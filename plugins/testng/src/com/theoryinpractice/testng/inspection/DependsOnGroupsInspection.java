@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.theoryinpractice.testng.inspection;
 
 import com.intellij.codeInspection.*;
@@ -21,8 +7,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.LabeledComponent;
 import com.intellij.openapi.util.JDOMExternalizableStringList;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.profile.codeInspection.InspectionProfileManager;
-import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
+import com.intellij.profile.codeInspection.ProjectInspectionProfileManager;
 import com.intellij.psi.*;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.util.ArrayUtil;
@@ -40,16 +25,12 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-/**
- * @author Hani Suleiman Date: Aug 3, 2005 Time: 3:34:56 AM
- */
-public class DependsOnGroupsInspection extends BaseJavaLocalInspectionTool {
+public class DependsOnGroupsInspection extends AbstractBaseJavaLocalInspectionTool {
   private static final Logger LOGGER = Logger.getInstance("TestNG Runner");
   private static final Pattern PATTERN = Pattern.compile("\"([a-zA-Z0-9_\\-\\(\\)]*)\"");
-  private static final ProblemDescriptor[] EMPTY = new ProblemDescriptor[0];
 
   public JDOMExternalizableStringList groups = new JDOMExternalizableStringList();
-  @NonNls public static String SHORT_NAME = "groupsTestNG";
+  @NonNls public static final String SHORT_NAME = "groupsTestNG";
 
   @NotNull
   @Override
@@ -69,20 +50,25 @@ public class DependsOnGroupsInspection extends BaseJavaLocalInspectionTool {
     return SHORT_NAME;
   }
 
+  @Override
   public boolean isEnabledByDefault() {
     return true;
   }
 
+  @Override
   @Nullable
   public JComponent createOptionsPanel() {
-    final LabeledComponent<JTextField> definedGroups = new LabeledComponent<JTextField>();
+    final LabeledComponent<JTextField> definedGroups = new LabeledComponent<>();
     definedGroups.setText("&Defined Groups");
     final JTextField textField = new JTextField(StringUtil.join(ArrayUtil.toStringArray(groups), ","));
     textField.getDocument().addDocumentListener(new DocumentAdapter() {
-      protected void textChanged(final DocumentEvent e) {
+      @Override
+      protected void textChanged(@NotNull final DocumentEvent e) {
         groups.clear();
-        final String[] groupsFromString = textField.getText().split("[, ]");
-        ContainerUtil.addAll(groups, groupsFromString);
+        String text = textField.getText();
+        if (!StringUtil.isEmptyOrSpaces(text)) {
+          ContainerUtil.addAll(groups, text.split("[, ]"));
+        }
       }
     });
     definedGroups.setComponent(textField);
@@ -98,9 +84,9 @@ public class DependsOnGroupsInspection extends BaseJavaLocalInspectionTool {
     if (!psiClass.getContainingFile().isWritable()) return null;
 
     PsiAnnotation[] annotations = TestNGUtil.getTestNGAnnotations(psiClass);
-    if (annotations.length == 0) return EMPTY;
+    if (annotations.length == 0) return ProblemDescriptor.EMPTY_ARRAY;
 
-    List<ProblemDescriptor> problemDescriptors = new ArrayList<ProblemDescriptor>();
+    List<ProblemDescriptor> problemDescriptors = new ArrayList<>();
     for (PsiAnnotation annotation : annotations) {
 
       PsiNameValuePair dep = null;
@@ -115,7 +101,7 @@ public class DependsOnGroupsInspection extends BaseJavaLocalInspectionTool {
       if (dep != null) {
         final PsiAnnotationMemberValue value = dep.getValue();
         if (value != null) {
-          LOGGER.info("Found " + dep.getName() + " with: " + value.getText());
+          LOGGER.debug("Found " + dep.getName() + " with: " + value.getText());
           String text = value.getText();
           if (value instanceof PsiReferenceExpression) {
             final PsiElement resolve = ((PsiReferenceExpression)value).resolve();
@@ -132,7 +118,7 @@ public class DependsOnGroupsInspection extends BaseJavaLocalInspectionTool {
           while (matcher.find()) {
             String methodName = matcher.group(1);
             if (!groups.contains(methodName)) {
-              LOGGER.info("group doesn't exist:" + methodName);
+              LOGGER.debug("group doesn't exist:" + methodName);
               ProblemDescriptor descriptor = manager.createProblemDescriptor(annotation, "Group '" + methodName + "' is undefined.",
                                                                              new GroupNameQuickFix(methodName),
                                                                              ProblemHighlightType.GENERIC_ERROR_OR_WARNING, isOnTheFly);
@@ -143,33 +129,34 @@ public class DependsOnGroupsInspection extends BaseJavaLocalInspectionTool {
         }
       }
     }
-    return problemDescriptors.toArray(new ProblemDescriptor[]{});
+    return problemDescriptors.toArray(ProblemDescriptor.EMPTY_ARRAY);
   }
 
   private class GroupNameQuickFix implements LocalQuickFix {
 
     String myGroupName;
 
-    public GroupNameQuickFix(@NotNull String groupName) {
+    GroupNameQuickFix(@NotNull String groupName) {
       myGroupName = groupName;
     }
 
+    @Override
     @NotNull
     public String getName() {
       return "Add '" + myGroupName + "' as a defined test group.";
     }
 
+    @Override
     @NotNull
     public String getFamilyName() {
       return "TestNG";
     }
 
+    @Override
     public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor problemDescriptor) {
       groups.add(myGroupName);
-      final InspectionProfile inspectionProfile =
-        InspectionProjectProfileManager.getInstance(project).getInspectionProfile();
       //correct save settings
-      InspectionProfileManager.getInstance().fireProfileChanged(inspectionProfile);
+      ProjectInspectionProfileManager.getInstance(project).fireProfileChanged();
       //TODO lesya
       /*
       try {
@@ -179,6 +166,11 @@ public class DependsOnGroupsInspection extends BaseJavaLocalInspectionTool {
         Messages.showErrorDialog(project, e.getMessage(), CommonBundle.getErrorTitle());
       }
       */
+    }
+
+    @Override
+    public boolean startInWriteAction() {
+      return false;
     }
   }
 }

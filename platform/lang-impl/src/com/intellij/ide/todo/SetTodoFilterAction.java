@@ -1,23 +1,9 @@
-/*
- * Copyright 2000-2011 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.todo;
 
+import com.intellij.ConfigurableFactory;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
-import com.intellij.ide.todo.configurable.TodoConfigurable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
 import com.intellij.openapi.actionSystem.impl.ActionButton;
@@ -25,50 +11,50 @@ import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.util.Consumer;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
 /**
 * @author irengrig
-*         Date: 2/24/11
-*         Time: 3:38 PM
  *         moved from inner class
 */
 public class SetTodoFilterAction extends AnAction implements CustomComponentAction {
   private final Project myProject;
   private final TodoPanelSettings myToDoSettings;
-  private final Consumer<TodoFilter> myTodoFilterConsumer;
+  private final Consumer<? super TodoFilter> myTodoFilterConsumer;
 
-  public SetTodoFilterAction(final Project project, final TodoPanelSettings toDoSettings, final Consumer<TodoFilter> todoFilterConsumer) {
+  public SetTodoFilterAction(final Project project, final TodoPanelSettings toDoSettings, final Consumer<? super TodoFilter> todoFilterConsumer) {
     super(IdeBundle.message("action.filter.todo.items"), null, AllIcons.General.Filter);
     myProject = project;
     myToDoSettings = toDoSettings;
     myTodoFilterConsumer = todoFilterConsumer;
   }
 
-  public void actionPerformed(AnActionEvent e) {
+  @Override
+  public void actionPerformed(@NotNull AnActionEvent e) {
     Presentation presentation = e.getPresentation();
-    JComponent button = (JComponent)presentation.getClientProperty("button");
+    JComponent button = presentation.getClientProperty(COMPONENT_KEY);
     DefaultActionGroup group = createPopupActionGroup(myProject, myToDoSettings, myTodoFilterConsumer);
     ActionPopupMenu popupMenu = ActionManager.getInstance().createActionPopupMenu(ActionPlaces.TODO_VIEW_TOOLBAR,
                                                                                   group);
     popupMenu.getComponent().show(button, button.getWidth(), 0);
   }
 
-  public JComponent createCustomComponent(Presentation presentation) {
-    ActionButton button = new ActionButton(
+  @NotNull
+  @Override
+  public JComponent createCustomComponent(@NotNull Presentation presentation) {
+    return new ActionButton(
       this,
       presentation,
       ActionPlaces.TODO_VIEW_TOOLBAR,
       ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE
     );
-    presentation.putClientProperty("button", button);
-    return button;
   }
 
   public static DefaultActionGroup createPopupActionGroup(final Project project,
                                                           final TodoPanelSettings settings,
-                                                          Consumer<TodoFilter> todoFilterConsumer) {
+                                                          Consumer<? super TodoFilter> todoFilterConsumer) {
     TodoFilter[] filters = TodoConfiguration.getInstance().getTodoFilters();
     DefaultActionGroup group = new DefaultActionGroup();
     group.add(new TodoFilterApplier(IdeBundle.message("action.todo.show.all"),
@@ -80,9 +66,10 @@ public class SetTodoFilterAction extends AnAction implements CustomComponentActi
     group.add(
       new AnAction(IdeBundle.message("action.todo.edit.filters"),
                    IdeBundle.message("action.todo.edit.filters"), AllIcons.General.Settings) {
-        public void actionPerformed(AnActionEvent e) {
+        @Override
+        public void actionPerformed(@NotNull AnActionEvent e) {
           final ShowSettingsUtil util = ShowSettingsUtil.getInstance();
-          util.editConfigurable(project, new TodoConfigurable());
+          util.editConfigurable(project, ConfigurableFactory.Companion.getInstance().getTodoConfigurable(project));
         }
       }
     );
@@ -92,12 +79,12 @@ public class SetTodoFilterAction extends AnAction implements CustomComponentActi
   private static class TodoFilterApplier extends ToggleAction {
     private final TodoFilter myFilter;
     private final TodoPanelSettings mySettings;
-    private final Consumer<TodoFilter> myTodoFilterConsumer;
+    private final Consumer<? super TodoFilter> myTodoFilterConsumer;
 
     /**
      * @param text        action's text.
      * @param description action's description.
-     * @param filter      filter to be applied. <code>null</code> value means "empty" filter.
+     * @param filter      filter to be applied. {@code null} value means "empty" filter.
      * @param settings
      * @param todoFilterConsumer
      */
@@ -105,7 +92,7 @@ public class SetTodoFilterAction extends AnAction implements CustomComponentActi
                       String description,
                       TodoFilter filter,
                       TodoPanelSettings settings,
-                      Consumer<TodoFilter> todoFilterConsumer) {
+                      Consumer<? super TodoFilter> todoFilterConsumer) {
       super(null, description, null);
       mySettings = settings;
       myTodoFilterConsumer = todoFilterConsumer;
@@ -113,18 +100,21 @@ public class SetTodoFilterAction extends AnAction implements CustomComponentActi
       myFilter = filter;
     }
 
-    public void update(AnActionEvent e) {
+    @Override
+    public void update(@NotNull AnActionEvent e) {
       super.update(e);
       if (myFilter != null) {
         e.getPresentation().setEnabled(!myFilter.isEmpty());
       }
     }
 
-    public boolean isSelected(AnActionEvent e) {
-      return Comparing.equal(myFilter != null ? myFilter.getName() : null, mySettings.getTodoFilterName());
+    @Override
+    public boolean isSelected(@NotNull AnActionEvent e) {
+      return Comparing.equal(myFilter != null ? myFilter.getName() : null, mySettings.todoFilterName);
     }
 
-    public void setSelected(AnActionEvent e, boolean state) {
+    @Override
+    public void setSelected(@NotNull AnActionEvent e, boolean state) {
       if (state) {
         myTodoFilterConsumer.consume(myFilter);
         //setTodoFilter(myFilter);

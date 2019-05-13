@@ -18,6 +18,8 @@ package com.siyeh.ig.abstraction;
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInspection.util.SpecialAnnotationsUtil;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.FindSuperElementsHelper;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.ui.CheckBox;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
@@ -35,32 +37,11 @@ import java.awt.*;
 public class PublicMethodNotExposedInInterfaceInspection
   extends BaseInspection {
 
-  @SuppressWarnings({"PublicField"})
-  public boolean onlyWarnIfContainingClassImplementsAnInterface = false;
-
-  @SuppressWarnings({"PublicField"})
+  @SuppressWarnings("PublicField")
   public final ExternalizableStringSet ignorableAnnotations =
     new ExternalizableStringSet();
-
-  @Override
-  @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "public.method.not.in.interface.display.name");
-  }
-
-  @Override
-  @NotNull
-  protected String buildErrorString(Object... infos) {
-    return InspectionGadgetsBundle.message(
-      "public.method.not.in.interface.problem.descriptor");
-  }
-
-  @NotNull
-  @Override
-  protected InspectionGadgetsFix[] buildFixes(Object... infos) {
-    return AddToIgnoreIfAnnotatedByListQuickFix.build((PsiModifierListOwner)infos[0], ignorableAnnotations);
-  }
+  @SuppressWarnings("PublicField")
+  public boolean onlyWarnIfContainingClassImplementsAnInterface = false;
 
   @Override
   public JComponent createOptionsPanel() {
@@ -83,6 +64,26 @@ public class PublicMethodNotExposedInInterfaceInspection
     constraints.fill = GridBagConstraints.HORIZONTAL;
     panel.add(checkBox, constraints);
     return panel;
+  }
+
+  @Override
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message(
+      "public.method.not.in.interface.display.name");
+  }
+
+  @Override
+  @NotNull
+  protected String buildErrorString(Object... infos) {
+    return InspectionGadgetsBundle.message(
+      "public.method.not.in.interface.problem.descriptor");
+  }
+
+  @NotNull
+  @Override
+  protected InspectionGadgetsFix[] buildFixes(Object... infos) {
+    return AddToIgnoreIfAnnotatedByListQuickFix.build((PsiModifierListOwner)infos[0], ignorableAnnotations);
   }
 
   @Override
@@ -119,7 +120,7 @@ public class PublicMethodNotExposedInInterfaceInspection
       if (!containingClass.hasModifierProperty(PsiModifier.PUBLIC)) {
         return;
       }
-      if (AnnotationUtil.isAnnotated(method, ignorableAnnotations)) {
+      if (AnnotationUtil.isAnnotated(method, ignorableAnnotations, 0)) {
         return;
       }
       if (onlyWarnIfContainingClassImplementsAnInterface) {
@@ -146,7 +147,11 @@ public class PublicMethodNotExposedInInterfaceInspection
     }
 
     private boolean exposedInInterface(PsiMethod method) {
-      final PsiMethod[] superMethods = method.findSuperMethods();
+      PsiMethod[] superMethods = method.findSuperMethods();
+      PsiMethod siblingInherited = FindSuperElementsHelper.getSiblingInheritedViaSubClass(method);
+      if (siblingInherited != null && !ArrayUtil.contains(siblingInherited, superMethods)) {
+        superMethods = ArrayUtil.append(superMethods, siblingInherited);
+      }
       for (final PsiMethod superMethod : superMethods) {
         final PsiClass superClass = superMethod.getContainingClass();
         if (superClass == null) {

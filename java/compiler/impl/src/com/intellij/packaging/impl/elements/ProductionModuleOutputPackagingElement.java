@@ -18,7 +18,6 @@ package com.intellij.packaging.impl.elements;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModulePointer;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.CompilerModuleExtension;
 import com.intellij.openapi.roots.ModuleRootModel;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.packaging.elements.ArtifactAntGenerationContext;
@@ -29,8 +28,8 @@ import com.intellij.packaging.ui.ArtifactEditorContext;
 import com.intellij.packaging.ui.PackagingElementPresentation;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
 
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 
@@ -51,12 +50,9 @@ public class ProductionModuleOutputPackagingElement extends ModuleOutputPackagin
     return "module:" + getModuleName();
   }
 
-  protected String getModuleOutputAntProperty(ArtifactAntGenerationContext generationContext) {
+  @Override
+  protected String getDirectoryAntProperty(ArtifactAntGenerationContext generationContext) {
     return generationContext.getModuleOutputPath(myModulePointer.getModuleName());
-  }
-
-  protected VirtualFile getModuleOutputPath(CompilerModuleExtension extension) {
-    return extension.getCompilerOutputPath();
   }
 
   @NotNull
@@ -66,10 +62,12 @@ public class ProductionModuleOutputPackagingElement extends ModuleOutputPackagin
     if (module == null) return Collections.emptyList();
 
     ModuleRootModel rootModel = context.getModulesProvider().getRootModel(module);
-    return Arrays.asList(rootModel.getSourceRoots(false));
+    return rootModel.getSourceRoots(JavaModuleSourceRootTypes.PRODUCTION);
   }
 
+  @Override
+  @NotNull
   public PackagingElementPresentation createPresentation(@NotNull ArtifactEditorContext context) {
-    return new DelegatedPackagingElementPresentation(new ModuleElementPresentation(myModulePointer, context, false));
+    return new DelegatedPackagingElementPresentation(new ModuleElementPresentation(myModulePointer, context, ProductionModuleOutputElementType.ELEMENT_TYPE));
   }
 }

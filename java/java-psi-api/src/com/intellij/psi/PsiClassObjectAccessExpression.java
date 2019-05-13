@@ -18,7 +18,7 @@ package com.intellij.psi;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * Represents a class literal expression (for example, <code>String.class</code>).
+ * Represents a class literal expression (for example, {@code String.class}).
  */
 public interface PsiClassObjectAccessExpression extends PsiExpression {
   /**
@@ -28,4 +28,8 @@ public interface PsiClassObjectAccessExpression extends PsiExpression {
    */
   @NotNull
   PsiTypeElement getOperand();
+
+  @NotNull
+  @Override
+  PsiType getType();
 }

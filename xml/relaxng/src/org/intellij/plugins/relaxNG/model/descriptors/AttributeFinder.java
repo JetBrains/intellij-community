@@ -17,24 +17,17 @@
 package org.intellij.plugins.relaxNG.model.descriptors;
 
 import com.intellij.openapi.util.Pair;
-import gnu.trove.THashMap;
 import org.kohsuke.rngom.digested.*;
 
 import javax.xml.namespace.QName;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-/**
- * Created by IntelliJ IDEA.
-* User: sweinreuter
-* Date: 30.07.2007
-*/
 class AttributeFinder extends RecursionSaveWalker {
   private int depth;
   private int optional;
   private final QName myQname;
-  private final Map<DAttributePattern, Pair<? extends Map<String, String>, Boolean>> myAttributes =
-          new THashMap<DAttributePattern, Pair<? extends Map<String, String>, Boolean>>();
+  private final Map<DAttributePattern, Pair<? extends Map<String, String>, Boolean>> myAttributes = new LinkedHashMap<>();
   private DAttributePattern myLastAttr;
 
   private AttributeFinder() {
@@ -46,6 +39,7 @@ class AttributeFinder extends RecursionSaveWalker {
     myQname = qname;
   }
 
+  @Override
   public Void onElement(DElementPattern p) {
     depth++;
     try {
@@ -59,17 +53,21 @@ class AttributeFinder extends RecursionSaveWalker {
     }
   }
 
+  @Override
   public Void onAttribute(DAttributePattern p) {
     assert depth > 0;
 
     if (depth == 1 && (myQname == null || p.getName().contains(myQname))) {
       myLastAttr = p;
-      myAttributes.put(p, Pair.create(new LinkedHashMap<String, String>(), optional > 0));
+      if (!myAttributes.containsKey(p)) {
+        myAttributes.put(p, Pair.create(new LinkedHashMap<>(), optional > 0));
+      }
       return super.onAttribute(p);
     }
     return null;
   }
 
+  @Override
   public Void onValue(DValuePattern p) {
     if (myLastAttr != null) {
       myAttributes.get(myLastAttr).first.put(p.getValue(), p.getType());
@@ -77,6 +75,7 @@ class AttributeFinder extends RecursionSaveWalker {
     return super.onValue(p);
   }
 
+  @Override
   public Void onOptional(DOptionalPattern p) {
     optional++;
     try {
@@ -86,6 +85,7 @@ class AttributeFinder extends RecursionSaveWalker {
     }
   }
 
+  @Override
   public Void onZeroOrMore(DZeroOrMorePattern p) {
     optional++;
     try {
@@ -95,6 +95,7 @@ class AttributeFinder extends RecursionSaveWalker {
     }
   }
 
+  @Override
   public Void onChoice(DChoicePattern p) {
     optional++;
     try {
@@ -104,6 +105,7 @@ class AttributeFinder extends RecursionSaveWalker {
     }
   }
 
+  @Override
   public Void onData(DDataPattern p) {
     if (depth == 1 && myLastAttr != null) {
       myAttributes.get(myLastAttr).first.put(null, p.getType());

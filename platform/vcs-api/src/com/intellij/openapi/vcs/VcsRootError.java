@@ -20,59 +20,31 @@ import org.jetbrains.annotations.NotNull;
 /**
  * Incorrect VCS root definition: either an unregistered, or an incorrectly registered VCS root.
  *
- * @see VcsRootChecker
- * @see AbstractVcs#getRootChecker
- *
  * @author Kirill Likhodedov
+ * @see VcsRootChecker
  */
-public class VcsRootError {
+public interface VcsRootError {
 
-  private final @NotNull Type myType;
-  private final @NotNull String myMapping;
-
-  public enum Type {
+  enum Type {
     EXTRA_MAPPING,
     UNREGISTERED_ROOT
   }
 
-  public VcsRootError(@NotNull Type type, @NotNull String mapping) {
-    myType = type;
-    myMapping = mapping;
-  }
-
+  /**
+   * @return type of mapping error
+   */
   @NotNull
-  public Type getType() {
-    return myType;
-  }
+  Type getType();
 
+  /**
+   * @return affected directory mapping string
+   */
   @NotNull
-  public String getMapping() {
-    return myMapping;
-  }
+  String getMapping();
 
-  @Override
-  public String toString() {
-    return String.format("VcsRootError{%s - %s}", myType, myMapping);
-  }
-
-  @Override
-  public boolean equals(Object o) {
-    if (this == o) return true;
-    if (o == null || getClass() != o.getClass()) return false;
-
-    VcsRootError error = (VcsRootError)o;
-
-    if (!myMapping.equals(error.myMapping)) return false;
-    if (myType != error.myType) return false;
-
-    return true;
-  }
-
-  @SuppressWarnings("ConstantConditions")
-  @Override
-  public int hashCode() {
-    int result = myType != null ? myType.hashCode() : 0;
-    result = 31 * result + myMapping.hashCode();
-    return result;
-  }
+  /**
+   * @return vcsKey for affected mapping
+   */
+  @NotNull
+  VcsKey getVcsKey();
 }

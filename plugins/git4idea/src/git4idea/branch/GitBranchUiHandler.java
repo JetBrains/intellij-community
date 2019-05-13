@@ -15,12 +15,11 @@
  */
 package git4idea.branch;
 
-import com.intellij.notification.NotificationListener;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vfs.VirtualFile;
-import git4idea.history.browser.GitCommit;
+import git4idea.GitCommit;
 import git4idea.repo.GitRepository;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -33,24 +32,11 @@ import java.util.Map;
  * <p>Handles UI interaction during various operations on branches: shows notifications, proposes to rollback, shows dialogs, messages, etc.
  * Some methods return the choice selected by user to the calling code, if it is needed.</p>
  * <p>The purpose of this class is to separate UI interaction from the main code, which would in particular simplify testing.</p>
- *
- * @author Kirill Likhodedov
  */
-interface GitBranchUiHandler {
+public interface GitBranchUiHandler {
 
   @NotNull
   ProgressIndicator getProgressIndicator();
-
-  /**
-   * Shows a notification about successful branch operation. The title is empty.
-   */
-  void notifySuccess(@NotNull String message);
-
-  void notifySuccess(@NotNull String title, @NotNull String message);
-
-  void notifySuccess(@NotNull String title, @NotNull String description, @Nullable NotificationListener listener);
-
-  void notifyError(@NotNull String title, @NotNull String message);
 
   boolean notifyErrorWithRollbackProposal(@NotNull String title, @NotNull String message, @NotNull String rollbackProposal);
 
@@ -73,25 +59,50 @@ interface GitBranchUiHandler {
 
   /**
    * Show notification about "untracked files would be overwritten by merge/checkout".
-   * @param untrackedFiles
    */
-  void showUntrackedFilesNotification(@NotNull String operationName, @NotNull Collection<VirtualFile> untrackedFiles);
+  void showUntrackedFilesNotification(@NotNull String operationName, @NotNull VirtualFile root, @NotNull Collection<String> relativePaths);
 
   boolean showUntrackedFilesDialogWithRollback(@NotNull String operationName, @NotNull String rollbackProposal,
-                                               @NotNull Collection<VirtualFile> untrackedFiles);
+                                               @NotNull VirtualFile root, @NotNull Collection<String> relativePaths);
 
   /**
    * Shows the dialog proposing to execute the operation (checkout or merge) smartly, i.e. stash-execute-unstash.
+   *
    * @param project
-   * @param changes   local changes that would be overwritten by checkout or merge.
-   * @param operation operation name
-   * @param force     can the operation be executed force (force checkout is possible, force merge - not).
+   * @param changes          local changes that would be overwritten by checkout or merge.
+   * @param paths            paths reported by Git (in most cases this is covered by {@code changes}.
+   * @param operation        operation name: checkout or merge
+   * @param forceButtonTitle if the operation can be executed force (force checkout is possible),
+   *                         specify the title of the force button; otherwise (force merge is not possible) pass null.
    * @return the code of the decision.
    */
-  int showSmartOperationDialog(@NotNull Project project, @NotNull List<Change> changes, @NotNull String operation, boolean force);
+  @NotNull
+  GitSmartOperationDialog.Choice showSmartOperationDialog(@NotNull Project project,
+                                                          @NotNull List<Change> changes,
+                                                          @NotNull Collection<String> paths,
+                                                          @NotNull String operation,
+                                                          @Nullable String forceButtonTitle);
 
-  boolean showBranchIsNotFullyMergedDialog(@NotNull Project project, @NotNull Map<GitRepository, List<GitCommit>> history,
-                                           @NotNull String unmergedBranch, @NotNull List<String> mergedToBranches,
-                                           @NotNull String baseBranch);
+  /**
+   * @return true if user decided to restore the branch.
+   */
+  boolean showBranchIsNotFullyMergedDialog(@NotNull Project project,
+                                           @NotNull Map<GitRepository, List<GitCommit>> history,
+                                           @NotNull Map<GitRepository, String> baseBranches,
+                                           @NotNull String removedBranch);
 
+  /**
+   * <p>Show confirmation about deleting of a remote branch.</p>
+   * <p>If there is a common tracking branch of this remote branch, the confirmation proposes to delete it as well.</p>
+   */
+  @NotNull
+  DeleteRemoteBranchDecision confirmRemoteBranchDeletion(@NotNull String branchName,
+                                                         @NotNull Collection<String> trackingBranches,
+                                                         @NotNull Collection<GitRepository> repositories);
+
+  enum DeleteRemoteBranchDecision {
+    CANCEL,
+    DELETE,
+    DELETE_WITH_TRACKING
+  }
 }

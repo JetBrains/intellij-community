@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,7 +23,7 @@ public class CenteredIcon implements Icon {
   private final Icon myIcon;
 
   private final int myWidth;
-  private final int myHight;
+  private final int myHeight;
 
   private final boolean myCenteredInComponent;
 
@@ -38,10 +38,11 @@ public class CenteredIcon implements Icon {
   public CenteredIcon(Icon icon, int width, int height, boolean centeredInComponent) {
     myIcon = icon;
     myWidth = width;
-    myHight = height;
+    myHeight = height;
     myCenteredInComponent = centeredInComponent;
   }
 
+  @Override
   public void paintIcon(Component c, Graphics g, int x, int y) {
     int offsetX;
     int offsetY;
@@ -53,17 +54,19 @@ public class CenteredIcon implements Icon {
     }
     else {
       offsetX = (myWidth - myIcon.getIconWidth()) / 2;
-      offsetY = (myHight - myIcon.getIconHeight()) / 2;
+      offsetY = (myHeight - myIcon.getIconHeight()) / 2;
     }
 
     myIcon.paintIcon(c, g, x + offsetX, y + offsetY);
   }
 
+  @Override
   public int getIconWidth() {
     return myWidth;
   }
 
+  @Override
   public int getIconHeight() {
-    return myHight;
+    return myHeight;
   }
 }

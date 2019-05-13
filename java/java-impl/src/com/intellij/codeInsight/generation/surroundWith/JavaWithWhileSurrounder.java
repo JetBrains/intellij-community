@@ -25,7 +25,7 @@ import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 
-class JavaWithWhileSurrounder extends JavaStatementsSurrounder{
+public class JavaWithWhileSurrounder extends JavaStatementsSurrounder{
   @Override
   public String getTemplateDescription() {
     return CodeInsightBundle.message("surround.with.while.template");
@@ -34,7 +34,7 @@ class JavaWithWhileSurrounder extends JavaStatementsSurrounder{
   @Override
   public TextRange surroundStatements(Project project, Editor editor, PsiElement container, PsiElement[] statements) throws IncorrectOperationException{
     PsiManager manager = PsiManager.getInstance(project);
-    PsiElementFactory factory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();
+    PsiElementFactory factory = JavaPsiFacade.getElementFactory(manager.getProject());
     CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(project);
 
     statements = SurroundWithUtil.moveDeclarationsOut(container, statements, true);
@@ -46,7 +46,7 @@ class JavaWithWhileSurrounder extends JavaStatementsSurrounder{
     PsiWhileStatement whileStatement = (PsiWhileStatement)factory.createStatementFromText(text, null);
     whileStatement = (PsiWhileStatement)codeStyleManager.reformat(whileStatement);
 
-    whileStatement = (PsiWhileStatement)container.addAfter(whileStatement, statements[statements.length - 1]);
+    whileStatement = (PsiWhileStatement)addAfter(whileStatement, container, statements);
 
     PsiStatement body = whileStatement.getBody();
     if (!(body instanceof PsiBlockStatement)) {
@@ -54,7 +54,7 @@ class JavaWithWhileSurrounder extends JavaStatementsSurrounder{
     }
     PsiCodeBlock bodyBlock = ((PsiBlockStatement)body).getCodeBlock();
     SurroundWithUtil.indentCommentIfNecessary(bodyBlock, statements);
-    bodyBlock.addRange(statements[0], statements[statements.length - 1]);
+    addRangeWithinContainer(bodyBlock, container, statements, false);
     container.deleteChildRange(statements[0], statements[statements.length - 1]);
 
     PsiExpression condition = whileStatement.getCondition();

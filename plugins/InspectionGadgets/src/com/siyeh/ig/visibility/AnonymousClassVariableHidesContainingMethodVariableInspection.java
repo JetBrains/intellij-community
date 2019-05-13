@@ -24,15 +24,21 @@ import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.RenameFix;
 import org.jetbrains.annotations.NotNull;
 
-public class AnonymousClassVariableHidesContainingMethodVariableInspection
-  extends BaseInspection {
+public class AnonymousClassVariableHidesContainingMethodVariableInspection extends
+                                                                           BaseInspection {
+  @Override
+  protected InspectionGadgetsFix buildFix(Object... infos) {
+    return new RenameFix();
+  }
 
+  @Override
   @NotNull
   public String getDisplayName() {
     return InspectionGadgetsBundle.message(
       "anonymous.class.variable.hides.containing.method.variable.display.name");
   }
 
+  @Override
   @NotNull
   public String buildErrorString(Object... infos) {
     final Object info = infos[0];
@@ -48,14 +54,12 @@ public class AnonymousClassVariableHidesContainingMethodVariableInspection
       "anonymous.class.variable.hides.containing.method.variable.problem.descriptor");
   }
 
-  protected InspectionGadgetsFix buildFix(Object... infos) {
-    return new RenameFix();
-  }
-
+  @Override
   protected boolean buildQuickFixesOnlyForOnTheFlyErrors() {
     return true;
   }
 
+  @Override
   public BaseInspectionVisitor buildVisitor() {
     return new AnonymousClassVariableHidesOuterClassVariableVisitor();
   }

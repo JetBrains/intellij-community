@@ -15,6 +15,12 @@
  */
 package com.intellij.util;
 
+import com.intellij.util.io.DataInputOutputUtil;
+
+import java.io.DataInput;
+import java.io.DataOutput;
+import java.io.IOException;
+
 public class BloomFilterBase {
   private final int myHashFunctionCount;
   private final int myBitsCount;
@@ -44,17 +50,31 @@ public class BloomFilterBase {
 
   protected final void addIt(int prime, int prime2) {
     for(int i = 0; i < myHashFunctionCount; ++i) {
-      int abs = Math.abs(i * prime + prime2 * (myHashFunctionCount - i)) % myBitsCount;
+      int abs = Math.abs((i * prime + prime2 * (myHashFunctionCount - i)) % myBitsCount);
       myElementsSet[abs >> BITS_PER_ELEMENT] |= (1L << abs);
     }
   }
 
   protected final boolean maybeContains(int prime, int prime2) {
     for(int i = 0; i < myHashFunctionCount; ++i) {
-      int abs = Math.abs(i * prime + prime2 * (myHashFunctionCount - i)) % myBitsCount;
+      int abs = Math.abs((i * prime + prime2 * (myHashFunctionCount - i)) % myBitsCount);
       if ((myElementsSet[abs >> BITS_PER_ELEMENT] & (1L << abs)) == 0) return false;
     }
 
     return true;
+  }
+
+  protected BloomFilterBase(DataInput input) throws IOException {
+    myHashFunctionCount = DataInputOutputUtil.readINT(input);
+    myBitsCount = DataInputOutputUtil.readINT(input);
+    myElementsSet = new long[(myBitsCount >> BITS_PER_ELEMENT) + 1];
+
+    for(int i = 0; i < myElementsSet.length; ++i) myElementsSet[i] = input.readLong();
+  }
+  
+  protected void save(DataOutput output) throws IOException {
+    DataInputOutputUtil.writeINT(output, myHashFunctionCount);
+    DataInputOutputUtil.writeINT(output, myBitsCount);
+    for(long l:myElementsSet) output.writeLong(l);
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,8 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.UserDataHolder;
+import com.intellij.util.text.CharArrayUtil;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -30,7 +32,7 @@ import java.beans.PropertyChangeListener;
  * text editor. Line breaks in the document text are always normalized as single \n characters,
  * and are converted to proper format when the document is saved.
  * <p/>
- * Please see <a href="http://confluence.jetbrains.net/display/IDEADEV/IntelliJ+IDEA+Architectural+Overview">IntelliJ IDEA Architectural Overview </a>
+ * Please see <a href="https://www.jetbrains.org/intellij/sdk/docs/basics/architectural_overview.html">IntelliJ Platform Architectural Overview</a>
  * for high-level overview.
  *
  * @see Editor#getDocument()
@@ -49,9 +51,17 @@ public interface Document extends UserDataHolder {
    *
    * @return document content.
    */
-  String getText();
+  @NotNull
+  @Contract(pure=true)
+  default String getText() {
+    return getImmutableCharSequence().toString();
+  }
 
-  @NotNull String getText(@NotNull TextRange range);
+  @NotNull
+  @Contract(pure=true)
+  default String getText(@NotNull TextRange range) {
+    return range.substring(getText());
+  }
 
   /**
    * Use this method instead of {@link #getText()} if you do not need to create a copy of the content.
@@ -62,12 +72,28 @@ public interface Document extends UserDataHolder {
    * @return inplace document content.
    * @see #getTextLength()
    */
-  @NotNull CharSequence getCharsSequence();
+  @Contract(pure=true)
+  @NotNull
+  default CharSequence getCharsSequence() {
+    return getImmutableCharSequence();
+  }
+
+  /**
+   * @return a char sequence representing document content that's guaranteed to be immutable. No read- or write-action is necessary.
+   * @see com.intellij.util.text.ImmutableCharSequence
+   */
+  @NotNull
+  @Contract(pure=true)
+  CharSequence getImmutableCharSequence();
 
   /**
    * @deprecated Use {@link #getCharsSequence()} or {@link #getText()} instead.
    */
-  @NotNull char[] getChars();
+  @NotNull
+  @Deprecated
+  default char[] getChars() {
+    return CharArrayUtil.fromSequence(getImmutableCharSequence());
+  }
 
   /**
    * Returns the length of the document text.
@@ -75,13 +101,17 @@ public interface Document extends UserDataHolder {
    * @return the length of the document text.
    * @see #getCharsSequence()
    */
-  int getTextLength();
+  @Contract(pure=true)
+  default int getTextLength() {
+    return getImmutableCharSequence().length();
+  }
 
   /**
    * Returns the number of lines in the document.
    *
    * @return the number of lines in the document.
    */
+  @Contract(pure=true)
   int getLineCount();
 
   /**
@@ -91,6 +121,7 @@ public interface Document extends UserDataHolder {
    * getTextLength()-1)
    * @return the line number corresponding to the offset.
    */
+  @Contract(pure=true)
   int getLineNumber(int offset);
 
   /**
@@ -99,6 +130,7 @@ public interface Document extends UserDataHolder {
    * @param line the line number (from 0 to getLineCount()-1)
    * @return the start offset for the line.
    */
+  @Contract(pure=true)
   int getLineStartOffset(int line);
 
   /**
@@ -107,7 +139,15 @@ public interface Document extends UserDataHolder {
    * @param line the line number (from 0 to getLineCount()-1)
    * @return the end offset for the line.
    */
+  @Contract(pure=true)
   int getLineEndOffset(int line);
+
+  /**
+   * @return whether the line with the given index has been modified since the document has been saved
+   */
+  default boolean isLineModified(int line) {
+    return false;
+  }
 
   /**
    * Inserts the specified text at the specified offset in the document. Line breaks in
@@ -148,6 +188,7 @@ public interface Document extends UserDataHolder {
    * @return true if the document text is writable, false if it is read-only.
    * @see #fireReadOnlyModificationAttempt()
    */
+  @Contract(pure=true)
   boolean isWritable();
 
   /**
@@ -158,6 +199,7 @@ public interface Document extends UserDataHolder {
    * @see com.intellij.psi.PsiFile#getModificationStamp()
    * @see com.intellij.openapi.vfs.VirtualFile#getModificationStamp()
    */
+  @Contract(pure=true)
   long getModificationStamp();
 
   /**
@@ -165,23 +207,27 @@ public interface Document extends UserDataHolder {
    * from the document (the read-only state can be removed by checking the file out
    * from the version control system, or by clearing the read-only attribute on the file).
    */
-  void fireReadOnlyModificationAttempt();
+  default void fireReadOnlyModificationAttempt() {
+  }
 
   /**
    * Adds a listener for receiving notifications about changes in the document content.
    *
    * @param listener the listener instance.
    */
-  void addDocumentListener(@NotNull DocumentListener listener);
+  default void addDocumentListener(@NotNull DocumentListener listener) {
+  }
 
-  void addDocumentListener(@NotNull DocumentListener listener, @NotNull Disposable parentDisposable);
+  default void addDocumentListener(@NotNull DocumentListener listener, @NotNull Disposable parentDisposable) {
+  }
 
   /**
    * Removes a listener for receiving notifications about changes in the document content.
    *
    * @param listener the listener instance.
    */
-  void removeDocumentListener(@NotNull DocumentListener listener);
+  default void removeDocumentListener(@NotNull DocumentListener listener) {
+  }
 
   /**
    * Creates a range marker which points to the specified range of text in the document and
@@ -192,7 +238,10 @@ public interface Document extends UserDataHolder {
    * @param endOffset the end offset for the range of text covered by the marker.
    * @return the marker instance.
    */
-  @NotNull RangeMarker createRangeMarker(int startOffset, int endOffset);
+  @NotNull
+  default RangeMarker createRangeMarker(int startOffset, int endOffset) {
+    return createRangeMarker(startOffset, endOffset, false);
+  }
 
   /**
    * Creates a range marker which points to the specified range of text in the document and
@@ -212,7 +261,8 @@ public interface Document extends UserDataHolder {
    *
    * @param listener the listener instance.
    */
-  void addPropertyChangeListener(@NotNull PropertyChangeListener listener);
+  default void addPropertyChangeListener(@NotNull PropertyChangeListener listener) {
+  }
 
   /**
    * Removes a listener for receiving notifications about changes in the properties of the document
@@ -220,7 +270,8 @@ public interface Document extends UserDataHolder {
    *
    * @param listener the listener instance.
    */
-  void removePropertyChangeListener(@NotNull PropertyChangeListener listener);
+  default void removePropertyChangeListener(@NotNull PropertyChangeListener listener) {
+  }
 
   /**
    * Marks the document as read-only or read/write. This method only modifies the flag stored
@@ -230,7 +281,8 @@ public interface Document extends UserDataHolder {
    * @see #isWritable()
    * @see #fireReadOnlyModificationAttempt()
    */
-  void setReadOnly(boolean isReadOnly);
+  default void setReadOnly(boolean isReadOnly) {
+  }
 
   /**
    * Marks a range of text in the document as read-only (attempts to modify text in the
@@ -243,7 +295,8 @@ public interface Document extends UserDataHolder {
    * @see #startGuardedBlockChecking()
    * @see com.intellij.openapi.editor.actionSystem.EditorActionManager#setReadonlyFragmentModificationHandler(com.intellij.openapi.editor.actionSystem.ReadonlyFragmentModificationHandler)
    */
-  @NotNull RangeMarker createGuardedBlock(int startOffset, int endOffset);
+  @NotNull
+  RangeMarker createGuardedBlock(int startOffset, int endOffset);
 
   /**
    * Removes a marker marking a range of text in the document as read-only.
@@ -251,7 +304,8 @@ public interface Document extends UserDataHolder {
    * @param block the marker to remove.
    * @see #createGuardedBlock(int, int)
    */
-  void removeGuardedBlock(@NotNull RangeMarker block);
+  default void removeGuardedBlock(@NotNull RangeMarker block) {
+  }
 
   /**
    * Returns the read-only marker covering the specified offset in the document.
@@ -260,7 +314,9 @@ public interface Document extends UserDataHolder {
    * @return the marker instance, or null if the specified offset is not covered by a read-only marker.
    */
   @Nullable
-  RangeMarker getOffsetGuard(int offset);
+  default RangeMarker getOffsetGuard(int offset) {
+    return getRangeGuard(offset, offset);
+  }
 
   /**
    * Returns the read-only marker covering the specified range in the document.
@@ -270,7 +326,9 @@ public interface Document extends UserDataHolder {
    * @return the marker instance, or null if the specified range is not covered by a read-only marker.
    */
   @Nullable
-  RangeMarker getRangeGuard(int start, int end);
+  default RangeMarker getRangeGuard(int start, int end) {
+    return null;
+  }
 
   /**
    * Enables checking for read-only markers when the document is modified. Checking is disabled by default.
@@ -278,7 +336,8 @@ public interface Document extends UserDataHolder {
    * @see #createGuardedBlock(int, int)
    * @see #stopGuardedBlockChecking()
    */
-  void startGuardedBlockChecking();
+  default void startGuardedBlockChecking() {
+  }
 
   /**
    * Disables checking for read-only markers when the document is modified. Checking is disabled by default.
@@ -286,7 +345,8 @@ public interface Document extends UserDataHolder {
    * @see #createGuardedBlock(int, int)
    * @see #startGuardedBlockChecking()
    */
-  void stopGuardedBlockChecking();
+  default void stopGuardedBlockChecking() {
+  }
 
   /**
    * Sets the maximum size of the cyclic buffer used for the document. If the document uses
@@ -295,11 +355,18 @@ public interface Document extends UserDataHolder {
    *
    * @param bufferSize the cyclic buffer size, or 0 if the document should not use a cyclic buffer.
    */
-  void setCyclicBufferSize(int bufferSize);
+  default void setCyclicBufferSize(int bufferSize) {
+  }
 
   void setText(@NotNull final CharSequence text);
 
-  @NotNull RangeMarker createRangeMarker(@NotNull TextRange textRange);
+  @NotNull
+  default RangeMarker createRangeMarker(@NotNull TextRange textRange) {
+    return createRangeMarker(textRange.getStartOffset(), textRange.getEndOffset());
+  }
 
-  int getLineSeparatorLength(int line);
+  @Contract(pure=true)
+  default int getLineSeparatorLength(int line) {
+    return 0;
+  }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,30 +15,29 @@
  */
 package com.intellij.codeInsight.folding.impl;
 
+import com.intellij.application.options.CodeStyle;
 import com.intellij.codeInsight.ExpectedTypeInfo;
 import com.intellij.codeInsight.ExpectedTypesProvider;
+import com.intellij.lang.java.JavaLanguage;
+import com.intellij.openapi.editor.colors.EditorColors;
+import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.PsiAnonymousClass;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiNewExpression;
-import com.intellij.psi.PsiReferenceExpression;
+import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
-import com.intellij.psi.impl.source.jsp.jspJava.JspHolderMethod;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 public class JavaFoldingBuilder extends JavaFoldingBuilderBase {
-
   @Override
-  protected boolean isBelowRightMargin(Project project, int lineLength) {
-    final CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(project);
-    return lineLength <= settings.RIGHT_MARGIN;
+  protected boolean isBelowRightMargin(@NotNull PsiFile file, int lineLength) {
+    final CodeStyleSettings settings = CodeStyle.getSettings(file);
+    return lineLength <= settings.getRightMargin(JavaLanguage.INSTANCE);
   }
 
   @Override
-  protected boolean shouldShowExplicitLambdaType(PsiAnonymousClass anonymousClass, PsiNewExpression expression) {
-    if (expression.getParent() instanceof PsiReferenceExpression) {
+  protected boolean shouldShowExplicitLambdaType(@NotNull PsiAnonymousClass anonymousClass, @NotNull PsiNewExpression expression) {
+    PsiElement parent = expression.getParent();
+    if (parent instanceof PsiReferenceExpression || parent instanceof PsiAssignmentExpression) {
       return true;
     }
 
@@ -46,12 +45,15 @@ public class JavaFoldingBuilder extends JavaFoldingBuilderBase {
     return types.length != 1 || !types[0].getType().equals(anonymousClass.getBaseClassType());
   }
 
-  @Nullable
   @Override
-  public TextRange getRangeToFold(PsiElement element) {
-    if (element instanceof JspHolderMethod)
-      return null;
-    return super.getRangeToFold(element);    //To change body of overridden methods use File | Settings | File Templates.
+  @NotNull
+  protected String rightArrow() {
+    return getRightArrow();
+  }
+
+  @NotNull
+  public static String getRightArrow() {
+    return EditorUtil.displayCharInEditor('\u2192', EditorColors.FOLDED_TEXT_ATTRIBUTES, "->");
   }
 }
 

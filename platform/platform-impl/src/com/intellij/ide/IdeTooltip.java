@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,13 +18,16 @@ package com.intellij.ide;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.awt.RelativePoint;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.update.ComparableObject;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.border.Border;
 import java.awt.*;
 
 public class IdeTooltip extends ComparableObject.Impl {
-
+  public static final Object TOOLTIP_DISMISS_DELAY_KEY = "TOOLTIP_DISMISS_DELAY_KEY";
   private Component myComponent;
   private Point myPoint;
 
@@ -36,10 +39,12 @@ public class IdeTooltip extends ComparableObject.Impl {
   private boolean myToCenter = false;
   private boolean myToCenterIfSmall = true;
   private boolean myHighlighter;
+  private boolean myRequestFocus;
 
   private Color myTextBackground;
   private Color myTextForeground;
   private Color myBorderColor;
+  private Insets myBorderInsets;
   private Font myFont;
 
   private int myCalloutShift = 4;
@@ -51,6 +56,7 @@ public class IdeTooltip extends ComparableObject.Impl {
   private Ui myUi;
 
   private boolean myHint = false;
+  private Border myComponentBorder = JBUI.Borders.empty(1, 3, 2, 3);
 
 
   public IdeTooltip(Component component, Point point, JComponent tipComponent, Object... identity) {
@@ -133,6 +139,12 @@ public class IdeTooltip extends ComparableObject.Impl {
   }
 
   public int getDismissDelay() {
+    if (myComponent instanceof JComponent) {
+      final Object value = ((JComponent)myComponent).getClientProperty(TOOLTIP_DISMISS_DELAY_KEY);
+      if (value instanceof Integer) {
+        return ((Integer)value).intValue();
+      }
+    }
     return Registry.intValue("ide.tooltip.dismissDelay");
   }
 
@@ -159,6 +171,11 @@ public class IdeTooltip extends ComparableObject.Impl {
     myBorderColor = borderColor;
     return this;
   }
+  public IdeTooltip setBorderInsets(Insets insets) {
+    myBorderInsets = insets;
+    return this;
+  }
+
 
   public Color getTextBackground() {
     return myTextBackground;
@@ -174,6 +191,19 @@ public class IdeTooltip extends ComparableObject.Impl {
 
   public Color getBorderColor() {
     return myBorderColor;
+  }
+
+  public Insets getBorderInsets() {
+    return myBorderInsets;
+  }
+  
+  public Border getComponentBorder() {
+    return myComponentBorder;
+  }
+  
+  public IdeTooltip setComponentBorder(@Nullable Border value) {
+    myComponentBorder = value;
+    return this;
   }
 
   public IdeTooltip setFont(Font font) {
@@ -245,6 +275,15 @@ public class IdeTooltip extends ComparableObject.Impl {
 
   public boolean isInside(RelativePoint target) {
     return myUi != null && myUi.isInside(target);
+  }
+
+  public boolean isRequestFocus() {
+    return myRequestFocus;
+  }
+
+  public IdeTooltip setRequestFocus(boolean requestFocus) {
+    myRequestFocus = requestFocus;
+    return this;
   }
 
   public interface Ui {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi;
 
+import com.intellij.openapi.actionSystem.CustomShortcutSet;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
@@ -25,9 +26,10 @@ import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.KeyEvent;
+import java.awt.event.InputEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -39,49 +41,68 @@ import java.util.Map;
  * @since 5.1
  */
 public class MnemonicHelper extends ComponentTreeWatcher {
+  private static final MnemonicContainerListener LISTENER = new MnemonicContainerListener();
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.MnemonicHelper");
   private Map<Integer, String> myMnemonics = null;
 
   public static final PropertyChangeListener TEXT_LISTENER = new PropertyChangeListener() {
-   public void propertyChange(PropertyChangeEvent evt) {
-     final Object source = evt.getSource();
-     if (source instanceof AbstractButton) {
-       DialogUtil.registerMnemonic(((AbstractButton)source));
-     } else if (source instanceof JLabel) {
-       DialogUtil.registerMnemonic(((JLabel)source), null);
-     }
-   }
+    @Override
+    public void propertyChange(PropertyChangeEvent event) {
+      Object source = event.getSource();
+      // SwingUtilities.invokeLater is needed to process this event,
+      // because the method is invoked from the setText method
+      // before Swing updates mnemonics
+      if (source instanceof AbstractButton) {
+        //noinspection SSBasedInspection //see javax.swing.AbstractButton.setText
+        SwingUtilities.invokeLater(() -> DialogUtil.registerMnemonic(((AbstractButton)source)));
+      }
+      else if (source instanceof JLabel) {
+        //noinspection SSBasedInspection //see javax.swing.JLabel.setText
+        SwingUtilities.invokeLater(() -> DialogUtil.registerMnemonic(((JLabel)source), null));
+      }
+    }
   };
   @NonNls public static final String TEXT_CHANGED_PROPERTY = "text";
 
+  /**
+   * @see #init(Component)
+   * @deprecated do not use this object as a tree watcher
+   */
+  @Deprecated
   public MnemonicHelper() {
     super(ArrayUtil.EMPTY_CLASS_ARRAY);
   }
 
+  @Override
   protected void processComponent(Component parentComponent) {
     if (parentComponent instanceof AbstractButton) {
       final AbstractButton abstractButton = ((AbstractButton)parentComponent);
       abstractButton.addPropertyChangeListener(AbstractButton.TEXT_CHANGED_PROPERTY, TEXT_LISTENER);
       DialogUtil.registerMnemonic(abstractButton);
       checkForDuplicateMnemonics(abstractButton);
-    } else if (parentComponent instanceof JLabel) {
+      fixMacMnemonicKeyStroke(abstractButton, null);
+    }
+    else if (parentComponent instanceof JLabel) {
       final JLabel jLabel = ((JLabel)parentComponent);
       jLabel.addPropertyChangeListener(TEXT_CHANGED_PROPERTY, TEXT_LISTENER);
       DialogUtil.registerMnemonic(jLabel, null);
       checkForDuplicateMnemonics(jLabel);
-      if (SystemInfo.isMac) {
-        // hack to make Labels mnemonic work for ALT+KEY_CODE on Macs.
-        // Default implementation uses ALT+CTRL+KEY_CODE (see BasicLabelUI).
-        final InputMap inputMap = jLabel.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW);
-        if (inputMap != null) {
-          final KeyStroke[] strokes = inputMap.allKeys();
-          if (strokes != null) {
-            for (KeyStroke stroke : strokes) {
-              final int m = stroke.getModifiers();
-              // to be sure if default mnemonic exist
-              if (((m & KeyEvent.ALT_MASK) == KeyEvent.ALT_MASK) && ((m & KeyEvent.CTRL_MASK) == KeyEvent.CTRL_MASK)) {
-                inputMap.put(KeyStroke.getKeyStroke(stroke.getKeyCode(), KeyEvent.ALT_MASK), "release"); // "release" only is OK
-              }
+      fixMacMnemonicKeyStroke(jLabel, "release"); // "release" only is OK for labels
+    }
+  }
+
+  private static void fixMacMnemonicKeyStroke(JComponent component, String type) {
+    if (SystemInfo.isMac && Registry.is("ide.mac.alt.mnemonic.without.ctrl")) {
+      // hack to make component's mnemonic work for ALT+KEY_CODE on Macs.
+      // Default implementation uses ALT+CTRL+KEY_CODE (see BasicLabelUI).
+      InputMap inputMap = component.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW);
+      if (inputMap != null) {
+        KeyStroke[] strokes = inputMap.allKeys();
+        if (strokes != null) {
+          int mask = InputEvent.ALT_MASK | InputEvent.CTRL_MASK;
+          for (KeyStroke stroke : strokes) {
+            if (mask == (mask & stroke.getModifiers())) {
+              inputMap.put(getKeyStrokeWithoutCtrlModifier(stroke), type != null ? type : inputMap.get(stroke));
             }
           }
         }
@@ -89,6 +110,19 @@ public class MnemonicHelper extends ComponentTreeWatcher {
     }
   }
 
+  private static KeyStroke getKeyStrokeWithoutCtrlModifier(KeyStroke stroke) {
+    try {
+      Method method = AWTKeyStroke.class.getDeclaredMethod("getCachedStroke", char.class, int.class, int.class, boolean.class);
+      method.setAccessible(true);
+      int modifiers = stroke.getModifiers() & ~InputEvent.CTRL_MASK & ~InputEvent.CTRL_DOWN_MASK;
+      return (KeyStroke)method.invoke(null, stroke.getKeyChar(), stroke.getKeyCode(), modifiers, stroke.isOnKeyRelease());
+    }
+    catch (Exception exception) {
+      throw new IllegalStateException(exception);
+    }
+  }
+
+  @Override
   protected void unprocessComponent(Component component) {
   }
 
@@ -104,11 +138,36 @@ public class MnemonicHelper extends ComponentTreeWatcher {
 
   public void checkForDuplicateMnemonics(int mnemonic, String text) {
     if (mnemonic == 0) return;
-    if (myMnemonics == null) myMnemonics = new HashMap();
+    if (myMnemonics == null) myMnemonics = new HashMap<>();
     final String other = myMnemonics.get(Integer.valueOf(mnemonic));
     if (other != null && !other.equals(text)) {
       LOG.error("conflict: multiple components with mnemonic '" + (char)mnemonic + "' seen on '" + text + "' and '" + other + "'");
     }
     myMnemonics.put(Integer.valueOf(mnemonic), text);
+  }
+
+  /**
+   * Creates shortcut for mnemonic replacing standard Alt+Letter to Ctrl+Alt+Letter on Mac with jdk version newer than 6
+   *
+   * @param ch mnemonic letter
+   * @return shortcut for mnemonic
+   */
+  public static CustomShortcutSet createShortcut(char ch) {
+    Character mnemonic = Character.valueOf(ch);
+    return CustomShortcutSet.fromString("alt " + (SystemInfo.isMac ? "released" : "pressed") + " " + mnemonic);
+  }
+
+  /**
+   * Initializes mnemonics support for the specified component and for its children if needed.
+   *
+   * @param component the root component of the hierarchy
+   */
+  public static void init(Component component) {
+    if (Registry.is("ide.mnemonic.helper.old") || Registry.is("ide.checkDuplicateMnemonics")) {
+      new MnemonicHelper().register(component);
+    }
+    else {
+      LISTENER.addTo(component);
+    }
   }
 }

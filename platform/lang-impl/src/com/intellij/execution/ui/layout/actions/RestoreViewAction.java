@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,30 +17,48 @@
 package com.intellij.execution.ui.layout.actions;
 
 import com.intellij.execution.ui.layout.CellTransform;
+import com.intellij.icons.AllIcons;
 import com.intellij.idea.ActionsBundle;
-import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.project.DumbAwareAction;
+import com.intellij.ui.LayeredIcon;
 import com.intellij.ui.content.Content;
+import org.jetbrains.annotations.NotNull;
 
-public class RestoreViewAction extends AnAction {
+import javax.swing.*;
+
+public class RestoreViewAction extends DumbAwareAction {
 
   private final Content myContent;
   private final CellTransform.Restore myRestoreAction;
 
+  private boolean myAlert;
+
   public RestoreViewAction(final Content content, CellTransform.Restore restore) {
     myContent = content;
     myRestoreAction = restore;
+    myContent.addPropertyChangeListener(l -> {
+      if (Content.PROP_ALERT.equals(l.getPropertyName())) {
+        myAlert = true;
+      }
+    });
   }
 
-  public void update(final AnActionEvent e) {
+  @Override
+  public void update(@NotNull final AnActionEvent e) {
     Presentation p = e.getPresentation();
     p.setText(ActionsBundle.message("action.Runner.RestoreView.text", myContent.getDisplayName()));
     p.setDescription(ActionsBundle.message("action.Runner.RestoreView.description"));
-    p.setIcon(myContent.getIcon());
+    Icon icon = myContent.getIcon();
+    if (myAlert) {
+      icon = new LayeredIcon(icon, AllIcons.Nodes.TabAlert);
+    }
+    p.setIcon(icon == null ? AllIcons.Debugger.RestoreLayout : icon);
   }
 
-  public void actionPerformed(final AnActionEvent e) {
+  @Override
+  public void actionPerformed(@NotNull final AnActionEvent e) {
     myRestoreAction.restoreInGrid();
   }
 

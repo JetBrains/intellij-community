@@ -1,23 +1,46 @@
+/*
+ * Copyright 2000-2016 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.intellij.openapi.project;
 
 import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.fileTypes.InternalFileType;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-/**
- * Author: dmitrylomov
- */
 public class ProjectCoreUtil {
-  public static final String DIRECTORY_BASED_PROJECT_DIR = ".idea";
-  private static final String PROJECT_DIR_PATTERN = "/"+ DIRECTORY_BASED_PROJECT_DIR +"/";
+  public static volatile Project theProject;
 
-  public static boolean isProjectOrWorkspaceFile(final VirtualFile file) {
-    return isProjectOrWorkspaceFile(file, file.getFileType());
+  public static boolean isProjectOrWorkspaceFile(@NotNull VirtualFile file) {
+    // do not use file.getFileType() to avoid autodetection by content loading for arbitrary files
+    return isProjectOrWorkspaceFile(file, FileTypeRegistry.getInstance().getFileTypeByFileName(file.getNameSequence()));
   }
 
-  public static boolean isProjectOrWorkspaceFile(final VirtualFile file,
-                                                 final FileType fileType) {
-    if (fileType instanceof InternalFileType) return true;
-    return file.getPath().contains(PROJECT_DIR_PATTERN);
+  public static boolean isProjectOrWorkspaceFile(@NotNull VirtualFile file, @Nullable FileType fileType) {
+    return fileType instanceof InternalFileType ||
+           VfsUtilCore.findContainingDirectory(file, Project.DIRECTORY_STORE_FOLDER) != null;
+  }
+
+  /**
+   * @return the only open project if there is one, null if no or several projects are open
+   */
+  @Nullable
+  public static Project theOnlyOpenProject() {
+    return theProject;
   }
 }

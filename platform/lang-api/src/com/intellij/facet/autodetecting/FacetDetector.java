@@ -31,6 +31,7 @@ import java.util.Collection;
  *
  * @author nik
  */
+@Deprecated
 public abstract class FacetDetector<T, C extends FacetConfiguration> {
   private final String myId;
 
@@ -44,6 +45,7 @@ public abstract class FacetDetector<T, C extends FacetConfiguration> {
   /**
    * @deprecated use {@link FacetDetector#FacetDetector(String)} instead
    */
+  @Deprecated
   protected FacetDetector() {
     myId = getClass().getName();
   }
@@ -53,14 +55,14 @@ public abstract class FacetDetector<T, C extends FacetConfiguration> {
   }
 
   /**
-   * Inspect <code>source</code> and decide does it really descriptor of a new facet or it relates to one of the existent facets
+   * Inspect {@code source} and decide does it really descriptor of a new facet or it relates to one of the existent facets
    * @param source {@link com.intellij.openapi.vfs.VirtualFile} or {@link com.intellij.psi.PsiFile} instance
    * @param existentFacetConfigurations configuration of existent facet in the module
    * @return
    * <ul>
-   *  <li><code>null</code> if <code>source</code> is not facet descriptor
-   *  <li>one of <code>existentFacetConfigurations</code> if <code>source</code> relates to an existent facet
-   *  <li>new facet configuration instance if <code>source</code> is descriptor of a new facet
+   *  <li>{@code null} if {@code source} is not facet descriptor
+   *  <li>one of {@code existentFacetConfigurations} if {@code source} relates to an existent facet
+   *  <li>new facet configuration instance if {@code source} is descriptor of a new facet
    * </ul>
    */
   @Nullable

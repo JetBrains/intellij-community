@@ -23,11 +23,6 @@ import com.thaiopensource.xml.sax.ErrorHandlerImpl;
 import org.intellij.plugins.relaxNG.validation.MessageViewHelper;
 import org.xml.sax.SAXParseException;
 
-/*
-* Created by IntelliJ IDEA.
-* User: sweinreuter
-* Date: 16.11.2007
-*/
 public class IdeaErrorHandler extends ErrorHandlerImpl {
   private static final String CONTENT_NAME = "Convert Schema";
   private static final Key<NewErrorTreeViewPanel> KEY = Key.create("CONVERSION_ERRORS");

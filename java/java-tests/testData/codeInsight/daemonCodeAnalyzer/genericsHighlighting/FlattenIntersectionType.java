@@ -5,7 +5,7 @@ interface EntityId<E extends BusinessEntity> {
     E getEntity();
 }
 
-public class MyTest {
+class MyTest {
     <T extends BusinessEntity<T>> T getEntity(EntityId<T> defaultValue) {
         return getEntityID(defaultValue).getEntity();
     }

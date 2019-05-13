@@ -16,17 +16,15 @@
 package com.intellij.packaging.impl.artifacts;
 
 import com.intellij.packaging.artifacts.Artifact;
-import com.intellij.packaging.elements.ComplexPackagingElement;
-import com.intellij.packaging.elements.CompositePackagingElement;
-import com.intellij.packaging.elements.PackagingElement;
-import com.intellij.packaging.elements.PackagingElementResolvingContext;
+import com.intellij.packaging.elements.*;
 import com.intellij.packaging.impl.elements.ArtifactPackagingElement;
 import com.intellij.util.SmartList;
-import com.intellij.util.StringBuilderSpinAllocator;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * @author nik
@@ -61,20 +59,9 @@ public class PackagingElementPath {
 
   @NotNull
   public String getPathStringFrom(String separator, @Nullable CompositePackagingElement<?> ancestor) {
-    final StringBuilder builder = StringBuilderSpinAllocator.alloc();
-    try {
-      final List<CompositePackagingElement<?>> parents = getParentsFrom(ancestor);
-      for (int i = parents.size() - 1; i >= 0; i--) {
-        builder.append(parents.get(i).getName());
-        if (i > 0) {
-          builder.append(separator);
-        }
-      }
-      return builder.toString();
-    }
-    finally {
-      StringBuilderSpinAllocator.dispose(builder);
-    }
+    final List<CompositePackagingElement<?>> parents = getParentsFrom(ancestor);
+    // StringUtil.join ignores empty strings whereas this monstrosity doesn't
+    return ContainerUtil.reverse(parents).stream().map(RenameablePackagingElement::getName).collect(Collectors.joining("/"));
   }
   
   public List<CompositePackagingElement<?>> getParents() {
@@ -82,7 +69,7 @@ public class PackagingElementPath {
   }
 
   public List<CompositePackagingElement<?>> getParentsFrom(@Nullable CompositePackagingElement<?> ancestor) {
-    List<CompositePackagingElement<?>> result = new SmartList<CompositePackagingElement<?>>();
+    List<CompositePackagingElement<?>> result = new SmartList<>();
     PackagingElementPath path = this;
     while (path != EMPTY && path.myLastElement != ancestor) {
       if (path.myLastElement instanceof CompositePackagingElement<?>) {
@@ -94,7 +81,7 @@ public class PackagingElementPath {
   }
 
   public List<PackagingElement<?>> getAllElements() {
-    List<PackagingElement<?>> result = new SmartList<PackagingElement<?>>();
+    List<PackagingElement<?>> result = new SmartList<>();
     PackagingElementPath path = this;
     while (path != EMPTY) {
       result.add(path.myLastElement);
@@ -128,7 +115,7 @@ public class PackagingElementPath {
     return null;
   }
 
-  public static PackagingElementPath createPath(@NotNull List<PackagingElement<?>> elements) {
+  public static PackagingElementPath createPath(@NotNull List<? extends PackagingElement<?>> elements) {
     PackagingElementPath path = EMPTY;
     for (PackagingElement<?> element : elements) {
       path = new PackagingElementPath(path, element);

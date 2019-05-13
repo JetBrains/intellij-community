@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,23 +15,26 @@
  */
 package com.siyeh.ig.dataflow;
 
-import com.intellij.testFramework.IdeaTestUtil;
-import com.siyeh.ig.IGInspectionTestCase;
-import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.projectRoots.impl.JavaSdkImpl;
-import com.intellij.openapi.roots.LanguageLevelProjectExtension;
-import com.intellij.pom.java.LanguageLevel;
+import com.intellij.codeInspection.InspectionProfileEntry;
+import com.intellij.testFramework.LightProjectDescriptor;
+import com.siyeh.ig.LightInspectionTestCase;
+import org.jetbrains.annotations.NotNull;
 
-public class UnnecessaryLocalVariableInspectionTest extends IGInspectionTestCase {
+public class UnnecessaryLocalVariableInspectionTest extends LightInspectionTestCase {
   @Override
-  protected Sdk getTestProjectSdk() {
-    final Sdk sdk = IdeaTestUtil.getMockJdk17();
-    LanguageLevelProjectExtension.getInstance(getProject()).setLanguageLevel(LanguageLevel.JDK_1_7);
-    return sdk;
+  protected InspectionProfileEntry getInspection() {
+    return new UnnecessaryLocalVariableInspection();
   }
 
-  public void test() throws Exception {
-    doTest("com/siyeh/igtest/dataflow/unnecessary_local_vars",
-           new UnnecessaryLocalVariableInspection());
+  public void testC() { doTest(); }
+
+  public void testTree() { doTest(); }
+
+  public void testSwitchExpression() { doTest(); }
+
+  @NotNull
+  @Override
+  protected LightProjectDescriptor getProjectDescriptor() {
+    return JAVA_12;
   }
 }

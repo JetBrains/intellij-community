@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,26 +15,36 @@
  */
 package com.intellij.openapi.editor.impl;
 
+import com.intellij.util.BitUtil;
 import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import java.util.concurrent.atomic.AtomicInteger;
 
 
-/**
- * User: cdr
- */
-public abstract class RedBlackTree<K> {
-  public static boolean VERIFY = false;
+public abstract class RedBlackTree<K> extends AtomicInteger {
+  // this "extends AtomicInteger" thing is for supporting modCounter.
+  // I couldn't make it "volatile int" field because Unsafe.getAndAddInt is since jdk8 only, and "final AtomicInteger" field would be too many indirections
+
+  public static boolean VERIFY;
   private static final int INDENT_STEP = 4;
   private int nodeSize; // number of nodes
-  protected int modCount;
   protected Node<K> root;
 
-  public RedBlackTree() {
+  RedBlackTree() {
     root = null;
     verifyProperties();
   }
 
-  protected void rotateLeft(Node<K> n) {
+  void incModCount() {
+    incrementAndGet();
+  }
+  int getModCount() {
+    return get();
+  }
+
+  protected void rotateLeft(@NotNull Node<K> n) {
     Node<K> r = n.getRight();
     replaceNode(n, r);
     n.setRight(r.getLeft());
@@ -45,7 +55,7 @@ public abstract class RedBlackTree<K> {
     n.setParent(r);
   }
 
-  protected void rotateRight(Node<K> n) {
+  protected void rotateRight(@NotNull Node<K> n) {
     Node<K> l = n.getLeft();
     replaceNode(n, l);
     n.setLeft(l.getRight());
@@ -77,13 +87,13 @@ public abstract class RedBlackTree<K> {
     //oldn.right = null;
   }
 
-  protected void onInsertNode() {
+  void onInsertNode() {
     nodeSize++;
   }
 
-  protected void insertCase1(Node<K> n) {
+  void insertCase1(Node<K> n) {
     if (n.getParent() == null) {
-      n.color = Color.BLACK;
+      n.setBlack();
     }
     else {
       insertCase2(n);
@@ -91,17 +101,17 @@ public abstract class RedBlackTree<K> {
   }
 
   private void insertCase2(Node<K> n) {
-    if (nodeColor(n.getParent()) != Color.BLACK) {
+    if (!isBlack(n.getParent())) {
       insertCase3(n);
     }
     // Tree is still valid
   }
 
   private void insertCase3(Node<K> n) {
-    if (nodeColor(n.uncle()) == Color.RED) {
-      n.getParent().color = Color.BLACK;
-      n.uncle().color = Color.BLACK;
-      n.grandparent().color = Color.RED;
+    if (!isBlack(n.uncle())) {
+      n.getParent().setBlack();
+      n.uncle().setBlack();
+      n.grandparent().setRed();
       insertCase1(n.grandparent());
     }
     else {
@@ -122,8 +132,8 @@ public abstract class RedBlackTree<K> {
   }
 
   private void insertCase5(Node<K> n) {
-    n.getParent().color = Color.BLACK;
-    n.grandparent().color = Color.RED;
+    n.getParent().setBlack();
+    n.grandparent().setRed();
     if (n == n.getParent().getLeft() && n.getParent() == n.grandparent().getLeft()) {
       rotateRight(n.grandparent());
     }
@@ -139,7 +149,7 @@ public abstract class RedBlackTree<K> {
   }
 
   protected void deleteNode(@NotNull Node<K> n) {
-    modCount++;
+    incModCount();
 
     Node<K> e = n;
     while (e.getParent() != null) e = e.getParent();
@@ -160,14 +170,14 @@ public abstract class RedBlackTree<K> {
 
     assert n.getLeft() == null || n.getRight() == null;
     Node<K> child = n.getRight() == null ? n.getLeft() : n.getRight();
-    if (nodeColor(n) == Color.BLACK) {
-      n.color = nodeColor(child);
+    if (isBlack(n)) {
+      n.setColor(isBlack(child));
       deleteCase1(n);
     }
     replaceNode(n, child);
 
-    if (nodeColor(root) == Color.RED) {
-      root.color = Color.BLACK;
+    if (!isBlack(root)) {
+      root.setBlack();
     }
 
     assert nodeSize > 0 : nodeSize;
@@ -175,10 +185,11 @@ public abstract class RedBlackTree<K> {
     verifyProperties();
   }
 
-  protected abstract Node<K> swapWithMaxPred(Node<K> nowAscendant, Node<K> nowDescendant);
+  @NotNull
+  protected abstract Node<K> swapWithMaxPred(@NotNull Node<K> nowAscendant, @NotNull Node<K> nowDescendant);
 
-  protected Node<K> maximumNode(Node<K> n) {
-    assert n != null;
+  @NotNull
+  protected Node<K> maximumNode(@NotNull Node<K> n) {
     while (n.getRight() != null) {
       n = n.getRight();
     }
@@ -192,9 +203,9 @@ public abstract class RedBlackTree<K> {
   }
 
   private void deleteCase2(Node<K> n) {
-    if (nodeColor(n.sibling()) == Color.RED) {
-      n.getParent().color = Color.RED;
-      n.sibling().color = Color.BLACK;
+    if (!isBlack(n.sibling())) {
+      n.getParent().setRed();
+      n.sibling().setBlack();
       if (n == n.getParent().getLeft()) {
         rotateLeft(n.getParent());
       }
@@ -206,11 +217,11 @@ public abstract class RedBlackTree<K> {
   }
 
   private void deleteCase3(Node<K> n) {
-    if (nodeColor(n.getParent()) == Color.BLACK &&
-        nodeColor(n.sibling()) == Color.BLACK &&
-        nodeColor(n.sibling().getLeft()) == Color.BLACK &&
-        nodeColor(n.sibling().getRight()) == Color.BLACK) {
-      n.sibling().color = Color.RED;
+    if (isBlack(n.getParent()) &&
+        isBlack(n.sibling()) &&
+        isBlack(n.sibling().getLeft()) &&
+        isBlack(n.sibling().getRight())) {
+      n.sibling().setRed();
       deleteCase1(n.getParent());
     }
     else {
@@ -219,12 +230,12 @@ public abstract class RedBlackTree<K> {
   }
 
   private void deleteCase4(Node<K> n) {
-    if (nodeColor(n.getParent()) == Color.RED &&
-        nodeColor(n.sibling()) == Color.BLACK &&
-        nodeColor(n.sibling().getLeft()) == Color.BLACK &&
-        nodeColor(n.sibling().getRight()) == Color.BLACK) {
-      n.sibling().color = Color.RED;
-      n.getParent().color = Color.BLACK;
+    if (!isBlack(n.getParent()) &&
+        isBlack(n.sibling()) &&
+        isBlack(n.sibling().getLeft()) &&
+        isBlack(n.sibling().getRight())) {
+      n.sibling().setRed();
+      n.getParent().setBlack();
     }
     else {
       deleteCase5(n);
@@ -233,35 +244,35 @@ public abstract class RedBlackTree<K> {
 
   private void deleteCase5(Node<K> n) {
     if (n == n.getParent().getLeft() &&
-        nodeColor(n.sibling()) == Color.BLACK &&
-        nodeColor(n.sibling().getLeft()) == Color.RED &&
-        nodeColor(n.sibling().getRight()) == Color.BLACK) {
-      n.sibling().color = Color.RED;
-      n.sibling().getLeft().color = Color.BLACK;
+        isBlack(n.sibling()) &&
+        !isBlack(n.sibling().getLeft()) &&
+        isBlack(n.sibling().getRight())) {
+      n.sibling().setRed();
+      n.sibling().getLeft().setBlack();
       rotateRight(n.sibling());
     }
     else if (n == n.getParent().getRight() &&
-             nodeColor(n.sibling()) == Color.BLACK &&
-             nodeColor(n.sibling().getRight()) == Color.RED &&
-             nodeColor(n.sibling().getLeft()) == Color.BLACK) {
-      n.sibling().color = Color.RED;
-      n.sibling().getRight().color = Color.BLACK;
+             isBlack(n.sibling()) &&
+             !isBlack(n.sibling().getRight()) &&
+             isBlack(n.sibling().getLeft())) {
+      n.sibling().setRed();
+      n.sibling().getRight().setBlack();
       rotateLeft(n.sibling());
     }
     deleteCase6(n);
   }
 
   private void deleteCase6(Node<K> n) {
-    n.sibling().color = nodeColor(n.getParent());
-    n.getParent().color = Color.BLACK;
+    n.sibling().setColor(isBlack(n.getParent()));
+    n.getParent().setBlack();
     if (n == n.getParent().getLeft()) {
-      assert nodeColor(n.sibling().getRight()) == Color.RED;
-      n.sibling().getRight().color = Color.BLACK;
+      assert !isBlack(n.sibling().getRight());
+      n.sibling().getRight().setBlack();
       rotateLeft(n.getParent());
     }
     else {
-      assert nodeColor(n.sibling().getLeft()) == Color.RED;
-      n.sibling().getLeft().color = Color.BLACK;
+      assert !isBlack(n.sibling().getLeft());
+      n.sibling().getLeft().setBlack();
       rotateRight(n.getParent());
     }
   }
@@ -281,7 +292,7 @@ public abstract class RedBlackTree<K> {
     for (int i = 0; i < indent; i++) {
       System.err.print(" ");
     }
-    if (n.color == Color.BLACK) {
+    if (n.isBlack()) {
       System.err.println(n);
     }
     else {
@@ -295,10 +306,17 @@ public abstract class RedBlackTree<K> {
   public abstract static class Node<K> {
     protected Node<K> left;
     protected Node<K> right;
-    protected Node<K> parent = null;
-    protected Color color = Color.RED;
+    protected Node<K> parent;
 
-    public Node() {
+    private volatile byte myFlags;
+    static final byte COLOR_MASK = 1;
+
+    boolean isFlagSet(byte mask) {
+      return BitUtil.isSet(myFlags, mask);
+    }
+
+    void setFlag(byte mask, boolean value) {
+      myFlags = BitUtil.set(myFlags, mask, value);
     }
 
     public Node<K> grandparent() {
@@ -313,7 +331,7 @@ public abstract class RedBlackTree<K> {
       return this == parent.getLeft() ? parent.getRight() : parent.getLeft();
     }
 
-    public Node<K> uncle() {
+    private Node<K> uncle() {
       assert getParent() != null; // Root node has no uncle
       assert getParent().getParent() != null; // Children of root have no uncle
       return getParent().sibling();
@@ -346,20 +364,29 @@ public abstract class RedBlackTree<K> {
     public abstract boolean processAliveKeys(@NotNull Processor<? super K> processor);
 
     public abstract boolean hasAliveKey(boolean purgeDead);
-  }
 
-  protected static enum Color {
-    RED, BLACK
+    public boolean isBlack() {
+      return isFlagSet(COLOR_MASK);
+    }
+    private void setBlack() {
+      setFlag(COLOR_MASK, true);
+    }
+    void setRed() {
+      setFlag(COLOR_MASK, false);
+    }
+    public void setColor(boolean isBlack) {
+      setFlag(COLOR_MASK, isBlack);
+    }
   }
 
   public int size() {
     return nodeSize;
   }
-  public int nodeSize() {
+  int nodeSize() {
     return nodeSize;
   }
 
-  public void verifyProperties() {
+  void verifyProperties() {
     //if (true) return;
     if (VERIFY) {
       verifyProperty1(root);
@@ -371,7 +398,7 @@ public abstract class RedBlackTree<K> {
   }
 
   private static void verifyProperty1(Node<?> n) {
-    assert nodeColor(n) == Color.RED || nodeColor(n) == Color.BLACK;
+    assert !isBlack(n) || isBlack(n);
     if (n == null) return;
     assert n.getParent() != n;
     assert n.getLeft() != n;
@@ -383,18 +410,18 @@ public abstract class RedBlackTree<K> {
   }
 
   private static void verifyProperty2(Node<?> root) {
-    assert nodeColor(root) == Color.BLACK;
+    assert isBlack(root);
   }
 
-  private static Color nodeColor(Node<?> n) {
-    return n == null ? Color.BLACK : n.color;
+  private static boolean isBlack(@Nullable Node<?> n) {
+    return n == null || n.isBlack();
   }
 
   private static void verifyProperty4(Node<?> n) {
-    if (nodeColor(n) == Color.RED) {
-      assert nodeColor(n.getLeft()) == Color.BLACK;
-      assert nodeColor(n.getRight()) == Color.BLACK;
-      assert nodeColor(n.getParent()) == Color.BLACK;
+    if (!isBlack(n)) {
+      assert isBlack(n.getLeft());
+      assert isBlack(n.getRight());
+      assert isBlack(n.getParent());
     }
     if (n == null) return;
     verifyProperty4(n.getLeft());
@@ -406,7 +433,7 @@ public abstract class RedBlackTree<K> {
   }
 
   private static int verifyProperty5Helper(Node<?> n, int blackCount, int pathBlackCount) {
-    if (nodeColor(n) == Color.BLACK) {
+    if (isBlack(n)) {
       blackCount++;
     }
     if (n == null) {
@@ -425,7 +452,8 @@ public abstract class RedBlackTree<K> {
   }
 
   public void clear() {
-    modCount++;
+    incModCount();
+
     root = null;
     nodeSize = 0;
   }

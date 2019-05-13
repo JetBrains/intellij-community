@@ -17,7 +17,10 @@
 package com.intellij.ui.debugger.extensions;
 
 import com.intellij.icons.AllIcons;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.ui.ColoredListCellRenderer;
@@ -26,6 +29,7 @@ import com.intellij.ui.SimpleColoredText;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.debugger.UiDebuggerExtension;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
@@ -48,6 +52,7 @@ public class FocusDebugger implements UiDebuggerExtension, PropertyChangeListene
   private DefaultListModel myLogModel;
   private JEditorPane myAllocation;
 
+  @Override
   public JComponent getComponent() {
     if (myComponent == null) {
       myComponent = init();
@@ -85,22 +90,23 @@ public class FocusDebugger implements UiDebuggerExtension, PropertyChangeListene
     final DefaultActionGroup group = new DefaultActionGroup();
     group.add(new ClearAction());
 
-    result.add(ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, group, true).getComponent(), BorderLayout.NORTH);
+    result.add(ActionManager.getInstance().createActionToolbar("FocusDbg", group, true).getComponent(), BorderLayout.NORTH);
 
     return result;
   }
 
   class ClearAction extends AnAction {
     ClearAction() {
-      super("Clear", "", AllIcons.Actions.Cross);
+      super("Clear", "", AllIcons.Actions.Close);
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       myLogModel.clear();
     }
   }
 
+  @Override
   public void valueChanged(ListSelectionEvent e) {
     if (myLog.getSelectedIndex() == -1) {
       myAllocation.setText(null);
@@ -120,6 +126,7 @@ public class FocusDebugger implements UiDebuggerExtension, PropertyChangeListene
     return c == debuggerWindow || SwingUtilities.getWindowAncestor(c) == debuggerWindow;
   }
 
+  @Override
   public void propertyChange(PropertyChangeEvent evt) {
     final Object newValue = evt.getNewValue();
     final Object oldValue = evt.getOldValue();
@@ -144,14 +151,12 @@ public class FocusDebugger implements UiDebuggerExtension, PropertyChangeListene
 
 
     myLogModel.addElement(new FocusElement(text, new Throwable()));
-    SwingUtilities.invokeLater(new Runnable() {
-      public void run() {
-        if (myLog != null && myLog.isShowing()) {
-          final int h = myLog.getFixedCellHeight();
-          myLog.scrollRectToVisible(new Rectangle(0, myLog.getPreferredSize().height - h, myLog.getWidth(), h));
-          if (myLog.getModel().getSize() > 0) {
-            myLog.setSelectedIndex(myLog.getModel().getSize() - 1);
-          }
+    SwingUtilities.invokeLater(() -> {
+      if (myLog != null && myLog.isShowing()) {
+        final int h = myLog.getFixedCellHeight();
+        myLog.scrollRectToVisible(new Rectangle(0, myLog.getPreferredSize().height - h, myLog.getWidth(), h));
+        if (myLog.getModel().getSize() > 0) {
+          myLog.setSelectedIndex(myLog.getModel().getSize() - 1);
         }
       }
     });
@@ -163,7 +168,7 @@ public class FocusDebugger implements UiDebuggerExtension, PropertyChangeListene
 
   static class FocusElementRenderer extends ColoredListCellRenderer {
     @Override
-    protected void customizeCellRenderer(JList list, Object value, int index, boolean selected, boolean hasFocus) {
+    protected void customizeCellRenderer(@NotNull JList list, Object value, int index, boolean selected, boolean hasFocus) {
       clear();
       final FocusElement element = (FocusElement)value;
       final SimpleColoredText text = element.getText();
@@ -194,10 +199,12 @@ public class FocusDebugger implements UiDebuggerExtension, PropertyChangeListene
   }
 
 
+  @Override
   public String getName() {
     return "Focus";
   }
 
+  @Override
   public void disposeUiResources() {
     myComponent = null;
     KeyboardFocusManager.getCurrentKeyboardFocusManager().removePropertyChangeListener(this);

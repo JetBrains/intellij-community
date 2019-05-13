@@ -24,6 +24,7 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.util.ThrowableRunnable;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -34,10 +35,10 @@ import java.util.List;
 public class MorphingAction extends AnAction {
   private final DesignerEditorPanel myDesigner;
   private final EditableArea myArea;
-  private final List<RadComponent> myComponents;
+  private final List<? extends RadComponent> myComponents;
   private final MetaModel myTarget;
 
-  public MorphingAction(DesignerEditorPanel designer, EditableArea area, List<RadComponent> components, MetaModel target) {
+  public MorphingAction(DesignerEditorPanel designer, EditableArea area, List<? extends RadComponent> components, MetaModel target) {
     super(target.getTag(), null, target.getIcon());
     myDesigner = designer;
     myArea = area;
@@ -46,27 +47,24 @@ public class MorphingAction extends AnAction {
   }
 
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     PaletteItem paletteItem = myTarget.getPaletteItem();
     e.getPresentation().setEnabled(paletteItem == null || paletteItem.isEnabled());
   }
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
-    myDesigner.getToolProvider().execute(new ThrowableRunnable<Exception>() {
-      @Override
-      public void run() throws Exception {
-        List<RadComponent> newComponents = new ArrayList<RadComponent>();
+  public void actionPerformed(@NotNull AnActionEvent e) {
+    myDesigner.getToolProvider().execute(() -> {
+      List<RadComponent> newComponents = new ArrayList<>();
 
-        for (RadComponent component : myComponents) {
-          RadComponent newComponent = component.morphingTo(myTarget);
-          if (newComponent != null) {
-            newComponents.add(newComponent);
-          }
+      for (RadComponent component : myComponents) {
+        RadComponent newComponent = component.morphingTo(myTarget);
+        if (newComponent != null) {
+          newComponents.add(newComponent);
         }
-
-        myArea.setSelection(newComponents);
       }
+
+      myArea.setSelection(newComponents);
     }, "Run Morphing action", true);
   }
 

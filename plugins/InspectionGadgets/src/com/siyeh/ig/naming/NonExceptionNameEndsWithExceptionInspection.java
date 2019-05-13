@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2011 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2018 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,31 +20,16 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.InheritanceUtil;
-import com.intellij.util.IncorrectOperationException;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.RenameFix;
+import com.siyeh.ig.psiutils.CommentTracker;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-public class NonExceptionNameEndsWithExceptionInspection
-  extends BaseInspection {
-
-  @Override
-  @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "non.exception.name.ends.with.exception.display.name");
-  }
-
-  @Override
-  @NotNull
-  protected String buildErrorString(Object... infos) {
-    return InspectionGadgetsBundle.message(
-      "non.exception.name.ends.with.exception.problem.descriptor");
-  }
+public class NonExceptionNameEndsWithExceptionInspection extends BaseInspection {
 
   @Override
   @NotNull
@@ -61,6 +46,30 @@ public class NonExceptionNameEndsWithExceptionInspection
     }
   }
 
+  @Override
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message(
+      "non.exception.name.ends.with.exception.display.name");
+  }
+
+  @Override
+  @NotNull
+  protected String buildErrorString(Object... infos) {
+    return InspectionGadgetsBundle.message(
+      "non.exception.name.ends.with.exception.problem.descriptor");
+  }
+
+  @Override
+  protected boolean buildQuickFixesOnlyForOnTheFlyErrors() {
+    return true;
+  }
+
+  @Override
+  public BaseInspectionVisitor buildVisitor() {
+    return new NonExceptionNameEndsWithExceptionVisitor();
+  }
+
   private static class ExtendExceptionFix extends InspectionGadgetsFix {
 
     private final String name;
@@ -69,15 +78,21 @@ public class NonExceptionNameEndsWithExceptionInspection
       this.name = name;
     }
 
+    @Override
     @NotNull
     public String getName() {
       return InspectionGadgetsBundle.message(
         "non.exception.name.ends.with.exception.quickfix", name);
     }
 
+    @NotNull
     @Override
-    protected void doFix(Project project, ProblemDescriptor descriptor)
-      throws IncorrectOperationException {
+    public String getFamilyName() {
+      return "Make class extend 'Exception'";
+    }
+
+    @Override
+    protected void doFix(Project project, ProblemDescriptor descriptor) {
       final PsiElement element = descriptor.getPsiElement();
       final PsiElement parent = element.getParent();
       if (!(parent instanceof PsiClass)) {
@@ -92,26 +107,14 @@ public class NonExceptionNameEndsWithExceptionInspection
       final PsiElementFactory factory = facade.getElementFactory();
       final GlobalSearchScope scope = aClass.getResolveScope();
       final PsiJavaCodeReferenceElement reference =
-        factory.createReferenceElementByFQClassName(
-          CommonClassNames.JAVA_LANG_EXCEPTION, scope);
-      final PsiJavaCodeReferenceElement[] referenceElements =
-        extendsList.getReferenceElements();
-      for (PsiJavaCodeReferenceElement referenceElement :
-        referenceElements) {
-        referenceElement.delete();
+        factory.createReferenceElementByFQClassName(CommonClassNames.JAVA_LANG_EXCEPTION, scope);
+      CommentTracker tracker = new CommentTracker();
+      final PsiJavaCodeReferenceElement[] referenceElements = extendsList.getReferenceElements();
+      for (PsiJavaCodeReferenceElement referenceElement : referenceElements) {
+        tracker.delete(referenceElement);
       }
-      extendsList.add(reference);
+      tracker.insertCommentsBefore(extendsList.add(reference));
     }
-  }
-
-  @Override
-  protected boolean buildQuickFixesOnlyForOnTheFlyErrors() {
-    return true;
-  }
-
-  @Override
-  public BaseInspectionVisitor buildVisitor() {
-    return new NonExceptionNameEndsWithExceptionVisitor();
   }
 
   private static class NonExceptionNameEndsWithExceptionVisitor

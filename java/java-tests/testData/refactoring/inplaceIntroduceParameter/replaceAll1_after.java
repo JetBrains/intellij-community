@@ -19,7 +19,7 @@ public abstract class PartnerAuthenticationInterceptor {
 
     private class PartnerAuthentication {
         public String serviceGroup() {
-            return null;  //To change body of created methods use File | Settings | File Templates.
+            return null;  
         }
 
         public String type() {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,23 +15,34 @@
  */
 package com.intellij.application.options;
 
+import com.intellij.lang.Language;
+import com.intellij.lang.html.HTMLLanguage;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsProvider;
+import com.intellij.psi.codeStyle.CustomCodeStyleSettings;
+import com.intellij.psi.formatter.xml.HtmlCodeStyleSettings;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author yole
  */
 public class HtmlCodeStyleSettingsProvider extends CodeStyleSettingsProvider {
+
+  public static final String DISPLAY_NAME = ApplicationBundle.message("title.html");
+
+  @Override
   @NotNull
   public Configurable createSettingsPage(final CodeStyleSettings settings, final CodeStyleSettings originalSettings) {
-    return new CodeStyleAbstractConfigurable(settings, originalSettings, ApplicationBundle.message("title.html")) {
+    return new CodeStyleAbstractConfigurable(settings, originalSettings, DISPLAY_NAME) {
+      @Override
       protected CodeStyleAbstractPanel createPanel(final CodeStyleSettings settings) {
         return new HtmlCodeStyleMainPanel(settings, originalSettings);
       }
 
+      @Override
       public String getHelpTopic() {
         return "reference.settingsdialog.IDE.globalcodestyle.html";
       }
@@ -40,6 +51,18 @@ public class HtmlCodeStyleSettingsProvider extends CodeStyleSettingsProvider {
 
   @Override
   public String getConfigurableDisplayName() {
-    return ApplicationBundle.message("title.html");
+    return DISPLAY_NAME;
+  }
+
+  @Nullable
+  @Override
+  public CustomCodeStyleSettings createCustomSettings(CodeStyleSettings settings) {
+    return new HtmlCodeStyleSettings(settings);
+  }
+
+  @Nullable
+  @Override
+  public Language getLanguage() {
+    return HTMLLanguage.INSTANCE;
   }
 }

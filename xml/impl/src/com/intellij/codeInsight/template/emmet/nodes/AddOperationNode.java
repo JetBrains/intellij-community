@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,7 +29,7 @@ public class AddOperationNode extends ZenCodingNode {
   private final ZenCodingNode myLeftOperand;
   private final ZenCodingNode myRightOperand;
 
-  public AddOperationNode(ZenCodingNode leftOperand, ZenCodingNode rightOperand) {
+  public AddOperationNode(@NotNull ZenCodingNode leftOperand, @NotNull ZenCodingNode rightOperand) {
     myLeftOperand = leftOperand;
     myRightOperand = rightOperand;
   }
@@ -54,7 +54,7 @@ public class AddOperationNode extends ZenCodingNode {
                                      int totalIterations, String surroundedText,
                                      CustomTemplateCallback callback,
                                      boolean insertSurroundedTextAtTheEnd, GenerationNode parent) {
-    List<GenerationNode> result = new ArrayList<GenerationNode>();
+    List<GenerationNode> result = new ArrayList<>();
     List<GenerationNode> leftNodes = myLeftOperand.expand(numberInIteration, totalIterations, surroundedText, callback, false, parent);
     result.addAll(leftNodes);
     result.addAll(myRightOperand.expand(numberInIteration, totalIterations, surroundedText, callback, insertSurroundedTextAtTheEnd, parent));
@@ -64,5 +64,10 @@ public class AddOperationNode extends ZenCodingNode {
   @Override
   public String toString() {
     return "+";
+  }
+
+  @Override
+  public int getApproximateOutputLength(CustomTemplateCallback callback) {
+    return myLeftOperand.getApproximateOutputLength(callback) + myRightOperand.getApproximateOutputLength(callback);
   }
 }

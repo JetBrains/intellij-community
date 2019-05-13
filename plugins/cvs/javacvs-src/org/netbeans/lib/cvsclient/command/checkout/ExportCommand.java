@@ -248,4 +248,9 @@ public final class ExportCommand extends AbstractCommand {
 		}
 		return cvsArguments.toString();
 	}
+
+	public void setUpdateByRevisionOrDate(String revision, final String date) {
+		setUpdateByRevisionOrTag(revision == null && date == null ? "HEAD" : revision);
+		setUpdateByDate(date);
+	}
 }

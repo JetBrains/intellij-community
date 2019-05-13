@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.jps.incremental.storage;
 
 import com.intellij.openapi.util.io.FileUtil;
@@ -30,11 +16,10 @@ import java.util.Set;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: 10/11/12
  */
 public class OneToManyPathsMapping extends AbstractStateStorage<String, Collection<String>> {
   public OneToManyPathsMapping(File storePath) throws IOException {
-    super(storePath, new PathStringDescriptor(), new PathCollectionExternalizer());
+    super(storePath, PathStringDescriptor.INSTANCE, new PathCollectionExternalizer());
   }
 
   @Override
@@ -82,17 +67,19 @@ public class OneToManyPathsMapping extends AbstractStateStorage<String, Collecti
   }
 
   private static class PathCollectionExternalizer implements DataExternalizer<Collection<String>> {
-    public void save(DataOutput out, Collection<String> value) throws IOException {
+    @Override
+    public void save(@NotNull DataOutput out, Collection<String> value) throws IOException {
       for (String str : value) {
-        IOUtil.writeString(str, out);
+        IOUtil.writeUTF(out, str);
       }
     }
 
-    public Collection<String> read(DataInput in) throws IOException {
-      final Set<String> result = new THashSet<String>(FileUtil.PATH_HASHING_STRATEGY);
+    @Override
+    public Collection<String> read(@NotNull DataInput in) throws IOException {
+      final Set<String> result = new THashSet<>(FileUtil.PATH_HASHING_STRATEGY);
       final DataInputStream stream = (DataInputStream)in;
       while (stream.available() > 0) {
-        final String str = IOUtil.readString(stream);
+        final String str = IOUtil.readUTF(stream);
         result.add(str);
       }
       return result;
@@ -100,7 +87,7 @@ public class OneToManyPathsMapping extends AbstractStateStorage<String, Collecti
   }
 
   private static Collection<String> normalizePaths(Collection<String> outputs) {
-    Collection<String> normalized = new ArrayList<String>(outputs.size());
+    Collection<String> normalized = new ArrayList<>(outputs.size());
     for (String out : outputs) {
       normalized.add(FileUtil.toSystemIndependentName(out));
     }

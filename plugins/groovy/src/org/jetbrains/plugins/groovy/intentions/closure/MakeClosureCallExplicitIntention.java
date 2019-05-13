@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,22 +21,24 @@ import com.intellij.psi.PsiElement;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.intentions.base.Intention;
-import org.jetbrains.plugins.groovy.intentions.base.IntentionUtils;
 import org.jetbrains.plugins.groovy.intentions.base.PsiElementPredicate;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
+import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 
 public class MakeClosureCallExplicitIntention extends Intention {
 
 
+    @Override
     @NotNull
     public PsiElementPredicate getElementPredicate() {
         return new ImplicitClosureCallPredicate();
     }
 
-    public void processIntention(@NotNull PsiElement element, Project project, Editor editor)
+    @Override
+    public void processIntention(@NotNull PsiElement element, @NotNull Project project, Editor editor)
             throws IncorrectOperationException {
         final GrMethodCallExpression expression =
                 (GrMethodCallExpression) element;
@@ -46,12 +48,10 @@ public class MakeClosureCallExplicitIntention extends Intention {
         final StringBuilder newExpression = new StringBuilder();
         newExpression.append(invokedExpression.getText());
         newExpression.append(".call");
-        if (argList != null) {
-            newExpression.append(argList.getText());
-        }
+        newExpression.append(argList.getText());
         for (GrClosableBlock closureArg : closureArgs) {
             newExpression.append(closureArg.getText());
         }
-        IntentionUtils.replaceExpression(newExpression.toString(), expression);
+        PsiImplUtil.replaceExpression(newExpression.toString(), expression);
     }
 }

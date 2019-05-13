@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiElement;
+import com.intellij.reference.SoftReference;
 import com.intellij.util.PatchedWeakReference;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -30,7 +31,6 @@ import java.lang.ref.WeakReference;
  * Expands {@link AnAction} contract for documentation-related actions that may be called from the IDE tooltip.
  * 
  * @author Denis Zhdanov
- * @since 7/26/12 12:28 PM
  */
 public abstract class AbstractDocumentationTooltipAction extends AnAction {
 
@@ -38,17 +38,17 @@ public abstract class AbstractDocumentationTooltipAction extends AnAction {
   @Nullable private WeakReference<PsiElement> myOriginalElement;
 
   public void setDocInfo(@NotNull PsiElement docAnchor, @NotNull PsiElement originalElement) {
-    myDocAnchor = new PatchedWeakReference<PsiElement>(docAnchor);
-    myOriginalElement = new PatchedWeakReference<PsiElement>(originalElement);
+    myDocAnchor = new PatchedWeakReference<>(docAnchor);
+    myOriginalElement = new PatchedWeakReference<>(originalElement);
   }
   
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     e.getPresentation().setVisible(getDocInfo() != null);
   }
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     Pair<PsiElement, PsiElement> info = getDocInfo();
     if (info == null) {
       return;
@@ -64,19 +64,11 @@ public abstract class AbstractDocumentationTooltipAction extends AnAction {
   
   @Nullable
   private Pair<PsiElement/* doc anchor */, PsiElement /* original element */> getDocInfo() {
-    WeakReference<PsiElement> docAnchorRef = myDocAnchor;
-    if (docAnchorRef == null) {
-      return null;
-    }
-    PsiElement docAnchor = docAnchorRef.get();
+    PsiElement docAnchor = SoftReference.dereference(myDocAnchor);
     if (docAnchor == null) {
       return null;
     }
-    WeakReference<PsiElement> originalElementRef = myOriginalElement;
-    if (originalElementRef == null) {
-      return null;
-    }
-    PsiElement originalElement = originalElementRef.get();
+    PsiElement originalElement = SoftReference.dereference(myOriginalElement);
     if (originalElement == null) {
       return null;
     }

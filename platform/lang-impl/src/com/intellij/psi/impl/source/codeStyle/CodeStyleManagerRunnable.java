@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,15 +15,19 @@
  */
 package com.intellij.psi.impl.source.codeStyle;
 
-import com.intellij.formatting.*;
+import com.intellij.application.options.CodeStyle;
+import com.intellij.formatting.CoreFormatterUtil;
+import com.intellij.formatting.FormattingMode;
+import com.intellij.formatting.FormattingModel;
+import com.intellij.formatting.FormattingModelBuilder;
 import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.LanguageFormatting;
+import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.formatter.DocumentBasedFormattingModel;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
@@ -34,15 +38,15 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
-* @author nik
-*/
+ * @author nik
+ */
 abstract class CodeStyleManagerRunnable<T> {
-  protected              CodeStyleSettings                     mySettings;
-  protected              CommonCodeStyleSettings.IndentOptions myIndentOptions;
-  protected              FormattingModel                       myModel;
-  protected              TextRange                             mySignificantRange;
-  private final          CodeStyleManagerImpl                  myCodeStyleManager;
-  @NotNull private final FormattingMode                        myMode;
+  protected CodeStyleSettings mySettings;
+  protected CommonCodeStyleSettings.IndentOptions myIndentOptions;
+  protected FormattingModel myModel;
+  protected TextRange mySignificantRange;
+  private final CodeStyleManagerImpl myCodeStyleManager;
+  @NotNull private final FormattingMode myMode;
 
   CodeStyleManagerRunnable(CodeStyleManagerImpl codeStyleManager, @NotNull FormattingMode mode) {
     myCodeStyleManager = codeStyleManager;
@@ -58,7 +62,7 @@ abstract class CodeStyleManagerRunnable<T> {
     Document document = documentManager.getDocument(file);
     if (document instanceof DocumentWindow) {
       final DocumentWindow documentWindow = (DocumentWindow)document;
-      final PsiFile topLevelFile = InjectedLanguageUtil.getTopLevelFile(file);
+      final PsiFile topLevelFile = InjectedLanguageManager.getInstance(file.getProject()).getTopLevelFile(file);
       if (!file.equals(topLevelFile)) {
         if (range != null) {
           range = documentWindow.injectedToHost(range);
@@ -90,21 +94,35 @@ abstract class CodeStyleManagerRunnable<T> {
     final FormattingModelBuilder builder = LanguageFormatting.INSTANCE.forContext(file);
     FormattingModelBuilder elementBuilder = element != null ? LanguageFormatting.INSTANCE.forContext(element) : builder;
     if (builder != null && elementBuilder != null) {
-      mySettings = CodeStyleSettingsManager.getSettings(myCodeStyleManager.getProject());
-      myIndentOptions = mySettings.getIndentOptions(file.getFileType());
+      mySettings = CodeStyle.getSettings(file);
+
       mySignificantRange = offset != -1 ? getSignificantRange(file, offset) : null;
-      myModel = CoreFormatterUtil.buildModel(builder, file, mySettings, myMode);
+      myIndentOptions = mySettings.getIndentOptionsByFile(file, mySignificantRange);
 
-      if (document != null && useDocumentBaseFormattingModel()) {
-        myModel = new DocumentBasedFormattingModel(myModel.getRootBlock(), document, myCodeStyleManager.getProject(), mySettings, file.getFileType(), file);
+      FormattingMode currentMode = myCodeStyleManager.getCurrentFormattingMode();
+      myCodeStyleManager.setCurrentFormattingMode(myMode);
+      try {
+        myModel = buildModel(builder, file, document);
+        T result = doPerform(offset, range);
+        if (result != null) {
+          return result;
+        }
       }
-
-      final T result = doPerform(offset, range);
-      if (result != null) {
-        return result;
+      finally {
+        myCodeStyleManager.setCurrentFormattingMode(currentMode);
       }
     }
     return defaultValue;
+  }
+
+  @NotNull
+  private FormattingModel buildModel(@NotNull FormattingModelBuilder builder, @NotNull PsiFile file, @Nullable Document document) {
+    FormattingModel model = CoreFormatterUtil.buildModel(builder, file, mySettings, myMode);
+    if (document != null && useDocumentBaseFormattingModel()) {
+      model = new DocumentBasedFormattingModel(model, document, myCodeStyleManager.getProject(), mySettings,
+                                               file.getFileType(), file);
+    }
+    return model;
   }
 
   protected boolean useDocumentBaseFormattingModel() {
@@ -123,7 +141,7 @@ abstract class CodeStyleManagerRunnable<T> {
   protected abstract T doPerform(int offset, TextRange range);
 
   private static boolean isInsidePlainComment(int offset, @Nullable PsiElement element) {
-    if (!(element instanceof PsiComment) || !element.getTextRange().contains(offset)) {
+    if (!(element instanceof PsiComment) || element instanceof PsiDocCommentBase || !element.getTextRange().contains(offset - 1)) {
       return false;
     }
 
@@ -135,18 +153,42 @@ abstract class CodeStyleManagerRunnable<T> {
   }
 
   private static TextRange getSignificantRange(final PsiFile file, final int offset) {
-    final ASTNode elementAtOffset = SourceTreeToPsiMap.psiElementToTree(CodeStyleManagerImpl.findElementInTreeWithFormatterEnabled(file, offset));
+    final ASTNode elementAtOffset =
+      SourceTreeToPsiMap.psiElementToTree(CodeStyleManagerImpl.findElementInTreeWithFormatterEnabled(file, offset));
     if (elementAtOffset == null) {
-      int significantRangeStart = CharArrayUtil.shiftBackward(file.getText(), offset - 1, "\r\t ");
-      return new TextRange(significantRangeStart, offset);
+      int significantRangeStart = CharArrayUtil.shiftBackward(file.getText(), offset - 1, "\n\r\t ");
+      return new TextRange(Math.max(significantRangeStart, 0), offset);
     }
 
     final FormattingModelBuilder builder = LanguageFormatting.INSTANCE.forContext(file);
-    final TextRange textRange = builder.getRangeAffectingIndent(file, offset, elementAtOffset);
-    if (textRange != null) {
-      return textRange;
+    if (builder != null) {
+      final TextRange textRange = builder.getRangeAffectingIndent(file, offset, elementAtOffset);
+      if (textRange != null) {
+        return textRange;
+      }
     }
 
-    return elementAtOffset.getTextRange();
+    final TextRange elementRange = elementAtOffset.getTextRange();
+    if (isWhiteSpace(elementAtOffset)) {
+      return extendRangeAtStartOffset(file, elementRange);
+    }
+    
+    return elementRange;
+  }
+
+  private static boolean isWhiteSpace(ASTNode elementAtOffset) {
+    return elementAtOffset instanceof PsiWhiteSpace 
+           || CharArrayUtil.containsOnlyWhiteSpaces(elementAtOffset.getChars());
+  }
+
+  @NotNull
+  private static TextRange extendRangeAtStartOffset(@NotNull final PsiFile file, @NotNull final TextRange range) {
+    int startOffset = range.getStartOffset();
+    if (startOffset > 0) {
+      String text = file.getText();
+      startOffset = CharArrayUtil.shiftBackward(text, startOffset, "\n\r\t ");
+    }
+
+    return new TextRange(startOffset + 1, range.getEndOffset());
   }
 }

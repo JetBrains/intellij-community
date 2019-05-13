@@ -16,8 +16,12 @@
 package com.intellij.codeInsight.generation;
 
 import com.intellij.codeInsight.CodeInsightBundle;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiClass;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.Nullable;
+
+import javax.swing.*;
 
 public class GenerateSetterHandler extends GenerateGetterSetterHandlerBase {
 
@@ -26,8 +30,26 @@ public class GenerateSetterHandler extends GenerateGetterSetterHandlerBase {
   }
 
   @Override
+  protected String getHelpId() {
+    return "Generate_Setter_Dialog";
+  }
+
+  @Nullable
+  @Override
+  protected JComponent getHeaderPanel(final Project project) {
+    return getHeaderPanel(project, SetterTemplatesManager.getInstance(), CodeInsightBundle.message("generate.equals.hashcode.template"));
+  }
+
+  @Override
   protected GenerationInfo[] generateMemberPrototypes(PsiClass aClass, ClassMember original) throws IncorrectOperationException {
-    if (original instanceof EncapsulatableClassMember) {
+    if (original instanceof PropertyClassMember) {
+      final PropertyClassMember propertyClassMember = (PropertyClassMember)original;
+      final GenerationInfo[] getters = propertyClassMember.generateSetters(aClass);
+      if (getters != null) {
+        return getters;
+      }
+    }
+    else if (original instanceof EncapsulatableClassMember) {
       final EncapsulatableClassMember encapsulatableClassMember = (EncapsulatableClassMember)original;
       final GenerationInfo setter = encapsulatableClassMember.generateSetter();
       if (setter != null) {

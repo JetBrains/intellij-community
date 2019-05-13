@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,8 +15,8 @@
  */
 package com.intellij.util.containers;
 
-import com.intellij.util.ReflectionCache;
 import gnu.trove.THashMap;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 import java.util.Map;
@@ -30,30 +30,30 @@ public class ClassMap<T> {
   public ClassMap() {
     this(new THashMap<Class, T>());
   }
-  protected ClassMap(Map<Class, T> map) {
+  protected ClassMap(@NotNull Map<Class, T> map) {
     myMap = map; 
   }
 
-  public void put(Class aClass, T value) {
+  public void put(@NotNull Class aClass, T value) {
     myMap.put(aClass, value);
   }
-  public void remove(Class aClass) {
+  public void remove(@NotNull Class aClass) {
     myMap.remove(aClass);
   }
 
-  public T get(Class aClass) {
+  public T get(@NotNull Class aClass) {
     T t = myMap.get(aClass);
     if (t != null) {
       return t;
     }
-    for (final Class aClass1 : ReflectionCache.getInterfaces(aClass)) {
+    for (final Class aClass1 : aClass.getInterfaces()) {
       t = get(aClass1);
       if (t != null) {
         myMap.put(aClass, t);
         return t;
       }
     }
-    final Class superclass = ReflectionCache.getSuperClass(aClass);
+    final Class superclass = aClass.getSuperclass();
     if (superclass != null) {
       t = get(superclass);
       if (t != null) {
@@ -64,6 +64,7 @@ public class ClassMap<T> {
     return null;
   }
 
+  @NotNull
   public final Collection<T> values() {
     return myMap.values();
   }

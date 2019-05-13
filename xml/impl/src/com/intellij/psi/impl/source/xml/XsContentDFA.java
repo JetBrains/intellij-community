@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,22 +15,16 @@
  */
 package com.intellij.psi.impl.source.xml;
 
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.NullableComputable;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xml.XmlElementDescriptor;
-import com.intellij.xml.actions.ValidateXmlActionHandler;
+import com.intellij.xml.actions.validate.ErrorReporter;
+import com.intellij.xml.actions.validate.ValidateXmlActionHandler;
 import org.apache.xerces.impl.Constants;
-import org.apache.xerces.impl.xs.SubstitutionGroupHandler;
-import org.apache.xerces.impl.xs.XSComplexTypeDecl;
-import org.apache.xerces.impl.xs.XSElementDecl;
-import org.apache.xerces.impl.xs.XSGrammarBucket;
+import org.apache.xerces.impl.xs.*;
 import org.apache.xerces.impl.xs.models.CMBuilder;
 import org.apache.xerces.impl.xs.models.CMNodeFactory;
 import org.apache.xerces.impl.xs.models.XSCMValidator;
@@ -45,6 +39,7 @@ import org.apache.xerces.xs.XSTypeDefinition;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.xml.sax.SAXException;
+import org.xml.sax.SAXParseException;
 
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.parsers.SAXParser;
@@ -66,12 +61,7 @@ class XsContentDFA extends XmlContentDFA {
   public static XmlContentDFA createContentDFA(@NotNull XmlTag parentTag) {
     final PsiFile file = parentTag.getContainingFile().getOriginalFile();
     if (!(file instanceof XmlFile)) return null;
-    XSModel xsModel = ApplicationManager.getApplication().runReadAction(new NullableComputable<XSModel>() {
-      @Override
-      public XSModel compute() {
-        return getXSModel((XmlFile)file);
-      }
-    });
+    XSModel xsModel = ReadAction.compute(() -> getXSModel((XmlFile)file));
     if (xsModel == null) {
       return null;
     }
@@ -83,36 +73,28 @@ class XsContentDFA extends XmlContentDFA {
     return new XsContentDFA(decl, parentTag);
   }
 
-  public XsContentDFA(@NotNull XSElementDeclaration decl, final XmlTag parentTag) {
+  XsContentDFA(@NotNull XSElementDeclaration decl, final XmlTag parentTag) {
     XSComplexTypeDecl definition = (XSComplexTypeDecl)decl.getTypeDefinition();
     myContentModel = definition.getContentModel(new CMBuilder(new CMNodeFactory()));
-    myHandler = new SubstitutionGroupHandler(new XSGrammarBucket());
+    myHandler = new SubstitutionGroupHandler(new MyXSElementDeclHelper());
     myState = myContentModel.startContentModel();
-    myElementDescriptors = ApplicationManager.getApplication().runReadAction(new Computable<XmlElementDescriptor[]>() {
-
-      @Override
-      public XmlElementDescriptor[] compute() {
-        XmlElementDescriptor parentTagDescriptor = parentTag.getDescriptor();
-        assert parentTagDescriptor != null;
-        return parentTagDescriptor.getElementsDescriptors(parentTag);
-      }
+    myElementDescriptors = ReadAction.compute(() -> {
+      XmlElementDescriptor parentTagDescriptor = parentTag.getDescriptor();
+      assert parentTagDescriptor != null;
+      return parentTagDescriptor.getElementsDescriptors(parentTag);
     });
   }
 
   @Override
   public List<XmlElementDescriptor> getPossibleElements() {
     final List vector = myContentModel.whatCanGoHere(myState);
-    ArrayList<XmlElementDescriptor> list = new ArrayList<XmlElementDescriptor>();
+    ArrayList<XmlElementDescriptor> list = new ArrayList<>();
     for (Object o : vector) {
       if (o instanceof XSElementDecl) {
         final XSElementDecl elementDecl = (XSElementDecl)o;
-        XmlElementDescriptor descriptor = ContainerUtil.find(myElementDescriptors, new Condition<XmlElementDescriptor>() {
-          @Override
-          public boolean value(XmlElementDescriptor elementDescriptor) {
-            return elementDecl.getName().equals(elementDescriptor.getName());
-          }
-        });
-        ContainerUtil.addIfNotNull(descriptor, list);
+        XmlElementDescriptor descriptor = ContainerUtil.find(myElementDescriptors,
+                                                             elementDescriptor -> elementDecl.getName().equals(elementDescriptor.getName()));
+        ContainerUtil.addIfNotNull(list, descriptor);
       }
     }
     return list;
@@ -129,19 +111,19 @@ class XsContentDFA extends XmlContentDFA {
     return new QName(tag.getNamespacePrefix().intern(),
                      tag.getLocalName().intern(),
                      tag.getName().intern(),
-                     namespace.length() == 0 ? null : namespace.intern());
+                     namespace.isEmpty() ? null : namespace.intern());
   }
 
   @Nullable
   private static XSElementDeclaration getElementDeclaration(XmlTag tag, XSModel xsModel) {
 
-    List<XmlTag> ancestors = new ArrayList<XmlTag>();
+    List<XmlTag> ancestors = new ArrayList<>();
     for (XmlTag t = tag; t != null; t = t.getParentTag()) {
       ancestors.add(t);
     }
     Collections.reverse(ancestors);
     XSElementDeclaration declaration = null;
-    SubstitutionGroupHandler fSubGroupHandler = new SubstitutionGroupHandler(new XSGrammarBucket());
+    SubstitutionGroupHandler fSubGroupHandler = new SubstitutionGroupHandler(new MyXSElementDeclHelper());
     CMBuilder cmBuilder = new CMBuilder(new CMNodeFactory());
     for (XmlTag ancestor : ancestors) {
       if (declaration == null) {
@@ -178,11 +160,28 @@ class XsContentDFA extends XmlContentDFA {
       @Override
       protected SAXParser createParser() throws SAXException, ParserConfigurationException {
         SAXParser parser = super.createParser();
-        parser.getXMLReader().setFeature(Constants.XERCES_FEATURE_PREFIX + Constants.CONTINUE_AFTER_FATAL_ERROR_FEATURE, true);
+        if (parser != null) {
+          parser.getXMLReader().setFeature(Constants.XERCES_FEATURE_PREFIX + Constants.CONTINUE_AFTER_FATAL_ERROR_FEATURE, true);
+        }
         return parser;
       }
     };
-    handler.setErrorReporter(handler.new TestErrorReporter());
+    handler.setErrorReporter(new ErrorReporter(handler) {
+
+      int count;
+      @Override
+      public void processError(SAXParseException ex, ValidateXmlActionHandler.ProblemType warning) throws SAXException {
+        if (warning != ValidateXmlActionHandler.ProblemType.WARNING && count++ > 100) {
+          throw new SAXException(ex);
+        }
+      }
+
+      @Override
+      public boolean isUniqueProblem(SAXParseException e) {
+        return true;
+      }
+    });
+
     handler.doValidate(file);
     XMLGrammarPool grammarPool = ValidateXmlActionHandler.getGrammarPool(file);
     if (grammarPool == null) {
@@ -190,12 +189,16 @@ class XsContentDFA extends XmlContentDFA {
     }
     Grammar[] grammars = grammarPool.retrieveInitialGrammarSet(XMLGrammarDescription.XML_SCHEMA);
 
-    return grammars.length == 0 ? null : ((XSGrammar)grammars[0]).toXSModel(ContainerUtil.map(grammars, new Function<Grammar, XSGrammar>() {
-      @Override
-      public XSGrammar fun(Grammar grammar) {
-        return (XSGrammar)grammar;
-      }
-    }, new XSGrammar[0]));
+    return grammars.length == 0 ? null : ((XSGrammar)grammars[0]).toXSModel(ContainerUtil.map(grammars, grammar -> (XSGrammar)grammar, new XSGrammar[0]));
   }
 
+  private static class MyXSElementDeclHelper implements XSElementDeclHelper {
+    private final XSGrammarBucket myBucket = new XSGrammarBucket();
+
+    @Override
+    public XSElementDecl getGlobalElementDecl(QName name) {
+      SchemaGrammar grammar = myBucket.getGrammar(name.uri);
+      return grammar == null ? null : grammar.getGlobalElementDecl(name.localpart, name.prefix);
+    }
+  }
 }

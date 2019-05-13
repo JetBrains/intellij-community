@@ -1,6 +1,6 @@
 /*
  * Copyright 2006 ProductiveMe Inc.
- * Copyright 2013 JetBrains s.r.o.
+ * Copyright 2013-2018 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,10 +44,16 @@ public class StringTableDirectory {
   }
 
   public void setString(int id, String value) {
+    boolean found = false;
     for (Entry entry : myEntries) {
-      if (entry.startID == (id / 16)-1) {
+      if (entry.startID == (id / 16)+1) {
         entry.table.setString(id % 16, value);
+        found = true;
+        break;
       }
+    }
+    if (!found) {
+      throw new IllegalArgumentException("Cannot find string entry with ID " + id);
     }
   }
 

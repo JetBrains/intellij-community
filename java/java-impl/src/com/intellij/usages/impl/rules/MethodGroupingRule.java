@@ -1,25 +1,13 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 package com.intellij.usages.impl.rules;
 
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.navigation.NavigationItemFileStatus;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.actionSystem.DataSink;
-import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.actionSystem.TypeSafeDataProvider;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -28,33 +16,41 @@ import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.util.Segment;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.PsiFormatUtilBase;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usages.*;
 import com.intellij.usages.rules.PsiElementUsage;
-import com.intellij.usages.rules.UsageGroupingRule;
+import com.intellij.usages.rules.SingleParentUsageGroupingRule;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
 /**
  * @author max
  */
-public class MethodGroupingRule implements UsageGroupingRule {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.usages.impl.rules.MethodGroupingRule");
+public class MethodGroupingRule extends SingleParentUsageGroupingRule {
+  private static final Logger LOG = Logger.getInstance(MethodGroupingRule.class);
+  @NotNull
+  private final UsageViewSettings myUsageViewSettings;
 
+  public MethodGroupingRule(@NotNull UsageViewSettings usageViewSettings) {
+    myUsageViewSettings = usageViewSettings;
+  }
+
+  @Nullable
   @Override
-  public UsageGroup groupUsage(@NotNull Usage usage) {
+  protected UsageGroup getParentGroupFor(@NotNull Usage usage, @NotNull UsageTarget[] targets) {
     if (!(usage instanceof PsiElementUsage)) return null;
     PsiElement psiElement = ((PsiElementUsage)usage).getElement();
     PsiFile containingFile = psiElement.getContainingFile();
-    PsiFile topLevelFile = InjectedLanguageUtil.getTopLevelFile(containingFile);
-    if (topLevelFile instanceof PsiJavaFile) {
-      PsiElement containingMethod = topLevelFile == containingFile ? psiElement : InjectedLanguageManager
-              .getInstance(containingFile.getProject()).getInjectionHost(containingFile);
+    if (containingFile == null) return null;
+    InjectedLanguageManager manager = InjectedLanguageManager.getInstance(containingFile.getProject());
+    PsiFile topLevelFile = manager.getTopLevelFile(containingFile);
+    if (topLevelFile instanceof PsiJavaFile && !topLevelFile.getFileType().isBinary()) {
+      PsiElement containingMethod = topLevelFile == containingFile ? psiElement : manager.getInjectionHost(containingFile);
       if (usage instanceof UsageInfo2UsageAdapter && topLevelFile == containingFile) {
         int offset = ((UsageInfo2UsageAdapter)usage).getUsageInfo().getNavigationOffset();
         containingMethod = containingFile.findElementAt(offset);
@@ -68,7 +64,7 @@ public class MethodGroupingRule implements UsageGroupingRule {
       while (true);
 
       if (containingMethod != null) {
-        return new MethodUsageGroup((PsiMethod)containingMethod);
+        return new MethodUsageGroup((PsiMethod)containingMethod, myUsageViewSettings);
       }
     }
     return null;
@@ -80,7 +76,10 @@ public class MethodGroupingRule implements UsageGroupingRule {
     private final Icon myIcon;
     private final Project myProject;
 
-    public MethodUsageGroup(PsiMethod psiMethod) {
+    @NotNull
+    private final UsageViewSettings myUsageViewSettings;
+
+    MethodUsageGroup(PsiMethod psiMethod, @NotNull UsageViewSettings usageViewSettings) {
       myName = PsiFormatUtil.formatMethod(
           psiMethod,
           PsiSubstitutor.EMPTY,
@@ -91,6 +90,8 @@ public class MethodGroupingRule implements UsageGroupingRule {
       myMethodPointer = SmartPointerManager.getInstance(myProject).createSmartPsiElementPointer(psiMethod);
 
       myIcon = getIconImpl(psiMethod);
+
+      myUsageViewSettings = usageViewSettings;
     }
 
     @Override
@@ -131,7 +132,8 @@ public class MethodGroupingRule implements UsageGroupingRule {
 
     @Override
     public FileStatus getFileStatus() {
-      return isValid() ? NavigationItemFileStatus.get(getMethod()) : null;
+      PsiFile file = myMethodPointer.getContainingFile();
+      return file == null ? null : NavigationItemFileStatus.get(file);
     }
 
     @Override
@@ -158,7 +160,7 @@ public class MethodGroupingRule implements UsageGroupingRule {
     }
 
     @Override
-    public int compareTo(UsageGroup usageGroup) {
+    public int compareTo(@NotNull UsageGroup usageGroup) {
       if (!(usageGroup instanceof MethodUsageGroup)) {
         LOG.error("MethodUsageGroup expected but " + usageGroup.getClass() + " found");
       }
@@ -166,7 +168,7 @@ public class MethodGroupingRule implements UsageGroupingRule {
       if (SmartPointerManager.getInstance(myProject).pointToTheSameElement(myMethodPointer, other.myMethodPointer)) {
         return 0;
       }
-      if (!UsageViewSettings.getInstance().IS_SORT_MEMBERS_ALPHABETICALLY) {
+      if (!myUsageViewSettings.isSortAlphabetically()) {
         Segment segment1 = myMethodPointer.getRange();
         Segment segment2 = other.myMethodPointer.getRange();
         if (segment1 != null && segment2 != null) {
@@ -178,10 +180,10 @@ public class MethodGroupingRule implements UsageGroupingRule {
     }
 
     @Override
-    public void calcData(final DataKey key, final DataSink sink) {
+    public void calcData(@NotNull final DataKey key, @NotNull final DataSink sink) {
       if (!isValid()) return;
-      if (LangDataKeys.PSI_ELEMENT == key) {
-        sink.put(LangDataKeys.PSI_ELEMENT, getMethod());
+      if (CommonDataKeys.PSI_ELEMENT == key) {
+        sink.put(CommonDataKeys.PSI_ELEMENT, getMethod());
       }
       if (UsageView.USAGE_INFO_KEY == key) {
         PsiMethod method = getMethod();

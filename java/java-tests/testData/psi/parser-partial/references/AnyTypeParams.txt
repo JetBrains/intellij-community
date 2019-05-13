@@ -1,0 +1,11 @@
+PsiJavaFile:AnyTypeParams.java
+  PsiTypeParameterList
+    PsiJavaToken:LT('<')
+    PsiTypeParameter:T
+      PsiElement(DUMMY_ELEMENT)
+        PsiIdentifier:any('any')
+      PsiWhiteSpace(' ')
+      PsiIdentifier:T('T')
+      PsiReferenceList
+        <empty list>
+    PsiJavaToken:GT('>')

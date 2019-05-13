@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,39 +15,46 @@
  */
 package com.intellij.ui;
 
-import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.LangDataKeys;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.wm.IdeFrame;
-import com.intellij.openapi.wm.WindowManager;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.project.DumbAwareAction;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import java.awt.*;
+import java.util.List;
 
 /**
  * @author Konstantin Bulenkov
  */
-public class ShowColorPickerAction extends AnAction {
+public class ShowColorPickerAction extends DumbAwareAction {
   @Override
-  public void actionPerformed(AnActionEvent e) {
-    final Project project = e.getProject();
-    JComponent root = rootComponent(project);
+  public void actionPerformed(@NotNull AnActionEvent e) {
+    Window root = parent();
     if (root != null) {
-      ColorPickerListener[] listeners = ColorPickerListenerFactory.createListenersFor(e.getData(LangDataKeys.PSI_ELEMENT));
-      final ColorPicker.ColorPickerDialog picker =
-        new ColorPicker.ColorPickerDialog(root, "Color Picker", null, true, listeners);
+      List<ColorPickerListener> listeners = ColorPickerListenerFactory.createListenersFor(e.getData(CommonDataKeys.PSI_ELEMENT));
+      ColorPicker.ColorPickerDialog picker = new ColorPicker.ColorPickerDialog(root, "Color Picker", null, true, listeners, true);
       picker.setModal(false);
       picker.show();
     }
   }
 
-  private static JComponent rootComponent(Project project) {
-    if (project != null) {
-      IdeFrame frame = WindowManager.getInstance().getIdeFrame(project);
-      if (frame != null) return frame.getComponent();
+  @Override
+  public void update(@NotNull AnActionEvent e) {
+    Component component = PlatformDataKeys.CONTEXT_COMPONENT.getData(e.getDataContext());
+    if (component == null || !(SwingUtilities.getWindowAncestor(component) instanceof Frame)) {
+      e.getPresentation().setEnabledAndVisible(false);
+      return;
     }
+    e.getPresentation().setEnabledAndVisible(true);
+  }
 
-    JFrame frame = WindowManager.getInstance().findVisibleFrame();
-    return frame != null ? frame.getRootPane() : null;
+  private static Window parent() {
+    Window activeWindow = null;
+    for (Window w : Window.getWindows()) {
+      if (w.isActive()) {activeWindow = w;}
+    }
+    return activeWindow;
   }
 }

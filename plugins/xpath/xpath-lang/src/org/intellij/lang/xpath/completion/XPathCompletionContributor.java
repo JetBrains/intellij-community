@@ -21,7 +21,6 @@ import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.patterns.PatternCondition;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.Function;
 import com.intellij.util.ProcessingContext;
 import com.intellij.util.containers.ContainerUtil;
 import org.intellij.lang.xpath.context.NamespaceContext;
@@ -33,54 +32,57 @@ import java.util.Collection;
 
 import static com.intellij.patterns.PlatformPatterns.psiElement;
 
-/*
-* Created by IntelliJ IDEA.
-* User: sweinreuter
-*/
 public class XPathCompletionContributor extends CompletionContributor {
   public static final XPathInsertHandler INSERT_HANDLER = new XPathInsertHandler();
 
   public XPathCompletionContributor() {
     extend(CompletionType.BASIC, psiElement().withParent(XPathNodeTest.class), new CompletionProvider<CompletionParameters>() {
-      protected void addCompletions(@NotNull CompletionParameters parameters, ProcessingContext context, @NotNull CompletionResultSet result) {
+      @Override
+      protected void addCompletions(@NotNull CompletionParameters parameters, @NotNull ProcessingContext context, @NotNull CompletionResultSet result) {
         final XPathNodeTest nodeTest = (XPathNodeTest)parameters.getPosition().getParent();
         addResult(result, CompletionLists.getNodeTestCompletions(nodeTest), parameters.getPosition(), parameters.getOffset());
       }
     });
     extend(CompletionType.BASIC, psiElement().withParent(psiElement(XPathNodeTest.class).with(prefix())), new CompletionProvider<CompletionParameters>() {
-      protected void addCompletions(@NotNull CompletionParameters parameters, ProcessingContext context, @NotNull CompletionResultSet result) {
+      @Override
+      protected void addCompletions(@NotNull CompletionParameters parameters, @NotNull ProcessingContext context, @NotNull CompletionResultSet result) {
         final XPathNodeTest nodeTest = (XPathNodeTest)parameters.getPosition().getParent();
         addResult(result, CompletionLists.getFunctionCompletions(nodeTest), parameters.getPosition(), parameters.getOffset());
       }
     });
 
     extend(CompletionType.BASIC, psiElement().withParent(XPathAxisSpecifier.class), new CompletionProvider<CompletionParameters>() {
-      protected void addCompletions(@NotNull CompletionParameters parameters, ProcessingContext context, @NotNull CompletionResultSet result) {
+      @Override
+      protected void addCompletions(@NotNull CompletionParameters parameters, @NotNull ProcessingContext context, @NotNull CompletionResultSet result) {
         addResult(result, CompletionLists.getAxisCompletions(), parameters.getPosition(), parameters.getOffset());
       }
     });
 
     extend(CompletionType.BASIC, psiElement().withParent(XPathFunctionCall.class), new CompletionProvider<CompletionParameters>() {
-      protected void addCompletions(@NotNull CompletionParameters parameters, ProcessingContext context, @NotNull CompletionResultSet result) {
+      @Override
+      protected void addCompletions(@NotNull CompletionParameters parameters, @NotNull ProcessingContext context, @NotNull CompletionResultSet result) {
         final XPathFunctionCall call = (XPathFunctionCall)parameters.getPosition().getParent();
         addResult(result, CompletionLists.getFunctionCompletions(call), parameters.getPosition(), parameters.getOffset());
       }
     });
     extend(CompletionType.BASIC, psiElement().withParent(psiElement(XPathFunctionCall.class).without(prefix())), new CompletionProvider<CompletionParameters>() {
-      protected void addCompletions(@NotNull CompletionParameters parameters, ProcessingContext context, @NotNull CompletionResultSet result) {
+      @Override
+      protected void addCompletions(@NotNull CompletionParameters parameters, @NotNull ProcessingContext context, @NotNull CompletionResultSet result) {
         final XPathFunctionCall call = (XPathFunctionCall)parameters.getPosition().getParent();
         addResult(result, CompletionLists.getNodeTypeCompletions(call), parameters.getPosition(), parameters.getOffset());
       }
     });
 
     extend(CompletionType.BASIC, psiElement().withParent(XPathVariableReference.class), new CompletionProvider<CompletionParameters>() {
-      protected void addCompletions(@NotNull CompletionParameters parameters, ProcessingContext context, @NotNull CompletionResultSet result) {
+      @Override
+      protected void addCompletions(@NotNull CompletionParameters parameters, @NotNull ProcessingContext context, @NotNull CompletionResultSet result) {
         addResult(result, CompletionLists.getVariableCompletions((XPathVariableReference)parameters.getPosition().getParent()), parameters.getPosition(), parameters.getOffset());
       }
     });
 
     extend(CompletionType.BASIC, psiElement().withParent(psiElement(XPath2TypeElement.class).without(prefix())), new CompletionProvider<CompletionParameters>() {
-      protected void addCompletions(@NotNull CompletionParameters parameters, ProcessingContext context, @NotNull CompletionResultSet result) {
+      @Override
+      protected void addCompletions(@NotNull CompletionParameters parameters, @NotNull ProcessingContext context, @NotNull CompletionResultSet result) {
         final XPathElement parent = PsiTreeUtil.getParentOfType(parameters.getPosition(), XPathElement.class);
         assert parent != null;
 
@@ -92,29 +94,20 @@ public class XPathCompletionContributor extends CompletionContributor {
         if (namespaceContext != null) {
           final String prefixForURI = namespaceContext.getPrefixForURI(XPath2Type.XMLSCHEMA_NS, parent.getXPathContext().getContextElement());
           if (prefixForURI != null && prefixForURI.length() > 0) {
-            addResult(result, ContainerUtil.map(XPath2Type.SchemaType.listSchemaTypes(), new Function<XPath2Type, Lookup>() {
-              @Override
-              public Lookup fun(XPath2Type type) {
-                return new MyLookup(prefixForURI + ":" + type.getQName().getLocalPart());
-              }
-            }), parameters.getPosition(), parameters.getOffset());
+            addResult(result, ContainerUtil.map(XPath2Type.SchemaType.listSchemaTypes(), type -> new MyLookup(prefixForURI + ":" + type.getQName().getLocalPart())), parameters.getPosition(), parameters.getOffset());
           }
         }
       }
     });
     extend(CompletionType.BASIC, psiElement().withParent(psiElement(XPath2TypeElement.class).with(prefix())), new CompletionProvider<CompletionParameters>() {
-      protected void addCompletions(@NotNull CompletionParameters parameters, ProcessingContext context, @NotNull CompletionResultSet result) {
+      @Override
+      protected void addCompletions(@NotNull CompletionParameters parameters, @NotNull ProcessingContext context, @NotNull CompletionResultSet result) {
         final XPath2TypeElement parent = PsiTreeUtil.getParentOfType(parameters.getPosition(), XPath2TypeElement.class);
         assert parent != null;
 
         final QName qName = parent.getXPathContext().getQName(parent);
         if (qName != null && qName.getNamespaceURI().equals(XPath2Type.XMLSCHEMA_NS)) {
-          addResult(result, ContainerUtil.map(XPath2Type.SchemaType.listSchemaTypes(), new Function<XPath2Type, Lookup>() {
-            @Override
-            public Lookup fun(XPath2Type type) {
-              return new MyLookup(type.getQName().getLocalPart());
-            }
-          }), parameters.getPosition(), parameters.getOffset());
+          addResult(result, ContainerUtil.map(XPath2Type.SchemaType.listSchemaTypes(), type -> new MyLookup(type.getQName().getLocalPart())), parameters.getPosition(), parameters.getOffset());
         }
       }
     });
@@ -134,7 +127,7 @@ public class XPathCompletionContributor extends CompletionContributor {
     result = result.withPrefixMatcher(findPrefixStatic(position, offset));
 
     for (Lookup lookup : collection) {
-      final LookupItem<Lookup> item = new LookupItem<Lookup>(lookup, lookup.toString());
+      final LookupItem<Lookup> item = new LookupItem<>(lookup, lookup.toString());
       item.setInsertHandler(INSERT_HANDLER);
       if (lookup.isKeyword()) {
         item.setBold();
@@ -173,7 +166,7 @@ public class XPathCompletionContributor extends CompletionContributor {
   }
 
   private static class MyLookup extends AbstractLookup {
-    public MyLookup(String name) {
+    MyLookup(String name) {
       super(name, name);
     }
   }

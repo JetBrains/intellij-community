@@ -52,6 +52,8 @@ public final class EqualSizeCellsTest extends TestCase{
     panel.add(field3, new GridConstraints(0,2,1,1,GridConstraints.ANCHOR_CENTER,GridConstraints.FILL_BOTH,
       GridConstraints.SIZEPOLICY_WANT_GROW | GridConstraints.SIZEPOLICY_CAN_SHRINK, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0));
 
+    panel.doLayout();
+
     final Dimension minimumSize = panel.getMinimumSize();
     assertEquals(70 + 7 + 70 + 7 + 70, minimumSize.width);
 
@@ -110,6 +112,8 @@ public final class EqualSizeCellsTest extends TestCase{
 
     panel.add(field3, new GridConstraints(2,0,1,1,GridConstraints.ANCHOR_CENTER,GridConstraints.FILL_BOTH,
       GridConstraints.SIZEPOLICY_FIXED, GridConstraints.SIZEPOLICY_WANT_GROW | GridConstraints.SIZEPOLICY_CAN_SHRINK, null, null, null, 0));
+
+    panel.doLayout();
 
     final Dimension minimumSize = panel.getMinimumSize();
     assertEquals(70 + 7 + 70 + 7 + 70, minimumSize.height);

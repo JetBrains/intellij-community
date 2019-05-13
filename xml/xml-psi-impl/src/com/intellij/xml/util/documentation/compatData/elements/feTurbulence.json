@@ -1,0 +1,298 @@
+{
+  "svg": {
+    "elements": {
+      "feTurbulence": {
+        "__compat": {
+          "mdn_url": "https://developer.mozilla.org/docs/Web/SVG/Element/feTurbulence",
+          "support": {
+            "chrome": {
+              "version_added": true
+            },
+            "chrome_android": {
+              "version_added": true
+            },
+            "edge": {
+              "version_added": true,
+              "notes": "Partially supported, see <a href='https://developer.microsoft.com/en-us/microsoft-edge/platform/issues/12382004/'>bug 12382004</a>."
+            },
+            "edge_mobile": {
+              "version_added": true,
+              "notes": "Partially supported, see <a href='https://developer.microsoft.com/en-us/microsoft-edge/platform/issues/12382004/'>bug 12382004</a>."
+            },
+            "firefox": {
+              "version_added": "4"
+            },
+            "firefox_android": {
+              "version_added": true
+            },
+            "ie": {
+              "version_added": true,
+              "notes": "Partially supported, see <a href='https://developer.microsoft.com/en-us/microsoft-edge/platform/issues/12382004/'>bug 12382004</a>."
+            },
+            "opera": {
+              "version_added": "9"
+            },
+            "opera_android": {
+              "version_added": true
+            },
+            "safari": {
+              "version_added": null
+            },
+            "safari_ios": {
+              "version_added": null
+            },
+            "webview_android": {
+              "version_added": true
+            }
+          },
+          "status": {
+            "experimental": false,
+            "standard_track": true,
+            "deprecated": false
+          }
+        },
+        "baseFrequency": {
+          "__compat": {
+            "support": {
+              "chrome": {
+                "version_added": true
+              },
+              "chrome_android": {
+                "version_added": true
+              },
+              "edge": {
+                "version_added": true,
+                "notes": "Partially supported, see <a href='https://developer.microsoft.com/en-us/microsoft-edge/platform/issues/12382004/'>bug 12382004</a>."
+              },
+              "edge_mobile": {
+                "version_added": true,
+                "notes": "Partially supported, see <a href='https://developer.microsoft.com/en-us/microsoft-edge/platform/issues/12382004/'>bug 12382004</a>."
+              },
+              "firefox": {
+                "version_added": "4"
+              },
+              "firefox_android": {
+                "version_added": true
+              },
+              "ie": {
+                "version_added": true,
+                "notes": "Partially supported, see <a href='https://developer.microsoft.com/en-us/microsoft-edge/platform/issues/12382004/'>bug 12382004</a>."
+              },
+              "opera": {
+                "version_added": "9"
+              },
+              "opera_android": {
+                "version_added": true
+              },
+              "safari": {
+                "version_added": null
+              },
+              "safari_ios": {
+                "version_added": null
+              },
+              "webview_android": {
+                "version_added": true
+              }
+            },
+            "status": {
+              "experimental": false,
+              "standard_track": true,
+              "deprecated": false
+            }
+          }
+        },
+        "numOctaves": {
+          "__compat": {
+            "support": {
+              "chrome": {
+                "version_added": null
+              },
+              "chrome_android": {
+                "version_added": null
+              },
+              "edge": {
+                "version_added": null
+              },
+              "edge_mobile": {
+                "version_added": null
+              },
+              "firefox": {
+                "version_added": null
+              },
+              "firefox_android": {
+                "version_added": null
+              },
+              "ie": {
+                "version_added": null
+              },
+              "opera": {
+                "version_added": null
+              },
+              "opera_android": {
+                "version_added": null
+              },
+              "safari": {
+                "version_added": null
+              },
+              "safari_ios": {
+                "version_added": null
+              },
+              "webview_android": {
+                "version_added": null
+              }
+            },
+            "status": {
+              "experimental": false,
+              "standard_track": true,
+              "deprecated": false
+            }
+          }
+        },
+        "seed": {
+          "__compat": {
+            "support": {
+              "chrome": {
+                "version_added": true
+              },
+              "chrome_android": {
+                "version_added": true
+              },
+              "edge": {
+                "version_added": true,
+                "notes": "Partially supported, see <a href='https://developer.microsoft.com/en-us/microsoft-edge/platform/issues/12382004/'>bug 12382004</a>."
+              },
+              "edge_mobile": {
+                "version_added": true,
+                "notes": "Partially supported, see <a href='https://developer.microsoft.com/en-us/microsoft-edge/platform/issues/12382004/'>bug 12382004</a>."
+              },
+              "firefox": {
+                "version_added": "4"
+              },
+              "firefox_android": {
+                "version_added": true
+              },
+              "ie": {
+                "version_added": true,
+                "notes": "Partially supported, see <a href='https://developer.microsoft.com/en-us/microsoft-edge/platform/issues/12382004/'>bug 12382004</a>."
+              },
+              "opera": {
+                "version_added": "9"
+              },
+              "opera_android": {
+                "version_added": true
+              },
+              "safari": {
+                "version_added": null
+              },
+              "safari_ios": {
+                "version_added": null
+              },
+              "webview_android": {
+                "version_added": true
+              }
+            },
+            "status": {
+              "experimental": false,
+              "standard_track": true,
+              "deprecated": false
+            }
+          }
+        },
+        "stitchTiles": {
+          "__compat": {
+            "support": {
+              "chrome": {
+                "version_added": null
+              },
+              "chrome_android": {
+                "version_added": null
+              },
+              "edge": {
+                "version_added": null
+              },
+              "edge_mobile": {
+                "version_added": null
+              },
+              "firefox": {
+                "version_added": null
+              },
+              "firefox_android": {
+                "version_added": null
+              },
+              "ie": {
+                "version_added": null
+              },
+              "opera": {
+                "version_added": null
+              },
+              "opera_android": {
+                "version_added": null
+              },
+              "safari": {
+                "version_added": null
+              },
+              "safari_ios": {
+                "version_added": null
+              },
+              "webview_android": {
+                "version_added": null
+              }
+            },
+            "status": {
+              "experimental": false,
+              "standard_track": true,
+              "deprecated": false
+            }
+          }
+        },
+        "type": {
+          "__compat": {
+            "support": {
+              "chrome": {
+                "version_added": null
+              },
+              "chrome_android": {
+                "version_added": null
+              },
+              "edge": {
+                "version_added": null
+              },
+              "edge_mobile": {
+                "version_added": null
+              },
+              "firefox": {
+                "version_added": null
+              },
+              "firefox_android": {
+                "version_added": null
+              },
+              "ie": {
+                "version_added": null
+              },
+              "opera": {
+                "version_added": null
+              },
+              "opera_android": {
+                "version_added": null
+              },
+              "safari": {
+                "version_added": null
+              },
+              "safari_ios": {
+                "version_added": null
+              },
+              "webview_android": {
+                "version_added": null
+              }
+            },
+            "status": {
+              "experimental": false,
+              "standard_track": true,
+              "deprecated": false
+            }
+          }
+        }
+      }
+    }
+  }
+}

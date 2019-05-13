@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,16 +21,16 @@ import java.util.Comparator;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Dec 1
- * @author 2003
  */
 public class ModulesAlphaComparator implements Comparator<Module>{
-  public static ModulesAlphaComparator INSTANCE = new ModulesAlphaComparator();
+
+  public static final ModulesAlphaComparator INSTANCE = new ModulesAlphaComparator();
 
   @Override
   public int compare(Module module1, Module module2) {
-    final String name1 = module1.getName();
-    final String name2 = module2.getName();
-    return name1.compareToIgnoreCase(name2);
+    if (module1 == null && module2 == null) return 0;
+    if (module1 == null) return -1;
+    if (module2 == null) return 1;
+    return module1.getName().compareToIgnoreCase(module2.getName());
   }
 }

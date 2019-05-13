@@ -1,29 +1,12 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor.actionSystem;
 
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
-import com.intellij.openapi.command.UndoConfirmationPolicy;
 import com.intellij.openapi.editor.*;
-import com.intellij.openapi.extensions.Extensions;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.reporting.FreezeLogger;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -33,6 +16,7 @@ import org.jetbrains.annotations.Nullable;
  * @see EditorActionManager#getTypedAction()
  */
 public class TypedAction {
+  private TypedActionHandler myRawHandler;
   private TypedActionHandler myHandler;
   private boolean myHandlersLoaded;
 
@@ -43,27 +27,29 @@ public class TypedAction {
   private void ensureHandlersLoaded() {
     if (!myHandlersLoaded) {
       myHandlersLoaded = true;
-      for(EditorTypedHandlerBean handlerBean: Extensions.getExtensions(EditorTypedHandlerBean.EP_NAME)) {
+      for(EditorTypedHandlerBean handlerBean: EditorTypedHandlerBean.EP_NAME.getExtensionList()) {
         myHandler = handlerBean.getHandler(myHandler);
       }
     }
   }
 
+  private void loadRawHandlers() {
+    for (EditorTypedHandlerBean handlerBean: EditorTypedHandlerBean.RAW_EP_NAME.getExtensionList()) {
+      myRawHandler = handlerBean.getHandler(myRawHandler);
+    }
+  }
+
   private static class Handler implements TypedActionHandler {
-    public void execute(@NotNull Editor editor, char charTyped, @NotNull DataContext dataContext) {
+    @Override
+    public void execute(@NotNull final Editor editor, char charTyped, @NotNull DataContext dataContext) {
       if (editor.isViewer()) return;
 
       Document doc = editor.getDocument();
-      Project project = PlatformDataKeys.PROJECT.getData(dataContext);
-      if (!FileDocumentManager.getInstance().requestWriting(doc, project)) {
-        return;
-      }
-
       doc.startGuardedBlockChecking();
       try {
         final String str = String.valueOf(charTyped);
         CommandProcessor.getInstance().setCurrentCommandName(EditorBundle.message("typing.in.editor.command.name"));
-        EditorModificationUtil.typeInStringAtCaretHonorBlockSelection(editor, str, true);
+        EditorModificationUtil.typeInStringAtCaretHonorMultipleCarets(editor, str, true);
       }
       catch (ReadOnlyFragmentModificationException e) {
         EditorActionManager.getInstance().getReadonlyFragmentModificationHandler(doc).handle(e);
@@ -98,45 +84,49 @@ public class TypedAction {
     return tmp;
   }
 
+  /**
+   * Gets the current 'raw' typing handler.
+   *
+   * @see #setupRawHandler(TypedActionHandler)
+   */
+  @NotNull
+  public TypedActionHandler getRawHandler() {
+    return myRawHandler;
+  }
+
+  /**
+   * Replaces current 'raw' typing handler with the specified handler. The handler should pass unprocessed typing to the
+   * previously registered 'raw' handler.
+   * <p>
+   * 'Raw' handler is a handler directly invoked by the code which handles typing in editor. Default 'raw' handler
+   * performs some generic logic that has to be done on typing (like checking whether file has write access, creating a command
+   * instance for undo subsystem, initiating write action, etc), but delegates to 'normal' handler for actual typing logic.
+   *
+   * @param handler the handler to set.
+   * @return the previously registered handler.
+   *
+   * @see #getRawHandler()
+   * @see #getHandler()
+   * @see #setupHandler(TypedActionHandler)
+   */
+  public TypedActionHandler setupRawHandler(@NotNull TypedActionHandler handler) {
+    TypedActionHandler tmp = myRawHandler;
+    myRawHandler = handler;
+    if (tmp == null) {
+      loadRawHandlers();
+    }
+    return tmp;
+  }
+
+  public void beforeActionPerformed(@NotNull Editor editor, char c, @NotNull DataContext context, @NotNull ActionPlan plan) {
+    if (myRawHandler instanceof TypedActionHandlerEx) {
+      ((TypedActionHandlerEx)myRawHandler).beforeExecute(editor, c, context, plan);
+    }
+  }
+
   public final void actionPerformed(@Nullable final Editor editor, final char charTyped, final DataContext dataContext) {
     if (editor == null) return;
-
-    Runnable command = new TypingCommand(editor, charTyped, dataContext);
-
-    CommandProcessor.getInstance().executeCommand(PlatformDataKeys.PROJECT.getData(dataContext), command, "", editor.getDocument(), UndoConfirmationPolicy.DEFAULT, editor.getDocument());
-  }
-
-  public static boolean isTypedActionInProgress() {
-    return CommandProcessor.getInstance().getCurrentCommand() instanceof TypingCommand;
-  }
-
-  private class TypingCommand implements Runnable {
-    private final Editor myEditor;
-    private final char myCharTyped;
-    private final DataContext myDataContext;
-
-    public TypingCommand(Editor editor, char charTyped, DataContext dataContext) {
-      myEditor = editor;
-      myCharTyped = charTyped;
-      myDataContext = dataContext;
-    }
-
-    public void run() {
-      ApplicationManager.getApplication().runWriteAction(new DocumentRunnable(myEditor.getDocument(), myEditor.getProject()) {
-        public void run() {
-          Document doc = myEditor.getDocument();
-          doc.startGuardedBlockChecking();
-          try {
-            getHandler().execute(myEditor, myCharTyped, myDataContext);
-          }
-          catch (ReadOnlyFragmentModificationException e) {
-            EditorActionManager.getInstance().getReadonlyFragmentModificationHandler(doc).handle(e);
-          }
-          finally {
-            doc.stopGuardedBlockChecking();
-          }
-        }
-      });
-    }
+    Project project = CommonDataKeys.PROJECT.getData(dataContext);
+    FreezeLogger.getInstance().runUnderPerformanceMonitor(project, () -> myRawHandler.execute(editor, charTyped, dataContext));
   }
 }

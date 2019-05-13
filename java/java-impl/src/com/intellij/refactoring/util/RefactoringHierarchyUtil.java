@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,14 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * Created by IntelliJ IDEA.
- * User: dsl
- * Date: 18.06.2002
- * Time: 14:28:03
- * To change template for new class use
- * Code Style | Class Templates options (Tools | IDE Options).
- */
 package com.intellij.refactoring.util;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -31,7 +23,7 @@ import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.search.PsiElementProcessorAdapter;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.psi.util.InheritanceUtil;
-import com.intellij.util.containers.HashSet;
+import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -47,13 +39,14 @@ public class RefactoringHierarchyUtil {
   private RefactoringHierarchyUtil() {}
 
   public static boolean willBeInTargetClass(PsiElement place,
-                                            @NotNull Set<PsiMember> membersToMove,
+                                            @NotNull Set<? extends PsiMember> membersToMove,
                                             @Nullable PsiClass targetClass,
                                             boolean includeSubclasses) {
     PsiElement parent = place;
     while (parent != null) {
+      //noinspection SuspiciousMethodCalls
       if (membersToMove.contains(parent)) return true;
-      if (parent instanceof PsiModifierList) return false; //see IDEADEV-12448
+      if (parent instanceof PsiModifierList && (targetClass == null || targetClass.getModifierList() == parent)) return false; //see IDEADEV-12448
       if (parent instanceof PsiClass && targetClass != null) {
         if (targetClass.equals(parent)) return true;
         if (includeSubclasses && ((PsiClass) parent).isInheritor(targetClass, true)) return true;
@@ -113,7 +106,7 @@ public class RefactoringHierarchyUtil {
    * @return
    */
   public static ArrayList<PsiClass> createBasesList(PsiClass subClass, boolean includeNonProject, boolean sortAlphabetically) {
-    LinkedHashSet<PsiClass> bases = new LinkedHashSet<PsiClass>();
+    LinkedHashSet<PsiClass> bases = new LinkedHashSet<>();
     InheritanceUtil.getSuperClasses(subClass, bases, includeNonProject);
 
     if (!subClass.isInterface()) {
@@ -124,21 +117,19 @@ public class RefactoringHierarchyUtil {
       }
     }
 
-    ArrayList<PsiClass> basesList = new ArrayList<PsiClass>(bases);
+    ArrayList<PsiClass> basesList = new ArrayList<>(bases);
 
     if (sortAlphabetically) {
       Collections.sort(
-          basesList, new Comparator<PsiClass>() {
-            public int compare(PsiClass c1, PsiClass c2) {
-              final String fqn1 = c1.getQualifiedName();
-              final String fqn2 = c2.getQualifiedName();
-              if (fqn1 != null && fqn2 != null) return fqn1.compareTo(fqn2);
-              if (fqn1 == null && fqn2 == null) {
-                return Comparing.compare(c1.getName(), c2.getName());
-              }
-              return fqn1 == null ? 1 : -1;
-            }
+        basesList, (c1, c2) -> {
+          final String fqn1 = c1.getQualifiedName();
+          final String fqn2 = c2.getQualifiedName();
+          if (fqn1 != null && fqn2 != null) return fqn1.compareTo(fqn2);
+          if (fqn1 == null && fqn2 == null) {
+            return Comparing.compare(c1.getName(), c2.getName());
           }
+          return fqn1 == null ? 1 : -1;
+        }
       );
     }
 
@@ -160,8 +151,10 @@ public class RefactoringHierarchyUtil {
 
     if (elementClass == null) return false;
     if (superClass != null) {
-      return !superClass.getManager().areElementsEquivalent(superClass, elementClass) &&
-             elementClass.isInheritor(superClass, true);
+      if (elementClass.isInheritor(superClass, true)) {
+        return !superClass.getManager().areElementsEquivalent(superClass, elementClass);
+      }
+      return PsiTreeUtil.isAncestor(elementClass, subClass, false) && !PsiTreeUtil.isAncestor(elementClass, superClass, false);
     }
     else {
       return subClass.getManager().areElementsEquivalent(subClass, elementClass);
@@ -169,11 +162,6 @@ public class RefactoringHierarchyUtil {
   }
 
   public static void processSuperTypes(PsiType type, SuperTypeVisitor visitor) {
-    processSuperTypes(type, visitor, new HashSet<PsiType>());
-  }
-  private static void processSuperTypes(PsiType type, SuperTypeVisitor visitor, Set<PsiType> visited) {
-    if (visited.contains(type)) return;
-    visited.add(type);
     if (type instanceof PsiPrimitiveType) {
       int index = PRIMITIVE_TYPES.indexOf(type);
       if (index >= 0) {
@@ -183,17 +171,16 @@ public class RefactoringHierarchyUtil {
       }
     }
     else {
-      final PsiType[] superTypes = type.getSuperTypes();
-      for (PsiType superType : superTypes) {
-        visitor.visitType(superType);
-        processSuperTypes(superType, visitor, visited);
-      }
+      InheritanceUtil.processSuperTypes(type, false, aType -> {
+        visitor.visitType(aType);
+        return true;
+      });
     }
   }
 
   public static PsiClass[] findImplementingClasses(PsiClass anInterface) {
-    Set<PsiClass> result = new HashSet<PsiClass>();
-    _findImplementingClasses(anInterface, new HashSet<PsiClass>(), result);
+    Set<PsiClass> result = new HashSet<>();
+    _findImplementingClasses(anInterface, new HashSet<>(), result);
     boolean classesRemoved = true;
     while(classesRemoved) {
       classesRemoved = false;
@@ -209,28 +196,28 @@ public class RefactoringHierarchyUtil {
         }
       }
     }
-    return result.toArray(new PsiClass[result.size()]);
+    return result.toArray(PsiClass.EMPTY_ARRAY);
   }
 
-  private static void _findImplementingClasses(PsiClass anInterface, final Set<PsiClass> visited, final Collection<PsiClass> result) {
+  private static void _findImplementingClasses(PsiClass anInterface, final Set<? super PsiClass> visited, final Collection<? super PsiClass> result) {
     LOG.assertTrue(anInterface.isInterface());
     visited.add(anInterface);
-    ClassInheritorsSearch.search(anInterface, false).forEach(new PsiElementProcessorAdapter<PsiClass>(new PsiElementProcessor<PsiClass>() {
+    ClassInheritorsSearch.search(anInterface, false).forEach(new PsiElementProcessorAdapter<>(new PsiElementProcessor<PsiClass>() {
+      @Override
       public boolean execute(@NotNull PsiClass aClass) {
         if (!aClass.isInterface()) {
           result.add(aClass);
         }
-        else if (!visited.contains(aClass)){
+        else if (!visited.contains(aClass)) {
           _findImplementingClasses(aClass, visited, result);
         }
         return true;
       }
-
     }));
   }
 
 
-  public static interface SuperTypeVisitor {
+  public interface SuperTypeVisitor {
     void visitType(PsiType aType);
 
     void visitClass(PsiClass aClass);

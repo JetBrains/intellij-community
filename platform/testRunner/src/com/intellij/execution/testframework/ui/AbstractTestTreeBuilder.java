@@ -16,7 +16,10 @@
 package com.intellij.execution.testframework.ui;
 
 import com.intellij.execution.testframework.AbstractTestProxy;
-import com.intellij.ide.util.treeView.*;
+import com.intellij.execution.testframework.TestFrameworkRunningModel;
+import com.intellij.ide.util.treeView.AbstractTreeBuilder;
+import com.intellij.ide.util.treeView.AbstractTreeStructure;
+import com.intellij.ide.util.treeView.IndexComparator;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.util.StatusBarProgress;
 import org.jetbrains.annotations.NotNull;
@@ -25,10 +28,7 @@ import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 
-/**
- * @author: Roman Chernyatchik
- */
-public abstract class AbstractTestTreeBuilder extends AbstractTreeBuilder {
+public abstract class AbstractTestTreeBuilder extends AbstractTreeBuilder implements AbstractTestTreeBuilderBase<AbstractTestProxy> {
   public AbstractTestTreeBuilder(final JTree tree,
                                  final DefaultTreeModel defaultTreeModel,
                                  final AbstractTreeStructure structure,
@@ -40,7 +40,8 @@ public abstract class AbstractTestTreeBuilder extends AbstractTreeBuilder {
     super();
   }
 
-  public void repaintWithParents(final AbstractTestProxy testProxy) {
+  @Override
+  public void repaintWithParents(@NotNull AbstractTestProxy testProxy) {
     AbstractTestProxy current = testProxy;
     do {
       DefaultMutableTreeNode node = getNodeForElement(current);
@@ -53,21 +54,20 @@ public abstract class AbstractTestTreeBuilder extends AbstractTreeBuilder {
     while (current != null);
   }
 
-  protected boolean isAlwaysShowPlus(final NodeDescriptor descriptor) {
-    return false;
-  }
-
+  @Override
   @NotNull
   protected ProgressIndicator createProgressIndicator() {
     return new StatusBarProgress();
   }
 
+  @Override
   protected boolean isSmartExpand() {
     return false;
   }
 
-  public void setTestsComparator(boolean sortAlphabetically) {
-    setNodeDescriptorComparator(sortAlphabetically ? AlphaComparator.INSTANCE : null);
+  @Override
+  public void setTestsComparator(TestFrameworkRunningModel model) {
+    setNodeDescriptorComparator(model.createComparator());
     queueUpdate();
   }
 }

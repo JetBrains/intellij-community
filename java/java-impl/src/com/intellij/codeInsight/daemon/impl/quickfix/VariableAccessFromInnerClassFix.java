@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,11 +15,14 @@
  */
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
-import com.intellij.codeInsight.CodeInsightUtilBase;
+import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
+import com.intellij.codeInsight.daemon.impl.analysis.JavaGenericsUtil;
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -27,11 +30,14 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
+import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.psi.controlFlow.ControlFlowUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.containers.ConcurrentWeakHashMap;
+import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -41,16 +47,16 @@ import java.util.*;
 public class VariableAccessFromInnerClassFix implements IntentionAction {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.quickfix.VariableAccessFromInnerClassFix");
   private final PsiVariable myVariable;
-  private final PsiClass myClass;
+  private final PsiElement myContext;
   private final int myFixType;
   private static final int MAKE_FINAL = 0;
   private static final int MAKE_ARRAY = 1;
   private static final int COPY_TO_FINAL = 2;
   private static final Key<Map<PsiVariable,Boolean>>[] VARS = new Key[] {Key.create("VARS_TO_MAKE_FINAL"), Key.create("VARS_TO_TRANSFORM"), Key.create("???")};
 
-  public VariableAccessFromInnerClassFix(PsiVariable variable, PsiClass aClass) {
+  public VariableAccessFromInnerClassFix(@NotNull PsiVariable variable, @NotNull PsiElement element) {
     myVariable = variable;
-    myClass = aClass;
+    myContext = element;
     myFixType = getQuickFixType(variable);
     if (myFixType == -1) return;
 
@@ -69,7 +75,7 @@ public class VariableAccessFromInnerClassFix implements IntentionAction {
         message = "make.final.transform.to.one.element.array";
         break;
       case COPY_TO_FINAL:
-        return QuickFixBundle.message("make.final.copy.to.temp", myVariable.getName());
+        return QuickFixBundle.message("make.final.copy.to.temp", myVariable.getName(), (!PsiUtil.isLanguageLevel8OrHigher(myContext) ? "" : "effectively ") + "final");
       default:
         return "";
     }
@@ -86,54 +92,54 @@ public class VariableAccessFromInnerClassFix implements IntentionAction {
 
   @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    return myClass != null
-           && myClass.isValid()
-           && myClass.getManager().isInProject(myClass)
-           && myVariable != null
-           && myVariable.isValid()
-           && myFixType != -1
-           && !getVariablesToFix().isEmpty()
-           && !inOwnInitializer (myVariable, myClass);
+    return myContext.isValid() &&
+           BaseIntentionAction.canModify(myContext) &&
+           myVariable.isValid() &&
+           myFixType != -1 &&
+           !getVariablesToFix().isEmpty() &&
+           !inOwnInitializer(myVariable, myContext);
   }
 
-  private static boolean inOwnInitializer(PsiVariable variable, PsiClass aClass) {
-    return PsiTreeUtil.isAncestor(variable, aClass, false);
+  private static boolean inOwnInitializer(PsiVariable variable, PsiElement context) {
+    return PsiTreeUtil.isAncestor(variable, context, false);
   }
 
   @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) {
-    if (!CodeInsightUtilBase.preparePsiElementsForWrite(myClass, myVariable)) return;
-    try {
-      switch (myFixType) {
-        case MAKE_FINAL:
-          makeFinal();
-          break;
-        case MAKE_ARRAY:
-          makeArray();
-          break;
-        case COPY_TO_FINAL:
-          copyToFinal();
-          break;
+    if (!FileModificationService.getInstance().preparePsiElementsForWrite(myContext, myVariable)) return;
+    WriteAction.run(() -> {
+      try {
+        switch (myFixType) {
+          case MAKE_FINAL:
+            makeFinal();
+            break;
+          case MAKE_ARRAY:
+            makeArray();
+            break;
+          case COPY_TO_FINAL:
+            copyToFinal(myVariable, myContext);
+            break;
+        }
       }
-    }
-    catch (IncorrectOperationException e) {
-      LOG.error(e);
-    }
-    finally {
-      getVariablesToFix().clear();
-    }
+      catch (IncorrectOperationException e) {
+        LOG.error(e);
+      }
+      finally {
+        getVariablesToFix().clear();
+      }
+    });
   }
 
   private void makeArray() {
     for (PsiVariable var : getVariablesToFix()) {
-      makeArray(var);
+      makeArray(var, myContext);
     }
   }
 
   @NotNull
   private Collection<PsiVariable> getVariablesToFix() {
-    Map<PsiVariable, Boolean> vars = myClass.getUserData(VARS[myFixType]);
-    if (vars == null) myClass.putUserData(VARS[myFixType], vars = new ConcurrentWeakHashMap<PsiVariable, Boolean>(1));
+    Map<PsiVariable, Boolean> vars = myContext.getUserData(VARS[myFixType]);
+    if (vars == null) myContext.putUserData(VARS[myFixType], vars = ContainerUtil.createConcurrentWeakMap());
     final Map<PsiVariable, Boolean> finalVars = vars;
     return new AbstractCollection<PsiVariable>() {
       @Override
@@ -141,6 +147,7 @@ public class VariableAccessFromInnerClassFix implements IntentionAction {
         return finalVars.put(psiVariable, Boolean.TRUE) == null;
       }
 
+      @NotNull
       @Override
       public Iterator<PsiVariable> iterator() {
         return finalVars.keySet().iterator();
@@ -161,10 +168,11 @@ public class VariableAccessFromInnerClassFix implements IntentionAction {
     }
   }
 
-  private void makeArray(PsiVariable variable) throws IncorrectOperationException {
+  private static void makeArray(PsiVariable variable, PsiElement context) throws IncorrectOperationException {
+    variable.normalizeDeclaration();
     PsiType type = variable.getType();
 
-    PsiElementFactory factory = JavaPsiFacade.getInstance(myClass.getProject()).getElementFactory();
+    PsiElementFactory factory = JavaPsiFacade.getElementFactory(context.getProject());
     PsiType newType = type.createArrayType();
 
     PsiDeclarationStatement variableDeclarationStatement;
@@ -179,7 +187,8 @@ public class VariableAccessFromInnerClassFix implements IntentionAction {
       variableDeclarationStatement = factory.createVariableDeclarationStatement(variable.getName(), newType, init);
     }
     else {
-      PsiExpression init = factory.createExpressionFromText("{ " + initializer.getText() + " }", variable);
+      String explicitArrayDeclaration = JavaGenericsUtil.isReifiableType(type) ? "" : "new " + TypeConversionUtil.erasure(type).getCanonicalText() + "[]";
+      PsiExpression init = factory.createExpressionFromText(explicitArrayDeclaration + "{ " + initializer.getText() + " }", variable);
       variableDeclarationStatement = factory.createVariableDeclarationStatement(variable.getName(), newType, init);
     }
     PsiVariable newVariable = (PsiVariable)variableDeclarationStatement.getDeclaredElements()[0];
@@ -188,44 +197,51 @@ public class VariableAccessFromInnerClassFix implements IntentionAction {
 
     PsiElement outerCodeBlock = PsiUtil.getVariableCodeBlock(variable, null);
     if (outerCodeBlock == null) return;
-    List<PsiReferenceExpression> outerReferences = new ArrayList<PsiReferenceExpression>();
+    List<PsiReferenceExpression> outerReferences = new ArrayList<>();
     collectReferences(outerCodeBlock, variable, outerReferences);
     replaceReferences(outerReferences, newExpression);
     variable.replace(newVariable);
   }
 
-  private void copyToFinal() throws IncorrectOperationException {
-    PsiManager psiManager = myClass.getManager();
-    PsiElementFactory factory = JavaPsiFacade.getInstance(psiManager.getProject()).getElementFactory();
-    PsiExpression initializer = factory.createExpressionFromText(myVariable.getName(), myClass);
-    String newName = suggestNewName(psiManager.getProject(), myVariable);
-    PsiType type = myVariable.getType();
+  private static void copyToFinal(PsiVariable variable, PsiElement context) throws IncorrectOperationException {
+    PsiManager psiManager = context.getManager();
+    final Project project = psiManager.getProject();
+    PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
+    PsiExpression initializer = factory.createExpressionFromText(variable.getName(), context);
+    String newName = suggestNewName(project, variable);
+    PsiType type = variable.getType();
     PsiDeclarationStatement copyDecl = factory.createVariableDeclarationStatement(newName, type, initializer);
     PsiVariable newVariable = (PsiVariable)copyDecl.getDeclaredElements()[0];
-    PsiUtil.setModifierProperty(newVariable, PsiModifier.FINAL, true);
-    PsiElement statement = getStatementToInsertBefore();
+    final boolean mustBeFinal =
+      !PsiUtil.isLanguageLevel8OrHigher(context) || JavaCodeStyleSettings.getInstance(context.getContainingFile()).GENERATE_FINAL_LOCALS;
+    PsiUtil.setModifierProperty(newVariable, PsiModifier.FINAL, mustBeFinal);
+    PsiElement statement = getStatementToInsertBefore(variable, context);
     if (statement == null) return;
-    statement.getParent().addBefore(copyDecl, statement);
-    PsiExpression newExpression = factory.createExpressionFromText(newName, myVariable);
-    replaceReferences(myClass, myVariable, newExpression);
+    PsiExpression newExpression = factory.createExpressionFromText(newName, variable);
+    replaceReferences(context, variable, newExpression);
+    if (RefactoringUtil.isLoopOrIf(statement.getParent())) {
+      RefactoringUtil.putStatementInLoopBody(copyDecl, statement.getParent(), statement);
+    } else {
+      statement.getParent().addBefore(copyDecl, statement);
+    }
   }
 
-  private PsiElement getStatementToInsertBefore() {
-    PsiElement declarationScope = myVariable instanceof PsiParameter
-                                  ? ((PsiParameter)myVariable).getDeclarationScope() : PsiUtil.getVariableCodeBlock(myVariable, null);
+  private static PsiElement getStatementToInsertBefore(PsiVariable variable, PsiElement context) {
+    PsiElement declarationScope = variable instanceof PsiParameter
+                                  ? ((PsiParameter)variable).getDeclarationScope() : PsiUtil.getVariableCodeBlock(variable, null);
     if (declarationScope == null) return null;
 
-    PsiElement statement = myClass;
+    PsiElement statement = context;
     nextInnerClass:
     do {
-      statement = PsiUtil.getEnclosingStatement(statement);
+      statement = RefactoringUtil.getParentStatement(statement, false);
 
       if (statement == null || statement.getParent() == null) {
         return null;
       }
       PsiElement element = statement;
       while (element != declarationScope && !(element instanceof PsiFile)) {
-        if (element instanceof PsiClass) {
+        if (element instanceof PsiClass || element instanceof PsiLambdaExpression) {
           statement = statement.getParent();
           continue nextInnerClass;
         }
@@ -263,13 +279,13 @@ public class VariableAccessFromInnerClassFix implements IntentionAction {
     });
   }
 
-  private static void replaceReferences(List<PsiReferenceExpression> references, PsiElement newExpression) throws IncorrectOperationException {
+  private static void replaceReferences(List<? extends PsiReferenceExpression> references, PsiElement newExpression) throws IncorrectOperationException {
     for (PsiReferenceExpression reference : references) {
       reference.replace(newExpression);
     }
   }
 
-  private static void collectReferences(PsiElement context, final PsiVariable variable, final List<PsiReferenceExpression> references) {
+  private static void collectReferences(PsiElement context, final PsiVariable variable, final List<? super PsiReferenceExpression> references) {
     context.accept(new JavaRecursiveElementWalkingVisitor() {
       @Override public void visitReferenceExpression(PsiReferenceExpression expression) {
         if (expression.resolve() == variable) references.add(expression);
@@ -278,20 +294,20 @@ public class VariableAccessFromInnerClassFix implements IntentionAction {
     });
   }
 
-  private static int getQuickFixType(PsiVariable variable) {
+  private static int getQuickFixType(@NotNull PsiVariable variable) {
     PsiElement outerCodeBlock = PsiUtil.getVariableCodeBlock(variable, null);
     if (outerCodeBlock == null) return -1;
-    List<PsiReferenceExpression> outerReferences = new ArrayList<PsiReferenceExpression>();
+    List<PsiReferenceExpression> outerReferences = new ArrayList<>();
     collectReferences(outerCodeBlock, variable, outerReferences);
 
     int type = MAKE_FINAL;
     for (PsiReferenceExpression expression : outerReferences) {
       // if it happens that variable referenced from another inner class, make sure it can be make final from there
-      PsiClass innerClass = HighlightControlFlowUtil.getInnerClassVariableReferencedFrom(variable, expression);
+      PsiElement innerScope = HighlightControlFlowUtil.getInnerClassVariableReferencedFrom(variable, expression);
 
-      if (innerClass != null) {
+      if (innerScope != null) {
         int thisType = MAKE_FINAL;
-        if (writtenInside(variable, innerClass)) {
+        if (writtenInside(variable, innerScope)) {
           // cannot make parameter array
           if (variable instanceof PsiParameter) return -1;
           thisType = MAKE_ARRAY;
@@ -306,13 +322,14 @@ public class VariableAccessFromInnerClassFix implements IntentionAction {
     return type;
   }
 
-  private static boolean canBeFinal(PsiVariable variable, List<PsiReferenceExpression> references) {
+  private static boolean canBeFinal(@NotNull PsiVariable variable, @NotNull List<? extends PsiReferenceExpression> references) {
     // if there is at least one assignment to this variable, it cannot be final
-    Map<PsiElement, Collection<PsiReferenceExpression>> uninitializedVarProblems = new THashMap<PsiElement, Collection<PsiReferenceExpression>>();
-    Map<PsiElement, Collection<ControlFlowUtil.VariableInfo>> finalVarProblems = new THashMap<PsiElement, Collection<ControlFlowUtil.VariableInfo>>();
+    Map<PsiElement, Collection<PsiReferenceExpression>> uninitializedVarProblems = new THashMap<>();
+    Map<PsiElement, Collection<ControlFlowUtil.VariableInfo>> finalVarProblems = new THashMap<>();
     for (PsiReferenceExpression expression : references) {
       if (ControlFlowUtil.isVariableAssignedInLoop(expression, variable)) return false;
-      HighlightInfo highlightInfo = HighlightControlFlowUtil.checkVariableInitializedBeforeUsage(expression, variable, uninitializedVarProblems);
+      HighlightInfo highlightInfo = HighlightControlFlowUtil.checkVariableInitializedBeforeUsage(expression, variable, uninitializedVarProblems,
+                                                                                                 variable.getContainingFile());
       if (highlightInfo != null) return false;
       highlightInfo = HighlightControlFlowUtil.checkFinalVariableMightAlreadyHaveBeenAssignedTo(variable, expression, finalVarProblems);
       if (highlightInfo != null) return false;
@@ -330,9 +347,7 @@ public class VariableAccessFromInnerClassFix implements IntentionAction {
         return true;
     }
     else if (PsiUtil.isIncrementDecrementOperation(element)) {
-      PsiElement operand = element instanceof PsiPostfixExpression ?
-                           ((PsiPostfixExpression) element).getOperand() :
-                           ((PsiPrefixExpression) element).getOperand();
+      PsiElement operand = ((PsiUnaryExpression) element).getOperand();
       if (operand instanceof PsiReferenceExpression
           && ((PsiReferenceExpression) operand).resolve() == variable)
         return true;
@@ -346,6 +361,22 @@ public class VariableAccessFromInnerClassFix implements IntentionAction {
 
   @Override
   public boolean startInWriteAction() {
-    return true;
+    return false;
+  }
+
+  public static void fixAccess(@NotNull PsiVariable variable, @NotNull PsiElement context) {
+    int type = getQuickFixType(variable);
+    if (type == -1) return;
+    switch (type) {
+      case MAKE_FINAL:
+        PsiUtil.setModifierProperty(variable, PsiModifier.FINAL, true);
+        break;
+      case MAKE_ARRAY:
+        makeArray(variable, context);
+        break;
+      case COPY_TO_FINAL:
+        copyToFinal(variable, context);
+        break;
+    }
   }
 }

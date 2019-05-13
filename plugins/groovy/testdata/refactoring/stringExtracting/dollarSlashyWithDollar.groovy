@@ -1,0 +1,1 @@
+$/abc$<selection> </selection>cde/$

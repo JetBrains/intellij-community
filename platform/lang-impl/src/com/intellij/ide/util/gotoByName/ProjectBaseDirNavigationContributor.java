@@ -39,7 +39,7 @@ public class ProjectBaseDirNavigationContributor implements ChooseByNameContribu
     final VirtualFile baseDir = project.getBaseDir();
     if (baseDir == null) return ArrayUtil.EMPTY_STRING_ARRAY;
     final VirtualFile[] files = baseDir.getChildren();
-    final ArrayList<String> list = new ArrayList<String>();
+    final ArrayList<String> list = new ArrayList<>();
     for (VirtualFile file : files) {
       if (!file.isDirectory()) {
         list.add(file.getName());
@@ -55,7 +55,7 @@ public class ProjectBaseDirNavigationContributor implements ChooseByNameContribu
     final VirtualFile baseDir = project.getBaseDir();
     if (baseDir == null) return NavigationItem.EMPTY_NAVIGATION_ITEM_ARRAY;
     final VirtualFile[] files = baseDir.getChildren();
-    final ArrayList<PsiFile> list = new ArrayList<PsiFile>();
+    final ArrayList<PsiFile> list = new ArrayList<>();
     for (VirtualFile file : files) {
       if (isEditable(file, includeNonProjectItems) && Comparing.strEqual(name, file.getName())) {
         final PsiFile psiFile = psiManager.findFile(file);

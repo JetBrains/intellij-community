@@ -22,6 +22,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
+import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.util.NonCodeUsageInfo;
@@ -48,7 +49,7 @@ public class JavaMoveClassToInnerHandler implements MoveClassToInnerHandler {
     if (targetClass.isInterface()) {
       PsiUtil.setModifierProperty(newClass, PsiModifier.PACKAGE_LOCAL, true);
     }
-    else {
+    else if (!newClass.isEnum()) {
       PsiUtil.setModifierProperty(newClass, PsiModifier.STATIC, true);
     }
     return (PsiClass)ChangeContextUtil.decodeContextInfo(newClass, null, null);
@@ -56,17 +57,13 @@ public class JavaMoveClassToInnerHandler implements MoveClassToInnerHandler {
 
   @Override
   public List<PsiElement> filterImports(@NotNull List<UsageInfo> usageInfos, @NotNull Project project) {
-    final List<PsiElement> importStatements = new ArrayList<PsiElement>();
-    if (!CodeStyleSettingsManager.getSettings(project).INSERT_INNER_CLASS_IMPORTS) {
+    final List<PsiElement> importStatements = new ArrayList<>();
+    if (!CodeStyleSettingsManager.getSettings(project).getCustomSettings(JavaCodeStyleSettings.class).INSERT_INNER_CLASS_IMPORTS) {
       filterUsagesInImportStatements(usageInfos, importStatements);
     }
     else {
       //rebind imports first
-      Collections.sort(usageInfos, new Comparator<UsageInfo>() {
-        public int compare(UsageInfo o1, UsageInfo o2) {
-          return PsiUtil.BY_POSITION.compare(o1.getElement(), o2.getElement());
-        }
-      });
+      Collections.sort(usageInfos, (o1, o2) -> PsiUtil.BY_POSITION.compare(o1.getElement(), o2.getElement()));
     }
     return importStatements;
   }
@@ -84,6 +81,7 @@ public class JavaMoveClassToInnerHandler implements MoveClassToInnerHandler {
     }
   }
 
+  @Override
   public void retargetClassRefsInMoved(@NotNull final Map<PsiElement, PsiElement> oldToNewElementsMapping) {
     for (final PsiElement newClass : oldToNewElementsMapping.values()) {
       if (newClass.getLanguage() != JavaLanguage.INSTANCE) continue;
@@ -123,6 +121,7 @@ public class JavaMoveClassToInnerHandler implements MoveClassToInnerHandler {
     return newInnerClass;
   }
 
+  @Override
   public void retargetNonCodeUsages(@NotNull final Map<PsiElement, PsiElement> oldToNewElementMap,
                                     @NotNull final NonCodeUsageInfo[] nonCodeUsages) {
     for (PsiElement newClass : oldToNewElementMap.values()) {

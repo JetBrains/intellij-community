@@ -1,8 +1,8 @@
 // "Remove 'unchecked' suppression" "true"
 import java.util.*;
 
-@SuppressWarnings("unchecked")
-public class Te<caret>st {
+@SuppressWarnings("un<caret>checked")
+public class Test {
   @SafeVarargs
   static <T> List<T> foo(T... t){
     return null;

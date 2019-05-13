@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,18 +15,19 @@
  */
 package com.intellij.util.xml;
 
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.Iconable;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.xml.XmlDocument;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.ConstantFunction;
 import com.intellij.util.NotNullFunction;
 import com.intellij.util.SmartList;
-import com.intellij.util.containers.ConcurrentHashMap;
 import com.intellij.util.containers.ConcurrentInstanceMap;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xml.highlighting.DomElementsAnnotator;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -42,25 +43,29 @@ import java.util.*;
  * @see com.intellij.util.xml.MergingFileDescription
  */
 public class DomFileDescription<T> {
+  /**
+   * @deprecated use "com.intellij.dom.fileMetaData" extension instead
+   */
   public static final ExtensionPointName<DomFileDescription> EP_NAME = ExtensionPointName.create("com.intellij.dom.fileDescription");
 
-  private static final Logger LOG = Logger.getInstance("#com.intellij.util.xml.DomFileDescription");
-  private final ConcurrentInstanceMap<ScopeProvider> myScopeProviders = new ConcurrentInstanceMap<ScopeProvider>();
+  private final Map<Class<? extends ScopeProvider>, ScopeProvider> myScopeProviders = ConcurrentInstanceMap.create();
   protected final Class<T> myRootElementClass;
   protected final String myRootTagName;
   private final String[] myAllPossibleRootTagNamespaces;
   private volatile boolean myInitialized;
-  private final Map<Class<? extends DomElement>,Class<? extends DomElement>> myImplementations = new HashMap<Class<? extends DomElement>, Class<? extends DomElement>>();
+  private final Map<Class<? extends DomElement>,Class<? extends DomElement>> myImplementations = new HashMap<>();
   private final TypeChooserManager myTypeChooserManager = new TypeChooserManager();
-  private final List<DomReferenceInjector> myInjectors = new SmartList<DomReferenceInjector>();
-  private final Map<String, NotNullFunction<XmlTag,List<String>>> myNamespacePolicies = new ConcurrentHashMap<String, NotNullFunction<XmlTag, List<String>>>();
+  private final List<DomReferenceInjector> myInjectors = new SmartList<>();
+  private final Map<String, NotNullFunction<XmlTag, List<String>>> myNamespacePolicies =
+    ContainerUtil.newConcurrentMap();
 
-  public DomFileDescription(final Class<T> rootElementClass, @NonNls final String rootTagName, @NonNls final String... allPossibleRootTagNamespaces) {
+  public DomFileDescription(final Class<T> rootElementClass, @NonNls final String rootTagName, @NonNls @NotNull String... allPossibleRootTagNamespaces) {
     myRootElementClass = rootElementClass;
     myRootTagName = rootTagName;
-    myAllPossibleRootTagNamespaces = allPossibleRootTagNamespaces;
+    myAllPossibleRootTagNamespaces = allPossibleRootTagNamespaces.length == 0 ? ArrayUtil.EMPTY_STRING_ARRAY : allPossibleRootTagNamespaces;
   }
 
+  @NotNull
   public String[] getAllPossibleRootTagNamespaces() {
     return myAllPossibleRootTagNamespaces;
   }
@@ -74,6 +79,7 @@ public class DomFileDescription<T> {
    * @deprecated use dom.implementation extension point instead
    * @see #initializeFileDescription()
    */
+  @Deprecated
   public final <T extends DomElement> void registerImplementation(Class<T> domElementClass, Class<? extends T> implementationClass) {
     myImplementations.put(domElementClass, implementationClass);
   }
@@ -85,6 +91,7 @@ public class DomFileDescription<T> {
    * function shouldn't use DOM since it may be not initialized for the file at the moment
    * @deprecated use {@link #registerNamespacePolicy(String, String...)} or override {@link #getAllowedNamespaces(String, com.intellij.psi.xml.XmlFile)} instead
    */
+  @Deprecated
   protected final void registerNamespacePolicy(String namespaceKey, NotNullFunction<XmlTag,List<String>> policy) {
     myNamespacePolicies.put(namespaceKey, policy);
   }
@@ -95,13 +102,12 @@ public class DomFileDescription<T> {
    * @param namespaces XML namespace or DTD public or system id value for the given namespaceKey
    */
   public final void registerNamespacePolicy(String namespaceKey, final String... namespaces) {
-    registerNamespacePolicy(namespaceKey, new ConstantFunction<XmlTag, List<String>>(Arrays.asList(namespaces)));
+    registerNamespacePolicy(namespaceKey, new ConstantFunction<>(Arrays.asList(namespaces)));
   }
 
   /**
    * Consider using {@link DomService#getXmlFileHeader(com.intellij.psi.xml.XmlFile)} when implementing this.
    */
-  @SuppressWarnings({"MethodMayBeStatic"})
   @NotNull
   public List<String> getAllowedNamespaces(@NotNull String namespaceKey, @NotNull XmlFile file) {
     final NotNullFunction<XmlTag, List<String>> function = myNamespacePolicies.get(namespaceKey);
@@ -124,10 +130,13 @@ public class DomFileDescription<T> {
   }
 
   /**
-   * @return some version. Override and change (e.g. <code>super.getVersion()+1</code>) when after some changes some files stopped being
+   * @return some version. Override and change (e.g. {@code super.getVersion()+1}) when after some changes some files stopped being
    * described by this description or vice versa, so that the
-   * {@link com.intellij.util.xml.DomService#getDomFileCandidates(Class, com.intellij.openapi.project.Project)} index is rebuilt correctly.
+   * {@link com.intellij.util.xml.DomService#getDomFileCandidates(Class, com.intellij.openapi.project.Project, com.intellij.psi.search.GlobalSearchScope)}
+   * index is rebuilt correctly.
+   * @deprecated use "domVersion" attribute of "com.intellij.dom.fileMetaData" extension instead
    */
+  @Deprecated
   public int getVersion() {
     return myRootTagName.hashCode();
   }
@@ -159,8 +168,11 @@ public class DomFileDescription<T> {
 
   /**
    * The right place to call
-   * {@link #registerNamespacePolicy(String, String...)}
-   * and {@link #registerTypeChooser(java.lang.reflect.Type, TypeChooser)}.
+   * <ul>
+   * <li>{@link #registerNamespacePolicy(String, String...)}</li>
+   * <li>{@link #registerTypeChooser(java.lang.reflect.Type, TypeChooser)}</li>
+   * <li>{@link #registerReferenceInjector(DomReferenceInjector)}</li>
+   * </ul>
    */
   protected void initializeFileDescription() {}
 
@@ -196,7 +208,7 @@ public class DomFileDescription<T> {
     final Namespace namespace = DomReflectionUtil.findAnnotationDFS(myRootElementClass, Namespace.class);
     if (namespace != null) {
       final String key = namespace.value();
-      Set<String> allNs = new HashSet<String>(getAllowedNamespaces(key, file));
+      Set<String> allNs = new HashSet<>(getAllowedNamespaces(key, file));
       if (allNs.isEmpty()) {
         return false;
       }
@@ -220,7 +232,7 @@ public class DomFileDescription<T> {
    * @return dependency item set 
    */
   @NotNull
-  public Set<? extends Object> getDependencyItems(XmlFile file) {
+  public Set<?> getDependencyItems(XmlFile file) {
     return Collections.emptySet();
   }
 
@@ -259,13 +271,24 @@ public class DomFileDescription<T> {
 
   /**
    * @see Stubbed
-   * @return false
+   * @deprecated define "stubVersion" of "com.intellij.dom.fileMetaData" extension instead
    */
+  @Deprecated
   public boolean hasStubs() {
     return false;
   }
 
+  /**
+   * @see Stubbed
+   * @deprecated define "stubVersion" of "com.intellij.dom.fileMetaData" extension instead
+   */
+  @Deprecated
   public int getStubVersion() {
-    return 0;
+    throw new UnsupportedOperationException("define \"stubVersion\" of \"com.intellij.dom.fileMetaData\" extension instead");
+  }
+
+  @Override
+  public String toString() {
+    return getRootElementClass() + " <" + getRootTagName() + "> \n" + StringUtil.join(getAllPossibleRootTagNamespaces());
   }
 }

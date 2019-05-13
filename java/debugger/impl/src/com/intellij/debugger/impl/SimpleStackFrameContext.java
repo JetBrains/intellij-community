@@ -15,13 +15,13 @@
  */
 package com.intellij.debugger.impl;
 
-import com.intellij.debugger.engine.StackFrameContext;
 import com.intellij.debugger.engine.DebugProcess;
+import com.intellij.debugger.engine.StackFrameContext;
 import com.intellij.debugger.engine.jdi.StackFrameProxy;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Dec 30, 2004
  */
 public final class SimpleStackFrameContext implements StackFrameContext{
   private final StackFrameProxy myProxy;
@@ -32,10 +32,13 @@ public final class SimpleStackFrameContext implements StackFrameContext{
     myProcess = process;
   }
 
+  @Override
   public StackFrameProxy getFrameProxy() {
     return myProxy;
   }
 
+  @Override
+  @NotNull
   public DebugProcess getDebugProcess() {
     return myProcess;
   }

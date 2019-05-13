@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2012 Bas Leijdekkers
+ * Copyright 2010-2018 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,15 +19,14 @@ import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.fixes.SuppressForTestsScopeFix;
 import com.siyeh.ig.psiutils.ExceptionUtils;
 import com.siyeh.ig.psiutils.LibraryUtil;
-import com.siyeh.ig.psiutils.TestUtils;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -38,8 +37,8 @@ public class TooBroadThrowsInspection extends BaseInspection {
   @SuppressWarnings({"PublicField"})
   public boolean onlyWarnOnRootExceptions = false;
 
-  @SuppressWarnings("PublicField")
-  public boolean ignoreInTestCode = false;
+  @SuppressWarnings({"PublicField", "UnusedDeclaration"})
+  public boolean ignoreInTestCode = false; // keep for compatibility
 
   @SuppressWarnings("PublicField")
   public boolean ignoreLibraryOverrides = false;
@@ -89,7 +88,6 @@ public class TooBroadThrowsInspection extends BaseInspection {
   public JComponent createOptionsPanel() {
     final MultipleCheckboxOptionsPanel panel = new MultipleCheckboxOptionsPanel(this);
     panel.addCheckbox(InspectionGadgetsBundle.message("too.broad.catch.option"), "onlyWarnOnRootExceptions");
-    panel.addCheckbox(InspectionGadgetsBundle.message("ignore.exceptions.declared.in.tests.option"), "ignoreInTestCode");
     panel.addCheckbox(InspectionGadgetsBundle.message("ignore.exceptions.declared.on.library.override.option"), "ignoreLibraryOverrides");
     panel.addCheckbox(InspectionGadgetsBundle.message("overly.broad.throws.clause.ignore.thrown.option"), "ignoreThrown");
     return panel;
@@ -103,12 +101,23 @@ public class TooBroadThrowsInspection extends BaseInspection {
     return new AddThrowsClauseFix(maskedExceptions, originalNeeded.booleanValue());
   }
 
+  @NotNull
+  @Override
+  protected InspectionGadgetsFix[] buildFixes(Object... infos) {
+    final PsiElement context = (PsiElement)infos[2];
+    final SuppressForTestsScopeFix suppressFix = SuppressForTestsScopeFix.build(this, context);
+    if (suppressFix == null) {
+      return new InspectionGadgetsFix[] {buildFix(infos)};
+    }
+    return new InspectionGadgetsFix[] {buildFix(infos), suppressFix};
+  }
+
   private static class AddThrowsClauseFix extends InspectionGadgetsFix {
 
-    private final Collection<SmartTypePointer> types;
+    private final Collection<? extends SmartTypePointer> types;
     private final boolean originalNeeded;
 
-    AddThrowsClauseFix(Collection<SmartTypePointer> types, boolean originalNeeded) {
+    AddThrowsClauseFix(Collection<? extends SmartTypePointer> types, boolean originalNeeded) {
       this.types = types;
       this.originalNeeded = originalNeeded;
     }
@@ -124,8 +133,14 @@ public class TooBroadThrowsInspection extends BaseInspection {
       }
     }
 
+    @NotNull
     @Override
-    protected void doFix(Project project, ProblemDescriptor descriptor) throws IncorrectOperationException {
+    public String getFamilyName() {
+      return "Fix 'throws' clause";
+    }
+
+    @Override
+    protected void doFix(Project project, ProblemDescriptor descriptor) {
       final PsiElement element = descriptor.getPsiElement();
       final PsiElement parent = element.getParent();
       if (!(parent instanceof PsiReferenceList)) {
@@ -168,15 +183,12 @@ public class TooBroadThrowsInspection extends BaseInspection {
       if (body == null) {
         return;
       }
-      if (ignoreInTestCode && TestUtils.isInTestCode(method)) {
-        return;
-      }
       if (ignoreLibraryOverrides && LibraryUtil.isOverrideOfLibraryMethod(method)) {
         return;
       }
       final Set<PsiClassType> exceptionsThrown = ExceptionUtils.calculateExceptionsThrown(body);
       final PsiClassType[] referencedExceptions = throwsList.getReferencedTypes();
-      final Set<PsiClassType> exceptionsDeclared = new HashSet(referencedExceptions.length);
+      final Set<PsiType> exceptionsDeclared = new HashSet<>(referencedExceptions.length);
       ContainerUtil.addAll(exceptionsDeclared, referencedExceptions);
       final int referencedExceptionsLength = referencedExceptions.length;
       for (int i = 0; i < referencedExceptionsLength; i++) {
@@ -187,9 +199,9 @@ public class TooBroadThrowsInspection extends BaseInspection {
             continue;
           }
         }
-        final List<SmartTypePointer> exceptionsMasked = new ArrayList();
+        final List<SmartTypePointer> exceptionsMasked = new ArrayList<>();
         final SmartTypePointerManager pointerManager = SmartTypePointerManager.getInstance(body.getProject());
-        for (PsiClassType exceptionThrown : exceptionsThrown) {
+        for (PsiType exceptionThrown : exceptionsThrown) {
           if (referencedException.isAssignableFrom(exceptionThrown) && !exceptionsDeclared.contains(exceptionThrown)) {
             exceptionsMasked.add(pointerManager.createSmartTypePointer(exceptionThrown));
           }
@@ -200,7 +212,7 @@ public class TooBroadThrowsInspection extends BaseInspection {
           if (ignoreThrown && originalNeeded) {
             continue;
           }
-          registerError(throwsReference, exceptionsMasked, Boolean.valueOf(originalNeeded));
+          registerError(throwsReference, exceptionsMasked, Boolean.valueOf(originalNeeded), throwsReference);
         }
       }
     }

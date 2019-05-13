@@ -23,7 +23,7 @@ import java.util.List;
  */
 public class PaletteGroup {
   private final String myName;
-  protected final List<PaletteItem> myItems = new ArrayList<PaletteItem>();
+  protected final List<PaletteItem> myItems = new ArrayList<>();
 
   public PaletteGroup(String name) {
     myName = name;

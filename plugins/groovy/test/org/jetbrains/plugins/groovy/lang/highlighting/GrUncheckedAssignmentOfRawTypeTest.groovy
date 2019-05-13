@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,17 +27,17 @@ class GrUncheckedAssignmentOfRawTypeTest extends GrHighlightingTestBase {
     [new GroovyUncheckedAssignmentOfMemberOfRawTypeInspection()] as InspectionProfileEntry[]
   }
 
-  public void testRawMethodAccess() { doTest() }
+  void testRawMethodAccess() { doTest() }
 
-  public void testRawFieldAccess() { doTest() }
+  void testRawFieldAccess() { doTest() }
 
-  public void testRawArrayStyleAccess() { doTest() }
+  void testRawArrayStyleAccess() { doTest() }
 
-  public void testRawArrayStyleAccessToMap() { doTest() }
+  void testRawArrayStyleAccessToMap() { doTest() }
 
-  public void testRawArrayStyleAccessToList() { doTest() }
+  void testRawArrayStyleAccessToList() { doTest() }
 
-  public void testRawClosureReturnType() {
+  void testRawClosureReturnType() {
     testHighlighting('''\
 class A<T> {
   A(T t) {this.t = t}

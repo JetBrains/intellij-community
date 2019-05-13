@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,41 +22,28 @@ import org.jetbrains.annotations.Nullable;
  * @author yole
  */
 public abstract class ProgressIndicatorProvider {
-  @Nullable
-  public static ProgressIndicatorProvider ourInstance;
-  
-  @Nullable
   public static ProgressIndicatorProvider getInstance() {
-    return ourInstance;
+    return ProgressManager.getInstance();
   }
-  
+
   public abstract ProgressIndicator getProgressIndicator();
 
   protected abstract void doCheckCanceled() throws ProcessCanceledException;
 
   @Nullable
   public static ProgressIndicator getGlobalProgressIndicator() {
-    return ourInstance != null ? ourInstance.getProgressIndicator() : null;
+    ProgressManager instance = ProgressManager.ourInstance;
+    return instance == null ? null : instance.getProgressIndicator();
   }
 
-  public abstract NonCancelableSection startNonCancelableSection();
-
+  /** use {@link ProgressManager#executeNonCancelableSection(Runnable)} instead */
   @NotNull
+  @Deprecated
   public static NonCancelableSection startNonCancelableSectionIfSupported() {
-    return ourInstance != null ? ourInstance.startNonCancelableSection() : new NonCancelableSection() {
-      @Override
-      public void done() {
-        // do nothing
-      }
-    };
+    throw new UnsupportedOperationException();
   }
 
-  public static volatile boolean ourNeedToCheckCancel = false;
   public static void checkCanceled() throws ProcessCanceledException {
-    // smart optimization! There's a thread started in ProgressManagerImpl, that set's this flag up once in 10 milliseconds
-    if (ourNeedToCheckCancel && ourInstance != null) {
-      ourInstance.doCheckCanceled();
-      ourNeedToCheckCancel = false;
-    }
+    ProgressManager.checkCanceled();
   }
 }

@@ -1,9 +1,11 @@
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package net.sf.cglib.proxy;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.containers.ConcurrentWeakValueHashMap;
+import com.intellij.util.ExceptionUtil;
+import com.intellij.util.containers.ContainerUtil;
 import net.sf.cglib.core.CodeGenerationException;
 
 import java.lang.reflect.Constructor;
@@ -36,8 +38,9 @@ public class AdvancedProxy {
   }
 
 
-  private static final Map<ProxyDescription, Factory> ourFactories = new ConcurrentWeakValueHashMap<ProxyDescription, Factory>();
+  private static final Map<ProxyDescription, Factory> ourFactories = ContainerUtil.createConcurrentWeakValueMap();
   private static final CallbackFilter NO_OBJECT_METHODS_FILTER = new CallbackFilter() {
+    @Override
     public int accept(Method method) {
       if (AdvancedProxy.FINALIZE_METHOD.equals(method)) {
         return 1;
@@ -51,6 +54,7 @@ public class AdvancedProxy {
     }
   };
   private static final CallbackFilter WITH_OBJECT_METHODS_FILTER = new CallbackFilter() {
+    @Override
     public int accept(Method method) {
       if (AdvancedProxy.FINALIZE_METHOD.equals(method)) {
         return 1;
@@ -78,6 +82,7 @@ public class AdvancedProxy {
 
   public static <T> T createProxy(final Class<T> superClass, final Class... otherInterfaces) {
     return createProxy(superClass, otherInterfaces, new InvocationHandler() {
+      @Override
       public Object invoke(final Object proxy, final Method method, final Object[] args) throws Throwable {
         throw new AbstractMethodError(method.toString());
       }
@@ -124,16 +129,9 @@ public class AdvancedProxy {
       if (throwable instanceof InvocationTargetException) {
         final InvocationTargetException targetException = (InvocationTargetException)throwable;
         final Throwable cause = targetException.getCause();
-        if (cause instanceof RuntimeException) {
-          throw (RuntimeException)cause;
-        }
-        if (cause instanceof Error) {
-          throw (Error)cause;
-        }
+        ExceptionUtil.rethrowUnchecked(cause);
       }
-      if (throwable instanceof RuntimeException) {
-        throw (RuntimeException)throwable;
-      }
+      ExceptionUtil.rethrowUnchecked(throwable);
       throw e;
     }
     catch (ProcessCanceledException e) {
@@ -167,27 +165,29 @@ public class AdvancedProxy {
     private final Class mySuperClass;
     private final Class[] myInterfaces;
 
-    public ProxyDescription(final Class superClass, final Class[] interfaces) {
+    ProxyDescription(final Class superClass, final Class[] interfaces) {
       mySuperClass = superClass;
       myInterfaces = interfaces;
     }
 
+    @Override
     public String toString() {
       return mySuperClass + " " + (myInterfaces != null ? Arrays.asList(myInterfaces) : "");
     }
 
+    @Override
     public boolean equals(final Object o) {
       if (this == o) return true;
       if (o == null || getClass() != o.getClass()) return false;
 
       final ProxyDescription that = (ProxyDescription)o;
 
-      if (!Arrays.equals(myInterfaces, that.myInterfaces)) return false;
       if (mySuperClass != null ? !mySuperClass.equals(that.mySuperClass) : that.mySuperClass != null) return false;
 
-      return true;
+      return Arrays.equals(myInterfaces, that.myInterfaces);
     }
 
+    @Override
     public int hashCode() {
       int result;
       result = (mySuperClass != null ? mySuperClass.hashCode() : 0);

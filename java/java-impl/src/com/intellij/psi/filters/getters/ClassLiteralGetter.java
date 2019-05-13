@@ -32,10 +32,13 @@ import org.jetbrains.annotations.Nullable;
 public class ClassLiteralGetter {
 
   public static void addCompletions(@NotNull final JavaSmartCompletionParameters parameters,
-                                    @NotNull Consumer<LookupElement> result, final PrefixMatcher matcher) {
-    PsiType expectedType = parameters.getExpectedType();
+                                    @NotNull Consumer<? super LookupElement> result, final PrefixMatcher matcher) {
+    PsiType expectedType = parameters.getDefaultType();
     if (!InheritanceUtil.isInheritor(expectedType, CommonClassNames.JAVA_LANG_CLASS)) {
-      return;
+      expectedType = parameters.getExpectedType();
+      if (!InheritanceUtil.isInheritor(expectedType, CommonClassNames.JAVA_LANG_CLASS)) {
+        return;
+      }
     }
 
     PsiType classParameter = PsiUtil.substituteTypeParameter(expectedType, CommonClassNames.JAVA_LANG_CLASS, 0, false);
@@ -61,21 +64,16 @@ public class ClassLiteralGetter {
 
   private static void addInheritorClassLiterals(final PsiFile context,
                                                 final PsiType classParameter,
-                                                final Consumer<LookupElement> result, PrefixMatcher matcher) {
+                                                final Consumer<? super LookupElement> result, PrefixMatcher matcher) {
     final String canonicalText = classParameter.getCanonicalText();
     if (CommonClassNames.JAVA_LANG_OBJECT.equals(canonicalText) && StringUtil.isEmpty(matcher.getPrefix())) {
       return;
     }
 
-    CodeInsightUtil.processSubTypes(classParameter, context, true, matcher, new Consumer<PsiType>() {
-      @Override
-      public void consume(PsiType type) {
-        addClassLiteralLookupElement(type, result, context);
-      }
-    });
+    CodeInsightUtil.processSubTypes(classParameter, context, true, matcher, type -> addClassLiteralLookupElement(type, result, context));
   }
 
-  private static void addClassLiteralLookupElement(@Nullable final PsiType type, final Consumer<LookupElement> resultSet, final PsiFile context) {
+  private static void addClassLiteralLookupElement(@Nullable final PsiType type, final Consumer<? super LookupElement> resultSet, final PsiFile context) {
     if (type instanceof PsiClassType &&
         PsiUtil.resolveClassInType(type) != null &&
         !((PsiClassType)type).hasParameters() &&

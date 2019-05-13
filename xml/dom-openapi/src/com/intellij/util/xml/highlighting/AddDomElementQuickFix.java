@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,10 @@ package com.intellij.util.xml.highlighting;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
+import com.intellij.psi.xml.XmlAttribute;
+import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlTag;
+import com.intellij.util.PsiNavigateUtil;
 import com.intellij.util.xml.DomBundle;
 import com.intellij.util.xml.DomElement;
 import org.jetbrains.annotations.NotNull;
@@ -33,10 +36,11 @@ public class AddDomElementQuickFix<T extends DomElement> implements LocalQuickFi
   protected final String myName;
 
   public AddDomElementQuickFix(@NotNull T element) {
-    myElement = (T)element.createStableCopy();
+    myElement = element.createStableCopy();
     myName = computeName();
   }
 
+  @Override
   @NotNull
   public String getName() {
     return myName;
@@ -44,21 +48,24 @@ public class AddDomElementQuickFix<T extends DomElement> implements LocalQuickFi
 
   private String computeName() {
     final String name = myElement.getXmlElementName();
-    return isTag() ?
-           DomBundle.message("add.element.fix.name", name) :
-           DomBundle.message("add.attribute.fix.name", name);
+    return DomBundle.message(isTag() ? "add.element.fix.name" : "add.attribute.fix.name", name);
   }
 
   private boolean isTag() {
     return myElement.getXmlElement() instanceof XmlTag;
   }
 
+  @Override
   @NotNull
   public String getFamilyName() {
-    return DomBundle.message("quick.fixes.family");
+    return DomBundle.message("add.element.fix.family");
   }
 
+  @Override
   public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-    myElement.ensureXmlElementExists();
+    final XmlElement element = myElement.ensureXmlElementExists();
+
+    final XmlElement navigationElement = isTag() ? element : ((XmlAttribute)element).getValueElement();
+    PsiNavigateUtil.navigate(navigationElement);
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,8 @@
  */
 package com.intellij.uiDesigner;
 
+import com.intellij.ui.Gray;
+import com.intellij.ui.JBColor;
 import com.intellij.uiDesigner.core.Spacer;
 
 import java.awt.*;
@@ -32,7 +34,7 @@ abstract class DesignSpacer extends Spacer{
 
   protected static final int SPRING_PRERIOD = 4;
 
-  protected static final Color ourColor1 = new Color(8,8,108);
-  protected static final Color ourColor2 = new Color(3,26,142);
-  protected static final Color ourColor3 = Color.BLACK;
+  protected static final Color ourColor1 = new JBColor(new Color(8,8,108), Gray._168);
+  protected static final Color ourColor2 = new JBColor(new Color(3, 26, 142), Gray._128);
+  protected static final Color ourColor3 = new JBColor(Gray._0, Gray._128);
 }

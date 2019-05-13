@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,8 +17,6 @@ package com.siyeh.ig.fixes.errorhandling;
 
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.IGQuickFixesTestCase;
-import com.siyeh.ig.errorhandling.CaughtExceptionImmediatelyRethrownInspection;
-import com.siyeh.ig.errorhandling.EmptyFinallyBlockInspection;
 import com.siyeh.ig.errorhandling.ThrowsRuntimeExceptionInspection;
 
 public class ThrowsRuntimeExceptionInspectionFixTest extends IGQuickFixesTestCase {

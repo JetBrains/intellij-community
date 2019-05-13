@@ -80,7 +80,7 @@ public class PsiAssignmentExpressionImpl extends ExpressionPsiElement implements
   }
 
   @Override
-  public int getChildRole(ASTNode child) {
+  public int getChildRole(@NotNull ASTNode child) {
     LOG.assertTrue(child.getTreeParent() == this);
     if (ElementType.EXPRESSION_BIT_SET.contains(child.getElementType())) {
       if (child == getFirstChildNode()) return ChildRole.LOPERAND;
@@ -110,6 +110,7 @@ public class PsiAssignmentExpressionImpl extends ExpressionPsiElement implements
     }
   }
 
+  @Override
   public String toString() {
     return "PsiAssignmentExpression:" + getText();
   }

@@ -45,7 +45,7 @@ public class MavenExecutionOptions {
   }
 
   public enum FailureMode {
-    FAST("Fail Fast", "--fail-fast"), AT_END("Fail At End", "--fail-at-end"), NEVER("Never Fail", "--fail-never");
+    NOT_SET("Default", ""), FAST("Fail Fast", "--fail-fast"), AT_END("Fail At End", "--fail-at-end"), NEVER("Never Fail", "--fail-never");
 
     private final String myDisplayString;
     private final String myCommandLineOption;

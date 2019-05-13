@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,76 +19,50 @@ import com.intellij.idea.Bombed;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.idea.maven.MavenImportingTestCase;
+import org.jetbrains.idea.maven.model.MavenExplicitProfiles;
 import org.jetbrains.idea.maven.project.MavenProject;
 
 import java.util.Calendar;
 import java.util.Collections;
 import java.util.List;
-import java.util.Comparator;
 
-// do not run on build server
-@Bombed(year = 3000, month = Calendar.FEBRUARY, day = 1)
+@Bombed(user = "cdr", year = 3000, month = Calendar.FEBRUARY, day = 1, description = "do not run on build server")
 public abstract class MavenPerformanceTest extends MavenImportingTestCase {
   @Override
   protected void setUp() throws Exception {
     super.setUp();
     VirtualFile file = LocalFileSystem.getInstance().findFileByPath("C:\\projects\\mvn\\_projects\\geronimo\\pom.xml");
     initProjectsManager(false);
-    myProjectsManager.resetManagedFilesAndProfilesInTests(Collections.singletonList(file), Collections.<String>emptyList());
+    myProjectsManager.resetManagedFilesAndProfilesInTests(Collections.singletonList(file), MavenExplicitProfiles.NONE);
   }
 
-  public void testReading() throws Exception {
-    measure(4000, new Runnable() {
-      @Override
-      public void run() {
-        waitForReadingCompletion();
-      }
-    });
+  public void testReading() {
+    measure(4000, () -> waitForReadingCompletion());
   }
 
-  public void testImporting() throws Exception {
+  public void testImporting() {
     waitForReadingCompletion();
-    measure(8, new Runnable() {
-      @Override
-      public void run() {
-        myProjectsManager.importProjects();
-      }
-    });
+    measure(8, () -> myProjectsManager.importProjects());
   }
 
-  public void testReImporting() throws Exception {
+  public void testReImporting() {
     waitForReadingCompletion();
     myProjectsManager.importProjects();
-    measure(2, new Runnable() {
-      @Override
-      public void run() {
-        myProjectsManager.importProjects();
-      }
-    });
+    measure(2, () -> myProjectsManager.importProjects());
   }
 
-  public void testResolving() throws Exception {
+  public void testResolving() {
     waitForReadingCompletion();
     List<MavenProject> mavenProjects = myProjectsManager.getProjects();
-    Collections.sort(mavenProjects, new Comparator<MavenProject>() {
-      @Override
-      public int compare(MavenProject o1, MavenProject o2) {
-        return o1.getPath().compareToIgnoreCase(o2.getPath());
-      }
-    });
+    Collections.sort(mavenProjects, (o1, o2) -> o1.getPath().compareToIgnoreCase(o2.getPath()));
 
     myProjectsManager.unscheduleAllTasksInTests();
 
     myProjectsManager.scheduleResolveInTests(mavenProjects.subList(0, 100));
-    measure(50000, new Runnable() {
-      @Override
-      public void run() {
-        myProjectsManager.waitForResolvingCompletion();
-      }
-    });
+    measure(50000, () -> myProjectsManager.waitForResolvingCompletion());
   }
 
-  private void measure(long expected, Runnable r) {
+  private static void measure(long expected, Runnable r) {
     //ProfilingUtil.startCPUProfiling();
     long before = System.currentTimeMillis();
     r.run();

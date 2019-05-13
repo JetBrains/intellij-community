@@ -1,5 +1,5 @@
 class Test {
-  protected <T> void applyChanges(final T variable) {
+  protected <T extends java.util.List<K>, K> void applyChanges(final T variable) {
                  new Runnable() {
                      @Override
                      public void run() {

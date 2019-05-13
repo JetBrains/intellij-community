@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package com.intellij.psi;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.util.Condition;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.Processor;
 import com.intellij.util.SmartList;
@@ -100,6 +101,46 @@ public abstract class PsiElementFinder {
   }
 
   /**
+   * Returns the filter to exclude classes, for example derived classes.
+   *
+   * @param scope the scope in which classes are searched.
+   * @return the filter to use, or null if no additional filtering is necessary
+   */
+  @Nullable
+  public Condition<PsiClass> getClassesFilter(@NotNull GlobalSearchScope scope) {
+    return null;
+  }
+
+  /**
+   * Returns a list of files belonging to the specified package which are not located in any of the package directories.
+   *
+   * @param psiPackage the package to return the list of files for.
+   * @param scope      the scope in which files are searched.
+   * @return the list of files.
+   * @since 14.1
+   */
+  @NotNull
+  public PsiFile[] getPackageFiles(@NotNull PsiPackage psiPackage, @NotNull GlobalSearchScope scope) {
+    return PsiFile.EMPTY_ARRAY;
+  }
+
+  /**
+   * Returns the filter to use for filtering the list of files in the directories belonging to a package to exclude files
+   * that actually belong to a different package. (For example, in Kotlin the package of a file is determined by its
+   * package statement and not by its location in the directory structure, so the files which have a differring package
+   * statement need to be excluded.)
+   *
+   * @param psiPackage the package for which the list of files is requested.
+   * @param scope      the scope in which children are requested.
+   * @return the filter to use, or null if no additional filtering is necessary.
+   * @since 14.1
+   */
+  @Nullable
+  public Condition<PsiFile> getPackageFilesFilter(@NotNull PsiPackage psiPackage, @NotNull GlobalSearchScope scope) {
+    return null;
+  }
+
+  /**
    * A method to optimize resolve (to only search classes in a package which might be there)
    */
   @NotNull
@@ -113,14 +154,23 @@ public abstract class PsiElementFinder {
       return Collections.emptySet();
     }
 
-    final HashSet<String> names = new HashSet<String>();
+    final HashSet<String> names = new HashSet<>();
     for (PsiClass aClass : classes) {
-      ContainerUtil.addIfNotNull(aClass.getName(), names);
+      ContainerUtil.addIfNotNull(names, aClass.getName());
     }
     return names;
   }
 
-  public boolean processPackageDirectories(@NotNull PsiPackage psiPackage, @NotNull GlobalSearchScope scope, @NotNull Processor<PsiDirectory> consumer) {
+  public boolean processPackageDirectories(@NotNull PsiPackage psiPackage,
+                                           @NotNull GlobalSearchScope scope,
+                                           @NotNull Processor<PsiDirectory> consumer) {
+    return processPackageDirectories(psiPackage, scope, consumer, false);
+  }
+
+  public boolean processPackageDirectories(@NotNull PsiPackage psiPackage,
+                                           @NotNull GlobalSearchScope scope,
+                                           @NotNull Processor<PsiDirectory> consumer,
+                                           boolean includeLibrarySources) {
     return true;
   }
 
@@ -146,13 +196,13 @@ public abstract class PsiElementFinder {
     if (classes.length == 1) {
       return className.equals(classes[0].getName()) ? classes : PsiClass.EMPTY_ARRAY;
     }
-    List<PsiClass> foundClasses = new SmartList<PsiClass>();
+    List<PsiClass> foundClasses = new SmartList<>();
     for (PsiClass psiClass : classes) {
       if (className.equals(psiClass.getName())) {
         foundClasses.add(psiClass);
       }
     }
-    return foundClasses.isEmpty() ? PsiClass.EMPTY_ARRAY : foundClasses.toArray(new PsiClass[foundClasses.size()]);
+    return foundClasses.isEmpty() ? PsiClass.EMPTY_ARRAY : foundClasses.toArray(PsiClass.EMPTY_ARRAY);
   }
 
 }

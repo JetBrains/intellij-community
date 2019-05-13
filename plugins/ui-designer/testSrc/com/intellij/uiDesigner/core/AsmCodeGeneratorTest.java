@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,9 +16,11 @@
 package com.intellij.uiDesigner.core;
 
 import com.intellij.compiler.instrumentation.InstrumentationClassFinder;
+import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.PluginPathManager;
+import com.intellij.openapi.components.BaseState;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.ui.components.JBTabbedPane;
@@ -28,11 +30,15 @@ import com.intellij.uiDesigner.compiler.NestedFormLoader;
 import com.intellij.uiDesigner.compiler.Utils;
 import com.intellij.uiDesigner.lw.CompiledClassPropertiesProvider;
 import com.intellij.uiDesigner.lw.LwRootContainer;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.PathUtil;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.UIUtilities;
+import com.sun.tools.javac.Main;
 import gnu.trove.TIntObjectHashMap;
 import junit.framework.TestCase;
-import org.jetbrains.asm4.ClassWriter;
+import kotlin.reflect.KDeclarationContainer;
+import org.jetbrains.org.objectweb.asm.ClassWriter;
 
 import javax.swing.*;
 import javax.swing.border.EtchedBorder;
@@ -45,10 +51,10 @@ import java.lang.reflect.Method;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.charset.Charset;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
+import java.util.List;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * @author yole
@@ -64,18 +70,22 @@ public class AsmCodeGeneratorTest extends TestCase {
 
     final String swingPath = PathUtil.getJarPathForClass(AbstractButton.class);
 
-    java.util.List<URL> cp = new ArrayList<URL>();
+    List<URL> cp = new ArrayList<>();
     appendPath(cp, JBTabbedPane.class);
     appendPath(cp, TIntObjectHashMap.class);
     appendPath(cp, UIUtil.class);
+    appendPath(cp, UIUtilities.class);
     appendPath(cp, SystemInfoRt.class);
     appendPath(cp, ApplicationManager.class);
     appendPath(cp, PathManager.getResourceRoot(this.getClass(), "/messages/UIBundle.properties"));
     appendPath(cp, PathManager.getResourceRoot(this.getClass(), "/RuntimeBundle.properties"));
-    appendPath(cp, GridLayoutManager.class); // forms_rt
+    appendPath(cp, GridLayoutManager.class); // intellij.java.guiForms.rt
+    appendPath(cp, DataProvider.class);
+    appendPath(cp, BaseState.class);
+    appendPath(cp, KDeclarationContainer.class);
     myClassFinder = new MyClassFinder(
       new URL[] {new File(swingPath).toURI().toURL()},
-      cp.toArray(new URL[cp.size()])
+      cp.toArray(new URL[0])
     );
   }
 
@@ -90,13 +100,17 @@ public class AsmCodeGeneratorTest extends TestCase {
 
   @Override
   protected void tearDown() throws Exception {
-    myNestedFormLoader = null;
-    final MyClassFinder classFinder = myClassFinder;
-    if (classFinder != null) {
-      classFinder.releaseResources();
-      myClassFinder = null;
+    try {
+      myNestedFormLoader = null;
+      final MyClassFinder classFinder = myClassFinder;
+      if (classFinder != null) {
+        classFinder.releaseResources();
+        myClassFinder = null;
+      }
     }
-    super.tearDown();
+    finally {
+      super.tearDown();
+    }
   }
 
   private AsmCodeGenerator initCodeGenerator(final String formFileName, final String className) throws Exception {
@@ -108,25 +122,25 @@ public class AsmCodeGeneratorTest extends TestCase {
     String tmpPath = FileUtil.getTempDirectory();
     String formPath = testDataPath + formFileName;
     String javaPath = testDataPath + className + ".java";
-    com.sun.tools.javac.Main.compile(new String[] { "-d", tmpPath, javaPath } );
+    final int rc = Main.compile(new String[]{"-d", tmpPath, javaPath});
+    
+    assertEquals(0, rc);
 
-    String classPath = tmpPath + "/" + className + ".class";
+    final String classPath = tmpPath + "/" + className + ".class";
+    final File classFile = new File(classPath);
+    
+    assertTrue(classFile.exists());
+    
     final LwRootContainer rootContainer = loadFormData(formPath);
-    final AsmCodeGenerator codeGenerator = new AsmCodeGenerator(rootContainer, myClassFinder, myNestedFormLoader, false,
-                                                                new ClassWriter(ClassWriter.COMPUTE_FRAMES));
-    final FileInputStream classStream = new FileInputStream(classPath);
+    final AsmCodeGenerator codeGenerator = new AsmCodeGenerator(rootContainer, myClassFinder, myNestedFormLoader, false, new ClassWriter(ClassWriter.COMPUTE_FRAMES));
+    final FileInputStream classStream = new FileInputStream(classFile);
     try {
       codeGenerator.patchClass(classStream);
     }
     finally {
       classStream.close();
-      FileUtil.delete(new File(classPath));
-      final File[] inners = new File(tmpPath).listFiles(new FilenameFilter() {
-        @Override
-        public boolean accept(File dir, String name) {
-          return name.startsWith(className + "$") && name.endsWith(".class");
-        }
-      });
+      FileUtil.delete(classFile);
+      final File[] inners = new File(tmpPath).listFiles((dir, name) -> name.startsWith(className + "$") && name.endsWith(".class"));
       if (inners != null) {
         for (File file : inners) FileUtil.delete(file);
       }
@@ -224,16 +238,17 @@ public class AsmCodeGeneratorTest extends TestCase {
     return ethalon.isAssignableFrom(object.getClass());
   }
 
-  private static Object invokeMethod(Object obj, String methodName) throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
-    return invokeMethod(obj, methodName, new Class[0], new Object[0]);
+  private static Object invokeMethod(Object obj, String methodName) throws InvocationTargetException, IllegalAccessException {
+    return invokeMethod(obj, methodName, ArrayUtil.EMPTY_CLASS_ARRAY, ArrayUtil.EMPTY_OBJECT_ARRAY);
   }
 
-  private static Object invokeMethod(Object obj, String methodName, Class[] params, Object[] args) throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
+  private static Object invokeMethod(Object obj, String methodName, Class[] params, Object[] args) throws
+                                                                                                   InvocationTargetException, IllegalAccessException {
     final Method method = findMethod(obj.getClass(), methodName, params);
     return method.invoke(obj, args);
   }
 
-  private static Method findMethod(Class<? extends Object> aClass, String methodName, Class[] params) {
+  private static Method findMethod(Class<?> aClass, String methodName, Class[] params) {
     try {
       final Method method = aClass.getDeclaredMethod(methodName, params);
       method.setAccessible(true);
@@ -259,7 +274,7 @@ public class AsmCodeGeneratorTest extends TestCase {
   public void testCardLayoutShow() throws Exception {
     JComponent rootComponent = getInstrumentedRootComponent("TestCardLayoutShow.form", "BindingTest");
     assertTrue(rootComponent.getLayout() instanceof CardLayout);
-    assertEquals(rootComponent.getComponentCount(), 2);
+    assertThat(rootComponent.getComponentCount()).isEqualTo(2);
     assertFalse(rootComponent.getComponent(0).isVisible());
     assertTrue(rootComponent.getComponent(1).isVisible());
   }
@@ -439,7 +454,7 @@ public class AsmCodeGeneratorTest extends TestCase {
   private static class MyClassFinder extends InstrumentationClassFinder {
     private static final String TEST_PROPERTY_CONTENT = "test=Test Value\nmnemonic=Mne&monic";
     private final byte[] myTestProperties = Charset.defaultCharset().encode(TEST_PROPERTY_CONTENT).array();
-    private final Map<String, byte[]> myClassData = new HashMap<String, byte[]>();
+    private final Map<String, byte[]> myClassData = new HashMap<>();
 
     private MyClassFinder(URL[] platformUrls, URL[] classpathUrls) {
       super(platformUrls, classpathUrls);
@@ -449,6 +464,7 @@ public class AsmCodeGeneratorTest extends TestCase {
       myClassData.put(name.replace('.', '/'), bytes);
     }
 
+    @Override
     protected InputStream lookupClassBeforeClasspath(String internalClassName) {
       final byte[] bytes = myClassData.get(internalClassName);
       if (bytes != null) {
@@ -457,6 +473,7 @@ public class AsmCodeGeneratorTest extends TestCase {
       return null;
     }
 
+    @Override
     public InputStream getResourceAsStream(String name) throws IOException {
       if (name.equals("TestProperties.properties")) {
         return new ByteArrayInputStream(myTestProperties, 0, TEST_PROPERTY_CONTENT.length());
@@ -466,7 +483,7 @@ public class AsmCodeGeneratorTest extends TestCase {
   }
 
   private class MyNestedFormLoader implements NestedFormLoader {
-    private final Map<String, String> myFormMap = new HashMap<String, String>();
+    private final Map<String, String> myFormMap = new HashMap<>();
 
     public void registerNestedForm(String formName, String fileName) {
       myFormMap.put(formName, fileName);

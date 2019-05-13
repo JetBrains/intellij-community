@@ -1,0 +1,11 @@
+<html>
+<body>
+Reports if trivial lambda expression is used where there's an alternative method which behaves the same way, but
+accepts a concrete value instead of a lambda.
+<p>
+  For example, <code>Optional.orElseGet(() -> null)</code> can be replaced with <code>Optional.orElse(null)</code>.
+</p>
+<!-- tooltip end -->
+<p><small>New in 2017.1</small></p>
+</body>
+</html>

@@ -15,9 +15,13 @@
  */
 package com.intellij.lang.ant.config.execution;
 
+import org.jetbrains.annotations.NotNull;
+
 import javax.swing.*;
 
 public interface AntOutputView {
+  String getId();
+
   Object addMessage(AntMessage message);
   void addJavacMessage(AntMessage message, String url);
   void addException(AntMessage exception, boolean showFullTrace);
@@ -28,7 +32,7 @@ public interface AntOutputView {
   void finishTarget();
   void finishTask();
 
-  Object getData(String dataId);
+  Object getData(@NotNull String dataId);
 
   void buildFailed(AntMessage message);
 

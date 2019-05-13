@@ -19,6 +19,7 @@ import com.intellij.util.containers.hash.HashSet;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
+import java.util.Locale;
 import java.util.Set;
 
 @SuppressWarnings({"ALL"})
@@ -26,10 +27,13 @@ public class Transformation {
   
   @Nullable
   public  String transform(@Nullable String word) {
-    if (word == null || word.trim().length() < 3) {
+    if (word == null) return null;
+    word = word.trim();
+    if (word.length() < 3) {
       return null;
     }
-    return word.trim().toLowerCase();
+
+    return word.toLowerCase(Locale.ENGLISH);
   }
 
   @Nullable

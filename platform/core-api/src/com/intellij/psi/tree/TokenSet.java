@@ -1,49 +1,39 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.tree;
 
 import com.intellij.openapi.diagnostic.LogUtil;
+import com.intellij.psi.TokenType;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Stream;
 
 /**
  * A set of element types.
  */
 public class TokenSet {
-  public static final TokenSet EMPTY = new TokenSet(Short.MAX_VALUE, (short)0) {
-    @Override public boolean contains(IElementType t) { return false; }
-  };
+  public static final TokenSet EMPTY = new TokenSet(Short.MAX_VALUE, (short)0, null);
+  public static final TokenSet ANY = forAllMatching(IElementType.TRUE);
+  public static final TokenSet WHITE_SPACE = doCreate(TokenType.WHITE_SPACE);
 
   private final short myShift;
   private final short myMax;
-  private final short myTop;
   private final long[] myWords;
+  @Nullable private final IElementType.Predicate myOrCondition;
   private volatile IElementType[] myTypes;
 
-  private TokenSet(short shift, short max) {
+  private TokenSet(short shift, short max, @Nullable IElementType.Predicate orCondition) {
     myShift = shift;
     myMax = max;
-    myTop = IElementType.getAllocatedTypesCount();
     final int size = (max >> 6) + 1 - shift;
     myWords = size > 0 ? new long[size] : ArrayUtil.EMPTY_LONG_ARRAY;
+    myOrCondition = orCondition;
   }
 
   private boolean get(int index) {
@@ -57,10 +47,11 @@ public class TokenSet {
    * @param t the element type to search for.
    * @return true if the element type is found in the set, false otherwise.
    */
+  @Contract("null -> false")
   public boolean contains(@Nullable IElementType t) {
     if (t == null) return false;
     final short i = t.getIndex();
-    return 0 <= i && i <= myMax && get(i);
+    return 0 <= i && i <= myMax && get(i) || myOrCondition != null && myOrCondition.matches(t);
   }
 
   /**
@@ -70,6 +61,11 @@ public class TokenSet {
    */
   @NotNull
   public IElementType[] getTypes() {
+    if (myOrCondition != null) {
+      // don't cache, since new element types matching the given condition can be registered at any moment
+      return IElementType.enumerate(this::contains);
+    }
+
     IElementType[] types = myTypes;
 
     if (types == null) {
@@ -77,7 +73,7 @@ public class TokenSet {
         types = IElementType.EMPTY_ARRAY;
       }
       else {
-        List<IElementType> list = new ArrayList<IElementType>();
+        List<IElementType> list = new ArrayList<>();
         for (short i = (short)Math.max(1, myShift << 6); i <= myMax; i++) {
           if (!get(i)) continue;
           IElementType type = IElementType.find(i);
@@ -85,7 +81,7 @@ public class TokenSet {
             list.add(type);
           }
         }
-        types = list.toArray(new IElementType[list.size()]);
+        types = list.toArray(IElementType.EMPTY_ARRAY);
       }
       myTypes = types;
     }
@@ -107,7 +103,14 @@ public class TokenSet {
   @NotNull
   public static TokenSet create(@NotNull IElementType... types) {
     if (types.length == 0) return EMPTY;
+    if (types.length == 1 && types[0] == TokenType.WHITE_SPACE) {
+      return WHITE_SPACE;
+    }
+    return doCreate(types);
+  }
 
+  @NotNull
+  private static TokenSet doCreate(@NotNull IElementType... types) {
     short min = Short.MAX_VALUE;
     short max = 0;
     for (IElementType type : types) {
@@ -119,8 +122,8 @@ public class TokenSet {
       }
     }
 
-    final short shift = (short)(min >> 6);
-    final TokenSet set = new TokenSet(shift, max);
+    short shift = (short)(min >> 6);
+    TokenSet set = new TokenSet(shift, max, null);
     for (IElementType type : types) {
       if (type != null) {
         final short index = type.getIndex();
@@ -129,6 +132,13 @@ public class TokenSet {
       }
     }
     return set;
+  }
+
+  /**
+   * @return a token set containing all element types satisfying the given condition, including ones registered after this set creation
+   */
+  public static TokenSet forAllMatching(@NotNull IElementType.Predicate condition) {
+    return new TokenSet(Short.MAX_VALUE, (short)0, condition);
   }
 
   /**
@@ -141,14 +151,22 @@ public class TokenSet {
   public static TokenSet orSet(@NotNull TokenSet... sets) {
     if (sets.length == 0) return EMPTY;
 
+    List<IElementType.Predicate> orConditions = new ArrayList<>();
+    ContainerUtil.addIfNotNull(orConditions, sets[0].myOrCondition);
+
     short shift = sets[0].myShift;
     short max = sets[0].myMax;
     for (int i = 1; i < sets.length; i++) {
       if (shift > sets[i].myShift) shift = sets[i].myShift;
       if (max < sets[i].myMax) max = sets[i].myMax;
+      ContainerUtil.addIfNotNull(orConditions, sets[i].myOrCondition);
     }
 
-    final TokenSet newSet = new TokenSet(shift, max);
+    IElementType.Predicate disjunction =
+      orConditions.isEmpty() ? null :
+      orConditions.size() == 1 ? orConditions.get(0) :
+      new OrPredicate(orConditions);
+    TokenSet newSet = new TokenSet(shift, max, disjunction);
     for (TokenSet set : sets) {
       final int shiftDiff = set.myShift - newSet.myShift;
       for (int i = 0; i < set.myWords.length; i++) {
@@ -167,11 +185,19 @@ public class TokenSet {
    */
   @NotNull
   public static TokenSet andSet(@NotNull TokenSet a, @NotNull TokenSet b) {
-    final TokenSet newSet = new TokenSet((short)Math.min(a.myShift, b.myShift), (short)Math.max(a.myMax, b.myMax));
+    List<IElementType.Predicate> orConditions = new ArrayList<>();
+    ContainerUtil.addIfNotNull(orConditions, a.myOrCondition);
+    ContainerUtil.addIfNotNull(orConditions, b.myOrCondition);
+
+    IElementType.Predicate conjunction =
+      orConditions.isEmpty() ? null :
+      orConditions.size() == 1 ? orConditions.get(0) :
+      t -> a.myOrCondition.matches(t) && b.myOrCondition.matches(t);
+    TokenSet newSet = new TokenSet((short)Math.min(a.myShift, b.myShift), (short)Math.max(a.myMax, b.myMax), conjunction);
     for (int i = 0; i < newSet.myWords.length; i++) {
       final int ai = newSet.myShift - a.myShift + i;
       final int bi = newSet.myShift - b.myShift + i;
-      newSet.myWords[i] = (0 <= ai && ai < a.myWords.length ? a.myWords[ai] : 0l) & (0 <= bi && bi < b.myWords.length ? b.myWords[bi] : 0l);
+      newSet.myWords[i] = (0 <= ai && ai < a.myWords.length ? a.myWords[ai] : 0L) & (0 <= bi && bi < b.myWords.length ? b.myWords[bi] : 0L);
     }
     return newSet;
   }
@@ -185,32 +211,35 @@ public class TokenSet {
    */
   @NotNull
   public static TokenSet andNot(@NotNull TokenSet a, @NotNull TokenSet b) {
-    final TokenSet newSet = new TokenSet((short)Math.min(a.myShift, b.myShift), (short)Math.max(a.myMax, b.myMax));
+    IElementType.Predicate difference = a.myOrCondition == null ? null : e -> !b.contains(e) && a.myOrCondition.matches(e);
+    TokenSet newSet = new TokenSet((short)Math.min(a.myShift, b.myShift), (short)Math.max(a.myMax, b.myMax), difference);
     for (int i = 0; i < newSet.myWords.length; i++) {
       final int ai = newSet.myShift - a.myShift + i;
       final int bi = newSet.myShift - b.myShift + i;
-      newSet.myWords[i] = (0 <= ai && ai < a.myWords.length ? a.myWords[ai] : 0l) & ~(0 <= bi && bi < b.myWords.length ? b.myWords[bi] : 0l);
+      newSet.myWords[i] = (0 <= ai && ai < a.myWords.length ? a.myWords[ai] : 0L) & ~(0 <= bi && bi < b.myWords.length ? b.myWords[bi] : 0L);
     }
     return newSet;
   }
 
-  /** @deprecated please use {@linkplain #andNot(TokenSet, TokenSet)} (to remove in IDEA 13) */
-  @SuppressWarnings("UnusedDeclaration")
-  @NotNull
-  public TokenSet minus(@NotNull TokenSet t) {
-    return andNot(this, t);
-  }
+  private static class OrPredicate implements IElementType.Predicate {
+    private final IElementType.Predicate[] myComponents;
 
-  /** @deprecated please use {@linkplain IElementType#enumerate(com.intellij.psi.tree.IElementType.Predicate)} (to remove in IDEA 13) */
-  @SuppressWarnings("UnusedDeclaration")
-  @NotNull
-  public static TokenSet not(@NotNull TokenSet set) {
-    final TokenSet newSet = new TokenSet((short)0, set.myTop);
-    for (int i = 0; i < newSet.myWords.length; i++) {
-      int wordIndex = i - set.myShift;
-      long word = wordIndex >= 0 && wordIndex < set.myWords.length ? set.myWords[wordIndex] : 0;
-      newSet.myWords[i] = ~word;
+    OrPredicate(List<IElementType.Predicate> components) {
+      myComponents = components
+        .stream()
+        .flatMap(p -> p instanceof OrPredicate ? Arrays.stream(((OrPredicate)p).myComponents) : Stream.of(p))
+        .distinct()
+        .toArray(IElementType.Predicate[]::new);
     }
-    return newSet;
+
+    @Override
+    public boolean matches(@NotNull IElementType t) {
+      for (IElementType.Predicate component : myComponents) {
+        if (component.matches(t)) {
+          return true;
+        }
+      }
+      return false;
+    }
   }
 }

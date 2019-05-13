@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,134 +15,25 @@
  */
 package com.intellij.packaging.impl.compiler;
 
-import com.intellij.facet.Facet;
-import com.intellij.facet.FacetManager;
-import com.intellij.facet.FacetRootsProvider;
 import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.application.Result;
-import com.intellij.openapi.compiler.CompileContext;
-import com.intellij.openapi.compiler.CompilerMessageCategory;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.JarFileSystem;
-import com.intellij.openapi.vfs.VfsUtilCore;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.artifacts.ArtifactManager;
-import com.intellij.packaging.elements.ComplexPackagingElement;
-import com.intellij.packaging.elements.PackagingElement;
-import com.intellij.packaging.elements.PackagingElementResolvingContext;
-import com.intellij.packaging.impl.artifacts.ArtifactUtil;
-import com.intellij.packaging.impl.artifacts.PackagingElementPath;
-import com.intellij.packaging.impl.artifacts.PackagingElementProcessor;
-import com.intellij.packaging.impl.elements.ArtifactPackagingElement;
-import com.intellij.packaging.impl.elements.FileOrDirectoryCopyPackagingElement;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
-import gnu.trove.THashMap;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.ParametersMessage.TargetTypeBuildScope;
 import org.jetbrains.jps.incremental.artifacts.ArtifactBuildTargetType;
 
-import java.io.BufferedInputStream;
-import java.io.File;
-import java.io.IOException;
-import java.util.*;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipFile;
+import java.util.List;
 
 /**
  * @author nik
  */
 public class ArtifactCompilerUtil {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.packaging.impl.compiler.ArtifactCompilerUtil");
-
   private ArtifactCompilerUtil() {
   }
 
-  @Nullable
-  public static BufferedInputStream getJarEntryInputStream(VirtualFile sourceFile, final CompileContext context) throws IOException {
-    final String fullPath = sourceFile.getPath();
-    final int jarEnd = fullPath.indexOf(JarFileSystem.JAR_SEPARATOR);
-    LOG.assertTrue(jarEnd != -1, fullPath);
-    String pathInJar = fullPath.substring(jarEnd + JarFileSystem.JAR_SEPARATOR.length());
-    String jarPath = fullPath.substring(0, jarEnd);
-    final ZipFile jarFile = new ZipFile(new File(FileUtil.toSystemDependentName(jarPath)));
-    final ZipEntry entry = jarFile.getEntry(pathInJar);
-    if (entry == null) {
-      context.addMessage(CompilerMessageCategory.ERROR, "Cannot extract '" + pathInJar + "' from '" + jarFile.getName() + "': entry not found", null, -1, -1);
-      return null;
-    }
-
-    return new BufferedInputStream(jarFile.getInputStream(entry)) {
-      @Override
-      public void close() throws IOException {
-        super.close();
-        jarFile.close();
-      }
-    };
-  }
-
-  public static File getJarFile(VirtualFile jarEntry) {
-    String fullPath = jarEntry.getPath();
-    return new File(FileUtil.toSystemDependentName(fullPath.substring(fullPath.indexOf(JarFileSystem.JAR_SEPARATOR))));
-  }
-
-
-  @NotNull
-  public static Set<VirtualFile> getArtifactOutputsContainingSourceFiles(final @NotNull Project project) {
-    final List<VirtualFile> allOutputs = new ArrayList<VirtualFile>();
-    for (Artifact artifact : ArtifactManager.getInstance(project).getArtifacts()) {
-      ContainerUtil.addIfNotNull(artifact.getOutputFile(), allOutputs);
-    }
-
-    final Set<VirtualFile> roots = new HashSet<VirtualFile>();
-    final PackagingElementResolvingContext context = ArtifactManager.getInstance(project).getResolvingContext();
-    for (Artifact artifact : ArtifactManager.getInstance(project).getArtifacts()) {
-      ArtifactUtil.processPackagingElements(artifact, null, new PackagingElementProcessor<PackagingElement<?>>() {
-        @Override
-        public boolean shouldProcessSubstitution(ComplexPackagingElement<?> element) {
-          return !(element instanceof ArtifactPackagingElement);
-        }
-
-        @Override
-        public boolean process(@NotNull PackagingElement<?> element, @NotNull PackagingElementPath path) {
-          if (element instanceof FileOrDirectoryCopyPackagingElement<?>) {
-            final VirtualFile file = ((FileOrDirectoryCopyPackagingElement)element).findFile();
-            if (file != null) {
-              roots.add(file);
-            }
-          }
-          return true;
-        }
-      }, context, true);
-    }
-
-    final Module[] modules = ModuleManager.getInstance(project).getModules();
-    for (Module module : modules) {
-      final Facet[] facets = FacetManager.getInstance(module).getAllFacets();
-      for (Facet facet : facets) {
-        if (facet instanceof FacetRootsProvider) {
-          roots.addAll(((FacetRootsProvider)facet).getFacetRoots());
-        }
-      }
-    }
-
-    final Set<VirtualFile> affectedOutputPaths = new HashSet<VirtualFile>();
-    for (VirtualFile output : allOutputs) {
-      for (VirtualFile root : roots) {
-        if (VfsUtilCore.isAncestor(output, root, false)) {
-          affectedOutputPaths.add(output);
-        }
-      }
-    }
-    return affectedOutputPaths;
-  }
 
   public static boolean containsArtifacts(List<TargetTypeBuildScope> scopes) {
     for (TargetTypeBuildScope scope : scopes) {
@@ -154,22 +45,15 @@ public class ArtifactCompilerUtil {
   }
 
   public static MultiMap<String, Artifact> createOutputToArtifactMap(final Project project) {
-    final MultiMap<String, Artifact> result = new MultiMap<String, Artifact>() {
-      @Override
-      protected Map<String, Collection<Artifact>> createMap() {
-        return new THashMap<String, Collection<Artifact>>(FileUtil.PATH_HASHING_STRATEGY);
-      }
-    };
-    new ReadAction() {
-      protected void run(final Result r) {
-        for (Artifact artifact : ArtifactManager.getInstance(project).getArtifacts()) {
-          String outputPath = artifact.getOutputFilePath();
-          if (!StringUtil.isEmpty(outputPath)) {
-            result.putValue(outputPath, artifact);
-          }
+    final MultiMap<String, Artifact> result = MultiMap.create(FileUtil.PATH_HASHING_STRATEGY);
+    ReadAction.run(() -> {
+      for (Artifact artifact : ArtifactManager.getInstance(project).getArtifacts()) {
+        String outputPath = artifact.getOutputFilePath();
+        if (!StringUtil.isEmpty(outputPath)) {
+          result.putValue(outputPath, artifact);
         }
       }
-    }.execute();
+    });
 
 
     return result;

@@ -24,7 +24,6 @@ import java.awt.*;
 
 /**
  * @author Denis Zhdanov
- * @since 11/8/12 12:58 PM
  */
 public class CalloutBorder implements Border {
 
@@ -75,7 +74,7 @@ public class CalloutBorder implements Border {
 
   @Override
   public Insets getBorderInsets(Component c) {
-    return INSETS;
+    return (Insets)INSETS.clone();
   }
 
   @Override

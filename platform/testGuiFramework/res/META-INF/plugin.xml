@@ -1,0 +1,32 @@
+<idea-plugin>
+
+  <id>com.intellij.testGuiFramework</id>
+  <name>Test GUI Framework</name>
+  <vendor>JetBrains</vendor>
+
+  <depends>com.intellij.modules.lang</depends>
+  <description>This plugin helps testing IDEA and other plugins via GUI.</description>
+
+  <idea-version since-build="173"/>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <appStarter implementation="com.intellij.testGuiFramework.impl.GuiTestStarter"/>
+  </extensions>
+  <extensionPoints>
+    <extensionPoint qualifiedName="com.intellij.guiRecorderListener" interface="com.intellij.testGuiFramework.recorder.GuiRecorderListener"/>
+    <extensionPoint qualifiedName="com.intellij.generatedCodeReceiver" interface="com.intellij.testGuiFramework.recorder.GeneratedCodeReceiver"/>
+  </extensionPoints>
+
+  <actions>
+    <action class="com.intellij.testGuiFramework.recorder.actions.StartPauseRecAction" id="gui.recorder.startStopRecAction"
+            description="Start/Stop GUI Recorder" text="Start/Stop GUI Recorder">
+      <!--TODO: add shortcuts for Windows and Linux-->
+      <keyboard-shortcut first-keystroke="control alt meta S" keymap="$default"/>
+    </action>
+    <action class="com.intellij.testGuiFramework.recorder.actions.PerformScriptAction" id="gui.recorder.PerformScriptAction"
+            description="Perform Script Action" text="Perform Script Action"/>
+    <action class="com.intellij.testGuiFramework.recorder.actions.ShowGuiEditorWindowAction" id="gui.recorder.ShowLightEditorWindowAction"
+            description="Show GUI script editor" text="Show GUI script editor"/>
+  </actions>
+
+</idea-plugin>

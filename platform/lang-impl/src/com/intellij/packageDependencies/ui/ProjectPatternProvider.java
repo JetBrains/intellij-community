@@ -14,10 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * User: anna
- * Date: 16-Jan-2008
- */
 package com.intellij.packageDependencies.ui;
 
 import com.intellij.icons.AllIcons;
@@ -27,11 +23,14 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.packageDependencies.DependencyUISettings;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.search.scope.packageSet.FilePatternPackageSet;
 import com.intellij.psi.search.scope.packageSet.PackageSet;
@@ -46,27 +45,32 @@ public class ProjectPatternProvider extends PatternDialectProvider {
 
   @NonNls public static final String FILE = "file";
 
-  private static final Logger LOG = Logger.getInstance("#" + ProjectPatternProvider.class.getName());
+  private static final Logger LOG = Logger.getInstance(ProjectPatternProvider.class);
 
 
+  @Override
   public TreeModel createTreeModel(final Project project, final Marker marker) {
     return FileTreeModelBuilder.createTreeModel(project, false, marker);
   }
 
+  @Override
   public TreeModel createTreeModel(final Project project, final Set<PsiFile> deps, final Marker marker,
                                    final DependenciesPanel.DependencyPanelSettings settings) {
     return FileTreeModelBuilder.createTreeModel(project, false, deps, marker, settings);
   }
 
+  @Override
   public String getDisplayName() {
     return IdeBundle.message("title.project");
   }
 
+  @Override
   @NotNull
   public String getShortName() {
     return FILE;
   }
 
+  @Override
   public AnAction[] createActions(Project project, final Runnable update) {
     if (ProjectViewDirectoryHelper.getInstance(project).supportsHideEmptyMiddlePackages()) {
       return new AnAction[]{new CompactEmptyMiddlePackagesAction(update)};
@@ -74,12 +78,12 @@ public class ProjectPatternProvider extends PatternDialectProvider {
     return AnAction.EMPTY_ARRAY;
   }
 
+  @Override
   @Nullable
   public PackageSet createPackageSet(final PackageDependenciesNode node, final boolean recursively) {
     if (node instanceof ModuleGroupNode) {
       if (!recursively) return null;
-      @NonNls final String modulePattern = "group:" + ((ModuleGroupNode)node).getModuleGroup().toString();
-      return new FilePatternPackageSet(modulePattern, "*//*");
+      return new FilePatternPackageSet(getGroupModulePattern((ModuleGroupNode)node), "*//*");
     }
     else if (node instanceof ModuleNode) {
       if (!recursively) return null;
@@ -97,7 +101,10 @@ public class ProjectPatternProvider extends PatternDialectProvider {
           pattern += recursively ? "*/" : "*";
         }
       }
-      return new FilePatternPackageSet(getModulePattern(node), pattern);
+      final VirtualFile vDir = ((DirectoryNode)node).getDirectory();
+      final PsiElement psiElement = node.getPsiElement();
+      final Module module = psiElement != null ? ModuleUtilCore.findModuleForFile(vDir, psiElement.getProject()) : null;
+      return new FilePatternPackageSet(module != null ? module.getName() : null, pattern);
     }
     else if (node instanceof FileNode) {
       if (recursively) return null;
@@ -114,6 +121,7 @@ public class ProjectPatternProvider extends PatternDialectProvider {
     return null;
   }
 
+  @Override
   public Icon getIcon() {
     return AllIcons.General.ProjectTab;
   }
@@ -127,18 +135,15 @@ public class ProjectPatternProvider extends PatternDialectProvider {
       myUpdate = update;
     }
 
-    public boolean isSelected(AnActionEvent event) {
+    @Override
+    public boolean isSelected(@NotNull AnActionEvent event) {
       return DependencyUISettings.getInstance().UI_COMPACT_EMPTY_MIDDLE_PACKAGES;
     }
 
-    public void setSelected(AnActionEvent event, boolean flag) {
+    @Override
+    public void setSelected(@NotNull AnActionEvent event, boolean flag) {
       DependencyUISettings.getInstance().UI_COMPACT_EMPTY_MIDDLE_PACKAGES = flag;
       myUpdate.run();
-    }
-
-    public void update(final AnActionEvent e) {
-      super.update(e);
-      e.getPresentation().setVisible(DependencyUISettings.getInstance().SCOPE_TYPE == FILE);
     }
   }
 }

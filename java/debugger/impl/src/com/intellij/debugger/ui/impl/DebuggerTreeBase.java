@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,17 +20,15 @@
  */
 package com.intellij.debugger.ui.impl;
 
+import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.ui.impl.watch.DebuggerTreeNodeImpl;
 import com.intellij.debugger.ui.impl.watch.NodeDescriptorImpl;
 import com.intellij.debugger.ui.impl.watch.ValueDescriptorImpl;
 import com.intellij.ide.dnd.aware.DnDAwareTree;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.JDOMUtil;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.ui.ScreenUtil;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.util.text.StringTokenizer;
@@ -169,8 +167,6 @@ public class DebuggerTreeBase extends DnDAwareTree implements Disposable {
       return myCurrentTooltip;
     }
 
-    myCurrentTooltipNode = node;
-
     final String toolTipText = getTipText(node);
     if (toolTipText == null) {
       return null;
@@ -231,6 +227,7 @@ public class DebuggerTreeBase extends DnDAwareTree implements Disposable {
     toolTip.setPreferredSize(tipRectangle.getSize());
 
     myCurrentTooltip = toolTip;
+    myCurrentTooltipNode = node;
 
     return myCurrentTooltip;
   }
@@ -239,24 +236,11 @@ public class DebuggerTreeBase extends DnDAwareTree implements Disposable {
   private String getTipText(DebuggerTreeNodeImpl node) {
     NodeDescriptorImpl descriptor = node.getDescriptor();
     if (descriptor instanceof ValueDescriptorImpl) {
-      String text = ((ValueDescriptorImpl)descriptor).getValueLabel();
-      if (text != null) {
-        if (StringUtil.startsWithChar(text, '{') && text.indexOf('}') > 0) {
-          int idx = text.indexOf('}');
-          if (idx != text.length() - 1) {
-            text = text.substring(idx + 1);
-          }
-        }
-
-        if (StringUtil.startsWithChar(text, '\"') && StringUtil.endsWithChar(text, '\"')) {
-          text = text.substring(1, text.length() - 1);
-        }
-
-        final String tipText = prepareToolTipText(text);
-        if (!tipText.isEmpty() &&
-            (tipText.indexOf('\n') >= 0 || !getVisibleRect().contains(getRowBounds(getRowForPath(new TreePath(node.getPath())))))) {
-          return tipText;
-        }
+      String text = ((ValueDescriptorImpl)descriptor).getValueText();
+      final String tipText = DebuggerUtilsEx.prepareValueText(text, myProject);
+      if (!tipText.isEmpty() &&
+          (tipText.indexOf('\n') >= 0 || !getVisibleRect().contains(getRowBounds(getRowForPath(new TreePath(node.getPath())))))) {
+        return tipText;
       }
     }
     return node.getMarkupTooltipText() != null? "" : null;
@@ -273,44 +257,6 @@ public class DebuggerTreeBase extends DnDAwareTree implements Disposable {
     }
 
     return null;
-  }
-
-  private String prepareToolTipText(String text) {
-    int tabSize = CodeStyleSettingsManager.getSettings(myProject).getTabSize(StdFileTypes.JAVA);
-    if (tabSize < 0) {
-      tabSize = 0;
-    }
-    final StringBuilder buf = new StringBuilder();
-    boolean special = false;
-    for (int idx = 0; idx < text.length(); idx++) {
-      char c = text.charAt(idx);
-      if (special) {
-        if (c == 't') { // convert tabs to spaces
-          for (int i = 0; i < tabSize; i++) {
-            buf.append(' ');
-          }
-        }
-        else if (c == 'r') { // remove occurrences of '\r'
-        }
-        else if (c == 'n') {
-          buf.append('\n');
-        }
-        else {
-          buf.append('\\');
-          buf.append(c);
-        }
-        special = false;
-      }
-      else {
-        if (c == '\\') {
-          special = true;
-        }
-        else {
-          buf.append(c);
-        }
-      }
-    }
-    return buf.toString();
   }
 
   @Override
@@ -330,7 +276,7 @@ public class DebuggerTreeBase extends DnDAwareTree implements Disposable {
   private static class HideTooltip extends MouseAdapter {
     private final JToolTip myToolTip;
 
-    public HideTooltip(JToolTip toolTip) {
+    HideTooltip(JToolTip toolTip) {
       myToolTip = toolTip;
     }
 

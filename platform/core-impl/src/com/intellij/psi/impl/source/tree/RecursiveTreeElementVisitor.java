@@ -16,7 +16,9 @@
 
 package com.intellij.psi.impl.source.tree;
 
-public abstract class RecursiveTreeElementVisitor extends TreeElementVisitor{
+import com.intellij.psi.PsiRecursiveVisitor;
+
+public abstract class RecursiveTreeElementVisitor extends TreeElementVisitor implements PsiRecursiveVisitor {
   @Override public void visitLeaf(LeafElement leaf) {
     visitNode(leaf);
   }

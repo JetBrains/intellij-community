@@ -1,7 +1,8 @@
-<idea-plugin version="2">
+<idea-plugin>
   <id>com.intellij.java-i18n</id>
   <name>I18n for Java</name>
   <depends>com.intellij.properties</depends>
+  <depends>com.intellij.modules.platform</depends>
   <description>
     This plugin provides code inspections and corresponding quick fixes for code internationalization.
   </description>
@@ -19,34 +20,54 @@
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij">
-    <errorHandler implementation="com.intellij.diagnostic.ITNReporter"/>
     <referenceProviderType key="Properties File Key Provider"
                            implementationClass="com.intellij.lang.properties.PropertiesReferenceProvider"/>
     <psi.referenceContributor implementation="com.intellij.psi.impl.source.resolve.reference.impl.providers.JavaReferenceContributor"/>
     <psi.referenceContributor implementation="com.intellij.lang.properties.PropertiesReferenceContributor"/>
-    <lang.foldingBuilder language="JAVA" implementationClass="com.intellij.codeInspection.i18n.folding.PropertyFoldingBuilder" />
+    <lang.foldingBuilder language="UAST" implementationClass="com.intellij.codeInspection.i18n.folding.PropertyFoldingBuilder"
+                         order="FIRST"/>
     <gotoDeclarationHandler implementation="com.intellij.codeInspection.i18n.folding.I18nMessageGotoDeclarationHandler" order="FIRST"/>
-    <spellchecker.support language="JAVA" implementationClass="com.intellij.spellchecker.JavaSpellcheckingStrategy"/>
+    <inlineActionHandler implementation="com.intellij.refactoring.inline.InlinePropertyHandler"/>
 
-    <localInspection shortName="HardCodedStringLiteral" bundle="messages.CodeInsightBundle" key="inspection.i18n.display.name"
+    <localInspection groupPath="Java" shortName="HardCodedStringLiteral" alternativeId="nls" bundle="messages.CodeInsightBundle" key="inspection.i18n.display.name"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.internationalization.issues" enabledByDefault="false" level="WARNING"
                      implementationClass="com.intellij.codeInspection.i18n.I18nInspection"/>
-    <localInspection language="JAVA" shortName="UnresolvedPropertyKey" bundle="messages.CodeInsightBundle"
+    <localInspection groupPath="Java"  language="JAVA" shortName="UnresolvedPropertyKey" bundle="messages.CodeInsightBundle"
                      key="inspection.unresolved.property.key.reference.name"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.properties.files" enabledByDefault="true"
                      level="ERROR" implementationClass="com.intellij.codeInspection.i18n.InvalidPropertyKeyInspection"/>
-    <globalInspection shortName="InconsistentResourceBundle" bundle="messages.InspectionsBundle"
+    <globalInspection language="Properties" shortName="InconsistentResourceBundle" bundle="messages.InspectionsBundle"
                       key="inconsistent.resource.bundle.display.name" groupBundle="messages.PropertiesBundle"
                       groupKey="properties.files.inspection.group.display.name" enabledByDefault="true" level="ERROR"
-                      implementationClass="com.intellij.codeInspection.i18n.InconsistentResourceBundleInspection"/>
+                      implementationClass="com.intellij.codeInspection.i18n.inconsistentResourceBundle.InconsistentResourceBundleInspection"/>
     <localInspection language="Properties" shortName="UnusedMessageFormatParameter" bundle="messages.PropertiesBundle"
                      key="unused.message.format.parameter.display.name" groupKey="properties.files.inspection.group.display.name"
                      enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.lang.properties.UnusedMessageFormatParameterInspection"/>
-    <localInspection language="JAVA" shortName="DuplicateStringLiteralInspection" bundle="messages.InspectionsBundle"
-                     key="inspection.duplicates.display.name" groupName="Internationalization issues" enabledByDefault="false"
+    <localInspection groupPath="Java" language="JAVA" shortName="DuplicateStringLiteralInspection" bundle="messages.InspectionsBundle"
+                     key="inspection.duplicates.display.name" groupKey="group.names.internationalization.issues" groupBundle="messages.InspectionsBundle" enabledByDefault="false"
                      level="WARNING"
                      implementationClass="com.intellij.codeInspection.duplicateStringLiteral.DuplicateStringLiteralInspection"/>
+
+    <localInspection groupPath="Java"  language="JAVA" shortName="DialogTitleCapitalization"
+                     groupBundle="messages.InspectionsBundle" groupKey="group.names.internationalization.issues"
+                     displayName="Incorrect string capitalization"
+                     enabledByDefault="true"
+                     level="WARNING"
+                     implementationClass="com.intellij.codeInspection.capitalization.TitleCapitalizationInspection"/>
+    <localInspection language="Properties" shortName="SuspiciousLocalesLanguages"
+                     groupBundle="messages.InspectionsBundle" groupKey="group.names.properties.files"
+                     displayName="Suspicious resource bundle locale languages"
+                     enabledByDefault="false"
+                     level="WARNING"
+                     implementationClass="com.intellij.codeInspection.SuspiciousLocalesLanguagesInspection"/>
+
+    <intentionAction>
+      <className>com.intellij.codeInspection.capitalization.AnnotateCapitalizationIntention</className>
+      <category>Java/I18N</category>
+    </intentionAction>
+
+    <completion.confidence language="UAST" implementationClass="com.intellij.lang.properties.PropertyKeyLiteralConfidence" id="propertyKeys" order="before javaSkipAutopopupInStrings"/>
   </extensions>
   <actions>
     <action id="I18nize" class="com.intellij.codeInspection.i18n.I18nizeAction">

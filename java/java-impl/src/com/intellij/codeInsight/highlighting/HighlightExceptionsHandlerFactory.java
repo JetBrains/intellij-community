@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,24 +16,23 @@
 package com.intellij.codeInsight.highlighting;
 
 import com.intellij.codeInsight.ExceptionUtil;
-import com.intellij.codeInsight.TargetElementUtilBase;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.Conditions;
 import com.intellij.psi.*;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
 import java.util.Collection;
+import java.util.stream.Stream;
 
 /**
  * @author yole
  */
-public class HighlightExceptionsHandlerFactory implements HighlightUsagesHandlerFactory {
+public class HighlightExceptionsHandlerFactory extends HighlightUsagesHandlerFactoryBase {
   @Override
-  public HighlightUsagesHandlerBase createHighlightUsagesHandler(final Editor editor, final PsiFile file) {
-    int offset = TargetElementUtilBase.adjustOffset(file, editor.getDocument(), editor.getCaretModel().getOffset());
-    PsiElement target = file.findElementAt(offset);
+  public HighlightUsagesHandlerBase createHighlightUsagesHandler(@NotNull Editor editor, @NotNull PsiFile file, @NotNull PsiElement target) {
     if (target instanceof PsiKeyword) {
       PsiElement parent = target.getParent();
       if (PsiKeyword.TRY.equals(target.getText()) && parent instanceof PsiTryStatement) {
@@ -50,70 +49,56 @@ public class HighlightExceptionsHandlerFactory implements HighlightUsagesHandler
   }
 
   @Nullable
-  private static HighlightUsagesHandlerBase createHighlightTryHandler(final Editor editor,
-                                                                      final PsiFile file,
-                                                                      final PsiElement target,
-                                                                      final PsiElement parent) {
-    final PsiTryStatement tryStatement = (PsiTryStatement)parent;
+  private static HighlightUsagesHandlerBase createHighlightTryHandler(Editor editor, PsiFile file, PsiElement target, PsiElement parent) {
     FeatureUsageTracker.getInstance().triggerFeatureUsed("codeassists.highlight.throws");
-    final PsiCodeBlock tryBlock = tryStatement.getTryBlock();
+
+    PsiCodeBlock tryBlock = ((PsiTryStatement)parent).getTryBlock();
     if (tryBlock == null) return null;
-    final Collection<PsiClassType> psiClassTypes = ExceptionUtil.collectUnhandledExceptions(tryBlock, tryBlock);
-    return new HighlightExceptionsHandler(editor, file, target, psiClassTypes.toArray(new PsiClassType[psiClassTypes.size()]), tryBlock, Condition.TRUE);
+
+    Collection<PsiClassType> unhandled = ExceptionUtil.collectUnhandledExceptions(tryBlock, tryBlock);
+    PsiClassType[] types = unhandled.toArray(PsiClassType.EMPTY_ARRAY);
+    return new HighlightExceptionsHandler(editor, file, target, types, tryBlock, null, Conditions.alwaysTrue());
   }
 
   @Nullable
-  private static HighlightUsagesHandlerBase createHighlightCatchHandler(final Editor editor,
-                                                                 final PsiFile file,
-                                                                 final PsiElement target,
-                                                                 final PsiElement parent) {
-    final PsiCatchSection catchSection = (PsiCatchSection)parent;
+  private static HighlightUsagesHandlerBase createHighlightCatchHandler(Editor editor, PsiFile file, PsiElement target, PsiElement parent) {
     FeatureUsageTracker.getInstance().triggerFeatureUsed("codeassists.highlight.throws");
 
-    PsiTryStatement tryStatement = catchSection.getTryStatement();
+    PsiTryStatement tryStatement = ((PsiCatchSection)parent).getTryStatement();
+    PsiParameter parameter = ((PsiCatchSection)parent).getParameter();
+    PsiCodeBlock tryBlock = tryStatement.getTryBlock();
+    PsiResourceList resourceList = tryStatement.getResourceList();
+    if (parameter == null || tryBlock == null) return null;
 
-    final PsiParameter param = catchSection.getParameter();
-    if (param == null) return null;
-
-    final PsiParameter[] catchBlockParameters = tryStatement.getCatchBlockParameters();
-
-    final Collection<PsiClassType> allThrownExceptions = ExceptionUtil.collectUnhandledExceptions(tryStatement.getTryBlock(),
-                                                                                        tryStatement.getTryBlock());
-    Condition<PsiType> filter = new Condition<PsiType>() {
-      @Override
-      public boolean value(PsiType type) {
-        for (PsiParameter parameter : catchBlockParameters) {
-          boolean isAssignable = parameter.getType().isAssignableFrom(type);
-          if (parameter != param) {
-            if (isAssignable) return false;
-          }
-          else {
-            return isAssignable;
-          }
-        }
-        return false;
+    PsiParameter[] parameters = tryStatement.getCatchBlockParameters();
+    Condition<PsiType> filter = type -> {
+      for (PsiParameter p : parameters) {
+        boolean isAssignable = p.getType().isAssignableFrom(type);
+        if (p == parameter) return isAssignable;
+        else if (isAssignable) return false;
       }
+      return false;
     };
 
-    ArrayList<PsiClassType> filtered = new ArrayList<PsiClassType>();
-    for (PsiClassType type : allThrownExceptions) {
-      if (filter.value(type)) filtered.add(type);
+    Stream<PsiClassType> unhandled = ExceptionUtil.collectUnhandledExceptions(tryBlock, tryBlock).stream();
+    if (resourceList != null) {
+      unhandled = Stream.concat(unhandled, ExceptionUtil.collectUnhandledExceptions(resourceList, resourceList).stream());
     }
-
-    return new HighlightExceptionsHandler(editor, file, target, filtered.toArray(new PsiClassType[filtered.size()]),
-                                          tryStatement.getTryBlock(), filter);
+    PsiClassType[] types = unhandled.filter(filter::value).toArray(PsiClassType[]::new);
+    return new HighlightExceptionsHandler(editor, file, target, types, tryBlock, resourceList, filter);
   }
 
   @Nullable
-  private static HighlightUsagesHandlerBase createThrowsHandler(final Editor editor, final PsiFile file, final PsiElement target) {
+  private static HighlightUsagesHandlerBase createThrowsHandler(Editor editor, PsiFile file, PsiElement target) {
     FeatureUsageTracker.getInstance().triggerFeatureUsed("codeassists.highlight.throws");
+
     PsiElement grand = target.getParent().getParent();
     if (!(grand instanceof PsiMethod)) return null;
-    PsiMethod method = (PsiMethod)grand;
-    if (method.getBody() == null) return null;
+    PsiCodeBlock body = ((PsiMethod)grand).getBody();
+    if (body == null) return null;
 
-    final Collection<PsiClassType> psiClassTypes = ExceptionUtil.collectUnhandledExceptions(method.getBody(), method.getBody());
-
-    return new HighlightExceptionsHandler(editor, file, target, psiClassTypes.toArray(new PsiClassType[psiClassTypes.size()]), method.getBody(), Condition.TRUE);
+    Collection<PsiClassType> unhandled = ExceptionUtil.collectUnhandledExceptions(body, body);
+    PsiClassType[] types = unhandled.toArray(PsiClassType.EMPTY_ARRAY);
+    return new HighlightExceptionsHandler(editor, file, target, types, body, null, Conditions.alwaysTrue());
   }
 }

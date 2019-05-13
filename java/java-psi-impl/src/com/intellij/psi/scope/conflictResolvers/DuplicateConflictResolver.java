@@ -18,21 +18,15 @@ package com.intellij.psi.scope.conflictResolvers;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.infos.CandidateInfo;
+import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.scope.PsiConflictResolver;
 import com.intellij.psi.util.PsiUtilCore;
-import com.intellij.util.containers.HashMap;
+import java.util.HashMap;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 import java.util.Map;
 
-/**
- * Created by IntelliJ IDEA.
- * User: ik
- * Date: 31.03.2003
- * Time: 17:21:42
- * To change this template use Options | File Templates.
- */
 public class DuplicateConflictResolver implements PsiConflictResolver{
   public static final DuplicateConflictResolver INSTANCE = new DuplicateConflictResolver();
 
@@ -42,12 +36,12 @@ public class DuplicateConflictResolver implements PsiConflictResolver{
   @Override
   public CandidateInfo resolveConflict(@NotNull List<CandidateInfo> conflicts){
     if (conflicts.size() == 1) return conflicts.get(0);
-    final Map<Object, CandidateInfo> uniqueItems = new HashMap<Object, CandidateInfo>();
+    final Map<Object, CandidateInfo> uniqueItems = new HashMap<>();
     for (CandidateInfo info : conflicts) {
       final PsiElement element = info.getElement();
       Object key;
-      if (element instanceof PsiMethod) {
-        key = ((PsiMethod)element).getSignature(info.getSubstitutor());
+      if (info instanceof MethodCandidateInfo) {
+        key = ((PsiMethod)element).getSignature(((MethodCandidateInfo)info).getSubstitutor(false));
       }
       else {
         key = PsiUtilCore.getName(element);

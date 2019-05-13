@@ -26,24 +26,30 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.refactoring.copy.CopyHandler;
+import org.jetbrains.annotations.NotNull;
 
 public class CopyElementAction extends AnAction {
-  public void actionPerformed(AnActionEvent e) {
+
+  @Override
+  public boolean startInTransaction() {
+    return true;
+  }
+
+  @Override
+  public void actionPerformed(@NotNull AnActionEvent e) {
     final DataContext dataContext = e.getDataContext();
-    final Project project = PlatformDataKeys.PROJECT.getData(dataContext);
+    final Project project = CommonDataKeys.PROJECT.getData(dataContext);
     if (project == null) {
       return;
     }
 
-    CommandProcessor.getInstance().executeCommand(project, new Runnable() {
-      public void run() {
-        PsiDocumentManager.getInstance(project).commitAllDocuments();
-      }}, "", null
+    CommandProcessor.getInstance().executeCommand(project, () -> PsiDocumentManager.getInstance(project).commitAllDocuments(), "", null
     );
-    final Editor editor = PlatformDataKeys.EDITOR.getData(dataContext);
+    final Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
     PsiElement[] elements;
 
-    PsiDirectory defaultTargetDirectory;
+    PsiElement targetPsiElement = LangDataKeys.TARGET_PSI_ELEMENT.getData(dataContext);
+    PsiDirectory defaultTargetDirectory = targetPsiElement instanceof PsiDirectory ? (PsiDirectory)targetPsiElement : null;
     if (editor != null) {
       PsiElement aElement = getTargetElement(editor, project);
       PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
@@ -52,10 +58,8 @@ public class CopyElementAction extends AnAction {
       if (aElement == null || !CopyHandler.canCopy(elements)) {
         elements = new PsiElement[]{file};
       }
-      defaultTargetDirectory = file.getContainingDirectory();
-    } else {
-      PsiElement element = LangDataKeys.TARGET_PSI_ELEMENT.getData(dataContext);
-      defaultTargetDirectory = element instanceof PsiDirectory ? (PsiDirectory)element : null;
+    }
+    else {
       elements = LangDataKeys.PSI_ELEMENT_ARRAY.getData(dataContext);
     }
     doCopy(elements, defaultTargetDirectory);
@@ -65,16 +69,17 @@ public class CopyElementAction extends AnAction {
     CopyHandler.doCopy(elements, defaultTargetDirectory);
   }
 
-  public void update(AnActionEvent event){
+  @Override
+  public void update(@NotNull AnActionEvent event){
     Presentation presentation = event.getPresentation();
     DataContext dataContext = event.getDataContext();
-    Project project = PlatformDataKeys.PROJECT.getData(dataContext);
+    Project project = CommonDataKeys.PROJECT.getData(dataContext);
     presentation.setEnabled(false);
     if (project == null) {
       return;
     }
 
-    Editor editor = PlatformDataKeys.EDITOR.getData(dataContext);
+    Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
     if (editor != null) {
       updateForEditor(dataContext, presentation);
     }
@@ -85,13 +90,13 @@ public class CopyElementAction extends AnAction {
   }
 
   protected void updateForEditor(DataContext dataContext, Presentation presentation) {
-    Editor editor = PlatformDataKeys.EDITOR.getData(dataContext);
+    Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
     if (editor == null) {
       presentation.setVisible(false);
       return;
     }
 
-    Project project = PlatformDataKeys.PROJECT.getData(dataContext);
+    Project project = CommonDataKeys.PROJECT.getData(dataContext);
     if (project == null) {
       return;
 

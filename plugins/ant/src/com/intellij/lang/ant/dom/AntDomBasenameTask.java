@@ -22,7 +22,6 @@ import com.intellij.util.xml.GenericAttributeValue;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Aug 10, 2010
  */
 public abstract class AntDomBasenameTask extends AntDomPropertyDefiningTask {
   @Attribute("file")
@@ -32,6 +31,7 @@ public abstract class AntDomBasenameTask extends AntDomPropertyDefiningTask {
   @Attribute("suffix")
   public abstract GenericAttributeValue<String> getSuffix();
 
+  @Override
   protected String calcPropertyValue(String propertyName) {
     final PsiFileSystemItem item = getFile().getValue();
     if (item != null) {

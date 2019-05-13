@@ -12,7 +12,7 @@ class Test2 {
         bar(new I<Stri<caret>ng>() {
             @Override
             public String foo(List<String> list) {
-                return null;  //To change body of implemented methods use File | Settings | File Templates.
+                return null;
             }
         });
     }

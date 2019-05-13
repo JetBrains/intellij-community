@@ -30,12 +30,15 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 
 public class ProtectedInnerClassInspection extends BaseInspection {
-
   @SuppressWarnings({"PublicField"})
   public boolean ignoreEnums = false;
-
   @SuppressWarnings("PublicField")
   public boolean ignoreInterfaces = false;
+
+  @Override
+  protected InspectionGadgetsFix buildFix(Object... infos) {
+    return new MoveClassFix();
+  }
 
   @Override
   @NotNull
@@ -58,11 +61,6 @@ public class ProtectedInnerClassInspection extends BaseInspection {
     panel.addCheckbox(InspectionGadgetsBundle.message("protected.inner.class.ignore.enum.option"), "ignoreEnums");
     panel.addCheckbox(InspectionGadgetsBundle.message("protected.inner.class.ignore.interface.option"), "ignoreInterfaces");
     return panel;
-  }
-
-  @Override
-  protected InspectionGadgetsFix buildFix(Object... infos) {
-    return new MoveClassFix();
   }
 
   @Override

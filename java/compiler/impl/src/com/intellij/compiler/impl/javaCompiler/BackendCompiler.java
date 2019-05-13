@@ -15,36 +15,34 @@
  */
 package com.intellij.compiler.impl.javaCompiler;
 
-import com.intellij.compiler.OutputParser;
-import com.intellij.openapi.compiler.CompileContext;
-import com.intellij.openapi.compiler.CompileScope;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.options.Configurable;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.jps.model.java.compiler.CompilerOptions;
 
-import java.io.IOException;
 import java.util.Set;
 
 public interface BackendCompiler {
   ExtensionPointName<BackendCompiler> EP_NAME = ExtensionPointName.create("com.intellij.java.compiler");
 
-  @NotNull @NonNls String getId(); // used for externalization
-  @NotNull String getPresentableName();
-  @NotNull Configurable createConfigurable();
-  @NotNull Set<FileType> getCompilableFileTypes();
-  @Nullable OutputParser createErrorParser(@NotNull String outputDir, Process process);
-  @Nullable OutputParser createOutputParser(@NotNull String outputDir);
+  CompilerOptions EMPTY_OPTIONS = new CompilerOptions() {
+  };
 
-  boolean checkCompiler(final CompileScope scope);
+  @NotNull
+  String getId(); // used for externalization
 
-  @NotNull Process launchProcess(
-    @NotNull ModuleChunk chunk,
-    @NotNull String outputDir,
-    @NotNull CompileContext compileContext) throws IOException;
+  @NotNull
+  String getPresentableName();
 
-  void compileFinished();
+  @NotNull
+  Configurable createConfigurable();
 
+  @NotNull
+  Set<FileType> getCompilableFileTypes();
+
+  @NotNull
+  default CompilerOptions getOptions() {
+    return EMPTY_OPTIONS;
+  }
 }

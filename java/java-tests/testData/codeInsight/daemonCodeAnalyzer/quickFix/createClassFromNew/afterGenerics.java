@@ -1,9 +1,9 @@
-// "Create Class 'Generic'" "true"
+// "Create class 'Generic'" "true"
 class Test {
   void foo () {
     new Generic<String> ();
   }
 }
 
-<caret>public class Generic<T> {
+public class <caret>Generic<T> {
 }

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.fileTypes.impl;
 
 import com.intellij.ide.highlighter.FileTypeRegistrator;
@@ -24,20 +10,21 @@ import com.intellij.openapi.fileTypes.*;
 import com.intellij.openapi.fileTypes.ex.ExternalizableFileType;
 import com.intellij.openapi.options.ExternalizableScheme;
 import com.intellij.openapi.options.SettingsEditor;
-import com.intellij.openapi.options.ExternalInfo;
 import com.intellij.openapi.util.*;
+import com.intellij.util.ArrayUtil;
+import com.intellij.util.SmartList;
 import com.intellij.util.text.StringTokenizer;
 import org.jdom.Element;
 import org.jdom.output.XMLOutputter;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Set;
-
 
 public class AbstractFileType extends UserFileType<AbstractFileType> implements ExternalizableFileType, ExternalizableScheme,
                                                                                 CustomSyntaxTableFileType {
@@ -66,8 +53,7 @@ public class AbstractFileType extends UserFileType<AbstractFileType> implements 
   @NonNls private static final String ELEMENT_KEYWORDS3 = "keywords3";
   @NonNls private static final String ELEMENT_KEYWORDS4 = "keywords4";
   @NonNls private static final String ATTRIBUTE_NAME = "name";
-  @NonNls public static final String ELEMENT_EXTENSIONMAP = "extensionMap";
-  private final ExternalInfo myExternalInfo = new ExternalInfo();
+  @NonNls public static final String ELEMENT_EXTENSION_MAP = "extensionMap";
 
   public AbstractFileType(SyntaxTable syntaxTable) {
     mySyntaxTable = syntaxTable;
@@ -92,38 +78,38 @@ public class AbstractFileType extends UserFileType<AbstractFileType> implements 
     mySyntaxTable = syntaxTable;
   }
 
+  @Override
   public AbstractFileType clone() {
     return (AbstractFileType)super.clone();
   }
 
-  public void copyFrom(UserFileType newType) {
+  @Override
+  public void copyFrom(@NotNull UserFileType newType) {
     super.copyFrom(newType);
+
     if (newType instanceof AbstractFileType) {
       mySyntaxTable = ((CustomSyntaxTableFileType)newType).getSyntaxTable();
-      myExternalInfo.copy(((AbstractFileType)newType).myExternalInfo);
     }
   }
 
+  @Override
   public boolean isBinary() {
     return false;
   }
 
-  public void readExternal(final Element typeElement) throws InvalidDataException {
+  @Override
+  public void readExternal(@NotNull Element typeElement) throws InvalidDataException {
     Element element = typeElement.getChild(ELEMENT_HIGHLIGHTING);
     if (element != null) {
-      SyntaxTable table = readSyntaxTable(element);
-      if (table != null) {
-        setSyntaxTable(table);
-      }
+      setSyntaxTable(readSyntaxTable(element));
     }
   }
 
-  public static SyntaxTable readSyntaxTable(Element root) {
+  @NotNull
+  public static SyntaxTable readSyntaxTable(@NotNull Element root) {
     SyntaxTable table = new SyntaxTable();
 
-    for (final Object o : root.getChildren()) {
-      Element element = (Element)o;
-
+    for (Element element : root.getChildren()) {
       if (ELEMENT_OPTIONS.equals(element.getName())) {
         for (final Object o1 : element.getChildren(ELEMENT_OPTION)) {
           Element e = (Element)o1;
@@ -155,7 +141,8 @@ public class AbstractFileType extends UserFileType<AbstractFileType> implements 
           }
           else if (VALUE_HAS_PARENS.equals(name)) {
             table.setHasParens(Boolean.valueOf(value).booleanValue());
-          } else if (VALUE_HAS_STRING_ESCAPES.equals(name)) {
+          }
+          else if (VALUE_HAS_STRING_ESCAPES.equals(name)) {
             table.setHasStringEscapes(Boolean.valueOf(value).booleanValue());
           }
         }
@@ -183,12 +170,14 @@ public class AbstractFileType extends UserFileType<AbstractFileType> implements 
       XMLOutputter outputter = JDOMUtil.createOutputter("\n");
       try {
         outputter.output((Element)element.getContent().get(0), System.out);
-      } catch (IOException ex) {}
+      }
+      catch (IOException ignored) {
+      }
     }
     return table;
   }
 
-  private static void loadKeywords(Element element, Set<String> keywords) {
+  private static void loadKeywords(Element element, Set<? super String> keywords) {
     String value = element.getAttributeValue(ELEMENT_KEYWORDS);
     if (value != null) {
       StringTokenizer tokenizer = new StringTokenizer(value, SEMICOLON);
@@ -202,12 +191,12 @@ public class AbstractFileType extends UserFileType<AbstractFileType> implements 
     }
   }
 
-  public void writeExternal(final Element element) throws WriteExternalException {
-    SyntaxTable table = getSyntaxTable();
-    writeTable(element, table);
+  @Override
+  public void writeExternal(@NotNull Element element) {
+    writeTable(element, getSyntaxTable());
   }
 
-  private static void writeTable(Element element, SyntaxTable table) {
+  private static void writeTable(@NotNull Element element, @NotNull SyntaxTable table) {
     Element highlightingElement = new Element(ELEMENT_HIGHLIGHTING);
 
     Element optionsElement = new Element(ELEMENT_OPTIONS);
@@ -269,22 +258,25 @@ public class AbstractFileType extends UserFileType<AbstractFileType> implements 
   }
 
   private static void addElementOption(final Element optionsElement, final String valueHasParens, final boolean hasParens) {
-    if (!hasParens) return;
+    if (!hasParens) {
+      return;
+    }
+
     Element supportParens = new Element(ELEMENT_OPTION);
     supportParens.setAttribute(ATTRIBUTE_NAME, valueHasParens);
-    supportParens.setAttribute(ATTRIBUTE_VALUE, String.valueOf(hasParens));
+    supportParens.setAttribute(ATTRIBUTE_VALUE, String.valueOf(true));
     optionsElement.addContent(supportParens);
   }
 
   private static Element writeKeywords(Set<String> keywords, String tagName, Element highlightingElement) {
     if (keywords.size() == 0 && !ELEMENT_KEYWORDS.equals(tagName)) return null;
     Element keywordsElement = new Element(tagName);
-    String[] strings = keywords.toArray(new String[keywords.size()]);
+    String[] strings = ArrayUtil.toStringArray(keywords);
     Arrays.sort(strings);
     StringBuilder keywordsAttribute = new StringBuilder();
 
     for (final String keyword : strings) {
-      if (keyword.indexOf(SEMICOLON) == -1) {
+      if (!keyword.contains(SEMICOLON)) {
         if (keywordsAttribute.length() != 0) keywordsAttribute.append(SEMICOLON);
         keywordsAttribute.append(keyword);
       } else {
@@ -300,88 +292,86 @@ public class AbstractFileType extends UserFileType<AbstractFileType> implements 
     return keywordsElement;
   }
 
+  @Override
   public void markDefaultSettings() {
     myDefaultSyntaxTable = mySyntaxTable;
   }
 
+  @Override
   public boolean isModified() {
     return !Comparing.equal(myDefaultSyntaxTable, getSyntaxTable());
   }
 
-  @NonNls private static final String ELEMENT_MAPPING = "mapping";
-  @NonNls private static final String ATTRIBUTE_EXT = "ext";
+  @NonNls static final String ELEMENT_MAPPING = "mapping";
+  @NonNls static final String ATTRIBUTE_EXT = "ext";
   @NonNls private static final String ATTRIBUTE_PATTERN = "pattern";
+  /** Applied for removed mappings approved by user */
+  @NonNls private static final String ATTRIBUTE_APPROVED = "approved";
+
   @NonNls private static final String ELEMENT_REMOVED_MAPPING = "removed_mapping";
-  @NonNls private static final String ATTRIBUTE_TYPE = "type";
+  @NonNls static final String ATTRIBUTE_TYPE = "type";
 
-  public static List<Pair<FileNameMatcher, String>> readAssociations(final Element e) {
-    ArrayList<Pair<FileNameMatcher, String>> result = new ArrayList<Pair<FileNameMatcher, String>>();
-    List mappings = e.getChildren(ELEMENT_MAPPING);
+  @NotNull
+  public static List<Pair<FileNameMatcher, String>> readAssociations(@NotNull Element element) {
+    List<Element> children = element.getChildren(ELEMENT_MAPPING);
+    if (children.isEmpty()) {
+      return Collections.emptyList();
+    }
 
-    for (Object mapping1 : mappings) {
-      Element mapping = (Element)mapping1;
+    List<Pair<FileNameMatcher, String>> result = new SmartList<>();
+    for (Element mapping : children) {
       String ext = mapping.getAttributeValue(ATTRIBUTE_EXT);
       String pattern = mapping.getAttributeValue(ATTRIBUTE_PATTERN);
 
       FileNameMatcher matcher = ext != null ? new ExtensionFileNameMatcher(ext) : FileTypeManager.parseFromString(pattern);
-      result.add(new Pair<FileNameMatcher, String>(matcher, mapping.getAttributeValue(ATTRIBUTE_TYPE)));
+      result.add(Pair.create(matcher, mapping.getAttributeValue(ATTRIBUTE_TYPE)));
     }
-
     return result;
   }
 
-  public static List<Pair<FileNameMatcher, String>> readRemovedAssociations(final Element e) {
-    ArrayList<Pair<FileNameMatcher, String>> result = new ArrayList<Pair<FileNameMatcher, String>>();
-    List removedMappings = e.getChildren(ELEMENT_REMOVED_MAPPING);
-    for (Object removedMapping : removedMappings) {
-      Element mapping = (Element)removedMapping;
+  @NotNull
+  public static List<Trinity<FileNameMatcher, String, Boolean>> readRemovedAssociations(@NotNull Element element) {
+    List<Element> children = element.getChildren(ELEMENT_REMOVED_MAPPING);
+    if (children.isEmpty()) {
+      return Collections.emptyList();
+    }
+
+    List<Trinity<FileNameMatcher, String, Boolean>> result = new SmartList<>();
+    for (Element mapping : children) {
       String ext = mapping.getAttributeValue(ATTRIBUTE_EXT);
-      String pattern = mapping.getAttributeValue(ATTRIBUTE_PATTERN);
-      FileNameMatcher matcher = ext != null ? new ExtensionFileNameMatcher(ext) : FileTypeManager.parseFromString(pattern);
-      result.add(new Pair<FileNameMatcher, String>(matcher, mapping.getAttributeValue(ATTRIBUTE_TYPE)));
-
+      FileNameMatcher matcher = ext == null ? FileTypeManager.parseFromString(mapping.getAttributeValue(ATTRIBUTE_PATTERN)) : new ExtensionFileNameMatcher(ext);
+      result.add(Trinity.create(matcher, mapping.getAttributeValue(ATTRIBUTE_TYPE), Boolean.parseBoolean(mapping.getAttributeValue(ATTRIBUTE_APPROVED))));
     }
-
     return result;
-
   }
 
-  public static Element writeMapping(final FileType type, final FileNameMatcher matcher, boolean specifyTypeName) {
+  @Nullable
+  public static Element writeMapping(String typeName, @NotNull FileNameMatcher matcher, boolean specifyTypeName) {
     Element mapping = new Element(ELEMENT_MAPPING);
     if (matcher instanceof ExtensionFileNameMatcher) {
       mapping.setAttribute(ATTRIBUTE_EXT, ((ExtensionFileNameMatcher)matcher).getExtension());
     }
-    else if (matcher instanceof WildcardFileNameMatcher) {
-      mapping.setAttribute(ATTRIBUTE_PATTERN, ((WildcardFileNameMatcher)matcher).getPattern());
-    }
-    else if (matcher instanceof ExactFileNameMatcher) {
-      mapping.setAttribute(ATTRIBUTE_PATTERN, ((ExactFileNameMatcher)matcher).getFileName());
-    }
-    else {
+    else if (writePattern(matcher, mapping)) {
       return null;
     }
 
     if (specifyTypeName) {
-      mapping.setAttribute(ATTRIBUTE_TYPE, type.getName());
+      mapping.setAttribute(ATTRIBUTE_TYPE, typeName);
     }
 
     return mapping;
-
   }
 
-  public static Element writeRemovedMapping(final FileType type, final FileNameMatcher matcher, final boolean specifyTypeName) {
+  static Element writeRemovedMapping(@NotNull FileType type, @NotNull FileNameMatcher matcher, boolean specifyTypeName, boolean approved) {
     Element mapping = new Element(ELEMENT_REMOVED_MAPPING);
     if (matcher instanceof ExtensionFileNameMatcher) {
       mapping.setAttribute(ATTRIBUTE_EXT, ((ExtensionFileNameMatcher)matcher).getExtension());
     }
-    else if (matcher instanceof WildcardFileNameMatcher) {
-      mapping.setAttribute(ATTRIBUTE_PATTERN, ((WildcardFileNameMatcher)matcher).getPattern());
-    }
-    else if (matcher instanceof ExactFileNameMatcher) {
-      mapping.setAttribute(ATTRIBUTE_PATTERN, ((ExactFileNameMatcher)matcher).getFileName());
-    }
-    else {
+    else if (writePattern(matcher, mapping)) {
       return null;
+    }
+    if (approved) {
+      mapping.setAttribute(ATTRIBUTE_APPROVED, "true");
     }
     if (specifyTypeName) {
       mapping.setAttribute(ATTRIBUTE_TYPE, type.getName());
@@ -390,16 +380,25 @@ public class AbstractFileType extends UserFileType<AbstractFileType> implements 
     return mapping;
   }
 
+  private static boolean writePattern(FileNameMatcher matcher, Element mapping) {
+    if (matcher instanceof WildcardFileNameMatcher) {
+      mapping.setAttribute(ATTRIBUTE_PATTERN, ((WildcardFileNameMatcher)matcher).getPattern());
+    }
+    else if (matcher instanceof ExactFileNameMatcher) {
+      mapping.setAttribute(ATTRIBUTE_PATTERN, ((ExactFileNameMatcher)matcher).getFileName());
+    }
+    else {
+      return true;
+    }
+    return false;
+  }
+
+  @Override
   public SettingsEditor<AbstractFileType> getEditor() {
     return new CustomFileTypeEditor();
   }
 
   public void setCommenter(final Commenter commenter) {
     myCommenter = commenter;
-  }
-
-  @NotNull
-  public ExternalInfo getExternalInfo() {
-    return myExternalInfo;
   }
 }

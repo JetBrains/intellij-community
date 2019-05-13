@@ -1,0 +1,13 @@
+PyFile:magicError.py
+  PyAssignmentStatement
+    PyTargetExpression: b
+      PsiElement(Py:IDENTIFIER)('b')
+    PsiWhiteSpace(' ')
+    PsiElement(Py:EQ)('=')
+    PsiErrorElement:Multiline magic can't be used as an expression
+      <empty list>
+    PsiWhiteSpace(' ')
+    PyEmptyExpression
+      PsiElement(Py:PERC)('%')
+      PsiElement(Py:PERC)('%')
+      PsiElement(Py:IDENTIFIER)('bach')

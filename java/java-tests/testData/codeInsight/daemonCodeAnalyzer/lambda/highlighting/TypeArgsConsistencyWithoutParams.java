@@ -20,7 +20,7 @@ class Test5 {
     static <T> void bar(I<T> i){}
 
     {
-        bar(<error descr="Incompatible return type <null> in lambda expression">() -> null</error>);
+        bar(<error descr="Incompatible parameter types in lambda expression">() -> null</error>);
     }
 }
 class Test6 {
@@ -31,7 +31,7 @@ class Test6 {
     static <T> void bar(I<T> i){}
 
     {
-        bar(<error descr="Incompatible return type <null> in lambda expression">() -> null</error>);
+        bar(<error descr="Incompatible types: expected void but the lambda body is neither a statement expression nor a void-compatible block">() -> null</error>);
         bar(() -> {});
     }
 }

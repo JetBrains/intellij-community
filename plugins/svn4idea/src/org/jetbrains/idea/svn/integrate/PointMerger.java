@@ -1,120 +1,89 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.integrate;
 
+import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
+import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.svn.SvnRevisionNumber;
 import org.jetbrains.idea.svn.SvnUtil;
 import org.jetbrains.idea.svn.SvnVcs;
+import org.jetbrains.idea.svn.api.Depth;
+import org.jetbrains.idea.svn.api.Target;
+import org.jetbrains.idea.svn.api.Url;
+import org.jetbrains.idea.svn.copy.CopyMoveClient;
+import org.jetbrains.idea.svn.delete.DeleteClient;
 import org.jetbrains.idea.svn.history.SvnRepositoryContentRevision;
 import org.jetbrains.idea.svn.update.UpdateEventHandler;
-import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.SVNURL;
-import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
-import org.tmatesoft.svn.core.wc.SVNCopyClient;
-import org.tmatesoft.svn.core.wc.SVNCopySource;
-import org.tmatesoft.svn.core.wc.SVNRevision;
-import org.tmatesoft.svn.core.wc.SVNWCClient;
 
 import java.io.File;
-import java.util.*;
+import java.util.Comparator;
+import java.util.List;
 
 public class PointMerger extends Merger {
-  private final List<Change> mySelectedChanges;
-  private SVNWCClient myWcClient;
-  private SVNCopyClient myCopyClient;
-  private final SvnVcs myVcs;
-  private final UpdateEventHandler myHandler;
+
+  @NotNull private final List<Change> mySelectedChanges;
 
   public PointMerger(final SvnVcs vcs,
                      CommittedChangeList selectedChangeList,
                      final File target,
                      final UpdateEventHandler handler,
-                     final SVNURL currentBranchUrl,
-                     final List<Change> selectedChanges,
+                     final Url currentBranchUrl,
+                     @NotNull List<Change> selectedChanges,
                      String branchName) {
-    super(vcs, new ArrayList<CommittedChangeList>(Arrays.<CommittedChangeList>asList(selectedChangeList)),
-          target, handler, currentBranchUrl, branchName);
-    myHandler = handler;
-    myVcs = vcs;
-    mySelectedChanges = selectedChanges;
-    Collections.sort(mySelectedChanges, ChangesComparator.getInstance());
-    myLatestProcessed = selectedChangeList;
+    super(vcs, ContainerUtil.newArrayList(selectedChangeList), target, handler, currentBranchUrl, branchName);
+
+    mySelectedChanges = ContainerUtil.sorted(selectedChanges, ChangesComparator.getInstance());
   }
 
-  public boolean hasNext() {
-    return myCount == 0;
-  }
-
-  protected void doMerge() throws SVNException {
+  @Override
+  protected void doMerge() throws VcsException {
     for (Change change : mySelectedChanges) {
-      if (change.getBeforeRevision() == null) {
-        add(change);
-      } else if (change.getAfterRevision() == null) {
-        delete(change);
-      } else {
-        merge(change);
+      SvnRepositoryContentRevision before = (SvnRepositoryContentRevision)change.getBeforeRevision();
+      SvnRepositoryContentRevision after = (SvnRepositoryContentRevision)change.getAfterRevision();
+
+      if (before == null) {
+        //noinspection ConstantConditions
+        add(after);
+      }
+      else if (after == null) {
+        delete(before);
+      }
+      else {
+        merge(before, after);
       }
     }
   }
 
-  private void merge(final Change change) throws SVNException {
-    final SvnRepositoryContentRevision before = (SvnRepositoryContentRevision) change.getBeforeRevision();
-    final SvnRepositoryContentRevision after = (SvnRepositoryContentRevision) change.getAfterRevision();
+  private void merge(@NotNull SvnRepositoryContentRevision before, @NotNull SvnRepositoryContentRevision after) throws VcsException {
+    MergeClient client = myVcs.getFactory(myTarget).createMergeClient();
+    Target source1 = before.toTarget();
+    Target source2 = after.toTarget();
+    File localPath = getLocalPath(after.getFullPath());
 
-    final String path = myCurrentBranchUrl.toString();
-    final String beforeUrl = before.getFullPath();
-    final String afterUrl = after.getFullPath();
-
-    final File afterPath = SvnUtil.fileFromUrl(myTarget, path, afterUrl);
-
-    myDiffClient.doMerge(SVNURL.parseURIEncoded(beforeUrl), ((SvnRevisionNumber) before.getRevisionNumber()).getRevision(),
-                         SVNURL.parseURIEncoded(afterUrl), ((SvnRevisionNumber) after.getRevisionNumber()).getRevision(),
-                         afterPath, false, true, false, mySvnConfig.MERGE_DRY_RUN);
+    client.merge(source1, source2, localPath, Depth.FILES, true, mySvnConfig.isMergeDryRun(), false, false, mySvnConfig.getMergeOptions(),
+                 myHandler);
   }
 
-  private void delete(final Change change) throws SVNException {
-    if (myWcClient == null) {
-      myWcClient = myVcs.createWCClient();
-      myWcClient.setEventHandler(myHandler);
-    }
-    final SvnRepositoryContentRevision before = (SvnRepositoryContentRevision) change.getBeforeRevision();
-    final String path = myCurrentBranchUrl.toString();
-    final String beforeUrl = before.getFullPath();
-    final File beforePath = SvnUtil.fileFromUrl(myTarget, path, beforeUrl);
+  private void delete(@NotNull SvnRepositoryContentRevision revision) throws VcsException {
+    DeleteClient client = myVcs.getFactory(myTarget).createDeleteClient();
+    File localPath = getLocalPath(revision.getFullPath());
 
-    myWcClient.doDelete(beforePath, false, mySvnConfig.MERGE_DRY_RUN);
+    client.delete(localPath, false, mySvnConfig.isMergeDryRun(), myHandler);
   }
 
-  private void add(final Change change) throws SVNException {
-    if (myCopyClient == null) {
-      myCopyClient = myVcs.createCopyClient();
-      myCopyClient.setEventHandler(myHandler);
-    }
-    final SvnRepositoryContentRevision after = (SvnRepositoryContentRevision) change.getAfterRevision();
-    final String path = myCurrentBranchUrl.toString();
-    final String afterUrl = after.getFullPath();
-    final File afterPath = SvnUtil.fileFromUrl(myTarget, path, afterUrl);
-
-    final SVNRevision revision = ((SvnRevisionNumber)after.getRevisionNumber()).getRevision();
-    final SVNCopySource[] copySource = new SVNCopySource[]{new SVNCopySource(revision, revision, SVNURL.parseURIEncoded(afterUrl))};
+  private void add(@NotNull SvnRepositoryContentRevision revision) throws VcsException {
     // todo dry run
-    myCopyClient.doCopy(copySource, afterPath, false, true, true);
+    CopyMoveClient client = myVcs.getFactory(myTarget).createCopyMoveClient();
+    File localPath = getLocalPath(revision.getFullPath());
+
+    client.copy(revision.toTarget(), localPath, revision.getRevisionNumber().getRevision(), true, myHandler);
+  }
+
+  @NotNull
+  private File getLocalPath(@NotNull String fullUrl) {
+    return SvnUtil.fileFromUrl(myTarget, myCurrentBranchUrl.toString(), fullUrl);
   }
 
   private static class ChangesComparator implements Comparator<Change> {
@@ -124,10 +93,12 @@ public class PointMerger extends Merger {
       return ourInstance;
     }
 
+    @Override
     public int compare(final Change o1, final Change o2) {
       final SvnRepositoryContentRevision after1 = (SvnRepositoryContentRevision) o1.getAfterRevision();
       final SvnRepositoryContentRevision after2 = (SvnRepositoryContentRevision) o2.getAfterRevision();
 
+      // "delete" changes to the end
       if (after1 == null) {
         return 1;
       }
@@ -137,15 +108,9 @@ public class PointMerger extends Merger {
 
       final String path1 = after1.getFullPath();
       final String path2 = after2.getFullPath();
-      if (path1 == null) {
-        return 1;
-      }
-      if (path2 == null) {
-        return -1;
-      }
 
-      final String ancestor = SVNPathUtil.getCommonPathAncestor(path1, path2);
-      return (path1.equals(ancestor)) ? -1 : 1;
+      final String ancestor = Url.getCommonAncestor(path1, path2);
+      return path1.equals(ancestor) ? -1 : 1;
     }
   }
 

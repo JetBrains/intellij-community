@@ -1,0 +1,16 @@
+<html>
+<body>
+Reports statements which use a <b>GString</b> object as a key to map.
+In general <b>GString</b> objects are mutable and probably should not be used as keys.
+<p>
+Also, a <b>GString</b> entry cannot be accessed with a <b>java.lang.String</b> object with same value. Example:
+<br>
+<pre>
+    def map = [:]
+    <b>def</b> key = 'foo'
+    map &lt&lt ["${key}": 'bar']
+    <b>assert </b> map[key] == <b>null</b>
+</pre>
+<small>New in 2017.1</small>
+</body>
+</html>

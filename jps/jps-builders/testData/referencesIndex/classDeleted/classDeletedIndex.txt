@@ -1,0 +1,10 @@
+Backward Hierarchy:
+java.lang.Object -> Foo
+
+Backward References:
+Foo in Foo occurrences = 1
+
+Class Definitions:
+Foo in Foo
+
+Members Signatures:

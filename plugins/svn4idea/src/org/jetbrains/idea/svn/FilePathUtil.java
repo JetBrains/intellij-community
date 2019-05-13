@@ -25,14 +25,14 @@ public class FilePathUtil {
   private FilePathUtil() {
   }
 
-  public static boolean isNested(final Collection<FilePath> roots, final FilePath root) {
+  public static boolean isNested(final Collection<? extends FilePath> roots, final FilePath root) {
     return isNested(roots, root.getIOFile());
   }
 
-  public static boolean isNested(final Collection<FilePath> roots, final File root) {
+  public static boolean isNested(final Collection<? extends FilePath> roots, final File root) {
     for (FilePath filePath : roots) {
       final File ioFile = filePath.getIOFile();
-      if (ioFile.equals(root)) continue;
+
       if (FileUtil.isAncestor(ioFile, root, true)) {
         return true;
       }

@@ -15,3 +15,5 @@ Groovy script
     Variable
       PsiElement(identifier)('c')
     PsiElement())(')')
+    PsiErrorElement:'=' expected
+      <empty list>

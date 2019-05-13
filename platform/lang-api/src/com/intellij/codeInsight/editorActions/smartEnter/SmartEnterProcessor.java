@@ -36,6 +36,10 @@ import org.jetbrains.annotations.Nullable;
 public abstract class SmartEnterProcessor {
   public abstract boolean process(@NotNull final Project project, @NotNull final Editor editor, @NotNull final PsiFile psiFile);
 
+  public boolean processAfterCompletion(@NotNull final Editor editor, @NotNull final PsiFile psiFile) {
+    return process(psiFile.getProject(), editor, psiFile);
+  }
+
   protected void reformat(PsiElement atCaret) throws IncorrectOperationException {
     final TextRange range = atCaret.getTextRange();
     final PsiFile file = atCaret.getContainingFile();
@@ -68,12 +72,15 @@ public abstract class SmartEnterProcessor {
     return PsiDocumentManager.getInstance(project).hasUncommitedDocuments();
   }
 
-  protected void commit(@NotNull final Editor editor) {
+  public void commit(@NotNull final Editor editor) {
+    commitDocument(editor);
+  }
+
+  public static void commitDocument(@NotNull Editor editor) {
     final Project project = editor.getProject();
     PsiDocumentManager.getInstance(project).commitDocument(editor.getDocument());
 
     //some psi operations may block the document, unblock here
     PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(editor.getDocument());
   }
-
 }

@@ -1,0 +1,12 @@
+<html>
+<body>
+Reports <b>return</b> statements returning an instance of an anonymous, local, or inner class.
+Such instances keep an implicit reference to the outer instance.
+Which means the instance can prevent the outer instance from being garbage collected.
+Any caller of a method which returns such an instance might cause a memory leak by holding on to the instance returned.
+<p>
+Use the checkbox below to ignore returns from <b>protected</b> or package-private methods.
+Returns from <b>private</b> methods are always ignored.
+<p>
+</body>
+</html>

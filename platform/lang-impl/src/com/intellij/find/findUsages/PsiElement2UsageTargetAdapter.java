@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,30 +17,39 @@
 package com.intellij.find.findUsages;
 
 import com.intellij.codeInsight.highlighting.HighlightUsagesHandler;
+import com.intellij.find.FindBundle;
 import com.intellij.find.FindManager;
 import com.intellij.find.impl.FindManagerImpl;
+import com.intellij.ide.presentation.VirtualFilePresentation;
+import com.intellij.lang.findUsages.DescriptiveNameUtil;
+import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.navigation.NavigationItem;
 import com.intellij.navigation.PsiElementNavigationItem;
 import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.actionSystem.DataSink;
+import com.intellij.openapi.actionSystem.KeyboardShortcut;
 import com.intellij.openapi.actionSystem.TypeSafeDataProvider;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditor;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.pom.Navigatable;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.psi.meta.PsiMetaOwner;
 import com.intellij.psi.meta.PsiPresentableMetaData;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
-import com.intellij.ui.ComputableIcon;
 import com.intellij.usageView.UsageInfo;
+import com.intellij.usageView.UsageViewBundle;
 import com.intellij.usageView.UsageViewUtil;
+import com.intellij.usages.ConfigurableUsageTarget;
 import com.intellij.usages.PsiElementUsageTarget;
 import com.intellij.usages.UsageView;
+import com.intellij.usages.impl.UsageViewImpl;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -50,49 +59,57 @@ import java.util.Collection;
 /**
  * @author max
  */
-public class PsiElement2UsageTargetAdapter implements PsiElementUsageTarget, TypeSafeDataProvider, PsiElementNavigationItem {
+public class PsiElement2UsageTargetAdapter
+  implements PsiElementUsageTarget, TypeSafeDataProvider, PsiElementNavigationItem, ItemPresentation, ConfigurableUsageTarget {
   private final SmartPsiElementPointer myPointer;
-  private final MyItemPresentation myPresentation;
+  @NotNull protected final FindUsagesOptions myOptions;
+  private String myPresentableText;
+  private Icon myIcon;
 
-  public PsiElement2UsageTargetAdapter(@NotNull PsiElement element) {
+  public PsiElement2UsageTargetAdapter(@NotNull PsiElement element, @NotNull FindUsagesOptions options) {
+    myOptions = options;
     myPointer = SmartPointerManager.getInstance(element.getProject()).createSmartPsiElementPointer(element);
 
     if (!(element instanceof NavigationItem)) {
       throw new IllegalArgumentException("Element is not a navigation item: " + element);
     }
+    update(element);
+  }
 
-    myPresentation = new MyItemPresentation();
+  public PsiElement2UsageTargetAdapter(@NotNull PsiElement element) {
+    this(element, new FindUsagesOptions(element.getProject()));
   }
 
   @Override
   public String getName() {
-    return getNavigationItem().getName();
+    PsiElement element = getElement();
+    return element instanceof NavigationItem ? ((NavigationItem)element).getName() : null;
   }
 
   @Override
   @NotNull
   public ItemPresentation getPresentation() {
-    return myPresentation;
+    return this;
   }
 
   @Override
   public void navigate(boolean requestFocus) {
-    if (!canNavigate()) return;
-    getNavigationItem().navigate(requestFocus);
+    PsiElement element = getElement();
+    if (element instanceof Navigatable && ((Navigatable)element).canNavigate()) {
+      ((Navigatable)element).navigate(requestFocus);
+    }
   }
 
   @Override
   public boolean canNavigate() {
-    return isValid() && getNavigationItem().canNavigate();
+    PsiElement element = getElement();
+    return element instanceof Navigatable && ((Navigatable)element).canNavigate();
   }
 
   @Override
   public boolean canNavigateToSource() {
-    return isValid() && getNavigationItem().canNavigateToSource();
-  }
-
-  private NavigationItem getNavigationItem() {
-    return (NavigationItem)getElement();
+    PsiElement element = getElement();
+    return element instanceof Navigatable && ((Navigatable)element).canNavigateToSource();
   }
 
   @Override
@@ -100,14 +117,16 @@ public class PsiElement2UsageTargetAdapter implements PsiElementUsageTarget, Typ
     return getElement();
   }
 
+  @Override
   public String toString() {
-    return myPresentation.getPresentableText();
+    return getPresentableText();
   }
 
   @Override
   public void findUsages() {
     PsiElement element = getElement();
-    FindManager.getInstance(element.getProject()).findUsages(element);
+    if (element == null) return;
+    ((FindManagerImpl)FindManager.getInstance(element.getProject())).getFindUsagesManager().startFindUsages(element, myOptions, null, null);
   }
 
   @Override
@@ -127,17 +146,18 @@ public class PsiElement2UsageTargetAdapter implements PsiElementUsageTarget, Typ
 
     if (file instanceof PsiCompiledFile) file = ((PsiCompiledFile)file).getDecompiledPsiFile();
 
-    final FindUsagesManager findUsagesManager = ((FindManagerImpl)FindManager.getInstance(target.getProject())).getFindUsagesManager();
+    Project project = target.getProject();
+    final FindUsagesManager findUsagesManager = ((FindManagerImpl)FindManager.getInstance(project)).getFindUsagesManager();
     final FindUsagesHandler handler = findUsagesManager.getFindUsagesHandler(target, true);
 
     // in case of injected file, use host file to highlight all occurrences of the target in each injected file
-    PsiFile context = InjectedLanguageUtil.getTopLevelFile(file);
+    PsiFile context = InjectedLanguageManager.getInstance(project).getTopLevelFile(file);
     SearchScope searchScope = new LocalSearchScope(context);
     Collection<PsiReference> refs = handler == null
                                     ? ReferencesSearch.search(target, searchScope, false).findAll()
                                     : handler.findReferencesToHighlight(target, searchScope);
 
-    new HighlightUsagesHandler.DoHighlightRunnable(new ArrayList<PsiReference>(refs), target.getProject(), target,
+    new HighlightUsagesHandler.DoHighlightRunnable(new ArrayList<>(refs), project, target,
                                                    editor, context, clearHighlights).run();
   }
 
@@ -162,12 +182,8 @@ public class PsiElement2UsageTargetAdapter implements PsiElementUsageTarget, Typ
     return virtualFile == null ? null : new VirtualFile[]{virtualFile};
   }
 
-  @Override
-  public void update() {
-    myPresentation.update();
-  }
-
-  public static PsiElement2UsageTargetAdapter[] convert(PsiElement[] psiElements) {
+  @NotNull
+  public static PsiElement2UsageTargetAdapter[] convert(@NotNull PsiElement[] psiElements) {
     PsiElement2UsageTargetAdapter[] targets = new PsiElement2UsageTargetAdapter[psiElements.length];
     for (int i = 0; i < targets.length; i++) {
       targets[i] = new PsiElement2UsageTargetAdapter(psiElements[i]);
@@ -176,68 +192,99 @@ public class PsiElement2UsageTargetAdapter implements PsiElementUsageTarget, Typ
     return targets;
   }
 
+  @NotNull
+  static PsiElement[] convertToPsiElements(@NotNull PsiElement2UsageTargetAdapter[] adapters) {
+    PsiElement[] targets = new PsiElement[adapters.length];
+    for (int i = 0; i < targets.length; i++) {
+      targets[i] = adapters[i].getElement();
+    }
+
+    return targets;
+  }
+
   @Override
-  public void calcData(final DataKey key, final DataSink sink) {
+  public void calcData(@NotNull final DataKey key, @NotNull final DataSink sink) {
     if (key == UsageView.USAGE_INFO_KEY) {
       PsiElement element = getElement();
       if (element != null && element.getTextRange() != null) {
         sink.put(UsageView.USAGE_INFO_KEY, new UsageInfo(element));
       }
     }
+    else if (key == UsageView.USAGE_SCOPE) {
+      sink.put(UsageView.USAGE_SCOPE, myOptions.searchScope);
+    }
   }
 
-  private class MyItemPresentation implements ItemPresentation {
-    private String myPresentableText;
-    private ComputableIcon myIconOpen;
-    private ComputableIcon myIconClosed;
+  @Override
+  public KeyboardShortcut getShortcut() {
+    return UsageViewImpl.getShowUsagesWithSettingsShortcut();
+  }
 
-    public MyItemPresentation() {
-      update();
+  @NotNull
+  @Override
+  public String getLongDescriptiveName() {
+    SearchScope searchScope = myOptions.searchScope;
+    String scopeString = searchScope.getDisplayName();
+    PsiElement psiElement = getElement();
+
+    return psiElement == null ? UsageViewBundle.message("node.invalid") :
+           FindBundle.message("recent.find.usages.action.popup", StringUtil.capitalize(UsageViewUtil.getType(psiElement)),
+                              DescriptiveNameUtil.getDescriptiveName(psiElement),
+                              scopeString
+    );
+  }
+
+  @Override
+  public void showSettings() {
+    PsiElement element = getElement();
+    if (element != null) {
+      FindUsagesManager findUsagesManager = ((FindManagerImpl)FindManager.getInstance(myPointer.getProject())).getFindUsagesManager();
+      findUsagesManager.findUsages(element, null, null, true, null);
     }
+  }
 
-    public void update() {
-      final PsiElement element = getElement();
-      if (element != null && element.isValid()) {
-        final ItemPresentation presentation = ((NavigationItem)element).getPresentation();
-        myIconOpen = presentation != null ? ComputableIcon.create(presentation, true) : null;
-        myIconClosed = presentation != null ? ComputableIcon.create(presentation, false) : null;
-        myPresentableText = presentation != null ? presentation.getPresentableText() : UsageViewUtil.createNodeText(element);
-        if (myIconOpen == null || myIconClosed == null) {
-          if (element instanceof PsiMetaOwner) {
-            final PsiMetaOwner psiMetaOwner = (PsiMetaOwner)element;
-            final PsiMetaData metaData = psiMetaOwner.getMetaData();
-            if (metaData instanceof PsiPresentableMetaData) {
-              final PsiPresentableMetaData psiPresentableMetaData = (PsiPresentableMetaData)metaData;
-              if (myIconOpen == null) myIconOpen = ComputableIcon.create(psiPresentableMetaData);
-              if (myIconClosed == null) myIconClosed = ComputableIcon.create(psiPresentableMetaData);
-            }
+  @Override
+  public void update() {
+    update(getElement());
+  }
+
+  private void update(PsiElement element) {
+    if (element != null && element.isValid()) {
+      final ItemPresentation presentation = ((NavigationItem)element).getPresentation();
+      myIcon = presentation == null ? null : presentation.getIcon(true);
+      myPresentableText = presentation == null ? UsageViewUtil.createNodeText(element) : presentation.getPresentableText();
+      if (myIcon == null) {
+        if (element instanceof PsiMetaOwner) {
+          final PsiMetaOwner psiMetaOwner = (PsiMetaOwner)element;
+          final PsiMetaData metaData = psiMetaOwner.getMetaData();
+          if (metaData instanceof PsiPresentableMetaData) {
+            final PsiPresentableMetaData psiPresentableMetaData = (PsiPresentableMetaData)metaData;
+            if (myIcon == null) myIcon = psiPresentableMetaData.getIcon();
           }
-          else if (element instanceof PsiFile) {
-            final PsiFile psiFile = (PsiFile)element;
-            final VirtualFile virtualFile = psiFile.getVirtualFile();
-            if (virtualFile != null) {
-              myIconOpen = ComputableIcon.create(virtualFile);
-              myIconClosed = ComputableIcon.create(virtualFile);
-            }
+        }
+        else if (element instanceof PsiFile) {
+          final PsiFile psiFile = (PsiFile)element;
+          final VirtualFile virtualFile = psiFile.getVirtualFile();
+          if (virtualFile != null) {
+            myIcon = VirtualFilePresentation.getIcon(virtualFile);
           }
         }
       }
     }
+  }
 
-    @Override
-    public String getPresentableText() {
-      return myPresentableText;
-    }
+  @Override
+  public String getPresentableText() {
+    return myPresentableText;
+  }
 
-    @Override
-    public String getLocationString() {
-      return null;
-    }
+  @Override
+  public String getLocationString() {
+    return null;
+  }
 
-    @Override
-    public Icon getIcon(boolean open) {
-      final ComputableIcon computableIcon = open ? myIconOpen : myIconClosed;
-      return computableIcon == null? null : computableIcon.getIcon();
-    }
+  @Override
+  public Icon getIcon(boolean open) {
+    return myIcon;
   }
 }

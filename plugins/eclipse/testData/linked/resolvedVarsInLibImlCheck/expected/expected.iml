@@ -1,5 +1,4 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<root inherit-compiler-output="false">
+<root>
   <output url="file://$MODULE_DIR$/bin" />
   <exclude-output />
   <content url="file://$MODULE_DIR$" />

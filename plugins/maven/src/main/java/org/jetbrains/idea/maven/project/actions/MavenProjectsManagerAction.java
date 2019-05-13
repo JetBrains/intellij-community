@@ -16,20 +16,28 @@
 package org.jetbrains.idea.maven.project.actions;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
+import org.jetbrains.idea.maven.statistics.MavenActionsUsagesCollector;
 import org.jetbrains.idea.maven.utils.actions.MavenAction;
 import org.jetbrains.idea.maven.utils.actions.MavenActionUtil;
 
 public abstract class MavenProjectsManagerAction extends MavenAction {
   @Override
-  public void actionPerformed(AnActionEvent e) {
-    perform(MavenActionUtil.getProjectsManager(e.getDataContext()));
+  public void actionPerformed(@NotNull AnActionEvent e) {
+    MavenActionsUsagesCollector.trigger(e.getProject(), this, e);
+    final MavenProjectsManager projectsManager = MavenActionUtil.getProjectsManager(e.getDataContext());
+    if (projectsManager != null) {
+      perform(projectsManager);
+    }
   }
 
   @Override
-  protected boolean isAvailable(AnActionEvent e) {
-    return super.isAvailable(e) && MavenActionUtil.getProjectsManager(e.getDataContext()).isMavenizedProject();
+  protected boolean isAvailable(@NotNull AnActionEvent e) {
+    if(!super.isAvailable(e)) return false;
+    final MavenProjectsManager projectsManager = MavenActionUtil.getProjectsManager(e.getDataContext());
+    return projectsManager != null && projectsManager.isMavenizedProject();
   }
 
-  protected abstract void perform(MavenProjectsManager manager);
+  protected abstract void perform(@NotNull MavenProjectsManager manager);
 }

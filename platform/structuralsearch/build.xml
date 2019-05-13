@@ -1,0 +1,53 @@
+<project name="StructuralSearchPlugin" default="jar_plugin" basedir="">
+  <property name="plugname" value="StructuralSearchPlugin"/>
+  <property name="releasePlugname" value="SS"/>
+  <property name="build.path" value="${project.path}/build_out"/>
+  <property name="version" value="0.7.0.1"/>
+  <property name="description" value="This is experimental yet useful plugin for searching source code
+    in terms of java syntax (query code by example :-). It is intended to be used for:
+    &amp;lt;LI&amp;gt;understanding new libraries, finding highlevel code patterns (singletons, serialization implementation,
+    Struts actions, ejbs, servlets, filters, source metadata, etc), analyzing
+    opportunities for aspect refactoring (finding exception handling, methods with
+    specific signatures and structure, etc). For instance, for exploring source code of JDK 1.5 with Aurora
+    one could use search to find added entities (classes, methods, etc), generic classes, methods and declarations or just
+    parameterized symbols. Note, that the plugin could miss some generic stuff that is not supported by Aurora (e.g. anonymous typed vars).
+    &amp;lt;LI&amp;gt; finding expressions, statements or group of statements regardsless of particular whitespace indentation.
+    This could be useful e.g. after applying extract method refactoring to find the other occurences the such extracted code.
+    &amp;lt;LI&amp;gt;Find code fragments (symbols, references, constants) like given pattern.
+    &amp;lt;BR&amp;gt;Warning, the plugin is PSI dependent, works with 1156 and 706" />
+  <target name="clean">
+    <delete includeEmptyDirs="true" failonerror="false">
+        <fileset dir="${build.path}" includes="**/*.class,**/*.html,META-INF/*.xml,META-INF/*.txt"/>
+    </delete>
+    <mkdir dir="${build.path}"/>
+  </target>
+  <target name="copy_files">
+    <copy todir="${build.path}/META-INF" >
+       <fileset dir="${project.path}/META-INF" includes="plugin.xml,version.txt"/>
+    </copy>
+    <copy todir="${build.path}/resources">
+       <fileset dir="${project.path}/resources"/>
+    </copy>
+    <copy todir="${build.path}">
+       <fileset dir="${project.path}/classes" includes="**/*.class">
+       </fileset>
+    </copy>
+  </target>
+
+  <target name="version" depends="copy_files">
+    <replace dir="${build.path}" includes="**/*.xml **/*.html **/*.txt">
+       <replacefilter token="@PLUGIN.VERSION@" value="${version}"/>
+       <replacefilter token="@PLUGIN.DESCRIPTION@" value="${description}"/>
+    </replace>
+  </target>
+  <target name="jar_plugin" depends="clean,copy_files,version" >
+
+    <jar jarfile="${build.path}/${plugname}.jar" basedir="${build.path}"
+      excludes="${plugname}.jar"
+     />
+
+    <copy todir="${idea.path}/debug/plugins">
+       <fileset dir="${build.path}" includes="*.jar"  />
+    </copy>
+  </target>
+</project>

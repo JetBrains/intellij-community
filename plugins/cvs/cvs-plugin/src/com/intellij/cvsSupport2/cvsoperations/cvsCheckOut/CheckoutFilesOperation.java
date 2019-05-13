@@ -17,7 +17,6 @@ package com.intellij.cvsSupport2.cvsoperations.cvsCheckOut;
 
 import com.intellij.cvsSupport2.application.CvsEntriesManager;
 import com.intellij.cvsSupport2.config.CvsConfiguration;
-import com.intellij.cvsSupport2.cvshandlers.CvsHandler;
 import com.intellij.cvsSupport2.cvsoperations.common.CompositeOperation;
 import com.intellij.openapi.vcs.FilePath;
 
@@ -38,9 +37,5 @@ public class CheckoutFilesOperation extends CompositeOperation {
                                 CvsEntriesManager.getInstance().getEntryFor(file.getVirtualFileParent(), file.getName()),
                                 cvsConfiguration.MAKE_NEW_FILES_READONLY, file.isDirectory());
     addOperation(operation);
-  }                                                                                           
-
-  public int getFilesToProcessCount() {
-    return CvsHandler.UNKNOWN_COUNT;
   }
 }

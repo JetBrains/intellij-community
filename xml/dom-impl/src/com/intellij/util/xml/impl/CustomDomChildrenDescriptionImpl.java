@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,6 @@ package com.intellij.util.xml.impl;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.NotNullFunction;
 import com.intellij.util.xml.*;
 import com.intellij.util.xml.reflect.CustomDomChildrenDescription;
 import com.intellij.util.xml.reflect.DomExtensionImpl;
@@ -34,20 +33,13 @@ import java.util.List;
  */
 public class CustomDomChildrenDescriptionImpl extends AbstractDomChildDescriptionImpl implements CustomDomChildrenDescription, AbstractCollectionChildDescription {
   @Nullable private final JavaMethod myGetter;
-  public static final NotNullFunction<DomInvocationHandler,List<XmlTag>> CUSTOM_TAGS_GETTER = new NotNullFunction<DomInvocationHandler, List<XmlTag>>() {
-    @NotNull
-    public List<XmlTag> fun(final DomInvocationHandler handler) {
-      return DomImplUtil.getCustomSubTags(handler, handler.getXmlTag().getSubTags(), handler.getFile());
-    }
-  };
-
   private final TagNameDescriptor myTagNameDescriptor;
   private final AttributeDescriptor myAttributeDescriptor;
 
 
   public CustomDomChildrenDescriptionImpl(@NotNull final JavaMethod getter) {
     this(getter, DomReflectionUtil.extractCollectionElementType(getter.getGenericReturnType()),
-         TagNameDescriptor.EMPTY, TagNameDescriptor.EMPTY);
+         AttributeDescriptor.EMPTY, AttributeDescriptor.EMPTY);
   }
 
   public CustomDomChildrenDescriptionImpl(DomExtensionImpl custom) {
@@ -68,30 +60,35 @@ public class CustomDomChildrenDescriptionImpl extends AbstractDomChildDescriptio
   }
 
   @NotNull
-  public List<? extends DomElement> getValues(@NotNull final DomInvocationHandler parent) {
+  public List<? extends DomElement> getValues(@NotNull final DomInvocationHandler<?,?> parent) {
     if (!parent.getGenericInfo().checkInitialized()) {
       return Collections.emptyList();
     }
-    return parent.getCollectionChildren(this, CUSTOM_TAGS_GETTER);
+    return parent.getCollectionChildren(this);
   }
 
+  @Override
   @NotNull
   public List<? extends DomElement> getValues(@NotNull final DomElement parent) {
-    final DomInvocationHandler handler = DomManagerImpl.getDomInvocationHandler(parent);
+    final DomInvocationHandler<?,?> handler = DomManagerImpl.getDomInvocationHandler(parent);
     if (handler != null) return getValues(handler);
 
     assert myGetter != null;
+    //noinspection unchecked
     return (List<? extends DomElement>)myGetter.invoke(parent, ArrayUtil.EMPTY_OBJECT_ARRAY);
   }
 
+  @Override
   public int compareTo(final AbstractDomChildDescriptionImpl o) {
     return equals(o) ? 0 : -1;
   }
 
+  @Override
   public List<XmlTag> getSubTags(final DomInvocationHandler handler, final XmlTag[] subTags, final XmlFile file) {
     return DomImplUtil.getCustomSubTags(handler, subTags, file);
   }
 
+  @Override
   public EvaluatedXmlName createEvaluatedXmlName(final DomInvocationHandler parent, final XmlTag childTag) {
     return new DummyEvaluatedXmlName(childTag.getLocalName(), childTag.getNamespace());
   }

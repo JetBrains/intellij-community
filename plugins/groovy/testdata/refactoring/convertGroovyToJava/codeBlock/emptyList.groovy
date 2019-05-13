@@ -16,3 +16,4 @@
 def list = []
 int[] arr = []
 List<String> strings = []
+int[] arr2 = list

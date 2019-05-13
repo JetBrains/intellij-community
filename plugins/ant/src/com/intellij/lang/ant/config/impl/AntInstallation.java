@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,19 +17,15 @@ package com.intellij.lang.ant.config.impl;
 
 import com.intellij.lang.ant.AntBundle;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.util.io.JarUtil;
 import com.intellij.util.config.*;
 import com.intellij.util.containers.Convertor;
-import com.intellij.util.lang.UrlClassLoader;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
 import java.net.MalformedURLException;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.Properties;
 
@@ -37,18 +33,11 @@ public class AntInstallation {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ant.impl.AntInstallation");
   public static final StringProperty HOME_DIR = new StringProperty("homeDir", "");
   public static final AbstractProperty<String> NAME = new StringProperty("name", "");
-  public static final ListProperty<AntClasspathEntry> CLASS_PATH = ListProperty.<AntClasspathEntry>create("classpath");
-  public static final Comparator<AntInstallation> NAME_COMPARATOR = new Comparator<AntInstallation>() {
-    public int compare(AntInstallation antInstallation, AntInstallation antInstallation1) {
-      return String.CASE_INSENSITIVE_ORDER.compare(antInstallation.getName(), antInstallation1.getName());
-    }
-  };
+  public static final ListProperty<AntClasspathEntry> CLASS_PATH = ListProperty.create("classpath");
+  public static final Comparator<AntInstallation> NAME_COMPARATOR =
+    (antInstallation, antInstallation1) -> String.CASE_INSENSITIVE_ORDER.compare(antInstallation.getName(), antInstallation1.getName());
 
-  public static final Convertor<AntInstallation, AntReference> REFERENCE_TO_ANT = new Convertor<AntInstallation, AntReference>() {
-    public AntReference convert(AntInstallation antInstallation) {
-      return antInstallation.getReference();
-    }
-  };
+  public static final Convertor<AntInstallation, AntReference> REFERENCE_TO_ANT = antInstallation -> antInstallation.getReference();
   public static final AbstractProperty<String> VERSION =
     new StringProperty("version", AntBundle.message("ant.unknown.version.string.presentation"));
   @NonNls private static final String PROPERTY_VERSION = "VERSION";
@@ -64,18 +53,20 @@ public class AntInstallation {
   }
 
   public static final Externalizer<AntInstallation> EXTERNALIZER = new Externalizer<AntInstallation>() {
-    public AntInstallation readValue(Element dataElement) throws InvalidDataException {
+    @Override
+    public AntInstallation readValue(Element dataElement) {
       AntInstallation antInstallation = new AntInstallation();
       antInstallation.readExternal(dataElement);
       return antInstallation;
     }
 
-    public void writeValue(Element dataElement, AntInstallation antInstallation) throws WriteExternalException {
+    @Override
+    public void writeValue(Element dataElement, AntInstallation antInstallation) {
       antInstallation.myProperties.writeExternal(dataElement);
     }
   };
 
-  private void readExternal(Element dataElement) throws InvalidDataException {
+  private void readExternal(Element dataElement) {
     myProperties.readExternal(dataElement);
     File antJar = new File(HOME_DIR.get(myProperties), PATH_TO_ANT_JAR);
     updateVersion(antJar);
@@ -116,15 +107,16 @@ public class AntInstallation {
   public String getVersion() {
     return VERSION.get(myProperties);
   }
-  
+
   public String getHomeDir() {
     return HOME_DIR.get(myProperties);
   }
-  
+
   public AbstractProperty.AbstractPropertyContainer getProperties() {
     return myProperties;
   }
 
+  @NotNull
   public ClassLoader getClassLoader() {
     return myClassLoaderHolder.getClassloader();
   }
@@ -132,7 +124,7 @@ public class AntInstallation {
   public void updateClasspath() {
     myClassLoaderHolder.updateClasspath();
   }
-  
+
   public static AntInstallation fromHome(String homePath) throws ConfigurationException {
     File antHome = new File(homePath);
     String antPath = "'" + antHome.getAbsolutePath() + "'";
@@ -161,27 +153,9 @@ public class AntInstallation {
   }
 
   private static Properties loadProperties(File antJar) throws MalformedURLException, ConfigurationException {
-    Properties properties = new Properties();
-    InputStream stream = null;
-    try {
-      stream = new UrlClassLoader(Collections.singletonList(antJar.toURL()), null, false, false, true).getResourceAsStream(VERSION_RESOURCE);
-      properties.load(stream);
-    }
-    catch (MalformedURLException e) {
-      throw e;
-    }
-    catch (IOException e) {
+    Properties properties = JarUtil.loadProperties(antJar, VERSION_RESOURCE);
+    if (properties == null) {
       throw new ConfigurationException(AntBundle.message("cant.read.from.ant.jar.error.message", antJar.getAbsolutePath()));
-    }
-    finally {
-      if (stream != null) {
-        try {
-          stream.close();
-        }
-        catch (IOException e) {
-          LOG.error(e);
-        }
-      }
     }
     return properties;
   }
@@ -203,7 +177,7 @@ public class AntInstallation {
   private static void registerProperties(ExternalizablePropertyContainer container) {
     container.registerProperty((StringProperty)NAME);
     container.registerProperty(HOME_DIR);
-    container.registerProperty(CLASS_PATH, "classpathItem", SinglePathEntry.EXTERNALIZER);
+    container.registerProperty(CLASS_PATH, "classpathItem", AntClasspathEntry.EXTERNALIZER);
     container.registerProperty((StringProperty)VERSION);
   }
 }

@@ -1,25 +1,10 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.uiDesigner.palette;
 
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.LangDataKeys;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.WindowManager;
@@ -32,7 +17,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.uiDesigner.UIDesignerBundle;
 import com.intellij.uiDesigner.compiler.Utils;
 import com.intellij.uiDesigner.core.GridConstraints;
-import com.intellij.uiDesigner.lw.StringDescriptor;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -43,15 +28,16 @@ import java.util.HashMap;
  * @author yole
  */
 public class AddComponentAction extends AnAction {
-  public void actionPerformed(AnActionEvent e) {
-    Project project = e.getData(PlatformDataKeys.PROJECT);
+  @Override
+  public void actionPerformed(@NotNull AnActionEvent e) {
+    Project project = e.getData(CommonDataKeys.PROJECT);
     if (project == null) return;
     GroupItem groupItem = e.getData(GroupItem.DATA_KEY);
-    PsiFile psiFile = e.getData(LangDataKeys.PSI_FILE);
+    PsiFile psiFile = e.getData(CommonDataKeys.PSI_FILE);
     PsiElement elementToAdd = (psiFile != null) ? findElementToAdd(psiFile) : null;
     String className = "";
     if (elementToAdd instanceof PsiClass) {
-      className = ((PsiClass) elementToAdd).getQualifiedName();
+      className = ((PsiClass)elementToAdd).getQualifiedName();
       assert className != null;
     }
     else if (elementToAdd instanceof PsiFile) {
@@ -70,7 +56,7 @@ public class AddComponentAction extends AnAction {
       null,
       null,
       new GridConstraints(),
-      new HashMap<String, StringDescriptor>(),
+      new HashMap<>(),
       true/*all user defined components are removable*/,
       false,
       false
@@ -79,14 +65,13 @@ public class AddComponentAction extends AnAction {
     final ComponentItemDialog dialog = new ComponentItemDialog(project, parentWindow, itemToBeAdded, false);
     dialog.setTitle(UIDesignerBundle.message("title.add.component"));
     dialog.showGroupChooser(groupItem);
-    dialog.show();
-    if(!dialog.isOK()){
+    if (!dialog.showAndGet()) {
       return;
     }
 
     groupItem = dialog.getSelectedGroup();
     // If the itemToBeAdded is already in palette do nothing
-    if(groupItem.containsItemClass(itemToBeAdded.getClassName())){
+    if (groupItem.containsItemClass(itemToBeAdded.getClassName())) {
       return;
     }
 
@@ -118,8 +103,8 @@ public class AddComponentAction extends AnAction {
     }
   }
 
-  @Override public void update(AnActionEvent e) {
-    Project project = e.getData(PlatformDataKeys.PROJECT);
+  @Override public void update(@NotNull AnActionEvent e) {
+    Project project = e.getData(CommonDataKeys.PROJECT);
     if (e.getData(GroupItem.DATA_KEY) != null ||
         e.getData(ComponentItem.DATA_KEY) != null) {
       e.getPresentation().setVisible(true);
@@ -127,7 +112,7 @@ public class AddComponentAction extends AnAction {
       e.getPresentation().setEnabled(project != null && (groupItem == null || !groupItem.isReadOnly()));
     }
     else {
-      PsiFile psiFile = e.getData(LangDataKeys.PSI_FILE);
+      PsiFile psiFile = e.getData(CommonDataKeys.PSI_FILE);
       e.getPresentation().setVisible(psiFile != null && findElementToAdd(psiFile) != null);
     }
   }

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.uiDesigner.quickFixes;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
@@ -78,6 +64,7 @@ public abstract class QuickFixManager <T extends JComponent>{
     new ShowHintAction(this, component);
 
     viewPort.addChangeListener(new ChangeListener() {
+      @Override
       public void stateChanged(ChangeEvent e) {
         updateIntentionHintPosition(viewPort);
       }
@@ -101,7 +88,7 @@ public abstract class QuickFixManager <T extends JComponent>{
   /**
    * @return rectangle (in {@link #myComponent} coordinates) that represents
    * area that contains errors. This methods is invoked only if {@link #getErrorInfos()}
-   * returned non empty list of error infos. <code>null</code> means that
+   * returned non empty list of error infos. {@code null} means that
    * error bounds are not defined.
    */
   @Nullable
@@ -220,7 +207,7 @@ public abstract class QuickFixManager <T extends JComponent>{
       return;
     }
 
-    final ArrayList<ErrorWithFix> fixList = new ArrayList<ErrorWithFix>();
+    final ArrayList<ErrorWithFix> fixList = new ArrayList<>();
     for(ErrorInfo errorInfo: errorInfos) {
       final QuickFix[] quickFixes = errorInfo.myFixes;
       if (quickFixes.length > 0) {
@@ -254,7 +241,7 @@ public abstract class QuickFixManager <T extends JComponent>{
   }
 
   private static class ErrorWithFix extends Pair<ErrorInfo, QuickFix> {
-    public ErrorWithFix(final ErrorInfo first, final QuickFix second) {
+    ErrorWithFix(final ErrorInfo first, final QuickFix second) {
       super(first, second);
     }
   }
@@ -262,40 +249,36 @@ public abstract class QuickFixManager <T extends JComponent>{
   private class QuickFixPopupStep extends BaseListPopupStep<ErrorWithFix> {
     private final boolean myShowSuppresses;
 
-    public QuickFixPopupStep(final ArrayList<ErrorWithFix> fixList, boolean showSuppresses) {
+    QuickFixPopupStep(final ArrayList<ErrorWithFix> fixList, boolean showSuppresses) {
       super(null, fixList);
       myShowSuppresses = showSuppresses;
     }
 
+    @Override
     @NotNull
     public String getTextFor(final ErrorWithFix value) {
       return value.second.getName();
     }
 
+    @Override
     public PopupStep onChosen(final ErrorWithFix selectedValue, final boolean finalChoice) {
       if (selectedValue.second instanceof PopupQuickFix) {
         return ((PopupQuickFix) selectedValue.second).getPopupStep();
       }
       if (finalChoice || !myShowSuppresses) {
-        return doFinalStep(new Runnable() {
-          public void run() {
-            CommandProcessor.getInstance().executeCommand(myEditor.getProject(), new Runnable() {
-              public void run() {
-                selectedValue.second.run();
-              }
-            }, selectedValue.second.getName(), null);
-          }
-        });
+        return doFinalStep(
+          () -> CommandProcessor.getInstance().executeCommand(myEditor.getProject(), () -> selectedValue.second.run(), selectedValue.second.getName(), null));
       }
       if (selectedValue.first.getInspectionId() != null && selectedValue.second.getComponent() != null &&
           !(selectedValue.second instanceof SuppressFix)) {
-        ArrayList<ErrorWithFix> suppressList = new ArrayList<ErrorWithFix>();
+        ArrayList<ErrorWithFix> suppressList = new ArrayList<>();
         buildSuppressFixes(selectedValue.first, suppressList, false);
         return new QuickFixPopupStep(suppressList, false);
       }
       return FINAL_CHOICE;
     }
 
+    @Override
     public boolean hasSubstep(final ErrorWithFix selectedValue) {
       return (myShowSuppresses && selectedValue.first.getInspectionId() != null && selectedValue.second.getComponent() != null &&
         !(selectedValue.second instanceof SuppressFix)) || selectedValue.second instanceof PopupQuickFix;
@@ -309,11 +292,12 @@ public abstract class QuickFixManager <T extends JComponent>{
   private static class SuppressFix extends QuickFix {
     private final String myInspectionId;
 
-    public SuppressFix(final GuiEditor editor, final String name, final String inspectionId, final RadComponent component) {
+    SuppressFix(final GuiEditor editor, final String name, final String inspectionId, final RadComponent component) {
       super(editor, name, component);
       myInspectionId = inspectionId;
     }
 
+    @Override
     public void run() {
       if (!myEditor.ensureEditable()) return;
       myEditor.getRootContainer().suppressInspection(myInspectionId, myComponent);
@@ -322,13 +306,14 @@ public abstract class QuickFixManager <T extends JComponent>{
     }
   }
 
-  private final class MyShowHintRequest implements Runnable{
+  private static final class MyShowHintRequest implements Runnable{
     private final QuickFixManager myManager;
 
-    public MyShowHintRequest(@NotNull final QuickFixManager manager) {
+    MyShowHintRequest(@NotNull final QuickFixManager manager) {
       myManager = manager;
     }
 
+    @Override
     public void run() {
       myManager.showIntentionHint();
     }

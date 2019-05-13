@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm.impl;
 
 import com.intellij.ide.ui.UISettings;
@@ -27,7 +13,9 @@ import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.Gray;
 import com.intellij.ui.ScreenUtil;
+import com.intellij.util.ui.JBSwingUtilities;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.border.Border;
@@ -41,11 +29,10 @@ import java.util.List;
 /**
  * @author Eugene Belyaev
  */
-final class Stripe extends JPanel{
+final class Stripe extends JPanel implements UISettingsListener {
   private final int myAnchor;
-  private final ArrayList<StripeButton> myButtons = new ArrayList<StripeButton>();
+  private final ArrayList<StripeButton> myButtons = new ArrayList<>();
   private final MyKeymapManagerListener myWeakKeymapManagerListener;
-  private final MyUISettingsListener myUISettingsListener;
 
   private Dimension myPrefSize;
   private StripeButton myDragButton;
@@ -58,86 +45,78 @@ final class Stripe extends JPanel{
   private final Disposable myDisposable = Disposer.newDisposable();
   private BufferedImage myCachedBg;
 
-  Stripe(final int anchor, ToolWindowManagerImpl manager){
+  Stripe(final int anchor, ToolWindowManagerImpl manager) {
     super(new GridBagLayout());
     setOpaque(true);
     myManager = manager;
     myAnchor = anchor;
-    myWeakKeymapManagerListener=new MyKeymapManagerListener();
-    myUISettingsListener=new MyUISettingsListener();
+    myWeakKeymapManagerListener = new MyKeymapManagerListener();
     setBorder(new AdaptiveBorder());
+  }
+
+  @Override
+  public void uiSettingsChanged(UISettings uiSettings) {
+    updatePresentation();
   }
 
   private static class AdaptiveBorder implements Border {
     @Override
     public void paintBorder(Component c, Graphics g, int x, int y, int width, int height) {
       Insets insets = ((JComponent)c).getInsets();
-
-      if (UIUtil.isUnderDarcula()) {
-        g.setColor(Gray._40);
-        drawBorder(g, x, y, width, height, insets);
-      } else {
-        g.setColor(UIUtil.getPanelBackground());
-        drawBorder(g, x, y, width, height, insets);
-        g.setColor(Gray._155);
-        drawBorder(g, x, y, width, height, insets);
-      }
+      g.setColor(UIUtil.CONTRAST_BORDER_COLOR);
+      drawBorder(g, x, y, width, height, insets);
     }
 
     private static void drawBorder(Graphics g, int x, int y, int width, int height, Insets insets) {
-      if (insets.top == 1) g.drawLine(x, y, x + width, y);
-      if (insets.right == 1) g.drawLine(x + width - 1, y, x + width - 1, y + height);
-      if (insets.left == 1) g.drawLine(x, y, x, y + height);
-      if (insets.bottom == 1) g.drawLine(x, y + height - 1, x + width, y + height - 1);
+      if (insets.top == 1) UIUtil.drawLine(g, x, y, x + width, y);
+      if (insets.right == 1) UIUtil.drawLine(g, x + width - 1, y, x + width - 1, y + height);
+      if (insets.left == 1) UIUtil.drawLine(g, x, y, x, y + height);
+      if (insets.bottom == 1) UIUtil.drawLine(g, x, y + height - 1, x + width, y + height - 1);
 
       if (UIUtil.isUnderDarcula()) {
         final Color c = g.getColor();
         if (insets.top == 2) {
           g.setColor(c);
-          g.drawLine(x, y, x + width, y);
+          UIUtil.drawLine(g, x, y, x + width, y);
           g.setColor(Gray._85);
-          g.drawLine(x, y+1, x + width, y+1);
+          UIUtil.drawLine(g, x, y + 1, x + width, y + 1);
         }
         if (insets.right == 2) {
           g.setColor(Gray._85);
-          g.drawLine(x + width - 1, y, x + width - 1, y + height);
+          UIUtil.drawLine(g, x + width - 1, y, x + width - 1, y + height);
           g.setColor(c);
-          g.drawLine(x + width - 2, y, x + width - 2, y + height);
+          UIUtil.drawLine(g, x + width - 2, y, x + width - 2, y + height);
         }
         if (insets.left == 2) {
           g.setColor(Gray._85);
-          g.drawLine(x + 1, y, x + 1, y + height);
+          UIUtil.drawLine(g, x + 1, y, x + 1, y + height);
           g.setColor(c);
-          g.drawLine(x, y, x, y + height);
+          UIUtil.drawLine(g, x, y, x, y + height);
         }
         if (insets.bottom == 2) {
           //do nothing
         }
       }
     }
-    
+
+    @SuppressWarnings("UseDPIAwareInsets")
     @Override
     public Insets getBorderInsets(Component c) {
       Stripe stripe = (Stripe)c;
       ToolWindowAnchor anchor = stripe.getAnchor();
 
-      Insets result = new Insets(0, 0, 0, 0);
-      final int off = UIUtil.isUnderDarcula() ? 1 : 0;
       if (anchor == ToolWindowAnchor.LEFT) {
-        result.top = 1;
-        result.right = 1 + off;
-      } else if (anchor == ToolWindowAnchor.RIGHT) {
-        result.left = 1 + off;
-        result.top = 1;
-      } else if (anchor == ToolWindowAnchor.TOP) {
-        result.bottom = 0;
-        //result.bottom = 1;
-        result.top = 1;
-      } else {
-        result.top = 1+off;
+        return new Insets(1, 0, 0, 1);
       }
-
-      return result;
+      else if (anchor == ToolWindowAnchor.RIGHT) {
+        return new Insets(1, 1, 0, 0);
+      }
+      else if (anchor == ToolWindowAnchor.TOP) {
+        return new Insets(1, 0, 0, 0);
+      }
+      else {
+        return new Insets(1, 0, 0, 0);
+      }
     }
 
     @Override
@@ -150,21 +129,17 @@ final class Stripe extends JPanel{
    * Invoked when enclosed frame is being shown.
    */
   @Override
-  public void addNotify(){
+  public void addNotify() {
     super.addNotify();
-    updateText();
-    updateState();
+    updatePresentation();
     KeymapManagerEx.getInstanceEx().addWeakListener(myWeakKeymapManagerListener);
-    if (ScreenUtil.isStandardAddRemoveNotify(this)) {
-      UISettings.getInstance().addUISettingsListener(myUISettingsListener,myDisposable);
-    }
   }
 
   /**
    * Invoked when enclosed frame is being disposed.
    */
   @Override
-  public void removeNotify(){
+  public void removeNotify() {
     KeymapManagerEx.getInstanceEx().removeWeakListener(myWeakKeymapManagerListener);
     if (ScreenUtil.isStandardAddRemoveNotify(this)) {
       Disposer.dispose(myDisposable);
@@ -172,15 +147,15 @@ final class Stripe extends JPanel{
     super.removeNotify();
   }
 
-  void addButton(final StripeButton button,final Comparator<StripeButton> comparator){
+  void addButton(@NotNull StripeButton button, final Comparator<StripeButton> comparator) {
     myPrefSize = null;
     myButtons.add(button);
-    Collections.sort(myButtons,comparator);
+    Collections.sort(myButtons, comparator);
     add(button);
     revalidate();
   }
 
-  void removeButton(final StripeButton button) {
+  void removeButton(@NotNull StripeButton button) {
     myPrefSize = null;
     myButtons.remove(button);
     remove(button);
@@ -214,19 +189,22 @@ final class Stripe extends JPanel{
 
     data.eachY = 0;
     data.size = new Dimension();
-    data.gap = 1;
+    data.gap = 0;
     data.horizontal = isHorizontal();
     data.dragInsertPosition = -1;
     if (data.horizontal) {
       data.eachX = horizontaloffset - 1;
       data.eachY = 1;
-    } else {
+    }
+    else {
       data.eachX = 0;
     }
 
     data.fitSize = toFitWith != null ? toFitWith : new Dimension();
 
-    final Rectangle stripeSensetiveRec = new Rectangle(-DROP_DISTANCE_SENSIVITY, -DROP_DISTANCE_SENSIVITY, getWidth() + DROP_DISTANCE_SENSIVITY * 2, getHeight() + DROP_DISTANCE_SENSIVITY * 2);
+    final Rectangle stripeSensetiveRec =
+      new Rectangle(-DROP_DISTANCE_SENSIVITY, -DROP_DISTANCE_SENSIVITY, getWidth() + DROP_DISTANCE_SENSIVITY * 2,
+                    getHeight() + DROP_DISTANCE_SENSIVITY * 2);
     boolean processDrop = isDroppingButton() && stripeSensetiveRec.intersects(myDropRectangle) && !noDrop;
 
     if (toFitWith == null) {
@@ -242,7 +220,7 @@ final class Stripe extends JPanel{
     if (toFitWith != null) {
       LayoutData layoutData = recomputeBounds(false, null, true);
       if (data.horizontal) {
-        gap = toFitWith.width - horizontaloffset - layoutData.size.width - data.eachX ;
+        gap = toFitWith.width - horizontaloffset - layoutData.size.width - data.eachX;
       }
       else {
         gap = toFitWith.height - layoutData.size.height - data.eachY;
@@ -273,7 +251,8 @@ final class Stripe extends JPanel{
         if (data.horizontal) {
           data.eachX += gap;
           data.size.width += gap;
-        } else {
+        }
+        else {
           data.eachY += gap;
           data.size.height += gap;
         }
@@ -308,13 +287,13 @@ final class Stripe extends JPanel{
       tryDroppingOnGap(data, gap, -1);
     }
 
-
     if (isDroppingButton()) {
       final Dimension dragSize = myDragButton.getPreferredSize();
       if (getAnchor().isHorizontal() == myDragButton.getWindowInfo().getAnchor().isHorizontal()) {
         data.size.width = Math.max(data.size.width, dragSize.width);
         data.size.height = Math.max(data.size.height, dragSize.height);
-      } else {
+      }
+      else {
         data.size.width = Math.max(data.size.width, dragSize.height);
         data.size.height = Math.max(data.size.height, dragSize.width);
       }
@@ -361,10 +340,10 @@ final class Stripe extends JPanel{
   }
 
   private List<StripeButton> getButtonsToLayOut() {
-    List<StripeButton> result = new ArrayList<StripeButton>();
+    List<StripeButton> result = new ArrayList<>();
 
-    List<StripeButton> tools = new ArrayList<StripeButton>();
-    List<StripeButton> sideTools = new ArrayList<StripeButton>();
+    List<StripeButton> tools = new ArrayList<>();
+    List<StripeButton> sideTools = new ArrayList<>();
 
     for (StripeButton b : myButtons) {
       if (!isConsideredInLayout(b)) continue;
@@ -400,7 +379,8 @@ final class Stripe extends JPanel{
       data.eachX += deltaX;
       data.size.width += deltaX;
       data.size.height = eachSize.height;
-    } else {
+    }
+    else {
       final int deltaY = eachSize.height + data.gap;
       data.eachY += deltaY;
       data.size.width = eachSize.width;
@@ -435,8 +415,9 @@ final class Stripe extends JPanel{
       bg = new Color(Color.HSBtoRGB(result[0], result[1], result[2] - 0.08f > 0 ? result[2] - 0.08f : result[2]));
     }
     if (overlayed) {
-    setBackground(ColorUtil.toAlpha(bg, 190));
-    } else {
+      setBackground(ColorUtil.toAlpha(bg, 190));
+    }
+    else {
       setBackground(bg);
     }
   }
@@ -468,29 +449,21 @@ final class Stripe extends JPanel{
     return myPrefSize;
   }
 
-
-  private void updateText(){
-    final int size=myButtons.size();
-    for(int i=0;i<size;i++){
-      myButtons.get(i).updateText();
+  void updatePresentation() {
+    for (StripeButton button : myButtons) {
+      button.updatePresentation();
     }
   }
 
-  void updateState(){
-    final int size=myButtons.size();
-    for(int i=0;i<size;i++){
-      myButtons.get(i).updateState();
-    }
-  }
-
-  public boolean containsScreen(final Rectangle screenRec) {
+  public boolean containsScreen(@NotNull Rectangle screenRec) {
     final Point point = screenRec.getLocation();
     SwingUtilities.convertPointFromScreen(point, this);
     return new Rectangle(point, screenRec.getSize()).intersects(
       new Rectangle(-DROP_DISTANCE_SENSIVITY,
                     -DROP_DISTANCE_SENSIVITY,
                     getWidth() + DROP_DISTANCE_SENSIVITY,
-                    getHeight() + DROP_DISTANCE_SENSIVITY));
+                    getHeight() + DROP_DISTANCE_SENSIVITY)
+    );
   }
 
   public void finishDrop() {
@@ -498,14 +471,10 @@ final class Stripe extends JPanel{
 
     final WindowInfoImpl info = myDragButton.getDecorator().getWindowInfo();
     myFinishingDrop = true;
-    myManager.setSideToolAndAnchor(info.getId(), ToolWindowAnchor.get(myAnchor), myLastLayoutData.dragInsertPosition, myLastLayoutData.dragToSide);
+    myManager.setSideToolAndAnchor(info.getId(), ToolWindowAnchor.get(myAnchor), myLastLayoutData.dragInsertPosition,
+                                    myLastLayoutData.dragToSide);
 
-    myManager.invokeLater(new Runnable() {
-      @Override
-      public void run() {
-        resetDrop();
-      }
-    });
+    myManager.invokeLater(() -> resetDrop());
   }
 
   public void resetDrop() {
@@ -519,7 +488,7 @@ final class Stripe extends JPanel{
 
   public void processDropButton(final StripeButton button, JComponent buttonImage, Point screenPoint) {
     if (!isDroppingButton()) {
-      final BufferedImage image = UIUtil.createImage(button.getWidth(), button.getHeight(), BufferedImage.TYPE_INT_RGB);
+      final BufferedImage image = UIUtil.createImage(button, button.getWidth(), button.getHeight(), BufferedImage.TYPE_INT_RGB);
       buttonImage.paint(image.getGraphics());
       myDragButton = button;
       myDragButtonImage = buttonImage;
@@ -545,23 +514,15 @@ final class Stripe extends JPanel{
 
   private final class MyKeymapManagerListener implements KeymapManagerListener {
     @Override
-    public void activeKeymapChanged(final Keymap keymap){
-      updateText();
+    public void activeKeymapChanged(final Keymap keymap) {
+      updatePresentation();
     }
   }
 
-  private final class MyUISettingsListener implements UISettingsListener{
-    @Override
-    public void uiSettingsChanged(final UISettings source){
-      updateText();
-      updateState();
-    }
-  }
-
-
+  @Override
   public String toString() {
     String anchor = null;
-    switch(myAnchor) {
+    switch (myAnchor) {
       case SwingConstants.TOP:
         anchor = "TOP";
         break;
@@ -584,23 +545,29 @@ final class Stripe extends JPanel{
       Rectangle bounds = getBounds();
       BufferedImage bg;
       if (anchor == ToolWindowAnchor.LEFT || anchor == ToolWindowAnchor.RIGHT) {
-        bg = (BufferedImage) createImage(bounds.width, 50);
+        bg = (BufferedImage)createImage(bounds.width, 50);
         Graphics2D graphics = bg.createGraphics();
         graphics.setPaint(UIUtil.getGradientPaint(0, 0, new Color(0, 0, 0, 10), bounds.width, 0, new Color(0, 0, 0, 0)));
         graphics.fillRect(0, 0, bounds.width, 50);
         graphics.dispose();
-      } else {
-        bg = (BufferedImage) createImage(50, bounds.height);
+      }
+      else {
+        bg = (BufferedImage)createImage(50, bounds.height);
         Graphics2D graphics = bg.createGraphics();
         graphics.setPaint(UIUtil.getGradientPaint(0, 0, new Color(0, 0, 0, 0), 0, bounds.height, new Color(0, 0, 0, 10)));
         graphics.fillRect(0, 0, 50, bounds.height);
         graphics.dispose();
       }
-      
+
       myCachedBg = bg;
     }
-    
+
     return myCachedBg;
+  }
+
+  @Override
+  protected Graphics getComponentGraphics(Graphics g) {
+    return JBSwingUtilities.runGlobalCGTransform(this, super.getComponentGraphics(g));
   }
 
   @Override
@@ -615,11 +582,12 @@ final class Stripe extends JPanel{
     g.setColor(new Color(255, 255, 255, 40));
     Rectangle r = getBounds();
     if (anchor == ToolWindowAnchor.LEFT || anchor == ToolWindowAnchor.RIGHT) {
-      g.drawLine(0, 0, 0, r.height);
-      g.drawLine(r.width - 2, 0, r.width - 2, r.height);
-    } else {
-      g.drawLine(0, 1, r.width, 1);
-      g.drawLine(0, r.height - 1, r.width, r.height - 1);
+      UIUtil.drawLine(g, 0, 0, 0, r.height);
+      UIUtil.drawLine(g, r.width - 2, 0, r.width - 2, r.height);
+    }
+    else {
+      UIUtil.drawLine(g, 0, 1, r.width, 1);
+      UIUtil.drawLine(g, 0, r.height - 1, r.width, r.height - 1);
     }
   }
 }

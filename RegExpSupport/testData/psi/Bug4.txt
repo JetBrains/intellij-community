@@ -1,0 +1,6 @@
+REGEXP_FILE
+  RegExpPatternImpl: <{>
+    RegExpBranchImpl: <{>
+      PsiErrorElement:Dangling metacharacter
+        <empty list>
+      PsiElement(LBRACE)('{')

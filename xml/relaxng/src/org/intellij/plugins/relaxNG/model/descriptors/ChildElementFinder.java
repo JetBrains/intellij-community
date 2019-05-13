@@ -25,7 +25,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 class ChildElementFinder extends RecursionSaveWalker {
-  private final List<DElementPattern> myRoots = new ArrayList<DElementPattern>();
+  private final List<DElementPattern> myRoots = new ArrayList<>();
 
   private final int myTargetDepth;
   private int myDepth;
@@ -34,6 +34,7 @@ class ChildElementFinder extends RecursionSaveWalker {
     myTargetDepth = targetDepth;
   }
 
+  @Override
   public Void onRef(DRefPattern p) {
     if (myDepth < myTargetDepth || myTargetDepth == -1) {
       return super.onRef(p);
@@ -41,6 +42,7 @@ class ChildElementFinder extends RecursionSaveWalker {
     return null;
   }
 
+  @Override
   public Void onElement(DElementPattern p) {
     myDepth++;
     try {

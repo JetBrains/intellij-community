@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,10 @@
  */
 package com.intellij.lexer;
 
+import org.jetbrains.annotations.NotNull;
+
 public abstract class LexerBase extends Lexer {
+  @NotNull
   @Override
   public LexerPosition getCurrentPosition() {
     final int offset = getTokenStart();
@@ -24,7 +27,7 @@ public abstract class LexerBase extends Lexer {
   }
 
   @Override
-  public void restore(LexerPosition position) {
+  public void restore(@NotNull LexerPosition position) {
     start(getBufferSequence(), position.getOffset(), getBufferEnd(), position.getState());
   }
 }

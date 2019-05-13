@@ -1,30 +1,29 @@
 /*
-* Copyright (c) 2005, Joe Desbonnet, (jdesbonnet@gmail.com)
-* All rights reserved.
-*
-* Redistribution and use in source and binary forms, with or without
-* modification, are permitted provided that the following conditions are met:
-*     * Redistributions of source code must retain the above copyright
-*       notice, this list of conditions and the following disclaimer.
-*     * Redistributions in binary form must reproduce the above copyright
-*       notice, this list of conditions and the following disclaimer in the
-*       documentation and/or other materials provided with the distribution.
-*     * Neither the name of the <organization> nor the
-*       names of its contributors may be used to endorse or promote products
-*       derived from this software without specific prior written permission.
-*
-* THIS SOFTWARE IS PROVIDED BY <copyright holder> ``AS IS'' AND ANY
-* EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
-* WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-* DISCLAIMED. IN NO EVENT SHALL <copyright holder> BE LIABLE FOR ANY
-* DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
-* (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
-* LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
-* ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-* (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
-* SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-*/
-
+ * Copyright (c) 2005, Joe Desbonnet, (jdesbonnet@gmail.com)
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are met:
+ *     * Redistributions of source code must retain the above copyright
+ *       notice, this list of conditions and the following disclaimer.
+ *     * Redistributions in binary form must reproduce the above copyright
+ *       notice, this list of conditions and the following disclaimer in the
+ *       documentation and/or other materials provided with the distribution.
+ *     * Neither the name of the <organization> nor the
+ *       names of its contributors may be used to endorse or promote products
+ *       derived from this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY <copyright holder> ``AS IS'' AND ANY
+ * EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+ * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+ * DISCLAIMED. IN NO EVENT SHALL <copyright holder> BE LIABLE FOR ANY
+ * DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+ * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+ * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+ * ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+ * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
 package ie.wombat.jbdiff;
 
 import com.intellij.updater.Utils;
@@ -33,109 +32,92 @@ import java.io.*;
 import java.util.zip.GZIPInputStream;
 
 /**
- * Java Binary patcher (based on bspatch by Colin Percival)
+ * Java Binary Patch utility. Based on <a href="http://www.daemonology.net/bsdiff/">bsdiff (v4.2)</a> by Colin Percival.
  *
- * @author Joe Desbonnet, jdesbonnet@gmail.com
+ * @author <a href="maito:jdesbonnet@gmail.com">Joe Desbonnet</a>
  */
 public class JBPatch {
-  public static void bspatch(InputStream oldFileIn, OutputStream newFileOut, InputStream diffFileIn)
-    throws IOException {
+  private static final int BLOCK_SIZE = 2 * 1024 * 1024;
 
-    int oldpos, newpos;
+  public static void bspatch(InputStream oldFileIn, OutputStream newFileOut, InputStream diffFileIn) throws IOException {
+    int oldPos, newPos;
 
     byte[] diffData = Utils.readBytes(diffFileIn);
 
-    DataInputStream diffIn = new DataInputStream(new ByteArrayInputStream(diffData));
+    @SuppressWarnings("IOResourceOpenedButNotSafelyClosed") DataInputStream diffIn = new DataInputStream(new ByteArrayInputStream(diffData));
 
-    // headerMagic at header offset 0 (length 8 bytes)
-    long headerMagic = diffIn.readLong();
-
-    // ctrlBlockLen after gzip compression at heater offset 8 (length 8 bytes)
+    // ctrlBlockLen after gzip compression at heater offset 0 (length 8 bytes)
     long ctrlBlockLen = diffIn.readLong();
 
-    // diffBlockLen after gzip compression at header offset 16 (length 8 bytes)
+    // diffBlockLen after gzip compression at header offset 8 (length 8 bytes)
     long diffBlockLen = diffIn.readLong();
 
-    // size of new file at header offset 24 (length 8 bytes)
-    int newsize = (int)diffIn.readLong();
-
-    /*
-                System.err.println ("newsize=" + newsize);
-                System.err.println ("ctrlBlockLen=" + ctrlBlockLen);
-                System.err.println ("diffBlockLen=" + diffBlockLen);
-                System.err.println ("newsize=" + newsize);
-                */
+    // size of new file at header offset 16 (length 8 bytes)
+    int newSize = (int)diffIn.readLong();
 
     InputStream in;
     in = new ByteArrayInputStream(diffData);
-    in.skip(ctrlBlockLen + 32);
-    GZIPInputStream diffBlockIn = new GZIPInputStream(in);
+    skip(in, ctrlBlockLen + 24);
+    @SuppressWarnings("IOResourceOpenedButNotSafelyClosed") GZIPInputStream diffBlockIn = new GZIPInputStream(in);
 
     in = new ByteArrayInputStream(diffData);
-    in.skip(diffBlockLen + ctrlBlockLen + 32);
-    GZIPInputStream extraBlockIn = new GZIPInputStream(in);
+    skip(in, diffBlockLen + ctrlBlockLen + 24);
+    @SuppressWarnings("IOResourceOpenedButNotSafelyClosed") GZIPInputStream extraBlockIn = new GZIPInputStream(in);
 
-    /*
-                 * Read in old file (file to be patched) to oldBuf
-                 */
-    ByteArrayOutputStream oldFileByteOut = new ByteArrayOutputStream();
-    try {
-      Utils.copyStream(oldFileIn, oldFileByteOut);
-    }
-    finally {
-      oldFileByteOut.close();
-    }
-    byte[] oldBuf = oldFileByteOut.toByteArray();
-    int oldsize = oldBuf.length;
+    byte[] oldBuf = realAllFileContent(oldFileIn);
+    int oldSize = oldBuf.length;
 
-    byte[] newBuf = new byte[newsize + 1];
+    byte[] newBuf = new byte[BLOCK_SIZE];
 
-    oldpos = 0;
-    newpos = 0;
-    int[] ctrl = new int[3];
-    int nbytes;
-    while (newpos < newsize) {
+    oldPos = 0;
+    newPos = 0;
 
-      for (int i = 0; i <= 2; i++) {
-        ctrl[i] = diffIn.readInt();
-        //System.err.println ("  ctrl[" + i + "]=" + ctrl[i]);
+    while (newPos < newSize) {
+      int bytesToReadFromDiffAndOld = diffIn.readInt();
+      int bytesToReadFromExtraBlockIn = diffIn.readInt();
+      int bytesToSkipFromOld = diffIn.readInt();
+
+      if (newPos + bytesToReadFromDiffAndOld > newSize) {
+        throw new IOException("Corrupted patch");
       }
 
-      if (newpos + ctrl[0] > newsize) {
-        System.err.println("Corrupt patch\n");
-        return;
+      int nBytes = 0;
+      while (nBytes < bytesToReadFromDiffAndOld) {
+        int nBytesFromDiff = diffBlockIn.read(newBuf, 0, Math.min(newBuf.length, bytesToReadFromDiffAndOld - nBytes));
+        if (nBytesFromDiff < 0) {
+          throw new IOException("error reading from diffBlockIn");
+        }
+
+        int nBytesFromOld = Math.min(nBytesFromDiff, oldSize - oldPos);
+        for (int i = 0; i < nBytesFromOld; ++i) {
+          newBuf[i] += oldBuf[oldPos + i];
+        }
+
+        nBytes += nBytesFromDiff;
+        newPos += nBytesFromDiff;
+        oldPos += nBytesFromDiff;
+        Utils.writeBytes(newBuf, nBytesFromDiff, newFileOut);
       }
 
-      /*
-                         * Read ctrl[0] bytes from diffBlock stream
-                         */
+      if (bytesToReadFromExtraBlockIn > 0) {
+        if (newPos + bytesToReadFromExtraBlockIn > newSize) {
+          throw new IOException("Corrupted patch");
+        }
 
-      if (!Util.readFromStream(diffBlockIn, newBuf, newpos, ctrl[0])) {
-        System.err.println("error reading from extraIn");
-        return;
-      }
+        nBytes = 0;
+        while (nBytes < bytesToReadFromExtraBlockIn) {
+          int nBytesFromExtraBlockIn = extraBlockIn.read(newBuf, 0, Math.min(newBuf.length, bytesToReadFromExtraBlockIn - nBytes));
+          if (nBytesFromExtraBlockIn < 0) {
+            throw new IOException("error reading from extraBlockIn");
+          }
 
-      for (int i = 0; i < ctrl[0]; i++) {
-        if ((oldpos + i >= 0) && (oldpos + i < oldsize)) {
-          newBuf[newpos + i] += oldBuf[oldpos + i];
+          nBytes += nBytesFromExtraBlockIn;
+          newPos += nBytesFromExtraBlockIn;
+          Utils.writeBytes(newBuf, nBytesFromExtraBlockIn, newFileOut);
         }
       }
 
-      newpos += ctrl[0];
-      oldpos += ctrl[0];
-
-      if (newpos + ctrl[1] > newsize) {
-        System.err.println("Corrupt patch");
-        return;
-      }
-
-      if (!Util.readFromStream(extraBlockIn, newBuf, newpos, ctrl[1])) {
-        System.err.println("error reading from extraIn");
-        return;
-      }
-
-      newpos += ctrl[1];
-      oldpos += ctrl[2];
+      oldPos += bytesToSkipFromOld;
     }
 
     // TODO: Check if at end of ctrlIn
@@ -145,8 +127,22 @@ public class JBPatch {
     diffBlockIn.close();
     extraBlockIn.close();
     diffIn.close();
+  }
 
-    newFileOut.write(newBuf, 0, newBuf.length - 1);
+  private static void skip(InputStream in, long n) throws IOException {
+    if (in.skip(n) != n) throw new IOException("Premature EOF?");
+  }
+
+  private static byte[] realAllFileContent(InputStream oldFileIn) throws IOException {
+    // Important: oldFileIn may be very large: so use max size (to avoid allocating memory to next power of 2) +
+    // do not hold reference for oldFileByteOut on stack
+    ByteArrayOutputStream oldFileByteOut = new ByteArrayOutputStream(Math.max(oldFileIn.available(), 32));
+    try {
+      Utils.copyStream(oldFileIn, oldFileByteOut);
+    }
+    finally {
+      oldFileByteOut.close();
+    }
+    return oldFileByteOut.toByteArray();
   }
 }
-

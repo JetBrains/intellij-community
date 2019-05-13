@@ -1,0 +1,68 @@
+<idea-plugin>
+  <extensionPoints>
+    <extensionPoint name="pushSupport"
+                    interface="com.intellij.dvcs.push.PushSupport" area="IDEA_PROJECT"/>
+    <extensionPoint name="cherryPicker"
+                    interface="com.intellij.dvcs.cherrypick.VcsCherryPicker" area="IDEA_PROJECT"/>
+    <extensionPoint name="vcsRepositoryCreator" interface="com.intellij.dvcs.repo.VcsRepositoryCreator" area="IDEA_PROJECT"/>
+
+    <extensionPoint name="prePushHandler" interface="com.intellij.dvcs.push.PrePushHandler" area="IDEA_PROJECT"/>
+
+  </extensionPoints>
+  <actions>
+    <action id="Vcs.CherryPick" class="com.intellij.dvcs.cherrypick.VcsCherryPickAction" icon="DvcsImplIcons.CherryPick"/>
+    <action id="Vcs.Push" class="com.intellij.dvcs.push.VcsPushAction" icon="AllIcons.Vcs.Push" text="Push...">
+      <keyboard-shortcut first-keystroke="control shift K" keymap="$default"/>
+    </action>
+    <action id="Vcs.Force.Push" class="com.intellij.dvcs.push.ui.ForcePushAction" text="_Force Push" />
+
+    <group id="Vcs.Push.Actions">
+      <reference id="Vcs.Force.Push" />
+    </group>
+
+    <group id="Dvcs.Log.ContextMenu">
+      <reference id="Vcs.CherryPick"/>
+      <add-to-group group-id="Vcs.Log.ContextMenu" relative-to-action="ChangesView.CreatePatchFromChanges" anchor="after"/>
+    </group>
+    <group id="Dvcs.FileHistory.ContextMenu">
+      <reference id="Vcs.CherryPick"/>
+      <add-to-group group-id="Vcs.FileHistory.ContextMenu" relative-to-action="ChangesView.CreatePatchFromChanges" anchor="after"/>
+    </group>
+
+    <group id="Dvcs.Log.Toolbar">
+      <reference id="Vcs.CherryPick"/>
+      <add-to-group group-id="Vcs.Log.Toolbar"/>
+    </group>
+
+    <group>
+      <reference ref="Vcs.CherryPick"/>
+      <reference ref="Vcs.Push"/>
+      <separator/>
+
+      <add-to-group group-id="VcsGeneral.KeymapGroup"/>
+    </group>
+
+    <action id="ChangesView.GroupBy.Repository" text="Repository" class="com.intellij.dvcs.actions.SetRepositoryChangesGroupingAction">
+      <add-to-group group-id="ChangesView.GroupBy"/>
+    </action>
+
+  </actions>
+  <project-components>
+    <component>
+      <implementation-class>com.intellij.dvcs.repo.VcsRepositoryManager</implementation-class>
+    </component>
+    <component>
+      <implementation-class>com.intellij.dvcs.shelf.ShelfViewUpdater</implementation-class>
+      <headless-implementation-class/>
+    </component>
+  </project-components>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <projectService serviceImplementation="com.intellij.dvcs.push.PushSettings"/>
+    <projectService serviceImplementation="com.intellij.dvcs.cherrypick.VcsCherryPickManager"/>
+
+    <changesGroupingPolicy key="repository" id="repository"
+                           implementationClass="com.intellij.dvcs.ui.RepositoryChangesGroupingPolicy$Factory"/>
+  </extensions>
+</idea-plugin>
+

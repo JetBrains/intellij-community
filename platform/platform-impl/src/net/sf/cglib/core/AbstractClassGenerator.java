@@ -15,7 +15,8 @@
  */
 package net.sf.cglib.core;
 
-import org.objectweb.asm.ClassReader;
+import com.intellij.reference.SoftReference;
+import net.sf.cglib.asm.$ClassReader;
 
 import java.lang.ref.Reference;
 import java.lang.ref.WeakReference;
@@ -24,7 +25,7 @@ import java.util.*;
 /**
  * Abstract class for all code-generating CGLIB utilities.
  * In addition to caching generated classes for performance, it provides hooks for
- * customizing the <code>ClassLoader</code>, name of the generated class, and transformations
+ * customizing the {@code ClassLoader}, name of the generated class, and transformations
  * applied before generation.
  *
  * intellij changes: made some fields final
@@ -72,6 +73,7 @@ implements ClassGenerator
     private String getClassName(final ClassLoader loader) {
         final Set nameCache = getClassNameCache(loader);
         return namingPolicy.getClassName(namePrefix, source.name, key, new Predicate() {
+            @Override
             public boolean evaluate(Object arg) {
                 return nameCache.contains(arg);
             }
@@ -83,11 +85,11 @@ implements ClassGenerator
     }
 
     /**
-     * Set the <code>ClassLoader</code> in which the class will be generated.
-     * Concrete subclasses of <code>AbstractClassGenerator</code> (such as <code>Enhancer</code>)
+     * Set the {@code ClassLoader} in which the class will be generated.
+     * Concrete subclasses of {@code AbstractClassGenerator} (such as {@code Enhancer})
      * will try to choose an appropriate default if this is unset.
      * <p>
-     * Classes are cached per-<code>ClassLoader</code> using a <code>WeakHashMap</code>, to allow
+     * Classes are cached per-{@code ClassLoader} using a {@code WeakHashMap}, to allow
      * the generated classes to be removed when the associated loader is garbage collected.
      * @param classLoader the loader to generate the new class with, or null to use the default
      */
@@ -115,7 +117,7 @@ implements ClassGenerator
 
     /**
      * Whether use and update the static cache of generated classes
-     * for a class with the same properties. Default is <code>true</code>.
+     * for a class with the same properties. Default is {@code true}.
      */
     public void setUseCache(boolean useCache) {
         this.useCache = useCache;
@@ -130,8 +132,8 @@ implements ClassGenerator
 
     /**
      * If set, CGLIB will attempt to load classes from the specified
-     * <code>ClassLoader</code> before generating them. Because generated
-     * class names are not guaranteed to be unique, the default is <code>false</code>.
+     * {@code ClassLoader} before generating them. Because generated
+     * class names are not guaranteed to be unique, the default is {@code false}.
      */
     public void setAttemptLoad(boolean attemptLoad) {
         this.attemptLoad = attemptLoad;
@@ -159,7 +161,7 @@ implements ClassGenerator
     }
 
     /**
-     * Used internally by CGLIB. Returns the <code>AbstractClassGenerator</code>
+     * Used internally by CGLIB. Returns the {@code AbstractClassGenerator}
      * that is being used to generate a class in the current thread.
      */
     public static AbstractClassGenerator getCurrent() {
@@ -199,7 +201,7 @@ implements ClassGenerator
                     source.cache.put(loader, cache2);
                 } else if (useCache) {
                     Reference ref = (Reference)cache2.get(key);
-                    gen = (Class) (( ref == null ) ? null : ref.get());
+                    gen = (Class) SoftReference.dereference(ref);
                 }
                 if (gen == null) {
                     Object save = CURRENT.get();
@@ -216,7 +218,7 @@ implements ClassGenerator
                         }
                         if (gen == null) {
                             byte[] b = strategy.generate(this);
-                            String className = ClassNameReader.getClassName(new ClassReader(b));
+                            String className = ClassNameReader.getClassName(new $ClassReader(b));
                             getClassNameCache(loader).add(className);
                             gen = ReflectUtils.defineClass(className, b, loader);
                         }
@@ -232,8 +234,6 @@ implements ClassGenerator
             }
             return firstInstance(gen);
         } catch (RuntimeException e) {
-            throw e;
-        } catch (Error e) {
             throw e;
         } catch (Exception e) {
             throw new CodeGenerationException(e);

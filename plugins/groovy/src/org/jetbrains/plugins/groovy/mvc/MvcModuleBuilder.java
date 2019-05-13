@@ -15,15 +15,7 @@
  */
 package org.jetbrains.plugins.groovy.mvc;
 
-import com.intellij.ide.util.projectWizard.ModuleWizardStep;
-import com.intellij.ide.util.projectWizard.SdkSettingsStep;
-import com.intellij.ide.util.projectWizard.SettingsStep;
-import com.intellij.openapi.projectRoots.SdkTypeId;
-import com.intellij.openapi.util.Condition;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.config.GroovyAwareModuleBuilder;
-
-import javax.swing.*;
 
 /**
  * @author peter
@@ -31,25 +23,14 @@ import javax.swing.*;
 public class MvcModuleBuilder extends GroovyAwareModuleBuilder {
   private final MvcFramework myFramework;
 
-  protected MvcModuleBuilder(MvcFramework framework, Icon bigIcon) {
-    super(framework.getFrameworkName(), framework.getDisplayName() + " Module",
-          framework.getDisplayName() + " modules are used for creating <b>" + framework.getDisplayName() + "</b> applications.", bigIcon);
+  protected MvcModuleBuilder(MvcFramework framework) {
+    super(framework.getFrameworkName(), framework.getDisplayName(),
+          framework.getDisplayName() + " modules are used for creating <b>" + framework.getDisplayName() + "</b> applications.");
     myFramework = framework;
   }
 
   @Override
   protected MvcFramework getFramework() {
     return myFramework;
-  }
-
-  @Nullable
-  @Override
-  public ModuleWizardStep modifySettingsStep(SettingsStep settingsStep) {
-    return new SdkSettingsStep(settingsStep, this, new Condition<SdkTypeId>() {
-          @Override
-          public boolean value(SdkTypeId sdkType) {
-            return isSuitableSdkType(sdkType);
-          }
-        });
   }
 }

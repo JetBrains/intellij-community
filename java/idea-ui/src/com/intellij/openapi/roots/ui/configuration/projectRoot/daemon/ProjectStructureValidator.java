@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,9 +28,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-/**
- * User: ksafonov
- */
 public abstract class ProjectStructureValidator {
 
   private static final ExtensionPointName<ProjectStructureValidator> EP_NAME =
@@ -63,14 +60,14 @@ public abstract class ProjectStructureValidator {
     }
 
     final ModuleStructureConfigurable moduleStructureConfigurable = ModuleStructureConfigurable.getInstance(project);
-    final List<Module> modules = LibraryEditingUtil.getSuitableModules(moduleStructureConfigurable, ((LibraryEx)library).getKind(), library);
+    final List<Module> modules =
+      LibraryEditingUtil.getSuitableModules(moduleStructureConfigurable, ((LibraryEx)library).getKind(), library);
     if (modules.isEmpty()) return;
     final ChooseModulesDialog
       dlg = new ChooseModulesDialog(moduleStructureConfigurable.getProject(), modules, ProjectBundle.message("choose.modules.dialog.title"),
                                     ProjectBundle
                                       .message("choose.modules.dialog.description", library.getName()));
-    dlg.show();
-    if (dlg.isOK()) {
+    if (dlg.showAndGet()) {
       final List<Module> chosenModules = dlg.getChosenElements();
       for (Module module : chosenModules) {
         moduleStructureConfigurable.addLibraryOrderEntry(module, library);
@@ -79,7 +76,7 @@ public abstract class ProjectStructureValidator {
   }
 
   /**
-   * @return <code>true</code> if handled
+   * @return {@code true} if handled
    */
   protected boolean addLibraryToDependencies(final Library library, final Project project, final boolean allowEmptySelection) {
     return false;
@@ -87,14 +84,14 @@ public abstract class ProjectStructureValidator {
 
 
   /**
-   * @return <code>true</code> if it handled this element
+   * @return {@code true} if it handled this element
    */
   protected boolean checkElement(ProjectStructureElement element, ProjectStructureProblemsHolder problemsHolder) {
     return false;
   }
 
   /**
-   * @return list of usages or <code>null</code> when it does not handle such element
+   * @return list of usages or {@code null} when it does not handle such element
    */
   @Nullable
   protected List<ProjectStructureElementUsage> getUsagesIn(final ProjectStructureElement element) {

@@ -1,0 +1,46 @@
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+package com.jetbrains.python.psi.impl;
+
+import com.intellij.lang.ASTNode;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.jetbrains.python.psi.PyExpression;
+import com.jetbrains.python.psi.PyKeyValueExpression;
+import com.jetbrains.python.psi.types.PyTupleType;
+import com.jetbrains.python.psi.types.PyType;
+import com.jetbrains.python.psi.types.TypeEvalContext;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import java.util.Arrays;
+
+/**
+ * @author yole
+ */
+public class PyKeyValueExpressionImpl extends PyElementImpl implements PyKeyValueExpression {
+  public PyKeyValueExpressionImpl(ASTNode astNode) {
+    super(astNode);
+  }
+
+  @Override
+  public PyType getType(@NotNull TypeEvalContext context, @NotNull TypeEvalContext.Key key) {
+    final PyType keyType = context.getType(getKey());
+    final PyExpression value = getValue();
+    PyType valueType = null;
+    if (value != null) {
+      valueType = context.getType(value);
+    }
+    return PyTupleType.create(this, Arrays.asList(keyType, valueType));
+  }
+
+  @Override
+  @NotNull
+  public PyExpression getKey() {
+    return (PyExpression)getNode().getFirstChildNode().getPsi();
+  }
+
+  @Override
+  @Nullable
+  public PyExpression getValue() {
+    return PsiTreeUtil.getNextSiblingOfType(getKey(), PyExpression.class);
+  }
+}

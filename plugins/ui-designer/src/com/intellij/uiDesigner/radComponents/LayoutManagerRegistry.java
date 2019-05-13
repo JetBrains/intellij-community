@@ -32,9 +32,9 @@ import java.util.*;
  * @author yole
  */
 public class LayoutManagerRegistry {
-  @NonNls private static final Map<String, Class<? extends RadLayoutManager>> ourLayoutManagerRegistry = new HashMap<String, Class<? extends RadLayoutManager>>();
-  @NonNls private static final Map<Class, Class<? extends RadLayoutManager>> ourLayoutManagerClassRegistry = new HashMap<Class, Class<? extends RadLayoutManager>>();
-  @NonNls private static final Map<String, String> ourLayoutManagerDisplayNames = new HashMap<String, String>();
+  @NonNls private static final Map<String, Class<? extends RadLayoutManager>> ourLayoutManagerRegistry = new HashMap<>();
+  @NonNls private static final Map<Class, Class<? extends RadLayoutManager>> ourLayoutManagerClassRegistry = new HashMap<>();
+  @NonNls private static final Map<String, String> ourLayoutManagerDisplayNames = new HashMap<>();
 
   private LayoutManagerRegistry() {
   }
@@ -67,7 +67,7 @@ public class LayoutManagerRegistry {
   }
 
   public static String[] getNonDeprecatedLayoutManagerNames() {
-    ArrayList<String> layoutManagerNames = new ArrayList<String>();
+    ArrayList<String> layoutManagerNames = new ArrayList<>();
     for(String name: ourLayoutManagerRegistry.keySet()) {
       if (!name.equals(UIFormXmlConstants.LAYOUT_XY)) {
         layoutManagerNames.add(name);

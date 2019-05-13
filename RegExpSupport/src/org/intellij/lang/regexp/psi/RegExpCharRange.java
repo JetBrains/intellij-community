@@ -16,16 +16,16 @@
 package org.intellij.lang.regexp.psi;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Represents a character range as in [a-z]. 
  */
-public interface RegExpCharRange extends RegExpElement, RegExpClassElement {
-    interface Endpoint extends RegExpClassElement { }
+public interface RegExpCharRange extends RegExpClassElement {
 
     @NotNull
-    Endpoint getFrom();
+    RegExpChar getFrom();
 
-    @NotNull
-    Endpoint getTo();
+    @Nullable
+    RegExpChar getTo();
 }

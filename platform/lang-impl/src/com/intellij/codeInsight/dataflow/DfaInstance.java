@@ -25,6 +25,4 @@ public interface DfaInstance<E> {
 
   @NotNull
   E initial();
-
-  boolean isForward();
 }

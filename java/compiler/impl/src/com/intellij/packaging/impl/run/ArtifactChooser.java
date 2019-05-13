@@ -31,16 +31,15 @@ import java.util.List;
  * @author nik
  */
 public class ArtifactChooser extends ElementsChooser<ArtifactPointer> {
-  private static final Comparator<ArtifactPointer> ARTIFACT_COMPARATOR = new Comparator<ArtifactPointer>() {
-    public int compare(ArtifactPointer o1, ArtifactPointer o2) {
-      return o1.getArtifactName().compareToIgnoreCase(o2.getArtifactName());
-    }
-  };
+  private static final Comparator<ArtifactPointer> ARTIFACT_COMPARATOR =
+    (o1, o2) -> o1.getArtifactName().compareToIgnoreCase(o2.getArtifactName());
   private static final ElementProperties INVALID_ARTIFACT_PROPERTIES = new ElementProperties() {
+    @Override
     public Icon getIcon() {
       return AllIcons.Nodes.Artifact;
     }
 
+    @Override
     public Color getColor() {
       return JBColor.RED;
     }

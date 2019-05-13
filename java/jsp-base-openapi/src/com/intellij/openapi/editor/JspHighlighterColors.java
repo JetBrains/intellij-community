@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,13 +21,19 @@ import com.intellij.openapi.editor.colors.TextAttributesKey;
  * @author yole
  */
 public class JspHighlighterColors {
-  private JspHighlighterColors() {
-  }
+  private JspHighlighterColors() { }
 
-  public static final TextAttributesKey JSP_SCRIPTING_BACKGROUND = TextAttributesKey.createTextAttributesKey("JSP_SCRIPTING_BACKGROUND", DefaultLanguageHighlighterColors.TEMPLATE_LANGUAGE_COLOR);
-  public static final TextAttributesKey JSP_ACTION_AND_DIRECTIVE_BACKGROUND = TextAttributesKey.createTextAttributesKey("JSP_DIRECTIVE_BACKGROUND", DefaultLanguageHighlighterColors.TEMPLATE_LANGUAGE_COLOR);
-  public static final TextAttributesKey JSP_ACTION_AND_DIRECTIVE_NAME = TextAttributesKey.createTextAttributesKey("JSP_DIRECTIVE_NAME", DefaultLanguageHighlighterColors.KEYWORD);
-  public static final TextAttributesKey JSP_ATTRIBUTE_NAME = TextAttributesKey.createTextAttributesKey("JSP_ATTRIBUTE_NAME", DefaultLanguageHighlighterColors.MARKUP_ATTRIBUTE);
-  public static final TextAttributesKey JSP_ATTRIBUTE_VALUE = TextAttributesKey.createTextAttributesKey("JSP_ATTRIBUTE_VALUE", DefaultLanguageHighlighterColors.STRING);
-  public static final TextAttributesKey JSP_COMMENT = TextAttributesKey.createTextAttributesKey("JSP_COMMENT", JSP_ACTION_AND_DIRECTIVE_BACKGROUND);
+  public static final TextAttributesKey JSP_SCRIPTING_BACKGROUND =
+    TextAttributesKey.createTextAttributesKey("JSP_SCRIPTING_BACKGROUND", DefaultLanguageHighlighterColors.TEMPLATE_LANGUAGE_COLOR);
+  public static final TextAttributesKey JSP_ACTION_AND_DIRECTIVE_BACKGROUND =
+    TextAttributesKey.createTextAttributesKey("JSP_DIRECTIVE_BACKGROUND", DefaultLanguageHighlighterColors.TEMPLATE_LANGUAGE_COLOR);
+  public static final TextAttributesKey JSP_ACTION_AND_DIRECTIVE_NAME =
+    TextAttributesKey.createTextAttributesKey("JSP_DIRECTIVE_NAME", DefaultLanguageHighlighterColors.KEYWORD);
+  public static final TextAttributesKey JSP_ATTRIBUTE_NAME =
+    TextAttributesKey.createTextAttributesKey("JSP_ATTRIBUTE_NAME", DefaultLanguageHighlighterColors.MARKUP_ATTRIBUTE);
+  public static final TextAttributesKey JSP_ATTRIBUTE_VALUE =
+    TextAttributesKey.createTextAttributesKey("JSP_ATTRIBUTE_VALUE", DefaultLanguageHighlighterColors.STRING);
+  public static final TextAttributesKey JSP_COMMENT =
+    TextAttributesKey.createTextAttributesKey("JSP_COMMENT", DefaultLanguageHighlighterColors.BLOCK_COMMENT);
+  public static final TextAttributesKey JSP_DIRECTIVE_STAT_END_MARKER = DefaultLanguageHighlighterColors.KEYWORD;
 }

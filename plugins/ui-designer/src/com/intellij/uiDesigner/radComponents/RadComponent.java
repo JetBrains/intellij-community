@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.uiDesigner.radComponents;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -40,9 +26,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.awt.Dimension;
-import java.awt.Point;
-import java.awt.Rectangle;
+import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
@@ -63,7 +47,7 @@ public abstract class RadComponent implements IComponent {
   public static final RadComponent[] EMPTY_ARRAY = new RadComponent[]{};
   /**
    * Using this constant as client property of the Swing component
-   * you can find corresponding <code>RadComponent</code>
+   * you can find corresponding {@code RadComponent}
    */
   @NonNls
   public static final String CLIENT_PROP_RAD_COMPONENT = "radComponent";
@@ -102,9 +86,9 @@ public abstract class RadComponent implements IComponent {
    */
   @NotNull private final JComponent myDelegee;
   /**
-   * Parent RadContainer. This field is always not <code>null</code>
+   * Parent RadContainer. This field is always not {@code null}
    * is the component is in hierarchy. But the root of hierarchy
-   * has <code>null</code> parent indeed.
+   * has {@code null} parent indeed.
    */
   private RadContainer myParent;
   /**
@@ -129,11 +113,11 @@ public abstract class RadComponent implements IComponent {
   private boolean myDefaultBinding;
 
   /**
-   * Creates new <code>RadComponent</code> with the specified
+   * Creates new {@code RadComponent} with the specified
    * class of delegee and specified ID.
    *
    * @param aClass class of the compoent's delegee
-   * @param id     id of the compoent inside the form. <code>id</code>
+   * @param id     id of the compoent inside the form. {@code id}
    *               should be a unique atring inside the form.
    */
   public RadComponent(final ModuleProvider module, @NotNull final Class aClass, @NotNull final String id) {
@@ -143,7 +127,7 @@ public abstract class RadComponent implements IComponent {
 
     myChangeSupport = new PropertyChangeSupport(this);
     myConstraints = new GridConstraints();
-    myModifiedPropertyNames = new HashSet<String>();
+    myModifiedPropertyNames = new HashSet<>();
 
     Constructor constructor;
     try {
@@ -230,11 +214,13 @@ public abstract class RadComponent implements IComponent {
   /**
    * @return the component's id. It is unique within the form.
    */
+  @Override
   @NotNull
   public final String getId() {
     return myId;
   }
 
+  @Override
   public final String getBinding() {
     return myBinding;
   }
@@ -244,6 +230,7 @@ public abstract class RadComponent implements IComponent {
     myBinding = binding;
   }
 
+  @Override
   public boolean isCustomCreate() {
     return myCustomCreate;
   }
@@ -257,7 +244,7 @@ public abstract class RadComponent implements IComponent {
   }
 
   /**
-   * @return Swing delegee component. The <code>RadComponent</code> has the same
+   * @return Swing delegee component. The {@code RadComponent} has the same
    *         delegee during all its life.
    */
   @NotNull
@@ -271,8 +258,8 @@ public abstract class RadComponent implements IComponent {
    *
    * @param x x in delegee coordinate system
    * @param y y in delegee coordinate system
-   * @return inplace property for the <code>RadComponent</code> if any.
-   *         The method returns <code>null</code> if the component doesn't have
+   * @return inplace property for the {@code RadComponent} if any.
+   *         The method returns {@code null} if the component doesn't have
    *         any inplace property. Please not the method can return different
    *         instances of the property for each invokation.
    */
@@ -310,11 +297,13 @@ public abstract class RadComponent implements IComponent {
     return myClass;
   }
 
+  @Override
   @NotNull
   public String getComponentClassName() {
     return myClass.getName();
   }
 
+  @Override
   public final Object getCustomLayoutConstraints() {
     return myCustomLayoutConstraints;
   }
@@ -404,6 +393,7 @@ public abstract class RadComponent implements IComponent {
   /**
    * @return component's constarints.
    */
+  @Override
   @NotNull
   public final GridConstraints getConstraints() {
     return myConstraints;
@@ -432,6 +422,7 @@ public abstract class RadComponent implements IComponent {
   /**
    * @see JComponent#getClientProperty(Object)
    */
+  @Override
   public final Object getClientProperty(@NotNull final Object key) {
     return myDelegee.getClientProperty(key);
   }
@@ -439,6 +430,7 @@ public abstract class RadComponent implements IComponent {
   /**
    * @see JComponent#putClientProperty(Object, Object)
    */
+  @Override
   public final void putClientProperty(@NotNull final Object key, final Object value) {
     myDelegee.putClientProperty(key, value);
   }
@@ -550,7 +542,7 @@ public abstract class RadComponent implements IComponent {
   }
 
   /**
-   * Serializes component into the passed <code>writer</code>
+   * Serializes component into the passed {@code writer}
    */
   public abstract void write(XmlWriter writer);
 
@@ -659,17 +651,19 @@ public abstract class RadComponent implements IComponent {
     firePropertyChanged(PROP_CONSTRAINTS, oldConstraints, myConstraints);
   }
 
+  @Override
   public IProperty[] getModifiedProperties() {
     IntrospectedProperty[] props = getPalette().getIntrospectedProperties(this);
-    ArrayList<IProperty> result = new ArrayList<IProperty>();
+    ArrayList<IProperty> result = new ArrayList<>();
     for (IntrospectedProperty prop : props) {
       if (isMarkedAsModified(prop)) {
         result.add(prop);
       }
     }
-    return result.toArray(new IProperty[result.size()]);
+    return result.toArray(new IProperty[0]);
   }
 
+  @Override
   public IContainer getParentContainer() {
     return myParent;
   }
@@ -678,10 +672,12 @@ public abstract class RadComponent implements IComponent {
     return true;
   }
 
+  @Override
   public boolean accept(ComponentVisitor visitor) {
     return visitor.visit(this);
   }
 
+  @Override
   public boolean areChildrenExclusive() {
     return false;
   }

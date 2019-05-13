@@ -19,7 +19,6 @@ import com.intellij.cvsSupport2.config.CvsApplicationLevelConfiguration;
 import com.intellij.cvsSupport2.config.CvsConfiguration;
 import com.intellij.cvsSupport2.config.ui.CvsConfigurationPanel;
 import com.intellij.openapi.options.Configurable;
-import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NonNls;
 
@@ -29,18 +28,21 @@ class Cvs2Configurable implements Configurable {
   private CvsConfigurationPanel  myComponent = null;
   private final Project myProject;
 
-  public Cvs2Configurable(Project project) {
+  Cvs2Configurable(Project project) {
     myProject = project;
   }
 
+  @Override
   @NonNls public String getDisplayName() {
     return "CVS2";
   }
 
+  @Override
   public String getHelpTopic() {
     return "reference.projectsettings.vcs.cvs.options";
   }
 
+  @Override
   public JComponent createComponent() {
     myComponent = new CvsConfigurationPanel(myProject);
     myComponent.updateFrom(getCvsConfiguration(), getAppLevelConfiguration());
@@ -55,18 +57,22 @@ class Cvs2Configurable implements Configurable {
     return CvsConfiguration.getInstance(myProject);
   }
 
+  @Override
   public boolean isModified() {
     return !myComponent.equalsTo(getCvsConfiguration(), getAppLevelConfiguration());
   }
 
-  public void apply() throws ConfigurationException {
+  @Override
+  public void apply() {
     myComponent.saveTo(getCvsConfiguration(), getAppLevelConfiguration());
   }
 
+  @Override
   public void reset() {
     myComponent.updateFrom(getCvsConfiguration(), getAppLevelConfiguration());
   }
 
+  @Override
   public void disposeUIResources() {
     myComponent = null;
   }

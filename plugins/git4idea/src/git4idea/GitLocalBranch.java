@@ -15,6 +15,7 @@
  */
 package git4idea;
 
+import git4idea.branch.GitBranchUtil;
 import git4idea.repo.GitBranchTrackInfo;
 import git4idea.repo.GitRepository;
 import org.jetbrains.annotations.NotNull;
@@ -25,8 +26,8 @@ import org.jetbrains.annotations.Nullable;
  */
 public class GitLocalBranch extends GitBranch {
 
-  public GitLocalBranch(@NotNull String name, @NotNull Hash hash) {
-    super(name, hash);
+  public GitLocalBranch(@NotNull String name) {
+    super(name);
   }
 
   @Override
@@ -34,28 +35,9 @@ public class GitLocalBranch extends GitBranch {
     return false;
   }
 
-  @Override
-  public boolean equals(Object o) {
-    return super.equals(o);
-  }
-
-  @Override
-  public int hashCode() {
-    return super.hashCode();
-  }
-
-  @Override
-  public String toString() {
-    return super.toString();
-  }
-
   @Nullable
   public GitRemoteBranch findTrackedBranch(@NotNull GitRepository repository) {
-    for (GitBranchTrackInfo info : repository.getBranchTrackInfos()) {
-      if (info.getLocalBranch().equals(this)) {
-        return info.getRemoteBranch();
-      }
-    }
-    return null;
+    GitBranchTrackInfo info = GitBranchUtil.getTrackInfoForBranch(repository, this);
+    return info != null ? info.getRemoteBranch() : null;
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,19 +15,30 @@
  */
 package com.intellij.util.xml.stubs;
 
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.xml.impl.*;
+import com.intellij.xml.util.IncludedXmlTag;
 import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.List;
+
 /**
  * @author Dmitry Avdeev
- *         Date: 8/9/12
  */
 public class StubParentStrategy implements DomParentStrategy {
+
+  private final static Logger LOG = Logger.getInstance(StubParentStrategy.class);
+  protected final DomStub myStub;
+
+  public StubParentStrategy(@NotNull DomStub stub) {
+    myStub = stub;
+  }
 
   public static StubParentStrategy createAttributeStrategy(@Nullable AttributeStub stub, @NotNull final DomStub parent) {
     if (stub == null) {
@@ -38,20 +49,21 @@ public class StubParentStrategy implements DomParentStrategy {
         @Override
         public XmlElement getXmlElement() {
           DomInvocationHandler parentHandler = getParentHandler();
+          if (parentHandler == null) {
+            LOG.error("no parent handler for " + this);
+            return null;
+          }
           XmlTag tag = parentHandler.getXmlTag();
           if (tag == null) {
-            throw new AssertionError("can't find tag for " + parentHandler);
+            LOG.error("can't find tag for " + parentHandler + "\n" +
+                      "parent stub: " + myStub.getParentStub() + "\n" +
+                      "parent's children: " + myStub.getParentStub().getChildrenStubs());
+            return null;
           }
           return tag.getAttribute(myStub.getName());
         }
       };
     }
-  }
-
-  protected final DomStub myStub;
-
-  public StubParentStrategy(@NotNull DomStub stub) {
-    myStub = stub;
   }
 
   @Override
@@ -64,31 +76,27 @@ public class StubParentStrategy implements DomParentStrategy {
   public XmlElement getXmlElement() {
     DomStub parentStub = myStub.getParentStub();
     if (parentStub == null) return null;
-    int index = parentStub.getChildIndex(myStub);
-    if (index < 0) {
-      return null;
-    }
+    List<DomStub> children = parentStub.getChildrenStubs();
+    if (children.isEmpty()) return null;
     XmlTag parentTag = parentStub.getHandler().getXmlTag();
     if (parentTag == null) return null;
 
     // for custom elements, namespace information is lost
     // todo: propagate ns info through DomChildDescriptions
-    XmlTag[] tags = parentTag.getSubTags();
+    XmlTag[] tags;
+    try {
+      XmlUtil.BUILDING_DOM_STUBS.set(true);
+      tags = parentTag.getSubTags();
+    }
+    finally {
+      XmlUtil.BUILDING_DOM_STUBS.set(false);
+    }
+
     int i = 0;
-    String nameToFind = myStub.isCustom() ? XmlUtil.findLocalNameByQualifiedName(myStub.getName()) : myStub.getName();
-    assert nameToFind != null;
+    String nameToFind = myStub.getName();
     for (XmlTag xmlTag : tags) {
-      if (myStub.isCustom()) {
-        if (nameToFind.equals(xmlTag.getLocalName())) {
-          if (index == i++) {
-            return xmlTag;
-          }
-        }
-      }
-      else if (nameToFind.equals(xmlTag.getName())) {
-        if (index == i++) {
-          return xmlTag;
-        }
+      if (nameToFind.equals(xmlTag.getName()) && !(xmlTag instanceof IncludedXmlTag) && myStub.getIndex() == i++) {
+        return xmlTag;
       }
     }
     return null;
@@ -129,10 +137,21 @@ public class StubParentStrategy implements DomParentStrategy {
     return true;
   }
 
-  @SuppressWarnings("EqualsWhichDoesntCheckParameterClass")
   @Override
   public boolean equals(Object obj) {
-    return PhysicalDomParentStrategy.strategyEquals(this, obj);
+    if (!(obj instanceof StubParentStrategy)) {
+      return PhysicalDomParentStrategy.strategyEquals(this, obj);
+    }
+
+    if (obj == this) return true;
+
+    StubParentStrategy other = (StubParentStrategy)obj;
+    if (!other.getClass().equals(getClass())) return false;
+
+    if (!other.myStub.equals(myStub)) return false;
+
+    return Comparing.equal(getContainingFile(myStub.getHandler()),
+                           other.getContainingFile(other.myStub.getHandler()));
   }
 
   public static class Empty extends StubParentStrategy {

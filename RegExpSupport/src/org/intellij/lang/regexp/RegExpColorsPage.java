@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,7 +21,7 @@ import com.intellij.openapi.fileTypes.SyntaxHighlighterFactory;
 import com.intellij.openapi.options.colors.AttributesDescriptor;
 import com.intellij.openapi.options.colors.ColorDescriptor;
 import com.intellij.openapi.options.colors.ColorSettingsPage;
-import com.intellij.util.containers.HashMap;
+import java.util.HashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -32,8 +32,9 @@ import java.util.Map;
  * @author traff
  */
 public class RegExpColorsPage implements ColorSettingsPage {
-  private static final AttributesDescriptor[] ATTRS = new AttributesDescriptor[] {
-    new AttributesDescriptor("Keyword",  RegExpHighlighter.META),
+  private static final AttributesDescriptor[] DESCRIPTORS = new AttributesDescriptor[] {
+    new AttributesDescriptor("Plain character",  RegExpHighlighter.CHARACTER),
+    new AttributesDescriptor("Operator character",  RegExpHighlighter.META),
     new AttributesDescriptor("Escaped character",  RegExpHighlighter.ESC_CHARACTER),
     new AttributesDescriptor("Invalid escape sequence",  RegExpHighlighter.INVALID_CHARACTER_ESCAPE),
     new AttributesDescriptor("Redundant escape sequence",  RegExpHighlighter.REDUNDANT_ESCAPE),
@@ -44,30 +45,39 @@ public class RegExpColorsPage implements ColorSettingsPage {
     new AttributesDescriptor("Bad character",  RegExpHighlighter.BAD_CHARACTER),
     new AttributesDescriptor("Character class",  RegExpHighlighter.CHAR_CLASS),
     new AttributesDescriptor("Quote character",  RegExpHighlighter.QUOTE_CHARACTER),
-    new AttributesDescriptor("Comment",  RegExpHighlighter.COMMENT)
+    new AttributesDescriptor("Comment",  RegExpHighlighter.COMMENT),
+    new AttributesDescriptor("Quantifier", RegExpHighlighter.QUANTIFIER),
+    new AttributesDescriptor("Dot", RegExpHighlighter.DOT),
+    new AttributesDescriptor("Inline option", RegExpHighlighter.OPTIONS),
+    new AttributesDescriptor("Name", RegExpHighlighter.NAME)
   };
 
-  @NonNls private static final HashMap<String,TextAttributesKey> ourTagToDescriptorMap = new HashMap<String, TextAttributesKey>();
+  @NonNls private static final HashMap<String,TextAttributesKey> ourTagToDescriptorMap = new HashMap<>();
 
+  @Override
   @NotNull
   public String getDisplayName() {
     return "RegExp";
   }
 
+  @Override
   public Icon getIcon() {
     return RegExpFileType.INSTANCE.getIcon();
   }
 
+  @Override
   @NotNull
   public AttributesDescriptor[] getAttributeDescriptors() {
-    return ATTRS;
+    return DESCRIPTORS;
   }
 
+  @Override
   @NotNull
   public ColorDescriptor[] getColorDescriptors() {
     return ColorDescriptor.EMPTY_ARRAY;
   }
 
+  @Override
   @NotNull
   public SyntaxHighlighter getHighlighter() {
     final SyntaxHighlighter highlighter = SyntaxHighlighterFactory.getSyntaxHighlighter(RegExpFileType.INSTANCE, null, null);
@@ -75,13 +85,17 @@ public class RegExpColorsPage implements ColorSettingsPage {
     return highlighter;
   }
 
+  @Override
   @NotNull
   public String getDemoText() {
     return
-      "^[\\w\\.-]+@([\\w\\-]+\\.)+[A-Z]{2,4}\\x0g\\#\\p{alpha}\\Q\\E$";
+      "^[\\w\\.-]+@([\\w\\-]+|\\.)+[A-Z0-9]{2,4}(?x)\n" +
+      "\\x0g\\#\\p{Alpha}\\1(?#comment)\n" +
+      ".*\\Q...\\E$# end-of-line comment";
 
   }
 
+  @Override
   public Map<String, TextAttributesKey> getAdditionalHighlightingTagToDescriptorMap() {
     return ourTagToDescriptorMap;
   }

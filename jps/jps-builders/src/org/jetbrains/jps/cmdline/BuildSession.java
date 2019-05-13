@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,98 +16,115 @@
 package org.jetbrains.jps.cmdline;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.LowMemoryWatcherManager;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
-import com.intellij.openapi.util.io.FileSystemUtil;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.concurrency.SequentialTaskExecutor;
 import com.intellij.util.io.DataOutputStream;
-import org.jboss.netty.channel.Channel;
-import org.jboss.netty.channel.Channels;
+import io.netty.channel.Channel;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.jps.TimingLog;
 import org.jetbrains.jps.api.*;
 import org.jetbrains.jps.builders.*;
 import org.jetbrains.jps.builders.java.JavaModuleBuildTargetType;
 import org.jetbrains.jps.builders.java.dependencyView.Callbacks;
-import org.jetbrains.jps.incremental.MessageHandler;
-import org.jetbrains.jps.incremental.TargetTypeRegistry;
-import org.jetbrains.jps.incremental.Utils;
+import org.jetbrains.jps.incremental.*;
 import org.jetbrains.jps.incremental.fs.BuildFSState;
-import org.jetbrains.jps.incremental.fs.FSState;
 import org.jetbrains.jps.incremental.messages.*;
 import org.jetbrains.jps.incremental.storage.Timestamps;
 import org.jetbrains.jps.model.module.JpsModule;
+import org.jetbrains.jps.model.serialization.CannotLoadJpsModelException;
 import org.jetbrains.jps.service.SharedThreadPool;
 
 import java.io.*;
 import java.util.*;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
-import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.*;
 
 import static org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.ParametersMessage.TargetTypeBuildScope;
 
 /**
 * @author Eugene Zhuravlev
-*         Date: 4/17/12
 */
 final class BuildSession implements Runnable, CanceledStatus {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.jps.cmdline.BuildSession");
-  private static final String FS_STATE_FILE = "fs_state.dat";
+  public static final String FS_STATE_FILE = "fs_state.dat";
+  private static final Boolean REPORT_BUILD_STATISTICS = Boolean.valueOf(System.getProperty(GlobalOptions.REPORT_BUILD_STATISTICS, "false"));
+  
   private final UUID mySessionId;
   private final Channel myChannel;
-  private volatile boolean myCanceled = false;
-  private String myProjectPath;
+  @Nullable 
+  private final PreloadedData myPreloadedData;
+  private volatile boolean myCanceled;
+  private final String myProjectPath;
   @Nullable
   private CmdlineRemoteProto.Message.ControllerMessage.FSEvent myInitialFSDelta;
   // state
-  private EventsProcessor myEventsProcessor = new EventsProcessor();
+  private final EventsProcessor myEventsProcessor = new EventsProcessor();
   private volatile long myLastEventOrdinal;
   private volatile ProjectDescriptor myProjectDescriptor;
   private final Map<Pair<String, String>, ConstantSearchFuture> mySearchTasks = Collections.synchronizedMap(new HashMap<Pair<String, String>, ConstantSearchFuture>());
   private final ConstantSearch myConstantSearch = new ConstantSearch();
+  @NotNull
   private final BuildRunner myBuildRunner;
   private final boolean myForceModelLoading;
-  private BuildType myBuildType;
+  private final BuildType myBuildType;
+  private final List<TargetTypeBuildScope> myScopes;
+  private final boolean myLoadUnloadedModules;
 
   BuildSession(UUID sessionId,
                Channel channel,
                CmdlineRemoteProto.Message.ControllerMessage.ParametersMessage params,
-               @Nullable CmdlineRemoteProto.Message.ControllerMessage.FSEvent delta) {
+               @Nullable CmdlineRemoteProto.Message.ControllerMessage.FSEvent delta, @Nullable PreloadedData preloaded) {
     mySessionId = sessionId;
     myChannel = channel;
 
-    // globals
-    Map<String, String> pathVars = new HashMap<String, String>();
     final CmdlineRemoteProto.Message.ControllerMessage.GlobalSettings globals = params.getGlobalSettings();
-    for (CmdlineRemoteProto.Message.KeyValuePair variable : globals.getPathVariableList()) {
-      pathVars.put(variable.getKey(), variable.getValue());
-    }
-
-    // session params
     myProjectPath = FileUtil.toCanonicalPath(params.getProjectId());
     String globalOptionsPath = FileUtil.toCanonicalPath(globals.getGlobalOptionsPath());
     myBuildType = convertCompileType(params.getBuildType());
-    List<TargetTypeBuildScope> scopes = params.getScopeList();
+    myScopes = params.getScopeList();
     List<String> filePaths = params.getFilePathList();
-    Map<String, String> builderParams = new HashMap<String, String>();
+    final Map<String, String> builderParams = new HashMap<>();
     for (CmdlineRemoteProto.Message.KeyValuePair pair : params.getBuilderParameterList()) {
       builderParams.put(pair.getKey(), pair.getValue());
     }
     myInitialFSDelta = delta;
-    JpsModelLoaderImpl loader = new JpsModelLoaderImpl(myProjectPath, globalOptionsPath, pathVars, null);
-    myForceModelLoading = Boolean.parseBoolean(builderParams.get(BuildMain.FORCE_MODEL_LOADING_PARAMETER.toString()));
-    myBuildRunner = new BuildRunner(loader, scopes, filePaths, builderParams);
+    myLoadUnloadedModules = Boolean.parseBoolean(builderParams.get(BuildParametersKeys.LOAD_UNLOADED_MODULES));
+    if (myLoadUnloadedModules && preloaded != null) {
+      myPreloadedData = null;
+      ProjectDescriptor projectDescriptor = preloaded.getProjectDescriptor();
+      if (projectDescriptor != null) {
+        projectDescriptor.release();
+        preloaded.setProjectDescriptor(null);
+      }
+    }
+    else {
+      myPreloadedData = preloaded;
+    }
+
+    if (myPreloadedData == null || myPreloadedData.getRunner() == null) {
+      myBuildRunner = new BuildRunner(new JpsModelLoaderImpl(myProjectPath, globalOptionsPath, myLoadUnloadedModules, null));
+    }
+    else {
+      myBuildRunner = myPreloadedData.getRunner();
+    }
+    myBuildRunner.setFilePaths(filePaths);
+    myBuildRunner.setBuilderParams(builderParams);
+    myForceModelLoading =  Boolean.parseBoolean(builderParams.get(BuildParametersKeys.FORCE_MODEL_LOADING));
   }
 
+  @Override
   public void run() {
+    final LowMemoryWatcherManager memWatcher = new LowMemoryWatcherManager(SharedThreadPool.getInstance());
     Throwable error = null;
-    final Ref<Boolean> hasErrors = new Ref<Boolean>(false);
-    final Ref<Boolean> doneSomething = new Ref<Boolean>(false);
+    final Ref<Boolean> hasErrors = new Ref<>(false);
+    final Ref<Boolean> doneSomething = new Ref<>(false);
     try {
       ProfilingHelper profilingHelper = null;
       if (Utils.IS_PROFILING_MODE) {
@@ -116,6 +133,7 @@ final class BuildSession implements Runnable, CanceledStatus {
       }
 
       runBuild(new MessageHandler() {
+        @Override
         public void processMessage(BuildMessage buildMessage) {
           final CmdlineRemoteProto.Message.BuilderMessage response;
           if (buildMessage instanceof FileGeneratedEvent) {
@@ -145,15 +163,28 @@ final class BuildSession implements Runnable, CanceledStatus {
             CustomBuilderMessage builderMessage = (CustomBuilderMessage)buildMessage;
             response = CmdlineProtoUtil.createCustomBuilderMessage(builderMessage.getBuilderId(), builderMessage.getMessageType(), builderMessage.getMessageText());
           }
-          else {
+          else if (buildMessage instanceof BuilderStatisticsMessage) {
+            final BuilderStatisticsMessage message = (BuilderStatisticsMessage)buildMessage;
+            final boolean worthReporting = message.getNumberOfProcessedSources() != 0 || message.getElapsedTimeMs() > 50;
+            if (worthReporting) {
+              LOG.info(message.getMessageText());
+            }
+            response = worthReporting && REPORT_BUILD_STATISTICS ?
+                       CmdlineProtoUtil.createCompileMessage(BuildMessage.Kind.JPS_INFO, message.getMessageText(), null, -1, -1, -1, -1, -1, -1.0f):
+                       null;
+          }
+          else if (!(buildMessage instanceof BuildingTargetProgressMessage)) {
             float done = -1.0f;
             if (buildMessage instanceof ProgressMessage) {
               done = ((ProgressMessage)buildMessage).getDone();
             }
             response = CmdlineProtoUtil.createCompileProgressMessageResponse(buildMessage.getMessageText(), done);
           }
+          else {
+            response = null;
+          }
           if (response != null) {
-            Channels.write(myChannel, CmdlineProtoUtil.toMessage(mySessionId, response));
+            myChannel.writeAndFlush(CmdlineProtoUtil.toMessage(mySessionId, response));
           }
         }
       }, this);
@@ -168,6 +199,7 @@ final class BuildSession implements Runnable, CanceledStatus {
     }
     finally {
       finishBuild(error, hasErrors.get(), doneSomething.get());
+      Disposer.dispose(memWatcher);
     }
   }
 
@@ -177,41 +209,89 @@ final class BuildSession implements Runnable, CanceledStatus {
       msgHandler.processMessage(new CompilerMessage("build", BuildMessage.Kind.ERROR, "Cannot determine build data storage root for project " + myProjectPath));
       return;
     }
-    if (!dataStorageRoot.exists()) {
-      // invoked the very first time for this project. Force full rebuild
-      myBuildType = BuildType.PROJECT_REBUILD;
+    final boolean storageFilesAbsent = !dataStorageRoot.exists() || !new File(dataStorageRoot, FS_STATE_FILE).exists();
+    if (storageFilesAbsent) {
+      // invoked the very first time for this project
+      myBuildRunner.setForceCleanCaches(true);
     }
+    final ProjectDescriptor preloadedProject = myPreloadedData != null? myPreloadedData.getProjectDescriptor() : null;
+    final DataInputStream fsStateStream = 
+      storageFilesAbsent || preloadedProject != null || myLoadUnloadedModules || myInitialFSDelta == null /*this will force FS rescan*/? null : createFSDataStream(dataStorageRoot, myInitialFSDelta.getOrdinal());
 
-    final DataInputStream fsStateStream = createFSDataStream(dataStorageRoot);
-
-    if (fsStateStream != null) {
+    if (fsStateStream != null || myPreloadedData != null) {
       // optimization: check whether we can skip the build
-      final boolean hasWorkToDoWithModules = fsStateStream.readBoolean();
-      if (!myForceModelLoading && (myBuildType == BuildType.MAKE || myBuildType == BuildType.UP_TO_DATE_CHECK) && !hasWorkToDoWithModules && scopeContainsModulesOnly(myBuildRunner.getScopes()) && !containsChanges(myInitialFSDelta)) {
-        updateFsStateOnDisk(dataStorageRoot, fsStateStream, myInitialFSDelta.getOrdinal());
-        return;
+      final boolean hasWorkFlag = fsStateStream != null? fsStateStream.readBoolean() : myPreloadedData.hasWorkToDo();
+      final boolean hasWorkToDoWithModules = hasWorkFlag || myInitialFSDelta == null;
+      if (!myForceModelLoading && (myBuildType == BuildType.BUILD || myBuildType == BuildType.UP_TO_DATE_CHECK) && !hasWorkToDoWithModules
+          && scopeContainsModulesOnlyForIncrementalMake(myScopes) && !containsChanges(myInitialFSDelta)) {
+
+        final DataInputStream storedFsData;
+        if (myPreloadedData != null) {
+          storedFsData = createFSDataStream(dataStorageRoot, myInitialFSDelta.getOrdinal());
+          if (storedFsData != null) {
+            storedFsData.readBoolean(); // skip hasWorkToDo flag
+          }
+        }
+        else {
+          storedFsData = fsStateStream;
+        }
+
+        if (storedFsData != null) {
+          updateFsStateOnDisk(dataStorageRoot, storedFsData, myInitialFSDelta.getOrdinal());
+          LOG.info("No changes found since last build. Exiting.");
+          if (preloadedProject != null) {
+            preloadedProject.release();
+          }
+          return;
+        }
       }
     }
 
-    final BuildFSState fsState = new BuildFSState(false);
+    final BuildFSState fsState = preloadedProject != null? preloadedProject.fsState : new BuildFSState(false);
     try {
-      final ProjectDescriptor pd = myBuildRunner.load(msgHandler, dataStorageRoot, fsState);
-      myProjectDescriptor = pd;
-      if (fsStateStream != null) {
-        try {
+      final ProjectDescriptor pd;
+      if (preloadedProject != null) {
+        pd = preloadedProject;
+        final List<BuildMessage> preloadMessages = myPreloadedData.getLoadMessages();
+        if (!preloadMessages.isEmpty()) {
+          // replay preload-time messages, so that they are delivered to the IDE
+          for (BuildMessage message : preloadMessages) {
+            msgHandler.processMessage(message);
+          }
+        }
+        if (myInitialFSDelta == null || myPreloadedData.getFsEventOrdinal() + 1L != myInitialFSDelta.getOrdinal()) {
+          // FS rescan was forced
+          fsState.clearAll(); 
+        }
+        else {
+          // apply events to already loaded state
+          try {
+            applyFSEvent(pd, myInitialFSDelta, false);
+          }
+          catch (Throwable e) {
+            LOG.error(e);
+            fsState.clearAll();
+          }
+        }
+      }
+      else {
+        // standard case
+        pd = myBuildRunner.load(msgHandler, dataStorageRoot, fsState);
+        TimingLog.LOG.debug("Project descriptor loaded");
+        if (fsStateStream != null) {
           try {
             fsState.load(fsStateStream, pd.getModel(), pd.getBuildRootIndex());
             applyFSEvent(pd, myInitialFSDelta, false);
+            TimingLog.LOG.debug("FS Delta loaded");
           }
-          finally {
-            fsStateStream.close();
+          catch (Throwable e) {
+            LOG.error(e);
+            fsState.clearAll();
           }
-        }
-        catch (Throwable e) {
-          LOG.error(e);
-          fsState.clearAll();
         }
       }
+      myProjectDescriptor = pd;
+      
       myLastEventOrdinal = myInitialFSDelta != null? myInitialFSDelta.getOrdinal() : 0L;
 
       // free memory
@@ -219,16 +299,18 @@ final class BuildSession implements Runnable, CanceledStatus {
       // ensure events from controller are processed after FSState initialization
       myEventsProcessor.startProcessing();
 
-      myBuildRunner.runBuild(pd, cs, myConstantSearch, msgHandler, myBuildType);
+      myBuildRunner.runBuild(pd, cs, myConstantSearch, msgHandler, myBuildType, myScopes, false);
+      TimingLog.LOG.debug("Build finished");
     }
     finally {
       saveData(fsState, dataStorageRoot);
     }
   }
 
-  private static boolean scopeContainsModulesOnly(List<TargetTypeBuildScope> scopes) {
+  private static boolean scopeContainsModulesOnlyForIncrementalMake(List<TargetTypeBuildScope> scopes) {
     TargetTypeRegistry typeRegistry = null;
     for (TargetTypeBuildScope scope : scopes) {
+      if (scope.getForceBuild()) return false;
       final String typeId = scope.getTypeId();
       if (isJavaModuleBuildType(typeId)) { // fast check
         continue;
@@ -238,7 +320,7 @@ final class BuildSession implements Runnable, CanceledStatus {
         typeRegistry = TargetTypeRegistry.getInstance();
       }
       final BuildTargetType<?> targetType = typeRegistry.getTargetType(typeId);
-      if (targetType != null && !(targetType instanceof ModuleBasedBuildTargetType)) {
+      if (targetType != null && !(targetType instanceof ModuleInducedTargetType)) {
         return false;
       }
     }
@@ -271,16 +353,13 @@ final class BuildSession implements Runnable, CanceledStatus {
   }
 
   public void processFSEvent(final CmdlineRemoteProto.Message.ControllerMessage.FSEvent event) {
-    myEventsProcessor.submit(new Runnable() {
-      @Override
-      public void run() {
-        try {
-          applyFSEvent(myProjectDescriptor, event, true);
-          myLastEventOrdinal += 1;
-        }
-        catch (IOException e) {
-          LOG.error(e);
-        }
+    myEventsProcessor.execute(() -> {
+      try {
+        applyFSEvent(myProjectDescriptor, event, true);
+        myLastEventOrdinal += 1;
+      }
+      catch (IOException e) {
+        LOG.error(e);
       }
     });
   }
@@ -290,7 +369,7 @@ final class BuildSession implements Runnable, CanceledStatus {
     if (future != null) {
       if (result.getIsSuccess()) {
         final List<String> paths = result.getPathList();
-        final List<File> files = new ArrayList<File>(paths.size());
+        final List<File> files = new ArrayList<>(paths.size());
         for (String path : paths) {
           files.add(new File(path));
         }
@@ -304,7 +383,7 @@ final class BuildSession implements Runnable, CanceledStatus {
     }
   }
 
-  private void applyFSEvent(ProjectDescriptor pd, @Nullable CmdlineRemoteProto.Message.ControllerMessage.FSEvent event, final boolean saveEventStamp) throws IOException {
+  private static void applyFSEvent(ProjectDescriptor pd, @Nullable CmdlineRemoteProto.Message.ControllerMessage.FSEvent event, final boolean saveEventStamp) throws IOException {
     if (event == null) {
       return;
     }
@@ -316,14 +395,13 @@ final class BuildSession implements Runnable, CanceledStatus {
       Collection<BuildRootDescriptor> descriptor = pd.getBuildRootIndex().findAllParentDescriptors(file, null, null);
       if (!descriptor.isEmpty()) {
         if (!cacheCleared) {
-          pd.getFSCache().clear();
           cacheCleared = true;
         }
         if (LOG.isDebugEnabled()) {
           LOG.debug("Applying deleted path from fs event: " + file.getPath());
         }
         for (BuildRootDescriptor rootDescriptor : descriptor) {
-          pd.fsState.registerDeleted(rootDescriptor.getTarget(), file, timestamps);
+          pd.fsState.registerDeleted(null, rootDescriptor.getTarget(), file, timestamps);
         }
       }
       else {
@@ -343,12 +421,11 @@ final class BuildSession implements Runnable, CanceledStatus {
         for (BuildRootDescriptor descriptor : descriptors) {
           if (!descriptor.isGenerated()) { // ignore generates sources as they are processed at the time of generation
             if (fileStamp == -1L) {
-              fileStamp = FileSystemUtil.lastModified(file); // lazy init
+              fileStamp = FSOperations.lastModified(file); // lazy init
             }
             final long stamp = timestamps.getStamp(file, descriptor.getTarget());
             if (stamp != fileStamp) {
               if (!cacheCleared) {
-                pd.getFSCache().clear();
                 cacheCleared = true;
               }
               pd.fsState.markDirty(null, file, descriptor, timestamps, saveEventStamp);
@@ -369,13 +446,12 @@ final class BuildSession implements Runnable, CanceledStatus {
     }
   }
 
-  private void updateFsStateOnDisk(File dataStorageRoot, DataInputStream original, final long ordinal) {
+  private static void updateFsStateOnDisk(File dataStorageRoot, DataInputStream original, final long ordinal) {
     final File file = new File(dataStorageRoot, FS_STATE_FILE);
     try {
       final BufferExposingByteArrayOutputStream bytes = new BufferExposingByteArrayOutputStream();
-      final DataOutputStream out = new DataOutputStream(bytes);
-      try {
-        out.writeInt(FSState.VERSION);
+      try (DataOutputStream out = new DataOutputStream(bytes)) {
+        out.writeInt(BuildFSState.VERSION);
         out.writeLong(ordinal);
         out.writeBoolean(false);
         while (true) {
@@ -385,9 +461,6 @@ final class BuildSession implements Runnable, CanceledStatus {
           }
           out.write(b);
         }
-      }
-      finally {
-        out.close();
       }
 
       saveOnDisk(bytes, file);
@@ -403,15 +476,11 @@ final class BuildSession implements Runnable, CanceledStatus {
     final File file = new File(dataStorageRoot, FS_STATE_FILE);
     try {
       final BufferExposingByteArrayOutputStream bytes = new BufferExposingByteArrayOutputStream();
-      final DataOutputStream out = new DataOutputStream(bytes);
-      try {
-        out.writeInt(FSState.VERSION);
+      try (DataOutputStream out = new DataOutputStream(bytes)) {
+        out.writeInt(BuildFSState.VERSION);
         out.writeLong(myLastEventOrdinal);
         out.writeBoolean(hasWorkToDo(state, pd));
         state.save(out);
-      }
-      finally {
-        out.close();
       }
 
       saveOnDisk(bytes, file);
@@ -422,11 +491,14 @@ final class BuildSession implements Runnable, CanceledStatus {
     }
   }
 
-  private static boolean hasWorkToDo(BuildFSState state, ProjectDescriptor pd) {
+  private static boolean hasWorkToDo(BuildFSState state, @Nullable ProjectDescriptor pd) {
+    if (pd == null) {
+      return true; // assuming worst case
+    }
     final BuildTargetIndex targetIndex = pd.getBuildTargetIndex();
     for (JpsModule module : pd.getProject().getModules()) {
       for (ModuleBasedTarget<?> target : targetIndex.getModuleBasedTargets(module, BuildTargetRegistry.ModuleTargetSelector.ALL)) {
-        if (state.hasWorkToDo(target)) {
+        if (!pd.getBuildTargetIndex().isDummy(target) && state.hasWorkToDo(target)) {
           return true;
         }
       }
@@ -435,48 +507,40 @@ final class BuildSession implements Runnable, CanceledStatus {
   }
 
   private static void saveOnDisk(BufferExposingByteArrayOutputStream bytes, final File file) throws IOException {
+    try (FileOutputStream fos = writeOrCreate(file)) {
+      fos.write(bytes.getInternalBuffer(), 0, bytes.size());
+    }
+  }
+
+  @NotNull
+  private static FileOutputStream writeOrCreate(@NotNull File file) throws FileNotFoundException {
     FileOutputStream fos = null;
     try {
+      //noinspection IOResourceOpenedButNotSafelyClosed
       fos = new FileOutputStream(file);
     }
-    catch (FileNotFoundException e) {
+    catch (FileNotFoundException ignored) {
       FileUtil.createIfDoesntExist(file);
     }
 
     if (fos == null) {
       fos = new FileOutputStream(file);
     }
-    try {
-      fos.write(bytes.getInternalBuffer(), 0, bytes.size());
-    }
-    finally {
-      fos.close();
-    }
+    return fos;
   }
 
   @Nullable
-  private DataInputStream createFSDataStream(File dataStorageRoot) {
-    if (myInitialFSDelta == null) {
-      // this will force FS rescan
-      return null;
-    }
-    try {
-      final File file = new File(dataStorageRoot, FS_STATE_FILE);
-      final InputStream fs = new FileInputStream(file);
-      byte[] bytes;
-      try {
-        bytes = FileUtil.loadBytes(fs, (int)file.length());
-      }
-      finally {
-        fs.close();
-      }
+  private static DataInputStream createFSDataStream(File dataStorageRoot, final long currentEventOrdinal) {
+    final File file = new File(dataStorageRoot, FS_STATE_FILE);
+    try (InputStream fs = new FileInputStream(file)) {
+      byte[] bytes = FileUtil.loadBytes(fs, (int)file.length());
       final DataInputStream in = new DataInputStream(new ByteArrayInputStream(bytes));
       final int version = in.readInt();
-      if (version != FSState.VERSION) {
+      if (version != BuildFSState.VERSION) {
         return null;
       }
       final long savedOrdinal = in.readLong();
-      if (savedOrdinal + 1L != myInitialFSDelta.getOrdinal()) {
+      if (savedOrdinal + 1L != currentEventOrdinal) {
         return null;
       }
       return in;
@@ -493,21 +557,22 @@ final class BuildSession implements Runnable, CanceledStatus {
     return event.getChangedPathsCount() != 0 || event.getDeletedPathsCount() != 0;
   }
 
-  private void finishBuild(Throwable error, boolean hadBuildErrors, boolean doneSomething) {
+  private void finishBuild(final Throwable error, boolean hadBuildErrors, boolean doneSomething) {
     CmdlineRemoteProto.Message lastMessage = null;
     try {
-      if (error != null) {
+      if (error instanceof CannotLoadJpsModelException) {
+        String text = "Failed to load project configuration: " + StringUtil.decapitalize(error.getMessage());
+        String path = ((CannotLoadJpsModelException)error).getFile().getAbsolutePath();
+        lastMessage = CmdlineProtoUtil.toMessage(mySessionId, CmdlineProtoUtil.createCompileMessage(BuildMessage.Kind.ERROR, text, path, -1, -1, -1, -1, -1, -1.0f));
+      }
+      else if (error != null) {
         Throwable cause = error.getCause();
         if (cause == null) {
           cause = error;
         }
         final ByteArrayOutputStream out = new ByteArrayOutputStream();
-        final PrintStream stream = new PrintStream(out);
-        try {
+        try (PrintStream stream = new PrintStream(out)) {
           cause.printStackTrace(stream);
-        }
-        finally {
-          stream.close();
         }
 
         final StringBuilder messageText = new StringBuilder();
@@ -515,6 +580,9 @@ final class BuildSession implements Runnable, CanceledStatus {
         final String trace = out.toString();
         if (!trace.isEmpty()) {
           messageText.append("\n").append(trace);
+        }
+        if (error instanceof RebuildRequestedException || cause instanceof IOException) {
+          messageText.append("\n").append("Please perform full project rebuild (Build | Rebuild Project)");
         }
         lastMessage = CmdlineProtoUtil.toMessage(mySessionId, CmdlineProtoUtil.createFailure(messageText.toString(), cause));
       }
@@ -537,7 +605,7 @@ final class BuildSession implements Runnable, CanceledStatus {
     }
     finally {
       try {
-        Channels.write(myChannel, lastMessage).await();
+        myChannel.writeAndFlush(lastMessage).await();
       }
       catch (InterruptedException e) {
         LOG.info(e);
@@ -557,32 +625,27 @@ final class BuildSession implements Runnable, CanceledStatus {
   private static BuildType convertCompileType(CmdlineRemoteProto.Message.ControllerMessage.ParametersMessage.Type compileType) {
     switch (compileType) {
       case CLEAN: return BuildType.CLEAN;
-      case MAKE: return BuildType.MAKE;
-      case REBUILD: return BuildType.PROJECT_REBUILD;
-      case FORCED_COMPILATION: return BuildType.FORCED_COMPILATION;
+      case BUILD: return BuildType.BUILD;
       case UP_TO_DATE_CHECK: return BuildType.UP_TO_DATE_CHECK;
     }
-    return BuildType.MAKE; // use make by default
+    return BuildType.BUILD;
   }
 
-  private static class EventsProcessor extends SequentialTaskExecutor {
-    private final AtomicBoolean myProcessingEnabled = new AtomicBoolean(false);
+  private static class EventsProcessor {
+    private final Semaphore myProcessingEnabled = new Semaphore();
+    private final Executor myExecutorService = SequentialTaskExecutor.createSequentialApplicationPoolExecutor("BuildSession.EventsProcessor.EventsProcessor Pool", SharedThreadPool.getInstance());
 
-    EventsProcessor() {
-      super(SharedThreadPool.getInstance());
+    private EventsProcessor() {
+      myProcessingEnabled.down();
+      execute(() -> myProcessingEnabled.waitFor());
     }
 
-    public void startProcessing() {
-      if (!myProcessingEnabled.getAndSet(true)) {
-        super.processQueue();
-      }
+    private void startProcessing() {
+      myProcessingEnabled.up();
     }
 
-    @Override
-    protected void processQueue() {
-      if (myProcessingEnabled.get()) {
-        super.processQueue();
-      }
+    public void execute(@NotNull Runnable task) {
+      myExecutorService.execute(task);
     }
   }
 
@@ -601,15 +664,12 @@ final class BuildSession implements Runnable, CanceledStatus {
       task.setIsAccessChanged(accessChanged);
       task.setIsFieldRemoved(fieldRemoved);
       final ConstantSearchFuture future = new ConstantSearchFuture(BuildSession.this);
-      final ConstantSearchFuture prev = mySearchTasks.put(new Pair<String, String>(ownerClassName, fieldName), future);
+      final ConstantSearchFuture prev = mySearchTasks.put(Pair.create(ownerClassName, fieldName), future);
       if (prev != null) {
         prev.setDone();
       }
-      Channels.write(myChannel,
-        CmdlineProtoUtil.toMessage(
-          mySessionId, CmdlineRemoteProto.Message.BuilderMessage.newBuilder().setType(CmdlineRemoteProto.Message.BuilderMessage.Type.CONSTANT_SEARCH_TASK).setConstantSearchTask(task.build()).build()
-        )
-      );
+      myChannel.writeAndFlush(CmdlineProtoUtil.toMessage(mySessionId, CmdlineRemoteProto.Message.BuilderMessage.newBuilder()
+        .setType(CmdlineRemoteProto.Message.BuilderMessage.Type.CONSTANT_SEARCH_TASK).setConstantSearchTask(task.build()).build()));
       return future;
     }
   }

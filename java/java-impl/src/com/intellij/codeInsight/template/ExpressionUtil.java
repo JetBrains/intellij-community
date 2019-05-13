@@ -50,16 +50,13 @@ import org.jetbrains.annotations.Nullable;
      }
      else{
        final PsiFile fileCopy = (PsiFile)file.copy();
-       ApplicationManager.getApplication().runWriteAction(new Runnable() {
-         @Override
-         public void run() {
-           BlockSupport blockSupport = BlockSupport.getInstance(project);
-           try{
-             blockSupport.reparseRange(fileCopy, offset, offset, "xxx");
-           }
-           catch(IncorrectOperationException e){
-             LOG.error(e);
-           }
+       ApplicationManager.getApplication().runWriteAction(() -> {
+         BlockSupport blockSupport = BlockSupport.getInstance(project);
+         try{
+           blockSupport.reparseRange(fileCopy, offset, offset, "xxx");
+         }
+         catch(IncorrectOperationException e){
+           LOG.error(e);
          }
        });
        PsiElement identifierCopy = fileCopy.findElementAt(offset);
@@ -84,8 +81,7 @@ import org.jetbrains.annotations.Nullable;
            final PsiExpression iteratedValue = foreachStatement.getIteratedValue();
            if (iteratedValue != null) {
              try {
-               final PsiArrayAccessExpression expr = (PsiArrayAccessExpression)JavaPsiFacade.getInstance(iteratedValue.getProject())
-                 .getElementFactory().createExpressionFromText("a[0]", var);
+               final PsiArrayAccessExpression expr = (PsiArrayAccessExpression)JavaPsiFacade.getElementFactory(iteratedValue.getProject()).createExpressionFromText("a[0]", var);
                expr.getArrayExpression().replace(iteratedValue);
                initializer = expr; //note: non physical with no parent
              }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,22 +22,16 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.usageView.UsageInfo;
+import com.intellij.usageView.UsageViewUtil;
 import com.intellij.usages.TextChunk;
 import com.intellij.usages.UsageInfo2UsageAdapter;
 import com.intellij.usages.UsagePresentation;
-import com.intellij.util.Function;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * Created with IntelliJ IDEA.
- * User: Irina.Chernushina
- * Date: 6/6/12
- * Time: 7:24 PM
- */
 public class UsageProjectTreeNode extends ProjectViewNodeWithChildrenList<UsageInfo> {
   private final UsagePresentation myUsagePresentation;
 
-  public UsageProjectTreeNode(Project project, UsageInfo usage, ViewSettings viewSettings) {
+  public UsageProjectTreeNode(Project project, @NotNull UsageInfo usage, ViewSettings viewSettings) {
     super(project, usage, viewSettings);
     final UsageInfo2UsageAdapter adapter = new UsageInfo2UsageAdapter(usage);
     myUsagePresentation = adapter.getPresentation();
@@ -57,17 +51,12 @@ public class UsageProjectTreeNode extends ProjectViewNodeWithChildrenList<UsageI
   }
 
   @Override
-  protected void update(PresentationData presentation) {
+  protected void update(@NotNull PresentationData presentation) {
     presentation.setIcon(myUsagePresentation.getIcon());
     presentation.setTooltip(myUsagePresentation.getTooltipText());
     final TextChunk[] text = myUsagePresentation.getText();
     updatePresentationWithTextChunks(presentation, text);
-    presentation.setPresentableText(StringUtil.join(text, new Function<TextChunk, String>() {
-      @Override
-      public String fun(TextChunk chunk) {
-        return chunk.getText();
-      }
-    }, ""));
+    presentation.setPresentableText(StringUtil.join(text, chunk -> chunk.getText(), ""));
   }
 
   public static void updatePresentationWithTextChunks(PresentationData presentation, TextChunk[] text) {
@@ -78,12 +67,12 @@ public class UsageProjectTreeNode extends ProjectViewNodeWithChildrenList<UsageI
 
   @Override
   public void navigate(boolean requestFocus) {
-    getValue().navigateTo(requestFocus);
+    UsageViewUtil.navigateTo(getValue(), requestFocus);
   }
 
   @Override
   public boolean canNavigate() {
-    return getValue().getElement().isValid();
+    return canNavigateToSource();
   }
 
   @Override

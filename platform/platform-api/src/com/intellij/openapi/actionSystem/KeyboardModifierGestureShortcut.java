@@ -15,6 +15,9 @@
  */
 package com.intellij.openapi.actionSystem;
 
+import com.intellij.openapi.keymap.KeymapUtil;
+import org.jetbrains.annotations.NotNull;
+
 import javax.swing.*;
 
 public class KeyboardModifierGestureShortcut extends Shortcut {
@@ -22,6 +25,7 @@ public class KeyboardModifierGestureShortcut extends Shortcut {
   private final KeyStroke myStroke;
   private final KeyboardGestureAction.ModifierType myType;
 
+  @NotNull
   public static Shortcut newInstance(KeyboardGestureAction.ModifierType type, KeyStroke stroke) {
     switch (type) {
       case dblClick:
@@ -46,11 +50,13 @@ public class KeyboardModifierGestureShortcut extends Shortcut {
     return myType;
   }
 
+  @Override
   public boolean isKeyboard() {
     return true;
   }
 
-  public boolean startsWith(final Shortcut sc) {
+  @Override
+  public boolean startsWith(@NotNull final Shortcut sc) {
     if (!(sc instanceof KeyboardModifierGestureShortcut)) return false;
 
     final KeyboardModifierGestureShortcut other = (KeyboardModifierGestureShortcut)sc;
@@ -93,5 +99,12 @@ public class KeyboardModifierGestureShortcut extends Shortcut {
     public Hold(final KeyStroke stroke) {
       super(stroke, KeyboardGestureAction.ModifierType.hold);
     }
+  }
+
+  @Override
+  public String toString() {
+    String s = getType() == KeyboardGestureAction.ModifierType.dblClick ? "Press, release and hold " : "Hold ";
+    s += KeymapUtil.getKeystrokeText(this.getStroke());
+    return s;
   }
 }

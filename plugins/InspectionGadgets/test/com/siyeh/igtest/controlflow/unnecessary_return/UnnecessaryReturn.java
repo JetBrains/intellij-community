@@ -7,18 +7,18 @@ public class UnnecessaryReturn
 
     public UnnecessaryReturn()
     {
-        return;
+        <warning descr="'return' is unnecessary as the last statement in a constructor">return</warning>;
     }
 
     public void foo()
     {
-        return;
+        <warning descr="'return' is unnecessary as the last statement in a 'void' method">return</warning>;
     }
     public void foo2()
     {
         {
             {
-                return;
+                <warning descr="'return' is unnecessary as the last statement in a 'void' method">return</warning>;
             }
         }
     }
@@ -27,7 +27,7 @@ public class UnnecessaryReturn
     {
         if(true)
         {
-            return;
+            <warning descr="'return' is unnecessary as the last statement in a 'void' method">return</warning>;
         }
     }
 
@@ -42,11 +42,11 @@ public class UnnecessaryReturn
 }
 class C {
   public C() {
-    return;
+    <warning descr="'return' is unnecessary as the last statement in a constructor">return</warning>;
   }
 
   public void m1() {
-    return;
+    <warning descr="'return' is unnecessary as the last statement in a 'void' method">return</warning>;
   }
 
   public boolean m2() {
@@ -59,7 +59,7 @@ class C {
     }
     System.out.println("m3()");
     if (f) {
-      return;
+      <warning descr="'return' is unnecessary as the last statement in a 'void' method">return</warning>;
     }
   }
 
@@ -69,7 +69,7 @@ class C {
       return;
     }
     else {
-      return;
+      <warning descr="'return' is unnecessary as the last statement in a 'void' method">return</warning>;
     }
   }
 
@@ -81,7 +81,7 @@ class C {
   }
 
   public void lambda() {
-    Runnable r = () -> { return; };
+    Runnable r = () -> { <warning descr="'return' is unnecessary as the last statement in a 'void' method">return</warning>; };
     System.out.println(r);
 
     Callable<Integer> c = () -> { return 42; };
@@ -92,6 +92,56 @@ class C {
     if (a) return;
     else {
       System.out.println();
+    }
+  }
+}
+
+class Incomplete {
+  interface A {
+    Void m();
+  }
+  
+  {
+    A a = new A() {
+      public Void m() {
+        return<EOLError descr="';' expected"></EOLError>
+      }
+    };
+    
+    A a1 = () -> {
+      return<EOLError descr="';' expected"></EOLError>
+    };
+  }
+}
+
+class Switch {
+  enum E { A, B, C}
+    void x(E e) {
+        switch (e) {
+            case A, B, C -> {
+                <warning descr="'return' is unnecessary as the last statement in a 'void' method">return</warning>;
+            }
+            default -> {
+                <warning descr="'return' is unnecessary as the last statement in a 'void' method">return</warning>;
+            }
+        }
+    }
+
+  void f(int n) {
+    int a;
+    switch (n) {
+      case 1 -> a = 0;
+      default -> {return;}
+    }
+    System.out.println("a = " + a);
+  }
+
+  void g(int n) {
+    switch (n) {
+      case 1:
+        return;
+      default:
+        <warning descr="'return' is unnecessary as the last statement in a 'void' method">return</warning>;
     }
   }
 }

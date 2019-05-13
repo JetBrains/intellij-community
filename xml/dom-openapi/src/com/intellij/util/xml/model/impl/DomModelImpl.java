@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -60,33 +60,31 @@ public class DomModelImpl<T extends DomElement> implements DomModel<T> {
     myClass = clazz;
   }
 
+  @Override
   @NotNull
   public T getMergedModel() {
     if (myMergedModel == null) {
       final DomManager domManager = DomManager.getDomManager(myProject);
-      return domManager.createModelMerger().mergeModels(myClass, ContainerUtil.mapNotNull(myConfigFiles, new NullableFunction<XmlFile, T>() {
-        public T fun(XmlFile xmlFile) {
-          DomFileElement<T> fileElement = domManager.getFileElement(xmlFile, myClass);
-          return fileElement == null ? null : fileElement.getRootElement();
-        }
-      }));
+      return domManager.createModelMerger().mergeModels(myClass, ContainerUtil.mapNotNull(myConfigFiles,
+                                                                                          (NullableFunction<XmlFile, T>)xmlFile -> {
+                                                                                            DomFileElement<T> fileElement = domManager.getFileElement(xmlFile, myClass);
+                                                                                            return fileElement == null ? null : fileElement.getRootElement();
+                                                                                          }));
     }
     return myMergedModel.getRootElement();
   }
 
+  @Override
   @NotNull
   public Set<XmlFile> getConfigFiles() {
     return myConfigFiles;
   }
 
+  @Override
   @NotNull
   public List<DomFileElement<T>> getRoots() {
     if (myMergedModel == null) {
-      return ContainerUtil.mapNotNull(myConfigFiles, new NullableFunction<XmlFile, DomFileElement<T>>() {
-        public DomFileElement<T> fun(XmlFile xmlFile) {
-          return DomManager.getDomManager(xmlFile.getProject()).getFileElement(xmlFile, myClass);
-        }
-      });
+      return ContainerUtil.mapNotNull(myConfigFiles, (NullableFunction<XmlFile, DomFileElement<T>>)xmlFile -> DomManager.getDomManager(xmlFile.getProject()).getFileElement(xmlFile, myClass));
     }
     return myMergedModel instanceof MergedObject ? ((MergedObject) myMergedModel).getImplementations() : Collections.singletonList(myMergedModel);
   }

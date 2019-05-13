@@ -15,83 +15,89 @@
  */
 package com.intellij.compiler.impl.javaCompiler.javac;
 
+import com.intellij.compiler.impl.javaCompiler.CompilerModuleOptionsComponent;
 import com.intellij.compiler.options.ComparingUtils;
 import com.intellij.openapi.compiler.CompilerBundle;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
+import com.intellij.openapi.project.Project;
 import com.intellij.ui.RawCommandLineEditor;
+import com.intellij.ui.components.JBCheckBox;
 import org.jetbrains.jps.model.java.compiler.JpsJavaCompilerOptions;
 
 import javax.swing.*;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Mar 30, 2004
  */
 public class JavacConfigurable implements Configurable{
   private JPanel myPanel;
+  private JBCheckBox myCbPreferTargetJdkCompiler;
   private JCheckBox myCbDebuggingInfo;
   private JCheckBox myCbDeprecation;
   private JCheckBox myCbGenerateNoWarnings;
   private RawCommandLineEditor myAdditionalOptionsField;
-  private JTextField myJavacMaximumHeapField;
+  private CompilerModuleOptionsComponent myOptionsOverride;
+  private final Project myProject;
   private final JpsJavaCompilerOptions myJavacSettings;
 
-  public JavacConfigurable(final JpsJavaCompilerOptions javacSettings) {
+  public JavacConfigurable(Project project, final JpsJavaCompilerOptions javacSettings) {
+    myProject = project;
     myJavacSettings = javacSettings;
     myAdditionalOptionsField.setDialogCaption(CompilerBundle.message("java.compiler.option.additional.command.line.parameters"));
+    myAdditionalOptionsField.setDescriptor(null, false);
   }
 
+  private void createUIComponents() {
+    myOptionsOverride = new CompilerModuleOptionsComponent(myProject);
+  }
+
+  @Override
   public String getDisplayName() {
     return null;
   }
 
+  @Override
   public String getHelpTopic() {
     return null;
   }
 
+  @Override
   public JComponent createComponent() {
     return myPanel;
   }
 
+  @Override
   public boolean isModified() {
     boolean isModified = false;
-    isModified |= ComparingUtils.isModified(myJavacMaximumHeapField, myJavacSettings.MAXIMUM_HEAP_SIZE);
-
+    isModified |= ComparingUtils.isModified(myCbPreferTargetJdkCompiler, myJavacSettings.PREFER_TARGET_JDK_COMPILER);
     isModified |= ComparingUtils.isModified(myCbDeprecation, myJavacSettings.DEPRECATION);
     isModified |= ComparingUtils.isModified(myCbDebuggingInfo, myJavacSettings.DEBUGGING_INFO);
     isModified |= ComparingUtils.isModified(myCbGenerateNoWarnings, myJavacSettings.GENERATE_NO_WARNINGS);
     isModified |= ComparingUtils.isModified(myAdditionalOptionsField, myJavacSettings.ADDITIONAL_OPTIONS_STRING);
+    isModified |= !myOptionsOverride.getModuleOptionsMap().equals(myJavacSettings.ADDITIONAL_OPTIONS_OVERRIDE);
+
     return isModified;
   }
 
+  @Override
   public void apply() throws ConfigurationException {
-
-    try {
-      myJavacSettings.MAXIMUM_HEAP_SIZE = Integer.parseInt(myJavacMaximumHeapField.getText());
-      if(myJavacSettings.MAXIMUM_HEAP_SIZE < 1) {
-        myJavacSettings.MAXIMUM_HEAP_SIZE = 128;
-      }
-    }
-    catch(NumberFormatException exception) {
-      myJavacSettings.MAXIMUM_HEAP_SIZE = 128;
-    }
-
+    myJavacSettings.PREFER_TARGET_JDK_COMPILER =  myCbPreferTargetJdkCompiler.isSelected();
     myJavacSettings.DEPRECATION =  myCbDeprecation.isSelected();
     myJavacSettings.DEBUGGING_INFO = myCbDebuggingInfo.isSelected();
     myJavacSettings.GENERATE_NO_WARNINGS = myCbGenerateNoWarnings.isSelected();
     myJavacSettings.ADDITIONAL_OPTIONS_STRING = myAdditionalOptionsField.getText();
+    myJavacSettings.ADDITIONAL_OPTIONS_OVERRIDE.clear();
+    myJavacSettings.ADDITIONAL_OPTIONS_OVERRIDE.putAll(myOptionsOverride.getModuleOptionsMap());
   }
 
+  @Override
   public void reset() {
-    myJavacMaximumHeapField.setText(Integer.toString(myJavacSettings.MAXIMUM_HEAP_SIZE));
+    myCbPreferTargetJdkCompiler.setSelected(myJavacSettings.PREFER_TARGET_JDK_COMPILER);
     myCbDeprecation.setSelected(myJavacSettings.DEPRECATION);
     myCbDebuggingInfo.setSelected(myJavacSettings.DEBUGGING_INFO);
     myCbGenerateNoWarnings.setSelected(myJavacSettings.GENERATE_NO_WARNINGS);
     myAdditionalOptionsField.setText(myJavacSettings.ADDITIONAL_OPTIONS_STRING);
+    myOptionsOverride.setModuleOptionsMap(myJavacSettings.ADDITIONAL_OPTIONS_OVERRIDE);
   }
-
-  public void disposeUIResources() {
-  }
-
 }

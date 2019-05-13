@@ -1,28 +1,9 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
-/*
- * Created by IntelliJ IDEA.
- * User: Anna.Kozlova
- * Date: 28-Jun-2006
- * Time: 19:03:32
- */
 package com.intellij.openapi.roots.ui.configuration;
 
 import com.intellij.ide.util.BrowseFilesListener;
+import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.fileChooser.FileChooserFactory;
@@ -35,8 +16,11 @@ import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.FieldPanel;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.InsertPathAction;
+import com.intellij.ui.components.fields.ExtendableTextField;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -48,7 +32,6 @@ import java.io.IOException;
 
 public class BuildElementsEditor extends ModuleElementsEditor {
   private JRadioButton myInheritCompilerOutput;
-  @SuppressWarnings({"FieldCanBeLocal"})
   private JRadioButton myPerModuleCompilerOutput;
 
   private CommitableFieldPanel myOutputPathPanel;
@@ -69,6 +52,68 @@ public class BuildElementsEditor extends ModuleElementsEditor {
     group.add(myInheritCompilerOutput);
     group.add(myPerModuleCompilerOutput);
 
+    myOutputPathPanel = createOutputPathPanel(ProjectBundle.message("module.paths.output.title"), new CommitPathRunnable() {
+      @Override
+      public void saveUrl(String url) {
+        if (myInheritCompilerOutput.isSelected()) return;  //do not override settings if any
+        getCompilerExtension().setCompilerOutputPath(url);
+        fireConfigurationChanged();
+      }
+    });
+    myTestsOutputPathPanel = createOutputPathPanel(ProjectBundle.message("module.paths.test.output.title"), new CommitPathRunnable() {
+      @Override
+      public void saveUrl(String url) {
+        if (myInheritCompilerOutput.isSelected()) return; //do not override settings if any
+        getCompilerExtension().setCompilerOutputPathForTests(url);
+        fireConfigurationChanged();
+      }
+    });
+
+    myCbExcludeOutput = new JCheckBox(ProjectBundle.message("module.paths.exclude.output.checkbox"), getCompilerExtension().isExcludeOutput());
+    myCbExcludeOutput.addActionListener(new ActionListener() {
+      @Override
+      public void actionPerformed(final ActionEvent e) {
+        getCompilerExtension().setExcludeOutput(myCbExcludeOutput.isSelected());
+        fireConfigurationChanged();
+      }
+    });
+
+    final JPanel outputPathsPanel = new JPanel(new GridBagLayout());
+
+
+    outputPathsPanel.add(myInheritCompilerOutput, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 2, 1, 1.0, 0.0,
+                                                                         GridBagConstraints.WEST, GridBagConstraints.NONE,
+                                                                         JBUI.insets(6, 0, 0, 4), 0, 0));
+    outputPathsPanel.add(myPerModuleCompilerOutput, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 2, 1, 1.0, 0.0,
+                                                                           GridBagConstraints.WEST, GridBagConstraints.NONE,
+                                                                           JBUI.insets(6, 0, 0, 4), 0, 0));
+
+    myOutputLabel = new JLabel(ProjectBundle.message("module.paths.output.label"));
+    outputPathsPanel.add(myOutputLabel, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 0.0, 0.0, GridBagConstraints.EAST,
+                                                               GridBagConstraints.NONE, JBUI.insets(6, 12, 0, 4), 0, 0));
+    outputPathsPanel.add(myOutputPathPanel, new GridBagConstraints(1, GridBagConstraints.RELATIVE, 2, 1, 1.0, 0.0, GridBagConstraints.WEST,
+                                                                   GridBagConstraints.HORIZONTAL, JBUI.insets(6, 4, 0, 0), 0, 0));
+
+    myTestOutputLabel = new JLabel(ProjectBundle.message("module.paths.test.output.label"));
+    outputPathsPanel.add(myTestOutputLabel, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 0.0, 0.0, GridBagConstraints.EAST,
+                                                                   GridBagConstraints.NONE, JBUI.insets(6, 16, 0, 4), 0, 0));
+    outputPathsPanel.add(myTestsOutputPathPanel, new GridBagConstraints(1, GridBagConstraints.RELATIVE, 2, 1, 1.0, 0.0,
+                                                                        GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL,
+                                                                        JBUI.insets(6, 4, 0, 0), 0, 0));
+
+    outputPathsPanel.add(myCbExcludeOutput, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 2, 1, 1.0, 0.0, GridBagConstraints.WEST,
+                                                                   GridBagConstraints.NONE, JBUI.insets(6, 16, 0, 0), 0, 0));
+
+    final boolean outputPathInherited = getCompilerExtension().isCompilerOutputPathInherited();
+    myInheritCompilerOutput.setSelected(outputPathInherited);
+    myPerModuleCompilerOutput.setSelected(!outputPathInherited);
+
+    // fill with data
+    updateOutputPathPresentation();
+
+    //compiler settings
+    enableCompilerSettings(!outputPathInherited);
+
     final ActionListener listener = new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
@@ -79,64 +124,6 @@ public class BuildElementsEditor extends ModuleElementsEditor {
     myInheritCompilerOutput.addActionListener(listener);
     myPerModuleCompilerOutput.addActionListener(listener);
 
-    myOutputPathPanel = createOutputPathPanel(ProjectBundle.message("module.paths.output.title"), new CommitPathRunnable() {
-      @Override
-      public void saveUrl(String url) {
-        if (getCompilerExtension().isCompilerOutputPathInherited()) return;  //do not override settings if any
-        getCompilerExtension().setCompilerOutputPath(url);
-      }
-    });
-    myTestsOutputPathPanel = createOutputPathPanel(ProjectBundle.message("module.paths.test.output.title"), new CommitPathRunnable() {
-      @Override
-      public void saveUrl(String url) {
-        if (getCompilerExtension().isCompilerOutputPathInherited()) return; //do not override settings if any
-        getCompilerExtension().setCompilerOutputPathForTests(url);
-      }
-    });
-
-    myCbExcludeOutput = new JCheckBox(ProjectBundle.message("module.paths.exclude.output.checkbox"), getCompilerExtension().isExcludeOutput());
-    myCbExcludeOutput.addActionListener(new ActionListener() {
-      @Override
-      public void actionPerformed(final ActionEvent e) {
-        getCompilerExtension().setExcludeOutput(myCbExcludeOutput.isSelected());
-      }
-    });
-
-    final JPanel outputPathsPanel = new JPanel(new GridBagLayout());
-
-
-    outputPathsPanel.add(myInheritCompilerOutput, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 2, 1, 1.0, 0.0,
-                                                                         GridBagConstraints.WEST, GridBagConstraints.NONE,
-                                                                         new Insets(6, 0, 0, 4), 0, 0));
-    outputPathsPanel.add(myPerModuleCompilerOutput, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 2, 1, 1.0, 0.0,
-                                                                           GridBagConstraints.WEST, GridBagConstraints.NONE,
-                                                                           new Insets(6, 0, 0, 4), 0, 0));
-
-    myOutputLabel = new JLabel(ProjectBundle.message("module.paths.output.label"));
-    outputPathsPanel.add(myOutputLabel, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 0.0, 0.0, GridBagConstraints.EAST,
-                                                               GridBagConstraints.NONE, new Insets(6, 12, 0, 4), 0, 0));
-    outputPathsPanel.add(myOutputPathPanel, new GridBagConstraints(1, GridBagConstraints.RELATIVE, 2, 1, 1.0, 0.0, GridBagConstraints.WEST,
-                                                                   GridBagConstraints.HORIZONTAL, new Insets(6, 4, 0, 0), 0, 0));
-
-    myTestOutputLabel = new JLabel(ProjectBundle.message("module.paths.test.output.label"));
-    outputPathsPanel.add(myTestOutputLabel, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 0.0, 0.0, GridBagConstraints.EAST,
-                                                                   GridBagConstraints.NONE, new Insets(6, 16, 0, 4), 0, 0));
-    outputPathsPanel.add(myTestsOutputPathPanel, new GridBagConstraints(1, GridBagConstraints.RELATIVE, 2, 1, 1.0, 0.0,
-                                                                        GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL,
-                                                                        new Insets(6, 4, 0, 0), 0, 0));
-
-    outputPathsPanel.add(myCbExcludeOutput, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 2, 1, 1.0, 0.0, GridBagConstraints.WEST,
-                                                                   GridBagConstraints.NONE, new Insets(6, 16, 0, 0), 0, 0));
-
-    // fill with data
-    updateOutputPathPresentation();
-
-    //compiler settings
-    final boolean outputPathInherited = getCompilerExtension().isCompilerOutputPathInherited();
-    myInheritCompilerOutput.setSelected(outputPathInherited);
-    myPerModuleCompilerOutput.setSelected(!outputPathInherited);
-    enableCompilerSettings(!outputPathInherited);
-
     final JPanel panel = new JPanel(new BorderLayout());
     panel.setBorder(IdeBorderFactory.createTitledBorder(ProjectBundle.message("project.roots.output.compiler.title"),
                                                         true));
@@ -146,7 +133,11 @@ public class BuildElementsEditor extends ModuleElementsEditor {
 
   private void updateOutputPathPresentation() {
     if (getCompilerExtension().isCompilerOutputPathInherited()) {
-      final String baseUrl = ProjectStructureConfigurable.getInstance(myProject).getProjectConfig().getCompilerOutputUrl();
+      ProjectConfigurable projectConfig = ProjectStructureConfigurable.getInstance(myProject).getProjectConfig();
+      if (projectConfig == null) {
+        return;
+      }
+      final String baseUrl = projectConfig.getCompilerOutputUrl();
       moduleCompileOutputChanged(baseUrl, getModel().getModule().getName());
     } else {
       final VirtualFile compilerOutputPath = getCompilerExtension().getCompilerOutputPath();
@@ -180,41 +171,48 @@ public class BuildElementsEditor extends ModuleElementsEditor {
     myCbExcludeOutput.setEnabled(enabled);
     getCompilerExtension().inheritCompilerOutputPath(!enabled);
     updateOutputPathPresentation();
+    fireConfigurationChanged();
   }
 
   private CommitableFieldPanel createOutputPathPanel(final String title, final CommitPathRunnable commitPathRunnable) {
-    final JTextField textField = new JTextField();
+    final JTextField textField = new ExtendableTextField();
     final FileChooserDescriptor outputPathsChooserDescriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor();
+    outputPathsChooserDescriptor.putUserData(LangDataKeys.MODULE_CONTEXT, getModel().getModule());
     outputPathsChooserDescriptor.setHideIgnored(false);
     InsertPathAction.addTo(textField, outputPathsChooserDescriptor);
     FileChooserFactory.getInstance().installFileCompletion(textField, outputPathsChooserDescriptor, true, null);
-    final Runnable commitRunnable = new Runnable() {
-      @Override
-      public void run() {
-        if (!getModel().isWritable()) {
-          return;
+    final Runnable commitRunnable = () -> {
+      if (!getModel().isWritable()) {
+        return;
+      }
+      final String path = textField.getText().trim();
+      if (path.length() == 0) {
+        commitPathRunnable.saveUrl(null);
+      }
+      else {
+        // should set only absolute paths
+        String canonicalPath;
+        try {
+          canonicalPath = FileUtil.resolveShortWindowsName(path);
         }
-        final String path = textField.getText().trim();
-        if (path.length() == 0) {
-          commitPathRunnable.saveUrl(null);
+        catch (IOException e) {
+          canonicalPath = path;
         }
-        else {
-          // should set only absolute paths
-          String canonicalPath;
-          try {
-            canonicalPath = FileUtil.resolveShortWindowsName(path);
-          }
-          catch (IOException e) {
-            canonicalPath = path;
-          }
-          commitPathRunnable.saveUrl(VfsUtilCore.pathToUrl(FileUtil.toSystemIndependentName(canonicalPath)));
-        }
+        commitPathRunnable.saveUrl(VfsUtilCore.pathToUrl(FileUtil.toSystemIndependentName(canonicalPath)));
       }
     };
 
+    final ActionListener listener = new ActionListener() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        commitRunnable.run();
+      }
+    };
+    myPerModuleCompilerOutput.addActionListener(listener);
+
     textField.getDocument().addDocumentListener(new DocumentAdapter() {
       @Override
-      protected void textChanged(DocumentEvent e) {
+      protected void textChanged(@NotNull DocumentEvent e) {
         commitRunnable.run();
       }
     });
@@ -281,7 +279,7 @@ public class BuildElementsEditor extends ModuleElementsEditor {
   private static class CommitableFieldPanel extends FieldPanel {
     private final Runnable myCommitRunnable;
 
-    public CommitableFieldPanel(final JTextField textField,
+    CommitableFieldPanel(final JTextField textField,
                                 String labelText,
                                 final String viewerDialogTitle,
                                 ActionListener browseButtonActionListener,

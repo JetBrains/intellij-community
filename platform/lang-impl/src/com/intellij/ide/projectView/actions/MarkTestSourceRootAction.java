@@ -15,11 +15,13 @@
  */
 package com.intellij.ide.projectView.actions;
 
+import org.jetbrains.jps.model.java.JavaSourceRootType;
+
 /**
  * @author yole
  */
-public class MarkTestSourceRootAction extends MarkRootAction {
+public class MarkTestSourceRootAction extends MarkSourceRootAction {
   public MarkTestSourceRootAction() {
-    super(true, false);
+    super(JavaSourceRootType.TEST_SOURCE);
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,18 +22,17 @@ import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Separator;
+import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-/**
- * User: anna
- * Date: Mar 3, 2005
- */
-public class AddToFavoritesActionGroup extends ActionGroup {
+public class AddToFavoritesActionGroup extends ActionGroup implements DumbAware {
 
+  @Override
   @NotNull
   public AnAction[] getChildren(@Nullable AnActionEvent e) {
     if (e == null) return AnAction.EMPTY_ARRAY;
@@ -58,8 +57,13 @@ public class AddToFavoritesActionGroup extends ActionGroup {
   }
 
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     super.update(e);
-    e.getPresentation().setVisible(AddToFavoritesAction.canCreateNodes(e));
+    try {
+      e.getPresentation().setVisible(AddToFavoritesAction.canCreateNodes(e));
+    }
+    catch (IndexNotReadyException e1) {
+      e.getPresentation().setVisible(false);
+    }
   }
 }

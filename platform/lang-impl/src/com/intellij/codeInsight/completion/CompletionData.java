@@ -1,75 +1,45 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.TailType;
-import com.intellij.codeInsight.lookup.*;
+import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.codeInsight.lookup.LookupItem;
+import com.intellij.codeInsight.lookup.LookupValueWithUIHint;
+import com.intellij.codeInsight.lookup.PresentableLookupValue;
 import com.intellij.codeInsight.template.Template;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.paths.PsiDynaReference;
 import com.intellij.openapi.project.IndexNotReadyException;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.patterns.CharPattern;
 import com.intellij.patterns.ElementPattern;
 import com.intellij.patterns.ObjectPattern;
 import com.intellij.psi.*;
-import com.intellij.psi.filters.ContextGetter;
 import com.intellij.psi.filters.ElementFilter;
 import com.intellij.psi.filters.TrueFilter;
 import com.intellij.psi.impl.source.resolve.reference.impl.PsiMultiReference;
 import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.psi.util.PsiUtilCore;
-import com.intellij.util.ReflectionCache;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-import static com.intellij.patterns.StandardPatterns.character;
 import static com.intellij.patterns.StandardPatterns.not;
 
 /**
- * @deprecated see {@link com.intellij.codeInsight.completion.CompletionContributor}
+ * @deprecated see {@link CompletionContributor}
  */
+@Deprecated
 public class CompletionData {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.completion.CompletionData");
-  public static final ObjectPattern.Capture<Character> NOT_JAVA_ID = not(character().javaIdentifierPart());
-  private final Set<Class> myFinalScopes = new HashSet<Class>();
-  private final List<CompletionVariant> myCompletionVariants = new ArrayList<CompletionVariant>();
+  public static final ObjectPattern.Capture<Character> NOT_JAVA_ID = not(CharPattern.javaIdentifierPartCharacter());
+  private final List<CompletionVariant> myCompletionVariants = new ArrayList<>();
 
   protected CompletionData(){ }
-
-  protected final void declareFinalScope(Class scopeClass){
-    myFinalScopes.add(scopeClass);
-  }
-
-  protected boolean isScopeFinal(Class scopeClass){
-    if(myFinalScopes.contains(scopeClass))
-      return true;
-
-    for (final Class myFinalScope : myFinalScopes) {
-      if (ReflectionCache.isAssignable(myFinalScope, scopeClass)) {
-        return true;
-      }
-    }
-    return false;
-  }
 
   private boolean isScopeAcceptable(PsiElement scope){
 
@@ -81,53 +51,37 @@ public class CompletionData {
     return false;
   }
 
-  protected void defineScopeEquivalence(Class scopeClass, Class equivClass){
-    final Iterator<CompletionVariant> iter = myCompletionVariants.iterator();
-    if(isScopeFinal(scopeClass)){
-      declareFinalScope(equivClass);
-    }
-
-    while(iter.hasNext()){
-      final CompletionVariant variant = iter.next();
-      if(variant.isScopeClassAcceptable(scopeClass)){
-        variant.includeScopeClass(equivClass, variant.isScopeClassFinal(scopeClass));
-      }
-    }
-  }
-
   /**
    * @deprecated 
-   * @see com.intellij.codeInsight.completion.CompletionContributor
+   * @see CompletionContributor
    */
+  @Deprecated
   protected void registerVariant(CompletionVariant variant){
     myCompletionVariants.add(variant);
   }
 
-  public void completeReference(final PsiReference reference, final Set<LookupElement> set, @NotNull final PsiElement position, final PsiFile file,
-                                final int offset){
+  public void completeReference(final PsiReference reference, final Set<? super LookupElement> set, @NotNull final PsiElement position, final PsiFile file) {
     final CompletionVariant[] variants = findVariants(position, file);
     boolean hasApplicableVariants = false;
     for (CompletionVariant variant : variants) {
       if (variant.hasReferenceFilter()) {
-        variant.addReferenceCompletions(reference, position, set, file, CompletionData.this);
+        variant.addReferenceCompletions(reference, position, set, file, this);
         hasApplicableVariants = true;
       }
     }
 
     if (!hasApplicableVariants) {
-      myGenericVariant.addReferenceCompletions(reference, position, set, file, CompletionData.this);
+      myGenericVariant.addReferenceCompletions(reference, position, set, file, this);
     }
   }
 
-  public void addKeywordVariants(Set<CompletionVariant> set, PsiElement position, final PsiFile file) {
+  public void addKeywordVariants(Set<? super CompletionVariant> set, PsiElement position, final PsiFile file) {
     ContainerUtil.addAll(set, findVariants(position, file));
   }
 
-  public void completeKeywordsBySet(final Set<LookupElement> set, Set<CompletionVariant> variants, final PsiElement position,
-                                    final PrefixMatcher matcher,
-                                    final PsiFile file){
+  void completeKeywordsBySet(final Set<LookupElement> set, Set<? extends CompletionVariant> variants){
     for (final CompletionVariant variant : variants) {
-      variant.addKeywords(set, position, matcher, file, CompletionData.this);
+      variant.addKeywords(set, this);
     }
   }
 
@@ -136,7 +90,7 @@ public class CompletionData {
   }
 
   public CompletionVariant[] findVariants(final PsiElement position, final PsiFile file){
-    final List<CompletionVariant> variants = new ArrayList<CompletionVariant>();
+    final List<CompletionVariant> variants = new ArrayList<>();
       PsiElement scope = position;
       if(scope == null){
         scope = file;
@@ -154,42 +108,42 @@ public class CompletionData {
             }
           }
         }
-        if(breakFlag || isScopeFinal(scope.getClass()))
+        if(breakFlag)
           break;
         scope = scope.getContext();
         if (scope instanceof PsiDirectory) break;
       }
-      return variants.toArray(new CompletionVariant[variants.size()]);
+      return variants.toArray(new CompletionVariant[0]);
   }
 
   protected final CompletionVariant myGenericVariant = new CompletionVariant() {
     @Override
-    public void addReferenceCompletions(PsiReference reference, PsiElement position, Set<LookupElement> set, final PsiFile file,
-                                        final CompletionData completionData) {
-      completeReference(reference, position, set, TailType.NONE, file, TrueFilter.INSTANCE, this);
+    void addReferenceCompletions(PsiReference reference, PsiElement position, Set<? super LookupElement> set, final PsiFile file,
+                                 final CompletionData completionData) {
+      completeReference(reference, position, set, TailType.NONE, TrueFilter.INSTANCE, this);
     }
   };
 
   @Nullable
   public static String getReferencePrefix(@NotNull PsiElement insertedElement, int offsetInFile) {
     try {
-      final PsiReference ref = insertedElement.getContainingFile().findReferenceAt(offsetInFile);
-      if(ref != null) {
-        final List<TextRange> ranges = ReferenceRange.getRanges(ref);
-        final PsiElement element = ref.getElement();
-        final int elementStart = element.getTextRange().getStartOffset();
-        for (TextRange refRange : ranges) {
-          if (refRange.contains(offsetInFile - elementStart)) {
-            final int endIndex = offsetInFile - elementStart;
-            final int beginIndex = refRange.getStartOffset();
-            if (beginIndex > endIndex) {
-              LOG.error("Inconsistent reference (found at offset not included in its range): ref=" + ref + " element=" + element + " text=" + element.getText());
+      PsiReference ref = insertedElement.getContainingFile().findReferenceAt(offsetInFile);
+      if (ref != null) {
+        PsiElement element = ref.getElement();
+        int offsetInElement = offsetInFile - element.getTextRange().getStartOffset();
+        for (TextRange refRange : ReferenceRange.getRanges(ref)) {
+          if (refRange.contains(offsetInElement)) {
+            int beginIndex = refRange.getStartOffset();
+            String text = element.getText();
+            if (beginIndex > offsetInElement || beginIndex < 0 || offsetInElement < 0 || offsetInElement > text.length() || beginIndex > text.length()) {
+              throw new AssertionError("Inconsistent reference range:" +
+                                       " ref=" + ref.getClass() +
+                                       " element=" + element.getClass() +
+                                       " ref.start=" + refRange.getStartOffset() +
+                                       " offset=" + offsetInElement +
+                                       " psi.length=" + text.length());
             }
-            if (beginIndex < 0) {
-              LOG.error("Inconsistent reference (begin < 0): ref=" + ref + " element=" + element + "; begin=" + beginIndex + " text=" + element.getText());
-            }
-            LOG.assertTrue(endIndex >= 0);
-            return element.getText().substring(beginIndex, endIndex);
+            return text.substring(beginIndex, offsetInElement);
           }
         }
       }
@@ -209,7 +163,7 @@ public class CompletionData {
     final String prefix = getReferencePrefix(insertedElement, offsetInFile);
     if (prefix != null) return prefix;
 
-    if (insertedElement instanceof PsiPlainText || insertedElement instanceof PsiComment) {
+    if (insertedElement.getTextRange().equals(insertedElement.getContainingFile().getTextRange()) || insertedElement instanceof PsiComment) {
       return CompletionUtil.findJavaIdentifierPrefix(insertedElement, offsetInFile);
     }
 
@@ -231,7 +185,7 @@ public class CompletionData {
     return substr.substring(i).trim();
   }
 
-  public static LookupElement objectToLookupItem(Object object) {
+  public static LookupElement objectToLookupItem(final @NotNull Object object) {
     if (object instanceof LookupElement) return (LookupElement)object;
 
     String s = null;
@@ -251,8 +205,8 @@ public class CompletionData {
     else if (object instanceof PresentableLookupValue) {
       s = ((PresentableLookupValue)object).getPresentation();
     }
-    else {
-      LOG.error("Null string for object: " + object + " of class " + (object != null ? object.getClass() : null));
+    if (s == null) {
+      throw new AssertionError("Null string for object: " + object + " of class " + object.getClass());
     }
 
     LookupItem item = new LookupItem(object, s);
@@ -260,16 +214,12 @@ public class CompletionData {
     if (object instanceof LookupValueWithUIHint && ((LookupValueWithUIHint) object).isBold()) {
       item.setBold();
     }
-    if (object instanceof LookupValueWithTail) {
-      item.setAttribute(LookupItem.TAIL_TEXT_ATTR, " " + ((LookupValueWithTail)object).getTailText());
-    }
-    item.setAttribute(CompletionUtil.TAIL_TYPE_ATTR, tailType);
+    item.setAttribute(LookupItem.TAIL_TYPE_ATTR, tailType);
     return item;
   }
 
 
-  protected void addLookupItem(Set<LookupElement> set, TailType tailType, @NotNull Object completion, final PsiFile file,
-                                     final CompletionVariant variant) {
+  protected void addLookupItem(Set<? super LookupElement> set, TailType tailType, @NotNull Object completion, final CompletionVariant variant) {
     LookupElement ret = objectToLookupItem(completion);
     if (ret == null) return;
     if (!(ret instanceof LookupItem)) {
@@ -295,18 +245,15 @@ public class CompletionData {
     set.add(ret);
   }
 
-  protected void completeReference(final PsiReference reference, final PsiElement position, final Set<LookupElement> set, final TailType tailType,
-                                   final PsiFile file,
-                                   final ElementFilter filter,
-                                   final CompletionVariant variant) {
+  protected void completeReference(PsiReference reference, PsiElement position, Set<? super LookupElement> set, TailType tailType, ElementFilter filter, CompletionVariant variant) {
     if (reference instanceof PsiMultiReference) {
       for (PsiReference ref : getReferences((PsiMultiReference)reference)) {
-        completeReference(ref, position, set, tailType, file, filter, variant);
+        completeReference(ref, position, set, tailType, filter, variant);
       }
     }
     else if (reference instanceof PsiDynaReference) {
       for (PsiReference ref : ((PsiDynaReference<?>)reference).getReferences()) {
-        completeReference(ref, position, set, tailType, file, filter, variant);
+        completeReference(ref, position, set, tailType, filter, variant);
       }
     }
     else{
@@ -314,11 +261,12 @@ public class CompletionData {
       for (Object completion : completions) {
         if (completion == null) {
           LOG.error("Position=" + position + "\n;Reference=" + reference + "\n;variants=" + Arrays.toString(completions));
+          continue;
         }
         if (completion instanceof PsiElement) {
           final PsiElement psiElement = (PsiElement)completion;
           if (filter.isClassAcceptable(psiElement.getClass()) && filter.isAcceptable(psiElement, position)) {
-            addLookupItem(set, tailType, completion, file, variant);
+            addLookupItem(set, tailType, completion, variant);
           }
         }
         else {
@@ -328,7 +276,12 @@ public class CompletionData {
               if (!filter.isClassAcceptable(o.getClass()) || !filter.isAcceptable(o, position)) continue;
             }
           }
-          addLookupItem(set, tailType, completion, file, variant);
+          try {
+            addLookupItem(set, tailType, completion, variant);
+          }
+          catch (AssertionError e) {
+            LOG.error("Caused by variant from reference: " + reference.getClass(), e);
+          }
         }
       }
     }
@@ -336,42 +289,21 @@ public class CompletionData {
 
   protected static PsiReference[] getReferences(final PsiMultiReference multiReference) {
     final PsiReference[] references = multiReference.getReferences();
-    final List<PsiReference> hard = ContainerUtil.findAll(references, new Condition<PsiReference>() {
-      @Override
-      public boolean value(final PsiReference object) {
-        return !object.isSoft();
-      }
-    });
+    final List<PsiReference> hard = ContainerUtil.findAll(references, object -> !object.isSoft());
     if (!hard.isEmpty()) {
-      return hard.toArray(new PsiReference[hard.size()]);
+      return hard.toArray(PsiReference.EMPTY_ARRAY);
     }
     return references;
   }
 
-  protected void addKeywords(final Set<LookupElement> set, final PsiElement position, final PrefixMatcher matcher, final PsiFile file,
-                             final CompletionVariant variant, final Object comp, final TailType tailType) {
-    if (comp instanceof String) {
-      addKeyword(set, tailType, comp, matcher, file, variant);
-    }
-    else {
-      final CompletionContext context = position.getUserData(CompletionContext.COMPLETION_CONTEXT_KEY);
-      if (comp instanceof ContextGetter) {
-        final Object[] elements = ((ContextGetter)comp).get(position, context);
-        for (Object element : elements) {
-          addLookupItem(set, tailType, element, file, variant);
-        }
-      }
-    }
-  }
+  void addKeywords(Set<LookupElement> set, CompletionVariant variant, Object comp, TailType tailType) {
+    if (!(comp instanceof String)) return;
 
-  private void addKeyword(Set<LookupElement> set, final TailType tailType, final Object comp, final PrefixMatcher matcher,
-                          final PsiFile file,
-                          final CompletionVariant variant) {
     for (final LookupElement item : set) {
-      if (item.getObject().toString().equals(comp.toString())) {
+      if (item.getObject().toString().equals(comp)) {
         return;
       }
     }
-    addLookupItem(set, tailType, comp, file, variant);
+    addLookupItem(set, tailType, comp, variant);
   }
 }

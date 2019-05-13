@@ -1,0 +1,7 @@
+deprecated: dataSourceImport.png; to be removed in IDEA 2020
+deprecated: entityBeanBig.png; to be removed in IDEA 2020
+deprecated: dbSchemaImportBig.png; to be removed in IDEA 2020
+deprecated: localHome.png -> /javaee/home.svg; to be removed in IDEA 2020 - use AllIcons.Javaee.Home
+deprecated: local.png -> /nodes/interface.svg; to be removed in IDEA 2020 - use AllIcons.Nodes.Interface
+deprecated: WebService2.png -> /javaee/WebService.svg; to be removed in IDEA 2020 - use AllIcons.Javaee.WebService
+deprecated: WebServiceClient2.png -> /javaee/WebServiceClient.svg; to be removed in IDEA 2020 - use AllIcons.Javaee.WebServiceClient

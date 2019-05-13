@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,25 +16,29 @@
 
 package com.intellij.util.indexing;
 
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.util.Processor;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.concurrent.locks.Lock;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Dec 10, 2007
  */
-public interface UpdatableIndex<Key, Value, Input> extends AbstractIndex<Key,Value> {
+public interface UpdatableIndex<Key, Value, Input> extends InvertedIndex<Key,Value, Input> {
 
-  void clear() throws StorageException;
+  boolean processAllKeys(@NotNull Processor<? super Key> processor, @NotNull GlobalSearchScope scope, @Nullable IdFilter idFilter) throws StorageException;
 
-  void flush() throws StorageException;
-
-  void update(int inputId, @Nullable Input content) throws StorageException;
-  
+  @NotNull
   Lock getReadLock();
-  
+
+  @NotNull
   Lock getWriteLock();
-  
-  void dispose();
+
+  void setIndexedStateForFile(int fileId, @NotNull VirtualFile file);
+  void resetIndexedStateForFile(int fileId);
+
+  boolean isIndexedStateForFile(int fileId, @NotNull VirtualFile file);
 }

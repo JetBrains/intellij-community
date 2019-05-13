@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,52 +15,67 @@
  */
 package com.intellij.util.containers;
 
-import com.intellij.openapi.util.Comparing;
+import com.intellij.util.DeprecatedMethodException;
+import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.lang.ref.ReferenceQueue;
 import java.lang.ref.WeakReference;
-import java.util.Map;
 
+/**
+ * Weak keys hash map.
+ * Custom TObjectHashingStrategy is supported.
+ * Null keys are NOT allowed
+ * Null values are allowed
+ *
+ * Use this class if you need custom TObjectHashingStrategy.
+ * Do not use this class if you have null keys (shame on you).
+ * Otherwise it's the same as java.util.WeakHashMap, you are free to use either.
+ *
+ * @deprecated use {@link ContainerUtil#createWeakMap()} instead
+ */
+@Deprecated
 public final class WeakHashMap<K, V> extends RefHashMap<K, V> {
-  public WeakHashMap(int initialCapacity, float loadFactor) {
-    super(initialCapacity, loadFactor);
-  }
-
   public WeakHashMap(int initialCapacity) {
     super(initialCapacity);
+    DeprecatedMethodException.report("Use ContainerUtil.createWeakMap() instead");
   }
 
   public WeakHashMap() {
-    super();
+    DeprecatedMethodException.report("Use ContainerUtil.createWeakMap() instead");
   }
 
-  public WeakHashMap(@NotNull Map<K, V> t) {
-    super(t);
+  WeakHashMap(int initialCapacity, float loadFactor, @NotNull TObjectHashingStrategy<? super K> strategy) {
+    super(initialCapacity, loadFactor, strategy);
   }
 
+  @NotNull
   @Override
-  protected <T> Key<T> createKey(@NotNull T k, ReferenceQueue<? super T> q) {
-    return new WeakKey<T>(k, q);
+  protected <T> Key<T> createKey(@NotNull T k, @NotNull TObjectHashingStrategy<? super T> strategy, @NotNull ReferenceQueue<? super T> q) {
+    return new WeakKey<T>(k, strategy, q);
   }
 
   private static class WeakKey<T> extends WeakReference<T> implements Key<T> {
-    private final int myHash;	/* Hashcode of key, stored here since the key may be tossed by the GC */
+    private final int myHash; // Hashcode of key, stored here since the key may be tossed by the GC
+    @NotNull private final TObjectHashingStrategy<? super T> myStrategy;
 
-    private WeakKey(@NotNull T k, ReferenceQueue<? super T> q) {
+    private WeakKey(@NotNull T k, @NotNull TObjectHashingStrategy<? super T> strategy, @NotNull ReferenceQueue<? super T> q) {
       super(k, q);
-      myHash = k.hashCode();
+      myStrategy = strategy;
+      myHash = strategy.computeHashCode(k);
     }
 
+    @Override
     public boolean equals(Object o) {
       if (this == o) return true;
       if (!(o instanceof Key)) return false;
-      Object t = get();
-      Object u = ((Key)o).get();
-      return myHash == o.hashCode() && (t == u || Comparing.equal(t, u));
+      T t = get();
+      T u = ((Key<T>)o).get();
+      return keyEqual(t,u,myStrategy);
     }
 
+    @Override
     public int hashCode() {
       return myHash;
     }

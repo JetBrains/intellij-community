@@ -16,8 +16,6 @@
 
 /*
  * @author: Eugene Zhuravlev
- * Date: Feb 5, 2003
- * Time: 4:17:58 PM
  */
 package com.intellij.compiler.impl;
 
@@ -26,7 +24,7 @@ import com.intellij.openapi.compiler.ExportableUserDataHolderBase;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
@@ -35,20 +33,20 @@ import org.jetbrains.annotations.NotNull;
 import java.util.*;
 
 public class CompositeScope extends ExportableUserDataHolderBase implements CompileScope{
-  private final List<CompileScope> myScopes = new ArrayList<CompileScope>();
+  private final List<CompileScope> myScopes = new ArrayList<>();
 
-  public CompositeScope(CompileScope scope1, CompileScope scope2) {
+  public CompositeScope(@NotNull CompileScope scope1, @NotNull CompileScope scope2) {
     addScope(scope1);
     addScope(scope2);
   }
 
-  public CompositeScope(CompileScope[] scopes) {
+  public CompositeScope(@NotNull CompileScope[] scopes) {
     for (CompileScope scope : scopes) {
       addScope(scope);
     }
   }
 
-  private void addScope(CompileScope scope) {
+  private void addScope(@NotNull CompileScope scope) {
     if (scope instanceof CompositeScope) {
       final CompositeScope compositeScope = (CompositeScope)scope;
       for (CompileScope childScope : compositeScope.myScopes) {
@@ -60,19 +58,21 @@ public class CompositeScope extends ExportableUserDataHolderBase implements Comp
     }
   }
 
+  @Override
   @NotNull
   public VirtualFile[] getFiles(FileType fileType, boolean inSourceOnly) {
-    Set<VirtualFile> allFiles = new THashSet<VirtualFile>();
+    Set<VirtualFile> allFiles = new THashSet<>();
     for (CompileScope scope : myScopes) {
       final VirtualFile[] files = scope.getFiles(fileType, inSourceOnly);
       if (files.length > 0) {
         ContainerUtil.addAll(allFiles, files);
       }
     }
-    return VfsUtil.toVirtualFileArray(allFiles);
+    return VfsUtilCore.toVirtualFileArray(allFiles);
   }
 
-  public boolean belongs(String url) {
+  @Override
+  public boolean belongs(@NotNull String url) {
     for (CompileScope scope : myScopes) {
       if (scope.belongs(url)) {
         return true;
@@ -81,15 +81,27 @@ public class CompositeScope extends ExportableUserDataHolderBase implements Comp
     return false;
   }
 
+  @Override
   @NotNull
   public Module[] getAffectedModules() {
-    Set<Module> modules = new HashSet<Module>();
+    Set<Module> modules = new HashSet<>();
     for (final CompileScope compileScope : myScopes) {
       ContainerUtil.addAll(modules, compileScope.getAffectedModules());
     }
-    return modules.toArray(new Module[modules.size()]);
+    return modules.toArray(Module.EMPTY_ARRAY);
   }
 
+  @NotNull
+  @Override
+  public Collection<String> getAffectedUnloadedModules() {
+    Set<String> unloadedModules = new LinkedHashSet<>();
+    for (final CompileScope compileScope : myScopes) {
+      ContainerUtil.addAll(unloadedModules, compileScope.getAffectedUnloadedModules());
+    }
+    return unloadedModules;
+  }
+
+  @Override
   public <T> T getUserData(@NotNull Key<T> key) {
     for (CompileScope compileScope : myScopes) {
       T userData = compileScope.getUserData(key);
@@ -99,7 +111,8 @@ public class CompositeScope extends ExportableUserDataHolderBase implements Comp
     }
     return super.getUserData(key);
   }
-  
+
+  @NotNull
   public Collection<CompileScope> getScopes() {
     return Collections.unmodifiableList(myScopes);
   }

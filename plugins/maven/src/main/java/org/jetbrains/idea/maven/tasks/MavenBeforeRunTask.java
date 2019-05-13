@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package org.jetbrains.idea.maven.tasks;
 import com.intellij.execution.BeforeRunTask;
 import com.intellij.openapi.util.io.FileUtil;
 import org.jdom.Element;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.project.MavenProject;
 
 public class MavenBeforeRunTask extends BeforeRunTask<MavenBeforeRunTask> {
@@ -50,14 +51,14 @@ public class MavenBeforeRunTask extends BeforeRunTask<MavenBeforeRunTask> {
   }
 
   @Override
-  public void writeExternal(Element element) {
+  public void writeExternal(@NotNull Element element) {
     super.writeExternal(element);
     if (myProjectPath != null) element.setAttribute("file", myProjectPath);
     if (myGoal != null) element.setAttribute("goal", myGoal);
   }
 
   @Override
-  public void readExternal(Element element) {
+  public void readExternal(@NotNull Element element) {
     super.readExternal(element);
     myProjectPath = element.getAttributeValue("file");
     myGoal = element.getAttributeValue("goal");

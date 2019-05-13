@@ -49,18 +49,20 @@ public class FileCopyElementType extends PackagingElementType<FileCopyPackagingE
     return true;
   }
 
+  @Override
   @NotNull
   public List<? extends FileCopyPackagingElement> chooseAndCreate(@NotNull ArtifactEditorContext context, @NotNull Artifact artifact,
                                                                    @NotNull CompositePackagingElement<?> parent) {
     final FileChooserDescriptor descriptor = new FileChooserDescriptor(true, false, true, true, false, true);
     final VirtualFile[] files = FileChooser.chooseFiles(descriptor, context.getProject(), null);
-    final List<FileCopyPackagingElement> list = new ArrayList<FileCopyPackagingElement>();
+    final List<FileCopyPackagingElement> list = new ArrayList<>();
     for (VirtualFile file : files) {
       list.add(new FileCopyPackagingElement(file.getPath()));
     }
     return list;
   }
 
+  @Override
   @NotNull
   public FileCopyPackagingElement createEmpty(@NotNull Project project) {
     return new FileCopyPackagingElement();

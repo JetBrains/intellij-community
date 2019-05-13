@@ -31,19 +31,18 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class XPathParameterInfoHandler implements ParameterInfoHandler<XPathFunctionCall, XPathFunction> {
+    @Override
     public boolean couldShowInLookup() {
         return false;
     }
 
+    @Override
     public Object[] getParametersForLookup(LookupElement lookupElement, ParameterInfoContext parameterInfoContext) {
       return ArrayUtil.EMPTY_OBJECT_ARRAY;
     }
 
-    public Object[] getParametersForDocumentation(XPathFunction xPathFunction, ParameterInfoContext parameterInfoContext) {
-      return ArrayUtil.EMPTY_OBJECT_ARRAY;
-    }
-
-    public XPathFunctionCall findElementForParameterInfo(CreateParameterInfoContext context) {
+    @Override
+    public XPathFunctionCall findElementForParameterInfo(@NotNull CreateParameterInfoContext context) {
         final XPathFunctionCall call = findFunctionCall(context.getFile(), context.getOffset());
         if (call != null) {
             final XPathFunction function = call.resolve();
@@ -72,28 +71,24 @@ public class XPathParameterInfoHandler implements ParameterInfoHandler<XPathFunc
         return null;
     }
 
-    public void showParameterInfo(@NotNull XPathFunctionCall call, CreateParameterInfoContext context) {
+    @Override
+    public void showParameterInfo(@NotNull XPathFunctionCall call, @NotNull CreateParameterInfoContext context) {
         context.showHint(call, call.getTextOffset() + 1, this);
     }
 
-    public XPathFunctionCall findElementForUpdatingParameterInfo(UpdateParameterInfoContext context) {
+    @Override
+    public XPathFunctionCall findElementForUpdatingParameterInfo(@NotNull UpdateParameterInfoContext context) {
         return findFunctionCall(context.getFile(), context.getOffset());
     }
 
-    public void updateParameterInfo(@NotNull XPathFunctionCall call, UpdateParameterInfoContext context) {
+    @Override
+    public void updateParameterInfo(@NotNull XPathFunctionCall call, @NotNull UpdateParameterInfoContext context) {
         int currentParameterIndex = ParameterInfoUtils.getCurrentParameterIndex(call.getNode(), context.getOffset(), XPathTokenTypes.COMMA);
         context.setCurrentParameter(currentParameterIndex);
     }
 
-    public String getParameterCloseChars() {
-        return "(,)";
-    }
-
-    public boolean tracksParameterIndex() {
-        return true;
-    }
-
-    public void updateUI(XPathFunction function, ParameterInfoUIContext context) {
+    @Override
+    public void updateUI(XPathFunction function, @NotNull ParameterInfoUIContext context) {
         final Function declaration = function.getDeclaration();
         if (declaration != null) {
             if (declaration.getParameters().length > 0) {
@@ -126,7 +121,6 @@ public class XPathParameterInfoHandler implements ParameterInfoHandler<XPathFunc
         }
     }
 
-    @SuppressWarnings({ "UnresolvedPropertyKey" })
     private static String noParamsMessage() {
         return CodeInsightBundle.message("parameter.info.no.parameters");
     }

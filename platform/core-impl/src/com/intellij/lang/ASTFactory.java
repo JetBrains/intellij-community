@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,8 +21,14 @@ import com.intellij.psi.impl.source.CharTableImpl;
 import com.intellij.psi.impl.source.CodeFragmentElement;
 import com.intellij.psi.impl.source.DummyHolderElement;
 import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
-import com.intellij.psi.impl.source.tree.*;
-import com.intellij.psi.tree.*;
+import com.intellij.psi.impl.source.tree.CompositeElement;
+import com.intellij.psi.impl.source.tree.LazyParseableElement;
+import com.intellij.psi.impl.source.tree.LeafElement;
+import com.intellij.psi.impl.source.tree.PsiWhiteSpaceImpl;
+import com.intellij.psi.tree.ICompositeElementType;
+import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.tree.ILazyParseableElementType;
+import com.intellij.psi.tree.ILeafElementType;
 import com.intellij.util.CharTable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -36,31 +42,31 @@ public abstract class ASTFactory {
   // interface methods
 
   @Nullable
-  public LazyParseableElement createLazy(final ILazyParseableElementType type, final CharSequence text) {
+  public LazyParseableElement createLazy(@NotNull ILazyParseableElementType type, final CharSequence text) {
     return null;
   }
 
   @Nullable
-  public CompositeElement createComposite(final IElementType type) {
+  public CompositeElement createComposite(@NotNull IElementType type) {
     return null;
   }
 
   @Nullable
-  public LeafElement createLeaf(final IElementType type, final CharSequence text) {
+  public LeafElement createLeaf(@NotNull IElementType type, @NotNull CharSequence text) {
     return null;
   }
 
   // factory methods
 
   @NotNull
-  public static LazyParseableElement lazy(@NotNull final ILazyParseableElementType type, final CharSequence text) {
+  public static LazyParseableElement lazy(@NotNull final ILazyParseableElementType type, CharSequence text) {
     final ASTNode node = type.createNode(text);
     if (node != null) return (LazyParseableElement)node;
 
     if (type == TokenType.CODE_FRAGMENT) {
       return new CodeFragmentElement(null);
     }
-    else if (type == TokenType.DUMMY_HOLDER) {
+    if (type == TokenType.DUMMY_HOLDER) {
       return new DummyHolderElement(text);
     }
 
@@ -79,7 +85,7 @@ public abstract class ASTFactory {
   }
 
   @NotNull
-  public static LeafElement leaf(@NotNull final IElementType type, final CharSequence text) {
+  public static LeafElement leaf(@NotNull final IElementType type, @NotNull CharSequence text) {
     if (type == TokenType.WHITE_SPACE) {
       return new PsiWhiteSpaceImpl(text);
     }
@@ -92,7 +98,6 @@ public abstract class ASTFactory {
     return customLeaf != null ? customLeaf : DefaultFactoryHolder.DEFAULT.createLeaf(type, text);
   }
 
-  @Nullable
   private static ASTFactory factory(final IElementType type) {
     return LanguageASTFactory.INSTANCE.forLanguage(type.getLanguage());
   }
@@ -105,11 +110,7 @@ public abstract class ASTFactory {
   }
   
   public static class DefaultFactoryHolder {
-    public static final ASTFactory DEFAULT = def();
-
-    private static ASTFactory def() {
-      return (ASTFactory)ServiceManager.getService(DefaultASTFactory.class);
-    }
+    public static final ASTFactory DEFAULT = (ASTFactory)ServiceManager.getService(DefaultASTFactory.class);
 
     private DefaultFactoryHolder() {
     }

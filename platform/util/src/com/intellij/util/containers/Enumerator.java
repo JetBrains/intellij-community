@@ -20,6 +20,7 @@ import com.intellij.util.ArrayUtil;
 import gnu.trove.TObjectHashingStrategy;
 import gnu.trove.TObjectIntHashMap;
 import gnu.trove.TObjectIntIterator;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author dyoma
@@ -29,7 +30,7 @@ public class Enumerator<T> {
   private final TObjectIntHashMap<T> myNumbers;
   private int myNextNumber = 1;
 
-  public Enumerator(int expectNumber, TObjectHashingStrategy<T> strategy) {
+  public Enumerator(int expectNumber, @NotNull TObjectHashingStrategy<T> strategy) {
     myNumbers = new TObjectIntHashMap<T>(expectNumber, strategy);
   }
 
@@ -38,13 +39,15 @@ public class Enumerator<T> {
     myNextNumber = 1;
   }
 
-  public int[] enumerate(T[] objects) {
+  @NotNull
+  public int[] enumerate(@NotNull T[] objects) {
     return enumerate(objects, 0, 0);
   }
 
-  public int[] enumerate(T[] objects, final int startShift, final int endCut) {
+  @NotNull
+  public int[] enumerate(@NotNull T[] objects, final int startShift, final int endCut) {
     int[] idx = ArrayUtil.newIntArray(objects.length - startShift - endCut);
-    for (int i = startShift; i < (objects.length - endCut); i++) {
+    for (int i = startShift; i < objects.length - endCut; i++) {
       final T object = objects[i];
       final int number = enumerate(object);
       idx[i - startShift] = number;
@@ -74,6 +77,10 @@ public class Enumerator<T> {
     return number;
   }
 
+  public boolean contains(@NotNull T object) {
+    return myNumbers.get(object) != 0;
+  }
+
   public int get(T object) {
     if (object == null) return 0;
     final int res = myNumbers.get(object);
@@ -84,11 +91,12 @@ public class Enumerator<T> {
     return res;
   }
 
+  @Override
   public String toString() {
-    StringBuffer buffer = new StringBuffer();
-    for( TObjectIntIterator<T> iter = myNumbers.iterator(); iter.hasNext(); ) {
+    StringBuilder buffer = new StringBuilder();
+    for (TObjectIntIterator<T> iter = myNumbers.iterator(); iter.hasNext(); ) {
       iter.advance();
-      buffer.append(Integer.toString(iter.value()) + ": " + iter.key().toString() + "\n");
+      buffer.append(iter.value()).append(": ").append(iter.key()).append("\n");
     }
     return buffer.toString();
   }

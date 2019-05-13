@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,8 @@ package com.intellij.internal;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.LangDataKeys;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
@@ -31,51 +33,49 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usages.*;
-import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
 
 public class StaticIconFieldsAction extends AnAction {
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     final Project project = LangDataKeys.PROJECT.getData(e.getDataContext());
 
 
     final UsageViewPresentation presentation = new UsageViewPresentation();
     presentation.setTabName("Statics");
     presentation.setTabText("Statitcs");
-    final UsageView view = UsageViewManager.getInstance(project).showUsages(UsageTarget.EMPTY_ARRAY, new Usage[0], presentation);
+    final UsageView view = UsageViewManager.getInstance(project).showUsages(UsageTarget.EMPTY_ARRAY, Usage.EMPTY_ARRAY, presentation);
 
 
     ProgressManager.getInstance().run(new Task.Backgroundable(project, "Searching icons usages") {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
-        JavaPsiFacade facade = JavaPsiFacade.getInstance(project);
-        GlobalSearchScope all = GlobalSearchScope.allScope(project);
-        PsiClass allIcons = facade.findClass("com.intellij.icons.AllIcons", all);
+        final JavaPsiFacade facade = JavaPsiFacade.getInstance(project);
+        final GlobalSearchScope all = GlobalSearchScope.allScope(project);
+        PsiClass allIcons = ReadAction.compute(() -> facade.findClass("com.intellij.icons.AllIcons", all));
         searchFields(allIcons, view, indicator);
-        for (PsiClass iconsClass : facade.findPackage("icons").getClasses(all)) {
+        PsiClass[] classes = ReadAction.compute(() -> facade.findPackage("icons").getClasses(all));
+        for (PsiClass iconsClass : classes) {
           searchFields(iconsClass, view, indicator);
         }
       }
     });
   }
 
-  private static void searchFields(PsiClass allIcons, final UsageView view, ProgressIndicator indicator) {
-    indicator.setText("Searching for: " + allIcons.getQualifiedName());
-    ReferencesSearch.search(allIcons).forEach(new Processor<PsiReference>() {
-      @Override
-      public boolean process(PsiReference reference) {
-        PsiElement elt = reference.getElement();
+  private static void searchFields(final PsiClass allIcons, final UsageView view, final ProgressIndicator indicator) {
+    ApplicationManager.getApplication().runReadAction(() -> indicator.setText("Searching for: " + allIcons.getQualifiedName()));
 
-        while (elt instanceof PsiExpression) elt = elt.getParent();
+    ReferencesSearch.search(allIcons).forEach(reference -> {
+      PsiElement elt = reference.getElement();
 
-        if (elt instanceof PsiField) {
-          UsageInfo info = new UsageInfo(elt, false);
-          view.appendUsage(new UsageInfo2UsageAdapter(info));
-        }
+      while (elt instanceof PsiExpression) elt = elt.getParent();
 
-        return true;
+      if (elt instanceof PsiField) {
+        UsageInfo info = new UsageInfo(elt, false);
+        view.appendUsage(new UsageInfo2UsageAdapter(info));
       }
+
+      return true;
     });
   }
 }

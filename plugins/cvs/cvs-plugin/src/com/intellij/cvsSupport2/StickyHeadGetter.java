@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -57,11 +57,7 @@ public abstract class StickyHeadGetter {
       final String branchRoot = getTagStart(myStickyData);
       if (branchRoot == null) return myStickyData;
 
-      return getBranchHeadRevision(parent, name, new Convertor<CvsRevisionNumber, Boolean>() {
-        public Boolean convert(CvsRevisionNumber o) {
-          return o.asString().startsWith(branchRoot);
-        }
-      });
+      return getBranchHeadRevision(parent, name, o -> o.asString().startsWith(branchRoot));
     }
   }
 
@@ -116,7 +112,7 @@ public abstract class StickyHeadGetter {
         }
       }
       return myStickyData;
-    }                                           
+    }
   }
 
   public abstract String getHead(final VirtualFile parent, final String name);
@@ -126,12 +122,14 @@ public abstract class StickyHeadGetter {
                                        final String name,
                                        final Convertor<CvsRevisionNumber, Boolean> chooser) {
     final LocalPathIndifferentLogOperation operation = new LocalPathIndifferentLogOperation(new File(parent.getPath(), name));
-    final Ref<Boolean> logSuccess = new Ref<Boolean>(Boolean.TRUE);
+    final Ref<Boolean> logSuccess = new Ref<>(Boolean.TRUE);
     final CvsExecutionEnvironment cvsExecutionEnvironment = new CvsExecutionEnvironment(new CvsMessagesAdapter(),
       CvsExecutionEnvironment.DUMMY_STOPPER, new ErrorProcessor() {
+      @Override
       public void addError(VcsException ex) {
         logSuccess.set(Boolean.FALSE);
       }
+      @Override
       public List<VcsException> getErrors() {
         return null;
       }
@@ -141,10 +139,7 @@ public abstract class StickyHeadGetter {
       //operation.login(context);
       operation.execute(cvsExecutionEnvironment, false);
     }
-    catch (VcsException e) {
-      //
-    }
-    catch (CommandAbortedException e) {
+    catch (VcsException | CommandAbortedException e) {
       //
     }
     if (Boolean.TRUE.equals(logSuccess.get())) {

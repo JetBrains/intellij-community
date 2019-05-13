@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import com.intellij.psi.JavaElementVisitor;
 import com.intellij.psi.PsiBlockStatement;
 import com.intellij.psi.PsiCodeBlock;
 import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.tree.ChildRoleBase;
 import com.intellij.psi.impl.source.Constants;
 import com.intellij.psi.impl.source.tree.ChildRole;
@@ -31,7 +32,7 @@ public class PsiBlockStatementImpl extends CompositePsiElement implements PsiBlo
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.java.PsiBlockStatementImpl");
 
   public PsiBlockStatementImpl() {
-    super(Constants.BLOCK_STATEMENT);
+    super(JavaElementType.BLOCK_STATEMENT);
   }
 
   @Override
@@ -43,19 +44,16 @@ public class PsiBlockStatementImpl extends CompositePsiElement implements PsiBlo
   @Override
   public ASTNode findChildByRole(int role) {
     LOG.assertTrue(ChildRole.isUnique(role));
-    switch(role){
-      default:
-        return null;
-
-      case ChildRole.BLOCK:
-        return findChildByType(Constants.CODE_BLOCK);
+    if (role == ChildRole.BLOCK) {
+      return findChildByType(JavaElementType.CODE_BLOCK);
     }
+    return null;
   }
 
   @Override
-  public int getChildRole(ASTNode child) {
+  public int getChildRole(@NotNull ASTNode child) {
     LOG.assertTrue(child.getTreeParent() == this);
-    if (child.getElementType() == Constants.CODE_BLOCK) {
+    if (child.getElementType() == JavaElementType.CODE_BLOCK) {
       return ChildRole.BLOCK;
     }
     else {
@@ -73,6 +71,7 @@ public class PsiBlockStatementImpl extends CompositePsiElement implements PsiBlo
     }
   }
 
+  @Override
   public String toString() {
     return "PsiBlockStatement";
   }

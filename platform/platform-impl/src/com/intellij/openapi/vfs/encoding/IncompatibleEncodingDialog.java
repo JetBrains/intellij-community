@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,12 +16,13 @@
 package com.intellij.openapi.vfs.encoding;
 
 import com.intellij.icons.AllIcons;
-import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -30,24 +31,17 @@ import java.awt.event.ActionEvent;
 import java.nio.charset.Charset;
 
 public class IncompatibleEncodingDialog extends DialogWrapper {
-
-  @NotNull private final Document document;
   @NotNull private final VirtualFile virtualFile;
-  @NotNull private final byte[] bytes;
   @NotNull private final Charset charset;
   @NotNull private final EncodingUtil.Magic8 safeToReload;
   @NotNull private final EncodingUtil.Magic8 safeToConvert;
 
-  public IncompatibleEncodingDialog(@NotNull Document document,
-                                    @NotNull VirtualFile virtualFile,
-                                    @NotNull byte[] bytes,
-                                    @NotNull final Charset charset,
-                                    @NotNull EncodingUtil.Magic8 safeToReload,
-                                    @NotNull EncodingUtil.Magic8 safeToConvert) {
+  IncompatibleEncodingDialog(@NotNull VirtualFile virtualFile,
+                             @NotNull final Charset charset,
+                             @NotNull EncodingUtil.Magic8 safeToReload,
+                             @NotNull EncodingUtil.Magic8 safeToConvert) {
     super(false);
-    this.document = document;
     this.virtualFile = virtualFile;
-    this.bytes = bytes;
     this.charset = charset;
     this.safeToReload = safeToReload;
     this.safeToConvert = safeToConvert;
@@ -58,11 +52,11 @@ public class IncompatibleEncodingDialog extends DialogWrapper {
   @Nullable
   @Override
   protected JComponent createCenterPanel() {
-    JLabel label = new JLabel("<html><body>" +
+    JLabel label = new JLabel(XmlStringUtil.wrapInHtml(
                               "The encoding you've chosen ('" + charset.displayName() + "') may change the contents of '" + virtualFile.getName() + "'.<br>" +
-                              "Do you want to reload the file from disk or<br>" +
-                              "convert the text and save in the new encoding?" +
-                              "</body></html>");
+                              "Do you want to<br>" +
+                              "1. <b>Reload</b> the file from disk in the new encoding '" + charset.displayName() + "' and overwrite editor contents or<br>" +
+                              "2. <b>Convert</b> the text and overwrite file in the new encoding" + "?"));
     label.setIcon(Messages.getQuestionIcon());
     label.setIconTextGap(10);
     return label;
@@ -75,30 +69,24 @@ public class IncompatibleEncodingDialog extends DialogWrapper {
       @Override
       protected void doAction(ActionEvent e) {
         if (safeToReload == EncodingUtil.Magic8.NO_WAY) {
-          Pair<Charset,String> detected = EncodingUtil.checkCanReload(virtualFile);
-          String failReason = detected.second;
-          Charset autoDetected = detected.first;
+          Ref<Charset> current = Ref.create();
+          EncodingUtil.FailReason failReason = EncodingUtil.checkCanReload(virtualFile, current);
           int res;
           byte[] bom = virtualFile.getBOM();
+          String explanation = "<br><br>" +
+                               (failReason == null ? "" : "Why: " + failReason + "<br>") +
+                               (current.isNull() ? "" : "Current encoding: '" + current.get().displayName() + "'");
           if (bom != null) {
-            Messages
-              .showErrorDialog("<html><body>" +
-                          "File '" + virtualFile.getName() + "' can't be reloaded in the '" + charset.displayName() + "' encoding.<br><br>" +
-                          (failReason == null ? "" : "Why: "+ failReason +"<br>") +
-                          (autoDetected == null ? "" : "Detected encoding: '"+ autoDetected.displayName()+"'") +
-                          "</body></html>",
-                          "Incompatible Encoding: " + charset.displayName()
-                          );
+            Messages.showErrorDialog(XmlStringUtil.wrapInHtml(
+                          "File '" + virtualFile.getName() + "' can't be reloaded in the '" + charset.displayName() + "' encoding." +
+                          explanation),
+                               "Incompatible Encoding: " + charset.displayName());
             res = -1;
           }
           else {
-            res = Messages
-              .showDialog("<html><body>" +
-                        "File '" + virtualFile.getName() + "' most likely isn't stored in the '" + charset.displayName() + "' encoding." +
-                        "<br><br>" +
-                        (failReason == null ? "" : "Why: " + failReason + "<br>") +
-                        (autoDetected == null ? "" : "Detected encoding: '" + autoDetected.displayName() + "'") +
-                        "</body></html>",
+            res = Messages.showDialog(XmlStringUtil.wrapInHtml(
+                "File '" + virtualFile.getName() + "' most likely isn't stored in the '" + charset.displayName() + "' encoding." +
+                explanation),
                         "Incompatible Encoding: " + charset.displayName(), new String[]{"Reload anyway", "Cancel"}, 1,
                         AllIcons.General.WarningDialog);
           }
@@ -118,13 +106,15 @@ public class IncompatibleEncodingDialog extends DialogWrapper {
       @Override
       protected void doAction(ActionEvent e) {
         if (safeToConvert == EncodingUtil.Magic8.NO_WAY) {
-          String error = EncodingUtil.checkCanConvert(virtualFile);
-          int res = Messages.showDialog("<html><body>" +
-                                        "Please do not convert to '"+charset.displayName()+"'.<br><br>" +
-                                        (error == null ? "Encoding '" + charset.displayName() + "' does not support some characters from the text." : error)+
-                                        "</body></html>",
-                                        "Incompatible Encoding: " + charset.displayName(), new String[]{"Convert anyway", "Cancel"}, 1,
-                                        AllIcons.General.WarningDialog);
+          EncodingUtil.FailReason error = EncodingUtil.checkCanConvert(virtualFile);
+          int res = Messages.showDialog(
+            XmlStringUtil.wrapInHtml(
+              "Please do not convert to '" + charset.displayName() + "'.<br><br>" +
+              (error == null
+               ? "Encoding '" + charset.displayName() + "' does not support some characters from the text."
+               : EncodingUtil.reasonToString(error, virtualFile))),
+            "Incompatible Encoding: " + charset.displayName(), new String[]{"Convert anyway", "Cancel"}, 1,
+            AllIcons.General.WarningDialog);
           if (res != 0) {
             doCancelAction();
             return;
@@ -132,14 +122,21 @@ public class IncompatibleEncodingDialog extends DialogWrapper {
         }
         close(CONVERT_EXIT_CODE);
       }
+
+      @Override
+      public boolean isEnabled() {
+        return !FileUtilRt.isTooLarge(virtualFile.getLength());
+      }
     };
     if (!SystemInfo.isMac && safeToConvert == EncodingUtil.Magic8.NO_WAY) {
       convertAction.putValue(Action.SMALL_ICON, AllIcons.General.Warning);
     }
     convertAction.putValue(Action.MNEMONIC_KEY, (int)'C');
-    return new Action[]{reloadAction, convertAction, getCancelAction()};
+    Action cancelAction = getCancelAction();
+    cancelAction.putValue(DEFAULT_ACTION, Boolean.TRUE);
+    return new Action[]{reloadAction, convertAction, cancelAction};
   }
 
-  public static final int RELOAD_EXIT_CODE = 10;
-  public static final int CONVERT_EXIT_CODE = 20;
+  static final int RELOAD_EXIT_CODE = 10;
+  static final int CONVERT_EXIT_CODE = 20;
 }

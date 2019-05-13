@@ -1,21 +1,8 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.codeInsight.lookup;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -27,7 +14,7 @@ import org.jetbrains.annotations.Nullable;
 import java.beans.PropertyChangeListener;
 
 public abstract class LookupManager {
-  public static LookupManager getInstance(Project project){
+  public static LookupManager getInstance(@NotNull Project project){
     return ServiceManager.getService(project, LookupManager.class);
   }
 
@@ -41,35 +28,44 @@ public abstract class LookupManager {
     final LookupEx lookup = getInstance(project).getActiveLookup();
     if (lookup == null) return null;
 
-    return InjectedLanguageUtil.getTopLevelEditor(lookup.getEditor()) == InjectedLanguageUtil.getTopLevelEditor(editor) ? lookup : null;
+    return lookup.getTopLevelEditor() == InjectedLanguageUtil.getTopLevelEditor(editor) ? lookup : null;
   }
 
   @Nullable
-  public LookupEx showLookup(Editor editor, @NotNull LookupElement... items) {
+  public LookupEx showLookup(@NotNull Editor editor, @NotNull LookupElement... items) {
     return showLookup(editor, items, "", new LookupArranger.DefaultArranger());
   }
 
   @Nullable
-  public LookupEx showLookup(Editor editor, @NotNull LookupElement[] items, @NotNull String prefix) {
+  public LookupEx showLookup(@NotNull Editor editor, @NotNull LookupElement[] items, @NotNull String prefix) {
     return showLookup(editor, items, prefix, new LookupArranger.DefaultArranger());
   }
 
   @Nullable
-  public abstract LookupEx showLookup(Editor editor, @NotNull LookupElement[] items,
-                                      @NotNull String prefix, @NotNull LookupArranger arranger);
+  public abstract LookupEx showLookup(@NotNull Editor editor,
+                                      @NotNull LookupElement[] items,
+                                      @NotNull String prefix,
+                                      @NotNull LookupArranger arranger);
 
   public abstract void hideActiveLookup();
+
+  public static void hideActiveLookup(@NotNull Project project) {
+    LookupManager lookupManager = ServiceManager.getServiceIfCreated(project, LookupManager.class);
+    if (lookupManager != null) {
+      lookupManager.hideActiveLookup();
+    }
+  }
 
   @Nullable
   public abstract LookupEx getActiveLookup();
 
   @NonNls public static final String PROP_ACTIVE_LOOKUP = "activeLookup";
 
-  public abstract void addPropertyChangeListener(PropertyChangeListener listener);
-  public abstract void removePropertyChangeListener(PropertyChangeListener listener);
+  public abstract void addPropertyChangeListener(@NotNull PropertyChangeListener listener);
+  public abstract void addPropertyChangeListener(@NotNull PropertyChangeListener listener, @NotNull Disposable disposable);
+  public abstract void removePropertyChangeListener(@NotNull PropertyChangeListener listener);
 
-  //public abstract boolean isDisposed();
-
-  public abstract Lookup createLookup(Editor editor, @NotNull LookupElement[] items, @NotNull final String prefix, LookupArranger arranger);
+  @NotNull
+  public abstract Lookup createLookup(@NotNull Editor editor, @NotNull LookupElement[] items, @NotNull final String prefix, @NotNull LookupArranger arranger);
 
 }

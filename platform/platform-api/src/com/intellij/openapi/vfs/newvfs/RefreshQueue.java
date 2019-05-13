@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,17 +32,19 @@ public abstract class RefreshQueue {
     return ServiceManager.getService(RefreshQueue.class);
   }
 
+  @NotNull
   public final RefreshSession createSession(boolean async, boolean recursive, @Nullable Runnable finishRunnable) {
     return createSession(async, recursive, finishRunnable, getDefaultModalityState());
   }
 
+  @NotNull
   public abstract RefreshSession createSession(boolean async, boolean recursive, @Nullable Runnable finishRunnable, @NotNull ModalityState state);
 
   public final void refresh(boolean async, boolean recursive, @Nullable Runnable finishRunnable, @NotNull VirtualFile... files) {
     refresh(async, recursive, finishRunnable, getDefaultModalityState(), files);
   }
 
-  public final void refresh(boolean async, boolean recursive, @Nullable Runnable finishRunnable, @NotNull Collection<VirtualFile> files) {
+  public final void refresh(boolean async, boolean recursive, @Nullable Runnable finishRunnable, @NotNull Collection<? extends VirtualFile> files) {
     refresh(async, recursive, finishRunnable, getDefaultModalityState(), files);
   }
 
@@ -60,15 +62,11 @@ public abstract class RefreshQueue {
                             boolean recursive,
                             @Nullable Runnable finishRunnable,
                             @NotNull ModalityState state,
-                            @NotNull Collection<VirtualFile> files) {
+                            @NotNull Collection<? extends VirtualFile> files) {
     RefreshSession session = createSession(async, recursive, finishRunnable, state);
     session.addAllFiles(files);
     session.launch();
   }
-
-  /** @deprecated use {@linkplain #refresh(boolean, boolean, Runnable, ModalityState, VirtualFile...)} with {@linkplain ManagingFS#getLocalRoots()} (to remove in IDEA 13) */
-  @SuppressWarnings("UnusedDeclaration")
-  public abstract void refreshLocalRoots(boolean async, @Nullable Runnable postAction, @NotNull ModalityState modalityState);
 
   public abstract void processSingleEvent(@NotNull VFileEvent event);
 

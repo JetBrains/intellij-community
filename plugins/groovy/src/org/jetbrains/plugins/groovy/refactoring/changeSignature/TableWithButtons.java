@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package org.jetbrains.plugins.groovy.refactoring.changeSignature;
 
+import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.RowEditableTableModel;
 import com.intellij.ui.table.JBTable;
 
@@ -32,6 +33,7 @@ public abstract class TableWithButtons {
   public TableWithButtons(RowEditableTableModel model) {
     myModel = model;
     myAddButton.addActionListener(new ActionListener() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         int selectedColumn = myTable.getSelectedColumn();
         if (selectedColumn < 0) selectedColumn = 0;
@@ -39,10 +41,13 @@ public abstract class TableWithButtons {
         myTable.setRowSelectionInterval(myModel.getRowCount() - 1, myModel.getRowCount() - 1);
         myTable.setColumnSelectionInterval(selectedColumn, selectedColumn);
         innerUpdate();
-        myTable.requestFocus();
+        IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
+          IdeFocusManager.getGlobalInstance().requestFocus(myTable, true);
+        });
       }
     });
     myRemoveButton.addActionListener(new ActionListener() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         int selectedRow = myTable.getSelectedRow();
         int selectedColumn = myTable.getSelectedColumn();
@@ -54,10 +59,13 @@ public abstract class TableWithButtons {
         myTable.setRowSelectionInterval(selectedRow, selectedRow);
         myTable.setColumnSelectionInterval(selectedColumn, selectedColumn);
         innerUpdate();
-        myTable.requestFocus();
+        IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
+          IdeFocusManager.getGlobalInstance().requestFocus(myTable, true);
+        });
       }
     });
     myMoveUpButton.addActionListener(new ActionListener() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         final int selectedRow = myTable.getSelectedRow();
         int selectedColumn = myTable.getSelectedColumn();
@@ -65,10 +73,13 @@ public abstract class TableWithButtons {
         myTable.setRowSelectionInterval(selectedRow - 1, selectedRow - 1);
         myTable.setColumnSelectionInterval(selectedColumn, selectedColumn);
         innerUpdate();
-        myTable.requestFocus();
+        IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
+          IdeFocusManager.getGlobalInstance().requestFocus(myTable, true);
+        });
       }
     });
     myMoveDownButton.addActionListener(new ActionListener() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         final int selectedRow = myTable.getSelectedRow();
         int selectedColumn = myTable.getSelectedColumn();
@@ -76,18 +87,21 @@ public abstract class TableWithButtons {
         myTable.setRowSelectionInterval(selectedRow + 1, selectedRow + 1);
         myTable.setColumnSelectionInterval(selectedColumn, selectedColumn);
         innerUpdate();
-        myTable.requestFocus();
+        IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
+          IdeFocusManager.getGlobalInstance().requestFocus(myTable, true);
+        });
       }
     });
 
     myModel.addTableModelListener(new TableModelListener() {
+      @Override
       public void tableChanged(TableModelEvent e) {
         innerUpdate();
       }
     });
   }
 
-  private RowEditableTableModel myModel;
+  private final RowEditableTableModel myModel;
 
   private JPanel myPanel;
   private JButton myAddButton;

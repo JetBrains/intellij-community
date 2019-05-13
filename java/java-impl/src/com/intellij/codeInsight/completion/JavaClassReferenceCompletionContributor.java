@@ -41,7 +41,7 @@ public class JavaClassReferenceCompletionContributor extends CompletionContribut
   }
 
   @Override
-  public void fillCompletionVariants(CompletionParameters parameters, CompletionResultSet result) {
+  public void fillCompletionVariants(@NotNull CompletionParameters parameters, @NotNull CompletionResultSet result) {
     PsiElement position = parameters.getPosition();
     JavaClassReference reference = findJavaClassReference(position.getContainingFile(), parameters.getOffset());
     if (reference == null) {

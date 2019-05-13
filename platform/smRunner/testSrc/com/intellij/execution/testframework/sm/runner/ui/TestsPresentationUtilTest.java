@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,19 +17,19 @@ package com.intellij.execution.testframework.sm.runner.ui;
 
 import com.intellij.execution.executors.DefaultDebugExecutor;
 import com.intellij.execution.testframework.PoolOfTestIcons;
+import com.intellij.execution.testframework.sm.SMTestsRunnerBundle;
 import com.intellij.execution.testframework.sm.UITestUtil;
 import com.intellij.execution.testframework.sm.runner.BaseSMTRunnerTestCase;
 import com.intellij.execution.testframework.sm.runner.SMTRunnerConsoleProperties;
 import com.intellij.execution.testframework.sm.runner.SMTestProxy;
-import com.intellij.execution.testframework.ui.TestsProgressAnimator;
 import com.intellij.icons.AllIcons;
 import com.intellij.ui.SimpleTextAttributes;
-import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
@@ -59,7 +59,7 @@ public class TestsPresentationUtilTest extends BaseSMTRunnerTestCase {
     assertEquals("Running: 10 of 1  ",
                  TestsPresentationUtil.getProgressStatus_Text(0, 0, 1, 10, 0, null, true));
     //here number format is platform-dependent
-    assertEquals("Done: 10 of 1  (0 s)  ",
+    assertEquals("Done: 10 of 1  (0\u2009ms)  ",
                  TestsPresentationUtil.getProgressStatus_Text(5, 5, 1, 10, 0, null, false));
   }
 
@@ -73,15 +73,15 @@ public class TestsPresentationUtilTest extends BaseSMTRunnerTestCase {
     assertEquals("Running: 10 of <...>  Failed: 1  ",
                  TestsPresentationUtil.getProgressStatus_Text(0, 0, 0, 10, 1, null, false));
     //here number format is platform-dependent
-    assertEquals("Done: 10 of <...>  Failed: 1  (5 ms)  ",
+    assertEquals("Done: 10 of <...>  Failed: 1  (5\u2009ms)  ",
                  TestsPresentationUtil.getProgressStatus_Text(0, 5, 0, 10, 1, null, false));
   }
 
   public void testProgressText_Category() {
     assertEquals("Running: 0 of <...>  ",
-                 TestsPresentationUtil.getProgressStatus_Text(0, 0, 0, 0, 0, new HashSet<String>(), false));
+                 TestsPresentationUtil.getProgressStatus_Text(0, 0, 0, 0, 0, new HashSet<>(), false));
 
-    final Set<String> category = new LinkedHashSet<String>();
+    final Set<String> category = new LinkedHashSet<>();
 
     category.clear();
     category.add("Scenarios");
@@ -96,11 +96,11 @@ public class TestsPresentationUtilTest extends BaseSMTRunnerTestCase {
 
     category.clear();
     category.add("Cucumbers");
-    category.add("Tomatos");
+    category.add("Tomatoes");
     category.add(TestsPresentationUtil.DEFAULT_TESTS_CATEGORY);
-    assertEquals("Running: Cucumbers, tomatos, tests 0 of <...>  ",
+    assertEquals("Running: Cucumbers, tomatoes, tests 0 of <...>  ",
                  TestsPresentationUtil.getProgressStatus_Text(0, 0, 0, 0, 0, category, false));
-    assertEquals("Running: Cucumbers, tomatos, tests 0 of 0  ",
+    assertEquals("Running: Cucumbers, tomatoes, tests 0 of 0  ",
                  TestsPresentationUtil.getProgressStatus_Text(0, 0, 0, 0, 0, category, true));
 
     category.clear();
@@ -284,7 +284,7 @@ public class TestsPresentationUtilTest extends BaseSMTRunnerTestCase {
 
   public void testFormatTestProxyTest_WithErrors_LegacyApi() {
     mySimpleTest.setStarted();
-    mySimpleTest.addError("msg", "stacktrace");
+    mySimpleTest.addError("msg", "stacktrace", true);
     mySimpleTest.setFinished();
     TestsPresentationUtil.formatTestProxy(mySimpleTest, myRenderer);
 
@@ -297,7 +297,7 @@ public class TestsPresentationUtilTest extends BaseSMTRunnerTestCase {
     mySimpleTest.setFinished();
     TestsPresentationUtil.formatTestProxy(mySimpleTest, myRenderer);
 
-    assertEquals(SMPoolOfTestIcons.PASSED_ICON, myRenderer.getIcon());
+    assertEquals(PoolOfTestIcons.PASSED_ICON, myRenderer.getIcon());
   }
 
   public void testFormatRootNodeWithChildren_Started() {
@@ -530,7 +530,7 @@ public class TestsPresentationUtilTest extends BaseSMTRunnerTestCase {
 
     final MyRenderer renderer2 = new MyRenderer(false, myFragContainer = new UITestUtil.FragmentsContainer());
     TestsPresentationUtil.formatTestProxy(mySimpleTest, renderer2);
-    assertEquals(SMPoolOfTestIcons.PASSED_ICON, renderer2.getIcon());
+    assertEquals(PoolOfTestIcons.PASSED_ICON, renderer2.getIcon());
   }
 
   public void testFormatRootNodeWithoutChildren() {
@@ -575,7 +575,7 @@ public class TestsPresentationUtilTest extends BaseSMTRunnerTestCase {
 
     assertEquals(PoolOfTestIcons.NOT_RAN, myRenderer.getIcon());
     assertOneElement(myFragContainer.getFragments());
-    assertEquals("Unable to attach test reporter to test framework or test framework quit unexpectedly", myFragContainer.getTextAt(0));
+    assertEquals(SMTestsRunnerBundle.message("sm.test.runner.ui.tests.tree.presentation.labels.test.reporter.not.attached"), myFragContainer.getTextAt(0));
     assertEquals(SimpleTextAttributes.ERROR_ATTRIBUTES, myFragContainer.getAttribsAt(0));
 
   }
@@ -607,6 +607,23 @@ public class TestsPresentationUtilTest extends BaseSMTRunnerTestCase {
     assertEquals(PoolOfTestIcons.FAILED_ICON, myRenderer.getIcon());
     assertOneElement(myFragContainer.getFragments());
     assertEquals("Test Results", myFragContainer.getTextAt(0));
+    assertEquals(SimpleTextAttributes.REGULAR_ATTRIBUTES, myFragContainer.getAttribsAt(0));
+  }
+
+  public void testFormatRootNodeIgnored() {
+    mySMRootTestProxy.setTestsReporterAttached();
+    // See [PY-2434] Unittest: Do not show "No test were found" notification before completing test suite
+    mySMRootTestProxy.addChild(mySimpleTest);
+    mySMRootTestProxy.setStarted();
+    mySimpleTest.setStarted();
+    mySimpleTest.setTestIgnored(null, null);
+    mySimpleTest.setFinished();
+    mySMRootTestProxy.setFinished();
+    TestsPresentationUtil.formatRootNodeWithoutChildren(mySMRootTestProxy, myRenderer);
+
+    assertEquals(PoolOfTestIcons.IGNORED_ICON, myRenderer.getIcon());
+    assertOneElement(myFragContainer.getFragments());
+    assertEquals("All Tests Passed (except ignored)", myFragContainer.getTextAt(0));
     assertEquals(SimpleTextAttributes.REGULAR_ATTRIBUTES, myFragContainer.getAttribsAt(0));
   }
 
@@ -712,12 +729,8 @@ public class TestsPresentationUtilTest extends BaseSMTRunnerTestCase {
     return createTestProxy(FAKE_TEST_NAME);
   }
 
-  private void assertIsAnimatorProgressIcon(final Icon icon) {
-    for (Icon frame : TestsProgressAnimator.FRAMES) {
-      if (icon == frame) {
-        return;
-      }
-    }
+  private static void assertIsAnimatorProgressIcon(final Icon icon) {
+    if (icon == SMPoolOfTestIcons.RUNNING_ICON) return;
 
     fail("Icon isn't an Animator progress frame");
   }
@@ -725,7 +738,7 @@ public class TestsPresentationUtilTest extends BaseSMTRunnerTestCase {
   private class MyRenderer extends TestTreeRenderer {
     private final UITestUtil.FragmentsContainer myFragmentsContainer;
 
-    public MyRenderer(final boolean isPaused,
+    MyRenderer(final boolean isPaused,
                       final UITestUtil.FragmentsContainer fragmentsContainer) {
       super(new SMTRunnerConsoleProperties(createRunConfiguration(), "SMRunnerTests", DefaultDebugExecutor.getDebugExecutorInstance()) {
         @Override

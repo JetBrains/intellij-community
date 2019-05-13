@@ -1,33 +1,20 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.checkout;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.extensions.ExtensionPointName;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.CheckoutProvider;
 import com.intellij.openapi.vcs.VcsKey;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
+import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
+import java.util.List;
 
 /**
  * to be called after checkout - notifiers extenders on checkout completion
@@ -42,64 +29,53 @@ public class CompositeCheckoutListener implements CheckoutProvider.Listener {
     myProject = project;
   }
 
+  @Override
   public void directoryCheckedOut(final File directory, VcsKey vcs) {
     myVcsKey = vcs;
-    if (!myFoundProject) {
-      final VirtualFile virtualFile = refreshVFS(directory);
-      if (virtualFile != null) {
-        if (myFirstDirectory == null) {
-          myFirstDirectory = directory;
-        }
-        notifyCheckoutListeners(directory, CheckoutListener.EP_NAME);
+    if (!myFoundProject && directory.isDirectory()) {
+      if (myFirstDirectory == null) {
+        myFirstDirectory = directory;
       }
+      notifyCheckoutListeners(directory, false);
     }
   }
 
-  private static VirtualFile refreshVFS(final File directory) {
-    final Ref<VirtualFile> result = new Ref<VirtualFile>();
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      public void run() {
-        final LocalFileSystem lfs = LocalFileSystem.getInstance();
-        final VirtualFile vDir = lfs.refreshAndFindFileByIoFile(directory);
-        result.set(vDir);
-        if (vDir != null) {
-          final LocalFileSystem.WatchRequest watchRequest = lfs.addRootToWatch(vDir.getPath(), true);
-          ((NewVirtualFile)vDir).markDirtyRecursively();
-          vDir.refresh(false, true);
-          if (watchRequest != null) {
-            lfs.removeWatchedRoot(watchRequest);
-          }
-        }
-      }
-    });
-    return result.get();
-  }
+  private void notifyCheckoutListeners(final File directory, boolean checkoutCompleted) {
+    ExtensionPointName<CheckoutListener> epName = checkoutCompleted ? CheckoutListener.COMPLETED_EP_NAME : CheckoutListener.EP_NAME;
 
-  private void notifyCheckoutListeners(final File directory, final ExtensionPointName<CheckoutListener> epName) {
-    final CheckoutListener[] listeners = Extensions.getExtensions(epName);
+    List<CheckoutListener> listeners = epName.getExtensionList();
     for (CheckoutListener listener: listeners) {
       myFoundProject = listener.processCheckedOutDirectory(myProject, directory);
       if (myFoundProject) break;
     }
-    if (!myFoundProject && !epName.equals(CheckoutListener.COMPLETED_EP_NAME)) {
-      final VcsAwareCheckoutListener[] vcsAwareExtensions = Extensions.getExtensions(VcsAwareCheckoutListener.EP_NAME);
-      for (VcsAwareCheckoutListener extension : vcsAwareExtensions) {
-        myFoundProject = extension.processCheckedOutDirectory(myProject, directory, myVcsKey);
-        if (myFoundProject) break;
+
+    if (!checkoutCompleted) {
+      for (VcsAwareCheckoutListener extension : VcsAwareCheckoutListener.EP_NAME.getExtensionList()) {
+        boolean processingCompleted = extension.processCheckedOutDirectory(myProject, directory, myVcsKey);
+        if (processingCompleted) break;
       }
     }
-    final Project[] openProjects = ProjectManager.getInstance().getOpenProjects();
-    if (openProjects.length > 0){
-      final Project lastOpenedProject = openProjects[openProjects.length - 1];
+
+    Project project = findProjectByBaseDirLocation(directory);
+    if (project != null) {
       for (CheckoutListener listener: listeners) {
-        listener.processOpenedProject(lastOpenedProject);
+        listener.processOpenedProject(project);
       }
     }
   }
 
+  @Override
   public void checkoutCompleted() {
     if (!myFoundProject && myFirstDirectory != null) {
-      notifyCheckoutListeners(myFirstDirectory, CheckoutListener.COMPLETED_EP_NAME);
+      notifyCheckoutListeners(myFirstDirectory, true);
     }
+  }
+
+  @Nullable
+  static Project findProjectByBaseDirLocation(@NotNull final File directory) {
+    return ContainerUtil.find(ProjectManager.getInstance().getOpenProjects(), project -> {
+      VirtualFile baseDir = project.getBaseDir();
+      return baseDir != null && FileUtil.filesEqual(VfsUtilCore.virtualToIoFile(baseDir), directory);
+    });
   }
 }

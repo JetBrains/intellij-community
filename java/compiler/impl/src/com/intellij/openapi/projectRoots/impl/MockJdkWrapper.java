@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,9 +14,6 @@
  * limitations under the License.
  */
 
-/**
- * @author cdr
- */
 package com.intellij.openapi.projectRoots.impl;
 
 import com.intellij.openapi.projectRoots.Sdk;
@@ -46,54 +43,66 @@ public final class MockJdkWrapper implements Sdk {
     myDelegate = delegate;
   }
 
+  @Override
   public VirtualFile getHomeDirectory() {
     return LocalFileSystem.getInstance().findFileByIoFile(new File(getHomePath()));
   }
 
+  @Override
   public String getHomePath() {
     final String homePath = FileUtil.toSystemDependentName(myHomePath == null ? myDelegate.getHomePath() : myHomePath);
     return StringUtil.trimEnd(homePath, File.separator);
   }
 
+  @Override
   @NotNull
   public SdkTypeId getSdkType() {
     return myDelegate.getSdkType();
   }
 
+  @Override
   @NotNull
   public String getName() {
     return myDelegate.getName();
   }
 
+  @Override
   public String getVersionString() {
     return myDelegate.getVersionString();
   }
 
+  @Override
   @NotNull
   public RootProvider getRootProvider() {
     return myDelegate.getRootProvider();
   }
 
+  @Override
   public <T> T getUserData(@NotNull Key<T> key) {
     return myDelegate.getUserData(key);
   }
 
+  @Override
   public <T> void putUserData(@NotNull Key<T> key, @Nullable T value) {
     myDelegate.putUserData(key, value);
   }
 
+  @Override
   @NotNull
   public Object clone() throws CloneNotSupportedException {
-    throw new CloneNotSupportedException();
+    Sdk delegateClone = (Sdk)myDelegate.clone();
+    return new MockJdkWrapper(myHomePath, delegateClone);
   }
 
+  @Override
   public SdkAdditionalData getSdkAdditionalData() {
     return null;
   }
 
+  @Override
   @NotNull
   public SdkModificator getSdkModificator() {
-    return null;
+    return myDelegate.getSdkModificator();
   }
 
   public Sdk getDelegate() {

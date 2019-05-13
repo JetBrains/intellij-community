@@ -23,6 +23,8 @@ import com.intellij.openapi.ui.DialogWrapper;
 import javax.swing.*;
 import java.awt.*;
 
+import static com.intellij.openapi.application.ex.ClipboardUtil.getTextInClipboard;
+
 /**
  * @author yole
  */
@@ -37,9 +39,10 @@ public class AnalyzeStacktraceDialog extends DialogWrapper {
     init();
   }
 
+  @Override
   protected JComponent createCenterPanel() {
     JPanel panel = new JPanel(new BorderLayout());
-    panel.add(new JLabel("Put a thread dump here:"), BorderLayout.NORTH);
+    panel.add(new JLabel("Put a stacktrace here:"), BorderLayout.NORTH);
     myEditorPanel = AnalyzeStacktraceUtil.createEditorPanel(myProject, myDisposable);
     myEditorPanel.pasteTextFromClipboard();
     panel.add(myEditorPanel, BorderLayout.CENTER);
@@ -54,6 +57,12 @@ public class AnalyzeStacktraceDialog extends DialogWrapper {
 
   @Override
   public JComponent getPreferredFocusedComponent() {
-    return myEditorPanel.getEditorComponent();
+    String text = getTextInClipboard();
+    if (text == null || text.isEmpty()) {
+      return myEditorPanel.getEditorComponent();
+    }
+
+    JRootPane pane = getRootPane();
+    return pane != null ? pane.getDefaultButton() : super.getPreferredFocusedComponent();
   }
 }

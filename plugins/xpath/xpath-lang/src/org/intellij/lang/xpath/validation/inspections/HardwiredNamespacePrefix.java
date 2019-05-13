@@ -31,12 +31,15 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 public class HardwiredNamespacePrefix extends XPathInspection {
+    @Override
     public boolean isEnabledByDefault() {
         return true;
     }
 
+    @Override
     protected Visitor createVisitor(final InspectionManager manager, final boolean isOnTheFly) {
         return new Visitor(manager, isOnTheFly) {
+            @Override
             protected void checkExpression(XPathExpression expression) {
                 if (!(expression instanceof XPathBinaryExpression)) {
                     return;
@@ -85,18 +88,21 @@ public class HardwiredNamespacePrefix extends XPathInspection {
         return "name".equals(fc.getFunctionName());
     }
 
+    @Override
     @Nls
     @NotNull
     public String getDisplayName() {
         return "Hardwired Namespace Prefix";
     }
 
+    @Override
     @NonNls
     @NotNull
     public String getShortName() {
         return "HardwiredNamespacePrefix";
     }
 
+  @Override
   protected boolean acceptsLanguage(Language language) {
     return language == XPathFileType.XPATH.getLanguage() || language == XPathFileType.XPATH2.getLanguage();
   }

@@ -1,0 +1,1 @@
+print("I want to be inside main")  #hello.main  <caret>

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package com.intellij.util.xml;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author peter
@@ -25,13 +26,16 @@ public interface GenericDomValue<T> extends DomElement, MutableGenericValue<T>{
   @NotNull
   Converter<T> getConverter();
 
+  @Override
   @TagValue
   void setStringValue(String value);
 
+  @Override
   void setValue(T value);
 
   /**
    * @return text of the value as it is specified in the underlying XML. No conversions or substitutions are made 
    */
+  @Nullable
   String getRawText();
 }

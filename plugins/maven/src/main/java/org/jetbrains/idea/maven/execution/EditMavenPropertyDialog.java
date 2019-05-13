@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -70,6 +70,7 @@ public class EditMavenPropertyDialog extends DialogWrapper {
 
   private void installPropertySelectionListener() {
     myNameBox.addItemListener(new ItemListener() {
+      @Override
       public void itemStateChanged(ItemEvent e) {
         if (e.getStateChange() != ItemEvent.SELECTED) return;
         String key = (String)e.getItem();
@@ -85,6 +86,7 @@ public class EditMavenPropertyDialog extends DialogWrapper {
     myNameBox.setModel(new DefaultComboBoxModel(keys));
   }
 
+  @Override
   @Nullable
   protected JComponent createCenterPanel() {
     return contentPane;
@@ -96,6 +98,6 @@ public class EditMavenPropertyDialog extends DialogWrapper {
   }
 
   public Pair<String, String> getValue() {
-    return new Pair<String, String>((String)myNameBox.getEditor().getItem(), myValueField.getText());
+    return Pair.create((String)myNameBox.getEditor().getItem(), myValueField.getText());
   }
 }

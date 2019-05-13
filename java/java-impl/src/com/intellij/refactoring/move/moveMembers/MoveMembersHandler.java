@@ -19,27 +19,30 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.source.jsp.jspJava.JspHolderMethod;
 import com.intellij.refactoring.move.MoveCallback;
 import com.intellij.refactoring.move.MoveHandlerDelegate;
 import org.jetbrains.annotations.Nullable;
 
 public class MoveMembersHandler extends MoveHandlerDelegate {
+  @Override
   public boolean canMove(final PsiElement[] elements, @Nullable final PsiElement targetContainer) {
     for(PsiElement element: elements) {
       if (!isFieldOrStaticMethod(element)) return false;
     }
-    return super.canMove(elements, targetContainer);
+    return targetContainer == null || super.canMove(elements, targetContainer);
   }
 
-  public boolean isValidTarget(final PsiElement psiElement, PsiElement[] sources) {
-    return psiElement instanceof PsiClass && !(psiElement instanceof PsiAnonymousClass);
+  @Override
+  public boolean isValidTarget(final PsiElement targetElement, PsiElement[] sources) {
+    return targetElement instanceof PsiClass && !(targetElement instanceof PsiAnonymousClass);
   }
 
+  @Override
   public void doMove(final Project project, final PsiElement[] elements, final PsiElement targetContainer, final MoveCallback callback) {
     MoveMembersImpl.doMove(project, elements, targetContainer, callback);
   }
 
+  @Override
   public boolean tryToMove(final PsiElement element, final Project project, final DataContext dataContext, final PsiReference reference,
                            final Editor editor) {
     if (isFieldOrStaticMethod(element)) {
@@ -52,7 +55,7 @@ public class MoveMembersHandler extends MoveHandlerDelegate {
   private static boolean isFieldOrStaticMethod(final PsiElement element) {
     if (element instanceof PsiField) return true;
     if (element instanceof PsiMethod) {
-      if (element instanceof JspHolderMethod) return false;
+      if (element instanceof SyntheticElement) return false;
       return ((PsiMethod) element).hasModifierProperty(PsiModifier.STATIC);
     }
     return false;

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import com.intellij.codeInsight.template.impl.DefaultLiveTemplatesProvider;
  * @author yole
  */
 public class XmlDefaultLiveTemplatesProvider implements DefaultLiveTemplatesProvider {
+  @Override
   public String[] getDefaultLiveTemplateFiles() {
     return new String[] { "/liveTemplates/html_xml", "/liveTemplates/zen_html", "/liveTemplates/zen_xsl" };
   }

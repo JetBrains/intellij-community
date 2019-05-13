@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,11 +29,12 @@ class PropertyAccessorInvocation implements Invocation {
   final int myLastElement;
   private final JavaMethod[] myMethods;
 
-  public PropertyAccessorInvocation(final JavaMethod[] methods) {
+  PropertyAccessorInvocation(final JavaMethod[] methods) {
     myMethods = methods;
     myLastElement = myMethods.length - 1;
   }
 
+  @Override
   public final Object invoke(final DomInvocationHandler<?, ?> handler, final Object[] args) throws Throwable {
     return invoke(0, handler.getProxy());
   }
@@ -43,7 +44,7 @@ class PropertyAccessorInvocation implements Invocation {
     if (i == myLastElement) return o;
 
     if (o instanceof List) {
-      List<Object> result = new ArrayList<Object>();
+      List<Object> result = new ArrayList<>();
       for (Object o1 : (List)o) {
         result.add(invoke(i + 1, o1));
       }

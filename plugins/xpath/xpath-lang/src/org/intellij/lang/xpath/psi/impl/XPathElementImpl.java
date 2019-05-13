@@ -20,7 +20,6 @@ import com.intellij.lang.ASTNode;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
-import com.intellij.psi.impl.PsiTreeDebugBuilder;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.intellij.lang.xpath.XPath2ElementTypes;
@@ -39,11 +38,13 @@ public class XPathElementImpl extends ASTWrapperPsiElement implements XPathEleme
     super(node);
   }
 
+  @Override
   public String toString() {
     final String name = getClass().getName();
     return name.substring(name.lastIndexOf('.') + 1) + ": " + getText();
   }
 
+  @Override
   public PsiElement addBefore(@NotNull PsiElement psiElement, final PsiElement anchor) throws IncorrectOperationException {
     final ASTNode node = getNode();
     final ASTNode child = psiElement.getNode();
@@ -52,6 +53,7 @@ public class XPathElementImpl extends ASTWrapperPsiElement implements XPathEleme
     return node.getPsi();
   }
 
+  @Override
   public PsiElement addAfter(@NotNull PsiElement psiElement, final PsiElement anchor) throws IncorrectOperationException {
     final ASTNode astNode = anchor.getNode();
     assert astNode != null;
@@ -68,6 +70,7 @@ public class XPathElementImpl extends ASTWrapperPsiElement implements XPathEleme
     return node.getPsi();
   }
 
+  @Override
   public PsiElement add(@NotNull PsiElement psiElement) throws IncorrectOperationException {
     final ASTNode child = psiElement.getNode();
     assert child != null;
@@ -75,6 +78,7 @@ public class XPathElementImpl extends ASTWrapperPsiElement implements XPathEleme
     return getNode().getPsi();
   }
 
+  @Override
   public void delete() throws IncorrectOperationException {
     final ASTNode node = getNode();
 
@@ -91,6 +95,7 @@ public class XPathElementImpl extends ASTWrapperPsiElement implements XPathEleme
     }
   }
 
+  @Override
   public PsiElement replace(@NotNull PsiElement psiElement) throws IncorrectOperationException {
     final ASTNode newNode = psiElement.getNode();
     final ASTNode myNode = getNode();
@@ -101,8 +106,9 @@ public class XPathElementImpl extends ASTWrapperPsiElement implements XPathEleme
     return newNode.getPsi();
   }
 
+  @Override
   @NotNull
-  @SuppressWarnings({ "ConstantConditions", "EmptyMethod" })
+  @SuppressWarnings({"EmptyMethod" })
   public final ASTNode getNode() {
     return super.getNode();
   }
@@ -123,8 +129,7 @@ public class XPathElementImpl extends ASTWrapperPsiElement implements XPathEleme
   }
 
   protected String unexpectedPsiAssertion() {
-    final PsiTreeDebugBuilder builder = new PsiTreeDebugBuilder();
-    return "Unexpected PSI structure: " + builder.psiToString(this) + "--\ninside: " + builder.psiToString(getContainingFile());
+    return "Unexpected PSI structure inside " + getNode().getElementType();
   }
 
   @Override
@@ -136,6 +141,7 @@ public class XPathElementImpl extends ASTWrapperPsiElement implements XPathEleme
     }
   }
 
+  @Override
   public void accept(XPathElementVisitor visitor) {
     visitor.visitXPathElement(this);
   }

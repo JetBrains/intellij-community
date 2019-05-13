@@ -1,0 +1,3280 @@
+{
+  "svg": {
+    "attributes": {
+      "events": {
+        "global": {
+          "oncancel": {
+            "__compat": {
+              "mdn_url": "https://developer.mozilla.org/docs/Web/SVG/Attribute/oncancel",
+              "support": {
+                "chrome": {
+                  "version_added": null
+                },
+                "chrome_android": {
+                  "version_added": null
+                },
+                "edge": {
+                  "version_added": null
+                },
+                "edge_mobile": {
+                  "version_added": null
+                },
+                "firefox": {
+                  "version_added": null
+                },
+                "firefox_android": {
+                  "version_added": null
+                },
+                "ie": {
+                  "version_added": null
+                },
+                "opera": {
+                  "version_added": null
+                },
+                "opera_android": {
+                  "version_added": null
+                },
+                "safari": {
+                  "version_added": null
+                },
+                "safari_ios": {
+                  "version_added": null
+                },
+                "webview_android": {
+                  "version_added": null
+                }
+              },
+              "status": {
+                "experimental": false,
+                "standard_track": true,
+                "deprecated": false
+              }
+            }
+          },
+          "oncanplay": {
+            "__compat": {
+              "mdn_url": "https://developer.mozilla.org/docs/Web/SVG/Attribute/oncanplay",
+              "support": {
+                "chrome": {
+                  "version_added": null
+                },
+                "chrome_android": {
+                  "version_added": null
+                },
+                "edge": {
+                  "version_added": null
+                },
+                "edge_mobile": {
+                  "version_added": null
+                },
+                "firefox": {
+                  "version_added": null
+                },
+                "firefox_android": {
+                  "version_added": null
+                },
+                "ie": {
+                  "version_added": null
+                },
+                "opera": {
+                  "version_added": null
+                },
+                "opera_android": {
+                  "version_added": null
+                },
+                "safari": {
+                  "version_added": null
+                },
+                "safari_ios": {
+                  "version_added": null
+                },
+                "webview_android": {
+                  "version_added": null
+                }
+              },
+              "status": {
+                "experimental": false,
+                "standard_track": true,
+                "deprecated": false
+              }
+            }
+          },
+          "oncanplaythrough": {
+            "__compat": {
+              "mdn_url": "https://developer.mozilla.org/docs/Web/SVG/Attribute/oncanplaythrough",
+              "support": {
+                "chrome": {
+                  "version_added": null
+                },
+                "chrome_android": {
+                  "version_added": null
+                },
+                "edge": {
+                  "version_added": null
+                },
+                "edge_mobile": {
+                  "version_added": null
+                },
+                "firefox": {
+                  "version_added": null
+                },
+                "firefox_android": {
+                  "version_added": null
+                },
+                "ie": {
+                  "version_added": null
+                },
+                "opera": {
+                  "version_added": null
+                },
+                "opera_android": {
+                  "version_added": null
+                },
+                "safari": {
+                  "version_added": null
+                },
+                "safari_ios": {
+                  "version_added": null
+                },
+                "webview_android": {
+                  "version_added": null
+                }
+              },
+              "status": {
+                "experimental": false,
+                "standard_track": true,
+                "deprecated": false
+              }
+            }
+          },
+          "onchange": {
+            "__compat": {
+              "mdn_url": "https://developer.mozilla.org/docs/Web/SVG/Attribute/onchange",
+              "support": {
+                "chrome": {
+                  "version_added": null
+                },
+                "chrome_android": {
+                  "version_added": null
+                },
+                "edge": {
+                  "version_added": null
+                },
+                "edge_mobile": {
+                  "version_added": null
+                },
+                "firefox": {
+                  "version_added": null
+                },
+                "firefox_android": {
+                  "version_added": null
+                },
+                "ie": {
+                  "version_added": null
+                },
+                "opera": {
+                  "version_added": null
+                },
+                "opera_android": {
+                  "version_added": null
+                },
+                "safari": {
+                  "version_added": null
+                },
+                "safari_ios": {
+                  "version_added": null
+                },
+                "webview_android": {
+                  "version_added": null
+                }
+              },
+              "status": {
+                "experimental": false,
+                "standard_track": true,
+                "deprecated": false
+              }
+            }
+          },
+          "onclick": {
+            "__compat": {
+              "mdn_url": "https://developer.mozilla.org/docs/Web/SVG/Attribute/onclick",
+              "support": {
+                "chrome": {
+                  "version_added": null
+                },
+                "chrome_android": {
+                  "version_added": null
+                },
+                "edge": {
+                  "version_added": null
+                },
+                "edge_mobile": {
+                  "version_added": null
+                },
+                "firefox": {
+                  "version_added": null
+                },
+                "firefox_android": {
+                  "version_added": null
+                },
+                "ie": {
+                  "version_added": null
+                },
+                "opera": {
+                  "version_added": null
+                },
+                "opera_android": {
+                  "version_added": null
+                },
+                "safari": {
+                  "version_added": null
+                },
+                "safari_ios": {
+                  "version_added": null
+                },
+                "webview_android": {
+                  "version_added": null
+                }
+              },
+              "status": {
+                "experimental": false,
+                "standard_track": true,
+                "deprecated": false
+              }
+            }
+          },
+          "onclose": {
+            "__compat": {
+              "mdn_url": "https://developer.mozilla.org/docs/Web/SVG/Attribute/onclose",
+              "support": {
+                "chrome": {
+                  "version_added": null
+                },
+                "chrome_android": {
+                  "version_added": null
+                },
+                "edge": {
+                  "version_added": null
+                },
+                "edge_mobile": {
+                  "version_added": null
+                },
+                "firefox": {
+                  "version_added": null
+                },
+                "firefox_android": {
+                  "version_added": null
+                },
+                "ie": {
+                  "version_added": null
+                },
+                "opera": {
+                  "version_added": null
+                },
+                "opera_android": {
+                  "version_added": null
+                },
+                "safari": {
+                  "version_added": null
+                },
+                "safari_ios": {
+                  "version_added": null
+                },
+                "webview_android": {
+                  "version_added": null
+                }
+              },
+              "status": {
+                "experimental": false,
+                "standard_track": true,
+                "deprecated": false
+              }
+            }
+          },
+          "oncuechange": {
+            "__compat": {
+              "mdn_url": "https://developer.mozilla.org/docs/Web/SVG/Attribute/oncuechange",
+              "support": {
+                "chrome": {
+                  "version_added": null
+                },
+                "chrome_android": {
+                  "version_added": null
+                },
+                "edge": {
+                  "version_added": null
+                },
+                "edge_mobile": {
+                  "version_added": null
+                },
+                "firefox": {
+                  "version_added": null
+                },
+                "firefox_android": {
+                  "version_added": null
+                },
+                "ie": {
+                  "version_added": null
+                },
+                "opera": {
+                  "version_added": null
+                },
+                "opera_android": {
+                  "version_added": null
+                },
+                "safari": {
+                  "version_added": null
+                },
+                "safari_ios": {
+                  "version_added": null
+                },
+                "webview_android": {
+                  "version_added": null
+                }
+              },
+              "status": {
+                "experimental": false,
+                "standard_track": true,
+                "deprecated": false
+              }
+            }
+          },
+          "ondblclick": {
+            "__compat": {
+              "mdn_url": "https://developer.mozilla.org/docs/Web/SVG/Attribute/ondblclick",
+              "support": {
+                "chrome": {
+                  "version_added": null
+                },
+                "chrome_android": {
+                  "version_added": null
+                },
+                "edge": {
+                  "version_added": null
+                },
+                "edge_mobile": {
+                  "version_added": null
+                },
+                "firefox": {
+                  "version_added": null
+                },
+                "firefox_android": {
+                  "version_added": null
+                },
+                "ie": {
+                  "version_added": null
+                },
+                "opera": {
+                  "version_added": null
+                },
+                "opera_android": {
+                  "version_added": null
+                },
+                "safari": {
+                  "version_added": null
+                },
+                "safari_ios": {
+                  "version_added": null
+                },
+                "webview_android": {
+                  "version_added": null
+                }
+              },
+              "status": {
+                "experimental": false,
+                "standard_track": true,
+                "deprecated": false
+              }
+            }
+          },
+          "ondrag": {
+            "__compat": {
+              "mdn_url": "https://developer.mozilla.org/docs/Web/SVG/Attribute/ondrag",
+              "support": {
+                "chrome": {
+                  "version_added": null
+                },
+                "chrome_android": {
+                  "version_added": null
+                },
+                "edge": {
+                  "version_added": null
+                },
+                "edge_mobile": {
+                  "version_added": null
+                },
+                "firefox": {
+                  "version_added": null
+                },
+                "firefox_android": {
+                  "version_added": null
+                },
+                "ie": {
+                  "version_added": null
+                },
+                "opera": {
+                  "version_added": null
+                },
+                "opera_android": {
+                  "version_added": null
+                },
+                "safari": {
+                  "version_added": null
+                },
+                "safari_ios": {
+                  "version_added": null
+                },
+                "webview_android": {
+                  "version_added": null
+                }
+              },
+              "status": {
+                "experimental": false,
+                "standard_track": true,
+                "deprecated": false
+              }
+            }
+          },
+          "ondragend": {
+            "__compat": {
+              "mdn_url": "https://developer.mozilla.org/docs/Web/SVG/Attribute/ondragend",
+              "support": {
+                "chrome": {
+                  "version_added": null
+                },
+                "chrome_android": {
+                  "version_added": null
+                },
+                "edge": {
+                  "version_added": null
+                },
+                "edge_mobile": {
+                  "version_added": null
+                },
+                "firefox": {
+                  "version_added": null
+                },
+                "firefox_android": {
+                  "version_added": null
+                },
+                "ie": {
+                  "version_added": null
+                },
+                "opera": {
+                  "version_added": null
+                },
+                "opera_android": {
+                  "version_added": null
+                },
+                "safari": {
+                  "version_added": null
+                },
+                "safari_ios": {
+                  "version_added": null
+                },
+                "webview_android": {
+                  "version_added": null
+                }
+              },
+              "status": {
+                "experimental": false,
+                "standard_track": true,
+                "deprecated": false
+              }
+            }
+          },
+          "ondragenter": {
+            "__compat": {
+              "mdn_url": "https://developer.mozilla.org/docs/Web/SVG/Attribute/ondragenter",
+              "support": {
+                "chrome": {
+                  "version_added": null
+                },
+                "chrome_android": {
+                  "version_added": null
+                },
+                "edge": {
+                  "version_added": null
+                },
+                "edge_mobile": {
+                  "version_added": null
+                },
+                "firefox": {
+                  "version_added": null
+                },
+                "firefox_android": {
+                  "version_added": null
+                },
+                "ie": {
+                  "version_added": null
+                },
+                "opera": {
+                  "version_added": null
+                },
+                "opera_android": {
+                  "version_added": null
+                },
+                "safari": {
+                  "version_added": null
+                },
+                "safari_ios": {
+                  "version_added": null
+                },
+                "webview_android": {
+                  "version_added": null
+                }
+              },
+              "status": {
+                "experimental": false,
+                "standard_track": true,
+                "deprecated": false
+              }
+            }
+          },
+          "ondragexit": {
+            "__compat": {
+              "mdn_url": "https://developer.mozilla.org/docs/Web/SVG/Attribute/ondragexit",
+              "support": {
+                "chrome": {
+                  "version_added": null
+                },
+                "chrome_android": {
+                  "version_added": null
+                },
+                "edge": {
+                  "version_added": null
+                },
+                "edge_mobile": {
+                  "version_added": null
+                },
+                "firefox": {
+                  "version_added": null
+                },
+                "firefox_android": {
+                  "version_added": null
+                },
+                "ie": {
+                  "version_added": null
+                },
+                "opera": {
+                  "version_added": null
+                },
+                "opera_android": {
+                  "version_added": null
+                },
+                "safari": {
+                  "version_added": null
+                },
+                "safari_ios": {
+                  "version_added": null
+                },
+                "webview_android": {
+                  "version_added": null
+                }
+              },
+              "status": {
+                "experimental": false,
+                "standard_track": true,
+                "deprecated": false
+              }
+            }
+          },
+          "ondragleave": {
+            "__compat": {
+              "mdn_url": "https://developer.mozilla.org/docs/Web/SVG/Attribute/ondragleave",
+              "support": {
+                "chrome": {
+                  "version_added": null
+                },
+                "chrome_android": {
+                  "version_added": null
+                },
+                "edge": {
+                  "version_added": null
+                },
+                "edge_mobile": {
+                  "version_added": null
+                },
+                "firefox": {
+                  "version_added": null
+                },
+                "firefox_android": {
+                  "version_added": null
+                },
+                "ie": {
+                  "version_added": null
+                },
+                "opera": {
+                  "version_added": null
+                },
+                "opera_android": {
+                  "version_added": null
+                },
+                "safari": {
+                  "version_added": null
+                },
+                "safari_ios": {
+                  "version_added": null
+                },
+                "webview_android": {
+                  "version_added": null
+                }
+              },
+              "status": {
+                "experimental": false,
+                "standard_track": true,
+                "deprecated": false
+              }
+            }
+          },
+          "ondragover": {
+            "__compat": {
+              "mdn_url": "https://developer.mozilla.org/docs/Web/SVG/Attribute/ondragover",
+              "support": {
+                "chrome": {
+                  "version_added": null
+                },
+                "chrome_android": {
+                  "version_added": null
+                },
+                "edge": {
+                  "version_added": null
+                },
+                "edge_mobile": {
+                  "version_added": null
+                },
+                "firefox": {
+                  "version_added": null
+                },
+                "firefox_android": {
+                  "version_added": null
+                },
+                "ie": {
+                  "version_added": null
+                },
+                "opera": {
+                  "version_added": null
+                },
+                "opera_android": {
+                  "version_added": null
+                },
+                "safari": {
+                  "version_added": null
+                },
+                "safari_ios": {
+                  "version_added": null
+                },
+                "webview_android": {
+                  "version_added": null
+                }
+              },
+              "status": {
+                "experimental": false,
+                "standard_track": true,
+                "deprecated": false
+              }
+            }
+          },
+          "ondragstart": {
+            "__compat": {
+              "mdn_url": "https://developer.mozilla.org/docs/Web/SVG/Attribute/ondragstart",
+              "support": {
+                "chrome": {
+                  "version_added": null
+                },
+                "chrome_android": {
+                  "version_added": null
+                },
+                "edge": {
+                  "version_added": null
+                },
+                "edge_mobile": {
+                  "version_added": null
+                },
+                "firefox": {
+                  "version_added": null
+                },
+                "firefox_android": {
+                  "version_added": null
+                },
+                "ie": {
+                  "version_added": null
+                },
+                "opera": {
+                  "version_added": null
+                },
+                "opera_android": {
+                  "version_added": null
+                },
+                "safari": {
+                  "version_added": null
+                },
+                "safari_ios": {
+                  "version_added": null
+                },
+                "webview_android": {
+                  "version_added": null
+                }
+              },
+              "status": {
+                "experimental": false,
+                "standard_track": true,
+                "deprecated": false
+              }
+            }
+          },
+          "ondrop": {
+            "__compat": {
+              "mdn_url": "https://developer.mozilla.org/docs/Web/SVG/Attribute/ondrop",
+              "support": {
+                "chrome": {
+                  "version_added": null
+                },
+                "chrome_android": {
+                  "version_added": null
+                },
+                "edge": {
+                  "version_added": null
+                },
+                "edge_mobile": {
+                  "version_added": null
+                },
+                "firefox": {
+                  "version_added": null
+                },
+                "firefox_android": {
+                  "version_added": null
+                },
+                "ie": {
+                  "version_added": null
+                },
+                "opera": {
+                  "version_added": null
+                },
+                "opera_android": {
+                  "version_added": null
+                },
+                "safari": {
+                  "version_added": null
+                },
+                "safari_ios": {
+                  "version_added": null
+                },
+                "webview_android": {
+                  "version_added": null
+                }
+              },
+              "status": {
+                "experimental": false,
+                "standard_track": true,
+                "deprecated": false
+              }
+            }
+          },
+          "ondurationchange": {
+            "__compat": {
+              "mdn_url": "https://developer.mozilla.org/docs/Web/SVG/Attribute/ondurationchange",
+              "support": {
+                "chrome": {
+                  "version_added": null
+                },
+                "chrome_android": {
+                  "version_added": null
+                },
+                "edge": {
+                  "version_added": null
+                },
+                "edge_mobile": {
+                  "version_added": null
+                },
+                "firefox": {
+                  "version_added": null
+                },
+                "firefox_android": {
+                  "version_added": null
+                },
+                "ie": {
+                  "version_added": null
+                },
+                "opera": {
+                  "version_added": null
+                },
+                "opera_android": {
+                  "version_added": null
+                },
+                "safari": {
+                  "version_added": null
+                },
+                "safari_ios": {
+                  "version_added": null
+                },
+                "webview_android": {
+                  "version_added": null
+                }
+              },
+              "status": {
+                "experimental": false,
+                "standard_track": true,
+                "deprecated": false
+              }
+            }
+          },
+          "onemptied": {
+            "__compat": {
+              "mdn_url": "https://developer.mozilla.org/docs/Web/SVG/Attribute/onemptied",
+              "support": {
+                "chrome": {
+                  "version_added": null
+                },
+                "chrome_android": {
+                  "version_added": null
+                },
+                "edge": {
+                  "version_added": null
+                },
+                "edge_mobile": {
+                  "version_added": null
+                },
+                "firefox": {
+                  "version_added": null
+                },
+                "firefox_android": {
+                  "version_added": null
+                },
+                "ie": {
+                  "version_added": null
+                },
+                "opera": {
+                  "version_added": null
+                },
+                "opera_android": {
+                  "version_added": null
+                },
+                "safari": {
+                  "version_added": null
+                },
+                "safari_ios": {
+                  "version_added": null
+                },
+                "webview_android": {
+                  "version_added": null
+                }
+              },
+              "status": {
+                "experimental": false,
+                "standard_track": true,
+                "deprecated": false
+              }
+            }
+          },
+          "onended": {
+            "__compat": {
+              "mdn_url": "https://developer.mozilla.org/docs/Web/SVG/Attribute/onended",
+              "support": {
+                "chrome": {
+                  "version_added": null
+                },
+                "chrome_android": {
+                  "version_added": null
+                },
+                "edge": {
+                  "version_added": null
+                },
+                "edge_mobile": {
+                  "version_added": null
+                },
+                "firefox": {
+                  "version_added": null
+                },
+                "firefox_android": {
+                  "version_added": null
+                },
+                "ie": {
+                  "version_added": null
+                },
+                "opera": {
+                  "version_added": null
+                },
+                "opera_android": {
+                  "version_added": null
+                },
+                "safari": {
+                  "version_added": null
+                },
+                "safari_ios": {
+                  "version_added": null
+                },
+                "webview_android": {
+                  "version_added": null
+                }
+              },
+              "status": {
+                "experimental": false,
+                "standard_track": true,
+                "deprecated": false
+              }
+            }
+          },
+          "onerror": {
+            "__compat": {
+              "mdn_url": "https://developer.mozilla.org/docs/Web/SVG/Attribute/onerror",
+              "support": {
+                "chrome": {
+                  "version_added": null
+                },
+                "chrome_android": {
+                  "version_added": null
+                },
+                "edge": {
+                  "version_added": null
+                },
+                "edge_mobile": {
+                  "version_added": null
+                },
+                "firefox": {
+                  "version_added": null
+                },
+                "firefox_android": {
+                  "version_added": null
+                },
+                "ie": {
+                  "version_added": null
+                },
+                "opera": {
+                  "version_added": null
+                },
+                "opera_android": {
+                  "version_added": null
+                },
+                "safari": {
+                  "version_added": null
+                },
+                "safari_ios": {
+                  "version_added": null
+                },
+                "webview_android": {
+                  "version_added": null
+                }
+              },
+              "status": {
+                "experimental": false,
+                "standard_track": true,
+                "deprecated": false
+              }
+            }
+          },
+          "onfocus": {
+            "__compat": {
+              "mdn_url": "https://developer.mozilla.org/docs/Web/SVG/Attribute/onfocus",
+              "support": {
+                "chrome": {
+                  "version_added": null
+                },
+                "chrome_android": {
+                  "version_added": null
+                },
+                "edge": {
+                  "version_added": null
+                },
+                "edge_mobile": {
+                  "version_added": null
+                },
+                "firefox": {
+                  "version_added": null
+                },
+                "firefox_android": {
+                  "version_added": null
+                },
+                "ie": {
+                  "version_added": null
+                },
+                "opera": {
+                  "version_added": null
+                },
+                "opera_android": {
+                  "version_added": null
+                },
+                "safari": {
+                  "version_added": null
+                },
+                "safari_ios": {
+                  "version_added": null
+                },
+                "webview_android": {
+                  "version_added": null
+                }
+              },
+              "status": {
+                "experimental": false,
+                "standard_track": true,
+                "deprecated": false
+              }
+            }
+          },
+          "oninput": {
+            "__compat": {
+              "mdn_url": "https://developer.mozilla.org/docs/Web/SVG/Attribute/oninput",
+              "support": {
+                "chrome": {
+                  "version_added": null
+                },
+                "chrome_android": {
+                  "version_added": null
+                },
+                "edge": {
+                  "version_added": null
+                },
+                "edge_mobile": {
+                  "version_added": null
+                },
+                "firefox": {
+                  "version_added": null
+                },
+                "firefox_android": {
+                  "version_added": null
+                },
+                "ie": {
+                  "version_added": null
+                },
+                "opera": {
+                  "version_added": null
+                },
+                "opera_android": {
+                  "version_added": null
+                },
+                "safari": {
+                  "version_added": null
+                },
+                "safari_ios": {
+                  "version_added": null
+                },
+                "webview_android": {
+                  "version_added": null
+                }
+              },
+              "status": {
+                "experimental": false,
+                "standard_track": true,
+                "deprecated": false
+              }
+            }
+          },
+          "oninvalid": {
+            "__compat": {
+              "mdn_url": "https://developer.mozilla.org/docs/Web/SVG/Attribute/oninvalid",
+              "support": {
+                "chrome": {
+                  "version_added": null
+                },
+                "chrome_android": {
+                  "version_added": null
+                },
+                "edge": {
+                  "version_added": null
+                },
+                "edge_mobile": {
+                  "version_added": null
+                },
+                "firefox": {
+                  "version_added": null
+                },
+                "firefox_android": {
+                  "version_added": null
+                },
+                "ie": {
+                  "version_added": null
+                },
+                "opera": {
+                  "version_added": null
+                },
+                "opera_android": {
+                  "version_added": null
+                },
+                "safari": {
+                  "version_added": null
+                },
+                "safari_ios": {
+                  "version_added": null
+                },
+                "webview_android": {
+                  "version_added": null
+                }
+              },
+              "status": {
+                "experimental": false,
+                "standard_track": true,
+                "deprecated": false
+              }
+            }
+          },
+          "onkeydown": {
+            "__compat": {
+              "mdn_url": "https://developer.mozilla.org/docs/Web/SVG/Attribute/onkeydown",
+              "support": {
+                "chrome": {
+                  "version_added": null
+                },
+                "chrome_android": {
+                  "version_added": null
+                },
+                "edge": {
+                  "version_added": null
+                },
+                "edge_mobile": {
+                  "version_added": null
+                },
+                "firefox": {
+                  "version_added": null
+                },
+                "firefox_android": {
+                  "version_added": null
+                },
+                "ie": {
+                  "version_added": null
+                },
+                "opera": {
+                  "version_added": null
+                },
+                "opera_android": {
+                  "version_added": null
+                },
+                "safari": {
+                  "version_added": null
+                },
+                "safari_ios": {
+                  "version_added": null
+                },
+                "webview_android": {
+                  "version_added": null
+                }
+              },
+              "status": {
+                "experimental": false,
+                "standard_track": true,
+                "deprecated": false
+              }
+            }
+          },
+          "onkeypress": {
+            "__compat": {
+              "mdn_url": "https://developer.mozilla.org/docs/Web/SVG/Attribute/onkeypress",
+              "support": {
+                "chrome": {
+                  "version_added": null
+                },
+                "chrome_android": {
+                  "version_added": null
+                },
+                "edge": {
+                  "version_added": null
+                },
+                "edge_mobile": {
+                  "version_added": null
+                },
+                "firefox": {
+                  "version_added": null
+                },
+                "firefox_android": {
+                  "version_added": null
+                },
+                "ie": {
+                  "version_added": null
+                },
+                "opera": {
+                  "version_added": null
+                },
+                "opera_android": {
+                  "version_added": null
+                },
+                "safari": {
+                  "version_added": null
+                },
+                "safari_ios": {
+                  "version_added": null
+                },
+                "webview_android": {
+                  "version_added": null
+                }
+              },
+              "status": {
+                "experimental": false,
+                "standard_track": true,
+                "deprecated": false
+              }
+            }
+          },
+          "onkeyup": {
+            "__compat": {
+              "mdn_url": "https://developer.mozilla.org/docs/Web/SVG/Attribute/onkeyup",
+              "support": {
+                "chrome": {
+                  "version_added": null
+                },
+                "chrome_android": {
+                  "version_added": null
+                },
+                "edge": {
+                  "version_added": null
+                },
+                "edge_mobile": {
+                  "version_added": null
+                },
+                "firefox": {
+                  "version_added": null
+                },
+                "firefox_android": {
+                  "version_added": null
+                },
+                "ie": {
+                  "version_added": null
+                },
+                "opera": {
+                  "version_added": null
+                },
+                "opera_android": {
+                  "version_added": null
+                },
+                "safari": {
+                  "version_added": null
+                },
+                "safari_ios": {
+                  "version_added": null
+                },
+                "webview_android": {
+                  "version_added": null
+                }
+              },
+              "status": {
+                "experimental": false,
+                "standard_track": true,
+                "deprecated": false
+              }
+            }
+          },
+          "onload": {
+            "__compat": {
+              "mdn_url": "https://developer.mozilla.org/docs/Web/SVG/Attribute/onload",
+              "support": {
+                "chrome": {
+                  "version_added": null
+                },
+                "chrome_android": {
+                  "version_added": null
+                },
+                "edge": {
+                  "version_added": null
+                },
+                "edge_mobile": {
+                  "version_added": null
+                },
+                "firefox": {
+                  "version_added": null
+                },
+                "firefox_android": {
+                  "version_added": null
+                },
+                "ie": {
+                  "version_added": null
+                },
+                "opera": {
+                  "version_added": null
+                },
+                "opera_android": {
+                  "version_added": null
+                },
+                "safari": {
+                  "version_added": null
+                },
+                "safari_ios": {
+                  "version_added": null
+                },
+                "webview_android": {
+                  "version_added": null
+                }
+              },
+              "status": {
+                "experimental": false,
+                "standard_track": true,
+                "deprecated": false
+              }
+            }
+          },
+          "onloadeddata": {
+            "__compat": {
+              "mdn_url": "https://developer.mozilla.org/docs/Web/SVG/Attribute/onloadeddata",
+              "support": {
+                "chrome": {
+                  "version_added": null
+                },
+                "chrome_android": {
+                  "version_added": null
+                },
+                "edge": {
+                  "version_added": null
+                },
+                "edge_mobile": {
+                  "version_added": null
+                },
+                "firefox": {
+                  "version_added": null
+                },
+                "firefox_android": {
+                  "version_added": null
+                },
+                "ie": {
+                  "version_added": null
+                },
+                "opera": {
+                  "version_added": null
+                },
+                "opera_android": {
+                  "version_added": null
+                },
+                "safari": {
+                  "version_added": null
+                },
+                "safari_ios": {
+                  "version_added": null
+                },
+                "webview_android": {
+                  "version_added": null
+                }
+              },
+              "status": {
+                "experimental": false,
+                "standard_track": true,
+                "deprecated": false
+              }
+            }
+          },
+          "onloadedmetadata": {
+            "__compat": {
+              "mdn_url": "https://developer.mozilla.org/docs/Web/SVG/Attribute/onloadedmetadata",
+              "support": {
+                "chrome": {
+                  "version_added": null
+                },
+                "chrome_android": {
+                  "version_added": null
+                },
+                "edge": {
+                  "version_added": null
+                },
+                "edge_mobile": {
+                  "version_added": null
+                },
+                "firefox": {
+                  "version_added": null
+                },
+                "firefox_android": {
+                  "version_added": null
+                },
+                "ie": {
+                  "version_added": null
+                },
+                "opera": {
+                  "version_added": null
+                },
+                "opera_android": {
+                  "version_added": null
+                },
+                "safari": {
+                  "version_added": null
+                },
+                "safari_ios": {
+                  "version_added": null
+                },
+                "webview_android": {
+                  "version_added": null
+                }
+              },
+              "status": {
+                "experimental": false,
+                "standard_track": true,
+                "deprecated": false
+              }
+            }
+          },
+          "onloadstart": {
+            "__compat": {
+              "mdn_url": "https://developer.mozilla.org/docs/Web/SVG/Attribute/onloadstart",
+              "support": {
+                "chrome": {
+                  "version_added": null
+                },
+                "chrome_android": {
+                  "version_added": null
+                },
+                "edge": {
+                  "version_added": null
+                },
+                "edge_mobile": {
+                  "version_added": null
+                },
+                "firefox": {
+                  "version_added": null
+                },
+                "firefox_android": {
+                  "version_added": null
+                },
+                "ie": {
+                  "version_added": null
+                },
+                "opera": {
+                  "version_added": null
+                },
+                "opera_android": {
+                  "version_added": null
+                },
+                "safari": {
+                  "version_added": null
+                },
+                "safari_ios": {
+                  "version_added": null
+                },
+                "webview_android": {
+                  "version_added": null
+                }
+              },
+              "status": {
+                "experimental": false,
+                "standard_track": true,
+                "deprecated": false
+              }
+            }
+          },
+          "onmousedown": {
+            "__compat": {
+              "mdn_url": "https://developer.mozilla.org/docs/Web/SVG/Attribute/onmousedown",
+              "support": {
+                "chrome": {
+                  "version_added": null
+                },
+                "chrome_android": {
+                  "version_added": null
+                },
+                "edge": {
+                  "version_added": null
+                },
+                "edge_mobile": {
+                  "version_added": null
+                },
+                "firefox": {
+                  "version_added": null
+                },
+                "firefox_android": {
+                  "version_added": null
+                },
+                "ie": {
+                  "version_added": null
+                },
+                "opera": {
+                  "version_added": null
+                },
+                "opera_android": {
+                  "version_added": null
+                },
+                "safari": {
+                  "version_added": null
+                },
+                "safari_ios": {
+                  "version_added": null
+                },
+                "webview_android": {
+                  "version_added": null
+                }
+              },
+              "status": {
+                "experimental": false,
+                "standard_track": true,
+                "deprecated": false
+              }
+            }
+          },
+          "onmouseenter": {
+            "__compat": {
+              "mdn_url": "https://developer.mozilla.org/docs/Web/SVG/Attribute/onmouseenter",
+              "support": {
+                "chrome": {
+                  "version_added": null
+                },
+                "chrome_android": {
+                  "version_added": null
+                },
+                "edge": {
+                  "version_added": null
+                },
+                "edge_mobile": {
+                  "version_added": null
+                },
+                "firefox": {
+                  "version_added": null
+                },
+                "firefox_android": {
+                  "version_added": null
+                },
+                "ie": {
+                  "version_added": null
+                },
+                "opera": {
+                  "version_added": null
+                },
+                "opera_android": {
+                  "version_added": null
+                },
+                "safari": {
+                  "version_added": null
+                },
+                "safari_ios": {
+                  "version_added": null
+                },
+                "webview_android": {
+                  "version_added": null
+                }
+              },
+              "status": {
+                "experimental": false,
+                "standard_track": true,
+                "deprecated": false
+              }
+            }
+          },
+          "onmouseleave": {
+            "__compat": {
+              "mdn_url": "https://developer.mozilla.org/docs/Web/SVG/Attribute/onmouseleave",
+              "support": {
+                "chrome": {
+                  "version_added": null
+                },
+                "chrome_android": {
+                  "version_added": null
+                },
+                "edge": {
+                  "version_added": null
+                },
+                "edge_mobile": {
+                  "version_added": null
+                },
+                "firefox": {
+                  "version_added": null
+                },
+                "firefox_android": {
+                  "version_added": null
+                },
+                "ie": {
+                  "version_added": null
+                },
+                "opera": {
+                  "version_added": null
+                },
+                "opera_android": {
+                  "version_added": null
+                },
+                "safari": {
+                  "version_added": null
+                },
+                "safari_ios": {
+                  "version_added": null
+                },
+                "webview_android": {
+                  "version_added": null
+                }
+              },
+              "status": {
+                "experimental": false,
+                "standard_track": true,
+                "deprecated": false
+              }
+            }
+          },
+          "onmousemove": {
+            "__compat": {
+              "mdn_url": "https://developer.mozilla.org/docs/Web/SVG/Attribute/onmousemove",
+              "support": {
+                "chrome": {
+                  "version_added": null
+                },
+                "chrome_android": {
+                  "version_added": null
+                },
+                "edge": {
+                  "version_added": null
+                },
+                "edge_mobile": {
+                  "version_added": null
+                },
+                "firefox": {
+                  "version_added": null
+                },
+                "firefox_android": {
+                  "version_added": null
+                },
+                "ie": {
+                  "version_added": null
+                },
+                "opera": {
+                  "version_added": null
+                },
+                "opera_android": {
+                  "version_added": null
+                },
+                "safari": {
+                  "version_added": null
+                },
+                "safari_ios": {
+                  "version_added": null
+                },
+                "webview_android": {
+                  "version_added": null
+                }
+              },
+              "status": {
+                "experimental": false,
+                "standard_track": true,
+                "deprecated": false
+              }
+            }
+          },
+          "onmouseout": {
+            "__compat": {
+              "mdn_url": "https://developer.mozilla.org/docs/Web/SVG/Attribute/onmouseout",
+              "support": {
+                "chrome": {
+                  "version_added": null
+                },
+                "chrome_android": {
+                  "version_added": null
+                },
+                "edge": {
+                  "version_added": null
+                },
+                "edge_mobile": {
+                  "version_added": null
+                },
+                "firefox": {
+                  "version_added": null
+                },
+                "firefox_android": {
+                  "version_added": null
+                },
+                "ie": {
+                  "version_added": null
+                },
+                "opera": {
+                  "version_added": null
+                },
+                "opera_android": {
+                  "version_added": null
+                },
+                "safari": {
+                  "version_added": null
+                },
+                "safari_ios": {
+                  "version_added": null
+                },
+                "webview_android": {
+                  "version_added": null
+                }
+              },
+              "status": {
+                "experimental": false,
+                "standard_track": true,
+                "deprecated": false
+              }
+            }
+          },
+          "onmouseover": {
+            "__compat": {
+              "mdn_url": "https://developer.mozilla.org/docs/Web/SVG/Attribute/onmouseover",
+              "support": {
+                "chrome": {
+                  "version_added": null
+                },
+                "chrome_android": {
+                  "version_added": null
+                },
+                "edge": {
+                  "version_added": null
+                },
+                "edge_mobile": {
+                  "version_added": null
+                },
+                "firefox": {
+                  "version_added": null
+                },
+                "firefox_android": {
+                  "version_added": null
+                },
+                "ie": {
+                  "version_added": null
+                },
+                "opera": {
+                  "version_added": null
+                },
+                "opera_android": {
+                  "version_added": null
+                },
+                "safari": {
+                  "version_added": null
+                },
+                "safari_ios": {
+                  "version_added": null
+                },
+                "webview_android": {
+                  "version_added": null
+                }
+              },
+              "status": {
+                "experimental": false,
+                "standard_track": true,
+                "deprecated": false
+              }
+            }
+          },
+          "onmouseup": {
+            "__compat": {
+              "mdn_url": "https://developer.mozilla.org/docs/Web/SVG/Attribute/onmouseup",
+              "support": {
+                "chrome": {
+                  "version_added": null
+                },
+                "chrome_android": {
+                  "version_added": null
+                },
+                "edge": {
+                  "version_added": null
+                },
+                "edge_mobile": {
+                  "version_added": null
+                },
+                "firefox": {
+                  "version_added": null
+                },
+                "firefox_android": {
+                  "version_added": null
+                },
+                "ie": {
+                  "version_added": null
+                },
+                "opera": {
+                  "version_added": null
+                },
+                "opera_android": {
+                  "version_added": null
+                },
+                "safari": {
+                  "version_added": null
+                },
+                "safari_ios": {
+                  "version_added": null
+                },
+                "webview_android": {
+                  "version_added": null
+                }
+              },
+              "status": {
+                "experimental": false,
+                "standard_track": true,
+                "deprecated": false
+              }
+            }
+          },
+          "onmousewheel": {
+            "__compat": {
+              "mdn_url": "https://developer.mozilla.org/docs/Web/SVG/Attribute/onmousewheel",
+              "support": {
+                "chrome": {
+                  "version_added": null
+                },
+                "chrome_android": {
+                  "version_added": null
+                },
+                "edge": {
+                  "version_added": null
+                },
+                "edge_mobile": {
+                  "version_added": null
+                },
+                "firefox": {
+                  "version_added": null
+                },
+                "firefox_android": {
+                  "version_added": null
+                },
+                "ie": {
+                  "version_added": null
+                },
+                "opera": {
+                  "version_added": null
+                },
+                "opera_android": {
+                  "version_added": null
+                },
+                "safari": {
+                  "version_added": null
+                },
+                "safari_ios": {
+                  "version_added": null
+                },
+                "webview_android": {
+                  "version_added": null
+                }
+              },
+              "status": {
+                "experimental": false,
+                "standard_track": true,
+                "deprecated": false
+              }
+            }
+          },
+          "onpause": {
+            "__compat": {
+              "mdn_url": "https://developer.mozilla.org/docs/Web/SVG/Attribute/onpause",
+              "support": {
+                "chrome": {
+                  "version_added": null
+                },
+                "chrome_android": {
+                  "version_added": null
+                },
+                "edge": {
+                  "version_added": null
+                },
+                "edge_mobile": {
+                  "version_added": null
+                },
+                "firefox": {
+                  "version_added": null
+                },
+                "firefox_android": {
+                  "version_added": null
+                },
+                "ie": {
+                  "version_added": null
+                },
+                "opera": {
+                  "version_added": null
+                },
+                "opera_android": {
+                  "version_added": null
+                },
+                "safari": {
+                  "version_added": null
+                },
+                "safari_ios": {
+                  "version_added": null
+                },
+                "webview_android": {
+                  "version_added": null
+                }
+              },
+              "status": {
+                "experimental": false,
+                "standard_track": true,
+                "deprecated": false
+              }
+            }
+          },
+          "onplay": {
+            "__compat": {
+              "mdn_url": "https://developer.mozilla.org/docs/Web/SVG/Attribute/onplay",
+              "support": {
+                "chrome": {
+                  "version_added": null
+                },
+                "chrome_android": {
+                  "version_added": null
+                },
+                "edge": {
+                  "version_added": null
+                },
+                "edge_mobile": {
+                  "version_added": null
+                },
+                "firefox": {
+                  "version_added": null
+                },
+                "firefox_android": {
+                  "version_added": null
+                },
+                "ie": {
+                  "version_added": null
+                },
+                "opera": {
+                  "version_added": null
+                },
+                "opera_android": {
+                  "version_added": null
+                },
+                "safari": {
+                  "version_added": null
+                },
+                "safari_ios": {
+                  "version_added": null
+                },
+                "webview_android": {
+                  "version_added": null
+                }
+              },
+              "status": {
+                "experimental": false,
+                "standard_track": true,
+                "deprecated": false
+              }
+            }
+          },
+          "onplaying": {
+            "__compat": {
+              "mdn_url": "https://developer.mozilla.org/docs/Web/SVG/Attribute/onplaying",
+              "support": {
+                "chrome": {
+                  "version_added": null
+                },
+                "chrome_android": {
+                  "version_added": null
+                },
+                "edge": {
+                  "version_added": null
+                },
+                "edge_mobile": {
+                  "version_added": null
+                },
+                "firefox": {
+                  "version_added": null
+                },
+                "firefox_android": {
+                  "version_added": null
+                },
+                "ie": {
+                  "version_added": null
+                },
+                "opera": {
+                  "version_added": null
+                },
+                "opera_android": {
+                  "version_added": null
+                },
+                "safari": {
+                  "version_added": null
+                },
+                "safari_ios": {
+                  "version_added": null
+                },
+                "webview_android": {
+                  "version_added": null
+                }
+              },
+              "status": {
+                "experimental": false,
+                "standard_track": true,
+                "deprecated": false
+              }
+            }
+          },
+          "onprogress": {
+            "__compat": {
+              "mdn_url": "https://developer.mozilla.org/docs/Web/SVG/Attribute/onprogress",
+              "support": {
+                "chrome": {
+                  "version_added": null
+                },
+                "chrome_android": {
+                  "version_added": null
+                },
+                "edge": {
+                  "version_added": null
+                },
+                "edge_mobile": {
+                  "version_added": null
+                },
+                "firefox": {
+                  "version_added": null
+                },
+                "firefox_android": {
+                  "version_added": null
+                },
+                "ie": {
+                  "version_added": null
+                },
+                "opera": {
+                  "version_added": null
+                },
+                "opera_android": {
+                  "version_added": null
+                },
+                "safari": {
+                  "version_added": null
+                },
+                "safari_ios": {
+                  "version_added": null
+                },
+                "webview_android": {
+                  "version_added": null
+                }
+              },
+              "status": {
+                "experimental": false,
+                "standard_track": true,
+                "deprecated": false
+              }
+            }
+          },
+          "onratechange": {
+            "__compat": {
+              "mdn_url": "https://developer.mozilla.org/docs/Web/SVG/Attribute/onratechange",
+              "support": {
+                "chrome": {
+                  "version_added": null
+                },
+                "chrome_android": {
+                  "version_added": null
+                },
+                "edge": {
+                  "version_added": null
+                },
+                "edge_mobile": {
+                  "version_added": null
+                },
+                "firefox": {
+                  "version_added": null
+                },
+                "firefox_android": {
+                  "version_added": null
+                },
+                "ie": {
+                  "version_added": null
+                },
+                "opera": {
+                  "version_added": null
+                },
+                "opera_android": {
+                  "version_added": null
+                },
+                "safari": {
+                  "version_added": null
+                },
+                "safari_ios": {
+                  "version_added": null
+                },
+                "webview_android": {
+                  "version_added": null
+                }
+              },
+              "status": {
+                "experimental": false,
+                "standard_track": true,
+                "deprecated": false
+              }
+            }
+          },
+          "onreset": {
+            "__compat": {
+              "mdn_url": "https://developer.mozilla.org/docs/Web/SVG/Attribute/onreset",
+              "support": {
+                "chrome": {
+                  "version_added": null
+                },
+                "chrome_android": {
+                  "version_added": null
+                },
+                "edge": {
+                  "version_added": null
+                },
+                "edge_mobile": {
+                  "version_added": null
+                },
+                "firefox": {
+                  "version_added": null
+                },
+                "firefox_android": {
+                  "version_added": null
+                },
+                "ie": {
+                  "version_added": null
+                },
+                "opera": {
+                  "version_added": null
+                },
+                "opera_android": {
+                  "version_added": null
+                },
+                "safari": {
+                  "version_added": null
+                },
+                "safari_ios": {
+                  "version_added": null
+                },
+                "webview_android": {
+                  "version_added": null
+                }
+              },
+              "status": {
+                "experimental": false,
+                "standard_track": true,
+                "deprecated": false
+              }
+            }
+          },
+          "onresize": {
+            "__compat": {
+              "mdn_url": "https://developer.mozilla.org/docs/Web/SVG/Attribute/onresize",
+              "support": {
+                "chrome": {
+                  "version_added": null
+                },
+                "chrome_android": {
+                  "version_added": null
+                },
+                "edge": {
+                  "version_added": null
+                },
+                "edge_mobile": {
+                  "version_added": null
+                },
+                "firefox": {
+                  "version_added": null
+                },
+                "firefox_android": {
+                  "version_added": null
+                },
+                "ie": {
+                  "version_added": null
+                },
+                "opera": {
+                  "version_added": null
+                },
+                "opera_android": {
+                  "version_added": null
+                },
+                "safari": {
+                  "version_added": null
+                },
+                "safari_ios": {
+                  "version_added": null
+                },
+                "webview_android": {
+                  "version_added": null
+                }
+              },
+              "status": {
+                "experimental": false,
+                "standard_track": true,
+                "deprecated": false
+              }
+            }
+          },
+          "onscroll": {
+            "__compat": {
+              "mdn_url": "https://developer.mozilla.org/docs/Web/SVG/Attribute/onscroll",
+              "support": {
+                "chrome": {
+                  "version_added": null
+                },
+                "chrome_android": {
+                  "version_added": null
+                },
+                "edge": {
+                  "version_added": null
+                },
+                "edge_mobile": {
+                  "version_added": null
+                },
+                "firefox": {
+                  "version_added": null
+                },
+                "firefox_android": {
+                  "version_added": null
+                },
+                "ie": {
+                  "version_added": null
+                },
+                "opera": {
+                  "version_added": null
+                },
+                "opera_android": {
+                  "version_added": null
+                },
+                "safari": {
+                  "version_added": null
+                },
+                "safari_ios": {
+                  "version_added": null
+                },
+                "webview_android": {
+                  "version_added": null
+                }
+              },
+              "status": {
+                "experimental": false,
+                "standard_track": true,
+                "deprecated": false
+              }
+            }
+          },
+          "onseeked": {
+            "__compat": {
+              "mdn_url": "https://developer.mozilla.org/docs/Web/SVG/Attribute/onseeked",
+              "support": {
+                "chrome": {
+                  "version_added": null
+                },
+                "chrome_android": {
+                  "version_added": null
+                },
+                "edge": {
+                  "version_added": null
+                },
+                "edge_mobile": {
+                  "version_added": null
+                },
+                "firefox": {
+                  "version_added": null
+                },
+                "firefox_android": {
+                  "version_added": null
+                },
+                "ie": {
+                  "version_added": null
+                },
+                "opera": {
+                  "version_added": null
+                },
+                "opera_android": {
+                  "version_added": null
+                },
+                "safari": {
+                  "version_added": null
+                },
+                "safari_ios": {
+                  "version_added": null
+                },
+                "webview_android": {
+                  "version_added": null
+                }
+              },
+              "status": {
+                "experimental": false,
+                "standard_track": true,
+                "deprecated": false
+              }
+            }
+          },
+          "onseeking": {
+            "__compat": {
+              "mdn_url": "https://developer.mozilla.org/docs/Web/SVG/Attribute/onseeking",
+              "support": {
+                "chrome": {
+                  "version_added": null
+                },
+                "chrome_android": {
+                  "version_added": null
+                },
+                "edge": {
+                  "version_added": null
+                },
+                "edge_mobile": {
+                  "version_added": null
+                },
+                "firefox": {
+                  "version_added": null
+                },
+                "firefox_android": {
+                  "version_added": null
+                },
+                "ie": {
+                  "version_added": null
+                },
+                "opera": {
+                  "version_added": null
+                },
+                "opera_android": {
+                  "version_added": null
+                },
+                "safari": {
+                  "version_added": null
+                },
+                "safari_ios": {
+                  "version_added": null
+                },
+                "webview_android": {
+                  "version_added": null
+                }
+              },
+              "status": {
+                "experimental": false,
+                "standard_track": true,
+                "deprecated": false
+              }
+            }
+          },
+          "onselect": {
+            "__compat": {
+              "mdn_url": "https://developer.mozilla.org/docs/Web/SVG/Attribute/onselect",
+              "support": {
+                "chrome": {
+                  "version_added": null
+                },
+                "chrome_android": {
+                  "version_added": null
+                },
+                "edge": {
+                  "version_added": null
+                },
+                "edge_mobile": {
+                  "version_added": null
+                },
+                "firefox": {
+                  "version_added": null
+                },
+                "firefox_android": {
+                  "version_added": null
+                },
+                "ie": {
+                  "version_added": null
+                },
+                "opera": {
+                  "version_added": null
+                },
+                "opera_android": {
+                  "version_added": null
+                },
+                "safari": {
+                  "version_added": null
+                },
+                "safari_ios": {
+                  "version_added": null
+                },
+                "webview_android": {
+                  "version_added": null
+                }
+              },
+              "status": {
+                "experimental": false,
+                "standard_track": true,
+                "deprecated": false
+              }
+            }
+          },
+          "onshow": {
+            "__compat": {
+              "mdn_url": "https://developer.mozilla.org/docs/Web/SVG/Attribute/onshow",
+              "support": {
+                "chrome": {
+                  "version_added": null
+                },
+                "chrome_android": {
+                  "version_added": null
+                },
+                "edge": {
+                  "version_added": null
+                },
+                "edge_mobile": {
+                  "version_added": null
+                },
+                "firefox": {
+                  "version_added": null
+                },
+                "firefox_android": {
+                  "version_added": null
+                },
+                "ie": {
+                  "version_added": null
+                },
+                "opera": {
+                  "version_added": null
+                },
+                "opera_android": {
+                  "version_added": null
+                },
+                "safari": {
+                  "version_added": null
+                },
+                "safari_ios": {
+                  "version_added": null
+                },
+                "webview_android": {
+                  "version_added": null
+                }
+              },
+              "status": {
+                "experimental": false,
+                "standard_track": true,
+                "deprecated": false
+              }
+            }
+          },
+          "onstalled": {
+            "__compat": {
+              "mdn_url": "https://developer.mozilla.org/docs/Web/SVG/Attribute/onstalled",
+              "support": {
+                "chrome": {
+                  "version_added": null
+                },
+                "chrome_android": {
+                  "version_added": null
+                },
+                "edge": {
+                  "version_added": null
+                },
+                "edge_mobile": {
+                  "version_added": null
+                },
+                "firefox": {
+                  "version_added": null
+                },
+                "firefox_android": {
+                  "version_added": null
+                },
+                "ie": {
+                  "version_added": null
+                },
+                "opera": {
+                  "version_added": null
+                },
+                "opera_android": {
+                  "version_added": null
+                },
+                "safari": {
+                  "version_added": null
+                },
+                "safari_ios": {
+                  "version_added": null
+                },
+                "webview_android": {
+                  "version_added": null
+                }
+              },
+              "status": {
+                "experimental": false,
+                "standard_track": true,
+                "deprecated": false
+              }
+            }
+          },
+          "onsubmit": {
+            "__compat": {
+              "mdn_url": "https://developer.mozilla.org/docs/Web/SVG/Attribute/onsubmit",
+              "support": {
+                "chrome": {
+                  "version_added": null
+                },
+                "chrome_android": {
+                  "version_added": null
+                },
+                "edge": {
+                  "version_added": null
+                },
+                "edge_mobile": {
+                  "version_added": null
+                },
+                "firefox": {
+                  "version_added": null
+                },
+                "firefox_android": {
+                  "version_added": null
+                },
+                "ie": {
+                  "version_added": null
+                },
+                "opera": {
+                  "version_added": null
+                },
+                "opera_android": {
+                  "version_added": null
+                },
+                "safari": {
+                  "version_added": null
+                },
+                "safari_ios": {
+                  "version_added": null
+                },
+                "webview_android": {
+                  "version_added": null
+                }
+              },
+              "status": {
+                "experimental": false,
+                "standard_track": true,
+                "deprecated": false
+              }
+            }
+          },
+          "onsuspend": {
+            "__compat": {
+              "mdn_url": "https://developer.mozilla.org/docs/Web/SVG/Attribute/onsuspend",
+              "support": {
+                "chrome": {
+                  "version_added": null
+                },
+                "chrome_android": {
+                  "version_added": null
+                },
+                "edge": {
+                  "version_added": null
+                },
+                "edge_mobile": {
+                  "version_added": null
+                },
+                "firefox": {
+                  "version_added": null
+                },
+                "firefox_android": {
+                  "version_added": null
+                },
+                "ie": {
+                  "version_added": null
+                },
+                "opera": {
+                  "version_added": null
+                },
+                "opera_android": {
+                  "version_added": null
+                },
+                "safari": {
+                  "version_added": null
+                },
+                "safari_ios": {
+                  "version_added": null
+                },
+                "webview_android": {
+                  "version_added": null
+                }
+              },
+              "status": {
+                "experimental": false,
+                "standard_track": true,
+                "deprecated": false
+              }
+            }
+          },
+          "ontimeupdate": {
+            "__compat": {
+              "mdn_url": "https://developer.mozilla.org/docs/Web/SVG/Attribute/ontimeupdate",
+              "support": {
+                "chrome": {
+                  "version_added": null
+                },
+                "chrome_android": {
+                  "version_added": null
+                },
+                "edge": {
+                  "version_added": null
+                },
+                "edge_mobile": {
+                  "version_added": null
+                },
+                "firefox": {
+                  "version_added": null
+                },
+                "firefox_android": {
+                  "version_added": null
+                },
+                "ie": {
+                  "version_added": null
+                },
+                "opera": {
+                  "version_added": null
+                },
+                "opera_android": {
+                  "version_added": null
+                },
+                "safari": {
+                  "version_added": null
+                },
+                "safari_ios": {
+                  "version_added": null
+                },
+                "webview_android": {
+                  "version_added": null
+                }
+              },
+              "status": {
+                "experimental": false,
+                "standard_track": true,
+                "deprecated": false
+              }
+            }
+          },
+          "ontoggle": {
+            "__compat": {
+              "mdn_url": "https://developer.mozilla.org/docs/Web/SVG/Attribute/ontoggle",
+              "support": {
+                "chrome": {
+                  "version_added": null
+                },
+                "chrome_android": {
+                  "version_added": null
+                },
+                "edge": {
+                  "version_added": null
+                },
+                "edge_mobile": {
+                  "version_added": null
+                },
+                "firefox": {
+                  "version_added": null
+                },
+                "firefox_android": {
+                  "version_added": null
+                },
+                "ie": {
+                  "version_added": null
+                },
+                "opera": {
+                  "version_added": null
+                },
+                "opera_android": {
+                  "version_added": null
+                },
+                "safari": {
+                  "version_added": null
+                },
+                "safari_ios": {
+                  "version_added": null
+                },
+                "webview_android": {
+                  "version_added": null
+                }
+              },
+              "status": {
+                "experimental": false,
+                "standard_track": true,
+                "deprecated": false
+              }
+            }
+          },
+          "onvolumechange": {
+            "__compat": {
+              "mdn_url": "https://developer.mozilla.org/docs/Web/SVG/Attribute/onvolumechange",
+              "support": {
+                "chrome": {
+                  "version_added": null
+                },
+                "chrome_android": {
+                  "version_added": null
+                },
+                "edge": {
+                  "version_added": null
+                },
+                "edge_mobile": {
+                  "version_added": null
+                },
+                "firefox": {
+                  "version_added": null
+                },
+                "firefox_android": {
+                  "version_added": null
+                },
+                "ie": {
+                  "version_added": null
+                },
+                "opera": {
+                  "version_added": null
+                },
+                "opera_android": {
+                  "version_added": null
+                },
+                "safari": {
+                  "version_added": null
+                },
+                "safari_ios": {
+                  "version_added": null
+                },
+                "webview_android": {
+                  "version_added": null
+                }
+              },
+              "status": {
+                "experimental": false,
+                "standard_track": true,
+                "deprecated": false
+              }
+            }
+          },
+          "onwaiting": {
+            "__compat": {
+              "mdn_url": "https://developer.mozilla.org/docs/Web/SVG/Attribute/onwaiting",
+              "support": {
+                "chrome": {
+                  "version_added": null
+                },
+                "chrome_android": {
+                  "version_added": null
+                },
+                "edge": {
+                  "version_added": null
+                },
+                "edge_mobile": {
+                  "version_added": null
+                },
+                "firefox": {
+                  "version_added": null
+                },
+                "firefox_android": {
+                  "version_added": null
+                },
+                "ie": {
+                  "version_added": null
+                },
+                "opera": {
+                  "version_added": null
+                },
+                "opera_android": {
+                  "version_added": null
+                },
+                "safari": {
+                  "version_added": null
+                },
+                "safari_ios": {
+                  "version_added": null
+                },
+                "webview_android": {
+                  "version_added": null
+                }
+              },
+              "status": {
+                "experimental": false,
+                "standard_track": true,
+                "deprecated": false
+              }
+            }
+          }
+        },
+        "animation": {
+          "onbegin": {
+            "__compat": {
+              "mdn_url": "https://developer.mozilla.org/docs/Web/SVG/Attribute/onbegin",
+              "support": {
+                "chrome": {
+                  "version_added": null
+                },
+                "chrome_android": {
+                  "version_added": null
+                },
+                "edge": {
+                  "version_added": null
+                },
+                "edge_mobile": {
+                  "version_added": null
+                },
+                "firefox": {
+                  "version_added": null
+                },
+                "firefox_android": {
+                  "version_added": null
+                },
+                "ie": {
+                  "version_added": null
+                },
+                "opera": {
+                  "version_added": null
+                },
+                "opera_android": {
+                  "version_added": null
+                },
+                "safari": {
+                  "version_added": null
+                },
+                "safari_ios": {
+                  "version_added": null
+                },
+                "webview_android": {
+                  "version_added": null
+                }
+              },
+              "status": {
+                "experimental": false,
+                "standard_track": true,
+                "deprecated": false
+              }
+            }
+          },
+          "onend": {
+            "__compat": {
+              "mdn_url": "https://developer.mozilla.org/docs/Web/SVG/Attribute/onend",
+              "support": {
+                "chrome": {
+                  "version_added": null
+                },
+                "chrome_android": {
+                  "version_added": null
+                },
+                "edge": {
+                  "version_added": null
+                },
+                "edge_mobile": {
+                  "version_added": null
+                },
+                "firefox": {
+                  "version_added": null
+                },
+                "firefox_android": {
+                  "version_added": null
+                },
+                "ie": {
+                  "version_added": null
+                },
+                "opera": {
+                  "version_added": null
+                },
+                "opera_android": {
+                  "version_added": null
+                },
+                "safari": {
+                  "version_added": null
+                },
+                "safari_ios": {
+                  "version_added": null
+                },
+                "webview_android": {
+                  "version_added": null
+                }
+              },
+              "status": {
+                "experimental": false,
+                "standard_track": true,
+                "deprecated": false
+              }
+            }
+          },
+          "onrepeat": {
+            "__compat": {
+              "mdn_url": "https://developer.mozilla.org/docs/Web/SVG/Attribute/onrepeat",
+              "support": {
+                "chrome": {
+                  "version_added": null
+                },
+                "chrome_android": {
+                  "version_added": null
+                },
+                "edge": {
+                  "version_added": null
+                },
+                "edge_mobile": {
+                  "version_added": null
+                },
+                "firefox": {
+                  "version_added": null
+                },
+                "firefox_android": {
+                  "version_added": null
+                },
+                "ie": {
+                  "version_added": null
+                },
+                "opera": {
+                  "version_added": null
+                },
+                "opera_android": {
+                  "version_added": null
+                },
+                "safari": {
+                  "version_added": null
+                },
+                "safari_ios": {
+                  "version_added": null
+                },
+                "webview_android": {
+                  "version_added": null
+                }
+              },
+              "status": {
+                "experimental": false,
+                "standard_track": true,
+                "deprecated": false
+              }
+            }
+          }
+        },
+        "document": {
+          "onabort": {
+            "__compat": {
+              "mdn_url": "https://developer.mozilla.org/docs/Web/SVG/Attribute/onabort",
+              "support": {
+                "chrome": {
+                  "version_added": null
+                },
+                "chrome_android": {
+                  "version_added": null
+                },
+                "edge": {
+                  "version_added": null
+                },
+                "edge_mobile": {
+                  "version_added": null
+                },
+                "firefox": {
+                  "version_added": null
+                },
+                "firefox_android": {
+                  "version_added": null
+                },
+                "ie": {
+                  "version_added": null
+                },
+                "opera": {
+                  "version_added": null
+                },
+                "opera_android": {
+                  "version_added": null
+                },
+                "safari": {
+                  "version_added": null
+                },
+                "safari_ios": {
+                  "version_added": null
+                },
+                "webview_android": {
+                  "version_added": null
+                }
+              },
+              "status": {
+                "experimental": false,
+                "standard_track": true,
+                "deprecated": false
+              }
+            }
+          },
+          "onerror": {
+            "__compat": {
+              "mdn_url": "https://developer.mozilla.org/docs/Web/SVG/Attribute/onerror",
+              "support": {
+                "chrome": {
+                  "version_added": null
+                },
+                "chrome_android": {
+                  "version_added": null
+                },
+                "edge": {
+                  "version_added": null
+                },
+                "edge_mobile": {
+                  "version_added": null
+                },
+                "firefox": {
+                  "version_added": null
+                },
+                "firefox_android": {
+                  "version_added": null
+                },
+                "ie": {
+                  "version_added": null
+                },
+                "opera": {
+                  "version_added": null
+                },
+                "opera_android": {
+                  "version_added": null
+                },
+                "safari": {
+                  "version_added": null
+                },
+                "safari_ios": {
+                  "version_added": null
+                },
+                "webview_android": {
+                  "version_added": null
+                }
+              },
+              "status": {
+                "experimental": false,
+                "standard_track": true,
+                "deprecated": false
+              }
+            }
+          },
+          "onresize": {
+            "__compat": {
+              "mdn_url": "https://developer.mozilla.org/docs/Web/SVG/Attribute/onresize",
+              "support": {
+                "chrome": {
+                  "version_added": null
+                },
+                "chrome_android": {
+                  "version_added": null
+                },
+                "edge": {
+                  "version_added": null
+                },
+                "edge_mobile": {
+                  "version_added": null
+                },
+                "firefox": {
+                  "version_added": null
+                },
+                "firefox_android": {
+                  "version_added": null
+                },
+                "ie": {
+                  "version_added": null
+                },
+                "opera": {
+                  "version_added": null
+                },
+                "opera_android": {
+                  "version_added": null
+                },
+                "safari": {
+                  "version_added": null
+                },
+                "safari_ios": {
+                  "version_added": null
+                },
+                "webview_android": {
+                  "version_added": null
+                }
+              },
+              "status": {
+                "experimental": false,
+                "standard_track": true,
+                "deprecated": false
+              }
+            }
+          },
+          "onscroll": {
+            "__compat": {
+              "mdn_url": "https://developer.mozilla.org/docs/Web/SVG/Attribute/onscroll",
+              "support": {
+                "chrome": {
+                  "version_added": null
+                },
+                "chrome_android": {
+                  "version_added": null
+                },
+                "edge": {
+                  "version_added": null
+                },
+                "edge_mobile": {
+                  "version_added": null
+                },
+                "firefox": {
+                  "version_added": null
+                },
+                "firefox_android": {
+                  "version_added": null
+                },
+                "ie": {
+                  "version_added": null
+                },
+                "opera": {
+                  "version_added": null
+                },
+                "opera_android": {
+                  "version_added": null
+                },
+                "safari": {
+                  "version_added": null
+                },
+                "safari_ios": {
+                  "version_added": null
+                },
+                "webview_android": {
+                  "version_added": null
+                }
+              },
+              "status": {
+                "experimental": false,
+                "standard_track": true,
+                "deprecated": false
+              }
+            }
+          },
+          "onunload": {
+            "__compat": {
+              "mdn_url": "https://developer.mozilla.org/docs/Web/SVG/Attribute/onunload",
+              "support": {
+                "chrome": {
+                  "version_added": null
+                },
+                "chrome_android": {
+                  "version_added": null
+                },
+                "edge": {
+                  "version_added": null
+                },
+                "edge_mobile": {
+                  "version_added": null
+                },
+                "firefox": {
+                  "version_added": null
+                },
+                "firefox_android": {
+                  "version_added": null
+                },
+                "ie": {
+                  "version_added": null
+                },
+                "opera": {
+                  "version_added": null
+                },
+                "opera_android": {
+                  "version_added": null
+                },
+                "safari": {
+                  "version_added": null
+                },
+                "safari_ios": {
+                  "version_added": null
+                },
+                "webview_android": {
+                  "version_added": null
+                }
+              },
+              "status": {
+                "experimental": false,
+                "standard_track": true,
+                "deprecated": false
+              }
+            }
+          }
+        },
+        "graphical": {
+          "onactivate": {
+            "__compat": {
+              "mdn_url": "https://developer.mozilla.org/docs/Web/SVG/Attribute/onactivate",
+              "support": {
+                "chrome": {
+                  "version_added": null
+                },
+                "chrome_android": {
+                  "version_added": null
+                },
+                "edge": {
+                  "version_added": null
+                },
+                "edge_mobile": {
+                  "version_added": null
+                },
+                "firefox": {
+                  "version_added": null
+                },
+                "firefox_android": {
+                  "version_added": null
+                },
+                "ie": {
+                  "version_added": null
+                },
+                "opera": {
+                  "version_added": null
+                },
+                "opera_android": {
+                  "version_added": null
+                },
+                "safari": {
+                  "version_added": null
+                },
+                "safari_ios": {
+                  "version_added": null
+                },
+                "webview_android": {
+                  "version_added": null
+                }
+              },
+              "status": {
+                "experimental": false,
+                "standard_track": true,
+                "deprecated": true
+              }
+            }
+          },
+          "onfocusin": {
+            "__compat": {
+              "mdn_url": "https://developer.mozilla.org/docs/Web/SVG/Attribute/onfocusin",
+              "support": {
+                "chrome": {
+                  "version_added": null
+                },
+                "chrome_android": {
+                  "version_added": null
+                },
+                "edge": {
+                  "version_added": null
+                },
+                "edge_mobile": {
+                  "version_added": null
+                },
+                "firefox": {
+                  "version_added": null
+                },
+                "firefox_android": {
+                  "version_added": null
+                },
+                "ie": {
+                  "version_added": null
+                },
+                "opera": {
+                  "version_added": null
+                },
+                "opera_android": {
+                  "version_added": null
+                },
+                "safari": {
+                  "version_added": null
+                },
+                "safari_ios": {
+                  "version_added": null
+                },
+                "webview_android": {
+                  "version_added": null
+                }
+              },
+              "status": {
+                "experimental": false,
+                "standard_track": true,
+                "deprecated": false
+              }
+            }
+          },
+          "onfocusout": {
+            "__compat": {
+              "mdn_url": "https://developer.mozilla.org/docs/Web/SVG/Attribute/onfocusout",
+              "support": {
+                "chrome": {
+                  "version_added": null
+                },
+                "chrome_android": {
+                  "version_added": null
+                },
+                "edge": {
+                  "version_added": null
+                },
+                "edge_mobile": {
+                  "version_added": null
+                },
+                "firefox": {
+                  "version_added": null
+                },
+                "firefox_android": {
+                  "version_added": null
+                },
+                "ie": {
+                  "version_added": null
+                },
+                "opera": {
+                  "version_added": null
+                },
+                "opera_android": {
+                  "version_added": null
+                },
+                "safari": {
+                  "version_added": null
+                },
+                "safari_ios": {
+                  "version_added": null
+                },
+                "webview_android": {
+                  "version_added": null
+                }
+              },
+              "status": {
+                "experimental": false,
+                "standard_track": true,
+                "deprecated": false
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

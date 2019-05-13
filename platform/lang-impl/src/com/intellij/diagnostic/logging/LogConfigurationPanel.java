@@ -1,26 +1,10 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.diagnostic.logging;
 
 import com.intellij.diagnostic.DiagnosticBundle;
 import com.intellij.execution.configurations.LogFileOptions;
 import com.intellij.execution.configurations.PredefinedLogFile;
 import com.intellij.execution.configurations.RunConfigurationBase;
-import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SettingsEditor;
@@ -29,29 +13,27 @@ import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.ui.*;
+import com.intellij.openapi.wm.IdeFocusManager;
+import com.intellij.ui.BooleanTableCellRenderer;
+import com.intellij.ui.TableUtil;
+import com.intellij.ui.ToolbarDecorator;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.table.TableView;
+import com.intellij.util.SmartList;
 import com.intellij.util.ui.AbstractTableCellEditor;
 import com.intellij.util.ui.CellEditorComponentWithBrowseButton;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.ListTableModel;
+import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.table.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-/**
- * User: anna
- * Date: Apr 22, 2005
- */
 public class LogConfigurationPanel<T extends RunConfigurationBase> extends SettingsEditor<T> {
   private final TableView<LogFileOptions> myFilesTable;
   private final ListTableModel<LogFileOptions> myModel;
@@ -61,16 +43,16 @@ public class LogConfigurationPanel<T extends RunConfigurationBase> extends Setti
   private TextFieldWithBrowseButton myOutputFile;
   private JCheckBox myShowConsoleOnStdOutCb;
   private JCheckBox myShowConsoleOnStdErrCb;
-  private final Map<LogFileOptions, PredefinedLogFile> myLog2Predefined = new HashMap<LogFileOptions, PredefinedLogFile>();
-  private final List<PredefinedLogFile> myUnresolvedPredefined = new ArrayList<PredefinedLogFile>();
-
-  private final ColumnInfo<LogFileOptions, Boolean> IS_SHOW = new MyIsActiveColumnInfo();
-  private final ColumnInfo<LogFileOptions, LogFileOptions> FILE = new MyLogFileColumnInfo();
-  private final ColumnInfo<LogFileOptions, Boolean> IS_SKIP_CONTENT = new MyIsSkipColumnInfo();
+  private final Map<LogFileOptions, PredefinedLogFile> myLog2Predefined = new THashMap<>();
+  private final List<PredefinedLogFile> myUnresolvedPredefined = new SmartList<>();
 
   public LogConfigurationPanel() {
-    myModel = new ListTableModel<LogFileOptions>(IS_SHOW, FILE, IS_SKIP_CONTENT);
-    myFilesTable = new TableView<LogFileOptions>(myModel);
+    ColumnInfo<LogFileOptions, Boolean> IS_SHOW = new MyIsActiveColumnInfo();
+    ColumnInfo<LogFileOptions, LogFileOptions> FILE = new MyLogFileColumnInfo();
+    ColumnInfo<LogFileOptions, Boolean> IS_SKIP_CONTENT = new MyIsSkipColumnInfo();
+
+    myModel = new ListTableModel<>(IS_SHOW, FILE, IS_SKIP_CONTENT);
+    myFilesTable = new TableView<>(myModel);
     myFilesTable.getEmptyText().setText(DiagnosticBundle.message("log.monitor.no.files"));
 
     final JTableHeader tableHeader = myFilesTable.getTableHeader();
@@ -91,25 +73,20 @@ public class LogConfigurationPanel<T extends RunConfigurationBase> extends Setti
 
     myScrollPanel.add(
       ToolbarDecorator.createDecorator(myFilesTable)
-        .setAddAction(new AnActionButtonRunnable() {
-          @Override
-          public void run(AnActionButton button) {
-            ArrayList<LogFileOptions> newList = new ArrayList<LogFileOptions>(myModel.getItems());
-            LogFileOptions newOptions = new LogFileOptions("", "", true, true, false);
-            if (showEditorDialog(newOptions)) {
-              newList.add(newOptions);
-              myModel.setItems(newList);
-              int index = myModel.getRowCount() - 1;
-              myModel.fireTableRowsInserted(index, index);
-              myFilesTable.setRowSelectionInterval(index, index);
-            }
+        .setAddAction(button -> {
+          ArrayList<LogFileOptions> newList = new ArrayList<>(myModel.getItems());
+          LogFileOptions newOptions = new LogFileOptions("", "", true);
+          if (showEditorDialog(newOptions)) {
+            newList.add(newOptions);
+            myModel.setItems(newList);
+            int index = myModel.getRowCount() - 1;
+            myModel.fireTableRowsInserted(index, index);
+            myFilesTable.setRowSelectionInterval(index, index);
           }
-        }).setRemoveAction(new AnActionButtonRunnable() {
-        @Override
-        public void run(AnActionButton button) {
+        }).setRemoveAction(button -> {
           TableUtil.stopEditing(myFilesTable);
           final int[] selected = myFilesTable.getSelectedRows();
-          if (selected == null || selected.length == 0) return;
+          if (selected.length == 0) return;
           for (int i = selected.length - 1; i >= 0; i--) {
             myModel.removeRow(selected[i]);
           }
@@ -124,42 +101,26 @@ public class LogConfigurationPanel<T extends RunConfigurationBase> extends Setti
           if (selection >= 0) {
             myFilesTable.setRowSelectionInterval(selection, selection);
           }
-          myFilesTable.requestFocus();
-        }
-      }).setEditAction(new AnActionButtonRunnable() {
-        @Override
-        public void run(AnActionButton button) {
+          IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
+            IdeFocusManager.getGlobalInstance().requestFocus(myFilesTable, true);
+          });
+        }).setEditAction(button -> {
           final int selectedRow = myFilesTable.getSelectedRow();
-          final LogFileOptions selectedOptions = myFilesTable.getSelectedObject();
-          showEditorDialog(selectedOptions);
+          //noinspection ConstantConditions
+          showEditorDialog(myFilesTable.getSelectedObject());
           myModel.fireTableDataChanged();
           myFilesTable.setRowSelectionInterval(selectedRow, selectedRow);
-        }
-      }).setRemoveActionUpdater(new AnActionButtonUpdater() {
-        @Override
-        public boolean isEnabled(AnActionEvent e) {
-          return myFilesTable.getSelectedRowCount() >= 1 &&
-                 !myLog2Predefined.containsKey(myFilesTable.getSelectedObject());
-        }
-      }).setEditActionUpdater(new AnActionButtonUpdater() {
-        @Override
-        public boolean isEnabled(AnActionEvent e) {
-          return myFilesTable.getSelectedRowCount() >= 1 &&
-                 !myLog2Predefined.containsKey(myFilesTable.getSelectedObject()) &&
-                 myFilesTable.getSelectedObject() != null;
-        }
-      }).disableUpDownActions().createPanel(), BorderLayout.CENTER);
+        }).setRemoveActionUpdater(e -> myFilesTable.getSelectedRowCount() >= 1 &&
+                                     !myLog2Predefined.containsKey(myFilesTable.getSelectedObject())).setEditActionUpdater(
+        e -> myFilesTable.getSelectedRowCount() >= 1 &&
+           !myLog2Predefined.containsKey(myFilesTable.getSelectedObject()) &&
+               myFilesTable.getSelectedObject() != null).disableUpDownActions().createPanel(), BorderLayout.CENTER);
 
     myWholePanel.setPreferredSize(new Dimension(-1, 150));
     myOutputFile.addBrowseFolderListener("Choose File to Save Console Output", "Console output would be saved to the specified file", null,
                                          FileChooserDescriptorFactory.createSingleFileOrFolderDescriptor(),
                                          TextComponentAccessor.TEXT_FIELD_WHOLE_TEXT);
-    myRedirectOutputCb.addActionListener(new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        myOutputFile.setEnabled(myRedirectOutputCb.isSelected());
-      }
-    });
+    myRedirectOutputCb.addActionListener(e -> myOutputFile.setEnabled(myRedirectOutputCb.isSelected()));
   }
 
   private void setUpColumnWidth(final JTableHeader tableHeader, final int preferredWidth, int columnIdx) {
@@ -173,7 +134,7 @@ public class LogConfigurationPanel<T extends RunConfigurationBase> extends Setti
 
   public void refreshPredefinedLogFiles(RunConfigurationBase configurationBase) {
     List<LogFileOptions> items = myModel.getItems();
-    List<LogFileOptions> newItems = new ArrayList<LogFileOptions>();
+    List<LogFileOptions> newItems = new ArrayList<>();
     boolean changed = false;
     for (LogFileOptions item : items) {
       final PredefinedLogFile predefined = myLog2Predefined.get(item);
@@ -199,7 +160,7 @@ public class LogConfigurationPanel<T extends RunConfigurationBase> extends Setti
       }
     }
 
-    final PredefinedLogFile[] unresolved = myUnresolvedPredefined.toArray(new PredefinedLogFile[myUnresolvedPredefined.size()]);
+    final PredefinedLogFile[] unresolved = myUnresolvedPredefined.toArray(new PredefinedLogFile[0]);
     for (PredefinedLogFile logFile : unresolved) {
       final LogFileOptions options = configurationBase.getOptionsForPredefinedLogFile(logFile);
       if (options != null) {
@@ -215,18 +176,20 @@ public class LogConfigurationPanel<T extends RunConfigurationBase> extends Setti
     }
   }
 
-  protected void resetEditorFrom(final RunConfigurationBase configuration) {
-    ArrayList<LogFileOptions> list = new ArrayList<LogFileOptions>();
-    final ArrayList<LogFileOptions> logFiles = configuration.getLogFiles();
+  @Override
+  protected void resetEditorFrom(@NotNull final RunConfigurationBase configuration) {
+    ArrayList<LogFileOptions> list = new ArrayList<>();
+    final List<LogFileOptions> logFiles = configuration.getLogFiles();
     for (LogFileOptions setting : logFiles) {
       list.add(
         new LogFileOptions(setting.getName(), setting.getPathPattern(), setting.isEnabled(), setting.isSkipContent(), setting.isShowAll()));
     }
     myLog2Predefined.clear();
     myUnresolvedPredefined.clear();
-    final ArrayList<PredefinedLogFile> predefinedLogFiles = configuration.getPredefinedLogFiles();
+    final List<PredefinedLogFile> predefinedLogFiles = configuration.getPredefinedLogFiles();
     for (PredefinedLogFile predefinedLogFile : predefinedLogFiles) {
-      PredefinedLogFile logFile = new PredefinedLogFile(predefinedLogFile);
+      PredefinedLogFile logFile = new PredefinedLogFile();
+      logFile.copyFrom(predefinedLogFile);
       final LogFileOptions options = configuration.getOptionsForPredefinedLogFile(logFile);
       if (options != null) {
         myLog2Predefined.put(options, logFile);
@@ -246,7 +209,8 @@ public class LogConfigurationPanel<T extends RunConfigurationBase> extends Setti
     myShowConsoleOnStdErrCb.setSelected(configuration.isShowConsoleOnStdErr());
   }
 
-  protected void applyEditorTo(final RunConfigurationBase configuration) throws ConfigurationException {
+  @Override
+  protected void applyEditorTo(@NotNull final RunConfigurationBase configuration) throws ConfigurationException {
     myFilesTable.stopEditing();
     configuration.removeAllLogFiles();
     configuration.removeAllPredefinedLogFiles();
@@ -260,7 +224,10 @@ public class LogConfigurationPanel<T extends RunConfigurationBase> extends Setti
       final Boolean skipped = (Boolean)myModel.getValueAt(i, 2);
       final PredefinedLogFile predefined = myLog2Predefined.get(options);
       if (predefined != null) {
-        configuration.addPredefinedLogFile(new PredefinedLogFile(predefined.getId(), options.isEnabled()));
+        PredefinedLogFile file = new PredefinedLogFile();
+        file.setId(predefined.getId());
+        file.setEnabled(options.isEnabled());
+        configuration.addPredefinedLogFile(file);
       }
       else {
         configuration
@@ -277,19 +244,16 @@ public class LogConfigurationPanel<T extends RunConfigurationBase> extends Setti
     configuration.setShowConsoleOnStdErr(myShowConsoleOnStdErrCb.isSelected());
   }
 
+  @Override
   @NotNull
   protected JComponent createEditor() {
     return myWholePanel;
   }
 
-  protected void disposeEditor() {
-  }
-
   private static boolean showEditorDialog(@NotNull LogFileOptions options) {
     EditLogPatternDialog dialog = new EditLogPatternDialog();
     dialog.init(options.getName(), options.getPathPattern(), options.isShowAll());
-    dialog.show();
-    if (dialog.isOK()) {
+    if (dialog.showAndGet()) {
       options.setName(dialog.getName());
       options.setPathPattern(dialog.getLogPattern());
       options.setShowAll(dialog.isShowAllFiles());
@@ -299,13 +263,16 @@ public class LogConfigurationPanel<T extends RunConfigurationBase> extends Setti
   }
 
   private class MyLogFileColumnInfo extends ColumnInfo<LogFileOptions, LogFileOptions> {
-    public MyLogFileColumnInfo() {
+    MyLogFileColumnInfo() {
       super(DiagnosticBundle.message("log.monitor.log.file.column"));
     }
 
+    @Override
     public TableCellRenderer getRenderer(final LogFileOptions p0) {
       return new DefaultTableCellRenderer() {
-        public Component getTableCellRendererComponent(JTable table,
+        @NotNull
+        @Override
+        public Component getTableCellRendererComponent(@NotNull JTable table,
                                                        Object value,
                                                        boolean isSelected,
                                                        boolean hasFocus,
@@ -320,14 +287,17 @@ public class LogConfigurationPanel<T extends RunConfigurationBase> extends Setti
       };
     }
 
+    @Override
     public LogFileOptions valueOf(final LogFileOptions object) {
       return object;
     }
 
+    @Override
     public TableCellEditor getEditor(final LogFileOptions item) {
       return new LogFileCellEditor(item);
     }
 
+    @Override
     public void setValue(final LogFileOptions o, final LogFileOptions aValue) {
       if (aValue != null) {
         if (!o.getName().equals(aValue.getName()) || !o.getPathPattern().equals(aValue.getPathPattern())
@@ -340,6 +310,7 @@ public class LogConfigurationPanel<T extends RunConfigurationBase> extends Setti
       }
     }
 
+    @Override
     public boolean isCellEditable(final LogFileOptions o) {
       return !myLog2Predefined.containsKey(o);
     }
@@ -350,24 +321,28 @@ public class LogConfigurationPanel<T extends RunConfigurationBase> extends Setti
       super(DiagnosticBundle.message("log.monitor.is.active.column"));
     }
 
+    @Override
     public Class getColumnClass() {
       return Boolean.class;
     }
 
+    @Override
     public Boolean valueOf(final LogFileOptions object) {
       return object.isEnabled();
     }
 
+    @Override
     public boolean isCellEditable(LogFileOptions element) {
       return true;
     }
 
+    @Override
     public void setValue(LogFileOptions element, Boolean checked) {
       final PredefinedLogFile predefinedLogFile = myLog2Predefined.get(element);
       if (predefinedLogFile != null) {
         predefinedLogFile.setEnabled(checked.booleanValue());
       }
-      element.setEnable(checked.booleanValue());
+      element.setEnabled(checked.booleanValue());
     }
   }
 
@@ -376,18 +351,22 @@ public class LogConfigurationPanel<T extends RunConfigurationBase> extends Setti
       super(DiagnosticBundle.message("log.monitor.is.skipped.column"));
     }
 
+    @Override
     public Class getColumnClass() {
       return Boolean.class;
     }
 
+    @Override
     public Boolean valueOf(final LogFileOptions element) {
       return element.isSkipContent();
     }
 
+    @Override
     public boolean isCellEditable(LogFileOptions element) {
       return !myLog2Predefined.containsKey(element);
     }
 
+    @Override
     public void setValue(LogFileOptions element, Boolean skipped) {
       element.setSkipContent(skipped.booleanValue());
     }
@@ -395,24 +374,25 @@ public class LogConfigurationPanel<T extends RunConfigurationBase> extends Setti
 
   private class LogFileCellEditor extends AbstractTableCellEditor {
     private final CellEditorComponentWithBrowseButton<JTextField> myComponent;
-    private LogFileOptions myLogFileOptions;
+    private final LogFileOptions myLogFileOptions;
 
-    public LogFileCellEditor(LogFileOptions options) {
+    LogFileCellEditor(LogFileOptions options) {
       myLogFileOptions = options;
-      myComponent = new CellEditorComponentWithBrowseButton<JTextField>(new TextFieldWithBrowseButton(), this);
+      myComponent = new CellEditorComponentWithBrowseButton<>(new TextFieldWithBrowseButton(), this);
       getChildComponent().setEditable(false);
       getChildComponent().setBorder(null);
-      myComponent.getComponentWithButton().getButton().addActionListener(new ActionListener() {
-        public void actionPerformed(ActionEvent e) {
-          showEditorDialog(myLogFileOptions);
-          JTextField textField = getChildComponent();
-          textField.setText(myLogFileOptions.getName());
-          textField.requestFocus();
-          myModel.fireTableDataChanged();
-        }
+      myComponent.getComponentWithButton().getButton().addActionListener(e -> {
+        showEditorDialog(myLogFileOptions);
+        JTextField textField = getChildComponent();
+        textField.setText(myLogFileOptions.getName());
+        IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
+          IdeFocusManager.getGlobalInstance().requestFocus(textField, true);
+        });
+        myModel.fireTableDataChanged();
       });
     }
 
+    @Override
     public Object getCellEditorValue() {
       return myLogFileOptions;
     }
@@ -421,6 +401,7 @@ public class LogConfigurationPanel<T extends RunConfigurationBase> extends Setti
       return myComponent.getChildComponent();
     }
 
+    @Override
     public Component getTableCellEditorComponent(JTable table, Object value, boolean isSelected, int row, int column) {
       getChildComponent().setText(((LogFileOptions)value).getName());
       return myComponent;

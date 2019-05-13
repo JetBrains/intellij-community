@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,34 +21,76 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.codeStyle.MinusculeMatcher;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
-import com.intellij.util.Processor;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.Matcher;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 
-/**
- * User: spLeaner
- */
 public final class SpeedSearchUtil {
 
   private SpeedSearchUtil() {
   }
 
-  public static void appendFragmentsForSpeedSearch(@NotNull final JComponent speedSearchEnabledComponent, @NotNull final String text,
-                                                   @NotNull final SimpleTextAttributes attributes, final boolean selected,
-                                                   @NotNull final SimpleColoredComponent simpleColoredComponent) {
+  public static void applySpeedSearchHighlighting(@NotNull JComponent speedSearchEnabledComponent,
+                                                  @NotNull SimpleColoredComponent coloredComponent,
+                                                  boolean mainTextOnly,
+                                                  boolean selected) {
+    SpeedSearchSupply speedSearch = SpeedSearchSupply.getSupply(speedSearchEnabledComponent);
+    // The bad thing is that SpeedSearch model is decoupled from UI presentation so we don't know the real matched text.
+    // Our best guess is to get string from the ColoredComponent. We can only provide main-text-only option.
+    Iterable<TextRange> ranges = speedSearch == null ? null : speedSearch.matchingFragments(coloredComponent.getCharSequence(mainTextOnly).toString());
+    Iterator<TextRange> rangesIterator = ranges != null ? ranges.iterator() : null;
+    if (rangesIterator == null || !rangesIterator.hasNext()) return;
+    Color bg = UIUtil.getTreeBackground(selected, true);
+
+    SimpleColoredComponent.ColoredIterator coloredIterator = coloredComponent.iterator();
+    TextRange range = rangesIterator.next();
+    main: while (coloredIterator.hasNext()) {
+      coloredIterator.next();
+      int offset = coloredIterator.getOffset();
+      int endOffset = coloredIterator.getEndOffset();
+      if (!range.intersectsStrict(offset, endOffset)) continue;
+      SimpleTextAttributes attributes = coloredIterator.getTextAttributes();
+      SimpleTextAttributes highlighted = new SimpleTextAttributes(bg, attributes.getFgColor(), null, attributes.getStyle() | SimpleTextAttributes.STYLE_SEARCH_MATCH);
+      do {
+        if (range.getStartOffset() > offset) {
+          offset = coloredIterator.split(range.getStartOffset() - offset, attributes);
+        }
+        if (range.getEndOffset() <= endOffset) {
+          offset = coloredIterator.split(range.getEndOffset() - offset, highlighted);
+          if (rangesIterator.hasNext()) {
+            range = rangesIterator.next();
+          }
+          else {
+            break main;
+          }
+        }
+        else {
+          coloredIterator.split(endOffset - offset, highlighted);
+          continue main;
+        }
+      }
+      while (range.intersectsStrict(offset, endOffset));
+    }
+  }
+
+  public static void appendFragmentsForSpeedSearch(@NotNull JComponent speedSearchEnabledComponent,
+                                                   @NotNull String text,
+                                                   @NotNull SimpleTextAttributes attributes,
+                                                   boolean selected,
+                                                   @NotNull SimpleColoredComponent simpleColoredComponent) {
     final SpeedSearchSupply speedSearch = SpeedSearchSupply.getSupply(speedSearchEnabledComponent);
     if (speedSearch != null) {
       final Iterable<TextRange> fragments = speedSearch.matchingFragments(text);
       if (fragments != null) {
         final Color fg = attributes.getFgColor();
-        final Color bg = selected ? UIUtil.getTreeSelectionBackground() : UIUtil.getTreeTextBackground();
+        Color bg = UIUtil.getTreeBackground(selected, true);
         final int style = attributes.getStyle();
         final SimpleTextAttributes plain = new SimpleTextAttributes(style, fg);
         final SimpleTextAttributes highlighted = new SimpleTextAttributes(bg, fg, null, style | SimpleTextAttributes.STYLE_SEARCH_MATCH);
@@ -59,12 +101,12 @@ public final class SpeedSearchUtil {
     simpleColoredComponent.append(text, attributes);
   }
 
-  public static void appendColoredFragmentForMatcher(final String text,
-                                                     final SimpleColoredComponent component,
-                                                     final SimpleTextAttributes attributes,
-                                                     final Matcher matcher,
-                                                     final Color selectedBg,
-                                                     final boolean selected) {
+  public static void appendColoredFragmentForMatcher(@NotNull String text,
+                                                     SimpleColoredComponent component,
+                                                     @NotNull final SimpleTextAttributes attributes,
+                                                     @Nullable Matcher matcher,
+                                                     Color selectedBg,
+                                                     boolean selected) {
     if (!(matcher instanceof MinusculeMatcher) || (Registry.is("ide.highlight.match.in.selected.only") && !selected)) {
       component.append(text, attributes);
       return;
@@ -85,29 +127,25 @@ public final class SpeedSearchUtil {
 
   public static void appendColoredFragments(final SimpleColoredComponent simpleColoredComponent,
                                             final String text,
-                                            Iterable<TextRange> colored,
+                                            Iterable<? extends TextRange> colored,
                                             final SimpleTextAttributes plain, final SimpleTextAttributes highlighted) {
-    final List<Pair<String, Integer>> searchTerms = new ArrayList<Pair<String, Integer>>();
+    final List<Pair<String, Integer>> searchTerms = new ArrayList<>();
     for (TextRange fragment : colored) {
       searchTerms.add(Pair.create(fragment.substring(text), fragment.getStartOffset()));
     }
 
-    final int[] lastOffset = {0};
-    ContainerUtil.process(searchTerms, new Processor<Pair<String, Integer>>() {
-      @Override
-      public boolean process(Pair<String, Integer> pair) {
-        if (pair.second > lastOffset[0]) {
-          simpleColoredComponent.append(text.substring(lastOffset[0], pair.second), plain);
-        }
-
-        simpleColoredComponent.append(text.substring(pair.second, pair.second + pair.first.length()), highlighted);
-        lastOffset[0] = pair.second + pair.first.length();
-        return true;
+    int lastOffset = 0;
+    for (Pair<String, Integer> pair : searchTerms) {
+      if (pair.second > lastOffset) {
+        simpleColoredComponent.append(text.substring(lastOffset, pair.second), plain);
       }
-    });
 
-    if (lastOffset[0] < text.length()) {
-      simpleColoredComponent.append(text.substring(lastOffset[0]), plain);
+      simpleColoredComponent.append(text.substring(pair.second, pair.second + pair.first.length()), highlighted);
+      lastOffset = pair.second + pair.first.length();
+    }
+
+    if (lastOffset < text.length()) {
+      simpleColoredComponent.append(text.substring(lastOffset), plain);
     }
   }
 }

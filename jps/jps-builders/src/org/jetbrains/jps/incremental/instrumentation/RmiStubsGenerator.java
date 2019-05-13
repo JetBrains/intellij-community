@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -50,12 +50,11 @@ import java.util.concurrent.Future;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: 11/30/12
  */
 public class RmiStubsGenerator extends ClassProcessingBuilder {
   private static final String REMOTE_INTERFACE_NAME = Remote.class.getName().replace('.', '/');
   private static final File[] EMPTY_FILE_ARRAY = new File[0];
-  private static Key<Boolean> IS_ENABLED = Key.create("_rmic_compiler_enabled_");
+  private static final Key<Boolean> IS_ENABLED = Key.create("_rmic_compiler_enabled_");
 
   public RmiStubsGenerator() {
     super(BuilderCategory.CLASS_INSTRUMENTER);
@@ -88,14 +87,14 @@ public class RmiStubsGenerator extends ClassProcessingBuilder {
   protected ExitCode performBuild(CompileContext context, ModuleChunk chunk, InstrumentationClassFinder finder, OutputConsumer outputConsumer) {
     ExitCode exitCode = ExitCode.NOTHING_DONE;
     if (!outputConsumer.getCompiledClasses().isEmpty()) {
-      final Map<ModuleBuildTarget, Collection<ClassItem>> remoteClasses = new THashMap<ModuleBuildTarget, Collection<ClassItem>>();
+      final Map<ModuleBuildTarget, Collection<ClassItem>> remoteClasses = new THashMap<>();
       for (ModuleBuildTarget target : chunk.getTargets()) {
         for (CompiledClass compiledClass : outputConsumer.getTargetCompiledClasses(target)) {
           try {
             if (isRemote(compiledClass, finder)) {
               Collection<ClassItem> list = remoteClasses.get(target);
               if (list ==  null) {
-                list = new ArrayList<ClassItem>();
+                list = new ArrayList<>();
                 remoteClasses.put(target, list);
               }
               list.add(new ClassItem(compiledClass));
@@ -130,7 +129,7 @@ public class RmiStubsGenerator extends ClassProcessingBuilder {
     final String classpathString = buf.toString();
     final String rmicPath = getPathToRmic(chunk);
     final RmicCompilerOptions options = getOptions(context);
-    final List<ModuleBuildTarget> targetsProcessed = new ArrayList<ModuleBuildTarget>(remoteClasses.size());
+    final List<ModuleBuildTarget> targetsProcessed = new ArrayList<>(remoteClasses.size());
 
     for (Map.Entry<ModuleBuildTarget, Collection<ClassItem>> entry : remoteClasses.entrySet()) {
       try {
@@ -139,9 +138,10 @@ public class RmiStubsGenerator extends ClassProcessingBuilder {
           target, rmicPath, classpathString, options, entry.getValue()
         );
         final Process process = Runtime.getRuntime().exec(ArrayUtil.toStringArray(cmdLine));
-        final BaseOSProcessHandler handler = new BaseOSProcessHandler(process, null, null) {
+        final BaseOSProcessHandler handler = new BaseOSProcessHandler(process, StringUtil.join(cmdLine, " "), null) {
+          @NotNull
           @Override
-          protected Future<?> executeOnPooledThread(Runnable task) {
+          protected Future<?> executeOnPooledThread(@NotNull Runnable task) {
             return SharedThreadPool.getInstance().executeOnPooledThread(task);
           }
         };
@@ -150,7 +150,7 @@ public class RmiStubsGenerator extends ClassProcessingBuilder {
         final RmicOutputParser stdErrParser = new RmicOutputParser(context, getPresentableName());
         handler.addProcessListener(new ProcessAdapter() {
           @Override
-          public void onTextAvailable(ProcessEvent event, Key outputType) {
+          public void onTextAvailable(@NotNull ProcessEvent event, @NotNull Key outputType) {
             if (outputType == ProcessOutputTypes.STDOUT) {
               stdOutParser.append(event.getText());
             }
@@ -160,7 +160,7 @@ public class RmiStubsGenerator extends ClassProcessingBuilder {
           }
 
           @Override
-          public void processTerminated(ProcessEvent event) {
+          public void processTerminated(@NotNull ProcessEvent event) {
             super.processTerminated(event);
           }
         });
@@ -185,7 +185,7 @@ public class RmiStubsGenerator extends ClassProcessingBuilder {
     }
 
     // registering generated files
-    final Map<File, File[]> fsCache = new THashMap<File, File[]>(FileUtil.FILE_HASHING_STRATEGY);
+    final Map<File, File[]> fsCache = new THashMap<>(FileUtil.FILE_HASHING_STRATEGY);
     for (ModuleBuildTarget target : targetsProcessed) {
       final Collection<ClassItem> items = remoteClasses.get(target);
       for (ClassItem item : items) {
@@ -199,7 +199,7 @@ public class RmiStubsGenerator extends ClassProcessingBuilder {
         }
         final Collection<File> files = item.selectGeneratedFiles(children);
         if (!files.isEmpty()) {
-          final Collection<String> sources = Collections.singleton(item.compiledClass.getSourceFile().getPath());
+          final Collection<String> sources = item.compiledClass.getSourceFilesPaths();
           for (File generated : files) {
             try {
               outputConsumer.registerOutputFile(target, generated, sources);
@@ -220,7 +220,7 @@ public class RmiStubsGenerator extends ClassProcessingBuilder {
                                                          final String classpath,
                                                          final RmicCompilerOptions config,
                                                          final Collection<ClassItem> items) {
-    final List<String> commandLine = new ArrayList<String>();
+    final List<String> commandLine = new ArrayList<>();
     commandLine.add(compilerPath);
 
     if (config.DEBUGGING_INFO) {
@@ -322,7 +322,7 @@ public class RmiStubsGenerator extends ClassProcessingBuilder {
       if (candidates == null || candidates.length == 0) {
         return Collections.emptyList();
       }
-      final Collection<File> result = new SmartList<File>();
+      final Collection<File> result = new SmartList<>();
       final String[] suffixes = new String[GEN_SUFFIXES.length];
       for (int i = 0; i < GEN_SUFFIXES.length; i++) {
         suffixes[i] = baseName + GEN_SUFFIXES[i];

@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2011 Bas Leijdekkers
+ * Copyright 2010-2016 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,14 +21,16 @@ import com.intellij.ide.DataManager;
 import com.intellij.ide.util.ClassFilter;
 import com.intellij.ide.util.TreeClassChooser;
 import com.intellij.ide.util.TreeClassChooserFactory;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBList;
+import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
@@ -41,13 +43,6 @@ public class UiUtils {
   private UiUtils() {
   }
 
-  public static void setScrollPaneSize(JScrollPane scrollPane, int rows, int columns) {
-    final Component view = scrollPane.getViewport().getView();
-    final FontMetrics fontMetrics = view.getFontMetrics(view.getFont());
-    final int width = fontMetrics.charWidth('m') * columns;
-    scrollPane.setPreferredSize(new Dimension(width, fontMetrics.getHeight() * rows));
-  }
-
   public static void setComponentSize(Component component, int rows, int columns) {
     final FontMetrics fontMetrics = component.getFontMetrics(component.getFont());
     final int width = fontMetrics.charWidth('m') * columns;
@@ -55,33 +50,25 @@ public class UiUtils {
   }
 
   public static JPanel createAddRemovePanel(final ListTable table) {
-    return ToolbarDecorator.createDecorator(table)
+    final JPanel panel = ToolbarDecorator.createDecorator(table)
       .setAddAction(new AnActionButtonRunnable() {
         @Override
         public void run(AnActionButton button) {
           final ListWrappingTableModel tableModel = table.getModel();
           tableModel.addRow();
-          EventQueue.invokeLater(new Runnable() {
-            @Override
-            public void run() {
-              final int lastRowIndex = tableModel.getRowCount() - 1;
-              final Rectangle rectangle = table.getCellRect(lastRowIndex, 0, true);
-              table.scrollRectToVisible(rectangle);
-              table.editCellAt(lastRowIndex, 0);
-              final ListSelectionModel selectionModel = table.getSelectionModel();
-              selectionModel.setSelectionInterval(lastRowIndex, lastRowIndex);
-              final TableCellEditor editor = table.getCellEditor();
-              final Component component = editor.getTableCellEditorComponent(table, null, true, lastRowIndex, 0);
-              component.requestFocus();
-            }
+          EventQueue.invokeLater(() -> {
+            final int lastRowIndex = tableModel.getRowCount() - 1;
+            editTableCell(table, lastRowIndex, 0);
           });
         }
-      }).setRemoveAction(new RemoveAction(table))
+      })
+      .setRemoveAction(button -> TableUtil.removeSelectedItems(table))
       .disableUpDownActions().createPanel();
+    panel.setPreferredSize(JBUI.size(150, 100));
+    return panel;
   }
 
-  public static JPanel createAddRemoveTreeClassChooserPanel(final ListTable table,
-                                                            final String chooserTitle,
+  public static JPanel createAddRemoveTreeClassChooserPanel(final ListTable table, final String chooserTitle,
                                                             @NonNls String... ancestorClasses) {
     final ClassFilter filter;
     if (ancestorClasses.length == 0) {
@@ -90,50 +77,65 @@ public class UiUtils {
     else {
       filter = new SubclassFilter(ancestorClasses);
     }
-    return ToolbarDecorator.createDecorator(table)
+    final JPanel panel = ToolbarDecorator.createDecorator(table)
       .setAddAction(new AnActionButtonRunnable() {
         @Override
         public void run(AnActionButton button) {
           final DataContext dataContext = DataManager.getInstance().getDataContext(table);
-          final Project project = PlatformDataKeys.PROJECT.getData(dataContext);
-          if (project == null) {
-            return;
-          }
-          final TreeClassChooserFactory chooserFactory = TreeClassChooserFactory.getInstance(project);
-          final TreeClassChooser classChooser =
-            chooserFactory.createWithInnerClassesScopeChooser(chooserTitle, GlobalSearchScope.allScope(project), filter, null);
-          classChooser.showDialog();
-          final PsiClass selectedClass = classChooser.getSelected();
-          if (selectedClass == null) {
-            return;
-          }
-          final String qualifiedName = selectedClass.getQualifiedName();
-          final ListWrappingTableModel tableModel = table.getModel();
-          final int index = tableModel.indexOf(qualifiedName, 0);
+          final Project project = CommonDataKeys.PROJECT.getData(dataContext);
           final int rowIndex;
-          if (index < 0) {
-            tableModel.addRow(qualifiedName);
+          final ListWrappingTableModel tableModel = table.getModel();
+          if (project == null) {
+            tableModel.addRow();
             rowIndex = tableModel.getRowCount() - 1;
           }
           else {
-            rowIndex = index;
-          }
-          final ListSelectionModel selectionModel =
-            table.getSelectionModel();
-          selectionModel.setSelectionInterval(rowIndex, rowIndex);
-          EventQueue.invokeLater(new Runnable() {
-            @Override
-            public void run() {
-              final Rectangle rectangle = table.getCellRect(rowIndex, 0, true);
-              table.scrollRectToVisible(rectangle);
+            final TreeClassChooserFactory chooserFactory = TreeClassChooserFactory.getInstance(project);
+            final TreeClassChooser classChooser =
+              chooserFactory.createWithInnerClassesScopeChooser(chooserTitle, GlobalSearchScope.allScope(project), filter, null);
+            classChooser.showDialog();
+            final PsiClass selectedClass = classChooser.getSelected();
+            if (selectedClass == null) {
+              return;
             }
-          });
+            final String qualifiedName = selectedClass.getQualifiedName();
+            final int index = tableModel.indexOf(qualifiedName, 0);
+            if (index < 0) {
+              tableModel.addRow(qualifiedName);
+              rowIndex = tableModel.getRowCount() - 1;
+            }
+            else {
+              rowIndex = index;
+            }
+          }
+          editTableCell(table, rowIndex, table.getColumnCount() > 1 && project != null ? 1 : 0);
         }
-      }).setRemoveAction(new RemoveAction(table))
+      }).setRemoveAction(button -> TableUtil.removeSelectedItems(table))
       .disableUpDownActions().createPanel();
+    panel.setPreferredSize(JBUI.size(150, 100));
+    return panel;
   }
 
-  public static JPanel createTreeClassChooserList(final Collection<String> collection,
+  private static void editTableCell(final ListTable table, final int row, final int column) {
+    final ListSelectionModel selectionModel = table.getSelectionModel();
+    selectionModel.setSelectionInterval(row, row);
+    EventQueue.invokeLater(() -> {
+      final ListWrappingTableModel tableModel = table.getModel();
+      IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
+        IdeFocusManager.getGlobalInstance().requestFocus(table, true);
+      });
+      final Rectangle rectangle = table.getCellRect(row, column, true);
+      table.scrollRectToVisible(rectangle);
+      table.editCellAt(row, column);
+      final TableCellEditor editor = table.getCellEditor();
+      final Component component = editor.getTableCellEditorComponent(table, tableModel.getValueAt(row, column), true, row, column);
+      IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
+        IdeFocusManager.getGlobalInstance().requestFocus(component, true);
+      });
+    });
+  }
+
+  public static JPanel createTreeClassChooserList(final Collection<? super String> collection,
                                                   String borderTitle,
                                                   final String chooserTitle,
                                                   String... ancestorClasses) {
@@ -153,7 +155,7 @@ public class UiUtils {
         @Override
         public void run(AnActionButton anActionButton) {
           final DataContext dataContext = DataManager.getInstance().getDataContext(list);
-          final Project project = PlatformDataKeys.PROJECT.getData(dataContext);
+          final Project project = CommonDataKeys.PROJECT.getData(dataContext);
           if (project == null) {
             return;
           }
@@ -179,61 +181,15 @@ public class UiUtils {
       .setRemoveAction(new AnActionButtonRunnable() {
         @Override
         public void run(AnActionButton anActionButton) {
-          final Object selectedValue = list.getSelectedValue();
-          collection.remove(selectedValue);
+          collection.remove(list.getSelectedValue());
           ListUtil.removeSelectedItems(list);
         }
       }).createPanel();
+    panel.setPreferredSize(JBUI.size(150, 100));
     optionsPanel.setBorder(IdeBorderFactory.createTitledBorder(borderTitle,
-                                                               false, new Insets(10, 0, 0, 0)));
+                                                               false, JBUI.insetsTop(10)));
     optionsPanel.add(panel);
     return optionsPanel;
-  }
-
-  private static class RemoveAction implements AnActionButtonRunnable {
-
-    private final ListTable table;
-
-    public RemoveAction(ListTable table) {
-      this.table = table;
-    }
-
-    @Override
-    public void run(AnActionButton button) {
-      EventQueue.invokeLater(new Runnable() {
-        @Override
-        public void run() {
-          final TableCellEditor editor = table.getCellEditor();
-          if (editor != null) {
-            editor.stopCellEditing();
-          }
-          final ListSelectionModel selectionModel = table.getSelectionModel();
-          final int minIndex = selectionModel.getMinSelectionIndex();
-          final int maxIndex = selectionModel.getMaxSelectionIndex();
-          if (minIndex == -1 || maxIndex == -1) {
-            return;
-          }
-          final ListWrappingTableModel tableModel = table.getModel();
-          for (int i = minIndex; i <= maxIndex; i++) {
-            if (selectionModel.isSelectedIndex(i)) {
-              tableModel.removeRow(i);
-            }
-          }
-          final int count = tableModel.getRowCount();
-          if (count <= minIndex) {
-            selectionModel.setSelectionInterval(count - 1, count - 1);
-          }
-          else if (minIndex <= 0) {
-            if (count > 0) {
-              selectionModel.setSelectionInterval(0, 0);
-            }
-          }
-          else {
-            selectionModel.setSelectionInterval(minIndex - 1, minIndex - 1);
-          }
-        }
-      });
-    }
   }
 
   private static class SubclassFilter implements ClassFilter {

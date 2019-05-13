@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,8 +15,11 @@
  */
 package com.intellij.refactoring.introduceField;
 
+import com.intellij.codeInsight.ChangeContextUtil;
 import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.codeInsight.TestFrameworks;
+import com.intellij.codeInsight.daemon.impl.quickfix.AnonymousTargetClassPreselectionUtil;
+import com.intellij.codeInsight.generation.GenerateMembersUtil;
 import com.intellij.codeInsight.navigation.NavigationUtil;
 import com.intellij.ide.util.PsiClassListCellRenderer;
 import com.intellij.openapi.application.ApplicationManager;
@@ -29,6 +32,7 @@ import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.search.searches.ReferencesSearch;
+import com.intellij.psi.util.FileTypeUtils;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactoringBundle;
@@ -42,6 +46,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
 import static com.intellij.refactoring.introduceField.BaseExpressionToFieldHandler.InitializationPlace.IN_CONSTRUCTOR;
@@ -64,12 +69,12 @@ public abstract class LocalToFieldHandler {
   public boolean convertLocalToField(final PsiLocalVariable local, final Editor editor) {
     boolean tempIsStatic = myIsConstant;
     PsiElement parent = local.getParent();
-    List<PsiClass> classes = new ArrayList<PsiClass>();
+    final List<PsiClass> classes = new ArrayList<>();
     while (parent != null && parent.getContainingFile() != null) {
       if (parent instanceof PsiClass && !(myIsConstant && parent instanceof PsiAnonymousClass)) {
         classes.add((PsiClass)parent);
       }
-      if (parent instanceof PsiFile && JspPsiUtil.isInJspFile(parent)) {
+      if (parent instanceof PsiFile && FileTypeUtils.isInServerPageFile(parent)) {
         String message = RefactoringBundle.message("error.not.supported.for.jsp", REFACTORING_NAME);
         CommonRefactoringUtil.showErrorHint(myProject, editor, message, REFACTORING_NAME, HelpID.LOCAL_TO_FIELD);
         return false;
@@ -88,13 +93,16 @@ public abstract class LocalToFieldHandler {
       if (convertLocalToField(local, classes.get(getChosenClassIndex(classes)), editor, tempIsStatic)) return false;
     } else {
       final boolean isStatic = tempIsStatic;
-      NavigationUtil.getPsiElementPopup(classes.toArray(new PsiClass[classes.size()]), new PsiClassListCellRenderer(), "Choose class to introduce " + (myIsConstant ? "constant" : "field"), new PsiElementProcessor<PsiClass>() {
+      final PsiClass firstClass = classes.get(0);
+      final PsiClass preselection = AnonymousTargetClassPreselectionUtil.getPreselection(classes, firstClass);
+      NavigationUtil.getPsiElementPopup(classes.toArray(PsiClass.EMPTY_ARRAY), new PsiClassListCellRenderer(), "Choose class to introduce " + (myIsConstant ? "constant" : "field"), new PsiElementProcessor<PsiClass>() {
         @Override
         public boolean execute(@NotNull PsiClass aClass) {
+          AnonymousTargetClassPreselectionUtil.rememberSelection(aClass, aClass);
           convertLocalToField(local, aClass, editor, isStatic);
           return false;
         }
-      }).showInBestPositionFor(editor);
+      }, preselection).showInBestPositionFor(editor);
     }
 
     return true;
@@ -124,11 +132,7 @@ public abstract class LocalToFieldHandler {
     final boolean rebindNeeded1 = rebindNeeded;
     final Runnable runnable =
       new IntroduceFieldRunnable(rebindNeeded1, local, aaClass, settings, isStatic, occurences);
-    CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
-      public void run() {
-        ApplicationManager.getApplication().runWriteAction(runnable);
-      }
-    }, REFACTORING_NAME, null);
+    CommandProcessor.getInstance().executeCommand(myProject, () -> ApplicationManager.getApplication().runWriteAction(runnable), REFACTORING_NAME, null);
     return false;
   }
 
@@ -144,7 +148,7 @@ public abstract class LocalToFieldHandler {
     }
     pattern.append(";");
     final Project project = local.getProject();
-    PsiElementFactory factory = JavaPsiFacade.getInstance(project).getElementFactory();
+    PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
     try {
       PsiField field = factory.createFieldFromText(pattern.toString(), null);
 
@@ -155,9 +159,11 @@ public abstract class LocalToFieldHandler {
         field.getInitializer().replace(initializer);
       }
 
-      for (PsiAnnotation annotation : local.getModifierList().getAnnotations()) {
-        field.getModifierList().add(annotation.copy());
-      }
+      PsiModifierList sourceModifierList = local.getModifierList();
+      LOG.assertTrue(sourceModifierList != null);
+      PsiModifierList fieldModifierList = field.getModifierList();
+      LOG.assertTrue(fieldModifierList != null);
+      GenerateMembersUtil.copyAnnotations(sourceModifierList, fieldModifierList);
       return field;
     }
     catch (IncorrectOperationException e) {
@@ -166,10 +172,10 @@ public abstract class LocalToFieldHandler {
     }
   }
 
-  private static PsiStatement createAssignment(PsiLocalVariable local, String fieldname, PsiElementFactory factory) {
+  private static PsiExpressionStatement createAssignment(PsiLocalVariable local, String fieldname, PsiElementFactory factory) {
     try {
       String pattern = fieldname + "=0;";
-      PsiExpressionStatement statement = (PsiExpressionStatement)factory.createStatementFromText(pattern, null);
+      PsiExpressionStatement statement = (PsiExpressionStatement)factory.createStatementFromText(pattern, local);
       statement = (PsiExpressionStatement)CodeStyleManager.getInstance(local.getProject()).reformat(statement);
 
       PsiAssignmentExpression expr = (PsiAssignmentExpression)statement.getExpression();
@@ -186,16 +192,20 @@ public abstract class LocalToFieldHandler {
 
   private static PsiStatement addInitializationToSetUp(final PsiLocalVariable local, final PsiField field, final PsiElementFactory factory)
                                                                                                                              throws IncorrectOperationException {
-    PsiMethod inClass = TestFrameworks.getInstance().findOrCreateSetUpMethod(field.getContainingClass());
+    PsiClass containingClass = field.getContainingClass();
+    PsiMethod inClass = TestFrameworks.getInstance().findOrCreateSetUpMethod(containingClass);
     assert inClass != null;
     PsiStatement assignment = createAssignment(local, field.getName(), factory);
     final PsiCodeBlock body = inClass.getBody();
     assert body != null;
+    ChangeContextUtil.encodeContextInfo(assignment, false);
     if (PsiTreeUtil.isAncestor(body, local, false)) {
       assignment = (PsiStatement)body.addBefore(assignment, PsiTreeUtil.getParentOfType(local, PsiStatement.class));
     } else {
       assignment = (PsiStatement)body.add(assignment);
     }
+    ChangeContextUtil.decodeContextInfo(assignment, containingClass, factory.createExpressionFromText("this", null));
+    appendComments(local, assignment);
     local.delete();
     return assignment;
   }
@@ -205,6 +215,7 @@ public abstract class LocalToFieldHandler {
     PsiClass aClass = field.getContainingClass();
     PsiMethod[] constructors = aClass.getConstructors();
     PsiStatement assignment = createAssignment(local, field.getName(), factory);
+    PsiExpression thisAccessExpr = factory.createExpressionFromText("this", null);
     boolean added = false;
     for (PsiMethod constructor : constructors) {
       if (constructor == enclosingConstructor) continue;
@@ -221,18 +232,28 @@ public abstract class LocalToFieldHandler {
               continue;
             }
             if ("super".equals(text) && enclosingConstructor == null && PsiTreeUtil.isAncestor(constructor, local, false)) {
+              ChangeContextUtil.encodeContextInfo(assignment, false);
+              final PsiStatement statement = (PsiStatement)body.addAfter(assignment, first);
+              ChangeContextUtil.decodeContextInfo(statement, aClass, thisAccessExpr);
+              appendComments(local, statement);
               local.delete();
-              return (PsiStatement)body.addAfter(assignment, first);
+              return statement;
             }
           }
         }
         if (enclosingConstructor == null && PsiTreeUtil.isAncestor(constructor, local, false)) {
+          ChangeContextUtil.encodeContextInfo(assignment, false);
+          final PsiStatement statement = (PsiStatement)body.addBefore(assignment, first);
+          ChangeContextUtil.decodeContextInfo(statement, aClass, thisAccessExpr);
+          appendComments(local, statement);
           local.delete();
-          return (PsiStatement)body.addBefore(assignment, first);
+          return statement;
         }
       }
 
+      ChangeContextUtil.encodeContextInfo(assignment, false);
       assignment = (PsiStatement)body.add(assignment);
+      ChangeContextUtil.decodeContextInfo(assignment, aClass, thisAccessExpr);
       added = true;
     }
     if (!added && enclosingConstructor == null) {
@@ -245,7 +266,10 @@ public abstract class LocalToFieldHandler {
       }
     }
 
-    if (enclosingConstructor == null) local.delete();
+    if (enclosingConstructor == null) {
+      appendComments(assignment, local);
+      local.delete();
+    }
     return assignment;
   }
 
@@ -260,9 +284,8 @@ public abstract class LocalToFieldHandler {
     private final BaseExpressionToFieldHandler.InitializationPlace myInitializerPlace;
     private final PsiExpression[] myOccurences;
     private PsiField myField;
-    private PsiStatement myAssignmentStatement;
 
-    public IntroduceFieldRunnable(boolean rebindNeeded,
+    IntroduceFieldRunnable(boolean rebindNeeded,
                                   PsiLocalVariable local,
                                   PsiClass aClass,
                                   BaseExpressionToFieldHandler.Settings settings,
@@ -279,12 +302,14 @@ public abstract class LocalToFieldHandler {
       myOccurences = occurrences;
     }
 
+    @Override
     public void run() {
       try {
+        ChangeContextUtil.encodeContextInfo(myDestinationClass, true);
         final boolean rebindNeeded2 = !myVariableName.equals(myFieldName) || myRebindNeeded;
         final PsiReference[] refs;
         if (rebindNeeded2) {
-          refs = ReferencesSearch.search(myLocal, GlobalSearchScope.projectScope(myProject), false).toArray(new PsiReference[0]);
+          refs = ReferencesSearch.search(myLocal, GlobalSearchScope.projectScope(myProject), false).toArray(PsiReference.EMPTY_ARRAY);
         }
         else {
           refs = null;
@@ -300,7 +325,7 @@ public abstract class LocalToFieldHandler {
         }
 
         myLocal.normalizeDeclaration();
-        PsiDeclarationStatement declarationStatement = (PsiDeclarationStatement)myLocal.getParent();
+        PsiElement declarationStatement = myLocal.getParent();
         final BaseExpressionToFieldHandler.InitializationPlace finalInitializerPlace;
         if (myLocal.getInitializer() == null) {
           finalInitializerPlace = IN_FIELD_DECLARATION;
@@ -308,28 +333,34 @@ public abstract class LocalToFieldHandler {
         else {
           finalInitializerPlace = myInitializerPlace;
         }
-        final PsiElementFactory factory = JavaPsiFacade.getInstance(myProject).getElementFactory();
+        final PsiElementFactory factory = JavaPsiFacade.getElementFactory(myProject);
 
         switch (finalInitializerPlace) {
           case IN_FIELD_DECLARATION:
+            appendComments(declarationStatement, myField, myLocal.getInitializer());
             declarationStatement.delete();
             break;
 
           case IN_CURRENT_METHOD:
-            PsiStatement statement = createAssignment(myLocal, myFieldName, factory);
-            myAssignmentStatement = (PsiStatement)declarationStatement.replace(statement);
+            PsiExpressionStatement statement = createAssignment(myLocal, myFieldName, factory);
+            appendComments(declarationStatement, declarationStatement, myLocal.getInitializer());
+            if (declarationStatement instanceof PsiDeclarationStatement) {
+              declarationStatement.replace(statement);
+            } else {
+              myLocal.replace(statement.getExpression());
+            }
             break;
 
           case IN_CONSTRUCTOR:
-            myAssignmentStatement = addInitializationToConstructors(myLocal, myField, enclosingConstructor, factory);
+            addInitializationToConstructors(myLocal, myField, enclosingConstructor, factory);
             break;
           case IN_SETUP_METHOD:
-            myAssignmentStatement = addInitializationToSetUp(myLocal, myField, factory);
+            addInitializationToSetUp(myLocal, myField, factory);
         }
 
         if (enclosingConstructor != null && myInitializerPlace == IN_CONSTRUCTOR) {
           PsiStatement statement = createAssignment(myLocal, myFieldName, factory);
-          myAssignmentStatement = (PsiStatement)declarationStatement.replace(statement);
+          declarationStatement.replace(statement);
         }
 
         if (rebindNeeded2) {
@@ -341,6 +372,7 @@ public abstract class LocalToFieldHandler {
             }
           }
           //RefactoringUtil.renameVariableReferences(local, pPrefix + fieldName, GlobalSearchScope.projectScope(myProject));
+          ChangeContextUtil.decodeContextInfo(myDestinationClass, myDestinationClass, null);
         }
       }
       catch (IncorrectOperationException e) {
@@ -351,9 +383,20 @@ public abstract class LocalToFieldHandler {
     public PsiField getField() {
       return myField;
     }
+  }
 
-    public PsiStatement getAssignmentStatement() {
-      return myAssignmentStatement;
+  private static void appendComments(PsiElement declarationStatement, PsiElement element) {
+    appendComments(declarationStatement, element, null);
+  }
+
+  private static void appendComments(PsiElement declarationStatement, PsiElement element, PsiElement unchanged) {
+    final Collection<PsiComment> comments = PsiTreeUtil.findChildrenOfType(declarationStatement, PsiComment.class);
+    final PsiElement parent = element.getParent();
+    for (PsiComment comment : comments) {
+      if (PsiTreeUtil.isAncestor(unchanged, comment, false)) {
+        continue;
+      }
+      parent.addBefore(comment, element);
     }
   }
 }

@@ -1,14 +1,13 @@
-
 class s {
     {
-      x(<flown1211>"xxx");
+      x(<flown121111>"xxx");
     }
-    String x(String g) {
-        String d = <flown1>foo(<flown121>g);
+    String x(String <flown12111>g) {
+        String d = <flown1>foo(<flown1211>g);
         return <caret>d;
     }
 
-    private String foo(String i) {
+    private String foo(String <flown121>i) {
         if (i==null) {
             new Callable<String>(){
                 public String call() throws Exception {

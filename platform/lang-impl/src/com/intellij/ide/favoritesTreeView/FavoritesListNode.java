@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import com.intellij.ide.projectView.PresentationData;
 import com.intellij.ide.projectView.ProjectViewNode;
 import com.intellij.ide.projectView.impl.AbstractUrl;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.util.TreeItem;
@@ -34,17 +35,18 @@ import java.util.List;
  * @author Konstantin Bulenkov
  */
 public class FavoritesListNode extends AbstractTreeNode<String> {
+  private static final Logger LOGGER = Logger.getInstance(FavoritesListNode.class);
   private final Project myProject;
   private final String myDescription;
 
-  public FavoritesListNode(Project project, String listName, String description) {
+  public FavoritesListNode(Project project, @NotNull String listName, String description) {
     super(project, listName);
     myProject = project;
     myName = listName;
     myDescription = description;
   }
 
-  public FavoritesListNode(Project project, String listName) {
+  public FavoritesListNode(Project project, @NotNull String listName) {
     this(project, listName, null);
   }
 
@@ -59,7 +61,7 @@ public class FavoritesListNode extends AbstractTreeNode<String> {
   }
 
   @Override
-  protected void update(PresentationData presentation) {
+  protected void update(@NotNull PresentationData presentation) {
     presentation.setIcon(AllIcons.Toolwindows.ToolWindowFavorites);
     presentation.setPresentableText(myName);
     presentation.setLocationString(myDescription);
@@ -74,16 +76,16 @@ public class FavoritesListNode extends AbstractTreeNode<String> {
 
   @NotNull
   private static Collection<AbstractTreeNode> createFavoriteRoots(Project project,
-                                                                  @NotNull Collection<TreeItem<Pair<AbstractUrl, String>>> urls,
+                                                                  @NotNull Collection<? extends TreeItem<Pair<AbstractUrl, String>>> urls,
                                                                   final AbstractTreeNode me) {
-    Collection<AbstractTreeNode> result = new ArrayList<AbstractTreeNode>();
+    Collection<AbstractTreeNode> result = new ArrayList<>();
     processUrls(project, urls, result, me);
     return result;
   }
 
   private static void processUrls(Project project,
-                                  Collection<TreeItem<Pair<AbstractUrl, String>>> urls,
-                                  Collection<AbstractTreeNode> result, final AbstractTreeNode me) {
+                                  Collection<? extends TreeItem<Pair<AbstractUrl, String>>> urls,
+                                  Collection<? super AbstractTreeNode> result, final AbstractTreeNode me) {
     for (TreeItem<Pair<AbstractUrl, String>> pair : urls) {
       AbstractUrl abstractUrl = pair.getData().getFirst();
       final Object[] path = abstractUrl.createPath(project);
@@ -91,10 +93,16 @@ public class FavoritesListNode extends AbstractTreeNode<String> {
         continue;
       }
       try {
-        final String className = pair.getData().getSecond();
-
+        ClassLoader loader;
+        if (abstractUrl instanceof AbstractUrlFavoriteAdapter) {
+          FavoriteNodeProvider provider = ((AbstractUrlFavoriteAdapter)abstractUrl).getNodeProvider();
+          loader = provider.getClass().getClassLoader();
+        } else {
+          loader = FavoritesListNode.class.getClassLoader();
+        }
+        String className = pair.getData().getSecond();
         @SuppressWarnings("unchecked")
-        final Class<? extends AbstractTreeNode> nodeClass = (Class<? extends AbstractTreeNode>)Class.forName(className);
+        final Class<? extends AbstractTreeNode> nodeClass = (Class<? extends AbstractTreeNode>)loader.loadClass(className);
 
         final AbstractTreeNode node = ProjectViewNode
           .createTreeNode(nodeClass, project, path[path.length - 1], FavoritesManager.getInstance(project).getViewSettings());
@@ -105,7 +113,7 @@ public class FavoritesListNode extends AbstractTreeNode<String> {
         if (node instanceof ProjectViewNodeWithChildrenList) {
           final List<TreeItem<Pair<AbstractUrl, String>>> children = pair.getChildren();
           if (children != null && !children.isEmpty()) {
-            Collection<AbstractTreeNode> childList = new ArrayList<AbstractTreeNode>();
+            Collection<AbstractTreeNode> childList = new ArrayList<>();
             processUrls(project, children, childList, node);
             for (AbstractTreeNode treeNode : childList) {
               ((ProjectViewNodeWithChildrenList)node).addChild(treeNode);
@@ -113,7 +121,8 @@ public class FavoritesListNode extends AbstractTreeNode<String> {
           }
         }
       }
-      catch (Exception ignored) {
+      catch (Exception e) {
+        LOGGER.error(e);
       }
     }
   }

@@ -17,10 +17,13 @@ package com.intellij.openapi.roots.ui.configuration.artifacts;
 
 import com.intellij.facet.Facet;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.roots.ProjectModelExternalSource;
 import com.intellij.openapi.roots.libraries.Library;
+import com.intellij.openapi.roots.ui.configuration.ModificationOfImportedModelWarningComponent;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.StructureConfigurableContext;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.*;
 import com.intellij.packaging.artifacts.Artifact;
+import com.intellij.packaging.artifacts.ModifiableArtifactModel;
 import com.intellij.packaging.elements.CompositePackagingElement;
 import com.intellij.packaging.elements.PackagingElement;
 import com.intellij.packaging.impl.artifacts.ArtifactUtil;
@@ -29,7 +32,7 @@ import com.intellij.packaging.impl.artifacts.PackagingElementProcessor;
 import com.intellij.packaging.impl.elements.ArtifactPackagingElement;
 import com.intellij.packaging.impl.elements.FacetBasedPackagingElement;
 import com.intellij.packaging.impl.elements.LibraryPackagingElement;
-import com.intellij.packaging.impl.elements.ModuleOutputPackagingElement;
+import com.intellij.packaging.impl.elements.ModulePackagingElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -54,7 +57,22 @@ public class ArtifactProjectStructureElement extends ProjectStructureElement {
   public void check(final ProjectStructureProblemsHolder problemsHolder) {
     final Artifact artifact = myArtifactsStructureContext.getArtifactModel().getArtifactByOriginal(myOriginalArtifact);
     final ArtifactProblemsHolderImpl artifactProblemsHolder = new ArtifactProblemsHolderImpl(myArtifactsStructureContext, myOriginalArtifact, problemsHolder);
+    if (myArtifactsStructureContext instanceof ArtifactsStructureConfigurableContextImpl) {
+      ArtifactEditorImpl artifactEditor = ((ArtifactsStructureConfigurableContextImpl)myArtifactsStructureContext).getArtifactEditor(artifact);
+      if (artifactEditor != null && (artifactEditor.isModified() || isArtifactModified(artifact))) {
+        ProjectModelExternalSource externalSource = artifact.getExternalSource();
+        if (externalSource != null) {
+          String message = ModificationOfImportedModelWarningComponent.getWarningText("Artifact '" + artifact.getName() + "'", externalSource);
+          artifactProblemsHolder.registerWarning(message, "modification-of-imported-element", null);
+        }
+      }
+    }
     artifact.getArtifactType().checkRootElement(myArtifactsStructureContext.getRootElement(myOriginalArtifact), artifact, artifactProblemsHolder);
+  }
+
+  private boolean isArtifactModified(Artifact artifact) {
+    ModifiableArtifactModel modifiableModel = ((ArtifactsStructureConfigurableContextImpl)myArtifactsStructureContext).getActualModifiableModel();
+    return modifiableModel != null && artifact != modifiableModel.getOriginalArtifact(artifact);
   }
 
   public Artifact getOriginalArtifact() {
@@ -64,7 +82,7 @@ public class ArtifactProjectStructureElement extends ProjectStructureElement {
   @Override
   public List<ProjectStructureElementUsage> getUsagesInElement() {
     final Artifact artifact = myArtifactsStructureContext.getArtifactModel().getArtifactByOriginal(myOriginalArtifact);
-    final List<ProjectStructureElementUsage> usages = new ArrayList<ProjectStructureElementUsage>();
+    final List<ProjectStructureElementUsage> usages = new ArrayList<>();
     final CompositePackagingElement<?> rootElement = myArtifactsStructureContext.getRootElement(artifact);
     ArtifactUtil.processPackagingElements(rootElement, null, new PackagingElementProcessor<PackagingElement<?>>() {
       @Override
@@ -84,8 +102,8 @@ public class ArtifactProjectStructureElement extends ProjectStructureElement {
   public static ProjectStructureElement getProjectStructureElementFor(PackagingElement<?> packagingElement,
                                                                        final StructureConfigurableContext context,
                                                                        final ArtifactsStructureConfigurableContext artifactsStructureContext) {
-    if (packagingElement instanceof ModuleOutputPackagingElement) {
-      final Module module = ((ModuleOutputPackagingElement)packagingElement).findModule(artifactsStructureContext);
+    if (packagingElement instanceof ModulePackagingElement) {
+      final Module module = ((ModulePackagingElement)packagingElement).findModule(artifactsStructureContext);
       if (module != null) {
         return new ModuleProjectStructureElement(context, module);
       }
@@ -131,7 +149,7 @@ public class ArtifactProjectStructureElement extends ProjectStructureElement {
 
   @Override
   public String getPresentableName() {
-    return "Artifact '" + getActualArtifactName() + "'";
+    return getActualArtifactName();
   }
 
   @Override

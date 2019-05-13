@@ -17,6 +17,7 @@ package com.intellij.application.options.codeStyle.arrangement.action;
 
 import com.intellij.application.options.codeStyle.arrangement.match.ArrangementMatchingRulesControl;
 import com.intellij.openapi.application.ApplicationBundle;
+import com.intellij.util.IconUtil;
 import gnu.trove.TIntArrayList;
 import org.jetbrains.annotations.NotNull;
 
@@ -24,13 +25,14 @@ import java.util.List;
 
 /**
  * @author Denis Zhdanov
- * @since 9/28/12 12:16 PM
  */
 public class MoveArrangementMatchingRuleUpAction extends AbstractMoveArrangementRuleAction {
 
   public MoveArrangementMatchingRuleUpAction() {
     getTemplatePresentation().setText(ApplicationBundle.message("arrangement.action.rule.move.up.text"));
     getTemplatePresentation().setDescription(ApplicationBundle.message("arrangement.action.rule.move.up.description"));
+    getTemplatePresentation().setIcon(IconUtil.getMoveUpIcon());
+    setEnabledInModalContext(true);
   }
 
   @Override

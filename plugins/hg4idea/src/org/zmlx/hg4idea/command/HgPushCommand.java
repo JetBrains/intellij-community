@@ -12,15 +12,14 @@
 // limitations under the License.
 package org.zmlx.hg4idea.command;
 
+import com.intellij.openapi.progress.util.BackgroundTaskUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.HgVcs;
-import org.zmlx.hg4idea.execution.HgCommandExecutor;
 import org.zmlx.hg4idea.execution.HgCommandResult;
-import org.zmlx.hg4idea.execution.HgCommandResultHandler;
+import org.zmlx.hg4idea.execution.HgRemoteCommandExecutor;
 
 import java.util.LinkedList;
 import java.util.List;
@@ -33,7 +32,9 @@ public class HgPushCommand {
 
   private String myRevision;
   private boolean myForce;
-  private HgTagBranch myBranch;
+  private String myBranchName;
+  private String myBookmarkName;
+  private boolean myIsNewBranch;
 
   public HgPushCommand(Project project, @NotNull VirtualFile repo, String destination) {
     myProject = project;
@@ -49,36 +50,45 @@ public class HgPushCommand {
     myForce = force;
   }
 
-  public void setBranch(HgTagBranch branch) {
-    myBranch = branch;
+  public void setBranchName(String branchName) {
+    myBranchName = branchName;
   }
 
-  public void execute(final HgCommandResultHandler resultHandler) {
-    final List<String> arguments = new LinkedList<String>();
+  public void setIsNewBranch(boolean isNewBranch) {
+    myIsNewBranch = isNewBranch;
+  }
+
+  public void setBookmarkName(String bookmark) {
+    myBookmarkName = bookmark;
+  }
+
+  public HgCommandResult executeInCurrentThread() {
+    final List<String> arguments = new LinkedList<>();
     if (!StringUtil.isEmptyOrSpaces(myRevision)) {
       arguments.add("-r");
       arguments.add(myRevision);
     }
-    if (myBranch != null) {
+    if (myBranchName != null) {
       arguments.add("-b");
-      arguments.add(myBranch.getName());
+      arguments.add(myBranchName);
+    }
+    if (myIsNewBranch) {
+      arguments.add("--new-branch");
+    }
+    if (!StringUtil.isEmptyOrSpaces(myBookmarkName)) {
+      arguments.add("-B");
+      arguments.add(myBookmarkName);
     }
     if (myForce) {
       arguments.add("-f");
     }
     arguments.add(myDestination);
 
-    final HgCommandExecutor executor = new HgCommandExecutor(myProject, myDestination);
+    final HgRemoteCommandExecutor executor = new HgRemoteCommandExecutor(myProject, myDestination);
     executor.setShowOutput(true);
-    executor.execute(myRepo, "push", arguments, new HgCommandResultHandler() {
-      @Override
-      public void process(@Nullable HgCommandResult result) {
-        if (!myProject.isDisposed()) {
-          myProject.getMessageBus().syncPublisher(HgVcs.REMOTE_TOPIC).update(myProject, null);
-        }
-        resultHandler.process(result);
-      }
-    });
+    HgCommandResult result = executor.executeInCurrentThread(myRepo, "push", arguments);
+    BackgroundTaskUtil.syncPublisher(myProject, HgVcs.REMOTE_TOPIC).update(myProject, null);
+    return result;
   }
 
   public VirtualFile getRepo() {

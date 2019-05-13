@@ -17,7 +17,7 @@
 package com.intellij.codeInsight.generation.surroundWith;
 
 import com.intellij.codeInsight.CodeInsightBundle;
-import com.intellij.codeInsight.CodeInsightUtilBase;
+import com.intellij.codeInsight.CodeInsightUtilCore;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
@@ -37,7 +37,7 @@ class JavaWithNotInstanceofSurrounder extends JavaExpressionSurrounder{
   @Override
   public TextRange surroundExpression(Project project, Editor editor, PsiExpression expr) throws IncorrectOperationException {
     PsiManager manager = expr.getManager();
-    PsiElementFactory factory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();
+    PsiElementFactory factory = JavaPsiFacade.getElementFactory(manager.getProject());
     CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(project);
 
     PsiPrefixExpression prefixExpr = (PsiPrefixExpression)factory.createExpressionFromText("!(a instanceof Type)", null);
@@ -48,7 +48,7 @@ class JavaWithNotInstanceofSurrounder extends JavaExpressionSurrounder{
     prefixExpr = (PsiPrefixExpression)expr.replace(prefixExpr);
     parenthExpr = (PsiParenthesizedExpression)prefixExpr.getOperand();
     instanceofExpr = (PsiInstanceOfExpression)parenthExpr.getExpression();
-    instanceofExpr = CodeInsightUtilBase.forcePsiPostprocessAndRestoreElement(instanceofExpr);
+    instanceofExpr = CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(instanceofExpr);
     TextRange range = instanceofExpr.getCheckType().getTextRange();
     editor.getDocument().deleteString(range.getStartOffset(), range.getEndOffset());
     return new TextRange(range.getStartOffset(), range.getStartOffset());

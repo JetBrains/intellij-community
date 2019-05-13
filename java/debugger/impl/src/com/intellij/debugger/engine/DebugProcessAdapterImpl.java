@@ -15,66 +15,48 @@
  */
 package com.intellij.debugger.engine;
 
-import com.intellij.execution.ExecutionException;
-import com.intellij.execution.configurations.RemoteConnection;
-import com.intellij.execution.configurations.RunProfileState;
-import com.sun.jdi.ThreadReference;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author lex
  */
 public class DebugProcessAdapterImpl implements DebugProcessListener {
   //executed in manager thread
-  public final void paused(SuspendContext suspendContext) {
+  @Override
+  public final void paused(@NotNull SuspendContext suspendContext) {
     paused(((SuspendContextImpl)suspendContext));
   }
 
   //executed in manager thread
+  @Override
   public final void resumed(SuspendContext suspendContext) {
     resumed(((SuspendContextImpl)suspendContext));
   }
 
   //executed in manager thread
-  public final void processDetached(DebugProcess process, boolean closedByUser) {
+  @Override
+  public final void processDetached(@NotNull DebugProcess process, boolean closedByUser) {
     processDetached(((DebugProcessImpl)process), closedByUser);
   }
 
   //executed in manager thread
-  public final void processAttached(DebugProcess process) {
+  @Override
+  public final void processAttached(@NotNull DebugProcess process) {
     processAttached(((DebugProcessImpl)process));
   }
 
-  //executed in manager thread
-  public void connectorIsReady() {
-  }
-
   public void paused(SuspendContextImpl suspendContext) {
-    //To change body of implemented methods use File | Settings | File Templates.
   }
 
   //executed in manager thread
   public void resumed(SuspendContextImpl suspendContext) {
-    //To change body of implemented methods use File | Settings | File Templates.
   }
 
   //executed in manager thread
   public void processDetached(DebugProcessImpl process, boolean closedByUser) {
-    //To change body of implemented methods use File | Settings | File Templates.
   }
 
   //executed in manager thread
   public void processAttached(DebugProcessImpl process) {
-    //To change body of implemented methods use File | Settings | File Templates.
-  }
-
-  //executed in manager thread
-  public void threadStarted(DebugProcess proc, ThreadReference thread) {
-  }
-
-  //executed in manager thread
-  public void threadStopped(DebugProcess proc, ThreadReference thread) {
-  }
-
-  public void attachException(RunProfileState state, ExecutionException exception, RemoteConnection remoteConnection) {
   }
 }

@@ -1,11 +1,8 @@
 package com.intellij.xml.arrangement;
 
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.codeStyle.arrangement.ArrangementEntry;
-import com.intellij.psi.codeStyle.arrangement.DefaultArrangementEntry;
-import com.intellij.psi.codeStyle.arrangement.NameAwareArrangementEntry;
-import com.intellij.psi.codeStyle.arrangement.TypeAwareArrangementEntry;
-import com.intellij.psi.codeStyle.arrangement.match.ArrangementEntryType;
+import com.intellij.psi.codeStyle.arrangement.*;
+import com.intellij.psi.codeStyle.arrangement.std.ArrangementSettingsToken;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -16,18 +13,22 @@ import java.util.Set;
  * @author Eugene.Kudelevsky
  */
 public class XmlElementArrangementEntry extends DefaultArrangementEntry
-  implements TypeAwareArrangementEntry, NameAwareArrangementEntry {
+  implements TypeAwareArrangementEntry, NameAwareArrangementEntry, NamespaceAwareArrangementEntry {
 
-  private final ArrangementEntryType myType;
-  private final String myName;
+  private final ArrangementSettingsToken myType;
+  private final String                   myName;
+  private final String myNamespace;
 
   public XmlElementArrangementEntry(@Nullable ArrangementEntry parent,
                                     @NotNull TextRange range,
-                                    @NotNull ArrangementEntryType type,
+                                    @NotNull ArrangementSettingsToken type,
                                     @Nullable String name,
-                                    boolean canBeMatched) {
+                                    @Nullable String namespace,
+                                    boolean canBeMatched)
+  {
     super(parent, range.getStartOffset(), range.getEndOffset(), canBeMatched);
     myName = name;
+    myNamespace = namespace;
     myType = type;
   }
 
@@ -37,14 +38,15 @@ public class XmlElementArrangementEntry extends DefaultArrangementEntry
     return myName;
   }
 
-  @NotNull
+  @Nullable
   @Override
-  public Set<ArrangementEntryType> getTypes() {
-    return Collections.singleton(myType);
+  public String getNamespace() {
+    return myNamespace;
   }
 
   @NotNull
-  public ArrangementEntryType getType() {
-    return myType;
+  @Override
+  public Set<ArrangementSettingsToken> getTypes() {
+    return Collections.singleton(myType);
   }
 }

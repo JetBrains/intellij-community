@@ -1,3 +1,3 @@
-public abstract class BaseAction {
-  public abstract void action();
+public class BaseAction {
+  public void action() {}
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,25 +22,17 @@ import org.jetbrains.annotations.NotNull;
 import java.awt.*;
 
 /**
- * Basic interface for requesting sending focus commands to <code>IdeFocusManager</code>
+ * Basic interface for requesting sending focus commands to {@code IdeFocusManager}
  */
 public interface FocusRequestor extends Disposable {
 
   /**
    * Requests focus on a component
-   * @param c - component to reqiest focus to
+   * @param c - component to request focus to
    * @param forced - if true - focus request is explicit, must be fulfilled, if false - can be dropped
-   * @return action callback that either notifies when the focus was obtained or focus request was droppped
+   * @return action callback that either notifies when the focus was obtained or focus request was dropped
    */
   @NotNull
   ActionCallback requestFocus(@NotNull Component c, boolean forced);
-
-  /**
-   * Runs a request focus command, actual focus request is defined by the user in the command itself
-   * @param forced - if true - focus request is explicit, must be fulfilled, if false - can be dropped
-   * @return action callback that either notifies when the focus was obtained or focus request was droppped
-   */
-  @NotNull
-  ActionCallback requestFocus(@NotNull FocusCommand command, boolean forced);
   
 }

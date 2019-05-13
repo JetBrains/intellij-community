@@ -1,11 +1,11 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- * http: //www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -26,7 +26,7 @@ import static com.intellij.testFramework.PlatformTestUtil.assertTreeEqual
  */
 class GroovyStructureViewTest extends LightCodeInsightFixtureTestCase {
 
-  public void testSyntheticMethods() {
+  void testSyntheticMethods() {
     myFixture.configureByText 'a.groovy', '''
 class Foo {
   int prop
@@ -38,19 +38,19 @@ class Foo {
 '''
     myFixture.testStructureView(new Consumer<StructureViewComponent>() {
       @Override
-      public void consume(StructureViewComponent component) {
-        component.setActionActive(InheritedMembersNodeProvider.ID, false);
+      void consume(StructureViewComponent component) {
+        component.setActionActive(InheritedMembersNodeProvider.ID, false)
         assertTreeEqual(component.getTree(), """-a.groovy
  -Foo
   Foo(int, int)
   foo(int, int): Object
   prop: int
-""");
+""")
       }
-    });
+    })
   }
 
-  public void testInheritedSynthetic() {
+  void testInheritedSynthetic() {
     myFixture.configureByText 'a.groovy', '''
 class Foo {
   int prop
@@ -63,46 +63,46 @@ class Bar extends Foo {
 '''
     myFixture.testStructureView(new Consumer<StructureViewComponent>() {
       @Override
-      public void consume(StructureViewComponent component) {
-        component.setActionActive(InheritedMembersNodeProvider.ID, true);
+      void consume(StructureViewComponent component) {
+        component.setActionActive(InheritedMembersNodeProvider.ID, true)
         assertTreeEqual(component.getTree(), """-a.groovy
  -Foo
   Foo(int, int)
   foo(int, int): Object
-  getClass(): Class<? extends Object>
-  clone(): Object
-  equals(Object): boolean
+  getClass(): Class<?>
   hashCode(): int
+  equals(Object): boolean
+  clone(): Object
+  toString(): String
+  notify(): void
+  notifyAll(): void
   wait(long): void
   wait(long, int): void
   wait(): void
-  notify(): void
   finalize(): void
-  toString(): String
-  notifyAll(): void
   prop: int
  -Bar
   bar(int): Object
-  getClass(): Class<? extends Object>
-  clone(): Object
-  equals(Object): boolean
-  hashCode(): int
   foo(int, int): Object
+  getClass(): Class<?>
+  hashCode(): int
+  equals(Object): boolean
+  clone(): Object
+  toString(): String
+  notify(): void
+  notifyAll(): void
   wait(long): void
   wait(long, int): void
   wait(): void
-  notify(): void
   finalize(): void
-  toString(): String
-  notifyAll(): void
   prop: int
-""");
+""")
       }
-    });
+    })
 
   }
 
-  public void testTupleConstructor() {
+  void testTupleConstructor() {
     myFixture.addClass 'package groovy.transform; public @interface TupleConstructor{}'
     myFixture.configureByText 'a.groovy', '''
 @groovy.transform.TupleConstructor
@@ -113,16 +113,36 @@ class Foo {
 '''
     myFixture.testStructureView(new Consumer<StructureViewComponent>() {
       @Override
-      public void consume(StructureViewComponent component) {
-        component.setActionActive(InheritedMembersNodeProvider.ID, false);
+      void consume(StructureViewComponent component) {
+        component.setActionActive(InheritedMembersNodeProvider.ID, false)
         assertTreeEqual(component.getTree(), """-a.groovy
  -Foo
   foo(): void
   prop: int
-""");
+""")
       }
-    });
+    })
 
   }
 
+  void testTraitMembers() {
+    myFixture.addFileToProject 'T.groovy', '''\
+trait T { 
+  def tProperty
+  def tMethod() {}
+}
+'''
+    myFixture.configureByText '_.groovy', '''\
+class C implements T {
+  void ownMethod() {}
+}
+'''
+    myFixture.testStructureView {
+      it.setActionActive InheritedMembersNodeProvider.ID, false
+      assertTreeEqual(it.tree, """-_.groovy
+ -C
+  ownMethod(): void
+""")
+    }
+  }
 }

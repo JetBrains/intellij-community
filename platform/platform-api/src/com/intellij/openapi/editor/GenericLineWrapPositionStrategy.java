@@ -28,7 +28,6 @@ import java.util.Arrays;
  * Not thread-safe.
  *
  * @author Denis Zhdanov
- * @since Sep 23, 2010 12:04:52 PM
  */
 public class GenericLineWrapPositionStrategy implements LineWrapPositionStrategy {
 
@@ -39,7 +38,7 @@ public class GenericLineWrapPositionStrategy implements LineWrapPositionStrategy
   private static final int NON_ID_WEIGHT = (Rule.DEFAULT_WEIGHT - 1) / 2;
 
   /** Holds symbols wrap rules by symbol. */
-  private final TIntObjectHashMap<Rule> myRules = new TIntObjectHashMap<Rule>();
+  private final TIntObjectHashMap<Rule> myRules = new TIntObjectHashMap<>();
   private final Storage myOffset2weight = new Storage();
 
   @Override
@@ -49,7 +48,7 @@ public class GenericLineWrapPositionStrategy implements LineWrapPositionStrategy
                                    int endOffset,
                                    int maxPreferredOffset,
                                    boolean allowToBeyondMaxPreferredOffset,
-                                   boolean virtual)
+                                   boolean isSoftWrap)
   {
     if (endOffset <= startOffset) {
       return endOffset;
@@ -70,7 +69,7 @@ public class GenericLineWrapPositionStrategy implements LineWrapPositionStrategy
         return i + 1;
       }
 
-      if (!canUseOffset(document, i, virtual)) {
+      if (!canUseOffset(document, i, isSoftWrap)) {
         continue;
       }
 
@@ -118,7 +117,7 @@ public class GenericLineWrapPositionStrategy implements LineWrapPositionStrategy
         return i + 1;
       }
 
-      if (!canUseOffset(document, i, virtual)) {
+      if (!canUseOffset(document, i, isSoftWrap)) {
         continue;
       }
       
@@ -235,7 +234,7 @@ public class GenericLineWrapPositionStrategy implements LineWrapPositionStrategy
      * The general idea is that it's possible to prefer position with lower offset if it's weight is more than the one from
      * position with higher offset and distance between them is not too big.
      * <p/>
-     * Current algorithm uses the <code>'weight'</code> in a following manner:
+     * Current algorithm uses the {@code 'weight'} in a following manner:
      * <p/>
      * <pre>
      * <ol>
@@ -246,8 +245,8 @@ public class GenericLineWrapPositionStrategy implements LineWrapPositionStrategy
      * </pre>
      * <p/>
      * <b>Example</b>
-     * Suppose we have two positions that define lines of length 30 and 10 symbols. Suppose that the weights are <code>'1'</code>
-     * and <code>'4'</code> correspondingly.Position with greater weight is preferred because it's product is higher
+     * Suppose we have two positions that define lines of length 30 and 10 symbols. Suppose that the weights are {@code '1'}
+     * and {@code '4'} correspondingly.Position with greater weight is preferred because it's product is higher
      * ({@code 10 * 4 > 30 * 1})
      */
     public final double weight;

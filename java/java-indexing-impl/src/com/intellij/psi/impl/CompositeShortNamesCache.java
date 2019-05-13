@@ -23,12 +23,14 @@ import com.intellij.psi.PsiMethod;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiShortNamesCache;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.CommonProcessors;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.HashSet;
+import com.intellij.util.indexing.IdFilter;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
 import java.util.Set;
@@ -47,7 +49,7 @@ public class CompositeShortNamesCache extends PsiShortNamesCache {
     for (PsiShortNamesCache cache : myCaches) {
       PsiFile[] classes = cache.getFilesByName(name);
       if (classes.length != 0) {
-        if (merger == null) merger = new Merger<PsiFile>();
+        if (merger == null) merger = new Merger<>();
         merger.add(classes);
       }
     }
@@ -58,7 +60,7 @@ public class CompositeShortNamesCache extends PsiShortNamesCache {
   @Override
   @NotNull
   public String[] getAllFileNames() {
-    Merger<String> merger = new Merger<String>();
+    Merger<String> merger = new Merger<>();
     for (PsiShortNamesCache cache : myCaches) {
       merger.add(cache.getAllFileNames());
     }
@@ -73,7 +75,7 @@ public class CompositeShortNamesCache extends PsiShortNamesCache {
     for (PsiShortNamesCache cache : myCaches) {
       PsiClass[] classes = cache.getClassesByName(name, scope);
       if (classes.length != 0) {
-        if (merger == null) merger = new Merger<PsiClass>();
+        if (merger == null) merger = new Merger<>();
         merger.add(classes);
       }
     }
@@ -84,7 +86,7 @@ public class CompositeShortNamesCache extends PsiShortNamesCache {
   @Override
   @NotNull
   public String[] getAllClassNames() {
-    Merger<String> merger = new Merger<String>();
+    Merger<String> merger = new Merger<>();
     for (PsiShortNamesCache cache : myCaches) {
       String[] names = cache.getAllClassNames();
       merger.add(names);
@@ -94,10 +96,44 @@ public class CompositeShortNamesCache extends PsiShortNamesCache {
   }
 
   @Override
-  public void getAllClassNames(@NotNull HashSet<String> dest) {
+  public boolean processAllClassNames(@NotNull Processor<String> processor) {
+    CommonProcessors.UniqueProcessor<String> uniqueProcessor = new CommonProcessors.UniqueProcessor<>(processor);
     for (PsiShortNamesCache cache : myCaches) {
-      cache.getAllClassNames(dest);
+      if (!cache.processAllClassNames(uniqueProcessor)) {
+        return false;
+      }
     }
+    return true;
+  }
+
+  @Override
+  public boolean processAllClassNames(@NotNull Processor<String> processor, @NotNull GlobalSearchScope scope, IdFilter filter) {
+    for (PsiShortNamesCache cache : myCaches) {
+      if (!cache.processAllClassNames(processor, scope, filter)) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  @Override
+  public boolean processAllMethodNames(@NotNull Processor<String> processor, @NotNull GlobalSearchScope scope, IdFilter filter) {
+    for (PsiShortNamesCache cache : myCaches) {
+      if (!cache.processAllMethodNames(processor, scope, filter)) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  @Override
+  public boolean processAllFieldNames(@NotNull Processor<String> processor, @NotNull GlobalSearchScope scope, IdFilter filter) {
+    for (PsiShortNamesCache cache : myCaches) {
+      if (!cache.processAllFieldNames(processor, scope, filter)) {
+        return false;
+      }
+    }
+    return true;
   }
 
   @Override
@@ -107,7 +143,7 @@ public class CompositeShortNamesCache extends PsiShortNamesCache {
     for (PsiShortNamesCache cache : myCaches) {
       PsiMethod[] methods = cache.getMethodsByName(name, scope);
       if (methods.length != 0) {
-        if (merger == null) merger = new Merger<PsiMethod>();
+        if (merger == null) merger = new Merger<>();
         merger.add(methods);
       }
     }
@@ -123,7 +159,7 @@ public class CompositeShortNamesCache extends PsiShortNamesCache {
       PsiMethod[] methods = cache.getMethodsByNameIfNotMoreThan(name, scope, maxCount);
       if (methods.length == maxCount) return methods;
       if (methods.length != 0) {
-        if (merger == null) merger = new Merger<PsiMethod>();
+        if (merger == null) merger = new Merger<>();
         merger.add(methods);
       }
     }
@@ -139,7 +175,7 @@ public class CompositeShortNamesCache extends PsiShortNamesCache {
       PsiField[] fields = cache.getFieldsByNameIfNotMoreThan(name, scope, maxCount);
       if (fields.length == maxCount) return fields;
       if (fields.length != 0) {
-        if (merger == null) merger = new Merger<PsiField>();
+        if (merger == null) merger = new Merger<>();
         merger.add(fields);
       }
     }
@@ -151,8 +187,16 @@ public class CompositeShortNamesCache extends PsiShortNamesCache {
   public boolean processMethodsWithName(@NonNls @NotNull String name,
                                         @NotNull GlobalSearchScope scope,
                                         @NotNull Processor<PsiMethod> processor) {
+    return processMethodsWithName(name, processor, scope, null);
+  }
+
+  @Override
+  public boolean processMethodsWithName(@NonNls @NotNull String name,
+                                        @NotNull Processor<? super PsiMethod> processor,
+                                        @NotNull GlobalSearchScope scope,
+                                        @Nullable IdFilter idFilter) {
     for (PsiShortNamesCache cache : myCaches) {
-      if (!cache.processMethodsWithName(name, scope, processor)) return false;
+      if (!cache.processMethodsWithName(name, processor, scope, idFilter)) return false;
     }
     return true;
   }
@@ -160,19 +204,12 @@ public class CompositeShortNamesCache extends PsiShortNamesCache {
   @Override
   @NotNull
   public String[] getAllMethodNames() {
-    Merger<String> merger = new Merger<String>();
+    Merger<String> merger = new Merger<>();
     for (PsiShortNamesCache cache : myCaches) {
       merger.add(cache.getAllMethodNames());
     }
     String[] result = merger.getResult();
     return result != null ? result : ArrayUtil.EMPTY_STRING_ARRAY;
-  }
-
-  @Override
-  public void getAllMethodNames(@NotNull HashSet<String> set) {
-    for (PsiShortNamesCache cache : myCaches) {
-      cache.getAllMethodNames(set);
-    }
   }
 
   @Override
@@ -182,7 +219,7 @@ public class CompositeShortNamesCache extends PsiShortNamesCache {
     for (PsiShortNamesCache cache : myCaches) {
       PsiField[] classes = cache.getFieldsByName(name, scope);
       if (classes.length != 0) {
-        if (merger == null) merger = new Merger<PsiField>();
+        if (merger == null) merger = new Merger<>();
         merger.add(classes);
       }
     }
@@ -197,7 +234,7 @@ public class CompositeShortNamesCache extends PsiShortNamesCache {
     for (PsiShortNamesCache cache : myCaches) {
       String[] classes = cache.getAllFieldNames();
       if (classes.length != 0) {
-        if (merger == null) merger = new Merger<String>();
+        if (merger == null) merger = new Merger<>();
         merger.add(classes);
       }
     }
@@ -206,10 +243,25 @@ public class CompositeShortNamesCache extends PsiShortNamesCache {
   }
 
   @Override
-  public void getAllFieldNames(@NotNull HashSet<String> set) {
+  public boolean processFieldsWithName(@NotNull String key,
+                                       @NotNull Processor<? super PsiField> processor,
+                                       @NotNull GlobalSearchScope scope,
+                                       @Nullable IdFilter filter) {
     for (PsiShortNamesCache cache : myCaches) {
-      cache.getAllFieldNames(set);
+      if (!cache.processFieldsWithName(key, processor, scope, filter)) return false;
     }
+    return true;
+  }
+
+  @Override
+  public boolean processClassesWithName(@NotNull String key,
+                                        @NotNull Processor<? super PsiClass> processor,
+                                        @NotNull GlobalSearchScope scope,
+                                        @Nullable IdFilter filter) {
+    for (PsiShortNamesCache cache : myCaches) {
+      if (!cache.processClassesWithName(key, processor, scope, filter)) return false;
+    }
+    return true;
   }
 
   private static class Merger<T> {
@@ -224,7 +276,7 @@ public class CompositeShortNamesCache extends PsiShortNamesCache {
       }
       if (myAllItems == null) {
         T[] elements = mySingleItem;
-        myAllItems = ContainerUtil.addAll(new THashSet<T>(elements.length), elements);
+        myAllItems = ContainerUtil.addAll(new THashSet<>(elements.length), elements);
       }
       ContainerUtil.addAll(myAllItems, items);
     }

@@ -22,22 +22,11 @@ import org.jetbrains.idea.svn.SvnRevisionNumber;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.history.SvnChangeList;
 
-/**
- * Created with IntelliJ IDEA.
- * User: Irina.Chernushina
- * Date: 6/20/12
- * Time: 12:10 PM
- */
 public class SvnRemoteFileAnnotation extends BaseSvnFileAnnotation {
-  private final SvnChangeList mySvnChangeList;
-  private final String myPathToSelect;
   private final VirtualFile myCurrentFile;
 
-  public SvnRemoteFileAnnotation(SvnVcs vcs, String contents, VcsRevisionNumber baseRevision, SvnChangeList svnChangeList,
-                                 final String pathToSelect, final VirtualFile currentFile) {
+  public SvnRemoteFileAnnotation(SvnVcs vcs, String contents, VcsRevisionNumber baseRevision, final VirtualFile currentFile) {
     super(vcs, contents, baseRevision);
-    mySvnChangeList = svnChangeList;
-    myPathToSelect = pathToSelect;
     myCurrentFile = currentFile;
   }
 

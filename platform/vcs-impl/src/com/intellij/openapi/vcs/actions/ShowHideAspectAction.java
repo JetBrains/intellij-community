@@ -17,36 +17,40 @@ package com.intellij.openapi.vcs.actions;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.ToggleAction;
-import com.intellij.openapi.editor.ex.EditorGutterComponentEx;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.vcsUtil.VcsUtil;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Konstantin Bulenkov
  */
-public class ShowHideAspectAction extends ToggleAction {
+public class ShowHideAspectAction extends ToggleAction implements DumbAware {
   private final AnnotationFieldGutter myGutter;
-  private final EditorGutterComponentEx myGutterComponent;
   private boolean isAvailable = true;
 
-  public ShowHideAspectAction(AnnotationFieldGutter gutter, EditorGutterComponentEx gutterComponent) {
+  public ShowHideAspectAction(AnnotationFieldGutter gutter) {
     super(gutter.getID());
     myGutter = gutter;
-    myGutterComponent = gutterComponent;
   }
 
   @Override
-  public boolean isSelected(AnActionEvent e) {
+  public boolean isSelected(@NotNull AnActionEvent e) {
+    return isSelected();
+  }
+
+  boolean isSelected() {
     return myGutter.isAvailable();
   }
 
   @Override
-  public void setSelected(AnActionEvent e, boolean state) {
+  public void setSelected(@NotNull AnActionEvent e, boolean state) {
     VcsUtil.setAspectAvailability(myGutter.getID(), state);
-    myGutterComponent.revalidateMarkup();
+
+    AnnotateActionGroup.revalidateMarkupInAllEditors();
   }
 
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     super.update(e);
     e.getPresentation().setEnabled(isAvailable);
   }

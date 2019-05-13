@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,15 +14,13 @@
  * limitations under the License.
  */
 
-/**
- * @author cdr
- */
 package com.intellij.application.options.colors;
 
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.TextAttributes;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -30,7 +28,7 @@ import java.awt.*;
 public abstract class TextAttributesDescription extends ColorAndFontDescription {
   private final TextAttributes myAttributes;
 
-  public TextAttributesDescription(String name,
+  public TextAttributesDescription(@NotNull String name,
                                    String group,
                                    TextAttributes attributes,
                                    TextAttributesKey type,

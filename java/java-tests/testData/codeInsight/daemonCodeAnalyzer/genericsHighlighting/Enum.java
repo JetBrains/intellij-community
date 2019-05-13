@@ -38,8 +38,20 @@ enum Operation {
   <error descr="'valueOf(String)' is already defined in 'Operation'">void valueOf(String s)</error> {}
 }
 
-class exte extends <error descr="Cannot inherit from final 'Operation'">Operation</error> {
+enum enumWithTypeParameterInValueOf {
+  ;
+
+  <error descr="'valueOf(String)' is already defined in 'enumWithTypeParameterInValueOf'">static <T> void valueOf(String s)</error> {}
 }
+
+<error descr="There is no default constructor available in 'Operation'">class exte extends <error descr="Cannot inherit from enum 'Operation'">Operation</error></error> {
+}
+
+enum withConstant {
+  A() {};
+}
+
+class extwithConstant extends <error descr="Cannot inherit from enum 'withConstant'">withConstant</error> {}
 
 class use {
   void f(Operation op) {
@@ -91,7 +103,7 @@ enum OurEnum {
 
 enum TestEnum
 {
-    A(<error descr="Illegal forward reference">B</error>), B(A); 
+    A(<error descr="Illegal forward reference">B</error>), B(A);
     TestEnum(TestEnum other) {
       <error descr="Call to super is not allowed in enum constructor">super(null, 0)</error>;
     }
@@ -115,8 +127,7 @@ class X extends <error descr="Classes cannot directly extend 'java.lang.Enum'">E
 
 enum StaticInEnumConstantInitializer {
     AN {
-        <error descr="Modifier 'static' not allowed here">static</error> class s {
-        }
+        <error descr="Inner classes cannot have static declarations"><error descr="Modifier 'static' not allowed here">static</error></error> class s { }
         private <error descr="Inner classes cannot have static declarations">static</error> final String t = String.valueOf(1);
     };
 }
@@ -125,8 +136,8 @@ interface Barz {
     void baz();
 }
 
-enum Fooz implements Barz {
-    <error descr="Class 'Fooz' must either be declared abstract or implement abstract method 'baz()' in 'Barz'">FOO</error>;
+<error descr="Class 'Fooz' must either be declared abstract or implement abstract method 'baz()' in 'Barz'">enum Fooz implements Barz</error> {
+    FOO;
 }
 
 ///////////////////////
@@ -176,7 +187,6 @@ enum MyEnum {
 }
 //end of IDEADEV-8192
 
-
 class EnumBugIDEADEV15333  {
   public enum Type { one, to }
   Type type = Type.one;
@@ -185,5 +195,23 @@ class EnumBugIDEADEV15333  {
       case one:
       Object one = new Object();
     }
+  }
+}
+
+class NestedEnums {
+  enum E1 { }
+
+  class C2 {
+    <error descr="Inner classes cannot have static declarations">enum E2</error> { }
+  }
+
+  static class C3 {
+    enum E3 { }
+  }
+
+  {
+    new C3() {
+      <error descr="Inner classes cannot have static declarations">enum E2</error> { }
+    };
   }
 }

@@ -19,10 +19,18 @@ import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiClass;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.Nullable;
+
+import javax.swing.*;
 
 public class GenerateGetterHandler extends GenerateGetterSetterHandlerBase {
   public GenerateGetterHandler() {
     super(CodeInsightBundle.message("generate.getter.fields.chooser.title"));
+  }
+
+  @Override
+  protected String getHelpId() {
+    return "Generate_Getter_Dialog";
   }
 
   @Override
@@ -33,9 +41,21 @@ public class GenerateGetterHandler extends GenerateGetterSetterHandlerBase {
     return super.chooseOriginalMembers(aClass, project);
   }
 
+  @Nullable
+  @Override
+  protected JComponent getHeaderPanel(final Project project) {
+    return getHeaderPanel(project, GetterTemplatesManager.getInstance(), CodeInsightBundle.message("generate.equals.hashcode.template"));
+  }
+
   @Override
   protected GenerationInfo[] generateMemberPrototypes(PsiClass aClass, ClassMember original) throws IncorrectOperationException {
-    if (original instanceof EncapsulatableClassMember) {
+    if (original instanceof PropertyClassMember) {
+      final PropertyClassMember propertyClassMember = (PropertyClassMember)original;
+      final GenerationInfo[] getters = propertyClassMember.generateGetters(aClass);
+      if (getters != null) {
+        return getters;
+      }
+    } else if (original instanceof EncapsulatableClassMember) {
       final EncapsulatableClassMember encapsulatableClassMember = (EncapsulatableClassMember)original;
       final GenerationInfo getter = encapsulatableClassMember.generateGetter();
       if (getter != null) {

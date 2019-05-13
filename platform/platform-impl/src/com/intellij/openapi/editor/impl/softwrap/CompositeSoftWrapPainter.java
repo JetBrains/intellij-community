@@ -1,23 +1,7 @@
-/*
- * Copyright 2000-2010 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor.impl.softwrap;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.LogicalPosition;
-import com.intellij.openapi.editor.VisualPosition;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.impl.ColorProvider;
@@ -26,8 +10,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 
 import static com.intellij.openapi.editor.impl.softwrap.SoftWrapDrawingType.AFTER_SOFT_WRAP;
 import static com.intellij.openapi.editor.impl.softwrap.SoftWrapDrawingType.BEFORE_SOFT_WRAP_LINE_FEED;
@@ -40,27 +24,26 @@ import static java.util.Arrays.asList;
  * Not thread-safe.
  *
  * @author Denis Zhdanov
- * @since Jul 2, 2010 10:20:14 AM
  */
 public class CompositeSoftWrapPainter implements SoftWrapPainter {
 
   /**
-   * Defines a key to use for checking for code of the custom unicode symbol to use for <code>'before soft wrap'</code> representation.
+   * Defines a key to use for checking for code of the custom unicode symbol to use for {@code 'before soft wrap'} representation.
    * <p/>
    * Target value (if any) is assumed to be in hex format.
    */
   public static final String CUSTOM_BEFORE_SOFT_WRAP_SIGN_KEY = "idea.editor.wrap.soft.before.code";
 
   /**
-   * Defines a key to use for checking for code of the custom unicode symbol to use for <code>'after soft wrap'</code> representation.
+   * Defines a key to use for checking for code of the custom unicode symbol to use for {@code 'after soft wrap'} representation.
    * <p/>
    * Target value (if any) is assumed to be in hex format.
    */
   public static final String CUSTOM_AFTER_SOFT_WRAP_SIGN_KEY = "idea.editor.wrap.soft.after.code";
 
-  private static final Logger LOG = Logger.getInstance("#" + CompositeSoftWrapPainter.class.getName());
+  private static final Logger LOG = Logger.getInstance(CompositeSoftWrapPainter.class);
 
-  private static final List<Map<SoftWrapDrawingType, Character>> SYMBOLS = new ArrayList<Map<SoftWrapDrawingType, Character>>();
+  private static final List<Map<SoftWrapDrawingType, Character>> SYMBOLS = new ArrayList<>();
 
   static {
     // Pickup custom soft wraps drawing symbols if both of the are defined.
@@ -78,7 +61,7 @@ public class CompositeSoftWrapPainter implements SoftWrapPainter {
 
     SYMBOLS.add(asMap(
       asList(BEFORE_SOFT_WRAP_LINE_FEED, AFTER_SOFT_WRAP),
-      asList('\u2926',                   '\u2925'))
+      asList('\u2926', '\u2925'))
     );
     SYMBOLS.add(asMap(
       asList(BEFORE_SOFT_WRAP_LINE_FEED, AFTER_SOFT_WRAP),
@@ -141,13 +124,6 @@ public class CompositeSoftWrapPainter implements SoftWrapPainter {
   @Override
   public int paint(@NotNull Graphics g, @NotNull SoftWrapDrawingType drawingType, int x, int y, int lineHeight) {
     initDelegateIfNecessary();
-    if (!myEditor.getSettings().isAllSoftWrapsShown()) {
-      int visualLine = y / lineHeight;
-      LogicalPosition position = myEditor.visualToLogicalPosition(new VisualPosition(visualLine, 0));
-      if (position.line != myEditor.getCaretModel().getLogicalPosition().line) {
-        return myDelegate.getDrawingHorizontalOffset(g, drawingType, x, y, lineHeight);
-      }
-    }
     return myDelegate.paint(g, drawingType, x, y, lineHeight);
   }
 
@@ -182,8 +158,14 @@ public class CompositeSoftWrapPainter implements SoftWrapPainter {
     myDelegate = new ArrowSoftWrapPainter(myEditor);
   }
 
+  @Override
+  public void reinit() {
+    myDelegate = null;
+    mySymbolsDrawingIndex = -1;
+  }
+
   private static <K, V> Map<K, V> asMap(Iterable<K> keys, Iterable<V> values) throws IllegalArgumentException {
-    Map<K, V> result = new HashMap<K,V>();
+    Map<K, V> result = new HashMap<>();
     Iterator<K> keyIterator = keys.iterator();
     Iterator<V> valueIterator = values.iterator();
     while (keyIterator.hasNext()) {

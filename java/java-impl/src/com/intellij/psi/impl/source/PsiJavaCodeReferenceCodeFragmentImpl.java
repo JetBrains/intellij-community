@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@ import com.intellij.psi.PsiJavaCodeReferenceElement;
 import com.intellij.psi.impl.source.tree.CompositeElement;
 import com.intellij.psi.impl.source.tree.JavaElementType;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -32,10 +33,10 @@ public class PsiJavaCodeReferenceCodeFragmentImpl extends PsiCodeFragmentImpl im
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.PsiJavaCodeReferenceCodeFragmentImpl");
   private final boolean myIsClassesAccepted;
 
-  public PsiJavaCodeReferenceCodeFragmentImpl(final Project project,
+  public PsiJavaCodeReferenceCodeFragmentImpl(@NotNull Project project,
                                               final boolean isPhysical,
-                                              @NonNls final String name,
-                                              final CharSequence text,
+                                              @NonNls @NotNull String name,
+                                              @NotNull CharSequence text,
                                               boolean isClassesAccepted,
                                               @Nullable PsiElement context) {
     super(project, JavaElementType.REFERENCE_TEXT, isPhysical, name, text, context);

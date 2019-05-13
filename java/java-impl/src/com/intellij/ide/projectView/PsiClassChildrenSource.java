@@ -22,33 +22,33 @@ import com.intellij.util.containers.ContainerUtil;
 import java.util.List;
 
 public interface PsiClassChildrenSource {
-  void addChildren(PsiClass psiClass, List<PsiElement> children);
+  void addChildren(PsiClass psiClass, List<? super PsiElement> children);
 
   PsiClassChildrenSource NONE = new PsiClassChildrenSource() {
     @Override
-    public void addChildren(PsiClass psiClass, List<PsiElement> children) { }
+    public void addChildren(PsiClass psiClass, List<? super PsiElement> children) { }
   };
 
   PsiClassChildrenSource METHODS = new PsiClassChildrenSource() {
     @Override
-    public void addChildren(PsiClass psiClass, List<PsiElement> children) {
+    public void addChildren(PsiClass psiClass, List<? super PsiElement> children) {
       ContainerUtil.addAll(children, psiClass.getMethods());
     }
   };
 
   PsiClassChildrenSource FIELDS = new PsiClassChildrenSource() {
     @Override
-    public void addChildren(PsiClass psiClass, List<PsiElement> children) {
+    public void addChildren(PsiClass psiClass, List<? super PsiElement> children) {
       ContainerUtil.addAll(children, psiClass.getFields());
     }
   };
 
   PsiClassChildrenSource CLASSES = new PsiClassChildrenSource() {
     @Override
-    public void addChildren(PsiClass psiClass, List<PsiElement> children) {
+    public void addChildren(PsiClass psiClass, List<? super PsiElement> children) {
       ContainerUtil.addAll(children, psiClass.getInnerClasses());
     }
   };
 
-  PsiClassChildrenSource DEFAULT_CHILDREN = new CompositePsiClasChildrenSource(new PsiClassChildrenSource[]{CLASSES, METHODS, FIELDS});
+  PsiClassChildrenSource DEFAULT_CHILDREN = new CompositePsiClassChildrenSource(new PsiClassChildrenSource[]{CLASSES, METHODS, FIELDS});
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,18 +18,23 @@ package com.intellij.ide.actions;
 import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.ide.fileTemplates.FileTemplateUtil;
+import com.intellij.ide.fileTemplates.actions.CreateFromTemplateActionBase;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.SmartPointerManager;
+import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.util.IncorrectOperationException;
 import org.apache.velocity.runtime.parser.ParseException;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.Collections;
+import java.util.Map;
 
 /**
  * @author Dmitry Avdeev
@@ -40,28 +45,56 @@ public abstract class CreateFileFromTemplateAction extends CreateFromTemplateAct
     super(text, description, icon);
   }
 
-  protected PsiFile createFileFromTemplate(String name, FileTemplate template, PsiDirectory dir) {
+  protected PsiFile createFileFromTemplate(final String name, final FileTemplate template, final PsiDirectory dir) {
+    return createFileFromTemplate(name, template, dir, getDefaultTemplateProperty(), true);
+  }
 
-    PsiElement element;
+  @Nullable
+  public static PsiFile createFileFromTemplate(@Nullable String name,
+                                               @NotNull FileTemplate template,
+                                               @NotNull PsiDirectory dir,
+                                               @Nullable String defaultTemplateProperty,
+                                               boolean openFile) {
+    return createFileFromTemplate(name, template, dir, defaultTemplateProperty, openFile, Collections.emptyMap());
+  }
+
+  @Nullable
+  public static PsiFile createFileFromTemplate(@Nullable String name,
+                                               @NotNull FileTemplate template,
+                                               @NotNull PsiDirectory dir,
+                                               @Nullable String defaultTemplateProperty,
+                                               boolean openFile,
+                                               @NotNull Map<String, String> liveTemplateDefaultValues) {
+    if (name != null) {
+      CreateFileAction.MkDirs mkdirs = new CreateFileAction.MkDirs(name, dir);
+      name = mkdirs.newName;
+      dir = mkdirs.directory;
+    }
+    
     Project project = dir.getProject();
     try {
-      element = FileTemplateUtil
-        .createFromTemplate(template, name, FileTemplateManager.getInstance().getDefaultProperties(project), dir);
-      final PsiFile psiFile = element.getContainingFile();
+      PsiFile psiFile = FileTemplateUtil.createFromTemplate(template, name, FileTemplateManager.getInstance(dir.getProject()).getDefaultProperties(), dir)
+        .getContainingFile();
+      SmartPsiElementPointer<PsiFile> pointer = SmartPointerManager.getInstance(project).createSmartPsiElementPointer(psiFile);
 
-      final VirtualFile virtualFile = psiFile.getVirtualFile();
+      VirtualFile virtualFile = psiFile.getVirtualFile();
       if (virtualFile != null) {
-        FileEditorManager.getInstance(project).openFile(virtualFile, true);
-        String property = getDefaultTemplateProperty();
-        if (property != null) {
-          PropertiesComponent.getInstance(project).setValue(property, template.getName());
+        if (openFile) {
+          if (template.isLiveTemplateEnabled()) {
+            CreateFromTemplateActionBase.startLiveTemplate(psiFile, liveTemplateDefaultValues);
+          }
+          else {
+            FileEditorManager.getInstance(project).openFile(virtualFile, true);
+          }
         }
-        return psiFile;
+        if (defaultTemplateProperty != null) {
+          PropertiesComponent.getInstance(project).setValue(defaultTemplateProperty, template.getName());
+        }
+        return pointer.getElement();
       }
     }
     catch (ParseException e) {
-      Messages.showErrorDialog(project, "Error parsing Velocity template: " + e.getMessage(), "Create File from Template");
-      return null;
+      throw new IncorrectOperationException("Error parsing Velocity template: " + e.getMessage(), (Throwable)e);
     }
     catch (IncorrectOperationException e) {
       throw e;
@@ -73,10 +106,9 @@ public abstract class CreateFileFromTemplateAction extends CreateFromTemplateAct
     return null;
   }
 
-
   @Override
   protected PsiFile createFile(String name, String templateName, PsiDirectory dir) {
-    final FileTemplate template = FileTemplateManager.getInstance().getInternalTemplate(templateName);
+    final FileTemplate template = FileTemplateManager.getInstance(dir.getProject()).getInternalTemplate(templateName);
     return createFileFromTemplate(name, template, dir);
   }
 }

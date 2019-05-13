@@ -1,155 +1,218 @@
-/*
- * Copyright 2000-2010 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.updateSettings.impl;
 
 import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeBundle;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.application.ApplicationInfo;
-import com.intellij.openapi.options.BaseConfigurable;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ApplicationNamesInfo;
+import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.updateSettings.UpdateStrategyCustomization;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.CollectionComboBoxModel;
+import com.intellij.ui.JBColor;
+import com.intellij.ui.components.JBLabel;
+import com.intellij.ui.components.labels.ActionLink;
+import com.intellij.util.net.NetUtils;
 import com.intellij.util.text.DateFormatUtil;
+import com.intellij.util.ui.JBEmptyBorder;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
+import java.util.List;
 
 /**
  * @author pti
  */
-public class UpdateSettingsConfigurable extends BaseConfigurable implements SearchableConfigurable {
-  private UpdatesSettingsPanel myUpdatesSettingsPanel;
-  private boolean myCheckNowEnabled = true;
+public class UpdateSettingsConfigurable implements SearchableConfigurable {
+  private final UpdateSettings mySettings;
+  private final boolean myCheckNowEnabled;
+  private UpdatesSettingsPanel myPanel;
 
-  public JComponent createComponent() {
-    myUpdatesSettingsPanel = new UpdatesSettingsPanel();
-    return myUpdatesSettingsPanel.myPanel;
+  @SuppressWarnings("unused")
+  public UpdateSettingsConfigurable() {
+    this(true);
   }
 
+  public UpdateSettingsConfigurable(boolean checkNowEnabled) {
+    mySettings = UpdateSettings.getInstance();
+    myCheckNowEnabled = checkNowEnabled;
+  }
+
+  @Override
+  public JComponent createComponent() {
+    myPanel = new UpdatesSettingsPanel(myCheckNowEnabled);
+    return myPanel.myPanel;
+  }
+
+  @Override
   public String getDisplayName() {
     return IdeBundle.message("updates.settings.title");
   }
 
+  @NotNull
+  @Override
   public String getHelpTopic() {
     return "preferences.updates";
   }
 
-  public void setCheckNowEnabled(boolean enabled) {
-    myCheckNowEnabled = enabled;
-  }
-
-  public void apply() throws ConfigurationException {
-    UpdateSettings settings = UpdateSettings.getInstance();
-    settings.CHECK_NEEDED = myUpdatesSettingsPanel.myCbCheckForUpdates.isSelected();
-
-    settings.UPDATE_CHANNEL_TYPE = myUpdatesSettingsPanel.getSelectedChannelType().getCode();
-  }
-
-  public void reset() {
-    UpdateSettings settings = UpdateSettings.getInstance();
-    myUpdatesSettingsPanel.myCbCheckForUpdates.setSelected(settings.CHECK_NEEDED);
-    myUpdatesSettingsPanel.updateLastCheckedLabel();
-    myUpdatesSettingsPanel.setSelectedChannelType(ChannelStatus.fromCode(settings.UPDATE_CHANNEL_TYPE));
-  }
-
-  public boolean isModified() {
-    if (myUpdatesSettingsPanel == null) return false;
-    UpdateSettings settings = UpdateSettings.getInstance();
-    if (settings.CHECK_NEEDED != myUpdatesSettingsPanel.myCbCheckForUpdates.isSelected()) return true;
-    final JComboBox channelsBox = myUpdatesSettingsPanel.myUpdateChannelsBox;
-    return (channelsBox.getSelectedItem() != null && !channelsBox.getSelectedItem().equals(ChannelStatus.fromCode(settings.UPDATE_CHANNEL_TYPE)));
-  }
-
-  public void disposeUIResources() {
-    myUpdatesSettingsPanel = null;
-  }
-
-  private class UpdatesSettingsPanel {
-
-    private JPanel myPanel;
-    private JButton myBtnCheckNow;
-    private JCheckBox myCbCheckForUpdates;
-    private JLabel myBuildNumber;
-    private JLabel myVersionNumber;
-    private JLabel myLastCheckedDate;
-
-    private JComboBox myUpdateChannelsBox;
-
-    public UpdatesSettingsPanel() {
-
-      final ApplicationInfo appInfo = ApplicationInfo.getInstance();
-      final String majorVersion = appInfo.getMajorVersion();
-      String versionNumber = "";
-      if (majorVersion != null && majorVersion.trim().length() > 0) {
-        final String minorVersion = appInfo.getMinorVersion();
-        if (minorVersion != null && minorVersion.trim().length() > 0) {
-          versionNumber = majorVersion + "." + minorVersion;
-        }
-        else {
-          versionNumber = majorVersion + ".0";
-        }
-      }
-      myVersionNumber.setText(appInfo.getVersionName() + " " + versionNumber);
-      myBuildNumber.setText(appInfo.getBuild().asString());
-
-      myBtnCheckNow.addActionListener(new ActionListener() {
-        public void actionPerformed(ActionEvent e) {
-          Project project = PlatformDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(myBtnCheckNow));
-          UpdateSettings settings = new UpdateSettings();
-          settings.loadState(UpdateSettings.getInstance().getState());
-          settings.UPDATE_CHANNEL_TYPE = getSelectedChannelType().getCode();
-          CheckForUpdateAction.actionPerformed(project, false, null, settings);  //todo load configured hosts on the fly
-          updateLastCheckedLabel();
-        }
-      });
-      myBtnCheckNow.setEnabled(myCheckNowEnabled);
-
-      LabelTextReplacingUtil.replaceText(myPanel);
-
-      final UpdateSettings settings = UpdateSettings.getInstance();
-      myUpdateChannelsBox.setModel(new CollectionComboBoxModel(ChannelStatus.all(), ChannelStatus.fromCode(settings.UPDATE_CHANNEL_TYPE)));
-    }
-
-    private void updateLastCheckedLabel() {
-      final long lastChecked = UpdateSettings.getInstance().LAST_TIME_CHECKED;
-      myLastCheckedDate
-        .setText(lastChecked == 0 ? IdeBundle.message("updates.last.check.never") : DateFormatUtil.formatPrettyDateTime(lastChecked));
-    }
-
-    public ChannelStatus getSelectedChannelType() {
-      return (ChannelStatus) myUpdateChannelsBox.getSelectedItem();
-    }
-
-    public void setSelectedChannelType(ChannelStatus channelType) {
-      myUpdateChannelsBox.setSelectedItem(channelType != null ? channelType : ChannelStatus.RELEASE);
-    }
-  }
-
+  @Override
   @NotNull
   public String getId() {
     return getHelpTopic();
   }
 
-  @Nullable
-  public Runnable enableSearch(String option) {
-    return null;
+  @Override
+  public void apply() throws ConfigurationException {
+    if (myPanel.myUseSecureConnection.isSelected() && !NetUtils.isSniEnabled()) {
+      throw new ConfigurationException(IdeBundle.message("update.sni.disabled.error"));
+    }
+
+    boolean wasEnabled = mySettings.isCheckNeeded();
+    mySettings.setCheckNeeded(myPanel.myCheckForUpdates.isSelected());
+    if (wasEnabled != mySettings.isCheckNeeded()) {
+      UpdateCheckerComponent checker = ApplicationManager.getApplication().getComponent(UpdateCheckerComponent.class);
+      if (checker != null) {
+        if (wasEnabled) {
+          checker.cancelChecks();
+        }
+        else {
+          checker.queueNextCheck();
+        }
+      }
+    }
+
+    mySettings.setSelectedChannelStatus(myPanel.getSelectedChannelType());
+    mySettings.setSecureConnection(myPanel.myUseSecureConnection.isSelected());
+  }
+
+  @Override
+  public void reset() {
+    myPanel.myCheckForUpdates.setSelected(mySettings.isCheckNeeded());
+    myPanel.myUseSecureConnection.setSelected(mySettings.isSecureConnection());
+    myPanel.updateLastCheckedLabel();
+    myPanel.setSelectedChannelType(mySettings.getSelectedActiveChannel());
+  }
+
+  @Override
+  public boolean isModified() {
+    if (myPanel == null) {
+      return false;
+    }
+
+    if (mySettings.isCheckNeeded() != myPanel.myCheckForUpdates.isSelected() ||
+        mySettings.isSecureConnection() != myPanel.myUseSecureConnection.isSelected()) {
+      return true;
+    }
+
+    Object channel = myPanel.myUpdateChannels.getSelectedItem();
+    return channel != null && !channel.equals(mySettings.getSelectedActiveChannel());
+  }
+
+  @Override
+  public void disposeUIResources() {
+    myPanel = null;
+  }
+
+  private static class UpdatesSettingsPanel {
+    private final UpdateSettings mySettings;
+    private JPanel myPanel;
+    private JCheckBox myCheckForUpdates;
+    private JComboBox<ChannelStatus> myUpdateChannels;
+    private JButton myCheckNow;
+    private JBLabel myChannelWarning;
+    private JCheckBox myUseSecureConnection;
+    private JLabel myBuildNumber;
+    private JLabel myVersionNumber;
+    private JLabel myLastCheckedDate;
+    @SuppressWarnings("unused") private ActionLink myIgnoredBuildsLink;
+
+    UpdatesSettingsPanel(boolean checkNowEnabled) {
+      mySettings = UpdateSettings.getInstance();
+
+      ChannelStatus current = mySettings.getSelectedActiveChannel();
+      myUpdateChannels.setModel(new CollectionComboBoxModel<>(mySettings.getActiveChannels(), current));
+
+      ExternalUpdateManager manager = ExternalUpdateManager.ACTUAL;
+      if (manager != null) {
+        myCheckForUpdates.setText(IdeBundle.message("updates.settings.checkbox.external"));
+        myUpdateChannels.setVisible(false);
+        myChannelWarning.setText(IdeBundle.message("updates.settings.external", manager.toolName));
+        myChannelWarning.setForeground(JBColor.GRAY);
+        myChannelWarning.setVisible(true);
+        myChannelWarning.setBorder(new JBEmptyBorder(0, 0, 10, 0));
+      }
+      else if (ApplicationInfoEx.getInstanceEx().isMajorEAP() && UpdateStrategyCustomization.getInstance().forceEapUpdateChannelForEapBuilds()) {
+        myUpdateChannels.setEnabled(false);
+        myUpdateChannels.setToolTipText(IdeBundle.message("updates.settings.channel.locked"));
+      }
+      else {
+        myUpdateChannels.addActionListener(e -> {
+          boolean lessStable = current.compareTo(getSelectedChannelType()) > 0;
+          myChannelWarning.setVisible(lessStable);
+        });
+        myChannelWarning.setForeground(JBColor.RED);
+      }
+
+      if (checkNowEnabled) {
+        myCheckNow.addActionListener(e -> {
+          Project project = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(myCheckNow));
+          UpdateSettings settings = new UpdateSettings();
+          settings.loadState(mySettings.getState());
+          settings.setSelectedChannelStatus(getSelectedChannelType());
+          settings.setSecureConnection(myUseSecureConnection.isSelected());
+          UpdateChecker.updateAndShowResult(project, settings);
+          updateLastCheckedLabel();
+        });
+      }
+      else {
+        myCheckNow.setVisible(false);
+      }
+
+      ApplicationInfo appInfo = ApplicationInfo.getInstance();
+      myVersionNumber.setText(ApplicationNamesInfo.getInstance().getFullProductName() + ' ' + appInfo.getFullVersion());
+      myBuildNumber.setText(appInfo.getBuild().asString());
+    }
+
+    private void createUIComponents() {
+      myIgnoredBuildsLink = new ActionLink(IdeBundle.message("updates.settings.ignored"), new AnAction() {
+        @Override
+        public void actionPerformed(@NotNull AnActionEvent e) {
+          List<String> buildNumbers = mySettings.getIgnoredBuildNumbers();
+          String text = StringUtil.join(buildNumbers, "\n");
+          String result = Messages.showMultilineInputDialog(null, null, IdeBundle.message("updates.settings.ignored.title"), text, null, null);
+          if (result != null) {
+            buildNumbers.clear();
+            buildNumbers.addAll(StringUtil.split(result, "\n"));
+          }
+        }
+      });
+    }
+
+    private void updateLastCheckedLabel() {
+      long time = mySettings.getLastTimeChecked();
+      if (time <= 0) {
+        myLastCheckedDate.setText(IdeBundle.message("updates.last.check.never"));
+      }
+      else {
+        myLastCheckedDate.setText(DateFormatUtil.formatPrettyDateTime(time));
+        myLastCheckedDate.setToolTipText(DateFormatUtil.formatDate(time) + ' ' + DateFormatUtil.formatTimeWithSeconds(time));
+      }
+    }
+
+    public ChannelStatus getSelectedChannelType() {
+      return (ChannelStatus)myUpdateChannels.getSelectedItem();
+    }
+
+    public void setSelectedChannelType(ChannelStatus channelType) {
+      myUpdateChannels.setSelectedItem(channelType != null ? channelType : ChannelStatus.RELEASE);
+    }
   }
 }

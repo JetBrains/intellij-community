@@ -1,0 +1,5 @@
+def bar():
+  pass
+
+
+bar()

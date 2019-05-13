@@ -1,4 +1,4 @@
-// "Generate delegated method with default parameter value" "false"
+// "Generate overloaded method with default parameter values" "true"
 interface Test {
   void foo(int i<caret>i);
 }

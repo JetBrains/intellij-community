@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,11 +15,13 @@
  */
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
-import com.intellij.codeInsight.CodeInsightUtilBase;
+import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
+import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
 import com.intellij.ide.util.SuperMethodWarningUtil;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.command.undo.UndoUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -31,6 +33,7 @@ import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.changeSignature.ChangeSignatureProcessor;
 import com.intellij.refactoring.changeSignature.JavaChangeSignatureDialog;
 import com.intellij.refactoring.changeSignature.ParameterInfoImpl;
+import com.intellij.usageView.UsageViewUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -45,7 +48,7 @@ public class VariableTypeFix extends LocalQuickFixAndIntentionActionOnPsiElement
 
   public VariableTypeFix(@NotNull PsiVariable variable, PsiType toReturn) {
     super(variable);
-    myReturnType = toReturn != null ? GenericsUtil.getVariableTypeByExpressionType(toReturn) : null;
+    myReturnType = GenericsUtil.getVariableTypeByExpressionType(toReturn);
     myName = variable.getName();
   }
 
@@ -53,6 +56,7 @@ public class VariableTypeFix extends LocalQuickFixAndIntentionActionOnPsiElement
   @Override
   public String getText() {
     return QuickFixBundle.message("fix.variable.type.text",
+                                  UsageViewUtil.getType(getStartElement()),
                                   myName,
                                   getReturnType().getCanonicalText());
   }
@@ -64,40 +68,48 @@ public class VariableTypeFix extends LocalQuickFixAndIntentionActionOnPsiElement
   }
 
   @Override
+  public boolean startInWriteAction() {
+    return false;
+  }
+
+  @Override
   public boolean isAvailable(@NotNull Project project,
                              @NotNull PsiFile file,
                              @NotNull PsiElement startElement,
                              @NotNull PsiElement endElement) {
     final PsiVariable myVariable = (PsiVariable)startElement;
-    return myVariable.isValid()
-        && myVariable.getTypeElement() != null
-        && myVariable.getManager().isInProject(myVariable)
-        && getReturnType() != null
-        && getReturnType().isValid()
-        && !TypeConversionUtil.isNullType(getReturnType())
-        && !TypeConversionUtil.isVoidType(getReturnType());
+    return myVariable.getTypeElement() != null
+           && BaseIntentionAction.canModify(myVariable)
+           && getReturnType() != null
+           && !LambdaUtil.notInferredType(getReturnType())
+           && getReturnType().isValid()
+           && !TypeConversionUtil.isNullType(getReturnType())
+           && !TypeConversionUtil.isVoidType(getReturnType());
   }
 
   @Override
-  public void invoke(@NotNull Project project,
-                     @NotNull PsiFile file,
+  public void invoke(@NotNull final Project project,
+                     @NotNull final PsiFile file,
                      @Nullable("is null when called from inspection") Editor editor,
                      @NotNull PsiElement startElement,
                      @NotNull PsiElement endElement) {
     final PsiVariable myVariable = (PsiVariable)startElement;
     if (changeMethodSignatureIfNeeded(myVariable)) return;
-    if (!CodeInsightUtilBase.prepareFileForWrite(myVariable.getContainingFile())) return;
-    try {
-      myVariable.normalizeDeclaration();
-      final PsiTypeElement typeElement = myVariable.getTypeElement();
-      LOG.assertTrue(typeElement != null, myVariable.getClass());
-      final PsiTypeElement newTypeElement = JavaPsiFacade.getInstance(file.getProject()).getElementFactory().createTypeElement(getReturnType());
-      typeElement.replace(newTypeElement);
-      JavaCodeStyleManager.getInstance(project).shortenClassReferences(myVariable);
-      UndoUtil.markPsiFileForUndo(file);
-    } catch (IncorrectOperationException e) {
-      LOG.error(e);
-    }
+    WriteCommandAction.writeCommandAction(project, file).withName(getText()).run(() -> {
+      try {
+        myVariable.normalizeDeclaration();
+        final PsiTypeElement typeElement = myVariable.getTypeElement();
+        LOG.assertTrue(typeElement != null, myVariable.getClass());
+        final PsiTypeElement newTypeElement =
+          JavaPsiFacade.getElementFactory(file.getProject()).createTypeElement(getReturnType());
+        typeElement.replace(newTypeElement);
+        JavaCodeStyleManager.getInstance(project).shortenClassReferences(myVariable);
+        UndoUtil.markPsiFileForUndo(file);
+      }
+      catch (IncorrectOperationException e) {
+        LOG.error(e);
+      }
+    });
   }
 
   private boolean changeMethodSignatureIfNeeded(PsiVariable myVariable) {
@@ -108,8 +120,8 @@ public class VariableTypeFix extends LocalQuickFixAndIntentionActionOnPsiElement
         final PsiMethod psiMethod = SuperMethodWarningUtil.checkSuperMethod(method, RefactoringBundle.message("to.refactor"));
         if (psiMethod == null) return true;
         final int parameterIndex = method.getParameterList().getParameterIndex((PsiParameter)myVariable);
-        if (!CodeInsightUtilBase.prepareFileForWrite(psiMethod.getContainingFile())) return true;
-        final ArrayList<ParameterInfoImpl> infos = new ArrayList<ParameterInfoImpl>();
+        if (!FileModificationService.getInstance().prepareFileForWrite(psiMethod.getContainingFile())) return true;
+        final ArrayList<ParameterInfoImpl> infos = new ArrayList<>();
         int i = 0;
         for (PsiParameter parameter : psiMethod.getParameterList().getParameters()) {
           final boolean changeType = i == parameterIndex;
@@ -127,7 +139,7 @@ public class VariableTypeFix extends LocalQuickFixAndIntentionActionOnPsiElement
                                                                             false, null,
                                                                             psiMethod.getName(),
                                                                             psiMethod.getReturnType(),
-                                                                            infos.toArray(new ParameterInfoImpl[infos.size()]));
+                                                                            infos.toArray(new ParameterInfoImpl[0]));
           processor.run();
         }
         return true;

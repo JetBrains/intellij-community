@@ -14,25 +14,18 @@
  * limitations under the License.
  */
 
-/*
- * Created by IntelliJ IDEA.
- * User: mike
- * Date: Jul 23, 2002
- * Time: 3:01:22 PM
- * To change template for new class use 
- * Code Style | Class Templates options (Tools | IDE Options).
- */
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.lookup.CharFilter;
 import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupElement;
-import com.intellij.codeInsight.lookup.impl.LookupImpl;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.patterns.PsiJavaPatterns;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 
 public class JavaCharFilter extends CharFilter {
 
@@ -48,7 +41,7 @@ public class JavaCharFilter extends CharFilter {
     }
 
     LookupElement item = lookup.getCurrentItem();
-    if (item == null) return null;
+    if (item == null || !item.isValid()) return null;
 
     final Object o = item.getObject();
     if (c == '!') {
@@ -59,6 +52,9 @@ public class JavaCharFilter extends CharFilter {
         final PsiType type = ((PsiMethod)o).getReturnType();
         if (type != null && PsiType.BOOLEAN.isAssignableFrom(type)) return Result.SELECT_ITEM_AND_FINISH_LOOKUP;
       }
+      if (o instanceof PsiKeyword && ((PsiKeyword)o).textMatches(PsiKeyword.INSTANCEOF)) {
+        return Result.SELECT_ITEM_AND_FINISH_LOOKUP;
+      }
 
       return null;
     }
@@ -67,16 +63,23 @@ public class JavaCharFilter extends CharFilter {
     if (c == ':') {
       PsiFile file = lookup.getPsiFile();
       PsiDocumentManager.getInstance(file.getProject()).commitDocument(lookup.getEditor().getDocument());
-      PsiElement element = lookup.getPsiElement();
-      if (PsiTreeUtil.getParentOfType(element, PsiSwitchLabelStatement.class) != null ||
-          PsiTreeUtil.getParentOfType(element, PsiConditionalExpression.class) != null) {
+      PsiElement leaf = file.findElementAt(lookup.getEditor().getCaretModel().getOffset() - 1);
+      if (PsiUtil.getLanguageLevel(file).isAtLeast(LanguageLevel.JDK_1_8)) {
+        PsiStatement statement = PsiTreeUtil.getParentOfType(leaf, PsiStatement.class);
+        if (statement == null ||
+            statement.getTextRange().getStartOffset() != leaf.getTextRange().getStartOffset()) { // not typing a statement label
+          return Result.SELECT_ITEM_AND_FINISH_LOOKUP;
+        }
+      }
+      if (PsiTreeUtil.getParentOfType(leaf, PsiSwitchLabelStatement.class) != null ||
+          PsiTreeUtil.getParentOfType(leaf, PsiConditionalExpression.class) != null) {
         return Result.SELECT_ITEM_AND_FINISH_LOOKUP;
       }
       return Result.HIDE_LOOKUP;
     }
 
 
-    if (c == '[') return CharFilter.Result.SELECT_ITEM_AND_FINISH_LOOKUP;
+    if (c == '[' || c == ']' || c == ')' || c == '>') return CharFilter.Result.SELECT_ITEM_AND_FINISH_LOOKUP;
     if (c == '<' && o instanceof PsiClass) return Result.SELECT_ITEM_AND_FINISH_LOOKUP;
     if (c == '(') {
       if (o instanceof PsiClass) {
@@ -90,7 +93,7 @@ public class JavaCharFilter extends CharFilter {
       }
     }
     if ((c == ',' || c == '=') && o instanceof PsiVariable) {
-      int lookupStart = ((LookupImpl)lookup).getLookupStart();
+      int lookupStart = lookup.getLookupStart();
       String name = ((PsiVariable)o).getName();
       if (lookupStart >= 0 && name != null && name.equals(lookup.itemPattern(item))) {
         return Result.HIDE_LOOKUP;

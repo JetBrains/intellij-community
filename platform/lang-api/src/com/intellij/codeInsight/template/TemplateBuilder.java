@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.intellij.codeInsight.template;
 
 import com.intellij.openapi.editor.Editor;
@@ -25,9 +24,9 @@ import org.jetbrains.annotations.NotNull;
  * Shows a live template-like chooser UI over a PSI element and offers the user to replace certain sub-elements of the
  * specified element with values of his/her choice.
  *
- * @since 9.0
  * @author yole
- * @see com.intellij.codeInsight.template.TemplateBuilderFactory
+ * @see TemplateBuilderFactory
+ * @since 9.0
  */
 public interface TemplateBuilder {
   /**
@@ -66,7 +65,7 @@ public interface TemplateBuilder {
 
   /**
    * Shows the live template and initiates editing process.
-   * @deprecated doesn't work correctly for files with multiple editors use #run(Editor, boolean) instead
+   * @deprecated does not work correctly for files with multiple editors use #run(Editor, boolean) instead
    */
   @Deprecated
   void run();

@@ -15,6 +15,7 @@
  */
 package org.jetbrains.idea.maven.dom.references;
 
+import com.intellij.codeInspection.XmlSuppressionProvider;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -25,13 +26,13 @@ import com.intellij.psi.PsiReferenceProvider;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.ProcessingContext;
 import com.intellij.util.xml.DomElement;
-import com.intellij.util.xml.DomManager;
+import com.intellij.util.xml.DomUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.dom.MavenDomUtil;
-import org.jetbrains.idea.maven.dom.MavenPluginDomUtil;
 import org.jetbrains.idea.maven.dom.MavenPropertyResolver;
-import org.jetbrains.idea.maven.dom.model.MavenDomConfiguration;
+import org.jetbrains.idea.maven.dom.model.MavenDomProperties;
+import org.jetbrains.idea.maven.plugins.api.MavenPluginParamInfo;
 import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 
@@ -41,6 +42,7 @@ import java.util.regex.Matcher;
 
 public class MavenPropertyPsiReferenceProvider extends PsiReferenceProvider {
   public static final boolean SOFT_DEFAULT = false;
+  public static final String UNRESOLVED_MAVEN_PROPERTY_QUICKFIX_ID = "UnresolvedMavenProperty";
 
   @NotNull
   @Override
@@ -50,18 +52,9 @@ public class MavenPropertyPsiReferenceProvider extends PsiReferenceProvider {
 
   private static boolean isElementCanContainReference(PsiElement element) {
     if (element instanceof XmlTag) {
-      if ("delimiter".equals(((XmlTag)element).getName())) {
-        XmlTag delimitersTag = ((XmlTag)element).getParentTag();
-        if (delimitersTag != null && "delimiters".equals(delimitersTag.getName())) {
-          XmlTag configurationTag = delimitersTag.getParentTag();
-          if (configurationTag != null && "configuration".equals(configurationTag.getName())) {
-            DomElement configurationDom = DomManager.getDomManager(configurationTag.getProject()).getDomElement(configurationTag);
-            if (configurationDom != null && configurationDom instanceof MavenDomConfiguration) {
-              if (MavenPluginDomUtil.isPlugin((MavenDomConfiguration)configurationDom, "org.apache.maven.plugins", "maven-resources-plugin")) {
-                return false;
-              }
-            }
-          }
+      for (MavenPluginParamInfo.ParamInfo info : MavenPluginParamInfo.getParamInfoList((XmlTag)element)) {
+        if (Boolean.TRUE.equals(info.getParam().disableReferences)) {
+          return false;
         }
       }
     }
@@ -88,7 +81,10 @@ public class MavenPropertyPsiReferenceProvider extends PsiReferenceProvider {
 
     if (!isElementCanContainReference(element)) return PsiReference.EMPTY_ARRAY;
 
+    if (XmlSuppressionProvider.isSuppressed(element, UNRESOLVED_MAVEN_PROPERTY_QUICKFIX_ID)) return PsiReference.EMPTY_ARRAY;
+
     MavenProject mavenProject = null;
+    XmlTag propertiesTag = null;
     List<PsiReference> result = null;
 
     Matcher matcher = MavenPropertyResolver.PATTERN.matcher(textRange.substring(text));
@@ -106,17 +102,33 @@ public class MavenPropertyPsiReferenceProvider extends PsiReferenceProvider {
       TextRange range = TextRange.from(textRange.getStartOffset() + from, propertyName.length());
 
       if (result == null) {
-        result = new ArrayList<PsiReference>();
+        result = new ArrayList<>();
 
         mavenProject = findMavenProject(element);
         if (mavenProject == null) {
-          return PsiReference.EMPTY_ARRAY;
+          propertiesTag = findPropertiesParentTag(element);
+          if (propertiesTag == null) {
+            return PsiReference.EMPTY_ARRAY;
+          }
         }
       }
 
-      result.add(new MavenPropertyPsiReference(mavenProject, element, propertyName, range, isSoft));
+      PsiReference ref;
+      if (mavenProject != null) {
+        ref = new MavenPropertyPsiReference(mavenProject, element, propertyName, range, isSoft);
+      }
+      else {
+        ref = new MavenContextlessPropertyReference(propertiesTag, element, range, true);
+      }
+
+      result.add(ref);
     }
 
-    return result == null ? PsiReference.EMPTY_ARRAY : result.toArray(new PsiReference[result.size()]);
+    return result == null ? PsiReference.EMPTY_ARRAY : result.toArray(PsiReference.EMPTY_ARRAY);
+  }
+
+  private static XmlTag findPropertiesParentTag(@NotNull PsiElement element) {
+    DomElement domElement = DomUtil.getDomElement(element);
+    return domElement instanceof MavenDomProperties ? domElement.getXmlTag() : null;
   }
 }

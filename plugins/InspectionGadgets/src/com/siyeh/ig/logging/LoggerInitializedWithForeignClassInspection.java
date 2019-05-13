@@ -1,5 +1,5 @@
 /*
- * Copyright 2008-2012 Bas Leijdekkers
+ * Copyright 2008-2013 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,12 +22,17 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.*;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.IncorrectOperationException;
+import com.intellij.psi.util.PsiUtil;
+import com.intellij.util.xmlb.Accessor;
+import com.intellij.util.xmlb.SerializationFilterBase;
+import com.intellij.util.xmlb.XmlSerializer;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.PsiReplacementUtil;
+import com.siyeh.ig.psiutils.ClassUtils;
+import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.ui.UiUtils;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -45,14 +50,26 @@ public class LoggerInitializedWithForeignClassInspection extends BaseInspection 
   @NonNls private static final String DEFAULT_LOGGER_CLASS_NAMES =
     "org.apache.log4j.Logger,org.slf4j.LoggerFactory,org.apache.commons.logging.LogFactory,java.util.logging.Logger";
   @NonNls private static final String DEFAULT_FACTORY_METHOD_NAMES = "getLogger,getLogger,getLog,getLogger";
-
+  protected final List<String> loggerFactoryClassNames = new ArrayList<>();
+  protected final List<String> loggerFactoryMethodNames = new ArrayList<>();
   @SuppressWarnings({"PublicField"})
   public String loggerClassName = DEFAULT_LOGGER_CLASS_NAMES;
-  private final List<String> loggerFactoryClassNames = new ArrayList();
-
   @SuppressWarnings({"PublicField"})
   public String loggerFactoryMethodName = DEFAULT_FACTORY_METHOD_NAMES;
-  private final List<String> loggerFactoryMethodNames = new ArrayList();
+
+  
+  {
+    parseString(loggerClassName, loggerFactoryClassNames);
+    parseString(loggerFactoryMethodName, loggerFactoryMethodNames);
+  }
+  @Override
+  public JComponent createOptionsPanel() {
+    final ListTable table = new ListTable(
+      new ListWrappingTableModel(Arrays.asList(loggerFactoryClassNames, loggerFactoryMethodNames),
+                                 InspectionGadgetsBundle.message("logger.factory.class.name"),
+                                 InspectionGadgetsBundle.message("logger.factory.method.name")));
+    return UiUtils.createAddRemoveTreeClassChooserPanel(table, "Choose logger factory class");
+  }
 
   @Override
   @NotNull
@@ -67,18 +84,43 @@ public class LoggerInitializedWithForeignClassInspection extends BaseInspection 
   }
 
   @Override
-  public JComponent createOptionsPanel() {
-    final ListTable table = new ListTable(
-      new ListWrappingTableModel(Arrays.asList(loggerFactoryClassNames, loggerFactoryMethodNames),
-                                 InspectionGadgetsBundle.message("logger.factory.class.name"),
-                                 InspectionGadgetsBundle.message("logger.factory.method.name")));
-    return UiUtils.createAddRemovePanel(table);
-  }
-
-  @Override
   @Nullable
   protected InspectionGadgetsFix buildFix(Object... infos) {
     return new LoggerInitializedWithForeignClassFix((String)infos[0]);
+  }
+
+  @Override
+  public BaseInspectionVisitor buildVisitor() {
+    return new LoggerInitializedWithForeignClassVisitor();
+  }
+
+  @Override
+  public void readSettings(@NotNull Element element) throws InvalidDataException {
+    super.readSettings(element);
+    parseString(loggerClassName, loggerFactoryClassNames);
+    parseString(loggerFactoryMethodName, loggerFactoryMethodNames);
+    if (loggerFactoryClassNames.size() != loggerFactoryMethodNames.size() || loggerFactoryClassNames.isEmpty()) {
+      parseString(DEFAULT_LOGGER_CLASS_NAMES, loggerFactoryClassNames);
+      parseString(DEFAULT_FACTORY_METHOD_NAMES, loggerFactoryMethodNames);
+    }
+  }
+
+  @Override
+  public void writeSettings(@NotNull Element element) throws WriteExternalException {
+    loggerClassName = formatString(loggerFactoryClassNames);
+    loggerFactoryMethodName = formatString(loggerFactoryMethodNames);
+    XmlSerializer.serializeInto(this, element, new SerializationFilterBase() {
+      @Override
+      protected boolean accepts(@NotNull Accessor accessor, @NotNull Object bean, @Nullable Object beanValue) {
+        if ("loggerClassName".equals(accessor.getName()) && DEFAULT_LOGGER_CLASS_NAMES.equals(beanValue)) {
+          return false;
+        }
+        if ("loggerFactoryMethodNames".equals(accessor.getName()) && DEFAULT_FACTORY_METHOD_NAMES.equals(beanValue)) {
+          return false;
+        }
+        return true;
+      }
+    });
   }
 
   private static class LoggerInitializedWithForeignClassFix extends InspectionGadgetsFix {
@@ -92,25 +134,24 @@ public class LoggerInitializedWithForeignClassInspection extends BaseInspection 
     @Override
     @NotNull
     public String getName() {
-      return InspectionGadgetsBundle.message(
-        "logger.initialized.with.foreign.class.quickfix",
-        newClassName);
+      return InspectionGadgetsBundle.message("logger.initialized.with.foreign.class.quickfix", newClassName);
+    }
+
+    @NotNull
+    @Override
+    public String getFamilyName() {
+      return "Replace foreign class";
     }
 
     @Override
-    protected void doFix(Project project, ProblemDescriptor descriptor) throws IncorrectOperationException {
+    protected void doFix(Project project, ProblemDescriptor descriptor) {
       final PsiElement element = descriptor.getPsiElement();
       if (!(element instanceof PsiClassObjectAccessExpression)) {
         return;
       }
       final PsiClassObjectAccessExpression classObjectAccessExpression = (PsiClassObjectAccessExpression)element;
-      replaceExpression(classObjectAccessExpression, newClassName + ".class");
+      PsiReplacementUtil.replaceExpression(classObjectAccessExpression, newClassName + ".class", new CommentTracker());
     }
-  }
-
-  @Override
-  public BaseInspectionVisitor buildVisitor() {
-    return new LoggerInitializedWithForeignClassVisitor();
   }
 
   private class LoggerInitializedWithForeignClassVisitor extends BaseInspectionVisitor {
@@ -124,7 +165,7 @@ public class LoggerInitializedWithForeignClassInspection extends BaseInspection 
         if (!expression.equals(referenceExpression.getQualifierExpression())) {
           return;
         }
-        final String name = referenceExpression.getReferenceName();
+        @NonNls final String name = referenceExpression.getReferenceName();
         if (!"getName".equals(name)) {
           return;
         }
@@ -134,7 +175,7 @@ public class LoggerInitializedWithForeignClassInspection extends BaseInspection 
         }
         final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)grandParent;
         final PsiExpressionList list = methodCallExpression.getArgumentList();
-        if (list.getExpressions().length != 0) {
+        if (!list.isEmpty()) {
           return;
         }
         parent = methodCallExpression.getParent();
@@ -152,7 +193,10 @@ public class LoggerInitializedWithForeignClassInspection extends BaseInspection 
       if (expressions.length != 1) {
         return;
       }
-      final PsiClass containingClass = PsiTreeUtil.getParentOfType(expression, PsiClass.class);
+      PsiClass containingClass = ClassUtils.getContainingClass(expression);
+      while (containingClass instanceof PsiAnonymousClass) {
+        containingClass = ClassUtils.getContainingClass(containingClass);
+      }
       if (containingClass == null) {
         return;
       }
@@ -180,12 +224,7 @@ public class LoggerInitializedWithForeignClassInspection extends BaseInspection 
         return;
       }
       final PsiTypeElement operand = expression.getOperand();
-      final PsiType type = operand.getType();
-      if (!(type instanceof PsiClassType)) {
-        return;
-      }
-      final PsiClassType classType = (PsiClassType)type;
-      final PsiClass initializerClass = classType.resolve();
+      final PsiClass initializerClass = PsiUtil.resolveClassInClassTypeOnly(operand.getType());
       if (initializerClass == null) {
         return;
       }
@@ -195,21 +234,4 @@ public class LoggerInitializedWithForeignClassInspection extends BaseInspection 
       registerError(expression, containingClassName);
     }
   }
-
-  @Override
-  public void readSettings(Element element) throws InvalidDataException {
-    super.readSettings(element);
-    parseString(loggerClassName, loggerFactoryClassNames);
-    parseString(loggerFactoryMethodName, loggerFactoryMethodNames);
-    if (loggerFactoryClassNames.size() != loggerFactoryMethodNames.size()) {
-      parseString(DEFAULT_LOGGER_CLASS_NAMES, loggerFactoryClassNames);
-      parseString(DEFAULT_FACTORY_METHOD_NAMES, loggerFactoryMethodNames);
-    }
-  }
-
-  @Override
-  public void writeSettings(Element element) throws WriteExternalException {
-    loggerClassName = formatString(loggerFactoryClassNames);
-    loggerFactoryMethodName = formatString(loggerFactoryMethodNames);
-    super.writeSettings(element);
-  }}
+}

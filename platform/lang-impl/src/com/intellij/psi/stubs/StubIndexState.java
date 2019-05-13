@@ -19,19 +19,21 @@
  */
 package com.intellij.psi.stubs;
 
+import org.jetbrains.annotations.NotNull;
+
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
 public class StubIndexState {
-  public List<String> registeredIndices = new ArrayList<String>();
+  public List<String> registeredIndices = new ArrayList<>();
 
   public StubIndexState() {
   }
 
-  public StubIndexState(Collection<StubIndexKey<?, ?>> keys) {
+  public StubIndexState(@NotNull Collection<StubIndexKey<?, ?>> keys) {
     for (StubIndexKey key : keys) {
-      registeredIndices.add(key.toString());
+      registeredIndices.add(key.getName());
     }
   }
 }

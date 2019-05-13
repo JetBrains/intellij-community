@@ -28,7 +28,7 @@ public enum JpsJavaDependencyScope {
   TEST(TEST_COMPILE, TEST_RUNTIME),
   RUNTIME(PRODUCTION_RUNTIME, TEST_RUNTIME),
   PROVIDED(PRODUCTION_COMPILE, TEST_COMPILE, TEST_RUNTIME);
-  private EnumSet<JpsJavaClasspathKind> myAffectedClasspath;
+  private final EnumSet<JpsJavaClasspathKind> myAffectedClasspath;
 
   JpsJavaDependencyScope(JpsJavaClasspathKind... classpath) {
     myAffectedClasspath = EnumSet.copyOf(Arrays.asList(classpath));

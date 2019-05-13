@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,14 +29,10 @@ import org.jetbrains.annotations.Nullable;
  * @author Maxim.Mossienko
  */
 public class AnnotationParameterInfoHandler implements ParameterInfoHandler<PsiAnnotationParameterList,PsiAnnotationMethod>, DumbAware {
+  @Nullable
   @Override
-  public @Nullable Object[] getParametersForLookup(LookupElement item, ParameterInfoContext context) {
+  public Object[] getParametersForLookup(LookupElement item, ParameterInfoContext context) {
     return null;
-  }
-
-  @Override
-  public Object[] getParametersForDocumentation(final PsiAnnotationMethod p, final ParameterInfoContext context) {
-    return new Object[] {p};
   }
 
   @Override
@@ -45,7 +41,7 @@ public class AnnotationParameterInfoHandler implements ParameterInfoHandler<PsiA
   }
 
   @Override
-  public PsiAnnotationParameterList findElementForParameterInfo(final CreateParameterInfoContext context) {
+  public PsiAnnotationParameterList findElementForParameterInfo(@NotNull final CreateParameterInfoContext context) {
     final PsiAnnotation annotation = ParameterInfoUtils.findParentOfType(context.getFile(), context.getOffset(), PsiAnnotation.class);
 
     if (annotation != null) {
@@ -77,46 +73,39 @@ public class AnnotationParameterInfoHandler implements ParameterInfoHandler<PsiA
   }
 
   @Override
-  public void showParameterInfo(@NotNull final PsiAnnotationParameterList element, final CreateParameterInfoContext context) {
+  public void showParameterInfo(@NotNull final PsiAnnotationParameterList element, @NotNull final CreateParameterInfoContext context) {
     context.showHint(element, element.getTextRange().getStartOffset() + 1, this);
   }
 
   @Override
-  public PsiAnnotationParameterList findElementForUpdatingParameterInfo(final UpdateParameterInfoContext context) {
+  public PsiAnnotationParameterList findElementForUpdatingParameterInfo(@NotNull final UpdateParameterInfoContext context) {
     final PsiAnnotation annotation = ParameterInfoUtils.findParentOfType(context.getFile(), context.getOffset(), PsiAnnotation.class);
     return annotation != null ? annotation.getParameterList() : null;
   }
 
   @Override
-  public void updateParameterInfo(@NotNull final PsiAnnotationParameterList o, final UpdateParameterInfoContext context) {
+  public void updateParameterInfo(@NotNull final PsiAnnotationParameterList parameterOwner, @NotNull final UpdateParameterInfoContext context) {
     CharSequence chars = context.getEditor().getDocument().getCharsSequence();
     int offset1 = CharArrayUtil.shiftForward(chars, context.getEditor().getCaretModel().getOffset(), " \t");
-    if (chars.charAt(offset1) == ',') {
+    final char c = chars.charAt(offset1);
+    if (c == ',' || c == ')') {
       offset1 = CharArrayUtil.shiftBackward(chars, offset1 - 1, " \t");
     }
     context.setHighlightedParameter(findAnnotationMethod(context.getFile(), offset1));
   }
 
   @Override
-  public String getParameterCloseChars() {
-    return ParameterInfoUtils.DEFAULT_PARAMETER_CLOSE_CHARS;
+  public void updateUI(final PsiAnnotationMethod p, @NotNull final ParameterInfoUIContext context) {
+    updateUIText(p, context);
   }
 
-  @Override
-  public boolean tracksParameterIndex() {
-    return true;
-  }
-
-  @Override
-  public void updateUI(final PsiAnnotationMethod p, final ParameterInfoUIContext context) {
-    @NonNls StringBuffer buffer = new StringBuffer();
-    int highlightStartOffset;
-    int highlightEndOffset;
+  public static String updateUIText(PsiAnnotationMethod p, ParameterInfoUIContext context) {
+    @NonNls StringBuilder buffer = new StringBuilder();
     buffer.append(p.getReturnType().getPresentableText());
     buffer.append(" ");
-    highlightStartOffset = buffer.length();
+    int highlightStartOffset = buffer.length();
     buffer.append(p.getName());
-    highlightEndOffset = buffer.length();
+    int highlightEndOffset = buffer.length();
     buffer.append("()");
 
     if (p.getDefaultValue() != null) {
@@ -124,8 +113,8 @@ public class AnnotationParameterInfoHandler implements ParameterInfoHandler<PsiA
       buffer.append(p.getDefaultValue().getText());
     }
 
-    context.setupUIComponentPresentation(buffer.toString(), highlightStartOffset, highlightEndOffset, false, p.isDeprecated(),
-                                         false, context.getDefaultParameterColor());
+    return context.setupUIComponentPresentation(buffer.toString(), highlightStartOffset, highlightEndOffset, false, p.isDeprecated(),
+                                                false, context.getDefaultParameterColor());
   }
 
   private static PsiAnnotationMethod findAnnotationMethod(PsiFile file, int offset) {

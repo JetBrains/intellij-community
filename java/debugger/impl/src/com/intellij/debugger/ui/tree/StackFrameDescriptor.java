@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,11 +16,6 @@
 package com.intellij.debugger.ui.tree;
 
 import com.intellij.debugger.engine.StackFrameContext;
-import org.jetbrains.annotations.Nullable;
-
-import java.awt.*;
 
 public interface StackFrameDescriptor extends NodeDescriptor, StackFrameContext {
-  @Nullable
-  Color getBackgroundColor();
 }

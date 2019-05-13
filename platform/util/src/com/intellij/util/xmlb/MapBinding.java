@@ -1,231 +1,302 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.xmlb;
 
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.ReflectionUtil;
 import com.intellij.util.xmlb.annotations.MapAnnotation;
+import com.intellij.util.xmlb.annotations.XMap;
+import gnu.trove.THashMap;
 import org.jdom.Attribute;
 import org.jdom.Content;
 import org.jdom.Element;
-import org.jdom.Text;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
-import java.util.Arrays;
-import java.util.Comparator;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 import static com.intellij.util.xmlb.Constants.*;
 
-class MapBinding implements Binding {
-  private final Binding myKeyBinding;
-  private final Binding myValueBinding;
-  private final MapAnnotation myMapAnnotation;
+class MapBinding extends Binding implements MultiNodeBinding {
   private static final Comparator<Object> KEY_COMPARATOR = new Comparator<Object>() {
-    public int compare(final Object o1, final Object o2) {
+    @SuppressWarnings({"unchecked"})
+    @Override
+    public int compare(Object o1, Object o2) {
       if (o1 instanceof Comparable && o2 instanceof Comparable) {
         Comparable c1 = (Comparable)o1;
         Comparable c2 = (Comparable)o2;
         return c1.compareTo(c2);
       }
-
       return 0;
     }
   };
 
+  private final MapAnnotation oldAnnotation;
+  private final XMap annotation;
 
-  public MapBinding(ParameterizedType type, Accessor accessor) {
-    Type[] arguments = type.getActualTypeArguments();
-    Type keyType = arguments[0];
-    Type valueType = arguments[1];
+  @NotNull private final Class<? extends Map> mapClass;
 
-    myKeyBinding = XmlSerializerImpl.getBinding(keyType);
-    myValueBinding = XmlSerializerImpl.getBinding(valueType);
-    myMapAnnotation = XmlSerializerImpl.findAnnotation(accessor.getAnnotations(), MapAnnotation.class);
+  private Class<?> keyClass;
+  private Class<?> valueClass;
+
+  private Binding keyBinding;
+  private Binding valueBinding;
+
+  MapBinding(@Nullable MutableAccessor accessor, @NotNull Class<? extends Map> mapClass) {
+    super(accessor);
+
+    oldAnnotation = accessor == null ? null : accessor.getAnnotation(MapAnnotation.class);
+    annotation = accessor == null ? null : accessor.getAnnotation(XMap.class);
+    this.mapClass = mapClass;
   }
 
-  public Object serialize(Object o, Object context, SerializationFilter filter) {
+  @Override
+  public void init(@NotNull Type originalType, @NotNull Serializer serializer) {
+    ParameterizedType type = (ParameterizedType)originalType;
+    Type[] typeArguments = type.getActualTypeArguments();
+
+    keyClass = XmlSerializerImpl.typeToClass(typeArguments[0]);
+    valueClass = XmlSerializerImpl.typeToClass(typeArguments[1]);
+
+    keyBinding = serializer.getBinding(keyClass, typeArguments[0]);
+    valueBinding = serializer.getBinding(valueClass, typeArguments[1]);
+  }
+
+  @Override
+  public boolean isMulti() {
+    return true;
+  }
+
+  private boolean isSortMap(Map<?, ?> map) {
+    // for new XMap we do not sort LinkedHashMap
+    if (map instanceof TreeMap || (annotation != null && map instanceof LinkedHashMap)) {
+      return false;
+    }
+    return oldAnnotation == null || oldAnnotation.sortBeforeSave();
+  }
+
+  @Nullable
+  @Override
+  public Object serialize(@NotNull Object o, @Nullable Object context, @Nullable SerializationFilter filter) {
+    Element serialized = isSurroundWithTag() ? new Element(MAP) : (Element)context;
+    assert serialized != null;
+
     Map map = (Map)o;
-
-    Element m;
-
-    if (myMapAnnotation == null || myMapAnnotation.surroundWithTag()) {
-      m = new Element(Constants.MAP);
-    }
-    else {
-      m = (Element)context;
-    }
-
-    final Set keySet = map.keySet();
-    final Object[] keys = ArrayUtil.toObjectArray(keySet);
-
-    if (myMapAnnotation == null || myMapAnnotation.sortBeforeSave()) {
+    Object[] keys = ArrayUtil.toObjectArray(map.keySet());
+    if (isSortMap(map)) {
       Arrays.sort(keys, KEY_COMPARATOR);
     }
 
     for (Object k : keys) {
-      Object v = map.get(k);
+      Element entry = new Element(getEntryElementName());
+      serialized.addContent(entry);
 
-      Element entry = new Element(getEntryAttributeName());
-      m.addContent(entry);
-
-      Object kNode = myKeyBinding.serialize(k, entry, filter);
-
-      if (kNode instanceof Text) {
-        Text text = (Text)kNode;
-        entry.setAttribute(getKeyAttributeValue(), text.getText());
-      }
-      else {
-        if (myMapAnnotation != null && !myMapAnnotation.surroundKeyWithTag()) {
-          entry.addContent((Content)kNode);
-        }
-        else {
-          Element key = new Element(getKeyAttributeValue());
-          entry.addContent(key);
-          key.addContent((Content)kNode);
-        }
-      }
-
-      Object vNode = myValueBinding.serialize(v, entry, filter);
-      if (vNode instanceof Text) {
-        Text text = (Text)vNode;
-        entry.setAttribute(getValueAttributeName(), text.getText());
-      }
-      else {
-        if (myMapAnnotation != null && !myMapAnnotation.surroundValueWithTag()) {
-          entry.addContent((Element)vNode);
-        }
-        else {
-          Element value = new Element(getValueAttributeName());
-          entry.addContent(value);
-          value.addContent((Content)vNode);
-        }
-      }
+      serializeKeyOrValue(entry, getKeyAttributeName(), k, keyBinding, filter);
+      serializeKeyOrValue(entry, getValueAttributeName(), map.get(k), valueBinding, filter);
     }
 
-    return m;
+    return serialized == context ? null : serialized;
   }
 
-  private String getEntryAttributeName() {
-    return myMapAnnotation == null ? ENTRY : myMapAnnotation.entryTagName();
+  protected boolean isSurroundWithTag() {
+    if (annotation != null) {
+      return false;
+    }
+    return oldAnnotation == null || oldAnnotation.surroundWithTag();
+  }
+
+  @NotNull
+  String getEntryElementName() {
+    if (annotation != null) {
+      return annotation.entryTagName();
+    }
+    return oldAnnotation == null ? ENTRY : oldAnnotation.entryTagName();
+  }
+
+  private String getKeyAttributeName() {
+    if (annotation != null) {
+      return annotation.keyAttributeName();
+    }
+    return oldAnnotation == null ? KEY : oldAnnotation.keyAttributeName();
   }
 
   private String getValueAttributeName() {
-    return myMapAnnotation == null ? VALUE : myMapAnnotation.valueAttributeName();
+    if (annotation != null) {
+      return annotation.valueAttributeName();
+    }
+    return oldAnnotation == null ? VALUE : oldAnnotation.valueAttributeName();
   }
 
-  private String getKeyAttributeValue() {
-    return myMapAnnotation == null ? KEY : myMapAnnotation.keyAttributeName();
-  }
-
-  public Object deserialize(Object o, @NotNull Object... nodes) {
-    Map map = (Map)o;
-    map.clear();
-
-    final Object[] childNodes;
-
-    if (myMapAnnotation == null || myMapAnnotation.surroundWithTag()) {
-      assert nodes.length == 1;
-      Element m = (Element)nodes[0];
-      childNodes = JDOMUtil.getContent(m);
+  @Nullable
+  @Override
+  public Object deserializeList(@Nullable Object context, @NotNull List<? extends Element> elements) {
+    List<? extends Element> childNodes;
+    if (isSurroundWithTag()) {
+      assert elements.size() == 1;
+      childNodes = elements.get(0).getChildren();
     }
     else {
-      childNodes = nodes;
+      childNodes = elements;
+    }
+    return deserialize(context, childNodes);
+  }
+
+  @Override
+  public Object deserializeUnsafe(Object context, @NotNull Element element) {
+    return null;
+  }
+
+  @Nullable
+  public Object deserialize(@Nullable Object context, @NotNull Element element) {
+    if (isSurroundWithTag()) {
+      return deserialize(context, element.getChildren());
+    }
+    else {
+      return deserialize(context, Collections.singletonList(element));
+    }
+  }
+
+  private static boolean isMutableMap(@NotNull Map object) {
+    if (object == Collections.emptyMap()) {
+      return false;
+    }
+    else {
+      String simpleName = object.getClass().getSimpleName();
+      return !simpleName.equals("EmptyMap") && !simpleName.equals("UnmodifiableMap");
+    }
+  }
+
+  @Nullable
+  private Map deserialize(@Nullable Object context, @NotNull List<? extends Element> childNodes) {
+    // if accessor is null, it is sub-map and we must not use context
+    Map map = myAccessor == null ? null : (Map)context;
+    if (map != null) {
+      if (isMutableMap(map)) {
+        map.clear();
+      }
+      else {
+        map = null;
+      }
     }
 
-
-    for (Object childNode : childNodes) {
-      if (XmlSerializerImpl.isIgnoredNode(childNode)) continue;
-      
-      Element entry = (Element)childNode;
-
-      Object k = null;
-      Object v = null;
-
-      assert entry.getName().equals(getEntryAttributeName());
-
-      Attribute keyAttr = entry.getAttribute(getKeyAttributeValue());
-      if (keyAttr != null) {
-        k = myKeyBinding.deserialize(o, keyAttr);
+    for (Element childNode : childNodes) {
+      if (!childNode.getName().equals(getEntryElementName())) {
+        LOG.warn("unexpected entry for serialized Map will be skipped: " + childNode);
+        continue;
       }
-      else {
-        if (myMapAnnotation != null && !myMapAnnotation.surroundKeyWithTag()) {
-          final Object[] children = JDOMUtil.getContent(entry);
-          for (Object child : children) {
-            if (myKeyBinding.isBoundTo(child)) {
-              k = myKeyBinding.deserialize(o, child);
-              break;
-            }
-          }
 
-          assert k != null : "no key found";
+      if (map == null) {
+        if (mapClass == Map.class) {
+          map = new THashMap();
         }
         else {
-          final Object keyNode = entry.getChildren(getKeyAttributeValue()).get(0);
-          k = myKeyBinding.deserialize(o, JDOMUtil.getContent((Element)keyNode));
-        }
-      }
-
-      Attribute valueAttr = entry.getAttribute(getValueAttributeName());
-      if (valueAttr != null) {
-        v = myValueBinding.deserialize(o, valueAttr);
-      }
-      else {
-        if (myMapAnnotation != null && !myMapAnnotation.surroundValueWithTag()) {
-          final Object[] children = JDOMUtil.getContent(entry);
-          for (Object child : children) {
-            if (myValueBinding.isBoundTo(child)) {
-              v = myValueBinding.deserialize(o, child);
-              break;
-            }
+          try {
+            map = ReflectionUtil.newInstance(mapClass);
           }
-
-          assert v != null : "no value found";
-        }
-        else {
-          final Object valueNode = entry.getChildren(getValueAttributeName()).get(0);
-          v = myValueBinding.deserialize(o, XmlSerializerImpl.getNotIgnoredContent((Element)valueNode));
+          catch (Exception e) {
+            LOG.warn(e);
+            map = new THashMap();
+          }
         }
       }
 
       //noinspection unchecked
-      map.put(k, v);
+      map.put(deserializeKeyOrValue(childNode, getKeyAttributeName(), context, keyBinding, keyClass),
+              deserializeKeyOrValue(childNode, getValueAttributeName(), context, valueBinding, valueClass));
     }
-
     return map;
   }
 
-  public boolean isBoundTo(Object node) {
-    if (!(node instanceof Element)) return false;
-
-    if (myMapAnnotation != null && !myMapAnnotation.surroundWithTag()) {
-      return myMapAnnotation.entryTagName().equals(((Element)node).getName());
+  private void serializeKeyOrValue(@NotNull Element entry,
+                                   @NotNull String attributeName,
+                                   @Nullable Object value,
+                                   @Nullable Binding binding,
+                                   @Nullable SerializationFilter filter) {
+    if (value == null) {
+      return;
     }
 
-    return ((Element)node).getName().equals(Constants.MAP);
+    if (binding == null) {
+      entry.setAttribute(attributeName, JDOMUtil.removeControlChars(XmlSerializerImpl.convertToString(value)));
+    }
+    else {
+      Object serialized = binding.serialize(value, entry, filter);
+      if (serialized != null) {
+        if (isSurroundKey()) {
+          Element container = new Element(attributeName);
+          container.addContent((Content)serialized);
+          entry.addContent(container);
+        }
+        else {
+          entry.addContent((Content)serialized);
+        }
+      }
+    }
   }
 
-  public Class getBoundNodeType() {
-    return Element.class;
+  private Object deserializeKeyOrValue(@NotNull Element entry,
+                                       @NotNull String attributeName,
+                                       Object context,
+                                       @Nullable Binding binding,
+                                       @NotNull Class<?> valueClass) {
+    Attribute attribute = entry.getAttribute(attributeName);
+    if (attribute != null) {
+      return XmlSerializerImpl.convert(attribute.getValue(), valueClass);
+    }
+    else if (!isSurroundKey()) {
+      assert binding != null;
+      for (Element element : entry.getChildren()) {
+        if (binding.isBoundTo(element)) {
+          return binding.deserializeUnsafe(context, element);
+        }
+      }
+    }
+    else {
+      Element entryChild = entry.getChild(attributeName);
+      List<Element> children = entryChild == null ? Collections.<Element>emptyList() : entryChild.getChildren();
+      if (children.isEmpty()) {
+        return null;
+      }
+      else {
+        assert binding != null;
+        return Binding.deserializeList(binding, null, children);
+      }
+    }
+    return null;
   }
 
-  public void init() {
+  private boolean isSurroundKey() {
+    if (annotation != null) {
+      return false;
+    }
+    return oldAnnotation == null || oldAnnotation.surroundKeyWithTag();
+  }
+
+  boolean isBoundToWithoutProperty(@NotNull Element element) {
+    String elementName = element.getName();
+    if (annotation != null) {
+      return elementName.equals(annotation.entryTagName());
+    }
+    else if (oldAnnotation != null && !oldAnnotation.surroundWithTag()) {
+      return elementName.equals(oldAnnotation.entryTagName());
+    }
+    else {
+      return elementName.equals(MAP);
+    }
+  }
+
+  @Override
+  public boolean isBoundTo(@NotNull Element element) {
+    if (oldAnnotation != null && !oldAnnotation.surroundWithTag()) {
+      return oldAnnotation.entryTagName().equals(element.getName());
+    }
+    else if (annotation != null) {
+      return annotation.propertyElementName().equals(element.getName());
+    }
+    else {
+      return element.getName().equals(MAP);
+    }
   }
 }

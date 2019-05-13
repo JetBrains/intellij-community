@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,25 +15,24 @@
  */
 package com.intellij.ui;
 
-import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.border.CustomLineBorder;
 import com.intellij.ui.table.TableView;
+import com.intellij.util.SmartList;
 import com.intellij.util.ui.EditableModel;
 import com.intellij.util.ui.ElementProducer;
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.border.Border;
 import java.awt.*;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 
 /**
  * @author Konstantin Bulenkov
@@ -43,19 +42,8 @@ import java.util.List;
  * @see #createDecorator(javax.swing.JTree)
  */
 @SuppressWarnings("UnusedDeclaration")
-public abstract class ToolbarDecorator implements DataProvider, CommonActionsPanel.ListenerFactory {
-  private static final Comparator<AnAction> ACTION_BUTTONS_SORTER = new Comparator<AnAction>() {
-    @Override
-    public int compare(AnAction a1, AnAction a2) {
-      if (a1 instanceof AnActionButton && a2 instanceof AnActionButton) {
-        final JComponent c1 = ((AnActionButton)a1).getContextComponent();
-        final JComponent c2 = ((AnActionButton)a2).getContextComponent();
-        return c1.hasFocus() ? -1 : c2.hasFocus() ? 1 : 0;
-      }
-      return 0;
-    }
-  };
-
+public abstract class ToolbarDecorator implements CommonActionsPanel.ListenerFactory {
+  protected Border myPanelBorder;
   protected Border myToolbarBorder;
   protected boolean myAddActionEnabled;
   protected boolean myEditActionEnabled;
@@ -63,7 +51,7 @@ public abstract class ToolbarDecorator implements DataProvider, CommonActionsPan
   protected boolean myUpActionEnabled;
   protected boolean myDownActionEnabled;
   protected Border myActionsPanelBorder;
-  private List<AnActionButton> myExtraActions = new ArrayList<AnActionButton>();
+  private final List<AnActionButton> myExtraActions = new SmartList<>();
   private ActionToolbarPosition myToolbarPosition;
   protected AnActionButtonRunnable myAddAction;
   protected AnActionButtonRunnable myEditAction;
@@ -81,6 +69,7 @@ public abstract class ToolbarDecorator implements DataProvider, CommonActionsPan
   private AnActionButtonUpdater myMoveUpActionUpdater = null;
   private AnActionButtonUpdater myMoveDownActionUpdater = null;
   private Dimension myPreferredSize;
+  private Dimension myMinimumSize;
   private CommonActionsPanel myActionsPanel;
   private Comparator<AnActionButton> myButtonComparator;
   private boolean myAsUsualTopToolbar = false;
@@ -90,6 +79,14 @@ public abstract class ToolbarDecorator implements DataProvider, CommonActionsPan
   protected abstract JComponent getComponent();
 
   protected abstract void updateButtons();
+
+  protected void updateExtraElementActions(boolean someElementSelected) {
+    for (AnActionButton action : myExtraActions) {
+      if (action instanceof ElementActionButton) {
+        action.setEnabled(someElementSelected);
+      }
+    }
+  }
 
   public final CommonActionsPanel getActionsPanel() {
     return myActionsPanel;
@@ -156,6 +153,11 @@ public abstract class ToolbarDecorator implements DataProvider, CommonActionsPan
     return this;
   }
 
+  public ToolbarDecorator setPanelBorder(Border border) {
+    myPanelBorder = border;
+    return this;
+  }
+
   public ToolbarDecorator setToolbarBorder(Border border) {
     myActionsPanelBorder = border;
     return this;
@@ -168,19 +170,16 @@ public abstract class ToolbarDecorator implements DataProvider, CommonActionsPan
   
   public ToolbarDecorator setButtonComparator(String...actionNames) {
     final List<String> names = Arrays.asList(actionNames);
-    myButtonComparator = new Comparator<AnActionButton>() {
-      @Override
-      public int compare(AnActionButton o1, AnActionButton o2) {
-        final String t1 = o1.getTemplatePresentation().getText();
-        final String t2 = o2.getTemplatePresentation().getText();
-        if (t1 == null || t2 == null) return 0;
-        
-        final int ind1 = names.indexOf(t1);
-        final int ind2 = names.indexOf(t2);
-        if (ind1 == -1 && ind2 >= 0) return 1;
-        if (ind2 == -1 && ind1 >= 0) return -1;
-        return ind1 - ind2;
-      }
+    myButtonComparator = (o1, o2) -> {
+      final String t1 = o1.getTemplatePresentation().getText();
+      final String t2 = o2.getTemplatePresentation().getText();
+      if (t1 == null || t2 == null) return 0;
+
+      final int ind1 = names.indexOf(t1);
+      final int ind2 = names.indexOf(t2);
+      if (ind1 == -1 && ind2 >= 0) return 1;
+      if (ind2 == -1 && ind1 >= 0) return -1;
+      return ind1 - ind2;
     };
     return this;
   }
@@ -189,8 +188,17 @@ public abstract class ToolbarDecorator implements DataProvider, CommonActionsPan
     return setToolbarBorder(new CustomLineBorder(top, left, bottom, right));
   }
 
-  public ToolbarDecorator addExtraAction(AnActionButton action) {
+  public ToolbarDecorator addExtraAction(@NotNull AnActionButton action) {
     myExtraActions.add(action);
+    return this;
+  }
+
+  public ToolbarDecorator addExtraActions(AnActionButton... actions) {
+    for (AnActionButton action : actions) {
+      if (action != null) {
+        addExtraAction(action);
+      }
+    }
     return this;
   }
 
@@ -292,13 +300,20 @@ public abstract class ToolbarDecorator implements DataProvider, CommonActionsPan
   public ToolbarDecorator setActionGroup(@NotNull ActionGroup actionGroup) {
     AnAction[] actions = actionGroup.getChildren(null);
     for (AnAction action : actions) {
-      addExtraAction(AnActionButton.fromAction(action));
+      if (!(action instanceof Separator)) {
+        addExtraAction(AnActionButton.fromAction(action));
+      }
     }
     return this;
   }
 
   public ToolbarDecorator setPreferredSize(Dimension size) {
     myPreferredSize = size;
+    return this;
+  }
+
+  public ToolbarDecorator setMinimumSize(Dimension size) {
+    myMinimumSize = size;
     return this;
   }
 
@@ -319,13 +334,16 @@ public abstract class ToolbarDecorator implements DataProvider, CommonActionsPan
     final JComponent contextComponent = getComponent();
     myActionsPanel = new CommonActionsPanel(this, contextComponent,
                              myToolbarPosition,
-                             myExtraActions.toArray(new AnActionButton[myExtraActions.size()]),
+                             myExtraActions.toArray(new AnActionButton[0]),
                              myButtonComparator,
                              myAddName, myRemoveName, myMoveUpName, myMoveDownName, myEditName,
                              myAddIcon, buttons);
     final JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(contextComponent, true);
     if (myPreferredSize != null) {
       scrollPane.setPreferredSize(myPreferredSize);
+    }
+    if (myMinimumSize != null) {
+      scrollPane.setMinimumSize(myMinimumSize);
     }
     final JPanel panel = new JPanel(new BorderLayout()) {
       @Override
@@ -335,17 +353,18 @@ public abstract class ToolbarDecorator implements DataProvider, CommonActionsPan
       }
     };
     panel.add(scrollPane, BorderLayout.CENTER);
-    panel.add(myActionsPanel, getPlacement());
+    panel.add(myActionsPanel, getPlacement(myToolbarPosition));
     installUpdaters();
     updateButtons();
     installDnD();
     panel.putClientProperty(ActionToolbar.ACTION_TOOLBAR_PROPERTY_KEY, myActionsPanel.getComponent(0));
-    DataManager.registerDataProvider(panel, this);
+
+    Border mainBorder = myPanelBorder != null ? myPanelBorder : IdeBorderFactory.createBorder(SideBorder.ALL);  
     if (myAsUsualTopToolbar) {
-      scrollPane.setBorder(IdeBorderFactory.createBorder(SideBorder.ALL));
+      scrollPane.setBorder(mainBorder);
     } else {
       myActionsPanel.setBorder(myActionsPanelBorder);
-      panel.setBorder(IdeBorderFactory.createBorder(SideBorder.ALL));
+      panel.setBorder(mainBorder);
     }
     return panel;
   }
@@ -381,16 +400,9 @@ public abstract class ToolbarDecorator implements DataProvider, CommonActionsPan
 
   protected abstract boolean isModelEditable();
 
-  @Override
-  public Object getData(@NonNls String dataId) {
-    if (PlatformDataKeys.ACTIONS_SORTER.is(dataId)) {
-      return ACTION_BUTTONS_SORTER;
-    }
-    return null;
-  }
-
-  private Object getPlacement() {
-    switch (myToolbarPosition) {
+  @NotNull
+  static Object getPlacement(ActionToolbarPosition position) {
+    switch (position) {
       case TOP: return BorderLayout.NORTH;
       case LEFT: return BorderLayout.WEST;
       case BOTTOM: return BorderLayout.SOUTH;
@@ -400,9 +412,9 @@ public abstract class ToolbarDecorator implements DataProvider, CommonActionsPan
   }
 
   private CommonActionsPanel.Buttons[] getButtons() {
-    final ArrayList<CommonActionsPanel.Buttons> buttons = new ArrayList<CommonActionsPanel.Buttons>();
+    final ArrayList<CommonActionsPanel.Buttons> buttons = new ArrayList<>();
     final HashMap<CommonActionsPanel.Buttons, Pair<Boolean, AnActionButtonRunnable>> map =
-      new HashMap<CommonActionsPanel.Buttons, Pair<Boolean, AnActionButtonRunnable>>();
+      new HashMap<>();
     map.put(CommonActionsPanel.Buttons.ADD, Pair.create(myAddActionEnabled, myAddAction));
     map.put(CommonActionsPanel.Buttons.REMOVE, Pair.create(myRemoveActionEnabled, myRemoveAction));
     map.put(CommonActionsPanel.Buttons.EDIT, Pair.create(myEditActionEnabled, myEditAction));
@@ -416,9 +428,10 @@ public abstract class ToolbarDecorator implements DataProvider, CommonActionsPan
       }
     }
 
-    return buttons.toArray(new CommonActionsPanel.Buttons[buttons.size()]);
+    return buttons.toArray(new CommonActionsPanel.Buttons[0]);
   }
 
+  @Override
   public CommonActionsPanel.Listener createListener(final CommonActionsPanel panel) {
     return new CommonActionsPanel.Listener() {
       @Override
@@ -457,33 +470,58 @@ public abstract class ToolbarDecorator implements DataProvider, CommonActionsPan
       }
     };
   }
-  
+
+  @Nullable
   public static AnActionButton findAddButton(@NotNull JComponent container) {
     return findButton(container, CommonActionsPanel.Buttons.ADD);
   }
 
+  @Nullable
   public static AnActionButton findEditButton(@NotNull JComponent container) {
     return findButton(container, CommonActionsPanel.Buttons.EDIT);
   }
 
+  @Nullable
   public static AnActionButton findRemoveButton(@NotNull JComponent container) {
     return findButton(container, CommonActionsPanel.Buttons.REMOVE);
   }
 
+  @Nullable
   public static AnActionButton findUpButton(@NotNull JComponent container) {
     return findButton(container, CommonActionsPanel.Buttons.UP);
   }
 
+  @Nullable
   public static AnActionButton findDownButton(@NotNull JComponent container) {
     return findButton(container, CommonActionsPanel.Buttons.DOWN);
   }
 
+  @Nullable
   private static AnActionButton findButton(JComponent comp, CommonActionsPanel.Buttons type) {
     final CommonActionsPanel panel = UIUtil.findComponentOfType(comp, CommonActionsPanel.class);
     if (panel != null) {
       return panel.getAnActionButton(type);
     }
-    //noinspection ConstantConditions
     return null;
+  }
+
+  /**
+   * Marker interface, button will be disabled if no selected element
+   */
+  public abstract static class ElementActionButton extends AnActionButton {
+    public ElementActionButton(String text, String description, @Nullable Icon icon) {
+      super(text, description, icon);
+    }
+
+    public ElementActionButton(String text, Icon icon) {
+      super(text, icon);
+    }
+
+    public ElementActionButton() {
+    }
+
+    public ElementActionButton(String text) {
+      super(text);
+    }
   }
 }

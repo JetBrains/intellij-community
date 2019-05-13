@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package org.jetbrains.idea.maven.indices;
 
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.MavenCustomRepositoryHelper;
 import org.jetbrains.idea.maven.server.MavenIndexerWrapper;
 import org.jetbrains.idea.maven.server.MavenServerManager;
@@ -42,36 +43,30 @@ public abstract class MavenIndicesStressTest extends MavenIndicesTestCase implem
 
     final AtomicBoolean isFinished = new AtomicBoolean(false);
 
-    Thread t1 = new Thread(new Runnable() {
-      @Override
-      public void run() {
-        try {
-          for (int i = 0; i < 3; i++) {
-            System.out.println("INDEXING #" + i);
-            indices.updateOrRepair(index, true, getMavenGeneralSettings(), EMPTY_MAVEN_PROCESS);
-          }
-        }
-        catch (MavenProcessCanceledException e) {
-          throw new RuntimeException(e);
-        }
-        finally {
-          isFinished.set(true);
+    Thread t1 = new Thread(() -> {
+      try {
+        for (int i = 0; i < 3; i++) {
+          System.out.println("INDEXING #" + i);
+          indices.updateOrRepair(index, true, getMavenGeneralSettings(), EMPTY_MAVEN_PROCESS);
         }
       }
-    });
+      catch (MavenProcessCanceledException e) {
+        throw new RuntimeException(e);
+      }
+      finally {
+        isFinished.set(true);
+      }
+    }, "maven index 1");
 
-    Thread t2 = new Thread(new Runnable() {
-      @Override
-      public void run() {
-        Random random = new Random();
-        while (!isFinished.get()) {
-          int i = random.nextInt(100);
-          System.out.println("Adding artifact #" + i);
-          //index.addArtifact(new MavenId("group" + i, "artifact" + i, "" + i));
-          fail();
-        }
+    Thread t2 = new Thread(() -> {
+      Random random = new Random();
+      while (!isFinished.get()) {
+        int i = random.nextInt(100);
+        System.out.println("Adding artifact #" + i);
+        //index.addArtifact(new MavenId("group" + i, "artifact" + i, "" + i));
+        fail();
       }
-    });
+    }, "maven index 2");
 
     t1.start();
     t2.start();
@@ -86,6 +81,8 @@ public abstract class MavenIndicesStressTest extends MavenIndicesTestCase implem
     t2.join(100);
 
     indices.close();
+    t1.join();
+    t2.join();
   }
 
   public void test2() throws Exception {
@@ -130,28 +127,27 @@ public abstract class MavenIndicesStressTest extends MavenIndicesTestCase implem
 
     indices1.close();
     indices2.close();
+    t1.join();
+    t2.join();
   }
 
-  private Thread createThread(final MavenIndex index, final AtomicInteger finishedCount) {
-    Thread t2 = new Thread(new Runnable() {
-      @Override
-      public void run() {
-        try {
-          for (int i = 0; i < 1000; i++) {
-            System.out.println("Adding artifact #" + i);
-            //index.addArtifact(new MavenId("group" + i, "artifact" + i, "" + i));
-            fail();
-          }
-        }
-        finally {
-          finishedCount.incrementAndGet();
+  private static Thread createThread(final MavenIndex index, final AtomicInteger finishedCount) {
+    Thread t2 = new Thread(() -> {
+      try {
+        for (int i = 0; i < 1000; i++) {
+          System.out.println("Adding artifact #" + i);
+          //index.addArtifact(new MavenId("group" + i, "artifact" + i, "" + i));
+          fail();
         }
       }
-    });
+      finally {
+        finishedCount.incrementAndGet();
+      }
+    }, "maven test");
     return t2;
   }
 
   @Override
-  public void indexIsBroken(MavenIndex index) {
+  public void indexIsBroken(@NotNull MavenIndex index) {
   }
 }

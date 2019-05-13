@@ -15,25 +15,20 @@
  */
 package org.intellij.lang.xpath.xslt.quickfix;
 
-import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.template.TemplateBuilderImpl;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.ide.DataManager;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.LangDataKeys;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Condition;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileFactory;
 import com.intellij.psi.xml.XmlTag;
-import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.LocalTimeCounter;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -42,12 +37,14 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 
 public abstract class AbstractFix implements IntentionAction {
+  @Override
   @NotNull
   public String getFamilyName() {
     final String name = getClass().getSimpleName();
     return "XSLT " + name.replaceAll("Fix$", "").replaceAll("(\\p{Lower}+)(\\p{Upper})", "$1 $2");
   }
 
+  @Override
   public boolean startInWriteAction() {
     return true;
   }
@@ -56,16 +53,13 @@ public abstract class AbstractFix implements IntentionAction {
     editor.getCaretModel().moveToOffset(xmlTag.getTextRange().getStartOffset());
   }
 
-  protected static void deleteFromDocument(Editor editor, PsiElement dummy) {
-    editor.getDocument().deleteString(dummy.getTextRange().getStartOffset(), dummy.getTextRange().getEndOffset());
-  }
-
   protected static TemplateBuilderImpl createTemplateBuilder(XmlTag xmlTag) {
     final PsiFile psiFile = PsiFileFactory.getInstance(xmlTag.getProject())
       .createFileFromText("dummy.xml", StdFileTypes.XML, xmlTag.getText(), LocalTimeCounter.currentTime(), true, false);
     return new TemplateBuilderImpl(psiFile);
   }
 
+  @Override
   public final boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
     if (requiresEditor() && editor == null) return false;
 
@@ -82,22 +76,25 @@ public abstract class AbstractFix implements IntentionAction {
     if (requiresEditor && !isOnTheFly) return null;
 
     return new LocalQuickFix() {
+      @Override
       @NotNull
       public String getName() {
         return AbstractFix.this.getText();
       }
 
+      @Override
       @NotNull
       public String getFamilyName() {
         return AbstractFix.this.getFamilyName();
       }
 
+      @Override
       public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
         Editor editor;
         if (requiresEditor) {
           final DataContext dataContext = DataManager.getInstance().getDataContext();
 
-          editor = LangDataKeys.EDITOR.getData(dataContext);
+          editor = CommonDataKeys.EDITOR.getData(dataContext);
           if (editor == null) {
             if ((editor = FileEditorManager.getInstance(project).getSelectedTextEditor()) == null) {
               return;
@@ -112,25 +109,13 @@ public abstract class AbstractFix implements IntentionAction {
         if (!isAvailable(project, editor, psiFile)) {
           return;
         }
-        if (!CodeInsightUtilBase.prepareFileForWrite(psiFile)) {
-          return;
-        }
-        try {
-          invoke(project, editor, psiFile);
-        }
-        catch (IncorrectOperationException e) {
-          Logger.getInstance(getClass().getName()).error(e);
-        }
+        invoke(project, editor, psiFile);
       }
     };
   }
 
   public static LocalQuickFix[] createFixes(LocalQuickFix... fixes) {
-    final List<LocalQuickFix> result = ContainerUtil.findAll(fixes, new Condition<LocalQuickFix>() {
-      public boolean value(LocalQuickFix localQuickFix) {
-        return localQuickFix != null;
-      }
-    });
-    return result.toArray(new LocalQuickFix[result.size()]);
+    final List<LocalQuickFix> result = ContainerUtil.findAll(fixes, localQuickFix -> localQuickFix != null);
+    return result.toArray(LocalQuickFix.EMPTY_ARRAY);
   }
 }

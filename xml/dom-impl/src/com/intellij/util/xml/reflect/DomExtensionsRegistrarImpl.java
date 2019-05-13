@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,11 +33,11 @@ import java.util.Set;
  * @author peter
  */
 public class DomExtensionsRegistrarImpl implements DomExtensionsRegistrar {
-  private final List<DomExtensionImpl> myAttributes = new SmartList<DomExtensionImpl>();
-  private final List<DomExtensionImpl> myFixeds = new SmartList<DomExtensionImpl>();
-  private final List<DomExtensionImpl> myCollections = new SmartList<DomExtensionImpl>();
-  private final Set<Object> myDependencies = new THashSet<Object>();
-  private final List<DomExtensionImpl> myCustoms = new SmartList<DomExtensionImpl>();
+  private final List<DomExtensionImpl> myAttributes = new SmartList<>();
+  private final List<DomExtensionImpl> myFixeds = new SmartList<>();
+  private final List<DomExtensionImpl> myCollections = new SmartList<>();
+  private final Set<Object> myDependencies = new THashSet<>();
+  private final List<DomExtensionImpl> myCustoms = new SmartList<>();
 
   public List<DomExtensionImpl> getAttributes() {
     return myAttributes;
@@ -60,30 +60,35 @@ public class DomExtensionsRegistrarImpl implements DomExtensionsRegistrar {
     return addExtension(myFixeds, name, type).setCount(count);
   }
 
+  @Override
   @NotNull
   public DomExtension registerFixedNumberChildExtension(@NotNull final XmlName name, @NotNull final Type type) {
     return registerFixedNumberChildrenExtension(name, type, 1);
   }
 
+  @Override
   @NotNull
   public DomExtension registerCollectionChildrenExtension(@NotNull final XmlName name, @NotNull final Type type) {
     return addExtension(myCollections, name, type);
   }
 
+  @Override
   @NotNull
   public DomExtension registerGenericAttributeValueChildExtension(@NotNull final XmlName name, final Type parameterType) {
     return addExtension(myAttributes, name, new ParameterizedTypeImpl(GenericAttributeValue.class, parameterType));
   }
 
+  @Override
   @NotNull
   public DomExtension registerAttributeChildExtension(@NotNull final XmlName name, @NotNull final Type type) {
     assert GenericAttributeValue.class.isAssignableFrom(ReflectionUtil.getRawType(type));
     return addExtension(myAttributes, name, type);
   }
 
+  @Override
   @NotNull
   public DomExtension registerCustomChildrenExtension(@NotNull final Type type) {
-    return registerCustomChildrenExtension(type, CustomDomChildrenDescription.TagNameDescriptor.EMPTY);
+    return registerCustomChildrenExtension(type, CustomDomChildrenDescription.AttributeDescriptor.EMPTY);
   }
 
   @NotNull
@@ -105,7 +110,7 @@ public class DomExtensionsRegistrarImpl implements DomExtensionsRegistrar {
     return extension;
   }
 
-  private static DomExtensionImpl addExtension(final List<DomExtensionImpl> list, @Nullable final XmlName name, final Type type) {
+  private static DomExtensionImpl addExtension(final List<? super DomExtensionImpl> list, @Nullable final XmlName name, final Type type) {
     final DomExtensionImpl extension = new DomExtensionImpl(type, name);
     list.add(extension);
     return extension;

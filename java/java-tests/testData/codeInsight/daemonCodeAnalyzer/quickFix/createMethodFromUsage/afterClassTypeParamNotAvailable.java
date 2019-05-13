@@ -1,4 +1,4 @@
-// "Create Method 'makeOp'" "true"
+// "Create method 'makeOp'" "true"
 class Base<T> {
     Base(Factory<T> factory, Operator<T> operator) {
     }
@@ -19,7 +19,7 @@ class Sup<T> extends Base<T> {
     }
 
     private static <T> Operator<T> makeOp(MetaOperator<T> mop) {
-        <selection>return null;  //To change body of created methods use File | Settings | File Templates.</selection>
+        <selection>return null;</selection>
     }
 
 

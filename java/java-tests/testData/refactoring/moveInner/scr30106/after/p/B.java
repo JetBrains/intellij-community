@@ -1,11 +1,11 @@
 package p;
 
 public class B extends X {
+    private A outer;
+
     {
         method();
     }
-
-    private A outer;
 
     public B(A outer) {
         this.outer = outer;

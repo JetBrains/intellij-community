@@ -25,7 +25,7 @@ import java.io.IOException;
 // external synch in SshSharedConnection
 class ConnectionLifeCycle {
   private final int myCheckGranularity;
-  private final ThrowableComputable<Connection, AuthenticationException> myFactory;
+  private final ThrowableComputable<? extends Connection, ? extends AuthenticationException> myFactory;
 
   private Connection myConnection;
   // todo maybe, encapsulate those two
@@ -33,11 +33,11 @@ class ConnectionLifeCycle {
   private long myLastTs;
   private final Ref<Boolean> mySupportsPing;
 
-  ConnectionLifeCycle(final int checkGranularity, final ThrowableComputable<Connection, AuthenticationException> factory) {
+  ConnectionLifeCycle(final int checkGranularity, final ThrowableComputable<? extends Connection, ? extends AuthenticationException> factory) {
     myCheckGranularity = checkGranularity;
     myFactory = factory;
     myState = LifeStages.NOT_EXIST;
-    mySupportsPing = new Ref<Boolean>();
+    mySupportsPing = new Ref<>();
     myLastTs = -1;
     SshLogger.debug("Connection lifecycle created");
   }

@@ -1,32 +1,15 @@
-/*
- * Copyright 2000-2010 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
-/*
- * User: anna
- * Date: 13-May-2010
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.applet;
 
 import com.intellij.execution.JavaExecutionUtil;
 import com.intellij.execution.Location;
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.actions.ConfigurationContext;
+import com.intellij.execution.configurations.ConfigurationTypeUtil;
 import com.intellij.execution.junit.JavaRuntimeConfigurationProducerBase;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.JavaPsiFacade;
@@ -38,16 +21,16 @@ import com.intellij.psi.util.PsiClassUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class AppletConfigurationProducer extends JavaRuntimeConfigurationProducerBase {
-  private PsiClass myPsiClass;
+import java.util.List;
 
+public class AppletConfigurationProducer extends JavaRuntimeConfigurationProducerBase {
   protected AppletConfigurationProducer() {
-    super(AppletConfigurationType.getInstance());
+    super(ConfigurationTypeUtil.findConfigurationType(AppletConfigurationType.class));
   }
 
   @Override
   public PsiElement getSourceElement() {
-    return myPsiClass;
+    return restoreSourceElement();
   }
 
   @Override
@@ -56,20 +39,21 @@ public class AppletConfigurationProducer extends JavaRuntimeConfigurationProduce
     if (location == null) return null;
     final Project project = location.getProject();
     final PsiElement element = location.getPsiElement();
-    myPsiClass = getAppletClass(element, PsiManager.getInstance(project));
-    if (myPsiClass == null) return null;
+    PsiClass psiClass = getAppletClass(element, PsiManager.getInstance(project));
+    if (psiClass == null) return null;
+    storeSourceElement(psiClass);
     RunnerAndConfigurationSettings settings = cloneTemplateConfiguration(project, context);
     final AppletConfiguration configuration = (AppletConfiguration)settings.getConfiguration();
-    configuration.MAIN_CLASS_NAME = JavaExecutionUtil.getRuntimeQualifiedName(myPsiClass);
-    configuration.setModule(myPsiClass.isValid() ? ModuleUtilCore.findModuleForPsiElement(myPsiClass) : null);
-    configuration.setName(configuration.getGeneratedName());
+    configuration.setMainClassName(JavaExecutionUtil.getRuntimeQualifiedName(psiClass));
+    configuration.setModule(psiClass.isValid() ? ModuleUtilCore.findModuleForPsiElement(psiClass) : null);
+    configuration.setGeneratedName();
     return settings;
   }
 
+  @Override
   public int compareTo(Object o) {
     return PREFERED;
   }
-
 
   @Nullable
   private static PsiClass getAppletClass(PsiElement element, final PsiManager manager) {
@@ -87,6 +71,7 @@ public class AppletConfigurationProducer extends JavaRuntimeConfigurationProduce
 
 
   private static boolean isAppletClass(final PsiClass aClass, final PsiManager manager) {
+    if (DumbService.isDumb(manager.getProject())) return false;
     if (!PsiClassUtil.isRunnableClass(aClass, true)) return false;
 
     final Module module = JavaExecutionUtil.findModule(aClass);
@@ -106,13 +91,13 @@ public class AppletConfigurationProducer extends JavaRuntimeConfigurationProduce
 
   @Override
   protected RunnerAndConfigurationSettings findExistingByElement(Location location,
-                                                                 @NotNull RunnerAndConfigurationSettings[] existingConfigurations,
+                                                                 @NotNull List<RunnerAndConfigurationSettings> existingConfigurations,
                                                                  ConfigurationContext context) {
     final PsiClass aClass = getAppletClass(location.getPsiElement(), PsiManager.getInstance(location.getProject()));
     if (aClass != null) {
       for (RunnerAndConfigurationSettings existingConfiguration : existingConfigurations) {
         if (Comparing.equal(JavaExecutionUtil.getRuntimeQualifiedName(aClass),
-                            ((AppletConfiguration)existingConfiguration.getConfiguration()).MAIN_CLASS_NAME)) {
+                            ((AppletConfiguration)existingConfiguration.getConfiguration()).getOptions().getMainClassName())) {
           return existingConfiguration;
         }
       }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,33 +18,26 @@ package com.intellij.openapi.module.impl.scopes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.libraries.Library;
-import com.intellij.openapi.vfs.VfsUtilCore;
-import com.intellij.util.PathUtil;
+import com.intellij.openapi.roots.libraries.LibraryUtil;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author nik
  */
 public class LibraryScope extends LibraryScopeBase {
   private final Library myLibrary;
+  private final String myLibraryName;
 
   public LibraryScope(Project project, Library library) {
     super(project, library.getFiles(OrderRootType.CLASSES), library.getFiles(OrderRootType.SOURCES));
+    myLibraryName = LibraryUtil.getPresentableName(library);
     myLibrary = library;
   }
 
+  @NotNull
   @Override
   public String getDisplayName() {
-    String name = myLibrary.getName();
-    if (name == null) {
-      String[] urls = myLibrary.getUrls(OrderRootType.CLASSES);
-      if (urls.length > 0) {
-        name = PathUtil.getFileName(VfsUtilCore.urlToPath(urls[0]));
-      }
-      else {
-        name = "empty";
-      }
-    }
-    return "Library '" + name + "'";
+    return "Library '" + myLibraryName + "'";
   }
 
   @Override
@@ -56,7 +49,11 @@ public class LibraryScope extends LibraryScopeBase {
   }
 
   @Override
-  public int hashCode() {
-    return 31 * super.hashCode() + myLibrary.hashCode();
+  public int calcHashCode() {
+    return 31 * super.calcHashCode() + myLibrary.hashCode();
+  }
+
+  public Library getLibrary() {
+    return myLibrary;
   }
 }

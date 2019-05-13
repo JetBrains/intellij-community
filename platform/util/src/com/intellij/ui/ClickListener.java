@@ -19,6 +19,9 @@
  */
 package com.intellij.ui;
 
+import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NotNull;
+
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
@@ -27,12 +30,11 @@ import java.awt.event.MouseEvent;
 public abstract class ClickListener {
 
   private static final int EPS = 4;
-  private static final long TIME_EPS = 500; // TODO: read system mouse sensitivity settings?
   private MouseAdapter myListener;
 
-  public abstract boolean onClick(MouseEvent event, int clickCount);
+  public abstract boolean onClick(@NotNull MouseEvent event, int clickCount);
 
-  public void installOn(final Component c) {
+  public void installOn(@NotNull Component c) {
     myListener = new MouseAdapter() {
       private Point pressPoint;
       private Point lastClickPoint;
@@ -44,7 +46,7 @@ public abstract class ClickListener {
         final Point point = e.getPoint();
         SwingUtilities.convertPointToScreen(point, e.getComponent());
 
-        if (Math.abs(lastTimeClicked - e.getWhen()) > TIME_EPS || lastClickPoint != null && !isWithinEps(lastClickPoint, point)) {
+        if (Math.abs(lastTimeClicked - e.getWhen()) > UIUtil.getMultiClickInterval() || lastClickPoint != null && !isWithinEps(lastClickPoint, point)) {
           clickCount = 0;
           lastClickPoint = null;
         }
@@ -64,11 +66,9 @@ public abstract class ClickListener {
         lastClickPoint = clickedAt;
         pressPoint = null;
 
-        if (e.isConsumed()) return;
-
-        if (clickedAt == null) return;
-        if (e.isPopupTrigger()) return;
-        if (!e.getComponent().contains(e.getPoint())) return;
+        if (e.isConsumed() || clickedAt == null || e.isPopupTrigger() || !e.getComponent().contains(e.getPoint())) {
+          return;
+        }
 
         if (isWithinEps(releasedAt, clickedAt) && onClick(e, clickCount)) {
           e.consume();

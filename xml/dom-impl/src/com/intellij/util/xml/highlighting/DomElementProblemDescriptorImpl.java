@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,7 +26,13 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.xml.*;
+import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.psi.xml.XmlAttributeValue;
+import com.intellij.psi.xml.XmlElement;
+import com.intellij.psi.xml.XmlTag;
+import com.intellij.psi.xml.XmlText;
+import com.intellij.util.ArrayUtil;
+import com.intellij.util.FunctionUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xml.*;
 import org.jetbrains.annotations.NotNull;
@@ -42,7 +48,7 @@ public class DomElementProblemDescriptorImpl implements DomElementProblemDescrip
   private final LocalQuickFix[] myFixes;
   private List<Annotation> myAnnotations;
   private Pair<TextRange, PsiElement> myPair;
-  public static final Pair<TextRange,PsiElement> NO_PROBLEM = new Pair<TextRange, PsiElement>(null, null);
+  public static final Pair<TextRange,PsiElement> NO_PROBLEM = new Pair<>(null, null);
   private final ProblemHighlightType myHighlightType;
 
   public DomElementProblemDescriptorImpl(@NotNull final DomElement domElement, final String message, final HighlightSeverity type) {
@@ -59,7 +65,7 @@ public class DomElementProblemDescriptorImpl implements DomElementProblemDescrip
   public DomElementProblemDescriptorImpl(@NotNull final DomElement domElement,
                                          final String message,
                                          final HighlightSeverity type,
-                                         final LocalQuickFix... fixes) {
+                                         @NotNull LocalQuickFix... fixes) {
     this(domElement, message, type, null, null, fixes);
   }
 
@@ -68,7 +74,7 @@ public class DomElementProblemDescriptorImpl implements DomElementProblemDescrip
                                          final HighlightSeverity type,
                                          @Nullable final TextRange textRange,
                                          ProblemHighlightType highlightType,
-                                         final LocalQuickFix... fixes) {
+                                         @NotNull LocalQuickFix... fixes) {
     myDomElement = domElement;
     final XmlElement element = domElement.getXmlElement();
     if (element != null && !ApplicationManager.getApplication().isUnitTestMode()) {
@@ -76,37 +82,42 @@ public class DomElementProblemDescriptorImpl implements DomElementProblemDescrip
     }
     mySeverity = type;
     myMessage = message;
-    myFixes = fixes;
+    myFixes = ArrayUtil.contains(null, fixes) ? ContainerUtil.mapNotNull(fixes, FunctionUtil.id(), LocalQuickFix.EMPTY_ARRAY) : fixes;
 
     if (textRange != null) {
       final PsiElement psiElement = getPsiElement();
       LOG.assertTrue(psiElement != null, "Problems with explicit text range can't be created for DOM elements without underlying XML element");
       assert psiElement.isValid();
-      myPair = new Pair<TextRange, PsiElement>(textRange, psiElement);
+      myPair = Pair.create(textRange, psiElement);
     }
     myHighlightType = highlightType;
   }
 
+  @Override
   @NotNull
   public DomElement getDomElement() {
     return myDomElement;
   }
 
+  @Override
   @NotNull
   public HighlightSeverity getHighlightSeverity() {
     return mySeverity;
   }
 
+  @Override
   @NotNull
   public String getDescriptionTemplate() {
     return myMessage == null ? "" : myMessage;
   }
 
+  @Override
   @NotNull
   public LocalQuickFix[] getFixes() {
     return myFixes;
   }
 
+  @Override
   @NotNull
   public final List<Annotation> getAnnotations() {
     if (myAnnotations == null) {
@@ -115,6 +126,7 @@ public class DomElementProblemDescriptorImpl implements DomElementProblemDescrip
     return myAnnotations;
   }
 
+  @Override
   public void highlightWholeElement() {
     final PsiElement psiElement = getPsiElement();
     if (psiElement instanceof XmlAttributeValue) {
@@ -125,7 +137,7 @@ public class DomElementProblemDescriptorImpl implements DomElementProblemDescrip
     else if (psiElement != null) {
       assert psiElement.isValid() : psiElement;
       final XmlTag tag = (XmlTag)(psiElement instanceof XmlTag ? psiElement : psiElement.getParent());
-      myPair = new Pair<TextRange, PsiElement>(new TextRange(0, tag.getTextLength()), tag);
+      myPair = new Pair<>(new TextRange(0, tag.getTextLength()), tag);
     }
   }
 
@@ -135,7 +147,7 @@ public class DomElementProblemDescriptorImpl implements DomElementProblemDescrip
     }
     PsiElement element = myPair.second;
     if (element != null) {
-      assert element.isValid();
+      PsiUtilCore.ensureValid(element);
     }
     return myPair;
   }
@@ -150,8 +162,7 @@ public class DomElementProblemDescriptorImpl implements DomElementProblemDescrip
         return DomUtil.getProblemRange((XmlTag)element);
       }
 
-      int length = element.getTextRange().getLength();
-      TextRange range = TextRange.from(0, length);
+      TextRange range = TextRange.from(0, element.getTextLength());
       if (element instanceof XmlAttributeValue) {
         final String value = ((XmlAttributeValue)element).getValue();
         if (StringUtil.isNotEmpty(value)) {
@@ -225,6 +236,7 @@ public class DomElementProblemDescriptorImpl implements DomElementProblemDescrip
     return null;
   }
 
+  @Override
   @Nullable
   public ProblemHighlightType getHighlightType() {
     return myHighlightType;

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,21 +19,26 @@
  */
 package com.intellij.util.io;
 
+import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.LimitedPool;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.nio.ByteBuffer;
 import java.util.BitSet;
 
 public class Page {
-  public static final int PAGE_SIZE = 4 * 1024;
+  public static final int PAGE_SIZE = SystemProperties.getIntProperty("idea.io.page.size", 8 * 1024);
 
   private static final LimitedPool<ByteBuffer> ourBufferPool = new LimitedPool<ByteBuffer>(10, new LimitedPool.ObjectFactory<ByteBuffer>() {
+    @NotNull
+    @Override
     public ByteBuffer create() {
       return ByteBuffer.allocate(PAGE_SIZE);
     }
 
-    public void cleanup(final ByteBuffer byteBuffer) {
+    @Override
+    public void cleanup(@NotNull final ByteBuffer byteBuffer) {
     }
   });
 
@@ -97,7 +102,7 @@ public class Page {
   private final Range myContinuousRange = new Range();
 
   @Nullable
-  private Range calcContinousRange(final BitSet mask) {
+  private Range calcContinuousRange(final BitSet mask) {
     int lowestByte = mask.nextSetBit(0);
     int highestByte;
     if (lowestByte >= 0) {
@@ -131,9 +136,9 @@ public class Page {
         int start = 0;
         int end = PAGE_SIZE;
         if (myWriteMask != null) {
-          Range range = calcContinousRange(myWriteMask);
+          Range range = calcContinuousRange(myWriteMask);
           if (range == null) {
-  //          System.out.println("Discountinous write of: " + myWriteMask.cardinality() + " bytes. Performing ensure read before flush.");
+  //          System.out.println("Discontinuous write of: " + myWriteMask.cardinality() + " bytes. Performing ensure read before flush.");
             ensureRead();
           }
           else {

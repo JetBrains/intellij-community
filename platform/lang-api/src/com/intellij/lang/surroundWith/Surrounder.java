@@ -19,6 +19,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
+import com.intellij.util.ArrayFactory;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -30,6 +31,9 @@ import org.jetbrains.annotations.Nullable;
  * @see SurroundDescriptor
  */
 public interface Surrounder {
+  Surrounder[] EMPTY_ARRAY = new Surrounder[0];
+  ArrayFactory<Surrounder> myArrayFactory = count -> count == 0 ? EMPTY_ARRAY : new Surrounder[count];
+
   /**
    * Returns the user-visible name of the Surround With template.
    *

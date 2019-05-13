@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,12 +15,12 @@
  */
 package org.jetbrains.plugins.groovy.lang.completion.smartEnter;
 
+import com.intellij.application.options.CodeStyle;
 import com.intellij.lang.SmartEnterProcessorWithFixers;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.CodeStyleSettings;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
+import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.IncorrectOperationException;
@@ -28,27 +28,29 @@ import com.intellij.util.containers.OrderedSet;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.GroovyLanguage;
 import org.jetbrains.plugins.groovy.lang.completion.smartEnter.fixers.*;
 import org.jetbrains.plugins.groovy.lang.completion.smartEnter.processors.GroovyPlainEnterProcessor;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocComment;
-import org.jetbrains.plugins.groovy.lang.psi.api.formatter.GrControlStatement;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.*;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrCatchClause;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrForStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrSwitchStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrCodeBlock;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrString;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrStringInjection;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMember;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinitionBody;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
+import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-/**
- * User: Dmitry.Krasilschikov
- * Date: 29.07.2008
- */
 public class GroovySmartEnterProcessor extends SmartEnterProcessorWithFixers {
   public GroovySmartEnterProcessor() {
     final List<SmartEnterProcessorWithFixers.Fixer<GroovySmartEnterProcessor>> ourFixers = Arrays.asList(
@@ -75,6 +77,7 @@ public class GroovySmartEnterProcessor extends SmartEnterProcessorWithFixers {
             }
           }
         },
+        new GrClassBodyFixer() ,
         new GrMissingIfStatement(),
         new GrIfConditionFixer(),
         new GrLiteralFixer(),
@@ -85,10 +88,11 @@ public class GroovySmartEnterProcessor extends SmartEnterProcessorWithFixers {
         new GrWhileBodyFixer(),
         new GrForBodyFixer(),
         new GrSwitchBodyFixer(),
+        new GrSynchronizedFixer(),
         new GrListFixer(),
         new GrMethodCallWithSingleClosureArgFixer()
       );
-    addFixers(ourFixers.toArray(new Fixer[ourFixers.size()]));
+    addFixers(ourFixers.toArray(new Fixer[0]));
     addEnterProcessors(new GroovyPlainEnterProcessor());
   }
 
@@ -107,6 +111,7 @@ public class GroovySmartEnterProcessor extends SmartEnterProcessorWithFixers {
     super.reformat(atCaret);
   }
 
+  @Override
   protected void collectAllElements(@NotNull PsiElement atCaret, @NotNull OrderedSet<PsiElement> res, boolean recurse) {
     res.add(0, atCaret);
     if (doNotStepInto(atCaret)) {
@@ -136,48 +141,26 @@ public class GroovySmartEnterProcessor extends SmartEnterProcessorWithFixers {
 
   @Override
   public boolean doNotStepInto(PsiElement element) {
-    return element instanceof PsiClass || element instanceof GrCodeBlock || element instanceof GrStatement || element instanceof GrMethod;
+    return element instanceof PsiClass ||
+           element instanceof GrCodeBlock ||
+           element instanceof GrStatement && !(element instanceof GrExpression) ||
+           PsiUtil.isExpressionStatement(element) ||
+           element instanceof GrMethod;
   }
 
+  @Override
   @Nullable
   protected PsiElement getStatementAtCaret(Editor editor, PsiFile psiFile) {
-    final PsiElement atCaret = super.getStatementAtCaret(editor, psiFile);
+    PsiElement atCaret = super.getStatementAtCaret(editor, psiFile);
 
     if (atCaret instanceof PsiWhiteSpace) return null;
-    if (atCaret == null) return null;
 
-    GrCodeBlock codeBlock = PsiTreeUtil.getParentOfType(atCaret, GrCodeBlock.class, false, GrControlStatement.class);
-    if (codeBlock instanceof GrClosableBlock && "{}".equals(codeBlock.getText())) {
-      codeBlock = PsiTreeUtil.getParentOfType(codeBlock, GrCodeBlock.class, true, GrControlStatement.class);
-    }
-    if (codeBlock != null) {
-      for (GrStatement statement : codeBlock.getStatements()) {
-        if (PsiTreeUtil.isAncestor(statement, atCaret, true)) {
-          return statement;
-        }
-      }
+    while (atCaret != null && !PsiUtil.isExpressionStatement(atCaret)) {
+      if (atCaret instanceof PsiMethod || atCaret instanceof GrDocComment || atCaret instanceof GrTypeDefinition) return atCaret;
+      atCaret = atCaret.getParent();
     }
 
-    PsiElement statementAtCaret = PsiTreeUtil.getParentOfType(atCaret,
-                                                              GrStatement.class,
-                                                              GrCodeBlock.class,
-                                                              PsiMember.class,
-                                                              GrDocComment.class
-    );
-
-    if (statementAtCaret instanceof GrBlockStatement) return null;
-    if (statementAtCaret == null) return null;
-
-    GrControlStatement controlStatement = PsiTreeUtil.getParentOfType(statementAtCaret, GrControlStatement.class, false);
-
-    if (controlStatement != null && !PsiTreeUtil.hasErrorElements(statementAtCaret)) {
-      return controlStatement;
-    }
-
-    return statementAtCaret instanceof GrStatement ||
-           statementAtCaret instanceof GrMember
-           ? statementAtCaret
-           : null;
+    return atCaret;
   }
 
   @Override
@@ -196,27 +179,25 @@ public class GroovySmartEnterProcessor extends SmartEnterProcessorWithFixers {
     if (CharArrayUtil.regionMatches(chars, caretOffset - "{}".length(), "{}") ||
         CharArrayUtil.regionMatches(chars, caretOffset - "{\n}".length(), "{\n}")) {
       commit(editor);
-      final CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(file.getProject());
+      final CommonCodeStyleSettings settings = CodeStyle.getLanguageSettings(file, GroovyLanguage.INSTANCE);
       final boolean old = settings.KEEP_SIMPLE_BLOCKS_IN_ONE_LINE;
-      settings.KEEP_SIMPLE_BLOCKS_IN_ONE_LINE = false;
-      PsiElement elt = PsiTreeUtil.getParentOfType(file.findElementAt(caretOffset - 1), GrCodeBlock.class);
-      reformat(elt);
-      settings.KEEP_SIMPLE_BLOCKS_IN_ONE_LINE = old;
+      try {
+        settings.KEEP_SIMPLE_BLOCKS_IN_ONE_LINE = false;
+        PsiElement elt = PsiTreeUtil.getParentOfType(file.findElementAt(caretOffset - 1), GrCodeBlock.class, GrTypeDefinitionBody.class);
+        if (elt != null) reformat(elt);
+      }
+      finally {
+        settings.KEEP_SIMPLE_BLOCKS_IN_ONE_LINE = old;
+      }
       editor.getCaretModel().moveToOffset(caretOffset - 1);
-    }
-  }
-
-  public void registerUnresolvedError(int offset) {
-    if (myFirstErrorOffset > offset) {
-      myFirstErrorOffset = offset;
     }
   }
 
   private static PsiElement[] getChildren(PsiElement element) {
     PsiElement psiChild = element.getFirstChild();
-    if (psiChild == null) return new PsiElement[0];
+    if (psiChild == null) return PsiElement.EMPTY_ARRAY;
 
-    List<PsiElement> result = new ArrayList<PsiElement>();
+    List<PsiElement> result = new ArrayList<>();
     while (psiChild != null) {
       result.add(psiChild);
 

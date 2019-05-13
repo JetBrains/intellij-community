@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,22 +15,29 @@
  */
 package com.intellij.psi.impl;
 
-import com.intellij.openapi.util.Key;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.source.PsiClassReferenceType;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.util.ClassUtil;
 import com.intellij.psi.util.ConstantEvaluationOverflowException;
 import com.intellij.psi.util.ConstantExpressionUtil;
 import com.intellij.util.containers.StringInterner;
 import gnu.trove.THashSet;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentMap;
 
+@SuppressWarnings("UnnecessaryBoxing")
 class ConstantExpressionVisitor extends JavaElementVisitor implements PsiConstantEvaluationHelper.AuxEvaluator {
   
   private final StringInterner myInterner = new StringInterner();
 
   private Set<PsiVariable> myVisitedVars;
+  private final Map<PsiElement, Object> myCachedValues = new HashMap<>();
   private final boolean myThrowExceptionOnOverflow;
 
   private Object myResult;
@@ -49,20 +56,13 @@ class ConstantExpressionVisitor extends JavaElementVisitor implements PsiConstan
     store(element, myResult);
     return myResult;
   }
-  private static final Key<Object> VALUE = Key.create("VALUE");
-  private static Object getStoredValue(PsiElement element) {
-    if (element == null) {
-      return null;
-    }
-    try {
-      return element.getUserData(VALUE);
-    }
-    finally {
-      element.putUserData(VALUE, null);
-    }
+
+  private Object getStoredValue(PsiElement element) {
+    return myCachedValues.remove(element);
   }
-  static void store(PsiElement element, Object value) {
-    element.putUserData(VALUE, value);
+
+  void store(PsiElement element, Object value) {
+    myCachedValues.put(element, value);
   }
 
   @Override
@@ -83,6 +83,11 @@ class ConstantExpressionVisitor extends JavaElementVisitor implements PsiConstan
     }
 
     PsiType castType = castTypeElement.getType();
+    // According to JLS 15.28 Constant Expressions, only casts to primitive types and to String type are considered constant
+    if (!(castType instanceof PsiPrimitiveType) && !castType.equalsToText(CommonClassNames.JAVA_LANG_STRING)) {
+      myResult = null;
+      return;
+    }
     myResult = ConstantExpressionUtil.computeCastTo(opValue, castType);
   }
 
@@ -131,7 +136,7 @@ class ConstantExpressionVisitor extends JavaElementVisitor implements PsiConstan
     }
   }
 
-  private Object compute(Object lOperandValue, Object rOperandValue, IElementType tokenType, PsiElement expression) {
+  private Object compute(Object lOperandValue, Object rOperandValue, IElementType tokenType, PsiPolyadicExpression expression) {
     Object value = null;
     if (tokenType == JavaTokenType.PLUS) {
       if (lOperandValue instanceof String || rOperandValue instanceof String) {
@@ -194,10 +199,8 @@ class ConstantExpressionVisitor extends JavaElementVisitor implements PsiConstan
       }
     }
     else if (tokenType == JavaTokenType.ANDAND) {
-      if (lOperandValue instanceof Boolean && !((Boolean)lOperandValue).booleanValue()) {
-        value = Boolean.FALSE;
-      }
-      else if (rOperandValue instanceof Boolean && !((Boolean)rOperandValue).booleanValue()) {
+      if (lOperandValue instanceof Boolean && !((Boolean)lOperandValue).booleanValue() ||
+          rOperandValue instanceof Boolean && !((Boolean)rOperandValue).booleanValue()) {
         value = Boolean.FALSE;
       }
       else if (lOperandValue instanceof Boolean && rOperandValue instanceof Boolean) {
@@ -205,69 +208,20 @@ class ConstantExpressionVisitor extends JavaElementVisitor implements PsiConstan
       }
     }
     else if (tokenType == JavaTokenType.OROR) {
-      if (lOperandValue instanceof Boolean && ((Boolean)lOperandValue).booleanValue()) {
-        value = Boolean.TRUE;
-      }
-      else if (rOperandValue instanceof Boolean && ((Boolean)rOperandValue).booleanValue()) {
+      if (lOperandValue instanceof Boolean && ((Boolean)lOperandValue).booleanValue() ||
+          rOperandValue instanceof Boolean && ((Boolean)rOperandValue).booleanValue()) {
         value = Boolean.TRUE;
       }
       else if (lOperandValue instanceof Boolean && rOperandValue instanceof Boolean) {
         value = Boolean.valueOf(((Boolean)lOperandValue).booleanValue() || ((Boolean)rOperandValue).booleanValue());
       }
     }
-    else if (tokenType == JavaTokenType.LT) {
-      if (lOperandValue instanceof Character) lOperandValue = Integer.valueOf(((Character)lOperandValue).charValue());
-      if (rOperandValue instanceof Character) rOperandValue = Integer.valueOf(((Character)rOperandValue).charValue());
-      if (lOperandValue instanceof Number && rOperandValue instanceof Number) {
-        value = Boolean.valueOf(((Number)lOperandValue).doubleValue() < ((Number)rOperandValue).doubleValue());
-      }
+    else if (tokenType == JavaTokenType.LT || tokenType == JavaTokenType.LE ||
+             tokenType == JavaTokenType.GT || tokenType == JavaTokenType.GE) {
+      value = compareNumbers(lOperandValue, rOperandValue, tokenType);
     }
-    else if (tokenType == JavaTokenType.LE) {
-      if (lOperandValue instanceof Character) lOperandValue = Integer.valueOf(((Character)lOperandValue).charValue());
-      if (rOperandValue instanceof Character) rOperandValue = Integer.valueOf(((Character)rOperandValue).charValue());
-      if (lOperandValue instanceof Number && rOperandValue instanceof Number) {
-        value = Boolean.valueOf(((Number)lOperandValue).doubleValue() <= ((Number)rOperandValue).doubleValue());
-      }
-    }
-    else if (tokenType == JavaTokenType.GT) {
-      if (lOperandValue instanceof Character) lOperandValue = Integer.valueOf(((Character)lOperandValue).charValue());
-      if (rOperandValue instanceof Character) rOperandValue = Integer.valueOf(((Character)rOperandValue).charValue());
-      if (lOperandValue instanceof Number && rOperandValue instanceof Number) {
-        value = Boolean.valueOf(((Number)lOperandValue).doubleValue() > ((Number)rOperandValue).doubleValue());
-      }
-    }
-    else if (tokenType == JavaTokenType.GE) {
-      if (lOperandValue instanceof Character) lOperandValue = Integer.valueOf(((Character)lOperandValue).charValue());
-      if (rOperandValue instanceof Character) rOperandValue = Integer.valueOf(((Character)rOperandValue).charValue());
-      if (lOperandValue instanceof Number && rOperandValue instanceof Number) {
-        value = Boolean.valueOf(((Number)lOperandValue).doubleValue() >= ((Number)rOperandValue).doubleValue());
-      }
-    }
-    else if (tokenType == JavaTokenType.EQEQ) {
-      if (lOperandValue instanceof Character) lOperandValue = Integer.valueOf(((Character)lOperandValue).charValue());
-      if (rOperandValue instanceof Character) rOperandValue = Integer.valueOf(((Character)rOperandValue).charValue());
-      if (lOperandValue instanceof Number && rOperandValue instanceof Number) {
-        value = Boolean.valueOf(((Number)lOperandValue).doubleValue() == ((Number)rOperandValue).doubleValue());
-      }
-      else if (lOperandValue instanceof String && rOperandValue instanceof String) {
-        value = Boolean.valueOf(lOperandValue == rOperandValue);
-      }
-      else if (lOperandValue instanceof Boolean && rOperandValue instanceof Boolean) {
-        value = Boolean.valueOf(((Boolean)lOperandValue).booleanValue() == ((Boolean)rOperandValue).booleanValue());
-      }
-    }
-    else if (tokenType == JavaTokenType.NE) {
-      if (lOperandValue instanceof Character) lOperandValue = Integer.valueOf(((Character)lOperandValue).charValue());
-      if (rOperandValue instanceof Character) rOperandValue = Integer.valueOf(((Character)rOperandValue).charValue());
-      if (lOperandValue instanceof Number && rOperandValue instanceof Number) {
-        value = Boolean.valueOf(((Number)lOperandValue).doubleValue() != ((Number)rOperandValue).doubleValue());
-      }
-      else if (lOperandValue instanceof String && rOperandValue instanceof String) {
-        value = Boolean.valueOf(lOperandValue != rOperandValue);
-      }
-      else if (lOperandValue instanceof Boolean && rOperandValue instanceof Boolean) {
-        value = Boolean.valueOf(((Boolean)lOperandValue).booleanValue() != ((Boolean)rOperandValue).booleanValue());
-      }
+    else if (tokenType == JavaTokenType.EQEQ || tokenType == JavaTokenType.NE) {
+      value = handleEqualityComparison(lOperandValue, rOperandValue, tokenType);
     }
     else if (tokenType == JavaTokenType.ASTERISK) {
       if (lOperandValue instanceof Character) lOperandValue = Integer.valueOf(((Character)lOperandValue).charValue());
@@ -354,10 +308,16 @@ class ConstantExpressionVisitor extends JavaElementVisitor implements PsiConstan
       if (rOperandValue instanceof Character) rOperandValue = Integer.valueOf(((Character)rOperandValue).charValue());
       if (isIntegral(lOperandValue) && isIntegral(rOperandValue)) {
         if (lOperandValue instanceof Long) {
-          value = Long.valueOf(((Number)lOperandValue).longValue() << ((Number)rOperandValue).longValue());
+          long l = ((Number)lOperandValue).longValue();
+          long r = ((Number)rOperandValue).longValue();
+          value = Long.valueOf(l << r);
+          checkMultiplicationOverflow(((Long)value).longValue(), l, (long)Math.pow(2, r & 0x3F), expression);
         }
         else {
-          value = Integer.valueOf(((Number)lOperandValue).intValue() << ((Number)rOperandValue).intValue());
+          int l = ((Number)lOperandValue).intValue();
+          int r = ((Number)rOperandValue).intValue();
+          value = Integer.valueOf(l << r);
+          checkMultiplicationOverflow(((Integer)value).intValue(), l, (long)Math.pow(2, r & 0x1F), expression);
         }
       }
     }
@@ -433,6 +393,53 @@ class ConstantExpressionVisitor extends JavaElementVisitor implements PsiConstan
     return value;
   }
 
+  @Nullable
+  private static Boolean handleEqualityComparison(Object lOperandValue, Object rOperandValue, IElementType tokenType) {
+    if (lOperandValue instanceof String && rOperandValue instanceof String ||
+        lOperandValue instanceof Boolean && rOperandValue instanceof Boolean) {
+      return lOperandValue.equals(rOperandValue) == (tokenType == JavaTokenType.EQEQ);
+    }
+    return compareNumbers(lOperandValue, rOperandValue, tokenType);
+  }
+
+  private static Boolean compareNumbers(Object o1, Object o2, IElementType op) {
+    // JLS 15.20.1. Numerical Comparison Operators <, <=, >, and >=
+    // JLS 15.21.1. Numerical Equality Operators == and !=
+    // JLS 5.6.2 Binary Numeric Promotion
+    if (o1 instanceof Character) o1 = (int)((Character)o1).charValue();
+    if (o2 instanceof Character) o2 = (int)((Character)o2).charValue();
+    if (!(o1 instanceof Number) || !(o2 instanceof Number)) return null;
+    Number n1 = (Number)o1;
+    Number n2 = (Number)o2;
+    int result;
+    if (n1 instanceof Double || n2 instanceof Double) {
+      double v1 = n1.doubleValue();
+      double v2 = n2.doubleValue();
+      if (Double.isNaN(v1) || Double.isNaN(v2)) return op == JavaTokenType.NE;
+      //Cannot use Double.compare as we don't need special treatment of 0.0 and -0.0 here
+      //noinspection UseCompareMethod
+      result = v1 < v2 ? -1 : v1 == v2 ? 0 : 1;
+    } else if (n1 instanceof Float || n2 instanceof Float) {
+      float v1 = n1.floatValue();
+      float v2 = n2.floatValue();
+      if (Float.isNaN(v1) || Float.isNaN(v2)) return op == JavaTokenType.NE;
+      //Cannot use Float.compare as we don't need special treatment of 0.0 and -0.0 here
+      //noinspection UseCompareMethod
+      result = v1 < v2 ? -1 : v1 == v2 ? 0 : 1;
+    } else if (n1 instanceof Long || n2 instanceof Long) {
+      result = Long.compare(n1.longValue(), n2.longValue());
+    } else {
+      result = Integer.compare(n1.intValue(), n2.intValue());
+    }
+    if (op == JavaTokenType.EQEQ) return result == 0;
+    if (op == JavaTokenType.LT) return result < 0;
+    if (op == JavaTokenType.LE) return result <= 0;
+    if (op == JavaTokenType.GT) return result > 0;
+    if (op == JavaTokenType.GE) return result >= 0;
+    if (op == JavaTokenType.NE) return result != 0;
+    throw new IllegalArgumentException("Unexpected operator: " + op);
+  }
+
   @Override public void visitPrefixExpression(PsiPrefixExpression expression) {
     PsiExpression operand = expression.getOperand();
     Object operandValue = getStoredValue(operand);
@@ -447,11 +454,9 @@ class ConstantExpressionVisitor extends JavaElementVisitor implements PsiConstan
       if (operandValue instanceof Number) {
         if (operandValue instanceof Double) {
           value = new Double(-((Number)operandValue).doubleValue());
-          checkRealNumberOverflow(value, null, null, expression);
         }
         else if (operandValue instanceof Float) {
           value = new Float(-((Number)operandValue).floatValue());
-          checkRealNumberOverflow(value, null, null, expression);
         }
         else if (operandValue instanceof Long) {
           value = Long.valueOf(-((Number)operandValue).longValue());
@@ -480,9 +485,12 @@ class ConstantExpressionVisitor extends JavaElementVisitor implements PsiConstan
     else if (tokenType == JavaTokenType.TILDE) {
       if (operandValue instanceof Character) operandValue = Integer.valueOf(((Character)operandValue).charValue());
       if (isIntegral(operandValue)) {
-        value = operandValue instanceof Long
-                ? Long.valueOf(~((Number)operandValue).longValue())
-                : Integer.valueOf(~((Number)operandValue).intValue());
+        if (operandValue instanceof Long) {
+          value = Long.valueOf(~((Number)operandValue).longValue());
+        }
+        else {
+          value = Integer.valueOf(~((Number)operandValue).intValue());
+        }
       }
     }
     else if (tokenType == JavaTokenType.EXCL) {
@@ -503,6 +511,18 @@ class ConstantExpressionVisitor extends JavaElementVisitor implements PsiConstan
     myResult = myAuxEvaluator != null? myAuxEvaluator.computeExpression(expression, this) : null;
   }
 
+  @Override
+  public void visitClassObjectAccessExpression(PsiClassObjectAccessExpression expression) {
+    PsiType type = expression.getOperand().getType();
+    if (type instanceof PsiClassReferenceType) {
+      PsiClass aClass = ((PsiClassReferenceType)type).resolve();
+      if (aClass != null) {
+        type = JavaPsiFacade.getElementFactory(expression.getProject()).createType(aClass, ((PsiClassReferenceType)type).getParameters());
+      }
+    }
+    myResult = type;
+  }
+
   @Override public void visitReferenceExpression(PsiReferenceExpression expression) {
     PsiExpression qualifierExpression = expression.getQualifierExpression();
     while (qualifierExpression != null) {
@@ -520,7 +540,24 @@ class ConstantExpressionVisitor extends JavaElementVisitor implements PsiConstan
       }
       qualifierExpression = ((PsiReferenceExpression) qualifierExpression).getQualifierExpression();
     }
+
     PsiElement resolvedExpression = expression.resolve();
+    if (resolvedExpression instanceof PsiEnumConstant) {
+      String constant = ((PsiEnumConstant)resolvedExpression).getName();
+      if (constant == null) return;
+      PsiReferenceExpression qualifier = (PsiReferenceExpression)expression.getQualifier();
+      if (qualifier == null) return;
+      PsiElement element = qualifier.resolve();
+      if (!(element instanceof PsiClass)) return;
+      String name = ClassUtil.getJVMClassName((PsiClass)element);
+      try {
+        Class aClass = Class.forName(name);
+        //noinspection unchecked
+        myResult = Enum.valueOf(aClass, constant);
+      }
+      catch (Throwable ignore) { }
+      return;
+    }
     if (resolvedExpression instanceof PsiVariable) {
       PsiVariable variable = (PsiVariable) resolvedExpression;
       // avoid cycles
@@ -530,7 +567,7 @@ class ConstantExpressionVisitor extends JavaElementVisitor implements PsiConstan
       }
 
       Set<PsiVariable> oldVisitedVars = myVisitedVars;
-      if (myVisitedVars == null) { myVisitedVars = new THashSet<PsiVariable>(); }
+      if (myVisitedVars == null) { myVisitedVars = new THashSet<>(); }
 
       myVisitedVars.add(variable);
       try {
@@ -563,32 +600,29 @@ class ConstantExpressionVisitor extends JavaElementVisitor implements PsiConstan
     if (result / r != l || ((l < 0) ^ (r < 0) != (result < 0))) throw new ConstantEvaluationOverflowException(expression);
   }
 
-  private void checkAdditionOverflow(boolean resultPositive,
-                                     boolean lPositive,
-                                     boolean rPositive, PsiElement expression) {
+  private void checkAdditionOverflow(boolean resultPositive, boolean lPositive, boolean rPositive, PsiElement expression) {
     if (!myThrowExceptionOnOverflow) return;
     boolean overflow = lPositive == rPositive && lPositive != resultPositive;
     if (overflow) throw new ConstantEvaluationOverflowException(expression);
   }
 
-  private void checkRealNumberOverflow(Object result,
-                                       Object lOperandValue,
-                                       Object rOperandValue, PsiElement expression) {
+  private void checkRealNumberOverflow(Object result, Object lOperandValue, Object rOperandValue, PsiElement expression) {
     if (!myThrowExceptionOnOverflow) return;
     if (lOperandValue instanceof Float && ((Float) lOperandValue).isInfinite()) return;
     if (lOperandValue instanceof Double && ((Double) lOperandValue).isInfinite()) return;
     if (rOperandValue instanceof Float && ((Float) rOperandValue).isInfinite()) return;
     if (rOperandValue instanceof Double && ((Double) rOperandValue).isInfinite()) return;
 
-    if (result instanceof Float && ((Float) result).isInfinite()) throw new ConstantEvaluationOverflowException(expression);
-    if (result instanceof Double && ((Double) result).isInfinite()) throw new ConstantEvaluationOverflowException(expression);
+    if (result instanceof Float && ((Float)result).isInfinite()) throw new ConstantEvaluationOverflowException(expression);
+    if (result instanceof Double && ((Double)result).isInfinite()) throw new ConstantEvaluationOverflowException(expression);
   }
 
   @Override
-  public Object computeExpression(final PsiExpression expression, final PsiConstantEvaluationHelper.AuxEvaluator auxEvaluator) {
+  public Object computeExpression(@NotNull final PsiExpression expression, @NotNull final PsiConstantEvaluationHelper.AuxEvaluator auxEvaluator) {
     return JavaConstantExpressionEvaluator.computeConstantExpression(expression, myVisitedVars, myThrowExceptionOnOverflow, auxEvaluator);
   }
 
+  @NotNull
   @Override
   public ConcurrentMap<PsiElement, Object> getCacheMap(final boolean overflow) {
     throw new AssertionError("should not be called");

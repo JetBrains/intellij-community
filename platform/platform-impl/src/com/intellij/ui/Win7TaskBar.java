@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package com.intellij.ui;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.wm.IdeFrame;
+import com.intellij.util.io.jna.DisposableMemory;
 import com.sun.jna.Function;
 import com.sun.jna.Memory;
 import com.sun.jna.Native;
@@ -26,6 +27,8 @@ import com.sun.jna.platform.win32.*;
 import com.sun.jna.ptr.PointerByReference;
 import com.sun.jna.win32.StdCallLibrary;
 import com.sun.jna.win32.W32APIOptions;
+import org.jetbrains.annotations.NotNull;
+import sun.awt.AWTAccessor;
 
 import java.awt.*;
 import java.awt.peer.ComponentPeer;
@@ -55,7 +58,7 @@ class Win7TaskBar {
   private static Function mySetOverlayIcon;
 
   public interface User32Ex extends StdCallLibrary {
-    User32Ex INSTANCE = (User32Ex)Native.loadLibrary("user32", User32Ex.class, W32APIOptions.DEFAULT_OPTIONS);
+    User32Ex INSTANCE = Native.loadLibrary("user32", User32Ex.class, W32APIOptions.DEFAULT_OPTIONS);
 
     int LookupIconIdFromDirectoryEx(Memory presbits, boolean fIcon, int cxDesired, int cyDesired, int Flags);
 
@@ -68,17 +71,6 @@ class Win7TaskBar {
                                           int Flags);
 
     boolean FlashWindow(WinDef.HWND hwnd, boolean bInvert);
-  }
-
-  private static class MyMemory extends Memory {
-    private MyMemory(long size) {
-      super(size);
-    }
-
-    @Override
-    public synchronized void dispose() {
-      super.dispose();
-    }
   }
 
   private static boolean ourInitialized = true;
@@ -162,7 +154,7 @@ class Win7TaskBar {
       return new Object();
     }
 
-    MyMemory memory = new MyMemory(ico.length);
+    DisposableMemory memory = new DisposableMemory(ico.length);
 
     try {
       memory.write(0, ico, 0, ico.length);
@@ -187,9 +179,10 @@ class Win7TaskBar {
     User32Ex.INSTANCE.FlashWindow(getHandle(frame), true);
   }
 
-  private static WinDef.HWND getHandle(IdeFrame frame) {
+  private static WinDef.HWND getHandle(@NotNull IdeFrame frame) {
+    Component component = (Component)frame;
     try {
-      ComponentPeer peer = ((Component)frame).getPeer();
+      ComponentPeer peer = AWTAccessor.getComponentAccessor().getPeer(component);
       Method getHWnd = peer.getClass().getMethod("getHWnd");
       return new WinDef.HWND(new Pointer((Long)getHWnd.invoke(peer)));
     }

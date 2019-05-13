@@ -1,22 +1,7 @@
 
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.ui.laf;
 
-import javax.swing.*;
 import javax.swing.plaf.ColorUIResource;
 import javax.swing.plaf.metal.DefaultMetalTheme;
 import java.awt.*;
@@ -28,7 +13,7 @@ public class DarculaMetalTheme extends DefaultMetalTheme {
 
   private final ColorUIResource myControlHighlightColor = new ColorUIResource(108, 111, 113);
   private final ColorUIResource myControlDarkShadowColor = new ColorUIResource(39, 42, 44);
-  private final ColorUIResource myControlColor = new ColorUIResource(UIManager.getColor("control"));
+  private final ColorUIResource myControlColor = new ColorUIResource(0x3c3f41);
   private static final ColorUIResource white = new ColorUIResource(255, 255, 255);
   private static final ColorUIResource darkBlue = new ColorUIResource(82, 108, 164);
   private static final ColorUIResource lightGray = new ColorUIResource(214, 214, 214);
@@ -40,10 +25,12 @@ public class DarculaMetalTheme extends DefaultMetalTheme {
 
 
 
+  @Override
   public String getName() {
     return "Darcula theme";
   }
 
+  @Override
   public ColorUIResource getControl() {
     return myControlColor;
   }
@@ -58,42 +45,52 @@ public class DarculaMetalTheme extends DefaultMetalTheme {
     return myControlDarkShadowColor;
   }
 
+  @Override
   public ColorUIResource getSeparatorBackground() {
     return getControl();
   }
 
+  @Override
   public ColorUIResource getSeparatorForeground() {
     return mySeparatorForeground;
   }
 
+  @Override
   public ColorUIResource getMenuBackground() {
     return lightGray;
   }
 
+  @Override
   public ColorUIResource getMenuSelectedBackground() {
     return darkBlue;
   }
 
+  @Override
   public ColorUIResource getMenuSelectedForeground() {
     return white;
   }
 
+  @Override
   public ColorUIResource getAcceleratorSelectedForeground() {
     return white;
   }
 
+  @Override
   public ColorUIResource getFocusColor() {
     return new ColorUIResource(Color.black);
   }
 
+  @Override
   protected ColorUIResource getPrimary1() {
     return primary1;
   }
 
+  @Override
   protected ColorUIResource getPrimary2() {
     return primary2;
   }
 
+  @Override
   protected ColorUIResource getPrimary3() {
     return primary3;
   }

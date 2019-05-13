@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<root>
+  <item name="com.intellij.util.ArrayFactory">
+    <annotation name="java.lang.FunctionalInterface" />
+  </item>
+  <item name="com.intellij.util.Generator">
+    <annotation name="java.lang.FunctionalInterface" />
+  </item>
+  <item name="com.intellij.util.NotNullProducer">
+    <annotation name="java.lang.FunctionalInterface" />
+  </item>
+  <item name="com.intellij.util.PairConsumer">
+    <annotation name="java.lang.FunctionalInterface" />
+  </item>
+  <item name="com.intellij.util.PairFunction">
+    <annotation name="java.lang.FunctionalInterface" />
+  </item>
+  <item name="com.intellij.util.PairProcessor">
+    <annotation name="java.lang.FunctionalInterface" />
+  </item>
+  <item name="com.intellij.util.ParameterizedRunnable">
+    <annotation name="java.lang.FunctionalInterface" />
+  </item>
+  <item name="com.intellij.util.Processor">
+    <annotation name="java.lang.FunctionalInterface" />
+  </item>
+  <item name="com.intellij.util.Producer">
+    <annotation name="java.lang.FunctionalInterface" />
+  </item>
+  <item name="com.intellij.util.ThrowableConsumer">
+    <annotation name="java.lang.FunctionalInterface" />
+  </item>
+  <item name="com.intellij.util.ThrowableConvertor">
+    <annotation name="java.lang.FunctionalInterface" />
+  </item>
+  <item name="com.intellij.util.ThrowableRunnable">
+    <annotation name="java.lang.FunctionalInterface" />
+  </item>
+  <item name="com.intellij.util.TripleFunction">
+    <annotation name="java.lang.FunctionalInterface" />
+  </item>
+</root>
+

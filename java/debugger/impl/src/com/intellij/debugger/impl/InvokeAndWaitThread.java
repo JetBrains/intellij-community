@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,25 +15,15 @@
  */
 package com.intellij.debugger.impl;
 
+import com.intellij.openapi.project.Project;
+
 /**
  * @author lex
  */
 public abstract class InvokeAndWaitThread<E extends DebuggerTask> extends InvokeThread<E> {
 
-  public InvokeAndWaitThread() {
-    super();
-  }
-
-  /**
-   * !!! Do not remove this code !!!
-   * Otherwise it will be impossible to override schedule method
-   */
-  public boolean schedule(E e) {
-    return super.schedule(e);
-  }
-
-  public boolean pushBack(E e) {
-    return super.pushBack(e);
+  public InvokeAndWaitThread(Project project) {
+    super(project);
   }
 
   public void invokeAndWait(final E runnable) {

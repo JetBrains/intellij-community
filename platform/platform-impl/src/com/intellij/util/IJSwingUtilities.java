@@ -1,28 +1,11 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util;
 
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
+import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.ui.EditorTextField;
-import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.FilteringIterator;
+import com.intellij.util.ui.JBSwingUtilities;
 import com.intellij.util.ui.UIUtil;
-import gnu.trove.TIntStack;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -31,16 +14,8 @@ import javax.swing.event.HyperlinkEvent;
 import java.awt.*;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.Iterator;
 
-public class IJSwingUtilities {
-  public static void invoke(Runnable runnable) {
-    if (ApplicationManager.getApplication().isDispatchThread()) {
-      runnable.run();
-    } else {
-      ApplicationManager.getApplication().invokeLater(runnable, ModalityState.NON_MODAL);
-    }
-  }
+public class IJSwingUtilities extends JBSwingUtilities {
 
   /**
    * @return true if javax.swing.SwingUtilities.findFocusOwner(component) != null
@@ -86,9 +61,9 @@ public class IJSwingUtilities {
   }
 
   /**
-   * This method is copied from <code>SwingUtilities</code>.
-   * Returns index of the first occurrence of <code>mnemonic</code>
-   * within string <code>text</code>. Matching algorithm is not
+   * This method is copied from {@code SwingUtilities}.
+   * Returns index of the first occurrence of {@code mnemonic}
+   * within string {@code text}. Matching algorithm is not
    * case-sensitive.
    *
    * @param text The text to search through, may be null
@@ -113,72 +88,6 @@ public class IJSwingUtilities {
     } else {
       return (lci < uci) ? lci : uci;
     }
-  }
-
-  public static Iterator<Component> getParents(final Component component) {
-    return new Iterator<Component>() {
-      private Component myCurrent = component;
-      public boolean hasNext() {
-        return myCurrent != null && myCurrent.getParent() != null;
-      }
-
-      public Component next() {
-        myCurrent = myCurrent.getParent();
-        return myCurrent;
-      }
-
-      public void remove() {
-        throw new UnsupportedOperationException();
-      }
-    };
-  }
-
-  /**
-   * @param component - parent component, won't be reached by iterator.
-   * @return Component tree traverse {@link Iterator}.
-   */
-  public static Iterator<Component> getChildren(final Container component) {
-    return new Iterator<Component>() {
-      private Container myCurrentParent = component;
-      private final TIntStack myState = new TIntStack();
-      private int myCurrentIndex = 0;
-
-      public boolean hasNext() {
-        return hasNextChild();
-      }
-
-      public Component next() {
-        Component next = myCurrentParent.getComponent(myCurrentIndex);
-        myCurrentIndex++;
-        if (next instanceof Container) {
-          Container container = ((Container)next);
-          if (container.getComponentCount() > 0) {
-            myState.push(myCurrentIndex);
-            myCurrentIndex = 0;
-            myCurrentParent = container;
-          }
-        }
-        while (!hasNextChild()) {
-          if (myState.size() == 0) break;
-          myCurrentIndex = myState.pop();
-          myCurrentParent = myCurrentParent.getParent();
-        }
-        return next;
-      }
-
-      public void remove() {
-        throw new UnsupportedOperationException();
-      }
-
-      private boolean hasNextChild() {
-        return myCurrentParent.getComponentCount() > myCurrentIndex;
-      }
-    };
-  }
-
-  @Nullable
-  public static <T extends Component> T findParentOfType(Component focusOwner, Class<T> aClass) {
-    return (T)ContainerUtil.find(getParents(focusOwner), (FilteringIterator.InstanceOf<T>)FilteringIterator.instanceOf(aClass));
   }
 
   public static void adjustComponentsOnMac(@Nullable JComponent component) {
@@ -214,5 +123,47 @@ public class IJSwingUtilities {
     catch (MalformedURLException ignored) {
     }
     return new HyperlinkEvent(source, HyperlinkEvent.EventType.ACTIVATED, url, href);
+  }
+
+  /**
+   * A copy of javax.swing.SwingUtilities#updateComponentTreeUI that invokes children updateUI() first
+
+   * @param c component
+   * @see javax.swing.SwingUtilities#updateComponentTreeUI
+   */
+  public static void updateComponentTreeUI(@Nullable Component c) {
+    if (c == null) return;
+
+    if (c instanceof RootPaneContainer) {
+      JRootPane rootPane = ((RootPaneContainer)c).getRootPane();
+      if (rootPane != null) {
+        UIUtil.decorateWindowHeader(rootPane);
+      }
+    }
+
+    for (Component component : UIUtil.uiTraverser(c).postOrderDfsTraversal()) {
+      if (component instanceof JComponent) ((JComponent)component).updateUI();
+    }
+    c.invalidate();
+    c.validate();
+    c.repaint();
+  }
+
+  public static void moveMousePointerOn(Component component) {
+    if (component != null && component.isShowing()) {
+      UISettings settings = UISettings.getInstanceOrNull();
+      if (settings != null && settings.getMoveMouseOnDefaultButton()) {
+        Point point = component.getLocationOnScreen();
+        int dx = component.getWidth() / 2;
+        int dy = component.getHeight() / 2;
+        try {
+          new Robot().mouseMove(point.x + dx, point.y + dy);
+          component.requestFocusInWindow();
+        }
+        catch (AWTException ignored) {
+          // robot is not available
+        }
+      }
+    }
   }
 }

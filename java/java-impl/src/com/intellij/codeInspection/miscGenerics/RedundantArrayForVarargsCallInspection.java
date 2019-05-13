@@ -1,21 +1,7 @@
-/*
- * Copyright 2000-2011 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.miscGenerics;
 
-import com.intellij.codeInsight.CodeInsightUtilBase;
+import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.ExpectedTypeInfo;
 import com.intellij.codeInsight.ExpectedTypesProvider;
 import com.intellij.codeInsight.daemon.GroupNames;
@@ -24,6 +10,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.refactoring.util.InlineUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
@@ -31,6 +18,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -38,42 +26,43 @@ import java.util.List;
  */
 public class RedundantArrayForVarargsCallInspection extends GenericsInspectionToolBase {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.miscGenerics.RedundantArrayForVarargsCallInspection");
-  private final LocalQuickFix myQuickFixAction = new MyQuickFix();
+  private static final LocalQuickFix myQuickFixAction = new MyQuickFix();
 
   private static class MyQuickFix implements LocalQuickFix {
+    @Override
     public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      PsiNewExpression arrayCreation = (PsiNewExpression) descriptor.getPsiElement();
-      if (arrayCreation == null || !arrayCreation.isValid()) return;
-      if (!CodeInsightUtilBase.prepareFileForWrite(arrayCreation.getContainingFile())) return;
+      PsiNewExpression arrayCreation = (PsiNewExpression)descriptor.getPsiElement();
+      if (arrayCreation == null) return;
       InlineUtil.inlineArrayCreationForVarargs(arrayCreation);
     }
 
+    @Override
     @NotNull
     public String getFamilyName() {
-      return getName();
-    }
-
-    @NotNull
-    public String getName() {
       return InspectionsBundle.message("inspection.redundant.array.creation.quickfix");
     }
   }
 
-  public ProblemDescriptor[] getDescriptions(PsiElement place, final InspectionManager manager, final boolean isOnTheFly) {
-    if (!PsiUtil.isLanguageLevel5OrHigher(place)) return null;
-    final List<ProblemDescriptor> problems = new ArrayList<ProblemDescriptor>();
+  @Override
+  public ProblemDescriptor[] getDescriptions(@NotNull PsiElement place,
+                                             @NotNull final InspectionManager manager,
+                                             final boolean isOnTheFly) {
+    final List<ProblemDescriptor> problems = new ArrayList<>();
     place.accept(new JavaRecursiveElementWalkingVisitor() {
-      @Override public void visitCallExpression(PsiCallExpression expression) {
+      @Override
+      public void visitCallExpression(PsiCallExpression expression) {
         super.visitCallExpression(expression);
         checkCall(expression);
       }
 
-      @Override public void visitEnumConstant(PsiEnumConstant enumConstant) {
+      @Override
+      public void visitEnumConstant(PsiEnumConstant enumConstant) {
         super.visitEnumConstant(enumConstant);
         checkCall(enumConstant);
       }
 
-      @Override public void visitClass(PsiClass aClass) {
+      @Override
+      public void visitClass(PsiClass aClass) {
         //do not go inside to prevent multiple signals of the same problem
       }
 
@@ -81,38 +70,56 @@ public class RedundantArrayForVarargsCallInspection extends GenericsInspectionTo
         final JavaResolveResult resolveResult = expression.resolveMethodGenerics();
         PsiElement element = resolveResult.getElement();
         final PsiSubstitutor substitutor = resolveResult.getSubstitutor();
-        if (element instanceof PsiMethod && ((PsiMethod)element).isVarArgs()) {
-          PsiMethod method = (PsiMethod)element;
-          PsiParameter[] parameters = method.getParameterList().getParameters();
-          PsiExpressionList argumentList = expression.getArgumentList();
-          if (argumentList != null) {
-            PsiExpression[] args = argumentList.getExpressions();
-            if (parameters.length == args.length) {
-              PsiExpression lastArg = args[args.length - 1];
-              PsiParameter lastParameter = parameters[args.length - 1];
-              PsiType lastParamType = lastParameter.getType();
-              LOG.assertTrue(lastParamType instanceof PsiEllipsisType);
-              if (lastArg instanceof PsiNewExpression &&
-                  substitutor.substitute(((PsiEllipsisType) lastParamType).toArrayType()).equals(lastArg.getType())) {
-                PsiExpression[] initializers = getInitializers((PsiNewExpression)lastArg);
-                if (initializers != null) {
-                  if (isSafeToFlatten(expression, method, initializers)) {
-                    final ProblemDescriptor descriptor = manager.createProblemDescriptor(lastArg,
-                                                                                         InspectionsBundle.message("inspection.redundant.array.creation.for.varargs.call.descriptor"),
-                                                                                         myQuickFixAction,
-                                                                                         ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
-                                                                                         isOnTheFly);
-
-                    problems.add(descriptor);
-                  }
-                }
-              }
-            }
-          }
+        if (!(element instanceof PsiMethod)) {
+          return;
         }
+        PsiMethod method = (PsiMethod)element;
+        if (!method.isVarArgs() ||
+            AnnotationUtil.isAnnotated(method, CommonClassNames.JAVA_LANG_INVOKE_MH_POLYMORPHIC, 0)) {
+          return;
+        }
+        PsiParameter[] parameters = method.getParameterList().getParameters();
+        PsiExpressionList argumentList = expression.getArgumentList();
+        if (argumentList == null) {
+          return;
+        }
+        PsiExpression[] args = argumentList.getExpressions();
+        if (parameters.length != args.length) {
+          return;
+        }
+        PsiExpression lastArg = PsiUtil.skipParenthesizedExprDown(args[args.length - 1]);
+        PsiParameter lastParameter = parameters[args.length - 1];
+        if (!lastParameter.isVarArgs()) {
+          return;
+        }
+        PsiType lastParamType = lastParameter.getType();
+        LOG.assertTrue(lastParamType instanceof PsiEllipsisType, lastParamType);
+        if (!(lastArg instanceof PsiNewExpression)) {
+          return;
+        }
+        final PsiType substitutedLastParamType = substitutor.substitute(((PsiEllipsisType)lastParamType).toArrayType());
+        final PsiType lastArgType = lastArg.getType();
+        if (lastArgType == null || !lastArgType.equals(substitutedLastParamType) &&
+                                   !lastArgType.equals(TypeConversionUtil.erasure(substitutedLastParamType))) {
+          return;
+        }
+        PsiExpression[] initializers = getInitializers((PsiNewExpression)lastArg);
+        if (initializers == null) {
+          return;
+        }
+        if (Arrays.stream(initializers).anyMatch(expr -> expr instanceof PsiArrayInitializerExpression)) {
+          return;
+        }
+        if (!isSafeToFlatten(expression, method, initializers)) {
+          return;
+        }
+        String message = InspectionsBundle.message("inspection.redundant.array.creation.for.varargs.call.descriptor");
+        ProblemDescriptor descriptor = manager.createProblemDescriptor(lastArg, message, myQuickFixAction,
+                                                                       ProblemHighlightType.GENERIC_ERROR_OR_WARNING, isOnTheFly);
+        problems.add(descriptor);
       }
 
-      private boolean isSafeToFlatten(PsiCall callExpression, PsiMethod oldRefMethod, PsiExpression[] arrayElements) {
+      private boolean isSafeToFlatten(@NotNull PsiCall callExpression, @NotNull PsiMethod oldRefMethod, @NotNull PsiExpression[] arrayElements) {
         if (arrayElements.length == 1) {
           PsiType type = arrayElements[0].getType();
           // change foo(new Object[]{array}) to foo(array) is not safe
@@ -132,23 +139,28 @@ public class RedundantArrayForVarargsCallInspection extends GenericsInspectionTo
           if (callExpression instanceof PsiEnumConstant) {
             final PsiEnumConstant enumConstant = (PsiEnumConstant)callExpression;
             final PsiClass containingClass = enumConstant.getContainingClass();
+            if (containingClass == null) return false;
             final JavaPsiFacade facade = JavaPsiFacade.getInstance(project);
             final PsiClassType classType = facade.getElementFactory().createType(containingClass);
             resolveResult = facade.getResolveHelper().resolveConstructor(classType, copyArgumentList, enumConstant);
             return resolveResult.isValidResult() && resolveResult.getElement() == oldRefMethod;
-          } else {
+          }
+          else {
             resolveResult = copy.resolveMethodGenerics();
             if (!resolveResult.isValidResult() || resolveResult.getElement() != oldRefMethod) {
               return false;
             }
-            final ExpectedTypeInfo[] expectedTypes = ExpectedTypesProvider.getExpectedTypes((PsiCallExpression) callExpression, false);
+            if (callExpression.getParent() instanceof PsiExpressionStatement) return true;
+            final ExpectedTypeInfo[] expectedTypes = ExpectedTypesProvider.getExpectedTypes((PsiCallExpression)callExpression, false);
+            if (expectedTypes.length == 0) return false;
             final PsiType expressionType = ((PsiCallExpression)copy).getType();
+            if (expressionType == null) return false;
             for (ExpectedTypeInfo expectedType : expectedTypes) {
-              if (!expectedType.getType().isAssignableFrom(expressionType)) {
-                return false;
+              if (expectedType.getType().isAssignableFrom(expressionType)) {
+                return true;
               }
             }
-            return true;
+            return false;
           }
         }
         catch (IncorrectOperationException e) {
@@ -157,7 +169,7 @@ public class RedundantArrayForVarargsCallInspection extends GenericsInspectionTo
       }
     });
     if (problems.isEmpty()) return null;
-    return problems.toArray(new ProblemDescriptor[problems.size()]);
+    return problems.toArray(ProblemDescriptor.EMPTY_ARRAY);
   }
 
   @Nullable
@@ -177,16 +189,19 @@ public class RedundantArrayForVarargsCallInspection extends GenericsInspectionTo
     return null;
   }
 
+  @Override
   @NotNull
   public String getGroupDisplayName() {
     return GroupNames.VERBOSE_GROUP_NAME;
   }
 
+  @Override
   @NotNull
   public String getDisplayName() {
     return InspectionsBundle.message("inspection.redundant.array.creation.display.name");
   }
 
+  @Override
   @NotNull
   @NonNls
   public String getShortName() {

@@ -431,7 +431,7 @@
                 <properties/>
                 <border type="none"/>
                 <children>
-                  <component id="d2ccf" class="com.intellij.ui.table.JBTable">
+                  <component id="d2ccf" class="com.intellij.ui.table.JBTable" binding="myTable">
                     <constraints/>
                     <properties/>
                   </component>

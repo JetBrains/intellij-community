@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package com.intellij.ui;
 
 import com.intellij.openapi.actionSystem.ActionToolbarPosition;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.treeStructure.SimpleNode;
 import com.intellij.util.ui.EditableModel;
 import com.intellij.util.ui.EditableTreeModel;
@@ -30,8 +31,10 @@ import javax.swing.event.TreeSelectionListener;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreePath;
+import javax.swing.tree.TreeSelectionModel;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.util.Arrays;
 
 /**
  * @author Konstantin Bulenkov
@@ -89,7 +92,9 @@ class TreeToolbarDecorator extends ToolbarDecorator {
         final TreePath createdPath = model.addNode(new TreePath(parent.getPath()));
         if (path != null) {
           TreeUtil.selectPath(myTree, createdPath);
-          myTree.requestFocus();
+          IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
+            IdeFocusManager.getGlobalInstance().requestFocus(myTree, true);
+          });
         }
       }
     };
@@ -98,8 +103,18 @@ class TreeToolbarDecorator extends ToolbarDecorator {
       @Override
       public void run(AnActionButton button) {
         myTree.stopEditing();
-        final TreePath path = myTree.getSelectionPath();
-        model.removeNode(path);
+        if (myTree.getSelectionModel().getSelectionMode() == TreeSelectionModel.SINGLE_TREE_SELECTION) {
+          final TreePath path = myTree.getSelectionPath();
+          if (path != null) {
+            model.removeNode(path);
+          }
+        }
+        else {
+          final TreePath[] paths = myTree.getSelectionPaths();
+          if (paths != null && paths.length > 0) {
+            model.removeNodes(Arrays.asList(paths));
+          }
+        }
       }
     };
   }

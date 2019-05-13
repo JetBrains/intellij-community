@@ -1,4 +1,4 @@
-// "Create Class 'MyCollection'" "true"
+// "Create class 'MyCollection'" "true"
 import java.util.*;
 
 public class Test {

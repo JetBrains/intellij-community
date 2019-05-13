@@ -14,12 +14,12 @@ package org.zmlx.hg4idea.command;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FilePath;
-import com.intellij.openapi.vcs.ObjectsConvertor;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.HgRevisionNumber;
@@ -61,7 +61,7 @@ public class HgWorkingCopyRevisionsCommand {
    * @see #parents(com.intellij.openapi.vfs.VirtualFile, com.intellij.openapi.vfs.VirtualFile, org.zmlx.hg4idea.HgRevisionNumber)
    */
   @NotNull
-  public Pair<HgRevisionNumber, HgRevisionNumber> parents(@NotNull VirtualFile repo, @Nullable VirtualFile file) {
+  public Couple<HgRevisionNumber> parents(@NotNull VirtualFile repo, @Nullable VirtualFile file) {
     return parents(repo, file, null);
   }
 
@@ -70,39 +70,39 @@ public class HgWorkingCopyRevisionsCommand {
    * is the latest parent (i.e. having greater revision number), second one is the earlier parent (having smaller revision number).
    * @param repo     repository to work on.
    * @param file     file which revision's parents we are interested in. If null, the history of the whole repository is considered.
-   * @param revision revision number which parent is wanted. If null, the last revision is taken. 
+   * @param revision revision number which parent is wanted. If null, the last revision is taken.
    * @return One or two (in case of a merge commit) parents of the given revision. Or even zero in case of a fresh repository.
    *         So one should check pair elements for null.
    */
   @NotNull
-  public Pair<HgRevisionNumber, HgRevisionNumber> parents(@NotNull VirtualFile repo, @Nullable VirtualFile file, @Nullable HgRevisionNumber revision) {
-    return parents(repo, ObjectsConvertor.VIRTUAL_FILEPATH.convert(file), revision);
+  public Couple<HgRevisionNumber> parents(@NotNull VirtualFile repo, @Nullable VirtualFile file, @Nullable HgRevisionNumber revision) {
+    return parents(repo, VcsUtil.getFilePath(file), revision);
   }
-  
+
   /**
    * @see #parents(VirtualFile, FilePath, HgRevisionNumber)
    */
   @NotNull
-  public Pair<HgRevisionNumber, HgRevisionNumber> parents(@NotNull VirtualFile repo, @Nullable FilePath file) {
+  public Couple<HgRevisionNumber> parents(@NotNull VirtualFile repo, @Nullable FilePath file) {
     return parents(repo, file, null);
   }
-  
+
   /**
    * Parent(s) of the given revision of the given file. If there are two of them (in the case of merge) the first element of the pair
    * is the latest parent (i.e. having greater revision number), second one is the earlier parent (having smaller revision number).
    * @param repo     repository to work on.
    * @param file     filepath which revision's parents we are interested in. If null, the history of the whole repository is considered.
-   * @param revision revision number which parent is wanted. If null, the last revision is taken. 
+   * @param revision revision number which parent is wanted. If null, the last revision is taken.
    * @return One or two (in case of a merge commit) parents of the given revision. Or even zero in case of a fresh repository.
    *         So one should check pair elements for null.
    */
   @NotNull
-  public Pair<HgRevisionNumber, HgRevisionNumber> parents(@NotNull VirtualFile repo, @Nullable FilePath file, @Nullable HgRevisionNumber revision) {
+  public Couple<HgRevisionNumber> parents(@NotNull VirtualFile repo, @Nullable FilePath file, @Nullable HgRevisionNumber revision) {
     final List<HgRevisionNumber> revisions = getRevisions(repo, "parents", file, revision, true);
     switch (revisions.size()) {
-      case 1: return Pair.create(revisions.get(0), null);
-      case 2: return Pair.create(revisions.get(0), revisions.get(1));
-      default: return Pair.create(null, null);
+      case 1: return Couple.of(revisions.get(0), null);
+      case 2: return Couple.of(revisions.get(0), revisions.get(1));
+      default: return Couple.of(null, null);
     }
   }
 
@@ -135,33 +135,33 @@ public class HgWorkingCopyRevisionsCommand {
    * @return one or two revision numbers. Two revisions is the case of unresolved merge. In other cases there are only one revision.
    */
   @NotNull
-  public Pair<HgRevisionNumber, HgRevisionNumber> identify(@NotNull VirtualFile repo) {
+  public Couple<HgRevisionNumber> identify(@NotNull VirtualFile repo) {
     HgCommandExecutor commandExecutor = new HgCommandExecutor(myProject);
     commandExecutor.setSilent(true);
     HgCommandResult result = commandExecutor.executeInCurrentThread(repo, "identify", Arrays.asList("--num", "--id"));
     if (result == null) {
-      return Pair.create(HgRevisionNumber.NULL_REVISION_NUMBER, null);
+      return Couple.of(HgRevisionNumber.NULL_REVISION_NUMBER, null);
     }
 
     final List<String> lines = result.getOutputLines();
-    if (lines != null && !lines.isEmpty()) {
+    if (!lines.isEmpty()) {
       List<String> parts = StringUtil.split(lines.get(0), " ");
-      String changesets = parts.get(0);
-      String revisions = parts.get(1);
       if (parts.size() >= 2) {
+        String changesets = parts.get(0);
+        String revisions = parts.get(1);
         if (changesets.indexOf('+') != changesets.lastIndexOf('+')) {
           // in the case of unresolved merge we have 2 revisions at once, both current, so with "+"
           // 9f2e6c02913c+b311eb4eb004+ 186+183+
           List<String> chsets = StringUtil.split(changesets, "+");
           List<String> revs = StringUtil.split(revisions, "+");
-          return Pair.create(HgRevisionNumber.getInstance(revs.get(0) + "+", chsets.get(0) + "+"),
-                             HgRevisionNumber.getInstance(revs.get(1) + "+", chsets.get(1) + "+"));
+          return Couple.of(HgRevisionNumber.getInstance(revs.get(0) + "+", chsets.get(0) + "+"),
+                           HgRevisionNumber.getInstance(revs.get(1) + "+", chsets.get(1) + "+"));
         } else {
-          return Pair.create(HgRevisionNumber.getInstance(revisions, changesets), null);
+          return Couple.of(HgRevisionNumber.getInstance(revisions, changesets), null);
         }
       }
     }
-    return Pair.create(HgRevisionNumber.NULL_REVISION_NUMBER, null);
+    return Couple.of(HgRevisionNumber.NULL_REVISION_NUMBER, null);
   }
 
   /**
@@ -182,9 +182,9 @@ public class HgWorkingCopyRevisionsCommand {
                                               @Nullable FilePath file,
                                               @Nullable HgRevisionNumber revision,
                                               boolean silent) {
-    final List<String> args = new LinkedList<String>();
+    final List<String> args = new LinkedList<>();
     args.add("--template");
-    args.add(HgChangesetUtil.makeTemplate("{rev}", "{node|short}"));
+    args.add(HgChangesetUtil.makeTemplate("{rev}", "{node}"));
     if (revision != null) {
       args.add("-r");
       args.add(revision.getChangeset());
@@ -197,20 +197,20 @@ public class HgWorkingCopyRevisionsCommand {
     final HgCommandResult result = executor.executeInCurrentThread(repo, command, args);
 
     if (result == null) {
-      return new ArrayList<HgRevisionNumber>(0);
+      return new ArrayList<>(0);
     }
 
-    final List<String> lines = new ArrayList<String>();
+    final List<String> lines = new ArrayList<>();
     for (String line : result.getRawOutput().split(HgChangesetUtil.CHANGESET_SEPARATOR)) {
       if (!line.trim().isEmpty()) {     // filter out empty lines
         lines.add(line);
       }
     }
     if (lines.isEmpty()) {
-      return new ArrayList<HgRevisionNumber>();
+      return new ArrayList<>();
     }
 
-    final List<HgRevisionNumber> revisions = new ArrayList<HgRevisionNumber>(lines.size());
+    final List<HgRevisionNumber> revisions = new ArrayList<>(lines.size());
     for(String line: lines) {
       final List<String> parts = StringUtil.split(line, HgChangesetUtil.ITEM_SEPARATOR);
       if (parts.size() < 2) {
@@ -219,8 +219,6 @@ public class HgWorkingCopyRevisionsCommand {
       }
       revisions.add(HgRevisionNumber.getInstance(parts.get(0), parts.get(1)));
     }
-    
     return revisions;
   }
-
 }

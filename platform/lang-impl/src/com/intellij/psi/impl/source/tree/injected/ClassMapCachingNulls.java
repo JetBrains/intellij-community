@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,24 +15,23 @@
  */
 package com.intellij.psi.impl.source.tree.injected;
 
-import com.intellij.util.ReflectionCache;
-import com.intellij.util.containers.ConcurrentHashMap;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.JBIterable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
-public class ClassMapCachingNulls<T> {
+class ClassMapCachingNulls<T> {
   private final Map<Class, T[]> myBackingMap;
   private final T[] myEmptyArray;
-  private final Map<Class, T[]> myMap = new ConcurrentHashMap<Class, T[]>();
+  private final List<? extends T> myOrderingArray;
+  private final Map<Class, T[]> myMap = ContainerUtil.newConcurrentMap();
 
-  public ClassMapCachingNulls(@NotNull Map<Class, T[]> backingMap, T[] emptyArray) {
+  ClassMapCachingNulls(@NotNull Map<Class, T[]> backingMap, T[] emptyArray, @NotNull List<? extends T> orderingArray) {
     myBackingMap = backingMap;
     myEmptyArray = emptyArray;
+    myOrderingArray = orderingArray;
   }
 
   @Nullable
@@ -65,38 +64,37 @@ public class ClassMapCachingNulls<T> {
     return value;
   }
 
+  @Nullable
   private List<T> getFromBackingMap(Class aClass) {
     T[] value = myBackingMap.get(aClass);
-    List<T> result = null;
+    Set<T> result = null;
     if (value != null) {
       assert value.length != 0;
-      result = new ArrayList<T>(Arrays.asList(value));
+      result = new HashSet<>(Arrays.asList(value));
     }
-    for (final Class aClass1 : ReflectionCache.getInterfaces(aClass)) {
-      result = addFromUpper(result, aClass1);
-    }
-    final Class superclass = ReflectionCache.getSuperClass(aClass);
-    if (superclass != null) {
+    for (final Class superclass : JBIterable.of(aClass.getSuperclass()).append(aClass.getInterfaces())) {
       result = addFromUpper(result, superclass);
     }
-    return result;
+    
+    if (result == null) return null;
+    return ContainerUtil.filter(myOrderingArray, result::contains);
   }
 
-  private List<T> addFromUpper(List<T> value, Class superclass) {
+  private Set<T> addFromUpper(Set<T> value, Class superclass) {
     T[] fromUpper = get(superclass);
     if (fromUpper != null) {
       assert fromUpper.length != 0;
       if (value == null) {
-        value = new ArrayList<T>(fromUpper.length);
+        value = new HashSet<>(fromUpper.length);
       }
-      for (T t : fromUpper) {
-        if (!value.contains(t)) {
-          value.add(t);
-        }
-      }
+      Collections.addAll(value, fromUpper);
       assert !value.isEmpty();
     }
     return value;
+  }
+
+  Map<Class, T[]> getBackingMap() {
+    return myBackingMap;
   }
 
   public void clearCache() {

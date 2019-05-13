@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,7 +20,6 @@
 package com.intellij.debugger.ui.impl.watch;
 
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
-import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.ui.tree.render.DescriptorLabelListener;
 import com.intellij.openapi.diagnostic.Logger;
 
@@ -35,13 +34,16 @@ public final class DefaultNodeDescriptor extends NodeDescriptorImpl{
     return 0;
   }
 
+  @Override
   public boolean isExpandable() {
     return true;
   }
 
+  @Override
   public void setContext(EvaluationContextImpl context) {
   }
 
+  @Override
   protected String calcRepresentation(EvaluationContextImpl context, DescriptorLabelListener labelListener) {
     LOG.assertTrue(false);
     return null;

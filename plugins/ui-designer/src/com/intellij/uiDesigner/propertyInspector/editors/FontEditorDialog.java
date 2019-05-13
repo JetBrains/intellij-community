@@ -1,27 +1,15 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.uiDesigner.propertyInspector.editors;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.ui.ColoredListCellRenderer;
+import com.intellij.ui.FontInfoRenderer;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.uiDesigner.UIDesignerBundle;
 import com.intellij.uiDesigner.lw.FontDescriptor;
 import com.intellij.uiDesigner.propertyInspector.properties.IntroFontProperty;
+import com.intellij.util.ui.FontInfo;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -30,18 +18,19 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
-import java.awt.Font;
-import java.awt.event.ItemListener;
+import java.awt.*;
 import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.Enumeration;
+import java.util.List;
 
 /**
  * @author yole
  */
 public class FontEditorDialog extends DialogWrapper {
+  private final Model myModel = new Model();
   private JList myFontNameList;
   private JList myFontStyleList;
   private JList myFontSizeList;
@@ -61,7 +50,8 @@ public class FontEditorDialog extends DialogWrapper {
     super(project, false);
     init();
     setTitle(UIDesignerBundle.message("font.chooser.title", propertyName));
-    myFontNameList.setListData(UIUtil.getValidFontNames(true));
+    myFontNameList.setModel(myModel);
+    myFontNameList.setCellRenderer(new FontInfoRenderer());
     myFontNameList.addListSelectionListener(new MyListSelectionListener(myFontNameEdit));
     myFontStyleList.setListData(new String[] {
       UIDesignerBundle.message("font.chooser.regular"),
@@ -72,6 +62,7 @@ public class FontEditorDialog extends DialogWrapper {
     myFontStyleList.addListSelectionListener(new MyListSelectionListener(myFontStyleEdit));
     myFontSizeList.setListData(UIUtil.getStandardFontSizes());
     myFontSizeList.addListSelectionListener(new ListSelectionListener() {
+      @Override
       public void valueChanged(ListSelectionEvent e) {
         final Integer selValue = Integer.valueOf(myFontSizeList.getSelectedValue().toString());
         myFontSizeEdit.setValue(selValue);
@@ -80,6 +71,7 @@ public class FontEditorDialog extends DialogWrapper {
     });
     myFontSizeEdit.setModel(new SpinnerNumberModel(3, 3, 96, 1));
     myFontSizeEdit.addChangeListener(new ChangeListener() {
+      @Override
       public void stateChanged(ChangeEvent e) {
         myFontSizeList.setSelectedValue(myFontSizeEdit.getValue().toString(), true);
         updateValue();
@@ -87,7 +79,8 @@ public class FontEditorDialog extends DialogWrapper {
     });
     mySwingFontList.setListData(collectSwingFontDescriptors());
     mySwingFontList.setCellRenderer(new ColoredListCellRenderer() {
-      protected void customizeCellRenderer(JList list, Object value, int index, boolean selected, boolean hasFocus) {
+      @Override
+      protected void customizeCellRenderer(@NotNull JList list, Object value, int index, boolean selected, boolean hasFocus) {
         FontDescriptor descriptor = (FontDescriptor) value;
         clear();
         append(descriptor.getSwingFont(),
@@ -97,6 +90,7 @@ public class FontEditorDialog extends DialogWrapper {
       }
     });
     mySwingFontList.addListSelectionListener(new ListSelectionListener() {
+      @Override
       public void valueChanged(ListSelectionEvent e) {
         myValue = (FontDescriptor)mySwingFontList.getSelectedValue();
         updatePreview();
@@ -105,18 +99,21 @@ public class FontEditorDialog extends DialogWrapper {
     });
 
     myFontNameCheckbox.addChangeListener(new ChangeListener() {
+      @Override
       public void stateChanged(ChangeEvent e) {
         myFontNameList.setEnabled(myFontNameCheckbox.isSelected());
         updateValue();
       }
     });
     myFontStyleCheckbox.addItemListener(new ItemListener() {
+      @Override
       public void itemStateChanged(ItemEvent e) {
         myFontStyleList.setEnabled(myFontStyleCheckbox.isSelected());
         updateValue();
       }
     });
     myFontSizeCheckbox.addChangeListener(new ChangeListener() {
+      @Override
       public void stateChanged(ChangeEvent e) {
         myFontSizeList.setEnabled(myFontSizeCheckbox.isSelected());
         myFontSizeEdit.setEnabled(myFontSizeCheckbox.isSelected());
@@ -138,7 +135,7 @@ public class FontEditorDialog extends DialogWrapper {
   }
 
   private static FontDescriptor[] collectSwingFontDescriptors() {
-    ArrayList<FontDescriptor> result = new ArrayList<FontDescriptor>();
+    ArrayList<FontDescriptor> result = new ArrayList<>();
     UIDefaults defaults = UIManager.getDefaults();
     Enumeration e = defaults.keys ();
     while(e.hasMoreElements()) {
@@ -148,12 +145,8 @@ public class FontEditorDialog extends DialogWrapper {
         result.add(FontDescriptor.fromSwingFont((String) key));
       }
     }
-    Collections.sort(result, new Comparator<FontDescriptor>() {
-      public int compare(final FontDescriptor o1, final FontDescriptor o2) {
-        return o1.getSwingFont().compareTo(o2.getSwingFont());
-      }
-    });
-    return result.toArray(new FontDescriptor[result.size()]);
+    Collections.sort(result, (o1, o2) -> o1.getSwingFont().compareTo(o2.getSwingFont()));
+    return result.toArray(new FontDescriptor[0]);
   }
 
   public FontDescriptor getValue() {
@@ -170,7 +163,7 @@ public class FontEditorDialog extends DialogWrapper {
       myFontNameCheckbox.setSelected(value.getFontName() != null);
       myFontSizeCheckbox.setSelected(value.getFontSize() >= 0);
       myFontStyleCheckbox.setSelected(value.getFontStyle() >= 0);
-      myFontNameList.setSelectedValue(value.getFontName(), true);
+      myFontNameList.setSelectedValue(myModel.findElement(value.getFontName()), true);
       myFontStyleList.setSelectedIndex(value.getFontStyle());
       if (value.getFontSize() >= 0) {
         myFontSizeList.setSelectedValue(Integer.toString(value.getFontSize()), true);
@@ -187,7 +180,7 @@ public class FontEditorDialog extends DialogWrapper {
 
   private void updateValue() {
     final int fontSize = ((Integer)myFontSizeEdit.getValue()).intValue();
-    myValue = new FontDescriptor(myFontNameCheckbox.isSelected() ? (String) myFontNameList.getSelectedValue() : null,
+    myValue = new FontDescriptor(myFontNameCheckbox.isSelected() ? toString(myFontNameList.getSelectedValue()) : null,
                                  myFontStyleCheckbox.isSelected() ? myFontStyleList.getSelectedIndex() : -1,
                                  myFontSizeCheckbox.isSelected() ? fontSize : -1);
     updatePreview();
@@ -198,6 +191,7 @@ public class FontEditorDialog extends DialogWrapper {
     myPreviewTextLabel.setFont(myValue.getResolvedFont(myRootPane.getFont()));
   }
 
+  @Override
   protected JComponent createCenterPanel() {
     return myRootPane;
   }
@@ -205,10 +199,11 @@ public class FontEditorDialog extends DialogWrapper {
   private class MyListSelectionListener implements ListSelectionListener {
     private final JTextField myTextField;
 
-    public MyListSelectionListener(final JTextField textField) {
+    MyListSelectionListener(final JTextField textField) {
       myTextField = textField;
     }
 
+    @Override
     public void valueChanged(ListSelectionEvent e) {
       JList sourceList = (JList) e.getSource();
       final Object selValue = sourceList.getSelectedValue();
@@ -219,6 +214,33 @@ public class FontEditorDialog extends DialogWrapper {
         myTextField.setText("");
       }
       updateValue();
+    }
+  }
+
+  private static String toString(Object object) {
+    return object == null ? null : object.toString();
+  }
+
+  private static final class Model extends AbstractListModel {
+    private final List<FontInfo> myList = FontInfo.getAll(false);
+
+    @Override
+    public int getSize() {
+      return myList.size();
+    }
+
+    @Override
+    public FontInfo getElementAt(int index) {
+      return myList.get(index);
+    }
+
+    public FontInfo findElement(String name) {
+      for (FontInfo info : myList) {
+        if (info.toString().equalsIgnoreCase(name)) {
+          return info;
+        }
+      }
+      return null;
     }
   }
 }

@@ -15,9 +15,13 @@
  */
 package org.jetbrains.idea.maven.project;
 
+import com.intellij.notification.Notification;
+import com.intellij.notification.NotificationType;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.ControlFlowException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
+import com.intellij.util.ExceptionUtil;
 import com.intellij.util.concurrency.Semaphore;
 import org.jetbrains.idea.maven.execution.SoutMavenConsole;
 import org.jetbrains.idea.maven.utils.*;
@@ -31,7 +35,7 @@ public class MavenProjectsProcessor {
   private final boolean myCancellable;
   private final MavenEmbeddersManager myEmbeddersManager;
 
-  private final Queue<MavenProjectsProcessorTask> myQueue = new LinkedList<MavenProjectsProcessorTask>();
+  private final Queue<MavenProjectsProcessorTask> myQueue = new LinkedList<>();
   private boolean isProcessing;
 
   private volatile boolean isStopped;
@@ -76,6 +80,7 @@ public class MavenProjectsProcessor {
     final Semaphore semaphore = new Semaphore();
     semaphore.down();
     scheduleTask(new MavenProjectsProcessorTask() {
+      @Override
       public void perform(Project project, MavenEmbeddersManager embeddersManager, MavenConsole console, MavenProgressIndicator indicator)
         throws MavenProcessCanceledException {
         semaphore.up();
@@ -96,12 +101,9 @@ public class MavenProjectsProcessor {
 
   private void startProcessing(final MavenProjectsProcessorTask task) {
     MavenUtil.runInBackground(myProject, myTitle, myCancellable, new MavenTask() {
+      @Override
       public void run(MavenProgressIndicator indicator) throws MavenProcessCanceledException {
-        Condition<MavenProgressIndicator> condition = new Condition<MavenProgressIndicator>() {
-          public boolean value(MavenProgressIndicator mavenProgressIndicator) {
-            return isStopped;
-          }
-        };
+        Condition<MavenProgressIndicator> condition = mavenProgressIndicator -> isStopped;
         indicator.addCancelCondition(condition);
         try {
           doProcessPendingTasks(indicator, task);
@@ -128,13 +130,16 @@ public class MavenProjectsProcessor {
         indicator.setFraction(counter / (double)(counter + remained));
 
         try {
-          task.perform(myProject, myEmbeddersManager, new SoutMavenConsole(), indicator);
+          final MavenGeneralSettings mavenGeneralSettings = MavenProjectsManager.getInstance(myProject).getGeneralSettings();
+          task.perform(myProject, myEmbeddersManager,
+                       new SoutMavenConsole(mavenGeneralSettings.getOutputLevel(), mavenGeneralSettings.isPrintErrorStackTraces()),
+                       indicator);
         }
         catch (MavenProcessCanceledException e) {
           throw e;
         }
         catch (Throwable e) {
-          MavenLog.LOG.error(e);
+          logImportErrorIfNotControlFlow(e);
         }
 
         synchronized (myQueue) {
@@ -153,5 +158,17 @@ public class MavenProjectsProcessor {
       }
       throw e;
     }
+  }
+
+  private void logImportErrorIfNotControlFlow(Throwable e) {
+    if (e instanceof ControlFlowException) {
+      ExceptionUtil.rethrowAllAsUnchecked(e);
+    }
+    MavenLog.LOG.error(e);
+    new Notification(MavenUtil.MAVEN_NOTIFICATION_GROUP,
+                     "Unable to import maven project",
+                     "See logs for details",
+                     NotificationType.ERROR
+    ).notify(myProject);
   }
 }

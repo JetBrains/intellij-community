@@ -41,8 +41,8 @@ public final class XmlWriter{
   @NonNls private final StringBuffer myBuffer;
 
   public XmlWriter(){
-    myElementNames = new Stack<String>();
-    myElementHasBody = new Stack<Boolean>();
+    myElementNames = new Stack<>();
+    myElementHasBody = new Stack<>();
     myBuffer = new StringBuffer();
     myBuffer.append("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");
   }
@@ -114,7 +114,7 @@ public final class XmlWriter{
    * Helper method
    */
   public void addAttribute(@NonNls final String name, final String value){
-    addAttributeImpl(name, StringUtil.convertLineSeparators(XmlStringUtil.escapeString(value, true)));
+    addAttributeImpl(name, StringUtil.convertLineSeparators(XmlStringUtil.escapeString(value, true, false)));
   }
 
   /**

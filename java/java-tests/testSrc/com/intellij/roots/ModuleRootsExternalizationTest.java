@@ -1,74 +1,52 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.roots;
 
 import com.intellij.application.options.ReplacePathToMacroMap;
+import com.intellij.configurationStore.JbXmlOutputter;
+import com.intellij.ide.highlighter.ModuleFileType;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.components.ExpandMacroToPathMap;
-import com.intellij.openapi.components.PathMacroManager;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.projectRoots.impl.JavaSdkImpl;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.impl.ModuleRootManagerImpl;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
-import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.ModuleTestCase;
-import com.intellij.ide.highlighter.ModuleFileType;
 import com.intellij.testFramework.PsiTestUtil;
 import org.jdom.Element;
-import org.jdom.output.XMLOutputter;
+import org.jdom.JDOMException;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.Iterator;
 
+import static com.intellij.testFramework.assertions.Assertions.assertThat;
+
 /**
  *  @author dsl
  */
 public class ModuleRootsExternalizationTest extends ModuleTestCase {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.roots.impl.ExternalizationTest");
-
-  public void testEmptyModuleWrite() throws Exception {
-    try {
-      ModuleRootManagerImpl moduleRootManager = createTempModuleRootManager();
-      Element root = new Element("root");
-      moduleRootManager.getState().writeExternal(root);
-      assertEquals(root.getText(), "");
-    }
-    catch (IOException e) {
-      LOG.error(e);
-    }
+  public void testEmptyModuleWrite() {
+    ModuleRootManagerImpl moduleRootManager = createTempModuleRootManager();
+    Element root = new Element("root");
+    moduleRootManager.getState().writeExternal(root);
+    assertThat(root.getText()).isEmpty();
   }
 
-  private ModuleRootManagerImpl createTempModuleRootManager() throws IOException {
-    File tmpModule = FileUtil.createTempFile("tst", ModuleFileType.DOT_DEFAULT_EXTENSION);
+  private ModuleRootManagerImpl createTempModuleRootManager() {
+    File tmpModule = getTempDir().createTempFile("tst", ModuleFileType.DOT_DEFAULT_EXTENSION, false);
     myFilesToDelete.add(tmpModule);
     final Module module = createModule(tmpModule);
-    final ModuleRootManagerImpl moduleRootManager =
-      (ModuleRootManagerImpl)ModuleRootManager.getInstance(module);
-    return moduleRootManager;
+    return (ModuleRootManagerImpl)ModuleRootManager.getInstance(module);
   }
 
-  public void testContentWrite() throws Exception {
+  public void testContentWrite() throws IOException {
     File content = getTestRoot();
     File source = new File(content, "source");
     File testSource = new File(content, "testSource");
@@ -107,7 +85,7 @@ public class ModuleRootsExternalizationTest extends ModuleTestCase {
     final Element element = new Element("root");
     moduleRootManager.getState().writeExternal(element);
     assertElementEquals(element,
-                        "<root inherit-compiler-output=\"false\">" +
+                        "<root>" +
                         "<output url=\"file://$MODULE_DIR$/classes\" />" +
                         "<output-test url=\"file://$MODULE_DIR$/testClasses\" />" +
                         "<exclude-output />" +
@@ -122,7 +100,7 @@ public class ModuleRootsExternalizationTest extends ModuleTestCase {
                         module);
   }
 
-  public void testModuleLibraries() throws Exception {
+  public void testModuleLibraries() throws IOException {
     File moduleFile = new File(getTestRoot(), "test.iml");
     Module module = createModule(moduleFile);
     final ModuleRootManagerImpl moduleRootManager =
@@ -133,8 +111,8 @@ public class ModuleRootsExternalizationTest extends ModuleTestCase {
     final Library unnamedLibrary = moduleLibraryTable.createLibrary();
     final File unnamedLibClasses = new File(getTestRoot(), "unnamedLibClasses");
     final VirtualFile unnamedLibClassesRoot = LocalFileSystem.getInstance().findFileByIoFile(unnamedLibClasses);
-    final Library.ModifiableModel libraryModifyableModel = unnamedLibrary.getModifiableModel();
-    libraryModifyableModel.addRoot(unnamedLibClassesRoot.getUrl(), OrderRootType.CLASSES);
+    final Library.ModifiableModel libraryModifiableModel = unnamedLibrary.getModifiableModel();
+    libraryModifiableModel.addRoot(unnamedLibClassesRoot.getUrl(), OrderRootType.CLASSES);
 
     final Library namedLibrary = moduleLibraryTable.createLibrary("namedLibrary");
     final File namedLibClasses = new File(getTestRoot(), "namedLibClasses");
@@ -142,24 +120,16 @@ public class ModuleRootsExternalizationTest extends ModuleTestCase {
     final Library.ModifiableModel namedLibraryModel = namedLibrary.getModifiableModel();
     namedLibraryModel.addRoot(namedLibClassesRoot.getUrl(), OrderRootType.CLASSES);
 
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
-      public void run() {
-        libraryModifyableModel.commit();
-        namedLibraryModel.commit();
-      }
+    ApplicationManager.getApplication().runWriteAction(() -> {
+      libraryModifiableModel.commit();
+      namedLibraryModel.commit();
     });
 
     final Iterator libraryIterator = moduleLibraryTable.getLibraryIterator();
     assertEquals(libraryIterator.next(), unnamedLibrary);
     assertEquals(libraryIterator.next(), namedLibrary);
 
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
-      public void run() {
-        rootModel.commit();
-      }
-    });
+    ApplicationManager.getApplication().runWriteAction(rootModel::commit);
     final Element element = new Element("root");
     moduleRootManager.getState().writeExternal(element);
     assertElementEquals(element,
@@ -183,19 +153,14 @@ public class ModuleRootsExternalizationTest extends ModuleTestCase {
                         "</root>", module);
   }
 
-  public void testCompilerOutputInheritance() throws Exception {
+  public void testCompilerOutputInheritance() throws IOException {
     File moduleFile = new File(getTestRoot(), "test.iml");
     Module module = createModule(moduleFile);
     final ModuleRootManagerImpl moduleRootManager =
       (ModuleRootManagerImpl)ModuleRootManager.getInstance(module);
     final ModifiableRootModel rootModel = moduleRootManager.getModifiableModel();
     rootModel.getModuleExtension(CompilerModuleExtension.class).inheritCompilerOutputPath(true);
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
-      public void run() {
-        rootModel.commit();
-      }
-    });
+    ApplicationManager.getApplication().runWriteAction(rootModel::commit);
     Element element = new Element("root");
     moduleRootManager.getState().writeExternal(element);
     assertElementEquals(element,
@@ -272,15 +237,18 @@ public class ModuleRootsExternalizationTest extends ModuleTestCase {
     assertEquals(path, substituted);
   }
 
-  public static void assertElementEquals(final Element element, String value, Module module) {
-    PathMacroManager.getInstance(module).collapsePaths(element);
-    assertEquals(value, new XMLOutputter().outputString(element));
+  public static void assertElementEquals(@NotNull Element element, @NotNull String value, @NotNull Module module) throws IOException {
+    try {
+      assertThat(JbXmlOutputter.collapseMacrosAndWrite(element, module)).isEqualTo(JDOMUtil.writeElement(JDOMUtil.load(value)));
+    }
+    catch (JDOMException e) {
+      throw new IOException(e);
+    }
   }
 
   private File getTestRoot() {
     File testRoot = new File(PathManagerEx.getTestDataPath());
     File moduleRootManagerRoot = new File(testRoot, "moduleRootManager");
-    File thisTestRoot = new File(moduleRootManagerRoot, getTestName(true));
-    return thisTestRoot;
+    return new File(moduleRootManagerRoot, getTestName(true));
   }
 }

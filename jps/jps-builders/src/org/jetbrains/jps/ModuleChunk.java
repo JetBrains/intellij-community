@@ -17,7 +17,6 @@ package org.jetbrains.jps;
 
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.NotNullFunction;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.incremental.ModuleBuildTarget;
 import org.jetbrains.jps.model.module.JpsModule;
 
@@ -28,26 +27,35 @@ import java.util.Set;
  * @author max
  */
 public class ModuleChunk {
-  private static final NotNullFunction<JpsModule,String> GET_NAME = new NotNullFunction<JpsModule, String>() {
-    @NotNull
-    @Override
-    public String fun(JpsModule dom) {
-      return dom.getName();
-    }
-  };
-  private Set<JpsModule> myModules;
+  private static final NotNullFunction<JpsModule,String> GET_NAME = dom -> dom.getName();
+  private final Set<JpsModule> myModules;
   private final boolean myContainsTests;
-  private Set<ModuleBuildTarget> myTargets;
+  private final Set<ModuleBuildTarget> myTargets;
 
   public ModuleChunk(Set<ModuleBuildTarget> targets) {
     boolean containsTests = false;
     myTargets = targets;
-    myModules = new LinkedHashSet<JpsModule>();
+    myModules = new LinkedHashSet<>();
     for (ModuleBuildTarget target : targets) {
       myModules.add(target.getModule());
       containsTests |= target.isTests();
     }
     myContainsTests = containsTests;
+  }
+
+  public String getPresentableShortName() {
+    String name = myModules.iterator().next().getName();
+    if (myModules.size() > 1) {
+      name += " and " + (myModules.size() - 1) + " more";
+      String fullName = getName();
+      if (fullName.length() < name.length()) {
+        name = fullName;
+      }
+    }
+    if (containsTests()) {
+      name = "tests of " + name;
+    }
+    return name;
   }
 
   public String getName() {

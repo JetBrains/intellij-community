@@ -16,9 +16,9 @@ public class a12 {
     <error descr="Not a statement">new int[]{1};</error>
     <error descr="Not a statement">new String[]{new String()};</error>
     if (i==1)
-      <error descr="Not a statement">String s00 = "";</error>
+      <error descr="Declaration not allowed here">String s00 = "";</error>
     for (;;)
-      <error descr="Not a statement">String s01 = "";</error>
+      <error descr="Declaration not allowed here">String s01 = "";</error>
 
     
     for (<error descr="Not a statement">1==2,i=3;</error> i<3; <error descr="Not a statement">!(1==2)</error>);
@@ -110,3 +110,12 @@ public class a12 {
 }
 
 
+//invalid arrays
+class array {
+  {
+    int[] a1 =<error descr="Expression expected"> </error><error descr="Unexpected token">.</error>new <error descr="Cannot resolve symbol 'C'">C</error>[0];
+    int[] a2 = {}.new <error descr="Cannot resolve symbol 'D'">D</error>[0];
+    int[] a3 = t -><error descr="'{' expected"> </error>.new <error descr="Cannot resolve symbol 'E'">E</error>[0];
+    int[] a4 = <error descr="Cannot resolve symbol 'a'">a</error>::<error descr="';' expected"><error descr="Identifier expected"><error descr="Unexpected token">.</error></error></error>new <error descr="Cannot resolve symbol 'F'">F</error>[0];
+  }
+}

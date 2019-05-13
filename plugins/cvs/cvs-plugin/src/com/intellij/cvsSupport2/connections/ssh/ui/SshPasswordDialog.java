@@ -21,9 +21,6 @@ import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
 
-/**
- * User: lesya
- */
 public class SshPasswordDialog extends DialogWrapper{
   private JPasswordField myPasswordField;
   private JCheckBox myStoreCheckbox;
@@ -41,6 +38,7 @@ public class SshPasswordDialog extends DialogWrapper{
     myAdditionalLbl.setVisible(false);
   }
 
+  @Override
   protected JComponent createCenterPanel() {
     return myPanel;
   }
@@ -53,6 +51,7 @@ public class SshPasswordDialog extends DialogWrapper{
     return myStoreCheckbox.isSelected();
   }
 
+  @Override
   public JComponent getPreferredFocusedComponent() {
     return myPasswordField;
   }

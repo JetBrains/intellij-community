@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,19 +27,23 @@ public interface FragmentList {
                             int startLine1, int startLine2);
 
   FragmentList EMPTY = new FragmentList() {
+    @Override
     public FragmentList shift(TextRange rangeShift1, TextRange rangeShift2, int startLine1, int startLine2) {
       return EMPTY;
     }
 
+    @Override
     public boolean isEmpty() {
       return true;
     }
 
+    @Override
     public Iterator<Fragment> iterator() {
       return EmptyIterator.getInstance();
     }
 
-    public Fragment getFragmentAt(int offset, FragmentSide side, Condition<Fragment> condition) {
+    @Override
+    public Fragment getFragmentAt(int offset, FragmentSide side, Condition<? super Fragment> condition) {
       return null;
     }
   };
@@ -48,5 +52,5 @@ public interface FragmentList {
 
   Iterator<Fragment> iterator();
 
-  Fragment getFragmentAt(int offset, FragmentSide side, Condition<Fragment> condition);
+  Fragment getFragmentAt(int offset, FragmentSide side, Condition<? super Fragment> condition);
 }

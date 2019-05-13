@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import com.intellij.psi.impl.source.resolve.CompletionParameterTypeInferencePoli
 import com.intellij.psi.impl.source.resolve.DefaultParameterTypeInferencePolicy;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
@@ -28,6 +29,7 @@ import java.util.*;
 public class ExpectedTypeUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.ExpectedTypeUtil");
 
+  @NotNull
   public static ExpectedTypeInfo[] intersect(List<ExpectedTypeInfo[]> typeInfos) {
     if (typeInfos.isEmpty()) return ExpectedTypeInfo.EMPTY_ARRAY;
 
@@ -57,17 +59,17 @@ public class ExpectedTypeUtil {
   private static class ExpectedTypeInfos {
     List<ExpectedTypeInfo> myInfos;
 
-    public ExpectedTypeInfos() {
-      myInfos = new ArrayList<ExpectedTypeInfo>();
+    ExpectedTypeInfos() {
+      myInfos = new ArrayList<>();
     }
 
-    public ExpectedTypeInfos(ExpectedTypeInfo[] infos) {
-      myInfos = new ArrayList<ExpectedTypeInfo>(Arrays.asList(infos));
+    ExpectedTypeInfos(ExpectedTypeInfo[] infos) {
+      myInfos = new ArrayList<>(Arrays.asList(infos));
     }
 
     public void clear () { myInfos.clear(); }
 
-    public void addInfo (ExpectedTypeInfo info) {
+    void addInfo(ExpectedTypeInfo info) {
       for (Iterator<ExpectedTypeInfo> iterator = myInfos.iterator(); iterator.hasNext();) {
         ExpectedTypeInfo sub = iterator.next();
         int cmp = contains(sub, info);
@@ -87,8 +89,9 @@ public class ExpectedTypeUtil {
       return myInfos.iterator();
     }
 
+    @NotNull
     public ExpectedTypeInfo[] toArray() {
-      return myInfos.toArray(new ExpectedTypeInfo[myInfos.size()]);
+      return myInfos.toArray(ExpectedTypeInfo.EMPTY_ARRAY);
     }
   }
 
@@ -104,17 +107,18 @@ public class ExpectedTypeUtil {
       if (matchesStrictly(info1.getType(), info2)) return -1;
       if (matchesStrictly(info2.getType(), info1)) return 1;
       return 0;
-    } else if (kind1 == ExpectedTypeInfo.TYPE_STRICTLY) {
+    }
+    if (kind1 == ExpectedTypeInfo.TYPE_STRICTLY) {
       return matches(info1.getType(), info2) ? -1 : 0;
-    } else if (kind2 == ExpectedTypeInfo.TYPE_STRICTLY) {
+    }
+    if (kind2 == ExpectedTypeInfo.TYPE_STRICTLY) {
       return matches(info2.getType(), info1) ? 1  : 0;
     }
     return 0;
   }
 
   private static boolean matchesStrictly (PsiType type, ExpectedTypeInfo info) {
-    if ((type instanceof PsiPrimitiveType) != (info.getType() instanceof PsiPrimitiveType)) return false;
-    return matches(type, info);
+    return type instanceof PsiPrimitiveType == info.getType() instanceof PsiPrimitiveType && matches(type, info);
   }
 
   public static boolean matches (PsiType type, ExpectedTypeInfo info) {
@@ -128,6 +132,8 @@ public class ExpectedTypeUtil {
         return type.isAssignableFrom(infoType);
       case ExpectedTypeInfo.TYPE_BETWEEN:
         return type.isAssignableFrom(info.getDefaultType()) && infoType.isAssignableFrom(type);
+      case ExpectedTypeInfo.TYPE_SAME_SHAPED:
+        return true;
     }
 
     LOG.error("Unexpected ExpectedInfo kind");
@@ -135,30 +141,32 @@ public class ExpectedTypeUtil {
   }
 
   public static class ExpectedClassesFromSetProvider implements ExpectedTypesProvider.ExpectedClassProvider {
-    private final Set<PsiClass> myOccurrenceClasses;
+    private final Set<? extends PsiClass> myOccurrenceClasses;
 
-    public ExpectedClassesFromSetProvider(Set<PsiClass> occurrenceClasses) {
+    public ExpectedClassesFromSetProvider(@NotNull Set<? extends PsiClass> occurrenceClasses) {
       myOccurrenceClasses = occurrenceClasses;
     }
 
+    @NotNull
     @Override
-    public PsiField[] findDeclaredFields(final PsiManager manager, String name) {
-      List<PsiField> fields = new ArrayList<PsiField>();
+    public PsiField[] findDeclaredFields(@NotNull final PsiManager manager, @NotNull String name) {
+      List<PsiField> fields = new ArrayList<>();
       for (PsiClass aClass : myOccurrenceClasses) {
         final PsiField field = aClass.findFieldByName(name, true);
         if (field != null) fields.add(field);
       }
-      return fields.toArray(new PsiField[fields.size()]);
+      return fields.toArray(PsiField.EMPTY_ARRAY);
     }
 
+    @NotNull
     @Override
-    public PsiMethod[] findDeclaredMethods(final PsiManager manager, String name) {
-      List<PsiMethod> methods = new ArrayList<PsiMethod>();
+    public PsiMethod[] findDeclaredMethods(@NotNull final PsiManager manager, @NotNull String name) {
+      List<PsiMethod> methods = new ArrayList<>();
       for (PsiClass aClass : myOccurrenceClasses) {
         final PsiMethod[] occMethod = aClass.findMethodsByName(name, true);
         ContainerUtil.addAll(methods, occMethod);
       }
-      return methods.toArray(new PsiMethod[methods.size()]);
+      return methods.toArray(PsiMethod.EMPTY_ARRAY);
     }
   }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,21 +22,43 @@ import org.jetbrains.annotations.NotNull;
  * @author peter
  */
 public abstract class AtomicNotNullLazyValue<T> extends NotNullLazyValue<T> {
-
+  private static final RecursionGuard ourGuard = RecursionManager.createGuard("AtomicNotNullLazyValue");
   private volatile T myValue;
 
+  @Override
   @NotNull
   public final T getValue() {
     T value = myValue;
-    if (value != null) {
-      return value;
-    }
-    synchronized (this) {
-      value = myValue;
-      if (value == null) {
-        myValue = value = compute();
+    if (value == null) {
+      //noinspection SynchronizeOnThis
+      synchronized (this) {
+        value = myValue;
+        if (value == null) {
+          RecursionGuard.StackStamp stamp = ourGuard.markStack();
+          value = compute();
+          if (stamp.mayCacheNow()) {
+            myValue = value;
+          }
+        }
       }
     }
     return value;
+  }
+
+  @Override
+  public boolean isComputed() {
+    return myValue != null;
+  }
+
+  @SuppressWarnings("MethodOverridesStaticMethodOfSuperclass")
+  @NotNull
+  public static <T> AtomicNotNullLazyValue<T> createValue(@NotNull final NotNullFactory<? extends T> value) {
+    return new AtomicNotNullLazyValue<T>() {
+      @NotNull
+      @Override
+      protected T compute() {
+        return value.create();
+      }
+    };
   }
 }

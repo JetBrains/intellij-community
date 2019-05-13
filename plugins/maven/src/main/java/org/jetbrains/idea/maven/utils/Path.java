@@ -16,7 +16,7 @@
 package org.jetbrains.idea.maven.utils;
 
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.util.PathUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -35,7 +35,7 @@ public class Path {
   }
 
   public Url toUrl() {
-    return new Url(VfsUtil.pathToUrl(path));
+    return new Url(VfsUtilCore.pathToUrl(path));
   }
 
   @Override

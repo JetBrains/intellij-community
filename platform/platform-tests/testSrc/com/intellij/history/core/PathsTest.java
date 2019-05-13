@@ -71,7 +71,7 @@ public class PathsTest extends LocalHistoryTestCase {
   }
 
   @Test
-  public void testIsParentOf() throws Exception {
+  public void testIsParentOf() {
     assertTrue(Paths.isParent("foo", "foo"));
     assertTrue(Paths.isParent("foo", "foo/bar"));
     assertTrue(Paths.isParent("foo/bar", "foo/bar"));
@@ -86,7 +86,7 @@ public class PathsTest extends LocalHistoryTestCase {
   }
 
   @Test
-  public void testIsParentOrChildOf() throws Exception {
+  public void testIsParentOrChildOf() {
     assertTrue(Paths.isParentOrChild("foo/bar", "foo/bar"));
     assertTrue(Paths.isParentOrChild("foo/bar", "foo/bar/baz"));
     assertTrue(Paths.isParentOrChild("foo/bar/baz", "foo/bar"));
@@ -96,13 +96,18 @@ public class PathsTest extends LocalHistoryTestCase {
   }
 
   @Test
-  public void testSplitting() throws Exception {
+  public void testSplitting() {
     assertEquals(array("/", "foo", "bar"), ContainerUtil.collect(Paths.split("/foo/bar").iterator()));
     assertEquals(array("/", "foo", "bar"), ContainerUtil.collect(Paths.split("/foo/bar/").iterator()));
     assertEquals(array("foo", "bar"), ContainerUtil.collect(Paths.split("foo/bar/").iterator()));
     assertEquals(array("/", "foo"), ContainerUtil.collect(Paths.split("/foo").iterator()));
     assertEquals(array("/"), ContainerUtil.collect(Paths.split("/").iterator()));
     assertEquals(array("c:", "foo", "bar"), ContainerUtil.collect(Paths.split("c:/foo/bar").iterator()));
+
+    assertEquals(array("//"), ContainerUtil.collect(Paths.split("//").iterator()));
+    assertEquals(array("//foo"), ContainerUtil.collect(Paths.split("//foo").iterator()));
+    assertEquals(array("//foo"), ContainerUtil.collect(Paths.split("//foo/").iterator()));
+    assertEquals(array("//foo", "bar"), ContainerUtil.collect(Paths.split("//foo/bar").iterator()));
   }
 
   @Test

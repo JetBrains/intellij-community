@@ -14,10 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * User: anna
- * Date: 01-Feb-2008
- */
 package com.intellij.codeInsight.hint;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -26,14 +22,16 @@ import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 
 public class DefaultImplementationTextSelectioner implements ImplementationTextSelectioner {
-  private static final Logger LOG = Logger.getInstance("#" + DefaultImplementationTextSelectioner.class.getName());
+  private static final Logger LOG = Logger.getInstance(DefaultImplementationTextSelectioner.class);
 
+  @Override
   public int getTextStartOffset(@NotNull final PsiElement parent) {
     final TextRange textRange = parent.getTextRange();
     LOG.assertTrue(textRange != null, parent);
     return textRange.getStartOffset();
   }
 
+  @Override
   public int getTextEndOffset(@NotNull PsiElement element) {
     final TextRange textRange = element.getTextRange();
     LOG.assertTrue(textRange != null, element);

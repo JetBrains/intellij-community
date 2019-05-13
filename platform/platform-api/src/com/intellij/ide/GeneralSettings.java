@@ -1,113 +1,70 @@
-/*
- * Copyright 2000-2011 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide;
 
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.PathManager;
-import com.intellij.openapi.components.ExportableApplicationComponent;
-import com.intellij.openapi.util.NamedJDOMExternalizable;
-import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.vfs.CharsetToolkit;
-import com.intellij.openapi.vfs.encoding.EncodingManager;
+import com.intellij.ide.ui.UINumericRange;
+import com.intellij.ide.util.PropertiesComponent;
+import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.components.State;
+import com.intellij.openapi.components.Storage;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.ObjectUtils;
+import com.intellij.util.PlatformUtils;
+import com.intellij.util.xmlb.XmlSerializerUtil;
+import com.intellij.util.xmlb.annotations.OptionTag;
+import com.intellij.util.xmlb.annotations.Transient;
 import org.intellij.lang.annotations.MagicConstant;
-import org.jdom.Element;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.SystemDependent;
 
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
-import java.io.File;
-import java.nio.charset.Charset;
-import java.util.List;
 
-public class GeneralSettings implements NamedJDOMExternalizable, ExportableApplicationComponent {
-  @NonNls private static final String OPTION_INACTIVE_TIMEOUT = "inactiveTimeout";
-  @NonNls public static final String PROP_INACTIVE_TIMEOUT = OPTION_INACTIVE_TIMEOUT;
-  private static final int DEFAULT_INACTIVE_TIMEOUT = 15;
+@State(
+  name = "GeneralSettings",
+  storages = @Storage("ide.general.xml"),
+  reportStatistic = true
+)
+public class GeneralSettings implements PersistentStateComponent<GeneralSettings> {
+  public static final int OPEN_PROJECT_ASK = -1;
+  public static final int OPEN_PROJECT_NEW_WINDOW = 0;
+  public static final int OPEN_PROJECT_SAME_WINDOW = 1;
+  public static final int OPEN_PROJECT_SAME_WINDOW_ATTACH = 2;
 
-  @NonNls private String myBrowserPath;
+  public enum ProcessCloseConfirmation {ASK, TERMINATE, DISCONNECT}
+
+  public static final String PROP_INACTIVE_TIMEOUT = "inactiveTimeout";
+  public static final String PROP_SUPPORT_SCREEN_READERS = "supportScreenReaders";
+
+  public static final String SUPPORT_SCREEN_READERS = "ide.support.screenreaders.enabled";
+  private static final Boolean SUPPORT_SCREEN_READERS_OVERRIDDEN = getSupportScreenReadersOverridden();
+
+  static final UINumericRange SAVE_FILES_AFTER_IDLE_SEC = new UINumericRange(15, 1, 300);
+
+  private String myBrowserPath = BrowserUtil.getDefaultAlternativeBrowserPath();
   private boolean myShowTipsOnStartup = true;
-  private int myLastTip = 0;
-  private boolean myShowOccupiedMemory = false;
   private boolean myReopenLastProject = true;
+  private boolean mySupportScreenReaders = ObjectUtils.chooseNotNull(SUPPORT_SCREEN_READERS_OVERRIDDEN, Boolean.FALSE);
   private boolean mySyncOnFrameActivation = true;
   private boolean mySaveOnFrameDeactivation = true;
   private boolean myAutoSaveIfInactive = false;  // If true the IDEA automatically saves files if it is inactive for some seconds
-  private int myInactiveTimeout; // Number of seconds of inactivity after which IDEA automatically saves all files
+  private int myInactiveTimeout = 15; // Number of seconds of inactivity after which IDEA automatically saves all files
   private boolean myUseSafeWrite = true;
-  private final PropertyChangeSupport myPropertyChangeSupport;
+  private final PropertyChangeSupport myPropertyChangeSupport = new PropertyChangeSupport(this);
   private boolean myUseDefaultBrowser = true;
-  private boolean myConfirmExtractFiles = true;
-  private String myLastProjectLocation;
   private boolean mySearchInBackground;
   private boolean myConfirmExit = true;
+  private boolean myShowWelcomeScreen = !PlatformUtils.isDataGrip();
   private int myConfirmOpenNewProject = OPEN_PROJECT_ASK;
-
-  @NonNls private static final String ELEMENT_OPTION = "option";
-  @NonNls private static final String ATTRIBUTE_NAME = "name";
-  @NonNls private static final String ATTRIBUTE_VALUE = "value";
-  @NonNls private static final String OPTION_BROWSER_PATH = "browserPath";
-  @NonNls private static final String OPTION_LAST_TIP = "lastTip";
-  @NonNls private static final String OPTION_SHOW_TIPS_ON_STARTUP = "showTipsOnStartup";
-  @NonNls private static final String OPTION_SHOW_OCCUPIED_MEMORY = "showOccupiedMemory";
-  @NonNls private static final String OPTION_REOPEN_LAST_PROJECT = "reopenLastProject";
-  @NonNls private static final String OPTION_AUTO_SYNC_FILES = "autoSyncFiles";
-  @NonNls private static final String OPTION_AUTO_SAVE_FILES = "autoSaveFiles";
-  @NonNls private static final String OPTION_AUTO_SAVE_IF_INACTIVE = "autoSaveIfInactive";
-  @NonNls private static final String OPTION_USE_SAFE_WRITE = "useSafeWrite";
-
-  @Deprecated
-  @NonNls private static final String OPTION_CHARSET = "charset";
-  @Deprecated
-  @NonNls private static final String OPTION_UTFGUESSING = "UTFGuessing";
-
-  @NonNls private static final String OPTION_USE_DEFAULT_BROWSER = "useDefaultBrowser";
-  @NonNls private static final String OPTION_CONFIRM_EXTRACT_FILES = "confirmExtractFiles";
-  @NonNls private static final String OPTION_USE_CYCLIC_BUFFER = "useCyclicBuffer";
-  @NonNls private static final String OPTION_SEARCH_IN_BACKGROUND = "searchInBackground";
-  @NonNls private static final String OPTION_CONFIRM_EXIT = "confirmExit";
-  @NonNls private static final String OPTION_CONFIRM_OPEN_NEW_PROJECT = "confirmOpenNewProject2";
-  @NonNls private static final String OPTION_CYCLIC_BUFFER_SIZE = "cyclicBufferSize";
-  @NonNls private static final String OPTION_LAST_PROJECT_LOCATION = "lastProjectLocation";
-
-  @Deprecated
-  private Charset myCharset;
-  @Deprecated
-  private boolean myUseUTFGuessing;
-  @Deprecated
-  private boolean oldCharsetSettingsHaveBeenRead;
+  private ProcessCloseConfirmation myProcessCloseConfirmation = ProcessCloseConfirmation.ASK;
+  private String myDefaultProjectDirectory = "";
 
   public static GeneralSettings getInstance(){
-    return ApplicationManager.getApplication().getComponent(GeneralSettings.class);
+    return ServiceManager.getService(GeneralSettings.class);
   }
 
   public GeneralSettings() {
-    myInactiveTimeout=DEFAULT_INACTIVE_TIMEOUT;
-
-    if (SystemInfo.isWindows) {
-      myBrowserPath = "C:\\Program Files\\Internet Explorer\\IExplore.exe";
-    }
-    else if (SystemInfo.isMac) {
-      myBrowserPath = "open";
-    }
-    else {
-      myBrowserPath = "";
-    }
-
-    myPropertyChangeSupport = new PropertyChangeSupport(this);
   }
 
   public void addPropertyChangeListener(PropertyChangeListener listener){
@@ -118,30 +75,15 @@ public class GeneralSettings implements NamedJDOMExternalizable, ExportableAppli
     myPropertyChangeSupport.removePropertyChangeListener(listener);
   }
 
-  public void initComponent() { }
-
-  public void disposeComponent() { }
-
   public String getBrowserPath() {
     return myBrowserPath;
-  }
-
-  /**
-   * @return a path pointing to a directory where the last project was created or null if not available
-   */
-  public String getLastProjectCreationLocation() {
-    return myLastProjectLocation;
-  }
-
-  public void setLastProjectCreationLocation(String lastProjectLocation) {
-    myLastProjectLocation = lastProjectLocation;
   }
 
   public void setBrowserPath(String browserPath) {
     myBrowserPath = browserPath;
   }
 
-  public boolean showTipsOnStartup() {
+  public boolean isShowTipsOnStartup() {
     return myShowTipsOnStartup;
   }
 
@@ -149,16 +91,13 @@ public class GeneralSettings implements NamedJDOMExternalizable, ExportableAppli
     myShowTipsOnStartup = b;
   }
 
+  @Transient
   public int getLastTip() {
-    return myLastTip;
+    return StringUtil.parseInt(PropertiesComponent.getInstance().getValue("lastTip"), 0);
   }
 
   public void setLastTip(int i) {
-    myLastTip = i;
-  }
-
-  public boolean isShowOccupiedMemory() {
-    return myShowOccupiedMemory;
+    PropertiesComponent.getInstance().setValue("lastTip", Integer.toString(i), "0");
   }
 
   public boolean isReopenLastProject() {
@@ -169,6 +108,40 @@ public class GeneralSettings implements NamedJDOMExternalizable, ExportableAppli
     myReopenLastProject = reopenLastProject;
   }
 
+  @Nullable
+  private static Boolean getSupportScreenReadersOverridden() {
+    String prop = System.getProperty(SUPPORT_SCREEN_READERS);
+    if (prop != null) {
+      return Boolean.parseBoolean(prop);
+    }
+    return null;
+  }
+
+  public static boolean isSupportScreenReadersOverridden() {
+    return SUPPORT_SCREEN_READERS_OVERRIDDEN != null;
+  }
+
+  public boolean isSupportScreenReaders() {
+    return mySupportScreenReaders;
+  }
+
+  public void setSupportScreenReaders(boolean enabled) {
+    boolean oldValue = mySupportScreenReaders;
+    mySupportScreenReaders = enabled;
+    myPropertyChangeSupport.firePropertyChange(
+      PROP_SUPPORT_SCREEN_READERS, Boolean.valueOf(oldValue), Boolean.valueOf(enabled)
+    );
+  }
+
+  public ProcessCloseConfirmation getProcessCloseConfirmation() {
+    return myProcessCloseConfirmation;
+  }
+
+  public void setProcessCloseConfirmation(ProcessCloseConfirmation processCloseConfirmation) {
+    myProcessCloseConfirmation = processCloseConfirmation;
+  }
+
+  @OptionTag("autoSyncFiles")
   public boolean isSyncOnFrameActivation() {
     return mySyncOnFrameActivation;
   }
@@ -177,6 +150,7 @@ public class GeneralSettings implements NamedJDOMExternalizable, ExportableAppli
     mySyncOnFrameActivation = syncOnFrameActivation;
   }
 
+  @OptionTag("autoSaveFiles")
   public boolean isSaveOnFrameDeactivation() {
     return mySaveOnFrameDeactivation;
   }
@@ -186,7 +160,7 @@ public class GeneralSettings implements NamedJDOMExternalizable, ExportableAppli
   }
 
   /**
-   * @return <code>true</code> if IDEA saves all files after "idle" timeout.
+   * @return {@code true} if IDEA saves all files after "idle" timeout.
    */
   public boolean isAutoSaveIfInactive(){
     return myAutoSaveIfInactive;
@@ -198,18 +172,18 @@ public class GeneralSettings implements NamedJDOMExternalizable, ExportableAppli
 
   /**
    * @return timeout in seconds after which IDEA saves all files if there was no user activity.
-   * The method always return non positive (more then zero) value.
+   * The method always return positive (more then zero) value.
    */
   public int getInactiveTimeout(){
-    return myInactiveTimeout;
+    return SAVE_FILES_AFTER_IDLE_SEC.fit(myInactiveTimeout);
   }
 
-  public void setInactiveTimeout(int inactiveTimeout) {
+  public void setInactiveTimeout(int inactiveTimeoutSeconds) {
     int oldInactiveTimeout = myInactiveTimeout;
 
-    myInactiveTimeout = inactiveTimeout;
+    myInactiveTimeout = SAVE_FILES_AFTER_IDLE_SEC.fit(inactiveTimeoutSeconds);
     myPropertyChangeSupport.firePropertyChange(
-        PROP_INACTIVE_TIMEOUT, Integer.valueOf(oldInactiveTimeout), Integer.valueOf(inactiveTimeout)
+        PROP_INACTIVE_TIMEOUT, Integer.valueOf(oldInactiveTimeout), Integer.valueOf(myInactiveTimeout)
     );
   }
 
@@ -221,259 +195,15 @@ public class GeneralSettings implements NamedJDOMExternalizable, ExportableAppli
     myUseSafeWrite = useSafeWrite;
   }
 
-  //todo use DefaultExternalizer
-  public void readExternal(Element parentNode) {
-    boolean safeWriteSettingRead = false;
-
-    List children = parentNode.getChildren(ELEMENT_OPTION);
-    for (final Object aChildren : children) {
-      Element element = (Element)aChildren;
-
-      String name = element.getAttributeValue(ATTRIBUTE_NAME);
-      String value = element.getAttributeValue(ATTRIBUTE_VALUE);
-
-      if (OPTION_BROWSER_PATH.equals(name)) {
-        myBrowserPath = value;
-      }
-      if (OPTION_LAST_TIP.equals(name)) {
-        try {
-          myLastTip = Integer.parseInt(value);
-        }
-        catch (NumberFormatException ex) {
-          myLastTip = 0;
-        }
-      }
-      if (OPTION_SHOW_TIPS_ON_STARTUP.equals(name)) {
-        try {
-          myShowTipsOnStartup = Boolean.valueOf(value).booleanValue();
-        }
-        catch (Exception ex) {
-          myShowTipsOnStartup = true;
-        }
-      }
-      if (OPTION_SHOW_OCCUPIED_MEMORY.equals(name)) {
-        try {
-          myShowOccupiedMemory = Boolean.valueOf(value).booleanValue();
-        }
-        catch (Exception ex) {
-          myShowOccupiedMemory = false;
-        }
-      }
-      if (OPTION_REOPEN_LAST_PROJECT.equals(name)) {
-        try {
-          myReopenLastProject = Boolean.valueOf(value).booleanValue();
-        }
-        catch (Exception ex) {
-          myReopenLastProject = true;
-        }
-      }
-      if (OPTION_AUTO_SYNC_FILES.equals(name)) {
-        try {
-          mySyncOnFrameActivation = Boolean.valueOf(value).booleanValue();
-        }
-        catch (Exception ex) {
-          mySyncOnFrameActivation = true;
-        }
-      }
-      if (OPTION_AUTO_SAVE_FILES.equals(name)) {
-        try {
-          mySaveOnFrameDeactivation = Boolean.valueOf(value).booleanValue();
-        }
-        catch (Exception ex) {
-          mySaveOnFrameDeactivation = true;
-        }
-      }
-      if (OPTION_AUTO_SAVE_IF_INACTIVE.equals(name) && value != null) {
-        myAutoSaveIfInactive = Boolean.valueOf(value).booleanValue();
-      }
-      if (OPTION_INACTIVE_TIMEOUT.equals(name)) {
-        try {
-          int inactiveTimeout = Integer.parseInt(value);
-          if (inactiveTimeout > 0) {
-            myInactiveTimeout = inactiveTimeout;
-          }
-        }
-        catch (Exception ignored) {
-        }
-      }
-      if (OPTION_USE_SAFE_WRITE.equals(name) && value != null) {
-        myUseSafeWrite = Boolean.valueOf(value).booleanValue();
-        safeWriteSettingRead = true;
-      }
-
-      if (OPTION_CHARSET.equals(name)) {
-        //for migration
-        myCharset = CharsetToolkit.forName(value);
-        oldCharsetSettingsHaveBeenRead = true;
-      }
-      if (OPTION_UTFGUESSING.equals(name)) {
-        myUseUTFGuessing = Boolean.valueOf(value).booleanValue();
-        oldCharsetSettingsHaveBeenRead = true;
-      }
-
-      if (OPTION_USE_DEFAULT_BROWSER.equals(name)) {
-        try {
-          myUseDefaultBrowser = Boolean.valueOf(value).booleanValue();
-        }
-        catch (Exception ex) {
-          myUseDefaultBrowser = true;
-        }
-      }
-
-      if (OPTION_CONFIRM_EXTRACT_FILES.equals(name)) {
-        try {
-          myConfirmExtractFiles = Boolean.valueOf(value).booleanValue();
-        }
-        catch (Exception ex) {
-          myConfirmExtractFiles = true;
-        }
-      }
-
-      if (OPTION_SEARCH_IN_BACKGROUND.equals(name)) {
-        try {
-          mySearchInBackground = Boolean.valueOf(value).booleanValue();
-        }
-        catch (Exception ex) {
-          mySearchInBackground = false;
-        }
-      }
-
-      if (OPTION_CONFIRM_EXIT.equals(name)) {
-        try {
-          myConfirmExit = Boolean.valueOf(value).booleanValue();
-        }
-        catch (Exception ex) {
-          myConfirmExit = false;
-        }
-      }
-
-      if (OPTION_CONFIRM_OPEN_NEW_PROJECT.equals(name)) {
-        try {
-          myConfirmOpenNewProject = Integer.valueOf(value).intValue();
-        }
-        catch (Exception ex) {
-          myConfirmOpenNewProject = OPEN_PROJECT_ASK;
-        }
-      }
-
-      if (OPTION_LAST_PROJECT_LOCATION.equals(name)) {
-        try {
-          myLastProjectLocation = value;
-        }
-        catch (Exception ex) {
-          myLastProjectLocation = null;
-        }
-      }
-    }
-
-    if (!safeWriteSettingRead && "true".equals(System.getProperty("idea.no.safe.write"))) {
-      myUseSafeWrite = false;
-    }
+  @Nullable
+  @Override
+  public GeneralSettings getState() {
+    return this;
   }
 
-  public void writeExternal(Element parentNode) {
-    if (myBrowserPath != null) {
-      Element element = new Element(ELEMENT_OPTION);
-      element.setAttribute(ATTRIBUTE_NAME, OPTION_BROWSER_PATH);
-      element.setAttribute(ATTRIBUTE_VALUE, myBrowserPath);
-      parentNode.addContent(element);
-    }
-
-    Element optionElement = new Element(ELEMENT_OPTION);
-    optionElement.setAttribute(ATTRIBUTE_NAME, OPTION_LAST_TIP);
-    optionElement.setAttribute(ATTRIBUTE_VALUE, Integer.toString(myLastTip));
-    parentNode.addContent(optionElement);
-
-    optionElement = new Element(ELEMENT_OPTION);
-    optionElement.setAttribute(ATTRIBUTE_NAME, OPTION_SHOW_TIPS_ON_STARTUP);
-    optionElement.setAttribute(ATTRIBUTE_VALUE, Boolean.toString(myShowTipsOnStartup));
-    parentNode.addContent(optionElement);
-
-    optionElement = new Element(ELEMENT_OPTION);
-    optionElement.setAttribute(ATTRIBUTE_NAME, OPTION_SHOW_OCCUPIED_MEMORY);
-    optionElement.setAttribute(ATTRIBUTE_VALUE, Boolean.toString(myShowOccupiedMemory));
-    parentNode.addContent(optionElement);
-
-    optionElement = new Element(ELEMENT_OPTION);
-    optionElement.setAttribute(ATTRIBUTE_NAME, OPTION_REOPEN_LAST_PROJECT);
-    optionElement.setAttribute(ATTRIBUTE_VALUE, Boolean.toString(myReopenLastProject));
-    parentNode.addContent(optionElement);
-
-    optionElement = new Element(ELEMENT_OPTION);
-    optionElement.setAttribute(ATTRIBUTE_NAME, OPTION_AUTO_SYNC_FILES);
-    optionElement.setAttribute(ATTRIBUTE_VALUE, Boolean.toString(mySyncOnFrameActivation));
-    parentNode.addContent(optionElement);
-
-    optionElement = new Element(ELEMENT_OPTION);
-    optionElement.setAttribute(ATTRIBUTE_NAME, OPTION_AUTO_SAVE_FILES);
-    optionElement.setAttribute(ATTRIBUTE_VALUE, Boolean.toString(mySaveOnFrameDeactivation));
-    parentNode.addContent(optionElement);
-
-    optionElement = new Element(ELEMENT_OPTION);
-    optionElement.setAttribute(ATTRIBUTE_NAME,OPTION_AUTO_SAVE_IF_INACTIVE);
-    optionElement.setAttribute(ATTRIBUTE_VALUE,(myAutoSaveIfInactive?Boolean.TRUE:Boolean.FALSE).toString());
-    parentNode.addContent(optionElement);
-
-    optionElement = new Element(ELEMENT_OPTION);
-    optionElement.setAttribute(ATTRIBUTE_NAME,OPTION_INACTIVE_TIMEOUT);
-    optionElement.setAttribute(ATTRIBUTE_VALUE,Integer.toString(myInactiveTimeout));
-    parentNode.addContent(optionElement);
-
-    optionElement = new Element(ELEMENT_OPTION);
-    optionElement.setAttribute(ATTRIBUTE_NAME, OPTION_USE_SAFE_WRITE);
-    optionElement.setAttribute(ATTRIBUTE_VALUE, (myUseSafeWrite ? Boolean.TRUE : Boolean.FALSE).toString());
-    parentNode.addContent(optionElement);
-
-    optionElement = new Element(ELEMENT_OPTION);
-    optionElement.setAttribute(ATTRIBUTE_NAME, OPTION_USE_DEFAULT_BROWSER);
-    optionElement.setAttribute(ATTRIBUTE_VALUE, Boolean.toString(myUseDefaultBrowser));
-    parentNode.addContent(optionElement);
-
-    optionElement = new Element(ELEMENT_OPTION);
-    optionElement.setAttribute(ATTRIBUTE_NAME, OPTION_CONFIRM_EXTRACT_FILES);
-    optionElement.setAttribute(ATTRIBUTE_VALUE, Boolean.toString(myConfirmExtractFiles));
-    parentNode.addContent(optionElement);
-
-    optionElement = new Element(ELEMENT_OPTION);
-    optionElement.setAttribute(ATTRIBUTE_NAME, OPTION_SEARCH_IN_BACKGROUND);
-    optionElement.setAttribute(ATTRIBUTE_VALUE, Boolean.toString(mySearchInBackground));
-    parentNode.addContent(optionElement);
-
-    optionElement = new Element(ELEMENT_OPTION);
-    optionElement.setAttribute(ATTRIBUTE_NAME, OPTION_CONFIRM_EXIT);
-    optionElement.setAttribute(ATTRIBUTE_VALUE, Boolean.toString(myConfirmExit));
-    parentNode.addContent(optionElement);
-
-    optionElement = new Element(ELEMENT_OPTION);
-    optionElement.setAttribute(ATTRIBUTE_NAME, OPTION_CONFIRM_OPEN_NEW_PROJECT);
-    optionElement.setAttribute(ATTRIBUTE_VALUE, Integer.toString(myConfirmOpenNewProject));
-    parentNode.addContent(optionElement);
-
-    if (myLastProjectLocation != null) {
-      optionElement = new Element(ELEMENT_OPTION);
-      optionElement.setAttribute(ATTRIBUTE_NAME, OPTION_LAST_PROJECT_LOCATION);
-      optionElement.setAttribute(ATTRIBUTE_VALUE, myLastProjectLocation);
-      parentNode.addContent(optionElement);
-    }
-  }
-
-  public String getExternalFileName() {
-    return "ide.general";
-  }
-
-  @NotNull
-  public File[] getExportFiles() {
-    return new File[]{PathManager.getOptionsFile(this)};
-  }
-
-  @NotNull
-  public String getPresentableName() {
-    return IdeBundle.message("general.settings");
-  }
-
-  @NotNull
-  public String getComponentName() {
-    return "GeneralSettings";
+  @Override
+  public void loadState(@NotNull GeneralSettings state) {
+    XmlSerializerUtil.copyBean(state, this);
   }
 
   public boolean isUseDefaultBrowser() {
@@ -484,12 +214,14 @@ public class GeneralSettings implements NamedJDOMExternalizable, ExportableAppli
     myUseDefaultBrowser = value;
   }
 
+  @Transient
+  @Deprecated
   public boolean isConfirmExtractFiles() {
-    return myConfirmExtractFiles;
+    return true;
   }
 
+  @Deprecated
   public void setConfirmExtractFiles(boolean value) {
-    myConfirmExtractFiles = value;
   }
 
   public boolean isConfirmExit() {
@@ -498,6 +230,14 @@ public class GeneralSettings implements NamedJDOMExternalizable, ExportableAppli
 
   public void setConfirmExit(boolean confirmExit) {
     myConfirmExit = confirmExit;
+  }
+
+  public boolean isShowWelcomeScreen() {
+    return myShowWelcomeScreen;
+  }
+
+  public void setShowWelcomeScreen(boolean show) {
+    myShowWelcomeScreen = show;
   }
 
   @MagicConstant(intValues = {OPEN_PROJECT_ASK, OPEN_PROJECT_NEW_WINDOW, OPEN_PROJECT_SAME_WINDOW})
@@ -511,6 +251,7 @@ public class GeneralSettings implements NamedJDOMExternalizable, ExportableAppli
    * </ul>
    */
   @OpenNewProjectOption
+  @OptionTag("confirmOpenNewProject2")
   public int getConfirmOpenNewProject() {
     return myConfirmOpenNewProject;
   }
@@ -518,10 +259,6 @@ public class GeneralSettings implements NamedJDOMExternalizable, ExportableAppli
   public void setConfirmOpenNewProject(@OpenNewProjectOption int confirmOpenNewProject) {
     myConfirmOpenNewProject = confirmOpenNewProject;
   }
-
-  public static final int OPEN_PROJECT_ASK = -1;
-  public static final int OPEN_PROJECT_NEW_WINDOW = 0;
-  public static final int OPEN_PROJECT_SAME_WINDOW = 1;
 
   public boolean isSearchInBackground() {
     return mySearchInBackground;
@@ -531,12 +268,12 @@ public class GeneralSettings implements NamedJDOMExternalizable, ExportableAppli
     mySearchInBackground = searchInBackground;
   }
 
-  // returns true if something has been migrated
-  public boolean migrateCharsetSettingsTo(EncodingManager encodingProjectManager) {
-    if (oldCharsetSettingsHaveBeenRead) {
-      encodingProjectManager.setEncoding(null, myCharset);
-      encodingProjectManager.setUseUTFGuessing(null, myUseUTFGuessing);
-    }
-    return oldCharsetSettingsHaveBeenRead;
+  @SystemDependent
+  public String getDefaultProjectDirectory() {
+    return myDefaultProjectDirectory;
+  }
+
+  public void setDefaultProjectDirectory(@SystemDependent String defaultProjectDirectory) {
+    myDefaultProjectDirectory = defaultProjectDirectory;
   }
 }

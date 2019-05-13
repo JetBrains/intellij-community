@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,9 +24,8 @@ import java.util.List;
 /**
  * Describes a single block in the {@link FormattingModel}.
  *
- * @see com.intellij.formatting.FormattingModel#getRootBlock()
+ * @see FormattingModel#getRootBlock()
  */
-
 public interface Block {
   /**
    * Returns the text range covered by the block.
@@ -38,8 +37,8 @@ public interface Block {
 
   /**
    * Returns the list of child blocks for the specified block. <b>Important</b>: The same list
-   * of blocks must be returned when <code>getSubBlocks()</code> is repeatedly called on a particular
-   * <code>Block</code> instance.
+   * of blocks must be returned when {@code getSubBlocks()} is repeatedly called on a particular
+   * {@code Block} instance.
    *
    * @return the child block list.
    * @see #isLeaf()
@@ -64,14 +63,14 @@ public interface Block {
    * to its parent block.
    *
    * @return the indent object, or null if the default indent ("continuation without first") should be used.
-   * @see com.intellij.formatting.Indent#getContinuationWithoutFirstIndent()
+   * @see Indent#getContinuationWithoutFirstIndent()
    */
   @Nullable
   Indent getIndent();
 
   /**
    * Returns an alignment object indicating how this block is aligned with other blocks. Blocks
-   * which return the same alignment object instance from the <code>getAlignment</code> method
+   * which return the same alignment object instance from the {@code getAlignment} method
    * are aligned with each other.
    *
    * @return the alignment object instance, or null if no alignment is required for the block.
@@ -84,7 +83,7 @@ public interface Block {
    * specified children of this block.
    *
    * @param child1 the first child for which spacing is requested;
-   *               <code>null</code> if given <code>'child2'</code> block is the first document block
+   *               {@code null} if given {@code 'child2'} block is the first document block
    * @param child2 the second child for which spacing is requested.
    * @return the spacing instance, or null if no special spacing is required. If null is returned,
    *         the formatter does not insert or delete spaces between the child blocks, but may insert
@@ -125,4 +124,16 @@ public interface Block {
    * @return true if the block is a leaf block and may not contain child blocks, false otherwise.
    */
   boolean isLeaf();
+
+  /**
+   * Returns an internal debug name, used in the Block Structure of PSI Viewer.
+   *
+   * By default it returns null, in this case the PSI Viewer uses the simple class name.
+   *
+   * @return debug name, or null for default one.
+   */
+  @Nullable
+  default String getDebugName() {
+    return null;
+  }
 }

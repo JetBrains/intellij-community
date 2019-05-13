@@ -43,7 +43,7 @@ public class SuggestFirstVariableNameMacro extends VariableOfTypeMacro {
   protected PsiElement[] getVariables(Expression[] params, ExpressionContext context) {
     final PsiElement[] variables = super.getVariables(params, context);
     if (variables == null) return null;
-    final List<PsiElement> result = new ArrayList<PsiElement>();
+    final List<PsiElement> result = new ArrayList<>();
     final List<String> skip = Arrays.asList("true", "false", "this", "super");
     for (PsiElement variable : variables) {
       if (!skip.contains(variable.getText())) {

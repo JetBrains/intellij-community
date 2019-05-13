@@ -19,7 +19,10 @@
 
 package org.jetbrains.idea.maven.dom.model;
 
+import com.intellij.ide.presentation.Presentation;
 import org.jetbrains.idea.maven.dom.MavenDomElement;
+import org.jetbrains.idea.maven.dom.model.presentation.MavenExclusionPresentationProvider;
 
+@Presentation(provider = MavenExclusionPresentationProvider.class)
 public interface MavenDomExclusion extends MavenDomElement, MavenDomShortArtifactCoordinates {
 }

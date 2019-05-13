@@ -12,102 +12,120 @@
 // limitations under the License.
 package org.zmlx.hg4idea.execution;
 
-import com.intellij.execution.process.CapturingProcessHandler;
-import com.intellij.execution.process.ProcessOutput;
-import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.execution.ExecutionException;
+import com.intellij.execution.configurations.GeneralCommandLine;
+import com.intellij.execution.process.*;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.vcs.LineHandlerHelper;
+import com.intellij.vcs.VcsLocaleHelper;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
-import java.io.IOException;
-import java.io.StringWriter;
 import java.nio.charset.Charset;
-import java.util.ArrayList;
 import java.util.List;
 
-
 public final class ShellCommand {
+  private final GeneralCommandLine myCommandLine;
 
-  private static final Logger LOG = Logger.getInstance(ShellCommand.class.getName());
-
-  private static final int BUFFER_SIZE = 1024;
-  private final boolean myRunViaBash;
-
-  public ShellCommand(boolean runViaBash) {
-    myRunViaBash = runViaBash;
+  public ShellCommand(@NotNull List<String> commandLine, @Nullable String dir, @Nullable Charset charset) {
+    if (commandLine.isEmpty()) {
+      throw new IllegalArgumentException("commandLine is empty");
+    }
+    myCommandLine = new GeneralCommandLine(commandLine);
+    if (dir != null) {
+      myCommandLine.setWorkDirectory(new File(dir));
+    }
+    if (charset != null) {
+      myCommandLine.setCharset(charset);
+    }
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      //ignore all hg config files except current repository config
+      myCommandLine.getEnvironment().put("HGRCPATH", "");
+    }
+    myCommandLine.withEnvironment(VcsLocaleHelper.getDefaultLocaleEnvironmentVars("hg"));
   }
 
   @NotNull
-  public HgCommandResult execute(List<String> commandLine, String dir, Charset charset) throws ShellCommandException, InterruptedException {
-    if (commandLine == null || commandLine.isEmpty()) {
-      throw new IllegalArgumentException("commandLine is empty");
-    }
+  public HgCommandResult execute(boolean showTextOnIndicator, boolean isBinary) throws ShellCommandException {
+    CommandResultCollector listener = new CommandResultCollector(isBinary);
+    execute(showTextOnIndicator, isBinary, listener);
+    return listener.getResult();
+  }
 
-    if (myRunViaBash) {
-      // run via bash -cl <hg command> => need to escape bash special symbols
-      // '-l' makes bash execute as a login shell thus reading .bash_profile
-      StringBuilder hgCommandBuilder = new StringBuilder();
-      for (String command : commandLine) {
-        hgCommandBuilder.append(escapeSpacesIfNeeded(command));
-        hgCommandBuilder.append(" ");
-      }
-      String hgCommand = escapeBashControlCharacters(hgCommandBuilder.toString());
-      commandLine = new ArrayList<String>(3);
-      commandLine.add("bash");
-      commandLine.add("-cl");
-      commandLine.add(hgCommand);
-    }
-
-    StringWriter out = new StringWriter();
-    StringWriter err = new StringWriter();
+  public void execute(boolean showTextOnIndicator, boolean isBinary, @NotNull HgLineProcessListener listener)
+    throws ShellCommandException {
+    ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
     try {
-      ProcessBuilder processBuilder = new ProcessBuilder(commandLine);
-      if (dir != null) {
-        processBuilder = processBuilder.directory(new File(dir));
+      OSProcessHandler processHandler = isBinary
+                                        ? new BinaryOSProcessHandler(myCommandLine)
+                                        : new KillableProcessHandler(myCommandLine, Registry.is("hg4idea.execute.with.mediator"));
+      ProcessAdapter outputAdapter = new ProcessAdapter() {
+        @Override
+        public void onTextAvailable(@NotNull ProcessEvent event, @NotNull Key outputType) {
+          for (String line : LineHandlerHelper.splitText(event.getText())) {
+            if (ProcessOutputTypes.STDOUT == outputType && indicator != null && showTextOnIndicator) {
+              indicator.setText2(line);
+            }
+            listener.onLineAvailable(line, outputType);
+          }
+        }
+
+        @Override
+        public void processTerminated(@NotNull ProcessEvent event) {
+          listener.setExitCode(event.getExitCode());
+        }
+      };
+      processHandler.addProcessListener(outputAdapter);
+      processHandler.startNotify();
+      while (!processHandler.waitFor(300)) {
+        if (indicator != null && indicator.isCanceled()) {
+          processHandler.destroyProcess();
+          listener.setExitCode(255);
+          break;
+        }
       }
-      Process process = processBuilder.start();
-
-      CapturingProcessHandler processHandler = new CapturingProcessHandler(process, charset);
-      final ProcessOutput processOutput = processHandler.runProcess();
-
-      int exitValue = processOutput.getExitCode();
-      out.write(processOutput.getStdout());
-      err.write(processOutput.getStderr());
-      return new HgCommandResult(out, err, exitValue );
-    } catch (IOException e) {
+      if (isBinary) {
+        listener.setBinaryOutput(((BinaryOSProcessHandler)processHandler).getOutput());
+      }
+    }
+    catch (ExecutionException e) {
       throw new ShellCommandException(e);
     }
   }
 
-  /**
-   * Escapes charactes in the command which will be executed via 'bash -c' - these are standard chars like \n, and some bash specials.
-   * @param source Original string.
-   * @return Escaped string.
-   */
-  private static String escapeBashControlCharacters(String source) {
-    final String controlChars = "|>$\"'&";
-    final String standardChars = "\b\t\n\f\r";
-    final String standardCharsLetters = "btnfr";
+  public static class CommandResultCollector extends HgLineProcessListener {
+    @NotNull private final ProcessOutput myOutput;
+    private final boolean myIsBinary;
 
-    final StringBuilder sb = new StringBuilder();
-    for (int i = 0; i < source.length(); i++) {
-      char ch = source.charAt(i);
-      if (controlChars.indexOf(ch) > -1) {
-        sb.append("\\").append(ch);
-      } else {
-        final int index = standardChars.indexOf(ch);
-        if (index > -1) {
-          sb.append("\\").append(standardCharsLetters.charAt(index));
-        } else {
-          sb.append(ch);
-        }
-      }
+    public CommandResultCollector(boolean binary) {
+      myIsBinary = binary;
+      myOutput = new ProcessOutput();
     }
-    return sb.toString();
-  }
 
-  @NotNull
-  private String escapeSpacesIfNeeded(@NotNull String s) {
-    return myRunViaBash ? s.replace(" ", "\\ ") : s;
-  }
+    @Override
+    protected void processOutputLine(@NotNull String line) {
+      myOutput.appendStdout(line);
+    }
 
+    @Override
+    protected void processErrorLine(@NotNull String line) {
+      super.processErrorLine(line);
+      myOutput.appendStderr(line);
+    }
+
+    @Override
+    public void setExitCode(int exitCode) {
+      super.setExitCode(exitCode);
+      myOutput.setExitCode(exitCode);
+    }
+
+    public HgCommandResult getResult() {
+      return myIsBinary ? new HgCommandResult(myOutput, getBinaryOutput()) : new HgCommandResult(myOutput);
+    }
+  }
 }

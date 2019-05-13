@@ -3,23 +3,18 @@ package org.jetbrains.plugins.gradle.config;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.ActionToolbar;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.SimpleToolWindowPanel;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.SideBorder;
-import com.intellij.util.Consumer;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.gradle.notification.GradleConfigNotificationManager;
-import org.jetbrains.plugins.gradle.sync.GradleProjectStructureChangesDetector;
+import org.jetbrains.plugins.gradle.settings.GradleSettings;
+import org.jetbrains.plugins.gradle.settings.GradleSettingsListener;
 import org.jetbrains.plugins.gradle.ui.RichTextControlBuilder;
 import org.jetbrains.plugins.gradle.util.GradleBundle;
-import org.jetbrains.plugins.gradle.util.GradleUtil;
 
 import javax.swing.*;
 import java.awt.*;
@@ -28,7 +23,7 @@ import java.util.List;
 
 /**
  * Base class for high-level Gradle GUI controls used at the Gradle tool window. The basic idea is to encapsulate the same features in
- * this class and allow to extend it via <code>Template Method</code> pattern. The shared features are listed below:
+ * this class and allow to extend it via {@code Template Method} pattern. The shared features are listed below:
  * <pre>
  * <ul>
  *   <li>provide common actions at the toolbar;</li>
@@ -39,7 +34,6 @@ import java.util.List;
  * Not thread-safe.
  * 
  * @author Denis Zhdanov
- * @since 12/26/11 5:19 PM
  */
 public abstract class GradleToolWindowPanel extends SimpleToolWindowPanel {
 
@@ -62,62 +56,17 @@ public abstract class GradleToolWindowPanel extends SimpleToolWindowPanel {
     setContent(myContent);
 
     MessageBusConnection connection = project.getMessageBus().connect(project);
-    connection.subscribe(GradleConfigNotifier.TOPIC, new GradleConfigNotifier() {
-      
-      private boolean myRefresh;
-      private boolean myInBulk;
-
-      @Override
-      public void onBulkChangeStart() {
-        myInBulk = true; 
-      }
-
-      @Override
-      public void onBulkChangeEnd() {
-        myInBulk = false;
-        if (myRefresh) {
-          myRefresh = false;
-          refreshAll();
-        }
-      }
-
-      @Override public void onLinkedProjectPathChange(@Nullable String oldPath, @Nullable String newPath) {
-        if (StringUtil.isEmpty(newPath)) {
-          myLayout.show(myContent, NON_LINKED_CARD_NAME);
-          return;
-        }
-        if (StringUtil.isEmpty(oldPath) && !StringUtil.isEmpty(newPath)) {
-          myLayout.show(myContent, CONTENT_CARD_NAME);
-        }
-        refreshAll();
-      }
-      
-      @Override public void onPreferLocalGradleDistributionToWrapperChange(boolean preferLocalToWrapper) { refreshAll(); }
-      @Override public void onGradleHomeChange(@Nullable String oldPath, @Nullable String newPath) { refreshAll(); }
-      @Override public void onServiceDirectoryPathChange(@Nullable String oldPath, @Nullable String newPath) { refreshAll(); }
-      @Override public void onUseAutoImportChange(boolean oldValue, boolean newValue) { refreshAll(); }
-
-      private void refreshAll() {
-        if (myInBulk) {
-          myRefresh = true;
-          return;
-        }
-        GradleUtil.refreshProject(myProject, new Consumer<String>() {
-          @Override
-          public void consume(String s) {
-            GradleConfigNotificationManager notificationManager
-              = ServiceManager.getService(myProject, GradleConfigNotificationManager.class);
-            notificationManager.processRefreshError(s);
-            UIUtil.invokeLaterIfNeeded(new Runnable() {
-              @Override
-              public void run() {
-                update();
-              }
-            });
-          }
-        });
-        update();
-      }
+    connection.subscribe(GradleSettingsListener.TOPIC, new GradleSettingsListenerAdapter() {
+      // TODO den implement
+//      @Override public void onLinkedProjectConfigChange(@Nullable String oldPath, @Nullable String newPath) {
+//        if (StringUtil.isEmpty(newPath)) {
+//          myLayout.show(myContent, NON_LINKED_CARD_NAME);
+//          return;
+//        }
+//        if (StringUtil.isEmpty(oldPath) && !StringUtil.isEmpty(newPath)) {
+//          myLayout.show(myContent, CONTENT_CARD_NAME);
+//        }
+//      }
     });
   }
 
@@ -141,7 +90,6 @@ public abstract class GradleToolWindowPanel extends SimpleToolWindowPanel {
     final JComponent payloadControl = buildContent();
     JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(payloadControl);
     JScrollBar scrollBar = scrollPane.getVerticalScrollBar();
-    scrollBar.setUnitIncrement(scrollBar.getUnitIncrement() * 7);
     myContent.add(scrollPane, CONTENT_CARD_NAME);
     RichTextControlBuilder builder = new RichTextControlBuilder();
     builder.setBackgroundColor(payloadControl.getBackground());
@@ -166,17 +114,13 @@ public abstract class GradleToolWindowPanel extends SimpleToolWindowPanel {
    */
   public void update() {
     final GradleSettings settings = GradleSettings.getInstance(myProject);
-    String cardToShow = StringUtil.isEmpty(settings.getLinkedProjectPath()) ? NON_LINKED_CARD_NAME : CONTENT_CARD_NAME;
+    // TODO den implement
+    String cardToShow = "sf";
+//    String cardToShow = StringUtil.isEmpty(settings.getLinkedExternalProjectPath()) ? NON_LINKED_CARD_NAME : CONTENT_CARD_NAME;
     myLayout.show(myContent, cardToShow);
     boolean showToolbar = cardToShow != NON_LINKED_CARD_NAME;
     for (JComponent component : getToolbarControls()) {
       component.setVisible(showToolbar);
-    }
-
-    if (!NON_LINKED_CARD_NAME.equals(cardToShow)) {
-      updateContent();
-      // Ensure that changes detector service is loaded.
-      ServiceManager.getService(myProject, GradleProjectStructureChangesDetector.class);
     }
   }
 

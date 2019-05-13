@@ -1,61 +1,49 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.ignore;
 
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnPropertyKeys;
 import org.jetbrains.idea.svn.SvnVcs;
-import org.tmatesoft.svn.core.SVNDepth;
-import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.SVNPropertyValue;
-import org.tmatesoft.svn.core.wc.SVNPropertyData;
-import org.tmatesoft.svn.core.wc.SVNRevision;
-import org.tmatesoft.svn.core.wc.SVNWCClient;
+import org.jetbrains.idea.svn.api.Depth;
+import org.jetbrains.idea.svn.api.Revision;
+import org.jetbrains.idea.svn.api.Target;
+import org.jetbrains.idea.svn.properties.PropertyValue;
 
 import java.io.File;
 import java.util.*;
 
+import static com.intellij.openapi.vfs.VfsUtilCore.virtualToIoFile;
+
 public class SvnPropertyService {
-  private final static Logger LOG = Logger.getInstance("#org.jetbrains.idea.svn.ignore.SvnPropertyService");
 
   private SvnPropertyService() {
   }
 
-  public static void doAddToIgnoreProperty(final SvnVcs activeVcs, final Project project, final boolean useCommonExtension,
-                                           final VirtualFile[] file, final IgnoreInfoGetter getter) throws VcsException {
-    final IgnorePropertyAdder adder = new IgnorePropertyAdder(activeVcs, project, useCommonExtension);
+  public static void doAddToIgnoreProperty(@NotNull SvnVcs vcs, boolean useCommonExtension, VirtualFile[] file, IgnoreInfoGetter getter)
+    throws VcsException {
+    final IgnorePropertyAdder adder = new IgnorePropertyAdder(vcs, useCommonExtension);
     adder.execute(file, getter);
   }
 
-  public static void doRemoveFromIgnoreProperty(final SvnVcs activeVcs, final Project project, final boolean useCommonExtension,
-                                           final VirtualFile[] file, final IgnoreInfoGetter getter) throws VcsException{
-    final IgnorePropertyRemover remover = new IgnorePropertyRemover(activeVcs, project, useCommonExtension);
+  public static void doRemoveFromIgnoreProperty(@NotNull SvnVcs vcs,
+                                                boolean useCommonExtension,
+                                                VirtualFile[] file,
+                                                IgnoreInfoGetter getter) throws VcsException {
+    final IgnorePropertyRemover remover = new IgnorePropertyRemover(vcs, useCommonExtension);
     remover.execute(file, getter);
   }
 
-  public static void doCheckIgnoreProperty(final SvnVcs activeVcs, final Project project, final VirtualFile[] file,
-        final IgnoreInfoGetter getter, final String extensionPattern, final Ref<Boolean> filesOk, final Ref<Boolean> extensionOk) {
-    final IgnorePropertyChecker checker = new IgnorePropertyChecker(activeVcs, project, extensionPattern);
+  public static void doCheckIgnoreProperty(@NotNull SvnVcs vcs,
+                                           VirtualFile[] file,
+                                           IgnoreInfoGetter getter,
+                                           String extensionPattern,
+                                           Ref<? super Boolean> filesOk,
+                                           Ref<? super Boolean> extensionOk) {
+    final IgnorePropertyChecker checker = new IgnorePropertyChecker(vcs, extensionPattern);
     try {
       checker.execute(file, getter);
     } catch (VcsException e) {
@@ -66,24 +54,22 @@ public class SvnPropertyService {
   }
 
   private static abstract class IgnorePropertyWorkTemplate {
-    protected final SvnVcs myVcs;
-    protected final SVNWCClient myClient;
-    protected final Project myProject;
+    @NotNull protected final SvnVcs myVcs;
     protected final boolean myUseCommonExtension;
     protected final boolean myCanUseCachedProperty;
-    
+
     protected abstract void processFolder(final VirtualFile folder, final File folderDir, final Set<String> data,
-                                          final SVNPropertyValue propertyValue) throws SVNException;
+                                          final PropertyValue propertyValue) throws VcsException;
+
     protected abstract void onAfterProcessing(final VirtualFile[] file) throws VcsException;
-    protected abstract void onSVNException(SVNException e);
+
+    protected abstract void onSVNException(Exception e);
+
     protected abstract boolean stopIteration();
 
-    private IgnorePropertyWorkTemplate(final SvnVcs activeVcs, final Project project, final boolean useCommonExtension,
-                                       final boolean canUseCachedProperty) {
-      myVcs = activeVcs;
+    private IgnorePropertyWorkTemplate(@NotNull SvnVcs vcs, boolean useCommonExtension, boolean canUseCachedProperty) {
+      myVcs = vcs;
       myCanUseCachedProperty = canUseCachedProperty;
-      myClient = activeVcs.createWCClient();
-      myProject = project;
       myUseCommonExtension = useCommonExtension;
     }
 
@@ -93,19 +79,18 @@ public class SvnPropertyService {
         if (stopIteration()) {
           break;
         }
-        final File dir = new File(entry.getKey().getPath());
+        final File dir = virtualToIoFile(entry.getKey());
         try {
-          final SVNPropertyValue value;
+          final PropertyValue value;
           if (myCanUseCachedProperty) {
             value = myVcs.getPropertyWithCaching(entry.getKey(), SvnPropertyKeys.SVN_IGNORE);
           } else {
-            final SVNPropertyData data =
-              myVcs.createWCClient().doGetProperty(dir, SvnPropertyKeys.SVN_IGNORE, SVNRevision.UNDEFINED, SVNRevision.WORKING);
-            value = data == null ? null : data.getValue();
+            value = myVcs.getFactory(dir).createPropertyClient()
+              .getProperty(Target.on(dir), SvnPropertyKeys.SVN_IGNORE, false, Revision.WORKING);
           }
           processFolder(entry.getKey(), dir, entry.getValue(), value);
         }
-        catch (SVNException e) {
+        catch (VcsException e) {
           onSVNException(e);
         }
       }
@@ -113,53 +98,32 @@ public class SvnPropertyService {
     }
   }
 
-  @Nullable
-  public static Set<String> getIgnoreStringsUnder(final SvnVcs vcs, final VirtualFile dir) {
-    try {
-      final SVNPropertyData data = vcs.createWCClient().doGetProperty(new File(dir.getPath()), SvnPropertyKeys.SVN_IGNORE, SVNRevision.WORKING, SVNRevision.WORKING);
-      final SVNPropertyValue value = (data == null) ? null : data.getValue();
-      if (value != null) {
-        final Set<String> ignorePatterns = new HashSet<String>();
-        final String propAsString = SVNPropertyValue.getPropertyAsString(value);
-        final StringTokenizer st = new StringTokenizer(propAsString, "\r\n ");
-        while (st.hasMoreElements()) {
-          final String ignorePattern = (String) st.nextElement();
-          ignorePatterns.add(ignorePattern);
-        }
-        return ignorePatterns;
-      }
-    }
-    catch (SVNException e) {
-      LOG.info(e);
-    }
-    return null;
-  }
-
   private static class IgnorePropertyChecker extends IgnorePropertyWorkTemplate {
     private final String myExtensionPattern;
     private boolean myFilesOk;
     private boolean myExtensionOk;
 
-    private IgnorePropertyChecker(final SvnVcs activeVcs, final Project project, final String extensionPattern) {
-      super(activeVcs, project, false, true);
+    private IgnorePropertyChecker(@NotNull SvnVcs vcs, String extensionPattern) {
+      super(vcs, false, true);
       myExtensionPattern = extensionPattern;
       myExtensionOk = true;
       myFilesOk = true;
     }
 
+    @Override
     protected boolean stopIteration() {
       return (! myFilesOk) && (! myExtensionOk);
     }
 
-    protected void processFolder(final VirtualFile folder, final File folderDir, final Set<String> data, final SVNPropertyValue propertyValue)
-        throws SVNException {
+    @Override
+    protected void processFolder(final VirtualFile folder, final File folderDir, final Set<String> data, final PropertyValue propertyValue) {
       if (propertyValue == null) {
         myFilesOk = false;
         myExtensionOk = false;
         return;
       }
-      final Set<String> ignorePatterns = new HashSet<String>();
-      final StringTokenizer st = new StringTokenizer(SVNPropertyValue.getPropertyAsString(propertyValue), "\r\n ");
+      final Set<String> ignorePatterns = new HashSet<>();
+      final StringTokenizer st = new StringTokenizer(PropertyValue.toString(propertyValue), "\r\n ");
       while (st.hasMoreElements()) {
         final String ignorePattern = (String)st.nextElement();
         ignorePatterns.add(ignorePattern);
@@ -173,10 +137,12 @@ public class SvnPropertyService {
       }
     }
 
-    protected void onAfterProcessing(final VirtualFile[] file) throws VcsException {
+    @Override
+    protected void onAfterProcessing(final VirtualFile[] file) {
     }
 
-    protected void onSVNException(final SVNException e) {
+    @Override
+    protected void onSVNException(final Exception e) {
       myFilesOk = false;
       myExtensionOk = false;
     }
@@ -194,33 +160,37 @@ public class SvnPropertyService {
     private final Collection<String> exceptions;
     private final VcsDirtyScopeManager dirtyScopeManager;
 
-    private IgnorePropertyAddRemoveTemplate(final SvnVcs activeVcs, final Project project, final boolean useCommonExtension) {
-      super(activeVcs, project, useCommonExtension, false);
-      exceptions = new ArrayList<String>();
-      dirtyScopeManager = VcsDirtyScopeManager.getInstance(project);
+    private IgnorePropertyAddRemoveTemplate(@NotNull SvnVcs vcs, boolean useCommonExtension) {
+      super(vcs, useCommonExtension, false);
+      exceptions = new ArrayList<>();
+      dirtyScopeManager = VcsDirtyScopeManager.getInstance(vcs.getProject());
     }
 
+    @Override
     protected boolean stopIteration() {
       return false;
     }
 
-    protected abstract String getNewPropertyValue(final Set<String> data, final SVNPropertyValue propertyValue);
+    protected abstract String getNewPropertyValue(final Set<String> data, final PropertyValue propertyValue);
 
-    protected void processFolder(final VirtualFile folder, final File folderDir, final Set<String> data, final SVNPropertyValue propertyValue)
-        throws SVNException {
+    @Override
+    protected void processFolder(final VirtualFile folder, final File folderDir, final Set<String> data, final PropertyValue propertyValue)
+      throws VcsException {
       String newValue = getNewPropertyValue(data, propertyValue);
       newValue = (newValue.trim().isEmpty()) ? null : newValue;
-      myClient.doSetProperty(folderDir, SvnPropertyKeys.SVN_IGNORE, SVNPropertyValue.create(newValue), false, false, null);
+      myVcs.getFactory(folderDir).createPropertyClient()
+        .setProperty(folderDir, SvnPropertyKeys.SVN_IGNORE, PropertyValue.create(newValue), Depth.EMPTY, false);
 
       if (myUseCommonExtension) {
         dirtyScopeManager.dirDirtyRecursively(folder);
       }
     }
 
+    @Override
     protected void onAfterProcessing(final VirtualFile[] file) throws VcsException {
       if (! myUseCommonExtension) {
         for (VirtualFile virtualFile : file) {
-          VcsDirtyScopeManager.getInstance(myProject).fileDirty(virtualFile);
+          dirtyScopeManager.fileDirty(virtualFile);
         }
       }
 
@@ -229,36 +199,23 @@ public class SvnPropertyService {
       }
     }
 
-    protected void onSVNException(final SVNException e) {
+    @Override
+    protected void onSVNException(final Exception e) {
       exceptions.add(e.getMessage());
     }
   }
 
   private static class IgnorePropertyRemover extends IgnorePropertyAddRemoveTemplate {
-    private IgnorePropertyRemover(final SvnVcs activeVcs, final Project project, final boolean useCommonExtension) {
-      super(activeVcs, project, useCommonExtension);
+    private IgnorePropertyRemover(@NotNull SvnVcs vcs, boolean useCommonExtension) {
+      super(vcs, useCommonExtension);
     }
 
-    protected String getNewPropertyValue(final Set<String> data, final SVNPropertyValue propertyValue) {
+    @Override
+    protected String getNewPropertyValue(final Set<String> data, final PropertyValue propertyValue) {
       if (propertyValue != null) {
-        return getNewPropertyValueForRemove(data, SVNPropertyValue.getPropertyAsString(propertyValue));
+        return getNewPropertyValueForRemove(data, PropertyValue.toString(propertyValue));
       }
       return "";
-    }
-  }
-
-  public static void setIgnores(final SvnVcs vcs, final Collection<String> patterns, final File file)
-    throws SVNException {
-    final SVNWCClient client = vcs.createWCClient();
-    final StringBuilder sb = new StringBuilder();
-    for (String pattern : patterns) {
-      sb.append(pattern).append('\n');
-    }
-    if (! patterns.isEmpty()) {
-      final String value = sb.toString();
-      client.doSetProperty(file, SvnPropertyKeys.SVN_IGNORE, SVNPropertyValue.create(value), false, SVNDepth.EMPTY, null, null);
-    } else {
-      client.doSetProperty(file, SvnPropertyKeys.SVN_IGNORE, null, false, SVNDepth.EMPTY, null, null);
     }
   }
 
@@ -275,11 +232,12 @@ public class SvnPropertyService {
   }
 
   private static class IgnorePropertyAdder extends IgnorePropertyAddRemoveTemplate {
-    private IgnorePropertyAdder(final SvnVcs activeVcs, final Project project, final boolean useCommonExtension) {
-      super(activeVcs, project, useCommonExtension);
+    private IgnorePropertyAdder(@NotNull SvnVcs vcs, boolean useCommonExtension) {
+      super(vcs, useCommonExtension);
     }
 
-    protected String getNewPropertyValue(final Set<String> data, final SVNPropertyValue propertyValue) {
+    @Override
+    protected String getNewPropertyValue(final Set<String> data, final PropertyValue propertyValue) {
       final String ignoreString;
       if (data.size() == 1) {
         ignoreString = data.iterator().next();
@@ -290,7 +248,7 @@ public class SvnPropertyService {
         }
         ignoreString = sb.toString();
       }
-      return (propertyValue == null) ? ignoreString : (SVNPropertyValue.getPropertyAsString(propertyValue) + '\n' + ignoreString);
+      return (propertyValue == null) ? ignoreString : (PropertyValue.toString(propertyValue) + '\n' + ignoreString);
     }
   }
 }

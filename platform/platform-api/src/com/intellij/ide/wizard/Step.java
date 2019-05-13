@@ -19,8 +19,6 @@ import javax.swing.*;
 
 /**
  * @author nick
- * Date: 14.03.2003
- * Time: 19:07:06
  */
 public interface Step {
   /**
@@ -38,12 +36,12 @@ public interface Step {
    */
   void _commit(boolean finishChosen) throws CommitStepException;
   /**
-   * @return step's icon. This method can return <code>null</code>.
+   * @return step's icon. This method can return {@code null}.
    */
   Icon getIcon();
   /**
    * @return {@link JComponent} that represents step's UI in the wizard. This
-   * method should not return <code>null</code>.
+   * method should not return {@code null}.
    */
   JComponent getComponent();
 

@@ -29,19 +29,21 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: May 12, 2008
  */
 public class AntChangeContextLocalFix implements LocalQuickFix {
 
+  @Override
   @NotNull public String getName() {
     return AntBundle.message("intention.configure.highlighting.text");
   }
 
+  @Override
   @NotNull
   public final String getFamilyName() {
     return AntBundle.message("intention.configure.highlighting.family.name");
   }
 
+  @Override
   public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
     final PsiElement psiElement = descriptor.getPsiElement();
     final PsiFile containingFile = psiElement.getContainingFile();

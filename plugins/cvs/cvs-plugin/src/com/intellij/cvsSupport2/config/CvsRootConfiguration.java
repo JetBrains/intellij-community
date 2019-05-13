@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2011 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.cvsSupport2.config;
 
 import com.intellij.CvsBundle;
@@ -47,7 +33,7 @@ import java.io.IOException;
 import java.util.List;
 
 public class CvsRootConfiguration extends AbstractConfiguration implements CvsEnvironment, Cloneable {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.cvsSupport2.config.CvsRootConfiguration");
+  private static final Logger LOG = Logger.getInstance(CvsRootConfiguration.class);
 
   public String CVS_ROOT = "";
   public String PATH_TO_WORKING_FOLDER = "";
@@ -91,12 +77,7 @@ public class CvsRootConfiguration extends AbstractConfiguration implements CvsEn
 
   public static String createStringRepresentationOn(CvsMethod method, String user, String host, int port, String repository) {
     if (method == CvsMethod.LOCAL_METHOD) {
-      final StringBuilder result = new StringBuilder();
-      result.append(SEPARATOR);
-      result.append(method.getName());
-      result.append(SEPARATOR);
-      result.append(repository);
-      return result.toString();
+      return SEPARATOR + method.getName() + SEPARATOR + repository;
     }
     final StringBuilder result = new StringBuilder();
     result.append(SEPARATOR);
@@ -138,15 +119,6 @@ public class CvsRootConfiguration extends AbstractConfiguration implements CvsEn
     return DATE_OR_REVISION_SETTINGS.USE_BRANCH && !DATE_OR_REVISION_SETTINGS.BRANCH.isEmpty();
   }
 
-  public CvsRootConfiguration getMyCopy() {
-    try {
-      return (CvsRootConfiguration)clone();
-    }
-    catch (CloneNotSupportedException e) {
-      throw new RuntimeException(e);
-    }
-  }
-
   public void testConnection(Project project) throws AuthenticationException, IOException {
     final IConnection connection = createSettings().createConnection(new ReadWriteStatistics());
     final ErrorMessagesProcessor errorProcessor = new ErrorMessagesProcessor();
@@ -154,33 +126,30 @@ public class CvsRootConfiguration extends AbstractConfiguration implements CvsEn
       new CvsExecutionEnvironment(errorProcessor, CvsExecutionEnvironment.DUMMY_STOPPER, errorProcessor, PostCvsActivity.DEAF, project);
     final CvsResult result = new CvsResultEx();
     try {
-      ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
-        @Override
-        public void run() {
-          final GetModulesListOperation operation = new GetModulesListOperation(createSettings());
+      ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
+        final GetModulesListOperation operation = new GetModulesListOperation(createSettings());
 
-          final CvsRootProvider cvsRootProvider = operation.getCvsRootProvider();
-          try {
-            if (connection instanceof SelfTestingConnection) {
-              ((SelfTestingConnection)connection).test(CvsListenerWithProgress.createOnProgress());
-            }
-            operation.execute(cvsRootProvider, cvsExecutionEnvironment, connection, DummyProgressViewer.INSTANCE);
+        final CvsRootProvider cvsRootProvider = operation.getCvsRootProvider();
+        try {
+          if (connection instanceof SelfTestingConnection) {
+            ((SelfTestingConnection)connection).test(CvsListenerWithProgress.createOnProgress());
           }
-          catch (ValidRequestsExpectedException ex) {
-            result.addError(new CvsException(ex, cvsRootProvider.getCvsRootAsString()));
-          }
-          catch (CommandException ex) {
-            result.addError(new CvsException(ex.getUnderlyingException(), cvsRootProvider.getCvsRootAsString()));
-          }
-          catch (ProcessCanceledException ex) {
-            result.setIsCanceled();
-          }
-          catch (BugLog.BugException e) {
-            LOG.error(e);
-          }
-          catch (Exception e) {
-            result.addError(new CvsException(e, cvsRootProvider.getCvsRootAsString()));
-          }
+          operation.execute(cvsRootProvider, cvsExecutionEnvironment, connection, DummyProgressViewer.INSTANCE);
+        }
+        catch (ValidRequestsExpectedException ex) {
+          result.addError(new CvsException(ex, cvsRootProvider.getCvsRootAsString()));
+        }
+        catch (CommandException ex) {
+          result.addError(new CvsException(ex.getUnderlyingException(), cvsRootProvider.getCvsRootAsString()));
+        }
+        catch (ProcessCanceledException ex) {
+          result.setIsCanceled();
+        }
+        catch (BugLog.BugException e) {
+          LOG.error(e);
+        }
+        catch (Exception e) {
+          result.addError(new CvsException(e, cvsRootProvider.getCvsRootAsString()));
         }
       }, CvsBundle.message("operation.name.test.connection"), true, null);
       if (result.isCanceled()) throw new ProcessCanceledException();
@@ -267,15 +236,20 @@ public class CvsRootConfiguration extends AbstractConfiguration implements CvsEn
   }
 
   @Override
-  public Object clone() throws CloneNotSupportedException {
-    final CvsRootConfiguration result = (CvsRootConfiguration)super.clone();
-    result.DATE_OR_REVISION_SETTINGS = DATE_OR_REVISION_SETTINGS.clone();
-    result.PROXY_SETTINGS = PROXY_SETTINGS.clone();
-    result.EXT_CONFIGURATION = EXT_CONFIGURATION.clone();
-    result.SSH_CONFIGURATION = SSH_CONFIGURATION.clone();
-    result.SSH_FOR_EXT_CONFIGURATION = SSH_FOR_EXT_CONFIGURATION.clone();
-    result.LOCAL_CONFIGURATION = LOCAL_CONFIGURATION.clone();
-    return result;
+  public CvsRootConfiguration clone() {
+    try {
+      final CvsRootConfiguration result = (CvsRootConfiguration)super.clone();
+      result.DATE_OR_REVISION_SETTINGS = DATE_OR_REVISION_SETTINGS.clone();
+      result.PROXY_SETTINGS = PROXY_SETTINGS.clone();
+      result.EXT_CONFIGURATION = EXT_CONFIGURATION.clone();
+      result.SSH_CONFIGURATION = SSH_CONFIGURATION.clone();
+      result.SSH_FOR_EXT_CONFIGURATION = SSH_FOR_EXT_CONFIGURATION.clone();
+      result.LOCAL_CONFIGURATION = LOCAL_CONFIGURATION.clone();
+      return result;
+    }
+    catch (CloneNotSupportedException e) {
+      throw new RuntimeException(e);
+    }
   }
 
   @Override

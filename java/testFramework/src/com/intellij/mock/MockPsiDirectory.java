@@ -3,13 +3,15 @@
  */
 package com.intellij.mock;
 
+import com.intellij.lang.Language;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.search.PsiElementProcessor;
+import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.lang.Language;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -19,15 +21,29 @@ import org.jetbrains.annotations.Nullable;
  */
 public class MockPsiDirectory extends MockPsiElement implements PsiDirectory {
   private final PsiPackage myPackage;
+  private final Project myProject;
 
   public MockPsiDirectory(final PsiPackage aPackage, @NotNull Disposable parentDisposable) {
     super(parentDisposable);
     myPackage = aPackage;
+    myProject = null;
+  }
+
+  public MockPsiDirectory(Project project, @NotNull Disposable parentDisposable) {
+    super(parentDisposable);
+    myProject = project;
+    myPackage = null;
   }
 
   @Override
   public boolean isDirectory() {
     return true;
+  }
+
+  @NotNull
+  @Override
+  public Project getProject() {
+    return myProject != null ? myProject : super.getProject();
   }
 
   @NotNull
@@ -108,9 +124,14 @@ public class MockPsiDirectory extends MockPsiElement implements PsiDirectory {
   }
 
   @Override
+  public PsiFile getContainingFile() throws PsiInvalidElementAccessException {
+    return null;
+  }
+
+  @Override
   @NotNull
   public VirtualFile getVirtualFile() {
-    throw new UnsupportedOperationException("Method getVirtualFile is not yet implemented in " + getClass().getName());
+    return new LightVirtualFile();
   }
 
   @Override

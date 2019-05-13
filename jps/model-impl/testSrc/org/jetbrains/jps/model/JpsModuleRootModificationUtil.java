@@ -24,6 +24,7 @@ import org.jetbrains.jps.model.library.JpsLibrary;
 import org.jetbrains.jps.model.library.sdk.JpsSdk;
 import org.jetbrains.jps.model.module.JpsDependencyElement;
 import org.jetbrains.jps.model.module.JpsModule;
+import org.jetbrains.jps.model.module.JpsSdkDependency;
 
 /**
  * @author nik
@@ -45,6 +46,14 @@ public class JpsModuleRootModificationUtil {
 
   public static void setModuleSdk(JpsModule module, @Nullable JpsSdk<JpsDummyElement> sdk) {
     module.getSdkReferencesTable().setSdkReference(JpsJavaSdkType.INSTANCE, sdk != null ? sdk.createReference() : null);
+    addSdkDependencyIfNeeded(module);
+  }
+
+  private static void addSdkDependencyIfNeeded(JpsModule module) {
+    for (JpsDependencyElement element : module.getDependenciesList().getDependencies()) {
+      if (element instanceof JpsSdkDependency) return;
+    }
+    module.getDependenciesList().addSdkDependency(JpsJavaSdkType.INSTANCE);
   }
 
   public static void setSdkInherited(JpsModule module) {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package org.jetbrains.plugins.groovy.unwrap;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
@@ -27,7 +28,8 @@ public class GroovyBracesUnwrapper extends GroovyUnwrapper {
     super(CodeInsightBundle.message("unwrap.braces"));
   }
 
-  public boolean isApplicableTo(PsiElement e) {
+  @Override
+  public boolean isApplicableTo(@NotNull PsiElement e) {
     if (e instanceof GrClosableBlock && !((GrClosableBlock)e).hasParametersSection()) {
       PsiElement parent = e.getParent();
       return parent instanceof GrOpenBlock || parent instanceof GrClosableBlock || parent instanceof GroovyFileBase;

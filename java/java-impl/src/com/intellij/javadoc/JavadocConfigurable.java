@@ -1,21 +1,13 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 package com.intellij.javadoc;
 
 import com.intellij.openapi.options.Configurable;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.roots.JavadocOrderRootType;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiKeyword;
 
 import javax.swing.*;
@@ -24,13 +16,22 @@ import java.io.File;
 public final class JavadocConfigurable implements Configurable {
   private JavadocGenerationPanel myPanel;
   private final JavadocConfiguration myConfiguration;
+  private final Project myProject;
 
-  public JavadocConfigurable(JavadocConfiguration configuration) {
+  public JavadocConfigurable(JavadocConfiguration configuration, Project project) {
     myConfiguration = configuration;
+    myProject = project;
   }
 
+  public static boolean sdkHasJavadocUrls(Project project) {
+    Sdk sdk = JavadocGeneratorRunProfile.getSdk(project);
+    return sdk != null && sdk.getRootProvider().getFiles(JavadocOrderRootType.getInstance()).length > 0;
+  }
+
+  @Override
   public JComponent createComponent() {
     myPanel = new JavadocGenerationPanel();
+    myPanel.myLinkToJdkDocs.setEnabled(sdkHasJavadocUrls(myProject));
     return myPanel.myPanel;
   }
 
@@ -51,6 +52,7 @@ public final class JavadocConfigurable implements Configurable {
     configuration.OPTION_DOCUMENT_TAG_DEPRECATED = myPanel.myTagDeprecated.isSelected();
     configuration.OPTION_DEPRECATED_LIST = myPanel.myDeprecatedList.isSelected();
     configuration.OPTION_INCLUDE_LIBS = myPanel.myIncludeLibraryCb.isSelected();
+    configuration.OPTION_LINK_TO_JDK_DOCS = myPanel.myLinkToJdkDocs.isSelected();
   }
 
   public void loadFrom(JavadocConfiguration configuration) {
@@ -74,8 +76,10 @@ public final class JavadocConfigurable implements Configurable {
     myPanel.myDeprecatedList.setEnabled(myPanel.myTagDeprecated.isSelected());
 
     myPanel.myIncludeLibraryCb.setSelected(configuration.OPTION_INCLUDE_LIBS);
+    myPanel.myLinkToJdkDocs.setSelected(configuration.OPTION_LINK_TO_JDK_DOCS);
   }
 
+  @Override
   public boolean isModified() {
     boolean isModified;
 
@@ -95,14 +99,17 @@ public final class JavadocConfigurable implements Configurable {
     isModified |= myPanel.myTagDeprecated.isSelected() != configuration.OPTION_DOCUMENT_TAG_DEPRECATED;
     isModified |= myPanel.myDeprecatedList.isSelected() != configuration.OPTION_DEPRECATED_LIST;
     isModified |= myPanel.myIncludeLibraryCb.isSelected() != configuration.OPTION_INCLUDE_LIBS;
+    isModified |= myPanel.myLinkToJdkDocs.isSelected() != configuration.OPTION_LINK_TO_JDK_DOCS;
 
     return isModified;
   }
 
+  @Override
   public final void apply() {
     applyTo(myConfiguration);
   }
 
+  @Override
   public void reset() {
     loadFrom(myConfiguration);
   }
@@ -117,15 +124,13 @@ public final class JavadocConfigurable implements Configurable {
     return string1.equals(string2);
   }
 
+  @Override
   public void disposeUIResources() {
     myPanel = null;
   }
 
   private static String convertString(String s) {
-    if (s != null && s.trim().length() == 0) {
-      return null;
-    }
-    return s;
+    return StringUtil.nullize(s, true);
   }
 
   private static String toSystemIndependentFormat(String directory) {
@@ -142,10 +147,12 @@ public final class JavadocConfigurable implements Configurable {
     return directory.replace('/', File.separatorChar);
   }
 
+  @Override
   public String getDisplayName() {
     return null;
   }
 
+  @Override
   public String getHelpTopic() {
     return "project.propJavaDoc";
   }

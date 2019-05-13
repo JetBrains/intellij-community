@@ -1,30 +1,23 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xdebugger.impl.ui.tree;
 
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.codeInsight.lookup.impl.LookupImpl;
-import com.intellij.execution.ExecutionManager;
+import com.intellij.execution.Executor;
 import com.intellij.execution.ui.RunContentDescriptor;
-import com.intellij.execution.ui.RunContentListener;
 import com.intellij.execution.ui.RunContentManager;
+import com.intellij.execution.ui.RunContentWithExecutorListener;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.popup.JBPopup;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.wm.IdeFocusManager;
+import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -41,7 +34,8 @@ import java.util.List;
 public abstract class TreeInplaceEditor implements AWTEventListener {
   private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.ui.impl.watch.DebuggerTreeInplaceEditor");
   private JComponent myInplaceEditorComponent;
-  private final List<Runnable> myRemoveActions = new ArrayList<Runnable>();
+  private final List<Runnable> myRemoveActions = new ArrayList<>();
+  protected final Disposable myDisposable = Disposer.newDisposable();
 
   protected abstract JComponent createInplaceEditorComponent();
 
@@ -55,6 +49,10 @@ public abstract class TreeInplaceEditor implements AWTEventListener {
 
   protected abstract JTree getTree();
 
+  protected void doPopupOKAction() {
+    doOKAction();
+  }
+
   public void doOKAction() {
     hide();
   }
@@ -67,23 +65,27 @@ public abstract class TreeInplaceEditor implements AWTEventListener {
     if (!isShown()) {
       return;
     }
+    myInplaceEditorComponent = null;
     onHidden();
-    for (Runnable action : myRemoveActions) {
-      action.run();
-    }
+    myRemoveActions.forEach(Runnable::run);
     myRemoveActions.clear();
 
-    myInplaceEditorComponent = null;
+    Disposer.dispose(myDisposable);
 
     final JTree tree = getTree();
     tree.repaint();
-    tree.requestFocus();
+    IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(tree, true));
   }
 
   protected void onHidden() {
   }
 
   protected abstract Project getProject();
+
+  private static void setInplaceEditorBounds(JComponent component, int x, int y, int width, int height) {
+    int h = Math.max(height, component.getPreferredSize().height);
+    component.setBounds(x, y - (h - height) / 2, width, h);
+  }
 
   public final void show() {
     LOG.assertTrue(myInplaceEditorComponent == null, "editor is not released");
@@ -104,132 +106,140 @@ public abstract class TreeInplaceEditor implements AWTEventListener {
     final JComponent inplaceEditorComponent = createInplaceEditorComponent();
     myInplaceEditorComponent = inplaceEditorComponent;
     LOG.assertTrue(inplaceEditorComponent != null);
-    inplaceEditorComponent.setBounds(
-      layeredPanePoint.x,
-      layeredPanePoint.y,
-      bounds.width,
-      Math.max(bounds.height, inplaceEditorComponent.getPreferredSize().height)
-    );
+    setInplaceEditorBounds(inplaceEditorComponent, layeredPanePoint.x, layeredPanePoint.y, bounds.width, bounds.height);
 
     layeredPane.add(inplaceEditorComponent, new Integer(250));
 
-    myRemoveActions.add(new Runnable() {
-      public void run() {
-        layeredPane.remove(inplaceEditorComponent);
-      }
-    });
+    myRemoveActions.add(() -> layeredPane.remove(inplaceEditorComponent));
 
     inplaceEditorComponent.validate();
     inplaceEditorComponent.paintImmediately(0,0,inplaceEditorComponent.getWidth(),inplaceEditorComponent.getHeight());
-    getPreferredFocusedComponent().requestFocus();
+    IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(
+      () -> IdeFocusManager.getGlobalInstance().requestFocus(getPreferredFocusedComponent(), true));
 
     final ComponentAdapter componentListener = new ComponentAdapter() {
+      @Override
+      public void componentMoved(ComponentEvent e) {
+        resetBounds();
+      }
+
+      @Override
       public void componentResized(ComponentEvent e) {
+        resetBounds();
+      }
+
+      private void resetBounds() {
         final Project project = getProject();
-        ApplicationManager.getApplication().invokeLater(new Runnable() {
-          public void run() {
-            if (!isShown() || project == null || project.isDisposed()) {
-              return;
-            }
-            JTree tree = getTree();
-            JLayeredPane layeredPane = tree.getRootPane().getLayeredPane();
-            Rectangle bounds = getEditorBounds();
-            if (bounds == null) {
-              return;
-            }
-            Point layeredPanePoint = SwingUtilities.convertPoint(tree, bounds.x, bounds.y, layeredPane);
-            inplaceEditorComponent.setBounds(layeredPanePoint.x, layeredPanePoint.y, bounds.width, bounds.height);
-            inplaceEditorComponent.revalidate();
+        ApplicationManager.getApplication().invokeLater(() -> {
+          if (!isShown() || project == null || project.isDisposed()) {
+            return;
           }
+          JTree tree1 = getTree();
+          JLayeredPane layeredPane1 = tree1.getRootPane().getLayeredPane();
+          Rectangle bounds1 = getEditorBounds();
+          if (bounds1 == null) {
+            doOKAction();
+            return;
+          }
+          Point layeredPanePoint1 = SwingUtilities.convertPoint(tree1, bounds1.x, bounds1.y, layeredPane1);
+          setInplaceEditorBounds(inplaceEditorComponent, layeredPanePoint1.x, layeredPanePoint1.y, bounds1.width, bounds1.height);
+          inplaceEditorComponent.revalidate();
         });
       }
 
+      @Override
       public void componentHidden(ComponentEvent e) {
         cancelEditing();
       }
     };
-    rootPane.addComponentListener(componentListener);
-    myRemoveActions.add(new Runnable() {
-      public void run() {
-        rootPane.removeComponentListener(componentListener);
-      }
-    });
 
-    final RunContentManager contentManager = ExecutionManager.getInstance(getProject()).getContentManager();
-    final RunContentListener runContentListener = new RunContentListener() {
-      public void contentSelected(RunContentDescriptor descriptor) {
-        cancelEditing();
-      }
-
-      public void contentRemoved(RunContentDescriptor descriptor) {
+    final HierarchyListener hierarchyListener = e -> {
+      if (!tree.isShowing()) {
         cancelEditing();
       }
     };
-    contentManager.addRunContentListener(runContentListener);
-    myRemoveActions.add(new Runnable() {
-      public void run() {
-        contentManager.removeRunContentListener(runContentListener);
+
+    tree.addHierarchyListener(hierarchyListener);
+    tree.addComponentListener(componentListener);
+    rootPane.addComponentListener(componentListener);
+
+    myRemoveActions.add(() -> {
+      tree.removeHierarchyListener(hierarchyListener);
+      tree.removeComponentListener(componentListener);
+      rootPane.removeComponentListener(componentListener);
+    });
+
+    getProject().getMessageBus().connect(myDisposable).subscribe(RunContentManager.TOPIC, new RunContentWithExecutorListener() {
+      @Override
+      public void contentSelected(@Nullable RunContentDescriptor descriptor, @NotNull Executor executor) {
+        cancelEditing();
+      }
+
+      @Override
+      public void contentRemoved(@Nullable RunContentDescriptor descriptor, @NotNull Executor executor) {
+        cancelEditing();
       }
     });
 
     final JComponent editorComponent = getEditorComponent();
     editorComponent.getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT).put(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), "enterStroke");
     editorComponent.getActionMap().put("enterStroke", new AbstractAction() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         doOKAction();
       }
     });
     editorComponent.getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT).put(KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), "escapeStroke");
     editorComponent.getActionMap().put("escapeStroke", new AbstractAction() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         cancelEditing();
       }
     });
     final Toolkit defaultToolkit = Toolkit.getDefaultToolkit();
-    SwingUtilities.invokeLater(new Runnable() {
-      public void run() {
-        if (!isShown()) return;
-        defaultToolkit.addAWTEventListener(TreeInplaceEditor.this, AWTEvent.MOUSE_EVENT_MASK | AWTEvent.MOUSE_WHEEL_EVENT_MASK);
-      }
+    SwingUtilities.invokeLater(() -> {
+      if (!isShown()) return;
+      defaultToolkit.addAWTEventListener(this, AWTEvent.MOUSE_EVENT_MASK);
     });
 
-    myRemoveActions.add(new Runnable() {
-      public void run() {
-        defaultToolkit.removeAWTEventListener(TreeInplaceEditor.this);
-      }
-    });
+    myRemoveActions.add(() -> defaultToolkit.removeAWTEventListener(this));
     onShown();
   }
 
   protected void onShown() {
   }
 
+  @Override
   public void eventDispatched(AWTEvent event) {
     if (!isShown()) {
       return;
     }
     MouseEvent mouseEvent = (MouseEvent)event;
-    if (mouseEvent.getClickCount() == 0 && !(event instanceof MouseWheelEvent)) {
+    if (mouseEvent.getClickCount() == 0) {
       return;
     }
 
     final int id = mouseEvent.getID();
-    if (id == MouseEvent.MOUSE_WHEEL) {
-      cancelEditing();
-      return;
-    }
-
     if (id != MouseEvent.MOUSE_PRESSED && id != MouseEvent.MOUSE_RELEASED && id != MouseEvent.MOUSE_CLICKED) {
       return;
     }
-    
+
     final Component sourceComponent = mouseEvent.getComponent();
     final Point originalPoint = mouseEvent.getPoint();
 
     final Editor editor = getEditor();
     if (editor == null) return;
-    
-    final LookupImpl activeLookup = (LookupImpl)LookupManager.getInstance(editor.getProject()).getActiveLookup();
+
+    // do not cancel editing if we click or scroll in editor popup
+    final List<JBPopup> popups = JBPopupFactory.getInstance().getChildPopups(myInplaceEditorComponent);
+    for (JBPopup popup : popups) {
+      if (SwingUtilities.isDescendingFrom(sourceComponent, UIUtil.getWindow(popup.getContent()))) {
+        return;
+      }
+    }
+
+    Project project = editor.getProject();
+    LookupImpl activeLookup = project != null ? (LookupImpl)LookupManager.getInstance(project).getActiveLookup() : null;
     if (activeLookup != null){
       final Point lookupPoint = SwingUtilities.convertPoint(sourceComponent, originalPoint, activeLookup.getComponent());
       if (activeLookup.getComponent().getBounds().contains(lookupPoint)){
@@ -246,19 +256,25 @@ public abstract class TreeInplaceEditor implements AWTEventListener {
     final Component componentAtPoint = SwingUtilities.getDeepestComponentAt(sourceComponent, originalPoint.x, originalPoint.y);
     for (Component comp = componentAtPoint; comp != null; comp = comp.getParent()) {
       if (comp instanceof ComboPopup) {
-        doOKAction();
+        doPopupOKAction();
         return;
       }
     }
-    cancelEditing();
+
+    if (UIUtil.getWindow(sourceComponent) == UIUtil.getWindow(myInplaceEditorComponent) && id == MouseEvent.MOUSE_PRESSED) {
+      doOKAction();
+    }
   }
 
   @Nullable
-  private Rectangle getEditorBounds() {
+  protected Rectangle getEditorBounds() {
     final JTree tree = getTree();
     Rectangle bounds = tree.getVisibleRect();
     Rectangle nodeBounds = tree.getPathBounds(getNodePath());
     if (bounds == null || nodeBounds == null) {
+      return null;
+    }
+    if (bounds.y > nodeBounds.y || bounds.y + bounds.height < nodeBounds.y + nodeBounds.height) {
       return null;
     }
     bounds.y = nodeBounds.y;

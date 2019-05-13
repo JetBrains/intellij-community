@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package com.intellij.mock;
 
+import com.intellij.openapi.vfs.VFileProperty;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -28,8 +29,8 @@ public class MockVirtualLink extends MockVirtualFile {
   }
 
   @Override
-  public boolean isSymLink() {
-    return true;
+  public boolean is(@NotNull VFileProperty property) {
+    return property == VFileProperty.SYMLINK || super.is(property);
   }
 
   @Nullable

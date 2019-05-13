@@ -1,0 +1,8 @@
+<idea-plugin>
+  <idea-version since-build="3000"/>
+  <application-components>
+    <component>
+      <implementation-class>I<caret>mpl</implementation-class>
+    </component>
+  </application-components>
+</idea-plugin>

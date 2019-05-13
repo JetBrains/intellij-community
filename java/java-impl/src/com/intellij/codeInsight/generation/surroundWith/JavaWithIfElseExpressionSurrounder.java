@@ -17,7 +17,7 @@
 package com.intellij.codeInsight.generation.surroundWith;
 
 import com.intellij.codeInsight.CodeInsightBundle;
-import com.intellij.codeInsight.CodeInsightUtilBase;
+import com.intellij.codeInsight.CodeInsightUtilCore;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
@@ -31,7 +31,7 @@ public class JavaWithIfElseExpressionSurrounder extends JavaWithIfExpressionSurr
   @Override
   public TextRange surroundExpression(Project project, Editor editor, PsiExpression expr) throws IncorrectOperationException {
     PsiManager manager = expr.getManager();
-    PsiElementFactory factory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();
+    PsiElementFactory factory = JavaPsiFacade.getElementFactory(manager.getProject());
     CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(project);
 
     @NonNls String text = "if(a){\nst;\n}else{\n}";
@@ -45,8 +45,8 @@ public class JavaWithIfElseExpressionSurrounder extends JavaWithIfExpressionSurr
 
     PsiCodeBlock block = ((PsiBlockStatement)ifStatement.getThenBranch()).getCodeBlock();
 
-    PsiStatement afterStatement = CodeInsightUtilBase.forcePsiPostprocessAndRestoreElement(block.getStatements()[0]);
-    
+    PsiStatement afterStatement = CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(block.getStatements()[0]);
+
     TextRange range = afterStatement.getTextRange();
     editor.getDocument().deleteString(range.getStartOffset(), range.getEndOffset());
     return new TextRange(range.getStartOffset(), range.getStartOffset());

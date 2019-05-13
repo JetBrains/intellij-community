@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,37 +16,43 @@
 package com.intellij.codeInsight.navigation;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.JBListUpdater;
+import com.intellij.openapi.ui.popup.JBPopup;
+import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiElement;
 import com.intellij.ui.components.JBList;
-import com.intellij.ui.speedSearch.NameFilteringListModel;
+import com.intellij.ui.popup.AbstractPopup;
+import com.intellij.usages.UsageView;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.List;
+import java.util.Comparator;
 
 /**
- * User: anna
+ * @deprecated please use {@link BackgroundUpdaterTask}
  */
-public abstract class ListBackgroundUpdaterTask extends BackgroundUpdaterTask<JBList> {
+@Deprecated
+public abstract class ListBackgroundUpdaterTask extends BackgroundUpdaterTask {
+
+  protected AbstractPopup myPopup;
+
+  /**
+   * @deprecated Use {@link #ListBackgroundUpdaterTask(Project, String, Comparator)}
+   */
+  @Deprecated
   public ListBackgroundUpdaterTask(@Nullable final Project project, @NotNull final String title) {
-    super(project, title);
+    this(project, title, null);
+  }
+  
+  public ListBackgroundUpdaterTask(@Nullable final Project project, @NotNull final String title, @Nullable Comparator<PsiElement> comparator) {
+    super(project, title, comparator);
   }
 
-  @Override
-  protected void paintBusy(final boolean paintBusy) {
-    myComponent.setPaintBusy(paintBusy);
-  }
-
-  @Override
-  protected void replaceModel(@NotNull List<PsiElement> data) {
-    final Object selectedValue = myComponent.getSelectedValue();
-    final int index = myComponent.getSelectedIndex();
-    ((NameFilteringListModel)myComponent.getModel()).replaceAll(data);
-    if (index == 0) {
-      myComponent.setSelectedIndex(0);
-    }
-    else {
-      myComponent.setSelectedValue(selectedValue, true);
+  @Deprecated
+  public void init(@NotNull AbstractPopup popup, @NotNull Object component, @NotNull Ref<UsageView> usageView) {
+    myPopup = popup;
+    if (component instanceof JBList) {
+      init((JBPopup)myPopup, new JBListUpdater((JBList)component), usageView);
     }
   }
 }

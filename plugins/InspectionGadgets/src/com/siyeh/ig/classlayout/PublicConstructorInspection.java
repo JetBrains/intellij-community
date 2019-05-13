@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,20 +16,17 @@
 
 package com.siyeh.ig.classlayout;
 
-import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.ide.DataManager;
-import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.AsyncResult;
-import com.intellij.psi.*;
-import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiParameterList;
 import com.intellij.refactoring.JavaRefactoringActionHandlerFactory;
 import com.intellij.refactoring.RefactoringActionHandler;
-import com.intellij.util.IncorrectOperationException;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.fixes.RefactoringInspectionGadgetsFix;
 import com.siyeh.ig.psiutils.SerializationUtils;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -39,6 +36,12 @@ import org.jetbrains.annotations.Nullable;
  * @author Bas Leijdekkers
  */
 public class PublicConstructorInspection extends BaseInspection {
+
+  @Nullable
+  @Override
+  protected InspectionGadgetsFix buildFix(Object... infos) {
+    return new ReplaceConstructorWithFactoryMethodFix();
+  }
 
   @Nls
   @NotNull
@@ -63,38 +66,24 @@ public class PublicConstructorInspection extends BaseInspection {
     return true;
   }
 
-  @Nullable
-  @Override
-  protected InspectionGadgetsFix buildFix(Object... infos) {
-    return new ReplaceConstructorWithFactoryMethodFix();
-  }
-
-  private class ReplaceConstructorWithFactoryMethodFix extends InspectionGadgetsFix {
-
-    @NotNull
-    @Override
-    public String getName() {
-      return InspectionGadgetsBundle.message("public.constructor.quickfix");
-    }
-
-    @Override
-    protected void doFix(final Project project, ProblemDescriptor descriptor) throws IncorrectOperationException {
-      final PsiElement element = PsiTreeUtil.getParentOfType(descriptor.getPsiElement(), PsiClass.class, PsiMethod.class);
-      final AsyncResult<DataContext> context = DataManager.getInstance().getDataContextFromFocus();
-      context.doWhenDone(new AsyncResult.Handler<DataContext>() {
-        @Override
-        public void run(DataContext dataContext) {
-          final JavaRefactoringActionHandlerFactory factory = JavaRefactoringActionHandlerFactory.getInstance();
-          final RefactoringActionHandler handler = factory.createReplaceConstructorWithFactoryHandler();
-          handler.invoke(project, new PsiElement[]{element}, dataContext);
-        }
-      });
-    }
-  }
-
   @Override
   public BaseInspectionVisitor buildVisitor() {
     return new PublicConstructorVisitor();
+  }
+
+  private static class ReplaceConstructorWithFactoryMethodFix extends RefactoringInspectionGadgetsFix {
+
+    @NotNull
+    @Override
+    public String getFamilyName() {
+      return InspectionGadgetsBundle.message("public.constructor.quickfix");
+    }
+
+    @NotNull
+    @Override
+    public RefactoringActionHandler getHandler() {
+      return JavaRefactoringActionHandlerFactory.getInstance().createReplaceConstructorWithFactoryHandler();
+    }
   }
 
   private static class PublicConstructorVisitor extends BaseInspectionVisitor {
@@ -114,7 +103,7 @@ public class PublicConstructorInspection extends BaseInspection {
       }
       if (SerializationUtils.isExternalizable(aClass)) {
         final PsiParameterList parameterList = method.getParameterList();
-        if (parameterList.getParametersCount() == 0) {
+        if (parameterList.isEmpty()) {
           return;
         }
       }

@@ -3,7 +3,7 @@ package com.intellij.util.ui;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.containers.HashMap;
+import java.util.HashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.w3c.dom.Document;
@@ -27,7 +27,7 @@ import java.util.List;
 public class ComboBoxWithHistory extends JComboBox {
   private final String myHistoryId;
   private Project myProject;
-  private final HashMap<Object, Long> myWeights = new HashMap<Object, Long>();
+  private final HashMap<Object, Long> myWeights = new HashMap<>();
   private boolean myAutoSave = true;
 
   public ComboBoxWithHistory(@Nullable Project project, String historyId, Object[] items) {

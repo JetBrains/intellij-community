@@ -12,7 +12,7 @@ public class ThreeNegationsPerMethod
         }
     }
 
-    public void badMethod()
+    public void <warning descr="'badMethod' contains 4 negations">badMethod</warning>()
     {
         if(!!!!true)
         {
@@ -20,10 +20,16 @@ public class ThreeNegationsPerMethod
         }
     }
 
-    public void badMethod2()
+    public void <warning descr="'badMethod2' contains 4 negations">badMethod2</warning>()
     {
         if(!!!true && 3 !=4)
         {
+            return;
+        }
+    }
+
+    public void <warning descr="'badMethod3' contains 4 negations">badMethod3</warning>() {
+        if (true != false != true != false != true) {
             return;
         }
     }

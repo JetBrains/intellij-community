@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,7 +28,8 @@ public class RegExpWordSelectionFilter implements Condition<PsiElement> {
   @Override
   public boolean value(@NotNull PsiElement element) {
     final ASTNode node = element.getNode();
-    if ((node != null && node.getElementType() == RegExpTT.CHARACTER) || element instanceof RegExpChar) {
+    if ((node != null && node.getElementType() == RegExpTT.CHARACTER) ||
+        (element instanceof RegExpChar && ((RegExpChar)element).getType() == RegExpChar.Type.CHAR)) {
       return false;
     }
     return true;

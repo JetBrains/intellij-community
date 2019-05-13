@@ -1,8 +1,7 @@
 <html>
 <body>
-Reports methods with a <b>boolean</b> return type
-the usages of which always occur in negated context. Since this inspection
-requires global code analysis, it is only available in batch inspection mode.
+Reports methods with a <b>boolean</b> return type, which are only used in a negated context.
+Due to performance reasons some methods might not be reported during in-editor highlighting.
 <p>
 For example:
 <code><pre>
@@ -21,6 +20,6 @@ For example:
 </pre></code>
 <!-- tooltip end -->
 <p>
-<small>Powered by InspectionGadgets</small>
+
 </body>
 </html>

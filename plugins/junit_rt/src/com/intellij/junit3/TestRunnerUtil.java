@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,7 +22,8 @@ import junit.framework.TestSuite;
 import junit.runner.BaseTestRunner;
 
 import java.io.BufferedReader;
-import java.io.FileReader;
+import java.io.FileInputStream;
+import java.io.InputStreamReader;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -48,10 +49,14 @@ public class TestRunnerUtil {
         String[] classNames;
         String suiteName;
         try {
-          BufferedReader reader = new BufferedReader(new FileReader(suiteClassName.substring(1)));
+          BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(suiteClassName.substring(1)), "UTF-8"));
           Vector vector;
           try {
             suiteName = reader.readLine();
+
+            reader.readLine(); //category
+            reader.readLine();//filters
+
             vector = new Vector();
             String line;
             while ((line = reader.readLine()) != null) {
@@ -214,6 +219,7 @@ public class TestRunnerUtil {
     return MessageFormat.format(ourBundle.getString("tests.found.in.package"), new Object[]{new Integer(testCount), name});
   }
 
+  /** @noinspection JUnitTestClassNamingConvention, JUnitTestCaseWithNonTrivialConstructors, JUnitTestCaseWithNoTests */
   public static class FailedTestCase extends TestCase {
     private final String myMethodName;
     private final String myMessage;

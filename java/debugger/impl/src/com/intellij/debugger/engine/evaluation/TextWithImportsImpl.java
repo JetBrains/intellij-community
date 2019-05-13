@@ -1,21 +1,7 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.engine.evaluation;
 
-import com.intellij.debugger.ui.DebuggerEditorImpl;
+import com.intellij.lang.LanguageUtil;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.StdFileTypes;
@@ -23,9 +9,12 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Trinity;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.JavaCodeFragment;
-import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiExpressionCodeFragment;
 import com.intellij.psi.PsiFile;
+import com.intellij.xdebugger.XExpression;
+import com.intellij.xdebugger.evaluation.EvaluationMode;
+import com.intellij.xdebugger.impl.breakpoints.XExpressionImpl;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -36,7 +25,9 @@ public final class TextWithImportsImpl implements TextWithImports{
   private final FileType myFileType;
   private final String myImports;
 
-  public TextWithImportsImpl (PsiExpression expression) {
+  private static final char SEPARATOR = 13;
+
+  public TextWithImportsImpl(@NotNull PsiElement expression) {
     myKind = CodeFragmentKind.EXPRESSION;
     final String text = expression.getText();
     PsiFile containingFile = expression.getContainingFile();
@@ -69,18 +60,21 @@ public final class TextWithImportsImpl implements TextWithImports{
   }
 
   private static Trinity<String, String, FileType> parseExternalForm(String s) {
-    String[] split = s.split(String.valueOf(DebuggerEditorImpl.SEPARATOR));
+    String[] split = s.split(String.valueOf(SEPARATOR));
     return Trinity.create(split[0], split.length > 1 ? split[1] : "", split.length > 2 ? FileTypeManager.getInstance().getStdFileType(split[2]) : null);
   }
 
+  @Override
   public CodeFragmentKind getKind() {
     return myKind;
   }
 
+  @Override
   public String getText() {
     return myText;
   }
 
+  @Override
   public @NotNull String getImports() {
     return myImports;
   }
@@ -97,13 +91,14 @@ public final class TextWithImportsImpl implements TextWithImports{
     return getText();
   }
 
+  @Override
   public String toExternalForm() {
     String result = myText;
     if (StringUtil.isNotEmpty(myImports) || myFileType != null) {
-      result += DebuggerEditorImpl.SEPARATOR + myImports;
+      result += SEPARATOR + myImports;
     }
     if (myFileType != null) {
-      result += DebuggerEditorImpl.SEPARATOR + myFileType.getName();
+      result += SEPARATOR + myFileType.getName();
     }
     return result;
   }
@@ -112,16 +107,61 @@ public final class TextWithImportsImpl implements TextWithImports{
     return myText.hashCode();
   }
 
+  @Override
   public boolean isEmpty() {
-    final String text = getText();
-    return text == null || "".equals(text.trim());
+    return StringUtil.isEmptyOrSpaces(getText());
   }
 
+  @Override
   public void setText(String newText) {
     myText = newText;
   }
 
+  @Override
   public FileType getFileType() {
     return myFileType;
+  }
+
+  @Nullable
+  public static XExpression toXExpression(@Nullable TextWithImports text) {
+    if (text != null && !text.getText().isEmpty()) {
+      return new XExpressionImpl(text.getText(),
+                                 LanguageUtil.getFileTypeLanguage(text.getFileType()),
+                                 StringUtil.nullize(text.getImports()),
+                                 getMode(text.getKind()));
+    }
+    return null;
+  }
+
+  @NotNull
+  private static EvaluationMode getMode(@NotNull CodeFragmentKind kind) {
+    switch (kind) {
+      case EXPRESSION: return EvaluationMode.EXPRESSION;
+      case CODE_BLOCK: return EvaluationMode.CODE_FRAGMENT;
+    }
+    throw new IllegalStateException("Unknown kind " + kind);
+  }
+
+  @NotNull
+  private static CodeFragmentKind getKind(@NotNull EvaluationMode mode) {
+    switch (mode) {
+      case EXPRESSION: return CodeFragmentKind.EXPRESSION;
+      case CODE_FRAGMENT: return CodeFragmentKind.CODE_BLOCK;
+    }
+    throw new IllegalStateException("Unknown mode " + mode);
+  }
+
+  public static TextWithImports fromXExpression(@Nullable XExpression expression) {
+    if (expression == null) return null;
+
+    if (expression.getCustomInfo() == null && expression.getLanguage() == null) {
+      return new TextWithImportsImpl(getKind(expression.getMode()), expression.getExpression());
+    }
+    else {
+      return new TextWithImportsImpl(getKind(expression.getMode()),
+                                     expression.getExpression(),
+                                     StringUtil.notNullize(expression.getCustomInfo()),
+                                     LanguageUtil.getLanguageFileType(expression.getLanguage()));
+    }
   }
 }

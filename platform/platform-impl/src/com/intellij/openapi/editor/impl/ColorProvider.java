@@ -30,7 +30,6 @@ import java.util.List;
  * Defines common contract for target {@link Color} retrieving.
  *
  * @author Denis Zhdanov
- * @since Jul 2, 2010 11:12:07 AM
  */
 public abstract class ColorProvider {
 
@@ -94,7 +93,7 @@ public abstract class ColorProvider {
   private static class ColorSchemeBasedHolder extends ColorProvider {
 
     private final EditorColorsScheme myScheme;
-    private final List<ColorKey> myKeys = new ArrayList<ColorKey>();
+    private final List<ColorKey> myKeys = new ArrayList<>();
 
     ColorSchemeBasedHolder(EditorColorsScheme scheme, ColorKey ... keys) {
       myScheme = scheme;

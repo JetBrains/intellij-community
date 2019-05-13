@@ -1,5 +1,0 @@
-<resources>
-  <declare-styleable name="LabelView">
-    <attr name="attr1"/>
-  </declare-styleable>
-</resources>

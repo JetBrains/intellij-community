@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package com.intellij.refactoring.changeSignature;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.MultiLineLabelUI;
+import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.refactoring.util.RadioUpDownListener;
 import com.intellij.ui.EditorTextField;
 
@@ -25,10 +26,6 @@ import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
-/**
- * User: anna
- * Date: Sep 13, 2010
- */
 public class DefaultValueChooser extends DialogWrapper{
   private JRadioButton myLeaveBlankRadioButton;
   private JRadioButton myFeelLuckyRadioButton;
@@ -47,7 +44,9 @@ public class DefaultValueChooser extends DialogWrapper{
         myValueEditor.setEnabled(myUseValueRadioButton.isSelected());
         if (myUseValueRadioButton.isSelected()) {
           myValueEditor.selectAll();
-          myValueEditor.requestFocus();
+          IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
+            IdeFocusManager.getGlobalInstance().requestFocus(myValueEditor, true);
+          });
         }
       }
     };
@@ -57,9 +56,7 @@ public class DefaultValueChooser extends DialogWrapper{
     setTitle("Default value for parameter \"" + name + "\" needed");
     myLeaveBlankRadioButton.setSelected(true);
     myValueEditor.setEnabled(false);
-    myFeelLuckyDescription.setText("In method call place variable of the same type would be searched.\n" +
-                                   "When exactly one is found - it would be used.\n" +
-                                   "Parameter place would be leaved blank otherwise");
+    myFeelLuckyDescription.setText("In calls to this method, if exactly one variable of the correct type is found, use it. Otherwise leave blank.");
     myFeelLuckyDescription.setUI(new MultiLineLabelUI());
     myBlankDescription.setUI(new MultiLineLabelUI());
     myValueEditor.setText(defaultValue);

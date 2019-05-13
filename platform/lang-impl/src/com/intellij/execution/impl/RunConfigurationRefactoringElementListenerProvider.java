@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package com.intellij.execution.impl;
 
 import com.intellij.execution.RunManager;
+import com.intellij.execution.configurations.LocatableConfiguration;
 import com.intellij.execution.configurations.RefactoringListenerProvider;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.openapi.diagnostic.Logger;
@@ -30,13 +31,12 @@ import com.intellij.refactoring.listeners.RefactoringElementListenerProvider;
 public class RunConfigurationRefactoringElementListenerProvider implements RefactoringElementListenerProvider {
   private static final Logger LOG = Logger.getInstance("#com.intellij.execution.impl.RunConfigurationRefactoringElementListenerProvider");
 
+  @Override
   public RefactoringElementListener getListener(final PsiElement element) {
     RefactoringElementListenerComposite composite = null;
-    final RunConfiguration[] configurations = RunManager.getInstance(element.getProject()).getAllConfigurations();
-
-    for (RunConfiguration configuration : configurations) {
+    for (RunConfiguration configuration : RunManager.getInstance(element.getProject()).getAllConfigurationsList()) {
       if (configuration instanceof RefactoringListenerProvider) { // todo: perhaps better way to handle listeners?
-        final RefactoringElementListener listener;
+        RefactoringElementListener listener;
         try {
           listener = ((RefactoringListenerProvider)configuration).getRefactoringElementListener(element);
         }
@@ -45,6 +45,9 @@ public class RunConfigurationRefactoringElementListenerProvider implements Refac
           continue;
         }
         if (listener != null) {
+          if (configuration instanceof LocatableConfiguration) {
+            listener = new NameGeneratingListenerDecorator((LocatableConfiguration)configuration, listener);
+          }
           if (composite == null) {
             composite = new RefactoringElementListenerComposite();
           }

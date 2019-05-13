@@ -1,28 +1,10 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
-/*
- * User: anna
- * Date: 26-Dec-2007
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.roots.ui.configuration.libraryEditor;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CustomShortcutSet;
+import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.projectRoots.Sdk;
@@ -33,18 +15,23 @@ import com.intellij.openapi.roots.JavadocOrderRootType;
 import com.intellij.openapi.roots.ui.OrderRootTypeUIFactory;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.newvfs.ArchiveFileSystem;
 import com.intellij.ui.AnActionButton;
-import com.intellij.ui.AnActionButtonUpdater;
+import com.intellij.ui.DumbAwareActionButton;
 import com.intellij.ui.ToolbarDecorator;
 import com.intellij.util.IconUtil;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import java.awt.*;
 
+/**
+ * @author anna
+ */
 public class JavadocOrderRootTypeUIFactory implements OrderRootTypeUIFactory {
-
   @Override
   public SdkPathEditor createPathEditor(Sdk sdk) {
-    return new JavadocPathsEditor(sdk);
+    return new JavadocPathsEditor(sdk, FileChooserDescriptorFactory.createMultipleJavaPathDescriptor());
   }
 
   @Override
@@ -57,43 +44,56 @@ public class JavadocOrderRootTypeUIFactory implements OrderRootTypeUIFactory {
     return ProjectBundle.message("library.javadocs.node");
   }
 
-  static class JavadocPathsEditor extends SdkPathEditor {
+  private static class JavadocPathsEditor extends SdkPathEditor {
     private final Sdk mySdk;
 
-    public JavadocPathsEditor(Sdk sdk) {
-      super(ProjectBundle.message("sdk.configure.javadoc.tab"),
-            JavadocOrderRootType.getInstance(),
-            FileChooserDescriptorFactory.createMultipleJavaPathDescriptor());
+    JavadocPathsEditor(Sdk sdk, FileChooserDescriptor descriptor) {
+      super(ProjectBundle.message("sdk.configure.javadoc.tab"), JavadocOrderRootType.getInstance(), descriptor);
       mySdk = sdk;
     }
 
     @Override
     protected void addToolbarButtons(ToolbarDecorator toolbarDecorator) {
-      AnActionButton specifyUrlButton = new AnActionButton(ProjectBundle.message("sdk.paths.specify.url.button"), IconUtil.getAddLinkIcon()) {
+      AnActionButton specifyUrlButton = new DumbAwareActionButton(ProjectBundle.message("sdk.paths.specify.url.button"), IconUtil.getAddLinkIcon()) {
         @Override
-        public void actionPerformed(AnActionEvent e) {
+        public void actionPerformed(@NotNull AnActionEvent e) {
           onSpecifyUrlButtonClicked();
         }
       };
       specifyUrlButton.setShortcut(CustomShortcutSet.fromString("alt S"));
-      specifyUrlButton.addCustomUpdater(new AnActionButtonUpdater() {
-        @Override
-        public boolean isEnabled(AnActionEvent e) {
-          return myEnabled && !isUrlInserted();
-        }
-      });
+      specifyUrlButton.addCustomUpdater(e -> myEnabled);
       toolbarDecorator.addExtraAction(specifyUrlButton);
     }
 
     private void onSpecifyUrlButtonClicked() {
-      final String defaultDocsUrl = mySdk == null ? "" : StringUtil.notNullize(((SdkType) mySdk.getSdkType()).getDefaultDocumentationUrl(mySdk), "");
-      VirtualFile virtualFile  = Util.showSpecifyJavadocUrlDialog(myPanel, defaultDocsUrl);
-      if(virtualFile != null){
+      String defaultDocsUrl = mySdk == null ? "" : StringUtil.notNullize(((SdkType)mySdk.getSdkType()).getDefaultDocumentationUrl(mySdk));
+      VirtualFile virtualFile = Util.showSpecifyJavadocUrlDialog(myPanel, defaultDocsUrl);
+      if (virtualFile != null) {
         addElement(virtualFile);
         setModified(true);
         requestDefaultFocus();
         setSelectedRoots(new Object[]{virtualFile});
       }
+    }
+
+    @Override
+    protected VirtualFile[] adjustAddedFileSet(Component component, VirtualFile[] files) {
+      JavadocQuarantineStatusCleaner.cleanIfNeeded(files);
+
+      for (int i = 0; i < files.length; i++) {
+        VirtualFile file = files[i], docRoot = null;
+
+        if (file.getName().equalsIgnoreCase("docs")) {
+          docRoot = file.findChild("api");
+        }
+        else if (file.getFileSystem() instanceof ArchiveFileSystem && file.getParent() == null) {
+          docRoot = file.findFileByRelativePath("docs/api");
+        }
+
+        if (docRoot != null) files[i] = docRoot;
+      }
+
+      return files;
     }
   }
 }

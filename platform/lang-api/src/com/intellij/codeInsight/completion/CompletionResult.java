@@ -27,7 +27,7 @@ public class CompletionResult {
   private final PrefixMatcher myMatcher;
   private final CompletionSorter mySorter;
 
-  private CompletionResult(LookupElement lookupElement, PrefixMatcher matcher, CompletionSorter sorter) {
+  protected CompletionResult(LookupElement lookupElement, PrefixMatcher matcher, CompletionSorter sorter) {
     myLookupElement = lookupElement;
     myMatcher = matcher;
     mySorter = sorter;
@@ -65,4 +65,8 @@ public class CompletionResult {
     return myMatcher.isStartMatch(myLookupElement);
   }
 
+  @Override
+  public String toString() {
+    return myLookupElement.toString();
+  }
 }

@@ -22,19 +22,18 @@ import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.ConflictsUtil;
 import com.intellij.refactoring.util.RefactoringUIUtil;
-import com.intellij.util.VisibilityUtil;
-import com.intellij.util.containers.HashMap;
+import java.util.HashMap;
 import com.intellij.util.containers.MultiMap;
 
 import java.util.HashSet;
 
 class PackageLocalsUsageCollector extends JavaRecursiveElementWalkingVisitor {
-  private final HashMap<PsiElement,HashSet<PsiElement>> myReported = new HashMap<PsiElement, HashSet<PsiElement>>();
+  private final HashMap<PsiElement,HashSet<PsiElement>> myReported = new HashMap<>();
   private final PsiElement[] myElementsToMove;
   private final MultiMap<PsiElement, String> myConflicts;
   private final PackageWrapper myTargetPackage;
 
-  public PackageLocalsUsageCollector(final PsiElement[] elementsToMove, final PackageWrapper targetPackage, MultiMap<PsiElement,String> conflicts) {
+  PackageLocalsUsageCollector(final PsiElement[] elementsToMove, final PackageWrapper targetPackage, MultiMap<PsiElement,String> conflicts) {
     myElementsToMove = elementsToMove;
     myConflicts = conflicts;
     myTargetPackage = targetPackage;
@@ -53,8 +52,7 @@ class PackageLocalsUsageCollector extends JavaRecursiveElementWalkingVisitor {
 
   private void visitResolvedReference(PsiElement resolved, PsiJavaCodeReferenceElement reference) {
     if (resolved instanceof PsiModifierListOwner) {
-      final PsiModifierList modifierList = ((PsiModifierListOwner)resolved).getModifierList();
-      if (PsiModifier.PACKAGE_LOCAL.equals(VisibilityUtil.getVisibilityModifier(modifierList))) {
+      if (((PsiModifierListOwner)resolved).hasModifierProperty(PsiModifier.PACKAGE_LOCAL)) {
         PsiFile aFile = resolved.getContainingFile();
         if (aFile != null && !isInsideMoved(resolved)) {
           final PsiDirectory containingDirectory = aFile.getContainingDirectory();
@@ -63,7 +61,7 @@ class PackageLocalsUsageCollector extends JavaRecursiveElementWalkingVisitor {
             if (aPackage != null && !myTargetPackage.equalToPackage(aPackage)) {
               HashSet<PsiElement> reportedRefs = myReported.get(resolved);
               if (reportedRefs == null) {
-                reportedRefs = new HashSet<PsiElement>();
+                reportedRefs = new HashSet<>();
                 myReported.put(resolved, reportedRefs);
               }
               PsiElement container = ConflictsUtil.getContainer(reference);
@@ -83,7 +81,7 @@ class PackageLocalsUsageCollector extends JavaRecursiveElementWalkingVisitor {
 
   private boolean isInsideMoved(PsiElement place) {
     for (PsiElement element : myElementsToMove) {
-      if (element instanceof PsiClass) {
+      if (element.getContainingFile() != null) {
         if (PsiTreeUtil.isAncestor(element, place, false)) return true;
       }
     }

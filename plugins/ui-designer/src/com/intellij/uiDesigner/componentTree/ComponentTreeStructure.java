@@ -1,30 +1,16 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.uiDesigner.componentTree;
 
 import com.intellij.ide.util.treeView.AbstractTreeStructure;
 import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.uiDesigner.FormEditingUtil;
 import com.intellij.uiDesigner.designSurface.GuiEditor;
+import com.intellij.uiDesigner.lw.LwInspectionSuppression;
+import com.intellij.uiDesigner.radComponents.RadButtonGroup;
 import com.intellij.uiDesigner.radComponents.RadComponent;
 import com.intellij.uiDesigner.radComponents.RadContainer;
 import com.intellij.uiDesigner.radComponents.RadRootContainer;
-import com.intellij.uiDesigner.radComponents.RadButtonGroup;
-import com.intellij.uiDesigner.lw.LwInspectionSuppression;
-import com.intellij.uiDesigner.FormEditingUtil;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -41,18 +27,22 @@ final class ComponentTreeStructure extends AbstractTreeStructure{
   private final Object myRootElement;
   private final GuiEditor myEditor;
 
-  public ComponentTreeStructure(@NotNull final GuiEditor editor){
+  ComponentTreeStructure(@NotNull final GuiEditor editor){
     myRootElement = new ComponentTreeStructureRoot();
     myEditor = editor;
   }
 
+  @NotNull
+  @Override
   public Object getRootElement(){
     return myRootElement;
   }
 
-  public Object[] getChildElements(final Object element){
+  @NotNull
+  @Override
+  public Object[] getChildElements(@NotNull final Object element){
     if(element==myRootElement){
-      ArrayList<Object> elements = new ArrayList<Object>();
+      ArrayList<Object> elements = new ArrayList<>();
       final RadRootContainer rootContainer=myEditor.getRootContainer();
       elements.add(new ComponentPtr(myEditor, rootContainer));
       final LwInspectionSuppression[] suppressions = rootContainer.getInspectionSuppressions();
@@ -81,7 +71,7 @@ final class ComponentTreeStructure extends AbstractTreeStructure{
       }
     }
     else if (element instanceof LwInspectionSuppression[]) {
-      ArrayList<LwInspectionSuppression> result = new ArrayList<LwInspectionSuppression>();
+      ArrayList<LwInspectionSuppression> result = new ArrayList<>();
       for(LwInspectionSuppression suppression: (LwInspectionSuppression[]) element) {
         if (suppression.getComponentId() == null ||
           FormEditingUtil.findComponent(myEditor.getRootContainer(), suppression.getComponentId()) != null) {
@@ -101,7 +91,8 @@ final class ComponentTreeStructure extends AbstractTreeStructure{
     }
   }
 
-  public Object getParentElement(final Object element){
+  @Override
+  public Object getParentElement(@NotNull final Object element){
     if (element instanceof ComponentTreeStructureRoot) {
       return null;
     }
@@ -130,8 +121,9 @@ final class ComponentTreeStructure extends AbstractTreeStructure{
     }
   }
 
+  @Override
   @NotNull
-  public NodeDescriptor createDescriptor(final Object element,final NodeDescriptor parentDescriptor){
+  public NodeDescriptor createDescriptor(@NotNull final Object element, final NodeDescriptor parentDescriptor){
     if(element==myRootElement){
       return new RootDescriptor(parentDescriptor,myRootElement);
     }
@@ -167,11 +159,13 @@ final class ComponentTreeStructure extends AbstractTreeStructure{
     return element==myRootElement || element==myEditor.getRootContainer();
   }
 
+  @Override
   public void commit(){}
 
   /**
    * Nothing to commit
    */
+  @Override
   public boolean hasSomethingToCommit(){
     return false;
   }

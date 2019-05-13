@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,26 +17,28 @@ package com.intellij.ui.popup.util;
 
 import com.intellij.ui.components.JBList;
 import com.intellij.util.Alarm;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import javax.swing.event.ListSelectionEvent;
-import javax.swing.event.ListSelectionListener;
-import javax.swing.event.TreeSelectionEvent;
-import javax.swing.event.TreeSelectionListener;
 import java.io.File;
 
-public class DetailController implements TreeSelectionListener, ListSelectionListener {
+public class DetailController {
   private final MasterController myMasterController;
-  private Alarm myUpdateAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
+  private final Alarm myUpdateAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
   private DetailView myDetailView;
+  private ItemWrapper mySelectedItem;
 
-  public DetailController(MasterController myMasterController) {
-    this.myMasterController = myMasterController;
+  public DetailController(MasterController masterController) {
+    myMasterController = masterController;
   }
 
-  protected void doUpdateDetailViewWithItem(ItemWrapper wrapper1) {
-    if (wrapper1 != null) {
-      wrapper1.updateDetailView(myDetailView);
+  public void setDetailView(@NotNull DetailView detailView) {
+    myDetailView = detailView;
+  }
+
+  protected void doUpdateDetailViewWithItem(ItemWrapper wrapper) {
+    if (wrapper != null) {
+      wrapper.updateDetailView(myDetailView);
     }
     else {
       myDetailView.clearEditor();
@@ -61,7 +63,11 @@ public class DetailController implements TreeSelectionListener, ListSelectionLis
     return myMasterController.getPathLabel();
   }
 
-  void doUpdateDetailView() {
+  public ItemWrapper getSelectedItem() {
+    return mySelectedItem;
+  }
+
+  public void doUpdateDetailView(boolean now) {
     final Object[] values = myMasterController.getSelectedItems();
     ItemWrapper wrapper = null;
     if (values != null && values.length == 1) {
@@ -71,50 +77,29 @@ public class DetailController implements TreeSelectionListener, ListSelectionLis
     else {
       getLabel().setText(" ");
     }
-    final ItemWrapper wrapper1 = wrapper;
+    mySelectedItem = wrapper;
     myUpdateAlarm.cancelAllRequests();
-    myUpdateAlarm.addRequest(new Runnable() {
-      public void run() {
-        doUpdateDetailViewWithItem(wrapper1);
-      }
-    }, 100);
+    if (now) {
+      doUpdateDetailViewWithItem(mySelectedItem);
+    }
+    else {
+      myUpdateAlarm.addRequest(() -> {
+        doUpdateDetailViewWithItem(mySelectedItem);
+        myUpdateAlarm.cancelAllRequests();
+      }, 100);
+    }
   }
 
-  public void selectionChanged() {
-    SwingUtilities.invokeLater(new Runnable() {
-      @Override
-      public void run() {
-        doUpdateDetailView();
-      }
-    });
-  }
-
-  public void setTree(final JTree tree) {
-    tree.getSelectionModel().addTreeSelectionListener(this);
+  public void updateDetailView() {
+    doUpdateDetailView(false);
   }
 
   public void setList(final JBList list) {
     final ListSelectionModel listSelectionModel = list.getSelectionModel();
     listSelectionModel.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 
-    listSelectionModel.addListSelectionListener(this);
-
     if (list.getModel().getSize() == 0) {
       list.clearSelection();
     }
-  }
-
-  public void setDetailView(DetailView detailView) {
-    myDetailView = detailView;
-  }
-
-  @Override
-  public void valueChanged(TreeSelectionEvent event) {
-    selectionChanged();
-  }
-
-  @Override
-  public void valueChanged(ListSelectionEvent event) {
-    selectionChanged();
   }
 }

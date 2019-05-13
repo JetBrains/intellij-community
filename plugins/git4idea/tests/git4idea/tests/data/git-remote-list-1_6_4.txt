@@ -1,2 +1,0 @@
-origin	git://host/dir.git (fetch)
-origin	git@host/dir.git (push)

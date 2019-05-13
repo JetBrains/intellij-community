@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,7 @@ package org.jetbrains.idea.svn.dialogs;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.MultiLineLabelUI;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnBundle;
 
@@ -36,12 +36,6 @@ public class ChangeFormatDialog extends UpgradeFormatDialog {
     init();
   }
 
-  @NotNull
-  @Override
-  protected Action[] createActions() {
-    return new Action[]{getOKAction(),getCancelAction()};
-  }
-
   @Nullable
   @Override
   protected JPanel getBottomAuxiliaryPanel() {
@@ -52,7 +46,7 @@ public class ChangeFormatDialog extends UpgradeFormatDialog {
 
     GridBagConstraints gb = new GridBagConstraints();
 
-    gb.insets = new Insets(2, 2, 2, 2);
+    gb.insets = JBUI.insets(2);
     gb.weightx = 1;
     gb.weighty = 0;
     gb.gridwidth = 2;

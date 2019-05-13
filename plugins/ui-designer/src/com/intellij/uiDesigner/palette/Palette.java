@@ -1,25 +1,14 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.uiDesigner.palette;
 
 import com.intellij.ide.ui.LafManager;
 import com.intellij.ide.ui.LafManagerListener;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationNamesInfo;
-import com.intellij.openapi.components.*;
+import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.components.State;
+import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
@@ -38,6 +27,7 @@ import com.intellij.uiDesigner.propertyInspector.editors.IntEnumEditor;
 import com.intellij.uiDesigner.propertyInspector.properties.*;
 import com.intellij.uiDesigner.propertyInspector.renderers.IntEnumRenderer;
 import com.intellij.uiDesigner.radComponents.RadComponent;
+import com.intellij.util.containers.ContainerUtil;
 import org.jdom.Document;
 import org.jdom.Element;
 import org.jdom.input.SAXBuilder;
@@ -61,23 +51,17 @@ import java.util.Map;
  * @author Anton Katilin
  * @author Vladimir Kondratyev
  */
-@State(
-  name = "Palette2",
-  storages = {
-    @Storage( file = StoragePathMacros.PROJECT_FILE)
-   ,@Storage( file = StoragePathMacros.PROJECT_CONFIG_DIR + "/uiDesigner.xml", scheme = StorageScheme.DIRECTORY_BASED)
-    }
-)
-public final class Palette implements ProjectComponent, PersistentStateComponent<Element> {
+@State(name = "Palette2", defaultStateAsResource = true, storages = @Storage("uiDesigner.xml"))
+public final class Palette implements Disposable, PersistentStateComponent<Element> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.uiDesigner.palette.Palette");
 
   private final MyLafManagerListener myLafManagerListener;
-  private final HashMap<Class, IntrospectedProperty[]> myClass2Properties;
-  private final HashMap<String, ComponentItem> myClassName2Item;
+  private final Map<Class, IntrospectedProperty[]> myClass2Properties;
+  private final Map<String, ComponentItem> myClassName2Item;
   /*All groups in the palette*/
-  private final ArrayList<GroupItem> myGroups;
+  private final List<GroupItem> myGroups;
   /*Listeners, etc*/
-  private final ArrayList<Listener> myListeners;
+  private final List<Listener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
   private final Project myProject;
   private final GroupItem mySpecialGroup = new GroupItem(true);
 
@@ -112,87 +96,78 @@ public final class Palette implements ProjectComponent, PersistentStateComponent
   @NonNls private static final String ATTRIBUTE_IS_CONTAINER = "is-container";
 
   public static Palette getInstance(@NotNull final Project project) {
-    return project.getComponent(Palette.class);
+    return ServiceManager.getService(project, Palette.class);
   }
 
-  /** Invoked by reflection */
+  /**
+   * Invoked by reflection
+   */
   public Palette(Project project) {
     myProject = project;
-    myLafManagerListener = new MyLafManagerListener();
-    myClass2Properties = new HashMap<Class, IntrospectedProperty[]>();
-    myClassName2Item = new HashMap<String, ComponentItem>();
-    myGroups = new ArrayList<GroupItem>();
-    myListeners = new ArrayList<Listener>();
+    myLafManagerListener = project == null ? null : new MyLafManagerListener();
+    myClass2Properties = new HashMap<>();
+    myClassName2Item = new HashMap<>();
+    myGroups = new ArrayList<>();
 
     if (project != null) {
       mySpecialGroup.setReadOnly(true);
       mySpecialGroup.addItem(ComponentItem.createAnyComponentItem(project));
     }
+
+    if (myLafManagerListener != null) {
+      LafManager.getInstance().addLafManagerListener(myLafManagerListener);
+    }
   }
 
+  @Override
   public Element getState() {
-    final Element e = new Element("state");
-    writeExternal(e);
-    return e;
+    Element state = new Element("state");
+    writeGroups(state);
+    return state;
   }
 
-  public void loadState(Element state) {
-    readExternal(state);
+  @Override
+  public void loadState(@NotNull Element state) {
+    myClass2Properties.clear();
+    myClassName2Item.clear();
+    myGroups.clear();
+
+    processGroups(state.getChildren(ELEMENT_GROUP));
+
+    // Ensure that all predefined items are loaded
+    LOG.assertTrue(myPanelItem != null);
+
+    if (!state.getAttributeValue(ATTRIBUTE_VERSION, "1").equals("2")) {
+      upgradePalette();
+    }
   }
 
-
-  /**Adds specified listener.*/
-  public void addListener(@NotNull final Listener l){
+  /**
+   * Adds specified listener.
+   */
+  public void addListener(@NotNull final Listener l) {
     LOG.assertTrue(!myListeners.contains(l));
     myListeners.add(l);
   }
 
-  /**Removes specified listener.*/
-  public void removeListener(@NotNull final Listener l){
+  /**
+   * Removes specified listener.
+   */
+  public void removeListener(@NotNull final Listener l) {
     LOG.assertTrue(myListeners.contains(l));
     myListeners.remove(l);
   }
 
   void fireGroupsChanged() {
-    final Listener[] listeners = myListeners.toArray(new Listener[myListeners.size()]);
-    for(Listener listener : listeners) {
+    for (Listener listener : myListeners) {
       listener.groupsChanged(this);
     }
   }
 
-  @NotNull
-  public String getComponentName(){
-    return "Palette2";
-  }
-
-  public void projectOpened() {
-    LafManager.getInstance().addLafManagerListener(myLafManagerListener);
-  }
-
-  public void projectClosed() {
-    LafManager.getInstance().removeLafManagerListener(myLafManagerListener);
-  }
-
-  public void readExternal(@NotNull final Element element) {
-    /*
-    ApplicationManager.getApplication().assertIsDispatchThread();
-    */
-
-    // It seems that IDEA inokes readExternal twice: first time for node in defaults XML
-    // the second time for node in project file. Stupidity... :(
-    myClass2Properties.clear();
-    myClassName2Item.clear();
-    myGroups.clear();
-
-    // Parse XML
-    final List groupElements = element.getChildren(ELEMENT_GROUP);
-    processGroups(groupElements);
-
-    // Ensure that all predefined items are loaded
-    LOG.assertTrue(myPanelItem != null);
-
-    if (!element.getAttributeValue(ATTRIBUTE_VERSION, "1").equals("2")) {
-      upgradePalette();
+  @Override
+  public void dispose() {
+    if (myLafManagerListener != null) {
+      LafManager.getInstance().removeLafManagerListener(myLafManagerListener);
     }
   }
 
@@ -200,10 +175,9 @@ public final class Palette implements ProjectComponent, PersistentStateComponent
     // load new components from the predefined Palette2.xml
     try {
       //noinspection HardCodedStringLiteral
-      final Document document = new SAXBuilder().build(getClass().getResourceAsStream("/idea/Palette2.xml"));
-      for(Object o: document.getRootElement().getChildren(ELEMENT_GROUP)) {
-        Element groupElement = (Element) o;
-        for(GroupItem group: myGroups) {
+      Document document = new SAXBuilder().build(getClass().getResourceAsStream("/idea/Palette2.xml"));
+      for (Element groupElement : document.getRootElement().getChildren(ELEMENT_GROUP)) {
+        for (GroupItem group : myGroups) {
           if (group.getName().equals(groupElement.getAttributeValue(ATTRIBUTE_NAME))) {
             upgradeGroup(group, groupElement);
             break;
@@ -217,8 +191,7 @@ public final class Palette implements ProjectComponent, PersistentStateComponent
   }
 
   private void upgradeGroup(final GroupItem group, final Element groupElement) {
-    for(Object o: groupElement.getChildren(ELEMENT_ITEM)) {
-      Element itemElement = (Element) o;
+    for (Element itemElement : groupElement.getChildren(ELEMENT_ITEM)) {
       if (itemElement.getAttributeValue(ATTRIBUTE_SINCE_VERSION, "").equals("2")) {
         processItemElement(itemElement, group, true);
       }
@@ -235,28 +208,17 @@ public final class Palette implements ProjectComponent, PersistentStateComponent
     }
   }
 
-  public void writeExternal(@NotNull final Element element) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
-
-    writeGroups(element);
-    //element.setAttribute(ATTRIBUTE_VERSION, "2");
-  }
-
-  public void initComponent() {}
-
-  public void disposeComponent() {}
-
   /**
    * @return a predefined palette item which corresponds to the JPanel.
    */
   @NotNull
-  public ComponentItem getPanelItem(){
+  public ComponentItem getPanelItem() {
     return myPanelItem;
   }
 
   /**
-   * @return <code>ComponentItem</code> for the UI bean with the specified <code>componentClassName</code>.
-   * The method returns <code>null</code> if palette has no information about the specified
+   * @return {@code ComponentItem} for the UI bean with the specified {@code componentClassName}.
+   * The method returns {@code null} if palette has no information about the specified
    * class.
    */
   @Nullable
@@ -268,23 +230,23 @@ public final class Palette implements ProjectComponent, PersistentStateComponent
    * @return read-only list of all groups in the palette.
    * <em>DO NOT MODIFY OR CACHE THIS LIST</em>.
    */
-  public ArrayList<GroupItem> getGroups(){
+  public List<GroupItem> getGroups() {
     return myGroups;
   }
 
   public GroupItem[] getToolWindowGroups() {
-    GroupItem[] groups = new GroupItem[myGroups.size()+1];
-    for(int i=0; i<myGroups.size(); i++) {
-      groups [i] = myGroups.get(i);
+    GroupItem[] groups = new GroupItem[myGroups.size() + 1];
+    for (int i = 0; i < myGroups.size(); i++) {
+      groups[i] = myGroups.get(i);
     }
-    groups [myGroups.size()] = mySpecialGroup;
+    groups[myGroups.size()] = mySpecialGroup;
     return groups;
   }
 
   /**
    * @param groups list of new groups.
    */
-  public void setGroups(@NotNull final ArrayList<GroupItem> groups){
+  public void setGroups(@NotNull final ArrayList<GroupItem> groups) {
     myGroups.clear();
     myGroups.addAll(groups);
 
@@ -292,10 +254,11 @@ public final class Palette implements ProjectComponent, PersistentStateComponent
   }
 
   /**
-   * Adds specified <code>item</code> to the palette.
+   * Adds specified {@code item} to the palette.
+   *
    * @param item item to be added
-   * @exception java.lang.IllegalArgumentException  if an item for the same class
-   * is already exists in the palette
+   * @throws IllegalArgumentException if an item for the same class
+   *                                            is already exists in the palette
    */
   public void addItem(@NotNull final GroupItem group, @NotNull final ComponentItem item) {
     // class -> item
@@ -314,7 +277,7 @@ public final class Palette implements ProjectComponent, PersistentStateComponent
     group.addItem(item);
 
     // Process special predefined item for JPanel
-    if("javax.swing.JPanel".equals(item.getClassName())){
+    if ("javax.swing.JPanel".equals(item.getClassName())) {
       myPanelItem = item;
     }
   }
@@ -330,18 +293,18 @@ public final class Palette implements ProjectComponent, PersistentStateComponent
   }
 
   public GroupItem findGroup(final ComponentItem componentItem) {
-    for(GroupItem group: myGroups) {
+    for (GroupItem group : myGroups) {
       if (group.contains(componentItem)) {
         return group;
       }
     }
-    return null;    
+    return null;
   }
 
   /**
    * Helper method.
    */
-  private static GridConstraints processDefaultConstraintsElement(@NotNull final Element element){
+  private static GridConstraints processDefaultConstraintsElement(@NotNull final Element element) {
     final GridConstraints constraints = new GridConstraints();
 
     // grid related attributes
@@ -359,7 +322,7 @@ public final class Palette implements ProjectComponent, PersistentStateComponent
 
     // preferred size
     final Element prefSizeElement = element.getChild(ELEMENT_PREFERRED_SIZE);
-    if (prefSizeElement != null){
+    if (prefSizeElement != null) {
       constraints.myPreferredSize.width = LwXmlReader.getRequiredInt(prefSizeElement, ATTRIBUTE_WIDTH);
       constraints.myPreferredSize.height = LwXmlReader.getRequiredInt(prefSizeElement, ATTRIBUTE_HEIGHT);
     }
@@ -374,7 +337,7 @@ public final class Palette implements ProjectComponent, PersistentStateComponent
     return constraints;
   }
 
-  private void processItemElement(@NotNull final Element itemElement, @NotNull final GroupItem group, final boolean skipExisting){
+  private void processItemElement(@NotNull final Element itemElement, @NotNull final GroupItem group, final boolean skipExisting) {
     // Class name. It's OK if class does not exist.
     final String className = LwXmlReader.getRequiredString(itemElement, ATTRIBUTE_CLASS);
     if (skipExisting && getItem(className) != null) {
@@ -401,11 +364,11 @@ public final class Palette implements ProjectComponent, PersistentStateComponent
       constraints = new GridConstraints();
     }
 
-    final HashMap<String, StringDescriptor> propertyName2initialValue = new HashMap<String, StringDescriptor>();
+    final HashMap<String, StringDescriptor> propertyName2initialValue = new HashMap<>();
     {
       final Element initialValues = itemElement.getChild(ELEMENT_INITIAL_VALUES);
-      if (initialValues != null){
-        for(final Object o : initialValues.getChildren(ELEMENT_PROPERTY)) {
+      if (initialValues != null) {
+        for (final Object o : initialValues.getChildren(ELEMENT_PROPERTY)) {
           final Element e = (Element)o;
           final String name = LwXmlReader.getRequiredString(e, ATTRIBUTE_NAME);
           // TODO[all] currently all initial values are strings
@@ -435,14 +398,11 @@ public final class Palette implements ProjectComponent, PersistentStateComponent
   /**
    * Reads PaletteElements from
    */
-  private void processGroups(final List groupElements){
-    for(final Object groupElement1 : groupElements) {
-      final Element groupElement = (Element)groupElement1;
-      final String groupName = LwXmlReader.getRequiredString(groupElement, ATTRIBUTE_NAME);
-      final GroupItem group = new GroupItem(groupName);
+  private void processGroups(@NotNull List<Element> groupElements) {
+    for (Element groupElement : groupElements) {
+      GroupItem group = new GroupItem(LwXmlReader.getRequiredString(groupElement, ATTRIBUTE_NAME));
       myGroups.add(group);
-      for (final Object o : groupElement.getChildren(ELEMENT_ITEM)) {
-        final Element itemElement = (Element)o;
+      for (Element itemElement : groupElement.getChildren(ELEMENT_ITEM)) {
         try {
           processItemElement(itemElement, group, false);
         }
@@ -453,8 +413,10 @@ public final class Palette implements ProjectComponent, PersistentStateComponent
     }
   }
 
-  /** Helper method */
-  private static void writeDefaultConstraintsElement(@NotNull final Element itemElement, @NotNull final GridConstraints c){
+  /**
+   * Helper method
+   */
+  private static void writeDefaultConstraintsElement(@NotNull final Element itemElement, @NotNull final GridConstraints c) {
     LOG.assertTrue(ELEMENT_ITEM.equals(itemElement.getName()));
 
     final Element element = new Element(ELEMENT_DEFAULT_CONSTRAINTS);
@@ -499,14 +461,16 @@ public final class Palette implements ProjectComponent, PersistentStateComponent
     }
   }
 
-  /** Helper method */
+  /**
+   * Helper method
+   */
   private static void writeInitialValuesElement(
     @NotNull final Element itemElement,
     @NotNull final HashMap<String, StringDescriptor> name2value
-  ){
+  ) {
     LOG.assertTrue(ELEMENT_ITEM.equals(itemElement.getName()));
 
-    if(name2value.size() == 0){ // do not append 'initial-values' subtag
+    if (name2value.size() == 0) { // do not append 'initial-values' subtag
       return;
     }
 
@@ -521,8 +485,10 @@ public final class Palette implements ProjectComponent, PersistentStateComponent
     }
   }
 
-  /** Helper method */
-  private static void writeComponentItem(@NotNull final Element groupElement, @NotNull final ComponentItem item){
+  /**
+   * Helper method
+   */
+  private static void writeComponentItem(@NotNull final Element groupElement, @NotNull final ComponentItem item) {
     LOG.assertTrue(ELEMENT_GROUP.equals(groupElement.getName()));
 
     final Element itemElement = new Element(ELEMENT_ITEM);
@@ -532,13 +498,13 @@ public final class Palette implements ProjectComponent, PersistentStateComponent
     itemElement.setAttribute(ATTRIBUTE_CLASS, item.getClassName());
 
     // Tooltip text (if any)
-    if(item.myToolTipText != null){
+    if (item.myToolTipText != null) {
       itemElement.setAttribute(ATTRIBUTE_TOOLTIP_TEXT, item.myToolTipText);
     }
 
     // Icon (if any)
     final String iconPath = item.getIconPath();
-    if(iconPath != null){
+    if (iconPath != null) {
       itemElement.setAttribute(ATTRIBUTE_ICON, iconPath);
     }
 
@@ -557,21 +523,18 @@ public final class Palette implements ProjectComponent, PersistentStateComponent
     writeInitialValuesElement(itemElement, item.getInitialValues());
   }
 
-  /**
-   * @param parentElement element to which all "group" elements will be appended
-   */
-  private void writeGroups(@NotNull final Element parentElement){
-    for (final GroupItem group : myGroups) {
-      final Element groupElement = new Element(ELEMENT_GROUP);
+  private void writeGroups(@NotNull Element parentElement) {
+    for (GroupItem group : myGroups) {
+      Element groupElement = new Element(ELEMENT_GROUP);
       parentElement.addContent(groupElement);
       groupElement.setAttribute(ATTRIBUTE_NAME, group.getName());
 
-      final ComponentItem[] itemList = group.getItems();
-      for (ComponentItem aItemList : itemList) {
+      for (ComponentItem aItemList : group.getItems()) {
         writeComponentItem(groupElement, aItemList);
       }
     }
   }
+
   /**
    * Helper method
    */
@@ -580,7 +543,7 @@ public final class Palette implements ProjectComponent, PersistentStateComponent
     final Method readMethod,
     final Method writeMethod,
     final IntEnumEditor.Pair[] pairs
-  ){
+  ) {
     return new IntroIntProperty(
       name,
       readMethod,
@@ -595,26 +558,27 @@ public final class Palette implements ProjectComponent, PersistentStateComponent
   }
 
   /**
-   * @return arrys of all properties that can be introspected from the
+   * @return arrays of all properties that can be introspected from the
    * specified class. Only properties with getter and setter methods are
    * returned.
    */
   @NotNull
   public IntrospectedProperty[] getIntrospectedProperties(@NotNull final Class aClass, @NotNull final Class delegeeClass) {
     // Try the cache first
-    // TODO[vova, anton] update cache after class reloading (its properties caould be hanged).
+    // TODO[vova, anton] update cache after class reloading (its properties could be hanged).
     if (myClass2Properties.containsKey(aClass)) {
       return myClass2Properties.get(aClass);
     }
 
-    final ArrayList<IntrospectedProperty> result = new ArrayList<IntrospectedProperty>();
+    final ArrayList<IntrospectedProperty> result = new ArrayList<>();
     try {
       final BeanInfo beanInfo = Introspector.getBeanInfo(aClass);
       final PropertyDescriptor[] descriptors = beanInfo.getPropertyDescriptors();
       for (final PropertyDescriptor descriptor : descriptors) {
         Method readMethod = descriptor.getReadMethod();
         Method writeMethod = descriptor.getWriteMethod();
-        if (writeMethod == null || readMethod == null) {
+        Class propertyType = descriptor.getPropertyType();
+        if (writeMethod == null || readMethod == null || propertyType == null) {
           continue;
         }
 
@@ -631,7 +595,6 @@ public final class Palette implements ProjectComponent, PersistentStateComponent
 
         final IntrospectedProperty property;
 
-        final Class propertyType = descriptor.getPropertyType();
         final Properties properties = (myProject == null) ? new Properties() : Properties.getInstance();
         if (int.class.equals(propertyType)) { // int
           IntEnumEditor.Pair[] enumPairs = properties.getEnumPairs(aClass, name);
@@ -639,8 +602,8 @@ public final class Palette implements ProjectComponent, PersistentStateComponent
             property = createIntEnumProperty(name, readMethod, writeMethod, enumPairs);
           }
           else if (JLabel.class.isAssignableFrom(aClass)) { // special handling for javax.swing.JLabel
-            if (JLabel.class.isAssignableFrom(aClass) && ("displayedMnemonic".equals(name) || "displayedMnemonicIndex".equals(name)))
-            { // skip JLabel#displayedMnemonic and JLabel#displayedMnemonicIndex
+            if (JLabel.class.isAssignableFrom(aClass) &&
+                ("displayedMnemonic".equals(name) || "displayedMnemonicIndex".equals(name))) { // skip JLabel#displayedMnemonic and JLabel#displayedMnemonicIndex
               continue;
             }
             else {
@@ -714,11 +677,9 @@ public final class Palette implements ProjectComponent, PersistentStateComponent
           }
           Condition<RadComponent> filter = null;
           if (name.equals(SwingProperties.LABEL_FOR)) {
-            filter = new Condition<RadComponent>() {
-              public boolean value(final RadComponent t) {
-                ComponentItem item = getItem(t.getComponentClassName());
-                return item != null && item.isCanAttachLabel();
-              }
+            filter = t -> {
+              ComponentItem item = getItem(t.getComponentClassName());
+              return item != null && item.isCanAttachLabel();
             };
           }
           property = new IntroComponentProperty(name, readMethod, writeMethod, propertyType, filter, storeAsClient);
@@ -750,20 +711,20 @@ public final class Palette implements ProjectComponent, PersistentStateComponent
       throw new RuntimeException(e);
     }
 
-    final IntrospectedProperty[] properties = result.toArray(new IntrospectedProperty[result.size()]);
+    final IntrospectedProperty[] properties = result.toArray(new IntrospectedProperty[0]);
     myClass2Properties.put(aClass, properties);
     return properties;
   }
 
   /**
-   * @return introspected property with the given <code>name</code> of the
-   * specified <code>class</code>. The method returns <code>null</code> if there is no
+   * @return introspected property with the given {@code name} of the
+   * specified {@code class}. The method returns {@code null} if there is no
    * property with the such name.
    */
   @Nullable
-  public IntrospectedProperty getIntrospectedProperty(@NotNull final RadComponent component, @NotNull final String name){
+  public IntrospectedProperty getIntrospectedProperty(@NotNull final RadComponent component, @NotNull final String name) {
     final IntrospectedProperty[] properties = getIntrospectedProperties(component);
-    for (final IntrospectedProperty property: properties) {
+    for (final IntrospectedProperty property : properties) {
       if (name.equals(property.getName())) {
         return property;
       }
@@ -773,7 +734,7 @@ public final class Palette implements ProjectComponent, PersistentStateComponent
 
   /**
    * @return "inplace" property for the component with the specified class.
-   * <b>DO NOT USE THIS METHOD DIRECTLY</b>. Use {@link com.intellij.uiDesigner.radComponents.RadComponent#getInplaceProperty(int, int) }
+   * <b>DO NOT USE THIS METHOD DIRECTLY</b>. Use {@link RadComponent#getInplaceProperty(int, int) }
    * instead.
    */
   @Nullable
@@ -782,17 +743,17 @@ public final class Palette implements ProjectComponent, PersistentStateComponent
     final IntrospectedProperty[] properties = getIntrospectedProperties(component);
     for (int i = properties.length - 1; i >= 0; i--) {
       final IntrospectedProperty property = properties[i];
-      if(property.getName().equals(inplaceProperty)){
+      if (property.getName().equals(inplaceProperty)) {
         return property;
       }
     }
     return null;
   }
 
-  public static boolean isRemovable(@NotNull final GroupItem group){
+  public static boolean isRemovable(@NotNull final GroupItem group) {
     final ComponentItem[] items = group.getItems();
-    for(int i = items.length - 1; i >=0; i--){
-      if(!items [i].isRemovable()){
+    for (int i = items.length - 1; i >= 0; i--) {
+      if (!items[i].isRemovable()) {
         return false;
       }
     }
@@ -802,12 +763,12 @@ public final class Palette implements ProjectComponent, PersistentStateComponent
   /**
    * Updates UI of editors and renderers of all introspected properties
    */
-  private final class MyLafManagerListener implements LafManagerListener{
-    private void updateUI(final Property property){
+  private final class MyLafManagerListener implements LafManagerListener {
+    private void updateUI(final Property property) {
       final PropertyRenderer renderer = property.getRenderer();
       renderer.updateUI();
       final PropertyEditor editor = property.getEditor();
-      if(editor != null){
+      if (editor != null) {
         editor.updateUI();
       }
       final Property[] children = property.getChildren(null);
@@ -816,7 +777,8 @@ public final class Palette implements ProjectComponent, PersistentStateComponent
       }
     }
 
-    public void lookAndFeelChanged(final LafManager source) {
+    @Override
+    public void lookAndFeelChanged(@NotNull final LafManager source) {
       for (final IntrospectedProperty[] properties : myClass2Properties.values()) {
         LOG.assertTrue(properties != null);
         for (int j = properties.length - 1; j >= 0; j--) {
@@ -826,7 +788,7 @@ public final class Palette implements ProjectComponent, PersistentStateComponent
     }
   }
 
-  static interface Listener{
-    void groupsChanged(Palette palette);
+  interface Listener {
+    void groupsChanged(@NotNull Palette palette);
   }
 }

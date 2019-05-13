@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,16 +15,19 @@
  */
 package com.intellij.openapi.editor.textarea;
 
-import com.intellij.openapi.editor.CaretModel;
-import com.intellij.openapi.editor.LogicalPosition;
-import com.intellij.openapi.editor.VisualPosition;
+import com.intellij.openapi.Disposable;
+import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.event.CaretListener;
 import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.util.EventDispatcher;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.text.BadLocationException;
 import javax.swing.text.JTextComponent;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * @author yole
@@ -32,10 +35,13 @@ import javax.swing.text.JTextComponent;
 public class TextComponentCaretModel implements CaretModel {
   private final JTextComponent myTextComponent;
   private final TextComponentEditor myEditor;
+  private final Caret myCaret;
+  private final EventDispatcher<CaretActionListener> myCaretActionListeners = EventDispatcher.create(CaretActionListener.class);
 
-  public TextComponentCaretModel(final JTextComponent textComponent, TextComponentEditor editor) {
+  public TextComponentCaretModel(@NotNull JTextComponent textComponent, @NotNull TextComponentEditor editor) {
     myTextComponent = textComponent;
     myEditor = editor;
+    myCaret = new TextComponentCaret(editor);
   }
 
   @Override
@@ -62,7 +68,19 @@ public class TextComponentCaretModel implements CaretModel {
 
   @Override
   public void moveToOffset(final int offset, boolean locateBeforeSoftWrap) {
-    myTextComponent.setCaretPosition(Math.min(offset, myTextComponent.getText().length()));
+    int targetOffset = Math.min(offset, myTextComponent.getText().length());
+    int currentPosition = myTextComponent.getCaretPosition();
+    // We try to preserve selection, to match EditorImpl behaviour.
+    // It's only possible though, if target offset is located at either end of existing selection.
+    if (targetOffset != currentPosition) {
+      if (targetOffset == myTextComponent.getCaret().getMark()) {
+        myTextComponent.setCaretPosition(currentPosition);
+        myTextComponent.moveCaretPosition(targetOffset);
+      }
+      else {
+        myTextComponent.setCaretPosition(targetOffset);
+      }
+    }
   }
 
   @Override
@@ -128,5 +146,108 @@ public class TextComponentCaretModel implements CaretModel {
   @Override
   public TextAttributes getTextAttributes() {
     return null;
+  }
+
+  @Override
+  public boolean supportsMultipleCarets() {
+    return false;
+  }
+
+  @NotNull
+  @Override
+  public Caret getCurrentCaret() {
+    return myCaret;
+  }
+
+  @NotNull
+  @Override
+  public Caret getPrimaryCaret() {
+    return myCaret;
+  }
+
+  @Override
+  public int getCaretCount() {
+    return 1;
+  }
+
+  @NotNull
+  @Override
+  public List<Caret> getAllCarets() {
+    return Collections.singletonList(myCaret);
+  }
+
+  @Nullable
+  @Override
+  public Caret getCaretAt(@NotNull VisualPosition pos) {
+    return myCaret.getVisualPosition().equals(pos) ? myCaret : null;
+  }
+
+  @Nullable
+  @Override
+  public Caret addCaret(@NotNull VisualPosition pos) {
+    return null;
+  }
+
+  @Nullable
+  @Override
+  public Caret addCaret(@NotNull VisualPosition pos, boolean makePrimary) {
+    return null;
+  }
+
+  @Override
+  public boolean removeCaret(@NotNull Caret caret) {
+    return false;
+  }
+
+  @Override
+  public void removeSecondaryCarets() {
+  }
+
+  @Override
+  public void setCaretsAndSelections(@NotNull List<CaretState> caretStates) {
+    if (caretStates.size() != 1) throw new IllegalArgumentException("Exactly one CaretState object must be passed");
+    CaretState state = caretStates.get(0);
+    if (state != null) {
+      if (state.getCaretPosition() != null) moveToLogicalPosition(state.getCaretPosition());
+      if (state.getSelectionStart() != null && state.getSelectionEnd() != null) {
+        myEditor.getSelectionModel().setSelection(myEditor.logicalPositionToOffset(state.getSelectionStart()), 
+                                                  myEditor.logicalPositionToOffset(state.getSelectionEnd()));
+      }
+    }
+  }
+
+  @Override
+  public void setCaretsAndSelections(@NotNull List<CaretState> caretStates, boolean updateSystemSelection) {
+    setCaretsAndSelections(caretStates);
+  }
+
+  @NotNull
+  @Override
+  public List<CaretState> getCaretsAndSelections() {
+    return Collections.singletonList(new CaretState(getLogicalPosition(), 
+                                                    myEditor.offsetToLogicalPosition(myEditor.getSelectionModel().getSelectionStart()), 
+                                                    myEditor.offsetToLogicalPosition(myEditor.getSelectionModel().getSelectionEnd())));
+  }
+
+  @Override
+  public void runForEachCaret(@NotNull CaretAction action) {
+    myCaretActionListeners.getMulticaster().beforeAllCaretsAction();
+    action.perform(myCaret);
+    myCaretActionListeners.getMulticaster().afterAllCaretsAction();
+  }
+
+  @Override
+  public void runForEachCaret(@NotNull CaretAction action, boolean reverseOrder) {
+    runForEachCaret(action);
+  }
+
+  @Override
+  public void addCaretActionListener(@NotNull CaretActionListener listener, @NotNull Disposable disposable) {
+    myCaretActionListeners.addListener(listener, disposable);
+  }
+
+  @Override
+  public void runBatchCaretOperation(@NotNull Runnable runnable) {
+    runnable.run();
   }
 }

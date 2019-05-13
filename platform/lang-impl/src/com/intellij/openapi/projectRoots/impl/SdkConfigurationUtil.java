@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,13 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.intellij.openapi.projectRoots.impl;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.WriteAction;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
-import com.intellij.openapi.fileChooser.PathChooserDialog;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
@@ -32,48 +32,70 @@ import com.intellij.openapi.projectRoots.SdkType;
 import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.NullableConsumer;
+import com.intellij.util.text.UniqueNameGenerator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * @author yole
  */
 public class SdkConfigurationUtil {
-  private SdkConfigurationUtil() {
+  private static final Logger LOG = Logger.getInstance(SdkConfigurationUtil.class);
+  private SdkConfigurationUtil() { }
+
+  public static void createSdk(@Nullable final Project project,
+                               final Sdk[] existingSdks,
+                               final NullableConsumer<? super Sdk> onSdkCreatedCallBack,
+                               final boolean createIfExists,
+                               final SdkType... sdkTypes) {
+    createSdk(project, existingSdks, onSdkCreatedCallBack, createIfExists, true, sdkTypes);
   }
 
   public static void createSdk(@Nullable final Project project,
                                final Sdk[] existingSdks,
-                               final NullableConsumer<Sdk> onSdkCreatedCallBack,
+                               final NullableConsumer<? super Sdk> onSdkCreatedCallBack,
+                               final boolean createIfExists,
+                               final boolean followSymLinks,
                                final SdkType... sdkTypes) {
     if (sdkTypes.length == 0) {
       onSdkCreatedCallBack.consume(null);
       return;
     }
-    final FileChooserDescriptor descriptor = createCompositeDescriptor(sdkTypes);
-    if (SystemInfo.isMac) {
-      descriptor.putUserData(PathChooserDialog.NATIVE_MAC_CHOOSER_SHOW_HIDDEN_FILES, Boolean.TRUE);
+
+    FileChooserDescriptor descriptor = createCompositeDescriptor(sdkTypes);
+    // XXX: Workaround for PY-21787 since the native macOS dialog always follows symlinks
+    if (!followSymLinks) {
+      descriptor.setForcedToUseIdeaFileChooser(true);
     }
-    String suggestedPath = sdkTypes[0].suggestHomePath();
-    VirtualFile suggestedDir = suggestedPath == null
-                               ? null
-                               : LocalFileSystem.getInstance().findFileByPath(FileUtil.toSystemIndependentName(suggestedPath));
+    VirtualFile suggestedDir = getSuggestedSdkRoot(sdkTypes[0]);
     FileChooser.chooseFiles(descriptor, project, suggestedDir, new FileChooser.FileChooserConsumer() {
       @Override
       public void consume(List<VirtualFile> selectedFiles) {
         for (SdkType sdkType : sdkTypes) {
-          if (sdkType.isValidSdkHome(selectedFiles.get(0).getPath())) {
-            onSdkCreatedCallBack.consume(setupSdk(existingSdks, selectedFiles.get(0), sdkType, false, null, null));
+          final String path = selectedFiles.get(0).getPath();
+          if (sdkType.isValidSdkHome(path)) {
+            Sdk newSdk = null;
+            if (!createIfExists) {
+              for (Sdk sdk : existingSdks) {
+                if (path.equals(sdk.getHomePath())) {
+                  newSdk = sdk;
+                  break;
+                }
+              }
+            }
+            if (newSdk == null) {
+              newSdk = setupSdk(existingSdks, selectedFiles.get(0), sdkType, false, null, null);
+            }
+            onSdkCreatedCallBack.consume(newSdk);
             return;
           }
         }
@@ -87,12 +109,15 @@ public class SdkConfigurationUtil {
     });
   }
 
-  private static FileChooserDescriptor createCompositeDescriptor(final SdkType... sdkTypes) {
-    FileChooserDescriptor descriptor0 = sdkTypes[0].getHomeChooserDescriptor();
-    FileChooserDescriptor descriptor = new FileChooserDescriptor(descriptor0.isChooseFiles(), descriptor0.isChooseFolders(),
-                                                                 descriptor0.isChooseJars(), descriptor0.isChooseJarsAsFiles(),
-                                                                 descriptor0.isChooseJarContents(), descriptor0.isChooseMultiple()) {
+  public static void createSdk(@Nullable final Project project,
+                               final Sdk[] existingSdks,
+                               final NullableConsumer<? super Sdk> onSdkCreatedCallBack,
+                               final SdkType... sdkTypes) {
+    createSdk(project, existingSdks, onSdkCreatedCallBack, true, sdkTypes);
+  }
 
+  private static FileChooserDescriptor createCompositeDescriptor(final SdkType... sdkTypes) {
+    return new FileChooserDescriptor(sdkTypes[0].getHomeChooserDescriptor()) {
       @Override
       public void validateSelectedFiles(final VirtualFile[] files) throws Exception {
         if (files.length > 0) {
@@ -102,59 +127,39 @@ public class SdkConfigurationUtil {
             }
           }
         }
-        String message = files.length > 0 && files[0].isDirectory()
-                         ? ProjectBundle.message("sdk.configure.home.invalid.error", sdkTypes[0].getPresentableName())
-                         : ProjectBundle.message("sdk.configure.home.file.invalid.error", sdkTypes[0].getPresentableName());
-        throw new Exception(message);
+        String key = files.length > 0 && files[0].isDirectory() ? "sdk.configure.home.invalid.error" : "sdk.configure.home.file.invalid.error";
+        throw new Exception(ProjectBundle.message(key, sdkTypes[0].getPresentableName()));
       }
     };
-    descriptor.setTitle(descriptor0.getTitle());
-    return descriptor;
   }
 
   public static void addSdk(@NotNull final Sdk sdk) {
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
-      public void run() {
-        ProjectJdkTable.getInstance().addJdk(sdk);
-      }
-    });
+    ApplicationManager.getApplication().runWriteAction(() -> ProjectJdkTable.getInstance().addJdk(sdk));
   }
 
   public static void removeSdk(final Sdk sdk) {
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
-      public void run() {
-        ProjectJdkTable.getInstance().removeJdk(sdk);
-      }
-    });
+    ApplicationManager.getApplication().runWriteAction(() -> ProjectJdkTable.getInstance().removeJdk(sdk));
   }
 
   @Nullable
-  public static Sdk setupSdk(final Sdk[] allSdks,
-                             final VirtualFile homeDir, final SdkType sdkType, final boolean silent,
+  public static Sdk setupSdk(@NotNull Sdk[] allSdks,
+                             @NotNull VirtualFile homeDir,
+                             final SdkType sdkType,
+                             final boolean silent,
                              @Nullable final SdkAdditionalData additionalData,
                              @Nullable final String customSdkSuggestedName) {
-    final List<Sdk> sdksList = Arrays.asList(allSdks);
-
-    final ProjectJdkImpl sdk;
+    ProjectJdkImpl sdk = null;
     try {
-      final String sdkName = customSdkSuggestedName == null
-                             ? createUniqueSdkName(sdkType, homeDir.getPath(), sdksList)
-                             : createUniqueSdkName(customSdkSuggestedName, sdksList);
-      sdk = new ProjectJdkImpl(sdkName, sdkType);
+      sdk = createSdk(allSdks, homeDir, sdkType, additionalData, customSdkSuggestedName);
 
-      if (additionalData != null) {
-        // additional initialization.
-        // E.g. some ruby sdks must be initialized before
-        // setupSdkPaths() method invocation
-        sdk.setSdkAdditionalData(additionalData);
-      }
-
-      sdk.setHomePath(homeDir.getPath());
       sdkType.setupSdkPaths(sdk);
     }
-    catch (Exception e) {
+    catch (Throwable e) {
+      LOG.warn("Error creating or configuring sdk: homeDir=[" + homeDir + "]; " +
+               "sdkType=[" + sdkType + "]; " +
+               "additionalData=[" + additionalData + "]; " +
+               "customSdkSuggestedName=[" + customSdkSuggestedName + "]; " +
+               "sdk=[" + sdk + "]", e);
       if (!silent) {
         Messages.showErrorDialog("Error configuring SDK: " +
                                  e.getMessage() +
@@ -167,21 +172,44 @@ public class SdkConfigurationUtil {
     return sdk;
   }
 
+  @NotNull
+  public static ProjectJdkImpl createSdk(@NotNull Sdk[] allSdks,
+                                          @NotNull VirtualFile homeDir,
+                                          SdkType sdkType,
+                                          @Nullable SdkAdditionalData additionalData, @Nullable String customSdkSuggestedName) {
+    final List<Sdk> sdksList = Arrays.asList(allSdks);
+
+    String sdkPath = sdkType.sdkPath(homeDir);
+
+    final String sdkName = customSdkSuggestedName == null
+                           ? createUniqueSdkName(sdkType, sdkPath, sdksList)
+                           : createUniqueSdkName(customSdkSuggestedName, sdksList);
+
+    ProjectJdkImpl sdk = new ProjectJdkImpl(sdkName, sdkType);
+
+    if (additionalData != null) {
+      // additional initialization.
+      // E.g. some ruby sdks must be initialized before
+      // setupSdkPaths() method invocation
+      sdk.setSdkAdditionalData(additionalData);
+    }
+
+    sdk.setHomePath(sdkPath);
+    return sdk;
+  }
+
   public static void setDirectoryProjectSdk(@NotNull final Project project, @Nullable final Sdk sdk) {
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
-      public void run() {
-        ProjectRootManager.getInstance(project).setProjectSdk(sdk);
-        final Module[] modules = ModuleManager.getInstance(project).getModules();
-        if (modules.length > 0) {
-          ModuleRootModificationUtil.setSdkInherited(modules[0]);
-        }
+    ApplicationManager.getApplication().runWriteAction(() -> {
+      ProjectRootManager.getInstance(project).setProjectSdk(sdk);
+      final Module[] modules = ModuleManager.getInstance(project).getModules();
+      if (modules.length > 0) {
+        ModuleRootModificationUtil.setSdkInherited(modules[0]);
       }
     });
   }
 
   public static void configureDirectoryProjectSdk(final Project project,
-                                                  @Nullable Comparator<Sdk> preferredSdkComparator,
+                                                  @Nullable Comparator<? super Sdk> preferredSdkComparator,
                                                   final SdkType... sdkTypes) {
     Sdk existingSdk = ProjectRootManager.getInstance(project).getProjectSdk();
     if (existingSdk != null && ArrayUtil.contains(existingSdk.getSdkType(), sdkTypes)) {
@@ -195,7 +223,7 @@ public class SdkConfigurationUtil {
   }
 
   @Nullable
-  public static Sdk findOrCreateSdk(@Nullable Comparator<Sdk> comparator, final SdkType... sdkTypes) {
+  public static Sdk findOrCreateSdk(@Nullable Comparator<? super Sdk> comparator, final SdkType... sdkTypes) {
     final Project defaultProject = ProjectManager.getInstance().getDefaultProject();
     final Sdk sdk = ProjectRootManager.getInstance(defaultProject).getProjectSdk();
     if (sdk != null) {
@@ -233,12 +261,8 @@ public class SdkConfigurationUtil {
    */
   @Nullable
   public static Sdk createAndAddSDK(final String path, SdkType sdkType) {
-    VirtualFile sdkHome = ApplicationManager.getApplication().runWriteAction(new Computable<VirtualFile>() {
-      @Override
-      public VirtualFile compute() {
-        return LocalFileSystem.getInstance().refreshAndFindFileByPath(path);
-      }
-    });
+    VirtualFile sdkHome =
+      WriteAction.compute(() -> LocalFileSystem.getInstance().refreshAndFindFileByPath(path));
     if (sdkHome != null) {
       final Sdk newSdk = setupSdk(ProjectJdkTable.getInstance().getAllJdks(), sdkHome, sdkType, true, null, null);
       if (newSdk != null) {
@@ -249,24 +273,19 @@ public class SdkConfigurationUtil {
     return null;
   }
 
-  public static String createUniqueSdkName(SdkType type, String home, final Collection<Sdk> sdks) {
+  @NotNull
+  public static String createUniqueSdkName(@NotNull SdkType type, String home, final Collection<? extends Sdk> sdks) {
     return createUniqueSdkName(type.suggestSdkName(null, home), sdks);
   }
 
-  public static String createUniqueSdkName(final String suggestedName, final Collection<Sdk> sdks) {
-    final Set<String> names = new HashSet<String>();
-    for (Sdk jdk : sdks) {
-      names.add(jdk.getName());
-    }
-    String newSdkName = suggestedName;
-    int i = 0;
-    while (names.contains(newSdkName)) {
-      newSdkName = suggestedName + " (" + (++i) + ")";
-    }
-    return newSdkName;
+  @NotNull
+  public static String createUniqueSdkName(@NotNull String suggestedName, @NotNull Collection<? extends Sdk> sdks) {
+    Set<String> nameList = sdks.stream().map( jdk -> jdk.getName()).collect(Collectors.toSet());
+
+    return UniqueNameGenerator.generateUniqueName(suggestedName, "", "", " (", ")", o -> !nameList.contains(o));
   }
 
-  public static void selectSdkHome(final SdkType sdkType, @NotNull final Consumer<String> consumer) {
+  public static void selectSdkHome(@NotNull final SdkType sdkType, @NotNull final Consumer<? super String> consumer) {
     final FileChooserDescriptor descriptor = sdkType.getHomeChooserDescriptor();
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       Sdk sdk = ProjectJdkTable.getInstance().findMostRecentSdkOfType(sdkType);
@@ -274,32 +293,29 @@ public class SdkConfigurationUtil {
       consumer.consume(sdk.getHomePath());
       return;
     }
-    FileChooser.chooseFiles(descriptor, null, getSuggestedSdkRoot(sdkType), new Consumer<List<VirtualFile>>() {
-      @Override
-      public void consume(final List<VirtualFile> chosen) {
-        final String path = chosen.get(0).getPath();
-        if (sdkType.isValidSdkHome(path)) {
-          consumer.consume(path);
-          return;
-        }
+    FileChooser.chooseFiles(descriptor, null, getSuggestedSdkRoot(sdkType), chosen -> {
+      final String path = chosen.get(0).getPath();
+      if (sdkType.isValidSdkHome(path)) {
+        consumer.consume(path);
+        return;
+      }
 
-        final String adjustedPath = sdkType.adjustSelectedSdkHome(path);
-        if (sdkType.isValidSdkHome(adjustedPath)) {
-          consumer.consume(adjustedPath);
-        }
+      final String adjustedPath = sdkType.adjustSelectedSdkHome(path);
+      if (sdkType.isValidSdkHome(adjustedPath)) {
+        consumer.consume(adjustedPath);
       }
     });
   }
 
   @Nullable
-  public static VirtualFile getSuggestedSdkRoot(SdkType sdkType) {
-    final String homepath = sdkType.suggestHomePath();
-    if (homepath == null) return null;
-    return LocalFileSystem.getInstance().findFileByPath(homepath);
+  public static VirtualFile getSuggestedSdkRoot(@NotNull SdkType sdkType) {
+    final String homePath = sdkType.suggestHomePath();
+    return homePath == null ? null : LocalFileSystem.getInstance().findFileByPath(homePath);
   }
 
-  public static List<String> filterExistingPaths(SdkType sdkType, Collection<String> sdkHomes, final Sdk[] sdks) {
-    List<String> result = new ArrayList<String>();
+  @NotNull
+  public static List<String> filterExistingPaths(@NotNull SdkType sdkType, Collection<String> sdkHomes, final Sdk[] sdks) {
+    List<String> result = new ArrayList<>();
     for (String sdkHome : sdkHomes) {
       if (findByPath(sdkType, sdks, sdkHome) == null) {
         result.add(sdkHome);
@@ -309,10 +325,11 @@ public class SdkConfigurationUtil {
   }
 
   @Nullable
-  private static Sdk findByPath(SdkType sdkType, Sdk[] sdks, String sdkHome) {
+  private static Sdk findByPath(@NotNull SdkType sdkType, @NotNull Sdk[] sdks, @NotNull String sdkHome) {
     for (Sdk sdk : sdks) {
-      if (sdk.getSdkType() == sdkType &&
-          FileUtil.pathsEqual(FileUtil.toSystemIndependentName(sdk.getHomePath()), FileUtil.toSystemIndependentName(sdkHome))) {
+      final String path = sdk.getHomePath();
+      if (sdk.getSdkType() == sdkType && path != null &&
+          FileUtil.pathsEqual(FileUtil.toSystemIndependentName(path), FileUtil.toSystemIndependentName(sdkHome))) {
         return sdk;
       }
     }

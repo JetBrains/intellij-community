@@ -29,20 +29,20 @@ public class HgCopyCommand {
     myProject = project;
   }
 
-  public void execute(VirtualFile source, VirtualFile target) {
+  public void executeInCurrentThread(VirtualFile source, VirtualFile target) {
     VirtualFile sourceRepo = VcsUtil.getVcsRootFor(myProject, source);
     VirtualFile targetRepo = VcsUtil.getVcsRootFor(myProject, target);
     HgCommandExecutor executor = new HgCommandExecutor(myProject, VcsFileUtil.relativeOrFullPath(sourceRepo, source));
     if (sourceRepo != null && targetRepo != null && sourceRepo.equals(targetRepo)) {
-      executor.execute(sourceRepo, "copy", Arrays.asList("--after",
-                                                         VcsFileUtil.relativeOrFullPath(sourceRepo, source),
-                                                         VcsFileUtil.relativeOrFullPath(targetRepo, target)), null);
-    } else {
+      executor.executeInCurrentThread(sourceRepo, "copy", Arrays.asList("--after",
+                                                                        VcsFileUtil.relativeOrFullPath(sourceRepo, source),
+                                                                        VcsFileUtil.relativeOrFullPath(targetRepo, target)));
+    }
+    else {
       // copying from one repository to another => 'hg add' in new repo
       if (targetRepo != null) {
-        new HgAddCommand(myProject).execute(Collections.singleton(target));
+        new HgAddCommand(myProject).executeInCurrentThread(Collections.singleton(target));
       }
     }
   }
-
 }

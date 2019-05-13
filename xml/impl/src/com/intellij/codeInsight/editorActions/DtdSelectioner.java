@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,23 +15,26 @@
  */
 package com.intellij.codeInsight.editorActions;
 
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.xml.XmlAttlistDecl;
 import com.intellij.psi.xml.XmlElementDecl;
 import com.intellij.psi.xml.XmlToken;
 import com.intellij.psi.xml.XmlTokenType;
-import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.editor.Editor;
+import org.jetbrains.annotations.NotNull;
 
-import java.util.List;
 import java.util.ArrayList;
+import java.util.List;
 
-public class DtdSelectioner implements ExtendWordSelectionHandler {
-  public boolean canSelect(PsiElement e) {
+public class DtdSelectioner extends ExtendWordSelectionHandlerBase {
+  @Override
+  public boolean canSelect(@NotNull PsiElement e) {
     return e instanceof XmlAttlistDecl || e instanceof XmlElementDecl;
   }
 
-  public List<TextRange> select(PsiElement e, CharSequence editorText, int cursorOffset, Editor editor) {
+  @Override
+  public List<TextRange> select(@NotNull PsiElement e, @NotNull CharSequence editorText, int cursorOffset, @NotNull Editor editor) {
     PsiElement[] children = e.getChildren();
 
     PsiElement first = null;
@@ -51,7 +54,7 @@ public class DtdSelectioner implements ExtendWordSelectionHandler {
       }
     }
 
-    List<TextRange> result = new ArrayList<TextRange>(1);
+    List<TextRange> result = new ArrayList<>(1);
     if (first != null && last != null) {
       final int offset = last.getTextRange().getEndOffset() + 1;
         result.addAll(ExtendWordSelectionHandlerBase.expandToWholeLine(editorText,

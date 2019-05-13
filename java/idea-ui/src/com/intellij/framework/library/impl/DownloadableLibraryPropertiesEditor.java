@@ -24,8 +24,8 @@ import com.intellij.framework.library.LibraryVersionProperties;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.roots.libraries.ui.LibraryEditorComponent;
-import com.intellij.openapi.roots.ui.configuration.libraryEditor.LibraryPropertiesEditorBase;
 import com.intellij.openapi.roots.ui.configuration.libraryEditor.LibraryEditorBase;
+import com.intellij.openapi.roots.ui.configuration.libraryEditor.LibraryPropertiesEditorBase;
 import com.intellij.openapi.roots.ui.configuration.libraryEditor.NewLibraryEditor;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContainer;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -51,41 +51,39 @@ public class DownloadableLibraryPropertiesEditor extends LibraryPropertiesEditor
     myCurrentVersionString = myEditorComponent.getProperties().getVersionString();
   }
 
+  @Override
   protected void edit() {
     final ModalityState current = ModalityState.current();
     myDescription.fetchVersions(new DownloadableFileSetVersions.FileSetVersionsCallback<FrameworkLibraryVersion>() {
       @Override
       public void onSuccess(@NotNull final List<? extends FrameworkLibraryVersion> versions) {
-        ApplicationManager.getApplication().invokeLater(new Runnable() {
-          @Override
-          public void run() {
-            String pathForDownloaded = "";
-            final VirtualFile existingRootDirectory = myEditorComponent.getExistingRootDirectory();
-            if (existingRootDirectory != null) {
-              pathForDownloaded = existingRootDirectory.getPath();
+        ApplicationManager.getApplication().invokeLater(() -> {
+          String pathForDownloaded = "";
+          final VirtualFile existingRootDirectory = myEditorComponent.getExistingRootDirectory();
+          if (existingRootDirectory != null) {
+            pathForDownloaded = existingRootDirectory.getPath();
+          }
+          else {
+            final VirtualFile baseDir = myEditorComponent.getBaseDirectory();
+            if (baseDir != null) {
+              pathForDownloaded = baseDir.getPath() + "/lib";
             }
-            else {
-              final VirtualFile baseDir = myEditorComponent.getBaseDirectory();
-              if (baseDir != null) {
-                pathForDownloaded = baseDir.getPath() + "/lib";
-              }
-            }
-            final LibraryDownloadSettings initialSettings = new LibraryDownloadSettings(getCurrentVersion(versions), myLibraryType,
-                                                                                        LibrariesContainer.LibraryLevel.PROJECT,
-                                                                                        pathForDownloaded);
-            final LibraryDownloadSettings settings = DownloadingOptionsDialog.showDialog(getMainPanel(), initialSettings, versions, false);
-            if (settings != null) {
-              final NewLibraryEditor editor = settings.download(getMainPanel());
-              if (editor != null) {
-                final LibraryEditorBase target = (LibraryEditorBase)myEditorComponent.getLibraryEditor();
-                target.removeAllRoots();
-                myEditorComponent.renameLibrary(editor.getName());
-                target.setType(myLibraryType);
-                editor.applyTo(target);
-                myEditorComponent.updateRootsTree();
-                myCurrentVersionString = settings.getVersion().getVersionString();
-                setModified();
-              }
+          }
+          final LibraryDownloadSettings initialSettings = new LibraryDownloadSettings(getCurrentVersion(versions), myLibraryType,
+                                                                                      LibrariesContainer.LibraryLevel.PROJECT,
+                                                                                      pathForDownloaded);
+          final LibraryDownloadSettings settings = DownloadingOptionsDialog.showDialog(getMainPanel(), initialSettings, versions, false);
+          if (settings != null) {
+            final NewLibraryEditor editor = settings.download(getMainPanel(), null);
+            if (editor != null) {
+              final LibraryEditorBase target = (LibraryEditorBase)myEditorComponent.getLibraryEditor();
+              target.removeAllRoots();
+              myEditorComponent.renameLibrary(editor.getName());
+              target.setType(myLibraryType);
+              editor.applyTo(target);
+              myEditorComponent.updateRootsTree();
+              myCurrentVersionString = settings.getVersion().getVersionString();
+              setModified();
             }
           }
         }, current);

@@ -1,4 +1,0 @@
-interface Factory {
-  Product create();
-}
-

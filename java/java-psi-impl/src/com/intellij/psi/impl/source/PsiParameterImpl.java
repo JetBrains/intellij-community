@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,12 +39,13 @@ import com.intellij.util.PlatformIcons;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import java.lang.ref.Reference;
 import java.util.Arrays;
 
 public class PsiParameterImpl extends JavaStubPsiElement<PsiParameterStub> implements PsiParameter {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.PsiParameterImpl");
 
-  private volatile SoftReference<PsiType> myCachedType = null;
+  private volatile Reference<PsiType> myCachedType;
 
   public PsiParameterImpl(@NotNull PsiParameterStub stub) {
     this(stub, JavaStubElementTypes.PARAMETER);
@@ -56,6 +57,36 @@ public class PsiParameterImpl extends JavaStubPsiElement<PsiParameterStub> imple
 
   public PsiParameterImpl(@NotNull ASTNode node) {
     super(node);
+  }
+
+  public static PsiType getLambdaParameterType(PsiParameter param) {
+    final PsiElement paramParent = param.getParent();
+    if (paramParent instanceof PsiParameterList) {
+      final int parameterIndex = ((PsiParameterList)paramParent).getParameterIndex(param);
+      if (parameterIndex > -1) {
+        final PsiLambdaExpression lambdaExpression = PsiTreeUtil.getParentOfType(param, PsiLambdaExpression.class);
+        if (lambdaExpression != null) {
+          final PsiType functionalInterfaceType = LambdaUtil.ourParameterGuard.doPreventingRecursion(param, false,
+                                                                                                     () -> LambdaUtil.getFunctionalInterfaceType(lambdaExpression, true));
+          PsiType type = lambdaExpression.getGroundTargetType(functionalInterfaceType);
+          if (type instanceof PsiIntersectionType) {
+            final PsiType[] conjuncts = ((PsiIntersectionType)type).getConjuncts();
+            for (PsiType conjunct : conjuncts) {
+              final PsiType lambdaParameterFromType = LambdaUtil.getLambdaParameterFromType(conjunct, parameterIndex);
+              if (lambdaParameterFromType != null) {
+                return lambdaParameterFromType;
+              }
+            }
+          } else {
+            final PsiType lambdaParameterFromType = LambdaUtil.getLambdaParameterFromType(type, parameterIndex);
+            if (lambdaParameterFromType != null) {
+              return lambdaParameterFromType;
+            }
+          }
+        }
+      }
+    }
+    return new PsiLambdaParameterType(param);
   }
 
   @Override
@@ -75,34 +106,24 @@ public class PsiParameterImpl extends JavaStubPsiElement<PsiParameterStub> imple
   @Override
   @NotNull
   public final String getName() {
-    PsiParameterStub stub = getStub();
+    PsiParameterStub stub = getGreenStub();
     if (stub != null) {
       return stub.getName();
     }
 
-    return getParameterIdentifier().getText();
+    return getNameIdentifier().getText();
   }
 
   @Override
   public final PsiElement setName(@NotNull String name) throws IncorrectOperationException {
-    if (this instanceof PsiReceiverParameter) {
-      throw new IncorrectOperationException("Cannot rename receiver parameter");
-    }
-
-    PsiImplUtil.setName(getParameterIdentifier(), name);
+    PsiImplUtil.setName(getNameIdentifier(), name);
     return this;
   }
 
   @Override
-  public final PsiIdentifier getNameIdentifier() {
-    return PsiTreeUtil.getChildOfType(this, PsiIdentifier.class);
-  }
-
   @NotNull
-  private PsiElement getParameterIdentifier() {
-    PsiJavaToken identifier = PsiTreeUtil.getChildOfAnyType(this, PsiIdentifier.class, PsiKeyword.class);
-    assert identifier != null : this;
-    return identifier;
+  public final PsiIdentifier getNameIdentifier() {
+    return PsiTreeUtil.getRequiredChildOfType(this, PsiIdentifier.class);
   }
 
   @Override
@@ -116,59 +137,26 @@ public class PsiParameterImpl extends JavaStubPsiElement<PsiParameterStub> imple
   public PsiType getType() {
     PsiParameterStub stub = getStub();
     if (stub != null) {
-      SoftReference<PsiType> cachedType = myCachedType;
-      if (cachedType != null) {
-        PsiType type = cachedType.get();
-        if (type != null) return type;
+      PsiType type = SoftReference.dereference(myCachedType);
+      if (type == null) {
+        String typeText = TypeInfo.createTypeText(stub.getType(false));
+        assert typeText != null : stub;
+        type = JavaPsiFacade.getInstance(getProject()).getParserFacade().createTypeFromText(typeText, this);
+        type = JavaSharedImplUtil.applyAnnotations(type, getModifierList());
+        myCachedType = new SoftReference<>(type);
       }
-
-      String typeText = TypeInfo.createTypeText(stub.getType(true));
-      assert typeText != null : stub;
-      try {
-        PsiType type = JavaPsiFacade.getInstance(getProject()).getParserFacade().createTypeFromText(typeText, this);
-        myCachedType = new SoftReference<PsiType>(type);
-        return type;
-      }
-      catch (IncorrectOperationException e) {
-        LOG.error(e);
-        return null;
-      }
+      return type;
     }
 
     myCachedType = null;
 
     PsiTypeElement typeElement = getTypeElement();
-    if (typeElement == null) {
+    if (typeElement == null || isLambdaParameter() && typeElement.isInferredType()) {
       assert isLambdaParameter() : this;
-      return LambdaUtil.getLambdaParameterType(this);
+      return getLambdaParameterType(this);
     }
     else {
-      return JavaSharedImplUtil.getType(typeElement, getParameterIdentifier(), this);
-    }
-  }
-
-  @Override
-  public PsiType getTypeNoResolve() {
-    PsiParameterStub stub = getStub();
-    if (stub != null) {
-      String typeText = TypeInfo.createTypeText(stub.getType(false));
-      assert typeText != null : stub;
-      try {
-        return JavaPsiFacade.getInstance(getProject()).getParserFacade().createTypeFromText(typeText, this);
-      }
-      catch (IncorrectOperationException e) {
-        LOG.error(e);
-        return null;
-      }
-    }
-
-    final PsiTypeElement typeElement = getTypeElement();
-    if (typeElement == null) {
-      assert isLambdaParameter() : this;
-      return new PsiLambdaParameterType(this);
-    }
-    else {
-      return JavaSharedImplUtil.getTypeNoResolve(typeElement, getParameterIdentifier(), this);
+      return JavaSharedImplUtil.getType(typeElement, getNameIdentifier());
     }
   }
 
@@ -179,7 +167,12 @@ public class PsiParameterImpl extends JavaStubPsiElement<PsiParameterStub> imple
 
   @Override
   public PsiTypeElement getTypeElement() {
-    return PsiTreeUtil.getChildOfType(this, PsiTypeElement.class);
+    for (PsiElement child = getFirstChild(); child != null; child = child.getNextSibling()) {
+      if (child instanceof PsiTypeElement) {
+        return (PsiTypeElement)child;
+      }
+    }
+    return null;
   }
 
   @Override
@@ -226,6 +219,7 @@ public class PsiParameterImpl extends JavaStubPsiElement<PsiParameterStub> imple
     }
   }
 
+  @Override
   public String toString() {
     return "PsiParameter:" + getName();
   }
@@ -266,7 +260,7 @@ public class PsiParameterImpl extends JavaStubPsiElement<PsiParameterStub> imple
 
   @Override
   public boolean isVarArgs() {
-    final PsiParameterStub stub = getStub();
+    final PsiParameterStub stub = getGreenStub();
     if (stub != null) {
       return stub.isParameterTypeEllipsis();
     }
@@ -296,5 +290,24 @@ public class PsiParameterImpl extends JavaStubPsiElement<PsiParameterStub> imple
   public SearchScope getUseScope() {
     final PsiElement declarationScope = getDeclarationScope();
     return new LocalSearchScope(declarationScope);
+  }
+
+  @Override
+  public PsiElement getOriginalElement() {
+    PsiElement parent = getParent();
+    if (parent instanceof PsiParameterList) {
+      PsiElement gParent = parent.getParent();
+      if (gParent instanceof PsiMethod) {
+        PsiElement originalMethod = gParent.getOriginalElement();
+        if (originalMethod instanceof PsiMethod && originalMethod != gParent) {
+          int index = ((PsiParameterList)parent).getParameterIndex(this);
+          PsiParameter[] originalParameters = ((PsiMethod)originalMethod).getParameterList().getParameters();
+          if (index < originalParameters.length) {
+            return originalParameters[index];
+          }
+        }
+      }
+    }
+    return this;
   }
 }

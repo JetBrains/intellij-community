@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,18 +20,14 @@ import com.intellij.lang.Language;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.psi.*;
+import com.intellij.psi.util.CachedValueProvider;
+import com.intellij.psi.util.CachedValuesManager;
+import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * Created by IntelliJ IDEA.
- * User: ik
- * Date: 27.03.2003
- * Time: 17:13:45
- * To change this template use Options | File Templates.
- */
 public abstract class ReferenceProvidersRegistry {
-  public final static PsiReferenceProvider NULL_REFERENCE_PROVIDER = new PsiReferenceProvider() {
+  public static final PsiReferenceProvider NULL_REFERENCE_PROVIDER = new PsiReferenceProvider() {
       @NotNull
       @Override
       public PsiReference[] getReferencesByElement(@NotNull PsiElement element, @NotNull ProcessingContext context) {
@@ -43,27 +39,27 @@ public abstract class ReferenceProvidersRegistry {
     return ServiceManager.getService(ReferenceProvidersRegistry.class);
   }
 
-  public abstract PsiReferenceRegistrar getRegistrar(Language language);
+  @NotNull
+  public abstract PsiReferenceRegistrar getRegistrar(@NotNull Language language);
 
-  /**
-   * @see #getReferencesFromProviders(com.intellij.psi.PsiElement)
-   */
-  @Deprecated
-  public static PsiReference[] getReferencesFromProviders(PsiElement context, @NotNull Class clazz) {
+  @NotNull
+  public static PsiReference[] getReferencesFromProviders(@NotNull PsiElement context) {
     return getReferencesFromProviders(context, PsiReferenceService.Hints.NO_HINTS);
   }
 
-  public static PsiReference[] getReferencesFromProviders(PsiElement context) {
-    return getReferencesFromProviders(context, PsiReferenceService.Hints.NO_HINTS);
-  }
-
-  public static PsiReference[] getReferencesFromProviders(PsiElement context, @NotNull PsiReferenceService.Hints hints) {
+  @NotNull
+  public static PsiReference[] getReferencesFromProviders(@NotNull PsiElement context, @NotNull PsiReferenceService.Hints hints) {
     ProgressIndicatorProvider.checkCanceled();
-    assert context.isValid() : "Invalid context: " + context;
 
-    ReferenceProvidersRegistry registry = getInstance();
-    return registry.doGetReferencesFromProviders(context, hints);
+    if (hints == PsiReferenceService.Hints.NO_HINTS) {
+      return CachedValuesManager.getCachedValue(context, () ->
+        CachedValueProvider.Result.create(getInstance().doGetReferencesFromProviders(context, PsiReferenceService.Hints.NO_HINTS),
+                                          PsiModificationTracker.MODIFICATION_COUNT));
+    }
+
+    return getInstance().doGetReferencesFromProviders(context, hints);
   }
 
-  protected abstract PsiReference[] doGetReferencesFromProviders(PsiElement context, PsiReferenceService.Hints hints);
+  @NotNull
+  protected abstract PsiReference[] doGetReferencesFromProviders(@NotNull PsiElement context, @NotNull PsiReferenceService.Hints hints);
 }

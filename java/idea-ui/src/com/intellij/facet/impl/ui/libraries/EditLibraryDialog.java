@@ -22,6 +22,7 @@ import com.intellij.openapi.roots.ui.configuration.libraryEditor.NewLibraryEdito
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.util.ui.FormBuilder;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -35,10 +36,10 @@ public class EditLibraryDialog extends DialogWrapper {
   private JPanel myPanel;
   private JPanel myNameAndLevelPanelWrapper;
   private final LibraryNameAndLevelPanel myNameAndLevelPanel;
-  private LibraryCompositionSettings mySettings;
-  private LibraryEditor myLibraryEditor;
-  private LibraryRootsComponent myLibraryRootsComponent;
-  private FormBuilder myBuilder;
+  private final LibraryCompositionSettings mySettings;
+  private final LibraryEditor myLibraryEditor;
+  private final LibraryRootsComponent myLibraryRootsComponent;
+  private final FormBuilder myBuilder;
 
   public EditLibraryDialog(Component parent, LibraryCompositionSettings settings, final LibraryEditor libraryEditor) {
     super(parent, true);
@@ -73,5 +74,11 @@ public class EditLibraryDialog extends DialogWrapper {
       mySettings.setNewLibraryLevel(myNameAndLevelPanel.getLibraryLevel());
     }
     super.doOKAction();
+  }
+
+  @Nullable
+  @Override
+  protected String getHelpId() {
+    return "Edit_Library_dialog";
   }
 }

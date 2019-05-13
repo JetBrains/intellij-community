@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,12 +19,11 @@ import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.codeInsight.lookup.impl.LookupImpl;
 import com.intellij.testFramework.LightCodeInsightTestCase;
-import com.intellij.util.containers.HashSet;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.Set;
 
 /**
@@ -37,8 +36,16 @@ public abstract class LightCompletionTestCase extends LightCodeInsightTestCase {
 
   @Override
   protected void tearDown() throws Exception {
-    LookupManager.getInstance(getProject()).hideActiveLookup();
-    super.tearDown();
+    try {
+      myItems = null;
+    }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
+    finally {
+
+      super.tearDown();
+    }
   }
 
   @Override
@@ -46,10 +53,6 @@ public abstract class LightCompletionTestCase extends LightCodeInsightTestCase {
     super.configureByFile(filePath);
 
     complete();
-  }
-
-  protected void configureByFileNoComplete(String filePath) throws Exception {
-    super.configureByFile(filePath);
   }
 
   protected void complete() {
@@ -71,9 +74,10 @@ public abstract class LightCompletionTestCase extends LightCodeInsightTestCase {
   protected void selectItem(LookupElement item) {
     selectItem(item, (char)0);
   }
-  
+
   protected void selectItem(LookupElement item, char completionChar) {
     final LookupImpl lookup = (LookupImpl)LookupManager.getInstance(getProject()).getActiveLookup();
+    assertNotNull(lookup);
     lookup.setCurrentItem(item);
     if (completionChar == 0 || completionChar == '\n' || completionChar == '\t') {
       lookup.finishLookup(completionChar);
@@ -82,16 +86,16 @@ public abstract class LightCompletionTestCase extends LightCodeInsightTestCase {
     }
   }
 
-  protected void testByCount(int finalCount, @NonNls String... values) {
+  protected void testByCount(int finalCount, String... values) {
     if (myItems == null) {
-      assertEquals(finalCount, 0);
+      assertEquals(0, finalCount);
       return;
     }
     int index = 0;
     for (final LookupElement myItem : myItems) {
       for (String value : values) {
         if (value == null) {
-          assertFalse("Unacceptable value reached: " + myItem.getLookupString(), true);
+          fail("Unacceptable value reached: " + myItem.getLookupString());
         }
         if (value.equals(myItem.getLookupString())) {
           index++;
@@ -102,12 +106,12 @@ public abstract class LightCompletionTestCase extends LightCodeInsightTestCase {
     assertEquals(finalCount, index);
   }
 
-  protected void assertStringItems(@NonNls String... items) {
-    assertOrderedEquals(getLookupStrings(new ArrayList<String>()), items);
+  protected void assertStringItems(String... items) {
+    assertOrderedEquals(getLookupStrings(new ArrayList<>()), items);
   }
 
   protected void assertContainsItems(final String... expected) {
-    final Set<String> actual = getLookupStrings(new HashSet<String>());
+    final Set<String> actual = getLookupStrings(new HashSet<>());
     for (String s : expected) {
       assertTrue("Expected '" + s + "' not found in " + actual,
                  actual.contains(s));
@@ -115,7 +119,7 @@ public abstract class LightCompletionTestCase extends LightCodeInsightTestCase {
   }
 
   protected void assertNotContainItems(final String... unexpected) {
-    final Set<String> actual = getLookupStrings(new HashSet<String>());
+    final Set<String> actual = getLookupStrings(new HashSet<>());
     for (String s : unexpected) {
       assertFalse("Unexpected '" + s + "' presented in " + actual,
                   actual.contains(s));

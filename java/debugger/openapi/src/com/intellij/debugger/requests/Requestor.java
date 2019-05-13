@@ -15,12 +15,5 @@
  */
 package com.intellij.debugger.requests;
 
-/**
- * Created by IntelliJ IDEA.
- * User: lex
- * Date: Jun 27, 2003
- * Time: 8:06:36 PM
- * To change this template use Options | File Templates.
- */
 public interface Requestor {
 }

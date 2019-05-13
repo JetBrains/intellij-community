@@ -1,36 +1,24 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.ui;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.extensions.PluginAware;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.project.Project;
-import com.intellij.util.xmlb.annotations.Attribute;
 import com.intellij.util.NotNullFunction;
-import org.picocontainer.defaults.ConstructorInjectionComponentAdapter;
+import com.intellij.util.pico.CachingConstructorInjectionComponentAdapter;
+import com.intellij.util.xmlb.annotations.Attribute;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * @author yole
  */
-public class ChangesViewContentEP {
+public class ChangesViewContentEP implements PluginAware {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.changes.ui.ChangesViewContentEP");
 
-  public static final ExtensionPointName<ChangesViewContentEP> EP_NAME = new ExtensionPointName<ChangesViewContentEP>("com.intellij.changesViewContent");
+  public static final ExtensionPointName<ChangesViewContentEP> EP_NAME = new ExtensionPointName<>("com.intellij.changesViewContent");
 
   @Attribute("tabName")
   public String tabName;
@@ -44,6 +32,7 @@ public class ChangesViewContentEP {
   private PluginDescriptor myPluginDescriptor;
   private ChangesViewContentProvider myInstance;
 
+  @Override
   public void setPluginDescriptor(PluginDescriptor pluginDescriptor) {
     myPluginDescriptor = pluginDescriptor;
   }
@@ -72,26 +61,35 @@ public class ChangesViewContentEP {
     this.predicateClassName = predicateClassName;
   }
 
-  public ChangesViewContentProvider getInstance(Project project) {
+  public ChangesViewContentProvider getInstance(@NotNull Project project) {
     if (myInstance == null) {
-      myInstance = (ChangesViewContentProvider) newClassInstance(project, className); 
+      myInstance = (ChangesViewContentProvider)newClassInstance(project, className);
     }
     return myInstance;
   }
 
   @Nullable
-  public NotNullFunction<Project, Boolean> newPredicateInstance(Project project) {
-    //noinspection unchecked
-    return predicateClassName != null ? (NotNullFunction<Project, Boolean>)newClassInstance(project, predicateClassName) : null;
+  public ChangesViewContentProvider getCachedInstance() {
+    return myInstance;
   }
 
-  private Object newClassInstance(final Project project, final String className) {
-    try {
-      final Class<?> aClass = Class.forName(className, true,
-                                            myPluginDescriptor == null ? getClass().getClassLoader()  : myPluginDescriptor.getPluginClassLoader());
-      return new ConstructorInjectionComponentAdapter(className, aClass).getComponentInstance(project.getPicoContainer());
+  @Nullable
+  public NotNullFunction<Project, Boolean> newPredicateInstance(@NotNull Project project) {
+    if (predicateClassName == null) {
+      return null;
     }
-    catch(Exception e) {
+    //noinspection unchecked
+    return (NotNullFunction<Project, Boolean>)newClassInstance(project, predicateClassName);
+  }
+
+  @Nullable
+  private Object newClassInstance(@NotNull Project project, @NotNull String className) {
+    try {
+      Class<?> aClass = Class.forName(className, true,
+                                      myPluginDescriptor == null ? getClass().getClassLoader() : myPluginDescriptor.getPluginClassLoader());
+      return new CachingConstructorInjectionComponentAdapter(className, aClass).getComponentInstance(project.getPicoContainer());
+    }
+    catch (Exception e) {
       LOG.error(e);
       return null;
     }

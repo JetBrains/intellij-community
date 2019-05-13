@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,11 +28,13 @@ import com.intellij.psi.scope.util.PsiScopesUtil;
 import com.intellij.psi.tree.ChildRoleBase;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.*;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -44,7 +46,7 @@ public class PsiCatchSectionImpl extends CompositePsiElement implements PsiCatch
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.java.PsiCatchSectionImpl");
 
   private final Object myTypesCacheLock = new Object();
-  private CachedValue<List<PsiType>> myTypesCache = null;
+  private CachedValue<List<PsiType>> myTypesCache;
 
   public PsiCatchSectionImpl() {
     super(CATCH_SECTION);
@@ -88,12 +90,10 @@ public class PsiCatchSectionImpl extends CompositePsiElement implements PsiCatch
     synchronized (myTypesCacheLock) {
       if (myTypesCache == null) {
         final CachedValuesManager cacheManager = CachedValuesManager.getManager(getProject());
-        myTypesCache = cacheManager.createCachedValue(new CachedValueProvider<List<PsiType>>() {
-            @Override public Result<List<PsiType>> compute() {
-              final List<PsiType> types = computePreciseCatchTypes(getParameter());
-              return Result.create(types, PsiModificationTracker.MODIFICATION_COUNT);
-            }
-          }, false);
+        myTypesCache = cacheManager.createCachedValue(() -> {
+          final List<PsiType> types = computePreciseCatchTypes(getParameter());
+          return CachedValueProvider.Result.create(types, PsiModificationTracker.MODIFICATION_COUNT);
+        }, false);
       }
       return myTypesCache;
     }
@@ -116,26 +116,30 @@ public class PsiCatchSectionImpl extends CompositePsiElement implements PsiCatch
       // ... and for all exception parameters Ei declared by any catch clauses Ci, 1 <= i < j,
       //     declared to the left of Cj for the same try statement, T is not assignable to Ei ...
       final PsiParameter[] parameters = statement.getCatchBlockParameters();
-      List<PsiType> uncaughtTypes = ContainerUtil.mapNotNull(thrownTypes, new NullableFunction<PsiClassType, PsiType>() {
-        @Override
-        public PsiType fun(final PsiClassType thrownType) {
-          for (int i = 0; i < parameters.length && parameters[i] != parameter; i++) {
-            final PsiType catchType = parameters[i].getType();
-            if (catchType.isAssignableFrom(thrownType)) return null;
-          }
-          return thrownType;
+      final int currentIdx = ArrayUtil.find(parameters, parameter);
+      List<PsiType> uncaughtTypes = ContainerUtil.mapNotNull(thrownTypes, (NullableFunction<PsiClassType, PsiType>)thrownType -> {
+        for (int i = 0; i < currentIdx; i++) {
+          final PsiType catchType = parameters[i].getType();
+          if (catchType.isAssignableFrom(thrownType)) return null;
         }
+        return thrownType;
       });
+      if (uncaughtTypes.isEmpty()) return Collections.emptyList();  // unreachable catch section
       // ... and T is assignable to Ej ...
-      boolean passed = true;
+      List<PsiType> types = new ArrayList<>();
       for (PsiType type : uncaughtTypes) {
-        if (!declaredType.isAssignableFrom(type)) {
-          passed = false;
-          break;
+        if (declaredType.isAssignableFrom(type) ||
+            // JLS 11.2.3 "Exception Checking":
+            // "It is a compile-time error if a catch clause can catch checked exception class E1 and it is not the case
+            // that the try block corresponding to the catch clause can throw a checked exception class that is
+            // a subclass or superclass of E1, unless E1 is Exception or a superclass of Exception."
+            // So here unchecked exception can sneak through Exception or Throwable catch type only.
+            ExceptionUtil.isGeneralExceptionType(declaredType) && type instanceof PsiClassType && ExceptionUtil.isUncheckedException((PsiClassType)type)) {
+          types.add(type);
         }
       }
       // ... the throw statement throws precisely the set of exception types T.
-      if (passed) return uncaughtTypes;
+      if (!types.isEmpty()) return types;
     }
 
     return Collections.singletonList(declaredType);
@@ -200,6 +204,7 @@ public class PsiCatchSectionImpl extends CompositePsiElement implements PsiCatch
     }
   }
 
+  @Override
   public String toString() {
     return "PsiCatchSection";
   }
@@ -228,18 +233,22 @@ public class PsiCatchSectionImpl extends CompositePsiElement implements PsiCatch
   }
 
   @Override
-  public int getChildRole(ASTNode child) {
+  public int getChildRole(@NotNull ASTNode child) {
     LOG.assertTrue(child.getTreeParent() == this);
     IElementType i = child.getElementType();
     if (i == PARAMETER) {
       return ChildRole.PARAMETER;
-    } else if (i == CODE_BLOCK) {
+    }
+    if (i == CODE_BLOCK) {
       return ChildRole.CATCH_BLOCK;
-    } else if (i == CATCH_KEYWORD) {
+    }
+    if (i == CATCH_KEYWORD) {
       return ChildRole.CATCH_KEYWORD;
-    } else if (i == LPARENTH) {
+    }
+    if (i == LPARENTH) {
       return ChildRole.CATCH_BLOCK_PARAMETER_LPARENTH;
-    } else if (i == RPARENTH) {
+    }
+    if (i == RPARENTH) {
       return ChildRole.CATCH_BLOCK_PARAMETER_RPARENTH;
     }
 

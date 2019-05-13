@@ -15,13 +15,14 @@
  */
 package org.jetbrains.jps.incremental.artifacts.impl;
 
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Processor;
-import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.model.artifact.elements.JpsComplexPackagingElement;
 import org.jetbrains.jps.model.artifact.elements.JpsCompositePackagingElement;
 import org.jetbrains.jps.model.artifact.elements.JpsPackagingElement;
 
+import java.util.HashSet;
 import java.util.Set;
 
 /**
@@ -30,7 +31,7 @@ import java.util.Set;
 public class JpsArtifactUtil {
   public static boolean processPackagingElements(@NotNull JpsPackagingElement element,
                                                  @NotNull Processor<JpsPackagingElement> processor) {
-    return processPackagingElements(element, processor, new HashSet<JpsPackagingElement>());
+    return processPackagingElements(element, processor, new HashSet<>());
   }
 
   private static boolean processPackagingElements(@NotNull JpsPackagingElement element,
@@ -54,5 +55,9 @@ public class JpsArtifactUtil {
       }
     }
     return true;
+  }
+
+  public static boolean isArchiveName(String name) {
+    return name.length() >= 4 && name.charAt(name.length() - 4) == '.' && StringUtil.endsWithIgnoreCase(name, "ar");
   }
 }

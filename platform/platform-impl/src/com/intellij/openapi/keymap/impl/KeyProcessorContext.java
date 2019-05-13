@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package com.intellij.openapi.keymap.impl;
 
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.reference.SoftReference;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -28,7 +29,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class KeyProcessorContext {
-  private final List<AnAction> myActions = new ArrayList<AnAction>();
+  private final List<AnAction> myActions = new ArrayList<>();
   private WeakReference<JComponent> myFoundComponent;
   private boolean myHasSecondStroke;
 
@@ -38,17 +39,17 @@ public class KeyProcessorContext {
   private KeyEvent myInputEvent;
 
   @NotNull
-  public List<AnAction> getActions() {
+  List<AnAction> getActions() {
     return myActions;
   }
 
   @Nullable
   public JComponent getFoundComponent() {
-    return myFoundComponent != null ? myFoundComponent.get() : null;
+    return SoftReference.dereference(myFoundComponent);
   }
 
   public void setFoundComponent(final JComponent foundComponent) {
-    myFoundComponent = new WeakReference<JComponent>(foundComponent);
+    myFoundComponent = new WeakReference<>(foundComponent);
   }
 
   public void setHasSecondStroke(final boolean hasSecondStroke) {
@@ -77,11 +78,11 @@ public class KeyProcessorContext {
 
   @Nullable
   public Component getFocusOwner() {
-    return myFocusOwner != null ? myFocusOwner.get() : null;
+    return SoftReference.dereference(myFocusOwner);
   }
 
   public void setFocusOwner(final Component focusOwner) {
-    myFocusOwner = new WeakReference<Component>(focusOwner);
+    myFocusOwner = new WeakReference<>(focusOwner);
   }
 
   public void setInputEvent(final KeyEvent e) {
@@ -97,6 +98,5 @@ public class KeyProcessorContext {
     myActions.clear();
     myFocusOwner = null;
     myDataContext = null;
-    myFoundComponent = null;
   }
 }

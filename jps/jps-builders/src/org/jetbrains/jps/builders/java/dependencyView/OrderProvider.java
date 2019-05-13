@@ -22,8 +22,6 @@ import java.util.List;
 /**
  * Created with IntelliJ IDEA.
  * @author: db
- * Date: 24.06.12
- * Time: 19:08
  * To change this template use File | Settings | File Templates.
  */
 class OrderProvider {
@@ -42,7 +40,7 @@ class OrderProvider {
     }
   }
   private final DependencyContext myContext;
-  private final List<Entry> myList = new LinkedList<Entry>();
+  private final List<Entry> myList = new LinkedList<>();
 
   OrderProvider(final DependencyContext context) {
       myContext = context;

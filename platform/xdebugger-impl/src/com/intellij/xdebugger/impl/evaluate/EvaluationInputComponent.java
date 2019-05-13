@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package com.intellij.xdebugger.impl.evaluate;
 
 import com.intellij.xdebugger.impl.ui.XDebuggerEditorBase;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
@@ -33,7 +34,10 @@ public abstract class EvaluationInputComponent {
     return myTitle;
   }
 
-  protected abstract XDebuggerEditorBase getInputEditor();
+  @NotNull
+  public abstract XDebuggerEditorBase getInputEditor();
+
+  public abstract JPanel getMainComponent();
 
   public abstract void addComponent(JPanel contentPanel, JPanel resultPanel);
 }

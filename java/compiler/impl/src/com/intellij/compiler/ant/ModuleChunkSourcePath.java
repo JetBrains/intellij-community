@@ -32,7 +32,6 @@ import java.util.List;
 
 /**
  * @author Eugene Zhuravlev
- * @since Nov 22, 2004
  */
 public class ModuleChunkSourcePath extends CompositeGenerator{
   private final VirtualFile[] mySourceRoots;
@@ -49,8 +48,8 @@ public class ModuleChunkSourcePath extends CompositeGenerator{
       excludedFromCompilation.add(new PatternSetRef(BuildProperties.PROPERTY_COMPILER_EXCLUDES));
     }
 
-    final List<VirtualFile> sourceRootFiles = new ArrayList<VirtualFile>();
-    final List<VirtualFile> testSourceRootFiles = new ArrayList<VirtualFile>();
+    final List<VirtualFile> sourceRootFiles = new ArrayList<>();
+    final List<VirtualFile> testSourceRootFiles = new ArrayList<>();
 
     for (final Module module : modules) {
       final String moduleName = module.getName();

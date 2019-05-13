@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,14 +15,16 @@
  */
 package com.intellij.xdebugger.impl.actions;
 
+import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.xdebugger.impl.DebuggerSupport;
+import com.intellij.xdebugger.impl.ui.tree.actions.XAddToWatchesTreeAction;
+import com.intellij.xdebugger.impl.ui.tree.actions.XDebuggerTreeActionBase;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author nik
- */
-public class AddToWatchesAction extends XDebuggerActionBase {
-  public AddToWatchesAction() {
+final class AddToWatchesAction extends XDebuggerActionBase {
+  private static final XAddToWatchesTreeAction TREE_ACTION = new XAddToWatchesTreeAction();
+
+  AddToWatchesAction() {
     super(true);
   }
 
@@ -30,5 +32,25 @@ public class AddToWatchesAction extends XDebuggerActionBase {
   @Override
   protected DebuggerActionHandler getHandler(@NotNull DebuggerSupport debuggerSupport) {
     return debuggerSupport.getAddToWatchesActionHandler();
+  }
+
+  @Override
+  public void update(@NotNull AnActionEvent event) {
+    if (XDebuggerTreeActionBase.getSelectedNode(event.getDataContext()) != null) {
+      TREE_ACTION.update(event);
+    }
+    else {
+      super.update(event);
+    }
+  }
+
+  @Override
+  public void actionPerformed(@NotNull AnActionEvent event) {
+    if (XDebuggerTreeActionBase.getSelectedNode(event.getDataContext()) != null) {
+      TREE_ACTION.actionPerformed(event);
+    }
+    else {
+      super.actionPerformed(event);
+    }
   }
 }

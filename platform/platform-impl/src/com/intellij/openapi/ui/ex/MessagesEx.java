@@ -1,30 +1,20 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.ui.ex;
 
 import com.intellij.CommonBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.ui.messages.ChooseDialog;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.UIBundle;
 import com.intellij.util.ArrayUtil;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.awt.*;
 
 public class MessagesEx extends Messages {
 
@@ -52,34 +42,67 @@ public class MessagesEx extends Messages {
     return error(project, message, UIBundle.message("error.dialog.title"));
   }
 
+  @NotNull
   public static MessageInfo error(Project project, String message, String title) {
     return new MessageInfo(project, message, title);
   }
 
-  public static abstract class BaseDialogInfo<ThisClass extends BaseDialogInfo> {
-    private Project myProject;
+  public static void showErrorDialog(@Nullable Component parent, String message, @NotNull String title) {
+    if (parent != null) Messages.showErrorDialog(parent, message, title);
+    else showErrorDialog(message, title);
+  }
+
+  public static void showWarningDialog(@Nullable Component parent, String message, @NotNull String title) {
+    if (parent != null) Messages.showWarningDialog(parent, message, title);
+    else showWarningDialog(message, title);
+  }
+
+  public static void showInfoMessage(@Nullable Component parent, String message, @NotNull String title) {
+    if (parent != null) Messages.showInfoMessage(parent, message, title);
+    else showInfoMessage(message, title);
+  }
+
+  /**
+   * @return {@link #OK} if user pressed "Ok" or {@link #CANCEL} if user pressed "Cancel" button.
+   * @deprecated Please provide meaningful action names via {@link #showOkCancelDialog(Component, String, String, String, String, Icon)} instead
+   */
+  @OkCancelResult
+  @Deprecated
+  public static int showOkCancelDialog(@Nullable Component parent, String message, String title, Icon icon) {
+    return parent != null ? Messages.showOkCancelDialog(parent, message, title, icon) : showOkCancelDialog(message, title, icon);
+  }
+
+  public abstract static class BaseDialogInfo<ThisClass extends BaseDialogInfo> {
+    private final Project myProject;
     private String myMessage;
     private String myTitle;
     private Icon myIcon;
-    private String[] myOptions = new String[]{CommonBundle.getOkButtonText()};
+    private String[] myOptions = {CommonBundle.getOkButtonText()};
     private int myDefaultOption = 0;
 
     protected BaseDialogInfo(Project project) {
       myProject = project;
     }
 
-    public BaseDialogInfo(Project project, String message, String title, Icon icon) {
+    public BaseDialogInfo(Project project, @NotNull String message, String title, Icon icon) {
       this(project);
       myMessage = message;
       myTitle = title;
       myIcon = icon;
     }
 
-    public ThisClass setTitle(String title) { myTitle = title; return getThis(); }
+    @NotNull
+    public ThisClass setTitle(String title) {
+      myTitle = title;
+      return getThis();
+    }
 
-    public String getMessage() { return myMessage; }
+    public String getMessage() {
+      return myMessage;
+    }
 
-    public ThisClass appendMessage(String message) {
+    @NotNull
+    public ThisClass appendMessage(@NotNull String message) {
       myMessage += message;
       return getThis();
     }
@@ -89,11 +112,16 @@ public class MessagesEx extends Messages {
       myDefaultOption = defaultOption;
     }
 
+    @NotNull
     protected abstract ThisClass getThis();
 
-    public ThisClass setIcon(Icon icon) { myIcon = icon; return getThis(); }
+    @NotNull
+    public ThisClass setIcon(Icon icon) {
+      myIcon = icon;
+      return getThis();
+    }
 
-    public void setMessage(String message) {
+    public void setMessage(@NotNull String message) {
       myMessage = message;
     }
 
@@ -128,14 +156,10 @@ public class MessagesEx extends Messages {
     }
 
     public void showLater() {
-      ApplicationManager.getApplication().invokeLater(new Runnable() {
-          public void run() {
-            if (ApplicationManager.getApplication().isDisposed()) return;
-            showNow();
-          }
-        });
+      ApplicationManager.getApplication().invokeLater(() -> showNow(), ApplicationManager.getApplication().getDisposed());
     }
 
+    @YesNoResult
     public int askYesNo() {
       setIcon(getQuestionIcon());
       return showYesNoDialog(getProject(), getMessage(), getTitle(), getIcon());
@@ -146,6 +170,8 @@ public class MessagesEx extends Messages {
       return showNow();
     }
 
+    @NotNull
+    @Override
     protected MessageInfo getThis() {
       return this;
     }
@@ -154,7 +180,6 @@ public class MessagesEx extends Messages {
   public static class ChoiceInfo extends BaseInputInfo<ChoiceInfo> {
     private String[] myChoises = ArrayUtil.EMPTY_STRING_ARRAY;
     private String myDefaultChoice = null;
-    private final boolean myEditable = false;
 
     public ChoiceInfo(Project project) {
       super(project);
@@ -162,13 +187,10 @@ public class MessagesEx extends Messages {
       setOptions(new String[]{CommonBundle.getOkButtonText()}, 0);
     }
 
+    @NotNull
+    @Override
     public ChoiceInfo getThis() {
       return this;
-    }
-
-    public ChoiceInfo setChoices(String[] choices, int defaultChoiceIndex) {
-      setChoices(choices, defaultChoiceIndex >= 0 ? choices[defaultChoiceIndex] : null);
-      return getThis();
     }
 
     public ChoiceInfo setChoices(String[] choices, String defaultChoice) {
@@ -177,13 +199,12 @@ public class MessagesEx extends Messages {
       return getThis();
     }
 
+    @Override
     public UserInput askUser() {
       ChooseDialog dialog = new ChooseDialog(getProject(), getMessage(), getTitle(), getIcon(), myChoises, myDefaultChoice, getOptions(), getDefaultOption());
       dialog.setValidator(null);
       JComboBox comboBox = dialog.getComboBox();
-      comboBox.setEditable(myEditable);
-      if (myEditable)
-        comboBox.getEditor().setItem(myDefaultChoice);
+      comboBox.setEditable(false);
       comboBox.setSelectedItem(myDefaultChoice);
       dialog.show();
       Object selectedItem = comboBox.getSelectedItem();
@@ -210,23 +231,35 @@ public class MessagesEx extends Messages {
   }
 
   public static class InputInfo extends BaseInputInfo<InputInfo> {
+    private String myDefaultValue;
+
     public InputInfo(Project project) {
       super(project);
       setOptions(new String[]{CommonBundle.getOkButtonText(), CommonBundle.getCancelButtonText()}, 0);
     }
 
+    @Override
     public UserInput askUser() {
-      InputDialog dialog = new InputDialog(getProject(), getMessage(), getTitle(), getIcon(), null, null, getOptions(), getDefaultOption());
+      InputDialog
+        dialog = new InputDialog(getProject(), getMessage(), getTitle(), getIcon(), myDefaultValue, null, getOptions(), getDefaultOption());
       dialog.show();
       return new UserInput(dialog.getTextField().getText(), dialog.getExitCode());
     }
 
+    @NotNull
+    @Override
     public InputInfo getThis() {
       return this;
     }
+
+    public void setDefaultValue(String defaultValue) {
+      myDefaultValue = defaultValue;
+    }
   }
 
-  public static abstract class BaseInputInfo<ThisClass extends BaseInputInfo> extends BaseDialogInfo<ThisClass> {
+  public abstract static class BaseInputInfo<ThisClass extends BaseInputInfo> extends BaseDialogInfo<ThisClass> {
+
+
     public BaseInputInfo(Project project) {
       super(project);
     }

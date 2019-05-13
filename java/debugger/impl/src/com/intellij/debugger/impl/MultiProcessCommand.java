@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,12 +19,13 @@ import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.debugger.engine.events.DebuggerCommandImpl;
 import com.intellij.openapi.util.Pair;
 
-import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
 
 public class MultiProcessCommand implements Runnable{
-  private final List<Pair<DebugProcessImpl,  DebuggerCommandImpl>> myCommands = new ArrayList<Pair<DebugProcessImpl, DebuggerCommandImpl>>();
+  private final List<Pair<DebugProcessImpl,  DebuggerCommandImpl>> myCommands = new LinkedList<>();
 
+  @Override
   public void run() {
     while(true) {
       Pair<DebugProcessImpl,  DebuggerCommandImpl> pair;
@@ -40,7 +41,10 @@ public class MultiProcessCommand implements Runnable{
 
   public void cancel() {
     synchronized(myCommands) {
-      myCommands.clear();
+      while (!myCommands.isEmpty()) {
+        Pair<DebugProcessImpl,  DebuggerCommandImpl> pair = myCommands.remove(0);
+        pair.getSecond().notifyCancelled();
+      }
     }
   }
 
@@ -49,6 +53,6 @@ public class MultiProcessCommand implements Runnable{
   }
 
   public void addCommand(DebugProcessImpl debugProcess, DebuggerCommandImpl command) {
-    myCommands.add(new Pair<DebugProcessImpl, DebuggerCommandImpl>(debugProcess, command));
+    myCommands.add(Pair.create(debugProcess, command));
   }
 }

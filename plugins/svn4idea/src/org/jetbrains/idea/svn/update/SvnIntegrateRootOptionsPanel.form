@@ -32,11 +32,12 @@
             <properties/>
             <border type="none"/>
             <children>
-              <component id="e6a78" class="javax.swing.JLabel" binding="myUrlLabel1">
+              <component id="e6a78" class="javax.swing.JLabel">
                 <constraints>
                   <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
                 </constraints>
                 <properties>
+                  <labelFor value="a6192"/>
                   <text resource-bundle="org/jetbrains/idea/svn/SvnBundle" key="integrate.configuration.source1.label"/>
                 </properties>
               </component>
@@ -77,6 +78,7 @@
                   <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
                 </constraints>
                 <properties>
+                  <labelFor value="93f39"/>
                   <text resource-bundle="org/jetbrains/idea/svn/SvnBundle" key="integrate.configuration.source2.label"/>
                 </properties>
               </component>

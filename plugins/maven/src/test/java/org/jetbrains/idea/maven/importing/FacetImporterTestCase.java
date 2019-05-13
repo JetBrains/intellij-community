@@ -1,35 +1,40 @@
+/*
+ * Copyright 2000-2017 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package org.jetbrains.idea.maven.importing;
 
-import com.intellij.facet.Facet;
-import com.intellij.facet.FacetManager;
-import com.intellij.facet.FacetType;
-import com.intellij.openapi.vfs.VfsUtil;
-import com.intellij.util.ArrayUtil;
+import com.intellij.facet.*;
+import com.intellij.openapi.vfs.VfsUtilCore;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.MavenImportingTestCase;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public abstract class FacetImporterTestCase<FACET_TYPE extends Facet, FACET_TYPE_TYPE extends FacetType<FACET_TYPE, ?>> extends MavenImportingTestCase {
-  private FacetImporter<FACET_TYPE,?,FACET_TYPE_TYPE> myImporter;
-
-  @Override
-  protected void setUp() throws Exception {
-    super.setUp();
-    myImporter = createImporter();
-  }
-
-  protected abstract FacetImporter<FACET_TYPE, ?, FACET_TYPE_TYPE> createImporter();
+public abstract class FacetImporterTestCase<FACET_TYPE extends Facet> extends MavenImportingTestCase {
+  protected abstract FacetTypeId<FACET_TYPE> getFacetTypeId();
 
   protected void doAssertSourceRoots(List<String> actualRoots, String... roots) {
-    List<String> expectedRootUrls = new ArrayList<String>();
+    List<String> expectedRootUrls = new ArrayList<>();
 
     for (String r : roots) {
-      String url = VfsUtil.pathToUrl(getProjectPath() + "/" + r);
+      String url = VfsUtilCore.pathToUrl(getProjectPath() + "/" + r);
       expectedRootUrls.add(url);
     }
 
-    assertUnorderedElementsAreEqual(actualRoots, ArrayUtil.toStringArray(expectedRootUrls));
+    assertUnorderedPathsAreEqual(actualRoots, expectedRootUrls);
   }
 
   protected FACET_TYPE getFacet(String module) {
@@ -49,6 +54,7 @@ public abstract class FacetImporterTestCase<FACET_TYPE extends Facet, FACET_TYPE
     return manager.findFacet(type.getId(), facetName);
   }
 
+  @NotNull
   protected <T extends Facet> T getFacet(String module, FacetType<T, ?> type) {
     T result = findFacet(module, type);
     assertNotNull("facet '" + type + "' not found", result);
@@ -62,10 +68,10 @@ public abstract class FacetImporterTestCase<FACET_TYPE extends Facet, FACET_TYPE
   }
 
   private FacetType<FACET_TYPE, ?> getFacetType() {
-    return myImporter.getFacetType();
+    return FacetTypeRegistry.getInstance().findFacetType(getFacetTypeId());
   }
 
-  private String getDefaultFacetName() {
-    return myImporter.getDefaultFacetName();
+  protected String getDefaultFacetName() {
+    return getFacetType().getDefaultFacetName();
   }
 }

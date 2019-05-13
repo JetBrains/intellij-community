@@ -12,9 +12,10 @@
 // limitations under the License.
 package org.zmlx.hg4idea.provider.update;
 
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.options.Configurable;
-import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vcs.FilePath;
@@ -34,89 +35,99 @@ import java.util.List;
 public class HgUpdateEnvironment implements UpdateEnvironment {
 
   private final Project project;
-  private final HgUpdater.UpdateConfiguration updateConfiguration = new HgUpdater.UpdateConfiguration();
+  @NotNull private final HgUpdateConfigurationSettings updateConfiguration;
 
   public HgUpdateEnvironment(Project project) {
     this.project = project;
+    updateConfiguration = ServiceManager.getService(project, HgUpdateConfigurationSettings.class);
   }
 
+  @Override
   public void fillGroups(UpdatedFiles updatedFiles) {
   }
 
+  @Override
   @NotNull
   public UpdateSession updateDirectories(@NotNull FilePath[] contentRoots,
     UpdatedFiles updatedFiles, ProgressIndicator indicator,
     @NotNull Ref<SequentialUpdatesContext> context) {
-    
-    List<VcsException> exceptions = new LinkedList<VcsException>();
 
-    boolean result = true;
+    List<VcsException> exceptions = new LinkedList<>();
+
+    boolean[] result = {true};
     for (FilePath contentRoot : contentRoots) {
       if (indicator != null) {
         indicator.checkCanceled();
-        indicator.startNonCancelableSection();
       }
       VirtualFile repository =
         ProjectLevelVcsManager.getInstance(project).getVcsRootFor(contentRoot);
       if (repository == null) {
         continue;
       }
-      try {
-        HgUpdater updater = new HgRegularUpdater(project, repository, updateConfiguration);
-        result &= updater.update(updatedFiles, indicator, exceptions);
-      } catch (VcsException e) {
-        //TODO include module name where exception occurred
-        exceptions.add(e);
-      }
-      if (indicator != null) {
-        indicator.finishNonCancelableSection();
-      }
+      ProgressManager.getInstance().executeNonCancelableSection(()->{
+        try {
+          HgUpdater updater = new HgRegularUpdater(project, repository, updateConfiguration);
+          result[0] &= updater.update(updatedFiles, indicator, exceptions);
+        } catch (VcsException e) {
+          //TODO include module name where exception occurred
+          exceptions.add(e);
+        }
+      });
     }
-    return new UpdateSessionAdapter(exceptions, !result);
+    return new UpdateSessionAdapter(exceptions, !result[0]);
   }
 
+  @Override
   public Configurable createConfigurable(Collection<FilePath> contentRoots) {
     return new UpdateConfigurable(updateConfiguration);
   }
 
+  @Override
   public boolean validateOptions(Collection<FilePath> roots) {
     return true;
   }
-  
+
   public static class UpdateConfigurable implements Configurable {
-    private final HgUpdater.UpdateConfiguration updateConfiguration;
+    private final HgUpdateConfigurationSettings updateConfiguration;
     protected HgUpdateDialog updateDialog;
 
-    public UpdateConfigurable(HgUpdater.UpdateConfiguration updateConfiguration) {
+    public UpdateConfigurable(@NotNull HgUpdateConfigurationSettings updateConfiguration) {
       this.updateConfiguration = updateConfiguration;
     }
 
+    @Override
     @Nls
     public String getDisplayName() {
       return "Update";
     }
 
+    @Override
     public String getHelpTopic() {
-      return null;
+      return "reference.VersionControl.Mercurial.UpdateProject";
     }
 
+    @Override
     public JComponent createComponent() {
       updateDialog = new HgUpdateDialog();
-      return updateDialog.createCenterPanel();
+      return updateDialog.getContentPanel();
     }
 
+    @Override
     public boolean isModified() {
       return true;
     }
 
-    public void apply() throws ConfigurationException {
+    @Override
+    public void apply() {
       updateDialog.applyTo(updateConfiguration);
     }
 
+    @Override
     public void reset() {
       updateDialog.updateFrom(updateConfiguration);
     }
 
+    @Override
     public void disposeUIResources() {
       updateDialog = null;
     }

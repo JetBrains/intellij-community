@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,13 +16,14 @@
 package com.intellij.codeInsight.highlighting;
 
 import com.intellij.codeInsight.CodeInsightBundle;
-import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.util.Consumer;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -50,7 +51,7 @@ public class HighlightOverridingMethodsHandler extends HighlightUsagesHandlerBas
   protected void selectTargets(final List<PsiClass> targets, final Consumer<List<PsiClass>> selectionConsumer) {
     new ChooseClassAndDoHighlightRunnable(targets, myEditor, CodeInsightBundle.message("highlight.overridden.classes.chooser.title")) {
       @Override
-      protected void selected(PsiClass... classes) {
+      protected void selected(@NotNull PsiClass... classes) {
         selectionConsumer.consume(Arrays.asList(classes));
       }
     }.run();
@@ -58,7 +59,6 @@ public class HighlightOverridingMethodsHandler extends HighlightUsagesHandlerBas
 
   @Override
   public void computeUsages(final List<PsiClass> classes) {
-    FeatureUsageTracker.getInstance().triggerFeatureUsed("codeassists.highlight.implements");
     for (PsiMethod method : myClass.getMethods()) {
       List<HierarchicalMethodSignature> superSignatures = method.getHierarchicalMethodSignature().getSuperSignatures();
       for (HierarchicalMethodSignature superSignature : superSignatures) {
@@ -93,5 +93,11 @@ public class HighlightOverridingMethodsHandler extends HighlightUsagesHandlerBas
       myStatusText = CodeInsightBundle.message("status.bar.overridden.methods.highlighted.message", methodCount,
                                                                         HighlightUsagesHandler.getShortcutText());
     }
+  }
+
+  @Nullable
+  @Override
+  public String getFeatureId() {
+    return "codeassists.highlight.implements";
   }
 }

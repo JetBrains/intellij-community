@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,11 +32,15 @@ public interface JBTabsPresentation {
 
   JBTabsPresentation setPaintFocus(boolean paintFocus);
 
+  JBTabsPresentation setAlwaysPaintSelectedTab(final boolean paintSelected);
+
   JBTabsPresentation setStealthTabMode(boolean stealthTabMode);
 
   JBTabsPresentation setSideComponentVertical(boolean vertical);
 
   JBTabsPresentation setSideComponentOnTabs(boolean onTabs);
+
+  JBTabsPresentation setSideComponentBefore(boolean before);
 
   JBTabsPresentation setSingleRow(boolean singleRow);
 
@@ -75,7 +79,4 @@ public interface JBTabsPresentation {
   JBTabsPosition getTabsPosition();
 
   JBTabsPresentation setTabDraggingEnabled(boolean enabled);
-
-  JBTabsPresentation setProvideSwitchTargets(boolean provide);
-
 }

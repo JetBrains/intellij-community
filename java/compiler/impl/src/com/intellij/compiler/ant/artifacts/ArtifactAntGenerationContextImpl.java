@@ -38,16 +38,16 @@ import java.util.*;
  */
 public class ArtifactAntGenerationContextImpl implements ArtifactAntGenerationContext {
   @NonNls public static final String ARTIFACTS_TEMP_DIR_PROPERTY = "artifacts.temp.dir";
-  private final Map<Artifact, String> myArtifact2Target = new THashMap<Artifact, String>();
-  private final List<Generator> myBeforeBuildGenerators = new ArrayList<Generator>();
-  private final List<Generator> myAfterBuildGenerators = new ArrayList<Generator>();
-  private final Set<String> myTempFileNames = new THashSet<String>();
-  private final Set<String> myCreatedTempSubdirs = new THashSet<String>();
-  private final Set<String> myProperties = new LinkedHashSet<String>();
+  private final Map<Artifact, String> myArtifact2Target = new THashMap<>();
+  private final List<Generator> myBeforeBuildGenerators = new ArrayList<>();
+  private final List<Generator> myAfterBuildGenerators = new ArrayList<>();
+  private final Set<String> myTempFileNames = new THashSet<>();
+  private final Set<String> myCreatedTempSubdirs = new THashSet<>();
+  private final Set<String> myProperties = new LinkedHashSet<>();
   private final Project myProject;
   private final GenerationOptions myGenerationOptions;
-  private final List<Generator> myBeforeCurrentArtifact = new ArrayList<Generator>();
-  private final Set<Artifact> myArtifactsToClean = new THashSet<Artifact>();
+  private final List<Generator> myBeforeCurrentArtifact = new ArrayList<>();
+  private final Set<Artifact> myArtifactsToClean = new THashSet<>();
 
   public ArtifactAntGenerationContextImpl(Project project, GenerationOptions generationOptions, List<Artifact> allArtifacts) {
     myProject = project;
@@ -69,10 +69,12 @@ public class ArtifactAntGenerationContextImpl implements ArtifactAntGenerationCo
     return myGenerationOptions;
   }
 
+  @Override
   public String getConfiguredArtifactOutputProperty(@NotNull Artifact artifact) {
     return "artifact.output." + BuildProperties.convertName(artifact.getName());
   }
 
+  @Override
   public String getArtifactOutputProperty(@NotNull Artifact artifact) {
     if (shouldBuildIntoTempDirectory(artifact)) {
       return "artifact.temp.output." + BuildProperties.convertName(artifact.getName());
@@ -101,22 +103,27 @@ public class ArtifactAntGenerationContextImpl implements ArtifactAntGenerationCo
     return "artifact." + BuildProperties.convertName(artifactName);
   }
 
+  @Override
   public String getSubstitutedPath(String path) {
     return GenerationUtils.toRelativePath(path, VfsUtil.virtualToIoFile(myProject.getBaseDir()), BuildProperties.getProjectBaseDirProperty(), myGenerationOptions);
   }
 
+  @Override
   public void runBeforeCurrentArtifact(Generator generator) {
     myBeforeCurrentArtifact.add(generator);
   }
 
+  @Override
   public void runBeforeBuild(Generator generator) {
     myBeforeBuildGenerators.add(generator);
   }
 
+  @Override
   public void runAfterBuild(Generator generator) {
     myAfterBuildGenerators.add(generator);
   }
 
+  @Override
   public String createNewTempFileProperty(String basePropertyName, String fileName) {
     String tempFileName = fileName;
     int i = 1;
@@ -142,11 +149,12 @@ public class ArtifactAntGenerationContextImpl implements ArtifactAntGenerationCo
   }
 
   public Generator[] getAndClearBeforeCurrentArtifact() {
-    final Generator[] generators = myBeforeCurrentArtifact.toArray(new Generator[myBeforeCurrentArtifact.size()]);
+    final Generator[] generators = myBeforeCurrentArtifact.toArray(new Generator[0]);
     myBeforeCurrentArtifact.clear();
     return generators;
   }
 
+  @Override
   public String getModuleOutputPath(String moduleName) {
     return BuildProperties.getOutputPathProperty(moduleName);
   }

@@ -15,83 +15,24 @@
  */
 package com.intellij.designer;
 
-import com.intellij.designer.designSurface.DesignerEditorPanel;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.ProjectComponent;
+import com.intellij.designer.palette.PaletteToolWindowManager;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.fileEditor.FileEditorManagerEvent;
-import com.intellij.openapi.fileEditor.FileEditorManagerListener;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.startup.StartupManager;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.wm.ToolWindow;
-import com.intellij.util.ui.update.MergingUpdateQueue;
-import com.intellij.util.ui.update.Update;
+import com.intellij.openapi.wm.ToolWindowAnchor;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Alexander Lobas
  */
-public abstract class AbstractToolWindowManager implements ProjectComponent {
-  private final MergingUpdateQueue myWindowQueue = new MergingUpdateQueue(getComponentName(), 200, true, null);
-  protected final Project myProject;
-  protected final FileEditorManager myFileEditorManager;
-  protected volatile ToolWindow myToolWindow;
-  private volatile boolean myToolWindowReady;
-  private volatile boolean myToolWindowDisposed;
-
-  public AbstractToolWindowManager(Project project, FileEditorManager fileEditorManager) {
-    myProject = project;
-    myFileEditorManager = fileEditorManager;
-  }
-
-  @Override
-  public void projectOpened() {
-    StartupManager.getInstance(myProject).registerPostStartupActivity(new Runnable() {
-      public void run() {
-        myToolWindowReady = true;
-        initListeners();
-        bindToDesigner(getActiveDesigner());
-      }
-    });
-  }
-
-  @Override
-  public void projectClosed() {
-    if (!myToolWindowDisposed) {
-      disposeComponent();
-      myToolWindowDisposed = true;
-      myToolWindow = null;
-    }
-  }
-
-  private void initListeners() {
-    myProject.getMessageBus().connect(myProject).subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, new FileEditorManagerListener() {
-      @Override
-      public void fileOpened(FileEditorManager source, VirtualFile file) {
-        bindToDesigner(getActiveDesigner());
-      }
-
-      @Override
-      public void fileClosed(FileEditorManager source, VirtualFile file) {
-        ApplicationManager.getApplication().invokeLater(new Runnable() {
-          @Override
-          public void run() {
-            bindToDesigner(getActiveDesigner());
-          }
-        });
-      }
-
-      @Override
-      public void selectionChanged(FileEditorManagerEvent event) {
-        bindToDesigner(getDesigner(event.getNewEditor()));
-      }
-    });
+public abstract class AbstractToolWindowManager extends LightToolWindowManager {
+  protected AbstractToolWindowManager(Project project, FileEditorManager fileEditorManager) {
+    super(project, fileEditorManager);
   }
 
   @Nullable
-  private static DesignerEditorPanel getDesigner(FileEditor editor) {
+  @Override
+  protected DesignerEditorPanelFacade getDesigner(FileEditor editor) {
     if (editor instanceof DesignerEditor) {
       DesignerEditor designerEditor = (DesignerEditor)editor;
       return designerEditor.getDesignerPanel();
@@ -99,46 +40,20 @@ public abstract class AbstractToolWindowManager implements ProjectComponent {
     return null;
   }
 
-  @Nullable
-  public DesignerEditorPanel getActiveDesigner() {
-    for (FileEditor editor : myFileEditorManager.getSelectedEditors()) {
-      DesignerEditorPanel designer = getDesigner(editor);
-      if (designer != null) {
-        return designer;
-      }
-    }
-
-    return null;
-  }
-
-  private void bindToDesigner(final DesignerEditorPanel designer) {
-    myWindowQueue.cancelAllUpdates();
-    myWindowQueue.queue(new Update("update") {
+  @Override
+  protected ToggleEditorModeAction createToggleAction(ToolWindowAnchor anchor) {
+    return new ToggleEditorModeAction(this, myProject, anchor) {
       @Override
-      public void run() {
-        if (!myToolWindowReady || myToolWindowDisposed) {
-          return;
-        }
-        if (myToolWindow == null) {
-          if (designer == null) {
-            return;
-          }
-          initToolWindow();
-        }
-        updateToolWindow(designer);
+      protected LightToolWindowManager getOppositeManager() {
+        AbstractToolWindowManager designerManager = DesignerToolWindowManager.getInstance(myProject);
+        AbstractToolWindowManager paletteManager = PaletteToolWindowManager.getInstance(myProject);
+        return myManager == designerManager ? paletteManager : designerManager;
       }
-    });
+    };
   }
 
-  protected abstract void initToolWindow();
-
-  protected abstract void updateToolWindow(@Nullable DesignerEditorPanel designer);
-
-  @Override
-  public void initComponent() {
-  }
-
-  @Override
-  public void disposeComponent() {
+  @Nullable
+  protected static DesignerCustomizations getCustomizations() {
+    return DesignerCustomizations.EP_NAME.findExtension(DesignerCustomizations.class);
   }
 }

@@ -1,0 +1,1 @@
+class SharedClass(object): pass

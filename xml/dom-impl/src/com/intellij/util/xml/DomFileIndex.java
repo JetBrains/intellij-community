@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,6 @@ package com.intellij.util.xml;
 
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.*;
 import com.intellij.util.io.EnumeratorStringDescriptor;
@@ -28,37 +27,28 @@ import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @author peter
  */
 public class DomFileIndex extends ScalarIndexExtension<String>{
   public static final ID<String,Void> NAME = ID.create("DomFileIndex");
-  private static final FileBasedIndex.InputFilter INPUT_FILTER = new FileBasedIndex.InputFilter() {
-    @Override
-    public boolean acceptInput(final VirtualFile file) {
-      return file.getFileType() == StdFileTypes.XML;
-    }
-  };
   private final DataIndexer<String,Void, FileContent> myDataIndexer;
 
   public DomFileIndex() {
     myDataIndexer = new DataIndexer<String, Void, FileContent>() {
       @Override
       @NotNull
-      public Map<String, Void> map(final FileContent inputData) {
-        final Set<String> namespaces = new THashSet<String>();
+      public Map<String, Void> map(@NotNull final FileContent inputData) {
+        final Set<String> namespaces = new THashSet<>();
         final XmlFileHeader header = NanoXmlUtil.parseHeader(CharArrayUtil.readerFromCharSequence(inputData.getContentAsText()));
-        ContainerUtil.addIfNotNull(header.getPublicId(), namespaces);
-        ContainerUtil.addIfNotNull(header.getSystemId(), namespaces);
-        ContainerUtil.addIfNotNull(header.getRootTagNamespace(), namespaces);
+        ContainerUtil.addIfNotNull(namespaces, header.getPublicId());
+        ContainerUtil.addIfNotNull(namespaces, header.getSystemId());
+        ContainerUtil.addIfNotNull(namespaces, header.getRootTagNamespace());
         final String tagName = header.getRootTagLocalName();
         if (StringUtil.isNotEmpty(tagName)) {
-          final THashMap<String, Void> result = new THashMap<String, Void>();
+          final THashMap<String, Void> result = new THashMap<>();
           final DomApplicationComponent component = DomApplicationComponent.getInstance();
           for (final DomFileDescription description : component.getFileDescriptions(tagName)) {
             final String[] strings = description.getAllPossibleRootTagNamespaces();
@@ -91,14 +81,16 @@ public class DomFileIndex extends ScalarIndexExtension<String>{
     return myDataIndexer;
   }
 
+  @NotNull
   @Override
   public KeyDescriptor<String> getKeyDescriptor() {
-    return new EnumeratorStringDescriptor();
+    return EnumeratorStringDescriptor.INSTANCE;
   }
 
+  @NotNull
   @Override
   public FileBasedIndex.InputFilter getInputFilter() {
-    return INPUT_FILTER;
+    return new DefaultFileTypeSpecificInputFilter(StdFileTypes.XML);
   }
 
   @Override
@@ -108,13 +100,6 @@ public class DomFileIndex extends ScalarIndexExtension<String>{
 
   @Override
   public int getVersion() {
-    final DomApplicationComponent component = DomApplicationComponent.getInstance();
-    int result = 0;
-    for (DomFileDescription description : component.getAllFileDescriptions()) {
-      result += description.getVersion();
-      result += description.getRootTagName().hashCode(); // so that a plugin enabling/disabling could trigger the reindexing
-    }
-    return result;
+    return DomApplicationComponent.getInstance().getCumulativeVersion(false);
   }
-
 }

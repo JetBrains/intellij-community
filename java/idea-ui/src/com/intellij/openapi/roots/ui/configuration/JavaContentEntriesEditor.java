@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,6 @@ package com.intellij.openapi.roots.ui.configuration;
 
 import com.intellij.ide.util.projectWizard.importSources.JavaModuleSourceRoot;
 import com.intellij.ide.util.projectWizard.importSources.JavaSourceRootDetectionUtil;
-import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.ProgressWindow;
@@ -27,12 +26,13 @@ import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.concurrency.SwingWorker;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.jps.model.java.JavaResourceRootType;
+import org.jetbrains.jps.model.java.JavaSourceRootType;
 
-import javax.swing.*;
-import java.awt.*;
 import java.io.File;
 import java.util.Collection;
 import java.util.HashMap;
@@ -41,12 +41,12 @@ import java.util.Map;
 
 public class JavaContentEntriesEditor extends CommonContentEntriesEditor {
   public JavaContentEntriesEditor(String moduleName, ModuleConfigurationState state) {
-    super(moduleName, state, true, true);
+    super(moduleName, state, JavaSourceRootType.SOURCE, JavaSourceRootType.TEST_SOURCE, JavaResourceRootType.RESOURCE, JavaResourceRootType.TEST_RESOURCE);
   }
 
   @Override
   protected ContentEntryEditor createContentEntryEditor(final String contentEntryUrl) {
-    return new JavaContentEntryEditor(contentEntryUrl) {
+    return new JavaContentEntryEditor(contentEntryUrl, getEditHandlers()) {
       @Override
       protected ModifiableRootModel getModel() {
         return JavaContentEntriesEditor.this.getModel();
@@ -55,75 +55,56 @@ public class JavaContentEntriesEditor extends CommonContentEntriesEditor {
   }
 
   @Override
-  protected ContentEntryTreeEditor createContentEntryTreeEditor(Project project) {
-    return new ContentEntryTreeEditor(project, true, true);
-  }
-
-  @Override
   protected List<ContentEntry> addContentEntries(VirtualFile[] files) {
     List<ContentEntry> contentEntries = super.addContentEntries(files);
     if (!contentEntries.isEmpty()) {
-      final ContentEntry[] contentEntriesArray = contentEntries.toArray(new ContentEntry[contentEntries.size()]);
-      addSourceRoots(myProject, contentEntriesArray, new Runnable() {
-        @Override
-        public void run() {
-          addContentEntryPanels(contentEntriesArray);
-        }
-      });
+      final ContentEntry[] contentEntriesArray = contentEntries.toArray(new ContentEntry[0]);
+      addSourceRoots(myProject, contentEntriesArray, () -> addContentEntryPanels(contentEntriesArray));
     }
     return contentEntries;
   }
 
-  private static void addSourceRoots(final Project project, final ContentEntry[] contentEntries, final Runnable finishRunnable) {
-    final HashMap<ContentEntry, Collection<JavaModuleSourceRoot>> entryToRootMap = new HashMap<ContentEntry, Collection<JavaModuleSourceRoot>>();
-    final Map<File, ContentEntry> fileToEntryMap = new HashMap<File, ContentEntry>();
+  private static void addSourceRoots(@NotNull Project project, final ContentEntry[] contentEntries, final Runnable finishRunnable) {
+    final HashMap<ContentEntry, Collection<JavaModuleSourceRoot>> entryToRootMap = new HashMap<>();
+    final Map<File, ContentEntry> fileToEntryMap = new HashMap<>();
     for (final ContentEntry contentEntry : contentEntries) {
       final VirtualFile file = contentEntry.getFile();
       if (file != null) {
         entryToRootMap.put(contentEntry, null);
-        fileToEntryMap.put(VfsUtil.virtualToIoFile(file), contentEntry);
+        fileToEntryMap.put(VfsUtilCore.virtualToIoFile(file), contentEntry);
       }
     }
 
     final ProgressWindow progressWindow = new ProgressWindow(true, project);
     final ProgressIndicator progressIndicator = new SmoothProgressAdapter(progressWindow, project);
 
-    final Runnable searchRunnable = new Runnable() {
-      @Override
-      public void run() {
-        final Runnable process = new Runnable() {
-          @Override
-          public void run() {
-            for (final File file : fileToEntryMap.keySet()) {
-              progressIndicator.setText(ProjectBundle.message("module.paths.searching.source.roots.progress", file.getPath()));
-              final Collection<JavaModuleSourceRoot> roots = JavaSourceRootDetectionUtil.suggestRoots(file);
-              entryToRootMap.put(fileToEntryMap.get(file), roots);
-            }
-          }
-        };
-        progressWindow.setTitle(ProjectBundle.message("module.paths.searching.source.roots.title"));
-        ProgressManager.getInstance().runProcess(process, progressIndicator);
-      }
+    final Runnable searchRunnable = () -> {
+      final Runnable process = () -> {
+        for (final File file : fileToEntryMap.keySet()) {
+          progressIndicator.setText(ProjectBundle.message("module.paths.searching.source.roots.progress", file.getPath()));
+          final Collection<JavaModuleSourceRoot> roots = JavaSourceRootDetectionUtil.suggestRoots(file);
+          entryToRootMap.put(fileToEntryMap.get(file), roots);
+        }
+      };
+      progressWindow.setTitle(ProjectBundle.message("module.paths.searching.source.roots.title"));
+      ProgressManager.getInstance().runProcess(process, progressIndicator);
     };
 
-    final Runnable addSourcesRunnable = new Runnable() {
-      @Override
-      public void run() {
-        for (final ContentEntry contentEntry : contentEntries) {
-          final Collection<JavaModuleSourceRoot> suggestedRoots = entryToRootMap.get(contentEntry);
-          if (suggestedRoots != null) {
-            for (final JavaModuleSourceRoot suggestedRoot : suggestedRoots) {
-              final VirtualFile sourceRoot = LocalFileSystem.getInstance().findFileByIoFile(suggestedRoot.getDirectory());
-              final VirtualFile fileContent = contentEntry.getFile();
-              if (sourceRoot != null && fileContent != null && VfsUtil.isAncestor(fileContent, sourceRoot, false)) {
-                contentEntry.addSourceFolder(sourceRoot, false, suggestedRoot.getPackagePrefix());
-              }
+    final Runnable addSourcesRunnable = () -> {
+      for (final ContentEntry contentEntry : contentEntries) {
+        final Collection<JavaModuleSourceRoot> suggestedRoots = entryToRootMap.get(contentEntry);
+        if (suggestedRoots != null) {
+          for (final JavaModuleSourceRoot suggestedRoot : suggestedRoots) {
+            final VirtualFile sourceRoot = LocalFileSystem.getInstance().findFileByIoFile(suggestedRoot.getDirectory());
+            final VirtualFile fileContent = contentEntry.getFile();
+            if (sourceRoot != null && fileContent != null && VfsUtilCore.isAncestor(fileContent, sourceRoot, false)) {
+              contentEntry.addSourceFolder(sourceRoot, false, suggestedRoot.getPackagePrefix());
             }
           }
         }
-        if (finishRunnable != null) {
-          finishRunnable.run();
-        }
+      }
+      if (finishRunnable != null) {
+        finishRunnable.run();
       }
     };
 
@@ -139,12 +120,5 @@ public class JavaContentEntriesEditor extends CommonContentEntriesEditor {
         addSourcesRunnable.run();
       }
     }.start();
-  }
-
-  @Override
-  protected JPanel createBottomControl(Module module) {
-    final JPanel innerPanel = new JPanel(new GridBagLayout());
-    innerPanel.setBorder(BorderFactory.createEmptyBorder(6, 0, 0, 6));
-    return innerPanel;
   }
 }

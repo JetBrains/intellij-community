@@ -17,6 +17,10 @@ Groovy script
     PsiElement(class)('class')
     PsiWhiteSpace(' ')
     PsiElement(identifier)('StaticDemo')
+    Extends clause
+      <empty list>
+    Implements clause
+      <empty list>
     PsiWhiteSpace(' ')
     Type definition body
       PsiElement({)('{')
@@ -34,7 +38,7 @@ Groovy script
             PsiWhiteSpace(' ')
             Command arguments
               Literal
-                PsiElement(Gstring)('"Demo"')
+                PsiElement(double quoted string)('"Demo"')
           PsiElement(new line)('\n  ')
           PsiElement(})('}')
       PsiElement(new line)('\n\n  ')
@@ -48,8 +52,8 @@ Groovy script
           PsiElement(void)('void')
         PsiWhiteSpace(' ')
         PsiElement(identifier)('main')
-        PsiElement(()('(')
         Parameter list
+          PsiElement(()('(')
           Parameter
             Modifiers
               <empty list>
@@ -61,7 +65,7 @@ Groovy script
               PsiElement(])(']')
             PsiWhiteSpace(' ')
             PsiElement(identifier)('args')
-        PsiElement())(')')
+          PsiElement())(')')
         PsiElement(new line)('\n  ')
         Throw clause
           <empty list>

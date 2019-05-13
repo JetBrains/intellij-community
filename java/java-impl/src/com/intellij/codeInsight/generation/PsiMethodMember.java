@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import com.intellij.psi.PsiSubstitutor;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.PsiFormatUtilBase;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author peter
@@ -28,15 +29,15 @@ public class PsiMethodMember extends PsiElementClassMember<PsiMethod>{
   private static final int PARAM_OPTIONS = PsiFormatUtilBase.SHOW_NAME | PsiFormatUtilBase.SHOW_TYPE | PsiFormatUtilBase.TYPE_AFTER;
   private static final int METHOD_OPTIONS = PARAM_OPTIONS | PsiFormatUtilBase.SHOW_PARAMETERS;
 
-  public PsiMethodMember(final PsiMethod method) {
+  public PsiMethodMember(@NotNull PsiMethod method) {
     this(method, PsiSubstitutor.EMPTY);
   }
 
-  public PsiMethodMember(CandidateInfo info) {
+  public PsiMethodMember(@NotNull CandidateInfo info) {
     this((PsiMethod)info.getElement(), info.getSubstitutor());
   }
 
-  public PsiMethodMember(final PsiMethod method, final PsiSubstitutor substitutor) {
+  public PsiMethodMember(@NotNull PsiMethod method, @NotNull PsiSubstitutor substitutor) {
     super(method, substitutor, PsiFormatUtil.formatMethod(method, PsiSubstitutor.EMPTY, METHOD_OPTIONS, PARAM_OPTIONS));
   }
 

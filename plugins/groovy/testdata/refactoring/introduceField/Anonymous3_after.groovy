@@ -4,14 +4,13 @@ interface A {
 
 def a = new A() {
     int i
+    def f
     {
         f = 123
     }
 
-    def f
-
     @Override
     void m1() {
-        println <selection>f</selection>
+        println f<caret>
     }
 }

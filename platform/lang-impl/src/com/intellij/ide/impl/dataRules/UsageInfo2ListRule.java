@@ -16,6 +16,7 @@
 
 package com.intellij.ide.impl.dataRules;
 
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.usages.UsageView;
@@ -27,8 +28,9 @@ import java.util.Collections;
  * @author cdr
  */
 public class UsageInfo2ListRule implements GetDataRule {
+  @Override
   @Nullable
-  public Object getData(final DataProvider dataProvider) {
+  public Object getData(@NotNull final DataProvider dataProvider) {
     UsageInfo usageInfo = (UsageInfo)dataProvider.getData(UsageView.USAGE_INFO_KEY.getName());
     if (usageInfo != null) return Collections.singletonList(usageInfo);
     return null;

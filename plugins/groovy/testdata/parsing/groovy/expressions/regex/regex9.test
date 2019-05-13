@@ -4,13 +4,14 @@ i = 5
 Groovy script
   Logical expression
     Literal
-      PsiElement(string)(''bugaga'')
+      PsiElement(single quoted string)(''bugaga'')
     PsiWhiteSpace(' ')
     PsiElement(==~)('==~')
     PsiWhiteSpace(' ')
     Compound regular expression
       PsiElement(regex begin)('/')
-      PsiElement(regex content)('abc ')
+      GrStringContentImpl(STRING_CONTENT)
+        PsiElement(regex content)('abc ')
       GString injection
         PsiElement($)('$')
         Closable block
@@ -24,7 +25,8 @@ Groovy script
             Command arguments
               Compound Gstring
                 PsiElement(Gstring begin)('"')
-                PsiElement(Gstring content)('def ')
+                GrStringContentImpl(STRING_CONTENT)
+                  PsiElement(Gstring content)('def ')
                 GString injection
                   PsiElement($)('$')
                   Closable block
@@ -40,12 +42,14 @@ Groovy script
                     PsiElement(})('}')
                 PsiElement(Gstring end)('"')
           PsiElement(})('}')
-      PsiElement(regex content)(' fgh')
+      GrStringContentImpl(STRING_CONTENT)
+        PsiElement(regex content)(' fgh')
       GString injection
         PsiElement($)('$')
         Reference expression
           PsiElement(identifier)('st')
-      PsiElement(regex content)(' ')
+      GrStringContentImpl(STRING_CONTENT)
+        PsiElement(regex content)(' ')
       GString injection
         PsiElement($)('$')
         Closable block
@@ -57,7 +61,7 @@ Groovy script
               Reference expression
                 PsiElement(identifier)('frg')
               PsiElement(.)('.')
-              GroovyASTPsiElementImpl(regex literal)
+              GroovyASTPsiElementImpl(SLASHY_LITERAL)
                 PsiElement(regex begin)('/')
                 PsiElement(regex content)('sdf')
                 PsiElement(regex end)('/')
@@ -67,6 +71,7 @@ Groovy script
                 PsiElement(Integer)('5')
               PsiElement())(')')
           PsiElement(})('}')
-      PsiElement(regex content)('\ni = 5')
-      PsiErrorElement:Regex ending expected
+      GrStringContentImpl(STRING_CONTENT)
+        PsiElement(regex content)('\ni = 5')
+      PsiErrorElement:regex end expected
         <empty list>

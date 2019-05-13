@@ -26,6 +26,12 @@ public interface Processor<T> {
       return true;
     }
   };
+  Processor FALSE = new Processor() {
+    @Override
+    public boolean process(Object o) {
+      return false;
+    }
+  };
   /**
    * @param t consequently takes value of each element of the set this processor is passed to for processing.
    * @return {@code true} to continue processing or {@code false} to stop.

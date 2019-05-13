@@ -1,39 +1,43 @@
 <?xml version="1.0" encoding="iso-8859-1"?>
 
-<idea-plugin version="2">
+<idea-plugin>
 
   <extensions defaultExtensionNs="com.intellij">
-    <compiler implementation="org.intellij.plugins.intelliLang.pattern.compiler.impl.PatternValidationCompiler"/>
-
-    <localInspection shortName="UnknownLanguage" displayName="Unknown Language ID" groupName="Language Injection" enabledByDefault="true"
+    <localInspection language="JAVA" shortName="UnknownLanguage" displayName="Unknown Language ID" groupName="Language Injection" enabledByDefault="true"
                      level="ERROR" implementationClass="org.intellij.plugins.intelliLang.inject.java.validation.UnknownLanguageID"/>
-    <localInspection shortName="LanguageMismatch" displayName="Language Mismatch" groupName="Language Injection" enabledByDefault="true"
+    <localInspection language="JAVA" shortName="LanguageMismatch" displayName="Language Mismatch" groupName="Language Injection" enabledByDefault="true"
                      level="WARNING" implementationClass="org.intellij.plugins.intelliLang.inject.java.validation.LanguageMismatch"/>
-    <localInspection shortName="InjectionNotApplicable" displayName="Injection Annotation not applicable" groupName="Language Injection"
+    <localInspection language="JAVA" shortName="InjectionNotApplicable" displayName="Injection Annotation not applicable" groupName="Language Injection"
                      enabledByDefault="true" level="ERROR"
                      implementationClass="org.intellij.plugins.intelliLang.inject.java.validation.InjectionNotApplicable"/>
 
-    <localInspection shortName="PatternValidation" displayName="Validate Annotated Patterns" groupName="Pattern Validation"
+    <localInspection language="JAVA" shortName="PatternValidation" displayName="Validate Annotated Patterns" groupName="Pattern Validation"
                      enabledByDefault="true" level="WARNING"
                      implementationClass="org.intellij.plugins.intelliLang.pattern.PatternValidator"/>
-    <localInspection shortName="PatternNotApplicable" displayName="Pattern Annotation not applicable" groupName="Pattern Validation"
+    <localInspection language="JAVA" shortName="PatternNotApplicable" displayName="Pattern Annotation not applicable" groupName="Pattern Validation"
                      enabledByDefault="true" level="ERROR"
                      implementationClass="org.intellij.plugins.intelliLang.pattern.PatternAnnotationNotApplicable"/>
-    <localInspection shortName="PatternOverriddenByNonAnnotatedMethod" displayName="Non-annotated Method overrides @Pattern Method"
+    <localInspection language="JAVA" shortName="PatternOverriddenByNonAnnotatedMethod" displayName="Non-annotated Method overrides @Pattern Method"
                      groupName="Pattern Validation" enabledByDefault="true" level="WARNING"
                      implementationClass="org.intellij.plugins.intelliLang.pattern.PatternOverriddenByNonAnnotatedMethod"/>
 
     <concatenationAwareInjector implementation="org.intellij.plugins.intelliLang.inject.java.ConcatenationInjector"/>
 
-    <psi.referenceContributor implementation="org.intellij.plugins.intelliLang.inject.java.LanguageReferenceProvider"/>
+    <psi.referenceContributor language="UAST" implementation="org.intellij.plugins.intelliLang.inject.java.LanguageReferenceProvider"/>
+    <projectService serviceInterface="org.intellij.plugins.intelliLang.inject.java.InjectionCache"
+                    serviceImplementation="org.intellij.plugins.intelliLang.inject.java.InjectionCache"/>
+  </extensions>
 
-    <daemon.highlightInfoFilter implementation="org.intellij.plugins.intelliLang.inject.CustomErrorElementFilter"/>
+  <extensions defaultExtensionNs="com.intellij">
+    <tipAndTrick file="InjectSQLLanguage.html" feature-id="db.console.run.intention"/>
   </extensions>
 
   <extensions defaultExtensionNs="org.intellij.intelliLang">
     <languageSupport implementation="org.intellij.plugins.intelliLang.inject.java.JavaLanguageInjectionSupport"/>
     <injectionConfig config="resources/javaInjections.xml"/>
     <injectionConfig config="resources/xmlInjections-java.xml"/>
+
+
   </extensions>
 
 </idea-plugin>

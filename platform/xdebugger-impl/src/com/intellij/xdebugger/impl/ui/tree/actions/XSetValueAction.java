@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,6 @@ package com.intellij.xdebugger.impl.ui.tree.actions;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.xdebugger.impl.ui.tree.SetValueInplaceEditor;
-import com.intellij.xdebugger.impl.ui.tree.XDebuggerTreeInplaceEditor;
 import com.intellij.xdebugger.impl.ui.tree.nodes.WatchNode;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
 import org.jetbrains.annotations.NotNull;
@@ -28,7 +27,7 @@ import org.jetbrains.annotations.NotNull;
  */
 public class XSetValueAction extends XDebuggerTreeActionBase {
   @Override
-  public void update(final AnActionEvent e) {
+  public void update(@NotNull final AnActionEvent e) {
     super.update(e);
     XValueNodeImpl node = getSelectedNode(e.getDataContext());
     Presentation presentation = e.getPresentation();
@@ -42,12 +41,12 @@ public class XSetValueAction extends XDebuggerTreeActionBase {
   }
 
   @Override
-  protected boolean isEnabled(XValueNodeImpl node) {
-    return super.isEnabled(node) && node.getValueContainer().getModifier() != null;
+  protected boolean isEnabled(@NotNull XValueNodeImpl node, @NotNull AnActionEvent e) {
+    return super.isEnabled(node, e) && node.getValueContainer().getModifier() != null;
   }
 
+  @Override
   protected void perform(final XValueNodeImpl node, @NotNull final String nodeName, final AnActionEvent e) {
-    XDebuggerTreeInplaceEditor editor = new SetValueInplaceEditor(node, nodeName);
-    editor.show();
+    SetValueInplaceEditor.show(node, nodeName);
   }
 }

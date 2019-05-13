@@ -1,36 +1,20 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm.ex;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.impl.EditorComponentImpl;
 import com.intellij.openapi.fileEditor.impl.EditorWindowHolder;
-import com.intellij.openapi.util.Computable;
-import org.jetbrains.annotations.NonNls;
+import com.intellij.util.ReflectionUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.text.JTextComponent;
 import java.awt.*;
-import java.lang.reflect.Field;
 
 public class IdeFocusTraversalPolicy extends LayoutFocusTraversalPolicyExt {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy");
-  @NonNls private static final String FOCUS_TRAVERSAL_POLICY_FIELD = "focusTraversalPolicy";
 
+  @Override
   protected Component getDefaultComponentImpl(Container focusCycleRoot) {
     if (!(focusCycleRoot instanceof JComponent)) {
       return super.getDefaultComponent(focusCycleRoot);
@@ -43,8 +27,8 @@ public class IdeFocusTraversalPolicy extends LayoutFocusTraversalPolicyExt {
   }
 
   /**
-   * @return preferred focused component inside the specified <code>component</code>.
-   * Method can return component itself if the <code>component</code> is legal
+   * @return preferred focused component inside the specified {@code component}.
+   * Method can return component itself if the {@code component} is legal
    * (JTextFiel)focusable
    *
    */
@@ -62,12 +46,7 @@ public class IdeFocusTraversalPolicy extends LayoutFocusTraversalPolicyExt {
       Component defaultComponent;
       if (focusTraversalPolicy instanceof LayoutFocusTraversalPolicyExt) {
         final LayoutFocusTraversalPolicyExt extPolicy = (LayoutFocusTraversalPolicyExt)focusTraversalPolicy;
-        defaultComponent = extPolicy.queryImpl(new Computable<Component>() {
-          @Override
-          public Component compute() {
-            return extPolicy.getDefaultComponent(component);
-          }
-        });
+        defaultComponent = extPolicy.queryImpl(() -> extPolicy.getDefaultComponent(component));
       } else {
         defaultComponent = focusTraversalPolicy.getDefaultComponent(component);
       }
@@ -103,17 +82,10 @@ public class IdeFocusTraversalPolicy extends LayoutFocusTraversalPolicyExt {
   }
 
   private static FocusTraversalPolicy getFocusTraversalPolicyAwtImpl(final JComponent component) {
-    try {
-      final Field field = Container.class.getDeclaredField(FOCUS_TRAVERSAL_POLICY_FIELD);
-      field.setAccessible(true);
-      return (FocusTraversalPolicy)field.get(component);
-    }
-    catch (Exception e) {
-      LOG.error(e);
-      return null;
-    }
+    return ReflectionUtil.getField(Container.class, component, FocusTraversalPolicy.class, "focusTraversalPolicy");
   }
 
+  @Override
   protected final boolean accept(final Component aComponent) {
     if (aComponent instanceof JComponent) {
       return _accept((JComponent)aComponent);
@@ -126,7 +98,7 @@ public class IdeFocusTraversalPolicy extends LayoutFocusTraversalPolicyExt {
       return false;
     }
 
-    /** TODO[anton,vova] implement Policy in Editor component instead */
+    /* TODO[anton,vova] implement Policy in Editor component instead */
     if (component instanceof EditorComponentImpl || component instanceof EditorWindowHolder) {
       return true;
     }

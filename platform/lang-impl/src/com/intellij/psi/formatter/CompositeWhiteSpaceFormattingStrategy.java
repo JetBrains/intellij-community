@@ -31,14 +31,13 @@ import java.util.List;
  * Not thread-safe.
  *
  * @author Denis Zhdanov
- * @since Sep 21, 2010 3:35:25 PM
  */
 public class CompositeWhiteSpaceFormattingStrategy implements WhiteSpaceFormattingStrategy {
 
-  private final List<WhiteSpaceFormattingStrategy> myStrategies = new ArrayList<WhiteSpaceFormattingStrategy>();
+  private final List<WhiteSpaceFormattingStrategy> myStrategies = new ArrayList<>();
   private boolean myReplaceDefaultStrategy;
 
-  public CompositeWhiteSpaceFormattingStrategy(@NotNull Collection<WhiteSpaceFormattingStrategy> strategies)
+  public CompositeWhiteSpaceFormattingStrategy(@NotNull Collection<? extends WhiteSpaceFormattingStrategy> strategies)
     throws IllegalArgumentException
   {
     for (WhiteSpaceFormattingStrategy strategy : strategies) {
@@ -85,11 +84,11 @@ public class CompositeWhiteSpaceFormattingStrategy implements WhiteSpaceFormatti
   public CharSequence adjustWhiteSpaceIfNecessary(@NotNull CharSequence whiteSpaceText,
                                                   @NotNull CharSequence text,
                                                   int startOffset,
-                                                  int endOffset, CodeStyleSettings codeStyleSettings)
+                                                  int endOffset, CodeStyleSettings codeStyleSettings, ASTNode nodeAfter)
   {
     CharSequence result = whiteSpaceText;
     for (WhiteSpaceFormattingStrategy strategy : myStrategies) {
-      result = strategy.adjustWhiteSpaceIfNecessary(result, text, startOffset, endOffset, codeStyleSettings);
+      result = strategy.adjustWhiteSpaceIfNecessary(result, text, startOffset, endOffset, codeStyleSettings, nodeAfter);
     }
     return result;
   }

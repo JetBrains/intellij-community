@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,10 +15,14 @@
  */
 package com.intellij.util.containers;
 
+/**
+ * Please use {@link java.util.function.Function} instead
+ */
 public interface Convertor<Src, Dst> {
   IntoSelf SELF = new IntoSelf();
 
   class IntoSelf<Src> implements Convertor<Src, Src> {
+    @Override
     public Src convert(Src o) {
       return o;
     }

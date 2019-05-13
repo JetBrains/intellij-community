@@ -15,9 +15,11 @@
  */
 package com.intellij.codeInsight.generation;
 
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.speedSearch.SpeedSearchUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -29,20 +31,23 @@ public class MemberChooserObjectBase implements MemberChooserObject {
   private final String myText;
   private final Icon myIcon;
 
-  public MemberChooserObjectBase(final String text) {
+  public MemberChooserObjectBase(@Nullable final String text) {
     this(text, null);
   }
 
-  public MemberChooserObjectBase(final String text, @Nullable final Icon icon) {
-    myText = text;
+  public MemberChooserObjectBase(@Nullable final String text, @Nullable final Icon icon) {
+    myText = StringUtil.notNullize(text);
     myIcon = icon;
   }
 
+  @Override
   public void renderTreeNode(SimpleColoredComponent component, JTree tree) {
     SpeedSearchUtil.appendFragmentsForSpeedSearch(tree, getText(), getTextAttributes(tree), false, component);
     component.setIcon(myIcon);
   }
 
+  @Override
+  @NotNull
   public String getText() {
     return myText;
   }

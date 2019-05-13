@@ -26,6 +26,7 @@ public class XPath2ForImpl extends XPath2ElementImpl implements XPath2For {
     super(node);
   }
 
+  @Override
   @NotNull
   public XPathType getType() {
     final XPathExpression value = getReturn();
@@ -44,6 +45,7 @@ public class XPath2ForImpl extends XPath2ElementImpl implements XPath2For {
     return node != null ? PsiTreeUtil.findChildOfType(node.getPsi(), XPathExpression.class) : null;
   }
 
+  @Override
   public void accept(XPath2ElementVisitor visitor) {
     visitor.visitXPath2For(this);
   }

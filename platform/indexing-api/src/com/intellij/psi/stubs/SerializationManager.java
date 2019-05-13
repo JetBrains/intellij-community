@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,51 +20,46 @@
 package com.intellij.psi.stubs;
 
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.util.Computable;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.tree.IStubFileElementType;
+import com.intellij.psi.tree.StubFileElementType;
 
-import java.util.ArrayList;
 import java.util.List;
 
 public abstract class SerializationManager {
-
-  protected final List<ObjectStubSerializer> myAllSerializers = new ArrayList<ObjectStubSerializer>();
-  private volatile boolean mySerializersLoaded = false;
+  private volatile boolean mySerializersLoaded;
 
   public static SerializationManager getInstance() {
     return ApplicationManager.getApplication().getComponent(SerializationManager.class);
   }
 
   public void registerSerializer(ObjectStubSerializer serializer) {
-    myAllSerializers.add(serializer);
+    registerSerializer(serializer.getExternalId(), new Computable.PredefinedValueComputable<>(serializer));
   }
+
+  protected abstract void registerSerializer(String externalId, Computable<ObjectStubSerializer> lazySerializer);
 
   protected void initSerializers() {
     if (mySerializersLoaded) return;
+    //noinspection SynchronizeOnThis
     synchronized (this) {
       if (mySerializersLoaded) return;
-      for (StubElementTypeHolderEP holderEP : Extensions.getExtensions(StubElementTypeHolderEP.EP_NAME)) {
-        holderEP.initialize();
-      }
-      final IElementType[] stubElementTypes = IElementType.enumerate(new IElementType.Predicate() {
-        public boolean matches(final IElementType type) {
-          return type instanceof StubSerializer;
-        }
-      });
+      List<StubFieldAccessor> lazySerializers = IStubElementType.loadRegisteredStubElementTypes();
+      final IElementType[] stubElementTypes = IElementType.enumerate(type -> type instanceof StubSerializer);
       for (IElementType type : stubElementTypes) {
-        if (type instanceof IStubFileElementType &&
-            ((IStubFileElementType)type).getExternalId().equals(PsiFileStubImpl.TYPE.getExternalId())) {
+        if (type instanceof StubFileElementType &&
+            StubFileElementType.DEFAULT_EXTERNAL_ID.equals(((StubFileElementType)type).getExternalId())) {
           continue;
         }
-        StubSerializer stubSerializer = (StubSerializer)type;
 
-        if (!myAllSerializers.contains(stubSerializer)) {
-          registerSerializer(stubSerializer);
-        }
+        registerSerializer((StubSerializer)type);
+      }
+      for (StubFieldAccessor lazySerializer : lazySerializers) {
+        registerSerializer(lazySerializer.externalId, lazySerializer);
       }
       mySerializersLoaded = true;
     }
   }
 
+  public abstract String internString(String string);
 }

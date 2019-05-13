@@ -23,13 +23,7 @@ import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 
 import javax.xml.namespace.QName;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedHashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 /**
  * Helper class to collect all used namespaces and their prefixes from an xml document
@@ -49,9 +43,9 @@ public class NamespaceCollector extends XmlRecursiveElementVisitor {
         }
     }
 
-    private final Set<Namespace> namespaces = new LinkedHashSet<Namespace>();
-    private final Set<QName> elements = new HashSet<QName>(64);
-    private final Set<QName> attributes = new HashSet<QName>(64);
+    private final Set<Namespace> namespaces = new LinkedHashSet<>();
+    private final Set<QName> elements = new HashSet<>(64);
+    private final Set<QName> attributes = new HashSet<>(64);
 
     private NamespaceCollector() {
 
@@ -124,8 +118,7 @@ public class NamespaceCollector extends XmlRecursiveElementVisitor {
     }
 
     public static CollectedInfo empty() {
-        //noinspection unchecked
-        return new CollectedInfo(Collections.<Namespace>emptySet(), Collections.<QName>emptySet(), Collections.<QName>emptySet());
+      return new CollectedInfo(Collections.emptySet(), Collections.emptySet(), Collections.emptySet());
     }
     
     public static CollectedInfo collectInfo(final XmlFile psiFile) {
@@ -149,7 +142,7 @@ public class NamespaceCollector extends XmlRecursiveElementVisitor {
     }
 
     public static Map<String, String> convert(final Collection<Namespace> namespaces) {
-        final Map<String, String> map = new HashMap<String, String>();
+        final Map<String, String> map = new HashMap<>();
         for (Namespace namespace : namespaces) {
             if (!map.containsKey(namespace.getPrefix())) {
                 map.put(namespace.getPrefix(), namespace.getUri());

@@ -18,6 +18,7 @@ package com.intellij.codeInsight.completion;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiType;
 import com.intellij.codeInsight.ExpectedTypeInfo;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author peter
@@ -31,7 +32,7 @@ public class JavaSmartCompletionParameters {
     myExpectedType = expectedType;
   }
 
-  public PsiType getExpectedType() {
+  @NotNull public PsiType getExpectedType() {
     return myExpectedType.getType();
   }
 

@@ -35,19 +35,25 @@ public class JavaReferenceEditorUtil {
                                                                                       final Project project,
                                                                                       final boolean toAcceptClasses) {
     return new ReferenceEditorWithBrowseButton(browseActionListener, project,
-                                               new NullableFunction<String,Document>() {
-      public Document fun(final String s) {
-        return createDocument(s, project, toAcceptClasses);
-      }
-    }, text);
+                                               (NullableFunction<String, Document>)s -> createDocument(s, project, toAcceptClasses), text);
   }
 
   @Nullable
-  public static Document createDocument(final String text, Project project, boolean isClassesAccepted) {
+  public static Document createDocument(final String text,
+                                        Project project,
+                                        boolean isClassesAccepted) {
+    return createDocument(text, project, isClassesAccepted, JavaCodeFragment.VisibilityChecker.EVERYTHING_VISIBLE);
+  }
+
+  @Nullable
+  public static Document createDocument(final String text,
+                                        Project project,
+                                        boolean isClassesAccepted, 
+                                        JavaCodeFragment.VisibilityChecker visibilityChecker) {
     final PsiPackage defaultPackage = JavaPsiFacade.getInstance(project).findPackage("");
     final JavaCodeFragmentFactory factory = JavaCodeFragmentFactory.getInstance(project);
     final JavaCodeFragment fragment = factory.createReferenceCodeFragment(text, defaultPackage, true, isClassesAccepted);
-    fragment.setVisibilityChecker(JavaCodeFragment.VisibilityChecker.EVERYTHING_VISIBLE);
+    fragment.setVisibilityChecker(visibilityChecker);
     return PsiDocumentManager.getInstance(project).getDocument(fragment);
   }
 

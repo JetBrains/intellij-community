@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,35 +15,41 @@
  */
 package com.intellij.execution.testframework.sm;
 
+import com.intellij.execution.process.ProcessOutputType;
 import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.execution.testframework.sm.runner.OutputLineSplitter;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.testFramework.UsefulTestCase;
-import com.intellij.util.concurrency.FutureResult;
+import com.intellij.testFramework.LightPlatformTestCase;
+import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashMap;
+import jetbrains.buildServer.messages.serviceMessages.ServiceMessage;
 import org.jetbrains.annotations.NotNull;
+import org.junit.Assert;
 
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-public class OutputLineSplitterTest extends UsefulTestCase {
-  private static final Key RED = Key.create(OutputLineSplitterTest.class + ".RED");
-  private static final Key GREEN = Key.create(OutputLineSplitterTest.class + ".GREEN");
-  private static final Key BLUE = Key.create(OutputLineSplitterTest.class + ".BLUE");
+import static org.hamcrest.CoreMatchers.*;
 
+public class OutputLineSplitterTest extends LightPlatformTestCase {
   private static final List<Key> ALL_TYPES = Arrays.asList(ProcessOutputTypes.STDERR, ProcessOutputTypes.STDOUT, ProcessOutputTypes.SYSTEM);
-  private static final List<Key> ALL_COLORS = Arrays.asList(RED, GREEN, BLUE);
+  private static final List<Key> ALL_STDOUT_KEYS = Arrays.asList(
+    new ProcessOutputType(OutputLineSplitterTest.class + ".RED", (ProcessOutputType)ProcessOutputTypes.STDOUT),
+    new ProcessOutputType(OutputLineSplitterTest.class + ".GREEN", (ProcessOutputType)ProcessOutputTypes.STDOUT),
+    new ProcessOutputType(OutputLineSplitterTest.class + ".BLUE", (ProcessOutputType)ProcessOutputTypes.STDOUT)
+  );
+  private static final List<Key> ALL_STDERR_KEYS = Arrays.asList(
+    new ProcessOutputType(OutputLineSplitterTest.class + ".RED", (ProcessOutputType)ProcessOutputTypes.STDERR),
+    new ProcessOutputType(OutputLineSplitterTest.class + ".GREEN", (ProcessOutputType)ProcessOutputTypes.STDERR),
+    new ProcessOutputType(OutputLineSplitterTest.class + ".BLUE", (ProcessOutputType)ProcessOutputTypes.STDERR)
+  );
 
   private OutputLineSplitter mySplitter;
-  final Map<Key, List<String>> myOutput = new THashMap<Key, List<String>>();
-
-
-  @Override
-  protected boolean runInDispatchThread() {
-    return false;
-  }
+  final Map<Key, List<String>> myOutput = new THashMap<>();
 
   @Override
   protected void setUp() throws Exception {
@@ -52,11 +58,11 @@ public class OutputLineSplitterTest extends UsefulTestCase {
     mySplitter = new OutputLineSplitter(false) {
       @Override
       protected void onLineAvailable(@NotNull String text, @NotNull Key outputType, boolean tcLikeFakeOutput) {
-        if (ProcessOutputTypes.STDERR != outputType && ProcessOutputTypes.SYSTEM != outputType) outputType = ProcessOutputTypes.STDOUT;
+        ProcessOutputType baseOutputType = ((ProcessOutputType)outputType).getBaseOutputType();
         synchronized (myOutput) {
-          List<String> list = myOutput.get(outputType);
+          List<String> list = myOutput.get(baseOutputType);
           if (list == null) {
-            myOutput.put(outputType, list = new ArrayList<String>());
+            myOutput.put(baseOutputType, list = new ArrayList<>());
           }
           list.add(text);
         }
@@ -64,29 +70,58 @@ public class OutputLineSplitterTest extends UsefulTestCase {
     };
   }
 
-  public void testReadingSeveralStreams() throws Exception {
-    final Map<Key, List<String>> written = new ConcurrentHashMap<Key, List<String>>();
-    for (final Key each : ALL_TYPES) {
-      written.put(each, new ArrayList<String>());
-      execute(new Runnable() {
-        @Override
-        public void run() {
-          Random r = new Random();
-          for (int i = 0; i < 1000; i++) {
-            String s = StringUtil.repeat("A", 100 + r.nextInt(1000));
-            if (r.nextInt(1) == 1) s += "\n";
+  /**
+   * When tc message is in the middle of line it should reported as separate line like if it has \n before it
+   */
+  public void testMessageInTheMiddleOfLine() {
+    mySplitter.process("\nStarting...\n##teamcity[name1]\nDone 1\n\n##teamcity[name2]\nDone 2", ProcessOutputTypes.STDOUT);
+    mySplitter.process("##teamcity[name3]Test print##teamcity[name4]", ProcessOutputTypes.STDOUT);
+    mySplitter.process("##teamcity[name5]\n", ProcessOutputTypes.STDOUT);
+    mySplitter.process("##teamcity[name6]\nInfo##teamcity[name7]\n", ProcessOutputTypes.STDOUT);
+    List<String> stdout = myOutput.get(ProcessOutputTypes.STDOUT);
+    Assert.assertEquals(ContainerUtil.newArrayList(
+      "\n", "Starting...\n", "##teamcity[name1]\n", "Done 1\n", "\n", "##teamcity[name2]\n", "Done 2",
+      "##teamcity[name3]Test print", "##teamcity[name4]",
+      "##teamcity[name5]\n",
+      "##teamcity[name6]\n", "Info", "##teamcity[name7]\n"
+    ), stdout);
+    for(String prefix: new String[]{"...", "", "... ", "##", " ##", "##team##teamcity["}) {
+      final String testStarted = ServiceMessageBuilder.testStarted("myTest").toString() + "\n";
+      final String testEnded = ServiceMessageBuilder.testFinished("myTest").toString() + "\n";
 
-            mySplitter.process(s, each);
-            List<String> list = written.get(each);
-            if (!list.isEmpty()) {
-              String last = list.get(list.size() - 1);
-              if (!last.endsWith("\n")) {
-                list.set(list.size() - 1, last + s);
-                continue;
-              }
+      mySplitter.process(prefix, ProcessOutputTypes.SYSTEM);
+      mySplitter.process(prefix + testStarted, ProcessOutputTypes.SYSTEM);
+      mySplitter.process(testEnded, ProcessOutputTypes.SYSTEM);
+
+      mySplitter.flush();
+
+      final List<String> output = myOutput.get(ProcessOutputTypes.SYSTEM);
+      final String messagePrefix = ServiceMessage.SERVICE_MESSAGE_START;
+      Assert.assertThat(output, everyItem(either(startsWith(messagePrefix)).or(not(containsString(messagePrefix)))));
+      Assert.assertThat(output, hasItems(testStarted, testEnded));
+    }
+  }
+
+  public void testReadingSeveralStreams() throws Exception {
+    final Map<Key, List<String>> written = new ConcurrentHashMap<>();
+    for (final Key each : ALL_TYPES) {
+      written.put(each, new ArrayList<>());
+      execute(() -> {
+        Random r = new Random();
+        for (int i = 0; i < 1000; i++) {
+          String s = StringUtil.repeat("A", 100 + r.nextInt(1000));
+          if (r.nextInt(1) == 1) s += "\n";
+
+          mySplitter.process(s, each);
+          List<String> list = written.get(each);
+          if (!list.isEmpty()) {
+            String last = list.get(list.size() - 1);
+            if (!last.endsWith("\n")) {
+              list.set(list.size() - 1, last + s);
+              continue;
             }
-            list.add(s);
           }
+          list.add(s);
         }
       }).get();
     }
@@ -99,23 +134,33 @@ public class OutputLineSplitterTest extends UsefulTestCase {
   }
 
   public void testReadingColoredStreams() throws Exception {
-    final Map<Key, List<String>> written = new ConcurrentHashMap<Key, List<String>>();
+    final Map<Key, List<String>> written = new ConcurrentHashMap<>();
     for (final Key each : ALL_TYPES) {
-      written.put(each, new ArrayList<String>());
-      execute(new Runnable() {
-        @Override
-        public void run() {
-          Random r = new Random();
-          for (int i = 0; i < 1000; i++) {
-            String s = StringUtil.repeat("A", 100 + r.nextInt(1000)) + "\n";
+      written.put(each, new ArrayList<>());
+      execute(() -> {
+        Random r = new Random();
+        for (int i = 0; i < 1000; i++) {
+          String s = StringUtil.repeat("A", 100 + r.nextInt(1000)) + "\n";
 
-            if (each == ProcessOutputTypes.STDOUT) {
-              mySplitter.process(s, ALL_COLORS.get(r.nextInt(2)));
-            }
-            else {
-              mySplitter.process(s, each);
-            }
+          final Key outputType;
+          if (each == ProcessOutputTypes.STDOUT) {
+            outputType = ALL_STDOUT_KEYS.get(r.nextInt(2));
+          }
+          else if (each == ProcessOutputTypes.STDERR) {
+            outputType = ALL_STDERR_KEYS.get(r.nextInt(2));
+          }
+          else {
+            outputType = each;
+          }
+          String prefix = each.toString() + ":";
+          mySplitter.process(prefix, each);
+          mySplitter.process(s, outputType);
+          if (!outputType.equals(each)) {
+            written.get(each).add(prefix);
             written.get(each).add(s);
+          }
+          else {
+            written.get(each).add(prefix + s);
           }
         }
       }).get();
@@ -133,23 +178,21 @@ public class OutputLineSplitterTest extends UsefulTestCase {
     final Semaphore read = new Semaphore(0);
 
     final AtomicBoolean isFinished = new AtomicBoolean();
-    List<Future<?>> futures = new ArrayList<Future<?>>();
+    List<Future<?>> futures = new ArrayList<>();
 
     for (final Key each : ALL_TYPES) {
-      futures.add(execute(new Runnable() {
-        public void run() {
-          int i = 0;
-          while (!isFinished.get()) {
-            mySplitter.process(StringUtil.repeat("A", 100), each);
-            i++;
-            if (i % 10 == 0) {
-              written.release();
-              try {
-                if (!read.tryAcquire(10, TimeUnit.SECONDS)) throw new TimeoutException();
-              }
-              catch (Exception e) {
-                throw new RuntimeException(e);
-              }
+      futures.add(execute(() -> {
+        int i = 0;
+        while (!isFinished.get()) {
+          mySplitter.process(StringUtil.repeat("A", 100), each);
+          i++;
+          if (i % 10 == 0) {
+            written.release();
+            try {
+              if (!read.tryAcquire(10, TimeUnit.SECONDS)) throw new TimeoutException();
+            }
+            catch (Exception e) {
+              throw new RuntimeException(e);
             }
           }
         }
@@ -183,7 +226,7 @@ public class OutputLineSplitterTest extends UsefulTestCase {
         isFinished.set(true);
 
         for (Future<?> each : futures) {
-          each.get(10, TimeUnit.SECONDS);
+          each.get();
         }
       }
       catch (Exception e) {
@@ -192,20 +235,18 @@ public class OutputLineSplitterTest extends UsefulTestCase {
     }
   }
 
-  private Future<?> execute(final Runnable runnable) {
-    final FutureResult<?> result = new FutureResult<Object>();
-    new Thread(new Runnable() {
-      @Override
-      public void run() {
-        try {
-          runnable.run();
-          result.set(null);
+  public void testPerformanceWithLotsOfFragments() {
+    PlatformTestUtil.startPerformanceTest("Flushing lot's of fragments", 10, mySplitter::flush)
+      .setup(() -> {
+        for (int i = 0; i < 10_000; i++) {
+          mySplitter.process("some string without slash n appending in raw, attempt: " + i + "; ", ProcessOutputTypes.STDOUT);
         }
-        catch (Throwable e) {
-          result.setException(e);
-        }
-      }
-    }).start();
-    return result;
+      })
+      .useLegacyScaling()
+      .assertTiming();
+  }
+
+  private static Future<?> execute(final Runnable runnable) {
+    return ApplicationManager.getApplication().executeOnPooledThread(runnable);
   }
 }

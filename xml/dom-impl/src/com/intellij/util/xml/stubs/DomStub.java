@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,7 +34,6 @@ import java.util.List;
 
 /**
  * @author Dmitry Avdeev
- *         Date: 8/2/12
  */
 public abstract class DomStub extends ObjectStubBase<DomStub> {
 
@@ -51,12 +50,9 @@ public abstract class DomStub extends ObjectStubBase<DomStub> {
     myLocalName = localName;
   }
 
+  @NotNull
+  @Override
   public abstract List<DomStub> getChildrenStubs();
-
-  public int getChildIndex(DomStub child) {
-    List<DomStub> stubs = getChildrenByName(XmlUtil.getLocalName(child.getName()), child.getNamespaceKey());
-    return stubs.indexOf(child);
-  }
 
   public String getName() {
     return myLocalName.getString();
@@ -74,7 +70,7 @@ public abstract class DomStub extends ObjectStubBase<DomStub> {
     }
 
     final String s = nsKey == null ? "" : nsKey;
-    final List<DomStub> result = new SmartList<DomStub>();
+    final List<DomStub> result = new SmartList<>();
     //noinspection ForLoopReplaceableByForEach
     for (int i = 0, size = stubs.size(); i < size; i++) {
       final DomStub stub = stubs.get(i);
@@ -135,5 +131,29 @@ public abstract class DomStub extends ObjectStubBase<DomStub> {
 
   public boolean isCustom() {
     return false;
+  }
+
+  public abstract int getIndex();
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+
+    DomStub stub = (DomStub)o;
+    if (stub.getIndex() != getIndex()) return false;
+    if (stub.isCustom() != isCustom()) return false;
+
+    return Comparing.strEqual(stub.getName(), getName()) &&
+           Comparing.strEqual(stub.getNamespaceKey(), getNamespaceKey());
+  }
+
+  @Override
+  public int hashCode() {
+    int result = myLocalName.hashCode();
+    result = 31 * result + myNamespace.hashCode();
+    result = 31 * result + getIndex();
+    result = 31 * result + (isCustom() ? 1 : 0);
+    return result;
   }
 }

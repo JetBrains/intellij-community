@@ -21,19 +21,18 @@ import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
-import java.util.*;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * @author nik
  */
-class DetectedRootData {
+public class DetectedRootData {
   private final File myDirectory;
-  private MultiMap<DetectedProjectRoot, ProjectStructureDetector> myRoots = new MultiMap<DetectedProjectRoot, ProjectStructureDetector>() {
-    @Override
-    protected Map<DetectedProjectRoot, Collection<ProjectStructureDetector>> createMap() {
-      return new LinkedHashMap<DetectedProjectRoot, Collection<ProjectStructureDetector>>();
-    }
-  };
+  private final MultiMap<DetectedProjectRoot, ProjectStructureDetector> myRoots = MultiMap.createLinked();
+
   private boolean myIncluded = true;
   private DetectedProjectRoot mySelectedRoot;
 
@@ -53,7 +52,7 @@ class DetectedRootData {
       final DetectedProjectRoot combined = oldRoot.combineWith(root);
       if (combined != null) {
         myRoots.remove(oldRoot);
-        final Set<ProjectStructureDetector> values = new HashSet<ProjectStructureDetector>(entry.getValue());
+        final Set<ProjectStructureDetector> values = new HashSet<>(entry.getValue());
         values.add(detector);
         myRoots.put(combined, values);
         if (mySelectedRoot == oldRoot) {
@@ -68,7 +67,11 @@ class DetectedRootData {
 
   public DetectedProjectRoot[] getAllRoots() {
     final Set<DetectedProjectRoot> roots = myRoots.keySet();
-    return roots.toArray(new DetectedProjectRoot[roots.size()]);
+    return roots.toArray(new DetectedProjectRoot[0]);
+  }
+
+  public boolean isEmpty() {
+    return myRoots.isEmpty();
   }
 
   public boolean isIncluded() {
@@ -93,7 +96,7 @@ class DetectedRootData {
     mySelectedRoot = root;
   }
 
-  public void removeRoot(DetectedProjectRoot root) {
-    myRoots.remove(root);
+  public Collection<ProjectStructureDetector> removeRoot(DetectedProjectRoot root) {
+    return myRoots.remove(root);
   }
 }

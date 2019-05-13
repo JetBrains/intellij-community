@@ -15,6 +15,10 @@
  */
 package com.intellij.util.net;
 
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.ArrayUtil;
+import com.intellij.util.ObjectUtils;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -53,12 +57,14 @@ public class AuthenticationPanel extends JPanel {
     }
   }
 
-  public String getLogin () {
-    return myLoginTextField.getText();
+  @NotNull
+  public String getLogin() {
+    return StringUtil.notNullize(myLoginTextField.getText());
   }
 
-  public char[] getPassword () {
-    return myPasswordTextField.getPassword();
+  @NotNull
+  public char[] getPassword() {
+    return ObjectUtils.notNull(myPasswordTextField.getPassword(), ArrayUtil.EMPTY_CHAR_ARRAY);
   }
 
   public boolean isRememberPassword () {

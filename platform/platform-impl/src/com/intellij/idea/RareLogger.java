@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,7 +34,7 @@ public class RareLogger extends Logger {
 
   private RareLogger(final Logger logger, final boolean fairSynch) {
     myLogger = logger;
-    
+
     final Object lock = new Object();
     myCache = new SLRUMap<Object, Long>(64, 32) {
       @Override
@@ -68,8 +68,8 @@ public class RareLogger extends Logger {
         return super.remove(key);
       }
     };
-    myConvertors = new LinkedList<LogFilter>();
-    
+    myConvertors = new LinkedList<>();
+
     // just passes to parent logger
     myProxy = new LogFilter() {
       @Override
@@ -133,7 +133,22 @@ public class RareLogger extends Logger {
   }
 
   @Override
-  public void error(@NonNls String message, @Nullable Throwable t, @NonNls String... details) {
+  public boolean isTraceEnabled() {
+    return myLogger.isTraceEnabled();
+  }
+
+  @Override
+  public void trace(String message) {
+    process(Level.TRACE, message, null);
+  }
+
+  @Override
+  public void trace(@Nullable Throwable t) {
+    process(Level.TRACE, null, t);
+  }
+
+  @Override
+  public void error(@NonNls String message, @Nullable Throwable t, @NotNull @NonNls String... details) {
     process(Level.ERROR, message, t, details);
   }
 

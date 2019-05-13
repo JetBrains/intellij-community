@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package org.jetbrains.plugins.groovy.unwrap;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 
@@ -28,19 +29,21 @@ public class GroovyMethodParameterUnwrapper extends GroovyUnwrapper {
     super("");
   }
 
+  @NotNull
   @Override
-  public String getDescription(PsiElement e) {
+  public String getDescription(@NotNull PsiElement e) {
     String text = e.getText();
     if (text.length() > 20) text = text.substring(0, 17) + "...";
     return CodeInsightBundle.message("unwrap.with.placeholder", text);
   }
 
-  public boolean isApplicableTo(PsiElement e) {
+  @Override
+  public boolean isApplicableTo(@NotNull PsiElement e) {
     return (e instanceof GrExpression) && e.getParent() instanceof GrArgumentList;
   }
 
   @Override
-  public PsiElement collectAffectedElements(PsiElement e, List<PsiElement> toExtract) {
+  public PsiElement collectAffectedElements(@NotNull PsiElement e, @NotNull List<PsiElement> toExtract) {
     super.collectAffectedElements(e, toExtract);
     return e.getParent().getParent();
   }

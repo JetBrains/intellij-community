@@ -16,18 +16,17 @@
 
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
-import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
+import com.intellij.codeInspection.util.ChangeToAppendUtil;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.util.IncorrectOperationException;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Bas Leijdekkers
@@ -37,8 +36,9 @@ public class ChangeToAppendFix implements IntentionAction {
   private final IElementType myTokenType;
   private final PsiType myLhsType;
   private final PsiAssignmentExpression myAssignmentExpression;
+  private volatile TypeInfo myTypeInfo;
 
-  public ChangeToAppendFix(IElementType eqOpSign, PsiType lType, PsiAssignmentExpression assignmentExpression) {
+  public ChangeToAppendFix(@NotNull IElementType eqOpSign, @NotNull PsiType lType, @NotNull PsiAssignmentExpression assignmentExpression) {
     myTokenType = eqOpSign;
     myLhsType = lType;
     myAssignmentExpression = assignmentExpression;
@@ -48,9 +48,9 @@ public class ChangeToAppendFix implements IntentionAction {
   @Override
   public String getText() {
     return QuickFixBundle.message("change.to.append.text",
-                                  buildAppendExpression(myAssignmentExpression.getRExpression(),
-                                                        myLhsType.equalsToText("java.lang.Appendable"),
-                                                        new StringBuilder(myAssignmentExpression.getLExpression().getText())));
+                                  ChangeToAppendUtil.buildAppendExpression(myAssignmentExpression.getRExpression(),
+                                                                           getTypeInfo().myUseStringValueOf,
+                                                                           new StringBuilder(myAssignmentExpression.getLExpression().getText())));
   }
 
   @NotNull
@@ -63,10 +63,8 @@ public class ChangeToAppendFix implements IntentionAction {
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
     return JavaTokenType.PLUSEQ == myTokenType &&
            myAssignmentExpression.isValid() &&
-           PsiManager.getInstance(project).isInProject(myAssignmentExpression) &&
-           (myLhsType.equalsToText(CommonClassNames.JAVA_LANG_STRING_BUILDER) ||
-            myLhsType.equalsToText(CommonClassNames.JAVA_LANG_STRING_BUFFER) ||
-            myLhsType.equalsToText("java.lang.Appendable"));
+           BaseIntentionAction.canModify(myAssignmentExpression) &&
+           getTypeInfo().myAppendable;
   }
 
   @Override
@@ -76,83 +74,38 @@ public class ChangeToAppendFix implements IntentionAction {
 
   @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-    if (!CodeInsightUtilBase.prepareFileForWrite(file)) return;
     final PsiExpression appendExpression =
-      buildAppendExpression(myAssignmentExpression.getLExpression(), myAssignmentExpression.getRExpression());
+      ChangeToAppendUtil.buildAppendExpression(myAssignmentExpression.getLExpression(), myAssignmentExpression.getRExpression());
     if (appendExpression == null) return;
     myAssignmentExpression.replace(appendExpression);
   }
 
-  @Nullable
-  public static PsiExpression buildAppendExpression(PsiExpression appendable, PsiExpression concatenation) {
-    if (concatenation == null) return null;
-    final PsiType type = appendable.getType();
-    if (type == null) return null;
-    final StringBuilder result =
-      buildAppendExpression(concatenation, type.equalsToText("java.lang.Appendable"), new StringBuilder(appendable.getText()));
-    if (result == null) return null;
-    final PsiElementFactory factory = JavaPsiFacade.getElementFactory(appendable.getProject());
-    return factory.createExpressionFromText(result.toString(), appendable);
+  @NotNull
+  private TypeInfo getTypeInfo() {
+    if (myTypeInfo != null) return myTypeInfo;
+    myTypeInfo = calculateTypeInfo();
+    return myTypeInfo;
   }
 
-  @Nullable
-  private static StringBuilder buildAppendExpression(PsiExpression concatenation, boolean useStringValueOf, @NonNls StringBuilder out)
-    throws IncorrectOperationException {
-    final PsiType type = concatenation.getType();
-    if (type == null) {
-      return null;
+  @NotNull
+  private TypeInfo calculateTypeInfo() {
+    if (myLhsType.equalsToText(CommonClassNames.JAVA_LANG_STRING_BUILDER) ||
+        myLhsType.equalsToText(CommonClassNames.JAVA_LANG_STRING_BUFFER)) {
+      return new TypeInfo(true, false);
     }
-    if (concatenation instanceof PsiPolyadicExpression && type.equalsToText(CommonClassNames.JAVA_LANG_STRING)) {
-      PsiPolyadicExpression polyadicExpression = (PsiPolyadicExpression)concatenation;
-      final PsiExpression[] operands = polyadicExpression.getOperands();
-      boolean isConstant = true;
-      boolean isString = false;
-      final StringBuilder builder = new StringBuilder();
-      for (PsiExpression operand : operands) {
-        if (isConstant && PsiUtil.isConstantExpression(operand)) {
-          if (builder.length() != 0) {
-            builder.append('+');
-          }
-          final PsiType operandType = operand.getType();
-          if (operandType != null && operandType.equalsToText(CommonClassNames.JAVA_LANG_STRING)) {
-            isString = true;
-          }
-          builder.append(operand.getText());
-        }
-        else {
-          isConstant = false;
-          if (builder.length() != 0) {
-            append(builder, useStringValueOf && !isString, out);
-            builder.setLength(0);
-          }
-          buildAppendExpression(operand, useStringValueOf, out);
-        }
-      }
-      if (builder.length() != 0) {
-        append(builder, false, out);
-      }
+    if (InheritanceUtil.isInheritor(myLhsType, "java.lang.Appendable")) {
+      return new TypeInfo(true, true);
     }
-    else if (concatenation instanceof PsiParenthesizedExpression) {
-      final PsiParenthesizedExpression parenthesizedExpression = (PsiParenthesizedExpression)concatenation;
-      final PsiExpression expression = parenthesizedExpression.getExpression();
-      if (expression != null) {
-        return buildAppendExpression(expression, useStringValueOf, out);
-      }
-    }
-    else {
-      append(concatenation.getText(), useStringValueOf && !type.equalsToText(CommonClassNames.JAVA_LANG_STRING), out);
-    }
-    return out;
+    return new TypeInfo(false, false);
   }
 
-  private static void append(CharSequence text, boolean useStringValueOf, StringBuilder out) {
-    out.append(".append(");
-    if (useStringValueOf) {
-      out.append("String.valueOf(").append(text).append(')');
+  private static class TypeInfo {
+    private final boolean myAppendable;
+    private final boolean myUseStringValueOf;
+
+    TypeInfo(boolean appendable, boolean useStringValueOf) {
+      myAppendable = appendable;
+      myUseStringValueOf = useStringValueOf;
     }
-    else {
-      out.append(text);
-    }
-    out.append(')');
   }
 }

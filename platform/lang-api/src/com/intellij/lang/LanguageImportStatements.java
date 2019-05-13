@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,8 +19,12 @@
  */
 package com.intellij.lang;
 
+import com.intellij.application.options.CodeStyle;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.codeStyle.CodeStyleSettings;
+import org.jetbrains.annotations.NotNull;
 
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -32,8 +36,13 @@ public class LanguageImportStatements extends LanguageExtension<ImportOptimizer>
     super("com.intellij.lang.importOptimizer");
   }
 
-  public Set<ImportOptimizer> forFile(PsiFile file) {
-    Set<ImportOptimizer> optimizers = new HashSet<ImportOptimizer>();
+  @NotNull
+  public Set<ImportOptimizer> forFile(@NotNull PsiFile file) {
+    CodeStyleSettings settings = CodeStyle.getSettings(file);
+    if (settings.getExcludedFiles().contains(file)) {
+      return Collections.emptySet();
+    }
+    Set<ImportOptimizer> optimizers = new HashSet<>();
     for (PsiFile psiFile : file.getViewProvider().getAllFiles()) {
       List<ImportOptimizer> langOptimizers = allForLanguage(psiFile.getLanguage());
       for (ImportOptimizer optimizer : langOptimizers) {

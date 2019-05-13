@@ -65,18 +65,22 @@ public final class PServerConnection
 
   // Implemented ============================================================)
 
+  @Override
   public InputStream getInputStream() {
     return socketInputStream;
   }
 
+  @Override
   public OutputStream getOutputStream() {
     return socketOutputStream;
   }
 
+  @Override
   public String getRepository() {
     return repository;
   }
 
+  @Override
   public void verify(IStreamLogger streamLogger) throws AuthenticationException {
     try {
       open(streamLogger);
@@ -86,10 +90,12 @@ public final class PServerConnection
     }
   }
 
+  @Override
   public void open(IStreamLogger streamLogger) throws AuthenticationException {
     openConnection("BEGIN AUTH REQUEST", "END AUTH REQUEST", streamLogger);
   }
 
+  @Override
   public void close() {
     if (socketInputStream != null) {
       try {

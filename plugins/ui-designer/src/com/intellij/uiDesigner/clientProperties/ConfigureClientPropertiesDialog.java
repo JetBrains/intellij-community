@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,18 +16,18 @@
 
 package com.intellij.uiDesigner.clientProperties;
 
-import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.actionSystem.ActionToolbarPosition;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.*;
 import com.intellij.ui.table.JBTable;
 import com.intellij.ui.treeStructure.Tree;
+import com.intellij.uiDesigner.LoaderFactory;
 import com.intellij.uiDesigner.UIDesignerBundle;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -47,13 +47,11 @@ public class ConfigureClientPropertiesDialog extends DialogWrapper {
   private JTree myClassTree;
   private JTable myPropertiesTable;
   private Class mySelectedClass;
-  private ClientPropertiesManager.ClientProperty[] mySelectedProperties = new ClientPropertiesManager.ClientProperty[0];
+  private List<ClientPropertiesManager.ClientProperty> mySelectedProperties = Collections.emptyList();
   private final MyTableModel myTableModel = new MyTableModel();
   private final Project myProject;
   private final ClientPropertiesManager myManager;
-  private Splitter mySplitter;
-  final private PropertiesComponent myPropertiesComponent = PropertiesComponent.getInstance();
-  final private static String SPLITTER_PROPORTION_PROPERTY = "ConfigureClientPropertiesDialog.splitterProportion";
+  private JBSplitter mySplitter;
 
   public ConfigureClientPropertiesDialog(final Project project) {
     super(project, true);
@@ -67,22 +65,18 @@ public class ConfigureClientPropertiesDialog extends DialogWrapper {
     ClientPropertiesManager.getInstance(myProject).saveFrom(myManager);
   }
 
-  @Override
-  public void dispose() {
-    myPropertiesComponent.setValue(SPLITTER_PROPORTION_PROPERTY, String.valueOf(mySplitter.getProportion()));
-    super.dispose();
-  }
-
   private void updateSelectedProperties() {
     mySelectedProperties = myManager.getConfiguredProperties(mySelectedClass);
     myTableModel.fireTableDataChanged();
   }
 
+  @Override
   @Nullable
   protected JComponent createCenterPanel() {
     myClassTree = new Tree();
     myClassTree.setRootVisible(false);
     myClassTree.getSelectionModel().addTreeSelectionListener(new TreeSelectionListener() {
+      @Override
       public void valueChanged(TreeSelectionEvent e) {
         final TreePath leadSelectionPath = e.getNewLeadSelectionPath();
         if (leadSelectionPath == null) return;
@@ -93,7 +87,8 @@ public class ConfigureClientPropertiesDialog extends DialogWrapper {
     });
 
     myClassTree.setCellRenderer(new ColoredTreeCellRenderer() {
-      public void customizeCellRenderer(JTree tree,
+      @Override
+      public void customizeCellRenderer(@NotNull JTree tree,
                                         Object value,
                                         boolean selected,
                                         boolean expanded,
@@ -115,7 +110,7 @@ public class ConfigureClientPropertiesDialog extends DialogWrapper {
     myPropertiesTable.setModel(myTableModel);
 
 
-    mySplitter = new Splitter(false, Float.valueOf(myPropertiesComponent.getValue(SPLITTER_PROPORTION_PROPERTY, "0.5f")));
+    mySplitter = new JBSplitter("ConfigureClientPropertiesDialog.splitterProportion", 0.5f);
     mySplitter.setFirstComponent(
       ToolbarDecorator.createDecorator(myClassTree)
         .setAddAction(new AnActionButtonRunnable() {
@@ -125,10 +120,10 @@ public class ConfigureClientPropertiesDialog extends DialogWrapper {
             dlg.show();
             if (dlg.getExitCode() == OK_EXIT_CODE) {
               String className = dlg.getClassName();
-              if (className.length() == 0) return;
+              if (className.isEmpty()) return;
               final Class aClass;
               try {
-                aClass = Class.forName(className);
+                aClass = Class.forName(className, true, LoaderFactory.getInstance(myProject).getProjectClassLoader());
               }
               catch (ClassNotFoundException ex) {
                 Messages.showErrorDialog(mySplitter,
@@ -165,8 +160,7 @@ public class ConfigureClientPropertiesDialog extends DialogWrapper {
             AddClientPropertyDialog dlg = new AddClientPropertyDialog(myProject);
             dlg.show();
             if (dlg.getExitCode() == OK_EXIT_CODE) {
-              ClientPropertiesManager.ClientProperty[] props = myManager.getClientProperties(mySelectedClass);
-              for (ClientPropertiesManager.ClientProperty prop : props) {
+              for (ClientPropertiesManager.ClientProperty prop : myManager.getClientProperties(mySelectedClass)) {
                 if (prop.getName().equalsIgnoreCase(dlg.getEnteredProperty().getName())) {
                   Messages.showErrorDialog(mySplitter,
                                            UIDesignerBundle.message("client.properties.already.defined", prop.getName()),
@@ -182,11 +176,13 @@ public class ConfigureClientPropertiesDialog extends DialogWrapper {
         @Override
         public void run(AnActionButton button) {
           int row = myPropertiesTable.getSelectedRow();
-          if (row >= 0 && row < mySelectedProperties.length) {
-            myManager.removeConfiguredProperty(mySelectedClass, mySelectedProperties[row].getName());
+          if (row >= 0 && row < mySelectedProperties.size()) {
+            myManager.removeConfiguredProperty(mySelectedClass, mySelectedProperties.get(row).getName());
             updateSelectedProperties();
-            if (mySelectedProperties.length > 0) {
-              if (row >= mySelectedProperties.length) row--;
+            if (!mySelectedProperties.isEmpty()) {
+              if (row >= mySelectedProperties.size()) {
+                row--;
+              }
               myPropertiesTable.getSelectionModel().setSelectionInterval(row, row);
             }
           }
@@ -196,26 +192,22 @@ public class ConfigureClientPropertiesDialog extends DialogWrapper {
     return mySplitter;
   }
 
-  private void fillClassTree() {
-    List<Class> configuredClasses = myManager.getConfiguredClasses();
-    Collections.sort(configuredClasses, new Comparator<Class>() {
-      public int compare(final Class o1, final Class o2) {
-        return getInheritanceLevel(o1) - getInheritanceLevel(o2);
-      }
+  private static int getInheritanceLevel(Class aClass) {
+    int level = 0;
+    while (aClass.getSuperclass() != null) {
+      level++;
+      aClass = aClass.getSuperclass();
+    }
+    return level;
+  }
 
-      private int getInheritanceLevel(Class aClass) {
-        int level = 0;
-        while (aClass.getSuperclass() != null) {
-          level++;
-          aClass = aClass.getSuperclass();
-        }
-        return level;
-      }
-    });
+  private void fillClassTree() {
+    List<Class> configuredClasses = myManager.getConfiguredClasses(myProject);
+    Collections.sort(configuredClasses, Comparator.comparingInt(ConfigureClientPropertiesDialog::getInheritanceLevel));
 
     DefaultMutableTreeNode root = new DefaultMutableTreeNode();
     DefaultTreeModel treeModel = new DefaultTreeModel(root);
-    Map<Class, DefaultMutableTreeNode> classToNodeMap = new HashMap<Class, DefaultMutableTreeNode>();
+    Map<Class, DefaultMutableTreeNode> classToNodeMap = new HashMap<>();
     for (Class cls : configuredClasses) {
       DefaultMutableTreeNode parentNode = root;
       Class superClass = cls.getSuperclass();
@@ -231,9 +223,11 @@ public class ConfigureClientPropertiesDialog extends DialogWrapper {
       parentNode.add(childNode);
     }
     myClassTree.setModel(treeModel);
-    myClassTree.expandRow(0);
-    myClassTree.getSelectionModel().setSelectionMode(TreeSelectionModel.SINGLE_TREE_SELECTION);
-    myClassTree.getSelectionModel().setSelectionPath(new TreePath(new Object[]{root, root.getFirstChild()}));
+    if (root.getChildCount() > 0) {
+      myClassTree.expandRow(0);
+      myClassTree.getSelectionModel().setSelectionMode(TreeSelectionModel.SINGLE_TREE_SELECTION);
+      myClassTree.getSelectionModel().setSelectionPath(new TreePath(new Object[]{root, root.getFirstChild()}));
+    }
   }
 
   @Override
@@ -243,31 +237,30 @@ public class ConfigureClientPropertiesDialog extends DialogWrapper {
   }
 
   private class MyTableModel extends AbstractTableModel {
+    @Override
     public int getRowCount() {
-      return mySelectedProperties.length;
+      return mySelectedProperties.size();
     }
 
+    @Override
     public int getColumnCount() {
       return 2;
     }
 
+    @Override
     public Object getValueAt(int rowIndex, int columnIndex) {
-      switch (columnIndex) {
-        case 0:
-          return mySelectedProperties[rowIndex].getName();
-        default:
-          return mySelectedProperties[rowIndex].getValueClass();
+      if (columnIndex == 0) {
+        return mySelectedProperties.get(rowIndex).getName();
       }
+      return mySelectedProperties.get(rowIndex).getValueClass();
     }
 
     @Override
     public String getColumnName(int column) {
-      switch (column) {
-        case 0:
-          return UIDesignerBundle.message("client.properties.name");
-        default:
-          return UIDesignerBundle.message("client.properties.class");
+      if (column == 0) {
+        return UIDesignerBundle.message("client.properties.name");
       }
+      return UIDesignerBundle.message("client.properties.class");
     }
   }
 }

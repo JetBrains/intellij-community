@@ -18,13 +18,33 @@ package com.intellij.ide.projectView.impl.nodes;
 
 import com.intellij.ide.projectView.ViewSettings;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vcs.FileStatus;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.util.PsiUtilCore;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-@SuppressWarnings({"unchecked", "CastToIncompatibleInterface", "InstanceofIncompatibleInterface"})
+import java.util.Objects;
+
 public abstract class BasePsiNode <T extends PsiElement> extends AbstractPsiBasedNode<T> {
-  protected BasePsiNode(Project project, T value, ViewSettings viewSettings) {
+  @Nullable
+  private final VirtualFile myVirtualFile;
+
+  protected BasePsiNode(Project project, @NotNull T value, ViewSettings viewSettings) {
     super(project, value, viewSettings);
+    myVirtualFile = PsiUtilCore.getVirtualFile(value);
+  }
+
+  @Override
+  public FileStatus getFileStatus() {
+    return computeFileStatus(getVirtualFile(), Objects.requireNonNull(getProject()));
+  }
+
+  @Override
+  @Nullable
+  public VirtualFile getVirtualFile() {
+    return myVirtualFile;
   }
 
   @Override

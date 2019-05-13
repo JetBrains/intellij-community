@@ -20,13 +20,13 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.packaging.elements.CompositePackagingElement;
 import com.intellij.packaging.elements.CompositePackagingElementType;
-import com.intellij.packaging.impl.artifacts.ArtifactUtil;
 import com.intellij.packaging.impl.ui.properties.ArchiveElementPropertiesPanel;
 import com.intellij.packaging.ui.ArtifactEditorContext;
 import com.intellij.packaging.ui.PackagingElementPropertiesPanel;
 import com.intellij.util.PlatformIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.jps.incremental.artifacts.impl.JpsArtifactUtil;
 
 import javax.swing.*;
 
@@ -53,12 +53,13 @@ class ArchiveElementType extends CompositePackagingElementType<ArchivePackagingE
   public PackagingElementPropertiesPanel createElementPropertiesPanel(@NotNull ArchivePackagingElement element,
                                                                                                @NotNull ArtifactEditorContext context) {
     final String name = element.getArchiveFileName();
-    if (ArtifactUtil.isArchiveName(name)) {
+    if (JpsArtifactUtil.isArchiveName(name)) {
       return new ArchiveElementPropertiesPanel(element, context);
     }
     return null;
   }
 
+  @Override
   public CompositePackagingElement<?> createComposite(CompositePackagingElement<?> parent, @Nullable String baseName, @NotNull ArtifactEditorContext context) {
     final String initialValue = PackagingElementFactoryImpl.suggestFileName(parent, baseName != null ? baseName : "archive", ".jar");
     final String path = Messages.showInputDialog(context.getProject(), "Enter archive name: ", "New Archive", null, initialValue, new FilePathValidator());

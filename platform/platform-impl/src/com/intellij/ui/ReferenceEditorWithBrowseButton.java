@@ -24,6 +24,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComponentWithBrowseButton;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NotNull;
 
 import java.awt.event.ActionListener;
 import java.util.List;
@@ -32,19 +33,19 @@ import java.util.List;
  * @author ven
  */
 public class ReferenceEditorWithBrowseButton extends ComponentWithBrowseButton<EditorTextField> implements TextAccessor {
-  private final Function<String, Document> myFactory;
+  private final Function<? super String, ? extends Document> myFactory;
   private final List<DocumentListener> myDocumentListeners = ContainerUtil.createLockFreeCopyOnWriteList();
 
   public ReferenceEditorWithBrowseButton(final ActionListener browseActionListener,
                                          final Project project,
-                                         final Function<String, Document> factory,
+                                         final Function<? super String, ? extends Document> factory,
                                          String text) {
     this(browseActionListener, new EditorTextField(factory.fun(text), project, StdFileTypes.JAVA), factory);
   }
 
   public ReferenceEditorWithBrowseButton(final ActionListener browseActionListener,
                                          final EditorTextField editorTextField,
-                                         final Function<String, Document> factory) {
+                                         final Function<? super String, ? extends Document> factory) {
     super(editorTextField, browseActionListener);
     myFactory = factory;
   }
@@ -63,11 +64,13 @@ public class ReferenceEditorWithBrowseButton extends ComponentWithBrowseButton<E
     return getChildComponent();
   }
 
+  @Override
   public String getText() {
     return getEditorTextField().getText().trim();
   }
 
-  public void setText(final String text) {
+  @Override
+  public void setText(@NotNull String text) {
     Document oldDocument = getEditorTextField().getDocument();
     String oldText = oldDocument.getText();
     for (DocumentListener listener : myDocumentListeners) {

@@ -48,6 +48,7 @@ public class CvsFile extends CvsElement {
     }
   }
 
+  @Override
   public VirtualFile getVirtualFile() {
     if (myVirtualFile == null) {
       myVirtualFile = createVirtualFile();
@@ -63,14 +64,17 @@ public class CvsFile extends CvsElement {
                               VcsFileSystem.getInstance());
   }
 
+  @Override
   public File getCvsLightFile() {
     return new File(((CvsElement)getParent()).createPathForChild(myName));
   }
 
+  @Override
   public boolean isLeaf() {
     return true;
   }
 
+  @Override
   public int getChildCount() {
     return 0;
   }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,6 +31,7 @@ public class CharacterValueConverter extends Converter<String> {
   }
 
 
+  @Override
   public String fromString(@Nullable @NonNls String s, final ConvertContext context) {
     if (s == null) return null;
 
@@ -52,10 +53,12 @@ public class CharacterValueConverter extends Converter<String> {
     return sequence.startsWith(UNICODE_PREFIX) && sequence.length() == UNICODE_LENGTH;
   }
 
+  @Override
   public String toString(@Nullable String s, final ConvertContext context) {
     return s;
   }
 
+  @Override
   public String getErrorMessage(@Nullable final String s, final ConvertContext context) {
    return DomBundle.message("value.converter.format.exception", s, "char");
   }

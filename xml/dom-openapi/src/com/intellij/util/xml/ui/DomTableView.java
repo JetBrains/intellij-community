@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,9 +19,9 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.project.Project;
+import com.intellij.util.SmartList;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomUtil;
-import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -30,7 +30,7 @@ import java.util.List;
  * @author peter
  */
 public class DomTableView extends AbstractTableView<DomElement> {
-  private final List<TypeSafeDataProvider> myCustomDataProviders = new SmartList<TypeSafeDataProvider>();
+  private final List<TypeSafeDataProvider> myCustomDataProviders = new SmartList<>();
 
   public DomTableView(final Project project) {
     super(project);
@@ -44,25 +44,20 @@ public class DomTableView extends AbstractTableView<DomElement> {
     myCustomDataProviders.add(provider);
   }
 
-  public void calcData(final DataKey key, final DataSink sink) {
+  @Override
+  public void calcData(@NotNull final DataKey key, @NotNull final DataSink sink) {
     super.calcData(key, sink);
     for (final TypeSafeDataProvider customDataProvider : myCustomDataProviders) {
       customDataProvider.calcData(key, sink);
     }
   }
 
-  @Deprecated
-  protected final void installPopup(final DefaultActionGroup group) {
-    installPopup(ActionPlaces.J2EE_ATTRIBUTES_VIEW_POPUP, group);
-  }
-
+  @Override
   protected void wrapValueSetting(@NotNull final DomElement domElement, final Runnable valueSetter) {
     if (domElement.isValid()) {
-      new WriteCommandAction(getProject(), DomUtil.getFile(domElement)) {
-        protected void run(final Result result) throws Throwable {
-          valueSetter.run();
-        }
-      }.execute();
+      WriteCommandAction.writeCommandAction(getProject(), DomUtil.getFile(domElement)).run(() -> {
+        valueSetter.run();
+      });
       fireChanged();
     }
   }

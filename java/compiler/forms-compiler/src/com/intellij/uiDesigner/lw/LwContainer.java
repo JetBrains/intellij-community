@@ -38,12 +38,12 @@ public class LwContainer extends LwComponent implements IContainer{
    */
   private final ArrayList myComponents;
   /**
-   * Describes border's type. This member is never <code>null</code>
+   * Describes border's type. This member is never {@code null}
    */
   private BorderType myBorderType;
   /**
    * Border's title. If border doesn't have any title then
-   * this member is <code>null</code>.
+   * this member is {@code null}.
    */
   private StringDescriptor myBorderTitle;
   private int myBorderTitleJustification;
@@ -87,6 +87,7 @@ public class LwContainer extends LwComponent implements IContainer{
     return getLayout() instanceof GridLayoutManager;
   }
 
+  @Override
   public final boolean isXY(){
     return getLayout() instanceof XYLayoutManager;
   }
@@ -94,8 +95,8 @@ public class LwContainer extends LwComponent implements IContainer{
   /**
    * @param component component to be added.
    *
-   * @exception IllegalArgumentException if <code>component</code> is <code>null</code>
-   * @exception IllegalArgumentException if <code>component</code> already exist in the
+   * @exception IllegalArgumentException if {@code component} is {@code null}
+   * @exception IllegalArgumentException if {@code component} already exist in the
    * container
    */
   public final void addComponent(final LwComponent component){
@@ -114,27 +115,32 @@ public class LwContainer extends LwComponent implements IContainer{
     component.setParent(this);
   }
 
+  @Override
   public final IComponent getComponent(final int index) {
     return (IComponent)myComponents.get(index);
   }
 
+  @Override
   public final int getComponentCount() {
     return myComponents.size();
   }
 
+  @Override
   public int indexOfComponent(final IComponent lwComponent) {
     return myComponents.indexOf(lwComponent);
   }
 
   /**
-   * @return border's type. The method never return <code>null</code>.
+   * @return border's type. The method never return {@code null}.
    *
    * @see BorderType
    */
+  @Override
   public final BorderType getBorderType(){
     return myBorderType;
   }
 
+  @Override
   public boolean accept(ComponentVisitor visitor) {
     if (!super.accept(visitor)) {
       return false;
@@ -153,8 +159,8 @@ public class LwContainer extends LwComponent implements IContainer{
   /**
    * @see BorderType
    *
-   * @exception IllegalArgumentException if <code>type</code>
-   * is <code>null</code>
+   * @exception IllegalArgumentException if {@code type}
+   * is {@code null}
    */
   public final void setBorderType(final BorderType type){
     if(type==null){
@@ -165,14 +171,15 @@ public class LwContainer extends LwComponent implements IContainer{
 
   /**
    * @return border's title. If the container doesn't have any title then the
-   * method returns <code>null</code>.
+   * method returns {@code null}.
    */
+  @Override
   public final StringDescriptor getBorderTitle(){
     return myBorderTitle;
   }
 
   /**
-   * @param title new border's title. <code>null</code> means that
+   * @param title new border's title. {@code null} means that
    * the containr doesn't have have titled border.
    */
   public final void setBorderTitle(final StringDescriptor title){
@@ -205,7 +212,7 @@ public class LwContainer extends LwComponent implements IContainer{
 
   /**
    * TODO[anton,vova] looks like it is better to pass contraints tag
-   * 
+   *
    * @param element XML element which should contains 'constraints' tag
    */
   protected void readConstraintsForChild(final Element element, final LwComponent component){
@@ -254,8 +261,7 @@ public class LwContainer extends LwComponent implements IContainer{
    */
   protected final void readChildren(final Element element, final PropertiesProvider provider) throws Exception{
     final Element childrenElement = LwXmlReader.getRequiredChild(element, "children");
-    for(Iterator i=childrenElement.getChildren().iterator(); i.hasNext();){
-      final Element child = (Element)i.next();
+    for (final Element child : childrenElement.getChildren()) {
       final LwComponent component = createComponentFromTag(child);
       addComponent(component);
       component.read(child, provider);
@@ -343,13 +349,14 @@ public class LwContainer extends LwComponent implements IContainer{
       myLayoutSerializer = FormLayoutSerializer.INSTANCE;
     }
     else if (UIFormXmlConstants.LAYOUT_GRIDBAG.equals(myLayoutManager)) {
-      myLayoutSerializer = GridBagLayoutSerializer.INSTANCE;      
+      myLayoutSerializer = GridBagLayoutSerializer.INSTANCE;
     }
     else {
       myLayoutSerializer = GridLayoutSerializer.INSTANCE;
     }
   }
 
+  @Override
   public void read(final Element element, final PropertiesProvider provider) throws Exception {
     readBase(element);
 
@@ -379,6 +386,7 @@ public class LwContainer extends LwComponent implements IContainer{
     readChildren(element, provider);
   }
 
+  @Override
   public boolean areChildrenExclusive() {
     return UIFormXmlConstants.LAYOUT_CARD.equals(myLayoutManager);
   }

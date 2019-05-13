@@ -20,5 +20,5 @@ package com.intellij.util.net;
  * @author Konstantin Bulenkov
  */
 public enum HTTPMethod {
-  GET, POST, PUT, DELETE, HEAD, OPTIONS, TRACE
+  GET, POST, PUT, DELETE, HEAD, OPTIONS, TRACE, PATCH
 }

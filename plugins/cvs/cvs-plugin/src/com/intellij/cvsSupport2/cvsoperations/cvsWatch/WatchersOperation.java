@@ -16,8 +16,8 @@
 package com.intellij.cvsSupport2.cvsoperations.cvsWatch;
 
 import com.intellij.cvsSupport2.connections.CvsRootProvider;
-import com.intellij.cvsSupport2.cvsoperations.common.CvsOperationOnFiles;
 import com.intellij.cvsSupport2.cvsoperations.common.CvsExecutionEnvironment;
+import com.intellij.cvsSupport2.cvsoperations.common.CvsOperationOnFiles;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.netbeans.lib.cvsclient.command.Command;
 import org.netbeans.lib.cvsclient.command.watchers.WatchersCommand;
@@ -29,20 +29,22 @@ import java.util.List;
  * author: lesya
  */
 public class WatchersOperation extends CvsOperationOnFiles{
-  private final List<WatcherInfo> myWatchers = new ArrayList<WatcherInfo>();
+  private final List<WatcherInfo> myWatchers = new ArrayList<>();
   public WatchersOperation(VirtualFile[] files){
-    for (int i = 0; i < files.length; i++) {
-      addFile(files[i]);
+    for (VirtualFile file : files) {
+      addFile(file);
     }
 
   }
 
+  @Override
   protected Command createCommand(CvsRootProvider root, CvsExecutionEnvironment cvsExecutionEnvironment) {
     WatchersCommand result = new WatchersCommand();
     addFilesToCommand(root, result);
     return result;
   }
 
+  @Override
   public void messageSent(String message, final byte[] byteMessage, boolean error, boolean tagged) {
     super.messageSent(message, byteMessage, error, tagged);
     if (!error && !tagged){
@@ -51,6 +53,7 @@ public class WatchersOperation extends CvsOperationOnFiles{
     }
   }
 
+  @Override
   protected String getOperationName() {
     return "watchers";
   }

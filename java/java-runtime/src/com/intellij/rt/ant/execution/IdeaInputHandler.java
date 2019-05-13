@@ -15,8 +15,6 @@
  */
 package com.intellij.rt.ant.execution;
 
-import com.intellij.rt.execution.junit.segments.PacketWriter;
-import com.intellij.rt.execution.junit.segments.SegmentedOutputStream;
 import org.apache.tools.ant.BuildException;
 import org.apache.tools.ant.input.InputHandler;
 import org.apache.tools.ant.input.InputRequest;
@@ -40,6 +38,7 @@ public class IdeaInputHandler implements InputHandler {
     }
     final PacketWriter packet = PacketFactory.ourInstance.createPacket(IdeaAntLogger2.INPUT_REQUEST);
     packet.appendLimitedString(prompt);
+    packet.appendLimitedString(request.getDefaultValue());
     if (request instanceof MultipleChoiceInputRequest) {
       Vector choices = ((MultipleChoiceInputRequest)request).getChoices();
       if (choices != null && choices.size() > 0) {

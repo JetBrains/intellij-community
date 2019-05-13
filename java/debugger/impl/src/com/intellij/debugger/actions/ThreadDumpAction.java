@@ -1,24 +1,5 @@
-/*
- * Copyright 2000-2010 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
-/**
- * class ExportThreadsAction
- * @author Eugene Zhuravlev
- * @author Sascha Weinreuter
- */
 package com.intellij.debugger.actions;
 
 import com.intellij.debugger.DebuggerBundle;
@@ -27,12 +8,10 @@ import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.debugger.engine.events.DebuggerCommandImpl;
 import com.intellij.debugger.impl.DebuggerContextImpl;
 import com.intellij.debugger.impl.DebuggerSession;
+import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.jdi.VirtualMachineProxyImpl;
-import com.intellij.debugger.ui.DebuggerPanelsManager;
-import com.intellij.debugger.ui.DebuggerSessionTab;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -40,8 +19,10 @@ import com.intellij.openapi.project.Project;
 import com.intellij.unscramble.ThreadDumpParser;
 import com.intellij.unscramble.ThreadState;
 import com.intellij.util.SmartList;
+import com.intellij.xdebugger.XDebugSession;
 import com.sun.jdi.*;
 import gnu.trove.TIntObjectHashMap;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -50,8 +31,9 @@ import java.util.Map;
 
 public class ThreadDumpAction extends AnAction implements AnAction.TransparentUpdate {
 
-  public void actionPerformed(AnActionEvent e) {
-    final Project project = PlatformDataKeys.PROJECT.getData(e.getDataContext());
+  @Override
+  public void actionPerformed(@NotNull AnActionEvent e) {
+    final Project project = e.getProject();
     if (project == null) {
       return;
     }
@@ -61,17 +43,16 @@ public class ThreadDumpAction extends AnAction implements AnAction.TransparentUp
     if(session != null && session.isAttached()) {
       final DebugProcessImpl process = context.getDebugProcess();
       process.getManagerThread().invoke(new DebuggerCommandImpl() {
-        protected void action() throws Exception {
+        @Override
+        protected void action() {
           final VirtualMachineProxyImpl vm = process.getVirtualMachineProxy();
           vm.suspend();
           try {
             final List<ThreadState> threads = buildThreadStates(vm);
-            ApplicationManager.getApplication().invokeLater(new Runnable() {
-              public void run() {
-                final DebuggerSessionTab sessionTab = DebuggerPanelsManager.getInstance(project).getSessionTab();
-                if (sessionTab != null) {
-                  sessionTab.addThreadDump(threads);
-                }
+            ApplicationManager.getApplication().invokeLater(() -> {
+              XDebugSession xSession = session.getXDebugSession();
+              if (xSession != null) {
+                DebuggerUtilsEx.addThreadDump(project, threads, xSession.getUI(), session.getSearchScope());
               }
             }, ModalityState.NON_MODAL);
           }
@@ -83,11 +64,11 @@ public class ThreadDumpAction extends AnAction implements AnAction.TransparentUp
     }
   }
 
-  private static List<ThreadState> buildThreadStates(VirtualMachineProxyImpl vmProxy) {
+  public static List<ThreadState> buildThreadStates(VirtualMachineProxyImpl vmProxy) {
     final List<ThreadReference> threads = vmProxy.getVirtualMachine().allThreads();
-    final List<ThreadState> result = new ArrayList<ThreadState>();
-    final Map<String, ThreadState> nameToThreadMap = new HashMap<String, ThreadState>();
-    final Map<String, String> waitingMap = new HashMap<String, String>(); // key 'waits_for' value
+    final List<ThreadState> result = new ArrayList<>();
+    final Map<String, ThreadState> nameToThreadMap = new HashMap<>();
+    final Map<String, String> waitingMap = new HashMap<>(); // key 'waits_for' value
     for (ThreadReference threadReference : threads) {
       final StringBuilder buffer = new StringBuilder();
       boolean hasEmptyStack = true;
@@ -142,7 +123,7 @@ public class ThreadDumpAction extends AnAction implements AnAction.TransparentUp
       }
 
       buffer.append("\n  java.lang.Thread.State: ").append(threadState.getJavaThreadState());
-      
+
       try {
         if (vmProxy.canGetOwnedMonitorInfo() && vmProxy.canGetMonitorInfo()) {
           List<ObjectReference> list = threadReference.ownedMonitors();
@@ -175,15 +156,18 @@ public class ThreadDumpAction extends AnAction implements AnAction.TransparentUp
         final List<StackFrame> frames = threadReference.frames();
         hasEmptyStack = frames.size() == 0;
 
-        final TIntObjectHashMap<List<ObjectReference>> lockedAt = new TIntObjectHashMap<List<ObjectReference>>();
+        final TIntObjectHashMap<List<ObjectReference>> lockedAt = new TIntObjectHashMap<>();
         if (vmProxy.canGetMonitorFrameInfo()) {
-          for (MonitorInfo info : threadReference.ownedMonitorsAndFrames()) {
-            final int stackDepth = info.stackDepth();
-            List<ObjectReference> monitors;
-            if ((monitors = lockedAt.get(stackDepth)) == null) {
-              lockedAt.put(stackDepth, monitors = new SmartList<ObjectReference>());
+          for (Object m : threadReference.ownedMonitorsAndFrames()) {
+            if (m instanceof MonitorInfo) { // see JRE-937
+              MonitorInfo info = (MonitorInfo)m;
+              final int stackDepth = info.stackDepth();
+              List<ObjectReference> monitors;
+              if ((monitors = lockedAt.get(stackDepth)) == null) {
+                lockedAt.put(stackDepth, monitors = new SmartList<>());
+              }
+              monitors.add(info.monitor());
             }
-            monitors.add(info.monitor());
           }
         }
 
@@ -215,7 +199,9 @@ public class ThreadDumpAction extends AnAction implements AnAction.TransparentUp
     for (String waiting : waitingMap.keySet()) {
       final ThreadState waitingThread = nameToThreadMap.get(waiting);
       final ThreadState awaitedThread = nameToThreadMap.get(waitingMap.get(waiting));
-      awaitedThread.addWaitingThread(waitingThread);
+      if (waitingThread != null && awaitedThread != null) { //zombie
+        awaitedThread.addWaitingThread(waitingThread);
+      }
     }
 
     // detect simple deadlocks
@@ -290,19 +276,10 @@ public class ThreadDumpAction extends AnAction implements AnAction.TransparentUp
   }
 
   public static String renderLocation(final Location location) {
-    String sourceName;
-    try {
-      sourceName = location.sourceName();
-    }
-    catch (Throwable e) {
-      sourceName = "Unknown Source";
-    }
-    return DebuggerBundle.message(
-        "export.threads.stackframe.format",
-        location.declaringType().name() + "." + location.method().name(),
-        sourceName,
-        location.lineNumber()
-    );
+    return DebuggerBundle.message("export.threads.stackframe.format",
+                                  DebuggerUtilsEx.getLocationMethodQName(location),
+                                  DebuggerUtilsEx.getSourceName(location, e -> "Unknown Source"),
+                                  DebuggerUtilsEx.getLineNumber(location, false));
   }
 
   private static String threadName(ThreadReference threadReference) {
@@ -310,9 +287,10 @@ public class ThreadDumpAction extends AnAction implements AnAction.TransparentUp
   }
 
 
-  public void update(AnActionEvent event){
-    Presentation presentation = event.getPresentation();
-    Project project = PlatformDataKeys.PROJECT.getData(event.getDataContext());
+  @Override
+  public void update(@NotNull AnActionEvent e){
+    Presentation presentation = e.getPresentation();
+    Project project = e.getProject();
     if (project == null) {
       presentation.setEnabled(false);
       return;

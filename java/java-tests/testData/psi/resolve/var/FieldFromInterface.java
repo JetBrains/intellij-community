@@ -1,6 +1,6 @@
 class Client {
   int foo(){
-    return A.<ref>FIELD;
+    return A.<caret>FIELD;
   }
 }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,24 +15,20 @@
  */
 package org.jetbrains.idea.eclipse;
 
-import com.intellij.util.ArrayUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Set;
 
-/**
- * User: anna
- * Date: 10/29/12
- */
 public interface EclipseModuleManager {
   void setInvalidJdk(String invalidJdk);
 
   @Nullable
   String getInvalidJdk();
 
-  void addGroovySupport(String name);
+  void registerCon(String name);
 
-  String[] getGroovySupport();
+  String[] getUsedCons();
 
   void registerEclipseVariablePath(String path, String var);
 
@@ -56,7 +52,7 @@ public interface EclipseModuleManager {
 
   void registerUnknownCons(String con);
 
-  @Nullable
+  @NotNull
   Set<String> getUnknownCons();
 
   boolean isForceConfigureJDK();
@@ -73,106 +69,5 @@ public interface EclipseModuleManager {
 
   void registerSrcPlace(String srcUrl, int placeIdx);
 
-  @Nullable
-  Integer getSrcPlace(String srcUtl);
-  
-  EclipseModuleManager EMPTY = new EclipseModuleManager() {
-    @Override
-    public void setInvalidJdk(String invalidJdk) {}
-
-    @Nullable
-    @Override
-    public String getInvalidJdk() {
-      return null;
-    }
-
-    @Override
-    public void addGroovySupport(String name) {}
-
-    @Override
-    public String[] getGroovySupport() {
-      return ArrayUtil.EMPTY_STRING_ARRAY;
-    }
-
-    @Override
-    public void registerEclipseVariablePath(String path, String var) {}
-
-    @Override
-    public void registerEclipseSrcVariablePath(String path, String var) {}
-
-    @Override
-    public void registerEclipseLinkedSrcVarPath(String path, String var) {}
-
-    @Nullable
-    @Override
-    public String getEclipseLinkedSrcVariablePath(String path) {
-      return null;
-    }
-
-    @Override
-    public void registerEclipseLinkedVarPath(String path, String var) {
-    }
-
-    @Nullable
-    @Override
-    public String getEclipseLinkedVarPath(String path) {
-      return null;
-    }
-
-    @Nullable
-    @Override
-    public String getEclipseVariablePath(String path) {
-      return null;
-    }
-
-    @Nullable
-    @Override
-    public String getEclipseSrcVariablePath(String path) {
-      return null;
-    }
-
-    @Override
-    public void registerUnknownCons(String con) {}
-
-    @Nullable
-    @Override
-    public Set<String> getUnknownCons() {
-      return null;
-    }
-
-    @Override
-    public boolean isForceConfigureJDK() {
-      return false;
-    }
-
-    @Override
-    public void setForceConfigureJDK() {}
-
-    @Override
-    public void registerEclipseLibUrl(String url) {}
-
-    @Override
-    public boolean isEclipseLibUrl(String url) {
-      return false;
-    }
-
-    @Override
-    public void setExpectedModuleSourcePlace(int expectedModuleSourcePlace) {
-    }
-
-    @Override
-    public boolean isExpectedModuleSourcePlace(int expectedPlace) {
-      return false;
-    }
-
-    @Override
-    public void registerSrcPlace(String srcUrl, int placeIdx) {
-    }
-
-    @Nullable
-    @Override
-    public Integer getSrcPlace(String srcUtl) {
-      return null;
-    }
-  }; 
+  int getSrcPlace(String srcUtl);
 }

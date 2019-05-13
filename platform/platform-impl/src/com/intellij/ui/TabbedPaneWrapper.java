@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
 import com.intellij.ui.tabs.JBTabs;
 import com.intellij.util.IJSwingUtilities;
@@ -37,7 +38,7 @@ import java.awt.event.MouseListener;
  */
 public class TabbedPaneWrapper  {
   protected TabbedPane myTabbedPane;
-  protected JComponent myTabbedPaneHolder;
+  private JComponent myTabbedPaneHolder;
 
   private TabFactory myFactory;
 
@@ -54,22 +55,19 @@ public class TabbedPaneWrapper  {
   /**
    * Creates tabbed pane wrapper with specified tab placement
    *
-   * @param tabPlacement tab placement. It one of the <code>SwingConstants.TOP</code>,
-   * <code>SwingConstants.LEFT</code>, <code>SwingConstants.BOTTOM</code> or
-   * <code>SwingConstants.RIGHT</code>.
+   * @param tabPlacement tab placement. It one of the {@code SwingConstants.TOP},
+   * {@code SwingConstants.LEFT}, {@code SwingConstants.BOTTOM} or
+   * {@code SwingConstants.RIGHT}.
    */
-  public TabbedPaneWrapper(int tabPlacement, PrevNextActionsDescriptor installKeyboardNavigation, @NotNull Disposable parentDisposable) {
-    final TabFactory factory;
-    if (SwingConstants.BOTTOM == tabPlacement || SwingConstants.TOP == tabPlacement) {
-      factory = new JBTabsFactory(this, null, parentDisposable);
-    } else {
-      factory = new JTabbedPaneFactory(this);
-    }
+  public TabbedPaneWrapper(int tabPlacement, @NotNull PrevNextActionsDescriptor installKeyboardNavigation, @NotNull Disposable parentDisposable) {
+    TabFactory factory = SwingConstants.BOTTOM == tabPlacement || SwingConstants.TOP == tabPlacement
+                         ? new JBTabsFactory(this, null, parentDisposable)
+                         : new JTabbedPaneFactory(this);
 
     init(tabPlacement, installKeyboardNavigation, factory);
   }
 
-  void init(int tabPlacement, PrevNextActionsDescriptor installKeyboardNavigation, TabFactory tabbedPaneFactory) {
+  void init(int tabPlacement, @NotNull PrevNextActionsDescriptor installKeyboardNavigation, @NotNull TabFactory tabbedPaneFactory) {
     myFactory = tabbedPaneFactory;
 
     myTabbedPane = createTabbedPane(tabPlacement);
@@ -78,7 +76,7 @@ public class TabbedPaneWrapper  {
 
     myTabbedPaneHolder = createTabbedPaneHolder();
     myTabbedPaneHolder.add(myTabbedPane.getComponent(), BorderLayout.CENTER);
-    myTabbedPaneHolder.setFocusCycleRoot(true);
+    myTabbedPaneHolder.setFocusTraversalPolicyProvider(true);
     myTabbedPaneHolder.setFocusTraversalPolicy(new _MyFocusTraversalPolicy());
 
     assertIsDispatchThread();
@@ -95,7 +93,7 @@ public class TabbedPaneWrapper  {
     }
   }
 
-  public final void addChangeListener(final ChangeListener listener){
+  public final void addChangeListener(@NotNull ChangeListener listener){
     assertIsDispatchThread();
     myTabbedPane.addChangeListener(listener);
   }
@@ -115,7 +113,7 @@ public class TabbedPaneWrapper  {
   }
 
   /**
-   * @see javax.swing.JTabbedPane#addTab(java.lang.String, javax.swing.Icon, java.awt.Component, java.lang.String)
+   * @see JTabbedPane#addTab(String, Icon, Component, String)
    */
   public final synchronized void addTab(final String title, final Icon icon, final JComponent component, final String tip) {
     insertTab(title, icon, component, tip, myTabbedPane.getTabCount());
@@ -129,7 +127,7 @@ public class TabbedPaneWrapper  {
     myTabbedPane.insertTab(title, icon, createTabWrapper(component), tip, index);
   }
 
-  protected TabWrapper createTabWrapper(JComponent component) {
+  private TabWrapper createTabWrapper(JComponent component) {
     return myFactory.createTabWrapper(component);
   }
 
@@ -138,7 +136,7 @@ public class TabbedPaneWrapper  {
   }
 
   /**
-   * @see javax.swing.JTabbedPane#setTabPlacement
+   * @see JTabbedPane#setTabPlacement
    */
   public final void setTabPlacement(final int tabPlacement) {
     assertIsDispatchThread();
@@ -155,7 +153,7 @@ public class TabbedPaneWrapper  {
   }
 
   /**
-   * @see javax.swing.JTabbedPane#getSelectedComponent()
+   * @see JTabbedPane#getSelectedComponent()
    */
   public final synchronized JComponent getSelectedComponent() {
     // Workaround for JDK 6 bug
@@ -173,7 +171,8 @@ public class TabbedPaneWrapper  {
     final boolean hadFocus = IJSwingUtilities.hasFocus2(myTabbedPaneHolder);
     myTabbedPane.setSelectedIndex(index);
     if (hadFocus && requestFocus) {
-      myTabbedPaneHolder.requestFocus();
+      IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() ->
+              IdeFocusManager.getGlobalInstance().requestFocus(myTabbedPaneHolder, true));
     }
   }
 
@@ -199,7 +198,8 @@ public class TabbedPaneWrapper  {
         myTabbedPane.revalidate();
       }
       if (hadFocus) {
-        myTabbedPaneHolder.requestFocus();
+        IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() ->
+          IdeFocusManager.getGlobalInstance().requestFocus(myTabbedPaneHolder, true));
       }
     }
     finally {
@@ -217,15 +217,18 @@ public class TabbedPaneWrapper  {
   }
 
   /**
-   * @see javax.swing.JTabbedPane#setForegroundAt(int, java.awt.Color)
+   * @see JTabbedPane#setForegroundAt(int, Color)
    */
   public final void setForegroundAt(final int index,final Color color){
     assertIsDispatchThread();
     myTabbedPane.setForegroundAt(index,color);
   }
 
+  public final Component getTabComponentAt(final int index) {
+    return myTabbedPane.getTabComponentAt(index);
+  }
   /**
-   * @see javax.swing.JTabbedPane#setComponentAt(int, java.awt.Component)
+   * @see JTabbedPane#setComponentAt(int, Component)
    */
   public final synchronized JComponent getComponentAt(final int i) {
     return getWrapperAt(i).getComponent();
@@ -235,7 +238,7 @@ public class TabbedPaneWrapper  {
     return (TabWrapper)myTabbedPane.getComponentAt(i);
   }
 
-  public final void setTitleAt(final int index, final String title) {
+  public final void setTitleAt(final int index, @NotNull String title) {
     assertIsDispatchThread();
     myTabbedPane.setTitleAt(index, title);
   }
@@ -246,7 +249,7 @@ public class TabbedPaneWrapper  {
   }
 
   /**
-   * @see javax.swing.JTabbedPane#setComponentAt(int, java.awt.Component)
+   * @see JTabbedPane#setComponentAt(int, Component)
    */
   public final synchronized void setComponentAt(final int index, final JComponent component) {
     assertIsDispatchThread();
@@ -254,7 +257,7 @@ public class TabbedPaneWrapper  {
   }
 
   /**
-   * @see javax.swing.JTabbedPane#setIconAt(int, javax.swing.Icon)
+   * @see JTabbedPane#setIconAt(int, Icon)
    */
   public final void setIconAt(final int index, final Icon icon) {
     assertIsDispatchThread();
@@ -267,7 +270,7 @@ public class TabbedPaneWrapper  {
   }
 
   /**
-   * @see javax.swing.JTabbedPane#indexOfComponent(java.awt.Component)
+   * @see JTabbedPane#indexOfComponent(Component)
    */
   public final synchronized int indexOfComponent(final JComponent component) {
     for (int i=0; i < myTabbedPane.getTabCount(); i++) {
@@ -280,14 +283,14 @@ public class TabbedPaneWrapper  {
   }
 
   /**
-   * @see javax.swing.JTabbedPane#getTabLayoutPolicy
+   * @see JTabbedPane#getTabLayoutPolicy
    */
   public final synchronized int getTabLayoutPolicy(){
     return myTabbedPane.getTabLayoutPolicy();
   }
 
   /**
-   * @see javax.swing.JTabbedPane#setTabLayoutPolicy
+   * @see JTabbedPane#setTabLayoutPolicy
    */
   public final synchronized void setTabLayoutPolicy(final int policy){
     myTabbedPane.setTabLayoutPolicy(policy);
@@ -300,12 +303,14 @@ public class TabbedPaneWrapper  {
   /**
    * @deprecated Keyboard navigation is installed/deinstalled automatically. This method does nothing now.
    */
+  @Deprecated
   public final void installKeyboardNavigation(){
   }
 
   /**
    * @deprecated Keyboard navigation is installed/deinstalled automatically. This method does nothing now.
    */
+  @Deprecated
   public final void uninstallKeyboardNavigation(){
   }
 
@@ -339,7 +344,7 @@ public class TabbedPaneWrapper  {
 
     boolean myCustomFocus = true;
 
-    public TabWrapper(@NotNull final JComponent component) {
+    TabWrapper(@NotNull final JComponent component) {
       super(new BorderLayout());
       myComponent = component;
       add(component, BorderLayout.CENTER);
@@ -348,12 +353,12 @@ public class TabbedPaneWrapper  {
     /*
      * Make possible to search down for DataProviders
      */
-    public Object getData(final String dataId) {
+    @Override
+    public Object getData(@NotNull final String dataId) {
       if(myComponent instanceof DataProvider){
         return ((DataProvider)myComponent).getData(dataId);
-      } else {
-        return null;
       }
+      return null;
     }
 
     public JComponent getComponent() {
@@ -370,28 +375,32 @@ public class TabbedPaneWrapper  {
       }
     }
 
+    @Override
     public boolean requestDefaultFocus() {
       if (!myCustomFocus) return super.requestDefaultFocus();
       if (myComponent == null) return false; // Just in case someone requests the focus when we're already removed from the Swing tree.
       final JComponent preferredFocusedComponent = IdeFocusTraversalPolicy.getPreferredFocusedComponent(myComponent);
       if (preferredFocusedComponent != null) {
         if (!preferredFocusedComponent.requestFocusInWindow()) {
-          preferredFocusedComponent.requestFocus();
+          IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() ->
+            IdeFocusManager.getGlobalInstance().requestFocus(preferredFocusedComponent, true));
         }
         return true;
-      } else {
-        return myComponent.requestDefaultFocus();
       }
+      return myComponent.requestDefaultFocus();
     }
 
+    @Override
     public void requestFocus() {
       if (!myCustomFocus) {
-        super.requestFocus();
-      } else {
+        IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> super.requestFocus());
+      }
+      else {
         requestDefaultFocus();
       }
     }
 
+    @Override
     public boolean requestFocusInWindow() {
       if (!myCustomFocus) return super.requestFocusInWindow();
       return requestDefaultFocus();
@@ -399,17 +408,19 @@ public class TabbedPaneWrapper  {
   }
 
   private final class _MyFocusTraversalPolicy extends IdeFocusTraversalPolicy{
+    @Override
+    public boolean isNoDefaultComponent() {
+      return false;
+    }
+
+    @Override
     public final Component getDefaultComponentImpl(final Container focusCycleRoot) {
       final JComponent component=getSelectedComponent();
-      if(component!=null){
-        return IdeFocusTraversalPolicy.getPreferredFocusedComponent(component, this);
-      }else{
-        return null;
-      }
+      return component == null ? null : IdeFocusTraversalPolicy.getPreferredFocusedComponent(component, this);
     }
   }
 
-  protected static class TabbedPaneHolder extends JPanel {
+  public static class TabbedPaneHolder extends JPanel {
 
     private final TabbedPaneWrapper myWrapper;
 
@@ -418,31 +429,39 @@ public class TabbedPaneWrapper  {
       myWrapper = wrapper;
     }
 
+    @Override
     public boolean requestDefaultFocus() {
       final JComponent preferredFocusedComponent = IdeFocusTraversalPolicy.getPreferredFocusedComponent(myWrapper.myTabbedPane.getComponent());
       if (preferredFocusedComponent != null) {
         if (!preferredFocusedComponent.requestFocusInWindow()) {
-          preferredFocusedComponent.requestFocus();
+          IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() ->
+            IdeFocusManager.getGlobalInstance().requestFocus(preferredFocusedComponent, true));
         }
         return true;
-      } else {
-        return super.requestDefaultFocus();
       }
+      return super.requestDefaultFocus();
     }
 
+    @Override
     public final void requestFocus() {
       requestDefaultFocus();
     }
 
+    @Override
     public final boolean requestFocusInWindow() {
       return requestDefaultFocus();
     }
 
+    @Override
     public void updateUI() {
       super.updateUI();
       if (myWrapper != null) {
         myWrapper.myTabbedPane.updateUI();
       }
+    }
+
+    public TabbedPaneWrapper getTabbedPaneWrapper() {
+      return myWrapper;
     }
   }
 
@@ -451,9 +470,12 @@ public class TabbedPaneWrapper  {
   }
 
   private interface TabFactory {
+    @NotNull
     TabbedPane createTabbedPane(int tabPlacement);
+    @NotNull
     TabbedPaneHolder createTabbedPaneHolder();
-    TabWrapper createTabWrapper(JComponent component);
+    @NotNull
+    TabWrapper createTabWrapper(@NotNull JComponent component);
   }
 
   private static class JTabbedPaneFactory implements TabFactory {
@@ -463,15 +485,21 @@ public class TabbedPaneWrapper  {
       myWrapper = wrapper;
     }
 
+    @NotNull
+    @Override
     public TabbedPane createTabbedPane(int tabPlacement) {
       return new TabbedPaneImpl(tabPlacement);
     }
 
+    @NotNull
+    @Override
     public TabbedPaneHolder createTabbedPaneHolder() {
       return new TabbedPaneHolder(myWrapper);
     }
 
-    public TabWrapper createTabWrapper(JComponent component) {
+    @NotNull
+    @Override
+    public TabWrapper createTabWrapper(@NotNull JComponent component) {
       return new TabWrapper(component);
     }
   }
@@ -488,10 +516,14 @@ public class TabbedPaneWrapper  {
       myParent = parent;
     }
 
+    @NotNull
+    @Override
     public TabbedPane createTabbedPane(int tabPlacement) {
       return new JBTabsPaneImpl(myProject, tabPlacement, myParent);
     }
 
+    @NotNull
+    @Override
     public TabbedPaneHolder createTabbedPaneHolder() {
       return new TabbedPaneHolder(myWrapper) {
         @Override
@@ -503,7 +535,9 @@ public class TabbedPaneWrapper  {
       };
     }
 
-    public TabWrapper createTabWrapper(JComponent component) {
+    @NotNull
+    @Override
+    public TabWrapper createTabWrapper(@NotNull JComponent component) {
       final TabWrapper tabWrapper = new TabWrapper(component);
       tabWrapper.myCustomFocus = false;
       return tabWrapper;

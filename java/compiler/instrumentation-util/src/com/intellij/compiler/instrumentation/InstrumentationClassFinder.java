@@ -1,12 +1,28 @@
+/*
+ * Copyright 2000-2016 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.intellij.compiler.instrumentation;
 
-import org.jetbrains.asm4.ClassReader;
-import org.jetbrains.asm4.ClassVisitor;
-import org.jetbrains.asm4.MethodVisitor;
-import org.jetbrains.asm4.Opcodes;
-import sun.misc.Resource;
+import org.jetbrains.org.objectweb.asm.ClassReader;
+import org.jetbrains.org.objectweb.asm.ClassVisitor;
+import org.jetbrains.org.objectweb.asm.MethodVisitor;
+import org.jetbrains.org.objectweb.asm.Opcodes;
 
 import java.io.*;
+import java.lang.reflect.Constructor;
+import java.net.MalformedURLException;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLClassLoader;
@@ -16,7 +32,6 @@ import java.util.zip.ZipFile;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: 2/16/12
  */
 public class InstrumentationClassFinder {
   private static final PseudoClass[] EMPTY_PSEUDOCLASS_ARRAY = new PseudoClass[0];
@@ -41,6 +56,10 @@ public class InstrumentationClassFinder {
     myClasspath = new ClassFinderClasspath(classpathUrls);
   }
 
+  public static URL createJDKPlatformUrl(String jdkHomePath) throws MalformedURLException {
+    return new URL(ClassFinderClasspath.Loader.JRT_PROTOCOL, null, jdkHomePath.replace(File.separatorChar, '/'));
+  }
+
   // compatibility with legacy code requiring ClassLoader
   public ClassLoader getLoader() {
     ClassLoader loader = myLoader;
@@ -51,6 +70,7 @@ public class InstrumentationClassFinder {
     final ClassLoader cpLoader = new URLClassLoader(myClasspathUrls, platformLoader);
     loader = new ClassLoader(cpLoader) {
 
+      @Override
       public InputStream getResourceAsStream(String name) {
         InputStream is = null;
         is = super.getResourceAsStream(name);
@@ -64,6 +84,7 @@ public class InstrumentationClassFinder {
         return is;
       }
 
+      @Override
       protected Class findClass(String name) throws ClassNotFoundException {
         final InputStream is = lookupClassBeforeClasspath(name.replace('.', '/'));
         if (is == null) {
@@ -101,7 +122,7 @@ public class InstrumentationClassFinder {
       return aClass;
     }
 
-    final InputStream is = aClass == null? getClassBytesAsStream(internalName) : null;
+    final InputStream is = aClass == null? getClassBytesStream(internalName) : null;
 
     if (is == null) {
       if (aClass == null) {
@@ -132,12 +153,29 @@ public class InstrumentationClassFinder {
 
   public InputStream getClassBytesAsStream(String className) throws IOException {
     final String internalName = className.replace('.', '/'); // normalize
+    final PseudoClass aClass = myLoaded.get(internalName);
+    if (aClass == PseudoClass.NULL_OBJ) {
+      return null;
+    }
+    InputStream bytes = null;
+    try {
+      bytes = getClassBytesStream(internalName);
+    }
+    finally {
+      if (aClass == null && bytes == null) {
+        myLoaded.put(internalName, PseudoClass.NULL_OBJ);
+      }
+    }
+    return bytes;
+  }
+
+  private InputStream getClassBytesStream(String internalName) throws IOException {
     InputStream is = null;
     // first look into platformCp
     final String resourceName = internalName + CLASS_RESOURCE_EXTENSION;
-    Resource resource = myPlatformClasspath.getResource(resourceName, false);
+    Resource resource = myPlatformClasspath.getResource(resourceName);
     if (resource != null) {
-      is = new ByteArrayInputStream(resource.getBytes());
+      is = resource.getInputStream();
     }
     // second look into memory and classspath
     if (is == null) {
@@ -145,9 +183,9 @@ public class InstrumentationClassFinder {
     }
 
     if (is == null) {
-      resource = myClasspath.getResource(resourceName, false);
+      resource = myClasspath.getResource(resourceName);
       if (resource != null) {
-        is = new ByteArrayInputStream(resource.getBytes());
+        is = resource.getInputStream();
       }
     }
 
@@ -160,15 +198,15 @@ public class InstrumentationClassFinder {
   public InputStream getResourceAsStream(String resourceName) throws IOException {
     InputStream is = null;
 
-    Resource resource = myPlatformClasspath.getResource(resourceName, false);
+    Resource resource = myPlatformClasspath.getResource(resourceName);
     if (resource != null) {
-      is = new ByteArrayInputStream(resource.getBytes());
+      is = resource.getInputStream();
     }
 
     if (is == null) {
-      resource = myClasspath.getResource(resourceName, false);
+      resource = myClasspath.getResource(resourceName);
       if (resource != null) {
-        is = new ByteArrayInputStream(resource.getBytes());
+        is = resource.getInputStream();
       }
     }
 
@@ -191,7 +229,7 @@ public class InstrumentationClassFinder {
 
     return new PseudoClass(this, visitor.myName, visitor.mySuperclassName, visitor.myInterfaces, visitor.myModifiers, visitor.myMethods);
   }
-  
+
   public static class PseudoClass {
     static final PseudoClass NULL_OBJ = new PseudoClass(null, null, null, null, 0, null);
     private final String myName;
@@ -398,9 +436,10 @@ public class InstrumentationClassFinder {
     private final List<PseudoMethod> myMethods = new ArrayList<PseudoMethod>();
 
     private V() {
-      super(Opcodes.ASM4);
+      super(Opcodes.API_VERSION);
     }
 
+    @Override
     public MethodVisitor visitMethod(int access, String name, String desc, String signature, String[] exceptions) {
       if ((access & Opcodes.ACC_PUBLIC) > 0) {
         myMethods.add(new PseudoMethod(access, name, desc));
@@ -408,6 +447,7 @@ public class InstrumentationClassFinder {
       return super.visitMethod(access, name, desc, signature, exceptions);
     }
 
+    @Override
     public void visit(int version, int access, String pName, String signature, String pSuperName, String[] pInterfaces) {
       mySuperclassName = pSuperName;
       myInterfaces = pInterfaces;
@@ -416,14 +456,17 @@ public class InstrumentationClassFinder {
     }
   }
 
+  public interface Resource {
+    InputStream getInputStream() throws IOException;
+  }
+
   static class ClassFinderClasspath {
-    private static final String FILE_PROTOCOL = "file";
 
     private final Stack<URL> myUrls = new Stack<URL>();
     private final List<Loader> myLoaders = new ArrayList<Loader>();
     private final Map<URL,Loader> myLoadersMap = new HashMap<URL, Loader>();
 
-    public ClassFinderClasspath(URL[] urls) {
+    ClassFinderClasspath(URL[] urls) {
       if (urls.length > 0) {
         for (int i = urls.length - 1; i >= 0; i--) {
           myUrls.push(urls[i]);
@@ -431,10 +474,10 @@ public class InstrumentationClassFinder {
       }
     }
 
-    public Resource getResource(String s, boolean flag) {
+    public Resource getResource(String s) {
       int i = 0;
       for (Loader loader; (loader = getLoader(i)) != null; i++) {
-        Resource resource = loader.getResource(s, flag);
+        Resource resource = loader.getResource(s);
         if (resource != null) {
           return resource;
         }
@@ -483,7 +526,7 @@ public class InstrumentationClassFinder {
       return myLoaders.get(i);
     }
 
-    private Loader getLoader(final URL url, int index) throws IOException {
+    private static Loader getLoader(final URL url, int index) throws IOException {
       String s;
       try {
         s = url.toURI().getSchemeSpecificPart();
@@ -493,23 +536,28 @@ public class InstrumentationClassFinder {
         s = url.getFile();
       }
 
-      Loader loader = null;
-      if (s != null  && new File(s).isDirectory()) {
-        if (FILE_PROTOCOL.equals(url.getProtocol())) {
-          loader = new FileLoader(url, index);
+      if (s != null && s.length() > 0) {
+        final String protocol = url.getProtocol();
+        if (Loader.JRT_PROTOCOL.equals(protocol)) {
+          final Loader jrtLoader = JrtClassHolder.create(url, index);
+          if (jrtLoader != null) {
+            return jrtLoader;
+          }
+        }
+        if (new File(s).isDirectory()) {
+          return Loader.FILE_PROTOCOL.equals(protocol) ? new FileLoader(url, index) : null;
         }
       }
-      else {
-        loader = new JarLoader(url, index);
-      }
 
-      return loader;
+      // by default treat the url as a jar archive
+      return new JarLoader(url, index);
     }
 
 
-    private abstract static class Loader {
+    abstract static class Loader {
       protected static final String JAR_PROTOCOL = "jar";
       protected static final String FILE_PROTOCOL = "file";
+      protected static final String JRT_PROTOCOL = "jrt";
 
       private final URL myURL;
       private final int myIndex;
@@ -524,7 +572,7 @@ public class InstrumentationClassFinder {
         return myURL;
       }
 
-      public abstract Resource getResource(final String name, boolean flag);
+      public abstract Resource getResource(final String name);
 
       public abstract void releaseResources();
 
@@ -536,7 +584,6 @@ public class InstrumentationClassFinder {
     private static class FileLoader extends Loader {
       private final File myRootDir;
 
-      @SuppressWarnings({"HardCodedStringLiteral"})
       FileLoader(URL url, int index) throws IOException {
         super(url, index);
         if (!FILE_PROTOCOL.equals(url.getProtocol())) {
@@ -548,71 +595,35 @@ public class InstrumentationClassFinder {
         }
       }
 
+      @Override
       public void releaseResources() {
       }
 
-      public Resource getResource(final String name, boolean check) {
-        URL url = null;
-        File file = null;
-
+      @Override
+      public Resource getResource(final String name) {
         try {
-          url = new URL(getBaseURL(), name);
+          final URL url = new URL(getBaseURL(), name);
           if (!url.getFile().startsWith(getBaseURL().getFile())) {
             return null;
           }
 
-          file = new File(myRootDir, name.replace('/', File.separatorChar));
-          if (!check || file.exists()) {     // check means we load or process resource so we check its existence via old way
-            return new FileResource(name, url, file, !check);
+          final File file = new File(myRootDir, name.replace('/', File.separatorChar));
+          if (file.exists()) {
+            return new Resource() {
+              @Override
+              public InputStream getInputStream() throws IOException {
+                return new BufferedInputStream(new FileInputStream(file));
+              }
+
+              public String toString() {
+                return file.getAbsolutePath();
+              }
+            };
           }
         }
-        catch (Exception exception) {
-          if (!check && file != null && file.exists()) {
-            try {   // we can not open the file if it is directory, Resource still can be created
-              return new FileResource(name, url, file, false);
-            }
-            catch (IOException ex) {
-            }
-          }
+        catch (Exception ignored) {
         }
         return null;
-      }
-
-      private class FileResource extends Resource {
-        private final String myName;
-        private final URL myUrl;
-        private final File myFile;
-
-        public FileResource(String name, URL url, File file, boolean willLoadBytes) throws IOException {
-          myName = name;
-          myUrl = url;
-          myFile = file;
-          if (willLoadBytes) getByteBuffer(); // check for existence by creating cached file input stream
-        }
-
-        public String getName() {
-          return myName;
-        }
-
-        public URL getURL() {
-          return myUrl;
-        }
-
-        public URL getCodeSourceURL() {
-          return getBaseURL();
-        }
-
-        public InputStream getInputStream() throws IOException {
-          return new BufferedInputStream(new FileInputStream(myFile));
-        }
-
-        public int getContentLength() throws IOException {
-          return -1;
-        }
-
-        public String toString() {
-          return myFile.getAbsolutePath();
-        }
       }
 
       public String toString() {
@@ -620,7 +631,7 @@ public class InstrumentationClassFinder {
       }
     }
 
-    private class JarLoader extends Loader {
+    private static class JarLoader extends Loader {
       private final URL myURL;
       private ZipFile myZipFile;
 
@@ -629,6 +640,7 @@ public class InstrumentationClassFinder {
         myURL = url;
       }
 
+      @Override
       public void releaseResources() {
         final ZipFile zipFile = myZipFile;
         if (zipFile != null) {
@@ -654,10 +666,7 @@ public class InstrumentationClassFinder {
       private ZipFile doGetZipFile() throws IOException {
         if (FILE_PROTOCOL.equals(myURL.getProtocol())) {
           String s = unescapePercentSequences(myURL.getFile().replace('/', File.separatorChar));
-          if (!new File(s).exists()) {
-            throw new FileNotFoundException(s);
-          }
-          else {
+          if (new File(s).exists()) {
             return new ZipFile(s);
           }
         }
@@ -665,13 +674,35 @@ public class InstrumentationClassFinder {
         return null;
       }
 
-      public Resource getResource(String name, boolean flag) {
+      @Override
+      public Resource getResource(String name) {
         try {
           final ZipFile file = acquireZipFile();
           if (file != null) {
             final ZipEntry entry = file.getEntry(name);
             if (entry != null) {
-              return new JarResource(entry, new URL(getBaseURL(), name));
+              return new Resource() {
+                @Override
+                public InputStream getInputStream() throws IOException {
+                  try {
+                    final ZipFile file = acquireZipFile();
+                    if (file != null) {
+                      final InputStream inputStream = file.getInputStream(entry);
+                      if (inputStream != null) {
+                        return new FilterInputStream(inputStream) {};
+                      }
+                    }
+                  }
+                  catch (IOException e) {
+                    e.printStackTrace();
+                  }
+                  return null;
+                }
+
+                public String toString() {
+                  return "JarLoader [" + myURL + "!/" + entry.getName() + "]";
+                }
+              };
             }
           }
         }
@@ -681,54 +712,6 @@ public class InstrumentationClassFinder {
         return null;
       }
 
-      private class JarResource extends Resource {
-        private final ZipEntry myEntry;
-        private final URL myUrl;
-
-        public JarResource(ZipEntry name, URL url) {
-          myEntry = name;
-          myUrl = url;
-        }
-
-        public String getName() {
-          return myEntry.getName();
-        }
-
-        public URL getURL() {
-          return myUrl;
-        }
-
-        public URL getCodeSourceURL() {
-          return myURL;
-        }
-
-        public InputStream getInputStream() throws IOException {
-          try {
-            final ZipFile file = acquireZipFile();
-            if (file == null) {
-              return null;
-            }
-
-            final InputStream inputStream = file.getInputStream(myEntry);
-            if (inputStream == null) {
-              return null; // if entry was not found
-            }
-            return new FilterInputStream(inputStream) {};
-          }
-          catch (IOException e) {
-            e.printStackTrace();
-            return null;
-          }
-        }
-
-        public int getContentLength() {
-          return (int)myEntry.getSize();
-        }
-      }
-
-      public String toString() {
-        return "JarLoader [" + myURL + "]";
-      }
     }
   }
 
@@ -809,6 +792,36 @@ public class InstrumentationClassFinder {
     catch (IOException ignored) {
     }
     return result.toByteArray();
+  }
+
+  private static final class JrtClassHolder {
+    public static final Class<? extends ClassFinderClasspath.Loader> ourClass;
+    public static final Constructor<? extends ClassFinderClasspath.Loader> ourConstructor;
+
+    static {
+      Class<? extends ClassFinderClasspath.Loader> aClass = null;
+      Constructor<? extends ClassFinderClasspath.Loader> constructor = null;
+      try {
+        aClass = (Class<? extends ClassFinderClasspath.Loader>)Class.forName("com.intellij.compiler.instrumentation.JrtLoader");
+        constructor = aClass.getDeclaredConstructor(URL.class, int.class);
+        constructor.setAccessible(true);
+      }
+      catch (Throwable ignored) {
+      }
+      ourClass = aClass;
+      ourConstructor = constructor;
+    }
+
+    public static ClassFinderClasspath.Loader create(URL url, int index) {
+      if (ourConstructor != null) {
+        try {
+          return ourConstructor.newInstance(url, index);
+        }
+        catch (Throwable ignored) {
+        }
+      }
+      return null;
+    }
   }
 
 }

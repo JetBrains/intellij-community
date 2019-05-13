@@ -1,32 +1,24 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.config;
 
-import com.google.common.base.Objects;
+import com.intellij.execution.ExecutableValidator;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.process.CapturingProcessHandler;
 import com.intellij.execution.process.ProcessOutput;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import org.jetbrains.annotations.NotNull;
 
 import java.text.ParseException;
+import java.util.Locale;
+import java.util.Objects;
 import java.util.concurrent.TimeoutException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -45,7 +37,7 @@ public final class GitVersion implements Comparable<GitVersion> {
    * Type indicates the type of this git distribution: is it native (unix) or msys or cygwin.
    * Type UNDEFINED means that the type doesn't matter in certain condition.
    */
-  public static enum Type {
+  public enum Type {
     UNIX,
     MSYS,
     CYGWIN,
@@ -60,7 +52,8 @@ public final class GitVersion implements Comparable<GitVersion> {
   /**
    * The minimal supported version
    */
-  public static final GitVersion MIN = new GitVersion(1, 6, 0, 0);
+  public static final GitVersion MIN = SystemInfo.isWindows ? new GitVersion(2, 4, 0, 0)
+                                                            : new GitVersion(1, 8, 0, 0);
 
   /**
    * Special version with a special Type which indicates, that Git version information is unavailable.
@@ -69,7 +62,7 @@ public final class GitVersion implements Comparable<GitVersion> {
   public static final GitVersion NULL = new GitVersion(0, 0, 0, 0, Type.NULL);
 
   private static final Pattern FORMAT = Pattern.compile(
-    "git version (\\d+)\\.(\\d+)\\.(\\d+)(?:\\.(\\d+))?(.*)", Pattern.CASE_INSENSITIVE);
+    "git version (\\d+)\\.(\\d+)(?:\\.(\\d+))?(?:\\.(\\d+))?(.*)", Pattern.CASE_INSENSITIVE);
 
   private static final Logger LOG = Logger.getInstance(GitVersion.class.getName());
 
@@ -77,17 +70,17 @@ public final class GitVersion implements Comparable<GitVersion> {
   private final int myMinor;
   private final int myRevision;
   private final int myPatchLevel;
-  private final Type myType;
+  @NotNull private final Type myType;
 
   private final int myHashCode;
 
-  public GitVersion(int major, int minor, int revision, int patchLevel, Type type) {
+  public GitVersion(int major, int minor, int revision, int patchLevel, @NotNull Type type) {
     myMajor = major;
     myMinor = minor;
     myRevision = revision;
     myPatchLevel = patchLevel;
     myType = type;
-    myHashCode = Objects.hashCode(myMajor, myMinor, myRevision, myPatchLevel);
+    myHashCode = Objects.hash(myMajor, myMinor, myRevision, myPatchLevel);
   }
 
   /**
@@ -101,7 +94,7 @@ public final class GitVersion implements Comparable<GitVersion> {
    * Parses output of "git version" command.
    */
   @NotNull
-  public static GitVersion parse(String output) throws ParseException {
+  public static GitVersion parse(@NotNull String output) throws ParseException {
     if (StringUtil.isEmptyOrSpaces(output)) {
       throw new ParseException("Empty git --version output: " + output, 0);
     }
@@ -113,20 +106,29 @@ public final class GitVersion implements Comparable<GitVersion> {
     int minor = getIntGroup(m, 2);
     int rev = getIntGroup(m, 3);
     int patch = getIntGroup(m, 4);
-    boolean msys = (m.groupCount() >= 5) && m.group(5) != null && m.group(5).toLowerCase().contains("msysgit");
+
     Type type;
     if (SystemInfo.isWindows) {
-      type = msys ? Type.MSYS : Type.CYGWIN;
-    } else {
+      String suffix = getStringGroup(m, 5);
+      if (suffix.toLowerCase(Locale.ENGLISH).contains("msysgit") ||
+          suffix.toLowerCase(Locale.ENGLISH).contains("windows")) {
+        type = Type.MSYS;
+      }
+      else {
+        type = Type.CYGWIN;
+      }
+    }
+    else {
       type = Type.UNIX;
     }
+
     return new GitVersion(major, minor, rev, patch, type);
   }
 
   // Utility method used in parsing - checks that the given capture group exists and captured something - then returns the captured value,
   // otherwise returns 0.
-  private static int getIntGroup(Matcher matcher, int group) {
-    if (group > matcher.groupCount()+1) {
+  private static int getIntGroup(@NotNull Matcher matcher, int group) {
+    if (group > matcher.groupCount() + 1) {
       return 0;
     }
     final String match = matcher.group(group);
@@ -137,16 +139,42 @@ public final class GitVersion implements Comparable<GitVersion> {
   }
 
   @NotNull
-  public static GitVersion identifyVersion(String gitExecutable) throws TimeoutException, ExecutionException, ParseException {
+  private static String getStringGroup(@NotNull Matcher matcher, int group) {
+    if (group > matcher.groupCount() + 1) {
+      return "";
+    }
+    final String match = matcher.group(group);
+    if (match == null) {
+      return "";
+    }
+
+    return match.trim();
+  }
+
+  /**
+   * @deprecated use {@link GitExecutableManager#identifyVersion(String)} with appropriate {@link ProgressIndicator}
+   * or {@link GitExecutableManager#getVersion(Project)}
+   */
+  @Deprecated
+  @NotNull
+  public static GitVersion identifyVersion(@NotNull String gitExecutable) throws TimeoutException, ExecutionException, ParseException {
     GeneralCommandLine commandLine = new GeneralCommandLine();
     commandLine.setExePath(gitExecutable);
     commandLine.addParameter("--version");
-    CapturingProcessHandler handler = new CapturingProcessHandler(commandLine.createProcess(), CharsetToolkit.getDefaultSystemCharset());
-    ProcessOutput result = handler.runProcess(30 * 1000);
+    commandLine.setCharset(CharsetToolkit.getDefaultSystemCharset());
+    CapturingProcessHandler handler = new CapturingProcessHandler(commandLine);
+    ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
+    ProcessOutput result = indicator == null ?
+                           handler.runProcess(ExecutableValidator.TIMEOUT_MS) :
+                           handler.runProcessWithProgressIndicator(indicator);
     if (result.isTimeout()) {
       throw new TimeoutException("Couldn't identify the version of Git - stopped by timeout.");
     }
-    if (result.getExitCode() != 0 || !result.getStderr().isEmpty()) {
+    else if (result.isCancelled()) {
+      LOG.info("Cancelled by user. exitCode=" + result.getExitCode());
+      throw new ProcessCanceledException();
+    }
+    else if (result.getExitCode() != 0 || !result.getStderr().isEmpty()) {
       LOG.info("getVersion exitCode=" + result.getExitCode() + " errors: " + result.getStderr());
       // anyway trying to parse
       try {
@@ -172,7 +200,7 @@ public final class GitVersion implements Comparable<GitVersion> {
    * Types are considered equal also if one of them is undefined. Otherwise they are compared.
    */
   @Override
-  public boolean equals(final Object obj) {
+  public boolean equals(Object obj) {
     if (!(obj instanceof GitVersion)) {
       return false;
     }
@@ -201,9 +229,10 @@ public final class GitVersion implements Comparable<GitVersion> {
    * (msys git 1.7.3).compareTo(cygwin git 1.7.3) == 0
    * BUT
    * (msys git 1.7.3).equals(cygwin git 1.7.3) == false
-   * 
-   * {@link GitVersion#NULL} is less than any other not-NULL version. 
+   *
+   * {@link GitVersion#NULL} is less than any other not-NULL version.
    */
+  @Override
   public int compareTo(@NotNull GitVersion o) {
     if (o.getType() == Type.NULL) {
       return (getType() == Type.NULL ? 0 : 1);
@@ -223,10 +252,23 @@ public final class GitVersion implements Comparable<GitVersion> {
     return myPatchLevel - o.myPatchLevel;
   }
 
+  @NotNull
+  public String getPresentation() {
+    String presentation = myMajor + "." + myMinor + "." + myRevision;
+    if (myPatchLevel > 0) presentation += "." + myPatchLevel;
+    return presentation;
+  }
+
   @Override
   public String toString() {
-    final String msysIndicator = (myType == Type.MSYS ? ".msysgit" : "");
-    return myMajor + "." + myMinor + "." + myRevision + "." + myPatchLevel + msysIndicator;
+    return myMajor + "." + myMinor + "." + myRevision + "." + myPatchLevel + " (" + myType + ")";
+  }
+
+  @NotNull
+  public String getSemanticPresentation() {
+    String presentation = myMajor + "." + myMinor + "." + myRevision;
+    if (myPatchLevel > 0) presentation += "." + myPatchLevel;
+    return presentation + "-" + myType;
   }
 
   /**
@@ -243,6 +285,7 @@ public final class GitVersion implements Comparable<GitVersion> {
     return version != null && compareTo(version) >= 0;
   }
 
+  @NotNull
   public Type getType() {
     return myType;
   }

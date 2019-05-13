@@ -16,17 +16,19 @@
 
 package com.intellij.psi.impl.source.tree.injected;
 
+import com.intellij.lang.ASTNode;
+import com.intellij.openapi.diagnostic.Attachment;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.LiteralTextEscaper;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiLanguageInjectionHost;
-import com.intellij.psi.TokenType;
-import com.intellij.psi.impl.source.tree.ForeignLeafPsiElement;
-import com.intellij.psi.impl.source.tree.LeafElement;
-import com.intellij.psi.impl.source.tree.RecursiveTreeElementWalkingVisitor;
+import com.intellij.psi.impl.DebugUtil;
+import com.intellij.psi.impl.source.tree.*;
 import gnu.trove.THashMap;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 import java.util.Map;
@@ -35,19 +37,20 @@ import java.util.Map;
  * @author cdr
 */
 class LeafPatcher extends RecursiveTreeElementWalkingVisitor {
-  private LeafElement prevElement;
-  private String prevElementTail;
+  private static final Logger LOG = Logger.getInstance(LeafPatcher.class);
   private int shredNo;
   private String hostText;
+  private LiteralTextEscaper currentTextEscaper;
   private TextRange rangeInHost;
-  private final Place myShreds;
-  private final List<LiteralTextEscaper<? extends PsiLanguageInjectionHost>> myEscapers;
-  final Map<LeafElement, String> newTexts = new THashMap<LeafElement, String>();
-  final StringBuilder catLeafs = new StringBuilder();
+  private final Map<LeafElement, String> newTexts = new THashMap<>();
+  @NotNull
+  private final List<? extends PlaceInfo> myPlaceInfos;
+  private final StringBuilder catLeafs;
+  private final StringBuilder tempLeafBuffer = new StringBuilder();
 
-  LeafPatcher(Place shreds, List<LiteralTextEscaper<? extends PsiLanguageInjectionHost>> escapers) {
-    myShreds = shreds;
-    myEscapers = escapers;
+  LeafPatcher(@NotNull List<? extends PlaceInfo> placeInfos, int approxTextLength) {
+    myPlaceInfos = placeInfos;
+    catLeafs = new StringBuilder(approxTextLength);
   }
 
   @Override
@@ -58,38 +61,32 @@ class LeafPatcher extends RecursiveTreeElementWalkingVisitor {
 
     StringBuilder leafEncodedText = constructTextFromHostPSI(leafRange.getStartOffset(), leafRange.getEndOffset());
 
-    if (leaf.getElementType() == TokenType.WHITE_SPACE && prevElementTail != null) {
-      // optimization: put all garbage into whitespace
-      leafEncodedText.insert(0, prevElementTail);
-      newTexts.remove(prevElement);
-      storeUnescapedTextFor(prevElement, null);
-    }
     if (!Comparing.equal(leafText, leafEncodedText)) {
       newTexts.put(leaf, leafEncodedText.toString());
       storeUnescapedTextFor(leaf, leafText);
     }
-    prevElementTail = StringUtil.startsWith(leafEncodedText, leafText) && leafEncodedText.length() != leafText.length() ?
-                      leafEncodedText.substring(leafText.length()) : null;
-    prevElement = leaf;
   }
 
   private StringBuilder constructTextFromHostPSI(int startOffset, int endOffset) {
     boolean firstTimer = false;
-    PsiLanguageInjectionHost.Shred current = myShreds.get(shredNo);
+    PlaceInfo currentPlace = myPlaceInfos.get(shredNo);
     if (hostText == null) {
-      hostText = current.getHost().getText();
-      rangeInHost = current.getRangeInsideHost();
+      hostText = currentPlace.myHostText;
+      rangeInHost = currentPlace.getRelevantRangeInsideHost();
+      currentTextEscaper = currentPlace.myEscaper;
       firstTimer = true;
     }
 
-    StringBuilder text = new StringBuilder(endOffset-startOffset);
+    StringBuilder text = tempLeafBuffer;
+    text.setLength(0);
     while (startOffset < endOffset) {
-      TextRange shredRange = current.getRange();
-      String prefix = current.getPrefix();
+      TextRange shredRange = currentPlace.rangeInDecodedPSI;
+      String prefix = currentPlace.prefix;
       if (startOffset >= shredRange.getEndOffset()) {
-        current = myShreds.get(++shredNo);
-        hostText = current.getHost().getText();
-        rangeInHost = current.getRangeInsideHost();
+        currentPlace = myPlaceInfos.get(++shredNo);
+        hostText = currentPlace.myHostText;
+        currentTextEscaper = currentPlace.myEscaper;
+        rangeInHost = currentPlace.getRelevantRangeInsideHost();
         firstTimer = true;
         continue;
       }
@@ -102,21 +99,26 @@ class LeafPatcher extends RecursiveTreeElementWalkingVisitor {
         continue;
       }
 
-      String suffix = current.getSuffix();
+      String suffix = currentPlace.suffix;
       if (startOffset < shredRange.getEndOffset() - suffix.length()) {
         // inside host body, cut out from the host text
-        int startOffsetInHost = myEscapers.get(shredNo).getOffsetInHost(
-          startOffset - shredRange.getStartOffset() - prefix.length(), rangeInHost);
+        int startOffsetInHost = currentTextEscaper.getOffsetInHost(startOffset - shredRange.getStartOffset() - prefix.length(), rangeInHost);
         int endOffsetCut = Math.min(endOffset, shredRange.getEndOffset() - suffix.length());
-        int endOffsetInHost = myEscapers.get(shredNo).getOffsetInHost(
-          endOffsetCut - shredRange.getStartOffset() - prefix.length(), rangeInHost);
+        int endOffsetInHost = currentTextEscaper.getOffsetInHost(endOffsetCut - shredRange.getStartOffset() - prefix.length(), rangeInHost);
         if (endOffsetInHost != -1) {
-          if (firstTimer ) text.append(hostText, rangeInHost.getStartOffset(), startOffsetInHost);
+          if (firstTimer) text.append(hostText, rangeInHost.getStartOffset(), startOffsetInHost);
           text.append(hostText, startOffsetInHost, endOffsetInHost);
           startOffset = endOffsetCut;
           // todo what about lastTimer?
-          continue;
         }
+        else {
+          LOG.error("Text escaper " + currentTextEscaper +" ("+currentTextEscaper.getClass()+") " +
+                    "returned -1 in 'getOffsetInHost("+(endOffsetCut - shredRange.getStartOffset() - prefix.length())+", new TextRange"+rangeInHost+")' " +
+                    "for "+currentPlace.host.getClass(),
+                    new Attachment("host", StringUtil.first(currentPlace.host.getText(), 100, true)));
+        }
+
+        continue;
       }
 
       // inside suffix
@@ -128,10 +130,33 @@ class LeafPatcher extends RecursiveTreeElementWalkingVisitor {
     return text;
   }
 
-  private static void storeUnescapedTextFor(final LeafElement leaf, final String leafText) {
+  static final Key<String> UNESCAPED_TEXT = Key.create("INJECTED_UNESCAPED_TEXT");
+  private static void storeUnescapedTextFor(@NotNull LeafElement leaf, @NotNull String leafText) {
     PsiElement psi = leaf.getPsi();
     if (psi != null) {
-      psi.putCopyableUserData(InjectedLanguageManagerImpl.UNESCAPED_TEXT, leafText);
+      psi.putCopyableUserData(UNESCAPED_TEXT, leafText);
     }
+  }
+
+  void patch(@NotNull ASTNode parsedNode, @NotNull List<? extends PlaceInfo> placeInfos) {
+    ((TreeElement)parsedNode).acceptTree(this);
+
+    assert ((TreeElement)parsedNode).textMatches(catLeafs) :
+      "Malformed PSI structure: leaf texts do not add up to the whole file text." +
+      "\nFile text (from tree)  :'" + parsedNode.getText() + "'" +
+      "\nFile text (from PSI)   :'" + parsedNode.getPsi().getText() + "'" +
+      "\nLeaf texts concatenated:'" + catLeafs + "';" +
+      "\nFile root: " + parsedNode +
+      "\nLanguage: " + parsedNode.getPsi().getLanguage() +
+      "\nHost file: " + placeInfos.get(0).host.getContainingFile().getVirtualFile();
+    DebugUtil.performPsiModification("injection leaf patching", () -> {
+      for (Map.Entry<LeafElement, String> entry : newTexts.entrySet()) {
+        LeafElement leaf = entry.getKey();
+        String newText = entry.getValue();
+        leaf.rawReplaceWithText(newText);
+      }
+    });
+
+    TreeUtil.clearCaches((TreeElement)parsedNode);
   }
 }

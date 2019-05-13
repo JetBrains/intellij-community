@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,10 +19,13 @@ import com.intellij.navigation.ColoredItemPresentation;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.editor.colors.CodeInsightColors;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
+import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiFormatUtil;
+import com.intellij.psi.util.PsiFormatUtilBase;
 import com.intellij.psi.util.PsiTreeUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -31,21 +34,26 @@ public class JavaPresentationUtil {
   private JavaPresentationUtil() {
   }
 
-  public static ColoredItemPresentation getMethodPresentation(final PsiMethod psiMethod) {
+  @NotNull
+  public static ColoredItemPresentation getMethodPresentation(@NotNull final PsiMethod psiMethod) {
     return new ColoredItemPresentation() {
       @Override
       public String getPresentableText() {
         return PsiFormatUtil.formatMethod(
           psiMethod,
-          PsiSubstitutor.EMPTY, PsiFormatUtil.SHOW_NAME | PsiFormatUtil.SHOW_PARAMETERS,
-          PsiFormatUtil.SHOW_TYPE
+          PsiSubstitutor.EMPTY, PsiFormatUtilBase.SHOW_NAME | PsiFormatUtilBase.SHOW_PARAMETERS,
+          PsiFormatUtilBase.SHOW_TYPE
         );
       }
 
       @Override
       public TextAttributesKey getTextAttributesKey() {
-        if (psiMethod.isDeprecated()) {
-          return CodeInsightColors.DEPRECATED_ATTRIBUTES;
+        try {
+          if (psiMethod.isDeprecated()) {
+            return CodeInsightColors.DEPRECATED_ATTRIBUTES;
+          }
+        }
+        catch (IndexNotReadyException ignore) {
         }
         return null;
       }
@@ -62,7 +70,8 @@ public class JavaPresentationUtil {
     };
   }
 
-  public static ItemPresentation getFieldPresentation(final PsiField psiField) {
+  @NotNull
+  public static ItemPresentation getFieldPresentation(@NotNull final PsiField psiField) {
     return new ColoredItemPresentation() {
       @Override
       public String getPresentableText() {
@@ -71,8 +80,12 @@ public class JavaPresentationUtil {
 
       @Override
       public TextAttributesKey getTextAttributesKey() {
-        if (psiField.isDeprecated()) {
-          return CodeInsightColors.DEPRECATED_ATTRIBUTES;
+        try {
+          if (psiField.isDeprecated()) {
+            return CodeInsightColors.DEPRECATED_ATTRIBUTES;
+          }
+        }
+        catch (IndexNotReadyException ignore) {
         }
         return null;
       }
@@ -90,7 +103,7 @@ public class JavaPresentationUtil {
   }
 
   @Nullable
-  private static String getJavaSymbolContainerText(final PsiElement element) {
+  private static String getJavaSymbolContainerText(@NotNull final PsiElement element) {
     final String result;
     PsiElement container = PsiTreeUtil.getParentOfType(element, PsiMember.class, PsiFile.class);
 

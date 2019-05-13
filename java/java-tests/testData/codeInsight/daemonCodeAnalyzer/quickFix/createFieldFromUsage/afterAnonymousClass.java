@@ -1,8 +1,8 @@
-// "Create Field 'field'" "true"
+// "Create field 'field'" "true"
 class Main {
     static void foo() {
         new Object() {
-            public int field<caret>;
+            private int field<caret>;
 
             void bar() {
                 this.field = 0;

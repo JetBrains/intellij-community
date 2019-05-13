@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="12" height="12" viewBox="0 0 12 12">
+  <defs>
+    <circle id="db_muted_breakpoint_dark-a" cx="6" cy="6" r="5.5"/>
+  </defs>
+  <g fill="none" fill-rule="evenodd">
+    <use fill="#AFB1B3" xlink:href="#db_muted_breakpoint_dark-a"/>
+  </g>
+</svg>

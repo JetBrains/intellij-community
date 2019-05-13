@@ -27,38 +27,45 @@ import com.intellij.debugger.engine.DebuggerManagerThreadImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.Key;
+import com.intellij.xdebugger.breakpoints.XBreakpoint;
 import com.sun.jdi.ReferenceType;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.java.debugger.breakpoints.properties.JavaExceptionBreakpointProperties;
 
 public class AnyExceptionBreakpoint extends ExceptionBreakpoint {
   public static final @NonNls Key<AnyExceptionBreakpoint> ANY_EXCEPTION_BREAKPOINT = BreakpointCategory.lookup("breakpoint_any");
 
-  protected AnyExceptionBreakpoint(Project project) {
-    super(project, null, null);
-    ENABLED = false;
+  protected AnyExceptionBreakpoint(Project project, XBreakpoint<JavaExceptionBreakpointProperties> xBreakpoint) {
+    super(project, null, null, xBreakpoint);
+    //setEnabled(false);
   }
 
+  @Override
   public Key<AnyExceptionBreakpoint> getCategory() {
     return ANY_EXCEPTION_BREAKPOINT;
   }
 
+  @Override
   public String getDisplayName() {
     return DebuggerBundle.message("breakpoint.any.exception.display.name");
   }
 
+  @Override
   public void createRequest(DebugProcessImpl debugProcess) {
     DebuggerManagerThreadImpl.assertIsManagerThread();
-    if (!ENABLED || !debugProcess.isAttached() || debugProcess.areBreakpointsMuted() || !debugProcess.getRequestsManager().findRequests(this).isEmpty()) {
+    if (!shouldCreateRequest(debugProcess)) {
       return;
     }
     super.processClassPrepare(debugProcess, null);
   }
 
+  @Override
   public void processClassPrepare(DebugProcess debugProcess, ReferenceType refType) {
     // should be emty - does not make sense for this breakpoint
   }
 
+  @Override
   public void readExternal(Element parentNode) throws InvalidDataException {
     try {
       super.readExternal(parentNode);

@@ -22,7 +22,6 @@ import org.jetbrains.annotations.NotNull;
  * {@link Alignment.Anchor#RIGHT anchors to the right block edge}.
  * 
  * @author Denis Zhdanov
- * @since 4/28/11 4:06 PM
  */
 public class RightEdgeAlignmentProcessor extends AbstractBlockAlignmentProcessor {
 
@@ -38,7 +37,7 @@ public class RightEdgeAlignmentProcessor extends AbstractBlockAlignmentProcessor
       return new IndentData(whiteSpace.getIndentSpaces() + offsetResponsibleBlock.getSymbolsAtTheLastLine(), whiteSpace.getSpaces());
     }
     else {
-      final int targetIndent = CoreFormatterUtil.getOffsetBefore(offsetResponsibleBlock)
+      final int targetIndent = CoreFormatterUtil.getStartColumn(offsetResponsibleBlock)
                                + offsetResponsibleBlock.getSymbolsAtTheLastLine();
       final AbstractBlockWrapper prevIndentedBlock = CoreFormatterUtil.getIndentedParentBlock(context.targetBlock);
       if (prevIndentedBlock == null) {

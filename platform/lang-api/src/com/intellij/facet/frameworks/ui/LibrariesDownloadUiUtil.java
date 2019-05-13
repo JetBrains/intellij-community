@@ -19,6 +19,7 @@ import com.intellij.facet.frameworks.LibrariesDownloadAssistant;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.ui.CollectionComboBoxModel;
+import com.intellij.util.SmartList;
 import com.intellij.util.ui.update.Activatable;
 import com.intellij.util.ui.update.UiNotifyConnector;
 import org.jetbrains.annotations.NotNull;
@@ -26,7 +27,6 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import java.net.URL;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -49,7 +49,7 @@ public class LibrariesDownloadUiUtil {
   public static void initAsyncComboBoxModel(@NotNull final JComboBox jComboBox,
                                             @NotNull final String groupId,
                                             final URL... localUrls) {
-    final List<Object> items = new ArrayList<Object>();
+    final List<Object> items = new ArrayList<>();
 
     new UiNotifyConnector.Once(jComboBox, new Activatable() {
       @Override
@@ -72,26 +72,19 @@ public class LibrariesDownloadUiUtil {
                                 final String groupId,
                                 final URL... localUrls) {
     final ModalityState state = ModalityState.current();
-    ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
-      @Override
-      public void run() {
-        final List<Object> newItems = new ArrayList<Object>();
-        newItems.addAll(Arrays.asList(LibrariesDownloadAssistant.getVersions(groupId, localUrls)));
+    ApplicationManager.getApplication().executeOnPooledThread(() -> {
+      final List<Object> newItems = new SmartList<>(LibrariesDownloadAssistant.getVersions(groupId, localUrls));
 
-        ApplicationManager.getApplication().invokeLater(new Runnable() {
-          @Override
-          public void run() {
-            items.clear();
-            if (!newItems.isEmpty()) {
-              items.addAll(newItems);
-              final CollectionComboBoxModel model = (CollectionComboBoxModel)jComboBox.getModel();
-              model.update();
-              jComboBox.setSelectedIndex(0);
-            }
-            jComboBox.setEnabled(true);
-          }
-        }, state);
-      }
+      ApplicationManager.getApplication().invokeLater(() -> {
+        items.clear();
+        if (!newItems.isEmpty()) {
+          items.addAll(newItems);
+          final CollectionComboBoxModel model = (CollectionComboBoxModel)jComboBox.getModel();
+          model.update();
+          jComboBox.setSelectedIndex(0);
+        }
+        jComboBox.setEnabled(true);
+      }, state);
     }
 
     );

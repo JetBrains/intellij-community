@@ -28,6 +28,7 @@ import org.jetbrains.annotations.NotNull;
  * @author yole
  */
 public class PropertiesDescriptionProvider implements ElementDescriptionProvider {
+  @Override
   public String getElementDescription(@NotNull final PsiElement element, @Nullable final ElementDescriptionLocation location) {
     if (element instanceof IProperty) {
       if (location instanceof DeleteTypeDescriptionLocation) {

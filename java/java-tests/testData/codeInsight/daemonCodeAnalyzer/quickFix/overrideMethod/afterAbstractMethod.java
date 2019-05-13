@@ -6,6 +6,6 @@ abstract class Test {
 class TImple extends Test {
     @Override
     void foo() {
-        <selection>//To change body of implemented methods use File | Settings | File Templates.</selection>
+        <caret>
     }
 }

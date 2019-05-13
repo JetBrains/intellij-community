@@ -17,20 +17,20 @@
 package com.intellij.psi.impl.source.tree.injected;
 
 import com.intellij.psi.PsiLanguageInjectionHost;
+import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.List;
-
-/**
- * @author cdr
-*/
 public class Place extends SmartList<PsiLanguageInjectionHost.Shred> {
-  Place(@NotNull List<PsiLanguageInjectionHost.Shred> shreds) {
-    super(shreds);
+  Place() {
   }
 
-  public boolean isValid() {
+  @NotNull
+  public SmartPsiElementPointer<PsiLanguageInjectionHost> getHostPointer() {
+    return ((ShredImpl)get(0)).getSmartPointer();
+  }
+
+  boolean isValid() {
     for (PsiLanguageInjectionHost.Shred shred : this) {
       if (!shred.isValid()) {
         return false;
@@ -39,7 +39,7 @@ public class Place extends SmartList<PsiLanguageInjectionHost.Shred> {
     return true;
   }
 
-  public void dispose() {
+  void dispose() {
     for (PsiLanguageInjectionHost.Shred shred : this) {
       shred.dispose();
     }

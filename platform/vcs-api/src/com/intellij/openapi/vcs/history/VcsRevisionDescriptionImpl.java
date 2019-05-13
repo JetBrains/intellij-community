@@ -15,22 +15,17 @@
  */
 package com.intellij.openapi.vcs.history;
 
+import org.jetbrains.annotations.NotNull;
+
 import java.util.Date;
 
-/**
- * Created by IntelliJ IDEA.
- * User: Irina.Chernushina
- * Date: 8/2/11
- * Time: 12:46 AM
- * To change this template use File | Settings | File Templates.
- */
 public class VcsRevisionDescriptionImpl implements VcsRevisionDescription {
   private final VcsRevisionNumber myNumber;
   private Date myDate;
   private String myAuthor;
   private String myMessage;
 
-  public VcsRevisionDescriptionImpl(VcsRevisionNumber number, Date date, String author, String message) {
+  public VcsRevisionDescriptionImpl(@NotNull VcsRevisionNumber number, Date date, String author, String message) {
     myNumber = number;
     myDate = date;
     myAuthor = author;
@@ -41,6 +36,7 @@ public class VcsRevisionDescriptionImpl implements VcsRevisionDescription {
     myNumber = number;
   }
 
+  @NotNull
   @Override
   public VcsRevisionNumber getRevisionNumber() {
     return myNumber;

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.help.impl;
 
 import com.intellij.CommonBundle;
@@ -20,68 +6,100 @@ import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.plugins.HelpSetPath;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
-import com.intellij.ide.plugins.PluginManager;
+import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.openapi.application.ApplicationInfo;
+import com.intellij.openapi.application.IdeUrlTrackingParametersProvider;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.help.HelpManager;
+import com.intellij.openapi.help.WebHelpProvider;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.reference.SoftReference;
+import com.intellij.util.io.URLUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
 import javax.help.BadIDException;
 import javax.help.HelpSet;
 import java.awt.*;
+import java.lang.ref.WeakReference;
 import java.net.URL;
 
 public class HelpManagerImpl extends HelpManager {
   private static final Logger LOG = Logger.getInstance("#com.intellij.help.impl.HelpManagerImpl");
+  private static final ExtensionPointName<WebHelpProvider>
+    WEB_HELP_PROVIDER_EP_NAME = ExtensionPointName.create("com.intellij.webHelpProvider");
 
   @NonNls private static final String HELP_HS = "Help.hs";
 
-  private HelpSet myHelpSet = null;
-  private IdeaHelpBroker myBroker = null;
+  private WeakReference<IdeaHelpBroker> myBrokerReference = null;
 
+  @Override
   public void invokeHelp(@Nullable String id) {
-    if (MacHelpUtil.isApplicable()) {
-      if (MacHelpUtil.invokeHelp(id)) return;
-    }
-    if (myHelpSet == null) {
-      myHelpSet = createHelpSet();
+    id = StringUtil.notNullize(id, "top");
+
+    for (WebHelpProvider provider : WEB_HELP_PROVIDER_EP_NAME.getExtensions()) {
+      if (id.startsWith(provider.getHelpTopicPrefix())) {
+        String url = provider.getHelpPageUrl(id);
+        if (url != null) {
+          BrowserUtil.browse(url);
+          return;
+        }
+      }
     }
 
-    if (myHelpSet == null) {
-      BrowserUtil.launchBrowser(ApplicationInfoEx.getInstanceEx().getWebHelpUrl() + "?" + id);
+    if (MacHelpUtil.isApplicable() && MacHelpUtil.invokeHelp(id)) {
       return;
     }
 
-    if (myBroker == null) {
-      myBroker = new IdeaHelpBroker(myHelpSet);
+    IdeaHelpBroker broker = SoftReference.dereference(myBrokerReference);
+    if (broker == null) {
+      HelpSet set = createHelpSet();
+      if (set != null) {
+        broker = new IdeaHelpBroker(set);
+        myBrokerReference = new WeakReference<>(broker);
+      }
+    }
+
+    if (broker == null) {
+      ApplicationInfoEx info = ApplicationInfoEx.getInstanceEx();
+      String productVersion = info.getMajorVersion() + "." + info.getMinorVersionMainPart();
+
+      String url = info.getWebHelpUrl();
+      if (!url.endsWith("/")) url += "/";
+      url += productVersion + "/?" + URLUtil.encodeURIComponent(id);
+
+      BrowserUtil.browse(IdeUrlTrackingParametersProvider.getInstance().augmentUrl(url));
+      return;
     }
 
     Window activeWindow = KeyboardFocusManager.getCurrentKeyboardFocusManager().getActiveWindow();
-    myBroker.setActivationWindow(activeWindow);
+    broker.setActivationWindow(activeWindow);
 
-    if (id != null) {
-      try {
-        myBroker.setCurrentID(id);
-      }
-      catch (BadIDException e) {
-        Messages.showErrorDialog(IdeBundle.message("help.topic.not.found.error", id), CommonBundle.getErrorTitle());
-        return;
-      }
+    try {
+      broker.setCurrentID(id);
     }
-    myBroker.setDisplayed(true);
+    catch (BadIDException e) {
+      Messages.showErrorDialog(IdeBundle.message("help.topic.not.found.error", id), CommonBundle.getErrorTitle());
+      return;
+    }
+    broker.setDisplayed(true);
   }
 
   @Nullable
   private static HelpSet createHelpSet() {
-    String urlToHelp = ApplicationInfo.getInstance().getHelpURL() + "/" + HELP_HS;
+    String applicationHelpUrl = ApplicationInfo.getInstance().getHelpURL();
+    if( applicationHelpUrl == null ){
+      return null;
+    }
+    String urlToHelp = applicationHelpUrl + "/" + HELP_HS;
     HelpSet mainHelpSet = loadHelpSet(urlToHelp);
     if (mainHelpSet == null) return null;
 
     // merge plugins help sets
-    IdeaPluginDescriptor[] pluginDescriptors = PluginManager.getPlugins();
+    IdeaPluginDescriptor[] pluginDescriptors = PluginManagerCore.getPlugins();
     for (IdeaPluginDescriptor pluginDescriptor : pluginDescriptors) {
       HelpSetPath[] sets = pluginDescriptor.getHelpSets();
       for (HelpSetPath hsPath : sets) {

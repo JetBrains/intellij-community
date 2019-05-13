@@ -71,24 +71,25 @@ public final class XPathLexer extends LookAheadLexer {
         return;
       }
     } else if (type == XPathTokenTypes.NODE_TYPE) {
-      // "attribute::" vs. "attribute("
-      if ("attribute".equals(baseLexer.getTokenText())) {
-        if (replaceTokenFollowedBy(baseLexer, XPathTokenTypes.AXIS_NAME, XPathTokenTypes.COLCOL)) {
-          setState(baseLexer, _XPathLexer.S1);
-          return;
-        } else {
-          if (myXPath2Syntax) {
-            if (!replaceTokenNotFollowedBy(baseLexer, XPathTokenTypes.NCNAME, XPathTokenTypes.LPAREN)) {
-              advanceAs(baseLexer, type);
-            }
-          } else {
-            handleNCName(baseLexer, XPathTokenTypes.NCNAME);
-
-            // attribute() NODE_TYPE only valid in XPath 2
-            setState(baseLexer, _XPathLexer.YYINITIAL);
+      final String text = baseLexer.getTokenText();
+      // NODE_TYPE2
+      if ("attribute".equals(text) || "element".equals(text) || "schema-element".equals(text) || "schema-attribute".equals(text) || "document-node".equals(text)) {
+        // "attribute::" vs. "attribute("
+        if ("attribute".equals(text)) {
+          if (replaceTokenFollowedBy(baseLexer, XPathTokenTypes.AXIS_NAME, XPathTokenTypes.COLCOL)) {
+            setState(baseLexer, _XPathLexer.S1);
+            return;
           }
-          return;
         }
+
+        if (myXPath2Syntax) {
+          if (!replaceTokenNotFollowedBy(baseLexer, XPathTokenTypes.NCNAME, XPathTokenTypes.LPAREN)) {
+            advanceAs(baseLexer, type);
+          }
+        } else {
+          handleNCName(baseLexer, XPathTokenTypes.NCNAME);
+        }
+        return;
       } else if (replaceTokenNotFollowedBy(baseLexer, XPathTokenTypes.NCNAME, XPathTokenTypes.LPAREN)) {
         // other NODE_TYPEs
         setState(baseLexer, _XPathLexer.YYINITIAL);

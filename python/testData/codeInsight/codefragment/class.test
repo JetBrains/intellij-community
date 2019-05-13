@@ -1,0 +1,8 @@
+class Z:
+    def full(self):
+        pass
+<begin>z = Z()
+z.full()<end>
+<result>
+In:
+Out:

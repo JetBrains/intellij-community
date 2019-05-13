@@ -29,23 +29,22 @@ import java.util.Collections;
 import java.util.Map;
 
 public class ArchetypesTest extends MavenTestCase {
-  public void testGenerating() throws Exception {
+  public void testGenerating() {
     if (!hasMavenInstallation()) return;
 
     File dir = new File(myDir.getPath(), "generated");
     dir.mkdirs();
 
-    MavenRunnerParameters params = new MavenRunnerParameters(false, dir.getPath(),
+    MavenRunnerParameters params = new MavenRunnerParameters(false, dir.getPath(), (String)null,
                                                              Arrays.asList("org.apache.maven.plugins:maven-archetype-plugin:RELEASE:generate"),
-                                                             Collections.<String>emptyList());
+                                                             Collections.emptyList());
 
     MavenRunnerSettings settings = new MavenRunnerSettings();
-    Map<String, String> props = new THashMap<String, String>();
+    Map<String, String> props = new THashMap<>();
     props.put("archetypeGroupId", "org.apache.maven.archetypes");
     props.put("archetypeArtifactId", "maven-archetype-quickstart");
     props.put("archetypeVersion", "1.0");
     props.put("interactiveMode", "false");
-    props.put("groupId", "foo");
     props.put("groupId", "foo");
     props.put("artifactId", "bar");
 

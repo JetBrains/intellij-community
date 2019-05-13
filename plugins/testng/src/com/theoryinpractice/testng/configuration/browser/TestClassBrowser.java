@@ -1,21 +1,6 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.theoryinpractice.testng.configuration.browser;
 
-import com.intellij.execution.JavaExecutionUtil;
 import com.intellij.execution.configuration.BrowseModuleValueActionListener;
 import com.intellij.ide.util.ClassFilter;
 import com.intellij.ide.util.TreeClassChooser;
@@ -24,15 +9,16 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ex.MessagesEx;
 import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.util.containers.ContainerUtil;
 import com.theoryinpractice.testng.MessageInfoException;
 import com.theoryinpractice.testng.configuration.TestNGConfiguration;
 import com.theoryinpractice.testng.configuration.TestNGConfigurationEditor;
-import com.theoryinpractice.testng.configuration.TestNGConfigurationType;
 import com.theoryinpractice.testng.model.TestClassFilter;
 
 /**
- * @author Hani Suleiman Date: Jul 20, 2005 Time: 2:02:00 PM
+ * @author Hani Suleiman
  */
 public class TestClassBrowser extends BrowseModuleValueActionListener
 {
@@ -62,7 +48,7 @@ public class TestClassBrowser extends BrowseModuleValueActionListener
       return null;
     } else {
       onClassChoosen(psiclass);
-      return JavaExecutionUtil.getRuntimeQualifiedName(psiclass);
+      return psiclass.getQualifiedName();
     }
   }
 
@@ -74,22 +60,20 @@ public class TestClassBrowser extends BrowseModuleValueActionListener
   }
 
   public ClassFilter.ClassFilterWithScope getFilter() throws MessageInfoException {
-    TestNGConfiguration config = new TestNGConfiguration("<no-name>", getProject(), TestNGConfigurationType.getInstance().getConfigurationFactories()[0]);
+    TestNGConfiguration config = new TestNGConfiguration(getProject());
     editor.applyEditorTo(config);
     GlobalSearchScope scope = getSearchScope(config.getModules());
     if (scope == null) {
-      throw new MessageInfoException(new MessagesEx.MessageInfo(getProject(), "No classes found in project", "Can't Browse Tests"));
+      scope = GlobalSearchScope.allScope(getProject());
     }
     return new TestClassFilter(scope, getProject(), false);
   }
 
   protected GlobalSearchScope getSearchScope(Module[] modules) {
     if (modules == null || modules.length == 0) return null;
-    GlobalSearchScope scope = GlobalSearchScope.moduleWithDependenciesScope(modules[0]);
-    for (int i = 1; i < modules.length; i++) {
-      scope.uniteWith(GlobalSearchScope.moduleWithDependenciesScope(modules[i]));
-    }
-    return scope;
+    GlobalSearchScope[] scopes =
+      ContainerUtil.map2Array(modules, GlobalSearchScope.class, module -> GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(module));
+    return GlobalSearchScope.union(scopes);
   }
 
   private void init(TreeClassChooser chooser) {
@@ -97,7 +81,7 @@ public class TestClassBrowser extends BrowseModuleValueActionListener
     PsiClass psiclass = findClass(s);
     if (psiclass == null)
       return;
-    com.intellij.psi.PsiDirectory psidirectory = psiclass.getContainingFile().getContainingDirectory();
+    PsiDirectory psidirectory = psiclass.getContainingFile().getContainingDirectory();
     if (psidirectory != null)
       chooser.selectDirectory(psidirectory);
     chooser.select(psiclass);

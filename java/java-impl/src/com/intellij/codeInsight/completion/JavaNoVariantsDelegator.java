@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,66 +16,75 @@
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.ExpectedTypeInfo;
+import com.intellij.codeInsight.completion.impl.BetterPrefixMatcher;
 import com.intellij.codeInsight.completion.impl.CamelHumpMatcher;
 import com.intellij.codeInsight.lookup.AutoCompletionPolicy;
 import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.filters.ElementFilter;
 import com.intellij.psi.search.PsiShortNamesCache;
 import com.intellij.util.CollectConsumer;
 import com.intellij.util.Consumer;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
-import static com.intellij.patterns.PsiJavaPatterns.psiClass;
 import static com.intellij.patterns.PsiJavaPatterns.psiElement;
 
 /**
  * @author peter
  */
 public class JavaNoVariantsDelegator extends CompletionContributor {
-
   @Override
-  public void fillCompletionVariants(final CompletionParameters parameters, final CompletionResultSet result) {
-    final boolean empty = containsOnlyPackages(result.runRemainingContributors(parameters, true)) ||
-                          suggestMetaAnnotations(parameters);
+  public void fillCompletionVariants(@NotNull final CompletionParameters parameters, @NotNull final CompletionResultSet result) {
+    ResultTracker tracker = new ResultTracker(result) {
+      @Override
+      public void consume(CompletionResult plainResult) {
+        super.consume(plainResult);
 
-    if (!empty && parameters.getInvocationCount() == 0) {
-      result.restartCompletionWhenNothingMatches();
+        LookupElement element = plainResult.getLookupElement();
+        if (element instanceof TypeArgumentCompletionProvider.TypeArgsLookupElement) {
+          ((TypeArgumentCompletionProvider.TypeArgsLookupElement)element).registerSingleClass(session);
+        }
+      }
+    };
+    result.runRemainingContributors(parameters, tracker);
+    final boolean empty = tracker.containsOnlyPackages || suggestAllAnnotations(parameters);
+
+    if (JavaCompletionContributor.isClassNamePossible(parameters) && !JavaCompletionContributor.mayStartClassName(result)) {
+      result.restartCompletionOnAnyPrefixChange();
     }
 
     if (empty) {
-      delegate(parameters, JavaCompletionSorting.addJavaSorting(parameters, result));
-    }
-  }
-
-  private static boolean suggestMetaAnnotations(CompletionParameters parameters) {
-    PsiElement position = parameters.getPosition();
-    return psiElement().withParents(PsiJavaCodeReferenceElement.class, PsiAnnotation.class, PsiModifierList.class, PsiClass.class).accepts( position) &&
-           psiElement().withSuperParent(4, psiClass().isAnnotationType()).accepts(position);
-  }
-
-  public static boolean containsOnlyPackages(LinkedHashSet<CompletionResult> results) {
-    for (CompletionResult result : results) {
-      if (!(CompletionUtil.getTargetElement(result.getLookupElement()) instanceof PsiPackage)) {
-        return false;
+      delegate(parameters, JavaCompletionSorting.addJavaSorting(parameters, result), tracker.session);
+    } else if (Registry.is("ide.completion.show.better.matching.classes")) {
+      if (parameters.getCompletionType() == CompletionType.BASIC &&
+          parameters.getInvocationCount() <= 1 &&
+          JavaCompletionContributor.mayStartClassName(result) &&
+          JavaCompletionContributor.isClassNamePossible(parameters)) {
+        suggestNonImportedClasses(parameters, JavaCompletionSorting.addJavaSorting(parameters, result.withPrefixMatcher(tracker.betterMatcher)), tracker.session);
       }
     }
-    return true;
   }
 
-  private static void delegate(CompletionParameters parameters, final CompletionResultSet result) {
+  private static boolean suggestAllAnnotations(CompletionParameters parameters) {
+    return psiElement().withParents(PsiJavaCodeReferenceElement.class, PsiAnnotation.class).accepts(parameters.getPosition());
+  }
+
+  private static void delegate(CompletionParameters parameters, CompletionResultSet result, JavaCompletionSession session) {
     if (parameters.getCompletionType() == CompletionType.BASIC) {
       PsiElement position = parameters.getPosition();
       suggestCollectionUtilities(parameters, result, position);
 
       if (parameters.getInvocationCount() <= 1 &&
-          JavaCompletionContributor.mayStartClassName(result) &&
-          JavaCompletionContributor.isClassNamePossible(position)) {
-        suggestNonImportedClasses(parameters, result);
+          (JavaCompletionContributor.mayStartClassName(result) || suggestAllAnnotations(parameters)) &&
+          JavaCompletionContributor.isClassNamePossible(parameters)) {
+        suggestNonImportedClasses(parameters, result, session);
         return;
       }
 
@@ -97,7 +106,7 @@ public class JavaNoVariantsDelegator extends CompletionContributor {
 
   private static void suggestChainedCalls(CompletionParameters parameters, CompletionResultSet result, PsiElement position) {
     PsiElement parent = position.getParent();
-    if (!(parent instanceof PsiJavaCodeReferenceElement)) {
+    if (!(parent instanceof PsiJavaCodeReferenceElement) || parent.getParent() instanceof PsiImportStatementBase) {
       return;
     }
     PsiElement qualifier = ((PsiJavaCodeReferenceElement)parent).getQualifier();
@@ -110,17 +119,23 @@ public class JavaNoVariantsDelegator extends CompletionContributor {
       return;
     }
 
-    String fullPrefix = position.getContainingFile().getText().substring(parent.getTextRange().getStartOffset(), parameters.getOffset());
+    PsiFile file = position.getContainingFile();
+    if (file instanceof PsiJavaCodeReferenceCodeFragment) {
+      return;
+    }
+
+    String fullPrefix = parent.getText().substring(0, parameters.getOffset() - parent.getTextRange().getStartOffset());
     CompletionResultSet qualifiedCollector = result.withPrefixMatcher(fullPrefix);
     ElementFilter filter = JavaCompletionContributor.getReferenceFilter(position);
     for (LookupElement base : suggestQualifierItems(parameters, (PsiJavaCodeReferenceElement)qualifier, filter)) {
       PsiType type = JavaCompletionUtil.getLookupElementType(base);
       if (type != null && !PsiType.VOID.equals(type)) {
-        PsiReferenceExpression ref = ReferenceExpressionCompletionContributor.createMockReference(position, type, base);
+        String separator = parent instanceof PsiMethodReferenceExpression ? "::" : ".";
+        PsiReferenceExpression ref = ReferenceExpressionCompletionContributor.createMockReference(position, type, base, separator);
         if (ref != null) {
-          for (final LookupElement item : JavaSmartCompletionContributor.completeReference(position, ref, filter, true, true, parameters,
-                                                                                           result.getPrefixMatcher())) {
-            qualifiedCollector.addElement(new JavaChainLookupElement(base, item));
+          for (LookupElement item : JavaSmartCompletionContributor.completeReference(position, ref, filter, true, true, parameters,
+                                                                                     result.getPrefixMatcher())) {
+            qualifiedCollector.addElement(JavaCompletionUtil.highlightIfNeeded(null, new JavaChainLookupElement(base, item, separator), item.getObject(), position));
           }
         }
       }
@@ -147,28 +162,53 @@ public class JavaNoVariantsDelegator extends CompletionContributor {
       return plainVariants;
     }
 
-    final Set<LookupElement> allClasses = new LinkedHashSet<LookupElement>();
-    JavaClassNameCompletionContributor.addAllClasses(parameters.withPosition(qualifier.getReferenceNameElement(), qualifier.getTextRange().getEndOffset()),
-                                                     true, qMatcher, new CollectConsumer<LookupElement>(allClasses));
+    final Set<LookupElement> allClasses = new LinkedHashSet<>();
+    PsiElement qualifierName = qualifier.getReferenceNameElement();
+    if (qualifierName != null) {
+      JavaClassNameCompletionContributor.addAllClasses(parameters.withPosition(qualifierName, qualifierName.getTextRange().getEndOffset()),
+                                                       true, qMatcher, new CollectConsumer<>(allClasses));
+    }
     return allClasses;
   }
 
-  private static void suggestNonImportedClasses(CompletionParameters parameters, CompletionResultSet result) {
-    final ClassByNameMerger merger = new ClassByNameMerger(parameters, result);
-
-    JavaClassNameCompletionContributor.addAllClasses(parameters,
-                                                     true, result.getPrefixMatcher(), new Consumer<LookupElement>() {
-      @Override
-      public void consume(LookupElement element) {
-        JavaPsiClassReferenceElement classElement = element.as(JavaPsiClassReferenceElement.CLASS_CONDITION_KEY);
-        if (classElement != null) {
-          classElement.setAutoCompletionPolicy(AutoCompletionPolicy.NEVER_AUTOCOMPLETE);
-        }
-
-        merger.consume(classElement);
+  private static void suggestNonImportedClasses(CompletionParameters parameters, CompletionResultSet result, @Nullable JavaCompletionSession session) {
+    JavaClassNameCompletionContributor.addAllClasses(parameters, true, result.getPrefixMatcher(), element -> {
+      if (session != null && session.alreadyProcessed(element)) {
+        return;
       }
-    });
+      JavaPsiClassReferenceElement classElement = element.as(JavaPsiClassReferenceElement.CLASS_CONDITION_KEY);
+      if (classElement != null) {
+        classElement.setAutoCompletionPolicy(AutoCompletionPolicy.NEVER_AUTOCOMPLETE);
+      }
 
-    merger.finishedClassProcessing();
+      result.addElement(element);
+    });
+  }
+
+  public static class ResultTracker implements Consumer<CompletionResult> {
+    private final CompletionResultSet myResult;
+    public final JavaCompletionSession session;
+    public boolean containsOnlyPackages = true;
+    public BetterPrefixMatcher betterMatcher;
+
+    public ResultTracker(CompletionResultSet result) {
+      myResult = result;
+      betterMatcher = new BetterPrefixMatcher.AutoRestarting(result);
+      session = new JavaCompletionSession(result);
+    }
+
+    @Override
+    public void consume(CompletionResult plainResult) {
+      myResult.passResult(plainResult);
+
+      LookupElement element = plainResult.getLookupElement();
+      if (containsOnlyPackages && !(CompletionUtil.getTargetElement(element) instanceof PsiPackage)) {
+        containsOnlyPackages = false;
+      }
+
+      session.registerClassFrom(element);
+
+      betterMatcher = betterMatcher.improve(plainResult);
+    }
   }
 }

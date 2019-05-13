@@ -29,43 +29,53 @@ import java.io.InputStream;
  * author: lesya
  */
 public class DeafAdminWriter implements IAdminWriter{
-  public void ensureCvsDirectory(DirectoryObject directoryObject, String repositoryPath, CvsRoot cvsRoot, ICvsFileSystem cvsFileSystem) throws IOException {
+  @Override
+  public void ensureCvsDirectory(DirectoryObject directoryObject, String repositoryPath, CvsRoot cvsRoot, ICvsFileSystem cvsFileSystem) {
 
   }
 
-  public void setEntry(DirectoryObject directoryObject, Entry entry, ICvsFileSystem cvsFileSystem) throws IOException {
+  @Override
+  public void setEntry(DirectoryObject directoryObject, Entry entry, ICvsFileSystem cvsFileSystem) {
 
   }
 
-  public void removeEntryForFile(AbstractFileObject fileObject, ICvsFileSystem cvsFileSystem) throws IOException {
+  @Override
+  public void removeEntryForFile(AbstractFileObject fileObject, ICvsFileSystem cvsFileSystem) {
 
   }
 
+  @Override
   public void pruneDirectory(DirectoryObject directoryObject, ICvsFileSystem cvsFileSystem) {
 
   }
 
-  public void editFile(FileObject fileObject, Entry entry, ICvsFileSystem cvsFileSystem, IFileReadOnlyHandler fileReadOnlyHandler) throws IOException {
+  @Override
+  public void editFile(FileObject fileObject, Entry entry, ICvsFileSystem cvsFileSystem, IFileReadOnlyHandler fileReadOnlyHandler) {
 
   }
 
-  public void uneditFile(FileObject fileObject, ICvsFileSystem cvsFileSystem, IFileReadOnlyHandler fileReadOnlyHandler) throws IOException {
+  @Override
+  public void uneditFile(FileObject fileObject, ICvsFileSystem cvsFileSystem, IFileReadOnlyHandler fileReadOnlyHandler) {
 
   }
 
-  public void setStickyTagForDirectory(DirectoryObject directoryObject, String tag, ICvsFileSystem cvsFileSystem) throws IOException {
+  @Override
+  public void setStickyTagForDirectory(DirectoryObject directoryObject, String tag, ICvsFileSystem cvsFileSystem) {
 
   }
 
-  public void setEntriesDotStatic(DirectoryObject directoryObject, boolean set, ICvsFileSystem cvsFileSystem) throws IOException {
+  @Override
+  public void setEntriesDotStatic(DirectoryObject directoryObject, boolean set, ICvsFileSystem cvsFileSystem) {
 
   }
 
+  @Override
   public void writeTemplateFile(DirectoryObject directoryObject, int fileLength, InputStream inputStream, IReaderFactory readerFactory, IClientEnvironment clientEnvironment) throws IOException {
     CvsUtil.skip(inputStream, fileLength);
   }
 
-  public void directoryAdded(DirectoryObject directory, ICvsFileSystem cvsFileSystem) throws IOException {
+  @Override
+  public void directoryAdded(DirectoryObject directory, ICvsFileSystem cvsFileSystem) {
 
   }
 }

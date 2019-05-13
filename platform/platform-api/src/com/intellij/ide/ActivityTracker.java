@@ -19,7 +19,9 @@
  */
 package com.intellij.ide;
 
-public class ActivityTracker {
+import com.intellij.openapi.util.SimpleModificationTracker;
+
+public class ActivityTracker extends SimpleModificationTracker {
   private static final ActivityTracker INSTANCE = new ActivityTracker();
 
   public static ActivityTracker getInstance() {
@@ -29,13 +31,11 @@ public class ActivityTracker {
   private ActivityTracker() {
   }
 
-  private int ourCount = 0;
-
   public int getCount() {
-    return ourCount;
+    return (int)getModificationCount();
   }
 
   public void inc() {
-    ourCount++;
+    incModificationCount();
   }
 }

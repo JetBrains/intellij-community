@@ -21,7 +21,6 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Condition;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -41,7 +40,7 @@ public class WaitForProgressToShow {
       final ProgressIndicator pi = ProgressManager.getInstance().getProgressIndicator();
       if (pi != null) {
         execute(pi);
-        application.invokeAndWait(command, pi.getModalityState());
+        application.invokeAndWait(command);
       } else {
         final ModalityState notNullModalityState = modalityState == null ? ModalityState.NON_MODAL : modalityState;
         application.invokeAndWait(command, notNullModalityState);
@@ -57,12 +56,7 @@ public class WaitForProgressToShow {
       final ProgressIndicator pi = ProgressManager.getInstance().getProgressIndicator();
       if (pi != null) {
         execute(pi);
-        application.invokeLater(command, pi.getModalityState(), new Condition() {
-          @Override
-          public boolean value(Object o) {
-            return (! project.isOpen()) || project.isDisposed();
-          }
-        });
+        application.invokeLater(command, pi.getModalityState(), o -> (! project.isOpen()) || project.isDisposed());
       } else {
         final ModalityState notNullModalityState = modalityState == null ? ModalityState.NON_MODAL : modalityState;
         application.invokeLater(command, notNullModalityState, project.getDisposed());

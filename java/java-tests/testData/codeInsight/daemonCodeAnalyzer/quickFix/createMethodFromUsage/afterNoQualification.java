@@ -1,4 +1,4 @@
-// "Create Method 'run'" "true"
+// "Create method 'run'" "true"
 class Bug {
 
   interface Foo<X> {
@@ -15,6 +15,6 @@ class Bug {
   }
 
     private void run() {
-        <selection>//To change body of created methods use File | Settings | File Templates.</selection>
+        <selection></selection>
     }
 }

@@ -64,7 +64,7 @@ public class StackTraceLine {
   public int getLineNumber() throws NumberFormatException {
     final int close = getCloseBracket();
     final int lineNumberStart = myLine.lastIndexOf(':') + 1;
-    if (close < 0 || lineNumberStart < 1) throw new NumberFormatException(myLine);
+    if (lineNumberStart < 1 || lineNumberStart >= close) throw new NumberFormatException(myLine);
     return Integer.parseInt(myLine.substring(lineNumberStart, close)) - 1;
   }
 
@@ -103,25 +103,26 @@ public class StackTraceLine {
     final int dollarIndex = className.indexOf('$');
     if (dollarIndex != -1) className = className.substring(0, dollarIndex);
     PsiClass psiClass = findClass(project, className, lineNumber);
-    if (psiClass == null || (psiClass.getNavigationElement() instanceof PsiCompiledElement)) return null;
-    psiClass = (PsiClass)psiClass.getNavigationElement();
-    final PsiMethod psiMethod = getMethodAtLine(psiClass, methodName, lineNumber);
-    if (psiMethod != null) {
-      return new MethodLineLocation(project, psiMethod, PsiLocation.fromPsiElement(psiClass), lineNumber);
+    PsiElement navElement = psiClass == null ? null : psiClass.getNavigationElement();
+    if (psiClass == null || navElement instanceof PsiCompiledElement) return null;
+
+    if (navElement instanceof PsiClass) {
+      final PsiMethod psiMethod = getMethodAtLine((PsiClass)navElement, methodName, lineNumber);
+      if (psiMethod != null) {
+        return new MethodLineLocation(project, psiMethod, PsiLocation.fromPsiElement((PsiClass)navElement), lineNumber);
+      }
     }
-    else {
-      return null;
-    }
+    return null;
   }
 
-  private PsiClass findClass(final Project project, final String className, final int lineNumber) {
+  private static PsiClass findClass(final Project project, final String className, final int lineNumber) {
     if (project == null) return null;
     final PsiManager psiManager = PsiManager.getInstance(project);
-    if (psiManager == null) return null;
     PsiClass psiClass = JavaPsiFacade.getInstance(psiManager.getProject()).findClass(className, GlobalSearchScope.allScope(project));
-    if (psiClass == null || (psiClass.getNavigationElement() instanceof PsiCompiledElement)) return null;
-    psiClass = (PsiClass)psiClass.getNavigationElement();
-    final PsiFile psiFile = psiClass.getContainingFile();
+    PsiElement navElement = psiClass == null ? null : psiClass.getNavigationElement();
+    if (psiClass == null || navElement instanceof PsiCompiledElement) return null;
+
+    final PsiFile psiFile = navElement.getContainingFile();
     return PsiTreeUtil.getParentOfType(psiFile.findElementAt(offsetOfLine(psiFile, lineNumber)), PsiClass.class, false);
   }
 
@@ -132,8 +133,7 @@ public class StackTraceLine {
     if (methods.length == 0) return null;
     final PsiFile psiFile = methods[0].getContainingFile();
     final int offset = offsetOfLine(psiFile, lineNumber);
-    for (int i = 0; i < methods.length; i++) {
-      final PsiMethod method = methods[i];
+    for (final PsiMethod method : methods) {
       if (method.getTextRange().contains(offset)) return method;
     }
     //if (!methods.hasNext() || location == null) return null;
@@ -152,7 +152,6 @@ public class StackTraceLine {
   private static int offsetOfLine(final PsiFile psiFile, final int lineNumber) {
     final LineTokenizer lineTokenizer = new LineTokenizer(psiFile.getViewProvider().getContents());
     for (int i = 0; i < lineNumber; i++) lineTokenizer.advance();
-    final int offset = lineTokenizer.getOffset();
-    return offset;
+    return lineTokenizer.getOffset();
   }
 }

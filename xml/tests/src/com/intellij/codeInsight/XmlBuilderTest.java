@@ -1,4 +1,20 @@
 /*
+ * Copyright 2000-2014 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+/*
  * @author max
  */
 package com.intellij.codeInsight;
@@ -6,6 +22,7 @@ package com.intellij.codeInsight;
 import com.intellij.psi.impl.source.parsing.xml.XmlBuilder;
 import com.intellij.psi.impl.source.parsing.xml.XmlBuilderDriver;
 import com.intellij.testFramework.LightCodeInsightTestCase;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class XmlBuilderTest extends LightCodeInsightTestCase {
@@ -15,7 +32,7 @@ public class XmlBuilderTest extends LightCodeInsightTestCase {
     private final StringBuilder currentDisplayText = new StringBuilder();
     private final ProcessingOrder myTagProcessingOrder;
 
-    public TestXmlBuilder(final ProcessingOrder tagsAndAttributes) {
+    TestXmlBuilder(final ProcessingOrder tagsAndAttributes) {
       myTagProcessingOrder = tagsAndAttributes;
     }
 
@@ -56,7 +73,7 @@ public class XmlBuilderTest extends LightCodeInsightTestCase {
     }
 
     @Override
-    public void error(String message, int startOffset, int endOffset) {
+    public void error(@NotNull String message, int startOffset, int endOffset) {
       flushText();
       builder.append("ERROR: '").append(message).append("'\n");
     }
@@ -75,12 +92,12 @@ public class XmlBuilderTest extends LightCodeInsightTestCase {
     }
   }
   
-  public void testEmptyXml() throws Exception {
+  public void testEmptyXml() {
     doTest("<root/>", "TAG: name='root' namespace=''\n" +
                       "ENDTAG: name='root' namespace=''\n", XmlBuilder.ProcessingOrder.TAGS_AND_ATTRIBUTES);
   }
 
-  public void testRealJspx() throws Exception {
+  public void testRealJspx() {
     doTest(
       /* Test: */
       "<jsp:root xmlns:jsp=\"http://java.sun.com/JSP/Page\" xmlns=\"http://www.w3.org/1999/xhtml\" version=\"2.0\"\n" +
@@ -120,7 +137,7 @@ public class XmlBuilderTest extends LightCodeInsightTestCase {
       XmlBuilder.ProcessingOrder.TAGS_AND_ATTRIBUTES);
   }
 
-  public void testRealJspxNoAttributes() throws Exception {
+  public void testRealJspxNoAttributes() {
     doTest(
       /* Test: */
       "<jsp:root xmlns:jsp=\"http://java.sun.com/JSP/Page\" xmlns=\"http://www.w3.org/1999/xhtml\" version=\"2.0\"\n" +
@@ -151,7 +168,7 @@ public class XmlBuilderTest extends LightCodeInsightTestCase {
   }
 
 
-  public void testNamespaceOverride() throws Exception {
+  public void testNamespaceOverride() {
     doTest(
       "<c:x xmlns:c=\"ns1\">\n" +
       "  <c:y/>\n" +
@@ -176,7 +193,7 @@ public class XmlBuilderTest extends LightCodeInsightTestCase {
       XmlBuilder.ProcessingOrder.TAGS_AND_ATTRIBUTES);
   }
 
-  public void testSimpleEntityResolution() throws Exception {
+  public void testSimpleEntityResolution() {
     doTest(
       "<root>&lt;</root>",
       "TAG: name='root' namespace=''\n" +
@@ -185,7 +202,7 @@ public class XmlBuilderTest extends LightCodeInsightTestCase {
       XmlBuilder.ProcessingOrder.TAGS_AND_TEXTS);
   }
 
-  public void testCDATA() throws Exception {
+  public void testCDATA() {
     doTest(
       "<root><![CDATA[<asis/>]]></root>",
       "TAG: name='root' namespace=''\n" +
@@ -195,7 +212,7 @@ public class XmlBuilderTest extends LightCodeInsightTestCase {
     );
   }
 
-  public void testErrors() throws Exception {
+  public void testErrors() {
     doTest(
       "<root>" +
       "<foo>" +
@@ -217,7 +234,7 @@ public class XmlBuilderTest extends LightCodeInsightTestCase {
     );
   }
 
-  public void testComments() throws Exception {
+  public void testComments() {
     doTest(
       "<root>" +
       "<foo>" +
@@ -249,7 +266,7 @@ public class XmlBuilderTest extends LightCodeInsightTestCase {
     );
   }
 
-  private static void doTest(String xml, String expectedEventSequence, final XmlBuilder.ProcessingOrder tagsAndAttributes) throws Exception {
+  private static void doTest(String xml, String expectedEventSequence, final XmlBuilder.ProcessingOrder tagsAndAttributes) {
     final TestXmlBuilder builder = new TestXmlBuilder(tagsAndAttributes);
     new XmlBuilderDriver(xml).build(builder);
     assertEquals(expectedEventSequence, builder.getResult());

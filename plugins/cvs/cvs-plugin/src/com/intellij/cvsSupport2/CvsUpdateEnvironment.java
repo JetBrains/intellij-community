@@ -58,6 +58,7 @@ public class CvsUpdateEnvironment implements UpdateEnvironment {
 
   }
 
+  @Override
   public void fillGroups(UpdatedFiles updatedFiles) {
     CvsUpdatePolicy.fillGroups(updatedFiles);
   }
@@ -71,6 +72,7 @@ public class CvsUpdateEnvironment implements UpdateEnvironment {
       myConfiguration = configuration;
     }
 
+    @Override
     @NotNull
     public String getMessageWhenInterruptedBeforeStart() {
       String mergeString = "-j " + myConfiguration.getBranch1ToMergeWith();
@@ -80,6 +82,7 @@ public class CvsUpdateEnvironment implements UpdateEnvironment {
       return "Merge (" + mergeString + ") wasn't started, only update (-r " + myUpdateTagName + ") was performed";
     }
 
+    @Override
     public boolean shouldFail() {
       return true;
     }
@@ -96,7 +99,7 @@ public class CvsUpdateEnvironment implements UpdateEnvironment {
       contextRef.set(null);
       return cvsContext.getConfiguration();
     }
-    
+
     if ((! cvsConfiguration.CLEAN_COPY) && cvsConfiguration.UPDATE_DATE_OR_REVISION_SETTINGS.overridesDefault() &&
         (cvsConfiguration.MERGING_MODE != CvsConfiguration.DO_NOT_MERGE)) {
       // split into 2 updates
@@ -116,6 +119,7 @@ public class CvsUpdateEnvironment implements UpdateEnvironment {
     }
   }
 
+  @Override
   @NotNull
   public UpdateSession updateDirectories(@NotNull FilePath[] contentRoots, final UpdatedFiles updatedFiles, ProgressIndicator progressIndicator,
                                          @NotNull final Ref<SequentialUpdatesContext> contextRef) {
@@ -138,17 +142,18 @@ public class CvsUpdateEnvironment implements UpdateEnvironment {
     }
     finally {
       cvsConfiguration.CLEAN_COPY = false;
-      cvsConfiguration.RESET_STICKY = false;                    
+      cvsConfiguration.RESET_STICKY = false;
     }
   }
 
   private UpdateSessionAdapter createUpdateSessionAdapter(final UpdatedFiles updatedFiles, final CvsResult result) {
     return new UpdateSessionAdapter(result.getErrorsAndWarnings(), result.isCanceled()) {
+      @Override
       public void onRefreshFilesCompleted() {
         final FileGroup mergedWithConflictsGroup = updatedFiles.getGroupById(FileGroup.MERGED_WITH_CONFLICT_ID);
         final FileGroup binaryMergedGroup = updatedFiles.getGroupById(CvsUpdatePolicy.BINARY_MERGED_ID);
         if (!mergedWithConflictsGroup.isEmpty() || !binaryMergedGroup.isEmpty()) {
-          Collection<String> paths = new ArrayList<String>();
+          Collection<String> paths = new ArrayList<>();
           paths.addAll(mergedWithConflictsGroup.getFiles());
           paths.addAll(binaryMergedGroup.getFiles());
 
@@ -167,8 +172,8 @@ public class CvsUpdateEnvironment implements UpdateEnvironment {
   }
 
   private static List<VirtualFile> invokeManualMerging(Collection<String> paths, Project project) {
-    final List<VirtualFile> readOnlyFiles = new ArrayList<VirtualFile>();
-    final List<VirtualFile> files = new ArrayList<VirtualFile>();
+    final List<VirtualFile> readOnlyFiles = new ArrayList<>();
+    final List<VirtualFile> files = new ArrayList<>();
 
     for (final String path : paths) {
       final VirtualFile virtualFile = CvsVfsUtil.findFileByIoFile(new File(path));
@@ -184,11 +189,9 @@ public class CvsUpdateEnvironment implements UpdateEnvironment {
       final CvsHandler editHandler = CommandCvsHandler.createEditHandler(VfsUtil.toVirtualFileArray(readOnlyFiles),
                                                                          CvsConfiguration.getInstance(project).RESERVED_EDIT);
       new CvsOperationExecutor(true, project, ModalityState.current()).performActionSync(editHandler, CvsOperationExecutorCallback.EMPTY);
-      ApplicationManager.getApplication().runWriteAction(new Runnable() {
-        public void run() {
-          for(VirtualFile file: readOnlyFiles) {
-            file.refresh(false, false);
-          }
+      ApplicationManager.getApplication().runWriteAction(() -> {
+        for(VirtualFile file: readOnlyFiles) {
+          file.refresh(false, false);
         }
       });
     }
@@ -200,6 +203,7 @@ public class CvsUpdateEnvironment implements UpdateEnvironment {
   }
 
 
+  @Override
   public Configurable createConfigurable(Collection<FilePath> files) {
     myLastUpdateWasConfigured = true;
     CvsConfiguration.getInstance(myProject).CLEAN_COPY = false;
@@ -207,6 +211,7 @@ public class CvsUpdateEnvironment implements UpdateEnvironment {
     return new UpdateConfigurable(myProject, files);
   }
 
+  @Override
   public boolean validateOptions(final Collection<FilePath> roots) {
     return true;
   }

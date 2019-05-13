@@ -24,36 +24,32 @@ import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootEvent;
 import com.intellij.openapi.roots.ModuleRootListener;
 import com.intellij.openapi.roots.OrderEntry;
+import com.intellij.openapi.roots.impl.storage.ClassPathStorageUtil;
 import com.intellij.openapi.roots.impl.storage.ClasspathStorage;
 import com.intellij.openapi.roots.impl.storage.ClasspathStorageProvider;
 import com.intellij.openapi.roots.ui.configuration.classpath.ClasspathPanelImpl;
+import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.ui.OrderPanelListener;
+import com.intellij.ui.ListCellRendererWrapper;
+import com.intellij.util.ArrayUtil;
+import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.HashMap;
-import java.util.List;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
-/**
- * @author Eugene Zhuravlev
- *         Date: Oct 4, 2003
- *         Time: 6:54:57 PM
- */
 public class ClasspathEditor extends ModuleElementsEditor implements ModuleRootListener {
   public static final String NAME = ProjectBundle.message("modules.classpath.title");
 
   private ClasspathPanelImpl myPanel;
-
   private ClasspathFormatPanel myClasspathFormatPanel;
 
   public ClasspathEditor(final ModuleConfigurationState state) {
     super(state);
 
     final Disposable disposable = Disposer.newDisposable();
-    
     state.getProject().getMessageBus().connect(disposable).subscribe(ProjectTopics.PROJECT_ROOTS, this);
     registerDisposable(disposable);
   }
@@ -76,12 +72,11 @@ public class ClasspathEditor extends ModuleElementsEditor implements ModuleRootL
   @Override
   public void saveData() {
     myPanel.stopEditing();
-    flushChangesToModel();
   }
 
   @Override
-  public void apply () throws ConfigurationException {
-    if(myClasspathFormatPanel!=null) {
+  public void apply() throws ConfigurationException {
+    if (myClasspathFormatPanel != null) {
       myClasspathFormatPanel.apply();
     }
   }
@@ -90,22 +85,13 @@ public class ClasspathEditor extends ModuleElementsEditor implements ModuleRootL
   public void canApply() throws ConfigurationException {
     super.canApply();
     if (myClasspathFormatPanel != null) {
-      final String storageID = myClasspathFormatPanel.getSelectedClasspathFormat();
-      ClasspathStorage.getProvider(storageID).assertCompatible(getModel());
+      myClasspathFormatPanel.canApply();
     }
   }
 
   @Override
   public JComponent createComponentImpl() {
     myPanel = new ClasspathPanelImpl(getState());
-
-    myPanel.addListener(new OrderPanelListener() {
-      @Override
-      public void entryMoved() {
-        flushChangesToModel();
-      }
-    });
-
     final JPanel panel = new JPanel(new BorderLayout());
     panel.setBorder(BorderFactory.createEmptyBorder(6, 6, 6, 6));
     panel.add(myPanel, BorderLayout.CENTER);
@@ -121,18 +107,13 @@ public class ClasspathEditor extends ModuleElementsEditor implements ModuleRootL
     jdkConfigurable.reset();
     registerDisposable(jdkConfigurable);
 
-    List<ClasspathStorageProvider> providers = ClasspathStorage.getProviders();
-    if(providers.size()>1){
-      myClasspathFormatPanel = new ClasspathFormatPanel(providers);
+    ClasspathStorageProvider[] providers = ClasspathStorageProvider.EXTENSION_POINT_NAME.getExtensions();
+    if (providers.length > 0) {
+      myClasspathFormatPanel = new ClasspathFormatPanel(providers, getModel());
       panel.add(myClasspathFormatPanel, BorderLayout.SOUTH);
     }
 
     return panel;
-  }
-
-  public void flushChangesToModel() {
-    List<OrderEntry> entries = myPanel.getEntries();
-    getModel().rearrangeOrderEntries(entries.toArray(new OrderEntry[entries.size()]));
   }
 
   public void selectOrderEntry(@NotNull final OrderEntry entry) {
@@ -147,11 +128,7 @@ public class ClasspathEditor extends ModuleElementsEditor implements ModuleRootL
   }
 
   @Override
-  public void beforeRootsChange(ModuleRootEvent event) {
-  }
-
-  @Override
-  public void rootsChanged(ModuleRootEvent event) {
+  public void rootsChanged(@NotNull ModuleRootEvent event) {
     if (myPanel != null) {
       myPanel.rootsChanged();
     }
@@ -169,59 +146,58 @@ public class ClasspathEditor extends ModuleElementsEditor implements ModuleRootL
     if (myPanel != null) {
       myPanel.forceInitFromModel();
     }
-
-    flushChangesToModel();
   }
 
-  private class ClasspathFormatPanel extends JPanel {
+  private static class ClasspathFormatPanel extends JPanel {
+    private final ModifiableRootModel rootModel;
+    private final JComboBox<String> comboBoxClasspathFormat;
 
-    private final JComboBox cbClasspathFormat;
-
-    private final Map<String,String> formatIdToDescr = new HashMap<String, String>();
-
-    private ClasspathFormatPanel(final List<ClasspathStorageProvider> providers) {
+    private ClasspathFormatPanel(ClasspathStorageProvider[] providers, ModifiableRootModel model) {
       super(new GridBagLayout());
+      rootModel = model;
+
       add(new JLabel(ProjectBundle.message("project.roots.classpath.format.label")),
-                      new GridBagConstraints(0,0,1,1,0.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, new Insets(10, 6, 6, 0), 0, 0));
+          new GridBagConstraints(0, 0, 1, 1, 0.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, JBUI.insets(10, 6, 6, 0), 0, 0));
 
-      for (ClasspathStorageProvider provider : providers){
-        formatIdToDescr.put ( provider.getID(), provider.getDescription());
+      Map<String, String> formatIdToDescription = new LinkedHashMap<>();
+      formatIdToDescription.put(ClassPathStorageUtil.DEFAULT_STORAGE, ProjectBundle.message("project.roots.classpath.format.default.descr"));
+      for (ClasspathStorageProvider provider : providers) {
+        formatIdToDescription.put(provider.getID(), provider.getDescription());
       }
-
-      final Object[] items = formatIdToDescr.values().toArray();
-      cbClasspathFormat = new JComboBox(items);
-      updateClasspathFormat();
-      add(cbClasspathFormat,
-                      new GridBagConstraints(1,0,1,1,1.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, new Insets(6, 6, 6, 0), 0, 0));
-    }
-
-    private void updateClasspathFormat() {
-      cbClasspathFormat.setSelectedItem(formatIdToDescr.get(getModuleClasspathFormat()));
+      comboBoxClasspathFormat = new ComboBox<>(ArrayUtil.toStringArray(formatIdToDescription.keySet()));
+      comboBoxClasspathFormat.setRenderer(new ListCellRendererWrapper<String>() {
+        @Override
+        public void customize(JList list, String value, int index, boolean selected, boolean hasFocus) {
+          setText(formatIdToDescription.get(value));
+        }
+      });
+      comboBoxClasspathFormat.setSelectedItem(getModuleClasspathFormat());
+      add(comboBoxClasspathFormat,
+          new GridBagConstraints(1, 0, 1, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, JBUI.insets(6, 6, 6, 0), 0, 0));
     }
 
     private String getSelectedClasspathFormat() {
-      final String selected = (String)cbClasspathFormat.getSelectedItem();
-      for ( Map.Entry<String,String> entry : formatIdToDescr.entrySet() ) {
-        if ( entry.getValue().equals(selected)) {
-          return entry.getKey();
-        }
-      }
-      throw new IllegalStateException(selected);
+      return (String)comboBoxClasspathFormat.getSelectedItem();
     }
 
-    @NotNull
     private String getModuleClasspathFormat() {
-      return ClasspathStorage.getStorageType(getModel().getModule());
+      return ClassPathStorageUtil.getStorageType(rootModel.getModule());
     }
 
-    boolean isModified() {
-      return cbClasspathFormat != null && !getSelectedClasspathFormat().equals(getModuleClasspathFormat());
+    private boolean isModified() {
+      return !getSelectedClasspathFormat().equals(getModuleClasspathFormat());
     }
 
-    void apply() throws ConfigurationException {
-      final String storageID = getSelectedClasspathFormat();
-      ClasspathStorage.getProvider(storageID).assertCompatible(getModel());
-      ClasspathStorage.setStorageType(getModel(), storageID);
+    public void canApply() throws ConfigurationException {
+      ClasspathStorageProvider provider = ClasspathStorage.getProvider(getSelectedClasspathFormat());
+      if (provider != null) {
+        provider.assertCompatible(rootModel);
+      }
+    }
+
+    private void apply() throws ConfigurationException {
+      canApply();
+      ClasspathStorage.setStorageType(rootModel, getSelectedClasspathFormat());
     }
   }
 }

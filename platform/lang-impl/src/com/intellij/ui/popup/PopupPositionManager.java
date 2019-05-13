@@ -1,42 +1,60 @@
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.popup;
 
-import com.intellij.codeInsight.lookup.LookupAdapter;
 import com.intellij.codeInsight.lookup.LookupEvent;
 import com.intellij.codeInsight.lookup.LookupEx;
+import com.intellij.codeInsight.lookup.LookupListener;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.ui.popup.JBPopup;
+import com.intellij.openapi.ui.popup.util.PopupUtil;
 import com.intellij.openapi.util.DimensionService;
 import com.intellij.ui.ScreenUtil;
 import com.intellij.ui.awt.RelativePoint;
-import com.intellij.ui.components.JBList;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.awt.*;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 
 /**
  * @author pegov
+ * @author Konstantin Bulenkov
  */
 public class PopupPositionManager {
+  private static final Position[] DEFAULT_POSITION_ORDER = {Position.RIGHT, Position.LEFT, Position.TOP, Position.BOTTOM};
+
   private PopupPositionManager() {
+  }
+
+  public enum Position {
+    TOP, BOTTOM, LEFT, RIGHT
   }
 
   public static void positionPopupInBestPosition(final JBPopup hint,
                                                  @Nullable final Editor editor,
                                                  @Nullable DataContext dataContext) {
+    positionPopupInBestPosition(hint, editor, dataContext, DEFAULT_POSITION_ORDER);
+  }
+
+  public static void positionPopupInBestPosition(final JBPopup hint,
+                                                 @Nullable final Editor editor,
+                                                 @Nullable DataContext dataContext,
+                                                 @NotNull Position... relationToExistingPopup) {
     final LookupEx lookup = LookupManager.getActiveLookup(editor);
-    if (lookup != null && lookup.getCurrentItem() != null) {
-      new PositionAdjuster(lookup.getComponent()).adjust(hint);
-      lookup.addLookupListener(new LookupAdapter() {
+    if (lookup != null && lookup.getCurrentItem() != null && lookup.getComponent().isShowing()) {
+      new PositionAdjuster(lookup.getComponent()).adjust(hint, relationToExistingPopup);
+      lookup.addLookupListener(new LookupListener() {
         @Override
-        public void lookupCanceled(LookupEvent event) {
+        public void lookupCanceled(@NotNull LookupEvent event) {
           if (hint.isVisible()) {
             hint.cancel();
           }
@@ -45,19 +63,23 @@ public class PopupPositionManager {
       return;
     }
 
-    final PositionAdjuster positionAdjuster = createPositionAdjuster();
+    final PositionAdjuster positionAdjuster = createPositionAdjuster(hint);
     if (positionAdjuster != null) {
-      positionAdjuster.adjust(hint);
-      return;
-    }
-    
-    if (editor != null && editor.getComponent().isShowing()) {
-      hint.showInBestPositionFor(editor);
+      positionAdjuster.adjust(hint, relationToExistingPopup);
       return;
     }
 
+    if (editor != null && editor.getComponent().isShowing() && editor instanceof EditorEx) {
+      dataContext = ((EditorEx)editor).getDataContext();
+    }
+
     if (dataContext != null) {
-      hint.showInBestPositionFor(dataContext);
+      if (hint.canShow()) {
+        hint.showInBestPositionFor(dataContext);
+      }
+      else {
+        hint.setLocation(hint.getBestPositionFor(dataContext));
+      }
     }
   }
 
@@ -69,8 +91,6 @@ public class PopupPositionManager {
     if (focusOwner == null) return null;
 
     final DataContext dataContext = DataManager.getInstance().getDataContext(focusOwner);
-    if (dataContext == null) return null;
-
     final JBPopup popup = datakey.getData(dataContext);
     if (popup != null && popup.isVisible()) {
       return popup.getContent();
@@ -80,12 +100,13 @@ public class PopupPositionManager {
   }
 
   @Nullable
-  private static PositionAdjuster createPositionAdjuster() {
+  private static PositionAdjuster createPositionAdjuster(JBPopup hint) {
     final Component focusOwner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
     if (focusOwner == null) return null;
 
-    if (focusOwner instanceof JBList) {
-      return new PositionAdjuster(SwingUtilities.getWindowAncestor(focusOwner));
+    JBPopup popup = PopupUtil.getPopupContainerFor(focusOwner);
+    if (popup != null && popup != hint) {
+      return new PositionAdjuster(popup.getContent());
     }
 
     final Component existing = discoverPopup(LangDataKeys.POSITION_ADJUSTER_POPUP, focusOwner);
@@ -93,14 +114,12 @@ public class PopupPositionManager {
       return new PositionAdjuster2(existing, discoverPopup(LangDataKeys.PARENT_POPUP, focusOwner));
     }
 
-    //final Window window = SwingUtilities.getWindowAncestor(focusOwner);
-    //return window == null ? null : new PositionAdjuster(window);
     return null;
   }
 
   private static class PositionAdjuster2 extends PositionAdjuster {
 
-    private Component myTopComponent;
+    private final Component myTopComponent;
 
     private PositionAdjuster2(final Component relativeTo, final Component topComponent) {
       super(relativeTo);
@@ -113,34 +132,39 @@ public class PopupPositionManager {
     }
   }
 
-  private static class PositionAdjuster {
-    private static final int GAP = 5;
+  public static class PositionAdjuster {
+    protected final int myGap;
 
-    private Component myRelativeTo;
-    private Point myRelativeOnScreen;
-    private Rectangle myScreenRect;
+    protected final Component myRelativeTo;
+    protected final Point myRelativeOnScreen;
+    protected final Rectangle myScreenRect;
 
-    public PositionAdjuster(final Component relativeTo) {
+    public PositionAdjuster(final Component relativeTo, int gap) {
       myRelativeTo = relativeTo;
       myRelativeOnScreen = relativeTo.getLocationOnScreen();
       myScreenRect = ScreenUtil.getScreenRectangle(myRelativeOnScreen);
+      myGap = gap;
+    }
+
+    public PositionAdjuster(final Component relativeTo) {
+      this(relativeTo, 5);
     }
 
     protected Rectangle positionRight(final Dimension d) {
-      return new Rectangle(myRelativeOnScreen.x + myRelativeTo.getWidth() + GAP, myRelativeOnScreen.y, d.width,
+      return new Rectangle(myRelativeOnScreen.x + myRelativeTo.getWidth() + myGap, myRelativeOnScreen.y, d.width,
                            d.height);
     }
 
     protected Rectangle positionLeft(final Dimension d) {
-      return new Rectangle(myRelativeOnScreen.x - GAP - d.width, myRelativeOnScreen.y, d.width, d.height);
+      return new Rectangle(myRelativeOnScreen.x - myGap - d.width, myRelativeOnScreen.y, d.width, d.height);
     }
 
     protected Rectangle positionAbove(final Dimension d) {
-      return new Rectangle(myRelativeOnScreen.x, getYForTopPositioning() - GAP - d.height, d.width, d.height);
+      return new Rectangle(myRelativeOnScreen.x, getYForTopPositioning() - myGap - d.height, d.width, d.height);
     }
 
     protected Rectangle positionUnder(final Dimension d) {
-      return new Rectangle(myRelativeOnScreen.x, myRelativeOnScreen.y + GAP + myRelativeTo.getHeight(), d.width, d.height);
+      return new Rectangle(myRelativeOnScreen.x, myRelativeOnScreen.y + myGap + myRelativeTo.getHeight(), d.width, d.height);
     }
 
     protected int getYForTopPositioning() {
@@ -157,32 +181,44 @@ public class PopupPositionManager {
      * @param popup
      */
     public void adjust(final JBPopup popup) {
+      adjust(popup, DEFAULT_POSITION_ORDER);
+    }
+
+    public void adjust(final JBPopup popup, Position... traversalPolicy) {
+      if (traversalPolicy.length == 0) traversalPolicy = DEFAULT_POSITION_ORDER;
+
       final Dimension d = getPopupSize(popup);
 
       Rectangle popupRect = null;
-      Rectangle r = positionRight(d);
-      if (myScreenRect.contains(r)) {
-        popupRect = r;
-      }
+      Rectangle r = null;
+      final List<Rectangle> boxes = new ArrayList<>();
 
-      if (popupRect == null) {
-        r = positionLeft(d);
-        if (myScreenRect.contains(r)) {
-          popupRect = r;
+      for (Position position : traversalPolicy) {
+        switch (position) {
+          case TOP:
+            r = positionAbove(d);
+            boxes.add(crop(myScreenRect, new Rectangle(myRelativeOnScreen.x, myScreenRect.y,
+                                                       myScreenRect.width, getYForTopPositioning() - myScreenRect.y - myGap)));
+            break;
+          case BOTTOM:
+            r = positionUnder(d);
+            boxes.add(crop(myScreenRect, new Rectangle(myRelativeOnScreen.x, myRelativeOnScreen.y + myRelativeTo.getHeight() + myGap,
+                                                       myScreenRect.width, myScreenRect.height)));
+            break;
+          case LEFT:
+            r = positionLeft(d);
+            boxes.add(crop(myScreenRect, new Rectangle(myScreenRect.x, myRelativeOnScreen.y, myRelativeOnScreen.x - myScreenRect.x - myGap,
+                                                       myScreenRect.height)));
+            break;
+          case RIGHT:
+            r = positionRight(d);
+            boxes.add(crop(myScreenRect, new Rectangle(myRelativeOnScreen.x + myRelativeTo.getWidth() + myGap, myRelativeOnScreen.y,
+                                                       myScreenRect.width, myScreenRect.height)));
+            break;
         }
-      }
-
-      if (popupRect == null) {
-        r = positionAbove(d);
         if (myScreenRect.contains(r)) {
           popupRect = r;
-        }
-      }
-
-      if (popupRect == null) {
-        r = positionUnder(d);
-        if (myScreenRect.contains(r)) {
-          popupRect = r;
+          break;
         }
       }
 
@@ -197,30 +233,7 @@ public class PopupPositionManager {
       }
       else {
         // ok, popup does not fit, will try to resize it
-        final List<Rectangle> boxes = new ArrayList<Rectangle>();
-        // right
-        boxes.add(crop(myScreenRect, new Rectangle(myRelativeOnScreen.x + myRelativeTo.getWidth() + GAP, myRelativeOnScreen.y,
-                                                   myScreenRect.width, myScreenRect.height)));
-
-        // left
-        boxes.add(crop(myScreenRect, new Rectangle(myScreenRect.x, myRelativeOnScreen.y, myRelativeOnScreen.x - myScreenRect.x - GAP,
-                                                   myScreenRect.height)));
-
-        // top
-        boxes.add(crop(myScreenRect, new Rectangle(myRelativeOnScreen.x, myScreenRect.y,
-                                                   myScreenRect.width, getYForTopPositioning() - myScreenRect.y - GAP)));
-
-        // bottom
-        boxes.add(crop(myScreenRect, new Rectangle(myRelativeOnScreen.x, myRelativeOnScreen.y + myRelativeTo.getHeight() + GAP,
-                                                   myScreenRect.width, myScreenRect.height)));
-
-        Collections.sort(boxes, new Comparator<Rectangle>() {
-          @Override
-          public int compare(final Rectangle o1, final Rectangle o2) {
-            final int i = new Integer(o1.width).compareTo(o2.width);
-            return i == 0 ? new Integer(o1.height).compareTo(o2.height) : i;
-          }
-        });
+        Collections.sort(boxes, Comparator.comparingInt((Rectangle o) -> o.width).thenComparingInt(o -> o.height));
 
         final Rectangle suitableBox = boxes.get(boxes.size() - 1);
         final Rectangle crop = crop(suitableBox,
@@ -241,7 +254,7 @@ public class PopupPositionManager {
       }
     }
 
-    private static Rectangle crop(final Rectangle source, final Rectangle toCrop) {
+    protected static Rectangle crop(final Rectangle source, final Rectangle toCrop) {
       final Rectangle result = new Rectangle(toCrop);
       if (toCrop.x < source.x) {
         result.width -= source.x - toCrop.x;
@@ -264,7 +277,7 @@ public class PopupPositionManager {
       return result;
     }
 
-    protected static Dimension getPopupSize(final JBPopup popup) {
+    public static Dimension getPopupSize(final JBPopup popup) {
       Dimension size = null;
       if (popup instanceof AbstractPopup) {
         final String dimensionKey = ((AbstractPopup)popup).getDimensionServiceKey();

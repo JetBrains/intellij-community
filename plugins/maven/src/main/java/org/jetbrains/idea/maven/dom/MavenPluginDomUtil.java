@@ -16,32 +16,70 @@
 package org.jetbrains.idea.maven.dom;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.xml.XmlElement;
 import com.intellij.util.xml.DomElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.dom.model.MavenDomConfiguration;
 import org.jetbrains.idea.maven.dom.model.MavenDomPlugin;
 import org.jetbrains.idea.maven.dom.plugin.MavenDomPluginModel;
+import org.jetbrains.idea.maven.model.MavenId;
+import org.jetbrains.idea.maven.model.MavenPlugin;
+import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.utils.MavenArtifactUtil;
 
 import java.io.File;
 
 public class MavenPluginDomUtil {
+
+  @Nullable
+  public static MavenProject findMavenProject(@NotNull DomElement domElement) {
+    XmlElement xmlElement = domElement.getXmlElement();
+    if (xmlElement == null) return null;
+    PsiFile psiFile = xmlElement.getContainingFile();
+    if (psiFile == null) return null;
+    VirtualFile file = psiFile.getVirtualFile();
+    if (file == null) return null;
+    return MavenProjectsManager.getInstance(psiFile.getProject()).findProject(file);
+  }
+
   @Nullable
   public static MavenDomPluginModel getMavenPluginModel(DomElement element) {
-    Project p = element.getXmlElement().getProject();
+    Project project = element.getManager().getProject();
 
     MavenDomPlugin pluginElement = element.getParentOfType(MavenDomPlugin.class, false);
     if (pluginElement == null) return null;
 
-    VirtualFile pluginXmlFile = getPluginXmlFile(p, pluginElement);
+    String groupId = pluginElement.getGroupId().getStringValue();
+    String artifactId = pluginElement.getArtifactId().getStringValue();
+    String version = pluginElement.getVersion().getStringValue();
+    if (StringUtil.isEmpty(version)) {
+      MavenProject mavenProject = findMavenProject(element);
+      if (mavenProject != null) {
+        for (MavenPlugin plugin : mavenProject.getPlugins()) {
+          if (MavenArtifactUtil.isPluginIdEquals(groupId, artifactId, plugin.getGroupId(), plugin.getArtifactId())) {
+            MavenId pluginMavenId = plugin.getMavenId();
+            version = pluginMavenId.getVersion();
+            break;
+          }
+        }
+      }
+    }
+    return getMavenPluginModel(project, groupId, artifactId, version);
+  }
+
+  @Nullable
+  public static MavenDomPluginModel getMavenPluginModel(Project project, String groupId, String artifactId, String version) {
+    VirtualFile pluginXmlFile = getPluginXmlFile(project, groupId, artifactId, version);
     if (pluginXmlFile == null) return null;
 
-    return MavenDomUtil.getMavenDomModel(p, pluginXmlFile, MavenDomPluginModel.class);
+    return MavenDomUtil.getMavenDomModel(project, pluginXmlFile, MavenDomPluginModel.class);
   }
 
   public static boolean isPlugin(@NotNull MavenDomConfiguration configuration, @Nullable String groupId, @NotNull String artifactId) {
@@ -68,12 +106,8 @@ public class MavenPluginDomUtil {
   }
 
   @Nullable
-  private static VirtualFile getPluginXmlFile(Project p, MavenDomPlugin pluginElement) {
-    String groupId = pluginElement.getGroupId().getStringValue();
-    String artifactId = pluginElement.getArtifactId().getStringValue();
-    String version = pluginElement.getVersion().getStringValue();
-
-    File file = MavenArtifactUtil.getArtifactFile(MavenProjectsManager.getInstance(p).getLocalRepository(),
+  private static VirtualFile getPluginXmlFile(Project project, String groupId, String artifactId, String version) {
+    File file = MavenArtifactUtil.getArtifactFile(MavenProjectsManager.getInstance(project).getLocalRepository(),
                                                   groupId, artifactId, version, "jar");
     VirtualFile pluginFile = LocalFileSystem.getInstance().findFileByIoFile(file);
     if (pluginFile == null) return null;

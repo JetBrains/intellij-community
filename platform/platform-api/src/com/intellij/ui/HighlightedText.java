@@ -17,16 +17,18 @@
 package com.intellij.ui;
 
 import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.util.text.StringUtil;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
+import java.util.List;
 
 public class HighlightedText {
-  private final StringBuffer myBuffer;
-  private final ArrayList myHighlightedRegions;
+  private final StringBuilder myBuffer;
+  private final List<HighlightedRegion> myHighlightedRegions = new ArrayList<>();
 
   public HighlightedText() {
-    myBuffer = new StringBuffer();
-    myHighlightedRegions = new ArrayList(3);
+    myBuffer = new StringBuilder();
   }
 
   public void appendText(String text, TextAttributes attributes) {
@@ -37,16 +39,11 @@ public class HighlightedText {
     }
   }
 
-  public void insertTextAtStart(String text, TextAttributes attributes) {
-    int textLength = text.length();
-    for (int i=0; i < myHighlightedRegions.size(); i++) {
-      HighlightedRegion info = (HighlightedRegion)myHighlightedRegions.get(i);
-      info.startOffset += textLength;
-      info.endOffset += textLength;
-    }
-    myBuffer.insert(0, text);
+  public void appendText(char[] text, TextAttributes attributes) {
+    int startOffset = myBuffer.length();
+    myBuffer.append(text);
     if (attributes != null) {
-      myHighlightedRegions.add(new HighlightedRegion(0, textLength, attributes));
+      myHighlightedRegions.add(new HighlightedRegion(startOffset, myBuffer.length(), attributes));
     }
   }
 
@@ -55,22 +52,19 @@ public class HighlightedText {
 
     HighlightedText highlightedText = (HighlightedText)o;
 
-    if (!myBuffer.equals(highlightedText.myBuffer)) return false;
-    if (!myHighlightedRegions.equals(highlightedText.myHighlightedRegions)) return false;
-
-    return true;
+    return StringUtil.equals(myBuffer, highlightedText.myBuffer) &&
+           myHighlightedRegions.equals(highlightedText.myHighlightedRegions);
   }
 
+  @NotNull
   public String getText() {
     return myBuffer.toString();
   }
 
   public void applyToComponent(HighlightableComponent renderer) {
     renderer.setText(myBuffer.toString());
-    for (int i=0; i < myHighlightedRegions.size(); i++) {
-      HighlightedRegion info = (HighlightedRegion)myHighlightedRegions.get(i);
+    for (HighlightedRegion info : myHighlightedRegions) {
       renderer.addHighlighter(info.startOffset, info.endOffset, info.textAttributes);
     }
   }
-
 }

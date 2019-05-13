@@ -15,17 +15,24 @@
  */
 package com.intellij.openapi.actionSystem;
 
+import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.ArrayList;
 
 /**
+ * This class purpose is to reserve action-id in a plugin.xml so the action appears in Keymap.
+ * Then Keymap assignments can be used for non-registered actions created on runtime.
+ *
+ * Another usage is to override (hide) already registered actions by means of plugin.xml, see {@link EmptyActionGroup} as well.
+ *
+ * @see EmptyActionGroup
+ *
  * @author Gregory.Shrago
  * @author Konstantin Bulenkov
  */
-public class EmptyAction extends AnAction {
+public final class EmptyAction extends AnAction {
   private boolean myEnabled;
 
   public EmptyAction() {
@@ -46,69 +53,144 @@ public class EmptyAction extends AnAction {
   }
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
   }
 
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     e.getPresentation().setEnabledAndVisible(myEnabled);
   }
 
   public static void setupAction(@NotNull AnAction action, @NotNull String id, @Nullable JComponent component) {
-    final AnAction emptyAction = ActionManager.getInstance().getAction(id);
-    final Presentation copyFrom = emptyAction.getTemplatePresentation();
-    final Presentation copyTo = action.getTemplatePresentation();
-    if (copyTo.getIcon() == null) {
-      copyTo.setIcon(copyFrom.getIcon());
-    }
-    copyTo.setText(copyFrom.getText());
-    copyTo.setDescription(copyFrom.getDescription());
-    action.registerCustomShortcutSet(emptyAction.getShortcutSet(), component);
+    ActionUtil.mergeFrom(action, id).registerCustomShortcutSet(component, null);
   }
 
-  public static void registerActionShortcuts(JComponent component, final JComponent fromComponent) {
-    final ArrayList<AnAction> actionList =
-      (ArrayList<AnAction>)fromComponent.getClientProperty(ourClientProperty);
-    if (actionList != null) {
-      for (AnAction anAction : actionList) {
-        anAction.registerCustomShortcutSet(anAction.getShortcutSet(), component);
-      }
-    }
+  public static void registerActionShortcuts(@NotNull JComponent component, @NotNull JComponent fromComponent) {
+    ActionUtil.copyRegisteredShortcuts(component, fromComponent);
   }
 
+  /**
+   * Registers global action on a component with a custom shortcut set.
+   * <p>
+   * ActionManager.getInstance().getAction(id).registerCustomShortcutSet(shortcutSet, component) shouldn't be used directly,
+   * because it will erase shortcuts, assigned to this action in keymap.
+   */
+  @NotNull
+  public static AnAction registerWithShortcutSet(@NotNull String id, @NotNull ShortcutSet shortcutSet, @NotNull JComponent component) {
+    AnAction newAction = wrap(ActionManager.getInstance().getAction(id));
+    newAction.registerCustomShortcutSet(shortcutSet, component);
+    return newAction;
+  }
+
+  /**
+   * Creates proxy action
+   * <p>
+   * It allows to alter template presentation and shortcut set without affecting original action,
+   */
   public static AnAction wrap(final AnAction action) {
-    return action instanceof ActionGroup ? new ActionGroup() {
-      {
-        setPopup(((ActionGroup)action).isPopup());
-        copyFrom(action);
-        setShortcutSet(new CustomShortcutSet());
-      }
+    return action instanceof ActionGroup ?
+           new MyDelegatingActionGroup(((ActionGroup)action)) :
+           new MyDelegatingAction(action);
+  }
 
-      @Override
-      public void update(final AnActionEvent e) {
-        action.update(e);
-      }
+  public static class MyDelegatingAction extends AnAction {
+    @NotNull private final AnAction myDelegate;
 
-      @NotNull
-      @Override
-      public AnAction[] getChildren(@Nullable final AnActionEvent e) {
-        return ((ActionGroup)action).getChildren(e);
-      }
-    } : new AnAction() {
-      {
-        copyFrom(action);
-        setShortcutSet(new CustomShortcutSet());
-      }
+    public MyDelegatingAction(@NotNull AnAction action) {
+      myDelegate = action;
+      copyFrom(action);
+      setEnabledInModalContext(action.isEnabledInModalContext());
+    }
 
-      @Override
-      public void actionPerformed(final AnActionEvent e) {
-        action.actionPerformed(e);
-      }
+    @Override
+    public void update(@NotNull final AnActionEvent e) {
+      myDelegate.update(e);
+    }
 
-      @Override
-      public void update(final AnActionEvent e) {
-        action.update(e);
-      }
-    };
+    @Override
+    public void actionPerformed(@NotNull final AnActionEvent e) {
+      myDelegate.actionPerformed(e);
+    }
+
+    @Override
+    public boolean isDumbAware() {
+      return myDelegate.isDumbAware();
+    }
+
+    @Override
+    public boolean isTransparentUpdate() {
+      return myDelegate.isTransparentUpdate();
+    }
+
+    @Override
+    public boolean isInInjectedContext() {
+      return myDelegate.isInInjectedContext();
+    }
+  }
+
+  public static class MyDelegatingActionGroup extends ActionGroup {
+    @NotNull private final ActionGroup myDelegate;
+
+    public MyDelegatingActionGroup(@NotNull ActionGroup action) {
+      myDelegate = action;
+      copyFrom(action);
+      setEnabledInModalContext(action.isEnabledInModalContext());
+    }
+    
+    @NotNull
+    public ActionGroup getDelegate() {
+      return myDelegate;
+    }
+
+    @Override
+    public boolean isPopup() {
+      return myDelegate.isPopup();
+    }
+
+    @NotNull
+    @Override
+    public AnAction[] getChildren(@Nullable final AnActionEvent e) {
+      return myDelegate.getChildren(e);
+    }
+
+    @Override
+    public void update(@NotNull final AnActionEvent e) {
+      myDelegate.update(e);
+    }
+
+    @Override
+    public boolean canBePerformed(@NotNull DataContext context) {
+      return myDelegate.canBePerformed(context);
+    }
+
+    @Override
+    public void actionPerformed(@NotNull final AnActionEvent e) {
+      myDelegate.actionPerformed(e);
+    }
+
+    @Override
+    public boolean isDumbAware() {
+      return myDelegate.isDumbAware();
+    }
+
+    @Override
+    public boolean isTransparentUpdate() {
+      return myDelegate.isTransparentUpdate();
+    }
+
+    @Override
+    public boolean isInInjectedContext() {
+      return myDelegate.isInInjectedContext();
+    }
+
+    @Override
+    public boolean hideIfNoVisibleChildren() {
+      return myDelegate.hideIfNoVisibleChildren();
+    }
+
+    @Override
+    public boolean disableIfNoVisibleChildren() {
+      return myDelegate.disableIfNoVisibleChildren();
+    }
   }
 }

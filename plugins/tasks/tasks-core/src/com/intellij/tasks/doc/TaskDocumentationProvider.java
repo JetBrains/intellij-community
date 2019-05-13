@@ -22,6 +22,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiManager;
 import com.intellij.tasks.Comment;
 import com.intellij.tasks.Task;
+import com.intellij.xml.util.XmlStringUtil;
 import com.petebevin.markdown.MarkdownProcessor;
 import org.jetbrains.annotations.Nullable;
 
@@ -48,9 +49,9 @@ public class TaskDocumentationProvider extends AbstractDocumentationProvider imp
   public String generateDoc(PsiElement element, @Nullable PsiElement originalElement) {
     if (!(element instanceof TaskPsiElement)) return null;
     final Task task = ((TaskPsiElement)element).getTask();
-    final StringBuilder builder = new StringBuilder("<html>");
+    final StringBuilder builder = new StringBuilder();
     builder.append("<b>Summary:</b> ").append(task.getSummary()).append("<br>");
-    builder.append("<b>Id:</b> ").append(task.getId()).append("<br>");
+    builder.append("<b>Id:</b> ").append(task.getPresentableId()).append("<br>");
     if (task.getCreated() != null) {
       builder.append("<b>Created at:</b> ").append(task.getCreated()).append("<br>");
     }
@@ -65,8 +66,7 @@ public class TaskDocumentationProvider extends AbstractDocumentationProvider imp
     for (Comment comment : task.getComments()) {
       comment.appendTo(builder);
     }
-    builder.append("</html>");
-    return builder.toString();
+    return XmlStringUtil.wrapInHtml(builder);
   }
 
   @Override

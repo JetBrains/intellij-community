@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,17 +23,19 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.concurrency.SwingWorker;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.UiNotifyConnector;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
+
+import static java.awt.GridBagConstraints.*;
 
 /**
  * @author nik
@@ -47,13 +49,14 @@ public abstract class AbstractStepWithProgress<Result> extends ModuleWizardStep 
   private JLabel myTitleLabel;
   private JLabel myProgressLabel;
   private JLabel myProgressLabel2;
-  private ProgressIndicator myProgressIndicator = null;
+  private ProgressIndicator myProgressIndicator;
   private final String myPromptStopSearch;
 
   public AbstractStepWithProgress(final String promptStopSearching) {
     myPromptStopSearch = promptStopSearching;
   }
 
+  @Override
   public final JComponent getComponent() {
     if (myPanel == null) {
       myPanel = new JPanel(new CardLayout());
@@ -79,22 +82,31 @@ public abstract class AbstractStepWithProgress<Result> extends ModuleWizardStep 
     final JPanel progressPanel = new JPanel(new GridBagLayout());
     myTitleLabel = new JLabel();
     myTitleLabel.setFont(UIUtil.getLabelFont().deriveFont(Font.BOLD));
-    progressPanel.add(myTitleLabel, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 2, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL, new Insets(8, 10, 5, 10), 0, 0));
+    progressPanel.add(myTitleLabel, new GridBagConstraints(0, RELATIVE, 2, 1, 1.0, 0.0, NORTHWEST, HORIZONTAL, JBUI.insets(8, 10, 5, 10), 0, 0));
 
     myProgressLabel = new JLabel();
-    progressPanel.add(myProgressLabel, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL, new Insets(8, 10, 0, 10), 0, 0));
+    progressPanel.add(myProgressLabel, new GridBagConstraints(0, RELATIVE, 1, 1, 1.0, 0.0, NORTHWEST, HORIZONTAL, JBUI.insets(8, 10, 0, 10), 0, 0));
 
-    myProgressLabel2 = new JLabel();
-    progressPanel.add(myProgressLabel2, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 1.0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL, new Insets(8, 10, 0, 10), 0, 0));
+    myProgressLabel2 = new JLabel() {
+          @Override
+          public void setText(String text) {
+            super.setText(StringUtil.trimMiddle(text, 80));
+          }
+        };
+    progressPanel.add(myProgressLabel2, new GridBagConstraints(0, RELATIVE, 1, 1, 1.0, 1.0, NORTHWEST, HORIZONTAL, JBUI.insets(8, 10, 0, 10), 0, 0));
 
     JButton stopButton = new JButton(IdeBundle.message("button.stop.searching"));
-    stopButton.addActionListener(new ActionListener() {
-      public void actionPerformed(ActionEvent e) {
-        cancelSearch();
-      }
-    });
-    progressPanel.add(stopButton, new GridBagConstraints(1, GridBagConstraints.RELATIVE, 1, 2, 0.0, 1.0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, new Insets(10, 0, 0, 10), 0, 0));
+    stopButton.addActionListener(__ -> cancelSearch());
+    progressPanel.add(stopButton, new GridBagConstraints(1, RELATIVE, 1, 2, 0.0, 1.0, NORTHWEST, NONE, JBUI.insets(10, 0, 0, 10), 0, 0));
     return progressPanel;
+  }
+
+  @TestOnly
+  public void performStep() {
+    Result result = calculate();
+    createResultsPanel();
+    onFinished(result, false);
+    updateDataModel();
   }
 
   private void cancelSearch() {
@@ -108,6 +120,7 @@ public abstract class AbstractStepWithProgress<Result> extends ModuleWizardStep 
   }
   
   
+  @Override
   public void updateStep() {
     if (shouldRunProgress()) {
       runProgress();
@@ -117,7 +130,7 @@ public abstract class AbstractStepWithProgress<Result> extends ModuleWizardStep 
     }
   }
 
-  protected void runProgress() {
+  private void runProgress() {
     final MyProgressIndicator progress = new MyProgressIndicator();
     progress.setModalityProgress(null);
     final String title = getProgressText();
@@ -129,44 +142,29 @@ public abstract class AbstractStepWithProgress<Result> extends ModuleWizardStep 
 
     if (ApplicationManager.getApplication().isUnitTestMode()) {
 
-      Result result = ProgressManager.getInstance().runProcess(new Computable<Result>() {
-        @Override
-        public Result compute() {
-          return calculate();
-        }
-      }, progress);
+      Result result = ProgressManager.getInstance().runProcess(() -> calculate(), progress);
       onFinished(result, false);
       return;
     }
 
-    UiNotifyConnector.doWhenFirstShown(myPanel, new Runnable() {
+    UiNotifyConnector.doWhenFirstShown(myPanel, () -> new SwingWorker() {
       @Override
-      public void run() {
-
-        new SwingWorker() {
-          public Object construct() {
-            final Ref<Result> result = Ref.create(null);
-            ProgressManager.getInstance().runProcess(new Runnable() {
-              public void run() {
-                result.set(calculate());
-              }
-            }, progress);
-            return result.get();
-          }
-
-          public void finished() {
-            myProgressIndicator = null;
-            ApplicationManager.getApplication().invokeLater(new Runnable() {
-              public void run() {
-                final Result result = (Result)get();
-                onFinished(result, progress.isCanceled());
-                showCard(RESULTS_PANEL);
-              }
-            });
-          }
-        }.start();
+      public Object construct() {
+        final Ref<Result> result = Ref.create(null);
+        ProgressManager.getInstance().runProcess(() -> result.set(calculate()), progress);
+        return result.get();
       }
-    });
+
+      @Override
+      public void finished() {
+        myProgressIndicator = null;
+        ApplicationManager.getApplication().invokeLater(() -> {
+          final Result result = (Result)get();
+          onFinished(result, progress.isCanceled());
+          showCard(RESULTS_PANEL);
+        });
+      }
+    }.start());
   }
 
   private void showCard(final String id) {
@@ -174,11 +172,12 @@ public abstract class AbstractStepWithProgress<Result> extends ModuleWizardStep 
     myPanel.revalidate();
   }
 
+  @Override
   public boolean validate() throws ConfigurationException {
     if (isProgressRunning()) {
       final int answer = Messages.showOkCancelDialog(getComponent(), myPromptStopSearch,
                                              IdeBundle.message("title.question"), IdeBundle.message("action.continue.searching"), IdeBundle.message("action.stop.searching"), Messages.getWarningIcon());
-      if (answer == 1) { // terminate
+      if (answer != Messages.OK) { // terminate
         cancelSearch();
       }
       return false;
@@ -186,6 +185,7 @@ public abstract class AbstractStepWithProgress<Result> extends ModuleWizardStep 
     return true;
   }
 
+  @Override
   public void onStepLeaving() {
     if (isProgressRunning()) {
       cancelSearch();
@@ -193,22 +193,20 @@ public abstract class AbstractStepWithProgress<Result> extends ModuleWizardStep 
   }
 
   protected class MyProgressIndicator extends ProgressIndicatorBase {
+    @Override
     public void setText(String text) {
       updateLabel(myProgressLabel, text);
       super.setText(text);
     }
 
+    @Override
     public void setText2(String text) {
       updateLabel(myProgressLabel2, text);
       super.setText2(text);
     }
 
     private void updateLabel(final JLabel label, final String text) {
-      UIUtil.invokeLaterIfNeeded(new Runnable() {
-        public void run() {
-          label.setText(text);
-        }
-      });
+      UIUtil.invokeLaterIfNeeded(() -> label.setText(text));
     }
   }
 }

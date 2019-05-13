@@ -4,7 +4,7 @@ public class StringBufferReplaceableByStringBuilder {
 
     public void foo()
     {
-        final StringBuffer buffer = new StringBuffer();
+        final StringBuffer <warning descr="'StringBuffer buffer' may be declared as 'StringBuilder'">buffer</warning> = new StringBuffer();
         buffer.append("bar");
         buffer.append("bar");
         System.out.println(buffer.toString());
@@ -28,5 +28,13 @@ public class StringBufferReplaceableByStringBuilder {
     void caller() {
         final StringBuffer sb = new StringBuffer();
         argument(sb.append("asdf").append("wait"));
+    }
+
+    void lambda(StringBuilder logContainer) {
+        StringBuffer allLogs = new StringBuffer();
+        Runnable r = () -> {
+            allLogs.append("logs"); // might be used in another thread
+        };
+        logContainer.append(allLogs);
     }
 }

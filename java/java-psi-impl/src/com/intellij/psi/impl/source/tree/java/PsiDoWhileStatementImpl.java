@@ -19,15 +19,14 @@ import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiImplUtil;
-import com.intellij.psi.impl.source.tree.ChildRole;
-import com.intellij.psi.impl.source.tree.CompositePsiElement;
-import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.psi.impl.source.Constants;
-import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.impl.source.tree.ChildRole;
+import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.psi.tree.ChildRoleBase;
+import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
 
-public class PsiDoWhileStatementImpl extends CompositePsiElement implements PsiDoWhileStatement, Constants {
+public class PsiDoWhileStatementImpl extends PsiLoopStatementImpl implements PsiDoWhileStatement, Constants {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.java.PsiDoWhileStatementImpl");
 
   public PsiDoWhileStatementImpl() {
@@ -90,7 +89,7 @@ public class PsiDoWhileStatementImpl extends CompositePsiElement implements PsiD
   }
 
   @Override
-  public int getChildRole(ASTNode child) {
+  public int getChildRole(@NotNull ASTNode child) {
     LOG.assertTrue(child.getTreeParent() == this);
     IElementType i = child.getElementType();
     if (i == DO_KEYWORD) {
@@ -131,6 +130,7 @@ public class PsiDoWhileStatementImpl extends CompositePsiElement implements PsiD
     }
   }
 
+  @Override
   public String toString(){
     return "PsiDoWhileStatement";
   }

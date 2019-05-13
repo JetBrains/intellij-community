@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,6 +26,7 @@ import com.intellij.ui.NonFocusableCheckBox;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.doc.actions.GroovyDocAddPackageAction;
 import org.jetbrains.plugins.groovy.doc.actions.GroovyDocReducePackageAction;
@@ -36,7 +37,7 @@ import java.io.File;
 import java.util.HashSet;
 import java.util.Set;
 
-public final class GroovyDocGenerationPanel extends JPanel/* implements Disposable*/ {
+public final class GroovyDocGenerationPanel extends JPanel {
   JPanel myPanel;
   TextFieldWithBrowseButton myOutputDir;
   NonFocusableCheckBox myIsUse;
@@ -54,9 +55,6 @@ public final class GroovyDocGenerationPanel extends JPanel/* implements Disposab
   private final DefaultListModel myDataModel;
 
   GroovyDocGenerationPanel() {
-    //Disposer.register(this, myInputDir);
-    //Disposer.register(this, myOutputDir);
-
     myInputDir.addBrowseFolderListener(GroovyDocBundle.message("groovydoc.generate.directory.browse"), null, null,
                                        FileChooserDescriptorFactory.createSingleFolderDescriptor());
 
@@ -66,7 +64,7 @@ public final class GroovyDocGenerationPanel extends JPanel/* implements Disposab
     myDataModel = new DefaultListModel();
 
     myPackagesList = new JBList(myDataModel);
-    myPackagesList.setMinimumSize(new Dimension(100, 150));
+    myPackagesList.setMinimumSize(JBUI.size(100, 150));
 
     JScrollPane packagesScrollPane = ScrollPaneFactory.createScrollPane(myPackagesList);
     myPackagesPanel.setLayout(new BorderLayout());
@@ -78,7 +76,7 @@ public final class GroovyDocGenerationPanel extends JPanel/* implements Disposab
 
     actionToolbar.updateActionsImmediately();
 
-    myPanel.setMinimumSize(new Dimension(275, 350));
+    myPanel.setMinimumSize(JBUI.size(275, 350));
   }
 
 
@@ -132,7 +130,7 @@ public final class GroovyDocGenerationPanel extends JPanel/* implements Disposab
 
   @Nullable
   private static String toSystemIndependentFormat(String directory) {
-    if (directory.length() == 0) {
+    if (directory.isEmpty()) {
       return null;
     }
     return directory.replace(File.separatorChar, '/');
@@ -147,7 +145,7 @@ public final class GroovyDocGenerationPanel extends JPanel/* implements Disposab
 
 private static String[] toStringArray(final DefaultListModel model) {
     final int count = model.getSize();
-    Set<String> result = new HashSet<String>();
+    Set<String> result = new HashSet<>();
     for (int i = 0; i < count; i++) {
       final Object o = model.getElementAt(i);
       assert o instanceof String;
@@ -160,9 +158,5 @@ private static String[] toStringArray(final DefaultListModel model) {
 
   public JPanel getPanel() {
     return myPanel;
-  }
-
-  //@Override
-  public void dispose() {
   }
 }

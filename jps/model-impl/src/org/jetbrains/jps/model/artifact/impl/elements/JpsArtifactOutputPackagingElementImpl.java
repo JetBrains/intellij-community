@@ -64,10 +64,10 @@ public class JpsArtifactOutputPackagingElementImpl extends JpsComplexPackagingEl
     if (artifact == null) return Collections.emptyList();
     JpsCompositePackagingElement rootElement = artifact.getRootElement();
     if (rootElement instanceof JpsArtifactRootElement) {
-      return new ArrayList<JpsPackagingElement>(rootElement.getChildren());
+      return new ArrayList<>(rootElement.getChildren());
     }
     else {
-      return Collections.<JpsPackagingElement>singletonList(rootElement);
+      return Collections.singletonList(rootElement);
     }
   }
 }

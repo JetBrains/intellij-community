@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,21 +15,24 @@
  */
 package com.intellij.ui.content;
 
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.ex.ToolWindowEx;
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
+import com.intellij.util.ObjectUtils;
+import com.intellij.util.ui.ErrorTreeView;
 
 public class ContentManagerUtil {
   private ContentManagerUtil() {
   }
 
   /**
-   * This is utility method. It returns <code>ContentManager</code> from the current context.
+   * This is utility method. It returns {@code ContentManager} from the current context.
    */
   public static ContentManager getContentManagerFromContext(DataContext dataContext, boolean requiresVisibleToolWindow){
-    Project project = PlatformDataKeys.PROJECT.getData(dataContext);
+    Project project = CommonDataKeys.PROJECT.getData(dataContext);
     if (project == null) {
       return null;
     }
@@ -42,18 +45,30 @@ public class ContentManagerUtil {
         id = mgr.getLastActiveToolWindowId();
       }
     }
-    if(id == null){
+
+    ToolWindowEx toolWindow = id != null ? (ToolWindowEx)mgr.getToolWindow(id) : null;
+    if (requiresVisibleToolWindow && (toolWindow == null || !toolWindow.isVisible())) {
       return null;
     }
 
-    ToolWindowEx toolWindow = (ToolWindowEx)mgr.getToolWindow(id);
-    if (requiresVisibleToolWindow && !toolWindow.isVisible()) {
-      return null;
+    ContentManager fromToolWindow = toolWindow != null ? toolWindow.getContentManager() : null;
+    ContentManager fromContext = PlatformDataKeys.CONTENT_MANAGER.getData(dataContext);
+    return ObjectUtils.chooseNotNull(fromContext, fromToolWindow);
+  }
+
+  public static void cleanupContents(Content notToRemove, Project project, String contentName) {
+    MessageView messageView = MessageView.SERVICE.getInstance(project);
+
+    for (Content content : messageView.getContentManager().getContents()) {
+      if (content.isPinned()) continue;
+      if (contentName.equals(content.getDisplayName()) && content != notToRemove) {
+        ErrorTreeView listErrorView = (ErrorTreeView)content.getComponent();
+        if (listErrorView != null) {
+          if (messageView.getContentManager().removeContent(content, true)) {
+            content.release();
+          }
+        }
+      }
     }
-
-    final ContentManager fromContext = PlatformDataKeys.CONTENT_MANAGER.getData(dataContext);
-    if (fromContext != null) return fromContext;
-
-    return toolWindow != null ? toolWindow.getContentManager() : null;
   }
 }

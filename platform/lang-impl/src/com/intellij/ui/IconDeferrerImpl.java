@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,38 +21,46 @@ package com.intellij.ui;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.impl.ProjectLifecycleListener;
+import com.intellij.openapi.util.LowMemoryWatcher;
+import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.openapi.vfs.newvfs.BulkFileListener;
+import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.util.Function;
+import com.intellij.util.containers.FixedHashMap;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public class IconDeferrerImpl extends IconDeferrer {
   private final Object LOCK = new Object();
-  private final Map<Object, Icon> myIconsCache = new HashMap<Object, Icon>();
-  private long myLastClearTimestamp = 0;
+  private final Map<Object, Icon> myIconsCache = new FixedHashMap<>(100);
+  private long myLastClearTimestamp;
 
-  public IconDeferrerImpl(MessageBus bus) {
+  public IconDeferrerImpl(@NotNull MessageBus bus) {
     final MessageBusConnection connection = bus.connect();
-    connection.subscribe(PsiModificationTracker.TOPIC, new PsiModificationTracker.Listener() {
+    connection.subscribe(PsiModificationTracker.TOPIC, this::clear);
+    // update "locked" icon
+    connection.subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener() {
       @Override
-      public void modificationCountChanged() {
+      public void after(@NotNull List<? extends VFileEvent> events) {
         clear();
       }
     });
-    connection.subscribe(ProjectLifecycleListener.TOPIC, new ProjectLifecycleListener.Adapter() {
+    connection.subscribe(ProjectLifecycleListener.TOPIC, new ProjectLifecycleListener() {
       @Override
       public void afterProjectClosed(@NotNull Project project) {
         clear();
       }
     });
+    LowMemoryWatcher.register(this::clear, connection);
   }
 
-  private void clear() {
+  protected final void clear() {
     synchronized (LOCK) {
       myIconsCache.clear();
       myLastClearTimestamp++;
@@ -60,26 +68,32 @@ public class IconDeferrerImpl extends IconDeferrer {
   }
 
   @Override
-  public <T> Icon defer(final Icon base, final T param, @NotNull final Function<T, Icon> f) {
+  public <T> Icon defer(final Icon base, final T param, @NotNull final Function<T, Icon> evaluator) {
+    return deferImpl(base, param, evaluator, false);
+  }
+
+  @Override
+  public <T> Icon deferAutoUpdatable(Icon base, T param, @NotNull Function<? super T, ? extends Icon> evaluator) {
+    return deferImpl(base, param, evaluator, true);
+  }
+
+  private <T> Icon deferImpl(Icon base, T param, @NotNull Function<? super T, ? extends Icon> evaluator, final boolean autoUpdatable) {
     if (myEvaluationIsInProgress.get().booleanValue()) {
-      return f.fun(param);
+      return evaluator.fun(param);
     }
 
     synchronized (LOCK) {
       Icon result = myIconsCache.get(param);
       if (result == null) {
         final long started = myLastClearTimestamp;
-        result = new DeferredIconImpl<T>(base, param, f).setDoneListener(new DeferredIconImpl.IconListener<T>() {
-          @Override
-          public void evalDone(T key, @NotNull Icon r) {
-            synchronized (LOCK) {
-              // check if our results is not outdated yet
-              if (started == myLastClearTimestamp) {
-                myIconsCache.put(key, r);
-              }
+        result = new DeferredIconImpl<>(base, param, evaluator, (DeferredIconImpl<T> source, T key, Icon r) -> {
+          synchronized (LOCK) {
+            // check if our results is not outdated yet
+            if (started == myLastClearTimestamp) {
+              myIconsCache.put(key, autoUpdatable ? source : r);
             }
           }
-        });
+        }, autoUpdatable);
         myIconsCache.put(param, result);
       }
 
@@ -87,14 +101,9 @@ public class IconDeferrerImpl extends IconDeferrer {
     }
   }
 
-  private static final ThreadLocal<Boolean> myEvaluationIsInProgress = new ThreadLocal<Boolean>() {
-    @Override
-    protected Boolean initialValue() {
-      return Boolean.FALSE;
-    }
-  };
+  private static final ThreadLocal<Boolean> myEvaluationIsInProgress = ThreadLocal.withInitial(() -> Boolean.FALSE);
 
-  public static void evaluateDeferred(@NotNull Runnable runnable) {
+  static void evaluateDeferred(@NotNull Runnable runnable) {
     try {
       myEvaluationIsInProgress.set(Boolean.TRUE);
       runnable.run();
@@ -102,5 +111,10 @@ public class IconDeferrerImpl extends IconDeferrer {
     finally {
       myEvaluationIsInProgress.set(Boolean.FALSE);
     }
+  }
+
+  @Override
+  public boolean equalIcons(Icon icon1, Icon icon2) {
+    return DeferredIconImpl.equalIcons(icon1, icon2);
   }
 }

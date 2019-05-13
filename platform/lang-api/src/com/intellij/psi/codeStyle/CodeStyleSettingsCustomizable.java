@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,18 @@ import org.jetbrains.annotations.Nullable;
 
 public interface CodeStyleSettingsCustomizable {
   enum OptionAnchor {NONE, BEFORE, AFTER}
+
+  enum IndentOption {
+    INDENT_SIZE,
+    CONTINUATION_INDENT_SIZE,
+    TAB_SIZE,
+    USE_TAB_CHARACTER,
+    SMART_TABS,
+    LABEL_INDENT_SIZE,
+    LABEL_INDENT_ABSOLUTE,
+    USE_RELATIVE_INDENTS,
+    KEEP_INDENTS_ON_EMPTY_LINES
+  }
 
   enum SpacingOption {
     INSERT_FIRST_SPACE_IN_LINE,
@@ -88,12 +100,16 @@ public interface CodeStyleSettingsCustomizable {
     SPACE_BEFORE_TYPE_PARAMETER_LIST,
     SPACE_BEFORE_ANOTATION_PARAMETER_LIST,
     SPACE_WITHIN_ANNOTATION_PARENTHESES,
+    SPACE_WITHIN_EMPTY_METHOD_CALL_PARENTHESES,
+    SPACE_WITHIN_EMPTY_METHOD_PARENTHESES,
+    SPACE_WITHIN_EMPTY_ARRAY_INITIALIZER_BRACES,
   }
 
   enum BlankLinesOption {
     KEEP_BLANK_LINES_IN_DECLARATIONS,
     KEEP_BLANK_LINES_IN_CODE,
     KEEP_BLANK_LINES_BEFORE_RBRACE,
+    KEEP_BLANK_LINES_BETWEEN_PACKAGE_DECLARATION_AND_HEADER,
     BLANK_LINES_BEFORE_PACKAGE,
     BLANK_LINES_AFTER_PACKAGE,
     BLANK_LINES_BEFORE_IMPORTS,
@@ -105,13 +121,14 @@ public interface CodeStyleSettingsCustomizable {
     BLANK_LINES_AROUND_FIELD_IN_INTERFACE,
     BLANK_LINES_AROUND_METHOD_IN_INTERFACE,
     BLANK_LINES_AFTER_CLASS_HEADER,
-    BLANK_LINES_AFTER_ANONYMOUS_CLASS_HEADER
+    BLANK_LINES_AFTER_ANONYMOUS_CLASS_HEADER,
+    BLANK_LINES_BEFORE_CLASS_END
   }
 
   enum WrappingOrBraceOption {
+    RIGHT_MARGIN,
+    WRAP_ON_TYPING,
     KEEP_CONTROL_STATEMENT_IN_ONE_LINE,
-    LINE_COMMENT_AT_FIRST_COLUMN,
-    BLOCK_COMMENT_AT_FIRST_COLUMN,
     KEEP_LINE_BREAKS,
     KEEP_FIRST_COLUMN_COMMENT,
     CALL_PARAMETERS_WRAP,
@@ -139,6 +156,7 @@ public interface CodeStyleSettingsCustomizable {
     KEEP_SIMPLE_BLOCKS_IN_ONE_LINE,
     KEEP_SIMPLE_METHODS_IN_ONE_LINE,
     KEEP_SIMPLE_CLASSES_IN_ONE_LINE,
+    KEEP_SIMPLE_LAMBDAS_IN_ONE_LINE,
     KEEP_MULTIPLE_EXPRESSIONS_IN_ONE_LINE,
     FOR_STATEMENT_WRAP,
     FOR_STATEMENT_LPAREN_ON_NEXT_LINE,
@@ -163,6 +181,7 @@ public interface CodeStyleSettingsCustomizable {
     PARAMETER_ANNOTATION_WRAP,
     VARIABLE_ANNOTATION_WRAP,
     ALIGN_MULTILINE_CHAINED_METHODS,
+    WRAP_FIRST_METHOD_IN_CALL_CHAIN,
     ALIGN_MULTILINE_PARAMETERS,
     ALIGN_MULTILINE_PARAMETERS_IN_CALLS,
     ALIGN_MULTILINE_RESOURCES,
@@ -181,6 +200,7 @@ public interface CodeStyleSettingsCustomizable {
     BRACE_STYLE,
     CLASS_BRACE_STYLE,
     METHOD_BRACE_STYLE,
+    LAMBDA_BRACE_STYLE,
     USE_FLYING_GEESE_BRACES,
     FLYING_GEESE_BRACES_GAP,
     DO_NOT_INDENT_TOP_LEVEL_CLASS_MEMBERS,
@@ -189,10 +209,20 @@ public interface CodeStyleSettingsCustomizable {
     CATCH_ON_NEW_LINE,
     FINALLY_ON_NEW_LINE,
     INDENT_CASE_FROM_SWITCH,
+    CASE_STATEMENT_ON_NEW_LINE,
     SPECIAL_ELSE_IF_TREATMENT,
-    ENUM_CONSTANTS_WRAP
+    ENUM_CONSTANTS_WRAP,
+    ALIGN_CONSECUTIVE_VARIABLE_DECLARATIONS,
+    ALIGN_CONSECUTIVE_ASSIGNMENTS,
+    ALIGN_SUBSEQUENT_SIMPLE_METHODS,
+    INDENT_BREAK_FROM_CASE
   }
   
+  enum CommenterOption {
+    LINE_COMMENT_ADD_SPACE,
+    LINE_COMMENT_AT_FIRST_COLUMN,
+    BLOCK_COMMENT_AT_FIRST_COLUMN
+  }
   
 
   String SPACES_AROUND_OPERATORS = ApplicationBundle.message("group.spaces.around.operators");
@@ -202,6 +232,8 @@ public interface CodeStyleSettingsCustomizable {
   String SPACES_WITHIN = ApplicationBundle.message("group.spaces.within");
   String SPACES_IN_TERNARY_OPERATOR = ApplicationBundle.message("group.spaces.in.ternary.operator");
   String SPACES_WITHIN_TYPE_ARGUMENTS = ApplicationBundle.message("group.spaces.in.type.arguments");
+  String SPACES_IN_TYPE_ARGUMENTS = ApplicationBundle.message("group.spaces.in.type.arguments.block");
+  String SPACES_IN_TYPE_PARAMETERS = ApplicationBundle.message("group.spaces.in.type.parameters.block");
   String SPACES_OTHER = ApplicationBundle.message("group.spaces.other");
 
   String BLANK_LINES_KEEP = ApplicationBundle.message("title.keep.blank.lines");
@@ -209,6 +241,7 @@ public interface CodeStyleSettingsCustomizable {
 
   String WRAPPING_KEEP = ApplicationBundle.message("wrapping.keep.when.reformatting");
   String WRAPPING_BRACES = ApplicationBundle.message("wrapping.brace.placement");
+  String WRAPPING_COMMENTS = ApplicationBundle.message("wrapping.comments");
   String WRAPPING_METHOD_PARAMETERS = ApplicationBundle.message("wrapping.method.parameters");
   String WRAPPING_METHOD_PARENTHESES = ApplicationBundle.message("wrapping.method.parentheses");
   String WRAPPING_METHOD_ARGUMENTS_WRAPPING = ApplicationBundle.message("wrapping.method.arguments");
@@ -232,68 +265,90 @@ public interface CodeStyleSettingsCustomizable {
   String WRAPPING_MODIFIER_LIST = ApplicationBundle.message("wrapping.modifier.list");
   String WRAPPING_ASSERT_STATEMENT = ApplicationBundle.message("wrapping.assert.statement");
 
-  String[] WRAP_OPTIONS = new String[]{
+  String[] WRAP_OPTIONS = {
     ApplicationBundle.message("wrapping.do.not.wrap"),
     ApplicationBundle.message("wrapping.wrap.if.long"),
     ApplicationBundle.message("wrapping.chop.down.if.long"),
     ApplicationBundle.message("wrapping.wrap.always")
   };
-  String[] WRAP_OPTIONS_FOR_SINGLETON = new String[]{
+  String[] WRAP_OPTIONS_FOR_SINGLETON = {
     ApplicationBundle.message("wrapping.do.not.wrap"),
     ApplicationBundle.message("wrapping.wrap.if.long"),
     ApplicationBundle.message("wrapping.wrap.always")
   };
-  int[] WRAP_VALUES = new int[]{CodeStyleSettings.DO_NOT_WRAP,
-    CodeStyleSettings.WRAP_AS_NEEDED,
-    CodeStyleSettings.WRAP_AS_NEEDED |
-    CodeStyleSettings.WRAP_ON_EVERY_ITEM,
-    CodeStyleSettings.WRAP_ALWAYS};
+  int[] WRAP_VALUES = {CommonCodeStyleSettings.DO_NOT_WRAP,
+    CommonCodeStyleSettings.WRAP_AS_NEEDED,
+    CommonCodeStyleSettings.WRAP_AS_NEEDED |
+    CommonCodeStyleSettings.WRAP_ON_EVERY_ITEM,
+    CommonCodeStyleSettings.WRAP_ALWAYS};
 
-  int[] WRAP_VALUES_FOR_SINGLETON = new int[]{CodeStyleSettings.DO_NOT_WRAP,
-    CodeStyleSettings.WRAP_AS_NEEDED,
-    CodeStyleSettings.WRAP_ALWAYS};
-  String[] BRACE_OPTIONS = new String[]{
+  int[] WRAP_VALUES_FOR_SINGLETON = {CommonCodeStyleSettings.DO_NOT_WRAP,
+    CommonCodeStyleSettings.WRAP_AS_NEEDED,
+    CommonCodeStyleSettings.WRAP_ALWAYS};
+  String[] BRACE_OPTIONS = {
     ApplicationBundle.message("wrapping.force.braces.do.not.force"),
     ApplicationBundle.message("wrapping.force.braces.when.multiline"),
     ApplicationBundle.message("wrapping.force.braces.always")
   };
-  int[] BRACE_VALUES = new int[]{
-    CodeStyleSettings.DO_NOT_FORCE,
-    CodeStyleSettings.FORCE_BRACES_IF_MULTILINE,
-    CodeStyleSettings.FORCE_BRACES_ALWAYS
+  int[] BRACE_VALUES = {
+    CommonCodeStyleSettings.DO_NOT_FORCE,
+    CommonCodeStyleSettings.FORCE_BRACES_IF_MULTILINE,
+    CommonCodeStyleSettings.FORCE_BRACES_ALWAYS
   };
-  String[] BRACE_PLACEMENT_OPTIONS = new String[]{
+  String[] BRACE_PLACEMENT_OPTIONS = {
     ApplicationBundle.message("wrapping.brace.placement.end.of.line"),
     ApplicationBundle.message("wrapping.brace.placement.next.line.if.wrapped"),
     ApplicationBundle.message("wrapping.brace.placement.next.line"),
     ApplicationBundle.message("wrapping.brace.placement.next.line.shifted"),
     ApplicationBundle.message("wrapping.brace.placement.next.line.each.shifted")
   };
-  int[] BRACE_PLACEMENT_VALUES = new int[]{
-    CodeStyleSettings.END_OF_LINE,
-    CodeStyleSettings.NEXT_LINE_IF_WRAPPED,
-    CodeStyleSettings.NEXT_LINE,
-    CodeStyleSettings.NEXT_LINE_SHIFTED,
-    CodeStyleSettings.NEXT_LINE_SHIFTED2
+  int[] BRACE_PLACEMENT_VALUES = {
+    CommonCodeStyleSettings.END_OF_LINE,
+    CommonCodeStyleSettings.NEXT_LINE_IF_WRAPPED,
+    CommonCodeStyleSettings.NEXT_LINE,
+    CommonCodeStyleSettings.NEXT_LINE_SHIFTED,
+    CommonCodeStyleSettings.NEXT_LINE_SHIFTED2
+  };
+
+  String[] WRAP_ON_TYPING_OPTIONS = {
+    ApplicationBundle.message("wrapping.wrap.on.typing.no.wrap"),
+    ApplicationBundle.message("wrapping.wrap.on.typing.wrap"),
+    ApplicationBundle.message("wrapping.wrap.on.typing.default")
+  };
+  int [] WRAP_ON_TYPING_VALUES = {
+    CommonCodeStyleSettings.WrapOnTyping.NO_WRAP.intValue,
+    CommonCodeStyleSettings.WrapOnTyping.WRAP.intValue,
+    CommonCodeStyleSettings.WrapOnTyping.DEFAULT.intValue
   };
 
   void showAllStandardOptions();
 
   void showStandardOptions(String... optionNames);
 
-  void showCustomOption(Class<? extends CustomCodeStyleSettings> settingsClass,
+  default void showCustomOption(Class<? extends CustomCodeStyleSettings> settingsClass,
                         String fieldName,
                         String title,
                         @Nullable String groupName,
-                        Object... options);
+                        Object... options) {
+  }
 
-  void showCustomOption(Class<? extends CustomCodeStyleSettings> settingsClass,
+  default void showCustomOption(Class<? extends CustomCodeStyleSettings> settingsClass,
                         String fieldName,
                         String title,
                         @Nullable String groupName,
                         @Nullable OptionAnchor anchor,
                         @Nullable String anchorFieldName,
-                        Object... options);
+                        Object... options) {
+  }
 
-  void renameStandardOption(String fieldName, String newTitle);
+  default void renameStandardOption(String fieldName, String newTitle) {
+  }
+
+  /**
+   * Moves a standard option to another group.
+   * @param fieldName The field name of the option to move (as defined in {@code CommonCodeStyleSettings} class).
+   * @param newGroup  The new group name (the group may be one of existing ones). A custom group name can be used if supported by consumer.
+   */
+  default void moveStandardOption(String fieldName, String newGroup) {
+  }
 }

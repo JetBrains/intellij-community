@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,9 +24,6 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.theoryinpractice.testng.util.TestNGUtil;
 import org.jetbrains.annotations.NotNull;
 
-/**
-* User: anna
-*/
 public class TestNGSearchScope extends GlobalSearchScope {
 
   private final ProjectFileIndex myFileIndex;
@@ -35,18 +32,17 @@ public class TestNGSearchScope extends GlobalSearchScope {
     myFileIndex = ProjectRootManager.getInstance(project).getFileIndex();
   }
 
-  public boolean contains(VirtualFile file) {
-    return myFileIndex.isInContent(file) && TestNGUtil.isTestngXML(file);
+  @Override
+  public boolean contains(@NotNull VirtualFile file) {
+    return myFileIndex.isInContent(file) && TestNGUtil.isTestngSuiteFile(file);
   }
 
-  public int compare(VirtualFile file1, VirtualFile file2) {
-    return 0;
-  }
-
+  @Override
   public boolean isSearchInModuleContent(@NotNull Module aModule) {
     return true;
   }
 
+  @Override
   public boolean isSearchInLibraries() {
     return false;
   }

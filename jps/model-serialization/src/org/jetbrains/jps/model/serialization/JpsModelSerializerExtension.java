@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,6 +31,7 @@ import org.jetbrains.jps.model.serialization.library.JpsLibraryRootTypeSerialize
 import org.jetbrains.jps.model.serialization.library.JpsSdkPropertiesSerializer;
 import org.jetbrains.jps.model.serialization.module.JpsModuleClasspathSerializer;
 import org.jetbrains.jps.model.serialization.module.JpsModulePropertiesSerializer;
+import org.jetbrains.jps.model.serialization.module.JpsModuleSourceRootPropertiesSerializer;
 import org.jetbrains.jps.model.serialization.runConfigurations.JpsRunConfigurationPropertiesSerializer;
 import org.jetbrains.jps.service.JpsServiceManager;
 
@@ -98,6 +99,11 @@ public abstract class JpsModelSerializerExtension {
   }
 
   @NotNull
+  public List<? extends JpsModuleSourceRootPropertiesSerializer<?>> getModuleSourceRootPropertiesSerializers() {
+    return Collections.emptyList();
+  }
+
+  @NotNull
   public List<? extends JpsLibraryPropertiesSerializer<?>> getLibraryPropertiesSerializers() {
     return Collections.emptyList();
   }
@@ -107,18 +113,22 @@ public abstract class JpsModelSerializerExtension {
     return Collections.emptyList();
   }
 
+  @NotNull
   public List<? extends JpsFacetConfigurationSerializer<?>> getFacetConfigurationSerializers() {
     return Collections.emptyList();
   }
 
+  @NotNull
   public List<? extends JpsPackagingElementSerializer<?>> getPackagingElementSerializers() {
     return Collections.emptyList();
   }
 
+  @NotNull
   public List<? extends JpsArtifactPropertiesSerializer<?>> getArtifactTypePropertiesSerializers() {
     return Collections.emptyList();
   }
 
+  @NotNull
   public List<? extends JpsArtifactExtensionSerializer<?>> getArtifactExtensionSerializers() {
     return Collections.emptyList();
   }

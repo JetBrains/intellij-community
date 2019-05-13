@@ -24,6 +24,7 @@ import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.pom.Navigatable;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.ColoredTreeCellRenderer;
@@ -33,9 +34,12 @@ import com.intellij.ui.popup.util.ItemWrapper;
 import com.intellij.xdebugger.ui.DebuggerColors;
 
 import javax.swing.*;
+import java.awt.*;
 
-public abstract class BreakpointItem extends ItemWrapper implements Comparable<BreakpointItem> {
+public abstract class BreakpointItem extends ItemWrapper implements Comparable<BreakpointItem>, Navigatable {
   public static final Key<Object> EDITOR_ONLY = Key.create("EditorOnly");
+
+  public abstract void saveState();
 
   public abstract Object getBreakpoint();
 
@@ -58,19 +62,24 @@ public abstract class BreakpointItem extends ItemWrapper implements Comparable<B
     panel.navigateInPreviewEditor(state);
 
     TextAttributes softerAttributes = attributes.clone();
-    softerAttributes.setBackgroundColor(ColorUtil.softer(softerAttributes.getBackgroundColor()));
+    Color backgroundColor = softerAttributes.getBackgroundColor();
+    if (backgroundColor != null) {
+      softerAttributes.setBackgroundColor(ColorUtil.softer(backgroundColor));
+    }
 
     final Editor editor = panel.getEditor();
-    final MarkupModel editorModel = editor.getMarkupModel();
-    final MarkupModel documentModel =
-      DocumentMarkupModel.forDocument(editor.getDocument(), editor.getProject(), false);
+    if (editor != null) {
+      final MarkupModel editorModel = editor.getMarkupModel();
+      final MarkupModel documentModel =
+        DocumentMarkupModel.forDocument(editor.getDocument(), editor.getProject(), false);
 
-    for (RangeHighlighter highlighter : documentModel.getAllHighlighters()) {
-      if (highlighter.getUserData(DebuggerColors.BREAKPOINT_HIGHLIGHTER_KEY) == Boolean.TRUE) {
-        final int line1 = editor.offsetToLogicalPosition(highlighter.getStartOffset()).line;
-        if (line1 != line) {
-          editorModel.addLineHighlighter(line1,
-                                         DebuggerColors.BREAKPOINT_HIGHLIGHTER_LAYER + 1, softerAttributes);
+      for (RangeHighlighter highlighter : documentModel.getAllHighlighters()) {
+        if (highlighter.getUserData(DebuggerColors.BREAKPOINT_HIGHLIGHTER_KEY) == Boolean.TRUE) {
+          final int line1 = editor.offsetToLogicalPosition(highlighter.getStartOffset()).line;
+          if (line1 != line) {
+            editorModel.addLineHighlighter(line1,
+                                           DebuggerColors.BREAKPOINT_HIGHLIGHTER_LAYER + 1, softerAttributes);
+          }
         }
       }
     }
@@ -94,12 +103,13 @@ public abstract class BreakpointItem extends ItemWrapper implements Comparable<B
   }
 
 
-  protected abstract void setupGenericRenderer(SimpleColoredComponent renderer, boolean plainView);
+  public abstract void setupGenericRenderer(SimpleColoredComponent renderer, boolean plainView);
 
   public abstract Icon getIcon();
 
   public abstract String getDisplayText();
 
+  protected void dispose() {}
 
   @Override
   public boolean equals(Object o) {
@@ -117,6 +127,4 @@ public abstract class BreakpointItem extends ItemWrapper implements Comparable<B
   public int hashCode() {
     return getBreakpoint() != null ? getBreakpoint().hashCode() : 0;
   }
-
-  public abstract boolean navigate();
 }

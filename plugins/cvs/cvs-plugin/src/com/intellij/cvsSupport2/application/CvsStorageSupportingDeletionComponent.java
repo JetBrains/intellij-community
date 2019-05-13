@@ -1,38 +1,28 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.cvsSupport2.application;
 
 import com.intellij.cvsSupport2.CvsUtil;
 import com.intellij.cvsSupport2.CvsVcs2;
-import com.intellij.lifecycle.PeriodicalTasksCloser;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.command.CommandEvent;
 import com.intellij.openapi.command.CommandListener;
-import com.intellij.openapi.command.CommandProcessor;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vfs.*;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 
-public class CvsStorageSupportingDeletionComponent extends CvsStorageComponent implements CommandListener {
-  private static final Logger LOG = Logger.getInstance("#" + CvsStorageSupportingDeletionComponent.class.getName());
+public class CvsStorageSupportingDeletionComponent implements VirtualFileListener {
+  private static final Logger LOG = Logger.getInstance(CvsStorageSupportingDeletionComponent.class);
+  protected boolean myIsActive = false;
   private Project myProject;
 
   private DeletedCVSDirectoryStorage myDeletedStorage;
@@ -43,55 +33,62 @@ public class CvsStorageSupportingDeletionComponent extends CvsStorageComponent i
   private int myCommandLevel = 0;
 
   private boolean myAnotherProjectCommand = false;
-  static final Key<AbstractVcs> FILE_VCS = new Key<AbstractVcs>("File VCS");
+  static final Key<AbstractVcs> FILE_VCS = new Key<>("File VCS");
 
-  public void commandStarted(CommandEvent event) {
-    myCommandLevel++;
-    if (myCommandLevel == 1) {
-      myAnotherProjectCommand = (event.getProject() != null) != (event.getProject() == myProject);
-    }
+  private Disposable myListenerDisposable = Disposer.newDisposable();
 
-    if (LOG.isDebugEnabled()) {
-      LOG.debug("Started" + event.getCommandName() + ", commandLevel: " + myCommandLevel);
-    }
+  @NotNull
+  public static CvsStorageSupportingDeletionComponent getInstance(@NotNull Project project) {
+    return ServiceManager.getService(project, CvsStorageSupportingDeletionComponent.class);
   }
 
-  public void beforeCommandFinished(CommandEvent event) {}
-
-  public void undoTransparentActionStarted() {}
-
-  public void undoTransparentActionFinished() {}
-
-  public void commandFinished(CommandEvent event) {
-    myCommandLevel--;
-    if (LOG.isDebugEnabled()) {
-      LOG.debug("Finished" + event.getCommandName() + ", commandLevel: " + myCommandLevel);
-    }
-    execute();
-  }
-
-  public void init(Project project, boolean sync) {
+  public void init(@NotNull Project project) {
     myProject = project;
     initializeDeletedStorage();
-    VirtualFileManager.getInstance().addVirtualFileListener(this);
+    VirtualFileManager.getInstance().addVirtualFileListener(this, myListenerDisposable);
     CvsEntriesManager.getInstance().registerAsVirtualFileListener();
-    CommandProcessor.getInstance().addCommandListener(this);
+    project.getMessageBus().connect(myListenerDisposable).subscribe(CommandListener.TOPIC, new CommandListener() {
+      @Override
+      public void commandStarted(@NotNull CommandEvent event) {
+        myCommandLevel++;
+        if (myCommandLevel == 1) {
+          myAnotherProjectCommand = (event.getProject() == null) == (event.getProject() == myProject);
+        }
+
+        if (LOG.isDebugEnabled()) {
+          LOG.debug("Started" + event.getCommandName() + ", commandLevel: " + myCommandLevel);
+        }
+      }
+
+      @Override
+      public void commandFinished(@NotNull CommandEvent event) {
+        myCommandLevel--;
+        if (LOG.isDebugEnabled()) {
+          LOG.debug("Finished" + event.getCommandName() + ", commandLevel: " + myCommandLevel);
+        }
+        execute();
+      }
+    });
     myFileOperationsHandler = new CvsFileOperationsHandler(project, this);
     LocalFileSystem.getInstance().registerAuxiliaryFileOperationsHandler(myFileOperationsHandler);
     myIsActive = true;
   }
 
-  public void dispose() {
-    VirtualFileManager.getInstance().removeVirtualFileListener(this);
+  public void deactivate() {
+    Disposable listenerDisposable = myListenerDisposable;
+    if (listenerDisposable == null) {
+      return;
+    }
+
+    myListenerDisposable = null;
+    Disposer.dispose(listenerDisposable);
+
     CvsEntriesManager.getInstance().unregisterAsVirtualFileListener();
-    CommandProcessor.getInstance().removeCommandListener(this);
     LocalFileSystem.getInstance().unregisterAuxiliaryFileOperationsHandler(myFileOperationsHandler);
     myFileOperationsHandler = null;
     myIsActive = false;
     myProject = null;
   }
-
-  public void beforeFileDeletion(VirtualFileEvent event) {}
 
   public DeleteHandler getDeleteHandler() {
     if (myDeleteHandler == null) {
@@ -100,9 +97,7 @@ public class CvsStorageSupportingDeletionComponent extends CvsStorageComponent i
     return myDeleteHandler;
   }
 
-  public void fileDeleted(VirtualFileEvent event) {}
-
-  private boolean shouldProcessEvent(VirtualFileEvent event, boolean parentShouldBeUnderCvs) {
+  private boolean shouldProcessEvent(VirtualFileEvent event) {
     if (myAnotherProjectCommand) {
       return false;
     }
@@ -110,20 +105,19 @@ public class CvsStorageSupportingDeletionComponent extends CvsStorageComponent i
     if (disabled(file) || event.isFromRefresh() || isStorageEvent(event) || !isUnderCvsManagedModuleRoot(file)) {
       return false;
     }
-    return !parentShouldBeUnderCvs || parentIsUnderCvs(file);
+    return true;
+  }
+
+  public boolean getIsActive() {
+    return myIsActive;
   }
 
   private static boolean isStorageEvent(VirtualFileEvent event) {
     return event.getRequestor() instanceof DeletedCVSDirectoryStorage;
   }
 
-  private static boolean parentIsUnderCvs(VirtualFile file) {
-    return CvsUtil.fileIsUnderCvs(file.getParent());
-  }
-
-  public void beforeFileMovement(VirtualFileMoveEvent event) {}
-
-  public void fileMoved(VirtualFileMoveEvent event) {
+  @Override
+  public void fileMoved(@NotNull VirtualFileMoveEvent event) {
     fileCreated(event);
   }
 
@@ -147,29 +141,32 @@ public class CvsStorageSupportingDeletionComponent extends CvsStorageComponent i
     return ProjectLevelVcsManager.getInstance(myProject).getVcsFor(file) != CvsVcs2.getInstance(myProject);
   }
 
-  public void beforePropertyChange(VirtualFilePropertyEvent event) {
+  @Override
+  public void beforePropertyChange(@NotNull VirtualFilePropertyEvent event) {
     if (!event.getPropertyName().equals(VirtualFile.PROP_NAME)) return;
     if (!CvsUtil.fileIsUnderCvs(event.getFile())) return;
     beforeFileDeletion(event);
   }
 
-  public void propertyChanged(VirtualFilePropertyEvent event) {
+  @Override
+  public void propertyChanged(@NotNull VirtualFilePropertyEvent event) {
     if (processMoveOrRename()) {
       fileDeleted(event);
       fileCreated(event);
     }
   }
 
-  public void fileCreated(final VirtualFileEvent event) {
-    if (!shouldProcessEvent(event, false)) return;
+  @Override
+  public void fileCreated(@NotNull final VirtualFileEvent event) {
+    if (!shouldProcessEvent(event)) return;
     final Project project = myProject;
     if (project == null) return;    // already disposed
-    
+
     final VirtualFile file = event.getFile();
     if (myDeleteHandler != null) {
       myDeleteHandler.removeDeletedRoot(file);
     }
-    myDeletedStorage.checkNeedForPurge(VfsUtil.virtualToIoFile(file));
+    myDeletedStorage.checkNeedForPurge(VfsUtilCore.virtualToIoFile(file));
     deleteIfAdminDirCreated(file);
     getAddHandler().addFile(file);
 
@@ -203,21 +200,16 @@ public class CvsStorageSupportingDeletionComponent extends CvsStorageComponent i
 
   private void initializeDeletedStorage() {
     final File storageRoot = getStorageRoot();
-    storageRoot.mkdirs();
+    FileUtilRt.createDirectory(storageRoot);
     myDeletedStorage = new DeletedCVSDirectoryStorage(storageRoot);
   }
 
   private static File getStorageRoot() {
-    //noinspection HardCodedStringLiteral
     return new File(PathManager.getSystemPath(), "CVS-TO-DELETE");
   }
 
   public void sync() {
     //myDeletedStorage.sync();
-  }
-
-  public static CvsStorageComponent getInstance(Project project) {
-    return PeriodicalTasksCloser.getInstance().safeGetService(project, CvsStorageComponent.class);
   }
 
   public void deleteIfAdminDirCreated(VirtualFile addedFile) {

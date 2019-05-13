@@ -26,7 +26,7 @@ public class AmbiguousPatternsFinder {
   private final static int ourMessageLen = 30;
 
   public AmbiguousPatternsFinder() {
-    urls2groups = new HashMap<String, Set<String>>();
+    urls2groups = new HashMap<>();
   }
 
   public void acceptUrls(final String groupName, final List<String> urls) {
@@ -35,7 +35,7 @@ public class AmbiguousPatternsFinder {
       if (urls2groups.containsKey(url)) {
         set = urls2groups.get(url);
       } else {
-        set = new HashSet<String>();
+        set = new HashSet<>();
         urls2groups.put(url, set);
       }
       set.add(groupName);

@@ -18,6 +18,7 @@ package com.intellij.ide.wizard;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.util.EventDispatcher;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -42,6 +43,7 @@ public abstract class AbstractWizardStepEx implements Step, Disposable {
     myTitle = title;
   }
 
+  @Override
   public void _init() {
   }
 
@@ -49,6 +51,7 @@ public abstract class AbstractWizardStepEx implements Step, Disposable {
     commit(CommitType.Prev);
   }
 
+  @Override
   public final void _commit(boolean finishChosen) throws CommitStepException {
     commit(finishChosen ? CommitType.Finish : CommitType.Next);
   }
@@ -69,6 +72,7 @@ public abstract class AbstractWizardStepEx implements Step, Disposable {
     myEventDispatcher.getMulticaster().doNextAction();
   }
 
+  @Override
   public Icon getIcon() {
     return null;
   }
@@ -91,12 +95,15 @@ public abstract class AbstractWizardStepEx implements Step, Disposable {
     return myTitle;
   }
 
+  @Override
   public void dispose() {
   }
 
+  @Override
   @Nullable
   public abstract JComponent getPreferredFocusedComponent();
 
+  @NonNls
   public String getHelpId() {
     return null;
   }

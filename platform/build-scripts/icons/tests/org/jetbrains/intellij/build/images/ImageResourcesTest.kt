@@ -1,0 +1,225 @@
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+package org.jetbrains.intellij.build.images
+
+import com.intellij.openapi.application.PathManager
+import com.intellij.openapi.util.io.FileUtil
+import com.intellij.util.containers.ContainerUtil
+import org.jetbrains.jps.model.JpsElementFactory
+import org.jetbrains.jps.model.JpsModel
+import org.jetbrains.jps.model.module.JpsModule
+import org.jetbrains.jps.model.serialization.JpsModelSerializationDataService
+import org.jetbrains.jps.model.serialization.JpsProjectLoader
+import org.junit.Ignore
+import org.junit.Test
+import org.junit.runner.RunWith
+import org.junit.runners.Parameterized
+import org.junit.runners.Parameterized.Parameter
+import org.junit.runners.Parameterized.Parameters
+import java.io.File
+import java.nio.file.Path
+import java.nio.file.Paths
+import java.util.*
+
+class CommunityImageResourcesSanityTest : ImageResourcesTestBase() {
+  companion object {
+    @JvmStatic
+    @Parameters(name = "{0}")
+    fun data(): Collection<Array<Any?>> {
+      return ImageResourcesTestBase.collectBadIcons(TestRoot.COMMUNITY)
+    }
+  }
+}
+
+class CommunityImageResourcesOptimumSizeTest : ImageResourcesTestBase() {
+  companion object {
+    @JvmStatic
+    @Parameters(name = "{0}")
+    fun data(): Collection<Array<Any?>> {
+      return ImageResourcesTestBase.collectIconsWithNonOptimumSize(TestRoot.COMMUNITY)
+    }
+  }
+}
+
+class CommunityIconClassesTest : ImageResourcesTestBase() {
+  companion object {
+    @JvmStatic
+    @Parameters(name = "{0}")
+    fun data(): Collection<Array<Any?>> {
+      return ImageResourcesTestBase.collectNonRegeneratedIconClasses(TestRoot.COMMUNITY)
+    }
+  }
+}
+
+@Ignore
+class AllImageResourcesSanityTest : ImageResourcesTestBase() {
+  companion object {
+    @JvmStatic
+    @Parameters(name = "{0}")
+    fun data(): Collection<Array<Any?>> {
+      return ImageResourcesTestBase.collectBadIcons(TestRoot.ALL, true)
+    }
+  }
+}
+
+@Ignore
+class AllImageResourcesOptimumSizeTest : ImageResourcesTestBase() {
+  companion object {
+    @JvmStatic
+    @Parameters(name = "{0}")
+    fun data(): Collection<Array<Any?>> {
+      return ImageResourcesTestBase.collectIconsWithNonOptimumSize(TestRoot.ALL, false, true)
+    }
+  }
+}
+
+
+@RunWith(Parameterized::class)
+abstract class ImageResourcesTestBase {
+  @JvmField @Parameter(value = 0) var testName: String? = null
+  @JvmField @Parameter(value = 1) var exception: Throwable? = null
+
+  @Test
+  fun test() {
+    if (exception != null) throw exception!!
+  }
+
+  enum class TestRoot { COMMUNITY, ULTIMATE, ALL }
+
+  companion object {
+    @JvmStatic
+    @JvmOverloads
+    fun collectBadIcons(root: TestRoot,
+                        ignoreSkipTag: Boolean = false): List<Array<Any?>> {
+      val model = loadProjectModel(root)
+      val modules = collectModules(root, model)
+      val checker = MySanityChecker(File(PathManager.getHomePath()), ignoreSkipTag)
+      modules.forEach {
+        checker.check(it)
+      }
+      return createTestData(modules, checker.failures)
+    }
+
+    @JvmStatic
+    @JvmOverloads
+    fun collectIconsWithNonOptimumSize(root: TestRoot,
+                                       iconsOnly: Boolean = true,
+                                       ignoreSkipTag: Boolean = false): List<Array<Any?>> {
+      val model = loadProjectModel(root)
+      val modules = collectModules(root, model)
+      val checker = MyOptimumSizeChecker(Paths.get(PathManager.getHomePath()), iconsOnly, ignoreSkipTag)
+      modules.forEach {
+        checker.checkOptimumSizes(it)
+      }
+      return createTestData(modules, checker.failures)
+    }
+
+    @JvmStatic
+    fun collectNonRegeneratedIconClasses(root: TestRoot): List<Array<Any?>> {
+      val model = loadProjectModel(root)
+      val util = model.project.modules.find { it.name == "intellij.platform.util" } ?: throw IllegalStateException("Can't load module 'util'")
+      val modules = collectModules(root, model)
+
+      val checker = MyIconClassFileChecker(File(PathManager.getHomePath()), util)
+      modules.forEach {
+        checker.checkIconClasses(it)
+      }
+      return createTestData(modules, checker.failures)
+    }
+
+    private fun createTestData(modules: List<JpsModule>, failures: Collection<FailedTest>): List<Array<Any?>> {
+      val success = listOf(arrayOf<Any?>("success: processed ${modules.size} modules", null))
+      val failedTests = failures
+        .sortedWith(compareBy<FailedTest> { it.module }.thenBy { it.id }.thenBy { it.message })
+        .map { arrayOf<Any?>(it.getTestName(), it.getException()) }
+      return success + failedTests
+    }
+
+    private fun loadProjectModel(root: TestRoot): JpsModel {
+      val home = getHomePath(root)
+      val model = JpsElementFactory.getInstance().createModel()
+
+      val pathVariables = JpsModelSerializationDataService.computeAllPathVariables(model.global)
+      JpsProjectLoader.loadProject(model.project, pathVariables, home.path)
+
+      return model
+    }
+
+    private fun collectModules(root: TestRoot,
+                               model: JpsModel): List<JpsModule> {
+      val home = getHomePath(root)
+      return model.project.modules
+        .filterNot { root == TestRoot.ULTIMATE && isCommunityModule(home, it) }
+    }
+
+    private fun getHomePath(root: TestRoot): File {
+      val home = File(PathManager.getHomePath())
+
+      if (root == TestRoot.COMMUNITY) {
+        val community = File(home, "community")
+        if (community.exists()) return community
+      }
+      return home
+    }
+
+    private fun isCommunityModule(home: File, module: JpsModule): Boolean {
+      val community = File(home, "community")
+      return module.sourceRoots.all { FileUtil.isAncestor(community, it.file, false) }
+    }
+  }
+}
+
+private class MySanityChecker(projectHome: File, ignoreSkipTag: Boolean) : ImageSanityCheckerBase(projectHome, ignoreSkipTag) {
+  val failures = ArrayList<FailedTest>()
+
+  override fun log(severity: ImageSanityCheckerBase.Severity,
+                   message: String,
+                   module: JpsModule,
+                   images: Collection<ImagePaths>) {
+    if (severity == Severity.INFO) return
+    images.forEach { image ->
+      failures.add(FailedTest(module, message, image))
+    }
+  }
+}
+
+private class MyOptimumSizeChecker(val projectHome: Path, val iconsOnly: Boolean, val ignoreSkipTag: Boolean) {
+  val failures = ContainerUtil.createConcurrentList<FailedTest>()
+  fun checkOptimumSizes(module: JpsModule) {
+    val allImages = ImageCollector(projectHome, iconsOnly, ignoreSkipTag).collect(module)
+    allImages.parallelStream().filter { it.file != null }.forEach { image ->
+      image.files.parallelStream().forEach { file ->
+        val optimized = ImageSizeOptimizer.optimizeImage(file)
+        if (optimized != null && !optimized.hasOptimumSize) {
+          failures.add(FailedTest(module, "image size can be optimized: ${optimized.compressionStats}", image, file.toFile()))
+        }
+      }
+    }
+  }
+}
+
+private class MyIconClassFileChecker(val projectHome: File, val util: JpsModule) {
+  val failures = ArrayList<FailedTest>()
+
+  fun checkIconClasses(module: JpsModule) {
+    val generator = IconsClassGenerator(projectHome, util, false)
+    generator.processModule(module)
+
+    generator.getModifiedClasses().forEach { (module, file, details) ->
+      failures.add(FailedTest(module, "icon class file should be regenerated (run \"Generate icon classes\" configuration)", file, details))
+    }
+  }
+}
+
+class FailedTest internal constructor(val module: String, val message: String, val id: String, val details: String) {
+  internal constructor(module: JpsModule, message: String, image: ImagePaths, file: File) :
+    this(module.name, message, image.id, file.absolutePath)
+
+  internal constructor(module: JpsModule, message: String, image: ImagePaths) :
+    this(module.name, message, image.id, image.files.map { it.toAbsolutePath().toString() }.joinToString("\n"))
+
+  internal constructor(module: JpsModule, message: String, file: Path, details: CharSequence) :
+    this(module.name, message, file.fileName.toString(), "$file\n\n$details")
+
+  fun getTestName(): String = "'${module}' - $id - ${message.substringBefore('\n')}"
+  fun getException(): Throwable = Exception("${message}\n\n$details".trim())
+}

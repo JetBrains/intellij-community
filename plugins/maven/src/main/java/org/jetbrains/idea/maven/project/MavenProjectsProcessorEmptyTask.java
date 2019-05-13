@@ -24,6 +24,7 @@ public class MavenProjectsProcessorEmptyTask extends MavenProjectsProcessorBasic
     super(project, null);
   }
 
+  @Override
   public void perform(Project project, MavenEmbeddersManager embeddersManager, MavenConsole console, MavenProgressIndicator indicator)
     throws MavenProcessCanceledException {
     throw new UnsupportedOperationException();

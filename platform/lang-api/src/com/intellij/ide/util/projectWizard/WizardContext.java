@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,53 +15,84 @@
  */
 package com.intellij.ide.util.projectWizard;
 
-import com.intellij.ide.GeneralSettings;
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.RecentProjectsManager;
+import com.intellij.ide.wizard.AbstractWizard;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.components.StorageScheme;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.util.IconLoader;
-import com.intellij.openapi.util.NotNullLazyValue;
+import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
+import com.intellij.openapi.util.UserDataHolderBase;
+import com.intellij.platform.ProjectTemplate;
 import com.intellij.util.SystemProperties;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.io.File;
-import java.util.ArrayList;
 import java.util.List;
 
-public class WizardContext {
-  private static final Icon NEW_PROJECT_ICON = IconLoader.getIcon("/newprojectwizard.png");
-  private static final Icon NEW_MODULE_ICON = IconLoader.getIcon("/addmodulewizard.png");
+public class WizardContext extends UserDataHolderBase {
   /**
    * a project where the module should be added, can be null => the wizard creates a new project
    */
   @Nullable
   private final Project myProject;
+  private final Disposable myDisposable;
   private String myProjectFileDirectory;
   private String myProjectName;
   private String myCompilerOutputDirectory;
   private Sdk myProjectJdk;
   private ProjectBuilder myProjectBuilder;
-  private final List<Listener> myListeners = new ArrayList<Listener>();
+  /**
+   * Stores project type builder in case if replaced by TemplateModuleBuilder
+   */
+  private ProjectBuilder myOriginalBuilder;
+  private final List<Listener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
   private StorageScheme myProjectStorageFormat = StorageScheme.DIRECTORY_BASED;
-
-  private final NotNullLazyValue<ModuleBuilder[]> myAllBuilders = new NotNullLazyValue<ModuleBuilder[]>() {
-    @NotNull
-    @Override
-    protected ModuleBuilder[] compute() {
-      List<ModuleBuilder> builders = ModuleBuilder.getAllBuilders();
-      return builders.toArray(new ModuleBuilder[builders.size()]);
-    }
-  };
-
-  private ModuleWizardStep myProjectSdkStep;
+  private ModulesProvider myModulesProvider;
+  private boolean myProjectFileDirectorySetExplicitly;
+  private AbstractWizard myWizard;
+  private String myDefaultModuleName = "untitled";
 
   public void setProjectStorageFormat(StorageScheme format) {
     myProjectStorageFormat = format;
+  }
+
+  public boolean isNewWizard() {
+    return true;
+  }
+
+  public ModulesProvider getModulesProvider() {
+    return myModulesProvider;
+  }
+
+  public void setModulesProvider(ModulesProvider modulesProvider) {
+    myModulesProvider = modulesProvider;
+  }
+
+  public Disposable getDisposable() {
+    return myDisposable;
+  }
+
+  public AbstractWizard getWizard() {
+    return myWizard;
+  }
+
+  public void setWizard(AbstractWizard wizard) {
+    myWizard = wizard;
+  }
+
+  public void setDefaultModuleName(String defaultModuleName) {
+    myDefaultModuleName = defaultModuleName;
+  }
+
+  public String getDefaultModuleName() {
+    return myDefaultModuleName;
   }
 
   public interface Listener {
@@ -69,8 +100,9 @@ public class WizardContext {
     void nextStepRequested();
   }
 
-  public WizardContext(@Nullable Project project) {
+  public WizardContext(@Nullable Project project, Disposable parentDisposable) {
     myProject = project;
+    myDisposable = parentDisposable;
     if (myProject != null){
       myProjectJdk = ProjectRootManager.getInstance(myProject).getProjectSdk();
     }
@@ -81,25 +113,16 @@ public class WizardContext {
     return myProject;
   }
 
-  public ModuleWizardStep getProjectSdkStep() {
-    return myProjectSdkStep;
-  }
-
-  public void setProjectSdkStep(ModuleWizardStep projectSdkStep) {
-    myProjectSdkStep = projectSdkStep;
-  }
-
   @NotNull
   public String getProjectFileDirectory() {
     if (myProjectFileDirectory != null) {
       return myProjectFileDirectory;
     }
-    final String lastProjectLocation = GeneralSettings.getInstance().getLastProjectCreationLocation();
+    final String lastProjectLocation = RecentProjectsManager.getInstance().getLastProjectCreationLocation();
     if (lastProjectLocation != null) {
       return lastProjectLocation.replace('/', File.separatorChar);
     }
     final String userHome = SystemProperties.getUserHome();
-    //noinspection HardCodedStringLiteral
     String productName = ApplicationNamesInfo.getInstance().getLowercaseProductName();
     return userHome.replace('/', File.separatorChar) + File.separator + productName.replace(" ", "") + "Projects";
   }
@@ -108,7 +131,16 @@ public class WizardContext {
     return myProjectFileDirectory != null;
   }
 
+  public boolean isProjectFileDirectorySetExplicitly() {
+    return myProjectFileDirectorySetExplicitly;
+  }
+
   public void setProjectFileDirectory(String projectFileDirectory) {
+    setProjectFileDirectory(projectFileDirectory, false);
+  }
+
+  public void setProjectFileDirectory(String projectFileDirectory, boolean explicitly) {
+    myProjectFileDirectorySetExplicitly = explicitly;
     myProjectFileDirectory = projectFileDirectory;
   }
 
@@ -133,29 +165,23 @@ public class WizardContext {
   }
 
   public Icon getStepIcon() {
-    return isCreatingNewProject() ? NEW_PROJECT_ICON : NEW_MODULE_ICON;
+    return null;
   }
 
   public void requestWizardButtonsUpdate() {
-    final Listener[] listeners = myListeners.toArray(new Listener[myListeners.size()]);
-    for (Listener listener : listeners) {
+    for (Listener listener : myListeners) {
       listener.buttonsUpdateRequested();
     }
   }
 
   public void requestNextStep() {
-    final Listener[] listeners = myListeners.toArray(new Listener[myListeners.size()]);
-    for (Listener listener : listeners) {
+    for (Listener listener : myListeners) {
       listener.nextStepRequested();
     }
   }
 
   public void addContextListener(Listener listener) {
     myListeners.add(listener);
-  }
-
-  public void removeContextListener(Listener listener) {
-    myListeners.remove(listener);
   }
 
   public void setProjectJdk(Sdk jdk) {
@@ -173,17 +199,23 @@ public class WizardContext {
 
   public void setProjectBuilder(@Nullable final ProjectBuilder projectBuilder) {
     myProjectBuilder = projectBuilder;
+    myOriginalBuilder = myProjectBuilder;
+  }
+
+  public void setProjectTemplate(@Nullable ProjectTemplate projectTemplate) {
+    if (projectTemplate != null) {
+      myProjectBuilder = projectTemplate.createModuleBuilder();
+    }
+    else {
+      myProjectBuilder = myOriginalBuilder;
+    }
   }
 
   public String getPresentationName() {
-    return myProject == null ? IdeBundle.message("project.new.wizard.project.identification") : IdeBundle.message("project.new.wizard.module.identification");
+    return IdeBundle.message(myProject == null ? "project.new.wizard.project.identification" : "project.new.wizard.module.identification");
   }
 
   public StorageScheme getProjectStorageFormat() {
     return myProjectStorageFormat;
-  }
-
-  public ModuleBuilder[] getAllBuilders() {
-    return myAllBuilders.getValue();
   }
 }

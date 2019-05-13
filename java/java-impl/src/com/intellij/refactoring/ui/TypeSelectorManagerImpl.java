@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,6 +31,7 @@ import com.intellij.refactoring.util.RefactoringHierarchyUtil;
 import com.intellij.util.ArrayUtil;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
@@ -45,17 +46,17 @@ public class TypeSelectorManagerImpl implements TypeSelectorManager {
   private final PsiType[] myTypesForMain;
   private final PsiType[] myTypesForAll;
   private final boolean myIsOneSuggestion;
-  private TypeSelector myTypeSelector;
+  private final TypeSelector myTypeSelector;
   private final PsiElementFactory myFactory;
   private final SmartTypePointerManager mySmartTypePointerManager;
-  private ExpectedTypesProvider.ExpectedClassProvider myOccurrenceClassProvider;
+  private final ExpectedTypesProvider.ExpectedClassProvider myOccurrenceClassProvider;
 
   public TypeSelectorManagerImpl(Project project, PsiType type, PsiExpression[] occurrences) {
     this(project, type, occurrences, true);
   }
 
   public TypeSelectorManagerImpl(Project project, PsiType type, PsiExpression[] occurrences, boolean areTypesDirected) {
-    myFactory = JavaPsiFacade.getInstance(project).getElementFactory();
+    myFactory = JavaPsiFacade.getElementFactory(project);
     mySmartTypePointerManager = SmartTypePointerManager.getInstance(project);
     setDefaultType(type);
     myMainOccurrence = null;
@@ -84,7 +85,7 @@ public class TypeSelectorManagerImpl implements TypeSelectorManager {
                                  PsiMethod containingMethod,
                                  PsiExpression mainOccurrence,
                                  PsiExpression[] occurrences) {
-    myFactory = JavaPsiFacade.getInstance(project).getElementFactory();
+    myFactory = JavaPsiFacade.getElementFactory(project);
     mySmartTypePointerManager = SmartTypePointerManager.getInstance(project);
     setDefaultType(type);
     myMainOccurrence = mainOccurrence;
@@ -150,25 +151,41 @@ public class TypeSelectorManagerImpl implements TypeSelectorManager {
   }
 
   private ExpectedTypesProvider.ExpectedClassProvider createOccurrenceClassProvider() {
-    final Set<PsiClass> occurrenceClasses = new HashSet<PsiClass>();
+    final Set<PsiClass> occurrenceClasses = new HashSet<>();
     for (final PsiExpression occurrence : myOccurrences) {
       final PsiType occurrenceType = occurrence.getType();
+      collectOccurrenceClasses(occurrenceClasses, occurrenceType);
+    }
+    return new ExpectedTypeUtil.ExpectedClassesFromSetProvider(occurrenceClasses);
+  }
+
+  private static void collectOccurrenceClasses(Set<PsiClass> occurrenceClasses, PsiType occurrenceType) {
+    if (occurrenceType instanceof PsiIntersectionType) {
+      for (PsiType type : ((PsiIntersectionType)occurrenceType).getConjuncts()) {
+        collectOccurrenceClasses(occurrenceClasses, type);
+      }
+    }
+    else if (occurrenceType instanceof PsiCapturedWildcardType) {
+      collectOccurrenceClasses(occurrenceClasses, ((PsiCapturedWildcardType)occurrenceType).getUpperBound());
+    }
+    else {
       final PsiClass aClass = PsiUtil.resolveClassInType(occurrenceType);
       if (aClass != null) {
         occurrenceClasses.add(aClass);
       }
     }
-    return new ExpectedTypeUtil.ExpectedClassesFromSetProvider(occurrenceClasses);
   }
 
   private PsiType[] getTypesForMain() {
     final ExpectedTypeInfo[] expectedTypes = ExpectedTypesProvider.getExpectedTypes(myMainOccurrence, false, myOccurrenceClassProvider, false);
-    final ArrayList<PsiType> allowedTypes = new ArrayList<PsiType>();
+    final ArrayList<PsiType> allowedTypes = new ArrayList<>();
     RefactoringHierarchyUtil.processSuperTypes(getDefaultType(), new RefactoringHierarchyUtil.SuperTypeVisitor() {
+      @Override
       public void visitType(PsiType aType) {
         checkIfAllowed(aType);
       }
 
+      @Override
       public void visitClass(PsiClass aClass) {
         checkIfAllowed(myFactory.createType(aClass));
       }
@@ -189,12 +206,22 @@ public class TypeSelectorManagerImpl implements TypeSelectorManager {
       }
     });
 
+    collectAllSameShapedTypes(expectedTypes, allowedTypes);
+
     ArrayList<PsiType> result = normalizeTypeList(allowedTypes);
-    return result.toArray(new PsiType[result.size()]);
+    return result.toArray(PsiType.createArray(result.size()));
   }
 
-  private PsiType[] getTypesForAll(final boolean areTypesDirected) {
-    final ArrayList<ExpectedTypeInfo[]> expectedTypesFromAll = new ArrayList<ExpectedTypeInfo[]>();
+  private static void collectAllSameShapedTypes(ExpectedTypeInfo[] expectedTypes, ArrayList<PsiType> allowedTypes) {
+    for (ExpectedTypeInfo info : expectedTypes) {
+      if (info.getKind() == ExpectedTypeInfo.TYPE_SAME_SHAPED) {
+        allowedTypes.add(info.getDefaultType());
+      }
+    }
+  }
+
+  protected PsiType[] getTypesForAll(final boolean areTypesDirected) {
+    final ArrayList<ExpectedTypeInfo[]> expectedTypesFromAll = new ArrayList<>();
     for (PsiExpression occurrence : myOccurrences) {
       final ExpectedTypeInfo[] expectedTypes = ExpectedTypesProvider.getExpectedTypes(occurrence, false, myOccurrenceClassProvider, isUsedAfter());
       if (expectedTypes.length > 0) {
@@ -202,12 +229,14 @@ public class TypeSelectorManagerImpl implements TypeSelectorManager {
       }
     }
 
-    final ArrayList<PsiType> allowedTypes = new ArrayList<PsiType>();
+    final ArrayList<PsiType> allowedTypes = new ArrayList<>();
     RefactoringHierarchyUtil.processSuperTypes(getDefaultType(), new RefactoringHierarchyUtil.SuperTypeVisitor() {
+      @Override
       public void visitType(PsiType aType) {
         checkIfAllowed(aType);
       }
 
+      @Override
       public void visitClass(PsiClass aClass) {
         checkIfAllowed(myFactory.createType(aClass));
       }
@@ -224,11 +253,15 @@ public class TypeSelectorManagerImpl implements TypeSelectorManager {
       }
     });
 
+    for (ExpectedTypeInfo[] typeInfos : expectedTypesFromAll) {
+      collectAllSameShapedTypes(typeInfos, allowedTypes);
+    }
+
     final ArrayList<PsiType> result = normalizeTypeList(allowedTypes);
     if (!areTypesDirected) {
       Collections.reverse(result);
     }
-    return result.toArray(new PsiType[result.size()]);
+    return result.toArray(PsiType.createArray(result.size()));
   }
 
   protected boolean isUsedAfter() {
@@ -236,7 +269,7 @@ public class TypeSelectorManagerImpl implements TypeSelectorManager {
   }
 
   private ArrayList<PsiType> normalizeTypeList(final ArrayList<PsiType> typeList) {
-    ArrayList<PsiType> result = new ArrayList<PsiType>();
+    ArrayList<PsiType> result = new ArrayList<>();
     TypeListCreatingVisitor visitor = new TypeListCreatingVisitor(result, myFactory);
     for (PsiType psiType : typeList) {
       visitor.visitType(psiType);
@@ -270,6 +303,7 @@ public class TypeSelectorManagerImpl implements TypeSelectorManager {
     return result;
   }
 
+  @Override
   public void setAllOccurrences(boolean allOccurrences) {
     if (myIsOneSuggestion) return;
     setTypesAndPreselect(allOccurrences ? myTypesForAll : myTypesForMain);
@@ -278,20 +312,31 @@ public class TypeSelectorManagerImpl implements TypeSelectorManager {
   private void setTypesAndPreselect(PsiType[] types) {
     myTypeSelector.setTypes(types);
 
-    Map<String, PsiType> map = new THashMap<String, PsiType>();
+    final PsiType preferredType = getPreferredType(types, getDefaultType());
+    if (preferredType != null) {
+      myTypeSelector.selectType(preferredType);
+    }
+  }
+
+  public static PsiType getPreferredType(PsiType[] types, PsiType defaultType) {
+
+    if (defaultType instanceof PsiPrimitiveType) return defaultType;
+
+    Map<String, PsiType> map = new THashMap<>();
     for (final PsiType type : types) {
       map.put(serialize(type), type);
     }
 
-    for (StatisticsInfo info : StatisticsManager.getInstance().getAllValues(getStatsKey())) {
+    for (StatisticsInfo info : StatisticsManager.getInstance().getAllValues(getStatsKey(defaultType))) {
       final PsiType candidate = map.get(info.getValue());
       if (candidate != null && StatisticsManager.getInstance().getUseCount(info) > 0) {
-        myTypeSelector.selectType(candidate);
-        return;
+        return candidate;
       }
     }
+    return null;
   }
 
+  @Override
   public boolean isSuggestedType(final String fqName) {
     for(PsiType type: myTypesForAll) {
       if (type.getCanonicalText().equals(fqName)) {
@@ -308,27 +353,29 @@ public class TypeSelectorManagerImpl implements TypeSelectorManager {
     return false;
   }
 
+  @Override
   public void typeSelected(@NotNull PsiType type) {
     typeSelected(type, getDefaultType());
   }
 
-  public static void typeSelected(final PsiType type, final PsiType defaultType) {
+  public static void typeSelected(@NotNull final PsiType type, @Nullable final PsiType defaultType) {
+    if (defaultType == null) return;
     StatisticsManager.getInstance().incUseCount(new StatisticsInfo(getStatsKey(defaultType), serialize(type)));
   }
 
-  private String getStatsKey() {
-    return getStatsKey(getDefaultType());
-  }
-
   private static String getStatsKey(final PsiType defaultType) {
+    if (defaultType == null) {
+      return "IntroduceVariable##";
+    }
     return "IntroduceVariable##" + serialize(defaultType);
   }
 
-  private static String serialize(PsiType type) {
+  private static String serialize(@NotNull PsiType type) {
     if (PsiUtil.resolveClassInType(type) instanceof PsiTypeParameter) return type.getCanonicalText();
     return TypeConversionUtil.erasure(type).getCanonicalText();
   }
 
+  @Override
   public TypeSelector getTypeSelector() {
     return myTypeSelector;
   }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2012 Bas Leijdekkers
+ * Copyright 2007-2015 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,35 +15,16 @@
  */
 package com.siyeh.ipp.opassign;
 
-import com.intellij.psi.*;
-import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.util.TypeConversionUtil;
-import com.intellij.util.IncorrectOperationException;
-import com.siyeh.IntentionPowerPackBundle;
+import com.intellij.codeInspection.CommonQuickFixBundle;
+import com.intellij.psi.PsiAssignmentExpression;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiJavaToken;
+import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ipp.base.MutablyNamedIntention;
 import com.siyeh.ipp.base.PsiElementPredicate;
-import com.siyeh.ipp.psiutils.ParenthesesUtils;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.HashMap;
-import java.util.Map;
-
-public class ReplaceOperatorAssignmentWithAssignmentIntention
-  extends MutablyNamedIntention {
-
-  private static final Map<IElementType, IElementType> tokenMap = new HashMap<IElementType, IElementType>() {{
-    put(JavaTokenType.PLUSEQ, JavaTokenType.PLUS);
-    put(JavaTokenType.MINUSEQ, JavaTokenType.MINUS);
-    put(JavaTokenType.ASTERISKEQ, JavaTokenType.ASTERISK);
-    put(JavaTokenType.DIVEQ, JavaTokenType.DIV);
-    put(JavaTokenType.ANDEQ, JavaTokenType.AND);
-    put(JavaTokenType.OREQ, JavaTokenType.OR);
-    put(JavaTokenType.XOREQ, JavaTokenType.XOR);
-    put(JavaTokenType.PERCEQ, JavaTokenType.PERC);
-    put(JavaTokenType.LTLTEQ, JavaTokenType.LTLT);
-    put(JavaTokenType.GTGTEQ, JavaTokenType.GTGT);
-    put(JavaTokenType.GTGTGTEQ, JavaTokenType.GTGTGT);
-  }};
+public class ReplaceOperatorAssignmentWithAssignmentIntention extends MutablyNamedIntention {
 
   @Override
   @NotNull
@@ -53,63 +34,14 @@ public class ReplaceOperatorAssignmentWithAssignmentIntention
 
   @Override
   protected String getTextForElement(PsiElement element) {
-    final PsiAssignmentExpression assignmentExpression =
-      (PsiAssignmentExpression)element;
+    final PsiAssignmentExpression assignmentExpression = (PsiAssignmentExpression)element;
     final PsiJavaToken sign = assignmentExpression.getOperationSign();
     final String operator = sign.getText();
-    return IntentionPowerPackBundle.message(
-      "replace.operator.assignment.with.assignment.intention.name",
-      operator);
+    return CommonQuickFixBundle.message("fix.replace.x.with.y", operator, "=");
   }
 
   @Override
-  protected void processIntention(@NotNull PsiElement element) throws IncorrectOperationException {
-    final PsiAssignmentExpression assignmentExpression = (PsiAssignmentExpression)element;
-    final PsiJavaToken sign = assignmentExpression.getOperationSign();
-    final PsiExpression lhs = assignmentExpression.getLExpression();
-    final PsiExpression rhs = assignmentExpression.getRExpression();
-    final String operator = sign.getText();
-    final String newOperator = operator.substring(0, operator.length() - 1);
-    final String lhsText = lhs.getText();
-    final String rhsText = (rhs == null) ? "" : rhs.getText();
-    final boolean parentheses;
-    if (rhs instanceof PsiBinaryExpression) {
-      final PsiBinaryExpression binaryExpression = (PsiBinaryExpression)rhs;
-      final int precedence1 = ParenthesesUtils.getPrecedenceForOperator(binaryExpression.getOperationTokenType());
-      final IElementType signTokenType = sign.getTokenType();
-      final IElementType newOperatorToken = tokenMap.get(signTokenType);
-      final int precedence2 = ParenthesesUtils.getPrecedenceForOperator(newOperatorToken);
-      parentheses = precedence1 >= precedence2 || !ParenthesesUtils.isCommutativeBinaryOperator(newOperatorToken);
-    }
-    else {
-      parentheses = false;
-    }
-    final String cast = getCastString(lhs, rhs);
-    final StringBuilder newExpression = new StringBuilder(lhsText);
-    newExpression.append('=').append(cast);
-    if (!cast.isEmpty()) {
-      newExpression.append('(');
-    }
-    newExpression.append(lhsText).append(newOperator);
-    if (parentheses) {
-      newExpression.append('(').append(rhsText).append(')');
-    }
-    else {
-      newExpression.append(rhsText);
-    }
-    if (!cast.isEmpty()) {
-      newExpression.append(')');
-    }
-    replaceExpression(newExpression.toString(), assignmentExpression);
-  }
-
-  private static String getCastString(PsiExpression lhs, PsiExpression rhs) {
-    final PsiType lType = lhs.getType();
-    final PsiType rType = rhs.getType();
-    if (lType == null || rType == null ||
-        TypeConversionUtil.isAssignable(lType, rType) || !TypeConversionUtil.areTypesConvertible(lType, rType)) {
-      return "";
-    }
-    return '(' + lType.getCanonicalText() + ')';
+  protected void processIntention(@NotNull PsiElement element) {
+    PsiReplacementUtil.replaceOperatorAssignmentWithAssignmentExpression((PsiAssignmentExpression)element);
   }
 }

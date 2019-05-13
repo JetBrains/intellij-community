@@ -28,7 +28,7 @@ public final class GlobalContextKey<T> extends Key<T> {
   }
 
   public static <T> GlobalContextKey<T> create(@NotNull @NonNls String name) {
-    return new GlobalContextKey<T>(name);
+    return new GlobalContextKey<>(name);
   }
 
 }

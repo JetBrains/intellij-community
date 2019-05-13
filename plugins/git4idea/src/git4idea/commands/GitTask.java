@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,14 +15,15 @@
  */
 package git4idea.commands;
 
+import com.intellij.concurrency.JobScheduler;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
@@ -31,27 +32,20 @@ import git4idea.GitVcs;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Timer;
-import java.util.TimerTask;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
- * A Task to run the given GitHandler with ability to cancel it.
+ * All Git commands are cancellable when called via {@link GitHandler}. <br/>
+ * To execute the command synchronously, call {@link Git#runCommand(Computable)}.<br/>
+ * To execute in the background or under a modal progress, use the standard {@link Task}. <br/>
+ * To watch the progress, call {@link GitStandardProgressAnalyzer#createListener(ProgressIndicator)}.
  *
- * <b>Cancellation</b> is implemented with a {@link java.util.Timer} which checks whether the ProgressIndicator was cancelled and kills
- * the GitHandler in that case.
- *
- * A GitTask may be executed synchronously ({@link #executeModal()} or asynchronously ({@link #executeAsync(GitTask.ResultHandler)}.
- * Result of the execution is encapsulated in {@link GitTaskResult}.
- *
- * <p>
- * <b>GitTaskResultHandler</b> is called from AWT-thread. Use {@link #setExecuteResultInAwt(boolean) setExecuteResultInAwt(false)}
- * to execute the result {@link com.intellij.openapi.application.Application#executeOnPooledThread(Runnable) on the pooled thread}.
- * </p>
- *
- * @author Kirill Likhodedov
+ * @deprecated To remove in IDEA 2017.
  */
+@Deprecated
 public class GitTask {
 
   private static final Logger LOG = Logger.getInstance(GitTask.class);
@@ -72,16 +66,9 @@ public class GitTask {
    * Executes this task synchronously, with a modal progress dialog.
    * @return Result of the task execution.
    */
+  @SuppressWarnings("unused")
   public GitTaskResult executeModal() {
     return execute(true);
-  }
-
-  /**
-   * Executes the task synchronously, with a modal progress dialog.
-   * @param resultHandler callback which will be called after task execution.
-   */
-  public void executeModal(GitTaskResultHandler resultHandler) {
-    execute(true, true, resultHandler);
   }
 
   /**
@@ -99,7 +86,7 @@ public class GitTask {
   // this is always sync
   @NotNull
   public GitTaskResult execute(boolean modal) {
-    final AtomicReference<GitTaskResult> result = new AtomicReference<GitTaskResult>(GitTaskResult.INITIAL);
+    final AtomicReference<GitTaskResult> result = new AtomicReference<>(GitTaskResult.INITIAL);
     execute(true, modal, new GitTaskResultHandlerAdapter() {
       @Override
       protected void run(GitTaskResult res) {
@@ -111,9 +98,9 @@ public class GitTask {
 
   /**
    * The most general execution method.
-   * @param sync  Set to <code>true</code> to make the calling thread wait for the task execution.
-   * @param modal If <code>true</code>, the task will be modal with a modal progress dialog. If false, the task will be executed in
-   * background. <code>modal</code> implies <code>sync</code>, i.e. if modal then sync doesn't matter: you'll wait anyway.
+   * @param sync  Set to {@code true} to make the calling thread wait for the task execution.
+   * @param modal If {@code true}, the task will be modal with a modal progress dialog. If false, the task will be executed in
+   * background. {@code modal} implies {@code sync}, i.e. if modal then sync doesn't matter: you'll wait anyway.
    * @param resultHandler Handle the result.
    * @see #execute(boolean)
    */
@@ -131,13 +118,13 @@ public class GitTask {
           commonOnCancel(LOCK, resultHandler);
           completed.set(true);
         }
-      };
-      ApplicationManager.getApplication().invokeAndWait(new Runnable() {
-        @Override
-        public void run() {
-          ProgressManager.getInstance().run(task);
+        @Override public void onThrowable(@NotNull Throwable error) {
+          super.onThrowable(error);
+          commonOnCancel(LOCK, resultHandler);
+          completed.set(true);
         }
-      }, ModalityState.defaultModalityState());
+      };
+      ApplicationManager.getApplication().invokeAndWait(() -> ProgressManager.getInstance().run(task));
     } else {
       final BackgroundableTask task = new BackgroundableTask(myProject, myHandler, myTitle) {
         @Override public void onSuccess() {
@@ -192,7 +179,7 @@ public class GitTask {
     final GitLineHandlerListener listener = new GitLineHandlerListener() {
       @Override
       public void processTerminated(int exitCode) {
-        if (exitCode != 0 && !myHandler.isIgnoredErrorCode(exitCode)) {
+        if (exitCode != 0) {
           if (myHandler.errors().isEmpty()) {
             myHandler.addError(new VcsException(myHandler.getLastOutput()));
           }
@@ -200,7 +187,7 @@ public class GitTask {
       }
 
       @Override
-      public void startFailed(Throwable exception) {
+      public void startFailed(@NotNull Throwable exception) {
         myHandler.addError(new VcsException("Git start failed: " + exception.getMessage(), exception));
       }
 
@@ -237,7 +224,7 @@ public class GitTask {
       }
 
       @Override
-      public void startFailed(Throwable exception) {
+      public void startFailed(@NotNull Throwable exception) {
         task.dispose();
       }
     });
@@ -265,9 +252,9 @@ public class GitTask {
   // To minimize code duplication we use GitTaskDelegate.
 
   private abstract class BackgroundableTask extends Task.Backgroundable implements TaskExecution {
-    private GitTaskDelegate myDelegate;
+    private final GitTaskDelegate myDelegate;
 
-    public BackgroundableTask(@Nullable final Project project, @NotNull GitHandler handler, @NotNull final String processTitle) {
+    BackgroundableTask(@Nullable final Project project, @NotNull GitHandler handler, @NotNull final String processTitle) {
       super(project, processTitle, true);
       myDelegate = new GitTaskDelegate(myProject, handler, this);
     }
@@ -279,12 +266,7 @@ public class GitTask {
 
     public final void runAlone() {
       if (ApplicationManager.getApplication().isDispatchThread()) {
-        ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
-          @Override
-          public void run() {
-            justRun();
-          }
-        });
+        ApplicationManager.getApplication().executeOnPooledThread(() -> justRun());
       } else {
         justRun();
       }
@@ -315,16 +297,15 @@ public class GitTask {
   }
 
   private abstract class ModalTask extends Task.Modal implements TaskExecution {
-    private GitTaskDelegate myDelegate;
+    private final GitTaskDelegate myDelegate;
 
-    public ModalTask(@Nullable final Project project, @NotNull GitHandler handler, @NotNull final String processTitle) {
+    ModalTask(@Nullable final Project project, @NotNull GitHandler handler, @NotNull final String processTitle) {
       super(project, processTitle, true);
       myDelegate = new GitTaskDelegate(myProject, handler, this);
     }
 
     @Override
     public final void run(@NotNull ProgressIndicator indicator) {
-      myHandler.setModalityState(indicator.getModalityState());
       myDelegate.run(indicator);
     }
 
@@ -341,18 +322,18 @@ public class GitTask {
   }
 
   /**
-   * Does the work which is common for BackgrounableTask and ModalTask.
+   * Does the work which is common for BackgroundableTask and ModalTask.
    * Actually - starts a timer which checks if current progress indicator is cancelled.
    * If yes, kills the GitHandler.
    */
   private static class GitTaskDelegate implements Disposable {
-    private GitHandler myHandler;
+    private final GitHandler myHandler;
     private ProgressIndicator myIndicator;
-    private TaskExecution myTask;
-    private Timer myTimer;
-    private Project myProject;
+    private final TaskExecution myTask;
+    private ScheduledFuture<?> myTimer;
+    private final Project myProject;
 
-    public GitTaskDelegate(Project project, GitHandler handler, TaskExecution task) {
+    GitTaskDelegate(Project project, GitHandler handler, TaskExecution task) {
       myProject = project;
       myHandler = handler;
       myTask = task;
@@ -361,27 +342,26 @@ public class GitTask {
 
     public void run(ProgressIndicator indicator) {
       myIndicator = indicator;
-      myTimer = new Timer();
-      myTimer.schedule(new TimerTask() {
-        @Override
-        public void run() {
+      myTimer = JobScheduler.getScheduler().scheduleWithFixedDelay(
+        ()-> {
           if (myIndicator != null && myIndicator.isCanceled()) {
             try {
               if (myHandler != null) {
                 myHandler.destroyProcess();
               }
-            } finally {
-              Disposer.dispose(GitTaskDelegate.this);
+            }
+            finally {
+              Disposer.dispose(this);
             }
           }
-        }
-      }, 0, 200);
+      }, 0, 200, TimeUnit.MILLISECONDS);
       myTask.execute(indicator);
     }
 
+    @Override
     public void dispose() {
       if (myTimer != null) {
-        myTimer.cancel();
+        myTimer.cancel(false);
       }
     }
   }

@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.ui;
 
+import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -24,11 +25,17 @@ import javax.swing.*;
  * Describes why the data entered in a DialogWrapper is invalid.
  *
  * @author Konstantin Bulenkov
- * @see com.intellij.openapi.ui.DialogWrapper#doValidate()
+ * @see DialogWrapper#doValidate()
  */
 public final class ValidationInfo {
+  @NotNull
   public final String message;
+
+  @Nullable
   public final JComponent component;
+
+  public boolean okEnabled;
+  public boolean warning;
 
   /**
    * Creates a validation error message associated with a specific component. The component will have an error icon drawn next to it,
@@ -49,5 +56,27 @@ public final class ValidationInfo {
    */
   public ValidationInfo(@NotNull String message) {
     this(message, null);
+  }
+
+  public ValidationInfo withOKEnabled() {
+    okEnabled = true;
+    return this;
+  }
+
+  public ValidationInfo asWarning() {
+    warning = true;
+    return this;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (!(o instanceof ValidationInfo)) return false;
+
+    ValidationInfo that = (ValidationInfo)o;
+    return StringUtil.equals(this.message, that.message) &&
+           this.component == that.component &&
+           this.okEnabled == that.okEnabled &&
+           this.warning == that.warning;
   }
 }

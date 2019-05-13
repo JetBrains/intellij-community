@@ -20,7 +20,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.util.PsiUtilBase;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.usageView.UsageViewBundle;
 import com.intellij.usageView.UsageViewDescriptor;
@@ -40,13 +40,13 @@ public class RenameViewDescriptor implements UsageViewDescriptor{
 
   public RenameViewDescriptor(LinkedHashMap<PsiElement, String> renamesMap) {
 
-    myElements = PsiUtilBase.toPsiElementArray(renamesMap.keySet());
+    myElements = PsiUtilCore.toPsiElementArray(renamesMap.keySet());
 
-    Set<String> processedElementsHeaders = new THashSet<String>();
-    Set<String> codeReferences = new THashSet<String>();
+    Set<String> processedElementsHeaders = new THashSet<>();
+    Set<String> codeReferences = new THashSet<>();
 
     for (final PsiElement element : myElements) {
-      LOG.assertTrue(element.isValid(), "Invalid element: " + element.toString());
+      PsiUtilCore.ensureValid(element);
       String newName = renamesMap.get(element);
 
       String prefix = "";
@@ -69,19 +69,24 @@ public class RenameViewDescriptor implements UsageViewDescriptor{
                                                                                                  ", "));
   }
 
+  @Override
   @NotNull
   public PsiElement[] getElements() {
     return myElements;
   }
 
+  @Override
   public String getProcessedElementsHeader() {
     return myProcessedElementsHeader;
   }
 
+  @NotNull
+  @Override
   public String getCodeReferencesText(int usagesCount, int filesCount) {
     return myCodeReferencesText + UsageViewBundle.getReferencesString(usagesCount, filesCount);
   }
 
+  @Override
   public String getCommentReferencesText(int usagesCount, int filesCount) {
     return RefactoringBundle.message("comments.elements.header",
                                      UsageViewBundle.getOccurencesString(usagesCount, filesCount));

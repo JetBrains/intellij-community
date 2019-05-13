@@ -1,4 +1,4 @@
-// "Static Import Method..." "true"
+// "Import static method..." "true"
 package p;
 
 import static p.FFF.myEqualTo;

@@ -28,7 +28,6 @@ import org.jetbrains.annotations.NotNull;
  * This SHOULD NOT be subclassed!
  *
  * @author Dmitry Avdeev
- *         Date: 6/7/12
  */
 public final class DomStructureViewBuilderProvider implements XmlStructureViewBuilderProvider {
 
@@ -41,10 +40,5 @@ public final class DomStructureViewBuilderProvider implements XmlStructureViewBu
   }
 
   public static final Function<DomElement,DomService.StructureViewMode> DESCRIPTOR =
-    new Function<DomElement, DomService.StructureViewMode>() {
-      @Override
-      public DomService.StructureViewMode fun(DomElement element) {
-        return DomService.StructureViewMode.SHOW;
-      }
-    };
+    element -> DomService.StructureViewMode.SHOW;
 }

@@ -1,28 +1,19 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui;
 
-import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonShortcuts;
 import com.intellij.openapi.actionSystem.CustomShortcutSet;
+import com.intellij.openapi.application.Experiments;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.FixedSizeButton;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
+import com.intellij.ui.components.fields.ExtendableTextComponent;
 import com.intellij.util.PlatformIcons;
+import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -30,6 +21,7 @@ import javax.swing.event.DocumentEvent;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.util.ArrayList;
 
@@ -40,7 +32,7 @@ public abstract class AbstractFieldPanel extends JPanel {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ui.AbstractFieldPanel");
   private final JComponent myComponent;
   private Runnable myChangeListener;
-  protected ArrayList<JButton> myButtons = new ArrayList<JButton>(1);
+  protected ArrayList<JButton> myButtons = new ArrayList<>(1);
   protected JLabel myLabel;
   private ActionListener myBrowseButtonActionListener;
   private String myViewerDialogTitle;
@@ -68,6 +60,7 @@ public abstract class AbstractFieldPanel extends JPanel {
 
   public abstract void setText(String text);
 
+  @Override
   public void setEnabled(boolean enabled) {
     getComponent().setEnabled(enabled);
     if (myLabel != null) {
@@ -78,6 +71,7 @@ public abstract class AbstractFieldPanel extends JPanel {
     }
   }
 
+  @Override
   public boolean isEnabled() {
     return myComponent != null && myComponent.isEnabled();
   }
@@ -91,8 +85,8 @@ public abstract class AbstractFieldPanel extends JPanel {
   public final JLabel getFieldLabel() {
     if (myLabel == null){
       myLabel = new JLabel(myLabelText);
-      add(myLabel, new GridBagConstraints(0, 0, 1, 1, 0.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(0, 0, 5, 0), 0, 0));
-      myLabel.setLabelFor(getComponent());      
+      add(myLabel, new GridBagConstraints(0, 0, 1, 1, 0.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE, JBUI.insetsBottom(5), 0, 0));
+      myLabel.setLabelFor(getComponent());
     }
     return myLabel;
   }
@@ -111,19 +105,33 @@ public abstract class AbstractFieldPanel extends JPanel {
 
     if (myLabelText != null) {
       myLabel = new JLabel(myLabelText);
-      this.add(myLabel, new GridBagConstraints(0, 0, 1, 1, 0.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(0, 0, 5, 0), 0, 0));
+      this.add(myLabel, new GridBagConstraints(0, 0, 1, 1, 0.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE, JBUI.insetsBottom(5), 0, 0));
       myLabel.setLabelFor(myComponent);
     }
 
-    this.add(myComponent, new GridBagConstraints(0, 1, 1, 1, 1.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 0), 0, 0));
+    this.add(myComponent, new GridBagConstraints(0, 1, 1, 1, 1.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL, JBUI.emptyInsets(), 0, 0));
 
     if (myBrowseButtonActionListener != null) {
-      FixedSizeButton browseButton = new FixedSizeButton(getComponent());
-      myDoClickAction = new TextFieldWithBrowseButton.MyDoClickAction(browseButton);
-      browseButton.setFocusable(false);
-      browseButton.addActionListener(myBrowseButtonActionListener);
-      myButtons.add(browseButton);
-      this.add(browseButton, new GridBagConstraints(GridBagConstraints.RELATIVE, 1, 1, 1, 0.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(0, 2, 0, 0), 0, 0));
+      if (Experiments.isFeatureEnabled("inline.browse.button") && myComponent instanceof ExtendableTextComponent) {
+        ((ExtendableTextComponent)myComponent).addExtension(ExtendableTextComponent.Extension.create(
+          AllIcons.General.OpenDisk, AllIcons.General.OpenDiskHover,
+          UIBundle.message("component.with.browse.button.browse.button.tooltip.text"),
+          this::notifyActionListener));
+        new DumbAwareAction() {
+          @Override
+          public void actionPerformed(@NotNull AnActionEvent e) {
+            notifyActionListener();
+          }
+        }.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, InputEvent.SHIFT_DOWN_MASK)), myComponent);
+
+      } else {
+        FixedSizeButton browseButton = new FixedSizeButton(getComponent());
+        myDoClickAction = new TextFieldWithBrowseButton.MyDoClickAction(browseButton);
+        browseButton.setFocusable(false);
+        browseButton.addActionListener(myBrowseButtonActionListener);
+        myButtons.add(browseButton);
+        this.add(browseButton, new GridBagConstraints(GridBagConstraints.RELATIVE, 1, 1, 1, 0.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE, JBUI.insetsLeft(2), 0, 0));
+      }
     }
     if (myViewerDialogTitle != null) {
       final FixedSizeButton showViewerButton = new FixedSizeButton(getComponent());
@@ -134,6 +142,7 @@ public abstract class AbstractFieldPanel extends JPanel {
       showViewerButton.setFocusable(false);
       showViewerButton.setIcon(PlatformIcons.OPEN_EDIT_DIALOG_ICON);
       showViewerButton.addActionListener(new ActionListener() {
+        @Override
         public void actionPerformed(ActionEvent e) {
           Viewer viewer = new Viewer();
           viewer.setTitle(myViewerDialogTitle);
@@ -141,8 +150,13 @@ public abstract class AbstractFieldPanel extends JPanel {
         }
       });
       myButtons.add(showViewerButton);
-      this.add(showViewerButton, new GridBagConstraints(GridBagConstraints.RELATIVE, 1, 1, 1, 0.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
+      this.add(showViewerButton, new GridBagConstraints(GridBagConstraints.RELATIVE, 1, 1, 1, 0.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE, JBUI.emptyInsets(), 0, 0));
     }
+  }
+
+  private void notifyActionListener() {
+    ActionEvent event = new ActionEvent(myComponent, ActionEvent.ACTION_PERFORMED, "action");
+    if (myBrowseButtonActionListener != null) myBrowseButtonActionListener.actionPerformed(event);
   }
 
   public void setBrowseButtonActionListener(ActionListener browseButtonActionListener) {
@@ -173,39 +187,39 @@ public abstract class AbstractFieldPanel extends JPanel {
       init();
     }
 
+    @Override
     @NotNull
     protected Action[] createActions() {
       return new Action[]{getOKAction(), getCancelAction()};
     }
 
+    @Override
     public JComponent getPreferredFocusedComponent() {
       return myTextArea;
     }
 
+    @Override
     protected void doOKAction() {
       setText(myTextArea.getText());
       super.doOKAction();
     }
 
+    @Override
     protected JComponent createCenterPanel() {
       myTextArea = new JTextArea(10, 50);
       myTextArea.setText(getText());
       myTextArea.setWrapStyleWord(true);
       myTextArea.setLineWrap(true);
       myTextArea.getDocument().addDocumentListener(new DocumentAdapter() {
-        public void textChanged(DocumentEvent event) {
+        @Override
+        public void textChanged(@NotNull DocumentEvent event) {
           if (myChangeListener != null) {
             myChangeListener.run();
           }
         }
       });
 
-      new AnAction() {
-        public void actionPerformed(AnActionEvent e) {
-          doOKAction();
-        }
-      }.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0)), myTextArea);
-
+      DumbAwareAction.create(e -> doOKAction()).registerCustomShortcutSet(CommonShortcuts.ENTER, myTextArea);
       return ScrollPaneFactory.createScrollPane(myTextArea);
     }
   }

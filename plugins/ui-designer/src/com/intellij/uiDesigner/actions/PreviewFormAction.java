@@ -1,31 +1,20 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.uiDesigner.actions;
 
 import com.intellij.CommonBundle;
 import com.intellij.compiler.PsiClassWriter;
 import com.intellij.compiler.impl.FileSetCompileScope;
 import com.intellij.compiler.instrumentation.InstrumentationClassFinder;
-import com.intellij.execution.*;
+import com.intellij.execution.CantRunException;
+import com.intellij.execution.ExecutionException;
+import com.intellij.execution.ExecutionResult;
+import com.intellij.execution.Executor;
 import com.intellij.execution.configurations.*;
 import com.intellij.execution.executors.DefaultRunExecutor;
-import com.intellij.execution.filters.TextConsoleBuilderFactory;
 import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.runners.ExecutionEnvironment;
+import com.intellij.execution.runners.ExecutionEnvironmentBuilder;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.lang.properties.PropertiesFileType;
 import com.intellij.lang.properties.PropertiesReferenceManager;
@@ -55,20 +44,19 @@ import com.intellij.uiDesigner.compiler.FormErrorInfo;
 import com.intellij.uiDesigner.compiler.Utils;
 import com.intellij.uiDesigner.designSurface.GuiEditor;
 import com.intellij.uiDesigner.lw.*;
-import org.jetbrains.jps.incremental.java.CopyResourcesUtil;
-import com.intellij.uiDesigner.make.Form2ByteCodeCompiler;
 import com.intellij.uiDesigner.make.PreviewNestedFormLoader;
 import com.intellij.util.PathsList;
-import com.intellij.util.containers.HashSet;
+import com.jgoodies.forms.layout.CellConstraints;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.jps.incremental.java.CopyResourcesUtil;
 
 import javax.swing.*;
 import java.io.File;
 import java.io.IOException;
-import java.util.List;
-import java.util.Locale;
+import java.net.URL;
+import java.util.*;
 
 /**
  * @author Anton Katilin
@@ -85,14 +73,31 @@ public final class PreviewFormAction extends AnAction{
   @NonNls private static final String RUNTIME_BUNDLE_PREFIX = "RuntimeBundle";
   @NonNls public static final String PREVIEW_BINDING_FIELD = "myComponent";
 
-  public void actionPerformed(final AnActionEvent e) {
+  @NotNull
+  public static InstrumentationClassFinder createClassFinder(@NotNull final String classPath){
+    final ArrayList<URL> urls = new ArrayList<>();
+    for (StringTokenizer tokenizer = new StringTokenizer(classPath, File.pathSeparator); tokenizer.hasMoreTokens();) {
+      final String s = tokenizer.nextToken();
+      try {
+        urls.add(new File(s).toURI().toURL());
+      }
+      catch (Exception exc) {
+        throw new RuntimeException(exc);
+      }
+    }
+    return new InstrumentationClassFinder(urls.toArray(new URL[0]));
+  }
+
+  @Override
+  public void actionPerformed(@NotNull final AnActionEvent e) {
     final GuiEditor editor = FormEditingUtil.getActiveEditor(e.getDataContext());
     if (editor != null) {
       showPreviewFrame(editor.getModule(), editor.getFile(), editor.getStringDescriptorLocale());
     }
   }
 
-  public void update(final AnActionEvent e) {
+  @Override
+  public void update(@NotNull final AnActionEvent e) {
     final GuiEditor editor = FormEditingUtil.getActiveEditor(e.getDataContext());
 
     if(editor == null){
@@ -129,7 +134,7 @@ public final class PreviewFormAction extends AnAction{
     final String classPath = OrderEnumerator.orderEntries(module).recursively().getPathsList().getPathsString() + File.pathSeparator +
       sources.getPathsString() + File.pathSeparator + /* resources bundles */
       tempPath;
-    final InstrumentationClassFinder finder = Form2ByteCodeCompiler.createClassFinder(classPath);
+    final InstrumentationClassFinder finder = createClassFinder(classPath);
 
     try {
       final Document doc = FileDocumentManager.getInstance().getDocument(formFile);
@@ -206,10 +211,11 @@ public final class PreviewFormAction extends AnAction{
       }
 
       // 2.5. Copy up-to-date properties files to the output directory.
-      final HashSet<String> bundleSet = new HashSet<String>();
+      final HashSet<String> bundleSet = new HashSet<>();
       FormEditingUtil.iterateStringDescriptors(
         rootContainer,
         new FormEditingUtil.StringDescriptorVisitor<IComponent>() {
+          @Override
           public boolean visit(final IComponent component, final StringDescriptor descriptor) {
             if (descriptor.getBundleName() != null) {
               bundleSet.add(descriptor.getDottedBundleName());
@@ -219,8 +225,8 @@ public final class PreviewFormAction extends AnAction{
         });
 
       if (bundleSet.size() > 0) {
-        HashSet<VirtualFile> virtualFiles = new HashSet<VirtualFile>();
-        HashSet<Module> modules = new HashSet<Module>();
+        HashSet<VirtualFile> virtualFiles = new HashSet<>();
+        HashSet<Module> modules = new HashSet<>();
         PropertiesReferenceManager manager = PropertiesReferenceManager.getInstance(module.getProject());
         for(String bundleName: bundleSet) {
           for(PropertiesFile propFile: manager.findPropertiesFiles(module, bundleName)) {
@@ -231,10 +237,11 @@ public final class PreviewFormAction extends AnAction{
             }
           }
         }
-        FileSetCompileScope scope = new FileSetCompileScope(virtualFiles, modules.toArray(new Module[modules.size()]));
+        FileSetCompileScope scope = new FileSetCompileScope(virtualFiles, modules.toArray(Module.EMPTY_ARRAY));
 
         CompilerManager.getInstance(module.getProject()).make(scope, new CompileStatusNotification() {
-          public void finished(boolean aborted, int errors, int warnings, final CompileContext compileContext) {
+          @Override
+          public void finished(boolean aborted, int errors, int warnings, @NotNull final CompileContext compileContext) {
             if (!aborted && errors == 0) {
               runPreviewProcess(tempPath, sources, module, formFile, stringDescriptorLocale);
             }
@@ -256,6 +263,7 @@ public final class PreviewFormAction extends AnAction{
     FormEditingUtil.iterate(
       rootContainer,
       new FormEditingUtil.ComponentVisitor<LwComponent>() {
+        @Override
         public boolean visit(final LwComponent iComponent) {
           iComponent.setBinding(null);
           return true;
@@ -263,7 +271,6 @@ public final class PreviewFormAction extends AnAction{
       }
     );
     if (rootContainer.getComponentCount() == 1) {
-      //noinspection HardCodedStringLiteral
       ((LwComponent)rootContainer.getComponent(0)).setBinding(PREVIEW_BINDING_FIELD);
     }
   }
@@ -273,7 +280,7 @@ public final class PreviewFormAction extends AnAction{
     // 3. Now we are ready to launch Java process
     final JavaParameters parameters = new JavaParameters();
     parameters.getClassPath().add(tempPath);
-    parameters.getClassPath().add(PathManager.findFileInLibDirectory("jgoodies-forms.jar").getAbsolutePath());
+    parameters.getClassPath().add(PathManager.getJarPathForClass(CellConstraints.class));
     final List<String> paths = sources.getPathList();
     for (final String path : paths) {
       parameters.getClassPath().add(path);
@@ -296,12 +303,9 @@ public final class PreviewFormAction extends AnAction{
     }
 
     try {
-      final RunProfile profile = new MyRunProfile(module, parameters, tempPath,
-                                                  UIDesignerBundle.message("progress.preview.started", formFile.getPresentableUrl()));
-      ProgramRunner defaultRunner = RunnerRegistry.getInstance().getRunner(DefaultRunExecutor.EXECUTOR_ID, profile);
-      LOG.assertTrue(defaultRunner != null);
-      defaultRunner.execute(DefaultRunExecutor.getRunExecutorInstance(), new ExecutionEnvironment(profile, module.getProject(), null, null,
-                                                                                                  null));
+      RunProfile profile = new MyRunProfile(module, parameters, tempPath,
+                                            UIDesignerBundle.message("progress.preview.started", formFile.getPresentableUrl()));
+      ExecutionEnvironmentBuilder.create(module.getProject(), DefaultRunExecutor.getRunExecutorInstance(), profile).buildAndExecute();
     }
     catch (ExecutionException e) {
       Messages.showErrorDialog(
@@ -318,29 +322,34 @@ public final class PreviewFormAction extends AnAction{
     private final String myTempPath;
     private final String myStatusbarMessage;
 
-    public MyRunProfile(final Module module, final JavaParameters params, final String tempPath, final String statusbarMessage) {
+    MyRunProfile(final Module module, final JavaParameters params, final String tempPath, final String statusbarMessage) {
       myModule = module;
       myParams = params;
       myTempPath = tempPath;
       myStatusbarMessage = statusbarMessage;
     }
 
+    @Override
     public Icon getIcon() {
       return null;
     }
 
+    @Override
     public RunProfileState getState(@NotNull final Executor executor, @NotNull final ExecutionEnvironment env) throws ExecutionException {
-      final JavaCommandLineState state = new JavaCommandLineState(env) {
+      return new JavaCommandLineState(env) {
+        @Override
         protected JavaParameters createJavaParameters() {
           return myParams;
         }
 
+        @Override
+        @NotNull
         public ExecutionResult execute(@NotNull final Executor executor, @NotNull final ProgramRunner runner) throws ExecutionException {
           try {
             ExecutionResult executionResult = super.execute(executor, runner);
             executionResult.getProcessHandler().addProcessListener(new ProcessAdapter() {
               @Override
-              public void processTerminated(ProcessEvent event) {
+              public void processTerminated(@NotNull ProcessEvent event) {
                 FileUtil.asyncDelete(new File(myTempPath));
               }
             });
@@ -348,25 +357,19 @@ public final class PreviewFormAction extends AnAction{
           }
           finally {
             final Project project = myModule.getProject();
-            SwingUtilities.invokeLater(new Runnable() {
-              public void run() {
-                WindowManager.getInstance().getStatusBar(project).setInfo(myStatusbarMessage);
-              }
-            });
+            SwingUtilities.invokeLater(() -> WindowManager.getInstance().getStatusBar(project).setInfo(myStatusbarMessage));
           }
         }
       };
-      state.setConsoleBuilder(TextConsoleBuilderFactory.getInstance().createBuilder(myModule.getProject()));
-      return state;
     }
 
+    @NotNull
+    @Override
     public String getName() {
       return UIDesignerBundle.message("title.form.preview");
     }
 
-    public void checkConfiguration() throws RuntimeConfigurationException {
-    }
-
+    @Override
     @NotNull
     public Module[] getModules() {
       return new Module[] {myModule};

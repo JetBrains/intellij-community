@@ -21,7 +21,6 @@ import com.intellij.openapi.roots.ModifiableRootModel;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Oct 28, 2004
  */
 public class DefaultModuleConfigurationEditorFactoryImpl extends DefaultModuleConfigurationEditorFactory {
   @Override
@@ -40,5 +39,10 @@ public class DefaultModuleConfigurationEditorFactoryImpl extends DefaultModuleCo
   @Override
   public ModuleConfigurationEditor createOutputEditor(ModuleConfigurationState state) {
     return new OutputEditor(state);
+  }
+
+  @Override
+  public String getOutputEditorDisplayName() {
+    return OutputEditor.NAME;
   }
 }

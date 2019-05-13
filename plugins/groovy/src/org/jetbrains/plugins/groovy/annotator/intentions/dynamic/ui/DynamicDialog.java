@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -52,10 +52,6 @@ import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import javax.swing.*;
 import java.util.List;
 
-/**
- * User: Dmitry.Krasilschikov
- * Date: 18.12.2007
- */
 public abstract class DynamicDialog extends DialogWrapper {
   private static final Logger LOG = Logger.getInstance(DynamicDialog.class);
 
@@ -120,7 +116,7 @@ public abstract class DynamicDialog extends DialogWrapper {
     String containingClassName = mySettings.getContainingClassName();
     PsiClass targetClass = JavaPsiFacade.getInstance(myProject).findClass(containingClassName, GlobalSearchScope.allScope(myProject));
     if (targetClass == null || targetClass instanceof SyntheticElement) {
-      if (containingClassName.length() > 0) {
+      if (!containingClassName.isEmpty()) {
         myClassComboBox.addItem(containingClassName);
       }
 
@@ -179,11 +175,13 @@ public abstract class DynamicDialog extends DialogWrapper {
     return item instanceof Document ? (Document)item : null;
   }
 
+  @Override
   @Nullable
   protected JComponent createCenterPanel() {
     return myPanel;
   }
 
+  @Override
   protected void doOKAction() {
     super.doOKAction();
 
@@ -212,49 +210,49 @@ public abstract class DynamicDialog extends DialogWrapper {
 
     final Document document = PsiDocumentManager.getInstance(myProject).getDocument(myContext.getContainingFile());
 
-    CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
-      public void run() {
-        UndoManager.getInstance(myProject).undoableActionPerformed(new GlobalUndoableAction(document) {
-          public void undo() throws UnexpectedUndoException {
+    CommandProcessor.getInstance().executeCommand(myProject, () -> {
+      UndoManager.getInstance(myProject).undoableActionPerformed(new GlobalUndoableAction(document) {
+        @Override
+        public void undo() throws UnexpectedUndoException {
 
-            final DItemElement itemElement;
-            if (mySettings.isMethod()) {
-              final List<ParamInfo> myPairList = mySettings.getParams();
-              final String[] argumentsTypes = QuickfixUtil.getArgumentsTypes(myPairList);
-              itemElement =
-                myDynamicManager.findConcreteDynamicMethod(mySettings.getContainingClassName(), mySettings.getName(), argumentsTypes);
-            }
-            else {
-              itemElement = myDynamicManager.findConcreteDynamicProperty(mySettings.getContainingClassName(), mySettings.getName());
-            }
-
-            if (itemElement == null) {
-              Messages.showWarningDialog(myProject, GroovyInspectionBundle.message("Cannot.perform.undo.operation"),
-                                         GroovyInspectionBundle.message("Undo.disable"));
-              return;
-            }
-            final DClassElement classElement = myDynamicManager.getClassElementByItem(itemElement);
-
-            if (classElement == null) {
-              Messages.showWarningDialog(myProject, GroovyInspectionBundle.message("Cannot.perform.undo.operation"),
-                                         GroovyInspectionBundle.message("Undo.disable"));
-              return;
-            }
-
-            removeElement(itemElement);
-
-            if (classElement.getMethods().size() == 0 && classElement.getProperties().size() == 0) {
-              myDynamicManager.removeClassElement(classElement);
-            }
+          final DItemElement itemElement;
+          if (mySettings.isMethod()) {
+            final List<ParamInfo> myPairList = mySettings.getParams();
+            final String[] argumentsTypes = QuickfixUtil.getArgumentsTypes(myPairList);
+            itemElement =
+              myDynamicManager.findConcreteDynamicMethod(mySettings.getContainingClassName(), mySettings.getName(), argumentsTypes);
+          }
+          else {
+            itemElement = myDynamicManager.findConcreteDynamicProperty(mySettings.getContainingClassName(), mySettings.getName());
           }
 
-          public void redo() throws UnexpectedUndoException {
-            addElement(mySettings);
+          if (itemElement == null) {
+            Messages.showWarningDialog(myProject, GroovyInspectionBundle.message("Cannot.perform.undo.operation"),
+                                       GroovyInspectionBundle.message("Undo.disable"));
+            return;
           }
-        });
+          final DClassElement classElement = myDynamicManager.getClassElementByItem(itemElement);
 
-        addElement(mySettings);
-      }
+          if (classElement == null) {
+            Messages.showWarningDialog(myProject, GroovyInspectionBundle.message("Cannot.perform.undo.operation"),
+                                       GroovyInspectionBundle.message("Undo.disable"));
+            return;
+          }
+
+          removeElement(itemElement);
+
+          if (classElement.getMethods().isEmpty() && classElement.getProperties().isEmpty()) {
+            myDynamicManager.removeClassElement(classElement);
+          }
+        }
+
+        @Override
+        public void redo() throws UnexpectedUndoException {
+          addElement(mySettings);
+        }
+      });
+
+      addElement(mySettings);
     }, "Add dynamic element", null);
   }
 
@@ -274,12 +272,14 @@ public abstract class DynamicDialog extends DialogWrapper {
     myDynamicManager.fireChange();
   }
 
+  @Override
   public void doCancelAction() {
     super.doCancelAction();
 
     DaemonCodeAnalyzer.getInstance(myProject).restart();
   }
 
+  @Override
   public JComponent getPreferredFocusedComponent() {
     return myTypeComboBox;
   }

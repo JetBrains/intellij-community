@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,10 @@
  */
 package com.intellij.openapi.util;
 
-import com.intellij.util.containers.ConcurrentWeakValueIntObjectHashMap;
+import com.intellij.util.ObjectUtils;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.IntObjectMap;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -29,18 +32,19 @@ import java.util.concurrent.atomic.AtomicInteger;
  * @author max
  * @author Konstantin Bulenkov
  */
-@SuppressWarnings({"EqualsWhichDoesntCheckParameterClass"})
 public class Key<T> {
   private static final AtomicInteger ourKeysCounter = new AtomicInteger();
   private final int myIndex = ourKeysCounter.getAndIncrement();
   private final String myName; // for debug purposes only
-  private static final ConcurrentWeakValueIntObjectHashMap<Key> allKeys = new ConcurrentWeakValueIntObjectHashMap<Key>();
+  private static final IntObjectMap<Key<?>> allKeys = ContainerUtil.createConcurrentIntObjectWeakValueMap();
 
   public Key(@NotNull @NonNls String name) {
     myName = name;
     allKeys.put(myIndex, this);
   }
 
+  // made final because many classes depend on one-to-one key index <-> key instance relationship. See e.g. UserDataHolderBase
+  @Override
   public final int hashCode() {
     return myIndex;
   }
@@ -50,37 +54,43 @@ public class Key<T> {
     return obj == this;
   }
 
+  @Override
   public String toString() {
     return myName;
   }
 
+  @NotNull
   public static <T> Key<T> create(@NotNull @NonNls String name) {
     return new Key<T>(name);
   }
 
-  @Nullable
   public T get(@Nullable UserDataHolder holder) {
     return holder == null ? null : holder.getUserData(this);
   }
 
-  @Nullable
   public T get(@Nullable Map<Key, ?> holder) {
     //noinspection unchecked
     return holder == null ? null : (T)holder.get(this);
   }
 
+  @Contract("_, !null -> !null")
   public T get(@Nullable UserDataHolder holder, T defaultValue) {
     final T t = get(holder);
     return t == null ? defaultValue : t;
   }
 
+  @NotNull
+  public T getRequired(@NotNull UserDataHolder holder) {
+    return ObjectUtils.notNull(holder.getUserData(this));
+  }
+
   /**
-   * Returns <code>true</code> if and only if the <code>holder</code> has
+   * Returns {@code true} if and only if the {@code holder} has
    * not null value by the key.
    *
    * @param holder user data holder object
-   * @return <code>true</code> if holder.getUserData(this) != null
-   * <code>false</code> otherwise.
+   * @return {@code true} if holder.getUserData(this) != null
+   * {@code false} otherwise.
    */
   public boolean isIn(@Nullable UserDataHolder holder) {
     return get(holder) != null;
@@ -98,8 +108,23 @@ public class Key<T> {
     }
   }
 
+  @Nullable("can become null if the key has been gc-ed")
   public static <T> Key<T> getKeyByIndex(int index) {
     //noinspection unchecked
     return (Key<T>)allKeys.get(index);
+  }
+
+  /**
+   * @deprecated access to Key via its name is a kind of hack, use Key instance directly instead
+   */
+  @Deprecated
+  @Nullable
+  public static Key<?> findKeyByName(String name) {
+    for (IntObjectMap.Entry<Key<?>> key : allKeys.entrySet()) {
+      if (name.equals(key.getValue().myName)) {
+        return key.getValue();
+      }
+    }
+    return null;
   }
 }

@@ -30,17 +30,17 @@ public class HgHeadsCommand {
     this.repo = repo;
   }
 
-  public List<HgRevisionNumber> execute() {
-    return execute(".");
+  public List<HgRevisionNumber> executeInCurrentThread() {
+    return executeInCurrentThread(".");
   }
 
-  public List<HgRevisionNumber> execute(String branch) {
-    return new HeadsCommand(project, branch).execute(repo);
+  public List<HgRevisionNumber> executeInCurrentThread(String branch) {
+    return new HeadsCommand(project, branch).executeInCurrentThread(repo);
   }
 
-  private class HeadsCommand extends HgChangesetsCommand {
+  private static class HeadsCommand extends HgChangesetsCommand {
     private final String branch;
-    public HeadsCommand(Project project, String branch) {
+    HeadsCommand(Project project, String branch) {
       super(project, "heads");
       this.branch = branch;
     }

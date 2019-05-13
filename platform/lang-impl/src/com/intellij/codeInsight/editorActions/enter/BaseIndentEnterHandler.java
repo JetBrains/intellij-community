@@ -15,10 +15,11 @@
  */
 package com.intellij.codeInsight.editorActions.enter;
 
+import com.intellij.application.options.CodeStyle;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageFormatting;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorModificationUtil;
@@ -35,7 +36,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
@@ -54,6 +54,7 @@ public class BaseIndentEnterHandler extends EnterHandlerDelegateAdapter {
   private final IElementType myLineCommentType;
   private final String myLineCommentPrefix;
   private final TokenSet myWhitespaceTokens;
+  private final boolean myWorksWithFormatter;
 
   public BaseIndentEnterHandler(
     final Language language,
@@ -62,23 +63,28 @@ public class BaseIndentEnterHandler extends EnterHandlerDelegateAdapter {
     final String lineCommentPrefix,
     final TokenSet whitespaceTokens)
   {
+    this(language, indentTokens, lineCommentType, lineCommentPrefix, whitespaceTokens, false);
+  }
+
+
+  public BaseIndentEnterHandler(
+    final Language language,
+    final TokenSet indentTokens,
+    final IElementType lineCommentType,
+    final String lineCommentPrefix,
+    final TokenSet whitespaceTokens,
+    final boolean worksWithFormatter)
+  {
     myLanguage = language;
     myIndentTokens = indentTokens;
     myLineCommentType = lineCommentType;
     myLineCommentPrefix = lineCommentPrefix;
     myWhitespaceTokens = whitespaceTokens;
+    myWorksWithFormatter = worksWithFormatter;
   }
 
-  @Override
-  public Result preprocessEnter(
-    @NotNull final PsiFile file,
-    @NotNull final Editor editor,
-    @NotNull final Ref<Integer> caretOffset,
-    @NotNull final Ref<Integer> caretAdvance,
-    @NotNull final DataContext dataContext,
-    final EditorActionHandler originalHandler)
-  {
-    final Project project = PlatformDataKeys.PROJECT.getData(dataContext);
+  protected Result shouldSkipWithResult(@NotNull final PsiFile file, @NotNull final Editor editor, @NotNull final DataContext dataContext) {
+    final Project project = CommonDataKeys.PROJECT.getData(dataContext);
     if (project == null) {
       return Result.Continue;
     }
@@ -99,10 +105,31 @@ public class BaseIndentEnterHandler extends EnterHandlerDelegateAdapter {
     PsiDocumentManager.getInstance(project).commitDocument(document);
 
     int caret = editor.getCaretModel().getOffset();
+    if (caret == 0) {
+      return Result.DefaultSkipIndent;
+    }
     if (caret <= 0) {
       return Result.Continue;
     }
+    return null;
+  }
 
+  @Override
+  public Result preprocessEnter(
+    @NotNull final PsiFile file,
+    @NotNull final Editor editor,
+    @NotNull final Ref<Integer> caretOffset,
+    @NotNull final Ref<Integer> caretAdvance,
+    @NotNull final DataContext dataContext,
+    final EditorActionHandler originalHandler)
+  {
+    Result res = shouldSkipWithResult(file, editor, dataContext);
+    if (res != null) {
+      return res;
+    }
+
+    final Document document = editor.getDocument();
+    int caret = editor.getCaretModel().getOffset();
     final int lineNumber = document.getLineNumber(caret);
 
     final int lineStartOffset = document.getLineStartOffset(lineNumber);
@@ -130,7 +157,7 @@ public class BaseIndentEnterHandler extends EnterHandlerDelegateAdapter {
       }
     }
 
-    if (LanguageFormatting.INSTANCE.forLanguage(myLanguage) != null) {
+    if (!myWorksWithFormatter && LanguageFormatting.INSTANCE.forLanguage(myLanguage) != null) {
       return Result.Continue;
     }
     else {
@@ -165,7 +192,7 @@ public class BaseIndentEnterHandler extends EnterHandlerDelegateAdapter {
     final boolean usesSpacesForIndentation = nonEmptyIndent.length() > 0 && nonEmptyIndent.charAt(nonEmptyIndent.length() - 1) == ' ';
     final boolean firstIndent = nonEmptyIndent.length() == 0;
 
-    final CodeStyleSettings currentSettings = CodeStyleSettingsManager.getSettings(file.getProject());
+    final CodeStyleSettings currentSettings = CodeStyle.getSettings(file);
     final CommonCodeStyleSettings.IndentOptions indentOptions = currentSettings.getIndentOptions(file.getFileType());
     if (firstIndent && indentOptions.USE_TAB_CHARACTER || !firstIndent && !usesSpacesForIndentation) {
       int nTabsToIndent = indentOptions.INDENT_SIZE / indentOptions.TAB_SIZE;
@@ -190,7 +217,7 @@ public class BaseIndentEnterHandler extends EnterHandlerDelegateAdapter {
   }
 
   @Nullable
-  private IElementType getNonWhitespaceElementType(final HighlighterIterator iterator, int currentLineStartOffset, final int prevLineStartOffset) {
+  protected IElementType getNonWhitespaceElementType(final HighlighterIterator iterator, int currentLineStartOffset, final int prevLineStartOffset) {
     while (!iterator.atEnd() && iterator.getEnd() >= currentLineStartOffset && iterator.getStart() >= prevLineStartOffset) {
       final IElementType tokenType = iterator.getTokenType();
       if (!myWhitespaceTokens.contains(tokenType)) {

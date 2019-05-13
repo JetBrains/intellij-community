@@ -1,0 +1,301 @@
+import kotlin.Metadata;
+import kotlin.SuccessOrFailure.Failure;
+import kotlin.coroutines.Continuation;
+import kotlin.coroutines.intrinsics.IntrinsicsKt;
+import kotlin.coroutines.jvm.internal.ContinuationImpl;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+@Metadata(
+   mv = {1, 1, 11},
+   bv = {1, 0, 2},
+   k = 2,
+   xi = 2,
+   d1 = {"\u0000\n\n\u0000\n\u0002\u0010\b\n\u0002\b\u0002\u001a\u0011\u0010\u0000\u001a\u00020\u0001H\u0086@ø\u0001\u0000¢\u0006\u0002\u0010\u0002\u001a\u0011\u0010\u0003\u001a\u00020\u0001H\u0086@ø\u0001\u0000¢\u0006\u0002\u0010\u0002\u0082\u0002\u0004\n\u0002\b\u0019"},
+   d2 = {"bar", "", "(Lkotlin/coroutines/Continuation;)Ljava/lang/Object;", "foo2"}
+)
+public final class TestNamedSuspendFun2Kt {
+   @Nullable
+   public static final Object foo2(@NotNull Continuation<? super Integer> var0) {
+      @Metadata(
+         mv = {1, 1, 11},
+         bv = {1, 0, 2},
+         k = 3,
+         xi = 2,
+         d1 = {"\u0000\u0010\n\u0000\n\u0002\u0010\u0000\n\u0000\n\u0002\u0018\u0002\n\u0002\u0010\b\u0010\u0000\u001a\u0004\u0018\u00010\u00012\f\u0010\u0002\u001a\b\u0012\u0004\u0012\u00020\u00040\u0003H\u0086@ø\u0001\u0000"},
+         d2 = {"foo2", "", "continuation", "Lkotlin/coroutines/Continuation;", ""}
+      )
+      final class NamelessClass_1 extends ContinuationImpl {
+         int label;
+         int I$0;
+         Object L$0;
+
+         @Nullable
+         public final Object invokeSuspend(@NotNull Object result) {
+            this.data = result;
+            this.label |= -2147483648;
+            return TestNamedSuspendFun2Kt.foo2(this);
+         }
+
+         NamelessClass_1(Continuation var1) {
+            super(var1);
+         }
+      }
+
+      NamelessClass_1 var3;
+      label463: {
+         if (var0 instanceof NamelessClass_1) {
+            var3 = (NamelessClass_1)var0;
+            if ((var3.getLabel() & -2147483648) != 0) {
+               var3.setLabel(var3.getLabel() - -2147483648);
+               break label463;
+            }
+         }
+
+         var3 = new NamelessClass_1(var0);
+      }
+
+      Object var4;
+      int x;
+      label491: {
+         Throwable var1;
+         Throwable var10000;
+         label472: {
+            Object var2 = var3.data;
+            var4 = IntrinsicsKt.getCOROUTINE_SUSPENDED();// 2
+            boolean var10001;
+            Object var22;
+            switch(var3.label) {
+            case 0:
+               if (var2 instanceof Failure) {
+                  throw ((Failure)var2).exception;
+               }
+               break;
+            case 1:
+               try {
+                  if (var2 instanceof Failure) {
+                     throw ((Failure)var2).exception;
+                  }
+
+                  var22 = var2;
+               } catch (Throwable var19) {
+                  var10000 = var19;
+                  var10001 = false;
+                  break label472;
+               }
+
+               try {
+                  x = ((Number)var22).intValue();// 6
+                  if (x == 0) {
+                     break label491;
+                  }
+               } catch (Throwable var17) {
+                  var10000 = var17;
+                  var10001 = false;
+                  break label472;
+               }
+
+               var3.label = 3;
+               if (bar(var3) == var4) {
+                  return var4;
+               }
+               break;
+            case 2:
+               x = var3.I$0;
+               if (var2 instanceof Failure) {
+                  throw ((Failure)var2).exception;
+               }
+
+               return 1;// 11
+            case 3:
+               if (var2 instanceof Failure) {
+                  throw ((Failure)var2).exception;
+               }
+               break;
+            case 4:
+               var1 = (Throwable)var3.L$0;
+               if (var2 instanceof Failure) {
+                  throw ((Failure)var2).exception;
+               }
+
+               throw var1;// 9
+            default:
+               throw new IllegalStateException("call to 'resume' before 'invoke' with coroutine");
+            }
+
+            do {
+               try {
+                  var3.label = 1;// 5
+                  var22 = bar(var3);
+               } catch (Throwable var18) {
+                  var10000 = var18;
+                  var10001 = false;
+                  break label472;
+               }
+
+               if (var22 == var4) {
+                  return var4;
+               }
+
+               try {
+                  x = ((Number)var22).intValue();
+                  if (x == 0) {
+                     break label491;
+                  }
+               } catch (Throwable var20) {
+                  var10000 = var20;
+                  var10001 = false;
+                  break label472;
+               }
+
+               var3.label = 3;
+            } while(bar(var3) != var4);
+
+            return var4;
+         }
+
+         var1 = var10000;
+         var3.L$0 = var1;
+         var3.label = 4;
+         if (bar(var3) == var4) {// 8
+            return var4;
+         }
+
+         throw var1;
+      }
+
+      var3.I$0 = x;
+      var3.label = 2;
+      if (bar(var3) == var4) {
+         return var4;
+      } else {
+         return 1;
+      }
+   }
+
+   @Nullable
+   public static final Object bar(@NotNull Continuation<? super Integer> var0) {
+      return 0;// 14
+   }
+}
+
+class 'TestNamedSuspendFun2Kt$foo2$1' {
+   method 'invokeSuspend (Ljava/lang/Object;)Ljava/lang/Object;' {
+      2      34
+      a      35
+      d      35
+      11      36
+      14      36
+   }
+
+   method '<init> (Lkotlin/coroutines/Continuation;)V' {
+      2      40
+      5      41
+   }
+}
+
+class 'TestNamedSuspendFun2Kt' {
+   method 'foo2 (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;' {
+      1      46
+      4      46
+      8      47
+      b      47
+      d      48
+      10      48
+      12      48
+      13      48
+      18      49
+      1b      49
+      1d      49
+      1e      49
+      21      50
+      2c      54
+      2e      63
+      31      63
+      32      64
+      35      64
+      38      67
+      3b      67
+      5e      69
+      61      69
+      64      70
+      67      70
+      6a      70
+      6f      127
+      70      127
+      73      128
+      79      135
+      7e      136
+      81      75
+      84      75
+      87      76
+      8a      76
+      8d      76
+      90      87
+      93      87
+      96      87
+      98      88
+      9e      166
+      a2      167
+      a3      167
+      a6      168
+      ac      168
+      b1      169
+      b3      103
+      b6      103
+      b9      104
+      bc      104
+      bf      105
+      c2      105
+      c5      105
+      c9      108
+      ce      97
+      cf      97
+      d2      98
+      d8      98
+      dd      99
+      e0      110
+      e3      110
+      e6      111
+      e9      111
+      ec      111
+      f3      156
+      f7      157
+      fb      158
+      fc      158
+      ff      159
+      105      159
+      10a      160
+      10c      115
+      10f      115
+      112      115
+      115      116
+      118      116
+      11b      117
+      11e      117
+      121      117
+      126      120
+      12a      108
+      12b      108
+      133      122
+      138      122
+   }
+
+   method 'bar (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;' {
+      0      177
+      1      177
+      4      177
+   }
+}
+
+Lines mapping:
+2 <-> 65
+5 <-> 128
+6 <-> 88
+8 <-> 160
+9 <-> 121
+11 <-> 109
+14 <-> 178
+Not mapped:
+3
+4

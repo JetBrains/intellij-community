@@ -28,7 +28,6 @@ import java.io.File;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Mar 19, 2004
  */
 public class ZipFileSet extends Tag{
   public static final ZipFileSet[] EMPTY_ARRAY = new ZipFileSet[0];

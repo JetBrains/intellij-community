@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,12 +15,16 @@
  */
 package org.jetbrains.idea.maven.tasks.actions;
 
+import com.intellij.execution.RunManager;
 import com.intellij.execution.RunManagerEx;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.project.MavenProject;
+import org.jetbrains.idea.maven.statistics.MavenActionsUsagesCollector;
 import org.jetbrains.idea.maven.tasks.MavenBeforeRunTask;
 import org.jetbrains.idea.maven.tasks.MavenBeforeRunTasksProvider;
 import org.jetbrains.idea.maven.utils.MavenDataKeys;
@@ -31,7 +35,7 @@ import java.util.List;
 
 public class ToggleBeforeRunTaskAction extends MavenToggleAction {
   @Override
-  protected boolean isAvailable(AnActionEvent e) {
+  protected boolean isAvailable(@NotNull AnActionEvent e) {
     return super.isAvailable(e) && getTaskDesc(e.getDataContext()) != null;
   }
 
@@ -40,7 +44,9 @@ public class ToggleBeforeRunTaskAction extends MavenToggleAction {
     final DataContext context = e.getDataContext();
     final Pair<MavenProject, String> desc = getTaskDesc(context);
     if (desc != null) {
-      for (MavenBeforeRunTask each : getRunManager(context).getBeforeRunTasks(MavenBeforeRunTasksProvider.ID)) {
+      final RunManagerEx runManager = (RunManagerEx)getRunManager(context);
+      if(runManager == null) return false;
+      for (MavenBeforeRunTask each : runManager.getBeforeRunTasks(MavenBeforeRunTasksProvider.ID)) {
         if (each.isFor(desc.first, desc.second)) return true;
       }
     }
@@ -48,7 +54,8 @@ public class ToggleBeforeRunTaskAction extends MavenToggleAction {
   }
 
   @Override
-  public void setSelected(final AnActionEvent e, boolean state) {
+  public void setSelected(@NotNull final AnActionEvent e, boolean state) {
+    MavenActionsUsagesCollector.trigger(e.getProject(), this, e);
     final DataContext context = e.getDataContext();
     final Pair<MavenProject, String> desc = getTaskDesc(context);
     if (desc != null) {
@@ -58,16 +65,20 @@ public class ToggleBeforeRunTaskAction extends MavenToggleAction {
 
   @Nullable
   protected static Pair<MavenProject, String> getTaskDesc(DataContext context) {
+    List<String> goals = MavenDataKeys.MAVEN_GOALS.getData(context);
+    if (goals == null || goals.size() != 1) return null;
+
     MavenProject mavenProject = MavenActionUtil.getMavenProject(context);
     if (mavenProject == null) return null;
 
-    List<String> goals = MavenDataKeys.MAVEN_GOALS.getData(context);
-    if (goals == null || goals.size() != 1) return null;
 
     return Pair.create(mavenProject, goals.get(0));
   }
 
-  private static RunManagerEx getRunManager(DataContext context) {
-    return RunManagerEx.getInstanceEx(MavenActionUtil.getProject(context));
+  @Nullable
+  private static RunManager getRunManager(DataContext context) {
+    final Project project = MavenActionUtil.getProject(context);
+    if(project == null) return null;
+    return RunManager.getInstance(project);
   }
 }

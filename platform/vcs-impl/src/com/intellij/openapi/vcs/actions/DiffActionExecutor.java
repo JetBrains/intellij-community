@@ -1,140 +1,155 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.actions;
 
-import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.diff.*;
-import com.intellij.openapi.editor.Document;
+import com.intellij.diff.DiffContentFactory;
+import com.intellij.diff.DiffContentFactoryEx;
+import com.intellij.diff.DiffManager;
+import com.intellij.diff.DiffRequestFactory;
+import com.intellij.diff.contents.DiffContent;
+import com.intellij.diff.requests.DiffRequest;
+import com.intellij.diff.requests.SimpleDiffRequest;
+import com.intellij.diff.util.DiffUserDataKeys;
+import com.intellij.diff.util.DiffUserDataKeysEx;
+import com.intellij.diff.util.Side;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.fileEditor.FileEditor;
+import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vcs.*;
-import com.intellij.openapi.vcs.changes.BackgroundFromStartOption;
-import com.intellij.openapi.vcs.changes.BinaryContentRevision;
+import com.intellij.openapi.vcs.changes.ByteBackedContentRevision;
+import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.diff.DiffProvider;
 import com.intellij.openapi.vcs.diff.ItemLatestState;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
-import com.intellij.openapi.vcs.impl.BackgroundableActionEnabledHandler;
-import com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl;
+import com.intellij.openapi.vcs.impl.BackgroundableActionLock;
 import com.intellij.openapi.vcs.impl.VcsBackgroundableActions;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.WaitForProgressToShow;
+import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
-import java.util.Arrays;
 
+// TODO: remove duplication with ChangeDiffRequestProducer
 public abstract class DiffActionExecutor {
   protected final DiffProvider myDiffProvider;
   protected final VirtualFile mySelectedFile;
   protected final Project myProject;
-  private final BackgroundableActionEnabledHandler myHandler;
+  private final Integer mySelectedLine;
 
-  protected DiffActionExecutor(final DiffProvider diffProvider, final VirtualFile selectedFile, final Project project,
-                               final VcsBackgroundableActions actionKey) {
-    final ProjectLevelVcsManagerImpl vcsManager = (ProjectLevelVcsManagerImpl) ProjectLevelVcsManager.getInstance(project);
-    myHandler = vcsManager.getBackgroundableActionHandler(actionKey);
+  protected DiffActionExecutor(@NotNull DiffProvider diffProvider,
+                               @NotNull VirtualFile selectedFile,
+                               @NotNull Project project,
+                               @Nullable Editor editor) {
     myDiffProvider = diffProvider;
     mySelectedFile = selectedFile;
     myProject = project;
+
+    mySelectedLine = getSelectedLine(project, mySelectedFile, editor);
+  }
+
+  @Nullable
+  private Integer getSelectedLine(@NotNull Project project, @NotNull VirtualFile file, @Nullable Editor contextEditor) {
+    Editor editor = null;
+    if (contextEditor != null) {
+      VirtualFile contextFile = FileDocumentManager.getInstance().getFile(contextEditor.getDocument());
+      if (Comparing.equal(contextFile, mySelectedFile)) editor = contextEditor;
+    }
+
+    if (editor == null) {
+      FileEditor fileEditor = FileEditorManager.getInstance(project).getSelectedEditor(mySelectedFile);
+      if (fileEditor instanceof TextEditor) editor = ((TextEditor)fileEditor).getEditor();
+    }
+
+    if (editor == null) return null;
+    return editor.getCaretModel().getLogicalPosition().line;
   }
 
   @Nullable
   protected DiffContent createRemote(final VcsRevisionNumber revisionNumber) throws IOException, VcsException {
     final ContentRevision fileRevision = myDiffProvider.createFileContent(revisionNumber, mySelectedFile);
-    if (fileRevision instanceof BinaryContentRevision) {
-      final byte[] a = mySelectedFile.contentsToByteArray();
-      final byte[] content = ((BinaryContentRevision)fileRevision).getBinaryContent();
+    if (fileRevision == null) return null;
+    DiffContentFactoryEx contentFactory = DiffContentFactoryEx.getInstanceEx();
 
-      WaitForProgressToShow.runOrInvokeLaterAboveProgress(new Runnable() {
-          public void run() {
-            if (Arrays.equals(a, content)) {
-              Messages
-                .showInfoMessage(VcsBundle.message("message.text.binary.versions.are.identical"), VcsBundle.message("message.title.diff"));
-            }
-            else {
-              Messages
-                .showInfoMessage(VcsBundle.message("message.text.binary.versions.are.different"), VcsBundle.message("message.title.diff"));
-            }
-          }
-        }, ModalityState.NON_MODAL, myProject);
-      return null;
+    DiffContent diffContent;
+    if (fileRevision instanceof ByteBackedContentRevision) {
+      byte[] content = ((ByteBackedContentRevision)fileRevision).getContentAsBytes();
+      if (content == null) throw new VcsException("Failed to load content");
+      diffContent = contentFactory.createFromBytes(myProject, content, fileRevision.getFile());
+    }
+    else {
+      String content = fileRevision.getContent();
+      if (content == null) throw new VcsException("Failed to load content");
+      diffContent = contentFactory.create(myProject, content, fileRevision.getFile());
     }
 
-    if (fileRevision != null) {
-      final String content = fileRevision.getContent();
-      if (content == null) {
-        throw new VcsException("Failed to load content");
-      }
-      return new SimpleContent(content, mySelectedFile.getFileType());
-    }
-    return null;
+    diffContent.putUserData(DiffUserDataKeysEx.REVISION_INFO, Pair.create(fileRevision.getFile(), fileRevision.getRevisionNumber()));
+    return diffContent;
   }
 
   public void showDiff() {
-    final Ref<VcsException> exceptionRef = new Ref<VcsException>();
-    final Ref<SimpleDiffRequest> requestRef = new Ref<SimpleDiffRequest>();
+    final Ref<VcsException> exceptionRef = new Ref<>();
+    final Ref<DiffRequest> requestRef = new Ref<>();
+
+    FilePath filePath = VcsUtil.getFilePath(mySelectedFile);
+    BackgroundableActionLock lock = BackgroundableActionLock.getLock(myProject, VcsBackgroundableActions.COMPARE_WITH, filePath);
 
     final Task.Backgroundable task = new Task.Backgroundable(myProject,
-        VcsBundle.message("show.diff.progress.title.detailed", mySelectedFile.getPresentableUrl()),
-        true, BackgroundFromStartOption.getInstance()) {
+                                                             VcsBundle.message("show.diff.progress.title.detailed",
+                                                                               mySelectedFile.getPresentableUrl()),
+                                                             true) {
 
+      @Override
       public void run(@NotNull ProgressIndicator indicator) {
         final VcsRevisionNumber revisionNumber = getRevisionNumber();
         try {
           if (revisionNumber == null) {
             return;
           }
-          final DiffContent remote = createRemote(revisionNumber);
-          if (remote == null) {
-            return;
-          }
+          DiffContent content1 = createRemote(revisionNumber);
+          if (content1 == null) return;
+          DiffContent content2 = DiffContentFactory.getInstance().create(myProject, mySelectedFile);
 
-          final SimpleDiffRequest request = new SimpleDiffRequest(myProject, mySelectedFile.getPresentableUrl());
-          final Document document = FileDocumentManager.getInstance().getDocument(mySelectedFile);
-          if (document == null) return;
-          final DocumentContent content2 = new DocumentContent(myProject, document);
+          String title = DiffRequestFactory.getInstance().getTitle(mySelectedFile);
 
-          final FileStatus status = FileStatusManager.getInstance(myProject).getStatus(mySelectedFile);
-          if (status == null || FileStatus.NOT_CHANGED.equals(status) || FileStatus.UNKNOWN.equals(status) ||
-              FileStatus.IGNORED.equals(status)) {
-
+          boolean inverted = false;
+          String title1;
+          String title2;
+          final FileStatus status = ChangeListManager.getInstance(myProject).getStatus(mySelectedFile);
+          if (FileStatus.NOT_CHANGED.equals(status) || FileStatus.UNKNOWN.equals(status) || FileStatus.IGNORED.equals(status)) {
             final VcsRevisionNumber currentRevision = myDiffProvider.getCurrentRevision(mySelectedFile);
-            if (revisionNumber.compareTo(currentRevision) > 0) {
-              request.setContents(content2, remote);
-              request.setContentTitles(VcsBundle.message("diff.title.local.with.number", currentRevision.asString()), revisionNumber.asString());
-            }
-            else {
-              request.setContents(remote, content2);
-              request.setContentTitles(revisionNumber.asString(), VcsBundle.message("diff.title.local.with.number", currentRevision.asString()));
-            }
-          } else {
-            request.setContents(remote, content2);
-            request.setContentTitles(revisionNumber.asString(), VcsBundle.message("diff.title.local"));
+
+            inverted = revisionNumber.compareTo(currentRevision) > 0;
+            title1 = revisionNumber.asString();
+            title2 = VcsBundle.message("diff.title.local.with.number", currentRevision.asString());
+          }
+          else {
+            title1 = revisionNumber.asString();
+            title2 = VcsBundle.message("diff.title.local");
           }
 
-          request.addHint(DiffTool.HINT_SHOW_FRAME);
-          requestRef.set(request);
+          if (inverted) {
+            SimpleDiffRequest request = new SimpleDiffRequest(title, content2, content1, title2, title1);
+            if (mySelectedLine != null) request.putUserData(DiffUserDataKeys.SCROLL_TO_LINE, Pair.create(Side.LEFT, mySelectedLine));
+            request.putUserData(DiffUserDataKeys.MASTER_SIDE, Side.LEFT);
+            requestRef.set(request);
+          }
+          else {
+            SimpleDiffRequest request = new SimpleDiffRequest(title, content1, content2, title1, title2);
+            if (mySelectedLine != null) request.putUserData(DiffUserDataKeys.SCROLL_TO_LINE, Pair.create(Side.RIGHT, mySelectedLine));
+            request.putUserData(DiffUserDataKeys.MASTER_SIDE, Side.RIGHT);
+            requestRef.set(request);
+          }
         }
         catch (ProcessCanceledException e) {
           //ignore
@@ -154,25 +169,34 @@ public abstract class DiffActionExecutor {
 
       @Override
       public void onSuccess() {
-        myHandler.completed(VcsBackgroundableActions.keyFrom(mySelectedFile));
-
-        if (! exceptionRef.isNull()) {
+        if (!exceptionRef.isNull()) {
           AbstractVcsHelper.getInstance(myProject).showError(exceptionRef.get(), VcsBundle.message("message.title.diff"));
           return;
         }
-        if (! requestRef.isNull()) {
-          DiffManager.getInstance().getDiffTool().show(requestRef.get());
+        if (!requestRef.isNull()) {
+          DiffManager.getInstance().showDiff(myProject, requestRef.get());
         }
+      }
+
+      @Override
+      public void onFinished() {
+        lock.unlock();
       }
     };
 
-    myHandler.register(VcsBackgroundableActions.keyFrom(mySelectedFile));
+    lock.lock();
     ProgressManager.getInstance().run(task);
   }
 
+  @Deprecated
   public static void showDiff(final DiffProvider diffProvider, final VcsRevisionNumber revisionNumber, final VirtualFile selectedFile,
                               final Project project, final VcsBackgroundableActions actionKey) {
-    final DiffActionExecutor executor = new CompareToFixedExecutor(diffProvider, selectedFile, project, revisionNumber, actionKey);
+    showDiff(diffProvider, revisionNumber, selectedFile, project);
+  }
+
+  public static void showDiff(final DiffProvider diffProvider, final VcsRevisionNumber revisionNumber, final VirtualFile selectedFile,
+                              final Project project) {
+    final DiffActionExecutor executor = new CompareToFixedExecutor(diffProvider, selectedFile, project, null, revisionNumber);
     executor.showDiff();
   }
 
@@ -182,24 +206,30 @@ public abstract class DiffActionExecutor {
   public static class CompareToFixedExecutor extends DiffActionExecutor {
     private final VcsRevisionNumber myNumber;
 
-    public CompareToFixedExecutor(final DiffProvider diffProvider,
-                                  final VirtualFile selectedFile, final Project project, final VcsRevisionNumber number,
-                                  final VcsBackgroundableActions actionKey) {
-      super(diffProvider, selectedFile, project, actionKey);
+    public CompareToFixedExecutor(@NotNull DiffProvider diffProvider,
+                                  @NotNull VirtualFile selectedFile,
+                                  @NotNull Project project,
+                                  @Nullable Editor editor,
+                                  @NotNull VcsRevisionNumber number) {
+      super(diffProvider, selectedFile, project, editor);
       myNumber = number;
     }
 
+    @Override
     protected VcsRevisionNumber getRevisionNumber() {
       return myNumber;
     }
   }
 
   public static class CompareToCurrentExecutor extends DiffActionExecutor {
-    public CompareToCurrentExecutor(final DiffProvider diffProvider, final VirtualFile selectedFile, final Project project,
-                                    final VcsBackgroundableActions actionKey) {
-      super(diffProvider, selectedFile, project, actionKey);
+    public CompareToCurrentExecutor(@NotNull DiffProvider diffProvider,
+                                    @NotNull VirtualFile selectedFile,
+                                    @NotNull Project project,
+                                    @Nullable Editor editor) {
+      super(diffProvider, selectedFile, project, editor);
     }
 
+    @Override
     @Nullable
     protected VcsRevisionNumber getRevisionNumber() {
       return myDiffProvider.getCurrentRevision(mySelectedFile);
@@ -209,11 +239,14 @@ public abstract class DiffActionExecutor {
   public static class DeletionAwareExecutor extends DiffActionExecutor {
     private boolean myFileStillExists;
 
-    public DeletionAwareExecutor(final DiffProvider diffProvider,
-                                 final VirtualFile selectedFile, final Project project, final VcsBackgroundableActions actionKey) {
-      super(diffProvider, selectedFile, project, actionKey);
+    public DeletionAwareExecutor(@NotNull DiffProvider diffProvider,
+                                 @NotNull VirtualFile selectedFile,
+                                 @NotNull Project project,
+                                 @Nullable Editor editor) {
+      super(diffProvider, selectedFile, project, editor);
     }
 
+    @Override
     protected VcsRevisionNumber getRevisionNumber() {
       final ItemLatestState itemState = myDiffProvider.getLastRevision(mySelectedFile);
       if (itemState == null) {
@@ -228,7 +261,7 @@ public abstract class DiffActionExecutor {
       if (myFileStillExists) {
         return super.createRemote(revisionNumber);
       } else {
-        return new SimpleContent("", mySelectedFile.getFileType());
+        return DiffContentFactory.getInstance().createEmpty();
       }
     }
   }

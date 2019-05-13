@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,6 +39,8 @@ public interface FoundationLibrary extends Library {
 
   long CFStringConvertIANACharSetNameToEncoding(ID encodingName);
   long CFStringConvertEncodingToNSStringEncoding(long cfEncoding);
+  
+  ID CGWindowListCreateImage(Foundation.NSRect screenBounds, int windowOption, ID windowID, int imageOption);
 
   void CFRetain(ID cfTypeRef);
   void CFRelease(ID cfTypeRef);
@@ -55,6 +57,7 @@ public interface FoundationLibrary extends Library {
   ID objc_getMetaClass(String name);
 
   ID objc_msgSend(ID receiver, Pointer selector, Object... args);
+  double objc_msgSend_fpret(ID receiver, Pointer selector, Object... args); // the same as objc_msgSend but returns double
 
   boolean class_respondsToSelector(ID cls, Pointer selName);
   boolean class_addMethod(ID cls, Pointer selName, Callback imp, String types);
@@ -83,4 +86,29 @@ public interface FoundationLibrary extends Library {
   int kCFStringEncodingUTF32 = 0x0c000100;
   int kCFStringEncodingUTF32BE = 0x18000100;
   int kCFStringEncodingUTF32LE = 0x1c000100;
+  
+  // https://developer.apple.com/library/mac/documentation/Carbon/Reference/CGWindow_Reference/Constants/Constants.html#//apple_ref/doc/constant_group/Window_List_Option_Constants
+  int kCGWindowListOptionAll                 = 0;
+  int kCGWindowListOptionOnScreenOnly        = 1;
+  int kCGWindowListOptionOnScreenAboveWindow = 2;
+  int kCGWindowListOptionOnScreenBelowWindow = 4;
+  int kCGWindowListOptionIncludingWindow     = 8;
+  int kCGWindowListExcludeDesktopElements    = 16;
+  
+  //https://developer.apple.com/library/mac/documentation/Carbon/Reference/CGWindow_Reference/Constants/Constants.html#//apple_ref/doc/constant_group/Window_Image_Types
+  int kCGWindowImageDefault             = 0;
+  int kCGWindowImageBoundsIgnoreFraming = 1;
+  int kCGWindowImageShouldBeOpaque      = 2;
+  int kCGWindowImageOnlyShadows         = 4;
+  int kCGWindowImageBestResolution      = 8;
+  int kCGWindowImageNominalResolution   = 16;
+
+
+  // see enum NSBitmapImageFileType
+  int NSBitmapImageFileTypeTIFF = 0;
+  int NSBitmapImageFileTypeBMP = 1;
+  int NSBitmapImageFileTypeGIF = 2;
+  int NSBitmapImageFileTypeJPEG = 3;
+  int NSBitmapImageFileTypePNG = 4;
+  int NSBitmapImageFileTypeJPEG2000 = 5;
 }

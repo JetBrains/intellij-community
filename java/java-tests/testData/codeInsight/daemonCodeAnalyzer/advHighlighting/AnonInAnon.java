@@ -1,4 +1,4 @@
-public class QQQ {
+class QQQ {
   {
     new Outer(){
       void foo(){

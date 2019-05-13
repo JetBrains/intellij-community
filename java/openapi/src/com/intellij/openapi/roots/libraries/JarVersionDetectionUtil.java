@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.intellij.openapi.roots.libraries;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -21,90 +20,65 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.LibraryOrderEntry;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.OrderEntry;
+import com.intellij.openapi.util.io.JarUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.List;
 import java.util.jar.Attributes;
 import java.util.jar.JarFile;
 import java.util.jar.Manifest;
-import java.util.zip.ZipEntry;
 
 public class JarVersionDetectionUtil {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.roots.libraries.JarVersionDetectionUtil");
-
-  private JarVersionDetectionUtil() {
-  }
+  private JarVersionDetectionUtil() { }
 
   @Nullable
-  public static String detectJarVersion(@NotNull final String detectionClass, @NotNull Module module) {
-    try {
-      return detectJarVersion(getDetectionJar(detectionClass, module));
+  public static String detectJarVersion(@NotNull String detectionClass, @NotNull Module module) {
+    for (OrderEntry library : ModuleRootManager.getInstance(module).getOrderEntries()) {
+      if (library instanceof LibraryOrderEntry) {
+        VirtualFile jar = LibrariesHelper.getInstance().findJarByClass(((LibraryOrderEntry)library).getLibrary(), detectionClass);
+        if (jar != null && jar.getFileSystem() instanceof JarFileSystem) {
+          return getMainAttribute(jar, Attributes.Name.IMPLEMENTATION_VERSION);
+        }
+      }
     }
-    catch (IOException e) {
-      return null;
-    }
+
+    return null;
   }
 
   @Nullable
   public static String detectJarVersion(@NotNull String detectionClass, @NotNull List<VirtualFile> files) {
-    final VirtualFile jar = LibrariesHelper.getInstance().findRootByClass(files, detectionClass);
-    if (jar != null && jar.getFileSystem() instanceof JarFileSystem) {
-      final VirtualFile manifestFile = jar.findFileByRelativePath(JarFile.MANIFEST_NAME);
-      if (manifestFile != null) {
-        try {
-          final InputStream input = manifestFile.getInputStream();
-          try {
-            return new Manifest(input).getMainAttributes().getValue(Attributes.Name.IMPLEMENTATION_VERSION);
-          }
-          finally {
-            input.close();
-          }
-        }
-        catch (IOException e) {
-          LOG.debug(e);
-          return null;
-        }
+    VirtualFile jarRoot = LibrariesHelper.getInstance().findRootByClass(files, detectionClass);
+    return jarRoot != null && jarRoot.getFileSystem() instanceof JarFileSystem ?
+           getMainAttribute(jarRoot, Attributes.Name.IMPLEMENTATION_VERSION) : null;
+  }
+
+  private static String getMainAttribute(VirtualFile jarRoot, Attributes.Name attribute) {
+    VirtualFile manifestFile = jarRoot.findFileByRelativePath(JarFile.MANIFEST_NAME);
+    if (manifestFile != null) {
+      try (InputStream stream = manifestFile.getInputStream()) {
+        return new Manifest(stream).getMainAttributes().getValue(attribute);
+      }
+      catch (IOException e) {
+        Logger.getInstance(JarVersionDetectionUtil.class).debug(e);
       }
     }
+
     return null;
   }
 
   @Nullable
-  public static String detectJarVersion(com.intellij.openapi.vfs.JarFile zipFile) {
-    if (zipFile == null) {
-      return null;
-    }
-    try {
-      final com.intellij.openapi.vfs.JarFile.JarEntry zipEntry = zipFile.getEntry(JarFile.MANIFEST_NAME);
-      if (zipEntry == null) {
-        return null;
-      }
-      final InputStream inputStream = zipFile.getInputStream(zipEntry);
-      final Manifest manifest = new Manifest(inputStream);
-      final Attributes attributes = manifest.getMainAttributes();
-      return attributes.getValue(Attributes.Name.IMPLEMENTATION_VERSION);
-    }
-    catch (IOException e) {
-      return null;
-    }
+  public static String getBundleVersion(@NotNull File jar) {
+    return JarUtil.getJarAttribute(jar, new Attributes.Name("Bundle-Version"));
   }
 
   @Nullable
-  private static com.intellij.openapi.vfs.JarFile getDetectionJar(final String detectionClass, Module module) throws IOException {
-      for (OrderEntry library : ModuleRootManager.getInstance(module).getOrderEntries()) {
-        if (library instanceof LibraryOrderEntry) {
-          VirtualFile file = LibrariesHelper.getInstance().findJarByClass(((LibraryOrderEntry)library).getLibrary(), detectionClass);
-          if (file != null && file.getFileSystem() instanceof JarFileSystem) {
-            return JarFileSystem.getInstance().getJarFile(file);
-          }
-        }
-      }
-    return null;
+  public static String getImplementationVersion(@NotNull File jar) {
+    return JarUtil.getJarAttribute(jar, Attributes.Name.IMPLEMENTATION_VERSION);
   }
 }
-

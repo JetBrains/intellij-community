@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,14 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.plugins.groovy.intentions;
+package org.jetbrains.plugins.groovy.intentions
+
+import groovy.transform.CompileStatic
 
 /**
  * @author Max Medvedev
  */
-public class GrAliasImportTest extends GrIntentionTestCase {
-  public GrAliasImportTest() {
-    super(GroovyIntentionsBundle.message("gr.alias.import.intention.name"));
+@CompileStatic
+class GrAliasImportTest extends GrIntentionTestCase {
+  GrAliasImportTest() {
+    super(GroovyIntentionsBundle.message("gr.alias.import.intention.name"))
   }
 
   void testSimple() {
@@ -37,7 +40,7 @@ fo<caret>o()
 import static Foo.foo as aliased
 
 aliased()
-''');
+''')
   }
 
   void testOverriden() {
@@ -57,7 +60,7 @@ import static Foo.foo as aliased
 
 aliased()
 aliased(2)
-''');
+''')
   }
 
   void testOnDemand() {
@@ -75,7 +78,7 @@ import static Foo.*
 import static Foo.foo as aliased
 
 aliased()
-''');
+''')
   }
 
   void testSimpleOnImportStatement() {
@@ -92,7 +95,7 @@ foo()
 import static Foo.foo as aliased
 
 aliased()
-''');
+''')
   }
 
   void testProperty() {
@@ -117,4 +120,23 @@ print setAliased(2)
 ''')
   }
 
+  void 'test on non-static import'() {
+    doAntiTest 'impor<caret>t java.lang.String'
+  }
+
+  void 'test on star import'() {
+    doAntiTest 'impor<caret>t static java.lang.String.*'
+  }
+
+  void 'test on aliased import'() {
+    doAntiTest 'impor<caret>t static java.lang.String.valueOf as alreadyAliased'
+  }
+
+  void 'test on import without reference'() {
+    doAntiTest 'impor<caret>t static '
+  }
+
+  void 'test on unresolved import'() {
+    doAntiTest 'impor<caret>t static foo.bar.Baz'
+  }
 }

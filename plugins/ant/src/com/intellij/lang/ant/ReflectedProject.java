@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,11 +18,11 @@ package com.intellij.lang.ant;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.Pair;
-import org.jetbrains.annotations.NonNls;
+import com.intellij.util.ExceptionUtil;
+import com.intellij.util.ReflectionUtil;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.ref.SoftReference;
-import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Hashtable;
@@ -32,19 +32,13 @@ import java.util.concurrent.locks.ReentrantLock;
 
 /**
 * @author Eugene Zhuravlev
-*         Date: Apr 9, 2010
 */
 public final class ReflectedProject {
   private static final Logger LOG = Logger.getInstance("#com.intellij.lang.ant.ReflectedProject");
-  
-  @NonNls private static final String INIT_METHOD_NAME = "init";
-  @NonNls private static final String GET_TASK_DEFINITIONS_METHOD_NAME = "getTaskDefinitions";
-  @NonNls private static final String GET_DATA_TYPE_DEFINITIONS_METHOD_NAME = "getDataTypeDefinitions";
-  @NonNls private static final String GET_PROPERTIES_METHOD_NAME = "getProperties";
 
 
   private static final List<SoftReference<Pair<ReflectedProject, ClassLoader>>> ourProjects =
-    new ArrayList<SoftReference<Pair<ReflectedProject, ClassLoader>>>();
+    new ArrayList<>();
 
   private static final ReentrantLock ourProjectsLock = new ReentrantLock();
   
@@ -76,8 +70,8 @@ public final class ReflectedProject {
     final ReflectedProject reflectedProj = new ReflectedProject(classLoader);
     ourProjectsLock.lock();
     try {
-      ourProjects.add(new SoftReference<Pair<ReflectedProject, ClassLoader>>(
-        new Pair<ReflectedProject, ClassLoader>(reflectedProj, classLoader)
+      ourProjects.add(new SoftReference<>(
+        Pair.create(reflectedProj, classLoader)
       ));
     }
     finally {
@@ -92,13 +86,13 @@ public final class ReflectedProject {
       final Class projectClass = classLoader.loadClass("org.apache.tools.ant.Project");
       if (projectClass != null) {
         project = projectClass.newInstance();
-        Method method = projectClass.getMethod(INIT_METHOD_NAME);
+        Method method = projectClass.getMethod("init");
         method.invoke(project);
-        method = getMethod(projectClass, GET_TASK_DEFINITIONS_METHOD_NAME);
+        method = ReflectionUtil.getMethod(projectClass, "getTaskDefinitions");
         myTaskDefinitions = (Hashtable)method.invoke(project);
-        method = getMethod(projectClass, GET_DATA_TYPE_DEFINITIONS_METHOD_NAME);
+        method = ReflectionUtil.getMethod(projectClass, "getDataTypeDefinitions");
         myDataTypeDefinitions = (Hashtable)method.invoke(project);
-        method = getMethod(projectClass, GET_PROPERTIES_METHOD_NAME);
+        method = ReflectionUtil.getMethod(projectClass, "getProperties");
         myProperties = (Hashtable)method.invoke(project);
         myTargetClass = classLoader.loadClass("org.apache.tools.ant.Target");
       }
@@ -106,40 +100,16 @@ public final class ReflectedProject {
     catch (ProcessCanceledException e) {
       throw e;
     }
-    catch (ExceptionInInitializerError e) {
-      final Throwable cause = e.getCause();
-      if (cause instanceof ProcessCanceledException) {
-        throw (ProcessCanceledException)cause;
-      }
-      else {
-        LOG.info(e);
-        project = null;
-      }
-    }
-    catch (InvocationTargetException e) {
-      final Throwable cause = e.getCause();
-      if (cause instanceof ProcessCanceledException) {
-        throw (ProcessCanceledException)cause;
-      }
-      else {
-        LOG.info(e);
-        project = null;
-      }
-    }
     catch (Throwable e) {
+      // rethrow PCE if it was the cause
+      final Throwable cause = ExceptionUtil.getRootCause(e);
+      if (cause instanceof ProcessCanceledException) {
+        throw (ProcessCanceledException)cause;
+      }
       LOG.info(e);
       project = null;
     }
     myProject = project;
-  }
-
-  private static Method getMethod(final Class introspectionHelperClass, final String name) throws NoSuchMethodException {
-    final Method method;
-    method = introspectionHelperClass.getMethod(name);
-    if (!method.isAccessible()) {
-      method.setAccessible(true);
-    }
-    return method;
   }
 
   @Nullable

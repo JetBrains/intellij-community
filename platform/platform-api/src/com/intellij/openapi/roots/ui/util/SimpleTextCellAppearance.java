@@ -24,7 +24,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
-// todo: move to lang-impl ?
+// todo: move to intellij.platform.lang.impl ?
 public class SimpleTextCellAppearance implements ModifiableCellAppearanceEx {
   private Icon myIcon;
   private final SimpleTextAttributes myTextAttributes;

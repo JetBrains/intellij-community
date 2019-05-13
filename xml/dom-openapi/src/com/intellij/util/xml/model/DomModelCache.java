@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,6 @@ package com.intellij.util.xml.model;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolder;
-import com.intellij.psi.PsiManager;
 import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
@@ -37,19 +36,14 @@ public abstract class DomModelCache<T, H extends UserDataHolder> {
 
   public DomModelCache(Project project, @NonNls String keyName) {
     myProject = project;
-    myKey = new Key<CachedValue<T>>(keyName);
+    myKey = new Key<>(keyName);
   }
 
   @Nullable
   public T getCachedValue(final @NotNull H dataHolder) {
     CachedValue<T> cachedValue = dataHolder.getUserData(myKey);
     if (cachedValue == null) {
-      final CachedValueProvider<T> myProvider = new CachedValueProvider<T>() {
-        @Nullable
-        public Result<T> compute() {
-          return computeValue(dataHolder);
-        }
-      };
+      final CachedValueProvider<T> myProvider = () -> computeValue(dataHolder);
       final CachedValuesManager manager = CachedValuesManager.getManager(myProject);
       cachedValue = manager.createCachedValue(myProvider, false);
       dataHolder.putUserData(myKey, cachedValue);

@@ -16,24 +16,23 @@
 
 package com.intellij.util.ui;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.wm.IdeFocusManager;
-import com.intellij.util.Alarm;
+import com.intellij.ui.awt.RelativePoint;
+import com.intellij.util.ui.accessibility.ScreenReader;
 
 import javax.swing.*;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
-import java.awt.event.MouseMotionAdapter;
 import java.awt.*;
+import java.awt.event.*;
 
 public abstract class BaseButtonBehavior {
 
-  private JComponent myComponent;
+  private final JComponent myComponent;
 
   private boolean myHovered;
   private boolean myPressedByMouse;
-  private boolean mySelected;
 
-  private TimedDeadzone myMouseDeadzone;
+  private final TimedDeadzone myMouseDeadzone;
 
   private int myActionTrigger;
 
@@ -43,10 +42,35 @@ public abstract class BaseButtonBehavior {
 
   public BaseButtonBehavior(JComponent component, TimedDeadzone.Length mouseDeadzoneTime) {
     myComponent = component;
-    myMouseDeadzone = new TimedDeadzone(mouseDeadzoneTime, Alarm.ThreadToUse.SWING_THREAD);
+    myMouseDeadzone = new TimedDeadzone(mouseDeadzoneTime);
     myComponent.addMouseListener(new MyMouseListener());
     myComponent.addMouseMotionListener(new MyMouseMotionListener());
     setActionTrigger(MouseEvent.MOUSE_RELEASED);
+    if (ScreenReader.isActive()) {
+      myComponent.addKeyListener(new KeyAdapter() {
+        @Override
+        public void keyReleased(KeyEvent e) {
+          if (e.getModifiers() == 0 && e.getKeyCode() == KeyEvent.VK_SPACE) {
+            e.consume();
+            RelativePoint point = new RelativePoint(myComponent, new Point(myComponent.getWidth() / 2, myComponent.getHeight() / 2));
+            execute(point.toMouseEvent());
+            return;
+          }
+          super.keyReleased(e);
+        }
+      });
+      myComponent.addFocusListener(new FocusListener() {
+        @Override
+        public void focusGained(FocusEvent e) {
+          repaintComponent();
+        }
+
+        @Override
+        public void focusLost(FocusEvent e) {
+          repaintComponent();
+        }
+      });
+    }
   }
 
   public void setActionTrigger(int trigger) {
@@ -72,18 +96,6 @@ public abstract class BaseButtonBehavior {
     repaintComponent();
   }
 
-  public final boolean isSelected() {
-    return mySelected;
-  }
-
-  private void setSelected(boolean selected) {
-    mySelected = selected;
-  }
-
-  private boolean isPressed() {
-    return isSelected() || isPressedByMouse();
-  }
-
   public void setMouseDeadzone(final TimedDeadzone.Length deadZone) {
     myMouseDeadzone.setLength(deadZone);
   }
@@ -91,7 +103,7 @@ public abstract class BaseButtonBehavior {
   protected void repaintComponent() {
     repaint(myComponent);
   }
-  
+
   protected void repaint(Component c) {
     c.repaint();
   }
@@ -100,13 +112,15 @@ public abstract class BaseButtonBehavior {
 
     private boolean myWasPressedOnFocusTransfer;
 
+    @Override
     public void mouseEntered(MouseEvent e) {
-      myMouseDeadzone.reEnter();
+      myMouseDeadzone.enter(e);
 
       setHovered(true);
       repaintComponent();
     }
 
+    @Override
     public void mouseExited(MouseEvent e) {
       myMouseDeadzone.clear();
 
@@ -114,6 +128,7 @@ public abstract class BaseButtonBehavior {
       repaintComponent();
     }
 
+    @Override
     public void mousePressed(MouseEvent e) {
       Component owner = IdeFocusManager.getInstance(null).getFocusOwner();
       myWasPressedOnFocusTransfer = owner == null;
@@ -123,13 +138,14 @@ public abstract class BaseButtonBehavior {
       setPressedByMouse(true);
 
       if (myActionTrigger == MouseEvent.MOUSE_PRESSED) {
-        if (execute(e)) return;
+        execute(e);
       } else {
         repaintComponent();
       }
     }
 
 
+    @Override
     public void mouseReleased(MouseEvent e) {
       try {
         if (passIfNeeded(e, !myWasPressedOnFocusTransfer)) return;
@@ -137,7 +153,7 @@ public abstract class BaseButtonBehavior {
         setPressedByMouse(false);
 
         if (myActionTrigger == MouseEvent.MOUSE_RELEASED) {
-          if (execute(e)) return;
+          execute(e);
         } else {
           repaintComponent();
         }
@@ -155,13 +171,20 @@ public abstract class BaseButtonBehavior {
       repaintComponent();
 
       BaseButtonBehavior.this.execute(e);
+      ApplicationManager.getApplication().invokeLater(() -> {
+        if (!myComponent.isShowing()) {
+          setHovered(false);
+          myMouseDeadzone.clear();
+        }
+      });
+
       return false;
     }
 
-    private boolean passIfNeeded(final MouseEvent e, boolean considerDeadzone) {
+    private boolean passIfNeeded(final MouseEvent e, boolean considerDeadZone) {
       final boolean actionClick = UIUtil.isActionClick(e, myActionTrigger);
 
-      if (!actionClick || (considerDeadzone && myMouseDeadzone.isWithin())) {
+      if (!actionClick || (considerDeadZone && myMouseDeadzone.isWithin())) {
         pass(e);
         return true;
       }
@@ -173,7 +196,7 @@ public abstract class BaseButtonBehavior {
   private class MyMouseMotionListener extends MouseMotionAdapter {
     @Override
     public void mouseMoved(final MouseEvent e) {
-      myMouseDeadzone.enter();
+      myMouseDeadzone.enter(e);
     }
   }
 

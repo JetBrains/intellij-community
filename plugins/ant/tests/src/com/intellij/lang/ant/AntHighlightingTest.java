@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,24 +14,18 @@
  * limitations under the License.
  */
 
-/*
- * Created by IntelliJ IDEA.
- * User: Maxim.Mossienko
- * Date: Jul 13, 2006
- * Time: 12:55:30 AM
- */
 package com.intellij.lang.ant;
 
 import com.intellij.codeInsight.daemon.DaemonAnalyzerTestCase;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.analysis.XmlPathReferenceInspection;
 import com.intellij.codeInspection.LocalInspectionTool;
+import com.intellij.idea.HardwareAgentRequired;
 import com.intellij.lang.ant.dom.AntResolveInspection;
 import com.intellij.lang.ant.validation.AntDuplicateTargetsInspection;
 import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.TestDataFile;
-import com.intellij.util.ThrowableRunnable;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -39,9 +33,10 @@ import java.util.Collections;
 import java.util.List;
 
 /**
- * @by Maxim.Mossienko
+ * @author Maxim.Mossienko
  */
 @SuppressWarnings({"HardCodedStringLiteral"})
+@HardwareAgentRequired
 public class AntHighlightingTest extends DaemonAnalyzerTestCase {
   @Override
   protected String getTestDataPath() {
@@ -80,6 +75,10 @@ public class AntHighlightingTest extends DaemonAnalyzerTestCase {
   public void testRefid() throws Exception {
     doTest();
   }
+  
+  public void testRefidInCustomDomElement() throws Exception {
+    doTest();
+  }
 
   public void testExternalValidator() throws Exception {
     doTest();
@@ -108,17 +107,13 @@ public class AntHighlightingTest extends DaemonAnalyzerTestCase {
     doTest();
   }
 
-  public void testBigFile() throws Exception {
-    configureByFiles(null, getVirtualFile(getTestName(false) + ".xml"), getVirtualFile("buildserver.xml"), getVirtualFile("buildserver.properties"));
-
+  public void testBigFilePerformance() {
     try {
       myIgnoreInfos = true;
-      PlatformTestUtil.startPerformanceTest("Should be quite performant !", 25000, new ThrowableRunnable() {
-        @Override
-        public void run() {
-          doDoTest(true, false);
-        }
-      }).cpuBound().assertTiming();
+      PlatformTestUtil.startPerformanceTest("Big ant file highlighting", 15_000, () -> {
+        configureByFiles(null, getVirtualFile(getTestName(false) + ".xml"), getVirtualFile("buildserver.xml"), getVirtualFile("buildserver.properties"));
+        doDoTest(true, false);
+      }).assertTiming();
     }
     finally {
       myIgnoreInfos = false;

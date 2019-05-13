@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,7 @@ package com.intellij.util.containers;
 
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Conditions;
-import com.intellij.util.ReflectionCache;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Iterator;
 import java.util.NoSuchElementException;
@@ -27,39 +27,35 @@ import java.util.NoSuchElementException;
  *  @author dsl
  *  @author dyoma
  */
-public class FilteringIterator<Dom, E extends Dom> implements Iterator<E> {
-  private final Iterator<Dom> myBaseIterator;
-  private final Condition<Dom> myFilter;
-  private boolean myNextObtained = false;
-  private boolean myCurrentIsValid = false;
+public class FilteringIterator<Dom, E extends Dom> implements PeekableIterator<E> {
+  private final Iterator<? extends Dom> myDelegate;
+  private final Condition<? super Dom> myCondition;
+  private boolean myNextObtained;
+  private boolean myCurrentIsValid;
   private Dom myCurrent;
-  private Boolean myCurrentPassedFilter = null;
-  public static final Condition NOT_NULL = new Condition() {
-    public boolean value(Object t) {
-      return t != null;
-    }
-  };
+  private Boolean myCurrentPassedFilter;
 
-  public FilteringIterator(Iterator<Dom> baseIterator, Condition<Dom> filter) {
-    myBaseIterator = baseIterator;
-    myFilter = filter;
+  public FilteringIterator(@NotNull Iterator<? extends Dom> delegate, @NotNull Condition<? super Dom> condition) {
+    myDelegate = delegate;
+    myCondition = condition;
   }
 
   private void obtainNext() {
     if (myNextObtained) return;
-    boolean hasNext = myBaseIterator.hasNext();
-    setCurrent(hasNext ? myBaseIterator.next() : null);
+    boolean hasNext = myDelegate.hasNext();
+    setCurrent(hasNext ? myDelegate.next() : null);
 
     myCurrentIsValid = hasNext;
     myNextObtained = true;
   }
 
+  @Override
   public boolean hasNext() {
     obtainNext();
     if (!myCurrentIsValid) return false;
     boolean value = isCurrentPassesFilter();
-    while (!value && myBaseIterator.hasNext()) {
-      Dom next = myBaseIterator.next();
+    while (!value && myDelegate.hasNext()) {
+      Dom next = myDelegate.next();
       setCurrent(next);
       value = isCurrentPassesFilter();
     }
@@ -73,11 +69,12 @@ public class FilteringIterator<Dom, E extends Dom> implements Iterator<E> {
 
   private boolean isCurrentPassesFilter() {
     if (myCurrentPassedFilter != null) return myCurrentPassedFilter.booleanValue();
-    boolean passed = myFilter.value(myCurrent);
-    myCurrentPassedFilter = Boolean.valueOf(passed);
+    boolean passed = myCondition.value(myCurrent);
+    myCurrentPassedFilter = passed;
     return passed;
   }
 
+  @Override
   public E next() {
     if (!hasNext()) throw new NoSuchElementException();
     E result = (E)myCurrent;
@@ -89,16 +86,24 @@ public class FilteringIterator<Dom, E extends Dom> implements Iterator<E> {
    * Works after call {@link #next} until call {@link #hasNext}
    * @throws IllegalStateException if {@link #hasNext} called
    */
+  @Override
   public void remove() {
     if (myNextObtained) throw new IllegalStateException();
-    myBaseIterator.remove();
+    myDelegate.remove();
+  }
+
+  @Override
+  public E peek() {
+    if (!hasNext()) throw new NoSuchElementException();
+    return (E)myCurrent;
   }
 
   public static <T> Iterator<T> skipNulls(Iterator<T> iterator) {
-    return create(iterator, NOT_NULL);
+    return create(iterator, Conditions.<T>notNull());
   }
 
-  public static <Dom, T extends Dom> Iterator<T> create(Iterator<Dom> iterator, Condition<Dom> condition) {
+  public static <Dom, T extends Dom> Iterator<T> create(Iterator<Dom> iterator, Condition<? super Dom> condition) {
+    if (condition == Condition.TRUE || condition == Conditions.TRUE) return (Iterator<T>)iterator;
     return new FilteringIterator<Dom, T>(iterator, condition);
   }
 
@@ -114,23 +119,16 @@ public class FilteringIterator<Dom, E extends Dom> implements Iterator<E> {
     return create((Iterator<T>)iterator, instanceOf(aClass));
   }
 
-  public static class InstanceOf<T> implements Condition {
+  public static class InstanceOf<T> implements Condition<Object> {
     private final Class<T> myInstancesClass;
 
     public InstanceOf(Class<T> instancesClass) {
       myInstancesClass = instancesClass;
     }
 
+    @Override
     public boolean value(Object object) {
       return myInstancesClass.isInstance(object);
-    }
-
-    public boolean isClassAcceptable(Class hintClass) {
-      return ReflectionCache.isAssignable(myInstancesClass, hintClass);
-    }
-
-    public T cast(Object object) {
-      return (T)object;
     }
   }
 }

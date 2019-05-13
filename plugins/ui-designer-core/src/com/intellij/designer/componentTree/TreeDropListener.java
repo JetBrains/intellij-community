@@ -86,9 +86,11 @@ public class TreeDropListener extends DropTargetAdapter {
 
   @Override
   public void drop(DropTargetDropEvent event) {
+    event.acceptDrop(event.getDropAction());
     eraseFeedback();
     executeCommand();
     clearState(true);
+    event.dropComplete(true);
   }
 
   private void showFeedback() {
@@ -112,7 +114,7 @@ public class TreeDropListener extends DropTargetAdapter {
 
     if (myContext.getComponents() == null) {
       if (!ArrayUtil.contains(SimpleTransferable.getData(myEvent.getTransferable(), Class.class), myDragTargets)) {
-        myContext.setComponents(Collections.<RadComponent>emptyList());
+        myContext.setComponents(Collections.emptyList());
         return;
       }
 
@@ -123,7 +125,7 @@ public class TreeDropListener extends DropTargetAdapter {
           myContext.setComponents(Collections.singletonList(tool.getFactory().create()));
         }
         catch (Throwable e) {
-          myContext.setComponents(Collections.<RadComponent>emptyList());
+          myContext.setComponents(Collections.emptyList());
           myToolProvider.loadDefaultTool();
         }
         return;
@@ -156,7 +158,7 @@ public class TreeDropListener extends DropTargetAdapter {
       return;
     }
 
-    final List<RadComponent> excludeComponents = new ArrayList<RadComponent>(myContext.getComponents());
+    final List<RadComponent> excludeComponents = new ArrayList<>(myContext.getComponents());
     if (!myContext.isCreate()) {
       for (RadComponent component : myContext.getComponents()) {
         component.accept(new RadComponentVisitor() {

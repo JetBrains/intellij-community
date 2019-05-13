@@ -22,7 +22,6 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Oct 16
  * @author 2003
  */
 public class FileProcessingCompilerAdapter {

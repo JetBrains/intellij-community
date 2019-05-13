@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,7 @@
  */
 package org.jetbrains.idea.maven.importing;
 
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -35,12 +35,7 @@ public class WorkingWithOpenProjectTest extends MavenImportingTestCase {
                   "<version>1</version>");
   }
 
-  @Override
-  protected void tearDown() throws Exception {
-    super.tearDown();
-  }
-
-  public void testShouldNotFailOnNewEmptyPomCreation() throws Exception {
+  public void testShouldNotFailOnNewEmptyPomCreation() {
     createModulePom("module", ""); // should not throw an exception
   }
 
@@ -56,26 +51,22 @@ public class WorkingWithOpenProjectTest extends MavenImportingTestCase {
     PsiTestUtil.addContentRoot(getModule("project"), root);  // should not throw an exception
   }
   
-  public void _testSavingAllDocumentBeforeReimport() throws Exception {
+  public void _testSavingAllDocumentBeforeReimport() {
     // cannot make it work die to order of document listeners
 
     myProjectsManager.listenForExternalChanges();
     final Document d = FileDocumentManager.getInstance().getDocument(myProjectPom);
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      public void run() {
-        d.setText(createPomXml("<groupId>test</groupId>" +
-                               "<artifactId>project</artifactId>" +
-                               "<version>1</version>" +
+    WriteCommandAction.runWriteCommandAction(null, () -> d.setText(createPomXml("<groupId>test</groupId>" +
+                                                                              "<artifactId>project</artifactId>" +
+                                                                              "<version>1</version>" +
 
-                               "<dependencies>" +
-                               "  <dependency>" +
-                               "    <groupId>junit</groupId>" +
-                               "    <artifactId>junit</artifactId>" +
-                               "    <version>4.0</version>" +
-                               "  </dependency>" +
-                               "</dependencies>"));
-      }
-    });
+                                                                              "<dependencies>" +
+                                                                              "  <dependency>" +
+                                                                              "    <groupId>junit</groupId>" +
+                                                                              "    <artifactId>junit</artifactId>" +
+                                                                              "    <version>4.0</version>" +
+                                                                              "  </dependency>" +
+                                                                              "</dependencies>")));
 
     resolveDependenciesAndImport();
 

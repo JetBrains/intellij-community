@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,19 +14,13 @@
  * limitations under the License.
  */
 
-/*
- * Created by IntelliJ IDEA.
- * User: dsl
- * Date: 29.05.2002
- * Time: 13:05:34
- * To change template for new class use
- * Code Style | Class Templates options (Tools | IDE Options).
- */
 package com.intellij.refactoring.introduceField;
 
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.ChangeContextUtil;
+import com.intellij.codeInsight.ExceptionUtil;
 import com.intellij.codeInsight.TestFrameworks;
+import com.intellij.codeInsight.daemon.impl.quickfix.AnonymousTargetClassPreselectionUtil;
 import com.intellij.codeInsight.highlighting.HighlightManager;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.codeInsight.navigation.NavigationUtil;
@@ -34,7 +28,6 @@ import com.intellij.ide.util.DirectoryChooserUtil;
 import com.intellij.ide.util.PackageUtil;
 import com.intellij.ide.util.PsiClassListCellRenderer;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -52,9 +45,10 @@ import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiElementProcessor;
+import com.intellij.psi.util.FileTypeUtils;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.psi.util.PsiUtilBase;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.refactoring.IntroduceHandlerBase;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.introduce.inplace.AbstractInplaceIntroducer;
@@ -62,7 +56,9 @@ import com.intellij.refactoring.introduceVariable.IntroduceVariableBase;
 import com.intellij.refactoring.rename.RenameJavaVariableProcessor;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.EnumConstantsUtil;
+import com.intellij.refactoring.util.RefactoringChangeUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
+import com.intellij.refactoring.util.classMembers.ClassMemberReferencesVisitor;
 import com.intellij.refactoring.util.occurrences.OccurrenceManager;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.VisibilityUtil;
@@ -91,6 +87,7 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
     myIsConstant = isConstant;
   }
 
+  @Override
   protected boolean invokeImpl(final Project project, @NotNull final PsiExpression selectedExpr, final Editor editor) {
     final PsiElement element = getPhysicalElement(selectedExpr);
 
@@ -114,8 +111,14 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
       return false;
     }
 
+    String switchLabelError = RefactoringUtil.checkEnumConstantInSwitchLabel(selectedExpr);
+    if (switchLabelError != null) {
+      CommonRefactoringUtil.showErrorHint(project, editor, switchLabelError, getRefactoringName(), getHelpID());
+      return false;
+    }
+
     myParentClass = getParentClass(selectedExpr);
-    final List<PsiClass> classes = new ArrayList<PsiClass>();
+    final List<PsiClass> classes = new ArrayList<>();
     PsiClass aClass = myParentClass;
     while (aClass != null) {
       classes.add(aClass);
@@ -129,19 +132,14 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
     if (classes.size() == 1 || editor == null || ApplicationManager.getApplication().isUnitTestMode() || shouldSuggestDialog) {
       return !convertExpressionToField(selectedExpr, editor, file, project, tempType);
     }
-    else {
-      PsiClass selection = null;
-      for (PsiClass psiClass : classes) {
-        if (!(psiClass instanceof PsiAnonymousClass)) {
-          selection = psiClass;
-          break;
-        }
-      }
-      NavigationUtil.getPsiElementPopup(classes.toArray(new PsiClass[classes.size()]), new PsiClassListCellRenderer(),
+    else if (!classes.isEmpty()){
+      PsiClass selection = AnonymousTargetClassPreselectionUtil.getPreselection(classes, myParentClass);
+      NavigationUtil.getPsiElementPopup(classes.toArray(PsiClass.EMPTY_ARRAY), new PsiClassListCellRenderer(),
                                         "Choose class to introduce " + (myIsConstant ? "constant" : "field"),
                                         new PsiElementProcessor<PsiClass>() {
                                           @Override
                                           public boolean execute(@NotNull PsiClass aClass) {
+                                            AnonymousTargetClassPreselectionUtil.rememberSelection(aClass, myParentClass);
                                             myParentClass = aClass;
                                             convertExpressionToField(selectedExpr, editor, file, project, tempType);
                                             return false;
@@ -157,13 +155,19 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
                                            final Project project,
                                            PsiType tempType) {
     if (myParentClass == null) {
-      if (JspPsiUtil.isInJspFile(file)) {
+      if (FileTypeUtils.isInServerPageFile(file)) {
         CommonRefactoringUtil.showErrorHint(project, editor, RefactoringBundle.message("error.not.supported.for.jsp", getRefactoringName()),
                                             getRefactoringName(), getHelpID());
         return true;
       }
+      else if ("package-info.java".equals(file.getName())) {
+        CommonRefactoringUtil
+          .showErrorHint(project, editor, RefactoringBundle.message("error.not.supported.for.package.info", getRefactoringName()),
+                         getRefactoringName(), getHelpID());
+        return true;
+      }
       else {
-        LOG.assertTrue(false);
+        LOG.error(file);
         return true;
       }
     }
@@ -185,8 +189,12 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
 
     PsiElement tempAnchorElement = RefactoringUtil.getParentExpressionAnchorElement(selectedExpr);
     if (!Comparing.strEqual(IntroduceConstantHandler.REFACTORING_NAME, getRefactoringName()) &&
-        IntroduceVariableBase.checkAnchorBeforeThisOrSuper(project, editor, tempAnchorElement, getRefactoringName(), getHelpID()))
+        IntroduceFieldHandler.isInSuperOrThis(selectedExpr) &&
+        isStaticFinalInitializer(selectedExpr) != null) {
+      String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("invalid.expression.context"));
+      CommonRefactoringUtil.showErrorHint(project, editor, message, getRefactoringName(), getHelpID());
       return true;
+    }
 
     final Settings settings =
       showRefactoringDialog(project, editor, myParentClass, selectedExpr, tempType,
@@ -212,12 +220,9 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
                                  anchorStatementIfAll, tempAnchorElement, editor,
                                  myParentClass);
 
-    new WriteCommandAction(project, getRefactoringName()){
-      @Override
-      protected void run(Result result) throws Throwable {
-        runnable.run();
-      }
-    }.execute();
+    WriteCommandAction.writeCommandAction(project).withName(getRefactoringName()).run(() -> {
+      runnable.run();
+    });
     return false;
   }
 
@@ -230,7 +235,7 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
         PsiUtil.setModifierProperty(field, PsiModifier.FINAL, true);
       }
       if (settings.isAnnotateAsNonNls()) {
-        PsiAnnotation annotation = JavaPsiFacade.getInstance(field.getProject()).getElementFactory()
+        PsiAnnotation annotation = JavaPsiFacade.getElementFactory(field.getProject())
           .createAnnotationFromText("@" + AnnotationUtil.NON_NLS, field);
         final PsiModifierList modifierList = field.getModifierList();
         LOG.assertTrue(modifierList != null);
@@ -252,6 +257,15 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
               );
   }
 
+  @Nullable
+  protected PsiElement isStaticFinalInitializer(PsiExpression expr) {
+    PsiClass parentClass = expr != null ? getParentClass(expr) : null;
+    if (parentClass == null) return null;
+    IsStaticFinalInitializerExpression visitor = new IsStaticFinalInitializerExpression(parentClass, expr);
+    expr.accept(visitor);
+    return visitor.getElementReference();
+  }
+
   protected abstract OccurrenceManager createOccurrenceManager(PsiExpression selectedExpr, PsiClass parentClass);
 
   protected final PsiClass getParentClass() {
@@ -265,11 +279,11 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
     while (child != null) {
       PsiElement prev = child.getPrevSibling();
       if (RefactoringUtil.isExpressionAnchorElement(prev)) break;
-      if (prev instanceof PsiJavaToken && ((PsiJavaToken)prev).getTokenType() == JavaTokenType.LBRACE) break;
+      if (PsiUtil.isJavaToken(prev, JavaTokenType.LBRACE)) break;
       child = prev;
     }
 
-    child = PsiTreeUtil.skipSiblingsForward(child, PsiWhiteSpace.class, PsiComment.class);
+    child = PsiTreeUtil.skipWhitespacesAndCommentsForward(child);
     PsiElement anchor;
     if (child != null) {
       anchor = child;
@@ -333,7 +347,7 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
     }
 
     final PsiExpressionStatement expressionStatement =
-      (PsiExpressionStatement)JavaPsiFacade.getInstance(parentClass.getProject()).getElementFactory()
+      (PsiExpressionStatement)JavaPsiFacade.getElementFactory(parentClass.getProject())
         .createStatementFromText(field.getName() + "= expr;", null);
     PsiAssignmentExpression expr = (PsiAssignmentExpression)expressionStatement.getExpression();
     final PsiExpression rExpression = expr.getRExpression();
@@ -373,17 +387,17 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
         PsiStatement assignment = createAssignment(field, initializerExpression, body.getLastChild(), parentClass);
         assignment = (PsiStatement) body.add(assignment);
         ChangeContextUtil.decodeContextInfo(assignment, field.getContainingClass(),
-                                            RefactoringUtil.createThisExpression(field.getManager(), null));
+                                            RefactoringChangeUtil.createThisExpression(field.getManager(), null));
         added = true;
       }
       if (!added && enclosingConstructor == null) {
-        PsiElementFactory factory = JavaPsiFacade.getInstance(field.getProject()).getElementFactory();
+        PsiElementFactory factory = JavaPsiFacade.getElementFactory(field.getProject());
         PsiMethod constructor = (PsiMethod)aClass.add(factory.createConstructor());
         final PsiCodeBlock body = constructor.getBody();
         PsiStatement assignment = createAssignment(field, initializerExpression, body.getLastChild(), parentClass);
         assignment = (PsiStatement) body.add(assignment);
         ChangeContextUtil.decodeContextInfo(assignment, field.getContainingClass(),
-                                            RefactoringUtil.createThisExpression(field.getManager(), null));
+                                            RefactoringChangeUtil.createThisExpression(field.getManager(), null));
       }
     }
     catch (IncorrectOperationException e) {
@@ -403,11 +417,12 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
     }
     pattern.append(";");
     PsiManager psiManager = parentClass.getManager();
-    PsiElementFactory factory = JavaPsiFacade.getInstance(psiManager.getProject()).getElementFactory();
+    PsiElementFactory factory = JavaPsiFacade.getElementFactory(psiManager.getProject());
     try {
       PsiField field = factory.createFieldFromText(pattern.toString(), null);
+      final PsiTypeElement typeElement = factory.createTypeElement(type);
+      field.getTypeElement().replace(typeElement);
       field = (PsiField)CodeStyleManager.getInstance(psiManager.getProject()).reformat(field);
-      field.getTypeElement().replace(factory.createTypeElement(type));
       if (includeInitializer) {
         field.getInitializer().replace(initializerExpr);
       }
@@ -426,7 +441,7 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
     try {
       @NonNls String pattern = "x=0;";
       PsiManager psiManager = parentClass.getManager();
-      PsiElementFactory factory = JavaPsiFacade.getInstance(psiManager.getProject()).getElementFactory();
+      PsiElementFactory factory = JavaPsiFacade.getElementFactory(psiManager.getProject());
       PsiExpressionStatement statement = (PsiExpressionStatement)factory.createStatementFromText(pattern, null);
       statement = (PsiExpressionStatement)CodeStyleManager.getInstance(psiManager.getProject()).reformat(statement);
 
@@ -444,7 +459,7 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
       return null;
     }
   }
-  
+
   protected abstract boolean accept(ElementToWorkOn elementToWorkOn);
 
   protected ElementToWorkOn.ElementsProcessor<ElementToWorkOn> getElementProcessor(final Project project, final Editor editor) {
@@ -456,7 +471,14 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
 
       @Override
       public void pass(final ElementToWorkOn elementToWorkOn) {
-        if (elementToWorkOn == null) return;
+        if (elementToWorkOn == null) {
+          return;
+        }
+
+        if (elementToWorkOn.getExpression() == null && elementToWorkOn.getLocalVariable() == null) {
+          ElementToWorkOn.showNothingSelectedErrorMessage(editor, getRefactoringName(), getHelpID(), project);
+          return;
+        }
 
         final boolean hasRunTemplate = LookupManager.getActiveLookup(editor) == null;
         if (elementToWorkOn.getExpression() == null) {
@@ -630,7 +652,7 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
       final PsiDirectory psiDirectory;
       if (psiPackage != null) {
         final PsiDirectory[] directories = psiPackage.getDirectories(GlobalSearchScope.allScope(myProject));
-        psiDirectory = directories.length > 1 ? DirectoryChooserUtil.chooseDirectory(directories, null, myProject, new HashMap<PsiDirectory, String>()) : directories[0];
+        psiDirectory = directories.length > 1 ? DirectoryChooserUtil.chooseDirectory(directories, null, myProject, new HashMap<>()) : directories[0];
       } else {
         psiDirectory = PackageUtil.findOrCreateDirectoryForPackage(myProject, packageName, myParentClass.getContainingFile().getContainingDirectory(), false);
       }
@@ -693,6 +715,7 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
       myParentClass = parentClass;
     }
 
+    @Override
     public void run() {
       try {
         InitializationPlace initializerPlace = mySettings.getInitializerPlace();
@@ -706,19 +729,20 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
           initializer = mySelectedExpr;
         }
 
-        initializer = IntroduceVariableBase.replaceExplicitWithDiamondWhenApplicable(initializer, myType);
-        
+        final SmartTypePointer type = SmartTypePointerManager.getInstance(myProject).createSmartTypePointer(myType);
+        initializer = IntroduceVariableBase.simplifyVariableInitializer(initializer, myType, initializerPlace == InitializationPlace.IN_FIELD_DECLARATION);
+
         final PsiMethod enclosingConstructor = getEnclosingConstructor(myParentClass, myAnchorElement);
         PsiClass destClass = mySettings.getDestinationClass() == null ? myParentClass : mySettings.getDestinationClass();
 
         if (!CommonRefactoringUtil.checkReadOnlyStatus(myProject, destClass.getContainingFile())) return;
 
-        if (initializer != null) {
-          ChangeContextUtil.encodeContextInfo(initializer, true);
-        }
+        ChangeContextUtil.encodeContextInfo(destClass, true);
+
         myField = mySettings.isIntroduceEnumConstant() ? EnumConstantsUtil.createEnumConstant(destClass, myFieldName, initializer) :
-                         createField(myFieldName, myType, initializer, initializerPlace == InitializationPlace.IN_FIELD_DECLARATION && initializer != null,
-                                     myParentClass);
+                  createField(myFieldName, type.getType(), initializer,
+                              initializerPlace == InitializationPlace.IN_FIELD_DECLARATION && initializer != null,
+                              myParentClass);
 
         setModifiers(myField, mySettings);
         PsiElement finalAnchorElement = null;
@@ -730,7 +754,8 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
         }
         PsiMember anchorMember = finalAnchorElement instanceof PsiMember ? (PsiMember)finalAnchorElement : null;
 
-        if (anchorMember instanceof PsiEnumConstant && destClass == anchorMember.getContainingClass()) {
+        if (anchorMember instanceof PsiEnumConstant && destClass == anchorMember.getContainingClass() &&
+            initializer != null && PsiTreeUtil.isAncestor(((PsiEnumConstant)anchorMember).getArgumentList(), initializer, false)) {
           final String initialName = "Constants";
           String constantsClassName = initialName;
 
@@ -793,7 +818,7 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
             if (parent instanceof PsiClass) break;
             endElement = parent;
           }
-          PsiElement last = PsiTreeUtil.skipSiblingsBackward(endElement, PsiWhiteSpace.class);
+          PsiElement last = PsiTreeUtil.skipWhitespacesBackward(endElement);
           if (last.getTextRange().getStartOffset() < myElement.getTextRange().getStartOffset()) {
             last = myElement;
           }
@@ -804,11 +829,9 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
         }
 
         if (myReplaceAll) {
-          List<PsiElement> array = new ArrayList<PsiElement>();
+          List<PsiElement> array = new ArrayList<>();
           for (PsiExpression occurrence : myOccurrences) {
-            if (occurrence instanceof PsiExpression) {
-              occurrence = RefactoringUtil.outermostParenthesizedExpression(occurrence);
-            }
+            occurrence = RefactoringUtil.outermostParenthesizedExpression(occurrence);
             if (myDeleteSelf && occurrence.equals(mySelectedExpr)) continue;
             final PsiElement replaced = RefactoringUtil.replaceOccurenceWithFieldRef(occurrence, myField, destClass);
             if (replaced != null) {
@@ -818,7 +841,7 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
 
           if (myEditor != null) {
             if (!ApplicationManager.getApplication().isUnitTestMode()) {
-              PsiElement[] exprsToHighlight = PsiUtilBase.toPsiElementArray(array);
+              PsiElement[] exprsToHighlight = PsiUtilCore.toPsiElementArray(array);
               HighlightManager highlightManager = HighlightManager.getInstance(myProject);
               highlightManager.addOccurrenceHighlights(myEditor, exprsToHighlight, highlightAttributes(), true, null);
               WindowManager
@@ -845,9 +868,7 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
           }
         }
 
-        if (initializer != null) {
-          ChangeContextUtil.clearContextInfo(initializer);
-        }
+        ChangeContextUtil.decodeContextInfo(destClass, destClass, null);
       }
       catch (IncorrectOperationException e) {
         LOG.error(e);
@@ -861,7 +882,7 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
       }
       return true;
     }
-    
+
     static PsiField appendField(final PsiExpression initializer,
                                 InitializationPlace initializerPlace, final PsiClass destClass,
                                 final PsiClass parentClass,
@@ -877,13 +898,13 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
                                        final PsiField forwardReference) {
       final PsiClass parentClass = PsiTreeUtil.getParentOfType(anchorMember, PsiClass.class);
 
-      if (anchorMember instanceof PsiField && 
+      if (anchorMember instanceof PsiField &&
           anchorMember.getParent() == parentClass &&
           destClass == parentClass &&
           ((PsiField)anchorMember).hasModifierProperty(PsiModifier.STATIC) == psiField.hasModifierProperty(PsiModifier.STATIC)) {
         return (PsiField)destClass.addBefore(psiField, anchorMember);
       }
-      else if (anchorMember instanceof PsiClassInitializer && 
+      else if (anchorMember instanceof PsiClassInitializer &&
                anchorMember.getParent() == parentClass &&
                destClass == parentClass) {
         PsiField field = (PsiField)destClass.addBefore(psiField, anchorMember);
@@ -891,13 +912,10 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
         return field;
       }
       else {
-        if (forwardReference != null ) {
-          return forwardReference.getParent() == destClass ?
-                 (PsiField)destClass.addAfter(psiField, forwardReference) :
-                 (PsiField)forwardReference.getParent().addAfter(psiField, forwardReference);
-        } else {
-          return (PsiField)destClass.add(psiField);
+        if (forwardReference != null &&forwardReference.getParent() == destClass) {
+          return (PsiField)destClass.addAfter(psiField, forwardReference);
         }
+        return (PsiField)destClass.add(psiField);
       }
     }
 
@@ -924,6 +942,76 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
 
     public PsiField getField() {
       return myField;
+    }
+  }
+
+  private static class IsStaticFinalInitializerExpression extends ClassMemberReferencesVisitor {
+    private PsiElement myElementReference;
+    private final PsiExpression myInitializer;
+    private boolean myCheckThrowables = true;
+
+    IsStaticFinalInitializerExpression(PsiClass aClass, PsiExpression initializer) {
+      super(aClass);
+      myInitializer = initializer;
+    }
+
+    @Override
+    public void visitReferenceExpression(PsiReferenceExpression expression) {
+      final PsiElement psiElement = expression.resolve();
+      if ((psiElement instanceof PsiLocalVariable || psiElement instanceof PsiParameter) &&
+          !PsiTreeUtil.isAncestor(myInitializer, psiElement, false)) {
+        myElementReference = expression;
+      }
+      else {
+        super.visitReferenceExpression(expression);
+      }
+    }
+
+    @Override
+    public void visitMethodReferenceExpression(PsiMethodReferenceExpression expression) {
+      if (!PsiMethodReferenceUtil.isResolvedBySecondSearch(expression)) {
+        super.visitMethodReferenceExpression(expression);
+      }
+    }
+
+    @Override
+    public void visitCallExpression(PsiCallExpression callExpression) {
+      super.visitCallExpression(callExpression);
+      if (!myCheckThrowables) return;
+      final List<PsiClassType> checkedExceptions = ExceptionUtil.getThrownCheckedExceptions(callExpression);
+      if (!checkedExceptions.isEmpty()) {
+        myElementReference = callExpression;
+      }
+    }
+
+    @Override
+    public void visitClass(PsiClass aClass) {
+      myCheckThrowables = false;
+      super.visitClass(aClass);
+    }
+
+    @Override
+    public void visitLambdaExpression(PsiLambdaExpression expression) {
+      myCheckThrowables = false;
+      super.visitLambdaExpression(expression);
+    }
+
+    @Override
+    protected void visitClassMemberReferenceElement(PsiMember classMember, PsiJavaCodeReferenceElement classMemberReference) {
+      if (!classMember.hasModifierProperty(PsiModifier.STATIC)) {
+        myElementReference = classMemberReference;
+      }
+    }
+
+    @Override
+    public void visitElement(PsiElement element) {
+      if (myElementReference != null) return;
+      super.visitElement(element);
+    }
+
+    @Nullable
+    public PsiElement getElementReference() {
+      return myElementReference;
     }
   }
 }

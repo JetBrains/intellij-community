@@ -28,7 +28,6 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlTag;
-
 import org.intellij.lang.xpath.XPathFile;
 import org.intellij.lang.xpath.psi.XPathExpression;
 import org.intellij.lang.xpath.xslt.XsltSupport;
@@ -45,6 +44,7 @@ public abstract class BaseIntroduceAction<Settings extends RefactoringOptions> e
 
     protected abstract boolean extractImpl(XPathExpression expression, Set<XPathExpression> matchingExpressions, List<XmlTag> otherMatches, Settings settings);
 
+    @Override
     public String getErrorMessage(Editor editor, PsiFile file, XmlAttribute context) {
         if (context != null) {
             if (XsltSupport.isPatternAttribute(context)) {
@@ -57,9 +57,10 @@ public abstract class BaseIntroduceAction<Settings extends RefactoringOptions> e
         return super.getErrorMessage(editor, file, context);
     }
 
+    @Override
     protected boolean actionPerformedImpl(PsiFile file, Editor editor, XmlAttribute context, int offset) {
         if (!(file instanceof XPathFile)) return false;
-        
+
         // pattern attribute may not reference variables
         if (XsltSupport.isPatternAttribute(context)) return false;
 
@@ -102,12 +103,12 @@ public abstract class BaseIntroduceAction<Settings extends RefactoringOptions> e
 
     private void extractFromExpression(Editor e, final XPathExpression expression) {
         final Editor editor = (e instanceof EditorWindow) ? ((EditorWindow)e).getDelegate() : e;
-        
+
         final HighlightManager highlightManager = HighlightManager.getInstance(expression.getProject());
 
         final Set<XPathExpression> matchingExpressions = RefactoringUtil.collectMatchingExpressions(expression);
-        final List<XmlTag> otherMatches = new ArrayList<XmlTag>(matchingExpressions.size());
-        final ArrayList<RangeHighlighter> highlighters = new ArrayList<RangeHighlighter>(matchingExpressions.size() + 1);
+        final List<XmlTag> otherMatches = new ArrayList<>(matchingExpressions.size());
+        final ArrayList<RangeHighlighter> highlighters = new ArrayList<>(matchingExpressions.size() + 1);
         if (matchingExpressions.size() > 0) {
             final SelectionModel selectionModel = editor.getSelectionModel();
           highlightManager.addRangeHighlight(editor, selectionModel.getSelectionStart(), selectionModel.getSelectionEnd(),
@@ -127,15 +128,12 @@ public abstract class BaseIntroduceAction<Settings extends RefactoringOptions> e
         if (dlg == null || dlg.isCanceled()) return;
 
         if (getCommandName() != null) {
-            new WriteCommandAction.Simple(e.getProject(), getCommandName()) {
-                protected void run() throws Throwable {
-                    if (extractImpl(expression, matchingExpressions, otherMatches, dlg)) {
-                        for (RangeHighlighter highlighter : highlighters) {
-                            highlighter.dispose();
-                        }
-                    }
+            WriteCommandAction.writeCommandAction(e.getProject()).withName(getCommandName()).run(() -> {
+            if (extractImpl(expression, matchingExpressions, otherMatches, dlg)) {
+                for (RangeHighlighter highlighter : highlighters) {
+                    highlighter.dispose();
                 }
-            }.execute();
+            }});
         } else {
             extractImpl(expression, matchingExpressions, otherMatches, dlg);
         }

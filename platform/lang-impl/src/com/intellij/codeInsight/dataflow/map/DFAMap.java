@@ -38,10 +38,10 @@ public class DFAMap<V> {
   public DFAMap() {
   }
 
-  private DFAMap(DFAMap<V> initialMap) {
+  public DFAMap(DFAMap<? extends V> initialMap) {
     myK = initialMap.myK;
     myV = initialMap.myV;
-    myAll = initialMap.myAll == null ? null : new HashMap<String,V>(initialMap.myAll);
+    myAll = initialMap.myAll == null ? null : new HashMap<>(initialMap.myAll);
   }
 
   public static <V> DFAMap<V> empty() {
@@ -49,7 +49,7 @@ public class DFAMap<V> {
     return (DFAMap<V>) ourEmptyMap;
   }
 
-  public void addKeys(HashSet<String> allNames) {
+  public void addKeys(HashSet<? super String> allNames) {
     if (myAll != null) {
       allNames.addAll(myAll.keySet());
     }
@@ -65,7 +65,7 @@ public class DFAMap<V> {
     }
     else {
       if (myAll == null) {
-        myAll = new HashMap<String,V>();
+        myAll = new HashMap<>();
         myAll.put(myK, myV);
       }
       myAll.put(key, value);
@@ -113,7 +113,7 @@ public class DFAMap<V> {
     }
     if (myK != null && (names2Include == null || names2Include.contains(myK))) {
       if (names2Include != null && names2Include.size() == 1) return names2Include;
-      final HashSet<String> result = new HashSet<String>();
+      final HashSet<String> result = new HashSet<>();
       result.add(myK);
       return result;
     }
@@ -170,8 +170,18 @@ public class DFAMap<V> {
     return Collections.emptyList();
   }
 
+  public Map<String, V> toMap() {
+    if (myAll != null) {
+      return myAll;
+    }
+    if (myK != null) {
+      return Collections.singletonMap(myK, myV);
+    }
+    return Collections.emptyMap();
+  }
+
   public DFAMap<V> asWritable() {
-    return new DFAMap<V>(this);
+    return new DFAMap<>(this);
   }
 
   @Override
@@ -192,6 +202,6 @@ public class DFAMap<V> {
     if (myAll != null){
       return myAll.keySet();
     }
-    return myK != null ? Collections.singleton(myK) : Collections.<String>emptySet();
+    return myK != null ? Collections.singleton(myK) : Collections.emptySet();
   }
 }

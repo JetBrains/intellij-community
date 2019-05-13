@@ -17,25 +17,24 @@ package org.intellij.lang.regexp.psi.impl;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.StringEscapesTokenTypes;
-import com.intellij.psi.TokenType;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-
 import org.intellij.lang.regexp.RegExpTT;
+import org.intellij.lang.regexp.UnicodeCharacterNames;
 import org.intellij.lang.regexp.psi.RegExpChar;
 import org.intellij.lang.regexp.psi.RegExpElementVisitor;
+import org.jetbrains.annotations.NotNull;
 
 public class RegExpCharImpl extends RegExpElementImpl implements RegExpChar {
     private static final TokenSet OCT_CHARS = TokenSet.create(RegExpTT.OCT_CHAR, RegExpTT.BAD_OCT_VALUE);
     private static final TokenSet HEX_CHARS = TokenSet.create(RegExpTT.HEX_CHAR, RegExpTT.BAD_HEX_VALUE);
-    private static final TokenSet UNICODE_CHARS = TokenSet.create(RegExpTT.HEX_CHAR, StringEscapesTokenTypes.INVALID_UNICODE_ESCAPE_TOKEN);
+    private static final TokenSet UNICODE_CHARS = TokenSet.create(RegExpTT.UNICODE_CHAR, StringEscapesTokenTypes.INVALID_UNICODE_ESCAPE_TOKEN);
 
     public RegExpCharImpl(ASTNode astNode) {
         super(astNode);
     }
 
+    @Override
     @NotNull
     public Type getType() {
         final ASTNode child = getNode().getFirstChildNode();
@@ -47,102 +46,107 @@ public class RegExpCharImpl extends RegExpElementImpl implements RegExpChar {
             return Type.HEX;
         } else if (UNICODE_CHARS.contains(t)) {
             return Type.UNICODE;
-        } else if (t == TokenType.ERROR_ELEMENT) {
-            return Type.INVALID;
+        } else if (t == RegExpTT.NAMED_CHARACTER) {
+            return Type.NAMED;
         } else {
             return Type.CHAR;
         }
     }
 
-    @Nullable
-    public Character getValue() {
+    @Override
+    public int getValue() {
       final String s = getUnescapedText();
-      if (s.equals("\\") && getType() == Type.CHAR) {
-        return '\\';
-      }
-      // special case for valid octal escaped sequences (see RUBY-12161)
-      if (s.startsWith("\\") && s.length() > 1) {
-        final ASTNode child = getNode().getFirstChildNode();
-        assert child != null;
-        final IElementType t = child.getElementType();
-        if (t == RegExpTT.OCT_CHAR) {
-          try {
-            return (char) Integer.parseInt(s.substring(1), 8);
-          }
-          catch (NumberFormatException e) {
-            // do nothing
-          }
-        }
-      }
+      if (s.equals("\\") && getType() == Type.CHAR) return '\\';
       return unescapeChar(s);
     }
 
-    @Nullable
-    static Character unescapeChar(String s) {
-        assert s.length() > 0;
+    private static int unescapeChar(String s) {
+        final int length = s.length();
+        assert length > 0;
 
-        boolean escaped = false;
-        for (int idx = 0; idx < s.length(); idx++) {
-            char ch = s.charAt(idx);
-            if (!escaped) {
-                if (ch == '\\') {
-                    escaped = true;
-                } else {
-                    return ch;
-                }
-            } else {
-                switch (ch) {
-                    case'n':
-                        return '\n';
-                    case'r':
-                        return '\r';
-                    case't':
-                        return '\t';
-                    case'a':
-                        return '\u0007';
-                    case'e':
-                        return '\u001b';
-                    case'f':
-                        return '\f';
-                    case 'b':
-                        return '\b';
-                    case'c':
-                        return (char)(ch ^ 64);
-                    case'x':
-                        return parseNumber(idx, s, 16, 2, true);
-                    case'u':
-                        return parseNumber(idx, s, 16, 4, true);
-                    case'0':
-                        return parseNumber(idx, s, 8, 3, false);
-                    default:
-                        if (Character.isLetter(ch)) {
-                            return null;
-                        }
-                        return ch;
-                }
-            }
+        int codePoint = s.codePointAt(0);
+        if (codePoint != '\\') {
+            return codePoint;
         }
-
-        return null;
+        codePoint = s.codePointAt(1);
+        switch (codePoint) {
+            case 'n':
+                return '\n';
+            case 'r':
+                return '\r';
+            case 't':
+                return '\t';
+            case 'a':
+                return '\u0007';
+            case 'e':
+                return '\u001b';
+            case 'f':
+                return '\f';
+            case 'b':
+                return '\b';
+            case 'c':
+                return (char)(codePoint ^ 64);
+            case 'N':
+                if (length < 4 || s.charAt(2) != '{' || s.charAt(length - 1) != '}') {
+                    return -1;
+                }
+                final int value = UnicodeCharacterNames.getCodePoint(s.substring(3, length - 1));
+                if (value == -1) {
+                    return -1;
+                }
+                return value;
+            case 'x':
+                if (length <= 2) return -1;
+                if (s.charAt(2) == '{') {
+                    final char c = s.charAt(length - 1);
+                    return (c != '}') ? -1 : parseNumber(s, 3, 16);
+                }
+                if (length == 3) {
+                    return parseNumber(s, 2, 16);
+                }
+                return length == 4 ? parseNumber(s, 2, 16) : -1;
+            case 'u':
+                if (length <= 2) return -1;
+                if (s.charAt(2) == '{') {
+                    final char c = s.charAt(length - 1);
+                    return (c != '}') ? -1 : parseNumber(s, 3, 16);
+                }
+                if (length != 6) {
+                    return -1;
+                }
+                return parseNumber(s, 2, 16);
+            case '0':
+            case '1':
+            case '2':
+            case '3':
+            case '4':
+            case '5':
+            case '6':
+            case '7':
+                return parseNumber(s, 1, 8);
+            default:
+                return codePoint;
+        }
     }
 
-    static Character parseNumber(int idx, String s, int radix, int len, boolean strict) {
-        final int start = idx + 1;
-        final int end = start + len;
-        try {
-            int sum = 0;
-            int i;
-            for (i = start; i < end && i < s.length(); i++) {
-                sum *= radix;
-                sum += Integer.valueOf(s.substring(i, i + 1), radix);
+    private static int parseNumber(String s, int offset, int radix) {
+        int sum = 0;
+        int i = offset;
+        for (; i < s.length(); i++) {
+            final int digit = Character.digit(s.charAt(i), radix);
+            if (digit < 0) { // '}' encountered
+                break;
             }
-            if (i-start == 0) return null;
-            return i-start < len && strict ? null : (char)sum;
-        } catch (NumberFormatException e1) {
-            return null;
+            sum = sum * radix + digit;
+            if (sum > Character.MAX_CODE_POINT) {
+                return -1;
+            }
         }
+        if (i - offset <= 0) return -1; // no digits found
+        return sum;
     }
 
+    @Override
     public void accept(RegExpElementVisitor visitor) {
         visitor.visitRegExpChar(this);
     }

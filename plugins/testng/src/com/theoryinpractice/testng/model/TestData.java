@@ -1,38 +1,27 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.theoryinpractice.testng.model;
 
 import com.intellij.execution.ExternalizablePath;
 import com.intellij.execution.JavaExecutionUtil;
 import com.intellij.execution.Location;
-import com.intellij.execution.configurations.JavaRunConfigurationModule;
 import com.intellij.execution.junit.JUnitUtil;
 import com.intellij.execution.junit2.info.MethodLocation;
 import com.intellij.execution.testframework.TestSearchScope;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.*;
-import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiPackage;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.jps.model.serialization.PathMacroUtil;
 
 import java.util.*;
 
 /**
- * @author Hani Suleiman Date: Jul 20, 2005 Time: 1:11:01 PM
+ * @author Hani Suleiman
  */
 public class TestData implements Cloneable
 {
@@ -42,22 +31,22 @@ public class TestData implements Cloneable
   public String METHOD_NAME;
   public String GROUP_NAME;
   public String TEST_OBJECT;
-  public String VM_PARAMETERS;
+  // should be private, but for now we use DefaultJDOMExternalizer, so, public
+  public String VM_PARAMETERS = "-ea";
   public String PARAMETERS;
-  public String WORKING_DIRECTORY;
+  public String WORKING_DIRECTORY = PathMacroUtil.MODULE_WORKING_DIR;
   public String OUTPUT_DIRECTORY;
-  public String ANNOTATION_TYPE;
 
-  public String ENV_VARIABLES;
-  private Map<String, String> ENVS = new LinkedHashMap<String, String>();
+  private Map<String, String> ENVS = new LinkedHashMap<>();
   public boolean PASS_PARENT_ENVS = true;
 
   public TestSearchScope.Wrapper TEST_SEARCH_SCOPE;
-  public Map<String, String> TEST_PROPERTIES = new HashMap<String, String>();
-  public List<String> TEST_LISTENERS = new ArrayList<String>();
+  public Map<String, String> TEST_PROPERTIES = new HashMap<>();
+  public List<String> TEST_LISTENERS = new ArrayList<>();
   public boolean USE_DEFAULT_REPORTERS = false;
   public String PROPERTIES_FILE;
-  private Set<String> myPatterns = new HashSet<String>();
+  private LinkedHashSet<String> myPatterns = new LinkedHashSet<>();
+  private String myChangeList;
 
   public TestData() {
     TEST_OBJECT = TestType.CLASS.getType();
@@ -80,6 +69,7 @@ public class TestData implements Cloneable
     return GROUP_NAME == null ? "" : GROUP_NAME;
   }
 
+  @NotNull
   public String getMethodName() {
     return METHOD_NAME == null ? "" : METHOD_NAME;
   }
@@ -96,8 +86,8 @@ public class TestData implements Cloneable
     return OUTPUT_DIRECTORY == null ? "" : OUTPUT_DIRECTORY;
   }
 
-  public void setVMParameters(String value) {
-    VM_PARAMETERS = value;
+  public void setVMParameters(@Nullable String value) {
+    VM_PARAMETERS = StringUtil.nullize(value);
   }
 
   public String getVMParameters() {
@@ -113,10 +103,10 @@ public class TestData implements Cloneable
   }
 
   public void setWorkingDirectory(String value) {
-    WORKING_DIRECTORY = ExternalizablePath.urlValue(value);
+    WORKING_DIRECTORY = StringUtil.isEmptyOrSpaces(value) ? "" : FileUtilRt.toSystemIndependentName(value.trim());
   }
 
-  public String getWorkingDirectory(Project project) {
+  public String getWorkingDirectory() {
     return ExternalizablePath.localPathValue(WORKING_DIRECTORY);
   }
 
@@ -156,51 +146,31 @@ public class TestData implements Cloneable
   }
 
   @Override
-  public Object clone() throws CloneNotSupportedException {
-    TestData data = (TestData) super.clone();
+  public TestData clone() {
+    TestData data;
+    try {
+      data = (TestData)super.clone();
+    }
+    catch (CloneNotSupportedException e) {
+      //can't happen right?
+      //noinspection CallToPrintStackTrace
+      e.printStackTrace();
+      data = new TestData();
+    }
     data.TEST_SEARCH_SCOPE = new TestSearchScope.Wrapper();
 
-    data.TEST_PROPERTIES = new HashMap<String, String>();
+    data.TEST_PROPERTIES = new HashMap<>();
     data.TEST_PROPERTIES.putAll(TEST_PROPERTIES);
 
-    data.TEST_LISTENERS = new ArrayList<String>();
+    data.TEST_LISTENERS = new ArrayList<>();
     data.TEST_LISTENERS.addAll(TEST_LISTENERS);
 
     data.USE_DEFAULT_REPORTERS = USE_DEFAULT_REPORTERS;
-    data.ENVS = new LinkedHashMap<String, String>(ENVS);
-    data.myPatterns = new HashSet<String>();
+    data.ENVS = new LinkedHashMap<>(ENVS);
+    data.myPatterns = new LinkedHashSet<>();
     data.myPatterns.addAll(myPatterns);
     data.setScope(getScope());
     return data;
-  }
-
-  public boolean isGeneratedName(String s, JavaRunConfigurationModule config) {
-    if (TEST_OBJECT == null) return true;
-    if ((TestType.CLASS.getType().equals(TEST_OBJECT) || TestType.METHOD.getType().equals(TEST_OBJECT)) && getMainClassName().length() == 0)
-      return JavaExecutionUtil.isNewName(s);
-    if (TestType.METHOD.getType().equals(TEST_OBJECT) && getMethodName().length() == 0)
-      return JavaExecutionUtil.isNewName(s);
-    else return Comparing.equal(s, getGeneratedName(config));
-  }
-
-  public String getGeneratedName(JavaRunConfigurationModule runconfigurationmodule) {
-    if (TestType.PACKAGE.getType().equals(TEST_OBJECT)) if (getPackageName().length() == 0) return "<default>";
-    else return getPackageName();
-    String name = JavaExecutionUtil.getPresentableClassName(getMainClassName(), runconfigurationmodule);
-    if (TestType.METHOD.getType().equals(TEST_OBJECT)) {
-      return name + '.' + getMethodName();
-    }
-    else if (TestType.SUITE.getType().equals(TEST_OBJECT)) {
-      return getSuiteName();
-    }
-    else {
-      if (TestType.PATTERN.getType().equals(TEST_OBJECT)) {
-        final int size = myPatterns.size();
-        if (size == 0) return "Temp suite";
-        return StringUtil.getShortName(myPatterns.iterator().next()) + (size > 1 ? " and " + (size - 1) + " more" : "");
-      }
-      return name;
-    }
   }
 
   public String getMainClassName() {
@@ -226,28 +196,6 @@ public class TestData implements Cloneable
     return JavaExecutionUtil.findModule(psiclass);
   }
 
-  public boolean isConfiguredByElement(PsiElement element) {
-    if (TEST_OBJECT.equals(TestType.PACKAGE.getType())) {
-      if (element instanceof PsiPackage) {
-        return Comparing.strEqual(PACKAGE_NAME, ((PsiPackage) element).getQualifiedName());
-      } else if (element instanceof PsiDirectory) {
-        final PsiPackage psiPackage = JavaDirectoryService.getInstance().getPackage(((PsiDirectory)element));
-        return psiPackage != null && Comparing.strEqual(PACKAGE_NAME, psiPackage.getQualifiedName());
-      }
-    }
-
-    element = PsiTreeUtil.getParentOfType(element, PsiModifierListOwner.class, false);
-    if (element instanceof PsiMethod && TEST_OBJECT.equals(TestType.METHOD.getType())) {
-      final PsiClass aClass = ((PsiMethod) element).getContainingClass();
-      return aClass != null &&
-             Comparing.strEqual(MAIN_CLASS_NAME, JavaExecutionUtil.getRuntimeQualifiedName(aClass)) &&
-          Comparing.strEqual(METHOD_NAME, ((PsiMethod) element).getName());
-    } else if (element instanceof PsiClass && TEST_OBJECT.equals(TestType.CLASS.getType())) {
-      return Comparing.strEqual(MAIN_CLASS_NAME, JavaExecutionUtil.getRuntimeQualifiedName((PsiClass) element));
-    }
-    return false;
-  }
-
   public Map<String, String> getEnvs() {
     return ENVS;
   }
@@ -260,7 +208,15 @@ public class TestData implements Cloneable
     return myPatterns;
   }
 
-  public void setPatterns(Set<String> set) {
+  public void setPatterns(LinkedHashSet<String> set) {
     myPatterns = set;
+  }
+
+  public String getChangeList() {
+    return myChangeList;
+  }
+
+  public void setChangeList(String changeList) {
+    myChangeList = changeList;
   }
 }

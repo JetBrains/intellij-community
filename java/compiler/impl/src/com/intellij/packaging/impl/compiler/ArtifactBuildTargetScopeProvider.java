@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,9 +18,7 @@ package com.intellij.packaging.impl.compiler;
 import com.intellij.compiler.impl.BuildTargetScopeProvider;
 import com.intellij.compiler.impl.CompileScopeUtil;
 import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.application.Result;
 import com.intellij.openapi.compiler.CompileScope;
-import com.intellij.openapi.compiler.CompilerFilter;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.packaging.artifacts.Artifact;
@@ -40,30 +38,26 @@ import java.util.Set;
 public class ArtifactBuildTargetScopeProvider extends BuildTargetScopeProvider {
   @NotNull
   @Override
-  public List<TargetTypeBuildScope> getBuildTargetScopes(@NotNull final CompileScope baseScope, @NotNull CompilerFilter filter,
-                                                         @NotNull final Project project) {
-    final ArtifactsCompiler compiler = ArtifactsCompiler.getInstance(project);
-    if (compiler == null || !filter.acceptCompiler(compiler)) {
-      return Collections.emptyList();
-    }
-    final List<TargetTypeBuildScope> scopes = new ArrayList<TargetTypeBuildScope>();
-    new ReadAction() {
-      protected void run(final Result result) {
-        final Set<Artifact> artifacts = ArtifactCompileScope.getArtifactsToBuild(project, baseScope, false);
-        if (ArtifactCompileScope.getArtifacts(baseScope) == null) {
-          Set<Module> modules = ArtifactUtil.getModulesIncludedInArtifacts(artifacts, project);
-          CompileScopeUtil.addScopesForModules(modules, scopes);
-        }
-        if (!artifacts.isEmpty()) {
-          TargetTypeBuildScope.Builder builder =
-            TargetTypeBuildScope.newBuilder().setTypeId(ArtifactBuildTargetType.INSTANCE.getTypeId());
-          for (Artifact artifact : artifacts) {
-            builder.addTargetId(artifact.getName());
-          }
-          scopes.add(builder.build());
-        }
+  public List<TargetTypeBuildScope> getBuildTargetScopes(@NotNull final CompileScope baseScope,
+                                                         @NotNull final Project project, final boolean forceBuild) {
+    final List<TargetTypeBuildScope> scopes = new ArrayList<>();
+    ReadAction.run(() -> {
+      final Set<Artifact> artifacts = ArtifactCompileScope.getArtifactsToBuild(project, baseScope, false);
+      if (ArtifactCompileScope.getArtifacts(baseScope) == null) {
+        Set<Module> modules = ArtifactUtil.getModulesIncludedInArtifacts(artifacts, project);
+        CompileScopeUtil.addScopesForModules(modules, Collections.emptyList(), scopes, forceBuild);
       }
-    }.execute();
+      if (!artifacts.isEmpty()) {
+        TargetTypeBuildScope.Builder builder = TargetTypeBuildScope.newBuilder()
+                                                                   .setTypeId(ArtifactBuildTargetType.INSTANCE.getTypeId())
+                                                                   .setForceBuild(
+                                                                     forceBuild || ArtifactCompileScope.isArtifactRebuildForced(baseScope));
+        for (Artifact artifact : artifacts) {
+          builder.addTargetId(artifact.getName());
+        }
+        scopes.add(builder.build());
+      }
+    });
 
     return scopes;
   }

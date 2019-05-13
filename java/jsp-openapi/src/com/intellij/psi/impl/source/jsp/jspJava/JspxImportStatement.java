@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,11 +17,11 @@ package com.intellij.psi.impl.source.jsp.jspJava;
 
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiImportStatement;
+import com.intellij.psi.SyntheticElement;
 
 /**
  * @author peter
  */
-public interface JspxImportStatement extends PsiImportStatement {
-  boolean isForeignFileImport();
+public interface JspxImportStatement extends PsiImportStatement, SyntheticElement {
   PsiFile getDeclarationFile();
 }

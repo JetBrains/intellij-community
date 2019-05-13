@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,40 +14,63 @@
  * limitations under the License.
  */
 
-/*
- * User: anna
- * Date: 27-Dec-2007
- */
 package com.intellij.openapi.roots;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.extensions.ExtensionPointName;
-import com.intellij.openapi.util.JDOMExternalizable;
-import com.intellij.openapi.vfs.VirtualFile;
-import org.jetbrains.annotations.Nullable;
+import org.jdom.Element;
+import org.jetbrains.annotations.NotNull;
 
-public abstract class ModuleExtension<T extends ModuleExtension> implements JDOMExternalizable, Disposable, Comparable<ModuleExtension> {
+/**
+ * Extend this class to provide additional module-level properties which can be edited in Project Structure dialog. For ordinary module-level
+ * properties use {@link com.intellij.openapi.module.ModuleServiceManager module service} instead.
+ * <p/>
+ * If the inheritor implements {@link com.intellij.openapi.components.PersistentStateComponent} its state will be persisted in the module
+ * configuration file.
+ */
+public abstract class ModuleExtension implements Disposable {
   public static final ExtensionPointName<ModuleExtension> EP_NAME = ExtensionPointName.create("com.intellij.moduleExtension");
 
+  /**
+   * <b>Note:</b> don't call this method directly from client code. Use approach below instead:
+   * <pre>
+   *   ModifiableRootModel modifiableModel = ModuleRootManager.getInstance(module).getModifiableModel();
+   *   CompilerModuleExtension extension = modifiableModel.getModuleExtension(CompilerModuleExtension.class);
+   *   try {
+   *     // ...
+   *   }
+   *   finally {
+   *     modifiableModel.commit();
+   *   }
+   * </pre>
+   * The point is that call to commit() on CompilerModuleExtension obtained like
+   * {@code 'CompilerModuleExtension.getInstance(module).getModifiableModel(true)'} doesn't dispose the model.
+   * <p/>
+   * Call to {@code ModifiableRootModel.commit()} not only commits linked extensions but disposes them as well.
+   * 
+   * @param writable  flag which identifies if resulting model is writable
+   * @return          extension model
+   */
+  @NotNull
   public abstract ModuleExtension getModifiableModel(final boolean writable);
 
   public abstract void commit();
 
   public abstract boolean isChanged();
 
+  /**
+   * @deprecated Please implement PersistentStateComponent instead.
+   */
   @Deprecated
-  @Nullable
-  public VirtualFile[] getRootPaths(OrderRootType type) {
-    return null;
+  public void readExternal(@NotNull Element element) {
+    throw new UnsupportedOperationException("Implement PersistentStateComponent");
   }
 
+  /**
+   * @deprecated Please implement PersistentStateComponent instead.
+   */
   @Deprecated
-  @Nullable
-  public String[] getRootUrls(OrderRootType type) {
-    return null;
-  }
-
-  public int compareTo(final ModuleExtension o) {
-    return getClass().getName().compareTo(o.getClass().getName());
+  public void writeExternal(@NotNull Element element) {
+    throw new UnsupportedOperationException("Implement PersistentStateComponent");
   }
 }

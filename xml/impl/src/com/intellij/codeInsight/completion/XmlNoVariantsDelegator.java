@@ -15,14 +15,15 @@
  */
 package com.intellij.codeInsight.completion;
 
+import org.jetbrains.annotations.NotNull;
+
 /**
  * @author Dmitry Avdeev
- *         Date: 12/19/11
  */
 public class XmlNoVariantsDelegator extends CompletionContributor {
 
   @Override
-  public void fillCompletionVariants(final CompletionParameters parameters, final CompletionResultSet result) {
+  public void fillCompletionVariants(@NotNull final CompletionParameters parameters, @NotNull final CompletionResultSet result) {
     final boolean empty = result.runRemainingContributors(parameters, true).isEmpty();
 
     if (!empty && parameters.getInvocationCount() == 0) {

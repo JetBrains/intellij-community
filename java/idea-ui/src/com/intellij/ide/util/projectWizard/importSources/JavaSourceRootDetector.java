@@ -15,6 +15,7 @@
  */
 package com.intellij.ide.util.projectWizard.importSources;
 
+import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.ide.util.projectWizard.importSources.util.CommonSourceRootDetectionUtil;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
@@ -33,24 +34,54 @@ public abstract class JavaSourceRootDetector extends ProjectStructureDetector {
   @Override
   public DirectoryProcessingResult detectRoots(@NotNull File dir, @NotNull File[] children, @NotNull File base,
                                                @NotNull List<DetectedProjectRoot> result) {
+    if (dir.getName().equals("node_modules")) {
+      return DirectoryProcessingResult.SKIP_CHILDREN;
+    }
     final String fileExtension = getFileExtension();
-    for (File child : children) {
-      if (child.isFile()) {
-        if (FileUtilRt.extensionEquals(child.getName(), fileExtension)) {
-          Pair<File, String> root = CommonSourceRootDetectionUtil.IO_FILE.suggestRootForFileWithPackageStatement(child, base,
-                                                                                                                 getPackageNameFetcher(),
-                                                                                                                 true);
-          if (root != null) {
-            result.add(new JavaModuleSourceRoot(root.getFirst(), root.getSecond(), getLanguageName()));
-            return DirectoryProcessingResult.skipChildrenAndParentsUpTo(root.getFirst());
-          }
-          else {
-            return DirectoryProcessingResult.SKIP_CHILDREN;
-          }
+    if (JavaFileType.DEFAULT_EXTENSION.equals(fileExtension)) {
+      for (File child : children) {
+        if (child.isFile() && "module-info.java".equals(child.getName())) {
+          JavaModuleSourceRoot sourceRoot = new JavaModuleSourceRoot(dir, getLanguageName(), true);
+          result.add(sourceRoot);
+          return DirectoryProcessingResult.SKIP_CHILDREN;
         }
       }
     }
+
+    for (File child : children) {
+      if (child.isFile() && FileUtilRt.extensionEquals(child.getName(), fileExtension)) {
+        Pair<File, String> root = CommonSourceRootDetectionUtil.IO_FILE.suggestRootForFileWithPackageStatement(child, base,
+                                                                                                               getPackageNameFetcher(),
+                                                                                                               true);
+        if (root != null) {
+          JavaModuleSourceRoot sourceRoot = new JavaModuleSourceRoot(root.getFirst(), root.getSecond(), getLanguageName());
+          result.add(sourceRoot);
+          // sometimes java files from test data have package statement which includes names of all parent directories
+          // (e.g. files in jdk/test/java/awt/regtesthelpers in JDK sources have package 'test.java.awt.regtesthelpers')
+          // This check allows us to not skip searching for other java source roots when first such java file is found.
+          if (areLastRootsTheSame(result, sourceRoot, 20)) {
+            return DirectoryProcessingResult.skipChildrenAndParentsUpTo(root.getFirst());
+          }
+        }
+        return DirectoryProcessingResult.SKIP_CHILDREN;
+      }
+    }
     return DirectoryProcessingResult.PROCESS_CHILDREN;
+  }
+
+  private static boolean areLastRootsTheSame(List<DetectedProjectRoot> result, JavaModuleSourceRoot root, int threshold) {
+    if (result.size() < threshold) return false;
+
+    List<DetectedProjectRoot> lastItems = result.subList(result.size() - threshold, result.size());
+    for (DetectedProjectRoot item : lastItems) {
+      if (!(item instanceof JavaModuleSourceRoot)) return false;
+      JavaModuleSourceRoot oldRoot = (JavaModuleSourceRoot)item;
+      if (!FileUtil.filesEqual(oldRoot.getDirectory(), root.getDirectory()) || !oldRoot.getPackagePrefix().equals(root.getPackagePrefix())
+          || !oldRoot.getRootTypeName().equals(root.getRootTypeName())) {
+        return false;
+      }
+    }
+    return true;
   }
 
   @Override

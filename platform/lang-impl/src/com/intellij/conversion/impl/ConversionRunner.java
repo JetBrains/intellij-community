@@ -35,10 +35,12 @@ public class ConversionRunner {
   private boolean myProcessWorkspaceFile;
   private boolean myProcessRunConfigurations;
   private boolean myProcessProjectLibraries;
-  private final List<File> myModulesFilesToProcess = new ArrayList<File>();
+  private boolean myArtifacts;
+  private final List<File> myModulesFilesToProcess = new ArrayList<>();
   private final ProjectConverter myConverter;
   private final ConversionProcessor<RunManagerSettings> myRunConfigurationsConverter;
   private final ConversionProcessor<ProjectLibrariesSettings> myProjectLibrariesConverter;
+  private final ConversionProcessor<ArtifactsSettings> myArtifactsConverter;
 
   public ConversionRunner(ConverterProvider provider, ConversionContextImpl context) {
     myProvider = provider;
@@ -49,6 +51,7 @@ public class ConversionRunner {
     myWorkspaceConverter = myConverter.createWorkspaceFileConverter();
     myRunConfigurationsConverter = myConverter.createRunConfigurationsConverter();
     myProjectLibrariesConverter = myConverter.createProjectLibrariesConverter();
+    myArtifactsConverter = myConverter.createArtifactsConverter();
   }
 
   public boolean isConversionNeeded() throws CannotConvertException {
@@ -75,6 +78,9 @@ public class ConversionRunner {
     myProcessProjectLibraries = myProjectLibrariesConverter != null
                                  && myProjectLibrariesConverter.isConversionNeeded(myContext.getProjectLibrariesSettings());
 
+    myArtifacts = myArtifactsConverter != null
+                  && myArtifactsConverter.isConversionNeeded(myContext.getArtifactsSettings());
+
     return myProcessProjectFile ||
            myProcessWorkspaceFile ||
            myProcessRunConfigurations ||
@@ -92,7 +98,7 @@ public class ConversionRunner {
   }
 
   public Set<File> getAffectedFiles() {
-    Set<File> affectedFiles = new HashSet<File>();
+    Set<File> affectedFiles = new HashSet<>();
     if (myProcessProjectFile) {
       affectedFiles.add(myContext.getProjectFile());
     }
@@ -107,6 +113,9 @@ public class ConversionRunner {
       }
       if (myProcessProjectLibraries) {
         affectedFiles.addAll(myContext.getProjectLibrariesSettings().getAffectedFiles());
+      }
+      if (myArtifacts) {
+        affectedFiles.addAll(myContext.getArtifactsSettings().getAffectedFiles());
       }
     }
     catch (CannotConvertException ignored) {
@@ -143,6 +152,9 @@ public class ConversionRunner {
       myProjectLibrariesConverter.preProcess(myContext.getProjectLibrariesSettings());
     }
 
+    if (myArtifacts) {
+      myArtifactsConverter.preProcess(myContext.getArtifactsSettings());
+    }
     myConverter.preProcessingFinished();
   }
 
@@ -165,6 +177,10 @@ public class ConversionRunner {
 
     if (myProcessProjectLibraries) {
       myProjectLibrariesConverter.process(myContext.getProjectLibrariesSettings());
+    }
+
+    if (myArtifacts) {
+      myArtifactsConverter.process(myContext.getArtifactsSettings());
     }
     myConverter.processingFinished();
   }
@@ -189,6 +205,10 @@ public class ConversionRunner {
     if (myProcessProjectLibraries) {
       myProjectLibrariesConverter.postProcess(myContext.getProjectLibrariesSettings());
     }
+
+    if (myArtifacts) {
+      myArtifactsConverter.postProcess(myContext.getArtifactsSettings());
+    }
     myConverter.postProcessingFinished();
   }
 
@@ -196,8 +216,8 @@ public class ConversionRunner {
     return myProvider;
   }
 
-  public static List<File> getReadOnlyFiles(final Collection<File> affectedFiles) {
-    List<File> result = new ArrayList<File>();
+  public static List<File> getReadOnlyFiles(final Collection<? extends File> affectedFiles) {
+    List<File> result = new ArrayList<>();
     for (File file : affectedFiles) {
       if (!file.canWrite()) {
         result.add(file);

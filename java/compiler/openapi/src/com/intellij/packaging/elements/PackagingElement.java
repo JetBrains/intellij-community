@@ -25,28 +25,31 @@ import org.jetbrains.annotations.NotNull;
 import java.util.List;
 
 /**
+ * Describes an element in artifact's output layout.
+ *
+ * @see com.intellij.packaging.artifacts.Artifact
+ * @see PackagingElementFactory
  * @author nik
  */
 public abstract class PackagingElement<S> implements PersistentStateComponent<S> {
   private final PackagingElementType myType;
 
-  protected PackagingElement(PackagingElementType type) {
+  protected PackagingElement(@NotNull PackagingElementType type) {
     myType = type;
   }
 
+  @NotNull
   public abstract PackagingElementPresentation createPresentation(@NotNull ArtifactEditorContext context);
 
+  @NotNull
   public final PackagingElementType getType() {
     return myType;
   }
 
+  @NotNull
   public abstract List<? extends Generator> computeAntInstructions(@NotNull PackagingElementResolvingContext resolvingContext, @NotNull AntCopyInstructionCreator creator,
                                                                    @NotNull ArtifactAntGenerationContext generationContext,
                                                                    @NotNull ArtifactType artifactType);
-
-  public abstract void computeIncrementalCompilerInstructions(@NotNull IncrementalCompilerInstructionCreator creator, @NotNull PackagingElementResolvingContext resolvingContext,
-                                                              @NotNull ArtifactIncrementalCompilerContext compilerContext,
-                                                              @NotNull ArtifactType artifactType);
 
   public abstract boolean isEqualTo(@NotNull PackagingElement<?> element);
 

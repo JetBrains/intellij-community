@@ -33,11 +33,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-/*
-* Created by IntelliJ IDEA.
-* User: sweinreuter
-* Date: 14.01.11
-*/
 public class FunctionDeclarationParsing {
   public static final String FUNCTION_NAMESPACE = "http://www.w3.org/2005/xpath-functions";
 
@@ -59,7 +54,7 @@ public class FunctionDeclarationParsing {
     final String name = match(lexer, XPathTokenTypes.FUNCTION_NAME);
     match(lexer, XPathTokenTypes.LPAREN);
 
-    final List<Parameter> parameters = new ArrayList<Parameter>();
+    final List<Parameter> parameters = new ArrayList<>();
     while (lexer.getTokenType() != XPathTokenTypes.RPAREN) {
       if (lexer.getTokenType() == XPathTokenTypes.DOTDOT) {
         lexer.advance();
@@ -92,7 +87,7 @@ public class FunctionDeclarationParsing {
 
     final XPathType returnType = mapType(ret, indicator);
 
-    return Pair.create(prefix, new FunctionImpl(name, returnType, parameters.toArray(new Parameter[parameters.size()])));
+    return Pair.create(prefix, new FunctionImpl(name, returnType, parameters.toArray(new Parameter[0])));
   }
 
   public static XPathType mapType(String type, XPath2SequenceType.Cardinality c) {

@@ -22,52 +22,41 @@ import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
-import java.util.Collection;
-import java.util.LinkedHashSet;
+import java.util.*;
 
 /**
  * @author max
  */
-public class ExternalClasspathClassLoader extends URLClassLoader {
-  private ExternalClasspathClassLoader(URL[] urls) {
-    super(urls, Thread.currentThread().getContextClassLoader());
-  }
+public class ExternalClasspathClassLoader {
 
-  private static String[] parseUrls(String classpathFilePath) {
-    Collection<String> roots = new LinkedHashSet<String>();
-    File file = new File(classpathFilePath);
+  private static List<File> loadFilesPaths(String classpathFilePath) {
     try {
-      final BufferedReader reader = new BufferedReader(new FileReader(file));
-      try {
+      File file = new File(classpathFilePath);
+      Set<File> roots = new LinkedHashSet<>();
+      try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
         while (reader.ready()) {
-          roots.add(reader.readLine());
+          roots.add(new File(reader.readLine()));
         }
       }
-      finally {
-        reader.close();
-      }
-
-      //noinspection SSBasedInspection
-      return roots.toArray(new String[roots.size()]);
+      return new ArrayList<>(roots);
     }
     catch (IOException e) {
       throw new RuntimeException(e);
     }
   }
 
-  public static String[] getRoots() {
+  public static List<File> getRoots() {
     final String classPathFilePath = System.getProperty("classpath.file");
-    return classPathFilePath != null ? parseUrls(classPathFilePath) : null;
+    return classPathFilePath != null ? loadFilesPaths(classPathFilePath) : null;
   }
 
-  public static String[] getExcludeRoots() {
+  public static List<File> getExcludeRoots() {
     try {
       final String classPathFilePath = System.getProperty("exclude.tests.roots.file");
-      return classPathFilePath != null ? parseUrls(classPathFilePath) : null;
+      return classPathFilePath != null ? loadFilesPaths(classPathFilePath) : null;
     }
     catch (Exception e) {
-      //noinspection SSBasedInspection
-      return new String[0];
+      return Collections.emptyList();
     }
   }
 
@@ -75,7 +64,9 @@ public class ExternalClasspathClassLoader extends URLClassLoader {
     try {
       URL[] urls = parseUrls();
       if (urls != null) {
-        Thread.currentThread().setContextClassLoader(new ExternalClasspathClassLoader(urls));
+        URLClassLoader auxLoader = new URLClassLoader(urls, Thread.currentThread().getContextClassLoader());
+        Thread.currentThread().setContextClassLoader(auxLoader);
+        Thread.currentThread().setContextClassLoader(loadOptimizedLoader(urls, auxLoader));
       }
     }
     catch (Exception e) {
@@ -83,14 +74,24 @@ public class ExternalClasspathClassLoader extends URLClassLoader {
     }
   }
 
+  private static ClassLoader loadOptimizedLoader(Object urls, URLClassLoader auxLoader) throws Exception {
+    Object builder = auxLoader.loadClass("com.intellij.util.lang.UrlClassLoader").getMethod("build").invoke(null);
+    builder.getClass().getMethod("urls", URL[].class).invoke(builder, urls);
+    builder.getClass().getMethod("useCache").invoke(builder);
+    builder.getClass().getMethod("allowLock").invoke(builder);
+    builder.getClass().getMethod("allowBootstrapResources").invoke(builder);
+    builder.getClass().getMethod("parent", ClassLoader.class).invoke(builder, auxLoader.getParent());
+    return (ClassLoader)builder.getClass().getMethod("get").invoke(builder);
+  }
+
   private static URL[] parseUrls() {
     try {
-      String[] roots = getRoots();
+      List<File> roots = getRoots();
       if (roots == null) return null;
 
-      URL[] urls = new URL[roots.length];
+      URL[] urls = new URL[roots.size()];
       for (int i = 0; i < urls.length; i++) {
-        urls[i] = new File(roots[i]).toURI().toURL();
+        urls[i] = roots.get(i).toURI().toURL();
       }
       return urls;
     }

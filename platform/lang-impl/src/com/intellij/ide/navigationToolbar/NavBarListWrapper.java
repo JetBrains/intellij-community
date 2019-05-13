@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,10 +17,12 @@ package com.intellij.ide.navigationToolbar;
 
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
-import com.intellij.ui.ListScrollingUtil;
+import com.intellij.openapi.wm.IdeFocusManager;
+import com.intellij.ui.ScrollingUtil;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -37,10 +39,11 @@ class NavBarListWrapper extends JBScrollPane implements DataProvider {
   private static final int MAX_SIZE = 20;
   private final JList myList;
 
-  public NavBarListWrapper(final JList list) {
+  NavBarListWrapper(final JList list) {
     super(list);
     list.addMouseMotionListener(new MouseMotionAdapter() {
       boolean myIsEngaged = false;
+      @Override
       public void mouseMoved(MouseEvent e) {
         if (myIsEngaged && !UIUtil.isSelectionButtonDown(e)) {
           final Point point = e.getPoint();
@@ -52,7 +55,7 @@ class NavBarListWrapper extends JBScrollPane implements DataProvider {
       }
     });
 
-    ListScrollingUtil.installActions(list);
+    ScrollingUtil.installActions(list);
 
     final int modelSize = list.getModel().getSize();
     setBorder(BorderFactory.createEmptyBorder());
@@ -66,8 +69,9 @@ class NavBarListWrapper extends JBScrollPane implements DataProvider {
   }
 
 
+  @Override
   @Nullable
-  public Object getData(@NonNls String dataId) {
+  public Object getData(@NotNull @NonNls String dataId) {
     if (PlatformDataKeys.SELECTED_ITEM.is(dataId)){
       return myList.getSelectedValue();
     }
@@ -77,16 +81,21 @@ class NavBarListWrapper extends JBScrollPane implements DataProvider {
     return null;
   }
 
+  @Override
   public void setBorder(Border border) {
     if (myList != null){
       myList.setBorder(border);
     }
   }
 
+  @Override
   public void requestFocus() {
-    myList.requestFocus();
+    IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
+      IdeFocusManager.getGlobalInstance().requestFocus(myList, true);
+    });
   }
 
+  @Override
   public synchronized void addMouseListener(MouseListener l) {
     myList.addMouseListener(l);
   }

@@ -26,12 +26,8 @@ import org.jetbrains.annotations.NotNull;
 import java.util.ArrayList;
 
 public class MacroCallNode extends Expression {
-  public Macro getMacro() {
-    return myMacro;
-  }
-
   private final Macro myMacro;
-  private final ArrayList<Expression> myParameters = new ArrayList<Expression>();
+  private final ArrayList<Expression> myParameters = new ArrayList<>();
 
   public MacroCallNode(@NotNull Macro macro) {
     myMacro = macro;
@@ -41,25 +37,29 @@ public class MacroCallNode extends Expression {
     myParameters.add(node);
   }
 
+  public Macro getMacro() {
+    return myMacro;
+  }
+
   @Override
   public Result calculateResult(ExpressionContext context) {
-    Expression[] parameters = myParameters.toArray(new Expression[myParameters.size()]);
-    return myMacro.calculateResult(parameters, context);
+    Expression[] parameters = myParameters.toArray(new Expression[0]);
+    return getMacro().calculateResult(parameters, context);
   }
 
   @Override
   public Result calculateQuickResult(ExpressionContext context) {
-    Expression[] parameters = myParameters.toArray(new Expression[myParameters.size()]);
-    return myMacro.calculateQuickResult(parameters, context);
+    Expression[] parameters = myParameters.toArray(new Expression[0]);
+    return getMacro().calculateQuickResult(parameters, context);
   }
 
   @Override
   public LookupElement[] calculateLookupItems(ExpressionContext context) {
-    Expression[] parameters = myParameters.toArray(new Expression[myParameters.size()]);
-    return myMacro.calculateLookupItems(parameters, context);
+    Expression[] parameters = myParameters.toArray(new Expression[0]);
+    return getMacro().calculateLookupItems(parameters, context);
   }
 
   public Expression[] getParameters() {
-    return myParameters.toArray(new Expression[myParameters.size()]);
+    return myParameters.toArray(new Expression[0]);
   }
 }

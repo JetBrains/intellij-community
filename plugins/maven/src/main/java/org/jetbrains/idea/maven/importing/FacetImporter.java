@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,9 @@ import com.intellij.facet.*;
 import com.intellij.framework.FrameworkType;
 import com.intellij.framework.detection.DetectionExcludesConfiguration;
 import com.intellij.framework.detection.impl.FrameworkDetectionUtil;
+import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
@@ -65,27 +67,43 @@ public abstract class FacetImporter<FACET_TYPE extends Facet, FACET_CONFIG_TYPE 
   public void preProcess(Module module,
                          MavenProject mavenProject,
                          MavenProjectChanges changes,
-                         MavenModifiableModelsProvider modifiableModelsProvider) {
+                         IdeModifiableModelsProvider modifiableModelsProvider) {
     prepareImporter(mavenProject);
-    disableFacetAutodetection(module, modifiableModelsProvider);
-    ensureFacetExists(module, mavenProject, modifiableModelsProvider);
+
+    if (!isFacetDetectionDisabled(module.getProject())) {
+      disableFacetAutodetection(module, modifiableModelsProvider);
+      ensureFacetExists(module, mavenProject, modifiableModelsProvider);
+    }
   }
 
-  private void ensureFacetExists(Module module, MavenProject mavenProject, MavenModifiableModelsProvider modifiableModelsProvider) {
-    ModifiableFacetModel model = modifiableModelsProvider.getFacetModel(module);
+  private void ensureFacetExists(Module module, MavenProject mavenProject, IdeModifiableModelsProvider modifiableModelsProvider) {
+    ModifiableFacetModel model = modifiableModelsProvider.getModifiableFacetModel(module);
 
     FACET_TYPE f = findFacet(model);
     if (f != null) return;
 
     f = myFacetType.createFacet(module, myDefaultFacetName, myFacetType.createDefaultConfiguration(), null);
-    model.addFacet(f);
+    model.addFacet(f, MavenRootModelAdapter.getMavenExternalSource());
     setupFacet(f, mavenProject);
   }
 
   protected void prepareImporter(MavenProject p) {
   }
 
-  private void disableFacetAutodetection(Module module, MavenModifiableModelsProvider provider) {
+  /**
+   * Whether to disable auto detection for given module.
+   *
+   * @param module Current module.
+   * @return true.
+   * @since 171
+   */
+  protected boolean isDisableFacetAutodetection(Module module) {
+    return true;
+  }
+
+  private void disableFacetAutodetection(Module module, IdeModifiableModelsProvider provider) {
+    if (!isDisableFacetAutodetection(module)) return;
+
     final DetectionExcludesConfiguration excludesConfiguration = DetectionExcludesConfiguration.getInstance(module.getProject());
     final FrameworkType frameworkType = FrameworkDetectionUtil.findFrameworkTypeForFacetDetector(myFacetType);
     if (frameworkType != null) {
@@ -98,7 +116,7 @@ public abstract class FacetImporter<FACET_TYPE extends Facet, FACET_CONFIG_TYPE 
   protected abstract void setupFacet(FACET_TYPE f, MavenProject mavenProject);
 
   @Override
-  public void process(MavenModifiableModelsProvider modifiableModelsProvider,
+  public void process(IdeModifiableModelsProvider modifiableModelsProvider,
                       Module module,
                       MavenRootModelAdapter rootModel,
                       MavenProjectsTree mavenModel,
@@ -106,10 +124,12 @@ public abstract class FacetImporter<FACET_TYPE extends Facet, FACET_CONFIG_TYPE 
                       MavenProjectChanges changes,
                       Map<MavenProject, String> mavenProjectToModuleName,
                       List<MavenProjectsProcessorTask> postTasks) {
-    FACET_TYPE f = findFacet(modifiableModelsProvider.getFacetModel(module));
+    FACET_TYPE f = findFacet(modifiableModelsProvider.getModifiableFacetModel(module));
     if (f == null) return; // facet may has been removed between preProcess and process calls
 
-    reimportFacet(modifiableModelsProvider, module, rootModel, f, mavenModel, mavenProject, changes, mavenProjectToModuleName, postTasks);
+    if (!isFacetDetectionDisabled(module.getProject())) {
+      reimportFacet(modifiableModelsProvider, module, rootModel, f, mavenModel, mavenProject, changes, mavenProjectToModuleName, postTasks);
+    }
   }
 
   private FACET_TYPE findFacet(FacetModel model) {
@@ -122,7 +142,7 @@ public abstract class FacetImporter<FACET_TYPE extends Facet, FACET_CONFIG_TYPE 
     return result;
   }
 
-  protected abstract void reimportFacet(MavenModifiableModelsProvider modelsProvider,
+  protected abstract void reimportFacet(IdeModifiableModelsProvider modelsProvider,
                                         Module module,
                                         MavenRootModelAdapter rootModel,
                                         FACET_TYPE facet,
@@ -149,7 +169,7 @@ public abstract class FacetImporter<FACET_TYPE extends Facet, FACET_CONFIG_TYPE 
   }
 
   protected String getTargetOutputPath(MavenProject p, String... subFoldersAndFile) {
-    List<String> elements = new ArrayList<String>();
+    List<String> elements = new ArrayList<>();
     elements.add(p.getBuildDirectory());
     Collections.addAll(elements, subFoldersAndFile);
     return makePath(p, ArrayUtil.toStringArray(elements));
@@ -169,5 +189,13 @@ public abstract class FacetImporter<FACET_TYPE extends Facet, FACET_CONFIG_TYPE 
 
   protected String getTargetExtension(MavenProject p) {
     return p.getPackaging();
+  }
+
+  protected boolean isFacetDetectionDisabled(Project project) {
+    final DetectionExcludesConfiguration excludesConfiguration = DetectionExcludesConfiguration.getInstance(project);
+    final FrameworkType frameworkType = FrameworkDetectionUtil.findFrameworkTypeForFacetDetector(myFacetType);
+    if (frameworkType == null) return false;
+
+    return excludesConfiguration.isExcludedFromDetection(frameworkType);
   }
 }

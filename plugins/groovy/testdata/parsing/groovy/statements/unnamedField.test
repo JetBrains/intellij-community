@@ -9,13 +9,17 @@ Groovy script
     PsiElement(class)('class')
     PsiWhiteSpace(' ')
     PsiElement(identifier)('Steps')
+    Extends clause
+      <empty list>
+    Implements clause
+      <empty list>
     PsiWhiteSpace(' ')
     Type definition body
       PsiElement({)('{')
       PsiWhiteSpace('\n   ')
       Modifiers
         PsiElement(def)('def')
-      PsiElement(new line)('\n')
-      PsiErrorElement:Identifier, string literal or '(' expected
+      PsiErrorElement:identifier expected
         <empty list>
+      PsiElement(new line)('\n')
       PsiElement(})('}')

@@ -15,6 +15,6 @@ class Arrays {
 
     @Override
     public int hashCode() {
-        return i != null ? i.hashCode() : 0;
+        return java.util.Arrays.hashCode(i);
     }
 }

@@ -19,8 +19,9 @@ import com.intellij.formatting.ASTBlock;
 import com.intellij.formatting.Block;
 import com.intellij.formatting.Wrap;
 import com.intellij.lang.ASTNode;
-import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
+import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
+import com.intellij.psi.formatter.java.AbstractJavaBlock;
 import com.intellij.psi.formatter.java.wrap.impl.JavaChildBlockWrapFactory;
 import com.intellij.psi.formatter.java.wrap.impl.JavaChildWrapArranger;
 import org.jetbrains.annotations.Nullable;
@@ -35,7 +36,6 @@ import org.jetbrains.annotations.Nullable;
  * Thread-safe.
  *
  * @author Denis Zhdanov
- * @since Apr 21, 2010 2:19:17 PM
  */
 public class JavaWrapManager {
 
@@ -46,7 +46,7 @@ public class JavaWrapManager {
   private final JavaChildBlockWrapFactory myChildBlockFactory;
 
   /**
-   * Creates new <code>JavaWrapManager</code> object with default wrapping services.
+   * Creates new {@code JavaWrapManager} object with default wrapping services.
    */
   public JavaWrapManager() {
     this(new JavaChildWrapArranger(), new JavaChildBlockWrapFactory());
@@ -58,13 +58,13 @@ public class JavaWrapManager {
   }
 
   /**
-   * Tries to define the wrap to use for the {@link Block block} for the given <code>'child'</code> node. It's assumed that
-   * given <code>'child'</code> node is descendant (direct or indirect) of the given <code>'parent'</code> node.
-   * I.e. <code>'parent'</code> node defines usage context for the <code>'child'</code> node.
+   * Tries to define the wrap to use for the {@link Block block} for the given {@code 'child'} node. It's assumed that
+   * given {@code 'child'} node is descendant (direct or indirect) of the given {@code 'parent'} node.
+   * I.e. {@code 'parent'} node defines usage context for the {@code 'child'} node.
    *
    * @param child                   child node which {@link Wrap wrap} is to be defined
-   * @param parent                  direct or indirect parent of the given <code>'child'</code> node. Defines usage context
-   *                                of <code>'child'</code> node processing
+   * @param parent                  direct or indirect parent of the given {@code 'child'} node. Defines usage context
+   *                                of {@code 'child'} node processing
    * @param settings                code style settings to use during wrap definition
    * @param suggestedWrap           wrap suggested to use by clients of current class. I.e. those clients offer wrap to
    *                                use based on their information about current processing state. However, it's possible
@@ -74,14 +74,18 @@ public class JavaWrapManager {
    * @param reservedWrapsProvider   reserved {@code 'element type -> wrap instance'} mappings provider. <b>Note:</b> this
    *                                argument is considered to be a part of legacy heritage and is intended to be removed as
    *                                soon as formatting code refactoring is done
-   * @return                        wrap to use for the given <code>'child'</code> node if it's possible to define the one;
-   *                                <code>null</code> otherwise
+   * @return                        wrap to use for the given {@code 'child'} node if it's possible to define the one;
+   *                                {@code null} otherwise
    */
   @Nullable
-  public Wrap arrangeChildWrap(ASTNode child, ASTNode parent, CommonCodeStyleSettings settings, Wrap suggestedWrap,
-                               ReservedWrapsProvider reservedWrapsProvider) 
+  public Wrap arrangeChildWrap(ASTNode child, 
+                               ASTNode parent, 
+                               CommonCodeStyleSettings settings,
+                               JavaCodeStyleSettings javaSettings,
+                               Wrap suggestedWrap,
+                               AbstractJavaBlock reservedWrapsProvider)
   {
-    return myChildArranger.arrange(child, parent, settings, suggestedWrap, reservedWrapsProvider);
+    return myChildArranger.arrange(child, parent, settings, javaSettings, suggestedWrap, reservedWrapsProvider);
   }
 
   /**

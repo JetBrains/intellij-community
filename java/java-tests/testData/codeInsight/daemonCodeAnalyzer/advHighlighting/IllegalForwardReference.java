@@ -1,6 +1,6 @@
 /// forward references
 import java.io.*;
-import java.net.*;
+
 
 public class a  {
 
@@ -13,7 +13,7 @@ public class a  {
   int k = 1 + <error descr="Illegal forward reference">ki</error>;
   int ki;
 
-  final int fi5 = <error descr="Illegal forward reference">fi5</error> + 1;
+  final int fi5 = <error descr="Illegal self reference">fi5</error> + 1;
 }
 
 class a1 {

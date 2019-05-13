@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.typeCook.deductive.builder;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -32,28 +18,18 @@ import com.intellij.refactoring.typeCook.Settings;
 import com.intellij.refactoring.typeCook.Util;
 import com.intellij.refactoring.typeCook.deductive.PsiTypeVariableFactory;
 import com.intellij.refactoring.typeCook.deductive.util.VictimCollector;
-import com.intellij.util.containers.HashMap;
 
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Map;
+import java.util.*;
 
-/**
- * Created by IntelliJ IDEA.
- * User: db
- * Date: 27.06.2003
- * Time: 22:48:08
- * To change this template use Options | File Templates.
- */
 public class SystemBuilder {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.typeCook.deductive.builder.SystemBuilder");
 
   private final PsiManager myManager;
-  private final HashMap<PsiElement, Boolean> myMethodCache;
-  private final HashMap<PsiParameter, PsiParameter> myParameters;
-  private final HashMap<PsiMethod, PsiMethod> myMethods;
-  private final HashMap<PsiElement, PsiType> myTypes;
-  private final HashSet<PsiAnchor> myVisitedConstructions;
+  private final Map<PsiElement, Boolean> myMethodCache;
+  private final Map<PsiParameter, PsiParameter> myParameters;
+  private final Map<PsiMethod, PsiMethod> myMethods;
+  private final Map<PsiElement, PsiType> myTypes;
+  private final Set<PsiAnchor> myVisitedConstructions;
   private final Settings mySettings;
   private final PsiTypeVariableFactory myTypeVariableFactory;
   private final Project myProject;
@@ -62,19 +38,19 @@ public class SystemBuilder {
     myProject = project;
     myManager = PsiManager.getInstance(myProject);
     mySettings = settings;
-    myMethodCache = new HashMap<PsiElement, Boolean>();
-    myParameters = new HashMap<PsiParameter, PsiParameter>();
-    myMethods = new HashMap<PsiMethod, PsiMethod>();
-    myTypes = new HashMap<PsiElement, PsiType>();
-    myVisitedConstructions = new HashSet<PsiAnchor>();
+    myMethodCache = new HashMap<>();
+    myParameters = new HashMap<>();
+    myMethods = new HashMap<>();
+    myTypes = new HashMap<>();
+    myVisitedConstructions = new HashSet<>();
     myTypeVariableFactory = new PsiTypeVariableFactory();
   }
 
-  private HashSet<PsiElement> collect(final PsiElement[] scopes) {
+  private Set<PsiElement> collect(final PsiElement[] scopes) {
     return new VictimCollector(scopes, mySettings).getVictims();
   }
 
-  private boolean verifyMethod(final PsiElement element, final HashSet<PsiElement> victims, final PsiSearchHelper helper) {
+  private boolean verifyMethod(final PsiElement element, final Set<PsiElement> victims, final PsiSearchHelper helper) {
     PsiMethod method;
     PsiParameter parameter = null;
     int index = 0;
@@ -122,9 +98,7 @@ public class SystemBuilder {
       Boolean good = myMethodCache.get(method);
 
       if (good != null && good.booleanValue()) {
-        if (myMethods.get(method) == null) {
-          myMethods.put(method, method);
-        }
+        myMethods.putIfAbsent(method, method);
 
         if (parameter != null && myParameters.get(parameter) == null) {
           myParameters.put(parameter, parameter);
@@ -137,7 +111,7 @@ public class SystemBuilder {
       keyParameter = parameter;
     }
 
-    final PsiMethod[] overriders = OverridingMethodsSearch.search(keyMethod, true).toArray(PsiMethod.EMPTY_ARRAY);
+    final PsiMethod[] overriders = OverridingMethodsSearch.search(keyMethod).toArray(PsiMethod.EMPTY_ARRAY);
 
     for (final PsiMethod overrider : overriders) {
       final PsiElement e = parameter != null ? overrider.getParameterList().getParameters()[index] : overrider;
@@ -352,7 +326,7 @@ public class SystemBuilder {
         final PsiExpression qualifier =
           expr instanceof PsiMethodCallExpression ? ((PsiMethodCallExpression)expr).getMethodExpression().getQualifierExpression() : null;
 
-        final HashSet<PsiTypeParameter> typeParameters = new HashSet<PsiTypeParameter>(Arrays.asList(methodTypeParameters));
+        final Set<PsiTypeParameter> typeParameters = new HashSet<>(Arrays.asList(methodTypeParameters));
 
         PsiSubstitutor qualifierSubstitutor = PsiSubstitutor.EMPTY;
         PsiSubstitutor supertypeSubstitutor = PsiSubstitutor.EMPTY;
@@ -368,13 +342,13 @@ public class SystemBuilder {
             LOG.assertTrue(expr instanceof PsiMethodCallExpression); //either this(); or super();
             final PsiReferenceExpression methodExpression = ((PsiMethodCallExpression)expr).getMethodExpression();
             if (PsiKeyword.THIS.equals(methodExpression.getText())) {
-              aType = JavaPsiFacade.getInstance(myManager.getProject()).getElementFactory().createType(aClass);
+              aType = JavaPsiFacade.getElementFactory(myManager.getProject()).createType(aClass);
             }
             else {
               LOG.assertTrue(PsiKeyword.SUPER.equals(methodExpression.getText()));
               PsiClass placeClass = PsiTreeUtil.getParentOfType(expr, PsiClass.class);
               qualifierSubstitutor = TypeConversionUtil.getClassSubstitutor(aClass, placeClass, PsiSubstitutor.EMPTY);
-              aType = JavaPsiFacade.getInstance(myManager.getProject()).getElementFactory().createType(aClass, qualifierSubstitutor);
+              aType = JavaPsiFacade.getElementFactory(myManager.getProject()).createType(aClass, qualifierSubstitutor);
             }
           }
         }
@@ -397,7 +371,7 @@ public class SystemBuilder {
           }
         }
 
-        final HashMap<PsiTypeParameter, PsiType> mapping = new HashMap<PsiTypeParameter, PsiType>();
+        final Map<PsiTypeParameter, PsiType> mapping = new HashMap<>();
 
         for (int i = 0; i < Math.min(parameters.length, arguments.length); i++) {
           final PsiType argumentType = evaluateType(arguments[i], system);
@@ -478,7 +452,7 @@ public class SystemBuilder {
                               theSubst = theSubst.put(parm, type);
                             }
 
-                            return JavaPsiFacade.getInstance(aClass.getProject()).getElementFactory()
+                            return JavaPsiFacade.getElementFactory(aClass.getProject())
                               .createType(aClass, theSubst);
                           }
 
@@ -556,7 +530,7 @@ public class SystemBuilder {
                     }
                   }
 
-                  return Util.createArrayType(JavaPsiFacade.getInstance(aClass.getProject()).getElementFactory().createType(aClass, theSubst), level);
+                  return Util.createArrayType(JavaPsiFacade.getElementFactory(aClass.getProject()).createType(aClass, theSubst), level);
                 }
 
                 return Util.createArrayType(type, level);
@@ -670,7 +644,7 @@ public class SystemBuilder {
         final PsiElement declarationScope = parameter.getDeclarationScope();
         if (declarationScope instanceof PsiMethod) {
           final PsiMethod method = (PsiMethod)declarationScope;
-          final PsiSearchHelper helper = PsiSearchHelper.SERVICE.getInstance(myManager.getProject());
+          final PsiSearchHelper helper = PsiSearchHelper.getInstance(myManager.getProject());
           SearchScope scope = getScope(helper, method);
 
           for (PsiReference ref : ReferencesSearch.search(method, scope, true)) {
@@ -710,6 +684,12 @@ public class SystemBuilder {
             system.addSubtypeConstraint(evaluateType(retExpr, system), reType);
           }
         }
+
+        @Override
+        public void visitClass(PsiClass aClass) {}
+
+        @Override
+        public void visitLambdaExpression(PsiLambdaExpression expression) {}
       });
 
       return;
@@ -746,8 +726,7 @@ public class SystemBuilder {
           @Override public void visitReturnStatement(final PsiReturnStatement statement) {
             super.visitReturnStatement(statement);
 
-            final PsiMethod method = PsiTreeUtil.getParentOfType(statement, PsiMethod.class);
-
+            final PsiMethod method = PsiTreeUtil.getParentOfType(statement, PsiMethod.class, true, PsiLambdaExpression.class);
             if (method != null) {
               system.addSubtypeConstraint(evaluateType(statement.getReturnValue(), system), getType(method));
             }
@@ -776,7 +755,7 @@ public class SystemBuilder {
               final PsiClass castClass = castResult.getElement();
 
               if (operandClass != null && castClass != null) {
-                if (InheritanceUtil.isCorrectDescendant(operandClass, castClass, true)) {
+                if (InheritanceUtil.isInheritorOrSelf(operandClass, castClass, true)) {
                   system.addSubtypeConstraint(operandType, castType);
                 }
               }
@@ -860,7 +839,7 @@ public class SystemBuilder {
           theSubst = theSubst.put(p, replaceWildCards(aSubst.substitute(p), system, definedSubst));
         }
 
-        return JavaPsiFacade.getInstance(aClass.getProject()).getElementFactory().createType(aClass, theSubst);
+        return JavaPsiFacade.getElementFactory(aClass.getProject()).createType(aClass, theSubst);
       }
     }
 
@@ -913,21 +892,15 @@ public class SystemBuilder {
     return build(collect(scopes));
   }
 
-  public ReductionSystem build(final HashSet<PsiElement> victims) {
-    final PsiSearchHelper helper = PsiSearchHelper.SERVICE.getInstance(myManager.getProject());
+  public ReductionSystem build(final Set<PsiElement> victims) {
+    final PsiSearchHelper helper = PsiSearchHelper.getInstance(myManager.getProject());
 
     ReductionSystem system = new ReductionSystem(myProject, victims, myTypes, myTypeVariableFactory, mySettings);
 
     for (final PsiElement element : victims) {
-      if (element instanceof PsiParameter && ((PsiParameter)element).getDeclarationScope() instanceof PsiMethod) {
-        if (!verifyMethod(element, victims, helper)) {
-          continue;
-        }
-      }
-      else if (element instanceof PsiMethod) {
-        if (!verifyMethod(element, victims, helper)) {
-          continue;
-        }
+      if (element instanceof PsiParameter && ((PsiParameter)element).getDeclarationScope() instanceof PsiMethod ||
+          element instanceof PsiMethod) {
+        verifyMethod(element, victims, helper);
       }
     }
 

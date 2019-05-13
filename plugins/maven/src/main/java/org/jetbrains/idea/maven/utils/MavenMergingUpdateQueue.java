@@ -1,23 +1,10 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.utils;
 
 import com.intellij.ProjectTopics;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.*;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityStateListener;
 import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.EditorFactory;
@@ -73,58 +60,61 @@ public class MavenMergingUpdateQueue extends MergingUpdateQueue {
   }
 
   public void makeUserAware(final Project project) {
-    AccessToken accessToken = ReadAction.start();
-
-    try {
+    ApplicationManager.getApplication().runReadAction(() -> {
       EditorEventMulticaster multicaster = EditorFactory.getInstance().getEventMulticaster();
 
       multicaster.addCaretListener(new CaretListener() {
-          public void caretPositionChanged(CaretEvent e) {
-            MavenMergingUpdateQueue.this.restartTimer();
-          }
-        }, this);
+        @Override
+        public void caretPositionChanged(@NotNull CaretEvent e) {
+          restartTimer();
+        }
+      }, this);
 
-      multicaster.addDocumentListener(new DocumentAdapter() {
-          public void documentChanged(DocumentEvent event) {
-            MavenMergingUpdateQueue.this.restartTimer();
-          }
-        }, this);
+      multicaster.addDocumentListener(new DocumentListener() {
+        @Override
+        public void documentChanged(@NotNull DocumentEvent event) {
+          restartTimer();
+        }
+      }, this);
 
       project.getMessageBus().connect(this).subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootListener() {
         int beforeCalled;
 
-        public void beforeRootsChange(ModuleRootEvent event) {
+        @Override
+        public void beforeRootsChange(@NotNull ModuleRootEvent event) {
           if (beforeCalled++ == 0) {
             suspend();
           }
         }
 
-        public void rootsChanged(ModuleRootEvent event) {
-          if (beforeCalled == 0)
+        @Override
+        public void rootsChanged(@NotNull ModuleRootEvent event) {
+          if (beforeCalled == 0) {
             return; // This may occur if listener has been added between beforeRootsChange() and rootsChanged() calls.
+          }
 
           if (--beforeCalled == 0) {
             resume();
-            MavenMergingUpdateQueue.this.restartTimer();
+            restartTimer();
           }
         }
       });
-    }
-    finally {
-      accessToken.finish();
-    }
+    });
   }
 
   public void makeDumbAware(final Project project) {
-    AccessToken accessToken = ReadAction.start();
-
-    try {
+    ApplicationManager.getApplication().runReadAction(() -> {
+      if (DumbService.isDumb(project)) {
+        mySuspendCounter.incrementAndGet();
+      }
       MessageBusConnection connection = project.getMessageBus().connect(this);
       connection.subscribe(DumbService.DUMB_MODE, new DumbService.DumbModeListener() {
+        @Override
         public void enteredDumbMode() {
           suspend();
         }
 
+        @Override
         public void exitDumbMode() {
           resume();
         }
@@ -133,29 +123,25 @@ public class MavenMergingUpdateQueue extends MergingUpdateQueue {
       if (DumbService.getInstance(project).isDumb()) {
         suspend();
       }
-    }
-    finally {
-      accessToken.finish();
-    }
+    });
   }
 
   public void makeModalAware(Project project) {
-    MavenUtil.invokeAndWait(project, new Runnable() {
-      public void run() {
-        final ModalityStateListener listener = new ModalityStateListener() {
-          public void beforeModalityStateChanged(boolean entering) {
-            if (entering) {
-              suspend();
-            }
-            else {
-              resume();
-            }
+    MavenUtil.invokeLater(project, () -> {
+      final ModalityStateListener listener = new ModalityStateListener() {
+        @Override
+        public void beforeModalityStateChanged(boolean entering) {
+          if (entering) {
+            suspend();
           }
-        };
-        LaterInvocator.addModalityStateListener(listener, MavenMergingUpdateQueue.this);
-        if (MavenUtil.isInModalContext()) {
-          suspend();
+          else {
+            resume();
+          }
         }
+      };
+      LaterInvocator.addModalityStateListener(listener, this);
+      if (MavenUtil.isInModalContext()) {
+        suspend();
       }
     });
   }

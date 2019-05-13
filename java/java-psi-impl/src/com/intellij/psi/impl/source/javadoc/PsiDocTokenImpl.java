@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,15 +15,18 @@
  */
 package com.intellij.psi.impl.source.javadoc;
 
+import com.intellij.psi.JavaDocTokenType;
 import com.intellij.psi.JavaElementVisitor;
 import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.PsiReference;
+import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
 import com.intellij.psi.impl.source.tree.LeafPsiElement;
 import com.intellij.psi.javadoc.PsiDocToken;
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
 
 public class PsiDocTokenImpl extends LeafPsiElement implements PsiDocToken{
-  public PsiDocTokenImpl(IElementType type, CharSequence text) {
+  public PsiDocTokenImpl(@NotNull IElementType type, CharSequence text) {
     super(type, text);
   }
 
@@ -42,6 +45,16 @@ public class PsiDocTokenImpl extends LeafPsiElement implements PsiDocToken{
     }
   }
 
+  @NotNull
+  @Override
+  public PsiReference[] getReferences() {
+    if (getTokenType() == JavaDocTokenType.DOC_COMMENT_DATA) {
+      return ReferenceProvidersRegistry.getReferencesFromProviders(this);
+    }
+    return super.getReferences();
+  }
+
+  @Override
   public String toString(){
     return "PsiDocToken:" + getTokenType().toString();
   }

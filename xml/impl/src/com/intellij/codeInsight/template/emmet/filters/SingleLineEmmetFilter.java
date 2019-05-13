@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,20 +16,24 @@
 package com.intellij.codeInsight.template.emmet.filters;
 
 import com.intellij.codeInsight.template.emmet.nodes.GenerationNode;
+import com.intellij.codeInsight.template.emmet.tokens.TemplateToken;
 import com.intellij.codeInsight.template.impl.TemplateImpl;
 import com.intellij.lang.xml.XMLLanguage;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * User: zolotov
- * Date: 2/4/13
- */
 public class SingleLineEmmetFilter extends ZenCodingFilter {
   @NotNull
   @Override
   public String getSuffix() {
     return "s";
+  }
+
+  @NotNull
+  @Override
+  public String filterText(@NotNull String text, @NotNull TemplateToken token) {
+    return StringUtil.replace(text, "\n", "");
   }
 
   @NotNull
@@ -48,5 +52,11 @@ public class SingleLineEmmetFilter extends ZenCodingFilter {
   @Override
   public boolean isMyContext(@NotNull PsiElement context) {
     return context.getLanguage() instanceof XMLLanguage;
+  }
+
+  @NotNull
+  @Override
+  public String getDisplayName() {
+    return "Single line";
   }
 }

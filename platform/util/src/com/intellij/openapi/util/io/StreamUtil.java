@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,12 +16,17 @@
 package com.intellij.openapi.util.io;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.util.io.UnsyncByteArrayOutputStream;
 import com.intellij.util.text.StringFactory;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
+import java.nio.charset.Charset;
 
 public class StreamUtil {
+  private static final Logger LOG = Logger.getInstance(StreamUtil.class);
+
   private StreamUtil() {
   }
 
@@ -31,9 +36,8 @@ public class StreamUtil {
    * @param inputStream source stream
    * @param outputStream destination stream
    * @return bytes copied
-   * @throws IOException
    */
-  public static int copyStreamContent(InputStream inputStream, OutputStream outputStream) throws IOException {
+  public static int copyStreamContent(@NotNull InputStream inputStream, @NotNull OutputStream outputStream) throws IOException {
     final byte[] buffer = new byte[10 * 1024];
     int count;
     int total = 0;
@@ -44,8 +48,9 @@ public class StreamUtil {
     return total;
   }
 
-  public static byte[] loadFromStream(InputStream inputStream) throws IOException {
-    final ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+  @NotNull
+  public static byte[] loadFromStream(@NotNull InputStream inputStream) throws IOException {
+    final UnsyncByteArrayOutputStream outputStream = new UnsyncByteArrayOutputStream();
     try {
       copyStreamContent(inputStream, outputStream);
     }
@@ -58,27 +63,38 @@ public class StreamUtil {
   /**
    * @deprecated depends on the default encoding, use StreamUtil#readText(java.io.InputStream, String) instead
    */
-  public static String readText(InputStream inputStream) throws IOException {
+  @Deprecated
+  @NotNull
+  public static String readText(@NotNull InputStream inputStream) throws IOException {
     final byte[] data = loadFromStream(inputStream);
     return new String(data);
   }
 
-  public static String readText(InputStream inputStream, String encoding) throws IOException {
+  @NotNull
+  public static String readText(@NotNull InputStream inputStream, @NotNull String encoding) throws IOException {
+    final byte[] data = loadFromStream(inputStream);
+    return new String(data, encoding);
+  }
+  @NotNull
+  public static String readText(@NotNull InputStream inputStream, @NotNull Charset encoding) throws IOException {
     final byte[] data = loadFromStream(inputStream);
     return new String(data, encoding);
   }
 
-  public static String convertSeparators(String s) {
+  @NotNull
+  public static String convertSeparators(@NotNull String s) {
     return StringFactory.createShared(convertSeparators(s.toCharArray()));
   }
 
-  public static char[] readTextAndConvertSeparators(Reader reader) throws IOException {
+  @NotNull
+  public static char[] readTextAndConvertSeparators(@NotNull Reader reader) throws IOException {
     char[] buffer = readText(reader);
 
     return convertSeparators(buffer);
   }
 
-  private static char[] convertSeparators(char[] buffer) {
+  @NotNull
+  private static char[] convertSeparators(@NotNull char[] buffer) {
     int dst = 0;
     char prev = ' ';
     for (char c : buffer) {
@@ -106,11 +122,13 @@ public class StreamUtil {
     return result;
   }
 
-  public static String readTextFrom(Reader reader) throws IOException {
+  @NotNull
+  public static String readTextFrom(@NotNull Reader reader) throws IOException {
     return StringFactory.createShared(readText(reader));
   }
 
-  private static char[] readText(Reader reader) throws IOException {
+  @NotNull
+  private static char[] readText(@NotNull Reader reader) throws IOException {
     CharArrayWriter writer = new CharArrayWriter();
 
     char[] buffer = new char[2048];
@@ -133,7 +151,4 @@ public class StreamUtil {
       }
     }
   }
-
-  private static final Logger LOG = Logger.getInstance(StreamUtil.class);
-
 }

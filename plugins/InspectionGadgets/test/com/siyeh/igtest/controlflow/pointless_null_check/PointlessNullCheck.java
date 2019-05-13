@@ -2,67 +2,49 @@ package com.siyeh.igtest.controlflow.pointless_null_check;
 
 public class PointlessNullCheck {
 
-    public void testViolations(Object arg) {
-        if (arg != null && arg instanceof String) {
-            System.out.println("this should trigger a warning");
-        }
-
-        if (null != arg && arg instanceof String) {
-            System.out.println("this should trigger a warning");
-        }
-
-        if (arg instanceof String && null != arg) {
-            System.out.println("this should trigger a warning");
-        }
-
-        if (arg instanceof String && arg != null) {
-            System.out.println("this should trigger a warning");
-        }
-
-        if ((arg instanceof String) && (arg != null)) {
-            System.out.println("this should trigger a warning");
-        }
-
-        if (arg == null || !(arg instanceof String)) {
-            System.out.println("this should trigger a warning");
-        }
-
-        if (((arg) != (null)) && ((arg) instanceof String)) {
-          System.out.println("this should trigger a warning");
-        }
-        if (arg != null && (arg instanceof String || arg instanceof Integer)) {
-            System.out.println("this should trigger a warning");
-        }
-     }
-
     String arg1 = "foo";
 
-    public void testPassingCases(String arg1, String arg2) {
-        if (arg1 != null || arg1 instanceof String) {
-            System.out.println("this should not trigger a warning");
+    public void testMethods(Object obj, Object obj1, Object obj2) {
+        if(<warning descr="Unnecessary 'null' check before 'check()' call">obj != null</warning> && check(obj)) {
+            System.out.println("ok");
         }
+        if(<warning descr="Unnecessary 'null' check before 'check1()' call">obj1 != null</warning> && obj2 != null && check1(obj1, obj2)) {
+            System.out.println("ok");
+        }
+        if(obj1 != null && <warning descr="Unnecessary 'null' check before 'check2()' call">obj2 != null</warning> && check2(obj1, obj2)) {
+            System.out.println("ok");
+        }
+        if(obj != null && check1(obj, obj.toString())) {
+            System.out.println("ok");
+        }
+    }
 
-        if (arg1 == null && arg1 instanceof String) {
-            System.out.println("this should not trigger a warning");
-        }
+    private boolean check(Object obj) {
+        if(obj == null) return false;
+        return obj.hashCode() > 10;
+    }
 
-        if (arg1 != null && arg2 instanceof String) {
-            System.out.println("this should not trigger a warning");
-        }
+    private boolean check1(Object obj1, Object obj2) {
+        if(obj1 == null) return false;
+        return obj1.hashCode() > 10;
+    }
 
-        if (arg.charAt(5) instanceof String && arg.charAt(5) != null) {
-            System.out.println("this should not trigger a warning");
-        }
+    private boolean check2(Object obj1, Object obj2) {
+        if(obj2 == null) return false;
+        return obj2.hashCode() > 10;
+    }
 
-        if (arg1 != null && arg1.length() > 2) {
-            System.out.println("this should not trigger a warning");
-        }
+    void testQualified(Object obj) {
+        if(<warning descr="Unnecessary 'null' check before 'check()' call">obj != null</warning> && check(obj)) System.out.println(1);
+        if(<warning descr="Unnecessary 'null' check before 'check()' call">obj != null</warning> && this.check(obj)) System.out.println(1);
+        // ctor called only if obj is non-null: removing it may change the semantics
+        if(obj != null && new PointlessNullCheck().check(obj)) System.out.println(1);
+        if(<warning descr="Unnecessary 'null' check before 'check2()' call">obj != null</warning> && check2(null, obj)) System.out.println(1);
+        // argument side effect
+        if(obj != null && check2(new PointlessNullCheck(), obj)) System.out.println(1);
+    }
 
-        if (arg1 != "hello" || arg1 instanceof String) {
-            System.out.println("this should not trigger a warning");
-        }
-        if (this.arg1 != null && arg1 instanceof String) {
-            System.out.println("this should not trigger a warning");
-        }
+    void testEquals(String str) {
+        if (<warning descr="Unnecessary 'null' check before 'equals()' call">str != null</warning> && "foo".equals(str)) {}
     }
 }

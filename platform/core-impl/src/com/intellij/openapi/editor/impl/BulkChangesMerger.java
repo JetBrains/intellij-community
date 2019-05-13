@@ -17,7 +17,6 @@ package com.intellij.openapi.editor.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.TextChange;
-import com.intellij.util.text.CharArrayCharSequence;
 import com.intellij.util.text.StringFactory;
 import org.jetbrains.annotations.NotNull;
 
@@ -30,13 +29,11 @@ import java.util.List;
  * Thread-safe.
  * 
  * @author Denis Zhdanov
- * @since 12/22/10 12:02 PM
  */
-@SuppressWarnings({"MethodMayBeStatic"})
 public class BulkChangesMerger {
 
   public static final BulkChangesMerger INSTANCE = new BulkChangesMerger();
-  private static final Logger LOG = Logger.getInstance("#" + BulkChangesMerger.class.getName());
+  private static final Logger LOG = Logger.getInstance(BulkChangesMerger.class);
 
   /**
    * Merges given changes within the given text and returns result as a new char sequence.
@@ -60,6 +57,7 @@ public class BulkChangesMerger {
    *                      are sorted by offsets in ascending order 
    * @return              merge result
    */
+  @NotNull
   public char[] mergeToCharArray(@NotNull char[] text, int textLength, @NotNull List<? extends TextChange> changes) {
     int newLength = textLength;
     for (TextChange change : changes) {
@@ -93,11 +91,11 @@ public class BulkChangesMerger {
   /**
    * Allows to perform 'in-place' merge of the given changes to the given array.
    * <p/>
-   * I.e. it's considered that given array contains particular text at <code>[0; length)</code> region and given changes define
+   * I.e. it's considered that given array contains particular text at {@code [0; length)} region and given changes define
    * offsets against it. It's also assumed that given array length is enough to contain resulting text after applying the changes.
    * <p/>
-   * Example: consider that initial text is <code>'12345'</code> and given changes are <code>'remove text at [1; 3) interval'</code>
-   * and <code>'replace text at [4; 5) interval with 'abcde''</code>. Resulting text is <code>'14abcde'</code> then and given array
+   * Example: consider that initial text is {@code '12345'} and given changes are {@code 'remove text at [1; 3) interval'}
+   * and {@code 'replace text at [4; 5) interval with 'abcde''}. Resulting text is {@code '14abcde'} then and given array
    * length should be not less than 7.
    * 
    * @param data      data array
@@ -174,6 +172,20 @@ public class BulkChangesMerger {
       data[i + offset] = text.charAt(i);
     }
   }
+
+  /**
+   * Given an offset of some location in the document, returns offset of this location after application of given changes. List of changes
+   * is supposed to satisfy the same constraints as required by {@link #mergeToCharSequence(char[], int, List)} method.
+   */
+  public int updateOffset(int originalOffset, @NotNull List<? extends TextChange> changes) {
+    int offset = originalOffset;
+    for (TextChange change : changes) {
+      if (originalOffset > change.getStart()) {
+        offset += change.getText().length() - (change.getEnd() - change.getStart());
+      }
+    }
+    return offset;
+  } 
   
   private static class Context {
 
@@ -199,9 +211,8 @@ public class BulkChangesMerger {
     /**
      * Asks current context to update its state in order to point to the first change in a group.
      * 
-     * @return      <code>true</code> if the first change in a group is found; <code>false</code> otherwise
+     * @return      {@code true} if the first change in a group is found; {@code false} otherwise
      */
-    @SuppressWarnings({"ForLoopThatDoesntUseLoopVariable"})
     public boolean startGroup() {
       // Define first change that increases or reduces text length.
       for (boolean first = true; myDiff == 0 && myChangeGroupStartIndex < myChanges.size(); myChangeGroupStartIndex++, first = false) {

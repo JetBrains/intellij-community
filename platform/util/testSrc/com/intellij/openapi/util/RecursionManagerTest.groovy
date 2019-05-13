@@ -1,43 +1,30 @@
-/*
- * Copyright 2000-2011 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-package com.intellij.openapi.util;
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+package com.intellij.openapi.util
 
-import junit.framework.TestCase;
+import groovy.transform.Immutable
+import junit.framework.TestCase
 
 /**
  * @author peter
  */
-public class RecursionManagerTest extends TestCase {
-  private final RecursionGuard myGuard = RecursionManager.createGuard("RecursionManagerTest");
+class RecursionManagerTest extends TestCase {
+  private final RecursionGuard myGuard = RecursionManager.createGuard("RecursionManagerTest")
   
-  def prevent(String key, boolean memoize = true, Closure c) {
+  def prevent(Object key, boolean memoize = true, Closure c) {
     myGuard.doPreventingRecursion(key, memoize, c as Computable)
   }
 
-  public void testPreventRecursion() {
-    assert "foo-return" == prevent("foo") {
+  void testPreventRecursion() {
+    assert "foo-return" == prevent(["foo"]) {
       assert "bar-return" == prevent("bar") {
-        assert null == prevent("foo") { "foo-return" }
+        assert null == prevent(["foo"]) { "foo-return" }
         return "bar-return"
       }
       return "foo-return"
     }
   }
 
-  public void testMemoization() {
+  void testMemoization() {
     assert "foo-return" == prevent("foo") {
       assert "bar-return" == prevent("bar") {
         assert null == prevent("foo") { "foo-return" }
@@ -50,7 +37,7 @@ public class RecursionManagerTest extends TestCase {
     }
   }
 
-  public void testNoMemoizationAfterExit() {
+  void testNoMemoizationAfterExit() {
     assert "foo-return" == prevent("foo") {
       assert "bar-return" == prevent("bar") {
         assert null == prevent("foo") { "foo-return" }
@@ -63,7 +50,7 @@ public class RecursionManagerTest extends TestCase {
     }
   }
 
-  public void testMayCache() {
+  void testMayCache() {
     def doo1 = myGuard.markStack()
     assert "doo-return" == prevent("doo") {
       def foo1 = myGuard.markStack()
@@ -92,7 +79,7 @@ public class RecursionManagerTest extends TestCase {
     assert doo1.mayCacheNow()
   }
 
-  public void testNoCachingForMemoizedValues() {
+  void testNoCachingForMemoizedValues() {
     assert "foo-return" == prevent("foo") {
       assert "bar-return" == prevent("bar") {
         assert null == prevent("foo") { "foo-return" }
@@ -107,7 +94,7 @@ public class RecursionManagerTest extends TestCase {
     }
   }
 
-  public void testNoCachingForMemoizedValues2() {
+  void testNoCachingForMemoizedValues2() {
     assert "1-return" == prevent("1") {
       assert "2-return" == prevent("2") {
         assert "3-return" == prevent("3") {
@@ -129,7 +116,7 @@ public class RecursionManagerTest extends TestCase {
     }
   }
 
-  public void testNoMemoizationForNoReentrancy() {
+  void testNoMemoizationForNoReentrancy() {
     assert "foo-return" == prevent("foo") {
       assert null == prevent("foo") { "foo-return" }
       assert "bar-return" == prevent("bar") { "bar-return" }
@@ -140,7 +127,7 @@ public class RecursionManagerTest extends TestCase {
     }
   }
 
-  public void testFullGraphPerformance() throws Exception {
+  void testFullGraphPerformance() throws Exception {
     long start = System.currentTimeMillis()
     int count = 20
     Closure cl
@@ -154,6 +141,72 @@ public class RecursionManagerTest extends TestCase {
     assert "zoo" == cl()
 
     assert System.currentTimeMillis() - start < 10000
+  }
+
+  void "test changing hash code doesn't crash RecursionManager"() {
+    def key = ["b"]
+    prevent(key) {
+      key << "a"
+    }
+  }
+
+  void "test key equals that invokes RecursionManager"() {
+    prevent(new RecursiveKey('a')) {
+      prevent(new RecursiveKey('b')) {
+        prevent(new RecursiveKey('a')) {
+          throw new AssertionError("shouldn't be called")
+        }
+      }
+    }
+  }
+
+  @Immutable
+  private static class RecursiveKey {
+    final String id
+
+    @Override
+    int hashCode() {
+      return id.hashCode()
+    }
+
+    @Override
+    boolean equals(Object obj) {
+      RecursionManager.doPreventingRecursion("abc", false) { true }
+      return obj instanceof RecursiveKey && obj.id == id
+    }
+  }
+
+  void "test exception from hashCode on exiting"() {
+    def key1 = new ThrowingKey()
+    def key2 = new ThrowingKey()
+    def key3 = new ThrowingKey()
+    prevent(key1) {
+      prevent(key2) {
+        prevent(key3) {
+          key1.fail = key2.fail = key3.fail = true
+        }
+      }
+    }
+  }
+
+  private static class ThrowingKey {
+    boolean fail = false
+
+    @Override
+    int hashCode() {
+      if (fail) {
+        throw new RuntimeException()
+      }
+      return 0
+    }
+
+    @Override
+    boolean equals(Object obj) {
+      if (fail) {
+        throw new RuntimeException()
+      }
+      return super.equals(obj)
+    }
   }
 
 }

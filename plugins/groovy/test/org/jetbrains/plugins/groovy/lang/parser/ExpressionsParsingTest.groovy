@@ -1,524 +1,690 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.parser
-
 /**
  * @author peter
  */
-public class ExpressionsParsingTest extends GroovyParsingTestCase {
+class ExpressionsParsingTest extends GroovyParsingTestCase {
   @Override
-  public String getBasePath() {
-    return super.basePath + "expressions";
+  String getBasePath() {
+    return super.basePath + "expressions"
   }
 
-  public void testarguments$carg1() throws Throwable { doTest(); }
+  void testarguments$carg1() throws Throwable { doTest() }
 
-  public void testarguments$carg2() throws Throwable { doTest(); }
+  void testarguments$carg2() throws Throwable { doTest() }
 
-  public void testarguments$carg3() throws Throwable { doTest(); }
+  void testarguments$carg3() throws Throwable { doTest() }
 
-  public void testarguments$cargs1() throws Throwable { doTest(); }
+  void testarguments$cargs1() throws Throwable { doTest() }
 
-  public void testarguments$cargs2() throws Throwable { doTest(); }
+  void testarguments$cargs2() throws Throwable { doTest() }
 
-  public void testarguments$cargs3() throws Throwable { doTest(); }
+  void testarguments$cargs3() throws Throwable { doTest() }
 
-  public void testarithmetic$add1() throws Throwable { doTest(); }
+  void testarithmetic$add1() throws Throwable { doTest() }
 
-  public void testarithmetic$add2() throws Throwable { doTest(); }
+  void testarithmetic$add2() throws Throwable { doTest() }
 
-  public void testarithmetic$addbug1() throws Throwable { doTest(); }
+  void testarithmetic$addbug1() throws Throwable { doTest() }
 
-  public void testarithmetic$arif1() throws Throwable { doTest(); }
+  void testarithmetic$arif1() throws Throwable { doTest() }
 
-  public void testarithmetic$mul1() throws Throwable { doTest(); }
+  void testarithmetic$mul1() throws Throwable { doTest() }
 
-  public void testarithmetic$mul2() throws Throwable { doTest(); }
+  void testarithmetic$mul2() throws Throwable { doTest() }
 
-  public void testarithmetic$mul3() throws Throwable { doTest(); }
+  void testarithmetic$mul3() throws Throwable { doTest() }
 
-  public void testarithmetic$post1() throws Throwable { doTest(); }
+  void testarithmetic$mul4() throws Throwable { doTest() }
 
-  public void testarithmetic$sh1() throws Throwable { doTest(); }
+  void testarithmetic$post1() throws Throwable { doTest() }
 
-  public void testarithmetic$shift5() throws Throwable { doTest(); }
+  void testarithmetic$sh1() throws Throwable { doTest() }
 
-  public void testarithmetic$shift6() throws Throwable { doTest(); }
+  void testarithmetic$shift5() throws Throwable { doTest() }
 
-  public void testarithmetic$un1() throws Throwable { doTest(); }
+  void testarithmetic$shift6() throws Throwable { doTest() }
 
-  public void testass1() throws Throwable { doTest(); }
+  void testarithmetic$un1() throws Throwable { doTest() }
 
-  public void testass2() throws Throwable { doTest(); }
+  void testass1() throws Throwable { doTest() }
 
-  public void testass3() throws Throwable { doTest(); }
+  void testass2() throws Throwable { doTest() }
 
-  public void testclosures$appended() throws Throwable { doTest(); }
+  void testass3() throws Throwable { doTest() }
 
-  public void testclosures$closparam1() throws Throwable { doTest(); }
+  void testclosures$appended() throws Throwable { doTest() }
 
-  public void testclosures$closparam2() throws Throwable { doTest(); }
+  void testclosures$closparam1() throws Throwable { doTest() }
 
-  public void testclosures$closparam3() throws Throwable { doTest(); }
+  void testclosures$closparam2() throws Throwable { doTest() }
 
-  public void testclosures$closparam4() throws Throwable { doTest(); }
+  void testclosures$closparam3() throws Throwable { doTest() }
 
-  public void testclosures$closparam5() throws Throwable { doTest(); }
+  void testclosures$closparam4() throws Throwable { doTest() }
 
-  public void testclosures$closparam6() throws Throwable { doTest(); }
+  void testclosures$closparam5() throws Throwable { doTest() }
 
-  public void testclosures$final_error() throws Throwable { doTest(); }
+  void testclosures$closparam6() throws Throwable { doTest() }
 
-  public void testclosures$param6() throws Throwable { doTest(); }
+  void testclosures$final_error() throws Throwable { doTest() }
 
-  public void testclosures$param7() throws Throwable { doTest(); }
+  void testclosures$param6() throws Throwable { doTest() }
 
-  public void testconditional$con1() throws Throwable { doTest(); }
+  void testclosures$param7() throws Throwable { doTest() }
 
-  public void testconditional$con2() throws Throwable { doTest(); }
+  void testconditional$con1() throws Throwable { doTest() }
 
-  public void testconditional$elvis1() throws Throwable { doTest(); }
+  void testconditional$con2() throws Throwable { doTest() }
 
-  public void testconditional$elvis2() throws Throwable { doTest(); }
+  void testconditional$elvis1() throws Throwable { doTest() }
 
-  public void testerrors$err_final() throws Throwable { doTest(); }
+  void testconditional$elvis2() throws Throwable { doTest() }
 
-  public void testgstring$daniel_sun() throws Throwable { doTest(); }
+  void testconditional$elvisNlBeforeOperator() { doTest() }
 
-  public void testgstring$gravy16532() throws Throwable { doTest("gstring/gravy-1653-2.test"); }
+  void testconditional$ternaryQuestionOnly() { doTest() }
 
-  public void testgstring$grvy1653() throws Throwable { doTest("gstring/grvy-1653.test"); }
+  void testconditional$ternaryWithoutElse() { doTest() }
 
-  public void testgstring$gstr3() throws Throwable { doTest(); }
+  void testconditional$ternaryWithoutThen() { doTest() }
 
-  public void testgstring$standTrooper() throws Throwable { doTest(); }
+  void testconditional$ternaryWithoutThenElse() { doTest() }
 
-  public void testgstring$str1() throws Throwable { doTest(); }
+  void testconditional$ternaryNLBeforeColon() { doTest() }
 
-  public void testgstring$str2() throws Throwable { doTest(); }
+  void testconditional$ternaryNLBeforeElse() { doTest() }
 
-  public void testgstring$str3() throws Throwable { doTest(); }
+  void testconditional$ternaryNLBeforeQuestion() { doTest() }
 
-  public void testgstring$str4() throws Throwable { doTest(); }
+  void testconditional$ternaryNLBeforeThen() { doTest() }
 
-  public void testgstring$str5() throws Throwable { doTest(); }
+  void testerrors$err_final() throws Throwable { doTest() }
 
-  public void testgstring$str6() throws Throwable { doTest(); }
+  void testgstring$daniel_sun() throws Throwable { doTest() }
 
-  public void testgstring$str7() throws Throwable { doTest(); }
+  void testgstring$gravy16532() throws Throwable { doTest("gstring/gravy-1653-2.test") }
 
-  public void testgstring$str8() throws Throwable { doTest(); }
+  void testgstring$grvy1653() throws Throwable { doTest("gstring/grvy-1653.test") }
 
-  public void testgstring$str_error1() throws Throwable { doTest(); }
+  void testgstring$gstr3() throws Throwable { doTest() }
 
-  public void testgstring$str_error2() throws Throwable { doTest(); }
+  void testgstring$standTrooper() throws Throwable { doTest() }
 
-  public void testgstring$str_error3() throws Throwable { doTest(); }
+  void testgstring$str1() throws Throwable { doTest() }
 
-  public void testgstring$str_error4() throws Throwable { doTest(); }
+  void testgstring$str2() throws Throwable { doTest() }
 
-  public void testgstring$str_error5() throws Throwable { doTest(); }
+  void testgstring$str3() throws Throwable { doTest() }
 
-  public void testgstring$str_error6() throws Throwable { doTest(); }
+  void testgstring$str4() throws Throwable { doTest() }
 
-  public void testgstring$str_error7() throws Throwable { doTest(); }
+  void testgstring$str5() throws Throwable { doTest() }
 
-  public void testgstring$str_error8() throws Throwable { doTest(); }
+  void testgstring$str6() throws Throwable { doTest() }
 
-  public void testgstring$triple$triple1() throws Throwable { doTest(); }
+  void testgstring$str7() throws Throwable { doTest() }
 
-  public void testgstring$triple$triple2() throws Throwable { doTest(); }
+  void testgstring$str8() throws Throwable { doTest() }
 
-  public void testgstring$triple$triple3() throws Throwable { doTest(); }
+  void testgstring$str9() throws Throwable { doTest() }
 
-  public void testgstring$triple$quote_and_slash() throws Throwable { doTest(); }
+  void teststring$singleQuoted() { doTest() }
 
-  public void testgstring$ugly_lexer() throws Throwable { doTest(); }
+  void teststring$tripleSingleQuoted$ok() { doTest() }
 
-  public void testmapLiteral() throws Throwable { doTest(); }
+  void teststring$tripleSingleQuoted$err0() { doTest() }
 
-  public void testnew$arr_decl() throws Throwable { doTest(); }
+  void teststring$tripleSingleQuoted$err1() { doTest() }
+
+  void teststring$tripleSingleQuoted$err2() { doTest() }
+
+  void teststring$tripleSingleQuoted$err3() { doTest() }
+
+  void teststring$tripleSingleQuoted$err4() { doTest() }
+
+  void teststring$tripleSingleQuoted$err5() { doTest() }
+
+  void teststring$tripleSingleQuoted$unfinished0() { doTest() }
+
+  void teststring$tripleSingleQuoted$unfinished1() { doTest() }
+
+  void teststring$tripleSingleQuoted$unfinished2() { doTest() }
+
+  void teststring$tripleSingleQuoted$unfinished3() { doTest() }
+
+  void testgstring$str_error1() throws Throwable { doTest() }
+
+  void testgstring$str_error2() throws Throwable { doTest() }
+
+  void testgstring$str_error3() throws Throwable { doTest() }
+
+  void testgstring$str_error4() throws Throwable { doTest() }
+
+  void testgstring$str_error5() throws Throwable { doTest() }
+
+  void testgstring$str_error6() throws Throwable { doTest() }
+
+  void testgstring$str_error7() throws Throwable { doTest() }
+
+  void testgstring$str_error8() throws Throwable { doTest() }
+
+  void testgstring$triple$triple1() throws Throwable { doTest() }
+
+  void testgstring$triple$triple2() throws Throwable { doTest() }
+
+  void testgstring$triple$triple3() throws Throwable { doTest() }
+
+  void testgstring$triple$triple4() throws Throwable { doTest() }
+
+  void testgstring$triple$quote_and_slash() throws Throwable { doTest() }
+
+  void testgstring$ugly_lexer() throws Throwable { doTest() }
+
+  void testgstring$this() { doTest() }
+
+  void testgstring$newline() { doTest() }
+
+  void testmapLiteral() throws Throwable { doTest() }
+
+  void testmapKeys() { doTest() }
+
+  void testnamedArgumentKeys() { doTest() }
+
+  void testexpressionlabelWithoutExpression() { doTest() }
+
+  void testnew$arr_decl() throws Throwable { doTest() }
+
+  void testnew$emptyTypeArgs() { doTest() }
+
+  void testnew$noArgumentList() { doTest() }
+
+  void testnew$emptyArrayInitializer() { doTest() }
+
+  void testnew$arrayInitializer() { doTest() }
+
+  void testnew$arrayInitializerTrailingComma() { doTest() }
+
+  void testnew$nestedArrayInitializer() { doTest() }
+
+  void testnew$noInitializer() { doTest() }
+
+  void testnew$noClosingBrace() { doTest() }
+
+  void testnew$closureAfterArrayDeclaration() { doTest() }
+
+  void testnew$closureAfterArrayInitializer() { doTest() }
+
 //  public void testnew$new1() throws Throwable { doTest(); }
-  public void testanonymous$anonymous() throws Throwable { doTest(); }
+  void testanonymous$anonymous() throws Throwable { doTest() }
 
-  public void testnumbers() throws Throwable { doTest(); }
+  void testanonymous$anonymous1() throws Throwable { doTest() }
 
-  public void testparenthed$exprInParenth() throws Throwable { doTest(); }
+  void testanonymous$anonymous2() throws Throwable { doTest() }
 
-  public void testparenthed$paren1() throws Throwable { doTest(); }
+  void testanonymous$anonymous3() throws Throwable { doTest() }
 
-  public void testparenthed$paren2() throws Throwable { doTest(); }
+  void testanonymous$anonymous4() throws Throwable { doTest() }
 
-  public void testparenthed$paren3() throws Throwable { doTest(); }
+  void testanonymous$anonymous5() throws Throwable { doTest() }
 
-  public void testparenthed$paren4() throws Throwable { doTest(); }
+  void testanonymous$anonymous6() throws Throwable { doTest() }
 
-  public void testparenthed$paren5() throws Throwable { doTest(); }
+  void testanonymous$anonymous7() throws Throwable { doTest() }
 
-  public void testparenthed$paren6() throws Throwable { doTest(); }
+  void testanonymous$anonymous8() throws Throwable { doTest() }
 
-  public void testpath$method$ass4() throws Throwable { doTest(); }
+  void testanonymous$anonymous9() throws Throwable { doTest() }
 
-  public void testpath$method$clazz1() throws Throwable { doTest(); }
+  void testanonymous$anonymous10() throws Throwable { doTest() }
 
-  public void testpath$method$clazz2() throws Throwable { doTest(); }
+  void testanonymous$anonymous11() throws Throwable { doTest() }
 
-  public void testpath$method$clos1() throws Throwable { doTest(); }
+  void testanonymous$anonymous12() throws Throwable { doTest() }
 
-  public void testpath$method$clos2() throws Throwable { doTest(); }
+  void testanonymous$anonymous13() throws Throwable { doTest() }
 
-  public void testpath$method$clos3() throws Throwable { doTest(); }
+  void testanonymous$anonymous14() throws Throwable { doTest() }
 
-  public void testpath$method$clos4() throws Throwable { doTest(); }
+  void testanonymous$anonymous15() throws Throwable { doTest() }
 
-  public void testpath$method$ind1() throws Throwable { doTest(); }
+  void testanonymous$anonymous16() throws Throwable { doTest() }
 
-  public void testpath$method$ind2() throws Throwable { doTest(); }
+  void testanonymous$anonymous17() throws Throwable { doTest() }
 
-  public void testpath$method$ind3() throws Throwable { doTest(); }
+  void testnumbers() throws Throwable { doTest() }
 
-  public void testpath$method$method1() throws Throwable { doTest(); }
+  void testparenthed$exprInParenth() throws Throwable { doTest() }
 
-  public void testpath$method$method10() throws Throwable { doTest(); }
+  void testparenthed$paren1() throws Throwable { doTest() }
 
-  public void testpath$method$method11() throws Throwable { doTest(); }
+  void testparenthed$paren2() throws Throwable { doTest() }
 
-  public void testpath$method$method12() throws Throwable { doTest(); }
+  void testparenthed$paren3() throws Throwable { doTest() }
 
-  public void testpath$method$method13() throws Throwable { doTest(); }
+  void testparenthed$paren4() throws Throwable { doTest() }
 
-  public void testpath$method$method2() throws Throwable { doTest(); }
+  void testparenthed$paren5() throws Throwable { doTest() }
 
-  public void testpath$method$method3() throws Throwable { doTest(); }
+  void testparenthed$paren6() throws Throwable { doTest() }
 
-  public void testpath$method$method4() throws Throwable { doTest(); }
+  void testparenthed$capitalNamedArgument() { doTest() }
 
-  public void testpath$method$method5() throws Throwable { doTest(); }
+  void testparenthed$capitalListArgument() { doTest() }
 
-  public void testpath$method$method6() throws Throwable { doTest(); }
+  void testpath$method$ass4() throws Throwable { doTest() }
 
-  public void testpath$method$method7() throws Throwable { doTest(); }
+  void testpath$method$clazz1() throws Throwable { doTest() }
 
-  public void testpath$method$method8() throws Throwable { doTest(); }
+  void testpath$method$clazz2() throws Throwable { doTest() }
 
-  public void testpath$method$method9() throws Throwable { doTest(); }
+  void testpath$method$clos1() throws Throwable { doTest() }
 
-  public void testpath$path1() throws Throwable { doTest(); }
+  void testpath$method$clos2() throws Throwable { doTest() }
 
-  public void testpath$path13() throws Throwable { doTest(); }
+  void testpath$method$clos3() throws Throwable { doTest() }
 
-  public void testpath$path14() throws Throwable { doTest(); }
+  void testpath$method$clos4() throws Throwable { doTest() }
 
-  public void testpath$path2() throws Throwable { doTest(); }
+  void testpath$method$ind1() throws Throwable { doTest() }
 
-  public void testpath$path3() throws Throwable { doTest(); }
+  void testpath$method$ind2() throws Throwable { doTest() }
 
-  public void testpath$path4() throws Throwable { doTest(); }
+  void testpath$method$ind3() throws Throwable { doTest() }
 
-  public void testpath$path5() throws Throwable { doTest(); }
+  void testpath$method$method1() throws Throwable { doTest() }
 
-  public void testpath$path6() throws Throwable { doTest(); }
+  void testpath$method$method10() throws Throwable { doTest() }
 
-  public void testpath$path7() throws Throwable { doTest(); }
+  void testpath$method$method11() throws Throwable { doTest() }
 
-  public void testpath$path8() throws Throwable { doTest(); }
+  void testpath$method$method12() throws Throwable { doTest() }
 
-  public void testpath$path9() throws Throwable { doTest(); }
+  void testpath$method$method13() throws Throwable { doTest() }
 
-  public void testpath$path10() throws Throwable { doTest(); }
+  void testpath$method$method2() throws Throwable { doTest() }
 
-  public void testpath$regexp() { doTest() }
+  void testpath$method$method3() throws Throwable { doTest() }
 
-  public void testpath$typeVsExpr() { doTest(); }
+  void testpath$method$method4() throws Throwable { doTest() }
 
-  public void testreferences$ref1() throws Throwable { doTest(); }
+  void testpath$method$method5() throws Throwable { doTest() }
 
-  public void testreferences$ref2() throws Throwable { doTest(); }
+  void testpath$method$method6() throws Throwable { doTest() }
 
-  public void testreferences$ref3() throws Throwable { doTest(); }
+  void testpath$method$method7() throws Throwable { doTest() }
 
-  public void testreferences$ref4() throws Throwable { doTest(); }
+  void testpath$method$method8() throws Throwable { doTest() }
 
-  public void testreferences$ref5() throws Throwable { doTest(); }
+  void testpath$method$method9() throws Throwable { doTest() }
 
-  public void testreferences$ref6() throws Throwable { doTest(); }
+  void testpath$method$method14() { doTest() }
 
-  public void testreferences$ref7() throws Throwable { doTest(); }
+  void testpath$path1() throws Throwable { doTest() }
 
-  public void testregex$chen() throws Throwable { doTest(); }
+  void testpath$path13() throws Throwable { doTest() }
 
-  public void testregex$GRVY1509err() throws Throwable { doTest("regex/GRVY-1509err.test"); }
+  void testpath$path14() throws Throwable { doTest() }
 
-  public void testregex$GRVY1509norm() throws Throwable { doTest("regex/GRVY-1509norm.test"); }
+  void testpath$path15() throws Throwable { doTest() }
 
-  public void testregex$GRVY1509test() throws Throwable { doTest("regex/GRVY-1509test.test"); }
+  void testpath$path2() throws Throwable { doTest() }
 
-  public void testregex$regex1() throws Throwable { doTest(); }
+  void testpath$path4() throws Throwable { doTest() }
 
-  public void testregex$regex10() throws Throwable { doTest(); }
+  void testpath$path5() throws Throwable { doTest() }
 
-  public void testregex$regex11() throws Throwable { doTest(); }
+  void testpath$path6() throws Throwable { doTest() }
 
-  public void testregex$regex12() throws Throwable { doTest(); }
+  void testpath$path7() throws Throwable { doTest() }
 
-  public void testregex$regex13() throws Throwable { doTest(); }
+  void testpath$path8() throws Throwable { doTest() }
 
-  public void testregex$regex14() throws Throwable { doTest(); }
+  void testpath$path9() throws Throwable { doTest() }
 
-  public void testregex$regex15() throws Throwable { doTest(); }
+  void testpath$regexp() { doTest() }
 
-  public void testregex$regex16() throws Throwable { doTest(); }
+  void testpath$typeVsExpr() { doTest() }
 
-  public void testregex$regex17() throws Throwable { doTest(); }
+  void testreferences$ref1() throws Throwable { doTest() }
 
-  public void testregex$regex18() throws Throwable { doTest(); }
+  void testreferences$ref2() throws Throwable { doTest() }
 
-  public void testregex$regex19() throws Throwable { doTest(); }
+  void testreferences$ref3() throws Throwable { doTest() }
 
-  public void testregex$regex2() throws Throwable { doTest(); }
+  void testreferences$ref4() throws Throwable { doTest() }
 
-  public void testregex$regex20() throws Throwable { doTest(); }
+  void testreferences$ref5() throws Throwable { doTest() }
 
-  public void testregex$regex21() throws Throwable { doTest(); }
+  void testreferences$ref6() throws Throwable { doTest() }
 
-  public void testregex$regex22() throws Throwable { doTest(); }
+  void testreferences$ref7() throws Throwable { doTest() }
 
-  public void testregex$regex23() throws Throwable { doTest(); }
+  void testreferences$ref8() throws Throwable { doTest() }
 
-  public void testregex$regex3() throws Throwable { doTest(); }
+  void testreferences$ref9() throws Throwable { doTest() }
 
-  public void testregex$regex33() throws Throwable { doTest(); }
+  void testreferences$ref10() { doTest() }
 
-  public void testregex$regex4() throws Throwable { doTest(); }
+  void testreferences$ref11() { doTest() }
 
-  public void testregex$regex5() throws Throwable { doTest(); }
+  void testreferences$ref12() { doTest() }
 
-  public void testregex$regex6() throws Throwable { doTest(); }
+  void testreferences$keywords() { doTest() }
 
-  public void testregex$regex7() throws Throwable { doTest(); }
+  void testreferences$emptyTypeArgs() { doTest() }
 
-  public void testregex$regex8() throws Throwable { doTest(); }
+  void testreferences$dots() { doTest() }
 
-  public void testregex$regex9() throws Throwable { doTest(); }
+  void testregex$chen() throws Throwable { doTest() }
 
-  public void testregex$regex_begin() throws Throwable { doTest(); }
+  void testregex$GRVY1509err() throws Throwable { doTest("regex/GRVY-1509err.test") }
 
-  public void testregex$regex_begin2() throws Throwable { doTest(); }
+  void testregex$GRVY1509norm() throws Throwable { doTest("regex/GRVY-1509norm.test") }
 
-  public void testregex$multiLineSlashy() throws Throwable { doTest(); }
+  void testregex$GRVY1509test() throws Throwable { doTest("regex/GRVY-1509test.test") }
 
-  public void testregex$dollarSlashy() throws Throwable { doTest(); }
+  void testregex$regex1() throws Throwable { doTest() }
 
-  public void testregex$dollarSlashy2() throws Throwable { doTest(); }
+  void testregex$regex10() throws Throwable { doTest() }
 
-  public void testregex$dollarSlashy3() throws Throwable { doTest(); }
+  void testregex$regex11() throws Throwable { doTest() }
 
-  public void testregex$dollarSlashy4() throws Throwable { doTest(); }
+  void testregex$regex12() throws Throwable { doTest() }
 
-  public void testregex$dollarSlashy5() throws Throwable { doTest(); }
+  void testregex$regex13() throws Throwable { doTest() }
 
-  public void testregex$dollarSlashy6() throws Throwable { doTest(); }
+  void testregex$regex14() throws Throwable { doTest() }
 
-  public void testregex$dollarSlashy7() throws Throwable { doTest(); }
+  void testregex$regex15() throws Throwable { doTest() }
 
-  public void testregex$dollarSlashy8() throws Throwable { doTest(); }
+  void testregex$regex16() throws Throwable { doTest() }
 
-  public void testregex$dollarSlashy9() throws Throwable { doTest(); }
+  void testregex$regex17() throws Throwable { doTest() }
 
-  public void testregex$dollarSlashyCode() throws Throwable { doTest(); }
+  void testregex$regex18() throws Throwable { doTest() }
 
-  public void testregex$dollarSlashyCodeUnfinished() throws Throwable { doTest(); }
+  void testregex$regex19() throws Throwable { doTest() }
 
-  public void testregex$dollarSlashyEof() throws Throwable { doTest(); }
+  void testregex$regex2() throws Throwable { doTest() }
 
-  public void testregex$dollarSlashyRegex() throws Throwable { doTest(); }
+  void testregex$regex20() throws Throwable { doTest() }
 
-  public void testregex$dollarSlashyRegexFinishedTwice() throws Throwable { doTest(); }
+  void testregex$regex21() throws Throwable { doTest() }
 
-  public void testregex$dollarSlashyRegexUnfinished() throws Throwable { doTest(); }
+  void testregex$regex22() throws Throwable { doTest() }
 
-  public void testregex$dollarSlashyUnfinished() throws Throwable { doTest(); }
+  void testregex$regex23() throws Throwable { doTest() }
 
-  public void testregex$dollarSlashyWindowsPaths() throws Throwable { doTest(); }
+  void testregex$regex24() throws Throwable { doTest() }
 
-  public void testregex$dollarSlashyXml() throws Throwable { doTest(); }
+  void testregex$regex25() throws Throwable { doTest() }
 
-  public void testregex$dollarSlashyDouble() throws Throwable { doTest(); }
+  void testregex$regex3() throws Throwable { doTest() }
 
-  public void testregex$dollarSlashyTriple() throws Throwable { doTest(); }
+  void testregex$regex33() throws Throwable { doTest() }
 
-  public void testrelational$eq1() throws Throwable { doTest(); }
+  void testregex$regex4() throws Throwable { doTest() }
 
-  public void testrelational$inst0() throws Throwable { doTest(); }
+  void testregex$regex5() throws Throwable { doTest() }
 
-  public void testrelational$inst1() throws Throwable { doTest(); }
+  void testregex$regex6() throws Throwable { doTest() }
 
-  public void testrelational$inst2() throws Throwable { doTest(); }
+  void testregex$regex7() throws Throwable { doTest() }
 
-  public void testrelational$rel1() throws Throwable { doTest(); }
+  void testregex$regex8() throws Throwable { doTest() }
 
-  public void testspecial$grvy1173() throws Throwable { doTest(); }
+  void testregex$regex9() throws Throwable { doTest() }
 
-  public void testspecial$list1() throws Throwable { doTest(); }
+  void testregex$regex_begin() throws Throwable { doTest() }
 
-  public void testspecial$list2() throws Throwable { doTest(); }
+  void testregex$regex_begin2() throws Throwable { doTest() }
 
-  public void testspecial$list3() throws Throwable { doTest(); }
+  void testregex$slashyEq() { doTest() }
 
-  public void testspecial$map1() throws Throwable { doTest(); }
+  void testregex$multiLineSlashy() throws Throwable { doTest() }
 
-  public void testspecial$map2() throws Throwable { doTest(); }
+  void testregex$dollarSlashy() throws Throwable { doTest() }
 
-  public void testspecial$map3() throws Throwable { doTest(); }
+  void testregex$dollarSlashy2() throws Throwable { doTest() }
 
-  public void testspecial$map4() throws Throwable { doTest(); }
+  void testregex$dollarSlashy3() throws Throwable { doTest() }
 
-  public void testspecial$map5() throws Throwable { doTest(); }
+  void testregex$dollarSlashy4() throws Throwable { doTest() }
 
-  public void testspecial$map6() throws Throwable { doTest(); }
+  void testregex$dollarSlashy5() throws Throwable { doTest() }
 
-  public void testspecial$map7() throws Throwable { doTest(); }
+  void testregex$dollarSlashy6() throws Throwable { doTest() }
 
-  public void testspecial$map8() throws Throwable { doTest(); }
+  void testregex$dollarSlashy7() throws Throwable { doTest() }
 
-  public void testspecial$paren13() throws Throwable { doTest(); }
+  void testregex$dollarSlashy8() throws Throwable { doTest() }
 
-  public void testtypecast$castToObject() throws Throwable { doTest(); }
+  void testregex$dollarSlashy9() throws Throwable { doTest() }
 
-  public void testtypecast$una1() throws Throwable { doTest(); }
+  void testregex$dollarSlashy10() { doTest() }
 
-  public void testtypecast$una2() throws Throwable { doTest(); }
+  void testregex$dollarSlashy11() { doTest() }
 
-  public void testtypecast$una3() throws Throwable { doTest(); }
+  void testregex$dollarSlashyCode() throws Throwable { doTest() }
 
-  public void testtypecast$una4() throws Throwable { doTest(); }
+  void testregex$dollarSlashyCodeUnfinished() throws Throwable { doTest() }
 
-  public void testtypecast$una5() throws Throwable { doTest(); }
+  void testregex$dollarSlashyEof() throws Throwable { doTest() }
 
-  public void testtypecast$una6() throws Throwable { doTest(); }
+  void testregex$dollarSlashyRegex() throws Throwable { doTest() }
 
-  public void testtypecast$elvis() throws Throwable { doTest(); }
+  void testregex$dollarSlashyRegexFinishedTwice() throws Throwable { doTest() }
 
-  public void testtypecast$conditional() throws Throwable { doTest(); }
+  void testregex$dollarSlashyRegexUnfinished() throws Throwable { doTest() }
 
-  public void testAtHang() throws Throwable { doTest(); }
+  void testregex$dollarSlashyUnfinished() throws Throwable { doTest() }
 
-  public void testDollar() throws Throwable { doTest(); }
+  void testregex$dollarSlashyWindowsPaths() throws Throwable { doTest() }
 
-  public void testNoArrowClosure() throws Throwable { doTest(); }
+  void testregex$dollarSlashyXml() throws Throwable { doTest() }
 
-  public void testNoArrowClosure2() throws Throwable { doTest(); }
+  void testregex$dollarSlashyDouble() throws Throwable { doTest() }
 
-  public void testPropertyAccessError() throws Throwable {
-    checkParsing "a[b{}}", """Groovy script
-  Property by index
-    Reference expression
-      PsiElement(identifier)('a')
-    Arguments
-      PsiElement([)('[')
-      Method call
-        Reference expression
-          PsiElement(identifier)('b')
-        Arguments
-          <empty list>
-        Closable block
-          PsiElement({)('{')
-          Parameter list
-            <empty list>
-          PsiElement(})('}')
-      PsiErrorElement:',' or ']' expected
-        <empty list>
-  PsiErrorElement:';' or new line expected
-    PsiElement(})('}')"""
-  }
+  void testregex$dollarSlashyTriple() throws Throwable { doTest() }
 
-  public void testthis$qualifiedThis() throws Throwable { doTest(); }
+  void testregex$dollarSlashyUltimate() { doTest() }
 
-  public void testsuper$qualifiedSuper() throws Throwable { doTest(); }
+  void testregex$afterNewLine() { doTest() }
 
-  public void testthis$this() throws Throwable { doTest(); }
+  void testregex$afterDollarSlashyString() { doTest() }
 
-  public void testsuper$super() throws Throwable { doTest(); }
+  void testregex$afterDoubleQuotedString() { doTest() }
 
-  public void testTripleEqual() throws Exception {
-    checkParsing "2===3", """Groovy script
-  Relational expression
-    Literal
-      PsiElement(Integer)('2')
-    PsiElement(==)('===')
-    Literal
-      PsiElement(Integer)('3')
-"""
-  }
+  void testregex$afterSingleQuotedString() { doTest() }
 
-  public void testcommandExpr$closureArg() { doTest() }
+  void testregex$afterSlashyString() { doTest() }
 
-  public void testcommandExpr$simple() { doTest() }
+  void testregex$afterTripleSingleQuotedString() { doTest() }
 
-  public void testcommandExpr$callArg1() { doTest() }
+  void testregex$afterTripleDoubleQuotedString() { doTest() }
 
-  public void testcommandExpr$callArg2() { doTest() }
+  void testrelational$eq1() throws Throwable { doTest() }
 
-  public void testcommandExpr$threeArgs1() { doTest() }
+  void testrelational$inst0() throws Throwable { doTest() }
 
-  public void testcommandExpr$threeArgs2() { doTest() }
+  void testrelational$inst1() throws Throwable { doTest() }
 
-  public void testcommandExpr$threeArgs3() { doTest() }
+  void testrelational$inst2() throws Throwable { doTest() }
 
-  public void testcommandExpr$fourArgs() { doTest() }
+  void testrelational$rel1() throws Throwable { doTest() }
 
-  public void testcommandExpr$fiveArgs() { doTest() }
+  void testrelational$newlineAfterOperator() { doTest() }
 
-  public void testcommandExpr$multiArgs() { doTest() }
+  void testrelational$noRValue() { doTest() }
 
-  public void testcommandExpr$RHS() { doTest() }
+  void testrelational$exclamationAfterExpression() { doTest() }
 
-  public void testcommandExpr$oddArgCount() { doTest() }
+  void testrelational$inNegated() { doTest() }
 
-  public void testcommandExpr$indexAccess1() { doTest() }
+  void testrelational$instanceOfNegated() { doTest() }
 
-  public void testcommandExpr$indexAccess2() { doTest() }
+  void testspecial$grvy1173() throws Throwable { doTest() }
 
-  public void testcommandExpr$indexAccess3() { doTest() }
+  void testspecial$list1() throws Throwable { doTest() }
 
-  public void testcommandExpr$closureArg2() { doTest() }
+  void testspecial$list2() throws Throwable { doTest() }
 
-  public void testcommandExpr$closureArg3() { doTest() }
+  void testspecial$list3() throws Throwable { doTest() }
 
-  public void testcommandExpr$not() { doTest() }
+  void testspecial$map1() throws Throwable { doTest() }
 
-  public void testcommandExpr$methodCall() { doTest() }
+  void testspecial$map2() throws Throwable { doTest() }
 
-  public void testcommandExpr$indexProperty() { doTest() }
+  void testspecial$map3() throws Throwable { doTest() }
 
-  public void testcommandExpr$instanceof() { doTest() }
+  void testspecial$map4() throws Throwable { doTest() }
 
-  public void testcommandExpr$instanceof2() { doTest() }
+  void testspecial$map5() throws Throwable { doTest() }
 
-  public void testcommandExpr$in() { doTest() }
+  void testspecial$map6() throws Throwable { doTest() }
 
-  public void testcommandExpr$as() { doTest() }
+  void testspecial$map7() throws Throwable { doTest() }
 
-  public void testcommandExpr$arrayAccess() { doTest() }
+  void testspecial$map8() throws Throwable { doTest() }
 
-  public void testcommandExpr$keywords() { doTest() }
+  void testspecial$paren13() throws Throwable { doTest() }
 
-  public void testcommandExpr$literalInvoked() { doTest() }
+  void testtypecast$castToObject() throws Throwable { doTest() }
 
-  public void testDiamond() { doTest() }
+  void testtypecast$una1() throws Throwable { doTest() }
+
+  void testtypecast$una2() throws Throwable { doTest() }
+
+  void testtypecast$una3() throws Throwable { doTest() }
+
+  void testtypecast$una4() throws Throwable { doTest() }
+
+  void testtypecast$una5() throws Throwable { doTest() }
+
+  void testtypecast$una6() throws Throwable { doTest() }
+
+  void testtypecast$elvis() throws Throwable { doTest() }
+
+  void testtypecast$equality() { doTest() }
+
+  void testtypecast$parenthesized() { doTest() }
+
+  void testtypecast$noExpression() { doTest() }
+
+  void testtypecast$parenthesizedOperand() { doTest() }
+
+  void testtypecast$parenthesizedQualifier() { doTest() }
+
+  void testtypecast$parenthesizedOperandError() { doTest() }
+
+  void testtypecast$nested() { doTest() }
+
+  void testtypecast$vsMethodCall() { doTest() }
+
+  void testtypecast$conditional() throws Throwable { doTest() }
+
+  void testAtHang() throws Throwable { doTest() }
+
+  void testDollar() throws Throwable { doTest() }
+
+  void testNoArrowClosure() throws Throwable { doTest() }
+
+  void testNoArrowClosure2() throws Throwable { doTest() }
+
+  void testPropertyAccessError() throws Throwable { doTest() }
+
+  void testthis$qualifiedThis() throws Throwable { doTest() }
+
+  void testsuper$qualifiedSuper() throws Throwable { doTest() }
+
+  void testthis$this() throws Throwable { doTest() }
+
+  void testsuper$super() throws Throwable { doTest() }
+
+  void testbinary$identity() { doTest() }
+
+  void testbinary$elvisAssign() { doTest() }
+
+  void testbinary$elvisAssignNewLine() { doTest() }
+
+  void testbinary$elvisAssignWithoutRValue() { doTest() }
+
+  void testbinary$assignmentError() { doTest() }
+
+  void testcommandExpr$closureArg() { doTest() }
+
+  void testcommandExpr$simple() { doTest() }
+
+  void testcommandExpr$callArg1() { doTest() }
+
+  void testcommandExpr$callArg2() { doTest() }
+
+  void testcommandExpr$threeArgs1() { doTest() }
+
+  void testcommandExpr$threeArgs2() { doTest() }
+
+  void testcommandExpr$threeArgs3() { doTest() }
+
+  void testcommandExpr$fourArgs() { doTest() }
+
+  void testcommandExpr$fiveArgs() { doTest() }
+
+  void testcommandExpr$multiArgs() { doTest() }
+
+  void testcommandExpr$RHS() { doTest() }
+
+  void testcommandExpr$oddArgCount() { doTest() }
+
+  void testcommandExpr$indexAccess1() { doTest() }
+
+  void testcommandExpr$indexAccess2() { doTest() }
+
+  void testcommandExpr$indexAccess3() { doTest() }
+
+  void testcommandExpr$indexAccess4() { doTest() }
+
+  void testcommandExpr$closureArg2() { doTest() }
+
+  void testcommandExpr$closureArg3() { doTest() }
+
+  void testcommandExpr$not() { doTest() }
+
+  void testcommandExpr$methodCall() { doTest() }
+
+  void testcommandExpr$indexProperty() { doTest() }
+
+  void testcommandExpr$instanceof() { doTest() }
+
+  void testcommandExpr$instanceof2() { doTest() }
+
+  void testcommandExpr$in() { doTest() }
+
+  void testcommandExpr$as() { doTest() }
+
+  void testcommandExpr$arrayAccess() { doTest() }
+
+  void testcommandExpr$keywords() { doTest() }
+
+  void testcommandExpr$literalInvoked() { doTest() }
+
+  void testcommandExpr$literalInvokedWithUnfinishedLiteral() { doTest() }
+
+  void testcommandExpr$slashyInvoked() { doTest() }
+
+  void testcommandExpr$safeIndex() { doTest() }
+
+  void testcommandExpr$safeIndexEmpty() { doTest() }
+
+  void testcommandExpr$safeIndexEmptyMap() { doTest() }
+
+  void testcommandExpr$safeIndexLBrack() { doTest() }
+
+  void testcommandExpr$safeIndexMap() { doTest() }
+
+  void testDiamond() { doTest() }
+
+  void testDiamondErrors() { doTest() }
 
   void testpath$stringMethodCall1() { doTest() }
 
@@ -526,308 +692,163 @@ public class ExpressionsParsingTest extends GroovyParsingTestCase {
 
   void testpath$stringMethodCall3() { doTest() }
 
-  void testSpacesInStringAfterSlash() {
-    checkParsing '''
-print 'abc \\ \ncde' ''', '''
-Groovy script
-  PsiElement(new line)(\'\\n\')
-  Call expression
-    Reference expression
-      PsiElement(identifier)(\'print\')
-    PsiWhiteSpace(\' \')
-    Command arguments
-      Literal
-        PsiElement(string)(\'\'abc \\ \\ncde\'\')
-  PsiWhiteSpace(\' \')'''
-  }
+  void testSpacesInStringAfterSlash() { doTest() }
 
-  void testDiamondInPathRefElement() {
-    checkParsing 'Map<String, String> map = new java.util.concurrent.ConcurrentHashMap<>()', '''
-Groovy script
-  Variable definitions
-    Modifiers
-      <empty list>
-    Type element
-      Reference element
-        PsiElement(identifier)('Map')
-        Type arguments
-          PsiElement(<)('<')
-          Type element
-            Reference element
-              PsiElement(identifier)('String')
-          PsiElement(,)(',')
-          PsiWhiteSpace(' ')
-          Type element
-            Reference element
-              PsiElement(identifier)('String')
-          PsiElement(>)('>')
-    PsiWhiteSpace(' ')
-    Variable
-      PsiElement(identifier)('map')
-      PsiWhiteSpace(' ')
-      PsiElement(=)('=')
-      PsiWhiteSpace(' ')
-      NEW expression
-        PsiElement(new)('new')
-        PsiWhiteSpace(' ')
-        Reference element
-          Reference element
-            Reference element
-              Reference element
-                PsiElement(identifier)('java')
-              PsiElement(.)('.')
-              PsiElement(identifier)('util')
-            PsiElement(.)('.')
-            PsiElement(identifier)('concurrent')
-          PsiElement(.)('.')
-          PsiElement(identifier)('ConcurrentHashMap')
-          Type arguments
-            PsiElement(<)('<')
-            PsiElement(>)('>')
-        Arguments
-          PsiElement(()('(')
-          PsiElement())(')')
-'''
-  }
+  void testDiamondInPathRefElement() { doTest() }
 
-  void testNewMethodName() {
-    checkParsing 'def a = qualifer.new X()', '''
-Groovy script
-  Variable definitions
-    Modifiers
-      PsiElement(def)('def')
-    PsiWhiteSpace(' ')
-    Variable
-      PsiElement(identifier)('a')
-      PsiWhiteSpace(' ')
-      PsiElement(=)('=')
-      PsiWhiteSpace(' ')
-      Call expression
-        Reference expression
-          Reference expression
-            PsiElement(identifier)('qualifer')
-          PsiElement(.)('.')
-          PsiElement(new)('new')
-        PsiWhiteSpace(' ')
-        Command arguments
-          Method call
-            Reference expression
-              PsiElement(identifier)('X')
-            Arguments
-              PsiElement(()('(')
-              PsiElement())(')')'''
-  }
+  void testNewMethodName() { doTest() }
 
-  void testRefElementsWithKeywords() {
-    checkParsing('''\
-def a = new def.as.Foo()
-def b = new foo.as.in.Foo()
-''', '''\
-Groovy script
-  Variable definitions
-    Modifiers
-      PsiElement(def)('def')
-    PsiWhiteSpace(' ')
-    Variable
-      PsiElement(identifier)('a')
-      PsiWhiteSpace(' ')
-      PsiElement(=)('=')
-      PsiWhiteSpace(' ')
-      NEW expression
-        PsiElement(new)('new')
-        PsiWhiteSpace(' ')
-        Reference element
-          Reference element
-            Reference element
-              PsiElement(def)('def')
-            PsiElement(.)('.')
-            PsiElement(as)('as')
-          PsiElement(.)('.')
-          PsiElement(identifier)('Foo')
-        Arguments
-          PsiElement(()('(')
-          PsiElement())(')')
-  PsiElement(new line)('\\n')
-  Variable definitions
-    Modifiers
-      PsiElement(def)('def')
-    PsiWhiteSpace(' ')
-    Variable
-      PsiElement(identifier)('b')
-      PsiWhiteSpace(' ')
-      PsiElement(=)('=')
-      PsiWhiteSpace(' ')
-      NEW expression
-        PsiElement(new)('new')
-        PsiWhiteSpace(' ')
-        Reference element
-          Reference element
-            Reference element
-              Reference element
-                PsiElement(identifier)('foo')
-              PsiElement(.)('.')
-              PsiElement(as)('as')
-            PsiElement(.)('.')
-            PsiElement(in)('in')
-          PsiElement(.)('.')
-          PsiElement(identifier)('Foo')
-        Arguments
-          PsiElement(()('(')
-          PsiElement())(')')
-  PsiElement(new line)('\\n')
-''')
-  }
+  void testRefElementsWithKeywords() { doTest() }
 
-  public void "test finish argument list on keyword occurrence"() {
-    checkParsing '''switch (obj) {
-      case 1: return bar([param)
-      case 3: return bar([param]
-      case 2:
-        param = param.bar((foo):[bar:goo])
-        return param.foo
-    }
-''', '''\
-Groovy script
-  Switch statement
-    PsiElement(switch)('switch')
-    PsiWhiteSpace(' ')
-    PsiElement(()('(')
-    Reference expression
-      PsiElement(identifier)('obj')
-    PsiElement())(')')
-    PsiWhiteSpace(' ')
-    PsiElement({)('{')
-    PsiWhiteSpace('\\n      ')
-    Case section
-      Case label
-        PsiElement(case)('case')
-        PsiWhiteSpace(' ')
-        Literal
-          PsiElement(Integer)('1')
-        PsiElement(:)(':')
-      PsiWhiteSpace(' ')
-      RETURN statement
-        PsiElement(return)('return')
-        PsiWhiteSpace(' ')
-        Method call
-          Reference expression
-            PsiElement(identifier)('bar')
-          Arguments
-            PsiElement(()('(')
-            Generalized list
-              PsiElement([)('[')
-              Reference expression
-                PsiElement(identifier)('param')
-              PsiErrorElement:',' or ']' expected
-                <empty list>
-              PsiElement())(')')
-              PsiErrorElement:',' or ']' expected
-                <empty list>
-    PsiWhiteSpace('\\n      ')
-    Case section
-      Case label
-        PsiElement(case)('case')
-        PsiWhiteSpace(' ')
-        Literal
-          PsiElement(Integer)('3')
-        PsiElement(:)(':')
-      PsiWhiteSpace(' ')
-      RETURN statement
-        PsiElement(return)('return')
-        PsiWhiteSpace(' ')
-        Method call
-          Reference expression
-            PsiElement(identifier)('bar')
-          Arguments
-            PsiElement(()('(')
-            Generalized list
-              PsiElement([)('[')
-              Reference expression
-                PsiElement(identifier)('param')
-              PsiElement(])(']')
-            PsiErrorElement:',' or ')' expected
-              <empty list>
-    PsiWhiteSpace('\\n      ')
-    Case section
-      Case label
-        PsiElement(case)('case')
-        PsiWhiteSpace(' ')
-        Literal
-          PsiElement(Integer)('2')
-        PsiElement(:)(':')
-      PsiWhiteSpace('\\n        ')
-      Assignment expression
-        Reference expression
-          PsiElement(identifier)('param')
-        PsiWhiteSpace(' ')
-        PsiElement(=)('=')
-        PsiWhiteSpace(' ')
-        Method call
-          Reference expression
-            Reference expression
-              PsiElement(identifier)('param')
-            PsiElement(.)('.')
-            PsiElement(identifier)('bar')
-          Arguments
-            PsiElement(()('(')
-            Named argument
-              Argument label
-                Parenthesized expression
-                  PsiElement(()('(')
-                  Reference expression
-                    PsiElement(identifier)('foo')
-                  PsiElement())(')')
-              PsiElement(:)(':')
-              Generalized list
-                PsiElement([)('[')
-                Named argument
-                  Argument label
-                    PsiElement(identifier)('bar')
-                  PsiElement(:)(':')
-                  Reference expression
-                    PsiElement(identifier)('goo')
-                PsiElement(])(']')
-            PsiElement())(')')
-      PsiErrorElement:';', '}' or new line expected
-        <empty list>
-      PsiWhiteSpace('\\n        ')
-      RETURN statement
-        PsiElement(return)('return')
-        PsiWhiteSpace(' ')
-        Reference expression
-          Reference expression
-            PsiElement(identifier)('param')
-          PsiElement(.)('.')
-          PsiElement(identifier)('foo')
-    PsiWhiteSpace('\\n    ')
-    PsiElement(})('}')
-  PsiElement(new line)('\\n')'''
-  }
+  void "test finish argument list on keyword occurrence"() { doTest("finishArgumentListOnKeywordOccurrence.test") }
 
-  void testConditionalExpressionWithLineFeed() {
-    checkParsing('''\
-print true ? abc
-:cde
-''', '''\
-Groovy script
-  Call expression
-    Reference expression
-      PsiElement(identifier)('print')
-    PsiWhiteSpace(' ')
-    Command arguments
-      Conditional expression
-        Literal
-          PsiElement(true)('true')
-        PsiWhiteSpace(' ')
-        PsiElement(?)('?')
-        PsiWhiteSpace(' ')
-        Reference expression
-          PsiElement(identifier)('abc')
-        PsiElement(new line)('\\n')
-        PsiElement(:)(':')
-        Reference expression
-          PsiElement(identifier)('cde')
-  PsiElement(new line)('\\n')
-''')
-  }
+  void testConditionalExpressionWithLineFeed() { doTest() }
+
+  void testspecial$mapHang() { doTest() }
+
+  void testindexpropertyWithUnfinishedInvokedExpression() { doTest() }
+
+  void testindex$safeIndex() { doTest() }
+
+  void testindex$safeIndexEmpty() { doTest() }
+
+  void testindex$safeIndexEmptyMap() { doTest() }
+
+  void testindex$safeIndexLBrack() { doTest() }
+
+  void testindex$safeIndexMap() { doTest() }
+
+  void testindex$safeIndexNoRBrack() { doTest() }
+
+  void testindex$safeIndexVsTernary() { doTest() }
+
+  void testindex$safeIndexVsTernary2() { doTest() }
+
+  void testindex$safeIndexVsTernary3() { doTest() }
+
+  void testindex$safeIndexVsTernary4() { doTest() }
+
+  void testindex$safeIndexVsTernary5() { doTest() }
+
+  void testindex$safeIndexNewLineAfterQ() { doTest() }
+
+  void testindex$safeIndexNewLineBeforeQ() { doTest() }
+
+  void testnl$binary() { doTest() }
+
+  void testnl$cast() { doTest() }
+
+  void testnl$index() { doTest() }
+
+  void testnl$postfixDec() { doTest() }
+
+  void testnl$postfixInc() { doTest() }
+
+  void testnl$unary() { doTest() }
+
+  void testlambda$parenthesizedAdd() { doTest() }
+
+  void testlambda$standalone1() { doTest() }
+
+  void testlambda$standalone2() { doTest() }
+
+  void testlambda$standalone3() { doTest() }
+
+  void testlambda$standalone4() { doTest() }
+
+  void testlambda$standalone5() { doTest() }
+
+  void testlambda$standalone6() { doTest() }
+
+  void testlambda$standalone7() { doTest() }
+
+  void testlambda$standalone8() { doTest() }
+
+  void testlambda$standalone9() { doTest() }
+
+  void testlambda$standalone10() { doTest() }
+
+  void testlambda$standalone11() { doTest() }
+
+  void testlambda$standalone12() { doTest() }
+
+  void testlambda$closureLike() { doTest() }
+
+  void testlambda$nestedLambda() { doTest() }
+
+  void testlambda$nestedLambda2() { doTest() }
+
+  void testlambda$nestedLambda3() { doTest() }
+
+  void testlambda$nestedLambda4() { doTest() }
+
+  void testlambda$nestedLambda5() { doTest() }
+
+  void testlambda$nestedLambda6() { doTest() }
+
+  void testlambda$assign1() { doTest() }
+
+  void testlambda$assign2() { doTest() }
+
+  void testlambda$assign3() { doTest() }
+
+  void testlambda$assign4() { doTest() }
+
+  void testlambda$methodCall1() { doTest() }
+
+  void testlambda$methodCall2() { doTest() }
+
+  void testlambda$methodCall3() { doTest() }
+
+  void testlambda$methodCall4() { doTest() }
+
+  void testlambda$methodCall5() { doTest() }
+
+  void testlambda$methodCall6() { doTest() }
+
+  void testlambda$methodCall7() { doTest() }
+
+  void testlambda$methodCall8() { doTest() }
+
+  void testlambda$methodCall9() { doTest() }
+
+  void testlambda$methodCall10() { doTest() }
+
+  void testlambda$methodCall11() { doTest() }
+
+  void testlambda$methodCall12() { doTest() }
+
+  void testlambda$command1() { doTest() }
+
+  void testlambda$command2() { doTest() }
+
+  void testlambda$command3() { doTest() }
+
+  void testlambda$command4() { doTest() }
+
+  void testlambda$command5() { doTest() }
+
+  void testlambda$command6() { doTest() }
+
+  void testlambda$command7() { doTest() }
+
+  void testlambda$command8() { doTest() }
+
+  void testlambda$commandInLambda() { doTest() }
+
+  void testlambda$implicitReturn1() { doTest() }
+
+  void testlambda$implicitReturn2() { doTest() }
+
+  void testlambda$implicitReturn3() { doTest() }
+
+  void testlambda$implicitReturn4() { doTest() }
+
+  void testlambda$return1() { doTest() }
+
+  void testlambda$return2() { doTest() }
+
+  void testlambda$return3() { doTest() }
+
+  void testlambda$return4() { doTest() }
 }

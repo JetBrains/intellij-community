@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package org.jetbrains.idea.maven.navigator;
 
 import com.intellij.execution.Location;
+import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.ide.dnd.FileCopyPasteUtil;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.Project;
@@ -28,15 +29,19 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.ui.PopupHandler;
 import com.intellij.ui.ScrollPaneFactory;
+import com.intellij.ui.mac.TouchbarDataKeys;
+import com.intellij.ui.treeStructure.SimpleNode;
 import com.intellij.ui.treeStructure.SimpleTree;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.execution.MavenGoalLocation;
 import org.jetbrains.idea.maven.model.MavenArtifact;
 import org.jetbrains.idea.maven.model.MavenConstants;
+import org.jetbrains.idea.maven.model.MavenProfileKind;
 import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.utils.MavenDataKeys;
@@ -45,18 +50,34 @@ import org.jetbrains.idea.maven.utils.actions.MavenActionUtil;
 import javax.swing.*;
 import java.awt.*;
 import java.io.File;
-import java.util.*;
 import java.util.List;
+import java.util.*;
+
+import static org.jetbrains.idea.maven.navigator.MavenProjectsNavigator.TOOL_WINDOW_PLACE_ID;
 
 public class MavenProjectsNavigatorPanel extends SimpleToolWindowPanel implements DataProvider {
   private final Project myProject;
   private final SimpleTree myTree;
 
-  private Map<String, Integer> standardGoalOrder;
-
   private final Comparator<String> myGoalOrderComparator = new Comparator<String>() {
+
+    private Map<String, Integer> standardGoalOrder;
+
+    @Override
     public int compare(String o1, String o2) {
       return getStandardGoalOrder(o1) - getStandardGoalOrder(o2);
+    }
+
+    private int getStandardGoalOrder(String goal) {
+      if (standardGoalOrder == null) {
+        standardGoalOrder = new THashMap<>();
+        int i = 0;
+        for (String aGoal : MavenConstants.PHASES) {
+          standardGoalOrder.put(aGoal, i++);
+        }
+      }
+      Integer order = standardGoalOrder.get(goal);
+      return order != null ? order.intValue() : standardGoalOrder.size();
     }
   };
 
@@ -78,12 +99,13 @@ public class MavenProjectsNavigatorPanel extends SimpleToolWindowPanel implement
     setTransferHandler(new MyTransferHandler(project));
 
     myTree.addMouseListener(new PopupHandler() {
+      @Override
       public void invokePopup(final Component comp, final int x, final int y) {
         final String id = getMenuId(getSelectedNodes(MavenProjectsStructure.MavenSimpleNode.class));
         if (id != null) {
           final ActionGroup actionGroup = (ActionGroup)actionManager.getAction(id);
           if (actionGroup != null) {
-            actionManager.createActionPopupMenu("", actionGroup).getComponent().show(comp, x, y);
+            actionManager.createActionPopupMenu(TOOL_WINDOW_PLACE_ID, actionGroup).getComponent().show(comp, x, y);
           }
         }
       }
@@ -108,19 +130,21 @@ public class MavenProjectsNavigatorPanel extends SimpleToolWindowPanel implement
     });
   }
 
+  @Override
   @Nullable
-  public Object getData(@NonNls String dataId) {
+  public Object getData(@NotNull @NonNls String dataId) {
     if (PlatformDataKeys.HELP_ID.is(dataId)) return "reference.toolWindows.mavenProjects";
 
-    if (PlatformDataKeys.PROJECT.is(dataId)) return myProject;
+    if (CommonDataKeys.PROJECT.is(dataId)) return myProject;
 
-    if (PlatformDataKeys.VIRTUAL_FILE.is(dataId)) return extractVirtualFile();
-    if (PlatformDataKeys.VIRTUAL_FILE_ARRAY.is(dataId)) return extractVirtualFiles();
+    if (CommonDataKeys.VIRTUAL_FILE.is(dataId)) return extractVirtualFile();
+    if (CommonDataKeys.VIRTUAL_FILE_ARRAY.is(dataId)) return extractVirtualFiles();
 
     if (Location.DATA_KEY.is(dataId)) return extractLocation();
-    if (PlatformDataKeys.NAVIGATABLE_ARRAY.is(dataId)) return extractNavigatables();
+    if (CommonDataKeys.NAVIGATABLE_ARRAY.is(dataId)) return extractNavigatables();
 
-    if (MavenDataKeys.MAVEN_GOALS.is(dataId)) return extractGoals();
+    if (MavenDataKeys.MAVEN_GOALS.is(dataId)) return extractGoals(true);
+    if (MavenDataKeys.RUN_CONFIGURATION.is(dataId)) return extractRunSettings();
     if (MavenDataKeys.MAVEN_PROFILES.is(dataId)) return extractProfiles();
 
     if (MavenDataKeys.MAVEN_DEPENDENCIES.is(dataId)) {
@@ -128,6 +152,9 @@ public class MavenProjectsNavigatorPanel extends SimpleToolWindowPanel implement
     }
     if (MavenDataKeys.MAVEN_PROJECTS_TREE.is(dataId)) {
       return myTree;
+    }
+    if (TouchbarDataKeys.ACTIONS_KEY.is(dataId)) {
+      return new DefaultActionGroup(ActionManager.getInstance().getAction("Maven.Reimport"));
     }
 
     return super.getData(dataId);
@@ -147,7 +174,7 @@ public class MavenProjectsNavigatorPanel extends SimpleToolWindowPanel implement
   }
 
   private Object extractVirtualFiles() {
-    final List<VirtualFile> files = new ArrayList<VirtualFile>();
+    final List<VirtualFile> files = new ArrayList<>();
     for (MavenProjectsStructure.MavenSimpleNode each : getSelectedNodes(MavenProjectsStructure.MavenSimpleNode.class)) {
       VirtualFile file = each.getVirtualFile();
       if (file != null && file.isValid()) files.add(file);
@@ -156,24 +183,34 @@ public class MavenProjectsNavigatorPanel extends SimpleToolWindowPanel implement
   }
 
   private Object extractNavigatables() {
-    final List<Navigatable> navigatables = new ArrayList<Navigatable>();
+    final List<Navigatable> navigatables = new ArrayList<>();
     for (MavenProjectsStructure.MavenSimpleNode each : getSelectedNodes(MavenProjectsStructure.MavenSimpleNode.class)) {
       Navigatable navigatable = each.getNavigatable();
       if (navigatable != null) navigatables.add(navigatable);
     }
-    return navigatables.isEmpty() ? null : navigatables.toArray(new Navigatable[navigatables.size()]);
+    return navigatables.isEmpty() ? null : navigatables.toArray(new Navigatable[0]);
   }
 
   private Object extractLocation() {
     VirtualFile file = extractVirtualFile();
-    List<String> goals = extractGoals();
-    if (file == null || goals == null) return null;
+    if (file == null) return null;
+
+    List<String> goals = extractGoals(false);
+    if (goals == null) return null;
 
     PsiFile psiFile = PsiManager.getInstance(myProject).findFile(file);
-    return psiFile == null ? null : new MavenGoalLocation(myProject, psiFile, extractGoals());
+    return psiFile == null ? null : new MavenGoalLocation(myProject, psiFile, goals);
   }
 
-  private List<String> extractGoals() {
+  @Nullable
+  private RunnerAndConfigurationSettings extractRunSettings() {
+    SimpleNode node = myTree.getSelectedNode();
+    if (!(node instanceof MavenProjectsStructure.RunConfigurationNode)) return null;
+
+    return ((MavenProjectsStructure.RunConfigurationNode)node).getSettings();
+  }
+
+  private List<String> extractGoals(boolean qualifiedGoals) {
     final MavenProjectsStructure.ProjectNode projectNode = getSelectedProjectNode();
     if (projectNode != null) {
       MavenProject project = projectNode.getMavenProject();
@@ -188,9 +225,9 @@ public class MavenProjectsNavigatorPanel extends SimpleToolWindowPanel implement
       if (MavenProjectsStructure.getCommonProjectNode(nodes) == null) {
         return null;
       }
-      final List<String> goals = new ArrayList<String>();
+      final List<String> goals = new ArrayList<>();
       for (MavenProjectsStructure.GoalNode node : nodes) {
-        goals.add(node.getGoal());
+        goals.add(qualifiedGoals ? node.getGoal() : node.getName());
       }
       Collections.sort(goals, myGoalOrderComparator);
       return goals;
@@ -200,15 +237,15 @@ public class MavenProjectsNavigatorPanel extends SimpleToolWindowPanel implement
 
   private Object extractProfiles() {
     final List<MavenProjectsStructure.ProfileNode> nodes = getSelectedNodes(MavenProjectsStructure.ProfileNode.class);
-    final List<String> profiles = new ArrayList<String>();
+    final Map<String, MavenProfileKind> profiles = new THashMap<>();
     for (MavenProjectsStructure.ProfileNode node : nodes) {
-      profiles.add(node.getProfileName());
+      profiles.put(node.getProfileName(), node.getState());
     }
     return profiles;
   }
 
   private Set<MavenArtifact> extractDependencies() {
-    Set<MavenArtifact> result = new THashSet<MavenArtifact>();
+    Set<MavenArtifact> result = new THashSet<>();
 
     List<MavenProjectsStructure.ProjectNode> projectNodes = getSelectedProjectNodes();
     if (!projectNodes.isEmpty()) {
@@ -251,18 +288,6 @@ public class MavenProjectsNavigatorPanel extends SimpleToolWindowPanel implement
     return MavenProjectsStructure.getCommonProjectNode(getSelectedNodes(MavenProjectsStructure.MavenSimpleNode.class));
   }
 
-  private int getStandardGoalOrder(String goal) {
-    if (standardGoalOrder == null) {
-      standardGoalOrder = new THashMap<String, Integer>();
-      int i = 0;
-      for (String aGoal : MavenConstants.PHASES) {
-        standardGoalOrder.put(aGoal, i++);
-      }
-    }
-    Integer order = standardGoalOrder.get(goal);
-    return order != null ? order.intValue() : standardGoalOrder.size();
-  }
-
   private static class MyTransferHandler extends TransferHandler {
 
     private final Project myProject;
@@ -274,7 +299,7 @@ public class MavenProjectsNavigatorPanel extends SimpleToolWindowPanel implement
     @Override
     public boolean importData(final TransferSupport support) {
       if (canImport(support)) {
-        List<VirtualFile> pomFiles = new ArrayList<VirtualFile>();
+        List<VirtualFile> pomFiles = new ArrayList<>();
 
         final List<File> fileList = FileCopyPasteUtil.getFileList(support.getTransferable());
         if (fileList == null) return false;
@@ -295,7 +320,7 @@ public class MavenProjectsNavigatorPanel extends SimpleToolWindowPanel implement
           return false;
         }
 
-        manager.addManagedFiles(pomFiles);
+        manager.addManagedFilesOrUnignore(pomFiles);
 
         return true;
       }
@@ -304,7 +329,7 @@ public class MavenProjectsNavigatorPanel extends SimpleToolWindowPanel implement
 
     @Override
     public boolean canImport(final TransferSupport support) {
-      return FileCopyPasteUtil.isFileListFlavorSupported(support.getDataFlavors());
+      return FileCopyPasteUtil.isFileListFlavorAvailable(support.getDataFlavors());
     }
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -51,17 +51,19 @@ public class UneditAction extends AbstractActionFromEditGroup {
       else {
         message = CvsBundle.message("unedit.confirmation.multiple", modifiedFiles);
       }
-      if (Messages.showOkCancelDialog(context.getProject(), message, CvsBundle.message("unedit.confirmation.title"), Messages.getQuestionIcon()) != 0) {
+      if (Messages.showOkCancelDialog(context.getProject(), message, CvsBundle.message("unedit.confirmation.title"), Messages.getQuestionIcon()) != Messages.OK) {
         return;
       }
     }
     super.actionPerformed(context);
   }
 
+  @Override
   protected String getTitle(VcsContext context) {
     return CvsBundle.message("operation.name.unedit");
   }
 
+  @Override
   protected CvsHandler getCvsHandler(CvsContext context) {
     return CommandCvsHandler.createUneditHandler(context.getSelectedFiles(),
                                                  CvsConfiguration.getInstance(context.getProject())

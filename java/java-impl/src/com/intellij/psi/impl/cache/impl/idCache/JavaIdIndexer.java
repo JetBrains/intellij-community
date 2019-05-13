@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,7 @@
  */
 package com.intellij.psi.impl.cache.impl.idCache;
 
-import com.intellij.lexer.JavaLexer;
+import com.intellij.lang.java.JavaParserDefinition;
 import com.intellij.lexer.Lexer;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.impl.cache.impl.OccurrenceConsumer;
@@ -28,7 +28,7 @@ public class JavaIdIndexer extends LexerBasedIdIndexer {
   }
 
   public static Lexer createIndexingLexer(OccurrenceConsumer consumer) {
-    final JavaLexer javaLexer = new JavaLexer(LanguageLevel.JDK_1_3);
+    Lexer javaLexer = JavaParserDefinition.createLexer(LanguageLevel.JDK_1_3);
     return new JavaFilterLexer(javaLexer, consumer);
   }
 }

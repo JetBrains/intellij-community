@@ -1,0 +1,13 @@
+#if($field.modifierStatic)
+static ##
+#end
+$field.type ##
+#set($name = $StringUtil.capitalizeWithJavaBeanConvention($StringUtil.sanitizeJavaIdentifier($helper.getPropertyName($field, $project))))
+#if ($field.boolean && $field.primitive)
+  is##
+#else
+  get##
+#end
+${name}() {
+  return $field.name;
+}

@@ -33,7 +33,7 @@ class Computable<O> {}
 class WeighingComparable<T, Loc> implements Comparable<WeighingComparable<T, Loc>> {
 
   public WeighingComparable(final Computable<T> element, final Loc location, final Weigher[] weighers) {
-    //To change body of created methods use File | Settings | File Templates.
+    
   }
 
   public int compareTo(@NotNull final WeighingComparable<T, Loc> comparable) {

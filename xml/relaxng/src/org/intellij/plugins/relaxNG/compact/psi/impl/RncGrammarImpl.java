@@ -26,24 +26,22 @@ import org.intellij.plugins.relaxNG.compact.psi.RncGrammar;
 import org.intellij.plugins.relaxNG.compact.psi.RncPattern;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * Created by IntelliJ IDEA.
- * User: sweinreuter
- * Date: 13.08.2007
- */
 public class RncGrammarImpl extends RncElementImpl implements RncGrammar {
   public RncGrammarImpl(ASTNode node) {
     super(node);
   }
 
+  @Override
   public void accept(@NotNull RncElementVisitor visitor) {
     visitor.visitGrammar(this);
   }
 
+  @Override
   public void accept(Visitor visitor) {
     visitor.visitGrammar(this);
   }
 
+  @Override
   public RncPattern getStart() {
     final ASTNode node = getNode().findChildByType(RncElementTypes.START);
     return node != null ? (RncPattern)node.getPsi() : null;

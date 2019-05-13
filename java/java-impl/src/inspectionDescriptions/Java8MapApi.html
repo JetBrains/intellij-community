@@ -1,0 +1,38 @@
+<html>
+<body>
+Reports calls to <code>Map.get()</code> which could be replaced with <code>getOrDefault()</code>, <code>computeIfAbsent()</code> or
+<code>putIfAbsent()</code>.
+<ul>
+  <li><b>Map.getOrDefault</b> method could be used to replace the code like this:
+    <pre>
+      String val = map.containsKey(key) ? map.get(key) : "none";</pre>
+  </li>
+  <li><b>Map.computeIfAbsent</b> method could be used to replace the code like this:
+    <pre>
+      List&lt;String&gt; list = map.get(key);
+      if (list == null) {
+        list = new ArrayList&lt;&gt;();
+        map.put(key, list);
+      }</pre>
+  </li>
+  <li><b>Map.putIfAbsent</b> method could be used to replace the code like this:
+    <pre>
+      String val = map.get(key);
+      if (val == null) map.put(key, newVal);</pre>
+  </li>
+  <li><b>Map.merge</b> method could be used to replace the code like this:
+    <pre>
+      Integer val = map.get(key);
+      if (val == null) map.put(key, 1);
+      else map.put(key, val + 1);</pre>
+  </li>
+
+</ul>
+<p>Note that replacement with <code>computeIfAbsent()</code> or <code>merge()</code> may work incorrectly for some <code>Map</code>
+implementations if the code extracted to lambda expression modifies the same <code>Map</code>. By default,
+warning is not issued if this code may have side effects. If desired, use the last checkbox to issue warning always.</p>
+<!-- tooltip end -->
+<p>This inspection only reports if the project or module is configured to use a language level of 8 or higher.</p>
+<p><small>New in 2016.3</small></p>
+</body>
+</html>

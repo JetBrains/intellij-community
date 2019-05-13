@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.dialogs.browser;
 
 import com.intellij.openapi.fileChooser.FileChooser;
@@ -30,22 +16,19 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.DepthCombo;
 import org.jetbrains.idea.svn.SvnBundle;
+import org.jetbrains.idea.svn.api.Depth;
+import org.jetbrains.idea.svn.api.Revision;
+import org.jetbrains.idea.svn.api.Url;
 import org.jetbrains.idea.svn.revision.SvnSelectRevisionPanel;
-import org.jetbrains.idea.svn.update.SvnRevisionPanel;
-import org.tmatesoft.svn.core.SVNDepth;
-import org.tmatesoft.svn.core.SVNURL;
-import org.tmatesoft.svn.core.wc.SVNRevision;
 
 import javax.swing.*;
-import javax.swing.event.ListSelectionEvent;
-import javax.swing.event.ListSelectionListener;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+
+import static com.intellij.openapi.vfs.VfsUtilCore.virtualToIoFile;
 
 public class CheckoutOptionsDialog extends DialogWrapper {
   private JCheckBox myExternalsCheckbox;
@@ -59,44 +42,33 @@ public class CheckoutOptionsDialog extends DialogWrapper {
   private JBScrollPane myScroll;
   private final String myRelativePath;
 
-  public CheckoutOptionsDialog(final Project project, SVNURL url, File target, final VirtualFile root, final String relativePath) {
+  public CheckoutOptionsDialog(final Project project, Url url, File target, final VirtualFile root, final String relativePath) {
     super(project, true);
     myRelativePath = relativePath;
-    final String urlText = url.toString();
-    myUrlLabel.setText(urlText);
+    myUrlLabel.setText(url.toDecodedString());
 
     fillTargetList(target);
     validateTargetSelected();
 
-    mySelectTarget.addActionListener(new ActionListener() {
-      public void actionPerformed(final ActionEvent e) {
-        // choose directory here/
-        FileChooserDescriptor fcd = FileChooserDescriptorFactory.createSingleFolderDescriptor();
-        fcd.setShowFileSystemRoots(true);
-        fcd.setTitle(SvnBundle.message("checkout.directory.chooser.title"));
-        fcd.setDescription(SvnBundle.message("checkout.directory.chooser.prompt"));
-        fcd.setHideIgnored(false);
-        VirtualFile file = FileChooser.chooseFile(fcd, getContentPane(), project, null);
-        if (file == null) {
-          return;
-        }
-        fillTargetList(new File(file.getPath()));
-        validateTargetSelected();
+    mySelectTarget.addActionListener(e -> {
+      // choose directory here/
+      FileChooserDescriptor fcd = FileChooserDescriptorFactory.createSingleFolderDescriptor();
+      fcd.setShowFileSystemRoots(true);
+      fcd.setTitle(SvnBundle.message("checkout.directory.chooser.title"));
+      fcd.setDescription(SvnBundle.message("checkout.directory.chooser.prompt"));
+      fcd.setHideIgnored(false);
+      VirtualFile file = FileChooser.chooseFile(fcd, getContentPane(), project, null);
+      if (file == null) {
+        return;
       }
+      fillTargetList(virtualToIoFile(file));
+      validateTargetSelected();
     });
-    myLocalTargetList.addListSelectionListener(new ListSelectionListener() {
-      public void valueChanged(final ListSelectionEvent e) {
-        validateTargetSelected();
-      }
-    });
+    myLocalTargetList.addListSelectionListener(e -> validateTargetSelected());
 
     svnSelectRevisionPanel.setRoot(root);
     svnSelectRevisionPanel.setProject(project);
-    svnSelectRevisionPanel.setUrlProvider(new SvnRevisionPanel.UrlProvider() {
-      public String getUrl() {
-        return urlText;
-      }
-    });
+    svnSelectRevisionPanel.setUrlProvider(() -> url);
 
     setTitle(SvnBundle.message("checkout.options.dialog.title"));
     myDepthLabel.setLabelFor(myDepthCombo);
@@ -112,10 +84,10 @@ public class CheckoutOptionsDialog extends DialogWrapper {
 
   private void fillTargetList(final File target) {
     final DefaultListModel listModel = new DefaultListModel();
-    final List<CheckoutStrategy> strategies = new ArrayList<CheckoutStrategy>();
+    final List<CheckoutStrategy> strategies = new ArrayList<>();
     Collections.addAll(strategies, CheckoutStrategy.createAllStrategies(target, new File(myRelativePath), false));
     strategies.add(new SvnTrunkCheckoutStrategy(target, new File(myRelativePath), false));
-    final List<File> targets = new ArrayList<File>(5);
+    final List<File> targets = new ArrayList<>(5);
     for (CheckoutStrategy strategy : strategies) {
       final File result = strategy.getResult();
       if (result != null && (! targets.contains(result))) {
@@ -136,6 +108,7 @@ public class CheckoutOptionsDialog extends DialogWrapper {
     }
   }
 
+  @Override
   @NonNls
   protected String getDimensionServiceKey() {
     return "svn4idea.checkout.options";
@@ -147,7 +120,7 @@ public class CheckoutOptionsDialog extends DialogWrapper {
     return (objects == null) || (objects.length != 1) ? null : (File) objects[0];
   }
 
-  public SVNDepth getDepth() {
+  public Depth getDepth() {
     return myDepthCombo.getDepth();
   }
 
@@ -155,13 +128,14 @@ public class CheckoutOptionsDialog extends DialogWrapper {
     return !myExternalsCheckbox.isSelected();
   }
 
+  @Override
   @Nullable
   protected JComponent createCenterPanel() {
     return myTopPanel;
   }
 
   @NotNull
-  public SVNRevision getRevision() throws ConfigurationException {
+  public Revision getRevision() throws ConfigurationException {
       return svnSelectRevisionPanel.getRevision();
   }
 

@@ -17,7 +17,7 @@ PsiJavaFile:LambdaExpression12.java
             <empty list>
     PsiJavaToken:RPARENTH(')')
     PsiWhiteSpace(' ')
-    PsiLambdaExpression:() -> null
+    PsiLambdaExpression
       PsiParameterList:()
         PsiJavaToken:LPARENTH('(')
         PsiJavaToken:RPARENTH(')')

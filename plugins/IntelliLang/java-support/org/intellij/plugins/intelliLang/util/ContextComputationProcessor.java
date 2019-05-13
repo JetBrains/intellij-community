@@ -19,6 +19,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NotNull;
 
@@ -30,32 +32,31 @@ import java.util.List;
  * that computes the values not only for compile-time constants, but also for elements annotated with a substitution
  * annotation.
  *
- * @see org.intellij.plugins.intelliLang.util.SubstitutedExpressionEvaluationHelper
+ * @see SubstitutedExpressionEvaluationHelper
  */
 public class ContextComputationProcessor {
 
   private final SubstitutedExpressionEvaluationHelper myEvaluationHelper;
 
-  private ContextComputationProcessor(final Project project) {
+  private ContextComputationProcessor(Project project) {
     myEvaluationHelper = new SubstitutedExpressionEvaluationHelper(project);
   }
 
   @NotNull
-  public static List<Object> collectOperands(@NotNull final String prefix, final String suffix, final Ref<Boolean> unparsable, final PsiElement[] operands) {
-    final ArrayList<Object> result = new ArrayList<Object>();
-    final ContextComputationProcessor processor = new ContextComputationProcessor(operands[0].getProject());
+  public static List<Object> collectOperands(@NotNull String prefix, String suffix, Ref<Boolean> unparsable, PsiElement[] operands) {
+    ArrayList<Object> result = new ArrayList<>();
+    ContextComputationProcessor processor = new ContextComputationProcessor(operands[0].getProject());
     addStringFragment(prefix, result);
-    for (PsiElement operand : operands) {
-      processor.collectOperands(operand, result, unparsable);
-    }
+    PsiElement topParent = ObjectUtils.assertNotNull(PsiTreeUtil.findCommonParent(operands));
+    processor.collectOperands(getTopLevelInjectionTarget(topParent), result, unparsable);
     addStringFragment(suffix, result);
     return result;
   }
 
-  private static void addStringFragment(final String string, final List<Object> result) {
+  private static void addStringFragment(String string, List<Object> result) {
     if (StringUtil.isEmpty(string)) return;
-    final int size = result.size();
-    final Object last = size > 0? result.get(size -1) : null;
+    int size = result.size();
+    Object last = size > 0? result.get(size -1) : null;
     if (last instanceof String) {
       result.set(size - 1, last + string);
     }
@@ -64,7 +65,7 @@ public class ContextComputationProcessor {
     }
   }
 
-  public void collectOperands(final PsiElement expression, final List<Object> result, final Ref<Boolean> unparsable) {
+  public void collectOperands(PsiElement expression, List<Object> result, Ref<Boolean> unparsable) {
     if (expression instanceof PsiParenthesizedExpression) {
       collectOperands(((PsiParenthesizedExpression)expression).getExpression(), result, unparsable);
     }
@@ -79,7 +80,7 @@ public class ContextComputationProcessor {
     }
     else if (expression instanceof PsiPolyadicExpression &&
              ((PsiPolyadicExpression)expression).getOperationTokenType() == JavaTokenType.PLUS) {
-      final PsiPolyadicExpression binaryExpression = (PsiPolyadicExpression)expression;
+      PsiPolyadicExpression binaryExpression = (PsiPolyadicExpression)expression;
       for (PsiExpression operand : binaryExpression.getOperands()) {
         collectOperands(operand, result, unparsable);
       }
@@ -87,7 +88,7 @@ public class ContextComputationProcessor {
     else if (expression instanceof PsiAssignmentExpression &&
              ((PsiAssignmentExpression)expression).getOperationTokenType() == JavaTokenType.PLUSEQ) {
       unparsable.set(Boolean.TRUE);
-      final PsiAssignmentExpression assignmentExpression = (PsiAssignmentExpression)expression;
+      PsiAssignmentExpression assignmentExpression = (PsiAssignmentExpression)expression;
       collectOperands(assignmentExpression.getLExpression(), result, unparsable);
       collectOperands(assignmentExpression.getRExpression(), result, unparsable);
     }
@@ -95,8 +96,8 @@ public class ContextComputationProcessor {
       result.add(expression);
     }
     else if (expression instanceof PsiExpression) {
-      final SmartList<PsiExpression> uncomputables = new SmartList<PsiExpression>();
-      final Object o = myEvaluationHelper.computeExpression((PsiExpression)expression, uncomputables);
+      SmartList<PsiExpression> uncomputables = new SmartList<>();
+      Object o = myEvaluationHelper.computeExpression((PsiExpression)expression, uncomputables);
       // in many languages 'null' is a reserved word
       addStringFragment(o == null? "missingValue" : String.valueOf(o), result);
       if (uncomputables.size() > 0) {
@@ -110,17 +111,13 @@ public class ContextComputationProcessor {
   }
 
   @NotNull
-  public static PsiElement getTopLevelInjectionTarget(@NotNull final PsiElement host) {
+  public static PsiElement getTopLevelInjectionTarget(@NotNull PsiElement host) {
     PsiElement target = host;
     PsiElement parent = target.getParent();
     for (; parent != null; target = parent, parent = target.getParent()) {
       if (parent instanceof PsiPolyadicExpression) continue;
       if (parent instanceof PsiParenthesizedExpression) continue;
       if (parent instanceof PsiConditionalExpression && ((PsiConditionalExpression)parent).getCondition() != target) continue;
-      if (parent instanceof PsiArrayInitializerMemberValue) continue;
-      if (parent instanceof PsiArrayInitializerExpression) {
-        parent = parent.getParent(); continue;
-      }
       break;
     }
     return target;

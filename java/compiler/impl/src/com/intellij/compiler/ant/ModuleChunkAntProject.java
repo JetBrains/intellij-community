@@ -24,7 +24,6 @@ import java.io.PrintWriter;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Mar 16, 2004
  */
 public class ModuleChunkAntProject extends Generator{
   private final AntProject myAntProject;
@@ -36,6 +35,7 @@ public class ModuleChunkAntProject extends Generator{
 
   }
 
+  @Override
   public void generate(PrintWriter out) throws IOException {
     writeXmlHeader(out);
     myAntProject.generate(out);

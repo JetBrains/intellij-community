@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,11 +24,12 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
 import java.util.List;
 
-class MockFileTypeManager extends FileTypeManager {
+public class MockFileTypeManager extends FileTypeManager {
   @Override
   public void registerFileType(@NotNull FileType type, @NotNull List<FileNameMatcher> defaultAssociations) {
     throw new UnsupportedOperationException();
@@ -64,7 +65,7 @@ class MockFileTypeManager extends FileTypeManager {
   }
 
   @Override
-  public boolean isFileIgnored(@NonNls @NotNull VirtualFile file) {
+  public boolean isFileIgnored(@NotNull VirtualFile file) {
     return false;
   }
 
@@ -89,13 +90,8 @@ class MockFileTypeManager extends FileTypeManager {
   }
 
   @Override
-  public FileType getKnownFileTypeOrAssociate(@NotNull VirtualFile file) {
-    return file.getFileType();
-  }
-
-  @Override
   public FileType getKnownFileTypeOrAssociate(@NotNull VirtualFile file, @NotNull Project project) {
-    return getKnownFileTypeOrAssociate(file);
+    return file.getFileType();
   }
 
   @NotNull
@@ -122,13 +118,14 @@ class MockFileTypeManager extends FileTypeManager {
     return MockLanguageFileType.INSTANCE;
   }
 
-  public boolean isFileOfType(VirtualFile file, FileType type) {
+  @Override
+  public boolean isFileOfType(@NotNull VirtualFile file, @NotNull FileType type) {
     return false;
   }
 
-  @NotNull
+  @Nullable
   @Override
-  public FileType detectFileTypeFromContent(@NotNull VirtualFile file) {
-    return UnknownFileType.INSTANCE;
+  public FileType findFileTypeByName(@NotNull String fileTypeName) {
+    return null;
   }
 }

@@ -3,7 +3,7 @@
 class AClass
 {
   int f() {
-    int i = <caret><selection>0</selection>;
+    int i = 0<caret>;
     return i;
   }
 }

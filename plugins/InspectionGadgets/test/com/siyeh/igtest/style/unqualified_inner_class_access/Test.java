@@ -1,13 +1,13 @@
 package com.siyeh.igtest.style.unqualified_inner_class_access;
 
 import java.util.Map.Entry;
-
+import com.siyeh.igtest.style.unqualified_inner_class_access.A.X;
 public class Test<T> {
-    private Class<Entry> entryClass;
+    private Class<<warning descr="'Entry' is not qualified with outer class">Entry</warning>> entryClass;
 
     public Test() {
-        Entry entry;
-        entryClass = Entry.class;
+        <warning descr="'Entry' is not qualified with outer class">Entry</warning> entry;
+        entryClass = <warning descr="'Entry' is not qualified with outer class">Entry</warning>.class;
     }
 
     public Test(int i) {
@@ -22,4 +22,9 @@ class A {
 }
 class B extends A {
   void foo(X x) {}
+}
+class C {
+  void m(<warning descr="'X' is not qualified with outer class">X</warning> x) {
+    new A().new X();
+  }
 }

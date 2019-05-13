@@ -19,17 +19,22 @@ import com.intellij.openapi.util.SystemInfo;
 
 /**
  * Utilities for operations involving working with a number of changesets: log, incoming, outgoing, parents, etc.
+ * Storage for different mercurial response separators.
+ *
  * @author Kirill Likhodedov
  */
 public class HgChangesetUtil {
 
   public static final String CHANGESET_SEPARATOR = "\u0003";
   public static final String ITEM_SEPARATOR = "\u0017";
+  public static final String FILE_SEPARATOR = "\u0001";
+//FILE_SEPARATOR used for file_copies pair (by default no separator between prev source and next target)
 
   /**
    * Common method for hg commands which receive templates via --template option.
+   *
    * @param templateItems template items like <pre>{rev}</pre>, <pre>{node}</pre>.
-   * @return items joined by ITEM_SEPARATOR, ended by CHANGESET_SEPARATOR, and, if needed (for Windows), surrounded with double-quotes.
+   * @return items joined by ITEM_SEPARATOR, ended by CHANGESET_SEPARATOR.
    */
   public static String makeTemplate(String... templateItems) {
     StringBuilder template = new StringBuilder();
@@ -39,10 +44,6 @@ public class HgChangesetUtil {
     }
 
     template.append(CHANGESET_SEPARATOR);
-    if (SystemInfo.isWindows) {
-      return "\"" + template + "\"";
-    }
     return template.toString();
   }
-
 }

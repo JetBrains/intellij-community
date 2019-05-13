@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package com.intellij.openapi.editor.actions;
 
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.IdeActions;
+import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.SelectionModel;
@@ -32,7 +33,6 @@ import org.jetbrains.annotations.NotNull;
  * (white spaces, tabulations, line feeds) are removed then.
  * 
  * @author Denis Zhdanov
- * @since 6/27/12 4:10 PM
  */
 public class HungryBackspaceAction extends TextComponentEditorAction {
 
@@ -41,43 +41,29 @@ public class HungryBackspaceAction extends TextComponentEditorAction {
   }
   
   private static class Handler extends EditorWriteActionHandler {
+    Handler() {
+      super(true);
+    }
+
     @Override
-    public void executeWriteAction(@NotNull Editor editor, DataContext dataContext) {
+    public void executeWriteAction(@NotNull Editor editor, Caret caret, DataContext dataContext) {
       final Document document = editor.getDocument();
-      final int prevSymbolOffset = editor.getCaretModel().getOffset() - 1;
-      if (prevSymbolOffset < 0) {
+      final int caretOffset = editor.getCaretModel().getOffset();
+      if (caretOffset < 1) {
         return;
       }
-      
+
       final SelectionModel selectionModel = editor.getSelectionModel();
       final CharSequence text = document.getCharsSequence();
-      final char c = text.charAt(prevSymbolOffset);
-      final boolean doHungryCheck = !selectionModel.hasSelection() && !selectionModel.hasBlockSelection() && StringUtil.isWhiteSpace(c);
-      final EditorActionHandler handler = EditorActionManager.getInstance().getActionHandler(IdeActions.ACTION_EDITOR_BACKSPACE);
-      handler.execute(editor, dataContext);
-
-      if (!doHungryCheck) {
-        return;
-      }
-      
-      final int endOffset = prevSymbolOffset;
-      if (endOffset > document.getTextLength()) {
-        return;
-      }
-      int startOffset = CharArrayUtil.shiftBackward(text, endOffset - 1, "\t \n");
-      if (startOffset < 0) {
-        // No non-white space symbol before the current caret offset has been found.
-        startOffset = 0;
+      final char c = text.charAt(caretOffset - 1);
+      if (!selectionModel.hasSelection() && StringUtil.isWhiteSpace(c)) {
+        int startOffset = CharArrayUtil.shiftBackward(text, caretOffset - 2, "\t \n") + 1;
+        document.deleteString(startOffset, caretOffset);
       }
       else {
-        // Offset now points to the first non-white space symbol before the caret.
-        // Increment it to point to the first white space symbol instead.
-        startOffset++;
+        final EditorActionHandler handler = EditorActionManager.getInstance().getActionHandler(IdeActions.ACTION_EDITOR_BACKSPACE);
+        handler.execute(editor, caret, dataContext);
       }
-      if (startOffset >= endOffset) {
-        return;
-      }
-      document.deleteString(startOffset, endOffset);
     }
   }
 }

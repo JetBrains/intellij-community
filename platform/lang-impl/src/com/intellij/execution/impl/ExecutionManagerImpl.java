@@ -1,349 +1,103 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.impl;
 
 import com.intellij.CommonBundle;
 import com.intellij.execution.*;
-import com.intellij.execution.configurations.ConfigurationPerRunnerSettings;
+import com.intellij.execution.configuration.CompatibilityAwareRunProfile;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.configurations.RunProfile;
 import com.intellij.execution.configurations.RunProfileState;
-import com.intellij.execution.process.ProcessAdapter;
-import com.intellij.execution.process.ProcessEvent;
+import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.runners.ExecutionEnvironment;
+import com.intellij.execution.runners.ExecutionEnvironmentBuilder;
 import com.intellij.execution.runners.ExecutionUtil;
+import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.execution.ui.RunContentManager;
-import com.intellij.execution.ui.RunContentManagerImpl;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.ProjectComponent;
+import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbService;
+import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Trinity;
-import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.ui.docking.DockManager;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Alarm;
+import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
-/**
- * @author dyoma
- */
-public class ExecutionManagerImpl extends ExecutionManager implements ProjectComponent {
-  private static final Logger LOG = Logger.getInstance("com.intellij.execution.impl.ExecutionManagerImpl");
+public abstract class ExecutionManagerImpl extends ExecutionManager implements Disposable {
+  public static final Key<Object> EXECUTION_SESSION_ID_KEY = Key.create("EXECUTION_SESSION_ID_KEY");
+  public static final Key<Boolean> EXECUTION_SKIP_RUN = Key.create("EXECUTION_SKIP_RUN");
+
+  protected static final Logger LOG = Logger.getInstance(ExecutionManagerImpl.class);
+  private static final ProcessHandler[] EMPTY_PROCESS_HANDLERS = new ProcessHandler[0];
 
   private final Project myProject;
-
-  private RunContentManagerImpl myContentManager;
-  private final Alarm awaitingTerminationAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
-  private final List<Trinity<RunContentDescriptor, RunnerAndConfigurationSettings, Executor>> myRunningConfigurations =
+  private final Alarm myAwaitingTerminationAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
+  private final Map<RunProfile, ExecutionEnvironment> myAwaitingRunProfiles = ContainerUtil.newHashMap();
+  protected final List<Trinity<RunContentDescriptor, RunnerAndConfigurationSettings, Executor>> myRunningConfigurations =
     ContainerUtil.createLockFreeCopyOnWriteList();
 
-  /**
-   * reflection
-   */
-  ExecutionManagerImpl(final Project project) {
+  @SuppressWarnings("MethodOverridesStaticMethodOfSuperclass")
+  @NotNull
+  public static ExecutionManagerImpl getInstance(@NotNull Project project) {
+    return (ExecutionManagerImpl)ServiceManager.getService(project, ExecutionManager.class);
+  }
+
+  protected ExecutionManagerImpl(@NotNull Project project) {
     myProject = project;
   }
 
-  @Override
-  public void projectOpened() {
-    ((RunContentManagerImpl)getContentManager()).init();
-  }
+  @NotNull
+  private static ExecutionEnvironmentBuilder createEnvironmentBuilder(@NotNull Project project,
+                                                                      @NotNull Executor executor,
+                                                                      @Nullable RunnerAndConfigurationSettings configuration) {
+    ExecutionEnvironmentBuilder builder = new ExecutionEnvironmentBuilder(project, executor);
 
-  @Override
-  public void projectClosed() {
-  }
-
-  @Override
-  public void initComponent() {
-  }
-
-  @Override
-  public void disposeComponent() {
-    for (Trinity<RunContentDescriptor, RunnerAndConfigurationSettings, Executor> trinity : myRunningConfigurations) {
-      Disposer.dispose(trinity.first);
-    }
-    myRunningConfigurations.clear();
-  }
-
-  @Override
-  public RunContentManager getContentManager() {
-    if (myContentManager == null) {
-      myContentManager = new RunContentManagerImpl(myProject, DockManager.getInstance(myProject));
-      Disposer.register(myProject, myContentManager);
-    }
-    return myContentManager;
-  }
-
-  @Override
-  public ProcessHandler[] getRunningProcesses() {
-    final List<ProcessHandler> handlers = new ArrayList<ProcessHandler>();
-    for (RunContentDescriptor descriptor : getContentManager().getAllDescriptors()) {
-      final ProcessHandler processHandler = descriptor.getProcessHandler();
-      if (processHandler != null) {
-        handlers.add(processHandler);
-      }
-    }
-    return handlers.toArray(new ProcessHandler[handlers.size()]);
-  }
-
-  @Override
-  public void compileAndRun(@NotNull final Runnable startRunnable,
-                            @NotNull final ExecutionEnvironment env,
-                            @Nullable final RunProfileState state,
-                            @Nullable final Runnable onCancelRunnable) {
-    long id = env.getExecutionId();
-    if (id == 0) {
-      id = env.assignNewExecutionId();
-    }
-    RunProfile profile = env.getRunProfile();
-
-    if (profile instanceof RunConfiguration) {
-      final RunConfiguration runConfiguration = (RunConfiguration)profile;
-      final RunManagerImpl runManager = RunManagerImpl.getInstanceImpl(myProject);
-
-      final List<BeforeRunTask> activeTasks = new ArrayList<BeforeRunTask>();
-      activeTasks.addAll(runManager.getBeforeRunTasks(runConfiguration));
-
-      ConfigurationPerRunnerSettings configurationSettings = state != null ? state.getConfigurationSettings() : null;
-      final DataContext projectContext = SimpleDataContext.getProjectContext(myProject);
-      final DataContext dataContext = configurationSettings != null ? SimpleDataContext
-        .getSimpleContext(BeforeRunTaskProvider.RUNNER_ID, configurationSettings.getRunnerId(), projectContext) : projectContext;
-
-      if (!activeTasks.isEmpty()) {
-        final long finalId = id;
-        ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
-          /** @noinspection SSBasedInspection*/
-          @Override
-          public void run() {
-            for (BeforeRunTask task : activeTasks) {
-              BeforeRunTaskProvider<BeforeRunTask> provider = BeforeRunTaskProvider.getProvider(myProject, task.getProviderId());
-              if (provider == null) {
-                LOG.warn("Cannot find BeforeRunTaskProvider for id='" + task.getProviderId() + "'");
-                continue;
-              }
-              ExecutionEnvironment taskEnvironment = new ExecutionEnvironment(env.getRunProfile(),
-                                                                              env.getExecutionTarget(),
-                                                                              env.getProject(),
-                                                                              env.getRunnerSettings(),
-                                                                              env.getConfigurationSettings(),
-                                                                              null,
-                                                                              env.getRunnerAndConfigurationSettings());
-              taskEnvironment.setExecutionId(finalId);
-              if (!provider.executeTask(dataContext, runConfiguration, taskEnvironment, task)) {
-                if (onCancelRunnable != null) {
-                  SwingUtilities.invokeLater(onCancelRunnable);
-                }
-                return;
-              }
-            }
-            // important! Do not use DumbService.smartInvokelater here because it depends on modality state
-            // and execution of startRunnable could be skipped if modality state check fails
-            SwingUtilities.invokeLater(new Runnable() {
-              @Override
-              public void run() {
-                if (!myProject.isDisposed()) {
-                  DumbService.getInstance(myProject).runWhenSmart(startRunnable);
-                }
-              }
-            });
-          }
-        });
-      }
-      else {
-        startRunnable.run();
-      }
-    }
-    else {
-      startRunnable.run();
-    }
-  }
-
-  @Override
-  public void startRunProfile(@NotNull final RunProfileStarter starter, @NotNull final RunProfileState state,
-                              @NotNull final Project project, @NotNull final Executor executor, @NotNull final ExecutionEnvironment env) {
-    final RunContentDescriptor reuseContent =
-      ExecutionManager.getInstance(project).getContentManager().getReuseContent(executor, env);
-    if (reuseContent != null) {
-      reuseContent.setExecutionId(env.getExecutionId());
-    }
-    final RunProfile profile = env.getRunProfile();
-
-    project.getMessageBus().syncPublisher(EXECUTION_TOPIC).processStartScheduled(executor.getId(), env);
-
-    Runnable startRunnable = new Runnable() {
-      @Override
-      public void run() {
-        if (project.isDisposed()) return;
-        boolean started = false;
-        try {
-          project.getMessageBus().syncPublisher(EXECUTION_TOPIC).processStarting(executor.getId(), env);
-
-          final RunContentDescriptor descriptor = starter.execute(project, executor, state, reuseContent, env);
-
-          if (descriptor != null) {
-            final Trinity<RunContentDescriptor, RunnerAndConfigurationSettings, Executor> trinity =
-              Trinity.create(descriptor, env.getRunnerAndConfigurationSettings(), executor);
-            myRunningConfigurations.add(trinity);
-            Disposer.register(descriptor, new Disposable() {
-              @Override
-              public void dispose() {
-                myRunningConfigurations.remove(trinity);
-              }
-            });
-            ExecutionManager.getInstance(project).getContentManager().showRunContent(executor, descriptor, reuseContent);
-            final ProcessHandler processHandler = descriptor.getProcessHandler();
-            if (processHandler != null) {
-              processHandler.startNotify();
-              project.getMessageBus().syncPublisher(EXECUTION_TOPIC).processStarted(executor.getId(), env, processHandler);
-              started = true;
-              processHandler.addProcessListener(new ProcessExecutionListener(project, profile, processHandler));
-            }
-          }
-        }
-        catch (ExecutionException e) {
-          ExecutionUtil.handleExecutionError(project, executor.getToolWindowId(), profile, e);
-          LOG.info(e);
-        }
-        finally {
-          if (!started) {
-            project.getMessageBus().syncPublisher(EXECUTION_TOPIC).processNotStarted(executor.getId(), env);
-          }
-        }
-      }
-    };
-
-    if (ApplicationManager.getApplication().isUnitTestMode()) {
-      startRunnable.run();
-    }
-    else {
-      compileAndRun(startRunnable, env, state, new Runnable() {
-        @Override
-        public void run() {
-          if (!project.isDisposed()) {
-            project.getMessageBus().syncPublisher(EXECUTION_TOPIC).processNotStarted(executor.getId(), env);
-          }
-        }
-      });
-    }
-  }
-
-  @Override
-  public void restartRunProfile(@NotNull final Project project,
-                                @NotNull final Executor executor,
-                                @NotNull final ExecutionTarget target,
-                                @Nullable final RunnerAndConfigurationSettings configuration,
-                                @Nullable final ProcessHandler processHandler) {
-    if (processHandler != null) {
-      for (RunContentDescriptor descriptor : getContentManager().getAllDescriptors()) {
-        final ProcessHandler handler = descriptor.getProcessHandler();
-        if (handler == processHandler) {
-          restartRunProfile(project, executor, target, configuration, descriptor);
-          return;
-        }
-      }
-    }
-    restartRunProfile(project, executor, target, configuration, (RunContentDescriptor)null);
-  }
-
-  @Override
-  public void restartRunProfile(@NotNull final Project project,
-                                @NotNull final Executor executor,
-                                @NotNull final ExecutionTarget target,
-                                @Nullable final RunnerAndConfigurationSettings configuration,
-                                @Nullable final RunContentDescriptor currentDescriptor) {
-    if (configuration != null && ProgramRunnerUtil.getRunner(executor.getId(), configuration) == null) {
+    ProgramRunner runner = ProgramRunnerUtil.getRunner(executor.getId(), configuration);
+    if (runner == null && configuration != null) {
       LOG.error("Cannot find runner for " + configuration.getName());
-      return;
     }
-    if (configuration == null && (currentDescriptor == null || currentDescriptor.getRestarter() == null)) {
-      LOG.error("Nothing to restart");
-      return;
+    else if (runner != null) {
+      builder.runnerAndSettings(runner, configuration);
     }
-    final List<RunContentDescriptor> descriptorsToStop = new ArrayList<RunContentDescriptor>();
-    if (configuration != null && configuration.isSingleton()) {
-      descriptorsToStop.addAll(getRunningDescriptors(configuration));
-    }
-    else if (currentDescriptor != null) {
-      descriptorsToStop.add(currentDescriptor);
-    }
-
-    if (!descriptorsToStop.isEmpty()) {
-      if (configuration != null && (descriptorsToStop.size() > 1 || currentDescriptor == null || descriptorsToStop.get(0) != currentDescriptor) &&
-          !userApprovesStop(project, configuration.getName(), descriptorsToStop.size())) {
-        return;
-      }
-      for (RunContentDescriptor descriptor : descriptorsToStop) {
-        stop(descriptor);
-      }
-    }
-    else {
-      start(project, configuration, executor, target, currentDescriptor);
-      return;
-    }
-
-    Runnable runnable = new Runnable() {
-      @Override
-      public void run() {
-        for (RunContentDescriptor descriptor : descriptorsToStop) {
-          ProcessHandler processHandler = descriptor.getProcessHandler();
-          if (processHandler != null && !processHandler.isProcessTerminated()) {
-            awaitingTerminationAlarm.addRequest(this, 100);
-            return;
-          }
-        }
-        start(project, configuration, executor, target, currentDescriptor);
-      }
-    };
-    awaitingTerminationAlarm.addRequest(runnable, 100);
+    return builder;
   }
 
-  private static void start(@NotNull Project project,
-                            @Nullable RunnerAndConfigurationSettings configuration,
-                            @NotNull Executor executor,
-                            @NotNull ExecutionTarget target,
-                            @Nullable RunContentDescriptor descriptor) {
-    Runnable restarter = descriptor != null ? descriptor.getRestarter() : null;
-    if (configuration != null) {
-      ProgramRunnerUtil.executeConfiguration(project, configuration, executor, target, descriptor, true);
-    }
-    else if (restarter != null) {
-      restarter.run();
-    }
+  public static boolean isProcessRunning(@Nullable RunContentDescriptor descriptor) {
+    ProcessHandler processHandler = descriptor == null ? null : descriptor.getProcessHandler();
+    return processHandler != null && !processHandler.isProcessTerminated();
   }
 
-  private static boolean userApprovesStop(Project project, String configName, int instancesCount) {
-    RunManagerImpl runManager = RunManagerImpl.getInstanceImpl(project);
-    final RunManagerConfig config = runManager.getConfig();
-    if (!config.isRestartRequiresConfirmation()) return true;
+  private static void restart(@NotNull ExecutionEnvironment environment) {
+    //start() can be called during restartRunProfile() after pretty long 'awaitTermination()' so we have to check if the project is still here
+    if (environment.getProject().isDisposed()) return;
+
+    RunnerAndConfigurationSettings settings = environment.getRunnerAndConfigurationSettings();
+    ProgramRunnerUtil.executeConfiguration(environment, settings != null && settings.isEditBeforeRun(), true);
+  }
+
+  private static boolean userApprovesStopForSameTypeConfigurations(@NotNull  Project project, String configName, int instancesCount) {
+    final RunManagerConfig config = RunManagerImpl.getInstanceImpl(project).getConfig();
+    if (!config.isRestartRequiresConfirmation()) {
+      return true;
+    }
 
     DialogWrapper.DoNotAskOption option = new DialogWrapper.DoNotAskOption() {
       @Override
@@ -366,6 +120,7 @@ public class ExecutionManagerImpl extends ExecutionManager implements ProjectCom
         return false;
       }
 
+      @NotNull
       @Override
       public String getDoNotShowMessage() {
         return CommonBundle.message("dialog.options.do.not.show");
@@ -380,12 +135,366 @@ public class ExecutionManagerImpl extends ExecutionManager implements ProjectCom
       Messages.getQuestionIcon(), option) == Messages.OK;
   }
 
-  private List<RunContentDescriptor> getRunningDescriptors(RunnerAndConfigurationSettings configuration) {
-    List<RunContentDescriptor> result = new ArrayList<RunContentDescriptor>();
+  private static boolean userApprovesStopForIncompatibleConfigurations(Project project,
+                                                                       String configName,
+                                                                       List<RunContentDescriptor> runningIncompatibleDescriptors) {
+    RunManagerImpl runManager = RunManagerImpl.getInstanceImpl(project);
+    final RunManagerConfig config = runManager.getConfig();
+    if (!config.isStopIncompatibleRequiresConfirmation()) return true;
+
+    DialogWrapper.DoNotAskOption option = new DialogWrapper.DoNotAskOption() {
+      @Override
+      public boolean isToBeShown() {
+        return config.isStopIncompatibleRequiresConfirmation();
+      }
+
+      @Override
+      public void setToBeShown(boolean value, int exitCode) {
+        config.setStopIncompatibleRequiresConfirmation(value);
+      }
+
+      @Override
+      public boolean canBeHidden() {
+        return true;
+      }
+
+      @Override
+      public boolean shouldSaveOptionsOnCancel() {
+        return false;
+      }
+
+      @NotNull
+      @Override
+      public String getDoNotShowMessage() {
+        return CommonBundle.message("dialog.options.do.not.show");
+      }
+    };
+
+    final StringBuilder names = new StringBuilder();
+    for (final RunContentDescriptor descriptor : runningIncompatibleDescriptors) {
+      String name = descriptor.getDisplayName();
+      if (names.length() > 0) {
+        names.append(", ");
+      }
+      names.append(StringUtil.isEmpty(name) ? ExecutionBundle.message("run.configuration.no.name")
+                                            : String.format("'%s'", name));
+    }
+
+    //noinspection DialogTitleCapitalization
+    return Messages.showOkCancelDialog(
+      project,
+      ExecutionBundle.message("stop.incompatible.confirmation.message",
+                              configName, names.toString(), runningIncompatibleDescriptors.size()),
+      ExecutionBundle.message("incompatible.configuration.is.running.dialog.title", runningIncompatibleDescriptors.size()),
+      ExecutionBundle.message("stop.incompatible.confirmation.button.text"),
+      CommonBundle.message("button.cancel"),
+      Messages.getQuestionIcon(), option) == Messages.OK;
+  }
+
+  public static void stopProcess(@Nullable RunContentDescriptor descriptor) {
+    stopProcess(descriptor != null ? descriptor.getProcessHandler() : null);
+  }
+
+  public static void stopProcess(@Nullable ProcessHandler processHandler) {
+    if (processHandler == null) {
+      return;
+    }
+
+    processHandler.putUserData(ProcessHandler.TERMINATION_REQUESTED, Boolean.TRUE);
+
+    if (processHandler instanceof KillableProcess && processHandler.isProcessTerminating()) {
+      // process termination was requested, but it's still alive
+      // in this case 'force quit' will be performed
+      ((KillableProcess)processHandler).killProcess();
+      return;
+    }
+
+    if (!processHandler.isProcessTerminated()) {
+      if (processHandler.detachIsDefault()) {
+        processHandler.detachProcess();
+      }
+      else {
+        processHandler.destroyProcess();
+      }
+    }
+  }
+
+  @Override
+  public void dispose() {
     for (Trinity<RunContentDescriptor, RunnerAndConfigurationSettings, Executor> trinity : myRunningConfigurations) {
-      if (trinity.getSecond() == configuration) {
+      Disposer.dispose(trinity.first);
+    }
+    myRunningConfigurations.clear();
+  }
+
+  @NotNull
+  @Override
+  public RunContentManager getContentManager() {
+    return RunContentManager.getInstance(myProject);
+  }
+
+  @NotNull
+  public static List<RunContentDescriptor> getAllDescriptors(@NotNull Project project) {
+    RunContentManager contentManager = ServiceManager.getServiceIfCreated(project, RunContentManager.class);
+    return contentManager == null ? Collections.emptyList() : contentManager.getAllDescriptors();
+  }
+
+  @NotNull
+  @Override
+  public ProcessHandler[] getRunningProcesses() {
+    List<ProcessHandler> handlers = null;
+    for (RunContentDescriptor descriptor : getAllDescriptors(myProject)) {
+      ProcessHandler processHandler = descriptor.getProcessHandler();
+      if (processHandler != null) {
+        if (handlers == null) {
+          handlers = new SmartList<>();
+        }
+        handlers.add(processHandler);
+      }
+    }
+    return handlers == null ? EMPTY_PROCESS_HANDLERS : handlers.toArray(new ProcessHandler[0]);
+  }
+
+  @Override
+  public void compileAndRun(@NotNull final Runnable startRunnable,
+                            @NotNull final ExecutionEnvironment environment,
+                            @Nullable final RunProfileState state,
+                            @Nullable final Runnable onCancelRunnable) {
+    long id = environment.getExecutionId();
+    if (id == 0) {
+      id = environment.assignNewExecutionId();
+    }
+
+    RunProfile profile = environment.getRunProfile();
+    if (!(profile instanceof RunConfiguration)) {
+      startRunnable.run();
+      return;
+    }
+
+    final RunConfiguration runConfiguration = (RunConfiguration)profile;
+    final List<BeforeRunTask<?>> beforeRunTasks = RunManagerImplKt.doGetBeforeRunTasks(runConfiguration);
+    if (beforeRunTasks.isEmpty()) {
+      startRunnable.run();
+    }
+    else {
+      DataContext context = environment.getDataContext();
+      final DataContext projectContext = context != null ? context : SimpleDataContext.getProjectContext(myProject);
+      final long finalId = id;
+      final Long executionSessionId = new Long(id);
+      Map<BeforeRunTask, Executor> runBeforeRunExecutorMap = Collections.synchronizedMap(new LinkedHashMap<>());
+      for (BeforeRunTask task : beforeRunTasks) {
+        @SuppressWarnings("unchecked")
+        BeforeRunTaskProvider<BeforeRunTask> provider = BeforeRunTaskProvider.getProvider(myProject, task.getProviderId());
+        if (provider != null && task instanceof RunConfigurationBeforeRunProvider.RunConfigurableBeforeRunTask) {
+          RunConfigurationBeforeRunProvider.RunConfigurableBeforeRunTask runBeforeRun =
+            (RunConfigurationBeforeRunProvider.RunConfigurableBeforeRunTask)task;
+          RunnerAndConfigurationSettings settings = runBeforeRun.getSettings();
+          if (settings != null) {
+            Executor executor = environment.getExecutor();
+            if (!RunManagerImpl.canRunConfiguration(settings, executor)) {
+                executor = DefaultRunExecutor.getRunExecutorInstance();
+                if (!RunManagerImpl.canRunConfiguration(settings, executor)) {
+                  // We should stop here as before run task cannot be executed at all (possibly it's invalid)
+                  if (onCancelRunnable != null) {
+                    onCancelRunnable.run();
+                  }
+                  ExecutionUtil.handleExecutionError(environment, new ExecutionException("cannot start before run task '" + settings + "'."));
+                  return;
+                }
+            }
+            runBeforeRunExecutorMap.put(task, executor);
+          }
+        }
+      }
+      ApplicationManager.getApplication().executeOnPooledThread(() -> {
+        for (BeforeRunTask task : beforeRunTasks) {
+          if (myProject.isDisposed()) {
+            return;
+          }
+          @SuppressWarnings("unchecked")
+          BeforeRunTaskProvider<BeforeRunTask> provider = BeforeRunTaskProvider.getProvider(myProject, task.getProviderId());
+          if (provider == null) {
+            LOG.warn("Cannot find BeforeRunTaskProvider for id='" + task.getProviderId() + "'");
+            continue;
+          }
+          ExecutionEnvironmentBuilder builder = new ExecutionEnvironmentBuilder(environment).contentToReuse(null);
+          Executor executor = runBeforeRunExecutorMap.get(task);
+          if (executor != null) {
+            builder.executor(executor);
+          }
+          ExecutionEnvironment taskEnvironment = builder.build();
+          taskEnvironment.setExecutionId(finalId);
+          EXECUTION_SESSION_ID_KEY.set(taskEnvironment, executionSessionId);
+          if (!provider.executeTask(projectContext, runConfiguration, taskEnvironment, task)) {
+            if (onCancelRunnable != null) {
+              SwingUtilities.invokeLater(onCancelRunnable);
+            }
+            return;
+          }
+        }
+
+        doRun(environment, startRunnable);
+      });
+    }
+  }
+
+  protected void doRun(@NotNull final ExecutionEnvironment environment, @NotNull final Runnable startRunnable) {
+    Boolean allowSkipRun = environment.getUserData(EXECUTION_SKIP_RUN);
+    if (allowSkipRun != null && allowSkipRun) {
+      environment.getProject().getMessageBus().syncPublisher(EXECUTION_TOPIC).processNotStarted(environment.getExecutor().getId(),
+                                                                                                environment);
+    }
+    else {
+      // important! Do not use DumbService.smartInvokeLater here because it depends on modality state
+      // and execution of startRunnable could be skipped if modality state check fails
+      //noinspection SSBasedInspection
+      SwingUtilities.invokeLater(() -> {
+        if (!myProject.isDisposed()) {
+          RunnerAndConfigurationSettings settings = environment.getRunnerAndConfigurationSettings();
+          if (settings != null && !settings.getType().isDumbAware() && DumbService.isDumb(myProject)) {
+            DumbService.getInstance(myProject).runWhenSmart(startRunnable);
+          } else {
+            try {
+              startRunnable.run();
+            } catch (IndexNotReadyException ignored) {
+              ExecutionUtil.handleExecutionError(environment, new ExecutionException("cannot start while indexing is in progress."));
+            }
+          }
+        }
+      });
+    }
+  }
+
+  @Override
+  public void restartRunProfile(@NotNull Project project,
+                                @NotNull Executor executor,
+                                @NotNull ExecutionTarget target,
+                                @Nullable RunnerAndConfigurationSettings configuration,
+                                @Nullable ProcessHandler processHandler) {
+    ExecutionEnvironmentBuilder builder = createEnvironmentBuilder(project, executor, configuration);
+    if (processHandler != null) {
+      for (RunContentDescriptor descriptor : getAllDescriptors(project)) {
+        if (descriptor.getProcessHandler() == processHandler) {
+          builder.contentToReuse(descriptor);
+          break;
+        }
+      }
+    }
+    restartRunProfile(builder.target(target).build());
+  }
+
+  @Override
+  public void restartRunProfile(@NotNull final ExecutionEnvironment environment) {
+    RunnerAndConfigurationSettings configuration = environment.getRunnerAndConfigurationSettings();
+
+    List<RunContentDescriptor> runningIncompatible;
+    if (configuration == null) {
+      runningIncompatible = Collections.emptyList();
+    }
+    else {
+      runningIncompatible = getIncompatibleRunningDescriptors(configuration);
+    }
+
+    RunContentDescriptor contentToReuse = environment.getContentToReuse();
+    List<RunContentDescriptor> runningOfTheSameType = Collections.emptyList();
+    if (configuration != null && !configuration.getConfiguration().isAllowRunningInParallel()) {
+      runningOfTheSameType = getRunningDescriptors(it -> configuration == it);
+    }
+    else if (isProcessRunning(contentToReuse)) {
+      runningOfTheSameType = Collections.singletonList(contentToReuse);
+    }
+
+    List<RunContentDescriptor> runningToStop = ContainerUtil.concat(runningOfTheSameType, runningIncompatible);
+    if (!runningToStop.isEmpty()) {
+      if (configuration != null) {
+        if (!runningOfTheSameType.isEmpty() &&
+            (runningOfTheSameType.size() > 1 || contentToReuse == null || runningOfTheSameType.get(0) != contentToReuse)) {
+
+          final RunConfiguration.RestartSingletonResult result = configuration.getConfiguration().restartSingleton(environment);
+
+          if (result == RunConfiguration.RestartSingletonResult.NO_FURTHER_ACTION) {
+            return;
+          }
+
+          if (result == RunConfiguration.RestartSingletonResult.ASK_AND_RESTART &&
+              !userApprovesStopForSameTypeConfigurations(environment.getProject(), configuration.getName(), runningOfTheSameType.size())) {
+
+            return;
+          }
+        }
+        if (!runningIncompatible.isEmpty() &&
+            !userApprovesStopForIncompatibleConfigurations(myProject, configuration.getName(), runningIncompatible)) {
+
+          return;
+        }
+      }
+
+      for (RunContentDescriptor descriptor : runningToStop) {
+        stopProcess(descriptor);
+      }
+    }
+
+    if (myAwaitingRunProfiles.get(environment.getRunProfile()) == environment) {
+      // defense from rerunning exactly the same ExecutionEnvironment
+      return;
+    }
+    myAwaitingRunProfiles.put(environment.getRunProfile(), environment);
+
+    List<RunContentDescriptor> finalRunningOfTheSameType = runningOfTheSameType;
+    awaitTermination(new Runnable() {
+      @Override
+      public void run() {
+        if (myAwaitingRunProfiles.get(environment.getRunProfile()) != environment) {
+          // a new rerun has been requested before starting this one, ignore this rerun
+          return;
+        }
+        if ((DumbService.getInstance(myProject).isDumb() && configuration != null && !configuration.getType().isDumbAware()) ||
+            ExecutorRegistry.getInstance().isStarting(environment)) {
+          awaitTermination(this, 100);
+          return;
+        }
+
+        for (RunContentDescriptor descriptor : finalRunningOfTheSameType) {
+          ProcessHandler processHandler = descriptor.getProcessHandler();
+          if (processHandler != null && !processHandler.isProcessTerminated()) {
+            awaitTermination(this, 100);
+            return;
+          }
+        }
+        myAwaitingRunProfiles.remove(environment.getRunProfile());
+        restart(environment);
+      }
+    }, 50);
+  }
+
+  private void awaitTermination(@NotNull Runnable request, long delayMillis) {
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      ApplicationManager.getApplication().invokeLater(request, ModalityState.any());
+    }
+    else {
+      myAwaitingTerminationAlarm.addRequest(request, delayMillis);
+    }
+  }
+
+  @NotNull
+  private List<RunContentDescriptor> getIncompatibleRunningDescriptors(@NotNull RunnerAndConfigurationSettings configurationAndSettings) {
+    final RunConfiguration configurationToCheckCompatibility = configurationAndSettings.getConfiguration();
+    return getRunningDescriptors(runningConfigurationAndSettings -> {
+      RunConfiguration runningConfiguration = runningConfigurationAndSettings == null ? null : runningConfigurationAndSettings.getConfiguration();
+      if (!(runningConfiguration instanceof CompatibilityAwareRunProfile)) {
+        return false;
+      }
+      return ((CompatibilityAwareRunProfile)runningConfiguration).mustBeStoppedToRun(configurationToCheckCompatibility);
+    });
+  }
+
+  @NotNull
+  public List<RunContentDescriptor> getRunningDescriptors(@NotNull Condition<RunnerAndConfigurationSettings> condition) {
+    List<RunContentDescriptor> result = new SmartList<>();
+    for (Trinity<RunContentDescriptor, RunnerAndConfigurationSettings, Executor> trinity : myRunningConfigurations) {
+      if (trinity.getSecond() != null && condition.value(trinity.getSecond())) {
         ProcessHandler processHandler = trinity.getFirst().getProcessHandler();
-        if (processHandler != null && !processHandler.isProcessTerminating() && !processHandler.isProcessTerminated()) {
+        if (processHandler != null /*&& !processHandler.isProcessTerminating()*/ && !processHandler.isProcessTerminated()) {
           result.add(trinity.getFirst());
         }
       }
@@ -393,55 +502,32 @@ public class ExecutionManagerImpl extends ExecutionManager implements ProjectCom
     return result;
   }
 
-
-  private static void stop(RunContentDescriptor runContentDescriptor) {
-    ProcessHandler processHandler = runContentDescriptor != null ? runContentDescriptor.getProcessHandler() : null;
-    if (processHandler == null) {
-      return;
-    }
-    if (processHandler instanceof KillableProcess && processHandler.isProcessTerminating()) {
-      ((KillableProcess)processHandler).killProcess();
-      return;
-    }
-
-    if (processHandler.detachIsDefault()) {
-      processHandler.detachProcess();
-    }
-    else {
-      processHandler.destroyProcess();
-    }
-  }
-
-  @Override
   @NotNull
-  public String getComponentName() {
-    return "ExecutionManager";
+  public List<RunContentDescriptor> getDescriptors(@NotNull Condition<RunnerAndConfigurationSettings> condition) {
+    List<RunContentDescriptor> result = new SmartList<>();
+    for (Trinity<RunContentDescriptor, RunnerAndConfigurationSettings, Executor> trinity : myRunningConfigurations) {
+      if (trinity.getSecond() != null && condition.value(trinity.getSecond())) {
+        result.add(trinity.getFirst());
+      }
+    }
+    return result;
   }
 
-  private static class ProcessExecutionListener extends ProcessAdapter {
-    private final Project myProject;
-    private final RunProfile myProfile;
-    private final ProcessHandler myProcessHandler;
-
-    public ProcessExecutionListener(Project project, RunProfile profile, ProcessHandler processHandler) {
-      myProject = project;
-      myProfile = profile;
-      myProcessHandler = processHandler;
+  @NotNull
+  public Set<Executor> getExecutors(RunContentDescriptor descriptor) {
+    Set<Executor> result = new HashSet<>();
+    for (Trinity<RunContentDescriptor, RunnerAndConfigurationSettings, Executor> trinity : myRunningConfigurations) {
+      if (descriptor == trinity.first) result.add(trinity.third);
     }
+    return result;
+  }
 
-    @Override
-    public void processTerminated(ProcessEvent event) {
-      if (myProject.isDisposed()) return;
-
-      myProject.getMessageBus().syncPublisher(EXECUTION_TOPIC).processTerminated(myProfile, myProcessHandler);
-      VirtualFileManager.getInstance().asyncRefresh(null);
+  @NotNull
+  public Set<RunnerAndConfigurationSettings> getConfigurations(RunContentDescriptor descriptor) {
+    Set<RunnerAndConfigurationSettings> result = new HashSet<>();
+    for (Trinity<RunContentDescriptor, RunnerAndConfigurationSettings, Executor> trinity : myRunningConfigurations) {
+      if (descriptor == trinity.first && trinity.second != null) result.add(trinity.second);
     }
-
-    @Override
-    public void processWillTerminate(ProcessEvent event, boolean willBeDestroyed) {
-      if (myProject.isDisposed()) return;
-
-      myProject.getMessageBus().syncPublisher(EXECUTION_TOPIC).processTerminating(myProfile, myProcessHandler);
-    }
+    return result;
   }
 }

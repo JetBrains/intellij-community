@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,26 +16,30 @@
 
 package com.intellij.util.indexing;
 
-import com.intellij.util.CommonProcessors;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.indexing.impl.ChangeTrackingValueContainer;
+import com.intellij.util.indexing.impl.DebugAssertions;
+import com.intellij.util.indexing.impl.IndexStorage;
+import com.intellij.util.indexing.impl.UpdatableValueContainer;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.util.*;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * This storage is needed for indexing yet unsaved data without saving those changes to 'main' backend storage
  *
  * @author Eugene Zhuravlev
- *         Date: Dec 10, 2007
  */
-public class MemoryIndexStorage<Key, Value> implements IndexStorage<Key, Value> {
-  private final Map<Key, ChangeTrackingValueContainer<Value>> myMap = new HashMap<Key, ChangeTrackingValueContainer<Value>>();
+public class MemoryIndexStorage<Key, Value> implements VfsAwareIndexStorage<Key, Value> {
+  private final Map<Key, ChangeTrackingValueContainer<Value>> myMap = new HashMap<>();
+  @NotNull
   private final IndexStorage<Key, Value> myBackendStorage;
   private final List<BufferingStateListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
-  private final AtomicBoolean myBufferingEnabled = new AtomicBoolean(false);
+  private final ID<?, ?> myIndexId;
+  private boolean myBufferingEnabled;
 
   public interface BufferingStateListener {
     void bufferingStateChanged(boolean newState);
@@ -43,42 +47,74 @@ public class MemoryIndexStorage<Key, Value> implements IndexStorage<Key, Value> 
     void memoryStorageCleared();
   }
 
-  public MemoryIndexStorage(IndexStorage<Key, Value> backend) {
-    myBackendStorage = backend;
+  public MemoryIndexStorage(@NotNull IndexStorage<Key, Value> backend) {
+    this(backend, null);
   }
 
+  public MemoryIndexStorage(@NotNull IndexStorage<Key, Value> backend, ID<?, ?> indexId) {
+    myBackendStorage = backend;
+    myIndexId = indexId;
+  }
+
+  @NotNull
   public IndexStorage<Key, Value> getBackendStorage() {
     return myBackendStorage;
   }
 
-  public void addBufferingStateListsner(BufferingStateListener listener) {
+  public void addBufferingStateListener(@NotNull BufferingStateListener listener) {
     myListeners.add(listener);
   }
 
-  public void removeBufferingStateListsner(BufferingStateListener listener) {
+  public void removeBufferingStateListener(@NotNull BufferingStateListener listener) {
     myListeners.remove(listener);
   }
 
   public void setBufferingEnabled(boolean enabled) {
-    final boolean wasEnabled = myBufferingEnabled.getAndSet(enabled);
-    if (wasEnabled != enabled) {
-      for (BufferingStateListener listener : myListeners) {
-        listener.bufferingStateChanged(enabled);
-      }
+    final boolean wasEnabled = myBufferingEnabled;
+    assert wasEnabled != enabled;
+
+    myBufferingEnabled = enabled;
+    for (BufferingStateListener listener : myListeners) {
+      listener.bufferingStateChanged(enabled);
     }
   }
 
   public boolean isBufferingEnabled() {
-    return myBufferingEnabled.get();
+    return myBufferingEnabled;
   }
 
   public void clearMemoryMap() {
     myMap.clear();
   }
 
+  public void clearMemoryMapForId(Key key, int fileId) {
+    ChangeTrackingValueContainer<Value> container = myMap.get(key);
+    if (container != null) {
+      container.dropAssociatedValue(fileId);
+    }
+  }
+
   public void fireMemoryStorageCleared() {
     for (BufferingStateListener listener : myListeners) {
       listener.memoryStorageCleared();
+    }
+  }
+
+  @Override
+  public void clearCaches() {
+    try {
+      if (myMap.size() == 0) return;
+
+      if (DebugAssertions.DEBUG) {
+        String message = "Dropping caches for " + (myIndexId != null ? myIndexId : this) + ", number of items:" + myMap.size();
+        FileBasedIndexImpl.LOG.info(message);
+      }
+
+      for (ChangeTrackingValueContainer<Value> v : myMap.values()) {
+        v.dropMergedData();
+      }
+    } finally {
+      myBackendStorage.clearCaches();
     }
   }
 
@@ -99,27 +135,17 @@ public class MemoryIndexStorage<Key, Value> implements IndexStorage<Key, Value> 
   }
 
   @Override
-  public Collection<Key> getKeys() throws StorageException {
-    final Set<Key> keys = new HashSet<Key>();
-    processKeys(new CommonProcessors.CollectProcessor<Key>(keys));
-    return keys;
-  }
+  public boolean processKeys(@NotNull final Processor<? super Key> processor, GlobalSearchScope scope, IdFilter idFilter) throws StorageException {
+    final Set<Key> stopList = new HashSet<>();
 
-  @Override
-  public boolean processKeys(final Processor<Key> processor) throws StorageException {
-    final Set<Key> stopList = new HashSet<Key>();
+    Processor<Key> decoratingProcessor = key -> {
+      if (stopList.contains(key)) return true;
 
-    Processor<Key> decoratingProcessor = new Processor<Key>() {
-      @Override
-      public boolean process(final Key key) {
-        if (stopList.contains(key)) return true;
-
-        final UpdatableValueContainer<Value> container = myMap.get(key);
-        if (container != null && container.size() == 0) {
-          return true;
-        }
-        return processor.process(key);
+      final UpdatableValueContainer<Value> container = myMap.get(key);
+      if (container != null && container.size() == 0) {
+        return true;
       }
+      return processor.process(key);
     };
 
     for (Key key : myMap.keySet()) {
@@ -128,12 +154,12 @@ public class MemoryIndexStorage<Key, Value> implements IndexStorage<Key, Value> 
       }
       stopList.add(key);
     }
-    return myBackendStorage.processKeys(decoratingProcessor);
+    return ((VfsAwareIndexStorage<Key, Value>) myBackendStorage).processKeys(stopList.isEmpty() && myMap.isEmpty() ? processor : decoratingProcessor, scope, idFilter);
   }
 
   @Override
   public void addValue(final Key key, final int inputId, final Value value) throws StorageException {
-    if (myBufferingEnabled.get()) {
+    if (myBufferingEnabled) {
       getMemValueContainer(key).addValue(inputId, value);
       return;
     }
@@ -146,8 +172,8 @@ public class MemoryIndexStorage<Key, Value> implements IndexStorage<Key, Value> 
   }
 
   @Override
-  public void removeAllValues(Key key, int inputId) throws StorageException {
-    if (myBufferingEnabled.get()) {
+  public void removeAllValues(@NotNull Key key, int inputId) throws StorageException {
+    if (myBufferingEnabled) {
       getMemValueContainer(key).removeAssociatedValue(inputId);
       return;
     }
@@ -162,7 +188,7 @@ public class MemoryIndexStorage<Key, Value> implements IndexStorage<Key, Value> 
   private UpdatableValueContainer<Value> getMemValueContainer(final Key key) {
     ChangeTrackingValueContainer<Value> valueContainer = myMap.get(key);
     if (valueContainer == null) {
-      valueContainer = new ChangeTrackingValueContainer<Value>(new ChangeTrackingValueContainer.Initializer<Value>() {
+      valueContainer = new ChangeTrackingValueContainer<>(new ChangeTrackingValueContainer.Initializer<Value>() {
         @Override
         public Object getLock() {
           return this;

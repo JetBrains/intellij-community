@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,84 +15,43 @@
  */
 package com.intellij.psi.search.searches;
 
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.extensions.ExtensionPointName;
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.ProgressIndicatorProvider;
-import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.Ref;
-import com.intellij.psi.*;
-import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.search.PsiSearchScopeUtil;
+import com.intellij.openapi.util.Conditions;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.SmartPointerManager;
 import com.intellij.psi.search.SearchScope;
-import com.intellij.reference.SoftReference;
-import com.intellij.util.Processor;
-import com.intellij.util.Query;
-import com.intellij.util.QueryExecutor;
-import com.intellij.util.containers.Stack;
-import gnu.trove.THashSet;
+import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.util.*;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-
-import java.lang.ref.Reference;
-import java.util.Set;
 
 /**
  * @author max
  */
 public class ClassInheritorsSearch extends ExtensibleQueryFactory<PsiClass, ClassInheritorsSearch.SearchParameters> {
-  public static ExtensionPointName<QueryExecutor> EP_NAME = ExtensionPointName.create("com.intellij.classInheritorsSearch");
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.search.searches.ClassInheritorsSearch");
-
+  public static final ExtensionPointName<QueryExecutor> EP_NAME = ExtensionPointName.create("com.intellij.classInheritorsSearch");
   public static final ClassInheritorsSearch INSTANCE = new ClassInheritorsSearch();
 
-  static {
-    INSTANCE.registerExecutor(new QueryExecutor<PsiClass, SearchParameters>() {
-      @Override
-      public boolean execute(@NotNull final SearchParameters parameters, @NotNull final Processor<PsiClass> consumer) {
-        final PsiClass baseClass = parameters.getClassToProcess();
-        final SearchScope searchScope = parameters.getScope();
-
-        LOG.assertTrue(searchScope != null);
-
-        ProgressIndicator progress = ProgressIndicatorProvider.getGlobalProgressIndicator();
-        if (progress != null) {
-          progress.pushState();
-          String className = ApplicationManager.getApplication().runReadAction(new Computable<String>() {
-            @Override
-            public String compute() {
-              return baseClass.getName();
-            }
-          });
-          progress.setText(className != null ?
-                           PsiBundle.message("psi.search.inheritors.of.class.progress", className) :
-                           PsiBundle.message("psi.search.inheritors.progress"));
-        }
-
-        boolean result = processInheritors(consumer, baseClass, searchScope, parameters);
-
-        if (progress != null) {
-          progress.popState();
-        }
-
-        return result;
-      }
-    });
-  }
-
-  public static class SearchParameters {
+  public static class SearchParameters implements QueryParameters {
+    @NotNull
     private final PsiClass myClass;
+    @NotNull
     private final SearchScope myScope;
     private final boolean myCheckDeep;
     private final boolean myCheckInheritance;
     private final boolean myIncludeAnonymous;
+    @NotNull
     private final Condition<String> myNameCondition;
+    @NotNull
+    private final Project myProject;
 
     public SearchParameters(@NotNull final PsiClass aClass, @NotNull SearchScope scope, final boolean checkDeep, final boolean checkInheritance, boolean includeAnonymous) {
-      this(aClass, scope, checkDeep, checkInheritance, includeAnonymous, Condition.TRUE);
+      this(aClass, scope, checkDeep, checkInheritance, includeAnonymous, Conditions.alwaysTrue());
     }
 
     public SearchParameters(@NotNull final PsiClass aClass, @NotNull SearchScope scope, final boolean checkDeep, final boolean checkInheritance,
@@ -101,8 +60,10 @@ public class ClassInheritorsSearch extends ExtensibleQueryFactory<PsiClass, Clas
       myScope = scope;
       myCheckDeep = checkDeep;
       myCheckInheritance = checkInheritance;
+      assert checkInheritance;
       myIncludeAnonymous = includeAnonymous;
       myNameCondition = nameCondition;
+      myProject = PsiUtilCore.getProjectInReadAction(myClass);
     }
 
     @NotNull
@@ -110,7 +71,19 @@ public class ClassInheritorsSearch extends ExtensibleQueryFactory<PsiClass, Clas
       return myClass;
     }
 
-    @NotNull public Condition<String> getNameCondition() {
+    @NotNull
+    @Override
+    public Project getProject() {
+      return myProject;
+    }
+
+    @Override
+    public boolean isQueryValid() {
+      return myClass.isValid();
+    }
+
+    @NotNull
+    public Condition<String> getNameCondition() {
       return myNameCondition;
     }
 
@@ -118,6 +91,7 @@ public class ClassInheritorsSearch extends ExtensibleQueryFactory<PsiClass, Clas
       return myCheckDeep;
     }
 
+    @NotNull
     public SearchScope getScope() {
       return myScope;
     }
@@ -129,154 +103,92 @@ public class ClassInheritorsSearch extends ExtensibleQueryFactory<PsiClass, Clas
     public boolean isIncludeAnonymous() {
       return myIncludeAnonymous;
     }
+
+    @Override
+    public String toString() {
+      return "'"+myClass.getQualifiedName()+
+             "' scope="+myScope+
+             (myCheckDeep ? " (deep)" : "") +
+             (myCheckInheritance ? " (check inheritance)":"") +
+             (myIncludeAnonymous ? " (anonymous)":"")+
+             (myNameCondition == Conditions.<String>alwaysTrue() ? "" : " condition: "+myNameCondition);
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+
+      SearchParameters that = (SearchParameters)o;
+
+      if (myCheckDeep != that.myCheckDeep) return false;
+      if (myCheckInheritance != that.myCheckInheritance) return false;
+      if (myIncludeAnonymous != that.myIncludeAnonymous) return false;
+      if (!myClass.equals(that.myClass)) return false;
+      if (!myScope.equals(that.myScope)) return false;
+      return myNameCondition.equals(that.myNameCondition);
+    }
+
+    @Override
+    public int hashCode() {
+      int result = myClass.hashCode();
+      result = 31 * result + myScope.hashCode();
+      result = 31 * result + (myCheckDeep ? 1 : 0);
+      result = 31 * result + (myCheckInheritance ? 1 : 0);
+      result = 31 * result + (myIncludeAnonymous ? 1 : 0);
+      result = 31 * result + myNameCondition.hashCode();
+      return result;
+    }
   }
 
   private ClassInheritorsSearch() {}
 
+  @NotNull
   public static Query<PsiClass> search(@NotNull final PsiClass aClass, @NotNull SearchScope scope, final boolean checkDeep, final boolean checkInheritance, boolean includeAnonymous) {
     return search(new SearchParameters(aClass, scope, checkDeep, checkInheritance, includeAnonymous));
   }
 
+  @NotNull
   public static Query<PsiClass> search(@NotNull SearchParameters parameters) {
-    return INSTANCE.createQuery(parameters);
+    if (!parameters.isCheckDeep()) {
+      Query<PsiClass> directQuery = DirectClassInheritorsSearch.search(parameters.getClassToProcess(), parameters.getScope(), parameters.isIncludeAnonymous());
+      if (parameters.getNameCondition() != Conditions.<String>alwaysTrue()) {
+        directQuery = new FilteredQuery<>(directQuery, psiClass -> parameters.getNameCondition()
+          .value(ReadAction.compute(psiClass::getName)));
+      }
+      return AbstractQuery.wrapInReadAction(directQuery);
+    }
+    return INSTANCE.createUniqueResultsQuery(parameters, ContainerUtil.canonicalStrategy(),
+                                             psiClass -> ReadAction.compute(() -> SmartPointerManager.getInstance(psiClass.getProject()).createSmartPsiElementPointer(psiClass)));
   }
 
+  /**
+   * @deprecated use {@link #search(PsiClass, SearchScope, boolean)} instead
+   */
+  @NotNull
+  @Deprecated //todo to be removed in IDEA 17
   public static Query<PsiClass> search(@NotNull final PsiClass aClass, @NotNull SearchScope scope, final boolean checkDeep, final boolean checkInheritance) {
     return search(aClass, scope, checkDeep, checkInheritance, true);
   }
 
+  @NotNull
   public static Query<PsiClass> search(@NotNull final PsiClass aClass, @NotNull SearchScope scope, final boolean checkDeep) {
-    return search(aClass, scope, checkDeep, true);
+    return search(aClass, scope, checkDeep, true, true);
   }
 
+  @NotNull
   public static Query<PsiClass> search(@NotNull final PsiClass aClass, final boolean checkDeep) {
-    return search(aClass, aClass.getUseScope(), checkDeep);
+    return search(aClass, ReadAction.compute(() -> {
+      if (!aClass.isValid()) {
+        throw new ProcessCanceledException();
+      }
+      PsiFile file = aClass.getContainingFile();
+      return (file != null ? file : aClass).getUseScope();
+    }), checkDeep);
   }
 
+  @NotNull
   public static Query<PsiClass> search(@NotNull PsiClass aClass) {
     return search(aClass, true);
-  }
-
-  private static boolean processInheritors(@NotNull final Processor<PsiClass> consumer,
-                                           @NotNull final PsiClass baseClass,
-                                           @NotNull final SearchScope searchScope,
-                                           @NotNull final SearchParameters parameters) {
-    if (baseClass instanceof PsiAnonymousClass || isFinal(baseClass)) return true;
-
-    final String qname = ApplicationManager.getApplication().runReadAction(new Computable<String>() {
-      @Override
-      public String compute() {
-        return baseClass.getQualifiedName();
-      }
-    });
-    if (CommonClassNames.JAVA_LANG_OBJECT.equals(qname)) {
-      return AllClassesSearch.search(searchScope, baseClass.getProject(), parameters.getNameCondition()).forEach(new Processor<PsiClass>() {
-        @Override
-        public boolean process(final PsiClass aClass) {
-          ProgressIndicatorProvider.checkCanceled();
-          final String qname1 = ApplicationManager.getApplication().runReadAction(new Computable<String>() {
-            @Override
-            @Nullable
-            public String compute() {
-              return aClass.getQualifiedName();
-            }
-          });
-          return CommonClassNames.JAVA_LANG_OBJECT.equals(qname1) || consumer.process(aClass);
-        }
-      });
-    }
-
-    final Ref<PsiClass> currentBase = Ref.create(null);
-    final Stack<Pair<Reference<PsiClass>, String>> stack = new Stack<Pair<Reference<PsiClass>, String>>();
-    // there are two sets for memory optimization: it's cheaper to hold FQN than PsiClass
-    final Set<String> processedFqns = new THashSet<String>(); // FQN of processed classes if the class has one
-    final Set<PsiClass> processed = new THashSet<PsiClass>();   // processed classes without FQN (e.g. anonymous)
-
-    final Processor<PsiClass> processor = new Processor<PsiClass>() {
-      @Override
-      public boolean process(final PsiClass candidate) {
-        ProgressIndicatorProvider.checkCanceled();
-
-        final Ref<Boolean> result = new Ref<Boolean>();
-        final String[] fqn = new String[1];
-        ApplicationManager.getApplication().runReadAction(new Runnable() {
-          @Override
-          public void run() {
-            fqn[0] = candidate.getQualifiedName();
-            if (parameters.isCheckInheritance() || parameters.isCheckDeep() && !(candidate instanceof PsiAnonymousClass)) {
-              if (!candidate.isInheritor(currentBase.get(), false)) {
-                result.set(true);
-                return;
-              }
-            }
-
-            if (PsiSearchScopeUtil.isInScope(searchScope, candidate)) {
-              if (candidate instanceof PsiAnonymousClass) {
-                result.set(consumer.process(candidate));
-              }
-              else {
-                final String name = candidate.getName();
-                if (name != null && parameters.getNameCondition().value(name) && !consumer.process(candidate)) result.set(false);
-              }
-            }
-          }
-        });
-        if (!result.isNull()) return result.get().booleanValue();
-
-        if (parameters.isCheckDeep() && !(candidate instanceof PsiAnonymousClass) && !isFinal(candidate)) {
-          Reference<PsiClass> ref = fqn[0] == null ? createHardReference(candidate) : new SoftReference<PsiClass>(candidate);
-          stack.push(Pair.create(ref, fqn[0]));
-        }
-
-        return true;
-      }
-    };
-    stack.push(Pair.create(createHardReference(baseClass), qname));
-    final GlobalSearchScope projectScope = GlobalSearchScope.allScope(baseClass.getProject());
-    final JavaPsiFacade facade = JavaPsiFacade.getInstance(projectScope.getProject());
-    while (!stack.isEmpty()) {
-      ProgressIndicatorProvider.checkCanceled();
-
-      Pair<Reference<PsiClass>, String> pair = stack.pop();
-      PsiClass psiClass = pair.getFirst().get();
-      final String fqn = pair.getSecond();
-      if (psiClass == null) {
-        psiClass = ApplicationManager.getApplication().runReadAction(new Computable<PsiClass>() {
-          @Override
-          public PsiClass compute() {
-            return facade.findClass(fqn, projectScope);
-          }
-        });
-        if (psiClass == null) continue;
-      }
-      if (fqn == null) {
-        if (!processed.add(psiClass)) continue;
-      }
-      else {
-        if (!processedFqns.add(fqn)) continue;
-      }
-
-      currentBase.set(psiClass);
-      if (!DirectClassInheritorsSearch.search(psiClass, projectScope, parameters.isIncludeAnonymous(), false).forEach(processor)) return false;
-    }
-    return true;
-  }
-
-  private static Reference<PsiClass> createHardReference(final PsiClass candidate) {
-    return new SoftReference<PsiClass>(candidate){
-      @Override
-      public PsiClass get() {
-        return candidate;
-      }
-    };
-  }
-
-  private static boolean isFinal(@NotNull final PsiClass baseClass) {
-    return ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
-      @Override
-      public Boolean compute() {
-        return Boolean.valueOf(baseClass.hasModifierProperty(PsiModifier.FINAL));
-      }
-    }).booleanValue();
   }
 }

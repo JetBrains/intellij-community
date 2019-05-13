@@ -22,7 +22,7 @@ import com.intellij.psi.NavigatablePsiElement;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.RefactoringBundle;
-import com.intellij.util.containers.HashMap;
+import java.util.HashMap;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -37,12 +37,13 @@ public class UsedByMemberDependencyGraph<T extends NavigatablePsiElement, C exte
   private final MemberDependenciesStorage<T, C> myMemberDependenciesStorage;
 
   public UsedByMemberDependencyGraph(C aClass) {
-    myMemberDependenciesStorage = new MemberDependenciesStorage<T, C>(aClass, null);
-    mySelectedNormal = new HashSet<T>();
-    mySelectedAbstract = new HashSet<T>();
-    myMembers = new HashSet<T>();
+    myMemberDependenciesStorage = new MemberDependenciesStorage<>(aClass, null);
+    mySelectedNormal = new HashSet<>();
+    mySelectedAbstract = new HashSet<>();
+    myMembers = new HashSet<>();
   }
 
+  @Override
   public void memberChanged(M memberInfo) {
     final ClassMembersRefactoringSupport support =
       LanguageDependentMembersRefactoringSupport.INSTANCE.forLanguage(memberInfo.getMember().getLanguage());
@@ -68,10 +69,11 @@ public class UsedByMemberDependencyGraph<T extends NavigatablePsiElement, C exte
     }
   }
 
+  @Override
   public Set<? extends T> getDependent() {
     if(myDependencies == null) {
-      myDependencies = new HashSet<T>();
-      myDependenciesToDependent = new HashMap<T, HashSet<T>>();
+      myDependencies = new HashSet<>();
+      myDependenciesToDependent = new HashMap<>();
       for (T member : myMembers) {
         Set<T> dependent = myMemberDependenciesStorage.getMemberDependencies(member);
         if (dependent != null) {
@@ -80,7 +82,7 @@ public class UsedByMemberDependencyGraph<T extends NavigatablePsiElement, C exte
               myDependencies.add(member);
               HashSet<T> deps = myDependenciesToDependent.get(member);
               if (deps == null) {
-                deps = new HashSet<T>();
+                deps = new HashSet<>();
                 myDependenciesToDependent.put(member, deps);
               }
               deps.add(aDependent);
@@ -93,6 +95,7 @@ public class UsedByMemberDependencyGraph<T extends NavigatablePsiElement, C exte
     return myDependencies;
   }
 
+  @Override
   public Set<? extends T> getDependenciesOf(T member) {
     final Set<? extends T> dependent = getDependent();
     if(!dependent.contains(member)) return null;
@@ -103,7 +106,7 @@ public class UsedByMemberDependencyGraph<T extends NavigatablePsiElement, C exte
     final Set<? extends T> dependencies = getDependenciesOf(element);
     if (dependencies == null || dependencies.size() == 0) return null;
 
-    ArrayList<String> strings = new ArrayList<String>();
+    ArrayList<String> strings = new ArrayList<>();
     for (T dep : dependencies) {
       if (dep instanceof PsiNamedElement) {
         strings.add(dep.getName());

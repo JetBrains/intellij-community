@@ -1,26 +1,12 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.history.integration;
-
 
 import com.intellij.history.LocalHistory;
 import com.intellij.history.core.revisions.Revision;
 import com.intellij.history.utils.RunnableAdapter;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
+import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -33,28 +19,29 @@ import java.util.jar.JarEntry;
 import java.util.jar.JarOutputStream;
 
 public class BasicsTest extends IntegrationTestCase {
-  public void testProcessingCommands() throws Exception {
+  public void testProcessingCommands() {
     final VirtualFile[] f = new VirtualFile[1];
 
-    CommandProcessor.getInstance().executeCommand(myProject, new RunnableAdapter() {
+    ApplicationManager.getApplication().runWriteAction(() -> CommandProcessor.getInstance().executeCommand(myProject, new RunnableAdapter() {
       @Override
       public void doRun() throws IOException {
-        f[0] = myRoot.createChildData(null, "f1.txt");
+        f[0] = createChildData(myRoot, "f1.txt");
         f[0].setBinaryContent(new byte[]{1});
         f[0].setBinaryContent(new byte[]{2});
       }
-    }, "name", null);
+    }, "name", null));
+
 
     assertEquals(2, getRevisionsFor(f[0]).size());
   }
 
-  public void testPuttingUserLabel() throws Exception {
-    VirtualFile f = myRoot.createChildData(null, "f.txt");
+  public void testPuttingUserLabel() {
+    VirtualFile f = createChildData(myRoot, "f.txt");
 
     LocalHistory.getInstance().putUserLabel(myProject, "global");
 
     assertEquals(3, getRevisionsFor(f).size());
-    assertEquals(3, getRevisionsFor(myRoot).size());
+    assertEquals(4, getRevisionsFor(myRoot).size());
 
     LocalHistory.getInstance().putUserLabel(myProject, "file");
 
@@ -66,11 +53,11 @@ public class BasicsTest extends IntegrationTestCase {
     assertEquals(-1, rr.get(2).getLabelColor());
   }
 
-  public void testPuttingSystemLabel() throws IOException {
-    VirtualFile f = myRoot.createChildData(null, "file.txt");
+  public void testPuttingSystemLabel() {
+    VirtualFile f = createChildData(myRoot, "file.txt");
 
     assertEquals(2, getRevisionsFor(f).size());
-    assertEquals(2, getRevisionsFor(myRoot).size());
+    assertEquals(3, getRevisionsFor(myRoot).size());
 
     LocalHistory.getInstance().putSystemLabel(myProject, "label");
 
@@ -79,12 +66,12 @@ public class BasicsTest extends IntegrationTestCase {
     assertEquals("label", rr.get(1).getLabel());
 
     rr = getRevisionsFor(myRoot);
-    assertEquals(3, rr.size());
+    assertEquals(4, rr.size());
     assertEquals("label", rr.get(1).getLabel());
   }
 
-  public void testPuttingLabelWithUnsavedDocuments() throws Exception {
-    VirtualFile f = myRoot.createChildData(null, "f.txt");
+  public void testPuttingLabelWithUnsavedDocuments() {
+    VirtualFile f = createChildData(myRoot, "f.txt");
     setContent(f, "1");
 
     setDocumentTextFor(f, "2");
@@ -108,8 +95,8 @@ public class BasicsTest extends IntegrationTestCase {
     assertEquals("", new String(rr.get(7).findEntry().getContent().getBytes()));
   }
 
-  public void testDoNotRegisterSameUnsavedDocumentContentTwice() throws Exception {
-    VirtualFile f = myRoot.createChildData(null, "f.txt");
+  public void testDoNotRegisterSameUnsavedDocumentContentTwice() {
+    VirtualFile f = createChildData(myRoot, "f.txt");
     setContent(f, "1");
 
     setDocumentTextFor(f, "2");
@@ -125,9 +112,9 @@ public class BasicsTest extends IntegrationTestCase {
     assertEquals("", new String(rr.get(4).findEntry().getContent().getBytes()));
   }
 
-  public void testIsUnderControl() throws Exception {
-    VirtualFile f1 = myRoot.createChildData(null, "file.txt");
-    VirtualFile f2 = myRoot.createChildData(null, "file.hprof");
+  public void testIsUnderControl() {
+    VirtualFile f1 = createChildData(myRoot, "file.txt");
+    VirtualFile f2 = createChildData(myRoot, "file.hprof");
 
     assertTrue(LocalHistory.getInstance().isUnderControl(f1));
     assertFalse(LocalHistory.getInstance().isUnderControl(f2));
@@ -135,12 +122,18 @@ public class BasicsTest extends IntegrationTestCase {
 
   public void testDoNotRegisterChangesNotInLocalFS() throws Exception {
     File f = new File(myRoot.getPath(), "f.jar");
-    JarOutputStream jar = new JarOutputStream(new FileOutputStream(f));
+    ApplicationManager.getApplication().runWriteAction(new ThrowableComputable<Object, IOException>() {
+      @Override
+      public Object compute() throws IOException {
+        try (JarOutputStream jar = new JarOutputStream(new FileOutputStream(f))) {
 
-    jar.putNextEntry(new JarEntry("file.txt"));
-    jar.write(1);
-    jar.closeEntry();
-    jar.close();
+          jar.putNextEntry(new JarEntry("file.txt"));
+          jar.write(1);
+          jar.closeEntry();
+        }
+        return null;
+      }
+    });
 
     VirtualFile vfile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(f);
     assertNotNull(vfile);
@@ -148,24 +141,31 @@ public class BasicsTest extends IntegrationTestCase {
     VirtualFile jarRoot = JarFileSystem.getInstance().getJarRootForLocalFile(vfile);
     assertEquals(1, jarRoot.findChild("file.txt").contentsToByteArray()[0]);
 
-    assertEquals(2, getRevisionsFor(myRoot).size());
+    assertEquals(3, getRevisionsFor(myRoot).size());
 
-    jar = new JarOutputStream(new FileOutputStream(f));
+    ApplicationManager.getApplication().runWriteAction(new ThrowableComputable<Object, IOException>() {
+      @Override
+      public Object compute() throws IOException {
+        try (JarOutputStream jar = new JarOutputStream(new FileOutputStream(f))) {
 
-    JarEntry e = new JarEntry("file.txt");
-    e.setTime(f.lastModified() + 10000);
-    jar.putNextEntry(e);
-    jar.write(2);
-    jar.closeEntry();
-    jar.close();
-    f.setLastModified(f.lastModified() + 10000);
+          JarEntry e = new JarEntry("file.txt");
+          e.setTime(f.lastModified() + 10000);
+          jar.putNextEntry(e);
+          jar.write(2);
+          jar.closeEntry();
+        }
+        f.setLastModified(f.lastModified() + 10000);
+        return null;
+      }
+    });
+
 
     LocalFileSystem.getInstance().refreshWithoutFileWatcher(false);
     JarFileSystem.getInstance().refreshWithoutFileWatcher(false);
     jarRoot = JarFileSystem.getInstance().getJarRootForLocalFile(vfile);
     assertEquals(2, jarRoot.findChild("file.txt").contentsToByteArray()[0]);
 
-    assertEquals(2, getRevisionsFor(myRoot).size());
-    assertEquals(1, getRevisionsFor(jarRoot).size());
+    assertEquals(3, getRevisionsFor(myRoot).size());
+    assertEquals(2, getRevisionsFor(jarRoot).size());
   }
 }

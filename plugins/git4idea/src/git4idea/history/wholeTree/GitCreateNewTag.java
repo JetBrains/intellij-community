@@ -15,7 +15,6 @@
  */
 package git4idea.history.wholeTree;
 
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.InputValidator;
 import com.intellij.openapi.ui.Messages;
@@ -25,12 +24,6 @@ import git4idea.repo.GitRepository;
 
 import java.util.Collections;
 
-/**
- * Created by IntelliJ IDEA.
- * User: Irina.Chernushina
- * Date: 10/26/11
- * Time: 3:07 PM
- */
 public class GitCreateNewTag {
   private final Project myProject;
   private final GitRepository myRepository;
@@ -58,7 +51,7 @@ public class GitCreateNewTag {
       }
     });
     if (name != null) {
-      GitBrancher brancher = ServiceManager.getService(myProject, GitBrancher.class);
+      GitBrancher brancher = GitBrancher.getInstance(myProject);
       brancher.createNewTag(name, myReference, Collections.singletonList(myRepository), myCallInAwtAfterExecution);
     }
   }

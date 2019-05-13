@@ -12,24 +12,31 @@
 // limitations under the License.
 package org.zmlx.hg4idea;
 
-import com.google.common.base.Objects;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
+import com.intellij.vcs.log.util.VcsUserUtil;
+import org.jetbrains.annotations.NotNull;
+import org.zmlx.hg4idea.log.HgBaseLogParser;
+import org.zmlx.hg4idea.util.HgUtil;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 
 public class HgRevisionNumber implements VcsRevisionNumber {
 
-  private final String revision;
-  private final String changeset;
-  private final String commitMessage;
-  private final String author;
-  private final List<HgRevisionNumber> parents;
+  private static final int SHORT_HASH_SIZE = 12;
+  @NotNull private final String revision;
+  @NotNull private final String changeset;
+  @NotNull private final String commitMessage;
+  @NotNull private final String author;
+  @NotNull private final String email;
+  @NotNull private final List<? extends HgRevisionNumber> parents;
+  @NotNull private final String mySubject;
 
   private final boolean isWorkingVersion;
 
   // this is needed in place of VcsRevisionNumber.NULL, because sometimes we need to return HgRevisionNumber.
-  public static final HgRevisionNumber NULL_REVISION_NUMBER = new HgRevisionNumber("", "", "", "", Collections.<HgRevisionNumber>emptyList()) {
+  public static final HgRevisionNumber NULL_REVISION_NUMBER = new HgRevisionNumber("", "", "", "", Collections.emptyList()) {
     @Override
     public int compareTo(VcsRevisionNumber o) {
       return NULL.compareTo(o);
@@ -41,35 +48,53 @@ public class HgRevisionNumber implements VcsRevisionNumber {
     }
   };
 
-  public static HgRevisionNumber getInstance(String revision, String changeset, String author, String commitMessage) {
-    return new HgRevisionNumber(revision, changeset, author, commitMessage, Collections.<HgRevisionNumber>emptyList());
+  public static HgRevisionNumber getInstance(@NotNull String revision,@NotNull  String changeset,@NotNull  String author,@NotNull  String commitMessage) {
+    return new HgRevisionNumber(revision, changeset, author, commitMessage, Collections.emptyList());
   }
 
-  public static HgRevisionNumber getInstance(String revision, String changeset) {
-    return new HgRevisionNumber(revision, changeset, "", "", Collections.<HgRevisionNumber>emptyList());
+  public static HgRevisionNumber getInstance(@NotNull String revision,@NotNull  String changeset) {
+    return new HgRevisionNumber(revision, changeset, "", "", Collections.emptyList());
   }
-  
-  public static HgRevisionNumber getInstance(String revision, String changeset, List<HgRevisionNumber> parents) {
+
+  public static HgRevisionNumber getInstance(@NotNull String revision,@NotNull  String changeset,@NotNull List<? extends HgRevisionNumber> parents) {
     return new HgRevisionNumber(revision, changeset, "", "", parents);
   }
 
-  public static HgRevisionNumber getLocalInstance(String revision) {
-    return new HgRevisionNumber(revision, "", "", "", Collections.<HgRevisionNumber>emptyList());
+  public static HgRevisionNumber getLocalInstance(@NotNull String revision) {
+    return new HgRevisionNumber(revision, "", "", "", Collections.emptyList());
   }
 
-  private HgRevisionNumber(String revision, String changeset, String author, String commitMessage, List<HgRevisionNumber> parents) {
+  public HgRevisionNumber(@NotNull String revision,
+                          @NotNull String changeset,
+                          @NotNull String authorInfo,
+                          @NotNull String commitMessage,
+                          @NotNull List<? extends HgRevisionNumber> parents) {
+    this(revision, changeset, HgUtil.parseUserNameAndEmail(authorInfo).getFirst(), HgUtil.parseUserNameAndEmail(authorInfo).getSecond(),
+         commitMessage, parents);
+  }
+
+  public HgRevisionNumber(@NotNull String revision,
+                          @NotNull String changeset,
+                          @NotNull String author,
+                          @NotNull String email,
+                          @NotNull String commitMessage,
+                          @NotNull List<? extends HgRevisionNumber> parents) {
     this.commitMessage = commitMessage;
     this.author = author;
+    this.email = email;
     this.parents = parents;
     this.revision = revision.trim();
     this.changeset = changeset.trim();
     isWorkingVersion = changeset.endsWith("+");
+    mySubject = HgBaseLogParser.extractSubject(commitMessage);
   }
 
+  @NotNull
   public String getChangeset() {
     return changeset;
   }
 
+  @NotNull
   public String getRevision() {
     return revision;
   }
@@ -78,26 +103,44 @@ public class HgRevisionNumber implements VcsRevisionNumber {
     return java.lang.Long.parseLong(revision);
   }
 
+  @NotNull
   public String getCommitMessage() {
     return commitMessage;
   }
 
-  public String getAuthor() {
+  @NotNull
+  public String getName() {
     return author;
+  }
+
+  @NotNull
+  public String getEmail() {
+    return email;
+  }
+
+  @NotNull
+  public String getAuthor() {
+    return VcsUserUtil.getUserName(author, email);
   }
 
   public boolean isWorkingVersion() {
     return isWorkingVersion;
   }
 
+  @Override
   public String asString() {
+    if (revision.isEmpty()) {
+      return changeset;
+    }
     return revision + ":" + changeset;
   }
 
-  public List<HgRevisionNumber> getParents() {
+  @NotNull
+  public List<? extends HgRevisionNumber> getParents() {
     return parents;
   }
 
+  @Override
   public int compareTo(VcsRevisionNumber o) {
     // boundary cases
     if (this == o) {
@@ -124,6 +167,10 @@ public class HgRevisionNumber implements VcsRevisionNumber {
     if (revCompare != 0) {
       return revCompare;
     }
+    else if (getShortHash(changeset).equals(getShortHash(other.changeset))) {
+      //if local revision numbers are equal then it's enough to compare 12 symbols hash; collisions couldn't occur
+      return 0;
+    }
     // If they are equal, the working revision is greater.
     if (isWorkingVersion) {
       return other.isWorkingVersion ? 0 : 1;
@@ -132,8 +179,12 @@ public class HgRevisionNumber implements VcsRevisionNumber {
     }
   }
 
+  private static String getShortHash(@NotNull String changeset) {
+    return changeset.substring(0, SHORT_HASH_SIZE);
+  }
+
   /**
-   * Returns the numeric part of the revision, i. e. the revision without trailing '+' if one exists. 
+   * Returns the numeric part of the revision, i. e. the revision without trailing '+' if one exists.
    */
   public String getRevisionNumber() {
     if (isWorkingVersion) {
@@ -144,7 +195,8 @@ public class HgRevisionNumber implements VcsRevisionNumber {
 
   @Override
   public int hashCode() {
-    return Objects.hashCode(revision, changeset);
+    // if short revision number is not empty, then short changeset is enough, a.e. annotations
+    return Objects.hash(revision, revision.isEmpty() ? changeset : getShortHash(changeset));
   }
 
   @Override
@@ -162,5 +214,10 @@ public class HgRevisionNumber implements VcsRevisionNumber {
   @Override
   public String toString() {
     return asString();
+  }
+
+  @NotNull
+  public String getSubject() {
+    return mySubject;
   }
 }

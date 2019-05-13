@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,35 +15,17 @@
  */
 package com.intellij.util.xml;
 
-import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.vfs.VirtualFile;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.psi.search.DelegatingGlobalSearchScope;
 
-public class ModuleContentRootSearchScope extends GlobalSearchScope {
-  private final ModuleRootManager myRootManager;
-  private final Module myModule;
+/**
+ * @deprecated use {@link Module#getModuleContentScope()}
+ */
+@Deprecated
+public class ModuleContentRootSearchScope extends DelegatingGlobalSearchScope {
 
   public ModuleContentRootSearchScope(final Module module) {
-    super(module.getProject());
-    myRootManager = ModuleRootManager.getInstance(module);
-    myModule = module;
+    super(module.getModuleContentScope());
   }
 
-  public boolean contains(final VirtualFile file) {
-    return myRootManager.getFileIndex().isInContent(file);
-  }
-
-  public int compare(final VirtualFile file1, final VirtualFile file2) {
-    return 0;
-  }
-
-  public boolean isSearchInModuleContent(@NotNull final Module aModule) {
-    return aModule == myModule;
-  }
-
-  public boolean isSearchInLibraries() {
-    return false;
-  }
 }

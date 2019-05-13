@@ -1,27 +1,29 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
-import org.jetbrains.jps.Jps
-import org.jetbrains.jps.Module
-import org.jetbrains.jps.idea.IdeaProjectLoader
 
-includeTool << Jps
 
-binding.setVariable("p", {String key ->
-  return getProperty(key) as String
+import com.intellij.openapi.util.SystemInfo
+import com.intellij.openapi.util.io.FileUtil
+import org.jetbrains.intellij.build.impl.BuildUtils
+import org.jetbrains.jps.gant.JpsGantTool
+import org.jetbrains.jps.gant.TeamCityBuildInfoPrinter
+import org.jetbrains.jps.model.java.JdkVersionDetector
+import org.jetbrains.jps.model.java.JpsJavaExtensionService
+import org.jetbrains.jps.model.java.JpsJavaSdkType
+import org.jetbrains.jps.model.library.JpsOrderRootType
+
+includeTool << JpsGantTool
+
+binding.setVariable("p", {String key, String defaultValue = null ->
+  try {
+    return getProperty(key) as String
+  }
+  catch (MissingPropertyException e) {
+    if (defaultValue != null) {
+      return defaultValue
+    }
+    throw e
+  }
 })
 
 binding.setVariable("guessJdk", {
@@ -40,32 +42,6 @@ binding.setVariable("includeFile", {String filePath ->
   s
 })
 
-binding.setVariable("isMac", {
-  return System.getProperty("os.name").toLowerCase().startsWith("mac")
-})
-
-binding.setVariable("isWin", {
-  return System.getProperty("os.name").toLowerCase().startsWith("windows")
-})
-
-binding.setVariable("isEap", {
-  return "true" == p("component.version.eap")
-})
-
-binding.setVariable("mem32", "-Xms128m -Xmx512m -XX:MaxPermSize=250m -XX:ReservedCodeCacheSize=64m -XX:+UseCodeCacheFlushing")
-binding.setVariable("mem64", "-Xms128m -Xmx800m -XX:MaxPermSize=350m -XX:ReservedCodeCacheSize=64m -XX:+UseCodeCacheFlushing")
-binding.setVariable("common_vmoptions", "-ea -Dsun.io.useCanonCaches=false")
-
-binding.setVariable("vmOptions", { "$common_vmoptions ${isEap() ? '-XX:+HeapDumpOnOutOfMemoryError' : ''}".trim() })
-binding.setVariable("vmOptions32", { "$mem32 ${vmOptions()}".trim() })
-binding.setVariable("vmOptions64", { "$mem64 ${vmOptions()}".trim() })
-binding.setVariable("vmOptions32yjp", { String systemSelector ->
-  "${vmOptions32()} -agentlib:yjpagent=disablej2ee,disablealloc,onlylocal,sessionname=$systemSelector".trim()
-})
-binding.setVariable("vmOptions64yjp", { String systemSelector ->
-  "${vmOptions64()} -agentlib:yjpagent64=disablej2ee,disablealloc,onlylocal,sessionname=$systemSelector".trim()
-})
-
 binding.setVariable("isDefined", {String key ->
   try {
     this[key]
@@ -81,7 +57,7 @@ private String require(String key) {
     this[key]
   }
   catch (MissingPropertyException ignored) {
-    projectBuilder.error("Property $key is required")
+    projectBuilder.error("Property '$key' is required")
   }
 }
 
@@ -90,7 +66,7 @@ private String require(String key, String defaultValue) {
     this[key]
   }
   catch (MissingPropertyException ignored) {
-    projectBuilder.info("$key is not defined. Defaulting to $defaultValue")
+    projectBuilder.info("'$key' is not defined. Defaulting to '$defaultValue'")
     this[key] = defaultValue
   }
 }
@@ -105,619 +81,156 @@ binding.setVariable("requireProperty", {String key, String defaultValue = null -
 })
 
 binding.setVariable("guessHome", {
-  // Current file is supposed to be at build/scripts/release.gant path
-  new File(requireProperty("gant.file").substring("file:".length())).getParentFile().getParentFile().getParent()
+  // current file is supposed to be at build/scripts/*.gant path
+  String uri = requireProperty("gant.file")
+  new File(new URI(uri).getSchemeSpecificPart()).getParentFile().getParentFile().getParent()
 })
 
 binding.setVariable("loadProject", {
-  requireProperty("jdkHome", guessJdk())
-  def mac = isMac()
-  jdk("IDEA jdk", jdkHome) {
-    if (!mac) {
-      classpath "$jdkHome/lib/tools.jar"
-    }
+  defineJdk("IDEA jdk", setupJdkPath("jdkHome", "$home/build/jdk/1.6", "JDK_16_x64"))
+  defineJdk("1.8", setupJdkPath("jdk8Home", "$home/build/jdk/1.8", "JDK_18_x64"))
+
+  setupKotlin()
+  def bundledKotlinPath = "$home/build/dependencies/build/kotlin/Kotlin/kotlinc"
+  if (!new File(bundledKotlinPath, "lib/kotlin-stdlib.jar").exists()) {
+    bundledKotlinPath = "$home/community/build/dependencies/build/kotlin/Kotlin/kotlinc"
   }
-  IdeaProjectLoader.loadFromPath(project, "${home}")
+  if (!new File(bundledKotlinPath, "lib/kotlin-stdlib.jar").exists()) {
+    projectBuilder.error("Could not find Kotlin runtime at $bundledKotlinPath/lib/kotlin-stdlib.jar: run `./gradlew setupKotlinPlugin` in dependencies module to download Kotlin JARs")
+    return
+  }
+  if (!ensureKotlinCompilerAddedToClassPath()) {
+    return
+  }
+  projectBuilder.buildIncrementally = Boolean.parseBoolean(p("jps.build.incrementally", "false"))
+  def dataDirName = projectBuilder.buildIncrementally ? ".jps-incremental-build" : ".jps-build-data"
+  projectBuilder.dataStorageRoot = new File("$home/$dataDirName")
+  projectBuilder.setupAdditionalLogging(new File("${p("teamcity.build.tempDir", p("java.io.tmpdir"))}/system/build-log/build.log"),
+                                        p("jps.build.debug.logging.categories", ""))
+  loadProjectFromPath(home)
+
+  def compilerOptions = JpsJavaExtensionService.instance.getOrCreateCompilerConfiguration(project).currentCompilerOptions
+  compilerOptions.GENERATE_NO_WARNINGS = true
+  compilerOptions.DEPRECATION = false
+  compilerOptions.ADDITIONAL_OPTIONS_STRING = compilerOptions.ADDITIONAL_OPTIONS_STRING.replace("-Xlint:unchecked", "")
 })
 
-boolean hasSourceRoots(Module module) {
-  return !module.sourceRoots.isEmpty()
+binding.setVariable("removeJdkJarFiles", { Collection<String> classpath ->
+  def jdkHomePaths = project.model.global.libraryCollection.getLibraries(JpsJavaSdkType.INSTANCE).collect {
+    def homeDir = new File(it.properties.homePath)
+    return SystemInfo.isMac && homeDir.name == "Home" ? homeDir.parent : homeDir.absolutePath
+  }
+  return classpath.findAll { jarPath -> jdkHomePaths.every { !FileUtil.isAncestor(it, jarPath, false) } }
+})
+
+private void setupKotlin() {
+  def workingDirectory = getDependenciesProjectDir()
+  def gradleScript = System.getProperty('os.name').toLowerCase().contains('windows') ? "gradlew.bat" : "gradlew"
+  def process = new ProcessBuilder("${workingDirectory.absolutePath}/$gradleScript", 'setupKotlinPlugin', '--stacktrace', '--info')
+    .directory(workingDirectory)
+    .start()
+  process.consumeProcessOutputStream((OutputStream)System.out)
+  process.consumeProcessErrorStream((OutputStream)System.err)
+  process.waitFor()
+}
+
+private boolean ensureKotlinCompilerAddedToClassPath() {
+  if (getClass().getResource("/org/jetbrains/kotlin/jps/build/KotlinBuilder.class") != null) {
+    return true
+  }
+
+  def kotlinHomePath = "$home/build/dependencies/build/kotlin/Kotlin"
+  if (!new File(kotlinHomePath).exists()) {
+    kotlinHomePath = "$home/community/build/dependencies/build/kotlin/Kotlin"
+  }
+  def kotlinPluginLibPath = "$kotlinHomePath/lib"
+  def kotlincLibPath = "$kotlinHomePath/kotlinc/lib"
+  if (new File(kotlinPluginLibPath).exists() && new File(kotlincLibPath).exists()) {
+    ["jps/kotlin-jps-plugin.jar", "kotlin-plugin.jar", "kotlin-reflect.jar"].each {
+      BuildUtils.addToJpsClassPath("$kotlinPluginLibPath/$it", ant)
+    }
+    ["kotlin-stdlib.jar"].each {
+      BuildUtils.addToJpsClassPath("$kotlincLibPath/$it", ant)
+    }
+  }
+  else {
+    projectBuilder.error(
+      "Could not find Kotlin JARs at $kotlinPluginLibPath and $kotlincLibPath: run `./gradlew setupKotlinPlugin` in dependencies module to download Kotlin JARs")
+  }
+  return true
+}
+
+private File getDependenciesProjectDir() {
+  return new File(home, new File(home).name == "community" ? "build/dependencies" : "community/build/dependencies")
+}
+
+private String setupJdkPath(String propertyName, String defaultDir, String envVarName) {
+  try {
+    this[propertyName]
+  }
+  catch (MissingPropertyException ignored) {
+    def jdk = SystemInfo.isMac ? "$defaultDir/Contents/Home" : defaultDir
+    if (new File(jdk).exists()) {
+      projectBuilder.info("$propertyName set to $jdk")
+    }
+    else {
+      jdk = System.getenv(envVarName)
+      if (jdk != null) {
+        projectBuilder.info("'$defaultDir' doesn't exist, $propertyName set to '$envVarName' environment variable: $jdk")
+      }
+      else {
+        jdk = guessJdk()
+        def jdkInfo = JdkVersionDetector.instance.detectJdkVersionInfo(jdk)
+        if (propertyName.contains("8") && jdkInfo.version.contains("1.8.")) {
+          projectBuilder.error("JDK 1.8 is required to compile the project, but '$propertyName' property and '$envVarName' environment variable" +
+                               " aren't defined and default JDK $jdk ($jdkInfo) cannot be used as JDK 1.8")
+          return null
+        }
+        projectBuilder.info("'$envVarName' isn't defined and '$defaultDir' doesn't exist, $propertyName set to $jdk")
+      }
+    }
+    this[propertyName] = jdk
+    return jdk
+  }
+}
+
+private void defineJdk(String jdkName, jdkHomePath) {
+  jdk(jdkName, jdkHomePath) {
+    def toolsJar = "$jdkHomePath/lib/tools.jar"
+    if (new File(toolsJar).exists()) {
+      classpath toolsJar
+    }
+  }
+
+  if (SystemInfo.isMac) {
+    //temporary workaround for Mac: resolve symlinks manually. Previously ZipFileCache used FileUtil.toCanonicalPath method which doesn't resolve symlinks.
+    def jdk = global.libraryCollection.findLibrary(jdkName, JpsJavaSdkType.INSTANCE)
+    def jdkClasspath = jdk.getFiles(JpsOrderRootType.COMPILED)
+    def urls = jdk.getRootUrls(JpsOrderRootType.COMPILED)
+    urls.each { jdk.removeUrl(it, JpsOrderRootType.COMPILED) }
+    jdkClasspath.each {
+      try {
+        jdk.addRoot(it.getCanonicalFile(), JpsOrderRootType.COMPILED)
+      }
+      catch (IOException ignored) {
+      }
+    }
+    projectBuilder.info("JDK '$jdkName' classpath: ${jdk.getFiles(JpsOrderRootType.COMPILED)}")
+  }
 }
 
 binding.setVariable("findModule", {String name ->
-  project.modules[name]
+  project.modules.find { it.name == name }
 })
 
 binding.setVariable("allModules", {
-  return project.modules.values()
-})
-
-binding.setVariable("printUnusedModules", {Set<String> usedModules ->
-  allModules().each {Module m ->
-    if (!usedModules.contains(m.name) && hasSourceRoots(m)) {
-      projectBuilder.warning("Module $m.name is not used in project layout")
-    }
-  }
+  return project.modules
 })
 
 requireProperty("home", guessHome())
 
-String readSnapshotBuild() {
-  def file = new File("$home/community/build.txt")
-  if (!file.exists()) {
-    file = new File("$home/build.txt")
-  }
 
-  return file.readLines().get(0)
-}
-
-binding.setVariable("snapshot", readSnapshotBuild())
-
-projectBuilder.buildInfoPrinter = new org.jetbrains.jps.teamcity.TeamcityBuildInfoPrinter()
+projectBuilder.buildInfoPrinter = new TeamCityBuildInfoPrinter()
 projectBuilder.compressJars = false
 
-binding.setVariable("notifyArtifactBuilt", { String artifactPath ->
-  if (!artifactPath.startsWith(home)) {
-    projectBuilder.error("Artifact path $artifactPath should start with $home")
-  }
-  def relativePath = artifactPath.substring(home.length())
-  if (relativePath.startsWith("/")) {
-    relativePath = relativePath.substring(1)
-  }
-  def file = new File(artifactPath)
-  if (file.isDirectory()) {
-    relativePath += "=>" + file.name
-  }
-  projectBuilder.info("##teamcity[publishArtifacts '$relativePath']")
-})
 
-def suspendUntilDebuggerConnect = System.getProperty("debug.suspend") ?: "n"
-def debugPort = System.getProperty("debug.port") ?: 5555
-if (suspendUntilDebuggerConnect == 'y') {
-  println """\
-------------->----------- This process is suspended until remote debugger connects to the port $debugPort ----<----
--------------------------------------------^------^------^------^------^------^------^-----------------------  
-"""
-}
-
-binding.setVariable("patchFiles", { List files, Map args, String marker = "__" ->
-  files.each { file ->
-    args.each { arg ->
-      ant.replace(file: file, token: "${marker}${arg.key}${marker}", value:  arg.value)
-    }
-  }
-})
-
-binding.setVariable("copyAndPatchFile", { String file, String target, Map args, String marker = "__" ->
-  ant.copy(file: file, tofile: target, overwrite: "true") {
-    filterset(begintoken: marker, endtoken: marker) {
-      args.each {
-        filter(token: it.key, value: it.value)
-      }
-    }
-  }
-})
-
-binding.setVariable("copyAndPatchFiles", { Closure files, String target, Map args, String marker = "__" ->
-  ant.copy(todir: target, overwrite: "true") {
-    files()
-
-    filterset(begintoken: marker, endtoken: marker) {
-      args.each {
-        filter(token: it.key, value: it.value)
-      }
-    }
-  }
-})
-
-binding.setVariable("wireBuildDate", { String buildNumber, String appInfoFile ->
-  ant.tstamp()
-  patchFiles([appInfoFile], ["BUILD_NUMBER": buildNumber, "BUILD_DATE": DSTAMP])
-})
-
-binding.setVariable("commonJvmArgs", {
-  return [
-   "-ea",
-   "-Didea.home.path=$home",
-   "-Xbootclasspath/p:${projectBuilder.moduleOutput(findModule("boot"))}",
-   "-XX:+HeapDumpOnOutOfMemoryError",
-   "-Didea.system.path=${p("teamcity.build.tempDir")}/system",
-   "-Didea.config.path=${p("teamcity.build.tempDir")}/config",
-   "-Xdebug",
-   "-Xrunjdwp:transport=dt_socket,server=y,suspend=$suspendUntilDebuggerConnect,address=$debugPort"]
-})
-
-binding.setVariable("classPathLibs", [
-        "bootstrap.jar",
-        "extensions.jar",
-        "util.jar",
-        "jdom.jar",
-        "log4j.jar",
-        "trove4j.jar",
-        "jna.jar"
-])
-
-binding.setVariable("platformApiModules", [
-        "core-api",
-        "indexing-api",
-        "projectModel-api",
-        "jps-model-api",
-        "platform-api",
-        "lvcs-api",
-        "lang-api",
-        "vcs-api",
-        "usageView",
-        "xdebugger-api",
-        "xml-openapi",
-])
-
-
-binding.setVariable("platformImplementationModules", [
-        "core-impl",
-        "indexing-impl",
-        "jps-model-impl",
-        "jps-model-serialization",
-        "projectModel-impl",
-        "platform-impl",
-        "vcs-impl",
-        "lang-impl",
-        "testRunner",
-        "smRunner",
-        "xdebugger-impl",
-        "xml",
-        "relaxng",
-        "lvcs-impl",
-        "spellchecker",
-        "images",
-        "RegExpSupport",
-        "dvcs"
-])
-
-binding.setVariable("layoutMacApp", { String path, String ch, Map args ->
-  ant.copy(todir: "$path/bin") {
-    fileset(dir: "$ch/bin/mac")
-  }
-
-  ant.copy(todir: path) {
-    fileset(dir: "$ch/build/conf/mac")
-  }
-
-  ant.tstamp() {
-    format(property: "todayYear", pattern: "yyyy")
-  }
-
-  String executable = args.executable != null ? args.executable : p("component.names.product").toLowerCase()
-  String helpId = args.help_id != null ? args.help_id : "IJ"
-  String icns = "idea.icns"
-  String helpIcns = "$path/Contents/Resources/${helpId}.help/Contents/Resources/Shared/product.icns"
-  if (args.icns != null) {
-    ant.delete(file: "$path/Contents/Resources/idea.icns")
-    ant.copy(file: args.icns, todir: "$path/Contents/Resources")
-    ant.copy(file: args.icns, tofile: helpIcns)
-    icns = new File((String)args.icns).getName();
-  } else {
-    ant.copy(file: "$path/Contents/Resources/idea.icns", tofile: helpIcns)
-  }
-
-  String fullName = args.fullName != null ? args.fullName : p("component.names.fullname")
-
-  String vmOptions = "${vmOptions()} -Xverify:none"
-  if (isEap() && !args.mac_no_yjp) {
-    vmOptions += " -agentlib:yjpagent=disablej2ee,disablealloc,sessionname=${args.system_selector}"
-  }
-
-  String minor = p("component.version.minor")
-  String version = isEap() && !minor.contains("RC") && !minor.contains("Beta") ? "EAP $args.buildNumber" : "${p("component.version.major")}.${minor}"
-
-  Map properties = readIdeaProperties(args)
-
-  def coreKeys = ["idea.platform.prefix", "idea.paths.selector"]
-
-  String coreProperties = submapToXml(properties, coreKeys);
-
-  StringBuilder effectiveProperties = new StringBuilder()
-  properties.each { k, v ->
-    if (!coreKeys.contains(k)) {
-      effectiveProperties.append("$k=$v\n");
-    }
-  }
-
-  new File("$path/bin/idea.properties").text = effectiveProperties.toString()
-  new File("$path/bin/idea.vmoptions").text = "$mem64 -XX:+UseCompressedOops".split(" ").join("\n")
-
-  String classPath = classPathLibs.collect {"\$APP_PACKAGE/lib/${it}" }.join(":")
-
-  String urlSchemes = ""
-  if (args.urlSchemes != null) {
-    urlSchemes += """
-      <key>CFBundleURLTypes</key>
-      <array>
-        <dict>
-          <key>CFBundleTypeRole</key>
-          <string>Editor</string>
-          <key>CFBundleURLName</key>
-          <string>Stacktrace</string>
-          <key>CFBundleURLSchemes</key>
-          <array>
-"""
-    args.urlSchemes.each { scheme ->
-      urlSchemes += "            <string>${scheme}</string>"
-    }
-    urlSchemes += """
-          </array>
-        </dict>
-      </array>
-"""
-  }
-
-  ant.replace(file: "$path/Contents/Info.plist") {
-    replacefilter(token: "@@build@@", value: args.buildNumber)
-    replacefilter(token: "@@doc_types@@", value: ifNull(args.doc_types, ""))
-    replacefilter(token: "@@executable@@", value: executable)
-    replacefilter(token: "@@icns@@", value: icns)
-    replacefilter(token: "@@bundle_name@@", value: fullName)
-    replacefilter(token: "@@bundle_identifier@@", value: args.bundleIdentifier)
-    replacefilter(token: "@@year@@", value: "$todayYear")
-    replacefilter(token: "@@version@@", value: version)
-    replacefilter(token: "@@vmoptions@@", value: vmOptions)
-    replacefilter(token: "@@idea_properties@@", value: coreProperties)
-    replacefilter(token: "@@class_path@@", value: classPath)
-    replacefilter(token: "@@help_id@@", value: helpId)
-    replacefilter(token: "@@url_schemes@@", value: urlSchemes)
-  }
-
-  if (executable != "idea") {
-    ant.move(file: "$path/Contents/MacOS/idea", tofile: "$path/Contents/MacOS/$executable")
-  }
-
-  ant.replace(file: "$path/bin/inspect.sh") {
-    replacefilter(token: "@@product_full@@", value: fullName)
-    replacefilter(token: "@@script_name@@", value: executable)
-  }
-  if (args.inspect_script != null && args.inspect_script != "inspect") {
-    ant.move(file: "$path/bin/inspect.sh", tofile: "$path/bin/${args.inspect_script}.sh")
-  }
-})
-
-binding.setVariable("winScripts", { String target, String home, String name, Map args ->
-  String fullName = args.fullName != null ? args.fullName : p("component.names.fullname")
-  String product_uc = args.product_uc != null ? args.product_uc : p("component.names.product").toUpperCase()
-  String vm_options = args.vm_options != null ? args.vm_options : "${p("component.names.product").toLowerCase()}.exe"
-  if (vm_options.endsWith(".exe")) {
-    vm_options = vm_options.replace(".exe", "%BITS%.exe")
-  }
-  else {
-    vm_options = vm_options + "%BITS%"
-  }
-
-  String classPath = "SET CLASS_PATH=%IDE_HOME%\\lib\\${classPathLibs[0]}\n"
-  classPath += classPathLibs[1..-1].collect {"SET CLASS_PATH=%CLASS_PATH%;%IDE_HOME%\\lib\\${it}"}.join("\n")
-  if (args.tools_jar) classPath += "\nSET CLASS_PATH=%CLASS_PATH%;%JDK%\\lib\\tools.jar"
-
-  ant.copy(todir: "$target/bin") {
-    fileset(dir: "$home/bin/scripts/win")
-
-    filterset(begintoken: "@@", endtoken: "@@") {
-      filter(token: "product_full", value: fullName)
-      filter(token: "product_uc", value: product_uc)
-      filter(token: "vm_options", value: vm_options)
-      filter(token: "isEap", value: isEap())
-      filter(token: "system_selector", value: args.system_selector)
-      filter(token: "ide_jvm_args", value: ifNull(args.ide_jvm_args, ""))
-      filter(token: "class_path", value: classPath)
-      filter(token: "script_name", value: name)
-    }
-  }
-
-  if (name != "idea.bat") {
-    ant.move(file: "$target/bin/idea.bat", tofile: "$target/bin/$name")
-  }
-  if (args.inspect_script != null && args.inspect_script != "inspect") {
-    ant.move(file: "$target/bin/inspect.bat", tofile: "$target/bin/${args.inspect_script}.bat")
-  }
-
-  ant.fixcrlf(srcdir: "$target/bin", includes: "*.bat", eol: "dos")
-})
-
-private ifNull(v, defVal) { v != null ? v : defVal }
-
-binding.setVariable("unixScripts", { String target, String home, String name, Map args ->
-  String fullName = args.fullName != null ? args.fullName : p("component.names.fullname")
-  String product_uc = args.product_uc != null ? args.product_uc : p("component.names.product").toUpperCase()
-  String vm_options = args.vm_options != null ? args.vm_options : p("component.names.product").toLowerCase()
-
-  String classPath = "CLASSPATH=\"\$IDE_HOME/lib/${classPathLibs[0]}\"\n"
-  classPath += classPathLibs[1..-1].collect {"CLASSPATH=\"\$CLASSPATH:\$IDE_HOME/lib/${it}\""}.join("\n")
-  if (args.tools_jar) classPath += "\nCLASSPATH=\"\$CLASSPATH:\$JDK/lib/tools.jar\""
-
-  ant.copy(todir: "$target/bin") {
-    fileset(dir: "$home/bin/scripts/unix")
-
-    filterset(begintoken: "@@", endtoken: "@@") {
-      filter(token: "product_full", value: fullName)
-      filter(token: "product_uc", value: product_uc)
-      filter(token: "vm_options", value: vm_options)
-      filter(token: "isEap", value: isEap())
-      filter(token: "system_selector", value: args.system_selector)
-      filter(token: "ide_jvm_args", value: ifNull(args.ide_jvm_args, ""))
-      filter(token: "class_path", value: classPath)
-      filter(token: "script_name", value: name)
-    }
-  }
-
-  if (name != "idea.sh") {
-    ant.move(file: "$target/bin/idea.sh", tofile: "$target/bin/$name")
-  }
-  if (args.inspect_script != null && args.inspect_script != "inspect") {
-    ant.move(file: "$target/bin/inspect.sh", tofile: "$target/bin/${args.inspect_script}.sh")
-  }
-
-  ant.fixcrlf(srcdir: "$target/bin", includes: "*.sh", eol: "unix")
-})
-
-binding.setVariable("winVMOptions", { String target, String system_selector, String name, String name64 = null ->
-  def options = isEap() && system_selector != null ? vmOptions32yjp(system_selector) : vmOptions32()
-  ant.echo(file: "$target/bin/${name}.vmoptions", message: options.replace(' ', '\n'))
-
-  if (name64 != null) {
-    options = isEap() && system_selector != null ? vmOptions64yjp(system_selector) : vmOptions64()
-    ant.echo(file: "$target/bin/${name64}.vmoptions", message: options.replace(' ', '\n'))
-  }
-
-  ant.fixcrlf(srcdir: "$target/bin", includes: "*.vmoptions", eol: "dos")
-})
-
-binding.setVariable("unixVMOptions", { String target, String name ->
-  ant.echo(file: "$target/bin/${name}.vmoptions", message: vmOptions32().replace(' ', '\n'))
-  ant.echo(file: "$target/bin/${name}64.vmoptions", message: vmOptions64().replace(' ', '\n'))
-  ant.fixcrlf(srcdir: "$target/bin", includes: "*.vmoptions", eol: "unix")
-})
-
-binding.setVariable("unixReadme", { String target, String home, Map args ->
-  String fullName = args.fullName != null ? args.fullName : p("component.names.fullname")
-  String settings_dir = args.system_selector.replaceFirst("\\d+", "")
-  copyAndPatchFile("$home/build/Install-Linux-tar.txt", "$target/Install-Linux-tar.txt",
-                   ["product_full": fullName,
-                    "product": p("component.names.product").toLowerCase(),
-                    "system_selector": args.system_selector,
-                    "settings_dir": settings_dir], "@@")
-  ant.fixcrlf(file: "$target/bin/Install-Linux-tar.txt", eol: "unix")
-})
-
-binding.setVariable("forceDelete", { String dirPath ->
-  // if wasn't deleted - retry several times
-  attempt = 1
-  while (attempt < 21 && (new File(dirPath).exists())) {
-    if (attempt > 1) {
-      ant.echo "Deleting $dirPath ... (attempt=$attempt)"
-
-      // let's wait a bit and try again - may be help
-      // in some cases on our windows 7 agents
-      sleep(2000)
-    }
-
-    ant.delete(failonerror: false, dir: dirPath)
-
-    attempt++
-  }
-
-  if (new File(dirPath).exists()) {
-    ant.project.log ("Cannot delete directory: $dirPath" )
-    System.exit (1)
-  }
-})
-
-binding.setVariable("patchPropertiesFile", { String target, Map args = [:] ->
-  String file = "$target/bin/idea.properties"
-
-  if (args.appendices != null) {
-    ant.concat(destfile: file, append:  true) {
-      args.appendices.each {
-        fileset(file: it)
-      }
-    }
-  }
-
-  String product_uc = args.product_uc != null ? args.product_uc : p("component.names.product").toUpperCase()
-  String settings_dir = args.system_selector.replaceFirst("\\d+", "")
-  ant.replace(file: file) {
-    replacefilter(token: "@@product_uc@@", value: product_uc)
-    replacefilter(token: "@@settings_dir@@", value: settings_dir)
-  }
-
-  String message = (isEap() ? """
-#-----------------------------------------------------------------------
-# Change to 'disabled' if you don't want to receive instant visual notifications
-# about fatal errors that happen to an IDE or plugins installed.
-#-----------------------------------------------------------------------
-idea.fatal.error.notification=enabled
-"""
-                 : """
-#-----------------------------------------------------------------------
-# Change to 'enabled' if you want to receive instant visual notifications
-# about fatal errors that happen to an IDE or plugins installed.
-#-----------------------------------------------------------------------
-idea.fatal.error.notification=disabled
-""")
-  ant.echo(file: file, append: true, message: message)
-})
-
-binding.setVariable("zipSources", { String home, String targetDir ->
-  String sources = "$targetDir/sources.zip"
-  projectBuilder.stage("zip sources to $sources")
-
-  ant.mkdir(dir: targetDir)
-  ant.delete(file: sources)
-  ant.zip(destfile: sources) {
-    fileset(dir: home) {
-      ["java", "groovy", "ipr", "iml", "form", "xml", "properties"].each {
-        include(name: "**/*.$it")
-      }
-      exclude(name: "**/testData/**")
-    }
-  }
-
-  notifyArtifactBuilt(sources)
-})
-
-/**
- * E.g.
- *
- * Load all properties from file:
- *    readIdeaProperties("idea.properties.path" : "$home/ruby/build/idea.properties")
- *
- * Load all properties except "idea.cycle.buffer.size", change "idea.max.intellisense.filesize" to 3000
- * and enable "idea.is.internal" mode:
- *    readIdeaProperties("idea.properties.path" : "$home/ruby/build/idea.properties",
- *                       "idea.properties" : ["idea.max.intellisense.filesize" : 3000,
- *                                           "idea.cycle.buffer.size" : null,
- *                                           "idea.is.internal" : true ])
- * @param args
- * @return text xml properties description in xml
- */
-private Map readIdeaProperties(Map args) {
-  String ideaPropertiesPath =  args == null ? null : args.get("idea.properties.path")
-  if (ideaPropertiesPath == null) {
-    return [:]
-  }
-
-  // read idea.properties file
-  Properties ideaProperties = new Properties();
-  FileInputStream ideaPropertiesFile = new FileInputStream(ideaPropertiesPath);
-  ideaProperties.load(ideaPropertiesFile);
-  ideaPropertiesFile.close();
-
-  def defaultProperties = ["CVS_PASSFILE": "~/.cvspass",
-                           "com.apple.mrj.application.live-resize": "false",
-                           "idea.paths.selector": args.system_selector,
-                           "java.endorsed.dirs": "",
-                           "idea.smooth.progress": "false",
-                           "apple.laf.useScreenMenuBar": "true",
-                           "apple.awt.graphics.UseQuartz": "true",
-                           "apple.awt.fullscreencapturealldisplays": "false"]
-  if (args.platform_prefix != null) {
-    defaultProperties.put("idea.platform.prefix", args.platform_prefix)
-  }
-
-  Map properties = defaultProperties
-  def customProperties = args.get("idea.properties")
-  if (customProperties != null) {
-    properties += customProperties
-  }
-
-  properties.each {k, v ->
-    if (v == null) {
-      // if overridden with null - ignore property
-      ideaProperties.remove(k)
-    } else {
-      // if property is overridden in args map - use new value
-      ideaProperties.put(k, v)
-    }
-  }
-
-  return ideaProperties;
-}
-
-private String submapToXml(Map properties, List keys) {
-// generate properties description for Info.plist
-  StringBuilder buff = new StringBuilder()
-
-  keys.each { key ->
-    String value = properties[key]
-    if (value != null) {
-      String string =
-        """
-        <key>$key</key>
-        <string>$value</string>
-"""
-      buff.append(string)
-    }
-  }
-  return buff.toString()
-}
-
-binding.setVariable("buildWinZip", { String zipPath, List paths ->
-  projectBuilder.stage(".win.zip")
-
-  fixIdeaPropertiesEol(paths, "dos")
-
-  ant.zip(zipfile: zipPath) {
-    paths.each {
-      fileset(dir: it)
-    }
-  }
-
-  notifyArtifactBuilt(zipPath)
-})
-
-binding.setVariable("buildMacZip", { String zipRoot, String zipPath, List paths, String macPath, List extraBins = [] ->
-  projectBuilder.stage(".mac.zip")
-
-  allPaths = paths + [macPath]
-  ant.zip(zipfile: zipPath) {
-    allPaths.each {
-      zipfileset(dir: it, prefix: zipRoot) {
-        exclude(name: "bin/*.sh")
-        exclude(name: "bin/fsnotifier")
-        exclude(name: "bin/restarter")
-        exclude(name: "Contents/MacOS/*")
-        extraBins.each {
-          exclude(name: it)
-        }
-        exclude(name: "bin/idea.properties")
-      }
-    }
-
-    allPaths.each {
-      zipfileset(dir: it, filemode: "755", prefix: zipRoot) {
-        include(name: "bin/*.sh")
-        include(name: "bin/fsnotifier")
-        include(name: "bin/restarter")
-        include(name: "Contents/MacOS/*")
-        extraBins.each {
-          include(name: it)
-        }
-      }
-    }
-
-    zipfileset(file: "$macPath/bin/idea.properties", prefix: "$zipRoot/bin")
-  }
-})
-
-binding.setVariable("buildTarGz", { String tarRoot, String tarPath, List paths ->
-  projectBuilder.stage(".tar.gz")
-
-  fixIdeaPropertiesEol(paths, "unix")
-
-  ant.tar(tarfile: tarPath, longfile: "gnu") {
-    paths.each {
-      tarfileset(dir: it, prefix: tarRoot) {
-        exclude(name: "bin/*.sh")
-        exclude(name: "bin/fsnotifier*")
-        type(type: "file")
-      }
-    }
-
-    paths.each {
-      tarfileset(dir: it, filemode: "755", prefix: tarRoot) {
-        include(name: "bin/*.sh")
-        include(name: "bin/fsnotifier*")
-        type(type: "file")
-      }
-    }
-  }
-
-  String gzPath = "${tarPath}.gz"
-  ant.gzip(src: tarPath, zipfile: gzPath)
-  ant.delete(file: tarPath)
-  notifyArtifactBuilt(gzPath)
-})
-
-private void fixIdeaPropertiesEol(List paths, String eol) {
-  paths.each {
-    String file = "$it/bin/idea.properties"
-    if (new File(file).exists()) {
-      ant.fixcrlf(file: file, eol: eol)
-    }
-  }
-}

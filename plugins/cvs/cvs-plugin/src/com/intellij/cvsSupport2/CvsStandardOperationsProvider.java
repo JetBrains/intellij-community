@@ -33,11 +33,11 @@ public class CvsStandardOperationsProvider {
     myProject = project;
   }
 
-  public void checkinFile(String path, Object parameters, Map userData) throws VcsException {
+  public void checkinFile(String path, Object parameters, Map userData) {
     getCurrentTransaction().commitFile(path);
   }
 
-  public void addFile(String folderPath, String name, Object parameters, Map userData) throws VcsException {
+  public void addFile(String folderPath, String name, Object parameters, Map userData) {
     KeywordSubstitution substitution = null;
     if (parameters instanceof KeywordSubstitution) {
       substitution = (KeywordSubstitution)parameters;
@@ -45,7 +45,7 @@ public class CvsStandardOperationsProvider {
     getCurrentTransaction().addFile(folderPath, name, substitution);
   }
 
-  public void removeFile(String path, Object parameters, Map userData) throws VcsException {
+  public void removeFile(String path, Object parameters, Map userData) {
     getCurrentTransaction().removeFile(path);
   }
 
@@ -53,7 +53,7 @@ public class CvsStandardOperationsProvider {
     addFile(parentPath, name, parameters, userData);
   }
 
-  public void removeDirectory(String path, Object parameters, Map userData) throws VcsException {
+  public void removeDirectory(String path, Object parameters, Map userData) {
   }
 
   private RepositoryModificationOperation getCurrentTransaction() {

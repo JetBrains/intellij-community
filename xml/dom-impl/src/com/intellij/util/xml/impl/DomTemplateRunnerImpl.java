@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,7 +22,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.xml.XmlTag;
-import com.intellij.util.containers.HashMap;
+import java.util.HashMap;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.actions.generate.DomTemplateRunner;
 import org.jetbrains.annotations.NotNull;
@@ -30,9 +30,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;
 
-/**
- * User: Sergey.Vasiliev
- */
 public class DomTemplateRunnerImpl extends DomTemplateRunner {
   private final Project myProject;
 
@@ -40,8 +37,9 @@ public class DomTemplateRunnerImpl extends DomTemplateRunner {
     myProject = project;
   }
 
+  @Override
   public <T extends DomElement> void runTemplate(final T t, final String mappingId, final Editor editor) {
-       runTemplate(t, mappingId, editor, new HashMap<String, String>());
+       runTemplate(t, mappingId, editor, new HashMap<>());
   }
 
   @Override
@@ -52,11 +50,11 @@ public class DomTemplateRunnerImpl extends DomTemplateRunner {
   }
 
   public <T extends DomElement> void runTemplate(final T t, final Editor editor, @Nullable final Template template) {
-     runTemplate(t, editor, template, new HashMap<String, String>());
+     runTemplate(t, editor, template, new HashMap<>());
   }
 
   public <T extends DomElement> void runTemplate(final T t, final Editor editor, @Nullable final Template template, Map<String, String> predefinedVars) {
-    if (template != null) {
+    if (template != null && t != null) {
       DomElement copy = t.createStableCopy();
       PsiDocumentManager.getInstance(myProject).doPostponedOperationsAndUnblockDocument(editor.getDocument());
       XmlTag tag = copy.getXmlTag();

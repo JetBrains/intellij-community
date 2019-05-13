@@ -1,5 +1,3 @@
-import java.awt.Component;
-import javax.swing.JComponent;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -12,3 +10,5 @@ class Types {
         Object o = list.get(0);
     }
 }
+class JComponent extends Component {}
+class Component {}

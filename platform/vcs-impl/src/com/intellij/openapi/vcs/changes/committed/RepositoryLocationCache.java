@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,77 +18,61 @@ package com.intellij.openapi.vcs.changes.committed;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Couple;
+import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.vcs.*;
 import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.Collections;
-import java.util.HashMap;
 import java.util.Map;
 
-public class RepositoryLocationCache {
-  private final Project myProject;
-  private final Map<Pair<String, String>, RepositoryLocation> myMap;
+import static com.intellij.openapi.vcs.ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED;
+import static com.intellij.openapi.vcs.ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED_IN_PLUGIN;
+import static com.intellij.util.containers.ContainerUtil.newHashMap;
+import static java.util.Collections.synchronizedMap;
 
-  public RepositoryLocationCache(final Project project) {
+public class RepositoryLocationCache {
+
+  @NotNull private final Project myProject;
+  @NotNull private final Map<Couple<String>, RepositoryLocation> myMap = synchronizedMap(newHashMap());
+
+  public RepositoryLocationCache(@NotNull Project project) {
     myProject = project;
-    myMap = Collections.synchronizedMap(new HashMap<Pair<String, String>, RepositoryLocation>());
-    final MessageBusConnection connection = myProject.getMessageBus().connect();
-    final VcsListener listener = new VcsListener() {
-      @Override
-      public void directoryMappingChanged() {
-        reset();
-      }
-    };
-    connection.subscribe(ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED, listener);
-    connection.subscribe(ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED_IN_PLUGIN, listener);
+
+    MessageBusConnection connection = myProject.getMessageBus().connect();
+    VcsListener listener = () -> reset();
+    connection.subscribe(VCS_CONFIGURATION_CHANGED, listener);
+    connection.subscribe(VCS_CONFIGURATION_CHANGED_IN_PLUGIN, listener);
   }
 
-  public RepositoryLocation getLocation(final AbstractVcs vcs, final FilePath filePath, final boolean silent) {
-    final Pair<String, String> key = new Pair<String, String>(vcs.getName(), filePath.getIOFile().getAbsolutePath());
+  @Nullable
+  public RepositoryLocation getLocation(@NotNull AbstractVcs vcs, @NotNull FilePath filePath, boolean silent) {
+    Couple<String> key = Couple.of(vcs.getName(), filePath.getPath());
     RepositoryLocation location = myMap.get(key);
-    if (location != null) {
-      return location;
+
+    if (location == null) {
+      location = getLocationUnderProgress(vcs, filePath, silent);
+      myMap.put(key, location);
     }
-    location = getUnderProgress(vcs, filePath, silent);
-    myMap.put(key, location);
+
     return location;
   }
 
-  private RepositoryLocation getUnderProgress(final AbstractVcs vcs, final FilePath filePath, final boolean silent) {
-    final MyLoader loader = new MyLoader(vcs, filePath);
-    if ((! silent) && ApplicationManager.getApplication().isDispatchThread()) {
-      ProgressManager.getInstance().runProcessWithProgressSynchronously(loader, "Discovering location of " + filePath.getPresentableUrl(), true, myProject);
-    } else {
-      loader.run();
-    }
-    return loader.getLocation();
+  @Nullable
+  private RepositoryLocation getLocationUnderProgress(@NotNull AbstractVcs vcs, @NotNull FilePath filePath, boolean silent) {
+    ThrowableComputable<RepositoryLocation, RuntimeException> result = () -> {
+      CommittedChangesProvider committedChangesProvider = vcs.getCommittedChangesProvider();
+      return committedChangesProvider != null ? committedChangesProvider.getLocationFor(filePath) : null;
+    };
+
+    return !silent && ApplicationManager.getApplication().isDispatchThread()
+           ? ProgressManager.getInstance()
+             .runProcessWithProgressSynchronously(result, "Discovering location of " + filePath.getPresentableUrl(), true, myProject)
+           : result.compute();
   }
 
   public void reset() {
     myMap.clear();
-  }
-
-  private class MyLoader implements Runnable {
-    private final AbstractVcs myVcs;
-    private final FilePath myFilePath;
-    private RepositoryLocation myLocation;
-
-    private MyLoader(@NotNull final AbstractVcs vcs, @NotNull FilePath filePath) {
-      myVcs = vcs;
-      myFilePath = filePath;
-    }
-
-    public void run() {
-      final CommittedChangesProvider committedChangesProvider = myVcs.getCommittedChangesProvider();
-      if (committedChangesProvider != null) {
-        myLocation = committedChangesProvider.getLocationFor(myFilePath);
-      }
-    }
-
-    public RepositoryLocation getLocation() {
-      return myLocation;
-    }
   }
 }

@@ -51,6 +51,7 @@ public class DateFilterComponent {
     myDateAfter.setDateFormat(dateFormat);
     myDateBefore.setDateFormat(dateFormat);
     ActionListener listener = new ActionListener() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         updateAllEnabled(e);
       }

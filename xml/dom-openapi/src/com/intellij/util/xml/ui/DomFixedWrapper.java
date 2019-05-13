@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,19 +31,23 @@ public class DomFixedWrapper<T> extends DomWrapper<T>{
     myDomElement = domElement;
   }
 
+  @Override
   public DomElement getWrappedElement() {
     return myDomElement;
   }
 
+  @Override
   public void setValue(final T value) throws IllegalAccessException, InvocationTargetException {
     DomUIFactory.SET_VALUE_METHOD.invoke(getWrappedElement(), value);
   }
 
+  @Override
   public T getValue() throws IllegalAccessException, InvocationTargetException {
     final DomElement element = getWrappedElement();
     return element.isValid() ? (T)DomUIFactory.GET_VALUE_METHOD.invoke(element) : null;
   }
 
+  @Override
   @NotNull
   public DomElement getExistingDomElement() {
     return myDomElement;

@@ -17,8 +17,10 @@ package com.intellij.openapi.vcs;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.changes.Change;
+import com.intellij.openapi.vcs.changes.CommitContext;
 import com.intellij.openapi.vcs.ui.Refreshable;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.io.File;
@@ -29,7 +31,7 @@ import java.util.Collection;
  * included in the checkin operation, getting/setting the commit message and so on).
  * The active check-in dialog can be retrieved from the using {@link Refreshable#PANEL_KEY}
  *
- * @see com.intellij.openapi.vcs.checkin.BaseCheckinHandlerFactory#createHandler(CommitMessageI, CommitContext)
+ * @see com.intellij.openapi.vcs.checkin.BaseCheckinHandlerFactory#createHandler(CheckinProjectPanel, CommitContext)
  */
 public interface CheckinProjectPanel extends Refreshable, CommitMessageI {
   JComponent getComponent();
@@ -83,14 +85,13 @@ public interface CheckinProjectPanel extends Refreshable, CommitMessageI {
    */
   Collection<VirtualFile> getRoots();
 
-  void setWarning(final String s);
-
   /**
    * Gets the description for the check-in.
    *
    * @return the description text.
    * @since 5.1
    */
+  @NotNull
   String getCommitMessage();
 
   String getCommitActionName();

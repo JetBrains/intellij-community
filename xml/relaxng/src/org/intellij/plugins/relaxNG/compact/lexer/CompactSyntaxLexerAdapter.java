@@ -25,6 +25,7 @@ import com.intellij.util.text.CharArrayCharSequence;
 import com.intellij.util.text.CharArrayUtil;
 import gnu.trove.TIntIntHashMap;
 import org.intellij.plugins.relaxNG.compact.RncTokenTypes;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.kohsuke.rngom.parse.compact.*;
 
@@ -33,6 +34,8 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.io.Reader;
 import java.lang.reflect.Field;
+import java.net.URL;
+import java.security.CodeSource;
 import java.util.Arrays;
 import java.util.LinkedList;
 
@@ -58,7 +61,7 @@ public class CompactSyntaxLexerAdapter extends LexerBase {
   private static final Token START = new Token();
 
   private CompactSyntaxTokenManager myLexer;
-  private final LinkedList<Token> myTokenQueue = new LinkedList<Token>();
+  private final LinkedList<Token> myTokenQueue = new LinkedList<>();
   private Token myCurrentToken;
   private int myCurrentOffset;
   private int myCurrentEnd;
@@ -68,6 +71,7 @@ public class CompactSyntaxLexerAdapter extends LexerBase {
   private int myEndOffset;
   private TIntIntHashMap myLengthMap;
 
+  @Override
   public void advance() {
     try {
       myCurrentToken = nextToken();
@@ -128,15 +132,18 @@ public class CompactSyntaxLexerAdapter extends LexerBase {
     return CharArrayUtil.fromSequence(myBuffer);
   }
 
+  @NotNull
   @Override
   public CharSequence getBufferSequence() {
     return myBuffer;
   }
 
+  @Override
   public int getBufferEnd() {
     return myEndOffset;
   }
 
+  @Override
   public int getState() {
     try {
       return (Integer)myStateField.get(myLexer);
@@ -145,14 +152,17 @@ public class CompactSyntaxLexerAdapter extends LexerBase {
     }
   }
 
+  @Override
   public int getTokenEnd() {
     return myCurrentEnd;
   }
 
+  @Override
   public int getTokenStart() {
     return myCurrentToken == null ? 0 : myCurrentOffset;
   }
 
+  @Override
   @Nullable
   public IElementType getTokenType() {
     if (myCurrentToken == null) {
@@ -170,15 +180,14 @@ public class CompactSyntaxLexerAdapter extends LexerBase {
     init(startOffset, endOffset, reader, initialState);
   }
 
-  @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")
-  public void start(CharSequence buffer, int startOffset, int endOffset, int initialState) {
+  @Override
+  public void start(@NotNull CharSequence buffer, int startOffset, int endOffset, int initialState) {
     myBuffer = buffer;
 
     final Reader reader = new CharSequenceReader(buffer, startOffset, endOffset);
     init(startOffset, endOffset, reader, initialState);
   }
 
-  @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")
   private void init(int startOffset, int endOffset, Reader reader, int initialState) {
     myEndOffset = endOffset;
     myLengthMap = new TIntIntHashMap();
@@ -197,12 +206,26 @@ public class CompactSyntaxLexerAdapter extends LexerBase {
       return new CompactSyntaxTokenManager(new SimpleCharStream(preprocessor, 1, 1), initialState);
     } catch (NoSuchMethodError e) {
       final Class<CompactSyntaxTokenManager> managerClass = CompactSyntaxTokenManager.class;
-      LOG.error("Unsupported version of RNGOM in classpath", e,
+      LOG.error("Unsupported version of RNGOM in classpath. Please check your IDEA and JDK installation.", e,
                 "Actual parameter types: " + Arrays.toString(managerClass.getConstructors()[0].getParameterTypes()),
-                "Location of " + managerClass.getName() + ": " + managerClass.getProtectionDomain().getCodeSource(),
-                "Location of " + CharStream.class.getName() + ": " + CharStream.class.getProtectionDomain().getCodeSource());
+                "Location of " + managerClass.getName() + ": " + getSourceLocation(managerClass),
+                "Location of " + CharStream.class.getName() + ": " + getSourceLocation(CharStream.class));
       throw e;
     }
+  }
+
+  private static String getSourceLocation(Class<?> clazz) {
+    final CodeSource source = clazz.getProtectionDomain().getCodeSource();
+    if (source != null) {
+      final URL location = source.getLocation();
+      if (location != null) {
+        return location.toExternalForm();
+      }
+    }
+    final String name = clazz.getName().replace('.', '/') + ".class";
+    final ClassLoader loader = clazz.getClassLoader();
+    final URL resource = loader != null ? loader.getResource(name) : ClassLoader.getSystemResource(name);
+    return resource != null ? resource.toExternalForm() : "<unknown>";
   }
 
   public static void main(String[] args) throws IOException {
@@ -226,15 +249,17 @@ public class CompactSyntaxLexerAdapter extends LexerBase {
     private final int myEndOffset;
     private int myCurPos;
 
-    public CharSequenceReader(final CharSequence text, int startOffset, int endOffset) {
+    CharSequenceReader(final CharSequence text, int startOffset, int endOffset) {
       myText = text;
       myEndOffset = endOffset;
       myCurPos = startOffset;
     }
 
+    @Override
     public void close() {
     }
 
+    @Override
     public int read(char[] cbuf, int off, int len) {
       if ((off < 0) || (off > cbuf.length) || (len < 0) || ((off + len) > cbuf.length) || ((off + len) < 0)) {
         throw new IndexOutOfBoundsException();
@@ -260,6 +285,7 @@ public class CompactSyntaxLexerAdapter extends LexerBase {
       return charsToCopy;
     }
 
+    @Override
     public int read() {
       if (myCurPos >= myEndOffset) return -1;
       return myText.charAt(myCurPos++);

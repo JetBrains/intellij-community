@@ -36,11 +36,6 @@ import org.xml.sax.ErrorHandler;
 import org.xml.sax.SAXException;
 import org.xml.sax.SAXParseException;
 
-/**
- * Created by IntelliJ IDEA.
- * User: sweinreuter
- * Date: 30.07.2007
- */
 public class XmlInstanceValidator {
   private static final Logger LOG = Logger.getInstance("org.intellij.plugins.relaxNG.validation.XmlInstanceValidator");
 
@@ -86,26 +81,32 @@ public class XmlInstanceValidator {
       myDocument = PsiDocumentManager.getInstance(myFile.getProject()).getDocument(myFile);
     }
 
+    @Override
     public void warning(SAXParseException exception) throws SAXException {
       RngSchemaValidator.handleError(exception, myFile, myDocument, new RngSchemaValidator.ValidationMessageConsumer() {
+        @Override
         public void onMessage(PsiElement context, String message) {
-          myHost.addMessage(context, message, Validator.ValidationHost.WARNING);
+          myHost.addMessage(context, message, Validator.ValidationHost.ErrorType.WARNING);
         }
       });
     }
 
+    @Override
     public void error(SAXParseException exception) throws SAXException {
       RngSchemaValidator.handleError(exception, myFile, myDocument, new RngSchemaValidator.ValidationMessageConsumer() {
+        @Override
         public void onMessage(PsiElement context, String message) {
-          myHost.addMessage(context, message, Validator.ValidationHost.ERROR);
+          myHost.addMessage(context, message, Validator.ValidationHost.ErrorType.ERROR);
         }
       });
     }
 
+    @Override
     public void fatalError(SAXParseException exception) throws SAXException {
       RngSchemaValidator.handleError(exception, myFile, myDocument, new RngSchemaValidator.ValidationMessageConsumer() {
+        @Override
         public void onMessage(PsiElement context, String message) {
-          myHost.addMessage(context, message, Validator.ValidationHost.ERROR);
+          myHost.addMessage(context, message, Validator.ValidationHost.ErrorType.ERROR);
         }
       });
     }

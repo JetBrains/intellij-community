@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -85,6 +85,7 @@ public class OpenChannelsCache { // TODO: Will it make sense to have a backgroun
       assert !descriptor.isLocked();
 
       AntivirusDetector.getInstance().execute(new Runnable() {
+        @Override
         public void run() {
           try {
             descriptor.getChannel().close();
@@ -102,8 +103,7 @@ public class OpenChannelsCache { // TODO: Will it make sense to have a backgroun
     private final RandomAccessFile myChannel;
     private final File myFile;
 
-    @SuppressWarnings({"IOResourceOpenedButNotSafelyClosed"})
-    public ChannelDescriptor(File file, String accessMode) throws FileNotFoundException {
+    ChannelDescriptor(File file, String accessMode) throws FileNotFoundException {
       myFile = file;
       myChannel = new RandomAccessFile(file, accessMode);
     }

@@ -1,57 +1,57 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.tools;
 
 import com.intellij.execution.ExecutionException;
-import com.intellij.execution.RunnerRegistry;
 import com.intellij.execution.configurations.GeneralCommandLine;
+import com.intellij.execution.configurations.PtyCommandLine;
 import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.execution.process.OSProcessHandler;
+import com.intellij.execution.process.ProcessHandler;
+import com.intellij.execution.process.ProcessListener;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ExecutionEnvironmentBuilder;
 import com.intellij.execution.runners.ProgramRunner;
+import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.execution.util.ExecutionErrorDialog;
 import com.intellij.ide.macro.Macro;
 import com.intellij.ide.macro.MacroManager;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.options.SchemeElement;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 
 public class Tool implements SchemeElement {
-  @NonNls public final static String ACTION_ID_PREFIX = "Tool_";
+  private static final Logger LOG = Logger.getInstance("#" + Tool.class.getPackage().getName());
 
+  @NonNls public static final String ACTION_ID_PREFIX = "Tool_";
+
+  public static final String DEFAULT_GROUP_NAME = "External Tools";
   private String myName;
   private String myDescription;
-  private String myGroup;
+  @NotNull private String myGroup = DEFAULT_GROUP_NAME;
+
+  // These 4 fields and everything related are effectively not used anymore, see IDEA-190856.
+  // Let's keep them for a while for compatibility in case we have to reconsider.
   private boolean myShownInMainMenu;
   private boolean myShownInEditor;
   private boolean myShownInProjectViews;
   private boolean myShownInSearchResultsPopup;
+
   private boolean myEnabled;
 
   private boolean myUseConsole;
@@ -63,7 +63,7 @@ public class Tool implements SchemeElement {
   private String myProgram;
   private String myParameters;
 
-  private ArrayList<FilterInfo> myOutputFilters = new ArrayList<FilterInfo>();
+  private ArrayList<FilterInfo> myOutputFilters = new ArrayList<>();
 
   public Tool() {
   }
@@ -76,6 +76,7 @@ public class Tool implements SchemeElement {
     return myDescription;
   }
 
+  @NotNull
   public String getGroup() {
     return myGroup;
   }
@@ -128,8 +129,8 @@ public class Tool implements SchemeElement {
     myDescription = description;
   }
 
-  void setGroup(String group) {
-    myGroup = group;
+  void setGroup(@NotNull String group) {
+    myGroup = StringUtil.isEmpty(group)?DEFAULT_GROUP_NAME:group;
   }
 
   void setShownInMainMenu(boolean shownInMainMenu) {
@@ -193,16 +194,14 @@ public class Tool implements SchemeElement {
   }
 
   public void setOutputFilters(FilterInfo[] filters) {
-    myOutputFilters = new ArrayList<FilterInfo>();
+    myOutputFilters = new ArrayList<>();
     if (filters != null) {
-      for (int i = 0; i < filters.length; i++) {
-        myOutputFilters.add(filters[i]);
-      }
+      Collections.addAll(myOutputFilters, filters);
     }
   }
 
   public FilterInfo[] getOutputFilters() {
-    return myOutputFilters.toArray(new FilterInfo[myOutputFilters.size()]);
+    return myOutputFilters.toArray(new FilterInfo[0]);
   }
 
   public void copyFrom(Tool source) {
@@ -221,15 +220,15 @@ public class Tool implements SchemeElement {
     myWorkingDirectory = source.getWorkingDirectory();
     myProgram = source.getProgram();
     myParameters = source.getParameters();
-    myOutputFilters = new ArrayList<FilterInfo>(Arrays.asList(source.getOutputFilters()));
+    myOutputFilters = new ArrayList<>(Arrays.asList(source.getOutputFilters()));
   }
 
   public boolean equals(Object obj) {
-    if (!(obj instanceof Tool)) return false;
-    Tool secondTool = (Tool)obj;
+    if (!(obj instanceof Tool)) {
+      return false;
+    }
 
-    Tool source = secondTool;
-
+    Tool source = (Tool)obj;
     return
       Comparing.equal(myName, source.myName) &&
       Comparing.equal(myDescription, source.myDescription) &&
@@ -249,56 +248,77 @@ public class Tool implements SchemeElement {
       Comparing.equal(myOutputFilters, source.myOutputFilters);
   }
 
+  @NotNull
   public String getActionId() {
     StringBuilder name = new StringBuilder(getActionIdPrefix());
-    if (myGroup != null) {
-      name.append(myGroup);
-      name.append('_');
-    }
+    name.append(myGroup);
+    name.append('_');
     if (myName != null) {
       name.append(myName);
     }
     return name.toString();
   }
 
-  public void execute(AnActionEvent event, DataContext dataContext, long executionId) {
-    final Project project = PlatformDataKeys.PROJECT.getData(dataContext);
+  public void execute(AnActionEvent event, DataContext dataContext, long executionId, @Nullable final ProcessListener processListener) {
+    executeIfPossible(event, dataContext, executionId, processListener);
+  }
+
+  public boolean executeIfPossible(AnActionEvent event,
+                                   DataContext dataContext,
+                                   long executionId,
+                                   @Nullable final ProcessListener processListener) {
+    final Project project = CommonDataKeys.PROJECT.getData(dataContext);
     if (project == null) {
-      return;
+      return false;
     }
+
     FileDocumentManager.getInstance().saveAllDocuments();
     try {
       if (isUseConsole()) {
-        final ToolRunProfile profile = new ToolRunProfile(this, dataContext);
-        final ProgramRunner runner = RunnerRegistry.getInstance().getRunner(DefaultRunExecutor.EXECUTOR_ID, profile);
-        assert runner != null;
-
-        ExecutionEnvironment executionEnvironment = new ExecutionEnvironmentBuilder().setRunProfile(profile).setProject(project).build();
-        executionEnvironment.setExecutionId(executionId);
-        runner.execute(new DefaultRunExecutor(), executionEnvironment);
+        ExecutionEnvironment environment = ExecutionEnvironmentBuilder.create(project,
+                                                                              DefaultRunExecutor.getRunExecutorInstance(),
+                                                                              new ToolRunProfile(this, dataContext)).build();
+        environment.setExecutionId(executionId);
+        environment.getRunner().execute(environment, new ProgramRunner.Callback() {
+          @Override
+          public void processStarted(RunContentDescriptor descriptor) {
+            ProcessHandler processHandler = descriptor.getProcessHandler();
+            if (processHandler != null && processListener != null) {
+              LOG.assertTrue(!processHandler.isStartNotified(), "ProcessHandler is already startNotified, the listener won't be correctly notified");
+              processHandler.addProcessListener(processListener);
+            }
+          }
+        });
       }
       else {
         GeneralCommandLine commandLine = createCommandLine(dataContext);
         if (commandLine == null) {
-          return;
+          return false;
         }
-        OSProcessHandler handler = new OSProcessHandler(commandLine.createProcess(), commandLine.getCommandLineString());
+        OSProcessHandler handler = new OSProcessHandler(commandLine);
         handler.addProcessListener(new ToolProcessAdapter(project, synchronizeAfterExecution(), getName()));
+        if (processListener != null) {
+          handler.addProcessListener(processListener);
+        }
         handler.startNotify();
       }
     }
     catch (ExecutionException ex) {
       ExecutionErrorDialog.show(ex, ToolsBundle.message("tools.process.start.error"), project);
+      return false;
     }
+    return true;
   }
 
   @Nullable
   public GeneralCommandLine createCommandLine(DataContext dataContext) {
     if (StringUtil.isEmpty(getWorkingDirectory())) {
-      setWorkingDirectory(null);
+      setWorkingDirectory("$ProjectFileDir$");
     }
 
-    GeneralCommandLine commandLine = new GeneralCommandLine();
+    GeneralCommandLine commandLine = Registry.is("use.tty.for.external.tools", false)
+                                     ? new PtyCommandLine().withConsoleMode(true)
+                                     : new GeneralCommandLine();
     try {
       String paramString = MacroManager.getInstance().expandMacrosInString(getParameters(), true, dataContext);
       String workingDir = MacroManager.getInstance().expandMacrosInString(getWorkingDirectory(), true, dataContext);
@@ -322,20 +342,24 @@ public class Tool implements SchemeElement {
         commandLine.setExePath(exePath);
       }
     }
-    catch (Macro.ExecutionCancelledException e) {
+    catch (Macro.ExecutionCancelledException ignored) {
       return null;
     }
-    return commandLine;
+    return ToolsCustomizer.customizeCommandLine(commandLine, dataContext);
   }
 
-  public void setGroupName(final String name) {
+  @Override
+  public void setGroupName(@NotNull final String name) {
     setGroup(name);
   }
 
+  @Override
   public String getKey() {
     return getName();
   }
 
+  @NotNull
+  @Override
   public SchemeElement copy() {
     Tool copy = new Tool();
     copy.copyFrom(this);

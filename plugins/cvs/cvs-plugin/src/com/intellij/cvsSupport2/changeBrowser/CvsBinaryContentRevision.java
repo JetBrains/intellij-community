@@ -21,7 +21,6 @@ import com.intellij.cvsSupport2.cvsoperations.dateOrRevision.RevisionOrDate;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.BinaryContentRevision;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
@@ -40,16 +39,9 @@ public class CvsBinaryContentRevision extends CvsContentRevision implements Bina
     super(file, localFile, revision, environment, project);
   }
 
+  @Override
   @Nullable
   public byte[] getBinaryContent() throws VcsException {
-    if (myContent == null) {
-      myContent = loadContent();
-    }
-    return myContent;
-  }
-
-  @Override @NonNls
-  public String toString() {
-    return "CvsContentRevision:" + myFile + "@" + myRevision;
+    return getContentAsBytes();
   }
 }

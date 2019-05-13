@@ -22,5 +22,8 @@ package com.intellij.openapi.project;
  * @see DumbAware
  */
 public interface PossiblyDumbAware {
-  boolean isDumbAware();
+  default boolean isDumbAware() {
+    //noinspection SSBasedInspection
+    return this instanceof DumbAware;
+  }
 }

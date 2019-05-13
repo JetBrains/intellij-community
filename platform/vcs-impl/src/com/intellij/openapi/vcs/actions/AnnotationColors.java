@@ -15,28 +15,16 @@
  */
 package com.intellij.openapi.vcs.actions;
 
-import com.intellij.ui.Gray;
+import com.intellij.util.ArrayUtil;
 
 import java.awt.*;
 
 /**
- * @author Konstantin Bulenkov
+ * @deprecated use {@link AnnotationsSettings} instead
  */
+@Deprecated
 public interface AnnotationColors {
-  Color[] BG_COLORS = {
-    new Color(222, 241, 229),
-    new Color(234, 255, 226),
-    new Color(208, 229, 229),
-    new Color(255, 226, 199),
-    new Color(227, 226, 223),
-    new Color(255, 213, 203),
-    new Color(220, 204, 236),
-    new Color(255, 191, 195),
-    new Color(243, 223, 243),
-    new Color(217, 228, 249),
-    new Color(255, 251, 207),
-    new Color(217, 222, 229),
-    new Color(255, 204, 238),
-    Gray._236
-  };
+  int BG_COLORS_PRIME = 3;
+
+  Color[] BG_COLORS = ArrayUtil.toObjectArray(AnnotationsSettings.getInstance().getOrderedColors(null), Color.class);
 }

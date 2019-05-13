@@ -18,7 +18,6 @@ package com.intellij.openapi.roots.ui.configuration.libraryEditor;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
@@ -61,20 +60,6 @@ public class CreateNewLibraryAction extends DumbAwareAction {
     myProject = project;
   }
 
-  @Override
-  public void actionPerformed(AnActionEvent e) {
-    Library library =
-      createLibrary(myType, myLibrariesConfigurable.getTree(), myProject, myLibrariesConfigurable.getModelProvider().getModifiableModel());
-    if (library == null) return;
-
-    final BaseLibrariesConfigurable rootConfigurable = ProjectStructureConfigurable.getInstance(myProject).getConfigurableFor(library);
-    final DefaultMutableTreeNode
-      libraryNode = MasterDetailsComponent.findNodeByObject((TreeNode)rootConfigurable.getTree().getModel().getRoot(), library);
-    rootConfigurable.selectNodeInTree(libraryNode);
-    LibraryEditingUtil.showDialogAndAddLibraryToDependencies(library, myProject, true);
-  }
-
-
   @Nullable
   public static Library createLibrary(@Nullable final LibraryType type, @NotNull final JComponent parentComponent,
                                       @NotNull final Project project, @NotNull final LibrariesModifiableModel modifiableModel) {
@@ -82,19 +67,14 @@ public class CreateNewLibraryAction extends DumbAwareAction {
     if (configuration == null) return null;
     final LibraryType<?> libraryType = configuration.getLibraryType();
     final Library library = modifiableModel.createLibrary(
-      LibraryEditingUtil.suggestNewLibraryName(modifiableModel, configuration.getDefaultLibraryName()), libraryType != null ? libraryType.getKind() : null);
+      LibraryEditingUtil.suggestNewLibraryName(modifiableModel, configuration.getDefaultLibraryName()),
+      libraryType != null ? libraryType.getKind() : null);
 
     final NewLibraryEditor editor = new NewLibraryEditor(libraryType, configuration.getProperties());
     configuration.addRoots(editor);
     final Library.ModifiableModel model = library.getModifiableModel();
     editor.applyTo((LibraryEx.ModifiableModelEx)model);
-    AccessToken token = WriteAction.start();
-    try {
-      model.commit();
-    }
-    finally {
-      token.finish();
-    }
+    WriteAction.run(() -> model.commit());
     return library;
   }
 
@@ -115,8 +95,8 @@ public class CreateNewLibraryAction extends DumbAwareAction {
 
   public static AnAction[] createActionOrGroup(@NotNull String text, @NotNull BaseLibrariesConfigurable librariesConfigurable, final @NotNull Project project) {
     final LibraryType<?>[] extensions = LibraryType.EP_NAME.getExtensions();
-    List<LibraryType<?>> suitableTypes = new ArrayList<LibraryType<?>>();
-    if (librariesConfigurable instanceof ProjectLibrariesConfigurable) {
+    List<LibraryType<?>> suitableTypes = new ArrayList<>();
+    if (librariesConfigurable instanceof ProjectLibrariesConfigurable || !project.isDefault()) {
       final ModuleStructureConfigurable configurable = ModuleStructureConfigurable.getInstance(project);
       for (LibraryType<?> extension : extensions) {
         if (!LibraryEditingUtil.getSuitableModules(configurable, extension.getKind(), null).isEmpty()) {
@@ -131,14 +111,27 @@ public class CreateNewLibraryAction extends DumbAwareAction {
     if (suitableTypes.isEmpty()) {
       return new AnAction[]{new CreateNewLibraryAction(text, PlatformIcons.LIBRARY_ICON, null, librariesConfigurable, project)};
     }
-    List<AnAction> actions = new ArrayList<AnAction>();
+    List<AnAction> actions = new ArrayList<>();
     actions.add(new CreateNewLibraryAction(IdeBundle.message("create.default.library.type.action.name"), PlatformIcons.LIBRARY_ICON, null, librariesConfigurable, project));
     for (LibraryType<?> type : suitableTypes) {
       final String actionName = type.getCreateActionName();
       if (actionName != null) {
-        actions.add(new CreateNewLibraryAction(actionName, type.getIcon(), type, librariesConfigurable, project));
+        actions.add(new CreateNewLibraryAction(actionName, type.getIcon(null), type, librariesConfigurable, project));
       }
     }
-    return actions.toArray(new AnAction[actions.size()]);
+    return actions.toArray(AnAction.EMPTY_ARRAY);
+  }
+
+  @Override
+  public void actionPerformed(@NotNull AnActionEvent e) {
+    Library library =
+      createLibrary(myType, myLibrariesConfigurable.getTree(), myProject, myLibrariesConfigurable.getModelProvider().getModifiableModel());
+    if (library == null) return;
+
+    final BaseLibrariesConfigurable rootConfigurable = ProjectStructureConfigurable.getInstance(myProject).getConfigurableFor(library);
+    final DefaultMutableTreeNode
+      libraryNode = MasterDetailsComponent.findNodeByObject((TreeNode)rootConfigurable.getTree().getModel().getRoot(), library);
+    rootConfigurable.selectNodeInTree(libraryNode);
+    LibraryEditingUtil.showDialogAndAddLibraryToDependencies(library, myProject, true);
   }
 }

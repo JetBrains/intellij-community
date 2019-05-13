@@ -15,29 +15,30 @@
  */
 package com.intellij.application.options.codeStyle.arrangement.action;
 
-import com.intellij.application.options.codeStyle.arrangement.ArrangementConstants;
 import com.intellij.application.options.codeStyle.arrangement.group.ArrangementGroupingRulesControl;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.project.DumbAware;
+import com.intellij.util.IconUtil;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.table.DefaultTableModel;
 
 /**
  * @author Denis Zhdanov
- * @since 11/14/12 10:47 AM
  */
 public class MoveArrangementGroupingRuleDownAction extends AnAction implements DumbAware {
 
   public MoveArrangementGroupingRuleDownAction() {
     getTemplatePresentation().setText(ApplicationBundle.message("arrangement.action.rule.move.down.text"));
     getTemplatePresentation().setDescription(ApplicationBundle.message("arrangement.action.rule.move.down.description"));
+    getTemplatePresentation().setIcon(IconUtil.getMoveDownIcon());
   }
 
   @Override
-  public void update(AnActionEvent e) {
-    ArrangementGroupingRulesControl control = ArrangementConstants.GROUPING_RULES_CONTROL_KEY.getData(e.getDataContext());
+  public void update(@NotNull AnActionEvent e) {
+    ArrangementGroupingRulesControl control = ArrangementGroupingRulesControl.KEY.getData(e.getDataContext());
     if (control == null) {
       e.getPresentation().setEnabled(false);
       return;
@@ -48,8 +49,8 @@ public class MoveArrangementGroupingRuleDownAction extends AnAction implements D
   }
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
-    ArrangementGroupingRulesControl control = ArrangementConstants.GROUPING_RULES_CONTROL_KEY.getData(e.getDataContext());
+  public void actionPerformed(@NotNull AnActionEvent e) {
+    ArrangementGroupingRulesControl control = ArrangementGroupingRulesControl.KEY.getData(e.getDataContext());
     if (control == null) {
       return;
     }

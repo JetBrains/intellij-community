@@ -1,25 +1,11 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lang.ant.config.impl.configuration;
 
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Factory;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.ui.DocumentAdapter;
-import com.intellij.ui.ListScrollingUtil;
+import com.intellij.ui.ScrollingUtil;
 import com.intellij.ui.SortedListModel;
 import com.intellij.ui.TableUtil;
 import com.intellij.ui.table.BaseTableView;
@@ -28,6 +14,7 @@ import com.intellij.util.config.ListProperty;
 import com.intellij.util.config.StorageProperty;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.ListTableModel;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.event.*;
@@ -59,7 +46,7 @@ public abstract class UIPropertyBinding {
   public abstract void addAllPropertiesTo(Collection<AbstractProperty> properties);
 
   public static class Composite extends UIPropertyBinding {
-    private final ArrayList<UIPropertyBinding> myBindings = new ArrayList<UIPropertyBinding>();
+    private final ArrayList<UIPropertyBinding> myBindings = new ArrayList<>();
 
     public ToggleButtonBinding bindBoolean(JToggleButton toggleButton, AbstractProperty<Boolean> property) {
       ToggleButtonBinding binding = new ToggleButtonBinding(toggleButton, property);
@@ -77,18 +64,21 @@ public abstract class UIPropertyBinding {
       return textBinding;
     }
 
+    @Override
     public void loadValues(AbstractProperty.AbstractPropertyContainer container) {
       for (final UIPropertyBinding binding : myBindings) {
         binding.loadValues(container);
       }
     }
 
+    @Override
     public void apply(AbstractProperty.AbstractPropertyContainer container) {
       for (final UIPropertyBinding propertyBinding : myBindings) {
         propertyBinding.apply(container);
       }
     }
 
+    @Override
     public void beforeClose(AbstractProperty.AbstractPropertyContainer container) {
       for (final UIPropertyBinding binding : myBindings) {
         binding.beforeClose(container);
@@ -100,7 +90,7 @@ public abstract class UIPropertyBinding {
     }
 
     public <T extends JDOMExternalizable> TableListBinding<T> bindList(JTable table, ColumnInfo[] columns, ListProperty<T> property) {
-      final TableListBinding<T> binding = new TableListBinding<T>(table, columns, property);
+      final TableListBinding<T> binding = new TableListBinding<>(table, columns, property);
       myBindings.add(binding);
       return binding;
     }
@@ -109,18 +99,21 @@ public abstract class UIPropertyBinding {
       myBindings.add(binding);
     }
 
+    @Override
     public void beDisabled() {
       for (final UIPropertyBinding binding : myBindings) {
         binding.beDisabled();
       }
     }
 
+    @Override
     public void beEnabled() {
       for (final UIPropertyBinding binding : myBindings) {
         binding.beEnabled();
       }
     }
 
+    @Override
     public void addAllPropertiesTo(Collection<AbstractProperty> properties) {
       for (final UIPropertyBinding binding : myBindings) {
         binding.addAllPropertiesTo(properties);
@@ -128,17 +121,19 @@ public abstract class UIPropertyBinding {
     }
 
     public <T> OrderListBinding<T> bindList(JList list, ListProperty<T> property) {
-      OrderListBinding<T> binding = new OrderListBinding<T>(list, property);
+      OrderListBinding<T> binding = new OrderListBinding<>(list, property);
       addBinding(binding);
       return binding;
     }
 
     public void bindString(JLabel label, AbstractProperty<String> property) {
       addBinding(new ComponentBinding<JLabel, AbstractProperty<String>>(label, property) {
+        @Override
         public void loadValues(AbstractProperty.AbstractPropertyContainer container) {
           getComponent().setText(getProperty().get(container));
         }
 
+        @Override
         public void apply(AbstractProperty.AbstractPropertyContainer container) {
         }
       });
@@ -154,14 +149,17 @@ public abstract class UIPropertyBinding {
       myProperty = property;
     }
 
+    @Override
     public void beDisabled() {
       myComponent.setEnabled(false);
     }
 
+    @Override
     public void beEnabled() {
       myComponent.setEnabled(true);
     }
 
+    @Override
     public void addAllPropertiesTo(Collection<AbstractProperty> properties) {
       properties.add(myProperty);
     }
@@ -183,12 +181,14 @@ public abstract class UIPropertyBinding {
       myChangeSupport = ChangeValueSupport.create(toggleButton, ListenerInstaller.TOGGLE_BUTTON, property.getName());
     }
 
+    @Override
     public void loadValues(AbstractProperty.AbstractPropertyContainer container) {
       myChangeSupport.stop();
       getComponent().setSelected(getProperty().get(container).booleanValue());
       myChangeSupport.start();
     }
 
+    @Override
     public void apply(AbstractProperty.AbstractPropertyContainer container) {
       getProperty().set(container, getComponent().isSelected());
     }
@@ -197,6 +197,7 @@ public abstract class UIPropertyBinding {
       myChangeSupport.addListener(listener);
     }
 
+    @Override
     public void beforeClose(AbstractProperty.AbstractPropertyContainer container) {
       myChangeSupport.stop();
     }
@@ -205,18 +206,22 @@ public abstract class UIPropertyBinding {
   private static abstract class ListenerInstaller<Comp extends JComponent, Listener> {
     public static final ListenerInstaller<JToggleButton, ItemListener> TOGGLE_BUTTON =
       new ListenerInstaller<JToggleButton, ItemListener>() {
+        @Override
         public ItemListener create(final PropertyChangeSupport changeSupport, final String propertyName) {
           return new ItemListener() {
+            @Override
             public void itemStateChanged(ItemEvent e) {
               changeSupport.firePropertyChange(propertyName, null, null);
             }
           };
         }
 
+        @Override
         public void setListener(JToggleButton component, ItemListener listener) {
           component.getModel().addItemListener(listener);
         }
 
+        @Override
         public void removeListener(JToggleButton component, ItemListener listener) {
           component.getModel().removeItemListener(listener);
         }
@@ -230,18 +235,22 @@ public abstract class UIPropertyBinding {
 
     public final static ListenerInstaller<JTextComponent, DocumentListener> TEXT_LISTENER_INSTALLER =
       new ListenerInstaller<JTextComponent, DocumentListener>() {
+        @Override
         public DocumentListener create(final PropertyChangeSupport changeSupport, final String propertyName) {
           return new DocumentAdapter() {
-            protected void textChanged(DocumentEvent e) {
+            @Override
+            protected void textChanged(@NotNull DocumentEvent e) {
               changeSupport.firePropertyChange(propertyName, null, null);
             }
           };
         }
 
+        @Override
         public void setListener(JTextComponent textComponent, DocumentListener documentListener) {
           textComponent.getDocument().addDocumentListener(documentListener);
         }
 
+        @Override
         public void removeListener(JTextComponent textComponent, DocumentListener documentListener) {
           textComponent.getDocument().removeDocumentListener(documentListener);
         }
@@ -255,7 +264,7 @@ public abstract class UIPropertyBinding {
     private Listener myChangeListener = null;
     private final String myPropertyName;
 
-    public ChangeValueSupport(Comp component, ListenerInstaller<Comp, Listener> installer, String propertyName) {
+    ChangeValueSupport(Comp component, ListenerInstaller<Comp, Listener> installer, String propertyName) {
       myComponent = component;
       myPropertyName = propertyName;
       myChangeSupport = new PropertyChangeSupport(myPropertyName);
@@ -299,10 +308,12 @@ public abstract class UIPropertyBinding {
       myChangeSupport = ChangeValueSupport.create(textComponent, ListenerInstaller.TEXT_LISTENER_INSTALLER, property.getName());
     }
 
+    @Override
     public void apply(AbstractProperty.AbstractPropertyContainer container) {
       getProperty().set(container, getComponent().getText());
     }
 
+    @Override
     public void loadValues(AbstractProperty.AbstractPropertyContainer container) {
       myChangeSupport.stop();
       loadValuesImpl(container);
@@ -317,20 +328,23 @@ public abstract class UIPropertyBinding {
       myChangeSupport.addListener(listener);
     }
 
+    @Override
     public void beforeClose(AbstractProperty.AbstractPropertyContainer container) {
       myChangeSupport.stop();
     }
   }
 
   private static class IntTextBinding extends ComponentBinding<JTextComponent, AbstractProperty<Integer>> {
-    public IntTextBinding(JTextComponent textComponent, AbstractProperty<Integer> property) {
+    IntTextBinding(JTextComponent textComponent, AbstractProperty<Integer> property) {
       super(textComponent, property);
     }
 
+    @Override
     public void loadValues(AbstractProperty.AbstractPropertyContainer container) {
       getComponent().setText(getProperty().get(container).toString());
     }
 
+    @Override
     public void apply(AbstractProperty.AbstractPropertyContainer container) {
       int value;
       try {
@@ -346,7 +360,7 @@ public abstract class UIPropertyBinding {
   public static class TableListBinding<T> extends ComponentBinding<JTable, ListProperty<T>> {
     private final ListProperty<T> myProperty;
     private final ListTableModel<T> myModel;
-    private final Collection<JComponent> myComponents = new ArrayList<JComponent>();
+    private final Collection<JComponent> myComponents = new ArrayList<>();
     private StorageProperty myColumnWidthProperty;
 
     public TableListBinding(final JTable table, ColumnInfo[] columns, ListProperty<T> property) {
@@ -357,7 +371,7 @@ public abstract class UIPropertyBinding {
       header.setReorderingAllowed(false);
       header.setResizingAllowed(false);
       TableColumnModel columnModel = table.getColumnModel();
-      myModel = new ListTableModel<T>(columns);
+      myModel = new ListTableModel<>(columns);
       myModel.setSortable(false);
       table.setModel(myModel);
       for (int i = 0; i < columns.length; i++) {
@@ -376,6 +390,7 @@ public abstract class UIPropertyBinding {
       table.setSurrendersFocusOnKeystroke(true);
       // support for sorting
       myModel.addTableModelListener(new TableModelListener() {
+        @Override
         public void tableChanged(final TableModelEvent e) {
           final JTableHeader header = getComponent().getTableHeader();
           if (header != null) {
@@ -385,6 +400,7 @@ public abstract class UIPropertyBinding {
       });
     }
 
+    @Override
     public void loadValues(AbstractProperty.AbstractPropertyContainer container) {
       if (myColumnWidthProperty != null) {
         BaseTableView.restoreWidth(myColumnWidthProperty.get(container), getComponent().getColumnModel());
@@ -404,22 +420,26 @@ public abstract class UIPropertyBinding {
       TableUtil.ensureSelectionExists(getComponent());
     }
 
+    @Override
     public void beDisabled() {
       for (JComponent component : myComponents) {
         component.setEnabled(false);
       }
     }
 
+    @Override
     public void beEnabled() {
       for (JComponent component : myComponents) {
         component.setEnabled(true);
       }
     }
 
+    @Override
     public void apply(AbstractProperty.AbstractPropertyContainer container) {
       myProperty.set(container, myModel.getItems());
     }
 
+    @Override
     public void beforeClose(AbstractProperty.AbstractPropertyContainer container) {
       if (myColumnWidthProperty != null) {
         BaseTableView.storeWidth(myColumnWidthProperty.get(container), getComponent().getColumnModel());
@@ -434,6 +454,7 @@ public abstract class UIPropertyBinding {
     public void addAddFacility(JButton addButton, final Factory<T> factory) {
       myComponents.add(addButton);
       addButton.addActionListener(new ActionListener() {
+        @Override
         public void actionPerformed(ActionEvent e) {
           JTable table = getComponent();
           if (table.isEditing() && !table.getCellEditor().stopCellEditing()) {
@@ -443,7 +464,7 @@ public abstract class UIPropertyBinding {
           if (item == null) {
             return;
           }
-          ArrayList<T> items = new ArrayList<T>(myModel.getItems());
+          ArrayList<T> items = new ArrayList<>(myModel.getItems());
           items.add(item);
           myModel.setItems(items);
           int newIndex = myModel.indexOf(item);
@@ -470,11 +491,13 @@ public abstract class UIPropertyBinding {
     public void addRemoveFacility(final JButton button, final Condition<T> removable) {
       myComponents.add(button);
       button.addActionListener(new ActionListener() {
+        @Override
         public void actionPerformed(ActionEvent e) {
           TableUtil.removeSelectedItems(getComponent());
         }
       });
       getComponent().getSelectionModel().addListSelectionListener(new ListSelectionListener() {
+        @Override
         public void valueChanged(ListSelectionEvent e) {
           updateRemoveButton(button, removable);
         }
@@ -499,7 +522,7 @@ public abstract class UIPropertyBinding {
   }
 
   private static abstract class BaseListBinding<Item> extends UIPropertyBinding {
-    private final ArrayList<JComponent> myComponents = new ArrayList<JComponent>();
+    private final ArrayList<JComponent> myComponents = new ArrayList<>();
     private final JList myList;
     private final ListProperty<Item> myProperty;
 
@@ -509,12 +532,14 @@ public abstract class UIPropertyBinding {
       myComponents.add(myList);
     }
 
+    @Override
     public void beDisabled() {
       for (final JComponent component : myComponents) {
         component.setEnabled(false);
       }
     }
 
+    @Override
     public void beEnabled() {
       for (final JComponent component : myComponents) {
         component.setEnabled(true);
@@ -525,15 +550,17 @@ public abstract class UIPropertyBinding {
       myComponents.add(component);
     }
 
+    @Override
     public void apply(AbstractProperty.AbstractPropertyContainer container) {
       ListModel model = myList.getModel();
-      ArrayList<Item> list = new ArrayList<Item>();
+      ArrayList<Item> list = new ArrayList<>();
       for (int i = 0; i < model.getSize(); i++) {
         list.add((Item)model.getElementAt(i));
       }
       myProperty.set(container, list);
     }
 
+    @Override
     public void addAllPropertiesTo(Collection<AbstractProperty> properties) {
       properties.add(myProperty);
     }
@@ -550,12 +577,13 @@ public abstract class UIPropertyBinding {
   public static class SortedListBinding<T extends JDOMExternalizable> extends BaseListBinding<T> {
     public SortedListBinding(JList list, ListProperty<T> property, Comparator<T> comparator) {
       super(property, list);
-      list.setModel(new SortedListModel<T>(comparator));
+      list.setModel(new SortedListModel<>(comparator));
     }
 
+    @Override
     public void loadValues(AbstractProperty.AbstractPropertyContainer container) {
       getModel().setAll(getProperty().get(container));
-      ListScrollingUtil.ensureSelectionExists(getList());
+      ScrollingUtil.ensureSelectionExists(getList());
     }
 
     private SortedListModel<T> getModel() {
@@ -569,6 +597,7 @@ public abstract class UIPropertyBinding {
       list.setModel(new DefaultListModel());
     }
 
+    @Override
     public void loadValues(AbstractProperty.AbstractPropertyContainer container) {
       DefaultListModel model = getModel();
       model.clear();
@@ -577,7 +606,7 @@ public abstract class UIPropertyBinding {
         Object item = iterator.next();
         model.addElement(item);
       }
-      ListScrollingUtil.ensureSelectionExists(getList());
+      ScrollingUtil.ensureSelectionExists(getList());
     }
 
     private DefaultListModel getModel() {
@@ -586,6 +615,7 @@ public abstract class UIPropertyBinding {
 
     public void addAddManyFacility(JButton button, final Factory<List<T>> factory) {
       button.addActionListener(new ActionListener() {
+        @Override
         public void actionPerformed(ActionEvent e) {
           List<T> items = factory.create();
           getList().requestFocusInWindow();
@@ -594,7 +624,7 @@ public abstract class UIPropertyBinding {
           }
           for (final T item : items) {
             getModel().addElement(item);
-            ListScrollingUtil.selectItem(getList(), item);
+            ScrollingUtil.selectItem(getList(), item);
           }
         }
       });
@@ -607,10 +637,12 @@ public abstract class UIPropertyBinding {
       super(comboBox, property);
     }
 
+    @Override
     public void loadValues(AbstractProperty.AbstractPropertyContainer container) {
       getComponent().getModel().setSelectedItem(getProperty().get(container));
     }
 
+    @Override
     public void apply(AbstractProperty.AbstractPropertyContainer container) {
       getProperty().set(container, (String)getComponent().getSelectedItem());
     }

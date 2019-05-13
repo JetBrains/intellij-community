@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lang;
 
 import com.intellij.lexer.Lexer;
@@ -66,12 +52,15 @@ public interface ParserDefinition {
    * @return the set of whitespace token types.
    */
   @NotNull
-  TokenSet getWhitespaceTokens();
+  default TokenSet getWhitespaceTokens() {
+    return TokenSet.WHITE_SPACE;
+  }
 
   /**
    * Returns the set of token types which are treated as comments by the PSI builder.
    * Tokens of those types are automatically skipped by PsiBuilder. Also, To Do patterns
    * are searched in the text of tokens of those types.
+   * This token set shouldn't contain types of non-leaf comment inner elements.
    *
    * @return the set of comment token types.
    */
@@ -91,6 +80,15 @@ public interface ParserDefinition {
    * Creates a PSI element for the specified AST node. The AST tree is a simple, semantic-free
    * tree of AST nodes which is built during the PsiBuilder parsing pass. The PSI tree is built
    * over the AST tree and includes elements of different types for different language constructs.
+   *
+   * !!!WARNING!!! PSI element types should be unambiguously determined by AST node element types.
+   * You can not produce different PSI elements from AST nodes of the same types (e.g. based on AST node content).
+   * Typically, your code should be as simple as that:
+   * <pre>{@code
+   *   if (node.getElementType == MY_ELEMENT_TYPE) {
+   *     return new MyPsiElement(node);
+   *   }
+   * }</pre>
    *
    * @param node the node for which the PSI element should be returned.
    * @return the PSI element matching the element type of the AST node.
@@ -114,14 +112,24 @@ public interface ParserDefinition {
    * @param left  the first token to check.
    * @param right the second token to check.
    * @return the spacing requirements.
-   * @since 6.0
    */
-  SpaceRequirements spaceExistanceTypeBetweenTokens(ASTNode left, ASTNode right);
+  default SpaceRequirements spaceExistenceTypeBetweenTokens(ASTNode left, ASTNode right) {
+    //noinspection deprecation
+    return spaceExistanceTypeBetweenTokens(left, right);
+  }
+
+  /**
+   * @deprecated Override {@link ParserDefinition#spaceExistenceTypeBetweenTokens(ASTNode, ASTNode)} instead
+   */
+  @Deprecated
+  default SpaceRequirements spaceExistanceTypeBetweenTokens(ASTNode left, ASTNode right) {
+    return SpaceRequirements.MAY;
+  }
 
   /**
    * Requirements for spacing between tokens.
    *
-   * @see ParserDefinition#spaceExistanceTypeBetweenTokens
+   * @see ParserDefinition#spaceExistenceTypeBetweenTokens
    */
   enum SpaceRequirements {
     /** Whitespace between tokens is optional. */

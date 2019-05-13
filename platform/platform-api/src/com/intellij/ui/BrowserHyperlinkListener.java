@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,8 @@ import javax.swing.event.HyperlinkEvent;
  * @author yole
 */
 public class BrowserHyperlinkListener extends HyperlinkAdapter {
+  public static final BrowserHyperlinkListener INSTANCE = new BrowserHyperlinkListener();
+
   @Override
   protected void hyperlinkActivated(HyperlinkEvent e) {
     BrowserUtil.browse(e.getDescription());

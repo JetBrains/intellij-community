@@ -18,6 +18,8 @@ package com.intellij.packaging.impl.elements;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.packaging.elements.PackagingElement;
+import com.intellij.packaging.elements.PackagingElementOutputKind;
+import com.intellij.packaging.elements.PackagingElementResolvingContext;
 import com.intellij.packaging.elements.PackagingElementType;
 import com.intellij.util.xmlb.annotations.Attribute;
 import org.jetbrains.annotations.NonNls;
@@ -59,5 +61,33 @@ public abstract class FileOrDirectoryCopyPackagingElement<T extends FileOrDirect
 
   public void setFilePath(String filePath) {
     myFilePath = filePath;
+  }
+
+  @NotNull
+  @Override
+  public PackagingElementOutputKind getFilesKind(PackagingElementResolvingContext context) {
+    VirtualFile file = findFile();
+    if (file == null) return PackagingElementOutputKind.OTHER;
+
+    if (file.isDirectory() && file.isInLocalFileSystem()) {
+      boolean containsDirectories = false;
+      boolean containsJars = false;
+      for (VirtualFile child : file.getChildren()) {
+        if (child.isDirectory() && child.isInLocalFileSystem()) {
+          containsDirectories |= true;
+        }
+        else {
+          containsJars |= isJar(child);
+        }
+        if (containsDirectories && containsJars) break;
+      }
+      return new PackagingElementOutputKind(containsDirectories, containsJars);
+    }
+    return isJar(file) ? PackagingElementOutputKind.JAR_FILES : PackagingElementOutputKind.OTHER;
+  }
+
+  private static boolean isJar(VirtualFile file) {
+    final String ext = file.getExtension();
+    return ext != null && ext.equalsIgnoreCase("jar");
   }
 }

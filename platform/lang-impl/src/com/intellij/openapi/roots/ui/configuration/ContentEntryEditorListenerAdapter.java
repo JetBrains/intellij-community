@@ -22,7 +22,6 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Oct 14
  * @author 2003
  */
 public class ContentEntryEditorListenerAdapter implements ContentEntryEditor.ContentEntryEditorListener{
@@ -39,7 +38,7 @@ public class ContentEntryEditorListenerAdapter implements ContentEntryEditor.Con
   }
 
   @Override
-  public void sourceFolderRemoved(@NotNull ContentEntryEditor editor, VirtualFile file, boolean isTestSource) {
+  public void sourceFolderRemoved(@NotNull ContentEntryEditor editor, VirtualFile file) {
   }
 
   @Override
@@ -47,7 +46,7 @@ public class ContentEntryEditorListenerAdapter implements ContentEntryEditor.Con
   }
 
   @Override
-  public void folderIncluded(@NotNull ContentEntryEditor editor, VirtualFile file) {
+  public void folderIncluded(@NotNull ContentEntryEditor editor, String fileUrl) {
   }
 
   @Override
@@ -55,6 +54,6 @@ public class ContentEntryEditorListenerAdapter implements ContentEntryEditor.Con
   }
 
   @Override
-  public void packagePrefixSet(@NotNull ContentEntryEditor editor, @NotNull SourceFolder folder) {
+  public void sourceRootPropertiesChanged(@NotNull ContentEntryEditor editor, @NotNull SourceFolder folder) {
   }
 }

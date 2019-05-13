@@ -27,7 +27,7 @@ PsiJavaFile:GenericMethod.java
         PsiJavaToken:LT('<')
         PsiTypeParameter:E
           PsiIdentifier:E('E')
-          PsiElement(EXTENDS_BOUND_LIST)
+          PsiReferenceList
             <empty list>
         PsiJavaToken:GT('>')
       PsiWhiteSpace(' ')
@@ -50,7 +50,7 @@ PsiJavaFile:GenericMethod.java
         PsiJavaToken:LT('<')
         PsiTypeParameter:E
           PsiIdentifier:E('E')
-          PsiElement(EXTENDS_BOUND_LIST)
+          PsiReferenceList
             <empty list>
         PsiJavaToken:GT('>')
       PsiWhiteSpace(' ')
@@ -77,7 +77,7 @@ PsiJavaFile:GenericMethod.java
         PsiTypeParameter:E1
           PsiIdentifier:E1('E1')
           PsiWhiteSpace(' ')
-          PsiElement(EXTENDS_BOUND_LIST)
+          PsiReferenceList
             PsiKeyword:extends('extends')
             PsiWhiteSpace(' ')
             PsiJavaCodeReferenceElement:Integer
@@ -89,7 +89,7 @@ PsiJavaFile:GenericMethod.java
         PsiTypeParameter:E2
           PsiIdentifier:E2('E2')
           PsiWhiteSpace(' ')
-          PsiElement(EXTENDS_BOUND_LIST)
+          PsiReferenceList
             PsiKeyword:extends('extends')
             PsiWhiteSpace(' ')
             PsiJavaCodeReferenceElement:Runnable

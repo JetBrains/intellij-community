@@ -20,14 +20,10 @@ import com.intellij.ide.projectView.PresentationData;
 import com.intellij.ide.projectView.ViewSettings;
 import com.intellij.ide.projectView.impl.nodes.PackageElement;
 import com.intellij.ide.projectView.impl.nodes.PackageElementNode;
-import com.intellij.ide.todo.HighlightedRegionProvider;
 import com.intellij.ide.todo.TodoFileDirAndModuleComparator;
 import com.intellij.ide.todo.TodoTreeBuilder;
 import com.intellij.ide.todo.TodoTreeStructure;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
-import com.intellij.openapi.editor.colors.EditorColorsScheme;
-import com.intellij.openapi.editor.markup.TextAttributes;
-import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
@@ -38,34 +34,28 @@ import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiPackage;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.ui.HighlightedRegion;
-import com.intellij.usageView.UsageTreeColors;
-import com.intellij.usageView.UsageTreeColorsScheme;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
 import java.util.*;
 
-public final class TodoPackageNode extends PackageElementNode implements HighlightedRegionProvider {
-  private final ArrayList<HighlightedRegion> myHighlightedRegions;
+public final class TodoPackageNode extends PackageElementNode {
   private final TodoTreeBuilder myBuilder;
   @Nullable private final String myPresentationName;
 
   public TodoPackageNode(@NotNull Project project,
-                         PackageElement element,
+                         @NotNull PackageElement element,
                          TodoTreeBuilder builder) {
     this(project, element, builder,null);
   }
 
   public TodoPackageNode(@NotNull Project project,
-                         PackageElement element,
+                         @NotNull PackageElement element,
                          TodoTreeBuilder builder,
                          @Nullable String name) {
     super(project, element, ViewSettings.DEFAULT);
     myBuilder = builder;
-    myHighlightedRegions = new ArrayList<HighlightedRegion>(2);
     if (element != null && name == null){
       final PsiPackage aPackage = element.getPackage();
       myPresentationName = aPackage.getName();
@@ -75,14 +65,8 @@ public final class TodoPackageNode extends PackageElementNode implements Highlig
     }
   }
 
-
   @Override
-  public ArrayList<HighlightedRegion> getHighlightedRegions() {
-    return myHighlightedRegions;
-  }
-
-  @Override
-  protected void update(PresentationData data) {
+  protected void update(@NotNull PresentationData data) {
     super.update(data);
     final PackageElement packageElement = getValue();
 
@@ -107,25 +91,9 @@ public final class TodoPackageNode extends PackageElementNode implements Highlig
         newName = myPresentationName != null ? myPresentationName : "";
       }
 
-      int nameEndOffset = newName.length();
       int todoItemCount = getTodoItemCount(packageElement);
-      newName = IdeBundle.message("node.todo.group", newName, todoItemCount, fileCount);
 
-      myHighlightedRegions.clear();
-
-      TextAttributes textAttributes = new TextAttributes();
-      Color newColor = null;
-
-      if (CopyPasteManager.getInstance().isCutElement(packageElement)) {
-        newColor = CopyPasteManager.CUT_COLOR;
-      }
-      textAttributes.setForegroundColor(newColor);
-      myHighlightedRegions.add(new HighlightedRegion(0, nameEndOffset, textAttributes));
-
-      EditorColorsScheme colorsScheme = UsageTreeColorsScheme.getInstance().getScheme();
-      myHighlightedRegions.add(
-        new HighlightedRegion(nameEndOffset, newName.length(), colorsScheme.getAttributes(UsageTreeColors.NUMBER_OF_USAGES)));
-
+      data.setLocationString(IdeBundle.message("node.todo.group", todoItemCount));
       data.setPresentableText(newName);
     }
     catch (IndexNotReadyException e) {
@@ -199,7 +167,7 @@ public final class TodoPackageNode extends PackageElementNode implements Highlig
   @Override
   @NotNull
   public Collection<AbstractTreeNode> getChildren() {
-    ArrayList<AbstractTreeNode> children = new ArrayList<AbstractTreeNode>();
+    ArrayList<AbstractTreeNode> children = new ArrayList<>();
     final Project project = getProject();
     final ProjectFileIndex projectFileIndex = ProjectRootManager.getInstance(project).getFileIndex();
     final PsiPackage psiPackage = getValue().getPackage();
@@ -257,7 +225,6 @@ public final class TodoPackageNode extends PackageElementNode implements Highlig
         TodoFileNode todoFileNode = new TodoFileNode(getProject(), psiFile, myBuilder, false);
         if (ArrayUtil.find(psiPackage.getDirectories(), _dir) > -1 && !children.contains(todoFileNode)) {
           children.add(todoFileNode);
-          continue;
         }
       }
     }
@@ -267,16 +234,16 @@ public final class TodoPackageNode extends PackageElementNode implements Highlig
 
   /**
    * @return read-only iterator of all valid PSI files that can have T.O.D.O items
-   *         and which are located under specified <code>psiDirctory</code>.
+   *         and which are located under specified {@code psiDirctory}.
    */
   public Iterator<PsiFile> getFiles(PackageElement packageElement) {
-    ArrayList<PsiFile> psiFileList = new ArrayList<PsiFile>();
+    ArrayList<PsiFile> psiFileList = new ArrayList<>();
     GlobalSearchScope scope = packageElement.getModule() != null ? GlobalSearchScope.moduleScope(packageElement.getModule()) :
                               GlobalSearchScope.projectScope(myProject);
     final PsiDirectory[] directories = packageElement.getPackage().getDirectories(scope);
     for (PsiDirectory directory : directories) {
       Iterator<PsiFile> files = myBuilder.getFiles(directory, false);
-      for (;files.hasNext();) {
+      while (files.hasNext()) {
         psiFileList.add(files.next());
       }
     }

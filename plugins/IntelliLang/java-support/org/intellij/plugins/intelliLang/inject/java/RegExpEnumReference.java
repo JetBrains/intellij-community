@@ -20,7 +20,6 @@ import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiLiteralExpression;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.Function;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.containers.ContainerUtil;
 import org.intellij.plugins.intelliLang.util.RegExpUtil;
@@ -37,28 +36,27 @@ import java.util.Set;
 final class RegExpEnumReference extends StringLiteralReference {
   private final String myPattern;
 
-  public RegExpEnumReference(PsiLiteralExpression expression, @NotNull String pattern) {
+  RegExpEnumReference(PsiLiteralExpression expression, @NotNull String pattern) {
     super(expression);
     myPattern = pattern;
   }
 
+  @Override
   @NotNull
   public Object[] getVariants() {
     final Set<String> values = getEnumValues();
     if (values == null || values.size() == 0) {
       return ArrayUtil.EMPTY_OBJECT_ARRAY;
     }
-    return ContainerUtil.map2Array(values, new Function<String, Object>() {
-      public Object fun(String s) {
-        return LookupElementBuilder.create(s).withIcon(PlatformIcons.ENUM_ICON);
-      }
-    });
+    return ContainerUtil.map2Array(values, s -> LookupElementBuilder.create(s).withIcon(PlatformIcons.ENUM_ICON));
   }
 
+  @Override
   public boolean isSoft() {
     return true;
   }
 
+  @Override
   @Nullable
   public PsiElement resolve() {
     final Set<String> values = getEnumValues();

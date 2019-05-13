@@ -17,12 +17,10 @@
 package com.intellij.history.integration.ui.models;
 
 import com.intellij.diff.Block;
-import com.intellij.diff.FindBlock;
 import com.intellij.history.core.Content;
 import com.intellij.history.core.revisions.Revision;
 import com.intellij.history.core.tree.Entry;
 import com.intellij.history.integration.IdeaGateway;
-import com.intellij.util.diff.FilesTooBigForDiffException;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.HashMap;
@@ -33,19 +31,19 @@ public class SelectionCalculator {
   private static final Block EMPTY_BLOCK = new Block("", 0, 0);
   
   private final IdeaGateway myGateway;
-  private final List<Revision> myRevisions;
+  private final List<? extends Revision> myRevisions;
   private final int myFromLine;
   private final int myToLine;
-  private final Map<Integer, Block> myCache = new HashMap<Integer, Block>();
+  private final Map<Integer, Block> myCache = new HashMap<>();
 
-  public SelectionCalculator(IdeaGateway gw, List<Revision> rr, int fromLine, int toLine) {
+  public SelectionCalculator(IdeaGateway gw, List<? extends Revision> rr, int fromLine, int toLine) {
     myGateway = gw;
     myRevisions = rr;
     myFromLine = fromLine;
     myToLine = toLine;
   }
 
-  public boolean canCalculateFor(Revision r, Progress p) throws FilesTooBigForDiffException {
+  public boolean canCalculateFor(Revision r, Progress p) {
     try {
       doGetSelectionFor(r, p);
     }
@@ -55,16 +53,16 @@ public class SelectionCalculator {
     return true;
   }
 
-  public Block getSelectionFor(Revision r, Progress p) throws FilesTooBigForDiffException {
+  public Block getSelectionFor(Revision r, Progress p) {
     return doGetSelectionFor(r, p);
   }
 
-  private Block doGetSelectionFor(Revision r, Progress p) throws FilesTooBigForDiffException {
+  private Block doGetSelectionFor(Revision r, Progress p) {
     int target = myRevisions.indexOf(r);
     return getSelectionFor(target, target + 1, p);
   }
 
-  private Block getSelectionFor(int revisionIndex, int totalRevisions, Progress p) throws FilesTooBigForDiffException {
+  private Block getSelectionFor(int revisionIndex, int totalRevisions, Progress p) {
     Block cached = myCache.get(revisionIndex);
     if (cached != null) return cached;
 
@@ -75,7 +73,7 @@ public class SelectionCalculator {
     if (content == null) {
       result = EMPTY_BLOCK; 
     } else  if (revisionIndex == 0) {
-      result = new Block(content, myFromLine, myToLine);
+      result = new Block(content, myFromLine, myToLine + 1);
     }
     else {
       Block prev = EMPTY_BLOCK;
@@ -84,7 +82,7 @@ public class SelectionCalculator {
         i--;
         prev = getSelectionFor(i, totalRevisions, p);
       }
-      result = new FindBlock(content, prev).getBlockInThePrevVersion();
+      result = prev.createPreviousBlock(content);
     }
 
     myCache.put(revisionIndex, result);

@@ -17,6 +17,7 @@
 package org.intellij.plugins.relaxNG.validation;
 
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
@@ -24,6 +25,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.XmlElementVisitor;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.xml.*;
+import com.intellij.util.ArrayUtil;
 import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.NotNull;
 import org.xml.sax.ContentHandler;
@@ -33,18 +35,14 @@ import org.xml.sax.ext.Locator2Impl;
 
 import java.util.Map;
 
-/**
- * Created by IntelliJ IDEA.
-* User: sweinreuter
-* Date: 30.07.2007
-*/
 class Psi2SaxAdapter extends XmlElementVisitor implements PsiElementProcessor<PsiElement> {
   private final ContentHandler myHandler;
 
-  public Psi2SaxAdapter(ContentHandler handler) {
+  Psi2SaxAdapter(ContentHandler handler) {
     myHandler = handler;
   }
 
+  @Override
   public void visitXmlElement(XmlElement element) {
     if (element instanceof XmlEntityRef) {
       XmlUtil.processXmlElements(element, this, false, true);
@@ -52,6 +50,7 @@ class Psi2SaxAdapter extends XmlElementVisitor implements PsiElementProcessor<Ps
     super.visitXmlElement(element);
   }
 
+  @Override
   public void visitXmlToken(XmlToken token) {
     if (token.getTokenType() == XmlTokenType.XML_DATA_CHARACTERS) {
       handleText(token, token.getText());
@@ -67,11 +66,13 @@ class Psi2SaxAdapter extends XmlElementVisitor implements PsiElementProcessor<Ps
     }
   }
 
+  @Override
   public boolean execute(@NotNull PsiElement element) {
     element.accept(this);
     return true;
   }
 
+  @Override
   public void visitXmlDocument(XmlDocument document) {
     try {
       myHandler.startDocument();
@@ -85,12 +86,13 @@ class Psi2SaxAdapter extends XmlElementVisitor implements PsiElementProcessor<Ps
     }
   }
 
+  @Override
   public void visitXmlTag(XmlTag tag) {
     try {
       setLocation(tag);
 
       final Map<String,String> map = tag.getLocalNamespaceDeclarations();
-      final String[] prefixes = map.keySet().toArray(new String[map.size()]);
+      final String[] prefixes = ArrayUtil.toStringArray(map.keySet());
       for (String prefix : prefixes) {
         myHandler.startPrefixMapping(prefix, map.get(prefix));
       }
@@ -127,6 +129,7 @@ class Psi2SaxAdapter extends XmlElementVisitor implements PsiElementProcessor<Ps
     }
   }
 
+  @Override
   public void visitXmlText(XmlText text) {
     handleText(text, text.getValue());
   }
@@ -143,7 +146,7 @@ class Psi2SaxAdapter extends XmlElementVisitor implements PsiElementProcessor<Ps
     }
 
     final Locator2Impl locator = new Locator2Impl();
-    locator.setSystemId(RngParser.reallyFixIDEAUrl(virtualFile.getUrl()));
+    locator.setSystemId(VfsUtilCore.fixIDEAUrl(virtualFile.getUrl()));
 
     final int offset = text.getTextRange().getEndOffset();
     final int lineNumber = document.getLineNumber(offset);

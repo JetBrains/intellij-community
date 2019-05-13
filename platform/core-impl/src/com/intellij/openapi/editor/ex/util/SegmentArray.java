@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,16 +21,16 @@ import org.jetbrains.annotations.NotNull;
 /**
  * This class is a data structure specialized for working with the indexed segments, i.e. it holds numerous mappings like
  * {@code 'index <-> (start; end)'} and provides convenient way for working with them, e.g. find index by particular offset that
- * belongs to target <code>(start; end)</code> segment etc.
+ * belongs to target {@code (start; end)} segment etc.
  * <p/>
  * Not thread-safe.
  */
 public class SegmentArray {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.editor.ex.util.SegmentArray");
-  private int[] myStarts;
-  private int[] myEnds;
+  protected int[] myStarts;
+  protected int[] myEnds;
 
-  protected int mySegmentCount = 0;
+  protected int mySegmentCount;
   protected static final int INITIAL_SIZE = 64;
 
   protected SegmentArray() {
@@ -76,7 +76,7 @@ public class SegmentArray {
   }
 
   @NotNull
-  protected static int[] reallocateArray(@NotNull int[] array, int index) {
+  private static int[] reallocateArray(@NotNull int[] array, int index) {
     if (index < array.length) return array;
 
     int[] newArray = new int[calcCapacity(array.length, index)];
@@ -84,26 +84,36 @@ public class SegmentArray {
     return newArray;
   }
 
+  protected int noSegmentsAvailable(int offset) {
+    throw new IllegalStateException("no segments available. offset = " + offset);
+  }
+
+  protected int offsetOutOfRange(int offset, int lastValidOffset) {
+    throw new IndexOutOfBoundsException("Wrong offset: " + offset + ". Should be in range: [0, " + lastValidOffset + "]");
+  }
+
+  /**
+   * @throws IllegalStateException if a gap between segments is detected, or if there are no segments and an index for a positive offset is
+   * requested
+   */
   public final int findSegmentIndex(int offset) {
     if (mySegmentCount <= 0) {
-      if (offset == 0) return 0;
-      throw new IllegalStateException("no segments available. offset = "+offset);
+      return offset == 0 ? 0 : noSegmentsAvailable(offset);
     }
 
     final int lastValidOffset = getLastValidOffset();
-
     if (offset > lastValidOffset || offset < 0) {
-      throw new IndexOutOfBoundsException("Wrong offset: " + offset + ". Should be in range: [0, " + lastValidOffset + "]");
+      return offsetOutOfRange(offset, lastValidOffset);
     }
 
-    final int lastValidIndex = mySegmentCount - 1;
-    if (offset == lastValidOffset) return lastValidIndex;
+    int end = mySegmentCount - 1;
+    if (offset == lastValidOffset) {
+      return end;
+    }
 
     int start = 0;
-    int end = lastValidIndex;
-
-    while (start < end) {
-      int i = (start + end) / 2;
+    while (start <= end) {
+      int i = (start + end) >>> 1;
       if (offset < myStarts[i]) {
         end = i - 1;
       }
@@ -115,9 +125,14 @@ public class SegmentArray {
       }
     }
 
-    // This means that there is a gap at given offset
-    assert myStarts[start] <= offset && offset < myEnds[start] : start;
+    return segmentNotFound(offset, start);
+  }
 
+  protected int segmentNotFound(int offset, int start) {
+    // This means that there is a gap at given offset
+    if (offset < myStarts[start] || offset >= myEnds[start]) {
+      throw new IllegalStateException("Gap at offset " + offset + " near segment " + start);
+    } 
     return start;
   }
 

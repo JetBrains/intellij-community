@@ -21,9 +21,6 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * User: cdr
- */
 public class PackageEntry {
   private final String myPackageName;
   private final boolean myWithSubpackages;
@@ -31,7 +28,7 @@ public class PackageEntry {
 
   public PackageEntry(boolean isStatic, @NotNull @NonNls String packageName, boolean withSubpackages) {
     this.isStatic = isStatic;
-    myPackageName = packageName;
+    myPackageName = StringUtil.trimEnd(packageName, ".*");
     myWithSubpackages = withSubpackages;
   }
 

@@ -1,8 +1,24 @@
+/*
+ * Copyright 2000-2017 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package org.jetbrains.plugins.groovy.intentions.declaration;
 
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -31,7 +47,7 @@ public class GrIntroduceLocalVariableIntention extends Intention {
 
   private static boolean isTargetVisible(PsiElement element) {
     if (PsiUtil.isExpressionStatement(element) && element instanceof GrExpression) {
-      if (((GrExpression)element).getType() != PsiType.VOID) {
+      if (!PsiType.VOID.equals(((GrExpression)element).getType())) {
         if (PsiTreeUtil.getParentOfType(element, GrAssignmentExpression.class) == null) {
           return true;
         }
@@ -47,9 +63,15 @@ public class GrIntroduceLocalVariableIntention extends Intention {
   }
 
   @Override
-  protected void processIntention(@NotNull PsiElement element, Project project, Editor editor) throws IncorrectOperationException {
+  protected void processIntention(@NotNull final PsiElement element, @NotNull final Project project, final Editor editor) throws IncorrectOperationException {
     setSelection(editor, getTargetExpression(element));
-    new GrIntroduceVariableHandler().invoke(project, editor, element.getContainingFile(), null);
+    final PsiFile file = element.getContainingFile();
+    new GrIntroduceVariableHandler().invoke(project, editor, file, null);
+  }
+
+  @Override
+  public boolean startInWriteAction() {
+    return false;
   }
 
   @NotNull
@@ -57,10 +79,7 @@ public class GrIntroduceLocalVariableIntention extends Intention {
   protected PsiElementPredicate getElementPredicate() {
     return new PsiElementPredicate() {
       @Override
-      public boolean satisfiedBy(PsiElement element) {
-        if (element == null) {
-          return false;
-        }
+      public boolean satisfiedBy(@NotNull PsiElement element) {
         return getTargetExpression(element) != null;
       }
     };

@@ -1,4 +1,4 @@
-@Anno class Stub<A,B> {
+@Anno(a=b) class Stub<A,B> {
   def <T> T foo() {}
 }
 -----
@@ -6,12 +6,20 @@
   [Class definition : Stub]
     [Modifiers]
       [Annotation]
+        [Annotation arguments]
+          [Annotation member value pair]
     [Type parameter list]
       [Type parameter : A]
+        [Type extends bounds list]
       [Type parameter : B]
+        [Type extends bounds list]
+    [Extends clause]
+    [Implements clause]
     [Type definition body]
       [Method : foo]
         [Modifiers]
         [Type parameter list]
           [Type parameter : T]
+            [Type extends bounds list]
         [Parameter list]
+        [Throw clause]

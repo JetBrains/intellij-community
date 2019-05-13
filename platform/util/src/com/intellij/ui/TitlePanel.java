@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,10 +16,11 @@
 
 package com.intellij.ui;
 
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
-import javax.swing.border.EmptyBorder;
+import javax.swing.plaf.basic.BasicHTML;
 import java.awt.*;
 
 /**
@@ -42,27 +43,27 @@ public class TitlePanel extends CaptionPanel {
 
     myLabel = new EngravedLabel();
     if (UIUtil.isUnderAquaLookAndFeel()) {
-      myLabel.setFont(myLabel.getFont().deriveFont(12f));
+      myLabel.setFont(JBUI.Fonts.label(12));
     }
-    myLabel.setForeground(JBColor.foreground);
+    myLabel.setForeground(JBColor.foreground());
     myLabel.setHorizontalAlignment(SwingConstants.CENTER);
     myLabel.setVerticalAlignment(SwingConstants.CENTER);
-    myLabel.setBorder(new EmptyBorder(1, 2, 2, 2));
+    myLabel.setBorder(JBUI.Borders.empty(1, 10, 2, 10));
 
     add(myLabel, BorderLayout.CENTER);
 
     setActive(false);
   }
 
+  @Override
   public void setActive(final boolean active) {
     super.setActive(active);
     myLabel.setIcon(active ? myRegular : myInactive);
-    final Color foreground = UIUtil.getLabelForeground();
-    myLabel.setForeground(active ? foreground : Color.gray);
+    myLabel.setForeground(active ? UIUtil.getLabelForeground() : UIUtil.getLabelDisabledForeground());
   }
 
   public void setText(String titleText) {
-    myHtml = titleText.indexOf('<') >= 0;
+    myHtml = BasicHTML.isHTMLString(titleText);
     myLabel.setText(titleText);
   }
 
@@ -71,15 +72,18 @@ public class TitlePanel extends CaptionPanel {
     return new Dimension(10, getPreferredSize().height);
   }
 
+  @Override
   public Dimension getPreferredSize() {
     final String text = myLabel.getText();
-    if (text == null || text.trim().length() == 0) {
-      return new Dimension(0, 0);
+    if (text == null || text.trim().isEmpty()) {
+      return JBUI.emptySize();
     }
 
     final Dimension preferredSize = super.getPreferredSize();
-    if (!myHtml && preferredSize.width > 350) { // do not allow caption to extend parent container
-      return new Dimension(350, preferredSize.height);
+    preferredSize.height = JBUI.CurrentTheme.Popup.headerHeight(containsSettingsControls());
+    int maxWidth = JBUI.scale(350);
+    if (!myHtml && preferredSize.width > maxWidth) { // do not allow caption to extend parent container
+      return new Dimension(maxWidth, preferredSize.height);
     }
     
     return preferredSize;

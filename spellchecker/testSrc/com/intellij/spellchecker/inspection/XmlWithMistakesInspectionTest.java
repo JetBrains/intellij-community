@@ -27,4 +27,12 @@ public class XmlWithMistakesInspectionTest extends SpellcheckerInspectionTestCas
   public void testXml() {
     doTest("test.xml");
   }
+
+  public void testCharacterData() {
+    doTest("test.html");
+  }
+
+  public void testKnownAttributes() {
+    doTest("attributes.html");
+  }
 }

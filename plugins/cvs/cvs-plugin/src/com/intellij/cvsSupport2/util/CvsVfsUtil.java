@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -69,8 +69,13 @@ public class CvsVfsUtil {
     return LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file);
   }
 
+  @NotNull
   public static VirtualFile[] getChildrenOf(final VirtualFile directory) {
-    return directory.isValid() ? directory.getChildren() : null;
+    if (!directory.isValid()) {
+      return VirtualFile.EMPTY_ARRAY;
+    }
+    final VirtualFile[] children = directory.getChildren();
+    return (children == null) ? VirtualFile.EMPTY_ARRAY : children;
   }
 
   public static long getTimeStamp(final VirtualFile file) {

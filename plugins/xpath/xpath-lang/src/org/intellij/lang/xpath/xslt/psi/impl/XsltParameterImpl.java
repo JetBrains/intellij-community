@@ -42,10 +42,12 @@ public class XsltParameterImpl extends XsltVariableImpl implements XsltParameter
         return PlatformIcons.PARAMETER_ICON;
     }
 
+    @Override
     public boolean hasDefault() {
         return getValue() != null || !getTag().isEmpty();
     }
 
+    @Override
     public boolean isAbstract() {
         final boolean b = "true".equals(getTag().getAttributeValue("abstract", XsltSupport.PLUGIN_EXTENSIONS_NS));
         if (!b) {
@@ -55,6 +57,7 @@ public class XsltParameterImpl extends XsltVariableImpl implements XsltParameter
         return b;
     }
 
+    @Override
     @Nullable
     public XsltTemplate getTemplate() {
         return XsltCodeInsightUtil.getTemplate(getTag(), false);
@@ -80,7 +83,7 @@ public class XsltParameterImpl extends XsltVariableImpl implements XsltParameter
             return getDefaultUseScope();
         }
         final XmlFile file = (XmlFile)tag.getContainingFile();
-        if (!XsltIncludeIndex.processBackwardDependencies(file, new CommonProcessors.FindFirstProcessor<XmlFile>())) {
+        if (!XsltIncludeIndex.processBackwardDependencies(file, new CommonProcessors.FindFirstProcessor<>())) {
             // processor found something
             return getDefaultUseScope();
         }

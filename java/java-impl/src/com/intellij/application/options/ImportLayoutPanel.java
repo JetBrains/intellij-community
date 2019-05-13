@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,15 +17,19 @@ package com.intellij.application.options;
 
 import com.intellij.ide.highlighter.JavaHighlightingColors;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonShortcuts;
+import com.intellij.openapi.actionSystem.ShortcutSet;
 import com.intellij.openapi.application.ApplicationBundle;
-import com.intellij.openapi.editor.SyntaxHighlighterColors;
 import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.psi.codeStyle.PackageEntry;
 import com.intellij.psi.codeStyle.PackageEntryTable;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.IconUtil;
+import com.intellij.util.ui.JBUI;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -36,15 +40,13 @@ import javax.swing.table.TableCellEditor;
 import javax.swing.table.TableColumn;
 import javax.swing.table.TableModel;
 import java.awt.*;
-import java.awt.event.ItemEvent;
-import java.awt.event.ItemListener;
 
 /**
  * @author Max Medvedev
  */
 public abstract class ImportLayoutPanel extends JPanel {
   private final JBCheckBox myCbLayoutStaticImportsSeparately = new JBCheckBox("Layout static imports separately");
-  private JBTable myImportLayoutTable;
+  private final JBTable myImportLayoutTable;
 
   private final PackageEntryTable myImportLayoutList = new PackageEntryTable();
 
@@ -62,77 +64,70 @@ public abstract class ImportLayoutPanel extends JPanel {
 
   public ImportLayoutPanel() {
     super(new BorderLayout());
-    setBorder(IdeBorderFactory.createTitledBorder(ApplicationBundle.message("title.import.layout"), false, new Insets(0, 0, 0, 0)));
+    setBorder(IdeBorderFactory.createTitledBorder(ApplicationBundle.message("title.import.layout"), false, JBUI.emptyInsets()));
 
-    myCbLayoutStaticImportsSeparately.addItemListener(new ItemListener() {
-      public void itemStateChanged(ItemEvent e) {
-        if (areStaticImportsEnabled()) {
-          boolean found = false;
-          for (int i = myImportLayoutList.getEntryCount() - 1; i >= 0; i--) {
-            PackageEntry entry = myImportLayoutList.getEntryAt(i);
-            if (entry == PackageEntry.ALL_OTHER_STATIC_IMPORTS_ENTRY) {
-              found = true;
-              break;
-            }
-          }
-          if (!found) {
-            int index = myImportLayoutList.getEntryCount();
-            if (index != 0 && myImportLayoutList.getEntryAt(index - 1) != PackageEntry.BLANK_LINE_ENTRY) {
-              myImportLayoutList.addEntry(PackageEntry.BLANK_LINE_ENTRY);
-            }
-            myImportLayoutList.addEntry(PackageEntry.ALL_OTHER_STATIC_IMPORTS_ENTRY);
+    myCbLayoutStaticImportsSeparately.addItemListener(e -> {
+      if (areStaticImportsEnabled()) {
+        boolean found = false;
+        for (int i = myImportLayoutList.getEntryCount() - 1; i >= 0; i--) {
+          PackageEntry entry = myImportLayoutList.getEntryAt(i);
+          if (entry == PackageEntry.ALL_OTHER_STATIC_IMPORTS_ENTRY) {
+            found = true;
+            break;
           }
         }
-        else {
-          for (int i = myImportLayoutList.getEntryCount() - 1; i >= 0; i--) {
-            PackageEntry entry = myImportLayoutList.getEntryAt(i);
-            if (entry.isStatic()) {
-              myImportLayoutList.removeEntryAt(i);
-            }
+        if (!found) {
+          int index = myImportLayoutList.getEntryCount();
+          if (index != 0 && myImportLayoutList.getEntryAt(index - 1) != PackageEntry.BLANK_LINE_ENTRY) {
+            myImportLayoutList.addEntry(PackageEntry.BLANK_LINE_ENTRY);
           }
+          myImportLayoutList.addEntry(PackageEntry.ALL_OTHER_STATIC_IMPORTS_ENTRY);
         }
-        refresh();
       }
-    });
-    this.add(myCbLayoutStaticImportsSeparately, BorderLayout.NORTH);
-
-    this.add(
-      ToolbarDecorator.createDecorator(myImportLayoutTable = createTableForPackageEntries(myImportLayoutList, this))
-        .addExtraAction(new AnActionButton(ApplicationBundle.message("button.add.package"), IconUtil.getAddPackageIcon()) {
-          @Override
-          public void actionPerformed(AnActionEvent e) {
-            addPackageToImportLayouts();
+      else {
+        for (int i = myImportLayoutList.getEntryCount() - 1; i >= 0; i--) {
+          PackageEntry entry = myImportLayoutList.getEntryAt(i);
+          if (entry.isStatic()) {
+            myImportLayoutList.removeEntryAt(i);
           }
-        }).addExtraAction(new AnActionButton(ApplicationBundle.message("button.add.blank"), IconUtil.getAddBlankLineIcon()) {
+        }
+      }
+      refresh();
+    });
+
+    add(myCbLayoutStaticImportsSeparately, BorderLayout.NORTH);
+
+    JPanel importLayoutPanel = ToolbarDecorator.createDecorator(myImportLayoutTable = createTableForPackageEntries(myImportLayoutList, this))
+      .addExtraAction(new DumbAwareActionButton(ApplicationBundle.message("button.add.package"), IconUtil.getAddPackageIcon()) {
         @Override
-        public void actionPerformed(AnActionEvent e) {
+        public void actionPerformed(@NotNull AnActionEvent e) {
+          addPackageToImportLayouts();
+        }
+
+        @Override
+        public ShortcutSet getShortcut() {
+          return CommonShortcuts.getNewForDialogs();
+        }
+      })
+      .addExtraAction(new DumbAwareActionButton(ApplicationBundle.message("button.add.blank"), IconUtil.getAddBlankLineIcon()) {
+        @Override
+        public void actionPerformed(@NotNull AnActionEvent e) {
           addBlankLine();
         }
-      }).setRemoveAction(new AnActionButtonRunnable() {
-        @Override
-        public void run(AnActionButton button) {
-          removeEntryFromImportLayouts();
-        }
-      }).setMoveUpAction(new AnActionButtonRunnable() {
-        @Override
-        public void run(AnActionButton button) {
-          moveRowUp();
-        }
-      }).setMoveDownAction(new AnActionButtonRunnable() {
-        @Override
-        public void run(AnActionButton button) {
-          moveRowDown();
-        }
-      }).setRemoveActionUpdater(new AnActionButtonUpdater() {
-        @Override
-        public boolean isEnabled(AnActionEvent e) {
-          int selectedImport = myImportLayoutTable.getSelectedRow();
-          PackageEntry entry = selectedImport < 0 ? null : myImportLayoutList.getEntryAt(selectedImport);
-          return entry != null && entry != PackageEntry.ALL_OTHER_STATIC_IMPORTS_ENTRY && entry != PackageEntry.ALL_OTHER_IMPORTS_ENTRY;
-        }
-      }).setButtonComparator(ApplicationBundle.message("button.add.package"), ApplicationBundle.message("button.add.blank"),
-                             "Remove", "Up", "Down")
-        .setPreferredSize(new Dimension(-1, 100)).createPanel(), BorderLayout.CENTER);
+      })
+      .setRemoveAction(button -> removeEntryFromImportLayouts())
+      .setMoveUpAction(button -> moveRowUp())
+      .setMoveDownAction(button -> moveRowDown())
+      .setRemoveActionUpdater(e -> {
+        int selectedImport = myImportLayoutTable.getSelectedRow();
+        PackageEntry entry = selectedImport < 0 ? null : myImportLayoutList.getEntryAt(selectedImport);
+        return entry != null && entry != PackageEntry.ALL_OTHER_STATIC_IMPORTS_ENTRY && entry != PackageEntry.ALL_OTHER_IMPORTS_ENTRY;
+      })
+      .setButtonComparator(ApplicationBundle.message("button.add.package"), ApplicationBundle.message("button.add.blank"), "Remove", "Up", "Down")
+      .setPreferredSize(new Dimension(-1, 100)).createPanel();
+
+
+    add(importLayoutPanel, BorderLayout.CENTER);
   }
 
 
@@ -223,14 +218,17 @@ public abstract class ImportLayoutPanel extends JPanel {
     };
     // Create a model of the data.
     TableModel dataModel = new AbstractTableModel() {
+      @Override
       public int getColumnCount() {
         return names.length + (panel.areStaticImportsEnabled() ? 1 : 0);
       }
 
+      @Override
       public int getRowCount() {
         return packageTable.getEntryCount();
       }
 
+      @Override
       @Nullable
       public Object getValueAt(int row, int col) {
         PackageEntry entry = packageTable.getEntryAt(row);
@@ -243,17 +241,19 @@ public abstract class ImportLayoutPanel extends JPanel {
           return entry.getPackageName();
         }
         if (col == 2) {
-          return entry.isWithSubpackages() ? Boolean.TRUE : Boolean.FALSE;
+          return entry.isWithSubpackages();
         }
         throw new IllegalArgumentException(String.valueOf(col));
       }
 
+      @Override
       public String getColumnName(int column) {
         if (panel.areStaticImportsEnabled() && column == 0) return "Static";
         column -= panel.areStaticImportsEnabled() ? 1 : 0;
         return names[column];
       }
 
+      @Override
       public Class getColumnClass(int col) {
         col += panel.areStaticImportsEnabled() ? 0 : 1;
         if (col == 0) {
@@ -268,11 +268,13 @@ public abstract class ImportLayoutPanel extends JPanel {
         throw new IllegalArgumentException(String.valueOf(col));
       }
 
+      @Override
       public boolean isCellEditable(int row, int col) {
         PackageEntry packageEntry = packageTable.getEntryAt(row);
         return !packageEntry.isSpecial();
       }
 
+      @Override
       public void setValueAt(Object aValue, int row, int col) {
         PackageEntry packageEntry = packageTable.getEntryAt(row);
         col += panel.areStaticImportsEnabled() ? 0 : 1;
@@ -308,12 +310,14 @@ public abstract class ImportLayoutPanel extends JPanel {
 
     TableCellEditor beditor = result.getDefaultEditor(Boolean.class);
     beditor.addCellEditorListener(new CellEditorListener() {
+      @Override
       public void editingStopped(ChangeEvent e) {
         if (panel.areStaticImportsEnabled()) {
           result.repaint(); // add/remove static keyword
         }
       }
 
+      @Override
       public void editingCanceled(ChangeEvent e) {
       }
     });
@@ -328,7 +332,7 @@ public abstract class ImportLayoutPanel extends JPanel {
         PackageEntry entry = packageTable.getEntryAt(row);
 
         if (entry == PackageEntry.BLANK_LINE_ENTRY) {
-          append("                                               <blank line>", SimpleTextAttributes.LINK_ATTRIBUTES);
+          append("<blank line>", SimpleTextAttributes.GRAYED_ATTRIBUTES);
         }
         else {
           TextAttributes attributes = JavaHighlightingColors.KEYWORD.getDefaultAttributes();
@@ -377,7 +381,9 @@ public abstract class ImportLayoutPanel extends JPanel {
     TableUtil.editCellAt(table, selectedRow, 0);
     Component editorComp = table.getEditorComponent();
     if (editorComp != null) {
-      editorComp.requestFocus();
+      IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
+        IdeFocusManager.getGlobalInstance().requestFocus(editorComp, true);
+      });
     }
   }
 }

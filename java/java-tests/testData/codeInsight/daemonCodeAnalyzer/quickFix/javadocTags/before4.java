@@ -1,5 +1,5 @@
 // "Add tag @param <T>" "true"
-/**
+/**<caret>
  */
-class <caret>a<T> {
+class a<T> {
 }

@@ -16,15 +16,17 @@
 
 package com.intellij.history.integration.ui.models;
 
+import com.intellij.diff.DiffContentFactory;
+import com.intellij.diff.contents.DiffContent;
+import com.intellij.diff.contents.DocumentContent;
 import com.intellij.history.core.revisions.Revision;
 import com.intellij.history.core.tree.Entry;
 import com.intellij.history.integration.IdeaGateway;
-import com.intellij.openapi.diff.DiffContent;
-import com.intellij.openapi.diff.FragmentContent;
-import com.intellij.openapi.diff.SimpleContent;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
-import com.intellij.util.diff.FilesTooBigForDiffException;
+import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.vfs.VirtualFile;
 
 public class SelectionDifferenceModel extends FileDifferenceModel {
   private final SelectionCalculator myCalculator;
@@ -61,22 +63,12 @@ public class SelectionDifferenceModel extends FileDifferenceModel {
 
   @Override
   protected boolean isLeftContentAvailable(RevisionProcessingProgress p) {
-    try {
-      return myCalculator.canCalculateFor(myLeftRevision, p);
-    }
-    catch (FilesTooBigForDiffException e) {
-      return false;
-    }
+    return myCalculator.canCalculateFor(myLeftRevision, p);
   }
 
   @Override
   protected boolean isRightContentAvailable(RevisionProcessingProgress p) {
-    try {
-      return myCalculator.canCalculateFor(myRightRevision, p);
-    }
-    catch (FilesTooBigForDiffException e) {
-      return false;
-    }
+    return myCalculator.canCalculateFor(myRightRevision, p);
   }
 
   @Override
@@ -96,19 +88,19 @@ public class SelectionDifferenceModel extends FileDifferenceModel {
     int fromOffset = d.getLineStartOffset(myFrom);
     int toOffset = d.getLineEndOffset(myTo);
 
-    return FragmentContent.fromRangeMarker(d.createRangeMarker(fromOffset, toOffset), myProject);
+    return DiffContentFactory.getInstance().createFragment(myProject, d, new TextRange(fromOffset, toOffset));
   }
 
-  private SimpleContent getDiffContent(Revision r, RevisionProcessingProgress p) {
-    return createSimpleDiffContent(getContentOf(r, p), r.findEntry());
-  }
-
-  private String getContentOf(Revision r, RevisionProcessingProgress p) {
-    try {
-      return myCalculator.getSelectionFor(r, p).getBlockContent();
+  private DocumentContent getDiffContent(Revision r, RevisionProcessingProgress p) {
+    Entry e = r.findEntry();
+    String content = myCalculator.getSelectionFor(r, p).getBlockContent();
+    VirtualFile virtualFile = myGateway.findVirtualFile(e.getPath());
+    if (virtualFile != null) {
+      return DiffContentFactory.getInstance().create(content, virtualFile);
     }
-    catch (FilesTooBigForDiffException e) {
-      return "";
+    else {
+      FileType fileType = myGateway.getFileType(e.getName());
+      return DiffContentFactory.getInstance().create(content, fileType);
     }
   }
 }

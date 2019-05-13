@@ -15,6 +15,7 @@
  */
 package com.siyeh.ig.numeric;
 
+import com.intellij.codeInspection.ui.SingleIntegerFieldOptionsPanel;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.siyeh.InspectionGadgetsBundle;
@@ -23,7 +24,6 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.ExtractMethodFix;
 import com.siyeh.ig.psiutils.TypeUtils;
-import com.intellij.codeInspection.ui.SingleIntegerFieldOptionsPanel;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -33,15 +33,9 @@ import java.util.Set;
 public class OverlyComplexArithmeticExpressionInspection
   extends BaseInspection {
 
+  protected static final Set<IElementType> arithmeticTokens =
+    new HashSet<>(5);
   private static final int TERM_LIMIT = 6;
-
-  /**
-   * @noinspection PublicField
-   */
-  public int m_limit = TERM_LIMIT;  //this is public for the DefaultJDOMExternalizer thingy
-
-  private static final Set<IElementType> arithmeticTokens =
-    new HashSet<IElementType>(5);
 
   static {
     arithmeticTokens.add(JavaTokenType.PLUS);
@@ -49,6 +43,24 @@ public class OverlyComplexArithmeticExpressionInspection
     arithmeticTokens.add(JavaTokenType.ASTERISK);
     arithmeticTokens.add(JavaTokenType.DIV);
     arithmeticTokens.add(JavaTokenType.PERC);
+  }
+
+  /**
+   * @noinspection PublicField
+   */
+  public int m_limit = TERM_LIMIT;  //this is public for the DefaultJDOMExternalizer thingy
+
+  @Override
+  public JComponent createOptionsPanel() {
+    return new SingleIntegerFieldOptionsPanel(
+      InspectionGadgetsBundle.message(
+        "overly.complex.arithmetic.expression.max.number.option"),
+      this, "m_limit");
+  }
+
+  @Override
+  protected InspectionGadgetsFix buildFix(Object... infos) {
+    return new ExtractMethodFix();
   }
 
   @Override
@@ -63,19 +75,6 @@ public class OverlyComplexArithmeticExpressionInspection
   protected String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "overly.complex.arithmetic.expression.problem.descriptor");
-  }
-
-  @Override
-  public JComponent createOptionsPanel() {
-    return new SingleIntegerFieldOptionsPanel(
-      InspectionGadgetsBundle.message(
-        "overly.complex.arithmetic.expression.max.number.option"),
-      this, "m_limit");
-  }
-
-  @Override
-  protected InspectionGadgetsFix buildFix(Object... infos) {
-    return new ExtractMethodFix();
   }
 
   @Override
@@ -154,10 +153,7 @@ public class OverlyComplexArithmeticExpressionInspection
 
     private boolean isParentArithmetic(PsiExpression expression) {
       final PsiElement parent = expression.getParent();
-      if (!(parent instanceof PsiExpression)) {
-        return false;
-      }
-      return isArithmetic((PsiExpression)parent);
+      return parent instanceof PsiExpression && isArithmetic((PsiExpression)parent);
     }
 
     private boolean isArithmetic(PsiExpression expression) {

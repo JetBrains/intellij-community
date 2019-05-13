@@ -15,6 +15,7 @@
  */
 package com.intellij.ide.util.gotoByName;
 
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -31,7 +32,8 @@ public interface ChooseByNameModel {
   /**
    * @deprecated Mark mnemonic char with '&' ('&&' for mac if mnemonic char is 'N') in checkbox name instead
    */
-  char getCheckBoxMnemonic();
+  @Deprecated
+  default char getCheckBoxMnemonic() { return 0; }
 
 
   boolean loadInitialCheckBoxState();
@@ -59,7 +61,7 @@ public interface ChooseByNameModel {
   @Nullable
   String getFullName(Object element);
 
-  @Nullable
+  @Nullable @NonNls
   String getHelpId();
 
   boolean willOpenEditor();

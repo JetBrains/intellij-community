@@ -14,14 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * Created by IntelliJ IDEA.
- * User: dsl
- * Date: 16.04.2002
- * Time: 15:54:37
- * To change template for new class use
- * Code Style | Class Templates options (Tools | IDE Options).
- */
 package com.intellij.refactoring.introduceParameter;
 
 import com.intellij.psi.PsiElement;
@@ -34,13 +26,14 @@ class IntroduceParameterViewDescriptor extends UsageViewDescriptorAdapter {
 
   private final PsiMethod myMethodToSearchFor;
 
-  public IntroduceParameterViewDescriptor(PsiMethod methodToSearchFor
+  IntroduceParameterViewDescriptor(PsiMethod methodToSearchFor
   ) {
     super();
     myMethodToSearchFor = methodToSearchFor;
 
   }
 
+  @Override
   @NotNull
   public PsiElement[] getElements() {
 //    if(myMethodToReplaceIn.equals(myMethodToSearchFor)) {
@@ -50,6 +43,7 @@ class IntroduceParameterViewDescriptor extends UsageViewDescriptorAdapter {
   }
 
 
+  @Override
   public String getProcessedElementsHeader() {
     return RefactoringBundle.message("introduce.parameter.elements.header");
   }

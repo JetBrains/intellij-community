@@ -14,10 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * User: anna
- * Date: 19-Dec-2006
- */
 package com.intellij.compiler.ant;
 
 import com.intellij.openapi.module.Module;
@@ -62,7 +58,7 @@ public abstract class BuildProperties extends CompositeGenerator {
   protected abstract void createJdkGenerators(Project project);
 
   public static Sdk[] getUsedJdks(Project project) {
-    final Set<Sdk> jdks = new HashSet<Sdk>();
+    final Set<Sdk> jdks = new HashSet<>();
     Module[] modules = ModuleManager.getInstance(project).getModules();
     for (Module module : modules) {
       Sdk jdk = ModuleRootManager.getInstance(module).getSdk();
@@ -70,7 +66,7 @@ public abstract class BuildProperties extends CompositeGenerator {
         jdks.add(jdk);
       }
     }
-    return jdks.toArray(new Sdk[jdks.size()]);
+    return jdks.toArray(new Sdk[0]);
   }
 
   @NonNls
@@ -227,7 +223,6 @@ public abstract class BuildProperties extends CompositeGenerator {
    */
   @NonNls
   public static String convertName(@NonNls final String name) {
-    //noinspection HardCodedStringLiteral
     return name.replaceAll("\"", "").replaceAll("\\s+", "_").toLowerCase();
   }
 

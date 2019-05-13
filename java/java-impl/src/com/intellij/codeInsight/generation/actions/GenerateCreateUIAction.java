@@ -18,6 +18,8 @@ package com.intellij.codeInsight.generation.actions;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTypesUtil;
 
+import java.util.HashSet;
+
 /**
  * @author Konstantin Bulenkov
  */
@@ -27,12 +29,12 @@ public class GenerateCreateUIAction extends BaseGenerateAction {
   }
 
   @Override
-  protected boolean isValidForClass(PsiClass targetClass) {
+  public boolean isValidForClass(PsiClass targetClass) {
     final PsiModifierList list = targetClass.getModifierList();
     return list != null
            && !list.hasModifierProperty(PsiModifier.ABSTRACT)
            && !hasCreateUIMethod(targetClass)
-           && isComponentUI(targetClass);
+           && isComponentUI(targetClass, new HashSet<>());
   }
 
   private static boolean hasCreateUIMethod(PsiClass aClass) {
@@ -49,8 +51,9 @@ public class GenerateCreateUIAction extends BaseGenerateAction {
     return false;
   }
 
-  private static boolean isComponentUI(PsiClass aClass) {
+  private static boolean isComponentUI(PsiClass aClass, HashSet<? super PsiClass> classes) {
     while (aClass != null) {
+      if (!classes.add(aClass)) return false;
       if ("javax.swing.plaf.ComponentUI".equals(aClass.getQualifiedName())) {
         return true;
       }

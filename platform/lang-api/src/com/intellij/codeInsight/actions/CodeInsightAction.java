@@ -1,50 +1,43 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.codeInsight.actions;
 
 import com.intellij.codeInsight.CodeInsightActionHandler;
+import com.intellij.codeInsight.FileModificationService;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.EditorModificationUtil;
 import com.intellij.openapi.editor.actionSystem.DocCommandGroupId;
 import com.intellij.openapi.project.Project;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiUtilBase;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Dmitry Avdeev
  */
-public abstract class CodeInsightAction extends AnAction {
+public abstract class CodeInsightAction extends AnAction implements UpdateInBackground {
   @Override
-  public void actionPerformed(AnActionEvent e) {
-    DataContext dataContext = e.getDataContext();
-    Project project = PlatformDataKeys.PROJECT.getData(dataContext);
+  public void actionPerformed(@NotNull AnActionEvent e) {
+    Project project = e.getProject();
     if (project != null) {
-      Editor editor = getEditor(dataContext, project);
+      Editor editor = getEditor(e.getDataContext(), project, false);
       actionPerformedImpl(project, editor);
     }
   }
 
+  @Override
+  public boolean startInTransaction() {
+    return true;
+  }
+
   @Nullable
-  protected Editor getEditor(@NotNull DataContext dataContext, @NotNull Project project) {
-    return PlatformDataKeys.EDITOR.getData(dataContext);
+  protected Editor getEditor(@NotNull DataContext dataContext, @NotNull Project project, boolean forUpdate) {
+    return CommonDataKeys.EDITOR.getData(dataContext);
   }
 
   public void actionPerformedImpl(@NotNull final Project project, final Editor editor) {
@@ -52,46 +45,67 @@ public abstract class CodeInsightAction extends AnAction {
     //final PsiFile psiFile = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
     final PsiFile psiFile = PsiUtilBase.getPsiFileInEditor(editor, project);
     if (psiFile == null) return;
-    CommandProcessor.getInstance().executeCommand(project, new Runnable() {
-      @Override
-      public void run() {
-        final CodeInsightActionHandler handler = getHandler();
-        final Runnable action = new Runnable() {
-          @Override
-          public void run() {
-            if (!ApplicationManager.getApplication().isUnitTestMode() && !editor.getContentComponent().isShowing()) return;
-            handler.invoke(project, editor, psiFile);
-          }
-        };
-        if (handler.startInWriteAction()) {
-          ApplicationManager.getApplication().runWriteAction(action);
-        }
-        else {
-          action.run();
-        }
+    final CodeInsightActionHandler handler = getHandler();
+    PsiElement elementToMakeWritable = handler.getElementToMakeWritable(psiFile);
+    if (elementToMakeWritable != null &&
+        !(EditorModificationUtil.checkModificationAllowed(editor) &&
+          FileModificationService.getInstance().preparePsiElementsForWrite(elementToMakeWritable))) {
+      return;
+    }
+
+    CommandProcessor.getInstance().executeCommand(project, () -> {
+      final Runnable action = () -> {
+        if (!ApplicationManager.getApplication().isHeadlessEnvironment() && !editor.getContentComponent().isShowing()) return;
+        handler.invoke(project, editor, psiFile);
+      };
+      if (handler.startInWriteAction()) {
+        ApplicationManager.getApplication().runWriteAction(action);
+      }
+      else {
+        action.run();
       }
     }, getCommandName(), DocCommandGroupId.noneGroupId(editor.getDocument()));
   }
 
   @Override
-  public void update(AnActionEvent event) {
-    Presentation presentation = event.getPresentation();
-    DataContext dataContext = event.getDataContext();
+  public void beforeActionPerformedUpdate(@NotNull AnActionEvent e) {
+    CodeInsightEditorAction.beforeActionPerformedUpdate(e);
+    super.beforeActionPerformedUpdate(e);
+  }
 
-    Project project = PlatformDataKeys.PROJECT.getData(dataContext);
+  @Override
+  public void update(@NotNull AnActionEvent e) {
+    Presentation presentation = e.getPresentation();
+
+    Project project = e.getProject();
     if (project == null) {
       presentation.setEnabled(false);
       return;
     }
 
-    Editor editor = getEditor(dataContext, project);
+    final DataContext dataContext = e.getDataContext();
+    Editor editor = getEditor(dataContext, project, true);
     if (editor == null) {
       presentation.setEnabled(false);
       return;
     }
 
     final PsiFile file = PsiUtilBase.getPsiFileInEditor(editor, project);
-    presentation.setEnabled(file != null && isValidForFile(project, editor, file));
+    if (file == null) {
+      presentation.setEnabled(false);
+      return;
+    }
+
+    update(presentation, project, editor, file, dataContext, e.getPlace());
+  }
+
+  protected void update(@NotNull Presentation presentation, @NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
+    presentation.setEnabled(isValidForFile(project, editor, file));
+  }
+
+  protected void update(@NotNull Presentation presentation, @NotNull Project project,
+                        @NotNull Editor editor, @NotNull PsiFile file, @NotNull DataContext dataContext, @Nullable String actionPlace) {
+    update(presentation, project, editor, file);
   }
 
   protected boolean isValidForFile(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {

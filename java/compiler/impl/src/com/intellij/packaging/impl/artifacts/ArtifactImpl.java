@@ -15,6 +15,7 @@
  */
 package com.intellij.packaging.impl.artifacts;
 
+import com.intellij.openapi.roots.ProjectModelExternalSource;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -23,8 +24,8 @@ import com.intellij.packaging.artifacts.*;
 import com.intellij.packaging.elements.CompositePackagingElement;
 import com.intellij.packaging.impl.elements.ArchivePackagingElement;
 import com.intellij.util.EventDispatcher;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
@@ -40,24 +41,28 @@ public class ArtifactImpl extends UserDataHolderBase implements ModifiableArtifa
   private String myName;
   private boolean myBuildOnMake;
   private String myOutputPath;
-  private final EventDispatcher<ArtifactListener> myDispatcher;
+  private final EventDispatcher<? extends ArtifactListener> myDispatcher;
   private ArtifactType myArtifactType;
   private Map<ArtifactPropertiesProvider, ArtifactProperties<?>> myProperties;
+  private final ProjectModelExternalSource myExternalSource;
 
-  public ArtifactImpl(@NotNull String name, @NotNull ArtifactType artifactType, boolean buildOnMake, @NotNull CompositePackagingElement<?> rootElement,
-                      String outputPath) {
-    this(name, artifactType, buildOnMake, rootElement, outputPath, null);
+  public ArtifactImpl(@NotNull String name, @NotNull ArtifactType artifactType, boolean buildOnMake,
+                      @NotNull CompositePackagingElement<?> rootElement, String outputPath,
+                      @Nullable ProjectModelExternalSource externalSource) {
+    this(name, artifactType, buildOnMake, rootElement, outputPath, externalSource, null);
   }
-  public ArtifactImpl(@NotNull String name, @NotNull ArtifactType artifactType, boolean buildOnMake, @NotNull CompositePackagingElement<?> rootElement,
-                      String outputPath,
-                      EventDispatcher<ArtifactListener> dispatcher) {
+
+  public ArtifactImpl(@NotNull String name, @NotNull ArtifactType artifactType, boolean buildOnMake,
+                      @NotNull CompositePackagingElement<?> rootElement, String outputPath,
+                      @Nullable ProjectModelExternalSource externalSource, EventDispatcher<? extends ArtifactListener> dispatcher) {
     myName = name;
     myArtifactType = artifactType;
     myBuildOnMake = buildOnMake;
     myRootElement = rootElement;
     myOutputPath = outputPath;
     myDispatcher = dispatcher;
-    myProperties = new HashMap<ArtifactPropertiesProvider, ArtifactProperties<?>>();
+    myExternalSource = externalSource;
+    myProperties = new HashMap<>();
     resetProperties();
   }
 
@@ -70,34 +75,47 @@ public class ArtifactImpl extends UserDataHolderBase implements ModifiableArtifa
     }
   }
 
+  @Override
   @NotNull
   public ArtifactType getArtifactType() {
     return myArtifactType;
   }
 
+  @Override
   public String getName() {
     return myName;
   }
 
+  @Override
   public boolean isBuildOnMake() {
     return myBuildOnMake;
   }
 
+  @Override
   @NotNull
   public CompositePackagingElement<?> getRootElement() {
     return myRootElement;
   }
 
+  @Override
   public String getOutputPath() {
     return myOutputPath;
   }
 
+  @Override
   public Collection<? extends ArtifactPropertiesProvider> getPropertiesProviders() {
     return Collections.unmodifiableCollection(myProperties.keySet());
   }
 
-  public ArtifactImpl createCopy(EventDispatcher<ArtifactListener> dispatcher) {
-    final ArtifactImpl artifact = new ArtifactImpl(myName, myArtifactType, myBuildOnMake, myRootElement, myOutputPath, dispatcher);
+  @Nullable
+  @Override
+  public ProjectModelExternalSource getExternalSource() {
+    return myExternalSource;
+  }
+
+  public ArtifactImpl createCopy(EventDispatcher<? extends ArtifactListener> dispatcher) {
+    final ArtifactImpl artifact = new ArtifactImpl(myName, myArtifactType, myBuildOnMake, myRootElement, myOutputPath, myExternalSource,
+                                                   dispatcher);
     for (Map.Entry<ArtifactPropertiesProvider, ArtifactProperties<?>> entry : myProperties.entrySet()) {
       final ArtifactProperties newProperties = artifact.myProperties.get(entry.getKey());
       //noinspection unchecked
@@ -106,6 +124,7 @@ public class ArtifactImpl extends UserDataHolderBase implements ModifiableArtifa
     return artifact;
   }
 
+  @Override
   public void setName(@NotNull String name) {
     String oldName = myName;
     myName = name;
@@ -119,10 +138,12 @@ public class ArtifactImpl extends UserDataHolderBase implements ModifiableArtifa
     return "artifact:" + myName;
   }
 
+  @Override
   public void setRootElement(CompositePackagingElement<?> root) {
     myRootElement = root;
   }
 
+  @Override
   public void setProperties(ArtifactPropertiesProvider provider, ArtifactProperties<?> properties) {
     if (properties != null) {
       myProperties.put(provider, properties);
@@ -132,19 +153,23 @@ public class ArtifactImpl extends UserDataHolderBase implements ModifiableArtifa
     }
   }
 
+  @Override
   public void setArtifactType(@NotNull ArtifactType selected) {
     myArtifactType = selected;
     resetProperties();
   }
 
+  @Override
   public void setBuildOnMake(boolean buildOnMake) {
     myBuildOnMake = buildOnMake;
   }
 
+  @Override
   public void setOutputPath(String outputPath) {
     myOutputPath = outputPath;
   }
 
+  @Override
   public ArtifactProperties<?> getProperties(@NotNull ArtifactPropertiesProvider provider) {
     return myProperties.get(provider);
   }
@@ -167,14 +192,6 @@ public class ArtifactImpl extends UserDataHolderBase implements ModifiableArtifa
       filePath = myOutputPath;
     }
     return filePath;
-  }
-
-  @Nullable
-  public String getOutputDirectoryPathToCleanOnRebuild() {
-    if (myRootElement instanceof ArchivePackagingElement || StringUtil.isEmpty(myOutputPath)) {
-      return null;
-    }
-    return myOutputPath;
   }
 
   public void copyFrom(ArtifactImpl modified) {

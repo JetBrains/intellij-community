@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,68 +15,40 @@
  */
 package com.intellij.unscramble;
 
-import com.intellij.Patches;
-import com.intellij.openapi.application.ApplicationActivationListener;
+import com.intellij.openapi.application.ClipboardAnalyzeListener;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFrame;
-import com.intellij.util.Alarm;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.regex.Pattern;
 
 /**
  * @author Konstantin Bulenkov
  */
-public class UnscrambleListener implements ApplicationActivationListener {
-  private static final int MAX_STACKTRACE_SIZE = 100 * 1024;
-  private String stacktrace = null;
-
-  @Override
-  public void applicationActivated(final IdeFrame ideFrame) {
-    final Runnable processClipboard = new Runnable() {
-      @Override
-      public void run() {
-        final String clipboard = AnalyzeStacktraceUtil.getTextInClipboard();
-        if (clipboard != null && clipboard.length() < MAX_STACKTRACE_SIZE && !clipboard.equals(stacktrace)) {
-          stacktrace = clipboard;
-          final Project project = ideFrame.getProject();
-          if (project != null && isStacktrace(stacktrace)) {
-            final UnscrambleDialog dialog = new UnscrambleDialog(project);
-            dialog.createNormalizeTextAction().actionPerformed(null);
-            dialog.doOKAction();
-          }
-        }
-      }
-    };
-
-    if (Patches.SLOW_GETTING_CLIPBOARD_CONTENTS) {
-      //IDEA's clipboard is synchronized with the system clipboard on frame activation so we need to postpone clipboard processing
-      new Alarm().addRequest(processClipboard, 300);
-    }
-    else {
-      processClipboard.run();
-    }
-  }
-
-  @Override
-  public void applicationDeactivated(IdeFrame ideFrame) {
-    if (SystemInfo.isMac) return;
-    
-    stacktrace = AnalyzeStacktraceUtil.getTextInClipboard();
-  }
+class UnscrambleListener extends ClipboardAnalyzeListener {
 
   private static final Pattern STACKTRACE_LINE =
-    Pattern.compile("[\t]*at [[_a-zA-Z0-9]+\\.]+[_a-zA-Z$0-9]+\\.[a-zA-Z0-9_]+\\([A-Za-z0-9_]+\\.java:[\\d]+\\)+[ [~]*\\[[a-zA-Z0-9\\.\\:/]\\]]*");
+    Pattern.compile(
+      "[\t]*at [[_a-zA-Z0-9]+\\.]+[_a-zA-Z$0-9]+\\.[a-zA-Z0-9_]+\\([A-Za-z0-9_]+\\.java:[\\d]+\\)+[ [~]*\\[[a-zA-Z0-9\\.\\:/]\\]]*");
 
-  public static boolean isStacktrace(String stacktrace) {
-    stacktrace = UnscrambleDialog.normalizeText(stacktrace);
+  @Override
+  public void applicationActivated(@NotNull IdeFrame ideFrame) {
+    if (!Registry.is("analyze.exceptions.on.the.fly")) return;
+
+    super.applicationActivated(ideFrame);
+  }
+
+  @Override
+  public boolean canHandle(@NotNull String value) {
+    value = UnscrambleDialog.normalizeText(value);
     int linesCount = 0;
-    for (String line : stacktrace.split("\n")) {
+    for (String line : value.split("\n")) {
       line = line.trim();
       if (line.length() == 0) continue;
-      if (line.endsWith("\r")) {
-        line = line.substring(0, line.length() - 1);
-      }
+      line = StringUtil.trimEnd(line, "\r");
       if (STACKTRACE_LINE.matcher(line).matches()) {
         linesCount++;
       }
@@ -86,5 +58,14 @@ public class UnscrambleListener implements ApplicationActivationListener {
       if (linesCount > 2) return true;
     }
     return false;
+  }
+
+  @Override
+  protected void handle(@NotNull Project project, @NotNull String value) {
+    final UnscrambleDialog dialog = new UnscrambleDialog(project);
+    dialog.createNormalizeTextAction().actionPerformed(null);
+    if (!DumbService.isDumb(project)) {
+      dialog.doOKAction();
+    }
   }
 }

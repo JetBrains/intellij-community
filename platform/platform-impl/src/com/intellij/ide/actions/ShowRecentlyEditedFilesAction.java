@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,21 +19,23 @@
  */
 package com.intellij.ide.actions;
 
+import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NotNull;
 
-public class ShowRecentlyEditedFilesAction extends BaseShowRecentFilesAction {
-  protected VirtualFile[] filesToShow(Project project) {
-    return IdeDocumentHistory.getInstance(project).getChangedFiles();
+public class ShowRecentlyEditedFilesAction extends DumbAwareAction {
+  @Override
+  public void actionPerformed(@NotNull AnActionEvent e) {
+    final Project project = e.getProject();
+    if (project != null) {
+      Switcher.createAndShowSwitcher(e, "Recently Edited Files", true, IdeDocumentHistory.getInstance(project).getChangedFiles());
+    }
   }
 
   @Override
-  protected String getPeerActionId() {
-    return "RecentFiles";
-  }
-
-  protected String getTitle() {
-    return "Recently Edited Files";
+  public void update(@NotNull AnActionEvent e) {
+    e.getPresentation().setEnabled(e.getProject() != null);
   }
 }

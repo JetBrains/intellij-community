@@ -83,7 +83,7 @@ public class DecorationLayer extends JComponent {
   }
 
   private void paintStaticDecorators(Graphics2D g) {
-    final List<StaticDecorator> decorators = new ArrayList<StaticDecorator>();
+    final List<StaticDecorator> decorators = new ArrayList<>();
     final List<RadComponent> selection = myArea.getSelection();
 
     myArea.getRootComponent().accept(new RadComponentVisitor() {
@@ -112,5 +112,9 @@ public class DecorationLayer extends JComponent {
       return myArea.getRootSelectionDecorator();
     }
     return parent.getLayout().getChildSelectionDecorator(component, selection);
+  }
+
+  public double getZoom() {
+    return myDesigner.getZoom();
   }
 }

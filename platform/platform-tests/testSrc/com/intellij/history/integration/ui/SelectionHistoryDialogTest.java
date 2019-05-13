@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,21 +16,21 @@
 
 package com.intellij.history.integration.ui;
 
+import com.intellij.diff.actions.DocumentFragmentContent;
+import com.intellij.diff.contents.DiffContent;
 import com.intellij.history.integration.revertion.Reverter;
 import com.intellij.history.integration.ui.models.FileDifferenceModel;
 import com.intellij.history.integration.ui.models.NullRevisionsProgress;
 import com.intellij.history.integration.ui.models.RevisionProcessingProgress;
 import com.intellij.history.integration.ui.views.SelectionHistoryDialog;
 import com.intellij.history.integration.ui.views.SelectionHistoryDialogModel;
-import com.intellij.openapi.diff.DiffContent;
-import com.intellij.openapi.diff.FragmentContent;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 
-import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 
-import static org.easymock.classextension.EasyMock.*;
+import static org.easymock.EasyMock.*;
 
 public class SelectionHistoryDialogTest extends LocalHistoryUITestCase {
   private VirtualFile f;
@@ -41,20 +41,20 @@ public class SelectionHistoryDialogTest extends LocalHistoryUITestCase {
   protected void setUpInWriteAction() throws Exception {
     super.setUpInWriteAction();
 
-    f = myRoot.createChildData(null, "f.txt");
-    f.setBinaryContent("a\nb\nc\n".getBytes(), -1, 123);
-    f.setBinaryContent("a\nbc\nd\n".getBytes(), -1, 456);
-    f.setBinaryContent("a\nbcd\ne\n".getBytes(), -1, 789);
+    f = createChildData(myRoot, "f.txt");
+    setBinaryContent(f, "a\nb\nc\n".getBytes(StandardCharsets.UTF_8), -1, 123, this);
+    setBinaryContent(f,"a\nbc\nc\nd\n".getBytes(StandardCharsets.UTF_8), -1, 456,this);
+    setBinaryContent(f,"a\nbcd\nc\ne\n".getBytes(StandardCharsets.UTF_8), -1, 789,this);
   }
 
-  public void testDialogWorks() throws IOException {
+  public void testDialogWorks() {
     SelectionHistoryDialog d = new SelectionHistoryDialog(myProject, myGateway, f, 0, 0);
     Disposer.dispose(d);
   }
 
-  public void testTitles() throws IOException {
-    f.rename(null, "ff.txt");
-    f.setBinaryContent(new byte[0]);
+  public void testTitles() {
+    rename(f, "ff.txt");
+    setBinaryContent(f,new byte[0]);
 
     initModelOnSecondLineAndSelectRevisions(0, 1);
 
@@ -84,45 +84,46 @@ public class SelectionHistoryDialogTest extends LocalHistoryUITestCase {
     verify(p);
   }
 
-  public void testDiffContents() throws IOException {
+  public void testDiffContents() {
     initModelOnSecondLineAndSelectRevisions(0, 1);
 
     DiffContent left = dm.getLeftDiffContent(new NullRevisionsProgress());
     DiffContent right = dm.getRightDiffContent(new NullRevisionsProgress());
 
-    assertEquals("b", new String(left.getBytes()));
-    assertEquals("bc", new String(right.getBytes()));
+    assertContent("b", left);
+    assertContent("bc", right);
   }
 
-  public void testDiffContentsAndTitleForCurrentRevision() throws IOException {
+  public void testDiffContentsAndTitleForCurrentRevision() {
     initModelOnSecondLineAndSelectRevisions(0, 0);
 
     assertEquals("Current", dm.getRightTitle(new NullRevisionsProgress()));
 
     DiffContent right = dm.getRightDiffContent(new NullRevisionsProgress());
 
-    assertEquals("bcd", new String(right.getBytes()));
-    assertTrue(right instanceof FragmentContent);
+    assertContent("bcd", right);
+    assertTrue(right instanceof DocumentFragmentContent);
   }
 
   public void testDiffForDeletedAndRecreatedFile() throws Exception {
     byte[] bytes = f.contentsToByteArray();
-    f.delete(this);
+    delete(f);
 
     f = createFile(f.getName(), new String(bytes));
+    loadContent(f);
 
     initModelOnSecondLineAndSelectRevisions(3, 3);
 
-    assertEquals("b", new String(dm.getLeftDiffContent(new NullRevisionsProgress()).getBytes()));
-    assertEquals("bcd", new String(dm.getRightDiffContent(new NullRevisionsProgress()).getBytes()));
+    assertContent("b", dm.getLeftDiffContent(new NullRevisionsProgress()));
+    assertContent("bcd", dm.getRightDiffContent(new NullRevisionsProgress()));
   }
 
-  public void testRevert() throws IOException {
+  public void testRevert() throws Exception {
     initModelOnSecondLineAndSelectRevisions(0, 0);
     Reverter r = m.createReverter();
     r.revert();
 
-    assertEquals("a\nbc\ne\n", new String(f.contentsToByteArray()));
+    assertEquals("a\nbc\nc\ne\n", new String(f.contentsToByteArray()));
   }
 
   private void initModelOnSecondLineAndSelectRevisions(int first, int second) {

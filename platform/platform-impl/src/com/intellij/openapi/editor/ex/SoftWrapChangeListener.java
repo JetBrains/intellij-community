@@ -15,28 +15,17 @@
  */
 package com.intellij.openapi.editor.ex;
 
-import com.intellij.openapi.editor.SoftWrap;
-import org.jetbrains.annotations.NotNull;
-
 /**
  * Defines a contract for the callbacks for soft wraps management notifications (addition/removal).
  *
  * @author Denis Zhdanov
- * @since Jul 8, 2010 6:50:17 PM
  */
 public interface SoftWrapChangeListener {
 
   /**
-   * This method is assumed to be called every new soft wrap is registered.
-   *
-   * @param softWrap   newly registered soft wrap
+   * This method is called if soft wraps have been added or removed during recalculation.
    */
-  void softWrapAdded(@NotNull SoftWrap softWrap);
-
-  /**
-   * This method is assumed to be called every time soft wrap(s) is removed.
-   */
-  void softWrapsRemoved();
+  void softWrapsChanged();
 
   /**
    * Is called when soft wraps recalculation is finished.

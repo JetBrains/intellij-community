@@ -1,0 +1,2 @@
+if True:
+    <caret>

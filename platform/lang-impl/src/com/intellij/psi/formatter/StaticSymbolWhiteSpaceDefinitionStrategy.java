@@ -28,14 +28,13 @@ import org.jetbrains.annotations.NotNull;
  * Thread-safe.
  *
  * @author Denis Zhdanov
- * @since Sep 20, 2010 5:11:49 PM
  */
 public class StaticSymbolWhiteSpaceDefinitionStrategy extends AbstractWhiteSpaceFormattingStrategy {
 
   private final TIntHashSet myWhiteSpaceSymbols = new TIntHashSet();
 
   /**
-   * Creates new <code>StaticWhiteSpaceDefinitionStrategy</code> object with the symbols that should be treated as white spaces.
+   * Creates new {@code StaticWhiteSpaceDefinitionStrategy} object with the symbols that should be treated as white spaces.
    *
    * @param whiteSpaceSymbols   symbols that should be treated as white spaces by the current strategy
    */

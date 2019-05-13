@@ -68,7 +68,7 @@ public class PsiLabeledStatementImpl extends CompositePsiElement implements PsiL
   }
 
   @Override
-  public int getChildRole(ASTNode child) {
+  public int getChildRole(@NotNull ASTNode child) {
     LOG.assertTrue(child.getTreeParent() == this);
     IElementType i = child.getElementType();
     if (i == IDENTIFIER) {
@@ -95,6 +95,7 @@ public class PsiLabeledStatementImpl extends CompositePsiElement implements PsiL
     }
   }
 
+  @Override
   public String toString() {
     return "PsiLabeledStatement";
   }
@@ -112,6 +113,7 @@ public class PsiLabeledStatementImpl extends CompositePsiElement implements PsiL
     return true;
   }
 
+  @NotNull
   @Override
   public String getName() {
     return getLabelIdentifier().getText();

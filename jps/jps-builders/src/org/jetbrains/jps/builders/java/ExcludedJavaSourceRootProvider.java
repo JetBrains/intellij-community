@@ -20,6 +20,10 @@ import org.jetbrains.jps.model.module.JpsModule;
 import org.jetbrains.jps.model.module.JpsModuleSourceRoot;
 
 /**
+ * Allows excluding source or resource roots of Java modules from compilation.
+ *
+ * Implementations of this class are registered as Java services, by creating a file
+ * META-INF/services/org.jetbrains.jps.builders.java.ExcludedJavaSourceRootProvider containing the qualified name of your implementation class.
  *
  * @author nik
  */

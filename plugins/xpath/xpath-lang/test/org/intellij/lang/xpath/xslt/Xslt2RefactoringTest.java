@@ -30,11 +30,6 @@ import org.intellij.lang.xpath.xslt.refactoring.XsltExtractFunctionAction;
 
 import java.util.Set;
 
-/*
-* Created by IntelliJ IDEA.
-* User: sweinreuter
-* Date: 13.02.2009
-*/
 public class Xslt2RefactoringTest extends TestBase {
   @Override
   protected void setUp() throws Exception {
@@ -45,15 +40,15 @@ public class Xslt2RefactoringTest extends TestBase {
     settings.getIndentOptions(StdFileTypes.XML).INDENT_SIZE = 2;
   }
 
-  public void testExtractFunction() throws Throwable {
+  public void testExtractFunction() {
     doExtractFunction();
   }
 
-  public void testExtractFunction2() throws Throwable {
+  public void testExtractFunction2() {
     doExtractFunction();
   }
 
-  private void doExtractFunction() throws Throwable {
+  private void doExtractFunction() {
     myFixture.configureByFile(getTestFileName() + ".xsl");
     final Editor editor = myFixture.getEditor();
 

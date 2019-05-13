@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,7 +27,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefini
  * @author Max Medvedev
  */
 class GrAnnotationCollectorTest extends LightGroovyTestCase {
-  final String basePath = null
 
   void testAnnotatedAlias() {
     doTest('''\
@@ -78,9 +77,9 @@ class F<caret>oo {
     Integer a, b
 }
 ''', '''\
-@ToString(excludes = ["a"])
 @EqualsAndHashCode(excludes = ["a"])
 @Immutable
+@ToString(excludes = ["a"])
 ''')
   }
 
@@ -96,8 +95,8 @@ class F<caret>oo {
 @Alias
 class F<caret>oo {}
 ''', '''\
-@Y
 @X
+@Y
 ''')
   }
 

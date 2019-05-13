@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,6 @@ package com.intellij.structureView;
 
 import com.intellij.ide.util.treeView.smartTree.*;
 import com.intellij.openapi.ui.Queryable;
-import com.intellij.testFramework.PlatformTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase;
 import org.jetbrains.annotations.NonNls;
@@ -29,11 +28,6 @@ import java.util.Comparator;
 public class SmartTreeStructureTest extends LightPlatformCodeInsightFixtureTestCase {
   private final Queryable.PrintInfo myPrintInfo = new Queryable.PrintInfo();
   private TestTreeModel myModel;
-
-  @SuppressWarnings("JUnitTestCaseWithNonTrivialConstructors")
-  public SmartTreeStructureTest() {
-    PlatformTestCase.initPlatformLangPrefix();
-  }
 
   @Override
   protected void setUp() throws Exception {
@@ -49,7 +43,7 @@ public class SmartTreeStructureTest extends LightPlatformCodeInsightFixtureTestC
     root.addChild("xxx").addChild("aaa").addChild("bbb");
   }
 
-  public void testGrouping() throws Exception {
+  public void testGrouping() {
     assertStructureEqual("root\n" +
                          ".Group:a\n" +
                          "..Group:d\n" +
@@ -80,7 +74,7 @@ public class SmartTreeStructureTest extends LightPlatformCodeInsightFixtureTestC
                          ".....bbb\n", PlatformTestUtil.createComparator(myPrintInfo));
   }
 
-  public void testFiltering() throws Exception {
+  public void testFiltering() {
     myModel.addFlter(new Filter() {
       @Override
       @NotNull
@@ -121,17 +115,15 @@ public class SmartTreeStructureTest extends LightPlatformCodeInsightFixtureTestC
                          ".xxx\n", PlatformTestUtil.createComparator(myPrintInfo));
   }
 
-  public void testSorting() throws Exception {
+  public void testSorting() {
     myModel.addSorter(new Sorter() {
+      @NotNull
       @Override
       public Comparator getComparator() {
-        return new Comparator() {
-          @Override
-          public int compare(Object o1, Object o2) {
-            if (o1 instanceof Group && !(o2 instanceof Group)) return -1;
-            if (!(o1 instanceof Group) && o2 instanceof Group) return 1;
-            return 0;
-          }
+        return (o1, o2) -> {
+          if (o1 instanceof Group && !(o2 instanceof Group)) return -1;
+          if (!(o1 instanceof Group) && o2 instanceof Group) return 1;
+          return 0;
         };
       }
 
@@ -154,14 +146,10 @@ public class SmartTreeStructureTest extends LightPlatformCodeInsightFixtureTestC
     });
 
     myModel.addSorter(new Sorter() {
+      @NotNull
       @Override
       public Comparator getComparator() {
-        return new Comparator() {
-          @Override
-          public int compare(Object o1, Object o2) {
-            return o1.toString().compareTo(o2.toString());
-          }
-        };
+        return (o1, o2) -> o1.toString().compareTo(o2.toString());
       }
 
       @Override

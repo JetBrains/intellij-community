@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,7 +27,7 @@ public abstract class PredefinedCodeStyle {
   public static final ExtensionPointName<PredefinedCodeStyle> EP_NAME =
     ExtensionPointName.create("com.intellij.predefinedCodeStyle");
 
-  public final static PredefinedCodeStyle[] EMPTY_ARRAY = new PredefinedCodeStyle[]{};
+  public static final PredefinedCodeStyle[] EMPTY_ARRAY = {};
   private final String myName;
   private final Language myLanguage;
 

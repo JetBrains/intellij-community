@@ -1,50 +1,40 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vfs;
 
-import com.intellij.ide.highlighter.ArchiveFileType;
-import com.intellij.openapi.util.NotNullLazyValue;
-import com.intellij.util.StringBuilderSpinAllocator;
+import com.intellij.openapi.application.CachedSingletonsRegistry;
+import com.intellij.openapi.util.ClearableLazyValue;
+import com.intellij.util.io.URLUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-/**
- * @author yole
- */
 public class StandardFileSystems {
-  public static String FILE_PROTOCOL = "file";
-  public static String JAR_PROTOCOL = "jar";
-  public static String JAR_SEPARATOR = "!/";
-  public static String HTTP_PROTOCOL = "http";
+  public static final String FILE_PROTOCOL = URLUtil.FILE_PROTOCOL;
+  public static final String FILE_PROTOCOL_PREFIX = FILE_PROTOCOL + URLUtil.SCHEME_SEPARATOR;
 
-  private static final NotNullLazyValue<VirtualFileSystem> ourLocal = new NotNullLazyValue<VirtualFileSystem>() {
-    @NotNull
-    @Override
-    protected VirtualFileSystem compute() {
-      return VirtualFileManager.getInstance().getFileSystem(FILE_PROTOCOL);
-    }
-  };
+  public static final String JAR_PROTOCOL = URLUtil.JAR_PROTOCOL;
+  public static final String JAR_PROTOCOL_PREFIX = JAR_PROTOCOL + URLUtil.SCHEME_SEPARATOR;
 
-  private static final NotNullLazyValue<VirtualFileSystem> ourJar = new NotNullLazyValue<VirtualFileSystem>() {
-    @NotNull
-    @Override
-    protected VirtualFileSystem compute() {
-      return VirtualFileManager.getInstance().getFileSystem(JAR_PROTOCOL);
+  public static final String JRT_PROTOCOL = URLUtil.JRT_PROTOCOL;
+  public static final String JRT_PROTOCOL_PREFIX = JRT_PROTOCOL + URLUtil.SCHEME_SEPARATOR;
+
+  private static final ClearableLazyValue<VirtualFileSystem> ourLocal = CachedSingletonsRegistry.markLazyValue(
+    new ClearableLazyValue<VirtualFileSystem>() {
+      @NotNull
+      @Override
+      protected VirtualFileSystem compute() {
+        return VirtualFileManager.getInstance().getFileSystem(URLUtil.FILE_PROTOCOL);
+      }
     }
-  };
+  );
+
+  private static final ClearableLazyValue<VirtualFileSystem> ourJar = CachedSingletonsRegistry.markLazyValue(
+    new ClearableLazyValue<VirtualFileSystem>() {
+      @NotNull
+      @Override
+      protected VirtualFileSystem compute() {
+        return VirtualFileManager.getInstance().getFileSystem(JAR_PROTOCOL);
+      }
+    }
+  );
 
   public static VirtualFileSystem local() {
     return ourLocal.getValue();
@@ -54,31 +44,12 @@ public class StandardFileSystems {
     return ourJar.getValue();
   }
 
-  @Nullable
-  public static VirtualFile getJarRootForLocalFile(@NotNull VirtualFile virtualFile) {
-    if (virtualFile.getFileType() != ArchiveFileType.INSTANCE) return null;
+  //<editor-fold desc="Deprecated stuff.">
 
-    final StringBuilder builder = StringBuilderSpinAllocator.alloc();
-    final String path;
-    try {
-      builder.append(virtualFile.getPath());
-      builder.append(JAR_SEPARATOR);
-      path = builder.toString();
-    }
-    finally {
-      StringBuilderSpinAllocator.dispose(builder);
-    }
-    return jar().findFileByPath(path);
+  /** @deprecated use ArchiveFileSystem#getRootByLocal(VirtualFile) (to remove in IDEA 2018) */
+  @Deprecated
+  public static VirtualFile getJarRootForLocalFile(@NotNull VirtualFile local) {
+    return jar().findFileByPath(local.getPath() + URLUtil.JAR_SEPARATOR);
   }
-
-  @Nullable
-  public static VirtualFile getVirtualFileForJar(@Nullable VirtualFile entryVFile) {
-    if (entryVFile == null) return null;
-    final String path = entryVFile.getPath();
-    final int separatorIndex = path.indexOf(JAR_SEPARATOR);
-    if (separatorIndex < 0) return null;
-
-    String localPath = path.substring(0, separatorIndex);
-    return local().findFileByPath(localPath);
-  }
+  //</editor-fold>
 }

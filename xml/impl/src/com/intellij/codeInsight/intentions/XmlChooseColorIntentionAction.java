@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,9 +16,8 @@
 package com.intellij.codeInsight.intentions;
 
 import com.intellij.codeInsight.CodeInsightBundle;
-import com.intellij.codeInsight.CodeInsightUtilBase;
+import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction;
-import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -32,6 +31,7 @@ import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.ui.ColorChooser;
 import com.intellij.ui.ColorUtil;
+import com.intellij.ui.JBColor;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
@@ -46,56 +46,56 @@ public class XmlChooseColorIntentionAction extends PsiElementBaseIntentionAction
     setText(CodeInsightBundle.message("intention.color.chooser.dialog"));
   }
 
+  @Override
   public boolean isAvailable(@NotNull final Project project, final Editor editor, @NotNull final PsiElement element) {
     final PsiElement parent = element.getParent();
     return parent instanceof XmlAttributeValue && ColorUtil.fromHex(((XmlAttributeValue)parent).getValue(), null) != null;
   }
 
+  @Override
   @NotNull
   public String getFamilyName() {
     return getText();
   }
 
   @Override
-  public void invoke(@NotNull Project project, Editor editor, @NotNull PsiElement element) throws IncorrectOperationException {
-    chooseColor(editor.getComponent(), element, getText(), false);
+  public boolean startInWriteAction() {
+    return false;
   }
 
-  public static void chooseColor(JComponent editorComponent, PsiElement element, String caption, boolean startInWriteAction) {
+  @Override
+  public void invoke(@NotNull Project project, Editor editor, @NotNull PsiElement element) throws IncorrectOperationException {
+    chooseColor(editor.getComponent(), element);
+  }
+
+  public static void chooseColor(JComponent editorComponent, PsiElement element) {
+    String caption = CodeInsightBundle.message("intention.color.chooser.dialog");
     final XmlAttributeValue literal = PsiTreeUtil.getParentOfType(element, XmlAttributeValue.class, false);
     if (literal == null) return;
     final String text = StringUtil.unquoteString(literal.getValue());
-    final String hexPrefix = text.startsWith("#") ? "#" : "";
 
     Color oldColor;
     try {
       oldColor = Color.decode(text);
     }
     catch (NumberFormatException e) {
-      oldColor = Color.GRAY;
+      oldColor = JBColor.GRAY;
     }
-    Color color = ColorChooser.chooseColor(editorComponent, caption, oldColor, true);
+    Color color = ColorChooser.chooseColor(element.getProject(), editorComponent, caption, oldColor, true);
     if (color == null) return;
     if (!Comparing.equal(color, oldColor)) {
-      if (!CodeInsightUtilBase.preparePsiElementForWrite(element)) return;
-      final String newText =  hexPrefix + ColorUtil.toHex(color);
+      if (!FileModificationService.getInstance().preparePsiElementForWrite(element)) return;
+      final String newText = "#" + ColorUtil.toHex(color);
       final PsiManager manager = literal.getManager();
-      final XmlAttribute newAttribute = XmlElementFactory.getInstance(manager.getProject()).createXmlAttribute("name", newText);
-      final Runnable replaceRunnable = new Runnable() {
-        public void run() {
-          literal.replace(newAttribute.getValueElement());
-        }
+      final XmlAttribute newAttribute = XmlElementFactory.getInstance(manager.getProject()).createAttribute("name", newText, element);
+      final Runnable replaceRunnable = () -> {
+        final XmlAttributeValue valueElement = newAttribute.getValueElement();
+        assert valueElement != null;
+        literal.replace(valueElement);
       };
-      if (startInWriteAction) {
-        new WriteCommandAction(element.getProject(), caption) {
-          @Override
-          protected void run(Result result) throws Throwable {
-            replaceRunnable.run();
-          }
-        }.execute();
-      } else {
+      WriteCommandAction.writeCommandAction(element.getProject()).withName(caption).run(() -> {
         replaceRunnable.run();
-      }
+      });
     }
   }
 }

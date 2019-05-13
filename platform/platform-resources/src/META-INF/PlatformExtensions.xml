@@ -1,9 +1,36 @@
 <idea-plugin>
   <extensions defaultExtensionNs="com.intellij">
     <errorHandler implementation="com.intellij.diagnostic.ITNReporter"/>
-    <appStarter implementation="com.intellij.openapi.diff.DiffApplication"/>
-    <appStarter implementation="com.intellij.openapi.diff.MergeApplication"/>
+    <appStarter implementation="com.intellij.openapi.application.SaveStarter"/>
+    <appStarter implementation="com.intellij.diff.applications.DiffApplication"/>
+    <appStarter implementation="com.intellij.diff.applications.MergeApplication"/>
+    <appStarter implementation="com.intellij.ui.win.RecentProjectApplication"/>
+    <appStarter implementation="com.intellij.openapi.command.impl.UpdatePluginsApp"/>
+    <appStarter implementation="com.intellij.help.impl.KeymapGenerator"/>
+    <appStarter implementation="com.intellij.help.impl.IntentionDump"/>
+    <appStarter implementation="com.intellij.help.impl.InspectionDump"/>
+    <appStarter implementation="com.intellij.help.impl.ShowProductVersion"/>
+    <appStarter implementation="com.intellij.ide.plugins.BundledPluginsLister"/>
 
+    <applicationService serviceImplementation="com.intellij.execution.wsl.WSLDistributionService"/>
+    <experimentalFeature id="wsl.close.process.input" percentOfUsers="0">
+      <description>Forces closing of WSL process input stream to prevent process zombification. See
+        https://github.com/Microsoft/WSL/issues/2592
+        Required for Windows 10 version prior 1803
+      </description>
+    </experimentalFeature>
+
+    <applicationService serviceInterface="com.intellij.openapi.components.impl.stores.IComponentStore"
+                        serviceImplementation="com.intellij.configurationStore.ApplicationStoreImpl"/>
+    <applicationService serviceInterface="com.intellij.openapi.components.PathMacroManager"
+                        serviceImplementation="com.intellij.configurationStore.ApplicationPathMacroManager"/>
+
+    <applicationService serviceImplementation="com.intellij.configurationStore.DefaultProjectExportableAndSaveTrigger"/>
+
+    <applicationService serviceInterface="com.intellij.openapi.wm.impl.FrameTitleBuilder"
+                        serviceImplementation="com.intellij.openapi.wm.impl.PlatformFrameTitleBuilder"/>
+
+    <applicationService serviceImplementation="com.intellij.ide.GeneralSettings"/>
     <applicationService serviceInterface="com.intellij.ide.util.PropertiesComponent"
                         serviceImplementation="com.intellij.ide.util.AppPropertiesComponentImpl"/>
     <projectService serviceInterface="com.intellij.ide.util.PropertiesComponent"
@@ -11,12 +38,6 @@
 
     <applicationService serviceInterface="com.intellij.openapi.actionSystem.JBAwtEventQueue"
                         serviceImplementation="com.intellij.openapi.actionSystem.impl.JBAwtEventQueueImpl"/>
-
-    <applicationService serviceInterface="com.intellij.openapi.vfs.tracker.VirtualFileTracker"
-                        serviceImplementation="com.intellij.openapi.vfs.tracker.VirtualFileTrackerImpl"/>
-
-    <applicationService serviceInterface="com.intellij.concurrency.JobScheduler"
-                        serviceImplementation="com.intellij.concurrency.JobSchedulerImpl"/>
 
     <applicationService serviceInterface="com.intellij.openapi.options.ShowSettingsUtil"
                         serviceImplementation="com.intellij.ide.actions.ShowSettingsUtilImpl"/>
@@ -28,7 +49,8 @@
                         serviceImplementation="com.intellij.openapi.progress.impl.ProgressManagerImpl"/>
 
     <applicationService serviceImplementation="com.intellij.ide.ui.customization.CustomActionsSchema"/>
-    <exportable serviceInterface="com.intellij.ide.ui.customization.CustomActionsSchema"/>
+    <applicationService serviceInterface="com.intellij.ide.ui.ProductIcons"
+                        serviceImplementation="com.intellij.ide.impl.ui.ProductsIconsImpl"/>
 
     <applicationService serviceInterface="com.intellij.openapi.project.DefaultProjectFactory"
                         serviceImplementation="com.intellij.openapi.project.DefaultProjectFactoryImpl"/>
@@ -46,14 +68,17 @@
                         serviceImplementation="com.intellij.ide.CopyPasteManagerEx"/>
     <applicationService serviceInterface="com.intellij.openapi.ui.popup.JBPopupFactory"
                         serviceImplementation="com.intellij.ui.popup.PopupFactoryImpl"/>
-    <applicationService serviceInterface="com.intellij.openapi.diff.DiffManager"
-                        serviceImplementation="com.intellij.openapi.diff.impl.external.DiffManagerImpl"/>
     <applicationService serviceInterface="com.intellij.openapi.fileEditor.ex.FileEditorProviderManager"
                         serviceImplementation="com.intellij.openapi.fileEditor.impl.FileEditorProviderManagerImpl"/>
     <applicationService serviceInterface="com.intellij.ide.ui.search.SearchableOptionsRegistrar"
                         serviceImplementation="com.intellij.ide.ui.search.SearchableOptionsRegistrarImpl"/>
+    <applicationService serviceInterface="com.intellij.openapi.fileEditor.impl.EditorEmptyTextPainter"
+                        serviceImplementation="com.intellij.openapi.fileEditor.impl.EditorEmptyTextPainter"/>
+    <applicationService serviceInterface="com.intellij.openapi.fileEditor.impl.FileOffsetsManager"
+                        serviceImplementation="com.intellij.openapi.fileEditor.impl.FileOffsetsManager"/>
 
-    <applicationService serviceImplementation="com.intellij.openapi.options.ex.IdeConfigurablesGroup"/>
+    <applicationService serviceInterface="com.intellij.openapi.editor.EditorCopyPasteHelper"
+                        serviceImplementation="com.intellij.openapi.editor.impl.EditorCopyPasteHelperImpl"/>
 
     <applicationService serviceInterface="com.intellij.diagnostic.ErrorReportConfigurable"
                         serviceImplementation="com.intellij.diagnostic.ErrorReportConfigurable"/>
@@ -70,12 +95,49 @@
                         serviceImplementation="com.intellij.ui.TreeUIHelperImpl"/>
     <applicationService serviceInterface="com.intellij.ui.ExpandableItemsHandlerFactory"
                         serviceImplementation="com.intellij.ui.ExpandTipHandlerFactoryImpl"/>
+    <applicationService
+        serviceInterface="com.intellij.openapi.ui.messages.MessagesService"
+        serviceImplementation="com.intellij.ui.messages.MessagesServiceImpl"/>
+
+
     <applicationService serviceInterface="com.intellij.openapi.diff.DiffRequestFactory"
                         serviceImplementation="com.intellij.openapi.diff.impl.mergeTool.DiffRequestFactoryImpl"/>
+    <applicationService serviceInterface="com.intellij.openapi.diff.DiffManager"
+                        serviceImplementation="com.intellij.openapi.diff.impl.external.DiffManagerImpl"/>
+    <applicationService serviceInterface="com.intellij.diff.DiffManager"
+                        serviceImplementation="com.intellij.diff.DiffManagerImpl"/>
+    <applicationService serviceInterface="com.intellij.diff.DiffContentFactory"
+                        serviceImplementation="com.intellij.diff.DiffContentFactoryImpl"/>
+    <applicationService serviceInterface="com.intellij.diff.DiffRequestFactory"
+                        serviceImplementation="com.intellij.diff.DiffRequestFactoryImpl"/>
+    <applicationService serviceInterface="com.intellij.diff.comparison.ComparisonManager"
+                        serviceImplementation="com.intellij.diff.comparison.ComparisonManagerImpl"/>
+    <applicationService serviceInterface="com.intellij.diff.impl.DiffSettingsHolder"
+                        serviceImplementation="com.intellij.diff.impl.DiffSettingsHolder"/>
+    <applicationService serviceInterface="com.intellij.diff.tools.util.base.TextDiffSettingsHolder"
+                        serviceImplementation="com.intellij.diff.tools.util.base.TextDiffSettingsHolder"/>
+    <applicationService serviceInterface="com.intellij.diff.tools.external.ExternalDiffSettings"
+                        serviceImplementation="com.intellij.diff.tools.external.ExternalDiffSettings"/>
+    <applicationConfigurable groupId="tools" id="diff.base" displayName="Diff &amp; Merge"
+                             instance="com.intellij.diff.settings.DiffSettingsConfigurable">
+      <configurable id="diff.external" displayName="External Diff Tools"
+                    instance="com.intellij.diff.settings.ExternalDiffSettingsConfigurable"/>
+    </applicationConfigurable>
+    <colorAndFontPanelFactory implementation="com.intellij.openapi.diff.impl.settings.DiffColorsPageFactory"/>
+    <colorAndFontDescriptorProvider implementation="com.intellij.openapi.diff.impl.settings.DiffColorsPageFactory"/>
+    <getDataRule key="diff_navigatable_array" implementationClass="com.intellij.diff.actions.impl.DiffNavigatableArrayRule"/>
+
+    <daemon.highlightInfoFilter implementation="com.intellij.codeInsight.daemon.OutsidersPsiFileSupport$HighlightFilter"/>
+    <daemon.intentionActionFilter implementation="com.intellij.codeInsight.daemon.OutsidersPsiFileSupport$IntentionFilter"/>
+    <defaultHighlightingSettingProvider id="GeneratedSourcesHighlightingSettingProvider"
+                                        implementation="com.intellij.codeInsight.daemon.OutsidersPsiFileSupport$HighlightingSettingProvider"/>
+
     <applicationService serviceInterface="com.intellij.ui.SystemNotifications"
                         serviceImplementation="com.intellij.ui.SystemNotificationsImpl"/>
     <applicationService serviceInterface="com.intellij.openapi.keymap.KeymapGroupFactory"
                         serviceImplementation="com.intellij.openapi.keymap.impl.KeymapGroupFactoryImpl"/>
+    <applicationService serviceInterface="com.intellij.openapi.keymap.impl.ActionShortcutRestrictions"
+                        serviceImplementation="com.intellij.openapi.keymap.impl.ActionShortcutRestrictionsImpl"/>
     <applicationService serviceInterface="com.intellij.openapi.editor.highlighter.EditorHighlighterFactory"
                         serviceImplementation="com.intellij.openapi.editor.highlighter.EditorHighlighterFactoryImpl"/>
     <applicationService serviceInterface="com.intellij.ide.dnd.DnDManager"
@@ -94,14 +156,25 @@
                         serviceImplementation="com.intellij.codeInsight.hint.TooltipController"/>
     <applicationService serviceInterface="com.intellij.openapi.editor.actionSystem.EditorActionManager"
                         serviceImplementation="com.intellij.openapi.editor.impl.EditorActionManagerImpl"/>
+    <applicationService serviceInterface="com.intellij.openapi.editor.actionSystem.LatencyRecorder"
+                        serviceImplementation="com.intellij.internal.performance.LatencyRecorderImpl"/>
+
     <applicationService serviceInterface="com.intellij.openapi.updateSettings.impl.UpdateSettings"
                         serviceImplementation="com.intellij.openapi.updateSettings.impl.UpdateSettings"/>
+    <applicationService serviceImplementation="com.intellij.openapi.updateSettings.UpdateStrategyCustomization"/>
+    <applicationService serviceInterface="com.intellij.ide.plugins.InstalledPluginsState"
+                        serviceImplementation="com.intellij.ide.plugins.InstalledPluginsState"/>
+    <applicationService serviceInterface="com.intellij.ide.externalComponents.ExternalComponentManager"
+                        serviceImplementation="com.intellij.ide.externalComponents.ExternalComponentManagerImpl"/>
+
+    <applicationService serviceImplementation="com.intellij.openapi.application.IdeUrlTrackingParametersProvider"/>
+
     <applicationService serviceInterface="com.intellij.featureStatistics.FeatureUsageTracker"
                         serviceImplementation="com.intellij.featureStatistics.FeatureUsageTrackerImpl"/>
+    <applicationService serviceInterface="com.intellij.reporting.FreezeLogger"
+                        serviceImplementation="com.intellij.reporting.FreezeLoggerImpl"/>
     <applicationService serviceInterface="com.intellij.featureStatistics.ProductivityFeaturesRegistry"
                         serviceImplementation="com.intellij.featureStatistics.ProductivityFeaturesRegistryImpl"/>
-    <applicationService serviceInterface="com.intellij.util.InstanceofCheckerGenerator"
-                        serviceImplementation="com.intellij.util.InstanceofCheckerGeneratorImpl"/>
     <applicationService serviceInterface="com.intellij.internal.psiView.PsiViewerSettings"
                         serviceImplementation="com.intellij.internal.psiView.PsiViewerSettings"/>
 
@@ -114,46 +187,87 @@
     <applicationService serviceInterface="com.intellij.openapi.keymap.impl.DefaultKeymap"
                         serviceImplementation="com.intellij.openapi.keymap.impl.DefaultKeymap"/>
 
-    <applicationService serviceInterface="com.intellij.ide.passwordSafe.impl.providers.masterKey.PasswordDatabase"
-                        serviceImplementation="com.intellij.ide.passwordSafe.impl.providers.masterKey.PasswordDatabase"/>
-    <applicationService serviceInterface="com.intellij.ide.passwordSafe.config.PasswordSafeSettings"
-                        serviceImplementation="com.intellij.ide.passwordSafe.config.PasswordSafeSettings"/>
+    <applicationService serviceInterface="com.intellij.credentialStore.PasswordSafeSettings"
+                        serviceImplementation="com.intellij.credentialStore.PasswordSafeSettings"/>
     <applicationService serviceInterface="com.intellij.ide.passwordSafe.PasswordSafe"
-                        serviceImplementation="com.intellij.ide.passwordSafe.impl.PasswordSafeImpl"/>
-    <applicationConfigurable instance="com.intellij.ide.passwordSafe.config.PasswordSafeConfigurable" id="application.passwordSafe"
+                        serviceImplementation="com.intellij.ide.passwordSafe.impl.PasswordSafeImpl"
+                        testServiceImplementation="com.intellij.ide.passwordSafe.impl.BasePasswordSafe"/>
+
+    <applicationConfigurable parentId="preferences.general" instance="com.intellij.credentialStore.PasswordSafeConfigurable" id="application.passwordSafe"
                              displayName="Passwords"/>
     <applicationService serviceInterface="com.intellij.execution.process.ColoredOutputTypeRegistry"
                         serviceImplementation="com.intellij.execution.process.ColoredOutputTypeRegistry"/>
     <applicationService serviceInterface="com.intellij.execution.process.OSProcessManager"
                         serviceImplementation="com.intellij.execution.process.impl.OSProcessManagerImpl"/>
 
-    <applicationService serviceInterface="com.intellij.openapi.options.SchemesManagerFactory"
-                        serviceImplementation="com.intellij.openapi.options.SchemesManagerFactoryImpl"/>
+    <applicationService serviceInterface="com.intellij.openapi.options.SchemeManagerFactory"
+                        serviceImplementation="com.intellij.configurationStore.schemeManager.SchemeManagerFactoryBase$ApplicationSchemeManagerFactory"/>
+    <projectService serviceInterface="com.intellij.openapi.options.SchemeManagerFactory"
+                    serviceImplementation="com.intellij.configurationStore.schemeManager.SchemeManagerFactoryBase$ProjectSchemeManagerFactory"/>
 
-    <applicationService serviceInterface="com.intellij.openapi.editor.colors.ex.DefaultColorSchemesManager"
-                        serviceImplementation="com.intellij.openapi.editor.colors.ex.DefaultColorSchemesManager"/>
+    <applicationService serviceImplementation="com.intellij.openapi.editor.colors.ex.DefaultColorSchemesManager"/>
     <applicationService serviceInterface="com.intellij.openapi.editor.colors.TextAttributesKey$TextAttributeKeyDefaultsProvider"
                         serviceImplementation="com.intellij.openapi.editor.colors.impl.TextAttributeKeyDefaultsProviderImpl"/>
     <applicationService serviceInterface="com.intellij.openapi.editor.colors.EditorColorsManager"
                         serviceImplementation="com.intellij.openapi.editor.colors.impl.EditorColorsManagerImpl"/>
-    <exportable serviceInterface="com.intellij.openapi.editor.colors.EditorColorsManager"/>
-    <schemeOwner serviceInterface="com.intellij.openapi.editor.colors.EditorColorsManager"/>
+    <applicationService serviceInterface="com.intellij.openapi.editor.colors.EditorColorPaletteFactory"
+                        serviceImplementation="com.intellij.openapi.options.colors.EditorColorPaletteFactoryImpl"/>
 
     <applicationService serviceInterface="com.intellij.openapi.roots.ui.FileAppearanceService"
                         serviceImplementation="com.intellij.openapi.roots.ui.FileAppearanceServiceImpl"/>
 
-    <applicationService serviceImplementation="com.intellij.internal.statistic.UsageTrigger"/>
+    <projectService serviceImplementation="com.intellij.internal.statistic.service.fus.collectors.LegacyFUSProjectUsageTrigger"/>
+    <applicationService serviceImplementation="com.intellij.internal.statistic.service.fus.collectors.LegacyFUSApplicationUsageTrigger"/>
+    <applicationService serviceImplementation="com.intellij.internal.statistic.service.fus.collectors.LegacyApplicationUsageTriggers"/>
+    <applicationService serviceImplementation="com.intellij.internal.statistic.service.fus.collectors.LegacyApplicationUsageTriggers$LegacyUsageTrigger"/>
+
+    <applicationService serviceImplementation="com.intellij.internal.statistic.collectors.fus.ui.persistence.ToolbarClicksCollector"/>
+    <applicationService serviceImplementation="com.intellij.internal.statistic.collectors.fus.ui.persistence.ShortcutsCollector"/>
+    <applicationService serviceInterface="com.intellij.ide.actions.ActionsCollector"
+        serviceImplementation="com.intellij.internal.statistic.collectors.fus.actions.persistence.ActionsCollectorImpl"/>
+    <applicationService serviceImplementation="com.intellij.internal.statistic.collectors.fus.actions.persistence.MainMenuCollector"/>
+    <applicationService serviceImplementation="com.intellij.internal.statistic.collectors.fus.actions.persistence.IntentionsCollector"/>
+    <applicationService serviceImplementation="com.intellij.internal.statistic.collectors.fus.actions.persistence.ToolWindowCollector"/>
+    <applicationService serviceImplementation="com.intellij.internal.statistic.collectors.fus.actions.persistence.ToolWindowCollector$OutdatedToolWindowCollector"/>
+    <applicationService serviceInterface="com.intellij.internal.statistic.eventLog.FeatureUsageUiEvents"
+                        serviceImplementation="com.intellij.internal.statistic.eventLog.FeatureUsageUiEventsImpl"/>
+
+    <applicationService serviceImplementation="com.intellij.openapi.util.DimensionService"/>
+    <applicationService serviceInterface="com.intellij.openapi.util.WindowStateService"
+                        serviceImplementation="com.intellij.openapi.util.WindowStateApplicationService"/>
+    <projectService serviceInterface="com.intellij.openapi.util.WindowStateService"
+                    serviceImplementation="com.intellij.openapi.util.WindowStateProjectService"/>
+
+    <applicationService serviceInterface="com.intellij.openapi.application.ApplicationInfo"
+                        serviceImplementation="com.intellij.openapi.application.impl.ApplicationInfoImpl"/>
+
+    <applicationService serviceInterface="com.intellij.execution.RunnerRegistry"
+                        serviceImplementation="com.intellij.execution.RunnerRegistry"/>
+
+    <applicationService serviceInterface="org.jetbrains.ide.script.IdeScriptEngineManager"
+                        serviceImplementation="org.jetbrains.ide.script.Jsr223IdeScriptEngineManagerImpl"/>
+
+    <applicationService serviceImplementation="com.intellij.ide.ui.UISettings"/>
+    <applicationService serviceImplementation="com.intellij.ide.ui.NotRoamableUiSettings"/>
+
+    <applicationService serviceInterface="com.intellij.ide.UiActivityMonitor" serviceImplementation="com.intellij.ide.UiActivityMonitorImpl"/>
+
+    <applicationService serviceInterface="com.intellij.execution.process.ProcessHandlerFactory"
+                        serviceImplementation="com.intellij.execution.process.ProcessHandlerFactoryImpl" />
 
     <projectService serviceInterface="com.intellij.openapi.vfs.ReadonlyStatusHandler"
                     serviceImplementation="com.intellij.openapi.vcs.readOnlyHandler.ReadonlyStatusHandlerImpl"/>
     <projectService serviceInterface="com.intellij.openapi.startup.StartupManager"
                     serviceImplementation="com.intellij.ide.startup.impl.StartupManagerImpl"/>
+    <projectService serviceImplementation="com.intellij.openapi.project.ProjectTypeService"/>
     <projectService serviceInterface="com.intellij.openapi.ui.MasterDetailsStateService" serviceImplementation="com.intellij.openapi.ui.MasterDetailsStateService"/>
     <projectService serviceInterface="com.intellij.ide.SelectInManager" serviceImplementation="com.intellij.ide.SelectInManager"/>
 
     <projectService serviceInterface="com.intellij.ide.errorTreeView.impl.ErrorTreeViewConfiguration"
                     serviceImplementation="com.intellij.ide.errorTreeView.impl.ErrorTreeViewConfiguration"/>
 
+    <projectService serviceInterface="com.intellij.ui.docking.DockManager"
+                    serviceImplementation="com.intellij.ui.docking.impl.DockManagerImpl"/>
     <projectService serviceInterface="com.intellij.ide.SelectInEditorManager"
                     serviceImplementation="com.intellij.ide.impl.SelectInEditorManagerImpl"/>
     <projectService serviceInterface="com.intellij.ui.RecentsManager"
@@ -161,8 +275,7 @@
     <projectService serviceInterface="com.intellij.ui.content.MessageView"
                     serviceImplementation="com.intellij.ui.content.impl.MessageViewImpl"/>
 
-    <projectService serviceInterface="com.intellij.ui.tabs.FileColorSharedConfigurationManager"
-                    serviceImplementation="com.intellij.ui.tabs.FileColorSharedConfigurationManager"/>
+    <projectService serviceImplementation="com.intellij.ui.tabs.FileColorProjectLevelConfigurationManager"/>
 
     <projectService serviceInterface="com.intellij.openapi.project.DumbService" serviceImplementation="com.intellij.openapi.project.DumbServiceImpl"/>
 
@@ -181,45 +294,73 @@
     <projectService serviceInterface="com.intellij.execution.testframework.autotest.AutoTestManager"
                     serviceImplementation="com.intellij.execution.testframework.autotest.AutoTestManager"/>
 
+    <projectService serviceInterface="com.intellij.execution.testframework.sm.TestHistoryConfiguration"
+                    serviceImplementation="com.intellij.execution.testframework.sm.TestHistoryConfiguration"/>
     <projectService serviceInterface="com.intellij.openapi.vcs.VcsFileListenerContextHelper"
                     serviceImplementation="com.intellij.openapi.vcs.VcsFileListenerContextHelper"/>
 
+    <projectService serviceInterface="com.intellij.openapi.editor.LazyRangeMarkerFactory"
+                    serviceImplementation="com.intellij.openapi.editor.impl.LazyRangeMarkerFactoryImpl"/>
+
+    <projectService serviceInterface="com.intellij.openapi.project.ProjectReloadState"
+                    serviceImplementation="com.intellij.openapi.project.impl.ProjectReloadStateImpl"/>
+
+    <projectService serviceInterface="com.intellij.externalDependencies.ExternalDependenciesManager"
+                    serviceImplementation="com.intellij.externalDependencies.impl.ExternalDependenciesManagerImpl"/>
+
+    <welcomeFrameProvider implementation="com.intellij.openapi.wm.impl.welcomeScreen.FlatWelcomeFrameProvider"/>
+    <themeProvider id="JetBrainsHighContrastTheme" path="/themes/HighContrast.theme.json"/>
+
+    <postStartupActivity implementation="com.intellij.internal.IconsLoadTime$StartupLoadTime"/>
+
+    <applicationService serviceImplementation="com.intellij.ui.IdeUICustomization"/>
+
     <!-- General -->
-    <applicationConfigurable instance="com.intellij.ide.GeneralSettingsConfigurable"/>
+    <applicationConfigurable groupId="appearance" groupWeight="120" key="title.general" bundle="messages.IdeBundle" id="preferences.general"
+                             instance="com.intellij.ide.GeneralSettingsConfigurable"/>
 
     <!-- Appearance -->
-    <applicationConfigurable instance="com.intellij.ide.ui.AppearanceConfigurable" id="appearance" key="title.appearance"
-                             bundle="messages.IdeBundle"/>
+    <applicationConfigurable groupId="appearance" groupWeight="150" instance="com.intellij.ide.ui.AppearanceConfigurable"
+                             id="preferences.lookFeel" key="title.appearance" bundle="messages.IdeBundle"/>
 
     <!-- Keymap -->
-    <applicationConfigurable instance="com.intellij.openapi.keymap.impl.ui.KeymapPanel" id="preferences.keymap" key="keymap.display.name"
+    <applicationConfigurable groupId="root" groupWeight="65" instance="com.intellij.openapi.keymap.impl.ui.KeymapPanel" id="preferences.keymap" key="keymap.display.name"
                              bundle="messages.KeyMapBundle"/>
-    <applicationConfigurable instance="com.intellij.openapi.keymap.impl.ui.QuickListsPanel" id="reference.idesettings.quicklists"
+    <applicationConfigurable groupId="appearance" instance="com.intellij.openapi.keymap.impl.ui.QuickListsPanel" id="reference.idesettings.quicklists"
                              displayName="Quick Lists"/>
 
     <!-- Customizations -->
-    <applicationConfigurable instance="com.intellij.ide.ui.customization.CustomizationConfigurable" id="preferences.customizations"
+    <applicationConfigurable groupId="appearance" groupWeight="130" instance="com.intellij.ide.ui.customization.CustomizationConfigurable" id="preferences.customizations"
                              key="title.customizations" bundle="messages.IdeBundle"/>
 
-    <!-- Web Browser -->
-    <applicationConfigurable instance="com.intellij.ide.BrowserSettings" id="reference.settings.ide.settings.web.browsers"
-                             key="browsers.settings" bundle="messages.IdeBundle"/>
-
     <!-- Notifications -->
-    <applicationConfigurable instance="com.intellij.notification.impl.NotificationsConfigurable"/>
+    <applicationConfigurable groupId="appearance"
+                             groupWeight="110"
+                             displayName="Notifications"
+                             id="reference.settings.ide.settings.notifications"
+                             provider="com.intellij.notification.impl.NotificationsConfigurableProvider"/>
+    <search.optionContributor implementation="com.intellij.notification.impl.NotificationSearchableOptionContributor"/>
 
     <!-- Plugins -->
-    <applicationConfigurable instance="com.intellij.ide.plugins.PluginManagerConfigurable" id="preferences.pluginManager"
-                             displayName="Plugins"/>
-    <applicationConfigurable instance="com.intellij.util.net.HTTPProxySettingsPanel" id="http.proxy" displayName="HTTP Proxy" />
-    <applicationConfigurable instance="com.intellij.openapi.diff.impl.external.DiffOptionsForm" id="diff" displayName="External Diff Tools" />
-    <!--<applicationConfigurable instance="com.intellij.ui.switcher.QuickAccessConfigurable"/>-->
+    <applicationConfigurable groupId="root" groupWeight="55" instance="com.intellij.ide.plugins.PluginManagerConfigurableProxy" id="preferences.pluginManager"
+                             treeRenderer="com.intellij.ide.plugins.PluginManagerConfigurableTreeRenderer" displayName="Plugins"/>
+    <actionFromOptionDescriptorProvider implementation="com.intellij.ide.plugins.InstalledPluginsManagerMain$PluginsActionFromOptionDescriptorProvider"/>
+    <customFileDropHandler implementation="com.intellij.ide.plugins.InstalledPluginsManagerMain$PluginDropHandler"/>
+    <applicationConfigurable parentId="preferences.general" instance="com.intellij.util.net.HttpProxyConfigurable" id="http.proxy" displayName="HTTP Proxy"/>
+    <applicationConfigurable parentId="preferences.general" instance="com.intellij.ide.gdpr.ConsentConfigurable" id="consents" displayName="Data Sharing"/>
+    <applicationConfigurable groupId="tools" displayName="Server Certificates" id="http.certificates" instance="com.intellij.util.net.ssl.CertificateConfigurable"/>
 
     <fileTypeFactory implementation="com.intellij.openapi.fileTypes.impl.PlatformFileTypeFactory"/>
+    <fileTypeFactory implementation="com.intellij.openapi.fileTypes.impl.InternalFileTypeFactory"/>
+    <postStartupActivity implementation="com.intellij.openapi.fileTypes.impl.ApproveRemovedMappingsActivity"/>
     <applicationService serviceInterface="com.intellij.openapi.options.colors.ColorSettingsPages"
                         serviceImplementation="com.intellij.openapi.options.colors.pages.ColorSettingsPagesImpl"/>
 
-    <applicationConfigurable instance="com.intellij.openapi.updateSettings.impl.UpdateSettingsConfigurable" id="preferences.updates"
+    <postStartupActivity implementation="com.intellij.externalDependencies.impl.CheckRequiredPluginsActivity"/>
+    <projectConfigurable groupId="build" provider="com.intellij.externalDependencies.impl.ExternalDependenciesConfigurableProvider"
+                         id="preferences.externalDependencies" displayName="Required Plugins"/>
+
+    <applicationConfigurable parentId="preferences.general" instance="com.intellij.openapi.updateSettings.impl.UpdateSettingsConfigurable" id="preferences.updates"
                              key="updates.settings.title" bundle="messages.IdeBundle"/>
 
     <applicationService serviceInterface="com.intellij.psi.search.scope.packageSet.PackageSetFactory"
@@ -228,55 +369,118 @@
     <applicationService serviceInterface="com.intellij.ui.ColorChooserService"
                         serviceImplementation="com.intellij.ui.ColorChooserServiceImpl"/>
 
+    <applicationService serviceInterface="com.intellij.openapi.actionSystem.AbbreviationManager"
+                        serviceImplementation="com.intellij.openapi.actionSystem.impl.AbbreviationManagerImpl"/>
+
+    <applicationService serviceImplementation="com.intellij.openapi.editor.ex.EditorSettingsExternalizable"/>
+    <applicationService serviceImplementation="com.intellij.openapi.editor.colors.impl.AppEditorFontOptions"/>
+    <applicationConfigurable
+        groupId="editor"
+        groupWeight="189"
+        displayName="Font"
+        instance="com.intellij.application.options.editor.fonts.AppEditorFontConfigurable"
+    />
+    <applicationService serviceInterface="com.intellij.openapi.editor.colors.EditorFontCache"
+                        serviceImplementation="com.intellij.openapi.editor.colors.impl.EditorFontCacheImpl"/>
+
+    <applicationService serviceImplementation="com.intellij.codeInsight.hints.settings.ParameterNameHintsSettings"/>
+    <applicationService serviceImplementation="com.intellij.openapi.keymap.KeyboardSettingsExternalizable"/>
+    <applicationService serviceImplementation="com.intellij.openapi.editor.SpellCheckingEditorCustomizationProvider"/>
+
     <scopeParserExtension implementation="com.intellij.psi.search.scope.packageSet.FilePackageSetParserExtension"/>
     <applicationService serviceInterface="com.intellij.openapi.ui.popup.StackingPopupDispatcher" serviceImplementation="com.intellij.ui.popup.StackingPopupDispatcherImpl"/>
 
-    <fileEditorProvider implementation="com.intellij.openapi.fileEditor.impl.http.HttpFileEditorProvider"/>
-    <componentConfigurationMerger implementation="com.intellij.openapi.vcs.changes.shelf.ShelfManagerConfigurationMerger"/>
-    <editorActionHandler action="EditorEscape" implementationClass="com.intellij.codeInsight.hint.EscapeHandler" id="hide-hints"/>
-    <ComponentRoamingType component="ChangeListManager" type="DISABLED"/>
-    <ComponentRoamingType component="RestoreUpdateTree" type="DISABLED"/>
-    <ComponentRoamingType component="PropertiesComponent" type="DISABLED"/>
+    <applicationService serviceInterface="com.intellij.ide.RemoteDesktopService"
+                        serviceImplementation="com.intellij.ide.RemoteDesktopDetector"/>
 
-    <projectConfigurable instance="com.intellij.javaee.ExternalResourceConfigurable" key="display.name.edit.external.resource"
+    <projectService serviceInterface="com.intellij.execution.RunManager" serviceImplementation="com.intellij.execution.impl.RunManagerImpl"/>
+    <projectService serviceImplementation="com.intellij.execution.impl.IprRunManagerImpl"/>
+
+    <fileEditorProvider implementation="com.intellij.openapi.fileEditor.impl.http.HttpFileEditorProvider"/>
+    <editorActionHandler action="EditorEscape" implementationClass="com.intellij.codeInsight.hint.EscapeHandler" id="hide-hints"/>
+
+    <editorActionHandler action="EditorDelete" implementationClass="com.intellij.openapi.editor.actions.DeleteSelectionHandler"
+                         id="delete.for.selection"/>
+    <editorActionHandler action="EditorBackSpace" implementationClass="com.intellij.openapi.editor.actions.DeleteSelectionHandler"
+                         id="backspace.for.selection" order="after backspace.lookup"/>
+    <editorActionHandler action="EditorDelete" implementationClass="com.intellij.openapi.editor.actions.DeleteInColumnModeHandler"
+                         id="delete.in.column.mode"/>
+
+    <projectConfigurable groupId="language" groupWeight="110" instance="com.intellij.javaee.ExternalResourceConfigurable" key="display.name.edit.external.resource"
                          bundle="messages.XmlBundle" id="preferences.externalResources">
+      <configurable instance="com.intellij.javaee.DefaultSchemasConfigurable" displayName="Default XML Schemas" id="xml.defaultSchemas"/>
       <configurable instance="com.intellij.javaee.XMLCatalogConfigurable" displayName="XML Catalog" id="xml.catalog"/>
     </projectConfigurable>
 
     <bundledKeymapProvider implementation="com.intellij.openapi.keymap.impl.DefaultBundledKeymaps"/>
-    <!-- <checkinHandlerFactory implementation="com.intellij.openapi.vcs.CheckRemoteStatusCheckinHandlerFactory"/> -->
 
-    <statistics.usagesCollector  implementation="com.intellij.ide.plugins.DisabledPluginsUsagesCollector"/>
-    <statistics.usagesCollector  implementation="com.intellij.ide.plugins.NonBundledPluginsUsagesCollector"/>
-    <statistics.usagesCollector implementation="com.intellij.featureStatistics.FeaturesUsageCollector"/>
-    <statistics.usagesCollector implementation="com.intellij.openapi.vcs.statistics.VcsUsagesCollector"/>
-    <statistics.usagesCollector implementation="com.intellij.internal.statistic.UsageTrigger$MyCollector"/>
-    <!--<statistics.usagesCollector implementation="com.intellij.internal.statistic.ideSettings.IdeSettingsUsagesCollector"/>-->
-    <statistics.usagesCollector implementation="com.intellij.internal.statistic.ideSettings.LaFUsagesCollector"/>
+    <keymapExtension implementation="com.intellij.ide.actions.ToolWindowKeymapExtension"/>
 
-    <applicationConfigurable instance="com.intellij.internal.statistic.configurable.StatisticsConfigurable" id="usage.statistics"
-                             displayName="Usage Statistics"/>
+
+    <statistics.projectUsagesCollector implementation="com.intellij.internal.statistic.collectors.fus.fileTypes.ProjectStructureUsageCollector"/>
+    <statistics.projectUsagesCollector implementation="com.intellij.internal.statistic.collectors.fus.FacetTypeUsageCollector"/>
+    <statistics.applicationUsagesCollector implementation="com.intellij.internal.statistic.collectors.fus.ProductivityUsageCollector"/>
+    <statistics.applicationUsagesCollector implementation="com.intellij.internal.statistic.collectors.fus.plugins.DisabledPluginsUsagesCollector"/>
+    <statistics.applicationUsagesCollector implementation="com.intellij.internal.statistic.collectors.fus.plugins.NonBundledPluginsUsagesCollector"/>
+    <statistics.applicationUsagesCollector implementation="com.intellij.internal.statistic.collectors.fus.ui.EditorColorSchemesUsagesCollector"/>
+    <statistics.applicationUsagesCollector implementation="com.intellij.internal.statistic.collectors.fus.jdk.JdkInfoUsageCollector"/>
+    <statistics.applicationUsagesCollector implementation="com.intellij.internal.statistic.collectors.fus.os.OsNameUsageCollector"/>
+    <statistics.applicationUsagesCollector implementation="com.intellij.internal.statistic.collectors.fus.os.OsVersionUsageCollector"/>
+    <statistics.applicationUsagesCollector implementation="com.intellij.internal.statistic.collectors.fus.ui.FontSizeInfoUsageCollector"/>
+    <statistics.applicationUsagesCollector implementation="com.intellij.internal.statistic.collectors.fus.ui.HiDPIModeUsagesCollector"/>
+    <statistics.applicationUsagesCollector implementation="com.intellij.internal.statistic.collectors.fus.ui.LaFUsagesCollector"/>
+    <statistics.applicationUsagesCollector implementation="com.intellij.internal.statistic.collectors.fus.os.LinuxWindowManagerUsageCollector"/>
+    <statistics.applicationUsagesCollector implementation="com.intellij.internal.statistic.collectors.fus.ui.ScaleInfoUsageCollector"/>
+    <statistics.applicationUsagesCollector implementation="com.intellij.internal.statistic.collectors.fus.ui.UiInfoUsageCollector"/>
+    <statistics.applicationUsagesCollector implementation="com.intellij.internal.statistic.collectors.fus.ui.A11YUsagesCollector"/>
+    <statistics.applicationUsagesCollector implementation="com.intellij.diff.statistics.DiffUsagesCollector"/>
+    <applicationInitializedListener implementation="com.intellij.openapi.application.ImportOldConfigsUsagesCollector$Trigger"/>
+    <statistics.applicationUsagesCollector implementation="com.intellij.internal.statistic.collectors.fus.RegistryApplicationUsagesCollector"/>
+
+    <statistics.projectUsagesCollector implementation="com.intellij.openapi.vcs.statistics.VcsOptionsUsagesCollector"/>
+    <statistics.projectUsagesCollector implementation="com.intellij.openapi.vcs.statistics.VcsStatsUsagesCollector"/>
+    <statistics.projectUsagesCollector implementation="com.intellij.openapi.vcs.statistics.VcsNamesUsagesCollector"/>
+
+    <applicationInitializedListener implementation="com.intellij.openapi.vcs.statistics.VcsBackForwardUsageTriggerCollector$Trigger"/>
+
+    <statistics.projectUsagesCollector implementation="com.intellij.internal.statistic.collectors.fus.RegistryProjectUsagesCollector"/>
+    <statistics.applicationUsagesCollector implementation="com.intellij.featureStatistics.fusCollectors.EAPUsageCollector"/>
+    <statistic.eventLog.fusEventLoggerProvider implementation="com.intellij.internal.statistic.eventLog.FeatureUsageFileEventLoggerProvider"/>
+    <statistic.eventLog.fusStateEventTracker implementation="com.intellij.internal.statistic.eventLog.SystemStateMonitor"/>
+    <statistic.eventLog.fusStateEventTracker implementation="com.intellij.configurationStore.statistic.eventLog.FeatureUsageSettingsEventScheduler"/>
+
+    <vfs.local.pluggableFileWatcher implementation="com.intellij.openapi.vfs.impl.local.NativeFileWatcherImpl" />
 
     <virtualFileSystem key="dummy" implementationClass="com.intellij.openapi.vfs.ex.dummy.DummyFileSystem"/>
     <virtualFileSystem key="http" implementationClass="com.intellij.openapi.vfs.impl.http.HttpFileSystemImpl"/>
     <virtualFileSystem key="https" implementationClass="com.intellij.openapi.vfs.impl.http.HttpsFileSystem"/>
 
     <toolWindow id="Event Log" anchor="bottom" secondary="true"
-                icon="AllIcons.Ide.NoNotifications13"
+                icon="AllIcons.Ide.Notification.NoEvents"
                 factoryClass="com.intellij.notification.EventLogToolWindowFactory"/>
 
     <projectService serviceInterface="com.intellij.openapi.wm.impl.ProjectFrameBounds"
                     serviceImplementation="com.intellij.openapi.wm.impl.ProjectFrameBounds"/>
-    <exceptionFilter implementation="com.intellij.execution.filters.ExceptionBaseFilterFactory"/>
-    <exceptionFilter implementation="com.intellij.execution.filters.ExceptionExFilterFactory"/>
-    <exceptionFilter implementation="com.intellij.openapi.vcs.contentAnnotation.VcsContentAnnotationExceptionFilterFactory"/>
 
     <applicationService serviceInterface="com.intellij.ide.TypePresentationService"
                         serviceImplementation="com.intellij.ide.TypePresentationServiceImpl"/>
 
-    <postStartupActivity implementation="com.intellij.ide.TipOfTheDayManager"/>
-    <postStartupActivity implementation="com.intellij.openapi.actionSystem.impl.ActionPreloader"/>
+    <applicationService serviceInterface="com.intellij.openapi.application.AsyncExecutionService"
+                        serviceImplementation="com.intellij.openapi.application.impl.AsyncExecutionServiceImpl"/>
+
+    <preloadingActivity implementation="com.intellij.ide.ui.OptionsTopHitProvider$Activity"/>
+    <postStartupActivity implementation="com.intellij.ide.ui.OptionsTopHitProvider$Activity"/>
+
+    <postStartupActivity id="TipOfTheDayActivity" implementation="com.intellij.ide.TipOfTheDayStartupActivity"/>
+    <postStartupActivity implementation="com.intellij.ide.actions.PowerSaveModeNotifier"/>
+    <postStartupActivity implementation="com.intellij.openapi.wm.impl.ToolWindowManagerImpl$InitToolWindowsActivity" order="after OpenFilesActivity"/>
     <postStartupActivity id="OpenFilesActivity" implementation="com.intellij.openapi.fileEditor.impl.OpenFilesActivity"/>
+    <postStartupActivity implementation="com.intellij.xml.breadcrumbs.BreadcrumbsInitializingActivity"/>
+
+    <preloadingActivity implementation="com.intellij.openapi.actionSystem.impl.ActionPreloader"/>
+    <preloadingActivity implementation="com.intellij.ide.ui.search.SearchableOptionPreloader"/>
+
+    <writingAccessProvider implementation="com.intellij.openapi.fileEditor.impl.NonProjectFileWritingAccessProvider" order="first"/>
 
     <patch.extension implementation="com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP"/>
     <patch.extension implementation="com.intellij.openapi.diff.impl.patch.CharsetEP"/>
@@ -284,15 +488,105 @@
     <iconLayerProvider implementation="com.intellij.ide.LockedIconLayerProvider"/>
 
     <fileEditorProvider implementation="com.intellij.openapi.fileEditor.impl.text.LargeFileEditorProvider"/>
+    <editorNotificationProvider implementation="com.intellij.openapi.fileEditor.impl.text.LargeFileNotificationProvider"/>
+    <fileDocumentSynchronizationVetoer implementation="com.intellij.openapi.fileEditor.impl.LargeFileSavingVetoer"/>
     <frameEditorComponentProvider implementation="com.intellij.openapi.wm.ex.DefaultFrameEditorComponentProvider"/>
 
-    <xmlRpcHandler name="fileOpener" implementation="com.intellij.ide.OpenFileXmlRpcHandler"/>
-
-    <applicationService serviceInterface="org.jetbrains.ide.WebServerManager" serviceImplementation="org.jetbrains.ide.WebServerManagerImpl"/>
-    <applicationService serviceInterface="com.intellij.ide.XmlRpcServer" serviceImplementation="com.intellij.ide.XmlRpcServerImpl"/>
-    <httpRequestHandler implementation="com.intellij.ide.XmlRpcServerImpl$XmlRpcRequestHandler"/>
-    <postStartupActivity implementation="org.jetbrains.ide.WebServerManagerImpl$MyPostStartupActivity"/>
-
+    <editorNotificationProvider implementation="com.intellij.openapi.editor.impl.ForcedSoftWrapsNotificationProvider"/>
     <editorNotificationProvider implementation="com.intellij.ide.FileChangedNotificationProvider"/>
+    <editorNotificationProvider implementation="com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PluginAdvertiserEditorNotificationProvider"/>
+
+    <getDataRule key="context.ProjectFileDirectory" implementationClass="com.intellij.ide.impl.dataRules.ProjectFileDirectoryRule"/>
+
+    <localInspection shortName="InconsistentLineSeparators" bundle="messages.InspectionsBundle" key="inconsistent.line.separators"
+                     groupName="General" enabledByDefault="false" level="WARNING"
+                     implementationClass="com.intellij.codeStyle.InconsistentLineSeparatorsInspection"/>
+    <search.topHitProvider implementation="com.intellij.platform.DefaultPlatformTopHitProvider"/>
+    <search.topHitProvider implementation="com.intellij.ide.ui.UISimpleSettingsProvider"/>
+    <search.topHitProvider implementation="com.intellij.ide.ui.AppearanceOptionsTopHitProvider"/>
+    <search.topHitProvider implementation="com.intellij.ide.ui.AppearanceOptionsTopHitProvider$Ex"/>
+    <search.topHitProvider implementation="com.intellij.ide.ui.SystemOptionsTopHitProvider"/>
+    <search.topHitProvider implementation="com.intellij.ui.tabs.FileColorsOptionsTopHitProvider"/>
+    <search.topHitProvider implementation="com.intellij.ide.ui.EditorOptionsTopHitProvider"/>
+    <search.topHitProvider implementation="com.intellij.ide.ui.EditorOptionsTopHitProvider$Ex"/>
+    <search.topHitProvider implementation="com.intellij.ide.ui.InspectionsTopHitProvider"/>
+    <search.topHitProvider implementation="com.intellij.ide.ui.RegistryOptionsTopHitProvider"/>
+    <search.topHitProvider implementation="com.intellij.ide.ui.PluginOptionsTopHitProvider"/>
+    <projectService serviceImplementation="com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.UnknownFeaturesCollector"/>
+    <postStartupActivity implementation="com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PluginsAdvertiser" order="before OpenFilesActivity"/>
+    <actionPromoter implementation="com.intellij.ui.ToolbarDecoratorActionPromoter"/>
+
+    <ui.suitableFontProvider implementation="com.intellij.ui.SuitableFontProviderImpl"/>
+
+    <jbProtocolCommand implementation="com.intellij.openapi.project.impl.JBProtocolOpenProjectCommand"/>
+    <jbProtocolCommand implementation="com.intellij.openapi.application.JBProtocolShutdownCommand"/>
+
+    <intentionAction>
+      <className>com.intellij.openapi.editor.actions.FlipCommaIntention</className>
+      <category>Other</category>
+    </intentionAction>
+
+    <daemon.intentionActionFilter implementation="com.intellij.psi.IntentionFilterOwnerActionFilter"/>
+
+    <projectService serviceImplementation="com.intellij.execution.startup.ProjectStartupLocalConfiguration"/>
+    <projectService serviceImplementation="com.intellij.execution.startup.ProjectStartupSharedConfiguration"/>
+    <projectService serviceImplementation="com.intellij.execution.startup.ProjectStartupTaskManager"/>
+    <projectConfigurable groupId="tools" instance="com.intellij.execution.startup.ProjectStartupConfigurable"
+                         displayName="Startup Tasks"
+                         id="preferences.startup.tasks" nonDefaultProject="true"/>
+    <postStartupActivity implementation="com.intellij.execution.startup.ProjectStartupRunner"/>
+
+    <applicationService serviceInterface="com.intellij.remote.ext.CredentialsManager"
+                        serviceImplementation="com.intellij.remote.ext.CredentialsManagerImpl"/>
+
+    <applicationService serviceImplementation="com.intellij.openapi.options.newEditor.SettingsDialogFactory"/>
+
+    <postStartupActivity implementation="com.intellij.profile.codeInspection.ProjectInspectionProfileManager$ProjectInspectionProfileStartUpActivity"/>
+
+    <additionalTextAttributes scheme="Default" file="idea/FindViewColorsScheme.xml"/>
+    <additionalTextAttributes scheme="Darcula" file="idea/FindViewColorsScheme.xml"/>
+
+    <credentialStore implementation="com.intellij.credentialStore.MacOsCredentialStoreFactory" os="mac"/>
+    <credentialStore implementation="com.intellij.credentialStore.LinuxSecretCredentialStoreFactory" os="linux"/>
+
+    <projectService serviceImplementation="com.intellij.tasks.context.WorkingContextManager"/>
+
+    <projectService
+        serviceInterface="com.intellij.psi.availability.PsiAvailabilityService"
+        serviceImplementation="com.intellij.psi.availability.PsiAvailabilityServiceImpl"/>
+
+    <sdkType implementation="com.intellij.openapi.projectRoots.SimpleJavaSdkType"/>
+
+    <!--context providers-->
+    <tasks.contextProvider implementation="com.intellij.tasks.context.OpenEditorsContextProvider"/>
+    <tasks.contextProvider implementation="com.intellij.tasks.context.ProjectViewContextProvider"/>
+    <tasks.contextProvider implementation="com.intellij.tasks.context.RunConfigurationsContextProvider"/>
+    <tasks.contextProvider implementation="com.intellij.tasks.context.XDebuggerBreakpointsContextProvider"/>
+    <tasks.contextProvider implementation="com.intellij.tasks.context.XDebuggerWatchesProvider"/>
+
+    <actionPromoter implementation="com.intellij.execution.testframework.TestTreeViewActionsPromoter"/>
+    <smartSelectProvider implementation="com.intellij.ui.tree.TreeSmartSelectProvider"/>
+    <postStartupActivity implementation="com.intellij.tasks.context.BranchContextTracker$TrackerStartupActivity"/>
+
+    <!--troubleshooting-->
+    <generalTroubleInfoCollector implementation="com.intellij.ide.troubleshooting.AboutTroubleInfoCollector"/>
+    <generalTroubleInfoCollector implementation="com.intellij.ide.troubleshooting.SystemTroubleInfoCollector"/>
+    <generalTroubleInfoCollector implementation="com.intellij.ide.troubleshooting.DisplayTroubleInfoCollector"/>
+    <generalTroubleInfoCollector implementation="com.intellij.ide.troubleshooting.PluginTroubleInfoCollector"/>
+
+    <!-- experiments -->
+    <experimentalFeature id="inline.browse.button" percentOfUsers="100">
+      <description>Inlines browse button inside TextFieldWithBrowseButton component</description>
+    </experimentalFeature>
+
+    <experimentalFeature id="wsl.legacy.distribution" percentOfUsers="0">
+      <description>Makes legacy Ubuntu distribution (bash.exe) available</description>
+    </experimentalFeature>
+
+    <experimentalFeature id="linux.native.menu" percentOfUsers="100" requireRestart="true">
+      <description>Intergation with global menu in Linux</description>
+    </experimentalFeature>
+
+    <rawEditorTypedHandler implementationClass="com.intellij.openapi.editor.impl.EditorFactoryImpl$MyRawTypedHandler"/>
   </extensions>
 </idea-plugin>

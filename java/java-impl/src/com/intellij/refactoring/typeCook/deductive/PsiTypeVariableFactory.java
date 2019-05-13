@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,23 +21,21 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedList;
+import java.util.*;
 
 /**
  * @author db
  */
 public class PsiTypeVariableFactory {
-  private int myCurrent = 0;
-  private final LinkedList<HashSet<PsiTypeVariable>> myClusters = new LinkedList<HashSet<PsiTypeVariable>>();
-  private final HashMap<Integer, HashSet<PsiTypeVariable>> myVarCluster = new HashMap<Integer, HashSet<PsiTypeVariable>>();
+  private int myCurrent;
+  private final List<Set<PsiTypeVariable>> myClusters = new LinkedList<>();
+  private final Map<Integer, Set<PsiTypeVariable>> myVarCluster = new HashMap<>();
 
   public final int getNumber() {
     return myCurrent;
   }
 
-  public final void registerCluster(final HashSet<PsiTypeVariable> cluster) {
+  public final void registerCluster(final Set<PsiTypeVariable> cluster) {
     myClusters.add(cluster);
 
     for (final PsiTypeVariable aCluster : cluster) {
@@ -45,11 +43,11 @@ public class PsiTypeVariableFactory {
     }
   }
 
-  public final LinkedList<HashSet<PsiTypeVariable>> getClusters() {
+  public final List<Set<PsiTypeVariable>> getClusters() {
     return myClusters;
   }
 
-  public final HashSet<PsiTypeVariable> getClusterOf(final int var) {
+  public final Set<PsiTypeVariable> getClusterOf(final int var) {
     return myVarCluster.get(new Integer(var));
   }
 
@@ -62,6 +60,7 @@ public class PsiTypeVariableFactory {
       private final int myIndex = myCurrent++;
       private final PsiElement myContext = context;
 
+      @Override
       public boolean isValidInContext(final PsiType type) {
         if (myContext == null) {
           return true;
@@ -72,14 +71,17 @@ public class PsiTypeVariableFactory {
         }
 
         return type.accept(new PsiTypeVisitor<Boolean>() {
+          @Override
           public Boolean visitType(final PsiType type) {
             return Boolean.TRUE;
           }
 
+          @Override
           public Boolean visitArrayType(final PsiArrayType arrayType) {
             return arrayType.getDeepComponentType().accept(this);
           }
 
+          @Override
           public Boolean visitWildcardType(final PsiWildcardType wildcardType) {
             final PsiType bound = wildcardType.getBound();
 
@@ -90,6 +92,7 @@ public class PsiTypeVariableFactory {
             return Boolean.TRUE;
           }
 
+          @Override
           public Boolean visitClassType(final PsiClassType classType) {
             final PsiClassType.ClassResolveResult result = classType.resolveGenerics();
             final PsiClass aClass = result.getElement();
@@ -143,33 +146,37 @@ public class PsiTypeVariableFactory {
         }).booleanValue();
       }
 
+      @Override
+      @NotNull
       public String getPresentableText() {
         return "$" + myIndex;
       }
 
+      @Override
+      @NotNull
       public String getCanonicalText() {
         return getPresentableText();
       }
 
-      public String getInternalCanonicalText() {
-        return getCanonicalText();
-      }
-
+      @Override
       public boolean isValid() {
         return true;
       }
 
-      public boolean equalsToText(String text) {
+      @Override
+      public boolean equalsToText(@NotNull String text) {
         return text.equals(getPresentableText());
       }
 
+      @Override
       public GlobalSearchScope getResolveScope() {
         return null;
       }
 
+      @Override
       @NotNull
       public PsiType[] getSuperTypes() {
-        return new PsiType[0];
+        return EMPTY_ARRAY;
       }
 
       public boolean equals(Object o) {
@@ -187,6 +194,7 @@ public class PsiTypeVariableFactory {
         return myIndex;
       }
 
+      @Override
       public int getIndex() {
         return myIndex;
       }

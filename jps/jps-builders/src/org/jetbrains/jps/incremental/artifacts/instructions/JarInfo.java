@@ -31,15 +31,15 @@ public class JarInfo {
 
   public JarInfo(@NotNull DestinationInfo destination) {
     myDestination = destination;
-    myContent = new ArrayList<Pair<String, Object>>();
+    myContent = new ArrayList<>();
   }
 
   public void addContent(String pathInJar, ArtifactRootDescriptor descriptor) {
-    myContent.add(Pair.create(pathInJar, (Object)descriptor));
+    myContent.add(Pair.create(pathInJar, descriptor));
   }
 
   public void addJar(String pathInJar, JarInfo jarInfo) {
-    myContent.add(Pair.create(pathInJar, (Object)jarInfo));
+    myContent.add(Pair.create(pathInJar, jarInfo));
   }
 
   public List<Pair<String, Object>> getContent() {

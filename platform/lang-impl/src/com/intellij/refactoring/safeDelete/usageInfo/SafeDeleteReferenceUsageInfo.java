@@ -42,6 +42,7 @@ public abstract class SafeDeleteReferenceUsageInfo extends SafeDeleteUsageInfo i
     mySafeDelete = safeDelete;
   }
 
+  @Override
   public void performRefactoring() throws IncorrectOperationException {
     if (isSafeDelete()) {
       deleteElement();

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,6 @@
  */
 package com.intellij.application.options.codeStyle;
 
-import com.intellij.lang.Language;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
@@ -26,6 +25,7 @@ import com.intellij.ui.TreeSpeedSearch;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.containers.MultiMap;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import gnu.trove.THashMap;
@@ -40,23 +40,24 @@ import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.lang.reflect.Field;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 
 /**
  * @author max
  */
-public abstract class OptionTreeWithPreviewPanel extends MultilanguageCodeStyleAbstractPanel {
+public abstract class OptionTreeWithPreviewPanel extends CustomizableLanguageCodeStylePanel {
   private static final Logger LOG = Logger.getInstance("#com.intellij.application.options.CodeStyleSpacesPanel");
-  private JTree myOptionsTree;
-  private final ArrayList<BooleanOptionKey> myKeys = new ArrayList<BooleanOptionKey>();
+  protected JTree myOptionsTree;
+  protected final ArrayList<BooleanOptionKey> myKeys = new ArrayList<>();
   protected final JPanel myPanel = new JPanel(new GridBagLayout());
 
   private boolean myShowAllStandardOptions = false;
-  private Set<String> myAllowedOptions = new HashSet<String>();
-  private MultiMap<String, CustomBooleanOptionInfo> myCustomOptions = new MultiMap<String, CustomBooleanOptionInfo>();
-  private boolean isFirstUpdate = true;
-  private final Map<String, String> myRenamedFields = new THashMap<String, String>();
+  private final Set<String> myAllowedOptions = new HashSet<>();
+  protected MultiMap<String, CustomBooleanOptionInfo> myCustomOptions = new MultiMap<>();
+  protected boolean isFirstUpdate = true;
+  private final Map<String, String> myRenamedFields = new THashMap<>();
+  private final Map<String, String> myRemappedGroups = new THashMap<>();
 
 
   public OptionTreeWithPreviewPanel(CodeStyleSettings settings) {
@@ -71,6 +72,8 @@ public abstract class OptionTreeWithPreviewPanel extends MultilanguageCodeStyleA
 
     myOptionsTree = createOptionsTree();
     myOptionsTree.setCellRenderer(new MyTreeCellRenderer());
+    myOptionsTree.setBackground(UIUtil.getPanelBackground());
+    myOptionsTree.setBorder(JBUI.Borders.emptyRight(10));
     JScrollPane scrollPane = new JBScrollPane(myOptionsTree) {
       @Override
       public Dimension getMinimumSize() {
@@ -79,23 +82,18 @@ public abstract class OptionTreeWithPreviewPanel extends MultilanguageCodeStyleA
     };
     myPanel.add(scrollPane,
                 new GridBagConstraints(0, 0, 1, 1, 0, 1, GridBagConstraints.CENTER, GridBagConstraints.BOTH,
-                                       new Insets(0, 0, 0, 8), 0, 0));
+                                       JBUI.emptyInsets(), 0, 0));
 
     JPanel previewPanel = createPreviewPanel();
 
     myPanel.add(previewPanel,
                 new GridBagConstraints(1, 0, 1, 1, 1, 1, GridBagConstraints.CENTER, GridBagConstraints.BOTH,
-                                       new Insets(0, 0, 0, 0), 0, 0));
+                                       JBUI.emptyInsets(), 0, 0));
 
     installPreviewPanel(previewPanel);
     addPanelToWatch(myPanel);
 
     isFirstUpdate = false;
-  }
-
-  @Override
-  protected void onLanguageChange(Language language) {
-    updateOptionsTree();
   }
 
   @Override
@@ -170,17 +168,12 @@ public abstract class OptionTreeWithPreviewPanel extends MultilanguageCodeStyleA
     }
   }
 
-  protected void updateOptionsTree() {
-    resetImpl(getSettings());
-    myOptionsTree.repaint();
-  }
-
   protected JTree createOptionsTree() {
     DefaultMutableTreeNode rootNode = new DefaultMutableTreeNode();
     String groupName = "";
     DefaultMutableTreeNode groupNode = null;
 
-    List<BooleanOptionKey> result = sortOptions(myKeys);
+    List<BooleanOptionKey> result = sortOptions(orderByGroup(myKeys));
 
     for (BooleanOptionKey key : result) {
       String newGroupName = key.groupName;
@@ -218,7 +211,7 @@ public abstract class OptionTreeWithPreviewPanel extends MultilanguageCodeStyleA
 
     new ClickListener() {
       @Override
-      public boolean onClick(MouseEvent e, int clickCount) {
+      public boolean onClick(@NotNull MouseEvent e, int clickCount) {
         if (!optionsTree.isEnabled()) return false;
         TreePath treePath = optionsTree.getPathForLocation(e.getX(), e.getY());
         selectCheckbox(treePath);
@@ -235,6 +228,36 @@ public abstract class OptionTreeWithPreviewPanel extends MultilanguageCodeStyleA
     return optionsTree;
   }
 
+  private List<BooleanOptionKey> orderByGroup(final List<BooleanOptionKey> options) {
+    final List<String> groupOrder = getGroupOrder(options);
+    List<BooleanOptionKey> result = new ArrayList<>(options.size());
+    result.addAll(options);
+    Collections.sort(result, (key1, key2) -> {
+      String group1 = key1.groupName;
+      String group2 = key2.groupName;
+      if (group1 == null) {
+        return group2 == null ? 0 : 1;
+      }
+      if (group2 == null) {
+        return -1;
+      }
+      int index1 = groupOrder.indexOf(group1);
+      int index2 = groupOrder.indexOf(group2);
+      if (index1 == -1 || index2 == -1) return group1.compareToIgnoreCase(group2);
+      return Integer.compare(index1, index2);
+    });
+    return result;
+  }
+
+  protected List<String> getGroupOrder(List<BooleanOptionKey> options) {
+    List<String> groupOrder = new ArrayList<>();
+    for (BooleanOptionKey each : options) {
+      if (each.groupName != null && !groupOrder.contains(each.groupName)) {
+        groupOrder.add(each.groupName);
+      }
+    }
+    return groupOrder;
+  }
 
   private void selectCheckbox(TreePath treePath) {
     if (treePath == null) {
@@ -259,6 +282,7 @@ public abstract class OptionTreeWithPreviewPanel extends MultilanguageCodeStyleA
     TreeModel treeModel = myOptionsTree.getModel();
     TreeNode root = (TreeNode)treeModel.getRoot();
     resetNode(root, settings);
+    ((DefaultTreeModel)treeModel).nodeChanged(root);
   }
 
   private void resetNode(TreeNode node, final CodeStyleSettings settings) {
@@ -278,10 +302,7 @@ public abstract class OptionTreeWithPreviewPanel extends MultilanguageCodeStyleA
       childNode.setSelected(key.getValue(settings));
       childNode.setEnabled(key.isEnabled());
     }
-    catch (IllegalArgumentException e) {
-      LOG.error(e);
-    }
-    catch (IllegalAccessException e) {
+    catch (IllegalArgumentException | IllegalAccessException e) {
       LOG.error(e);
     }
   }
@@ -306,7 +327,7 @@ public abstract class OptionTreeWithPreviewPanel extends MultilanguageCodeStyleA
 
   private static void applyToggleNode(MyToggleTreeNode childNode, final CodeStyleSettings settings) {
     BooleanOptionKey key = (BooleanOptionKey)childNode.getKey();
-    key.setValue(settings, childNode.isSelected() ? Boolean.TRUE : Boolean.FALSE);
+    key.setValue(settings, childNode.isSelected());
   }
 
   @Override
@@ -339,10 +360,7 @@ public abstract class OptionTreeWithPreviewPanel extends MultilanguageCodeStyleA
       BooleanOptionKey key = (BooleanOptionKey)childNode.getKey();
       return childNode.isSelected() != key.getValue(settings);
     }
-    catch (IllegalArgumentException e) {
-      LOG.error(e);
-    }
-    catch (IllegalAccessException e) {
+    catch (IllegalArgumentException | IllegalAccessException e) {
       LOG.error(e);
     }
     return false;
@@ -356,18 +374,16 @@ public abstract class OptionTreeWithPreviewPanel extends MultilanguageCodeStyleA
 
   private void doInitBooleanField(@NonNls String fieldName, String title, String groupName) {
     try {
-      Class styleSettingsClass = CodeStyleSettings.class;
+      Class styleSettingsClass = CommonCodeStyleSettings.class;
       Field field = styleSettingsClass.getField(fieldName);
+      String actualGroupName = getRemappedGroup(fieldName, groupName);
 
       BooleanOptionKey key = new BooleanOptionKey(fieldName, 
-                                                  getRenamedTitle(groupName, groupName),
+                                                  getRenamedTitle(actualGroupName, actualGroupName),
                                                   getRenamedTitle(fieldName, title), field);
       myKeys.add(key);
     }
-    catch (NoSuchFieldException e) {
-      LOG.error(e);
-    }
-    catch (SecurityException e) {
+    catch (NoSuchFieldException | SecurityException e) {
       LOG.error(e);
     }
   }
@@ -382,10 +398,7 @@ public abstract class OptionTreeWithPreviewPanel extends MultilanguageCodeStyleA
                                               option.anchor, option.anchorFieldName,
                                               option.settingClass, field));
       }
-      catch (NoSuchFieldException e) {
-        LOG.error(e);
-      }
-      catch (SecurityException e) {
+      catch (NoSuchFieldException | SecurityException e) {
         LOG.error(e);
       }
     }
@@ -396,14 +409,14 @@ public abstract class OptionTreeWithPreviewPanel extends MultilanguageCodeStyleA
     return renamed == null ? defaultTitle : renamed;
   }
 
-  private static class MyTreeCellRenderer implements TreeCellRenderer {
+  protected static class MyTreeCellRenderer implements TreeCellRenderer {
     private final JLabel myLabel;
     private final JCheckBox myCheckBox;
 
     public MyTreeCellRenderer() {
       myLabel = new JLabel();
       myCheckBox = new JCheckBox();
-      myCheckBox.setMargin(new Insets(0, 0, 0, 0));
+      myCheckBox.setMargin(JBUI.emptyInsets());
     }
 
     @Override
@@ -415,12 +428,12 @@ public abstract class OptionTreeWithPreviewPanel extends MultilanguageCodeStyleA
         button.setText(treeNode.getText());
         button.setSelected(treeNode.isSelected);
         if (isSelected) {
-          button.setForeground(UIUtil.getTreeSelectionForeground());
-          button.setBackground(UIUtil.getTreeSelectionBackground());
+          button.setForeground(UIUtil.getTreeSelectionForeground(hasFocus));
+          button.setBackground(UIUtil.getTreeSelectionBackground(hasFocus));
         }
         else {
-          button.setForeground(UIUtil.getTreeTextForeground());
-          button.setBackground(UIUtil.getTreeTextBackground());
+          button.setForeground(UIUtil.getTreeForeground());
+          button.setBackground(tree.getBackground());
         }
 
         button.setEnabled(tree.isEnabled() && treeNode.isEnabled());
@@ -433,12 +446,12 @@ public abstract class OptionTreeWithPreviewPanel extends MultilanguageCodeStyleA
         myLabel.setOpaque(true);
 
         if (isSelected) {
-          myLabel.setForeground(UIUtil.getTreeSelectionForeground());
-          myLabel.setBackground(UIUtil.getTreeSelectionBackground());
+          myLabel.setForeground(UIUtil.getTreeSelectionForeground(hasFocus));
+          myLabel.setBackground(UIUtil.getTreeSelectionBackground(hasFocus));
         }
         else {
-          myLabel.setForeground(UIUtil.getTreeTextForeground());
-          myLabel.setBackground(UIUtil.getTreeTextBackground());
+          myLabel.setForeground(UIUtil.getTreeForeground());
+          myLabel.setBackground(tree.getBackground());
         }
 
         myLabel.setEnabled(tree.isEnabled());
@@ -454,11 +467,11 @@ public abstract class OptionTreeWithPreviewPanel extends MultilanguageCodeStyleA
     final Field field;
     private boolean enabled = true;
 
-    public BooleanOptionKey(String fieldName, String groupName, String title, Field field) {
+    BooleanOptionKey(String fieldName, String groupName, String title, Field field) {
       this(fieldName, groupName, title, null, null, field);
     }
 
-    public BooleanOptionKey(String fieldName,
+    BooleanOptionKey(String fieldName,
                             String groupName,
                             String title,
                             @Nullable OptionAnchor anchor,
@@ -472,7 +485,7 @@ public abstract class OptionTreeWithPreviewPanel extends MultilanguageCodeStyleA
 
     public void setValue(CodeStyleSettings settings, Boolean aBoolean) {
       try {
-        CommonCodeStyleSettings commonSettings = settings.getCommonSettings(getSelectedLanguage());
+        CommonCodeStyleSettings commonSettings = settings.getCommonSettings(getDefaultLanguage());
         field.set(commonSettings, aBoolean);
       }
       catch (IllegalAccessException e) {
@@ -481,7 +494,7 @@ public abstract class OptionTreeWithPreviewPanel extends MultilanguageCodeStyleA
     }
 
     public boolean getValue(CodeStyleSettings settings) throws IllegalAccessException {
-      CommonCodeStyleSettings commonSettings = settings.getCommonSettings(getSelectedLanguage());
+      CommonCodeStyleSettings commonSettings = settings.getCommonSettings(getDefaultLanguage());
       return field.getBoolean(commonSettings);
     }
 
@@ -505,9 +518,9 @@ public abstract class OptionTreeWithPreviewPanel extends MultilanguageCodeStyleA
     private CustomBooleanOptionInfo(@NotNull Class<? extends CustomCodeStyleSettings> settingClass,
                                     @NotNull String fieldName,
                                     @NotNull String title,
-                                    String groupName,
-                                    OptionAnchor anchor,
-                                    String anchorFieldName) {
+                                    @Nullable String groupName,
+                                    @Nullable OptionAnchor anchor,
+                                    @Nullable String anchorFieldName) {
       this.settingClass = settingClass;
       this.fieldName = fieldName;
       this.title = title;
@@ -520,7 +533,7 @@ public abstract class OptionTreeWithPreviewPanel extends MultilanguageCodeStyleA
   private class CustomBooleanOptionKey<T extends CustomCodeStyleSettings> extends BooleanOptionKey {
     private final Class<T> mySettingsClass;
 
-    public CustomBooleanOptionKey(String fieldName,
+    CustomBooleanOptionKey(String fieldName,
                                   String groupName,
                                   String title,
                                   OptionAnchor anchor,
@@ -555,7 +568,7 @@ public abstract class OptionTreeWithPreviewPanel extends MultilanguageCodeStyleA
     private boolean isSelected;
     private boolean isEnabled = true;
 
-    public MyToggleTreeNode(Object key, String text) {
+    MyToggleTreeNode(Object key, String text) {
       myKey = key;
       myText = text;
     }
@@ -592,7 +605,7 @@ public abstract class OptionTreeWithPreviewPanel extends MultilanguageCodeStyleA
 
   @Override
   public Set<String> processListOptions() {
-    Set<String> result = new HashSet<String>();
+    Set<String> result = new HashSet<>();
     for (BooleanOptionKey key : myKeys) {
       result.add(key.title);
       if (key.groupName != null) {
@@ -621,5 +634,14 @@ public abstract class OptionTreeWithPreviewPanel extends MultilanguageCodeStyleA
       if (customOption.fieldName.equals(key.getOptionName())) return true;
     }
     return false;
+  }
+
+  @Override
+  public void moveStandardOption(String fieldName, String newGroup) {
+    myRemappedGroups.put(fieldName, newGroup);
+  }
+
+  private String getRemappedGroup(String fieldName, String defaultName) {
+    return myRemappedGroups.getOrDefault(fieldName, defaultName);
   }
 }

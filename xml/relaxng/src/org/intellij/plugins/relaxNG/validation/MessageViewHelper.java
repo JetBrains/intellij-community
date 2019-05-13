@@ -28,10 +28,9 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.ui.content.*;
-import com.intellij.util.ui.ErrorTreeView;
 import com.intellij.util.ui.MessageCategory;
 import gnu.trove.THashSet;
-import org.xml.sax.SAXException;
+import org.jetbrains.annotations.NotNull;
 import org.xml.sax.SAXParseException;
 import org.xml.sax.helpers.DefaultHandler;
 
@@ -39,17 +38,12 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Set;
 
-/**
- * Created by IntelliJ IDEA.
- * User: sweinreuter
- * Date: 19.11.2007
- */
 public class MessageViewHelper {
   private static final Logger LOG = Logger.getInstance("#org.intellij.plugins.relaxNG.validation.MessageViewHelper");
 
   private final Project myProject;
 
-  private final Set<String> myErrors = new THashSet<String>();
+  private final Set<String> myErrors = new THashSet<>();
 
   private final String myContentName;
   private final Key<NewErrorTreeViewPanel> myKey;
@@ -101,52 +95,30 @@ public class MessageViewHelper {
 
     final VirtualFile file1 = file;
     ApplicationManager.getApplication().invokeLater(
-      new Runnable() {
-        public void run() {
-          myErrorsView.addMessage(
-            warning ? MessageCategory.WARNING : MessageCategory.ERROR,
-            new String[]{ex.getLocalizedMessage()},
-            file1,
-            ex.getLineNumber() - 1,
-            ex.getColumnNumber() - 1, null);
-        }
-      }
+      () -> myErrorsView.addMessage(
+        warning ? MessageCategory.WARNING : MessageCategory.ERROR,
+        new String[]{ex.getLocalizedMessage()},
+        file1,
+        ex.getLineNumber() - 1,
+        ex.getColumnNumber() - 1, null)
     );
   }
 
   public void close() {
-    removeOldContents(null);
-  }
-
-  private void removeOldContents(Content notToRemove) {
-    MessageView messageView = MessageView.SERVICE.getInstance(myProject);
-
-    for (Content content : messageView.getContentManager().getContents()) {
-      if (content.isPinned()) continue;
-      if (myContentName.equals(content.getDisplayName()) && content != notToRemove) {
-        ErrorTreeView listErrorView = (ErrorTreeView)content.getComponent();
-        if (listErrorView != null) {
-          if (messageView.getContentManager().removeContent(content, true)) {
-            content.release();
-          }
-        }
-      }
-    }
+    ContentManagerUtil.cleanupContents(null, myProject, myContentName);
   }
 
   private void openMessageViewImpl() {
     CommandProcessor commandProcessor = CommandProcessor.getInstance();
-    commandProcessor.executeCommand(myProject, new Runnable() {
-      public void run() {
-        MessageView messageView = MessageView.SERVICE.getInstance(myProject);
-        Content content = ContentFactory.SERVICE.getInstance().createContent(myErrorsView.getComponent(), myContentName, true);
-        content.putUserData(myKey, myErrorsView);
-        messageView.getContentManager().addContent(content);
-        messageView.getContentManager().setSelectedContent(content);
-        messageView.getContentManager().addContentManagerListener(new CloseListener(content, myContentName, myErrorsView));
-        removeOldContents(content);
-        messageView.getContentManager().addContentManagerListener(new MyContentDisposer(content, messageView, myKey));
-      }
+    commandProcessor.executeCommand(myProject, () -> {
+      MessageView messageView = MessageView.SERVICE.getInstance(myProject);
+      Content content = ContentFactory.SERVICE.getInstance().createContent(myErrorsView.getComponent(), myContentName, true);
+      content.putUserData(myKey, myErrorsView);
+      messageView.getContentManager().addContent(content);
+      messageView.getContentManager().setSelectedContent(content);
+      messageView.getContentManager().addContentManagerListener(new CloseListener(content, myContentName, myErrorsView));
+      ContentManagerUtil.cleanupContents(content, myProject, myContentName);
+      messageView.getContentManager().addContentManagerListener(new MyContentDisposer(content, messageView, myKey));
     }, "Open Message View", null);
 
     ToolWindowManager.getInstance(myProject).getToolWindow(ToolWindowId.MESSAGES_WINDOW).activate(null);
@@ -155,9 +127,11 @@ public class MessageViewHelper {
   private static class MyProcessController implements NewErrorTreeViewPanel.ProcessController {
     public static final MyProcessController INSTANCE = new MyProcessController();
 
+    @Override
     public void stopProcess() {
     }
 
+    @Override
     public boolean isProcessStopped() {
       return true;
     }
@@ -169,13 +143,14 @@ public class MessageViewHelper {
     private NewErrorTreeViewPanel myErrorsView;
     private Content myContent;
 
-    public CloseListener(Content content, String contentName, NewErrorTreeViewPanel errorsView) {
+    CloseListener(Content content, String contentName, NewErrorTreeViewPanel errorsView) {
       myContent = content;
       myContentName = contentName;
       myErrorsView = errorsView;
     }
 
-    public void contentRemoved(ContentManagerEvent event) {
+    @Override
+    public void contentRemoved(@NotNull ContentManagerEvent event) {
       if (event.getContent() == myContent) {
         if (myErrorsView.canControlProcess()) {
           myErrorsView.stopProcess();
@@ -188,7 +163,8 @@ public class MessageViewHelper {
       }
     }
 
-    public void contentRemoveQuery(ContentManagerEvent event) {
+    @Override
+    public void contentRemoveQuery(@NotNull ContentManagerEvent event) {
       if (event.getContent() == myContent) {
         if (myErrorsView != null && myErrorsView.canControlProcess() && !myErrorsView.isProcessStopped()) {
           int result = Messages.showYesNoDialog(
@@ -196,7 +172,7 @@ public class MessageViewHelper {
             myContentName + " is still running. Close anyway?",
               Messages.getQuestionIcon()
           );
-          if (result != 0) {
+          if (result != Messages.YES) {
             event.consume();
           }
         }
@@ -215,7 +191,8 @@ public class MessageViewHelper {
       myKey = key;
     }
 
-    public void contentRemoved(ContentManagerEvent event) {
+    @Override
+    public void contentRemoved(@NotNull ContentManagerEvent event) {
       final Content eventContent = event.getContent();
       if (!eventContent.equals(myContent)) {
         return;
@@ -233,19 +210,19 @@ public class MessageViewHelper {
     private boolean myHadErrorOrWarning;
 
     @Override
-    public void warning(SAXParseException e) throws SAXException {
+    public void warning(SAXParseException e) {
       myHadErrorOrWarning = true;
       processError(e, true);
     }
 
     @Override
-    public void error(SAXParseException e) throws SAXException {
+    public void error(SAXParseException e) {
       myHadErrorOrWarning = true;
       processError(e, false);
     }
 
     @Override
-    public void fatalError(SAXParseException e) throws SAXException {
+    public void fatalError(SAXParseException e) {
       myHadErrorOrWarning = true;
       processError(e, false);
     }

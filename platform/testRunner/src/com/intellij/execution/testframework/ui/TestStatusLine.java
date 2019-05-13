@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,18 @@
 package com.intellij.execution.testframework.ui;
 
 import com.intellij.execution.ExecutionBundle;
+import com.intellij.execution.testframework.TestIconMapper;
+import com.intellij.execution.testframework.sm.runner.states.TestStateInfo;
 import com.intellij.openapi.progress.util.ColorProgressBar;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.ui.SimpleColoredComponent;
+import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.ui.components.panels.NonOpaquePanel;
+import com.intellij.util.ui.JBDimension;
+import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
 import java.awt.*;
@@ -24,32 +35,147 @@ import java.awt.*;
 /**
  * @author yole
  */
-public class TestStatusLine extends JPanel {
-  protected final ColorProgressBar myProgressBar = new ColorProgressBar();
-  protected final JLabel myState = new JLabel(ExecutionBundle.message("junit.runing.info.starting.label"));
+public class TestStatusLine extends NonOpaquePanel {
+  private static final SimpleTextAttributes IGNORE_ATTRIBUTES = new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, ColorProgressBar.YELLOW);
+  private static final SimpleTextAttributes ERROR_ATTRIBUTES = new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, ColorProgressBar.RED_TEXT);
+
+  protected final JProgressBar myProgressBar = new JProgressBar();
+  protected final SimpleColoredComponent myState = new SimpleColoredComponent();
+  private final JPanel myProgressPanel;
 
   public TestStatusLine() {
-    super(new GridLayout(1, 2));
-    add(myState);
-    final JPanel progressPanel = new JPanel(new GridBagLayout());
-    add(progressPanel);
-    progressPanel.add(myProgressBar, new GridBagConstraints(0, 0, 0, 0, 1, 1, GridBagConstraints.CENTER, GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 0), 0, 0));
-    myProgressBar.setColor(ColorProgressBar.GREEN);
+    super(new BorderLayout());
+    myProgressPanel = new NonOpaquePanel(new BorderLayout());
+    add(myProgressPanel, BorderLayout.SOUTH);
+    myProgressBar.setMaximum(100);
+    myProgressBar.putClientProperty("ProgressBar.stripeWidth", 3);
+    myProgressBar.putClientProperty("ProgressBar.flatEnds", Boolean.TRUE);
+    setStatusColor(ColorProgressBar.GREEN);
+    JPanel stateWrapper = new NonOpaquePanel(new BorderLayout());
+    myState.setOpaque(false);
+    stateWrapper.add(myState, BorderLayout.NORTH);
+    add(stateWrapper, BorderLayout.CENTER);
+    myState.append(ExecutionBundle.message("junit.runing.info.starting.label"));
+  }
+
+  public void formatTestMessage(final int testsTotal,
+                                final int finishedTestsCount,
+                                final int failuresCount,
+                                final int ignoredTestsCount,
+                                final Long duration,
+                                final long endTime) {
+    UIUtil.invokeLaterIfNeeded(() -> doFormatTestMessage(testsTotal, finishedTestsCount, failuresCount, ignoredTestsCount, duration, endTime));
+  }
+
+  private void doFormatTestMessage(int testsTotal,
+                                   int finishedTestsCount,
+                                   int failuresCount,
+                                   int ignoredTestsCount,
+                                   Long duration,
+                                   long endTime) {
+    myState.clear();
+    if (testsTotal == 0) {
+      testsTotal = finishedTestsCount;
+      if (testsTotal == 0) return;
+    }
+    int passedCount = finishedTestsCount - failuresCount - ignoredTestsCount;
+    if (duration == null || endTime == 0) {
+      //running tests
+      formatCounts(failuresCount, ignoredTestsCount, passedCount, testsTotal);
+      return;
+    }
+
+    //finished tests
+    boolean stopped = finishedTestsCount != testsTotal;
+    if (stopped) {
+      myState.append("Stopped. ");
+    }
+
+    formatCounts(failuresCount, ignoredTestsCount, passedCount, testsTotal);
+
+    myState.append(" – " + StringUtil.formatDuration(duration, "\u2009"), SimpleTextAttributes.GRAY_ATTRIBUTES);
+  }
+
+  private void formatCounts(int failuresCount, int ignoredTestsCount, int passedCount, int testsTotal) {
+    boolean something = false;
+    if (failuresCount > 0) {
+      myState.append("Tests failed: " + failuresCount, ERROR_ATTRIBUTES);
+      something = true;
+    }
+    else {
+      myState.append("Tests ");
+    }
+
+    if (passedCount > 0 || ignoredTestsCount + failuresCount == 0) {
+      if (something) {
+        myState.append(", ");
+      }
+      something = true;
+      myState.append("passed: " + passedCount);
+    }
+
+    if (ignoredTestsCount > 0) {
+      if (something) {
+        myState.append(", ");
+      }
+      myState.append("ignored: " + ignoredTestsCount, IGNORE_ATTRIBUTES);
+    }
+
+    if (testsTotal > 0) {
+      myState.append(" of " + getTestsTotalMessage(testsTotal), SimpleTextAttributes.GRAYED_ATTRIBUTES);
+    }
+  }
+
+  public void setIndeterminate(boolean flag) {
+    myProgressPanel.add(myProgressBar, BorderLayout.NORTH);
+    myProgressBar.setIndeterminate(flag);
+  }
+
+  public void onTestsDone(@Nullable TestStateInfo.Magnitude info) {
+    myProgressPanel.remove(myProgressBar);
+    if (info != null) {
+      myState.setIcon(TestIconMapper.getToolbarIcon(info));
+    }
+  }
+
+  private static String getTestsTotalMessage(int testsTotal) {
+    return testsTotal + " test" + (testsTotal > 1 ? "s" : "");
   }
 
   public void setStatusColor(Color color) {
-    myProgressBar.setColor(color);
+    myProgressBar.setForeground(color);
   }
 
   public Color getStatusColor() {
-    return myProgressBar.getColor();
+    return myProgressBar.getForeground();
   }
 
   public void setFraction(double v) {
-    myProgressBar.setFraction(v);
+    int fraction = (int)(v * 100);
+    myProgressBar.setValue(fraction);
+  }
+
+  /**
+   * Usages should be deleted as progress is now incorporated into console
+   */
+  @Deprecated
+  public void setPreferredSize(boolean orientation) {
+    final Dimension size = new JBDimension(orientation ? 150 : 450 , -1);
+    myProgressPanel.setMaximumSize(size);
+    myProgressPanel.setMinimumSize(size);
+    myProgressPanel.setPreferredSize(size);
   }
 
   public void setText(String progressStatus_text) {
-    myState.setText(progressStatus_text);
+    UIUtil.invokeLaterIfNeeded(() -> {
+      myState.clear();
+      myState.append(progressStatus_text);
+    });
+  }
+
+  @TestOnly
+  @NotNull
+  public String getStateText() {
+    return myState.toString();
   }
 }

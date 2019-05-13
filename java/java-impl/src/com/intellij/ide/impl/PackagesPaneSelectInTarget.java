@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.impl;
 
 import com.intellij.ide.SelectInContext;
@@ -24,7 +10,7 @@ import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFileSystemItem;
-import com.intellij.psi.util.PsiUtilBase;
+import com.intellij.psi.util.PsiUtilCore;
 
 public class PackagesPaneSelectInTarget extends ProjectViewSelectInTarget {
   public PackagesPaneSelectInTarget(Project project) {
@@ -35,23 +21,17 @@ public class PackagesPaneSelectInTarget extends ProjectViewSelectInTarget {
     return SelectInManager.PACKAGES;
   }
 
+  @Override
   public boolean canSelect(PsiFileSystemItem file) {
-    if (!super.canSelect(file)) return false;
-    final VirtualFile vFile = PsiUtilBase.getVirtualFile(file);
+    VirtualFile vFile = PsiUtilCore.getVirtualFile(file);
+    if (vFile == null || !vFile.isValid()) return false;
 
-    return canSelect(vFile);
+    ProjectFileIndex fileIndex = ProjectRootManager.getInstance(myProject).getFileIndex();
+    return fileIndex.isInSourceContent(vFile) ||
+           isInLibraryContentOnly(vFile);
   }
 
-  private boolean canSelect(final VirtualFile vFile) {
-    if (vFile != null && vFile.isValid()) {
-      final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(myProject).getFileIndex();
-      return fileIndex.isInSourceContent(vFile) || isInLibraryContentOnly(vFile);
-    }
-    else {
-      return false;
-    }
-  }
-
+  @Override
   public boolean isSubIdSelectable(String subId, SelectInContext context) {
     return canSelect(context);
   }
@@ -61,18 +41,17 @@ public class PackagesPaneSelectInTarget extends ProjectViewSelectInTarget {
       return false;
     }
     ProjectFileIndex projectFileIndex = ProjectRootManager.getInstance(myProject).getFileIndex();
-    return (projectFileIndex.isInLibraryClasses(vFile) || projectFileIndex.isInLibrarySource(vFile)) && !projectFileIndex.isInSourceContent(vFile);
+    return projectFileIndex.isInLibrary(vFile) && !projectFileIndex.isInSourceContent(vFile);
   }
 
+  @Override
   public String getMinorViewId() {
     return PackageViewPane.ID;
   }
 
+  @Override
   public float getWeight() {
     return StandardTargetWeights.PACKAGES_WEIGHT;
   }
 
-  protected boolean canWorkWithCustomObjects() {
-    return false;
-  }
 }

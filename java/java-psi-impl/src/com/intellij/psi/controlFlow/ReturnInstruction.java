@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,11 +22,11 @@ import org.jetbrains.annotations.NotNull;
 public class ReturnInstruction extends GoToInstruction {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.controlFlow.ReturnInstruction");
 
-  private final ControlFlowStack myStack;
-  private CallInstruction myCallInstruction;
-  private boolean myRethrowFromFinally = false;
+  @NotNull private final ControlFlowStack myStack;
+  @NotNull private CallInstruction myCallInstruction;
+  private boolean myRethrowFromFinally;
 
-  public ReturnInstruction(int offset, @NotNull ControlFlowStack stack, CallInstruction callInstruction) {
+  public ReturnInstruction(int offset, @NotNull ControlFlowStack stack, @NotNull CallInstruction callInstruction) {
     super(offset, Role.END, false);
     myStack = stack;
     myCallInstruction = callInstruction;
@@ -49,7 +49,8 @@ public class ReturnInstruction extends GoToInstruction {
     }
   }
 
-  public int[] getPossibleReturnOffsets() {
+  @NotNull
+  int[] getPossibleReturnOffsets() {
     return offset == 0 ?
         new int[]{
           getProcBegin() - 5, // call normal
@@ -63,15 +64,15 @@ public class ReturnInstruction extends GoToInstruction {
 
   }
 
-  public int getProcBegin() {
+  int getProcBegin() {
     return myCallInstruction.procBegin;
   }
 
-  public int getProcEnd() {
+  int getProcEnd() {
     return myCallInstruction.procEnd;
   }
 
-  public void setCallInstruction(CallInstruction callInstruction) {
+  void setCallInstruction(@NotNull CallInstruction callInstruction) {
     myCallInstruction = callInstruction;
   }
 
@@ -81,7 +82,7 @@ public class ReturnInstruction extends GoToInstruction {
 
   @Override
   public int getNext(int index, int no) {
-    if (offset == 0)
+    if (offset == 0) {
       switch (no) {
         case 0: return getProcBegin() - 5; // call normal
         case 1: return getProcBegin() - 3; // call return
@@ -90,29 +91,29 @@ public class ReturnInstruction extends GoToInstruction {
           LOG.assertTrue (false);
           return -1;
       }
-    else
-      switch (no) {
-        case 0: return offset; // call normal
-        default:
-          LOG.assertTrue (false);
-          return -1;
-      }
+    }
+    if (no == 0) {
+      return offset; // call normal
+    }
+    LOG.assertTrue(false);
+    return -1;
   }
 
   @Override
-  public void accept(ControlFlowInstructionVisitor visitor, int offset, int nextOffset) {
+  public void accept(@NotNull ControlFlowInstructionVisitor visitor, int offset, int nextOffset) {
     visitor.visitReturnInstruction(this, offset, nextOffset);
   }
 
+  @NotNull
   public ControlFlowStack getStack() {
     return myStack;
   }
 
-  public void setRethrowFromFinally() {
+  void setRethrowFromFinally() {
     myRethrowFromFinally = true;
   }
 
-  public boolean isRethrowFromFinally() {
+  boolean isRethrowFromFinally() {
     return myRethrowFromFinally;
   }
 }

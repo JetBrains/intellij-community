@@ -15,16 +15,21 @@
  */
 package org.jetbrains.idea.maven.server;
 
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.SystemInfoRt;
+import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.io.File;
+import java.io.IOException;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.Properties;
 
 public class MavenServerUtil {
   private static final Properties mySystemPropertiesCache;
 
   static {
     Properties res = new Properties();
-    res.putAll(System.getProperties());
+    res.putAll((Properties)System.getProperties().clone());
     
     for (Iterator<Object> itr = res.keySet().iterator(); itr.hasNext(); ) {
       String propertyName = itr.next().toString();
@@ -38,7 +43,7 @@ public class MavenServerUtil {
 
       if (isMagicalProperty(key)) continue;
 
-      if (SystemInfo.isWindows) {
+      if (SystemInfoRt.isWindows) {
         key = key.toUpperCase();
       }
 
@@ -52,7 +57,30 @@ public class MavenServerUtil {
     return mySystemPropertiesCache;
   }
 
+  @NotNull
+  public static File findMavenBasedir(@NotNull File workingDir) {
+    File baseDir = workingDir;
+    File dir = workingDir;
+    while ((dir = dir.getParentFile()) != null) {
+      if (new File(dir, ".mvn").exists()) {
+        baseDir = dir;
+        break;
+      }
+    }
+    try {
+      return baseDir.getCanonicalFile();
+    }
+    catch (IOException e) {
+      return baseDir.getAbsoluteFile();
+    }
+  }
+
+
   private static boolean isMagicalProperty(String key) {
     return key.startsWith("=");
+  }
+
+  public static void registerShutdownTask(Runnable task) {
+    Runtime.getRuntime().addShutdownHook(new Thread(task, "Maven-server-shutdown-hook"));
   }
 }

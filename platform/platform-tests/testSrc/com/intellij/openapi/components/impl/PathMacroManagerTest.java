@@ -1,36 +1,23 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.components.impl;
 
+import com.intellij.application.options.PathMacrosCollector;
 import com.intellij.application.options.PathMacrosImpl;
 import com.intellij.application.options.ReplacePathToMacroMap;
-import com.intellij.mock.MockFileSystem;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.PathMacros;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ex.ApplicationEx;
+import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.extensions.ExtensionsArea;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.ex.ProjectEx;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.SystemProperties;
-import com.intellij.util.io.fs.FileSystem;
-import com.intellij.util.io.fs.IFileSystem;
 import org.hamcrest.Description;
 import org.jetbrains.annotations.Nullable;
 import org.jmock.Expectations;
@@ -46,7 +33,6 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assume.assumeNotNull;
 
 /**
  * @author mike
@@ -54,7 +40,7 @@ import static org.junit.Assume.assumeNotNull;
 @RunWith(JMock.class)
 public class PathMacroManagerTest {
   private static final String APP_HOME = FileUtil.toSystemIndependentName(PathManager.getHomePath());
-  private static final String USER_HOME = FileUtil.toSystemIndependentName(StringUtil.trimEnd(SystemProperties.getUserHome(), "/"));
+  private static final String USER_HOME = StringUtil.trimEnd(FileUtil.toSystemIndependentName(SystemProperties.getUserHome()), "/");
 
   private Module myModule;
   private ProjectEx myProject;
@@ -62,14 +48,10 @@ public class PathMacroManagerTest {
   private Mockery context;
 
   protected ApplicationEx myApplication;
-  private IFileSystem myOldFileSystem;
-  protected MockFileSystem myFileSystem;
+  private final Disposable myRootDisposable = Disposer.newDisposable();
 
   @Before
-  public final void setupApplication() throws Exception {
-    // in fact the test accesses extension points so it rather should be converted to a platform one
-    assumeNotNull(ApplicationManager.getApplication());
-
+  public final void setupApplication() {
     context = new JUnit4Mockery();
     context.setImposteriser(ClassImposteriser.INSTANCE);
     myApplication = context.mock(ApplicationEx.class, "application");
@@ -91,25 +73,30 @@ public class PathMacroManagerTest {
 
           @Override
           @Nullable
-          public Object invoke(final Invocation invocation) throws Throwable {
+          public Object invoke(final Invocation invocation) {
             ((Runnable)invocation.getParameter(0)).run();
             return null;
           }
         });
       }
     });
-  }
 
-  @Before
-  public final void setupFileSystem() {
-    myOldFileSystem = FileSystem.FILE_SYSTEM;
-    myFileSystem = new MockFileSystem();
-    FileSystem.FILE_SYSTEM = myFileSystem;
+    final ExtensionsArea area = Extensions.getRootArea();
+    final String epName = PathMacrosCollector.MACRO_FILTER_EXTENSION_POINT_NAME.getName();
+    if (!area.hasExtensionPoint(epName)) {
+      area.registerExtensionPoint(epName, "com.intellij.openapi.application.PathMacroFilter");
+      Disposer.register(myRootDisposable, new Disposable() {
+        @Override
+        public void dispose() {
+          area.unregisterExtensionPoint(epName);
+        }
+      });
+    }
   }
 
   @After
   public final void restoreFilesystem() {
-    FileSystem.FILE_SYSTEM = myOldFileSystem;
+    Disposer.dispose(myRootDisposable);
   }
 
   private void setUpMocks(final String projectPath) {
@@ -129,8 +116,11 @@ public class PathMacroManagerTest {
 
       allowing(myApplication).getComponent(with(equal(PathMacros.class))); will(returnValue(myPathMacros));
       allowing(myPathMacros).addMacroReplacements(with(any(ReplacePathToMacroMap.class)));
+      allowing(myPathMacros).getModificationCount();
 
       allowing(myProject).getBaseDir(); will(returnValue(projectFile));
+      allowing(myProject).getBasePath();
+      will(returnValue(projectPath));
       allowing(myModule).getModuleFilePath(); will(returnValue(moduleFilePath));
       allowing(myModule).getProject(); will(returnValue(myProject));
     }});
@@ -218,7 +208,7 @@ public class PathMacroManagerTest {
       String[] split = s.split(" -> ");
       String path = split[0];
       String replaced = split[1];
-      assertEquals(replaced, map.substitute(path, true));
+      assertEquals("For " + path, replaced, map.substitute(path, true));
     }
   }
 

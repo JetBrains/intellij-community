@@ -1,8 +1,9 @@
-""""" 
-------
+"""""
+-----
 Groovy script
   Compound Gstring
     PsiElement(Gstring begin)('"""')
-    PsiElement(Gstring content)('"" ')
-    PsiErrorElement:String end expected
+    GrStringContentImpl(STRING_CONTENT)
+      PsiElement(Gstring content)('""')
+    PsiErrorElement:Gstring end expected
       <empty list>

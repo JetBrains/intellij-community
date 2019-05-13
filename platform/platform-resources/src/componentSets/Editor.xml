@@ -1,9 +1,5 @@
-<components>
+<idea-plugin>
   <application-components>
-    <component>
-      <interface-class>com.intellij.openapi.editor.ex.EditorSettingsExternalizable</interface-class>
-      <implementation-class>com.intellij.openapi.editor.ex.EditorSettingsExternalizable</implementation-class>
-    </component>
     <component>
       <implementation-class>com.intellij.ide.actionMacro.ActionMacroManager</implementation-class>
     </component>
@@ -12,6 +8,9 @@
     </component>
     <component>
       <implementation-class>com.intellij.openapi.editor.impl.VisibleEditorsTracker</implementation-class>
+    </component>
+    <component>
+      <implementation-class>com.intellij.openapi.keymap.impl.ModifierKeyDoubleClickHandler</implementation-class>
     </component>
   </application-components>
 
@@ -23,16 +22,13 @@
       <implementation-class>com.intellij.openapi.editor.impl.DocumentMarkupModelManager</implementation-class>
     </component>
     <component>
-      <implementation-class>com.intellij.openapi.fileEditor.impl.EditorHistoryManager</implementation-class>
-      <option name="workspace" value="true"/>
-    </component>
-    <component>
       <interface-class>com.intellij.openapi.fileEditor.ex.IdeDocumentHistory</interface-class>
       <implementation-class>com.intellij.openapi.fileEditor.impl.IdeDocumentHistoryImpl</implementation-class>
     </component>
-    <component>
-      <implementation-class>com.intellij.openapi.editor.LazyRangeMarkerFactory</implementation-class>
-      <loadForDefaultProject/>
-    </component>
   </project-components>
-</components>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <projectService serviceImplementation="com.intellij.openapi.fileEditor.impl.EditorHistoryManager"/>
+    <postStartupActivity implementation="com.intellij.openapi.fileEditor.impl.EditorHistoryManager$EditorHistoryManagerStartUpActivity"/>
+  </extensions>
+</idea-plugin>

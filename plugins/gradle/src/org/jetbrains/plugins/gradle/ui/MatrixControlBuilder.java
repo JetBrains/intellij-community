@@ -12,7 +12,7 @@ import java.util.Arrays;
 /**
  * Allows to build control that shows target matrix-like information.
  * <p/>
- * <code>'Matrix-like'</code> here means that there is a set of columns and a number of rows where every row contains values for
+ * {@code 'Matrix-like'} here means that there is a set of columns and a number of rows where every row contains values for
  * every column.
  * <p/>
  * Example:
@@ -28,7 +28,6 @@ import java.util.Arrays;
  * Not thread-safe.
  * 
  * @author Denis Zhdanov
- * @since 3/14/12 3:52 PM
  */
 public class MatrixControlBuilder {
   

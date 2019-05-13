@@ -1,4 +1,6 @@
 // "Make 'victim' return 'boolean'" "true"
+import java.util.*;
+
 public class External {
     void m1() {
         if (new Out().<caret>victim(null)) {

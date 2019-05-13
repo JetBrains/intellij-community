@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,37 +13,28 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.intellij.testFramework.fixtures.impl;
 
-import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.module.Module;
 import com.intellij.testFramework.fixtures.ModuleFixture;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author mike
  */
 public class ModuleFixtureImpl extends BaseFixture implements ModuleFixture {
-
   private Module myModule;
   protected final ModuleFixtureBuilderImpl myBuilder;
 
-  public ModuleFixtureImpl(final ModuleFixtureBuilderImpl builder) {
+  public ModuleFixtureImpl(@NotNull ModuleFixtureBuilderImpl builder) {
     myBuilder = builder;
   }
 
   @Override
   public Module getModule() {
-    if (myModule != null) return myModule;
-    new WriteCommandAction.Simple(null) {
-      @Override
-      protected void run() throws Throwable {
-        myModule = myBuilder.buildModule();
-      }
-    }.execute().throwException();
-
-
-    //disposeOnTearDown(myModule);
+    if (myModule == null) {
+      myModule = myBuilder.buildModule();
+    }
     return myModule;
   }
 

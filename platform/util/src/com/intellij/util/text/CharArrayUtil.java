@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,12 +16,10 @@
 package com.intellij.util.text;
 
 import com.intellij.openapi.util.TextRange;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.OutputStreamWriter;
 import java.io.Reader;
 import java.nio.CharBuffer;
 import java.util.ArrayList;
@@ -67,9 +65,14 @@ public class CharArrayUtil {
    * @param len         number of source data symbols to copy to the given buffer
    */
   public static void getChars(@NotNull CharSequence src, @NotNull char[] dst, int srcOffset, int dstOffset, int len) {
+    if (src instanceof CharArrayExternalizable) {
+      ((CharArrayExternalizable)src).getChars(srcOffset, srcOffset + len, dst, dstOffset);
+      return;
+    }
+    
     if (len >= GET_CHARS_THRESHOLD) {
       if (src instanceof String) {
-        ((String)src).getChars(srcOffset, len, dst, dstOffset);
+        ((String)src).getChars(srcOffset, srcOffset + len, dst, dstOffset);
         return;
       }
       else if (src instanceof CharBuffer) {
@@ -81,7 +84,7 @@ public class CharArrayUtil {
         return;
       }
       else if (src instanceof CharSequenceBackedByArray) {
-        ((CharSequenceBackedByArray)src.subSequence(srcOffset, len)).getChars(dst, dstOffset);
+        ((CharSequenceBackedByArray)src.subSequence(srcOffset, srcOffset + len)).getChars(dst, dstOffset);
         return;
       }
       else if (src instanceof StringBuffer) {
@@ -97,15 +100,6 @@ public class CharArrayUtil {
     for (int i = 0, j = srcOffset, max = srcOffset + len; j < max && i < dst.length; i++, j++) {
       dst[i + dstOffset] = src.charAt(j);
     }
-  }
-
-  @NotNull
-  public static char[] fromSequenceStrict(@NotNull CharSequence seq) {
-    char[] chars = fromSequence(seq);
-    if (seq.length() == chars.length) return chars;
-    char[] strictChars = new char[seq.length()];
-    System.arraycopy(chars, 0, strictChars, 0, seq.length());
-    return strictChars;
   }
 
   @Nullable
@@ -126,71 +120,21 @@ public class CharArrayUtil {
 
   /**
    * @return the underlying char[] array if any, or the new chara array if not
-   * NOTE RETURNED ARRAY LENGTH MAY HAVE BE DIFFERENT FROM THE seq.length()
    */
   @NotNull
   public static char[] fromSequence(@NotNull CharSequence seq) {
-    if (seq instanceof CharSequenceBackedByArray) {
-      return ((CharSequenceBackedByArray)seq).getChars();
-    }
-
-    if (seq instanceof CharBuffer) {
-      final CharBuffer buffer = (CharBuffer)seq;
-      if (buffer.hasArray() && !buffer.isReadOnly() && buffer.arrayOffset() == 0) {
-        return buffer.array();
-        // final char[] bufArray = buffer.array();
-        // return larger array. Clients may use seq.length() to calculate correct processing range.
-        // if (bufArray.length == seq.length())
-        // return bufArray;
-      }
-
-      char[] chars = new char[seq.length()];
-      buffer.position(0);
-      buffer.get(chars);
-      buffer.position(0);
-      return chars;
-    }
-
-    if (seq instanceof StringBuffer) {
-      char[] chars = new char[seq.length()];
-      ((StringBuffer)seq).getChars(0, seq.length(), chars, 0);
-      return chars;
-    }
-
-    if (seq instanceof String) {
-      char[] chars = new char[seq.length()];
-      ((String)seq).getChars(0, seq.length(), chars, 0);
-      return chars;
-    }
-
-    return seq.toString().toCharArray();
+    char[] underlying = fromSequenceWithoutCopying(seq);
+    return underlying != null ? Arrays.copyOf(underlying, underlying.length) : fromSequence(seq, 0, seq.length());
   }
 
+  /**
+   * @return a new char array containing the sub-sequence's chars 
+   */
   @NotNull
   public static char[] fromSequence(@NotNull CharSequence seq, int start, int end) {
-    if (seq instanceof CharSequenceBackedByArray) {
-      return Arrays.copyOfRange(((CharSequenceBackedByArray)seq).getChars(), start, end);
-    }
-
-    if (seq instanceof CharBuffer) {
-      CharBuffer buffer = (CharBuffer)seq;
-      char[] chars = new char[end-start];
-      buffer.position(start);
-      buffer.get(chars, 0, end-start);
-      buffer.position(0);
-      return chars;
-    }
-
-    if (seq instanceof StringBuffer) {
-      char[] chars = new char[end-start];
-      ((StringBuffer)seq).getChars(start, end, chars, 0);
-      return chars;
-    }
-
-    String s = seq.toString();
-    char[] chars = new char[end-start];
-    s.getChars(start, end, chars, 0);
-    return chars;
+    char[] result = new char[end - start];
+    getChars(seq, result, start, 0, end - start);
+    return result;
   }
 
   public static int shiftForward(@NotNull CharSequence buffer, int offset, @NotNull String chars) {
@@ -198,7 +142,7 @@ public class CharArrayUtil {
   }
 
   /**
-   * Tries to find an offset from the <code>[startOffset; endOffset)</code> interval such that a char from the given buffer is
+   * Tries to find an offset from the {@code [startOffset; endOffset)} interval such that a char from the given buffer is
    * not contained at the given 'chars' string.
    * <p/>
    * Example:
@@ -208,9 +152,9 @@ public class CharArrayUtil {
    * @param startOffset  start offset to use within the given buffer (inclusive)
    * @param endOffset    end offset to use within the given buffer (exclusive)
    * @param chars        pass-through symbols
-   * @return             offset from the <code>[startOffset; endOffset)</code> which points to a symbol at the given buffer such
+   * @return             offset from the {@code [startOffset; endOffset)} which points to a symbol at the given buffer such
    *                     as that that symbol is not contained at the given 'chars';
-   *                     <code>endOffset</code> otherwise
+   *                     {@code endOffset} otherwise
    */
   public static int shiftForward(@NotNull CharSequence buffer, final int startOffset, final int endOffset, @NotNull String chars) {
     for (int offset = startOffset, limit = Math.min(endOffset, buffer.length()); offset < limit; offset++) {
@@ -250,10 +194,15 @@ public class CharArrayUtil {
   }
 
   public static int shiftBackward(@NotNull CharSequence buffer, int offset, @NotNull String chars) {
-    if (offset >= buffer.length()) return offset;
-
+    return shiftBackward(buffer, 0, offset, chars);
+  }
+  
+  public static int shiftBackward(@NotNull CharSequence buffer, int minOffset, int maxOffset, @NotNull String chars) {
+    if (maxOffset >= buffer.length()) return maxOffset;
+    
+    int offset = maxOffset;
     while (true) {
-      if (offset < 0) break;
+      if (offset < minOffset) break;
       char c = buffer.charAt(offset);
       int i;
       for (i = 0; i < chars.length(); i++) {
@@ -295,24 +244,24 @@ public class CharArrayUtil {
    * <ul>
    *   <li>is less than or equal to the given offset;</li>
    *   <li>
-   *      it's guaranteed that all symbols of the given buffer that are located at <code>(returned offset; given offset]</code>
+   *      it's guaranteed that all symbols of the given buffer that are located at {@code (returned offset; given offset]}
    *      interval differ from the given symbols;
    *    </li>
    * </ul>
    * <p/>
-   * Example: suppose that this method is called with buffer that holds <code>'test data'</code> symbols, offset that points
-   * to the last symbols and <code>'sf'</code> as a chars to exclude. Offset that points to <code>'s'</code> symbol
+   * Example: suppose that this method is called with buffer that holds {@code 'test data'} symbols, offset that points
+   * to the last symbols and {@code 'sf'} as a chars to exclude. Offset that points to {@code 's'} symbol
    * is returned then, i.e. all symbols of the given buffer that are located after it and not after given offset
-   * (<code>'t data'</code>) are guaranteed to not contain given chars (<code>'sf'</code>).
+   * ({@code 't data'}) are guaranteed to not contain given chars ({@code 'sf'}).
    *
    * @param buffer      symbols buffer to check
    * @param offset      initial symbols buffer offset to use
    * @param chars       chars to exclude
-   * @return            offset of the given buffer that guarantees that all symbols at <code>(returned offset; given offset]</code>
-   *                    interval of the given buffer differ from symbols of given <code>'chars'</code> arguments;
+   * @return            offset of the given buffer that guarantees that all symbols at {@code (returned offset; given offset]}
+   *                    interval of the given buffer differ from symbols of given {@code 'chars'} arguments;
    *                    given offset is returned if it is outside of given buffer bounds;
-   *                    <code>'-1'</code> is returned if all document symbols that precede given offset differ from symbols
-   *                    of the given <code>'chars to exclude'</code>
+   *                    {@code '-1'} is returned if all document symbols that precede given offset differ from symbols
+   *                    of the given {@code 'chars to exclude'}
    */
   public static int shiftBackwardUntil(@NotNull CharSequence buffer, int offset, @NotNull String chars) {
     if (offset >= buffer.length()) return offset;
@@ -329,27 +278,36 @@ public class CharArrayUtil {
     return offset;
   }
 
-  public static boolean regionMatches(@NotNull char[] buffer, int offset, int bufferEnd, @NotNull CharSequence s) {
+  public static boolean regionMatches(@NotNull char[] buffer, int start, int end, @NotNull CharSequence s) {
     final int len = s.length();
-    if (offset + len > bufferEnd) return false;
-    if (offset < 0) return false;
+    if (start + len > end) return false;
+    if (start < 0) return false;
     for (int i = 0; i < len; i++) {
-      if (buffer[offset + i] != s.charAt(i)) return false;
+      if (buffer[start + i] != s.charAt(i)) return false;
     }
     return true;
   }
 
-  public static boolean regionMatches(@NotNull CharSequence buffer, int offset, int bufferEnd, @NotNull CharSequence s) {
+  public static boolean regionMatches(@NotNull CharSequence buffer, int start, int end, @NotNull CharSequence s) {
     final int len = s.length();
-    if (offset + len > bufferEnd) return false;
-    if (offset < 0) return false;
+    if (start + len > end) return false;
+    if (start < 0) return false;
     
     //if (buffer instanceof String && s instanceof String) {
     //  return ((String)buffer).regionMatches(offset, (String)s, 0, len);
     //}
     
     for (int i = 0; i < len; i++) {
-      if (buffer.charAt(offset + i) != s.charAt(i)) return false;
+      if (buffer.charAt(start + i) != s.charAt(i)) return false;
+    }
+    return true;
+  }
+
+  public static boolean regionMatches(@NotNull CharSequence s1, int start1, int end1, @NotNull CharSequence s2, int start2, int end2) {
+    if (end1-start1 != end2-start2) return false;
+
+    for (int i = start1,j=start2; i < end1; i++,j++) {
+      if (s1.charAt(i) != s2.charAt(j)) return false;
     }
     return true;
   }
@@ -393,29 +351,19 @@ public class CharArrayUtil {
 
   /**
    * Tries to find index of given pattern at the given buffer.
-   * <p/>
-   * <b>Note:</b> given <code>'toIndex'</code> value restricts examination to <code>'toIndex -1'</code> value (exclusive).. I.e. invocation like below
-   * doesn't find the match:
-   * <pre>
-   *        String buffer = "aab";
-   *        String pattern = "ab";
-   *        CharArrayUtil.indexOf(buffer, pattern, 0, buffer.length()); // right boundary is "aab".length() - 1 = 2 (exclusive)
-   * </pre>
-   * <p/>
-   * This is historical behavior and is not going to be changed in order to preserve backward compatibility.
    *
    * @param buffer       characters buffer which contents should be checked for the given pattern
    * @param pattern      target characters sequence to find at the given buffer
    * @param fromIndex    start index (inclusive). Zero is used if given index is negative
-   * @param toIndex      defines end index (exclusive) by the formula <code>'toIndex - 1'</code>
-   * @return             index of the given pattern at the given buffer if the match is found; <code>-1</code> otherwise
+   * @param toIndex      end index (exclusive)
+   * @return             index of the given pattern at the given buffer if the match is found; {@code -1} otherwise
    */
   public static int indexOf(@NotNull CharSequence buffer, @NotNull CharSequence pattern, int fromIndex, final int toIndex) {
     final int patternLength = pattern.length();
-    int limit = toIndex - patternLength + 1;
     if (fromIndex < 0) {
       fromIndex = 0;
     }
+    int limit = toIndex - patternLength + 1;
     SearchLoop:
     for (int i = fromIndex; i < limit; i++) {
       for (int j = 0; j < patternLength; j++) {
@@ -427,15 +375,15 @@ public class CharArrayUtil {
   }
 
   /**
-   * Tries to find index that points to the first location of the given symbol at the given char array at range <code>[from; to)</code>.
+   * Tries to find index that points to the first location of the given symbol at the given char array at range {@code [from; to)}.
    *
    * @param buffer      target symbols holder to check
    * @param symbol      target symbol which offset should be found
    * @param fromIndex   start index to search (inclusive)
    * @param toIndex     end index to search (exclusive)
    * @return            index that points to the first location of the given symbol at the given char array at range
-   *                    <code>[from; to)</code> if target symbol is found;
-   *                    <code>-1</code> otherwise
+   *                    {@code [from; to)} if target symbol is found;
+   *                    {@code -1} otherwise
    */
   public static int indexOf(@NotNull char[] buffer, final char symbol, int fromIndex, final int toIndex) {
     if (fromIndex < 0) {
@@ -450,15 +398,15 @@ public class CharArrayUtil {
   }
 
   /**
-   * Tries to find index that points to the last location of the given symbol at the given char array at range <code>[from; to)</code>.
+   * Tries to find index that points to the last location of the given symbol at the given char array at range {@code [from; to)}.
    *
    * @param buffer      target symbols holder to check
    * @param symbol      target symbol which offset should be found
    * @param fromIndex   start index to search (inclusive)
    * @param toIndex     end index to search (exclusive)
    * @return            index that points to the last location of the given symbol at the given char array at range
-   *                    <code>[from; to)</code> if target symbol is found;
-   *                    <code>-1</code> otherwise
+   *                    {@code [from; to)} if target symbol is found;
+   *                    {@code -1} otherwise
    */
   public static int lastIndexOf(@NotNull char[] buffer, final char symbol, int fromIndex, final int toIndex) {
     if (fromIndex < 0) {
@@ -504,24 +452,6 @@ public class CharArrayUtil {
     return -1;
   }
 
-  @NotNull
-  public static byte[] toByteArray(@NotNull char[] chars) throws IOException {
-    return toByteArray(chars, chars.length);
-  }
-
-  @NotNull
-  public static byte[] toByteArray(@NotNull char[] chars, int size) throws IOException {
-    ByteArrayOutputStream out = new ByteArrayOutputStream();
-    OutputStreamWriter writer = new OutputStreamWriter(out);
-    try {
-      writer.write(chars, 0, size);
-    }
-    finally {
-      writer.close();
-    }
-    return out.toByteArray();
-  }
-
   public static boolean containsOnlyWhiteSpaces(@Nullable CharSequence chars) {
     if (chars == null) return true;
     for (int i = 0; i < chars.length(); i++) {
@@ -531,18 +461,6 @@ public class CharArrayUtil {
     }
     return true;
   }
-
-  //Commented in order to apply to green code policy as the method is unused.
-  //
-  //public static boolean subArraysEqual(char[] ca1, int startOffset1, int endOffset1,char[] ca2, int startOffset2, int endOffset2) {
-  //  if (endOffset1 - startOffset1 != endOffset2 - startOffset2) return false;
-  //  for (int i = startOffset1; i < endOffset1; i++) {
-  //    char c1 = ca1[i];
-  //    char c2 = ca2[i - startOffset1 + startOffset2];
-  //    if (c1 != c2) return false;
-  //  }
-  //  return true;
-  //}
 
   @NotNull
   public static TextRange[] getIndents(@NotNull CharSequence charsSequence, int shift) {
@@ -570,10 +488,8 @@ public class CharArrayUtil {
       }
     }
     if(whitespaceEnd > 0) result.add(new TextRange(0, whitespaceEnd + 1).shiftRight(shift));
-    if (lastTextFound < result.size()) {
-      result = result.subList(0, lastTextFound);
-    }
-    return result.toArray(new TextRange[result.size()]);
+    result = ContainerUtil.getFirstItems(result, lastTextFound);
+    return result.toArray(TextRange.EMPTY_ARRAY);
   }
 
   public static boolean containLineBreaks(@NotNull CharSequence seq) {
@@ -595,7 +511,7 @@ public class CharArrayUtil {
    * @param text      text to check
    * @param start     start offset within the given text to check (inclusive)
    * @param end       end offset within the given text to check (exclusive)
-   * @return          <code>true</code> if target region of the given text contains white space symbols only; <code>false</code> otherwise
+   * @return          {@code true} if target region of the given text contains white space symbols only; {@code false} otherwise
    */
   public static boolean isEmptyOrSpaces(@NotNull CharSequence text, int start, int end) {
     for (int i = start; i < end; i++) {
@@ -610,7 +526,11 @@ public class CharArrayUtil {
   @NotNull
   public static Reader readerFromCharSequence(@NotNull CharSequence text) {
     char[] chars = fromSequenceWithoutCopying(text);
-    //noinspection IOResourceOpenedButNotSafelyClosed
     return chars == null ? new CharSequenceReader(text.toString()) : new UnsyncCharArrayReader(chars, 0, text.length());
+  }
+
+  @NotNull
+  public static ImmutableCharSequence createImmutableCharSequence(@NotNull CharSequence sequence) {
+    return ImmutableText.valueOf(sequence);
   }
 }

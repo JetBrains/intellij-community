@@ -1,26 +1,12 @@
-/*
- * Copyright 2000-2011 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.editor.actions;
 
+import com.intellij.application.options.CodeStyle;
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.editorActions.enter.EnterHandlerDelegateAdapter;
 import com.intellij.lang.ASTNode;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.editor.CaretModel;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -37,17 +23,20 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.util.text.CharArrayCharSequence;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.codeStyle.GroovyCodeStyleSettings;
 import org.jetbrains.plugins.groovy.editor.HandlerUtils;
 import org.jetbrains.plugins.groovy.formatter.GeeseUtil;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyLexer;
+import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
+import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyTokenSets;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
@@ -55,69 +44,74 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrStringInjection;
 import org.jetbrains.plugins.groovy.lang.psi.util.GrStringUtil;
 
-import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mCLOSABLE_BLOCK_OP;
-import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mDOLLAR;
-import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mDOLLAR_SLASH_REGEX_BEGIN;
-import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mDOLLAR_SLASH_REGEX_CONTENT;
-import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mDOLLAR_SLASH_REGEX_END;
-import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mDOLLAR_SLASH_REGEX_LITERAL;
-import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mGSTRING_BEGIN;
-import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mGSTRING_CONTENT;
-import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mGSTRING_END;
-import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mGSTRING_LITERAL;
-import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mIDENT;
-import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mLBRACK;
-import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mLCURLY;
-import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mNLS;
-import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mRBRACK;
-import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mRCURLY;
-import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mREGEX_BEGIN;
-import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mREGEX_CONTENT;
-import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mREGEX_END;
-import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mREGEX_LITERAL;
-import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mSTRING_LITERAL;
-import static org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes.*;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.*;
 
 /**
  * @author ilyas
  */
 public class GroovyEnterHandler extends EnterHandlerDelegateAdapter {
 
-  private static final TokenSet GSTRING_TOKENS = TokenSet.create(mGSTRING_BEGIN, mGSTRING_CONTENT, mGSTRING_END, mGSTRING_LITERAL);
+  private static final TokenSet GSTRING_TOKENS = TokenSet.create(GroovyTokenTypes.mGSTRING_BEGIN, GroovyTokenTypes.mGSTRING_CONTENT,
+                                                                 GroovyTokenTypes.mGSTRING_END, STRING_DQ, STRING_TDQ);
 
-  private static final TokenSet REGEX_TOKENS = TokenSet.create(mREGEX_BEGIN, mREGEX_CONTENT, mREGEX_END, mDOLLAR_SLASH_REGEX_BEGIN,
-                                                         mDOLLAR_SLASH_REGEX_CONTENT, mDOLLAR_SLASH_REGEX_END);
+  private static final TokenSet REGEX_TOKENS = TokenSet.create(GroovyTokenTypes.mREGEX_BEGIN, GroovyTokenTypes.mREGEX_CONTENT,
+                                                               GroovyTokenTypes.mREGEX_END, GroovyTokenTypes.mDOLLAR_SLASH_REGEX_BEGIN,
+                                                               GroovyTokenTypes.mDOLLAR_SLASH_REGEX_CONTENT,
+                                                               GroovyTokenTypes.mDOLLAR_SLASH_REGEX_END);
 
-  private static final TokenSet AFTER_DOLLAR = TokenSet.create(mLCURLY, mIDENT, mGSTRING_CONTENT, mDOLLAR, mGSTRING_END, mREGEX_CONTENT,
-                                                               mDOLLAR_SLASH_REGEX_CONTENT, mREGEX_END, mDOLLAR_SLASH_REGEX_END);
+  private static final TokenSet AFTER_DOLLAR = TokenSet.create(GroovyTokenTypes.mLCURLY, GroovyTokenTypes.mIDENT, GroovyTokenTypes.mDOLLAR,
+                                                               GroovyTokenTypes.mGSTRING_END, GroovyTokenTypes.mREGEX_END,
+                                                               GroovyTokenTypes.mDOLLAR_SLASH_REGEX_END,
+                                                               GroovyElementTypes.GSTRING_CONTENT, GroovyTokenTypes.mGSTRING_CONTENT,
+                                                               GroovyTokenTypes.mREGEX_CONTENT,
+                                                               GroovyTokenTypes.mDOLLAR_SLASH_REGEX_CONTENT);
 
-  private static final TokenSet ALL_STRINGS = TokenSet.create(mSTRING_LITERAL, mGSTRING_LITERAL, mGSTRING_BEGIN, mGSTRING_END,
-                                                              mGSTRING_CONTENT, mRCURLY, mIDENT, mDOLLAR, mREGEX_BEGIN, mREGEX_CONTENT,
-                                                              mREGEX_END, mDOLLAR_SLASH_REGEX_BEGIN, mDOLLAR_SLASH_REGEX_CONTENT,
-                                                              mDOLLAR_SLASH_REGEX_END, mREGEX_LITERAL, mDOLLAR_SLASH_REGEX_LITERAL);
+  private static final TokenSet ALL_STRINGS = TokenSet.orSet(GroovyTokenSets.STRING_LITERALS, TokenSet.create(
+                                                              GroovyTokenTypes.mGSTRING_BEGIN, GroovyTokenTypes.mGSTRING_END,
+                                                              GroovyTokenTypes.mGSTRING_CONTENT, GroovyTokenTypes.mRCURLY,
+                                                              GroovyTokenTypes.mIDENT, GroovyTokenTypes.mDOLLAR,
+                                                              GroovyTokenTypes.mREGEX_BEGIN, GroovyTokenTypes.mREGEX_CONTENT,
+                                                              GroovyTokenTypes.mREGEX_END, GroovyTokenTypes.mDOLLAR_SLASH_REGEX_BEGIN,
+                                                              GroovyTokenTypes.mDOLLAR_SLASH_REGEX_CONTENT,
+                                                              GroovyTokenTypes.mDOLLAR_SLASH_REGEX_END, GroovyTokenTypes.mREGEX_LITERAL,
+                                                              GroovyTokenTypes.mDOLLAR_SLASH_REGEX_LITERAL,
+                                                              GroovyElementTypes.GSTRING_CONTENT));
 
-  private static final TokenSet BEFORE_DOLLAR =TokenSet.create(mGSTRING_BEGIN, mGSTRING_CONTENT, mREGEX_BEGIN, mREGEX_CONTENT,
-                                                               mDOLLAR_SLASH_REGEX_BEGIN, mDOLLAR_SLASH_REGEX_CONTENT);
+  private static final TokenSet BEFORE_DOLLAR =TokenSet.create(GroovyTokenTypes.mGSTRING_BEGIN, GroovyTokenTypes.mREGEX_BEGIN,
+                                                               GroovyTokenTypes.mDOLLAR_SLASH_REGEX_BEGIN,
+                                                               GroovyElementTypes.GSTRING_CONTENT,
+                                                               GroovyTokenTypes.mGSTRING_CONTENT, GroovyTokenTypes.mREGEX_CONTENT,
+                                                               GroovyTokenTypes.mDOLLAR_SLASH_REGEX_CONTENT);
 
-  private static final TokenSet EXPR_END = TokenSet.create(mRCURLY, mIDENT);
+  private static final TokenSet EXPR_END = TokenSet.create(GroovyTokenTypes.mRCURLY, GroovyTokenTypes.mIDENT);
 
-  private static final TokenSet AFTER_EXPR_END = TokenSet.create(mGSTRING_END, mGSTRING_CONTENT, mDOLLAR, mREGEX_END, mREGEX_CONTENT,
-                                                                 mDOLLAR_SLASH_REGEX_END, mDOLLAR_SLASH_REGEX_CONTENT);
+  private static final TokenSet AFTER_EXPR_END = TokenSet.create(GroovyTokenTypes.mGSTRING_END, GroovyTokenTypes.mDOLLAR,
+                                                                 GroovyTokenTypes.mREGEX_END, GroovyTokenTypes.mDOLLAR_SLASH_REGEX_END,
+                                                                 GroovyElementTypes.GSTRING_CONTENT,
+                                                                 GroovyTokenTypes.mGSTRING_CONTENT, GroovyTokenTypes.mREGEX_CONTENT,
+                                                                 GroovyTokenTypes.mDOLLAR_SLASH_REGEX_CONTENT);
 
-  private static final TokenSet STRING_END = TokenSet.create(mSTRING_LITERAL, mGSTRING_LITERAL, mGSTRING_END, mREGEX_END,
-                                                             mDOLLAR_SLASH_REGEX_END, mREGEX_LITERAL, mDOLLAR_SLASH_REGEX_LITERAL);
+  private static final TokenSet STRING_END = TokenSet.orSet(GroovyTokenSets.STRING_LITERALS, TokenSet.create(
+                                                             GroovyTokenTypes.mGSTRING_END, GroovyTokenTypes.mREGEX_END,
+                                                             GroovyTokenTypes.mDOLLAR_SLASH_REGEX_END, GroovyTokenTypes.mREGEX_LITERAL,
+                                                             GroovyTokenTypes.mDOLLAR_SLASH_REGEX_LITERAL));
 
-  private static final TokenSet INNER_STRING_TOKENS = TokenSet.create(mGSTRING_BEGIN, mGSTRING_CONTENT, mGSTRING_END, mREGEX_BEGIN,
-                                                                       mREGEX_CONTENT, mREGEX_END, mDOLLAR_SLASH_REGEX_BEGIN,
-                                                                       mDOLLAR_SLASH_REGEX_CONTENT, mDOLLAR_SLASH_REGEX_END,
-                                                                       GSTRING_INJECTION);
+  private static final TokenSet INNER_STRING_TOKENS = TokenSet.create(GroovyTokenTypes.mGSTRING_BEGIN, GroovyTokenTypes.mGSTRING_CONTENT,
+                                                                      GroovyTokenTypes.mGSTRING_END, GroovyTokenTypes.mREGEX_BEGIN,
+                                                                      GroovyTokenTypes.mREGEX_CONTENT, GroovyTokenTypes.mREGEX_END,
+                                                                      GroovyTokenTypes.mDOLLAR_SLASH_REGEX_BEGIN,
+                                                                      GroovyTokenTypes.mDOLLAR_SLASH_REGEX_CONTENT,
+                                                                      GroovyTokenTypes.mDOLLAR_SLASH_REGEX_END,
+                                                                      GroovyElementTypes.GSTRING_INJECTION,
+                                                                      GroovyElementTypes.GSTRING_CONTENT);
 
   public static void insertSpacesByGroovyContinuationIndent(Editor editor, Project project) {
-    int indentSize = CodeStyleSettingsManager.getSettings(project).getContinuationIndentSize(GroovyFileType.GROOVY_FILE_TYPE);
+    int indentSize = CodeStyle.getSettings(editor).getContinuationIndentSize(GroovyFileType.GROOVY_FILE_TYPE);
     EditorModificationUtil.insertStringAtCaret(editor, StringUtil.repeatSymbol(' ', indentSize));
   }
 
 
+  @Override
   public Result preprocessEnter(@NotNull PsiFile file,
                                 @NotNull Editor editor,
                                 @NotNull Ref<Integer> caretOffset,
@@ -128,24 +122,24 @@ public class GroovyEnterHandler extends EnterHandlerDelegateAdapter {
     Project project = file.getProject();
     CaretModel caretModel = editor.getCaretModel();
 
-    String text = document.getText();
-    if (StringUtil.isEmpty(text)) {
+    if (!(file instanceof GroovyFileBase)) {
       return Result.Continue;
     }
 
-    if (!(file instanceof GroovyFileBase)) {
+    int docLength = document.getTextLength();
+    if (docLength == 0) {
       return Result.Continue;
     }
 
     final int caret = caretModel.getOffset();
     final EditorHighlighter highlighter = ((EditorEx)editor).getHighlighter();
-    if (caret >= 1 && caret < text.length() && CodeInsightSettings.getInstance().SMART_INDENT_ON_ENTER) {
+    if (caret >= 1 && caret < docLength && CodeInsightSettings.getInstance().SMART_INDENT_ON_ENTER) {
       HighlighterIterator iterator = highlighter.createIterator(caret);
       iterator.retreat();
       while (!iterator.atEnd() && TokenType.WHITE_SPACE == iterator.getTokenType()) {
         iterator.retreat();
       }
-      boolean afterArrow = !iterator.atEnd() && iterator.getTokenType() == mCLOSABLE_BLOCK_OP;
+      boolean afterArrow = !iterator.atEnd() && iterator.getTokenType() == GroovyTokenTypes.mCLOSABLE_BLOCK_OP;
       if (afterArrow) {
         originalHandler.execute(editor, dataContext);
         PsiDocumentManager.getInstance(project).commitDocument(document);
@@ -156,13 +150,13 @@ public class GroovyEnterHandler extends EnterHandlerDelegateAdapter {
       while (!iterator.atEnd() && TokenType.WHITE_SPACE == iterator.getTokenType()) {
         iterator.advance();
       }
-      if (!iterator.atEnd() && mRCURLY == iterator.getTokenType()) {
+      if (!iterator.atEnd() && GroovyTokenTypes.mRCURLY == iterator.getTokenType()) {
         PsiDocumentManager.getInstance(project).commitDocument(document);
         final PsiElement element = file.findElementAt(iterator.getStart());
         if (element != null &&
-            element.getNode().getElementType() == mRCURLY &&
+            element.getNode().getElementType() == GroovyTokenTypes.mRCURLY &&
             element.getParent() instanceof GrClosableBlock &&
-            text.length() > caret && afterArrow) {
+            docLength > caret && afterArrow) {
           return Result.DefaultForceIndent;
         }
       }
@@ -207,11 +201,10 @@ public class GroovyEnterHandler extends EnterHandlerDelegateAdapter {
                                            DataContext dataContext,
                                            EditorActionHandler originalHandler,
                                            PsiFile file) {
-    Project project = PlatformDataKeys.PROJECT.getData(dataContext);
+    Project project = CommonDataKeys.PROJECT.getData(dataContext);
     if (project == null) return false;
 
-    GroovyCodeStyleSettings codeStyleSettings =
-      CodeStyleSettingsManager.getSettings(project).getCustomSettings(GroovyCodeStyleSettings.class);
+    GroovyCodeStyleSettings codeStyleSettings = GroovyCodeStyleSettings.getInstance(editor);
     if (!codeStyleSettings.USE_FLYING_GEESE_BRACES) return false;
 
     PsiElement element = file.findElementAt(caretOffset);
@@ -221,7 +214,7 @@ public class GroovyEnterHandler extends EnterHandlerDelegateAdapter {
     if (element == null || !GeeseUtil.isClosureRBrace(element)) return false;
 
     element = GeeseUtil.getNextNonWhitespaceToken(element);
-    if (element == null || element.getNode().getElementType() != mNLS || StringUtil.countChars(element.getText(), '\n') > 1) {
+    if (element == null || element.getNode().getElementType() != GroovyTokenTypes.mNLS || StringUtil.countChars(element.getText(), '\n') > 1) {
       return false;
     }
 
@@ -250,16 +243,16 @@ public class GroovyEnterHandler extends EnterHandlerDelegateAdapter {
                                                    Project project,
                                                    EditorActionHandler originalHandler) {
     String text = editor.getDocument().getText();
-    if (text == null || text.length() == 0) return false;
+    if (text == null || text.isEmpty()) return false;
     final EditorHighlighter highlighter = ((EditorEx)editor).getHighlighter();
     if (caret < 1 || caret > text.length() - 1) {
       return false;
     }
     HighlighterIterator iterator = highlighter.createIterator(caret - 1);
-    if (mLBRACK == iterator.getTokenType()) {
+    if (GroovyTokenTypes.mLBRACK == iterator.getTokenType()) {
       if (text.length() > caret) {
         iterator = highlighter.createIterator(caret);
-        if (mRBRACK == iterator.getTokenType()) {
+        if (GroovyTokenTypes.mRBRACK == iterator.getTokenType()) {
           originalHandler.execute(editor, context);
           originalHandler.execute(editor, context);
           editor.getCaretModel().moveCaretRelatively(0, -1, false, false, true);
@@ -272,7 +265,7 @@ public class GroovyEnterHandler extends EnterHandlerDelegateAdapter {
   }
 
   private static boolean handleInString(Editor editor, int caretOffset, DataContext dataContext, EditorActionHandler originalHandler) {
-    Project project = PlatformDataKeys.PROJECT.getData(dataContext);
+    Project project = CommonDataKeys.PROJECT.getData(dataContext);
     if (project == null) return false;
 
     final VirtualFile vfile = FileDocumentManager.getInstance().getFile(editor.getDocument());
@@ -287,25 +280,19 @@ public class GroovyEnterHandler extends EnterHandlerDelegateAdapter {
     if (file == null) return false;
 
     PsiDocumentManager.getInstance(project).commitDocument(document);
-    PsiElement stringElement = file.findElementAt(caretOffset - 1);
-    if (stringElement == null) return false;
-    ASTNode node = stringElement.getNode();
-    if (node == null) return false;
 
-    // For expression injection in GString like "abc ${}<caret>  abc"
-    if (!INNER_STRING_TOKENS.contains(node.getElementType()) && checkGStringInjection(stringElement)) {
-      stringElement = stringElement.getParent().getParent().getNextSibling();
-      if (stringElement == null) return false;
-      node = stringElement.getNode();
-      if (node == null) return false;
-    }
+    final PsiElement stringElement = inferStringPair(file, caretOffset);
+    if (stringElement == null) return false;
+
+    ASTNode node = stringElement.getNode();
+    final IElementType nodeElementType = node.getElementType();
 
     boolean isInsertIndent = isInsertIndent(caretOffset, stringElement.getTextRange().getStartOffset(), fileText);
 
-    // For simple String literals like 'abcdef'
+    // For simple String literals like 'abc'
     CaretModel caretModel = editor.getCaretModel();
-    if (mSTRING_LITERAL == node.getElementType()) {
-      if (GrStringUtil.isPlainStringLiteral(node)) {
+    if (nodeElementType == STRING_SQ || nodeElementType == STRING_TSQ) {
+      if (isSingleQuoteString(stringElement)) {
 
         //the case of print '\<caret>'
         if (isSlashBeforeCaret(caretOffset, fileText)) {
@@ -332,10 +319,11 @@ public class GroovyEnterHandler extends EnterHandlerDelegateAdapter {
       return true;
     }
 
-    if (GSTRING_TOKENS.contains(node.getElementType()) ||
-        node.getElementType() == mDOLLAR && node.getTreeParent().getTreeParent().getElementType() == GSTRING) {
+    if (GSTRING_TOKENS.contains(nodeElementType) ||
+        nodeElementType == GroovyElementTypes.GSTRING_CONTENT && GSTRING_TOKENS.contains(node.getFirstChildNode().getElementType()) ||
+        nodeElementType == GroovyTokenTypes.mDOLLAR && node.getTreeParent().getTreeParent().getElementType() == GroovyElementTypes.GSTRING) {
       PsiElement parent = stringElement.getParent();
-      if (node.getElementType() == mGSTRING_LITERAL) {
+      if (nodeElementType == STRING_DQ || nodeElementType == STRING_TDQ) {
         parent = stringElement;
       }
       else {
@@ -344,7 +332,7 @@ public class GroovyEnterHandler extends EnterHandlerDelegateAdapter {
         }
       }
       if (parent == null) return false;
-      if (GrStringUtil.isPlainGString(parent.getNode())) {
+      if (isDoubleQuotedString(parent)) {
         PsiElement exprSibling = stringElement.getNextSibling();
         boolean rightFromDollar = exprSibling instanceof GrExpression && exprSibling.getTextRange().getStartOffset() == caretOffset;
         if (rightFromDollar) caretOffset--;
@@ -375,10 +363,11 @@ public class GroovyEnterHandler extends EnterHandlerDelegateAdapter {
       return true;
     }
 
-    if (REGEX_TOKENS.contains(node.getElementType()) ||
-        node.getElementType() == mDOLLAR && node.getTreeParent().getTreeParent().getElementType() == REGEX) {
+    if (REGEX_TOKENS.contains(nodeElementType) ||
+        nodeElementType == GroovyElementTypes.GSTRING_CONTENT && REGEX_TOKENS.contains(node.getFirstChildNode().getElementType()) ||
+        nodeElementType == GroovyTokenTypes.mDOLLAR && node.getTreeParent().getTreeParent().getElementType() == GroovyElementTypes.REGEX) {
       PsiElement parent = stringElement.getParent();
-      if (node.getElementType() == mREGEX_LITERAL || node.getElementType() == mDOLLAR_SLASH_REGEX_LITERAL) {
+      if (nodeElementType == GroovyTokenTypes.mREGEX_LITERAL || nodeElementType == GroovyTokenTypes.mDOLLAR_SLASH_REGEX_LITERAL) {
         parent = stringElement;
       }
       else {
@@ -400,6 +389,30 @@ public class GroovyEnterHandler extends EnterHandlerDelegateAdapter {
     }
 
     return false;
+  }
+
+  private static boolean isDoubleQuotedString(PsiElement element) {
+    return "\"".equals(GrStringUtil.getStartQuote(element.getText()));
+  }
+
+  private static boolean isSingleQuoteString(PsiElement element) {
+    return "'".equals(GrStringUtil.getStartQuote(element.getText()));
+  }
+
+  @Nullable
+  private static PsiElement inferStringPair(PsiFile file, int caretOffset) {
+    PsiElement stringElement = file.findElementAt(caretOffset - 1);
+    if (stringElement == null) return null;
+    ASTNode node = stringElement.getNode();
+    if (node == null) return null;
+
+    // For expression injection in GString like "abc ${}<caret>  abc"
+    if (!INNER_STRING_TOKENS.contains(node.getElementType()) && checkGStringInjection(stringElement)) {
+      stringElement = stringElement.getParent().getParent().getNextSibling();
+      if (stringElement == null) return null;
+    }
+
+    return stringElement;
   }
 
   private static boolean isSlashBeforeCaret(int caretOffset, String fileText) {

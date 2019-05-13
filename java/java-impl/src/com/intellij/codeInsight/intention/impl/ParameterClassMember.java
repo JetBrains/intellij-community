@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,12 +26,9 @@ import com.intellij.ui.speedSearch.SpeedSearchUtil;
 
 import javax.swing.*;
 
-/**
-* User: anna
-* Date: 8/2/12
-*/
 public class ParameterClassMember implements ClassMember {
-  private PsiParameter myParameter;
+  public static final ParameterClassMember[] EMPTY_ARRAY = new ParameterClassMember[0];
+  private final PsiParameter myParameter;
 
   public ParameterClassMember(PsiParameter parameter) {
     myParameter = parameter;

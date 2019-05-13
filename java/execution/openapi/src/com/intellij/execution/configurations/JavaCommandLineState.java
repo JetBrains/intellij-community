@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,18 +18,16 @@ package com.intellij.execution.configurations;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.process.OSProcessHandler;
 import com.intellij.execution.runners.ExecutionEnvironment;
-import com.intellij.ide.DataManager;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import org.jetbrains.annotations.NotNull;
 
-
-public abstract class JavaCommandLineState extends CommandLineState implements JavaCommandLine{
+public abstract class JavaCommandLineState extends CommandLineState implements JavaCommandLine {
   private JavaParameters myParams;
-  
-  protected JavaCommandLineState(@NotNull final ExecutionEnvironment environment) {
+
+  protected JavaCommandLineState(@NotNull ExecutionEnvironment environment) {
     super(environment);
   }
 
+  @Override
   public JavaParameters getJavaParameters() throws ExecutionException {
     if (myParams == null) {
       myParams = createJavaParameters();
@@ -37,19 +35,28 @@ public abstract class JavaCommandLineState extends CommandLineState implements J
     return myParams;
   }
 
+  public void clear() {
+    myParams = null;
+  }
+
+  @Override
   @NotNull
   protected OSProcessHandler startProcess() throws ExecutionException {
     return JavaCommandLineStateUtil.startProcess(createCommandLine(), ansiColoringEnabled());
   }
 
   protected boolean ansiColoringEnabled() {
-    return false;
+    return true;
   }
 
   protected abstract JavaParameters createJavaParameters() throws ExecutionException;
 
   protected GeneralCommandLine createCommandLine() throws ExecutionException {
-    return CommandLineBuilder.createFromJavaParameters(getJavaParameters(), PlatformDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext()), true);
+    SimpleJavaParameters javaParameters = getJavaParameters();
+    if (!javaParameters.isDynamicClasspath()) {
+      javaParameters.setUseDynamicClasspath(getEnvironment().getProject());
+    }
+    return javaParameters.toCommandLine();
   }
 
   public boolean shouldAddJavaProgramRunnerActions() {

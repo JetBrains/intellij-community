@@ -44,6 +44,11 @@ public abstract class ResizePoint extends ComponentDecorator {
     Point location = getLocation(layer, component);
     Rectangle bounds = new Rectangle(location.x, location.y, getSize(), getSize());
 
+    int neighborhood = getNeighborhoodSize();
+    if (neighborhood > 0) {
+      bounds.grow(neighborhood, neighborhood);
+    }
+
     if (bounds.contains(x, y)) {
       return createTool(component);
     }
@@ -70,5 +75,14 @@ public abstract class ResizePoint extends ComponentDecorator {
 
   protected int getSize() {
     return DEFAULT_SIZE;
+  }
+
+  /**
+   * Additional space range around the resize point that will also be considered a match.
+   * This lets you get near but not necessarily right on top of the resize point in order
+   * to act on it.
+   */
+  protected int getNeighborhoodSize() {
+    return 0;
   }
 }

@@ -1,18 +1,21 @@
-
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.completion.impl;
 
 import com.intellij.codeInsight.CodeInsightSettings;
+import com.intellij.codeInsight.completion.CompletionUtil;
 import com.intellij.codeInsight.completion.PrefixMatcher;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.codeStyle.MinusculeMatcher;
 import com.intellij.psi.codeStyle.NameUtil;
-import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.FList;
+import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 /**
@@ -43,17 +46,42 @@ public class CamelHumpMatcher extends PrefixMatcher {
 
   @Override
   public boolean isStartMatch(LookupElement element) {
-    return ContainerUtil.or(element.getAllLookupStrings(), new Condition<String>() {
-      @Override
-      public boolean value(String s) {
-        return myCaseInsensitiveMatcher.isStartMatch(s);
+    for (String s : CompletionUtil.iterateLookupStrings(element)) {
+      FList<TextRange> ranges = myCaseInsensitiveMatcher.matchingFragments(s);
+      if (ranges == null) continue;
+      if (ranges.isEmpty() || skipUnderscores(s) >= ranges.get(0).getStartOffset()) {
+        return true;
       }
-    });
+    }
+
+    return false;
+  }
+
+  private static int skipUnderscores(@NotNull String name) {
+    return CharArrayUtil.shiftForward(name, 0, "_");
   }
 
   @Override
   public boolean prefixMatches(@NotNull final String name) {
+    if (name.startsWith("_") &&
+        CodeInsightSettings.getInstance().COMPLETION_CASE_SENSITIVE == CodeInsightSettings.FIRST_LETTER &&
+        firstLetterCaseDiffers(name)) {
+      return false;
+    }
+
     return myMatcher.matches(name);
+  }
+
+  private boolean firstLetterCaseDiffers(String name) {
+    int nameFirst = skipUnderscores(name);
+    int prefixFirst = skipUnderscores(myPrefix);
+    return nameFirst < name.length() &&
+           prefixFirst < myPrefix.length() &&
+           caseDiffers(name.charAt(nameFirst), myPrefix.charAt(prefixFirst));
+  }
+
+  private static boolean caseDiffers(char c1, char c2) {
+    return Character.isLowerCase(c1) != Character.isLowerCase(c2) || Character.isUpperCase(c1) != Character.isUpperCase(c2);
   }
 
   @Override
@@ -78,6 +106,10 @@ public class CamelHumpMatcher extends PrefixMatcher {
   @Override
   @NotNull
   public PrefixMatcher cloneWithPrefix(@NotNull final String prefix) {
+    if (prefix.equals(myPrefix)) {
+      return this;
+    }
+    
     return new CamelHumpMatcher(prefix, myCaseSensitive);
   }
 
@@ -130,6 +162,26 @@ public class CamelHumpMatcher extends PrefixMatcher {
 
   @Override
   public int matchingDegree(String string) {
-    return myMatcher.matchingDegree(string);
+    return matchingDegree(string, matchingFragments(string));
+  }
+
+  @Nullable
+  public FList<TextRange> matchingFragments(String string) {
+    return myMatcher.matchingFragments(string);
+  }
+
+  public int matchingDegree(String string, @Nullable FList<TextRange> fragments) {
+    int underscoreEnd = skipUnderscores(string);
+    if (underscoreEnd > 0) {
+      FList<TextRange> ciRanges = myCaseInsensitiveMatcher.matchingFragments(string);
+      if (ciRanges != null && !ciRanges.isEmpty()) {
+        int matchStart = ciRanges.get(0).getStartOffset();
+        if (matchStart > 0 && matchStart <= underscoreEnd) {
+          return myCaseInsensitiveMatcher.matchingDegree(string.substring(matchStart), true) - 1;
+        }
+      }
+    }
+
+    return myMatcher.matchingDegree(string, true, fragments);
   }
 }

@@ -33,7 +33,7 @@ import org.jetbrains.annotations.Nullable;
  */
 public interface InlineHandler {
 
-  ExtensionPointName<InlineHandler> EP_NAME = new ExtensionPointName<InlineHandler>("com.intellij.refactoring.inlineHandler");
+  ExtensionPointName<InlineHandler> EP_NAME = new ExtensionPointName<>("com.intellij.refactoring.inlineHandler");
 
   interface Settings {
     /**
@@ -46,6 +46,7 @@ public interface InlineHandler {
      * Special settings for the case when inline cannot be performed due to already reported (by error hint) problem
      */
     Settings CANNOT_INLINE_SETTINGS = new Settings() {
+      @Override
       public boolean isOnlyOneReferenceToInline() {
         return false;
       }
@@ -56,7 +57,7 @@ public interface InlineHandler {
    * @param element element to be inlined
    * @param invokedOnReference true if the user invoked the refactoring on an element reference
    * @param editor in case refactoring has been called in the editor
-   * @return <code>Settings</code> object in case refactoring should be performed or null otherwise
+   * @return {@code Settings} object in case refactoring should be performed or null otherwise
 
    */
   @Nullable Settings prepareInlineElement(@NotNull PsiElement element, @Nullable Editor editor, boolean invokedOnReference);

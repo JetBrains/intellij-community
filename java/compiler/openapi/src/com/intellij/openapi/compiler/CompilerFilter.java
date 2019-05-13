@@ -16,11 +16,14 @@
 package com.intellij.openapi.compiler;
 
 /**
- * @author Eugene Zhuravlev
- *         Date: Jul 9, 2009
+ * @deprecated this interface is a part of the obsolete build system which runs as part of the IDE process. Since IDEA 12 plugins need to
+ * integrate into 'external build system' instead (http://www.jetbrains.org/intellij/sdk/docs/reference_guide/frameworks_and_external_apis/external_builder_api.html).
+ * Since IDEA 13 users cannot switch to the old build system via UI and it will be completely removed in IDEA 14.
  */
+@Deprecated
 public interface CompilerFilter {
   CompilerFilter ALL = new CompilerFilter() {
+    @Override
     public boolean acceptCompiler(Compiler compiler) {
       return true;
     }

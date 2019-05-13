@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,43 +21,47 @@ import java.util.Iterator;
  * @author dsl
  */
 public class ConvertingIterator <Domain, Range> implements Iterator<Range> {
-  private final Iterator<Domain> myBaseIterator;
-  private final Convertor<Domain, Range> myConvertor;
+  private final Iterator<? extends Domain> myBaseIterator;
+  private final Convertor<? super Domain, ? extends Range> myConvertor;
 
   public static class IdConvertor <T> implements Convertor<T, T> {
+    @Override
     public T convert(T object) {
       return object;
     }
   }
 
-  public ConvertingIterator(Iterator<Domain> baseIterator, Convertor<Domain, Range> convertor) {
+  public ConvertingIterator(Iterator<? extends Domain> baseIterator, Convertor<? super Domain, ? extends Range> convertor) {
     myBaseIterator = baseIterator;
     myConvertor = convertor;
   }
 
+  @Override
   public boolean hasNext() {
     return myBaseIterator.hasNext();
   }
 
+  @Override
   public Range next() {
     return myConvertor.convert(myBaseIterator.next());
   }
 
+  @Override
   public void remove() {
     myBaseIterator.remove();
   }
 
-  public static <Domain, Intermediate, Range> Convertor<Domain, Range> composition(final Convertor<Domain, Intermediate> convertor1,
-                                                                                   final Convertor<Intermediate, Range> convertor2) {
+  public static <Domain, Intermediate, Range> Convertor<Domain, Range> composition(final Convertor<? super Domain, ? extends Intermediate> convertor1,
+                                                                                   final Convertor<? super Intermediate, ? extends Range> convertor2) {
     return new Convertor<Domain, Range>() {
+      @Override
       public Range convert(Domain domain) {
         return convertor2.convert(convertor1.convert(domain));
       }
     };
   }
 
-  public static <Domain, Range> ConvertingIterator<Domain, Range>
-    create(Iterator<Domain> iterator, Convertor<Domain, Range> convertor) {
+  public static <Domain, Range> ConvertingIterator<Domain, Range> create(Iterator<? extends Domain> iterator, Convertor<? super Domain, ? extends Range> convertor) {
     return new ConvertingIterator<Domain, Range>(iterator, convertor);
   }
 }

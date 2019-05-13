@@ -1,37 +1,24 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide;
 
 import com.intellij.ide.dnd.LinuxDragAndDropSupport;
-import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.project.ProjectManagerAdapter;
+import com.intellij.openapi.project.ProjectManagerListener;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
+import com.intellij.util.containers.JBIterable;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.datatransfer.DataFlavor;
@@ -44,6 +31,9 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class PsiCopyPasteManager {
   public static PsiCopyPasteManager getInstance() {
@@ -55,38 +45,33 @@ public class PsiCopyPasteManager {
   private MyData myRecentData;
   private final CopyPasteManagerEx myCopyPasteManager;
 
-  public PsiCopyPasteManager(CopyPasteManager copyPasteManager, ProjectManager projectManager) {
+  public PsiCopyPasteManager(CopyPasteManager copyPasteManager) {
     myCopyPasteManager = (CopyPasteManagerEx) copyPasteManager;
-    projectManager.addProjectManagerListener(new ProjectManagerAdapter() {
+    ApplicationManager.getApplication().getMessageBus().connect().subscribe(ProjectManager.TOPIC, new ProjectManagerListener() {
       @Override
-      public void projectClosing(Project project) {
-        if (myRecentData != null && myRecentData.getProject() == project) {
+      public void projectClosing(@NotNull Project project) {
+        if (myRecentData != null && (!myRecentData.isValid() || myRecentData.getProject() == project)) {
           myRecentData = null;
+        }
+
+        Transferable[] contents = myCopyPasteManager.getAllContents();
+        for (int i = contents.length - 1; i >= 0; i--) {
+          Transferable t = contents[i];
+          if (t instanceof MyTransferable) {
+            MyData myData = ((MyTransferable)t).myDataProxy;
+            if (!myData.isValid() || myData.getProject() == project) {
+              myCopyPasteManager.removeContent(t);
+            }
+          }
         }
       }
     });
   }
-    
 
   @Nullable
   public PsiElement[] getElements(boolean[] isCopied) {
     try {
-      Transferable content = myCopyPasteManager.getContents();
-      if (content == null) {
-        return null;
-      }
-
-      Object transferData;
-      try {
-        transferData = content.getTransferData(ourDataFlavor);
-      }
-      catch (UnsupportedFlavorException e) {
-        return null;
-      }
-      catch (IOException e) {
-        return null;
-      }
-
+      Object transferData = myCopyPasteManager.getContents(ourDataFlavor);
       if (!(transferData instanceof MyData)) {
         return null;
       }
@@ -100,9 +85,7 @@ public class PsiCopyPasteManager {
       return myRecentData.getElements();
     }
     catch (Exception e) {
-      if (LOG.isDebugEnabled()) {
-        LOG.debug(e);
-      }
+      LOG.debug(e);
       return null;
     }
   }
@@ -114,13 +97,7 @@ public class PsiCopyPasteManager {
     try {
       transferData = content.getTransferData(ourDataFlavor);
     }
-    catch (UnsupportedFlavorException e) {
-      return null;
-    }
-    catch (IOException e) {
-      return null;
-    }
-    catch (InvalidDnDOperationException e) {
+    catch (UnsupportedFlavorException | InvalidDnDOperationException | IOException e) {
       return null;
     }
 
@@ -128,19 +105,13 @@ public class PsiCopyPasteManager {
   }
 
   public void clear() {
-    Transferable old = myCopyPasteManager.getContents();
     myRecentData = null;
-    StringSelection _new = new StringSelection("");
-    myCopyPasteManager.setSystemClipboardContent(_new);
-    myCopyPasteManager.fireContentChanged(old, _new);
+    myCopyPasteManager.setContents(new StringSelection(""));
   }
 
   public void setElements(PsiElement[] elements, boolean copied) {
-    Transferable old = myCopyPasteManager.getContents();
     myRecentData = new MyData(elements, copied);
-    MyTransferable _new = new MyTransferable(myRecentData);
-    myCopyPasteManager.setSystemClipboardContent(_new);
-    myCopyPasteManager.fireContentChanged(old, _new);
+    myCopyPasteManager.setContents(new MyTransferable(myRecentData));
   }
 
   public boolean isCutElement(Object element) {
@@ -175,7 +146,7 @@ public class PsiCopyPasteManager {
   }
 
 
-  private static class MyData {
+  public static class MyData {
     private PsiElement[] myElements;
     private final boolean myIsCopied;
 
@@ -187,33 +158,26 @@ public class PsiCopyPasteManager {
     public PsiElement[] getElements() {
       if (myElements == null) return PsiElement.EMPTY_ARRAY;
 
-      int validElementsCount = 0;
-
-      final AccessToken token = ApplicationManager.getApplication().acquireReadActionLock();
-      try {
+      ReadAction.run(() -> {
+        int validElementsCount = 0;
         for (PsiElement element : myElements) {
           if (element.isValid()) {
             validElementsCount++;
           }
         }
 
-        if (validElementsCount == myElements.length) {
-          return myElements;
-        }
-
-        PsiElement[] validElements = new PsiElement[validElementsCount];
-        int j=0;
-        for (PsiElement element : myElements) {
-          if (element.isValid()) {
-            validElements[j++] = element;
+        if (validElementsCount != myElements.length) {
+          PsiElement[] validElements = new PsiElement[validElementsCount];
+          int j = 0;
+          for (PsiElement element : myElements) {
+            if (element.isValid()) {
+              validElements[j++] = element;
+            }
           }
-        }
 
-        myElements = validElements;
-      }
-      finally {
-        token.finish();
-      }
+          myElements = validElements;
+        }
+      });
 
       return myElements;
     }
@@ -221,7 +185,11 @@ public class PsiCopyPasteManager {
     public boolean isCopied() {
       return myIsCopied;
     }
-    
+
+    public boolean isValid() {
+      return myElements.length > 0 && myElements[0].isValid();
+    }
+
     @Nullable
     public Project getProject() {
       if (myElements == null || myElements.length == 0) {
@@ -248,8 +216,19 @@ public class PsiCopyPasteManager {
       myDataProxy = data;
     }
 
-    @Nullable
+    public MyTransferable(PsiElement[] selectedValues) {
+      this(new PsiCopyPasteManager.MyData(selectedValues, true));
+    }
+
+    @Override
     public Object getTransferData(DataFlavor flavor) throws UnsupportedFlavorException, IOException {
+      Object result = getTransferDataOrNull(flavor);
+      if (result == null) throw new IOException();
+      return result;
+    }
+
+    @Nullable
+    private Object getTransferDataOrNull(DataFlavor flavor) throws UnsupportedFlavorException {
       if (ourDataFlavor.equals(flavor)) {
         return myDataProxy;
       }
@@ -261,61 +240,53 @@ public class PsiCopyPasteManager {
       }
       else if (flavor.equals(LinuxDragAndDropSupport.uriListFlavor)) {
         final List<File> files = getDataAsFileList();
-        if (files != null) {
-          return LinuxDragAndDropSupport.toUriList(files);
-        }
+        return files == null ? null : LinuxDragAndDropSupport.toUriList(files);
       }
       else if (flavor.equals(LinuxDragAndDropSupport.gnomeFileListFlavor)) {
         final List<File> files = getDataAsFileList();
-        if (files != null) {
-          final String string = (myDataProxy.isCopied() ? "copy\n" : "cut\n") + LinuxDragAndDropSupport.toUriList(files);
-          return new ByteArrayInputStream(string.getBytes(CharsetToolkit.UTF8_CHARSET));
-        }
+        if (files == null) return null;
+        final String string = (myDataProxy.isCopied() ? "copy\n" : "cut\n") + LinuxDragAndDropSupport.toUriList(files);
+        return new ByteArrayInputStream(string.getBytes(CharsetToolkit.UTF8_CHARSET));
       }
       else if (flavor.equals(LinuxDragAndDropSupport.kdeCutMarkFlavor) && !myDataProxy.isCopied()) {
-        return new ByteArrayInputStream("1".getBytes());
+        return new ByteArrayInputStream("1".getBytes(CharsetToolkit.UTF8_CHARSET));
       }
-
-      return null;
+      throw new UnsupportedFlavorException(flavor);
     }
 
     @Nullable
     private String getDataAsText() {
-      final AccessToken token = ApplicationManager.getApplication().acquireReadActionLock();
-      try {
-        final List<String> names = new ArrayList<String>();
-        for (PsiElement element : myDataProxy.getElements()) {
-          if (element instanceof PsiNamedElement) {
-            String name = ((PsiNamedElement)element).getName();
-            if (name != null) {
-              names.add(name);
-            }
-          }
-        }
-        return names.isEmpty() ? null : StringUtil.join(names, "\n");
-      }
-      finally {
-        token.finish();
-      }
+      return ReadAction.compute(() -> {
+        String names = Stream.of(myDataProxy.getElements())
+          .filter(PsiNamedElement.class::isInstance)
+          .map(e -> StringUtil.nullize(((PsiNamedElement)e).getName(), true))
+          .filter(Objects::nonNull)
+          .collect(Collectors.joining("\n"));
+        return names.isEmpty() ? null : names;
+      });
     }
 
     @Nullable
     private List<File> getDataAsFileList() {
-      final AccessToken token = ApplicationManager.getApplication().acquireReadActionLock();
-      try {
-        return asFileList(myDataProxy.getElements());
-      }
-      finally {
-        token.finish();
-      }
+      return ReadAction.compute(() -> asFileList(myDataProxy.getElements()));
     }
 
+    @Override
     public DataFlavor[] getTransferDataFlavors() {
-      return myDataProxy.isCopied() ? DATA_FLAVORS_COPY : DATA_FLAVORS_CUT;
+      DataFlavor[] flavors = myDataProxy.isCopied() ? DATA_FLAVORS_COPY : DATA_FLAVORS_CUT;
+      return JBIterable.of(flavors).filter(flavor -> {
+        try {
+          return getTransferDataOrNull(flavor) != null;
+        }
+        catch (UnsupportedFlavorException ex) {
+          return false;
+        }
+      }).toList().toArray(new DataFlavor[0]);
     }
 
+    @Override
     public boolean isDataFlavorSupported(DataFlavor flavor) {
-      return ArrayUtil.find(getTransferDataFlavors(), flavor) != -1;
+      return ArrayUtilRt.find(getTransferDataFlavors(), flavor) != -1;
     }
 
     public PsiElement[] getElements() {
@@ -325,7 +296,7 @@ public class PsiCopyPasteManager {
 
   @Nullable
   public static List<File> asFileList(final PsiElement[] elements) {
-    final List<File> result = new ArrayList<File>();
+    final List<File> result = new ArrayList<>();
     for (PsiElement element : elements) {
       final PsiFileSystemItem psiFile;
       if (element instanceof PsiFileSystemItem) {
@@ -333,6 +304,10 @@ public class PsiCopyPasteManager {
       }
       else if (element instanceof PsiDirectoryContainer) {
         final PsiDirectory[] directories = ((PsiDirectoryContainer)element).getDirectories();
+        if (directories.length == 0) {
+          LOG.error("No directories for " + element + " of " + element.getClass());
+          return null;
+        }
         psiFile = directories[0];
       }
       else {

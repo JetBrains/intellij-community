@@ -39,6 +39,9 @@ public abstract class ProjectFacetManager {
   @NotNull
   public abstract <F extends Facet> List<F> getFacets(@NotNull FacetTypeId<F> typeId);
 
+  @NotNull
+  public abstract List<Module> getModulesWithFacet(@NotNull FacetTypeId<?> typeId);
+
   public abstract <C extends FacetConfiguration> C createDefaultConfiguration(@NotNull FacetType<?, C> facetType);
 
   public abstract <C extends FacetConfiguration> void setDefaultConfiguration(@NotNull FacetType<?, C> facetType, @NotNull C configuration);

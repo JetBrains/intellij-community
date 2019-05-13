@@ -20,7 +20,10 @@ import com.intellij.execution.testframework.*;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.util.Key;
+import com.intellij.terminal.TerminalExecutionConsole;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class TestsOutputConsolePrinter implements Printer, Disposable {
   private final ConsoleView myConsole;
@@ -36,21 +39,14 @@ public class TestsOutputConsolePrinter implements Printer, Disposable {
   private int myMarkOffset = 0;
 
   private final TestFrameworkPropertyListener<Boolean> myPropertyListener = new TestFrameworkPropertyListener<Boolean>() {
+        @Override
         public void onChanged(final Boolean value) {
           if (!value.booleanValue()) myMarkOffset = 0;
         }
       };
 
   public TestsOutputConsolePrinter(@NotNull BaseTestsOutputConsoleView testsOutputConsoleView, final TestConsoleProperties properties, final AbstractTestProxy unboundOutputRoot) {
-    this(testsOutputConsoleView.getConsole(), properties, unboundOutputRoot);
-  }
-
-  /**
-   * @deprecated left for JSTestDriver compatibility
-   */
-  @Deprecated
-  public TestsOutputConsolePrinter(final ConsoleView console, final TestConsoleProperties properties, final AbstractTestProxy unboundOutputRoot) {
-    myConsole = console;
+    myConsole = testsOutputConsoleView.getConsole();
     myProperties = properties;
     myUnboundOutputRoot = unboundOutputRoot;
     myProperties.addListener(TestConsoleProperties.SCROLL_TO_STACK_TRACE, myPropertyListener);
@@ -71,10 +67,12 @@ public class TestsOutputConsolePrinter implements Printer, Disposable {
     }
   }
 
+  @Override
   public void print(final String text, final ConsoleViewContentType contentType) {
     myConsole.print(text, contentType);
   }
 
+  @Override
   public void onNewAvailable(@NotNull final Printable printable) {
     if (myPaused) {
       printable.printOn(myPausedPrinter);
@@ -97,11 +95,7 @@ public class TestsOutputConsolePrinter implements Printer, Disposable {
       myCurrentTest.setPrinter(null);
     }
     myMarkOffset = 0;
-    final Runnable clearRunnable = new Runnable() {
-      public void run() {
-        myConsole.clear();
-      }
-    };
+    final Runnable clearRunnable = () -> myConsole.clear();
     if (test == null) {
       myCurrentTest = null;
       CompositePrintable.invokeInAlarm(clearRunnable);
@@ -109,15 +103,11 @@ public class TestsOutputConsolePrinter implements Printer, Disposable {
     }
     myCurrentTest = test;
     myCurrentTest.setPrinter(this);
-    final Runnable scrollRunnable = new Runnable() {
-      @Override
-      public void run() {
-        scrollToBeginning();
-      }
-    };
+    final Runnable scrollRunnable = () -> scrollToBeginning();
     final AbstractTestProxy currentProxyOrRoot = getCurrentProxyOrRoot();
     CompositePrintable.invokeInAlarm(clearRunnable);
     currentProxyOrRoot.printOn(this);
+    currentProxyOrRoot.printFromFrameworkOutputFile(this);
     CompositePrintable.invokeInAlarm(scrollRunnable);
   }
 
@@ -130,35 +120,51 @@ public class TestsOutputConsolePrinter implements Printer, Disposable {
   }
 
   private boolean isRoot() {
-    return myCurrentTest != null && myCurrentTest.getParent() == myUnboundOutputRoot;
+    return isRoot(myCurrentTest);
   }
 
+  private boolean isRoot(@Nullable AbstractTestProxy proxy) {
+    return proxy != null && proxy.getParent() == myUnboundOutputRoot;
+  }
+
+  @Override
   public void printHyperlink(final String text, final HyperlinkInfo info) {
     myConsole.printHyperlink(text, info);
   }
 
+  @Override
   public void mark() {
     if (TestConsoleProperties.SCROLL_TO_STACK_TRACE.value(myProperties))
       myMarkOffset = myConsole.getContentSize();
   }
 
+  @Override
   public void dispose() {
     myProperties.removeListener(TestConsoleProperties.SCROLL_TO_STACK_TRACE, myPropertyListener);
   }
 
   public boolean canPause() {
-    return myCurrentTest != null ? myCurrentTest.isInProgress() : false;
+    return myCurrentTest != null && myCurrentTest.isInProgress();
   }
 
   protected void scrollToBeginning() {
-    myConsole.performWhenNoDeferredOutput(new Runnable() {
-      public void run() {
-        final AbstractTestProxy currentProxyOrRoot = getCurrentProxyOrRoot();
-        if (currentProxyOrRoot != null && !currentProxyOrRoot.isInProgress()) {
-          //do not scroll to any mark during run
-          myConsole.scrollTo(myMarkOffset);
-        }
+    myConsole.performWhenNoDeferredOutput(() -> {
+      final AbstractTestProxy currentProxyOrRoot = getCurrentProxyOrRoot();
+      if (currentProxyOrRoot != null && !currentProxyOrRoot.isInProgress()) {
+        //do not scroll to any mark during run
+        myConsole.scrollTo(myMarkOffset);
       }
     });
+  }
+
+  @Override
+  public void printWithAnsiColoring(@NotNull String text, @NotNull Key processOutputType) {
+    if (myConsole instanceof TerminalExecutionConsole) {
+      // Terminal console handles ANSI escape sequences itself
+      print(text, ConsoleViewContentType.getConsoleViewType(processOutputType));
+    }
+    else {
+      Printer.super.printWithAnsiColoring(text, processOutputType);
+    }
   }
 }

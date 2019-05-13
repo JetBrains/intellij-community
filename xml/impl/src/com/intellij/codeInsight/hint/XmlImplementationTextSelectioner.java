@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,10 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * User: anna
- * Date: 01-Feb-2008
- */
 package com.intellij.codeInsight.hint;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -28,12 +24,14 @@ import com.intellij.psi.xml.XmlTag;
 import org.jetbrains.annotations.NotNull;
 
 public class XmlImplementationTextSelectioner implements ImplementationTextSelectioner {
-  private static final Logger LOG = Logger.getInstance("#" + XmlImplementationTextSelectioner.class.getName());
+  private static final Logger LOG = Logger.getInstance(XmlImplementationTextSelectioner.class);
 
+  @Override
   public int getTextStartOffset(@NotNull final PsiElement parent) {
     return parent.getTextRange().getStartOffset();
   }
 
+  @Override
   public int getTextEndOffset(@NotNull PsiElement element) {
     if (element instanceof XmlAttributeValue) {
       final XmlTag xmlTag = PsiTreeUtil.getParentOfType(element, XmlTag.class);// for convenience

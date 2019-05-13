@@ -25,6 +25,7 @@ import com.intellij.openapi.roots.ui.configuration.libraryEditor.NewLibraryEdito
 import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContainer;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.download.DownloadableFileDescription;
@@ -33,6 +34,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -42,9 +44,9 @@ import java.util.Map;
  * @author nik
  */
 public class LibraryDownloadSettings {
-  private FrameworkLibraryVersion myVersion;
+  private final FrameworkLibraryVersion myVersion;
   private final DownloadableLibraryType myLibraryType;
-  private String myDirectoryForDownloadedLibrariesPath;
+  private final String myLibrariesPath;
   private final String myLibraryName;
   private final boolean myDownloadSources;
   private final boolean myDownloadJavaDocs;
@@ -59,13 +61,13 @@ public class LibraryDownloadSettings {
   }
 
   public LibraryDownloadSettings(@NotNull FrameworkLibraryVersion libraryVersion, @Nullable DownloadableLibraryType libraryType,
-                                 @NotNull String directoryForDownloadedLibrariesPath, @NotNull String libraryName,
+                                 @NotNull String librariesPath, @NotNull String libraryName,
                                  @NotNull LibrariesContainer.LibraryLevel libraryLevel,
                                  @NotNull List<? extends DownloadableLibraryFileDescription> selectedDownloads,
                                  boolean downloadSources, boolean downloadJavaDocs) {
     myVersion = libraryVersion;
     myLibraryType = libraryType;
-    myDirectoryForDownloadedLibrariesPath = directoryForDownloadedLibrariesPath;
+    myLibrariesPath = librariesPath;
     myLibraryName = libraryName;
     myDownloadSources = downloadSources;
     myDownloadJavaDocs = downloadJavaDocs;
@@ -74,12 +76,7 @@ public class LibraryDownloadSettings {
   }
 
   private static List<? extends DownloadableLibraryFileDescription> getRequiredFiles(List<? extends DownloadableLibraryFileDescription> files) {
-    return ContainerUtil.filter(files, new Condition<DownloadableLibraryFileDescription>() {
-      @Override
-      public boolean value(DownloadableLibraryFileDescription description) {
-        return !description.isOptional();
-      }
-    });
+    return ContainerUtil.filter(files, (Condition<DownloadableLibraryFileDescription>)description -> !description.isOptional());
   }
 
   @NotNull
@@ -100,7 +97,7 @@ public class LibraryDownloadSettings {
   }
 
   public String getDirectoryForDownloadedLibrariesPath() {
-    return myDirectoryForDownloadedLibrariesPath;
+    return myLibrariesPath;
   }
 
   public List<? extends DownloadableLibraryFileDescription> getSelectedDownloads() {
@@ -116,18 +113,10 @@ public class LibraryDownloadSettings {
     return myLibraryType;
   }
 
-  public void setVersion(FrameworkLibraryVersion version) {
-    myVersion = version;
-  }
-
-  public void setDirectoryForDownloadedLibrariesPath(String directoryForDownloadedLibrariesPath) {
-    myDirectoryForDownloadedLibrariesPath = directoryForDownloadedLibrariesPath;
-  }
-
   @Nullable
-  public NewLibraryEditor download(JComponent parent) {
-    final List<DownloadableFileDescription> toDownload = new ArrayList<DownloadableFileDescription>(mySelectedDownloads);
-    Map<DownloadableFileDescription, OrderRootType> rootTypes = new HashMap<DownloadableFileDescription, OrderRootType>();
+  public NewLibraryEditor download(JComponent parent, @Nullable String rootPath) {
+    final List<DownloadableFileDescription> toDownload = new ArrayList<>(mySelectedDownloads);
+    Map<DownloadableFileDescription, OrderRootType> rootTypes = new HashMap<>();
     for (DownloadableLibraryFileDescription description : mySelectedDownloads) {
       final DownloadableFileDescription sources = description.getSourcesDescription();
       if (myDownloadSources && sources != null) {
@@ -141,10 +130,11 @@ public class LibraryDownloadSettings {
       }
     }
 
+    String path = rootPath != null && !FileUtil.isAbsolute(myLibrariesPath) ? new File(rootPath, myLibrariesPath).getPath() : myLibrariesPath;
     List<Pair<VirtualFile,DownloadableFileDescription>> downloaded =
-      DownloadableFileService.getInstance().createDownloader(toDownload, null, parent, myLibraryName + " Library")
-      .toDirectory(myDirectoryForDownloadedLibrariesPath)
-      .downloadAndReturnWithDescriptions();
+      DownloadableFileService.getInstance()
+        .createDownloader(toDownload, myLibraryName + " Library")
+        .downloadWithProgress(path, null, parent);
     if (downloaded == null) {
       return null;
     }
@@ -158,7 +148,7 @@ public class LibraryDownloadSettings {
     }
     libraryEditor.setName(myLibraryName);
     for (Pair<VirtualFile, DownloadableFileDescription> pair : downloaded) {
-      final OrderRootType rootType = rootTypes.containsKey(pair.getSecond()) ? rootTypes.get(pair.getSecond()) : OrderRootType.CLASSES;
+      final OrderRootType rootType = rootTypes.getOrDefault(pair.getSecond(), OrderRootType.CLASSES);
       libraryEditor.addRoot(pair.getFirst(), rootType);
     }
     return libraryEditor;

@@ -24,7 +24,6 @@ import java.util.List;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Aug 10, 2010
  */
 public abstract class AntDomExecTask extends AntDomPropertyDefiningElement{
 
@@ -40,6 +39,7 @@ public abstract class AntDomExecTask extends AntDomPropertyDefiningElement{
   @NameValue
   public abstract GenericAttributeValue<String> getResultPropertyName();
 
+  @Override
   protected List<GenericAttributeValue<String>> getPropertyDefiningAttributes() {
     return Arrays.asList(getOutputPropertyName(), getResultPropertyName(), getErrorPropertyName());
   }

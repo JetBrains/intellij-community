@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,14 +16,12 @@
 package com.intellij.util.xml.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiInvalidElementAccessException;
-import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
-import com.intellij.util.ReflectionCache;
+import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xml.*;
 import com.intellij.util.xml.reflect.DomCollectionChildDescription;
@@ -77,9 +75,9 @@ public class DomImplUtil {
       if (method.getAnnotation(SubTag.class) != null) return false;
       if (method.getAnnotation(SubTagList.class) != null) return false;
       if (method.getAnnotation(Convert.class) != null || method.getAnnotation(Resolve.class) != null) {
-        return !ReflectionCache.isAssignable(GenericDomValue.class, method.getReturnType());
+        return !ReflectionUtil.isAssignable(GenericDomValue.class, method.getReturnType());
       }
-      if (ReflectionCache.isAssignable(DomElement.class, method.getReturnType())) return false;
+      if (ReflectionUtil.isAssignable(DomElement.class, method.getReturnType())) return false;
       return true;
     }
     return false;
@@ -133,10 +131,7 @@ public class DomImplUtil {
       try {
         return (DomNameStrategy)aClass.newInstance();
       }
-      catch (InstantiationException e) {
-        LOG.error(e);
-      }
-      catch (IllegalAccessException e) {
+      catch (InstantiationException | IllegalAccessException e) {
         LOG.error(e);
       }
     }
@@ -152,21 +147,19 @@ public class DomImplUtil {
       return Collections.emptyList();
     }
 
-    return ContainerUtil.findAll(tags, new Condition<XmlTag>() {
-      public boolean value(XmlTag childTag) {
-        try {
-          return isNameSuitable(name, childTag.getLocalName(), childTag.getName(), childTag.getNamespace(), file);
+    return ContainerUtil.findAll(tags, childTag -> {
+      try {
+        return isNameSuitable(name, childTag.getLocalName(), childTag.getName(), childTag.getNamespace(), file);
+      }
+      catch (PsiInvalidElementAccessException e) {
+        if (!childTag.isValid()) {
+          LOG.error("tag.getSubTags() returned invalid, " +
+                    "tag=" + tag + ", " +
+                    "containing file: " + tag.getContainingFile() +
+                    "subTag.parent=" + childTag.getNode().getTreeParent());
+          return false;
         }
-        catch (PsiInvalidElementAccessException e) {
-          if (!childTag.isValid()) {
-            LOG.error("tag.getSubTags() returned invalid, " +
-                      "tag=" + tag + ", " +
-                      "containing file: " + tag.getContainingFile() +
-                      "subTag.parent=" + childTag.getNode().getTreeParent());
-            return false;
-          }
-          throw e;
-        }
+        throw e;
       }
     });
   }
@@ -176,11 +169,7 @@ public class DomImplUtil {
       return Collections.emptyList();
     }
 
-    return ContainerUtil.findAll(tags, new Condition<XmlTag>() {
-      public boolean value(XmlTag childTag) {
-        return isNameSuitable(name, childTag, file);
-      }
-    });
+    return ContainerUtil.findAll(tags, childTag -> isNameSuitable(name, childTag, file));
   }
 
   public static boolean isNameSuitable(final XmlName name, final XmlTag tag, @NotNull final DomInvocationHandler handler, final XmlFile file) {
@@ -188,10 +177,6 @@ public class DomImplUtil {
   }
 
   private static boolean isNameSuitable(final EvaluatedXmlName evaluatedXmlName, final XmlTag tag, final XmlFile file) {
-    if (!tag.isValid()) {
-      TreeElement parent = ((TreeElement) tag).getTreeParent();
-      throw new AssertionError("Invalid child tag of valid parent. Parent:" + (parent == null ? null : parent.getPsi().isValid()));
-    }
     return isNameSuitable(evaluatedXmlName, tag.getLocalName(), tag.getName(), tag.getNamespace(), file);
   }
 
@@ -263,7 +248,7 @@ public class DomImplUtil {
     }
 
     final DomGenericInfoEx info = handler.getGenericInfo();
-    final Set<XmlName> usedNames = new THashSet<XmlName>();
+    final Set<XmlName> usedNames = new THashSet<>();
     List<? extends DomCollectionChildDescription> collectionChildrenDescriptions = info.getCollectionChildrenDescriptions();
     //noinspection ForLoopReplaceableByForEach
     for (int i = 0, size = collectionChildrenDescriptions.size(); i < size; i++) {
@@ -276,17 +261,15 @@ public class DomImplUtil {
       DomFixedChildDescription description = fixedChildrenDescriptions.get(i);
       usedNames.add(description.getXmlName());
     }
-    return ContainerUtil.findAll(subTags, new Condition<XmlTag>() {
-      public boolean value(final XmlTag tag) {
-        if (StringUtil.isEmpty(tag.getName())) return false;
+    return ContainerUtil.findAll(subTags, tag -> {
+      if (StringUtil.isEmpty(tag.getName())) return false;
 
-        for (final XmlName name : usedNames) {
-          if (isNameSuitable(name, tag, handler, file)) {
-            return false;
-          }
+      for (final XmlName name : usedNames) {
+        if (isNameSuitable(name, tag, handler, file)) {
+          return false;
         }
-        return true;
       }
+      return true;
     });
   }
 
@@ -296,15 +279,24 @@ public class DomImplUtil {
     }
     DomInvocationHandler handler = DomManagerImpl.getDomInvocationHandler(domElement);
     assert handler != null : domElement;
-    while (handler != null && !(handler instanceof DomRootInvocationHandler) && handler.getXmlTag() == null) {
-      handler = handler.getParentHandler();
+    while (true) {
+      if (handler instanceof DomRootInvocationHandler) {
+        return ((DomRootInvocationHandler)handler).getParent().getFile();
+      }
+
+      XmlTag tag = handler.getXmlTag();
+      if (tag != null) {
+        return getContainingFile(tag);
+      }
+      DomInvocationHandler parent = handler.getParentHandler();
+      if (parent == null) {
+        throw new AssertionError("No parent for " + handler.toStringEx());
+      }
+      handler = parent;
     }
-    if (handler instanceof DomRootInvocationHandler) {
-      return ((DomRootInvocationHandler)handler).getParent().getFile();
-    }
-    assert handler != null;
-    XmlTag tag = handler.getXmlTag();
-    assert tag != null;
+  }
+
+  private static XmlFile getContainingFile(XmlTag tag) {
     while (true) {
       final PsiElement parentTag = PhysicalDomParentStrategy.getParentTagCandidate(tag);
       if (!(parentTag instanceof XmlTag)) {

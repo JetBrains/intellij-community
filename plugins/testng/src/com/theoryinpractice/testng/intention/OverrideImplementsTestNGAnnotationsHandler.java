@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,26 +14,15 @@
  * limitations under the License.
  */
 
-/*
- * User: anna
- * Date: 19-Aug-2008
- */
 package com.theoryinpractice.testng.intention;
 
 import com.intellij.codeInsight.generation.OverrideImplementsAnnotationsHandler;
 import com.intellij.openapi.project.Project;
-import com.intellij.util.ArrayUtil;
 import com.theoryinpractice.testng.util.TestNGUtil;
-import org.jetbrains.annotations.NotNull;
 
 public class OverrideImplementsTestNGAnnotationsHandler implements OverrideImplementsAnnotationsHandler{
+  @Override
   public String[] getAnnotations(Project project) {
     return TestNGUtil.CONFIG_ANNOTATIONS_FQN;
-  }
-
-
-  @NotNull
-  public String[] annotationsToRemove(Project project, @NotNull final String fqName) {
-    return ArrayUtil.EMPTY_STRING_ARRAY;
   }
 }

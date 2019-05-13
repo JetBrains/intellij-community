@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,6 @@ package org.jetbrains.plugins.groovy.refactoring.ui;
 import com.intellij.codeInsight.daemon.impl.JavaReferenceImporter;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiCodeFragment;
 import com.intellij.refactoring.ui.CodeFragmentTableCellEditorBase;
 import org.jetbrains.plugins.groovy.GroovyFileType;
 
@@ -30,10 +29,6 @@ import javax.swing.table.TableCellEditor;
 public class GrCodeFragmentTableCellEditor extends CodeFragmentTableCellEditorBase implements TableCellEditor {
   public GrCodeFragmentTableCellEditor(Project project) {
     super(project, GroovyFileType.GROOVY_FILE_TYPE);
-  }
-
-  public PsiCodeFragment getCellEditorValue() {
-    return myCodeFragment;
   }
 
   @Override

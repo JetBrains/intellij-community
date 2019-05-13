@@ -1,17 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 package com.intellij.xdebugger.impl.breakpoints;
 
@@ -19,12 +7,15 @@ import com.intellij.util.xmlb.annotations.Attribute;
 import com.intellij.util.xmlb.annotations.Property;
 import com.intellij.util.xmlb.annotations.Tag;
 import com.intellij.util.xmlb.annotations.Transient;
+import com.intellij.xdebugger.XExpression;
 import com.intellij.xdebugger.breakpoints.SuspendPolicy;
 import com.intellij.xdebugger.breakpoints.XBreakpoint;
 import com.intellij.xdebugger.breakpoints.XBreakpointProperties;
 import com.intellij.xdebugger.breakpoints.XBreakpointType;
+import com.intellij.xdebugger.impl.XDebuggerUtilImpl;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
 * @author nik
@@ -36,18 +27,26 @@ public class BreakpointState<B extends XBreakpoint<P>, P extends XBreakpointProp
   private Element myPropertiesElement;
   private SuspendPolicy mySuspendPolicy = SuspendPolicy.ALL;
   private boolean myLogMessage;
-  private String myLogExpression;
-  private String myCondition;
+  private boolean myLogStack;
+  private LogExpression myLogExpression;
+  private Condition myCondition;
   private XBreakpointDependencyState myDependencyState;
+  @Tag("group")
+  private String myGroup;
+
+  @Tag("description")
+  private String myDescription;
+
   private long myTimeStamp;
 
   public BreakpointState() {
   }
 
-  public BreakpointState(final boolean enabled, final String typeId, final long timeStamp) {
+  public BreakpointState(final boolean enabled, final String typeId, final long timeStamp, final SuspendPolicy suspendPolicy) {
     myEnabled = enabled;
     myTypeId = typeId;
     myTimeStamp = timeStamp;
+    mySuspendPolicy = suspendPolicy;
   }
 
   @Attribute("enabled")
@@ -104,22 +103,64 @@ public class BreakpointState<B extends XBreakpoint<P>, P extends XBreakpointProp
     myLogMessage = logMessage;
   }
 
-  @Tag("log-expression")
-  public String getLogExpression() {
+  @Attribute("log-stack")
+  public boolean isLogStack() {
+    return myLogStack;
+  }
+
+  public void setLogStack(final boolean logStack) {
+    myLogStack = logStack;
+  }
+
+  @Nullable
+  public String getGroup() {
+    return myGroup;
+  }
+
+  public void setGroup(String group) {
+    myGroup = group;
+  }
+
+  public String getDescription() {
+    return myDescription;
+  }
+
+  public void setDescription(String description) {
+    myDescription = description;
+  }
+
+  @Nullable
+  @Property(surroundWithTag = false)
+  public LogExpression getLogExpression() {
     return myLogExpression;
   }
 
-  public void setLogExpression(final String logExpression) {
+  public void setLogExpression(@Nullable LogExpression logExpression) {
+    if (logExpression != null) {
+      logExpression.checkConverted();
+    }
     myLogExpression = logExpression;
   }
 
-  @Tag("condition")
-  public String getCondition() {
+  @Nullable
+  @Property(surroundWithTag = false)
+  public Condition getCondition() {
     return myCondition;
   }
 
-  public void setCondition(final String condition) {
+  public void setCondition(@Nullable Condition condition) {
+    if (condition != null) {
+      condition.checkConverted();
+    }
     myCondition = condition;
+  }
+
+  public boolean isLogExpressionEnabled() {
+    return myLogExpression == null || !myLogExpression.myDisabled;
+  }
+
+  public boolean isConditionEnabled() {
+    return myCondition == null || !myCondition.myDisabled;
   }
 
   @Property(surroundWithTag = false)
@@ -141,5 +182,45 @@ public class BreakpointState<B extends XBreakpoint<P>, P extends XBreakpointProp
 
   public void setTimeStamp(long timeStamp) {
     myTimeStamp = timeStamp;
+  }
+
+  void applyDefaults(BreakpointState state) {
+    state.mySuspendPolicy = mySuspendPolicy;
+  }
+
+  @Tag("condition")
+  public static class Condition extends XExpressionState {
+    public Condition() {
+    }
+
+    private Condition(boolean disabled, XExpression expression) {
+      super(disabled, expression);
+    }
+
+    @Nullable
+    public static Condition create(boolean disabled, XExpression expression) {
+      if (XDebuggerUtilImpl.isEmptyExpression(expression)) {
+        return null;
+      }
+      return new Condition(disabled, expression);
+    }
+  }
+
+  @Tag("log-expression")
+  public static class LogExpression extends XExpressionState {
+    public LogExpression() {
+    }
+
+    private LogExpression(boolean disabled, XExpression expression) {
+      super(disabled, expression);
+    }
+
+    @Nullable
+    public static LogExpression create(boolean disabled, XExpression expression) {
+      if (XDebuggerUtilImpl.isEmptyExpression(expression)) {
+        return null;
+      }
+      return new LogExpression(disabled, expression);
+    }
   }
 }

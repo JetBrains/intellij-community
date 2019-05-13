@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.jps.incremental.storage;
 
 import com.intellij.util.ArrayUtil;
@@ -27,7 +13,6 @@ import java.io.IOException;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: 10/7/11
  */
 public class TimestampStorage extends AbstractStateStorage<File, TimestampStorage.TimestampPerTarget[]> implements Timestamps {
   private final BuildTargetsState myTargetsState;
@@ -82,6 +67,7 @@ public class TimestampStorage extends AbstractStateStorage<File, TimestampStorag
     return ArrayUtil.append(oldState, newItem);
   }
 
+  @Override
   public void removeStamp(File file, BuildTarget<?> buildTarget) throws IOException {
     TimestampPerTarget[] state = getState(file);
     if (state != null) {
@@ -113,7 +99,8 @@ public class TimestampStorage extends AbstractStateStorage<File, TimestampStorag
   }
 
   private static class StateExternalizer implements DataExternalizer<TimestampPerTarget[]> {
-    public void save(DataOutput out, TimestampPerTarget[] value) throws IOException {
+    @Override
+    public void save(@NotNull DataOutput out, TimestampPerTarget[] value) throws IOException {
       out.writeInt(value.length);
       for (TimestampPerTarget target : value) {
         out.writeInt(target.targetId);
@@ -121,7 +108,8 @@ public class TimestampStorage extends AbstractStateStorage<File, TimestampStorag
       }
     }
 
-    public TimestampPerTarget[] read(DataInput in) throws IOException {
+    @Override
+    public TimestampPerTarget[] read(@NotNull DataInput in) throws IOException {
       int size = in.readInt();
       TimestampPerTarget[] targets = new TimestampPerTarget[size];
       for (int i = 0; i < size; i++) {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,11 @@ package com.intellij.ide;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.popup.IdePopupEventDispatcher;
+import com.intellij.openapi.ui.popup.JBPopup;
+import com.intellij.openapi.wm.ex.IdeFrameEx;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -25,6 +29,7 @@ import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.awt.event.WindowEvent;
 import java.util.List;
+import java.util.Objects;
 
 public final class IdePopupManager implements IdeEventQueue.EventDispatcher {
   private static final Logger LOG = Logger.getInstance("com.intellij.ide.IdePopupManager");
@@ -41,24 +46,39 @@ public final class IdePopupManager implements IdeEventQueue.EventDispatcher {
     return myDispatchStack.size() > 0;
   }
 
-  public boolean dispatch(final AWTEvent e) {
+  @Override
+  public boolean dispatch(@NotNull final AWTEvent e) {
     LOG.assertTrue(isPopupActive());
 
-    if (e.getID() == WindowEvent.WINDOW_LOST_FOCUS) {
-      SwingUtilities.invokeLater(new Runnable() {
-        public void run() {
-          if (!isPopupActive()) return;
+    if (e.getID() == WindowEvent.WINDOW_LOST_FOCUS || e.getID() == WindowEvent.WINDOW_DEACTIVATED) {
+        if (!isPopupActive()) return false;
 
-          Window focused = ((WindowEvent)e).getOppositeWindow();
-          if (focused == null) {
-            focused = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusedWindow();
-          }
+        boolean shouldCloseAllPopup = false;
 
-          if (focused == null) {
-            closeAllPopups();
+        Window focused = ((WindowEvent)e).getOppositeWindow();
+        if (focused == null) {
+          focused = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusedWindow();
+        }
+
+        Component ultimateParentForFocusedComponent = UIUtil.findUltimateParent(focused);
+        Window sourceWindow = ((WindowEvent)e).getWindow();
+        Component ultimateParentForEventWindow = UIUtil.findUltimateParent(sourceWindow);
+
+        if (ultimateParentForEventWindow == null || ultimateParentForFocusedComponent == null) {
+          shouldCloseAllPopup = true;
+        }
+
+        if (!shouldCloseAllPopup && ultimateParentForEventWindow instanceof IdeFrameEx) {
+          IdeFrameEx ultimateParentWindowForEvent = ((IdeFrameEx)ultimateParentForEventWindow);
+          if (ultimateParentWindowForEvent.isInFullScreen()
+              && !ultimateParentForFocusedComponent.equals(ultimateParentForEventWindow)) {
+            shouldCloseAllPopup = true;
           }
         }
-      });
+
+        if (shouldCloseAllPopup) {
+          closeAllPopups();
+        }
     }
 
     if (e instanceof KeyEvent || e instanceof MouseEvent) {
@@ -81,20 +101,43 @@ public final class IdePopupManager implements IdeEventQueue.EventDispatcher {
     myDispatchStack.remove(dispatcher);
   }
 
-  public boolean closeAllPopups() {
+  public boolean closeAllPopups(boolean forceRestoreFocus) {
+    return closeAllPopups(forceRestoreFocus, null);
+  }
+
+  private boolean closeAllPopups(boolean forceRestoreFocus, Window window) {
     if (myDispatchStack.size() == 0) return false;
 
     boolean closed = true;
     for (IdePopupEventDispatcher each : myDispatchStack) {
+      if (window != null && !(window instanceof Frame) && window == UIUtil.getWindow(each.getComponent())) {
+        // do not close a heavyweight popup that is opened in the specified window
+        continue;
+      }
+      if (forceRestoreFocus) {
+        each.setRestoreFocusSilently();
+      }
       closed &= each.close();
     }
 
     return closed;
   }
 
+  public boolean closeAllPopups() {
+    return closeAllPopups(true);
+  }
+
   public boolean requestDefaultFocus(boolean forced) {
     if (!isPopupActive()) return false;
 
     return myDispatchStack.get(myDispatchStack.size() - 1).requestFocus();
+  }
+
+  public boolean isPopupWindow(Window w) {
+    return myDispatchStack.stream()
+             .flatMap(IdePopupEventDispatcher::getPopupStream)
+             .map(JBPopup::getContent)
+             .filter(Objects::nonNull)
+             .anyMatch(jbPopupContent -> SwingUtilities.getWindowAncestor(jbPopupContent) == w);
   }
 }

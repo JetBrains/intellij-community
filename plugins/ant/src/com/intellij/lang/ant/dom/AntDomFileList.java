@@ -33,7 +33,6 @@ import java.util.Set;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Jun 22, 2010
  */
 public abstract class AntDomFileList extends AntDomFilesProviderImpl{
 
@@ -47,12 +46,14 @@ public abstract class AntDomFileList extends AntDomFilesProviderImpl{
   @SubTagList("file")
   public abstract List<AntDomNamedElement> getFiles(); // todo: add filename completion relative to the filelist's basedir
 
-  
+
+  @Override
   @Nullable
   protected AntDomPattern getAntPattern() {
     return null; // not available for this data type
   }
 
+  @Override
   @NotNull
   protected List<File> getFiles(@Nullable AntDomPattern pattern, Set<AntFilesProvider> processed) {
     final File root = getCanonicalFile(getDir().getStringValue());
@@ -60,7 +61,7 @@ public abstract class AntDomFileList extends AntDomFilesProviderImpl{
       return Collections.emptyList();
     }
 
-    final ArrayList<File> files = new ArrayList<File>();
+    final ArrayList<File> files = new ArrayList<>();
 
     final String filenames = getFilesString().getStringValue();
     if (filenames != null) {

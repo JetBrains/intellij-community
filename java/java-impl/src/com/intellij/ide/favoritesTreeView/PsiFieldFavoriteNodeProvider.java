@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,22 +14,18 @@
  * limitations under the License.
  */
 
-/*
- * User: anna
- * Date: 21-Jan-2008
- */
 package com.intellij.ide.favoritesTreeView;
 
 import com.intellij.ide.favoritesTreeView.smartPointerPsiNodes.FieldSmartPointerNode;
 import com.intellij.ide.projectView.ViewSettings;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.LangDataKeys;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
-import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.module.ModuleUtilCore;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.JavaPsiFacade;
@@ -45,21 +41,21 @@ import java.util.Collection;
 
 public class PsiFieldFavoriteNodeProvider extends FavoriteNodeProvider {
   @Override
-  public Collection<AbstractTreeNode> getFavoriteNodes(final DataContext context, final ViewSettings viewSettings) {
-    final Project project = PlatformDataKeys.PROJECT.getData(context);
+  public Collection<AbstractTreeNode> getFavoriteNodes(final DataContext context, @NotNull final ViewSettings viewSettings) {
+    final Project project = CommonDataKeys.PROJECT.getData(context);
     if (project == null) return null;
     PsiElement[] elements = LangDataKeys.PSI_ELEMENT_ARRAY.getData(context);
     if (elements == null) {
-      final PsiElement element = LangDataKeys.PSI_ELEMENT.getData(context);
+      final PsiElement element = CommonDataKeys.PSI_ELEMENT.getData(context);
       if (element != null) {
         elements = new PsiElement[]{element};
       }
     }
     if (elements != null) {
-      final Collection<AbstractTreeNode> result = new ArrayList<AbstractTreeNode>();
+      final Collection<AbstractTreeNode> result = new ArrayList<>();
       for (PsiElement element : elements) {
         if (element instanceof PsiField) {
-          result.add(new FieldSmartPointerNode(project, element, viewSettings));
+          result.add(new FieldSmartPointerNode(project, (PsiField)element, viewSettings));
         }
       }
       return result.isEmpty() ? null : result;
@@ -68,9 +64,9 @@ public class PsiFieldFavoriteNodeProvider extends FavoriteNodeProvider {
   }
 
   @Override
-  public AbstractTreeNode createNode(final Project project, final Object element, final ViewSettings viewSettings) {
+  public AbstractTreeNode createNode(final Project project, final Object element, @NotNull final ViewSettings viewSettings) {
     if (element instanceof PsiField) {
-      return new FieldSmartPointerNode(project, element, viewSettings);
+      return new FieldSmartPointerNode(project, (PsiField)element, viewSettings);
     }
     return super.createNode(project, element, viewSettings);
   }
@@ -130,10 +126,11 @@ public class PsiFieldFavoriteNodeProvider extends FavoriteNodeProvider {
 
   @Override
   public Object[] createPathFromUrl(final Project project, final String url, final String moduleName) {
+    if (DumbService.isDumb(project)) return null;
     final Module module = moduleName != null ? ModuleManager.getInstance(project).findModuleByName(moduleName) : null;
     final GlobalSearchScope scope = module != null ? GlobalSearchScope.moduleScope(module) : GlobalSearchScope.allScope(project);
     final String[] paths = url.split(";");
-    if (paths == null || paths.length != 2) return null;
+    if (paths.length != 2) return null;
     final PsiClass aClass = JavaPsiFacade.getInstance(project).findClass(paths[0], scope);
     if (aClass == null) return null;
     final PsiField aField = aClass.findFieldByName(paths[1], false);

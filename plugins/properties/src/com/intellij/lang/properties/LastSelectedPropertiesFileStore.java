@@ -1,40 +1,24 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lang.properties;
 
 import com.intellij.injected.editor.VirtualFileWindow;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.openapi.components.*;
-import com.intellij.openapi.module.ModuleUtil;
+import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.statistics.StatisticsInfo;
 import com.intellij.psi.statistics.StatisticsManager;
-import gnu.trove.THashMap;
+import com.intellij.util.containers.hash.LinkedHashMap;
 import org.jdom.Element;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.List;
 import java.util.Map;
 
 /**
@@ -42,15 +26,13 @@ import java.util.Map;
  */
 @State(
   name = "LastSelectedPropertiesFileStore",
-  storages = {
-    @Storage(
-      file = StoragePathMacros.APP_CONFIG + "/other.xml"
-    )}
+  storages = @Storage(value = "lastSelectedPropertiesFile.xml", roamingType = RoamingType.DISABLED)
 )
 public class LastSelectedPropertiesFileStore implements PersistentStateComponent<Element> {
-  private final Map<String, String> lastSelectedUrls = new THashMap<String, String>();
+  private static final String PROPERTIES_FILE_STATISTICS_KEY = "PROPERTIES_FILE";
+
+  private final Map<String, String> lastSelectedUrls = new LinkedHashMap<>();
   private String lastSelectedFileUrl;
-  @NonNls private static final String PROPERTIES_FILE_STATISTICS_KEY = "PROPERTIES_FILE";
 
   public static LastSelectedPropertiesFileStore getInstance() {
     return ServiceManager.getService(LastSelectedPropertiesFileStore.class);
@@ -71,7 +53,7 @@ public class LastSelectedPropertiesFileStore implements PersistentStateComponent
     if (lastSelectedFileUrl != null) {
       VirtualFile lastFile = VirtualFileManager.getInstance().findFileByUrl(lastSelectedFileUrl);
       final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(context.getProject()).getFileIndex();
-      if (lastFile != null && ModuleUtil.findModuleForPsiElement(context) == fileIndex.getModuleForFile(lastFile)) {
+      if (lastFile != null && ModuleUtilCore.findModuleForPsiElement(context) == fileIndex.getModuleForFile(lastFile)) {
         return lastSelectedFileUrl;
       }
     }
@@ -96,15 +78,29 @@ public class LastSelectedPropertiesFileStore implements PersistentStateComponent
       VirtualFile containingDir = virtualFile.getParent();
       lastSelectedUrls.put(containingDir.getUrl(), url);
       lastSelectedFileUrl = url;
-      StatisticsManager.getInstance().incUseCount(new StatisticsInfo(PROPERTIES_FILE_STATISTICS_KEY, FileUtil.toSystemDependentName(VfsUtil.urlToPath(url))));
+      StatisticsManager.getInstance().incUseCount(new StatisticsInfo(PROPERTIES_FILE_STATISTICS_KEY, FileUtil.toSystemDependentName(VfsUtilCore.urlToPath(url))));
     }
   }
 
-  private void readExternal(@NonNls Element element) {
+  @Override
+  public Element getState() {
+    Element state = new Element("state");
+    for (Map.Entry<String, String> entry : lastSelectedUrls.entrySet()) {
+      Element child = new Element("entry");
+      child.setAttribute("context", entry.getKey());
+      child.setAttribute("url", entry.getValue());
+      state.addContent(child);
+    }
+    if (lastSelectedFileUrl != null) {
+      state.setAttribute("lastSelectedFileUrl", lastSelectedFileUrl);
+    }
+    return state;
+  }
+
+  @Override
+  public void loadState(@NotNull Element state) {
     lastSelectedUrls.clear();
-    List list = element.getChildren("entry");
-    for (Object o : list) {
-      @NonNls Element child = (Element)o;
+    for (Element child : state.getChildren("entry")) {
       String context = child.getAttributeValue("context");
       String url = child.getAttributeValue("url");
       VirtualFile propFile = VirtualFileManager.getInstance().findFileByUrl(url);
@@ -113,30 +109,6 @@ public class LastSelectedPropertiesFileStore implements PersistentStateComponent
         lastSelectedUrls.put(context, url);
       }
     }
-    lastSelectedFileUrl = element.getAttributeValue("lastSelectedFileUrl");
-  }
-
-  private void writeExternal(@NonNls Element element) {
-    for (Map.Entry<String, String> entry : lastSelectedUrls.entrySet()) {
-      String context = entry.getKey();
-      String url = entry.getValue();
-      @NonNls Element child = new Element("entry");
-      child.setAttribute("context", context);
-      child.setAttribute("url", url);
-      element.addContent(child);
-    }
-    if (lastSelectedFileUrl != null) {
-      element.setAttribute("lastSelectedFileUrl", lastSelectedFileUrl);
-    }
-  }
-
-  public Element getState() {
-    final Element e = new Element("state");
-    writeExternal(e);
-    return e;
-  }
-
-  public void loadState(Element state) {
-    readExternal(state);
+    lastSelectedFileUrl = state.getAttributeValue("lastSelectedFileUrl");
   }
 }

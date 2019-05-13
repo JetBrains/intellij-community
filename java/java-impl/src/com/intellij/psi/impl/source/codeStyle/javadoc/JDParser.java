@@ -1,61 +1,182 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.source.codeStyle.javadoc;
 
+import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
-import org.jetbrains.annotations.NonNls;
+import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
+import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
+import com.intellij.psi.javadoc.PsiDocComment;
+import com.intellij.util.text.CharArrayUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.StringTokenizer;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * Javadoc parser
- * 
+ *
  * @author Dmitry Skavish
  */
 public class JDParser {
-  
+  private static final String JAVADOC_HEADER = "/**";
   private static final String PRE_TAG_START = "<pre>";
   private static final String PRE_TAG_END = "</pre>";
-  
-  private final CodeStyleSettings mySettings;
+  private static final String P_END_TAG = "</p>";
+  private static final String P_START_TAG = "<p>";
+  private static final String SELF_CLOSED_P_TAG = "<p/>";
 
-  public JDParser(CodeStyleSettings settings) {
-    mySettings = settings;
+  private final JavaCodeStyleSettings mySettings;
+  private final CommonCodeStyleSettings myCommonSettings;
+
+  private final static String HTML_TAG_REGEXP = "\\s*</?\\w+\\s*(\\w+\\s*=.*)?>.*";
+  private final static String PRE_TAG_START_REGEXP = "<pre\\s*(\\w+\\s*=.*)?>";
+  private final static Pattern HTML_TAG_PATTERN = Pattern.compile(HTML_TAG_REGEXP);
+  private final static Pattern PRE_TAG_START_PATTERN = Pattern.compile(PRE_TAG_START_REGEXP);
+
+  public JDParser(@NotNull CodeStyleSettings settings) {
+    mySettings = settings.getCustomSettings(JavaCodeStyleSettings.class);
+    myCommonSettings = settings.getCommonSettings(JavaLanguage.INSTANCE);
   }
 
-  private static final char lineSeparator = '\n';
+  public void formatCommentText(@NotNull PsiElement element, @NotNull CommentFormatter formatter) {
+    CommentInfo info = getElementsCommentInfo(element);
+    if (info == null || !isJavadoc(info)) return;
 
-  public JDComment parse(String text, JDComment c) {
-    if (text == null) return c;
+    JDComment comment = parse(info, formatter);
+    if (comment != null) {
+      String indent = formatter.getIndent(info.commentOwner);
+      String commentText = comment.generate(indent);
+      formatter.replaceCommentText(commentText, info.docComment);
+    }
+  }
 
-    ArrayList<Boolean> markers = new ArrayList<Boolean>();
-    ArrayList<String> l = toArray(text, "\n", markers);
-    if (l == null) return c;
+  private static boolean isJavadoc(CommentInfo info) {
+    return JAVADOC_HEADER.equals(info.commentHeader);
+  }
+
+  private static CommentInfo getElementsCommentInfo(@Nullable PsiElement psiElement) {
+    if (psiElement instanceof PsiDocComment) {
+      PsiDocComment docComment = (PsiDocComment)psiElement;
+
+      PsiJavaDocumentedElement owner = docComment.getOwner();
+      if (owner != null) {
+        return getCommentInfo(docComment, owner);
+      }
+
+      PsiElement parent = docComment.getParent();
+      if (parent instanceof PsiJavaFile) {
+        return getCommentInfo(docComment, parent);
+      }
+    }
+    else if (psiElement instanceof PsiJavaDocumentedElement) {
+      PsiJavaDocumentedElement owner = (PsiJavaDocumentedElement)psiElement;
+      PsiDocComment docComment = owner.getDocComment();
+      if (docComment != null) {
+        return getCommentInfo(docComment, owner);
+      }
+    }
+
+    return null;
+  }
+
+  private static CommentInfo getCommentInfo(@NotNull PsiDocComment docComment, @NotNull PsiElement owner) {
+    String commentHeader = null;
+    String commentFooter = null;
+
+    StringBuilder sb = new StringBuilder();
+    boolean first = true;
+    PsiElement e = docComment;
+    while (true) {
+      if (e instanceof PsiDocComment) {
+        PsiComment cm = (PsiComment)e;
+        String text = cm.getText();
+        if (text.startsWith("//")) {
+          if (!first) sb.append('\n');
+          sb.append(text.substring(2).trim());
+        }
+        else if (text.startsWith("/*")) {
+          int commentHeaderEndOffset = CharArrayUtil.shiftForward(text, 1, "*");
+          int commentFooterStartOffset = CharArrayUtil.shiftBackward(text, text.length() - 2, "*");
+
+          if (commentHeaderEndOffset <= commentFooterStartOffset) {
+            commentHeader = text.substring(0, commentHeaderEndOffset);
+            commentFooter = text.substring(commentFooterStartOffset + 1);
+            text = text.substring(commentHeaderEndOffset, commentFooterStartOffset + 1);
+          }
+          else {
+            commentHeader = text.substring(0, commentHeaderEndOffset);
+            text = "";
+            commentFooter = "";
+          }
+          sb.append(text);
+        }
+      }
+      else if (!(e instanceof PsiWhiteSpace || e instanceof PsiComment)) {
+        break;
+      }
+      first = false;
+      e = e.getNextSibling();
+    }
+
+    return new CommentInfo(docComment, owner, commentHeader, sb.toString(), commentFooter);
+  }
+
+  private JDComment parse(@NotNull CommentInfo info, @NotNull CommentFormatter formatter) {
+    JDComment comment = createComment(info.commentOwner, formatter);
+    parse(info.comment, comment);
+    if (info.commentHeader != null) {
+      comment.setFirstCommentLine(info.commentHeader);
+    }
+    if (info.commentFooter != null) {
+      comment.setLastCommentLine(info.commentFooter);
+    }
+    return comment;
+  }
+
+  private static JDComment createComment(@NotNull PsiElement commentOwner, @NotNull CommentFormatter formatter) {
+    if (commentOwner instanceof PsiClass) {
+      return new JDClassComment(formatter);
+    }
+    else if (commentOwner instanceof PsiMethod) {
+      return new JDMethodComment(formatter);
+    }
+    else {
+      return new JDComment(formatter);
+    }
+  }
+
+  private void parse(@Nullable String text, @NotNull JDComment comment) {
+    if (text == null) return;
+
+    List<Boolean> markers = new ArrayList<>();
+    List<String> l = toArray(text, markers);
+
+    //if it is - we are dealing with multiline comment:
+    // /**
+    //  * comment
+    //  */
+    //which shouldn't be wrapped into one line comment like /** comment */
+    if (text.indexOf('\n') >= 0) {
+      comment.setMultiLine(true);
+    }
+
+    if (l == null) return;
     int size = l.size();
-    if (size == 0) return c;
+    if (size == 0) return;
 
     // preprocess strings - removes first '*'
     for (int i = 0; i < size; i++) {
       String line = l.get(i);
       line = line.trim();
-      if (line.length() > 0) {
+      if (!line.isEmpty()) {
         if (line.charAt(0) == '*') {
           if ((markers.get(i)).booleanValue()) {
             if (line.length() > 1 && line.charAt(1) == ' ') {
@@ -73,24 +194,26 @@ public class JDParser {
       l.set(i, line);
     }
 
-    StringBuffer sb = new StringBuffer();
+    StringBuilder sb = new StringBuilder();
     String tag = null;
+    boolean isInsidePreTag = false;
+
     for (int i = 0; i <= size; i++) {
       String line = i == size ? null : l.get(i);
-      if (i == size || line.length() > 0) {
-        if (i == size || line.charAt(0) == '@') {
+      if (i == size || !line.isEmpty()) {
+        if (i == size || line.charAt(0) == '@' && !isInsidePreTag) {
           if (tag == null) {
-            c.setDescription(sb.toString());
+            comment.setDescription(sb.toString());
           }
           else {
             int j = 0;
             String myline = sb.toString();
             for (; j < tagParsers.length; j++) {
               TagParser parser = tagParsers[j];
-              if (parser.parse(tag, myline, c)) break;
+              if (parser.parse(tag, myline, comment)) break;
             }
             if (j == tagParsers.length) {
-              c.addUnknownTag("@" + tag + " " + myline);
+              comment.addUnknownTag("@" + tag + " " + myline);
             }
           }
 
@@ -110,59 +233,42 @@ public class JDParser {
         }
         else {
           if (sb.length() > 0) {
-            sb.append(lineSeparator);
+            sb.append('\n');
           }
           sb.append(line);
         }
       }
       else {
         if (sb.length() > 0) {
-          sb.append(lineSeparator);
+          sb.append('\n');
         }
       }
+
+      if (line != null) {
+        isInsidePreTag = isInsidePreTag
+                         ? !lineHasClosingPreTag(line)
+                         : lineHasUnclosedPreTag(line);
+      }
     }
-
-    return c;
-  }
-
-  /**
-   * Breaks the specified string by lineseparator into array of strings
-   * 
-   * @param s the specified string
-   * @return array of strings (lines)
-   */
-  public ArrayList<String> toArrayByNL(String s) {
-    return toArray(s, "\n", null);
-  }
-
-  /**
-   * Breaks the specified string by comma into array of strings
-   * 
-   * @param s the specified string
-   * @return list of strings
-   */
-  public ArrayList<String> toArrayByComma(String s) {
-    return toArray(s, ",", null);
   }
 
   /**
    * Breaks the specified string by the specified separators into array of strings
-   * 
+   *
    * @param s          the specified string
-   * @param separators the specified separators
    * @param markers    if this parameter is not null then it will be filled with Boolean values:
-   *                   true if the correspoding line in returned list is inside &lt;pre&gt; tag,
+   *                   true if the corresponding line in returned list is inside &lt;pre&gt; tag,
    *                   false if it is outside
    * @return array of strings (lines)
    */
-  @SuppressWarnings({"HardCodedStringLiteral"})
-  private ArrayList<String> toArray(String s, String separators, ArrayList<Boolean> markers) {
+  @Nullable
+  private List<String> toArray(@Nullable String s, @Nullable List<Boolean> markers) {
     if (s == null) return null;
     s = s.trim();
-    if (s.length() == 0) return null;
+    if (s.isEmpty()) return null;
     boolean p2nl = markers != null && mySettings.JD_P_AT_EMPTY_LINES;
-    ArrayList<String> list = new ArrayList<String>();
-    StringTokenizer st = new StringTokenizer(s, separators, true);
+    List<String> list = new ArrayList<>();
+    StringTokenizer st = new StringTokenizer(s, "\n", true);
     boolean first = true;
     int preCount = 0;
     int curPos = 0;
@@ -170,7 +276,7 @@ public class JDParser {
       String token = st.nextToken();
       curPos += token.length();
 
-      if (separators.indexOf(token) >= 0) {
+      if ("\n".equals(token)) {
         if (!first) {
           list.add("");
           if (markers != null) markers.add(Boolean.valueOf(preCount > 0));
@@ -180,8 +286,8 @@ public class JDParser {
       else {
         first = true;
         if (p2nl) {
-          if (isParaTag(token) && s.indexOf("</p>", curPos) < 0) {
-            list.add("");
+          if (isParaTag(token) && s.indexOf(P_END_TAG, curPos) < 0) {
+            list.add(isSelfClosedPTag(token) ? SELF_CLOSED_P_TAG : P_START_TAG);
             markers.add(Boolean.valueOf(preCount > 0));
             continue;
           }
@@ -191,9 +297,9 @@ public class JDParser {
         list.add(token);
 
         if (markers != null) {
-          if (token.indexOf("<pre>") >= 0) preCount++;
+          if (lineHasUnclosedPreTag(token)) preCount++;
           markers.add(Boolean.valueOf(preCount > 0));
-          if (token.indexOf("</pre>") >= 0) preCount--;
+          if (lineHasClosingPreTag(token)) preCount--;
         }
 
       }
@@ -201,57 +307,47 @@ public class JDParser {
     return list;
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
-  private boolean isParaTag(final String token) {
-    String withoutWS = removeWhiteSpacesFrom(token).toLowerCase();
-    return withoutWS.equals("<p/>") || withoutWS.equals("<p>");
+  private static boolean isParaTag(String token) {
+    String withoutWS = removeWhiteSpacesFrom(token).toLowerCase(Locale.US);
+    return withoutWS.equals(SELF_CLOSED_P_TAG) || withoutWS.equals(P_START_TAG);
   }
 
-  private String removeWhiteSpacesFrom(final String token) {
-    final StringBuffer result = new StringBuffer();
+  private static boolean isSelfClosedPTag(String token) {
+    return removeWhiteSpacesFrom(token).toLowerCase(Locale.US).equals(SELF_CLOSED_P_TAG);
+  }
+
+  private static boolean hasLineLongerThan(String str, int maxLength) {
+    if (str == null) return false;
+
+    for (String s : str.split("\n")) {
+      if (s.length() > maxLength) {
+        return true;
+      }
+    }
+
+    return false;
+  }
+
+  @NotNull
+  private static String removeWhiteSpacesFrom(@NotNull final String token) {
+    final StringBuilder result = new StringBuilder();
     for (char c : token.toCharArray()) {
       if (c != ' ') result.append(c);
     }
     return result.toString();
   }
 
-  public static String toLines(ArrayList l) {
-    if (l == null || l.size() == 0) return null;
-    StringBuffer sb = new StringBuffer();
-    for (Object aL : l) {
-      String s = (String)aL;
-      if (sb.length() > 0) {
-        sb.append(lineSeparator);
-      }
-      sb.append(s);
-    }
-    return sb.toString();
-  }
-
-  public static String toCommaSeparated(ArrayList<String> l) {
-    if (l == null || l.size() == 0) return null;
-    StringBuffer sb = new StringBuffer();
-    for (int i = 0; i < l.size(); i++) {
-      String s = l.get(i);
-      if (i != 0) {
-        sb.append(", ");
-      }
-      sb.append(s);
-    }
-    return sb.toString();
-  }
-
   /**
-   * Processes all lines (char sequences separated by line feed symbol) from the given string slitting them if necessary 
-   * ensuring that every returned line contains less symbols than the given width. 
-   * 
+   * Processes all lines (char sequences separated by line feed symbol) from the given string slitting them if necessary
+   * ensuring that every returned line contains less symbols than the given width.
+   *
    * @param s     the specified string
    * @param width width of the wrapped text
    * @return array of strings (lines)
    */
   @Nullable
-  private List<String> toArrayWrapping(String s, int width) {
-    List<String> list = new ArrayList<String>();
+  private List<String> toArrayWrapping(@Nullable String s, int width) {
+    List<String> list = new ArrayList<>();
     List<Pair<String, Boolean>> pairs = splitToParagraphs(s);
     if (pairs == null) {
       return null;
@@ -260,13 +356,13 @@ public class JDParser {
       String seq = pair.getFirst();
       boolean isMarked = pair.getSecond();
 
-      if (seq.length() == 0) {
+      if (seq.isEmpty()) {
         // keep empty lines
         list.add("");
         continue;
       }
       while (true) {
-        if (seq.length() < width) {
+        if (seq.length() < width || isMarked) {
           // keep remaining line and proceed with next paragraph
           seq = isMarked ? seq : seq.trim();
           list.add(seq);
@@ -303,9 +399,9 @@ public class JDParser {
   }
 
   /**
-   * Processes given string and produces on its basis set of pairs like <code>'(string; flag)'</code> where <code>'string'</code>
-   * is interested line and <code>'flag'</code> indicates if it is wrapped to {@code <pre>} tag.
-   * 
+   * Processes given string and produces on its basis set of pairs like {@code '(string; flag)'} where {@code 'string'}
+   * is interested line and {@code 'flag'} indicates if it is wrapped to {@code <pre>} tag.
+   *
    * @param s   string to process
    * @return    processing result
    */
@@ -313,34 +409,29 @@ public class JDParser {
   private List<Pair<String, Boolean>> splitToParagraphs(@Nullable String s) {
     if (s == null) return null;
     s = s.trim();
-    if (s == null /* just to make inspection happy*/ || s.isEmpty()) return null;
+    if (s.isEmpty()) return null;
 
-    List<Pair<String, Boolean>> result = new ArrayList<Pair<String, Boolean>>();
-    
+    List<Pair<String, Boolean>> result = new ArrayList<>();
+
     StringBuilder sb = new StringBuilder();
-    ArrayList<Boolean> markers = new ArrayList<Boolean>();
-    ArrayList<String> list = toArray(s, "\n", markers);
-    Boolean[] marks = markers.toArray(new Boolean[markers.size()]);
+    List<Boolean> markers = new ArrayList<>();
+    List<String> list = toArray(s, markers);
+    Boolean[] marks = markers.toArray(new Boolean[0]);
     markers.clear();
+    assert list != null;
     for (int i = 0; i < list.size(); i++) {
       String s1 = list.get(i);
       if (marks[i].booleanValue()) {
         if (sb.length() != 0) {
-          result.add(new Pair<String, Boolean>(sb.toString(), false));
+          result.add(new Pair<>(sb.toString(), false));
           sb.setLength(0);
         }
-        result.add(new Pair<String, Boolean>(s1, marks[i]));
+        result.add(Pair.create(s1, marks[i]));
       }
       else {
-        if (s1.isEmpty()) {
-          if (sb.length() != 0) {
-            result.add(new Pair<String, Boolean>(sb.toString(), false));
-            sb.setLength(0);
-          }
-          result.add(new Pair<String, Boolean>("", marks[i]));
-        }
-        else if (mySettings.JD_PRESERVE_LINE_FEEDS) {
-          result.add(new Pair<String, Boolean>(s1, marks[i]));
+        if (s1.isEmpty() || s1.equals(SELF_CLOSED_P_TAG) || isKeepLineFeedsIn(s1)) {
+          endParagraph(result, sb);
+          result.add(Pair.create(s1, marks[i]));
         }
         else {
           if (sb.length() != 0) sb.append(' ');
@@ -349,162 +440,208 @@ public class JDParser {
       }
     }
     if (!mySettings.JD_PRESERVE_LINE_FEEDS && sb.length() != 0) {
-      result.add(new Pair<String, Boolean>(sb.toString(), false));
+      result.add(new Pair<>(sb.toString(), false));
     }
     return result;
   }
-  
-  static abstract class TagParser {
 
-    abstract boolean parse(String tag, String line, JDComment c);
+  private boolean isKeepLineFeedsIn(@NotNull String line) {
+    return mySettings.JD_PRESERVE_LINE_FEEDS || startsWithTag(line);
   }
 
-  private static final @NonNls String SEE_TAG = "see";
-  private static final @NonNls String SINCE_TAG = "since";
-  private static final @NonNls String VERSION_TAG = "version";
-  private static final @NonNls String DEPRECATED_TAG = "deprecated";
-  private static final @NonNls String RETURN_TAG = "return";
-  private static final @NonNls String PARAM_TAG = "param";
-  private static final @NonNls String THROWS_TAG = "throws";
-  private static final @NonNls String EXCEPTION_TAG = "exception";
-  private static final @NonNls String AUTHOR_TAG = "author";
+  private static boolean startsWithTag(@NotNull String line) {
+    if (line.trim().startsWith("<")) {
+      return HTML_TAG_PATTERN.matcher(line).matches();
+    }
+    return false;
+  }
+
+  private static void endParagraph(@NotNull List<Pair<String, Boolean>> result, @NotNull StringBuilder sb) {
+    if (sb.length() > 0) {
+      result.add(new Pair<>(sb.toString(), false));
+      sb.setLength(0);
+    }
+  }
+
+  private interface TagParser {
+    boolean parse(String tag, String line, JDComment c);
+  }
 
   private static final TagParser[] tagParsers = {
-    new TagParser() {
-      @Override
-      boolean parse(String tag, String line, JDComment c) {
-        boolean isMyTag = SEE_TAG.equals(tag);
-        if (isMyTag) {
-          c.addSeeAlso(line);
-        }
-        return isMyTag;
+    (tag, line, c) -> {
+      boolean isMyTag = JDTag.SEE.tagEqual(tag);
+      if (isMyTag) {
+        c.addSeeAlso(line);
       }
+      return isMyTag;
     },
-    new TagParser() {
-      @Override
-      boolean parse(String tag, String line, JDComment c) {
-        boolean isMyTag = SINCE_TAG.equals(tag);
-        if (isMyTag) {
-          c.setSince(line);
-        }
-        return isMyTag;
+
+    (tag, line, c) -> {
+      boolean isMyTag = JDTag.SINCE.tagEqual(tag);
+      if (isMyTag) {
+        c.addSince(line);
       }
+      return isMyTag;
     },
-    new TagParser() {
-      @Override
-      boolean parse(String tag, String line, JDComment c) {
-        boolean isMyTag = c instanceof JDClassComment && VERSION_TAG.equals(tag);
-        if (isMyTag) {
-          ((JDClassComment)c).setVersion(line);
-        }
-        return isMyTag;
+
+    (tag, line, c) -> {
+      boolean isMyTag = c instanceof JDClassComment && JDTag.VERSION.tagEqual(tag);
+      if (isMyTag) {
+        ((JDClassComment)c).setVersion(line);
       }
+      return isMyTag;
     },
-    new TagParser() {
-      @Override
-      boolean parse(String tag, String line, JDComment c) {
-        boolean isMyTag = DEPRECATED_TAG.equals(tag);
-        if (isMyTag) {
-          c.setDeprecated(line);
-        }
-        return isMyTag;
+
+    (tag, line, c) -> {
+      boolean isMyTag = JDTag.DEPRECATED.tagEqual(tag);
+      if (isMyTag) {
+        c.setDeprecated(line);
       }
+      return isMyTag;
     },
-    new TagParser() {
-      @Override
-      boolean parse(String tag, String line, JDComment c) {
-        boolean isMyTag = c instanceof JDMethodComment && RETURN_TAG.equals(tag);
-        if (isMyTag) {
-          JDMethodComment mc = (JDMethodComment)c;
-          mc.setReturnTag(line);
-        }
-        return isMyTag;
+
+    (tag, line, c) -> {
+      boolean isMyTag = c instanceof JDMethodComment && JDTag.RETURN.tagEqual(tag);
+      if (isMyTag) {
+        ((JDMethodComment)c).setReturnTag(line);
       }
+      return isMyTag;
     },
-    new TagParser() {
-      @Override
-      boolean parse(String tag, String line, JDComment c) {
-        boolean isMyTag = c instanceof JDParamListOwnerComment && PARAM_TAG.equals(tag);
-        if (isMyTag) {
-          JDParamListOwnerComment mc = (JDParamListOwnerComment)c;
-          int idx;
-          for (idx = 0; idx < line.length(); idx++) {
-            char ch = line.charAt(idx);
-            if (Character.isWhitespace(ch)) break;
-          }
-          if (idx == line.length()) {
-            mc.addParameter(line, "");
-          }
-          else {
-            String name = line.substring(0, idx);
-            String desc = line.substring(idx).trim();
-            mc.addParameter(name, desc);
-          }
+
+    (tag, line, c) -> {
+      boolean isMyTag = c instanceof JDParamListOwnerComment && JDTag.PARAM.tagEqual(tag);
+      if (isMyTag) {
+        JDParamListOwnerComment mc = (JDParamListOwnerComment)c;
+        int idx;
+        for (idx = 0; idx < line.length(); idx++) {
+          char ch = line.charAt(idx);
+          if (Character.isWhitespace(ch)) break;
         }
-        return isMyTag;
-      }
-    },
-    new TagParser() {
-      @Override
-      boolean parse(String tag, String line, JDComment c) {
-        boolean isMyTag = c instanceof JDMethodComment && (THROWS_TAG.equals(tag) || EXCEPTION_TAG.equals(tag));
-        if (isMyTag) {
-          JDMethodComment mc = (JDMethodComment)c;
-          int idx;
-          for (idx = 0; idx < line.length(); idx++) {
-            char ch = line.charAt(idx);
-            if (Character.isWhitespace(ch)) break;
-          }
-          if (idx == line.length()) {
-            mc.addThrow(line, "");
-          }
-          else {
-            String name = line.substring(0, idx);
-            String desc = line.substring(idx).trim();
-            mc.addThrow(name, desc);
-          }
+        if (idx == line.length()) {
+          mc.addParameter(line, "");
         }
-        return isMyTag;
-      }
-    },
-    new TagParser() {
-      @Override
-      boolean parse(String tag, String line, JDComment c) {
-        boolean isMyTag = c instanceof JDClassComment && AUTHOR_TAG.equals(tag);
-        if (isMyTag) {
-          JDClassComment cl = (JDClassComment)c;
-          cl.addAuthor(line.trim());
+        else {
+          String name = line.substring(0, idx);
+          String desc = line.substring(idx).trim();
+          mc.addParameter(name, desc);
         }
-        return isMyTag;
       }
+      return isMyTag;
     },
-/*        new TagParser() {
-            boolean parse( String tag, String line, JDComment c ) {
-                XDTag xdtag = XDTag.parse(tag, line);
-                if( xdtag != null ) {
-                    c.addXDocTag(xdtag);
-                }
-                return xdtag != null;
-            }
-        },*/
+
+    (tag, line, c) -> {
+      boolean isMyTag = c instanceof JDMethodComment && (JDTag.THROWS.tagEqual(tag) || JDTag.EXCEPTION.tagEqual(tag));
+      if (isMyTag) {
+        JDMethodComment mc = (JDMethodComment)c;
+        int idx;
+        for (idx = 0; idx < line.length(); idx++) {
+          char ch = line.charAt(idx);
+          if (Character.isWhitespace(ch)) break;
+        }
+        if (idx == line.length()) {
+          mc.addThrow(line, "");
+        }
+        else {
+          String name = line.substring(0, idx);
+          String desc = line.substring(idx).trim();
+          mc.addThrow(name, desc);
+        }
+      }
+      return isMyTag;
+    },
+
+    (tag, line, c) -> {
+      boolean isMyTag = c instanceof JDClassComment && JDTag.AUTHOR.tagEqual(tag);
+      if (isMyTag) {
+        ((JDClassComment)c).addAuthor(line.trim());
+      }
+      return isMyTag;
+    }
   };
 
-  protected StringBuffer splitIntoCLines(String s, String prefix) {
-    return splitIntoCLines(s, prefix, true);
+  private static boolean lineHasUnclosedPreTag(@NotNull String line) {
+    return getOccurenceCount(line, PRE_TAG_START_PATTERN) > StringUtil.getOccurrenceCount(line, PRE_TAG_END);
   }
 
-  protected StringBuffer splitIntoCLines(String s, String prefix, boolean add_prefix_to_first_line) {
-    return splitIntoCLines(s, new StringBuffer(prefix), add_prefix_to_first_line);
+  private static boolean lineHasClosingPreTag(@NotNull String line) {
+    return StringUtil.getOccurrenceCount(line, PRE_TAG_END) > getOccurenceCount(line, PRE_TAG_START_PATTERN);
   }
 
-  protected StringBuffer splitIntoCLines(String s, StringBuffer prefix, boolean add_prefix_to_first_line) {
-    @NonNls StringBuffer sb = new StringBuffer();
-    if (add_prefix_to_first_line) {
-      sb.append(prefix);
+  @SuppressWarnings("SameParameterValue")
+  private static int getOccurenceCount(@NotNull String line, @NotNull Pattern pattern) {
+    Matcher matcher = pattern.matcher(line);
+    int count = 0;
+    while (matcher.find()) {
+      count++;
     }
-    List<String> list = mySettings.WRAP_COMMENTS
-                             ? toArrayWrapping(s, mySettings.RIGHT_MARGIN - prefix.length())
-                             : toArray(s, "\n", new ArrayList<Boolean>());
+    return count;
+  }
+
+  @NotNull
+  protected StringBuilder formatJDTagDescription(@Nullable String str, @NotNull CharSequence prefix) {
+    return formatJDTagDescription(str, prefix, prefix);
+  }
+
+  /**
+   * Returns formatted JavaDoc tag description, according to selected configuration. Prefixs
+   * may be specified for the first lines and all subsequent lines. This distinction allows
+   * partially manual formatting of the first line (by moving content from the description
+   * to the first line prefix) and allow continuation lines to use different indentation.
+   *
+   * @param str                JavaDoc tag description
+   * @param firstLinePrefix    prefix to be added to the first line
+   * @param continuationPrefix prefix to be added to lines after the first
+   * @return formatted JavaDoc tag description
+   */
+  @NotNull
+  protected StringBuilder formatJDTagDescription(@Nullable String str,
+                                                 @NotNull CharSequence firstLinePrefix,
+                                                 @NotNull CharSequence continuationPrefix) {
+    final int rightMargin = myCommonSettings.getRootSettings().getRightMargin(JavaLanguage.INSTANCE);
+    final int maxCommentLength = rightMargin - continuationPrefix.length();
+    final int firstLinePrefixLength = firstLinePrefix.length();
+    final boolean firstLineShorter = firstLinePrefixLength > continuationPrefix.length();
+
+    StringBuilder sb = new StringBuilder(firstLinePrefix);
+    List<String> list;
+
+    boolean canWrap = !mySettings.JD_PRESERVE_LINE_FEEDS || hasLineLongerThan(str, maxCommentLength);
+
+    //If wrap comments selected, comments should be wrapped by the right margin
+    if (myCommonSettings.WRAP_COMMENTS && canWrap) {
+      list = toArrayWrapping(str, maxCommentLength);
+
+      if (firstLineShorter
+          && list != null && !list.isEmpty()
+          && list.get(0).length() > rightMargin - firstLinePrefixLength)
+      {
+        list = new ArrayList<>();
+        //want the first line to be shorter, according to it's prefix
+        String firstLine = toArrayWrapping(str, rightMargin - firstLinePrefixLength).get(0);
+        //so now first line is exactly same width we need
+        list.add(firstLine);
+        str = str.substring(firstLine.length());
+        //actually there is one more problem - when first line has unclosed <pre> tag, substring should be processed if it's inside <pre>
+        boolean unclosedPreTag = lineHasUnclosedPreTag(firstLine);
+        if (unclosedPreTag) {
+          str = PRE_TAG_START + str.replaceAll("^\\s+", "");
+        }
+
+        //getting all another lines according to their prefix
+        List<String> subList = toArrayWrapping(str, maxCommentLength);
+
+        //removing pre tag
+        if (unclosedPreTag && subList != null && !subList.isEmpty()) {
+          String firstLineTagRemoved = subList.get(0).substring(PRE_TAG_START.length());
+          subList.set(0, firstLineTagRemoved);
+        }
+        if (subList != null) list.addAll(subList);
+      }
+    }
+    else {
+      list = toArray(str, new ArrayList<>());
+    }
+
     if (list == null) {
       sb.append('\n');
     }
@@ -512,19 +649,19 @@ public class JDParser {
       boolean insidePreTag = false;
       for (int i = 0; i < list.size(); i++) {
         String line = list.get(i);
-        if (line.length() == 0 && !mySettings.JD_KEEP_EMPTY_LINES) continue;
-        if (i != 0) sb.append(prefix);
-        if (line.length() == 0 && mySettings.JD_P_AT_EMPTY_LINES && !insidePreTag) {
-          sb.append("<p/>");
+        if (line.isEmpty() && !mySettings.JD_KEEP_EMPTY_LINES) continue;
+        if (i != 0) sb.append(continuationPrefix);
+        if (line.isEmpty() && mySettings.JD_P_AT_EMPTY_LINES && !insidePreTag && !isFollowedByTagLine(list, i)) {
+          sb.append(P_START_TAG);
         }
         else {
           sb.append(line);
-          
+
           // We want to track if we're inside <pre>...</pre> in order to not generate <p/> there.
-          if (PRE_TAG_START.equals(line)) {
+          if (lineHasUnclosedPreTag(line)) {
             insidePreTag = true;
           }
-          else if (PRE_TAG_END.equals(line)) {
+          else if (lineHasClosingPreTag(line)) {
             insidePreTag = false;
           }
         }
@@ -533,5 +670,31 @@ public class JDParser {
     }
 
     return sb;
+  }
+
+  private static boolean isFollowedByTagLine(List<String> lines, int currLine) {
+    for (int i = currLine + 1; i < lines.size(); i ++) {
+      String line = lines.get(i);
+      if (!line.isEmpty()) {
+        return startsWithTag(line);
+      }
+    }
+    return false;
+  }
+
+  private static class CommentInfo {
+    public final PsiDocComment docComment;
+    public final PsiElement commentOwner;
+    public final String commentHeader;
+    public final String comment;
+    public final String commentFooter;
+
+    CommentInfo(PsiDocComment docComment, PsiElement commentOwner, String commentHeader, String comment, String commentFooter) {
+      this.docComment = docComment;
+      this.commentOwner = commentOwner;
+      this.commentHeader = commentHeader;
+      this.comment = comment;
+      this.commentFooter = commentFooter;
+    }
   }
 }

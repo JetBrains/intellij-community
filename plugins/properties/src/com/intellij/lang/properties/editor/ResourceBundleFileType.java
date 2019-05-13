@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,32 +15,30 @@
  */
 package com.intellij.lang.properties.editor;
 
-import com.intellij.openapi.fileTypes.SyntaxHighlighter;
-import com.intellij.openapi.fileTypes.ex.FakeFileType;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.lang.properties.PropertiesBundle;
+import com.intellij.openapi.fileTypes.ex.FakeFileType;
+import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @author cdr
  */
 class ResourceBundleFileType extends FakeFileType {
+  @Override
   @NotNull
   public String getName() {
     return "ResourceBundle";
   }
 
+  @Override
   @NotNull
   public String getDescription() {
     return PropertiesBundle.message("resourcebundle.fake.file.type.description");
   }
 
-  public boolean isMyFileType(VirtualFile file) {
+  @Override
+  public boolean isMyFileType(@NotNull VirtualFile file) {
     return file instanceof ResourceBundleAsVirtualFile;
   }
 
-  public SyntaxHighlighter getHighlighter(Project project, final VirtualFile virtualFile) {
-    return null;
-  }
 }

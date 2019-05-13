@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,7 +27,6 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.intentions.base.Intention;
 import org.jetbrains.plugins.groovy.intentions.base.PsiElementPredicate;
-import org.jetbrains.plugins.groovy.lang.GrReferenceAdjuster;
 import org.jetbrains.plugins.groovy.lang.psi.GrQualifiedReference;
 import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
@@ -40,7 +39,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatem
 public class ImportOnDemandIntention extends Intention {
 
   @Override
-  protected void processIntention(@NotNull PsiElement element, Project project, Editor editor) throws IncorrectOperationException {
+  protected void processIntention(@NotNull PsiElement element, @NotNull Project project, Editor editor) throws IncorrectOperationException {
     if (!(element instanceof GrReferenceElement)) return;
     final GrReferenceElement ref = (GrReferenceElement)element;
     final PsiElement resolved = ref.resolve();
@@ -55,12 +54,12 @@ public class ImportOnDemandIntention extends Intention {
     if (!(containingFile instanceof GroovyFile)) return;
     ((GroovyFile)containingFile).addImport(importStatement);
 
-    for (PsiReference reference : ReferencesSearch.search(resolved, new LocalSearchScope(containingFile), true)) {
+    for (PsiReference reference : ReferencesSearch.search(resolved, new LocalSearchScope(containingFile))) {
       final PsiElement refElement = reference.getElement();
       if (refElement == null) continue;
       final PsiElement parent = refElement.getParent();
       if (parent instanceof GrQualifiedReference<?>) {
-        GrReferenceAdjuster.shortenReference((GrQualifiedReference<?>)parent);
+        org.jetbrains.plugins.groovy.codeStyle.GrReferenceAdjuster.shortenReference((GrQualifiedReference<?>)parent);
       }
     }
   }
@@ -70,7 +69,7 @@ public class ImportOnDemandIntention extends Intention {
   protected PsiElementPredicate getElementPredicate() {
     return new PsiElementPredicate() {
       @Override
-      public boolean satisfiedBy(PsiElement element) {
+      public boolean satisfiedBy(@NotNull PsiElement element) {
         if (!(element instanceof GrReferenceElement)) return false;
         final GrReferenceElement ref = (GrReferenceElement)element;
         final PsiElement parent = ref.getParent();

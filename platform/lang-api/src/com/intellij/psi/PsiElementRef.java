@@ -16,6 +16,7 @@
 package com.intellij.psi;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.psi.util.PsiUtilCore;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -66,11 +67,11 @@ public final class PsiElementRef<T extends PsiElement> {
   }
 
   public static <T extends PsiElement> PsiElementRef<T> real(@NotNull final T element) {
-    return new PsiElementRef<T>(new PsiRefColleague.Real<T>(element));
+    return new PsiElementRef<>(new PsiRefColleague.Real<>(element));
   }
 
-  public static <Child extends PsiElement, Parent extends PsiElement> PsiElementRef<Child> imaginary(final PsiElementRef<? extends Parent> parent, final PsiRefElementCreator<Parent, Child> creator) {
-    return new PsiElementRef<Child>(new PsiRefColleague.Imaginary<Child, Parent>(parent, creator));
+  public static <Child extends PsiElement, Parent extends PsiElement> PsiElementRef<Child> imaginary(final PsiElementRef<? extends Parent> parent, final PsiRefElementCreator<? super Parent, ? extends Child> creator) {
+    return new PsiElementRef<>(new PsiRefColleague.Imaginary<>(parent, creator));
   }
 
   public PsiManager getPsiManager() {
@@ -94,15 +95,17 @@ public final class PsiElementRef<T extends PsiElement> {
       private final T myElement;
 
       public Real(@NotNull T element) {
-        LOG.assertTrue(element.isValid());
+        PsiUtilCore.ensureValid(element);
         myElement = element;
       }
 
+      @Override
       @NotNull
       public T getPsiElement() {
         return myElement;
       }
 
+      @Override
       public boolean isValid() {
         return myElement.isValid();
       }
@@ -124,11 +127,13 @@ public final class PsiElementRef<T extends PsiElement> {
         return myElement.hashCode();
       }
 
+      @Override
       @NotNull
       public Real<T> makeReal() {
         return this;
       }
 
+      @Override
       @NotNull
       public PsiElement getRoot() {
         return myElement;
@@ -137,17 +142,19 @@ public final class PsiElementRef<T extends PsiElement> {
 
     class Imaginary<Child extends PsiElement, Parent extends PsiElement> implements PsiRefColleague<Child> {
       private final PsiElementRef<? extends Parent> myParent;
-      private final PsiRefElementCreator<Parent, Child> myCreator;
+      private final PsiRefElementCreator<? super Parent, ? extends Child> myCreator;
 
-      public Imaginary(PsiElementRef<? extends Parent> parent, PsiRefElementCreator<Parent, Child> creator) {
+      public Imaginary(PsiElementRef<? extends Parent> parent, PsiRefElementCreator<? super Parent, ? extends Child> creator) {
         myParent = parent;
         myCreator = creator;
       }
 
+      @Override
       public boolean isValid() {
         return myParent.isValid();
       }
 
+      @Override
       public Child getPsiElement() {
         return null;
       }
@@ -172,11 +179,13 @@ public final class PsiElementRef<T extends PsiElement> {
         return result;
       }
 
+      @Override
       @NotNull
       public Real<Child> makeReal() {
-        return new Real<Child>(myCreator.createChild(myParent.ensurePsiElementExists()));
+        return new Real<>(myCreator.createChild(myParent.ensurePsiElementExists()));
       }
 
+      @Override
       @NotNull
       public PsiElement getRoot() {
         return myParent.getRoot();

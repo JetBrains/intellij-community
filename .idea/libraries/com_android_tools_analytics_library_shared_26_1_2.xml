@@ -1,0 +1,10 @@
+<component name="libraryTable">
+  <library name="com.android.tools.analytics-library:shared:26.1.2" type="repository">
+    <properties include-transitive-deps="false" maven-id="com.android.tools.analytics-library:shared:26.1.2" />
+    <CLASSES>
+      <root url="jar://$MAVEN_REPOSITORY$/com/android/tools/analytics-library/shared/26.1.2/shared-26.1.2.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>

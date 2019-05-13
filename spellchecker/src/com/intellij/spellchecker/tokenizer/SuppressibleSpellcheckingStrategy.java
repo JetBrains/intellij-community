@@ -15,7 +15,7 @@
  */
 package com.intellij.spellchecker.tokenizer;
 
-import com.intellij.codeInspection.SuppressIntentionAction;
+import com.intellij.codeInspection.SuppressQuickFix;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 
@@ -30,7 +30,7 @@ public abstract class SuppressibleSpellcheckingStrategy extends SpellcheckingStr
   public abstract boolean isSuppressedFor(@NotNull PsiElement element, @NotNull String name);
 
   /**
-   * @see com.intellij.codeInspection.CustomSuppressableInspectionTool#getSuppressActions(com.intellij.psi.PsiElement)
+   * @see com.intellij.codeInspection.BatchSuppressableTool#getBatchSuppressActions(com.intellij.psi.PsiElement)
    */
-  public abstract SuppressIntentionAction[] getSuppressActions(@NotNull PsiElement element, @NotNull String name);
+  public abstract SuppressQuickFix[] getSuppressActions(@NotNull PsiElement element, @NotNull String name);
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,13 +16,13 @@
 package com.intellij.codeInsight.hint.api.impls;
 
 import com.intellij.codeInsight.CodeInsightBundle;
-import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.MutableLookupElement;
 import com.intellij.lang.parameterInfo.*;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.xml.XmlToken;
@@ -40,21 +40,14 @@ import java.util.Comparator;
  * @author Maxim.Mossienko
  */
 public class XmlParameterInfoHandler implements ParameterInfoHandler<XmlTag,XmlElementDescriptor> {
-  private static final Comparator<XmlAttributeDescriptor> COMPARATOR = new Comparator<XmlAttributeDescriptor>() {
-    public int compare(final XmlAttributeDescriptor o1, final XmlAttributeDescriptor o2) {
-      return o1.getName().compareTo(o2.getName());
-    }
-  };
+  private static final Comparator<XmlAttributeDescriptor> COMPARATOR = Comparator.comparing(PsiMetaData::getName);
 
+  @Override
   public Object[] getParametersForLookup(LookupElement item, ParameterInfoContext context) {
     if (!(item instanceof MutableLookupElement)) return null;
     final Object lookupItem = item.getObject();
     if (lookupItem instanceof XmlElementDescriptor) return new Object[]{lookupItem};
     return null;
-  }
-
-  public Object[] getParametersForDocumentation(final XmlElementDescriptor p, final ParameterInfoContext context) {
-    return getSortedDescriptors(p);
   }
 
   public static XmlAttributeDescriptor[] getSortedDescriptors(final XmlElementDescriptor p) {
@@ -63,16 +56,17 @@ public class XmlParameterInfoHandler implements ParameterInfoHandler<XmlTag,XmlE
     return xmlAttributeDescriptors;
   }
 
+  @Override
   public boolean couldShowInLookup() {
     return true;
   }
 
-  public XmlTag findElementForParameterInfo(final CreateParameterInfoContext context) {
+  @Override
+  public XmlTag findElementForParameterInfo(@NotNull final CreateParameterInfoContext context) {
     final XmlTag tag = findXmlTag(context.getFile(), context.getOffset());
     final XmlElementDescriptor descriptor = tag != null ? tag.getDescriptor() : null;
 
     if (descriptor == null) {
-      DaemonCodeAnalyzer.getInstance(context.getProject()).updateVisibleHighlighters(context.getEditor());
       return null;
     }
 
@@ -80,11 +74,13 @@ public class XmlParameterInfoHandler implements ParameterInfoHandler<XmlTag,XmlE
     return tag;
   }
 
-  public void showParameterInfo(final @NotNull XmlTag element, final CreateParameterInfoContext context) {
+  @Override
+  public void showParameterInfo(final @NotNull XmlTag element, @NotNull final CreateParameterInfoContext context) {
     context.showHint(element, element.getTextRange().getStartOffset() + 1, this);
   }
 
-  public XmlTag findElementForUpdatingParameterInfo(final UpdateParameterInfoContext context) {
+  @Override
+  public XmlTag findElementForUpdatingParameterInfo(@NotNull final UpdateParameterInfoContext context) {
     final XmlTag tag = findXmlTag(context.getFile(), context.getOffset());
     if (tag != null) {
       final PsiElement currentXmlTag = context.getParameterOwner();
@@ -94,20 +90,13 @@ public class XmlParameterInfoHandler implements ParameterInfoHandler<XmlTag,XmlE
     return null;
   }
 
-  public void updateParameterInfo(@NotNull final XmlTag o, final UpdateParameterInfoContext context) {
-    if (context.getParameterOwner() == null || o.equals(context.getParameterOwner())) {
-      context.setParameterOwner( o );
+  @Override
+  public void updateParameterInfo(@NotNull final XmlTag parameterOwner, @NotNull final UpdateParameterInfoContext context) {
+    if (context.getParameterOwner() == null || parameterOwner.equals(context.getParameterOwner())) {
+      context.setParameterOwner(parameterOwner);
     } else {
       context.removeHint();
     }
-  }
-
-  public String getParameterCloseChars() {
-    return null;
-  }
-
-  public boolean tracksParameterIndex() {
-    return false;
   }
 
   @Nullable
@@ -145,24 +134,26 @@ public class XmlParameterInfoHandler implements ParameterInfoHandler<XmlTag,XmlE
     return null;
   }
 
-  public void updateUI(XmlElementDescriptor o, final ParameterInfoUIContext context) {
+  @Override
+  public void updateUI(XmlElementDescriptor o, @NotNull final ParameterInfoUIContext context) {
     updateElementDescriptor(
       o,
       context,
       new Function<String, Boolean>() {
         final XmlTag parameterOwner  = (XmlTag)context.getParameterOwner();
 
+        @Override
         public Boolean fun(String s) {
-          return parameterOwner != null ? parameterOwner.getAttributeValue(s) != null:false;
+          return parameterOwner != null && parameterOwner.getAttributeValue(s) != null;
         }
       });
   }
 
   public static void updateElementDescriptor(XmlElementDescriptor descriptor, ParameterInfoUIContext context,
-                                             Function<String, Boolean> attributePresentFun) {
+                                             Function<? super String, Boolean> attributePresentFun) {
     final XmlAttributeDescriptor[] attributes = descriptor != null ? getSortedDescriptors(descriptor) : XmlAttributeDescriptor.EMPTY;
 
-    StringBuffer buffer = new StringBuffer();
+    StringBuilder buffer = new StringBuilder();
     int highlightStartOffset = -1;
     int highlightEndOffset = -1;
 
@@ -170,9 +161,9 @@ public class XmlParameterInfoHandler implements ParameterInfoHandler<XmlTag,XmlE
       buffer.append(CodeInsightBundle.message("xml.tag.info.no.attributes"));
     }
     else {
-      StringBuffer text1 = new StringBuffer(" ");
-      StringBuffer text2 = new StringBuffer(" ");
-      StringBuffer text3 = new StringBuffer(" ");
+      StringBuilder text1 = new StringBuilder(" ");
+      StringBuilder text2 = new StringBuilder(" ");
+      StringBuilder text3 = new StringBuilder(" ");
 
       for (XmlAttributeDescriptor attribute : attributes) {
         if (Boolean.TRUE.equals(attributePresentFun.fun(attribute.getName()))) {

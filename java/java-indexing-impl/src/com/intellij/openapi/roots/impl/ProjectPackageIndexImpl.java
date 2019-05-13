@@ -27,11 +27,13 @@ public class ProjectPackageIndexImpl extends PackageIndex {
     myDirectoryIndex = directoryIndex;
   }
 
+  @NotNull
   @Override
   public VirtualFile[] getDirectoriesByPackageName(@NotNull String packageName, boolean includeLibrarySources) {
     return getDirsByPackageName(packageName, includeLibrarySources).toArray(VirtualFile.EMPTY_ARRAY);
   }
 
+  @NotNull
   @Override
   public Query<VirtualFile> getDirsByPackageName(@NotNull String packageName, boolean includeLibrarySources) {
     return myDirectoryIndex.getDirectoriesByPackageName(packageName, includeLibrarySources);

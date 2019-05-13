@@ -33,7 +33,6 @@ public interface PsiFileSystemItem extends PsiCheckedRenameElement, NavigatableP
   @Nullable
   PsiFileSystemItem getParent();
 
-  @Nullable
   VirtualFile getVirtualFile();
 
   @Override

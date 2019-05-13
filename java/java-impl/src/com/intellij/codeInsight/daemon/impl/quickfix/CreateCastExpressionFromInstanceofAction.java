@@ -16,7 +16,7 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.CodeInsightBundle;
-import com.intellij.codeInsight.CodeInsightUtilBase;
+import com.intellij.codeInsight.CodeInsightUtilCore;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -45,19 +45,19 @@ public class CreateCastExpressionFromInstanceofAction extends CreateLocalVarFrom
 
   @Override
   public void invoke(@NotNull final Project project, final Editor editor, final PsiFile file) {
-    if (!CodeInsightUtilBase.prepareFileForWrite(file)) return;
-
     PsiInstanceOfExpression instanceOfExpression = getInstanceOfExpressionAtCaret(editor, file);
     assert instanceOfExpression.getContainingFile() == file : instanceOfExpression.getContainingFile() + "; file="+file;
     PsiElement decl = createAndInsertCast(instanceOfExpression, editor, file);
     if (decl == null) return;
-    decl = CodeStyleManager.getInstance(project).reformat(CodeInsightUtilBase.forcePsiPostprocessAndRestoreElement(decl));
+    decl = CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(decl);
+    if (decl == null) return;
+    decl = CodeStyleManager.getInstance(project).reformat(decl);
     editor.getCaretModel().moveToOffset(decl.getTextRange().getEndOffset());
   }
 
   @Nullable
   private static PsiElement createAndInsertCast(final PsiInstanceOfExpression instanceOfExpression, Editor editor, PsiFile file) throws IncorrectOperationException {
-    PsiElementFactory factory = JavaPsiFacade.getInstance(instanceOfExpression.getProject()).getElementFactory();
+    PsiElementFactory factory = JavaPsiFacade.getElementFactory(instanceOfExpression.getProject());
     PsiExpressionStatement statement = (PsiExpressionStatement)factory.createStatementFromText("((a)b)", instanceOfExpression);
 
     PsiParenthesizedExpression paren = (PsiParenthesizedExpression)statement.getExpression();

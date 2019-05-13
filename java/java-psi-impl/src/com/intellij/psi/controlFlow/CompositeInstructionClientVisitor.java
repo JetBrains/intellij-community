@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,19 +14,19 @@
  * limitations under the License.
  */
 
-/**
- * @author Alexey
- */
 package com.intellij.psi.controlFlow;
+
+import org.jetbrains.annotations.NotNull;
 
 class CompositeInstructionClientVisitor extends InstructionClientVisitor<Object[]> {
   private final InstructionClientVisitor[] myVisitors;
 
-  public CompositeInstructionClientVisitor(InstructionClientVisitor[] visitors) {
+  CompositeInstructionClientVisitor(InstructionClientVisitor[] visitors) {
     myVisitors = visitors;
   }
 
   @Override
+  @NotNull
   public Object[] getResult() {
     Object[] result = new Object[myVisitors.length];
     for (int i = 0; i < myVisitors.length; i++) {

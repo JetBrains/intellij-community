@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.uiDesigner;
 
 import com.intellij.ProjectTopics;
@@ -21,7 +7,9 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.*;
+import com.intellij.openapi.roots.ModuleRootEvent;
+import com.intellij.openapi.roots.ModuleRootListener;
+import com.intellij.openapi.roots.OrderEnumerator;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
@@ -30,6 +18,7 @@ import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.impl.jar.JarFileSystemImpl;
 import com.intellij.uiDesigner.core.Spacer;
 import com.intellij.util.PathUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.lang.UrlClassLoader;
 import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NotNull;
@@ -39,6 +28,7 @@ import java.io.File;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.*;
+import java.util.concurrent.ConcurrentMap;
 
 /**
  * @author Anton Katilin
@@ -47,25 +37,27 @@ import java.util.*;
 public final class LoaderFactory {
   private final Project myProject;
 
-  private final WeakHashMap<Module, ClassLoader> myModule2ClassLoader;
+  private final ConcurrentMap<Module, ClassLoader> myModule2ClassLoader;
   private ClassLoader myProjectClassLoader = null;
   private final MessageBusConnection myConnection;
 
   public static LoaderFactory getInstance(final Project project) {
     return ServiceManager.getService(project, LoaderFactory.class);
   }
-  
+
   public LoaderFactory(final Project project) {
     myProject = project;
-    myModule2ClassLoader = new WeakHashMap<Module, ClassLoader>();
+    myModule2ClassLoader = ContainerUtil.createConcurrentWeakMap();
     myConnection = myProject.getMessageBus().connect();
-    myConnection.subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootAdapter() {
-      public void rootsChanged(final ModuleRootEvent event) {
+    myConnection.subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootListener() {
+      @Override
+      public void rootsChanged(@NotNull final ModuleRootEvent event) {
         clearClassLoaderCache();
       }
     });
 
     Disposer.register(project, new Disposable() {
+      @Override
       public void dispose() {
         myConnection.disconnect();
         myModule2ClassLoader.clear();
@@ -106,7 +98,7 @@ public final class LoaderFactory {
   }
 
   private static ClassLoader createClassLoader(final String runClasspath, final String moduleName) {
-    final ArrayList<URL> urls = new ArrayList<URL>();
+    final ArrayList<URL> urls = new ArrayList<>();
     final VirtualFileManager manager = VirtualFileManager.getInstance();
     final JarFileSystemImpl fileSystem = (JarFileSystemImpl)JarFileSystem.getInstance();
     final StringTokenizer tokenizer = new StringTokenizer(runClasspath, File.pathSeparator);
@@ -129,7 +121,7 @@ public final class LoaderFactory {
       // ignore
     }
 
-    final URL[] _urls = urls.toArray(new URL[urls.size()]);
+    final URL[] _urls = urls.toArray(new URL[0]);
     return new DesignTimeClassLoader(Arrays.asList(_urls), LoaderFactory.class.getClassLoader(), moduleName);
   }
 
@@ -151,10 +143,12 @@ public final class LoaderFactory {
   }
 
   private static class DesignTimeClassLoader extends UrlClassLoader {
+    static { if (registerAsParallelCapable()) markParallelCapable(DesignTimeClassLoader.class); }
+
     private final String myModuleName;
 
-    public DesignTimeClassLoader(final List<URL> urls, final ClassLoader parent, final String moduleName) {
-      super(urls, parent);
+    DesignTimeClassLoader(final List<URL> urls, final ClassLoader parent, final String moduleName) {
+      super(build().urls(urls).parent(parent));
       myModuleName = moduleName;
     }
 

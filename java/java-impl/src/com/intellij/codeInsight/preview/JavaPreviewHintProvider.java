@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,13 +15,16 @@
  */
 package com.intellij.codeInsight.preview;
 
-import com.intellij.codeInsight.intention.impl.ColorChooserIntentionAction;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.patterns.PlatformPatterns;
+import com.intellij.patterns.PsiExpressionPattern;
+import com.intellij.patterns.PsiJavaPatterns;
+import com.intellij.patterns.PsiMethodPattern;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtil;
-import com.intellij.xml.util.ColorSampleLookupValue;
+import com.intellij.xml.util.ColorMap;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -31,11 +34,33 @@ import java.awt.*;
  * @author yole
  */
 public class JavaPreviewHintProvider implements PreviewHintProvider {
+
+  private static final PsiMethodPattern DECODE_METHOD = PsiJavaPatterns.psiMethod()
+    .definedInClass(Color.class.getName())
+    .withName("decode");
+  private static final PsiExpressionPattern.Capture<PsiExpression> DECODE_METHOD_CALL_PARAMETER =
+    PsiJavaPatterns.psiExpression().methodCallParameter(0, DECODE_METHOD);
+  private static final PsiMethodPattern GET_COLOR_METHOD = PsiJavaPatterns.psiMethod()
+    .definedInClass(Color.class.getName())
+    .withName("getColor");
+  private static final PsiExpressionPattern.Capture<PsiExpression> GET_METHOD_CALL_PARAMETER =
+    PsiJavaPatterns.psiExpression().methodCallParameter(0, GET_COLOR_METHOD);
+
+  private static boolean isInsideDecodeOrGetColorMethod(PsiElement element) {
+    if (PsiUtil.isJavaToken(element, JavaTokenType.STRING_LITERAL)) {
+      element = element.getParent();
+    }
+
+    return DECODE_METHOD_CALL_PARAMETER.accepts(element) ||
+           GET_METHOD_CALL_PARAMETER.accepts(element);
+  }
+
   @Override
   public boolean isSupportedFile(PsiFile file) {
     return file instanceof PsiJavaFile;
   }
 
+  @SuppressWarnings("UseJBColor")
   @Override
   public JComponent getPreviewComponent(@NotNull PsiElement element) {
     final PsiNewExpression psiNewExpression = PsiTreeUtil.getParentOfType(element, PsiNewExpression.class);
@@ -120,7 +145,7 @@ public class JavaPreviewHintProvider implements PreviewHintProvider {
       }
     }
 
-    if (ColorChooserIntentionAction.isInsideDecodeOrGetColorMethod(element)) {
+    if (isInsideDecodeOrGetColorMethod(element)) {
       final String color = StringUtil.unquoteString(element.getText());
       try {
         return new ColorPreviewComponent(Color.decode(color));
@@ -137,7 +162,7 @@ public class JavaPreviewHintProvider implements PreviewHintProvider {
         if (psiElement instanceof PsiField) {
           if ("java.awt.Color".equals(((PsiField)psiElement).getContainingClass().getQualifiedName())) {
             final String colorName = ((PsiField)psiElement).getName().toLowerCase().replace("_", "");
-            final String hex = ColorSampleLookupValue.getHexCodeForColorName(colorName);
+            final String hex = ColorMap.getHexCodeForColorName(colorName);
             return new ColorPreviewComponent(Color.decode("0x" + hex.substring(1)));
           }
         }

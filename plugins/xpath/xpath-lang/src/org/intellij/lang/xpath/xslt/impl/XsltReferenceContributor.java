@@ -1,29 +1,15 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.intellij.lang.xpath.xslt.impl;
 
 import com.intellij.codeInsight.daemon.EmptyResolveMessageProvider;
-import com.intellij.codeInsight.daemon.QuickFixProvider;
-import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.analysis.CreateNSDeclarationIntentionFix;
-import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixAction;
+import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.LocalQuickFixProvider;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.patterns.XmlTagPattern;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.source.resolve.reference.impl.providers.SchemaReferencesProvider;
+import com.intellij.psi.impl.source.resolve.reference.impl.providers.TypeOrElementOrAttributeReference;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.util.ProcessingContext;
@@ -40,7 +26,8 @@ import java.util.regex.Pattern;
 
 import static com.intellij.patterns.PlatformPatterns.psiElement;
 import static com.intellij.patterns.StandardPatterns.string;
-import static com.intellij.patterns.XmlPatterns.*;
+import static com.intellij.patterns.XmlPatterns.xmlAttributeValue;
+import static com.intellij.patterns.XmlPatterns.xmlTag;
 
 /**
  * @author yole
@@ -50,27 +37,29 @@ public class XsltReferenceContributor {
   }
 
   public static class XPath extends PsiReferenceContributor {
-    public void registerReferenceProviders(PsiReferenceRegistrar registrar) {
+    @Override
+    public void registerReferenceProviders(@NotNull PsiReferenceRegistrar registrar) {
       registrar.registerReferenceProvider(psiElement(XPath2TypeElement.class), SchemaTypeProvider.INSTANCE);
     }
   }
 
   public static class XML extends PsiReferenceContributor {
-    public void registerReferenceProviders(PsiReferenceRegistrar registrar) {
+    @Override
+    public void registerReferenceProviders(@NotNull PsiReferenceRegistrar registrar) {
+      final XmlTagPattern xsltTag = xmlTag().withNamespace(XsltSupport.XSLT_NS);
       registrar.registerReferenceProvider(
-        psiElement(XmlAttributeValue.class).withParent(xmlAttribute().withLocalName(string().oneOf(
-          "name", "href", "mode", "elements", "exclude-result-prefixes", "extension-element-prefixes", "stylesheet-prefix"
-        )).withParent(xmlTag().withNamespace(XsltSupport.XSLT_NS))),
+        xmlAttributeValue("name", "href", "mode", "elements", "exclude-result-prefixes", "extension-element-prefixes", "stylesheet-prefix")
+          .withSuperParent(2, xsltTag),
         new XsltReferenceProvider());
 
       registrar.registerReferenceProvider(
-        xmlAttributeValue()
+        xmlAttributeValue("as")
           .withValue(string().matches("[^()]+"))
-          .withParent(xmlAttribute("as").withParent(xmlTag().withNamespace(XsltSupport.XSLT_NS))), SchemaTypeProvider.INSTANCE);
+          .withSuperParent(2, xsltTag), SchemaTypeProvider.INSTANCE);
 
       registrar.registerReferenceProvider(
-        xmlAttributeValue()
-          .withParent(xmlAttribute("as").withParent(xmlTag().withNamespace(XsltSupport.XSLT_NS)))
+        xmlAttributeValue("as")
+          .withSuperParent(2, xsltTag)
           .withValue(string().contains(":")), new PsiReferenceProvider() {
         @NotNull
         @Override
@@ -81,8 +70,8 @@ public class XsltReferenceContributor {
     }
   }
 
-  static class NamespacePrefixReference extends PrefixReference implements QuickFixProvider {
-    public NamespacePrefixReference(PsiElement element) {
+  static class NamespacePrefixReference extends PrefixReference implements LocalQuickFixProvider {
+    NamespacePrefixReference(PsiElement element) {
       super((XmlAttribute)element.getParent());
     }
 
@@ -92,21 +81,25 @@ public class XsltReferenceContributor {
       return XsltNamespaceContext.getPrefixes(myAttribute).toArray();
     }
 
+    @Nullable
     @Override
-    public void registerQuickfix(HighlightInfo info, PsiReference reference) {
+    public LocalQuickFix[] getQuickFixes() {
       final XmlAttributeValue valueElement = myAttribute.getValueElement();
       if (valueElement != null) {
-        QuickFixAction.registerQuickFixAction(info, new CreateNSDeclarationIntentionFix(valueElement, getCanonicalText()) {
-          @Override
-          public boolean showHint(Editor editor) {
-            return false;
+        return new LocalQuickFix[] {
+          new CreateNSDeclarationIntentionFix(valueElement, getCanonicalText()) {
+            @Override
+            public boolean showHint(@NotNull Editor editor) {
+              return false;
+            }
           }
-        });
+        };
       }
+      return LocalQuickFix.EMPTY_ARRAY;
     }
   }
 
-  public static class SchemaTypeReference extends SchemaReferencesProvider.TypeOrElementOrAttributeReference implements
+  public static class SchemaTypeReference extends TypeOrElementOrAttributeReference implements
                                                                                                              EmptyResolveMessageProvider {
     private static final Pattern NAME_PATTERN = Pattern.compile("(?:[\\w-]+:)[\\w-]+");
 

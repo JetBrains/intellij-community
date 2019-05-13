@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,8 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.content.Content;
+import com.intellij.util.containers.hash.LinkedHashMap;
+import com.intellij.util.xmlb.SkipDefaultValuesSerializationFilters;
 import com.intellij.util.xmlb.XmlSerializer;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -35,27 +37,24 @@ import java.util.*;
 
 public class RunnerLayout  {
   public static final Key<Integer> DEFAULT_INDEX = Key.create("RunnerLayoutDefaultIndex");
-  public static final Key<Integer> DROP_INDEX = Key.create("RunnerLayoutDropIndex");  
+  public static final Key<Integer> DROP_INDEX = Key.create("RunnerLayoutDropIndex");
   private final String myID;
 
-  protected Map<String, ViewImpl> myViews = new HashMap<String, ViewImpl>();
-  private final Map<String, ViewImpl.Default> myDefaultViews = new HashMap<String, ViewImpl.Default>();
+  protected Map<String, ViewImpl> myViews = new LinkedHashMap<>();
+  private final Map<String, ViewImpl.Default> myDefaultViews = new HashMap<>();
 
-  protected Set<TabImpl> myTabs = new TreeSet<TabImpl>(new Comparator<TabImpl>() {
-    public int compare(final TabImpl o1, final TabImpl o2) {
-      return o1.getIndex() - o2.getIndex();
-    }
-  });
-  private final Map<Integer, TabImpl.Default> myDefaultTabs = new HashMap<Integer, TabImpl.Default>();
+  protected Set<TabImpl> myTabs = new TreeSet<>(Comparator.comparingInt(TabImpl::getIndex));
+  private final Map<Integer, TabImpl.Default> myDefaultTabs = new HashMap<>();
 
   protected General myGeneral = new General();
-  private final Map<String, Pair<String, LayoutAttractionPolicy>> myDefaultFocus = new HashMap<String, Pair<String, LayoutAttractionPolicy>>();
+  private final Map<String, Pair<String, LayoutAttractionPolicy>> myDefaultFocus = new HashMap<>();
+  private Set<String> myLightWeightIds = null;
 
 
   public RunnerLayout(@NotNull String ID) {
     myID = ID;
   }
-  
+
   @Nullable
   public String getDefaultDisplayName(final int defaultIndex) {
     final TabImpl.Default tab = myDefaultTabs.get(defaultIndex);
@@ -64,6 +63,10 @@ public class RunnerLayout  {
 
   @NotNull
   public TabImpl getOrCreateTab(final int index) {
+    if (index < 0) {
+      return createNewTab();
+    }
+
     TabImpl tab = findTab(index);
     if (tab != null) return tab;
 
@@ -94,18 +97,7 @@ public class RunnerLayout  {
 
   @NotNull
   public TabImpl createNewTab() {
-    int index = 0;
-    for (TabImpl each : myTabs) {
-      if (!isUsed(each)) return each;
-
-      if (each.getIndex() < Integer.MAX_VALUE) {
-        index = each.getIndex() + 1;
-      }
-      else {
-        break;
-      }
-    }
-
+    final int index = myTabs.stream().mapToInt(x -> x.getIndex()).max().orElse(-1) + 1;
     return createNewTab(index);
   }
 
@@ -137,10 +129,10 @@ public class RunnerLayout  {
 
   @NotNull
   public Element read(@NotNull Element parentNode) {
-    List tabs = parentNode.getChildren(StringUtil.getShortName(TabImpl.class.getName()));
-    for (Object eachTabElement : tabs) {
-      TabImpl eachTab = new TabImpl((Element)eachTabElement);
-      getOrCreateTab(eachTab.getIndex()).read((Element)eachTabElement);
+    List<Element> tabs = parentNode.getChildren(StringUtil.getShortName(TabImpl.class.getName()));
+    for (Element eachTabElement : tabs) {
+      TabImpl eachTab = XmlSerializer.deserialize(eachTabElement, TabImpl.class);
+      XmlSerializer.deserializeInto(getOrCreateTab(eachTab.getIndex()), eachTabElement);
     }
 
     final List views = parentNode.getChildren(StringUtil.getShortName(ViewImpl.class.getName()));
@@ -157,16 +149,20 @@ public class RunnerLayout  {
   @NotNull
   public Element write(@NotNull Element parentNode) {
     for (ViewImpl eachState : myViews.values()) {
-      eachState.write(parentNode);
+      if (myLightWeightIds != null && myLightWeightIds.contains(eachState.getID())) {
+        continue;
+      }
+      parentNode.addContent(XmlSerializer.serialize(eachState));
     }
 
+    SkipDefaultValuesSerializationFilters filter = new SkipDefaultValuesSerializationFilters();
     for (TabImpl eachTab : myTabs) {
       if (isUsed(eachTab)) {
-        eachTab.write(parentNode);
+        parentNode.addContent(XmlSerializer.serialize(eachTab, filter));
       }
     }
 
-    parentNode.addContent(XmlSerializer.serialize(myGeneral));
+    parentNode.addContent(XmlSerializer.serialize(myGeneral, filter));
 
     return parentNode;
   }
@@ -191,7 +187,9 @@ public class RunnerLayout  {
   }
 
   public void clearStateFor(@NotNull Content content) {
-    final ViewImpl view = myViews.remove(getOrCreateContentId(content));
+    String id = getOrCreateContentId(content);
+    myDefaultViews.remove(id);
+    final ViewImpl view = myViews.remove(id);
     if (view != null) {
       final Tab tab = view.getTab();
       if (tab instanceof TabImpl) {
@@ -212,12 +210,11 @@ public class RunnerLayout  {
 
   @NotNull
   private ViewImpl getOrCreateView(@NotNull String id) {
-    if (myViews.containsKey(id)) {
-      return myViews.get(id);
+    ViewImpl view = myViews.get(id);
+    if (view == null) {
+      view = getOrCreateDefault(id).createView(this);
+      myViews.put(id, view);
     }
-    final ViewImpl.Default defaultView = getOrCreateDefault(id);
-    final ViewImpl view = defaultView.createView(this);
-    myViews.put(id, view);
     return view;
   }
 
@@ -261,6 +258,10 @@ public class RunnerLayout  {
     myDefaultFocus.put(condition, Pair.create(id, policy));
   }
 
+  void cancelDefaultFocusBy(@NotNull String condition) {
+    myDefaultFocus.remove(condition);
+  }
+
   @Nullable
   public String getToFocus(@NotNull String condition) {
     return myGeneral.focusOnCondition.containsKey(condition) ? myGeneral.focusOnCondition.get(condition) :
@@ -273,8 +274,18 @@ public class RunnerLayout  {
     return pair == null ? new LayoutAttractionPolicy.FocusOnce() : pair.getSecond();
   }
 
+  /**
+   * States of contents marked as "lightweight" won't be persisted
+   */
+  public void setLightWeight(Content content) {
+    if (myLightWeightIds == null) {
+      myLightWeightIds = new HashSet<>();
+    }
+    myLightWeightIds.add(getOrCreateContentId(content));
+  }
+
   public static class General {
     public volatile boolean horizontalToolbar = false;
-    public volatile Map<String, String> focusOnCondition = new HashMap<String, String>();
+    public volatile Map<String, String> focusOnCondition = new HashMap<>();
   }
 }

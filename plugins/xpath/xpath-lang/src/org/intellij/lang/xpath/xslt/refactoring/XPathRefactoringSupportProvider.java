@@ -49,7 +49,7 @@ public class XPathRefactoringSupportProvider extends RefactoringSupportProvider 
   }
 
   @Override
-  public boolean isInplaceRenameAvailable(PsiElement element, PsiElement context) {
+  public boolean isInplaceRenameAvailable(@NotNull PsiElement element, PsiElement context) {
     return element instanceof XsltVariable && element.getUseScope() instanceof LocalSearchScope;
   }
 
@@ -69,7 +69,7 @@ public class XPathRefactoringSupportProvider extends RefactoringSupportProvider 
   }
 
   @Override
-  public boolean isSafeDeleteAvailable(PsiElement element) {
+  public boolean isSafeDeleteAvailable(@NotNull PsiElement element) {
     return element instanceof XPathVariable ||
             element instanceof XsltTemplate;
   }

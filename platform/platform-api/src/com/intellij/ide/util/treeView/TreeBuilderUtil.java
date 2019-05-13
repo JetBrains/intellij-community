@@ -16,25 +16,30 @@
 
 package com.intellij.ide.util.treeView;
 
-import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.util.ui.tree.TreeUtil;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
+import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 public class TreeBuilderUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.util.treeView.TreeBuilderUtil");
 
-  public static void storePaths(AbstractTreeBuilder treeBuilder, DefaultMutableTreeNode root, List<Object> pathsToExpand, List<Object> selectionPaths, boolean storeElementsOnly) {
+  public static void storePaths(@NotNull AbstractTreeBuilder treeBuilder, @NotNull DefaultMutableTreeNode root, @NotNull List<Object> pathsToExpand, @NotNull List<Object> selectionPaths, boolean storeElementsOnly) {
     if (!treeBuilder.wasRootNodeInitialized()) return;
 
     JTree tree = treeBuilder.getTree();
+    if (tree != null) {
+      storePaths(tree, root, pathsToExpand, selectionPaths, storeElementsOnly);
+    }
+  }
+
+  public static void storePaths(@NotNull JTree tree, @NotNull DefaultMutableTreeNode root, @NotNull List<Object> pathsToExpand, @NotNull List<Object> selectionPaths, boolean storeElementsOnly) {
     TreePath path = new TreePath(root.getPath());
     if (tree.isPathSelected(path)){
       selectionPaths.add(storeElementsOnly ? ((NodeDescriptor)root.getUserObject()).getElement() : path);
@@ -45,8 +50,8 @@ public class TreeBuilderUtil {
     }
   }
 
-  private static void _storePaths(JTree tree, DefaultMutableTreeNode root, List<Object> pathsToExpand, List<Object> selectionPaths, boolean storeElementsOnly) {
-    ArrayList childNodes = TreeUtil.childrenToArray(root);
+  private static void _storePaths(@NotNull JTree tree, @NotNull DefaultMutableTreeNode root, @NotNull List<Object> pathsToExpand, @NotNull List<Object> selectionPaths, boolean storeElementsOnly) {
+    List<TreeNode> childNodes = TreeUtil.listChildren(root);
     for (final Object childNode1 : childNodes) {
       DefaultMutableTreeNode childNode = (DefaultMutableTreeNode)childNode1;
       TreePath path = new TreePath(childNode.getPath());
@@ -54,6 +59,7 @@ public class TreeBuilderUtil {
       if (tree.isPathSelected(path)) {
         if (!(userObject instanceof NodeDescriptor)) {
           LOG.error("Node: " + childNode + "; userObject: " + userObject + " of class " + userObject.getClass());
+          return;
         }
         selectionPaths.add(storeElementsOnly ? ((NodeDescriptor)userObject).getElement() : path);
       }
@@ -66,13 +72,13 @@ public class TreeBuilderUtil {
     }
   }
 
-  public static void restorePaths(AbstractTreeBuilder treeBuilder, List<Object> pathsToExpand, List<Object> selectionPaths, boolean elementsOnly) {
+  public static void restorePaths(@NotNull AbstractTreeBuilder treeBuilder, @NotNull List<Object> pathsToExpand, @NotNull List<Object> selectionPaths, boolean elementsOnly) {
     JTree tree = treeBuilder.getTree();
     if (!elementsOnly){
       for (Object path : pathsToExpand) {
         tree.expandPath((TreePath)path);
       }
-      tree.addSelectionPaths(selectionPaths.toArray(new TreePath[selectionPaths.size()]));
+      tree.addSelectionPaths(selectionPaths.toArray(new TreePath[0]));
     }
     else{
       for (Object element : pathsToExpand) {
@@ -92,15 +98,7 @@ public class TreeBuilderUtil {
     }
   }
 
-  public static boolean isNodeSelected(JTree tree, DefaultMutableTreeNode node){
-    TreePath[] selectionPaths = tree.getSelectionPaths();
-    return selectionPaths != null && selectionPaths.length != 0 &&
-           ContainerUtil.find(Arrays.asList(selectionPaths), new TreePath(node.getPath())) != null;
-
-  }
-
-
-  public static boolean isNodeOrChildSelected(JTree tree, DefaultMutableTreeNode node){
+  static boolean isNodeOrChildSelected(@NotNull JTree tree, @NotNull DefaultMutableTreeNode node){
     TreePath[] selectionPaths = tree.getSelectionPaths();
     if (selectionPaths == null || selectionPaths.length == 0) return false;
 

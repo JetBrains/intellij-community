@@ -15,6 +15,7 @@
  */
 package org.jetbrains.jps.model.java.impl;
 
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.model.java.*;
 import org.jetbrains.jps.model.library.JpsOrderRootType;
 import org.jetbrains.jps.model.module.JpsDependencyElement;
@@ -41,27 +42,31 @@ public class JpsJavaDependenciesEnumeratorImpl extends JpsDependenciesEnumerator
   public JpsJavaDependenciesEnumeratorImpl(Collection<JpsModule> rootModules) {
     super(rootModules);
     List<JpsJavaDependenciesEnumerationHandler> handlers = JpsJavaDependenciesEnumerationHandler.createHandlers(rootModules);
-    myHandlers = handlers != null ? handlers : Collections.<JpsJavaDependenciesEnumerationHandler>emptyList();
+    myHandlers = handlers != null ? handlers : Collections.emptyList();
   }
 
+  @NotNull
   @Override
   public JpsJavaDependenciesEnumerator productionOnly() {
     myProductionOnly = true;
     return this;
   }
 
+  @NotNull
   @Override
   public JpsJavaDependenciesEnumerator compileOnly() {
     myCompileOnly = true;
     return this;
   }
 
+  @NotNull
   @Override
   public JpsJavaDependenciesEnumerator runtimeOnly() {
     myRuntimeOnly = true;
     return this;
   }
 
+  @NotNull
   @Override
   public JpsJavaDependenciesEnumerator exportedOnly() {
     if (myRecursively) {
@@ -73,20 +78,35 @@ public class JpsJavaDependenciesEnumeratorImpl extends JpsDependenciesEnumerator
     return this;
   }
 
+  @NotNull
   @Override
-  public JpsJavaDependenciesEnumerator includedIn(JpsJavaClasspathKind classpathKind) {
+  public JpsJavaDependenciesEnumerator recursivelyExportedOnly() {
+    return recursively().exportedOnly();
+  }
+
+  @NotNull
+  @Override
+  public JpsJavaDependenciesEnumerator includedIn(@NotNull JpsJavaClasspathKind classpathKind) {
     myClasspathKind = classpathKind;
     return this;
   }
 
+  @NotNull
   @Override
   public JpsJavaDependenciesRootsEnumerator classes() {
     return new JpsJavaDependenciesRootsEnumeratorImpl(this, JpsOrderRootType.COMPILED);
   }
 
+  @NotNull
   @Override
   public JpsJavaDependenciesRootsEnumerator sources() {
     return new JpsJavaDependenciesRootsEnumeratorImpl(this, JpsOrderRootType.SOURCES);
+  }
+
+  @NotNull
+  @Override
+  public JpsJavaDependenciesRootsEnumerator annotations() {
+    return new JpsJavaDependenciesRootsEnumeratorImpl(this, JpsAnnotationRootType.INSTANCE);
   }
 
   @Override
@@ -123,7 +143,7 @@ public class JpsJavaDependenciesEnumeratorImpl extends JpsDependenciesEnumerator
     }
     if (!exported) {
       if (myExportedOnly) return false;
-      if (myRecursivelyExportedOnly && !isEnumerationRootModule(module)) return false;
+      if ((myRecursivelyExportedOnly || element instanceof JpsSdkDependency) && !isEnumerationRootModule(module)) return false;
     }
     return true;
   }

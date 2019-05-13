@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,14 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-/*
- * @author max
- */
 package com.intellij.psi.impl.java.stubs;
 
 import com.intellij.psi.*;
 
+/**
+ * @author max
+ */
 public abstract class StubPsiFactory {
   public abstract PsiClass createClass(PsiClassStub stub);
 
@@ -51,4 +50,24 @@ public abstract class StubPsiFactory {
   public abstract PsiAnnotationParameterList createAnnotationParameterList(PsiAnnotationParameterListStub stub);
 
   public abstract PsiNameValuePair createNameValuePair(PsiNameValuePairStub stub);
+
+  public PsiJavaModule createModule(PsiJavaModuleStub stub) {
+    return null;
+  }
+
+  public PsiRequiresStatement createRequiresStatement(PsiRequiresStatementStub stub) {
+    return null;
+  }
+
+  public PsiPackageAccessibilityStatement createPackageAccessibilityStatement(PsiPackageAccessibilityStatementStub stub) {
+    return null;
+  }
+
+  public PsiUsesStatement createUsesStatement(PsiUsesStatementStub stub) {
+    return null;
+  }
+
+  public PsiProvidesStatement createProvidesStatement(PsiProvidesStatementStub stub) {
+    return null;
+  }
 }

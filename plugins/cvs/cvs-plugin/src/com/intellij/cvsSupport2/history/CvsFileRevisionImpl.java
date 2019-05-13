@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.RepositoryLocation;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.netbeans.lib.cvsclient.command.log.LogInformation;
 import org.netbeans.lib.cvsclient.command.log.Revision;
@@ -53,13 +54,14 @@ public class CvsFileRevisionImpl extends CvsFileContent implements CvsFileRevisi
     return new GetFileContentOperation(cvsLightweightFile, cvsEnvironment, new SimpleRevision(revisionNumber));
   }
 
+  @Override
   public Collection<String> getBranches() {
     return getBranchList(true);
   }
 
   private Collection<String> getBranchList(final boolean includeRevisionNumbers) {
-    final ArrayList<String> result = new ArrayList<String>();
-    final Set<SymbolicName> processedSymbolicNames = new HashSet<SymbolicName>();
+    final ArrayList<String> result = new ArrayList<>();
+    final Set<SymbolicName> processedSymbolicNames = new HashSet<>();
 
     final String branches = myCvsRevision.getBranches();
     if (branches != null && branches.length() != 0) {
@@ -81,10 +83,9 @@ public class CvsFileRevisionImpl extends CvsFileContent implements CvsFileRevisi
       }
     }
     // IDEADEV-15186 - show branch name for just created branch with no revisions yet
-    //noinspection unchecked
     final List<SymbolicName> symNames = myLogInformation.getAllSymbolicNames();
     for (final SymbolicName symName : symNames) {
-      if (StringUtil.startsWithConcatenationOf(symName.getRevision(), myCvsRevision.getNumber(), ".") &&
+      if (StringUtil.startsWithConcatenation(symName.getRevision(), myCvsRevision.getNumber(), ".") &&
           !processedSymbolicNames.contains(symName)) {
         CvsRevisionNumber number = new CvsRevisionNumber(symName.getRevision().trim());
         final int[] subRevisions = number.getSubRevisions();
@@ -118,10 +119,12 @@ public class CvsFileRevisionImpl extends CvsFileContent implements CvsFileRevisi
     return myLogInformation.getSymNamesForRevision(symRevNumber.asString());
   }
 
+  @Override
   public String getAuthor() {
     return myCvsRevision.getAuthor();
   }
 
+  @Override
   public String getState() {
     return myCvsRevision.getState();
   }
@@ -132,16 +135,16 @@ public class CvsFileRevisionImpl extends CvsFileContent implements CvsFileRevisi
     return null;
   }
 
+  @Override
   public Collection<String> getTags() {
     if (myTags == null) {
-      myTags = myLogInformation == null ? Collections.<String>emptyList() : collectSymNamesForRevision();
+      myTags = myLogInformation == null ? Collections.emptyList() : collectSymNamesForRevision();
     }
     return myTags;
   }
 
   private List<String> collectSymNamesForRevision() {
-    ArrayList<String> result = new ArrayList<String>();
-    //noinspection unchecked
+    ArrayList<String> result = new ArrayList<>();
     List<SymbolicName> symNames = myLogInformation.getSymNamesForRevision(myCvsRevision.getNumber());
     for (final SymbolicName symName : symNames) {
       result.add(symName.getName());
@@ -149,6 +152,8 @@ public class CvsFileRevisionImpl extends CvsFileContent implements CvsFileRevisi
     return result;
   }
 
+  @Override
+  @NotNull
   public VcsRevisionNumber getRevisionNumber() {
     if (myCvsRevision != null) {
       return new CvsRevisionNumber(myCvsRevision.getNumber());
@@ -157,10 +162,12 @@ public class CvsFileRevisionImpl extends CvsFileContent implements CvsFileRevisi
     return number == null ? VcsRevisionNumber.NULL : number;
   }
 
+  @Override
   public Date getRevisionDate() {
     return myCvsRevision.getDate();
   }
 
+  @Override
   public String getCommitMessage() {
     return myCvsRevision.getMessage();
   }
@@ -169,6 +176,7 @@ public class CvsFileRevisionImpl extends CvsFileContent implements CvsFileRevisi
     return getRevisionNumber().asString();
   }
 
+  @Override
   public String getBranchName() {
     return StringUtil.join(getBranchList(false), ", ");
   }

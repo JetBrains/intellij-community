@@ -14,80 +14,91 @@
  * limitations under the License.
  */
 
-/*
- * Created by IntelliJ IDEA.
- * User: amrk
- * Date: Jul 26, 2005
- * Time: 7:33:45 PM
- */
 package com.theoryinpractice.testng.model;
 
+import com.intellij.ui.JBColor;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.ListTableModel;
 
+import javax.swing.*;
+import javax.swing.table.TableCellEditor;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
-public class TestNGParametersTableModel extends ListTableModel<Map.Entry>
+public class TestNGParametersTableModel extends ListTableModel<Map.Entry<String, String>>
 {
 
-    private ArrayList<Map.Entry> parameterList;
+    private ArrayList<Map.Entry<String, String>> parameterList;
 
     public TestNGParametersTableModel() {
         super(
-                new ColumnInfo("Name")
+                new ColumnInfo<Map.Entry<String, String>, String>("Name")
                 {
-                    public Object valueOf(Object object) {
-                        Map.Entry entry = (Map.Entry) object;
-                        return entry.getKey();
+                    @Override
+                    public String valueOf(Map.Entry<String, String> object) {
+                        return object.getKey();
+                    }
+
+                    @Override
+                    public TableCellEditor getEditor(final Map.Entry<String, String>  item) {
+                        final JTextField textField = new JTextField();
+                        textField.setBorder(BorderFactory.createLineBorder(JBColor.BLACK));
+                        return new DefaultCellEditor(textField);
                     }
                 },
-                new ColumnInfo("Value")
+                new ColumnInfo<Map.Entry<String, String>, String>("Value")
                 {
-                    public Object valueOf(Object object) {
-                        Map.Entry entry = (Map.Entry) object;
-                        return entry.getValue();
+                    @Override
+                    public String valueOf(Map.Entry<String, String> object) {
+                        return object.getValue();
+                    }
+
+                    @Override
+                    public TableCellEditor getEditor(final Map.Entry<String, String>  item) {
+                        final JTextField textField = new JTextField();
+                        textField.setBorder(BorderFactory.createLineBorder(JBColor.BLACK));
+                        return new DefaultCellEditor(textField);
                     }
                 }
         );
     }
 
+    @Override
     public boolean isCellEditable(int rowIndex, int columnIndex) {
         return true;
     }
 
-    public void setParameterList(ArrayList<Map.Entry> parameterList) {
+    public void setParameterList(ArrayList<Map.Entry<String, String>> parameterList) {
         this.parameterList = parameterList;
         setItems(parameterList);
     }
 
     public void addParameter() {
-        Map map = new HashMap();
+        Map<String, String> map = new HashMap<>();
         map.put("", "");
         parameterList.addAll(map.entrySet());
         setParameterList(parameterList);
     }
 
+    @Override
     public void setValueAt(Object aValue, int rowIndex, int columnIndex) {
-        Map.Entry entry = parameterList.get(rowIndex);
-        parameterList.remove(rowIndex);
-
-        Object key = entry.getKey();
-        Object value = entry.getValue();
+        Map.Entry<String, String> entry = parameterList.get(rowIndex);
+        String key = entry.getKey();
+        String value = entry.getValue();
 
         switch (columnIndex) {
             case 0:
-                key = aValue;
+                key = (String)aValue;
                 break;
             case 1:
-                value = aValue;
+                value = (String)aValue;
                 break;
         }
 
-        Map map = new HashMap();
+        Map<String, String> map = new HashMap<>();
         map.put(key, value);
-        parameterList.addAll(map.entrySet());
+        parameterList.set(rowIndex, map.entrySet().iterator().next());
         setParameterList(parameterList);
     }
 

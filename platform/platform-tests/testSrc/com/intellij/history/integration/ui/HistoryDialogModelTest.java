@@ -22,9 +22,7 @@ import com.intellij.history.integration.revertion.Reverter;
 import com.intellij.history.integration.ui.models.HistoryDialogModel;
 import com.intellij.history.integration.ui.models.RevisionItem;
 import com.intellij.openapi.vfs.VirtualFile;
-import org.junit.Test;
 
-import java.io.IOException;
 import java.util.List;
 
 public class HistoryDialogModelTest extends IntegrationTestCase {
@@ -50,7 +48,6 @@ public class HistoryDialogModelTest extends IntegrationTestCase {
     initModelFor();
   }
 
-  @Test
   public void testRevisionsList() {
     List<RevisionItem> rr = m.getRevisions();
 
@@ -60,15 +57,13 @@ public class HistoryDialogModelTest extends IntegrationTestCase {
     assertEquals("1", rr.get(2).revision.getChangeSetName());
   }
 
-  @Test
-  public void testDoesNotRecomputeRevisionsEveryTime() throws IOException {
+  public void testDoesNotRecomputeRevisionsEveryTime() {
     assertEquals(3, m.getRevisions().size());
 
     setContent(f, "xxx");
     assertEquals(3, m.getRevisions().size());
   }
 
-  @Test
   public void testRegisteringUnsavedDocumentsBeforeBuildingRevisionsList() {
     setDocumentTextFor(f, "unsaved");
     initModelFor();
@@ -80,14 +75,12 @@ public class HistoryDialogModelTest extends IntegrationTestCase {
     assertContent("unsaved", rr.get(0).findEntry());
   }
 
-  @Test
   public void testSelectingLastRevisionByDefault() {
     String leftChangeName = "3";
     String rightChangeName = "3";
     assertSelectedRevisins(leftChangeName, rightChangeName);
   }
 
-  @Test
   public void testSelectingOnlyOneRevisionSetsRightToLastOne() {
     m.selectRevisions(0, 0);
     assertSelectedRevisins("3", null);
@@ -96,7 +89,6 @@ public class HistoryDialogModelTest extends IntegrationTestCase {
     assertSelectedRevisins("2", null);
   }
 
-  @Test
   public void testSelectingTwoRevisions() {
     m.selectRevisions(0, 1);
     assertSelectedRevisins("2", "3");
@@ -105,13 +97,11 @@ public class HistoryDialogModelTest extends IntegrationTestCase {
     assertSelectedRevisins("1", "2");
   }
 
-  @Test
   public void testClearingSelectionSetsRevisionsToLastOnes() {
     m.selectRevisions(-1, -1);
     assertSelectedRevisins("3", null);
   }
 
-  @Test
   public void testIsCurrentRevisionSelected() {
     m.selectRevisions(1, 2);
     assertFalse(m.isCurrentRevisionSelected());
@@ -123,7 +113,6 @@ public class HistoryDialogModelTest extends IntegrationTestCase {
     assertTrue(m.isCurrentRevisionSelected());
   }
 
-  @Test
   public void testIsRevertEnabledForRevision() {
     m.selectRevisions(1, 1);
     assertTrue(m.isRevertEnabled());
@@ -144,7 +133,6 @@ public class HistoryDialogModelTest extends IntegrationTestCase {
     assertTrue(m.isRevertEnabled());
   }
 
-  @Test
   public void testIsCreatePatchEnabledForRevision() {
     m.selectRevisions(1, 1);
     assertTrue(m.isCreatePatchEnabled());

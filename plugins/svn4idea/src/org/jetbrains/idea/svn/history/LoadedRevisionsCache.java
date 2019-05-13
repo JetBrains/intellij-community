@@ -1,34 +1,19 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.history;
 
-import com.intellij.lifecycle.PeriodicalTasksCloser;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vcs.RepositoryLocation;
-import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.committed.ChangesBunch;
+import com.intellij.openapi.vcs.changes.committed.CommittedChangesAdapter;
 import com.intellij.openapi.vcs.changes.committed.CommittedChangesCache;
-import com.intellij.openapi.vcs.changes.committed.CommittedChangesListener;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
-import com.intellij.util.containers.SoftHashMap;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
@@ -43,39 +28,24 @@ public class LoadedRevisionsCache implements Disposable {
   private final MessageBusConnection myConnection;
 
   public static LoadedRevisionsCache getInstance(final Project project) {
-    return PeriodicalTasksCloser.getInstance().safeGetService(project, LoadedRevisionsCache.class);
+    return ServiceManager.getService(project, LoadedRevisionsCache.class);
   }
 
   private LoadedRevisionsCache(final Project project) {
     myProject = project;
-    myMap = (ApplicationManager.getApplication().isUnitTestMode()) ? new HashMap<String, Bunch>() : new SoftHashMap<String, Bunch>();
+    myMap = (ApplicationManager.getApplication().isUnitTestMode()) ? new HashMap<>() : ContainerUtil.createSoftMap();
 
     myConnection = project.getMessageBus().connect();
-    myConnection.subscribe(CommittedChangesCache.COMMITTED_TOPIC, new CommittedChangesListener() {
+    myConnection.subscribe(CommittedChangesCache.COMMITTED_TOPIC, new CommittedChangesAdapter() {
+
+      @Override
       public void changesLoaded(final RepositoryLocation location, final List<CommittedChangeList> changes) {
-        ApplicationManager.getApplication().invokeLater(new Runnable() {
-          public void run() {
-            myMap.clear();
-            setRefreshTime(System.currentTimeMillis());
-          }
+        ApplicationManager.getApplication().invokeLater(() -> {
+          myMap.clear();
+          setRefreshTime(System.currentTimeMillis());
         });
       }
-
-      @Override
-      public void changesCleared() {
-      }
-
-      @Override
-      public void presentationChanged() {
-      }
-
-      public void incomingChangesUpdated(@Nullable final List<CommittedChangeList> receivedChanges) {
-      }
-
-      public void refreshErrorStatusChanged(@Nullable final VcsException lastError) {
-      }
     });
-    Disposer.register(myProject, this);
     setRefreshTime(0);
   }
 
@@ -90,18 +60,21 @@ public class LoadedRevisionsCache implements Disposable {
       myRefreshTime = refreshTime;
     }
   }
-  
-  private void debugInfo(final List<CommittedChangeList> data, final boolean consistentWithPrevious, final Bunch bindTo) {
+
+  private static void debugInfo(@NotNull List<CommittedChangeList> data, final boolean consistentWithPrevious, final Bunch bindTo) {
     LOG.debug(">>> cache internal >>> consistent: " + consistentWithPrevious + " bindTo: " + bindTo +
              " oldest list: " + data.get(data.size() - 1).getNumber() + ", youngest list: " + data.get(0).getNumber());
   }
 
+  @Override
   public void dispose() {
+    // TODO: Seems that dispose could be removed as connection will be disposed anyway on project dispose and clearing map is not necessary
     myConnection.disconnect();
     myMap.clear();
   }
 
-  private List<List<CommittedChangeList>> split(final List<CommittedChangeList> list, final int size) {
+  @NotNull
+  private static List<List<CommittedChangeList>> split(final List<CommittedChangeList> list, final int size) {
     final int listSize = list.size();
     if (listSize < size) {
       return Collections.singletonList(list);
@@ -110,7 +83,7 @@ public class LoadedRevisionsCache implements Disposable {
 
     int start = 0;
     int end = (first == 0) ? (Math.min(listSize, size)) : first;
-    final List<List<CommittedChangeList>> result = new ArrayList<List<CommittedChangeList>>(listSize / size + 1);
+    final List<List<CommittedChangeList>> result = new ArrayList<>(listSize / size + 1);
     while (start < listSize) {
       result.add(list.subList(start, end));
       start = end;
@@ -179,11 +152,13 @@ public class LoadedRevisionsCache implements Disposable {
       }
     }
 
+    @Override
     public boolean hasNext() {
       checkValidity();
       return myBunch != null;
     }
 
+    @Override
     public ChangesBunch next() {
       checkValidity();
       final Bunch current = myBunch;
@@ -191,6 +166,7 @@ public class LoadedRevisionsCache implements Disposable {
       return current;
     }
 
+    @Override
     public void remove() {
       throw new UnsupportedOperationException();
     }

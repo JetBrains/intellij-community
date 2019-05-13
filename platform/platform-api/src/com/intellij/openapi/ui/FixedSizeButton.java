@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package com.intellij.openapi.ui;
 
 import com.intellij.icons.AllIcons;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -23,11 +24,11 @@ import javax.swing.*;
 import java.awt.*;
 
 /**
- * This class represents non resizable, nonfocusable button with the
+ * This class represents non-resizable, non-focusable button with the
  * same height and length.
  */
 public class FixedSizeButton extends JButton {
-  private final int mySize;
+  private int mySize;
   private JComponent myComponent;
 
   public FixedSizeButton() {
@@ -45,19 +46,19 @@ public class FixedSizeButton extends JButton {
     }
     mySize = size;
     myComponent = component;
-    setMargin(new Insets(0, 0, 0, 0));
+    setMargin(JBUI.emptyInsets());
     setDefaultCapable(false);
     setFocusable(false);
-    if (UIUtil.isUnderAquaLookAndFeel() && size == -1) {
+    if (((UIUtil.isUnderAquaLookAndFeel()) && size == -1) || UIUtil.isUnderIntelliJLaF() || UIUtil.isUnderDarcula()) {
       putClientProperty("JButton.buttonType", "square");
     }
   }
 
   /**
-   * Creates the <code>FixedSizeButton</code> with specified size.
+   * Creates the {@code FixedSizeButton} with specified size.
    *
-   * @throws java.lang.IllegalArgumentException
-   *          if <code>size</code> isn't
+   * @throws IllegalArgumentException
+   *          if {@code size} isn't
    *          positive integer number.
    */
   public FixedSizeButton(int size) {
@@ -68,33 +69,38 @@ public class FixedSizeButton extends JButton {
   }
 
   /**
-   * Creates the <code>FixedSizeButton</code> which size is equals to
-   * <code>component.getPreferredSize().height</code>. It is very convenient
+   * Creates the {@code FixedSizeButton} which size is equals to
+   * {@code component.getPreferredSize().height}. It is very convenient
    * way to create "browse" like button near the text fields.
    */
   public FixedSizeButton(@NotNull JComponent component) {
     this(-1, component);
   }
 
+  @Override
   public Dimension getMinimumSize() {
     return getPreferredSize();
   }
 
+  @Override
   public Dimension getMaximumSize() {
     return getPreferredSize();
   }
 
+  @Override
   public Dimension getPreferredSize() {
-    if (myComponent != null) {
-      int size = myComponent.getPreferredSize().height;
-      return new Dimension(size, size);
-    }
-    else if (mySize != -1) {
+    if (mySize != -1) {
       return new Dimension(mySize, mySize);
     }
-    else {
-      return super.getPreferredSize();
-    }
+
+    Dimension d = super.getPreferredSize();
+    int base = new JTextField().getPreferredSize().height;
+    if (base %2 == 1) base++;
+    d.width = Math.max(d.height, base);
+    int width = mySize == -1 ? d.width : mySize;
+    int height = myComponent != null ? myComponent.getPreferredSize().height : mySize != -1 ? mySize : base;
+
+    return new Dimension(width, height);
   }
 
   public void setAttachedComponent(JComponent component) {
@@ -102,8 +108,10 @@ public class FixedSizeButton extends JButton {
   }
 
   public JComponent getAttachedComponent() {
-
     return myComponent;
   }
-}
 
+  public void setSize(int size) {
+    mySize = size;
+  }
+}

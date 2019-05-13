@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,7 +31,7 @@ import java.util.Map;
  */
 public class CustomizingReferenceProvider extends PsiReferenceProvider implements CustomizableReferenceProvider {
   private final CustomizableReferenceProvider myProvider;
-  private @Nullable Map<CustomizationKey, Object> myOptions;
+  @Nullable private Map<CustomizationKey, Object> myOptions;
 
   public CustomizingReferenceProvider(@NotNull CustomizableReferenceProvider provider) {
     myProvider = provider;
@@ -39,7 +39,7 @@ public class CustomizingReferenceProvider extends PsiReferenceProvider implement
   
   public <Option> void addCustomization(CustomizableReferenceProvider.CustomizationKey<Option> key, Option value) {
     if (myOptions == null) {
-      myOptions = new HashMap<CustomizationKey, Object>(5);
+      myOptions = new HashMap<>(5);
     }
     myOptions.put(key,value);
   }

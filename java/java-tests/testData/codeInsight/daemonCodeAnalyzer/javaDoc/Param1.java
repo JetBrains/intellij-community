@@ -1,6 +1,6 @@
 class Test {
     /**
-     *  @param<EOLWarning/>
+     *  <warning descr="Parameter name expected">@param</warning>
      */
     public void foo() {
     }

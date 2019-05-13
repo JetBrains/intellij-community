@@ -15,6 +15,7 @@
  */
 package org.jetbrains.idea.maven.utils;
 
+import com.intellij.util.PatternUtil;
 import org.jetbrains.annotations.NonNls;
 
 import java.util.ArrayList;
@@ -29,7 +30,7 @@ public class Strings {
   @NonNls public static final String WHITESPACE = " \t\n\r\f";
 
   public static List<String> tokenize(final String string, final String delim) {
-    final List<String> tokens = new ArrayList<String>();
+    final List<String> tokens = new ArrayList<>();
     for (StringTokenizer tokenizer = new StringTokenizer(string, delim); tokenizer.hasMoreTokens(); ) {
       tokens.add(tokenizer.nextToken());
     }
@@ -53,12 +54,9 @@ public class Strings {
       if (patterns.length() != 0) {
         patterns.append('|');
       }
-      patterns.append(translateToRegex(mask));
+      patterns.append(PatternUtil.convertToRegex(mask));
     }
     return patterns.toString();
   }
 
-  private static String translateToRegex(final String mask) {
-    return mask.replaceAll("\\.", "\\.").replaceAll("\\*", ".*").replaceAll("\\?", ".");
-  }
 }

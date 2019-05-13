@@ -15,37 +15,37 @@
  */
 package com.intellij.application.options.codeStyle.arrangement.action;
 
-import com.intellij.application.options.codeStyle.arrangement.ArrangementConstants;
 import com.intellij.application.options.codeStyle.arrangement.match.ArrangementMatchingRulesControl;
 import com.intellij.application.options.codeStyle.arrangement.match.ArrangementMatchingRulesModel;
 import com.intellij.application.options.codeStyle.arrangement.match.EmptyArrangementRuleComponent;
-import com.intellij.icons.AllIcons;
-import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.project.DumbAware;
-import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.util.IconUtil;
 import gnu.trove.TIntArrayList;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Denis Zhdanov
- * @since 8/24/12 1:54 PM
  */
-public class AddArrangementRuleAction extends AnAction implements DumbAware {
+public class AddArrangementRuleAction extends AbstractArrangementRuleAction implements DumbAware {
   
   public AddArrangementRuleAction() {
     getTemplatePresentation().setText(ApplicationBundle.message("arrangement.action.rule.add.text"));
     getTemplatePresentation().setDescription(ApplicationBundle.message("arrangement.action.rule.add.description"));
+    getTemplatePresentation().setIcon(IconUtil.getAddIcon());
+    setEnabledInModalContext(true);
   }
 
   @Override
-  public void update(AnActionEvent e) {
-    e.getPresentation().setIcon(SystemInfoRt.isMac ? AllIcons.ToolbarDecorator.Mac.Add : AllIcons.ToolbarDecorator.Add);
+  public void update(@NotNull AnActionEvent e) {
+    ArrangementMatchingRulesControl control = getRulesControl(e);
+    e.getPresentation().setEnabled(control != null);
   }
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
-    ArrangementMatchingRulesControl control = ArrangementConstants.MATCHING_RULES_CONTROL_KEY.getData(e.getDataContext());
+  public void actionPerformed(@NotNull AnActionEvent e) {
+    ArrangementMatchingRulesControl control = getRulesControl(e);
     if (control == null) {
       return;
     }
@@ -56,13 +56,23 @@ public class AddArrangementRuleAction extends AnAction implements DumbAware {
     int rowToEdit;
     if (rows.size() == 1) {
       rowToEdit = rows.get(0) + 1;
-      model.insertRow(rowToEdit, new Object[] { new EmptyArrangementRuleComponent(control.getEmptyRowHeight()) });
+      model.insertRow(rowToEdit, new Object[] {createNewRule(control)});
     }
     else {
       rowToEdit = model.getSize();
-      model.add(new EmptyArrangementRuleComponent(control.getEmptyRowHeight()));
+      model.add(createNewRule(control));
     }
-    control.showEditor(rowToEdit);
+    showEditor(control, rowToEdit);
     control.getSelectionModel().setSelectionInterval(rowToEdit, rowToEdit);
+    scrollRowToVisible(control, rowToEdit);
+  }
+
+  @NotNull
+  protected Object createNewRule(@NotNull ArrangementMatchingRulesControl control) {
+    return new EmptyArrangementRuleComponent(control.getEmptyRowHeight());
+  }
+
+  protected void showEditor(@NotNull ArrangementMatchingRulesControl control, int rowToEdit) {
+    control.showEditor(rowToEdit);
   }
 }

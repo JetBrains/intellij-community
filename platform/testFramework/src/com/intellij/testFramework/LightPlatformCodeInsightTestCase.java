@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,96 +15,95 @@
  */
 package com.intellij.testFramework;
 
-import com.intellij.codeInsight.generation.CommentByLineCommentHandler;
+import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
+import com.intellij.codeInsight.highlighting.HighlightUsagesHandler;
 import com.intellij.ide.DataManager;
 import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.injected.editor.EditorWindow;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.injected.editor.VirtualFileWindow;
+import com.intellij.lang.injection.InjectedLanguageManager;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.command.CommandProcessor;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.*;
-import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
+import com.intellij.openapi.command.WriteCommandAction;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.actionSystem.EditorActionManager;
+import com.intellij.openapi.editor.actionSystem.TypedAction;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.impl.DocumentImpl;
 import com.intellij.openapi.editor.impl.EditorImpl;
+import com.intellij.openapi.editor.impl.TrailingSpacesStripper;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
-import com.intellij.openapi.fileEditor.impl.TrailingSpacesStripper;
-import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
-import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.encoding.EncodingProjectManager;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.rt.execution.junit.FileComparisonFailure;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.runners.Parameterized;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTestCase {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.testFramework.LightCodeInsightTestCase");
-
   protected static Editor myEditor;
   protected static PsiFile myFile;
   protected static VirtualFile myVFile;
 
-  private static final String CARET_MARKER = "<caret>";
-  @NonNls private static final String SELECTION_START_MARKER = "<selection>";
-  @NonNls private static final String SELECTION_END_MARKER = "</selection>";
-
   @Override
   protected void runTest() throws Throwable {
-    final Throwable[] throwable = {null};
-    Runnable action = new Runnable() {
-      @Override
-      public void run() {
-        CommandProcessor.getInstance().executeCommand(getProject(), new Runnable() {
-          @Override
-          public void run() {
-
-            try {
-              doRunTest();
-            }
-            catch (Throwable t) {
-              throwable[0] = t;
-            }
-          }
-        }, "", null);
-      }
-    };
     if (isRunInWriteAction()) {
-      ApplicationManager.getApplication().runWriteAction(action);
+      WriteCommandAction.runWriteCommandAction(getProject(), (ThrowableComputable<Void, Throwable>)() -> {
+        doRunTest();
+        return null;
+      });
     }
     else {
-      action.run();
-    }
-
-    if (throwable[0] != null) {
-      throw throwable[0];
+      Ref<Throwable> e = new Ref<>();
+      CommandProcessor.getInstance().executeCommand(getProject(), () -> {
+        try {
+          doRunTest();
+        }
+        catch (Throwable throwable) {
+          e.set(throwable);
+        }
+      }, null, null);
+      if (e.get() != null) throw e.get();
     }
   }
 
   protected void doRunTest() throws Throwable {
-    LightPlatformCodeInsightTestCase.super.runTest();
+    super.runTest();
   }
 
   protected boolean isRunInWriteAction() {
-    return true;
+    return false;
   }
 
   /**
@@ -112,16 +111,13 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
    * has &lt;caret&gt; marker where caret should be placed when file is loaded in editor and &lt;selection&gt;&lt;/selection&gt;
    * denoting selection bounds.
    * @param filePath - relative path from %IDEA_INSTALLATION_HOME%/testData/
-   * @throws Exception
    */
   protected void configureByFile(@TestDataFile @NonNls @NotNull String filePath) {
     try {
       String fullPath = getTestDataPath() + filePath;
-
       final File ioFile = new File(fullPath);
-      String fileText = FileUtil.loadFile(ioFile, CharsetToolkit.UTF8);
-      fileText = StringUtil.convertLineSeparators(fileText);
-
+      checkCaseSensitiveFS(fullPath, ioFile);
+      String fileText = FileUtilRt.loadFile(ioFile, CharsetToolkit.UTF8, true);
       configureFromFileText(ioFile.getName(), fileText);
     }
     catch (IOException e) {
@@ -129,92 +125,95 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
     }
   }
 
+  private static void checkCaseSensitiveFS(String fullOrRelativePath, File ioFile) throws IOException {
+    fullOrRelativePath = FileUtil.toSystemDependentName(FileUtil.toCanonicalPath(fullOrRelativePath));
+    if (!ioFile.getCanonicalPath().endsWith(fullOrRelativePath)) {
+      throw new RuntimeException("Search for: " + fullOrRelativePath + "; but found: " + ioFile.getCanonicalPath());
+    }
+  }
+
   @NonNls
   @NotNull
   protected String getTestDataPath() {
+    if (myTestDataPath != null) {
+      return myTestDataPath;
+    }
     return PathManagerEx.getTestDataPath();
+  }
+
+  @NotNull
+  protected VirtualFile getVirtualFile(@NonNls @NotNull String filePath) {
+    String fullPath = getTestDataPath() + filePath;
+
+    final VirtualFile vFile = LocalFileSystem.getInstance().findFileByPath(fullPath.replace(File.separatorChar, '/'));
+    assertNotNull("file " + fullPath + " not found", vFile);
+    return vFile;
   }
 
   /**
    * Same as configureByFile but text is provided directly.
    * @param fileName - name of the file.
    * @param fileText - data file text.
-   * @throws java.io.IOException
    */
   @NotNull
-  protected static Document configureFromFileText(@NonNls @NotNull final String fileName, @NonNls @NotNull final String fileText) throws IOException {
-    return ApplicationManager.getApplication().runWriteAction(new Computable<Document>() {
-      @Override
-      public Document compute() {
-        if (myVFile != null) {
-          // avoid messing with invalid files, in case someone calls configureXXX() several times
-          PsiDocumentManager.getInstance(ourProject).commitAllDocuments();
-          FileEditorManager.getInstance(ourProject).closeFile(myVFile);
-          try {
-            myVFile.delete(this);
-          }
-          catch (IOException e) {
-            LOG.error(e);
-          }
-          myVFile = null;
-        }
-        final Document fakeDocument = new DocumentImpl(fileText);
+  protected static Document configureFromFileText(@NonNls @NotNull final String fileName, @NonNls @NotNull final String fileText) {
+    return configureFromFileText(fileName, fileText, false);
+  }
 
-        int caretIndex = fileText.indexOf(CARET_MARKER);
-        int selStartIndex = fileText.indexOf(SELECTION_START_MARKER);
-        int selEndIndex = fileText.indexOf(SELECTION_END_MARKER);
+  /**
+   * Same as configureByFile but text is provided directly.
+   * @param fileName - name of the file.
+   * @param fileText - data file text.
+   * @param checkCaret - if true, if will be verified that file contains at least one caret or selection marker
+   */
+  @NotNull
+  protected static Document configureFromFileText(@NonNls @NotNull final String fileName,
+                                                  @NonNls @NotNull final String fileText,
+                                                  boolean checkCaret) {
+    return WriteCommandAction.writeCommandAction(null).compute(() -> {
+      final Document fakeDocument = new DocumentImpl(fileText);
 
-        final RangeMarker caretMarker = caretIndex >= 0 ? fakeDocument.createRangeMarker(caretIndex, caretIndex) : null;
-        final RangeMarker selStartMarker = selStartIndex >= 0 ? fakeDocument.createRangeMarker(selStartIndex, selStartIndex) : null;
-        final RangeMarker selEndMarker = selEndIndex >= 0 ? fakeDocument.createRangeMarker(selEndIndex, selEndIndex) : null;
-
-        if (caretMarker != null) {
-          fakeDocument.deleteString(caretMarker.getStartOffset(), caretMarker.getStartOffset() + CARET_MARKER.length());
-        }
-        if (selStartMarker != null) {
-          fakeDocument.deleteString(selStartMarker.getStartOffset(),
-                                    selStartMarker.getStartOffset() + SELECTION_START_MARKER.length());
-        }
-        if (selEndMarker != null) {
-          fakeDocument.deleteString(selEndMarker.getStartOffset(),
-                                    selEndMarker.getStartOffset() + SELECTION_END_MARKER.length());
-        }
-
-        String newFileText = fakeDocument.getText();
-        Document document;
-        try {
-          document = setupFileEditorAndDocument(fileName, newFileText);
-        }
-        catch (IOException e) {
-          throw new RuntimeException(e);
-        }
-        setupCaret(caretMarker, newFileText);
-        setupSelection(selStartMarker, selEndMarker);
-        setupEditorForInjectedLanguage();
-        return document;
+      EditorTestUtil.CaretAndSelectionState caretsState = EditorTestUtil.extractCaretAndSelectionMarkers(fakeDocument);
+      if (checkCaret) {
+        assertTrue("No caret specified in " + fileName, caretsState.hasExplicitCaret());
       }
+
+      String newFileText = fakeDocument.getText();
+      Document document;
+      try {
+        document = setupFileEditorAndDocument(fileName, newFileText);
+      }
+      catch (IOException e) {
+        throw new RuntimeException(e);
+      }
+      EditorTestUtil.setCaretsAndSelection(myEditor, caretsState);
+      setupEditorForInjectedLanguage();
+      return document;
     });
   }
 
-  private static void setupSelection(final RangeMarker selStartMarker, final RangeMarker selEndMarker) {
-    if (selStartMarker != null) {
-      myEditor.getSelectionModel().setSelection(selStartMarker.getStartOffset(), selEndMarker.getStartOffset());
-    }
+  @NotNull
+  protected static Editor configureFromFileTextWithoutPSI(@NonNls @NotNull final String fileText) {
+    return WriteCommandAction.writeCommandAction(getProject()).compute(() -> {
+      final Document fakeDocument = EditorFactory.getInstance().createDocument(fileText);
+      EditorTestUtil.CaretAndSelectionState caretsState = EditorTestUtil.extractCaretAndSelectionMarkers(fakeDocument);
+
+      String newFileText = fakeDocument.getText();
+      Document document = EditorFactory.getInstance().createDocument(newFileText);
+      final Editor editor = EditorFactory.getInstance().createEditor(document, getProject());
+      ((EditorImpl)editor).setCaretActive();
+
+      EditorTestUtil.setCaretsAndSelection(editor, caretsState);
+      return editor;
+    });
   }
 
-  private static void setupCaret(final RangeMarker caretMarker, String fileText) {
-    if (caretMarker != null) {
-      int caretLine = StringUtil.offsetToLineNumber(fileText, caretMarker.getStartOffset());
-      int caretCol = EditorUtil.calcColumnNumber(null, myEditor.getDocument().getText(),
-                                                 myEditor.getDocument().getLineStartOffset(caretLine), caretMarker.getStartOffset(),
-                                                 CodeStyleSettingsManager.getSettings(getProject()).getIndentOptions(StdFileTypes.JAVA).TAB_SIZE);
-      LogicalPosition pos = new LogicalPosition(caretLine, caretCol);
-      myEditor.getCaretModel().moveToLogicalPosition(pos);
-    }
-  }
-
+  @NotNull
   protected static Editor createEditor(@NotNull VirtualFile file) {
+    PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
     Editor editor = FileEditorManager.getInstance(getProject()).openTextEditor(new OpenFileDescriptor(getProject(), file, 0), false);
+    DaemonCodeAnalyzer.getInstance(getProject()).restart();
+    assertNotNull(editor);
     ((EditorImpl)editor).setCaretActive();
     return editor;
   }
@@ -225,254 +224,200 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
     EncodingProjectManager.getInstance(ProjectManager.getInstance().getDefaultProject()).setEncoding(null, CharsetToolkit.UTF8_CHARSET);
     PostprocessReformattingAspect.getInstance(ourProject).doPostponedFormatting();
     deleteVFile();
-    myVFile = getSourceRoot().createChildData(null, fileName);
-    VfsUtil.saveText(myVFile, fileText);
-    final FileDocumentManager manager = FileDocumentManager.getInstance();
-    final Document document = manager.getDocument(myVFile);
-    assertNotNull("Can't create document for '" + fileName + "'", document);
-    manager.reloadFromDisk(document);
-    document.insertString(0, " ");
-    document.deleteString(0, 1);
-    myFile = getPsiManager().findFile(myVFile);
-    assertNotNull("Can't create PsiFile for '" + fileName + "'. Unknown file type most probably.", myFile);
-    assertTrue(myFile.isPhysical());
-    myEditor = createEditor(myVFile);
-    myVFile.setCharset(CharsetToolkit.UTF8_CHARSET);
 
-    PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
-    return document;
+    myEditor = createSaveAndOpenFile(fileName, fileText);
+    myVFile = FileDocumentManager.getInstance().getFile(myEditor.getDocument());
+    myFile = getPsiManager().findFile(myVFile);
+
+    return myEditor.getDocument();
   }
 
-  private static void setupEditorForInjectedLanguage() {
-    Editor editor = InjectedLanguageUtil.getEditorForInjectedLanguageNoCommit(myEditor, myFile);
-    if (editor instanceof EditorWindow) {
-      myFile = ((EditorWindow)editor).getInjectedFile();
-      myEditor = editor;
+  @NotNull
+  protected static Editor createSaveAndOpenFile(@NotNull String relativePath, @NotNull String fileText) {
+    Editor editor = createEditor(VfsTestUtil.createFile(getSourceRoot(), relativePath, fileText));
+    PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
+    return editor;
+  }
+
+  @NotNull
+  protected static VirtualFile createAndSaveFile(@NotNull String relativePath, @NotNull String fileText) {
+    return VfsTestUtil.createFile(getSourceRoot(), relativePath, fileText);
+  }
+
+  protected static void setupEditorForInjectedLanguage() {
+    if (myEditor != null) {
+      Editor hostEditor = myEditor instanceof EditorWindow ? ((EditorWindow)myEditor).getDelegate() : myEditor;
+      PsiFile hostFile = myFile == null ? null : InjectedLanguageManager.getInstance(getProject()).getTopLevelFile(myFile);
+      final Ref<EditorWindow> editorWindowRef = new Ref<>();
+      hostEditor.getCaretModel().runForEachCaret(caret -> {
+        Editor editor = InjectedLanguageUtil.getEditorForInjectedLanguageNoCommit(hostEditor, hostFile);
+        if (caret == hostEditor.getCaretModel().getPrimaryCaret() && editor instanceof EditorWindow) {
+          editorWindowRef.set((EditorWindow)editor);
+        }
+      });
+      if (!editorWindowRef.isNull()) {
+        myEditor = editorWindowRef.get();
+        myFile = editorWindowRef.get().getInjectedFile();
+        myVFile = myFile.getVirtualFile();
+      }
     }
   }
 
-  private static void deleteVFile() {
+  private static void deleteVFile() throws IOException {
     if (myVFile != null) {
-      ApplicationManager.getApplication().runWriteAction(new Runnable() {
-        @Override
-        public void run() {
-          try {
-            myVFile.delete(this);
-          } catch (IOException e) {
-            LOG.error(e);
-          }
-        }
+      if (myVFile instanceof VirtualFileWindow) myVFile = ((VirtualFileWindow)myVFile).getDelegate();
+      WriteAction.run(() -> {
+        // avoid messing with invalid files, in case someone calls configureXXX() several times
+        PsiDocumentManager.getInstance(ourProject).commitAllDocuments();
+        FileEditorManager.getInstance(ourProject).closeFile(myVFile);
+        myVFile.delete(ourProject);
       });
     }
   }
 
   @Override
   protected void tearDown() throws Exception {
-    FileEditorManager editorManager = FileEditorManager.getInstance(getProject());
-    VirtualFile[] openFiles = editorManager.getOpenFiles();
-    for (VirtualFile openFile : openFiles) {
-      editorManager.closeFile(openFile);
+    try {
+      FileEditorManager editorManager = FileEditorManager.getInstance(getProject());
+      for (VirtualFile openFile : editorManager.getOpenFiles()) {
+        editorManager.closeFile(openFile);
+      }
+      deleteVFile();
+      myEditor = null;
+      myFile = null;
+      myVFile = null;
     }
-    deleteVFile();
-    myEditor = null;
-    myFile = null;
-    myVFile = null;
-    super.tearDown();
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
+    finally {
+      super.tearDown();
+    }
   }
 
   /**
    * Validates that content of the editor as well as caret and selection matches one specified in data file that
    * should be formed with the same format as one used in configureByFile
-   * @param filePath - relative path from %IDEA_INSTALLATION_HOME%/testData/
-   * @throws Exception
+   * @param expectedFilePath - relative path from %IDEA_INSTALLATION_HOME%/testData/
    */
-  protected void checkResultByFile(@NonNls @NotNull String filePath) {
-    checkResultByFile(null, filePath, false);
+  protected void checkResultByFile(@TestDataFile @NonNls @NotNull String expectedFilePath) {
+    checkResultByFile(null, expectedFilePath, false);
   }
 
   /**
    * Validates that content of the editor as well as caret and selection matches one specified in data file that
    * should be formed with the same format as one used in configureByFile
    * @param message - this check specific message. Added to text, caret position, selection checking. May be null
-   * @param filePath - relative path from %IDEA_INSTALLATION_HOME%/testData/
+   * @param expectedFilePath - relative path from %IDEA_INSTALLATION_HOME%/testData/
    * @param ignoreTrailingSpaces - whether trailing spaces in editor in data file should be stripped prior to comparing.
-   * @throws Exception
    */
-  protected void checkResultByFile(@Nullable String message, @NotNull String filePath, final boolean ignoreTrailingSpaces) {
+  protected void checkResultByFile(@Nullable String message, @TestDataFile @NotNull String expectedFilePath, final boolean ignoreTrailingSpaces) {
     bringRealEditorBack();
 
     getProject().getComponent(PostprocessReformattingAspect.class).doPostponedFormatting();
     if (ignoreTrailingSpaces) {
       final Editor editor = myEditor;
-      TrailingSpacesStripper.stripIfNotCurrentLine(editor.getDocument(), false);
+      TrailingSpacesStripper.strip(editor.getDocument(), false, true);
       EditorUtil.fillVirtualSpaceUntilCaret(editor);
     }
 
     PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
 
-    String fullPath = getTestDataPath() + filePath;
+    String fullPath = getTestDataPath() + expectedFilePath;
 
     File ioFile = new File(fullPath);
 
     assertTrue(getMessage("Cannot find file " + fullPath, message), ioFile.exists());
-    String fileText = null;
+    String fileText;
     try {
-      fileText = FileUtil.loadFile(ioFile, CharsetToolkit.UTF8);
-    } catch (IOException e) {
-      LOG.error(e);
+     checkCaseSensitiveFS(fullPath, ioFile);
+      fileText = FileUtil.loadFile(ioFile, CharsetToolkit.UTF8_CHARSET);
     }
-    checkResultByText(message, StringUtil.convertLineSeparators(fileText), ignoreTrailingSpaces, getTestDataPath() + "/" + filePath);
+    catch (IOException e) {
+      LOG.error(e);
+      throw new RuntimeException(e);
+    }
+    checkResultByText(message, StringUtil.convertLineSeparators(fileText), ignoreTrailingSpaces, getTestDataPath() + "/" + expectedFilePath);
   }
 
   /**
    * Same as checkResultByFile but text is provided directly.
-   * @param fileText
    */
-  protected void checkResultByText(@NonNls @NotNull String fileText) {
-    checkResultByText(null, fileText, false, null);
+  protected void checkResultByText(@NonNls @NotNull String expectedFileText) {
+    checkResultByText(null, expectedFileText, false, null);
   }
 
-  /**
-     * Same as checkResultByFile but text is provided directly.
-     * @param message - this check specific message. Added to text, caret position, selection checking. May be null
-     * @param fileText
-     * @param ignoreTrailingSpaces - whether trailing spaces in editor in data file should be stripped prior to comparing.
-     */
-  protected void checkResultByText(final String message, @NotNull String fileText, final boolean ignoreTrailingSpaces) {
-    checkResultByText(message, fileText, ignoreTrailingSpaces, null);  
-  }
-  
   /**
    * Same as checkResultByFile but text is provided directly.
    * @param message - this check specific message. Added to text, caret position, selection checking. May be null
-   * @param fileText
    * @param ignoreTrailingSpaces - whether trailing spaces in editor in data file should be stripped prior to comparing.
    */
-  protected void checkResultByText(final String message, @NotNull final String fileText, final boolean ignoreTrailingSpaces, final String filePath) {
+  protected void checkResultByText(final String message, @NotNull String expectedFileText, final boolean ignoreTrailingSpaces) {
+    checkResultByText(message, expectedFileText, ignoreTrailingSpaces, null);
+  }
+
+  /**
+   * Same as checkResultByFile but text is provided directly.
+   * @param message - this check specific message. Added to text, caret position, selection checking. May be null
+   * @param ignoreTrailingSpaces - whether trailing spaces in editor in data file should be stripped prior to comparing.
+   */
+  protected void checkResultByText(final String message, @NotNull String expectedFileText, final boolean ignoreTrailingSpaces, final String filePath) {
     bringRealEditorBack();
     PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
-      public void run() {
-        final Document document = EditorFactory.getInstance().createDocument(fileText);
+    ApplicationManager.getApplication().runWriteAction(() -> {
+      final Document document = EditorFactory.getInstance().createDocument(expectedFileText);
 
-        int caretIndex = fileText.indexOf(CARET_MARKER);
-        int selStartIndex = fileText.indexOf(SELECTION_START_MARKER);
-        int selEndIndex = fileText.indexOf(SELECTION_END_MARKER);
-
-        final RangeMarker caretMarker = caretIndex >= 0 ? document.createRangeMarker(caretIndex, caretIndex) : null;
-        final RangeMarker selStartMarker = selStartIndex >= 0
-                                           ? document.createRangeMarker(selStartIndex, selStartIndex)
-                                           : null;
-        final RangeMarker selEndMarker = selEndIndex >= 0
-                                         ? document.createRangeMarker(selEndIndex, selEndIndex)
-                                         : null;
-
-        if (ignoreTrailingSpaces) {
-          ((DocumentImpl)document).stripTrailingSpaces();
-        }
-
-        if (caretMarker != null) {
-          document.deleteString(caretMarker.getStartOffset(), caretMarker.getStartOffset() + CARET_MARKER.length());
-        }
-        if (selStartMarker != null) {
-          document.deleteString(selStartMarker.getStartOffset(),
-                                selStartMarker.getStartOffset() + SELECTION_START_MARKER.length());
-        }
-        if (selEndMarker != null) {
-          document.deleteString(selEndMarker.getStartOffset(),
-                                selEndMarker.getStartOffset() + SELECTION_END_MARKER.length());
-        }
-
-
-        PostprocessReformattingAspect.getInstance(getProject()).doPostponedFormatting();
-        String newFileText = document.getText();
-
-        PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
-        String fileText = myFile.getText();
-        String failMessage = getMessage("Text mismatch", message);
-        if (filePath != null && !newFileText.equals(fileText)) {
-          throw new FileComparisonFailure(failMessage, newFileText, fileText, filePath);
-        }
-        assertEquals(failMessage, newFileText, fileText);
-
-        checkCaretPosition(caretMarker, newFileText, message);
-        checkSelection(selStartMarker, selEndMarker, newFileText, message);
+      if (ignoreTrailingSpaces) {
+        ((DocumentImpl)document).stripTrailingSpaces(getProject());
       }
+
+      EditorTestUtil.CaretAndSelectionState carets = EditorTestUtil.extractCaretAndSelectionMarkers(document);
+
+      PostprocessReformattingAspect.getInstance(getProject()).doPostponedFormatting();
+      String newFileText = document.getText();
+
+      PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
+      String fileText1 = myFile.getText();
+      String failMessage = getMessage("Text mismatch", message);
+      if (filePath != null && !newFileText.equals(fileText1)) {
+        throw new FileComparisonFailure(failMessage, newFileText, fileText1, filePath);
+      }
+      assertEquals(failMessage, newFileText, fileText1);
+
+      EditorTestUtil.verifyCaretAndSelectionState(myEditor, carets, message);
     });
   }
 
-  private static String getMessage(@NonNls String engineMessage, String userMessage) {
+  protected static void checkResultByTextWithoutPSI(final String message,
+                                                    @NotNull final Editor editor,
+                                                    @NotNull final String fileText,
+                                                    final boolean ignoreTrailingSpaces,
+                                                    final String filePath) {
+    ApplicationManager.getApplication().runWriteAction(() -> {
+      final Document fakeDocument = EditorFactory.getInstance().createDocument(fileText);
+
+      if (ignoreTrailingSpaces) {
+        ((DocumentImpl)fakeDocument).stripTrailingSpaces(getProject());
+      }
+
+      EditorTestUtil.CaretAndSelectionState carets = EditorTestUtil.extractCaretAndSelectionMarkers(fakeDocument);
+
+      String newFileText = fakeDocument.getText();
+      String fileText1 = editor.getDocument().getText();
+      String failMessage = getMessage("Text mismatch", message);
+      if (filePath != null && !newFileText.equals(fileText1)) {
+        throw new FileComparisonFailure(failMessage, newFileText, fileText1, filePath);
+      }
+      assertEquals(failMessage, newFileText, fileText1);
+
+      EditorTestUtil.verifyCaretAndSelectionState(editor, carets, message);
+    });
+  }
+
+  @NotNull
+  private static String getMessage(@NonNls @NotNull String engineMessage, String userMessage) {
     if (userMessage == null) return engineMessage;
     return userMessage + " [" + engineMessage + "]";
-  }
-
-  private static void checkSelection(final RangeMarker selStartMarker, final RangeMarker selEndMarker, String newFileText, String message) {
-    if (selStartMarker != null && selEndMarker != null) {
-      int selStartLine = StringUtil.offsetToLineNumber(newFileText, selStartMarker.getStartOffset());
-      int selStartCol = selStartMarker.getStartOffset() - StringUtil.lineColToOffset(newFileText, selStartLine, 0);
-
-      int selEndLine = StringUtil.offsetToLineNumber(newFileText, selEndMarker.getEndOffset());
-      int selEndCol = selEndMarker.getEndOffset() - StringUtil.lineColToOffset(newFileText, selEndLine, 0);
-
-      assertEquals(
-          getMessage("selectionStartLine", message),
-          selStartLine + 1,
-          StringUtil.offsetToLineNumber(newFileText, myEditor.getSelectionModel().getSelectionStart()) + 1);
-
-      assertEquals(
-          getMessage("selectionStartCol", message),
-          selStartCol + 1,
-          myEditor.getSelectionModel().getSelectionStart() -
-          StringUtil.lineColToOffset(newFileText, selStartLine, 0) +
-                                                                   1);
-
-      assertEquals(
-          getMessage("selectionEndLine", message),
-          selEndLine + 1,
-          StringUtil.offsetToLineNumber(newFileText, myEditor.getSelectionModel().getSelectionEnd()) + 1);
-
-      assertEquals(
-          getMessage("selectionEndCol", message),
-          selEndCol + 1,
-          myEditor.getSelectionModel().getSelectionEnd() - StringUtil.lineColToOffset(newFileText, selEndLine, 0) +
-          1);
-    }
-    else {
-      assertTrue(getMessage("must not have selection", message), !myEditor.getSelectionModel().hasSelection());
-    }
-  }
-
-  private static void checkCaretPosition(final RangeMarker caretMarker, String newFileText, String message) {
-    if (caretMarker != null) {
-      int caretLine = StringUtil.offsetToLineNumber(newFileText, caretMarker.getStartOffset());
-      //int caretCol = caretMarker.getStartOffset() - StringUtil.lineColToOffset(newFileText, caretLine, 0);
-      int caretCol = EditorUtil.calcColumnNumber(null, newFileText,
-                                                 StringUtil.lineColToOffset(newFileText, caretLine, 0),
-                                                 caretMarker.getStartOffset(),
-                                                 CodeStyleSettingsManager.getSettings(getProject()).getIndentOptions(StdFileTypes.JAVA).TAB_SIZE);
-
-      assertEquals(getMessage("caretLine", message), caretLine, myEditor.getCaretModel().getLogicalPosition().line);
-      assertEquals(getMessage("caretColumn", message), caretCol, myEditor.getCaretModel().getLogicalPosition().column);
-    }
-  }
-
-  @Override
-  public Object getData(String dataId) {
-    if (PlatformDataKeys.EDITOR.is(dataId)) {
-      return myEditor;
-    }
-    if (dataId.equals(AnActionEvent.injectedId(PlatformDataKeys.EDITOR.getName()))) {
-      return InjectedLanguageUtil.getEditorForInjectedLanguageNoCommit(getEditor(), getFile());
-    }
-    if (LangDataKeys.PSI_FILE.is(dataId)) {
-      return myFile;
-    }
-    if (dataId.equals(AnActionEvent.injectedId(LangDataKeys.PSI_FILE.getName()))) {
-      Editor editor = InjectedLanguageUtil.getEditorForInjectedLanguageNoCommit(getEditor(), getFile());
-      return editor instanceof EditorWindow ? ((EditorWindow)editor).getInjectedFile() : getFile();
-    }
-    return super.getData(dataId);
   }
 
   /**
@@ -503,40 +448,81 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
     }
   }
 
-  protected void caretUp() {
-    EditorActionManager actionManager = EditorActionManager.getInstance();
-    EditorActionHandler action = actionManager.getActionHandler(IdeActions.ACTION_EDITOR_MOVE_CARET_UP);
-    action.execute(getEditor(), DataManager.getInstance().getDataContext());
+  protected void caretRight() {
+    caretRight(getEditor());
   }
-  protected void deleteLine() {
-    EditorActionManager actionManager = EditorActionManager.getInstance();
-    EditorActionHandler action = actionManager.getActionHandler(IdeActions.ACTION_EDITOR_DELETE_LINE);
-    action.execute(getEditor(), DataManager.getInstance().getDataContext());
-  }
-  protected static void type(char c) {
-    EditorActionManager actionManager = EditorActionManager.getInstance();
-    final DataContext dataContext = DataManager.getInstance().getDataContext();
-    if (c == '\n') {
-      actionManager.getActionHandler(IdeActions.ACTION_EDITOR_ENTER).execute(getEditor(), dataContext);
-    }
-    else if (c == '\b') {
-      actionManager.getActionHandler(IdeActions.ACTION_EDITOR_BACKSPACE).execute(getEditor(), dataContext);
-    }
-    else {
-      actionManager.getTypedAction().actionPerformed(getEditor(), c, dataContext);
-    }
+  public static void caretRight(@NotNull Editor editor) {
+    executeAction(IdeActions.ACTION_EDITOR_MOVE_CARET_RIGHT, editor);
   }
 
-  protected static void type(@NonNls String s) {
+  protected void caretUp() {
+    caretUp(getEditor());
+  }
+
+  public static void caretUp(@NotNull Editor editor) {
+    executeAction(IdeActions.ACTION_EDITOR_MOVE_CARET_UP, editor);
+  }
+
+  protected void deleteLine() {
+    deleteLine(getEditor(),getProject());
+  }
+  public static void deleteLine(@NotNull Editor editor, Project project) {
+    executeAction(IdeActions.ACTION_EDITOR_DELETE_LINE, editor,project);
+  }
+
+  protected void type(@NonNls @NotNull String s) {
     for (char c : s.toCharArray()) {
       type(c);
     }
   }
-  protected static void backspace() {
-    executeAction(IdeActions.ACTION_EDITOR_BACKSPACE);
+  protected void type(char c) {
+    type(c, getEditor(),getProject());
   }
-  protected static void delete() {
-    executeAction(IdeActions.ACTION_EDITOR_DELETE);
+
+  public static void type(char c, @NotNull Editor editor, Project project) {
+    if (c == '\n') {
+      executeAction(IdeActions.ACTION_EDITOR_ENTER, editor,project);
+    }
+    else {
+      EditorActionManager actionManager = EditorActionManager.getInstance();
+      final DataContext dataContext = DataManager.getInstance().getDataContext();
+      TypedAction action = actionManager.getTypedAction();
+      action.actionPerformed(editor, c, dataContext);
+    }
+  }
+
+  protected void backspace() {
+    backspace(getEditor(),getProject());
+  }
+
+  public static void backspace(@NotNull final Editor editor, Project project) {
+    executeAction(IdeActions.ACTION_EDITOR_BACKSPACE, editor,project);
+  }
+
+  protected void ctrlShiftF7() {
+    HighlightUsagesHandler.invoke(getProject(), getEditor(), getFile());
+  }
+
+  protected void ctrlW() {
+    ctrlW(getEditor(),getProject());
+  }
+
+  public static void ctrlW(@NotNull Editor editor, Project project) {
+    executeAction(IdeActions.ACTION_EDITOR_SELECT_WORD_AT_CARET, editor,project);
+  }
+
+  public void ctrlD() {
+    ctrlD(getEditor(),getProject());
+  }
+  public static void ctrlD(@NotNull Editor editor, Project project) {
+    executeAction(IdeActions.ACTION_EDITOR_DUPLICATE, editor, project);
+  }
+
+  protected void delete() {
+    delete(getEditor(), getProject());
+  }
+  public static void delete(@NotNull final Editor editor, Project project) {
+    executeAction(IdeActions.ACTION_EDITOR_DELETE, editor, project);
   }
 
   protected static void home() {
@@ -547,6 +533,14 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
     executeAction(IdeActions.ACTION_EDITOR_MOVE_LINE_END);
   }
 
+  protected static void homeWithSelection() {
+    executeAction(IdeActions.ACTION_EDITOR_MOVE_LINE_START_WITH_SELECTION);
+  }
+
+  protected static void endWithSelection() {
+    executeAction(IdeActions.ACTION_EDITOR_MOVE_LINE_END_WITH_SELECTION);
+  }
+
   protected static void copy() {
     executeAction(IdeActions.ACTION_EDITOR_COPY);
   }
@@ -554,27 +548,43 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
   protected static void paste() {
     executeAction(IdeActions.ACTION_EDITOR_PASTE);
   }
-  
+
   protected static void moveCaretToPreviousWordWithSelection() {
-    executeAction("EditorPreviousWordWithSelection");
+    executeAction(IdeActions.ACTION_EDITOR_PREVIOUS_WORD_WITH_SELECTION);
   }
 
   protected static void moveCaretToNextWordWithSelection() {
-    executeAction("EditorNextWordWithSelection");
+    executeAction(IdeActions.ACTION_EDITOR_NEXT_WORD_WITH_SELECTION);
+  }
+
+  protected static void previousWord() {
+    executeAction(IdeActions.ACTION_EDITOR_PREVIOUS_WORD);
+  }
+
+  protected static void nextWord() {
+    executeAction(IdeActions.ACTION_EDITOR_NEXT_WORD);
   }
 
   protected static void cutLineBackward() {
     executeAction("EditorCutLineBackward");
   }
-  
+
   protected static void cutToLineEnd() {
     executeAction("EditorCutLineEnd");
   }
-
+  
+  protected static void deleteToLineStart() {
+    executeAction("EditorDeleteToLineStart");
+  }
+  
+  protected static void deleteToLineEnd() {
+    executeAction("EditorDeleteToLineEnd");
+  }
+  
   protected static void killToWordStart() {
     executeAction("EditorKillToWordStart");
   }
-  
+
   protected static void killToWordEnd() {
     executeAction("EditorKillToWordEnd");
   }
@@ -590,42 +600,200 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
   protected static void unindent() {
     executeAction("EditorUnindentSelection");
   }
-  
-  protected static void lineComment() {
-    new CommentByLineCommentHandler().invoke(getProject(), getEditor(), getFile());
-  }
-  
-  protected static void executeAction(@NonNls @NotNull final String actionId) {
-    CommandProcessor.getInstance().executeCommand(getProject(), new Runnable() {
-      @Override
-      public void run() {
-        EditorActionManager actionManager = EditorActionManager.getInstance();
-        EditorActionHandler actionHandler = actionManager.getActionHandler(actionId);
-        actionHandler.execute(getEditor(), DataManager.getInstance().getDataContext());
-      }
-    }, "", null);
+
+  protected static void selectLine() {
+    executeAction("EditorSelectLine");
   }
 
+  protected static void left() {
+    executeAction("EditorLeft");
+  }
+
+  protected static void right() {
+    executeAction("EditorRight");
+  }
+
+  protected static void leftWithSelection() {
+    executeAction("EditorLeftWithSelection");
+  }
+
+  protected static void rightWithSelection() {
+    executeAction("EditorRightWithSelection");
+  }
+
+  protected static void up() {
+    executeAction("EditorUp");
+  }
+
+  protected static void down() {
+    executeAction("EditorDown");
+  }
+
+  protected static void lineComment() {
+    executeAction(IdeActions.ACTION_COMMENT_LINE);
+  }
+
+  protected static void executeAction(@NonNls @NotNull final String actionId) {
+    executeAction(actionId, getEditor());
+  }
+  protected static void executeAction(@NonNls @NotNull final String actionId, @NotNull final Editor editor) {
+    executeAction(actionId, editor, getProject());
+  }
+  public static void executeAction(@NonNls @NotNull final String actionId, @NotNull final Editor editor, Project project) {
+    CommandProcessor.getInstance().executeCommand(project, () -> EditorTestUtil.executeAction(editor, actionId), "", null, editor.getDocument());
+  }
+
+  @NotNull
   protected static DataContext getCurrentEditorDataContext() {
     final DataContext defaultContext = DataManager.getInstance().getDataContext();
-    return new DataContext() {
-      @Override
-      @Nullable
-      public Object getData(@NonNls String dataId) {
-        if (PlatformDataKeys.EDITOR.is(dataId)) {
-          return getEditor();
-        }
-        if (PlatformDataKeys.PROJECT.is(dataId)) {
-          return getProject();
-        }
-        if (LangDataKeys.PSI_FILE.is(dataId)) {
-          return getFile();
-        }
-        if (LangDataKeys.PSI_ELEMENT.is(dataId)) {
-          return getFile().findElementAt(getEditor().getCaretModel().getOffset());
-        }
-        return defaultContext.getData(dataId);
+    return dataId -> {
+      if (CommonDataKeys.EDITOR.is(dataId)) {
+        return getEditor();
       }
+      if (CommonDataKeys.PROJECT.is(dataId)) {
+        return getProject();
+      }
+      if (CommonDataKeys.PSI_FILE.is(dataId)) {
+        return getFile();
+      }
+      if (CommonDataKeys.PSI_ELEMENT.is(dataId)) {
+        PsiFile file = getFile();
+        if (file == null) return null;
+        Editor editor = getEditor();
+        if (editor == null) return null;
+        return file.findElementAt(editor.getCaretModel().getOffset());
+      }
+      return defaultContext.getData(dataId);
     };
+  }
+
+  /**
+   * file parameterized tests support
+   * @see FileBasedTestCaseHelperEx
+   * @Parameterized.Parameter fields are injected on parameterized test creation.
+   */
+  @Parameterized.Parameter()
+  public String myFileSuffix;
+
+  /**
+   * path to the root of test data in case of com.intellij.testFramework.FileBasedTestCaseHelperEx
+   * or
+   * path to the directory with current test data in case of @TestDataPath
+   */
+  @Parameterized.Parameter(1)
+  public String myTestDataPath;
+
+  @Parameterized.Parameters(name = "{0}")
+  public static List<Object[]> params() {
+    return Collections.emptyList();
+  }
+
+  @com.intellij.testFramework.Parameterized.Parameters(name = "{0}")
+  public static List<Object[]> params(@NotNull Class<?> klass) throws Throwable{
+    final LightPlatformCodeInsightTestCase testCase = (LightPlatformCodeInsightTestCase)klass.newInstance();
+    if (!(testCase instanceof FileBasedTestCaseHelper)) {
+      fail("Parameterized test should implement FileBasedTestCaseHelper");
+    }
+
+    try {
+      PathManagerEx.replaceLookupStrategy(klass, com.intellij.testFramework.Parameterized.class);
+    }
+    catch (IllegalArgumentException ignore) {
+      //allow to run out of idea project
+    }
+
+    final FileBasedTestCaseHelper fileBasedTestCase = (FileBasedTestCaseHelper)testCase;
+    String testDataPath = testCase.getTestDataPath();
+
+    File testDir = null;
+    if (fileBasedTestCase instanceof FileBasedTestCaseHelperEx) {
+      testDir = new File(testDataPath, ((FileBasedTestCaseHelperEx)fileBasedTestCase).getRelativeBasePath());
+    } else {
+      final TestDataPath annotation = klass.getAnnotation(TestDataPath.class);
+      if (annotation == null) {
+        fail("TestCase should implement com.intellij.testFramework.FileBasedTestCaseHelperEx or be annotated with com.intellij.testFramework.TestDataPath");
+      } else {
+        final String trimmedRoot = StringUtil.trimStart(StringUtil.trimStart(annotation.value(), "$CONTENT_ROOT"), "$PROJECT_ROOT");
+        final String lastPathComponent = new File(testDataPath).getName();
+        final int idx = trimmedRoot.indexOf(lastPathComponent);
+        testDataPath = testDataPath.replace(File.separatorChar, '/') + (idx > 0 ? trimmedRoot.substring(idx + lastPathComponent.length()) : trimmedRoot);
+        testDir = new File(testDataPath);
+      }
+    }
+
+    final File[] files = testDir.listFiles();
+
+    if (files == null) {
+      fail("Test files not found in " + testDir.getPath());
+    }
+
+    final List<Object[]> result = new ArrayList<>();
+    for (File file : files) {
+      final String fileSuffix = fileBasedTestCase.getFileSuffix(file.getName());
+      if (fileSuffix != null) {
+        result.add(new Object[] {fileSuffix, testDataPath});
+      }
+    }
+    return result;
+  }
+
+  @Override
+  public String getName() {
+    if (myFileSuffix != null) {
+      return "test" + myFileSuffix;
+    }
+    return super.getName();
+  }
+
+  @Before
+  public void before() throws Throwable {
+    final Throwable[] throwables = new Throwable[1];
+
+    invokeTestRunnable(() -> {
+      try {
+        setUp();
+      }
+      catch (Throwable e) {
+        throwables[0] = e;
+      }
+    });
+
+    if (throwables[0] != null) {
+      throw throwables[0];
+    }
+  }
+
+  @After
+  public void after() throws Throwable {
+    final Throwable[] throwables = new Throwable[1];
+
+    invokeTestRunnable(() -> {
+      try {
+        tearDown();
+      }
+      catch (Throwable e) {
+        throwables[0] = e;
+      }
+    });
+    if (throwables[0] != null) {
+      throw throwables[0];
+    }
+  }
+
+  protected void runSingleTest(@NotNull final Runnable testRunnable) throws Throwable {
+    final Throwable[] throwables = new Throwable[1];
+
+    invokeTestRunnable(() -> {
+      try {
+        testRunnable.run();
+      }
+      catch (Throwable e) {
+        throwables[0] = e;
+      }
+    });
+
+    if (throwables[0] != null) {
+      throw throwables[0];
+    }
   }
 }

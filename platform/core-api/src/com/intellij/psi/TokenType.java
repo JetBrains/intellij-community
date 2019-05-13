@@ -40,7 +40,12 @@ public interface TokenType {
    */
   IElementType NEW_LINE_INDENT = new IElementType("NEW_LINE_INDENT", Language.ANY);
 
-  IElementType ERROR_ELEMENT = new IElementType("ERROR_ELEMENT", Language.ANY);
+  IElementType ERROR_ELEMENT = new IElementType("ERROR_ELEMENT", Language.ANY) {
+    @Override
+    public boolean isLeftBound() {
+      return true;
+    }
+  };
 
   IElementType CODE_FRAGMENT = new IFileElementType("CODE_FRAGMENT", Language.ANY);
   IElementType DUMMY_HOLDER = new IFileElementType("DUMMY_HOLDER", Language.ANY);

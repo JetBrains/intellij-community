@@ -1,3 +1,5 @@
+import org.jetbrains.annotations.NotNull;
+
 public class S {
   {
     String s;
@@ -8,6 +10,7 @@ public class S {
     System.out.print(s);
   }
 
+    @NotNull
     private String newMethod() {
         String s;
         s = "";

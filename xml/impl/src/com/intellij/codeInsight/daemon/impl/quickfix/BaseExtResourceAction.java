@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,10 +18,8 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiReference;
-import com.intellij.psi.impl.source.resolve.reference.impl.providers.URIReferenceProvider;
+import com.intellij.psi.*;
+import com.intellij.psi.impl.source.resolve.reference.impl.providers.DependentNSReference;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.URLReference;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.IncorrectOperationException;
@@ -34,6 +32,7 @@ import org.jetbrains.annotations.Nullable;
  */
 abstract class BaseExtResourceAction extends BaseIntentionAction {
 
+  @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
     if (!(file instanceof XmlFile)) return false;
 
@@ -51,11 +50,13 @@ abstract class BaseExtResourceAction extends BaseIntentionAction {
 
   protected abstract String getQuickFixKeyId();
 
+  @Override
   @NotNull
   public String getFamilyName() {
     return XmlBundle.message(getQuickFixKeyId());
   }
 
+  @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
     int offset = editor.getCaretModel().getOffset();
 
@@ -67,15 +68,21 @@ abstract class BaseExtResourceAction extends BaseIntentionAction {
     doInvoke(file, offset, uri, editor);
   }
 
-  protected abstract void doInvoke(final @NotNull PsiFile file, final int offset, final @NotNull String uri, final Editor editor)
+  protected abstract void doInvoke(@NotNull final PsiFile file, final int offset, @NotNull final String uri, final Editor editor)
     throws IncorrectOperationException;
 
   @Nullable
   public static String findUri(PsiFile file, int offset) {
+    PsiElement element = file.findElementAt(offset);
+    if (element == null ||
+        element instanceof PsiWhiteSpace ) {
+      return null;
+    }
+
     PsiReference currentRef = file.getViewProvider().findReferenceAt(offset, file.getLanguage());
     if (currentRef == null) currentRef = file.getViewProvider().findReferenceAt(offset);
     if (currentRef instanceof URLReference ||
-        currentRef instanceof URIReferenceProvider.DependentNSReference) {
+        currentRef instanceof DependentNSReference) {
       return currentRef.getCanonicalText();
     }
     return null;

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2018 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -52,8 +52,8 @@ public class PagedFileStorageTest extends TestCase {
       assert f.delete() : f.getPath();
     } finally {
       lock.unlock();
+      super.tearDown();
     }
-    super.tearDown();
   }
 
   public void testResizing() throws IOException {
@@ -101,6 +101,9 @@ public class PagedFileStorageTest extends TestCase {
       assertEquals(1234, file.getInt(Integer.MAX_VALUE - 20));
       t = System.currentTimeMillis() - t;
       System.out.println("done in " + t + " ms");
+
+      file.putInt(Integer.MAX_VALUE + 20L, 5678);
+      assertEquals(5678, file.getInt(Integer.MAX_VALUE + 20L));
 
       t = System.currentTimeMillis();
       System.out.println("checking...");

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,12 +15,13 @@
  */
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
-import com.intellij.codeInsight.CodeInsightUtilBase;
+import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.XmlErrorMessages;
 import com.intellij.codeInsight.daemon.impl.analysis.CreateNSDeclarationIntentionFix;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.XmlElementFactory;
@@ -36,6 +37,7 @@ import com.intellij.xml.XmlBundle;
 import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -48,24 +50,38 @@ public class AddXsiSchemaLocationForExtResourceAction extends BaseExtResourceAct
   @NonNls private static final String XSI_SCHEMA_LOCATION_ATTR_NAME = "xsi:schemaLocation";
   public static final String KEY = "add.xsi.schema.location.for.external.resource";
 
+  @Override
   protected String getQuickFixKeyId() {
     return KEY;
   }
 
+  @Nullable
+  @Override
+  public PsiElement getElementToMakeWritable(@NotNull PsiFile currentFile) {
+    return currentFile;
+  }
+
+  @Override
+  public boolean startInWriteAction() {
+    return false;
+  }
+
+  @Override
   protected void doInvoke(@NotNull final PsiFile file, final int offset, @NotNull final String uri, final Editor editor) throws IncorrectOperationException {
     final XmlTag tag = PsiTreeUtil.getParentOfType(file.findElementAt(offset), XmlTag.class);
     if (tag == null) return;
-    final List<String> schemaLocations = new ArrayList<String>();
+    final List<String> schemaLocations = new ArrayList<>();
 
     CreateNSDeclarationIntentionFix.processExternalUris(new CreateNSDeclarationIntentionFix.TagMetaHandler(tag.getLocalName()), file, new CreateNSDeclarationIntentionFix.ExternalUriProcessor() {
+      @Override
       public void process(@NotNull final String currentUri, final String url) {
         if (currentUri.equals(uri) && url != null) schemaLocations.add(url);
       }
-
-    }, true);
+    });
 
     CreateNSDeclarationIntentionFix.runActionOverSeveralAttributeValuesAfterLettingUserSelectTheNeededOne(
       ArrayUtil.toStringArray(schemaLocations), file.getProject(), new CreateNSDeclarationIntentionFix.StringToAttributeProcessor() {
+        @Override
         public void doSomethingWithGivenStringToProduceXmlAttributeNowPlease(@NotNull final String attrName) throws IncorrectOperationException {
           doIt(file, editor, uri, tag, attrName);
         }
@@ -73,7 +89,7 @@ public class AddXsiSchemaLocationForExtResourceAction extends BaseExtResourceAct
   }
 
   private static void doIt(final PsiFile file, final Editor editor, final String uri, final XmlTag tag, final String s) throws IncorrectOperationException {
-    if (!CodeInsightUtilBase.prepareFileForWrite(file)) return;
+    if (!FileModificationService.getInstance().prepareFileForWrite(file)) return;
     final XmlElementFactory elementFactory = XmlElementFactory.getInstance(file.getProject());
 
     if (tag.getAttributeValue(XMLNS_XSI_ATTR_NAME) == null) {
@@ -91,6 +107,7 @@ public class AddXsiSchemaLocationForExtResourceAction extends BaseExtResourceAct
       locationAttribute.setValue(newValue);
     }
 
+    PsiDocumentManager.getInstance(file.getProject()).doPostponedOperationsAndUnblockDocument(editor.getDocument());
     CodeStyleManager.getInstance(file.getProject()).reformat(tag);
 
     @SuppressWarnings("ConstantConditions")

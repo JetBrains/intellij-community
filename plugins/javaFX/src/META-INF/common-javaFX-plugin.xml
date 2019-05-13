@@ -1,25 +1,42 @@
 <idea-plugin>
   <depends>com.intellij.modules.java</depends>
+  <depends optional="true" config-file="resources-plugin.xml">com.intellij.properties</depends>
   <extensions defaultExtensionNs="com.intellij">
-    <errorHandler implementation="com.intellij.diagnostic.ITNReporter"/>
     <fileTypeFactory implementation="org.jetbrains.plugins.javaFX.fxml.JavaFxFileTypeFactory"/>
+    <fileEditorProvider implementation="org.jetbrains.plugins.javaFX.sceneBuilder.SceneBuilderEditorProvider"/>
     <xml.xmlExtension implementation="org.jetbrains.plugins.javaFX.fxml.JavaFxXmlExtension"/>
-    <xml.fileNSInfoProvider implementation="org.jetbrains.plugins.javaFX.fxml.JavaFXNamespaceProvider"/>
-    <metaDataContributor implementation="org.jetbrains.plugins.javaFX.fxml.JavaFXMetaDataContributor"/>
-    <xml.schemaProvider implementation="org.jetbrains.plugins.javaFX.fxml.JavaFXSchemaHandler"/>
+    <xml.fileNSInfoProvider implementation="org.jetbrains.plugins.javaFX.fxml.JavaFxNamespaceDataProvider"/>
+    <metaDataContributor implementation="org.jetbrains.plugins.javaFX.fxml.JavaFxNamespaceDataProvider"/>
+    <xml.schemaProvider implementation="org.jetbrains.plugins.javaFX.fxml.JavaFxSchemaProvider"/>
     <psi.referenceContributor implementation="org.jetbrains.plugins.javaFX.fxml.refs.FxmlReferencesContributor"/>
-    <codeInsight.unresolvedReferenceQuickFixProvider implementation="org.jetbrains.plugins.javaFX.fxml.refs.JavaFxEventHandlerReference$JavaFxUnresolvedReferenceHandlerQuickfixProvider"/>
+    <codeInsight.unresolvedReferenceQuickFixProvider implementation="org.jetbrains.plugins.javaFX.fxml.refs.JavaFxEventHandlerReferenceQuickFixProvider"/>
     <codeInsight.unresolvedReferenceQuickFixProvider implementation="org.jetbrains.plugins.javaFX.fxml.refs.JavaFxTagNameReference$JavaFxUnresolvedTagRefsProvider"/>
     <multiHostInjector implementation="org.jetbrains.plugins.javaFX.fxml.ScriptLanguageInjector"/>
     <annotator language="XML" implementationClass="org.jetbrains.plugins.javaFX.fxml.refs.JavaFxAnnotator"/>
     <codeInsight.lineMarkerProvider language="JAVA" implementationClass="org.jetbrains.plugins.javaFX.fxml.codeInsight.JavaFxRelatedItemLineMarkerProvider"/>
-    <useScopeEnlarger implementation="org.jetbrains.plugins.javaFX.fxml.refs.JavaFxScopeEnlager"/>
+    <codeInsight.lineMarkerProvider language="Groovy" implementationClass="org.jetbrains.plugins.javaFX.fxml.codeInsight.JavaFxRelatedItemLineMarkerProvider"/>
+    <colorProvider implementation="org.jetbrains.plugins.javaFX.fxml.codeInsight.JavaFxColorProvider"/>
+    <useScopeEnlarger implementation="org.jetbrains.plugins.javaFX.fxml.refs.JavaFxScopeEnlarger"/>
+    <renamePsiElementProcessor implementation="org.jetbrains.plugins.javaFX.refactoring.JavaFxRenameFxIdFieldProcessor" order="first"/>
 
     <localInspection language="XML" shortName="JavaFxDefaultTag" displayName="Unnecessary default tag" groupName="JavaFX"
                      enabledByDefault="true" level="WARNING" implementationClass="org.jetbrains.plugins.javaFX.fxml.codeInsight.inspections.JavaFxDefaultTagInspection"/>
+    <localInspection language="XML" implementationClass="org.jetbrains.plugins.javaFX.fxml.codeInsight.inspections.JavaFxUnresolvedFxIdReferenceInspection" displayName="Unresolved fx:id attribute reference" 
+                     enabledByDefault="true" level="WARNING" groupName="JavaFX"/>
+    <localInspection language="XML" shortName="JavaFxUnusedImports" implementationClass="org.jetbrains.plugins.javaFX.fxml.codeInsight.inspections.JavaFxUnusedImportsInspection"
+                         enabledByDefault="true" level="WARNING" displayName="JavaFX unused imports" groupName="JavaFX"/>
+    <localInspection language="XML" shortName="JavaFxRedundantPropertyValue" implementationClass="org.jetbrains.plugins.javaFX.fxml.codeInsight.inspections.JavaFxRedundantPropertyValueInspection"
+                         enabledByDefault="true" level="WARNING" displayName="JavaFX redundant property values" groupName="JavaFX"/>
+    <localInspection language="XML" shortName="JavaFxColorRgb" displayName="Color component is out of range" groupName="JavaFX"
+                     enabledByDefault="true" level="WARNING" implementationClass="org.jetbrains.plugins.javaFX.fxml.codeInsight.inspections.JavaFxColorRgbInspection"/>
+    <localInspection language="XML" shortName="JavaFxEventHandler" displayName="Event handler method signature problems" groupName="JavaFX"
+                     enabledByDefault="true" level="WARNING" implementationClass="org.jetbrains.plugins.javaFX.fxml.codeInsight.inspections.JavaFxEventHandlerInspection"/>
+
     <applicationService serviceInterface="org.jetbrains.plugins.javaFX.JavaFxSettings" serviceImplementation="org.jetbrains.plugins.javaFX.JavaFxSettings"/>
-    <applicationConfigurable instance="org.jetbrains.plugins.javaFX.JavaFxSettingsConfigurable"/>
-    <fileBasedIndex implementation="org.jetbrains.plugins.javaFX.JavaFxControllerClassIndex"/>
+    <applicationConfigurable groupId="language" displayName="JavaFX" id="preferences.JavaFX" instance="org.jetbrains.plugins.javaFX.JavaFxSettingsConfigurable"/>
+    <fileBasedIndex implementation="org.jetbrains.plugins.javaFX.indexing.JavaFxControllerClassIndex"/>
+    <fileBasedIndex implementation="org.jetbrains.plugins.javaFX.indexing.JavaFxIdsIndex"/>
+    <fileBasedIndex implementation="org.jetbrains.plugins.javaFX.indexing.JavaFxCustomComponentsIndex"/>
     <intentionAction>
       <className>org.jetbrains.plugins.javaFX.fxml.codeInsight.intentions.JavaFxCollapseSubTagToAttributeIntention</className>
       <category>JavaFX</category>
@@ -28,13 +45,44 @@
       <className>org.jetbrains.plugins.javaFX.fxml.codeInsight.intentions.JavaFxExpandAttributeIntention</className>
       <category>JavaFX</category>
     </intentionAction>
+    <intentionAction>
+      <className>org.jetbrains.plugins.javaFX.codeInsight.JavaFxFieldToPropertyIntention</className>
+      <category>JavaFX</category>
+    </intentionAction>
+
     <lang.importOptimizer language="XML" implementationClass="org.jetbrains.plugins.javaFX.fxml.codeInsight.JavaFxImportsOptimizer" order="before XML"/>
     <psi.referenceContributor implementation="org.jetbrains.plugins.javaFX.fxml.refs.JavaFxReferencesContributor"/>
+    <getterSetterProvider implementation="org.jetbrains.plugins.javaFX.codeInsight.JavaFxGetterSetterPrototypeProvider"/>
+    <packaging.artifactPropertiesProvider implementation="org.jetbrains.plugins.javaFX.packaging.JavaFxArtifactPropertiesProvider"/>
+    <packaging.artifactType implementation="org.jetbrains.plugins.javaFX.packaging.JavaFxApplicationArtifactType"/>
+    <compileServer.plugin classpath="javaFX-jps-plugin.jar;common-javaFX-plugin.jar"/>
+    <antBuildGen implementation="org.jetbrains.plugins.javaFX.packaging.ant.JavaFxChunkBuildExtension"/>
+    <packaging.artifactType implementation="org.jetbrains.plugins.javaFX.packaging.preloader.JavaFxPreloaderArtifactType"/>
+    <packaging.artifactPropertiesProvider implementation="org.jetbrains.plugins.javaFX.packaging.preloader.JavaFxPreloaderArtifactPropertiesProvider"/>
+    <implicitUsageProvider implementation="org.jetbrains.plugins.javaFX.fxml.codeInsight.inspections.JavaFxImplicitUsageProvider"/>
+    <referencesSearch implementation="org.jetbrains.plugins.javaFX.fxml.refs.JavaFxControllerFieldSearcher"/>
+    <referencesSearch implementation="org.jetbrains.plugins.javaFX.fxml.refs.JavaFxMethodSearcher"/>
+    <renamePsiElementProcessor implementation="org.jetbrains.plugins.javaFX.refactoring.JavaFxRenameAttributeProcessor" order="before xmlAttribute"/>
+    <renameHandler implementation="org.jetbrains.plugins.javaFX.refactoring.JavaFxPropertyRenameHandler"/>
+    <completion.contributor implementationClass="org.jetbrains.plugins.javaFX.fxml.refs.JavaFxCompletionContributor" language="XML" order="before xmlNonFirst"/>
+    <manifest.parser.provider implementation="org.jetbrains.plugins.javaFX.manifest.JavaFxManifestHeaderParsers"/>
+    <projectTemplate projectType="Java FX" templatePath="resources/projectTemplates/Java/JavaFX Application.zip" category="true"/>
+    <javaMainMethodProvider implementation="org.jetbrains.plugins.javaFX.JavaFxMainMethodRunConfigurationProvider"/>
+    <deadCode implementation="org.jetbrains.plugins.javaFX.JavaFxEntryPoint"/>
+    <projectSdkSetupValidator implementation="org.jetbrains.plugins.javaFX.JavaFxProjectSdkSetupValidator" order="after javaSdk"/>
+    <predefinedMigrationMapProvider implementation="org.jetbrains.plugins.javaFX.refactoring.migration.JavaFx9Migration"/>
+    <postStartupActivity implementation="org.jetbrains.plugins.javaFX.fxml.JavaFxModuleUtil$JavaFxDetectionStartupActivity"/>
+    <runConfigurationExtension implementation="org.jetbrains.plugins.javaFX.execution.JavaFxRunConfigurationExtension"/>
   </extensions>
 
   <actions>
     <action class="org.jetbrains.plugins.javaFX.actions.OpenInSceneBuilderAction" id="OpenInSceneBuilder" text="Open In SceneBuilder">
       <add-to-group group-id="EditorPopupMenu" anchor="last"/>
+      <add-to-group group-id="EditorTabPopupMenu" anchor="last"/>
+      <add-to-group group-id="ProjectViewPopupMenu" anchor="last"/>
+    </action>
+    <action class="org.jetbrains.plugins.javaFX.actions.CreateFxmlFileAction" id="NewFxmlFile">
+      <add-to-group group-id="NewGroup" anchor="after" relative-to-action="NewDir"/>
     </action>
   </actions>
 </idea-plugin>

@@ -1,12 +1,12 @@
 // "Initialize in constructor" "true"
-class A {
+class Main {
   private final int var;
 
   private Main() {
-      var = <caret><selection>0</selection>;
+      var = 0;
   }
 
   private Main(int var) {
       this.var = 0;
   }
-}
+}<caret>

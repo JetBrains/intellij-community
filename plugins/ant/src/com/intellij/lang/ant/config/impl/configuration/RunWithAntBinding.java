@@ -31,14 +31,14 @@ import java.util.Collection;
 import java.util.Iterator;
 
 public class RunWithAntBinding extends UIPropertyBinding {
-  private final ArrayList<JComponent> myComponents = new ArrayList<JComponent>();
+  private final ArrayList<JComponent> myComponents = new ArrayList<>();
   private final JRadioButton myUseDefaultAnt;
   private final ComboboxWithBrowseButton myAnts;
   private final ChooseAndEditComboBoxController<AntReference, AntReference> myAntsController;
   private final GlobalAntConfiguration myAntConfiguration;
   private boolean myEnabled = true;
   private boolean myLoadingValues = false;
-  private JRadioButton myUseCustomAnt;
+  private final JRadioButton myUseCustomAnt;
 
   public RunWithAntBinding(JRadioButton useDefaultAnt, JRadioButton useCastomAnt, ComboboxWithBrowseButton ants) {
     this(useDefaultAnt, useCastomAnt, ants, GlobalAntConfiguration.getInstance());
@@ -56,6 +56,7 @@ public class RunWithAntBinding extends UIPropertyBinding {
     group.add(myUseCustomAnt);
 
     myUseCustomAnt.addItemListener(new ItemListener() {
+      @Override
       public void itemStateChanged(ItemEvent e) {
         updateEnableCombobox();
         if (myUseCustomAnt.isSelected() && !myLoadingValues)
@@ -63,11 +64,13 @@ public class RunWithAntBinding extends UIPropertyBinding {
       }
     });
 
-    myAntsController = new ChooseAndEditComboBoxController<AntReference, AntReference>(myAnts, new ConvertingIterator.IdConvertor<AntReference>(), AntReference.COMPARATOR) {
+    myAntsController = new ChooseAndEditComboBoxController<AntReference, AntReference>(myAnts, new ConvertingIterator.IdConvertor<>(), AntReference.COMPARATOR) {
+      @Override
       public Iterator<AntReference> getAllListItems() {
         return antConfiguration.getConfiguredAnts().keySet().iterator();
       }
 
+      @Override
       public AntReference openConfigureDialog(AntReference reference, JComponent parent) {
         AntSetPanel antSetPanel = new AntSetPanel();
         AntInstallation installation = myAntConfiguration.getConfiguredAnts().get(reference);
@@ -81,10 +84,12 @@ public class RunWithAntBinding extends UIPropertyBinding {
     myAntsController.setRenderer(new AntUIUtil.AntReferenceRenderer(myAntConfiguration));
   }
 
+  @Override
   public void addAllPropertiesTo(Collection<AbstractProperty> properties) {
     properties.add(AntBuildFileImpl.ANT_REFERENCE);
   }
 
+  @Override
   public void apply(AbstractProperty.AbstractPropertyContainer container) {
     AntReference antReference = myUseDefaultAnt.isSelected() ?
                                 AntReference.PROJECT_DEFAULT :
@@ -92,16 +97,19 @@ public class RunWithAntBinding extends UIPropertyBinding {
     AntBuildFileImpl.ANT_REFERENCE.set(container, antReference);
   }
 
+  @Override
   public void beDisabled() {
     myEnabled = false;
     updateEnabled();
   }
 
+  @Override
   public void beEnabled() {
     myEnabled = true;
     updateEnabled();
   }
 
+  @Override
   public void loadValues(AbstractProperty.AbstractPropertyContainer container) {
     myLoadingValues = true;
     AntReference antReference = AntBuildFileImpl.ANT_REFERENCE.get(container);

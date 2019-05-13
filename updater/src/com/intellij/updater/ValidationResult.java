@@ -1,3 +1,4 @@
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.updater;
 
 import java.util.Arrays;
@@ -9,7 +10,7 @@ public class ValidationResult implements Comparable<ValidationResult> {
   }
 
   public enum Action {
-    CREATE("Create"), UPDATE("Update"), DELETE("Delete"), NO_ACTION("");
+    CREATE("Create"), UPDATE("Update"), DELETE("Delete"), NO_ACTION(""), VALIDATE("Validate");
 
     private final String myDisplayString;
 
@@ -24,7 +25,7 @@ public class ValidationResult implements Comparable<ValidationResult> {
   }
 
   public enum Option {
-    IGNORE, KEEP, REPLACE, DELETE
+    NONE, IGNORE, KEEP, REPLACE, DELETE, KILL_PROCESS
   }
 
   public static final String ABSENT_MESSAGE = "Absent";
@@ -69,25 +70,26 @@ public class ValidationResult implements Comparable<ValidationResult> {
 
     ValidationResult result = (ValidationResult)o;
 
-    if (action != result.action) return false;
     if (kind != result.kind) return false;
-    if (message != null ? !message.equals(result.message) : result.message != null) return false;
-    if (options != null ? !options.equals(result.options) : result.options != null) return false;
-    if (path != null ? !path.equals(result.path) : result.path != null) return false;
+    if (!path.equals(result.path)) return false;
+    if (action != result.action) return false;
+    if (!message.equals(result.message)) return false;
+    if (!options.equals(result.options)) return false;
 
     return true;
   }
 
   @Override
   public int hashCode() {
-    int result = kind != null ? kind.hashCode() : 0;
-    result = 31 * result + (path != null ? path.hashCode() : 0);
-    result = 31 * result + (action != null ? action.hashCode() : 0);
-    result = 31 * result + (message != null ? message.hashCode() : 0);
-    result = 31 * result + (options != null ? options.hashCode() : 0);
+    int result = kind.hashCode();
+    result = 31 * result + path.hashCode();
+    result = 31 * result + action.hashCode();
+    result = 31 * result + message.hashCode();
+    result = 31 * result + options.hashCode();
     return result;
   }
 
+  @Override
   public int compareTo(ValidationResult o) {
     return path.compareToIgnoreCase(o.path);
   }

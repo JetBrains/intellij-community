@@ -18,9 +18,9 @@ package com.intellij.uiDesigner.compiler;
 
 import com.intellij.uiDesigner.lw.LwComponent;
 import com.intellij.uiDesigner.lw.LwContainer;
-import org.jetbrains.asm4.Type;
-import org.jetbrains.asm4.commons.GeneratorAdapter;
-import org.jetbrains.asm4.commons.Method;
+import org.jetbrains.org.objectweb.asm.Type;
+import org.jetbrains.org.objectweb.asm.commons.GeneratorAdapter;
+import org.jetbrains.org.objectweb.asm.commons.Method;
 
 /**
  * Layout code generator shared between BorderLayout and CardLayout.
@@ -35,6 +35,7 @@ public class SimpleLayoutCodeGenerator extends LayoutCodeGenerator {
     myLayoutType = layoutType;
   }
 
+  @Override
   public void generateContainerLayout(final LwContainer lwContainer, final GeneratorAdapter generator, final int componentLocal) {
     generator.loadLocal(componentLocal);
 
@@ -48,6 +49,7 @@ public class SimpleLayoutCodeGenerator extends LayoutCodeGenerator {
     generator.invokeVirtual(ourContainerType, ourSetLayoutMethod);
   }
 
+  @Override
   public void generateComponentLayout(final LwComponent lwComponent,
                                       final GeneratorAdapter generator,
                                       final int componentLocal,

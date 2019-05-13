@@ -1,77 +1,78 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.diagnostic;
 
+import com.intellij.idea.IdeaLogger;
+import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.IdeaLoggingEvent;
+import com.intellij.openapi.util.objectTree.ThrowableInterner;
 import com.intellij.openapi.util.text.StringUtil;
-import org.apache.log4j.spi.LoggingEvent;
-import org.jetbrains.annotations.NonNls;
+import com.intellij.util.containers.ContainerUtil;
+import org.apache.log4j.Layout;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 
 public class LogMessage extends AbstractMessage {
-
-  @NonNls static final String NO_MESSAGE = "No message";
-
-  private String myHeader = NO_MESSAGE;
   private final Throwable myThrowable;
+  private final String myMessage;
+  private final List<Attachment> myAttachments;
 
-  public LogMessage(LoggingEvent aEvent) {
-    super();
+  LogMessage(Throwable throwable, String message, List<Attachment> attachments) {
+    myThrowable = ThrowableInterner.intern(throwable);
 
-    myThrowable = aEvent.getThrowableInformation() == null ? null : aEvent.getThrowableInformation().getThrowable();
-
-    if (aEvent.getMessage() == null || aEvent.getMessage().toString().length() == 0) {
-      myHeader = getThrowable().toString();
-    }
-    else {
-      myHeader = aEvent.getMessage().toString();
-    }
-  }
-
-  public LogMessage(IdeaLoggingEvent aEvent) {
-    super();
-
-    myThrowable = aEvent.getThrowable();
-
-    if (StringUtil.isNotEmpty(aEvent.getMessage())) {
-      myHeader = aEvent.getMessage();
-    }
-
-    if (myThrowable != null && StringUtil.isNotEmpty(myThrowable.getMessage())) {
-      if (!myHeader.equals(NO_MESSAGE)) {
-        if (!myHeader.endsWith(": ") && !myHeader.endsWith(":")) {
-          myHeader += ": ";
-        }
-        myHeader += myThrowable.getMessage();
-      }
-      else {
-        myHeader = myThrowable.getMessage();
+    String str = message;
+    if (str != null && throwable.getMessage() != null) {
+      str = StringUtil.trimStart(str, throwable.getMessage());
+      if (str != message) {
+        str = StringUtil.trimStart(str, ": ");
       }
     }
+    if ("null".equals(str)) {
+      str = null;
+    }
+    myMessage = StringUtil.nullize(str, true);
+
+    myAttachments = new ArrayList<>(ContainerUtil.filter(attachments, attachment -> attachment != null));
   }
 
-  public Throwable getThrowable() {
+  @Override
+  public @NotNull Throwable getThrowable() {
     return myThrowable;
   }
 
-  public String getMessage() {
-    return myHeader;
+  @Override
+  public @NotNull String getThrowableText() {
+    return StringUtil.join(IdeaLogger.getThrowableRenderer().doRender(myThrowable), Layout.LINE_SEP);
   }
 
-  public String getThrowableText() {
-    return StringUtil.getThrowableText(getThrowable());
+  @Override
+  public @NotNull String getMessage() {
+    return myMessage != null ? myMessage : "";
   }
 
+  @Override
+  public @NotNull List<Attachment> getAllAttachments() {
+    return Collections.unmodifiableList(myAttachments);
+  }
+
+  /** @deprecated pass all attachments to {@link #createEvent(Throwable, String, Attachment...)} (to be removed in IDEA 2019) */
+  @Deprecated
+  public synchronized void addAttachment(@NotNull Attachment attachment) {
+    myAttachments.add(attachment);
+  }
+
+  // factory methods
+
+  /**
+   * @param userMessage      user-friendly message description (short, single line if possible)
+   * @param attachments      attachments that will be suggested to include to the report
+   */
+  public static IdeaLoggingEvent createEvent(@NotNull Throwable throwable, @Nullable String userMessage, @NotNull Attachment... attachments) {
+    @SuppressWarnings("deprecation") AbstractMessage message = new LogMessageEx(throwable, userMessage, Arrays.asList(attachments), null);
+    return new IdeaLoggingEvent(userMessage, throwable, message);
+  }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.intellij.execution.runners;
 
 import com.intellij.execution.*;
@@ -24,7 +23,7 @@ import com.intellij.execution.configurations.RunnerSettings;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.UserDataHolderBase;
@@ -33,175 +32,83 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicLong;
 
+import static com.intellij.openapi.actionSystem.LangDataKeys.*;
 
-public class ExecutionEnvironment extends UserDataHolderBase {
+public class ExecutionEnvironment extends UserDataHolderBase implements Disposable {
   private static final AtomicLong myIdHolder = new AtomicLong(1L);
 
-  @Nullable private final Project myProject;
+  @NotNull private final Project myProject;
 
   @NotNull private RunProfile myRunProfile;
+  @NotNull private final Executor myExecutor;
   @NotNull private ExecutionTarget myTarget;
 
   @Nullable private RunnerSettings myRunnerSettings;
   @Nullable private ConfigurationPerRunnerSettings myConfigurationSettings;
   @Nullable private final RunnerAndConfigurationSettings myRunnerAndConfigurationSettings;
   @Nullable private RunContentDescriptor myContentToReuse;
+  private final ProgramRunner<?> myRunner;
   private long myExecutionId = 0;
+  @Nullable private DataContext myDataContext;
 
   @TestOnly
   public ExecutionEnvironment() {
     myProject = null;
     myContentToReuse = null;
     myRunnerAndConfigurationSettings = null;
+    myExecutor = null;
+    myRunner = null;
   }
 
-  public ExecutionEnvironment(@NotNull final ProgramRunner runner,
-                              @NotNull final RunnerAndConfigurationSettings configuration,
-                              @Nullable Project project) {
-    this(configuration.getConfiguration(),
+  public ExecutionEnvironment(@NotNull Executor executor,
+                              @NotNull ProgramRunner runner,
+                              @NotNull RunnerAndConfigurationSettings settings,
+                              @NotNull Project project) {
+    this(settings.getConfiguration(),
+         executor,
          DefaultExecutionTarget.INSTANCE,
          project,
-         configuration.getRunnerSettings(runner),
-         configuration.getConfigurationSettings(runner),
+         settings.getRunnerSettings(runner),
+         settings.getConfigurationSettings(runner),
          null,
-         null);
+         settings,
+         runner);
   }
 
-  /**
-   * @deprecated, use {@link com.intellij.execution.runners.ExecutionEnvironmentBuilder} instead
-   */
-  public ExecutionEnvironment(@NotNull final ProgramRunner runner,
-                              @NotNull final ExecutionTarget target,
-                              @NotNull final RunnerAndConfigurationSettings configuration,
-                              @Nullable RunContentDescriptor contentToReuse,
-                              Project project) {
-    this(configuration.getConfiguration(),
-         target,
-         project,
-         configuration.getRunnerSettings(runner),
-         configuration.getConfigurationSettings(runner),
-         contentToReuse,
-         configuration);
-  }
-
-  /**
-   * @deprecated, use {@link com.intellij.execution.runners.ExecutionEnvironmentBuilder} instead
-   */
-  @TestOnly
-  public ExecutionEnvironment(@NotNull final ProgramRunner runner,
-                              @NotNull final ExecutionTarget target,
-                              @NotNull final RunnerAndConfigurationSettings configuration,
-                              Project project) {
-    this(configuration.getConfiguration(),
-         target,
-         project,
-         configuration.getRunnerSettings(runner),
-         configuration.getConfigurationSettings(runner),
-         null,
-         configuration);
-  }
-
-  /**
-   * @deprecated, use {@link com.intellij.execution.runners.ExecutionEnvironmentBuilder} instead
-   */
-  @Deprecated
-  public ExecutionEnvironment(@NotNull final RunProfile runProfile,
-                              @Nullable final RunnerSettings runnerSettings,
-                              @Nullable final ConfigurationPerRunnerSettings configurationSettings,
-                              @NotNull final DataContext dataContext) {
-    this(runProfile, DefaultExecutionTarget.INSTANCE, PlatformDataKeys.PROJECT.getData(dataContext), runnerSettings, configurationSettings, null, null);
-  }
-
-  /**
-   * @deprecated, use {@link com.intellij.execution.runners.ExecutionEnvironmentBuilder} instead
-   */
-  public ExecutionEnvironment(@NotNull RunProfile runProfile,
-                              @Nullable Project project,
-                              @Nullable RunnerSettings runnerSettings,
-                              @Nullable ConfigurationPerRunnerSettings configurationSettings,
-                              @Nullable RunContentDescriptor contentToReuse) {
-    this(runProfile, DefaultExecutionTarget.INSTANCE, project, runnerSettings, configurationSettings, contentToReuse, null);
-  }
-
-  /**
-   * @deprecated, use {@link com.intellij.execution.runners.ExecutionEnvironmentBuilder} instead
-   */
-  public ExecutionEnvironment(@NotNull RunProfile runProfile,
-                              @NotNull ExecutionTarget target,
-                              @Nullable Project project,
-                              @Nullable RunnerSettings runnerSettings,
-                              @Nullable ConfigurationPerRunnerSettings configurationSettings,
-                              @Nullable RunContentDescriptor contentToReuse) {
-    this(runProfile, target, project, runnerSettings, configurationSettings, contentToReuse, null);
-  }
-
-  /**
-   * @deprecated, use {@link com.intellij.execution.runners.ExecutionEnvironmentBuilder} instead
-   */
-  public ExecutionEnvironment(@NotNull RunProfile runProfile,
-                              @Nullable Project project,
-                              @Nullable RunnerSettings runnerSettings,
-                              @Nullable ConfigurationPerRunnerSettings configurationSettings,
-                              @Nullable RunContentDescriptor contentToReuse,
-                              @Nullable RunnerAndConfigurationSettings settings) {
-    this(runProfile, DefaultExecutionTarget.INSTANCE, project, runnerSettings, configurationSettings, contentToReuse, settings);
-  }
-
-  public ExecutionEnvironment(@NotNull RunProfile runProfile,
-                              @NotNull ExecutionTarget target,
-                              @Nullable Project project,
-                              @Nullable RunnerSettings runnerSettings,
-                              @Nullable ConfigurationPerRunnerSettings configurationSettings,
-                              @Nullable RunContentDescriptor contentToReuse,
-                              @Nullable RunnerAndConfigurationSettings settings) {
+  ExecutionEnvironment(@NotNull RunProfile runProfile,
+                       @NotNull Executor executor,
+                       @NotNull ExecutionTarget target,
+                       @NotNull Project project,
+                       @Nullable RunnerSettings runnerSettings,
+                       @Nullable ConfigurationPerRunnerSettings configurationSettings,
+                       @Nullable RunContentDescriptor contentToReuse,
+                       @Nullable RunnerAndConfigurationSettings settings,
+                       @NotNull ProgramRunner<?> runner) {
+    myExecutor = executor;
     myTarget = target;
     myRunProfile = runProfile;
     myRunnerSettings = runnerSettings;
     myConfigurationSettings = configurationSettings;
     myProject = project;
-    myContentToReuse = contentToReuse;
+    setContentToReuse(contentToReuse);
     myRunnerAndConfigurationSettings = settings;
-    if (myContentToReuse != null) {
-      Disposer.register(myContentToReuse, new Disposable() {
-        @Override
-        public void dispose() {
-          myContentToReuse = null;
-        }
-      });
-    }
+
+    myRunner = runner;
   }
 
-  /**
-   * @deprecated, use {@link com.intellij.execution.runners.ExecutionEnvironmentBuilder} instead
-   */
-  @Deprecated
-  public ExecutionEnvironment(@NotNull final ProgramRunner runner,
-                              @NotNull final RunnerAndConfigurationSettings configuration,
-                              @NotNull final DataContext context) {
-    this(configuration.getConfiguration(),
-         DefaultExecutionTarget.INSTANCE,
-         PlatformDataKeys.PROJECT.getData(context),
-         configuration.getRunnerSettings(runner),
-         configuration.getConfigurationSettings(runner),
-         null,
-         configuration);
+  @Override
+  public void dispose() {
+    myContentToReuse = null;
   }
 
-  /**
-   * @deprecated, use {@link com.intellij.execution.runners.ExecutionEnvironmentBuilder} instead
-   */
-  public ExecutionEnvironment(@NotNull final RunProfile profile,
-                              @NotNull final DataContext dataContext) {
-    this(profile, PlatformDataKeys.PROJECT.getData(dataContext), null, null, null);
-  }
-
-  @Nullable
+  @NotNull
   public Project getProject() {
     return myProject;
   }
-
 
   @NotNull
   public ExecutionTarget getExecutionTarget() {
@@ -218,26 +125,22 @@ public class ExecutionEnvironment extends UserDataHolderBase {
     return myRunnerAndConfigurationSettings;
   }
 
-  /**
-   * @deprecated use {@link #getProject()} and {@link #getContentToReuse()}
-   */
-  @Deprecated
-  public DataContext getDataContext() {
-    return new DataContext() {
-      public Object getData(@NonNls String dataId) {
-        return PlatformDataKeys.PROJECT.is(dataId) ? myProject : null;
-      }
-    };
-  }
-
   @Nullable
   public RunContentDescriptor getContentToReuse() {
     return myContentToReuse;
   }
 
-  @Nullable
-  public String getRunnerId() {
-    return myConfigurationSettings == null ? null : myConfigurationSettings.getRunnerId();
+  public void setContentToReuse(@Nullable RunContentDescriptor contentToReuse) {
+    myContentToReuse = contentToReuse;
+
+    if (contentToReuse != null) {
+      Disposer.register(contentToReuse, this);
+    }
+  }
+
+  @NotNull
+  public ProgramRunner<?> getRunner() {
+    return myRunner;
   }
 
   @Nullable
@@ -251,8 +154,8 @@ public class ExecutionEnvironment extends UserDataHolderBase {
   }
 
   @Nullable
-  public RunProfileState getState(final Executor executor) throws ExecutionException {
-    return myRunProfile.getState(executor, this);
+  public RunProfileState getState() throws ExecutionException {
+    return myRunProfile.getState(myExecutor, this);
   }
 
   public long assignNewExecutionId() {
@@ -264,19 +167,72 @@ public class ExecutionEnvironment extends UserDataHolderBase {
     myExecutionId = executionId;
   }
 
+  /**
+   * By default a new unique executionId is assigned to each new {@link ExecutionEnvironment} ({@see assignNewExecutionId}).
+   * Can be set manually to create a batch of {@link ExecutionEnvironment} that are semantically a "single launch".
+   * {@link RunContentDescriptor}s will not reuse each other tabs if they have the same executionId.
+   *
+   * @return An id that will be propagated to resulting {@link RunContentDescriptor}.
+   */
   public long getExecutionId() {
     return myExecutionId;
+  }
+
+  @NotNull
+  public Executor getExecutor() {
+    return myExecutor;
   }
 
   @Override
   public String toString() {
     if (myRunnerAndConfigurationSettings != null) {
       return myRunnerAndConfigurationSettings.getName();
-    } else if (myRunProfile != null) {
-        return myRunProfile.getName();
-    } else if (myContentToReuse != null) {
+    }
+    else if (myRunProfile != null) {
+      return myRunProfile.getName();
+    }
+    else if (myContentToReuse != null) {
       return myContentToReuse.getDisplayName();
     }
     return super.toString();
+  }
+
+  void setDataContext(@NotNull DataContext dataContext) {
+    myDataContext = CachingDataContext.cacheIfNeed(dataContext);
+  }
+
+  @Nullable
+  public DataContext getDataContext() {
+    return myDataContext;
+  }
+
+  private static class CachingDataContext implements DataContext {
+    private static final DataKey[] keys = {PROJECT, PROJECT_FILE_DIRECTORY, EDITOR, VIRTUAL_FILE, MODULE, PSI_FILE};
+    private final Map<String, Object> values = new HashMap<>();
+
+    @NotNull
+    static CachingDataContext cacheIfNeed(@NotNull DataContext context) {
+      if (context instanceof CachingDataContext)
+        return (CachingDataContext)context;
+      return new CachingDataContext(context);
+    }
+
+    private CachingDataContext(DataContext context) {
+      for (DataKey key : keys) {
+        values.put(key.getName(), key.getData(context));
+      }
+    }
+
+    @Override
+    public Object getData(@NotNull @NonNls String dataId) {
+        return values.get(dataId);
+    }
+  }
+
+  /**
+   * @return A valid executionId that was not previously assigned to any {@link ExecutionEnvironment}.
+   */
+  public static long getNextUnusedExecutionId() {
+    return myIdHolder.incrementAndGet();
   }
 }

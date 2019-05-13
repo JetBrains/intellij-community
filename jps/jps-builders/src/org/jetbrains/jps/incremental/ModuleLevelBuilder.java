@@ -29,10 +29,13 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Use {@link BuilderService} to register implementations of this class
+ * Allows to extend the compilation process for Java modules compiled to .class files. Use {@link BuilderService} to register
+ * implementations of this class. The order of execution of different module-level builders is determined by their category
+ * (they're executed in the order of constants in the {@code BuilderCategory}; the order of executing different builders of
+ * the same category is not determined).
  *
  * @author Eugene Zhuravlev
- *         Date: 9/17/11
+ * @see BuilderService#createModuleLevelBuilders()
  */
 public abstract class ModuleLevelBuilder extends Builder {
   private final BuilderCategory myCategory;
@@ -46,19 +49,45 @@ public abstract class ModuleLevelBuilder extends Builder {
   }
 
   public interface OutputConsumer {
+    /**
+     * Call this method for every file (except *.class files for which {@link #registerCompiledClass} should be
+     * used instead) produced by the builder.
+     * @param target unit of compilation to which the source files belong. It must be one the targets composing {@link ModuleChunk} instance
+     *               passed to {@link ModuleLevelBuilder#build} method
+     * @param outputFile path to the produced file
+     * @param sourcePaths path to source files which were used to produce {@code outputFile}
+     */
+    void registerOutputFile(@NotNull BuildTarget<?> target, File outputFile, Collection<String> sourcePaths) throws IOException;
 
-    void registerOutputFile(BuildTarget<?> target, File outputFile, Collection<String> sourcePaths) throws IOException;
+    /**
+     * Call this method for every JVM class produced by the builder. You don't need to save *.class file for the produced class to the disk manually.
+     * The passed {@link CompiledClass} instance will be processed by class-file instrumenters and then written to the disk.
+     */
+    void registerCompiledClass(@Nullable BuildTarget<?> target, CompiledClass compiled) throws IOException;
 
-    void registerCompiledClass(BuildTarget<?> target, CompiledClass compiled) throws IOException;
-
-    Collection<CompiledClass> getTargetCompiledClasses(BuildTarget<?> target);
+    Collection<CompiledClass> getTargetCompiledClasses(@NotNull BuildTarget<?> target);
     @NotNull
     Map<String, CompiledClass> getCompiledClasses();
 
+    /**
+     * @param className fully qualified dot-separated name of a class
+     */
     @Nullable
     BinaryContent lookupClassBytes(String className);
   }
 
+  /**
+   * Performs the compilation actions for a single module or a chunk of cyclically dependent modules.
+   *
+   * @param context          compilation context (can be used to report compiler errors/warnings and to check whether the build
+   *                         has been cancelled and needs to be stopped).
+   * @param chunk            set of targets each of which depends (maybe transitively) on others so they cannot be built separately.
+   *                         For project without circular dependencies it contains only one {@link ModuleBuildTarget} instance.
+   * @param dirtyFilesHolder can be used to enumerate the source files from the inputs of this target that have been modified
+   *                         or deleted since the previous compilation run.
+   * @param outputConsumer   receives the output files and classes produced by the build. (All output files produced by the build
+   *                         need to be reported here.)
+   */
   public abstract ExitCode build(CompileContext context,
                                  ModuleChunk chunk,
                                  DirtyFilesHolder<JavaSourceRootDescriptor, ModuleBuildTarget> dirtyFilesHolder,
@@ -68,6 +97,7 @@ public abstract class ModuleLevelBuilder extends Builder {
   /**
    * @deprecated use {@link org.jetbrains.jps.builders.java.JavaBuilderExtension#shouldHonorFileEncodingForCompilation(java.io.File)} instead
    */
+  @Deprecated
   public boolean shouldHonorFileEncodingForCompilation(File file) {
     return false;
   }
@@ -89,5 +119,14 @@ public abstract class ModuleLevelBuilder extends Builder {
   }
 
   public void chunkBuildFinished(CompileContext context, ModuleChunk chunk) {
+  }
+
+  @Override
+  public long getExpectedBuildTime() {
+    //temporary workaround until this method is overridden in Kotlin plugin
+    if (getClass().getName().equals("org.jetbrains.kotlin.jps.build.KotlinBuilder")) {
+      return 100;
+    }
+    return super.getExpectedBuildTime();
   }
 }

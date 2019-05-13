@@ -21,6 +21,7 @@ import com.intellij.openapi.roots.ui.configuration.artifacts.ArtifactEditorEx;
 import com.intellij.openapi.roots.ui.configuration.artifacts.sourceItems.SourceItemsTree;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.packaging.ui.PackagingSourceItem;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.HashSet;
 import java.util.List;
@@ -35,13 +36,13 @@ public class PutSourceItemIntoDefaultLocationAction extends PutIntoDefaultLocati
   }
 
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     final List<PackagingSourceItem> items = mySourceItemsTree.getSelectedItems();
     boolean enabled = false;
     final Presentation presentation = e.getPresentation();
     if (!items.isEmpty()) {
       enabled = true;
-      Set<String> paths = new HashSet<String>();
+      Set<String> paths = new HashSet<>();
       for (PackagingSourceItem item : items) {
         final String path = getDefaultPath(item);
         if (path == null) {
@@ -57,7 +58,7 @@ public class PutSourceItemIntoDefaultLocationAction extends PutIntoDefaultLocati
   }
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     myArtifactEditor.getLayoutTreeComponent().putIntoDefaultLocations(mySourceItemsTree.getSelectedItems());
   }
 }

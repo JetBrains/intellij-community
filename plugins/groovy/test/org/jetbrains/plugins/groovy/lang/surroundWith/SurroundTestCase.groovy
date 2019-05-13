@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,24 +17,20 @@ package org.jetbrains.plugins.groovy.lang.surroundWith
 
 import com.intellij.codeInsight.generation.surroundWith.SurroundWithHandler
 import com.intellij.lang.surroundWith.Surrounder
-import com.intellij.openapi.application.ApplicationManager
 import org.jetbrains.plugins.groovy.LightGroovyTestCase
 import org.jetbrains.plugins.groovy.util.TestUtils
-
 /**
  * @author peter
  */
-public abstract class SurroundTestCase extends LightGroovyTestCase {
+abstract class SurroundTestCase extends LightGroovyTestCase {
   protected void doTest(final Surrounder surrounder) {
-    final List<String> data = TestUtils.readInput(testDataPath + "/" + getTestName(true) + ".test")
-    final String fileText = data[0]
-    myFixture.configureByText("a.groovy", fileText)
+    def (String before, String after) = TestUtils.readInput(testDataPath + "/" + getTestName(true) + ".test")
+    doTest(surrounder, before, after)
+  }
 
-    ApplicationManager.application.runWriteAction {
-      SurroundWithHandler.invoke(project, myFixture.editor, myFixture.file, surrounder)
-      doPostponedFormatting(project)
-    }
-
-    myFixture.checkResult(data[1])
+  protected void doTest(final Surrounder surrounder, String textBefore, String textAfter) {
+    myFixture.configureByText("a.groovy", textBefore)
+    SurroundWithHandler.invoke(project, myFixture.editor, myFixture.file, surrounder)
+    myFixture.checkResult(textAfter)
   }
 }

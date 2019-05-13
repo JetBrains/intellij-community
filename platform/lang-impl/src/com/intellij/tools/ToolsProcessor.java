@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,19 +18,20 @@ package com.intellij.tools;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PathMacroManager;
-import com.intellij.openapi.options.BaseSchemeProcessor;
+import com.intellij.openapi.options.NonLazySchemeProcessor;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
-import org.jdom.Document;
+import com.intellij.openapi.util.text.StringUtil;
 import org.jdom.Element;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.IOException;
 
 
-abstract public class ToolsProcessor<T extends Tool> extends BaseSchemeProcessor<ToolsGroup<T>> {
+abstract public class ToolsProcessor<T extends Tool> extends NonLazySchemeProcessor<ToolsGroup<T>, ToolsGroup<T>> {
   @NonNls private static final String TOOL_SET = "toolSet";
   @NonNls private static final String TOOL = "tool";
   @NonNls private static final String ATTRIBUTE_NAME = "name";
@@ -53,22 +54,20 @@ abstract public class ToolsProcessor<T extends Tool> extends BaseSchemeProcessor
   @NonNls private static final String ELEMENT_OPTION = "option";
   @NonNls private static final String ATTRIBUTE_VALUE = "value";
 
-  @NonNls private static final String APPLICATION_HOME_MACRO = "$APPLICATION_HOME_DIR$";
-
-  public ToolsGroup<T> readScheme(final Document document) throws InvalidDataException, IOException, JDOMException {
-    Element root = document.getRootElement();
-    if (root == null || !TOOL_SET.equals(root.getName())) {
+  @NotNull
+  @Override
+  public ToolsGroup<T> readScheme(@NotNull Element root, boolean duringLoad) throws InvalidDataException, IOException, JDOMException {
+    if (!TOOL_SET.equals(root.getName())) {
       throw new InvalidDataException();
     }
 
-    String groupName = root.getAttributeValue(ATTRIBUTE_NAME);
+    String attrName = root.getAttributeValue(ATTRIBUTE_NAME);
+    String groupName = StringUtil.isEmpty(attrName)? Tool.DEFAULT_GROUP_NAME : attrName;
     ToolsGroup<T> result = createToolsGroup(groupName);
 
     final PathMacroManager macroManager = PathMacroManager.getInstance(ApplicationManager.getApplication());
 
-    for (final Object o : root.getChildren(TOOL)) {
-      Element element = (Element)o;
-
+    for (Element element : root.getChildren(TOOL)) {
       T tool = createTool();
 
       readToolAttributes(element, tool);
@@ -88,10 +87,10 @@ abstract public class ToolsProcessor<T extends Tool> extends BaseSchemeProcessor
             }
           }
           if (COMMAND.equals(name)) {
-            tool.setProgram(macroManager.expandPath(ToolManager.convertString(value)));
+            tool.setProgram(macroManager.expandPath(BaseToolManager.convertString(value)));
           }
           if (PARAMETERS.equals(name)) {
-            tool.setParameters(macroManager.expandPath(ToolManager.convertString(value)));
+            tool.setParameters(macroManager.expandPath(BaseToolManager.convertString(value)));
           }
         }
       }
@@ -112,8 +111,8 @@ abstract public class ToolsProcessor<T extends Tool> extends BaseSchemeProcessor
   }
 
   protected void readToolAttributes(Element element, T tool) {
-    tool.setName(ToolManager.convertString(element.getAttributeValue(NAME)));
-    tool.setDescription(ToolManager.convertString(element.getAttributeValue(DESCRIPTION)));
+    tool.setName(BaseToolManager.convertString(element.getAttributeValue(NAME)));
+    tool.setDescription(BaseToolManager.convertString(element.getAttributeValue(DESCRIPTION)));
     tool.setShownInMainMenu(Boolean.valueOf(element.getAttributeValue(SHOW_IN_MAIN_MENU)).booleanValue());
     tool.setShownInEditor(Boolean.valueOf(element.getAttributeValue(SHOW_IN_EDITOR)).booleanValue());
     tool.setShownInProjectViews(Boolean.valueOf(element.getAttributeValue(SHOW_IN_PROJECT)).booleanValue());
@@ -129,21 +128,17 @@ abstract public class ToolsProcessor<T extends Tool> extends BaseSchemeProcessor
 
   protected abstract T createTool();
 
-  public Document writeScheme(final ToolsGroup<T> scheme) throws WriteExternalException {
+  @NotNull
+  @Override
+  public Element writeScheme(@NotNull final ToolsGroup<T> scheme) throws WriteExternalException {
     Element groupElement = new Element(TOOL_SET);
-    if (scheme.getName() != null) {
-      groupElement.setAttribute(ATTRIBUTE_NAME, scheme.getName());
-    }
+    groupElement.setAttribute(ATTRIBUTE_NAME, scheme.getName());
 
     for (T tool : scheme.getElements()) {
       saveTool(tool, groupElement);
     }
 
-    return new Document(groupElement);
-  }
-
-  public boolean shouldBeSaved(final ToolsGroup scheme) {
-    return true;
+    return groupElement;
   }
 
   private void saveTool(T tool, Element groupElement) {

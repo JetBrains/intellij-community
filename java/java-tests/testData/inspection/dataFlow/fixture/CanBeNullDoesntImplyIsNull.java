@@ -1,8 +1,8 @@
 import org.jetbrains.annotations.Nullable;
 
-public class DDD {
+class DDD {
   int test(boolean t) {
-    if (t && <warning descr="Dereference of 'fff()' may produce 'java.lang.NullPointerException'">fff()</warning>.length == 1) {
+    if (t && <warning descr="Dereference of 'fff()' may produce 'NullPointerException'">fff()</warning>.length == 1) {
       return 0;
     }
     return 1;

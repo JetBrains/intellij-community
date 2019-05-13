@@ -57,7 +57,7 @@ public class PsiTypeResult implements RecalculatableResult {
   }
 
   public String toString() {
-    return getType().getPresentableText();
+    return getType().getCanonicalText();
   }
 
   @Override

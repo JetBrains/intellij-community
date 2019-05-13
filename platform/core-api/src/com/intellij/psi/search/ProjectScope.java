@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 /*
  * @author max
@@ -20,40 +6,60 @@
 package com.intellij.psi.search;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.UserDataHolderEx;
+import com.intellij.openapi.util.NotNullLazyKey;
 import org.jetbrains.annotations.NotNull;
 
 public class ProjectScope {
-  private static final Key<GlobalSearchScope> ALL_SCOPE_KEY = new Key<GlobalSearchScope>("ALL_SCOPE_KEY");
-  private static final Key<GlobalSearchScope> PROJECT_SCOPE_KEY = new Key<GlobalSearchScope>("PROJECT_SCOPE_KEY");
-  private static final Key<GlobalSearchScope> LIBRARIES_SCOPE_KEY = new Key<GlobalSearchScope>("LIBRARIES_SCOPE_KEY");
-  private static final Key<GlobalSearchScope> CONTENT_SCOPE_KEY = new Key<GlobalSearchScope>("CONTENT_SCOPE_KEY");
+  private static final NotNullLazyKey<GlobalSearchScope, Project> ALL_SCOPE_KEY = NotNullLazyKey.create(
+    "ALL_SCOPE_KEY",
+    project -> ProjectScopeBuilder.getInstance(project).buildAllScope());
 
-  private ProjectScope() {
-  }
+  private static final NotNullLazyKey<GlobalSearchScope, Project> PROJECT_SCOPE_KEY = NotNullLazyKey.create(
+    "PROJECT_SCOPE_KEY",
+    project -> ProjectScopeBuilder.getInstance(project).buildProjectScope());
 
+  private static final NotNullLazyKey<GlobalSearchScope, Project> LIBRARIES_SCOPE_KEY = NotNullLazyKey.create(
+    "LIBRARIES_SCOPE_KEY",
+    project -> ProjectScopeBuilder.getInstance(project).buildLibrariesScope());
+
+  private static final NotNullLazyKey<GlobalSearchScope, Project> CONTENT_SCOPE_KEY = NotNullLazyKey.create(
+    "CONTENT_SCOPE_KEY",
+    project -> ProjectScopeBuilder.getInstance(project).buildContentScope());
+
+  private static final NotNullLazyKey<GlobalSearchScope, Project> EVERYTHING_SCOPE_KEY = NotNullLazyKey.create(
+    "EVERYTHING_SCOPE_KEY",
+    project -> ProjectScopeBuilder.getInstance(project).buildEverythingScope());
+
+  private ProjectScope() { }
+
+  /**
+   * @return Scope for all things inside the project: files in the project content plus files in libraries/libraries sources
+   */
   @NotNull
   public static GlobalSearchScope getAllScope(@NotNull Project project) {
-    GlobalSearchScope cached = project.getUserData(ALL_SCOPE_KEY);
-    return cached != null ? cached : ((UserDataHolderEx)project).putUserDataIfAbsent(ALL_SCOPE_KEY, ProjectScopeBuilder.getInstance(project).buildAllScope());
+    return ALL_SCOPE_KEY.getValue(project);
   }
 
   @NotNull
   public static GlobalSearchScope getProjectScope(@NotNull Project project) {
-    GlobalSearchScope cached = project.getUserData(PROJECT_SCOPE_KEY);
-    return cached != null ? cached : ((UserDataHolderEx)project).putUserDataIfAbsent(PROJECT_SCOPE_KEY, ProjectScopeBuilder.getInstance(project).buildProjectScope());
+    return PROJECT_SCOPE_KEY.getValue(project);
   }
 
   @NotNull
   public static GlobalSearchScope getLibrariesScope(@NotNull Project project) {
-    GlobalSearchScope cached = project.getUserData(LIBRARIES_SCOPE_KEY);
-    return cached != null ? cached : ((UserDataHolderEx)project).putUserDataIfAbsent(LIBRARIES_SCOPE_KEY, ProjectScopeBuilder.getInstance(project).buildLibrariesScope());
+    return LIBRARIES_SCOPE_KEY.getValue(project);
   }
 
   @NotNull
   public static GlobalSearchScope getContentScope(@NotNull Project project) {
-    GlobalSearchScope cached = project.getUserData(CONTENT_SCOPE_KEY);
-    return cached != null ? cached : ((UserDataHolderEx)project).putUserDataIfAbsent(CONTENT_SCOPE_KEY, ProjectScopeBuilder.getInstance(project).buildContentScope());
+    return CONTENT_SCOPE_KEY.getValue(project);
+  }
+
+  /**
+   * @return The biggest possible scope: every file on the planet belongs to this.
+   */
+  @NotNull
+  public static GlobalSearchScope getEverythingScope(@NotNull Project project) {
+    return EVERYTHING_SCOPE_KEY.getValue(project);
   }
 }

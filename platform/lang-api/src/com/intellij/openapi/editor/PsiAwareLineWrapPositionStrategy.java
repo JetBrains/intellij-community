@@ -32,17 +32,16 @@ import org.jetbrains.annotations.Nullable;
  * only for particular elements/tokens (e.g. we may want to avoid line wrap in the middle of xml tag name etc).
  * 
  * @author Denis Zhdanov
- * @since 5/12/11 12:30 PM
  */
 public abstract class PsiAwareLineWrapPositionStrategy implements LineWrapPositionStrategy {
 
-  private static final Logger LOG = Logger.getInstance("#" + PsiAwareLineWrapPositionStrategy.class.getName());
+  private static final Logger LOG = Logger.getInstance(PsiAwareLineWrapPositionStrategy.class);
   
   private final TokenSet myEnabledTypes;
   private final boolean  myNonVirtualOnly;
 
   /**
-   * Creates new <code>PsiAwareLineWrapPositionStrategy</code> object.
+   * Creates new {@code PsiAwareLineWrapPositionStrategy} object.
    * 
    * @param nonVirtualOnly  defines if current PSI-aware logic should be exploited only for 'real wrap' position requests
    * @param enabledTypes    target element/token types where line wrapping is allowed
@@ -63,11 +62,12 @@ public abstract class PsiAwareLineWrapPositionStrategy implements LineWrapPositi
                                    int endOffset,
                                    int maxPreferredOffset,
                                    boolean allowToBeyondMaxPreferredOffset,
-                                   boolean virtual) {
-    if (virtual && myNonVirtualOnly) {
+                                   boolean isSoftWrap) {
+    if (isSoftWrap && myNonVirtualOnly) {
       LineWrapPositionStrategy implementation = LanguageLineWrapPositionStrategy.INSTANCE.getDefaultImplementation();
+      //noinspection ConstantConditions
       return implementation.calculateWrapPosition(
-        document, project, startOffset, endOffset, maxPreferredOffset, allowToBeyondMaxPreferredOffset, virtual
+        document, project, startOffset, endOffset, maxPreferredOffset, allowToBeyondMaxPreferredOffset, isSoftWrap
       );
     }
 
@@ -85,6 +85,7 @@ public abstract class PsiAwareLineWrapPositionStrategy implements LineWrapPositi
       return -1;
     }
 
+    documentManager.commitDocument(document);
     PsiElement element = psiFile.findElementAt(maxPreferredOffset);
     if (element == null) {
       return -1;
@@ -95,7 +96,7 @@ public abstract class PsiAwareLineWrapPositionStrategy implements LineWrapPositi
         TextRange textRange = element.getTextRange();
         int start = Math.max(textRange.getStartOffset(), startOffset);
         int end = Math.min(textRange.getEndOffset(), endOffset);
-        int result = doCalculateWrapPosition(document, project, start, end, end, false, virtual);
+        int result = doCalculateWrapPosition(document, project, element, start, end, maxPreferredOffset, isSoftWrap);
         if (result >= 0) {
           return result;
         }
@@ -122,27 +123,29 @@ public abstract class PsiAwareLineWrapPositionStrategy implements LineWrapPositi
    * @param startOffset                       start offset to use with the given text holder (inclusive)
    * @param endOffset                         end offset to use with the given text holder (exclusive)
    * @param maxPreferredOffset                this method is expected to do its best to return offset that belongs to
-   *                                          <code>(startOffset; maxPreferredOffset]</code> interval. However, it's allowed
-   *                                          to return value from <code>(maxPreferredOffset; endOffset]</code> interval
-   *                                          unless <code>'allowToBeyondMaxPreferredOffset'</code> if <code>'false'</code>
-   * @param allowToBeyondMaxPreferredOffset   indicates if it's allowed to return value from
-   *                                          <code>(maxPreferredOffset; endOffset]</code> interval in case of inability to
-   *                                          find appropriate offset from <code>(startOffset; maxPreferredOffset]</code> interval
-   * @param virtual                           identifies if current request is for virtual wrap (soft wrap) position
-   * @return                                  offset from <code>(startOffset; endOffset]</code> interval where
-   *                                          target line should be wrapped OR <code>-1</code> if no wrapping should be performed
+   *                                          {@code (startOffset; maxPreferredOffset]} interval. However, it's allowed
+   *                                          to return value from {@code (maxPreferredOffset; endOffset]} interval
+   *                                          unless {@code 'allowToBeyondMaxPreferredOffset'} if {@code 'false'}
+   * @param isSoftWrap                        identifies if current request is for virtual wrap (soft wrap) position
+   * @return                                  offset from {@code (startOffset; endOffset]} interval where
+   *                                          target line should be wrapped OR {@code -1} if no wrapping should be performed
    */
   protected abstract int doCalculateWrapPosition(
-    @NotNull Document document, @Nullable Project project, int startOffset, int endOffset, int maxPreferredOffset,
-    boolean allowToBeyondMaxPreferredOffset, boolean virtual
+    @NotNull Document document,
+    @Nullable Project project,
+    @NotNull PsiElement element,
+    int startOffset,
+    int endOffset,
+    int maxPreferredOffset,
+    boolean isSoftWrap
   );
 
   /**
    * Allows to check if line wrap at the text range defined by the given element is allowed.
    * 
    * @param element     element that defines target text range
-   * @return            <code>true</code> if wrapping at the text range defined by the given element is allowed;
-   *                    <code>false</code> otherwise
+   * @return            {@code true} if wrapping at the text range defined by the given element is allowed;
+   *                    {@code false} otherwise
    */
   private boolean allowToWrapInside(@NotNull PsiElement element) {
     TextRange textRange = element.getTextRange();

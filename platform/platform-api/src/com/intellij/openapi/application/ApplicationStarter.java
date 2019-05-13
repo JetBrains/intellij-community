@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,8 +20,8 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import org.jetbrains.annotations.NonNls;
 
 /**
- * Implementors of this interface declared via {@link com.intellij.ExtensionPoints#APPLICATION_STARTER} contribute a
- * command line application based on IDEA platform.
+ * Implementers of the interface declared via {@link com.intellij.ExtensionPoints#APPLICATION_STARTER}
+ * contribute to a command-line processing capability of an application.
  *
  * @author max
  * @see ApplicationStarterEx
@@ -30,25 +30,26 @@ public interface ApplicationStarter {
   ExtensionPointName<ApplicationStarter> EP_NAME = ExtensionPointName.create(ExtensionPoints.APPLICATION_STARTER);
 
   /**
-   * Command line switch to start with this runner. For example return "inspect" if you'd like to start app with
-   * <code>idea.exe inspect</code> cmdline.
-   * @return command line selector.
+   * Command-line switch to start with this runner.
+   * For example return {@code "inspect"} if you'd like to start an app with {@code "idea.exe inspect ..."} command).
+   *
+   * @return command-line selector.
    */
   @NonNls
   String getCommandName();
 
   /**
-   * Called before application initialization. Invoked in awt dispatch thread.
-   * @param args cmdline arguments including declared selector. For example <code>"idea.exe inspect myproject.ipr"</code>
-   * will pass <code>{"inspect", "myproject.ipr"}</code>
+   * Called before application initialization. Invoked in event dispatch thread.
+   *
+   * @param args program arguments (including the selector)
    */
   void premain(String[] args);
 
   /**
-   * Called when application have been initialized. Invoked in awt dispatch thread. An application starter should take care terminating
-   * JVM itself when appropriate by calling {@link java.lang.System#exit}(0);
-   * @param args cmdline arguments including declared selector. For example <code>"idea.exe inspect myproject.ipr"</code>
-   * will pass <code>{"inspect", "myproject.ipr"}</code>
+   * <p>Called when application has been initialized. Invoked in event dispatch thread.</p>
+   * <p>An application starter should take care of terminating JVM when appropriate by calling {@link System#exit}.</p>
+   *
+   * @param args program arguments (including the selector)
    */
   void main(String[] args);
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,9 +14,6 @@
  * limitations under the License.
  */
 
-/**
- * @author cdr
- */
 package com.intellij.psi.controlFlow;
 
 import com.intellij.psi.PsiElement;
@@ -27,12 +24,12 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class ControlFlowSubRange implements ControlFlow {
-  private final ControlFlowImpl myControlFlow;
+  private final ControlFlow myControlFlow;
   private final int myStart;
   private final int myEnd;
   private List<Instruction> myInstructions;
 
-  public ControlFlowSubRange(ControlFlowImpl controlFlow, int start, int end) {
+  public ControlFlowSubRange(ControlFlow controlFlow, int start, int end) {
     myControlFlow = controlFlow;
     myStart = start;
     myEnd = end;
@@ -42,7 +39,7 @@ public class ControlFlowSubRange implements ControlFlow {
   @NotNull
   public List<Instruction> getInstructions() {
     if (myInstructions == null) {
-      final List<Instruction> list = new ArrayList<Instruction>(myEnd - myStart);
+      final List<Instruction> list = new ArrayList<>(myEnd - myStart);
       final List<Instruction> oldList = myControlFlow.getInstructions();
       for (int i = myStart; i < myEnd; i++) {
         Instruction instruction = oldList.get(i).clone();
@@ -113,10 +110,7 @@ public class ControlFlowSubRange implements ControlFlow {
     final List<Instruction> instructions = getInstructions();
     for(int i = 0; i < instructions.size(); i++){
       Instruction instruction = instructions.get(i);
-      buffer.append(Integer.toString(i));
-      buffer.append(": ");
-      buffer.append(instruction.toString());
-      buffer.append("\n");
+      buffer.append(i).append(": ").append(instruction.toString()).append("\n");
     }
     return buffer.toString();
   }

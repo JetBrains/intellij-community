@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.popup.list;
 
 import com.intellij.openapi.ui.popup.ListPopupStep;
@@ -20,16 +6,19 @@ import com.intellij.openapi.ui.popup.ListSeparator;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.speedSearch.ElementFilter;
 import com.intellij.ui.speedSearch.SpeedSearch;
+import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class ListPopupModel extends AbstractListModel {
 
   private final List<Object> myOriginalList;
-  private final List<Object> myFilteredList = new ArrayList<Object>();
+  private final List<Object> myFilteredList = new ArrayList<>();
 
   private final ElementFilter myFilter;
   private final ListPopupStep myStep;
@@ -37,12 +26,13 @@ public class ListPopupModel extends AbstractListModel {
   private int myFullMatchIndex = -1;
   private int myStartsWithIndex = -1;
   private final SpeedSearch mySpeedSearch;
+  private final Map<Object, ListSeparator> mySeparators = new HashMap<>();
 
   public ListPopupModel(ElementFilter filter, SpeedSearch speedSearch, ListPopupStep step) {
     myFilter = filter;
     myStep = step;
     mySpeedSearch = speedSearch;
-    myOriginalList = new ArrayList<Object>(step.getValues());
+    myOriginalList = new ArrayList<>(step.getValues());
     rebuildLists();
   }
 
@@ -66,12 +56,20 @@ public class ListPopupModel extends AbstractListModel {
 
   private void rebuildLists() {
     myFilteredList.clear();
+    mySeparators.clear();
     myFullMatchIndex = -1;
     myStartsWithIndex = -1;
 
+    ListSeparator lastSeparator = null;
     for (Object each : myOriginalList) {
+      lastSeparator = ObjectUtils.chooseNotNull(myStep.getSeparatorAbove(each), lastSeparator);
+
       if (myFilter.shouldBeShowing(each)) {
         addToFiltered(each);
+        if (lastSeparator != null) {
+          mySeparators.put(each, lastSeparator);
+          lastSeparator = null;
+        }
       }
     }
   }
@@ -91,10 +89,12 @@ public class ListPopupModel extends AbstractListModel {
     }
   }
 
+  @Override
   public int getSize() {
     return myFilteredList.size();
   }
 
+  @Override
   public Object getElementAt(int index) {
     if (index >= myFilteredList.size()) {
       return null;
@@ -115,7 +115,7 @@ public class ListPopupModel extends AbstractListModel {
   }
 
   private ListSeparator getSeparatorAbove(Object value) {
-    return myStep.getSeparatorAbove(value);
+    return mySeparators.get(value);
   }
 
   public void refilter() {
@@ -123,9 +123,7 @@ public class ListPopupModel extends AbstractListModel {
     if (myFilteredList.isEmpty() && !myOriginalList.isEmpty()) {
       mySpeedSearch.noHits();
     }
-    else {
-      fireContentsChanged(this, 0, myFilteredList.size());
-    }
+    fireContentsChanged(this, 0, myFilteredList.size());
   }
 
   public boolean isVisible(Object object) {
@@ -136,4 +134,9 @@ public class ListPopupModel extends AbstractListModel {
     return myFullMatchIndex != -1 ? myFullMatchIndex : myStartsWithIndex;
   }
 
+  public void updateOriginalList() {
+    myOriginalList.clear();
+    myOriginalList.addAll(myStep.getValues());
+    refilter();
+  }
 }

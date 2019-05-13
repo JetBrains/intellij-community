@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,6 +28,7 @@ public class ArrayListEnumeration implements Enumeration {
     myCounter = 0;
   }
 
+  @Override
   public Object nextElement() {
     if (myCounter >= myArrayList.size()) {
       throw new NoSuchElementException();
@@ -36,6 +37,7 @@ public class ArrayListEnumeration implements Enumeration {
     }
   }
 
+  @Override
   public boolean hasMoreElements() {
     return myCounter < myArrayList.size();
   }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
+import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.psi.formatter.common.InjectedLanguageBlockBuilder;
 import org.jetbrains.annotations.NotNull;
 
@@ -30,16 +31,22 @@ import java.util.List;
  * @author nik
  */
 public class CommentWithInjectionBlock extends AbstractJavaBlock {
-  private InjectedLanguageBlockBuilder myInjectedBlockBuilder;
+  private final InjectedLanguageBlockBuilder myInjectedBlockBuilder;
 
-  public CommentWithInjectionBlock(ASTNode node, Wrap wrap, Alignment alignment, Indent indent, CommonCodeStyleSettings settings) {
-    super(node, wrap, alignment, indent, settings);
+  public CommentWithInjectionBlock(ASTNode node,
+                                   Wrap wrap,
+                                   Alignment alignment,
+                                   Indent indent,
+                                   CommonCodeStyleSettings settings,
+                                   JavaCodeStyleSettings javaSettings,
+                                   @NotNull FormattingMode formattingMode) {
+    super(node, wrap, alignment, indent, settings, javaSettings, formattingMode);
     myInjectedBlockBuilder = new JavaCommentInjectedBlockBuilder();
   }
 
   @Override
   protected List<Block> buildChildren() {
-    final List<Block> result = new ArrayList<Block>();
+    final List<Block> result = new ArrayList<>();
     myInjectedBlockBuilder.addInjectedBlocks(result, myNode, myWrap, myAlignment, Indent.getNoneIndent());
     return result;
   }
@@ -85,7 +92,7 @@ public class CommentWithInjectionBlock extends AbstractJavaBlock {
   private static class PartialCommentBlock extends LeafBlock {
     private final TextRange myRange;
 
-    public PartialCommentBlock(ASTNode node, Wrap wrap, Alignment alignment, Indent indent, TextRange range) {
+    PartialCommentBlock(ASTNode node, Wrap wrap, Alignment alignment, Indent indent, TextRange range) {
       super(node, wrap, alignment, indent);
       myRange = range;
     }

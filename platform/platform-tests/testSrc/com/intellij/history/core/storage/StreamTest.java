@@ -260,7 +260,7 @@ public class StreamTest extends LocalHistoryTestCase {
   @Test
   public void testChangeSet() throws IOException {
     ChangeSet cs = cs(123, "name", new CreateFileChange(nextId(), "file"));
-
+    cs.lock();
     cs.write(os);
     ChangeSet read = new ChangeSet(is);
 
@@ -275,7 +275,7 @@ public class StreamTest extends LocalHistoryTestCase {
   @Test
   public void testChangeSetWithoutName() throws IOException {
     ChangeSet cs = cs((String)null);
-
+    cs.lock();
     cs.write(os);
     ChangeSet read = new ChangeSet(is);
 

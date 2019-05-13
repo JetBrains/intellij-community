@@ -1,6 +1,6 @@
 
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,8 +16,12 @@
  */
 package com.intellij.openapi.fileEditor.ex;
 
+import com.intellij.openapi.fileEditor.impl.IdeDocumentHistoryImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NotNull;
+
+import java.util.List;
 
 public abstract class IdeDocumentHistory {
   public static IdeDocumentHistory getInstance(Project project) {
@@ -35,7 +39,14 @@ public abstract class IdeDocumentHistory {
   public abstract boolean isForwardAvailable();
 
   public abstract void navigatePreviousChange();
+  public abstract void navigateNextChange();
   public abstract boolean isNavigatePreviousChangeAvailable();
+  public abstract boolean isNavigateNextChangeAvailable();
 
   public abstract VirtualFile[] getChangedFiles();
+
+  public abstract List<IdeDocumentHistoryImpl.PlaceInfo> getChangePlaces();
+  public abstract List<IdeDocumentHistoryImpl.PlaceInfo> getBackPlaces();
+
+  public abstract void gotoPlaceInfo(@NotNull IdeDocumentHistoryImpl.PlaceInfo info);
 }

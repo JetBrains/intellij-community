@@ -1,82 +1,85 @@
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.updater;
 
 import java.io.*;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.LinkOption;
+import java.nio.file.Path;
+import java.nio.file.attribute.BasicFileAttributes;
 import java.util.*;
 import java.util.zip.CRC32;
 import java.util.zip.ZipEntry;
+import java.util.zip.ZipException;
 import java.util.zip.ZipFile;
 
 public class Digester {
-  public static Map<String, Long> digestFiles(File dir, List<String> ignoredFiles, UpdaterUI ui)
-    throws IOException, OperationCancelledException {
-    Map<String, Long> result = new HashMap<String, Long>();
+  // CRC32 will only use the lower 32bits of long, never returning negative values.
+  public static final long INVALID    = 0x8000_0000_0000_0000L;
+  public static final long DIRECTORY  = 0x4000_0000_0000_0000L;
+  public static final long SYM_LINK   = 0x2000_0000_0000_0000L;
+  public static final long EXECUTABLE = 0x1000_0000_0000_0000L;
+  public static final long FLAG_MASK  = 0xFFFF_FFFF_0000_0000L;
 
-    LinkedHashSet<String> paths = Utils.collectRelativePaths(dir);
-    for (String each : paths) {
-      if (ignoredFiles.contains(each)) continue;
-      ui.setStatus(each);
-      ui.checkCancelled();
-      result.put(each, digestFile(new File(dir, each)));
-    }
-    return result;
+  public static boolean isFile(long digest) {
+    return (digest & FLAG_MASK) == 0;
   }
 
-  public static long digestFile(File file) throws IOException {
-    if (Utils.isZipFile(file.getName())) {
-      ZipFile zipFile;
-      try {
-        zipFile = new ZipFile(file);
-      }
-      catch (IOException e) {
-        return doDigestRegularFile(file);
-      }
-
-      try {
-        return doDigestZipFile(zipFile);
-      }
-      finally {
-        zipFile.close();
-      }
-    }
-    return doDigestRegularFile(file);
+  public static boolean isSymlink(long digest) {
+    return (digest & SYM_LINK) == SYM_LINK;
   }
 
-  private static long doDigestRegularFile(File file) throws IOException {
-    InputStream in = new BufferedInputStream(new FileInputStream(file));
+  public static long digestRegularFile(File file, boolean normalize) throws IOException {
+    Path path = file.toPath();
+    BasicFileAttributes attrs = Files.readAttributes(path, BasicFileAttributes.class, LinkOption.NOFOLLOW_LINKS);
+
+    if (attrs.isSymbolicLink()) {
+      Path target = Files.readSymbolicLink(path);
+      if (target.isAbsolute()) throw new IOException("Absolute link: " + file + " -> " + target);
+      return digestStream(new ByteArrayInputStream(target.toString().getBytes(StandardCharsets.UTF_8))) | SYM_LINK;
+    }
+
+    if (attrs.isDirectory()) return DIRECTORY;
+
+    long executable = !Utils.IS_WINDOWS && file.canExecute() ? EXECUTABLE : 0;
+    try (InputStream in = new BufferedInputStream(Utils.newFileInputStream(file, normalize))) {
+      return digestStream(in) | executable;
+    }
+  }
+
+  public static long digestZipFile(File file) throws IOException {
+    ZipFile zipFile;
     try {
-      return digestStream(in);
+      zipFile = new ZipFile(file);
+    }
+    catch (ZipException e) {
+      // This was not a zip file...
+      return digestRegularFile(file, false);
+    }
+    try {
+      List<ZipEntry> sorted = new ArrayList<>();
+
+      Enumeration<? extends ZipEntry> temp = zipFile.entries();
+      while (temp.hasMoreElements()) {
+        ZipEntry each = temp.nextElement();
+        if (!each.isDirectory()) {
+          sorted.add(each);
+        }
+      }
+
+      Collections.sort(sorted, Comparator.comparing(ZipEntry::getName));
+
+      CRC32 crc = new CRC32();
+      for (ZipEntry each : sorted) {
+        try (InputStream in = zipFile.getInputStream(each)) {
+          doDigestStream(in, crc);
+        }
+      }
+      return crc.getValue();
     }
     finally {
-      in.close();
+      zipFile.close();
     }
-  }
-
-  private static long doDigestZipFile(ZipFile zipFile) throws IOException {
-    List<ZipEntry> sorted = new ArrayList<ZipEntry>();
-
-    Enumeration<? extends ZipEntry> temp = zipFile.entries();
-    while (temp.hasMoreElements()) {
-      ZipEntry each = temp.nextElement();
-      if (!each.isDirectory()) sorted.add(each);
-    }
-
-    Collections.sort(sorted, new Comparator<ZipEntry>() {
-      public int compare(ZipEntry o1, ZipEntry o2) {
-        return o1.getName().compareTo(o2.getName());
-      }
-    });
-
-    CRC32 crc = new CRC32();
-    for (ZipEntry each : sorted) {
-      InputStream in = zipFile.getInputStream(each);
-      try {
-        doDigestStream(in, crc);
-      }
-      finally {
-        in.close();
-      }
-    }
-    return crc.getValue();
   }
 
   public static long digestStream(InputStream in) throws IOException {
@@ -86,7 +89,7 @@ public class Digester {
   }
 
   private static void doDigestStream(InputStream in, CRC32 crc) throws IOException {
-    final byte[] BUFFER = new byte[65536];
+    byte[] BUFFER = new byte[8192];
     int size;
     while ((size = in.read(BUFFER)) != -1) {
       crc.update(BUFFER, 0, size);

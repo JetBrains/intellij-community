@@ -1,64 +1,58 @@
-/*
- * Copyright 2000-2011 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.update;
 
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FilePath;
-import com.intellij.openapi.vcs.FilePathImpl;
 import com.intellij.openapi.vcs.VcsException;
-import com.intellij.openapi.vcs.changes.*;
+import com.intellij.openapi.vcs.changes.Change;
+import com.intellij.openapi.vcs.changes.ChangeListManager;
+import com.intellij.openapi.vcs.changes.ContentRevision;
+import com.intellij.openapi.vcs.changes.LocalChangeList;
 import com.intellij.openapi.vcs.changes.ui.ChangeListViewerDialog;
 import com.intellij.openapi.vcs.update.UpdatedFiles;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.vcsUtil.VcsUtil;
 import git4idea.GitUtil;
-import git4idea.GitPlatformFacade;
 import git4idea.branch.GitBranchPair;
 import git4idea.commands.*;
 import git4idea.merge.GitConflictResolver;
 import git4idea.merge.GitMerger;
 import git4idea.repo.GitRepository;
 import git4idea.util.GitUIUtil;
-import git4idea.util.UntrackedFilesNotifier;
+import git4idea.util.GitUntrackedFilesHelper;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.util.*;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicReference;
+
+import static com.intellij.util.ObjectUtils.assertNotNull;
+import static java.util.Arrays.asList;
 
 /**
- * Handles <code>git pull</code> via merge.
+ * Handles {@code git pull} via merge.
  */
 public class GitMergeUpdater extends GitUpdater {
   private static final Logger LOG = Logger.getInstance(GitMergeUpdater.class);
 
-  private final ChangeListManager myChangeListManager;
+  @NotNull private final ChangeListManager myChangeListManager;
+  @NotNull private final GitBranchPair myBranchPair;
 
-  public GitMergeUpdater(Project project, @NotNull Git git,
-                         VirtualFile root,
-                         final Map<VirtualFile, GitBranchPair> trackedBranches,
-                         ProgressIndicator progressIndicator,
-                         UpdatedFiles updatedFiles) {
-    super(project, git, root, trackedBranches, progressIndicator, updatedFiles);
+  public GitMergeUpdater(@NotNull Project project,
+                         @NotNull Git git,
+                         @NotNull GitRepository repository,
+                         @NotNull GitBranchPair branchPair,
+                         @NotNull ProgressIndicator progressIndicator,
+                         @NotNull UpdatedFiles updatedFiles) {
+    super(project, git, repository, progressIndicator, updatedFiles);
+    myBranchPair = branchPair;
     myChangeListManager = ChangeListManager.getInstance(myProject);
   }
 
@@ -67,47 +61,32 @@ public class GitMergeUpdater extends GitUpdater {
   protected GitUpdateResult doUpdate() {
     LOG.info("doUpdate ");
     final GitMerger merger = new GitMerger(myProject);
-    final GitLineHandler mergeHandler = new GitLineHandler(myProject, myRoot, GitCommand.MERGE);
-    mergeHandler.addParameters("--no-stat", "-v");
-    mergeHandler.addParameters(myTrackedBranches.get(myRoot).getDest().getName());
 
-    final MergeLineListener mergeLineListener = new MergeLineListener();
-    mergeHandler.addLineListener(mergeLineListener);
+    MergeLineListener mergeLineListener = new MergeLineListener();
     GitUntrackedFilesOverwrittenByOperationDetector untrackedFilesDetector = new GitUntrackedFilesOverwrittenByOperationDetector(myRoot);
-    mergeHandler.addLineListener(untrackedFilesDetector);
 
-    String progressTitle = makeProgressTitle("Merging");
-    final GitTask mergeTask = new GitTask(myProject, mergeHandler, progressTitle);
-    mergeTask.setProgressIndicator(myProgressIndicator);
-    mergeTask.setProgressAnalyzer(new GitStandardProgressAnalyzer());
-    final AtomicReference<GitUpdateResult> updateResult = new AtomicReference<GitUpdateResult>();
-    final AtomicBoolean failure = new AtomicBoolean();
-    mergeTask.executeInBackground(true, new GitTaskResultHandlerAdapter() {
-      @Override protected void onSuccess() {
-        updateResult.set(GitUpdateResult.SUCCESS);
-      }
-
-      @Override protected void onCancel() {
-        cancel();
-        updateResult.set(GitUpdateResult.CANCEL);
-      }
-
-      @Override protected void onFailure() {
-        failure.set(true);
-      }
-    });
-
-    if (failure.get()) {
-      updateResult.set(handleMergeFailure(mergeLineListener, untrackedFilesDetector, merger, mergeHandler));
+    String originalText = myProgressIndicator.getText();
+    myProgressIndicator.setText("Merging" + GitUtil.mention(myRepository) + "...");
+    try {
+      GitCommandResult result = myGit.merge(myRepository, assertNotNull(myBranchPair.getDest()).getName(),
+                                            asList("--no-stat", "-v"), mergeLineListener, untrackedFilesDetector,
+                                            GitStandardProgressAnalyzer.createListener(myProgressIndicator));
+      myProgressIndicator.setText(originalText);
+      return result.success()
+             ? GitUpdateResult.SUCCESS
+             : handleMergeFailure(mergeLineListener, untrackedFilesDetector, merger, result.getErrorOutputAsJoinedString());
     }
-    return updateResult.get();
+    catch (ProcessCanceledException pce) {
+      cancel();
+      return GitUpdateResult.CANCEL;
+    }
   }
 
   @NotNull
   private GitUpdateResult handleMergeFailure(MergeLineListener mergeLineListener,
                                              GitMessageWithFilesDetector untrackedFilesWouldBeOverwrittenByMergeDetector,
                                              final GitMerger merger,
-                                             GitLineHandler mergeHandler) {
+                                             String errorMessage) {
     final MergeError error = mergeLineListener.getMergeError();
     LOG.info("merge error: " + error);
     if (error == MergeError.CONFLICT) {
@@ -120,30 +99,24 @@ public class GitMergeUpdater extends GitUpdater {
       LOG.info("Local changes would be overwritten by merge");
       final List<FilePath> paths = getFilesOverwrittenByMerge(mergeLineListener.getOutput());
       final Collection<Change> changes = getLocalChangesFilteredByFiles(paths);
-      final ChangeListViewerDialog dialog = new ChangeListViewerDialog(myProject, changes, false) {
-        @Override protected String getDescription() {
-          return "Your local changes to the following files would be overwritten by merge.<br/>" +
-                            "Please, commit your changes or stash them before you can merge.";
-        }
-      };
-      UIUtil.invokeAndWaitIfNeeded(new Runnable() {
-        @Override
-        public void run() {
-          dialog.show();
-        }
+      UIUtil.invokeAndWaitIfNeeded((Runnable)() -> {
+        ChangeListViewerDialog dialog = new ChangeListViewerDialog(myProject, changes);
+        dialog.setDescription("Your local changes to the following files would be overwritten by merge.<br/>" +
+                              "Please, commit your changes or stash them before you can merge.");
+        dialog.show();
       });
       return GitUpdateResult.ERROR;
     }
     else if (untrackedFilesWouldBeOverwrittenByMergeDetector.wasMessageDetected()) {
       LOG.info("handleMergeFailure: untracked files would be overwritten by merge");
-      UntrackedFilesNotifier.notifyUntrackedFilesOverwrittenBy(myProject, ServiceManager.getService(myProject, GitPlatformFacade.class),
-                                                               untrackedFilesWouldBeOverwrittenByMergeDetector.getFiles(), "merge", null);
+      GitUntrackedFilesHelper.notifyUntrackedFilesOverwrittenBy(myProject, myRoot,
+                                                                untrackedFilesWouldBeOverwrittenByMergeDetector.getRelativeFilePaths(),
+                                                                "merge", null);
       return GitUpdateResult.ERROR;
     }
     else {
-      String errors = GitUIUtil.stringifyErrors(mergeHandler.errors());
-      LOG.info("Unknown error: " + errors);
-      GitUIUtil.notifyImportantError(myProject, "Error merging", errors);
+      LOG.info("Unknown error: " + errorMessage);
+      GitUIUtil.notifyImportantError(myProject, "Error merging", errorMessage);
       return GitUpdateResult.ERROR;
     }
   }
@@ -161,21 +134,20 @@ public class GitMergeUpdater extends GitUpdater {
     }
 
     // git log --name-status master..origin/master
-    GitBranchPair gitBranchPair = myTrackedBranches.get(myRoot);
-    String currentBranch = gitBranchPair.getBranch().getName();
-    String remoteBranch = gitBranchPair.getDest().getName();
+    String currentBranch = myBranchPair.getBranch().getName();
+    String remoteBranch = myBranchPair.getDest().getName();
     try {
       GitRepository repository = GitUtil.getRepositoryManager(myProject).getRepositoryForRoot(myRoot);
       if (repository == null) {
         LOG.error("Repository is null for root " + myRoot);
         return true; // fail safe
       }
-      final Collection<String> remotelyChanged = GitUtil.getPathsDiffBetweenRefs(ServiceManager.getService(Git.class), repository,
+      final Collection<String> remotelyChanged = GitUtil.getPathsDiffBetweenRefs(Git.getInstance(), repository,
                                                                                  currentBranch, remoteBranch);
       final List<File> locallyChanged = myChangeListManager.getAffectedPaths();
-      for (File localPath : locallyChanged) {
-        if (remotelyChanged.contains(FilePathsHelper.convertPath(localPath.getPath()))) {
-         // found a file which was changed locally and remotely => need to save
+      for (final File localPath : locallyChanged) {
+        if (ContainerUtil.exists(remotelyChanged, remotelyChangedPath -> FileUtil.pathsEqual(localPath.getPath(), remotelyChangedPath))) {
+          // found a file which was changed locally and remotely => need to save
           return true;
         }
       }
@@ -187,20 +159,18 @@ public class GitMergeUpdater extends GitUpdater {
   }
 
   private void cancel() {
-    try {
-      GitSimpleHandler h = new GitSimpleHandler(myProject, myRoot, GitCommand.RESET);
-      h.setNoSSH(true);
-      h.addParameters("--merge");
-      h.run();
-    } catch (VcsException e) {
-      LOG.info("cancel git reset --merge", e);
-      GitUIUtil.notifyImportantError(myProject, "Couldn't reset merge", e.getLocalizedMessage());
+    GitLineHandler h = new GitLineHandler(myProject, myRoot, GitCommand.RESET);
+    h.addParameters("--merge");
+    GitCommandResult result = Git.getInstance().runCommand(h);
+    if (!result.success()) {
+      LOG.info("cancel git reset --merge: " + result.getErrorOutputAsJoinedString());
+      GitUIUtil.notifyImportantError(myProject, "Couldn't reset merge", result.getErrorOutputAsHtmlString());
     }
   }
 
   // parses the output of merge conflict returning files which would be overwritten by merge. These files will be stashed.
   private List<FilePath> getFilesOverwrittenByMerge(@NotNull List<String> mergeOutput) {
-    final List<FilePath> paths = new ArrayList<FilePath>();
+    final List<FilePath> paths = new ArrayList<>();
     for  (String line : mergeOutput) {
       if (StringUtil.isEmptyOrSpaces(line)) {
         continue;
@@ -215,7 +185,7 @@ public class GitMergeUpdater extends GitUpdater {
         path = myRoot.getPath() + "/" + GitUtil.unescapePath(line);
         final File file = new File(path);
         if (file.exists()) {
-          paths.add(new FilePathImpl(file, false));
+          paths.add(VcsUtil.getFilePath(file, false));
         }
       } catch (VcsException e) { // just continue
       }
@@ -224,7 +194,7 @@ public class GitMergeUpdater extends GitUpdater {
   }
 
   private Collection<Change> getLocalChangesFilteredByFiles(List<FilePath> paths) {
-    final Collection<Change> changes = new HashSet<Change>();
+    final Collection<Change> changes = new HashSet<>();
     for(LocalChangeList list : myChangeListManager.getChangeLists()) {
       for (Change change : list.getChanges()) {
         final ContentRevision afterRevision = change.getAfterRevision();
@@ -248,9 +218,9 @@ public class GitMergeUpdater extends GitUpdater {
     OTHER
   }
 
-  private static class MergeLineListener extends GitLineHandlerAdapter {
+  private static class MergeLineListener implements GitLineHandlerListener {
     private MergeError myMergeError;
-    private List<String> myOutput = new ArrayList<String>();
+    private final List<String> myOutput = new ArrayList<>();
     private boolean myLocalChangesError = false;
 
     @Override
@@ -278,14 +248,14 @@ public class GitMergeUpdater extends GitUpdater {
     private final GitMerger myMerger;
     private final VirtualFile myRoot;
 
-    public MyConflictResolver(Project project, @NotNull Git git, GitMerger merger, VirtualFile root) {
-      super(project, git, ServiceManager.getService(git4idea.GitPlatformFacade.class), Collections.singleton(root), makeParams());
+    MyConflictResolver(Project project, @NotNull Git git, GitMerger merger, VirtualFile root) {
+      super(project, git, Collections.singleton(root), makeParams(project));
       myMerger = merger;
       myRoot = root;
     }
     
-    private static Params makeParams() {
-      Params params = new Params();
+    private static Params makeParams(Project project) {
+      Params params = new Params(project);
       params.setErrorNotificationTitle("Can't complete update");
       params.setMergeDescription("Merge conflicts detected. Resolve them before continuing update.");
       return params;

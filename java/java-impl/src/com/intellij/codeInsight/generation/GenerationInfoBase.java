@@ -20,6 +20,7 @@ import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMember;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -30,22 +31,18 @@ import org.jetbrains.annotations.Nullable;
 public abstract class GenerationInfoBase implements GenerationInfo {
 
   @Override
-  public abstract void insert(PsiClass aClass, PsiElement anchor, boolean before) throws IncorrectOperationException;
+  public abstract void insert(@NotNull PsiClass aClass, PsiElement anchor, boolean before) throws IncorrectOperationException;
 
   @Override
   public abstract PsiMember getPsiMember();
 
-  /**
-   * @param aClass
-   * @param leaf leaf element. Is guaranteed to be a tree descendant of aClass.
-   * @return the value that will be passed to the {@link #insert(com.intellij.psi.PsiClass, com.intellij.psi.PsiElement, boolean)} method later.
-   */
   @Override
   @Nullable
   public PsiElement findInsertionAnchor(@NotNull PsiClass aClass, @NotNull PsiElement leaf) {
     PsiElement element = leaf;
     while (element.getParent() != aClass) {
       element = element.getParent();
+      if (element == null) return null;
     }
 
     PsiElement lBrace = aClass.getLBrace();
@@ -56,15 +53,17 @@ public abstract class GenerationInfoBase implements GenerationInfo {
     if (!GenerateMembersUtil.isChildInRange(element, lBrace.getNextSibling(), rBrace)) {
       return null;
     }
-    PsiElement prev = leaf.getPrevSibling();
-    if (prev != null && prev.getNode() != null && prev.getNode().getElementType() == JavaTokenType.END_OF_LINE_COMMENT) {
+    if (leaf.getParent() == aClass && PsiUtilCore.getElementType(leaf.getPrevSibling()) == JavaTokenType.END_OF_LINE_COMMENT) {
       element = leaf.getNextSibling();
     }
     return element;
   }
 
   @Override
-  public void positionCaret(Editor editor, boolean toEditMethodBody) {
-    GenerateMembersUtil.positionCaret(editor, getPsiMember(), toEditMethodBody);
+  public void positionCaret(@NotNull Editor editor, boolean toEditMethodBody) {
+    PsiMember member = getPsiMember();
+    if (member != null) {
+      GenerateMembersUtil.positionCaret(editor, member, toEditMethodBody);
+    }
   }
 }

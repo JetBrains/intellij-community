@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,28 +15,28 @@
  */
 package com.intellij.refactoring.encapsulateFields;
 
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiField;
-import com.intellij.psi.PsiFile;
+import com.intellij.psi.*;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.HashSet;
+import java.util.List;
 
 public class EncapsulateFieldsHandler implements RefactoringActionHandler {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.encapsulateFields.EncapsulateFieldsHandler");
   public static final String REFACTORING_NAME = RefactoringBundle.message("encapsulate.fields.title");
 
+  @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file, DataContext dataContext) {
     int offset = editor.getCaretModel().getOffset();
     editor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
@@ -68,9 +68,10 @@ public class EncapsulateFieldsHandler implements RefactoringActionHandler {
    * if elements.length == 1 the expected value is either PsiClass or PsiField
    * if elements.length > 1 the expected values are PsiField objects only
    */
+  @Override
   public void invoke(@NotNull final Project project, @NotNull final PsiElement[] elements, DataContext dataContext) {
     PsiClass aClass = null;
-    final HashSet<PsiField> preselectedFields = new HashSet<PsiField>();
+    final HashSet<PsiField> preselectedFields = new HashSet<>();
     if (elements.length == 1) {
       if (elements[0] instanceof PsiClass) {
         aClass = (PsiClass) elements[0];
@@ -96,8 +97,9 @@ public class EncapsulateFieldsHandler implements RefactoringActionHandler {
             preselectedFields.add(field);
           }
           else {
-            String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("fields.to.be.refactored.should.belong.to.the.same.class"));
-            Editor editor = PlatformDataKeys.EDITOR.getData(dataContext);
+            String message = RefactoringBundle.getCannotRefactorMessage(
+              RefactoringBundle.message("fields.to.be.refactored.should.belong.to.the.same.class"));
+            Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
             CommonRefactoringUtil.showErrorHint(project, editor, message, REFACTORING_NAME, HelpID.ENCAPSULATE_FIELDS);
             return;
           }
@@ -106,25 +108,32 @@ public class EncapsulateFieldsHandler implements RefactoringActionHandler {
     }
 
     LOG.assertTrue(aClass != null);
-    final PsiField[] fields = aClass.getFields();
-    if (fields.length == 0) {
-      CommonRefactoringUtil.showErrorHint(project, PlatformDataKeys.EDITOR.getData(dataContext), "Class has no fields to encapsulate", REFACTORING_NAME, HelpID.ENCAPSULATE_FIELDS);
+    final List<PsiField> fields = ContainerUtil.filter(aClass.getFields(), field -> !(field instanceof PsiEnumConstant));
+    if (fields.isEmpty()) {
+      CommonRefactoringUtil.showErrorHint(project, CommonDataKeys.EDITOR.getData(dataContext), "Class has no fields to encapsulate",
+                                          REFACTORING_NAME, HelpID.ENCAPSULATE_FIELDS);
       return;
     }
 
     if (aClass.isInterface()) {
-      String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("encapsulate.fields.refactoring.cannot.be.applied.to.interface"));
-      Editor editor = PlatformDataKeys.EDITOR.getData(dataContext);
+      String message = RefactoringBundle.getCannotRefactorMessage(
+        RefactoringBundle.message("encapsulate.fields.refactoring.cannot.be.applied.to.interface"));
+      Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
       CommonRefactoringUtil.showErrorHint(project, editor, message, REFACTORING_NAME, HelpID.ENCAPSULATE_FIELDS);
       return;
     }
 
     if (!CommonRefactoringUtil.checkReadOnlyStatus(project, aClass)) return;
 
-    EncapsulateFieldsDialog dialog = new EncapsulateFieldsDialog(
-            project,
-            aClass,
-            preselectedFields);
+    EncapsulateFieldsDialog dialog = createDialog(project, aClass, preselectedFields);
     dialog.show();
+  }
+
+  protected EncapsulateFieldsDialog createDialog(Project project, PsiClass aClass, HashSet<PsiField> preselectedFields) {
+    return new EncapsulateFieldsDialog(
+              project,
+              aClass,
+              preselectedFields,
+              new JavaEncapsulateFieldHelper());
   }
 }

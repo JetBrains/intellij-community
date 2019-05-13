@@ -14,14 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * Created by IntelliJ IDEA.
- * User: dsl
- * Date: 08.07.2002
- * Time: 18:22:48
- * To change template for new class use
- * Code Style | Class Templates options (Tools | IDE Options).
- */
 package com.intellij.refactoring.classMembers;
 
 import com.intellij.lang.LanguageDependentMembersRefactoringSupport;
@@ -30,7 +22,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.NavigatablePsiElement;
 import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.RefactoringBundle;
-import com.intellij.util.containers.HashMap;
+import java.util.HashMap;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -48,21 +40,23 @@ public class UsesMemberDependencyGraph<T extends NavigatablePsiElement, C extend
 
   public UsesMemberDependencyGraph(C aClass, C superClass, boolean recursive) {
     myRecursive = recursive;
-    mySelectedNormal = new HashSet<T>();
-    mySelectedAbstract = new HashSet<T>();
-    myMemberDependenciesStorage = new MemberDependenciesStorage<T, C>(aClass, superClass);
+    mySelectedNormal = new HashSet<>();
+    mySelectedAbstract = new HashSet<>();
+    myMemberDependenciesStorage = new MemberDependenciesStorage<>(aClass, superClass);
   }
 
 
+  @Override
   public Set<? extends T> getDependent() {
     if (myDependencies == null) {
-      myDependencies = new HashSet<T>();
-      myDependenciesToDependentMap = new HashMap<T, HashSet<T>>();
+      myDependencies = new HashSet<>();
+      myDependenciesToDependentMap = new HashMap<>();
       buildDeps(null, mySelectedNormal);
     }
     return myDependencies;
   }
 
+  @Override
   public Set<? extends T> getDependenciesOf(T member) {
     final Set dependent = getDependent();
     if(!dependent.contains(member)) return null;
@@ -73,7 +67,7 @@ public class UsesMemberDependencyGraph<T extends NavigatablePsiElement, C extend
     final Set<? extends T> dependencies = getDependenciesOf(element);
     if(dependencies == null || dependencies.size() == 0) return null;
 
-    ArrayList<String> strings = new ArrayList<String>();
+    ArrayList<String> strings = new ArrayList<>();
     for (T dep : dependencies) {
       strings.add(dep.getName());
     }
@@ -120,13 +114,14 @@ public class UsesMemberDependencyGraph<T extends NavigatablePsiElement, C extend
     if (sourceElement != null) {
       HashSet<T> relations = myDependenciesToDependentMap.get(member);
       if (relations == null) {
-        relations = new HashSet<T>();
+        relations = new HashSet<>();
         myDependenciesToDependentMap.put(member, relations);
       }
       relations.add(sourceElement);
     }
   }
 
+  @Override
   public void memberChanged(M memberInfo) {
     final ClassMembersRefactoringSupport support =
       LanguageDependentMembersRefactoringSupport.INSTANCE.forLanguage(memberInfo.getMember().getLanguage());

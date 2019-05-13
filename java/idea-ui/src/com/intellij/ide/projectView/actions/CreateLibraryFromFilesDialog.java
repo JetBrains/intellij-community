@@ -1,21 +1,7 @@
-/*
- * Copyright 2000-2011 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.projectView.actions;
 
-import com.intellij.openapi.application.AccessToken;
+import com.intellij.application.options.ModulesComboBox;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
@@ -26,7 +12,6 @@ import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.roots.impl.libraries.LibraryTypeServiceImpl;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.ui.OrderRoot;
-import com.intellij.openapi.roots.ui.configuration.ModulesCombobox;
 import com.intellij.openapi.roots.ui.configuration.libraryEditor.LibraryNameAndLevelPanel;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContainer;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContainerFactory;
@@ -50,7 +35,7 @@ import java.util.List;
  */
 public class CreateLibraryFromFilesDialog extends DialogWrapper {
   private final LibraryNameAndLevelPanel myNameAndLevelPanel;
-  private final ModulesCombobox myModulesCombobox;
+  private final ModulesComboBox myModulesComboBox;
   private final Project myProject;
   private final List<OrderRoot> myRoots;
   private final JPanel myPanel;
@@ -67,10 +52,10 @@ public class CreateLibraryFromFilesDialog extends DialogWrapper {
     myNameAndLevelPanel = new LibraryNameAndLevelPanel(builder, myDefaultName, Arrays.asList(LibrariesContainer.LibraryLevel.values()),
                                                        LibrariesContainer.LibraryLevel.PROJECT);
     myNameAndLevelPanel.setDefaultName(myDefaultName);
-    myModulesCombobox = new ModulesCombobox();
-    myModulesCombobox.fillModules(myProject);
-    myModulesCombobox.setSelectedModule(findModule(roots));
-    builder.addLabeledComponent("&Add to module:", myModulesCombobox);
+    myModulesComboBox = new ModulesComboBox();
+    myModulesComboBox.fillModules(myProject);
+    myModulesComboBox.setSelectedModule(findModule(roots));
+    builder.addLabeledComponent("&Add to module:", myModulesComboBox);
     myPanel = builder.getPanel();
     myNameAndLevelPanel.getLibraryNameField().selectAll();
     myNameAndLevelPanel.getLevelComboBox().addActionListener(new ActionListener() {
@@ -81,7 +66,7 @@ public class CreateLibraryFromFilesDialog extends DialogWrapper {
     });
     myNameAndLevelPanel.getLibraryNameField().getDocument().addDocumentListener(new DocumentAdapter() {
       @Override
-      protected void textChanged(DocumentEvent e) {
+      protected void textChanged(@NotNull DocumentEvent e) {
         updateOkAction();
       }
     });
@@ -131,10 +116,14 @@ public class CreateLibraryFromFilesDialog extends DialogWrapper {
 
   @Override
   protected void doOKAction() {
+    addLibrary();
+    super.doOKAction();
+  }
+
+  private void addLibrary() {
     final LibrariesContainer.LibraryLevel level = myNameAndLevelPanel.getLibraryLevel();
-    AccessToken token = WriteAction.start();
-    try {
-      final Module module = myModulesCombobox.getSelectedModule();
+    WriteAction.run(() -> {
+      final Module module = myModulesComboBox.getSelectedModule();
       final String libraryName = myNameAndLevelPanel.getLibraryName();
       if (level == LibrariesContainer.LibraryLevel.MODULE) {
         final ModifiableRootModel modifiableModel = ModuleRootManager.getInstance(module).getModifiableModel();
@@ -147,11 +136,7 @@ public class CreateLibraryFromFilesDialog extends DialogWrapper {
           ModuleRootModificationUtil.addDependency(module, library);
         }
       }
-    }
-    finally {
-      token.finish();
-    }
-    super.doOKAction();
+    });
   }
 
   @Override

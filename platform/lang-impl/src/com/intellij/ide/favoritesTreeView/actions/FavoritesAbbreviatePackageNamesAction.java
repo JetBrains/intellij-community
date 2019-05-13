@@ -20,10 +20,8 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.ide.favoritesTreeView.FavoritesViewTreeBuilder;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.NotNull;
 
-/**
- * User: Vassiliy.Kudryashov
- */
 public class FavoritesAbbreviatePackageNamesAction extends FavoritesToolbarButtonAction {
   public FavoritesAbbreviatePackageNamesAction(Project project, FavoritesViewTreeBuilder builder) {
     super(project, builder, IdeBundle.message("action.abbreviate.qualified.package.names"), AllIcons.ObjectBrowser.AbbreviatePackageNames);
@@ -40,7 +38,7 @@ public class FavoritesAbbreviatePackageNamesAction extends FavoritesToolbarButto
   }
 
   @Override
-  public void updateButton(AnActionEvent e) {
+  public void updateButton(@NotNull AnActionEvent e) {
     super.updateButton(e);
     setVisible(getViewSettings().isFlattenPackages());
   }

@@ -20,14 +20,10 @@ import com.intellij.lang.PsiBuilder;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import org.intellij.plugins.relaxNG.compact.RncElementTypes;
+import org.jetbrains.annotations.NotNull;
 
 import static org.intellij.plugins.relaxNG.compact.RncTokenTypes.*;
 
-/**
- * Created by IntelliJ IDEA.
- * User: sweinreuter
- * Date: 09.08.2007
- */
 public abstract class AbstractParsing {
   protected static final TokenSet LA_INCLUDE_CONTENT = TokenSet.orSet(TokenSet.create(
           KEYWORD_DIV, KEYWORD_START), IDENTIFIERS);
@@ -77,21 +73,21 @@ public abstract class AbstractParsing {
     return false;
   }
 
-  protected final void match(IElementType token, String msg) {
+  protected final void match(IElementType token, @NotNull String msg) {
     if (!matches(token)) {
       error(msg);
       advance();
     }
   }
 
-  protected final void match(TokenSet set, String msg) {
+  protected final void match(TokenSet set, @NotNull String msg) {
     if (!matches(set)) {
       error(msg);
       advance();
     }
   }
 
-  protected final void error(String s) {
+  protected final void error(@NotNull String s) {
     myBuilder.error(s);
   }
 

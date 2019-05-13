@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,17 +25,16 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiPackage;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.ui.IdeBorderFactory;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
-/**
- * User: anna
- * Date: Jan 31, 2005
- */
 public class CyclicDependenciesAction extends AnAction{
   private final String myAnalysisVerb;
   private final String myAnalysisNoun;
@@ -47,25 +46,29 @@ public class CyclicDependenciesAction extends AnAction{
     myTitle = AnalysisScopeBundle.message("action.cyclic.dependency.title");
   }
 
-  public void update(AnActionEvent event) {
+  @Override
+  public void update(@NotNull AnActionEvent event) {
     Presentation presentation = event.getPresentation();
     presentation.setEnabled(
-      getInspectionScope(event.getDataContext()) != null || 
-      event.getData(PlatformDataKeys.PROJECT) != null);
+      getInspectionScope(event.getDataContext()) != null ||
+      event.getData(CommonDataKeys.PROJECT) != null);
   }
 
-  public void actionPerformed(AnActionEvent e) {
+  @Override
+  public void actionPerformed(@NotNull AnActionEvent e) {
     DataContext dataContext = e.getDataContext();
-    final Project project = PlatformDataKeys.PROJECT.getData(dataContext);
+    final Project project = CommonDataKeys.PROJECT.getData(dataContext);
     final Module module = LangDataKeys.MODULE.getData(dataContext);
     if (project != null) {
       AnalysisScope scope = getInspectionScope(dataContext);
       if (scope == null || scope.getScopeType() != AnalysisScope.MODULES){
         ProjectModuleOrPackageDialog dlg = null;
         if (module != null) {
-          dlg = new ProjectModuleOrPackageDialog(ModuleManager.getInstance(project).getModules().length == 1 ? null : ModuleUtilCore.getModuleNameInReadAction(module), scope);
-          dlg.show();
-          if (!dlg.isOK()) return;
+          dlg = new ProjectModuleOrPackageDialog(
+            ModuleManager.getInstance(project).getModules().length == 1 ? null : ModuleUtilCore.getModuleNameInReadAction(module), scope);
+          if (!dlg.showAndGet()) {
+            return;
+          }
         }
         if (dlg == null || dlg.isProjectScopeSelected()) {
           scope = getProjectScope(dataContext);
@@ -89,7 +92,7 @@ public class CyclicDependenciesAction extends AnAction{
 
   @Nullable
   private static AnalysisScope getInspectionScope(final DataContext dataContext) {
-    final Project project = PlatformDataKeys.PROJECT.getData(dataContext);
+    final Project project = CommonDataKeys.PROJECT.getData(dataContext);
     if (project == null) return null;
 
     AnalysisScope scope = getInspectionScopeImpl(dataContext);
@@ -110,12 +113,12 @@ public class CyclicDependenciesAction extends AnAction{
       return null;
     }
 
-    Module [] modulesArray = LangDataKeys.MODULE_CONTEXT_ARRAY.getData(dataContext);
-    if (modulesArray != null) {
+    final Module [] modulesArray = LangDataKeys.MODULE_CONTEXT_ARRAY.getData(dataContext);
+    if (modulesArray != null && modulesArray.length > 0) {
       return new AnalysisScope(modulesArray);
     }
 
-    PsiElement psiTarget = LangDataKeys.PSI_ELEMENT.getData(dataContext);
+    PsiElement psiTarget = CommonDataKeys.PSI_ELEMENT.getData(dataContext);
     if (psiTarget instanceof PsiDirectory) {
       PsiDirectory psiDirectory = (PsiDirectory)psiTarget;
       if (!psiDirectory.getManager().isInProject(psiDirectory)) return null;
@@ -133,7 +136,7 @@ public class CyclicDependenciesAction extends AnAction{
 
   @Nullable
   private static AnalysisScope getProjectScope(DataContext dataContext) {
-    final Project data = PlatformDataKeys.PROJECT.getData(dataContext);
+    final Project data = CommonDataKeys.PROJECT.getData(dataContext);
     if (data == null) {
       return null;
     }
@@ -151,7 +154,7 @@ public class CyclicDependenciesAction extends AnAction{
 
   private class ProjectModuleOrPackageDialog extends DialogWrapper {
     private final String myModuleName;
-    private AnalysisScope mySelectedScope;
+    private final AnalysisScope mySelectedScope;
     private JRadioButton myProjectButton;
     private JRadioButton myModuleButton;
     private JRadioButton mySelectedScopeButton;
@@ -161,7 +164,7 @@ public class CyclicDependenciesAction extends AnAction{
     private JCheckBox myIncludeTestSourcesCb;
 
 
-    public ProjectModuleOrPackageDialog(String moduleName, AnalysisScope selectedScope) {
+    ProjectModuleOrPackageDialog(String moduleName, AnalysisScope selectedScope) {
       super(true);
       myModuleName = moduleName;
       mySelectedScope = selectedScope;
@@ -174,6 +177,7 @@ public class CyclicDependenciesAction extends AnAction{
       return myIncludeTestSourcesCb.isSelected();
     }
 
+    @Override
     protected JComponent createCenterPanel() {
       myScopePanel.setBorder(IdeBorderFactory.createTitledBorder(
         AnalysisScopeBundle.message("analysis.scope.title", myAnalysisNoun), true));

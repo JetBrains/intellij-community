@@ -1,38 +1,25 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.debugger;
 
-import com.intellij.codeInsight.daemon.impl.quickfix.StaticImportMethodFix;
 import com.intellij.debugger.engine.evaluation.CodeFragmentFactory;
 import com.intellij.debugger.engine.evaluation.TextWithImports;
 import com.intellij.debugger.engine.evaluation.expression.EvaluatorBuilder;
 import com.intellij.debugger.engine.evaluation.expression.EvaluatorBuilderImpl;
 import com.intellij.openapi.fileTypes.LanguageFileType;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
+import com.intellij.psi.util.ClassUtil;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyFileType;
+import org.jetbrains.plugins.groovy.GroovyLanguage;
 import org.jetbrains.plugins.groovy.debugger.fragments.GroovyCodeFragment;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
@@ -42,11 +29,12 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTraitTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.ClosureSyntheticParameter;
-import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightVariable;
+import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrBindingVariable;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
 import java.util.*;
@@ -69,79 +57,68 @@ public class GroovyCodeFragmentFactory extends CodeFragmentFactory {
            "}\n";
   }
 
+  @Override
   public JavaCodeFragment createCodeFragment(TextWithImports textWithImports, PsiElement context, Project project) {
-    String text = textWithImports.getText();
-    String imports = textWithImports.getImports();
-
-    final Pair<Map<String, String>, GroovyFile> pair = externalParameters(text, context);
+    final Pair<Map<String, String>, GroovyFile> pair = externalParameters(textWithImports.getText(), context);
     GroovyFile toEval = pair.second;
     final Map<String, String> parameters = pair.first;
 
-    List<String> names = new ArrayList<String>(parameters.keySet());
-    List<String> values = ContainerUtil.map(names, new Function<String, String>() {
-      public String fun(String name) {
-        return parameters.get(name);
-      }
-    });
+    List<String> names = new ArrayList<>(parameters.keySet());
+    List<String> values = ContainerUtil.map(names, name -> parameters.get(name));
 
-
-    text = toEval.getText();
+    String text = toEval.getText();
     final String groovyText = StringUtil.join(names, ", ") + "->" + stripImports(text, toEval);
 
     PsiClass contextClass = PsiUtil.getContextClass(context);
     boolean isStatic = isStaticContext(context);
     StringBuilder javaText = new StringBuilder();
 
-    javaText.append("groovy.lang.MetaClass |mc;\n");
     javaText.append("java.lang.Class |clazz;\n");
 
     if (!isStatic) {
       javaText.append("java.lang.Object |thiz0;\n");
 
-      String fileName;
+      PsiFile containingFile = context.getContainingFile();
 
-      PsiElement originalContext = context.getContainingFile().getContext();
-      if (originalContext == null) {
-        fileName = null; // The class is not reloaded by springloaded if context is in physical file.
+      if (containingFile.getContext() != null) {
+        containingFile = containingFile.getContext().getContainingFile();
+      }
+
+      String fileName = containingFile.getOriginalFile().getName();
+
+      String s = StringUtil.escapeStringCharacters(Pattern.quote(fileName));
+      // We believe what class is reloaded if stacktrace matches one of two patterns:
+      // 1.) [com.package.Foo$$ENLbVXwm.methodName(FileName.groovy:12), com.package.Foo$$DNLbVXwm.methodName(Unknown Source), *
+      // 2.) [com.package.Foo$$ENLbVXwm.methodName(FileName.groovy:12), * com.springsource.loaded. *
+      // Pattern below test this.
+
+      //javaText.append("System.out.println(java.util.Arrays.toString(new Exception().getStackTrace()));\n");
+      //javaText.append("System.out.println(\"\\\\[([^,()]+\\\\$\\\\$)[A-Za-z0-9]{8}(\\\\.[^,()]+)\\\\(" + s + ":\\\\d+\\\\), (\\\\1[A-Za-z0-9]{8}\\\\2\\\\(Unknown Source\\\\), |.+(?:com|org)\\\\.springsource\\\\.loaded\\\\.).+\")\n");
+
+      javaText.append("Class.forName(\"java.lang.StackTraceElement\");\n");
+      javaText.append("StackTraceElement[] |trace = new Exception().getStackTrace();\n");
+      javaText.append(
+        "if (java.util.Arrays.toString(|trace).matches(\"\\\\[([^,()]+\\\\$\\\\$)[A-Za-z0-9]{8}(\\\\.[^,()]+)\\\\(")
+        .append(s)
+        .append(
+          ":\\\\d+\\\\), (\\\\1[A-Za-z0-9]{8}\\\\2\\\\(Unknown Source\\\\), $OR$.+(?:com$OR$org)\\\\.springsource\\\\.loaded\\\\.).+\")) {\n");
+      javaText.append("  |thiz0 = thiz;\n");
+      javaText.append(" } else {\n");
+      if (contextClass instanceof GrTraitTypeDefinition) {
+        javaText.append("  |thiz0 = $self;\n");
       }
       else {
-        fileName = originalContext.getContainingFile().getOriginalFile().getName();
-      }
-
-      if (fileName == null) {
-        // The class could not be reloaded by springloaded
-        javaText.append("|thiz0 = this;\n");
-      }
-      else {
-        // Class could be reloaded by springloaded
-
-        String s = StringUtil.escapeStringCharacters(Pattern.quote(fileName));
-        // We believe what class is reloaded if stacktrace matches one of two patterns:
-        // 1.) [com.package.Foo$$ENLbVXwm.methodName(FileName.groovy:12), com.package.Foo$$DNLbVXwm.methodName(Unknown Source), *
-        // 2.) [com.package.Foo$$ENLbVXwm.methodName(FileName.groovy:12), * com.springsource.loaded. *
-        // Pattern below test this.
-
-        //javaText.append("System.out.println(java.util.Arrays.toString(new Exception().getStackTrace()));\n");
-        //javaText.append("System.out.println(\"\\\\[([^,()]+\\\\$\\\\$)[A-Za-z0-9]{8}(\\\\.[^,()]+)\\\\(" + s + ":\\\\d+\\\\), (\\\\1[A-Za-z0-9]{8}\\\\2\\\\(Unknown Source\\\\), |.+(?:com|org)\\\\.springsource\\\\.loaded\\\\.).+\")\n");
-
-        javaText.append(
-          "if (java.util.Arrays.toString(new Exception().getStackTrace()).matches(\"\\\\[([^,()]+\\\\$\\\\$)[A-Za-z0-9]{8}(\\\\.[^,()]+)\\\\(")
-          .append(s)
-          .append(":\\\\d+\\\\), (\\\\1[A-Za-z0-9]{8}\\\\2\\\\(Unknown Source\\\\), $OR$.+(?:com$OR$org)\\\\.springsource\\\\.loaded\\\\.).+\")) {\n");
-        javaText.append("  |thiz0 = thiz;\n");
-        javaText.append(" } else {\n");
         javaText.append("  |thiz0 = this;\n");
-        javaText.append(" }\n");
       }
+      javaText.append(" }\n");
     }
 
     if (!isStatic) {
       javaText.append("|clazz = |thiz0.getClass();\n");
-      javaText.append("|mc = |thiz0.getMetaClass();\n");
-    } else {
+    }
+    else {
       assert contextClass != null;
-      javaText.append("|clazz = java.lang.Class.forName(\"").append(contextClass.getQualifiedName()).append("\");\n");
-      javaText.append("|mc = groovy.lang.GroovySystem.getMetaClassRegistry().getMetaClass(|clazz);\n");
+      javaText.append("|clazz = java.lang.Class.forName(\"").append(ClassUtil.getJVMClassName(contextClass)).append("\");\n");
     }
 
     javaText.append("final java.lang.ClassLoader |parentLoader = |clazz.getClassLoader();\n" +
@@ -160,24 +137,33 @@ public class GroovyCodeFragmentFactory extends CodeFragmentFactory {
     if (!isStatic) {
       javaText.append("|closure.setDelegate(|thiz0);\n");
       javaText.append("|emc.setProperty(\"").append(EVAL_NAME).append("\", |closure);\n");
-    } else {
+    }
+    else {
       javaText.append("|emc.getProperty(\"static\").setProperty(\"").append(EVAL_NAME).append("\", |closure);\n");
     }
     javaText.append("|emc.initialize();\n");
     javaText.append(unwrapVals(values));
     if (!isStatic) {
-      javaText.append("java.lang.Object |res = ((groovy.lang.MetaClassImpl)|emc).invokeMethod(|thiz0, \"").append(EVAL_NAME).append("\", |resVals);\n");
-    } else {
-      javaText.append("java.lang.Object |res = ((groovy.lang.MetaClassImpl)|emc).invokeStaticMethod(|clazz, \"").append(EVAL_NAME).append("\", |resVals);\n");
+      javaText.append(
+        "java.lang.Object |res = ((groovy.lang.MetaClassImpl)|emc).invokeMethod(|thiz0, \""
+      ).append(EVAL_NAME).append("\", |resVals);\n");
     }
-    javaText.append("if (|res instanceof java.lang.Boolean) ((java.lang.Boolean) |res).booleanValue() else |res");
+    else {
+      javaText.append(
+        "java.lang.Object |res = ((groovy.lang.MetaClassImpl)|emc).invokeStaticMethod(|clazz, \""
+      ).append(EVAL_NAME).append("\", |resVals);\n");
+    }
+    javaText.append("|res");
 
     final PsiElementFactory factory = JavaPsiFacade.getInstance(toEval.getProject()).getElementFactory();
 
-    String hiddenJavaVars = StringUtil.replace(javaText.toString(), "|", "_$_" + new Random().nextInt(42));
-    hiddenJavaVars = hiddenJavaVars.replaceAll("\\$OR\\$", "|");
-    final String finalText = StringUtil.replace(StringUtil.replace(hiddenJavaVars, TEXT, groovyText), IMPORTS, imports);
-    JavaCodeFragment result = JavaCodeFragmentFactory.getInstance(project).createCodeBlockCodeFragment(finalText, null, true);
+    final String hiddenJavaVars = StringUtil.replace(
+      javaText.toString(), "|", "_$_" + new Random().nextInt(42)
+    ).replaceAll("\\$OR\\$", "|");
+    final String finalText = StringUtil.replace(
+      StringUtil.replace(hiddenJavaVars, TEXT, groovyText), IMPORTS, textWithImports.getImports()
+    );
+    final JavaCodeFragment result = JavaCodeFragmentFactory.getInstance(project).createCodeBlockCodeFragment(finalText, null, true);
     if (contextClass != null) {
       result.setThisType(factory.createType(contextClass));
     }
@@ -189,10 +175,11 @@ public class GroovyCodeFragmentFactory extends CodeFragmentFactory {
     final GroovyFile toEval = factory.createGroovyFile(text, false, context);
 
     final GrClosableBlock closure = PsiTreeUtil.getParentOfType(context, GrClosableBlock.class);
-    final Map<String, String> parameters = new THashMap<String, String>();
-    final Map<GrExpression, String> replacements = new HashMap<GrExpression, String>();
+    final Map<String, String> parameters = new THashMap<>();
+    final Map<GrExpression, String> replacements = new HashMap<>();
     toEval.accept(new GroovyRecursiveElementVisitor() {
-      public void visitReferenceExpression(GrReferenceExpression referenceExpression) {
+      @Override
+      public void visitReferenceExpression(@NotNull GrReferenceExpression referenceExpression) {
         super.visitReferenceExpression(referenceExpression);
 
         if (PsiUtil.isThisReference(referenceExpression) || PsiUtil.isSuperReference(referenceExpression)) {
@@ -201,8 +188,9 @@ public class GroovyCodeFragmentFactory extends CodeFragmentFactory {
         }
 
         PsiElement resolved = referenceExpression.resolve();
-        if (resolved instanceof PsiMember && (resolved instanceof PsiClass || ((PsiMember)resolved).hasModifierProperty(PsiModifier.STATIC))) {
-          String qName = StaticImportMethodFix.getMemberQualifiedName((PsiMember)resolved);
+        if (resolved instanceof PsiMember
+            && (resolved instanceof PsiClass || ((PsiMember)resolved).hasModifierProperty(PsiModifier.STATIC))) {
+          String qName = com.intellij.psi.util.PsiUtil.getMemberQualifiedName((PsiMember)resolved);
           if (qName != null && qName.contains(".") && !referenceExpression.isQualified()) {
             replaceWithReference(referenceExpression, qName);
             return;
@@ -216,9 +204,15 @@ public class GroovyCodeFragmentFactory extends CodeFragmentFactory {
 
         if (resolved instanceof GrVariable && !(resolved instanceof GrField) && !PsiTreeUtil.isAncestor(toEval, resolved, false)) {
           final String name = ((GrVariable)resolved).getName();
-          if (resolved instanceof ClosureSyntheticParameter && PsiTreeUtil.isAncestor(toEval, ((ClosureSyntheticParameter) resolved).getClosure(), false)) {
+          if (resolved instanceof ClosureSyntheticParameter
+              && PsiTreeUtil.isAncestor(toEval, ((ClosureSyntheticParameter)resolved).getClosure(), false)) {
             return;
           }
+
+          if (resolved instanceof GrBindingVariable && !PsiTreeUtil.isAncestor(resolved.getContainingFile(), toEval, false)) {
+            return;
+          }
+
           String value;
           if (closure != null &&
               PsiTreeUtil.findCommonParent(resolved, closure) != closure &&
@@ -226,12 +220,18 @@ public class GroovyCodeFragmentFactory extends CodeFragmentFactory {
             // Evaluating inside closure for outer variable definitions
             // All non-local variables are accessed by references
             value = "this." + name;
-          } else {
+          }
+          else {
             value = name;
           }
           parameters.put(name, value);
+          return;
         }
 
+        if (resolved instanceof PsiLocalVariable || resolved instanceof PsiParameter && !(resolved instanceof GrParameter)) {
+          String name = referenceExpression.getReferenceName();
+          parameters.put(name, name);
+        }
       }
 
       private boolean shouldDelegate(GrReferenceExpression referenceExpression, @Nullable PsiElement resolved) {
@@ -243,21 +243,20 @@ public class GroovyCodeFragmentFactory extends CodeFragmentFactory {
           return true;
         }
 
-        if (resolved instanceof PsiMethod && !referenceExpression.isQualified()) {
+        if (resolved instanceof PsiMethod) {
           String methodName = ((PsiMethod)resolved).getName();
-          if (closure != null && "getDelegate".equals(methodName) || "call".equals(methodName)) {
-            return true;
-          }
+          return closure != null && ("getDelegate".equals(methodName) || "getOwner".equals(methodName)) || "call".equals(methodName);
         }
 
-        return closure != null && resolved instanceof GrLightVariable && "owner".equals(((GrLightVariable)resolved).getName());
+        return false;
       }
 
       private void replaceWithReference(GrExpression expr, final String exprText) {
         replacements.put(expr, exprText);
       }
 
-      public void visitCodeReferenceElement(GrCodeReferenceElement refElement) {
+      @Override
+      public void visitCodeReferenceElement(@NotNull GrCodeReferenceElement refElement) {
         super.visitCodeReferenceElement(refElement);
         if (refElement.getQualifier() == null) {
           PsiElement resolved = refElement.resolve();
@@ -267,7 +266,7 @@ public class GroovyCodeFragmentFactory extends CodeFragmentFactory {
               int dotIndex = qName.lastIndexOf(".");
               if (dotIndex < 0) return;
               String packageName = qName.substring(0, dotIndex);
-              refElement.setQualifier(factory.createReferenceElementFromText(packageName));
+              refElement.setQualifier(factory.createCodeReference(packageName));
             }
           }
         }
@@ -277,7 +276,7 @@ public class GroovyCodeFragmentFactory extends CodeFragmentFactory {
     for (GrExpression expression : replacements.keySet()) {
       expression.replaceWithExpression(factory.createExpressionFromText(replacements.get(expression)), false);
     }
-    
+
     return Pair.create(parameters, toEval);
   }
 
@@ -285,11 +284,12 @@ public class GroovyCodeFragmentFactory extends CodeFragmentFactory {
     GrImportStatement[] imports = toEval.getImportStatements();
     for (int i = imports.length - 1; i >= 0; i--) {
       TextRange range = imports[i].getTextRange();
-      text = text.substring(0, range.getStartOffset()) + text.substring(range.getEndOffset(), text.length());
+      text = text.substring(0, range.getStartOffset()) + text.substring(range.getEndOffset());
     }
     return StringUtil.escapeStringCharacters(text);
   }
 
+  @Override
   public JavaCodeFragment createPresentationCodeFragment(TextWithImports item, PsiElement context, Project project) {
     GroovyCodeFragment result = new GroovyCodeFragment(project, item.getText());
     result.setContext(context);
@@ -299,9 +299,10 @@ public class GroovyCodeFragmentFactory extends CodeFragmentFactory {
   private static boolean isStaticContext(PsiElement context) {
     PsiElement parent = context;
     while (parent != null) {
-      if (parent instanceof PsiModifierListOwner && ((PsiModifierListOwner)parent).hasModifierProperty(PsiModifier.STATIC)) return true;
+      if (parent instanceof PsiMember) {
+        return ((PsiMember)parent).hasModifierProperty(PsiModifier.STATIC);
+      }
       if (parent instanceof GroovyFile && parent.isPhysical()) return false;
-      if (parent instanceof GrTypeDefinition) return false;
       if (parent instanceof GrClosableBlock) return false;
 
       parent = parent.getContext();
@@ -310,10 +311,17 @@ public class GroovyCodeFragmentFactory extends CodeFragmentFactory {
     return false;
   }
 
+  @Override
   public boolean isContextAccepted(PsiElement context) {
-    return context != null && context.getLanguage().equals(GroovyFileType.GROOVY_LANGUAGE);
+    if (context == null) return false;
+    if (context.getLanguage().equals(GroovyLanguage.INSTANCE)) return true;
+    Project project = context.getProject();
+    if (DumbService.isDumb(project)) return false;
+    return JavaPsiFacade.getInstance(project).findClass("org.codehaus.groovy.control.CompilationUnit", context.getResolveScope()) != null;
   }
 
+  @NotNull
+  @Override
   public LanguageFileType getFileType() {
     return GroovyFileType.GROOVY_FILE_TYPE;
   }

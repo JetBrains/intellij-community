@@ -29,7 +29,7 @@ PsiJavaFile:Errors2.java
         PsiJavaToken:LT('<')
         PsiTypeParameter:caret
           PsiIdentifier:caret('caret')
-          PsiElement(EXTENDS_BOUND_LIST)
+          PsiReferenceList
             <empty list>
         PsiJavaToken:GT('>')
       PsiIdentifier:Configuration('Configuration')

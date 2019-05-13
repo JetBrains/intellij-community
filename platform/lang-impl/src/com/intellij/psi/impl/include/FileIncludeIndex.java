@@ -1,29 +1,17 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.psi.impl.include;
 
-import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.util.Consumer;
 import com.intellij.util.containers.FactoryMap;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.indexing.*;
 import com.intellij.util.io.DataExternalizer;
+import com.intellij.util.io.IOUtil;
 import com.intellij.util.io.KeyDescriptor;
 import org.jetbrains.annotations.NotNull;
 
@@ -39,32 +27,32 @@ import java.util.Map;
  */
 public class FileIncludeIndex extends FileBasedIndexExtension<FileIncludeIndex.Key, List<FileIncludeInfoImpl>> {
 
-  private final FileIncludeProvider[] myProviders = Extensions.getExtensions(FileIncludeProvider.EP_NAME);
-
   public static final ID<Key,List<FileIncludeInfoImpl>> INDEX_ID = ID.create("fileIncludes");
 
-  public static List<FileIncludeInfoImpl> getIncludes(VirtualFile file, GlobalSearchScope scope) {
-    final List<FileIncludeInfoImpl> result = new ArrayList<FileIncludeInfoImpl>();
-    FileBasedIndex.getInstance().processValues(INDEX_ID, new FileKey(file), file, new FileBasedIndex.ValueProcessor<List<FileIncludeInfoImpl>>() {
-      @Override
-      public boolean process(VirtualFile file, List<FileIncludeInfoImpl> value) {
-        result.addAll(value);
-        return true;
-      }
+  private static final int BASE_VERSION = 5;
+
+  @NotNull
+  public static List<FileIncludeInfo> getIncludes(@NotNull VirtualFile file, @NotNull GlobalSearchScope scope) {
+    final List<FileIncludeInfo> result = new ArrayList<>();
+    FileBasedIndex.getInstance().processValues(INDEX_ID, new FileKey(file), file, (file1, value) -> {
+      result.addAll(value);
+      return true;
     }, scope);
     return result;
   }
 
-  public static MultiMap<VirtualFile, FileIncludeInfoImpl> getIncludingFileCandidates(String fileName, GlobalSearchScope scope) {
-    final MultiMap<VirtualFile, FileIncludeInfoImpl> result = new MultiMap<VirtualFile, FileIncludeInfoImpl>();
-    FileBasedIndex.getInstance().processValues(INDEX_ID, new IncludeKey(fileName), null, new FileBasedIndex.ValueProcessor<List<FileIncludeInfoImpl>>() {
-      @Override
-      public boolean process(VirtualFile file, List<FileIncludeInfoImpl> value) {
-        result.put(file, value);
-        return true;
-      }
+  @NotNull
+  public static MultiMap<VirtualFile, FileIncludeInfoImpl> getIncludingFileCandidates(String fileName, @NotNull GlobalSearchScope scope) {
+    final MultiMap<VirtualFile, FileIncludeInfoImpl> result = new MultiMap<>();
+    FileBasedIndex.getInstance().processValues(INDEX_ID, new IncludeKey(fileName), null, (file, value) -> {
+      result.put(file, value);
+      return true;
     }, scope);
     return result;
+  }
+
+  private static class Holder {
+    private static final List<FileIncludeProvider> myProviders = FileIncludeProvider.EP_NAME.getExtensionList();
   }
 
   @NotNull
@@ -79,16 +67,11 @@ public class FileIncludeIndex extends FileBasedIndexExtension<FileIncludeIndex.K
     return new DataIndexer<Key, List<FileIncludeInfoImpl>, FileContent>() {
       @Override
       @NotNull
-      public Map<Key, List<FileIncludeInfoImpl>> map(FileContent inputData) {
+      public Map<Key, List<FileIncludeInfoImpl>> map(@NotNull FileContent inputData) {
 
-        Map<Key, List<FileIncludeInfoImpl>> map = new FactoryMap<Key, List<FileIncludeInfoImpl>>() {
-          @Override
-          protected List<FileIncludeInfoImpl> create(Key key) {
-            return new ArrayList<FileIncludeInfoImpl>();
-          }
-        };
+        Map<Key, List<FileIncludeInfoImpl>> map = FactoryMap.create(key -> new ArrayList<>());
 
-        for (FileIncludeProvider provider : myProviders) {
+        for (FileIncludeProvider provider : Holder.myProviders) {
           if (!provider.acceptFile(inputData.getFile())) continue;
           FileIncludeInfo[] infos = provider.getIncludeInfos(inputData);
           if (infos.length  == 0) continue;
@@ -105,6 +88,7 @@ public class FileIncludeIndex extends FileBasedIndexExtension<FileIncludeIndex.K
     };
   }
 
+  @NotNull
   @Override
   public KeyDescriptor<Key> getKeyDescriptor() {
     return new KeyDescriptor<Key>() {
@@ -119,59 +103,68 @@ public class FileIncludeIndex extends FileBasedIndexExtension<FileIncludeIndex.K
       }
 
       @Override
-      public void save(DataOutput out, Key value) throws IOException {
+      public void save(@NotNull DataOutput out, Key value) throws IOException {
         out.writeBoolean(value.isInclude());
         value.writeValue(out);
       }
 
       @Override
-      public Key read(DataInput in) throws IOException {
+      public Key read(@NotNull DataInput in) throws IOException {
         boolean isInclude = in.readBoolean();
-        return isInclude ? new IncludeKey(in.readUTF()) : new FileKey(in.readInt());
+        return isInclude ? new IncludeKey(IOUtil.readUTF(in)) : new FileKey(in.readInt());
       }
     };
   }
 
+  @NotNull
   @Override
   public DataExternalizer<List<FileIncludeInfoImpl>> getValueExternalizer() {
     return new DataExternalizer<List<FileIncludeInfoImpl>>() {
       @Override
-      public void save(DataOutput out, List<FileIncludeInfoImpl> value) throws IOException {
+      public void save(@NotNull DataOutput out, List<FileIncludeInfoImpl> value) throws IOException {
         out.writeInt(value.size());
         for (FileIncludeInfoImpl info : value) {
-          out.writeUTF(info.path);
+          IOUtil.writeUTF(out, info.path);
           out.writeInt(info.offset);
           out.writeBoolean(info.runtimeOnly);
-          out.writeUTF(info.providerId);
+          IOUtil.writeUTF(out, info.providerId);
         }
       }
 
       @Override
-      public List<FileIncludeInfoImpl> read(DataInput in) throws IOException {
+      public List<FileIncludeInfoImpl> read(@NotNull DataInput in) throws IOException {
         int size = in.readInt();
-        ArrayList<FileIncludeInfoImpl> infos = new ArrayList<FileIncludeInfoImpl>(size);
+        ArrayList<FileIncludeInfoImpl> infos = new ArrayList<>(size);
         for (int i = 0; i < size; i++) {
-          infos.add(new FileIncludeInfoImpl(in.readUTF(), in.readInt(), in.readBoolean(), in.readUTF()));
+          infos.add(new FileIncludeInfoImpl(IOUtil.readUTF(in), in.readInt(), in.readBoolean(), IOUtil.readUTF(in)));
         }
         return infos;
       }
     };
   }
 
+  @NotNull
   @Override
   public FileBasedIndex.InputFilter getInputFilter() {
-    return new FileBasedIndex.InputFilter() {
+    return new FileBasedIndex.FileTypeSpecificInputFilter() {
       @Override
-      public boolean acceptInput(VirtualFile file) {
+      public boolean acceptInput(@NotNull VirtualFile file) {
         if (file.getFileSystem() == JarFileSystem.getInstance()) {
           return false;
         }
-        for (FileIncludeProvider provider : myProviders) {
+        for (FileIncludeProvider provider : Holder.myProviders) {
           if (provider.acceptFile(file)) {
             return true;
           }
         }
         return false;
+      }
+
+      @Override
+      public void registerFileTypesUsedForIndexing(@NotNull Consumer<FileType> fileTypeSink) {
+        for (FileIncludeProvider provider : Holder.myProviders) {
+          provider.registerFileTypesUsedForIndexing(fileTypeSink);
+        }
       }
     };
   }
@@ -183,7 +176,11 @@ public class FileIncludeIndex extends FileBasedIndexExtension<FileIncludeIndex.K
 
   @Override
   public int getVersion() {
-    return 1;
+    int version = BASE_VERSION;
+    for (FileIncludeProvider provider : Holder.myProviders) {
+      version = version * 31 + (provider.getVersion() ^ provider.getClass().getName().hashCode());
+    }
+    return version;
   }
 
   interface Key {
@@ -195,7 +192,7 @@ public class FileIncludeIndex extends FileBasedIndexExtension<FileIncludeIndex.K
   private static class IncludeKey implements Key {
     private final String myFileName;
 
-    public IncludeKey(String fileName) {
+    IncludeKey(String fileName) {
       myFileName = fileName;
     }
 
@@ -206,7 +203,7 @@ public class FileIncludeIndex extends FileBasedIndexExtension<FileIncludeIndex.K
 
     @Override
     public void writeValue(DataOutput out) throws IOException {
-      out.writeUTF(myFileName);
+      IOUtil.writeUTF(out, myFileName);
     }
 
     @Override

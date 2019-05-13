@@ -19,25 +19,27 @@ import com.intellij.execution.impl.ConsoleState;
 import com.intellij.execution.impl.ConsoleViewImpl;
 import com.intellij.execution.impl.ConsoleViewRunningState;
 import com.intellij.execution.process.ProcessHandler;
-import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.search.GlobalSearchScope;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Roman.Chernyatchik
  */
-public class TestsConsoleViewImpl extends ConsoleViewImpl {
+class TestsConsoleViewImpl extends ConsoleViewImpl {
 
-  public TestsConsoleViewImpl(final Project project,
-                              final GlobalSearchScope searchScope,
-                              final boolean viewer,
-                              final FileType fileType) {
-    super(project, searchScope, viewer, fileType,
+  TestsConsoleViewImpl(final Project project,
+                       final GlobalSearchScope searchScope,
+                       final boolean viewer,
+                       boolean usePredefinedMessageFilter) {
+    super(project, searchScope, viewer,
           new ConsoleState.NotStartedStated() {
+            @NotNull
             @Override
-            public ConsoleState attachTo(ConsoleViewImpl console, ProcessHandler processHandler) {
+            public ConsoleState attachTo(@NotNull ConsoleViewImpl console, ProcessHandler processHandler) {
               return new ConsoleViewRunningState(console, processHandler, this, false, !viewer);
             }
-          });
+          },
+          usePredefinedMessageFilter);
   }
 }

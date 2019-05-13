@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,12 +21,12 @@ import com.intellij.codeInsight.daemon.impl.quickfix.CreateFromUsageUtils;
 import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
 import com.intellij.ide.util.DirectoryChooserUtil;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.Result;
-import com.intellij.openapi.command.WriteCommandAction;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.JavaProjectRootsUtil;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -45,7 +45,7 @@ import java.util.*;
  */
 public class CreateClassOrPackageFix extends LocalQuickFixAndIntentionActionOnPsiElement {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.quickFix.CreateClassOrPackageFix");
-  private final List<PsiDirectory> myWritableDirectoryList;
+  private final List<? extends PsiDirectory> myWritableDirectoryList;
   private final String myPresentation;
 
   @Nullable private final ClassKind myClassKind;
@@ -69,28 +69,25 @@ public class CreateClassOrPackageFix extends LocalQuickFixAndIntentionActionOnPs
     final int dot = redPart.indexOf('.');
     final boolean fixPath = dot >= 0;
     final String firstRedName = fixPath ? redPart.substring(0, dot) : redPart;
-    for (Iterator<PsiDirectory> i = directories.iterator(); i.hasNext(); ) {
-      if (!checkCreateClassOrPackage(kind != null && !fixPath, i.next(), firstRedName)) {
-        i.remove();
-      }
-    }
-    return directories.isEmpty() ? null : new CreateClassOrPackageFix(directories,
-                                                                      context,
-                                                                      fixPath ? qualifiedName : redPart,
-                                                                      redPart,
-                                                                      kind,
-                                                                      superClass,
-                                                                      templateName);
+    directories.removeIf(directory -> !checkCreateClassOrPackage(kind != null && !fixPath, directory, firstRedName));
+    return new CreateClassOrPackageFix(directories,
+                                       context,
+                                       fixPath ? qualifiedName : redPart,
+                                       redPart,
+                                       kind,
+                                       superClass,
+                                       templateName);
   }
 
   @Nullable
   public static CreateClassOrPackageFix createFix(@NotNull final String qualifiedName,
                                                   @NotNull final PsiElement context,
-                                                  @Nullable ClassKind kind, final String superClass) {
+                                                  @Nullable ClassKind kind,
+                                                  String superClass) {
     return createFix(qualifiedName, context.getResolveScope(), context, null, kind, superClass, null);
   }
 
-  private CreateClassOrPackageFix(@NotNull List<PsiDirectory> writableDirectoryList,
+  private CreateClassOrPackageFix(@NotNull List<? extends PsiDirectory> writableDirectoryList,
                                   @NotNull PsiElement context,
                                   @NotNull String presentation,
                                   @NotNull String redPart,
@@ -127,19 +124,9 @@ public class CreateClassOrPackageFix extends LocalQuickFixAndIntentionActionOnPs
                      @NotNull final PsiElement startElement,
                      @NotNull PsiElement endElement) {
     if (isAvailable(project, null, file)) {
-      new WriteCommandAction(project) {
-        @Override
-        protected void run(Result result) throws Throwable {
-          final PsiDirectory directory = chooseDirectory(project, file);
-          if (directory == null) return;
-          ApplicationManager.getApplication().runWriteAction(new Runnable() {
-            @Override
-            public void run() {
-              doCreate(directory, startElement);
-            }
-          });
-        }
-      }.execute();
+      PsiDirectory directory = chooseDirectory(project, file);
+      if (directory == null) return;
+      WriteAction.run(() -> doCreate(directory, startElement));
     }
   }
 
@@ -176,9 +163,9 @@ public class CreateClassOrPackageFix extends LocalQuickFixAndIntentionActionOnPs
       }
 
       return DirectoryChooserUtil
-          .chooseDirectory(myWritableDirectoryList.toArray(new PsiDirectory[myWritableDirectoryList.size()]),
+          .chooseDirectory(myWritableDirectoryList.toArray(PsiDirectory.EMPTY_ARRAY),
                            preferredDirectory, project,
-                           new HashMap<PsiDirectory, String>());
+                           new HashMap<>());
     }
     return preferredDirectory;
   }
@@ -232,25 +219,27 @@ public class CreateClassOrPackageFix extends LocalQuickFixAndIntentionActionOnPs
     return false;
   }
 
-  public static List<PsiDirectory> getWritableDirectoryListDefault(@Nullable final PsiPackage context,
-                                                                   final GlobalSearchScope scope,
-                                                                   final PsiManager psiManager) {
+  private static List<PsiDirectory> getWritableDirectoryListDefault(@Nullable final PsiPackage context,
+                                                                    final GlobalSearchScope scope,
+                                                                    final PsiManager psiManager) {
     if (LOG.isDebugEnabled()) {
       LOG.debug("Getting writable directory list for package '" + (context == null ? null : context.getQualifiedName()) + "', scope=" + scope);
     }
-    final List<PsiDirectory> writableDirectoryList = new ArrayList<PsiDirectory>();
+    final List<PsiDirectory> writableDirectoryList = new ArrayList<>();
     if (context != null) {
       for (PsiDirectory directory : context.getDirectories()) {
         if (LOG.isDebugEnabled()) {
           LOG.debug("Package directory: " + directory);
         }
-        if (directory.isWritable() && scope.contains(directory.getVirtualFile())) {
+        VirtualFile virtualFile = directory.getVirtualFile();
+        if (directory.isWritable() && scope.contains(virtualFile)
+            && !JavaProjectRootsUtil.isInGeneratedCode(virtualFile, psiManager.getProject())) {
           writableDirectoryList.add(directory);
         }
       }
     }
     else {
-      for (VirtualFile root : ProjectRootManager.getInstance(psiManager.getProject()).getContentSourceRoots()) {
+      for (VirtualFile root : JavaProjectRootsUtil.getSuitableDestinationSourceRoots(psiManager.getProject())) {
         PsiDirectory directory = psiManager.findDirectory(root);
         if (LOG.isDebugEnabled()) {
           LOG.debug("Root: " + root + ", directory: " + directory);

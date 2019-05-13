@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,101 +15,151 @@
  */
 package com.intellij.ui;
 
+import com.intellij.ide.ui.UISettings;
+import com.intellij.util.ui.JBInsets;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NotNull;
 
+import javax.accessibility.Accessible;
+import javax.accessibility.AccessibleContext;
+import javax.accessibility.AccessibleRole;
 import javax.swing.*;
 import java.awt.*;
 
-import static javax.swing.SwingConstants.*;
+import static com.intellij.ui.paint.RectanglePainter.FILL;
+import static javax.swing.SwingConstants.CENTER;
+import static javax.swing.SwingConstants.LEFT;
+import static javax.swing.SwingUtilities.layoutCompoundLabel;
 
-public class SeparatorWithText extends JComponent {
+public class SeparatorWithText extends JComponent implements Accessible {
 
-  private String myCaption = "";
+  private String myCaption;
   private int myPrefWidth;
-  private boolean myCaptionCentered = true;
+  private int myAlignment;
+  private Color myTextForeground;
 
   public SeparatorWithText() {
     setBorder(BorderFactory.createEmptyBorder(getVgap(), 0, getVgap(), 0));
     setFont(UIUtil.getLabelFont());
     setFont(getFont().deriveFont(Font.BOLD));
+    setForeground(JBUI.CurrentTheme.Popup.separatorColor());
+    setTextForeground(JBUI.CurrentTheme.Popup.separatorTextColor());
   }
 
-  private static int getVgap() {
+  public Color getTextForeground() {
+    return myTextForeground;
+  }
+
+  public void setTextForeground(@NotNull Color textForeground) {
+    myTextForeground = textForeground;
+  }
+
+  protected static int getVgap() {
     return UIUtil.isUnderNativeMacLookAndFeel() ? 1 : 3;
   }
 
-  private static int getHgap() {
+  protected static int getHgap() {
     return 3;
   }
 
   public void setCaptionCentered(boolean captionCentered) {
-    myCaptionCentered = captionCentered;
+    myAlignment = captionCentered ? CENTER : LEFT;
   }
 
+  @Override
   public Dimension getPreferredSize() {
-    final Dimension size = getPreferredFontSize();
-    size.width = myPrefWidth == -1 ? size.width : myPrefWidth;
-    return size;
+    return isPreferredSizeSet() ? super.getPreferredSize() : getPreferredFontSize();
   }
 
   private Dimension getPreferredFontSize() {
-    if (hasCaption()) {
+    Dimension size = new Dimension(myPrefWidth < 0 ? 0 : myPrefWidth, 1);
+    String caption = getCaption();
+    if (caption != null) {
       FontMetrics fm = getFontMetrics(getFont());
-      int preferredHeight = fm.getHeight();
-      int preferredWidth = getPreferredWidth(fm);
-
-      return new Dimension(preferredWidth, preferredHeight + getVgap() * 2);
+      size.height = fm.getHeight();
+      if (myPrefWidth < 0) {
+        size.width = 2 * getHgap() + fm.stringWidth(caption);
+      }
     }
-
-    return new Dimension(0, getVgap() * 2 + 1);
+    JBInsets.addTo(size, getInsets());
+    return size;
   }
 
-  private int getPreferredWidth(FontMetrics fm) {
-    return fm.stringWidth(myCaption) + 2 * getHgap();
-  }
-
-  private boolean hasCaption() {
-    return myCaption != null && !myCaption.trim().isEmpty();
-  }
-
+  @Override
   public Dimension getMinimumSize() {
-    return getPreferredSize();
+    return isMinimumSizeSet() ? super.getMinimumSize() : getPreferredFontSize();
   }
 
   public void setMinimumWidth(int width) {
     myPrefWidth = width;
   }
 
+  @Override
   protected void paintComponent(Graphics g) {
-    g.setColor(GroupedElementsRenderer.POPUP_SEPARATOR_FOREGROUND);
+    g.setColor(getForeground());
 
-    if (hasCaption()) {
-      Rectangle viewR = new Rectangle(0, getVgap(), getWidth() - 1, getHeight() - getVgap() - 1);
+    Rectangle bounds = new Rectangle(getWidth(), getHeight());
+    JBInsets.removeFrom(bounds, getInsets());
+
+    String caption = getCaption();
+    if (caption != null) {
+      int hGap = getHgap();
+      bounds.x += hGap;
+      bounds.width -= hGap + hGap;
+
       Rectangle iconR = new Rectangle();
       Rectangle textR = new Rectangle();
-      String s = SwingUtilities
-        .layoutCompoundLabel(g.getFontMetrics(), myCaption, null, CENTER,
-                             myCaptionCentered ? CENTER : LEFT,
-                             CENTER,
-                             myCaptionCentered ? CENTER : LEFT,
-                             viewR, iconR, textR, 0);
-      final int lineY = textR.y + textR.height / 2;
-      if (s.equals(myCaption) && viewR.width - textR.width > 2 * getHgap()) {
-        if (myCaptionCentered) {
-          g.drawLine(0, lineY, textR.x - getHgap(), lineY);
-        }
-        g.drawLine(textR.x + textR.width + getHgap(), lineY, getWidth() - 1, lineY);
+      FontMetrics fm = g.getFontMetrics();
+      String label = layoutCompoundLabel(fm, caption, null, CENTER, myAlignment, CENTER, myAlignment, bounds, iconR, textR, 0);
+      textR.y += fm.getAscent();
+      if (caption.equals(label)) {
+        int y = textR.y + (int)fm.getLineMetrics(label, g).getStrikethroughOffset();
+        paintLinePart(g, bounds.x, textR.x, -hGap, y);
+        paintLinePart(g, textR.x + textR.width, bounds.x + bounds.width, hGap, y);
       }
-      UIUtil.applyRenderingHints(g);
-      g.setColor(GroupedElementsRenderer.POPUP_SEPARATOR_TEXT_FOREGROUND);
-      g.drawString(s, textR.x, textR.y + g.getFontMetrics().getAscent());
+      UISettings.setupAntialiasing(g);
+      g.setColor(getTextForeground());
+      g.drawString(label, textR.x, textR.y);
     }
     else {
-      g.drawLine(0, getVgap(), getWidth() - 1, getVgap());
+      paintLine(g, bounds.x, bounds.y, bounds.width);
     }
+  }
+
+  protected void paintLinePart(Graphics g, int xMin, int xMax, int hGap, int y) {
+    if (xMax > xMin) paintLine(g, xMin + hGap, y, xMax - xMin);
+  }
+
+  protected void paintLine(Graphics g, int x, int y, int width) {
+    FILL.paint((Graphics2D)g, x, y, width, 1, null);
+  }
+
+  public String getCaption() {
+    return myCaption == null || myCaption.trim().isEmpty() ? null : myCaption;
   }
 
   public void setCaption(String captionAboveOf) {
     myCaption = captionAboveOf;
+  }
+
+  @Override
+  public AccessibleContext getAccessibleContext() {
+    if (accessibleContext == null) {
+      accessibleContext = new AccessibleSeparatorWithText();
+    }
+    return accessibleContext;
+  }
+
+  protected class AccessibleSeparatorWithText extends AccessibleJComponent {
+    @Override
+    public AccessibleRole getAccessibleRole() {
+      return AccessibleRole.LABEL;
+    }
+
+    @Override
+    public String getAccessibleName() {
+      return myCaption;
+    }
   }
 }

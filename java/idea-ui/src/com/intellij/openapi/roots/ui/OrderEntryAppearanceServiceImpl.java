@@ -36,6 +36,7 @@ import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.openapi.vfs.impl.LightFilePointer;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.PathUtil;
@@ -48,7 +49,6 @@ import java.awt.*;
 import java.io.File;
 
 public class OrderEntryAppearanceServiceImpl extends OrderEntryAppearanceService {
-  private static final Icon EXCLUDE_FOLDER_ICON = IconLoader.getDisabledIcon(PlatformIcons.FOLDER_ICON);
 
   private static final String NO_JDK = ProjectBundle.message("jdk.missing.item");
 
@@ -110,7 +110,8 @@ public class OrderEntryAppearanceServiceImpl extends OrderEntryAppearanceService
     }
 
     final String url = StringUtil.trimEnd(files[0], JarFileSystem.JAR_SEPARATOR);
-    return SimpleTextCellAppearance.regular(PathUtil.getFileName(url), PlatformIcons.LIBRARY_ICON);
+    String text = ProjectBundle.message("library.unnamed.text", PathUtil.getFileName(url), files.length - 1);
+    return SimpleTextCellAppearance.regular(text, PlatformIcons.LIBRARY_ICON);
   }
 
   @NotNull
@@ -122,16 +123,16 @@ public class OrderEntryAppearanceServiceImpl extends OrderEntryAppearanceService
 
     String name = jdk.getName();
     CompositeAppearance appearance = new CompositeAppearance();
-    appearance.setIcon(((SdkType) jdk.getSdkType()).getIcon());
-    VirtualFile homeDirectory = jdk.getHomeDirectory();
-    SimpleTextAttributes attributes = getTextAttributes(homeDirectory != null && homeDirectory.isValid(), selected);
+    SdkType sdkType = (SdkType)jdk.getSdkType();
+    appearance.setIcon(sdkType.getIcon());
+    SimpleTextAttributes attributes = getTextAttributes(sdkType.sdkHasValidPath(jdk), selected);
     CompositeAppearance.DequeEnd ending = appearance.getEnding();
     ending.addText(name, attributes);
 
     if (showVersion) {
       String versionString = jdk.getVersionString();
       if (versionString != null && !versionString.equals(name)) {
-        SimpleTextAttributes textAttributes = isInComboBox ? SimpleTextAttributes.SYNTHETIC_ATTRIBUTES :
+        SimpleTextAttributes textAttributes = isInComboBox && !selected ? SimpleTextAttributes.SYNTHETIC_ATTRIBUTES :
                                               SystemInfo.isMac && selected ? new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, 
                                                                                                       Color.WHITE): SimpleTextAttributes.GRAY_ATTRIBUTES;
         ending.addComment(versionString, textAttributes);
@@ -145,7 +146,7 @@ public class OrderEntryAppearanceServiceImpl extends OrderEntryAppearanceService
     if (!valid) {
       return SimpleTextAttributes.ERROR_ATTRIBUTES;
     }
-    else if (selected) {
+    else if (selected && !(SystemInfo.isWinVistaOrNewer && UIManager.getLookAndFeel().getName().contains("Windows"))) {
       return SimpleTextAttributes.SELECTED_SIMPLE_CELL_ATTRIBUTES;
     }
     else {
@@ -160,7 +161,7 @@ public class OrderEntryAppearanceServiceImpl extends OrderEntryAppearanceService
       return formatRelativePath(folder, PlatformIcons.FOLDER_ICON);
     }
     else if (folder instanceof ExcludeFolder) {
-      return formatRelativePath(folder, EXCLUDE_FOLDER_ICON);
+      return formatRelativePath(folder, IconLoader.getDisabledIcon(PlatformIcons.FOLDER_ICON));
     }
     else {
       throw new RuntimeException(folder.getClass().getName());

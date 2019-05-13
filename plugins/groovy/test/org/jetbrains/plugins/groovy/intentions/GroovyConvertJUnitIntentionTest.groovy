@@ -1,3 +1,18 @@
+/*
+ * Copyright 2000-2016 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package org.jetbrains.plugins.groovy.intentions
 
 import com.intellij.codeInsight.intention.IntentionAction
@@ -9,7 +24,7 @@ import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
  */
 class GroovyConvertJUnitIntentionTest extends LightCodeInsightFixtureTestCase {
 
-  public void testAssertFalse() {
+  void testAssertFalse() {
     doTest("""
 class A extends junit.framework.Assert {
   public void testXxxx() {
@@ -25,7 +40,7 @@ class A extends junit.framework.Assert {
 """)
   }
 
-  public void testAssertEquals() {
+  void testAssertEquals() {
     doTest("""
 class A extends junit.framework.Assert {
   public void testXxxx() {
@@ -41,7 +56,7 @@ class A extends junit.framework.Assert {
 """)
   }
 
-  public void testAssertNotSame() {
+  void testAssertNotSame() {
     doTest("""
 class A extends junit.framework.Assert {
   public void testXxxx() {
@@ -57,7 +72,7 @@ class A extends junit.framework.Assert {
 """)
   }
 
-  public void testFail() {
+  void testFail() {
     doTest("""
 class A extends junit.framework.Assert {
   public void testXxxx() {
@@ -78,17 +93,17 @@ public class Assert {
   public static void assertNotSame(java.lang.Object expected, java.lang.Object actual) { }
 }
 """)
-    myFixture.configureByText("A.groovy", before);
+    myFixture.configureByText("A.groovy", before)
 
-    String hint = GroovyIntentionsBundle.message("convert.junit.assertion.to.assert.statement.intention.name");
-    final List<IntentionAction> list = myFixture.filterAvailableIntentions(hint);
+    String hint = GroovyIntentionsBundle.message("convert.junit.assertion.to.assert.statement.intention.name")
+    final List<IntentionAction> list = myFixture.filterAvailableIntentions(hint)
     if (after == null) {
-      assertEmpty(list);
-      return;
+      assertEmpty(list)
+      return
     }
 
-    myFixture.launchAction(assertOneElement(list));
-    PostprocessReformattingAspect.getInstance(getProject()).doPostponedFormatting();
+    myFixture.launchAction(assertOneElement(list))
+    PostprocessReformattingAspect.getInstance(getProject()).doPostponedFormatting()
 
     myFixture.checkResult(after)
   }

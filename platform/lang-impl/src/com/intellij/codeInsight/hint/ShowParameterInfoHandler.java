@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.codeInsight.hint;
 
@@ -31,6 +17,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.LightweightHint;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
@@ -40,9 +27,19 @@ import java.awt.*;
 import java.util.Set;
 
 public class ShowParameterInfoHandler implements CodeInsightActionHandler {
+  private final boolean myRequestFocus;
+
+  public ShowParameterInfoHandler() {
+    this(false);
+  }
+
+  public ShowParameterInfoHandler(boolean requestFocus) {
+    myRequestFocus = requestFocus;
+  }
+
   @Override
   public void invoke(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
-    invoke(project, editor, file, -1, null);
+    invoke(project, editor, file, -1, null, myRequestFocus);
   }
 
   @Override
@@ -50,25 +47,44 @@ public class ShowParameterInfoHandler implements CodeInsightActionHandler {
     return false;
   }
 
+  /**
+   * @deprecated use {@link #invoke(Project, Editor, PsiFile, int, PsiElement, boolean)} instead
+   */
+  @Deprecated
   public static void invoke(final Project project, final Editor editor, PsiFile file, int lbraceOffset, PsiElement highlightedElement) {
+    invoke(project, editor, file, lbraceOffset, highlightedElement, false);
+  }
+
+  public static void invoke(final Project project, final Editor editor, PsiFile file,
+                            int lbraceOffset, PsiElement highlightedElement, boolean requestFocus) {
+    invoke(project, editor, file, lbraceOffset, highlightedElement, requestFocus, false);
+  }
+
+  public static void invoke(final Project project, final Editor editor, PsiFile file,
+                            int lbraceOffset, PsiElement highlightedElement, boolean requestFocus, boolean singleParameterHint) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     PsiDocumentManager.getInstance(project).commitAllDocuments();
 
     final int offset = editor.getCaretModel().getOffset();
-    final PsiElement psiElement = file.findElementAt(offset);
-    if (psiElement == null) return;
+    final int fileLength = file.getTextLength();
+    if (fileLength == 0) return;
 
     final ShowParameterInfoContext context = new ShowParameterInfoContext(
       editor,
       project,
       file,
       offset,
-      lbraceOffset
+      lbraceOffset,
+      requestFocus,
+      singleParameterHint
     );
 
     context.setHighlightedElement(highlightedElement);
+    context.setRequestFocus(requestFocus);
 
-    final Language language = psiElement.getLanguage();
+    // file.findElementAt(file.getTextLength()) returns null but we may need to show parameter info at EOF offset (for example in SQL)
+    final int offsetForLangDetection = offset > 0 && offset == fileLength ? offset - 1 : offset;
+    final Language language = PsiUtilCore.getLanguageAtOffset(file, offsetForLangDetection);
     ParameterInfoHandler[] handlers = getHandlers(project, language, file.getViewProvider().getBaseLanguage());
     if (handlers == null) handlers = new ParameterInfoHandler[0];
 
@@ -82,7 +98,7 @@ public class ShowParameterInfoHandler implements CodeInsightActionHandler {
           if (handler.couldShowInLookup()) {
             final Object[] items = handler.getParametersForLookup(item, context);
             if (items != null && items.length > 0) {
-              showLookupEditorHint(items, editor, project, handler);
+              showLookupEditorHint(items, editor, handler, requestFocus);
             }
             return;
           }
@@ -91,51 +107,48 @@ public class ShowParameterInfoHandler implements CodeInsightActionHandler {
       return;
     }
 
-    for (ParameterInfoHandler<Object, ?> handler : handlers) {
-      Object element = handler.findElementForParameterInfo(context);
-      if (element != null) {
-        handler.showParameterInfo(element, context);
+    DumbService.getInstance(project).setAlternativeResolveEnabled(true);
+    try {
+      for (ParameterInfoHandler<Object, ?> handler : handlers) {
+        Object element = handler.findElementForParameterInfo(context);
+        if (element != null) {
+          handler.showParameterInfo(element, context);
+        }
       }
+    }
+    finally {
+      DumbService.getInstance(project).setAlternativeResolveEnabled(false);
     }
   }
 
-  private static void showLookupEditorHint(Object[] descriptors, final Editor editor, final Project project, ParameterInfoHandler handler) {
-    ParameterInfoComponent component = new ParameterInfoComponent(descriptors, editor, handler);
-    component.update();
+  private static void showLookupEditorHint(Object[] descriptors,
+                                           final Editor editor,
+                                           ParameterInfoHandler handler,
+                                           boolean requestFocus) {
+    ParameterInfoComponent component = new ParameterInfoComponent(descriptors, editor, handler, requestFocus, false);
+    component.update(false);
 
     final LightweightHint hint = new LightweightHint(component);
     hint.setSelectingHint(true);
     final HintManagerImpl hintManager = HintManagerImpl.getInstanceImpl();
-    final Pair<Point, Short> pos = ShowParameterInfoContext.chooseBestHintPosition(project, editor, -1, -1, hint, true, HintManager.DEFAULT);
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
-      @Override
-      public void run() {
-        if (!editor.getComponent().isShowing()) return;
-        hintManager.showEditorHint(hint, editor, pos.getFirst(),
-                                   HintManager.HIDE_BY_ANY_KEY | HintManager.HIDE_BY_LOOKUP_ITEM_CHANGE | HintManager.UPDATE_BY_SCROLLING,
-                                   0, false, pos.getSecond());
-      }
+    final Pair<Point, Short> pos = ParameterInfoController.chooseBestHintPosition(editor, null, hint, HintManager.DEFAULT, true);
+    ApplicationManager.getApplication().invokeLater(() -> {
+      if (!editor.getComponent().isShowing()) return;
+      hintManager.showEditorHint(hint, editor, pos.getFirst(),
+                                 HintManager.HIDE_BY_ANY_KEY | HintManager.HIDE_BY_LOOKUP_ITEM_CHANGE | HintManager.UPDATE_BY_SCROLLING,
+                                 0, false, pos.getSecond());
     });
   }
 
   @Nullable
   public static ParameterInfoHandler[] getHandlers(Project project, final Language... languages) {
-    Set<ParameterInfoHandler> handlers = new THashSet<ParameterInfoHandler>();
+    Set<ParameterInfoHandler> handlers = new THashSet<>();
+    DumbService dumbService = DumbService.getInstance(project);
     for (final Language language : languages) {
-      handlers.addAll(DumbService.getInstance(project).filterByDumbAwareness(LanguageParameterInfo.INSTANCE.allForLanguage(language)));
+      handlers.addAll(dumbService.filterByDumbAwareness(LanguageParameterInfo.INSTANCE.allForLanguage(language)));
     }
     if (handlers.isEmpty()) return null;
-    return handlers.toArray(new ParameterInfoHandler[handlers.size()]);
+    return handlers.toArray(new ParameterInfoHandler[0]);
   }
-
-  interface BestLocationPointProvider {
-    @NotNull
-    Pair<Point, Short> getBestPointPosition(LightweightHint hint,
-                                            final PsiElement list,
-                                            int offset,
-                                            final boolean awtTooltip,
-                                            short preferredPosition);
-  }
-
 }
 

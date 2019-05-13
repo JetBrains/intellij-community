@@ -25,10 +25,12 @@ import org.jetbrains.annotations.NotNull;
 
 public class WrapReturnValueAction extends BaseRefactoringAction{
 
+  @Override
   protected RefactoringActionHandler getHandler(@NotNull DataContext context){
         return new WrapReturnValueHandler();
     }
 
+  @Override
   public boolean isAvailableInEditorOnly(){
       return false;
   }
@@ -38,11 +40,12 @@ public class WrapReturnValueAction extends BaseRefactoringAction{
     final PsiMethod psiMethod = PsiTreeUtil.getParentOfType(element, PsiMethod.class, false);
     if (psiMethod != null && !(psiMethod instanceof PsiCompiledElement)) {
       final PsiType returnType = psiMethod.getReturnType();
-      return returnType != null && returnType != PsiType.VOID;
+      return returnType != null && !PsiType.VOID.equals(returnType);
     }
     return false;
   }
 
+  @Override
   public boolean isEnabledOnElements(@NotNull PsiElement[] elements) {
     if (elements.length != 1) {
         return false;

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,12 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * Created by IntelliJ IDEA.
- * User: spleaner
- * Date: Jun 19, 2007
- * Time: 4:44:25 PM
- */
 package com.intellij.xml.breadcrumbs;
 
 import com.intellij.lang.Language;
@@ -29,55 +23,43 @@ import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlTag;
-import org.jetbrains.annotations.NonNls;
+import com.intellij.xml.util.HtmlUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.StringTokenizer;
-
 public class XmlLanguageBreadcrumbsInfoProvider extends BreadcrumbsInfoProvider {
-  @NonNls private static final String CLASS_ATTRIBUTE_NAME = "class";
-  @NonNls private static final String ID_ATTRIBUTE_NAME = "id";
-
+  @Override
   public boolean acceptElement(@NotNull final PsiElement e) {
     return e instanceof XmlTag && e.isValid();
   }
 
+  @Override
   public Language[] getLanguages() {
     return new Language[]{XMLLanguage.INSTANCE, XHTMLLanguage.INSTANCE, HTMLLanguage.INSTANCE};
   }
 
+  @Override
   @NotNull
   public String getElementInfo(@NotNull final PsiElement e) {
-    final XmlTag tag = (XmlTag)e;
-    final StringBuffer sb = new StringBuffer();
-
-    sb.append(tag.getName());
-
-    final boolean addHtmlInfo = e.getContainingFile().getLanguage() != XMLLanguage.INSTANCE;
-
-    if (addHtmlInfo) {
-      final String id_value = tag.getAttributeValue(ID_ATTRIBUTE_NAME);
-      if (null != id_value) {
-        sb.append("#").append(id_value);
-      }
-
-      final String class_value = tag.getAttributeValue(CLASS_ATTRIBUTE_NAME);
-      if (null != class_value) {
-        final StringTokenizer tokenizer = new StringTokenizer(class_value, " ");
-        while (tokenizer.hasMoreTokens()) {
-          sb.append(".").append(tokenizer.nextToken());
-        }
-      }
-    }
-
-    return sb.toString();
+    return getInfo(e);
   }
 
+  @NotNull
+  public static String getInfo(@NotNull PsiElement e) {
+    final XmlTag tag = (XmlTag)e;
+    final boolean addHtmlInfo = e.getContainingFile().getLanguage() != XMLLanguage.INSTANCE;
+    return addHtmlInfo ? HtmlUtil.getTagPresentation(tag) : tag.getName();
+  }
+
+  @Override
   @Nullable
   public String getElementTooltip(@NotNull final PsiElement e) {
-    final XmlTag tag = (XmlTag)e;
-    final StringBuffer result = new StringBuffer("&lt;");
+    return getTooltip((XmlTag)e);
+  }
+
+  @NotNull
+  public static String getTooltip(@NotNull XmlTag tag) {
+    final StringBuilder result = new StringBuilder("&lt;");
     result.append(tag.getName());
     final XmlAttribute[] attributes = tag.getAttributes();
     for (final XmlAttribute each : attributes) {

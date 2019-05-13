@@ -8,19 +8,18 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.platform.templates.github.DownloadUtil;
 import com.intellij.platform.templates.github.GeneratorException;
 import com.intellij.platform.templates.github.Outcome;
-import com.intellij.util.Producer;
 import com.intellij.util.net.IOExceptionDialog;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.concurrent.Callable;
 
 /**
  * @author Sergey Simonchik
  */
 public class GithubDownloadUtil {
+  private static final String PROJECT_GENERATORS = "projectGenerators";
 
   private GithubDownloadUtil() {}
 
@@ -30,9 +29,26 @@ public class GithubDownloadUtil {
   }
 
   @NotNull
+  private static String formatGithubUserName(@NotNull String userName) {
+    return "github-" + userName;
+  }
+
+  @NotNull
   public static File getCacheDir(@NotNull String userName, @NotNull String repositoryName) {
-    File generatorsDir = new File(PathManager.getSystemPath(), "projectGenerators");
+    File generatorsDir = new File(PathManager.getSystemPath(), PROJECT_GENERATORS);
     String dirName = formatGithubRepositoryName(userName, repositoryName);
+    File dir = new File(generatorsDir, dirName);
+    try {
+      return dir.getCanonicalFile();
+    } catch (IOException e) {
+      return dir;
+    }
+  }
+
+  @NotNull
+  public static File getUserCacheDir(@NotNull String userName) {
+    File generatorsDir = new File(PathManager.getSystemPath(), PROJECT_GENERATORS);
+    String dirName = formatGithubUserName(userName);
     File dir = new File(generatorsDir, dirName);
     try {
       return dir.getCanonicalFile();
@@ -46,31 +62,28 @@ public class GithubDownloadUtil {
     return new File(dir, cacheFileName);
   }
 
-  @SuppressWarnings("ThrowableResultOfMethodCallIgnored")
   public static void downloadContentToFileWithProgressSynchronously(
     @Nullable Project project,
     @NotNull final String url,
     @NotNull String progressTitle,
     @NotNull final File outputFile,
     @NotNull final String userName,
-    @NotNull final String repositoryName) throws GeneratorException
+    @NotNull final String repositoryName,
+    final boolean retryOnError) throws GeneratorException
   {
     Outcome<File> outcome = DownloadUtil.provideDataWithProgressSynchronously(
       project,
       progressTitle,
       "Downloading zip archive" + DownloadUtil.CONTENT_LENGTH_TEMPLATE + " ...",
-      new Callable<File>() {
-        @Override
-        public File call() throws Exception {
-          ProgressIndicator progress = ProgressManager.getInstance().getProgressIndicator();
-          downloadAtomically(progress, url, outputFile, userName, repositoryName);
-          return outputFile;
+      () -> {
+        ProgressIndicator progress = ProgressManager.getInstance().getProgressIndicator();
+        downloadAtomically(progress, url, outputFile, userName, repositoryName);
+        return outputFile;
+      }, () -> {
+        if (!retryOnError) {
+          return false;
         }
-      }, new Producer<Boolean>() {
-        @Override
-        public Boolean produce() {
-          return IOExceptionDialog.showErrorDialog("Download Error", "Can not download '" + url + "'");
-        }
+        return IOExceptionDialog.showErrorDialog("Download Error", "Can not download '" + url + "'");
       }
     );
     File out = outcome.get();
@@ -79,7 +92,7 @@ public class GithubDownloadUtil {
     }
     Exception e = outcome.getException();
     if (e != null) {
-      throw new GeneratorException("Can not fetch content from " + url);
+      throw new GeneratorException("Can not fetch content from " + url, e);
     }
     throw new GeneratorException("Download was cancelled");
   }

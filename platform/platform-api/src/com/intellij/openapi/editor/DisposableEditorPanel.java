@@ -32,6 +32,7 @@ public class DisposableEditorPanel extends JPanel implements Disposable {
     add(editor.getComponent(), BorderLayout.CENTER);
   }
 
+  @Override
   public void dispose() {
     if (! myEditor.isDisposed()) {
       EditorFactory.getInstance().releaseEditor(myEditor);

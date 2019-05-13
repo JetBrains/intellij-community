@@ -14,10 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * User: anna
- * Date: 06-May-2008
- */
 package com.intellij.refactoring.actions;
 
 import com.intellij.openapi.actionSystem.DataContext;
@@ -27,14 +23,17 @@ import com.intellij.refactoring.extractMethodObject.ExtractMethodObjectHandler;
 import org.jetbrains.annotations.NotNull;
 
 public class ReplaceMethodWithMethodObjectAction extends BaseRefactoringAction{
+  @Override
   protected boolean isAvailableInEditorOnly() {
     return true;
   }
 
+  @Override
   protected boolean isEnabledOnElements(@NotNull final PsiElement[] elements) {
     return false;
   }
 
+  @Override
   protected RefactoringActionHandler getHandler(@NotNull final DataContext dataContext) {
     return new ExtractMethodObjectHandler();
   }

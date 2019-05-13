@@ -30,9 +30,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class PsiCompositeModifierList extends LightModifierList {
-  private final List<PsiModifierList> mySublists;
+  private final List<? extends PsiModifierList> mySublists;
 
-  public PsiCompositeModifierList(final PsiManager manager, List<PsiModifierList> sublists) {
+  public PsiCompositeModifierList(final PsiManager manager, List<? extends PsiModifierList> sublists) {
     super(manager);
     mySublists = sublists;
   }
@@ -40,11 +40,11 @@ public class PsiCompositeModifierList extends LightModifierList {
   @Override
   @NotNull
   public PsiAnnotation[] getAnnotations() {
-    List<PsiAnnotation> annotations = new ArrayList<PsiAnnotation>();
+    List<PsiAnnotation> annotations = new ArrayList<>();
     for (PsiModifierList list : mySublists) {
       ContainerUtil.addAll(annotations, list.getAnnotations());
     }
-    return annotations.toArray(new PsiAnnotation[annotations.size()]);
+    return annotations.toArray(PsiAnnotation.EMPTY_ARRAY);
   }
 
   @Override

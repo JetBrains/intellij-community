@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.designer.palette;
 
 import com.intellij.designer.componentTree.TreeTransfer;
@@ -24,10 +10,12 @@ import com.intellij.ide.dnd.DnDSource;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -42,6 +30,8 @@ import java.awt.event.MouseListener;
  * @author Alexander Lobas
  */
 public class PaletteItemsComponent extends JBList {
+  private static final SimpleTextAttributes DEPRECATED_ATTRIBUTES = new SimpleTextAttributes(SimpleTextAttributes.STYLE_STRIKEOUT, null);
+
   private final PaletteGroup myGroup;
   private final DesignerEditorPanel myDesigner;
   private int myBeforeClickSelectedRow = -1;
@@ -66,7 +56,7 @@ public class PaletteItemsComponent extends JBList {
 
     ColoredListCellRenderer renderer = new ColoredListCellRenderer() {
       @Override
-      protected void customizeCellRenderer(JList list, Object value, int index, boolean selected, boolean hasFocus) {
+      protected void customizeCellRenderer(@NotNull JList list, Object value, int index, boolean selected, boolean hasFocus) {
         clear();
         PaletteItem item = (PaletteItem)value;
 
@@ -81,22 +71,34 @@ public class PaletteItemsComponent extends JBList {
         }
 
         String title = item.getTitle();
-        append(title, SimpleTextAttributes.REGULAR_ATTRIBUTES);
-
         String tooltip = item.getTooltip();
-        String version = item.getVersion();
-        if (version == null) {
-          version = "";
-        }
-        else {
+        String version = myDesigner.getVersionLabel(item.getVersion());
+        String deprecatedIn = item.getDeprecatedIn();
+        boolean deprecated = myDesigner.isDeprecated(deprecatedIn);
+
+        append(title, deprecated ? DEPRECATED_ATTRIBUTES : SimpleTextAttributes.REGULAR_ATTRIBUTES);
+
+        if (!version.isEmpty()) {
           version = "<sup><i>" + version + "</i></sup>";
         }
         if (tooltip != null) {
+          String deprecatedMessage = "";
+          if (deprecated) {
+            deprecatedMessage =
+              String.format("<b>This item is deprecated in version \"%1$s\".<br>", myDesigner.getVersionLabel(deprecatedIn));
+            String hint = item.getDeprecatedHint();
+            if (!StringUtil.isEmpty(hint)) {
+              deprecatedMessage += hint;
+            }
+            deprecatedMessage += "</b><br><br>";
+          }
+
           tooltip = "<html><body><center><b>" +
-                    StringUtil.escapeXml(title) +
+                    StringUtil.escapeXmlEntities(title) +
                     "</b>" +
                     version +
                     "</center><p style='width: 300px'>" +
+                    deprecatedMessage +
                     tooltip +
                     "</p></body></html>";
         }
@@ -206,6 +208,7 @@ public class PaletteItemsComponent extends JBList {
     invalidate();
   }
 
+  @Override
   public int getWidth() {
     return (myTempWidth == null) ? super.getWidth() : myTempWidth.intValue();
   }
@@ -227,7 +230,9 @@ public class PaletteItemsComponent extends JBList {
     else if (getModel().getSize() == 0) {
       indexToSelect = -1;
     }
-    requestFocus();
+    IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
+      IdeFocusManager.getGlobalInstance().requestFocus(this, true);
+    });
     setSelectedIndex(indexToSelect);
     if (indexToSelect >= 0) {
       ensureIndexIsVisible(indexToSelect);
@@ -267,11 +272,12 @@ public class PaletteItemsComponent extends JBList {
     private final Action myDefaultAction;
     private final boolean myFocusNext;
 
-    public MoveFocusAction(Action defaultAction, boolean focusNext) {
+    MoveFocusAction(Action defaultAction, boolean focusNext) {
       myDefaultAction = defaultAction;
       myFocusNext = focusNext;
     }
 
+    @Override
     public void actionPerformed(ActionEvent e) {
       int selIndexBefore = getSelectedIndex();
       myDefaultAction.actionPerformed(e);
@@ -294,7 +300,9 @@ public class PaletteItemsComponent extends JBList {
                        : policy.getComponentBefore(container, PaletteItemsComponent.this);
       if (next instanceof PaletteGroupComponent) {
         clearSelection();
-        next.requestFocus();
+        IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
+          IdeFocusManager.getGlobalInstance().requestFocus(next, true);
+        });
         ((PaletteGroupComponent)next).scrollRectToVisible(next.getBounds());
       }
     }
@@ -304,11 +312,12 @@ public class PaletteItemsComponent extends JBList {
     private final Action myDefaultAction;
     private final boolean mySelectNext;
 
-    public ChangeColumnAction(Action defaultAction, boolean selectNext) {
+    ChangeColumnAction(Action defaultAction, boolean selectNext) {
       myDefaultAction = defaultAction;
       mySelectNext = selectNext;
     }
 
+    @Override
     public void actionPerformed(ActionEvent e) {
       int selIndexBefore = getSelectedIndex();
       myDefaultAction.actionPerformed(e);

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,7 +25,9 @@ import com.intellij.psi.PsiClass;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBList;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -39,7 +41,7 @@ class RestoreReferencesDialog extends DialogWrapper {
   private Object[] mySelectedElements = PsiClass.EMPTY_ARRAY;
   private boolean myContainsClassesOnly = true;
 
-  public RestoreReferencesDialog(final Project project, final Object[] elements) {
+  RestoreReferencesDialog(final Project project, final Object[] elements) {
     super(project, true);
     myNamedElements = elements;
     for (Object element : elements) {
@@ -85,7 +87,7 @@ class RestoreReferencesDialog extends DialogWrapper {
     final JButton cancelButton = new JButton(CommonBundle.getCancelButtonText());
     buttonPanel.add(cancelButton);
 
-    panel.setPreferredSize(new Dimension(500, 400));
+    panel.setPreferredSize(JBUI.size(500, 400));
 
     return panel;
   }
@@ -96,6 +98,7 @@ class RestoreReferencesDialog extends DialogWrapper {
     return "#com.intellij.codeInsight.editorActions.RestoreReferencesDialog";
   }
 
+  @NotNull
   public Object[] getSelectedElements(){
     return mySelectedElements;
   }

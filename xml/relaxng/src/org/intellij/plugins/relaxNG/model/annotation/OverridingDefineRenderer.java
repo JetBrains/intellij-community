@@ -21,10 +21,10 @@ import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiElement;
 import com.intellij.ui.awt.RelativePoint;
-import com.intellij.util.Function;
 import com.intellij.util.OpenSourceUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.intellij.plugins.relaxNG.model.Define;
@@ -36,52 +36,53 @@ import java.awt.event.MouseEvent;
 import java.util.Collection;
 import java.util.Set;
 
-class OverridingDefineRenderer extends GutterIconRenderer {
+class OverridingDefineRenderer extends GutterIconRenderer implements DumbAware {
 
-  private final Set<Define> mySet;
+  private final Set<? extends Define> mySet;
   private final String myMessage;
 
-  public OverridingDefineRenderer(String message, Set<Define> set) {
+  OverridingDefineRenderer(String message, Set<? extends Define> set) {
     mySet = set;
     myMessage = message;
   }
 
+  @Override
   @NotNull
   public Icon getIcon() {
     return AllIcons.Gutter.OverridingMethod;
   }
 
+  @Override
   public boolean isNavigateAction() {
     return true;
   }
 
+  @Override
   @Nullable
   public AnAction getClickAction() {
     return new MyClickAction();
   }
 
+  @Override
   @Nullable
   public String getTooltipText() {
     return myMessage;
   }
 
   private class MyClickAction extends AnAction {
-    public void actionPerformed(AnActionEvent e) {
+    @Override
+    public void actionPerformed(@NotNull AnActionEvent e) {
       doClickAction(e, mySet, "Go to overridden define");
     }
   }
 
-  static void doClickAction(AnActionEvent e, Collection<Define> set, String title) {
+  static void doClickAction(AnActionEvent e, Collection<? extends Define> set, String title) {
     if (set.size() == 1) {
       final Navigatable n = (Navigatable)set.iterator().next().getPsiElement();
       OpenSourceUtil.navigate(true, n);
     } else {
-      final Define[] array = set.toArray(new Define[set.size()]);
-      NavigationUtil.getPsiElementPopup(ContainerUtil.map(array, new Function<Define, PsiElement>() {
-        public PsiElement fun(Define define) {
-          return define.getPsiElement();
-        }
-      }, PsiElement.EMPTY_ARRAY), title).show(new RelativePoint((MouseEvent)e.getInputEvent()));
+      final Define[] array = set.toArray(new Define[0]);
+      NavigationUtil.getPsiElementPopup(ContainerUtil.map(array, define -> define.getPsiElement(), PsiElement.EMPTY_ARRAY), title).show(new RelativePoint((MouseEvent)e.getInputEvent()));
     }
   }
 

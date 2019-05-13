@@ -1,0 +1,12 @@
+a?[:]
+-----
+Groovy script
+  Reference expression
+    PsiElement(identifier)('a')
+  PsiElement(?)('?')
+  PsiErrorElement:<expression> expected, got '['
+    <empty list>
+  Generalized list
+    PsiElement([)('[')
+    PsiElement(:)(':')
+    PsiElement(])(']')

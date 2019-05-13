@@ -2,17 +2,19 @@ package com.intellij.refactoring.introduceParameter;
 
 import com.intellij.codeInsight.intention.impl.TypeExpression;
 import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.codeInsight.lookup.PsiTypeLookupItem;
 import com.intellij.codeInsight.template.Expression;
 import com.intellij.codeInsight.template.ExpressionContext;
 import com.intellij.codeInsight.template.Result;
 import com.intellij.codeInsight.template.TextResult;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.lang.Language;
+import com.intellij.lang.injection.InjectedLanguageManager;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Computable;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
@@ -25,9 +27,6 @@ import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * User: anna
- */
 public abstract class AbstractJavaInplaceIntroducer extends AbstractInplaceIntroducer<PsiVariable, PsiExpression> {
   protected TypeSelectorManagerImpl myTypeSelectorManager;
 
@@ -37,8 +36,14 @@ public abstract class AbstractJavaInplaceIntroducer extends AbstractInplaceIntro
                                        PsiVariable localVariable,
                                        PsiExpression[] occurrences,
                                        TypeSelectorManagerImpl typeSelectorManager, String title) {
-    super(project, InjectedLanguageUtil.getTopLevelEditor(editor), expr, localVariable, occurrences, title, StdFileTypes.JAVA);
+    super(project, getEditor(editor, expr), expr, localVariable, occurrences, title, StdFileTypes.JAVA);
     myTypeSelectorManager = typeSelectorManager;
+  }
+
+  private static Editor getEditor(Editor editor, PsiExpression expr) {
+    return expr != null && Comparing.equal(InjectedLanguageManager.getInstance(expr.getProject()).getTopLevelFile(expr), expr.getContainingFile())
+           ? InjectedLanguageUtil.getTopLevelEditor(editor)
+           : editor;
   }
 
   protected abstract PsiVariable createFieldToStartTemplateOn(String[] names, PsiType psiType);
@@ -49,8 +54,7 @@ public abstract class AbstractJavaInplaceIntroducer extends AbstractInplaceIntro
 
   @Override
   protected String[] suggestNames(boolean replaceAll, PsiVariable variable) {
-    myTypeSelectorManager.setAllOccurrences(replaceAll);
-    final PsiType defaultType = myTypeSelectorManager.getTypeSelector().getSelectedType();
+    final PsiType defaultType = getType();
     final String propertyName = variable != null
                                 ? JavaCodeStyleManager.getInstance(myProject).variableNameToPropertyName(variable.getName(), VariableKind.LOCAL_VARIABLE)
                                 : null;
@@ -76,12 +80,10 @@ public abstract class AbstractJavaInplaceIntroducer extends AbstractInplaceIntro
   protected void correctExpression() {
     final PsiElement parent = getExpr().getParent();
     if (parent instanceof PsiExpressionStatement && parent.getLastChild() instanceof PsiErrorElement) {
-      myExpr = ((PsiExpressionStatement)ApplicationManager.getApplication().runWriteAction(new Computable<PsiElement>() {
-        @Override
-        public PsiElement compute() {
-          return parent.replace(JavaPsiFacade.getElementFactory(myProject).createStatementFromText(parent.getText() + ";", parent));
-        }
-      })).getExpression();
+      myExpr = ((PsiExpressionStatement)WriteAction
+        .compute(() -> parent.replace(JavaPsiFacade.getElementFactory(myProject).createStatementFromText(parent.getText() + ";", parent)))).getExpression();
+      //postfix templates start introduce in write action so postprocess reformatting aspect doesn't run automatically on write action finish
+      PsiDocumentManager.getInstance(myProject).doPostponedOperationsAndUnblockDocument(myEditor.getDocument());
       myEditor.getCaretModel().moveToOffset(myExpr.getTextRange().getStartOffset());
     }
   }
@@ -92,7 +94,7 @@ public abstract class AbstractJavaInplaceIntroducer extends AbstractInplaceIntro
   }
 
   @Override
-  protected void restoreState(PsiVariable psiField) {
+  protected void restoreState(@NotNull PsiVariable psiField) {
     final SmartTypePointer typePointer = SmartTypePointerManager.getInstance(myProject).createSmartTypePointer(getType());
     super.restoreState(psiField);
     for (PsiExpression occurrence : myOccurrences) {
@@ -121,7 +123,7 @@ public abstract class AbstractJavaInplaceIntroducer extends AbstractInplaceIntro
   public static String[] appendUnresolvedExprName(String[] names, final PsiExpression expr) {
     if (expr instanceof PsiReferenceExpression && ((PsiReferenceExpression)expr).resolve() == null) {
       final String name = expr.getText();
-      if (JavaPsiFacade.getInstance(expr.getProject()).getNameHelper().isIdentifier(name, LanguageLevel.HIGHEST)) {
+      if (PsiNameHelper.getInstance(expr.getProject()).isIdentifier(name, LanguageLevel.HIGHEST)) {
         names = ArrayUtil.mergeArrays(new String[]{name}, names);
       }
     }
@@ -139,7 +141,9 @@ public abstract class AbstractJavaInplaceIntroducer extends AbstractInplaceIntro
     final PsiElement refVariableElementParent = refVariableElement != null ? refVariableElement.getParent() : null;
     PsiExpression expression = refVariableElement instanceof PsiKeyword && refVariableElementParent instanceof PsiNewExpression 
                                ? (PsiNewExpression)refVariableElementParent 
-                               : PsiTreeUtil.getParentOfType(refVariableElement, PsiReferenceExpression.class);
+                               : refVariableElementParent instanceof PsiParenthesizedExpression 
+                                 ? ((PsiParenthesizedExpression)refVariableElementParent).getExpression() 
+                                 : PsiTreeUtil.getParentOfType(refVariableElement, PsiReferenceExpression.class);
     if (expression instanceof PsiReferenceExpression && !(expression.getParent() instanceof PsiMethodCallExpression)) {
       final String referenceName = ((PsiReferenceExpression)expression).getReferenceName();
       if (((PsiReferenceExpression)expression).resolve() == psiVariable ||
@@ -151,18 +155,31 @@ public abstract class AbstractJavaInplaceIntroducer extends AbstractInplaceIntro
     if (expression == null) {
       expression = PsiTreeUtil.getParentOfType(refVariableElement, PsiExpression.class);
     }
-    while (expression instanceof PsiReferenceExpression) {
+    while (expression instanceof PsiReferenceExpression || expression instanceof PsiMethodCallExpression) {
       final PsiElement parent = expression.getParent();
       if (parent instanceof PsiMethodCallExpression) {
         if (parent.getText().equals(exprText)) return (PsiExpression)parent;
       }
       if (parent instanceof PsiExpression) {
         expression = (PsiExpression)parent;
-      } else {
+        if (expression.getText().equals(exprText)) {
+          return expression;
+        }
+      } else if (expression instanceof PsiReferenceExpression) {
         return null;
+      } else {
+        break;
       }
     }
-    return expression != null && expression.isValid() && expression.getText().equals(exprText) ? expression : null;
+    if (expression != null && expression.isValid() && expression.getText().equals(exprText)) {
+      return expression;
+    }
+
+    if (refVariableElementParent instanceof PsiExpression && refVariableElementParent.getText().equals(exprText)) {
+      return (PsiExpression)refVariableElementParent;
+    }
+
+    return null;
   }
 
    public static Expression createExpression(final TypeExpression expression, final String defaultType) {
@@ -179,7 +196,23 @@ public abstract class AbstractJavaInplaceIntroducer extends AbstractInplaceIntro
 
        @Override
        public LookupElement[] calculateLookupItems(ExpressionContext context) {
-         return expression.calculateLookupItems(context);
+         final LookupElement[] elements = expression.calculateLookupItems(context);
+         if (elements != null) {
+           LookupElement toBeSelected = null;
+           for (LookupElement element : elements) {
+             if (element instanceof PsiTypeLookupItem && ((PsiTypeLookupItem)element).getType().getPresentableText().equals(defaultType)) {
+               toBeSelected = element;
+               break;
+             }
+           }
+           if (toBeSelected != null) {
+             final int idx = ArrayUtil.find(elements, toBeSelected);
+             if (idx > 0) {
+               return ArrayUtil.prepend(toBeSelected, ArrayUtil.remove(elements, idx));
+             }
+           }
+         }
+         return elements;
        }
 
        @Override
@@ -189,4 +222,11 @@ public abstract class AbstractJavaInplaceIntroducer extends AbstractInplaceIntro
      };
    }
 
+  protected String chooseName(String[] names, Language language) {
+    String inputName = getInputName();
+    if (inputName != null && !isIdentifier(inputName, language)) {
+      inputName = null;
+    }
+    return inputName != null ? inputName : names[0];
+  }
 }

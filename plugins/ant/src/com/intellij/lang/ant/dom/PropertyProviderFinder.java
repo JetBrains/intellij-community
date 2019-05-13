@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,7 +22,6 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.psi.xml.XmlFile;
-import com.intellij.util.containers.HashMap;
 import com.intellij.util.xml.DomElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -31,51 +30,34 @@ import java.util.*;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Apr 22, 2010
  */
 public abstract class PropertyProviderFinder extends AntDomRecursiveVisitor {
 
-  protected static <K, V> void cacheResult(@Nullable final DomElement context,
-                                           final Key<Map<K, V>> cacheKind,
-                                           K key,
-                                           V value) {
+  protected static <K, V> void cacheResult(@Nullable final DomElement context, final Key<Map<K, V>> cacheKind, K key, V value) {
     if (context != null) {
-      Map<K, V> cachemap = context.getUserData(cacheKind);
+      Map<K, V> cachemap = cacheKind.get(context);
       if (cachemap == null) {
-        context.putUserData(cacheKind, cachemap = Collections.synchronizedMap(new HashMap<K, V>()));
+        cacheKind.set(context, cachemap = Collections.synchronizedMap(new HashMap<K, V>()));
       }
       cachemap.put(key, value);
     }
   }
 
-  @Nullable
-  protected static <K, V> V getCachedResult(@Nullable final DomElement context,
-                                            final Key<Map<K, V>> cacheKind,
-                                            K key) {
-    if (context != null) {
-      final Map<K, V> cached = context.getUserData(cacheKind);
-      if (cached != null) {
-        return cached.get(key);
-      }
-    }
-    return null;
-  }
-
-  public static enum Stage {
+  public enum Stage {
     RESOLVE_MAP_BUILDING_STAGE, TARGETS_WALKUP_STAGE
   }
   private Stage myStage = Stage.RESOLVE_MAP_BUILDING_STAGE;
 
-  private Stack<String> myCurrentTargetEffectiveName = new Stack<String>();
+  private final Stack<String> myCurrentTargetEffectiveName = new Stack<>();
 
   private final AntDomElement myContextElement;
   private boolean myStopped;
-  private TargetsNameContext myNameContext = new TargetsNameContext();
-  private Map<String, AntDomTarget> myTargetsResolveMap = new HashMap<String, AntDomTarget>(); // target effective name -> ant target
-  private Map<String, List<String>> myDependenciesMap = new HashMap<String, List<String>>();   // target effective name -> dependencies effective names
+  private final TargetsNameContext myNameContext = new TargetsNameContext();
+  private final Map<String, AntDomTarget> myTargetsResolveMap = new HashMap<>(); // target effective name -> ant target
+  private final Map<String, List<String>> myDependenciesMap = new HashMap<>();   // target effective name -> dependencies effective names
 
-  private Set<String> myProcessedTargets = new HashSet<String>();
-  private Set<AntDomProject> myVisitedProjects = new HashSet<AntDomProject>();
+  private final Set<String> myProcessedTargets = new HashSet<>();
+  private final Set<AntDomProject> myVisitedProjects = new HashSet<>();
 
   protected PropertyProviderFinder(DomElement contextElement) {
     myContextElement = contextElement != null? contextElement.getParentOfType(AntDomElement.class, false) : null;
@@ -95,7 +77,7 @@ public abstract class PropertyProviderFinder extends AntDomRecursiveVisitor {
       for (String s : myTargetsResolveMap.keySet()) {
         if (!myProcessedTargets.contains(s)) {
           if (unprocessed == null) {
-            unprocessed = new ArrayList<String>();
+            unprocessed = new ArrayList<>();
           }
           unprocessed.add(s);
         }
@@ -118,11 +100,11 @@ public abstract class PropertyProviderFinder extends AntDomRecursiveVisitor {
     }
   }
 
+  @Override
   public void visitTarget(AntDomTarget target) {
     if (myStage == Stage.TARGETS_WALKUP_STAGE) {
       final String targetEffectiveName = myCurrentTargetEffectiveName.peek();
-      if (!myProcessedTargets.contains(targetEffectiveName)) {
-        myProcessedTargets.add(targetEffectiveName);
+      if (myProcessedTargets.add(targetEffectiveName)) {
         final List<String> depsList = myDependenciesMap.get(targetEffectiveName);
         if (depsList != null) {
           for (String dependencyName : depsList) {
@@ -144,7 +126,7 @@ public abstract class PropertyProviderFinder extends AntDomRecursiveVisitor {
           final String alias = myNameContext.getShortPrefix() + declaredTargetName;
           if (!myTargetsResolveMap.containsKey(declaredTargetName)) {
             effectiveTargetName = declaredTargetName;
-            myTargetsResolveMap.put(alias, target); 
+            myTargetsResolveMap.put(alias, target);
           }
           else {
             effectiveTargetName = alias;
@@ -169,14 +151,14 @@ public abstract class PropertyProviderFinder extends AntDomRecursiveVisitor {
           final String dependsStr = target.getDependsList().getRawText();
           Map<String, Pair<AntDomTarget, String>> depsMap = Collections.emptyMap();
           if (dependsStr != null) {
-            depsMap = new HashMap<String, Pair<AntDomTarget, String>>();
+            depsMap = new HashMap<>();
             final StringTokenizer tokenizer = new StringTokenizer(dependsStr, ",", false);
             while (tokenizer.hasMoreTokens()) {
               final String token = tokenizer.nextToken().trim();
               final String dependentTargetEffectiveName = myNameContext.calcTargetReferenceText(token);
               final AntDomTarget dependent = getTargetByName(dependentTargetEffectiveName);
               if (dependent != null) {
-                depsMap.put(token, new Pair<AntDomTarget, String>(dependent, dependentTargetEffectiveName));
+                depsMap.put(token, Pair.create(dependent, dependentTargetEffectiveName));
               }
               addDependency(effectiveTargetName, dependentTargetEffectiveName);
             }
@@ -190,7 +172,7 @@ public abstract class PropertyProviderFinder extends AntDomRecursiveVisitor {
   @Override
   public void visitAntDomElement(AntDomElement element) {
     if (myStopped) {
-      return; 
+      return;
     }
     if (element.equals(myContextElement)) {
       stop();
@@ -239,17 +221,19 @@ public abstract class PropertyProviderFinder extends AntDomRecursiveVisitor {
   protected abstract void propertyProviderFound(PropertiesProvider propertiesProvider);
 
 
+  @Override
   public void visitInclude(AntDomInclude includeTag) {
     processFileInclusion(includeTag, InclusionKind.INCLUDE);
   }
 
+  @Override
   public void visitImport(AntDomImport importTag) {
     processFileInclusion(importTag, InclusionKind.IMPORT);
   }
 
+  @Override
   public void visitProject(AntDomProject project) {
-    if (!myVisitedProjects.contains(project)) {
-      myVisitedProjects.add(project);
+    if (myVisitedProjects.add(project)) {
       try {
         super.visitProject(project);
       }
@@ -284,7 +268,7 @@ public abstract class PropertyProviderFinder extends AntDomRecursiveVisitor {
   private void addDependency(String effectiveTargetName, String dependentTargetEffectiveName) {
     List<String> list = myDependenciesMap.get(effectiveTargetName);
     if (list == null) {
-      myDependenciesMap.put(effectiveTargetName, list = new ArrayList<String>());
+      myDependenciesMap.put(effectiveTargetName, list = new ArrayList<>());
     }
     list.add(dependentTargetEffectiveName);
   }
@@ -308,12 +292,12 @@ public abstract class PropertyProviderFinder extends AntDomRecursiveVisitor {
   protected void stageCompleted(Stage completedStage, Stage startingStage) {
   }
 
-  private static enum InclusionKind {
+  private enum InclusionKind {
     INCLUDE("included"), IMPORT("imported"), TOPLEVEL("toplevel");
 
     private final String myDisplayName;
 
-    private InclusionKind(String displayName) {
+    InclusionKind(String displayName) {
       myDisplayName = displayName;
     }
 
@@ -324,7 +308,7 @@ public abstract class PropertyProviderFinder extends AntDomRecursiveVisitor {
 
   private static class TargetsNameContext {
     private int myDefaultPrefixCounter = 0;
-    private final LinkedList<Pair<String, InclusionKind>> myPrefixes = new LinkedList<Pair<String, InclusionKind>>();
+    private final LinkedList<Pair<String, InclusionKind>> myPrefixes = new LinkedList<>();
     private String myCurrentPrefix = null;
 
     public String calcTargetReferenceText(String targetReferenceText) {
@@ -354,7 +338,7 @@ public abstract class PropertyProviderFinder extends AntDomRecursiveVisitor {
       if (myPrefixes.isEmpty()) {
         return "";
       }
-      StringBuffer buf = new StringBuffer();
+      StringBuilder buf = new StringBuilder();
       for (Pair<String, InclusionKind> prefix : myPrefixes) {
         buf.append(prefix.getFirst());
       }
@@ -380,7 +364,7 @@ public abstract class PropertyProviderFinder extends AntDomRecursiveVisitor {
 
     public void pushPrefix(String prefix, InclusionKind kind) {
       myCurrentPrefix = null;
-      myPrefixes.addLast(new Pair<String, InclusionKind>(prefix, kind));
+      myPrefixes.addLast(Pair.create(prefix, kind));
     }
 
     public void popPrefix() {

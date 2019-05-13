@@ -29,11 +29,12 @@ import java.awt.*;
  * size of the dialog that serves as a container for the panel), that width is used as a maximum width.
  *
  * @author Denis Zhdanov
- * @since Jul 28, 2008
  */
 public class MultiRowFlowPanel extends JPanel {
 
-  private final int maximumWidth = GraphicsEnvironment.isHeadless() ? 400 : Toolkit.getDefaultToolkit().getScreenSize().width / 2;
+  private final int maximumWidth = GraphicsEnvironment.isHeadless()
+                                   ? 400
+                                   : GraphicsEnvironment.getLocalGraphicsEnvironment().getDefaultScreenDevice().getDefaultConfiguration().getBounds().width / 2;
   private int myForcedWidth;
 
   public MultiRowFlowPanel(@JdkConstants.FlowLayoutAlignment int align, int hGap, int vGap) {

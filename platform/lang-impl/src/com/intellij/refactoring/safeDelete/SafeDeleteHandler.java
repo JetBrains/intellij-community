@@ -1,47 +1,29 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.refactoring.safeDelete;
 
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtilBase;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.RefactoringSettings;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.LinkedHashSet;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @author dsl
@@ -49,8 +31,9 @@ import java.util.Set;
 public class SafeDeleteHandler implements RefactoringActionHandler {
   public static final String REFACTORING_NAME = RefactoringBundle.message("safe.delete.title");
 
+  @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file, DataContext dataContext) {
-    PsiElement element = LangDataKeys.PSI_ELEMENT.getData(dataContext);
+    PsiElement element = CommonDataKeys.PSI_ELEMENT.getData(dataContext);
     editor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
     if (element == null || !SafeDeleteProcessor.validElement(element)) {
       String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("is.not.supported.in.the.current.context", REFACTORING_NAME));
@@ -60,8 +43,9 @@ public class SafeDeleteHandler implements RefactoringActionHandler {
     invoke(project, new PsiElement[]{element}, dataContext);
   }
 
+  @Override
   public void invoke(@NotNull final Project project, @NotNull PsiElement[] elements, DataContext dataContext) {
-    invoke(project, elements, LangDataKeys.MODULE.getData(dataContext), true, null);
+    invoke(project, elements, LangDataKeys.MODULE.getData(dataContext), true, null, null);
   }
 
   public static void invoke(final Project project, PsiElement[] elements, boolean checkDelegates) {
@@ -69,23 +53,34 @@ public class SafeDeleteHandler implements RefactoringActionHandler {
   }
 
   public static void invoke(final Project project, PsiElement[] elements, boolean checkDelegates, @Nullable final Runnable successRunnable) {
-    invoke(project, elements, null, checkDelegates, successRunnable);
+    invoke(project, elements, null, checkDelegates, successRunnable, null);
   }
 
-  public static void invoke(final Project project, PsiElement[] elements, @Nullable Module module, boolean checkDelegates, @Nullable final Runnable successRunnable) {
+  public static void invoke(final Project project, PsiElement[] elements, @Nullable Module module, boolean checkDelegates,
+                            @Nullable final Runnable successRunnable) {
+    invoke(project, elements, module, checkDelegates, successRunnable, null);
+  }
+
+  public static void invoke(final Project project, PsiElement[] elements, @Nullable Module module, boolean checkDelegates,
+                            @Nullable final Runnable successRunnable, @Nullable final  Runnable afterRefactoring) {
+    invoke(project, elements, module, checkDelegates, successRunnable, afterRefactoring, false);
+  }
+
+  public static void invoke(final Project project, PsiElement[] elements, @Nullable Module module, boolean checkDelegates,
+                            @Nullable final Runnable successRunnable, @Nullable final  Runnable afterRefactoring, boolean silent) {
     for (PsiElement element : elements) {
       if (!SafeDeleteProcessor.validElement(element)) {
         return;
       }
     }
     final PsiElement[] temptoDelete = PsiTreeUtil.filterAncestors(elements);
-    Set<PsiElement> elementsSet = new HashSet<PsiElement>(Arrays.asList(temptoDelete));
-    Set<PsiElement> fullElementsSet = new LinkedHashSet<PsiElement>();
+    Set<PsiElement> elementsSet = new HashSet<>(Arrays.asList(temptoDelete));
+    Set<PsiElement> fullElementsSet = new LinkedHashSet<>();
 
     if (checkDelegates) {
       for (PsiElement element : temptoDelete) {
         boolean found = false;
-        for(SafeDeleteProcessorDelegate delegate: Extensions.getExtensions(SafeDeleteProcessorDelegate.EP_NAME)) {
+        for(SafeDeleteProcessorDelegate delegate: SafeDeleteProcessorDelegate.EP_NAME.getExtensionList()) {
           if (delegate.handlesElement(element)) {
             found = true;
             Collection<? extends PsiElement> addElements = delegate instanceof SafeDeleteProcessorDelegateBase
@@ -106,27 +101,30 @@ public class SafeDeleteHandler implements RefactoringActionHandler {
 
     if (!CommonRefactoringUtil.checkReadOnlyStatusRecursively(project, fullElementsSet, true)) return;
 
-    final PsiElement[] elementsToDelete = PsiUtilBase.toPsiElementArray(fullElementsSet);
+    final PsiElement[] elementsToDelete = PsiUtilCore.toPsiElementArray(fullElementsSet);
 
-    if (ApplicationManager.getApplication().isUnitTestMode()) {
+    if (ApplicationManager.getApplication().isUnitTestMode() || silent) {
       RefactoringSettings settings = RefactoringSettings.getInstance();
-      SafeDeleteProcessor.createInstance(project, null, elementsToDelete, settings.SAFE_DELETE_SEARCH_IN_COMMENTS,
-                                         settings.SAFE_DELETE_SEARCH_IN_NON_JAVA, true).run();
+      final SafeDeleteProcessor processor =
+        SafeDeleteProcessor.createInstance(project, null, elementsToDelete, settings.SAFE_DELETE_SEARCH_IN_COMMENTS,
+                                           settings.SAFE_DELETE_SEARCH_IN_NON_JAVA, true);
+      if (afterRefactoring != null) processor.setAfterRefactoringCallback(afterRefactoring);
+      processor.run();
       if (successRunnable != null) successRunnable.run();
     }
     else {
       final SafeDeleteDialog.Callback callback = new SafeDeleteDialog.Callback() {
+        @Override
         public void run(final SafeDeleteDialog dialog) {
-          SafeDeleteProcessor.createInstance(project, new Runnable() {
-            public void run() {
-              if (successRunnable != null) {
-                successRunnable.run();
-              }
-              dialog.close(DialogWrapper.CANCEL_EXIT_CODE);
+          final SafeDeleteProcessor processor = SafeDeleteProcessor.createInstance(project, () -> {
+            if (successRunnable != null) {
+              successRunnable.run();
             }
-          }, elementsToDelete, dialog.isSearchInComments(), dialog.isSearchForTextOccurences(), true).run();
+            dialog.close(DialogWrapper.CANCEL_EXIT_CODE);
+          }, elementsToDelete, dialog.isSearchInComments(), dialog.isSearchForTextOccurences(), true);
+          if (afterRefactoring != null) processor.setAfterRefactoringCallback(afterRefactoring);
+          processor.run();
         }
-
       };
 
       SafeDeleteDialog dialog = new SafeDeleteDialog(project, elementsToDelete, callback);

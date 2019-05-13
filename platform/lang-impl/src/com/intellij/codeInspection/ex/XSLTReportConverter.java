@@ -36,7 +36,7 @@ import java.util.Map;
  * @author Roman.Chernyatchik
  */
 public class XSLTReportConverter implements InspectionsReportConverter {
-  private String myXSLTSchemePath;
+  private final String myXSLTSchemePath;
 
   public XSLTReportConverter(@NotNull final String xsltSchemePath) {
     myXSLTSchemePath = xsltSchemePath;
@@ -52,10 +52,11 @@ public class XSLTReportConverter implements InspectionsReportConverter {
     return true;
   }
 
+  @Override
   public void convert(@NotNull final String rawDataDirectoryPath,
                       @Nullable final String outputPath,
                       @NotNull final Map<String, Tools> tools,
-                      @NotNull final List<File> inspectionsResults) throws InspectionsReportConverter.ConversionException {
+                      @NotNull final List<? extends File> inspectionsResults) throws InspectionsReportConverter.ConversionException {
 
     if (outputPath == null) {
       throw new ConversionException("Output path isn't specified.");

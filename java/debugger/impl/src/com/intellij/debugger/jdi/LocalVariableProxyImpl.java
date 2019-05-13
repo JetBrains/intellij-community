@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,6 +40,7 @@ public class LocalVariableProxyImpl extends JdiProxy implements LocalVariablePro
     myVariable = variable;
   }
 
+  @Override
   protected void clearCaches() {
     myVariable = null;
     myVariableType = null;
@@ -47,10 +48,9 @@ public class LocalVariableProxyImpl extends JdiProxy implements LocalVariablePro
 
   public LocalVariable getVariable() throws EvaluateException {
     checkValid();
-    if(myVariable == null) {
+    if (myVariable == null) {
       myVariable = myFrame.visibleVariableByNameInt(myVariableName);
-
-      if(myVariable == null) {
+      if (myVariable == null) {
         //myFrame is not this variable's frame
         throw EvaluateExceptionUtil.createEvaluateException(new IncompatibleThreadStateException());
       }
@@ -75,7 +75,7 @@ public class LocalVariableProxyImpl extends JdiProxy implements LocalVariablePro
   }
 
   public boolean equals(Object o) {
-    if(o instanceof LocalVariableProxyImpl) {
+    if (o instanceof LocalVariableProxyImpl) {
       LocalVariableProxyImpl proxy = (LocalVariableProxyImpl)o;
       return Comparing.equal(proxy.myFrame, myFrame) && myVariableName.equals(proxy.myVariableName);
     }
@@ -88,5 +88,10 @@ public class LocalVariableProxyImpl extends JdiProxy implements LocalVariablePro
 
   public String typeName() {
     return myTypeName;
+  }
+
+  @Override
+  public String toString() {
+    return myVariableName;
   }
 }

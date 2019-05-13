@@ -25,14 +25,8 @@ import java.util.Map;
 
 import static org.intellij.plugins.relaxNG.compact.RncTokenTypes.*;
 
-/**
- * Created by IntelliJ IDEA.
-* User: sweinreuter
-* Date: 09.08.2007
-*/
 public class PatternParsing extends DeclarationParsing {
 
-  @SuppressWarnings({"unchecked"})
   protected static final Map<IElementType, IElementType> TOKEN_MAP =
     ContainerUtil.newIdentityTroveMap();
 
@@ -56,6 +50,7 @@ public class PatternParsing extends DeclarationParsing {
     parseTopLevel();
   }
 
+  @Override
   protected boolean parsePattern() {
     PsiBuilder.Marker marker = myBuilder.mark();
     if (!parseQuantifiedPattern()) {

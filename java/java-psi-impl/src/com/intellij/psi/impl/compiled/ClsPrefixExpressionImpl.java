@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,21 +22,15 @@ import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
 
-public class ClsPrefixExpressionImpl extends ClsElementImpl implements PsiPrefixExpression {
-  private ClsElementImpl myParent;
-  private final PsiJavaToken myOperation;
+class ClsPrefixExpressionImpl extends ClsElementImpl implements PsiPrefixExpression {
+  private final ClsElementImpl myParent;
+  private final PsiJavaToken myOperator;
   private final PsiExpression myOperand;
 
-  public ClsPrefixExpressionImpl(ClsElementImpl parent, ClsJavaTokenImpl operation, ClsLiteralExpressionImpl operand) {
+  ClsPrefixExpressionImpl(ClsElementImpl parent, PsiJavaToken sign, PsiExpression operand) {
     myParent = parent;
-    myOperation = operation;
-    myOperand = operand;
-    operation.setParent(this);
-    operand.setParent(this);
-  }
-
-  void setParent(ClsElementImpl parent) {
-    myParent = parent;
+    myOperator = new ClsJavaTokenImpl(this, sign.getTokenType(), sign.getText());
+    myOperand = ClsParsingUtil.psiToClsExpression(operand, this);
   }
 
   @NotNull
@@ -48,13 +42,13 @@ public class ClsPrefixExpressionImpl extends ClsElementImpl implements PsiPrefix
   @NotNull
   @Override
   public PsiJavaToken getOperationSign() {
-    return myOperation;
+    return myOperator;
   }
 
   @NotNull
   @Override
   public IElementType getOperationTokenType() {
-    return myOperation.getTokenType();
+    return myOperator.getTokenType();
   }
 
   @Override
@@ -70,12 +64,12 @@ public class ClsPrefixExpressionImpl extends ClsElementImpl implements PsiPrefix
   @NotNull
   @Override
   public PsiElement[] getChildren() {
-    return new PsiElement[]{myOperation, myOperand};
+    return new PsiElement[]{myOperator, myOperand};
   }
 
   @Override
   public String getText() {
-    return StringUtil.join(myOperation.getText(), myOperand.getText());
+    return StringUtil.join(myOperator.getText(), myOperand.getText());
   }
 
   @Override

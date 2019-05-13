@@ -16,7 +16,6 @@
 package com.intellij.openapi.vcs.changes.committed;
 
 import com.intellij.openapi.vcs.RepositoryLocation;
-import com.intellij.openapi.vcs.VcsException;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -28,9 +27,10 @@ public class RepositoryLocationGroup implements RepositoryLocation {
 
   public RepositoryLocationGroup(final String presentableString) {
     myPresentableString = presentableString;
-    myLocations = new ArrayList<RepositoryLocation>();
+    myLocations = new ArrayList<>();
   }
 
+  @Override
   public String toPresentableString() {
     return myPresentableString;
   }
@@ -46,6 +46,7 @@ public class RepositoryLocationGroup implements RepositoryLocation {
     myLocations.add(location);
   }
 
+  @Override
   public String getKey() {
     final StringBuilder sb = new StringBuilder(myPresentableString);
     // they are ordered
@@ -56,7 +57,7 @@ public class RepositoryLocationGroup implements RepositoryLocation {
   }
 
   @Override
-  public void onBeforeBatch() throws VcsException {
+  public void onBeforeBatch() {
   }
 
   @Override

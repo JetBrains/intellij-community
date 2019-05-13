@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,11 +32,11 @@ import org.jetbrains.annotations.Nullable;
  * @see ModuleRootManager#getModifiableModel()
  */
 public interface ModifiableRootModel extends ModuleRootModel {
-
+  @NotNull
   Project getProject();
 
   /**
-   * Adds the specified directory as a content root.
+   * Adds the specified file or directory as a content root.
    *
    * @param root root of a content
    * @return new content entry
@@ -45,7 +45,7 @@ public interface ModifiableRootModel extends ModuleRootModel {
   ContentEntry addContentEntry(@NotNull VirtualFile root);
 
   /**
-   * Adds the specified directory as a content root.
+   * Adds the specified file or directory as a content root.
    *
    * @param url root of a content
    * @return new content entry
@@ -78,10 +78,6 @@ public interface ModifiableRootModel extends ModuleRootModel {
 
   /**
    * Adds an entry for invalid library.
-   *
-   * @param name
-   * @param level
-   * @return
    */
   @NotNull
   LibraryOrderEntry addInvalidLibrary(@NotNull @NonNls String name, @NotNull String level);
@@ -93,18 +89,16 @@ public interface ModifiableRootModel extends ModuleRootModel {
   ModuleOrderEntry addInvalidModuleEntry(@NotNull String name);
 
   @Nullable
+  ModuleOrderEntry findModuleOrderEntry(@NotNull Module module);
+
+  @Nullable
   LibraryOrderEntry findLibraryOrderEntry(@NotNull Library library);
 
   /**
    * Removes order entry from an order.
-   *
-   * @param orderEntry
    */
   void removeOrderEntry(@NotNull OrderEntry orderEntry);
 
-  /**
-   * @param newOrder
-   */
   void rearrangeOrderEntries(@NotNull OrderEntry[] newOrder);
 
   void clear();
@@ -113,17 +107,22 @@ public interface ModifiableRootModel extends ModuleRootModel {
    * Commits changes to a <code>{@link ModuleRootManager}</code>.
    * Should be invoked in a write action. After <code>commit()<code>, the model
    * becomes read-only.
+   *
+   * Use of ModuleRootModificationUtil.updateModel() is recommended.
    */
   void commit();
 
   /**
-   * Must be invoked for uncommited models that are no longer needed.
+   * Must be invoked for uncommitted models that are no longer needed.
+   *
+   * Use of ModuleRootModificationUtil.updateModel() is recommended.
    */
   void dispose();
 
   /**
    * Returns library table with module libraries.<br>
-   * <b>Note:</b> returned library table does not support listeners.
+   * <b>Note:</b> returned library table does not support listeners. Also one shouldn't invoke 'commit()' or 'dispose()' methods on it,
+   * it is automatically committed or disposed along with this {@link ModifiableRootModel} instance.
    *
    * @return library table to be modified
    */
@@ -132,8 +131,6 @@ public interface ModifiableRootModel extends ModuleRootModel {
 
   /**
    * Sets JDK for this module to a specific value
-   *
-   * @param jdk
    */
   void setSdk(@Nullable Sdk jdk);
 
@@ -151,39 +148,9 @@ public interface ModifiableRootModel extends ModuleRootModel {
    */
   void inheritSdk();
 
-  /**
-   * @deprecated moved to J2ME plugin
-   */
-  @Deprecated
-  void setExplodedDirectory(VirtualFile file);
-
-  /**
-   * @deprecated moved to J2ME plugin
-   */
-  @Deprecated
-  void setExplodedDirectory(String url);
-
   boolean isChanged();
 
-  /**
-   * @deprecated moved to J2ME plugin
-   */
-  @Deprecated
-  boolean isExcludeExplodedDirectory();
-
-  /**
-   * @deprecated moved to J2ME plugin
-   */
-  @Deprecated
-  void setExcludeExplodedDirectory(boolean excludeExplodedDir);
-
   boolean isWritable();
-
-  /**
-   * @deprecated use {@code JavaModuleExternalPaths} extension instead
-   */
-  @Deprecated
-  void setRootUrls(OrderRootType orderRootType, String[] urls);
 
   <T extends OrderEntry> void replaceEntryOfType(Class<T> entryClass, T entry);
 

@@ -1,11 +1,11 @@
-// "Create Method 'f'" "true"
+// "Create method 'f'" "true"
 public class A {
     public A() {
         this(f());
     }
 
     private static int f() {
-        <caret><selection>return 0;  //To change body of created methods use File | Settings | File Templates.</selection>
+        <caret><selection>return 0;</selection>
     }
 
     public A(int i) {

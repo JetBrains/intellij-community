@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,8 +14,9 @@
  * limitations under the License.
  */
 package org.jetbrains.plugins.groovy.lang.overriding
+
 import com.intellij.codeInsight.generation.OverrideImplementUtil
-import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.PsiClassOwner
 import com.intellij.psi.PsiMethod
@@ -26,9 +27,9 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefini
 /**
  * @author peter
  */
-public class GroovyOverrideImplementTest extends LightGroovyTestCase {
+class GroovyOverrideImplementTest extends LightGroovyTestCase {
 
-  public void testInEmptyBraces() throws Exception {
+  void testInEmptyBraces() throws Exception {
     myFixture.configureByText "a.groovy", """
 class Test {<caret>}
 """
@@ -37,13 +38,13 @@ class Test {<caret>}
 class Test {
     @Override
     boolean equals(Object obj) {
-        return super.equals(obj)    //To change body of overridden methods use File | Settings | File Templates.
+        return super.equals(obj)
     }
 }
 """
   }
-  
-  public void testConstructor() throws Exception {
+
+  void testConstructor() throws Exception {
     myFixture.configureByText "a.groovy", """
 class Test {<caret>}
 """
@@ -51,13 +52,13 @@ class Test {<caret>}
     myFixture.checkResult """
 class Test {
     Test() {
-        super()    //To change body of overridden methods use File | Settings | File Templates.
+        super()
     }
 }
 """
   }
 
-  public void testNoSuperReturnType() throws Exception {
+  void testNoSuperReturnType() throws Exception {
     myFixture.addFileToProject("Foo.groovy", """
     class Foo {
       def foo() {
@@ -73,13 +74,13 @@ class Test {<caret>}
 class Test {
     @Override
     def foo() {
-        return super.foo()    //To change body of overridden methods use File | Settings | File Templates.
+        return super.foo()
     }
 }
 """
   }
 
-  public void testMethodTypeParameters() {
+  void testMethodTypeParameters() {
     myFixture.addFileToProject "v.java", """
 class Base<E> {
   public <T> T[] toArray(T[] t) {return (T[])new Object[0];}
@@ -92,15 +93,15 @@ class Test<T> extends Base<T> {<caret>}
     myFixture.checkResult """
 class Test<T> extends Base<T> {
     @Override
-    def <T> T[] toArray(T[] t) {
-        return super.toArray(t)    //To change body of overridden methods use File | Settings | File Templates.
+    def <T1> T1[] toArray(T1[] t) {
+        return super.toArray(t)
     }
 }
 """
   }
 
-  void testTrhowsList() {
-    myFixture.configureByText('a.groovy', '''\
+  void testThrowsList() {
+    assertImplement('''\
 class X implements I {
     <caret>
 }
@@ -108,16 +109,12 @@ class X implements I {
 interface I {
     void foo() throws RuntimeException
 }
-''')
-
-    generateImplementation(findMethod('I', 'foo'))
-
-    myFixture.checkResult('''\
+''', 'I', 'foo', '''\
 class X implements I {
 
     @Override
     void foo() throws RuntimeException {
-        //To change body of implemented methods use File | Settings | File Templates.
+
     }
 }
 
@@ -127,7 +124,81 @@ interface I {
 ''')
   }
 
-  public void _testImplementIntention() {
+  private void assertImplement(String textBefore, String clazz, String name, String textAfter) {
+    myFixture.configureByText('a.groovy', textBefore)
+    generateImplementation(findMethod(clazz, name))
+    myFixture.checkResult(textAfter)
+  }
+
+  void testThrowsListWithImport() {
+    myFixture.addClass('''\
+package pack;
+public class Exc extends RuntimeException {}
+''')
+
+    myFixture.addClass('''\
+import pack.Exc;
+
+interface I {
+    void foo() throws Exc;
+}
+''')
+
+    myFixture.configureByText('a.groovy', '''\
+class X implements I {
+    <caret>
+}
+''')
+
+    generateImplementation(findMethod('I', 'foo'))
+
+    myFixture.checkResult('''\
+import pack.Exc
+
+class X implements I {
+
+    @Override
+    void foo() throws Exc {
+
+    }
+}
+''')
+  }
+
+  void testNullableParameter() {
+    myFixture.addClass('''
+package org.jetbrains.annotations;
+public @interface Nullable{}
+''')
+
+    assertImplement('''
+import org.jetbrains.annotations.Nullable
+
+class Inheritor implements I {
+  <caret>
+}
+
+interface I {
+  def foo(@Nullable p)
+}
+''', 'I', 'foo', '''
+import org.jetbrains.annotations.Nullable
+
+class Inheritor implements I {
+
+    @Override
+    def foo(@Nullable Object p) {
+        <caret>return null
+    }
+}
+
+interface I {
+  def foo(@Nullable p)
+}
+''')
+  }
+
+  void _testImplementIntention() {
     myFixture.configureByText('a.groovy', '''
 class Base<E> {
   public <E> E fo<caret>o(E e){}
@@ -144,10 +215,42 @@ class Test extends Base<String> {
     fix.invoke(myFixture.project, myFixture.editor, myFixture.file)
   }
 
+  void 'test abstract final trait properties'() {
+    myFixture.addFileToProject('T.groovy', '''\
+trait T {
+  abstract foo
+  abstract final bar
+}
+''')
+    myFixture.configureByText('classes.groovy', '''\
+class <caret>A implements T {
+}
+''')
+    myFixture.launchAction myFixture.findSingleIntention('Implement methods')
+    myFixture.checkResult('''\
+class A implements T {
+    @Override
+    Object getFoo() {
+        return null
+    }
+
+    @Override
+    void setFoo(Object foo) {
+
+    }
+
+    @Override
+    Object getBar() {
+        return null
+    }
+}
+''')
+  }
+
   private def generateImplementation(PsiMethod method) {
-    ApplicationManager.application.runWriteAction {
+    WriteCommandAction.runWriteCommandAction project, {
       GrTypeDefinition clazz = (myFixture.file as PsiClassOwner).classes[0] as GrTypeDefinition
-      OverrideImplementUtil.overrideOrImplement(clazz, method);
+      OverrideImplementUtil.overrideOrImplement(clazz, method)
       PostprocessReformattingAspect.getInstance(myFixture.project).doPostponedFormatting()
     }
     myFixture.editor.selectionModel.removeSelection()
@@ -157,8 +260,4 @@ class Test extends Base<String> {
     return JavaPsiFacade.getInstance(project).findClass(className, GlobalSearchScope.allScope(project)).findMethodsByName(methodName, false)[0]
   }
 
-  @Override
-  protected String getBasePath() {
-    return null
-  }
 }

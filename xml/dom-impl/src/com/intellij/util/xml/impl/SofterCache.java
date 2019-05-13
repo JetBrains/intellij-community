@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,7 @@ package com.intellij.util.xml.impl;
 
 import com.intellij.util.NotNullFunction;
 import com.intellij.util.SofterReference;
-import com.intellij.util.containers.ConcurrentHashMap;
+import com.intellij.util.containers.ContainerUtil;
 
 import java.util.concurrent.ConcurrentMap;
 
@@ -25,15 +25,15 @@ import java.util.concurrent.ConcurrentMap;
  * @author peter
  */
 public class SofterCache<T,V> {
-  private final NotNullFunction<T,V> myValueProvider;
+  private final NotNullFunction<? super T, ? extends V> myValueProvider;
   private SofterReference<ConcurrentMap<T, V>> myCache;
 
-  public SofterCache(NotNullFunction<T, V> valueProvider) {
+  public SofterCache(NotNullFunction<? super T, ? extends V> valueProvider) {
     myValueProvider = valueProvider;
   }
 
-  public static <T, V> SofterCache<T, V> create(NotNullFunction<T, V> valueProvider) {
-    return new SofterCache<T, V>(valueProvider);
+  public static <T, V> SofterCache<T, V> create(NotNullFunction<? super T, ? extends V> valueProvider) {
+    return new SofterCache<>(valueProvider);
   }
 
   public void clearCache() {
@@ -44,7 +44,7 @@ public class SofterCache<T,V> {
     SofterReference<ConcurrentMap<T, V>> ref = myCache;
     ConcurrentMap<T, V> map = ref == null ? null : ref.get();
     if (map == null) {
-      myCache = new SofterReference<ConcurrentMap<T, V>>(map = new ConcurrentHashMap<T, V>());
+      myCache = new SofterReference<>(map = ContainerUtil.newConcurrentMap());
     }
     V value = map.get(key);
     if (value == null) {

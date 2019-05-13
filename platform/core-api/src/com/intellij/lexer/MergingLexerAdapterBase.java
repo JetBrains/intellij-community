@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,22 +16,25 @@
 package com.intellij.lexer;
 
 import com.intellij.psi.tree.IElementType;
+import org.jetbrains.annotations.NotNull;
 
-public class MergingLexerAdapterBase extends DelegateLexer {
+public abstract class MergingLexerAdapterBase extends DelegateLexer {
   private IElementType myTokenType;
   private int myState;
   private int myTokenStart;
-  private final MergeFunction myMergeFunction;
 
-  public MergingLexerAdapterBase(final Lexer original, final MergeFunction mergeFunction){
+  public MergingLexerAdapterBase(final Lexer original){
     super(original);
-    myMergeFunction = mergeFunction;
   }
 
+  public abstract MergeFunction getMergeFunction();
+
   @Override
-  public void start(final CharSequence buffer, final int startOffset, final int endOffset, final int initialState) {
+  public void start(@NotNull final CharSequence buffer, final int startOffset, final int endOffset, final int initialState) {
     super.start(buffer, startOffset, endOffset, initialState);
     myTokenType = null;
+    myState = 0;
+    myTokenStart = 0;
   }
 
   @Override
@@ -61,6 +64,8 @@ public class MergingLexerAdapterBase extends DelegateLexer {
   @Override
   public void advance(){
     myTokenType = null;
+    myState = 0;
+    myTokenStart = 0;
   }
 
   private void locateToken(){
@@ -72,7 +77,7 @@ public class MergingLexerAdapterBase extends DelegateLexer {
       myState = orig.getState();
       if (myTokenType == null) return;
       orig.advance();
-      myTokenType = myMergeFunction.merge(myTokenType, orig);
+      myTokenType = getMergeFunction().merge(myTokenType, orig);
     }
   }
 
@@ -81,7 +86,7 @@ public class MergingLexerAdapterBase extends DelegateLexer {
   }
 
   @Override
-  public void restore(LexerPosition position) {
+  public void restore(@NotNull LexerPosition position) {
     MyLexerPosition pos = (MyLexerPosition)position;
 
     getDelegate().restore(pos.getOriginalPosition());
@@ -90,6 +95,12 @@ public class MergingLexerAdapterBase extends DelegateLexer {
     myState = pos.getOldState();
   }
 
+  @Override
+  public String toString() {
+    return getClass().getName() + "[" + getDelegate() + "]";
+  }
+
+  @NotNull
   @Override
   public LexerPosition getCurrentPosition() {
     return new MyLexerPosition(myTokenStart, myTokenType, getDelegate().getCurrentPosition(), myState);
@@ -101,7 +112,7 @@ public class MergingLexerAdapterBase extends DelegateLexer {
     private final LexerPosition myOriginalPosition;
     private final int myOldState;
 
-    public MyLexerPosition(final int offset, final IElementType tokenType, final LexerPosition originalPosition, int oldState) {
+    MyLexerPosition(final int offset, final IElementType tokenType, final LexerPosition originalPosition, int oldState) {
       myOffset = offset;
       myTokenType = tokenType;
       myOriginalPosition = originalPosition;
@@ -131,7 +142,4 @@ public class MergingLexerAdapterBase extends DelegateLexer {
     }
   }
 
-  protected interface MergeFunction {
-    IElementType merge(IElementType type, Lexer originalLexer);
-  }
 }

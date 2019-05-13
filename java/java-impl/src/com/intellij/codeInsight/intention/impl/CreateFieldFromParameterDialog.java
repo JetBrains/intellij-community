@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeInsight.CodeInsightBundle;
@@ -21,13 +7,15 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiNameHelper;
 import com.intellij.psi.PsiType;
 import com.intellij.refactoring.ui.TypeSelector;
 import com.intellij.ui.DocumentAdapter;
+import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -67,7 +55,7 @@ public class CreateFieldFromParameterDialog extends DialogWrapper {
   @Override
   protected void doOKAction() {
     if (myCbFinal.isEnabled()) {
-      PropertiesComponent.getInstance().setValue(PROPERTY_NAME, String.valueOf(myCbFinal.isSelected()));
+      PropertiesComponent.getInstance().setValue(PROPERTY_NAME, myCbFinal.isSelected());
     }
 
     final PsiField[] fields = myTargetClass.getFields();
@@ -78,7 +66,7 @@ public class CreateFieldFromParameterDialog extends DialogWrapper {
           CodeInsightBundle.message("dialog.create.field.from.parameter.already.exists.text", getEnteredName()),
           CodeInsightBundle.message("dialog.create.field.from.parameter.already.exists.title"),
           Messages.getQuestionIcon());
-        if (result == 0) {
+        if (result == Messages.OK) {
           close(OK_EXIT_CODE);
         }
         else {
@@ -179,7 +167,7 @@ public class CreateFieldFromParameterDialog extends DialogWrapper {
 
       field.getDocument().addDocumentListener(new DocumentAdapter() {
         @Override
-        protected void textChanged(DocumentEvent e) {
+        protected void textChanged(@NotNull DocumentEvent e) {
           updateOkStatus();
         }
       });
@@ -189,7 +177,7 @@ public class CreateFieldFromParameterDialog extends DialogWrapper {
     panel.setLayout(new GridBagLayout());
     GridBagConstraints gbConstraints = new GridBagConstraints();
 
-    gbConstraints.insets = new Insets(4, 4, 4, 4);
+    gbConstraints.insets = JBUI.insets(4);
     gbConstraints.anchor = GridBagConstraints.EAST;
     gbConstraints.fill = GridBagConstraints.BOTH;
 
@@ -237,7 +225,7 @@ public class CreateFieldFromParameterDialog extends DialogWrapper {
     gbConstraints.gridwidth = 1;
     gbConstraints.gridx = 0;
     gbConstraints.gridy = 0;
-    gbConstraints.insets = new Insets(0, 0, 0, 0);
+    gbConstraints.insets = JBUI.emptyInsets();
 
     myCbFinal = new JCheckBox(CodeInsightBundle.message("dialog.create.field.from.parameter.declare.final.checkbox"));
     if (myFieldMayBeFinal) {
@@ -273,7 +261,7 @@ public class CreateFieldFromParameterDialog extends DialogWrapper {
 
   private void updateOkStatus() {
     String text = getEnteredName();
-    setOKActionEnabled(JavaPsiFacade.getInstance(myProject).getNameHelper().isIdentifier(text));
+    setOKActionEnabled(PsiNameHelper.getInstance(myProject).isIdentifier(text));
   }
 
   @Override

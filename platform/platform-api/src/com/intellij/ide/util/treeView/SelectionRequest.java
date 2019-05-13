@@ -18,14 +18,15 @@ package com.intellij.ide.util.treeView;
 import org.jetbrains.annotations.NotNull;
 
 class SelectionRequest {
-  final Object[] myElements;
-  final Runnable myOnDone;
-  final boolean myAddToSelection;
-  final boolean myCheckCurrentSelection;
-  final boolean myCheckInInStructure;
-  final boolean myScrollToVisible;
-  final boolean myDeferred;
-  final boolean myCanSmartExpand;
+  @NotNull
+  private final Object[] myElements;
+  private final Runnable myOnDone;
+  private final boolean myAddToSelection;
+  private final boolean myCheckCurrentSelection;
+  private final boolean myCheckInInStructure;
+  private final boolean myScrollToVisible;
+  private final boolean myDeferred;
+  private final boolean myCanSmartExpand;
 
   SelectionRequest(@NotNull Object[] elements,
                    Runnable onDone,
@@ -45,8 +46,8 @@ class SelectionRequest {
     myCanSmartExpand = canSmartExpand;
   }
 
-  void execute(AbstractTreeUi ui) {
-    ui._select(myElements, myOnDone, myAddToSelection, myCheckCurrentSelection, myCheckInInStructure, myScrollToVisible, myDeferred, myCanSmartExpand, false);    
+  void execute(@NotNull AbstractTreeUi ui) {
+    ui._select(myElements, myOnDone, myAddToSelection, myCheckCurrentSelection, myCheckInInStructure, myScrollToVisible, myDeferred, myCanSmartExpand, false);
   }
 
   void reject() {

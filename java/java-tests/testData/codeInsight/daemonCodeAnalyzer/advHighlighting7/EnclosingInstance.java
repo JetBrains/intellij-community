@@ -20,3 +20,29 @@ class UsageWithParenthesis extends NonDefaultConstructorContainer.Inner {
        (e).super("");
     }
 }
+
+class ClassA {
+  public class InnerSuperClass {
+    public void method() {
+    }
+  }
+}
+
+class ClassB extends ClassA {
+  public static class StaticInnerSubClass extends InnerSuperClass {
+    public StaticInnerSubClass(boolean f) {
+      (f ? new ClassD() : new ClassC()).super();
+    }
+
+    public StaticInnerSubClass() {
+      new ClassD().super();
+    }
+
+    public StaticInnerSubClass(String s) {
+      new ClassB().super();
+    }
+  }
+}
+
+class ClassC extends ClassA {}
+class ClassD extends ClassC {}

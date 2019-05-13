@@ -17,7 +17,7 @@ package com.intellij.execution;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleUtil;
+import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -32,10 +32,14 @@ public class PsiLocation<E extends PsiElement> extends Location<E> {
   private final Project myProject;
   private final Module myModule;
 
+  public PsiLocation(E psiElement) {
+    this(psiElement.getProject(), psiElement);
+  }
+
   public PsiLocation(@NotNull final Project project, @NotNull final E psiElement) {
     myPsiElement = psiElement;
     myProject = project;
-    myModule = ModuleUtil.findModuleForPsiElement(psiElement);
+    myModule = ModuleUtilCore.findModuleForPsiElement(psiElement);
   }
 
   public PsiLocation(@NotNull Project project, Module module, @NotNull E psiElement) {
@@ -44,11 +48,13 @@ public class PsiLocation<E extends PsiElement> extends Location<E> {
     myModule = module;
   }
 
+  @Override
   @NotNull
   public E getPsiElement() {
     return myPsiElement;
   }
 
+  @Override
   @NotNull
   public Project getProject() {
     return myProject;
@@ -59,28 +65,33 @@ public class PsiLocation<E extends PsiElement> extends Location<E> {
     return myModule;
   }
 
+  @Override
   @NotNull
   public <T extends PsiElement> Iterator<Location<T>> getAncestors(@NotNull final Class<T> ancestorClass, final boolean strict) {
     final T first = strict || !ancestorClass.isInstance(myPsiElement) ? findNext(myPsiElement, ancestorClass) : (T)myPsiElement;
     return new Iterator<Location<T>>() {
       private T myCurrent = first;
+      @Override
       public boolean hasNext() {
         return myCurrent != null;
       }
 
+      @Override
       public Location<T> next() {
         if (myCurrent == null) throw new NoSuchElementException();
-        final PsiLocation<T> psiLocation = new PsiLocation<T>(myProject, myCurrent);
+        final PsiLocation<T> psiLocation = new PsiLocation<>(myProject, myCurrent);
         myCurrent = findNext(myCurrent, ancestorClass);
         return psiLocation;
       }
 
+      @Override
       public void remove() {
         LOG.assertTrue(false);
       }
     };
   }
 
+  @Override
   @NotNull
   public PsiLocation<E> toPsiLocation() {
     return this;
@@ -97,7 +108,7 @@ public class PsiLocation<E extends PsiElement> extends Location<E> {
 
   public static <T extends PsiElement> Location<T> fromPsiElement(@NotNull Project project, final T element) {
     if (element == null) return null;
-    return new PsiLocation<T>(project, element);
+    return new PsiLocation<>(project, element);
   }
 
   public static <T extends PsiElement> Location<T> fromPsiElement(final T element) {
@@ -106,6 +117,6 @@ public class PsiLocation<E extends PsiElement> extends Location<E> {
 
   public static <T extends PsiElement> Location<T> fromPsiElement(T element, Module module) {
     if (element == null || !element.isValid()) return null;
-    return module != null ? new PsiLocation<T>(element.getProject(), module, element) : new PsiLocation<T>(element.getProject(), element);
+    return module != null ? new PsiLocation<>(element.getProject(), module, element) : new PsiLocation<>(element.getProject(), element);
   }
 }

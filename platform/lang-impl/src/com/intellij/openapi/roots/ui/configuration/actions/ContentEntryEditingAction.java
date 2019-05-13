@@ -16,9 +16,9 @@
 
 package com.intellij.openapi.roots.ui.configuration.actions;
 
-import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
-import com.intellij.openapi.actionSystem.impl.ActionButtonWithText;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.openapi.fileChooser.FileElement;
 import com.intellij.openapi.fileChooser.ex.FileNodeDescriptor;
 import com.intellij.openapi.project.DumbAware;
@@ -33,9 +33,8 @@ import java.util.List;
 
 /**
  * @author Eugene Zhuravlev
- * @since Oct 14, 2003
  */
-public abstract class ContentEntryEditingAction extends ToggleAction implements CustomComponentAction, DumbAware {
+public abstract class ContentEntryEditingAction extends ToggleAction implements DumbAware {
   protected final JTree myTree;
 
   protected ContentEntryEditingAction(JTree tree) {
@@ -44,7 +43,7 @@ public abstract class ContentEntryEditingAction extends ToggleAction implements 
   }
 
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     super.update(e);
     final Presentation presentation = e.getPresentation();
     presentation.setEnabled(true);
@@ -67,7 +66,7 @@ public abstract class ContentEntryEditingAction extends ToggleAction implements 
     if (selectionPaths == null) {
       return VirtualFile.EMPTY_ARRAY;
     }
-    final List<VirtualFile> selected = new ArrayList<VirtualFile>();
+    final List<VirtualFile> selected = new ArrayList<>();
     for (TreePath treePath : selectionPaths) {
       final DefaultMutableTreeNode node = (DefaultMutableTreeNode)treePath.getLastPathComponent();
       final Object nodeDescriptor = node.getUserObject();
@@ -80,11 +79,11 @@ public abstract class ContentEntryEditingAction extends ToggleAction implements 
         selected.add(file);
       }
     }
-    return selected.toArray(new VirtualFile[selected.size()]);
+    return selected.toArray(VirtualFile.EMPTY_ARRAY);
   }
 
   @Override
-  public JComponent createCustomComponent(Presentation presentation) {
-    return new ActionButtonWithText(this, presentation, ActionPlaces.UNKNOWN, ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE);
+  public boolean displayTextInToolbar() {
+    return true;
   }
 }

@@ -1,9 +1,9 @@
 public class Aaaaaaa {
 
-    void foo(Class<? extends Object> c) {}
+    void foo(Class<? extends Aaaaaaa> c) {}
 
     void bar() {
-        foo((Class<Object>) <caret>Class.forName("sdd"));
+        foo((Class<? extends Aaaaaaa>) <caret>Class.forName("sdd"));
     }
 
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,10 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * User: anna
- * Date: 27-Dec-2007
- */
 package com.intellij.openapi.roots.impl;
 
 import com.intellij.openapi.module.Module;
@@ -25,8 +21,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.CompilerModuleExtension;
 import com.intellij.openapi.roots.CompilerProjectExtension;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
@@ -45,7 +39,6 @@ public class CompilerModuleExtensionImpl extends CompilerModuleExtension {
   @NonNls private static final String OUTPUT_TAG = JpsJavaModelSerializerExtension.OUTPUT_TAG;
   @NonNls private static final String TEST_OUTPUT_TAG = JpsJavaModelSerializerExtension.TEST_OUTPUT_TAG;
   @NonNls private static final String ATTRIBUTE_URL = JpsJavaModelSerializerExtension.URL_ATTRIBUTE;
-  @NonNls private static final String INHERIT_COMPILER_OUTPUT = JpsJavaModelSerializerExtension.INHERIT_COMPILER_OUTPUT_ATTRIBUTE;
   @NonNls private static final String EXCLUDE_OUTPUT_TAG = JpsJavaModelSerializerExtension.EXCLUDE_OUTPUT_TAG;
 
   private String myCompilerOutput;
@@ -56,17 +49,18 @@ public class CompilerModuleExtensionImpl extends CompilerModuleExtension {
 
   private boolean myInheritedCompilerOutput = true;
   private boolean myExcludeOutput = true;
+  @NotNull
   private final Module myModule;
 
   private CompilerModuleExtensionImpl mySource;
   private boolean myWritable;
   private boolean myDisposed;
 
-  public CompilerModuleExtensionImpl(@NotNull final Module module) {
+  public CompilerModuleExtensionImpl(@NotNull Module module) {
     myModule = module;
   }
 
-  public CompilerModuleExtensionImpl(final CompilerModuleExtensionImpl source, final boolean writable) {
+  private CompilerModuleExtensionImpl(@NotNull CompilerModuleExtensionImpl source, final boolean writable) {
     this(source.myModule);
     myWritable = writable;
     myCompilerOutput = source.myCompilerOutput;
@@ -84,12 +78,10 @@ public class CompilerModuleExtensionImpl extends CompilerModuleExtension {
     return filePointerManager.duplicate(pointer, this, null);
   }
 
-
   @Override
-  public void readExternal(final Element element) throws InvalidDataException {
+  public void readExternal(@NotNull Element element) {
     assert !myDisposed;
-    final String value = element.getAttributeValue(INHERIT_COMPILER_OUTPUT);
-    myInheritedCompilerOutput = value != null && Boolean.parseBoolean(value);
+    myInheritedCompilerOutput = Boolean.parseBoolean(element.getAttributeValue(JpsJavaModelSerializerExtension.INHERIT_COMPILER_OUTPUT_ATTRIBUTE, "false"));
     myExcludeOutput = element.getChild(EXCLUDE_OUTPUT_TAG) != null;
 
     myCompilerOutputPointer = getOutputPathValue(element, OUTPUT_TAG, !myInheritedCompilerOutput);
@@ -102,26 +94,31 @@ public class CompilerModuleExtensionImpl extends CompilerModuleExtension {
   }
 
   @Override
-  public void writeExternal(final Element element) throws WriteExternalException {
+  public void writeExternal(@NotNull Element element) {
     assert !myDisposed;
-    if (myCompilerOutput != null) {
-      final Element pathElement = new Element(OUTPUT_TAG);
-      pathElement.setAttribute(ATTRIBUTE_URL, myCompilerOutput);
-      element.addContent(pathElement);
+    if (!myInheritedCompilerOutput) {
+      if (myCompilerOutput != null) {
+        final Element pathElement = new Element(OUTPUT_TAG);
+        pathElement.setAttribute(ATTRIBUTE_URL, myCompilerOutput);
+        element.addContent(pathElement);
+      }
+      if (myCompilerOutputForTests != null) {
+        final Element pathElement = new Element(TEST_OUTPUT_TAG);
+        pathElement.setAttribute(ATTRIBUTE_URL, myCompilerOutputForTests);
+        element.addContent(pathElement);
+      }
     }
-    if (myCompilerOutputForTests != null) {
-      final Element pathElement = new Element(TEST_OUTPUT_TAG);
-      pathElement.setAttribute(ATTRIBUTE_URL, myCompilerOutputForTests);
-      element.addContent(pathElement);
+    else {
+      element.setAttribute(JpsJavaModelSerializerExtension.INHERIT_COMPILER_OUTPUT_ATTRIBUTE, "true");
     }
-    element.setAttribute(INHERIT_COMPILER_OUTPUT, String.valueOf(myInheritedCompilerOutput));
+
     if (myExcludeOutput) {
       element.addContent(new Element(EXCLUDE_OUTPUT_TAG));
     }
   }
 
   @Nullable
-  protected VirtualFilePointer getOutputPathValue(Element element, String tag, final boolean createPointer) {
+  private VirtualFilePointer getOutputPathValue(Element element, String tag, final boolean createPointer) {
     final Element outputPathChild = element.getChild(tag);
     VirtualFilePointer vptr = null;
     if (outputPathChild != null && createPointer) {
@@ -132,7 +129,7 @@ public class CompilerModuleExtensionImpl extends CompilerModuleExtension {
   }
 
   @Nullable
-  protected static String getOutputPathValue(Element element, String tag) {
+  private static String getOutputPathValue(@NotNull Element element, @NotNull String tag) {
     final Element outputPathChild = element.getChild(tag);
     if (outputPathChild != null) {
       return outputPathChild.getAttributeValue(ATTRIBUTE_URL);
@@ -146,7 +143,7 @@ public class CompilerModuleExtensionImpl extends CompilerModuleExtension {
     if (myInheritedCompilerOutput) {
       final VirtualFile projectOutputPath = CompilerProjectExtension.getInstance(getProject()).getCompilerOutput();
       if (projectOutputPath == null) return null;
-      return projectOutputPath.findFileByRelativePath(PRODUCTION + "/" + getModule().getName());
+      return projectOutputPath.findFileByRelativePath(PRODUCTION + "/" + getSanitizedModuleName());
     }
     return myCompilerOutputPointer == null ? null : myCompilerOutputPointer.getFile();
   }
@@ -157,7 +154,7 @@ public class CompilerModuleExtensionImpl extends CompilerModuleExtension {
     if (myInheritedCompilerOutput) {
       final VirtualFile projectOutputPath = CompilerProjectExtension.getInstance(getProject()).getCompilerOutput();
       if (projectOutputPath == null) return null;
-      return projectOutputPath.findFileByRelativePath(TEST + "/" + getModule().getName());
+      return projectOutputPath.findFileByRelativePath(TEST + "/" + getSanitizedModuleName());
     }
     return myCompilerOutputPathForTestsPointer == null ? null : myCompilerOutputPathForTestsPointer.getFile();
   }
@@ -168,7 +165,7 @@ public class CompilerModuleExtensionImpl extends CompilerModuleExtension {
     if (myInheritedCompilerOutput) {
       final String projectOutputPath = CompilerProjectExtension.getInstance(getProject()).getCompilerOutputUrl();
       if (projectOutputPath == null) return null;
-      return projectOutputPath + "/" + PRODUCTION + "/" + getModule().getName();
+      return projectOutputPath + "/" + PRODUCTION + "/" + getSanitizedModuleName();
     }
     return myCompilerOutputPointer == null ? null : myCompilerOutputPointer.getUrl();
   }
@@ -179,9 +176,16 @@ public class CompilerModuleExtensionImpl extends CompilerModuleExtension {
     if (myInheritedCompilerOutput) {
       final String projectOutputPath = CompilerProjectExtension.getInstance(getProject()).getCompilerOutputUrl();
       if (projectOutputPath == null) return null;
-      return projectOutputPath + "/" + TEST + "/" + getModule().getName();
+      return projectOutputPath + "/" + TEST + "/" + getSanitizedModuleName();
     }
     return myCompilerOutputPathForTestsPointer == null ? null : myCompilerOutputPathForTestsPointer.getUrl();
+  }
+
+  @NotNull
+  private String getSanitizedModuleName() {
+    Module module = getModule();
+    VirtualFile file = module.getModuleFile();
+    return file != null ? file.getNameWithoutExtension() : module.getName();
   }
 
   @Override
@@ -189,8 +193,9 @@ public class CompilerModuleExtensionImpl extends CompilerModuleExtension {
     setCompilerOutputPath(file == null ? null : file.getUrl());
   }
 
-  private VirtualFilePointer createPointer(final String url) {
-    return VirtualFilePointerManager.getInstance().create(url, this, null);
+  @NotNull
+  private VirtualFilePointer createPointer(@NotNull String url) {
+    return VirtualFilePointerManager.getInstance().create(url, this, ProjectRootManagerImpl.getInstanceImpl(getProject()).getRootsValidityChangedListener());
   }
 
   @Override
@@ -212,16 +217,20 @@ public class CompilerModuleExtensionImpl extends CompilerModuleExtension {
     myCompilerOutputPathForTestsPointer = url == null ? null : createPointer(url);
   }
 
+  @NotNull
   public Module getModule() {
     return myModule;
   }
 
+  @NotNull
   public Project getProject() {
     return myModule.getProject();
   }
 
   @Override
   public void inheritCompilerOutputPath(final boolean inherit) {
+    if (myInheritedCompilerOutput == inherit) return;
+
     assertWritable();
     myInheritedCompilerOutput = inherit;
   }
@@ -256,6 +265,7 @@ public class CompilerModuleExtensionImpl extends CompilerModuleExtension {
     return myExcludeOutput;
   }
 
+  @NotNull
   @Override
   public CompilerModuleExtension getModifiableModel(final boolean writable) {
     assert !myDisposed;
@@ -283,13 +293,11 @@ public class CompilerModuleExtensionImpl extends CompilerModuleExtension {
       return true;
     }
 
-    if (!myInheritedCompilerOutput) {
-      if (!vptrEqual(myCompilerOutputPointer, mySource.myCompilerOutputPointer)) {
-        return true;
-      }
-      if (!vptrEqual(myCompilerOutputPathForTestsPointer, mySource.myCompilerOutputPathForTestsPointer)) {
-        return true;
-      }
+    if (!vptrEqual(myCompilerOutputPointer, mySource.myCompilerOutputPointer)) {
+      return true;
+    }
+    if (!vptrEqual(myCompilerOutputPathForTestsPointer, mySource.myCompilerOutputPathForTestsPointer)) {
+      return true;
     }
 
     return myExcludeOutput != mySource.myExcludeOutput;
@@ -307,9 +315,10 @@ public class CompilerModuleExtensionImpl extends CompilerModuleExtension {
     myCompilerOutputForTests = null;
   }
 
+  @NotNull
   @Override
   public VirtualFile[] getOutputRoots(final boolean includeTests) {
-    final ArrayList<VirtualFile> result = new ArrayList<VirtualFile>();
+    List<VirtualFile> result = new ArrayList<>();
 
     final VirtualFile outputPathForTests = includeTests ? getCompilerOutputPathForTests() : null;
     if (outputPathForTests != null) {
@@ -323,9 +332,10 @@ public class CompilerModuleExtensionImpl extends CompilerModuleExtension {
     return VfsUtilCore.toVirtualFileArray(result);
   }
 
+  @NotNull
   @Override
   public String[] getOutputRootUrls(final boolean includeTests) {
-    final List<String> result = new ArrayList<String>();
+    final List<String> result = new ArrayList<>();
 
     final String outputPathForTests = includeTests ? getCompilerOutputUrlForTests() : null;
     if (outputPathForTests != null) {

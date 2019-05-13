@@ -31,21 +31,21 @@ public class ResolveLabelTest extends GroovyResolveTestCase {
     return TestUtils.getTestDataPath()+"resolve/label";
   }
 
-  public void testLabelResolve() throws Exception {
+  public void testLabelResolve() {
     final PsiReference ref = configureByFile(getTestName(true)+"/"+getTestName(false) + ".groovy");
     final PsiElement resolved = ref.resolve();
     assertNotNull(resolved);
     assertInstanceOf(resolved, GrLabeledStatement.class);
   }
 
-  public void testLabelResolve2() throws Exception {
+  public void testLabelResolve2() {
     final PsiReference ref = configureByFile(getTestName(true)+"/"+getTestName(false) + ".groovy");
     final PsiElement resolved = ref.resolve();
     assertNotNull(resolved);
     assertInstanceOf(resolved, GrLabeledStatement.class);
   }
 
-  public void testLabelNotResolved() throws Exception {
+  public void testLabelNotResolved() {
     final PsiReference ref = configureByFile(getTestName(true)+"/"+getTestName(false) + ".groovy");
     final PsiElement resolved = ref.resolve();
     assertNull(resolved);

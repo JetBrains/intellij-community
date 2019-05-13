@@ -38,27 +38,20 @@ public class SocketServer {
     myServerSocket = new ServerSocket(0);
     int port = myServerSocket.getLocalPort();
 
-    ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
-      @Override
-      public void run() {
-        try {
-          boolean _continue = true;
-          while (_continue) {
-            Socket socket = myServerSocket.accept();
-            try {
-              _continue = myProtocol.handleConnection(socket);
-            }
-            finally {
-              socket.close();
-            }
+    ApplicationManager.getApplication().executeOnPooledThread(() -> {
+      try {
+        boolean _continue = true;
+        while (_continue) {
+          try (Socket socket = myServerSocket.accept()) {
+            _continue = myProtocol.handleConnection(socket);
           }
         }
-        catch (SocketException e) {
-          //socket was closed, that's OK
-        }
-        catch (IOException e) {
-          throw new RuntimeException(e); //TODO implement catch clause
-        }
+      }
+      catch (SocketException e) {
+        //socket was closed, that's OK
+      }
+      catch (IOException e) {
+        throw new RuntimeException(e); //TODO implement catch clause
       }
     });
 
@@ -84,8 +77,8 @@ public class SocketServer {
      * Override this method to implement the actual logic of the protocol.
      *
      * @param socket The connected socket
-     * @return <code>true</code> if the server should keep listening for new incoming requests, 
-     *         <code>false</code> if the server handling the protocol can be shutdown.
+     * @return {@code true} if the server should keep listening for new incoming requests,
+     *         {@code false} if the server handling the protocol can be shutdown.
      * 
      * @throws IOException when the communication over the socket gives errors.
      */
@@ -111,6 +104,7 @@ public class SocketServer {
       return data;
     }
 
+    //if mercurial already sent number of bytes, but there was no data yet, this method read '\u0000' len times instead of data bytes.
     private static void readAsMuchAsAvailable(DataInputStream inputStream, byte[] data, int maxLength) throws IOException {
       int offset = 0;
       int available;

@@ -17,9 +17,9 @@ package org.intellij.plugins.xpathView.util;
 
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Set;
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.Set;
 
 public final class Variable implements Cloneable, Copyable<Variable> {
     private String myName;
@@ -39,6 +39,7 @@ public final class Variable implements Cloneable, Copyable<Variable> {
         return myName != null ? myName : "";
     }
 
+    @Override
     public Variable copy() {
         try {
             return (Variable)clone();
@@ -81,7 +82,7 @@ public final class Variable implements Cloneable, Copyable<Variable> {
     }
 
     public static Set<String> asSet(Collection<Variable> second) {
-        final HashSet<String> strings = new HashSet<String>();
+        final HashSet<String> strings = new HashSet<>();
         for (Variable variable : second) {
             strings.add(variable.getName());
         }

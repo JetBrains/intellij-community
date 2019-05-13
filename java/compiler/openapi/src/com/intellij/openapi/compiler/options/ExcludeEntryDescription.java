@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,10 +14,6 @@
  * limitations under the License.
  */
 
-/**
- * created at Jan 3, 2002
- * @author Jeka
- */
 package com.intellij.openapi.compiler.options;
 
 import com.intellij.openapi.Disposable;
@@ -50,7 +46,7 @@ public class ExcludeEntryDescription implements Disposable {
     return new ExcludeEntryDescription(getUrl(), myIncludeSubdirectories, myIsFile,parent);
   }
 
-  public void setPresentableUrl(String newUrl) {
+  void setPresentableUrl(String newUrl) {
     myFilePointer = VirtualFilePointerManager.getInstance().create(VfsUtil.pathToUrl(FileUtil.toSystemIndependentName(newUrl)), myParentDisposable, null);
     final VirtualFile file = getVirtualFile();
     if (file != null) {
@@ -74,7 +70,7 @@ public class ExcludeEntryDescription implements Disposable {
     return myIncludeSubdirectories;
   }
 
-  public void setIncludeSubdirectories(boolean includeSubdirectories) {
+  void setIncludeSubdirectories(boolean includeSubdirectories) {
     myIncludeSubdirectories = includeSubdirectories;
   }
 
@@ -108,6 +104,7 @@ public class ExcludeEntryDescription implements Disposable {
     return result;
   }
 
+  @Override
   public void dispose() {
   }
 }

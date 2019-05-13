@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,18 +15,17 @@
  */
 package com.intellij.openapi.vcs.ui;
 
+import com.intellij.CommonBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ui.FilePathSplittingPolicy;
-import com.intellij.CommonBundle;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -60,9 +59,9 @@ public class ReplaceFileConfirmationDialog {
     if (modifiedFiles.isEmpty()) return true;
 
     return Messages.showOkCancelDialog(createMessage(modifiedFiles), myActionName,
-                                    createOwerriteButtonName(modifiedFiles), getCancelButtonText(),
-                               Messages.getWarningIcon()) ==
-                DialogWrapper.OK_EXIT_CODE;
+                                       createOverwriteButtonName(modifiedFiles), getCancelButtonText(),
+                                       Messages.getWarningIcon()) ==
+           Messages.OK;
 
   }
 
@@ -70,8 +69,7 @@ public class ReplaceFileConfirmationDialog {
     return CommonBundle.getCancelButtonText();
   }
 
-  private String createOwerriteButtonName(Collection modifiedFiles) {
-
+  private String createOverwriteButtonName(Collection modifiedFiles) {
     return modifiedFiles.size() > 1 ? getOkButtonTextForFiles() : getOkButtonTextForOneFile();
   }
 
@@ -96,12 +94,11 @@ public class ReplaceFileConfirmationDialog {
 
   public Collection<VirtualFile> collectModifiedFiles(VirtualFile[] files) {
 
-    ArrayList<VirtualFile> result = new ArrayList<VirtualFile>();
+    ArrayList<VirtualFile> result = new ArrayList<>();
 
     if (files == null) return result;
 
-    for (int i = 0; i < files.length; i++) {
-      VirtualFile file = files[i];
+    for (VirtualFile file : files) {
       if (myProgressIndicator != null) {
         myProgressIndicator.setText(VcsBundle.message("progress.text.searching.for.modified.files"));
         myProgressIndicator.setText2(file.getPresentableUrl());

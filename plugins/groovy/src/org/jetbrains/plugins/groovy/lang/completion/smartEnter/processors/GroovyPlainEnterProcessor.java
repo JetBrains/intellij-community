@@ -27,10 +27,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrCodeBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 
-/**
- * User: Dmitry.Krasilschikov
- * Date: 05.08.2008
- */
 public class GroovyPlainEnterProcessor extends SmartEnterProcessorWithFixers.FixEnterProcessor {
   @Nullable
   private static GrCodeBlock getControlStatementBlock(int caret, PsiElement element) {

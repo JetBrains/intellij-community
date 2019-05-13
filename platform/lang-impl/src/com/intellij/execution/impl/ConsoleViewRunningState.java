@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,10 +16,7 @@
 package com.intellij.execution.impl;
 
 import com.intellij.execution.ExecutionBundle;
-import com.intellij.execution.process.OSProcessHandler;
-import com.intellij.execution.process.ProcessAdapter;
-import com.intellij.execution.process.ProcessEvent;
-import com.intellij.execution.process.ProcessHandler;
+import com.intellij.execution.process.*;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
@@ -31,7 +28,6 @@ import java.io.OutputStreamWriter;
 import java.io.Writer;
 import java.nio.charset.Charset;
 
-
 public class ConsoleViewRunningState extends ConsoleState {
   private final ConsoleViewImpl myConsole;
   private final ProcessHandler myProcessHandler;
@@ -39,12 +35,14 @@ public class ConsoleViewRunningState extends ConsoleState {
   private final Writer myUserInputWriter;
 
   private final ProcessAdapter myProcessListener = new ProcessAdapter() {
-    public void onTextAvailable(final ProcessEvent event, final Key outputType) {
+    @Override
+    public void onTextAvailable(@NotNull final ProcessEvent event, @NotNull final Key outputType) {
       myConsole.print(event.getText(), ConsoleViewContentType.getConsoleViewType(outputType));
     }
   };
 
-  public ConsoleViewRunningState(final ConsoleViewImpl console, final ProcessHandler processHandler,
+  public ConsoleViewRunningState(final ConsoleViewImpl console,
+                                 final ProcessHandler processHandler,
                                  final ConsoleState finishedStated,
                                  final boolean attachToStdOut,
                                  final boolean attachToStdIn) {
@@ -61,7 +59,7 @@ public class ConsoleViewRunningState extends ConsoleState {
     // attach to process stdin
     if (attachToStdIn) {
       final OutputStream processInput = myProcessHandler.getProcessInput();
-      myUserInputWriter = processInput != null ? createOutputStreamWriter(processInput, processHandler) : null;
+      myUserInputWriter = processInput == null ? null : createOutputStreamWriter(processInput, processHandler);
     }
     else {
       myUserInputWriter = null;
@@ -76,10 +74,10 @@ public class ConsoleViewRunningState extends ConsoleState {
     if (charset == null) {
       charset = EncodingManager.getInstance().getDefaultCharset();
     }
-
     return new OutputStreamWriter(processInput, charset);
   }
 
+  @Override
   @NotNull
   public ConsoleState dispose() {
     if (myProcessHandler != null) {
@@ -88,15 +86,23 @@ public class ConsoleViewRunningState extends ConsoleState {
     return myFinishedStated;
   }
 
+  @Override
+  public boolean isCommandLine(@NotNull String line) {
+    return myProcessHandler instanceof BaseProcessHandler && line.equals(((BaseProcessHandler)myProcessHandler).getCommandLine());
+  }
+
+  @Override
   public boolean isFinished() {
     return myProcessHandler == null || myProcessHandler.isProcessTerminated();
   }
 
+  @Override
   public boolean isRunning() {
     return myProcessHandler != null && !myProcessHandler.isProcessTerminated();
   }
 
-  public void sendUserInput(final String input) throws IOException {
+  @Override
+  public void sendUserInput(@NotNull final String input) throws IOException {
     if (myUserInputWriter == null) {
       throw new IOException(ExecutionBundle.message("no.user.process.input.error.message"));
     }
@@ -104,7 +110,9 @@ public class ConsoleViewRunningState extends ConsoleState {
     myUserInputWriter.flush();
   }
 
-  public ConsoleState attachTo(final ConsoleViewImpl console, final ProcessHandler processHandler) {
+  @NotNull
+  @Override
+  public ConsoleState attachTo(@NotNull final ConsoleViewImpl console, final ProcessHandler processHandler) {
     return dispose().attachTo(console, processHandler);
   }
 

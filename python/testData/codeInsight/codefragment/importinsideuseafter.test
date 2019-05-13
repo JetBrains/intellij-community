@@ -1,0 +1,10 @@
+def foo():
+    print("start")
+    <begin>
+    import foo
+    <end>
+    foo.bar
+<result>
+In:
+Out:
+foo

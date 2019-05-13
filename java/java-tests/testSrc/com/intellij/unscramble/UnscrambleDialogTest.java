@@ -1,22 +1,9 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.unscramble;
 
 import com.intellij.JavaTestUtil;
 import com.intellij.execution.ui.RunContentDescriptor;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
 
@@ -25,47 +12,62 @@ import java.io.File;
 
 /**
  * @author Dmitry Avdeev
- *         Date: 4/9/12
  */
 public class UnscrambleDialogTest extends JavaCodeInsightFixtureTestCase {
+  private RunContentDescriptor myContent;
 
-  public void testStacktrace() throws Exception {
-    RunContentDescriptor content = showText("");
-    Icon icon = content.getIcon();
-    String name = content.getDisplayName();
+  @Override
+  protected void tearDown() throws Exception {
+    try {
+      Disposer.dispose(myContent);
+    }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
+    finally {
+      myContent = null;
+      super.tearDown();
+    }
+  }
+
+  public void testStacktrace() {
+    showText("");
+    Icon icon = myContent.getIcon();
+    String name = myContent.getDisplayName();
     assertEquals(null, icon);
     assertEquals("<Stacktrace>", name);
   }
 
-  public void testException() throws Exception {
-    RunContentDescriptor content = showText("java.lang.NullPointerException\n" +
-                                            "\tat com.intellij.psi.css.resolve.impl.XhtmlFileInfo.findOneStyleSheet(XhtmlFileInfo.java:291)\n" +
-                                            "\tat com.intellij.psi.css.resolve.impl.XhtmlFileInfo.getStylesheets(XhtmlFileInfo.java:174)\n" +
-                                            "\tat com.intellij.psi.css.resolve.impl.XhtmlFileInfo.initStylesheets(XhtmlFileInfo.java:119)");
-    assertIcon("exception.png", content.getIcon());
-    assertEquals("NPE", content.getDisplayName());
+  public void testException() {
+    showText("java.lang.NullPointerException\n" +
+             "\tat com.intellij.psi.css.resolve.impl.XhtmlFileInfo.findOneStyleSheet(XhtmlFileInfo.java:291)\n" +
+             "\tat com.intellij.psi.css.resolve.impl.XhtmlFileInfo.getStylesheets(XhtmlFileInfo.java:174)\n" +
+             "\tat com.intellij.psi.css.resolve.impl.XhtmlFileInfo.initStylesheets(XhtmlFileInfo.java:119)");
+    assertIcon("lightning.svg", myContent.getIcon());
+    assertEquals("NPE", myContent.getDisplayName());
   }
 
   public void testThreadDump() throws Exception {
     File file = new File(getTestDataPath() + "threaddump.txt");
     String s = FileUtil.loadFile(file);
-    RunContentDescriptor content = showText(s);
-    assertIcon("threaddump.png", content.getIcon());
-    assertEquals("<Threads>", content.getDisplayName());
+    showText(s);
+    assertIcon("dump.svg", myContent.getIcon());
+    assertEquals("<Threads>", myContent.getDisplayName());
   }
 
   public void testDeadlock() throws Exception {
     File file = new File(getTestDataPath() + "deadlock.txt");
     String s = FileUtil.loadFile(file);
-    RunContentDescriptor content = showText(s);
-    assertIcon("killProcess.png", content.getIcon());
-    assertEquals("<Deadlock>", content.getDisplayName());
+    showText(s);
+    assertIcon("killProcess.svg", myContent.getIcon());
+    assertEquals("<Deadlock>", myContent.getDisplayName());
   }
 
-  private RunContentDescriptor showText(String unscramble) {
-    RunContentDescriptor descriptor = UnscrambleDialog.showUnscrambledText(null, "foo", getProject(), unscramble);
+  private void showText(String unscramble) {
+    RunContentDescriptor descriptor = UnscrambleDialog.showUnscrambledText(null, "foo", null, getProject(), unscramble);
     assertNotNull(descriptor);
-    return descriptor;
+    Disposer.register(myFixture.getTestRootDisposable(), descriptor);
+    myContent = descriptor;
   }
 
   private static void assertIcon(String s, Icon icon) {

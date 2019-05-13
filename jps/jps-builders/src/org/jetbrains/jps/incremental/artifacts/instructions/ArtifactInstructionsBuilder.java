@@ -15,12 +15,26 @@
  */
 package org.jetbrains.jps.incremental.artifacts.instructions;
 
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.jps.model.artifact.elements.JpsPackagingElement;
+
+import java.io.File;
 import java.util.List;
 
 /**
  * @author nik
  */
 public interface ArtifactInstructionsBuilder {
-
+  @NotNull
   List<ArtifactRootDescriptor> getDescriptors();
+
+  /**
+   * @deprecated use {@link #createCopyingHandler(File, JpsPackagingElement, ArtifactCompilerInstructionCreator)} instead
+   */
+  @Deprecated
+  @NotNull
+  FileCopyingHandler createCopyingHandler(@NotNull File file, @NotNull JpsPackagingElement contextElement);
+
+  @NotNull
+  FileCopyingHandler createCopyingHandler(@NotNull File file, @NotNull JpsPackagingElement contextElement, @NotNull ArtifactCompilerInstructionCreator instructionCreator);
 }

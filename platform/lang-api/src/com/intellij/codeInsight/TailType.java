@@ -1,20 +1,19 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+// http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
 package com.intellij.codeInsight;
 
+import com.intellij.application.options.CodeStyle;
 import com.intellij.codeInsight.completion.InsertionContext;
 import com.intellij.lang.Language;
 import com.intellij.openapi.editor.CaretModel;
@@ -24,9 +23,9 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
-import com.intellij.psi.util.PsiUtilBase;
+import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -57,6 +56,7 @@ public abstract class TailType {
   }
 
   public static final TailType UNKNOWN = new TailType(){
+    @Override
     public int processTail(final Editor editor, final int tailOffset) {
       return tailOffset;
     }
@@ -68,6 +68,7 @@ public abstract class TailType {
   };
 
   public static final TailType NONE = new TailType(){
+    @Override
     public int processTail(final Editor editor, final int tailOffset) {
       return tailOffset;
     }
@@ -78,9 +79,9 @@ public abstract class TailType {
   };
 
   public static final TailType SEMICOLON = new CharTailType(';');
-  @Deprecated public static final TailType EXCLAMATION = new CharTailType('!');
 
   public static final TailType COMMA = new TailType(){
+    @Override
     public int processTail(final Editor editor, int tailOffset) {
       CommonCodeStyleSettings styleSettings = getLocalCodeStyleSettings(editor, tailOffset);
       if (styleSettings.SPACE_BEFORE_COMMA) tailOffset = insertChar(editor, tailOffset, ' ');
@@ -96,11 +97,8 @@ public abstract class TailType {
 
   protected static CommonCodeStyleSettings getLocalCodeStyleSettings(Editor editor, int tailOffset) {
     final PsiFile psiFile = getFile(editor);
-    Language language = PsiUtilBase.getLanguageAtOffset(psiFile, tailOffset);
-
-    final Project project = editor.getProject();
-    assert project != null;
-    return CodeStyleSettingsManager.getSettings(project).getCommonSettings(language);
+    Language language = PsiUtilCore.getLanguageAtOffset(psiFile, tailOffset);
+    return CodeStyle.getLanguageSettings(psiFile, language);
   }
 
   protected static FileType getFileType(Editor editor) {
@@ -149,16 +147,15 @@ public abstract class TailType {
 
   public static final TailType CASE_COLON = new CharTailType(':');
   public static final TailType COND_EXPR_COLON = new TailType(){
+    @Override
     public int processTail(final Editor editor, final int tailOffset) {
       Document document = editor.getDocument();
       int textLength = document.getTextLength();
       CharSequence chars = document.getCharsSequence();
 
-      if (tailOffset < textLength - 1 && chars.charAt(tailOffset) == ' ' && chars.charAt(tailOffset + 1) == ':') {
-        return moveCaret(editor, tailOffset, 2);
-      }
-      if (tailOffset < textLength && chars.charAt(tailOffset) == ':') {
-        return moveCaret(editor, tailOffset, 1);
+      int afterWhitespace = CharArrayUtil.shiftForward(chars, tailOffset, " \n\t");
+      if (afterWhitespace < textLength && chars.charAt(afterWhitespace) == ':') {
+        return moveCaret(editor, tailOffset, afterWhitespace - tailOffset + 1);
       }
       document.insertString(tailOffset, " : ");
       return moveCaret(editor, tailOffset, 3);
@@ -174,9 +171,10 @@ public abstract class TailType {
   public static class TailTypeEQ extends TailType {
 
     protected boolean isSpaceAroundAssignmentOperators(Editor editor, int tailOffset) {
-      return CodeStyleSettingsManager.getSettings(editor.getProject()).SPACE_AROUND_ASSIGNMENT_OPERATORS;
+      return getLocalCodeStyleSettings(editor, tailOffset).SPACE_AROUND_ASSIGNMENT_OPERATORS;
     }
 
+    @Override
     public int processTail(final Editor editor, int tailOffset) {
       Document document = editor.getDocument();
       int textLength = document.getTextLength();

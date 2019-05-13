@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,9 +32,6 @@ public class RelativePoint {
 
   public RelativePoint(@NotNull MouseEvent event) {
     init(event.getComponent(), event.getPoint());
-
-    myOriginalComponent = event.getComponent();
-    myOriginalPoint = event.getPoint();
   }
 
   public RelativePoint(@NotNull Component aComponent, Point aPointOnComponent) {
@@ -69,9 +66,8 @@ public class RelativePoint {
       myComponent = aComponent;
       myPointOnComponent = aPointOnComponent;
     }
-
-    myOriginalComponent = myComponent;
-    myOriginalPoint = myPointOnComponent;
+    myOriginalComponent = aComponent;
+    myOriginalPoint = aPointOnComponent;
   }
 
   public Component getComponent() {
@@ -83,8 +79,11 @@ public class RelativePoint {
   }
 
   public Point getPoint(@Nullable Component aTargetComponent) {
-//todo: remove that after implementation of DND to html design time controls
-    if (aTargetComponent == null || aTargetComponent.getParent() == null || SwingUtilities.getWindowAncestor(aTargetComponent) == null) return new Point();
+    //todo: remove that after implementation of DND to html design time controls
+    boolean window = aTargetComponent instanceof Window;
+    if (aTargetComponent == null || !window && (aTargetComponent.getParent() == null || SwingUtilities.getWindowAncestor(aTargetComponent) == null)) {
+      return new Point();
+    }
 
     return SwingUtilities.convertPoint(getComponent(), getPoint(), aTargetComponent);
   }
@@ -107,10 +106,11 @@ public class RelativePoint {
     return new MouseEvent(myComponent, 0, 0, 0, myPointOnComponent.x, myPointOnComponent.y, 1, false); 
   }
 
+  @Override
   @NotNull
   public String toString() {
     //noinspection HardCodedStringLiteral
-    return getPoint() + " on " + getComponent().toString();
+    return getPoint() + " on " + getComponent();
   }
 
   @NotNull
@@ -135,13 +135,20 @@ public class RelativePoint {
   }
 
   @NotNull
+  public static RelativePoint getSouthOf(@NotNull JComponent component) {
+    final Rectangle visibleRect = component.getVisibleRect();
+    final Point point = new Point(visibleRect.x + visibleRect.width / 2, visibleRect.y + visibleRect.height);
+    return new RelativePoint(component, point);
+  }
+
+  @NotNull
   public static RelativePoint getNorthWestOf(@NotNull JComponent component) {
     final Rectangle visibleRect = component.getVisibleRect();
     final Point point = new Point(visibleRect.x, visibleRect.y);
     return new RelativePoint(component, point);
   }
 
-  @NotNull
+  @NotNull @SuppressWarnings("unused")
   public static RelativePoint getNorthEastOf(@NotNull JComponent component) {
     final Rectangle visibleRect = component.getVisibleRect();
     final Point point = new Point(visibleRect.x + visibleRect.width, visibleRect.y);
@@ -159,6 +166,7 @@ public class RelativePoint {
     return myOriginalComponent;
   }
 
+  @SuppressWarnings("unused")
   public Point getOriginalPoint() {
     return myOriginalPoint;
   }

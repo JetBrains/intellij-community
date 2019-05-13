@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package org.jetbrains.jps.model.serialization.java.compiler;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jdom.Element;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.model.java.compiler.ProcessorConfigProfile;
 
 import java.io.File;
@@ -27,12 +28,7 @@ import java.util.*;
  * @author nik
  */
 public class AnnotationProcessorProfileSerializer {
-  private static final Comparator<String> ALPHA_COMPARATOR = new Comparator<String>() {
-    @Override
-    public int compare(String o1, String o2) {
-      return o1.compareToIgnoreCase(o2);
-    }
-  };
+  private static final Comparator<String> ALPHA_COMPARATOR = (o1, o2) -> o1.compareToIgnoreCase(o2);
   private static final String ENTRY = "entry";
   private static final String NAME = "name";
   private static final String VALUE = "value";
@@ -45,10 +41,12 @@ public class AnnotationProcessorProfileSerializer {
     profile.setEnabled(Boolean.valueOf(element.getAttributeValue(ENABLED, "false")));
 
     final Element srcOutput = element.getChild("sourceOutputDir");
-    profile.setGeneratedSourcesDirectoryName(srcOutput != null ? srcOutput.getAttributeValue(NAME) : null, false);
+    final String out = srcOutput != null ? srcOutput.getAttributeValue(NAME) : null;
+    profile.setGeneratedSourcesDirectoryName(out != null? FileUtil.toSystemDependentName(out) : null, false);
 
     final Element srcTestOutput = element.getChild("sourceTestOutputDir");
-    profile.setGeneratedSourcesDirectoryName(srcTestOutput != null ? srcTestOutput.getAttributeValue(NAME) : null, true);
+    final String testOut = srcTestOutput != null ? srcTestOutput.getAttributeValue(NAME) : null;
+    profile.setGeneratedSourcesDirectoryName(testOut != null? FileUtil.toSystemDependentName(testOut) : null, true);
 
     final Element isRelativeToContentRoot = element.getChild("outputRelativeToContentRoot");
     if (isRelativeToContentRoot != null) {
@@ -98,17 +96,19 @@ public class AnnotationProcessorProfileSerializer {
     }
   }
 
-  public static void writeExternal(ProcessorConfigProfile profile, final Element element) {
+  public static void writeExternal(@NotNull ProcessorConfigProfile profile, @NotNull Element element) {
     element.setAttribute(NAME, profile.getName());
-    element.setAttribute(ENABLED, Boolean.toString(profile.isEnabled()));
+    if (profile.isEnabled()) {
+      element.setAttribute(ENABLED, Boolean.toString(profile.isEnabled()));
+    }
 
     final String srcDirName = profile.getGeneratedSourcesDirectoryName(false);
     if (!StringUtil.equals(ProcessorConfigProfile.DEFAULT_PRODUCTION_DIR_NAME, srcDirName)) {
-      addChild(element, "sourceOutputDir").setAttribute(NAME, srcDirName);
+      addChild(element, "sourceOutputDir").setAttribute(NAME, FileUtil.toSystemIndependentName(srcDirName));
     }
     final String testSrcDirName = profile.getGeneratedSourcesDirectoryName(true);
     if (!StringUtil.equals(ProcessorConfigProfile.DEFAULT_TESTS_DIR_NAME, testSrcDirName)) {
-      addChild(element, "sourceTestOutputDir").setAttribute(NAME, testSrcDirName);
+      addChild(element, "sourceTestOutputDir").setAttribute(NAME, FileUtil.toSystemIndependentName(testSrcDirName));
     }
 
     if (profile.isOutputRelativeToContentRoot()) {
@@ -117,8 +117,8 @@ public class AnnotationProcessorProfileSerializer {
 
     final Map<String, String> options = profile.getProcessorOptions();
     if (!options.isEmpty()) {
-      final List<String> keys = new ArrayList<String>(options.keySet());
-      Collections.sort(keys, ALPHA_COMPARATOR);
+      final List<String> keys = new ArrayList<>(options.keySet());
+      keys.sort(ALPHA_COMPARATOR);
       for (String key : keys) {
         addChild(element, OPTION).setAttribute(NAME, key).setAttribute(VALUE, options.get(key));
       }
@@ -126,17 +126,24 @@ public class AnnotationProcessorProfileSerializer {
 
     final Set<String> processors = profile.getProcessors();
     if (!processors.isEmpty()) {
-      final List<String> processorList = new ArrayList<String>(processors);
-      Collections.sort(processorList, ALPHA_COMPARATOR);
+      final List<String> processorList = new ArrayList<>(processors);
       for (String proc : processorList) {
         addChild(element, "processor").setAttribute(NAME, proc);
       }
     }
 
-    final Element pathElement = addChild(element, "processorPath").setAttribute("useClasspath", Boolean.toString(
-      profile.isObtainProcessorsFromClasspath()));
+
+    Element pathElement = null;
+    if (!profile.isObtainProcessorsFromClasspath()) {
+      pathElement = addChild(element, "processorPath");
+      pathElement.setAttribute("useClasspath", Boolean.toString(profile.isObtainProcessorsFromClasspath()));
+    }
+
     final String path = profile.getProcessorPath();
     if (!StringUtil.isEmpty(path)) {
+      if (pathElement == null) {
+        pathElement = addChild(element, "processorPath");
+      }
       final StringTokenizer tokenizer = new StringTokenizer(path, File.pathSeparator, false);
       while (tokenizer.hasMoreTokens()) {
         final String token = tokenizer.nextToken();
@@ -146,8 +153,7 @@ public class AnnotationProcessorProfileSerializer {
 
     final Set<String> moduleNames = profile.getModuleNames();
     if (!moduleNames.isEmpty()) {
-      final List<String> names = new ArrayList<String>(moduleNames);
-      Collections.sort(names, ALPHA_COMPARATOR);
+      final List<String> names = new ArrayList<>(moduleNames);
       for (String name : names) {
         addChild(element, MODULE).setAttribute(NAME, name);
       }

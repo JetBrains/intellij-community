@@ -16,31 +16,36 @@
 package com.intellij.openapi.vcs.history;
 
 import com.intellij.openapi.vcs.RepositoryLocation;
-import com.intellij.openapi.vcs.VcsException;
 import com.intellij.util.ArrayUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.IOException;
 import java.util.Date;
 
 public interface VcsFileRevision extends VcsFileContent, VcsRevisionDescription {
   VcsFileRevision NULL = new VcsFileRevision() {
+    @Override
+    @NotNull
     public VcsRevisionNumber getRevisionNumber() {
       return VcsRevisionNumber.NULL;
     }
 
+    @Override
     public Date getRevisionDate() {
       return new Date();
     }
 
+    @Override
     public String getAuthor() {
       return "";
     }
 
+    @Override
     public String getCommitMessage() {
       return "";
     }
 
+    @Override
     public String getBranchName() {
       return null;
     }
@@ -51,11 +56,13 @@ public interface VcsFileRevision extends VcsFileContent, VcsRevisionDescription 
       return null;
     }
 
-    public byte[] loadContent() throws IOException, VcsException {
-      return getContent();
+    @Override
+    public byte[] getContent() {
+      return loadContent();
     }
 
-    public byte[] getContent() throws IOException, VcsException {
+    @Override
+    public byte[] loadContent() {
       return ArrayUtil.EMPTY_BYTE_ARRAY;
     }
   };

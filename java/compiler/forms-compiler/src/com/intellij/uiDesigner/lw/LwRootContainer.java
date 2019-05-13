@@ -22,7 +22,6 @@ import com.intellij.uiDesigner.compiler.Utils;
 import org.jdom.Element;
 
 import java.util.ArrayList;
-import java.util.Iterator;
 
 
 /**
@@ -32,10 +31,10 @@ import java.util.Iterator;
 public final class LwRootContainer extends LwContainer implements IRootContainer{
   private String myClassToBind;
   private String myMainComponentBinding;
-  private final ArrayList myButtonGroups = new ArrayList();
-  private final ArrayList myInspectionSuppressions = new ArrayList();
+  private final ArrayList<LwButtonGroup> myButtonGroups = new ArrayList<LwButtonGroup>();
+  private final ArrayList<LwInspectionSuppression> myInspectionSuppressions = new ArrayList<LwInspectionSuppression>();
 
-  public LwRootContainer() throws Exception{
+  public LwRootContainer() {
     super("javax.swing.JPanel");
     myLayoutSerializer = XYLayoutSerializer.INSTANCE;
   }
@@ -44,6 +43,7 @@ public final class LwRootContainer extends LwContainer implements IRootContainer
     return myMainComponentBinding;
   }
 
+  @Override
   public String getClassToBind(){
     return myClassToBind;
   }
@@ -52,6 +52,7 @@ public final class LwRootContainer extends LwContainer implements IRootContainer
     myClassToBind = classToBind;
   }
 
+  @Override
   public void read(final Element element, final PropertiesProvider provider) throws Exception {
     if (element == null) {
       throw new IllegalArgumentException("element cannot be null");
@@ -68,8 +69,7 @@ public final class LwRootContainer extends LwContainer implements IRootContainer
     myClassToBind = element.getAttributeValue(UIFormXmlConstants.ATTRIBUTE_BIND_TO_CLASS);
 
     // Constraints and properties
-    for(Iterator i=element.getChildren().iterator(); i.hasNext();){
-      final Element child = (Element)i.next();
+    for (final Element child : element.getChildren()) {
       if (child.getName().equals(UIFormXmlConstants.ELEMENT_BUTTON_GROUPS)) {
         readButtonGroups(child);
       }
@@ -87,8 +87,7 @@ public final class LwRootContainer extends LwContainer implements IRootContainer
   }
 
   private void readButtonGroups(final Element element) {
-    for(Iterator i=element.getChildren().iterator(); i.hasNext();){
-      final Element child = (Element)i.next();
+    for (final Element child : element.getChildren()) {
       LwButtonGroup group = new LwButtonGroup();
       group.read(child);
       myButtonGroups.add(group);
@@ -96,24 +95,24 @@ public final class LwRootContainer extends LwContainer implements IRootContainer
   }
 
   private void readInspectionSuppressions(final Element element) {
-    for(Iterator i=element.getChildren().iterator(); i.hasNext();){
-      final Element child = (Element)i.next();
+    for (final Element child : element.getChildren()) {
       String inspectionId = LwXmlReader.getRequiredString(child, UIFormXmlConstants.ATTRIBUTE_INSPECTION);
       String componentId = LwXmlReader.getString(child, UIFormXmlConstants.ATTRIBUTE_ID);
       myInspectionSuppressions.add(new LwInspectionSuppression(inspectionId, componentId));
     }
   }
 
+  @Override
   public IButtonGroup[] getButtonGroups() {
-    return (LwButtonGroup[])myButtonGroups.toArray(new LwButtonGroup[myButtonGroups.size()]);
+    return myButtonGroups.toArray(new LwButtonGroup[0]);
   }
 
+  @Override
   public String getButtonGroupName(IComponent component) {
-    for(int i=0; i<myButtonGroups.size(); i++) {
-      LwButtonGroup group = (LwButtonGroup) myButtonGroups.get(i);
+    for (LwButtonGroup group : myButtonGroups) {
       final String[] ids = group.getComponentIds();
-      for(int j=0; j<ids.length; j++) {
-        if (ids [j].equals(component.getId())) {
+      for (String id : ids) {
+        if (id.equals(component.getId())) {
           return group.getName();
         }
       }
@@ -121,9 +120,9 @@ public final class LwRootContainer extends LwContainer implements IRootContainer
     return null;
   }
 
+  @Override
   public String[] getButtonGroupComponentIds(String groupName) {
-    for(int i=0; i<myButtonGroups.size(); i++) {
-      LwButtonGroup group = (LwButtonGroup) myButtonGroups.get(i);
+    for (LwButtonGroup group : myButtonGroups) {
       if (group.getName().equals(groupName)) {
         return group.getComponentIds();
       }
@@ -131,9 +130,9 @@ public final class LwRootContainer extends LwContainer implements IRootContainer
     throw new IllegalArgumentException("Cannot find group " + groupName);
   }
 
+  @Override
   public boolean isInspectionSuppressed(final String inspectionId, final String componentId) {
-    for (Iterator iterator = myInspectionSuppressions.iterator(); iterator.hasNext();) {
-      LwInspectionSuppression suppression = (LwInspectionSuppression)iterator.next();
+    for (LwInspectionSuppression suppression : myInspectionSuppressions) {
       if ((suppression.getComponentId() == null || suppression.getComponentId().equals(componentId)) &&
           suppression.getInspectionId().equals(inspectionId)) {
         return true;
@@ -143,6 +142,6 @@ public final class LwRootContainer extends LwContainer implements IRootContainer
   }
 
   public LwInspectionSuppression[] getInspectionSuppressions() {
-    return (LwInspectionSuppression[]) myInspectionSuppressions.toArray(new LwInspectionSuppression[myInspectionSuppressions.size()]);
+    return myInspectionSuppressions.toArray(LwInspectionSuppression.EMPTY_ARRAY);
   }
 }

@@ -28,11 +28,12 @@ import java.io.File;
  * author: lesya
  */
 public class IgnoreFileFilterBasedOnCvsEntriesManager implements IIgnoreFileFilter{
+  @Override
   public boolean shouldBeIgnored(AbstractFileObject abstractFileObject, ICvsFileSystem cvsFileSystem) {
     File file = cvsFileSystem.getLocalFileSystem().getFile(abstractFileObject);
     VirtualFile virtualFile = CvsVfsUtil.findFileByIoFile(file);
     if (virtualFile == null) return false;
     IgnoredFilesInfo filter = CvsEntriesManager.getInstance().getFilter(virtualFile.getParent());
-    return filter.shouldBeIgnored(file.getName());
+    return filter.shouldBeIgnored(virtualFile);
   }
 }

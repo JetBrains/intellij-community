@@ -35,7 +35,7 @@ public class MavenModelClassesProperties {
   public static final String MAVEN_MODEL_CLASS = "org.apache.maven.model.Model";
 
   static {
-    Map<String, Map<String, String>> res = new HashMap<String, Map<String, String>>();
+    Map<String, Map<String, String>> res = new HashMap<>();
 
     res.put(MAVEN_PROJECT_CLASS, ContainerUtil.<String, String>immutableMapBuilder()
       .put("parentFile", "java.io.File")
@@ -162,7 +162,7 @@ public class MavenModelClassesProperties {
       .build()
     );
 
-    res.put(CommonClassNames.JAVA_UTIL_LIST, ImmutableMap.<String, String>of("empty", "boolean"));
+    res.put(CommonClassNames.JAVA_UTIL_LIST, ImmutableMap.of("empty", "boolean"));
 
     res.put("org.apache.maven.model.Build", ImmutableMap.<String, String>builder()
       .put("extensions", CommonClassNames.JAVA_UTIL_LIST)

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,13 +15,9 @@
  */
 package com.intellij.openapi.roots.ui.configuration.classpath;
 
-import com.intellij.CommonBundle;
-import com.intellij.analysis.AnalysisScope;
-import com.intellij.find.FindBundle;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.impl.scopes.LibraryScope;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.projectRoots.Sdk;
@@ -36,9 +32,9 @@ import com.intellij.openapi.roots.ui.OrderEntryAppearanceService;
 import com.intellij.openapi.roots.ui.configuration.LibraryTableModifiableModelProvider;
 import com.intellij.openapi.roots.ui.configuration.ModuleConfigurationState;
 import com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurable;
-import com.intellij.openapi.roots.ui.configuration.dependencyAnalysis.AnalyzeDependenciesDialog;
 import com.intellij.openapi.roots.ui.configuration.libraries.LibraryEditingUtil;
 import com.intellij.openapi.roots.ui.configuration.libraryEditor.EditExistingLibraryDialog;
+import com.intellij.openapi.roots.ui.configuration.projectRoot.ConvertModuleLibraryToRepositoryLibraryAction;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.FindUsagesInProjectStructureActionBase;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ModuleStructureConfigurable;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.StructureConfigurableContext;
@@ -46,43 +42,41 @@ import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.LibraryPro
 import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.ModuleProjectStructureElement;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.ProjectStructureElement;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.SdkProjectStructureElement;
+import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.ComboBoxTableRenderer;
-import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.openapi.wm.IdeFocusManager;
-import com.intellij.openapi.wm.ToolWindowId;
-import com.intellij.packageDependencies.DependenciesBuilder;
-import com.intellij.packageDependencies.actions.AnalyzeDependenciesOnSpecifiedTargetHandler;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.IconUtil;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.TextTransferable;
+import gnu.trove.TIntArrayList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.border.Border;
-import javax.swing.border.LineBorder;
-import javax.swing.event.ListSelectionEvent;
-import javax.swing.event.ListSelectionListener;
 import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableColumn;
+import javax.swing.table.TableModel;
+import javax.swing.table.TableRowSorter;
 import java.awt.*;
+import java.awt.datatransfer.Transferable;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
+import java.util.*;
+
+import static com.intellij.openapi.wm.IdeFocusManager.getGlobalInstance;
 
 public class ClasspathPanelImpl extends JPanel implements ClasspathPanel {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.roots.ui.configuration.classpath.ClasspathPanelImpl");
@@ -90,7 +84,7 @@ public class ClasspathPanelImpl extends JPanel implements ClasspathPanel {
   private final ClasspathTableModel myModel;
   private final EventDispatcher<OrderPanelListener> myListeners = EventDispatcher.create(OrderPanelListener.class);
   private List<AddItemPopupAction<?>> myPopupActions = null;
-  private AnActionButton myEditButton;
+  private final AnActionButton myEditButton;
   private final ModuleConfigurationState myState;
   private AnActionButton myRemoveButton;
 
@@ -99,7 +93,27 @@ public class ClasspathPanelImpl extends JPanel implements ClasspathPanel {
 
     myState = state;
     myModel = new ClasspathTableModel(state, getStructureConfigurableContext());
-    myEntryTable = new JBTable(myModel);
+    myEntryTable = new JBTable(myModel) {
+      @Override
+      protected TableRowSorter<TableModel> createRowSorter(TableModel model) {
+        return new DefaultColumnInfoBasedRowSorter(model) {
+          @Override
+          public void toggleSortOrder(int column) {
+            if (isSortable(column)) {
+              SortKey oldKey = ContainerUtil.getFirstItem(getSortKeys());
+              SortOrder oldOrder;
+              if (oldKey == null || oldKey.getColumn() != column) {
+                oldOrder = SortOrder.UNSORTED;
+              }
+              else {
+                oldOrder = oldKey.getSortOrder();
+              }
+              setSortKeys(Collections.singletonList(new SortKey(column, getNextSortOrder(oldOrder))));
+            }
+          }
+        };
+      }
+    };
     myEntryTable.setShowGrid(false);
     myEntryTable.setDragEnabled(false);
     myEntryTable.setIntercellSpacing(new Dimension(0, 0));
@@ -107,7 +121,7 @@ public class ClasspathPanelImpl extends JPanel implements ClasspathPanel {
     myEntryTable.setDefaultRenderer(ClasspathTableItem.class, new TableItemRenderer(getStructureConfigurableContext()));
     myEntryTable.setDefaultRenderer(Boolean.class, new ExportFlagRenderer(myEntryTable.getDefaultRenderer(Boolean.class)));
 
-    JComboBox scopeEditor = new JComboBox(new EnumComboBoxModel<DependencyScope>(DependencyScope.class));
+    JComboBox scopeEditor = new ComboBox<>(new EnumComboBoxModel<>(DependencyScope.class));
     myEntryTable.setDefaultEditor(DependencyScope.class, new DefaultCellEditor(scopeEditor));
     myEntryTable.setDefaultRenderer(DependencyScope.class, new ComboBoxTableRenderer<DependencyScope>(DependencyScope.values()) {
         @Override
@@ -115,6 +129,22 @@ public class ClasspathPanelImpl extends JPanel implements ClasspathPanel {
           return value.getDisplayName();
         }
       });
+
+    myEntryTable.setTransferHandler(new TransferHandler() {
+      @Nullable
+      @Override
+      protected Transferable createTransferable(JComponent c) {
+        OrderEntry entry = getSelectedEntry();
+        if (entry == null) return null;
+        String text = entry.getPresentableName();
+        return new TextTransferable(text);
+      }
+
+      @Override
+      public int getSourceActions(JComponent c) {
+        return COPY;
+      }
+    });
 
     myEntryTable.getSelectionModel().setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
 
@@ -129,12 +159,13 @@ public class ClasspathPanelImpl extends JPanel implements ClasspathPanel {
         return myEntryTable.convertRowIndexToModel(viewIndex);
       }
 
+      @NotNull
       @Override
       public Object[] getAllElements() {
         final int count = myModel.getRowCount();
         Object[] elements = new Object[count];
         for (int idx = 0; idx < count; idx++) {
-          elements[idx] = myModel.getItemAt(idx);
+          elements[idx] = myModel.getItem(idx);
         }
         return elements;
       }
@@ -148,7 +179,7 @@ public class ClasspathPanelImpl extends JPanel implements ClasspathPanel {
       public void selectElement(Object element, String selectedText) {
         final int count = myModel.getRowCount();
         for (int row = 0; row < count; row++) {
-          if (element.equals(myModel.getItemAt(row))) {
+          if (element.equals(myModel.getItem(row))) {
             final int viewRow = myEntryTable.convertRowIndexToView(row);
             myEntryTable.getSelectionModel().setSelectionInterval(viewRow, viewRow);
             TableUtil.scrollSelectionToVisible(myEntryTable);
@@ -159,6 +190,7 @@ public class ClasspathPanelImpl extends JPanel implements ClasspathPanel {
     };
     setFixedColumnWidth(ClasspathTableModel.EXPORT_COLUMN, ClasspathTableModel.EXPORT_COLUMN_NAME);
     setFixedColumnWidth(ClasspathTableModel.SCOPE_COLUMN, DependencyScope.COMPILE.toString() + "     ");  // leave space for combobox border
+    myEntryTable.getTableHeader().getColumnModel().getColumn(ClasspathTableModel.ITEM_COLUMN).setPreferredWidth(10000); // consume all available space
 
     myEntryTable.registerKeyboardAction(
       new ActionListener() {
@@ -167,14 +199,14 @@ public class ClasspathPanelImpl extends JPanel implements ClasspathPanel {
           final int[] selectedRows = myEntryTable.getSelectedRows();
           boolean currentlyMarked = true;
           for (final int selectedRow : selectedRows) {
-            final ClasspathTableItem<?> item = myModel.getItemAt(myEntryTable.convertRowIndexToModel(selectedRow));
+            final ClasspathTableItem<?> item = getItemAt(selectedRow);
             if (selectedRow < 0 || !item.isExportable()) {
               return;
             }
             currentlyMarked &= item.isExported();
           }
           for (final int selectedRow : selectedRows) {
-            myModel.getItemAt(myEntryTable.convertRowIndexToModel(selectedRow)).setExported(!currentlyMarked);
+            getItemAt(selectedRow).setExported(!currentlyMarked);
           }
           myModel.fireTableDataChanged();
           TableUtil.selectRows(myEntryTable, selectedRows);
@@ -186,8 +218,14 @@ public class ClasspathPanelImpl extends JPanel implements ClasspathPanel {
 
     myEditButton = new AnActionButton(ProjectBundle.message("module.classpath.button.edit"), null, IconUtil.getEditIcon()) {
       @Override
-      public void actionPerformed(AnActionEvent e) {
+      public void actionPerformed(@NotNull AnActionEvent e) {
         doEdit();
+      }
+
+      @Override
+      public boolean isEnabled() {
+        ClasspathTableItem<?> selectedItem = getSelectedItem();
+        return selectedItem != null && selectedItem.isEditable();
       }
 
       @Override
@@ -212,12 +250,12 @@ public class ClasspathPanelImpl extends JPanel implements ClasspathPanel {
     DefaultActionGroup actionGroup = new DefaultActionGroup();
     final AnAction navigateAction = new AnAction(ProjectBundle.message("classpath.panel.navigate.action.text")) {
       @Override
-      public void actionPerformed(AnActionEvent e) {
+      public void actionPerformed(@NotNull AnActionEvent e) {
         navigate(false);
       }
 
       @Override
-      public void update(AnActionEvent e) {
+      public void update(@NotNull AnActionEvent e) {
         final Presentation presentation = e.getPresentation();
         presentation.setEnabled(false);
         final OrderEntry entry = getSelectedEntry();
@@ -233,12 +271,31 @@ public class ClasspathPanelImpl extends JPanel implements ClasspathPanel {
     actionGroup.add(myEditButton);
     actionGroup.add(myRemoveButton);
     actionGroup.add(navigateAction);
+    actionGroup.add(new InlineModuleDependencyAction(this));
     actionGroup.add(new MyFindUsagesAction());
-    actionGroup.add(new AnalyzeDependencyAction());
+    actionGroup.add(new AnalyzeModuleDependencyAction(this));
     addChangeLibraryLevelAction(actionGroup, LibraryTablesRegistrar.PROJECT_LEVEL);
     addChangeLibraryLevelAction(actionGroup, LibraryTablesRegistrar.APPLICATION_LEVEL);
     addChangeLibraryLevelAction(actionGroup, LibraryTableImplUtil.MODULE_LEVEL);
+    actionGroup.add(new ConvertModuleLibraryToRepositoryLibraryAction(this, getStructureConfigurableContext()));
     PopupHandler.installPopupHandler(myEntryTable, actionGroup, ActionPlaces.UNKNOWN, ActionManager.getInstance());
+  }
+
+  @NotNull
+  private static SortOrder getNextSortOrder(@NotNull SortOrder order) {
+    switch (order) {
+      case ASCENDING:
+        return SortOrder.DESCENDING;
+      case DESCENDING:
+        return SortOrder.UNSORTED;
+      case UNSORTED:
+      default:
+        return SortOrder.ASCENDING;
+    }
+  }
+
+  private ClasspathTableItem<?> getItemAt(int selectedRow) {
+    return myModel.getItem(myEntryTable.convertRowIndexToModel(selectedRow));
   }
 
   private void addChangeLibraryLevelAction(DefaultActionGroup actionGroup, String tableLevel) {
@@ -249,14 +306,23 @@ public class ClasspathPanelImpl extends JPanel implements ClasspathPanel {
   @Override
   @Nullable
   public OrderEntry getSelectedEntry() {
-    if (myEntryTable.getSelectedRowCount() != 1) return null;
-    return myModel.getItemAt(myEntryTable.getSelectedRow()).getEntry();
+    ClasspathTableItem<?> item = getSelectedItem();
+    return item != null ? item.getEntry() : null;
   }
 
-  private void setFixedColumnWidth(final int columnIndex, final String textToMeasure) {
+  @Nullable
+  private ClasspathTableItem<?> getSelectedItem() {
+    if (myEntryTable.getSelectedRowCount() != 1) return null;
+    return getItemAt(myEntryTable.getSelectedRow());
+  }
+
+  private void setFixedColumnWidth(final int columnIndex, String sampleText) {
     final TableColumn column = myEntryTable.getTableHeader().getColumnModel().getColumn(columnIndex);
+    final FontMetrics fontMetrics = myEntryTable.getFontMetrics(myEntryTable.getFont());
+    final int width = fontMetrics.stringWidth(" " + sampleText + " ") + JBUI.scale(4);
+    column.setPreferredWidth(width);
+    column.setMinWidth(width);
     column.setResizable(false);
-    column.setMaxWidth(column.getPreferredWidth());
   }
 
   @Override
@@ -270,11 +336,11 @@ public class ClasspathPanelImpl extends JPanel implements ClasspathPanel {
       }
     }
     else if (entry instanceof LibraryOrderEntry){
-      if (!openLibraryEditor) {
+      if (!openLibraryEditor && !((LibraryOrderEntry)entry).getLibraryLevel().equals(LibraryTableImplUtil.MODULE_LEVEL)) {
         rootConfigurable.select((LibraryOrderEntry)entry, true);
       }
       else {
-        myEditButton.actionPerformed(null);
+        doEdit();
       }
     }
     else if (entry instanceof JdkOrderEntry) {
@@ -287,8 +353,6 @@ public class ClasspathPanelImpl extends JPanel implements ClasspathPanel {
 
 
   private JComponent createTableWithButtons() {
-    final boolean isAnalyzeShown = false;
-
     final ClasspathPanelAction removeAction = new ClasspathPanelAction(this) {
       @Override
       public void run() {
@@ -296,31 +360,20 @@ public class ClasspathPanelImpl extends JPanel implements ClasspathPanel {
       }
     };
 
-    final AnActionButton analyzeButton = new AnActionButton(ProjectBundle.message("classpath.panel.analyze"), null, IconUtil.getAnalyzeIcon()) {
-      @Override
-      public void actionPerformed(AnActionEvent e) {
-        AnalyzeDependenciesDialog.show(getRootModel().getModule());
-      }
-    };
-
     //addButton.setShortcut(CustomShortcutSet.fromString("alt A", "INSERT"));
     //removeButton.setShortcut(CustomShortcutSet.fromString("alt DELETE"));
     //upButton.setShortcut(CustomShortcutSet.fromString("alt UP"));
     //downButton.setShortcut(CustomShortcutSet.fromString("alt DOWN"));
-    myEntryTable.setBorder(new LineBorder(UIUtil.getBorderColor()));
-
-    // we need to register our listener before ToolbarDecorator registers its own. Otherwise
-    myEntryTable.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
-      @Override
-      public void valueChanged(ListSelectionEvent e) {
-        if (e.getValueIsAdjusting()) {
-          return;
-        }
-        updateButtons();
-      }
-    });
 
     final ToolbarDecorator decorator = ToolbarDecorator.createDecorator(myEntryTable);
+    AnActionButtonUpdater moveUpDownUpdater = e -> {
+      for (RowSorter.SortKey key : myEntryTable.getRowSorter().getSortKeys()) {
+        if (key.getSortOrder() != SortOrder.UNSORTED) {
+          return false;
+        }
+      }
+      return true;
+    };
     decorator.setAddAction(new AnActionButtonRunnable() {
       @Override
       public void run(AnActionButton button) {
@@ -347,12 +400,7 @@ public class ClasspathPanelImpl extends JPanel implements ClasspathPanel {
               if (selectedValue.hasSubStep()) {
                 return selectedValue.createSubStep();
               }
-              return doFinalStep(new Runnable() {
-                @Override
-                public void run() {
-                  selectedValue.execute();
-                }
-              });
+              return doFinalStep(() -> selectedValue.execute());
             }
 
             @Override
@@ -370,22 +418,32 @@ public class ClasspathPanelImpl extends JPanel implements ClasspathPanel {
           removeAction.actionPerformed(null);
         }
       })
+      .setRemoveActionUpdater(e -> {
+        final int[] selectedRows = myEntryTable.getSelectedRows();
+        for (final int selectedRow : selectedRows) {
+          if (!getItemAt(selectedRow).isRemovable()) {
+            return false;
+          }
+        }
+        return selectedRows.length > 0;
+      })
       .setMoveUpAction(new AnActionButtonRunnable() {
         @Override
         public void run(AnActionButton button) {
           moveSelectedRows(-1);
         }
       })
+      .setMoveUpActionUpdater(moveUpDownUpdater)
+      .setMoveUpActionName("Move Up (disabled if items are shown in sorted order)")
       .setMoveDownAction(new AnActionButtonRunnable() {
         @Override
         public void run(AnActionButton button) {
           moveSelectedRows(+1);
         }
       })
+      .setMoveDownActionUpdater(moveUpDownUpdater)
+      .setMoveDownActionName("Move Down (disabled if items are shown in sorted order)")
       .addExtraAction(myEditButton);
-    if (isAnalyzeShown) {
-      decorator.addExtraAction(analyzeButton);
-    }
 
     final JPanel panel = decorator.createPanel();
     myRemoveButton = ToolbarDecorator.findRemoveButton(panel);
@@ -410,32 +468,6 @@ public class ClasspathPanelImpl extends JPanel implements ClasspathPanel {
     dialog.show();
     myEntryTable.repaint();
     ModuleStructureConfigurable.getInstance(myState.getProject()).getTree().repaint();
-  }
-
-  @Override
-  public void addNotify() {
-    super.addNotify();
-    updateButtons();
-  }
-
-  private void updateButtons() {
-    final int[] selectedRows = myEntryTable.getSelectedRows();
-    boolean removeButtonEnabled = true;
-    int minRow = myEntryTable.getRowCount() + 1;
-    int maxRow = -1;
-    for (final int selectedRow : selectedRows) {
-      minRow = Math.min(minRow, selectedRow);
-      maxRow = Math.max(maxRow, selectedRow);
-      final ClasspathTableItem<?> item = myModel.getItemAt(selectedRow);
-      if (!item.isRemovable()) {
-        removeButtonEnabled = false;
-      }
-    }
-    if (myRemoveButton != null) {
-      myRemoveButton.setEnabled(removeButtonEnabled && selectedRows.length > 0);
-    }
-    ClasspathTableItem<?> selectedItem = selectedRows.length == 1 ? myModel.getItemAt(selectedRows[0]) : null;
-    myEditButton.setEnabled(selectedItem != null && selectedItem.isEditable());
   }
 
   private void removeSelectedItems(final List removedRows) {
@@ -483,18 +515,20 @@ public class ClasspathPanelImpl extends JPanel implements ClasspathPanel {
     }
     finally {
       enableModelUpdate();
-      myEntryTable.requestFocus();
+      getGlobalInstance().doWhenFocusSettlesDown(() -> getGlobalInstance().requestFocus(myEntryTable, true));
     }
   }
 
   @Override
-  public void addItems(List<ClasspathTableItem<?>> toAdd) {
+  public void addItems(List<? extends ClasspathTableItem<?>> toAdd) {
     for (ClasspathTableItem<?> item : toAdd) {
-      myModel.addItem(item);
+      myModel.addRow(item);
     }
-    myModel.fireTableDataChanged();
-    final ListSelectionModel selectionModel = myEntryTable.getSelectionModel();
-    selectionModel.setSelectionInterval(myModel.getRowCount() - toAdd.size(), myModel.getRowCount() - 1);
+    TIntArrayList toSelect = new TIntArrayList();
+    for (int i = myModel.getRowCount() - toAdd.size(); i < myModel.getRowCount(); i++) {
+      toSelect.add(myEntryTable.convertRowIndexToView(i));
+    }
+    TableUtil.selectRows(myEntryTable, toSelect.toNativeArray());
     TableUtil.scrollSelectionToVisible(myEntryTable);
 
     final StructureConfigurableContext context = ModuleStructureConfigurable.getInstance(myState.getProject()).getContext();
@@ -528,7 +562,7 @@ public class ClasspathPanelImpl extends JPanel implements ClasspathPanel {
   private void initPopupActions() {
     if (myPopupActions == null) {
       int actionIndex = 1;
-      final List<AddItemPopupAction<?>> actions = new ArrayList<AddItemPopupAction<?>>();
+      final List<AddItemPopupAction<?>> actions = new ArrayList<>();
       final StructureConfigurableContext context = getStructureConfigurableContext();
       actions.add(new AddNewModuleLibraryAction(this, actionIndex++, context));
       actions.add(new AddLibraryDependencyAction(this, actionIndex++, ProjectBundle.message("classpath.add.library.action"), context));
@@ -561,34 +595,32 @@ public class ClasspathPanelImpl extends JPanel implements ClasspathPanel {
   }
 
   private void moveSelectedRows(int increment) {
-    if (increment == 0) {
-      return;
-    }
-    if (myEntryTable.isEditing()){
+    LOG.assertTrue(increment == -1 || increment == 1);
+    if (myEntryTable.isEditing()) {
       myEntryTable.getCellEditor().stopCellEditing();
     }
     final ListSelectionModel selectionModel = myEntryTable.getSelectionModel();
-    for(int row = increment < 0? 0 : myModel.getRowCount() - 1; increment < 0? row < myModel.getRowCount() : row >= 0; row +=
-      increment < 0? +1 : -1){
+    for (int row = increment < 0 ? 0 : myModel.getRowCount() - 1; increment < 0 ? row < myModel.getRowCount() : row >= 0; row +=
+      increment < 0 ? +1 : -1) {
       if (selectionModel.isSelectedIndex(row)) {
         final int newRow = moveRow(row, increment);
         selectionModel.removeSelectionInterval(row, row);
         selectionModel.addSelectionInterval(newRow, newRow);
       }
     }
-    myModel.fireTableRowsUpdated(0, myModel.getRowCount() - 1);
     Rectangle cellRect = myEntryTable.getCellRect(selectionModel.getMinSelectionIndex(), 0, true);
-    if (cellRect != null) {
-      myEntryTable.scrollRectToVisible(cellRect);
-    }
+    myEntryTable.scrollRectToVisible(cellRect);
     myEntryTable.repaint();
-    myListeners.getMulticaster().entryMoved();
   }
 
   public void selectOrderEntry(@NotNull OrderEntry entry) {
     for (int row = 0; row < myModel.getRowCount(); row++) {
-      final OrderEntry orderEntry = myModel.getItemAt(row).getEntry();
+      final OrderEntry orderEntry = getItemAt(row).getEntry();
       if (orderEntry != null && entry.getPresentableName().equals(orderEntry.getPresentableName())) {
+        if (orderEntry instanceof ExportableOrderEntry && entry instanceof ExportableOrderEntry &&
+            ((ExportableOrderEntry)entry).getScope() != ((ExportableOrderEntry)orderEntry).getScope()) {
+          continue;
+        }
         myEntryTable.getSelectionModel().setSelectionInterval(row, row);
         TableUtil.scrollSelectionToVisible(myEntryTable);
       }
@@ -598,25 +630,12 @@ public class ClasspathPanelImpl extends JPanel implements ClasspathPanel {
 
   private int moveRow(final int row, final int increment) {
     int newIndex = Math.abs(row + increment) % myModel.getRowCount();
-    final ClasspathTableItem<?> item = myModel.removeDataRow(row);
-    myModel.addItemAt(item, newIndex);
+    myModel.exchangeRows(row, newIndex);
     return newIndex;
   }
 
   public void stopEditing() {
     TableUtil.stopEditing(myEntryTable);
-  }
-
-  public List<OrderEntry> getEntries() {
-    final int count = myModel.getRowCount();
-    final List<OrderEntry> entries = new ArrayList<OrderEntry>(count);
-    for (int row = 0; row < count; row++) {
-      final OrderEntry entry = myModel.getItemAt(row).getEntry();
-      if (entry != null) {
-        entries.add(entry);
-      }
-    }
-    return entries;
   }
 
   private int myInsideChange = 0;
@@ -627,16 +646,25 @@ public class ClasspathPanelImpl extends JPanel implements ClasspathPanel {
   }
 
   public void forceInitFromModel() {
-    final int[] selection = myEntryTable.getSelectedRows();
+    Set<ClasspathTableItem<?>> oldSelection = new HashSet<>();
+    for (int i : myEntryTable.getSelectedRows()) {
+      ContainerUtil.addIfNotNull(oldSelection, getItemAt(i));
+    }
     myModel.clear();
     myModel.init();
     myModel.fireTableDataChanged();
-    TableUtil.selectRows(myEntryTable, selection);
+    TIntArrayList newSelection = new TIntArrayList();
+    for (int i = 0; i < myModel.getRowCount(); i++) {
+      if (oldSelection.contains(getItemAt(i))) {
+        newSelection.add(i);
+      }
+    }
+    TableUtil.selectRows(myEntryTable, newSelection.toNativeArray());
   }
 
-  private static CellAppearanceEx getCellAppearance(final ClasspathTableItem<?> item,
-                                                    final StructureConfigurableContext context,
-                                                    final boolean selected) {
+  static CellAppearanceEx getCellAppearance(final ClasspathTableItem<?> item,
+                                            final StructureConfigurableContext context,
+                                            final boolean selected) {
     final OrderEntryAppearanceService service = OrderEntryAppearanceService.getInstance();
     if (item instanceof InvalidJdkItem) {
       return service.forJdk(null, false, selected, true);
@@ -650,9 +678,9 @@ public class ClasspathPanelImpl extends JPanel implements ClasspathPanel {
 
   private static class TableItemRenderer extends ColoredTableCellRenderer {
     private final Border NO_FOCUS_BORDER = BorderFactory.createEmptyBorder(1, 1, 1, 1);
-    private StructureConfigurableContext myContext;
+    private final StructureConfigurableContext myContext;
 
-    public TableItemRenderer(StructureConfigurableContext context) {
+    TableItemRenderer(StructureConfigurableContext context) {
       myContext = context;
     }
 
@@ -673,7 +701,7 @@ public class ClasspathPanelImpl extends JPanel implements ClasspathPanel {
     private final TableCellRenderer myDelegate;
     private final JPanel myBlankPanel;
 
-    public ExportFlagRenderer(TableCellRenderer delegate) {
+    ExportFlagRenderer(TableCellRenderer delegate) {
       myDelegate = delegate;
       myBlankPanel = new JPanel();
     }
@@ -728,63 +756,6 @@ public class ClasspathPanelImpl extends JPanel implements ClasspathPanel {
       Point location = rect.getLocation();
       location.y += rect.height;
       return new RelativePoint(myEntryTable, location);
-    }
-  }
-  
-  private class AnalyzeDependencyAction extends AnAction {
-    private AnalyzeDependencyAction() {
-      super("Analyze This Dependency");
-    }
-
-    @Override
-    public void actionPerformed(AnActionEvent e) {
-      final OrderEntry selectedEntry = getSelectedEntry();
-      GlobalSearchScope targetScope;
-      if (selectedEntry instanceof ModuleOrderEntry) {
-        final Module module = ((ModuleOrderEntry)selectedEntry).getModule();
-        LOG.assertTrue(module != null);
-        targetScope = GlobalSearchScope.moduleScope(module);
-      }
-      else {
-        Library library = ((LibraryOrderEntry)selectedEntry).getLibrary();
-        LOG.assertTrue(library != null);
-        targetScope = new LibraryScope(getProject(), library);
-      }
-      new AnalyzeDependenciesOnSpecifiedTargetHandler(getProject(), new AnalysisScope(myState.getRootModel().getModule()),
-                                                      targetScope) {
-        @Override
-        protected boolean canStartInBackground() {
-          return false;
-        }
-
-        @Override
-        protected boolean shouldShowDependenciesPanel(List<DependenciesBuilder> builders) {
-          for (DependenciesBuilder builder : builders) {
-            for (Set<PsiFile> files : builder.getDependencies().values()) {
-              if (!files.isEmpty()) {
-                Messages.showInfoMessage(myEntryTable,
-                                         "Dependencies were successfully collected in \"" +
-                                         ToolWindowId.DEPENDENCIES + "\" toolwindow",
-                                         FindBundle.message("find.pointcut.applications.not.found.title"));
-                return true;
-              }
-            }
-          }
-          if (Messages.showOkCancelDialog(myEntryTable,
-                                          "No code dependencies were found. Would you like to remove the dependency?",
-                                          CommonBundle.getWarningTitle(), Messages.getWarningIcon()) == DialogWrapper.OK_EXIT_CODE) {
-            removeSelectedItems(TableUtil.removeSelectedItems(myEntryTable));
-          }
-          return false;
-        }
-      }.analyze();
-    }
-
-    @Override
-    public void update(AnActionEvent e) {
-      final OrderEntry entry = getSelectedEntry();
-      e.getPresentation().setVisible(entry instanceof ModuleOrderEntry && ((ModuleOrderEntry)entry).getModule() != null
-                                   || entry instanceof LibraryOrderEntry && ((LibraryOrderEntry)entry).getLibrary() != null);
     }
   }
 }

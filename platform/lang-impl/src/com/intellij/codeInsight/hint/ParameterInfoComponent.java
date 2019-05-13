@@ -1,92 +1,178 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.codeInsight.hint;
 
+import com.intellij.codeInsight.CodeInsightBundle;
+import com.intellij.injected.editor.EditorWindow;
 import com.intellij.lang.parameterInfo.ParameterInfoHandler;
 import com.intellij.lang.parameterInfo.ParameterInfoUIContextEx;
+import com.intellij.openapi.actionSystem.IdeActions;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.colors.EditorFontType;
+import com.intellij.openapi.keymap.KeymapUtil;
+import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.ui.*;
+import com.intellij.util.Function;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.accessibility.AccessibleContextUtil;
+import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
 import javax.swing.border.Border;
+import javax.swing.border.CompoundBorder;
 import java.awt.*;
-import java.util.EnumSet;
+import java.util.*;
+import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
-class ParameterInfoComponent extends JPanel{
-  private final Object[] myObjects;
+public class ParameterInfoComponent extends JPanel {
+  private Object[] myObjects;
   private int myCurrentParameterIndex;
 
   private PsiElement myParameterOwner;
   private Object myHighlighted;
   @NotNull private final ParameterInfoHandler myHandler;
 
-  private final OneElementComponent[] myPanels;
+  private final JPanel myMainPanel;
+  private OneElementComponent[] myPanels;
+  private JLabel myShortcutLabel;
+  private final boolean myAllowSwitchLabel;
 
-  private static final Color BACKGROUND_COLOR = HintUtil.INFORMATION_COLOR;
-  private static final Color FOREGROUND_COLOR = JBColor.foreground;
-//  private static final Color DISABLED_BACKGROUND_COLOR = HintUtil.INFORMATION_COLOR;
-  private static final Color DISABLED_FOREGROUND_COLOR = Gray._128;
-  private static final Color HIGHLIGHTED_BORDER_COLOR = new JBColor(new Color(231, 254, 234), Gray._100);
   private final Font NORMAL_FONT;
   private final Font BOLD_FONT;
 
-  private static final Border BOTTOM_BORDER = new SideBorder(JBColor.LIGHT_GRAY, SideBorder.BOTTOM);
-  private static final Border BACKGROUND_BORDER = BorderFactory.createLineBorder(BACKGROUND_COLOR);
+  private static final Color BACKGROUND = JBColor.namedColor("ParameterInfo.background", HintUtil.getInformationColor());
+  private static final Color FOREGROUND = JBColor.namedColor("ParameterInfo.foreground", new JBColor(0x1D1D1D, 0xBBBBBB));
+  private static final Color HIGHLIGHTED_COLOR = JBColor.namedColor("ParameterInfo.currentParameterForeground", new JBColor(0x1D1D1D, 0xE8E8E8));
+  private static final Color DISABLED_COLOR = JBColor.namedColor("ParameterInfo.disabledForeground", new JBColor(0xA8A8A8, 0x777777));
+  private static final Color CONTEXT_HELP_FOREGROUND = JBColor.namedColor("ParameterInfo.infoForeground", new JBColor(0x787878, 0x878787));
+  static final Color BORDER_COLOR = JBColor.namedColor("ParameterInfo.borderColor", HintUtil.INFORMATION_BORDER_COLOR);
+  private static final Color HIGHLIGHTED_BACKGROUND = JBColor.namedColor("ParameterInfo.currentOverloadBackground", BORDER_COLOR);
+  private static final Color SEPARATOR_COLOR = JBColor.namedColor("ParameterInfo.lineSeparatorColor", BORDER_COLOR);
+  private static final Border EMPTY_BORDER = JBUI.Borders.empty(2, 10);
+  private static final Border BOTTOM_BORDER = new CompoundBorder(JBUI.Borders.customLine(SEPARATOR_COLOR, 0, 0, 1, 0), EMPTY_BORDER);
 
-  protected int myWidthLimit;
+  protected int myWidthLimit = 500;
 
-  public ParameterInfoComponent(Object[] objects, Editor editor,@NotNull ParameterInfoHandler handler) {
+  private static final Comparator<TextRange> TEXT_RANGE_COMPARATOR = (o1, o2) -> {
+    if (o1.getStartOffset() == o2.getStartOffset()) {
+      return o1.getEndOffset() > o2.getEndOffset() ? 1 : -1;
+    }
+    if (o1.getStartOffset() > o2.getStartOffset()) return 1;
+    if (o1.getEndOffset() > o2.getEndOffset()) return 1;
+    return -1;
+  };
+  private final boolean myRequestFocus;
+
+  @TestOnly
+  public static ParameterInfoUIContextEx createContext(Object[] objects, Editor editor, @NotNull ParameterInfoHandler handler, int currentParameterIndex) {
+    return createContext(objects, editor, handler, currentParameterIndex, null);
+  }
+
+  @TestOnly
+  public static ParameterInfoUIContextEx createContext(Object[] objects, Editor editor, @NotNull ParameterInfoHandler handler, int currentParameterIndex, @Nullable PsiElement parameterOwner) {
+    final ParameterInfoComponent infoComponent = new ParameterInfoComponent(objects, editor, handler);
+    infoComponent.setCurrentParameterIndex(currentParameterIndex);
+    infoComponent.setParameterOwner(parameterOwner);
+    return infoComponent.new MyParameterContext(false);
+  }
+
+  ParameterInfoComponent(Object[] objects, Editor editor, @NotNull ParameterInfoHandler handler) {
+    this(objects, editor, handler, false, false);
+  }
+
+  ParameterInfoComponent(Object[] objects, Editor editor, @NotNull ParameterInfoHandler handler, 
+                         boolean requestFocus, boolean allowSwitchLabel) {
     super(new BorderLayout());
+    myRequestFocus = requestFocus;
 
-    JComponent editorComponent = editor.getComponent();
-    JLayeredPane layeredPane = editorComponent.getRootPane().getLayeredPane();
-    myWidthLimit = layeredPane.getWidth();
+    if (!ApplicationManager.getApplication().isUnitTestMode() && !ApplicationManager.getApplication().isHeadlessEnvironment()) {
+      JComponent editorComponent = editor.getComponent();
+      JLayeredPane layeredPane = editorComponent.getRootPane().getLayeredPane();
+      myWidthLimit = layeredPane.getWidth();
+    }
 
-    NORMAL_FONT = UIUtil.getLabelFont();
-    BOLD_FONT = NORMAL_FONT.deriveFont(Font.BOLD);
+    NORMAL_FONT = editor != null && Registry.is("parameter.info.editor.font")
+                  ? editor.getColorsScheme().getFont(EditorFontType.PLAIN)
+                  : UIUtil.getLabelFont();
+    BOLD_FONT = editor != null && Registry.is("parameter.info.editor.font")
+                ? editor.getColorsScheme().getFont(EditorFontType.BOLD)
+                : NORMAL_FONT.deriveFont(Font.BOLD);
 
     myObjects = objects;
 
-    setBackground(BACKGROUND_COLOR);
+    setBackground(BACKGROUND);
 
     myHandler = handler;
-    myPanels = new OneElementComponent[myObjects.length];
-    final JPanel panel = new JPanel(new GridBagLayout());
-    for(int i = 0; i < myObjects.length; i++) {
-      myPanels[i] = new OneElementComponent();
-      panel.add(myPanels[i], new GridBagConstraints(0,i,1,1,1,0,GridBagConstraints.WEST,GridBagConstraints.HORIZONTAL,new Insets(0,0,0,0),0,0));
+    myMainPanel = new JPanel(new GridBagLayout());
+    setPanels();
+
+    if (myRequestFocus) {
+      AccessibleContextUtil.setName(this, "Parameter Info. Press TAB to navigate through each element. Press ESC to close.");
     }
 
-    final JScrollPane pane = ScrollPaneFactory.createScrollPane(panel);
-    pane.setBorder(null);
-    pane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+    final JScrollPane pane = ScrollPaneFactory.createScrollPane(myMainPanel, true);
     add(pane, BorderLayout.CENTER);
 
+    myAllowSwitchLabel = allowSwitchLabel && !(editor instanceof EditorWindow);
+    setShortcutLabel();
     myCurrentParameterIndex = -1;
+  }
+
+  private void setPanels() {
+    myMainPanel.removeAll();
+    myPanels = new OneElementComponent[myObjects.length];
+    for (int i = 0; i < myObjects.length; i++) {
+      myPanels[i] = new OneElementComponent();
+      myMainPanel.add(myPanels[i], new GridBagConstraints(0, i, 1, 1, 1, 0,
+                                                          GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL,
+                                                          JBUI.emptyInsets(), 0, 0));
+    }
+  }
+
+  private void setShortcutLabel() {
+    if (myShortcutLabel != null) remove(myShortcutLabel);
+
+    String upShortcut = KeymapUtil.getFirstKeyboardShortcutText(IdeActions.ACTION_METHOD_OVERLOAD_SWITCH_UP);
+    String downShortcut = KeymapUtil.getFirstKeyboardShortcutText(IdeActions.ACTION_METHOD_OVERLOAD_SWITCH_DOWN);
+    if (!myAllowSwitchLabel || myObjects.length <= 1 || !myHandler.supportsOverloadSwitching() ||
+        upShortcut.isEmpty() && downShortcut.isEmpty()) {
+      myShortcutLabel = null;
+    }
+    else {
+      myShortcutLabel = new JLabel(
+        upShortcut.isEmpty() || downShortcut.isEmpty()
+        ? CodeInsightBundle.message("parameter.info.switch.overload.shortcuts.single", upShortcut.isEmpty() ? downShortcut : upShortcut)
+        : CodeInsightBundle.message("parameter.info.switch.overload.shortcuts", upShortcut, downShortcut));
+      myShortcutLabel.setForeground(CONTEXT_HELP_FOREGROUND);
+      Font labelFont = UIUtil.getLabelFont();
+      myShortcutLabel.setFont(labelFont.deriveFont(labelFont.getSize2D() - (SystemInfo.isWindows ? 1 : 2)));
+      myShortcutLabel.setBorder(JBUI.Borders.empty(6, 10, 0, 10));
+      add(myShortcutLabel, BorderLayout.SOUTH);
+    }
+  }
+
+  void setDescriptors(Object[] descriptors) {
+    myObjects = descriptors;
+    setPanels();
+    setShortcutLabel();
   }
 
   @Override
   public Dimension getPreferredSize() {
-    int size = myPanels.length;
+    long visibleRows = Stream.of(myPanels).filter(Component::isVisible).count();
     final Dimension preferredSize = super.getPreferredSize();
-    if (size >= 0 && size <= 20) {
+    if (visibleRows <= 20) {
       return preferredSize;
     }
     else {
@@ -94,28 +180,85 @@ class ParameterInfoComponent extends JPanel{
     }
   }
 
+  @Override
+  public String toString() {
+    return Stream.of(myPanels)
+      .filter(Component::isVisible)
+      .map(c -> c.toString() + (c.getBorder() == BOTTOM_BORDER ? "\n-" : ""))
+      .collect(Collectors.joining("\n"));
+  }
+
   public Object getHighlighted() {
     return myHighlighted;
   }
 
+  public boolean isRequestFocus() {
+    return myRequestFocus;
+  }
+
   class MyParameterContext implements ParameterInfoUIContextEx {
+    private final boolean mySingleParameterInfo;
     private int i;
-    @Override
-    public void setupUIComponentPresentation(String text,
-                                             int highlightStartOffset,
-                                             int highlightEndOffset,
-                                             boolean isDisabled,
-                                             boolean strikeout,
-                                             boolean isDisabledBeforeHighlight,
-                                             Color background) {
-      myPanels[i].setup(text, highlightStartOffset, highlightEndOffset, isDisabled, strikeout, isDisabledBeforeHighlight, background);
-      myPanels[i].setBorder(isLastParameterOwner() ? BACKGROUND_BORDER : new SideBorder(new JBColor(JBColor.LIGHT_GRAY, Gray._90), SideBorder.BOTTOM));
+    private Function<String, String> myEscapeFunction;
+    private final ParameterInfoController.Model result = new ParameterInfoController.Model();
+    
+    MyParameterContext(boolean singleParameterInfo) {
+      mySingleParameterInfo = singleParameterInfo;
     }
 
     @Override
-    public void setupUIComponentPresentation(final String[] texts, final EnumSet<Flag>[] flags, final Color background) {
-      myPanels[i].setup(texts, flags, background);
-      myPanels[i].setBorder(isLastParameterOwner() ? BACKGROUND_BORDER : new SideBorder(new JBColor(JBColor.LIGHT_GRAY, Gray._90), SideBorder.BOTTOM));
+    public String setupUIComponentPresentation(String text,
+                                               int highlightStartOffset,
+                                               int highlightEndOffset,
+                                               boolean isDisabled,
+                                               boolean strikeout,
+                                               boolean isDisabledBeforeHighlight,
+                                               Color background) {
+      List<String> split = StringUtil.split(text, ",", false);
+      StringBuilder plainLine = new StringBuilder();
+      final List<Integer> startOffsets = new ArrayList<>();
+      final List<Integer> endOffsets = new ArrayList<>();
+
+      TextRange highlightRange = highlightStartOffset >=0 && highlightEndOffset >= highlightStartOffset ?
+                               new TextRange(highlightStartOffset, highlightEndOffset) :
+                               null;
+      for (int j = 0; j < split.size(); j++) {
+        String line = split.get(j);
+        int startOffset = plainLine.length();
+        startOffsets.add(startOffset);
+        plainLine.append(line);
+        int endOffset = plainLine.length();
+        endOffsets.add(endOffset);
+        if (highlightRange != null && highlightRange.intersects(new TextRange(startOffset, endOffset))) {
+          result.current = j;
+        }
+      }
+      ParameterInfoController.SignatureItem item = new ParameterInfoController.SignatureItem(plainLine.toString(), strikeout, isDisabled,
+                                                                                             startOffsets, endOffsets);
+      result.signatures.add(item);
+
+      final String resultedText =
+        myPanels[i].setup(text, myEscapeFunction, highlightStartOffset, highlightEndOffset, isDisabled, strikeout, isDisabledBeforeHighlight, background);
+      myPanels[i].setBorder(isLastParameterOwner() || isSingleParameterInfo() ? EMPTY_BORDER : BOTTOM_BORDER);
+      return resultedText;
+    }
+
+    @Override
+    public void setupRawUIComponentPresentation(String htmlText) {
+      myPanels[i].setup(htmlText, getDefaultParameterColor());
+      myPanels[i].setBorder(isLastParameterOwner() || isSingleParameterInfo() ? EMPTY_BORDER : BOTTOM_BORDER);
+    }
+
+    @Override
+    public String setupUIComponentPresentation(final String[] texts, final EnumSet<Flag>[] flags, final Color background) {
+      final String resultedText = myPanels[i].setup(result, texts, myEscapeFunction, flags, background);
+      myPanels[i].setBorder(isLastParameterOwner() || isSingleParameterInfo() ? EMPTY_BORDER : BOTTOM_BORDER);
+      return resultedText;
+    }
+
+    @Override
+    public void setEscapeFunction(@Nullable Function<String, String> escapeFunction) {
+      myEscapeFunction = escapeFunction;
     }
 
     @Override
@@ -143,35 +286,59 @@ class ParameterInfoComponent extends JPanel{
     }
 
     @Override
+    public boolean isSingleOverload() {
+      return myPanels.length == 1;
+    }
+
+    @Override
+    public boolean isSingleParameterInfo() {
+      return mySingleParameterInfo;
+    }
+
+    private boolean isHighlighted() {
+      return myObjects[i].equals(myHighlighted);
+    }
+
+    @Override
     public Color getDefaultParameterColor() {
-      return myObjects[i].equals(myHighlighted) ? HIGHLIGHTED_BORDER_COLOR : BACKGROUND_COLOR;
+      return mySingleParameterInfo || !isHighlighted() ? BACKGROUND : HIGHLIGHTED_BACKGROUND;
     }
   }
 
-  public void update(){
-    MyParameterContext context = new MyParameterContext();
+  public ParameterInfoController.Model update(boolean singleParameterInfo) {
+    MyParameterContext context = new MyParameterContext(singleParameterInfo);
 
-    for(int i = 0; i < myObjects.length; i++) {
+    for (int i = 0; i < myObjects.length; i++) {
       context.i = i;
       final Object o = myObjects[i];
 
-      myHandler.updateUI(o,context);
+      if (singleParameterInfo && myObjects.length > 1 && !context.isHighlighted()) {
+        setVisible(i, false);
+      }
+      else {
+        setVisible(i, true);
+        //noinspection unchecked
+        myHandler.updateUI(o, context);
+      }
     }
 
-    invalidate();
-    validate();
-    repaint();
+    if (myShortcutLabel != null) myShortcutLabel.setVisible(!singleParameterInfo);
+    return context.result;
   }
 
   public Object[] getObjects() {
     return myObjects;
   }
 
-  void setEnabled(int index, boolean enabled){
+  void setEnabled(int index, boolean enabled) {
     myPanels[index].setEnabled(enabled);
   }
 
-  boolean isEnabled(int index){
+  void setVisible(int index, boolean visible) {
+    myPanels[index].setVisible(visible);
+  }
+
+  boolean isEnabled(int index) {
     return myPanels[index].isEnabled();
   }
 
@@ -183,7 +350,7 @@ class ParameterInfoComponent extends JPanel{
     return myCurrentParameterIndex;
   }
 
-  public void setParameterOwner (PsiElement element) {
+  public void setParameterOwner(PsiElement element) {
     myParameterOwner = element;
   }
 
@@ -198,13 +365,41 @@ class ParameterInfoComponent extends JPanel{
   private class OneElementComponent extends JPanel {
     private OneLineComponent[] myOneLineComponents;
 
-    public OneElementComponent(){
+    OneElementComponent() {
       super(new GridBagLayout());
+      setOpaque(true);
       myOneLineComponents = new OneLineComponent[0]; //TODO ???
     }
 
-    private void setup(String text, int highlightStartOffset, int highlightEndOffset, boolean isDisabled, boolean strikeout, boolean isDisabledBeforeHighlight, Color background) {
+    @Override
+    public String toString() {
+      boolean highlighted = myOneLineComponents.length > 0 && !BACKGROUND.equals(myOneLineComponents[0].getBackground());
+      String text = Stream.of(myOneLineComponents).filter(Objects::nonNull).map(Object::toString).collect(Collectors.joining());
+      return highlighted ? '[' + text + ']' : text;
+    }
+
+    private void setup(String htmlText, Color background) {
       removeAll();
+      setBackground(background);
+      myOneLineComponents = new OneLineComponent[1];
+      myOneLineComponents[0] = new OneLineComponent();
+      myOneLineComponents[0].doSetup(htmlText, background);
+      add(myOneLineComponents[0], new GridBagConstraints(0,0,1,1,1,0,
+                                                         GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL,
+                                                         new Insets(0,0,0,0),0,0));
+    }
+
+    private String setup(String text,
+                         Function<? super String, String> escapeFunction,
+                         int highlightStartOffset,
+                         int highlightEndOffset,
+                         boolean isDisabled,
+                         boolean strikeout,
+                         boolean isDisabledBeforeHighlight,
+                         Color background) {
+      StringBuilder buf = new StringBuilder();
+      removeAll();
+      setBackground(background);
 
       String[] lines = UIUtil.splitText(text, getFontMetrics(BOLD_FONT), myWidthLimit, ',');
 
@@ -212,19 +407,24 @@ class ParameterInfoComponent extends JPanel{
 
       int lineOffset = 0;
 
+      boolean hasHighlighting = highlightStartOffset >= 0 && highlightEndOffset > highlightStartOffset;
+      TextRange highlightingRange = hasHighlighting ? new TextRange(highlightStartOffset, highlightEndOffset) : null;
+
       for (int i = 0; i < lines.length; i++) {
         String line = lines[i];
 
         myOneLineComponents[i] = new OneLineComponent();
 
-        int startOffset = -1;
-        int endOffset = -1;
-        if (highlightStartOffset >= 0 && highlightEndOffset > lineOffset && highlightStartOffset < lineOffset + line.length()) {
-          startOffset = Math.max(highlightStartOffset - lineOffset, 0);
-          endOffset = Math.min(highlightEndOffset - lineOffset, line.length());
-        }
+        TextRange lRange = new TextRange(lineOffset, lineOffset + line.length());
+        TextRange hr = highlightingRange == null ? null : lRange.intersection(highlightingRange);
+        hr = hr == null ? null : hr.shiftRight(-lineOffset);
 
-        myOneLineComponents[i].setup(line, startOffset, endOffset, isDisabled, strikeout, background);
+        String before = escapeString(hr == null ? line : line.substring(0, hr.getStartOffset()), escapeFunction);
+        String in = hr == null ? "" : escapeString(hr.substring(line), escapeFunction);
+        String after = hr == null ? "" : escapeString(line.substring(hr.getEndOffset()), escapeFunction);
+
+        TextRange escapedHighlightingRange = in.isEmpty() ? null : TextRange.create(before.length(), before.length() + in.length());
+        buf.append(myOneLineComponents[i].setup(before + in + after, isDisabled, strikeout, background, escapedHighlightingRange));
 
         if (isDisabledBeforeHighlight) {
           if (highlightStartOffset < 0 || highlightEndOffset > lineOffset) {
@@ -236,113 +436,200 @@ class ParameterInfoComponent extends JPanel{
 
         lineOffset += line.length();
       }
+      return buf.toString();
     }
 
-    public void setup(final String[] texts, final EnumSet<ParameterInfoUIContextEx.Flag>[] flags, final Color background) {
+    private String escapeString(String line, Function<? super String, String> escapeFunction) {
+      line = XmlStringUtil.escapeString(line);
+      return escapeFunction == null ? line : escapeFunction.fun(line);
+    }
+
+    public String setup(final ParameterInfoController.Model result,
+                        final String[] texts,
+                        Function<? super String, String> escapeFunction,
+                        final EnumSet<ParameterInfoUIContextEx.Flag>[] flags,
+                        final Color background) {
+      StringBuilder buf = new StringBuilder();
       removeAll();
+      setBackground(background);
+      int index = 0;
+      int curOffset = 0;
+      final ArrayList<OneLineComponent> components = new ArrayList<>();
+      final List<Integer> startOffsets = new ArrayList<>();
+      final List<Integer> endOffsets = new ArrayList<>();
 
-      myOneLineComponents = new OneLineComponent[texts.length];
+
+      Map<TextRange, ParameterInfoUIContextEx.Flag> flagsMap = new TreeMap<>(TEXT_RANGE_COMPARATOR);
+
+      StringBuilder fullLine = new StringBuilder();
+      StringBuilder line = new StringBuilder();
       for (int i = 0; i < texts.length; i++) {
-        String line = texts[i];
+        String paramText = escapeString(texts[i], escapeFunction);
+        if (paramText == null) break;
+        startOffsets.add(fullLine.length());
+        fullLine.append(texts[i]);
+        endOffsets.add(fullLine.length());
+        line.append(texts[i]);
         final EnumSet<ParameterInfoUIContextEx.Flag> flag = flags[i];
-        myOneLineComponents[i] = new OneLineComponent();
-        boolean highlighed = flag.contains(ParameterInfoUIContextEx.Flag.HIGHLIGHT);
-        myOneLineComponents[i].setup(
-          line, 0, highlighed ?  line.length() : 0,
-          flag.contains(ParameterInfoUIContextEx.Flag.DISABLE), flags[i].contains(ParameterInfoUIContextEx.Flag.STRIKEOUT),
-          background
-        );
-        add(myOneLineComponents[i], new GridBagConstraints(i,0,1,1,1,0,GridBagConstraints.WEST,GridBagConstraints.HORIZONTAL,new Insets(0,0,0,0),0,0));
-      }
-    }
+        if (flag.contains(ParameterInfoUIContextEx.Flag.HIGHLIGHT)) {
+          result.current = i;
+          flagsMap.put(TextRange.create(curOffset, curOffset + paramText.trim().length()), ParameterInfoUIContextEx.Flag.HIGHLIGHT);
+        }
 
-    public void setDisabled(){
-      for (OneLineComponent oneLineComponent : myOneLineComponents) {
-        oneLineComponent.setDisabled();
+        if (flag.contains(ParameterInfoUIContextEx.Flag.DISABLE)) {
+          flagsMap.put(TextRange.create(curOffset, curOffset + paramText.trim().length()), ParameterInfoUIContextEx.Flag.DISABLE);
+        }
+
+        if (flag.contains(ParameterInfoUIContextEx.Flag.STRIKEOUT)) {
+          flagsMap.put(TextRange.create(curOffset, curOffset + paramText.trim().length()), ParameterInfoUIContextEx.Flag.STRIKEOUT);
+        }
+
+        curOffset += paramText.length();
+        if (line.length() >= 50) {
+          final OneLineComponent component = new OneLineComponent();
+          buf.append(component.setup(escapeString(line.toString(), escapeFunction), flagsMap, background));
+          add(component, new GridBagConstraints(0, index, 1, 1, 1, 0, GridBagConstraints.WEST,
+                                                                 GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
+          index += 1;
+          flagsMap.clear();
+          curOffset = 0;
+          line = new StringBuilder();
+          components.add(component);
+        }
       }
+      ParameterInfoController.SignatureItem item = new ParameterInfoController.SignatureItem(fullLine.toString(), false, false,
+                                                                                             startOffsets, endOffsets);
+      result.signatures.add(item);
+      final OneLineComponent component = new OneLineComponent();
+      buf.append(component.setup(escapeString(line.toString(), escapeFunction), flagsMap, background));
+      add(component, new GridBagConstraints(0, index, 1, 1, 1, 0, GridBagConstraints.WEST,
+                                            GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
+      components.add(component);
+      myOneLineComponents = components.toArray(new OneLineComponent[0]);
+      return buf.toString();
     }
   }
 
   private class OneLineComponent extends JPanel {
-    StrikeoutLabel myLabel1 = new StrikeoutLabel("", SwingConstants.LEFT);
-    StrikeoutLabel myLabel2 = new StrikeoutLabel("", SwingConstants.LEFT);
-    StrikeoutLabel myLabel3 = new StrikeoutLabel("", SwingConstants.LEFT);
+    JLabel myLabel = new JLabel("", SwingConstants.LEFT);
+    private boolean isDisabledBeforeHighlight = false;
 
     private OneLineComponent(){
       super(new GridBagLayout());
 
-      myLabel1.setOpaque(true);
-      myLabel1.setFont(NORMAL_FONT);
+      myLabel.setOpaque(true);
+      myLabel.setFont(NORMAL_FONT);
+      if (myRequestFocus)
+        myLabel.setFocusable(true);
 
-      myLabel2.setOpaque(true);
-      myLabel2.setFont(BOLD_FONT);
-
-      myLabel3.setOpaque(true);
-      myLabel3.setFont(NORMAL_FONT);
-
-      add(myLabel1, new GridBagConstraints(0,0,1,1,0,0,GridBagConstraints.WEST,GridBagConstraints.NONE,new Insets(0,0,0,0),0,0));
-      add(myLabel2, new GridBagConstraints(1,0,1,1,0,0,GridBagConstraints.WEST,GridBagConstraints.NONE,new Insets(0,0,0,0),0,0));
-      add(myLabel3, new GridBagConstraints(2,0,1,1,1,0,GridBagConstraints.WEST,GridBagConstraints.HORIZONTAL,new Insets(0,0,0,0),0,0));
-    }
-
-    private void setup(String text, int highlightStartOffset, int highlightEndOffset, boolean isDisabled, boolean strikeout, Color background) {
-      myLabel1.setBackground(background);
-      myLabel2.setBackground(background);
-      myLabel3.setBackground(background);
-      setBackground(background);
-
-      myLabel1.setStrikeout(strikeout);
-      myLabel2.setStrikeout(strikeout);
-      myLabel3.setStrikeout(strikeout);
-
-      if (isDisabled) {
-        myLabel1.setText(text);
-        myLabel2.setText("");
-        myLabel3.setText("");
-
-        setDisabled();
-      }
-      else {
-        myLabel1.setForeground(FOREGROUND_COLOR);
-        myLabel2.setForeground(FOREGROUND_COLOR);
-        myLabel3.setForeground(FOREGROUND_COLOR);
-
-        if (highlightStartOffset < 0) {
-          myLabel1.setText(text);
-          myLabel2.setText("");
-          myLabel3.setText("");
-        }
-        else {
-          myLabel1.setText(text.substring(0, highlightStartOffset));
-          myLabel2.setText(text.substring(highlightStartOffset, highlightEndOffset));
-          myLabel3.setText(text.substring(highlightEndOffset));
-        }
-      }
-    }
-
-    private void setDisabled(){
-      myLabel1.setForeground(DISABLED_FOREGROUND_COLOR);
-      myLabel2.setForeground(DISABLED_FOREGROUND_COLOR);
-      myLabel3.setForeground(DISABLED_FOREGROUND_COLOR);
-    }
-
-    private void setDisabledBeforeHighlight(){
-      myLabel1.setForeground(DISABLED_FOREGROUND_COLOR);
+      add(myLabel, new GridBagConstraints(0, 0, 1, 1, 1, 1, GridBagConstraints.WEST, GridBagConstraints.NONE,
+                                          new Insets(0, 0, 0, 0), 0, 0));
     }
 
     @Override
-    public Dimension getPreferredSize(){
-      myLabel1.setFont(BOLD_FONT);
-      myLabel3.setFont(BOLD_FONT);
-      Dimension boldPreferredSize = super.getPreferredSize();
-      myLabel1.setFont(NORMAL_FONT);
-      myLabel3.setFont(NORMAL_FONT);
-      Dimension normalPreferredSize = super.getPreferredSize();
-
-      // some fonts (for example, Arial Black Cursiva) have NORMAL characters wider than BOLD characters
-
-      return new Dimension(Math.max(boldPreferredSize.width, normalPreferredSize.width),
-                                          Math.max(boldPreferredSize.height, normalPreferredSize.height));
+    public String toString() {
+      return myLabel.getText();
     }
+
+    private String setup(String text,
+                         boolean isDisabled,
+                         boolean isStrikeout,
+                         Color background, @Nullable TextRange range) {
+      Map<TextRange, ParameterInfoUIContextEx.Flag> flagsMap = new TreeMap<>(TEXT_RANGE_COMPARATOR);
+      if (range != null)
+        flagsMap.put(range, ParameterInfoUIContextEx.Flag.HIGHLIGHT);
+      if (isDisabled)
+        flagsMap.put(TextRange.create(0, text.length()), ParameterInfoUIContextEx.Flag.DISABLE);
+      if (isStrikeout)
+        flagsMap.put(TextRange.create(0, text.length()), ParameterInfoUIContextEx.Flag.STRIKEOUT);
+      return setup(text, flagsMap, background);
+    }
+
+    private String setup(@NotNull String text, @NotNull Map<TextRange, ParameterInfoUIContextEx.Flag> flagsMap, @NotNull Color background) {
+      if (flagsMap.isEmpty()) {
+        return doSetup(text, background);
+      }
+      else {
+        String labelText = buildLabelText(text, flagsMap);
+        return doSetup(labelText, background);
+      }
+    }
+
+    private String doSetup(@NotNull String text, @NotNull Color background) {
+      myLabel.setBackground(background);
+      setBackground(background);
+
+      myLabel.setForeground(FOREGROUND);
+
+      myLabel.setText(XmlStringUtil.wrapInHtml(text));
+      return myLabel.getText();
+    }
+
+    private String buildLabelText(@NotNull final String text, @NotNull final Map<TextRange, ParameterInfoUIContextEx.Flag> flagsMap) {
+      final StringBuilder labelText = new StringBuilder(text);
+      final String disabledTag = getTagValue(ParameterInfoUIContextEx.Flag.DISABLE);
+
+      final Map<Integer, Integer> faultMap = new HashMap<>();
+      if (isDisabledBeforeHighlight) {
+        final String tag = getOpeningTag(disabledTag);
+        labelText.insert(0, tag);
+        faultMap.put(0, tag.length());
+      }
+
+      for (Map.Entry<TextRange, ParameterInfoUIContextEx.Flag> entry : flagsMap.entrySet()) {
+        final TextRange highlightRange = entry.getKey();
+        final ParameterInfoUIContextEx.Flag flag = entry.getValue();
+
+        final String tagValue = getTagValue(flag);
+        final String tag = getOpeningTag(tagValue);
+
+        int startOffset = highlightRange.getStartOffset();
+        int endOffset = highlightRange.getEndOffset() + tag.length();
+
+        for (Map.Entry<Integer, Integer> entry1 : faultMap.entrySet()) {
+          if (entry1.getKey() < highlightRange.getStartOffset()) {
+            startOffset += entry1.getValue();
+          }
+          if (entry1.getKey() < highlightRange.getEndOffset()) {
+            endOffset += entry1.getValue();
+          }
+        }
+
+        if (flag == ParameterInfoUIContextEx.Flag.HIGHLIGHT && isDisabledBeforeHighlight) {
+          final String disableCloseTag = getClosingTag(disabledTag);
+          labelText.insert(startOffset, disableCloseTag);
+          faultMap.put(highlightRange.getStartOffset(), disableCloseTag.length());
+        }
+
+        labelText.insert(startOffset, tag);
+        faultMap.put(highlightRange.getStartOffset(), tag.length());
+
+        final String endTag = getClosingTag(tagValue);
+        labelText.insert(endOffset, endTag);
+        faultMap.put(highlightRange.getEndOffset(), endTag.length());
+
+      }
+      return labelText.toString();
+    }
+
+    public void setDisabledBeforeHighlight() {
+      isDisabledBeforeHighlight = true;
+    }
+  }
+
+  private static String getOpeningTag(@NotNull String value) {
+    return "<" + value + ">";
+  }
+
+  private static String getClosingTag(@NotNull String value) {
+    int index = value.indexOf(' ');
+    return "</" + (0 <= index ? value.substring(0, index) : value) + ">";
+  }
+
+  private static String getTagValue(@NotNull ParameterInfoUIContextEx.Flag flag) {
+    if (flag == ParameterInfoUIContextEx.Flag.HIGHLIGHT) return "b color=" + ColorUtil.toHex(HIGHLIGHTED_COLOR);
+    if (flag == ParameterInfoUIContextEx.Flag.DISABLE) return "font color=" + ColorUtil.toHex(DISABLED_COLOR);
+    if (flag == ParameterInfoUIContextEx.Flag.STRIKEOUT) return "strike";
+    throw new IllegalArgumentException("flag=" + flag);
   }
 }

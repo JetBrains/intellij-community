@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,9 +19,11 @@ import com.intellij.ide.IdeTooltipManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.ui.awt.RelativePoint;
-import com.intellij.util.ui.AwtVisitor;
+import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.border.Border;
 import java.awt.*;
 import java.awt.event.MouseEvent;
 
@@ -41,13 +43,18 @@ public class HintHint {
   private Color myTextFg;
   private Color myTextBg;
   private Color myBorderColor;
+  private Border myComponentBorder = null;
+  private Insets myBorderInsets;
   private Font myFont;
   private int myCalloutShift;
-  private boolean myExplicitClose;
 
+  private boolean myExplicitClose;
   private int myPositionChangeX;
   private int myPositionChangeY;
   private boolean myShowImmediately = false;
+  private boolean myAnimationEnabled;
+  private boolean myRequestFocus;
+  
 
   public HintHint() {
   }
@@ -99,7 +106,15 @@ public class HintHint {
   public RelativePoint getTargetPoint() {
     return new RelativePoint(getOriginalComponent(), getOriginalPoint());
   }
+  
+  public Border getComponentBorder() {
+    return myComponentBorder;
+  }
 
+  public void setComponentBorder(@Nullable Border border) {
+    myComponentBorder = border;
+  }
+  
   public Balloon.Position getPreferredPosition() {
     return myPreferredPosition;
   }
@@ -122,6 +137,10 @@ public class HintHint {
 
   public Color getBorderColor() {
     return myBorderColor != null ? myBorderColor : getTooltipManager().getBorderColor(myAwtTooltip);
+  }
+
+  public Insets getBorderInsets() {
+    return myBorderInsets;
   }
 
   public boolean isOpaqueAllowed() {
@@ -154,7 +173,7 @@ public class HintHint {
     return this;
   }
 
-  public boolean isHightlighterType() {
+  public boolean isHighlighterType() {
     return myQuickHint;
   }
 
@@ -164,14 +183,11 @@ public class HintHint {
 
   public void initStyle(Component c, boolean includeChildren) {
     if (includeChildren) {
-      new AwtVisitor(c) {
-        @Override
-        public boolean visit(Component component) {
-          doInit(component);
-          return false;
-        }
-      };
-    } else {
+      for (Component component : UIUtil.uiTraverser(c)) {
+        doInit(component);
+      }
+    }
+    else {
       doInit(c);
     }
   }
@@ -214,6 +230,12 @@ public class HintHint {
     return this;
   }
 
+  public HintHint setBorderInsets(Insets insets) {
+    myBorderInsets = insets;
+    return this;
+  }
+
+
   public int getCalloutShift() {
     return myCalloutShift;
   }
@@ -247,13 +269,36 @@ public class HintHint {
   }
 
   /**
-   * Make sense if and only if isAwtTooltip set to <code>true</code>
+   * Make sense if and only if isAwtTooltip set to {@code true}
    *
    * @param showImmediately true or false
    * @return current instance of HintHint
    */
   public HintHint setShowImmediately(boolean showImmediately) {
     myShowImmediately = showImmediately;
+    return this;
+  }
+
+  public boolean isAnimationEnabled() {
+    return myAnimationEnabled;
+  }
+
+  /**
+   *
+   * @param enabled is {@code true} by default and balloon appears with transparency animation. {@code false} means instant opaque showing.
+   * @return current instance of HintHint
+   */
+  public HintHint setAnimationEnabled(boolean enabled){
+    myAnimationEnabled = enabled;
+    return this;
+  }
+
+  public boolean isRequestFocus() {
+    return myRequestFocus;
+  }
+
+  public HintHint setRequestFocus(boolean requestFocus) {
+    myRequestFocus = requestFocus;
     return this;
   }
 }

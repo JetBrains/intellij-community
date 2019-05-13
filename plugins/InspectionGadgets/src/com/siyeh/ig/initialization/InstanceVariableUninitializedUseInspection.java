@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2012 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2013 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,6 @@ package com.siyeh.ig.initialization;
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.daemon.ImplicitUsageProvider;
 import com.intellij.codeInspection.util.SpecialAnnotationsUtil;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.*;
@@ -30,63 +29,31 @@ import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.AddToIgnoreIfAnnotatedByListQuickFix;
 import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.psiutils.UninitializedReadCollector;
+import org.intellij.lang.annotations.Pattern;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.JComponent;
-import javax.swing.JPanel;
-import java.awt.GridBagConstraints;
-import java.awt.GridBagLayout;
+import javax.swing.*;
+import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
 
 public class InstanceVariableUninitializedUseInspection extends BaseInspection {
 
+  protected final List<String> annotationNames = new ArrayList<>();
   /**
    * @noinspection PublicField
    */
   public boolean m_ignorePrimitives = false;
-
   /**
    * @noinspection PublicField
    */
   @NonNls
   public String annotationNamesString = "";
-  private final List<String> annotationNames = new ArrayList();
 
   public InstanceVariableUninitializedUseInspection() {
-    parseString(annotationNamesString, annotationNames);
-  }
-
-  @Override
-  @NotNull
-  public String getID() {
-    return "InstanceVariableUsedBeforeInitialized";
-  }
-
-  @Override
-  @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("instance.variable.used.before.initialized.display.name");
-  }
-
-  @Override
-  @NotNull
-  public String buildErrorString(Object... infos) {
-    return InspectionGadgetsBundle.message("instance.variable.used.before.initialized.problem.descriptor");
-  }
-
-  @Override
-  public void readSettings(Element element) throws InvalidDataException {
-    super.readSettings(element);
-    parseString(annotationNamesString, annotationNames);
-  }
-
-  @Override
-  public void writeSettings(Element element) throws WriteExternalException {
-    annotationNamesString = formatString(annotationNames);
-    super.writeSettings(element);
+    parseString(this.annotationNamesString, this.annotationNames);
   }
 
   @Override
@@ -113,6 +80,37 @@ public class InstanceVariableUninitializedUseInspection extends BaseInspection {
     return panel;
   }
 
+  @Pattern(VALID_ID_PATTERN)
+  @Override
+  @NotNull
+  public String getID() {
+    return "InstanceVariableUsedBeforeInitialized";
+  }
+
+  @Override
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message("instance.variable.used.before.initialized.display.name");
+  }
+
+  @Override
+  @NotNull
+  public String buildErrorString(Object... infos) {
+    return InspectionGadgetsBundle.message("instance.variable.used.before.initialized.problem.descriptor");
+  }
+
+  @Override
+  public void readSettings(@NotNull Element element) throws InvalidDataException {
+    super.readSettings(element);
+    parseString(annotationNamesString, annotationNames);
+  }
+
+  @Override
+  public void writeSettings(@NotNull Element element) throws WriteExternalException {
+    annotationNamesString = formatString(annotationNames);
+    super.writeSettings(element);
+  }
+
   @NotNull
   @Override
   protected InspectionGadgetsFix[] buildFixes(Object... infos) {
@@ -129,7 +127,7 @@ public class InstanceVariableUninitializedUseInspection extends BaseInspection {
 
     @Override
     public void visitField(@NotNull PsiField field) {
-      if (field.hasModifierProperty(PsiModifier.STATIC)) {
+      if (field.hasModifierProperty(PsiModifier.STATIC) || field.hasModifierProperty(PsiModifier.FINAL)) {
         return;
       }
       if (field.getInitializer() != null) {
@@ -150,7 +148,7 @@ public class InstanceVariableUninitializedUseInspection extends BaseInspection {
         return;
       }
       for (ImplicitUsageProvider provider :
-        Extensions.getExtensions(ImplicitUsageProvider.EP_NAME)) {
+        ImplicitUsageProvider.EP_NAME.getExtensionList()) {
         if (provider.isImplicitWrite(field)) {
           return;
         }

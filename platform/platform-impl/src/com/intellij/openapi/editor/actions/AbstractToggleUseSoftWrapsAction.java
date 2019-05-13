@@ -16,28 +16,33 @@
 package com.intellij.openapi.editor.actions;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.editor.EditorFactory;
+import com.intellij.openapi.editor.EditorSettings;
+import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
+import com.intellij.openapi.editor.impl.SettingsImpl;
 import com.intellij.openapi.editor.impl.softwrap.SoftWrapAppliancePlaces;
+import com.intellij.openapi.project.DumbAware;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.awt.*;
+
 /**
- * Provides common functionality for <code>'toggle soft wraps usage'</code> actions.
+ * Provides common functionality for {@code 'toggle soft wraps usage'} actions.
  *
  * @author Denis Zhdanov
- * @since Aug 23, 2010 11:33:35 AM
  */
-public abstract class AbstractToggleUseSoftWrapsAction extends ToggleAction {
+public abstract class AbstractToggleUseSoftWrapsAction extends ToggleAction implements DumbAware {
 
   private final SoftWrapAppliancePlaces myAppliancePlace;
   private final boolean myGlobal;
 
   /**
-   * Creates new <code>AbstractToggleUseSoftWrapsAction</code> object.
+   * Creates new {@code AbstractToggleUseSoftWrapsAction} object.
    * 
    * @param appliancePlace    defines type of the place where soft wraps are applied
    * @param global            indicates if soft wraps should be changed for the current editor only or for the all editors
@@ -49,32 +54,57 @@ public abstract class AbstractToggleUseSoftWrapsAction extends ToggleAction {
   }
 
   @Override
-  public boolean isSelected(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
+    if (myGlobal) {
+      Editor editor = getEditor(e);
+      if (editor != null) {
+        EditorSettings settings = editor.getSettings();
+        if (settings instanceof SettingsImpl && ((SettingsImpl)settings).getSoftWrapAppliancePlace() != myAppliancePlace) {
+          e.getPresentation().setEnabledAndVisible(false);
+          return;
+        }
+      }
+    }
+    super.update(e);
+  }
+
+  @Override
+  public boolean isSelected(@NotNull AnActionEvent e) {
+    if (myGlobal) return EditorSettingsExternalizable.getInstance().isUseSoftWraps(myAppliancePlace);
     Editor editor = getEditor(e);
     return editor != null && editor.getSettings().isUseSoftWraps();
   }
 
   @Override
-  public void setSelected(AnActionEvent e, boolean state) {
+  public void setSelected(@NotNull AnActionEvent e, boolean state) {
     final Editor editor = getEditor(e);
     if (editor == null) {
       return;
     }
-    
-    if (myGlobal) {
-      EditorSettingsExternalizable.getInstance().setUseSoftWraps(state, myAppliancePlace);
+
+    toggleSoftWraps(editor, myGlobal ? myAppliancePlace : null, state);
+  }
+
+  public static void toggleSoftWraps(@NotNull Editor editor, @Nullable SoftWrapAppliancePlaces places, boolean state) {
+    Point point = editor.getScrollingModel().getVisibleArea().getLocation();
+    LogicalPosition anchorPosition = editor.xyToLogicalPosition(point);
+    int intraLineShift = point.y - editor.logicalPositionToXY(anchorPosition).y;
+
+    if (places != null) {
+      EditorSettingsExternalizable.getInstance().setUseSoftWraps(state, places);
+      EditorFactory.getInstance().refreshAllEditors();
     }
-    else {
+    if (editor.getSettings().isUseSoftWraps() != state) {
       editor.getSettings().setUseSoftWraps(state);
     }
-    
-    if (editor instanceof EditorEx) {
-      ((EditorEx)editor).reinitSettings();
-    }
+
+    editor.getScrollingModel().disableAnimation();
+    editor.getScrollingModel().scrollVertically(editor.logicalPositionToXY(anchorPosition).y + intraLineShift);
+    editor.getScrollingModel().enableAnimation();
   }
 
   @Nullable
-  protected Editor getEditor(AnActionEvent e) {
-    return e.getData(PlatformDataKeys.EDITOR);
+  protected Editor getEditor(@NotNull AnActionEvent e) {
+    return e.getData(CommonDataKeys.EDITOR);
   }
 }

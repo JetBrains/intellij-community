@@ -13,14 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.intellij.plugins.relaxNG;
 
+import com.intellij.ide.ApplicationInitializedListener;
 import com.intellij.javaee.ResourceRegistrar;
 import com.intellij.javaee.StandardResourceProvider;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.filters.AndFilter;
 import com.intellij.psi.filters.ClassFilter;
@@ -31,6 +30,7 @@ import com.intellij.psi.xml.XmlDocument;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomManager;
+import com.intellij.xml.util.HtmlUtil;
 import org.intellij.plugins.relaxNG.compact.psi.impl.RncDocument;
 import org.intellij.plugins.relaxNG.inspections.RngDomInspection;
 import org.intellij.plugins.relaxNG.inspections.UnusedDefineInspection;
@@ -38,26 +38,13 @@ import org.intellij.plugins.relaxNG.model.descriptors.RngNsDescriptor;
 import org.intellij.plugins.relaxNG.validation.ValidateAction;
 import org.intellij.plugins.relaxNG.xml.dom.RngDefine;
 import org.intellij.plugins.relaxNG.xml.dom.impl.RngDefineMetaData;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
 
-/**
- * Created by IntelliJ IDEA.
- * User: sweinreuter
- * Date: 18.07.2007
- */
-public class ApplicationLoader implements ApplicationComponent {
-  private static final String RNG_EXT = "rng";
+public class ApplicationLoader implements ApplicationInitializedListener {
   private static final String VALIDATE_XML = "ValidateXml";
   public static final String RNG_NAMESPACE = "http://relaxng.org/ns/structure/1.0";
 
-  @NonNls
-  @NotNull
-  public String getComponentName() {
-    return "Relax-NG";
-  }
-
-  public void initComponent() {
+  @Override
+  public void componentsInitialized() {
     registerMetaData();
 
     installValidateXmlAction();
@@ -66,8 +53,7 @@ public class ApplicationLoader implements ApplicationComponent {
   private static void installValidateXmlAction() {
     final ActionManager mgr = ActionManager.getInstance();
     final AnAction validateAction = mgr.getAction(VALIDATE_XML);
-    mgr.unregisterAction(VALIDATE_XML);
-    mgr.registerAction(VALIDATE_XML, new ValidateAction(validateAction));
+    mgr.replaceAction(VALIDATE_XML, new ValidateAction(validateAction));
   }
 
   private static void registerMetaData() {
@@ -84,6 +70,7 @@ public class ApplicationLoader implements ApplicationComponent {
             RngNsDescriptor.class);
 
     registrar.registerMetaData(new ElementFilter() {
+      @Override
       public boolean isAcceptable(Object element, PsiElement context) {
         if (element instanceof XmlTag) {
           final XmlTag tag = (XmlTag)element;
@@ -93,13 +80,11 @@ public class ApplicationLoader implements ApplicationComponent {
         return false;
       }
 
+      @Override
       public boolean isClassAcceptable(Class hintClass) {
         return XmlTag.class.isAssignableFrom(hintClass);
       }
     }, RngDefineMetaData.class);
-  }
-
-  public void disposeComponent() {
   }
 
   public static Class[] getInspectionClasses() {
@@ -110,8 +95,11 @@ public class ApplicationLoader implements ApplicationComponent {
   }
 
   public static class ResourceProvider implements StandardResourceProvider {
+    @Override
     public void registerResources(ResourceRegistrar registrar) {
       registrar.addStdResource(RNG_NAMESPACE, "/resources/relaxng.rng", getClass());
+      registrar.addStdResource(HtmlUtil.SVG_NAMESPACE, "/resources/html5-schema/svg11/svg11.rnc", getClass());
+      registrar.addStdResource(HtmlUtil.MATH_ML_NAMESPACE, "/resources/html5-schema/mml3/mathml3.rnc", getClass());
       registrar.addIgnoredResource("http://relaxng.org/ns/compatibility/annotations/1.0");
     }
   }

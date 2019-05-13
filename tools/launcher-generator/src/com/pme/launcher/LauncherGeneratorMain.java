@@ -1,6 +1,6 @@
 /*
  * Copyright 2006 ProductiveMe Inc.
- * Copyright 2013 JetBrains s.r.o.
+ * Copyright 2013-2018 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,17 +17,15 @@
 
 package com.pme.launcher;
 
-import org.apache.sanselan.ImageFormat;
-import org.apache.sanselan.Sanselan;
+import org.apache.commons.imaging.ImageFormats;
+import org.apache.commons.imaging.Imaging;
 import org.jdom.Document;
+import org.jdom.Element;
 import org.jdom.input.SAXBuilder;
 
 import java.awt.image.BufferedImage;
 import java.io.*;
-import java.nio.charset.Charset;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Properties;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -47,21 +45,30 @@ public class LauncherGeneratorMain {
       System.exit(2);
     }
 
-    InputStream appInfoStream = LauncherGeneratorMain.class.getClassLoader().getResourceAsStream(args[1]);
+    String appInfoFileName = args[1];
+    InputStream appInfoStream;
+    try {
+      appInfoStream = new FileInputStream(appInfoFileName);
+    }
+    catch (FileNotFoundException e) {
+      appInfoStream = LauncherGeneratorMain.class.getClassLoader().getResourceAsStream(appInfoFileName);
+    }
+
     if (appInfoStream == null) {
-      System.err.println("Application info file " + appInfoStream + " not found");
+      System.err.println("Application info file " + appInfoFileName + " not found");
       System.exit(3);
     }
     Document appInfo;
     try {
       appInfo = new SAXBuilder().build(appInfoStream);
     } catch (Exception e) {
-      System.err.println("Error loading application info file " + args[1] + ": " + e.getMessage());
+      System.err.println("Error loading application info file " + appInfoFileName + ": " + e.getMessage());
       System.exit(4);
       return;
     }
 
-    String splashUrl = appInfo.getRootElement().getChild("logo").getAttributeValue("url");
+    Element appInfoRoot = appInfo.getRootElement();
+    String splashUrl = getChild(appInfoRoot, "logo").getAttributeValue("url");
     if (splashUrl.startsWith("/")) {
       splashUrl = splashUrl.substring(1);
     }
@@ -73,17 +80,17 @@ public class LauncherGeneratorMain {
 
     ByteArrayOutputStream splashBmpStream = new ByteArrayOutputStream();
     try {
-      BufferedImage bufferedImage = Sanselan.getBufferedImage(splashStream);
-      Sanselan.writeImage(bufferedImage, splashBmpStream, ImageFormat.IMAGE_FORMAT_BMP, new HashMap());
+      BufferedImage bufferedImage = Imaging.getBufferedImage(splashStream);
+      Imaging.writeImage(bufferedImage, splashBmpStream, ImageFormats.BMP, new HashMap());
     }
     catch (Exception e) {
       System.err.println("Error converting splash screen to BMP: " + e.getMessage());
       System.exit(6);
     }
 
-    String icoUrl = appInfo.getRootElement().getChild("icon").getAttributeValue("ico");
+    String icoUrl = getChild(appInfoRoot, "icon").getAttributeValue("ico");
     if (icoUrl == null) {
-      System.err.println(".ico file URL not specified in application info file " + args[1]);
+      System.err.println(".ico file URL not specified in application info file " + appInfoFileName);
       System.exit(11);
     }
     InputStream iconStream = LauncherGeneratorMain.class.getClassLoader().getResourceAsStream(icoUrl);
@@ -117,6 +124,25 @@ public class LauncherGeneratorMain {
       System.exit(8);
     }
 
+    String companyName = getChild(appInfoRoot, "company").getAttributeValue("name");
+    Element names = getChild(appInfoRoot, "names");
+    String productShortName = names.getAttributeValue("product");
+    String productFullName = names.getAttributeValue("fullname", productShortName);
+    Element versionElement = getChild(appInfoRoot, "version");
+    int majorVersion = Integer.parseInt(versionElement.getAttributeValue("major"));
+    String minorVersionString = versionElement.getAttributeValue("minor");
+    Pattern p = Pattern.compile("(\\d+)(\\.(\\d+))?");
+    Matcher matcher = p.matcher(minorVersionString);
+    if (!matcher.matches()) {
+      System.err.println("Unexpected minor version format: " + minorVersionString);
+    }
+    int minorVersion = Integer.parseInt(matcher.group(1));
+    int bugfixVersion = matcher.group(3) != null ? Integer.parseInt(matcher.group(3)) : 0;
+    String buildNumber = getChild(appInfoRoot, "build").getAttributeValue("number");
+    String versionString = "" + majorVersion + "." + minorVersion + "." + bugfixVersion + "." + buildNumber;
+
+    int year = new GregorianCalendar().get(Calendar.YEAR);
+
     LauncherGenerator generator = new LauncherGenerator(template, new File(args[4]));
     try {
       generator.load();
@@ -134,6 +160,15 @@ public class LauncherGeneratorMain {
       generator.injectBitmap(resourceIDs.get("IDB_SPLASH"), splashBmpStream.toByteArray());
       generator.injectIcon(resourceIDs.get("IDI_WINLAUNCHER"), iconStream);
 
+      generator.setVersionInfoString("LegalCopyright", "Copyright (C) 2000-" + year + " " + companyName);
+      generator.setVersionInfoString("ProductName", productFullName);
+      generator.setVersionInfoString("FileVersion", versionString);
+      generator.setVersionInfoString("FileDescription", productFullName);
+      generator.setVersionInfoString("ProductVersion", versionString);
+      generator.setVersionInfoString("InternalName", productShortName.toLowerCase() + ".exe");
+      generator.setVersionInfoString("OriginalFilename", productShortName.toLowerCase() + ".exe");
+      generator.setVersionNumber(majorVersion, minorVersion, bugfixVersion);
+
       generator.generate();
     } catch (IOException e) {
       e.printStackTrace();
@@ -141,9 +176,13 @@ public class LauncherGeneratorMain {
     }
   }
 
+  private static Element getChild(Element appInfoRoot, String logo) {
+    return appInfoRoot.getChild(logo, appInfoRoot.getNamespace());
+  }
+
   private static Map<String, Integer> loadResourceIDs(String arg) throws IOException {
     Map<String, Integer> result = new HashMap<String, Integer>();
-    BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(arg), Charset.forName("UTF-16")));
+    BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(arg)));
     Pattern pattern = Pattern.compile("#define (\\w+)\\s+(\\d+)");
     try {
       while(true) {

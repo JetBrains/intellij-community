@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2012 Dave Griffith, Bas Leijdekkers
+ * Copyright 2006-2018 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,10 +17,8 @@ package com.siyeh.ig.serialization;
 
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInspection.util.SpecialAnnotationsUtil;
-import com.intellij.psi.PsiAnonymousClass;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiField;
-import com.intellij.psi.PsiModifier;
+import com.intellij.psi.*;
+import com.intellij.psi.util.PsiUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
@@ -31,10 +29,16 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
-public class NonSerializableFieldInSerializableClassInspection extends SerializableInspection {
-
+public class NonSerializableFieldInSerializableClassInspection extends SerializableInspectionBase {
   @SuppressWarnings({"PublicField"})
   public final ExternalizableStringSet ignorableAnnotations = new ExternalizableStringSet();
+
+  @NotNull
+  @Override
+  protected JComponent[] createAdditionalOptions() {
+    return new JComponent[]{SpecialAnnotationsUtil.createSpecialAnnotationsListControl(
+      ignorableAnnotations, InspectionGadgetsBundle.message("ignore.if.annotated.by"))};
+  }
 
   @Override
   @NotNull
@@ -48,12 +52,6 @@ public class NonSerializableFieldInSerializableClassInspection extends Serializa
   public String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "non.serializable.field.in.serializable.class.problem.descriptor");
-  }
-
-  @Override
-  protected JComponent[] createAdditionalOptions() {
-    return new JComponent[]{SpecialAnnotationsUtil.createSpecialAnnotationsListControl(
-      ignorableAnnotations, InspectionGadgetsBundle.message("ignore.if.annotated.by"))};
   }
 
   @NotNull
@@ -85,17 +83,21 @@ public class NonSerializableFieldInSerializableClassInspection extends Serializa
       if (!SerializationUtils.isSerializable(aClass)) {
         return;
       }
-      if (SerializationUtils.isProbablySerializable(field.getType())) {
+      PsiType fieldType = field.getType();
+      if (SerializationUtils.isProbablySerializable(fieldType)) {
         return;
       }
-      final boolean hasWriteObject = SerializationUtils.hasWriteObject(aClass);
-      if (hasWriteObject) {
+      PsiClass fieldClass = PsiUtil.resolveClassInClassTypeOnly(fieldType);
+      if (fieldClass != null && isIgnoredSubclass(fieldClass)) {
+        return;
+      }
+      if (SerializationUtils.hasWriteObject(aClass) || SerializationUtils.hasWriteReplace(aClass)) {
         return;
       }
       if (isIgnoredSubclass(aClass)) {
         return;
       }
-      if (AnnotationUtil.isAnnotated(field, ignorableAnnotations)) {
+      if (AnnotationUtil.isAnnotated(field, ignorableAnnotations, 0)) {
         return;
       }
       registerFieldError(field, field);

@@ -20,20 +20,14 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import gnu.trove.TIntObjectHashMap;
-import gnu.trove.TObjectProcedure;
 import org.jetbrains.annotations.NotNull;
 import org.kohsuke.rngom.parse.compact.CompactSyntaxConstants;
 
 import java.lang.reflect.Field;
 import java.util.Locale;
 
-/**
- * Created by IntelliJ IDEA.
- * User: sweinreuter
- * Date: 04.08.2007
- */
 public class RncTokenTypes {
-  private static final TIntObjectHashMap<IElementType> ourTokenTypes = new TIntObjectHashMap<IElementType>();
+  private static final TIntObjectHashMap<IElementType> ourTokenTypes = new TIntObjectHashMap<>();
 
   static {
     assert RngCompactLanguage.INSTANCE != null;
@@ -77,15 +71,13 @@ public class RncTokenTypes {
   @NotNull
   private static IElementType get(final String name) {
     assert !ourTokenTypes.isEmpty();
-    final Ref<IElementType> ref = new Ref<IElementType>();
-    ourTokenTypes.forEachValue(new TObjectProcedure<IElementType>() {
-      public boolean execute(IElementType iElementType) {
-        if (iElementType.toString().equals(name)) {
-          ref.set(iElementType);
-          return false;
-        }
-        return true;
+    final Ref<IElementType> ref = new Ref<>();
+    ourTokenTypes.forEachValue(iElementType -> {
+      if (iElementType.toString().equals(name)) {
+        ref.set(iElementType);
+        return false;
       }
+      return true;
     });
     return ref.get();
   }
@@ -168,7 +160,7 @@ public class RncTokenTypes {
   public static final IElementType KEYWORD_GRAMMAR = get("KEYWORD_GRAMMAR");
   public static final IElementType KEYWORD_TEXT = get("KEYWORD_TEXT");
   public static final IElementType KEYWORD_PARENT = get("KEYWORD_PARENT");
-  public static final IElementType KEYWORD_EXTERNAL = get("KEYWORD_LIST");
+  public static final IElementType KEYWORD_EXTERNAL = get("KEYWORD_EXTERNAL");
   public static final IElementType KEYWORD_NOT_ALLOWED = get("KEYWORD_NOTALLOWED");
   public static final IElementType KEYWORD_START = get("KEYWORD_START");
   public static final IElementType KEYWORD_INCLUDE = get("KEYWORD_INCLUDE");

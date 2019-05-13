@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package com.intellij.util;
 
 import com.intellij.patterns.*;
+import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
 
 import java.util.Collection;
@@ -27,24 +28,21 @@ import java.util.Set;
  */
 public class PatternValuesIndex {
 
-  public static Set<String> buildStringIndex(Collection<ElementPattern<?>> patterns) {
-    final THashSet<String> result = new THashSet<String>();
-    processStringValues(patterns, new PairProcessor<ElementPattern<?>, Collection<Object>>() {
-      @Override
-      public boolean process(ElementPattern<?> elementPattern, Collection<Object> value) {
-        for (Object o : value) {
-          if (o instanceof String) {
-            result.add((String)o);
-          }
+  public static Set<String> buildStringIndex(Collection<? extends ElementPattern<?>> patterns) {
+    final THashSet<String> result = new THashSet<>();
+    processStringValues(patterns, (elementPattern, value) -> {
+      for (Object o : value) {
+        if (o instanceof String) {
+          result.add((String)o);
         }
-        return true;
       }
+      return true;
     });
     return result;
   }
 
-  public static boolean processStringValues(Collection<ElementPattern<?>> patterns, final PairProcessor<ElementPattern<?>, Collection<Object>> valueProcessor) {
-    final LinkedList<ElementPattern<?>> stack = new LinkedList<ElementPattern<?>>();
+  public static boolean processStringValues(Collection<? extends ElementPattern<?>> patterns, final PairProcessor<? super ElementPattern<?>, ? super Collection<Object>> valueProcessor) {
+    final LinkedList<ElementPattern<?>> stack = new LinkedList<>();
     for (final ElementPattern<?> next : patterns) {
       stack.add(next);
       while (!stack.isEmpty()) {
@@ -52,14 +50,15 @@ public class PatternValuesIndex {
         final ElementPatternCondition<?> patternCondition = pattern.getCondition();
         final InitialPatternCondition<?> initialCondition = patternCondition.getInitialCondition();
         if (initialCondition instanceof InitialPatternConditionPlus) {
-          stack.addAll(((InitialPatternConditionPlus<?>)initialCondition).getPatterns());
+          ContainerUtil.addAllNotNull(stack, ((InitialPatternConditionPlus<?>)initialCondition).getPatterns());
         }
         for (PatternCondition<?> condition : patternCondition.getConditions()) {
           if (condition instanceof PatternConditionPlus) {
             stack.add(((PatternConditionPlus)condition).getValuePattern());
           }
           else if (condition instanceof ValuePatternCondition) {
-            if (!valueProcessor.process(next, ((ValuePatternCondition)condition).getValues())) return false;
+            Collection<Object> values = ((ValuePatternCondition)condition).getValues();
+            if (!valueProcessor.process(next, values)) return false;
           }
         }
       }

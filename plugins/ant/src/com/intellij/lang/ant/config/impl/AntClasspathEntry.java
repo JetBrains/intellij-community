@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,9 +18,7 @@ package com.intellij.lang.ant.config.impl;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.roots.ui.CellAppearanceEx;
-import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.NullableFactory;
-import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Function;
 import com.intellij.util.PathUtil;
@@ -34,22 +32,26 @@ import java.util.List;
 
 public interface AntClasspathEntry {
   Externalizer<AntClasspathEntry> EXTERNALIZER = new Externalizer<AntClasspathEntry>() {
-    public AntClasspathEntry readValue(Element dataElement) throws InvalidDataException {
+    @Override
+    public AntClasspathEntry readValue(Element dataElement) {
       String pathUrl = dataElement.getAttributeValue(SinglePathEntry.PATH);
-      if (pathUrl != null)
+      if (pathUrl != null) {
         return new SinglePathEntry(PathUtil.toPresentableUrl(pathUrl));
+      }
       String dirUrl = dataElement.getAttributeValue(AllJarsUnderDirEntry.DIR);
-      if (dirUrl != null)
+      if (dirUrl != null) {
         return new AllJarsUnderDirEntry(PathUtil.toPresentableUrl(dirUrl));
-      throw new InvalidDataException();
+      }
+      throw new IllegalStateException();
     }
 
-    public void writeValue(Element dataElement, AntClasspathEntry entry) throws WriteExternalException {
+    @Override
+    public void writeValue(Element dataElement, AntClasspathEntry entry) {
       entry.writeExternal(dataElement);
     }
   };
 
-  void writeExternal(Element dataElement) throws WriteExternalException;
+  void writeExternal(Element dataElement);
 
   void addFilesTo(List<File> files);
 
@@ -58,16 +60,17 @@ public interface AntClasspathEntry {
   abstract class AddEntriesFactory implements NullableFactory<List<AntClasspathEntry>> {
     private final JComponent myParentComponent;
     private final FileChooserDescriptor myDescriptor;
-    private final Function<VirtualFile,AntClasspathEntry> myMapper;
+    private final Function<? super VirtualFile, ? extends AntClasspathEntry> myMapper;
 
     public AddEntriesFactory(final JComponent parentComponent,
                              final FileChooserDescriptor descriptor,
-                             final Function<VirtualFile, AntClasspathEntry> mapper) {
+                             final Function<? super VirtualFile, ? extends AntClasspathEntry> mapper) {
       myParentComponent = parentComponent;
       myDescriptor = descriptor;
       myMapper = mapper;
     }
 
+    @Override
     public List<AntClasspathEntry> create() {
       final VirtualFile[] files = FileChooser.chooseFiles(myDescriptor, myParentComponent, null, null);
       return files.length == 0 ? null : ContainerUtil.map(files, myMapper);

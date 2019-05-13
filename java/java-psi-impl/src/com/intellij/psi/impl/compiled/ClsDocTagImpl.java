@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,7 +32,7 @@ class ClsDocTagImpl extends ClsElementImpl implements PsiDocTag {
   private final ClsDocCommentImpl myDocComment;
   private final PsiElement myNameElement;
 
-  public ClsDocTagImpl(ClsDocCommentImpl docComment, @NonNls String name) {
+  ClsDocTagImpl(ClsDocCommentImpl docComment, @NonNls String name) {
     myDocComment = docComment;
     myNameElement = new NameElement(this, name);
   }
@@ -100,6 +100,7 @@ class ClsDocTagImpl extends ClsElementImpl implements PsiDocTag {
     return myNameElement;
   }
 
+  @NotNull
   @Override
   public PsiElement[] getDataElements() {
     return PsiElement.EMPTY_ARRAY;
@@ -130,7 +131,7 @@ class ClsDocTagImpl extends ClsElementImpl implements PsiDocTag {
     private final ClsDocTagImpl myParent;
     private final String myText;
 
-    public NameElement(ClsDocTagImpl parent, String text) {
+    NameElement(ClsDocTagImpl parent, String text) {
       myParent = parent;
       myText = text;
     }
@@ -164,11 +165,6 @@ class ClsDocTagImpl extends ClsElementImpl implements PsiDocTag {
     @Override
     public PsiElement getParent() {
       return myParent;
-    }
-
-    @Override
-    public void accept(@NotNull PsiElementVisitor visitor) {
-      visitor.visitElement(this);
     }
   }
 }

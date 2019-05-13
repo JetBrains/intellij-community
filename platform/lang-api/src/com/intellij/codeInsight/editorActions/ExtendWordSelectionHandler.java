@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,13 +20,16 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
 public interface ExtendWordSelectionHandler {
   ExtensionPointName<ExtendWordSelectionHandler> EP_NAME = ExtensionPointName.create("com.intellij.extendWordSelectionHandler");
   
-  boolean canSelect(PsiElement e);
+  boolean canSelect(@NotNull PsiElement e);
 
-  List<TextRange> select(PsiElement e, CharSequence editorText, int cursorOffset, Editor editor);
+  @Nullable
+  List<TextRange> select(@NotNull PsiElement e, @NotNull CharSequence editorText, int cursorOffset, @NotNull Editor editor);
 }

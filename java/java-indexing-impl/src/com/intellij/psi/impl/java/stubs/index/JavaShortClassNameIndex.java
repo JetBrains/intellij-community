@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,10 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-/*
- * @author max
- */
 package com.intellij.psi.impl.java.stubs.index;
 
 import com.intellij.openapi.project.Project;
@@ -24,16 +20,26 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.impl.search.JavaSourceFilterScope;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.stubs.StringStubIndexExtension;
+import com.intellij.psi.stubs.StubIndex;
 import com.intellij.psi.stubs.StubIndexKey;
+import com.intellij.util.indexing.FileBasedIndex;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 
+/**
+ * @author max
+ */
 public class JavaShortClassNameIndex extends StringStubIndexExtension<PsiClass> {
-
   private static final JavaShortClassNameIndex ourInstance = new JavaShortClassNameIndex();
+
   public static JavaShortClassNameIndex getInstance() {
     return ourInstance;
+  }
+
+  @Override
+  public int getVersion() {
+    return super.getVersion() + (FileBasedIndex.ourEnableTracingOfKeyHashToVirtualFileMapping ? 2 : 0);
   }
 
   @NotNull
@@ -43,7 +49,12 @@ public class JavaShortClassNameIndex extends StringStubIndexExtension<PsiClass> 
   }
 
   @Override
-  public Collection<PsiClass> get(final String s, final Project project, @NotNull final GlobalSearchScope scope) {
-    return super.get(s, project, new JavaSourceFilterScope(scope));
+  public Collection<PsiClass> get(@NotNull final String shortName, @NotNull final Project project, @NotNull final GlobalSearchScope scope) {
+    return StubIndex.getElements(getKey(), shortName, project, new JavaSourceFilterScope(scope), PsiClass.class);
+  }
+
+  @Override
+  public boolean traceKeyHashToVirtualFileMapping() {
+    return FileBasedIndex.ourEnableTracingOfKeyHashToVirtualFileMapping;
   }
 }

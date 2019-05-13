@@ -1,31 +1,32 @@
 package com.intellij.find.editorHeaderActions;
 
-import com.intellij.find.EditorSearchComponent;
 import com.intellij.find.FindSettings;
+import com.intellij.find.SearchSession;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import org.jetbrains.annotations.NotNull;
 
 public class ToggleWholeWordsOnlyAction extends EditorHeaderToggleAction {
-  private static final String WHOLE_WORDS_ONLY = "W&ords";
-
-  public ToggleWholeWordsOnlyAction(EditorSearchComponent editorSearchComponent) {
-    super(editorSearchComponent, WHOLE_WORDS_ONLY);
+  public ToggleWholeWordsOnlyAction() {
+    super("W&ords");
   }
 
   @Override
-  public boolean isSelected(AnActionEvent e) {
-    return getEditorSearchComponent().getFindModel().isWholeWordsOnly();
-  }
-
-  @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     super.update(e);
-    e.getPresentation().setEnabled(!getEditorSearchComponent().getFindModel().isRegularExpressions());
-    e.getPresentation().setVisible(!getEditorSearchComponent().getFindModel().isMultiline());
+
+    SearchSession session = e.getData(SearchSession.KEY);
+    e.getPresentation().setEnabled(session != null && !session.getFindModel().isRegularExpressions());
+    e.getPresentation().setVisible(session != null && !session.getFindModel().isMultiline());
   }
 
   @Override
-  public void setSelected(AnActionEvent e, boolean state) {
-    FindSettings.getInstance().setLocalWholeWordsOnly(state);
-    getEditorSearchComponent().getFindModel().setWholeWordsOnly(state);
+  protected boolean isSelected(@NotNull SearchSession session) {
+    return session.getFindModel().isWholeWordsOnly();
+  }
+
+  @Override
+  protected void setSelected(@NotNull SearchSession session, boolean selected) {
+    FindSettings.getInstance().setLocalWholeWordsOnly(selected);
+    session.getFindModel().setWholeWordsOnly(selected);
   }
 }

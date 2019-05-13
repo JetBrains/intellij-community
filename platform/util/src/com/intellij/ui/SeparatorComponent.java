@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,7 @@
  */
 package com.intellij.ui;
 
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.JBUI;
 
 import javax.swing.*;
 import java.awt.*;
@@ -33,13 +33,13 @@ public class SeparatorComponent extends JComponent {
 
   public SeparatorComponent(int aVerticalGap) {
     myVGap = aVerticalGap;
-    setBorder(BorderFactory.createEmptyBorder(myVGap, 0, myVGap, 0));
+    setBorder(JBUI.Borders.empty(myVGap, 0));
   }
 
   public SeparatorComponent(int aVerticalGap, int aHorizontalGap) {
     myVGap = aVerticalGap;
     myHGap = aHorizontalGap;
-    setBorder(BorderFactory.createEmptyBorder(myVGap, 0, myVGap, 0));
+    setBorder(JBUI.Borders.empty(myVGap, 0));
   }
 
   public SeparatorComponent(int aVerticalGap, Color aColor, Color aShadowColor) {
@@ -51,7 +51,7 @@ public class SeparatorComponent extends JComponent {
     myHGap = horizontalGap;
     myColor = aColor;
     myShadow = aShadowColor;
-    setBorder(BorderFactory.createEmptyBorder(myVGap, 0, myVGap, 0));
+    setBorder(JBUI.Borders.empty(myVGap, 0));
   }
 
   public SeparatorComponent(Color color, SeparatorOrientation orientation) {
@@ -62,6 +62,7 @@ public class SeparatorComponent extends JComponent {
     myVGap = 0;
   }
 
+  @Override
   protected void paintComponent(Graphics g) {
     if (!isVisible()) return;
 
@@ -84,34 +85,30 @@ public class SeparatorComponent extends JComponent {
 
   }
 
+  @Override
   public Dimension getPreferredSize() {
-    if (myOrientation != SeparatorOrientation.VERTICAL)
+    if (myOrientation != SeparatorOrientation.VERTICAL) {
       return new Dimension(0, myVGap * 2 + 1);
-    else
+    }
+    else {
       return new Dimension(myHGap * 2 + 1, 1 + ((myShadow != null) ? 1 : 0));
+    }
   }
 
+  @Override
   public Dimension getMinimumSize() {
     return getPreferredSize();
   }
 
-  /**
-   * Create control what consist of label with <strong>title</strong> text in the left side and single line at all rest space.
-   * @param titleText text for a label.
-   * @param containerBackgroungColor background color of container in that control will be putted on.
-   */
-  public static JComponent createLabbeledLineSeparator(final String titleText, final Color containerBackgroungColor) {
-    JLabel titleLabel = new JLabel(titleText);
-    titleLabel.setFont(UIUtil.getLabelFont());
-    titleLabel.setForeground(Colors.DARK_BLUE);
-
-    SeparatorComponent separatorComponent = new SeparatorComponent(5, containerBackgroungColor.darker(), containerBackgroungColor.brighter());
-
-    int hgap = titleText.length() > 0 ? 5 : 0;
-    JPanel result = new JPanel(new BorderLayout(hgap, 10));
-    result.add(titleLabel, BorderLayout.WEST);
-    result.add(separatorComponent, BorderLayout.CENTER);
-
-    return result;
+  @Override
+  public Dimension getMaximumSize() {
+    Dimension size = getPreferredSize();
+    if (myOrientation != SeparatorOrientation.VERTICAL) {
+      size.width = Integer.MAX_VALUE;
+    }
+    else {
+      size.height = Integer.MAX_VALUE;
+    }
+    return size;
   }
 }

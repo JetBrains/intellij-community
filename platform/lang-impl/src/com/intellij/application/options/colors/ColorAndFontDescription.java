@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,17 +17,21 @@
 package com.intellij.application.options.colors;
 
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
+import com.intellij.openapi.editor.colors.EditorSchemeAttributeDescriptorWithPath;
+import com.intellij.openapi.editor.colors.impl.AbstractColorsScheme;
+import com.intellij.openapi.editor.colors.impl.ReadOnlyColorsScheme;
 import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.TextAttributes;
-import com.intellij.openapi.options.colors.AttributesDescriptor;
-import com.intellij.openapi.options.colors.ColorSettingsPage;
+import com.intellij.openapi.options.colors.AbstractKeyDescriptor;
+import com.intellij.openapi.options.colors.ColorAndFontDescriptorsProvider;
 import com.intellij.openapi.util.Pair;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
 
-public abstract class ColorAndFontDescription extends TextAttributes implements EditorSchemeAttributeDescriptor {
+public abstract class ColorAndFontDescription extends TextAttributes implements EditorSchemeAttributeDescriptorWithPath {
   private final String myName;
   private final String myGroup;
   private final String myType;
@@ -38,8 +42,14 @@ public abstract class ColorAndFontDescription extends TextAttributes implements 
   private boolean isBackgroundChecked;
   private boolean isEffectsColorChecked;
   private boolean isErrorStripeChecked;
+  private boolean isInherited;
 
-  public ColorAndFontDescription(String name, String group, String type, EditorColorsScheme scheme, final Icon icon, final String toolTip) {
+  public ColorAndFontDescription(@NotNull String name,
+                                 @Nullable String group,
+                                 @Nullable String type,
+                                 @Nullable EditorColorsScheme scheme,
+                                 @Nullable Icon icon,
+                                 @Nullable String toolTip) {
     myName = name;
     myGroup = group;
     myType = type;
@@ -222,12 +232,36 @@ public abstract class ColorAndFontDescription extends TextAttributes implements 
     return false;
   }
 
-  public boolean isInherited() {
-    return false;
+  public final boolean isInherited() {
+    return isInherited;
+  }
+
+  public void setInherited(boolean isInherited) {
+    this.isInherited = isInherited;
+  }
+
+  public boolean isEditable() {
+    return !(myScheme instanceof ReadOnlyColorsScheme ||
+             myScheme instanceof AbstractColorsScheme && ((AbstractColorsScheme)myScheme).isReadOnly());
   }
 
   @Nullable
-  public Pair<ColorSettingsPage,AttributesDescriptor> getBaseAttributeDescriptor() {
+  public TextAttributes getBaseAttributes() {
     return null;
+  }
+
+  @Nullable
+  public Pair<ColorAndFontDescriptorsProvider, ? extends AbstractKeyDescriptor> getFallbackKeyDescriptor() {
+    return null;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    return this == o;
+  }
+
+  @Override
+  public int hashCode() {
+    return System.identityHashCode(this);
   }
 }

@@ -16,19 +16,13 @@
 
 package org.intellij.plugins.relaxNG.model.descriptors;
 
-import com.intellij.util.SpinAllocator;
 import com.intellij.util.containers.ContainerUtil;
-import gnu.trove.THashSet;
-import gnu.trove.TObjectHashingStrategy;
 import org.kohsuke.rngom.digested.*;
 
-/*
-* Created by IntelliJ IDEA.
-* User: sweinreuter
-* Date: 19.07.2007
-*/
+import java.util.Set;
+
 public class RecursionSaveWalker extends DPatternWalker {
-  private THashSet<DPattern> myVisited;
+  private final Set<DPattern> myVisited = ContainerUtil.newIdentityTroveSet(256);
 
   protected RecursionSaveWalker() {
   }
@@ -45,6 +39,7 @@ public class RecursionSaveWalker extends DPatternWalker {
     return null;
   }
 
+  @Override
   public Void onRef(DRefPattern p) {
     if (myVisited.add(p)) {
       try {
@@ -56,6 +51,7 @@ public class RecursionSaveWalker extends DPatternWalker {
     return null;
   }
 
+  @Override
   protected Void onUnary(DUnaryPattern p) {
     if (myVisited.add(p)) {
       try {
@@ -68,27 +64,11 @@ public class RecursionSaveWalker extends DPatternWalker {
   }
 
   protected void doAccept(DPattern... p) {
-    myVisited = ourAllocator.alloc();
-    try {
-      //noinspection ForLoopReplaceableByForEach
-      for (int i = 0; i < p.length; i++) {
-        p[i].accept(this);
-      }
-    } finally {
-      ourAllocator.dispose(myVisited);
+    myVisited.clear();
+    //noinspection ForLoopReplaceableByForEach
+    for (int i = 0; i < p.length; i++) {
+      p[i].accept(this);
     }
+    myVisited.clear();
   }
-
-  private static final SpinAllocator<THashSet<DPattern>> ourAllocator = new SpinAllocator<THashSet<DPattern>>(
-          new SpinAllocator.ICreator<THashSet<DPattern>>() {
-            @SuppressWarnings({ "unchecked" })
-            public THashSet<DPattern> createInstance() {
-              return ContainerUtil.<DPattern>newIdentityTroveSet(256);
-            }
-          },
-          new SpinAllocator.IDisposer<THashSet<DPattern>>() {
-            public void disposeInstance(THashSet<DPattern> instance) {
-              instance.clear();
-            }
-          });
 }

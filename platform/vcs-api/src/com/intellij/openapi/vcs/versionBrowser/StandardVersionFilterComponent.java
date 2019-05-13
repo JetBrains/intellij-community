@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,8 +15,9 @@
  */
 package com.intellij.openapi.vcs.versionBrowser;
 
-import com.intellij.ui.IdeBorderFactory;
 import com.intellij.openapi.vcs.VcsBundle;
+import com.intellij.openapi.wm.IdeFocusManager;
+import com.intellij.ui.IdeBorderFactory;
 
 import javax.swing.*;
 import java.awt.*;
@@ -70,6 +71,7 @@ public abstract class StandardVersionFilterComponent<T extends ChangeBrowserSett
 
   private void installCheckBoxesListeners() {
     final ActionListener filterListener = new ActionListener() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         updateAllEnabled(e);
       }
@@ -84,7 +86,9 @@ public abstract class StandardVersionFilterComponent<T extends ChangeBrowserSett
     if (e != null && e.getSource() instanceof JCheckBox && ((JCheckBox)e.getSource()).isSelected()) {
       final Object source = e.getSource();
       if (source == checkBox && checkBox.isSelected()) {
-        textField.requestFocus();
+        IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
+          IdeFocusManager.getGlobalInstance().requestFocus(textField, true);
+        });
       }
     }
 
@@ -103,7 +107,7 @@ public abstract class StandardVersionFilterComponent<T extends ChangeBrowserSett
     myNumBefore.setText(settings.CHANGE_BEFORE);
     myNumAfter.setText(settings.CHANGE_AFTER);
   }
-  
+
   public void saveValues(T settings) {
     myDateFilterComponent.saveValues(settings);
     settings.USE_CHANGE_BEFORE_FILTER = myUseNumBeforeFilter.isSelected();
@@ -118,17 +122,20 @@ public abstract class StandardVersionFilterComponent<T extends ChangeBrowserSett
     myUseNumAfterFilter.addActionListener(filterListener);
   }
 
+  @Override
   public T getSettings() {
     saveValues(mySettings);
     return mySettings;
   }
 
+  @Override
   public void setSettings(T settings) {
     mySettings = settings;
     initValues(settings);
     updateAllEnabled(null);
   }
 
+  @Override
   public String validateInput() {
     if (myUseNumAfterFilter.isSelected()) {
       try {
@@ -149,13 +156,15 @@ public abstract class StandardVersionFilterComponent<T extends ChangeBrowserSett
     return myDateFilterComponent.validateInput();
   }
 
+  @Override
   public void updateEnabledControls() {
     updateAllEnabled(null);
   }
 
+  @Override
   public String getDimensionServiceKey() {
     return getClass().getName();
   }
 }
 
-  
+

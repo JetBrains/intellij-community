@@ -32,12 +32,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Date;
 
-/**
- * Created by IntelliJ IDEA.
- * User: Irina.Chernushina
- * Date: 8/3/11
- * Time: 1:04 PM
- */
 public class VcsContentAnnotationImpl implements VcsContentAnnotation {
   private final Project myProject;
   private final VcsContentAnnotationSettings mySettings;
@@ -87,7 +81,7 @@ public class VcsContentAnnotationImpl implements VcsContentAnnotation {
 
     final FileAnnotation fileAnnotation;
     try {
-      fileAnnotation = vcs.getCachingAnnotationProvider().annotate(file);
+      fileAnnotation = vcs.getAnnotationProvider().annotate(file);
     }
     catch (VcsException e) {
       LOG.info(e);

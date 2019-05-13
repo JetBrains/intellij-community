@@ -23,14 +23,37 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 
+/**
+ * Triggered when the user uses the "Navigation / Test"  action (= jump to test shortcut). 
+ * Corresponding extension point qualified name is {@code com.intellij.testFinder}.
+ */
 public interface TestFinder {
   ExtensionPointName<TestFinder> EP_NAME = ExtensionPointName.create("com.intellij.testFinder");
 
+  /**
+   * Retrieve the source element (PsiFile) to handle some UI elements, like the name displayed in "Choose Test for {file name}".
+   *
+   * @param from PsiElement where the cursor was when "Navigate to test" was triggered
+   * @return the parent PsiFile of the PsiElement where the cursor was when the test finder was invoked
+   */
   @Nullable
   PsiElement findSourceElement(@NotNull PsiElement from);
 
+  /**
+   * Finds tests for given class.
+   *
+   * @param element may by of any language but not specific to a current test finder domain language
+   * @return found tests for class
+   */
   @NotNull
   Collection<PsiElement> findTestsForClass(@NotNull PsiElement element);
+
+  /**
+   * Finds classes for given test.
+   *
+   * @param element may by of any language but not specific to a current test finder domain language
+   * @return found classes for test
+   */
   @NotNull
   Collection<PsiElement> findClassesForTest(@NotNull PsiElement element);
 

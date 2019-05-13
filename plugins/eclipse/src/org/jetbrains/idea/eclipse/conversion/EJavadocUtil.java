@@ -14,10 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * User: anna
- * Date: 25-Mar-2010
- */
 package org.jetbrains.idea.eclipse.conversion;
 
 import com.intellij.openapi.module.Module;
@@ -34,6 +30,7 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.ex.http.HttpFileSystem;
+import com.intellij.util.Function;
 import org.jdom.Element;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.eclipse.EPathCommonUtil;
@@ -202,10 +199,16 @@ public class EJavadocUtil {
   }
 
   static void setupJavadocAttributes(Element orderEntry, LibraryOrderEntry libraryOrderEntry, final ModuleRootModel model) {
-    final List<String> eclipseUrls = new ArrayList<String>();
-    final String[] docUrls = libraryOrderEntry.getRootUrls(JavadocOrderRootType.getInstance());
-    if (docUrls.length > 0) {
-      eclipseUrls.add(toEclipseJavadocPath(model, docUrls[0]));
+    setupAttributes(orderEntry, s -> toEclipseJavadocPath(model, s), JAVADOC_LOCATION, libraryOrderEntry.getRootUrls(JavadocOrderRootType.getInstance()));
+  }
+
+  static void setupAttributes(Element orderEntry,
+                              Function<? super String, String> fun,
+                              String attributeName,
+                              String[] roots) {
+    final List<String> eclipseUrls = new ArrayList<>();
+    if (roots.length > 0) {
+      eclipseUrls.add(fun.fun(roots[0]));
     }
 
     final List children = new ArrayList(orderEntry.getChildren(ATTRIBUTES_TAG));
@@ -214,7 +217,7 @@ public class EJavadocUtil {
       final ArrayList attTags = new ArrayList(attsElement.getChildren(ATTRIBUTE_TAG));
       for (Object a : attTags) {
         Element attElement = (Element)a;
-        if (Comparing.strEqual(attElement.getAttributeValue("name"), JAVADOC_LOCATION)) {
+        if (Comparing.strEqual(attElement.getAttributeValue("name"), attributeName)) {
           final String javadocPath = attElement.getAttributeValue("value");
           if (!eclipseUrls.remove(javadocPath)) {
             attElement.detach();
@@ -232,7 +235,7 @@ public class EJavadocUtil {
 
       final Element attrElement = new Element(ATTRIBUTE_TAG);
       child.addContent(attrElement);
-      attrElement.setAttribute("name", JAVADOC_LOCATION);
+      attrElement.setAttribute("name", attributeName);
       attrElement.setAttribute("value", docUrl);
     }
   }

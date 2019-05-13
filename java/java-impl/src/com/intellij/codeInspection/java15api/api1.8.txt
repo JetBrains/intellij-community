@@ -1,0 +1,1154 @@
+com.sun.source.tree.MethodTree#getReceiverParameter()
+com.sun.source.tree.AnnotatedTypeTree
+com.sun.source.tree.TypeParameterTree#getAnnotations()
+com.sun.source.tree.MemberReferenceTree
+com.sun.source.tree.IntersectionTypeTree
+com.sun.source.util.Plugin
+com.sun.source.util.DocTrees
+com.sun.source.util.JavacTask#instance(javax.annotation.processing.ProcessingEnvironment;)
+com.sun.source.util.JavacTask#addTaskListener(TaskListener;)
+com.sun.source.util.JavacTask#removeTaskListener(TaskListener;)
+com.sun.source.util.DocTreePath
+com.sun.source.util.DocTreeScanner
+com.sun.source.util.DocSourcePositions
+com.sun.source.util.DocTreePathScanner
+com.sun.source.util.SimpleDocTreeVisitor
+com.sun.source.doctree.DocTree
+com.sun.source.doctree.SeeTree
+com.sun.source.doctree.LinkTree
+com.sun.source.doctree.TextTree
+com.sun.source.doctree.ParamTree
+com.sun.source.doctree.SinceTree
+com.sun.source.doctree.ValueTree
+com.sun.source.doctree.AuthorTree
+com.sun.source.doctree.EntityTree
+com.sun.source.doctree.ReturnTree
+com.sun.source.doctree.SerialTree
+com.sun.source.doctree.ThrowsTree
+com.sun.source.doctree.CommentTree
+com.sun.source.doctree.DocRootTree
+com.sun.source.doctree.LiteralTree
+com.sun.source.doctree.VersionTree
+com.sun.source.doctree.BlockTagTree
+com.sun.source.doctree.AttributeTree
+com.sun.source.doctree.ErroneousTree
+com.sun.source.doctree.InlineTagTree
+com.sun.source.doctree.ReferenceTree
+com.sun.source.doctree.DeprecatedTree
+com.sun.source.doctree.DocCommentTree
+com.sun.source.doctree.DocTreeVisitor
+com.sun.source.doctree.EndElementTree
+com.sun.source.doctree.IdentifierTree
+com.sun.source.doctree.InheritDocTree
+com.sun.source.doctree.SerialDataTree
+com.sun.source.doctree.SerialFieldTree
+com.sun.source.doctree.StartElementTree
+com.sun.source.doctree.UnknownBlockTagTree
+com.sun.source.doctree.UnknownInlineTagTree
+com.sun.javadoc.Type#asAnnotatedType()
+com.sun.javadoc.Type#getElementType()
+com.sun.javadoc.AnnotatedType
+com.sun.javadoc.ExecutableMemberDoc#receiverType()
+com.sun.security.jgss.ExtendedGSSCredential
+java.io.BufferedReader#lines()
+java.io.DefaultFileSystem
+java.io.UncheckedIOException
+java.awt.event.InvocationEvent#listener
+java.awt.KeyboardFocusManager#clearFocusOwner()
+java.net.URLPermission
+java.net.HttpConnectSocketImpl
+java.nio.file.attribute.FileTime#from(java.time.Instant;)
+java.nio.file.attribute.FileTime#toInstant()
+java.nio.file.Files#newBufferedReader(java.nio.file.Path;)
+java.nio.file.Files#newBufferedWriter(java.nio.file.Path;java.nio.file.OpenOption[];)
+java.nio.file.Files#readAllLines(java.nio.file.Path;)
+java.nio.file.Files#write(java.nio.file.Path;java.lang.Iterable<? extends java.lang.CharSequence>;java.nio.file.OpenOption[];)
+java.nio.file.Files#list(java.nio.file.Path;)
+java.nio.file.Files#walk(java.nio.file.Path;int;java.nio.file.FileVisitOption[];)
+java.nio.file.Files#walk(java.nio.file.Path;java.nio.file.FileVisitOption[];)
+java.nio.file.Files#find(java.nio.file.Path;int;java.util.function.BiPredicate<java.nio.file.Path,java.nio.file.attribute.BasicFileAttributes>;java.nio.file.FileVisitOption[];)
+java.nio.file.Files#lines(java.nio.file.Path;java.nio.charset.Charset;)
+java.nio.file.Files#lines(java.nio.file.Path;)
+java.sql.Date#valueOf(java.time.LocalDate;)
+java.sql.Date#toLocalDate()
+java.sql.Time#valueOf(java.time.LocalTime;)
+java.sql.Time#toLocalTime()
+java.sql.Types#REF_CURSOR
+java.sql.Types#TIME_WITH_TIMEZONE
+java.sql.Types#TIMESTAMP_WITH_TIMEZONE
+java.sql.SQLType
+java.sql.JDBCType
+java.sql.SQLInput#readObject(java.lang.Class<T>;)
+java.sql.ResultSet#updateObject(int;java.lang.Object;java.sql.SQLType;int;)
+java.sql.ResultSet#updateObject(java.lang.String;java.lang.Object;java.sql.SQLType;int;)
+java.sql.ResultSet#updateObject(int;java.lang.Object;java.sql.SQLType;)
+java.sql.ResultSet#updateObject(java.lang.String;java.lang.Object;java.sql.SQLType;)
+java.sql.SQLOutput#writeObject(java.lang.Object;java.sql.SQLType;)
+java.sql.Statement#getLargeUpdateCount()
+java.sql.Statement#setLargeMaxRows(long;)
+java.sql.Statement#getLargeMaxRows()
+java.sql.Statement#executeLargeBatch()
+java.sql.Statement#executeLargeUpdate(java.lang.String;)
+java.sql.Statement#executeLargeUpdate(java.lang.String;int;)
+java.sql.Statement#executeLargeUpdate(java.lang.String;int[];)
+java.sql.Statement#executeLargeUpdate(java.lang.String;java.lang.String[];)
+java.sql.Timestamp#valueOf(java.time.LocalDateTime;)
+java.sql.Timestamp#toLocalDateTime()
+java.sql.Timestamp#from(java.time.Instant;)
+java.sql.Timestamp#toInstant()
+java.sql.DriverAction#deregister()
+java.sql.DriverAction
+java.sql.DriverManager#DEREGISTER_DRIVER_PERMISSION
+java.sql.DriverManager#registerDriver(java.sql.Driver;java.sql.DriverAction;)
+java.sql.DatabaseMetaData#getMaxLogicalLobSize()
+java.sql.DatabaseMetaData#supportsRefCursors()
+java.sql.CallableStatement#setObject(java.lang.String;java.lang.Object;java.sql.SQLType;int;)
+java.sql.CallableStatement#setObject(java.lang.String;java.lang.Object;java.sql.SQLType;)
+java.sql.CallableStatement#registerOutParameter(int;java.sql.SQLType;)
+java.sql.CallableStatement#registerOutParameter(int;java.sql.SQLType;int;)
+java.sql.CallableStatement#registerOutParameter(int;java.sql.SQLType;java.lang.String;)
+java.sql.CallableStatement#registerOutParameter(java.lang.String;java.sql.SQLType;)
+java.sql.CallableStatement#registerOutParameter(java.lang.String;java.sql.SQLType;int;)
+java.sql.CallableStatement#registerOutParameter(java.lang.String;java.sql.SQLType;java.lang.String;)
+java.sql.PreparedStatement#setObject(int;java.lang.Object;java.sql.SQLType;int;)
+java.sql.PreparedStatement#setObject(int;java.lang.Object;java.sql.SQLType;)
+java.sql.PreparedStatement#executeLargeUpdate()
+java.sql.BatchUpdateException#BatchUpdateException(java.lang.String;java.lang.String;int;long[];java.lang.Throwable;)
+java.sql.BatchUpdateException#getLargeUpdateCounts()
+java.sql.BatchUpdateException#longUpdateCounts
+java.lang.invoke.LambdaConversionException
+java.lang.invoke.LambdaMetafactory
+java.lang.invoke.MethodHandles#reflectAs(java.lang.Class<T>;java.lang.invoke.MethodHandle;)
+java.lang.invoke.MethodHandles.Lookup#revealDirect(java.lang.invoke.MethodHandle;)
+java.lang.invoke.MethodHandleInfo
+java.lang.invoke.SerializedLambda
+java.lang.reflect.Type#getTypeName()
+java.lang.reflect.Field#getAnnotationsByType(java.lang.Class<T>;)
+java.lang.reflect.Field#getAnnotatedType()
+java.lang.reflect.Method#isDefault()
+java.lang.reflect.Method#getAnnotatedReturnType()
+java.lang.reflect.Modifier#parameterModifiers()
+java.lang.reflect.Parameter
+java.lang.reflect.Executable#getParameterCount()
+java.lang.reflect.Executable#getParameters()
+java.lang.reflect.Executable#getAnnotationsByType(java.lang.Class<T>;)
+java.lang.reflect.Executable#getAnnotatedReturnType()
+java.lang.reflect.Executable#getAnnotatedReceiverType()
+java.lang.reflect.Executable#getAnnotatedParameterTypes()
+java.lang.reflect.Executable#getAnnotatedExceptionTypes()
+java.lang.reflect.Executable
+java.lang.reflect.Constructor#getAnnotatedReturnType()
+java.lang.reflect.Constructor#getAnnotatedReceiverType()
+java.lang.reflect.TypeVariable#getAnnotatedBounds()
+java.lang.reflect.AnnotatedType
+java.lang.reflect.AccessibleObject#getAnnotationsByType(java.lang.Class<T>;)
+java.lang.reflect.AccessibleObject#getDeclaredAnnotation(java.lang.Class<T>;)
+java.lang.reflect.AccessibleObject#getDeclaredAnnotationsByType(java.lang.Class<T>;)
+java.lang.reflect.AnnotatedElement#getAnnotationsByType(java.lang.Class<T>;)
+java.lang.reflect.AnnotatedElement#getDeclaredAnnotation(java.lang.Class<T>;)
+java.lang.reflect.AnnotatedElement#getDeclaredAnnotationsByType(java.lang.Class<T>;)
+java.lang.reflect.AnnotatedArrayType
+java.lang.reflect.AnnotatedTypeVariable
+java.lang.reflect.AnnotatedWildcardType
+java.lang.reflect.AnnotatedParameterizedType
+java.lang.reflect.MalformedParametersException
+java.lang.Byte#hashCode(byte;)
+java.lang.Byte#toUnsignedInt(byte;)
+java.lang.Byte#toUnsignedLong(byte;)
+java.lang.Byte#BYTES
+java.lang.Long#toUnsignedString(long;int;)
+java.lang.Long#toUnsignedString(long;)
+java.lang.Long#parseUnsignedLong(java.lang.String;int;)
+java.lang.Long#parseUnsignedLong(java.lang.String;)
+java.lang.Long#hashCode(long;)
+java.lang.Long#compareUnsigned(long;long;)
+java.lang.Long#divideUnsigned(long;long;)
+java.lang.Long#remainderUnsigned(long;long;)
+java.lang.Long#BYTES
+java.lang.Long#sum(long;long;)
+java.lang.Long#max(long;long;)
+java.lang.Long#min(long;long;)
+java.lang.Math#addExact(int;int;)
+java.lang.Math#addExact(long;long;)
+java.lang.Math#subtractExact(int;int;)
+java.lang.Math#subtractExact(long;long;)
+java.lang.Math#multiplyExact(int;int;)
+java.lang.Math#multiplyExact(long;long;)
+java.lang.Math#incrementExact(int;)
+java.lang.Math#incrementExact(long;)
+java.lang.Math#decrementExact(int;)
+java.lang.Math#decrementExact(long;)
+java.lang.Math#negateExact(int;)
+java.lang.Math#negateExact(long;)
+java.lang.Math#toIntExact(long;)
+java.lang.Math#floorDiv(int;int;)
+java.lang.Math#floorDiv(long;long;)
+java.lang.Math#floorMod(int;int;)
+java.lang.Math#floorMod(long;long;)
+java.lang.Math#nextDown(double;)
+java.lang.Math#nextDown(float;)
+java.lang.Class#toGenericString()
+java.lang.Class#getTypeName()
+java.lang.Class#getAnnotationsByType(java.lang.Class<A>;)
+java.lang.Class#getDeclaredAnnotation(java.lang.Class<A>;)
+java.lang.Class#getDeclaredAnnotationsByType(java.lang.Class<A>;)
+java.lang.Class#getAnnotatedSuperclass()
+java.lang.Class#getAnnotatedInterfaces()
+java.lang.Float#BYTES
+java.lang.Float#isFinite(float;)
+java.lang.Float#hashCode(float;)
+java.lang.Float#sum(float;float;)
+java.lang.Float#max(float;float;)
+java.lang.Float#min(float;float;)
+java.lang.Short#hashCode(short;)
+java.lang.Short#BYTES
+java.lang.Short#toUnsignedInt(short;)
+java.lang.Short#toUnsignedLong(short;)
+java.lang.annotation.Native
+java.lang.annotation.Repeatable
+java.lang.annotation.ElementType#TYPE_PARAMETER
+java.lang.annotation.ElementType#TYPE_USE
+java.lang.management.LockInfo#from(javax.management.openmbean.CompositeData;)
+java.lang.Double#BYTES
+java.lang.Double#isFinite(double;)
+java.lang.Double#hashCode(double;)
+java.lang.Double#sum(double;double;)
+java.lang.Double#max(double;double;)
+java.lang.Double#min(double;double;)
+java.lang.String#join(java.lang.CharSequence;java.lang.CharSequence[];)
+java.lang.String#join(java.lang.CharSequence;java.lang.Iterable<? extends java.lang.CharSequence>;)
+java.lang.Boolean#hashCode(boolean;)
+java.lang.Boolean#logicalAnd(boolean;boolean;)
+java.lang.Boolean#logicalOr(boolean;boolean;)
+java.lang.Boolean#logicalXor(boolean;boolean;)
+java.lang.Integer#toUnsignedString(int;int;)
+java.lang.Integer#toUnsignedString(int;)
+java.lang.Integer#parseUnsignedInt(java.lang.String;int;)
+java.lang.Integer#parseUnsignedInt(java.lang.String;)
+java.lang.Integer#hashCode(int;)
+java.lang.Integer#compareUnsigned(int;int;)
+java.lang.Integer#toUnsignedLong(int;)
+java.lang.Integer#divideUnsigned(int;int;)
+java.lang.Integer#remainderUnsigned(int;int;)
+java.lang.Integer#BYTES
+java.lang.Integer#sum(int;int;)
+java.lang.Integer#max(int;int;)
+java.lang.Integer#min(int;int;)
+java.lang.Package#getAnnotationsByType(java.lang.Class<A>;)
+java.lang.Package#getDeclaredAnnotation(java.lang.Class<A>;)
+java.lang.Package#getDeclaredAnnotationsByType(java.lang.Class<A>;)
+java.lang.Process#waitFor(long;java.util.concurrent.TimeUnit;)
+java.lang.Process#destroyForcibly()
+java.lang.Process#isAlive()
+java.lang.Iterable#forEach(java.util.function.Consumer<? super T>;)
+java.lang.Iterable#spliterator()
+java.lang.Character.UnicodeBlock#ARABIC_EXTENDED_A
+java.lang.Character.UnicodeBlock#SUNDANESE_SUPPLEMENT
+java.lang.Character.UnicodeBlock#MEETEI_MAYEK_EXTENSIONS
+java.lang.Character.UnicodeBlock#MEROITIC_HIEROGLYPHS
+java.lang.Character.UnicodeBlock#MEROITIC_CURSIVE
+java.lang.Character.UnicodeBlock#SORA_SOMPENG
+java.lang.Character.UnicodeBlock#CHAKMA
+java.lang.Character.UnicodeBlock#SHARADA
+java.lang.Character.UnicodeBlock#TAKRI
+java.lang.Character.UnicodeBlock#MIAO
+java.lang.Character.UnicodeBlock#ARABIC_MATHEMATICAL_ALPHABETIC_SYMBOLS
+java.lang.Character#hashCode(char;)
+java.lang.Character#BYTES
+java.lang.StrictMath#addExact(int;int;)
+java.lang.StrictMath#addExact(long;long;)
+java.lang.StrictMath#subtractExact(int;int;)
+java.lang.StrictMath#subtractExact(long;long;)
+java.lang.StrictMath#multiplyExact(int;int;)
+java.lang.StrictMath#multiplyExact(long;long;)
+java.lang.StrictMath#toIntExact(long;)
+java.lang.StrictMath#floorDiv(int;int;)
+java.lang.StrictMath#floorDiv(long;long;)
+java.lang.StrictMath#floorMod(int;int;)
+java.lang.StrictMath#floorMod(long;long;)
+java.lang.StrictMath#nextDown(double;)
+java.lang.StrictMath#nextDown(float;)
+java.lang.ThreadLocal#withInitial(java.util.function.Supplier<? extends S>;)
+java.lang.CharSequence#chars()
+java.lang.CharSequence#codePoints()
+java.lang.StringBuffer#append(java.lang.AbstractStringBuilder;)
+java.lang.InternalError#InternalError(java.lang.String;java.lang.Throwable;)
+java.lang.InternalError#InternalError(java.lang.Throwable;)
+java.lang.FunctionalInterface
+java.lang.VirtualMachineError#VirtualMachineError(java.lang.String;java.lang.Throwable;)
+java.lang.VirtualMachineError#VirtualMachineError(java.lang.Throwable;)
+java.lang.AbstractStringBuilder#append(java.lang.AbstractStringBuilder;)
+java.math.BigInteger#longValueExact()
+java.math.BigInteger#intValueExact()
+java.math.BigInteger#shortValueExact()
+java.math.BigInteger#byteValueExact()
+java.time.zone.Ser
+java.time.zone.ZoneRules
+java.time.zone.ZoneRulesProvider
+java.time.zone.ZoneRulesException
+java.time.zone.ZoneOffsetTransition
+java.time.zone.TzdbZoneRulesProvider
+java.time.zone.ZoneOffsetTransitionRule
+java.time.chrono.Era
+java.time.chrono.Ser
+java.time.chrono.IsoEra
+java.time.chrono.HijrahEra
+java.time.chrono.MinguoEra
+java.time.chrono.Chronology
+java.time.chrono.HijrahDate
+java.time.chrono.MinguoDate
+java.time.chrono.JapaneseEra
+java.time.chrono.ChronoPeriod
+java.time.chrono.JapaneseDate
+java.time.chrono.IsoChronology
+java.time.chrono.ChronoLocalDate
+java.time.chrono.ThaiBuddhistEra
+java.time.chrono.ChronoPeriodImpl
+java.time.chrono.HijrahChronology
+java.time.chrono.MinguoChronology
+java.time.chrono.ThaiBuddhistDate
+java.time.chrono.AbstractChronology
+java.time.chrono.JapaneseChronology
+java.time.chrono.ChronoLocalDateImpl
+java.time.chrono.ChronoLocalDateTime
+java.time.chrono.ChronoZonedDateTime
+java.time.chrono.ThaiBuddhistChronology
+java.time.chrono.ChronoLocalDateTimeImpl
+java.time.chrono.ChronoZonedDateTimeImpl
+java.time.format.Parsed
+java.time.format.SignStyle
+java.time.format.FormatStyle
+java.time.format.DecimalStyle
+java.time.format.ResolverStyle
+java.time.format.DateTimeFormatter
+java.time.format.DateTimeParseContext
+java.time.format.DateTimePrintContext
+java.time.format.DateTimeTextProvider
+java.time.format.DateTimeParseException
+java.time.format.DateTimeFormatterBuilder
+java.time.Ser
+java.time.temporal.Temporal
+java.time.temporal.IsoFields
+java.time.temporal.ChronoUnit
+java.time.temporal.ValueRange
+java.time.temporal.WeekFields
+java.time.temporal.ChronoField
+java.time.temporal.JulianFields
+java.time.temporal.TemporalUnit
+java.time.temporal.TemporalField
+java.time.temporal.TemporalQuery
+java.time.temporal.TemporalAmount
+java.time.temporal.TemporalQueries
+java.time.temporal.TemporalAccessor
+java.time.temporal.TemporalAdjuster
+java.time.temporal.TemporalAdjusters
+java.time.temporal.UnsupportedTemporalTypeException
+java.time.Year
+java.time.Clock
+java.time.Month
+java.time.Period
+java.time.ZoneId
+java.time.Instant
+java.time.Duration
+java.time.MonthDay
+java.time.DayOfWeek
+java.time.LocalDate
+java.time.LocalTime
+java.time.YearMonth
+java.time.OffsetTime
+java.time.ZoneOffset
+java.time.ZoneRegion
+java.time.LocalDateTime
+java.time.ZonedDateTime
+java.time.OffsetDateTime
+java.time.DateTimeException
+java.util.spi.CalendarDataProvider
+java.util.spi.CalendarNameProvider
+java.util.spi.TimeZoneNameProvider#getGenericDisplayName(java.lang.String;int;java.util.Locale;)
+java.util.spi.LocaleServiceProvider#isSupportedLocale(java.util.Locale;)
+java.util.spi.ResourceBundleControlProvider
+java.util.zip.CRC32#update(java.nio.ByteBuffer;)
+java.util.zip.Adler32#update(java.nio.ByteBuffer;)
+java.util.zip.ZipFile#stream()
+java.util.zip.ZipEntry#setLastModifiedTime(java.nio.file.attribute.FileTime;)
+java.util.zip.ZipEntry#getLastModifiedTime()
+java.util.zip.ZipEntry#setLastAccessTime(java.nio.file.attribute.FileTime;)
+java.util.zip.ZipEntry#getLastAccessTime()
+java.util.zip.ZipEntry#setCreationTime(java.nio.file.attribute.FileTime;)
+java.util.zip.ZipEntry#getCreationTime()
+java.util.regex.Matcher#start(java.lang.String;)
+java.util.regex.Matcher#end(java.lang.String;)
+java.util.regex.Pattern#asPredicate()
+java.util.regex.Pattern#splitAsStream(java.lang.CharSequence;)
+java.util.stream.Node
+java.util.stream.Sink
+java.util.stream.Nodes
+java.util.stream.Stream.Builder
+java.util.stream.Stream
+java.util.stream.FindOps
+java.util.stream.Streams
+java.util.stream.MatchOps
+java.util.stream.SliceOps
+java.util.stream.Tripwire
+java.util.stream.Collector
+java.util.stream.IntStream.Builder
+java.util.stream.IntStream
+java.util.stream.ReduceOps
+java.util.stream.SortedOps
+java.util.stream.BaseStream
+java.util.stream.Collectors
+java.util.stream.ForEachOps
+java.util.stream.LongStream.Builder
+java.util.stream.LongStream
+java.util.stream.TerminalOp
+java.util.stream.DistinctOps
+java.util.stream.IntPipeline.Head
+java.util.stream.IntPipeline.StatelessOp
+java.util.stream.IntPipeline.StatefulOp
+java.util.stream.IntPipeline
+java.util.stream.StreamShape
+java.util.stream.AbstractTask
+java.util.stream.DoubleStream.Builder
+java.util.stream.DoubleStream
+java.util.stream.LongPipeline.Head
+java.util.stream.LongPipeline.StatelessOp
+java.util.stream.LongPipeline.StatefulOp
+java.util.stream.LongPipeline
+java.util.stream.SpinedBuffer
+java.util.stream.StreamOpFlag
+java.util.stream.TerminalSink
+java.util.stream.StreamSupport
+java.util.stream.DoublePipeline.StatelessOp
+java.util.stream.DoublePipeline.StatefulOp
+java.util.stream.DoublePipeline
+java.util.stream.PipelineHelper
+java.util.stream.AbstractPipeline
+java.util.stream.ReferencePipeline.Head
+java.util.stream.ReferencePipeline.StatelessOp
+java.util.stream.ReferencePipeline.StatefulOp
+java.util.stream.ReferencePipeline
+java.util.stream.StreamSpliterators
+java.util.stream.AbstractSpinedBuffer
+java.util.stream.AbstractShortCircuitTask
+java.util.logging.Logger#log(java.util.logging.Level;java.lang.Throwable;java.util.function.Supplier<java.lang.String>;)
+java.util.logging.Logger#logp(java.util.logging.Level;java.lang.String;java.lang.String;java.util.function.Supplier<java.lang.String>;)
+java.util.logging.Logger#logp(java.util.logging.Level;java.lang.String;java.lang.String;java.lang.Throwable;java.util.function.Supplier<java.lang.String>;)
+java.util.logging.Logger#logrb(java.util.logging.Level;java.lang.String;java.lang.String;java.util.ResourceBundle;java.lang.String;java.lang.Object[];)
+java.util.logging.Logger#logrb(java.util.logging.Level;java.lang.String;java.lang.String;java.util.ResourceBundle;java.lang.String;java.lang.Throwable;)
+java.util.logging.Logger#severe(java.util.function.Supplier<java.lang.String>;)
+java.util.logging.Logger#warning(java.util.function.Supplier<java.lang.String>;)
+java.util.logging.Logger#info(java.util.function.Supplier<java.lang.String>;)
+java.util.logging.Logger#config(java.util.function.Supplier<java.lang.String>;)
+java.util.logging.Logger#fine(java.util.function.Supplier<java.lang.String>;)
+java.util.logging.Logger#finer(java.util.function.Supplier<java.lang.String>;)
+java.util.logging.Logger#finest(java.util.function.Supplier<java.lang.String>;)
+java.util.logging.Logger#setResourceBundle(java.util.ResourceBundle;)
+java.util.Map.Entry#comparingByKey()
+java.util.Map.Entry#comparingByValue()
+java.util.Map.Entry#comparingByKey(java.util.Comparator<? super K>;)
+java.util.Map.Entry#comparingByValue(java.util.Comparator<? super V>;)
+java.util.Map#getOrDefault(java.lang.Object;V;)
+java.util.Map#forEach(java.util.function.BiConsumer<? super K,? super V>;)
+java.util.Map#replaceAll(java.util.function.BiFunction<? super K,? super V,? extends V>;)
+java.util.Map#putIfAbsent(K;V;)
+java.util.Map#remove(java.lang.Object;java.lang.Object;)
+java.util.Map#replace(K;V;V;)
+java.util.Map#replace(K;V;)
+java.util.Map#computeIfAbsent(K;java.util.function.Function<? super K,? extends V>;)
+java.util.Map#computeIfPresent(K;java.util.function.BiFunction<? super K,? super V,? extends V>;)
+java.util.Map#compute(K;java.util.function.BiFunction<? super K,? super V,? extends V>;)
+java.util.Map#merge(K;V;java.util.function.BiFunction<? super V,? super V,? extends V>;)
+java.util.Set#spliterator()
+java.util.function.Consumer
+java.util.function.Function
+java.util.function.Supplier
+java.util.function.Predicate
+java.util.function.BiConsumer
+java.util.function.BiFunction
+java.util.function.BiPredicate
+java.util.function.IntConsumer
+java.util.function.IntFunction
+java.util.function.IntSupplier
+java.util.function.IntPredicate
+java.util.function.LongConsumer
+java.util.function.LongFunction
+java.util.function.LongSupplier
+java.util.function.LongPredicate
+java.util.function.ToIntFunction
+java.util.function.UnaryOperator
+java.util.function.BinaryOperator
+java.util.function.DoubleConsumer
+java.util.function.DoubleFunction
+java.util.function.DoubleSupplier
+java.util.function.ObjIntConsumer
+java.util.function.ToLongFunction
+java.util.function.BooleanSupplier
+java.util.function.DoublePredicate
+java.util.function.ObjLongConsumer
+java.util.function.ToIntBiFunction
+java.util.function.IntUnaryOperator
+java.util.function.ToDoubleFunction
+java.util.function.ToLongBiFunction
+java.util.function.IntBinaryOperator
+java.util.function.IntToLongFunction
+java.util.function.LongToIntFunction
+java.util.function.LongUnaryOperator
+java.util.function.ObjDoubleConsumer
+java.util.function.LongBinaryOperator
+java.util.function.ToDoubleBiFunction
+java.util.function.DoubleToIntFunction
+java.util.function.DoubleUnaryOperator
+java.util.function.IntToDoubleFunction
+java.util.function.DoubleBinaryOperator
+java.util.function.DoubleToLongFunction
+java.util.function.LongToDoubleFunction
+java.util.Date#from(java.time.Instant;)
+java.util.Date#toInstant()
+java.util.List#replaceAll(java.util.function.UnaryOperator<E>;)
+java.util.List#sort(java.util.Comparator<? super E>;)
+java.util.List#spliterator()
+java.util.concurrent.locks.StampedLock
+java.util.concurrent.atomic.LongAdder
+java.util.concurrent.atomic.AtomicLong#getAndUpdate(java.util.function.LongUnaryOperator;)
+java.util.concurrent.atomic.AtomicLong#updateAndGet(java.util.function.LongUnaryOperator;)
+java.util.concurrent.atomic.AtomicLong#getAndAccumulate(long;java.util.function.LongBinaryOperator;)
+java.util.concurrent.atomic.AtomicLong#accumulateAndGet(long;java.util.function.LongBinaryOperator;)
+java.util.concurrent.atomic.DoubleAdder
+java.util.concurrent.atomic.AtomicInteger#getAndUpdate(java.util.function.IntUnaryOperator;)
+java.util.concurrent.atomic.AtomicInteger#updateAndGet(java.util.function.IntUnaryOperator;)
+java.util.concurrent.atomic.AtomicInteger#getAndAccumulate(int;java.util.function.IntBinaryOperator;)
+java.util.concurrent.atomic.AtomicInteger#accumulateAndGet(int;java.util.function.IntBinaryOperator;)
+java.util.concurrent.atomic.AtomicLongArray#getAndUpdate(int;java.util.function.LongUnaryOperator;)
+java.util.concurrent.atomic.AtomicLongArray#updateAndGet(int;java.util.function.LongUnaryOperator;)
+java.util.concurrent.atomic.AtomicLongArray#getAndAccumulate(int;long;java.util.function.LongBinaryOperator;)
+java.util.concurrent.atomic.AtomicLongArray#accumulateAndGet(int;long;java.util.function.LongBinaryOperator;)
+java.util.concurrent.atomic.AtomicReference#getAndUpdate(java.util.function.UnaryOperator<V>;)
+java.util.concurrent.atomic.AtomicReference#updateAndGet(java.util.function.UnaryOperator<V>;)
+java.util.concurrent.atomic.AtomicReference#getAndAccumulate(V;java.util.function.BinaryOperator<V>;)
+java.util.concurrent.atomic.AtomicReference#accumulateAndGet(V;java.util.function.BinaryOperator<V>;)
+java.util.concurrent.atomic.LongAccumulator
+java.util.concurrent.atomic.DoubleAccumulator
+java.util.concurrent.atomic.AtomicIntegerArray#getAndUpdate(int;java.util.function.IntUnaryOperator;)
+java.util.concurrent.atomic.AtomicIntegerArray#updateAndGet(int;java.util.function.IntUnaryOperator;)
+java.util.concurrent.atomic.AtomicIntegerArray#getAndAccumulate(int;int;java.util.function.IntBinaryOperator;)
+java.util.concurrent.atomic.AtomicIntegerArray#accumulateAndGet(int;int;java.util.function.IntBinaryOperator;)
+java.util.concurrent.atomic.AtomicReferenceArray#getAndUpdate(int;java.util.function.UnaryOperator<E>;)
+java.util.concurrent.atomic.AtomicReferenceArray#updateAndGet(int;java.util.function.UnaryOperator<E>;)
+java.util.concurrent.atomic.AtomicReferenceArray#getAndAccumulate(int;E;java.util.function.BinaryOperator<E>;)
+java.util.concurrent.atomic.AtomicReferenceArray#accumulateAndGet(int;E;java.util.function.BinaryOperator<E>;)
+java.util.concurrent.atomic.AtomicLongFieldUpdater#getAndUpdate(T;java.util.function.LongUnaryOperator;)
+java.util.concurrent.atomic.AtomicLongFieldUpdater#updateAndGet(T;java.util.function.LongUnaryOperator;)
+java.util.concurrent.atomic.AtomicLongFieldUpdater#getAndAccumulate(T;long;java.util.function.LongBinaryOperator;)
+java.util.concurrent.atomic.AtomicLongFieldUpdater#accumulateAndGet(T;long;java.util.function.LongBinaryOperator;)
+java.util.concurrent.atomic.AtomicIntegerFieldUpdater#getAndUpdate(T;java.util.function.IntUnaryOperator;)
+java.util.concurrent.atomic.AtomicIntegerFieldUpdater#updateAndGet(T;java.util.function.IntUnaryOperator;)
+java.util.concurrent.atomic.AtomicIntegerFieldUpdater#getAndAccumulate(T;int;java.util.function.IntBinaryOperator;)
+java.util.concurrent.atomic.AtomicIntegerFieldUpdater#accumulateAndGet(T;int;java.util.function.IntBinaryOperator;)
+java.util.concurrent.atomic.AtomicReferenceFieldUpdater#getAndUpdate(T;java.util.function.UnaryOperator<V>;)
+java.util.concurrent.atomic.AtomicReferenceFieldUpdater#updateAndGet(T;java.util.function.UnaryOperator<V>;)
+java.util.concurrent.atomic.AtomicReferenceFieldUpdater#getAndAccumulate(T;V;java.util.function.BinaryOperator<V>;)
+java.util.concurrent.atomic.AtomicReferenceFieldUpdater#accumulateAndGet(T;V;java.util.function.BinaryOperator<V>;)
+java.util.concurrent.Executors#newWorkStealingPool(int;)
+java.util.concurrent.Executors#newWorkStealingPool()
+java.util.concurrent.ForkJoinPool#commonPool()
+java.util.concurrent.ForkJoinPool#getCommonPoolParallelism()
+java.util.concurrent.ForkJoinTask#quietlyComplete()
+java.util.concurrent.ForkJoinTask#getForkJoinTaskTag()
+java.util.concurrent.ForkJoinTask#setForkJoinTaskTag(short;)
+java.util.concurrent.ForkJoinTask#compareAndSetForkJoinTaskTag(short;short;)
+java.util.concurrent.ConcurrentMap#getOrDefault(java.lang.Object;V;)
+java.util.concurrent.ConcurrentMap#forEach(java.util.function.BiConsumer<? super K,? super V>;)
+java.util.concurrent.ConcurrentMap#replaceAll(java.util.function.BiFunction<? super K,? super V,? extends V>;)
+java.util.concurrent.ConcurrentMap#computeIfAbsent(K;java.util.function.Function<? super K,? extends V>;)
+java.util.concurrent.ConcurrentMap#computeIfPresent(K;java.util.function.BiFunction<? super K,? super V,? extends V>;)
+java.util.concurrent.ConcurrentMap#compute(K;java.util.function.BiFunction<? super K,? super V,? extends V>;)
+java.util.concurrent.ConcurrentMap#merge(K;V;java.util.function.BiFunction<? super V,? super V,? extends V>;)
+java.util.concurrent.CompletionStage
+java.util.concurrent.CountedCompleter
+java.util.concurrent.SynchronousQueue#spliterator()
+java.util.concurrent.CompletableFuture.AsynchronousCompletionTask
+java.util.concurrent.CompletableFuture
+java.util.concurrent.ConcurrentHashMap#mappingCount()
+java.util.concurrent.ConcurrentHashMap#newKeySet()
+java.util.concurrent.ConcurrentHashMap#newKeySet(int;)
+java.util.concurrent.ConcurrentHashMap#forEach(long;java.util.function.BiConsumer<? super K,? super V>;)
+java.util.concurrent.ConcurrentHashMap#forEach(long;java.util.function.BiFunction<? super K,? super V,? extends U>;java.util.function.Consumer<? super U>;)
+java.util.concurrent.ConcurrentHashMap#search(long;java.util.function.BiFunction<? super K,? super V,? extends U>;)
+java.util.concurrent.ConcurrentHashMap#reduce(long;java.util.function.BiFunction<? super K,? super V,? extends U>;java.util.function.BiFunction<? super U,? super U,? extends U>;)
+java.util.concurrent.ConcurrentHashMap#reduceToDouble(long;java.util.function.ToDoubleBiFunction<? super K,? super V>;double;java.util.function.DoubleBinaryOperator;)
+java.util.concurrent.ConcurrentHashMap#reduceToLong(long;java.util.function.ToLongBiFunction<? super K,? super V>;long;java.util.function.LongBinaryOperator;)
+java.util.concurrent.ConcurrentHashMap#reduceToInt(long;java.util.function.ToIntBiFunction<? super K,? super V>;int;java.util.function.IntBinaryOperator;)
+java.util.concurrent.ConcurrentHashMap#forEachKey(long;java.util.function.Consumer<? super K>;)
+java.util.concurrent.ConcurrentHashMap#forEachKey(long;java.util.function.Function<? super K,? extends U>;java.util.function.Consumer<? super U>;)
+java.util.concurrent.ConcurrentHashMap#searchKeys(long;java.util.function.Function<? super K,? extends U>;)
+java.util.concurrent.ConcurrentHashMap#reduceKeys(long;java.util.function.BiFunction<? super K,? super K,? extends K>;)
+java.util.concurrent.ConcurrentHashMap#reduceKeys(long;java.util.function.Function<? super K,? extends U>;java.util.function.BiFunction<? super U,? super U,? extends U>;)
+java.util.concurrent.ConcurrentHashMap#reduceKeysToDouble(long;java.util.function.ToDoubleFunction<? super K>;double;java.util.function.DoubleBinaryOperator;)
+java.util.concurrent.ConcurrentHashMap#reduceKeysToLong(long;java.util.function.ToLongFunction<? super K>;long;java.util.function.LongBinaryOperator;)
+java.util.concurrent.ConcurrentHashMap#reduceKeysToInt(long;java.util.function.ToIntFunction<? super K>;int;java.util.function.IntBinaryOperator;)
+java.util.concurrent.ConcurrentHashMap#forEachValue(long;java.util.function.Consumer<? super V>;)
+java.util.concurrent.ConcurrentHashMap#forEachValue(long;java.util.function.Function<? super V,? extends U>;java.util.function.Consumer<? super U>;)
+java.util.concurrent.ConcurrentHashMap#searchValues(long;java.util.function.Function<? super V,? extends U>;)
+java.util.concurrent.ConcurrentHashMap#reduceValues(long;java.util.function.BiFunction<? super V,? super V,? extends V>;)
+java.util.concurrent.ConcurrentHashMap#reduceValues(long;java.util.function.Function<? super V,? extends U>;java.util.function.BiFunction<? super U,? super U,? extends U>;)
+java.util.concurrent.ConcurrentHashMap#reduceValuesToDouble(long;java.util.function.ToDoubleFunction<? super V>;double;java.util.function.DoubleBinaryOperator;)
+java.util.concurrent.ConcurrentHashMap#reduceValuesToLong(long;java.util.function.ToLongFunction<? super V>;long;java.util.function.LongBinaryOperator;)
+java.util.concurrent.ConcurrentHashMap#reduceValuesToInt(long;java.util.function.ToIntFunction<? super V>;int;java.util.function.IntBinaryOperator;)
+java.util.concurrent.ConcurrentHashMap#forEachEntry(long;java.util.function.Consumer<? super java.util.Map.Entry<K,V>>;)
+java.util.concurrent.ConcurrentHashMap#forEachEntry(long;java.util.function.Function<java.util.Map.Entry<K,V>,? extends U>;java.util.function.Consumer<? super U>;)
+java.util.concurrent.ConcurrentHashMap#searchEntries(long;java.util.function.Function<java.util.Map.Entry<K,V>,? extends U>;)
+java.util.concurrent.ConcurrentHashMap#reduceEntries(long;java.util.function.BiFunction<java.util.Map.Entry<K,V>,java.util.Map.Entry<K,V>,? extends java.util.Map.Entry<K,V>>;)
+java.util.concurrent.ConcurrentHashMap#reduceEntries(long;java.util.function.Function<java.util.Map.Entry<K,V>,? extends U>;java.util.function.BiFunction<? super U,? super U,? extends U>;)
+java.util.concurrent.ConcurrentHashMap#reduceEntriesToDouble(long;java.util.function.ToDoubleFunction<java.util.Map.Entry<K,V>>;double;java.util.function.DoubleBinaryOperator;)
+java.util.concurrent.ConcurrentHashMap#reduceEntriesToLong(long;java.util.function.ToLongFunction<java.util.Map.Entry<K,V>>;long;java.util.function.LongBinaryOperator;)
+java.util.concurrent.ConcurrentHashMap#reduceEntriesToInt(long;java.util.function.ToIntFunction<java.util.Map.Entry<K,V>>;int;java.util.function.IntBinaryOperator;)
+java.util.concurrent.ConcurrentHashMap.KeySetView
+java.util.concurrent.ThreadLocalRandom#ints(long;)
+java.util.concurrent.ThreadLocalRandom#ints()
+java.util.concurrent.ThreadLocalRandom#ints(long;int;int;)
+java.util.concurrent.ThreadLocalRandom#ints(int;int;)
+java.util.concurrent.ThreadLocalRandom#longs(long;)
+java.util.concurrent.ThreadLocalRandom#longs()
+java.util.concurrent.ThreadLocalRandom#longs(long;long;long;)
+java.util.concurrent.ThreadLocalRandom#longs(long;long;)
+java.util.concurrent.ThreadLocalRandom#doubles(long;)
+java.util.concurrent.ThreadLocalRandom#doubles()
+java.util.concurrent.ThreadLocalRandom#doubles(long;double;double;)
+java.util.concurrent.ThreadLocalRandom#doubles(double;double;)
+java.util.concurrent.ArrayBlockingQueue#spliterator()
+java.util.concurrent.CompletionException
+java.util.concurrent.CopyOnWriteArraySet#spliterator()
+java.util.concurrent.LinkedBlockingDeque#spliterator()
+java.util.concurrent.LinkedBlockingQueue#spliterator()
+java.util.concurrent.LinkedTransferQueue#spliterator()
+java.util.concurrent.CopyOnWriteArrayList#spliterator()
+java.util.concurrent.ConcurrentLinkedDeque#spliterator()
+java.util.concurrent.ConcurrentLinkedQueue#spliterator()
+java.util.concurrent.ConcurrentSkipListMap#getOrDefault(java.lang.Object;V;)
+java.util.concurrent.ConcurrentSkipListMap#computeIfAbsent(K;java.util.function.Function<? super K,? extends V>;)
+java.util.concurrent.ConcurrentSkipListMap#computeIfPresent(K;java.util.function.BiFunction<? super K,? super V,? extends V>;)
+java.util.concurrent.ConcurrentSkipListMap#compute(K;java.util.function.BiFunction<? super K,? super V,? extends V>;)
+java.util.concurrent.ConcurrentSkipListMap#merge(K;V;java.util.function.BiFunction<? super V,? super V,? extends V>;)
+java.util.concurrent.ConcurrentSkipListSet#spliterator()
+java.util.concurrent.PriorityBlockingQueue#spliterator()
+java.util.Arrays#parallelSort(byte[];)
+java.util.Arrays#parallelSort(byte[];int;int;)
+java.util.Arrays#parallelSort(char[];)
+java.util.Arrays#parallelSort(char[];int;int;)
+java.util.Arrays#parallelSort(short[];)
+java.util.Arrays#parallelSort(short[];int;int;)
+java.util.Arrays#parallelSort(int[];)
+java.util.Arrays#parallelSort(int[];int;int;)
+java.util.Arrays#parallelSort(long[];)
+java.util.Arrays#parallelSort(long[];int;int;)
+java.util.Arrays#parallelSort(float[];)
+java.util.Arrays#parallelSort(float[];int;int;)
+java.util.Arrays#parallelSort(double[];)
+java.util.Arrays#parallelSort(double[];int;int;)
+java.util.Arrays#parallelSort(T[];)
+java.util.Arrays#parallelSort(T[];int;int;)
+java.util.Arrays#parallelSort(T[];java.util.Comparator<? super T>;)
+java.util.Arrays#parallelSort(T[];int;int;java.util.Comparator<? super T>;)
+java.util.Arrays#parallelPrefix(T[];java.util.function.BinaryOperator<T>;)
+java.util.Arrays#parallelPrefix(T[];int;int;java.util.function.BinaryOperator<T>;)
+java.util.Arrays#parallelPrefix(long[];java.util.function.LongBinaryOperator;)
+java.util.Arrays#parallelPrefix(long[];int;int;java.util.function.LongBinaryOperator;)
+java.util.Arrays#parallelPrefix(double[];java.util.function.DoubleBinaryOperator;)
+java.util.Arrays#parallelPrefix(double[];int;int;java.util.function.DoubleBinaryOperator;)
+java.util.Arrays#parallelPrefix(int[];java.util.function.IntBinaryOperator;)
+java.util.Arrays#parallelPrefix(int[];int;int;java.util.function.IntBinaryOperator;)
+java.util.Arrays#setAll(T[];java.util.function.IntFunction<? extends T>;)
+java.util.Arrays#parallelSetAll(T[];java.util.function.IntFunction<? extends T>;)
+java.util.Arrays#setAll(int[];java.util.function.IntUnaryOperator;)
+java.util.Arrays#parallelSetAll(int[];java.util.function.IntUnaryOperator;)
+java.util.Arrays#setAll(long[];java.util.function.IntToLongFunction;)
+java.util.Arrays#parallelSetAll(long[];java.util.function.IntToLongFunction;)
+java.util.Arrays#setAll(double[];java.util.function.IntToDoubleFunction;)
+java.util.Arrays#parallelSetAll(double[];java.util.function.IntToDoubleFunction;)
+java.util.Arrays#spliterator(T[];)
+java.util.Arrays#spliterator(T[];int;int;)
+java.util.Arrays#spliterator(int[];)
+java.util.Arrays#spliterator(int[];int;int;)
+java.util.Arrays#spliterator(long[];)
+java.util.Arrays#spliterator(long[];int;int;)
+java.util.Arrays#spliterator(double[];)
+java.util.Arrays#spliterator(double[];int;int;)
+java.util.Arrays#stream(T[];)
+java.util.Arrays#stream(T[];int;int;)
+java.util.Arrays#stream(int[];)
+java.util.Arrays#stream(int[];int;int;)
+java.util.Arrays#stream(long[];)
+java.util.Arrays#stream(long[];int;int;)
+java.util.Arrays#stream(double[];)
+java.util.Arrays#stream(double[];int;int;)
+java.util.Base64.Encoder
+java.util.Base64.Decoder
+java.util.Base64
+java.util.BitSet#stream()
+java.util.Locale#hasExtensions()
+java.util.Locale#stripExtensions()
+java.util.Locale.FilteringMode
+java.util.Locale.LanguageRange
+java.util.Locale#filter(java.util.List<java.util.Locale.LanguageRange>;java.util.Collection<java.util.Locale>;java.util.Locale.FilteringMode;)
+java.util.Locale#filter(java.util.List<java.util.Locale.LanguageRange>;java.util.Collection<java.util.Locale>;)
+java.util.Locale#filterTags(java.util.List<java.util.Locale.LanguageRange>;java.util.Collection<java.lang.String>;java.util.Locale.FilteringMode;)
+java.util.Locale#filterTags(java.util.List<java.util.Locale.LanguageRange>;java.util.Collection<java.lang.String>;)
+java.util.Locale#lookup(java.util.List<java.util.Locale.LanguageRange>;java.util.Collection<java.util.Locale>;)
+java.util.Locale#lookupTag(java.util.List<java.util.Locale.LanguageRange>;java.util.Collection<java.lang.String>;)
+java.util.Random#ints(long;)
+java.util.Random#ints()
+java.util.Random#ints(long;int;int;)
+java.util.Random#ints(int;int;)
+java.util.Random#longs(long;)
+java.util.Random#longs()
+java.util.Random#longs(long;long;long;)
+java.util.Random#longs(long;long;)
+java.util.Random#doubles(long;)
+java.util.Random#doubles()
+java.util.Random#doubles(long;double;double;)
+java.util.Random#doubles(double;double;)
+java.util.Vector#spliterator()
+java.util.HashSet#spliterator()
+java.util.Objects#isNull(java.lang.Object;)
+java.util.Objects#nonNull(java.lang.Object;)
+java.util.Objects#requireNonNull(T;java.util.function.Supplier<java.lang.String>;)
+java.util.TimSort#sort(T[];int;int;java.util.Comparator<? super T>;T[];int;int;)
+java.util.TreeSet#spliterator()
+java.util.Calendar#NARROW_FORMAT
+java.util.Calendar#NARROW_STANDALONE
+java.util.Calendar#SHORT_FORMAT
+java.util.Calendar#LONG_FORMAT
+java.util.Calendar#SHORT_STANDALONE
+java.util.Calendar#LONG_STANDALONE
+java.util.Calendar.Builder
+java.util.Calendar#getAvailableCalendarTypes()
+java.util.Calendar#getCalendarType()
+java.util.Calendar#toInstant()
+java.util.Iterator#forEachRemaining(java.util.function.Consumer<? super E>;)
+java.util.Optional
+java.util.TimeZone#getTimeZone(java.time.ZoneId;)
+java.util.TimeZone#toZoneId()
+java.util.Tripwire
+java.util.ArrayList#spliterator()
+java.util.SortedSet#spliterator()
+java.util.ArrayDeque#spliterator()
+java.util.Collection#removeIf(java.util.function.Predicate<? super E>;)
+java.util.Collection#spliterator()
+java.util.Collection#stream()
+java.util.Collection#parallelStream()
+java.util.Comparator#reversed()
+java.util.Comparator#thenComparing(java.util.Comparator<? super T>;)
+java.util.Comparator#thenComparing(java.util.function.Function<? super T,? extends U>;java.util.Comparator<? super U>;)
+java.util.Comparator#thenComparing(java.util.function.Function<? super T,? extends U>;)
+java.util.Comparator#thenComparingInt(java.util.function.ToIntFunction<? super T>;)
+java.util.Comparator#thenComparingLong(java.util.function.ToLongFunction<? super T>;)
+java.util.Comparator#thenComparingDouble(java.util.function.ToDoubleFunction<? super T>;)
+java.util.Comparator#reverseOrder()
+java.util.Comparator#naturalOrder()
+java.util.Comparator#nullsFirst(java.util.Comparator<? super T>;)
+java.util.Comparator#nullsLast(java.util.Comparator<? super T>;)
+java.util.Comparator#comparing(java.util.function.Function<? super T,? extends U>;java.util.Comparator<? super U>;)
+java.util.Comparator#comparing(java.util.function.Function<? super T,? extends U>;)
+java.util.Comparator#comparingInt(java.util.function.ToIntFunction<? super T>;)
+java.util.Comparator#comparingLong(java.util.function.ToLongFunction<? super T>;)
+java.util.Comparator#comparingDouble(java.util.function.ToDoubleFunction<? super T>;)
+java.util.LinkedList#spliterator()
+java.util.Collections#unmodifiableNavigableSet(java.util.NavigableSet<T>;)
+java.util.Collections#unmodifiableNavigableMap(java.util.NavigableMap<K,? extends V>;)
+java.util.Collections#synchronizedNavigableSet(java.util.NavigableSet<T>;)
+java.util.Collections#synchronizedNavigableMap(java.util.NavigableMap<K,V>;)
+java.util.Collections#checkedQueue(java.util.Queue<E>;java.lang.Class<E>;)
+java.util.Collections#checkedNavigableSet(java.util.NavigableSet<E>;java.lang.Class<E>;)
+java.util.Collections#checkedNavigableMap(java.util.NavigableMap<K,V>;java.lang.Class<K>;java.lang.Class<V>;)
+java.util.Collections#emptySortedSet()
+java.util.Collections#emptyNavigableSet()
+java.util.Collections#emptySortedMap()
+java.util.Collections#emptyNavigableMap()
+java.util.OptionalInt
+java.util.Spliterator.OfPrimitive
+java.util.Spliterator.OfInt
+java.util.Spliterator.OfLong
+java.util.Spliterator.OfDouble
+java.util.Spliterator
+java.util.OptionalLong
+java.util.Spliterators.AbstractSpliterator
+java.util.Spliterators.AbstractIntSpliterator
+java.util.Spliterators.AbstractLongSpliterator
+java.util.Spliterators.AbstractDoubleSpliterator
+java.util.Spliterators
+java.util.StringJoiner
+java.util.LinkedHashSet#spliterator()
+java.util.PriorityQueue#PriorityQueue(java.util.Comparator<? super E>;)
+java.util.PriorityQueue#spliterator()
+java.util.OptionalDouble
+java.util.ResourceBundle#getBaseBundleName()
+java.util.SplittableRandom
+java.util.ComparableTimSort#sort(java.lang.Object[];int;int;java.lang.Object[];int;int;)
+java.util.GregorianCalendar#getCalendarType()
+java.util.GregorianCalendar#toZonedDateTime()
+java.util.GregorianCalendar#from(java.time.ZonedDateTime;)
+java.util.PrimitiveIterator.OfInt
+java.util.PrimitiveIterator.OfLong
+java.util.PrimitiveIterator.OfDouble
+java.util.PrimitiveIterator
+java.util.ArrayPrefixHelpers
+java.util.IntSummaryStatistics
+java.util.LongSummaryStatistics
+java.util.DoubleSummaryStatistics
+java.security.cert.X509CRL#verify(java.security.PublicKey;java.security.Provider;)
+java.security.cert.Certificate#verify(java.security.PublicKey;java.security.Provider;)
+java.security.cert.CertPathBuilder#getRevocationChecker()
+java.security.cert.CertPathChecker
+java.security.cert.X509Certificate#verify(java.security.PublicKey;java.security.Provider;)
+java.security.cert.CertPathValidator#getRevocationChecker()
+java.security.cert.CertPathBuilderSpi#engineGetRevocationChecker()
+java.security.cert.CertPathValidatorSpi#engineGetRevocationChecker()
+java.security.cert.PKIXRevocationChecker
+java.security.KeyStore.PasswordProtection#PasswordProtection(char[];java.lang.String;java.security.spec.AlgorithmParameterSpec;)
+java.security.KeyStore.PasswordProtection#getProtectionAlgorithm()
+java.security.KeyStore.PasswordProtection#getProtectionParameters()
+java.security.KeyStore.Entry#getAttributes()
+java.security.KeyStore.Entry.Attribute
+java.security.KeyStore.PrivateKeyEntry#PrivateKeyEntry(java.security.PrivateKey;java.security.cert.Certificate[];java.util.Set<java.security.KeyStore.Entry.Attribute>;)
+java.security.KeyStore.PrivateKeyEntry#getAttributes()
+java.security.KeyStore.SecretKeyEntry#SecretKeyEntry(javax.crypto.SecretKey;java.util.Set<java.security.KeyStore.Entry.Attribute>;)
+java.security.KeyStore.SecretKeyEntry#getAttributes()
+java.security.KeyStore.TrustedCertificateEntry#TrustedCertificateEntry(java.security.cert.Certificate;java.util.Set<java.security.KeyStore.Entry.Attribute>;)
+java.security.KeyStore.TrustedCertificateEntry#getAttributes()
+java.security.Provider#putIfAbsent(java.lang.Object;java.lang.Object;)
+java.security.Provider#remove(java.lang.Object;java.lang.Object;)
+java.security.Provider#replace(java.lang.Object;java.lang.Object;java.lang.Object;)
+java.security.Provider#replace(java.lang.Object;java.lang.Object;)
+java.security.Provider#replaceAll(java.util.function.BiFunction<? super java.lang.Object,? super java.lang.Object,? extends java.lang.Object>;)
+java.security.Provider#compute(java.lang.Object;java.util.function.BiFunction<? super java.lang.Object,? super java.lang.Object,? extends java.lang.Object>;)
+java.security.Provider#computeIfAbsent(java.lang.Object;java.util.function.Function<? super java.lang.Object,? extends java.lang.Object>;)
+java.security.Provider#computeIfPresent(java.lang.Object;java.util.function.BiFunction<? super java.lang.Object,? super java.lang.Object,? extends java.lang.Object>;)
+java.security.Provider#merge(java.lang.Object;java.lang.Object;java.util.function.BiFunction<? super java.lang.Object,? super java.lang.Object,? extends java.lang.Object>;)
+java.security.Provider#getOrDefault(java.lang.Object;java.lang.Object;)
+java.security.Provider#forEach(java.util.function.BiConsumer<? super java.lang.Object,? super java.lang.Object>;)
+java.security.Principal#implies(javax.security.auth.Subject;)
+java.security.SecureRandom#getInstanceStrong()
+java.security.PKCS12Attribute
+java.security.AccessController#doPrivileged(java.security.PrivilegedAction<T>;java.security.AccessControlContext;java.security.Permission[];)
+java.security.AccessController#doPrivilegedWithCombiner(java.security.PrivilegedAction<T>;java.security.AccessControlContext;java.security.Permission[];)
+java.security.AccessController#doPrivileged(java.security.PrivilegedExceptionAction<T>;java.security.AccessControlContext;java.security.Permission[];)
+java.security.AccessController#doPrivilegedWithCombiner(java.security.PrivilegedExceptionAction<T>;java.security.AccessControlContext;java.security.Permission[];)
+java.security.DomainLoadStoreParameter
+javax.xml.validation.SchemaFactoryConfigurationError
+javax.lang.model.type.TypeKind#INTERSECTION
+javax.lang.model.type.TypeVisitor#visitIntersection(javax.lang.model.type.IntersectionType;P;)
+javax.lang.model.type.ExecutableType#getReceiverType()
+javax.lang.model.type.IntersectionType
+javax.lang.model.util.Elements#isFunctionalInterface(javax.lang.model.element.TypeElement;)
+javax.lang.model.util.ElementScanner8
+javax.lang.model.util.TypeKindVisitor8
+javax.lang.model.util.SimpleTypeVisitor8
+javax.lang.model.util.ElementKindVisitor8
+javax.lang.model.util.AbstractTypeVisitor6#visitIntersection(javax.lang.model.type.IntersectionType;P;)
+javax.lang.model.util.AbstractTypeVisitor8
+javax.lang.model.util.SimpleElementVisitor8
+javax.lang.model.util.AbstractElementVisitor8
+javax.lang.model.util.SimpleAnnotationValueVisitor8
+javax.lang.model.util.AbstractAnnotationValueVisitor8
+javax.lang.model.element.Modifier#DEFAULT
+javax.lang.model.element.ExecutableElement#getReceiverType()
+javax.lang.model.element.ExecutableElement#isDefault()
+javax.lang.model.SourceVersion#RELEASE_8
+javax.lang.model.AnnotatedConstruct
+javax.tools.StandardLocation#NATIVE_HEADER_OUTPUT
+javax.security.auth.kerberos.KeyTab#getUnboundInstance(java.io.File;)
+javax.security.auth.kerberos.KeyTab#getInstance(javax.security.auth.kerberos.KerberosPrincipal;java.io.File;)
+javax.security.auth.kerberos.KeyTab#getUnboundInstance()
+javax.security.auth.kerberos.KeyTab#getInstance(javax.security.auth.kerberos.KerberosPrincipal;)
+javax.security.auth.kerberos.KeyTab#getPrincipal()
+javax.security.auth.kerberos.KeyTab#isBound()
+java.lang.reflect.Method#getParameterCount()
+java.lang.reflect.Constructor#getParameterCount()
+sun.reflect.generics.reflectiveObjects.TypeVariableImpl#getAnnotatedBounds()
+java.lang.reflect.Parameter#getAnnotationsByType(java.lang.Class<T>;)
+sun.reflect.annotation.AnnotatedTypeFactory.AnnotatedTypeBaseImpl#getAnnotationsByType(java.lang.Class<T>;)
+sun.reflect.generics.reflectiveObjects.TypeVariableImpl#getAnnotationsByType(java.lang.Class<T>;)
+java.lang.reflect.Parameter#getDeclaredAnnotation(java.lang.Class<T>;)
+sun.reflect.annotation.AnnotatedTypeFactory.AnnotatedTypeBaseImpl#getDeclaredAnnotation(java.lang.Class<T>;)
+sun.reflect.generics.reflectiveObjects.TypeVariableImpl#getDeclaredAnnotation(java.lang.Class<T>;)
+java.lang.reflect.Parameter#getDeclaredAnnotationsByType(java.lang.Class<T>;)
+sun.reflect.annotation.AnnotatedTypeFactory.AnnotatedTypeBaseImpl#getDeclaredAnnotationsByType(java.lang.Class<T>;)
+sun.reflect.generics.reflectiveObjects.TypeVariableImpl#getDeclaredAnnotationsByType(java.lang.Class<T>;)
+java.lang.ProcessImpl#waitFor(long;java.util.concurrent.TimeUnit;)
+java.lang.ProcessImpl#destroyForcibly()
+java.lang.ProcessImpl#isAlive()
+java.util.stream.SpinedBuffer.OfPrimitive#forEach(java.util.function.Consumer<? super E>;)
+java.util.stream.SpinedBuffer#forEach(java.util.function.Consumer<? super E>;)
+java.util.stream.Nodes.SpinedNodeBuilder#forEach(java.util.function.Consumer<? super T>;)
+java.util.concurrent.ConcurrentHashMap.ValuesView#forEach(java.util.function.Consumer<? super V>;)
+java.util.Collections.CheckedCollection#forEach(java.util.function.Consumer<? super E>;)
+java.util.Collections.SynchronizedCollection#forEach(java.util.function.Consumer<? super E>;)
+java.util.Collections.UnmodifiableCollection#forEach(java.util.function.Consumer<? super E>;)
+java.util.Collections.AsLIFOQueue#forEach(java.util.function.Consumer<? super E>;)
+java.util.Collections.UnmodifiableMap.UnmodifiableEntrySet#forEach(java.util.function.Consumer<? super java.util.Map.Entry<K,V>>;)
+java.util.concurrent.ConcurrentHashMap.EntrySetView#forEach(java.util.function.Consumer<? super java.util.Map.Entry<K,V>>;)
+java.util.concurrent.ConcurrentHashMap.KeySetView#forEach(java.util.function.Consumer<? super K>;)
+java.util.ArrayList#forEach(java.util.function.Consumer<? super E>;)
+java.util.Vector#forEach(java.util.function.Consumer<? super E>;)
+java.util.concurrent.CopyOnWriteArrayList#forEach(java.util.function.Consumer<? super E>;)
+java.util.concurrent.CopyOnWriteArrayList.COWSubList#forEach(java.util.function.Consumer<? super E>;)
+java.util.Collections.SingletonList#forEach(java.util.function.Consumer<? super E>;)
+java.util.Arrays.ArrayList#forEach(java.util.function.Consumer<? super E>;)
+java.util.Collections.EmptyList#forEach(java.util.function.Consumer<? super E>;)
+java.util.LinkedHashMap.LinkedValues#forEach(java.util.function.Consumer<? super V>;)
+java.util.HashMap.Values#forEach(java.util.function.Consumer<? super V>;)
+java.util.HashMap.KeySet#forEach(java.util.function.Consumer<? super K>;)
+java.util.LinkedHashMap.LinkedKeySet#forEach(java.util.function.Consumer<? super K>;)
+java.util.LinkedHashMap.LinkedEntrySet#forEach(java.util.function.Consumer<? super java.util.Map.Entry<K,V>>;)
+java.util.Collections.EmptySet#forEach(java.util.function.Consumer<? super E>;)
+java.util.Collections.SingletonSet#forEach(java.util.function.Consumer<? super E>;)
+java.util.concurrent.CopyOnWriteArraySet#forEach(java.util.function.Consumer<? super E>;)
+java.util.HashMap.EntrySet#forEach(java.util.function.Consumer<? super java.util.Map.Entry<K,V>>;)
+java.util.Collections.SetFromMap#forEach(java.util.function.Consumer<? super E>;)
+java.util.stream.SpinedBuffer.OfDouble#forEach(java.util.function.Consumer<? super java.lang.Double>;)
+java.util.stream.SpinedBuffer.OfLong#forEach(java.util.function.Consumer<? super java.lang.Long>;)
+java.util.stream.SpinedBuffer.OfInt#forEach(java.util.function.Consumer<? super java.lang.Integer>;)
+java.util.stream.SpinedBuffer#spliterator()
+java.util.stream.Nodes.SpinedNodeBuilder#spliterator()
+java.util.concurrent.ConcurrentHashMap.ValuesView#spliterator()
+java.util.Collections.CheckedCollection#spliterator()
+java.util.Collections.SynchronizedCollection#spliterator()
+java.util.Collections.UnmodifiableCollection#spliterator()
+java.util.Collections.AsLIFOQueue#spliterator()
+java.util.Collections.UnmodifiableMap.UnmodifiableEntrySet#spliterator()
+java.util.concurrent.ConcurrentHashMap.EntrySetView#spliterator()
+java.util.concurrent.ConcurrentHashMap.KeySetView#spliterator()
+java.util.concurrent.CopyOnWriteArrayList.COWSubList#spliterator()
+java.util.Collections.SingletonList#spliterator()
+java.util.Arrays.ArrayList#spliterator()
+java.util.Collections.EmptyList#spliterator()
+java.util.ArrayList.SubList#spliterator()
+java.util.Collections.CopiesList#spliterator()
+java.util.LinkedHashMap.LinkedValues#spliterator()
+java.util.HashMap.Values#spliterator()
+java.util.TreeMap.Values#spliterator()
+java.util.WeakHashMap.Values#spliterator()
+java.util.IdentityHashMap.Values#spliterator()
+java.util.concurrent.ConcurrentSkipListMap.Values#spliterator()
+java.util.HashMap.KeySet#spliterator()
+java.util.WeakHashMap.EntrySet#spliterator()
+java.util.WeakHashMap.KeySet#spliterator()
+java.util.TreeMap.EntrySet#spliterator()
+java.util.TreeMap.KeySet#spliterator()
+java.util.concurrent.ConcurrentSkipListMap.EntrySet#spliterator()
+java.util.LinkedHashMap.LinkedKeySet#spliterator()
+java.util.LinkedHashMap.LinkedEntrySet#spliterator()
+java.util.Collections.EmptySet#spliterator()
+java.util.Collections.SingletonSet#spliterator()
+java.util.HashMap.EntrySet#spliterator()
+java.util.IdentityHashMap.KeySet#spliterator()
+java.util.IdentityHashMap.EntrySet#spliterator()
+java.util.Collections.SetFromMap#spliterator()
+java.util.concurrent.ConcurrentSkipListMap.KeySet#spliterator()
+java.util.stream.SpinedBuffer.OfDouble#spliterator()
+java.util.stream.SpinedBuffer.OfLong#spliterator()
+java.util.stream.SpinedBuffer.OfInt#spliterator()
+java.util.stream.Nodes.IntSpinedNodeBuilder#spliterator()
+java.util.stream.Nodes.LongSpinedNodeBuilder#spliterator()
+java.util.stream.Nodes.DoubleSpinedNodeBuilder#spliterator()
+java.nio.CharBuffer#chars()
+sun.util.locale.provider.SPILocaleProviderAdapter.TimeZoneNameProviderDelegate#getGenericDisplayName(java.lang.String;int;java.util.Locale;)
+sun.util.locale.provider.TimeZoneNameProviderImpl#getGenericDisplayName(java.lang.String;int;java.util.Locale;)
+sun.util.locale.provider.BreakIteratorProviderImpl#isSupportedLocale(java.util.Locale;)
+sun.util.locale.provider.SPILocaleProviderAdapter.BreakIteratorProviderDelegate#isSupportedLocale(java.util.Locale;)
+sun.util.locale.provider.LocaleNameProviderImpl#isSupportedLocale(java.util.Locale;)
+sun.util.locale.provider.SPILocaleProviderAdapter.LocaleNameProviderDelegate#isSupportedLocale(java.util.Locale;)
+sun.util.locale.provider.SPILocaleProviderAdapter.CurrencyNameProviderDelegate#isSupportedLocale(java.util.Locale;)
+sun.util.locale.provider.SPILocaleProviderAdapter.TimeZoneNameProviderDelegate#isSupportedLocale(java.util.Locale;)
+sun.util.locale.provider.TimeZoneNameProviderImpl#isSupportedLocale(java.util.Locale;)
+sun.util.locale.provider.CollatorProviderImpl#isSupportedLocale(java.util.Locale;)
+sun.util.locale.provider.SPILocaleProviderAdapter.CollatorProviderDelegate#isSupportedLocale(java.util.Locale;)
+sun.util.locale.provider.SPILocaleProviderAdapter.DateFormatProviderDelegate#isSupportedLocale(java.util.Locale;)
+sun.util.locale.provider.DateFormatProviderImpl#isSupportedLocale(java.util.Locale;)
+sun.util.locale.provider.NumberFormatProviderImpl#isSupportedLocale(java.util.Locale;)
+sun.util.locale.provider.SPILocaleProviderAdapter.NumberFormatProviderDelegate#isSupportedLocale(java.util.Locale;)
+sun.util.locale.provider.DateFormatSymbolsProviderImpl#isSupportedLocale(java.util.Locale;)
+sun.util.locale.provider.SPILocaleProviderAdapter.DateFormatSymbolsProviderDelegate#isSupportedLocale(java.util.Locale;)
+sun.util.locale.provider.SPILocaleProviderAdapter.CalendarNameProviderDelegate#isSupportedLocale(java.util.Locale;)
+sun.util.locale.provider.CalendarNameProviderImpl#isSupportedLocale(java.util.Locale;)
+sun.util.locale.provider.SPILocaleProviderAdapter.DecimalFormatSymbolsProviderDelegate#isSupportedLocale(java.util.Locale;)
+sun.util.locale.provider.DecimalFormatSymbolsProviderImpl#isSupportedLocale(java.util.Locale;)
+sun.util.locale.provider.CalendarProviderImpl#isSupportedLocale(java.util.Locale;)
+sun.util.locale.provider.SPILocaleProviderAdapter.CalendarDataProviderDelegate#isSupportedLocale(java.util.Locale;)
+java.util.jar.JarFile#stream()
+java.util.Collections.SynchronizedMap#getOrDefault(java.lang.Object;V;)
+java.util.HashMap#getOrDefault(java.lang.Object;V;)
+java.util.LinkedHashMap#getOrDefault(java.lang.Object;V;)
+java.util.Collections.UnmodifiableMap#getOrDefault(java.lang.Object;V;)
+java.util.Hashtable#getOrDefault(java.lang.Object;V;)
+java.util.concurrent.ConcurrentHashMap#getOrDefault(java.lang.Object;V;)
+java.util.Collections.EmptyMap#getOrDefault(java.lang.Object;V;)
+java.util.Collections.SingletonMap#getOrDefault(java.lang.Object;V;)
+java.util.IdentityHashMap#forEach(java.util.function.BiConsumer<? super K,? super V>;)
+java.util.Collections.SynchronizedMap#forEach(java.util.function.BiConsumer<? super K,? super V>;)
+java.util.Collections.CheckedMap#forEach(java.util.function.BiConsumer<? super K,? super V>;)
+java.util.HashMap#forEach(java.util.function.BiConsumer<? super K,? super V>;)
+java.util.LinkedHashMap#forEach(java.util.function.BiConsumer<? super K,? super V>;)
+java.util.Collections.UnmodifiableMap#forEach(java.util.function.BiConsumer<? super K,? super V>;)
+java.util.WeakHashMap#forEach(java.util.function.BiConsumer<? super K,? super V>;)
+java.util.Hashtable#forEach(java.util.function.BiConsumer<? super K,? super V>;)
+java.util.TreeMap#forEach(java.util.function.BiConsumer<? super K,? super V>;)
+java.util.concurrent.ConcurrentSkipListMap#forEach(java.util.function.BiConsumer<? super K,? super V>;)
+java.util.concurrent.ConcurrentHashMap#forEach(java.util.function.BiConsumer<? super K,? super V>;)
+java.util.Collections.EmptyMap#forEach(java.util.function.BiConsumer<? super K,? super V>;)
+java.util.Collections.SingletonMap#forEach(java.util.function.BiConsumer<? super K,? super V>;)
+java.util.IdentityHashMap#replaceAll(java.util.function.BiFunction<? super K,? super V,? extends V>;)
+java.util.Collections.SynchronizedMap#replaceAll(java.util.function.BiFunction<? super K,? super V,? extends V>;)
+java.util.Collections.CheckedMap#replaceAll(java.util.function.BiFunction<? super K,? super V,? extends V>;)
+java.util.HashMap#replaceAll(java.util.function.BiFunction<? super K,? super V,? extends V>;)
+java.util.LinkedHashMap#replaceAll(java.util.function.BiFunction<? super K,? super V,? extends V>;)
+java.util.Collections.UnmodifiableMap#replaceAll(java.util.function.BiFunction<? super K,? super V,? extends V>;)
+java.util.WeakHashMap#replaceAll(java.util.function.BiFunction<? super K,? super V,? extends V>;)
+java.util.Hashtable#replaceAll(java.util.function.BiFunction<? super K,? super V,? extends V>;)
+java.util.TreeMap#replaceAll(java.util.function.BiFunction<? super K,? super V,? extends V>;)
+java.util.concurrent.ConcurrentSkipListMap#replaceAll(java.util.function.BiFunction<? super K,? super V,? extends V>;)
+java.util.concurrent.ConcurrentHashMap#replaceAll(java.util.function.BiFunction<? super K,? super V,? extends V>;)
+java.util.Collections.EmptyMap#replaceAll(java.util.function.BiFunction<? super K,? super V,? extends V>;)
+java.util.Collections.SingletonMap#replaceAll(java.util.function.BiFunction<? super K,? super V,? extends V>;)
+java.util.Collections.SynchronizedMap#putIfAbsent(K;V;)
+java.util.Collections.CheckedMap#putIfAbsent(K;V;)
+java.util.HashMap#putIfAbsent(K;V;)
+java.util.Collections.UnmodifiableMap#putIfAbsent(K;V;)
+java.util.Hashtable#putIfAbsent(K;V;)
+java.util.Collections.EmptyMap#putIfAbsent(K;V;)
+java.util.Collections.SingletonMap#putIfAbsent(K;V;)
+java.util.Collections.SynchronizedMap#remove(java.lang.Object;java.lang.Object;)
+java.util.Collections.CheckedMap#remove(java.lang.Object;java.lang.Object;)
+java.util.HashMap#remove(java.lang.Object;java.lang.Object;)
+java.util.Collections.UnmodifiableMap#remove(java.lang.Object;java.lang.Object;)
+java.util.Hashtable#remove(java.lang.Object;java.lang.Object;)
+java.util.Collections.EmptyMap#remove(java.lang.Object;java.lang.Object;)
+java.util.Collections.SingletonMap#remove(java.lang.Object;java.lang.Object;)
+java.util.Collections.SynchronizedMap#replace(K;V;V;)
+java.util.Collections.CheckedMap#replace(K;V;V;)
+java.util.HashMap#replace(K;V;V;)
+java.util.Collections.UnmodifiableMap#replace(K;V;V;)
+java.util.Hashtable#replace(K;V;V;)
+java.util.TreeMap#replace(K;V;V;)
+java.util.Collections.EmptyMap#replace(K;V;V;)
+java.util.Collections.SingletonMap#replace(K;V;V;)
+java.util.Collections.SynchronizedMap#replace(K;V;)
+java.util.Collections.CheckedMap#replace(K;V;)
+java.util.HashMap#replace(K;V;)
+java.util.Collections.UnmodifiableMap#replace(K;V;)
+java.util.Hashtable#replace(K;V;)
+java.util.TreeMap#replace(K;V;)
+java.util.Collections.EmptyMap#replace(K;V;)
+java.util.Collections.SingletonMap#replace(K;V;)
+java.util.Collections.SynchronizedMap#computeIfAbsent(K;java.util.function.Function<? super K,? extends V>;)
+java.util.Collections.CheckedMap#computeIfAbsent(K;java.util.function.Function<? super K,? extends V>;)
+java.util.HashMap#computeIfAbsent(K;java.util.function.Function<? super K,? extends V>;)
+java.util.Collections.UnmodifiableMap#computeIfAbsent(K;java.util.function.Function<? super K,? extends V>;)
+java.util.Hashtable#computeIfAbsent(K;java.util.function.Function<? super K,? extends V>;)
+java.util.concurrent.ConcurrentHashMap#computeIfAbsent(K;java.util.function.Function<? super K,? extends V>;)
+java.util.Collections.EmptyMap#computeIfAbsent(K;java.util.function.Function<? super K,? extends V>;)
+java.util.Collections.SingletonMap#computeIfAbsent(K;java.util.function.Function<? super K,? extends V>;)
+java.util.Collections.SynchronizedMap#computeIfPresent(K;java.util.function.BiFunction<? super K,? super V,? extends V>;)
+java.util.Collections.CheckedMap#computeIfPresent(K;java.util.function.BiFunction<? super K,? super V,? extends V>;)
+java.util.HashMap#computeIfPresent(K;java.util.function.BiFunction<? super K,? super V,? extends V>;)
+java.util.Collections.UnmodifiableMap#computeIfPresent(K;java.util.function.BiFunction<? super K,? super V,? extends V>;)
+java.util.Hashtable#computeIfPresent(K;java.util.function.BiFunction<? super K,? super V,? extends V>;)
+java.util.concurrent.ConcurrentHashMap#computeIfPresent(K;java.util.function.BiFunction<? super K,? super V,? extends V>;)
+java.util.Collections.EmptyMap#computeIfPresent(K;java.util.function.BiFunction<? super K,? super V,? extends V>;)
+java.util.Collections.SingletonMap#computeIfPresent(K;java.util.function.BiFunction<? super K,? super V,? extends V>;)
+java.util.Collections.SynchronizedMap#compute(K;java.util.function.BiFunction<? super K,? super V,? extends V>;)
+java.util.Collections.CheckedMap#compute(K;java.util.function.BiFunction<? super K,? super V,? extends V>;)
+java.util.HashMap#compute(K;java.util.function.BiFunction<? super K,? super V,? extends V>;)
+java.util.Collections.UnmodifiableMap#compute(K;java.util.function.BiFunction<? super K,? super V,? extends V>;)
+java.util.Hashtable#compute(K;java.util.function.BiFunction<? super K,? super V,? extends V>;)
+java.util.concurrent.ConcurrentHashMap#compute(K;java.util.function.BiFunction<? super K,? super V,? extends V>;)
+java.util.Collections.EmptyMap#compute(K;java.util.function.BiFunction<? super K,? super V,? extends V>;)
+java.util.Collections.SingletonMap#compute(K;java.util.function.BiFunction<? super K,? super V,? extends V>;)
+java.util.Collections.SynchronizedMap#merge(K;V;java.util.function.BiFunction<? super V,? super V,? extends V>;)
+java.util.Collections.CheckedMap#merge(K;V;java.util.function.BiFunction<? super V,? super V,? extends V>;)
+java.util.HashMap#merge(K;V;java.util.function.BiFunction<? super V,? super V,? extends V>;)
+java.util.Collections.UnmodifiableMap#merge(K;V;java.util.function.BiFunction<? super V,? super V,? extends V>;)
+java.util.Hashtable#merge(K;V;java.util.function.BiFunction<? super V,? super V,? extends V>;)
+java.util.concurrent.ConcurrentHashMap#merge(K;V;java.util.function.BiFunction<? super V,? super V,? extends V>;)
+java.util.Collections.EmptyMap#merge(K;V;java.util.function.BiFunction<? super V,? super V,? extends V>;)
+java.util.Collections.SingletonMap#merge(K;V;java.util.function.BiFunction<? super V,? super V,? extends V>;)
+java.sql.Time#toInstant()
+java.sql.Date#toInstant()
+java.util.Collections.CheckedList#replaceAll(java.util.function.UnaryOperator<E>;)
+java.util.ArrayList#replaceAll(java.util.function.UnaryOperator<E>;)
+java.util.Vector#replaceAll(java.util.function.UnaryOperator<E>;)
+java.util.Collections.SynchronizedList#replaceAll(java.util.function.UnaryOperator<E>;)
+java.util.Collections.UnmodifiableList#replaceAll(java.util.function.UnaryOperator<E>;)
+java.util.concurrent.CopyOnWriteArrayList#replaceAll(java.util.function.UnaryOperator<E>;)
+java.util.concurrent.CopyOnWriteArrayList.COWSubList#replaceAll(java.util.function.UnaryOperator<E>;)
+java.util.Collections.SingletonList#replaceAll(java.util.function.UnaryOperator<E>;)
+java.util.Arrays.ArrayList#replaceAll(java.util.function.UnaryOperator<E>;)
+java.util.Collections.EmptyList#replaceAll(java.util.function.UnaryOperator<E>;)
+java.util.Collections.CheckedList#sort(java.util.Comparator<? super E>;)
+java.util.ArrayList#sort(java.util.Comparator<? super E>;)
+java.util.Vector#sort(java.util.Comparator<? super E>;)
+java.util.Collections.SynchronizedList#sort(java.util.Comparator<? super E>;)
+com.sun.javafx.collections.SortableList#sort(java.util.Comparator<? super E>;)
+java.util.Collections.UnmodifiableList#sort(java.util.Comparator<? super E>;)
+java.util.concurrent.CopyOnWriteArrayList#sort(java.util.Comparator<? super E>;)
+com.sun.javafx.collections.ObservableListWrapper#sort(java.util.Comparator<? super E>;)
+com.sun.javafx.collections.ObservableSequentialListWrapper#sort(java.util.Comparator<? super E>;)
+java.util.concurrent.CopyOnWriteArrayList.COWSubList#sort(java.util.Comparator<? super E>;)
+java.util.Collections.SingletonList#sort(java.util.Comparator<? super E>;)
+java.util.Arrays.ArrayList#sort(java.util.Comparator<? super E>;)
+java.util.Collections.EmptyList#sort(java.util.Comparator<? super E>;)
+java.util.JapaneseImperialCalendar#getCalendarType()
+sun.util.BuddhistCalendar#getCalendarType()
+java.util.concurrent.ConcurrentSkipListMap.SubMap.SubMapIter#forEachRemaining(java.util.function.Consumer<? super T>;)
+java.util.ArrayList.Itr#forEachRemaining(java.util.function.Consumer<? super E>;)
+java.util.ArrayDeque.DeqIterator#forEachRemaining(java.util.function.Consumer<? super E>;)
+java.util.Collections.EmptyIterator#forEachRemaining(java.util.function.Consumer<? super E>;)
+java.util.Vector.Itr#forEachRemaining(java.util.function.Consumer<? super E>;)
+java.util.PrimitiveIterator.OfDouble#forEachRemaining(java.util.function.Consumer<? super java.lang.Double>;)
+java.util.PrimitiveIterator.OfInt#forEachRemaining(java.util.function.Consumer<? super java.lang.Integer>;)
+java.util.PrimitiveIterator.OfLong#forEachRemaining(java.util.function.Consumer<? super java.lang.Long>;)
+java.util.TreeMap.NavigableSubMap.SubMapKeyIterator#forEachRemaining(java.util.function.Consumer<? super K>;)
+java.util.TreeMap.NavigableSubMap.DescendingSubMapKeyIterator#forEachRemaining(java.util.function.Consumer<? super K>;)
+java.util.concurrent.CopyOnWriteArrayList.COWSubListIterator#forEachRemaining(java.util.function.Consumer<? super E>;)
+java.util.LinkedList.ListItr#forEachRemaining(java.util.function.Consumer<? super E>;)
+java.util.concurrent.CopyOnWriteArrayList.COWIterator#forEachRemaining(java.util.function.Consumer<? super E>;)
+java.util.Collections.CheckedCollection#removeIf(java.util.function.Predicate<? super E>;)
+java.util.Collections.SynchronizedCollection#removeIf(java.util.function.Predicate<? super E>;)
+java.util.Collections.UnmodifiableCollection#removeIf(java.util.function.Predicate<? super E>;)
+java.util.Collections.AsLIFOQueue#removeIf(java.util.function.Predicate<? super E>;)
+java.util.ArrayList#removeIf(java.util.function.Predicate<? super E>;)
+java.util.Vector#removeIf(java.util.function.Predicate<? super E>;)
+java.util.concurrent.CopyOnWriteArrayList#removeIf(java.util.function.Predicate<? super E>;)
+java.util.concurrent.CopyOnWriteArrayList.COWSubList#removeIf(java.util.function.Predicate<? super E>;)
+java.util.Collections.SingletonList#removeIf(java.util.function.Predicate<? super E>;)
+java.util.Collections.EmptyList#removeIf(java.util.function.Predicate<? super E>;)
+java.util.Collections.EmptySet#removeIf(java.util.function.Predicate<? super E>;)
+java.util.Collections.SingletonSet#removeIf(java.util.function.Predicate<? super E>;)
+java.util.concurrent.CopyOnWriteArraySet#removeIf(java.util.function.Predicate<? super E>;)
+java.util.Collections.SetFromMap#removeIf(java.util.function.Predicate<? super E>;)
+java.util.Collections.CheckedCollection#stream()
+java.util.Collections.SynchronizedCollection#stream()
+java.util.Collections.UnmodifiableCollection#stream()
+java.util.Collections.AsLIFOQueue#stream()
+java.util.Collections.UnmodifiableMap.UnmodifiableEntrySet#stream()
+java.util.Collections.CopiesList#stream()
+java.util.Collections.SetFromMap#stream()
+java.util.Collections.CheckedCollection#parallelStream()
+java.util.Collections.SynchronizedCollection#parallelStream()
+java.util.Collections.UnmodifiableCollection#parallelStream()
+java.util.Collections.AsLIFOQueue#parallelStream()
+java.util.Collections.UnmodifiableMap.UnmodifiableEntrySet#parallelStream()
+java.util.Collections.CopiesList#parallelStream()
+java.util.Collections.SetFromMap#parallelStream()
+java.util.Collections.ReverseComparator2#reversed()
+java.util.Collections.ReverseComparator#reversed()
+java.util.Comparators.NullComparator#reversed()
+java.util.Comparators.NaturalOrderComparator#reversed()
+java.util.Comparators.NullComparator#thenComparing(java.util.Comparator<? super T>;)
+sun.security.x509.X509CRLImpl#verify(java.security.PublicKey;java.security.Provider;)
+sun.security.x509.X509CertImpl#verify(java.security.PublicKey;java.security.Provider;)
+sun.security.provider.certpath.SunCertPathBuilder#engineGetRevocationChecker()
+sun.security.provider.certpath.PKIXCertPathValidator#engineGetRevocationChecker()
+javax.lang.model.util.AbstractTypeVisitor8#visitIntersection(javax.lang.model.type.IntersectionType;P;)
+javax.lang.model.util.TypeKindVisitor8#visitIntersection(javax.lang.model.type.IntersectionType;P;)
+javax.lang.model.util.SimpleTypeVisitor8#visitIntersection(javax.lang.model.type.IntersectionType;P;)

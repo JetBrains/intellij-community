@@ -7,9 +7,5 @@ package pkg;
 public enum SimpleEnum {
     E1, E2;
 
-    public static pkg.SimpleEnum[] values() { /* compiled code */ }
-
-    public static pkg.SimpleEnum valueOf(java.lang.String s) { /* compiled code */ }
-
     private SimpleEnum() { /* compiled code */ }
 }

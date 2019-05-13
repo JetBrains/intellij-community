@@ -23,11 +23,6 @@ import java.rmi.RemoteException;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * Created by IntelliJ IDEA.
- * User: sweinreuter
- * Date: 29.05.2007
- */
 class RemoteBreakpointImpl extends PortableRemoteObject implements RemoteBreakpoint {
   private final Breakpoint myBreakpoint;
 
@@ -84,7 +79,7 @@ class RemoteBreakpointImpl extends PortableRemoteObject implements RemoteBreakpo
     myBreakpoint.setSuspend(suspend);
   }
 
-  public static List<RemoteBreakpoint> convert(List<Breakpoint> list) throws RemoteException {
+  public static List<RemoteBreakpoint> convert(List<? extends Breakpoint> list) throws RemoteException {
     final ArrayList<RemoteBreakpoint> breakpoints = new ArrayList<RemoteBreakpoint>(list.size());
     for (Breakpoint breakpoint : list) {
       breakpoints.add(create(breakpoint));

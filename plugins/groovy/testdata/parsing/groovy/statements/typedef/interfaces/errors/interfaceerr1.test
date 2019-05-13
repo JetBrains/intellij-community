@@ -13,6 +13,8 @@ Groovy script
     PsiElement(interface)('interface')
     PsiWhiteSpace(' ')
     PsiElement(identifier)('q')
+    Extends clause
+      <empty list>
     PsiWhiteSpace(' ')
     Type definition body
       PsiElement({)('{')
@@ -23,13 +25,12 @@ Groovy script
         PsiWhiteSpace(' ')
         PsiElement(identifier)('a')
         PsiWhiteSpace(' ')
-        PsiElement(()('(')
         Parameter list
-          <empty list>
-        PsiElement())(')')
-        PsiWhiteSpace(' ')
+          PsiElement(()('(')
+          PsiElement())(')')
         Throw clause
           <empty list>
+        PsiWhiteSpace(' ')
         Open block
           PsiElement({)('{')
           PsiWhiteSpace('   ')
@@ -41,13 +42,12 @@ Groovy script
         PsiWhiteSpace(' ')
         PsiElement(identifier)('q')
         PsiWhiteSpace(' ')
-        PsiElement(()('(')
         Parameter list
-          <empty list>
-        PsiElement())(')')
-        PsiWhiteSpace(' ')
+          PsiElement(()('(')
+          PsiElement())(')')
         Throw clause
           <empty list>
+        PsiWhiteSpace(' ')
         Open block
           PsiElement({)('{')
           PsiWhiteSpace('\n    ')

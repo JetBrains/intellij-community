@@ -1,33 +1,21 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util;
 
 import com.intellij.util.containers.EmptyIterator;
+import com.intellij.util.containers.SingletonIteratorBase;
 import org.jetbrains.annotations.NotNull;
 
+import java.lang.reflect.Array;
 import java.util.*;
 
 /**
  * A List which is optimised for the sizes of 0 and 1,
  * in which cases it would not allocate array at all.
  */
-@SuppressWarnings({"unchecked"})
-public class SmartList<E> extends AbstractList<E> {
-  private int mySize = 0;
-  private Object myElem = null; // null if mySize==0, (E)elem if mySize==1, Object[] if mySize>=2
+@SuppressWarnings("unchecked")
+public class SmartList<E> extends AbstractList<E> implements RandomAccess {
+  private int mySize;
+  private Object myElem; // null if mySize==0, (E)elem if mySize==1, Object[] if mySize>=2
 
   public SmartList() { }
 
@@ -208,39 +196,33 @@ public class SmartList<E> extends AbstractList<E> {
     return super.iterator();
   }
 
-  private class SingletonIterator implements Iterator<E> {
-    private boolean myVisited;
+  private class SingletonIterator extends SingletonIteratorBase<E> {
     private final int myInitialModCount;
 
-    public SingletonIterator() {
+    SingletonIterator() {
       myInitialModCount = modCount;
     }
 
     @Override
-    public boolean hasNext() {
-      return !myVisited;
-    }
-
-    @Override
-    public E next() {
-      if (myVisited) throw new NoSuchElementException();
-      myVisited = true;
-      if (modCount != myInitialModCount) {
-        throw new ConcurrentModificationException("ModCount: " + modCount + "; expected: " + myInitialModCount);
-      }
+    protected E getElement() {
       return (E)myElem;
     }
 
     @Override
-    public void remove() {
+    protected void checkCoModification() {
       if (modCount != myInitialModCount) {
         throw new ConcurrentModificationException("ModCount: " + modCount + "; expected: " + myInitialModCount);
       }
+    }
+
+    @Override
+    public void remove() {
+      checkCoModification();
       clear();
     }
   }
 
-  public void sort(@NotNull Comparator<? super E> comparator) {
+  public void sort(Comparator<? super E> comparator) {
     if (mySize >= 2) {
       Arrays.sort((E[])myElem, 0, mySize, comparator);
     }
@@ -253,18 +235,29 @@ public class SmartList<E> extends AbstractList<E> {
   @NotNull
   @Override
   public <T> T[] toArray(@NotNull T[] a) {
+    int aLength = a.length;
     if (mySize == 1) {
-      int length = a.length;
-      if (length  != 0) {
+      if (aLength != 0) {
         a[0] = (T)myElem;
-        if (length > 1) {
-          a[1] = null;
-        }
-        return a;
+      }
+      else {
+        T[] r = (T[])Array.newInstance(a.getClass().getComponentType(), 1);
+        r[0] = (T)myElem;
+        return r;
       }
     }
-    //noinspection SuspiciousToArrayCall
-    return super.toArray(a);
+    else if (aLength < mySize) {
+      return (T[])Arrays.copyOf((E[])myElem, mySize, a.getClass());
+    }
+    else if (mySize != 0) {
+      //noinspection SuspiciousSystemArraycopy
+      System.arraycopy(myElem, 0, a, 0, mySize);
+    }
+
+    if (aLength > mySize) {
+      a[mySize] = null;
+    }
+    return a;
   }
 
   /**
@@ -280,4 +273,95 @@ public class SmartList<E> extends AbstractList<E> {
       modCount++;
       myElem = Arrays.copyOf(array, mySize);
     }
-  }}
+  }
+
+  @Override
+  public int indexOf(Object o) {
+    if (mySize == 0) {
+      return -1;
+    }
+    if (mySize == 1) {
+      if (o == null) {
+        return myElem == null ? 0 : -1;
+      }
+      else {
+        return o.equals(myElem) ? 0 : -1;
+      }
+    }
+
+    Object[] array = (Object[])myElem;
+    if (o == null) {
+      for (int i = 0; i < mySize; i++) {
+        if (array[i] == null) {
+          return i;
+        }
+      }
+    }
+    else {
+      for (int i = 0; i < mySize; i++) {
+        if (o.equals(array[i])) {
+          return i;
+        }
+      }
+    }
+    return -1;
+  }
+
+  @Override
+  public boolean contains(Object o) {
+    return indexOf(o) >= 0;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (o == this) {
+      return true;
+    }
+
+    if (o instanceof SmartList) {
+      return equalsWithSmartList((SmartList)o);
+    }
+
+    if (o instanceof ArrayList) {
+      return equalsWithArrayList((ArrayList)o);
+    }
+
+    return super.equals(o);
+  }
+
+  private boolean equalsWithSmartList(SmartList that) {
+    if (mySize != that.mySize) {
+      return false;
+    }
+
+    if (mySize == 1) {
+      return myElem == null ? that.myElem == null : myElem.equals(that.myElem);
+    }
+
+    return compareOneByOne(that);
+  }
+
+  private boolean equalsWithArrayList(ArrayList that) {
+    if (mySize != that.size()) {
+      return false;
+    }
+
+    if (mySize == 1) {
+      Object o = that.get(0);
+      return myElem == null ? o == null : myElem.equals(o);
+    }
+
+    return compareOneByOne(that);
+  }
+
+  private boolean compareOneByOne(List that) {
+    for (int i = 0; i < mySize; i++) {
+      E o1 = get(i);
+      Object o2 = that.get(i);
+      if (o1 == null ? o2 != null : !o1.equals(o2)) {
+        return false;
+      }
+    }
+    return true;
+  }
+}

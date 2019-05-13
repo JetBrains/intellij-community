@@ -33,10 +33,10 @@ public class ResourcesTargetType extends ModuleBasedBuildTargetType<ResourcesTar
   public static final ResourcesTargetType TEST = new ResourcesTargetType("resources-test", true);
   public static final List<ResourcesTargetType> ALL_TYPES = Arrays.asList(PRODUCTION, TEST);
 
-  private boolean myTests;
+  private final boolean myTests;
 
   private ResourcesTargetType(String typeId, boolean tests) {
-    super(typeId);
+    super(typeId, true);
     myTests = tests;
   }
 
@@ -44,7 +44,7 @@ public class ResourcesTargetType extends ModuleBasedBuildTargetType<ResourcesTar
   @Override
   public List<ResourcesTarget> computeAllTargets(@NotNull JpsModel model) {
     List<JpsModule> modules = model.getProject().getModules();
-    List<ResourcesTarget> targets = new ArrayList<ResourcesTarget>(modules.size());
+    List<ResourcesTarget> targets = new ArrayList<>(modules.size());
     for (JpsModule module : modules) {
       targets.add(new ResourcesTarget(module, this));
     }
@@ -68,8 +68,8 @@ public class ResourcesTargetType extends ModuleBasedBuildTargetType<ResourcesTar
   private class Loader extends BuildTargetLoader<ResourcesTarget> {
     private final Map<String, JpsModule> myModules;
 
-    public Loader(JpsModel model) {
-      myModules = new HashMap<String, JpsModule>();
+    Loader(JpsModel model) {
+      myModules = new HashMap<>();
       for (JpsModule module : model.getProject().getModules()) {
         myModules.put(module.getName(), module);
       }

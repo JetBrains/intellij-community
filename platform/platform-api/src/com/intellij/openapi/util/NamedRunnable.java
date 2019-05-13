@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,18 +15,25 @@
  */
 package com.intellij.openapi.util;
 
+import com.intellij.openapi.diagnostic.Logger;
+import org.jetbrains.annotations.NotNull;
+
 /**
- * Created by IntelliJ IDEA.
- * User: kirillk
- * Date: 5/5/11
- * Time: 10:47 AM
- * To change this template use File | Settings | File Templates.
+ * @author Kirill.Kalishev
+ * @author Sergey.Malenkov
  */
 public abstract class NamedRunnable implements Runnable {
-  private String myName;
+  private static final Logger LOG = Logger.getInstance(NamedRunnable.class);
+  private final String myName;
 
-  protected NamedRunnable(String name) {
+  protected NamedRunnable(@NotNull String name) {
     myName = name;
+  }
+
+  protected void trace(Object message) {
+    if (LOG.isTraceEnabled()) {
+      LOG.trace(myName + ": " + message);
+    }
   }
 
   @Override

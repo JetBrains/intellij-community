@@ -1,6 +1,6 @@
 
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,19 +20,22 @@ import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.openapi.project.DumbAware;
+import org.jetbrains.annotations.NotNull;
 
 public class ViewToolbarAction extends ToggleAction implements DumbAware {
   public ViewToolbarAction() {
     super("Show Toolbar");
   }
 
-  public boolean isSelected(AnActionEvent event) {
-    return UISettings.getInstance().SHOW_MAIN_TOOLBAR;
+  @Override
+  public boolean isSelected(@NotNull AnActionEvent event) {
+    return UISettings.getInstance().getShowMainToolbar();
   }
 
-  public void setSelected(AnActionEvent event,boolean state) {
+  @Override
+  public void setSelected(@NotNull AnActionEvent event, boolean state) {
     UISettings uiSettings = UISettings.getInstance();
-    uiSettings.SHOW_MAIN_TOOLBAR=state;
+    uiSettings.setShowMainToolbar(state);
     uiSettings.fireUISettingsChanged();
   }
 }

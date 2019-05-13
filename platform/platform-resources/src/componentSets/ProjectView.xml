@@ -1,11 +1,10 @@
-<components>
+<idea-plugin>
   <project-components>
     <component>
       <implementation-class>com.intellij.ide.favoritesTreeView.FavoritesManager</implementation-class>
       <option name="workspace" value="true"/>
-      <skipForDefaultProject/>
     </component>
 
     
   </project-components>
-</components>
+</idea-plugin>

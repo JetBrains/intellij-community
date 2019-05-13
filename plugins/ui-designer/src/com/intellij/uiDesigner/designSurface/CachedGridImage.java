@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -188,19 +188,16 @@ public class CachedGridImage {
   }
 
   public static Image getGridImage(final RadContainer container) {
-    CachedGridImage gridImage = null;
     //noinspection unchecked
     SoftReference<CachedGridImage> imageRef = (SoftReference<CachedGridImage>) container.getDelegee().getClientProperty(CACHED_GRID_IMAGE_KEY);
-    if (imageRef != null) {
-      gridImage = imageRef.get();
-    }
+    CachedGridImage gridImage = SoftReference.dereference(imageRef);
     if (gridImage != null && gridImage.sizeEquals(container)) {
       gridImage.update(container);
     }
     else {
       gridImage = new CachedGridImage(container);
       container.getDelegee().putClientProperty(CACHED_GRID_IMAGE_KEY,
-                                               new SoftReference<CachedGridImage>(gridImage));
+                                               new SoftReference<>(gridImage));
     }
     return gridImage.getImage();
   }

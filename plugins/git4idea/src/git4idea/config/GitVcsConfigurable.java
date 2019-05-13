@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,63 +15,64 @@
  */
 package git4idea.config;
 
-import com.intellij.openapi.options.Configurable;
-import com.intellij.openapi.options.ConfigurationException;
+import com.intellij.openapi.options.ConfigurableBase;
 import com.intellij.openapi.project.Project;
 import git4idea.GitVcs;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-
-public class GitVcsConfigurable implements Configurable {
-
+public class GitVcsConfigurable extends ConfigurableBase<GitVcsPanel, GitVcsConfigurable.GitVcsSettingsHolder> {
   private final Project myProject;
-  private final GitVcsSettings mySettings;
-  private GitVcsPanel panel;
+  private final GitVcsSettingsHolder mySettingsHolder;
+  @NotNull private final GitExecutableManager myExecutableManager;
 
-  public GitVcsConfigurable(@NotNull GitVcsSettings settings, @NotNull Project project) {
+  public GitVcsConfigurable(@NotNull GitVcsApplicationSettings applicationSettings,
+                            @NotNull Project project,
+                            @NotNull GitVcsSettings projectSettings,
+                            @NotNull GitSharedSettings sharedSettings,
+                            @NotNull GitExecutableManager executableManager) {
+    super("vcs." + GitVcs.NAME, GitVcs.NAME, "project.propVCSSupport.VCSs.Git");
     myProject = project;
-    mySettings = settings;
+    myExecutableManager = executableManager;
+    mySettingsHolder = new GitVcsSettingsHolder(applicationSettings, projectSettings, sharedSettings);
+  }
+
+  @Override
+  protected GitVcsPanel createUi() {
+    return new GitVcsPanel(myProject, myExecutableManager);
   }
 
   @NotNull
   @Override
-  public String getDisplayName() {
-    return GitVcs.NAME;
+  protected GitVcsSettingsHolder getSettings() {
+    return mySettingsHolder;
   }
 
-  @Nullable
-  @Override
-  public String getHelpTopic() {
-    return "project.propVCSSupport.VCSs.Git";
-  }
+  static class GitVcsSettingsHolder {
+    @NotNull private final GitVcsApplicationSettings myApplicationSettings;
+    @NotNull private final GitVcsSettings myProjectSettings;
+    @NotNull private final GitSharedSettings mySharedSettings;
 
-  @NotNull
-  @Override
-  public JComponent createComponent() {
-    panel = new GitVcsPanel(myProject);
-    panel.load(mySettings);
-    return panel.getPanel();
-  }
+    GitVcsSettingsHolder(@NotNull GitVcsApplicationSettings applicationSettings,
+                         @NotNull GitVcsSettings projectSettings,
+                         @NotNull GitSharedSettings sharedSettings) {
+      myApplicationSettings = applicationSettings;
+      myProjectSettings = projectSettings;
+      mySharedSettings = sharedSettings;
+    }
 
-  @Override
-  public boolean isModified() {
-    return panel.isModified(mySettings);
-  }
+    @NotNull
+    public GitVcsApplicationSettings getApplicationSettings() {
+      return myApplicationSettings;
+    }
 
-  @Override
-  public void apply() throws ConfigurationException {
-    panel.save(mySettings);
-  }
+    @NotNull
+    public GitVcsSettings getProjectSettings() {
+      return myProjectSettings;
+    }
 
-  @Override
-  public void reset() {
-    panel.load(mySettings);
+    @NotNull
+    public GitSharedSettings getSharedSettings() {
+      return mySharedSettings;
+    }
   }
-
-  @Override
-  public void disposeUIResources() {
-  }
-
 }

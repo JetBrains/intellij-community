@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@
 package com.intellij.psi;
 
 import com.intellij.psi.search.GlobalSearchScope;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * Implemented by PSI files which must have non-standard resolve scope for elements contained in them.
@@ -24,6 +25,7 @@ import com.intellij.psi.search.GlobalSearchScope;
  * @author yole
  */
 public interface FileResolveScopeProvider {
+  @NotNull
   GlobalSearchScope getFileResolveScope();
   boolean ignoreReferencedElementAccessibility();
 }

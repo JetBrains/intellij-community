@@ -1,30 +1,15 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm.impl;
 
 import com.intellij.ide.DataManager;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.FocusWatcher;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
-import com.intellij.util.containers.HashMap;
-import com.intellij.util.containers.WeakHashMap;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -39,6 +24,7 @@ import java.lang.ref.WeakReference;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * @author Anton Katilin
@@ -47,25 +33,26 @@ import java.util.Map;
 public final class WindowWatcher implements PropertyChangeListener{
   private static final Logger LOG=Logger.getInstance("#com.intellij.openapi.wm.impl.WindowWatcher");
   private final Object myLock = new Object();
-  private final Map<Window, WindowInfo> myWindow2Info = new WeakHashMap<Window, WindowInfo>();
+  private final Map<Window, WindowInfo> myWindow2Info = ContainerUtil.createWeakMap();
   /**
-   * Currenly focused window (window which has focused component). Can be <code>null</code> if there is no focused
+   * Currently focused window (window which has focused component). Can be {@code null} if there is no focused
    * window at all.
    */
   private Window myFocusedWindow;
   /**
    * Contains last focused window for each project.
    */
-  private final HashSet myFocusedWindows = new HashSet();
-  @NonNls protected static final String FOCUSED_WINDOW_PROPERTY = "focusedWindow";
+  private final Set<Window> myFocusedWindows = new HashSet<>();
+  @NonNls private static final String FOCUSED_WINDOW_PROPERTY = "focusedWindow";
 
   WindowWatcher() {}
 
   /**
-   * This method should get notifications abount changes of focused window.
-   * Only <code>focusedWindow</code> property is acceptable.
-   * @throws IllegalArgumentException if property name isn't <code>focusedWindow</code>.
+   * This method should get notifications about changes of focused window.
+   * Only {@code focusedWindow} property is acceptable.
+   * @throws IllegalArgumentException if property name isn't {@code focusedWindow}.
    */
+  @Override
   public final void propertyChange(final PropertyChangeEvent e){
     if(LOG.isDebugEnabled()){
       LOG.debug("enter: propertyChange("+e+")");
@@ -82,11 +69,11 @@ public final class WindowWatcher implements PropertyChangeListener{
         myWindow2Info.put(window,new WindowInfo(window, true));
       }
       myFocusedWindow=window;
-      final Project project = PlatformDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(myFocusedWindow));
-      for (Iterator i = myFocusedWindows.iterator(); i.hasNext();) {
-        final Window w = (Window)i.next();
+      final Project project = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(myFocusedWindow));
+      for (Iterator<Window> i = myFocusedWindows.iterator(); i.hasNext();) {
+        final Window w = i.next();
         final DataContext dataContext = DataManager.getInstance().getDataContext(w);
-        if (project == PlatformDataKeys.PROJECT.getData(dataContext)) {
+        if (project == CommonDataKeys.PROJECT.getData(dataContext)) {
           i.remove();
         }
       }
@@ -203,7 +190,7 @@ public final class WindowWatcher implements PropertyChangeListener{
           return focusedComponent;
         }
         else{
-          return null;
+          return window == KeyboardFocusManager.getCurrentKeyboardFocusManager().getActiveWindow() ? window : null;
         }
       }else{
          // info isn't valid, i.e. window was garbage collected, so we need the remove invalid info
@@ -241,11 +228,6 @@ public final class WindowWatcher implements PropertyChangeListener{
       LOG.assertTrue(window.isShowing());
 
       while(window!=null){
-        // skip all windows until found forst dialog or frame
-        if(!(window instanceof Dialog)&&!(window instanceof Frame)){
-          window=window.getOwner();
-          continue;
-        }
         // skip not visible and disposed/not shown windows
         if(!window.isDisplayable()||!window.isShowing()){
           window = window.getOwner();
@@ -282,22 +264,22 @@ public final class WindowWatcher implements PropertyChangeListener{
   }
 
   /**
-   * @return active window for specified <code>project</code>. There is only one window
+   * @return active window for specified {@code project}. There is only one window
    * for project can be at any point of time.
    */
   @Nullable
   private Window getFocusedWindowForProject(@Nullable final Project project) {
     //todo[anton,vova]: it is possible that returned wnd is not contained in myFocusedWindows; investigate
-    outer: for(Iterator i=myFocusedWindows.iterator();i.hasNext();){
-      Window window=(Window)i.next();
-      while(!window.isDisplayable()||!window.isShowing()){ // if window isn't visible then gets its first visible ancestor
-        window=window.getOwner();
-        if(window==null){
+    outer:
+    for (Window window : myFocusedWindows) {
+      while (!window.isDisplayable() || !window.isShowing()) { // if window isn't visible then gets its first visible ancestor
+        window = window.getOwner();
+        if (window == null) {
           continue outer;
         }
       }
       final DataContext dataContext = DataManager.getInstance().getDataContext(window);
-      if (project == PlatformDataKeys.PROJECT.getData(dataContext)) {
+      if (project == CommonDataKeys.PROJECT.getData(dataContext)) {
         return window;
       }
     }
@@ -308,10 +290,10 @@ public final class WindowWatcher implements PropertyChangeListener{
     public final WeakReference<FocusWatcher> myFocusWatcherRef;
     public boolean mySuggestAsParent;
 
-    public WindowInfo(final Window window,final boolean suggestAsParent){
+    WindowInfo(final Window window,final boolean suggestAsParent){
       final FocusWatcher focusWatcher=new FocusWatcher();
       focusWatcher.install(window);
-      myFocusWatcherRef=new WeakReference<FocusWatcher>(focusWatcher);
+      myFocusWatcherRef= new WeakReference<>(focusWatcher);
       mySuggestAsParent=suggestAsParent;
     }
 

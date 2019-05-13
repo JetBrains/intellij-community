@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,28 +15,25 @@
  */
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
+import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.ide.util.PsiClassListCellRenderer;
-import com.intellij.ide.util.PsiElementListCellRenderer;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.command.CommandProcessor;
+import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.popup.PopupChooserBuilder;
-import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.ui.popup.IPopupChooserBuilder;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
-import com.intellij.ui.components.JBList;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.util.ArrayList;
 import java.util.List;
-
-import static com.intellij.codeInsight.daemon.impl.quickfix.CreateClassKind.CLASS;
-import static com.intellij.codeInsight.daemon.impl.quickfix.CreateClassKind.INTERFACE;
 
 /**
  * @author ven
@@ -49,13 +46,20 @@ public class CreateInnerClassFromUsageFix extends CreateClassFromUsageBaseFix {
 
   @Override
   public String getText(String varName) {
-    return QuickFixBundle.message("create.inner.class.from.usage.text", StringUtil.capitalize(myKind.getDescription()), varName);
+    return QuickFixBundle.message("create.inner.class.from.usage.text", myKind.getDescription(), varName);
+  }
+
+  @Override
+  public boolean startInWriteAction() {
+    return false;
   }
 
   @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
+    PsiDocumentManager.getInstance(project).commitAllDocuments();
+
     final PsiJavaCodeReferenceElement element = getRefElement();
-    assert element != null;
+    if (element == null) return;
     final String superClassName = getSuperClassName(element);
     PsiClass[] targets = getPossibleTargets(element);
     LOG.assertTrue(targets.length > 0);
@@ -74,7 +78,7 @@ public class CreateInnerClassFromUsageFix extends CreateClassFromUsageBaseFix {
 
   @NotNull
   private static PsiClass[] getPossibleTargets(final PsiJavaCodeReferenceElement element) {
-    List<PsiClass> result = new ArrayList<PsiClass>();
+    List<PsiClass> result = new ArrayList<>();
     PsiElement run = element;
     PsiMember contextMember = PsiTreeUtil.getParentOfType(run, PsiMember.class);
 
@@ -88,7 +92,7 @@ public class CreateInnerClassFromUsageFix extends CreateClassFromUsageBaseFix {
       contextMember = PsiTreeUtil.getParentOfType(run, PsiMember.class);
     }
 
-    return result.isEmpty() ? PsiClass.EMPTY_ARRAY : result.toArray(new PsiClass[result.size()]);
+    return result.isEmpty() ? PsiClass.EMPTY_ARRAY : result.toArray(PsiClass.EMPTY_ARRAY);
   }
 
   private static boolean isUsedInExtends(PsiElement element, PsiClass psiClass) {
@@ -97,85 +101,51 @@ public class CreateInnerClassFromUsageFix extends CreateClassFromUsageBaseFix {
     if (extendsList != null && PsiTreeUtil.isAncestor(extendsList, element, false)) {
       return true;
     }
-      
-    if (implementsList != null && PsiTreeUtil.isAncestor(implementsList, element, false)) {
-      return true;
-    }
-    return false;
+
+    return implementsList != null && PsiTreeUtil.isAncestor(implementsList, element, false);
   }
 
   private void chooseTargetClass(PsiClass[] classes, final Editor editor, final String superClassName) {
-    final Project project = classes[0].getProject();
-
-    final JList list = new JBList(classes);
-    PsiElementListCellRenderer renderer = new PsiClassListCellRenderer();
-    list.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-    list.setCellRenderer(renderer);
-    final PopupChooserBuilder builder = new PopupChooserBuilder(list);
+    PsiClassListCellRenderer renderer = new PsiClassListCellRenderer();
+    final IPopupChooserBuilder<PsiClass> builder = JBPopupFactory.getInstance()
+      .createPopupChooserBuilder(ContainerUtil.newArrayList(classes))
+      .setSelectionMode(ListSelectionModel.SINGLE_SELECTION)
+      .setRenderer(renderer)
+      .setTitle(QuickFixBundle.message("target.class.chooser.title"))
+      .setItemChosenCallback((aClass) -> {
+        doInvoke(aClass, superClassName);
+      });
     renderer.installSpeedSearch(builder);
-
-    Runnable runnable = new Runnable() {
-      @Override
-      public void run() {
-        int index = list.getSelectedIndex();
-        if (index < 0) return;
-        final PsiClass aClass = (PsiClass)list.getSelectedValue();
-        CommandProcessor.getInstance().executeCommand(project, new Runnable() {
-          @Override
-          public void run() {
-            ApplicationManager.getApplication().runWriteAction(new Runnable() {
-              @Override
-              public void run() {
-                try {
-                  doInvoke(aClass, superClassName);
-                }
-                catch (IncorrectOperationException e) {
-                  LOG.error(e);
-                }
-              }
-            });
-
-          }
-        }, getText(), null);
-      }
-    };
-
-    builder.
-      setTitle(QuickFixBundle.message("target.class.chooser.title")).
-      setItemChoosenCallback(runnable).
-      createPopup().
-      showInBestPositionFor(editor);
+    builder.createPopup().showInBestPositionFor(editor);
   }
 
   private void doInvoke(final PsiClass aClass, final String superClassName) throws IncorrectOperationException {
     PsiJavaCodeReferenceElement ref = getRefElement();
     assert ref != null;
+    if (!FileModificationService.getInstance().preparePsiElementForWrite(aClass)) return;
     String refName = ref.getReferenceName();
     LOG.assertTrue(refName != null);
-    PsiElementFactory elementFactory = JavaPsiFacade.getInstance(aClass.getProject()).getElementFactory();
-    PsiClass created = myKind == INTERFACE
+    PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(aClass.getProject());
+    PsiClass created = myKind == CreateClassKind.INTERFACE
                       ? elementFactory.createInterface(refName)
-                      : myKind == CLASS ? elementFactory.createClass(refName) : elementFactory.createEnum(refName);
+                      : myKind == CreateClassKind.CLASS ? elementFactory.createClass(refName) : elementFactory.createEnum(refName);
     final PsiModifierList modifierList = created.getModifierList();
     LOG.assertTrue(modifierList != null);
-    if (aClass.isInterface()) {
+    if (aClass.isInterface() || PsiUtil.isLocalOrAnonymousClass(aClass)) {
       modifierList.setModifierProperty(PsiModifier.PACKAGE_LOCAL, true);
     } else {
       modifierList.setModifierProperty(PsiModifier.PRIVATE, true);
     }
-    if (RefactoringUtil.isInStaticContext(ref, aClass)) {
+    if (RefactoringUtil.isInStaticContext(ref, aClass) && !aClass.isInterface()) {
       modifierList.setModifierProperty(PsiModifier.STATIC, true);
     }
     if (superClassName != null) {
-      PsiJavaCodeReferenceElement superClass =
-        elementFactory.createReferenceElementByFQClassName(superClassName, created.getResolveScope());
-      final PsiReferenceList extendsList = created.getExtendsList();
-      LOG.assertTrue(extendsList != null);
-      extendsList.add(superClass);
+      CreateFromUsageUtils.setupSuperClassReference(created, superClassName);
     }
     CreateFromUsageBaseFix.setupGenericParameters(created, ref);
 
-    created = (PsiClass)aClass.add(created);
-    ref.bindToElement(created);
+    WriteCommandAction.runWriteCommandAction(aClass.getProject(), getText(), null,
+                                             () -> ref.bindToElement(aClass.add(created)),
+                                             aClass.getContainingFile());
   }
 }

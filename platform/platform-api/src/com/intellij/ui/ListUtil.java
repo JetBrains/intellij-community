@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,18 +18,44 @@ package com.intellij.ui;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Condition;
 import com.intellij.ui.speedSearch.FilteringListModel;
+import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
+import java.awt.event.*;
 import java.util.ArrayList;
 import java.util.List;
 
 public class ListUtil {
+  public static final String SELECTED_BY_MOUSE_EVENT = "byMouseEvent";
   private static final Logger LOG = Logger.getInstance("#com.intellij.ui.ListUtil");
+
+  public static MouseMotionListener installAutoSelectOnMouseMove(final JList list) {
+    final MouseMotionAdapter listener = new MouseMotionAdapter() {
+      boolean myIsEngaged = false;
+
+      @Override
+      public void mouseMoved(MouseEvent e) {
+        Component focusOwner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
+        if (myIsEngaged && !UIUtil.isSelectionButtonDown(e) && !(focusOwner instanceof JRootPane)) {
+          Point point = e.getPoint();
+          int index = list.locationToIndex(point);
+          list.putClientProperty(SELECTED_BY_MOUSE_EVENT, Boolean.TRUE);
+          list.setSelectedIndex(index);
+          list.putClientProperty(SELECTED_BY_MOUSE_EVENT, Boolean.FALSE);
+        }
+        else {
+          myIsEngaged = true;
+        }
+      }
+    };
+    list.addMouseMotionListener(listener);
+    return listener;
+  }
 
   public abstract static class Updatable {
     private final JButton myButton;
@@ -55,25 +81,25 @@ public class ListUtil {
     return removeSelectedItems(list, null);
   }
 
-  public static List removeIndices(JList list, int[] indices) {
+  public static <T> List<T> removeIndices(JList<T> list, int[] indices) {
     return removeIndices(list, indices, null);
   }
 
-  public static <T> List<T> removeSelectedItems(JList list, Condition<T> condition) {
+  public static <T> List<T> removeSelectedItems(JList list, Condition<? super T> condition) {
     int[] idxs = list.getSelectedIndices();
     return removeIndices(list, idxs, condition);
   }
 
-  private static <T> List<T> removeIndices(JList list, int[] idxs, Condition<T> condition) {
+  private static <T> List<T> removeIndices(JList list, int[] idxs, Condition<? super T> condition) {
     if (idxs.length == 0) {
-      return new ArrayList<T>(0);
+      return new ArrayList<>(0);
     }
     ListModel model = list.getModel();
     int firstSelectedIndex = idxs[0];
-    ArrayList<T> removedItems = new ArrayList<T>();
+    ArrayList<T> removedItems = new ArrayList<>();
     int deletedCount = 0;
-    for (int idx = 0; idx < idxs.length; idx++) {
-      int index = idxs[idx] - deletedCount;
+    for (int idx1 : idxs) {
+      int index = idx1 - deletedCount;
       if (index < 0 || index >= model.getSize()) continue;
       T obj = (T)get(model, index);
       if (condition == null || condition.value(obj)) {
@@ -108,8 +134,7 @@ public class ListUtil {
       return false;
     }
 
-    for (int idx = 0; idx < idxs.length; idx++) {
-      int index = idxs[idx];
+    for (int index : idxs) {
       if (index < 0 || index >= model.getSize()) continue;
       Object obj = getExtensions(model).get(model, index);
       if (applyable == null || applyable.value(obj)) {
@@ -124,8 +149,7 @@ public class ListUtil {
     DefaultListModel model = getModel(list);
     int[] indices = list.getSelectedIndices();
     if (!canMoveSelectedItemsUp(list)) return 0;
-    for(int i = 0; i < indices.length; i++){
-      int index = indices[i];
+    for (int index : indices) {
       Object temp = model.get(index);
       model.set(index, model.get(index - 1));
       model.set(index - 1, temp);
@@ -191,6 +215,32 @@ public class ListUtil {
     return model;
   }
 
+  public static boolean isPointOnSelection(@NotNull JList list, int x, int y) {
+    int row = list.locationToIndex(new Point(x, y));
+    if (row < 0) return false;
+    return list.isSelectedIndex(row);
+  }
+
+  @Nullable
+  public static <E> Component getDeepestRendererChildComponentAt(@NotNull JList<E> list, @NotNull Point point) {
+    int idx = list.locationToIndex(point);
+    if (idx < 0) return null;
+
+    Rectangle cellBounds = list.getCellBounds(idx, idx);
+    if (!cellBounds.contains(point)) return null;
+
+    E value = list.getModel().getElementAt(idx);
+    if (value == null) return null;
+
+    Component rendererComponent = list.getCellRenderer().getListCellRendererComponent(list, value, idx, true, true);
+    rendererComponent.setBounds(cellBounds.x, cellBounds.y, cellBounds.width, cellBounds.height);
+    UIUtil.layoutRecursively(rendererComponent);
+
+    int rendererRelativeX = point.x - cellBounds.x;
+    int rendererRelativeY = point.y - cellBounds.y;
+    return UIUtil.getDeepestComponentAt(rendererComponent, rendererRelativeX, rendererRelativeY);
+  }
+
   public static boolean canMoveSelectedItemsDown(JList list) {
     ListModel model = list.getModel();
     int[] indices = list.getSelectedIndices();
@@ -199,6 +249,7 @@ public class ListUtil {
 
   public static Updatable addMoveUpListener(JButton button, final JList list) {
     button.addActionListener(new ActionListener() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         moveSelectedItemsUp(list);
         list.requestFocusInWindow();
@@ -210,6 +261,7 @@ public class ListUtil {
 
   public static Updatable addMoveDownListener(JButton button, final JList list) {
     button.addActionListener(new ActionListener() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         moveSelectedItemsDown(list);
         list.requestFocusInWindow();
@@ -224,6 +276,7 @@ public class ListUtil {
 
   public static Updatable addRemoveListener(final JButton button, final JList list, final RemoveNotification<String> notification) {
     button.addActionListener(new ActionListener() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         final List<String> items = removeSelectedItems(list);
         if (notification != null)
@@ -232,14 +285,16 @@ public class ListUtil {
       }
     });
     class MyListSelectionListener extends Updatable implements ListSelectionListener {
-      public MyListSelectionListener(JButton button) {
+      MyListSelectionListener(JButton button) {
         super(button);
       }
 
+      @Override
       public void valueChanged(ListSelectionEvent e) {
         setButtonEnabled(canRemoveSelectedItems(list));
       }
 
+      @Override
       protected void update() {
         valueChanged(null);
       }
@@ -260,14 +315,16 @@ public class ListUtil {
 
   public static Updatable disableWhenNoSelection(final JButton button, final JList list) {
     class MyListSelectionListener extends Updatable implements ListSelectionListener {
-      public MyListSelectionListener(JButton button) {
+      MyListSelectionListener(JButton button) {
         super(button);
       }
 
+      @Override
       public void valueChanged(ListSelectionEvent e) {
         setButtonEnabled((list.getSelectedIndex() != -1));
       }
 
+      @Override
       public void update() {
         valueChanged(null);
       }
@@ -299,40 +356,48 @@ public class ListUtil {
   }
 
   private static final ListModelExtension DEFAULT_MODEL = new ListModelExtension<DefaultListModel>() {
+    @Override
     public Object get(DefaultListModel model, int index) {
       return model.get(index);
     }
 
+    @Override
     public void remove(DefaultListModel model, int index) {
       model.remove(index);
     }
   };
 
   private static final ListModelExtension COLLECTION_MODEL = new ListModelExtension<CollectionListModel>() {
+    @Override
     public Object get(CollectionListModel model, int index) {
       return model.getElementAt(index);
     }
 
+    @Override
     public void remove(CollectionListModel model, int index) {
       model.remove(index);
     }
   };
 
   private static final ListModelExtension SORTED_MODEL = new ListModelExtension<SortedListModel>() {
+    @Override
     public Object get(SortedListModel model, int index) {
       return model.get(index);
     }
 
+    @Override
     public void remove(SortedListModel model, int index) {
       model.remove(index);
     }
   };
 
   private static final ListModelExtension FILTERED_MODEL = new ListModelExtension<FilteringListModel>() {
+    @Override
     public Object get(FilteringListModel model, int index) {
       return model.getElementAt(index);
     }
 
+    @Override
     public void remove(FilteringListModel model, int index) {
       model.remove(index);
     }

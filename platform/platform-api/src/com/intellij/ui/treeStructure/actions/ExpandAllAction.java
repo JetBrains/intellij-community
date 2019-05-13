@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,10 +18,12 @@ package com.intellij.ui.treeStructure.actions;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.project.DumbAware;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
-public class ExpandAllAction extends AnAction {
+public class ExpandAllAction extends AnAction implements DumbAware {
 
   protected JTree myTree;
 
@@ -30,7 +32,8 @@ public class ExpandAllAction extends AnAction {
     myTree = tree;
   }
 
-  public void actionPerformed(AnActionEvent e) {
+  @Override
+  public void actionPerformed(@NotNull AnActionEvent e) {
     for (int i = 0; i < getTree().getRowCount(); i++) {
       getTree().expandRow(i);
     }

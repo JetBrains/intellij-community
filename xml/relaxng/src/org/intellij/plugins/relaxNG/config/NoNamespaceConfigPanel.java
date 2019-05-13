@@ -37,11 +37,6 @@ import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.io.File;
 
-/**
- * Created by IntelliJ IDEA.
- * User: sweinreuter
- * Date: 25.11.2007
- */
 class NoNamespaceConfigPanel extends HectorComponentPanel {
   private final NoNamespaceConfig myConfig;
   private final PsiFile myFile;
@@ -57,6 +52,7 @@ class NoNamespaceConfigPanel extends HectorComponentPanel {
     myMapping = myConfig.getMapping(file);
 
     final FileChooserDescriptor descriptor = new FileChooserDescriptor(true, false, false, false, false, false) {
+      @Override
       public boolean isFileSelectable(VirtualFile file) {
         final boolean b = super.isFileSelectable(file);
         if (b) {
@@ -81,6 +77,7 @@ class NoNamespaceConfigPanel extends HectorComponentPanel {
     final ComponentWithBrowseButton.BrowseFolderActionListener<JTextField> actionListener =
             new ComponentWithBrowseButton.BrowseFolderActionListener<JTextField>("Select Schema", "Select a RELAX-NG file to associate with the document",
                     mySchemaFile, project, descriptor, TextComponentAccessor.TEXT_FIELD_WHOLE_TEXT) {
+              @Override
               public void actionPerformed(ActionEvent e) {
                 myDialogOpen = true;
                 try {
@@ -94,20 +91,24 @@ class NoNamespaceConfigPanel extends HectorComponentPanel {
     mySchemaFile.addActionListener(actionListener);
   }
 
+  @Override
   public boolean canClose() {
     return super.canClose() && !myDialogOpen;
   }
 
+  @Override
   public JComponent createComponent() {
     return myRoot;
   }
 
+  @Override
   public boolean isModified() {
     final String s = mySchemaFile.getText();
     final String m = myMapping != null ? myMapping : "";
     return !s.equals(m);
   }
 
+  @Override
   public void apply() throws ConfigurationException {
     final String s = getMapping();
     if (s != null) {
@@ -122,10 +123,12 @@ class NoNamespaceConfigPanel extends HectorComponentPanel {
     return s.length() > 0 ? VfsUtil.pathToUrl(s.replace(File.separatorChar, '/')) : null;
   }
 
+  @Override
   public void reset() {
     mySchemaFile.setText(myMapping != null ? VfsUtil.urlToPath(myMapping).replace('/', File.separatorChar) : "");
   }
 
+  @Override
   public void disposeUIResources() {
     // doesn't help - updating the validation needs a hard modification
 //    DaemonCodeAnalyzer.getInstance(myFile.getProject()).restart();

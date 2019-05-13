@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,22 +26,20 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 
 import java.util.*;
 
-import static org.jetbrains.plugins.groovy.refactoring.convertToJava.GenerationUtil.suggestMethodName;
-
 class ExpressionContext implements Cloneable {
-  List<String> myStatements = new ArrayList<String>();
+  List<String> myStatements = new ArrayList<>();
   Set<String> myUsedVarNames;
   LocalVarAnalyzer.Result analyzedVars = LocalVarAnalyzer.initialResult();
   TypeProvider typeProvider;
 
   Project project;
-  private Map<String, Boolean> myProps = new HashMap<String, Boolean>();
+  private final Map<String, Boolean> myProps = new HashMap<>();
   private static final String myShouldInsertCurlyBrackets = "shouldInsertCurly";
   private static final String myInAnonymousContext = "inAnonymousContext";
-  private Ref<String> myRefSetterName = new Ref<String>(null);
+  private Ref<String> myRefSetterName = new Ref<>(null);
 
-  private Map<PsiMethod, String> setters;
-  private Set<PsiClass> myClasses;
+  private final Map<PsiMethod, String> setters;
+  private final Set<PsiClass> myClasses;
 
   private ExpressionContext(Project project, Set<String> usedVarNames, Map<PsiMethod, String> setters, Set<PsiClass> myClasses) {
     this.project = project;
@@ -51,7 +49,7 @@ class ExpressionContext implements Cloneable {
   }
 
   ExpressionContext(Project project, GroovyFile[] filesToConvert) {
-    this(project, new HashSet<String>(), new HashMap<PsiMethod, String>(), new HashSet<PsiClass>());
+    this(project, new HashSet<>(), new HashMap<>(), new HashSet<>());
     typeProvider = new TypeProvider();
     for (GroovyFile groovyFile : filesToConvert) {
       myClasses.addAll(Arrays.asList(groovyFile.getClasses()));
@@ -73,7 +71,7 @@ class ExpressionContext implements Cloneable {
   }
 
   ExpressionContext extend() {
-    final HashSet<String> usedVarNames = new HashSet<String>();
+    final HashSet<String> usedVarNames = new HashSet<>();
     usedVarNames.addAll(myUsedVarNames);
     final ExpressionContext expressionContext = new ExpressionContext(project, usedVarNames, setters, myClasses);
     expressionContext.myProps.putAll(myProps);
@@ -114,7 +112,7 @@ class ExpressionContext implements Cloneable {
 
   public String getRefSetterName(GroovyPsiElement context) {
     if (myRefSetterName.isNull()) {
-      myRefSetterName.set(suggestMethodName(context, "setGroovyRef", this));
+      myRefSetterName.set(GenerationUtil.suggestMethodName(context, "setGroovyRef", this));
     }
     return myRefSetterName.get();
   }

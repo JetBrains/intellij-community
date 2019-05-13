@@ -35,14 +35,17 @@ import java.util.*;
 public class JpsJavaCompilerConfigurationImpl extends JpsCompositeElementBase<JpsJavaCompilerConfigurationImpl> implements JpsJavaCompilerConfiguration {
   public static final JpsElementChildRole<JpsJavaCompilerConfiguration> ROLE = JpsElementChildRoleBase.create("compiler configuration");
   private boolean myAddNotNullAssertions = true;
+  private List<String> myNotNullAnnotations = Collections.singletonList(NotNull.class.getName());
   private boolean myClearOutputDirectoryOnRebuild = true;
-  private JpsCompilerExcludes myCompilerExcludes = new JpsCompilerExcludesImpl();
-  private List<String> myResourcePatterns = new ArrayList<String>();
-  private List<ProcessorConfigProfile> myAnnotationProcessingProfiles = new ArrayList<ProcessorConfigProfile>();
-  private ProcessorConfigProfileImpl myDefaultAnnotationProcessingProfile = new ProcessorConfigProfileImpl("Default");
+  private final JpsCompilerExcludes myCompilerExcludes = new JpsCompilerExcludesImpl();
+  private final JpsCompilerExcludes myValidationExcludes = new JpsCompilerExcludesImpl();
+  private final List<String> myResourcePatterns = new ArrayList<>();
+  private final List<ProcessorConfigProfile> myAnnotationProcessingProfiles = new ArrayList<>();
+  private final ProcessorConfigProfileImpl myDefaultAnnotationProcessingProfile = new ProcessorConfigProfileImpl("Default");
+  private boolean myUseReleaseOption = true;
   private String myProjectByteCodeTargetLevel;
-  private Map<String, String> myModulesByteCodeTargetLevels = new HashMap<String, String>();
-  private Map<String, JpsJavaCompilerOptions> myCompilerOptions = new HashMap<String, JpsJavaCompilerOptions>();
+  private final Map<String, String> myModulesByteCodeTargetLevels = new HashMap<>();
+  private final Map<String, JpsJavaCompilerOptions> myCompilerOptions = new HashMap<>();
   private String myJavaCompilerId = "Javac";
   private Map<JpsModule, ProcessorConfigProfile> myAnnotationProcessingProfileMap;
   private ResourcePatterns myCompiledPatterns;
@@ -66,6 +69,11 @@ public class JpsJavaCompilerConfigurationImpl extends JpsCompositeElementBase<Jp
   }
 
   @Override
+  public List<String> getNotNullAnnotations() {
+    return myNotNullAnnotations;
+  }
+
+  @Override
   public boolean isClearOutputDirectoryOnRebuild() {
     return myClearOutputDirectoryOnRebuild;
   }
@@ -73,6 +81,11 @@ public class JpsJavaCompilerConfigurationImpl extends JpsCompositeElementBase<Jp
   @Override
   public void setAddNotNullAssertions(boolean addNotNullAssertions) {
     myAddNotNullAssertions = addNotNullAssertions;
+  }
+
+  @Override
+  public void setNotNullAnnotations(List<String> notNullAnnotations) {
+    myNotNullAnnotations = Collections.unmodifiableList(notNullAnnotations);
   }
 
   @Override
@@ -84,6 +97,12 @@ public class JpsJavaCompilerConfigurationImpl extends JpsCompositeElementBase<Jp
   @Override
   public JpsCompilerExcludes getCompilerExcludes() {
     return myCompilerExcludes;
+  }
+
+  @NotNull
+  @Override
+  public JpsCompilerExcludes getValidationExcludes() {
+    return myValidationExcludes;
   }
 
   @NotNull
@@ -171,6 +190,16 @@ public class JpsJavaCompilerConfigurationImpl extends JpsCompositeElementBase<Jp
   }
 
   @Override
+  public boolean useReleaseOption() {
+    return myUseReleaseOption;
+  }
+
+  @Override
+  public void setUseReleaseOption(boolean useReleaseOption) {
+    myUseReleaseOption = useReleaseOption;
+  }
+
+  @Override
   public ProcessorConfigProfile addAnnotationProcessingProfile() {
     ProcessorConfigProfileImpl profile = new ProcessorConfigProfileImpl("");
     myAnnotationProcessingProfiles.add(profile);
@@ -182,8 +211,8 @@ public class JpsJavaCompilerConfigurationImpl extends JpsCompositeElementBase<Jp
   public ProcessorConfigProfile getAnnotationProcessingProfile(JpsModule module) {
     Map<JpsModule, ProcessorConfigProfile> map = myAnnotationProcessingProfileMap;
     if (map == null) {
-      map = new HashMap<JpsModule, ProcessorConfigProfile>();
-      final Map<String, JpsModule> namesMap = new HashMap<String, JpsModule>();
+      map = new HashMap<>();
+      final Map<String, JpsModule> namesMap = new HashMap<>();
       for (JpsModule m : module.getProject().getModules()) {
         namesMap.put(m.getName(), m);
       }

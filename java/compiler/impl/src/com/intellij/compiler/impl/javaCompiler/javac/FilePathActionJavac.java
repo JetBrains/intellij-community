@@ -16,30 +16,28 @@
 package com.intellij.compiler.impl.javaCompiler.javac;
 
 import com.intellij.compiler.OutputParser;
-import com.intellij.compiler.impl.javaCompiler.FileObject;
 import com.intellij.openapi.compiler.CompilerBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 
-import java.io.File;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
- * @author Eugene Zhuravlev              
- *         Date: Sep 14, 2005
+ * @author Eugene Zhuravlev
  */
 public class FilePathActionJavac extends JavacParserAction {
   private static final Logger LOG = Logger.getInstance("#com.intellij.compiler.impl.javaCompiler.javac.FilePathActionJavac");
   private final Matcher myJdk7FormatMatcher;
-  
+
   public FilePathActionJavac(final Matcher matcher) {
     super(matcher);
     myJdk7FormatMatcher = Pattern.compile("^\\w+\\[(.+)\\]$", Pattern.CASE_INSENSITIVE).matcher("");
   }
 
+  @Override
   protected void doExecute(final String line, String filePath, final OutputParser.Callback callback) {
     if (LOG.isDebugEnabled()) {
       LOG.debug("Process parsing message: " + filePath);
@@ -59,7 +57,7 @@ public class FilePathActionJavac extends JavacParserAction {
       callback.setProgressText(CompilerBundle.message("progress.parsing.file", name));
     }
     else if (StdFileTypes.CLASS.equals(fileType)) {
-      callback.fileGenerated(new FileObject(new File(filePath)));
+      callback.fileGenerated(filePath);
     }
   }
 }

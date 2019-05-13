@@ -1,88 +1,64 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
-/*
- * Created by IntelliJ IDEA.
- * User: yole
- * Date: 14.11.2006
- * Time: 19:04:28
- */
 package com.intellij.openapi.vcs.changes.patch;
 
-import com.intellij.ide.IdeBundle;
-import com.intellij.openapi.diff.impl.patch.SelectFilesToAddTextsToPatchPanel;
+import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.fileChooser.FileChooserFactory;
 import com.intellij.openapi.fileChooser.FileSaverDescriptor;
 import com.intellij.openapi.fileChooser.FileSaverDialog;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.ComboBox;
+import com.intellij.openapi.ui.TextBrowseFolderListener;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
+import com.intellij.openapi.ui.ValidationInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsBundle;
-import com.intellij.openapi.vcs.VcsConfiguration;
-import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileWrapper;
-import com.intellij.openapi.vfs.encoding.EncodingManager;
-import com.intellij.ui.HideableTitledPanel;
-import com.intellij.util.Consumer;
+import com.intellij.openapi.vfs.encoding.EncodingProjectManager;
+import com.intellij.ui.JBColor;
+import com.intellij.ui.components.JBRadioButton;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.FormBuilder;
+import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.awt.*;
-import java.awt.event.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.io.File;
 import java.nio.charset.Charset;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
 
 public class CreatePatchConfigurationPanel {
-  private static final String SYSTEM_DEFAULT = IdeBundle.message("encoding.name.system.default");
+  private static final int TEXT_FIELD_WIDTH = 70;
 
-  public static final String ALL = "(All)";
   private JPanel myMainPanel;
   private TextFieldWithBrowseButton myFileNameField;
+  private TextFieldWithBrowseButton myBasePathField;
   private JCheckBox myReversePatchCheckbox;
-  private JComboBox myEncoding;
-  private JLabel myErrorLabel;
-  private JCheckBox myIncludeBaseRevisionTextCheckBox;
-  private Consumer<Boolean> myOkEnabledListener;
+  private ComboBox<Charset> myEncoding;
+  private JLabel myWarningLabel;
   private final Project myProject;
-  private boolean myDvcsIsUsed;
-  private List<Change> myChanges;
-  private Collection<Change> myIncludedChanges;
-  private SelectFilesToAddTextsToPatchPanel mySelectFilesToAddTextsToPatchPanel;
-  private HideableTitledPanel myHideableTitledPanel;
-  private JPanel myPanelWithSelectedFiles;
-  private boolean myExecute;
+  @Nullable private File myCommonParentDir;
+  private JBRadioButton myToClipboardButton;
+  private JBRadioButton myToFileButton;
 
-  public CreatePatchConfigurationPanel(final Project project) {
+  public CreatePatchConfigurationPanel(@NotNull final Project project) {
     myProject = project;
     initMainPanel();
 
     myFileNameField.addActionListener(new ActionListener() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         final FileSaverDialog dialog =
           FileChooserFactory.getInstance().createSaveFileDialog(
-            new FileSaverDescriptor("Save patch to", ""), myMainPanel);
-        final String path = FileUtil.toSystemIndependentName(myFileNameField.getText().trim());
+            new FileSaverDescriptor("Save Patch to", ""), myMainPanel);
+        final String path = FileUtil.toSystemIndependentName(getFileName());
         final int idx = path.lastIndexOf("/");
         VirtualFile baseDir = idx == -1 ? project.getBaseDir() :
                               (LocalFileSystem.getInstance().refreshAndFindFileByIoFile(new File(path.substring(0, idx))));
@@ -91,163 +67,87 @@ public class CreatePatchConfigurationPanel {
         final VirtualFileWrapper fileWrapper = dialog.save(baseDir, name);
         if (fileWrapper != null) {
           myFileNameField.setText(fileWrapper.getFile().getPath());
-          checkName();
         }
       }
     });
 
-    myIncludeBaseRevisionTextCheckBox.setVisible(false);
-
-    myFileNameField.getTextField().addInputMethodListener(new InputMethodListener() {
-      public void inputMethodTextChanged(final InputMethodEvent event) {
-        checkName();
-      }
-
-      public void caretPositionChanged(final InputMethodEvent event) {
-      }
-    });
-    myFileNameField.setTextFieldPreferredWidth(70);
-    myFileNameField.getTextField().addKeyListener(new KeyListener() {
-      public void keyTyped(final KeyEvent e) {
-        checkName();
-      }
-
-      public void keyPressed(final KeyEvent e) {
-        checkName();
-      }
-
-      public void keyReleased(final KeyEvent e) {
-        checkName();
-      }
-    });
-    myErrorLabel.setForeground(Color.RED);
-    checkName();
+    myToFileButton.addChangeListener(e -> myFileNameField.setEnabled(myToFileButton.isSelected()));
+    myFileNameField.setTextFieldPreferredWidth(TEXT_FIELD_WIDTH);
+    myBasePathField.setTextFieldPreferredWidth(TEXT_FIELD_WIDTH);
+    myBasePathField.addBrowseFolderListener(new TextBrowseFolderListener(FileChooserDescriptorFactory.createSingleFolderDescriptor()));
+    myWarningLabel.setForeground(JBColor.RED);
+    selectBasePath(ObjectUtils.assertNotNull(myProject.getBaseDir()));
     initEncodingCombo();
   }
 
-  private void initEncodingCombo() {
-    final DefaultComboBoxModel encodingsModel = new DefaultComboBoxModel(CharsetToolkit.getAvailableCharsets());
-    encodingsModel.insertElementAt(SYSTEM_DEFAULT, 0);
-    myEncoding.setModel(encodingsModel);
-
-    final String name = EncodingManager.getInstance().getDefaultCharsetName();
-    if (StringUtil.isEmpty(name)) {
-      myEncoding.setSelectedItem(SYSTEM_DEFAULT);
-    }
-    else {
-      myEncoding.setSelectedItem(EncodingManager.getInstance().getDefaultCharset());
-    }
+  public void selectBasePath(@NotNull VirtualFile baseDir) {
+    myBasePathField.setText(baseDir.getPresentableUrl());
   }
 
-  @Nullable
+  private void initEncodingCombo() {
+    final DefaultComboBoxModel<Charset> encodingsModel = new DefaultComboBoxModel<>(CharsetToolkit.getAvailableCharsets());
+    myEncoding.setModel(encodingsModel);
+    Charset projectCharset = EncodingProjectManager.getInstance(myProject).getDefaultCharset();
+    myEncoding.setSelectedItem(projectCharset);
+  }
+
+  @NotNull
   public Charset getEncoding() {
-    final Object selectedItem = myEncoding.getSelectedItem();
-    if (SYSTEM_DEFAULT.equals(selectedItem)) {
-      return EncodingManager.getInstance().getDefaultCharset();
-    }
-    return (Charset)selectedItem;
+    return (Charset)myEncoding.getSelectedItem();
   }
 
   private void initMainPanel() {
     myFileNameField = new TextFieldWithBrowseButton();
+    myBasePathField = new TextFieldWithBrowseButton();
     myReversePatchCheckbox = new JCheckBox(VcsBundle.message("create.patch.reverse.checkbox"));
-    myEncoding = new JComboBox();
-    myIncludeBaseRevisionTextCheckBox = new JCheckBox(VcsBundle.message("create.patch.base.revision"));
-    myErrorLabel = new JLabel();
+    myEncoding = new ComboBox<>();
+    myWarningLabel = new JLabel();
+    myToFileButton = new JBRadioButton(VcsBundle.message("create.patch.file.path"), true);
+
+    if (UIUtil.isUnderWin10LookAndFeel()) {
+      myToFileButton.setBorder(JBUI.Borders.emptyRight(UIUtil.DEFAULT_HGAP));
+    }
+
+    myToClipboardButton = new JBRadioButton(VcsBundle.message("create.patch.to.clipboard"));
+    ButtonGroup group = new ButtonGroup();
+    group.add(myToFileButton);
+    group.add(myToClipboardButton);
+    JPanel toFilePanel = JBUI.Panels.simplePanel().addToLeft(myToFileButton).addToCenter(myFileNameField);
 
     myMainPanel = FormBuilder.createFormBuilder()
-      .addLabeledComponent(VcsBundle.message("create.patch.file.path"), myFileNameField)
+      .addComponent(toFilePanel)
+      .addComponent(myToClipboardButton)
+      .addVerticalGap(5)
+      .addLabeledComponent("&Base path:", myBasePathField)
       .addComponent(myReversePatchCheckbox)
-      .addComponent(myIncludeBaseRevisionTextCheckBox)
       .addLabeledComponent(VcsBundle.message("create.patch.encoding"), myEncoding)
-      .addComponent(myErrorLabel)
+      .addComponent(myWarningLabel)
       .getPanel();
   }
 
-  private void initPanelWithSelectedFiles(Runnable inclusionListener) {
-    mySelectFilesToAddTextsToPatchPanel = new SelectFilesToAddTextsToPatchPanel(myProject, myChanges, myIncludedChanges, inclusionListener);
-    myHideableTitledPanel = new HideableTitledPanel("", mySelectFilesToAddTextsToPatchPanel.getPanel(), false);
-    myPanelWithSelectedFiles = new JPanel(new BorderLayout());
-    myPanelWithSelectedFiles.add(myMainPanel, BorderLayout.NORTH);
-    myPanelWithSelectedFiles.add(myHideableTitledPanel, BorderLayout.CENTER);
+  public void setCommonParentPath(@Nullable File commonParentPath) {
+    myCommonParentDir = commonParentPath == null || commonParentPath.isDirectory() ? commonParentPath : commonParentPath.getParentFile();
   }
 
-  public void showTextStoreOption(final boolean dvcsIsUsed) {
-    myDvcsIsUsed = dvcsIsUsed;
-    if (myChanges.size() > 0) {
-      myIncludeBaseRevisionTextCheckBox.setVisible(true);
-
-      final Runnable inclusionListener = new Runnable() {
-        @Override
-        public void run() {
-          if (mySelectFilesToAddTextsToPatchPanel != null) {
-            myIncludedChanges = mySelectFilesToAddTextsToPatchPanel.getIncludedChanges();
-            myHideableTitledPanel.setTitle("&Selected: " + (myIncludedChanges.size() == myChanges.size() ?
-                                                           "All" : (myIncludedChanges.size() + " of " + myChanges.size())));
-          }
-        }
-      };
-      initPanelWithSelectedFiles(inclusionListener);
-      inclusionListener.run();
-
-      final VcsConfiguration configuration = VcsConfiguration.getInstance(myProject);
-      myIncludeBaseRevisionTextCheckBox.setSelected(configuration.INCLUDE_TEXT_INTO_PATCH);
-      myIncludeBaseRevisionTextCheckBox.addActionListener(new ActionListener() {
-        @Override
-        public void actionPerformed(ActionEvent e) {
-          myHideableTitledPanel.setEnabled(myIncludeBaseRevisionTextCheckBox.isSelected());
-          mySelectFilesToAddTextsToPatchPanel.setEnabled(myIncludeBaseRevisionTextCheckBox.isSelected());
-        }
-      });
-      myHideableTitledPanel.setEnabled(myIncludeBaseRevisionTextCheckBox.isSelected());
-      mySelectFilesToAddTextsToPatchPanel.setEnabled(myIncludeBaseRevisionTextCheckBox.isSelected());
-    }
-  }
-
-  private void checkName() {
-    final PatchNameChecker patchNameChecker = new PatchNameChecker(myFileNameField.getText());
-    if (patchNameChecker.nameOk()) {
-      myErrorLabel.setText("");
-    }
-    else {
-      myErrorLabel.setText(patchNameChecker.getError());
-    }
-    myExecute = patchNameChecker.nameOk() || !patchNameChecker.isPreventsOk();
-    if (myOkEnabledListener != null) {
-      myOkEnabledListener.consume(myExecute);
-    }
-  }
-
-  public void onOk() {
-    if (myIncludeBaseRevisionTextCheckBox.isVisible()) {
-      final VcsConfiguration vcsConfiguration = VcsConfiguration.getInstance(myProject);
-      vcsConfiguration.INCLUDE_TEXT_INTO_PATCH = myIncludeBaseRevisionTextCheckBox.isSelected();
-    }
-  }
-
-  public boolean isStoreTexts() {
-    return myIncludeBaseRevisionTextCheckBox.isSelected();
-  }
-
-  public Collection<Change> getIncludedChanges() {
-    return myIncludedChanges;
+  private void checkExist() {
+    myWarningLabel.setText(new File(getFileName()).exists() ? "File with the same name already exists" : "");
   }
 
   public JComponent getPanel() {
-    return !myIncludeBaseRevisionTextCheckBox.isVisible() || myChanges.isEmpty() ? myMainPanel : myPanelWithSelectedFiles;
-  }
-
-  public void installOkEnabledListener(final Consumer<Boolean> runnable) {
-    myOkEnabledListener = runnable;
+    return myMainPanel;
   }
 
   public String getFileName() {
-    return myFileNameField.getText();
+    return FileUtil.expandUserHome(myFileNameField.getText().trim());
+  }
+
+  @NotNull
+  public String getBaseDirName() {
+    return FileUtil.expandUserHome(myBasePathField.getText().trim());
   }
 
   public void setFileName(final File file) {
     myFileNameField.setText(file.getPath());
-    checkName();
   }
 
   public boolean isReversePatch() {
@@ -258,17 +158,36 @@ public class CreatePatchConfigurationPanel {
     myReversePatchCheckbox.setSelected(reverse);
   }
 
+  public boolean isToClipboard() {
+    return myToClipboardButton.isSelected();
+  }
+
+  public void setToClipboard(boolean toClipboard) {
+    myToClipboardButton.setSelected(toClipboard);
+  }
+
   public boolean isOkToExecute() {
-    return myExecute;
+    return validateFields() == null;
   }
 
-  public String getError() {
-    return myErrorLabel.getText() == null ? "" : myErrorLabel.getText();
+  @Nullable
+  private ValidationInfo verifyBaseDirPath() {
+    String baseDirName = getBaseDirName();
+    if (StringUtil.isEmptyOrSpaces(baseDirName)) return new ValidationInfo("Base path can't be empty!", myBasePathField);
+    File baseFile = new File(baseDirName);
+    if (!baseFile.exists()) return new ValidationInfo("Base dir doesn't exist", myBasePathField);
+    if (myCommonParentDir != null && !FileUtil.isAncestor(baseFile, myCommonParentDir, false)) {
+      return new ValidationInfo(String.format("Base path doesn't contain all selected changes (use %s)", myCommonParentDir.getPath()),
+                                myBasePathField);
+    }
+    return null;
   }
 
-  public void setChanges(Collection<Change> changes) {
-    myChanges = new ArrayList<Change>(changes);
-    myIncludedChanges = new ArrayList<Change>(myChanges);
-    myIncludedChanges.removeAll(SelectFilesToAddTextsToPatchPanel.getBig(myChanges));
+  @Nullable
+  public ValidationInfo validateFields() {
+    checkExist();
+    String validateNameError = PatchNameChecker.validateName(getFileName());
+    if (validateNameError != null) return new ValidationInfo(validateNameError, myFileNameField);
+    return verifyBaseDirPath();
   }
 }

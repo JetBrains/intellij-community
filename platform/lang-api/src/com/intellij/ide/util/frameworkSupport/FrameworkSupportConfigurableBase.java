@@ -17,10 +17,10 @@
 package com.intellij.ide.util.frameworkSupport;
 
 import com.intellij.facet.ui.libraries.LibraryInfo;
-import com.intellij.ui.ListCellRendererWrapper;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.libraries.Library;
+import com.intellij.ui.ListCellRendererWrapper;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -43,7 +43,7 @@ public class FrameworkSupportConfigurableBase extends FrameworkSupportConfigurab
   private JLabel myDescriptionLabel;
 
   public FrameworkSupportConfigurableBase(FrameworkSupportProviderBase frameworkSupportProvider, FrameworkSupportModel model) {
-    this(frameworkSupportProvider, model, Collections.<FrameworkVersion>emptyList(), null);
+    this(frameworkSupportProvider, model, Collections.emptyList(), null);
   }
 
   public FrameworkSupportConfigurableBase(FrameworkSupportProviderBase frameworkSupportProvider, FrameworkSupportModel model,
@@ -62,6 +62,7 @@ public class FrameworkSupportConfigurableBase extends FrameworkSupportConfigurab
     });
     updateAvailableVersions(versions);
     myVersionComboBox.addActionListener(new ActionListener() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         fireFrameworkVersionChanged();
       }
@@ -92,17 +93,17 @@ public class FrameworkSupportConfigurableBase extends FrameworkSupportConfigurab
     myVersionComboBox.setVisible(hasMoreThanOneVersion);
   }
 
+  @Override
   public JComponent getComponent() {
-    return myVersions.size() > 1 ? myMainPanel : null;
-  }
-  
-  protected void reloadVersions(List<? extends FrameworkVersion> frameworkVersions) {
-    myVersions.clear();
-    for (FrameworkVersion version : frameworkVersions) {
-      myVersions.add(version);
-    }
+    return myMainPanel;
   }
 
+  protected void reloadVersions(List<? extends FrameworkVersion> frameworkVersions) {
+    myVersions.clear();
+    myVersions.addAll(frameworkVersions);
+  }
+
+  @Override
   @NotNull
   public List<? extends FrameworkVersion> getVersions() {
     return myVersions;
@@ -113,10 +114,12 @@ public class FrameworkSupportConfigurableBase extends FrameworkSupportConfigurab
     return getSelectedVersion().getLibraries();
   }
 
+  @Override
   public void addSupport(@NotNull final Module module, @NotNull final ModifiableRootModel rootModel, final @Nullable Library library) {
     myFrameworkSupportProvider.addSupport(module, rootModel, getSelectedVersion(), library);
   }
 
+  @Override
   public FrameworkVersion getSelectedVersion() {
     return (FrameworkVersion)myVersionComboBox.getSelectedItem();
   }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,91 +15,32 @@
  */
 package com.intellij.execution.filters;
 
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-public final class OpenFileHyperlinkInfo implements FileHyperlinkInfo {
+public class OpenFileHyperlinkInfo extends FileHyperlinkInfoBase implements FileHyperlinkInfo {
 
-  private static final int UNDEFINED_OFFSET = -1;
-
-  private final Project myProject;
   private final VirtualFile myFile;
-  private final int myDocumentLine;
-  private final int myDocumentColumn;
 
   public OpenFileHyperlinkInfo(@NotNull OpenFileDescriptor descriptor) {
     this(descriptor.getProject(), descriptor.getFile(), descriptor.getLine(), descriptor.getColumn());
   }
 
-  public OpenFileHyperlinkInfo(@NotNull Project project, @NotNull VirtualFile file,
-                               int documentLine, int documentColumn) {
-    myProject = project;
+  public OpenFileHyperlinkInfo(@NotNull Project project, @NotNull VirtualFile file, int documentLine, int documentColumn) {
+    super(project, documentLine, documentColumn);
     myFile = file;
-    myDocumentLine = documentLine;
-    myDocumentColumn = documentColumn;
   }
 
   public OpenFileHyperlinkInfo(@NotNull Project project, @NotNull final VirtualFile file, final int line) {
     this(project, file, line, 0);
   }
 
-  public OpenFileDescriptor getDescriptor() {
-    if (!myFile.isValid()) {
-      return null;
-    }
-
-    int offset = calculateOffset(myFile, myDocumentLine, myDocumentColumn);
-    if (offset != UNDEFINED_OFFSET) {
-      return new OpenFileDescriptor(myProject, myFile, offset);
-    }
-    // although document position != logical position, it seems better than returning 'null'
-    return new OpenFileDescriptor(myProject, myFile, myDocumentLine, myDocumentColumn);
-  }
-
-  public void navigate(final Project project) {
-    ApplicationManager.getApplication().runReadAction(new Runnable() {
-      public void run() {
-        final VirtualFile file = myFile;
-        if (file.isValid()) {
-          FileEditorManager.getInstance(project).openTextEditor(getDescriptor(), true);
-        }
-      }
-    });
-  }
-
-  /**
-   * Calculates an offset, that matches given line and column of the document.
-   *
-   * @param file           VirtualFile instance
-   * @param documentLine   zero-based line of the document
-   * @param documentColumn zero-based column of the document
-   * @return calculated offset or UNDEFINED_OFFSET if it's impossible to calculate
-   */
-  private static int calculateOffset(@NotNull final VirtualFile file,
-                                     final int documentLine, final int documentColumn) {
-    return ApplicationManager.getApplication().runReadAction(new Computable<Integer>() {
-
-      @Override
-      public Integer compute() {
-        Document document = FileDocumentManager.getInstance().getDocument(file);
-        if (document != null) {
-          int lineCount = document.getLineCount();
-          if (0 <= documentLine && documentLine < lineCount) {
-            int lineStartOffset = document.getLineStartOffset(documentLine);
-            int lineEndOffset = document.getLineEndOffset(documentLine);
-            int fixedColumn = Math.min(Math.max(documentColumn, 0), lineEndOffset - lineStartOffset);
-            return lineStartOffset + fixedColumn;
-          }
-        }
-        return UNDEFINED_OFFSET;
-      }
-    });
+  @Nullable
+  @Override
+  public VirtualFile getVirtualFile() {
+    return myFile;
   }
 }

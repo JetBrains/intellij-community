@@ -55,6 +55,7 @@ public class CvsContextWrapper implements CvsContext {
     return new CvsContextWrapper(event, VcsContextFactory.SERVICE.getInstance().createContextOn(event));
   }
 
+  @Override
   public boolean cvsIsActive() {
     Project project = getProject();
     if (project == null) return false;
@@ -66,10 +67,12 @@ public class CvsContextWrapper implements CvsContext {
     return myVcsContext.getActionName();
   }
 
+  @Override
   public Collection<String> getDeletedFileNames() {
     return CvsDataKeys.DELETED_FILE_NAMES.getData(myContext);
   }
 
+  @Override
   public CvsLightweightFile[] getSelectedLightweightFiles() {
     CvsLightweightFile[] files = CvsDataKeys.CVS_LIGHT_FILES.getData(myContext);
     if (files == null || files.length <= 0) {
@@ -78,60 +81,75 @@ public class CvsContextWrapper implements CvsContext {
     return files;
   }
 
+  @Override
   public Project getProject() {
     return myVcsContext.getProject();
   }
 
+  @Override
   public VirtualFile getSelectedFile() {
     return myVcsContext.getSelectedFile();
   }
 
+  @Override
   @NotNull
   public VirtualFile[] getSelectedFiles() {
     return myVcsContext.getSelectedFiles();
   }
 
+  @Override
   public Editor getEditor() {
     return myVcsContext.getEditor();
   }
 
+  @Override
   public Collection<VirtualFile> getSelectedFilesCollection() {
     return myVcsContext.getSelectedFilesCollection();
   }
 
+  @Override
   public File[] getSelectedIOFiles() {
     return myVcsContext.getSelectedIOFiles();
   }
 
+  @Override
   public int getModifiers() {
     return myVcsContext.getModifiers();
   }
 
+  @Override
   public Refreshable getRefreshableDialog() {
     return myVcsContext.getRefreshableDialog();
   }
 
+  @Override
   public String getPlace() {
     return myVcsContext.getPlace();
   }
 
+  @Override
   public File getSelectedIOFile() {
     return myVcsContext.getSelectedIOFile();
   }
 
+  @Override
+  @NotNull
   public FilePath[] getSelectedFilePaths() {
     return myVcsContext.getSelectedFilePaths();
   }
 
+  @Override
   public FilePath getSelectedFilePath() {
     return myVcsContext.getSelectedFilePath();
   }
 
+  @Override
   @Nullable
   public ChangeList[] getSelectedChangeLists() {
     return myVcsContext.getSelectedChangeLists();
   }
 
+  @Override
   @Nullable
   public Change[] getSelectedChanges() {
     return myVcsContext.getSelectedChanges();

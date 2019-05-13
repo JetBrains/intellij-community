@@ -51,6 +51,7 @@ public final class Namespace implements Cloneable, Copyable<Namespace> {
         return (uri != null ? uri.hashCode() : 0);
     }
 
+    @Override
     protected Namespace clone() {
         try {
             return (Namespace)super.clone();
@@ -59,12 +60,13 @@ public final class Namespace implements Cloneable, Copyable<Namespace> {
         }
     }
 
+    @Override
     public Namespace copy() {
         return clone();
     }
 
     public static Collection<Namespace> fromMap(Map<String, String> namespaces) {
-        final List<Namespace> list = new ArrayList<Namespace>(namespaces.size());
+        final List<Namespace> list = new ArrayList<>(namespaces.size());
         for (Map.Entry<String, String> e : namespaces.entrySet()) {
             list.add(new Namespace(e.getKey(), e.getValue()));
         }
@@ -72,7 +74,7 @@ public final class Namespace implements Cloneable, Copyable<Namespace> {
     }
 
     public static Map<String, String> makeMap(Collection<Namespace> namespaces) {
-        final Map<String, String> _ns = new HashMap<String, String>();
+        final Map<String, String> _ns = new HashMap<>();
         for (Namespace namespace : namespaces) {
             _ns.put(namespace.getPrefix(), namespace.getUri());
         }

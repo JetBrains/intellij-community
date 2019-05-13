@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,41 +28,44 @@ class ModifierPredicate implements PsiElementPredicate {
   @PsiModifier.ModifierConstant
   private final String myModifier;
 
-  public ModifierPredicate(@NotNull @PsiModifier.ModifierConstant String modifier) {
+  ModifierPredicate(@NotNull @PsiModifier.ModifierConstant String modifier) {
     myModifier = modifier;
   }
 
   @Override
   public boolean satisfiedBy(PsiElement element) {
     final PsiElement parent = element.getParent();
-    if (!(parent instanceof PsiClass || parent instanceof PsiField || parent instanceof PsiMethod)) {
+    if (!(parent instanceof PsiClass || parent instanceof PsiField || parent instanceof PsiMethod) || parent instanceof PsiEnumConstant) {
       return false;
     }
     if (element instanceof PsiDocComment || element instanceof PsiCodeBlock) {
       return false;
     }
+    final PsiNameIdentifierOwner named = (PsiNameIdentifierOwner)parent;
+    final PsiElement identifier = named.getNameIdentifier();
+    if (identifier == null || identifier.getTextRange().getEndOffset() <= element.getTextRange().getStartOffset()) {
+      return false;
+    }
     if (parent instanceof PsiClass) {
       final PsiClass aClass = (PsiClass)parent;
-      final PsiElement brace = aClass.getLBrace();
-      if (brace != null && brace.getTextOffset() < element.getTextOffset()) {
+      if (aClass.getParent() instanceof PsiDeclarationStatement) {
+        // local classes are not allowed a modifier
         return false;
       }
       if (aClass.getContainingClass() == null &&
           (myModifier.equals(PsiModifier.PRIVATE) || myModifier.equals(PsiModifier.PROTECTED))) {
         return false;
       }
-    } else if (parent instanceof PsiMethod) {
+    }
+    else if (parent instanceof PsiMethod) {
       final PsiMethod method = (PsiMethod)parent;
       final PsiClass containingClass = method.getContainingClass();
-      if (containingClass == null || containingClass.isInterface()) {
+      if (containingClass == null || containingClass.isInterface() || (method.isConstructor() && containingClass.isEnum())) {
         return false;
       }
     }
     final PsiModifierListOwner owner = (PsiModifierListOwner)parent;
     final PsiModifierList modifierList = owner.getModifierList();
-    if (modifierList == null) {
-      return false;
-    }
-    return !modifierList.hasModifierProperty(myModifier);
+    return modifierList != null && !modifierList.hasModifierProperty(myModifier);
   }
 }

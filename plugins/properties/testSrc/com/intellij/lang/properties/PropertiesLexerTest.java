@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,17 +18,12 @@ package com.intellij.lang.properties;
 import com.intellij.lang.properties.parsing.PropertiesLexer;
 import com.intellij.lexer.Lexer;
 import com.intellij.testFramework.LightPlatformTestCase;
-import com.intellij.testFramework.PlatformTestCase;
 import org.jetbrains.annotations.NonNls;
 
 /**
  * @author max
  */
 public class PropertiesLexerTest extends LightPlatformTestCase {
-
-  public PropertiesLexerTest() {
-    PlatformTestCase.initPlatformLangPrefix();    
-  }
 
   private static void doTest(@NonNls String text, @NonNls String[] expectedTokens) {
     Lexer lexer = new PropertiesLexer();
@@ -48,16 +43,16 @@ public class PropertiesLexerTest extends LightPlatformTestCase {
       String tokenName = lexer.getTokenType().toString();
       String expectedTokenType = expectedTokens[idx++];
       String expectedTokenText = expectedTokens[idx++];
-      assertEquals(expectedTokenType, tokenName);
       String tokenText = lexer.getBufferSequence().subSequence(lexer.getTokenStart(), lexer.getTokenEnd()).toString();
-      assertEquals(expectedTokenText, tokenText);
+      assertEquals(tokenText, expectedTokenType, tokenName);
+      assertEquals("Token type: " + expectedTokenType, expectedTokenText, tokenText);
       lexer.advance();
     }
 
     if (idx < expectedTokens.length) fail("Not enough tokens");
   }
 
-  public void testSimple() throws Exception {
+  public void testSimple() {
     doTest("xxx=yyy", new String[]{
       "Properties:KEY_CHARACTERS", "xxx",
       "Properties:KEY_VALUE_SEPARATOR", "=",
@@ -65,7 +60,7 @@ public class PropertiesLexerTest extends LightPlatformTestCase {
     });
   }
 
-  public void testTwoWords() throws Exception {
+  public void testTwoWords() {
     doTest("xxx=yyy zzz", new String[]{
       "Properties:KEY_CHARACTERS", "xxx",
       "Properties:KEY_VALUE_SEPARATOR", "=",
@@ -73,40 +68,42 @@ public class PropertiesLexerTest extends LightPlatformTestCase {
     });
   }
 
-  public void testMulti() throws Exception {
+  public void testMulti() {
     doTest("a  b\n \nx\ty", new String[]{
       "Properties:KEY_CHARACTERS", "a",
-      "Properties:KEY_VALUE_SEPARATOR", "  ",
+      "WHITE_SPACE", "  ",
       "Properties:VALUE_CHARACTERS", "b",
       "WHITE_SPACE", "\n \n",
       "Properties:KEY_CHARACTERS", "x",
-      "Properties:KEY_VALUE_SEPARATOR", "\t",
+      "WHITE_SPACE", "\t",
       "Properties:VALUE_CHARACTERS", "y"
     });
   }
 
-  public void testIncompleteProperty() throws Exception {
+  public void testIncompleteProperty() {
     doTest("a", new String[]{
       "Properties:KEY_CHARACTERS", "a"
     });
   }
 
-  public void testIncompleteProperty2() throws Exception {
+  public void testIncompleteProperty2() {
     doTest("a.2=", new String[]{
       "Properties:KEY_CHARACTERS", "a.2",
       "Properties:KEY_VALUE_SEPARATOR", "="
     });
   }
 
-  public void testEscaping() throws Exception {
+  public void testEscaping() {
     doTest("sdlfkjsd\\l\\\\\\:\\=gk   =   s\\nsssd", new String[]{
       "Properties:KEY_CHARACTERS", "sdlfkjsd\\l\\\\\\:\\=gk",
-      "Properties:KEY_VALUE_SEPARATOR", "   =   ",
+      "WHITE_SPACE", "   ",
+      "Properties:KEY_VALUE_SEPARATOR", "=",
+      "WHITE_SPACE", "   ",
       "Properties:VALUE_CHARACTERS", "s\\nsssd"
     });
   }
 
-  public void testCRLFEscaping() throws Exception {
+  public void testCRLFEscaping() {
     doTest("sdlfkjsdsssd:a\\\nb", new String[]{
       "Properties:KEY_CHARACTERS", "sdlfkjsdsssd",
       "Properties:KEY_VALUE_SEPARATOR", ":",
@@ -114,7 +111,7 @@ public class PropertiesLexerTest extends LightPlatformTestCase {
     });
   }
 
-  public void testCRLFEscapingKey() throws Exception {
+  public void testCRLFEscapingKey() {
     doTest("x\\\ny:z", new String[]{
       "Properties:KEY_CHARACTERS", "x\\\ny",
       "Properties:KEY_VALUE_SEPARATOR", ":",
@@ -122,35 +119,37 @@ public class PropertiesLexerTest extends LightPlatformTestCase {
     });
   }
 
-  public void testWhitespace() throws Exception {
+  public void testWhitespace() {
     doTest("x y", new String[]{
       "Properties:KEY_CHARACTERS", "x",
-      "Properties:KEY_VALUE_SEPARATOR", " ",
+      "WHITE_SPACE", " ",
       "Properties:VALUE_CHARACTERS", "y"
     });
   }
-  public void testHashInValue() throws Exception {
+  public void testHashInValue() {
     doTest("x=# y", new String[]{
       "Properties:KEY_CHARACTERS", "x",
       "Properties:KEY_VALUE_SEPARATOR", "=",
       "Properties:VALUE_CHARACTERS", "# y"
     });
   }
-  public void testComments() throws Exception {
+  public void testComments() {
     doTest("#hhhh kkkk \n\n", new String[]{
       "Properties:END_OF_LINE_COMMENT", "#hhhh kkkk ",
       "WHITE_SPACE", "\n\n",
     });
   }
-  public void testTabs() throws Exception {
+  public void testTabs() {
     doTest("install/htdocs/imcms/html/link_editor.jsp/1002 = URL\\n\\\n" +
            "\t\\t\\teller meta_id:", new String[]{
       "Properties:KEY_CHARACTERS", "install/htdocs/imcms/html/link_editor.jsp/1002",
-      "Properties:KEY_VALUE_SEPARATOR", " = ",
+      "WHITE_SPACE", " ",
+      "Properties:KEY_VALUE_SEPARATOR", "=",
+      "WHITE_SPACE", " ",
       "Properties:VALUE_CHARACTERS", "URL\\n\\\n" + "\t\\t\\teller meta_id:"
     });
   }
-  public void testIndentedComments() throws Exception {
+  public void testIndentedComments() {
     doTest("   #comm1\n#comm2=n\n\t#comm3", new String[]{
       "WHITE_SPACE", "   ",
       "Properties:END_OF_LINE_COMMENT", "#comm1",
@@ -161,29 +160,29 @@ public class PropertiesLexerTest extends LightPlatformTestCase {
     });
   }
 
-  public void testHighlighting() throws Exception {
+  public void testHighlighting() {
     doTestHL("x y", new String[]{
       "Properties:KEY_CHARACTERS", "x",
-      "Properties:KEY_VALUE_SEPARATOR", " ",
+      "WHITE_SPACE", " ",
       "Properties:VALUE_CHARACTERS", "y"
     });
   }
 
-  public void testHighlighting2() throws Exception {
+  public void testHighlighting2() {
     doTestHL("x\\n\\kz y", new String[]{
       "Properties:KEY_CHARACTERS", "x",
       "VALID_STRING_ESCAPE_TOKEN", "\\n",
       "INVALID_CHARACTER_ESCAPE_TOKEN", "\\k",
       "Properties:KEY_CHARACTERS", "z",
-      "Properties:KEY_VALUE_SEPARATOR", " ",
+      "WHITE_SPACE", " ",
       "Properties:VALUE_CHARACTERS", "y"
     });
   }
 
-  public void testHighlighting3() throws Exception {
+  public void testHighlighting3() {
     doTestHL("x  \\uxyzt\\pz\\tp", new String[]{
       "Properties:KEY_CHARACTERS", "x",
-      "Properties:KEY_VALUE_SEPARATOR", "  ",
+      "WHITE_SPACE", "  ",
       "INVALID_UNICODE_ESCAPE_TOKEN", "\\uxyzt",
       "INVALID_CHARACTER_ESCAPE_TOKEN", "\\p",
       "Properties:VALUE_CHARACTERS", "z",
@@ -191,7 +190,7 @@ public class PropertiesLexerTest extends LightPlatformTestCase {
       "Properties:VALUE_CHARACTERS", "p",
     });
   }
-  public void testFramingSpaces() throws Exception {
+  public void testFramingSpaces() {
     doTestHL("\\ x\\ y\\ =\\ z\\ t\\ \\ ", new String[]{
       "VALID_STRING_ESCAPE_TOKEN", "\\ ",
       "Properties:KEY_CHARACTERS", "x",
@@ -207,7 +206,7 @@ public class PropertiesLexerTest extends LightPlatformTestCase {
       "VALID_STRING_ESCAPE_TOKEN", "\\ ",
     });
   }
-  public void testSpecialCharsInValue() throws Exception {
+  public void testSpecialCharsInValue() {
     doTestHL("xxx=\\ x\\ y\\!\\=\\#\\:", new String[]{
       "Properties:KEY_CHARACTERS", "xxx",
       "Properties:KEY_VALUE_SEPARATOR", "=",

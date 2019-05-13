@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,22 +27,23 @@ import java.util.Set;
 */
 class AddToCompositeCollectionInvocation implements Invocation {
   private final CollectionChildDescriptionImpl myMainDescription;
-  private final Set<CollectionChildDescriptionImpl> myQnames;
+  private final Set<? extends CollectionChildDescriptionImpl> myQnames;
   private final Type myType;
 
-  public AddToCompositeCollectionInvocation(final CollectionChildDescriptionImpl tagName, final Set<CollectionChildDescriptionImpl> qnames, final Type type) {
+  AddToCompositeCollectionInvocation(final CollectionChildDescriptionImpl tagName, final Set<? extends CollectionChildDescriptionImpl> qnames, final Type type) {
     myMainDescription = tagName;
     myQnames = qnames;
     myType = type;
   }
 
+  @Override
   public Object invoke(final DomInvocationHandler<?, ?> handler, final Object[] args) throws Throwable {
+    final XmlTag tag = handler.ensureTagExists();
+
     Set<XmlTag> set = ContainerUtil.newTroveSet();
     for (final CollectionChildDescriptionImpl qname : myQnames) {
-      set.addAll(qname.getTagsGetter().fun(handler));
+      set.addAll(qname.getCollectionSubTags(handler, tag));
     }
-
-    final XmlTag tag = handler.ensureTagExists();
     int index = args != null && args.length == 1 ? (Integer)args[0] : Integer.MAX_VALUE;
 
     XmlTag lastTag = null;

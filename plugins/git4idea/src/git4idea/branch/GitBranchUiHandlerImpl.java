@@ -1,105 +1,65 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.branch;
 
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationListener;
-import com.intellij.notification.NotificationType;
-import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.ui.MessageDialogBuilder;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.ui.VerticalFlowLayout;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.openapi.vcs.changes.Change;
-import com.intellij.openapi.vcs.changes.ui.SelectFilesDialog;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.ui.components.JBLabel;
-import com.intellij.util.ui.UIUtil;
-import git4idea.*;
+import com.intellij.xml.util.XmlStringUtil;
+import git4idea.DialogManager;
+import git4idea.GitCommit;
+import git4idea.GitUtil;
 import git4idea.commands.Git;
-import git4idea.history.browser.GitCommit;
 import git4idea.merge.GitConflictResolver;
 import git4idea.repo.GitRepository;
-import git4idea.util.UntrackedFilesNotifier;
+import git4idea.util.GitUntrackedFilesHelper;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import javax.swing.event.HyperlinkEvent;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import static com.intellij.openapi.util.text.StringUtil.stripHtml;
+import static com.intellij.openapi.ui.Messages.YES;
+import static com.intellij.openapi.ui.Messages.getQuestionIcon;
+import static git4idea.branch.GitBranchUiHandler.DeleteRemoteBranchDecision.CANCEL;
+import static git4idea.branch.GitBranchUiHandler.DeleteRemoteBranchDecision.DELETE;
 
-/**
- * @author Kirill Likhodedov
- */
-class GitBranchUiHandlerImpl implements GitBranchUiHandler {
+public class GitBranchUiHandlerImpl implements GitBranchUiHandler {
 
   @NotNull private final Project myProject;
   @NotNull private final Git myGit;
-  @NotNull private final GitPlatformFacade myFacade;
   @NotNull private final ProgressIndicator myProgressIndicator;
 
-  GitBranchUiHandlerImpl(@NotNull Project project, @NotNull GitPlatformFacade facade, @NotNull Git git, @NotNull ProgressIndicator indicator) {
+  public GitBranchUiHandlerImpl(@NotNull Project project, @NotNull Git git, @NotNull ProgressIndicator indicator) {
     myProject = project;
     myGit = git;
-    myFacade = facade;
     myProgressIndicator = indicator;
-  }
-
-  @Override
-  public void notifySuccess(@NotNull String message) {
-    notifySuccess("", message);
-  }
-
-  @Override
-  public void notifySuccess(@NotNull String title, @NotNull String message) {
-    notifySuccess(title, message, null);
-  }
-
-  @Override
-  public void notifySuccess(@NotNull String title, @NotNull String description, @Nullable NotificationListener listener) {
-    Notificator.getInstance(myProject).notify(GitVcs.NOTIFICATION_GROUP_ID, title, description, NotificationType.INFORMATION, listener);
-  }
-
-  @Override
-  public void notifyError(@NotNull String title, @NotNull String message) {
-    Notificator.getInstance(myProject).notify(GitVcs.IMPORTANT_ERROR_NOTIFICATION, title, message, NotificationType.ERROR);
   }
 
   @Override
   public boolean notifyErrorWithRollbackProposal(@NotNull final String title, @NotNull final String message,
                                                  @NotNull final String rollbackProposal) {
     final AtomicBoolean ok = new AtomicBoolean();
-    UIUtil.invokeAndWaitIfNeeded(new Runnable() {
-      @Override
-      public void run() {
-        StringBuilder description = new StringBuilder("<html>");
-        if (!StringUtil.isEmptyOrSpaces(message)) {
-          description.append(message).append("<br/>");
-        }
-        description.append(rollbackProposal).append("</html>");
-        ok.set(Messages.OK == MessageManager.showYesNoDialog(myProject, description.toString(), title,
-                                                             "Rollback", "Don't rollback", Messages.getErrorIcon()));
+    ApplicationManager.getApplication().invokeAndWait(() -> {
+      StringBuilder description = new StringBuilder();
+      if (!StringUtil.isEmptyOrSpaces(message)) {
+        description.append(message).append("<br/>");
       }
+      description.append(rollbackProposal);
+      ok.set(YES == DialogManager.showOkCancelDialog(myProject, XmlStringUtil.wrapInHtml(description), title,
+                                                     "Rollback", "Don't rollback", Messages.getErrorIcon()));
     });
     return ok.get();
   }
@@ -108,17 +68,17 @@ class GitBranchUiHandlerImpl implements GitBranchUiHandler {
   public void showUnmergedFilesNotification(@NotNull final String operationName, @NotNull final Collection<GitRepository> repositories) {
     String title = unmergedFilesErrorTitle(operationName);
     String description = unmergedFilesErrorNotificationDescription(operationName);
-    Notificator.getInstance(myProject).notify(GitVcs.IMPORTANT_ERROR_NOTIFICATION, title, description, NotificationType.ERROR,
+    VcsNotifier.getInstance(myProject).notifyError(title, description,
       new NotificationListener() {
         @Override
         public void hyperlinkUpdate(@NotNull Notification notification,
                                     @NotNull HyperlinkEvent event) {
           if (event.getEventType() == HyperlinkEvent.EventType.ACTIVATED && event.getDescription().equals("resolve")) {
-            GitConflictResolver.Params params = new GitConflictResolver.Params().
+            GitConflictResolver.Params params = new GitConflictResolver.Params(myProject).
               setMergeDescription(String.format("The following files have unresolved conflicts. You need to resolve them before %s.",
                                                 operationName)).
               setErrorNotificationTitle("Unresolved files remain.");
-            new GitConflictResolver(myProject, myGit, myFacade, GitUtil.getRootsFromRepositories(repositories), params).merge();
+            new GitConflictResolver(myProject, myGit, GitUtil.getRootsFromRepositories(repositories), params).merge();
           }
         }
       }
@@ -128,41 +88,25 @@ class GitBranchUiHandlerImpl implements GitBranchUiHandler {
   @Override
   public boolean showUnmergedFilesMessageWithRollback(@NotNull final String operationName, @NotNull final String rollbackProposal) {
     final AtomicBoolean ok = new AtomicBoolean();
-    UIUtil.invokeAndWaitIfNeeded(new Runnable() {
-      @Override
-      public void run() {
-        String description = String.format("<html>You have to resolve all merge conflicts before %s.<br/>%s</html>",
-                                           operationName, rollbackProposal);
-        // suppressing: this message looks ugly if capitalized by words
-        //noinspection DialogTitleCapitalization
-        ok.set(Messages.OK == MessageManager.showYesNoDialog(myProject, description, unmergedFilesErrorTitle(operationName),
-                                                             "Rollback", "Don't rollback", Messages.getErrorIcon()));
-      }
+    ApplicationManager.getApplication().invokeAndWait(() -> {
+      String description = String.format("<html>You have to resolve all merge conflicts before %s.<br/>%s</html>",
+                                         operationName, rollbackProposal);
+      // suppressing: this message looks ugly if capitalized by words
+      ok.set(YES == DialogManager.showOkCancelDialog(myProject, description, unmergedFilesErrorTitle(operationName),
+                                                     "Rollback", "Don't rollback", Messages.getErrorIcon()));
     });
     return ok.get();
   }
 
   @Override
-  public void showUntrackedFilesNotification(@NotNull String operationName, @NotNull Collection<VirtualFile> untrackedFiles) {
-    UntrackedFilesNotifier.notifyUntrackedFilesOverwrittenBy(myProject, ServiceManager.getService(myProject, GitPlatformFacade.class),
-                                                             untrackedFiles, operationName, null);
+  public void showUntrackedFilesNotification(@NotNull String operationName, @NotNull VirtualFile root, @NotNull Collection<String> relativePaths) {
+    GitUntrackedFilesHelper.notifyUntrackedFilesOverwrittenBy(myProject, root, relativePaths, operationName, null);
   }
 
   @Override
-  public boolean showUntrackedFilesDialogWithRollback(@NotNull String operationName, @NotNull String rollbackProposal,
-                                                      @NotNull Collection<VirtualFile> untrackedFiles) {
-    String title = "Couldn't " + operationName;
-    String description = UntrackedFilesNotifier.createUntrackedFilesOverwrittenDescription(operationName, false);
-
-    final SelectFilesDialog dialog = new UntrackedFilesDialog(myProject, untrackedFiles, stripHtml(description, true), rollbackProposal);
-    dialog.setTitle(title);
-    UIUtil.invokeAndWaitIfNeeded(new Runnable() {
-      @Override
-      public void run() {
-        myFacade.showDialog(dialog);
-      }
-    });
-    return dialog.isOK();
+  public boolean showUntrackedFilesDialogWithRollback(@NotNull String operationName, @NotNull final String rollbackProposal,
+                                                      @NotNull VirtualFile root, @NotNull final Collection<String> relativePaths) {
+    return GitUntrackedFilesHelper.showUntrackedFilesDialogWithRollback(myProject, operationName, rollbackProposal, root, relativePaths);
   }
 
   @NotNull
@@ -171,23 +115,65 @@ class GitBranchUiHandlerImpl implements GitBranchUiHandler {
     return myProgressIndicator;
   }
 
+  @NotNull
   @Override
-  public int showSmartOperationDialog(@NotNull Project project, @NotNull List<Change> changes, @NotNull String operation, boolean force) {
-    return GitSmartOperationDialog.showAndGetAnswer(myProject, changes, operation, true);
+  public GitSmartOperationDialog.Choice showSmartOperationDialog(@NotNull Project project,
+                                                                 @NotNull List<Change> changes,
+                                                                 @NotNull Collection<String> paths,
+                                                                 @NotNull String operation,
+                                                                 @Nullable String forceButtonTitle) {
+    Ref<GitSmartOperationDialog.Choice> exitCode = Ref.create();
+    ApplicationManager.getApplication().invokeAndWait(() -> {
+      exitCode.set(GitSmartOperationDialog.show(project, changes, paths, operation, forceButtonTitle));
+    });
+    return exitCode.get();
   }
 
   @Override
-  public boolean showBranchIsNotFullyMergedDialog(@NotNull Project project, @NotNull final Map<GitRepository, List<GitCommit>> history,
-                                                  @NotNull final String unmergedBranch, @NotNull final List<String> mergedToBranches,
-                                                  @NotNull final String baseBranch) {
-    final AtomicBoolean forceDelete = new AtomicBoolean();
-    UIUtil.invokeAndWaitIfNeeded(new Runnable() {
-      @Override
-      public void run() {
-        forceDelete.set(GitBranchIsNotFullyMergedDialog.showAndGetAnswer(myProject, history, unmergedBranch, mergedToBranches, baseBranch));
-      }
-    });
-    return forceDelete.get();
+  public boolean showBranchIsNotFullyMergedDialog(@NotNull Project project,
+                                                  @NotNull Map<GitRepository, List<GitCommit>> history,
+                                                  @NotNull Map<GitRepository, String> baseBranches,
+                                                  @NotNull String removedBranch) {
+    AtomicBoolean restore = new AtomicBoolean();
+    ApplicationManager.getApplication().invokeAndWait(() -> restore.set(
+      GitBranchIsNotFullyMergedDialog.showAndGetAnswer(myProject, history, baseBranches, removedBranch)));
+    return restore.get();
+  }
+
+  @NotNull
+  @Override
+  public DeleteRemoteBranchDecision confirmRemoteBranchDeletion(@NotNull String branchName,
+                                                                @NotNull Collection<String> trackingBranches,
+                                                                @NotNull Collection<GitRepository> repositories) {
+    String title = "Delete Remote Branch";
+    String message = "Delete remote branch " + branchName + "?";
+
+    if (trackingBranches.isEmpty()) {
+      return YES == DialogManager.showOkCancelDialog(myProject, message, title, "Delete", "Cancel", getQuestionIcon()) ? DELETE : CANCEL;
+    }
+
+    String checkboxMessage = trackingBranches.size() == 1
+                             ? "Delete tracking local branch " + trackingBranches.iterator().next() + " as well"
+                             : "Delete tracking local branches " + StringUtil.join(trackingBranches, ", ");
+
+      Ref<Boolean> deleteChoice = Ref.create(false);
+      boolean delete = MessageDialogBuilder.yesNo(title, message).project(myProject).yesText("Delete").noText("Cancel").doNotAsk(
+        new DialogWrapper.DoNotAskOption.Adapter() {
+          @Override
+          public void rememberChoice(boolean isSelected, int exitCode) {
+            deleteChoice.set(isSelected);
+          }
+
+          @NotNull
+          @Override
+          public String getDoNotShowMessage() {
+            return checkboxMessage;
+          }
+        }).show() == YES;
+      boolean deleteTracking = deleteChoice.get();
+      return delete
+             ? deleteTracking ? DeleteRemoteBranchDecision.DELETE_WITH_TRACKING : DELETE
+             : CANCEL;
   }
 
   @NotNull
@@ -199,27 +185,5 @@ class GitBranchUiHandlerImpl implements GitBranchUiHandler {
   private static String unmergedFilesErrorNotificationDescription(String operationName) {
     return "You have to <a href='resolve'>resolve</a> all merge conflicts before " + operationName + ".<br/>" +
            "After resolving conflicts you also probably would want to commit your files to the current branch.";
-  }
-
-  private static class UntrackedFilesDialog extends SelectFilesDialog {
-
-    @NotNull private final String myRollbackProposal;
-
-    public UntrackedFilesDialog(@NotNull Project project, @NotNull Collection<VirtualFile> originalFiles, @NotNull String prompt,
-                                @NotNull String rollbackProposal) {
-      super(project, new ArrayList<VirtualFile>(originalFiles), prompt, null, false, false, false);
-      myRollbackProposal = rollbackProposal;
-      setOKButtonText("Rollback");
-      setCancelButtonText("Don't rollback");
-    }
-
-    @Override
-    protected JComponent createSouthPanel() {
-      JComponent buttons = super.createSouthPanel();
-      JPanel panel = new JPanel(new VerticalFlowLayout());
-      panel.add(new JBLabel("<html>" + myRollbackProposal + "</html>"));
-      panel.add(buttons);
-      return panel;
-    }
   }
 }

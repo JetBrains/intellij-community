@@ -32,13 +32,15 @@ public final class TreeContentProvider extends AbstractTreeStructure {
     myDesigner = designer;
   }
 
+  @NotNull
   @Override
   public Object getRootElement() {
     return myTreeRoot;
   }
 
+  @NotNull
   @Override
-  public Object[] getChildElements(Object element) {
+  public Object[] getChildElements(@NotNull Object element) {
     if (element == myTreeRoot) {
       return myDesigner.getTreeRoots();
     }
@@ -50,7 +52,7 @@ public final class TreeContentProvider extends AbstractTreeStructure {
   }
 
   @Override
-  public Object getParentElement(Object element) {
+  public Object getParentElement(@NotNull Object element) {
     if (element instanceof RadComponent) {
       RadComponent component = (RadComponent)element;
       return component.getParent();
@@ -60,7 +62,7 @@ public final class TreeContentProvider extends AbstractTreeStructure {
 
   @NotNull
   @Override
-  public NodeDescriptor createDescriptor(Object element, NodeDescriptor parentDescriptor) {
+  public NodeDescriptor createDescriptor(@NotNull Object element, NodeDescriptor parentDescriptor) {
     if (element == myTreeRoot || element instanceof RadComponent) {
       TreeNodeDescriptor descriptor = new TreeNodeDescriptor(parentDescriptor, element);
       descriptor.setWasDeclaredAlwaysLeaf(isAlwaysLeaf(element));
@@ -70,7 +72,7 @@ public final class TreeContentProvider extends AbstractTreeStructure {
   }
 
   @Override
-  public boolean isAlwaysLeaf(Object element) {
+  public boolean isAlwaysLeaf(@NotNull Object element) {
     return element instanceof RadComponent && ((RadComponent)element).getTreeChildren().length == 0;
   }
 

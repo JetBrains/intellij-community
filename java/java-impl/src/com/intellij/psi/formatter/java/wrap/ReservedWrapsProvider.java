@@ -27,7 +27,6 @@ import org.jetbrains.annotations.Nullable;
  * method and most probably will be removed as soon as formatting stuff is refactored.
  *
  * @author Denis Zhdanov
- * @since Apr 21, 2010 3:43:17 PM
  */
 public interface ReservedWrapsProvider {
 
@@ -35,7 +34,7 @@ public interface ReservedWrapsProvider {
    * Allows to retrieve predefined {@link Wrap} object for the given element type if any.
    *
    * @param elementType   target element type
-   * @return              predefined wrap for the given element type if any; <code>null</code> otherwise
+   * @return              predefined wrap for the given element type if any; {@code null} otherwise
    */
   @Nullable
   Wrap getReservedWrap(IElementType elementType);

@@ -19,7 +19,12 @@ import com.intellij.openapi.vfs.VirtualFile;
 
 /**
  * This compiler is called right before the java sources compiler.
+ *
+ * @deprecated this interface is part of the obsolete build system which runs as part of the IDE process. Since IDEA 12 plugins need to
+ * integrate into 'external build system' instead (https://confluence.jetbrains.com/display/IDEADEV/External+Builder+API+and+Plugins).
+ * Since IDEA 13 users cannot switch to the old build system via UI and it will be completely removed in IDEA 14.
  */
+@Deprecated
 public interface JavaSourceTransformingCompiler extends Compiler {
 
   /**
@@ -40,11 +45,11 @@ public interface JavaSourceTransformingCompiler extends Compiler {
    * @param originalFile an original file. Since the copy that is supposed to be modified is located outside the project, it is not possible to use PSI for analysis.
    *                     So the original file is provided. Note that it is passed for reference purposes only. It MUST NOT be transformed or changed in any way.
    *                     For example, it is possible to obtain a PsiFile for the original file:<br><br>
-   *                     <code>PsiJavaFile originalPsiJavaFile = (PsiJavaFile)PsiManager.getInstance(project).findFile(originalFile)</code>;<br><br>
+   *                     {@code PsiJavaFile originalPsiJavaFile = (PsiJavaFile)PsiManager.getInstance(project).findFile(originalFile)};<br><br>
    *                     The obtained originalPsiJavaFile can be analysed, searched etc. For transforming the file by the means of PSI, there should be created a copy of the originalPsiJavaFile:<br><br>
-   *                     <code>PsiJavaFile psiFileCopy = (PsiJavaFile)originalPsiJavaFile.copy();</code><br><br>
+   *                     {@code PsiJavaFile psiFileCopy = (PsiJavaFile)originalPsiJavaFile.copy();}<br><br>
    *                     The psiFileCopy can then be transformed, and its text saved to the first "file" argument:<br><br>
-   *                     <code>String text = psiFileCopy.getText();</code><br><br>
+   *                     {@code String text = psiFileCopy.getText();}<br><br>
    *                     <p/>
    *                     <b>Note that transforming files by the means of PSI may considerably slow down the overall make performance.</b>
    * @return true if transform succeeded, false otherwise.

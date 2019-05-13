@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.search.SearchScope;
 import com.intellij.util.messages.Topic;
 import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.NotNull;
@@ -31,7 +32,7 @@ import org.jetbrains.annotations.Nullable;
  * Allows to invoke and control Find, Replace and Find Usages operations.
  */
 public abstract class FindManager {
-  public static final Topic<FindModelListener> FIND_MODEL_TOPIC = new Topic<FindModelListener>("FindManager's model changes", FindModelListener.class);
+  public static final Topic<FindModelListener> FIND_MODEL_TOPIC = new Topic<>("FindManager's model changes", FindModelListener.class);
 
   public abstract FindModel createReplaceInFileModel();
 
@@ -67,7 +68,7 @@ public abstract class FindManager {
    *
    * @param model the model containing the settings of the replace operation.
    * @param title the title of the dialog to show.
-   * @return the exit code of the dialog, as defined by the {@link com.intellij.find.FindManager.PromptResult}
+   * @return the exit code of the dialog, as defined by the {@link FindManager.PromptResult}
    * interface.
    */
   @PromptResultValue
@@ -125,7 +126,7 @@ public abstract class FindManager {
    *
    * @param model the model containing the settings of the replace operation.
    * @param title the title of the dialog to show.
-   * @param exception exception from {@link FindManager#getStringToReplace}
+   * @param exception exception from {@link FindManager#getStringToReplace(String, FindModel, int, CharSequence)}
    * @return the exit code of the dialog, as defined by the {@link PromptResult}
    * interface. May be only {@link PromptResult#CANCEL} or {@link PromptResult#SKIP} for bad replace operation
    */
@@ -133,12 +134,8 @@ public abstract class FindManager {
   public abstract int showMalformedReplacementPrompt(@NotNull FindModel model, String title, MalformedReplacementStringException exception);
 
   public static class MalformedReplacementStringException extends Exception {
-    public MalformedReplacementStringException(String s) {
-      super(s);    //To change body of overridden methods use File | Settings | File Templates.
-    }
-
     public MalformedReplacementStringException(String s, Throwable throwable) {
-      super(s, throwable);    //To change body of overridden methods use File | Settings | File Templates.
+      super(s, throwable);
     }
   }
 
@@ -148,11 +145,12 @@ public abstract class FindManager {
    *
    * @param foundString the found string.
    * @param model       the search and replace settings, including the replace string.
+   * @param startOffset offset in the source text at which the string was found (matters for regex searches)
+   * @param documentText source text in which the string was found (matters for regex searches)
    * @return the string to replace the specified found string.
    */
-  public abstract String getStringToReplace(@NotNull String foundString, @NotNull FindModel model) throws MalformedReplacementStringException;
   public abstract String getStringToReplace(@NotNull String foundString, @NotNull FindModel model,
-                                            int startOffset, @NotNull String documentText) throws MalformedReplacementStringException;
+                                            int startOffset, @NotNull CharSequence documentText) throws MalformedReplacementStringException;
 
   /**
    * Gets the flag indicating whether the "Find Next" and "Find Previous" actions are
@@ -169,6 +167,18 @@ public abstract class FindManager {
    * available to continue a previously started search operation.
    */
   public abstract void setFindWasPerformed();
+
+  /**
+   * Gets the flag indicating that 'Add Selection for Next Occurrence' action was performed recently,
+   * so "Find Next" and "Find Previous" actions should work in its context.
+   */
+  public abstract boolean selectNextOccurrenceWasPerformed();
+
+  /**
+   * Sets the flag indicating that 'Add Selection for Next Occurrence' action was performed recently,
+   * so "Find Next" and "Find Previous" actions should work in its context.
+   */
+  public abstract void setSelectNextOccurrenceWasPerformed();
 
   /**
    * Explicitly tell FindManager that "Find Next" and "Find Previous" actions should not use
@@ -207,7 +217,7 @@ public abstract class FindManager {
    *
    * @param element the element to check the availability for.
    * @return true if Find Usages is available, false otherwise.
-   * @see com.intellij.lang.findUsages.FindUsagesProvider#canFindUsagesFor(com.intellij.psi.PsiElement)
+   * @see com.intellij.lang.findUsages.FindUsagesProvider#canFindUsagesFor(PsiElement)
    */
   public abstract boolean canFindUsages(@NotNull PsiElement element);
 
@@ -217,6 +227,7 @@ public abstract class FindManager {
    * @param element the element to find the usages for.
    */
   public abstract void findUsages(@NotNull PsiElement element);
+  public abstract void findUsagesInScope(@NotNull PsiElement element, @NotNull SearchScope searchScope);
 
   /**
    * Shows the Find Usages dialog (if {@code showDialog} is true} and performs the Find Usages operation for the
@@ -271,5 +282,6 @@ public abstract class FindManager {
     int ALL = 3;
     int ALL_IN_THIS_FILE = 4;
     int ALL_FILES = 5;
+    int SKIP_ALL_IN_THIS_FILE = 6;
   }
 }

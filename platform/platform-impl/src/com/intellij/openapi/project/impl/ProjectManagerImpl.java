@@ -1,74 +1,49 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.project.impl;
 
-import com.intellij.CommonBundle;
+import com.intellij.configurationStore.StorageUtilKt;
+import com.intellij.configurationStore.StoreUtil;
 import com.intellij.conversion.ConversionResult;
 import com.intellij.conversion.ConversionService;
+import com.intellij.featureStatistics.fusCollectors.LifecycleUsageTriggerCollector;
 import com.intellij.ide.AppLifecycleListener;
 import com.intellij.ide.impl.ProjectUtil;
+import com.intellij.ide.plugins.PluginManager;
+import com.intellij.ide.startup.StartupManagerEx;
 import com.intellij.ide.startup.impl.StartupManagerImpl;
+import com.intellij.notification.Notification;
+import com.intellij.notification.NotificationType;
 import com.intellij.notification.NotificationsManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.*;
-import com.intellij.openapi.application.ex.ApplicationManagerEx;
-import com.intellij.openapi.application.impl.ApplicationImpl;
-import com.intellij.openapi.components.ExportableApplicationComponent;
-import com.intellij.openapi.components.StateStorage;
-import com.intellij.openapi.components.StateStorageException;
-import com.intellij.openapi.components.TrackingPathMacroSubstitutor;
-import com.intellij.openapi.components.impl.stores.IComponentStore;
-import com.intellij.openapi.components.impl.stores.IProjectStore;
-import com.intellij.openapi.components.impl.stores.StorageUtil;
-import com.intellij.openapi.components.impl.stores.XmlElementStorage;
+import com.intellij.openapi.application.impl.LaterInvocator;
+import com.intellij.openapi.components.ProjectComponent;
+import com.intellij.openapi.components.impl.ComponentManagerImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
-import com.intellij.openapi.progress.util.ProgressWindow;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectBundle;
-import com.intellij.openapi.project.ProjectManagerListener;
-import com.intellij.openapi.project.ProjectReloadState;
+import com.intellij.openapi.project.*;
 import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.*;
-import com.intellij.openapi.vfs.impl.local.FileWatcher;
-import com.intellij.openapi.vfs.impl.local.LocalFileSystemImpl;
+import com.intellij.openapi.util.io.FileUtilRt;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.impl.ZipHandler;
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame;
-import com.intellij.util.Alarm;
+import com.intellij.project.ProjectKt;
+import com.intellij.ui.GuiUtils;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.TimeoutUtil;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.HashMap;
-import com.intellij.util.io.fs.IFile;
+import com.intellij.util.containers.UnsafeWeakList;
 import com.intellij.util.messages.MessageBus;
-import com.intellij.util.messages.MessageBusConnection;
+import com.intellij.util.ref.GCUtil;
 import com.intellij.util.ui.UIUtil;
-import gnu.trove.THashSet;
-import gnu.trove.TObjectLongHashMap;
-import org.jdom.Element;
-import org.jdom.JDOMException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -77,176 +52,167 @@ import org.jetbrains.annotations.TestOnly;
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
-public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExternalizable, ExportableApplicationComponent {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.project.impl.ProjectManagerImpl");
-
-  public static final int CURRENT_FORMAT_VERSION = 4;
+public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
+  private static final Logger LOG = Logger.getInstance(ProjectManagerImpl.class);
 
   private static final Key<List<ProjectManagerListener>> LISTENERS_IN_PROJECT_KEY = Key.create("LISTENERS_IN_PROJECT_KEY");
-  @NonNls private static final String ELEMENT_DEFAULT_PROJECT = "defaultProject";
 
-  @SuppressWarnings({"FieldAccessedSynchronizedAndUnsynchronized"})
-  private ProjectImpl myDefaultProject; // Only used asynchronously in save and dispose, which itself are synchronized.
+  @SuppressWarnings("FieldAccessedSynchronizedAndUnsynchronized")
+  private ProjectEx myDefaultProject; // Only used asynchronously in save and dispose, which itself are synchronized.
 
-  @SuppressWarnings({"FieldAccessedSynchronizedAndUnsynchronized"})
-  private Element myDefaultProjectRootElement; // Only used asynchronously in save and dispose, which itself are synchronized.
+  private Project[] myOpenProjects = {}; // guarded by lock
+  private final Map<String, Project> myOpenProjectByHash = ContainerUtil.newConcurrentMap();
+  private final Object lock = new Object();
 
-  private final List<Project> myOpenProjects = new ArrayList<Project>();
-  private Project[] myOpenProjectsArrayCache = {};
+  // we cannot use the same approach to migrate to message bus as CompilerManagerImpl because of method canCloseProject
   private final List<ProjectManagerListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
 
-  private final Set<Project> myTestProjects = new THashSet<Project>();
-
-  private final Map<VirtualFile, byte[]> mySavedCopies = new HashMap<VirtualFile, byte[]>();
-  private final TObjectLongHashMap<VirtualFile> mySavedTimestamps = new TObjectLongHashMap<VirtualFile>();
-  private final Map<Project, List<Pair<VirtualFile, StateStorage>>> myChangedProjectFiles =
-    new HashMap<Project, List<Pair<VirtualFile, StateStorage>>>();
-  private final Alarm myChangedFilesAlarm = new Alarm();
-  private final List<Pair<VirtualFile, StateStorage>> myChangedApplicationFiles = new ArrayList<Pair<VirtualFile, StateStorage>>();
-  private final AtomicInteger myReloadBlockCount = new AtomicInteger(0);
-  @SuppressWarnings("FieldCanBeLocal") private final Map<Project, String> myProjects = new WeakHashMap<Project, String>();
-  private static final int MAX_LEAKY_PROJECTS = 42;
   private final ProgressManager myProgressManager;
-  private volatile boolean myDefaultProjectWasDisposed = false;
+  private volatile boolean myDefaultProjectWasDisposed;
+  private final ProjectManagerListener myBusPublisher;
 
   @NotNull
-  private static List<ProjectManagerListener> getListeners(Project project) {
+  private static List<ProjectManagerListener> getListeners(@NotNull Project project) {
     List<ProjectManagerListener> array = project.getUserData(LISTENERS_IN_PROJECT_KEY);
     if (array == null) return Collections.emptyList();
     return array;
   }
 
-  public ProjectManagerImpl(VirtualFileManager virtualFileManager, ProgressManager progressManager) {
+  public ProjectManagerImpl(ProgressManager progressManager) {
     myProgressManager = progressManager;
-    Application app = ApplicationManager.getApplication();
-    MessageBus messageBus = app.getMessageBus();
-    MessageBusConnection connection = messageBus.connect(app);
-    connection.subscribe(StateStorage.STORAGE_TOPIC, new StateStorage.Listener() {
+    MessageBus messageBus = ApplicationManager.getApplication().getMessageBus();
+    myBusPublisher = messageBus.syncPublisher(TOPIC);
+    messageBus.connect().subscribe(ProjectManager.TOPIC, new ProjectManagerListener() {
       @Override
-      public void storageFileChanged(final VirtualFileEvent event, @NotNull final StateStorage storage) {
-        VirtualFile file = event.getFile();
-        if (!file.isDirectory() && !(event.getRequestor() instanceof StateStorage.SaveSession)) {
-          saveChangedProjectFile(file, null, storage);
+      public void projectOpened(@NotNull Project project) {
+        for (ProjectManagerListener listener : getAllListeners(project)) {
+          try {
+            listener.projectOpened(project);
+          }
+          catch (Exception e) {
+            handleListenerError(e, listener);
+          }
+        }
+      }
+
+      @Override
+      public void projectClosed(@NotNull Project project) {
+        for (ProjectManagerListener listener : getAllListeners(project)) {
+          try {
+            listener.projectClosed(project);
+          }
+          catch (Exception e) {
+            handleListenerError(e, listener);
+          }
+        }
+        ZipHandler.clearFileAccessorCache();
+        LaterInvocator.purgeExpiredItems();
+      }
+
+      @Override
+      public void projectClosing(@NotNull Project project) {
+        for (ProjectManagerListener listener : getAllListeners(project)) {
+          try {
+            listener.projectClosing(project);
+          }
+          catch (Exception e) {
+            handleListenerError(e, listener);
+          }
+        }
+      }
+
+      @Override
+      public void projectClosingBeforeSave(@NotNull Project project) {
+        for (ProjectManagerListener listener : getAllListeners(project)) {
+          try {
+            listener.projectClosingBeforeSave(project);
+          }
+          catch (Exception e) {
+            handleListenerError(e, listener);
+          }
         }
       }
     });
-    final ProjectManagerListener busPublisher = messageBus.syncPublisher(TOPIC);
+  }
 
-    addProjectManagerListener(
-      new ProjectManagerListener() {
-        @Override
-        public void projectOpened(final Project project) {
-          MessageBus messageBus = project.getMessageBus();
-          MessageBusConnection connection = messageBus.connect(project);
-          connection.subscribe(StateStorage.STORAGE_TOPIC, new StateStorage.Listener() {
-            @Override
-            public void storageFileChanged(final VirtualFileEvent event, @NotNull final StateStorage storage) {
-              VirtualFile file = event.getFile();
-              if (!file.isDirectory() && !(event.getRequestor() instanceof StateStorage.SaveSession)) {
-                saveChangedProjectFile(file, project, storage);
-              }
-            }
-          });
-
-          busPublisher.projectOpened(project);
-          for (ProjectManagerListener listener : getListeners(project)) {
-            listener.projectOpened(project);
-          }
-        }
-
-        @Override
-        public void projectClosed(Project project) {
-          busPublisher.projectClosed(project);
-          for (ProjectManagerListener listener : getListeners(project)) {
-            listener.projectClosed(project);
-          }
-        }
-
-        @Override
-        public boolean canCloseProject(Project project) {
-          for (ProjectManagerListener listener : getListeners(project)) {
-            if (!listener.canCloseProject(project)) {
-              return false;
-            }
-          }
-          return true;
-        }
-
-        @Override
-        public void projectClosing(Project project) {
-          busPublisher.projectClosing(project);
-          for (ProjectManagerListener listener : getListeners(project)) {
-            listener.projectClosing(project);
-          }
-        }
-      }
-    );
-
-    registerExternalProjectFileListener(virtualFileManager);
+  private static void handleListenerError(@NotNull Throwable e, @NotNull ProjectManagerListener listener) {
+    if (e instanceof ProcessCanceledException) {
+      throw (ProcessCanceledException)e;
+    }
+    else {
+      LOG.error("From listener " + listener + " (" + listener.getClass() + ")", e);
+    }
   }
 
   @Override
-  public void disposeComponent() {
-    Disposer.dispose(myChangedFilesAlarm);
+  public void dispose() {
+    ApplicationManager.getApplication().assertWriteAccessAllowed();
     if (myDefaultProject != null) {
-      ApplicationManager.getApplication().runWriteAction(new Runnable() {
-        @Override
-        public void run() {
-          Disposer.dispose(myDefaultProject);
-        }
-      });
+      Disposer.dispose(myDefaultProject);
 
       myDefaultProject = null;
       myDefaultProjectWasDisposed = true;
     }
   }
 
-  @Override
-  public void initComponent() {
-  }
-
-  private static final boolean LOG_PROJECT_LEAKAGE_IN_TESTS = false;
+  @SuppressWarnings("StaticNonFinalField") public static int TEST_PROJECTS_CREATED;
+  private static final boolean LOG_PROJECT_LEAKAGE_IN_TESTS = Boolean.parseBoolean(System.getProperty("idea.log.leaked.projects.in.tests", "true"));
+  private static final int MAX_LEAKY_PROJECTS = 5;
+  private static final long LEAK_CHECK_INTERVAL = TimeUnit.MINUTES.toMillis(30);
+  private static long CHECK_START = System.currentTimeMillis();
+  private final Map<Project, String> myProjects = new WeakHashMap<>();
 
   @Override
   @Nullable
-  public Project newProject(final String projectName, String filePath, boolean useDefaultProjectSettings, boolean isDummy) {
+  public Project newProject(@Nullable String projectName, @NotNull String filePath, boolean useDefaultProjectSettings, boolean isDummy) {
     filePath = toCanonicalName(filePath);
 
-    //noinspection ConstantConditions
-    if (LOG_PROJECT_LEAKAGE_IN_TESTS && ApplicationManager.getApplication().isUnitTestMode()) {
-      for (int i = 0; i < 42; i++) {
-        if (myProjects.size() < MAX_LEAKY_PROJECTS) break;
-        System.gc();
-        TimeoutUtil.sleep(100);
-        System.gc();
-      }
-
-      if (myProjects.size() >= MAX_LEAKY_PROJECTS) {
-        List<Project> copy = new ArrayList<Project>(myProjects.keySet());
-        myProjects.clear();
-        throw new TooManyProjectLeakedException(copy);
-      }
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      //noinspection AssignmentToStaticFieldFromInstanceMethod
+      TEST_PROJECTS_CREATED++;
+      //noinspection TestOnlyProblems
+      checkProjectLeaksInTests();
     }
 
-    ProjectImpl project = createProject(projectName, filePath, false, ApplicationManager.getApplication().isUnitTestMode());
+    File projectFile = new File(filePath);
+    if (projectFile.isFile()) {
+      FileUtil.delete(projectFile);
+    }
+    else {
+      File[] files = new File(projectFile, Project.DIRECTORY_STORE_FOLDER).listFiles();
+      if (files != null) {
+        for (File file : files) {
+          FileUtil.delete(file);
+        }
+      }
+    }
+    ProjectEx project = createProject(projectName, filePath, false);
     try {
-      initProject(project, useDefaultProjectSettings ? (ProjectImpl)getDefaultProject() : null);
+      initProject(project, useDefaultProjectSettings ? getDefaultProject() : null);
       if (LOG_PROJECT_LEAKAGE_IN_TESTS) {
         myProjects.put(project, null);
       }
       return project;
     }
-    catch (final Exception e) {
-      LOG.info(e);
-      Messages.showErrorDialog(message(e), ProjectBundle.message("project.load.default.error"));
+    catch (Throwable t) {
+      LOG.warn(t);
+      try {
+        Messages.showErrorDialog(message(t), ProjectBundle.message("project.load.default.error"));
+      }
+      catch (NoClassDefFoundError e) {
+        // error icon not loaded
+        LOG.info(e);
+      }
+      return null;
     }
-    return null;
   }
 
   @NonNls
-  private static String message(Throwable e) {
+  @NotNull
+  private static String message(@NotNull Throwable e) {
     String message = e.getMessage();
     if (message != null) return message;
     message = e.getLocalizedMessage();
@@ -261,71 +227,94 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
     return message;
   }
 
-  private void initProject(@NotNull ProjectImpl project, @Nullable ProjectImpl template) throws IOException {
+  @TestOnly
+  private void checkProjectLeaksInTests() {
+    if (!LOG_PROJECT_LEAKAGE_IN_TESTS || getLeakedProjectsCount() < MAX_LEAKY_PROJECTS) {
+      return;
+    }
 
-    final ProgressIndicator indicator = myProgressManager.getProgressIndicator();
-    if (indicator != null) {
-      indicator.setText(ProjectBundle.message("loading.components.for", project.isDefault() ? "Default" : project.getName()));
-      indicator.setIndeterminate(true);
+    long currentTime = System.currentTimeMillis();
+    if (currentTime - CHECK_START < LEAK_CHECK_INTERVAL) {
+      return; // check every N minutes
+    }
+
+    for (int i = 0; i < 3 && getLeakedProjectsCount() >= MAX_LEAKY_PROJECTS; i++) {
+      GCUtil.tryGcSoftlyReachableObjects();
+    }
+
+    //noinspection AssignmentToStaticFieldFromInstanceMethod
+    CHECK_START = currentTime;
+
+    if (getLeakedProjectsCount() >= MAX_LEAKY_PROJECTS) {
+      System.gc();
+      Collection<Project> copy = getLeakedProjects();
+      myProjects.clear();
+      if (ContainerUtil.collect(copy.iterator()).size() >= MAX_LEAKY_PROJECTS) {
+        throw new TooManyProjectLeakedException(copy);
+      }
+    }
+  }
+
+  @TestOnly
+  private Collection<Project> getLeakedProjects() {
+    myProjects.remove(getDefaultProject()); // process queue
+    return myProjects.keySet().stream().filter(project -> project.isDisposed() && !((ProjectImpl)project).isTemporarilyDisposed()).collect(Collectors.toCollection(UnsafeWeakList::new));
+  }
+  @TestOnly
+  private int getLeakedProjectsCount() {
+    myProjects.remove(getDefaultProject()); // process queue
+    return (int)myProjects.keySet().stream().filter(project -> project.isDisposed() && !((ProjectImpl)project).isTemporarilyDisposed()).count();
+  }
+
+  private void initProject(@NotNull ProjectEx project, @Nullable Project template) {
+    ProgressIndicator indicator = myProgressManager.getProgressIndicator();
+    if (indicator != null && !project.isDefault()) {
+      indicator.setIndeterminate(false);
+      indicator.setText(ProjectBundle.message("loading.components.for", project.getName()));
     }
 
     ApplicationManager.getApplication().getMessageBus().syncPublisher(ProjectLifecycleListener.TOPIC).beforeProjectLoaded(project);
 
+    boolean succeed = false;
     try {
       if (template != null) {
-        project.getStateStore().loadProjectFromTemplate(template);
+        ProjectKt.getStateStore(project).loadProjectFromTemplate(template);
       }
-      else {
-        project.getStateStore().load();
-      }
-      project.loadProjectComponents();
       project.init();
+      succeed = true;
     }
-    catch (IOException e) {
-      scheduleDispose(project);
-      throw e;
-    }
-    catch (ProcessCanceledException e) {
-      scheduleDispose(project);
-      throw e;
-    }
-  }
-
-  private ProjectImpl createProject(@Nullable String projectName,
-                                    @Nullable String filePath,
-                                    boolean isDefault,
-                                    boolean isOptimiseTestLoadSpeed) {
-    assert isDefault || filePath != null : filePath;
-    return isDefault ? new DefaultProject(this, null, isOptimiseTestLoadSpeed, projectName)
-                     : new ProjectImpl(this, filePath, isOptimiseTestLoadSpeed, projectName);
-  }
-
-  private static void scheduleDispose(final ProjectImpl project) {
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
-      @Override
-      public void run() {
-        ApplicationManager.getApplication().runWriteAction(new Runnable() {
-          @Override
-          public void run() {
-            if (!project.isDisposed()) {
-              Disposer.dispose(project);
-            }
-          }
-        });
+    finally {
+      if (!succeed && !project.isDefault()) {
+        TransactionGuard.submitTransaction(project, () -> WriteAction.run(() -> Disposer.dispose(project)));
       }
-    });
+    }
+  }
+
+  @NotNull
+  private static ProjectEx createProject(@Nullable String projectName, @NotNull String filePath, boolean isDefault) {
+    if (isDefault) {
+      return new DefaultProject("");
+    }
+    return new ProjectImpl(FileUtilRt.toSystemIndependentName(filePath), projectName);
   }
 
   @Override
   @Nullable
-  public Project loadProject(String filePath) throws IOException, JDOMException, InvalidDataException {
+  public Project loadProject(@NotNull String filePath) throws IOException {
+    return loadProject(filePath, null);
+  }
+
+  @Override
+  @Nullable
+  public Project loadProject(@NotNull String filePath, @Nullable String projectName) throws IOException {
     try {
-      ProjectImpl project = createProject(null, filePath, false, false);
+      ProjectEx project = createProject(projectName, new File(filePath).getAbsolutePath(), false);
       initProject(project, null);
       return project;
     }
-    catch (StateStorageException e) {
-      throw new IOException(e.getMessage());
+    catch (Throwable t) {
+      LOG.info(t);
+      throw new IOException(t);
     }
   }
 
@@ -341,6 +330,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
     return filePath;
   }
 
+  @Override
   @TestOnly
   public synchronized boolean isDefaultProjectInitialized() {
     return myDefaultProject != null;
@@ -351,168 +341,179 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
   public synchronized Project getDefaultProject() {
     LOG.assertTrue(!myDefaultProjectWasDisposed, "Default project has been already disposed!");
     if (myDefaultProject == null) {
-      try {
-        myDefaultProject = createProject(null, null, true, ApplicationManager.getApplication().isUnitTestMode());
-        initProject(myDefaultProject, null);
-        myDefaultProjectRootElement = null;
-      }
-      catch (IOException e) {
-        LOG.error(e);
-      }
-      catch (StateStorageException e) {
-        LOG.error(e);
-      }
+      LOG.assertTrue(!ApplicationManager.getApplication().isDisposeInProgress(), "Application being disposed!");
+      ProgressManager.getInstance().executeNonCancelableSection(() -> {
+        try {
+          myDefaultProject = createProject(null, "", true);
+          initProject(myDefaultProject, null);
+        }
+        catch (Throwable t) {
+          PluginManager.processException(t);
+        }
+      });
     }
     return myDefaultProject;
-  }
-
-
-  public Element getDefaultProjectRootElement() {
-    return myDefaultProjectRootElement;
   }
 
   @Override
   @NotNull
   public Project[] getOpenProjects() {
-    synchronized (myOpenProjects) {
-      if (myOpenProjectsArrayCache.length != myOpenProjects.size()) {
-        LOG.error("Open projects: " + myOpenProjects + "; cache: " + Arrays.asList(myOpenProjectsArrayCache));
-      }
-      if (myOpenProjectsArrayCache.length > 0 && myOpenProjectsArrayCache[0] != myOpenProjects.get(0)) {
-        LOG
-          .error("Open projects cache corrupted. Open projects: " + myOpenProjects + "; cache: " + Arrays.asList(myOpenProjectsArrayCache));
-      }
-      if (ApplicationManager.getApplication().isUnitTestMode()) {
-        return ArrayUtil.mergeArrays(myOpenProjectsArrayCache, myTestProjects.toArray(new Project[myTestProjects.size()]));
-      }
-      return myOpenProjectsArrayCache;
+    synchronized (lock) {
+      return myOpenProjects;
     }
   }
 
   @Override
   public boolean isProjectOpened(Project project) {
-    return ApplicationManager.getApplication().isUnitTestMode() && myTestProjects.contains(project) || myOpenProjects.contains(project);
+    synchronized (lock) {
+      return ArrayUtil.contains(project, myOpenProjects);
+    }
   }
 
   @Override
-  public boolean openProject(final Project project) {
+  public boolean openProject(@NotNull final Project project) {
     if (isLight(project)) {
-      throw new AssertionError("must not open light project");
+      ((ProjectImpl)project).setTemporarilyDisposed(false);
+      boolean isInitialized = StartupManagerEx.getInstanceEx(project).startupActivityPassed();
+      if (isInitialized) {
+        addToOpened(project);
+        // events already fired
+        return true;
+      }
     }
-    final Application application = ApplicationManager.getApplication();
 
-    if (!application.isUnitTestMode() && !((ProjectEx)project).getStateStore().checkVersion()) {
-      return false;
-    }
-
-    synchronized (myOpenProjects) {
-      if (myOpenProjects.contains(project)) {
+    for (Project p : getOpenProjects()) {
+      if (ProjectUtil.isSameProject(project.getProjectFilePath(), p)) {
+        GuiUtils.invokeLaterIfNeeded(() -> ProjectUtil.focusProjectWindow(p, false), ModalityState.NON_MODAL);
         return false;
       }
-      myOpenProjects.add(project);
-      cacheOpenProjects();
     }
-    fireProjectOpened(project);
 
-    final StartupManagerImpl startupManager = (StartupManagerImpl)StartupManager.getInstance(project);
-    waitForFileWatcher(project);
-    boolean ok = myProgressManager.runProcessWithProgressSynchronously(new Runnable() {
-      @Override
-      public void run() {
-        startupManager.runStartupActivities();
-
-        // dumb mode should start before post-startup activities
-        // only when startCacheUpdate is called from UI thread, we can guarantee that
-        // when the method returns, the application has entered dumb mode
-        UIUtil.invokeAndWaitIfNeeded(new Runnable() {
-          @Override
-          public void run() {
-            startupManager.startCacheUpdate();
-          }
-        });
-
-        startupManager.runPostStartupActivitiesFromExtensions();
-
-        UIUtil.invokeLaterIfNeeded(new Runnable() {
-          @Override
-          public void run() {
-            startupManager.runPostStartupActivities();
-          }
-        });
-      }
-    }, ProjectBundle.message("project.load.progress"), true, project);
-
-    if (!ok) {
-      closeProject(project, false, false, true);
-      notifyProjectOpenFailed();
+    if (!addToOpened(project)) {
       return false;
     }
 
-    if (!application.isHeadlessEnvironment() && !application.isUnitTestMode()) {
-      // should be invoked last
-      StartupManager.getInstance(project).runWhenProjectIsInitialized(new Runnable() {
-        @Override
-        public void run() {
-          final TrackingPathMacroSubstitutor macroSubstitutor =
-            ((ProjectEx)project).getStateStore().getStateStorageManager().getMacroSubstitutor();
-          if (macroSubstitutor != null) {
-            StorageUtil.notifyUnknownMacros(macroSubstitutor, project, null);
+    Runnable process = () -> {
+      TransactionGuard.getInstance().submitTransactionAndWait(() -> fireProjectOpened(project));
+
+      StartupManagerImpl startupManager = (StartupManagerImpl)StartupManager.getInstance(project);
+      startupManager.runStartupActivities();
+
+      // Startup activities (e.g. the one in FileBasedIndexProjectHandler) have scheduled dumb mode to begin "later"
+      // Now we schedule-and-wait to the same event queue to guarantee that the dumb mode really begins now:
+      // Post-startup activities should not ever see unindexed and at the same time non-dumb state
+      TransactionGuard.getInstance().submitTransactionAndWait(startupManager::startCacheUpdate);
+
+      startupManager.runPostStartupActivitiesFromExtensions();
+
+      GuiUtils.invokeLaterIfNeeded(() -> {
+        if (!project.isDisposed()) {
+          startupManager.runPostStartupActivities();
+
+          Application application = ApplicationManager.getApplication();
+          if (!(application.isHeadlessEnvironment() || application.isUnitTestMode())) {
+            StorageUtilKt.checkUnknownMacros(project, true);
           }
         }
-      });
+      }, ModalityState.NON_MODAL);
+    };
+
+    if (!loadProjectUnderProgress(project, process)) {
+      GuiUtils.invokeLaterIfNeeded(() -> {
+        closeProject(project, false, false, false, true);
+        WriteAction.run(() -> Disposer.dispose(project));
+        notifyProjectOpenFailed();
+      }, ModalityState.defaultModalityState());
+      return false;
     }
 
     return true;
   }
 
-  private void cacheOpenProjects() {
-    myOpenProjectsArrayCache = myOpenProjects.toArray(new Project[myOpenProjects.size()]);
+  private boolean loadProjectUnderProgress(@NotNull Project project, @NotNull Runnable performLoading) {
+    ProgressIndicator indicator = myProgressManager.getProgressIndicator();
+    if (!ApplicationManager.getApplication().isDispatchThread() && indicator != null) {
+      indicator.setText("Preparing workspace...");
+      try {
+        performLoading.run();
+        return true;
+      }
+      catch (ProcessCanceledException e) {
+        return false;
+      }
+    }
+
+    return myProgressManager.runProcessWithProgressSynchronously(performLoading, ProjectBundle.message("project.load.progress"), canCancelProjectLoading(), project);
   }
 
-  private void waitForFileWatcher(@NotNull Project project) {
-    LocalFileSystem fs = LocalFileSystem.getInstance();
-    if (!(fs instanceof LocalFileSystemImpl)) return;
-
-    final FileWatcher watcher = ((LocalFileSystemImpl)fs).getFileWatcher();
-    if (!watcher.isOperational() || !watcher.isSettingRoots()) return;
-
-    LOG.info("FW/roots waiting started");
-    Task.Modal task = new Task.Modal(project, ProjectBundle.message("project.load.progress"), true) {
-      @Override
-      public void run(@NotNull ProgressIndicator indicator) {
-        indicator.setIndeterminate(true);
-        indicator.setText(ProjectBundle.message("project.load.waiting.watcher"));
-        if (indicator instanceof ProgressWindow) {
-          ((ProgressWindow)indicator).setCancelButtonText(CommonBundle.message("button.skip"));
-        }
-        while (watcher.isSettingRoots() && !indicator.isCanceled()) {
-          TimeoutUtil.sleep(10);
-        }
-        LOG.info("FW/roots waiting finished");
+  private boolean addToOpened(@NotNull Project project) {
+    assert !project.isDisposed() : "Must not open already disposed project";
+    synchronized (lock) {
+      if (isProjectOpened(project)) {
+        return false;
       }
-    };
-    myProgressManager.run(task);
+      myOpenProjects = ArrayUtil.append(myOpenProjects, project);
+      ProjectCoreUtil.theProject = myOpenProjects.length == 1 ? project : null;
+      myOpenProjectByHash.put(project.getLocationHash(), project);
+    }
+    return true;
+  }
+
+  private void removeFromOpened(@NotNull Project project) {
+    synchronized (lock) {
+      myOpenProjects = ArrayUtil.remove(myOpenProjects, project);
+      ProjectCoreUtil.theProject = myOpenProjects.length == 1 ? myOpenProjects[0] : null;
+      myOpenProjectByHash.values().remove(project); // remove by value and not by key!
+    }
   }
 
   @Override
-  public Project loadAndOpenProject(@NotNull final String filePath) throws IOException {
-    final Project project = convertAndLoadProject(filePath);
-    if (project == null) {
-      WelcomeFrame.showIfNoProjectOpened();
-      return null;
-    }
+  @Nullable
+  public Project findOpenProjectByHash(@Nullable String locationHash) {
+    return myOpenProjectByHash.get(locationHash);
+  }
 
-    // todo unify this logic with PlatformProjectOpenProcessor
-    if (!openProject(project)) {
-      WelcomeFrame.showIfNoProjectOpened();
-      ApplicationManager.getApplication().runWriteAction(new Runnable() {
+  private static boolean canCancelProjectLoading() {
+    return !ProgressManager.getInstance().isInNonCancelableSection();
+  }
+
+  @Override
+  public Project loadAndOpenProject(@NotNull final String originalFilePath) throws IOException {
+    final String filePath = toCanonicalName(originalFilePath);
+    final ConversionResult conversionResult = ConversionService.getInstance().convert(filePath);
+    ProjectEx project;
+    if (conversionResult.openingIsCanceled()) {
+      project = null;
+    }
+    else {
+      project = createProject(null, filePath, false);
+      myProgressManager.run(new Task.WithResult<Project, IOException>(project, ProjectBundle.message("project.load.progress"), true) {
         @Override
-        public void run() {
-          Disposer.dispose(project);
+        protected Project compute(@NotNull ProgressIndicator indicator) throws IOException {
+          if (!loadProjectWithProgress(project)) {
+            return null;
+          }
+          if (!conversionResult.conversionNotNeeded()) {
+            StartupManager.getInstance(project).registerPostStartupActivity(() -> conversionResult.postStartupActivity(project));
+          }
+          openProject(project);
+          return project;
         }
       });
     }
 
+    if (project == null) {
+      WelcomeFrame.showIfNoProjectOpened();
+      return null;
+    }
+    if (!project.isOpen()) {
+      WelcomeFrame.showIfNoProjectOpened();
+      ApplicationManager.getApplication().runWriteAction(() -> {
+        if (!project.isDisposed()) {
+          Disposer.dispose(project);
+        }
+      });
+    }
     return project;
   }
 
@@ -524,419 +525,159 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
    */
   @Override
   @Nullable
-  public Project convertAndLoadProject(String filePath) throws IOException {
-    final String fp = toCanonicalName(filePath);
-    final ConversionResult conversionResult = ConversionService.getInstance().convert(fp);
+  public Project convertAndLoadProject(@NotNull String filePath) throws IOException {
+    final String canonicalFilePath = toCanonicalName(filePath);
+    final ConversionResult conversionResult = ConversionService.getInstance().convert(canonicalFilePath);
     if (conversionResult.openingIsCanceled()) {
       return null;
     }
 
-    final Project project = loadProjectWithProgress(filePath);
-    if (project == null) return null;
-
+    ProjectEx project = createProject(null, canonicalFilePath, false);
+    if (!loadProjectWithProgress(project)) return null;
     if (!conversionResult.conversionNotNeeded()) {
-      StartupManager.getInstance(project).registerPostStartupActivity(new Runnable() {
-        @Override
-        public void run() {
-          conversionResult.postStartupActivity(project);
-        }
-      });
+      StartupManager.getInstance(project).registerPostStartupActivity(() -> conversionResult.postStartupActivity(project));
     }
     return project;
   }
 
-  /**
-   * Opens the project at the specified path.
-   *
-   * @param filePath the path to open the project.
-   * @return the project, or null if the user has cancelled opening the project.
-   */
-  @Nullable
-  private Project loadProjectWithProgress(@NotNull final String filePath) throws IOException {
-    final ProjectImpl project = createProject(null, toCanonicalName(filePath), false, false);
+  private boolean loadProjectWithProgress(ProjectEx project) throws IOException {
     try {
-      myProgressManager.runProcessWithProgressSynchronously(new ThrowableComputable<Project, IOException>() {
-        @Override
-        @Nullable
-        public Project compute() throws IOException {
-          initProject(project, null);
-          return project;
-        }
-      }, ProjectBundle.message("project.load.progress"), true, project);
+      if (!ApplicationManager.getApplication().isDispatchThread() &&
+          myProgressManager.getProgressIndicator() != null) {
+        initProject(project, null);
+        return true;
+      }
+      myProgressManager.runProcessWithProgressSynchronously((ThrowableComputable<Object, RuntimeException>)() -> {
+        initProject(project, null);
+        return project;
+      }, ProjectBundle.message("project.load.progress"), canCancelProjectLoading(), project);
+      return true;
     }
-    catch (StateStorageException e) {
-      throw new IOException(e);
+    catch (ProcessCanceledException e) {
+      return false;
     }
-    catch (ProcessCanceledException ignore) {
-      return null;
+    catch (Throwable t) {
+      LOG.info(t);
+      throw new IOException(t);
     }
-
-    return project;
   }
 
   private static void notifyProjectOpenFailed() {
-    ApplicationManager.getApplication().getMessageBus().syncPublisher(AppLifecycleListener.TOPIC).projectOpenFailed();
+    Application application = ApplicationManager.getApplication();
+    application.getMessageBus().syncPublisher(AppLifecycleListener.TOPIC).projectOpenFailed();
+    if (application.isUnitTestMode()) return;
     WelcomeFrame.showIfNoProjectOpened();
   }
 
-  private void registerExternalProjectFileListener(VirtualFileManager virtualFileManager) {
-    virtualFileManager.addVirtualFileManagerListener(new VirtualFileManagerListener() {
-      @Override
-      public void beforeRefreshStart(boolean asynchronous) {
-      }
-
-      @Override
-      public void afterRefreshFinish(boolean asynchronous) {
-        scheduleReloadApplicationAndProject();
-      }
-    });
-  }
-
-  private void askToReloadProjectIfConfigFilesChangedExternally() {
-    LOG.debug("[RELOAD] myReloadBlockCount = " + myReloadBlockCount.get());
-    if (myReloadBlockCount.get() == 0) {
-      Set<Project> projects;
-
-      synchronized (myChangedProjectFiles) {
-        if (myChangedProjectFiles.isEmpty()) return;
-        projects = new HashSet<Project>(myChangedProjectFiles.keySet());
-      }
-
-      List<Project> projectsToReload = new ArrayList<Project>();
-
-      for (Project project : projects) {
-        if (shouldReloadProject(project)) {
-          projectsToReload.add(project);
-        }
-      }
-
-      for (final Project projectToReload : projectsToReload) {
-        reloadProjectImpl(projectToReload, false);
-      }
-    }
-  }
-
-  private boolean tryToReloadApplication() {
-    try {
-      final Application app = ApplicationManager.getApplication();
-
-      if (app.isDisposed()) return false;
-      final HashSet<Pair<VirtualFile, StateStorage>> causes = new HashSet<Pair<VirtualFile, StateStorage>>(myChangedApplicationFiles);
-      if (causes.isEmpty()) return true;
-
-      final boolean[] reloadOk = {false};
-      final LinkedHashSet<String> components = new LinkedHashSet<String>();
-
-      ApplicationManager.getApplication().runWriteAction(new Runnable() {
-        @Override
-        public void run() {
-          try {
-            reloadOk[0] = ((ApplicationImpl)app).getStateStore().reload(causes, components);
-          }
-          catch (StateStorageException e) {
-            Messages.showWarningDialog(ProjectBundle.message("project.reload.failed", e.getMessage()),
-                                       ProjectBundle.message("project.reload.failed.title"));
-          }
-          catch (IOException e) {
-            Messages.showWarningDialog(ProjectBundle.message("project.reload.failed", e.getMessage()),
-                                       ProjectBundle.message("project.reload.failed.title"));
-          }
-        }
-      });
-
-      if (!reloadOk[0] && !components.isEmpty()) {
-        String message = "Application components were changed externally and cannot be reloaded:\n";
-        for (String component : components) {
-          message += component + "\n";
-        }
-
-        final boolean canRestart = ApplicationManager.getApplication().isRestartCapable();
-        message += "Would you like to " + (canRestart ? "restart " : "shutdown ");
-        message += ApplicationNamesInfo.getInstance().getProductName() + "?";
-
-        if (Messages.showYesNoDialog(message,
-                                     "Application Configuration Reload", Messages.getQuestionIcon()) == 0) {
-          for (Pair<VirtualFile, StateStorage> cause : causes) {
-            StateStorage stateStorage = cause.getSecond();
-            if (stateStorage instanceof XmlElementStorage) {
-              ((XmlElementStorage)stateStorage).disableSaving();
-            }
-          }
-          ApplicationManagerEx.getApplicationEx().restart(true);
-        }
-      }
-
-      return reloadOk[0];
-    }
-    finally {
-      myChangedApplicationFiles.clear();
-    }
-  }
-
-  private boolean shouldReloadProject(final Project project) {
-    if (project.isDisposed()) return false;
-    final HashSet<Pair<VirtualFile, StateStorage>> causes = new HashSet<Pair<VirtualFile, StateStorage>>();
-
-    synchronized (myChangedProjectFiles) {
-      final List<Pair<VirtualFile, StateStorage>> changes = myChangedProjectFiles.remove(project);
-      if (changes != null) {
-        causes.addAll(changes);
-      }
-
-      if (causes.isEmpty()) return false;
-    }
-
-    final boolean[] reloadOk = {false};
-
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
-      public void run() {
-        try {
-          LOG.debug("[RELOAD] Reloading project/components...");
-          reloadOk[0] = ((ProjectEx)project).getStateStore().reload(causes);
-        }
-        catch (StateStorageException e) {
-          Messages.showWarningDialog(ProjectBundle.message("project.reload.failed", e.getMessage()),
-                                     ProjectBundle.message("project.reload.failed.title"));
-        }
-        catch (IOException e) {
-          Messages.showWarningDialog(ProjectBundle.message("project.reload.failed", e.getMessage()),
-                                     ProjectBundle.message("project.reload.failed.title"));
-        }
-      }
-    });
-    if (reloadOk[0]) return false;
-
-    String message;
-    if (causes.size() == 1) {
-      message = ProjectBundle.message("project.reload.external.change.single", causes.iterator().next().first.getPresentableUrl());
-    }
-    else {
-      StringBuilder filesBuilder = new StringBuilder();
-      boolean first = true;
-      Set<String> alreadyShown = new HashSet<String>();
-      for (Pair<VirtualFile, StateStorage> cause : causes) {
-        String url = cause.first.getPresentableUrl();
-        if (!alreadyShown.contains(url)) {
-          if (alreadyShown.size() > 10) {
-            filesBuilder.append("\n" + "and ").append(causes.size() - alreadyShown.size()).append(" more");
-            break;
-          }
-          if (!first) filesBuilder.append("\n");
-          first = false;
-          filesBuilder.append(url);
-          alreadyShown.add(url);
-        }
-      }
-      message = ProjectBundle.message("project.reload.external.change.multiple", filesBuilder.toString());
-    }
-
-    return Messages.showTwoStepConfirmationDialog(message, ProjectBundle.message("project.reload.external.change.title"), "Reload project",
-                                                  Messages.getQuestionIcon()) == 0;
-  }
-
   @Override
-  public boolean isFileSavedToBeReloaded(VirtualFile candidate) {
-    return mySavedCopies.containsKey(candidate);
-  }
-
-  @Override
-  public void blockReloadingProjectOnExternalChanges() {
-    myReloadBlockCount.incrementAndGet();
-  }
-
-  @Override
-  public void unblockReloadingProjectOnExternalChanges() {
-    if (myReloadBlockCount.decrementAndGet() == 0) scheduleReloadApplicationAndProject();
-  }
-
-  private void scheduleReloadApplicationAndProject() {
-    // todo: commented due to "IDEA-61938 Libraries configuration is kept if switching branches"
-    // because of save which may happen _before_ project reload ;(
-
-    //ApplicationManager.getApplication().invokeLater(new Runnable() {
-    //  public void run() {
-    //IdeEventQueue.getInstance().addIdleListener(new Runnable() {
-    //  @Override
-    //  public void run() {
-    //    IdeEventQueue.getInstance().removeIdleListener(this);
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
-      @Override
-      public void run() {
-        if (!tryToReloadApplication()) return;
-        askToReloadProjectIfConfigFilesChangedExternally();
-      }
-    }, ModalityState.NON_MODAL);
-    //}
-    //}, 2000);
-    //}
-    //}, ModalityState.NON_MODAL);
-  }
-
-  @Override
+  @TestOnly
   public void openTestProject(@NotNull final Project project) {
     assert ApplicationManager.getApplication().isUnitTestMode();
-    myTestProjects.add(project);
+    openProject(project);
+    UIUtil.dispatchAllInvocationEvents(); // post init activities are invokeLatered
   }
 
+  @NotNull
   @Override
-  public Collection<Project> closeTestProject(@NotNull Project project) {
+  @TestOnly
+  public Collection<Project> closeTestProject(@NotNull final Project project) {
     assert ApplicationManager.getApplication().isUnitTestMode();
-    myTestProjects.remove(project);
-    return myTestProjects;
+    forceCloseProject(project, false);
+    Project[] projects = getOpenProjects();
+    return projects.length == 0 ? Collections.emptyList() : Arrays.asList(projects);
   }
 
   @Override
-  public void saveChangedProjectFile(final VirtualFile file, final Project project) {
-    if (file.exists()) {
-      copyToTemp(file);
-    }
-    registerProjectToReload(project, file, null);
+  public void reloadProject(@NotNull Project project) {
+    doReloadProject(project);
   }
 
-  private void saveChangedProjectFile(final VirtualFile file, @Nullable final Project project, final StateStorage storage) {
-    if (file.exists()) {
-      copyToTemp(file);
-    }
-    registerProjectToReload(project, file, storage);
-  }
+  protected static void doReloadProject(@NotNull Project project) {
+    final Ref<Project> projectRef = Ref.create(project);
+    ProjectReloadState.getInstance(project).onBeforeAutomaticProjectReload();
+    ApplicationManager.getApplication().invokeLater(() -> {
+      LOG.debug("Reloading project.");
+      Project project1 = projectRef.get();
+      // Let it go
+      projectRef.set(null);
 
-  private void registerProjectToReload(@Nullable final Project project, final VirtualFile cause, @Nullable final StateStorage storage) {
-    if (LOG.isDebugEnabled()) {
-      LOG.debug("[RELOAD] Registering project to reload: " + cause, new Exception());
-    }
-
-    if (project != null) {
-      synchronized (myChangedProjectFiles) {
-        List<Pair<VirtualFile, StateStorage>> changedProjectFiles = myChangedProjectFiles.get(project);
-        if (changedProjectFiles == null) {
-          changedProjectFiles = new ArrayList<Pair<VirtualFile, StateStorage>>();
-          myChangedProjectFiles.put(project, changedProjectFiles);
-        }
-
-        changedProjectFiles.add(new Pair<VirtualFile, StateStorage>(cause, storage));
+      if (project1.isDisposed()) {
+        return;
       }
-    }
-    else {
-      myChangedApplicationFiles.add(new Pair<VirtualFile, StateStorage>(cause, storage));
-    }
 
-    myChangedFilesAlarm.cancelAllRequests();
-    myChangedFilesAlarm.addRequest(new Runnable() {
-      @Override
-      public void run() {
-        LOG.debug("[RELOAD] Scheduling reload application & project, myReloadBlockCount = " + myReloadBlockCount);
-        if (myReloadBlockCount.get() == 0) {
-          scheduleReloadApplicationAndProject();
-        }
+      // must compute here, before project dispose
+      String presentableUrl = project1.getPresentableUrl();
+      if (!ProjectUtil.closeAndDispose(project1)) {
+        return;
       }
-    }, 444);
-  }
 
-  private void copyToTemp(VirtualFile file) {
-    try {
-      final byte[] bytes = file.contentsToByteArray();
-      mySavedCopies.put(file, bytes);
-      mySavedTimestamps.put(file, file.getTimeStamp());
-    }
-    catch (IOException e) {
-      LOG.error(e);
-    }
-  }
-
-  private void restoreCopy(VirtualFile file) {
-    try {
-      if (file == null) return; // Externally deleted actually.
-      if (!file.isWritable()) return; // IDEA was unable to save it as well. So no need to restore.
-
-      final byte[] bytes = mySavedCopies.get(file);
-      if (bytes != null) {
-        try {
-          file.setBinaryContent(bytes, -1, mySavedTimestamps.get(file));
-        }
-        catch (IOException e) {
-          Messages.showWarningDialog(ProjectBundle.message("project.reload.write.failed", file.getPresentableUrl()),
-                                     ProjectBundle.message("project.reload.write.failed.title"));
-        }
-      }
-    }
-    finally {
-      mySavedCopies.remove(file);
-      mySavedTimestamps.remove(file);
-    }
-  }
-
-  @Override
-  public void reloadProject(@NotNull final Project p) {
-    reloadProjectImpl(p, true);
-  }
-
-  public void reloadProjectImpl(@NotNull final Project p, final boolean clearCopyToRestore) {
-    if (clearCopyToRestore) {
-      mySavedCopies.clear();
-      mySavedTimestamps.clear();
-    }
-
-    final Project[] project = {p};
-
-    ProjectReloadState.getInstance(project[0]).onBeforeAutomaticProjectReload();
-    final Application application = ApplicationManager.getApplication();
-
-    application.invokeLater(new Runnable() {
-      @Override
-      public void run() {
-        LOG.debug("Reloading project.");
-        ProjectImpl projectImpl = (ProjectImpl)project[0];
-        if (projectImpl.isDisposed()) return;
-        IProjectStore projectStore = projectImpl.getStateStore();
-        final String location = projectImpl.getPresentableUrl();
-
-        final List<IFile> original;
-        try {
-          final IComponentStore.SaveSession saveSession = projectStore.startSave();
-          original = saveSession.getAllStorageFiles(true);
-          saveSession.finishSave();
-        }
-        catch (IOException e) {
-          LOG.error(e);
-          return;
-        }
-
-        if (project[0].isDisposed() || ProjectUtil.closeAndDispose(project[0])) {
-          application.runWriteAction(new Runnable() {
-            @Override
-            public void run() {
-              for (final IFile originalFile : original) {
-                restoreCopy(LocalFileSystem.getInstance().refreshAndFindFileByIoFile(originalFile));
-              }
-            }
-          });
-
-          project[0] = null; // Let it go.
-
-          ProjectUtil.openProject(location, null, true);
-        }
-      }
+      ProjectUtil.openProject(Objects.requireNonNull(presentableUrl), null, true);
     }, ModalityState.NON_MODAL);
   }
 
   @Override
   public boolean closeProject(@NotNull final Project project) {
-    return closeProject(project, true, false, true);
+    return closeProject(project, true, true, false, true);
   }
 
-  public boolean closeProject(@NotNull final Project project, final boolean save, final boolean dispose, boolean checkCanClose) {
-    if (isLight(project)) {
-      throw new AssertionError("must not close light project");
+  @Override
+  @TestOnly
+  public boolean forceCloseProject(@NotNull Project project, boolean dispose) {
+    return closeProject(project, false /* do not save project */, false /* do not save app */, dispose, false);
+  }
+
+  // return true if successful
+  @Override
+  public boolean closeAndDisposeAllProjects(boolean checkCanClose) {
+    for (Project project : getOpenProjects()) {
+      if (!closeProject(project, true, false, true, checkCanClose)) {
+        return false;
+      }
     }
-    if (!isProjectOpened(project)) return true;
-    if (checkCanClose && !canClose(project)) return false;
+    return true;
+  }
+
+  // isSaveApp is ignored if saveProject is false
+  @SuppressWarnings("TestOnlyProblems")
+  private boolean closeProject(@NotNull final Project project,
+                               final boolean isSaveProject,
+                               final boolean isSaveApp,
+                               final boolean dispose,
+                               boolean checkCanClose) {
+    Application app = ApplicationManager.getApplication();
+    if (app.isWriteAccessAllowed()) {
+      throw new IllegalStateException("Must not call closeProject() from under write action because fireProjectClosing() listeners must have a chance to do something useful");
+    }
+    app.assertIsDispatchThread();
+
+    if (isLight(project)) {
+      // if we close project at the end of the test, just mark it closed; if we are shutting down the entire test framework, proceed to full dispose
+      if (!((ProjectImpl)project).isTemporarilyDisposed()) {
+        ((ProjectImpl)project).setTemporarilyDisposed(true);
+        removeFromOpened(project);
+        return true;
+      }
+      ((ProjectImpl)project).setTemporarilyDisposed(false);
+    }
+    else if (!isProjectOpened(project)) {
+      return true;
+    }
+
+    if (checkCanClose && !canClose(project)) {
+      return false;
+    }
+
     final ShutDownTracker shutDownTracker = ShutDownTracker.getInstance();
     shutDownTracker.registerStopperThread(Thread.currentThread());
     try {
-      if (save) {
+      myBusPublisher.projectClosingBeforeSave(project);
+
+      if (isSaveProject) {
         FileDocumentManager.getInstance().saveAllDocuments();
-        project.save();
+        StoreUtil.saveSettings(project, true);
+        if (isSaveApp) {
+          StoreUtil.saveSettings(app, true);
+        }
       }
 
       if (checkCanClose && !ensureCouldCloseIfUnableToSave(project)) {
@@ -945,22 +686,13 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
 
       fireProjectClosing(project); // somebody can start progress here, do not wrap in write action
 
-      ApplicationManager.getApplication().runWriteAction(new Runnable() {
-        @Override
-        public void run() {
-          synchronized (myOpenProjects) {
-            myOpenProjects.remove(project);
-            cacheOpenProjects();
-          }
-          myTestProjects.remove(project);
+      app.runWriteAction(() -> {
+        removeFromOpened(project);
 
-          myChangedProjectFiles.remove(project);
+        fireProjectClosed(project);
 
-          fireProjectClosed(project);
-
-          if (dispose) {
-            Disposer.dispose(project);
-          }
+        if (dispose) {
+          Disposer.dispose(project);
         }
       });
     }
@@ -971,28 +703,22 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
     return true;
   }
 
+  @TestOnly
   public static boolean isLight(@NotNull Project project) {
-    return ApplicationManager.getApplication().isUnitTestMode() && project.toString().contains("light_temp_");
+    return project instanceof ProjectImpl && ((ProjectImpl)project).isLight();
   }
 
   @Override
-  public boolean closeAndDispose(@NotNull final Project project) {
-    return closeProject(project, true, true, true);
+  public boolean closeAndDispose(@NotNull Project project) {
+    return closeProject(project, true /* save project */, false /* don't save app */, true /* dispose project */, true);
   }
 
-  private void fireProjectClosing(Project project) {
+  private void fireProjectClosing(@NotNull Project project) {
     if (LOG.isDebugEnabled()) {
       LOG.debug("enter: fireProjectClosing()");
     }
 
-    for (ProjectManagerListener listener : myListeners) {
-      try {
-        listener.projectClosing(project);
-      }
-      catch (Exception e) {
-        LOG.error(e);
-      }
-    }
+    myBusPublisher.projectClosing(project);
   }
 
   @Override
@@ -1001,14 +727,14 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
   }
 
   @Override
+  public void addProjectManagerListener(@NotNull VetoableProjectManagerListener listener) {
+    myListeners.add(listener);
+  }
+
+  @Override
   public void addProjectManagerListener(@NotNull final ProjectManagerListener listener, @NotNull Disposable parentDisposable) {
     addProjectManagerListener(listener);
-    Disposer.register(parentDisposable, new Disposable() {
-      @Override
-      public void dispose() {
-        removeProjectManagerListener(listener);
-      }
-    });
+    Disposer.register(parentDisposable, () -> removeProjectManagerListener(listener));
   }
 
   @Override
@@ -1018,11 +744,17 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
   }
 
   @Override
+  public void removeProjectManagerListener(@NotNull VetoableProjectManagerListener listener) {
+    boolean removed = myListeners.remove(listener);
+    LOG.assertTrue(removed);
+  }
+
+  @Override
   public void addProjectManagerListener(@NotNull Project project, @NotNull ProjectManagerListener listener) {
     List<ProjectManagerListener> listeners = project.getUserData(LISTENERS_IN_PROJECT_KEY);
     if (listeners == null) {
       listeners = ((UserDataHolderEx)project)
-        .putUserDataIfAbsent(LISTENERS_IN_PROJECT_KEY, ContainerUtil.<ProjectManagerListener>createLockFreeCopyOnWriteList());
+        .putUserDataIfAbsent(LISTENERS_IN_PROJECT_KEY, ContainerUtil.createLockFreeCopyOnWriteList());
     }
     listeners.add(listener);
   }
@@ -1035,117 +767,158 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
     LOG.assertTrue(removed);
   }
 
-  private void fireProjectOpened(Project project) {
+  private void fireProjectOpened(@NotNull Project project) {
     if (LOG.isDebugEnabled()) {
       LOG.debug("projectOpened");
     }
 
-    for (ProjectManagerListener listener : myListeners) {
-      try {
-        listener.projectOpened(project);
-      }
-      catch (Exception e) {
-        LOG.error(e);
+    LifecycleUsageTriggerCollector.onProjectOpened(project);
+    myBusPublisher.projectOpened(project);
+    // https://jetbrains.slack.com/archives/C5E8K7FL4/p1495015043685628
+    // projectOpened in the project components is called _after_ message bus event projectOpened for ages
+    // old behavior is preserved for now (smooth transition, to not break all), but this order is not logical,
+    // because ProjectComponent.projectOpened it is part of project initialization contract, but message bus projectOpened it is just an event
+    // (and, so, should be called after project initialization)
+    if (project instanceof ComponentManagerImpl) {
+      for (ProjectComponent component : ((ComponentManagerImpl)project).getComponentInstancesOfType(ProjectComponent.class)) {
+        StartupManagerImpl.runActivity(() -> component.projectOpened());
       }
     }
   }
 
-  private void fireProjectClosed(Project project) {
+  private void fireProjectClosed(@NotNull Project project) {
     if (LOG.isDebugEnabled()) {
       LOG.debug("projectClosed");
     }
 
-    for (ProjectManagerListener listener : myListeners) {
-      try {
-        listener.projectClosed(project);
-      }
-      catch (Exception e) {
-        LOG.error(e);
+    LifecycleUsageTriggerCollector.onProjectClosed(project);
+
+    myBusPublisher.projectClosed(project);
+    // see "why is called after message bus" in the fireProjectOpened
+    if (project instanceof ComponentManagerImpl) {
+      List<ProjectComponent> components = ((ComponentManagerImpl)project).getComponentInstancesOfType(ProjectComponent.class);
+      for (int i = components.size() - 1; i >= 0; i--) {
+        ProjectComponent component = components.get(i);
+        try {
+          component.projectClosed();
+        }
+        catch (Throwable e) {
+          LOG.error(component.toString(), e);
+        }
       }
     }
   }
 
   @Override
-  public boolean canClose(Project project) {
+  public boolean canClose(@NotNull Project project) {
     if (LOG.isDebugEnabled()) {
       LOG.debug("enter: canClose()");
     }
 
-    for (ProjectManagerListener listener : myListeners) {
+    for (ProjectManagerListener listener : getAllListeners(project)) {
       try {
-        if (!listener.canCloseProject(project)) return false;
+        //noinspection deprecation
+        boolean canClose = listener instanceof VetoableProjectManagerListener ? ((VetoableProjectManagerListener)listener).canClose(project) : listener.canCloseProject(project);
+        if (!canClose) {
+          LOG.debug("close canceled by " + listener);
+          return false;
+        }
       }
       catch (Throwable e) {
-        LOG.warn(e); // DO NOT LET ANY PLUGIN to prevent closing due to exception
+        handleListenerError(e, listener);
       }
     }
 
     return true;
   }
 
-  private static boolean ensureCouldCloseIfUnableToSave(@NotNull final Project project) {
-    final ProjectImpl.UnableToSaveProjectNotification[] notifications =
-      NotificationsManager.getNotificationsManager().getNotificationsOfType(ProjectImpl.UnableToSaveProjectNotification.class, project);
-    if (notifications.length == 0) return true;
-
-    final String fileNames = StringUtil.join(notifications[0].getFileNames(), "\n");
-
-    final String msg = String.format("%s was unable to save some project files,\nare you sure you want to close this project anyway?",
-                                     ApplicationNamesInfo.getInstance().getProductName());
-    return Messages.showDialog(project, msg, "Unsaved Project", "Read-only files:\n\n" + fileNames, new String[]{"Yes", "No"}, 0, 1,
-                               Messages.getWarningIcon()) == 0;
-  }
-
-  @Override
-  public void writeExternal(Element parentNode) throws WriteExternalException {
-    if (myDefaultProject != null) {
-      myDefaultProject.save();
+  // both lists are thread-safe (LockFreeCopyOnWriteArrayList), but ContainerUtil.concat cannot handle situation when list size is changed during iteration
+  // so, we have to create list.
+  @NotNull
+  private List<ProjectManagerListener> getAllListeners(@NotNull Project project) {
+    List<ProjectManagerListener> projectLevelListeners = getListeners(project);
+    if (projectLevelListeners.isEmpty()) {
+      return myListeners;
+    }
+    if (myListeners.isEmpty()) {
+      return projectLevelListeners;
     }
 
-    if (myDefaultProjectRootElement == null) { //read external isn't called if config folder is absent
-      myDefaultProjectRootElement = new Element(ELEMENT_DEFAULT_PROJECT);
+    List<ProjectManagerListener> result = new ArrayList<>(projectLevelListeners.size() + myListeners.size());
+    // order is critically important due to backward compatibility - project level listeners must be first
+    result.addAll(projectLevelListeners);
+    result.addAll(myListeners);
+    return result;
+  }
+
+  private static boolean ensureCouldCloseIfUnableToSave(@NotNull Project project) {
+    UnableToSaveProjectNotification[] notifications =
+      NotificationsManager.getNotificationsManager().getNotificationsOfType(UnableToSaveProjectNotification.class, project);
+    if (notifications.length == 0) {
+      return true;
     }
 
-    myDefaultProjectRootElement.detach();
-    parentNode.addContent(myDefaultProjectRootElement);
+    StringBuilder message = new StringBuilder();
+    message.append(String.format("%s was unable to save some project files,\nare you sure you want to close this project anyway?",
+                                 ApplicationNamesInfo.getInstance().getProductName()));
+
+    message.append("\n\nRead-only files:\n");
+    int count = 0;
+    List<VirtualFile> files = notifications[0].myFiles;
+    for (VirtualFile file : files) {
+      if (count == 10) {
+        message.append('\n').append("and ").append(files.size() - count).append(" more").append('\n');
+      }
+      else {
+        message.append(file.getPath()).append('\n');
+        count++;
+      }
+    }
+    return Messages.showYesNoDialog(project, message.toString(), "Unsaved Project", Messages.getWarningIcon()) == Messages.YES;
   }
 
+  public static class UnableToSaveProjectNotification extends Notification {
+    private Project myProject;
 
-  public void setDefaultProjectRootElement(final Element defaultProjectRootElement) {
-    myDefaultProjectRootElement = defaultProjectRootElement;
-  }
+    private List<VirtualFile> myFiles;
 
-  @Override
-  public void readExternal(Element parentNode) throws InvalidDataException {
-    myDefaultProjectRootElement = parentNode.getChild(ELEMENT_DEFAULT_PROJECT);
-
-    if (myDefaultProjectRootElement == null) {
-      myDefaultProjectRootElement = new Element(ELEMENT_DEFAULT_PROJECT);
+    public void setFiles(@NotNull List<VirtualFile> files) {
+      myFiles = files;
     }
 
-    myDefaultProjectRootElement.detach();
+    public UnableToSaveProjectNotification(@NotNull final Project project, @NotNull List<VirtualFile> readOnlyFiles) {
+      super("Project Settings", "Could not save project", "Unable to save project files. Please ensure project files are writable and you have permissions to modify them." +
+                                                           " <a href=\"\">Try to save project again</a>.", NotificationType.ERROR,
+            (notification, event) -> {
+              final UnableToSaveProjectNotification unableToSaveProjectNotification = (UnableToSaveProjectNotification)notification;
+              final Project _project = unableToSaveProjectNotification.myProject;
+              notification.expire();
+
+              if (_project != null && !_project.isDisposed()) {
+                _project.save();
+              }
+            });
+
+      myProject = project;
+      myFiles = readOnlyFiles;
+    }
+
+    @Override
+    public void expire() {
+      myProject = null;
+      super.expire();
+    }
   }
 
   @Override
-  public String getExternalFileName() {
-    return "project.default";
+  public void saveChangedProjectFile(@NotNull VirtualFile file, @NotNull Project project) {
   }
 
   @Override
-  @NotNull
-  public String getComponentName() {
-    return "ProjectManager";
+  public void blockReloadingProjectOnExternalChanges() {
   }
 
   @Override
-  @NotNull
-  public File[] getExportFiles() {
-    return new File[]{PathManager.getOptionsFile(this)};
-  }
-
-  @Override
-  @NotNull
-  public String getPresentableName() {
-    return ProjectBundle.message("project.default.settings");
+  public void unblockReloadingProjectOnExternalChanges() {
   }
 }

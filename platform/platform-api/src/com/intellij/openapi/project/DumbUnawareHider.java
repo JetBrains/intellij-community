@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,8 @@
 
 package com.intellij.openapi.project;
 
-import org.jetbrains.annotations.NonNls;
+import com.intellij.ui.components.JBPanelWithEmptyText;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -24,19 +25,24 @@ import java.awt.*;
 /**
  * @author peter
  */
-public class DumbUnawareHider extends JPanel {
-  @NonNls private static final String CONTENT = "content";
-  @NonNls private static final String EXCUSE = "excuse";
+public class DumbUnawareHider extends JBPanelWithEmptyText {
 
-  public DumbUnawareHider(JComponent dumbUnawareContent) {
-    super(new CardLayout());
-    add(dumbUnawareContent, CONTENT);
-    final JLabel label = new JLabel("This view is not available until indices are built");
-    label.setHorizontalAlignment(SwingConstants.CENTER);
-    add(label, EXCUSE);
+  private final JComponent myDumbUnawareContent;
+
+  public DumbUnawareHider(@NotNull JComponent dumbUnawareContent) {
+    super(new BorderLayout());
+    this.myDumbUnawareContent = dumbUnawareContent;
+    getEmptyText().setText("This view is not available until indices are built");
+    add(dumbUnawareContent, BorderLayout.CENTER);
+  }
+
+  public JComponent getContent() {
+    return myDumbUnawareContent;
   }
 
   public void setContentVisible(boolean show) {
-    ((CardLayout)getLayout()).show(this, show ? CONTENT : EXCUSE);
+    for (int i = 0, count = getComponentCount(); i < count; i++) {
+      getComponent(i).setVisible(show);
+    }
   }
 }

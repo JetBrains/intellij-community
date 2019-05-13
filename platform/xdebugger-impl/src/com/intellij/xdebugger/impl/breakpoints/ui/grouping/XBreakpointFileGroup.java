@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,8 +16,8 @@
 package com.intellij.xdebugger.impl.breakpoints.ui.grouping;
 
 import com.intellij.ide.presentation.VirtualFilePresentation;
-import com.intellij.xdebugger.breakpoints.ui.XBreakpointGroup;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.xdebugger.breakpoints.ui.XBreakpointGroup;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -33,11 +33,13 @@ public class XBreakpointFileGroup extends XBreakpointGroup {
     myFile = file;
   }
 
+  @Override
   @Nullable
   public Icon getIcon(final boolean isOpen) {
     return VirtualFilePresentation.getIcon(myFile);
   }
 
+  @Override
   @NotNull
   public String getName() {
     return myFile.getPresentableUrl();
@@ -45,5 +47,10 @@ public class XBreakpointFileGroup extends XBreakpointGroup {
 
   public VirtualFile getFile() {
     return myFile;
+  }
+
+  @Override
+  public boolean equals(Object obj) {
+    return obj instanceof XBreakpointFileGroup && myFile.equals(((XBreakpointFileGroup)obj).myFile);
   }
 }

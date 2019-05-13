@@ -1,0 +1,7 @@
+<html>
+<body>
+               Reports any @GuardedBy annotations (net.jcip.annotations|javax.annotation.concurrent|org.apache.http.annotation) on instance fields or methods,
+                where the guard is a static field. Guarding a non-static by a static may result in excessive lock contention,
+                as access to each locked field in any object instance will prevent simultaneous access to that field in every object instance.
+</body>
+</html>

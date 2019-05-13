@@ -17,10 +17,12 @@ package com.intellij.designer.model;
 
 import com.intellij.designer.palette.DefaultPaletteItem;
 import com.intellij.designer.palette.PaletteGroup;
+import com.intellij.designer.palette.PaletteItem;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jdom.Attribute;
 import org.jdom.Element;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -40,12 +42,12 @@ public abstract class MetaManager extends ModelLoader {
   private static final String TAG = "tag";
   private static final String WRAP_IN = "wrap-in";
 
-  private final Map<String, MetaModel> myTag2Model = new HashMap<String, MetaModel>();
-  private final Map<String, MetaModel> myTarget2Model = new HashMap<String, MetaModel>();
-  private final List<PaletteGroup> myPaletteGroups = new ArrayList<PaletteGroup>();
-  private final List<MetaModel> myWrapModels = new ArrayList<MetaModel>();
+  private final Map<String, MetaModel> myTag2Model = new HashMap<>();
+  private final Map<String, MetaModel> myTarget2Model = new HashMap<>();
+  private final List<PaletteGroup> myPaletteGroups = new ArrayList<>();
+  private final List<MetaModel> myWrapModels = new ArrayList<>();
 
-  private Map<Object, Object> myCache = new HashMap<Object, Object>();
+  private final Map<Object, Object> myCache = new HashMap<>();
 
   protected MetaManager(Project project, String name) {
     super(project);
@@ -56,27 +58,26 @@ public abstract class MetaManager extends ModelLoader {
   protected void loadDocument(Element rootElement) throws Exception {
     ClassLoader classLoader = getClass().getClassLoader();
 
-    Map<MetaModel, List<String>> modelToMorphing = new HashMap<MetaModel, List<String>>();
+    Map<MetaModel, List<String>> modelToMorphing = new HashMap<>();
 
-    for (Object element : rootElement.getChildren(META)) {
-      loadModel(classLoader, (Element)element, modelToMorphing);
+    for (Element element : rootElement.getChildren(META)) {
+      loadModel(classLoader, element, modelToMorphing);
     }
 
-    for (Object element : rootElement.getChild(PALETTE).getChildren(GROUP)) {
-      loadGroup((Element)element);
+    for (Element element : rootElement.getChild(PALETTE).getChildren(GROUP)) {
+      loadGroup(element);
     }
 
     Element wrapInElement = rootElement.getChild(WRAP_IN);
     if (wrapInElement != null) {
-      for (Object element : wrapInElement.getChildren(ITEM)) {
-        Element item = (Element)element;
-        myWrapModels.add(myTag2Model.get(item.getAttributeValue("tag")));
+      for (Element element : wrapInElement.getChildren(ITEM)) {
+        myWrapModels.add(myTag2Model.get(element.getAttributeValue("tag")));
       }
     }
 
     for (Map.Entry<MetaModel, List<String>> entry : modelToMorphing.entrySet()) {
       MetaModel meta = entry.getKey();
-      List<MetaModel> morphingModels = new ArrayList<MetaModel>();
+      List<MetaModel> morphingModels = new ArrayList<>();
 
       for (String tag : entry.getValue()) {
         MetaModel morphingModel = myTag2Model.get(tag);
@@ -91,8 +92,9 @@ public abstract class MetaManager extends ModelLoader {
     }
   }
 
+  @NotNull
   @SuppressWarnings("unchecked")
-  private void loadModel(ClassLoader classLoader, Element element, Map<MetaModel, List<String>> modelToMorphing) throws Exception {
+  protected MetaModel loadModel(ClassLoader classLoader, Element element, Map<MetaModel, List<String>> modelToMorphing) throws Exception {
     String modelValue = element.getAttributeValue("model");
     Class<RadComponent> model = modelValue == null ? null : (Class<RadComponent>)classLoader.loadClass(modelValue);
     String target = element.getAttributeValue("class");
@@ -144,14 +146,28 @@ public abstract class MetaManager extends ModelLoader {
     if (target != null) {
       myTarget2Model.put(target, meta);
     }
+
+    return meta;
   }
 
+  @NotNull
   protected MetaModel createModel(Class<RadComponent> model, String target, String tag) throws Exception {
     return new MetaModel(model, target, tag);
   }
 
+  @NotNull
   protected DefaultPaletteItem createPaletteItem(Element palette) {
     return new DefaultPaletteItem(palette);
+  }
+
+  @NotNull
+  protected VariationPaletteItem createVariationPaletteItem(PaletteItem paletteItem, MetaModel model, Element itemElement) {
+    return new VariationPaletteItem(paletteItem, model, itemElement);
+  }
+
+  @NotNull
+  protected PaletteGroup createPaletteGroup(String name) {
+    return new PaletteGroup(name);
   }
 
   protected void loadProperties(MetaModel meta, Element properties) throws Exception {
@@ -189,15 +205,41 @@ public abstract class MetaManager extends ModelLoader {
   protected void loadOther(MetaModel meta, Element element) throws Exception {
   }
 
-  private void loadGroup(Element element) throws Exception {
-    PaletteGroup group = new PaletteGroup(element.getAttributeValue(NAME));
+  @NotNull
+  protected PaletteGroup loadGroup(Element element) throws Exception {
+    PaletteGroup group = createPaletteGroup(element.getAttributeValue(NAME));
 
-    for (Object child : element.getChildren(ITEM)) {
-      String tag = ((Element)child).getAttributeValue(TAG);
-      group.addItem(getModelByTag(tag).getPaletteItem());
+    for (Element itemElement : element.getChildren(ITEM)) {
+      MetaModel model = getModelByTag(itemElement.getAttributeValue(TAG));
+      PaletteItem paletteItem = model.getPaletteItem();
+
+      if (!itemElement.getChildren().isEmpty()) {
+        // Replace the palette item shown in the palette; it might provide a custom
+        // title, icon or creation logic (and this is done here rather than in the
+        // default palette item, since when loading elements back from XML, there's
+        // no variation matching. We don't want for example to call the default
+        // LinearLayout item "LinearLayout (Horizontal)", since that item would be
+        // shown in the component tree for any <LinearLayout> found in the XML, including
+        // those which set orientation="vertical". In the future, consider generalizing
+        // this such that the {@link MetaModel} can hold multiple {@link PaletteItem}
+        // instances, and perform attribute matching.
+        if (itemElement.getAttribute("title") != null) {
+          paletteItem = createVariationPaletteItem(paletteItem, model, itemElement);
+        }
+        group.addItem(paletteItem);
+
+        for (Element grandChild : itemElement.getChildren(ITEM)) {
+          group.addItem(createVariationPaletteItem(paletteItem, model, grandChild));
+        }
+      }
+      else {
+        group.addItem(paletteItem);
+      }
     }
 
     myPaletteGroups.add(group);
+
+    return group;
   }
 
   @SuppressWarnings("unchecked")

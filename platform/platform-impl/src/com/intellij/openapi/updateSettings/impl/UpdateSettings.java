@@ -1,136 +1,146 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.updateSettings.impl;
 
 import com.intellij.openapi.application.ApplicationInfo;
-import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.components.*;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.DefaultJDOMExternalizer;
-import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.JDOMExternalizableStringList;
-import com.intellij.openapi.util.WriteExternalException;
-import org.jdom.Element;
+import com.intellij.openapi.updateSettings.UpdateStrategyCustomization;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.net.NetUtils;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
-/**
- * @author yole
- */
-@State(
-  name = "UpdatesConfigurable",
-  storages = {
-    @Storage(
-      file = StoragePathMacros.APP_CONFIG + "/other.xml"
-    )}
-)
-public class UpdateSettings implements PersistentStateComponent<Element>, UserUpdateSettings {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.updateSettings.impl.UpdateSettings"); 
-
-  @SuppressWarnings({"WeakerAccess", "CanBeFinal"})
-  public JDOMExternalizableStringList myPluginHosts = new JDOMExternalizableStringList();
-
-  @SuppressWarnings({"WeakerAccess", "CanBeFinal"})
-  public JDOMExternalizableStringList myKnownUpdateChannels = new JDOMExternalizableStringList();
-
-  @SuppressWarnings({"WeakerAccess", "CanBeFinal"})
-  public JDOMExternalizableStringList myIgnoredBuildNumbers = new JDOMExternalizableStringList();
-
-  public boolean CHECK_NEEDED = true;
-  public long LAST_TIME_CHECKED = 0;
-  public String LAST_BUILD_CHECKED = "";
-  public String UPDATE_CHANNEL_TYPE = ChannelStatus.RELEASE_CODE;
-
+@State(name = "UpdatesConfigurable", storages = @Storage(value = "updates.xml", roamingType = RoamingType.DISABLED, exportable = true))
+public class UpdateSettings implements PersistentStateComponent<UpdateOptions> {
   public static UpdateSettings getInstance() {
     return ServiceManager.getService(UpdateSettings.class);
   }
 
-  public UpdateSettings() {
-    updateDefaultChannel();
-  }
+  private UpdateOptions myState = new UpdateOptions();
 
-  public void saveLastCheckedInfo() {
-    LAST_TIME_CHECKED = System.currentTimeMillis();
-    ApplicationInfo appInfo = ApplicationInfo.getInstance();
-    LAST_BUILD_CHECKED = appInfo.getBuild().asString();
-  }
-
-  private void updateDefaultChannel() {
-    if (ApplicationInfoImpl.getShadowInstance().isEAP()) {
-      UPDATE_CHANNEL_TYPE = ChannelStatus.EAP_CODE;
-    }
-  }
-
-  public Element getState() {
-    Element element = new Element("state");
-    try {
-      DefaultJDOMExternalizer.writeExternal(this, element);
-    }
-    catch (WriteExternalException e) {
-      LOG.info(e);
-    }
-    return element;
-  }
-
-  public void loadState(final Element state) {
-    try {
-      DefaultJDOMExternalizer.readExternal(this, state);
-    }
-    catch (InvalidDataException e) {
-      LOG.info(e);
-    }
-    updateDefaultChannel();
+  public boolean isPlatformUpdateEnabled() {
+    return ExternalUpdateManager.ACTUAL == null;
   }
 
   @NotNull
   @Override
-  public List<String> getKnownChannelsIds() {
-    List<String> ids = new ArrayList<String>();
-    for (String channel : myKnownUpdateChannels) {
-      ids.add(channel);
-    }
-    return ids;
+  public UpdateOptions getState() {
+    return myState;
   }
 
   @Override
-  public void setKnownChannelIds(@NotNull List<String> ids) {
-    myKnownUpdateChannels.clear();
-    for (String id : ids) {
-      myKnownUpdateChannels.add(id);
-    }
+  public void loadState(@NotNull UpdateOptions state) {
+    myState = state;
   }
 
-  public void forgetChannelId(String id) {
-    myKnownUpdateChannels.remove(id);
+  @Nullable
+  public String getLastBuildChecked() {
+    return myState.getLastBuildChecked();
   }
 
-  @Override
+  @NotNull
+  public List<String> getStoredPluginHosts() {
+    return myState.getPluginHosts();
+  }
+
+  public boolean isCheckNeeded() {
+    return myState.isCheckNeeded();
+  }
+
+  public void setCheckNeeded(boolean value) {
+    myState.setCheckNeeded(value);
+  }
+
+  public List<String> getEnabledExternalUpdateSources() {
+    return myState.getEnabledExternalComponentSources();
+  }
+
+  public List<String> getKnownExternalUpdateSources() {
+    return myState.getKnownExternalComponentSources();
+  }
+
+  public Map<String, String> getExternalUpdateChannels() {
+    return myState.getExternalUpdateChannels();
+  }
+
+  public boolean isSecureConnection() {
+    return myState.isUseSecureConnection();
+  }
+
+  public void setSecureConnection(boolean value) {
+    myState.setUseSecureConnection(value);
+  }
+
+  public long getLastTimeChecked() {
+    return myState.getLastTimeChecked();
+  }
+
+  @NotNull
   public List<String> getIgnoredBuildNumbers() {
-    return myIgnoredBuildNumbers;
+    return myState.getIgnoredBuildNumbers();
   }
 
   @NotNull
-  @Override
   public ChannelStatus getSelectedChannelStatus() {
-    return ChannelStatus.fromCode(UPDATE_CHANNEL_TYPE);
+    return ChannelStatus.fromCode(myState.getUpdateChannelType());
+  }
+
+  public void setSelectedChannelStatus(@NotNull ChannelStatus channel) {
+    myState.setUpdateChannelType(channel.getCode());
+  }
+
+  @NotNull
+  public List<ChannelStatus> getActiveChannels() {
+    UpdateStrategyCustomization tweaker = UpdateStrategyCustomization.getInstance();
+    return Stream.of(ChannelStatus.values())
+      .filter(ch -> ch == ChannelStatus.EAP || ch == ChannelStatus.RELEASE || tweaker.isChannelActive(ch))
+      .collect(Collectors.toList());
+  }
+
+  @NotNull
+  public ChannelStatus getSelectedActiveChannel() {
+    UpdateStrategyCustomization tweaker = UpdateStrategyCustomization.getInstance();
+    ChannelStatus current = getSelectedChannelStatus();
+    return tweaker.isChannelActive(current)
+           ? current
+           : getActiveChannels().stream().filter(ch -> ch.compareTo(current) > 0).findFirst().orElse(ChannelStatus.RELEASE);
+  }
+
+  @NotNull
+  public List<String> getPluginHosts() {
+    List<String> hosts = new ArrayList<>(myState.getPluginHosts());
+    String pluginHosts = System.getProperty("idea.plugin.hosts");
+    if (pluginHosts != null) {
+      ContainerUtil.addAll(hosts, pluginHosts.split(";"));
+    }
+
+    UpdateSettingsProviderHelper.addPluginRepositories(hosts);
+    return hosts;
   }
 
   public void forceCheckForUpdateAfterRestart() {
-    LAST_TIME_CHECKED = 0;
+    myState.setLastTimeChecked(0);
+  }
+
+  public void saveLastCheckedInfo() {
+    myState.setLastTimeChecked(System.currentTimeMillis());
+    myState.setLastBuildChecked(ApplicationInfo.getInstance().getBuild().asString());
+  }
+
+  public boolean canUseSecureConnection() {
+    return myState.isUseSecureConnection() && NetUtils.isSniEnabled();
+  }
+
+  public boolean isThirdPartyPluginsAllowed() {
+    return myState.isThirdPartyPluginsAllowed();
+  }
+
+  public void setThirdPartyPluginsAllowed(boolean value) {
+    myState.setThirdPartyPluginsAllowed(value);
   }
 }

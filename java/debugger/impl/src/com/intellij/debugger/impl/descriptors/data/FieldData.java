@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,7 +30,8 @@ public final class FieldData extends DescriptorData<FieldDescriptorImpl>{
     myField = field;
   }
 
-  protected FieldDescriptorImpl createDescriptorImpl(Project project) {
+  @Override
+  protected FieldDescriptorImpl createDescriptorImpl(@NotNull Project project) {
     return new FieldDescriptorImpl(project, myObjRef, myField);
   }
 
@@ -46,7 +47,8 @@ public final class FieldData extends DescriptorData<FieldDescriptorImpl>{
     return myObjRef.hashCode() + myField.hashCode();
   }
 
+  @Override
   public DisplayKey<FieldDescriptorImpl> getDisplayKey() {
-    return new SimpleDisplayKey<FieldDescriptorImpl>(myField);
+    return new SimpleDisplayKey<>(myField);
   }
 }

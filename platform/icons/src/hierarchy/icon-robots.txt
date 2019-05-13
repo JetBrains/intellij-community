@@ -1,0 +1,3 @@
+deprecated: base.png -> /actions/forward.svg; to be removed in IDEA 2020 - use AllIcons.Actions.Forward
+deprecated: callee.png -> /hierarchy/subtypes.svg; to be removed in IDEA 2020 - use AllIcons.Hierarchy.Subtypes
+deprecated: caller.png -> /hierarchy/supertypes.svg; to be removed in IDEA 2020 - use AllIcons.Hierarchy.Supertypes

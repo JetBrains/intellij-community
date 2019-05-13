@@ -16,14 +16,31 @@
 
 package com.intellij.openapi.vcs.changes.ui;
 
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.changes.ChangeListOwner;
+import com.intellij.openapi.vcs.changes.IgnoredViewDialog;
+import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NotNull;
 
-/**
- * @author yole
- */
-public class ChangesBrowserIgnoredFilesNode extends ChangesBrowserNode {
-  protected ChangesBrowserIgnoredFilesNode(Object userObject) {
-    super(userObject);
+import java.util.List;
+
+public class ChangesBrowserIgnoredFilesNode extends ChangesBrowserSpecificFilesNode {
+
+  private final boolean myUpdatingMode;
+
+  protected ChangesBrowserIgnoredFilesNode(Project project, @NotNull List<VirtualFile> files, boolean updatingMode) {
+    super(IGNORED_FILES_TAG, files, () -> {
+      if (!project.isDisposed()) new IgnoredViewDialog(project).show();
+    });
+    myUpdatingMode = updatingMode;
+  }
+
+  @Override
+  public void render(@NotNull ChangesBrowserNodeRenderer renderer, boolean selected, boolean expanded, boolean hasFocus) {
+    super.render(renderer, selected, expanded, hasFocus);
+    if (myUpdatingMode) {
+      appendUpdatingState(renderer);
+    }
   }
 
   @Override
@@ -34,5 +51,10 @@ public class ChangesBrowserIgnoredFilesNode extends ChangesBrowserNode {
   @Override
   public void acceptDrop(final ChangeListOwner dragOwner, final ChangeListDragBean dragBean) {
     IgnoreUnversionedDialog.ignoreSelectedFiles(dragOwner.getProject(), dragBean.getUnversionedFiles());
+  }
+
+  @Override
+  public int getSortWeight() {
+    return IGNORED_SORT_WEIGHT;
   }
 }

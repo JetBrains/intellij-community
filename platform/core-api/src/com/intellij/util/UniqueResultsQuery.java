@@ -1,22 +1,9 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.util;
 
 import com.intellij.concurrency.AsyncFuture;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
 import gnu.trove.TObjectHashingStrategy;
@@ -28,19 +15,21 @@ import java.util.*;
  * @author max
  */
 public class UniqueResultsQuery<T, M> implements Query<T> {
-  private final Query<T> myOriginal;
-  private final TObjectHashingStrategy<M> myHashingStrategy;
-  private final Function<T, M> myMapper;
+  @NotNull private final Query<? extends T> myOriginal;
+  @NotNull private final TObjectHashingStrategy<? super M> myHashingStrategy;
+  @NotNull private final Function<? super T, ? extends M> myMapper;
 
-  public UniqueResultsQuery(@NotNull Query<T> original) {
-    this(original, ContainerUtil.<M>canonicalStrategy(), (Function<T, M>)FunctionUtil.<M>id());
+  public UniqueResultsQuery(@NotNull Query<? extends T> original) {
+    //noinspection unchecked
+    this(original, ContainerUtil.canonicalStrategy(), Function.ID);
   }
 
-  public UniqueResultsQuery(@NotNull Query<T> original, @NotNull TObjectHashingStrategy<M> hashingStrategy) {
-    this(original, hashingStrategy, (Function<T, M>)FunctionUtil.<M>id());
+  public UniqueResultsQuery(@NotNull Query<? extends T> original, @NotNull TObjectHashingStrategy<? super M> hashingStrategy) {
+    //noinspection unchecked
+    this(original, hashingStrategy, Function.ID);
   }
 
-  public UniqueResultsQuery(@NotNull Query<T> original, @NotNull TObjectHashingStrategy<M> hashingStrategy, @NotNull Function<T, M> mapper) {
+  public UniqueResultsQuery(@NotNull Query<? extends T> original, @NotNull TObjectHashingStrategy<? super M> hashingStrategy, @NotNull Function<? super T, ? extends M> mapper) {
     myOriginal = original;
     myHashingStrategy = hashingStrategy;
     myMapper = mapper;
@@ -52,39 +41,32 @@ public class UniqueResultsQuery<T, M> implements Query<T> {
   }
 
   @Override
-  public boolean forEach(@NotNull final Processor<T> consumer) {
-    return process(consumer, Collections.synchronizedSet(new THashSet<M>(myHashingStrategy)));
+  public boolean forEach(@NotNull final Processor<? super T> consumer) {
+    return process(Collections.synchronizedSet(new THashSet<>(myHashingStrategy)), consumer);
   }
 
   @NotNull
   @Override
-  public AsyncFuture<Boolean> forEachAsync(@NotNull Processor<T> consumer) {
-    return processAsync(consumer, Collections.synchronizedSet(new THashSet<M>(myHashingStrategy)));
+  public AsyncFuture<Boolean> forEachAsync(@NotNull Processor<? super T> consumer) {
+    return processAsync(Collections.synchronizedSet(new THashSet<>(myHashingStrategy)), consumer);
   }
 
-  private boolean process(final Processor<T> consumer, final Set<M> processedElements) {
+  private boolean process(@NotNull Set<? super M> processedElements, @NotNull Processor<? super T> consumer) {
     return myOriginal.forEach(new MyProcessor(processedElements, consumer));
   }
 
-  private AsyncFuture<Boolean> processAsync(final Processor<T> consumer, final Set<M> processedElements) {
+  @NotNull
+  private AsyncFuture<Boolean> processAsync(@NotNull Set<? super M> processedElements, @NotNull Processor<? super T> consumer) {
     return myOriginal.forEachAsync(new MyProcessor(processedElements, consumer));
   }
-
 
   @Override
   @NotNull
   public Collection<T> findAll() {
-    if (myMapper == Function.ID) {
-      Set<M> set = new THashSet<M>(myHashingStrategy);
-      process(CommonProcessors.<T>alwaysTrue(), Collections.synchronizedSet(set));
-      //noinspection unchecked
-      return (Collection<T>)set;
-    }
-    else {
-      final CommonProcessors.CollectProcessor<T> processor = new CommonProcessors.CollectProcessor<T>(Collections.synchronizedList(new ArrayList<T>()));
-      forEach(processor);
-      return processor.getResults();
-    }
+    List<T> result = Collections.synchronizedList(new ArrayList<>());
+    Processor<T> processor = Processors.cancelableCollectProcessor(result);
+    forEach(processor);
+    return result;
   }
 
   @NotNull
@@ -93,23 +75,36 @@ public class UniqueResultsQuery<T, M> implements Query<T> {
     return findAll().toArray(a);
   }
 
+  @NotNull
   @Override
   public Iterator<T> iterator() {
     return findAll().iterator();
   }
 
   private class MyProcessor implements Processor<T> {
-    private final Set<M> myProcessedElements;
-    private final Processor<T> myConsumer;
+    private final Set<? super M> myProcessedElements;
+    private final Processor<? super T> myConsumer;
 
-    public MyProcessor(Set<M> processedElements, Processor<T> consumer) {
+    MyProcessor(@NotNull Set<? super M> processedElements, @NotNull Processor<? super T> consumer) {
       myProcessedElements = processedElements;
       myConsumer = consumer;
     }
 
     @Override
     public boolean process(final T t) {
-      return !myProcessedElements.add(myMapper.fun(t)) || myConsumer.process(t);
+      ProgressManager.checkCanceled();
+      // in case of exception do not mark the element as processed, we couldn't recover otherwise
+      M m = myMapper.fun(t);
+      if (myProcessedElements.contains(m)) return true;
+      boolean result = myConsumer.process(t);
+      myProcessedElements.add(m);
+      return result;
     }
+  }
+
+  @SuppressWarnings("HardCodedStringLiteral")
+  @Override
+  public String toString() {
+    return "UniqueQuery: "+myOriginal;
   }
 }

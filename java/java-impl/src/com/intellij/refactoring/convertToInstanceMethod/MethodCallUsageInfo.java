@@ -27,7 +27,7 @@ import com.intellij.psi.PsiMethodCallExpression;
 class MethodCallUsageInfo extends UsageInfo {
   private final PsiMethodCallExpression myMethodCall;
 
-  public MethodCallUsageInfo(PsiMethodCallExpression methodCall) {
+  MethodCallUsageInfo(PsiMethodCallExpression methodCall) {
     super(methodCall);
     myMethodCall = methodCall;
   }

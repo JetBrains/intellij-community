@@ -22,6 +22,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.*;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.regex.Pattern;
 
@@ -32,7 +33,7 @@ public class SSHConfig {
   /**
    * Entry list for config
    */
-  final List<HostEntry> myEntries = new ArrayList<HostEntry>();
+  final List<HostEntry> myEntries = new ArrayList<>();
   /**
    * User home directory
    */
@@ -46,7 +47,7 @@ public class SSHConfig {
   /**
    * Allowed authentication methods
    */
-  @NonNls private final static HashSet<String> ALLOWED_METHODS = new HashSet<String>();
+  @NonNls private final static HashSet<String> ALLOWED_METHODS = new HashSet<>();
 
   static {
     ALLOWED_METHODS.add(SSHMain.PUBLIC_KEY_METHOD);
@@ -110,8 +111,7 @@ public class SSHConfig {
       // no config file = empty config file
       return rc;
     }
-    BufferedReader in = new BufferedReader(new InputStreamReader(new FileInputStream(configFile), "ISO-8859-1"));
-    try {
+    try (BufferedReader in = new BufferedReader(new InputStreamReader(new FileInputStream(configFile), StandardCharsets.ISO_8859_1))) {
       Host host = null;
       String line;
       while ((line = in.readLine()) != null) {
@@ -171,9 +171,6 @@ public class SSHConfig {
           host.myUser = argument;
         }
       }
-    }
-    finally {
-      in.close();
     }
     return rc;
   }
@@ -255,7 +252,7 @@ public class SSHConfig {
   }
 
   private static List<String> parseList(final String arg) {
-    List<String> values = new ArrayList<String>();
+    List<String> values = new ArrayList<>();
     for (String a : arg.split("[ \t,]+")) {
       if (a.length() == 0) {
         continue;
@@ -286,15 +283,15 @@ public class SSHConfig {
     /**
      * Negative patterns
      */
-    private final List<Pattern> myNegative = new ArrayList<Pattern>();
+    private final List<Pattern> myNegative = new ArrayList<>();
     /**
      * Positive patterns
      */
-    private final List<Pattern> myPositive = new ArrayList<Pattern>();
+    private final List<Pattern> myPositive = new ArrayList<>();
     /**
      * Exact positive patterns that match host exactly rather than by mask
      */
-    private final List<String> myExactPositive = new ArrayList<String>();
+    private final List<String> myExactPositive = new ArrayList<>();
     /**
      * The host entry
      */
@@ -305,7 +302,7 @@ public class SSHConfig {
      *
      * @param patterns a patterns to match
      */
-    public HostEntry(final String patterns) {
+    HostEntry(final String patterns) {
       for (String pattern : patterns.split("[\t ,]+")) {
         if (pattern.length() == 0) {
           continue;
@@ -420,7 +417,6 @@ public class SSHConfig {
     /**
      * @return port number
      */
-    @SuppressWarnings({"NullableProblems"})
     public int getPort() {
       return notNull(myPort).intValue();
     }
@@ -447,7 +443,6 @@ public class SSHConfig {
     /**
      * @return true if the host should be use in the batch mode
      */
-    @SuppressWarnings({"NullableProblems"})
     public boolean isBatchMode() {
       return notNull(myBatchMode).booleanValue();
     }
@@ -463,7 +458,6 @@ public class SSHConfig {
     /**
      * @return the number of the password prompts
      */
-    @SuppressWarnings({"NullableProblems"})
     public int getNumberOfPasswordPrompts() {
       return notNull(myNumberOfPasswordPrompts).intValue();
     }
@@ -493,7 +487,6 @@ public class SSHConfig {
     /**
      * Set defaults for unspecified fields
      */
-    @SuppressWarnings({"HardCodedStringLiteral"})
     private void setDefaults() {
       if (myUser == null) {
         myUser = System.getProperty("user.name");

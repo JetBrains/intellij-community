@@ -20,6 +20,8 @@ import com.intellij.psi.util.MethodSignatureUtil;
 import com.intellij.refactoring.classMembers.AbstractMemberInfoStorage;
 
 import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.Set;
 
 
 public class MemberInfoStorage extends AbstractMemberInfoStorage<PsiMember, PsiClass, MemberInfo> {
@@ -53,24 +55,32 @@ public class MemberInfoStorage extends AbstractMemberInfoStorage<PsiMember, PsiC
 
   @Override
   protected void buildSubClassesMap(PsiClass aClass) {
+    buildSubClassesMap(aClass, new HashSet<>());
+  }
+
+  private void buildSubClassesMap(PsiClass aClass, Set<PsiClass> visited) {
     final PsiReferenceList extendsList = aClass.getExtendsList();
     if (extendsList != null) {
-      buildSubClassesMapForList(extendsList.getReferencedTypes(), aClass);
+      buildSubClassesMapForList(aClass, visited, extendsList.getReferencedTypes());
     }
     final PsiReferenceList implementsList = aClass.getImplementsList();
     if (implementsList != null) {
-      buildSubClassesMapForList(implementsList.getReferencedTypes(), aClass);
+      buildSubClassesMapForList(aClass, visited, implementsList.getReferencedTypes());
+    }
+
+    if (aClass instanceof PsiAnonymousClass) {
+      buildSubClassesMapForList(aClass, visited, ((PsiAnonymousClass)aClass).getBaseClassType());
     }
   }
 
-  private void buildSubClassesMapForList(final PsiClassType[] classesList, PsiClass aClass) {
-    for (int i = 0; i < classesList.length; i++) {
-      PsiClassType element = classesList[i];
+  private void buildSubClassesMapForList(final PsiClass aClass,
+                                         final Set<PsiClass> processed,
+                                         final PsiClassType... classesList) {
+    for (PsiClassType element : classesList) {
       PsiClass resolved = element.resolve();
-      if(resolved != null) {
-        PsiClass superClass = resolved;
-        getSubclasses(superClass).add(aClass);
-        buildSubClassesMap(superClass);
+      if (resolved != null && processed.add(resolved)) {
+        getSubclasses(resolved).add(aClass);
+        buildSubClassesMap(resolved, processed);
       }
     }
   }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -99,16 +99,6 @@ public class DummyFileSystem extends DeprecatedVirtualFileSystem implements NonP
   }
 
   @Override
-  public void moveFile(Object requestor, @NotNull VirtualFile vFile, @NotNull VirtualFile newParent) throws IOException {
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
-  public VirtualFile copyFile(Object requestor, @NotNull VirtualFile vFile, @NotNull VirtualFile newParent, @NotNull final String copyName) throws IOException {
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
   public void renameFile(Object requestor, @NotNull VirtualFile vFile, @NotNull String newName) throws IOException {
     final String oldName = vFile.getName();
     fireBeforePropertyChange(requestor, vFile, VirtualFile.PROP_NAME, oldName, newName);
@@ -116,9 +106,10 @@ public class DummyFileSystem extends DeprecatedVirtualFileSystem implements NonP
     firePropertyChanged(requestor, vFile, VirtualFile.PROP_NAME, oldName, newName);
   }
 
+  @NotNull
   @Override
   public VirtualFile createChildFile(Object requestor, @NotNull VirtualFile vDir, @NotNull String fileName) throws IOException {
-    final VirtualFileDirectoryImpl dir = ((VirtualFileDirectoryImpl)vDir);
+    final VirtualFileDirectoryImpl dir = (VirtualFileDirectoryImpl)vDir;
     VirtualFileImpl child = new VirtualFileDataImpl(this, dir, fileName);
     dir.addChild(child);
     fireFileCreated(requestor, child);
@@ -138,7 +129,7 @@ public class DummyFileSystem extends DeprecatedVirtualFileSystem implements NonP
   @Override
   @NotNull
   public VirtualFile createChildDirectory(Object requestor, @NotNull VirtualFile vDir, @NotNull String dirName) throws IOException {
-    final VirtualFileDirectoryImpl dir = ((VirtualFileDirectoryImpl)vDir);
+    final VirtualFileDirectoryImpl dir = (VirtualFileDirectoryImpl)vDir;
     VirtualFileImpl child = new VirtualFileDirectoryImpl(this, dir, dirName);
     dir.addChild(child);
     fireFileCreated(requestor, child);

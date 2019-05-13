@@ -16,14 +16,15 @@
 package com.intellij.lang.ant.dom;
 
 import com.intellij.lang.properties.IProperty;
+import com.intellij.lang.properties.PropertiesImplUtil;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.pom.references.PomService;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.util.PathUtil;
-import com.intellij.util.containers.HashMap;
 import com.intellij.util.xml.Attribute;
 import com.intellij.util.xml.Convert;
 import com.intellij.util.xml.DomTarget;
@@ -35,12 +36,12 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Apr 21, 2010
  */
 public abstract class AntDomProperty extends AntDomClasspathComponent implements PropertiesProvider{
   private volatile Map<String, String> myCachedProperties;
@@ -77,6 +78,7 @@ public abstract class AntDomProperty extends AntDomClasspathComponent implements
   @Attribute("basedir")
   public abstract GenericAttributeValue<String> getbasedir();
 
+  @Override
   @NotNull
   public final Iterator<String> getNamesIterator() {
     final String prefix = getPropertyPrefixValue();
@@ -85,20 +87,24 @@ public abstract class AntDomProperty extends AntDomClasspathComponent implements
       return delegate;
     }
     return new Iterator<String>() {
+      @Override
       public boolean hasNext() {
         return delegate.hasNext();
       }
 
+      @Override
       public String next() {
         return prefix + delegate.next();
       }
 
+      @Override
       public void remove() {
         delegate.remove();
       }
     };
   }
 
+  @Override
   public PsiElement getNavigationElement(final String propertyName) {
     DomTarget domTarget = DomTarget.getTarget(this);
     if (domTarget == null) {
@@ -113,7 +119,7 @@ public abstract class AntDomProperty extends AntDomClasspathComponent implements
         }
       }
     }
-    
+
     if (domTarget != null) {
       final PsiElement psi = PomService.convertToPsi(domTarget);
       if (psi != null) {
@@ -131,14 +137,16 @@ public abstract class AntDomProperty extends AntDomClasspathComponent implements
         }
         _propertyName = propertyName.substring(prefix.length());
       }
-      if (psiFile instanceof PropertiesFile) {
-        final IProperty property = ((PropertiesFile)psiFile).findPropertyByKey(_propertyName);
+      final PropertiesFile pf = toPropertiesFile(psiFile);
+      if (pf != null) {
+        final IProperty property = pf.findPropertyByKey(_propertyName);
         return property != null? property.getPsiElement() : null;
       }
     }
     return null;
   }
 
+  @Override
   @Nullable
   public final String getPropertyValue(String propertyName) {
     final String prefix = getPropertyPrefixValue();
@@ -185,10 +193,11 @@ public abstract class AntDomProperty extends AntDomClasspathComponent implements
     else { // name attrib is not specified
       final PsiFileSystemItem psiFile = getFile().getValue();
       if (psiFile != null) {
-        if (psiFile instanceof PropertiesFile) {
-          result = new HashMap<String, String>();
-          for (final IProperty property : ((PropertiesFile)psiFile).getProperties()) {
-            result.put(property.getUnescapedKey(), property.getValue());
+        final PropertiesFile file = toPropertiesFile(psiFile);
+        if (file != null) {
+          result = new HashMap<>();
+          for (final IProperty property : file.getProperties()) {
+            result.put(property.getUnescapedKey(), property.getUnescapedValue());
           }
         }
       }
@@ -197,7 +206,7 @@ public abstract class AntDomProperty extends AntDomClasspathComponent implements
         if (!prefix.endsWith(".")) {
           prefix += ".";
         }
-        result = new HashMap<String, String>();
+        result = new HashMap<>();
         for (Map.Entry<String, String> entry : System.getenv().entrySet()) {
           result.put(prefix + entry.getKey(), entry.getValue());
         }
@@ -212,10 +221,11 @@ public abstract class AntDomProperty extends AntDomClasspathComponent implements
             final InputStream stream = loader.getResourceAsStream(resource);
             if (stream != null) {
               try {
+                // todo: Remote file can be XmlPropertiesFile
                 final PropertiesFile propFile = (PropertiesFile)CustomAntElementsRegistry.loadContentAsFile(getXmlTag().getProject(), stream, StdFileTypes.PROPERTIES);
-                result = new HashMap<String, String>();
+                result = new HashMap<>();
                 for (final IProperty property : propFile.getProperties()) {
-                  result.put(property.getUnescapedKey(), property.getValue());
+                  result.put(property.getUnescapedKey(), property.getUnescapedValue());
                 }
               }
               catch (IOException ignored) {
@@ -255,4 +265,17 @@ public abstract class AntDomProperty extends AntDomClasspathComponent implements
     return loader;
   }
 
+  @Nullable
+  public PropertiesFile getPropertiesFile() {
+    return toPropertiesFile(getFile().getValue());
+  }
+
+  @Nullable
+  private static PropertiesFile toPropertiesFile(@Nullable final PsiFileSystemItem item) {
+    if (item instanceof PropertiesFile) {
+      return (PropertiesFile)item;
+    }
+    // Sometimes XmlPropertiesFile is just XmlFile, sao we should ask PropertiesImplUtil about that.
+    return item instanceof PsiFile? PropertiesImplUtil.getPropertiesFile(((PsiFile)item)) : null;
+  }
 }

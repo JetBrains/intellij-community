@@ -1,259 +1,338 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
+// Copyright 2000-2017 JetBrains s.r.o.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+// http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
 package com.intellij.util.lang;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.util.TimedComputable;
-import org.jetbrains.annotations.NonNls;
+import com.intellij.reference.SoftReference;
+import gnu.trove.TIntHashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import sun.misc.Resource;
 
-import java.io.*;
-import java.lang.ref.SoftReference;
+import java.io.ByteArrayInputStream;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
 import java.net.URL;
-import java.util.Enumeration;
+import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.jar.Attributes;
+import java.util.jar.JarFile;
+import java.util.jar.Manifest;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
+import static com.intellij.openapi.util.Pair.pair;
+
 class JarLoader extends Loader {
-  private final URL myURL;
+  private static final List<Pair<Resource.Attribute, Attributes.Name>> PACKAGE_FIELDS = Arrays.asList(
+    pair(Resource.Attribute.SPEC_TITLE, Attributes.Name.SPECIFICATION_TITLE),
+    pair(Resource.Attribute.SPEC_VERSION, Attributes.Name.SPECIFICATION_VERSION),
+    pair(Resource.Attribute.SPEC_VENDOR, Attributes.Name.SPECIFICATION_VENDOR),
+    pair(Resource.Attribute.IMPL_TITLE, Attributes.Name.IMPLEMENTATION_TITLE),
+    pair(Resource.Attribute.IMPL_VERSION, Attributes.Name.IMPLEMENTATION_VERSION),
+    pair(Resource.Attribute.IMPL_VENDOR, Attributes.Name.IMPLEMENTATION_VENDOR));
+
+  private final String myFilePath;
+  private final ClassPath myConfiguration;
+  private final URL myUrl;
   private SoftReference<JarMemoryLoader> myMemoryLoader;
-  private final boolean myCanLockJar;
-  private static final boolean myDebugTime = false;
-  private static int misses;
-  private static int hits;
+  private volatile SoftReference<ZipFile> myZipFileSoftReference; // Used only when myConfiguration.myCanLockJars==true
+  private volatile Map<Resource.Attribute, String> myAttributes;
+  private volatile String myClassPathManifestAttribute;
+  private static final String NULL_STRING = "<null>";
 
-  private static final Logger LOG = Logger.getInstance(JarLoader.class);
+  JarLoader(URL url, int index, ClassPath configuration) throws IOException {
+    super(new URL("jar", "", -1, url + "!/"), index);
 
-  private final TimedComputable<ZipFile> myZipFileRef = new TimedComputable<ZipFile>(null) {
-    @NotNull
-    protected ZipFile calc() {
+    myFilePath = urlToFilePath(url);
+    myConfiguration = configuration;
+    myUrl = url;
+
+    if (!configuration.myLazyClassloadingCaches) {
+      ZipFile zipFile = getZipFile(); // IOException from opening is propagated to caller if zip file isn't valid,
       try {
-        final ZipFile zipFile = doGetZipFile();
-        if (zipFile == null) throw new RuntimeException("Can't load zip file");
-        return zipFile;
+        if (configuration.myPreloadJarContents) {
+          JarMemoryLoader loader = JarMemoryLoader.load(zipFile, getBaseURL(), this);
+          if (loader != null) {
+            myMemoryLoader = new SoftReference<JarMemoryLoader>(loader);
+          }
+        }
       }
-      catch (IOException e) {
-        throw new RuntimeException(e);
-      }
-    }
-  };
-
-  @NonNls private static final String JAR_PROTOCOL = "jar";
-  @NonNls private static final String FILE_PROTOCOL = "file";
-  private static final long NS_THRESHOLD = 10000000;
-
-  JarLoader(URL url, boolean canLockJar, int index) throws IOException {
-    super(new URL(JAR_PROTOCOL, "", -1, url + "!/"), index);
-    myURL = url;
-    myCanLockJar = canLockJar;
-  }
-
-  void preLoadClasses() {
-    ZipFile zipFile = null;
-    try {
-      zipFile = acquireZipFile();
-      if (zipFile == null) return;
-      try {
-        File file = new File(zipFile.getName());
-        myMemoryLoader = new SoftReference<JarMemoryLoader>(JarMemoryLoader.load(file, getBaseURL()));
-      }
-      catch (Exception e) {
-        LOG.error(e);
-      }
-    }
-    catch (Exception e) {
-      // it happens :) eg tools.jar under MacOS
-    }
-    finally {
-      try {
+      finally {
         releaseZipFile(zipFile);
       }
-      catch (IOException ignore) {
+    }
+  }
 
+  Map<Resource.Attribute, String> getAttributes() {
+    loadManifestAttributes();
+    return myAttributes;
+  }
+
+  @Nullable
+  String getClassPathManifestAttribute() {
+    loadManifestAttributes();
+    String manifestAttribute = myClassPathManifestAttribute;
+    return manifestAttribute != NULL_STRING ? manifestAttribute : null;
+  }
+
+  private static String urlToFilePath(URL url) {
+    try {
+      return new File(url.toURI()).getPath();
+    } catch (Throwable ignore) { // URISyntaxException or IllegalArgumentException
+      return url.getPath();
+    }
+  }
+
+  @Nullable
+  private static Map<Resource.Attribute, String> getAttributes(@Nullable Attributes attributes) {
+    if (attributes == null) return null;
+    Map<Resource.Attribute, String> map = null;
+
+    for (Pair<Resource.Attribute, Attributes.Name> p : PACKAGE_FIELDS) {
+      String value = attributes.getValue(p.second);
+      if (value != null) {
+        if (map == null) map = new EnumMap<Resource.Attribute, String>(Resource.Attribute.class);
+        map.put(p.first, value);
+      }
+    }
+
+    return map;
+  }
+
+  private void loadManifestAttributes() {
+    if (myClassPathManifestAttribute != null) return;
+    synchronized (this) {
+      try {
+        if (myClassPathManifestAttribute != null) return;
+        ZipFile zipFile = getZipFile();
+        try {
+          Attributes manifestAttributes = myConfiguration.getManifestData(myUrl);
+          if (manifestAttributes == null) {
+            ZipEntry entry = zipFile.getEntry(JarFile.MANIFEST_NAME);
+            manifestAttributes = loadManifestAttributes(entry != null ? zipFile.getInputStream(entry) : null);
+            if (manifestAttributes == null) manifestAttributes = new Attributes(0);
+            myConfiguration.cacheManifestData(myUrl, manifestAttributes);
+          }
+
+          myAttributes = getAttributes(manifestAttributes);
+          Object attribute = manifestAttributes.get(Attributes.Name.CLASS_PATH);
+          myClassPathManifestAttribute = attribute instanceof String ? (String)attribute : NULL_STRING;
+        }
+        finally {
+          releaseZipFile(zipFile);
+        }
+      } catch (IOException io) {
+        throw new RuntimeException(io);
       }
     }
   }
 
   @Nullable
-  private ZipFile acquireZipFile() throws IOException {
-    if (myCanLockJar) {
-      return myZipFileRef.acquire();
-    }
-    return doGetZipFile();
-  }
-
-  private void releaseZipFile(final ZipFile zipFile) throws IOException {
-    if (myCanLockJar) {
-      myZipFileRef.release();
-    }
-    else if (zipFile != null) {
-      zipFile.close();
-    }
-  }
-
-  @Nullable
-  private ZipFile doGetZipFile() throws IOException {
-    if (FILE_PROTOCOL.equals(myURL.getProtocol())) {
-      String s = FileUtil.unquote(myURL.getFile());
-      if (!new File(s).exists()) {
-        throw new FileNotFoundException(s);
+  private static Attributes loadManifestAttributes(@Nullable InputStream stream) {
+    if (stream == null) return null;
+    try {
+      try {
+        return new Manifest(stream).getMainAttributes();
       }
-      else {
-        return new ZipFile(s);
+      finally {
+        stream.close();
       }
     }
-
+    catch (Exception ignored) { }
     return null;
   }
 
-  void buildCache(final ClasspathCache cache) throws IOException {
-    ZipFile zipFile = null;
+  @NotNull
+  @Override
+  public ClasspathCache.LoaderData buildData() throws IOException {
+    ZipFile zipFile = getZipFile();
     try {
-      zipFile = acquireZipFile();
-      if (zipFile == null) return;
-      final Enumeration<? extends ZipEntry> entries = zipFile.entries();
-
+      ClasspathCache.LoaderDataBuilder loaderDataBuilder = new ClasspathCache.LoaderDataBuilder();
+      Enumeration<? extends ZipEntry> entries = zipFile.entries();
+      
       while (entries.hasMoreElements()) {
-        ZipEntry zipEntry = entries.nextElement();
-        String name = zipEntry.getName();
-        cache.addResourceEntry(name, this);
-        cache.addNameEntry(name, this);
+        ZipEntry entry = entries.nextElement();
+        String name = entry.getName();
+
+        if (name.endsWith(UrlClassLoader.CLASS_EXTENSION)) {
+          loaderDataBuilder.addClassPackageFromName(name);
+        } else {
+          loaderDataBuilder.addResourcePackageFromName(name);
+        }
+
+        loaderDataBuilder.addPossiblyDuplicateNameEntry(name);
       }
+
+      return loaderDataBuilder.build();
     }
     finally {
       releaseZipFile(zipFile);
     }
   }
 
-  @Nullable
-  Resource getResource(String name, boolean flag) {
-    final long started = myDebugTime ? System.nanoTime():0;
-    if (myMemoryLoader != null) {
-      JarMemoryLoader loader = myMemoryLoader.get();
-      if (loader != null) {
-        Resource resource = loader.getResource(name);
-        if (resource != null) return resource;
-      }
-    }
-    ZipFile file = null;
+  private final AtomicInteger myNumberOfRequests = new AtomicInteger();
+  private volatile TIntHashSet myPackageHashesInside;
+
+  private TIntHashSet buildPackageHashes() {
     try {
-      file = acquireZipFile();
-      if (file == null) return null;
-      ZipEntry entry = file.getEntry(name);
-      if (entry != null) {
-        ++hits;
-        if (hits % 1000 == 0 && UrlClassLoader.doDebug) {
-          UrlClassLoader.debug("Exists jar loader: misses:" + misses + ", hits:" + hits);
+      ZipFile zipFile = getZipFile();
+      try {
+        Enumeration<? extends ZipEntry> entries = zipFile.entries();
+        TIntHashSet result = new TIntHashSet();
+
+        while (entries.hasMoreElements()) {
+          ZipEntry entry = entries.nextElement();
+          result.add(ClasspathCache.getPackageNameHash(entry.getName()));
         }
-        return new MyResource(entry, new URL(getBaseURL(), name));
+        result.add(0); // empty package is in every jar
+        return result;
+      }
+      finally {
+        releaseZipFile(zipFile);
+      }
+    } catch (Exception e) {
+      error("url: " + myFilePath, e);
+      return new TIntHashSet(0);
+    }
+  }
+
+  @Override
+  @Nullable
+  Resource getResource(String name) {
+    if (myConfiguration.myLazyClassloadingCaches) {
+      int numberOfHits = myNumberOfRequests.incrementAndGet();
+      TIntHashSet packagesInside = myPackageHashesInside;
+
+      if (numberOfHits > ClasspathCache.NUMBER_OF_ACCESSES_FOR_LAZY_CACHING && packagesInside == null) {
+        myPackageHashesInside = packagesInside = buildPackageHashes();
       }
 
-      if (misses % 1000 == 0 && UrlClassLoader.doDebug) {
-        UrlClassLoader.debug("Missed " + name + " from jar:" + myURL);
+      if (packagesInside != null && !packagesInside.contains(ClasspathCache.getPackageNameHash(name))) {
+        return null;
       }
-      ++misses;
+    }
+
+    JarMemoryLoader loader = myMemoryLoader != null ? myMemoryLoader.get() : null;
+    if (loader != null) {
+      Resource resource = loader.getResource(name);
+      if (resource != null) return resource;
+    }
+
+    try {
+      ZipFile zipFile = getZipFile();
+      try {
+        ZipEntry entry = zipFile.getEntry(name);
+        if (entry != null) {
+          return new MyResource(getBaseURL(), entry);
+        }
+      }
+      finally {
+        releaseZipFile(zipFile);
+      }
     }
     catch (Exception e) {
-      return null;
-    }
-    finally {
-      try {
-        releaseZipFile(file);
-      }
-      catch (IOException ignored) {
-      }
-      final long doneFor = myDebugTime ? System.nanoTime() - started :0;
-      if (doneFor > NS_THRESHOLD) {
-        System.out.println(doneFor/1000000 + " ms for jar loader get resource:"+name);
-      }
+      error("url: " + myFilePath, e);
     }
 
     return null;
   }
 
   private class MyResource extends Resource {
-    private final ZipEntry myEntry;
     private final URL myUrl;
+    private final ZipEntry myEntry;
 
-    public MyResource(ZipEntry name, URL url) {
-      myEntry = name;
-      myUrl = url;
+    MyResource(URL url, ZipEntry entry) throws IOException {
+      myUrl = new URL(url, entry.getName());
+      myEntry = entry;
     }
 
-    public String getName() {
-      return myEntry.getName();
-    }
-
+    @Override
     public URL getURL() {
       return myUrl;
     }
 
-    public URL getCodeSourceURL() {
-      return myURL;
-    }
-
-    @Nullable
+    @Override
     public InputStream getInputStream() throws IOException {
-      final boolean[] wasReleased = {false};
-      ZipFile file = null;
+      return new ByteArrayInputStream(getBytes());
+    }
 
+    @Override
+    public byte[] getBytes() throws IOException {
+      ZipFile file = getZipFile();
+      InputStream stream = null;
       try {
-        file = acquireZipFile();
-        if (file == null) {
-          releaseZipFile(file);
-          return null;
-        }
-
-        final InputStream inputStream = file.getInputStream(myEntry);
-        if (inputStream == null) {
-          releaseZipFile(file);
-          return null; // if entry was not found
-        }
-        final ZipFile finalFile = file;
-        return new FilterInputStream(inputStream) {
-          private boolean myClosed = false;
-          public void close() throws IOException {
-            super.close();
-            if (!myClosed) {
-              releaseZipFile(finalFile);
-            }
-            myClosed = true;
-            wasReleased[0] = true;
-          }
-        };
-      }
-      catch (IOException e) {
-        e.printStackTrace();
+        stream = file.getInputStream(myEntry);
+        return FileUtil.loadBytes(stream, (int)myEntry.getSize());
+      } finally {
+        if (stream != null) stream.close();
         releaseZipFile(file);
-        assert !wasReleased[0];
-        return null;
       }
     }
 
-    public int getContentLength() {
-      return (int)myEntry.getSize();
+    @Override
+    public String getValue(Attribute key) {
+      loadManifestAttributes();
+      return myAttributes != null ? myAttributes.get(key) : null;
     }
   }
 
-  @NonNls
+  protected void error(String message, Throwable t) {
+    if (myConfiguration.myLogErrorOnMissingJar) {
+      Logger.getInstance(JarLoader.class).error(message, t);
+    }
+    else {
+      Logger.getInstance(JarLoader.class).warn(message, t);
+    }
+  }
+
+  private static final Object ourLock = new Object();
+
+  @NotNull
+  private ZipFile getZipFile() throws IOException {
+    // This code is executed at least 100K times (O(number of classes needed to load)) and it takes considerable time to open ZipFile's
+    // such number of times so we store reference to ZipFile if we allowed to lock the file (assume it isn't changed)
+    if (myConfiguration.myCanLockJars) {
+      ZipFile zipFile = SoftReference.dereference(myZipFileSoftReference);
+      if (zipFile != null) return zipFile;
+
+      synchronized (ourLock) {
+        zipFile = SoftReference.dereference(myZipFileSoftReference);
+        if (zipFile != null) return zipFile;
+
+        // ZipFile's native implementation (ZipFile.c, zip_util.c) has path -> file descriptor cache
+        zipFile = new ZipFile(myFilePath);
+        myZipFileSoftReference = new SoftReference<ZipFile>(zipFile);
+        return zipFile;
+      }
+    }
+    else {
+      return new ZipFile(myFilePath);
+    }
+  }
+
+  private void releaseZipFile(ZipFile zipFile) throws IOException {
+    // Closing of zip file when myConfiguration.myCanLockJars=true happens in ZipFile.finalize
+    if (!myConfiguration.myCanLockJars) {
+      zipFile.close();
+    }
+  }
+
+  @Override
   public String toString() {
-    return "JarLoader [" + myURL + "]";
+    return "JarLoader [" + myFilePath + "]";
   }
 }

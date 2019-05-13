@@ -4,5 +4,5 @@ class Neg07 {
        Foo(X x) {}
    }
 
-   SuperFoo<String> sf1 = new Foo<><error descr="'Foo(java.lang.String & java.lang.Number)' in 'Neg07.Foo' cannot be applied to '(java.lang.String)'">("")</error>;
+   SuperFoo<String> sf1 = new Foo<><error descr="'Foo(java.lang.Number & java.lang.String)' in 'Neg07.Foo' cannot be applied to '(java.lang.String)'">("")</error>;
 }

@@ -4,12 +4,11 @@ import com.intellij.facet.frameworks.beans.Artifact;
 import com.intellij.facet.frameworks.beans.ArtifactItem;
 import com.intellij.facet.frameworks.beans.Artifacts;
 import com.intellij.facet.ui.libraries.LibraryInfo;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.HashSet;
+import java.util.HashSet;
 import com.intellij.util.net.HttpConfigurable;
 import com.intellij.util.xmlb.XmlSerializationException;
 import com.intellij.util.xmlb.XmlSerializer;
@@ -31,7 +30,13 @@ public class LibrariesDownloadAssistant {
 
   @NotNull
   public static Artifact[] getVersions(@NotNull String groupId, @NotNull URL... localUrls) {
-    final Artifact[] versions = getDownloadServiceVersions(groupId);
+    final Artifact[] versions;
+    if (!ApplicationManager.getApplication().isUnitTestMode()) {
+      versions = getDownloadServiceVersions(groupId);
+    }
+    else {
+      versions = null;
+    }
     return versions == null ? getVersions(localUrls) : versions;
   }
 
@@ -66,18 +71,18 @@ public class LibrariesDownloadAssistant {
 
   @NotNull
   public static Artifact[] getVersions(@NotNull URL... urls) {
-    Set<Artifact> versions = new HashSet<Artifact>();
+    Set<Artifact> versions = new HashSet<>();
     for (URL url : urls) {
       final Artifacts allArtifacts = deserialize(url);
       if (allArtifacts != null) {
         final Artifact[] vers = allArtifacts.getArtifacts();
         if (vers != null) {
-          versions.addAll(Arrays.asList(vers));
+          ContainerUtil.addAll(versions, Arrays.asList(vers));
         }
       }
     }
 
-    return versions.toArray(new Artifact[versions.size()]);
+    return versions.toArray(Artifact.EMPTY_ARRAY);
   }
 
   @Nullable
@@ -104,11 +109,7 @@ public class LibrariesDownloadAssistant {
 
   @Nullable
   private static Artifact findVersion(@Nullable Artifact[] versions, @NotNull final String versionId) {
-    return versions == null ? null : ContainerUtil.find(versions, new Condition<Artifact>() {
-      public boolean value(final Artifact springVersion) {
-        return versionId.equals(springVersion.getVersion());
-      }
-    });
+    return versions == null ? null : ContainerUtil.find(versions, springVersion -> versionId.equals(springVersion.getVersion()));
   }
 
   @NotNull
@@ -123,25 +124,22 @@ public class LibrariesDownloadAssistant {
 
     final List<LibraryInfo> infos = convert(version.getUrlPrefix(), version.getItems());
 
-    return infos.toArray(new LibraryInfo[infos.size()]);
+    return infos.toArray(LibraryInfo.EMPTY_ARRAY);
   }
 
   @NotNull
   private static List<LibraryInfo> convert(final String urlPrefix, @NotNull ArtifactItem[] jars) {
-    return ContainerUtil.mapNotNull(jars, new Function<ArtifactItem, LibraryInfo>() {
-      @Override
-      public LibraryInfo fun(ArtifactItem artifactItem) {
-        String downloadUrl = artifactItem.getUrl();
-        if (urlPrefix != null) {
-          if (downloadUrl == null) {
-            downloadUrl = artifactItem.getName();
-          }
-          if (!downloadUrl.startsWith("http://")) {
-            downloadUrl = urlPrefix + downloadUrl;
-          }
+    return ContainerUtil.mapNotNull(jars, artifactItem -> {
+      String downloadUrl = artifactItem.getUrl();
+      if (urlPrefix != null) {
+        if (downloadUrl == null) {
+          downloadUrl = artifactItem.getName();
         }
-        return new LibraryInfo(artifactItem.getName(), downloadUrl, downloadUrl, artifactItem.getMD5(), artifactItem.getRequiredClasses());
+        if (!downloadUrl.startsWith("http://")) {
+          downloadUrl = urlPrefix + downloadUrl;
+        }
       }
+      return new LibraryInfo(artifactItem.getName(), downloadUrl, downloadUrl, artifactItem.getMD5(), artifactItem.getRequiredClasses());
     });
   }
 }

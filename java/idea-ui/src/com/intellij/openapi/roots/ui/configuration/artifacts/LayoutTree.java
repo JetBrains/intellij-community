@@ -72,15 +72,12 @@ public class LayoutTree extends SimpleDnDAwareTree implements AdvancedDnDSource 
 
   @Override
   protected void configureUiHelper(TreeUIHelper helper) {
-    final Convertor<TreePath, String> convertor = new Convertor<TreePath, String>() {
-      @Override
-      public String convert(final TreePath path) {
-        final SimpleNode node = getNodeFor(path);
-        if (node instanceof PackagingElementNode) {
-          return ((PackagingElementNode<?>)node).getElementPresentation().getSearchName();
-        }
-        return "";
+    final Convertor<TreePath, String> convertor = path -> {
+      final SimpleNode node = getNodeFor(path);
+      if (node instanceof PackagingElementNode) {
+        return ((PackagingElementNode<?>)node).getElementPresentation().getSearchName();
       }
+      return "";
     };
     new TreeSpeedSearch(this, convertor, true);
   }
@@ -149,20 +146,17 @@ public class LayoutTree extends SimpleDnDAwareTree implements AdvancedDnDSource 
   }
 
   public List<PackagingElementNode<?>> findNodes(final Collection<? extends PackagingElement<?>> elements) {
-    final List<PackagingElementNode<?>> nodes = new ArrayList<PackagingElementNode<?>>();
-    TreeUtil.traverseDepth(getRootNode(), new TreeUtil.Traverse() {
-      @Override
-      public boolean accept(Object node) {
-        final Object userObject = ((DefaultMutableTreeNode)node).getUserObject();
-        if (userObject instanceof PackagingElementNode) {
-          final PackagingElementNode<?> packagingNode = (PackagingElementNode<?>)userObject;
-          final List<? extends PackagingElement<?>> nodeElements = packagingNode.getPackagingElements();
-          if (ContainerUtil.intersects(nodeElements, elements)) {
-            nodes.add(packagingNode);
-          }
+    final List<PackagingElementNode<?>> nodes = new ArrayList<>();
+    TreeUtil.traverseDepth(getRootNode(), node -> {
+      final Object userObject = ((DefaultMutableTreeNode)node).getUserObject();
+      if (userObject instanceof PackagingElementNode) {
+        final PackagingElementNode<?> packagingNode = (PackagingElementNode<?>)userObject;
+        final List<? extends PackagingElement<?>> nodeElements = packagingNode.getPackagingElements();
+        if (ContainerUtil.intersects(nodeElements, elements)) {
+          nodes.add(packagingNode);
         }
-        return true;
       }
+      return true;
     });
     return nodes;
   }
@@ -187,7 +181,7 @@ public class LayoutTree extends SimpleDnDAwareTree implements AdvancedDnDSource 
   }
 
   private class LayoutTreeCellEditor extends DefaultCellEditor {
-    public LayoutTreeCellEditor() {
+    LayoutTreeCellEditor() {
       super(new JTextField());
     }
 
@@ -220,12 +214,7 @@ public class LayoutTree extends SimpleDnDAwareTree implements AdvancedDnDSource 
       final boolean stopped = super.stopCellEditing();
       if (stopped && currentElement != null) {
         final RenameablePackagingElement finalCurrentElement = currentElement;
-        myArtifactsEditor.getLayoutTreeComponent().editLayout(new Runnable() {
-          @Override
-          public void run() {
-            finalCurrentElement.rename(newValue);
-          }
-        });
+        myArtifactsEditor.getLayoutTreeComponent().editLayout(() -> finalCurrentElement.rename(newValue));
         myArtifactsEditor.queueValidation();
         myArtifactsEditor.getLayoutTreeComponent().updatePropertiesPanel(true);
         addSubtreeToUpdate((DefaultMutableTreeNode)path.getLastPathComponent());

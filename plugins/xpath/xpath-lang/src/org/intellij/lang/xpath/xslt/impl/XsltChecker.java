@@ -16,12 +16,11 @@
 
 package org.intellij.lang.xpath.xslt.impl;
 
+import com.intellij.util.xml.NanoXmlBuilder;
 import org.intellij.lang.xpath.context.XPathVersion;
 import org.intellij.lang.xpath.xslt.XsltSupport;
 
-import com.intellij.util.xml.NanoXmlUtil;
-
-public class XsltChecker extends NanoXmlUtil.IXMLBuilderAdapter {
+public class XsltChecker implements NanoXmlBuilder {
     public enum LanguageLevel { NONE(null), V1(XPathVersion.V1), V2(XPathVersion.V2);
       private final XPathVersion myVersion;
 
@@ -41,7 +40,7 @@ public class XsltChecker extends NanoXmlUtil.IXMLBuilderAdapter {
     private State myState;
 
     @Override
-    public void startElement(String name, String nsPrefix, String nsURI, String systemID, int lineNr) throws Exception {
+    public void startElement(String name, String nsPrefix, String nsURI, String systemID, int lineNr) {
         if (("stylesheet".equals(name) || "transform".equals(name)) && XsltSupport.XSLT_NS.equals(nsURI)) {
             myState = State.POSSIBLY;
         } else {
@@ -54,12 +53,12 @@ public class XsltChecker extends NanoXmlUtil.IXMLBuilderAdapter {
         if (myState == State.POSSIBLY) {
             if ("version".equals(key) && (nsURI == null || nsURI.length() == 0)) {
                 checkVersion(value, State.YES);
-                stop();
+                NanoXmlBuilder.stop();
             }
         } else if (myState == State.POSSIBLY_SIMPLIFIED_SYNTAX) {
             if ("version".equals(key) && XsltSupport.XSLT_NS.equals(nsURI)) {
                 checkVersion(value, State.SIMPLIFIED);
-                stop();
+                NanoXmlBuilder.stop();
             }
         }
     }
@@ -88,12 +87,12 @@ public class XsltChecker extends NanoXmlUtil.IXMLBuilderAdapter {
 
     @Override
     public void elementAttributesProcessed(String name, String nsPrefix, String nsURI) throws Exception {
-        stop();  // the first element (or its attrs) decides - stop here
+        NanoXmlBuilder.stop();  // the first element (or its attrs) decides - stop here
     }
 
     @Override
     public void endElement(String name, String nsPrefix, String nsURI) throws Exception {
-        stop();  // the first element (or its attrs) decides - stop here
+        NanoXmlBuilder.stop();  // the first element (or its attrs) decides - stop here
     }
 
     public boolean isFullySupportedXsltFile() {

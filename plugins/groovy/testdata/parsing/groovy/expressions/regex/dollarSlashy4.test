@@ -10,8 +10,13 @@ Groovy script
       PsiWhiteSpace(' ')
       PsiElement(=)('=')
       PsiWhiteSpace(' ')
-      Literal
-        GroovyASTPsiElementImpl($/ regex literal)
-          PsiElement($/ regex begin)('$/')
-          PsiElement($/ regex content)('$')
-          PsiElement($/ regex end)('/$')
+      Compound regular expression
+        PsiElement($/ regex begin)('$/')
+        GrStringContentImpl(STRING_CONTENT)
+          PsiElement($/ regex content)('$/')
+        GString injection
+          PsiElement($)('$')
+          PsiErrorElement:Identifier or code block expected
+            <empty list>
+        PsiErrorElement:$/ regex end expected
+          <empty list>

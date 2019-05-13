@@ -1,39 +1,33 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution;
 
 import com.intellij.execution.configurations.RunProfile;
 import com.intellij.execution.runners.ProgramRunner;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.ApplicationComponent;
+import com.intellij.openapi.components.ServiceManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public abstract class RunnerRegistry implements ApplicationComponent {
+public class RunnerRegistry {
+  @NotNull
   public static RunnerRegistry getInstance() {
-    return ApplicationManager.getApplication().getComponent(RunnerRegistry.class);
+    return ServiceManager.getService(RunnerRegistry.class);
   }
 
-  public abstract boolean hasRunner(@NotNull final String executorId, @NotNull final RunProfile settings);
-
+  /**
+   * Use {@link ProgramRunner#getRunner)}
+   */
   @Nullable
-  public abstract ProgramRunner getRunner(final String executorId, final RunProfile settings);
+  @Deprecated
+  public ProgramRunner getRunner(@NotNull String executorId, @Nullable RunProfile settings) {
+    return settings == null ? null : ProgramRunner.getRunner(executorId, settings);
+  }
 
-  public abstract ProgramRunner[] getRegisteredRunners();
-
+  /**
+   * Use {@link ProgramRunner#findRunnerById(String)}
+   */
   @Nullable
-  public abstract ProgramRunner findRunnerById(String id);
+  @Deprecated
+  public ProgramRunner findRunnerById(@NotNull String id) {
+    return ProgramRunner.findRunnerById(id);
+  }
 }

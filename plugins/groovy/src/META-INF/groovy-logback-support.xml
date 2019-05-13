@@ -1,0 +1,13 @@
+<idea-plugin>
+  <extensions defaultExtensionNs="org.intellij.groovy">
+    <importContributor implementation="org.jetbrains.plugins.groovy.ext.logback.LogbackImportContributor"/>
+    <membersContributor implementation="org.jetbrains.plugins.groovy.ext.logback.LogbackTopLevelMemberContributor"/>
+    <membersContributor implementation="org.jetbrains.plugins.groovy.ext.logback.LogbackDelegateMemberContributor"/>
+    <delegatesToProvider implementation="org.jetbrains.plugins.groovy.ext.logback.LogbackDelegatesToProvider"/>
+  </extensions>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <pom.declarationSearcher implementation="org.jetbrains.plugins.groovy.ext.logback.LogbackDeclarationSearcher"/>
+    <psi.referenceContributor implementation="org.jetbrains.plugins.groovy.ext.logback.LogbackReferenceContributor" language="Groovy"/>
+  </extensions>
+</idea-plugin>

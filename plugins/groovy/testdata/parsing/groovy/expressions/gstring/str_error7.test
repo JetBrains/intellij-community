@@ -3,6 +3,7 @@
 Groovy script
   Compound Gstring
     PsiElement(Gstring begin)('"""')
-    PsiElement(Gstring content)('a\')
-    PsiErrorElement:String end expected
+    GrStringContentImpl(STRING_CONTENT)
+      PsiElement(Gstring content)('a\')
+    PsiErrorElement:Gstring end expected
       <empty list>

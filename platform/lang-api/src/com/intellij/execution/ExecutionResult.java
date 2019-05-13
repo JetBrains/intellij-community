@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,11 +18,35 @@ package com.intellij.execution;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.ui.ExecutionConsole;
 import com.intellij.openapi.actionSystem.AnAction;
+import org.jetbrains.annotations.NotNull;
 
+/**
+ * The result of executing a process.
+ *
+ * @see DefaultExecutionResult
+ */
 public interface ExecutionResult {
+  /**
+   * Returns the component displaying the result of executing the process. This could be a console, a test results view or another similar
+   * component.
+   *
+   * @return the component displaying the result of executing the process
+   */
   ExecutionConsole getExecutionConsole();
 
+  /**
+   * Returns the actions to display in the toolbar of the Run/Debug console tab.
+   *
+   * @return the list of toolbar actions to display.
+   */
+  @NotNull
   AnAction[] getActions();
 
+
+  /**
+   * Returns the ProcessHandler attached to the running process.
+   *
+   * @return the ProcessHandler instance.
+   */
   ProcessHandler getProcessHandler();
 }

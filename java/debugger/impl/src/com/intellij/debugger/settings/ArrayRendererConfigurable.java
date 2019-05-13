@@ -1,39 +1,28 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.settings;
 
 import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.ui.tree.render.ArrayRenderer;
 import com.intellij.openapi.application.ApplicationNamesInfo;
+import com.intellij.openapi.options.Configurable;
+import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.UnnamedConfigurable;
-import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.ui.JBUI;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import java.awt.*;
 
-public class ArrayRendererConfigurable implements UnnamedConfigurable{
+public class ArrayRendererConfigurable implements UnnamedConfigurable, Configurable.NoScroll {
   private JTextField myEntriesLimit;
   private JTextField myStartIndex;
   private JTextField myEndIndex;
   private boolean myEntriesLimitUpdateEnabled = true;
   private boolean myIndexUpdateEnabled = true;
-  
+
   private final ArrayRenderer myRenderer;
   private JComponent myPanel;
 
@@ -45,23 +34,33 @@ public class ArrayRendererConfigurable implements UnnamedConfigurable{
     return myRenderer;
   }
 
+  @Override
   public void reset() {
     myStartIndex.setText(String.valueOf(myRenderer.START_INDEX));
     myEndIndex.setText(String.valueOf(myRenderer.END_INDEX));
     myEntriesLimit.setText(String.valueOf(myRenderer.ENTRIES_LIMIT));
   }
 
-  public void apply() {
+  @Override
+  public void apply() throws ConfigurationException {
     applyTo(myRenderer, true);
   }
 
-  private void applyTo(ArrayRenderer renderer, boolean showBigRangeWarning) {
+  private void applyTo(ArrayRenderer renderer, boolean showBigRangeWarning) throws ConfigurationException {
     int newStartIndex = getInt(myStartIndex);
     int newEndIndex = getInt(myEndIndex);
     int newLimit = getInt(myEntriesLimit);
 
+    if (newStartIndex < 0) {
+      throw new ConfigurationException(DebuggerBundle.message("error.array.renderer.configurable.start.index.less.than.zero"));
+    }
+
+    if (newEndIndex < newStartIndex) {
+      throw new ConfigurationException(DebuggerBundle.message("error.array.renderer.configurable.end.index.less.than.start"));
+    }
+
     if (newStartIndex >= 0 && newEndIndex >= 0) {
-      if (newStartIndex >= newEndIndex) {
+      if (newStartIndex > newEndIndex) {
         int currentStartIndex = renderer.START_INDEX;
         int currentEndIndex = renderer.END_INDEX;
         newEndIndex = newStartIndex + (currentEndIndex - currentStartIndex);
@@ -77,7 +76,7 @@ public class ArrayRendererConfigurable implements UnnamedConfigurable{
           DebuggerBundle.message("warning.range.too.big", ApplicationNamesInfo.getInstance().getProductName()),
           DebuggerBundle.message("title.range.too.big"),
           Messages.getWarningIcon());
-        if(answer != DialogWrapper.OK_EXIT_CODE) {
+        if(answer != Messages.OK) {
           return;
         }
       }
@@ -88,6 +87,7 @@ public class ArrayRendererConfigurable implements UnnamedConfigurable{
     renderer.ENTRIES_LIMIT = newLimit;
   }
 
+  @Override
   public JComponent createComponent() {
     myPanel = new JPanel(new GridBagLayout());
 
@@ -112,14 +112,17 @@ public class ArrayRendererConfigurable implements UnnamedConfigurable{
     JLabel entriesLimitLabel = new JLabel(DebuggerBundle.message("label.array.renderer.configurable.max.count1"));
     entriesLimitLabel.setLabelFor(myEntriesLimit);
 
-    myPanel.add(startIndexLabel, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 0.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(0, 0, 0, 8), 0, 0));
-    myPanel.add(myStartIndex, new GridBagConstraints(1, GridBagConstraints.RELATIVE, 1, 1, 0.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, new Insets(0, 0, 0, 8), 0, 0));
-    myPanel.add(endIndexLabel, new GridBagConstraints(2, GridBagConstraints.RELATIVE, 1, 1, 0.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(0, 0, 0, 8), 0, 0));
-    myPanel.add(myEndIndex, new GridBagConstraints(3, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
+    myPanel.add(startIndexLabel, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 0.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE, JBUI.insetsRight(8), 0, 0));
+    myPanel.add(myStartIndex, new GridBagConstraints(1, GridBagConstraints.RELATIVE, 1, 1, 0.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, JBUI.insetsRight(8), 0, 0));
+    myPanel.add(endIndexLabel, new GridBagConstraints(2, GridBagConstraints.RELATIVE, 1, 1, 0.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE, JBUI.insetsRight(8), 0, 0));
+    myPanel.add(myEndIndex, new GridBagConstraints(3, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, JBUI.emptyInsets(), 0, 0));
 
-    myPanel.add(entriesLimitLabel, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 0.0, 1.0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(4, 0, 0, 8), 0, 0));
-    myPanel.add(myEntriesLimit, new GridBagConstraints(1, GridBagConstraints.RELATIVE, 1, 1, 0.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, new Insets(4, 0, 0, 8), 0, 0));
-    myPanel.add(new JLabel(DebuggerBundle.message("label.array.renderer.configurable.max.count2")), new GridBagConstraints(2, GridBagConstraints.RELATIVE, 2, 1, 1.0, 1.0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(4, 0, 0, 0), 0, 0));
+    myPanel.add(entriesLimitLabel, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 0.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE, JBUI.insets(4, 0, 0, 8), 0, 0));
+    myPanel.add(myEntriesLimit, new GridBagConstraints(1, GridBagConstraints.RELATIVE, 1, 1, 0.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, JBUI.insets(4, 0, 0, 8), 0, 0));
+    myPanel.add(new JLabel(DebuggerBundle.message("label.array.renderer.configurable.max.count2")), new GridBagConstraints(2, GridBagConstraints.RELATIVE, 2, 1, 0.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE, JBUI.insetsTop(4), 0, 0));
+
+    // push other components up
+    myPanel.add(new JLabel(), new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 0.0, 1.0, GridBagConstraints.WEST, GridBagConstraints.NONE, JBUI.emptyInsets(), 0, 0));
 
     final DocumentListener listener = new DocumentListener() {
       private void updateEntriesLimit() {
@@ -134,12 +137,15 @@ public class ArrayRendererConfigurable implements UnnamedConfigurable{
           myIndexUpdateEnabled = state;
         }
       }
+      @Override
       public void changedUpdate(DocumentEvent e) {
         updateEntriesLimit();
       }
+      @Override
       public void insertUpdate (DocumentEvent e) {
         updateEntriesLimit();
       }
+      @Override
       public void removeUpdate (DocumentEvent e) {
         updateEntriesLimit();
       }
@@ -159,14 +165,17 @@ public class ArrayRendererConfigurable implements UnnamedConfigurable{
           myEntriesLimitUpdateEnabled = state;
         }
       }
+      @Override
       public void insertUpdate(DocumentEvent e) {
         updateEndIndex();
       }
 
+      @Override
       public void removeUpdate(DocumentEvent e) {
         updateEndIndex();
       }
 
+      @Override
       public void changedUpdate(DocumentEvent e) {
         updateEndIndex();
       }
@@ -175,26 +184,22 @@ public class ArrayRendererConfigurable implements UnnamedConfigurable{
   }
 
   private static int getInt(JTextField textField) {
-    int newEndIndex = 0;
-    try {
-      newEndIndex = Integer.parseInt(textField.getText().trim());
-    }
-    catch (NumberFormatException exception) {
-      // ignored
-    }
-    return newEndIndex;
+    return StringUtil.parseInt(textField.getText().trim(), 0);
   }
 
+  @Override
   public boolean isModified() {
     ArrayRenderer cloneRenderer = myRenderer.clone();
-    applyTo(cloneRenderer, false);
+    try {
+      applyTo(cloneRenderer, false);
+    }
+    catch (ConfigurationException e) {
+      return true;
+    }
     final boolean valuesEqual =
       (myRenderer.END_INDEX == cloneRenderer.END_INDEX) &&
       (myRenderer.START_INDEX == cloneRenderer.START_INDEX) &&
       (myRenderer.ENTRIES_LIMIT == cloneRenderer.ENTRIES_LIMIT);
     return !valuesEqual;
-  }
-
-  public void disposeUIResources() {
   }
 }

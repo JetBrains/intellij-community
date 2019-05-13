@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.jps.model.serialization;
 
 import com.intellij.openapi.util.JDOMUtil;
@@ -25,7 +11,7 @@ import org.jetbrains.annotations.Nullable;
  * @author nik
  */
 public class JDomSerializationUtil {
-  @NonNls protected static final String COMPONENT_ELEMENT = "component";
+  @NonNls public static final String COMPONENT_ELEMENT = "component";
   @NonNls protected static final String OPTION_ELEMENT = "option";
   @NonNls protected static final String NAME_ATTRIBUTE = "name";
   @NonNls protected static final String VALUE_ATTRIBUTE = "value";
@@ -33,11 +19,15 @@ public class JDomSerializationUtil {
   @Nullable
   public static Element findComponent(@Nullable Element root, @NonNls String componentName) {
     for (Element element : JDOMUtil.getChildren(root, COMPONENT_ELEMENT)) {
-      if (element.getAttributeValue(NAME_ATTRIBUTE).equals(componentName)) {
+      if (isComponent(componentName, element)) {
         return element;
       }
     }
     return null;
+  }
+
+  public static boolean isComponent(@NotNull String componentName, @NotNull Element element) {
+    return componentName.equals(element.getAttributeValue(NAME_ATTRIBUTE));
   }
 
   public static Element createComponentElement(final String componentName) {

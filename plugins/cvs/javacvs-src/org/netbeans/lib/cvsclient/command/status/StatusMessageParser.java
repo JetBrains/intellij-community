@@ -12,6 +12,8 @@
  */
 package org.netbeans.lib.cvsclient.command.status;
 
+import com.intellij.openapi.util.text.StringUtil;
+import org.jetbrains.annotations.NonNls;
 import org.netbeans.lib.cvsclient.command.AbstractMessageParser;
 import org.netbeans.lib.cvsclient.event.IEventSender;
 import org.netbeans.lib.cvsclient.file.AbstractFileObject;
@@ -19,7 +21,6 @@ import org.netbeans.lib.cvsclient.file.FileObject;
 import org.netbeans.lib.cvsclient.file.FileStatus;
 import org.netbeans.lib.cvsclient.file.ICvsFileSystem;
 import org.netbeans.lib.cvsclient.util.BugLog;
-import org.jetbrains.annotations.NonNls;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -55,7 +56,7 @@ final class StatusMessageParser extends AbstractMessageParser {
 
 	// Fields =================================================================
 
-	private final List fileObjects = new ArrayList();
+	private final List<AbstractFileObject> fileObjects = new ArrayList<>();
 	private final ICvsFileSystem cvsFileSystem;
 	private final IEventSender eventSender;
 
@@ -66,7 +67,7 @@ final class StatusMessageParser extends AbstractMessageParser {
 
 	// Setup ==================================================================
 
-	public StatusMessageParser(IEventSender eventSender, List fileObjects, ICvsFileSystem cvsFileSystem) {
+	StatusMessageParser(IEventSender eventSender, List<AbstractFileObject> fileObjects, ICvsFileSystem cvsFileSystem) {
 		BugLog.getInstance().assertNotNull(eventSender);
 
 		this.eventSender = eventSender;
@@ -79,7 +80,8 @@ final class StatusMessageParser extends AbstractMessageParser {
 
 	// Implemented ============================================================
 
-	protected void outputDone() {
+	@Override
+        protected void outputDone() {
 		if (statusInformation != null) {
 			eventSender.notifyFileInfoListeners(statusInformation);
 			statusInformation = null;
@@ -88,7 +90,8 @@ final class StatusMessageParser extends AbstractMessageParser {
 		}
 	}
 
-	public void parseLine(String line, boolean isErrorMessage) {
+	@Override
+        public void parseLine(String line, boolean isErrorMessage) {
 		if (readingTags) {
 			if (line.startsWith(NO_TAGS)) {
 				outputDone();
@@ -135,9 +138,7 @@ final class StatusMessageParser extends AbstractMessageParser {
 				final String statusString = line.substring(statusIndex + STATUS.length());
 				final FileStatus status = FileStatus.getStatusForString(statusString);
 				String fileName = line.substring(FILE.length(), statusIndex).trim();
-				if (fileName.startsWith(NO_FILE)) {
-					fileName = fileName.substring(NO_FILE.length());
-				}
+				fileName = StringUtil.trimStart(fileName, NO_FILE);
 
 				outputDone();
 
@@ -145,7 +146,6 @@ final class StatusMessageParser extends AbstractMessageParser {
 				statusInformation.setFile(createFile(fileName));
 				statusInformation.setStatus(status);
 				beginning = false;
-				return;
 			}
 
 //			int index = line.indexOf(NOTHING_KNOWN_ABOUT);
@@ -211,8 +211,8 @@ final class StatusMessageParser extends AbstractMessageParser {
 			}
 		}
 		else {
-			for (Iterator it = fileObjects.iterator(); it.hasNext();) {
-				final AbstractFileObject abstractFileObject = (AbstractFileObject)it.next();
+			for (Iterator<AbstractFileObject> it = fileObjects.iterator(); it.hasNext();) {
+				final AbstractFileObject abstractFileObject = it.next();
 				if (abstractFileObject instanceof FileObject) {
 					final FileObject fileObject = (FileObject)abstractFileObject;
 
@@ -230,7 +230,4 @@ final class StatusMessageParser extends AbstractMessageParser {
 		BugLog.getInstance().assertTrue(file != null, "Wrong algorithm for detecting file name (" + fileName + ")");
 		return file;
 	}
-
-        public void binaryMessageSent(final byte[] bytes) {
-        }
 }

@@ -1,27 +1,17 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
-
 package com.intellij.openapi.roots.impl;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleComponent;
 import com.intellij.openapi.module.ModuleManager;
+import com.intellij.openapi.module.ModuleServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.*;
@@ -29,43 +19,41 @@ import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizable;
-import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.util.SimpleModificationTracker;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
+import com.intellij.util.ThrowableRunnable;
 import gnu.trove.THashMap;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 
-import java.util.ArrayList;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
-
-public class ModuleRootManagerImpl extends ModuleRootManager implements ModuleComponent {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.roots.impl.ModuleRootManagerImpl");
+public class ModuleRootManagerImpl extends ModuleRootManagerEx implements Disposable {
+  protected static final Logger LOG = Logger.getInstance("#com.intellij.openapi.roots.impl.ModuleRootManagerImpl");
 
   private final Module myModule;
   private final ProjectRootManagerImpl myProjectRootManager;
   private final VirtualFilePointerManager myFilePointerManager;
-  private RootModelImpl myRootModel;
-  private final ModuleFileIndexImpl myFileIndex;
-  private boolean myIsDisposed = false;
-  private boolean isModuleAdded = false;
+  protected RootModelImpl myRootModel;
+  private boolean myIsDisposed;
+  private boolean myLoaded;
   private final OrderRootsCache myOrderRootsCache;
-  private final Map<RootModelImpl, Throwable> myModelCreations = new THashMap<RootModelImpl, Throwable>();
+  private final Map<RootModelImpl, Throwable> myModelCreations = new THashMap<>();
 
+  protected final SimpleModificationTracker myModificationTracker = new SimpleModificationTracker();
 
-  public ModuleRootManagerImpl(Module module,
-                               DirectoryIndex directoryIndex,
-                               ProjectRootManagerImpl projectRootManager,
-                               VirtualFilePointerManager filePointerManager) {
+  public ModuleRootManagerImpl(@NotNull Module module,
+                               @NotNull ProjectRootManagerImpl projectRootManager,
+                               @NotNull VirtualFilePointerManager filePointerManager) {
     myModule = module;
     myProjectRootManager = projectRootManager;
     myFilePointerManager = filePointerManager;
 
-    myFileIndex = new ModuleFileIndexImpl(myModule, directoryIndex);
-
-    myRootModel = new RootModelImpl(this, myProjectRootManager, myFilePointerManager);
+    myRootModel = new RootModelImpl(this, projectRootManager, filePointerManager);
     myOrderRootsCache = new OrderRootsCache(module);
   }
 
@@ -78,47 +66,28 @@ public class ModuleRootManagerImpl extends ModuleRootManager implements ModuleCo
   @Override
   @NotNull
   public ModuleFileIndex getFileIndex() {
-    return myFileIndex;
+    return ModuleServiceManager.getService(myModule, ModuleFileIndex.class);
   }
 
   @Override
-  @NotNull
-  public String getComponentName() {
-    return "NewModuleRootManager";
-  }
-
-  @Override
-  public void initComponent() {
-  }
-
-  @Override
-  public void disposeComponent() {
+  public void dispose() {
     myRootModel.dispose();
     myIsDisposed = true;
 
     if (Disposer.isDebugMode()) {
-      final Set<Map.Entry<RootModelImpl, Throwable>> entries = myModelCreations.entrySet();
-      for (final Map.Entry<RootModelImpl, Throwable> entry : new ArrayList<Map.Entry<RootModelImpl, Throwable>>(entries)) {
-        System.err.println("***********************************************************************************************");
-        System.err.println("***                        R O O T   M O D E L   N O T   D I S P O S E D                    ***");
-        System.err.println("***********************************************************************************************");
-        System.err.println("Created at:");
-        entry.getValue().printStackTrace(System.err);
+      List<Map.Entry<RootModelImpl, Throwable>> entries;
+      synchronized (myModelCreations) {
+        entries = new ArrayList<>(myModelCreations.entrySet());
+      }
+      for (final Map.Entry<RootModelImpl, Throwable> entry : entries) {
+        LOG.warn("\n" +
+                 "***********************************************************************************************\n" +
+                 "***                        R O O T   M O D E L   N O T   D I S P O S E D                    ***\n" +
+                 "***********************************************************************************************\n" +
+                 "Created at:", entry.getValue());
         entry.getKey().dispose();
       }
     }
-  }
-
-
-
-  @Override
-  public VirtualFile getExplodedDirectory() {
-    return null;
-  }
-
-  @Override
-  public String getExplodedDirectoryUrl() {
-    return null;
   }
 
   @Override
@@ -127,24 +96,25 @@ public class ModuleRootManagerImpl extends ModuleRootManager implements ModuleCo
     return getModifiableModel(new RootConfigurationAccessor());
   }
 
+  @Override
   @NotNull
-  public ModifiableRootModel getModifiableModel(final RootConfigurationAccessor accessor) {
+  public ModifiableRootModel getModifiableModel(@NotNull RootConfigurationAccessor accessor) {
     ApplicationManager.getApplication().assertReadAccessAllowed();
     final RootModelImpl model = new RootModelImpl(myRootModel, this, true, accessor, myFilePointerManager, myProjectRootManager) {
       @Override
       public void dispose() {
         super.dispose();
         if (Disposer.isDebugMode()) {
-          myModelCreations.remove(this);
-        }
-
-        for (OrderEntry entry : ModuleRootManagerImpl.this.getOrderEntries()) {
-          assert !((RootModelComponentBase)entry).isDisposed();
+          synchronized (myModelCreations) {
+            myModelCreations.remove(this);
+          }
         }
       }
     };
     if (Disposer.isDebugMode()) {
-      myModelCreations.put(model, new Throwable());
+      synchronized (myModelCreations) {
+        myModelCreations.put(model, new Throwable());
+      }
     }
     return model;
   }
@@ -152,13 +122,14 @@ public class ModuleRootManagerImpl extends ModuleRootManager implements ModuleCo
   void makeRootsChange(@NotNull Runnable runnable) {
     ProjectRootManagerEx projectRootManagerEx = (ProjectRootManagerEx)ProjectRootManager.getInstance(myModule.getProject());
     // IMPORTANT: should be the first listener!
-    projectRootManagerEx.makeRootsChange(runnable, false, isModuleAdded);
+    projectRootManagerEx.makeRootsChange(runnable, false, myModule.isLoaded());
   }
 
   public RootModelImpl getRootModel() {
     return myRootModel;
   }
 
+  @NotNull
   @Override
   public ContentEntry[] getContentEntries() {
     return myRootModel.getContentEntries();
@@ -184,16 +155,30 @@ public class ModuleRootManagerImpl extends ModuleRootManager implements ModuleCo
     ApplicationManager.getApplication().assertWriteAccessAllowed();
     LOG.assertTrue(rootModel.myModuleRootManager == this);
 
+    boolean changed = rootModel.isChanged();
+
     final Project project = myModule.getProject();
     final ModifiableModuleModel moduleModel = ModuleManager.getInstance(project).getModifiableModel();
-    ModifiableModelCommitter.multiCommit(new ModifiableRootModel[]{rootModel}, moduleModel);
+    ModifiableModelCommitter.multiCommit(Collections.singletonList(rootModel), moduleModel);
+
+    if (changed) {
+      stateChanged();
+    }
   }
 
   static void doCommit(RootModelImpl rootModel) {
+    ModuleRootManagerImpl rootManager = (ModuleRootManagerImpl)getInstance(rootModel.getModule());
+    LOG.assertTrue(!rootManager.myIsDisposed);
     rootModel.docommit();
     rootModel.dispose();
-  }
 
+    try {
+      rootManager.stateChanged();
+    }
+    catch (Exception e) {
+      LOG.error(e);
+    }
+  }
 
   @Override
   @NotNull
@@ -221,7 +206,7 @@ public class ModuleRootManagerImpl extends ModuleRootManager implements ModuleCo
 
   @Override
   public boolean isDependsOn(Module module) {
-    return myRootModel.isDependsOn(module);
+    return myRootModel.findModuleOrderEntry(module) != null;
   }
 
   @Override
@@ -231,19 +216,7 @@ public class ModuleRootManagerImpl extends ModuleRootManager implements ModuleCo
   }
 
   @Override
-  @NotNull
-  public VirtualFile[] getRootPaths(final OrderRootType rootType) {
-    return myRootModel.getRootPaths(rootType);
-  }
-
-  @Override
-  @NotNull
-  public String[] getRootUrls(final OrderRootType rootType) {
-    return myRootModel.getRootUrls(rootType);
-  }
-
-  @Override
-  public <T> T getModuleExtension(final Class<T> klass) {
+  public <T> T getModuleExtension(@NotNull final Class<T> klass) {
     return myRootModel.getModuleExtension(klass);
   }
 
@@ -259,12 +232,12 @@ public class ModuleRootManagerImpl extends ModuleRootManager implements ModuleCo
     return new ModuleOrderEnumerator(myRootModel, myOrderRootsCache);
   }
 
-  public static OrderRootsEnumerator getCachingEnumeratorForType(OrderRootType type, Module module) {
+  public static OrderRootsEnumerator getCachingEnumeratorForType(@NotNull OrderRootType type, @NotNull Module module) {
     return getEnumeratorForType(type, module).usingCache();
   }
 
   @NotNull
-  private static OrderRootsEnumerator getEnumeratorForType(OrderRootType type, Module module) {
+  private static OrderRootsEnumerator getEnumeratorForType(@NotNull OrderRootType type, @NotNull Module module) {
     OrderEnumerator base = OrderEnumerator.orderEntries(module);
     if (type == OrderRootType.CLASSES) {
       return base.exportedOnly().withoutModuleSourceEntries().recursively().classes();
@@ -329,73 +302,88 @@ public class ModuleRootManagerImpl extends ModuleRootManager implements ModuleCo
     return myRootModel.getSourceRoots(includingTests);
   }
 
+  @NotNull
   @Override
-  public void projectOpened() {
+  public List<VirtualFile> getSourceRoots(@NotNull JpsModuleSourceRootType<?> rootType) {
+    return myRootModel.getSourceRoots(rootType);
   }
 
+  @NotNull
   @Override
-  public void projectClosed() {
+  public List<VirtualFile> getSourceRoots(@NotNull Set<? extends JpsModuleSourceRootType<?>> rootTypes) {
+    return myRootModel.getSourceRoots(rootTypes);
   }
-
-  @Override
-  public void moduleAdded() {
-    isModuleAdded = true;
-  }
-
 
   public void dropCaches() {
     myOrderRootsCache.clearCache();
   }
 
   public ModuleRootManagerState getState() {
+    if (Registry.is("store.track.module.root.manager.changes", false)) {
+      LOG.error("getState, module " + myModule.getName());
+    }
     return new ModuleRootManagerState(myRootModel);
   }
 
-  public void loadState(ModuleRootManagerState object) {
-    loadState(object, myRootModel != null);
+  public void loadState(@NotNull ModuleRootManagerState object) {
+    loadState(object, myLoaded || myModule.isLoaded());
+    myLoaded = true;
   }
 
   protected void loadState(ModuleRootManagerState object, boolean throwEvent) {
-    try {
-      final RootModelImpl newModel = new RootModelImpl(object.getRootModelElement(), this, myProjectRootManager, myFilePointerManager);
+    ThrowableRunnable<RuntimeException> r = () -> {
+      final RootModelImpl newModel = new RootModelImpl(object.getRootModelElement(), this, myProjectRootManager, myFilePointerManager, throwEvent);
 
       if (throwEvent) {
-        makeRootsChange(new Runnable() {
-          @Override
-          public void run() {
-            doCommit(newModel);
-          }
-        });
+        makeRootsChange(() -> doCommit(newModel));
       }
       else {
+        myRootModel.dispose();
         myRootModel = newModel;
       }
 
       assert !myRootModel.isOrderEntryDisposed();
+    };
+    try {
+      if (throwEvent) WriteAction.run(r);
+      else ReadAction.run(r);
     }
     catch (InvalidDataException e) {
       LOG.error(e);
     }
   }
 
+  public void stateChanged() {
+    if (Registry.is("store.track.module.root.manager.changes", false)) {
+      LOG.error("ModelRootManager state changed");
+    }
+    myModificationTracker.incModificationCount();
+  }
+
+  @Override
+  @Nullable
+  public ProjectModelExternalSource getExternalSource() {
+    return ExternalProjectSystemRegistry.getInstance().getExternalSource(myModule);
+  }
+
   public static class ModuleRootManagerState implements JDOMExternalizable {
     private RootModelImpl myRootModel;
-    private Element myRootModelElement = null;
+    private Element myRootModelElement;
 
     public ModuleRootManagerState() {
     }
 
-    public ModuleRootManagerState(final RootModelImpl rootModel) {
+    public ModuleRootManagerState(RootModelImpl rootModel) {
       myRootModel = rootModel;
     }
 
     @Override
-    public void readExternal(Element element) throws InvalidDataException {
+    public void readExternal(Element element) {
       myRootModelElement = element;
     }
 
     @Override
-    public void writeExternal(Element element) throws WriteExternalException {
+    public void writeExternal(Element element) {
       myRootModel.writeExternal(element);
     }
 

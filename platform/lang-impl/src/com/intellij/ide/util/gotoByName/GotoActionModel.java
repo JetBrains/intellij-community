@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,65 +16,114 @@
 
 package com.intellij.ide.util.gotoByName;
 
-import com.intellij.ide.DataManager;
+import com.google.common.annotations.VisibleForTesting;
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.actions.ApplyIntentionAction;
+import com.intellij.ide.actions.ShowSettingsUtilImpl;
+import com.intellij.ide.ui.UISettings;
+import com.intellij.ide.ui.search.BooleanOptionDescription;
 import com.intellij.ide.ui.search.OptionDescription;
-import com.intellij.ide.ui.search.SearchableOptionsRegistrar;
-import com.intellij.ide.ui.search.SearchableOptionsRegistrarImpl;
-import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
-import com.intellij.openapi.actionSystem.impl.ActionManagerImpl;
-import com.intellij.openapi.keymap.KeymapManager;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.keymap.KeymapUtil;
+import com.intellij.openapi.options.Configurable;
+import com.intellij.openapi.options.SearchableConfigurable;
+import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressIndicatorProvider;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.ui.IdeBorderFactory;
-import com.intellij.ui.LayeredIcon;
-import com.intellij.ui.LightColors;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.codeStyle.MinusculeMatcher;
+import com.intellij.ui.*;
 import com.intellij.ui.components.JBLabel;
+import com.intellij.ui.components.OnOffButton;
+import com.intellij.ui.speedSearch.SpeedSearchUtil;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.Function;
+import com.intellij.util.ObjectUtils;
+import com.intellij.util.concurrency.Semaphore;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.ContainerUtilRt;
 import com.intellij.util.ui.EmptyIcon;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
-import org.apache.oro.text.regex.*;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.border.Border;
 import java.awt.*;
+import java.util.List;
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
-public class GotoActionModel implements ChooseByNameModel, CustomMatcherModel, Comparator<Object> {
-  @NonNls public static final String SETTINGS_KEY = "$$$SETTINGS$$$";
+import static com.intellij.openapi.keymap.KeymapUtil.getActiveKeymapShortcuts;
+import static com.intellij.ui.SimpleTextAttributes.STYLE_PLAIN;
+import static com.intellij.ui.SimpleTextAttributes.STYLE_SEARCH_MATCH;
+import static java.util.Collections.emptyList;
+import static java.util.Collections.singletonList;
+
+public class GotoActionModel implements ChooseByNameModel, Comparator<Object>, DumbAware {
+  private static final Pattern INNER_GROUP_WITH_IDS = Pattern.compile("(.*) \\(\\d+\\)");
+
   @Nullable private final Project myProject;
   private final Component myContextComponent;
+  @Nullable private final Editor myEditor;
 
-  private final ActionManager myActionManager = ActionManager.getInstance();
+  protected final ActionManager myActionManager = ActionManager.getInstance();
 
   private static final Icon EMPTY_ICON = EmptyIcon.ICON_18;
 
-  private Pattern myCompiledPattern;
+  private final Map<AnAction, GroupMapping> myActionGroups = new HashMap<>();
 
-  private final SearchableOptionsRegistrar myIndex;
-  private final Map<AnAction, String> myActionsMap = new TreeMap<AnAction, String>(new Comparator<AnAction>() {
-    @Override
-    public int compare(AnAction o1, AnAction o2) {
-      int compare = Comparing.compare(o1.getTemplatePresentation().getText(), o2.getTemplatePresentation().getText());
-      if (compare == 0 && !o1.equals(o2)) {
-        return o1.hashCode() - o2.hashCode();
+  private final NotNullLazyValue<Map<String, String>> myConfigurablesNames = VolatileNotNullLazyValue.createValue(() -> {
+    Map<String, String> map = ContainerUtil.newTroveMap();
+    for (Configurable configurable : ShowSettingsUtilImpl.getConfigurables(getProject(), true)) {
+      if (configurable instanceof SearchableConfigurable) {
+        map.put(((SearchableConfigurable)configurable).getId(), configurable.getDisplayName());
       }
-      return compare;
     }
+    return map;
   });
 
-  public GotoActionModel(@Nullable Project project, final Component component) {
+  private final ModalityState myModality;
+
+  public GotoActionModel(@Nullable Project project, Component component, @Nullable Editor editor) {
+    this(project, component, editor, ModalityState.defaultModalityState());
+  }
+
+  public GotoActionModel(@Nullable Project project, Component component, @Nullable Editor editor, @Nullable ModalityState modalityState) {
     myProject = project;
     myContextComponent = component;
-    final ActionGroup mainMenu = (ActionGroup)myActionManager.getActionOrStub(IdeActions.GROUP_MAIN_MENU);
-    collectActions(myActionsMap, mainMenu, mainMenu.getTemplatePresentation().getText());
-    myIndex = SearchableOptionsRegistrar.getInstance();
+    myEditor = editor;
+    myModality = modalityState;
+    ActionGroup mainMenu = (ActionGroup)myActionManager.getActionOrStub(IdeActions.GROUP_MAIN_MENU);
+    assert mainMenu != null;
+    collectActions(mainMenu, emptyList());
+  }
+
+  @NotNull
+  Map<String, ApplyIntentionAction> getAvailableIntentions() {
+    Map<String, ApplyIntentionAction> map = new TreeMap<>();
+    if (myProject != null && !myProject.isDisposed() && myEditor != null && !myEditor.isDisposed()) {
+      PsiFile file = PsiDocumentManager.getInstance(myProject).getPsiFile(myEditor.getDocument());
+      ApplyIntentionAction[] children = file == null ? null : ApplyIntentionAction.getAvailableIntentions(myEditor, file);
+      if (children != null) {
+        for (ApplyIntentionAction action : children) {
+          map.put(action.getName(), action);
+        }
+      }
+    }
+    return map;
   }
 
   @Override
@@ -82,19 +131,16 @@ public class GotoActionModel implements ChooseByNameModel, CustomMatcherModel, C
     return IdeBundle.message("prompt.gotoaction.enter.action");
   }
 
+  @Nullable
   @Override
   public String getCheckBoxName() {
-    return IdeBundle.message("checkbox.other.included");
+    return IdeBundle.message("checkbox.disabled.included");
   }
 
-  @Override
-  public char getCheckBoxMnemonic() {
-    return 'd';
-  }
 
   @Override
   public String getNotInMessage() {
-    return IdeBundle.message("label.no.menu.actions.found");
+    return IdeBundle.message("label.no.enabled.actions.found");
   }
 
   @Override
@@ -104,275 +150,217 @@ public class GotoActionModel implements ChooseByNameModel, CustomMatcherModel, C
 
   @Override
   public boolean loadInitialCheckBoxState() {
-    PropertiesComponent propertiesComponent = getPropertiesStorage();
-    return Boolean.TRUE.toString().equals(propertiesComponent.getValue("GoToAction.toSaveAllIncluded")) &&
-           propertiesComponent.isTrueValue("GoToAction.allIncluded");
-  }
-
-  private PropertiesComponent getPropertiesStorage() {
-    return myProject != null ? PropertiesComponent.getInstance(myProject) : PropertiesComponent.getInstance();
+    return false;
   }
 
   @Override
   public void saveInitialCheckBoxState(boolean state) {
-    PropertiesComponent propertiesComponent = getPropertiesStorage();
-    if (Boolean.TRUE.toString().equals(propertiesComponent.getValue("GoToAction.toSaveAllIncluded"))) {
-      propertiesComponent.setValue("GoToAction.allIncluded", Boolean.toString(state));
+  }
+
+  public static class MatchedValue implements Comparable<MatchedValue> {
+    @NotNull public final Comparable value;
+    @NotNull final String pattern;
+
+    public MatchedValue(@NotNull Comparable value, @NotNull String pattern) {
+      this.value = value;
+      this.pattern = pattern;
+    }
+
+    @Nullable
+    @VisibleForTesting
+    public String getValueText() {
+      if (value instanceof OptionDescription) return ((OptionDescription)value).getHit();
+      if (!(value instanceof ActionWrapper)) return null;
+      return ((ActionWrapper)value).getAction().getTemplatePresentation().getText();
+    }
+
+    @Nullable
+    @Override
+    public String toString() {
+      return getMatchingDegree() + " " + getValueText();
+    }
+
+    private int getMatchingDegree() {
+      String text = getValueText();
+      if (text != null) {
+        int degree = getRank(text);
+        return value instanceof ActionWrapper && !((ActionWrapper)value).isGroupAction() ? degree + 1 : degree;
+      }
+      return 0;
+    }
+
+    private int getRank(@NotNull String text) {
+      if (StringUtil.equalsIgnoreCase(StringUtil.trimEnd(text, "..."), pattern)) return 3;
+      if (StringUtil.startsWithIgnoreCase(text, pattern)) return 2;
+      if (StringUtil.containsIgnoreCase(text, pattern)) return 1;
+      return 0;
+    }
+
+    @Override
+    public int compareTo(@NotNull MatchedValue o) {
+      if (o == this) return 0;
+      int diff = o.getMatchingDegree() - getMatchingDegree();
+      if (diff != 0) return diff;
+
+      boolean edt = ApplicationManager.getApplication().isDispatchThread();
+
+      if (value instanceof ActionWrapper && o.value instanceof ActionWrapper) {
+        if (edt || ((ActionWrapper)value).hasPresentation() && ((ActionWrapper)o.value).hasPresentation()) {
+          boolean p1Enable = ((ActionWrapper)value).isAvailable();
+          boolean p2enable = ((ActionWrapper)o.value).isAvailable();
+          if (p1Enable && !p2enable) return -1;
+          if (!p1Enable && p2enable) return 1;
+        }
+        //noinspection unchecked
+        int compared = value.compareTo(o.value);
+        if (compared != 0) return compared;
+      }
+      
+      if (value instanceof ActionWrapper && o.value instanceof BooleanOptionDescription) {
+        return edt && ((ActionWrapper)value).isAvailable() ? -1 : 1;
+      }
+      
+      if (o.value instanceof ActionWrapper && value instanceof BooleanOptionDescription) {
+        return edt && ((ActionWrapper)o.value).isAvailable() ? 1 : -1;
+      }
+      
+      if (value instanceof BooleanOptionDescription && !(o.value instanceof BooleanOptionDescription) && o.value instanceof OptionDescription) return -1;
+      if (o.value instanceof BooleanOptionDescription && !(value instanceof BooleanOptionDescription) && value instanceof OptionDescription) return 1;
+
+      if (value instanceof OptionDescription && !(o.value instanceof OptionDescription)) return 1;
+      if (o.value instanceof OptionDescription && !(value instanceof OptionDescription)) return -1;
+
+      diff = StringUtil.notNullize(getValueText()).length() - StringUtil.notNullize(o.getValueText()).length();
+      if (diff != 0) return diff;
+      
+      //noinspection unchecked
+      diff = value.compareTo(o.value);
+      if (diff != 0) return diff;
+      
+      return o.hashCode() - hashCode(); 
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+      MatchedValue value1 = (MatchedValue)o;
+      return Objects.equals(value, value1.value) &&
+             Objects.equals(pattern, value1.pattern);
+    }
+
+    @Override
+    public int hashCode() {
+      return Objects.hash(value, pattern);
     }
   }
 
   @Override
   public ListCellRenderer getListCellRenderer() {
-    return new DefaultListCellRenderer() {
-
-      @Override
-      public Component getListCellRendererComponent(final JList list,
-                                                    final Object value,
-                                                    final int index, final boolean isSelected, final boolean cellHasFocus) {
-        final JPanel panel = new JPanel(new BorderLayout());
-        panel.setBorder(IdeBorderFactory.createEmptyBorder(2));
-        panel.setOpaque(true);
-        final Color bg = isSelected ? UIUtil.getListSelectionBackground() : UIUtil.getListBackground();
-        panel.setBackground(bg);
-
-
-        if (value instanceof Map.Entry) {
-
-          final Map.Entry actionWithParentGroup = (Map.Entry)value;
-
-          final AnAction anAction = (AnAction)actionWithParentGroup.getKey();
-          final Presentation templatePresentation = anAction.getTemplatePresentation();
-          final Icon icon = templatePresentation.getIcon();
-
-          final DataContext dataContext = DataManager.getInstance().getDataContext(myContextComponent);
-
-          final AnActionEvent event = updateActionBeforeShow(anAction, dataContext);
-          final Presentation presentation = event.getPresentation();
-
-          final Color fg = defaultActionForeground(isSelected, presentation);
-
-          final JLabel actionLabel = createActionLabel(anAction, templatePresentation.getText(), fg, bg, icon);
-          panel.add(actionLabel, BorderLayout.WEST);
-
-          final String groupName = (String)actionWithParentGroup.getValue();
-          if (groupName != null) {
-            final JLabel groupLabel = new JLabel(groupName);
-            groupLabel.setBackground(bg);
-            groupLabel.setForeground(fg);
-            panel.add(groupLabel, BorderLayout.EAST);
-          }
-        }
-        else if (value instanceof OptionDescription) {
-          if (!isSelected && !UIUtil.isUnderDarcula()) {
-            panel.setBackground(LightColors.SLIGHTLY_GRAY);
-          }
-          String hit = ((OptionDescription)value).getHit();
-          if (hit == null) {
-            hit = ((OptionDescription)value).getOption();
-          }
-          hit = StringUtil.unescapeXml(hit);
-          if (hit.length() > 60) {
-            hit = hit.substring(0, 60) + "...";
-          }
-          final Color fg = isSelected ? UIUtil.getListSelectionForeground() : UIUtil.getListForeground();
-          final JLabel label = new JLabel(hit.trim());
-          label.setIcon(EMPTY_ICON);
-          label.setForeground(fg);
-          label.setBackground(bg);
-          panel.add(label, BorderLayout.WEST);
-          final JLabel settingsLabel = new JLabel("Settings");
-          settingsLabel.setForeground(fg);
-          settingsLabel.setBackground(bg);
-          panel.add(settingsLabel, BorderLayout.EAST);
-        }
-        else if (value instanceof String) {
-          final JBLabel label = new JBLabel((String)value);
-          label.setIcon(EMPTY_ICON);
-          panel.add(label, BorderLayout.WEST);
-        }
-        return panel;
-      }
-    };
+    return new GotoActionListCellRenderer(this::getGroupName);
   }
 
-  protected String getActionId(@NotNull final AnAction anAction) {
+  protected String getActionId(@NotNull AnAction anAction) {
     return myActionManager.getId(anAction);
   }
 
-  protected JLabel createActionLabel(final AnAction anAction, final String anActionName,
-                                     final Color fg, final Color bg,
-                                     final Icon icon) {
-    final LayeredIcon layeredIcon = new LayeredIcon(2);
+  @NotNull
+  private static JLabel createIconLabel(@Nullable Icon icon, boolean disabled) {
+    LayeredIcon layeredIcon = new LayeredIcon(2);
     layeredIcon.setIcon(EMPTY_ICON, 0);
-    if (icon != null && icon.getIconWidth() <= EMPTY_ICON.getIconWidth() && icon.getIconHeight() <= EMPTY_ICON.getIconHeight()) {
-      layeredIcon
-        .setIcon(icon, 1, (-icon.getIconWidth() + EMPTY_ICON.getIconWidth()) / 2, (EMPTY_ICON.getIconHeight() - icon.getIconHeight()) / 2);
+    if (icon == null) return new JLabel(layeredIcon);
+    
+    int width = icon.getIconWidth();
+    int height = icon.getIconHeight();
+    int emptyIconWidth = EMPTY_ICON.getIconWidth();
+    int emptyIconHeight = EMPTY_ICON.getIconHeight();
+    if (width <= emptyIconWidth && height <= emptyIconHeight) {
+      layeredIcon.setIcon(disabled && IconLoader.isGoodSize(icon) ? IconLoader.getDisabledIcon(icon) : icon, 1, 
+                          (emptyIconWidth - width) / 2, 
+                          (emptyIconHeight - height) / 2);
     }
 
-    final Shortcut[] shortcutSet = KeymapManager.getInstance().getActiveKeymap().getShortcuts(getActionId(anAction));
-    final String actionName = anActionName + (shortcutSet != null && shortcutSet.length > 0
-                                              ? " (" + KeymapUtil.getShortcutText(shortcutSet[0]) + ")"
-                                              : "");
-    final JLabel actionLabel = new JLabel(actionName, layeredIcon, SwingConstants.LEFT);
-    actionLabel.setBackground(bg);
-    actionLabel.setForeground(fg);
-    return actionLabel;
+    return new JLabel(layeredIcon);
   }
 
   @Override
-  public int compare(Object o1, Object o2) {
-    if (o1 instanceof Map.Entry && !(o2 instanceof Map.Entry)) {
-      return -1;
-    }
-    if (o2 instanceof Map.Entry && !(o1 instanceof Map.Entry)) {
-      return 1;
-    }
-
-    return StringUtil.compare(getFullName(o1), getFullName(o2), true);
+  public int compare(@NotNull Object o1, @NotNull Object o2) {
+    if (ChooseByNameBase.EXTRA_ELEM.equals(o1)) return 1;
+    if (ChooseByNameBase.EXTRA_ELEM.equals(o2)) return -1;
+    return ((MatchedValue)o1).compareTo((MatchedValue)o2);
   }
 
-  protected static AnActionEvent updateActionBeforeShow(AnAction anAction, DataContext dataContext) {
-    final AnActionEvent event = new AnActionEvent(null, dataContext,
-                                                  ActionPlaces.UNKNOWN, new Presentation(), ActionManager.getInstance(),
-                                                  0);
-    ActionUtil.performDumbAwareUpdate(anAction, event, false);
-    ActionUtil.performDumbAwareUpdate(anAction, event, true);
+  @NotNull
+  public static AnActionEvent updateActionBeforeShow(@NotNull AnAction anAction, @NotNull DataContext dataContext) {
+    Presentation presentation = new Presentation();
+    presentation.copyFrom(anAction.getTemplatePresentation());
+    AnActionEvent event = AnActionEvent.createFromDataContext(ActionPlaces.ACTION_SEARCH, presentation, dataContext);
+    ActionUtil.performDumbAwareUpdate(false, anAction, event, false);
     return event;
   }
 
-  protected static Color defaultActionForeground(boolean isSelected, Presentation presentation) {
-    if (isSelected) {
-      return UIUtil.getListSelectionForeground();
-    }
-
-    if (!presentation.isEnabled() || !presentation.isVisible()) {
-      return UIUtil.getInactiveTextColor();
-    }
-
+  public static Color defaultActionForeground(boolean isSelected, @Nullable Presentation presentation) {
+    if (presentation != null && (!presentation.isEnabled() || !presentation.isVisible())) return UIUtil.getInactiveTextColor();
+    if (isSelected) return UIUtil.getListSelectionForeground();
     return UIUtil.getListForeground();
   }
 
   @Override
   @NotNull
   public String[] getNames(boolean checkBoxState) {
-    final ArrayList<String> result = new ArrayList<String>();
-    for (AnAction action : myActionsMap.keySet()) {
-      result.add(getActionId(action));
-    }
-    if (checkBoxState) {
-      final Set<String> ids = ((ActionManagerImpl)myActionManager).getActionIds();
-      for (String id : ids) {
-        result.add(id);
-      }
-    }
-    result.add(SETTINGS_KEY);
-    return ArrayUtil.toStringArray(result);
+    return ArrayUtil.EMPTY_STRING_ARRAY;
   }
 
   @Override
   @NotNull
-  public Object[] getElementsByName(final String id, final boolean checkBoxState, final String pattern) {
-    final HashMap<AnAction, String> map = new HashMap<AnAction, String>();
-    final AnAction act = myActionManager.getAction(id);
-    if (act != null) {
-      map.put(act, myActionsMap.get(act));
-      if (checkBoxState) {
-        final Set<String> ids = ((ActionManagerImpl)myActionManager).getActionIds();
-        for (AnAction action : map.keySet()) { //do not add already included actions
-          ids.remove(getActionId(action));
-        }
-        if (ids.contains(id)) {
-          final AnAction anAction = myActionManager.getAction(id);
-          map.put(anAction, null);
-        }
-      }
-    }
-    Object[] objects = map.entrySet().toArray(new Map.Entry[map.size()]);
-    if (Comparing.strEqual(id, SETTINGS_KEY)) {
-      final Set<String> words = myIndex.getProcessedWords(pattern);
-      Set<OptionDescription> optionDescriptions = null;
-      final String actionManagerName = myActionManager.getComponentName();
-      for (String word : words) {
-        final Set<OptionDescription> descriptions = ((SearchableOptionsRegistrarImpl)myIndex).getAcceptableDescriptions(word);
-        if (descriptions != null) {
-          for (Iterator<OptionDescription> iterator = descriptions.iterator(); iterator.hasNext(); ) {
-            OptionDescription description = iterator.next();
-            if (actionManagerName.equals(description.getPath())) {
-              iterator.remove();
-            }
-          }
-          if (!descriptions.isEmpty()) {
-            if (optionDescriptions == null) {
-              optionDescriptions = descriptions;
-            }
-            else {
-              optionDescriptions.retainAll(descriptions);
-            }
-          }
-        } else {
-          optionDescriptions = null;
-          break;
-        }
-      }
-      if (optionDescriptions != null && !optionDescriptions.isEmpty()) {
-        Set<String> currentHits = new HashSet<String>();
-        for (Iterator<OptionDescription> iterator = optionDescriptions.iterator(); iterator.hasNext(); ) {
-          OptionDescription description = iterator.next();
-          final String hit = description.getHit();
-          if (hit == null || !currentHits.add(hit.trim())) {
-            iterator.remove();
-          }
-        }
-        final Object[] descriptions = optionDescriptions.toArray();
-        Arrays.sort(descriptions);
-        objects = ArrayUtil.mergeArrays(objects, descriptions);
-      }
-    }
-    return objects;
+  public Object[] getElementsByName(String id, boolean checkBoxState, String pattern) {
+    return ArrayUtil.EMPTY_OBJECT_ARRAY;
   }
 
-  private void collectActions(Map<AnAction, String> result, ActionGroup group, final String containingGroupName) {
-    final AnAction[] actions = group.getChildren(null);
-    includeGroup(result, group, actions, containingGroupName);
+  @NotNull
+  public String getGroupName(@NotNull OptionDescription description) {
+    String name = description.getGroupName();
+    if (name == null) name = myConfigurablesNames.getValue().get(description.getConfigurableId());
+    String settings = SystemInfo.isMac ? "Preferences" : "Settings";
+    if (name == null || name.equals(description.getHit())) return settings;
+    return settings + " > " + name;
+  }
+
+  @NotNull
+  Map<String, String> getConfigurablesNames() {
+    return myConfigurablesNames.getValue();
+  }
+
+  private void collectActions(@NotNull ActionGroup group, @NotNull List<ActionGroup> path) {
+    AnAction[] actions = group.getChildren(null);
+
+    boolean hasMeaningfulChildren = ContainerUtil.exists(actions, action -> myActionManager.getId(action) != null);
+    if (!hasMeaningfulChildren) {
+      GroupMapping mapping = myActionGroups.computeIfAbsent(group, (key) -> new GroupMapping());
+      mapping.addPath(path);
+    }
+
+    List<ActionGroup> newPath = ContainerUtil.append(path, group);
     for (AnAction action : actions) {
-      if (action != null) {
-        if (action instanceof ActionGroup) {
-          final ActionGroup actionGroup = (ActionGroup)action;
-          final String groupName = actionGroup.getTemplatePresentation().getText();
-          collectActions(result, actionGroup, StringUtil.isEmpty(groupName) || !actionGroup.isPopup() ? containingGroupName : groupName);
-        }
-        else {
-          final String groupName = group.getTemplatePresentation().getText();
-          if (result.containsKey(action)) {
-            result.put(action, null);
-          }
-          else {
-            result.put(action, StringUtil.isEmpty(groupName) ? containingGroupName : groupName);
-          }
-        }
+      if (action == null || action instanceof Separator) continue;
+      if (action instanceof ActionGroup) {
+        collectActions((ActionGroup)action, newPath);
+      }
+      else {
+        GroupMapping mapping = myActionGroups.computeIfAbsent(action, (key) -> new GroupMapping());
+        mapping.addPath(newPath);
       }
     }
   }
 
-  private void includeGroup(Map<AnAction, String> result,
-                            ActionGroup group,
-                            AnAction[] actions,
-                            String containingGroupName) {
-    boolean showGroup = true;
-    for (AnAction action : actions) {
-      if (myActionManager.getId(action) != null) {
-        showGroup = false;
-        break;
-      }
-    }
-    if (showGroup) {
-      result.put(group, containingGroupName);
-    }
+  @Nullable
+  GroupMapping getGroupMapping(@NotNull AnAction action) {
+    return myActionGroups.get(action);
   }
 
   @Override
   @Nullable
-  public String getFullName(final Object element) {
+  public String getFullName(@NotNull Object element) {
     return getElementName(element);
   }
 
@@ -388,28 +376,43 @@ public class GotoActionModel implements ChooseByNameModel, CustomMatcherModel, C
     return ArrayUtil.EMPTY_STRING_ARRAY;
   }
 
+  @Nullable
   @Override
-  public String getElementName(final Object element) {
-    if (element instanceof OptionDescription) return ((OptionDescription)element).getHit();
-    if (!(element instanceof Map.Entry)) return null;
-    return ((AnAction)((Map.Entry)element).getKey()).getTemplatePresentation().getText();
+  public String getElementName(@NotNull Object mv) {
+    return ((MatchedValue) mv).getValueText();
   }
 
-  @Override
-  public boolean matches(@NotNull final String name, @NotNull final String pattern) {
-    final AnAction anAction = myActionManager.getAction(name);
-    if (anAction == null) return true;
-    final Pattern compiledPattern = getPattern(pattern);
-    final Presentation presentation = anAction.getTemplatePresentation();
-    final String text = presentation.getText();
-    final String description = presentation.getDescription();
-    PatternMatcher matcher = getMatcher();
-    if (text != null && matcher.matches(text, compiledPattern) ||
-        description != null && !description.equals(text) && matcher.matches(description, compiledPattern)) {
-      return true;
+  protected MatchMode actionMatches(@NotNull String pattern, MinusculeMatcher matcher, @NotNull AnAction anAction) {
+    Presentation presentation = anAction.getTemplatePresentation();
+    String text = presentation.getText();
+    String description = presentation.getDescription();
+    if (text != null && matcher.matches(text)) {
+      return MatchMode.NAME;
     }
-    final String groupName = myActionsMap.get(anAction);
-    return groupName != null && text != null && matcher.matches(groupName + " " + text, compiledPattern);
+    else if (description != null && !description.equals(text) && matcher.matches(description)) {
+      return MatchMode.DESCRIPTION;
+    }
+    if (text == null) {
+      return MatchMode.NONE;
+    }
+    GroupMapping groupMapping = myActionGroups.get(anAction);
+    if (groupMapping != null) {
+      for (String groupName: groupMapping.getAllGroupNames()) {
+        if (matcher.matches(groupName + " " + text)) {
+          return anAction instanceof ToggleAction ? MatchMode.NAME : MatchMode.GROUP;
+        }
+        if (matcher.matches(text + " " + groupName)) {
+          return MatchMode.GROUP;
+        }
+      }
+    }
+
+    for (GotoActionAliasMatcher m : GotoActionAliasMatcher.EP_NAME.getExtensions()) {
+      if (m.match(anAction, pattern)) {
+        return MatchMode.NAME;
+      }
+    }
+    return MatchMode.NONE;
   }
 
   @Nullable
@@ -422,110 +425,34 @@ public class GotoActionModel implements ChooseByNameModel, CustomMatcherModel, C
   }
 
   @NotNull
-  private Pattern getPattern(@NotNull String pattern) {
-    String converted = convertPattern(pattern.trim());
-    Pattern compiledPattern = myCompiledPattern;
-    if (compiledPattern != null && !Comparing.strEqual(converted, compiledPattern.getPattern())) {
-      compiledPattern = null;
-    }
-    if (compiledPattern == null) {
+  public SortedSet<Object> sortItems(@NotNull Set<Object> elements) {
+    TreeSet<Object> objects = ContainerUtilRt.newTreeSet(this);
+    objects.addAll(elements);
+    return objects;
+  }
+
+  private void updateOnEdt(Runnable update) {
+    Semaphore semaphore = new Semaphore(1);
+    ProgressIndicator indicator = ProgressIndicatorProvider.getGlobalProgressIndicator();
+    ApplicationManager.getApplication().invokeLater(() -> {
       try {
-        myCompiledPattern = compiledPattern = new Perl5Compiler().compile(converted, Perl5Compiler.READ_ONLY_MASK);
+        update.run();
       }
-      catch (MalformedPatternException e) {
-        //do nothing
+      finally {
+        semaphore.up();
+      }
+    }, myModality, __ -> indicator != null && indicator.isCanceled());
+
+    while (!semaphore.waitFor(10)) {
+      if (indicator != null && indicator.isCanceled()) {
+        // don't use `checkCanceled` because some smart devs might suppress PCE and end up with a deadlock like IDEA-177788
+        throw new ProcessCanceledException();
       }
     }
-
-    return compiledPattern;
   }
 
-  private String convertPattern(String pattern) {
-    final int eol = pattern.indexOf('\n');
-    if (eol != -1) {
-      pattern = pattern.substring(0, eol);
-    }
-    if (pattern.length() >= 80) {
-      pattern = pattern.substring(0, 80);
-    }
-
-    @NonNls final StringBuilder buffer = new StringBuilder();
-
-    boolean allowToLower = true;
-    if (containsOnlyUppercaseLetters(pattern)) {
-      allowToLower = false;
-    }
-
-    if (allowToLower) {
-      buffer.append(".*");
-    }
-
-    boolean firstIdentifierLetter = true;
-    for (int i = 0; i < pattern.length(); i++) {
-      final char c = pattern.charAt(i);
-      if (Character.isLetterOrDigit(c)) {
-        // This logic allows to use uppercase letters only to catch the name like PDM for PsiDocumentManager
-        if (Character.isUpperCase(c) || Character.isDigit(c)) {
-
-          if (!firstIdentifierLetter) {
-            buffer.append("[^A-Z]*");
-          }
-
-          buffer.append("[");
-          buffer.append(c);
-          if (allowToLower || i == 0) {
-            buffer.append('|');
-            buffer.append(Character.toLowerCase(c));
-          }
-          buffer.append("]");
-        }
-        else if (Character.isLowerCase(c)) {
-          buffer.append('[');
-          buffer.append(c);
-          buffer.append('|');
-          buffer.append(Character.toUpperCase(c));
-          buffer.append(']');
-        }
-        else {
-          buffer.append(c);
-        }
-
-        firstIdentifierLetter = false;
-      }
-      else if (c == '*') {
-        buffer.append(".*");
-        firstIdentifierLetter = true;
-      }
-      else if (c == '.') {
-        buffer.append("\\.");
-        firstIdentifierLetter = true;
-      }
-      else if (c == ' ') {
-        buffer.append("[^A-Z]*\\ ");
-        firstIdentifierLetter = true;
-      }
-      else {
-        firstIdentifierLetter = true;
-        // for standard RegExp engine
-        // buffer.append("\\u");
-        // buffer.append(Integer.toHexString(c + 0x20000).substring(1));
-
-        // for OROMATCHER RegExp engine
-        buffer.append("\\x");
-        buffer.append(Integer.toHexString(c + 0x20000).substring(3));
-      }
-    }
-
-    buffer.append(".*");
-    return buffer.toString();
-  }
-
-  private static boolean containsOnlyUppercaseLetters(String s) {
-    for (int i = 0; i < s.length(); i++) {
-      char c = s.charAt(i);
-      if (c != '*' && c != ' ' && !Character.isUpperCase(c)) return false;
-    }
-    return true;
+  public enum MatchMode {
+    NONE, INTENTION, NAME, DESCRIPTION, GROUP, NON_MENU
   }
 
   @Override
@@ -535,16 +462,420 @@ public class GotoActionModel implements ChooseByNameModel, CustomMatcherModel, C
 
   @Override
   public boolean useMiddleMatching() {
-    return false;
+    return true;
   }
 
-  private final ThreadLocal<PatternMatcher> myMatcher = new ThreadLocal<PatternMatcher>() {
-    @Override
-    protected PatternMatcher initialValue() {
-      return new Perl5Matcher();
+  public static class GroupMapping implements Comparable<GroupMapping> {
+    private final List<List<ActionGroup>> myPaths = new ArrayList<>();
+
+    @Nullable private String myBestGroupName;
+    private boolean myBestNameComputed;
+
+    @NotNull
+    public static GroupMapping createFromText(String text) {
+      GroupMapping mapping = new GroupMapping();
+      mapping.addPath(singletonList(new DefaultActionGroup(text, false)));
+      return mapping;
     }
-  };
-  private PatternMatcher getMatcher() {
-    return myMatcher.get();
+
+    private void addPath(@NotNull List<ActionGroup> path) {
+      myPaths.add(path);
+    }
+
+
+    @Override
+    public int compareTo(@NotNull GroupMapping o) {
+      return Comparing.compare(getFirstGroupName(), o.getFirstGroupName());
+    }
+
+    @Nullable
+    public String getBestGroupName() {
+      if (myBestNameComputed) return myBestGroupName;
+      return getFirstGroupName();
+    }
+
+    @Nullable
+    private String getFirstGroupName() {
+      List<ActionGroup> path = ContainerUtil.getFirstItem(myPaths);
+      return path != null ? getPathName(path) : null;
+    }
+
+    private void updateBeforeShow(@NotNull DataContext context) {
+      if (myBestNameComputed) return;
+      myBestNameComputed = true;
+
+      for (List<ActionGroup> path : myPaths) {
+        String name = getActualPathName(path, context);
+        if (name != null) {
+          myBestGroupName = name;
+          return;
+        }
+      }
+    }
+
+    @NotNull
+    public List<String> getAllGroupNames() {
+      return ContainerUtil.map(myPaths, GroupMapping::getPathName);
+    }
+
+    @Nullable
+    private static String getPathName(@NotNull List<ActionGroup> path) {
+      String name = "";
+      for (ActionGroup group: path) {
+        name = appendGroupName(name, group, group.getTemplatePresentation());
+      }
+      return StringUtil.nullize(name);
+    }
+
+    @Nullable
+    private static String getActualPathName(@NotNull List<ActionGroup> path, @NotNull DataContext context) {
+      String name = "";
+      for (ActionGroup group : path) {
+        Presentation presentation = updateActionBeforeShow(group, context).getPresentation();
+        if (!presentation.isVisible()) return null;
+        name = appendGroupName(name, group, presentation);
+      }
+      return StringUtil.nullize(name);
+    }
+
+    @NotNull
+    private static String appendGroupName(@NotNull String prefix, @NotNull ActionGroup group, @NotNull Presentation presentation) {
+      if (group.isPopup()) {
+        String groupName = getActionGroupName(presentation);
+        if (!StringUtil.isEmptyOrSpaces(groupName)) {
+          return prefix.isEmpty()
+                 ? groupName
+                 : prefix + " | " + groupName;
+        }
+      }
+      return prefix;
+    }
+
+    @Nullable
+    private static String getActionGroupName(@NotNull Presentation presentation) {
+      String text = presentation.getText();
+      if (text == null) return null;
+
+      Matcher matcher = INNER_GROUP_WITH_IDS.matcher(text);
+      if (matcher.matches()) return matcher.group(1);
+
+      return text;
+    }
+  }
+
+  public static class ActionWrapper implements Comparable<ActionWrapper> {
+    @NotNull private final AnAction myAction;
+    @NotNull private final MatchMode myMode;
+    @Nullable private final GroupMapping myGroupMapping;
+    private final DataContext myDataContext;
+    private final GotoActionModel myModel;
+    private volatile Presentation myPresentation;
+
+    public ActionWrapper(@NotNull AnAction action,
+                         @Nullable GroupMapping groupMapping,
+                         @NotNull MatchMode mode,
+                         DataContext dataContext,
+                         GotoActionModel model) {
+      myAction = action;
+      myMode = mode;
+      myGroupMapping = groupMapping;
+      myDataContext = dataContext;
+      myModel = model;
+    }
+
+    @NotNull
+    public AnAction getAction() {
+      return myAction;
+    }
+
+    @NotNull
+    public MatchMode getMode() {
+      return myMode;
+    }
+
+    @Override
+    public int compareTo(@NotNull ActionWrapper o) {
+      int compared = myMode.compareTo(o.getMode());
+      if (compared != 0) return compared;
+      Presentation myPresentation = myAction.getTemplatePresentation();
+      Presentation oPresentation = o.getAction().getTemplatePresentation();
+      String myText = StringUtil.notNullize(myPresentation.getText());
+      String oText = StringUtil.notNullize(oPresentation.getText());
+      int byText = StringUtil.compare(StringUtil.trimEnd(myText, "..."), StringUtil.trimEnd(oText, "..."), true);
+      if (byText != 0) return byText;
+      int byTextLength = StringUtil.notNullize(myText).length() - StringUtil.notNullize(oText).length();
+      if (byTextLength != 0) return byTextLength;
+      int byGroup = Comparing.compare(myGroupMapping, o.myGroupMapping);
+      if (byGroup != 0) return byGroup;
+      int byDesc = StringUtil.compare(myPresentation.getDescription(), oPresentation.getDescription(), true);
+      if (byDesc != 0) return byDesc;
+      int byClassHashCode = Comparing.compare(myAction.getClass().hashCode(), o.myAction.getClass().hashCode());
+      if (byClassHashCode != 0) return byClassHashCode;
+      int byInstanceHashCode = Comparing.compare(myAction.hashCode(), o.myAction.hashCode());
+      if (byInstanceHashCode != 0) return byInstanceHashCode;
+      return 0;
+    }
+
+    public boolean isAvailable() {
+      return getPresentation().isEnabledAndVisible();
+    }
+
+    @NotNull
+    public Presentation getPresentation() {
+      if (myPresentation != null) return myPresentation;
+      Runnable r = () -> {
+        myPresentation = updateActionBeforeShow(myAction, myDataContext).getPresentation();
+        if (myGroupMapping != null) myGroupMapping.updateBeforeShow(myDataContext);
+      };
+      if (ApplicationManager.getApplication().isDispatchThread()) {
+        r.run();
+      }
+      else {
+        myModel.updateOnEdt(r);
+      }
+
+      return ObjectUtils.notNull(myPresentation, myAction.getTemplatePresentation());
+    }
+
+    private boolean hasPresentation() {
+      return myPresentation != null;
+    }
+
+    @Nullable
+    public String getGroupName() {
+      if (myGroupMapping == null) return null;
+      String groupName = myGroupMapping.getBestGroupName();
+      if (myAction instanceof ActionGroup && Comparing.equal(myAction.getTemplatePresentation().getText(), groupName)) return null;
+      return groupName;
+    }
+    
+    public boolean isGroupAction() {
+      return myAction instanceof ActionGroup;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+      return obj instanceof ActionWrapper && compareTo((ActionWrapper)obj) == 0;
+    }
+
+    @Override
+    public int hashCode() {
+      String text = myAction.getTemplatePresentation().getText();
+      return text != null ? text.hashCode() : 0;
+    }
+
+    @Override
+    public String toString() {
+      return myAction.toString();
+    }
+  }
+
+  public static class GotoActionListCellRenderer extends DefaultListCellRenderer {
+    private final Function<? super OptionDescription, String> myGroupNamer;
+    private final boolean myUseListFont;
+
+    public GotoActionListCellRenderer(Function<? super OptionDescription, String> groupNamer) {
+      this(groupNamer, false);
+    }
+
+    public GotoActionListCellRenderer(Function<? super OptionDescription, String> groupNamer, boolean useListFont) {
+      myGroupNamer = groupNamer;
+      myUseListFont = useListFont;
+    }
+
+    @NotNull
+    @Override
+    public Component getListCellRendererComponent(@NotNull JList list,
+                                                  Object matchedValue,
+                                                  int index, boolean isSelected, boolean cellHasFocus) {
+      boolean showIcon = UISettings.getInstance().getShowIconsInMenus();
+      JPanel panel = new JPanel(new BorderLayout());
+      panel.setBorder(JBUI.Borders.empty(2));
+      panel.setOpaque(true);
+      Color bg = UIUtil.getListBackground(isSelected);
+      panel.setBackground(bg);
+
+      SimpleColoredComponent nameComponent = new SimpleColoredComponent();
+      if (myUseListFont) {
+        nameComponent.setFont(list.getFont());
+      }
+      nameComponent.setBackground(bg);
+      panel.add(nameComponent, BorderLayout.CENTER);
+      
+      if (matchedValue instanceof String) { //...
+        if (showIcon) {
+          panel.add(new JBLabel(EMPTY_ICON), BorderLayout.WEST);
+        }
+        String str = cutName((String)matchedValue, null, list, panel, nameComponent);
+        nameComponent.append(str, new SimpleTextAttributes(STYLE_PLAIN, defaultActionForeground(isSelected, null)));
+        return panel;
+      }
+
+      Color groupFg = isSelected ? UIUtil.getListSelectionForeground() : UIUtil.getInactiveTextColor();
+
+      Object value = ((MatchedValue) matchedValue).value;
+      String pattern = ((MatchedValue)matchedValue).pattern;
+
+      Border eastBorder = JBUI.Borders.emptyRight(2);
+      if (value instanceof ActionWrapper) {
+        ActionWrapper actionWithParentGroup = (ActionWrapper)value;
+        AnAction anAction = actionWithParentGroup.getAction();
+        boolean toggle = anAction instanceof ToggleAction;
+        String groupName = actionWithParentGroup.getAction() instanceof ApplyIntentionAction ? null : actionWithParentGroup.getGroupName();
+        Presentation presentation = actionWithParentGroup.getPresentation();
+        Color fg = defaultActionForeground(isSelected, presentation);
+        boolean disabled = !presentation.isEnabled() || !presentation.isVisible();
+
+        if (disabled) {
+          groupFg = UIUtil.getLabelDisabledForeground();
+        }
+        
+        if (showIcon) {
+          Icon icon = presentation.getIcon();
+          panel.add(createIconLabel(icon, disabled), BorderLayout.WEST);
+        }
+
+        if (toggle) {
+          AnActionEvent event = AnActionEvent.createFromDataContext(ActionPlaces.UNKNOWN, null, ((ActionWrapper)value).myDataContext);
+          boolean selected = ((ToggleAction)anAction).isSelected(event);
+          addOnOffButton(panel, selected);
+        }
+        else {
+          if (groupName != null) {
+            JLabel groupLabel = new JLabel(groupName);
+            groupLabel.setBackground(bg);
+            groupLabel.setBorder(eastBorder);
+            groupLabel.setForeground(groupFg);
+            panel.add(groupLabel, BorderLayout.EAST);
+          }
+        }
+
+        panel.setToolTipText(presentation.getDescription());
+        Shortcut[] shortcuts = getActiveKeymapShortcuts(ActionManager.getInstance().getId(anAction)).getShortcuts();
+        String shortcutText = KeymapUtil.getPreferredShortcutText(shortcuts);
+        String name = getName(presentation.getText(), groupName, toggle);
+        name = cutName(name, shortcutText, list, panel, nameComponent);
+
+        appendWithColoredMatches(nameComponent, name, pattern, fg, isSelected);
+        if (StringUtil.isNotEmpty(shortcutText)) {
+          nameComponent.append(" " + shortcutText,
+                   new SimpleTextAttributes(SimpleTextAttributes.STYLE_SMALLER | SimpleTextAttributes.STYLE_BOLD, groupFg));
+        }
+      }
+      else if (value instanceof OptionDescription) {
+        if (!isSelected && !(value instanceof BooleanOptionDescription)) {
+          Color descriptorBg = UIUtil.isUnderDarcula() ? ColorUtil.brighter(UIUtil.getListBackground(), 1) : LightColors.SLIGHTLY_GRAY;
+          panel.setBackground(descriptorBg);
+          nameComponent.setBackground(descriptorBg);
+        }
+        String hit = ((OptionDescription)value).getHit();
+        if (hit == null) {
+          hit = ((OptionDescription)value).getOption();
+        }
+        hit = StringUtil.unescapeXmlEntities(hit);
+        hit = hit.replace("  ", " "); // avoid extra spaces from mnemonics and xml conversion
+        String fullHit = hit;
+        Color fg = UIUtil.getListForeground(isSelected);
+
+        if (showIcon) {
+          panel.add(new JLabel(EMPTY_ICON), BorderLayout.WEST);
+        }
+        panel.setToolTipText(fullHit);
+
+        if (value instanceof BooleanOptionDescription) {
+          boolean selected = ((BooleanOptionDescription)value).isOptionEnabled();
+          addOnOffButton(panel, selected);
+        }
+        else {
+          JLabel settingsLabel = new JLabel(myGroupNamer.fun((OptionDescription)value));
+          settingsLabel.setForeground(groupFg);
+          settingsLabel.setBackground(bg);
+          settingsLabel.setBorder(eastBorder);
+          panel.add(settingsLabel, BorderLayout.EAST);
+        }
+
+        String name = cutName(fullHit, null, list, panel, nameComponent);
+        appendWithColoredMatches(nameComponent, name, pattern, fg, isSelected);
+      }
+      return panel;
+    }
+
+    private static String cutName(String name, String shortcutText, JList list, JPanel panel, SimpleColoredComponent nameComponent) {
+      if (!list.isShowing() || list.getWidth() <= 0) {
+        return StringUtil.first(name, 60, true); //fallback to previous behaviour
+      }
+      int freeSpace = calcFreeSpace(list, panel, nameComponent, shortcutText);
+
+      if (freeSpace <= 0) {
+        return name;
+      }
+
+      FontMetrics fm = nameComponent.getFontMetrics(nameComponent.getFont());
+      int strWidth = fm.stringWidth(name);
+      if (strWidth <= freeSpace) {
+        return name;
+      }
+
+      int cutSymbolIndex  = (int)((((double) freeSpace - fm.stringWidth("...")) / strWidth) * name.length());
+      cutSymbolIndex = Integer.max(1, cutSymbolIndex);
+      name = name.substring(0, cutSymbolIndex);
+      while (fm.stringWidth(name + "...") > freeSpace && name.length() > 1) {
+        name = name.substring(0, name.length() - 1);
+      }
+
+      return name.trim() + "...";
+    }
+
+    private static int calcFreeSpace(JList list, JPanel panel, SimpleColoredComponent nameComponent, String shortcutText) {
+      BorderLayout layout = (BorderLayout)panel.getLayout();
+      Component eastComponent = layout.getLayoutComponent(BorderLayout.EAST);
+      Component westComponent = layout.getLayoutComponent(BorderLayout.WEST);
+      int freeSpace = list.getWidth()
+        - (list.getInsets().right + list.getInsets().left)
+        - (panel.getInsets().right + panel.getInsets().left)
+        - (eastComponent == null ? 0 : eastComponent.getPreferredSize().width)
+        - (westComponent == null ? 0 : westComponent.getPreferredSize().width)
+        - (nameComponent.getInsets().right + nameComponent.getInsets().left)
+        - (nameComponent.getIpad().right + nameComponent.getIpad().left)
+        - nameComponent.getIconTextGap();
+
+      if (StringUtil.isNotEmpty(shortcutText)) {
+        FontMetrics fm = nameComponent.getFontMetrics(nameComponent.getFont().deriveFont(Font.BOLD));
+        freeSpace -= fm.stringWidth(" " + shortcutText);
+      }
+
+      return freeSpace;
+    }
+
+    private static void addOnOffButton(@NotNull JPanel panel, boolean selected) {
+      OnOffButton button = new OnOffButton();
+      button.setSelected(selected);
+      panel.add(button, BorderLayout.EAST);
+      panel.setBorder(JBUI.Borders.empty(0, 2));
+    }
+
+    @NotNull
+    private static String getName(@Nullable String text, @Nullable String groupName, boolean toggle) {
+      return toggle && StringUtil.isNotEmpty(groupName)
+             ? StringUtil.isNotEmpty(text) ? groupName + ": " + text 
+                                           : groupName : StringUtil.notNullize(text);
+    }
+
+    private static void appendWithColoredMatches(SimpleColoredComponent nameComponent,
+                                                 @NotNull String name,
+                                                 @NotNull String pattern,
+                                                 Color fg,
+                                                 boolean selected) {
+      SimpleTextAttributes plain = new SimpleTextAttributes(STYLE_PLAIN, fg);
+      SimpleTextAttributes highlighted = new SimpleTextAttributes(null, fg, null, STYLE_SEARCH_MATCH);
+      List<TextRange> fragments = ContainerUtil.newArrayList();
+      if (selected) {
+        int matchStart = StringUtil.indexOfIgnoreCase(name, pattern, 0);
+        if (matchStart >= 0) {
+          fragments.add(TextRange.from(matchStart, pattern.length()));
+        }
+      }
+      SpeedSearchUtil.appendColoredFragments(nameComponent, name, fragments, plain, highlighted);
+    }
   }
 }

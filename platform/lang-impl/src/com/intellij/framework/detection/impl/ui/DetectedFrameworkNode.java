@@ -37,7 +37,7 @@ class DetectedFrameworkNode extends DetectedFrameworkTreeNodeBase {
   private final DetectedFrameworkDescription myDescription;
   private final FrameworkDetectionContext myContext;
 
-  public DetectedFrameworkNode(DetectedFrameworkDescription description, FrameworkDetectionContext context) {
+  DetectedFrameworkNode(DetectedFrameworkDescription description, FrameworkDetectionContext context) {
     super(description);
     myDescription = description;
     myContext = context;

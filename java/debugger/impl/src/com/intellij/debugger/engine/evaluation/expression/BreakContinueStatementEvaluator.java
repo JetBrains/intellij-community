@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,24 +26,18 @@ public class BreakContinueStatementEvaluator {
 
   public static Evaluator createBreakEvaluator(final String labelName) {
     return new Evaluator() {
+      @Override
       public Object evaluate(EvaluationContextImpl context) throws BreakException {
         throw new BreakException(labelName);
-      }
-
-      public Modifier getModifier() {
-        return null;
       }
     };
   }
 
   public static Evaluator createContinueEvaluator(final String labelName) {
     return new Evaluator() {
+      @Override
       public Object evaluate(EvaluationContextImpl context) throws ContinueException {
         throw new ContinueException(labelName);
-      }
-
-      public Modifier getModifier() {
-        return null;
       }
     };
   }

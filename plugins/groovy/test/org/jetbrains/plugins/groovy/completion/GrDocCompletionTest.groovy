@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,9 +15,9 @@
  */
 package org.jetbrains.plugins.groovy.completion
 
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager
-import org.jetbrains.plugins.groovy.util.TestUtils
+import com.intellij.application.options.CodeStyle
 import org.jetbrains.plugins.groovy.codeStyle.GroovyCodeStyleSettings
+import org.jetbrains.plugins.groovy.util.TestUtils
 
 /**
  * @author Max Medvedev
@@ -25,12 +25,12 @@ import org.jetbrains.plugins.groovy.codeStyle.GroovyCodeStyleSettings
 class GrDocCompletionTest extends GroovyCompletionTestBase {
   @Override
   protected String getBasePath() {
-    "${TestUtils.testDataPath}groovy/completion/gdoc";
+    "${TestUtils.testDataPath}groovy/completion/gdoc"
   }
 
   void testLinkCompletion() { doBasicTest() }
   void testLinkCompletion1() {
-    CodeStyleSettingsManager.getSettings(project).getCustomSettings(GroovyCodeStyleSettings.class).USE_FQ_CLASS_NAMES_IN_JAVADOC = false
+    CodeStyle.getSettings(project).getCustomSettings(GroovyCodeStyleSettings.class).USE_FQ_CLASS_NAMES_IN_JAVADOC = false
     doBasicTest()
   }
 }

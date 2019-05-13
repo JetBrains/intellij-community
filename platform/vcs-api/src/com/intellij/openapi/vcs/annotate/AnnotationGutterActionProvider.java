@@ -20,9 +20,7 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * Implement this to add additional custom actions to the popup invoked by right-clicking on the annotation gutter.
- *
- * @author Kirill Likhodedov
+ * Implement this to add an additional custom action to the annotation gutter popup (invoked by right-click to an annotation).
  */
 public interface AnnotationGutterActionProvider {
 
@@ -30,10 +28,11 @@ public interface AnnotationGutterActionProvider {
 
   /**
    * Create an action that will be added to the annotation gutter popup.
+   *
    * @param annotation annotation which is currently shown on the gutter.
    * @return new action that can be invoked from the annotation gutter popup.
    */
   @NotNull
-  AnAction createAction(FileAnnotation annotation);
+  AnAction createAction(@NotNull FileAnnotation annotation);
 
 }

@@ -1,12 +1,14 @@
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.search;
 
 import com.intellij.openapi.application.QueryExecutorBase;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.PsiReference;
+import com.intellij.psi.impl.SyntheticFileSystemItem;
 import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.psi.meta.PsiMetaOwner;
 import com.intellij.psi.search.SearchScope;
@@ -23,15 +25,21 @@ public class CachesBasedRefSearcher extends QueryExecutorBase<PsiReference, Refe
   }
 
   @Override
-  public void processQuery(@NotNull ReferencesSearch.SearchParameters p, @NotNull Processor<PsiReference> consumer) {
+  public void processQuery(@NotNull ReferencesSearch.SearchParameters p, @NotNull Processor<? super PsiReference> consumer) {
     final PsiElement refElement = p.getElementToSearch();
+    boolean caseSensitive = refElement.getLanguage().isCaseSensitive();
 
     String text = null;
-    if (refElement instanceof PsiFile) {
-      final VirtualFile vFile = ((PsiFile)refElement).getVirtualFile();
+    if (refElement instanceof PsiFileSystemItem && !(refElement instanceof SyntheticFileSystemItem)) {
+      final VirtualFile vFile = ((PsiFileSystemItem)refElement).getVirtualFile();
       if (vFile != null) {
-        text = vFile.getNameWithoutExtension();
+        String fileNameWithoutExtension = vFile.getNameWithoutExtension();
+        text = fileNameWithoutExtension.isEmpty() ? vFile.getName() : fileNameWithoutExtension;
       }
+      // We must not look for file references with the file language's case-sensitivity, 
+      // since case-sensitivity of the references themselves depends either on file system 
+      // or on the rules of the language of reference
+      caseSensitive = false;
     }
     else if (refElement instanceof PsiNamedElement) {
       text = ((PsiNamedElement)refElement).getName();
@@ -47,9 +55,7 @@ public class CachesBasedRefSearcher extends QueryExecutorBase<PsiReference, Refe
     }
     if (StringUtil.isNotEmpty(text)) {
       final SearchScope searchScope = p.getEffectiveSearchScope();
-      assert text != null;
-      p.getOptimizer().searchWord(text, searchScope, refElement.getLanguage().isCaseSensitive(), refElement);
+      p.getOptimizer().searchWord(text, searchScope, caseSensitive, refElement);
     }
   }
-
 }

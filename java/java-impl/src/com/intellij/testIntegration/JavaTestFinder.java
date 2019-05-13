@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,12 +20,17 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiShortNamesCache;
-import com.intellij.util.containers.HashSet;
+import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.util.Processor;
+import com.intellij.util.Processors;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -36,31 +41,26 @@ import java.util.List;
 import java.util.regex.Pattern;
 
 public class JavaTestFinder implements TestFinder {
+  @Override
   public PsiClass findSourceElement(@NotNull PsiElement element) {
     return TestIntegrationUtils.findOuterClass(element);
   }
 
+  @Override
   @NotNull
   public Collection<PsiElement> findClassesForTest(@NotNull PsiElement element) {
     PsiClass klass = findSourceElement(element);
     if (klass == null) return Collections.emptySet();
 
-    GlobalSearchScope scope;
-    Module module = getModule(element);
-    if (module != null) {
-      scope = GlobalSearchScope.moduleWithDependenciesScope(module);
-    }
-    else {
-      scope = GlobalSearchScope.projectScope(element.getProject());
-    }
+    GlobalSearchScope scope = getSearchScope(element, true);
 
     PsiShortNamesCache cache = PsiShortNamesCache.getInstance(element.getProject());
 
-    List<Pair<? extends PsiNamedElement, Integer>> classesWithWeights = new ArrayList<Pair<? extends PsiNamedElement, Integer>>();
+    List<Pair<? extends PsiNamedElement, Integer>> classesWithWeights = new ArrayList<>();
     for (Pair<String, Integer> eachNameWithWeight : TestFinderHelper.collectPossibleClassNamesWithWeights(klass.getName())) {
       for (PsiClass eachClass : cache.getClassesByName(eachNameWithWeight.first, scope)) {
         if (isTestSubjectClass(eachClass)) {
-          classesWithWeights.add(new Pair<PsiClass, Integer>(eachClass, eachNameWithWeight.second));
+          classesWithWeights.add(Pair.create(eachClass, eachNameWithWeight.second));
         }
       }
     }
@@ -68,56 +68,75 @@ public class JavaTestFinder implements TestFinder {
     return TestFinderHelper.getSortedElements(classesWithWeights, false);
   }
 
-  private static boolean isTestSubjectClass(PsiClass klass) {
-    if (klass.isAnnotationType() || TestFrameworks.getInstance().isTestClass(klass)) {
+  protected GlobalSearchScope getSearchScope(PsiElement element, boolean dependencies) {
+    final Module module = getModule(element);
+    if (module != null) {
+      return dependencies ? GlobalSearchScope.moduleWithDependenciesScope(module)
+                          : GlobalSearchScope.moduleWithDependentsScope(module);
+    }
+    else {
+      return GlobalSearchScope.projectScope(element.getProject());
+    }
+  }
+
+  protected boolean isTestSubjectClass(PsiClass klass) {
+    if (klass.isAnnotationType() ||
+        TestFrameworks.getInstance().isTestClass(klass) ||
+        !klass.isPhysical()) {
       return false;
     }
     return true;
   }
 
+  @Override
   @NotNull
   public Collection<PsiElement> findTestsForClass(@NotNull PsiElement element) {
     PsiClass klass = findSourceElement(element);
     if (klass == null) return Collections.emptySet();
 
-    GlobalSearchScope scope;
-    Module module = getModule(element);
-    if (module != null) {
-      scope = GlobalSearchScope.moduleWithDependentsScope(module);
-    }
-    else {
-      scope = GlobalSearchScope.projectScope(element.getProject());
-    }
+    List<Pair<? extends PsiNamedElement, Integer>> classesWithProximities = new ArrayList<>();
+    Processor<Pair<? extends PsiNamedElement, Integer>> processor =
+      Processors.cancelableCollectProcessor(classesWithProximities);
+    collectTests(klass, processor);
 
-    PsiShortNamesCache cache = PsiShortNamesCache.getInstance(element.getProject());
+    return TestFinderHelper.getSortedElements(classesWithProximities, true);
+  }
+
+  private boolean collectTests(PsiClass klass, Processor<Pair<? extends PsiNamedElement, Integer>> processor) {
+    GlobalSearchScope scope = getSearchScope(klass, false);
+
+    PsiShortNamesCache cache = PsiShortNamesCache.getInstance(klass.getProject());
 
     String klassName = klass.getName();
-    Pattern pattern = Pattern.compile(".*" + klassName + ".*");
+    Pattern pattern = Pattern.compile(".*" + StringUtil.escapeToRegexp(klassName) + ".*", Pattern.CASE_INSENSITIVE);
 
-    List<Pair<? extends PsiNamedElement, Integer>> classesWithProximities = new ArrayList<Pair<? extends PsiNamedElement, Integer>>();
-
-    HashSet<String> names = new HashSet<String>();
-    cache.getAllClassNames(names);
-    for (String eachName : names) {
+    for (String eachName : ContainerUtil.newHashSet(cache.getAllClassNames())) {
       if (pattern.matcher(eachName).matches()) {
         for (PsiClass eachClass : cache.getClassesByName(eachName, scope)) {
-          if (TestFrameworks.getInstance().isTestClass(eachClass)) {
-            classesWithProximities.add(
-                new Pair<PsiClass, Integer>(eachClass, TestFinderHelper.calcTestNameProximity(klassName, eachName)));
+          if (isTestClass(eachClass, klass)) {
+            if (!processor.process(Pair.create(eachClass, TestFinderHelper.calcTestNameProximity(klassName, eachName)))) {
+              return true;
+            }
           }
         }
       }
     }
+    return false;
+  }
 
-    return TestFinderHelper.getSortedElements(classesWithProximities, true);
+  protected boolean isTestClass(PsiClass eachClass, PsiClass klass) {
+    final TestFrameworks frameworks = TestFrameworks.getInstance();
+    return eachClass.isPhysical() && (frameworks.isTestClass(eachClass) || eachClass != klass && frameworks.isPotentialTestClass(eachClass));
   }
 
   @Nullable
   private static Module getModule(PsiElement element) {
     ProjectFileIndex index = ProjectRootManager.getInstance(element.getProject()).getFileIndex();
-    return index.getModuleForFile(element.getContainingFile().getVirtualFile());
+    VirtualFile file = PsiUtilCore.getVirtualFile(element);
+    return file == null ? null : index.getModuleForFile(file);
   }
 
+  @Override
   public boolean isTest(@NotNull PsiElement element) {
     return TestIntegrationUtils.isTest(element);
   }

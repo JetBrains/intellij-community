@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,6 +31,7 @@ import com.intellij.packaging.impl.artifacts.ArtifactUtil;
 import com.intellij.packaging.impl.elements.ArtifactPackagingElement;
 import com.intellij.util.PathUtil;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
@@ -49,7 +50,7 @@ public class ExtractArtifactAction extends LayoutTreeActionBase {
   }
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     final LayoutTreeComponent treeComponent = myArtifactEditor.getLayoutTreeComponent();
     final LayoutTreeSelection selection = treeComponent.getSelection();
     final CompositePackagingElement<?> parent = selection.getCommonParentElement();
@@ -73,17 +74,14 @@ public class ExtractArtifactAction extends LayoutTreeActionBase {
     final Project project = myArtifactEditor.getContext().getProject();
     final ModifiableArtifactModel model = myArtifactEditor.getContext().getOrCreateModifiableArtifactModel();
     final ModifiableArtifact artifact = model.addArtifact(dialog.getArtifactName(), dialog.getArtifactType());
-    treeComponent.editLayout(new Runnable() {
-      @Override
-      public void run() {
-        for (PackagingElement<?> element : selectedElements) {
-          artifact.getRootElement().addOrFindChild(ArtifactUtil.copyWithChildren(element, project));
-        }
-        for (PackagingElement element : selectedElements) {
-          parent.removeChild(element);
-        }
-        parent.addOrFindChild(new ArtifactPackagingElement(project, ArtifactPointerManager.getInstance(project).createPointer(artifact, myArtifactEditor.getContext().getArtifactModel())));
+    treeComponent.editLayout(() -> {
+      for (PackagingElement<?> element : selectedElements) {
+        artifact.getRootElement().addOrFindChild(ArtifactUtil.copyWithChildren(element, project));
       }
+      for (PackagingElement element : selectedElements) {
+        parent.removeChild(element);
+      }
+      parent.addOrFindChild(new ArtifactPackagingElement(project, ArtifactPointerManager.getInstance(project).createPointer(artifact, myArtifactEditor.getContext().getArtifactModel())));
     });
     treeComponent.rebuildTree();
   }
@@ -91,8 +89,7 @@ public class ExtractArtifactAction extends LayoutTreeActionBase {
   @Nullable
   protected IExtractArtifactDialog showDialog(LayoutTreeComponent treeComponent, String initialName) {
     final ExtractArtifactDialog dialog = new ExtractArtifactDialog(myArtifactEditor.getContext(), treeComponent, initialName);
-    dialog.show();
-    if (!dialog.isOK()) {
+    if (!dialog.showAndGet()) {
       return null;
     }
     return dialog;

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,10 +17,11 @@ package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeInsight.ChangeContextUtil;
 import com.intellij.codeInsight.CodeInsightBundle;
+import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.generation.GenerateMembersUtil;
 import com.intellij.codeInsight.generation.OverrideImplementUtil;
 import com.intellij.ide.util.MethodCellRenderer;
-import com.intellij.openapi.application.Result;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -30,16 +31,14 @@ import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.ui.popup.PopupChooserBuilder;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.*;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.psi.util.TypeConversionUtil;
-import com.intellij.ui.components.JBList;
 import com.intellij.util.IncorrectOperationException;
 
-import javax.swing.*;
 import java.util.*;
 
 /**
@@ -52,9 +51,9 @@ public class CopyAbstractMethodImplementationHandler {
   private final Editor myEditor;
   private final PsiMethod myMethod;
   private PsiClass mySourceClass;
-  private final List<PsiClass> myTargetClasses = new ArrayList<PsiClass>();
-  private final List<PsiEnumConstant> myTargetEnumConstants = new ArrayList<PsiEnumConstant>();
-  private final List<PsiMethod> mySourceMethods = new ArrayList<PsiMethod>();
+  private final List<PsiClass> myTargetClasses = new ArrayList<>();
+  private final List<PsiEnumConstant> myTargetEnumConstants = new ArrayList<>();
+  private final List<PsiMethod> mySourceMethods = new ArrayList<>();
 
   public CopyAbstractMethodImplementationHandler(final Project project, final Editor editor, final PsiMethod method) {
     myProject = project;
@@ -63,12 +62,7 @@ public class CopyAbstractMethodImplementationHandler {
   }
 
   public void invoke() {
-    ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
-      @Override
-      public void run() {
-        searchExistingImplementations();
-      }
-    }, CodeInsightBundle.message("searching.for.implementations"), false, myProject);
+    ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> ApplicationManager.getApplication().runReadAction(() -> searchExistingImplementations()), CodeInsightBundle.message("searching.for.implementations"), false, myProject);
     if (mySourceMethods.isEmpty()) {
       Messages.showErrorDialog(myProject, CodeInsightBundle.message("copy.abstract.method.no.existing.implementations.found"),
                                CodeInsightBundle.message("copy.abstract.method.title"));
@@ -78,29 +72,16 @@ public class CopyAbstractMethodImplementationHandler {
       copyImplementation(mySourceMethods.get(0));
     }
     else {
-      Collections.sort(mySourceMethods, new Comparator<PsiMethod>() {
-        @Override
-        public int compare(final PsiMethod o1, final PsiMethod o2) {
-          PsiClass c1 = o1.getContainingClass();
-          PsiClass c2 = o2.getContainingClass();
-          return Comparing.compare(c1.getName(), c2.getName());
-        }
+      Collections.sort(mySourceMethods, (o1, o2) -> {
+        PsiClass c1 = o1.getContainingClass();
+        PsiClass c2 = o2.getContainingClass();
+        return Comparing.compare(c1.getName(), c2.getName());
       });
-      final PsiMethod[] methodArray = mySourceMethods.toArray(new PsiMethod[mySourceMethods.size()]);
-      final JList list = new JBList(methodArray);
-      list.setCellRenderer(new MethodCellRenderer(true));
-      final Runnable runnable = new Runnable() {
-        @Override
-        public void run() {
-          int index = list.getSelectedIndex();
-          if (index < 0) return;
-          PsiMethod element = (PsiMethod)list.getSelectedValue();
-          copyImplementation(element);
-        }
-      };
-      new PopupChooserBuilder(list)
+      JBPopupFactory.getInstance()
+        .createPopupChooserBuilder(mySourceMethods)
+        .setRenderer(new MethodCellRenderer(true))
+        .setItemChosenCallback((element) -> copyImplementation(element))
         .setTitle(CodeInsightBundle.message("copy.abstract.method.popup.title"))
-        .setItemChoosenCallback(runnable)
         .createPopup()
         .showInBestPositionFor(myEditor);
     }
@@ -109,7 +90,7 @@ public class CopyAbstractMethodImplementationHandler {
   private void searchExistingImplementations() {
     mySourceClass = myMethod.getContainingClass();
     if (!mySourceClass.isValid()) return;
-    for (PsiClass inheritor : ClassInheritorsSearch.search(mySourceClass, true)) {
+    for (PsiClass inheritor : ClassInheritorsSearch.search(mySourceClass)) {
       if (!inheritor.isInterface()) {
         PsiMethod method = ImplementAbstractMethodAction.findExistingImplementation(inheritor, myMethod);
         if (method != null && !method.hasModifierProperty(PsiModifier.ABSTRACT)) {
@@ -149,44 +130,42 @@ public class CopyAbstractMethodImplementationHandler {
   }
 
   private void copyImplementation(final PsiMethod sourceMethod) {
-    final List<PsiMethod> generatedMethods = new ArrayList<PsiMethod>();
-    new WriteCommandAction(myProject, getTargetFiles()) {
-      @Override
-      protected void run(final Result result) throws Throwable {
-        for (PsiEnumConstant enumConstant : myTargetEnumConstants) {
-          PsiClass initializingClass = enumConstant.getOrCreateInitializingClass();
-          myTargetClasses.add(initializingClass);
-        }
-        for(PsiClass psiClass: myTargetClasses) {
-          final Collection<PsiMethod> methods = OverrideImplementUtil.overrideOrImplementMethod(psiClass, myMethod, true);
-          final Iterator<PsiMethod> iterator = methods.iterator();
-          if (!iterator.hasNext()) continue;
-          PsiMethod overriddenMethod = iterator.next();
-          final PsiCodeBlock body = overriddenMethod.getBody();
-          final PsiCodeBlock sourceBody = sourceMethod.getBody();
-          assert body != null && sourceBody != null;
-          ChangeContextUtil.encodeContextInfo(sourceBody, true);
-          final PsiElement newBody = body.replace(sourceBody.copy());
-          ChangeContextUtil.decodeContextInfo(newBody, psiClass, null);
+    if (!FileModificationService.getInstance().preparePsiElementForWrite(sourceMethod)) return;
+    final List<PsiMethod> generatedMethods = new ArrayList<>();
+    WriteCommandAction.writeCommandAction(myProject, getTargetFiles()).run(() -> {
+      for (PsiEnumConstant enumConstant : myTargetEnumConstants) {
+        PsiClass initializingClass = enumConstant.getOrCreateInitializingClass();
+        myTargetClasses.add(initializingClass);
+      }
+      for (PsiClass psiClass : myTargetClasses) {
+        final Collection<PsiMethod> methods = OverrideImplementUtil.overrideOrImplementMethod(psiClass, myMethod, true);
+        final Iterator<PsiMethod> iterator = methods.iterator();
+        if (!iterator.hasNext()) continue;
+        PsiMethod overriddenMethod = iterator.next();
+        final PsiCodeBlock body = overriddenMethod.getBody();
+        final PsiCodeBlock sourceBody = sourceMethod.getBody();
+        assert body != null && sourceBody != null;
+        ChangeContextUtil.encodeContextInfo(sourceBody, true);
+        final PsiElement newBody = body.replace(sourceBody.copy());
+        ChangeContextUtil.decodeContextInfo(newBody, psiClass, null);
 
-          PsiSubstitutor substitutor = TypeConversionUtil.getSuperClassSubstitutor(mySourceClass, psiClass, PsiSubstitutor.EMPTY);
-          PsiElement anchor = OverrideImplementUtil.getDefaultAnchorToOverrideOrImplement(psiClass, sourceMethod, substitutor);
-          try {
-            if (anchor != null) {
-              overriddenMethod = (PsiMethod) anchor.getParent().addBefore(overriddenMethod, anchor);
-            }
-            else {
-              overriddenMethod = (PsiMethod) psiClass.addBefore(overriddenMethod, psiClass.getRBrace());
-            }
-            generatedMethods.add(overriddenMethod);
+        PsiSubstitutor substitutor = TypeConversionUtil.getSuperClassSubstitutor(mySourceClass, psiClass, PsiSubstitutor.EMPTY);
+        PsiElement anchor = OverrideImplementUtil.getDefaultAnchorToOverrideOrImplement(psiClass, sourceMethod, substitutor);
+        try {
+          if (anchor != null) {
+            overriddenMethod = (PsiMethod)anchor.getParent().addBefore(overriddenMethod, anchor);
           }
-          catch (IncorrectOperationException e) {
-            LOG.error(e);
+          else {
+            overriddenMethod = (PsiMethod)psiClass.addBefore(overriddenMethod, psiClass.getRBrace());
           }
+          generatedMethods.add(overriddenMethod);
+        }
+        catch (IncorrectOperationException e) {
+          LOG.error(e);
         }
       }
-    }.execute();
-    if (generatedMethods.size() > 0) {
+    });
+    if (!generatedMethods.isEmpty()) {
       PsiMethod target = generatedMethods.get(0);
       PsiFile psiFile = target.getContainingFile();
       FileEditorManager fileEditorManager = FileEditorManager.getInstance(psiFile.getProject());
@@ -199,7 +178,7 @@ public class CopyAbstractMethodImplementationHandler {
   }
 
   private PsiFile[] getTargetFiles() {
-    Collection<PsiFile> fileList = new HashSet<PsiFile>();
+    Collection<PsiFile> fileList = new HashSet<>();
     for(PsiClass psiClass: myTargetClasses) {
       fileList.add(psiClass.getContainingFile());
     }

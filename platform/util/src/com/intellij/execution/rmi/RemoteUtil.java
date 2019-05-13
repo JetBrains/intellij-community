@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,8 +15,11 @@
  */
 package com.intellij.execution.rmi;
 
-import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.ClassLoaderUtil;
+import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.ThrowableComputable;
+import com.intellij.util.Function;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ConcurrentFactoryMap;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
@@ -24,7 +27,11 @@ import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.*;
 import java.rmi.Remote;
-import java.util.*;
+import java.rmi.ServerError;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentMap;
 
 /**
  * @author Gregory.Shrago
@@ -33,35 +40,41 @@ public class RemoteUtil {
   RemoteUtil() {
   }
 
-  private static final ConcurrentFactoryMap<Pair<Class<?>, Class<?>>, Map<Method, Method>> ourRemoteToLocalMap =
-    new ConcurrentFactoryMap<Pair<Class<?>, Class<?>>, Map<Method, Method>>() {
-      @Override
-      protected Map<Method, Method> create(Pair<Class<?>, Class<?>> key) {
-        final THashMap<Method, Method> map = new THashMap<Method, Method>();
-        for (Method method : key.second.getMethods()) {
-          Method m = null;
-          main:
-          for (Method candidate : key.first.getMethods()) {
-            if (!candidate.getName().equals(method.getName())) continue;
-            Class<?>[] cpts = candidate.getParameterTypes();
-            Class<?>[] mpts = method.getParameterTypes();
-            if (cpts.length != mpts.length) continue;
-            for (int i = 0; i < mpts.length; i++) {
-              Class<?> mpt = mpts[i];
-              Class<?> cpt = cpts[i];
-              if (!cpt.isAssignableFrom(mpt)) continue main;
-            }
-            m = candidate;
-            break;
-          }
-          if (m != null) map.put(method, m);
-        }
-        return map;
-      }
-    };
+  private static final ConcurrentMap<Couple<Class<?>>, Map<Method, Method>> ourRemoteToLocalMap =
+    ConcurrentFactoryMap.createMap(new Function<Couple<Class<?>>, Map<Method, Method>>() {
+     @Override
+     public Map<Method, Method> fun(Couple<Class<?>> key) {
+       final THashMap<Method, Method> map = new THashMap<Method, Method>();
+       for (Method method : key.second.getMethods()) {
+         Method m = null;
+         main:
+         for (Method candidate : key.first.getMethods()) {
+           if (!candidate.getName().equals(method.getName())) continue;
+           Class<?>[] cpts = candidate.getParameterTypes();
+           Class<?>[] mpts = method.getParameterTypes();
+           if (cpts.length != mpts.length) continue;
+           for (int i = 0; i < mpts.length; i++) {
+             Class<?> mpt = mpts[i];
+             Class<?> cpt = castArgumentClassToLocal(cpts[i]);
+             if (!cpt.isAssignableFrom(mpt)) continue main;
+           }
+           m = candidate;
+           break;
+         }
+         if (m != null) map.put(method, m);
+       }
+       return map;
+     }
+     }
+    );
+
+  @NotNull
+  public static <T> T castToRemoteNotNull(Object object, Class<T> clazz) {
+    return ObjectUtils.notNull(castToRemote(object, clazz));
+  }
 
   @Nullable
-  public static <T> T castToRemote(final Object object, final Class<T> clazz) {
+  public static <T> T castToRemote(Object object, Class<T> clazz) {
     if (!Proxy.isProxyClass(object.getClass())) return null;
     final InvocationHandler handler = Proxy.getInvocationHandler(object);
     if (handler instanceof RemoteInvocationHandler) {
@@ -73,8 +86,9 @@ public class RemoteUtil {
     return null;
   }
 
-  public static <T> T castToLocal(final Object remote, final Class<T> clazz) {
-    final ClassLoader loader = clazz.getClassLoader();
+  @NotNull
+  public static <T> T castToLocal(Object remote, Class<T> clazz) {
+    ClassLoader loader = clazz.getClassLoader();
     //noinspection unchecked
     return (T)Proxy.newProxyInstance(loader, new Class[]{clazz}, new RemoteInvocationHandler(remote, clazz, loader));
   }
@@ -88,23 +102,62 @@ public class RemoteUtil {
     return returnType;
   }
 
-  public static <T> T substituteClassLoader(final T remote, final ClassLoader classLoader) throws Exception {
+  private static Class<?> castArgumentClassToLocal(@NotNull Class<?> remote) {
+    try {
+      if (!CastableArgument.class.isAssignableFrom(remote)) return remote;
+      Type[] generics = remote.getGenericInterfaces();
+      for (Type generic : generics) {
+        if (generic instanceof ParameterizedType) {
+          Type rawType = ((ParameterizedType)generic).getRawType();
+          if (rawType == CastableArgument.class) return (Class<?>)((ParameterizedType)generic).getActualTypeArguments()[0];
+        }
+      }
+    }
+    catch (Exception ignore) {
+    }
+    return remote;
+  }
+
+  @Nullable
+  private static Object[] fixArgs(@Nullable Object[] args, @NotNull Method method) {
+    if (args == null) return null;
+    Object[] result = new Object[args.length];
+    try {
+      Class<?>[] methodArgs = method.getParameterTypes();
+      if (methodArgs.length != args.length) return args;
+      for (int i = 0; i < args.length; i++) {
+        result[i] = fixArg(args[i], methodArgs[i]);
+      }
+    }
+    catch (Exception e) {
+      return args;
+    }
+    return result;
+  }
+
+  @Nullable
+  private static Object fixArg(@Nullable Object arg, @NotNull Class<?> fieldClass) {
+    if (arg == null) return null;
+    if (!fieldClass.isPrimitive() && Proxy.isProxyClass(arg.getClass())) {
+      InvocationHandler handler = Proxy.getInvocationHandler(arg);
+      RemoteInvocationHandler remoteHandler = ObjectUtils.tryCast(handler, RemoteInvocationHandler.class);
+      boolean isCastableArg = remoteHandler != null && CastableArgument.class.isAssignableFrom(remoteHandler.myRemote.getClass());
+      if (isCastableArg && remoteHandler.myClazz == fieldClass) return remoteHandler.myRemote;
+    }
+    return arg;
+  }
+
+  public static <T> T substituteClassLoader(@NotNull final T remote, @Nullable final ClassLoader classLoader) throws Exception {
     return executeWithClassLoader(new ThrowableComputable<T, Exception>() {
+      @Override
       public T compute() {
         Object proxy = Proxy.newProxyInstance(classLoader, remote.getClass().getInterfaces(), new InvocationHandler() {
+          @Override
           public Object invoke(Object proxy, final Method method, final Object[] args) throws Throwable {
             return executeWithClassLoader(new ThrowableComputable<Object, Exception>() {
+              @Override
               public Object compute() throws Exception {
-                try {
-                  return handleRemoteResult(method.invoke(remote, args), method.getReturnType(), classLoader, true);
-                }
-                catch (InvocationTargetException e) {
-                  Throwable cause = e.getCause();
-                  if (cause instanceof RuntimeException) throw (RuntimeException)cause;
-                  if (cause instanceof Error) throw (Error)cause;
-                  if (canThrow(cause, method)) throw (Exception)cause;
-                  throw new RuntimeException(cause);
-                }
+                return invokeRemote(method, method, remote, args, classLoader, true);
               }
             }, classLoader);
           }
@@ -114,8 +167,31 @@ public class RemoteUtil {
     }, classLoader);
   }
 
+  private static Object invokeRemote(@NotNull Method localMethod,
+                                     @NotNull Method remoteMethod,
+                                     @NotNull Object remoteObj,
+                                     @Nullable Object[] args,
+                                     @Nullable ClassLoader loader,
+                                     boolean substituteClassLoader)
+    throws Exception {
+    boolean canThrowError = false;
+    try {
+      Object result = remoteMethod.invoke(remoteObj, args);
+      canThrowError = true;
+      return handleRemoteResult(result, localMethod.getReturnType(), loader, substituteClassLoader);
+    }
+    catch (InvocationTargetException e) {
+      Throwable cause = e.getCause(); // root cause may go deeper than we need, so leave it like this
+      if (cause instanceof ServerError) cause = ObjectUtils.chooseNotNull(cause.getCause(), cause);
+      if (cause instanceof RuntimeException) throw (RuntimeException)cause;
+      else if (canThrowError && cause instanceof Error || cause instanceof LinkageError) throw (Error)cause;
+      else if (cause instanceof Exception && canThrow(cause, localMethod)) throw (Exception)cause;
+      throw new RuntimeException(cause);
+    }
+  }
+
   public static <T> T handleRemoteResult(Object value, Class<? super T> clazz, Object requestor) throws Exception {
-    return RemoteUtil.<T>handleRemoteResult(value, clazz, requestor.getClass().getClassLoader(), false);
+    return handleRemoteResult(value, clazz, requestor.getClass().getClassLoader(), false);
   }
 
   private static <T> T handleRemoteResult(Object value, Class<?> methodReturnType, ClassLoader classLoader, boolean substituteClassLoader) throws Exception {
@@ -144,24 +220,15 @@ public class RemoteUtil {
     return (T)result;
   }
 
-  private static boolean canThrow(Throwable cause, Method method) {
+  private static boolean canThrow(@NotNull Throwable cause, @NotNull Method method) {
     for (Class<?> each : method.getExceptionTypes()) {
       if (each.isInstance(cause)) return true;
     }
     return false;
   }
 
-  public static <T> T executeWithClassLoader(final ThrowableComputable<T, Exception> action, final ClassLoader classLoader)
-    throws Exception {
-    final Thread thread = Thread.currentThread();
-    final ClassLoader prev = thread.getContextClassLoader();
-    try {
-      thread.setContextClassLoader(classLoader);
-      return action.compute();
-    }
-    finally {
-      thread.setContextClassLoader(prev);
-    }
+  public static <T> T executeWithClassLoader(ThrowableComputable<T, Exception> action, ClassLoader classLoader) throws Exception {
+    return ClassLoaderUtil.runWithClassLoader(classLoader, action);
   }
 
   /**
@@ -189,29 +256,23 @@ public class RemoteUtil {
     private final Class<?> myClazz;
     private final ClassLoader myLoader;
 
-    public RemoteInvocationHandler(Object remote, Class<?> clazz, ClassLoader loader) {
+    RemoteInvocationHandler(Object remote, Class<?> clazz, ClassLoader loader) {
       myRemote = remote;
       myClazz = clazz;
       myLoader = loader;
     }
 
+    @Override
     public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
       if (method.getDeclaringClass() == Object.class) {
+        if ("equals".equals(method.getName())) return proxy == args[0];
+        if ("hashCode".equals(method.getName())) return hashCode();
         return method.invoke(myRemote, args);
       }
       else {
-        Method m = ourRemoteToLocalMap.get(Pair.<Class<?>, Class<?>>create(myRemote.getClass(), myClazz)).get(method);
-        if (m == null) throw new NoSuchMethodError(method.getName() + " in " + myRemote.getClass());
-        try {
-          return handleRemoteResult(m.invoke(myRemote, args), method.getReturnType(), myLoader, false);
-        }
-        catch (InvocationTargetException e) {
-          Throwable cause = e.getCause();
-          if (cause instanceof RuntimeException) throw cause;
-          if (cause instanceof Error) throw cause;
-          if (canThrow(cause, method)) throw cause;
-          throw new RuntimeException(cause);
-        }
+        Method remoteMethod = ourRemoteToLocalMap.get(Couple.of(myRemote.getClass(), myClazz)).get(method);
+        if (remoteMethod == null) throw new NoSuchMethodError(method.getName() + " in " + myRemote.getClass());
+        return invokeRemote(method, remoteMethod, myRemote, fixArgs(args, method), myLoader, false);
       }
     }
   }

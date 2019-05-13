@@ -51,7 +51,7 @@ public class CustomTypesTest extends LightCodeInsightFixtureTestCase {
     String text = loadFile(name + ".ant");
     PsiFile file = myFixture.addFileToProject(name + ".ant", text);
     final AntDomProject antProject = AntSupport.getAntDomProject(file);
-    final Ref<Boolean> found = new Ref<Boolean>(false); 
+    final Ref<Boolean> found = new Ref<>(false);
     antProject.accept(new AntDomRecursiveVisitor() {
 
       @Override

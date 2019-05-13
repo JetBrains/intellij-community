@@ -22,6 +22,7 @@ import com.siyeh.ipp.psiutils.ErrorUtil;
 
 class FlipCommutativeMethodCallPredicate implements PsiElementPredicate {
 
+  @Override
   public boolean satisfiedBy(PsiElement element) {
     if (!(element instanceof PsiMethodCallExpression)) {
       return false;
@@ -51,10 +52,10 @@ class FlipCommutativeMethodCallPredicate implements PsiElementPredicate {
     // as parameter then we can switch the argument and the caller.
     final PsiType callerType = qualifier.getType();
     final PsiType argumentType = args[0].getType();
-    if (argumentType == null || !(argumentType instanceof PsiClassType)) {
+    if (!(argumentType instanceof PsiClassType)) {
       return false;
     }
-    if (callerType == null || !(callerType instanceof PsiClassType)) {
+    if (!(callerType instanceof PsiClassType)) {
       return false;
     }
     final PsiClassType.ClassResolveResult resolveResult = ((PsiClassType)argumentType).resolveGenerics();

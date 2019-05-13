@@ -17,18 +17,11 @@ package com.intellij.openapi.options;
 
 
 
-/**
- * Created by IntelliJ IDEA.
- * User: max
- * Date: Dec 9, 2003
- * Time: 3:21:22 PM
- */
 public interface ConfigurableGroup extends Configurable.Composite {
 
   String getDisplayName();
 
-  /** No one use it */
+  /** No one uses it */
   @Deprecated
-  String getShortName();
-
+  default String getShortName() { return null; }
 }

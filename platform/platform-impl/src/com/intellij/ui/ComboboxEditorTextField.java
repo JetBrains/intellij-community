@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,34 +21,15 @@ import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.FocusChangeListener;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.FixedComboBoxEditor;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import javax.swing.border.Border;
 import java.awt.*;
 
-/**
- * User: spLeaner
- */
 public class ComboboxEditorTextField extends EditorTextField {
-
-  public static final Border EDITOR_TEXTFIELD_BORDER = new FixedComboBoxEditor.MacComboBoxEditorBorder(false) {
-    @Override
-    public Insets getBorderInsets(Component c) {
-      return new Insets(5, 6, 5, 3);
-    }
-  };
-
-  public static final Border EDITOR_TEXTFIELD_DISABLED_BORDER = new FixedComboBoxEditor.MacComboBoxEditorBorder(true) {
-    @Override
-    public Insets getBorderInsets(Component c) {
-      return new Insets(5, 6, 5, 3);
-    }
-  };
 
   public ComboboxEditorTextField(@NotNull String text, Project project, FileType fileType) {
     super(text, project, fileType);
@@ -63,39 +44,28 @@ public class ComboboxEditorTextField extends EditorTextField {
   public ComboboxEditorTextField(Document document, Project project, FileType fileType, boolean isViewer) {
     super(document, project, fileType, isViewer);
     setOneLineMode(true);
-    if (UIUtil.isUnderDarcula()) { //todo[kb] make for all LaFs and color schemes ?
-      setBackground(UIUtil.getTextFieldBackground());
-    }
   }
 
   @Override
   protected boolean shouldHaveBorder() {
-    return UIManager.getBorder("ComboBox.border") == null && !UIUtil.isUnderDarcula();
+    return UIManager.getBorder("ComboBox.border") == null && !UIUtil.isUnderDarcula() && !UIUtil.isUnderIntelliJLaF();
   }
 
   @Override
-  public void setBounds(int x, int y, int width, int height) {
-    UIUtil.setComboBoxEditorBounds(x, y, width, height, this);
-  }
-
-  protected void updateBorder(@NotNull final EditorEx editor) {
-    if (UIUtil.isUnderAquaLookAndFeel()) {
-      editor.setBorder(isEnabled() ? EDITOR_TEXTFIELD_BORDER : EDITOR_TEXTFIELD_DISABLED_BORDER);
-    }
-  }
+  protected void updateBorder(@NotNull EditorEx editor) {}
 
   @Override
   protected EditorEx createEditor() {
-    final EditorEx result = super.createEditor();
+    EditorEx result = super.createEditor();
 
     result.addFocusListener(new FocusChangeListener() {
       @Override
-      public void focusGained(Editor editor) {
+      public void focusGained(@NotNull Editor editor) {
         repaintComboBox();
       }
 
       @Override
-      public void focusLost(Editor editor) {
+      public void focusLost(@NotNull Editor editor) {
         repaintComboBox();
       }
     });
@@ -110,30 +80,17 @@ public class ComboboxEditorTextField extends EditorTextField {
 
   @Override
   public Dimension getPreferredSize() {
-    final Dimension preferredSize = super.getPreferredSize();
-    return new Dimension(preferredSize.width, (SystemInfo.isMac && UIUtil.isUnderAquaLookAndFeel() ? 28 : preferredSize.height));
-  }
-
-  @Override
-  public void setEnabled(boolean enabled) {
-    if (UIUtil.isUnderAquaLookAndFeel()) {
-      final Editor editor = getEditor();
-      if (editor != null) {
-        editor.setBorder(enabled ? EDITOR_TEXTFIELD_BORDER : EDITOR_TEXTFIELD_DISABLED_BORDER);
-      }
-    }
-
-    super.setEnabled(enabled);
+    Dimension preferredSize = super.getPreferredSize();
+    return new Dimension(preferredSize.width, UIUtil.fixComboBoxHeight(preferredSize.height));
   }
 
   private void repaintComboBox() {
     // TODO:
-    if (UIUtil.isUnderDarcula() || (SystemInfo.isMac && UIUtil.isUnderAquaLookAndFeel())) {
-      IdeFocusManager.getInstance(getProject()).doWhenFocusSettlesDown(new Runnable() {
-        @Override
-        public void run() {
-          final Container parent = getParent();
-          if (parent != null) parent.repaint();
+    if (UIUtil.isUnderDarcula() || UIUtil.isUnderIntelliJLaF() || (SystemInfo.isMac && UIUtil.isUnderAquaLookAndFeel())) {
+      IdeFocusManager.getInstance(getProject()).doWhenFocusSettlesDown(() -> {
+        JComboBox comboBox = UIUtil.getParentOfType(JComboBox.class, this);
+        if (comboBox != null) {
+          comboBox.repaint();
         }
       });
     }

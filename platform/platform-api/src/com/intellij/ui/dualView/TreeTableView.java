@@ -16,7 +16,6 @@
 package com.intellij.ui.dualView;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Condition;
 import com.intellij.ui.HighlightableCellRenderer;
 import com.intellij.ui.table.ItemsProvider;
 import com.intellij.ui.table.SelectionProvider;
@@ -24,6 +23,7 @@ import com.intellij.ui.treeStructure.treetable.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.SortableColumnModel;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.table.TableCellEditor;
@@ -39,12 +39,15 @@ import java.util.List;
 
 public class TreeTableView extends TreeTable implements ItemsProvider, SelectionProvider {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ui.dualView.TreeTableView");
+
   public TreeTableView(ListTreeTableModelOnColumns treeTableModel) {
     super(treeTableModel);
     setRootVisible(false);
 
     setTreeCellRenderer(new TreeCellRenderer() {
       private final TreeCellRenderer myBaseRenderer = new HighlightableCellRenderer();
+
+      @Override
       public Component getTreeCellRendererComponent(JTree tree1,
                                                     Object value,
                                                     boolean selected,
@@ -61,6 +64,7 @@ public class TreeTableView extends TreeTable implements ItemsProvider, Selection
     setSizes();
   }
 
+  @Override
   public void setTableModel(TreeTableModel treeTableModel) {
     super.setTableModel(treeTableModel);
     LOG.assertTrue(treeTableModel instanceof SortableColumnModel);
@@ -86,13 +90,16 @@ public class TreeTableView extends TreeTable implements ItemsProvider, Selection
     }
   }
 
+  @Override
   public TableCellEditor getCellEditor(int row, int column) {
     TableCellEditor editor = getColumnInfo(column).getEditor(getRowElement(row));
     return editor == null ? super.getCellEditor(row, column) : editor;
   }
 
+  @Override
   public TreeTableCellRenderer createTableRenderer(TreeTableModel treeTableModel) {
     return new TreeTableCellRenderer(TreeTableView.this, getTree()) {
+      @Override
       public Component getTableCellRendererComponent(JTable table,
                                                      Object value,
                                                      boolean isSelected,
@@ -113,13 +120,10 @@ public class TreeTableView extends TreeTable implements ItemsProvider, Selection
 
   public List<DualTreeElement> getFlattenItems() {
     List<DualTreeElement> items = getTreeViewModel().getItems();
-    return ContainerUtil.findAll(items, new Condition<DualTreeElement>() {
-      public boolean value(final DualTreeElement object) {
-        return object.shouldBeInTheFlatView();
-      }
-    });
+    return ContainerUtil.findAll(items, object -> object.shouldBeInTheFlatView());
   }
 
+  @Override
   public TableCellRenderer getCellRenderer(int row, int column) {
     TableCellRenderer renderer = getColumnInfo(column).getRenderer(getRowElement(row));
     final TableCellRenderer baseRenderer = renderer == null ? super.getCellRenderer(row, column) : renderer;
@@ -130,14 +134,16 @@ public class TreeTableView extends TreeTable implements ItemsProvider, Selection
     return getTree().getPathForRow(row).getLastPathComponent();
   }
 
-  protected final ColumnInfo<Object,?> getColumnInfo(final int column) {
+  protected final ColumnInfo<Object, ?> getColumnInfo(final int column) {
     return getTreeViewModel().getColumnInfos()[convertColumnIndexToModel(column)];
   }
 
+  @Override
   public List getItems() {
     return getTreeViewModel().getItems();
   }
 
+  @Override
   public List getSelection() {
     final TreeTableTree tree = getTree();
     if (tree == null) return Collections.emptyList();
@@ -150,31 +156,35 @@ public class TreeTableView extends TreeTable implements ItemsProvider, Selection
     return result;
   }
 
+  @Override
   public void addSelection(Object item) {
     getTree().setExpandsSelectedPaths(true);
     DefaultMutableTreeNode treeNode = (DefaultMutableTreeNode)item;
     addSelectedPath(new TreePath(treeNode.getPath()));
   }
 
-  public static class CellRendererWrapper implements TableCellRenderer {
-    private final TableCellRenderer myBaseRenderer;
+  public static class CellRendererWrapper implements TableCellRendererWrapper {
+    @NotNull private final TableCellRenderer myBaseRenderer;
 
-    public CellRendererWrapper(final TableCellRenderer baseRenderer) {
+    public CellRendererWrapper(@NotNull TableCellRenderer baseRenderer) {
       myBaseRenderer = baseRenderer;
     }
 
+    @Override
+    @NotNull
     public TableCellRenderer getBaseRenderer() {
       return myBaseRenderer;
     }
 
+    @Override
     public Component getTableCellRendererComponent(JTable table,
                                                    Object value,
                                                    boolean isSelected,
                                                    boolean hasFocus,
                                                    int row,
                                                    int column) {
-      final JComponent rendererComponent = (JComponent)myBaseRenderer.getTableCellRendererComponent(
-        table, value, isSelected, hasFocus, row, column);
+      JComponent rendererComponent = (JComponent)myBaseRenderer.getTableCellRendererComponent(table, value, isSelected, hasFocus,
+                                                                                              row, column);
       if (isSelected) {
         rendererComponent.setBackground(table.getSelectionBackground());
         rendererComponent.setForeground(table.getSelectionForeground());

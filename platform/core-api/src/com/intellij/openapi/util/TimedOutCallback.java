@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,15 +44,12 @@ public class TimedOutCallback extends ActionCallback implements Runnable {
     myMessage = message;
     myAllocation = allocation;
     final long current = System.currentTimeMillis();
-    myTask = SimpleTimer.getInstance().setUp(new Runnable() {
-      @Override
-      public void run() {
-        myShouldDumpError = System.currentTimeMillis() - current > timeOut; //double check is necessary :-(
-        if (isEdt) {
-          SwingUtilities.invokeLater(TimedOutCallback.this);
-        } else {
-          TimedOutCallback.this.run();
-        }
+    myTask = SimpleTimer.getInstance().setUp(() -> {
+      myShouldDumpError = System.currentTimeMillis() - current > timeOut; //double check is necessary :-(
+      if (isEdt) {
+        SwingUtilities.invokeLater(this);
+      } else {
+        this.run();
       }
     }, timeOut);
   }

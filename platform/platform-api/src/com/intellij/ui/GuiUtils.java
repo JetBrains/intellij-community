@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,22 +15,25 @@
  */
 package com.intellij.ui;
 
-import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.ui.FixedSizeButton;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.CharFilter;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.ui.components.JBTextField;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.intellij.lang.annotations.JdkConstants;
 import org.jetbrains.annotations.NonNls;
@@ -48,12 +51,13 @@ import java.lang.reflect.InvocationTargetException;
 import java.net.MalformedURLException;
 
 public class GuiUtils {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.ui.GuiUtils");
 
   private static final Insets paddingFromDialogBoundaries = new Insets(7, 5, 7, 5);
   private static final Insets paddingInsideDialog = new Insets(5, 5, 5, 5);
 
-  public static final int lengthForFileField = 25;
   private static final CharFilter NOT_MNEMONIC_CHAR_FILTER = new CharFilter() {
+    @Override
     public boolean accept(char ch) {
       return ch != '&' && ch != UIUtil.MNEMONIC;
     }
@@ -78,31 +82,33 @@ public class GuiUtils {
     return result;
   }
 
-  public static JPanel constructDirectoryBrowserField(final JTextField aTextField, final String aSearchedObjectName) {
-    return constructFieldWithBrowseButton(aTextField, new ActionListener() {
+  public static JPanel constructDirectoryBrowserField(final JTextField field, final String objectName) {
+    return constructFieldWithBrowseButton(field, new ActionListener() {
+      @Override
       public void actionPerformed(ActionEvent e) {
-        FileChooserDescriptor descriptor = FileChooserDescriptorFactory.getDirectoryChooserDescriptor(aSearchedObjectName);
-        VirtualFile file = FileChooser.chooseFile(descriptor, aTextField, null, null);
+        FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor().withTitle("Select " + objectName);
+        VirtualFile file = FileChooser.chooseFile(descriptor, field, null, null);
         if (file != null) {
-          aTextField.setText(FileUtil.toSystemDependentName(file.getPath()));
-          aTextField.postActionEvent();
+          field.setText(FileUtil.toSystemDependentName(file.getPath()));
+          field.postActionEvent();
         }
       }
     });
   }
 
-  public static JPanel constructFileURLBrowserField(final TextFieldWithHistory aFieldWithHistory,
-                                                    final String aSearchedObjectName) {
-    return constructFieldWithBrowseButton(aFieldWithHistory, new ActionListener() {
+  public static JPanel constructFileURLBrowserField(final TextFieldWithHistory field, final String objectName) {
+    return constructFieldWithBrowseButton(field, new ActionListener() {
+      @Override
       public void actionPerformed(ActionEvent e) {
-        FileChooserDescriptor descriptor = FileChooserDescriptorFactory.getFileChooserDescriptor(aSearchedObjectName);
-        VirtualFile file = FileChooser.chooseFile(descriptor, aFieldWithHistory, null, null);
+        FileChooserDescriptor descriptor =
+          FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor().withTitle("Select " + objectName);
+        VirtualFile file = FileChooser.chooseFile(descriptor, field, null, null);
         if (file != null) {
           try {
-            aFieldWithHistory.setText(VfsUtil.virtualToIoFile(file).toURL().toString());
+            field.setText(VfsUtilCore.virtualToIoFile(file).toURI().toURL().toString());
           }
           catch (MalformedURLException e1) {
-            aFieldWithHistory.setText("");
+            field.setText("");
           }
         }
       }
@@ -180,17 +186,17 @@ public class GuiUtils {
     final Icon defaultIcon = UIUtil.getRadioButtonIcon();
     LayeredIcon deficon = new LayeredIcon(2);
     deficon.setIcon(defaultIcon, 0);
-    deficon.setIcon(icon, 1, defaultIcon.getIconWidth() + 5, 0);
+    deficon.setIcon(icon, 1, defaultIcon.getIconWidth() + JBUI.scale(5), 0);
     button.setIcon(deficon);
 
     LayeredIcon pressed = new LayeredIcon(2);
     pressed.setIcon(defaultIcon, 0);
-    pressed.setIcon(icon, 1, defaultIcon.getIconWidth() + 5, 0);
+    pressed.setIcon(icon, 1, defaultIcon.getIconWidth() + JBUI.scale(5), 0);
     button.setPressedIcon(pressed);
 
     LayeredIcon selected = new LayeredIcon(2);
     selected.setIcon(defaultIcon, 0);
-    selected.setIcon(icon, 1, defaultIcon.getIconWidth() + 5, 0);
+    selected.setIcon(icon, 1, defaultIcon.getIconWidth() + JBUI.scale(5), 0);
     button.setSelectedIcon(selected);
   }
 
@@ -218,6 +224,10 @@ public class GuiUtils {
   }
 
   public static void replaceJSplitPaneWithIDEASplitter(JComponent root) {
+    replaceJSplitPaneWithIDEASplitter(root, false);
+  }
+
+  public static void replaceJSplitPaneWithIDEASplitter(JComponent root, boolean useOnePixelDivider) {
     final Container parent = root.getParent();
     if (root instanceof JSplitPane) {
       // we can painlessly replace only splitter which is the only child in container
@@ -228,7 +238,8 @@ public class GuiUtils {
       final Component component1 = pane.getTopComponent();
       final Component component2 = pane.getBottomComponent();
       final int orientation = pane.getOrientation();
-      final Splitter splitter = new JBSplitter(orientation == JSplitPane.VERTICAL_SPLIT);
+      boolean vertical = orientation == JSplitPane.VERTICAL_SPLIT;
+      final Splitter splitter = useOnePixelDivider ? new OnePixelSplitter(vertical) : new JBSplitter(vertical);
       splitter.setFirstComponent((JComponent) component1);
       splitter.setSecondComponent((JComponent) component2);
       splitter.setShowDividerControls(pane.isOneTouchExpandable());
@@ -236,18 +247,16 @@ public class GuiUtils {
 
       if (pane.getDividerLocation() > 0) {
 // let the component chance to resize itself
-        SwingUtilities.invokeLater(new Runnable() {
-          public void run() {
-            double proportion;
-            if (pane.getOrientation() == JSplitPane.VERTICAL_SPLIT) {
-              proportion = pane.getDividerLocation() / (double)(parent.getHeight() - pane.getDividerSize());
-            }
-            else {
-              proportion = pane.getDividerLocation() / (double)(parent.getWidth() - pane.getDividerSize());
-            }
-            if (proportion > 0 && proportion < 1) {
-              splitter.setProportion((float)proportion);
-            }
+        SwingUtilities.invokeLater(() -> {
+          double proportion;
+          if (pane.getOrientation() == JSplitPane.VERTICAL_SPLIT) {
+            proportion = pane.getDividerLocation() / (double)(parent.getHeight() - pane.getDividerSize());
+          }
+          else {
+            proportion = pane.getDividerLocation() / (double)(parent.getWidth() - pane.getDividerSize());
+          }
+          if (proportion > 0 && proportion < 1) {
+            splitter.setProportion((float)proportion);
           }
         });
       }
@@ -264,20 +273,20 @@ public class GuiUtils {
         parent.setLayout(new BorderLayout());
         parent.add(splitter, BorderLayout.CENTER);
       }
-      replaceJSplitPaneWithIDEASplitter((JComponent) component1);
-      replaceJSplitPaneWithIDEASplitter((JComponent) component2);
+      replaceJSplitPaneWithIDEASplitter((JComponent) component1, useOnePixelDivider);
+      replaceJSplitPaneWithIDEASplitter((JComponent) component2, useOnePixelDivider);
     }
     else {
       final Component[] components = root.getComponents();
       for (Component component : components) {
         if (component instanceof JComponent) {
-          replaceJSplitPaneWithIDEASplitter((JComponent)component);
+          replaceJSplitPaneWithIDEASplitter((JComponent)component, useOnePixelDivider);
         }
       }
     }
   }
 
-  public static void iterateChildren(Component container, Consumer<Component> consumer, JComponent... excludeComponents) {
+  public static void iterateChildren(Component container, Consumer<? super Component> consumer, JComponent... excludeComponents) {
     if (excludeComponents != null && ArrayUtil.find(excludeComponents, container) != -1) return;
     consumer.consume(container);
     if (container instanceof Container) {
@@ -288,7 +297,7 @@ public class GuiUtils {
     }
   }
 
-  public static void iterateChildren(Consumer<Component> consumer, Component... components) {
+  public static void iterateChildren(Consumer<? super Component> consumer, Component... components) {
     for (final Component component : components) {
       iterateChildren(component, consumer);
     }
@@ -307,11 +316,7 @@ public class GuiUtils {
   }
 
   public static void enableChildren(Component container, final boolean enabled, JComponent... excludeComponents) {
-    iterateChildren(container, new Consumer<Component>() {
-      public void consume(final Component t) {
-        enableComponent(t, enabled);
-      }
-    }, excludeComponents);
+    iterateChildren(container, t -> enableComponent(t, enabled), excludeComponents);
   }
 
   private static void enableComponent(Component component, boolean enabled) {
@@ -331,10 +336,10 @@ public class GuiUtils {
       final JLabel label = (JLabel)component;
       @NonNls String text = label.getText();
       if (text != null && text.startsWith("<html>")) {
-        if (StringUtil.startsWithConcatenationOf(text, "<html>", changeColorString) && enabled) {
+        if (StringUtil.startsWithConcatenation(text, "<html>", changeColorString) && enabled) {
           text = "<html>"+text.substring(("<html>"+changeColorString).length());
         }
-        else if (!StringUtil.startsWithConcatenationOf(text, "<html>", changeColorString) && !enabled) {
+        else if (!StringUtil.startsWithConcatenation(text, "<html>", changeColorString) && !enabled) {
           text = "<html>"+changeColorString+text.substring("<html>".length());
         }
         label.setText(text);
@@ -363,30 +368,54 @@ public class GuiUtils {
     return s;
   }
 
-  public static void invokeAndWait(@NotNull Runnable runnable) throws InvocationTargetException, InterruptedException {
-    Application application = ApplicationManager.getApplication();
-    assert !application.isDispatchThread() : "Must not be invoked from AWT dispatch thread";
-    if (application.isReadAccessAllowed()) {
-      // make ApplicationImpl catch deadlock situation with readLock held
-      application.invokeAndWait(runnable, application.getDefaultModalityState());
-      return;
-    }
-    SwingUtilities.invokeAndWait(runnable);
-  }
-
   public static void runOrInvokeAndWait(@NotNull Runnable runnable) throws InvocationTargetException, InterruptedException {
-    Application application = ApplicationManager.getApplication();
-    if (application.isDispatchThread()) {
+    ApplicationManager.getApplication().invokeAndWait(runnable);
+  }
+
+  public static void invokeLaterIfNeeded(@NotNull Runnable runnable, @NotNull ModalityState modalityState) {
+    if (ApplicationManager.getApplication().isDispatchThread()) {
       runnable.run();
-    }
-    else {
-      invokeAndWait(runnable);
+    } else {
+      ApplicationManager.getApplication().invokeLater(runnable, modalityState);
     }
   }
 
-  /** @deprecated call {@link Application#invokeAndWait(Runnable, ModalityState)} directly (to remove in IDEA 13). */
-  @SuppressWarnings("UnusedDeclaration")
-  public static void invokeAndWaitIfNeeded(@NotNull Runnable runnable, @NotNull ModalityState modalityState) {
-    ApplicationManager.getApplication().invokeAndWait(runnable, modalityState);
+  public static void invokeLaterIfNeeded(@NotNull Runnable runnable, @NotNull ModalityState modalityState, @NotNull Condition expired) {
+    if (ApplicationManager.getApplication().isDispatchThread()) {
+      runnable.run();
+    } else {
+      ApplicationManager.getApplication().invokeLater(runnable, modalityState, expired);
+    }
+  }
+
+  public static JTextField createUndoableTextField() {
+    return new JBTextField();
+  }
+
+  /**
+   * Returns dimension with width required to type certain number of chars in provided component
+   * @param charCount number of chars
+   * @param comp component
+   * @return dimension with width enough to insert provided number of chars into component
+   */
+  @NotNull
+  public static Dimension getSizeByChars(int charCount, @NotNull JComponent comp) {
+    Dimension size = comp.getPreferredSize();
+    FontMetrics fontMetrics = comp.getFontMetrics(comp.getFont());
+    size.width = fontMetrics.charWidth('a') * charCount;
+    return size;
+  }
+
+  public static void printDebugInfo(Component component) {
+    StringBuilder builder = new StringBuilder();
+    boolean first = true;
+    while (component != null) {
+      builder.append("\n");
+      builder.append(first ? "UI debug dump:" : "\tat ").append(component.getClass().getName()).append(" with bounds ")
+        .append(component.getBounds());
+      component = component.getParent();
+      first = false;
+    }
+    LOG.warn(builder.toString());
   }
 }

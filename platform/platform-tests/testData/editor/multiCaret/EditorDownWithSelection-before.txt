@@ -1,0 +1,5 @@
+yet a<selection><caret>no</selection>ther line
+blah blah<caret>
+
+some ot<caret>her text
+some<caret> text

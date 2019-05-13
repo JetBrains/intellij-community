@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2012 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2018 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,14 +15,16 @@
  */
 package com.siyeh.ipp.junit;
 
-import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.IntentionPowerPackBundle;
+import com.siyeh.ig.PsiReplacementUtil;
+import com.siyeh.ig.psiutils.CommentTracker;
+import com.siyeh.ig.psiutils.ImportUtils;
 import com.siyeh.ipp.base.MutablyNamedIntention;
 import com.siyeh.ipp.base.PsiElementPredicate;
-import com.siyeh.ipp.psiutils.ImportUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -72,11 +74,10 @@ public class ReplaceAssertLiteralWithAssertEqualsIntention extends MutablyNamedI
     @NonNls final StringBuilder newExpression = new StringBuilder();
     final PsiElement qualifier = methodExpression.getQualifier();
     if (qualifier == null) {
-      final PsiMethod containingMethod = PsiTreeUtil.getParentOfType(call, PsiMethod.class);
-      if (containingMethod != null && AnnotationUtil.isAnnotated(containingMethod, "org.junit.Test", true)) {
-        if (!ImportUtils.addStaticImport("org.junit.Assert", "assertEquals", element)) {
-          newExpression.append("org.junit.Assert.");
-        }
+      final PsiClass containingClass = PsiTreeUtil.getParentOfType(element, PsiClass.class);
+      if (!InheritanceUtil.isInheritor(containingClass, "junit.framework.Assert") &&
+          !ImportUtils.addStaticImport("org.junit.Assert", "assertEquals", element)) {
+        newExpression.append("org.junit.Assert.");
       }
     }
     else {
@@ -88,8 +89,9 @@ public class ReplaceAssertLiteralWithAssertEqualsIntention extends MutablyNamedI
     final String literal = postfix.toLowerCase();
     final PsiExpressionList argumentList = call.getArgumentList();
     final PsiExpression[] arguments = argumentList.getExpressions();
+    CommentTracker commentTracker = new CommentTracker();
     if (arguments.length > 1) {
-      newExpression.append(arguments[0].getText()).append(", ");
+      newExpression.append(commentTracker.text(arguments[0])).append(", ");
     }
     final PsiExpression lastArgument = arguments[arguments.length - 1];
     if (lastArgument instanceof PsiBinaryExpression) {
@@ -98,20 +100,21 @@ public class ReplaceAssertLiteralWithAssertEqualsIntention extends MutablyNamedI
       if (("assertTrue".equals(methodName) && JavaTokenType.EQEQ.equals(tokenType)) ||
           ("assertFalse".equals(methodName) && JavaTokenType.NE.equals(tokenType))) {
         final PsiExpression lhs = binaryExpression.getLOperand();
-        newExpression.append(lhs.getText()).append(", ");
+        newExpression.append(commentTracker.text(lhs)).append(", ");
         final PsiExpression rhs = binaryExpression.getROperand();
         if (rhs != null) {
-          newExpression.append(rhs.getText());
+          newExpression.append(commentTracker.text(rhs));
         }
       }
       else {
-        newExpression.append(literal).append(", ").append(lastArgument.getText());
+        newExpression.append(literal).append(", ").append(commentTracker.text(lastArgument));
       }
     }
     else {
-      newExpression.append(literal).append(", ").append(lastArgument.getText());
+      newExpression.append(literal).append(", ").append(commentTracker.text(lastArgument));
     }
     newExpression.append(')');
-    replaceExpression(newExpression.toString(), call);
+
+    PsiReplacementUtil.replaceExpression(call, newExpression.toString(), commentTracker);
   }
 }

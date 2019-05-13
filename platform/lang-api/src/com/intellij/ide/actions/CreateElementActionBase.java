@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,15 +17,17 @@
 package com.intellij.ide.actions;
 
 import com.intellij.ide.IdeView;
-import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.project.DumbService;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.LangDataKeys;
+import com.intellij.openapi.application.WriteActionAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.InputValidator;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
-import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
@@ -34,7 +36,7 @@ import javax.swing.*;
  *
  * @since 5.1
  */
-public abstract class CreateElementActionBase extends AnAction {
+public abstract class CreateElementActionBase extends CreateInDirectoryActionBase implements WriteActionAware {
 
   protected CreateElementActionBase() {
   }
@@ -53,7 +55,7 @@ public abstract class CreateElementActionBase extends AnAction {
    * @return created elements. Never null.
    */
   @NotNull
-  protected abstract PsiElement[] create(String newName, PsiDirectory directory) throws Exception;
+  protected abstract PsiElement[] create(@NotNull String newName, PsiDirectory directory) throws Exception;
 
   protected abstract String getErrorTitle();
 
@@ -61,15 +63,14 @@ public abstract class CreateElementActionBase extends AnAction {
 
   protected abstract String getActionName(PsiDirectory directory, String newName);
 
-  public final void actionPerformed(final AnActionEvent e) {
-    final DataContext dataContext = e.getDataContext();
-
-    final IdeView view = LangDataKeys.IDE_VIEW.getData(dataContext);
+  @Override
+  public final void actionPerformed(@NotNull final AnActionEvent e) {
+    final IdeView view = getIdeView(e);
     if (view == null) {
       return;
     }
 
-    final Project project = PlatformDataKeys.PROJECT.getData(dataContext);
+    final Project project = e.getProject();
 
     final PsiDirectory dir = view.getOrChooseDirectory();
     if (dir == null) return;
@@ -80,44 +81,15 @@ public abstract class CreateElementActionBase extends AnAction {
     }
   }
 
-  public void update(final AnActionEvent e) {
-    final DataContext dataContext = e.getDataContext();
-    final Presentation presentation = e.getPresentation();
-
-    final boolean enabled = isAvailable(dataContext);
-
-    presentation.setVisible(enabled);
-    presentation.setEnabled(enabled);
-  }
-
-  public boolean isDumbAware() {
-    return false;
-  }
-
-  protected boolean isAvailable(final DataContext dataContext) {
-    final Project project = PlatformDataKeys.PROJECT.getData(dataContext);
-    if (project == null) {
-      return false;
-    }
-
-    if (DumbService.getInstance(project).isDumb() && !isDumbAware()) {
-      return false;
-    }
-
-    final IdeView view = LangDataKeys.IDE_VIEW.getData(dataContext);
-    if (view == null || view.getDirectories().length == 0) {
-      return false;
-    }
-
-    return true;
+  @Nullable
+  protected IdeView getIdeView(@NotNull AnActionEvent e) {
+    return e.getData(LangDataKeys.IDE_VIEW);
   }
 
   public static String filterMessage(String message) {
     if (message == null) return null;
     @NonNls final String ioExceptionPrefix = "java.io.IOException:";
-    if (message.startsWith(ioExceptionPrefix)) {
-      message = message.substring(ioExceptionPrefix.length());
-    }
+    message = StringUtil.trimStart(message, ioExceptionPrefix);
     return message;
   }
 
@@ -130,13 +102,23 @@ public abstract class CreateElementActionBase extends AnAction {
       myDirectory = directory;
     }
 
+    public PsiDirectory getDirectory() {
+      return myDirectory;
+    }
+
+    @Override
     public boolean checkInput(final String inputString) {
       return true;
     }
 
     @Override
-    public PsiElement[] create(String newName) throws Exception {
+    public PsiElement[] create(@NotNull String newName) throws Exception {
       return CreateElementActionBase.this.create(newName, myDirectory);
+    }
+
+    @Override
+    public boolean startInWriteAction() {
+      return CreateElementActionBase.this.startInWriteAction();
     }
 
     @Override
@@ -144,6 +126,7 @@ public abstract class CreateElementActionBase extends AnAction {
       return CreateElementActionBase.this.getActionName(myDirectory, newName);
     }
 
+    @Override
     public boolean canClose(final String inputString) {
       myCreatedElements = tryCreate(inputString);
       return myCreatedElements.length > 0;

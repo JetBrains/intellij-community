@@ -17,14 +17,15 @@
 package org.intellij.plugins.xpathView.search;
 
 import com.intellij.find.FindProgressIndicator;
+import com.intellij.find.FindSettings;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Factory;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.usages.*;
 import org.intellij.plugins.xpathView.Config;
 import org.intellij.plugins.xpathView.XPathAppComponent;
@@ -40,13 +41,15 @@ import java.util.Collections;
 
 public class FindByXPathAction extends AnAction {
 
-    public void update(AnActionEvent e) {
-        final Project project = LangDataKeys.PROJECT.getData(e.getDataContext());
+    @Override
+    public void update(@NotNull AnActionEvent e) {
+        final Project project = e.getProject();
         e.getPresentation().setEnabled(project != null);
     }
 
-    public void actionPerformed(AnActionEvent e) {
-        final Project project = LangDataKeys.PROJECT.getData(e.getDataContext());
+    @Override
+    public void actionPerformed(@NotNull AnActionEvent e) {
+        final Project project = e.getProject();
         final Module module = LangDataKeys.MODULE.getData(e.getDataContext());
 
         if (project != null) {
@@ -54,7 +57,7 @@ public class FindByXPathAction extends AnAction {
         }
     }
 
-    private void executeSearch(final Project project, final Module module) {
+    private void executeSearch(@NotNull final Project project, final Module module) {
         final Config settings = XPathAppComponent.getInstance().getConfig();
         final XPathProjectComponent projectComponent = XPathProjectComponent.getInstance(project);
 
@@ -78,39 +81,34 @@ public class FindByXPathAction extends AnAction {
         }
 
         final UsageViewPresentation presentation = new UsageViewPresentation();
-        presentation.setTargetsNodeText(settings.MATCH_RECURSIVELY ? "Pattern" : "Expression");
+        presentation.setTargetsNodeText(settings.MATCH_RECURSIVELY ? "XPath Pattern" : "XPath Expression");
         presentation.setCodeUsages(false);
-        presentation.setCodeUsagesString("Result");
+        presentation.setCodeUsagesString("Found Matches in " + scope.getName());
         presentation.setNonCodeUsagesString("Result");
-        presentation.setUsagesString("XPath Result");
+        presentation.setUsagesString("results matching '" + expression + '\'');
         presentation.setUsagesWord("match");
-        presentation.setTabText("XPath");
+        presentation.setTabText(StringUtil.shortenTextWithEllipsis("XPath '" + expression + '\'', 60, 0, true));
         presentation.setScopeText(scope.getName());
 
-        presentation.setOpenInNewTab(settings.OPEN_NEW_TAB);
+        presentation.setOpenInNewTab(FindSettings.getInstance().isShowResultsInSeparateView());
 
-        final FindUsagesProcessPresentation processPresentation = new FindUsagesProcessPresentation();
-        processPresentation.setProgressIndicatorFactory(new Factory<ProgressIndicator>() {
-            public ProgressIndicator create() {
-                return new FindProgressIndicator(project, scope.getName());
-            }
-        });
+        final FindUsagesProcessPresentation processPresentation = new FindUsagesProcessPresentation(presentation);
+        processPresentation.setProgressIndicatorFactory(() -> new FindProgressIndicator(project, scope.getName()));
         processPresentation.setShowPanelIfOnlyOneUsage(true);
         processPresentation.setShowNotFoundMessage(true);
 
         final XPathEvalAction.MyUsageTarget usageTarget = new XPathEvalAction.MyUsageTarget(context.input.expression, null);
         final UsageTarget[] usageTargets = new UsageTarget[]{ usageTarget };
 
-        final Factory<UsageSearcher> searcherFactory = new Factory<UsageSearcher>() {
-            public UsageSearcher create() {
-                return new XPathUsageSearcher(project, context.input, scope, settings.MATCH_RECURSIVELY);
-            }
-        };
+        final Factory<UsageSearcher> searcherFactory =
+          () -> new XPathUsageSearcher(project, context.input, scope, settings.MATCH_RECURSIVELY);
         final UsageViewManager.UsageViewStateListener stateListener = new UsageViewManager.UsageViewStateListener() {
+            @Override
             public void usageViewCreated(@NotNull UsageView usageView) {
                 usageView.addButtonToLowerPane(new MyEditExpressionAction(project, module), "&Edit Expression");
             }
 
+            @Override
             public void findingUsagesFinished(UsageView usageView) {
             }
         };
@@ -125,31 +123,21 @@ public class FindByXPathAction extends AnAction {
     private class MyEditExpressionAction extends XPathEvalAction.EditExpressionAction {
         private final Project myProject;
         private final Module myModule;
-        private final Config myConfig = XPathAppComponent.getInstance().getConfig();
 
-        public MyEditExpressionAction(Project project, Module module) {
+        MyEditExpressionAction(Project project, Module module) {
             myProject = project;
             myModule = module;
         }
 
+        @Override
         protected void execute() {
-            myConfig.OPEN_NEW_TAB = false;
             executeSearch(myProject, myModule);
-        }
-
-        protected Object saveState() {
-            return myConfig.OPEN_NEW_TAB;
-        }
-
-        protected void restoreState(Object o) {
-            if (!myConfig.OPEN_NEW_TAB) myConfig.OPEN_NEW_TAB = Boolean.TRUE.equals(o);
         }
     }
 
     private static boolean validateExpression(Project project, String expression) {
         try {
-            //noinspection unchecked
-            XPathSupport.getInstance().createXPath(null, expression, Collections.<org.intellij.plugins.xpathView.util.Namespace>emptyList());
+          XPathSupport.getInstance().createXPath(null, expression, Collections.emptyList());
             return true;
         } catch (XPathSyntaxException e) {
             Messages.showErrorDialog(project, e.getMultilineMessage(), "XPath Syntax Error");

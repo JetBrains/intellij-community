@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,12 +43,12 @@ static bool array_realloc(array* a) {
 }
 
 array* array_create(int initial_capacity) {
-  array* a = (array*) malloc(sizeof(array));
+  array* a = calloc(1, sizeof(array));
   if (a == NULL) {
     return NULL;
   }
 
-  a->data = calloc(sizeof(void*), initial_capacity);
+  a->data = calloc(initial_capacity, sizeof(void*));
   if (a->data == NULL) {
     free(a);
     return NULL;
@@ -108,12 +108,19 @@ void array_delete(array* a) {
 
 void array_delete_vs_data(array* a) {
   if (a != NULL) {
+    array_delete_data(a);
+    array_delete(a);
+  }
+}
+
+void array_delete_data(array* a) {
+  if (a != NULL) {
     for (int i=0; i<a->size; i++) {
       if (a->data[i] != NULL) {
         free(a->data[i]);
       }
     }
-    array_delete(a);
+    a->size = 0;
   }
 }
 
@@ -124,17 +131,16 @@ struct __table {
 };
 
 table* table_create(int capacity) {
-  table* t = malloc(sizeof(table));
+  table* t = calloc(1, sizeof(table));
   if (t == NULL) {
     return NULL;
   }
 
-  t->data = calloc(sizeof(void*), capacity);
+  t->data = calloc(capacity, sizeof(void*));
   if (t->data == NULL) {
     free(t);
     return NULL;
   }
-  memset(t->data, 0, sizeof(void*) * capacity);
 
   t->capacity = capacity;
 

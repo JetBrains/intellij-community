@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,45 +14,48 @@
  * limitations under the License.
  */
 
-/*
- * User: anna
- * Date: 19-Aug-2008
- */
 package com.intellij.codeInsight.generation;
 
+import com.intellij.application.options.CodeStyle;
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Comparing;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
-import java.util.Collection;
+import java.util.List;
 
 public class OverrideImplementsAnnotationsHandlerImpl implements OverrideImplementsAnnotationsHandler {
   @Override
   public String[] getAnnotations(Project project) {
-    final NullableNotNullManager manager = NullableNotNullManager.getInstance(project);
-    final Collection<String> anns = new ArrayList<String>(manager.getNotNulls());
-    anns.addAll(manager.getNullables());
-    anns.add(AnnotationUtil.NLS);
-    return ArrayUtil.toStringArray(anns);
+    List<String> annotations = getCoreAnnotations(project);
+
+    CodeStyleSettings settings = CodeStyle.getSettings(project);
+    annotations.addAll(settings.getCustomSettings(JavaCodeStyleSettings.class).getRepeatAnnotations());
+
+    return ArrayUtil.toStringArray(annotations);
   }
 
   @Override
+  public String[] getAnnotations(@NotNull PsiFile file) {
+    List<String> annotations = getCoreAnnotations(file.getProject());
+    annotations.addAll(JavaCodeStyleSettings.getInstance(file).getRepeatAnnotations());
+    return ArrayUtil.toStringArray(annotations);
+  }
+
   @NotNull
-  public String[] annotationsToRemove(Project project, @NotNull final String fqName) {
-    final NullableNotNullManager manager = NullableNotNullManager.getInstance(project);
-    if (manager.getNotNulls().contains(fqName)) {
-      return ArrayUtil.toStringArray(manager.getNullables());
-    }
-    if (manager.getNullables().contains(fqName)) {
-      return ArrayUtil.toStringArray(manager.getNotNulls()); 
-    }
-    if (Comparing.strEqual(fqName, AnnotationUtil.NLS)){
-      return new String[]{AnnotationUtil.NON_NLS};
-    }
-    return ArrayUtil.EMPTY_STRING_ARRAY;
+  private static List<String> getCoreAnnotations(Project project) {
+    List<String> annotations = new ArrayList<>();
+
+    NullableNotNullManager manager = NullableNotNullManager.getInstance(project);
+    annotations.addAll(manager.getNotNulls());
+    annotations.addAll(manager.getNullables());
+
+    annotations.add(AnnotationUtil.NLS);
+    return annotations;
   }
 }

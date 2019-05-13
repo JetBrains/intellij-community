@@ -15,10 +15,12 @@
  */
 package com.intellij.openapi.extensions;
 
+import org.jetbrains.annotations.NotNull;
+
 /**
  * @author akireyev
  */
 public interface AreaListener {
-  void areaCreated(String areaClass, AreaInstance areaInstance);
-  void areaDisposing(String areaClass, AreaInstance areaInstance);
+  void areaCreated(@NotNull String areaClass, @NotNull AreaInstance areaInstance);
+  void areaDisposing(@NotNull String areaClass, @NotNull AreaInstance areaInstance);
 }

@@ -14,10 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * User: anna
- * Date: 10-Jul-2007
- */
 package com.intellij.ide.util.newProjectWizard.modes;
 
 import com.intellij.ide.util.importProject.FrameworkDetectionStep;
@@ -39,24 +35,29 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 public abstract class CreateFromSourcesMode extends WizardMode {
   protected ProjectFromSourcesBuilderImpl myProjectBuilder;
 
+  @Override
   @NotNull
   public String getDisplayName(final WizardContext context) {
     return ProjectBundle.message("project.new.wizard.from.existent.sources.title", context.getPresentationName());
   }
 
+  @Override
   @NotNull
   public String getDescription(final WizardContext context) {
     return ProjectBundle.message("project.new.wizard.from.existent.sources.description",
                                  ApplicationNamesInfo.getInstance().getFullProductName(), context.getPresentationName());
   }
 
+  @Override
   @Nullable
-  protected StepSequence createSteps(final WizardContext context, @NotNull final ModulesProvider modulesProvider) {
+  protected StepSequence createSteps(@NotNull final WizardContext context, @NotNull final ModulesProvider modulesProvider) {
     final StepSequence sequence = new StepSequence();
     addSteps(context, modulesProvider, sequence, null);
     return sequence;
@@ -71,7 +72,10 @@ public abstract class CreateFromSourcesMode extends WizardMode {
       addStep(sequence, new ProjectNameStep(context, this), specific);
     }
     addStep(sequence, new RootsDetectionStep(projectBuilder, context, sequence, icon, "reference.dialogs.new.project.fromCode.source"), specific);
+
+    Set<String> detectorTypes = new HashSet<>();
     for (ProjectStructureDetector detector : ProjectStructureDetector.EP_NAME.getExtensions()) {
+      detectorTypes.add(detector.getDetectorId());
       for (ModuleWizardStep step : detector.createWizardSteps(projectBuilder, projectBuilder.getProjectDescriptor(detector), icon)) {
         sequence.addSpecificStep(detector.getDetectorId(), step);
       }
@@ -79,8 +83,9 @@ public abstract class CreateFromSourcesMode extends WizardMode {
 
     if (FrameworkDetectionStep.isEnabled()) {
       FrameworkDetectionStep frameworkDetectionStep = new FrameworkDetectionStep(icon, projectBuilder) {
+        @Override
         public List<ModuleDescriptor> getModuleDescriptors() {
-          final List<ModuleDescriptor> moduleDescriptors = new ArrayList<ModuleDescriptor>();
+          final List<ModuleDescriptor> moduleDescriptors = new ArrayList<>();
           for (ProjectDescriptor descriptor : projectBuilder.getSelectedDescriptors()) {
             moduleDescriptors.addAll(descriptor.getModules());
           }
@@ -88,7 +93,7 @@ public abstract class CreateFromSourcesMode extends WizardMode {
         }
       };
       projectBuilder.addConfigurationUpdater(frameworkDetectionStep);
-      sequence.addCommonFinishingStep(frameworkDetectionStep);
+      sequence.addCommonFinishingStep(frameworkDetectionStep, detectorTypes);
     }
   }
 
@@ -101,10 +106,12 @@ public abstract class CreateFromSourcesMode extends WizardMode {
     }
   }
 
+  @Override
   public ProjectBuilder getModuleBuilder() {
     return myProjectBuilder;
   }
 
+  @Override
   public void onChosen(final boolean enabled) {
   }
 
@@ -113,6 +120,7 @@ public abstract class CreateFromSourcesMode extends WizardMode {
     return "Create from Sources";
   }
 
+  @Override
   public void dispose() {
     myProjectBuilder = null;
     super.dispose();

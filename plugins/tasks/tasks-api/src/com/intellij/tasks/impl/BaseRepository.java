@@ -15,14 +15,23 @@
  */
 package com.intellij.tasks.impl;
 
+import com.intellij.credentialStore.CredentialAttributes;
+import com.intellij.credentialStore.CredentialAttributesKt;
+import com.intellij.credentialStore.Credentials;
+import com.intellij.ide.passwordSafe.PasswordSafe;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.PasswordUtil;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.tasks.CustomTaskState;
 import com.intellij.tasks.TaskRepository;
 import com.intellij.tasks.TaskRepositoryType;
 import com.intellij.util.xmlb.annotations.Tag;
 import com.intellij.util.xmlb.annotations.Transient;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -36,6 +45,8 @@ public abstract class BaseRepository extends TaskRepository {
   protected boolean myUseProxy;
   protected boolean myUseHttpAuthentication;
   protected boolean myLoginAnonymously;
+  protected CustomTaskState myPreferredOpenTaskState;
+  protected CustomTaskState myPreferredCloseTaskState;
 
   public BaseRepository(TaskRepositoryType type) {
     super(type);
@@ -73,9 +84,10 @@ public abstract class BaseRepository extends TaskRepository {
 
   @Tag("password")
   public String getEncodedPassword() {
-    return PasswordUtil.encodePassword(getPassword());
+    return null;
   }
 
+  @SuppressWarnings("unused")
   public void setEncodedPassword(String password) {
     try {
       setPassword(PasswordUtil.decodePassword(password));
@@ -85,6 +97,32 @@ public abstract class BaseRepository extends TaskRepository {
     }
   }
 
+  @Override
+  public void initializeRepository() {
+    if (StringUtil.isEmpty(getPassword())) {
+      CredentialAttributes attributes = getAttributes();
+      Credentials credentials = PasswordSafe.getInstance().get(attributes);
+      if (credentials != null) {
+        setPassword(credentials.getPasswordAsString());
+      }
+    }
+    else {
+      storeCredentials();
+    }
+  }
+
+  public void storeCredentials() {
+    CredentialAttributes attributes = getAttributes();
+    PasswordSafe.getInstance().set(attributes, new Credentials(getUsername(), getPassword()));
+  }
+
+  @NotNull
+  protected CredentialAttributes getAttributes() {
+    String serviceName = CredentialAttributesKt.generateServiceName("Tasks", getRepositoryType().getName() + " " + getUrl());
+    return new CredentialAttributes(serviceName, getUsername());
+  }
+
+  @NotNull
   @Override
   public abstract BaseRepository clone();
 
@@ -130,9 +168,58 @@ public abstract class BaseRepository extends TaskRepository {
     myLoginAnonymously = loginAnonymously;
   }
 
+  @Override
+  public void setPreferredOpenTaskState(@Nullable CustomTaskState state) {
+    myPreferredOpenTaskState = state;
+  }
+
   @Nullable
-  public String extractId(String taskName) {
+  @Override
+  public CustomTaskState getPreferredOpenTaskState() {
+    return myPreferredOpenTaskState;
+  }
+
+  @Override
+  public void setPreferredCloseTaskState(@Nullable CustomTaskState state) {
+    myPreferredCloseTaskState = state;
+  }
+
+  @Nullable
+  @Override
+  public CustomTaskState getPreferredCloseTaskState() {
+    return myPreferredCloseTaskState;
+  }
+
+  @Override
+  @Nullable
+  public String extractId(@NotNull String taskName) {
     Matcher matcher = PATTERN.matcher(taskName);
     return matcher.find() ? matcher.group() : null;
+  }
+
+  @Override
+  public void setUrl(String url) {
+    super.setUrl(addSchemeIfNoneSpecified(url));
+  }
+
+  @NotNull
+  protected String getDefaultScheme() {
+    return "http";
+  }
+
+  @Nullable
+  private String addSchemeIfNoneSpecified(@Nullable String url) {
+    if (StringUtil.isNotEmpty(url)) {
+      try {
+        final String scheme = new URI(url).getScheme();
+        // For URL like "foo.bar:8080" host name will be parsed as scheme
+        if (scheme == null) {
+          url = getDefaultScheme() + "://" + url;
+        }
+      }
+      catch (URISyntaxException ignored) {
+      }
+    }
+    return url;
   }
 }

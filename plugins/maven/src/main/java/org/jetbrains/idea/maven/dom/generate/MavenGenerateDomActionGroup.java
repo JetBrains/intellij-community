@@ -34,24 +34,12 @@ public class MavenGenerateDomActionGroup extends DefaultActionGroup {
 
     addSeparator();
     add(createAction(MavenDomBundle.message("generate.dependency.template"), MavenDomDependency.class, "maven-dependency",
-                     new Function<MavenDomProjectModel, DomElement>() {
-                       public DomElement fun(MavenDomProjectModel mavenDomProjectModel) {
-                         return mavenDomProjectModel.getDependencies();
-                       }
-                     }));
+                     mavenDomProjectModel -> mavenDomProjectModel.getDependencies()));
     add(createAction(MavenDomBundle.message("generate.plugin.template"), MavenDomPlugin.class, "maven-plugin",
-                     new Function<MavenDomProjectModel, DomElement>() {
-                       public DomElement fun(MavenDomProjectModel mavenDomProjectModel) {
-                         return mavenDomProjectModel.getBuild().getPlugins();
-                       }
-                     }));
+                     mavenDomProjectModel -> mavenDomProjectModel.getBuild().getPlugins()));
 
     add(createAction(MavenDomBundle.message("generate.repository.template"), MavenDomRepository.class, "maven-repository",
-                     new Function<MavenDomProjectModel, DomElement>() {
-                       public DomElement fun(MavenDomProjectModel mavenDomProjectModel) {
-                         return mavenDomProjectModel.getRepositories();
-                       }
-                     }));
+                     mavenDomProjectModel -> mavenDomProjectModel.getRepositories()));
 
     addSeparator();
     add(new GenerateParentAction());

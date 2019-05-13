@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,6 @@
  */
 package com.intellij.packaging.impl.artifacts;
 
-import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.module.ConfigurationErrorDescription;
 import com.intellij.openapi.module.ConfigurationErrorType;
@@ -41,11 +40,7 @@ public class ArtifactLoadingErrorDescription extends ConfigurationErrorDescripti
   public void ignoreInvalidElement() {
     final ModifiableArtifactModel model = ArtifactManager.getInstance(myProject).createModifiableModel();
     model.removeArtifact(myArtifact);
-    new WriteAction() {
-      protected void run(final Result result) {
-        model.commit();
-      }
-    }.execute();
+    WriteAction.run(() -> model.commit());
   }
 
   @Override

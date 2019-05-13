@@ -30,11 +30,11 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class CreateAnnotationMethodFromUsageFix extends CreateFromUsageBaseFix {
-  private static final Logger LOG = Logger.getInstance("#" + CreateAnnotationMethodFromUsageFix.class.getName());
+  private static final Logger LOG = Logger.getInstance(CreateAnnotationMethodFromUsageFix.class);
 
   private final SmartPsiElementPointer<PsiNameValuePair> myNameValuePair;
 
-  public CreateAnnotationMethodFromUsageFix(PsiNameValuePair valuePair) {
+  public CreateAnnotationMethodFromUsageFix(@NotNull PsiNameValuePair valuePair) {
     myNameValuePair = SmartPointerManager.getInstance(valuePair.getProject()).createSmartPsiElementPointer(valuePair);
   }
 
@@ -44,7 +44,7 @@ public class CreateAnnotationMethodFromUsageFix extends CreateFromUsageBaseFix {
     if (call == null || !call.isValid()) return false;
     String name = call.getName();
 
-    if (name == null || !JavaPsiFacade.getInstance(call.getProject()).getNameHelper().isIdentifier(name)) return false;
+    if (name == null || !PsiNameHelper.getInstance(call.getProject()).isIdentifier(name)) return false;
     if (getAnnotationValueType(call.getValue()) == null) return false;
     setText(QuickFixBundle.message("create.method.from.usage.text", name));
     return true;
@@ -64,7 +64,7 @@ public class CreateAnnotationMethodFromUsageFix extends CreateFromUsageBaseFix {
     PsiNameValuePair nameValuePair = getNameValuePair();
     if (nameValuePair == null || isValidElement(nameValuePair)) return;
 
-    final PsiElementFactory factory = JavaPsiFacade.getInstance(nameValuePair.getProject()).getElementFactory();
+    final PsiElementFactory factory = JavaPsiFacade.getElementFactory(nameValuePair.getProject());
 
     final String methodName = nameValuePair.getName();
     LOG.assertTrue(methodName != null);
@@ -83,12 +83,12 @@ public class CreateAnnotationMethodFromUsageFix extends CreateFromUsageBaseFix {
     LOG.assertTrue(type != null);
     final ExpectedTypeInfo[] expectedTypes =
       new ExpectedTypeInfo[]{ExpectedTypesProvider.createInfo(type, ExpectedTypeInfo.TYPE_OR_SUBTYPE, type, TailType.NONE)};
-    CreateMethodFromUsageFix.doCreate(targetClass, method, true, ContainerUtil.map2List(PsiExpression.EMPTY_ARRAY, Pair.<PsiExpression, PsiType>createFunction(null)),
+    CreateMethodFromUsageFix.doCreate(targetClass, method, true, ContainerUtil.map2List(PsiExpression.EMPTY_ARRAY, Pair.createFunction(null)),
                                       getTargetSubstitutor(nameValuePair), expectedTypes, context);
   }
 
   @Nullable
-  private static PsiType getAnnotationValueType(PsiAnnotationMemberValue value) {
+  public static PsiType getAnnotationValueType(PsiAnnotationMemberValue value) {
     PsiType type = null;
     if (value instanceof PsiExpression) {
       type = ((PsiExpression)value).getType();

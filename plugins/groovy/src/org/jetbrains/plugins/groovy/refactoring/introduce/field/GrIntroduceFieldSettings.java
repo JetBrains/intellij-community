@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package org.jetbrains.plugins.groovy.refactoring.introduce.field;
 
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifier;
 import org.jetbrains.plugins.groovy.refactoring.introduce.GrIntroduceSettings;
 
@@ -33,8 +34,18 @@ public interface GrIntroduceFieldSettings extends GrIntroduceSettings {
 
   boolean removeLocalVar();
 
-  enum Init{
-    CUR_METHOD, FIELD_DECLARATION, CONSTRUCTOR
-  }
+  enum Init {
+    CUR_METHOD("current method"), FIELD_DECLARATION("field declaration"), CONSTRUCTOR("class constructor(s)"), SETUP_METHOD("setUp method");
 
+    private final String myName;
+
+    Init(@NotNull String name) {
+      myName = name;
+    }
+
+    @Override
+    public String toString() {
+      return myName;
+    }
+  }
 }

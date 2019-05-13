@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,33 +18,43 @@ package org.jetbrains.jps.incremental.messages;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.jps.builders.BuildTarget;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: 9/29/11
  */
 public class FileGeneratedEvent extends BuildMessage {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.jps.incremental.messages.FileGeneratedEvent");
 
-  private final Collection<Pair<String, String>> myPaths = new ArrayList<Pair<String, String>>();
+  private final Collection<Pair<String, String>> myPaths = new ArrayList<>();
+  private final BuildTarget<?> mySourceTarget;
 
-  public FileGeneratedEvent() {
+  public FileGeneratedEvent(@NotNull BuildTarget<?> sourceTarget) {
     super("", Kind.INFO);
+    mySourceTarget = sourceTarget;
+  }
+
+  @NotNull
+  public BuildTarget<?> getSourceTarget() {
+    return mySourceTarget;
   }
 
   public void add(String root, String relativePath) {
     if (root != null && relativePath != null) {
-      myPaths.add(new Pair<String, String>(FileUtil.toSystemIndependentName(root), FileUtil.toSystemIndependentName(relativePath)));
+      myPaths.add(Pair.create(FileUtil.toSystemIndependentName(root), FileUtil.toSystemIndependentName(relativePath)));
     }
     else {
       LOG.info("Invalid file generation event: root=" + root + "; relativePath=" + relativePath);
     }
   }
 
+  @NotNull
   public Collection<Pair<String, String>> getPaths() {
-    return myPaths;
+    return Collections.unmodifiableCollection(myPaths);
   }
 }

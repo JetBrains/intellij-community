@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,18 +38,22 @@ public class GenericValueColumnInfo<T> extends DomColumnInfo<GenericDomValue<T>,
     this(name, columnClass, new DefaultTableCellRenderer(), editor);
   }
 
+  @Override
   public final TableCellEditor getEditor(GenericDomValue<T> value) {
     return myEditor;
   }
 
+  @Override
   public final Class<T> getColumnClass() {
     return myColumnClass;
   }
 
+  @Override
   public final void setValue(final GenericDomValue<T> o, final String aValue) {
     o.setStringValue(aValue);
   }
 
+  @Override
   public final String valueOf(GenericDomValue<T> object) {
     return object.getStringValue();
   }

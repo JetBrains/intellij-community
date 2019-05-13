@@ -1,22 +1,8 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.move.moveClassesOrPackages;
 
 import com.intellij.ide.util.DirectoryUtil;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
@@ -25,18 +11,14 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
-import com.intellij.refactoring.JavaRefactoringFactory;
-import com.intellij.refactoring.JavaRefactoringSettings;
-import com.intellij.refactoring.MoveDestination;
-import com.intellij.refactoring.RefactoringBundle;
+import com.intellij.refactoring.*;
 import com.intellij.refactoring.move.MoveCallback;
+import com.intellij.refactoring.move.MoveDialogBase;
 import com.intellij.refactoring.move.MoveHandler;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.usageView.UsageViewUtil;
@@ -46,6 +28,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
+import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.HashSet;
@@ -54,7 +37,7 @@ import java.util.Set;
 /**
  * @author ven
  */
-public class MoveClassesOrPackagesToNewDirectoryDialog extends DialogWrapper {
+public class MoveClassesOrPackagesToNewDirectoryDialog extends MoveDialogBase {
   private static final Logger LOG = Logger.getInstance("com.intellij.refactoring.move.moveClassesOrPackages.MoveClassesToNewDirectoryDialog");
 
   private final PsiDirectory myDirectory;
@@ -69,7 +52,7 @@ public class MoveClassesOrPackagesToNewDirectoryDialog extends DialogWrapper {
   public MoveClassesOrPackagesToNewDirectoryDialog(@NotNull final PsiDirectory directory, PsiElement[] elementsToMove,
                                                    boolean canShowPreserveSourceRoots,
                                                    final MoveCallback moveCallback) {
-    super(false);
+    super(directory.getProject(), false);
     setTitle(MoveHandler.REFACTORING_NAME);
     myDirectory = directory;
     myElementsToMove = elementsToMove;
@@ -77,6 +60,7 @@ public class MoveClassesOrPackagesToNewDirectoryDialog extends DialogWrapper {
     myDestDirectoryField.setText(FileUtil.toSystemDependentName(directory.getVirtualFile().getPath()));
     final FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor();
     myDestDirectoryField.getButton().addActionListener(new ActionListener() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         final VirtualFile file = FileChooser.chooseFile(descriptor, myDirectory.getProject(), directory.getVirtualFile());
         if (file != null) {
@@ -99,13 +83,14 @@ public class MoveClassesOrPackagesToNewDirectoryDialog extends DialogWrapper {
     mySearchForTextOccurrencesCheckBox.setSelected(refactoringSettings.MOVE_SEARCH_FOR_TEXT);
 
     myDestDirectoryField.getTextField().getDocument().addDocumentListener(new DocumentAdapter() {
-      public void textChanged(DocumentEvent event) {
+      @Override
+      public void textChanged(@NotNull DocumentEvent event) {
         setOKActionEnabled(myDestDirectoryField.getText().length() > 0);
       }
     });
 
     if (canShowPreserveSourceRoots) {
-      final Set<VirtualFile> sourceRoots = new HashSet<VirtualFile>();
+      final Set<VirtualFile> sourceRoots = new HashSet<>();
       final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(directory.getProject()).getFileIndex();
       final Module destinationModule = fileIndex.getModuleForFile(directory.getVirtualFile());
       boolean sameModule = true;
@@ -127,6 +112,12 @@ public class MoveClassesOrPackagesToNewDirectoryDialog extends DialogWrapper {
       myPreserveSourceRoot.setSelected(sameModule);
     }
     init();
+    for (PsiElement element : elementsToMove) {
+      if (element.getContainingFile() != null) {
+        myOpenInEditor.add(initOpenInEditorCb(), BorderLayout.WEST);
+        break;
+      }
+    }
   }
 
   private TextFieldWithBrowseButton myDestDirectoryField;
@@ -135,6 +126,7 @@ public class MoveClassesOrPackagesToNewDirectoryDialog extends DialogWrapper {
   private JPanel myRootPanel;
   private JLabel myNameLabel;
   private JCheckBox myPreserveSourceRoot;
+  private JPanel myOpenInEditor;
 
   private boolean isSearchInNonJavaFiles() {
     return mySearchForTextOccurrencesCheckBox.isSelected();
@@ -144,23 +136,23 @@ public class MoveClassesOrPackagesToNewDirectoryDialog extends DialogWrapper {
     return mySearchInCommentsAndStringsCheckBox.isSelected();
   }
 
+  @Override
   @Nullable
   protected JComponent createCenterPanel() {
     return myRootPanel;
   }
 
-  protected void doOKAction() {
+  @Override
+  protected void doAction() {
     final String path = FileUtil.toSystemIndependentName(myDestDirectoryField.getText());
     final Project project = myDirectory.getProject();
-    PsiDirectory directory = ApplicationManager.getApplication().runWriteAction(new Computable<PsiDirectory>() {
-      public PsiDirectory compute() {
-        try {
-          return DirectoryUtil.mkdirs(PsiManager.getInstance(project), path);
-        }
-        catch (IncorrectOperationException e) {
-          LOG.error(e);
-          return null;
-        }
+    PsiDirectory directory = WriteAction.compute(() -> {
+      try {
+        return DirectoryUtil.mkdirs(PsiManager.getInstance(project), path);
+      }
+      catch (IncorrectOperationException e) {
+        LOG.error(e);
+        return null;
       }
     });
     if (directory == null) {
@@ -169,7 +161,6 @@ public class MoveClassesOrPackagesToNewDirectoryDialog extends DialogWrapper {
       return;
     }
 
-    super.doOKAction();
     final PsiPackage aPackage = JavaDirectoryService.getInstance().getPackage(directory);
     if (aPackage == null) {
       Messages.showErrorDialog(project, RefactoringBundle.message("destination.directory.does.not.correspond.to.any.package"),
@@ -182,8 +173,12 @@ public class MoveClassesOrPackagesToNewDirectoryDialog extends DialogWrapper {
     final boolean searchForTextOccurences = isSearchInNonJavaFiles();
     refactoringSettings.MOVE_SEARCH_IN_COMMENTS = searchInComments;
     refactoringSettings.MOVE_SEARCH_FOR_TEXT = searchForTextOccurences;
-
-    performRefactoring(project, directory, aPackage, searchInComments, searchForTextOccurences);
+    saveOpenInEditorOption();
+    final BaseRefactoringProcessor refactoringProcessor =
+      createRefactoringProcessor(project, directory, aPackage, searchInComments, searchForTextOccurences);
+    if (refactoringProcessor != null) {
+      invokeRefactoring(refactoringProcessor);
+    }
   }
 
   @Override
@@ -191,32 +186,61 @@ public class MoveClassesOrPackagesToNewDirectoryDialog extends DialogWrapper {
     return myDestDirectoryField.getTextField();
   }
 
-  protected void performRefactoring(Project project, PsiDirectory directory, PsiPackage aPackage,
-                                    boolean searchInComments,
-                                    boolean searchForTextOccurences) {
+  //for scala plugin
+  @NotNull
+  protected MoveClassesOrPackagesProcessor createMoveClassesOrPackagesProcessor(Project project,
+                                                                          PsiElement[] elements,
+                                                                          @NotNull final MoveDestination moveDestination,
+                                                                          boolean searchInComments,
+                                                                          boolean searchInNonJavaFiles,
+                                                                          MoveCallback moveCallback) {
+
+    return new MoveClassesOrPackagesProcessor(project, elements, moveDestination,
+        searchInComments, searchInNonJavaFiles, moveCallback);
+  }
+
+  protected BaseRefactoringProcessor createRefactoringProcessor(Project project,
+                                                                PsiDirectory directory,
+                                                                PsiPackage aPackage,
+                                                                boolean searchInComments,
+                                                                boolean searchForTextOccurences) {
+    final MoveDestination destination = createDestination(aPackage, directory);
+    if (destination == null) return null;
+
+    MoveClassesOrPackagesProcessor processor = createMoveClassesOrPackagesProcessor(myDirectory.getProject(), myElementsToMove, destination,
+        searchInComments, searchForTextOccurences, myMoveCallback);
+
+    processor.setOpenInEditor(isOpenInEditor());
+    if (processor.verifyValidPackageName()) {
+      return processor;
+    }
+    return null;
+  }
+
+  @Nullable
+  protected MoveDestination createDestination(PsiPackage aPackage, PsiDirectory directory) {
+    final Project project = aPackage.getProject();
     final VirtualFile sourceRoot = ProjectRootManager.getInstance(project).getFileIndex().getSourceRootForFile(directory.getVirtualFile());
     if (sourceRoot == null) {
       Messages.showErrorDialog(project, RefactoringBundle.message("destination.directory.does.not.correspond.to.any.package"),
                                RefactoringBundle.message("cannot.move"));
-      return;
+      return null;
     }
+
     final JavaRefactoringFactory factory = JavaRefactoringFactory.getInstance(project);
-    final MoveDestination destination = myPreserveSourceRoot.isSelected() && myPreserveSourceRoot.isVisible()
-                                        ? factory.createSourceFolderPreservingMoveDestination(aPackage.getQualifiedName())
-                                        : factory.createSourceRootMoveDestination(aPackage.getQualifiedName(), sourceRoot);
+    return myPreserveSourceRoot.isSelected() && myPreserveSourceRoot.isVisible()
+           ? factory.createSourceFolderPreservingMoveDestination(aPackage.getQualifiedName())
+           : factory.createSourceRootMoveDestination(aPackage.getQualifiedName(), sourceRoot);
+  }
 
-    MoveClassesOrPackagesProcessor processor = new MoveClassesOrPackagesProcessor(myDirectory.getProject(), myElementsToMove, destination,
-                                                                                  searchInComments, searchForTextOccurences,
-                                                                                  myMoveCallback);
-    if (processor.verifyValidPackageName()) {
-      processor.setPrepareSuccessfulSwingThreadCallback(new Runnable() {
-        @Override
-        public void run() {
-        }
-      });
+  @Override
+  protected String getMovePropertySuffix() {
+    return "ClassWithTarget";
+  }
 
-      processor.run();
-    }
+  @Override
+  protected String getCbTitle() {
+    return "Open moved classes in editor";
   }
 }
 

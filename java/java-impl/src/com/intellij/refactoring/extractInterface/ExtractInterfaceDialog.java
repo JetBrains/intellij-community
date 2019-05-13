@@ -17,6 +17,7 @@ package com.intellij.refactoring.extractInterface;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.JavaRefactoringSettings;
 import com.intellij.refactoring.RefactoringBundle;
@@ -28,6 +29,7 @@ import com.intellij.refactoring.ui.MemberSelectionPanel;
 import com.intellij.refactoring.util.DocCommentPolicy;
 import com.intellij.refactoring.util.classMembers.MemberInfo;
 import com.intellij.util.ArrayUtil;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -35,19 +37,31 @@ import java.util.List;
 
 class ExtractInterfaceDialog extends JavaExtractSuperBaseDialog {
 
-  public ExtractInterfaceDialog(Project project, PsiClass sourceClass) {
+  ExtractInterfaceDialog(Project project, PsiClass sourceClass) {
     super(project, sourceClass, collectMembers(sourceClass), ExtractInterfaceHandler.REFACTORING_NAME);
+    for (MemberInfo memberInfo : myMemberInfos) {
+      final PsiMember member = memberInfo.getMember();
+      if (member instanceof PsiMethod &&
+          (member.hasModifierProperty(PsiModifier.STATIC) || member.hasModifierProperty(PsiModifier.PRIVATE))) {
+        continue;
+      }
+      memberInfo.setToAbstract(true);
+    }
     init();
   }
 
   private static List<MemberInfo> collectMembers(PsiClass c) {
     return MemberInfo.extractClassMembers(c, new MemberInfoBase.Filter<PsiMember>() {
+      @Override
       public boolean includeMember(PsiMember element) {
         if (element instanceof PsiMethod) {
+          if (PsiUtil.isLanguageLevel9OrHigher(element)) {
+            return true;
+          }
           return element.hasModifierProperty(PsiModifier.PUBLIC)
-                 && !element.hasModifierProperty(PsiModifier.STATIC);
+                 && (PsiUtil.isLanguageLevel8OrHigher(element) || !element.hasModifierProperty(PsiModifier.STATIC));
         }
-        else if (element instanceof PsiField) {
+        else if (element instanceof PsiField && !(element instanceof PsiEnumConstant)) {
           return element.hasModifierProperty(PsiModifier.FINAL)
                  && element.hasModifierProperty(PsiModifier.STATIC)
                  && element.hasModifierProperty(PsiModifier.PUBLIC);
@@ -60,6 +74,7 @@ class ExtractInterfaceDialog extends JavaExtractSuperBaseDialog {
     }, true);
   }
 
+  @Override
   protected String getClassNameLabelText() {
     return isExtractSuperclass()
            ? RefactoringBundle.message("interface.name.prompt")
@@ -73,6 +88,8 @@ class ExtractInterfaceDialog extends JavaExtractSuperBaseDialog {
            : RefactoringBundle.message("package.for.original.class");
   }
 
+  @NotNull
+  @Override
   protected String getEntityName() {
     return RefactoringBundle.message("extractSuperInterface.interface");
   }
@@ -82,12 +99,14 @@ class ExtractInterfaceDialog extends JavaExtractSuperBaseDialog {
     return RefactoringBundle.message("extract.interface.from");
   }
 
+  @Override
   protected JComponent createCenterPanel() {
     JPanel panel = new JPanel(new BorderLayout());
     final MemberSelectionPanel memberSelectionPanel = new MemberSelectionPanel(RefactoringBundle.message("members.to.form.interface"),
-                                                                               myMemberInfos, null);
+                                                                               myMemberInfos, RefactoringBundle.message("make.abstract"));
     memberSelectionPanel.getTable()
       .setMemberInfoModel(new DelegatingMemberInfoModel<PsiMember, MemberInfo>(memberSelectionPanel.getTable().getMemberInfoModel()) {
+        @Override
         public Boolean isFixedAbstract(MemberInfo member) {
           return Boolean.TRUE;
         }

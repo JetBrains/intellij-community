@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2012 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2015 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,9 +16,15 @@
 package com.siyeh.ig.classlayout;
 
 import com.intellij.codeInsight.AnnotationUtil;
+import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.util.SpecialAnnotationsUtil;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.*;
+import com.intellij.psi.util.FileTypeUtils;
 import com.intellij.psi.util.InheritanceUtil;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ui.CheckBox;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
@@ -26,43 +32,26 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.AddToIgnoreIfAnnotatedByListQuickFix;
 import com.siyeh.ig.ui.ExternalizableStringSet;
+import org.jdom.Element;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.ArrayList;
+import java.util.List;
 
 public class EmptyClassInspection extends BaseInspection {
 
-  @SuppressWarnings({"PublicField"})
+  @SuppressWarnings("PublicField")
   public final ExternalizableStringSet ignorableAnnotations = new ExternalizableStringSet();
-
-  @SuppressWarnings({"PublicField"})
-  public boolean ignoreClassWithParameterization = false;
-
-  @SuppressWarnings({"PublicField"})
+  @SuppressWarnings({"PublicField", "WeakerAccess"})
+  public boolean ignoreClassWithParameterization;
+  @SuppressWarnings({"PublicField", "WeakerAccess"})
   public boolean ignoreThrowables = true;
-
-  @Override
-  @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("empty.class.display.name");
-  }
-
-  @Override
-  @NotNull
-  protected String buildErrorString(Object... infos) {
-    final Object element = infos[0];
-    if (element instanceof PsiAnonymousClass) {
-      return InspectionGadgetsBundle.message("empty.anonymous.class.problem.descriptor");
-    }
-    else if (element instanceof PsiClass) {
-      return InspectionGadgetsBundle.message("empty.class.problem.descriptor");
-    }
-    else {
-      return InspectionGadgetsBundle.message("empty.class.file.without.class.problem.descriptor");
-    }
-  }
+  @SuppressWarnings({"PublicField", "WeakerAccess"})
+  public boolean commentsAreContent = true;
 
   @Override
   public JComponent createOptionsPanel() {
@@ -86,7 +75,39 @@ public class EmptyClassInspection extends BaseInspection {
     constraints.gridy++;
     final CheckBox checkBox2 = new CheckBox("Ignore subclasses of java.lang.Throwable", this, "ignoreThrowables");
     panel.add(checkBox2, constraints);
+    constraints.gridy++;
+    final CheckBox checkBox3 = new CheckBox(InspectionGadgetsBundle.message("comments.as.content.option"), this, "commentsAreContent");
+    panel.add(checkBox3, constraints);
     return panel;
+  }
+
+  @Override
+  public void writeSettings(@NotNull Element node) throws WriteExternalException {
+    defaultWriteSettings(node, "commentsAreContent");
+    writeBooleanOption(node, "commentsAreContent", false);
+  }
+
+  @Override
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message("empty.class.display.name");
+  }
+
+  @Override
+  @NotNull
+  protected String buildErrorString(Object... infos) {
+    final Object element = infos[0];
+    if (element instanceof PsiAnonymousClass) {
+      return InspectionGadgetsBundle.message("empty.anonymous.class.problem.descriptor");
+    }
+    else if (element instanceof PsiClass) {
+      return ((PsiClass)element).isEnum() ?
+             InspectionGadgetsBundle.message("empty.enum.problem.descriptor"):
+             InspectionGadgetsBundle.message("empty.class.problem.descriptor");
+    }
+    else {
+      return InspectionGadgetsBundle.message("empty.class.file.without.class.problem.descriptor");
+    }
   }
 
   @NotNull
@@ -96,7 +117,12 @@ public class EmptyClassInspection extends BaseInspection {
     if (!(info instanceof PsiModifierListOwner)) {
       return InspectionGadgetsFix.EMPTY_ARRAY;
     }
-    return AddToIgnoreIfAnnotatedByListQuickFix.build((PsiModifierListOwner)info, ignorableAnnotations);
+    List<InspectionGadgetsFix> fixes =
+      AddToIgnoreIfAnnotatedByListQuickFix.build((PsiModifierListOwner)info, ignorableAnnotations, new ArrayList<>());
+    if (info instanceof PsiAnonymousClass) {
+      fixes.add(0, new ConvertEmptyAnonymousToNewFix());
+    }
+    return fixes.toArray(InspectionGadgetsFix.EMPTY_ARRAY);
   }
 
   @Override
@@ -104,10 +130,39 @@ public class EmptyClassInspection extends BaseInspection {
     return new EmptyClassVisitor();
   }
 
-  private class EmptyClassVisitor extends BaseInspectionVisitor {
+  private static class ConvertEmptyAnonymousToNewFix extends InspectionGadgetsFix {
+    @Override
+    protected void doFix(Project project, ProblemDescriptor descriptor) {
+      PsiElement element = descriptor.getPsiElement();
+      if (element == null) return;
+      PsiElement parent = element.getParent();
+      if (!(parent instanceof PsiAnonymousClass)) return;
+      PsiAnonymousClass aClass = (PsiAnonymousClass)parent;
+      PsiElement lBrace = aClass.getLBrace();
+      PsiElement rBrace = aClass.getRBrace();
+      if (lBrace != null && rBrace != null) {
+        PsiElement prev = lBrace.getPrevSibling();
+        PsiElement start = prev instanceof PsiWhiteSpace ? prev : lBrace;
+        Document document = PsiDocumentManager.getInstance(project).getDocument(aClass.getContainingFile());
+        if (document == null) return;
+        int anonymousStart = start.getTextRange().getStartOffset();
+        int rBraceEnd = rBrace.getTextRange().getEndOffset();
+        document.deleteString(anonymousStart, rBraceEnd);
+      }
+    }
 
+    @Nls
+    @NotNull
+    @Override
+    public String getFamilyName() {
+      return "Remove '{}'";
+    }
+  }
+
+  private class EmptyClassVisitor extends BaseInspectionVisitor {
     @Override
     public void visitFile(PsiFile file) {
+      super.visitFile(file);
       if (!(file instanceof PsiJavaFile)) {
         return;
       }
@@ -116,7 +171,7 @@ public class EmptyClassInspection extends BaseInspection {
         return;
       }
       @NonNls final String fileName = javaFile.getName();
-      if ("package-info.java".equals(fileName)) {
+      if (PsiPackage.PACKAGE_INFO_FILE.equals(fileName) || PsiJavaModule.MODULE_INFO_FILE.equals(fileName)) {
         return;
       }
       registerError(file, file);
@@ -124,12 +179,19 @@ public class EmptyClassInspection extends BaseInspection {
 
     @Override
     public void visitClass(@NotNull PsiClass aClass) {
-      //don't call super, to prevent drilldown
-      if (JspPsiUtil.isInJspFile(aClass.getContainingFile())) {
+      super.visitClass(aClass);
+      if (FileTypeUtils.isInServerPageFile(aClass.getContainingFile())) {
         return;
       }
-      if (aClass.isInterface() || aClass.isEnum() || aClass.isAnnotationType()) {
+      if (aClass.isInterface() || aClass.isAnnotationType()) {
         return;
+      }
+      if (!aClass.hasModifierProperty(PsiModifier.ABSTRACT) && !aClass.isEnum()) {
+        for (PsiClass superClass : aClass.getSupers()) {
+          if (superClass.isInterface() || superClass.hasModifierProperty(PsiModifier.ABSTRACT)) {
+            return;
+          }
+        }
       }
       if (aClass instanceof PsiTypeParameter) {
         return;
@@ -150,10 +212,13 @@ public class EmptyClassInspection extends BaseInspection {
       if (initializers.length > 0) {
         return;
       }
+      if (commentsAreContent && PsiTreeUtil.getChildOfType(aClass, PsiComment.class) != null) {
+        return;
+      }
       if (ignoreClassWithParameterization && isSuperParametrization(aClass)) {
         return;
       }
-      if (AnnotationUtil.isAnnotated(aClass, ignorableAnnotations)) {
+      if (AnnotationUtil.isAnnotated(aClass, ignorableAnnotations, 0)) {
         return;
       }
       if (ignoreThrowables && InheritanceUtil.isInheritor(aClass, "java.lang.Throwable")) {

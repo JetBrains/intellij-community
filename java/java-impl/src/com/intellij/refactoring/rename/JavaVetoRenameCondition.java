@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,18 +15,27 @@
  */
 package com.intellij.refactoring.rename;
 
-import com.intellij.ide.projectView.impl.ProjectRootsUtil;
+import com.intellij.openapi.roots.JavaProjectRootsUtil;
 import com.intellij.openapi.util.Condition;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiJavaFile;
-import com.intellij.psi.JspPsiUtil;
+import com.intellij.psi.*;
+import com.intellij.psi.impl.light.LightMethod;
+import com.intellij.psi.util.FileTypeUtils;
 
 public class JavaVetoRenameCondition implements Condition<PsiElement> {
-  public boolean value(final PsiElement element) {
+  @Override
+  public boolean value(PsiElement element) {
+    if (element instanceof LightMethod) {
+      PsiClass containingClass = ((LightMethod)element).getContainingClass();
+      if (containingClass != null && containingClass.isEnum()) return true;
+    }
+
+    if (element instanceof PsiReceiverParameter) {
+      return true;
+    }
+
     return element instanceof PsiJavaFile &&
-           !JspPsiUtil.isInJspFile(element) &&
-           !ProjectRootsUtil.isOutsideSourceRoot((PsiFile)element) &&
+           !FileTypeUtils.isInServerPageFile(element) &&
+           !JavaProjectRootsUtil.isOutsideJavaSourceRoot((PsiFile)element) &&
            ((PsiJavaFile) element).getClasses().length > 0;
   }
 }

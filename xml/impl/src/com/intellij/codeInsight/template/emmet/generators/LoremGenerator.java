@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,13 +16,10 @@
 package com.intellij.codeInsight.template.emmet.generators;
 
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.ArrayUtil;
 
 import java.util.*;
 
-/**
- * User: zolotov
- * Date: 1/31/13
- */
 public class LoremGenerator {
   static final String[] COMMON_P = "lorem ipsum dolor sit amet consectetur adipisicing elit".split(" ");
   private static final String[] WORDS = new String[]{"exercitationem", "perferendis", "perspiciatis", "laborum", "eveniet",
@@ -69,7 +66,7 @@ public class LoremGenerator {
    * @return generated paragraph
    */
   public String generate(int wordsCount, boolean startWithCommon) {
-    Collection<String> sentences = new LinkedList<String>();
+    Collection<String> sentences = new LinkedList<>();
     int totalWords = 0;
     String[] words;
 
@@ -139,13 +136,13 @@ public class LoremGenerator {
   private String[] sample(String[] words, int wordsCount) {
     int len = words.length;
     int iterations = Math.min(len, wordsCount);
-    Set<String> result = new TreeSet<String>();
+    Set<String> result = new TreeSet<>();
     while (result.size() < iterations) {
       int i = rand(0, len - 1);
       result.add(words[i]);
     }
 
-    return result.toArray(new String[result.size()]);
+    return ArrayUtil.toStringArray(result);
   }
 
   private char choice(String values) {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,7 +27,7 @@ import java.util.List;
 /**
  * @author peter
  */
-public final class JavaMethod implements AnnotatedElement{
+public final class JavaMethod implements AnnotatedElement {
   public static final JavaMethod[] EMPTY_ARRAY = new JavaMethod[0];
   private static final Object NONE = new Object();
 
@@ -92,6 +92,7 @@ public final class JavaMethod implements AnnotatedElement{
     return myMethod.getName();
   }
 
+  @Override
   public final <T extends Annotation> T getAnnotation(Class<T> annotationClass) {
     Object annotation = myAnnotationsMap.get(annotationClass);
     if (annotation == null) {
@@ -101,14 +102,10 @@ public final class JavaMethod implements AnnotatedElement{
     return annotation == NONE ? null : (T)annotation;
   }
 
-  @NotNull private Object findAnnotation(Class<? extends Annotation> annotationClass) {
-    for (Method method : mySignature.getAllMethods(myDeclaringClass)) {
-      final Annotation annotation = method.getAnnotation(annotationClass);
-      if (annotation != null) {
-        return annotation;
-      }
-    }
-    return NONE;
+  @NotNull
+  private Object findAnnotation(Class<? extends Annotation> annotationClass) {
+    final Annotation annotation = mySignature.findAnnotation(annotationClass, myDeclaringClass);
+    return annotation == null ? NONE : annotation;
   }
 
   @Override

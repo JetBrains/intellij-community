@@ -18,13 +18,14 @@ package com.intellij.refactoring.typeMigration.usageInfo;
 import com.intellij.psi.PsiElement;
 import com.intellij.usageView.UsageInfo;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author anna
- * Date: 27-Mar-2008
  */
 public class TypeMigrationUsageInfo extends UsageInfo {
   private boolean myExcluded;
+  private TypeMigrationUsageInfo myOwnerRoot;
 
 
   public TypeMigrationUsageInfo(@NotNull PsiElement element) {
@@ -39,4 +40,16 @@ public class TypeMigrationUsageInfo extends UsageInfo {
     return myExcluded;
   }
 
+  public TypeMigrationUsageInfo getOwnerRoot() {
+    return myOwnerRoot;
+  }
+
+  public void setOwnerRoot(TypeMigrationUsageInfo ownerRoot) {
+    myOwnerRoot = ownerRoot;
+  }
+
+  @Override
+  public String toString() {
+    return getClass().getSimpleName() + ":" + getElement();
+  }
 }

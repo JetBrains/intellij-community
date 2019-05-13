@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,18 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.maddyhome.idea.copyright.ui;
 
-import com.intellij.ide.actions.OpenProjectFileChooserDescriptor;
+import com.intellij.copyright.CopyrightManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonShortcuts;
 import com.intellij.openapi.actionSystem.CustomShortcutSet;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileChooser.FileChooser;
+import com.intellij.openapi.fileChooser.FileChooserDescriptor;
+import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
+import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.PlainTextFileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.InputValidator;
 import com.intellij.openapi.ui.MasterDetailsComponent;
@@ -33,13 +38,9 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
-import com.intellij.openapi.util.Conditions;
-import com.intellij.openapi.vfs.VfsUtil;
-import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.util.IconUtil;
 import com.intellij.util.PlatformIcons;
-import com.intellij.util.containers.HashMap;
-import com.maddyhome.idea.copyright.CopyrightManager;
 import com.maddyhome.idea.copyright.CopyrightProfile;
 import com.maddyhome.idea.copyright.options.ExternalOptionHelper;
 import org.jetbrains.annotations.Nls;
@@ -49,25 +50,23 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.tree.TreePath;
+import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-public class CopyrightProfilesPanel extends MasterDetailsComponent implements SearchableConfigurable {
-
+class CopyrightProfilesPanel extends MasterDetailsComponent implements SearchableConfigurable {
   private final Project myProject;
-  private final CopyrightManager myManager;
   private final AtomicBoolean myInitialized = new AtomicBoolean(false);
 
   private Runnable myUpdate;
 
-  public CopyrightProfilesPanel(Project project) {
+  CopyrightProfilesPanel(Project project) {
     myProject = project;
-    myManager = CopyrightManager.getInstance(project);
     initTree();
   }
 
-  public void setUpdate(Runnable update) {
+  void setUpdate(Runnable update) {
     myUpdate = update;
   }
 
@@ -81,29 +80,30 @@ public class CopyrightProfilesPanel extends MasterDetailsComponent implements Se
     return "Copyright.UI";
   }
 
+  @Override
   protected void processRemovedItems() {
     Map<String, CopyrightProfile> profiles = getAllProfiles();
-    final List<CopyrightProfile> deleted = new ArrayList<CopyrightProfile>();
-    for (CopyrightProfile profile : myManager.getCopyrights()) {
+    CopyrightManager manager = CopyrightManager.getInstance(myProject);
+    for (CopyrightProfile profile : new ArrayList<>(manager.getCopyrights())) {
       if (!profiles.containsValue(profile)) {
-        deleted.add(profile);
+        manager.removeCopyright(profile);
       }
     }
-    for (CopyrightProfile profile : deleted) {
-      myManager.removeCopyright(profile);
-    }
   }
 
+  @Override
   protected boolean wasObjectStored(Object o) {
-    return myManager.getCopyrights().contains((CopyrightProfile)o);
+    return CopyrightManager.getInstance(myProject).getCopyrights().contains((CopyrightProfile)o);
   }
 
+  @Override
   @Nls
   public String getDisplayName() {
     return "Copyright Profiles";
   }
 
-  @Nullable
+  @Override
+  @NotNull
   @NonNls
   public String getHelpTopic() {
     return "copyright.profiles";
@@ -115,8 +115,9 @@ public class CopyrightProfilesPanel extends MasterDetailsComponent implements Se
     }
   }
 
+  @Override
   public void apply() throws ConfigurationException {
-    final Set<String> profiles = new HashSet<String>();
+    final Set<String> profiles = new HashSet<>();
     for (int i = 0; i < myRoot.getChildCount(); i++) {
       MyNode node = (MyNode)myRoot.getChildAt(i);
       final String profileName = ((CopyrightConfigurable)node.getConfigurable()).getEditableObject().getName();
@@ -129,10 +130,10 @@ public class CopyrightProfilesPanel extends MasterDetailsComponent implements Se
     super.apply();
   }
 
-  public Map<String, CopyrightProfile> getAllProfiles() {
-    final Map<String, CopyrightProfile> profiles = new HashMap<String, CopyrightProfile>();
+  Map<String, CopyrightProfile> getAllProfiles() {
+    final Map<String, CopyrightProfile> profiles = new HashMap<>();
     if (!myInitialized.get()) {
-      for (CopyrightProfile profile : myManager.getCopyrights()) {
+      for (CopyrightProfile profile : CopyrightManager.getInstance(myProject).getCopyrights()) {
         profiles.put(profile.getName(), profile);
       }
     }
@@ -152,91 +153,85 @@ public class CopyrightProfilesPanel extends MasterDetailsComponent implements Se
     myInitialized.set(false);
   }
 
+  @Override
   @Nullable
   protected ArrayList<AnAction> createActions(boolean fromPopup) {
-    ArrayList<AnAction> result = new ArrayList<AnAction>();
-    result.add(new AnAction("Add", "Add", IconUtil.getAddIcon()) {
+    ArrayList<AnAction> result = new ArrayList<>();
+    result.add(new DumbAwareAction("Add", "Add", IconUtil.getAddIcon()) {
       {
         registerCustomShortcutSet(CommonShortcuts.INSERT, myTree);
       }
 
-      public void actionPerformed(AnActionEvent event) {
-        final String name = askForProfileName("Create Copyright Profile", "");
-        if (name == null) return;
-        final CopyrightProfile copyrightProfile = new CopyrightProfile(name);
-        addProfileNode(copyrightProfile);
+      @Override
+      public void actionPerformed(@NotNull AnActionEvent event) {
+        String name = askForProfileName("Create Copyright Profile", "");
+        if (name != null) {
+          addProfileNode(new CopyrightProfile(name));
+        }
       }
     });
-    result.add(new MyDeleteAction(forAll(Conditions.alwaysTrue())));
-    result.add(new AnAction("Copy", "Copy", PlatformIcons.COPY_ICON) {
+    result.add(new MyDeleteAction());
+    result.add(new DumbAwareAction("Copy", "Copy", PlatformIcons.COPY_ICON) {
       {
-        registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_D, KeyEvent.CTRL_MASK)), myTree);
+        registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_D, InputEvent.CTRL_MASK)), myTree);
       }
 
-      public void actionPerformed(AnActionEvent event) {
-        final String profileName = askForProfileName("Copy Copyright Profile", "");
-        if (profileName == null) return;
-        final CopyrightProfile clone = new CopyrightProfile();
+      @Override
+      public void actionPerformed(@NotNull AnActionEvent event) {
+        String profileName = askForProfileName("Copy Copyright Profile", "");
+        if (profileName == null) {
+          return;
+        }
+
+        CopyrightProfile clone = new CopyrightProfile();
         clone.copyFrom((CopyrightProfile)getSelectedObject());
         clone.setName(profileName);
         addProfileNode(clone);
       }
 
-      public void update(AnActionEvent event) {
+      @Override
+      public void update(@NotNull AnActionEvent event) {
         super.update(event);
         event.getPresentation().setEnabled(getSelectedObject() != null);
       }
     });
-    result.add(new AnAction("Import", "Import", PlatformIcons.IMPORT_ICON) {
-      public void actionPerformed(AnActionEvent event) {
-        final OpenProjectFileChooserDescriptor descriptor = new OpenProjectFileChooserDescriptor(true) {
-          @Override
-          public boolean isFileVisible(VirtualFile file, boolean showHiddenFiles) {
-            return super.isFileVisible(file, showHiddenFiles) || canContainCopyright(file);
-          }
+    result.add(new DumbAwareAction("Import", "Import", PlatformIcons.IMPORT_ICON) {
+      @Override
+      public void actionPerformed(@NotNull AnActionEvent event) {
+        FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor()
+          .withFileFilter(file -> {
+            final FileType fileType = file.getFileType();
+            return fileType != PlainTextFileType.INSTANCE && (fileType == StdFileTypes.IDEA_MODULE || fileType == StdFileTypes.XML);
+          })
+          .withTitle("Choose File Containing Copyright Notice");
+        FileChooser.chooseFile(descriptor, myProject, null, file -> {
+          final List<CopyrightProfile> profiles = ExternalOptionHelper.loadOptions(VfsUtilCore.virtualToIoFile(file));
+          if (profiles == null) return;
+          if (!profiles.isEmpty()) {
+            if (profiles.size() == 1) {
+              importProfile(profiles.get(0));
+            }
+            else {
+              JBPopupFactory.getInstance()
+                .createListPopup(new BaseListPopupStep<CopyrightProfile>("Choose profile to import", profiles) {
+                  @Override
+                  public PopupStep onChosen(final CopyrightProfile selectedValue, boolean finalChoice) {
+                    return doFinalStep(() -> importProfile(selectedValue));
+                  }
 
-          @Override
-          public boolean isFileSelectable(VirtualFile file) {
-            return super.isFileSelectable(file) || canContainCopyright(file);
-          }
-
-          private boolean canContainCopyright(VirtualFile file) {
-            return !file.isDirectory() && (file.getFileType() == StdFileTypes.IDEA_MODULE || file.getFileType() == StdFileTypes.XML);
-          }
-        };
-        descriptor.setTitle("Choose file containing copyright notice");
-        final VirtualFile file = FileChooser.chooseFile(descriptor, myProject, null);
-        if (file == null) return;
-
-        final List<CopyrightProfile> copyrightProfiles = ExternalOptionHelper.loadOptions(VfsUtil.virtualToIoFile(file));
-        if (copyrightProfiles == null) return;
-        if (!copyrightProfiles.isEmpty()) {
-          if (copyrightProfiles.size() == 1) {
-            importProfile(copyrightProfiles.get(0));
+                  @NotNull
+                  @Override
+                  public String getTextFor(CopyrightProfile value) {
+                    return value.getName();
+                  }
+                })
+                .showUnderneathOf(myNorthPanel);
+            }
           }
           else {
-            JBPopupFactory.getInstance()
-              .createListPopup(new BaseListPopupStep<CopyrightProfile>("Choose profile to import", copyrightProfiles) {
-                @Override
-                public PopupStep onChosen(final CopyrightProfile selectedValue, boolean finalChoice) {
-                  return doFinalStep(new Runnable() {
-                    public void run() {
-                      importProfile(selectedValue);
-                    }
-                  });
-                }
-
-                @NotNull
-                @Override
-                public String getTextFor(CopyrightProfile value) {
-                  return value.getName();
-                }
-              }).showUnderneathOf(myNorthPanel);
+            Messages.showWarningDialog(myProject, "The selected file does not contain any copyright settings.", "Import Failure");
           }
-        }
-        else {
-          Messages.showWarningDialog(myProject, "The selected file does not contain any copyright settings.", "Import Failure");
-        }
+        });
       }
 
       private void importProfile(CopyrightProfile copyrightProfile) {
@@ -254,17 +249,19 @@ public class CopyrightProfilesPanel extends MasterDetailsComponent implements Se
   @Nullable
   private String askForProfileName(String title, String initialName) {
     return Messages.showInputDialog("New copyright profile name:", title, Messages.getQuestionIcon(), initialName, new InputValidator() {
+      @Override
       public boolean checkInput(String s) {
         return !getAllProfiles().containsKey(s) && s.length() > 0;
       }
 
+      @Override
       public boolean canClose(String s) {
         return checkInput(s);
       }
     });
   }
 
-  private void addProfileNode(CopyrightProfile copyrightProfile) {
+  private void addProfileNode(@NotNull CopyrightProfile copyrightProfile) {
     final CopyrightConfigurable copyrightConfigurable = new CopyrightConfigurable(myProject, copyrightProfile, TREE_UPDATER);
     copyrightConfigurable.setModified(true);
     final MyNode node = new MyNode(copyrightConfigurable);
@@ -281,7 +278,7 @@ public class CopyrightProfilesPanel extends MasterDetailsComponent implements Se
 
   private void reloadTree() {
     myRoot.removeAllChildren();
-    Collection<CopyrightProfile> collection = myManager.getCopyrights();
+    Collection<CopyrightProfile> collection = CopyrightManager.getInstance(myProject).getCopyrights();
     for (CopyrightProfile profile : collection) {
       CopyrightProfile clone = new CopyrightProfile();
       clone.copyFrom(profile);
@@ -290,6 +287,7 @@ public class CopyrightProfilesPanel extends MasterDetailsComponent implements Se
     myInitialized.set(true);
   }
 
+  @Override
   public void reset() {
     reloadTree();
     super.reset();
@@ -300,24 +298,23 @@ public class CopyrightProfilesPanel extends MasterDetailsComponent implements Se
     return "Select a profile to view or edit its details here";
   }
 
-  public void addItemsChangeListener(final Runnable runnable) {
+  void addItemsChangeListener(final Runnable runnable) {
     addItemsChangeListener(new ItemsChangeListener() {
+      @Override
       public void itemChanged(@Nullable Object deletedItem) {
-        SwingUtilities.invokeLater(runnable);
+        ApplicationManager.getApplication().invokeLater(runnable);
       }
 
+      @Override
       public void itemsExternallyChanged() {
-        SwingUtilities.invokeLater(runnable);
+        ApplicationManager.getApplication().invokeLater(runnable);
       }
     });
   }
 
+  @Override
   @NotNull
   public String getId() {
     return getHelpTopic();
-  }
-
-  public Runnable enableSearch(String option) {
-    return null;
   }
 }

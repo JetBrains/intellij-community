@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,9 +19,12 @@ import com.intellij.core.CoreASTFactory;
 import com.intellij.psi.impl.source.tree.LeafElement;
 import com.intellij.psi.impl.source.tree.PsiCommentImpl;
 import com.intellij.psi.tree.IElementType;
+import org.jetbrains.annotations.NotNull;
 
 public class DefaultASTFactoryImpl extends CoreASTFactory implements DefaultASTFactory {
-  public LeafElement createComment(IElementType type, CharSequence text) {
+  @NotNull
+  @Override
+  public LeafElement createComment(@NotNull IElementType type, @NotNull CharSequence text) {
     return new PsiCommentImpl(type, text);
   }
 }

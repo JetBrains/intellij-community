@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,16 +20,28 @@ import com.siyeh.ig.IGInspectionTestCase;
 public class UnnecessarilyQualifiedStaticallyImportedElementInspectionTest
   extends IGInspectionTestCase {
 
-  public void test() throws Exception {
-    doTest("com/siyeh/igtest/style/unnecessarily_qualified_statically_imported_element",
+  public void test() {
+    doTest("com/siyeh/igtest/style/unnecessarily_qualified_statically_imported_element/simple",
            new UnnecessarilyQualifiedStaticallyImportedElementInspection());
   }
 
-  public void testSameMemberNames() throws Exception {
+  public void testSameMemberNames() {
     doTest(getTestName(true));
   }
 
-  private void doTest(String testName) throws Exception {
+  public void testMethodRef() {
+    doTest(getTestName(true));
+  }
+
+  public void testChainedMethodCall() {
+    doTest(getTestName(true));
+  }
+
+  public void testOverriding() {
+    doTest(getTestName(true));
+  }
+
+  private void doTest(String testName) {
     doTest("com/siyeh/igtest/style/unnecessarily_qualified_statically_imported_element/" + testName,
            new UnnecessarilyQualifiedStaticallyImportedElementInspection());
   }

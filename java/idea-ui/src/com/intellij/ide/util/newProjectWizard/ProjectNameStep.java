@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.util.newProjectWizard;
 
 import com.intellij.ide.IdeBundle;
@@ -22,6 +8,7 @@ import com.intellij.ide.util.projectWizard.importSources.impl.ProjectFromSources
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.projectImport.ProjectFormatPanel;
+import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -30,7 +17,6 @@ import java.io.File;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Jul 17, 2007
  */
 public class ProjectNameStep extends ModuleWizardStep {
   private final JPanel myPanel;
@@ -60,13 +46,23 @@ public class ProjectNameStep extends ModuleWizardStep {
 
     myPanel = new JPanel(new GridBagLayout());
     myPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
-    myPanel.add(myNamePathComponent, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL, new Insets(10, 0, 20, 0), 0, 0));
+    myPanel.add(myNamePathComponent, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL, JBUI.insets(10, 0, 20, 0), 0, 0));
+
+    if (myWizardContext.isCreatingNewProject()) {
+      myNamePathComponent.add(new JLabel("Project format:"),
+                              new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 0.0, 0.0, GridBagConstraints.WEST,
+                                                     GridBagConstraints.NONE, JBUI.emptyInsets(), 0, 0));
+      myNamePathComponent.add(myFormatPanel.getStorageFormatComboBox(),
+                              new GridBagConstraints(1, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST,
+                                                     GridBagConstraints.NONE, JBUI.emptyInsets(), 0, 0));
+    }
 
     myNamePathComponent.setVisible(isStepVisible());
     myAdditionalContentPanel = new JPanel(new GridBagLayout());
-    myPanel.add(myAdditionalContentPanel, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 1.0, GridBagConstraints.NORTHWEST, GridBagConstraints.BOTH, new Insets(0, 0, 0, 0), 0, 0));
+    myPanel.add(myAdditionalContentPanel, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 1.0, GridBagConstraints.NORTHWEST, GridBagConstraints.BOTH, JBUI.emptyInsets(), 0, 0));
   }
-  
+
+  @Override
   public JComponent getComponent() {
     return myPanel;
   }
@@ -76,6 +72,7 @@ public class ProjectNameStep extends ModuleWizardStep {
     return myWizardContext.getProject() == null;
   }
 
+  @Override
   public void updateDataModel() {
     myWizardContext.setProjectName(getProjectName());
     final String projectFileDirectory = getProjectFileDirectory();
@@ -93,14 +90,17 @@ public class ProjectNameStep extends ModuleWizardStep {
     myFormatPanel.updateData(myWizardContext);
   }
 
+  @Override
   public Icon getIcon() {
     return myWizardContext.getStepIcon();
   }
 
+  @Override
   public JComponent getPreferredFocusedComponent() {
     return myNamePathComponent.getNameComponent();
   }
 
+  @Override
   public String getHelpId() {
     return "reference.dialogs.new.project.fromCode.name";
   }
@@ -113,6 +113,7 @@ public class ProjectNameStep extends ModuleWizardStep {
     return myNamePathComponent.getNameValue();
   }
 
+  @Override
   public boolean validate() throws ConfigurationException {
     return myNamePathComponent.validateNameAndPath(myWizardContext, myFormatPanel.isDefault());
   }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,6 +41,7 @@ public interface ASTNode extends UserDataHolder {
    *
    * @return the element type.
    */
+  @NotNull
   IElementType getElementType();
 
   /**
@@ -48,6 +49,7 @@ public interface ASTNode extends UserDataHolder {
    *
    * @return the node text.
    */
+  @NotNull
   String getText();
 
   /**
@@ -55,6 +57,7 @@ public interface ASTNode extends UserDataHolder {
    *
    * @return the node text.
    */
+  @NotNull
   CharSequence getChars();
 
   /**
@@ -129,6 +132,7 @@ public interface ASTNode extends UserDataHolder {
    *               all children should be returned.
    * @return the children array.
    */
+  @NotNull
   ASTNode[] getChildren(@Nullable TokenSet filter);
 
   /**
@@ -142,7 +146,7 @@ public interface ASTNode extends UserDataHolder {
    * Adds the specified child node at the specified position in the child list.
    *
    * @param child        the child node to add.
-   * @param anchorBefore the node before which the child node is inserted (<code>null</code> to add a child as a last node).
+   * @param anchorBefore the node before which the child node is inserted ({@code null} to add a child as a last node).
    */
   void addChild(@NotNull ASTNode child, @Nullable ASTNode anchorBefore);
 
@@ -153,7 +157,7 @@ public interface ASTNode extends UserDataHolder {
    * @param anchorBefore the node before which the child node is inserted.
    * @since 7.0
    */
-  void addLeaf(@NotNull IElementType leafType, CharSequence leafText, @Nullable ASTNode anchorBefore);
+  void addLeaf(@NotNull IElementType leafType, @NotNull CharSequence leafText, @Nullable ASTNode anchorBefore);
 
   /**
    * Removes the specified node from the list of children of this node.
@@ -163,8 +167,8 @@ public interface ASTNode extends UserDataHolder {
   void removeChild(@NotNull ASTNode child);
 
   /**
-   * Removes a range of nodes from the list of children, starting with <code>firstNodeToRemove</code>,
-   * up to and not including <code>firstNodeToKeep</code>.
+   * Removes a range of nodes from the list of children, starting with {@code firstNodeToRemove},
+   * up to and not including {@code firstNodeToKeep}.
    *
    * @param firstNodeToRemove the first child node to remove from the tree.
    * @param firstNodeToKeep   the first child node to keep in the tree.
@@ -184,23 +188,24 @@ public interface ASTNode extends UserDataHolder {
    *
    * @param anotherParent the parent node whose children are used for replacement.
    */
-  void replaceAllChildrenToChildrenOf(ASTNode anotherParent);
+  void replaceAllChildrenToChildrenOf(@NotNull ASTNode anotherParent);
 
   /**
    * Adds a range of nodes belonging to the same parent to the list of children of this node,
-   * starting with <code>firstChild</code>, up to and not including <code>firstChildToNotAdd</code>.
+   * starting with {@code firstChild}, up to and not including {@code firstChildToNotAdd}.
    *
    * @param firstChild         the first node to add.
    * @param firstChildToNotAdd the first child node following firstChild which will not be added to the tree.
    * @param anchorBefore       the node before which the child nodes are inserted.
    */
-  void addChildren(ASTNode firstChild, ASTNode firstChildToNotAdd, ASTNode anchorBefore);
+  void addChildren(@NotNull ASTNode firstChild, ASTNode firstChildToNotAdd, ASTNode anchorBefore);
 
   /**
    * Creates and returns a deep copy of the AST tree part starting at this node.
    *
    * @return the top node of the copied tree (as an ASTNode object)
    */
+  @NotNull
   Object clone();
 
   /**
@@ -225,10 +230,10 @@ public interface ASTNode extends UserDataHolder {
    *
    * @param key the key for accessing the user data object.
    * @return the user data object, or null if no such object is found in the current node.
-   * @see #putCopyableUserData(com.intellij.openapi.util.Key, Object)
+   * @see #putCopyableUserData(Key, Object)
    */
   @Nullable
-    <T> T getCopyableUserData(Key<T> key);
+  <T> T getCopyableUserData(@NotNull Key<T> key);
 
   /**
    * Attaches a copyable user data object to this node. Copyable user data objects are copied
@@ -236,9 +241,9 @@ public interface ASTNode extends UserDataHolder {
    *
    * @param key the key for accessing the user data object.
    * @param value the user data object to attach.
-   * @see #getCopyableUserData(com.intellij.openapi.util.Key)
+   * @see #getCopyableUserData(Key)
    */
-  <T> void putCopyableUserData(Key<T> key, T value);
+  <T> void putCopyableUserData(@NotNull Key<T> key, T value);
 
   /**
    * Returns the first child of the specified node which has the specified type.
@@ -247,7 +252,7 @@ public interface ASTNode extends UserDataHolder {
    * @return the found node, or null if none was found.
    */
   @Nullable
-  ASTNode findChildByType(IElementType type);
+  ASTNode findChildByType(@NotNull IElementType type);
 
   /**
    * Returns the first child after anchor of the specified node which has the specified type.
@@ -257,7 +262,7 @@ public interface ASTNode extends UserDataHolder {
    * @return the found node, or null if none was found.
    */
   @Nullable
-  ASTNode findChildByType(IElementType type, @Nullable ASTNode anchor);
+  ASTNode findChildByType(@NotNull IElementType type, @Nullable ASTNode anchor);
 
   /**
    * Returns the first child of the specified node which has type from specified set.
@@ -291,6 +296,5 @@ public interface ASTNode extends UserDataHolder {
    * @param clazz expected psi class
    * @return the PSI element.
    */
-  @Nullable
-  <T extends PsiElement> T getPsi(Class<T> clazz);
+  <T extends PsiElement> T getPsi(@NotNull Class<T> clazz);
 }

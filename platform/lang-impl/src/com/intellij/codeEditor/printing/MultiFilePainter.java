@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,13 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.intellij.codeEditor.printing;
 
-import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.progress.ProcessCanceledException;
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiFile;
 
 import java.awt.*;
@@ -28,50 +24,64 @@ import java.awt.print.Printable;
 import java.awt.print.PrinterException;
 import java.util.List;
 
-class MultiFilePainter implements Printable{
-  private final List<Pair<PsiFile, Editor>> myFilesList;
+class MultiFilePainter extends BasePainter {
+  private final List<? extends PsiFile> myFilesList;
+  private final boolean myEvenNumberOfPagesPerFile;
   private int myFileIndex = 0;
   private int myStartPageIndex = 0;
-  private Printable myTextPainter = null;
-  private ProgressIndicator myProgress;
+  private TextPainter myTextPainter = null;
+  private int myLargestPrintedPage = -1;
 
-  public MultiFilePainter(List<Pair<PsiFile, Editor>> filesList) {
+  MultiFilePainter(List<? extends PsiFile> filesList, boolean evenNumberOfPagesPerFile) {
     myFilesList = filesList;
+    myEvenNumberOfPagesPerFile = evenNumberOfPagesPerFile;
   }
 
-  public void setProgress(ProgressIndicator progress) {
-    myProgress = progress;
-  }
-
+  @Override
   public int print(Graphics g, PageFormat pageFormat, int pageIndex) throws PrinterException {
     if (myProgress.isCanceled()) {
       return Printable.NO_SUCH_PAGE;
     }
-    while(myFileIndex < myFilesList.size()) {
-      if(myTextPainter == null) {
-        Pair<PsiFile, Editor> pair = myFilesList.get(myFileIndex);
-        myTextPainter = PrintManager.initTextPainter(pair.first, pair.second);
+    while (myFileIndex < myFilesList.size()) {
+      if (myTextPainter == null) {
+        PsiFile psiFile = myFilesList.get(myFileIndex);
+        myTextPainter = PrintManager.initTextPainter(psiFile);
       }
       if (myTextPainter != null) {
-        ((TextPainter)myTextPainter).setProgress(myProgress);
+        myTextPainter.setProgress(myProgress);
+
         int ret = 0;
         try {
           ret = myTextPainter.print(g, pageFormat, pageIndex - myStartPageIndex);
         }
-        catch (ProcessCanceledException ignored) {
-        }
+        catch (ProcessCanceledException ignored) { }
 
         if (myProgress.isCanceled()) {
           return Printable.NO_SUCH_PAGE;
         }
-        if(ret == Printable.PAGE_EXISTS) {
+        if (ret == Printable.PAGE_EXISTS) {
+          myLargestPrintedPage = pageIndex;
           return Printable.PAGE_EXISTS;
         }
+        if (myEvenNumberOfPagesPerFile && pageIndex == (myLargestPrintedPage + 1) && (pageIndex % 2) == 1 &&
+            myFileIndex < (myFilesList.size() - 1)) {
+          return PAGE_EXISTS;
+        }
+        myTextPainter.dispose();
         myTextPainter = null;
         myStartPageIndex = pageIndex;
       }
       myFileIndex++;
+      myLargestPrintedPage = -1;
     }
     return Printable.NO_SUCH_PAGE;
+  }
+
+  @Override
+  void dispose() {
+    if (myTextPainter != null) {
+      myTextPainter.dispose();
+      myTextPainter = null;
+    }
   }
 }

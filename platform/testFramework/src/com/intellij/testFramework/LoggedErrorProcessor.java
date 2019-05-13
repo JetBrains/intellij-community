@@ -15,34 +15,22 @@
  */
 package com.intellij.testFramework;
 
+import com.intellij.openapi.Disposable;
+import com.intellij.openapi.diagnostic.DefaultLogger;
 import org.apache.log4j.Logger;
-import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
-@NonNls public abstract class LoggedErrorProcessor {
-  private static final LoggedErrorProcessor DEFAULT = new LoggedErrorProcessor() {
-    @Override
-    public void processError(String message, Throwable t, String[] details, Logger logger) {
-      logger.info(message, t);
-      System.err.println("ERROR: " + message);
-      if (t != null) t.printStackTrace();
-      if (details != null && details.length > 0) {
-        System.out.println("details: ");
-        for (String detail : details) {
-          System.out.println(detail);
-        }
-      }
-
-      throw new AssertionError(message);
-    }
-  };
+public class LoggedErrorProcessor {
+  private static final LoggedErrorProcessor DEFAULT = new LoggedErrorProcessor();
 
   private static LoggedErrorProcessor ourInstance = DEFAULT;
 
+  @NotNull
   public static LoggedErrorProcessor getInstance() {
     return ourInstance;
   }
 
-  public static void setNewInstance(LoggedErrorProcessor newInstance) {
+  public static void setNewInstance(@NotNull LoggedErrorProcessor newInstance) {
     ourInstance = newInstance;
   }
 
@@ -50,5 +38,30 @@ import org.jetbrains.annotations.NonNls;
     ourInstance = DEFAULT;
   }
 
-  public abstract void processError(String message, Throwable t, String[] details, Logger logger);
+  public void processWarn(String message, Throwable t, @NotNull Logger logger) {
+    logger.warn(message, t);
+  }
+
+  @SuppressWarnings("UseOfSystemOutOrSystemErr")
+  public void processError(String message, Throwable t, String[] details, @NotNull Logger logger) {
+    message += DefaultLogger.attachmentsToString(t);
+    logger.info(message, t);
+
+    if (DefaultLogger.shouldDumpExceptionToStderr()) {
+      System.err.println("ERROR: " + message);
+      if (t != null) t.printStackTrace(System.err);
+      if (details != null && details.length > 0) {
+        System.err.println("details: ");
+        for (String detail : details) {
+          System.err.println(detail);
+        }
+      }
+    }
+
+    throw new AssertionError(message, t);
+  }
+
+  public void disableStderrDumping(@NotNull Disposable parentDisposable) {
+    DefaultLogger.disableStderrDumping(parentDisposable);
+  }
 }

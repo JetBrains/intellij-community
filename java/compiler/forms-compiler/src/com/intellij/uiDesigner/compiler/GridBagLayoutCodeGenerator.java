@@ -18,9 +18,9 @@ package com.intellij.uiDesigner.compiler;
 import com.intellij.uiDesigner.core.Spacer;
 import com.intellij.uiDesigner.lw.LwComponent;
 import com.intellij.uiDesigner.lw.LwContainer;
-import org.jetbrains.asm4.Type;
-import org.jetbrains.asm4.commons.GeneratorAdapter;
-import org.jetbrains.asm4.commons.Method;
+import org.jetbrains.org.objectweb.asm.Type;
+import org.jetbrains.org.objectweb.asm.commons.GeneratorAdapter;
+import org.jetbrains.org.objectweb.asm.commons.Method;
 
 import javax.swing.*;
 import java.awt.*;
@@ -35,6 +35,7 @@ public class GridBagLayoutCodeGenerator extends LayoutCodeGenerator {
 
   private static final Type myPanelType = Type.getType(JPanel.class);
 
+  @Override
   public String mapComponentClass(final String componentClassName) {
     if (componentClassName.equals(Spacer.class.getName())) {
       return JPanel.class.getName();
@@ -42,6 +43,7 @@ public class GridBagLayoutCodeGenerator extends LayoutCodeGenerator {
     return super.mapComponentClass(componentClassName);
   }
 
+  @Override
   public void generateContainerLayout(final LwContainer lwContainer, final GeneratorAdapter generator, final int componentLocal) {
     generator.loadLocal(componentLocal);
 
@@ -64,6 +66,7 @@ public class GridBagLayoutCodeGenerator extends LayoutCodeGenerator {
 
   }
 
+  @Override
   public void generateComponentLayout(final LwComponent component,
                                       final GeneratorAdapter generator,
                                       final int componentLocal,

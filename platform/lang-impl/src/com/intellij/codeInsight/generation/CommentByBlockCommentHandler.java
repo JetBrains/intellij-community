@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,66 +16,72 @@
 
 package com.intellij.codeInsight.generation;
 
-import com.intellij.codeInsight.CodeInsightActionHandler;
-import com.intellij.codeInsight.CodeInsightUtilBase;
+import com.intellij.application.options.CodeStyle;
+import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.CommentUtil;
+import com.intellij.codeInsight.actions.MultiCaretCodeInsightActionHandler;
+import com.intellij.codeInsight.hint.HintManager;
+import com.intellij.codeInsight.hint.HintManagerImpl;
+import com.intellij.codeInsight.hint.HintUtil;
 import com.intellij.featureStatistics.FeatureUsageTracker;
+import com.intellij.formatting.IndentData;
 import com.intellij.ide.highlighter.custom.CustomFileTypeLexer;
-import com.intellij.lang.Commenter;
-import com.intellij.lang.Language;
-import com.intellij.lang.LanguageCommenters;
+import com.intellij.lang.*;
 import com.intellij.lexer.Lexer;
 import com.intellij.openapi.editor.*;
+import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.impl.AbstractFileType;
 import com.intellij.openapi.fileTypes.impl.CustomSyntaxTableFileType;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.CodeStyleManager;
-import com.intellij.psi.codeStyle.CodeStyleSettings;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
-import com.intellij.psi.codeStyle.Indent;
+import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.templateLanguages.MultipleLangCommentProvider;
 import com.intellij.psi.templateLanguages.OuterLanguageElement;
 import com.intellij.psi.templateLanguages.TemplateLanguageFileViewProvider;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilBase;
+import com.intellij.ui.LightweightHint;
 import com.intellij.util.containers.IntArrayList;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
 
-public class CommentByBlockCommentHandler implements CodeInsightActionHandler {
+public class CommentByBlockCommentHandler extends MultiCaretCodeInsightActionHandler {
   private Project myProject;
   private Editor myEditor;
-  private PsiFile myFile;
+  private Caret myCaret;
+  private @NotNull PsiFile myFile;
   private Document myDocument;
+  private Commenter myCommenter;
   private CommenterDataHolder mySelfManagedCommenterData;
+  private String myWarning;
+  private RangeMarker myWarningLocation;
 
   @Override
-  public void invoke(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
-    if (!CodeInsightUtilBase.prepareEditorForWrite(editor)) return;
+  public void invoke(@NotNull Project project, @NotNull Editor editor, @NotNull Caret caret, @NotNull PsiFile file) {
     myProject = project;
     myEditor = editor;
+    myCaret = caret;
     myFile = file;
+    myWarning = null;
+    myWarningLocation = null;
 
     myDocument = editor.getDocument();
 
-    if (!FileDocumentManager.getInstance().requestWriting(myDocument, project)) {
-      return;
-    }
     FeatureUsageTracker.getInstance().triggerFeatureUsed("codeassists.comment.block");
-    final Commenter commenter = findCommenter(myFile, myEditor);
+    final Commenter commenter = findCommenter(myFile, myEditor, caret);
     if (commenter == null) return;
-
-    final SelectionModel selectionModel = myEditor.getSelectionModel();
+    myCommenter = commenter;
 
     final String prefix;
     final String suffix;
@@ -83,8 +89,8 @@ public class CommentByBlockCommentHandler implements CodeInsightActionHandler {
     if (commenter instanceof SelfManagingCommenter) {
       final SelfManagingCommenter selfManagingCommenter = (SelfManagingCommenter)commenter;
       mySelfManagedCommenterData = selfManagingCommenter.createBlockCommentingState(
-        selectionModel.getSelectionStart(),
-        selectionModel.getSelectionEnd(),
+        caret.getSelectionStart(),
+        caret.getSelectionEnd(),
         myDocument,
         myFile
       );
@@ -94,12 +100,12 @@ public class CommentByBlockCommentHandler implements CodeInsightActionHandler {
       }
 
       prefix = selfManagingCommenter.getBlockCommentPrefix(
-        selectionModel.getSelectionStart(),
+        caret.getSelectionStart(),
         myDocument,
         mySelfManagedCommenterData
       );
       suffix = selfManagingCommenter.getBlockCommentSuffix(
-        selectionModel.getSelectionEnd(),
+        caret.getSelectionEnd(),
         myDocument,
         mySelfManagedCommenterData
       );
@@ -117,9 +123,9 @@ public class CommentByBlockCommentHandler implements CodeInsightActionHandler {
       final int commentEnd = commentedRange.getEndOffset();
       int selectionStart = commentStart;
       int selectionEnd = commentEnd;
-      if (selectionModel.hasSelection()) {
-        selectionStart = selectionModel.getSelectionStart();
-        selectionEnd = selectionModel.getSelectionEnd();
+      if (myCaret.hasSelection()) {
+        selectionStart = myCaret.getSelectionStart();
+        selectionEnd = myCaret.getSelectionEnd();
       }
       if ((commentStart < selectionStart || commentStart >= selectionEnd) && (commentEnd <= selectionStart || commentEnd > selectionEnd)) {
         commentRange(selectionStart, selectionEnd, prefix, suffix, commenter);
@@ -129,34 +135,12 @@ public class CommentByBlockCommentHandler implements CodeInsightActionHandler {
       }
     }
     else {
-      if (selectionModel.hasBlockSelection()) {
-        final LogicalPosition start = selectionModel.getBlockStart();
-        final LogicalPosition end = selectionModel.getBlockEnd();
-
-        assert start != null;
-        assert end != null;
-
-        int startColumn = Math.min(start.column, end.column);
-        int endColumn = Math.max(start.column, end.column);
-        int startLine = Math.min(start.line, end.line);
-        int endLine = Math.max(start.line, end.line);
-
-        for (int i = startLine; i <= endLine; i++) {
-          editor.getCaretModel().moveToLogicalPosition(new LogicalPosition(i, endColumn));
-          EditorModificationUtil.insertStringAtCaret(editor, suffix, true, true);
-        }
-
-        for (int i = startLine; i <= endLine; i++) {
-          editor.getCaretModel().moveToLogicalPosition(new LogicalPosition(i, startColumn));
-          EditorModificationUtil.insertStringAtCaret(editor, prefix, true, true);
-        }
-      }
-      else if (selectionModel.hasSelection()) {
-        int selectionStart = selectionModel.getSelectionStart();
-        int selectionEnd = selectionModel.getSelectionEnd();
+      if (myCaret.hasSelection()) {
+        int selectionStart = myCaret.getSelectionStart();
+        int selectionEnd = myCaret.getSelectionEnd();
         if (commenter instanceof IndentedCommenter) {
-          final Boolean value = ((IndentedCommenter)commenter).forceIndentedLineComment();
-          if (value != null && value == Boolean.TRUE) {
+          final Boolean value = ((IndentedCommenter)commenter).forceIndentedBlockComment();
+          if (value == Boolean.TRUE) {
             selectionStart = myDocument.getLineStartOffset(myDocument.getLineNumber(selectionStart));
             selectionEnd = myDocument.getLineEndOffset(myDocument.getLineNumber(selectionEnd));
           }
@@ -165,10 +149,10 @@ public class CommentByBlockCommentHandler implements CodeInsightActionHandler {
       }
       else {
         EditorUtil.fillVirtualSpaceUntilCaret(editor);
-        int caretOffset = myEditor.getCaretModel().getOffset();
+        int caretOffset = myCaret.getOffset();
         if (commenter instanceof IndentedCommenter) {
-          final Boolean value = ((IndentedCommenter)commenter).forceIndentedLineComment();
-          if (value != null && value == Boolean.TRUE) {
+          final Boolean value = ((IndentedCommenter)commenter).forceIndentedBlockComment();
+          if (value == Boolean.TRUE) {
             final int lineNumber = myDocument.getLineNumber(caretOffset);
             final int start = myDocument.getLineStartOffset(lineNumber);
             final int end = myDocument.getLineEndOffset(lineNumber);
@@ -177,8 +161,30 @@ public class CommentByBlockCommentHandler implements CodeInsightActionHandler {
           }
         }
         myDocument.insertString(caretOffset, prefix + suffix);
-        myEditor.getCaretModel().moveToOffset(caretOffset + prefix.length());
+        myCaret.moveToOffset(caretOffset + prefix.length());
       }
+    }
+
+    showMessageIfNeeded();
+  }
+
+  private void showMessageIfNeeded() {
+    if (myWarning != null) {
+      myEditor.getScrollingModel().disableAnimation();
+      myEditor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
+      myEditor.getScrollingModel().enableAnimation();
+      
+      LogicalPosition hintPosition = myCaret.getLogicalPosition();
+      if (myWarningLocation != null) {
+        LogicalPosition targetPosition = myEditor.offsetToLogicalPosition(myWarningLocation.getStartOffset());
+        Point targetPoint = myEditor.logicalPositionToXY(targetPosition);
+        if (myEditor.getScrollingModel().getVisibleArea().contains(targetPoint)) {
+          hintPosition = targetPosition;
+        }
+      }
+      LightweightHint hint = new LightweightHint(HintUtil.createInformationLabel(myWarning));
+      Point p = HintManagerImpl.getHintPosition(hint, myEditor, hintPosition, HintManager.ABOVE);
+      HintManagerImpl.getInstanceImpl().showEditorHint(hint, myEditor, p, 0, 0, false);
     }
   }
 
@@ -188,12 +194,11 @@ public class CommentByBlockCommentHandler implements CodeInsightActionHandler {
   }
 
   private boolean testSelectionForNonComments() {
-    SelectionModel model = myEditor.getSelectionModel();
-    if (!model.hasSelection()) {
+    if (!myCaret.hasSelection()) {
       return true;
     }
     TextRange range
-      = new TextRange(model.getSelectionStart(), model.getSelectionEnd() - 1);
+      = new TextRange(myCaret.getSelectionStart(), myCaret.getSelectionEnd() - 1);
     for (PsiElement element = myFile.findElementAt(range.getStartOffset()); element != null && range.intersects(element.getTextRange());
          element = element.getNextSibling()) {
       if (element instanceof OuterLanguageElement) {
@@ -202,7 +207,7 @@ public class CommentByBlockCommentHandler implements CodeInsightActionHandler {
         }
       }
       else {
-        if (!isWhiteSpaceOrComment(element)) {
+        if (!isWhiteSpaceOrComment(element, range)) {
           return false;
         }
       }
@@ -225,17 +230,18 @@ public class CommentByBlockCommentHandler implements CodeInsightActionHandler {
   }
 
   private boolean isWhiteSpaceOrComment(@NotNull PsiElement element, @NotNull TextRange range) {
-    TextRange intersection = range.intersection(element.getTextRange());
+    final TextRange textRange = element.getTextRange();
+    TextRange intersection = range.intersection(textRange);
     if (intersection == null) {
       return false;
     }
-    intersection = TextRange.from(Math.max(intersection.getStartOffset() - element.getTextRange().getStartOffset(), 0),
-                                  Math.min(intersection.getEndOffset() - element.getTextRange().getStartOffset(), element.getTextRange().getLength()));
+    intersection = TextRange.create(Math.max(intersection.getStartOffset() - textRange.getStartOffset(), 0),
+                                    Math.min(intersection.getEndOffset() - textRange.getStartOffset(), textRange.getLength()));
     return isWhiteSpaceOrComment(element) ||
-           intersection.substring(element.getText()).trim().length() == 0;
+           intersection.substring(element.getText()).trim().isEmpty();
   }
 
-  private boolean isWhiteSpaceOrComment(PsiElement element) {
+  private static boolean isWhiteSpaceOrComment(PsiElement element) {
     return element instanceof PsiWhiteSpace ||
            PsiTreeUtil.getParentOfType(element, PsiComment.class, false) != null;
   }
@@ -246,7 +252,7 @@ public class CommentByBlockCommentHandler implements CodeInsightActionHandler {
     final FileType fileType = myFile.getFileType();
     if (fileType instanceof CustomSyntaxTableFileType) {
       Lexer lexer = new CustomFileTypeLexer(((CustomSyntaxTableFileType)fileType).getSyntaxTable());
-      final int caretOffset = myEditor.getCaretModel().getOffset();
+      final int caretOffset = myCaret.getOffset();
       int commentStart = CharArrayUtil.lastIndexOf(text, commenter.getBlockCommentPrefix(), caretOffset);
       if (commentStart == -1) return null;
 
@@ -259,18 +265,27 @@ public class CommentByBlockCommentHandler implements CodeInsightActionHandler {
 
     final String prefix;
     final String suffix;
+    // Custom uncommenter is able to find commented block inside of selected text
+    final String selectedText = myCaret.getSelectedText();
+    if ((commenter instanceof CustomUncommenter) && selectedText != null) {
+      final TextRange commentedRange = ((CustomUncommenter)commenter).findMaximumCommentedRange(selectedText);
+      if (commentedRange == null) {
+        return null;
+      }
+      // Uncommenter returns range relative to text start, so we need to shift it to make abosolute.
+      return commentedRange.shiftRight(myCaret.getSelectionStart());
+    }
 
-    final SelectionModel selectionModel = myEditor.getSelectionModel();
     if (commenter instanceof SelfManagingCommenter) {
       SelfManagingCommenter selfManagingCommenter = (SelfManagingCommenter)commenter;
 
       prefix = selfManagingCommenter.getBlockCommentPrefix(
-        selectionModel.getSelectionStart(),
+        myCaret.getSelectionStart(),
         myDocument,
         mySelfManagedCommenterData
       );
       suffix = selfManagingCommenter.getBlockCommentSuffix(
-        selectionModel.getSelectionEnd(),
+        myCaret.getSelectionEnd(),
         myDocument,
         mySelfManagedCommenterData
       );
@@ -285,8 +300,8 @@ public class CommentByBlockCommentHandler implements CodeInsightActionHandler {
 
     if (commenter instanceof SelfManagingCommenter) {
       commentedRange = ((SelfManagingCommenter)commenter).getBlockCommentRange(
-        selectionModel.getSelectionStart(),
-        selectionModel.getSelectionEnd(),
+        myCaret.getSelectionStart(),
+        myCaret.getSelectionEnd(),
         myDocument,
         mySelfManagedCommenterData
       );
@@ -297,14 +312,14 @@ public class CommentByBlockCommentHandler implements CodeInsightActionHandler {
       }
 
       commentedRange = getSelectedComments(text, prefix, suffix);
-      if (commentedRange == null) {
-        PsiElement comment = findCommentAtCaret();
-        if (comment != null) {
+    }
+    if (commentedRange == null) {
+      PsiElement comment = findCommentAtCaret();
+      if (comment != null) {
 
-          String commentText = comment.getText();
-          if (commentText.startsWith(prefix) && commentText.endsWith(suffix)) {
-            commentedRange = comment.getTextRange();
-          }
+        String commentText = comment.getText();
+        if (commentText.startsWith(prefix) && commentText.endsWith(suffix)) {
+          commentedRange = comment.getTextRange();
         }
       }
     }
@@ -315,11 +330,10 @@ public class CommentByBlockCommentHandler implements CodeInsightActionHandler {
   @Nullable
   private TextRange getSelectedComments(CharSequence text, String prefix, String suffix) {
     TextRange commentedRange = null;
-    final SelectionModel selectionModel = myEditor.getSelectionModel();
-    if (selectionModel.hasSelection()) {
-      int selectionStart = selectionModel.getSelectionStart();
+    if (myCaret.hasSelection()) {
+      int selectionStart = myCaret.getSelectionStart();
       selectionStart = CharArrayUtil.shiftForward(text, selectionStart, " \t\n");
-      int selectionEnd = selectionModel.getSelectionEnd() - 1;
+      int selectionEnd = myCaret.getSelectionEnd() - 1;
       selectionEnd = CharArrayUtil.shiftBackward(text, selectionEnd, " \t\n") + 1;
       if (selectionEnd - selectionStart >= prefix.length() + suffix.length() &&
           CharArrayUtil.regionMatches(text, selectionStart, prefix) &&
@@ -331,13 +345,13 @@ public class CommentByBlockCommentHandler implements CodeInsightActionHandler {
   }
 
   @Nullable
-  private static Commenter findCommenter(PsiFile file, Editor editor) {
+  private static Commenter findCommenter(PsiFile file, Editor editor, Caret caret) {
     final FileType fileType = file.getFileType();
     if (fileType instanceof AbstractFileType) {
       return ((AbstractFileType)fileType).getCommenter();
     }
 
-    Language lang = PsiUtilBase.getLanguageInEditor(editor, file.getProject());
+    Language lang = PsiUtilBase.getLanguageInEditor(caret, file.getProject());
 
     return getCommenter(file, editor, lang, lang);
   }
@@ -370,48 +384,49 @@ public class CommentByBlockCommentHandler implements CodeInsightActionHandler {
 
   @Nullable
   private PsiElement findCommentAtCaret() {
-    int offset = myEditor.getCaretModel().getOffset();
-    SelectionModel selectionModel = myEditor.getSelectionModel();
-    TextRange range = new TextRange(selectionModel.getSelectionStart(), selectionModel.getSelectionEnd());
+    int offset = myCaret.getOffset();
+    TextRange range = new TextRange(myCaret.getSelectionStart(), myCaret.getSelectionEnd());
     if (offset == range.getEndOffset()) {
       offset--;
     }
     if (offset <= range.getStartOffset()) {
       offset++;
     }
-    PsiElement elt = myFile.getViewProvider().findElementAt(offset);
-    if (elt == null) return null;
-    PsiElement comment = PsiTreeUtil.getParentOfType(elt, PsiComment.class, false);
-    if (comment == null || selectionModel.hasSelection() && !range.contains(comment.getTextRange())) {
+    PsiElement comment = getCommentAtOffset(offset);
+    if (comment == null || myCaret.hasSelection() && !range.contains(comment.getTextRange())) {
       return null;
     }
 
     return comment;
   }
 
-  @Override
-  public boolean startInWriteAction() {
-    return true;
+  @Nullable
+  private PsiComment getCommentAtOffset(int offset) {
+    PsiElement elt = myFile.getViewProvider().findElementAt(offset);
+    if (elt == null) return null;
+    return PsiTreeUtil.getParentOfType(elt, PsiComment.class, false);
   }
 
   public void commentRange(int startOffset, int endOffset, String commentPrefix, String commentSuffix, Commenter commenter) {
-    CharSequence chars = myDocument.getCharsSequence();
-    LogicalPosition caretPosition = myEditor.getCaretModel().getLogicalPosition();
+    if (breaksExistingComment(startOffset, true) || breaksExistingComment(endOffset, false)) {
+      myWarning = CodeInsightBundle.message("block.comment.intersects.existing.comment");
+      return;
+    }
+    final CharSequence chars = myDocument.getCharsSequence();
+    LogicalPosition caretPosition = myCaret.getLogicalPosition();
 
     if (startOffset == 0 || chars.charAt(startOffset - 1) == '\n') {
       if (endOffset == myDocument.getTextLength() || endOffset > 0 && chars.charAt(endOffset - 1) == '\n') {
-        CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(myProject);
-        CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(myProject);
+        CommonCodeStyleSettings settings = CodeStyle.getLanguageSettings(myFile);
         String space;
         if (!settings.BLOCK_COMMENT_AT_FIRST_COLUMN) {
-          final FileType fileType = myFile.getFileType();
           int line1 = myEditor.offsetToLogicalPosition(startOffset).line;
           int line2 = myEditor.offsetToLogicalPosition(endOffset - 1).line;
-          Indent minIndent = CommentUtil.getMinLineIndent(myProject, myDocument, line1, line2, fileType);
+          IndentData minIndent = CommentUtil.getMinLineIndent(myDocument, line1, line2, myFile);
           if (minIndent == null) {
-            minIndent = codeStyleManager.zeroIndent();
+            minIndent = new IndentData(0);
           }
-          space = codeStyleManager.fillIndent(minIndent, fileType);
+          space = minIndent.createIndentInfo().generateNewWhiteSpace(CodeStyle.getIndentOptions(myFile));
         }
         else {
           space = "";
@@ -420,26 +435,64 @@ public class CommentByBlockCommentHandler implements CodeInsightActionHandler {
         if (!commentPrefix.endsWith("\n")) {
           nestingPrefix.append("\n");
         }
-        final StringBuilder nestingSuffix = new StringBuilder(space);
-        nestingSuffix.append(commentSuffix.startsWith("\n") ? commentSuffix.substring(1) : commentSuffix);
-        nestingSuffix.append("\n");
+        String nestingSuffix = space + (commentSuffix.startsWith("\n") ? commentSuffix.substring(1) : commentSuffix) + "\n";
         TextRange range =
-          insertNestedComments(chars, startOffset, endOffset, nestingPrefix.toString(), nestingSuffix.toString(), commenter);
-        myEditor.getSelectionModel().setSelection(range.getStartOffset(), range.getEndOffset());
-        //myEditor.getSelectionModel().removeSelection();
-        LogicalPosition pos = new LogicalPosition(caretPosition.line + 1, caretPosition.column);
-        myEditor.getCaretModel().moveToLogicalPosition(pos);
-        myEditor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
+          insertNestedComments(startOffset, endOffset, nestingPrefix.toString(), nestingSuffix, commenter);
+        if (range != null) {
+          myCaret.setSelection(range.getStartOffset(), range.getEndOffset());
+          LogicalPosition pos = new LogicalPosition(caretPosition.line + 1, caretPosition.column);
+          myCaret.moveToLogicalPosition(pos);
+        }
         return;
       }
     }
 
-    TextRange range = insertNestedComments(chars, startOffset, endOffset, commentPrefix, commentSuffix, commenter);
-    myEditor.getSelectionModel().setSelection(range.getStartOffset(), range.getEndOffset());
-    //myEditor.getSelectionModel().removeSelection();
-    LogicalPosition pos = new LogicalPosition(caretPosition.line, caretPosition.column + commentPrefix.length());
-    myEditor.getCaretModel().moveToLogicalPosition(pos);
-    myEditor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
+    TextRange range = insertNestedComments(startOffset, endOffset, commentPrefix, commentSuffix, commenter);
+    if (range != null) {
+      myCaret.setSelection(range.getStartOffset(), range.getEndOffset());
+      LogicalPosition pos = new LogicalPosition(caretPosition.line, caretPosition.column + commentPrefix.length());
+      myCaret.moveToLogicalPosition(pos);
+    }
+  }
+
+  private boolean breaksExistingComment(int offset, boolean includingAfterLineComment) {
+    if (!(myCommenter instanceof CodeDocumentationAwareCommenter) || !(myEditor instanceof EditorEx) || offset == 0) return false;
+    CodeDocumentationAwareCommenter commenter = (CodeDocumentationAwareCommenter)myCommenter;
+    HighlighterIterator it = ((EditorEx)myEditor).getHighlighter().createIterator(offset - 1);
+    IElementType tokenType = it.getTokenType();
+    return  (tokenType != null && (it.getEnd() > offset && (tokenType == commenter.getLineCommentTokenType() || 
+                                                            tokenType == commenter.getBlockCommentTokenType() ||
+                                                            tokenType == commenter.getDocumentationCommentTokenType()) || 
+                                   includingAfterLineComment && it.getEnd() == offset && tokenType == commenter.getLineCommentTokenType() && 
+                                   !(commenter instanceof CommenterWithLineSuffix)));
+  }
+
+  private boolean canDetectBlockComments() {
+    return myEditor instanceof EditorEx && myCommenter instanceof CodeDocumentationAwareCommenter && 
+           ((CodeDocumentationAwareCommenter)myCommenter).getBlockCommentTokenType() != null;
+  }
+
+  // should be called only if 'canDetectBlockComments' returns 'true'
+  private TextRange getBlockCommentAt(int offset) {
+    CodeDocumentationAwareCommenter commenter = (CodeDocumentationAwareCommenter)myCommenter;
+    HighlighterIterator it = ((EditorEx)myEditor).getHighlighter().createIterator(offset);
+    if (it.getTokenType() == commenter.getBlockCommentTokenType()) {
+      return new TextRange(it.getStart(), it.getEnd());
+    }
+    if (docCommentIsBlockComment(commenter)) {
+      PsiComment comment = getCommentAtOffset(offset);
+      if (comment != null && commenter.isDocumentationComment(comment)) {
+        return comment.getTextRange();
+      }
+    }
+    return null;
+  }
+
+  private static boolean docCommentIsBlockComment(CodeDocumentationAwareCommenter commenter) {
+    return commenter.getBlockCommentPrefix() != null && commenter.getDocumentationCommentPrefix() != null &&
+           commenter.getDocumentationCommentPrefix().startsWith(commenter.getBlockCommentPrefix()) &&
+           commenter.getBlockCommentSuffix() != null && commenter.getDocumentationCommentSuffix() != null &&
+           commenter.getDocumentationCommentSuffix().endsWith(commenter.getBlockCommentSuffix());
   }
 
   private int doBoundCommentingAndGetShift(int offset,
@@ -461,8 +514,7 @@ public class CommentByBlockCommentHandler implements CodeInsightActionHandler {
     }
   }
 
-  private TextRange insertNestedComments(CharSequence chars,
-                                         int startOffset,
+  private TextRange insertNestedComments(int startOffset,
                                          int endOffset,
                                          String commentPrefix,
                                          String commentSuffix,
@@ -483,15 +535,35 @@ public class CommentByBlockCommentHandler implements CodeInsightActionHandler {
     IntArrayList nestedCommentSuffixes = new IntArrayList();
     String commentedPrefix = commenter.getCommentedBlockCommentPrefix();
     String commentedSuffix = commenter.getCommentedBlockCommentSuffix();
+    CharSequence chars = myDocument.getCharsSequence();
+    boolean canDetectBlockComments = canDetectBlockComments();
+    boolean warnAboutNestedComments = false;
     for (int i = startOffset; i < endOffset; ++i) {
       if (CharArrayUtil.regionMatches(chars, i, normalizedPrefix)) {
+        if (commentedPrefix == null && canDetectBlockComments) {
+          TextRange commentRange = getBlockCommentAt(i);
+          // skipping prefixes outside of comments (e.g. in string literals) and inside comments
+          if (commentRange == null || commentRange.getStartOffset() != i) continue;
+          else warnAboutNestedComments = true;
+        }
         nestedCommentPrefixes.add(i);
       }
-      else {
-        if (CharArrayUtil.regionMatches(chars, i, normalizedSuffix)) {
-          nestedCommentSuffixes.add(i);
+      else if (CharArrayUtil.regionMatches(chars, i, normalizedSuffix)) {
+        if (commentedSuffix == null && canDetectBlockComments) {
+          TextRange commentRange = getBlockCommentAt(i);
+          if (commentRange == null) {
+            myWarning = CodeInsightBundle.message("block.comment.wrapping.suffix");
+            myWarningLocation = myDocument.createRangeMarker(i, i);
+            return null;
+          }
         }
+        nestedCommentSuffixes.add(i);
       }
+    }
+    if (warnAboutNestedComments) {
+      myWarning = CodeInsightBundle.message("block.comment.nested.comment", nestedCommentPrefixes.size());
+      myWarningLocation = myDocument.createRangeMarker(nestedCommentPrefixes.get(0), 
+                                                       nestedCommentPrefixes.get(0) + normalizedPrefix.length());
     }
     int shift = 0;
     if (!(commentedSuffix == null &&
@@ -535,7 +607,25 @@ public class CommentByBlockCommentHandler implements CodeInsightActionHandler {
       shift += commentPrefix.length();
     }
 
-    return new TextRange(startOffset, endOffset + shift);
+    RangeMarker marker = myDocument.createRangeMarker(startOffset, endOffset + shift);
+    try {
+      return processDocument(myDocument, marker, commenter, true);
+    }
+    finally {
+      marker.dispose();
+    }
+  }
+
+  static TextRange processDocument(Document document, RangeMarker marker, Commenter commenter, boolean escape) {
+    if (commenter instanceof EscapingCommenter) {
+      if (escape) {
+        ((EscapingCommenter)commenter).escape(document, marker);
+      }
+      else {
+        ((EscapingCommenter)commenter).unescape(document, marker);
+      }
+    }
+    return TextRange.create(marker.getStartOffset(), marker.getEndOffset());
   }
 
   private static int getNearest(String text, String pattern, int position) {
@@ -547,7 +637,7 @@ public class CommentByBlockCommentHandler implements CodeInsightActionHandler {
     final int offset = range.getStartOffset();
     final IntArrayList toReplaceWithComments = new IntArrayList();
     final IntArrayList prefixes = new IntArrayList();
-    if (range.getLength() < 0) return; // TODO: reproduce and fix this case
+
     final String text = document.getCharsSequence().subSequence(range.getStartOffset(), range.getEndOffset()).toString();
     final String commentedPrefix = commenter.getCommentedBlockCommentPrefix();
     final String commentedSuffix = commenter.getCommentedBlockCommentSuffix();
@@ -624,7 +714,7 @@ public class CommentByBlockCommentHandler implements CodeInsightActionHandler {
     return new TextRange(delOffset1, delOffset2);
   }
 
-  private Pair<TextRange, TextRange> findCommentBlock(TextRange range, String commentPrefix, String commentSuffix) {
+  private Couple<TextRange> findCommentBlock(TextRange range, String commentPrefix, String commentSuffix) {
     CharSequence chars = myDocument.getCharsSequence();
     int startOffset = range.getStartOffset();
     boolean endsProperly = CharArrayUtil.regionMatches(chars, range.getEndOffset() - commentSuffix.length(), commentSuffix);
@@ -638,7 +728,7 @@ public class CommentByBlockCommentHandler implements CodeInsightActionHandler {
       end = new TextRange(range.getEndOffset(), range.getEndOffset());
     }
 
-    return new Pair<TextRange, TextRange>(start, end);
+    return Couple.of(start, end);
   }
 
   public void uncommentRange(TextRange range, String commentPrefix, String commentSuffix, Commenter commenter) {
@@ -656,31 +746,55 @@ public class CommentByBlockCommentHandler implements CodeInsightActionHandler {
     String text = myDocument.getCharsSequence().subSequence(range.getStartOffset(), range.getEndOffset()).toString();
     int startOffset = range.getStartOffset();
     //boolean endsProperly = CharArrayUtil.regionMatches(chars, range.getEndOffset() - commentSuffix.length(), commentSuffix);
-    List<Pair<TextRange, TextRange>> ranges = new ArrayList<Pair<TextRange, TextRange>>();
+    List<Couple<TextRange>> ranges = new ArrayList<>();
 
-    int position = 0;
-    while (true) {
-      int start = getNearest(text, commentPrefix, position);
-      if (start == text.length()) {
-        break;
+
+    if (commenter instanceof CustomUncommenter) {
+      /*
+        In case of custom uncommenter, we need to ask it for list of [commentOpen-start,commentOpen-end], [commentClose-start,commentClose-end]
+        and shift if according to current offset
+       */
+      CustomUncommenter customUncommenter = (CustomUncommenter)commenter;
+      for (Couple<TextRange> coupleFromCommenter : customUncommenter.getCommentRangesToDelete(text)) {
+        TextRange openComment = coupleFromCommenter.first.shiftRight(startOffset);
+        TextRange closeComment = coupleFromCommenter.second.shiftRight(startOffset);
+        ranges.add(Couple.of(openComment, closeComment));
       }
-      position = start;
-      int end = getNearest(text, commentSuffix, position + commentPrefix.length()) + commentSuffix.length();
-      position = end;
-      Pair<TextRange, TextRange> pair =
-        findCommentBlock(new TextRange(start + startOffset, end + startOffset), commentPrefix, commentSuffix);
-      ranges.add(pair);
+    }
+    else {
+      // If commenter is not custom, we need to get this list by our selves
+      int position = 0;
+      while (true) {
+        int start = getNearest(text, commentPrefix, position);
+        if (start == text.length()) {
+          break;
+        }
+        position = start;
+        int end = getNearest(text, commentSuffix, position + commentPrefix.length()) + commentSuffix.length();
+        position = end;
+        Couple<TextRange> pair =
+          findCommentBlock(new TextRange(start + startOffset, end + startOffset), commentPrefix, commentSuffix);
+        ranges.add(pair);
+      }
     }
 
-    for (int i = ranges.size() - 1; i >= 0; i--) {
-      Pair<TextRange, TextRange> toDelete = ranges.get(i);
-      myDocument.deleteString(toDelete.first.getStartOffset(), toDelete.first.getEndOffset());
-      int shift = toDelete.first.getEndOffset() - toDelete.first.getStartOffset();
-      myDocument.deleteString(toDelete.second.getStartOffset() - shift, toDelete.second.getEndOffset() - shift);
-      if (commenter.getCommentedBlockCommentPrefix() != null) {
-        commentNestedComments(myDocument, new TextRange(toDelete.first.getEndOffset() - shift, toDelete.second.getStartOffset() - shift),
-                              commenter);
+    RangeMarker marker = myDocument.createRangeMarker(range);
+    try {
+      for (int i = ranges.size() - 1; i >= 0; i--) {
+        Couple<TextRange> toDelete = ranges.get(i);
+        myDocument.deleteString(toDelete.first.getStartOffset(), toDelete.first.getEndOffset());
+        int shift = toDelete.first.getEndOffset() - toDelete.first.getStartOffset();
+        myDocument.deleteString(toDelete.second.getStartOffset() - shift, toDelete.second.getEndOffset() - shift);
+        if (commenter.getCommentedBlockCommentPrefix() != null) {
+          commentNestedComments(myDocument, new TextRange(toDelete.first.getEndOffset() - shift, toDelete.second.getStartOffset() - shift),
+                                commenter);
+        }
       }
+
+      processDocument(myDocument, marker, commenter, false);
+    }
+    finally {
+      marker.dispose();
     }
   }
 }

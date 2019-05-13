@@ -17,10 +17,11 @@
 package org.intellij.plugins.xsltDebugger.ui;
 
 import com.intellij.ide.DataManager;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.pom.Navigatable;
+import com.intellij.reference.SoftReference;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.StringInterner;
 import org.intellij.plugins.xsltDebugger.XsltDebuggerSession;
@@ -38,19 +39,14 @@ import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 
-/**
- * Created by IntelliJ IDEA.
- * User: sweinreuter
- * Date: 09.06.2007
- */
 public class GeneratedStructureModel extends DefaultTreeModel {
   @NonNls
   private static final String PENDING = "...";
 
   private static WeakReference<StringInterner> ourSharedInterner;
 
-  private final LinkedList<DefaultMutableTreeNode> myCurrentPath = new LinkedList<DefaultMutableTreeNode>();
-  private final List<DefaultMutableTreeNode> myLastNodes = new LinkedList<DefaultMutableTreeNode>();
+  private final LinkedList<DefaultMutableTreeNode> myCurrentPath = new LinkedList<>();
+  private final List<DefaultMutableTreeNode> myLastNodes = new LinkedList<>();
 
   private final StringInterner myInterner = getInterner();
 
@@ -58,10 +54,10 @@ public class GeneratedStructureModel extends DefaultTreeModel {
   // all instances (and their toolwindow contents) are gone. This should minimize the memory usage of the generated
   // structure tree.
   private static StringInterner getInterner() {
-    StringInterner interner;
-    if (ourSharedInterner == null || (interner = ourSharedInterner.get()) == null) {
+    StringInterner interner = SoftReference.dereference(ourSharedInterner);
+    if (interner == null) {
       interner = new StringInterner();
-      ourSharedInterner = new WeakReference<StringInterner>(interner);
+      ourSharedInterner = new WeakReference<>(interner);
     }
     return interner;
   }
@@ -78,11 +74,7 @@ public class GeneratedStructureModel extends DefaultTreeModel {
 
   public void update(final List<OutputEventQueue.NodeEvent> eventQueue) {
     if (!SwingUtilities.isEventDispatchThread()) {
-      ApplicationManager.getApplication().invokeLater(new Runnable() {
-        public void run() {
-          updateImpl(eventQueue);
-        }
-      });
+      ApplicationManager.getApplication().invokeLater(() -> updateImpl(eventQueue));
       return;
     }
     updateImpl(eventQueue);
@@ -117,8 +109,8 @@ public class GeneratedStructureModel extends DefaultTreeModel {
       return Collections.emptyList();
     }
     final List<DefaultMutableTreeNode> nodes = checkOnly ?
-                                               new SmartList<DefaultMutableTreeNode>() :
-                                               new ArrayList<DefaultMutableTreeNode>(node.getChildCount());
+                                               new SmartList<>() :
+                                               new ArrayList<>(node.getChildCount());
 
     DefaultMutableTreeNode child = (DefaultMutableTreeNode)node.getFirstChild();
     while (child != null) {
@@ -241,15 +233,13 @@ public class GeneratedStructureModel extends DefaultTreeModel {
   }
 
   public void finalUpdate(final List<OutputEventQueue.NodeEvent> events) {
-    Runnable runnable = new Runnable() {
-      public void run() {
-        myListenersDisabled = true;
-        try {
-          updateImpl(events);
-        } finally {
-          myListenersDisabled = false;
-          nodeStructureChanged((TreeNode)getRoot());
-        }
+    Runnable runnable = () -> {
+      myListenersDisabled = true;
+      try {
+        updateImpl(events);
+      } finally {
+        myListenersDisabled = false;
+        nodeStructureChanged((TreeNode)getRoot());
       }
     };
     ApplicationManager.getApplication().invokeLater(runnable);
@@ -280,7 +270,7 @@ public class GeneratedStructureModel extends DefaultTreeModel {
   }
 
   private static class MyRootNode extends DefaultMutableTreeNode {
-    public MyRootNode() {
+    MyRootNode() {
       super("ROOT");
     }
   }
@@ -305,16 +295,19 @@ public class GeneratedStructureModel extends DefaultTreeModel {
       return (OutputEventQueue.NodeEvent)super.getUserObject();
     }
 
+    @Override
     public void navigate(boolean requestFocus) {
       final OutputEventQueue.NodeEvent event = getUserObject();
-      final Project project = (Project)DataManager.getInstance().getDataContext().getData(PlatformDataKeys.PROJECT.getName());
+      final Project project = (Project)DataManager.getInstance().getDataContext().getData(CommonDataKeys.PROJECT.getName());
       XsltDebuggerSession.openLocation(project, event.getURI(), event.getLineNumber() - 1);
     }
 
+    @Override
     public boolean canNavigate() {
       return getUserObject().getLineNumber() > 0;
     }
 
+    @Override
     public boolean canNavigateToSource() {
       return canNavigate();
     }

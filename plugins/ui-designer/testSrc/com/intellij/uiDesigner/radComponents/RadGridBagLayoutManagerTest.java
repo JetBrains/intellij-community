@@ -14,12 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * Created by IntelliJ IDEA.
- * User: yole
- * Date: 12.10.2006
- * Time: 12:46:47
- */
 package com.intellij.uiDesigner.radComponents;
 
 import junit.framework.TestCase;
@@ -101,7 +95,7 @@ public class RadGridBagLayoutManagerTest extends TestCase {
   }
 
   private class GridBagCase extends JPanel {
-    public GridBagCase() {
+    GridBagCase() {
       GridBagLayout layout = new GridBagLayout();
       setLayout(layout);
     }

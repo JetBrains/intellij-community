@@ -32,7 +32,9 @@ public class RemoteFileUtil {
 
     int end = contentType.indexOf(';');
     String mimeType = end == -1 ? contentType : contentType.substring(0, end);
-    if (mimeType.length() == 0) return null;
+    if (mimeType.isEmpty()) {
+      return null;
+    }
 
     for (Language language : Language.getRegisteredLanguages()) {
       String[] types = language.getMimeTypes();

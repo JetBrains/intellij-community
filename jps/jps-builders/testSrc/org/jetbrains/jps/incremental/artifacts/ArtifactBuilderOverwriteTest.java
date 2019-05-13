@@ -17,12 +17,12 @@ package org.jetbrains.jps.incremental.artifacts;
 
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.PathUtil;
-import com.intellij.util.text.CharsetUtil;
 import org.jetbrains.jps.model.artifact.JpsArtifact;
 
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
@@ -170,22 +170,16 @@ public class ArtifactBuilderOverwriteTest extends ArtifactBuilderTestCase {
   }
 
   private String createArchive(String relativeArchivePath, String fileNameInArchive, String text) {
-    try {
-      File file = new File(getOrCreateProjectDir(), relativeArchivePath);
-      ZipOutputStream output = new ZipOutputStream(new FileOutputStream(file));
-      try {
-        output.putNextEntry(new ZipEntry(fileNameInArchive));
-        output.write(text.getBytes(CharsetUtil.UTF8));
-        output.closeEntry();
-      }
-      finally {
-        output.close();
-      }
-      return FileUtil.toSystemIndependentName(file.getAbsolutePath());
+    File file = new File(getOrCreateProjectDir(), relativeArchivePath);
+    try (ZipOutputStream output = new ZipOutputStream(new FileOutputStream(file))) {
+      output.putNextEntry(new ZipEntry(fileNameInArchive));
+      output.write(text.getBytes(StandardCharsets.UTF_8));
+      output.closeEntry();
     }
     catch (IOException e) {
       throw new RuntimeException(e);
     }
+    return FileUtil.toSystemIndependentName(file.getAbsolutePath());
   }
 
   public void testFileOrder() {

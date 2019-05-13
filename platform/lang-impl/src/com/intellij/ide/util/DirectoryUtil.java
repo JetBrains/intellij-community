@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,10 +19,12 @@ package com.intellij.ide.util;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiManager;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.util.StringTokenizer;
@@ -84,17 +86,10 @@ public class DirectoryUtil {
       return directory;
     }
 
-    String postfix = path.substring(existingPath.length() + 1, path.length());
+    String postfix = path.substring(existingPath.length() + 1);
     StringTokenizer tokenizer = new StringTokenizer(postfix, "/");
     while (tokenizer.hasMoreTokens()) {
-      String name = tokenizer.nextToken();
-
-      PsiDirectory subdirectory = directory.createSubdirectory(name);
-      if (subdirectory == null) {
-        return null;
-      }
-
-      directory = subdirectory;
+      directory = directory.createSubdirectory(tokenizer.nextToken());
     }
 
     return directory;
@@ -103,16 +98,34 @@ public class DirectoryUtil {
   public static PsiDirectory createSubdirectories(final String subDirName, PsiDirectory baseDirectory, final String delim) throws IncorrectOperationException {
     StringTokenizer tokenizer = new StringTokenizer(subDirName, delim);
     PsiDirectory dir = baseDirectory;
+    boolean firstToken = true;
     while (tokenizer.hasMoreTokens()) {
-      String packName = tokenizer.nextToken();
+      String dirName = tokenizer.nextToken();
       if (tokenizer.hasMoreTokens()) {
-        PsiDirectory existingDir = dir.findSubdirectory(packName);
+        if (firstToken && "~".equals(dirName)) {
+          final VirtualFile userHomeDir = VfsUtil.getUserHomeDir();
+          if (userHomeDir == null) throw new IncorrectOperationException("User home directory not found");
+          final PsiDirectory directory1 = baseDirectory.getManager().findDirectory(userHomeDir);
+          if (directory1 == null) throw new IncorrectOperationException("User home directory not found");
+          dir = directory1;
+          continue;
+        }
+        else if ("..".equals(dirName)) {
+          dir = dir.getParentDirectory();
+          if (dir == null) throw new IncorrectOperationException("Not a valid directory");
+          continue;
+        }
+        else if (".".equals(dirName)) {
+          continue;
+        }
+        PsiDirectory existingDir = dir.findSubdirectory(dirName);
         if (existingDir != null) {
           dir = existingDir;
           continue;
         }
       }
-      dir = dir.createSubdirectory(packName);
+      dir = dir.createSubdirectory(dirName);
+      firstToken = false;
     }
     return dir;
   }

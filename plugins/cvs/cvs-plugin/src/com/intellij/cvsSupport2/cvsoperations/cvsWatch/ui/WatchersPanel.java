@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,66 +15,59 @@
  */
 package com.intellij.cvsSupport2.cvsoperations.cvsWatch.ui;
 
+import com.intellij.CvsBundle;
 import com.intellij.cvsSupport2.cvsoperations.cvsWatch.WatcherInfo;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.table.TableView;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.ListTableModel;
-import com.intellij.CvsBundle;
 
 import javax.swing.*;
 import java.awt.*;
 import java.util.Comparator;
+import java.util.List;
 
 /**
  * author: lesya
  */
 public class WatchersPanel extends JPanel{
-  private final ListTableModel myModel = new ListTableModel(COLUMNS);
-  private final TableView myTable = new TableView(myModel);
 
-  private final static ColumnInfo USER = new ColumnInfo(CvsBundle.message("view.watchers.user.column.name")){
-    public Object valueOf(Object object) {
-      return ((WatcherInfo)object).getUser();
+  private final ListTableModel<WatcherInfo> myModel = new ListTableModel<>(COLUMNS);
+  private final TableView<WatcherInfo> myTable = new TableView<>(myModel);
+
+  private final static ColumnInfo<WatcherInfo, String> USER = new ColumnInfo<WatcherInfo, String>(CvsBundle.message("view.watchers.user.column.name")){
+    @Override
+    public String valueOf(WatcherInfo object) {
+      return object.getUser();
     }
 
-    public Comparator getComparator() {
-      return new Comparator(){
-        public int compare(Object o, Object o1) {
-          return ((WatcherInfo)o).getUser().
-            compareTo(((WatcherInfo)o1).getUser());
-        }
-      };
+    @Override
+    public Comparator<WatcherInfo> getComparator() {
+      return Comparator.comparing(WatcherInfo::getUser);
     }
   };
 
-  private final static ColumnInfo ACTIONS = new ColumnInfo(CvsBundle.message("view.watchers.actions.column.name")){
-    public Object valueOf(Object object) {
-      return ((WatcherInfo)object).getActions();
+  private final static ColumnInfo<WatcherInfo, String> ACTIONS = new ColumnInfo<WatcherInfo, String>(CvsBundle.message("view.watchers.actions.column.name")){
+    @Override
+    public String valueOf(WatcherInfo object) {
+      return object.getActions();
     }
 
-    public Comparator getComparator() {
-      return new Comparator(){
-        public int compare(Object o, Object o1) {
-          return ((WatcherInfo)o).getActions().
-            compareTo(((WatcherInfo)o1).getActions());
-        }
-      };
+    @Override
+    public Comparator<WatcherInfo> getComparator() {
+      return Comparator.comparing(WatcherInfo::getActions);
     }
   };
 
-  private final static ColumnInfo FILE = new ColumnInfo(CvsBundle.message("view.watchers.file.column.name")){
-    public Object valueOf(Object object) {
-      return ((WatcherInfo)object).getFile();
+  private final static ColumnInfo<WatcherInfo, String> FILE = new ColumnInfo<WatcherInfo, String>(CvsBundle.message("view.watchers.file.column.name")){
+    @Override
+    public String valueOf(WatcherInfo object) {
+      return object.getFile();
     }
 
-    public Comparator getComparator() {
-      return new Comparator(){
-        public int compare(Object o, Object o1) {
-          return ((WatcherInfo)o).getFile().
-            compareTo(((WatcherInfo)o1).getFile());
-        }
-      };
+    @Override
+    public Comparator<WatcherInfo> getComparator() {
+      return Comparator.comparing(WatcherInfo::getFile);
     }
   };
 
@@ -82,11 +75,9 @@ public class WatchersPanel extends JPanel{
     FILE, USER, ACTIONS
   };
 
-
-  public WatchersPanel(java.util.List<WatcherInfo> watchers) {
+  public WatchersPanel(List<WatcherInfo> watchers) {
     super(new BorderLayout());
     myModel.setItems(watchers);
     add(ScrollPaneFactory.createScrollPane(myTable), BorderLayout.CENTER);
   }
-
 }

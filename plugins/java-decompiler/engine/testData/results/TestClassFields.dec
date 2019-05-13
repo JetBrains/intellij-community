@@ -1,0 +1,37 @@
+package pkg;
+
+public class TestClassFields {
+   private static int[] sizes;
+   private static String[] names = new String[]{"name1", "name2"};
+   private static final int SIZE;
+
+   static {
+      sizes = new int[names.length];// 15
+      TestClassFields.Inner.staticMutable = 3;// 17
+      SIZE = TestClassFields.Inner.staticMutable;// 18
+   }// 19
+
+   private static class Inner {
+      private static int staticMutable;
+   }
+}
+
+class 'pkg/TestClassFields' {
+   method '<clinit> ()V' {
+      11      8
+      14      8
+      17      8
+      1b      9
+      1f      10
+      22      10
+      25      11
+   }
+}
+
+Lines mapping:
+15 <-> 9
+17 <-> 10
+18 <-> 11
+19 <-> 12
+Not mapped:
+14

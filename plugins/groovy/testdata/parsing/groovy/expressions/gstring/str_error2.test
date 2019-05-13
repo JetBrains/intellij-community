@@ -10,7 +10,7 @@ Groovy script
     PsiWhiteSpace(' ')
     Compound Gstring
       PsiElement(Gstring begin)('"')
-      PsiErrorElement:String end expected
+      PsiErrorElement:Gstring end expected
         <empty list>
   PsiElement(new line)('\n')
   Literal

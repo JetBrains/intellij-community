@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,99 +19,86 @@ package com.intellij.codeInspection.ex;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.intention.HighPriorityAction;
 import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.codeInspection.InspectionProfile;
 import com.intellij.codeInspection.InspectionsBundle;
-import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.options.ShowSettingsUtil;
+import com.intellij.openapi.options.ex.ConfigurableExtensionPointUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Iconable;
-import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.profile.codeInspection.ui.ErrorsConfigurable;
-import com.intellij.profile.codeInspection.ui.IDEInspectionToolsConfigurable;
+import com.intellij.profile.codeInspection.ui.ErrorsConfigurableProvider;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import java.util.function.Consumer;
 
-/**
- * User: anna
- * Date: Feb 7, 2005
- */
 public class EditInspectionToolsSettingsAction implements IntentionAction, Iconable, HighPriorityAction {
   private final String myShortName;
-
-  public EditInspectionToolsSettingsAction(@NotNull LocalInspectionTool tool) {
-    myShortName = tool.getShortName();
-  }
 
   public EditInspectionToolsSettingsAction(@NotNull HighlightDisplayKey key) {
     myShortName = key.toString();
   }
 
+  @Override
   @NotNull
   public String getText() {
     return InspectionsBundle.message("edit.options.of.reporter.inspection.text");
   }
 
+  @Override
   @NotNull
   public String getFamilyName() {
     return InspectionsBundle.message("edit.options.of.reporter.inspection.family");
   }
 
+  @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
     return true;
   }
 
+  @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
     final InspectionProjectProfileManager projectProfileManager = InspectionProjectProfileManager.getInstance(file.getProject());
-    InspectionProfile inspectionProfile = projectProfileManager.getInspectionProfile();
+    InspectionProfileImpl inspectionProfile = projectProfileManager.getCurrentProfile();
     editToolSettings(project,
-                     inspectionProfile, true,
+                     inspectionProfile,
                      myShortName);
   }
 
   public boolean editToolSettings(final Project project,
-                                  final InspectionProfileImpl inspectionProfile,
-                                  final boolean canChooseDifferentProfiles) {
+                                  final InspectionProfileImpl inspectionProfile) {
     return editToolSettings(project,
                             inspectionProfile,
-                            canChooseDifferentProfiles,
                             myShortName);
   }
 
   public static boolean editToolSettings(final Project project,
-                                         final InspectionProfile inspectionProfile,
-                                         final boolean canChooseDifferentProfile,
+                                         final InspectionProfileImpl inspectionProfile,
                                          final String selectedToolShortName) {
-    final ShowSettingsUtil settingsUtil = ShowSettingsUtil.getInstance();
-    final ErrorsConfigurable errorsConfigurable;
-    if (!canChooseDifferentProfile) {
-      errorsConfigurable = new IDEInspectionToolsConfigurable(InspectionProjectProfileManager.getInstance(project), InspectionProfileManager.getInstance());
-    }
-    else {
-      errorsConfigurable = ErrorsConfigurable.SERVICE.createConfigurable(project);
-    }
-    return settingsUtil.editConfigurable(project, errorsConfigurable, new Runnable() {
-      public void run() {
-        errorsConfigurable.selectProfile(inspectionProfile.getName());
-        SwingUtilities.invokeLater(new Runnable() {
-          public void run() {
-            errorsConfigurable.selectInspectionTool(selectedToolShortName);
-          }
-        });
-      }
-    });
-
+    return editSettings(project, inspectionProfile, c -> c.selectInspectionTool(selectedToolShortName));
   }
 
+  public static boolean editSettings(final Project project,
+                                     final InspectionProfileImpl inspectionProfile,
+                                     final Consumer<? super ErrorsConfigurable> configurableAction) {
+    final ShowSettingsUtil settingsUtil = ShowSettingsUtil.getInstance();
+    final ErrorsConfigurable errorsConfigurable = (ErrorsConfigurable) ConfigurableExtensionPointUtil.createProjectConfigurableForProvider(project, ErrorsConfigurableProvider.class);
+    return settingsUtil.editConfigurable(project, errorsConfigurable, () -> {
+      errorsConfigurable.selectProfile(inspectionProfile); // profile can be selected only after the UI has been initialized
+      configurableAction.accept(errorsConfigurable);
+    });
+  }
+
+  @Override
   public boolean startInWriteAction() {
     return false;
   }
 
+  @Override
   public Icon getIcon(int flags) {
     return AllIcons.General.Settings;
   }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,16 +18,17 @@ package com.intellij.roots;
 import com.intellij.ProjectTopics;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.PathManagerEx;
+import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.StdModuleTypes;
-import com.intellij.openapi.roots.impl.ModifiableModelCommitter;
-import com.intellij.openapi.project.ModuleAdapter;
+import com.intellij.openapi.project.ModuleListener;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.roots.impl.ModifiableModelCommitter;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -35,6 +36,7 @@ import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.testFramework.ModuleTestCase;
 import com.intellij.util.messages.MessageBusConnection;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -57,7 +59,7 @@ public class MultiModuleEditingTest extends ModuleTestCase {
   protected void setUpJdk() {
   }
 
-  public void testAddTwoModules() throws Exception {
+  public void testAddTwoModules() {
     final MessageBusConnection connection = myProject.getMessageBus().connect();
     final MyModuleListener moduleListener = new MyModuleListener();
     connection.subscribe(ProjectTopics.MODULES, moduleListener);
@@ -73,12 +75,7 @@ public class MultiModuleEditingTest extends ModuleTestCase {
       assertEquals("Changes are not applied until commit", 0, moduleManager.getModules().length);
       //noinspection SSBasedInspection
       moduleListener.assertCorrectEvents(new String[0][]);
-      ApplicationManager.getApplication().runWriteAction(new Runnable() {
-        @Override
-        public void run() {
-          modifiableModel.commit();
-        }
-      });
+      ApplicationManager.getApplication().runWriteAction(modifiableModel::commit);
     }
 
     assertEquals(2, moduleManager.getModules().length);
@@ -92,12 +89,7 @@ public class MultiModuleEditingTest extends ModuleTestCase {
       modifiableModel.disposeModule(moduleB);
       assertEquals("Changes are not applied until commit", 2, moduleManager.getModules().length);
       moduleListener.assertCorrectEvents(new String[][]{{"+a", "+b"}});
-      ApplicationManager.getApplication().runWriteAction(new Runnable() {
-        @Override
-        public void run() {
-          modifiableModel.commit();
-        }
-      });
+      ApplicationManager.getApplication().runWriteAction(modifiableModel::commit);
     }
 
     assertEquals(0, moduleManager.getModules().length);
@@ -126,12 +118,7 @@ public class MultiModuleEditingTest extends ModuleTestCase {
       final ContentEntry contentEntryB = rootModelB.addContentEntry(getVirtualFileInTestData("b"));
       contentEntryB.addSourceFolder(getVirtualFileInTestData("b/src"), false);
 
-      ApplicationManager.getApplication().runWriteAction(new Runnable() {
-        @Override
-        public void run() {
-          ModifiableModelCommitter.multiCommit(new ModifiableRootModel[]{rootModelB, rootModelA}, moduleModel);
-        }
-      });
+      ApplicationManager.getApplication().runWriteAction(() -> ModifiableModelCommitter.multiCommit(new ModifiableRootModel[]{rootModelB, rootModelA}, moduleModel));
     }
 
     final JavaPsiFacade psiManager = getJavaFacade();
@@ -163,12 +150,7 @@ public class MultiModuleEditingTest extends ModuleTestCase {
       final ModifiableRootModel rootModelB = ModuleRootManager.getInstance(moduleB).getModifiableModel();
       rootModelB.addModuleOrderEntry(moduleC);
       moduleModel.disposeModule(moduleC);
-      ApplicationManager.getApplication().runWriteAction(new Runnable() {
-        @Override
-        public void run() {
-          ModifiableModelCommitter.multiCommit(new ModifiableRootModel[]{rootModelB}, moduleModel);
-        }
-      });
+      ApplicationManager.getApplication().runWriteAction(() -> ModifiableModelCommitter.multiCommit(new ModifiableRootModel[]{rootModelB}, moduleModel));
     }
 
     final ModuleRootManager rootManagerB = ModuleRootManager.getInstance(moduleB);
@@ -180,39 +162,45 @@ public class MultiModuleEditingTest extends ModuleTestCase {
     {
       final ModifiableModuleModel moduleModel = moduleManager.getModifiableModel();
       moduleModel.renameModule(moduleA, "c");
-      moduleModel.commit();
+      assertSame(moduleA, moduleModel.findModuleByName("a"));
+      assertSame(moduleA, moduleManager.findModuleByName("a"));
+      assertEquals("c", moduleModel.getNewName(moduleA));
+      assertEquals("b", moduleModel.getActualName(moduleB));
+      assertEquals("c", moduleModel.getActualName(moduleA));
+      assertSame(moduleA, moduleModel.getModuleToBeRenamed("c"));
+      ApplicationManager.getApplication().runWriteAction(() -> moduleModel.commit());
     }
 
     assertEquals(1, rootManagerB.getDependencies().length);
     assertEquals(moduleA, rootManagerB.getDependencies()[0]);
+    assertSame(moduleA, moduleManager.findModuleByName("c"));
+    assertNull(moduleManager.findModuleByName("a"));
     assertEquals("c", moduleA.getName());
     moduleManager.disposeModule(moduleA);
     moduleManager.disposeModule(moduleB);
   }
 
   private VirtualFile getVirtualFileInTestData(final String relativeVfsPath) {
-    return ApplicationManager.getApplication().runWriteAction(new Computable<VirtualFile>() {
-      @Override
-      public VirtualFile compute() {
-        final String path = TEST_PATH + File.separatorChar + getTestName(true) + File.separatorChar + relativeVfsPath.replace('/', File.separatorChar);
-        final VirtualFile result = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(new File(path));
-        assertNotNull("File " + path + " doen\'t exist", result);
-        return result;
-      }
+    return WriteCommandAction.runWriteCommandAction(null, (Computable<VirtualFile>)() -> {
+      final String path =
+        TEST_PATH + File.separatorChar + getTestName(true) + File.separatorChar + relativeVfsPath.replace('/', File.separatorChar);
+      final VirtualFile result = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(new File(path));
+      assertNotNull("File " + path + " doesn't exist", result);
+      return result;
     });
   }
 
 
-  private static class MyModuleListener extends ModuleAdapter {
-    private final List<String> myLog = new ArrayList<String>();
+  private static class MyModuleListener implements ModuleListener {
+    private final List<String> myLog = new ArrayList<>();
 
     @Override
-    public void moduleRemoved(Project project, Module module) {
+    public void moduleRemoved(@NotNull Project project, @NotNull Module module) {
       myLog.add("-" + module.getName());
     }
 
     @Override
-    public void moduleAdded(Project project, Module module) {
+    public void moduleAdded(@NotNull Project project, @NotNull Module module) {
       myLog.add("+" + module.getName());
     }
 
@@ -220,10 +208,10 @@ public class MultiModuleEditingTest extends ModuleTestCase {
       int runningIndex = 0;
       for (int chunkIndex = 0; chunkIndex < expected.length; chunkIndex++) {
         String[] chunk = expected[chunkIndex];
-        final List<String> expectedChunkList = new ArrayList<String>(Arrays.asList(chunk));
+        final List<String> expectedChunkList = new ArrayList<>(Arrays.asList(chunk));
         int nextIndex = runningIndex + chunk.length;
         assertTrue("Expected chunk " + expectedChunkList.toString(), nextIndex <= myLog.size());
-        final List<String> actualChunkList = new ArrayList<String>(myLog.subList(runningIndex, nextIndex));
+        final List<String> actualChunkList = new ArrayList<>(myLog.subList(runningIndex, nextIndex));
         Collections.sort(expectedChunkList);
         Collections.sort(actualChunkList);
         assertEquals("Chunk " + chunkIndex, expectedChunkList.toString(), actualChunkList.toString());

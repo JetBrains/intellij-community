@@ -23,15 +23,10 @@ import java.io.File;
 import java.rmi.RemoteException;
 import java.util.List;
 
-/**
- * Created by IntelliJ IDEA.
- * User: sweinreuter
- * Date: 24.05.2007
- */
 class RemoteBreakpointManagerImpl extends PortableRemoteObject implements RemoteBreakpointManager {
   private final BreakpointManager myManager;
 
-  public RemoteBreakpointManagerImpl(BreakpointManager manager) throws RemoteException {
+  RemoteBreakpointManagerImpl(BreakpointManager manager) throws RemoteException {
     super();
     myManager = manager;
   }

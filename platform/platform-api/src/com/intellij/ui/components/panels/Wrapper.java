@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,14 +16,15 @@
 package com.intellij.ui.components.panels;
 
 import com.intellij.openapi.ui.NullableComponent;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.openapi.wm.IdeFocusManager;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.FocusEvent;
-import java.awt.event.FocusListener;
 
 public class Wrapper extends JPanel implements NullableComponent {
+
+  private JComponent myVerticalSizeReferent;
+  private JComponent myHorizontalSizeReferent;
 
   public Wrapper() {
     setLayout(new BorderLayout());
@@ -70,18 +71,25 @@ public class Wrapper extends JPanel implements NullableComponent {
     validate();
   }
 
+  @Override
   public boolean isNull() {
     return getComponentCount() == 0;
   }
 
+  @Override
   public void requestFocus() {
     if (getTargetComponent() == this) {
-      super.requestFocus();
+      IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
+        super.requestFocus();
+      });
       return;
     }
-    getTargetComponent().requestFocus();
+    IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
+      IdeFocusManager.getGlobalInstance().requestFocus(getTargetComponent(), true);
+    });
   }
 
+  @Override
   public boolean requestFocusInWindow() {
     if (getTargetComponent() == this) {
       return super.requestFocusInWindow();
@@ -90,9 +98,12 @@ public class Wrapper extends JPanel implements NullableComponent {
   }
 
   public void requestFocusInternal() {
-    super.requestFocus();
+    IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
+      super.requestFocus();
+    });
   }
 
+  @Override
   public final boolean requestFocus(boolean temporary) {
     if (getTargetComponent() == this) {
       return super.requestFocus(temporary);
@@ -108,69 +119,26 @@ public class Wrapper extends JPanel implements NullableComponent {
     }
   }
 
+  public final Wrapper setVerticalSizeReferent(JComponent verticalSizeReferent) {
+    myVerticalSizeReferent = verticalSizeReferent;
+    return this;
+  }
 
-  public static class FocusHolder extends Wrapper implements FocusListener {
+  public final Wrapper setHorizontalSizeReferent(JComponent horizontalSizeReferent) {
+    myHorizontalSizeReferent = horizontalSizeReferent;
+    return this;
+  }
 
-    private Runnable myFocusGainedCallback;
-
-    public FocusHolder() {
-      init();
+  @Override
+  public Dimension getPreferredSize() {
+    Dimension size = super.getPreferredSize();
+    if (myHorizontalSizeReferent != null && myHorizontalSizeReferent.isShowing()) {
+      size.width = Math.max(size.width, myHorizontalSizeReferent.getPreferredSize().width);
     }
-
-    public FocusHolder(final JComponent wrapped) {
-      super(wrapped);
-      init();
+    if (myVerticalSizeReferent != null && myVerticalSizeReferent.isShowing()) {
+      size.height = Math.max(size.height, myVerticalSizeReferent.getPreferredSize().height);
     }
-
-    public FocusHolder(final LayoutManager layout, final JComponent wrapped) {
-      super(layout, wrapped);
-      init();
-    }
-
-    public FocusHolder(final boolean isDoubleBuffered) {
-      super(isDoubleBuffered);
-      init();
-    }
-
-    public FocusHolder(final LayoutManager layout) {
-      super(layout);
-      init();
-    }
-
-    public FocusHolder(final LayoutManager layout, final boolean isDoubleBuffered) {
-      super(layout, isDoubleBuffered);
-      init();
-    }
-
-    private void init() {
-      UIUtil.setFocusProxy(this, true);
-      setFocusable(true);
-      addFocusListener(this);
-    }
-
-    public void requestFocus(Runnable callback) {
-      myFocusGainedCallback = callback;
-      if (isFocusOwner()) {
-        processCallback();    
-      } else {
-        requestFocusInternal();
-      }
-    }
-
-    public void focusGained(final FocusEvent e) {
-      processCallback();
-    }
-
-    private void processCallback() {
-      if (myFocusGainedCallback != null) {
-        Runnable callback = myFocusGainedCallback;
-        myFocusGainedCallback = null;
-        callback.run();
-      }
-    }
-
-    public void focusLost(final FocusEvent e) {
-    }
+    return size;
   }
 
   public static class North extends Wrapper {

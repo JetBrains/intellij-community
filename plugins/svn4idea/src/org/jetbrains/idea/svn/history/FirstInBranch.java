@@ -1,161 +1,188 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.history;
 
-import com.intellij.openapi.application.ApplicationManager;
+import com.google.common.base.MoreObjects;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.vcs.changes.TransparentlyFailedValueI;
-import com.intellij.util.Consumer;
-import com.intellij.util.containers.hash.HashSet;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vcs.VcsException;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnVcs;
-import org.tmatesoft.svn.core.*;
-import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
-import org.tmatesoft.svn.core.wc.SVNLogClient;
-import org.tmatesoft.svn.core.wc.SVNRevision;
+import org.jetbrains.idea.svn.api.Revision;
+import org.jetbrains.idea.svn.api.Target;
+import org.jetbrains.idea.svn.api.Url;
 
-import java.util.Map;
-import java.util.Set;
+import static com.intellij.openapi.util.text.StringUtil.join;
+import static com.intellij.util.ObjectUtils.notNull;
+import static com.intellij.util.containers.ContainerUtil.immutableList;
+import static org.jetbrains.idea.svn.SvnUtil.*;
+import static org.jetbrains.idea.svn.commandLine.CommandUtil.format;
 
-public class FirstInBranch implements Runnable {
-  private final SvnVcs myVcs;
-  private final String myBranchUrl;
-  private final String myTrunkUrl;
-  private final String myRepositoryRoot;
-  private final TransparentlyFailedValueI<CopyData, SVNException> myConsumer;
-  private static final Logger LOG = Logger.getInstance("#org.jetbrains.idea.svn.history.FirstInBranch");
+public class FirstInBranch {
 
-  public FirstInBranch(final SvnVcs vcs, final String repositoryRoot, final String branchUrl, final String trunkUrl,
-                       final TransparentlyFailedValueI<CopyData, SVNException> consumer) {
+  private static final Logger LOG = Logger.getInstance(FirstInBranch.class);
+
+  @NotNull private final SvnVcs myVcs;
+  @NotNull private final Url myAbsoluteBranchUrl;
+  @NotNull private final Url myAbsoluteTrunkUrl;
+  @NotNull private final Url myRepositoryRoot;
+
+  public FirstInBranch(@NotNull SvnVcs vcs, @NotNull Url repositoryRoot, @NotNull Url branchUrl, @NotNull Url trunkUrl) {
     myVcs = vcs;
     myRepositoryRoot = repositoryRoot;
-    myConsumer = consumer;
-
-    myBranchUrl = relativePath(repositoryRoot, branchUrl);
-    myTrunkUrl = relativePath(repositoryRoot, trunkUrl);
+    myAbsoluteBranchUrl = branchUrl;
+    myAbsoluteTrunkUrl = trunkUrl;
   }
 
-  private String relativePath(final String parent, final String child) {
-    String path = SVNPathUtil.getRelativePath(parent, child);
-    return path.startsWith("/") ? path : "/" + path;
+  @Nullable
+  public CopyData run() throws VcsException {
+    Target trunk = Target.on(myAbsoluteTrunkUrl, Revision.HEAD);
+    Target branch = Target.on(myAbsoluteBranchUrl, Revision.HEAD);
+    CopyData result = find(new BranchPoint(trunk), new BranchPoint(branch), true);
+
+    debug(result);
+
+    return result;
   }
 
-  public void run() {
-    final Set<SVNException> exceptions = new HashSet<SVNException>();
-    final boolean [] called = new boolean[1];
-    try {
-      createTask(SVNURL.parseURIDecoded(myRepositoryRoot), exceptions).consume(new Consumer<CopyData>() {
-        @Override
-        public void consume(CopyData data) {
-          if (data != null) {
-            myConsumer.set(data);
-            called[0] = true;
+  @Nullable
+  private CopyData find(@NotNull BranchPoint trunk, @NotNull BranchPoint branch, boolean isBranchFromTrunk) throws VcsException {
+    CopyData result = null;
+
+    debug(trunk, branch, isBranchFromTrunk);
+
+    if (trunk.hasCopyPath()) {
+      if (StringUtil.equals(trunk.copyPath(), branch.relativePath())) {
+        // trunk was copied from branch
+        result = trunk.toCopyData(!isBranchFromTrunk);
+      }
+      else {
+        if (branch.hasCopyPath()) {
+          if (branch.copyRevision() == trunk.copyRevision()) {
+            // both trunk and branch were copied from same point -> we assume parent branch is the one created earlier
+            result = branch.revision() > trunk.revision() ? branch.toCopyData(isBranchFromTrunk) : trunk.toCopyData(!isBranchFromTrunk);
+          }
+          else {
+            // both trunk and branch were copied from different points -> search recursively starting with latter revisions
+            result = branch.copyRevision() > trunk.copyRevision()
+                     ? find(trunk, new BranchPoint(branch.copyTarget()), isBranchFromTrunk)
+                     : find(new BranchPoint(trunk.copyTarget()), branch, isBranchFromTrunk);
           }
         }
-      });
-    }
-    catch (SVNException e) {
-      myConsumer.fail(e);
-      return;
-    }
-    if (called[0]) return;
-
-    if (! exceptions.isEmpty()) {
-      LOG.info("Wasn't able to find branch point, exception(s) below");
-      for (SVNException exception : exceptions) {
-        LOG.info(exception);
+        else {
+          // branch was not copied from anywhere -> search in trunk when it was copied from branch
+          result = find(branch, trunk, !isBranchFromTrunk);
+        }
       }
-      myConsumer.fail(exceptions.iterator().next());
-    } else if (! called[0]) {
-      myConsumer.set(null);
+    }
+    else if (branch.hasCopyPath()) {
+      // trunk was not copied from anywhere -> search in branch when it was copied from trunk
+      result = StringUtil.equals(branch.copyPath(), trunk.relativePath())
+               ? branch.toCopyData(isBranchFromTrunk)
+               : find(trunk, new BranchPoint(branch.copyTarget()), isBranchFromTrunk);
+    }
+
+    return result;
+  }
+
+  private void debug(@Nullable CopyData copyData) {
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("Found branch point " +
+                join(immutableList(myAbsoluteTrunkUrl.toDecodedString(), myAbsoluteBranchUrl.toDecodedString(), copyData), ", "));
     }
   }
 
-  private Consumer<Consumer<CopyData>> createTask(final SVNURL branchURL, final Set<SVNException> exceptions) {
-    return new Consumer<Consumer<CopyData>>() {
-      public void consume(final Consumer<CopyData> copyDataConsumer) {
-        final SVNLogClient logClient = ApplicationManager.getApplication().runReadAction(new Computable<SVNLogClient>() {
-          @Override
-          public SVNLogClient compute() {
-            if (myVcs.getProject().isDisposed()) return null;
-            return myVcs.createLogClient();
-          }
-        });
-        if (logClient == null) return;
-        try {
-            logClient.doLog(branchURL, null, SVNRevision.UNDEFINED, SVNRevision.HEAD, SVNRevision.create(0), false, true, -1,
-                            new MyLogEntryHandler(copyDataConsumer, myTrunkUrl, myBranchUrl));
-        } catch (SVNCancelException e) {
-          //
-        } catch (SVNException e) {
-          exceptions.add(e);
-        }
-      }
-    };
+  private void debug(@NotNull BranchPoint trunk, @NotNull BranchPoint branch, boolean isBranchFromTrunk) {
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("Searching branch point for " + join(immutableList(trunk, branch, isBranchFromTrunk), ", "));
+    }
   }
 
-  private static class MyLogEntryHandler implements ISVNLogEntryHandler {
-    private final SvnPathThroughHistoryCorrection myTrunkCorrector;
-    private final SvnPathThroughHistoryCorrection myBranchCorrector;
-    private final Consumer<CopyData> myCopyDataConsumer;
+  private class BranchPoint {
+    @NotNull private final Target myTarget;
+    @Nullable private LogEntry myEntry;
+    @Nullable private LogEntryPath myPath;
 
-    public MyLogEntryHandler(Consumer<CopyData> copyDataConsumer, String trunkUrl, String branchUrl) {
-      myCopyDataConsumer = copyDataConsumer;
-      myTrunkCorrector = new SvnPathThroughHistoryCorrection(trunkUrl);
-      myBranchCorrector = new SvnPathThroughHistoryCorrection(branchUrl);
+    private BranchPoint(@NotNull Target target) {
+      myTarget = target;
     }
 
-    public void handleLogEntry(SVNLogEntry logEntry) throws SVNException {
-      final Map map = logEntry.getChangedPaths();
-      checkEntries(logEntry, map);
-      myTrunkCorrector.handleLogEntry(logEntry);
-      myBranchCorrector.handleLogEntry(logEntry);
-      checkEntries(logEntry, map);
+    @Override
+    public String toString() {
+      return MoreObjects.toStringHelper(this)
+        .add("target", myTarget)
+        .add("revision", myEntry != null ? myEntry.getRevision() : -1)
+        .add("path", myPath != null && myPath.getCopyPath() != null
+                     ? format(myPath.getCopyPath(), Revision.of(myPath.getCopyRevision()))
+                     : null)
+        .toString();
     }
 
-    private void checkEntries(SVNLogEntry logEntry, Map map) throws SVNCancelException {
-      for (Object o : map.values()) {
-        final SVNLogEntryPath path = (SVNLogEntryPath) o;
-        final String localPath = path.getPath();
-        final String copyPath = path.getCopyPath();
+    private void init() throws VcsException {
+      if (myEntry == null) {
+        Pair<LogEntry, LogEntryPath> copyPoint = getCopyPoint();
 
-        if ('A' == path.getType()) {
-          if (checkForCopyCase(logEntry, path, localPath, copyPath, myTrunkCorrector.getCurrentPath(), myBranchCorrector.getCurrentPath())) {
-            throw new SVNCancelException();
-          }
-        }
+        myEntry = copyPoint.first;
+        myPath = copyPoint.second;
       }
     }
 
-    private boolean checkForCopyCase(SVNLogEntry logEntry, SVNLogEntryPath path, String localPath, String copyPath,
-                                     final String trunkUrl, final String branchUrl) {
-      if (equalOrParent(localPath, branchUrl) && equalOrParent(copyPath, trunkUrl)) {
-        myCopyDataConsumer.consume(new CopyData(path.getCopyRevision(), logEntry.getRevision(), true));
-        return true;
-      } else {
-        if ((equalOrParent(copyPath, branchUrl)) && equalOrParent(localPath, trunkUrl)) {
-          myCopyDataConsumer.consume(new CopyData(path.getCopyRevision(), logEntry.getRevision(), false));
-          return true;
-        }
+    @NotNull
+    private Pair<LogEntry, LogEntryPath> getCopyPoint() throws VcsException {
+      HistoryClient client = myVcs.getFactory(myTarget).createHistoryClient();
+      Ref<LogEntry> entry = Ref.create();
+
+      client.doLog(myTarget, Revision.of(1), myTarget.getPegRevision(), true, true, false, 1, null, entry::set);
+
+      if (entry.isNull()) {
+        throw new VcsException("No branch point found for " + myTarget);
       }
-      return false;
+
+      LogEntryPath path = entry.get().getChangedPaths().get(relativePath());
+
+      if (path == null) {
+        throw new VcsException(myTarget + " not found in " + entry.get().getChangedPaths());
+      }
+
+      return Pair.create(entry.get(), path);
     }
 
-    private static boolean equalOrParent(String localPath, final String targetPath) {
-      return targetPath.equals(localPath) || SVNPathUtil.isAncestor(localPath, targetPath);
+    private boolean hasCopyPath() throws VcsException {
+      init();
+      return notNull(myPath).getCopyPath() != null;
+    }
+
+    @NotNull
+    private String copyPath() throws VcsException {
+      init();
+      return notNull(myPath).getCopyPath();
+    }
+
+    private long copyRevision() throws VcsException {
+      init();
+      return notNull(myPath).getCopyRevision();
+    }
+
+    @NotNull
+    private Target copyTarget() throws VcsException {
+      return Target.on(append(myRepositoryRoot, copyPath()), Revision.of(copyRevision()));
+    }
+
+    @NotNull
+    private String relativePath() {
+      return ensureStartSlash(getRelativeUrl(myRepositoryRoot, myTarget.getUrl()));
+    }
+
+    private long revision() throws VcsException {
+      init();
+      return notNull(myEntry).getRevision();
+    }
+
+    @NotNull
+    private CopyData toCopyData(boolean isBranchFromTrunk) throws VcsException {
+      return new CopyData(copyRevision(), revision(), isBranchFromTrunk);
     }
   }
 }

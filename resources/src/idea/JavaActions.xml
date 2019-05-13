@@ -1,4 +1,4 @@
-<component>
+<idea-plugin>
   <actions>
     <group id="JavaGenerateGroup1">
       <action id="GenerateTestMethod" class="com.intellij.testIntegration.GenerateTestMethodAction"/>
@@ -11,6 +11,7 @@
       <action id="GenerateSetter" class="com.intellij.codeInsight.generation.actions.GenerateSetterAction"/>
       <action id="GenerateGetterAndSetter" class="com.intellij.codeInsight.generation.actions.GenerateGetterAndSetterAction"/>
       <action id="GenerateEquals" class="com.intellij.codeInsight.generation.actions.GenerateEqualsAction"/>
+      <action id="Actions.ActionsPlugin.GenerateToString" class="org.jetbrains.java.generate.GenerateToStringAction" text="to_String()" description="Generate toString() method"/>
       <action id="GenerateCreateUI" class="com.intellij.codeInsight.generation.actions.GenerateCreateUIAction"/>
       <add-to-group group-id="GenerateGroup" anchor="first"/>
     </group>
@@ -24,29 +25,39 @@
       <add-to-group group-id="NewGroup1" anchor="first"/>
     </action>
 
-    <action id="CollapseBlock" class="com.intellij.codeInsight.folding.impl.actions.CollapseBlockAction">
-      <add-to-group group-id="FoldingGroup" anchor="after" relative-to-action="CollapseSelection"/>
-    </action>
+    <group id="NewJavaSpecialFile">
+      <action id="NewPackageInfo" class="com.intellij.ide.actions.CreatePackageInfoAction"/>
+      <action id="NewModuleInfo" class="com.intellij.ide.actions.CreateModuleInfoAction"/>
+      <add-to-group group-id="NewGroup" anchor="after" relative-to-action="NewDir"/>
+    </group>
 
     <action id="InferNullity" class="com.intellij.codeInspection.inferNullity.InferNullityAnnotationsAction">
-      <add-to-group group-id="InspectCodeGroup" anchor="after" relative-to-action="RunInspection"/>
+      <add-to-group group-id="InspectCodeGroup" anchor="after" relative-to-action="ViewOfflineInspection"/>
+    </action>
+
+    <action id="GenerateModuleDescriptors" class="com.intellij.codeInspection.java19api.Java9GenerateModuleDescriptorsAction">
+      <add-to-group group-id="CodeMenu" anchor="last"/>
+    </action>
+    <action id="StubHierarchy" class="com.intellij.psi.stubsHierarchy.impl.test.BuildStubsHierarchyAction" text="Build Stub Hierarchy" internal="true">
+      <add-to-group group-id="InspectCodeGroup" anchor="after" relative-to-action="ViewOfflineInspection"/>
+    </action>
+
+    <action id="TestStubHierarchy" class="com.intellij.psi.stubsHierarchy.impl.test.TestStubHierarchyAction" text="Test Stub Hierarchy" internal="true">
+      <add-to-group group-id="InspectCodeGroup" anchor="after" relative-to-action="ViewOfflineInspection"/>
     </action>
 
     <group id="AnalyzeJavaMenu">
       <action id="ShowPackageCycles" class="com.intellij.cyclicDependencies.actions.CyclicDependenciesAction"/>
       <separator/>
-      <action id="SliceBackward" class="com.intellij.slicer.SliceBackwardAction"/>
-      <action id="SliceForward" class="com.intellij.slicer.SliceForwardAction"/>
+      <reference id="SliceBackward"/>
+      <reference id="SliceForward"/>
       <separator/>
       <action id="Unscramble" class="com.intellij.unscramble.UnscrambleAction"/>
       <add-to-group group-id="AnalyzeMenu" anchor="last"/>
     </group>
 
     <group id="RefactoringMenu1">
-      <action id="ChangeTypeSignature"
-              class="com.intellij.refactoring.typeMigration.actions.ChangeTypeSignatureAction"
-              text="T_ype Migration..."
-              description="Change type of the return type of the method, field, parameter, variable or class type arguments and correct all references"/>
+      <action id="ChangeTypeSignature" class="com.intellij.refactoring.typeMigration.actions.ChangeTypeSignatureAction"/>
       <action id="MakeStatic" class="com.intellij.refactoring.actions.MakeStaticAction"/>
       <action id="ConvertToInstanceMethod" class="com.intellij.refactoring.actions.ConvertToInstanceMethodAction"/>
       <add-to-group group-id="RefactoringMenu" anchor="after" relative-to-action="ChangeSignature"/>
@@ -54,8 +65,7 @@
 
     <group id="RefactoringMenu2">
       <action id="MethodDuplicates" class="com.intellij.refactoring.actions.MethodDuplicatesAction"/>
-      
-      <action id="InvertBoolean" class="com.intellij.refactoring.actions.InvertBooleanAction"/>
+
       <add-to-group group-id="RefactoringMenu" anchor="after" relative-to-action="Inline"/>
     </group>
 
@@ -63,14 +73,19 @@
       <add-to-group group-id="IntroduceActionsGroup" anchor="after" relative-to-action="ExtractMethod"/>
     </action>
 
-    <action id="IntroduceParameterObject" class="com.intellij.refactoring.actions.IntroduceParameterObjectAction">
-      <add-to-group group-id="IntroduceActionsGroup" anchor="after" relative-to-action="IntroduceParameter"/>
+    <action id="IntroduceFunctionalParameter" class="com.intellij.refactoring.actions.IntroduceFunctionalParameterAction">
+      <add-to-group group-id="IntroduceActionsGroup" anchor="before" relative-to-action="IntroduceParameterObject"/>
+      <keyboard-shortcut first-keystroke="control shift alt P" keymap="$default"/>
     </action>
 
-    <action id="RenameFile" class="com.intellij.refactoring.actions.RenameFileAction">
-      <add-to-group group-id="RefactoringMenu" anchor="after" relative-to-action="RenameElement"/>
-      <add-to-group group-id="EditorTabPopupMenuEx" anchor="after" relative-to-action="AddAllToFavorites"/>
+    <action id="IntroduceFunctionalVariable" class="com.intellij.refactoring.actions.IntroduceFunctionalVariableAction">
+      <add-to-group group-id="IntroduceActionsGroup" anchor="after" relative-to-action="IntroduceFunctionalParameter"/>
     </action>
+
+    <group id="RefactoringMenuRenameFile">
+      <reference id="RenameFile"/>
+      <add-to-group group-id="RefactoringMenu" anchor="after" relative-to-action="RenameElement"/>
+    </group>
 
     <group id="RefactoringMenu4">
       <action id="TurnRefsToSuper" class="com.intellij.refactoring.actions.TurnRefsToSuperAction"/>
@@ -92,24 +107,29 @@
     </group>
 
     <action id="Hotswap" class="com.intellij.debugger.actions.HotSwapAction">
-      <add-to-group group-id="DebugMainMenu" anchor="before" relative-to-action="StepOver"/>
+      <add-to-group group-id="DebugMainMenu" anchor="after" relative-to-action="UpdateRunningApplication"/>
     </action>
 
     <action id="Debugger.PopFrame" class="com.intellij.debugger.actions.PopFrameAction" icon="AllIcons.Actions.PopFrame">
       <add-to-group group-id="DebugMainMenu" anchor="after" relative-to-action="ForceRunToCursor"/>
+      <add-to-group group-id="XDebugger.Frames.Tree.Popup" anchor="first"/>
+      <add-to-group group-id="XDebugger.ToolWindow.TopToolbar" anchor="before" relative-to-action="RunToCursor"/>
     </action>
 
     <group id="ToggleBreakpointAction">
       <action id="ToggleMethodBreakpoint" class="com.intellij.debugger.actions.ToggleMethodBreakpointAction"/>
-      <action id="ToggleFieldBreakpoint" class="com.intellij.debugger.actions.ToggleFieldBreakpointAction"/>
-      <action id="ToggleBreakpointEnabled" class="com.intellij.debugger.actions.ToggleBreakpointEnabledAction"/>
+      <action id="ToggleFieldBreakpoint" class="com.intellij.debugger.actions.ToggleFieldBreakpointAction">
+        <add-to-group group-id="XDebugger.ValueGroup" anchor="after" relative-to-action="Debugger.AddToWatch"/>
+      </action>
+      <!--Moved to XDebugger <action id="ToggleBreakpointEnabled" class="com.intellij.debugger.actions.ToggleBreakpointEnabledAction"/>-->
       <add-to-group group-id="DebugMainMenu" anchor="after" relative-to-action="ToggleLineBreakpoint"/>
     </group>
 
-    <action id="ExportThreads" class="com.intellij.debugger.actions.ExportThreadsAction" icon="AllIcons.Actions.Export">
-      <add-to-group group-id="RunMenu" anchor="last"/>
+    <action id="ExportThreads" class="com.intellij.debugger.actions.ExportThreadsAction" icon="AllIcons.ToolbarDecorator.Export">
+      <add-to-group group-id="XDebugger.Frames.Tree.Popup"/>
+      <add-to-group group-id="XDebugger.Actions"/>
     </action>
-    <action id="DumpThreads" class="com.intellij.debugger.actions.ThreadDumpAction" text="Take a thread dump" icon="AllIcons.Actions.Dump">
+    <action id="DumpThreads" class="com.intellij.debugger.actions.ThreadDumpAction" text="Get thread dump" icon="AllIcons.Actions.Dump">
       <add-to-group group-id="RunMenu" anchor="last"/>
     </action>
 
@@ -121,50 +141,184 @@
       <add-to-group group-id="Internal.Errors"/>
     </action>
 
-    <action id="GenerateVisitorByHierarchy" internal="true" class="com.intellij.internal.GenerateVisitorByHierarchyAction"
-            text="Generate Hierarchy Visitor">
-      <add-to-group group-id="Internal"/>
-    </action>
+    <group id="Internal.Java" text="Java" popup="true" internal="true" compact="true">
+      <action id="GenerateVisitorByHierarchy" internal="true" class="com.intellij.internal.GenerateVisitorByHierarchyAction"
+              text="Generate Hierarchy Visitor..."/>
 
-    <action id="UsedIconsListing" internal="true" class="com.intellij.internal.UsedIconsListingAction"
-            text="List Used Icons">
-      <add-to-group group-id="Internal"/>
-    </action>
+      <action id="UsedIconsListing" internal="true" class="com.intellij.internal.UsedIconsListingAction"
+              text="List Used Icons"/>
+      <action id="ExpressionStatistics" internal="true" class="com.intellij.internal.ExpressionStatisticsAction"
+              text="Collect Java Expression Statistics"/>
 
-    <action id="StaticIconFields" internal="true" class="com.intellij.internal.StaticIconFieldsAction"
-            text="List Static Field Initializers">
+      <action id="StaticIconFields" internal="true" class="com.intellij.internal.StaticIconFieldsAction"
+              text="List Static Field Initializers"/>
+
       <add-to-group group-id="Internal"/>
-    </action>
+    </group>
 
     <group id="JavaDebuggerActions">
-      <action id="Debugger.AdjustArrayRange" class="com.intellij.debugger.actions.AdjustArrayRangeAction"/>
-      <action id="Debugger.Inspect" class="com.intellij.debugger.actions.InspectAction"/>
-      <action id="Debugger.ViewText" class="com.intellij.debugger.actions.ViewTextAction"/>
-      <action id="Debugger.CopyValue" class="com.intellij.debugger.actions.CopyValueAction"/>
-      <action id="Debugger.CompareValueWithClipboard" class="com.intellij.debugger.actions.CompareValueWithClipboardAction"/>
-      <action id="Debugger.CustomizeContextView" class="com.intellij.debugger.actions.CustomizeContextViewAction"/>
-      <action id="Debugger.CustomizeThreadsView" class="com.intellij.debugger.actions.CustomizeThreadsViewAction"/>
-      <action id="Debugger.NewWatch" class="com.intellij.debugger.actions.NewWatchAction" icon="AllIcons.Debugger.NewWatch"/>
-      <action id="Debugger.EditWatch" class="com.intellij.debugger.actions.EditWatchAction"/>
-      <action id="Debugger.EditFrameSource" class="com.intellij.debugger.actions.EditFrameSourceAction"/>
+      <action id="Debugger.CustomizeContextView" class="com.intellij.debugger.actions.CustomizeContextViewAction">
+        <add-to-group group-id="XDebugger.Variables.Tree.Popup" anchor="last"/>
+        <add-to-group group-id="XDebugger.Watches.Tree.Popup" anchor="last"/>
+      </action>
+      <action id="Debugger.NewCustomField" class="com.intellij.debugger.actions.NewCustomFieldAction">
+        <add-to-group group-id="XDebugger.Variables.Tree.Popup" anchor="first"/>
+        <add-to-group group-id="XDebugger.Watches.Tree.Popup" anchor="after" relative-to-action="XDebugger.NewWatch"/>
+      </action>
+      <action id="Debugger.EditCustomField" class="com.intellij.debugger.actions.EditCustomFieldAction" use-shortcut-of="XDebugger.SetValue">
+        <add-to-group group-id="XDebugger.Variables.Tree.Popup" anchor="first"/>
+        <add-to-group group-id="XDebugger.Watches.Tree.Popup" anchor="after" relative-to-action="XDebugger.EditWatch"/>
+      </action>
+      <action id="Debugger.RemoveCustomField" class="com.intellij.debugger.actions.RemoveCustomFieldAction" use-shortcut-of="XDebugger.RemoveWatch">
+        <add-to-group group-id="XDebugger.Variables.Tree.Popup" anchor="first"/>
+        <add-to-group group-id="XDebugger.Watches.Tree.Popup" anchor="after" relative-to-action="XDebugger.RemoveWatch"/>
+      </action>
+      <action id="Debugger.EditArrayFilter" class="com.intellij.debugger.actions.ArrayFilterAction$Edit" use-shortcut-of="XDebugger.SetValue">
+        <add-to-group group-id="XDebugger.Variables.Tree.Popup" anchor="first"/>
+        <add-to-group group-id="XDebugger.Watches.Tree.Popup" anchor="after" relative-to-action="XDebugger.EditWatch"/>
+      </action>
+      <action id="Debugger.RemoveArrayFilter" class="com.intellij.debugger.actions.ArrayFilterAction$Delete" use-shortcut-of="XDebugger.RemoveWatch">
+        <add-to-group group-id="XDebugger.Variables.Tree.Popup" anchor="first"/>
+        <add-to-group group-id="XDebugger.Watches.Tree.Popup" anchor="after" relative-to-action="XDebugger.RemoveWatch"/>
+      </action>
+      <action id="Debugger.ViewText" class="com.intellij.debugger.actions.ViewTextAction">
+        <add-to-group group-id="XDebugger.ValueGroup" anchor="last"/>
+      </action>
+      <action id="Debugger.CustomizeThreadsView" class="com.intellij.debugger.actions.CustomizeThreadsViewAction">
+        <add-to-group group-id="XDebugger.Frames.Tree.Popup" anchor="last"/>
+      </action>
+      <action id="Debugger.EditFrameSource" class="com.intellij.debugger.actions.EditFrameSourceAction" use-shortcut-of="EditSource"/>
       <action id="Debugger.EditNodeSource" class="com.intellij.debugger.actions.EditSourceAction"/>
       <action id="Debugger.EditTypeSource" class="com.intellij.debugger.actions.JumpToObjectAction"/>
       <reference ref="Debugger.PopFrame"/>
-      <action id="Debugger.RemoveAllWatches" class="com.intellij.debugger.actions.RemoveAllWatchesAction"/>
-      <action id="Debugger.RemoveWatch" class="com.intellij.debugger.actions.RemoveWatchAction" icon="AllIcons.Actions.Delete"/>
-      <action id="Debugger.ViewAsGroup" class="com.intellij.debugger.actions.ViewAsGroup"/>
-      <action id="Debugger.SetValue" class="com.intellij.debugger.actions.SetValueAction"/>
+      <action id="Debugger.ViewAsGroup" class="com.intellij.debugger.actions.ViewAsGroup">
+        <add-to-group group-id="XDebugger.ValueGroup" anchor="last"/>
+      </action>
+      <action id="Debugger.FilterArray" class="com.intellij.debugger.actions.ArrayAction$FilterArrayAction">
+        <add-to-group group-id="XDebugger.ValueGroup" anchor="last"/>
+      </action>
+      <action id="Debugger.AdjustArrayRange" class="com.intellij.debugger.actions.ArrayAction$AdjustArrayRangeAction">
+        <add-to-group group-id="XDebugger.ValueGroup" anchor="last"/>
+      </action>
+      <action id="Debugger.ShowRelatedStack" class="com.intellij.debugger.actions.ShowRelatedStackAction"  text="Show related stack...">
+        <add-to-group group-id="XDebugger.ValueGroup" anchor="first"/>
+      </action>
+      <action id="Debugger.ShowTypes" class="com.intellij.debugger.actions.ShowTypesAction" text="Show types">
+        <add-to-group group-id="XDebugger.ValueGroup" anchor="last"/>
+      </action>
+      <!--<action id="Debugger.SetValue" class="com.intellij.debugger.actions.SetValueAction"/>-->
       <!--<action id="Debugger.ShowAsHex" class="com.intellij.debugger.actions.ShowAsHexAction" text="Show as Hex"/>-->
-      <action id="Debugger.ShowFrame" class="com.intellij.debugger.actions.ShowFrameAction"/>
       <action id="Debugger.ResumeThread" class="com.intellij.debugger.actions.ResumeThreadAction"/>
       <action id="Debugger.FreezeThread" class="com.intellij.debugger.actions.FreezeThreadAction"/>
       <action id="Debugger.InterruptThread" class="com.intellij.debugger.actions.InterruptThreadAction"/>
-      <action id="Debugger.FocusOnBreakpoint" class="com.intellij.debugger.ui.breakpoints.actions.FocusOnBreakpointAction"/>
-      <add-to-group group-id="DebuggerActions" anchor="first"/>
+
+      <action id="Debugger.ForceEarlyReturn" class="com.intellij.debugger.actions.ForceEarlyReturnAction">
+        <add-to-group group-id="XDebugger.Frames.Tree.Popup" anchor="after" relative-to-action="Debugger.PopFrame"/>
+        <add-to-group group-id="DebugMainMenu" anchor="after" relative-to-action="Debugger.PopFrame"/>
+      </action>
+
+      <action id="Debugger.ThrowException" class="com.intellij.debugger.actions.ThrowExceptionAction">
+        <add-to-group group-id="XDebugger.Frames.Tree.Popup" anchor="after" relative-to-action="Debugger.PopFrame"/>
+        <add-to-group group-id="DebugMainMenu" anchor="after" relative-to-action="Debugger.ForceEarlyReturn"/>
+      </action>
+
+      <action id="Debugger.AddSteppingFilter" class="com.intellij.debugger.actions.AddSteppingFilterAction" text="Add Stepping Filter...">
+        <add-to-group group-id="XDebugger.Frames.Tree.Popup"/>
+      </action>
+
+      <action id="Debugger.CreateRenderer" class="com.intellij.debugger.actions.CreateRendererAction" text="Create..."/>
+      <action id="Debugger.AutoRenderer" class="com.intellij.debugger.actions.AutoRendererAction"/>
+      <action id="Debugger.MuteRenderers" class="com.intellij.debugger.ui.tree.actions.ForceOnDemandRenderersAction" text="Mute Renderers">
+        <add-to-group group-id="XDebugger.ValueGroup" anchor="last"/>
+      </action>
+
+      <action id="Debugger.AsyncStacks" class="com.intellij.debugger.actions.AsyncStacksToggleAction" text="Async Stack Traces">
+        <add-to-group group-id="XDebugger.Frames.Tree.Popup"/>
+      </action>
+      <action id="Debugger.SwitchToTheNextContext" class="com.intellij.debugger.actions.SwitchToTheNextContextAction"
+              text="Switch to the next stopped breakpoint"/>
+      <action id="Debugger.CallTracer" class="com.intellij.debugger.ui.breakpoints.CallTracer$CallTracerToggleAction" text="Trace Calls"
+              icon="AllIcons.Debugger.Db_set_breakpoint">
+        <add-to-group group-id="XDebugger.ToolWindow.TopToolbar"/>
+      </action>
+    </group>
+
+    <action class="com.intellij.debugger.memory.action.ShowInstancesByClassAction"
+            id="MemoryView.ShowInstancesFromDebuggerTree"
+            text="Show Instances">
+      <add-to-group group-id="XDebugger.ValueGroup" anchor="after"
+                    relative-to-action="Debugger.ShowReferring"/>
+    </action>
+
+    <action class="com.intellij.debugger.memory.action.CalculateRetainedSizeAction"
+            id="Memory.CalculateRetainedSize"
+            text="Calculate Retained Size">
+      <add-to-group group-id="XDebugger.ValueGroup" anchor="after"
+                    relative-to-action="MemoryView.ShowInstancesFromDebuggerTree"/>
+    </action>
+
+    <action class="com.intellij.debugger.memory.action.ShowGarbageCollectorRootsAction"
+            id="Memory.ShowGarbageCollectorRoots"
+            text="Find Garbage Collector Roots">
+      <add-to-group group-id="XDebugger.ValueGroup" anchor="after"
+                    relative-to-action="Memory.CalculateRetainedSize"/>
+    </action>
+
+    <action class="com.intellij.debugger.memory.action.tracking.JumpToAllocationSourceAction"
+            id="MemoryView.ShowAllocationStackTrace"
+            text="Jump To Allocation Position">
+      <add-to-group group-id="XDebugger.ValueGroup" anchor="after"
+                    relative-to-action="XDebugger.JumpToTypeSource"/>
+    </action>
+
+    <group id="MemoryView.SettingsPopupActionGroup">
+      <action class="com.intellij.debugger.memory.action.ShowClassesWithInstanceAction"
+              id="MemoryView.ShowOnlyWithInstances"
+              text="Show With Instances Only"/>
+
+      <action class="com.intellij.xdebugger.memory.action.ShowClassesWithDiffAction"
+              id="MemoryView.ShowOnlyWithDiff"
+              text="Show Non-Zero Diff Only"/>
+
+      <action class="com.intellij.debugger.memory.action.ShowTrackedAction"
+              id="MemoryView.ShowOnlyTracked"
+              text="Show Tracked Classes Only"/>
+
+      <separator/>
+
+      <action class="com.intellij.debugger.memory.action.EnableBackgroundTrackingAction"
+              id="MemoryView.EnableTrackingWithClosedWindow"
+              text="Enable Tracking With Hidden Memory View"/>
+
+      <action class="com.intellij.xdebugger.memory.action.SwitchUpdateModeAction"
+              id="MemoryView.SwitchUpdateMode"
+              text="Update Loaded Classes On Debugger Stop"
+              description="Load classes on debugger pause (may increase overhead on debugger stepping)"/>
+    </group>
+
+    <group id="MemoryView.ClassesPopupActionGroup">
+      <action class="com.intellij.debugger.memory.action.ShowInstancesFromClassesViewAction"
+              id="MemoryView.ShowInstances"
+              text="Show Instances"/>
+
+      <action class="com.intellij.debugger.memory.action.ShowNewInstancesAction"
+              id="MemoryView.ShowNewInstances"
+              text="Show New Instances"/>
+
+      <action class="com.intellij.debugger.memory.action.JumpToTypeSourceAction"
+              id="MemoryView.JumpToTypeSource"
+              text="Jump To Type Source"/>
+      <separator/>
+
+      <action class="com.intellij.debugger.memory.action.tracking.TrackInstancesToggleAction"
+              id="MemoryView.TrackingAction.NewInstancesTracking"
+              text="Track New Instances"/>
     </group>
 
     <group id="Debugger.Representation">
-      <action id="Debugger.AutoRenderer" class="com.intellij.debugger.actions.AutoRendererAction"/>
+      <reference ref="Debugger.CreateRenderer"/>
+      <separator/>
+      <reference ref="Debugger.AutoRenderer"/>
     </group>
 
     <group id="EditorPopupMenuDebugJava">
@@ -182,7 +336,9 @@
       <add-to-group group-id="StructureViewCompileGroup" anchor="first"/>
     </group>
 
-    <action id="TypeHierarchy.BaseOnThisType" class="com.intellij.ide.hierarchy.type.TypeHierarchyBrowser$BaseOnThisTypeAction">
+    <action id="TypeHierarchy.BaseOnThisType"
+            class="com.intellij.ide.hierarchy.type.TypeHierarchyBrowser$BaseOnThisTypeAction"
+            use-shortcut-of="TypeHierarchy">
       <add-to-group group-id="TypeHierarchyPopupMenu" anchor="first"/>
     </action>
 
@@ -195,11 +351,15 @@
       <add-to-group group-id="MethodHierarchyPopupMenu" anchor="first"/>
     </group>
 
-    <action id="MethodHierarchy.BaseOnThisType" class="com.intellij.ide.hierarchy.method.MethodHierarchyBrowser$BaseOnThisMethodAction">
+    <action id="MethodHierarchy.BaseOnThisType"
+            class="com.intellij.ide.hierarchy.method.MethodHierarchyBrowser$BaseOnThisMethodAction"
+            use-shortcut-of="MethodHierarchy">
       <add-to-group group-id="MethodHierarchyPopupMenu" anchor="first"/>
     </action>
 
-    <action id="CallHierarchy.BaseOnThisType" class="com.intellij.ide.hierarchy.call.CallHierarchyBrowser$BaseOnThisMethodAction">
+    <action id="CallHierarchy.BaseOnThisType"
+            class="com.intellij.ide.hierarchy.call.CallHierarchyBrowser$BaseOnThisMethodAction"
+            use-shortcut-of="CallHierarchy">
       <add-to-group group-id="CallHierarchyPopupMenu" anchor="first"/>
     </action>
 
@@ -209,9 +369,9 @@
 
     <group id="Debugger.FramePanelPopup">
       <reference ref="Debugger.AdjustArrayRange"/>
-      <reference ref="Debugger.Inspect"/>
+      <!--<reference ref="Debugger.Inspect"/>-->
       <reference ref="Debugger.MarkObject"/>
-      <reference ref="Debugger.SetValue"/>
+      <!--<reference ref="Debugger.SetValue"/>-->
       <reference ref="Debugger.EditNodeSource"/>
       <reference ref="Debugger.EditTypeSource"/>
       <separator/>
@@ -221,17 +381,17 @@
       <separator/>
       <reference ref="ToggleFieldBreakpoint"/>
       <separator/>
-      <reference ref="Debugger.CopyValue"/>
+      <!--<reference ref="Debugger.CopyValue"/>-->
       <reference ref="Debugger.ViewText"/>
-      <reference ref="Debugger.CompareValueWithClipboard"/>
+      <!--<reference ref="Debugger.CompareValueWithClipboard"/>-->
       <reference ref="Debugger.CustomizeContextView"/>
     </group>
 
     <group id="Debugger.EvaluationDialogPopup">
       <reference ref="Debugger.AdjustArrayRange"/>
-      <reference ref="Debugger.Inspect"/>
+      <!--<reference ref="Debugger.Inspect"/>-->
       <reference ref="Debugger.MarkObject"/>
-      <reference ref="Debugger.SetValue"/>
+      <!--<reference ref="Debugger.SetValue"/>-->
       <reference ref="Debugger.EditNodeSource"/>
       <reference ref="Debugger.EditTypeSource"/>
       <separator/>
@@ -242,17 +402,17 @@
       <separator/>
       <reference ref="ToggleFieldBreakpoint"/>
       <separator/>
-      <reference ref="Debugger.CopyValue"/>
+      <!--<reference ref="Debugger.CopyValue"/>-->
       <reference ref="Debugger.ViewText"/>
-      <reference ref="Debugger.CompareValueWithClipboard"/>
+      <!--<reference ref="Debugger.CompareValueWithClipboard"/>-->
       <reference ref="Debugger.CustomizeContextView"/>
     </group>
 
     <group id="Debugger.InspectPanelPopup">
       <reference ref="Debugger.AdjustArrayRange"/>
-      <reference ref="Debugger.Inspect"/>
+      <!--<reference ref="Debugger.Inspect"/>-->
       <reference ref="Debugger.MarkObject"/>
-      <reference ref="Debugger.SetValue"/>
+      <!--<reference ref="Debugger.SetValue"/>-->
       <reference ref="Debugger.EditNodeSource"/>
       <reference ref="Debugger.EditTypeSource"/>
       <separator/>
@@ -263,15 +423,15 @@
       <separator/>
       <reference ref="ToggleFieldBreakpoint"/>
       <separator/>
-      <reference ref="Debugger.CopyValue"/>
+      <!--<reference ref="Debugger.CopyValue"/>-->
       <reference ref="Debugger.ViewText"/>
-      <reference ref="Debugger.CompareValueWithClipboard"/>
+      <!--<reference ref="Debugger.CompareValueWithClipboard"/>-->
       <reference ref="Debugger.CustomizeContextView"/>
     </group>
 
     <group id="Debugger.ThreadsPanelPopup">
-      <!--<reference ref="Debugger.ResumeThread"/>-->
-      <!--<reference ref="Debugger.FreezeThread"/>-->
+      <reference ref="Debugger.ResumeThread"/>
+      <reference ref="Debugger.FreezeThread"/>
       <reference ref="Debugger.InterruptThread"/>
       <!--<reference ref="Debugger.ShowFrame"/>-->
       <reference ref="Debugger.PopFrame"/>
@@ -280,20 +440,21 @@
       <!--<reference ref="EditSource"/>-->
       <separator/>
       <reference ref="ExportThreads"/>
+      <reference ref="Debugger.AddSteppingFilter"/>
       <separator/>
       <reference ref="Debugger.CustomizeThreadsView"/>
     </group>
 
     <group id="Debugger.WatchesPanelPopup">
-      <reference ref="Debugger.NewWatch"/>
-      <reference ref="Debugger.EditWatch"/>
-      <reference ref="Debugger.RemoveWatch"/>
-      <reference ref="Debugger.RemoveAllWatches"/>
+      <!--<reference ref="Debugger.NewWatch"/>-->
+      <!--<reference ref="Debugger.EditWatch"/>-->
+      <!--<reference ref="Debugger.RemoveWatch"/>-->
+      <!--<reference ref="Debugger.RemoveAllWatches"/>-->
       <separator/>
       <reference ref="Debugger.AdjustArrayRange"/>
-      <reference ref="Debugger.Inspect"/>
+      <!--<reference ref="Debugger.Inspect"/>-->
       <reference ref="Debugger.MarkObject"/>
-      <reference ref="Debugger.SetValue"/>
+      <!--<reference ref="Debugger.SetValue"/>-->
       <reference ref="Debugger.EditNodeSource"/>
       <reference ref="Debugger.EditTypeSource"/>
       <separator/>
@@ -304,10 +465,16 @@
       <separator/>
       <reference ref="ToggleFieldBreakpoint"/>
       <separator/>
-      <reference ref="Debugger.CopyValue"/>
+      <!--<reference ref="Debugger.CopyValue"/>-->
       <reference ref="Debugger.ViewText"/>
-      <reference ref="Debugger.CompareValueWithClipboard"/>
+      <!--<reference ref="Debugger.CompareValueWithClipboard"/>-->
       <reference ref="Debugger.CustomizeContextView"/>
+    </group>
+
+    <group id="MarkGeneratedSourceRootGroup">
+      <action id="MarkGeneratedSourceRoot" class="com.intellij.ide.projectView.actions.MarkGeneratedSourceRootAction"/>
+      <action id="UnmarkGeneratedSourceRoot" class="com.intellij.ide.projectView.actions.UnmarkGeneratedSourceRootAction"/>
+      <add-to-group group-id="MarkRootGroup" anchor="after" relative-to-action="MarkSourceRootGroup"/>
     </group>
 
     <action id="ShowPackageDeps" class="com.intellij.packageDependencies.actions.AnalyzeDependenciesAction">
@@ -326,5 +493,31 @@
     <action id="FileChooser.GotoJDK" class="com.intellij.openapi.projectRoots.JdkPopupAction" >
       <add-to-group group-id="FileChooserToolbar" anchor="last"/>
     </action>
+
+    <action class="com.intellij.compiler.backwardRefs.view.TestCompilerRefFindUsagesAction" id="TestCompilerReferenceServiceFindUsages" internal="true"/>
+    <action class="com.intellij.compiler.backwardRefs.view.TestCompilerRefFunctionalExpressionSearchAction" id="TestCompilerReferenceServiceFunctionalExpressionSearch" internal="true"/>
+    <action class="com.intellij.compiler.backwardRefs.view.TestCompilerRefInheritanceAction" id="TestCompilerReferenceServiceInheritance" internal="true"/>
+
+    <group id="AnnotationHintsContextMenu" popup="true">
+      <action id="ToggleExternalAnnotationsHintsAction"
+              class="com.intellij.codeInsight.hints.AnnotationHintsPass$ToggleExternalAnnotationsHintsAction"
+              text="Show External Annotations"/>
+      <action id="ToggleInferredAnnotationsHintsAction"
+              class="com.intellij.codeInsight.hints.AnnotationHintsPass$ToggleInferredAnnotationsHintsAction"
+              text="Show Inferred Annotations"/>
+      <separator/>
+      <reference ref="EditorPopupMenu"/>
+    </group>
+
+    <group id="MethodChainHintsContextMenu" popup="true">
+      <action id="MethodChainHintAction"
+              class="com.intellij.codeInsight.hints.MethodChainHintTurningAction"
+              text="Show method chain hints"/>
+      <separator/>
+      <reference ref="EditorPopupMenu"/>
+    </group>
+
+    <action id="MethodOverloadSwitchUp" class="com.intellij.codeInsight.editorActions.JavaMethodOverloadSwitchUpAction"/>
+    <action id="MethodOverloadSwitchDown" class="com.intellij.codeInsight.editorActions.JavaMethodOverloadSwitchDownAction" />
   </actions>
-</component>
+</idea-plugin>

@@ -15,9 +15,8 @@
  */
 package com.intellij.psi.codeStyle.arrangement;
 
-import com.intellij.psi.codeStyle.arrangement.match.ArrangementEntryType;
+import com.intellij.psi.codeStyle.arrangement.std.ArrangementSettingsToken;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.Set;
 
@@ -27,10 +26,9 @@ import java.util.Set;
  * Implementations of this interface are not obliged to be thread-safe.
  * 
  * @author Denis Zhdanov
- * @since 7/17/12 11:17 AM
  */
 public interface TypeAwareArrangementEntry extends ArrangementEntry {
   
   @NotNull
-  Set<ArrangementEntryType> getTypes();
+  Set<ArrangementSettingsToken> getTypes();
 }

@@ -2,14 +2,7 @@ import java.util.*;
 import java.util.Comparator;
 
 
-/**
- * Created by IntelliJ IDEA.
- * User: dsl
- * Date: Mar 25, 2004
- * Time: 8:08:44 PM
- * To change this template use File | Settings | File Templates.
- */
-public class VarianceTesting {
+class VarianceTesting {
     void method(List<? extends VarianceTesting> l) {
 //        l.add(new VarianceTesting());
         l.add(null);
@@ -33,11 +26,11 @@ public class VarianceTesting {
         VarianceTesting z = x.field;
         VarianceTesting[] v = x.arrayField;
         VarianceTesting v1 = x.arrayField[0];
-        x.arrayField[0] = new VarianceTesting();
+        <error descr="Incompatible types. Found: 'VarianceTesting', required: 'capture<? extends VarianceTesting>'">x.arrayField[0] = new VarianceTesting()</error>;
         <error descr="Incompatible types. Found: 'VarianceTesting', required: 'capture<? extends VarianceTesting>'">x.field = new VarianceTesting()</error>;
         VarianceTesting[] k = x.method();
         k[0] = new VarianceTesting();
-        x.method()[0] = new VarianceTesting();
+        <error descr="Incompatible types. Found: 'VarianceTesting', required: 'capture<? extends VarianceTesting>'">x.method()[0] = new VarianceTesting()</error>;
         <error descr="Incompatible types. Found: 'VarianceTesting[]', required: 'capture<? extends VarianceTesting>[]'">x.arrayField = new VarianceTesting[10]</error>;
         l1.addAll<error descr="'addAll(java.util.Collection<? extends capture<? extends VarianceTesting>>)' in 'java.util.List' cannot be applied to '(java.util.ArrayList<VarianceTesting>)'">(new ArrayList<VarianceTesting>())</error>;
         <error descr="Incompatible types. Found: 'java.util.ArrayList<java.lang.String>', required: 'java.util.List<? extends VarianceTesting>'">List<? extends VarianceTesting> l2 = new ArrayList<String>();</error>
@@ -45,7 +38,7 @@ public class VarianceTesting {
         VarianceTesting t = l1.get(0);
         l.add(new VarianceTesting());
         l.add(null);
-        <error descr="Incompatible types. Found: 'java.lang.Object', required: 'VarianceTesting'">VarianceTesting t1 = l.get(0);</error>
+        <error descr="Incompatible types. Found: 'capture<? super VarianceTesting>', required: 'VarianceTesting'">VarianceTesting t1 = l.get(0);</error>
         X<? extends VarianceTesting> x1 = null;
         x1.putAll(new ArrayList<VarianceTesting>());
         List<?> unknownlist = l;
@@ -61,7 +54,7 @@ public class VarianceTesting {
 
 class SuperTester <U> {
      void go(Acceptor<? super U> acceptor, U u) {
-          acceptor.accept<error descr="'accept(SuperTester<capture<? super U>>, capture<? super U>)' in 'SuperTester.Acceptor' cannot be applied to '(SuperTester<U>, U)'">(this, u)</error>;
+          acceptor.accept(<error descr="'accept(SuperTester<capture<? super U>>, capture<? super U>)' in 'SuperTester.Acceptor' cannot be applied to '(SuperTester<U>, U)'">this</error>, u);
      }
 
      static class Acceptor <V> {
@@ -87,7 +80,7 @@ class CaptureTest {
    }
 
    void foo (Class<? extends Emum<CaptureTest>> clazz) {
-     <error descr="Inferred type '? extends CaptureTest.Emum<CaptureTest>' for type parameter 'T' is not within its bound; should extend 'CaptureTest.Emum<? extends CaptureTest.Emum<CaptureTest>>'">Emum.valueOf(clazz, "CCC")</error>;
+     <error descr="Inferred type 'capture<? extends CaptureTest.Emum<CaptureTest>>' for type parameter 'T' is not within its bound; should extend 'CaptureTest.Emum<capture<? extends CaptureTest.Emum<CaptureTest>>>'">Emum.valueOf(clazz, "CCC")</error>;
    }
 }
 
@@ -142,7 +135,7 @@ class S1 {
     }
 
     void bar(List<? extends S1> k) {
-        f<error descr="'f(java.util.List<S1>, S1)' in 'S1' cannot be applied to '(java.util.List<capture<? extends S1>>, S1)'">(k,  k.get(0))</error>;
+        f(k,  <error descr="'f(java.util.List<capture<? extends S1>>, capture<? extends S1>)' in 'S1' cannot be applied to '(java.util.List<capture<? extends S1>>, capture<? extends S1>)'">k.get(0)</error>);
     }
 }
 
@@ -152,7 +145,7 @@ class S2 {
     }
 
     void bar(List<? extends S2> k) {
-        f<error descr="'f(java.util.List<T>, java.util.List<T>)' in 'S2' cannot be applied to '(java.util.List<capture<? extends S2>>, java.util.List<capture<? extends S2>>)'">(k, k)</error>;
+        f(k, <error descr="'f(java.util.List<capture<? extends S2>>, java.util.List<capture<? extends S2>>)' in 'S2' cannot be applied to '(java.util.List<capture<? extends S2>>, java.util.List<capture<? extends S2>>)'">k</error>);
     }
 }
 
@@ -162,7 +155,7 @@ class S3 {
     }
 
     void bar(Map<? extends S3, ? extends S3> k) {
-        f<error descr="'f(java.util.Map<T,T>)' in 'S3' cannot be applied to '(java.util.Map<capture<? extends S3>,capture<? extends S3>>)'">(k)</error>;
+        f<error descr="'f(java.util.Map<capture<? extends S3>,capture<? extends S3>>)' in 'S3' cannot be applied to '(java.util.Map<capture<? extends S3>,capture<? extends S3>>)'">(k)</error>;
     }
 }
 
@@ -214,7 +207,7 @@ public static void foo(List<? extends Foo> foos) {
 class OtherBug1 {
   public static void foo(List<? super Foo> foos) {
     final Comparator<Foo> comparator = createComparator();
-    Collections.sort<error descr="'sort(java.util.List<T>, java.util.Comparator<? super T>)' in 'java.util.Collections' cannot be applied to '(java.util.List<capture<? super OtherBug1.Foo>>, java.util.Comparator<OtherBug1.Foo>)'">(foos, comparator)</error>;
+    Collections.sort(foos, <error descr="'sort(java.util.List<capture<? super OtherBug1.Foo>>, java.util.Comparator<? super capture<? super OtherBug1.Foo>>)' in 'java.util.Collections' cannot be applied to '(java.util.List<capture<? super OtherBug1.Foo>>, java.util.Comparator<OtherBug1.Foo>)'">comparator</error>);
   }
 
   private static Comparator<Foo> createComparator() {
@@ -242,7 +235,7 @@ class Use99n extends Use99<GenericTest99D<?>,Double> {
 
 class IDEA79360 {
     public static void main(Map<?, ?> map, Map<Object, Object> test) {
-        map.putAll<error descr="'putAll(java.util.Map<capture<?>,capture<?>>)' in 'java.util.Map' cannot be applied to '(java.util.Map<java.lang.Object,java.lang.Object>)'">(test)</error>;
+        map.putAll<error descr="'putAll(java.util.Map<? extends capture<?>,? extends capture<?>>)' in 'java.util.Map' cannot be applied to '(java.util.Map<java.lang.Object,java.lang.Object>)'">(test)</error>;
         map.put<error descr="'put(capture<?>, capture<?>)' in 'java.util.Map' cannot be applied to '(java.lang.String, java.lang.String)'">("", "")</error>;
         map.put<error descr="'put(capture<?>, capture<?>)' in 'java.util.Map' cannot be applied to '(java.lang.Object, java.lang.Object)'">(new Object(), new Object())</error>;
         map = new HashMap<Object, Object>(test);
@@ -280,6 +273,6 @@ class C67675<T extends B67675<?>>
 {
     void foo(T x)
     {
-        x.foo()[0] = "";
+        <error descr="Incompatible types. Found: 'java.lang.String', required: 'capture<?>'">x.foo()[0] = ""</error>;
     }
 }

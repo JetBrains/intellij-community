@@ -1,0 +1,6 @@
+public class X {
+   @DataPoint
+   int <spot>f</spot>() {
+     return 0;
+   }
+ }

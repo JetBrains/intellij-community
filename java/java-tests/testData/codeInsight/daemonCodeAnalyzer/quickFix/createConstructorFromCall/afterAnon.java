@@ -1,4 +1,4 @@
-// "Create Constructor" "true"
+// "Create constructor" "true"
 class Test {
 
     public void t() {
@@ -7,7 +7,7 @@ class Test {
 
     class Inner {
         public Inner(String a) {
-            <caret><selection>//To change body of created methods use File | Settings | File Templates.</selection>
+            <caret><selection></selection>
         }
     }
 }

@@ -16,12 +16,10 @@
 package org.intellij.lang.regexp.psi;
 
 import com.intellij.psi.PsiElement;
-import com.intellij.lang.ASTNode;
 import org.jetbrains.annotations.NotNull;
 
 public interface RegExpElement extends PsiElement {
-    @NotNull
-    ASTNode getNode();
 
+    @NotNull
     String getUnescapedText();
 }

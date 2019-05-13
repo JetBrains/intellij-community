@@ -1,0 +1,101 @@
+datatypes w = "http://whattf.org/datatype-draft"
+
+# #####################################################################
+##  RELAX NG Schema for HTML 5: Microdata                             #
+# #####################################################################
+
+common.attrs.microdata =
+	(	common.attrs.microdata.itemref?
+	&	common.attrs.microdata.itemprop?
+	&	common.attrs.microdata.itemscope?
+	&	common.attrs.microdata.itemtype?
+	&	common.attrs.microdata.itemid?
+	)
+	common.attrs.microdata.itemref =
+		attribute itemref {
+			common.data.idrefs
+		}
+	common.attrs.microdata.itemprop =
+		attribute itemprop {
+			common.data.microdata-properties
+		}
+	common.attrs.microdata.itemscope =
+		attribute itemscope {
+			w:string "itemscope" | w:string ""
+		}
+	common.attrs.microdata.itemtype =
+		attribute itemtype {
+			list { common.data.uri.absolute+ }
+		}
+	common.attrs.microdata.itemid =
+		attribute itemid {
+			common.data.uri
+		}
+
+common.attrs &= common.attrs.microdata
+
+a.attrs &= common.attrs.microdata
+area.attrs &= common.attrs.microdata
+base.attrs &= common.attrs.microdata
+
+## URL-valued Property Metadata: <link itemprop>
+
+	link.elem.phrasing =
+		element link { link.inner & link.phrasing.attrs }
+	link.phrasing.attrs =
+		(	common.attrs.basic
+		&	common.attrs.i18n
+		&	common.attrs.present
+		&	common.attrs.other
+		&	common.attrs.microdata.itemprop
+		&	common.attrs.microdata.itemref?
+		&	common.attrs.microdata.itemscope?
+		&	common.attrs.microdata.itemtype?
+		&	common.attrs.microdata.itemid?
+		&	shared-hyperlink.attrs.href
+		&	shared-hyperlink.attrs.hreflang?
+		&	shared-hyperlink.attrs.media?
+		&	shared-hyperlink.attrs.type?
+		&	link.attrs.sizes?
+		#	link.attrs.title included in common.attrs
+		&	embedded.content.attrs.crossorigin?
+		&	(	common.attrs.aria.role.link
+			|	common.attrs.aria.role.presentation
+			|	common.attrs.aria.role.menuitem
+			)?
+		)
+	common.elem.phrasing |= link.elem.phrasing
+
+## <link> element in head, extensions
+
+link.attrs.rel |= common.attrs.microdata.itemprop
+link.attrs &= common.attrs.microdata.itemref?
+link.attrs &= common.attrs.microdata.itemscope?
+link.attrs &= common.attrs.microdata.itemtype?
+link.attrs &= common.attrs.microdata.itemid?
+
+## Property Metadata: <meta itemprop>
+
+	meta.itemprop.elem =
+		element meta { meta.inner & meta.itemprop.attrs }
+	meta.itemprop.attrs =
+		(	common.attrs.basic
+		&	common.attrs.i18n
+		&	common.attrs.present
+		&	common.attrs.other
+		&	common.attrs.microdata.itemprop
+		&	common.attrs.microdata.itemref?
+		&	common.attrs.microdata.itemscope?
+		&	common.attrs.microdata.itemtype?
+		&	common.attrs.microdata.itemid?
+		&	meta.itemprop.attrs.content
+		&	(	common.attrs.aria.role.presentation
+			|	common.attrs.aria.role.menuitem
+			)?
+		)
+		meta.itemprop.attrs.content =
+			attribute content {
+				string
+			}
+	common.elem.metadata |= meta.itemprop.elem
+	common.elem.phrasing |= meta.itemprop.elem

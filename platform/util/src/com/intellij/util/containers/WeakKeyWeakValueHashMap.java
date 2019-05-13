@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,112 +15,47 @@
  */
 package com.intellij.util.containers;
 
+import com.intellij.util.DeprecatedMethodException;
 import org.jetbrains.annotations.NotNull;
 
 import java.lang.ref.ReferenceQueue;
 import java.lang.ref.WeakReference;
-import java.util.*;
+import java.util.Map;
 
-public final class WeakKeyWeakValueHashMap<K,V> implements Map<K,V>{
-  private final WeakHashMap<K, MyValueReference<K,V>> myWeakKeyMap = new WeakHashMap<K, MyValueReference<K, V>>();
-  private final ReferenceQueue<V> myQueue = new ReferenceQueue<V>();
+/**
+ * @deprecated use {@link ContainerUtil#createWeakKeyWeakValueMap()} instead
+ */
+@Deprecated
+public final class WeakKeyWeakValueHashMap<K,V> extends RefKeyRefValueHashMap<K,V> implements Map<K,V>{
+  public WeakKeyWeakValueHashMap() {
+    this(false);
+    DeprecatedMethodException.report("Use ContainerUtil#createWeakKeyWeakValueMap() instead");
+  }
 
-  private static class MyValueReference<K,V> extends WeakReference<V> {
-    private final WeakHashMap.Key<K> key;
+  WeakKeyWeakValueHashMap(boolean good) {
+    super((RefHashMap<K, ValueReference<K, V>>)ContainerUtil.<K, ValueReference<K, V>>createWeakMap());
+  }
 
-    private MyValueReference(WeakHashMap.Key<K> key, V referent, ReferenceQueue<? super V> q) {
+  private static class WeakValueReference<K,V> extends WeakReference<V> implements ValueReference<K,V> {
+    @NotNull private final RefHashMap.Key<K> key;
+
+    private WeakValueReference(@NotNull RefHashMap.Key<K> key, V referent, ReferenceQueue<? super V> q) {
       super(referent, q);
       this.key = key;
     }
-  }
 
-  private void processQueue() {
-    myWeakKeyMap.processQueue();
-    while(true) {
-      MyValueReference<K,V> ref = (MyValueReference<K, V>)myQueue.poll();
-      if (ref == null) break;
-      WeakHashMap.Key<K> weakKey = ref.key;
-      myWeakKeyMap.removeKey(weakKey);
+    @NotNull
+    @Override
+    public RefHashMap.Key<K> getKey() {
+      return key;
     }
   }
 
-  @Override
-  public V get(Object key) {
-    MyValueReference<K,V> ref = myWeakKeyMap.get(key);
-    if (ref == null) return null;
-    return ref.get();
-  }
-
-  @Override
-  public V put(K key, V value) {
-    processQueue();
-    WeakHashMap.Key<K> weakKey = myWeakKeyMap.createKey(key);
-    MyValueReference<K, V> reference = new MyValueReference<K, V>(weakKey, value, myQueue);
-    MyValueReference<K,V> oldRef = myWeakKeyMap.putKey(weakKey, reference);
-    return oldRef == null ? null : oldRef.get();
-  }
-
-  @Override
-  public V remove(Object key) {
-    processQueue();
-    MyValueReference<K,V> ref = myWeakKeyMap.remove(key);
-    return ref != null ? ref.get() : null;
-  }
-
-  @Override
-  public void putAll(Map<? extends K, ? extends V> t) {
-    throw new RuntimeException("method not implemented");
-  }
-
-  @Override
-  public void clear() {
-    myWeakKeyMap.clear();
-    processQueue();
-  }
-
-  @Override
-  public int size() {
-    return myWeakKeyMap.size(); //?
-  }
-
-  @Override
-  public boolean isEmpty() {
-    return myWeakKeyMap.isEmpty(); //?
-  }
-
-  @Override
-  public boolean containsKey(Object key) {
-    return get(key) != null;
-  }
-
-  @Override
-  public boolean containsValue(Object value) {
-    throw new RuntimeException("method not implemented");
-  }
-
   @NotNull
   @Override
-  public Set<K> keySet() {
-    return myWeakKeyMap.keySet();
-  }
-
-  @NotNull
-  @Override
-  public Collection<V> values() {
-    List<V> result = new ArrayList<V>();
-    final Collection<MyValueReference<K, V>> refs = myWeakKeyMap.values();
-    for (MyValueReference<K, V> ref : refs) {
-      final V value = ref.get();
-      if (value != null) {
-        result.add(value);
-      }
-    }
-    return result;
-  }
-
-  @NotNull
-  @Override
-  public Set<Entry<K, V>> entrySet() {
-    throw new RuntimeException("method not implemented");
+  protected ValueReference<K, V> createValueReference(@NotNull RefHashMap.Key<K> key,
+                                                      V referent,
+                                                      ReferenceQueue<? super V> q) {
+    return new WeakValueReference<K, V>(key, referent, q);
   }
 }

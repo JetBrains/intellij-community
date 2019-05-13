@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,16 +20,18 @@ import com.intellij.compiler.options.CompileStepBeforeRunNoErrorCheck;
 import com.intellij.execution.Location;
 import com.intellij.execution.RunManagerEx;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleUtil;
+import com.intellij.openapi.module.ModuleUtilCore;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.search.NonClasspathDirectoryScope;
+import com.intellij.psi.search.NonClasspathDirectoriesScope;
 import icons.JetgroovyIcons;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.extensions.GroovyRunnableScriptType;
 import org.jetbrains.plugins.groovy.extensions.GroovyScriptType;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentLabel;
@@ -46,7 +48,7 @@ import java.util.List;
 /**
  * @author ilyas
  */
-public class GantScriptType extends GroovyScriptType {
+public class GantScriptType extends GroovyRunnableScriptType {
   @NonNls public static final String DEFAULT_EXTENSION = "gant";
 
   public static final GroovyScriptType INSTANCE = new GantScriptType();
@@ -55,6 +57,7 @@ public class GantScriptType extends GroovyScriptType {
     super("gant");
   }
 
+  @Override
   @NotNull
   public Icon getScriptIcon() {
     return JetgroovyIcons.Groovy.Gant_16x16;
@@ -67,9 +70,12 @@ public class GantScriptType extends GroovyScriptType {
 
   @Override
   public boolean isConfigurationByLocation(@NotNull GroovyScriptRunConfiguration existing, @NotNull Location place) {
-    final String params = existing.getScriptParameters();
-    final String s = getTargetName(place);
-    return s != null && params != null && (params.startsWith(s + " ") || params.equals(s));
+    final String params = existing.getProgramParameters();
+    final String targetName = getTargetName(place);
+    if (targetName == null) {
+      return StringUtil.isEmpty(params);
+    }
+    return params != null && (params.startsWith(targetName + " ") || params.equals(targetName));
   }
 
   @Nullable
@@ -82,7 +88,7 @@ public class GantScriptType extends GroovyScriptType {
       final GrNamedArgument[] args = ((GrMethodCallExpression)parent).getNamedArguments();
       if (args.length == 1) {
         final GrArgumentLabel label = args[0].getLabel();
-        if (label != null && GantUtils.isPlainIdentifier(label)) {
+        if (label != null) {
           return label.getName();
         }
       }
@@ -95,14 +101,14 @@ public class GantScriptType extends GroovyScriptType {
   public void tuneConfiguration(@NotNull GroovyFile file, @NotNull GroovyScriptRunConfiguration configuration, Location location) {
     String target = getTargetName(location);
     if (target != null) {
-      configuration.setScriptParameters(target);
+      configuration.setProgramParameters(target);
       configuration.setName(configuration.getName() + "." + target);
     }
     RunManagerEx.disableTasks(file.getProject(), configuration, CompileStepBeforeRun.ID, CompileStepBeforeRunNoErrorCheck.ID);
   }
 
   public static List<VirtualFile> additionalScopeFiles(@NotNull GroovyFile file) {
-    final Module module = ModuleUtil.findModuleForPsiElement(file);
+    final Module module = ModuleUtilCore.findModuleForPsiElement(file);
     if (module != null) {
       final String sdkHome = GantUtils.getSdkHomeFromClasspath(module);
       if (sdkHome != null) {
@@ -121,10 +127,6 @@ public class GantScriptType extends GroovyScriptType {
 
   @Override
   public GlobalSearchScope patchResolveScope(@NotNull GroovyFile file, @NotNull GlobalSearchScope baseScope) {
-    GlobalSearchScope result = baseScope;
-    for (final VirtualFile root : additionalScopeFiles(file)) {
-      result = result.uniteWith(new NonClasspathDirectoryScope(root));
-    }
-    return result;
+    return baseScope.uniteWith(new NonClasspathDirectoriesScope(additionalScopeFiles(file)));
   }
 }

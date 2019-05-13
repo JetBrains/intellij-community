@@ -1,7 +1,7 @@
 class X {
   def foo
 
-  def bar = { final def anObject ->
+  def bar = { final anObject ->
       print anObject
   }
 }

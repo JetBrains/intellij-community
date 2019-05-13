@@ -1,44 +1,29 @@
-/*
- * Copyright 2000-2011 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.cvsSupport2.config;
 
-import com.intellij.openapi.components.NamedComponent;
-import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.DefaultJDOMExternalizer;
+import com.intellij.openapi.util.DifferenceFilter;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.util.SystemProperties;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * author: lesya
- */
-public class CvsApplicationLevelConfiguration implements NamedComponent, JDOMExternalizable, RoamingTypeDisabled {
-
+@State(name = "CvsApplicationLevelConfiguration", storages = @Storage(value = "other.xml", roamingType = RoamingType.DISABLED))
+public class CvsApplicationLevelConfiguration implements PersistentStateComponent<Element> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.cvsSupport2.config.CvsApplicationLevelConfiguration");
 
-  public List<CvsRootConfiguration> CONFIGURATIONS = new ArrayList<CvsRootConfiguration>();
+  public List<CvsRootConfiguration> CONFIGURATIONS = new ArrayList<>();
 
   public ExtConfiguration EXT_CONFIGURATION = new ExtConfiguration();
   public SshSettings SSH_CONFIGURATION = new SshSettings();
@@ -72,14 +57,23 @@ public class CvsApplicationLevelConfiguration implements NamedComponent, JDOMExt
     return ServiceManager.getService(CvsApplicationLevelConfiguration.class);
   }
 
-  @NotNull
-  public String getComponentName() {
-    return "CvsApplicationLevelConfiguration";
+  @Nullable
+  @Override
+  public Element getState() {
+    Element state = new Element("state");
+    DefaultJDOMExternalizer.writeExternal(this, state, new DifferenceFilter<>(this, new CvsApplicationLevelConfiguration()));
+    for (CvsRootConfiguration configuration : CONFIGURATIONS) {
+      Element child = new Element(CONFIGURATION_ELEMENT_NAME);
+      configuration.writeExternal(child);
+      state.addContent(child);
+    }
+    return state;
   }
 
-  public void readExternal(Element element) throws InvalidDataException {
-    DefaultJDOMExternalizer.readExternal(this, element);
-    for (Element child : (Iterable<Element>)element.getChildren(CONFIGURATION_ELEMENT_NAME)) {
+  @Override
+  public void loadState(@NotNull Element state) {
+    DefaultJDOMExternalizer.readExternal(this, state);
+    for (Element child : state.getChildren(CONFIGURATION_ELEMENT_NAME)) {
       CONFIGURATIONS.add(createConfigurationOn(child));
     }
 
@@ -100,21 +94,7 @@ public class CvsApplicationLevelConfiguration implements NamedComponent, JDOMExt
     return false;
   }
 
-  public void writeExternal(Element element) throws WriteExternalException {
-    DefaultJDOMExternalizer.writeExternal(this, element);
-    for (CvsRootConfiguration configuration : CONFIGURATIONS) {
-      createConfigurationElement(configuration, element);
-    }
-  }
-
-  private static void createConfigurationElement(CvsRootConfiguration configuration, Element element)
-    throws WriteExternalException {
-    Element child = new Element(CONFIGURATION_ELEMENT_NAME);
-    configuration.writeExternal(child);
-    element.addContent(child);
-  }
-
-  private CvsRootConfiguration createConfigurationOn(Element child) throws InvalidDataException {
+  private CvsRootConfiguration createConfigurationOn(Element child) {
     CvsRootConfiguration config = createNewConfiguration(this);
     config.readExternal(child);
     return config;
@@ -189,9 +169,7 @@ public class CvsApplicationLevelConfiguration implements NamedComponent, JDOMExt
       try {
         String line;
         while ((line = reader.readLine()) != null) {
-          if (line.startsWith("/1 ")) {
-            line = line.substring(3);
-          }
+          line = StringUtil.trimStart(line, "/1 ");
           final int sepPosition = line.indexOf(' ');
           if (sepPosition > 0) {
             final String cvsRoot = line.substring(0, sepPosition);

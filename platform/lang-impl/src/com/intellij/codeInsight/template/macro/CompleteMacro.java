@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,9 +27,13 @@ public class CompleteMacro extends BaseCompleteMacro {
     super("complete");
   }
 
+  public CompleteMacro(final boolean checkCompletionChar) {
+    super("complete", checkCompletionChar);
+  }
+
   @Override
   protected void invokeCompletionHandler(Project project, Editor editor) {
-    new CodeCompletionHandlerBase(CompletionType.BASIC, ApplicationManager.getApplication().isUnitTestMode(), false, true)
+    CodeCompletionHandlerBase.createHandler(CompletionType.BASIC, ApplicationManager.getApplication().isUnitTestMode(), false, true)
       .invokeCompletion(project, editor, 1);
   }
 }

@@ -1,0 +1,2 @@
+some <caret>text
+some <selection><caret>other</selection> text

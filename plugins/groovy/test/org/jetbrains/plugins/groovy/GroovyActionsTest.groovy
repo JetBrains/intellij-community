@@ -1,65 +1,104 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- *  Licensed under the Apache License, Version 2.0 (the "License");
- *  you may not use this file except in compliance with the License.
- *  You may obtain a copy of the License at
- *
- *  http://www.apache.org/licenses/LICENSE-2.0
- *
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS" BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language governing permissions and
- *  limitations under the License.
- */
-package org.jetbrains.plugins.groovy;
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+package org.jetbrains.plugins.groovy
 
-
-import com.intellij.ide.DataManager
 import com.intellij.openapi.actionSystem.IdeActions
-import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.editor.actionSystem.EditorActionHandler
-import com.intellij.openapi.editor.actionSystem.EditorActionManager
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
 import org.jetbrains.plugins.groovy.util.TestUtils
 
 /**
  * @author peter
  */
-public class GroovyActionsTest extends LightCodeInsightFixtureTestCase {
+class GroovyActionsTest extends LightCodeInsightFixtureTestCase {
 
-  final String basePath =  TestUtils.testDataPath + 'groovy/actions/';
+  final String basePath = TestUtils.testDataPath + 'groovy/actions/'
 
-  public void testSelectWordBeforeMethod() {
-    doTestForSelectWord 1;
+  void testSelectWordBeforeMethod() {
+    doTestForSelectWord 1
   }
 
-  public void testSWInGString1() {doTestForSelectWord(1);}
-  public void testSWInGString2() {doTestForSelectWord(2);}
-  public void testSWInGString3() {doTestForSelectWord(3);}
-  public void testSWInGString4() {doTestForSelectWord(4);}
-  public void testSWInGString5() {doTestForSelectWord(5);}
-  public void testSWInParameterList() {doTestForSelectWord(3);}
-  public void testSWInArgLabel1() {doTestForSelectWord(2)}
-  public void testSWInArgLabel2() {doTestForSelectWord(2)}
-  public void testSWInArgLabel3() {doTestForSelectWord(2)}
+  void testSWInGString() { doTestSelectWordUpTo 5 }
 
-  public void testSWListLiteralArgument() {
+  void 'test select word in GString select line before injection'() {
+    doTestForSelectWord 2, '''\
+print """
+asddf
+as<caret>df $b sfsasdf
+fdsas
+"""
+''', '''\
+print """
+asddf
+<selection>as<caret>df $b sfsasdf</selection>
+fdsas
+"""
+'''
+  }
+
+  void 'test select word in GString select line after injection'() {
+    doTestForSelectWord 2, '''\
+print """
+asddf
+asdf $b sfs<caret>asdf
+fdsas
+"""
+''', '''\
+print """
+asddf
+<selection>asdf $b sfs<caret>asdf</selection>
+fdsas
+"""
+'''
+  }
+
+  void 'test select word in GString select line before end'() {
+    doTestForSelectWord 2, '''\
+print """
+asddf
+asdf $b sfsasdf
+fd<caret>sas fsss"""
+''', '''\
+print """
+asddf
+asdf $b sfsasdf
+<selection>fd<caret>sas fsss</selection>"""
+'''
+  }
+
+  void testSWInGStringMultiline() { doTestSelectWordUpTo 4 }
+
+  void testSWInGStringBegin() { doTestSelectWordUpTo 2 }
+
+  void testSWInGStringEnd() { doTestSelectWordUpTo 2 }
+
+  void testSWInParameterList() { doTestForSelectWord(3) }
+
+  void testSWInArgLabel1() { doTestForSelectWord(2) }
+
+  void testSWInArgLabel2() { doTestForSelectWord(2) }
+
+  void testSWInArgLabel3() { doTestForSelectWord(2) }
+
+  void testSWEscapesInString() {
+    doTestForSelectWord 1,
+      "String s = \"abc\\nd<caret>ef\"",
+      "String s = \"abc\\n<selection>d<caret>ef</selection>\""
+  }
+
+  void testSWListLiteralArgument() {
     doTestForSelectWord 2,
 "foo([a<caret>], b)",
 "foo(<selection>[a<caret>]</selection>, b)"
   }
 
-  public void testSWMethodParametersBeforeQualifier() {
+  void testSWMethodParametersBeforeQualifier() {
     doTestForSelectWord 2,
 "a.fo<caret>o(b)",
 "a.<selection>foo(b)</selection>"
   }
 
-  public void testSWInCodeBlock() {doTestForSelectWord 5}
+  void testSWInCodeBlock() { doTestForSelectWord 5 }
 
-  public void testElseBranch() {
+  void testElseBranch() {
     doTestForSelectWord (3, '''\
 def foo() {
   if (a){
@@ -117,6 +156,40 @@ this.allOptions = [:];
 ''')
   }
 
+  void "test hippie completion in groovydoc"() {
+    def text = '''
+class A {
+
+  /** long<caret>
+  */
+  void longName() {}
+  void example() {}
+}
+'''
+    myFixture.configureByText 'a.groovy', text
+    performEditorAction(IdeActions.ACTION_HIPPIE_COMPLETION)
+    assert myFixture.editor.document.text.contains('** longName\n')
+    performEditorAction(IdeActions.ACTION_HIPPIE_COMPLETION)
+    myFixture.checkResult(text)
+  }
+
+  void "test hippie completion with hyphenated match"() {
+    myFixture.configureByText 'a.groovy', '''
+foo = [ helloWorld: 1, "hello-world": {
+    hw<caret>
+    f
+  }
+]'''
+    performEditorAction(IdeActions.ACTION_HIPPIE_COMPLETION)
+    assert myFixture.editor.document.text.contains(' hello-world\n')
+    performEditorAction(IdeActions.ACTION_HIPPIE_COMPLETION)
+    assert myFixture.editor.document.text.contains(' helloWorld\n')
+
+    myFixture.editor.caretModel.moveToOffset(myFixture.editor.document.text.indexOf(' f') + 2)
+    performEditorAction(IdeActions.ACTION_HIPPIE_COMPLETION)
+    assert myFixture.editor.document.text.contains(' foo\n')
+  }
+
   void testSWforMemberWithDoc() {
     doTestForSelectWord(4, '''\
 class A {
@@ -139,29 +212,64 @@ class A {
 ''')
   }
 
+  void testMultiLineStingSelection() {
+    doTestForSelectWord(2, """
+      print '''
+        abc cde 
+        xyz <caret>ahc
+      '''
+    """, """
+      print '''
+<selection>        abc cde 
+        xyz <caret>ahc
+</selection>      '''
+    """)
+
+    doTestForSelectWord(3, """
+      print '''
+        abc cde 
+        xyz <caret>ahc
+      '''
+    """, """
+      print '''<selection>
+        abc cde 
+        xyz <caret>ahc
+      </selection>'''
+    """)
+
+  }
+
   private void doTestForSelectWord(int count, String input, String expected) {
-    myFixture.configureByText("a.groovy", input);
+    myFixture.configureByText("a.groovy", input)
     selectWord(count)
-    myFixture.checkResult(expected);
+    myFixture.checkResult(expected)
   }
 
   private void doTestForSelectWord(int count) {
-    myFixture.configureByFile(getTestName(false) + ".groovy");
+    myFixture.configureByFile(getTestName(false) + ".groovy")
     selectWord(count)
-    myFixture.checkResultByFile(getTestName(false) + "_after.groovy");
+    myFixture.checkResultByFile(getTestName(false) + "_after.groovy")
+  }
+
+  private void doTestSelectWordUpTo(int count) {
+    def testName = getTestName(false)
+    myFixture.configureByFile "${testName}_0.groovy"
+    myFixture.editor.settings.camelWords = true
+    count.times {
+      performEditorAction IdeActions.ACTION_EDITOR_SELECT_WORD_AT_CARET
+      myFixture.checkResultByFile "${testName}_${it + 1}.groovy"
+    }
   }
 
   private def selectWord(int count) {
-    myFixture.editor.settings.camelWords = true;
+    myFixture.editor.settings.camelWords = true
     for (int i = 0; i < count; i++) {
-      performEditorAction(IdeActions.ACTION_EDITOR_SELECT_WORD_AT_CARET);
+      performEditorAction(IdeActions.ACTION_EDITOR_SELECT_WORD_AT_CARET)
     }
   }
 
   private void performEditorAction(final String actionId) {
-    final EditorActionHandler handler = EditorActionManager.instance.getActionHandler(actionId);
-    final Editor editor = myFixture.editor;
-    handler.execute(editor, DataManager.instance.getDataContext(editor.contentComponent));
+    myFixture.performEditorAction(actionId)
   }
 
 }

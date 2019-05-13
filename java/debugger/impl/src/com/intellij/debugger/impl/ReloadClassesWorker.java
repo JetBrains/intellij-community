@@ -1,41 +1,38 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.impl;
 
 import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.DebuggerManagerEx;
+import com.intellij.debugger.actions.ThreadDumpAction;
 import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.debugger.engine.DebuggerManagerThreadImpl;
+import com.intellij.debugger.engine.JavaExecutionStack;
+import com.intellij.debugger.engine.SuspendContextImpl;
+import com.intellij.debugger.jdi.ThreadReferenceProxyImpl;
 import com.intellij.debugger.jdi.VirtualMachineProxyImpl;
 import com.intellij.debugger.ui.breakpoints.BreakpointManager;
+import com.intellij.debugger.ui.breakpoints.StackCapturingLineBreakpoint;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.util.StringBuilderSpinAllocator;
+import com.intellij.openapi.util.registry.Registry;
+import com.intellij.unscramble.ThreadState;
+import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.ui.MessageCategory;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.xdebugger.XDebugSession;
 import com.sun.jdi.ReferenceType;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
+import java.io.File;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.IntStream;
 
 /**
  * @author lex
@@ -45,7 +42,7 @@ class ReloadClassesWorker {
   private final DebuggerSession  myDebuggerSession;
   private final HotSwapProgress  myProgress;
 
-  public ReloadClassesWorker(DebuggerSession session, HotSwapProgress progress) {
+  ReloadClassesWorker(DebuggerSession session, HotSwapProgress progress) {
     myDebuggerSession = session;
     myProgress = progress;
   }
@@ -100,103 +97,129 @@ class ReloadClassesWorker {
 
     final DebugProcessImpl debugProcess = getDebugProcess();
     final VirtualMachineProxyImpl virtualMachineProxy = debugProcess.getVirtualMachineProxy();
-    if(virtualMachineProxy == null) {
-      return;
-    }
 
     final Project project = debugProcess.getProject();
     final BreakpointManager breakpointManager = (DebuggerManagerEx.getInstanceEx(project)).getBreakpointManager();
     breakpointManager.disableBreakpoints(debugProcess);
+    StackCapturingLineBreakpoint.deleteAll(debugProcess);
 
     //virtualMachineProxy.suspend();
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("Threads before hotswap:\n",
+                StreamEx.of(ThreadDumpAction.buildThreadStates(virtualMachineProxy)).map(ThreadState::getStackTrace).joining("\n"));
+    }
+
+    if (Registry.is("debugger.resume.yourkit.threads")) {
+      virtualMachineProxy.allThreads().stream()
+        .filter(ThreadReferenceProxyImpl::isResumeOnHotSwap)
+        .filter(ThreadReferenceProxyImpl::isSuspended)
+        .forEach(t -> IntStream.range(0, t.getSuspendCount()).forEach(i -> t.resume()));
+    }
 
     try {
       RedefineProcessor redefineProcessor = new RedefineProcessor(virtualMachineProxy);
 
-      int processedClassesCount = 0;
-      for (final String qualifiedName : modifiedClasses.keySet()) {
-        processedClassesCount++;
+      int processedEntriesCount = 0;
+      for (final Map.Entry<String, HotSwapFile> entry : modifiedClasses.entrySet()) {
+        // stop if process is finished already
+        if (debugProcess.isDetached() || debugProcess.isDetaching()) {
+          break;
+        }
+        if (redefineProcessor.getProcessedClassesCount() == 0 && myProgress.isCancelled()) {
+          // once at least one class has been actually reloaded, do not interrupt the whole process
+          break;
+        }
+        processedEntriesCount++;
+        final String qualifiedName = entry.getKey();
         if (qualifiedName != null) {
           myProgress.setText(qualifiedName);
-          myProgress.setFraction(processedClassesCount / (double)modifiedClasses.size());
+          myProgress.setFraction(processedEntriesCount / (double)modifiedClasses.size());
         }
-        final HotSwapFile fileDescr = modifiedClasses.get(qualifiedName);
-        final byte[] content;
         try {
-          content = FileUtil.loadFileBytes(fileDescr.file);
+          redefineProcessor.processClass(qualifiedName, entry.getValue().file);
         }
         catch (IOException e) {
           reportProblem(qualifiedName, e);
-          continue;
         }
-        redefineProcessor.processClass(qualifiedName, content);
       }
+
+      if (redefineProcessor.getProcessedClassesCount() == 0 && myProgress.isCancelled()) {
+        // once at least one class has been actually reloaded, do not interrupt the whole process
+        return;
+      }
+
       redefineProcessor.processPending();
       myProgress.setFraction(1);
 
       final int partiallyRedefinedClassesCount = redefineProcessor.getPartiallyRedefinedClassesCount();
       if (partiallyRedefinedClassesCount == 0) {
-        myProgress.addMessage(myDebuggerSession, MessageCategory.INFORMATION,
-                              DebuggerBundle.message("status.classes.reloaded", redefineProcessor.getProcessedClassesCount()));
+        myProgress.addMessage(
+          myDebuggerSession, MessageCategory.INFORMATION,
+          DebuggerBundle.message("status.classes.reloaded", redefineProcessor.getProcessedClassesCount())
+        );
       }
       else {
-        final String message = DebuggerBundle.message("status.classes.not.all.versions.reloaded", partiallyRedefinedClassesCount,
-                                                      redefineProcessor.getProcessedClassesCount());
+        final String message = DebuggerBundle.message(
+          "status.classes.not.all.versions.reloaded", partiallyRedefinedClassesCount, redefineProcessor.getProcessedClassesCount()
+        );
         myProgress.addMessage(myDebuggerSession, MessageCategory.WARNING, message);
       }
 
-      if (LOG.isDebugEnabled()) {
-        LOG.debug("classes reloaded");
-      }
+      LOG.debug("classes reloaded");
     }
     catch (Throwable e) {
       processException(e);
     }
 
+    debugProcess.onHotSwapFinished();
+
+    DebuggerContextImpl context = myDebuggerSession.getContextManager().getContext();
+    SuspendContextImpl suspendContext = context.getSuspendContext();
+    if (suspendContext != null) {
+      JavaExecutionStack stack = suspendContext.getActiveExecutionStack();
+      if (stack != null) {
+        stack.initTopFrame();
+      }
+    }
+
+    final Semaphore waitSemaphore = new Semaphore();
+    waitSemaphore.down();
     //noinspection SSBasedInspection
-    UIUtil.invokeAndWaitIfNeeded(new Runnable() {
-      public void run() {
-        if (project.isDisposed()) {
-          return;
-        }
-        final BreakpointManager breakpointManager = (DebuggerManagerEx.getInstanceEx(project)).getBreakpointManager();
-        breakpointManager.reloadBreakpoints();
-        debugProcess.getRequestsManager().clearWarnings();
-        if (LOG.isDebugEnabled()) {
-          LOG.debug("requests updated");
-          LOG.debug("time stamp set");
-        }
-        myDebuggerSession.refresh(false);
-
-        /*
-        debugProcess.getManagerThread().schedule(new DebuggerCommandImpl() {
-          protected void action() throws Exception {
-            try {
-              breakpointManager.enableBreakpoints(debugProcess);
-            }
-            catch (Exception e) {
-              processException(e);
-            }
-            //try {
-            //  virtualMachineProxy.resume();
-            //}
-            //catch (Exception e) {
-            //  processException(e);
-            //}
+    SwingUtilities.invokeLater(() -> {
+      try {
+        if (!project.isDisposed()) {
+          breakpointManager.reloadBreakpoints();
+          debugProcess.getRequestsManager().clearWarnings();
+          if (LOG.isDebugEnabled()) {
+            LOG.debug("requests updated");
+            LOG.debug("time stamp set");
           }
+          myDebuggerSession.refresh(false);
 
-          public Priority getPriority() {
-            return Priority.HIGH;
+          XDebugSession session = myDebuggerSession.getXDebugSession();
+          if (session != null) {
+            session.rebuildViews();
           }
-        });
-        */
+        }
+      }
+      catch (Throwable e) {
+        LOG.error(e);
+      }
+      finally {
+        waitSemaphore.up();
       }
     });
-    try {
-      breakpointManager.enableBreakpoints(debugProcess);
-    }
-    catch (Exception e) {
-      processException(e);
+
+    waitSemaphore.waitFor();
+
+    if (!project.isDisposed()) {
+      try {
+        breakpointManager.enableBreakpoints(debugProcess);
+        StackCapturingLineBreakpoint.createAll(debugProcess);
+      }
+      catch (Exception e) {
+        processException(e);
+      }
     }
   }
 
@@ -208,14 +231,7 @@ class ReloadClassesWorker {
     if (reason == null || reason.length() == 0) {
       reason = DebuggerBundle.message("error.io.error");
     }
-    final StringBuilder buf = StringBuilderSpinAllocator.alloc();
-    try {
-      buf.append(qualifiedName).append(" : ").append(reason);
-      myProgress.addMessage(myDebuggerSession, MessageCategory.ERROR, buf.toString());
-    }
-    finally {
-      StringBuilderSpinAllocator.dispose(buf);
-    }
+    myProgress.addMessage(myDebuggerSession, MessageCategory.ERROR, qualifiedName + " : " + reason);
   }
 
   private static class RedefineProcessor {
@@ -225,18 +241,21 @@ class ReloadClassesWorker {
      */
     private static final int CLASSES_CHUNK_SIZE = 100;
     private final VirtualMachineProxyImpl myVirtualMachineProxy;
-    private final Map<ReferenceType, byte[]> myRedefineMap = new HashMap<ReferenceType, byte[]>();
+    private final Map<ReferenceType, byte[]> myRedefineMap = new HashMap<>();
     private int myProcessedClassesCount;
     private int myPartiallyRedefinedClassesCount;
 
-    public RedefineProcessor(VirtualMachineProxyImpl virtualMachineProxy) {
+    RedefineProcessor(VirtualMachineProxyImpl virtualMachineProxy) {
       myVirtualMachineProxy = virtualMachineProxy;
     }
 
-    public void processClass(String qualifiedName, byte[] content) throws Throwable {
+    public void processClass(String qualifiedName, File file) throws Throwable {
       final List<ReferenceType> vmClasses = myVirtualMachineProxy.classesByName(qualifiedName);
-      if (vmClasses.isEmpty()) return;
+      if (vmClasses.isEmpty()) {
+        return;
+      }
 
+      final byte[] content = FileUtil.loadFileBytes(file);
       if (vmClasses.size() == 1) {
         myRedefineMap.put(vmClasses.get(0), content);
         if (myRedefineMap.size() >= CLASSES_CHUNK_SIZE) {

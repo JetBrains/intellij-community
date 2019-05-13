@@ -24,20 +24,23 @@ import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.PlatformIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.List;
 
-// todo: move to lang-impl ?
+// todo: move to intellij.platform.lang.impl ?
 public class CompositeAppearance implements ModifiableCellAppearanceEx {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.roots.ui.util.CompositeAppearance");
 
   private Icon myIcon;
-  private final ArrayList<TextSection> mySections = new ArrayList<TextSection>();
+  private final List<TextSection> mySections = new ArrayList<>();
   private int myInsertionIndex = 0;
 
+  @Override
   public void customize(@NotNull SimpleColoredComponent component) {
     synchronized (mySections) {
       for (TextSection section : mySections) {
@@ -65,12 +68,14 @@ public class CompositeAppearance implements ModifiableCellAppearanceEx {
     }
   }
 
+  @Override
   public void setIcon(@Nullable final Icon icon) {
     synchronized (mySections) {
       myIcon = icon;
     }
   }
 
+  @Override
   @NotNull
   public String getText() {
     synchronized (mySections) {
@@ -90,7 +95,7 @@ public class CompositeAppearance implements ModifiableCellAppearanceEx {
         return appearance.mySections.equals(mySections);
       }
       else {
-        return new ArrayList<TextSection>(appearance.mySections).equals(new ArrayList<TextSection>(mySections));
+        return new ArrayList<>(appearance.mySections).equals(new ArrayList<>(mySections));
       }
     }
   }
@@ -148,6 +153,7 @@ public class CompositeAppearance implements ModifiableCellAppearanceEx {
     return appearance;
   }
 
+  @TestOnly
   public Iterator<TextSection> getSectionsIterator() {
     return mySections.iterator();
   }
@@ -155,8 +161,8 @@ public class CompositeAppearance implements ModifiableCellAppearanceEx {
   public static class TextSection {
     private static final TextAttributes DEFAULT_TEXT_ATTRIBUTES = new TextAttributes(null, null, null, null, Font.PLAIN);
     private static final String DEFAULT_TEXT = "";
-    private String TEXT;
-    private TextAttributes ATTRIBUTES;
+    private final String TEXT;
+    private final TextAttributes ATTRIBUTES;
 
     public TextSection(String text, TextAttributes attributes) {
       ATTRIBUTES = attributes == null ? DEFAULT_TEXT_ATTRIBUTES : attributes;
@@ -198,7 +204,7 @@ public class CompositeAppearance implements ModifiableCellAppearanceEx {
     }
 
     public void addSurrounded(String text, String prefix, String suffix, SimpleTextAttributes textAttributes) {
-      if (text != null && text.trim().length() > 0) {
+      if (text != null && !text.trim().isEmpty()) {
         addText(prefix + text + suffix, textAttributes);
       }
     }
@@ -217,6 +223,7 @@ public class CompositeAppearance implements ModifiableCellAppearanceEx {
   }
 
   private class DequeBeginning extends DequeEnd {
+    @Override
     public void addSection(TextSection section) {
       synchronized (mySections) {
         addSectionAt(0, section);
@@ -226,6 +233,7 @@ public class CompositeAppearance implements ModifiableCellAppearanceEx {
   }
 
   private class DequeEnding extends DequeEnd {
+    @Override
     public void addSection(TextSection section) {
       synchronized (mySections) {
         addSectionAt(myInsertionIndex, section);
@@ -235,6 +243,7 @@ public class CompositeAppearance implements ModifiableCellAppearanceEx {
   }
 
   private class DequeSuffix extends DequeEnd {
+    @Override
     public void addSection(TextSection section) {
       synchronized (mySections) {
         addSectionAt(mySections.size(), section);

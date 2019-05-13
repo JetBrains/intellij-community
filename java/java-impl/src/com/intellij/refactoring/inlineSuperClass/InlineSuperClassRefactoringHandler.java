@@ -14,20 +14,17 @@
  * limitations under the License.
  */
 
-/*
- * User: anna
- * Date: 27-Aug-2008
- */
 package com.intellij.refactoring.inlineSuperClass;
 
+import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.lang.StdLanguages;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiAnonymousClass;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiReference;
+import com.intellij.psi.PsiReferenceList;
 import com.intellij.psi.search.searches.DirectClassInheritorsSearch;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.inline.JavaInlineActionHandler;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 
@@ -41,6 +38,7 @@ public class InlineSuperClassRefactoringHandler extends JavaInlineActionHandler 
     return element instanceof PsiClass;
   }
 
+  @Override
   public boolean canInlineElement(PsiElement element) {
     if (!(element instanceof PsiClass)) return false;
     if (element.getLanguage() != StdLanguages.JAVA) return false;
@@ -48,25 +46,31 @@ public class InlineSuperClassRefactoringHandler extends JavaInlineActionHandler 
     return inheritors.size() > 0;
   }
 
+  @Override
   public void inlineElement(final Project project, final Editor editor, final PsiElement element) {
     PsiClass superClass = (PsiClass) element;
-    Collection<PsiClass> inheritors = DirectClassInheritorsSearch.search((PsiClass)element).findAll();
     if (!superClass.getManager().isInProject(superClass)) {
       CommonRefactoringUtil.showErrorHint(project, editor, "Cannot inline non-project class", REFACTORING_NAME, null);
       return;
     }
 
-    for (PsiClass inheritor : inheritors) {
-      if (PsiTreeUtil.isAncestor(superClass, inheritor, false)) {
-        CommonRefactoringUtil.showErrorHint(project, editor, "Cannot inline into the inner class. Move \'" + inheritor.getName() + "\' to upper level", REFACTORING_NAME, null);
-        return;
-      }
-      if (inheritor instanceof PsiAnonymousClass) {
-        CommonRefactoringUtil.showErrorHint(project, editor, "Cannot inline into anonymous class.", REFACTORING_NAME, null);
-        return;
+    PsiClass chosen = null;
+    PsiReference reference = editor != null ? TargetElementUtil.findReference(editor, editor.getCaretModel().getOffset()) : null;
+    if (reference != null) {
+      final PsiElement resolve = reference.resolve();
+      if (resolve == superClass) {
+        final PsiElement referenceElement = reference.getElement();
+        if (referenceElement != null) {
+          final PsiElement parent = referenceElement.getParent();
+          if (parent instanceof PsiReferenceList) {
+            final PsiElement gParent = parent.getParent();
+            if (gParent instanceof PsiClass) {
+              chosen = (PsiClass)gParent;
+            }
+          }
+        }
       }
     }
-
-    new InlineSuperClassRefactoringDialog(project, superClass, inheritors.toArray(new PsiClass[inheritors.size()])).show();
+    new InlineSuperClassRefactoringDialog(project, superClass, chosen).show();
   }
 }

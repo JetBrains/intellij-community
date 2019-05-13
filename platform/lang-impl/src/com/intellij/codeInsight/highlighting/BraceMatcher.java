@@ -26,7 +26,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public interface BraceMatcher {
-  ExtensionPointName<FileTypeExtensionPoint<BraceMatcher>> EP_NAME = new ExtensionPointName<FileTypeExtensionPoint<BraceMatcher>>("com.intellij.braceMatcher");
+  ExtensionPointName<FileTypeExtensionPoint<BraceMatcher>> EP_NAME = new ExtensionPointName<>("com.intellij.braceMatcher");
 
   int getBraceTokenGroupId(IElementType tokenType);
   boolean isLBraceToken(HighlighterIterator iterator,CharSequence fileText, FileType fileType);

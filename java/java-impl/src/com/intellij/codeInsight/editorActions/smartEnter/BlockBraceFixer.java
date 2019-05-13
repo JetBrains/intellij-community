@@ -23,13 +23,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiStatement;
 import com.intellij.util.IncorrectOperationException;
 
-/**
- * Created by IntelliJ IDEA.
- * User: max
- * Date: Sep 5, 2003
- * Time: 6:30:10 PM
- * To change this template use Options | File Templates.
- */
 public class BlockBraceFixer implements Fixer{
   @Override
   public void apply(Editor editor, JavaSmartEnterProcessor processor, PsiElement psiElement) throws IncorrectOperationException {

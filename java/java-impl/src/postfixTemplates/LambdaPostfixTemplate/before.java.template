@@ -1,0 +1,3 @@
+public void m() {
+  <spot>foo()</spot>.lambda
+}

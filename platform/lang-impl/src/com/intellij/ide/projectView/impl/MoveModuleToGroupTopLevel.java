@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,9 +14,6 @@
  * limitations under the License.
  */
 
-/**
- * @author cdr
- */
 package com.intellij.ide.projectView.impl;
 
 import com.intellij.ide.projectView.actions.MoveModulesOutsideGroupAction;
@@ -24,7 +21,8 @@ import com.intellij.ide.projectView.actions.MoveModulesToSubGroupAction;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleManager;
+import com.intellij.openapi.module.ModuleGrouper;
+import com.intellij.openapi.module.ModuleGrouperKt;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -33,55 +31,43 @@ import java.util.*;
 
 public class MoveModuleToGroupTopLevel extends ActionGroup {
   @Override
-  public void update(AnActionEvent e){
+  public void update(@NotNull AnActionEvent e){
     final DataContext dataContext = e.getDataContext();
-    final Project project = PlatformDataKeys.PROJECT.getData(dataContext);
+    final Project project = CommonDataKeys.PROJECT.getData(dataContext);
     final Module[] modules = LangDataKeys.MODULE_CONTEXT_ARRAY.getData(dataContext);
-    boolean active = project != null && modules != null && modules.length != 0;
+    boolean active = project != null && modules != null && modules.length != 0 && !ModuleGrouperKt.isQualifiedModuleNamesEnabled(project);
     e.getPresentation().setVisible(active);
   }
 
   @Override
   @NotNull
   public AnAction[] getChildren(@Nullable AnActionEvent e) {
-    if (e == null) {
-      return EMPTY_ARRAY;
-    }
-    List<String> topLevelGroupNames = new ArrayList<String> (getTopLevelGroupNames(e.getDataContext()));
-    Collections.sort ( topLevelGroupNames );
+    if (e == null) return EMPTY_ARRAY;
 
-    List<AnAction> result = new ArrayList<AnAction>();
+    Project project = getEventProject(e);
+    if (project == null) return EMPTY_ARRAY;
+
+    ModifiableModuleModel moduleModel = LangDataKeys.MODIFIABLE_MODULE_MODEL.getData(e.getDataContext());
+    ModuleGrouper grouper = ModuleGrouper.instanceFor(project, moduleModel);
+    List<String> topLevelGroupNames = new ArrayList<>(getTopLevelGroupNames(grouper));
+    Collections.sort(topLevelGroupNames);
+
+    List<AnAction> result = new ArrayList<>();
     result.add(new MoveModulesOutsideGroupAction());
     result.add(new MoveModulesToSubGroupAction(null));
     result.add(Separator.getInstance());
     for (String name : topLevelGroupNames) {
-      result.add(new MoveModuleToGroup(new ModuleGroup(new String[]{name})));
+      result.add(new MoveModuleToGroup(new ModuleGroup(Collections.singletonList(name))));
     }
-    return result.toArray(new AnAction[result.size()]);
+    return result.toArray(AnAction.EMPTY_ARRAY);
   }
 
-  private static Collection<String> getTopLevelGroupNames(final DataContext dataContext) {
-    final Project project =PlatformDataKeys.PROJECT.getData(dataContext);
-
-    final ModifiableModuleModel model = LangDataKeys.MODIFIABLE_MODULE_MODEL.getData(dataContext);
-
-    Module[] allModules;
-    if ( model != null ) {
-      allModules = model.getModules();
-    } else {
-      allModules = ModuleManager.getInstance(project).getModules();
-    }
-
-    Set<String> topLevelGroupNames = new HashSet<String>();
-    for (final Module child : allModules) {
-      String[] group;
-      if ( model != null ) {
-        group = model.getModuleGroupPath(child);
-      } else {
-        group = ModuleManager.getInstance(project).getModuleGroupPath(child);
-      }
-      if (group != null) {
-        topLevelGroupNames.add(group[0]);
+  private static Collection<String> getTopLevelGroupNames(ModuleGrouper grouper) {
+    Set<String> topLevelGroupNames = new HashSet<>();
+    for (final Module child : grouper.getAllModules()) {
+      List<String> group = grouper.getGroupPath(child);
+      if (!group.isEmpty()) {
+        topLevelGroupNames.add(group.get(0));
       }
     }
     return topLevelGroupNames;

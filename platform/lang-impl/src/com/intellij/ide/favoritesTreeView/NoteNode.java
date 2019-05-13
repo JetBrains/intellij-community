@@ -15,23 +15,20 @@
  */
 package com.intellij.ide.favoritesTreeView;
 
+import org.jetbrains.annotations.NotNull;
+
 import java.util.Set;
 
-/**
- * Created with IntelliJ IDEA.
- * User: Irina.Chernushina
- * Date: 5/31/12
- * Time: 8:47 PM
- */
 public class NoteNode {
   private PercentDone myPercentDone = PercentDone._0;
   private Set<Flag> myFlags;
   private Set<Concept> myConcepts;
 
+  @NotNull
   private String myText;
-  private boolean myReadonly;
+  private final boolean myReadonly;
 
-  public NoteNode(String text, boolean readonly) {
+  public NoteNode(@NotNull String text, boolean readonly) {
     myText = text;
     myReadonly = readonly;
   }
@@ -60,11 +57,12 @@ public class NoteNode {
     myConcepts = concepts;
   }
 
+  @NotNull
   public String getText() {
     return myText;
   }
 
-  public void setText(String text) {
+  public void setText(@NotNull String text) {
     myText = text;
   }
 

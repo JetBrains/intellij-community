@@ -9,8 +9,8 @@ Groovy script
     PsiWhiteSpace(' ')
     PsiElement(identifier)('a')
     PsiWhiteSpace(' ')
-    PsiElement(()('(')
     Parameter list
+      PsiElement(()('(')
       Parameter
         Modifiers
           <empty list>
@@ -39,10 +39,10 @@ Groovy script
               PsiElement(>)('>')
         PsiWhiteSpace(' ')
         PsiElement(identifier)('f')
-    PsiElement())(')')
-    PsiWhiteSpace(' ')
+      PsiElement())(')')
     Throw clause
       <empty list>
+    PsiWhiteSpace(' ')
     Open block
       PsiElement({)('{')
       PsiElement(})('}')

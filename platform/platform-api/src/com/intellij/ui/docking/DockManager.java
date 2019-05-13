@@ -15,7 +15,7 @@
  */
 package com.intellij.ui.docking;
 
-import com.intellij.openapi.components.ProjectComponent;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.IdeFrame;
 import org.jetbrains.annotations.NotNull;
@@ -25,13 +25,13 @@ import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.util.Set;
 
-public abstract class DockManager implements ProjectComponent {
+public abstract class DockManager {
 
   public abstract void register(DockContainer container);
   public abstract void register(String id, DockContainerFactory factory);
 
   public static DockManager getInstance(Project project) {
-    return project.getComponent(DockManager.class);
+    return ServiceManager.getService(project, DockManager.class);
   }
 
   public abstract DragSession createDragSession(MouseEvent mouseEvent, @NotNull DockableContent content);

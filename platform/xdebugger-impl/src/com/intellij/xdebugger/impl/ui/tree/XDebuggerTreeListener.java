@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,9 +15,9 @@
  */
 package com.intellij.xdebugger.impl.ui.tree;
 
-import com.intellij.xdebugger.impl.ui.tree.nodes.XValueContainerNode;
-import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
+import com.intellij.xdebugger.impl.ui.tree.nodes.RestorableStateNode;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XDebuggerTreeNode;
+import com.intellij.xdebugger.impl.ui.tree.nodes.XValueContainerNode;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -26,8 +26,9 @@ import java.util.List;
  * @author nik
  */
 public interface XDebuggerTreeListener {
+  default void nodeLoaded(@NotNull RestorableStateNode node, @NotNull String name) {
+  }
 
-  void nodeLoaded(@NotNull XValueNodeImpl node, final String name, final String value);
-
-  void childrenLoaded(@NotNull XDebuggerTreeNode node, @NotNull List<XValueContainerNode<?>> children, final boolean last);
+  default void childrenLoaded(@NotNull XDebuggerTreeNode node, @NotNull List<XValueContainerNode<?>> children, final boolean last) {
+  }
 }

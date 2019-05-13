@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,8 +14,9 @@
  * limitations under the License.
  */
 
-#ifndef __FSNOTIFIER_H
-#define __FSNOTIFIER_H
+#pragma once
+
+#define VERSION "20181217.1910"
 
 #include <stdbool.h>
 #include <stdio.h>
@@ -32,7 +33,7 @@ void message(MSG id);
 // logging
 void userlog(int priority, const char* format, ...);
 
-#define CHECK_NULL(p, r) if (p == NULL)  { userlog(LOG_ERR, "out of memory"); return r; }
+#define CHECK_NULL(p, r) if (p == NULL) { userlog(LOG_ERR, "out of memory"); return r; }
 
 
 // variable-length array
@@ -46,6 +47,7 @@ void array_put(array* a, int index, void* element);
 void* array_get(array* a, int index);
 void array_delete(array* a);
 void array_delete_vs_data(array* a);
+void array_delete_data(array* a);
 
 
 // poor man's hash table
@@ -61,11 +63,12 @@ void table_delete(table* t);
 enum {
   ERR_IGNORE = -1,
   ERR_CONTINUE = -2,
-  ERR_ABORT = -3
+  ERR_ABORT = -3,
+  ERR_MISSING = -4
 };
 
 bool init_inotify();
-void set_inotify_callback(void (* callback)(char*, int));
+void set_inotify_callback(void (* callback)(const char*, int));
 int get_inotify_fd();
 int watch(const char* root, array* mounts);
 void unwatch(int id);
@@ -80,6 +83,3 @@ char* read_line(FILE* stream);
 
 // path comparison
 bool is_parent_path(const char* parent_path, const char* child_path);
-
-
-#endif

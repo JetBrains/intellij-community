@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,13 +20,10 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.project.DumbAware;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
-/**
- * User: Dmitry.Krasilschikov
- * Date: 14.10.2008
- */
 public class GroovyDocReducePackageAction extends AnAction implements DumbAware {
   private final JList myPackagesList;
   private final DefaultListModel myDataModel;
@@ -37,12 +34,13 @@ public class GroovyDocReducePackageAction extends AnAction implements DumbAware 
     myDataModel = dataModel;
   }
 
-  public void actionPerformed(final AnActionEvent e) {
+  @Override
+  public void actionPerformed(@NotNull final AnActionEvent e) {
     myDataModel.remove(myPackagesList.getSelectedIndex());
   }
 
   @Override
-  public void update(final AnActionEvent e) {
+  public void update(@NotNull final AnActionEvent e) {
     final Presentation presentation = e.getPresentation();
     if (myPackagesList.getSelectedIndex() == -1) {
       presentation.setEnabled(false);

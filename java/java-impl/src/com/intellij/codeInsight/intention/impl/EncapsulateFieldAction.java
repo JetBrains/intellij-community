@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -65,12 +65,12 @@ public class EncapsulateFieldAction extends BaseRefactoringIntentionAction {
 
   @Nullable
   protected static PsiField getField(@Nullable PsiElement element) {
-    if (element == null || !(element instanceof PsiIdentifier)) {
+    if (!(element instanceof PsiIdentifier)) {
       return null;
     }
 
     final PsiElement parent = element.getParent();
-    if (parent == null || !(parent instanceof PsiReferenceExpression)) {
+    if (!(parent instanceof PsiReferenceExpression)) {
       return null;
     }
     final PsiReferenceExpression ref = (PsiReferenceExpression)parent;
@@ -80,9 +80,14 @@ public class EncapsulateFieldAction extends BaseRefactoringIntentionAction {
     }
 
     final PsiElement resolved = ref.resolve();
-    if (resolved == null || !(resolved instanceof PsiField)) {
+    if (!(resolved instanceof PsiField)) {
       return null;
     }
     return (PsiField)resolved;
+  }
+
+  @Override
+  public boolean startInWriteAction() {
+    return false;
   }
 }

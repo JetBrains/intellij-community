@@ -15,8 +15,8 @@
  */
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
-import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.codeInsight.ExceptionUtil;
+import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.editor.Editor;
@@ -45,7 +45,7 @@ public class AddRuntimeExceptionToThrowsAction implements IntentionAction {
 
   @Override
   public void invoke(@NotNull final Project project, Editor editor, PsiFile file) {
-    if (!CodeInsightUtilBase.prepareFileForWrite(file)) return;
+    if (!FileModificationService.getInstance().prepareFileForWrite(file)) return;
 
     PsiDocumentManager.getInstance(project).commitAllDocuments();
 
@@ -72,7 +72,7 @@ public class AddRuntimeExceptionToThrowsAction implements IntentionAction {
     PsiClassType exception = getRuntimeExceptionAtCaret(editor, file);
     if (exception == null) return false;
 
-    PsiMethod method = PsiTreeUtil.getParentOfType(elementAtCaret(editor, file), PsiMethod.class);
+    PsiMethod method = PsiTreeUtil.getParentOfType(elementAtCaret(editor, file), PsiMethod.class, true, PsiLambdaExpression.class);
     if (method == null || !method.getThrowsList().isPhysical()) return false;
 
     return !isMethodThrows(method, exception);

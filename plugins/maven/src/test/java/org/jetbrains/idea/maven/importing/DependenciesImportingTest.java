@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,6 @@
  */
 package org.jetbrains.idea.maven.importing;
 
-import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.module.Module;
@@ -25,11 +24,13 @@ import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.idea.maven.MavenCustomRepositoryHelper;
 import org.jetbrains.idea.maven.MavenImportingTestCase;
 import org.jetbrains.idea.maven.model.MavenId;
 import org.jetbrains.idea.maven.project.MavenProject;
+import org.jetbrains.idea.maven.server.MavenServerManager;
 
 import java.io.File;
 import java.util.Arrays;
@@ -37,7 +38,7 @@ import java.util.Collections;
 import java.util.List;
 
 public class DependenciesImportingTest extends MavenImportingTestCase {
-  public void testLibraryDependency() throws Exception {
+  public void testLibraryDependency() {
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
                   "<version>1</version>" +
@@ -57,7 +58,7 @@ public class DependenciesImportingTest extends MavenImportingTestCase {
                        "jar://" + getRepositoryPath() + "/junit/junit/4.0/junit-4.0-javadoc.jar!/");
   }
 
-  public void testSystemDependency() throws Exception {
+  public void testSystemDependency() {
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
                   "<version>1</version>" +
@@ -75,10 +76,10 @@ public class DependenciesImportingTest extends MavenImportingTestCase {
     assertModules("project");
     assertModuleLibDep("project", "Maven: junit:junit:4.0",
                        Arrays.asList("jar://" + getRepositoryPath() + "/junit/junit/4.0/junit-4.0.jar!/"),
-                       Collections.<String>emptyList(), Collections.<String>emptyList());
+                       Collections.emptyList(), Collections.emptyList());
   }
 
-  public void testTestJarDependencies() throws Exception {
+  public void testTestJarDependencies() {
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
                   "<version>1</version>" +
@@ -99,7 +100,7 @@ public class DependenciesImportingTest extends MavenImportingTestCase {
                        "jar://" + getRepositoryPath() + "/junit/junit/4.0/junit-4.0-test-javadoc.jar!/");
   }
 
-  public void testDependencyWithClassifier() throws Exception {
+  public void testDependencyWithClassifier() {
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
                   "<version>1</version>" +
@@ -119,25 +120,26 @@ public class DependenciesImportingTest extends MavenImportingTestCase {
                        "jar://" + getRepositoryPath() + "/junit/junit/4.0/junit-4.0-javadoc.jar!/");
   }
 
-  public void testSystemDependencyWithoutPath() throws Exception {
-    importProject("<groupId>test</groupId>" +
-                  "<artifactId>project</artifactId>" +
-                  "<version>1</version>" +
+  public void testSystemDependencyWithoutPath() {
+    createProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>project</artifactId>" +
+                     "<version>1</version>" +
 
-                  "<dependencies>" +
-                  "  <dependency>" +
-                  "    <groupId>junit</groupId>" +
-                  "    <artifactId>junit</artifactId>" +
-                  "    <version>4.0</version>" +
-                  "    <scope>system</scope>" +
-                  "  </dependency>" +
-                  "</dependencies>");
+                     "<dependencies>" +
+                     "  <dependency>" +
+                     "    <groupId>junit</groupId>" +
+                     "    <artifactId>junit</artifactId>" +
+                     "    <version>4.0</version>" +
+                     "    <scope>system</scope>" +
+                     "  </dependency>" +
+                     "</dependencies>");
+    importProjectWithErrors();
 
     assertModules("project");
     assertModuleLibDeps("project"); // dependency was not added due to reported pom model problem. 
   }
 
-  public void testPreservingDependenciesOrder() throws Exception {
+  public void testPreservingDependenciesOrder() {
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
                   "<version>1</version>" +
@@ -159,7 +161,7 @@ public class DependenciesImportingTest extends MavenImportingTestCase {
     assertModuleLibDeps("project", "Maven: B:B:2", "Maven: A:A:1");
   }
 
-  public void testDoNotResetDependenciesIfProjectIsInvalid() throws Exception {
+  public void testDoNotResetDependenciesIfProjectIsInvalid() {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +
@@ -187,11 +189,11 @@ public class DependenciesImportingTest extends MavenImportingTestCase {
                      "  </dependency>" +
                      "</dependencies>");
 
-    importProject();
+    importProjectWithErrors();
     assertModuleLibDeps("project", "Maven: group:lib:1");
   }
 
-  public void testInterModuleDependencies() throws Exception {
+  public void testInterModuleDependencies() {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<packaging>pom</packaging>" +
@@ -223,8 +225,44 @@ public class DependenciesImportingTest extends MavenImportingTestCase {
 
     assertModuleModuleDeps("m1", "m2");
   }
+  public void testInterModuleDependenciesWithClassifier() {
+    createProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>project</artifactId>" +
+                     "<packaging>pom</packaging>" +
+                     "<version>1</version>" +
 
-  public void testDoNotAddInterModuleDependenciesFoUnsupportedDependencyType() throws Exception {
+                     "<modules>" +
+                     "  <module>m1</module>" +
+                     "  <module>m2</module>" +
+                     "</modules>");
+
+    createModulePom("m1", "<groupId>test</groupId>" +
+                          "<artifactId>m1</artifactId>" +
+                          "<version>1</version>" +
+
+                          "<dependencies>" +
+                          "  <dependency>" +
+                          "    <groupId>test</groupId>" +
+                          "    <artifactId>m2</artifactId>" +
+                          "    <version>1</version>" +
+                          "    <classifier>client</classifier>" +
+                          "  </dependency>" +
+                          "</dependencies>");
+
+    createModulePom("m2", "<groupId>test</groupId>" +
+                          "<artifactId>m2</artifactId>" +
+                          "<version>1</version>");
+
+    importProject();
+
+    assertModuleModuleDeps("m1", "m2");
+    assertModuleLibDep("m1", "Maven: test:m2:client:1",
+                       "jar://" + getRepositoryPath() + "/test/m2/1/m2-1-client.jar!/",
+                       "jar://" + getRepositoryPath() + "/test/m2/1/m2-1-sources.jar!/",
+                       "jar://" + getRepositoryPath() + "/test/m2/1/m2-1-javadoc.jar!/");
+  }
+
+  public void testDoNotAddInterModuleDependenciesFoUnsupportedDependencyType() {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<packaging>pom</packaging>" +
@@ -258,7 +296,7 @@ public class DependenciesImportingTest extends MavenImportingTestCase {
     assertModuleModuleDeps("m1");
   }
 
-  public void testInterModuleDependenciesWithoutModuleVersions() throws Exception {
+  public void testInterModuleDependenciesWithoutModuleVersions() {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<packaging>pom</packaging>" +
@@ -296,7 +334,7 @@ public class DependenciesImportingTest extends MavenImportingTestCase {
     assertModuleModuleDeps("m1", "m2");
   }
 
-  public void testInterModuleDependenciesWithVersionRanges() throws Exception {
+  public void testInterModuleDependenciesWithVersionRanges() {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<packaging>pom</packaging>" +
@@ -329,7 +367,7 @@ public class DependenciesImportingTest extends MavenImportingTestCase {
     assertModuleModuleDeps("m1", "m2");
   }
 
-  public void testInterModuleDependenciesWithLatestVersion() throws Exception {
+  public void testInterModuleDependenciesWithLatestVersion() {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<packaging>pom</packaging>" +
@@ -356,6 +394,7 @@ public class DependenciesImportingTest extends MavenImportingTestCase {
                           "<artifactId>m2</artifactId>" +
                           "<version>1</version>");
 
+    MavenServerManager.getInstance().setUseMaven2();
     importProject();
     assertModules("project", "m1", "m2");
 
@@ -366,7 +405,7 @@ public class DependenciesImportingTest extends MavenImportingTestCase {
     assertEquals(new MavenId("test", "m2", "1"), p.getDependencies().get(0).getMavenId());
   }
 
-  public void testInterModuleDependenciesWithLatestVersionAreBeingSetupForSnapshots() throws Exception {
+  public void testInterModuleDependenciesWithLatestVersionAreBeingSetupForSnapshots() {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<packaging>pom</packaging>" +
@@ -393,6 +432,7 @@ public class DependenciesImportingTest extends MavenImportingTestCase {
                           "<artifactId>m2</artifactId>" +
                           "<version>1-SNAPSHOT</version>");
 
+    MavenServerManager.getInstance().setUseMaven2();
     importProject();
     assertModules("project", "m1", "m2");
 
@@ -403,7 +443,7 @@ public class DependenciesImportingTest extends MavenImportingTestCase {
     assertEquals(new MavenId("test", "m2", "1-SNAPSHOT"), p.getDependencies().get(0).getMavenId());
   }
 
-  public void testInterModuleDependenciesWithReleaseVersion() throws Exception {
+  public void testInterModuleDependenciesWithReleaseVersion() {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<packaging>pom</packaging>" +
@@ -430,6 +470,7 @@ public class DependenciesImportingTest extends MavenImportingTestCase {
                           "<artifactId>m2</artifactId>" +
                           "<version>1</version>");
 
+    MavenServerManager.getInstance().setUseMaven2();
     importProject();
     assertModules("project", "m1", "m2");
 
@@ -440,7 +481,7 @@ public class DependenciesImportingTest extends MavenImportingTestCase {
     assertEquals(new MavenId("test", "m2", "1"), p.getDependencies().get(0).getMavenId());
   }
 
-  public void testInterModuleDependenciesWithReleaseVersionAreNotBeingSetupForSnapshotDependencies() throws Exception {
+  public void testInterModuleDependenciesWithReleaseVersionAreNotBeingSetupForSnapshotDependencies() {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<packaging>pom</packaging>" +
@@ -467,6 +508,7 @@ public class DependenciesImportingTest extends MavenImportingTestCase {
                           "<artifactId>m2</artifactId>" +
                           "<version>1-SNAPSHOT</version>");
 
+    MavenServerManager.getInstance().setUseMaven2();
     importProject();
     assertModules("project", "m1", "m2");
 
@@ -474,7 +516,7 @@ public class DependenciesImportingTest extends MavenImportingTestCase {
     assertModuleLibDeps("m1", "Maven: test:m2:RELEASE");
   }
 
-  public void testInterSnapshotModuleDependenciesWithSnapshotVersionRanges() throws Exception {
+  public void testInterSnapshotModuleDependenciesWithSnapshotVersionRanges() {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<packaging>pom</packaging>" +
@@ -501,13 +543,14 @@ public class DependenciesImportingTest extends MavenImportingTestCase {
                           "<artifactId>m2</artifactId>" +
                           "<version>1-SNAPSHOT</version>");
 
+    MavenServerManager.getInstance().setUseMaven2();
     importProject();
     assertModules("project", "m1", "m2");
 
     assertModuleModuleDeps("m1", "m2");
   }
 
-  public void testInterSnapshotModuleDependenciesWithVersionRanges() throws Exception {
+  public void testInterSnapshotModuleDependenciesWithVersionRanges() {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<packaging>pom</packaging>" +
@@ -534,13 +577,14 @@ public class DependenciesImportingTest extends MavenImportingTestCase {
                           "<artifactId>m2</artifactId>" +
                           "<version>1-SNAPSHOT</version>");
 
+    MavenServerManager.getInstance().setUseMaven2();
     importProject();
     assertModules("project", "m1", "m2");
 
     assertModuleModuleDeps("m1", "m2");
   }
 
-  public void testInterModuleDependenciesWithoutModuleGroup() throws Exception {
+  public void testInterModuleDependenciesWithoutModuleGroup() {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<packaging>pom</packaging>" +
@@ -578,7 +622,7 @@ public class DependenciesImportingTest extends MavenImportingTestCase {
     assertModuleModuleDeps("m1", "m2");
   }
 
-  public void testInterModuleDependenciesIfThereArePropertiesInArtifactHeader() throws Exception {
+  public void testInterModuleDependenciesIfThereArePropertiesInArtifactHeader() {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<packaging>pom</packaging>" +
@@ -621,7 +665,7 @@ public class DependenciesImportingTest extends MavenImportingTestCase {
     assertModuleModuleDeps("m1", "m2");
   }
 
-  public void testInterModuleDependenciesIfThereArePropertiesInArtifactHeaderDefinedInParent() throws Exception {
+  public void testInterModuleDependenciesIfThereArePropertiesInArtifactHeaderDefinedInParent() {
     createProjectPom("<groupId>${groupProp}</groupId>" +
                      "<artifactId>parent</artifactId>" +
                      "<version>${versionProp}</version>" +
@@ -667,7 +711,7 @@ public class DependenciesImportingTest extends MavenImportingTestCase {
     assertModuleModuleDeps("m1", "m2");
   }
 
-  public void testDependencyOnSelf() throws Exception {
+  public void testDependencyOnSelf() {
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
                   "<version>1</version>" +
@@ -683,7 +727,7 @@ public class DependenciesImportingTest extends MavenImportingTestCase {
     assertModuleModuleDeps("project");
   }
 
-  public void testDependencyOnSelfWithPomPackaging() throws Exception {
+  public void testDependencyOnSelfWithPomPackaging() {
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
                   "<version>1</version>" +
@@ -700,7 +744,7 @@ public class DependenciesImportingTest extends MavenImportingTestCase {
     assertModuleModuleDeps("project");
   }
 
-  public void testIntermoduleDependencyOnTheSameModuleWithDifferentTypes() throws Exception {
+  public void testIntermoduleDependencyOnTheSameModuleWithDifferentTypes() {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<packaging>pom</packaging>" +
@@ -739,7 +783,7 @@ public class DependenciesImportingTest extends MavenImportingTestCase {
     assertModuleModuleDeps("m1", "m2", "m2");
   }
 
-  public void testDependencyScopes() throws Exception {
+  public void testDependencyScopes() {
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
                   "<version>1</version>" +
@@ -769,7 +813,7 @@ public class DependenciesImportingTest extends MavenImportingTestCase {
     assertModuleLibDepScope("project", "Maven: test:foo3:1", DependencyScope.TEST);
   }
 
-  public void testModuleDependencyScopes() throws Exception {
+  public void testModuleDependencyScopes() {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<packaging>pom</packaging>" +
@@ -824,7 +868,7 @@ public class DependenciesImportingTest extends MavenImportingTestCase {
     assertModuleModuleDepScope("m1", "m4", DependencyScope.TEST);
   }
 
-  public void testDependenciesAreNotExported() throws Exception {
+  public void testDependenciesAreNotExported() {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<packaging>pom</packaging>" +
@@ -860,7 +904,7 @@ public class DependenciesImportingTest extends MavenImportingTestCase {
     assertExportedDeps("m1");
   }
 
-  public void testTransitiveDependencies() throws Exception {
+  public void testTransitiveDependencies() {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<packaging>pom</packaging>" +
@@ -903,7 +947,7 @@ public class DependenciesImportingTest extends MavenImportingTestCase {
     assertModuleLibDeps("m1", "Maven: group:id:1");
   }
 
-  public void testTransitiveLibraryDependencyVersionResolution() throws Exception {
+  public void testTransitiveLibraryDependencyVersionResolution() {
     // this test hanles the case when the particular dependency list cause embedder set
     // the versionRange for the xml-apis:xml-apis:1.0.b2 artifact to null.
     // see http://jira.codehaus.org/browse/MNG-3386
@@ -931,7 +975,7 @@ public class DependenciesImportingTest extends MavenImportingTestCase {
     assertModuleLibDep("project", "Maven: xml-apis:xml-apis:1.0.b2");
   }
 
-  public void testExclusionOfTransitiveDependencies() throws Exception {
+  public void testExclusionOfTransitiveDependencies() {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<packaging>pom</packaging>" +
@@ -979,7 +1023,7 @@ public class DependenciesImportingTest extends MavenImportingTestCase {
     assertModuleLibDeps("m1");
   }
 
-  public void testDependencyWithEnvironmentProperty() throws Exception {
+  public void testDependencyWithEnvironmentProperty() {
     String javaHome = FileUtil.toSystemIndependentName(System.getProperty("java.home"));
 
     importProject("<groupId>test</groupId>" +
@@ -1002,9 +1046,9 @@ public class DependenciesImportingTest extends MavenImportingTestCase {
                        "jar://" + javaHome + "/lib/tools.jar!/");
   }
 
-  public void testDependencyWithEnvironmentENVProperty() throws Exception {
+  public void testDependencyWithEnvironmentENVProperty() {
     String envDir = FileUtil.toSystemIndependentName(System.getenv(getEnvVar()));
-    if (envDir.endsWith("/")) envDir = envDir.substring(0, envDir.length() - 1);
+    envDir = StringUtil.trimEnd(envDir, "/");
 
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
@@ -1026,7 +1070,7 @@ public class DependenciesImportingTest extends MavenImportingTestCase {
                        "jar://" + envDir + "/lib/tools.jar!/");
   }
 
-  public void testDependencyWithVersionRangeOnModule() throws Exception {
+  public void testDependencyWithVersionRangeOnModule() {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<packaging>pom</packaging>" +
@@ -1063,7 +1107,7 @@ public class DependenciesImportingTest extends MavenImportingTestCase {
     assertModuleLibDeps("m1");
   }
 
-  public void testPropertiesInInheritedDependencies() throws Exception {
+  public void testPropertiesInInheritedDependencies() {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +
@@ -1096,7 +1140,7 @@ public class DependenciesImportingTest extends MavenImportingTestCase {
     assertModuleLibDep("m", "Maven: group:lib:2");
   }
 
-  public void testPropertyInTheModuleDependency() throws Exception {
+  public void testPropertyInTheModuleDependency() {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +
@@ -1134,7 +1178,7 @@ public class DependenciesImportingTest extends MavenImportingTestCase {
     assertModuleLibDeps("m", "Maven: group:id:1.2.3");
   }
 
-  public void testManagedModuleDependency() throws Exception {
+  public void testManagedModuleDependency() {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +
@@ -1174,7 +1218,7 @@ public class DependenciesImportingTest extends MavenImportingTestCase {
     assertModuleLibDeps("m", "Maven: group:id:1");
   }
 
-  public void testPropertyInTheManagedModuleDependencyVersion() throws Exception {
+  public void testPropertyInTheManagedModuleDependencyVersion() {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +
@@ -1220,7 +1264,7 @@ public class DependenciesImportingTest extends MavenImportingTestCase {
     assertModuleLibDeps("m", "Maven: group:id:1");
   }
 
-  public void testPomTypeDependency() throws Exception {
+  public void testPomTypeDependency() {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +
@@ -1237,7 +1281,7 @@ public class DependenciesImportingTest extends MavenImportingTestCase {
     importProject(); // shouldn't throw any exception
   }
 
-  public void testPropertyInTheManagedModuleDependencyVersionOfPomType() throws Exception {
+  public void testPropertyInTheManagedModuleDependencyVersionOfPomType() {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +
@@ -1279,7 +1323,7 @@ public class DependenciesImportingTest extends MavenImportingTestCase {
                          "  </dependency>" +
                          "</dependencies>");
 
-    importProject();
+    importProjectWithErrors();
 
     assertModules("project", "m");
     assertModuleLibDeps("m");
@@ -1350,11 +1394,10 @@ public class DependenciesImportingTest extends MavenImportingTestCase {
                   "  </dependency>" +
                   "</dependencies>");
 
-    assertFalse(new File(getRepositoryFile(), "junit").exists());
     assertTrue(myProjectsTree.findProject(myProjectPom).hasUnresolvedArtifacts());
   }
 
-  public void testCanResolveDependenciesWhenExtensionPluginNotFound() throws Exception {
+  public void testCanResolveDependenciesWhenExtensionPluginNotFound() {
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
                   "<version>1</version>" +
@@ -1381,7 +1424,7 @@ public class DependenciesImportingTest extends MavenImportingTestCase {
     assertModuleLibDep("project", "Maven: junit:junit:4.0");
   }
 
-  public void testDoNotRemoveLibrariesOnImportIfProjectWasNotChanged() throws Exception {
+  public void testDoNotRemoveLibrariesOnImportIfProjectWasNotChanged() {
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
                   "<version>1</version>" +
@@ -1403,7 +1446,7 @@ public class DependenciesImportingTest extends MavenImportingTestCase {
     assertModuleLibDeps("project", "Maven: junit:junit:4.0");
   }
 
-  public void testDoNotCreateSameLibraryTwice() throws Exception {
+  public void testDoNotCreateSameLibraryTwice() {
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
                   "<version>1</version>" +
@@ -1422,7 +1465,7 @@ public class DependenciesImportingTest extends MavenImportingTestCase {
     assertModuleLibDeps("project", "Maven: junit:junit:4.0");
   }
 
-  public void testCreateSeparateLibraryForDifferentArtifactTypeAndClassifier() throws Exception {
+  public void testCreateSeparateLibraryForDifferentArtifactTypeAndClassifier() {
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
                   "<version>1</version>" +
@@ -1456,7 +1499,7 @@ public class DependenciesImportingTest extends MavenImportingTestCase {
                         "Maven: junit:junit:jdk5:4.0");
   }
 
-  public void testDoNotResetUserLibraryDependencies() throws Exception {
+  public void testDoNotResetUserLibraryDependencies() {
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
                   "<version>1</version>" +
@@ -1484,7 +1527,7 @@ public class DependenciesImportingTest extends MavenImportingTestCase {
     assertModuleLibDeps("project", "My Library", "Maven: junit:junit:4.0");
   }
 
-  public void testDoNotResetUserModuleDependencies() throws Exception {
+  public void testDoNotResetUserModuleDependencies() {
     VirtualFile m1 = createModulePom("m1",
                                      "<groupId>test</groupId>" +
                                      "<artifactId>m1</artifactId>" +
@@ -1515,7 +1558,7 @@ public class DependenciesImportingTest extends MavenImportingTestCase {
     assertModuleModuleDeps("m1", "my-module", "m2");
   }
 
-  public void testRemoveUnnecessaryMavenizedModuleDepsOnRepomport() throws Exception {
+  public void testRemoveUnnecessaryMavenizedModuleDepsOnRepomport() {
     VirtualFile m1 = createModulePom("m1",
                                      "<groupId>test</groupId>" +
                                      "<artifactId>m1</artifactId>" +
@@ -1543,7 +1586,7 @@ public class DependenciesImportingTest extends MavenImportingTestCase {
     assertModuleModuleDeps("m1");
   }
 
-  public void testDoNotResetCustomRootEntries() throws Exception {
+  public void testDoNotResetCustomRootEntries() {
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
                   "<version>1</version>" +
@@ -1562,71 +1605,71 @@ public class DependenciesImportingTest extends MavenImportingTestCase {
     addLibraryRoot("Maven: junit:junit:4.0", OrderRootType.CLASSES, "file://foo.classes");
     addLibraryRoot("Maven: junit:junit:4.0", OrderRootType.SOURCES, "file://foo.sources");
     addLibraryRoot("Maven: junit:junit:4.0", JavadocOrderRootType.getInstance(), "file://foo.javadoc");
+    addLibraryRoot("Maven: junit:junit:4.0", OrderRootType.SOURCES, "jar://" + getRepositoryPath() + "/junit/junit/4.0/junit-4.0-sources.jar!/aaa");
+    addLibraryRoot("Maven: junit:junit:4.0", JavadocOrderRootType.getInstance(), "jar://" + getRepositoryPath() + "/junit/junit/4.0/junit-4.0-javadoc.jar!/bbb");
 
     assertModuleLibDep("project", "Maven: junit:junit:4.0",
                        Arrays.asList("jar://" + getRepositoryPath() + "/junit/junit/4.0/junit-4.0.jar!/", "file://foo.classes"),
-                       Arrays.asList("jar://" + getRepositoryPath() + "/junit/junit/4.0/junit-4.0-sources.jar!/", "file://foo.sources"),
-                       Arrays.asList("jar://" + getRepositoryPath() + "/junit/junit/4.0/junit-4.0-javadoc.jar!/", "file://foo.javadoc"));
+                       Arrays.asList("jar://" + getRepositoryPath() + "/junit/junit/4.0/junit-4.0-sources.jar!/",
+                                     "file://foo.sources",
+                                     "jar://" + getRepositoryPath() + "/junit/junit/4.0/junit-4.0-sources.jar!/aaa"),
+                       Arrays.asList("jar://" + getRepositoryPath() + "/junit/junit/4.0/junit-4.0-javadoc.jar!/",
+                                     "file://foo.javadoc",
+                                     "jar://" + getRepositoryPath() + "/junit/junit/4.0/junit-4.0-javadoc.jar!/bbb"));
 
     scheduleResolveAll();
     resolveDependenciesAndImport();
 
     assertModuleLibDep("project", "Maven: junit:junit:4.0",
                        Arrays.asList("jar://" + getRepositoryPath() + "/junit/junit/4.0/junit-4.0.jar!/", "file://foo.classes"),
-                       Arrays.asList("jar://" + getRepositoryPath() + "/junit/junit/4.0/junit-4.0-sources.jar!/", "file://foo.sources"),
-                       Arrays.asList("jar://" + getRepositoryPath() + "/junit/junit/4.0/junit-4.0-javadoc.jar!/", "file://foo.javadoc"));
+                       Arrays.asList("jar://" + getRepositoryPath() + "/junit/junit/4.0/junit-4.0-sources.jar!/", "file://foo.sources", "jar://" + getRepositoryPath() + "/junit/junit/4.0/junit-4.0-sources.jar!/aaa"),
+                       Arrays.asList("jar://" + getRepositoryPath() + "/junit/junit/4.0/junit-4.0-javadoc.jar!/", "file://foo.javadoc", "jar://" + getRepositoryPath() + "/junit/junit/4.0/junit-4.0-javadoc.jar!/bbb"));
   }
 
-  public void testDoNotResetCustomRootForSystemLibraries() throws Exception {
+  public void testDifferentSystemDependenciesWithSameId() {
+    createModulePom("m1", "<groupId>test</groupId>" +
+                          "<artifactId>m1</artifactId>" +
+                          "<version>1</version>" +
+
+                          "<dependencies>" +
+                          "  <dependency>" +
+                          "    <groupId>xxx</groupId>" +
+                          "    <artifactId>yyy</artifactId>" +
+                          "    <version>1</version>" +
+                          "    <scope>system</scope>" +
+                          "    <systemPath>" + getRoot() + "/m1/foo.jar</systemPath>" +
+                          "  </dependency>" +
+                          "</dependencies>");
+    createModulePom("m2", "<groupId>test</groupId>" +
+                          "<artifactId>m2</artifactId>" +
+                          "<version>1</version>" +
+
+                          "<dependencies>" +
+                          "  <dependency>" +
+                          "    <groupId>xxx</groupId>" +
+                          "    <artifactId>yyy</artifactId>" +
+                          "    <version>1</version>" +
+                          "    <scope>system</scope>" +
+                          "    <systemPath>" + getRoot() + "/m2/foo.jar</systemPath>" +
+                          "  </dependency>" +
+                          "</dependencies>");
+
     importProject("<groupId>test</groupId>" +
-                  "<artifactId>project</artifactId>" +
-                  "<version>1</version>" +
-
-                  "<dependencies>" +
-                  "  <dependency>" +
-                  "    <groupId>xxx</groupId>" +
-                  "    <artifactId>yyy</artifactId>" +
-                  "    <version>1</version>" +
-                  "    <scope>system</scope>" +
-                  "    <systemPath>" + getRoot() + "/foo/foo.jar</systemPath>" +
-                  "  </dependency>" +
-                  "</dependencies>");
-
-    assertProjectLibraries("Maven: xxx:yyy:1");
-    assertModuleLibDeps("project", "Maven: xxx:yyy:1");
-
-    // add sources and javadoc near the jar, just like in the local repository
-    addLibraryRoot("Maven: xxx:yyy:1", OrderRootType.SOURCES, "jar://" + getRoot() + "/foo/foo-sources.jar!/");
-    addLibraryRoot("Maven: xxx:yyy:1", JavadocOrderRootType.getInstance(), "jar://" + getRoot() + "/foo/foo-javadoc.jar!/");
-
-    assertModuleLibDep("project", "Maven: xxx:yyy:1",
-                       Arrays.asList("jar://" + getRoot() + "/foo/foo.jar!/"),
-                       Arrays.asList("jar://" + getRoot() + "/foo/foo-sources.jar!/"),
-                       Arrays.asList("jar://" + getRoot() + "/foo/foo-javadoc.jar!/"));
-
-    createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +
+                     "<packaging>pom</packaging>" +
 
-                     "<dependencies>" +
-                     "  <dependency>" +
-                     "    <groupId>xxx</groupId>" +
-                     "    <artifactId>yyy</artifactId>" +
-                     "    <version>1</version>" +
-                     "    <scope>system</scope>" +
-                     "    <systemPath>" + getRoot() + "/bar/bar.jar</systemPath>" +
-                     "  </dependency>" +
-                     "</dependencies>");
-    scheduleResolveAll();
-    resolveDependenciesAndImport();
+                     "<modules>" +
+                     "  <module>m1</module>" +
+                     "  <module>m2</module>" +
+                     "</modules>");
 
-    assertModuleLibDep("project", "Maven: xxx:yyy:1",
-                       Arrays.asList("jar://" + getRoot() + "/bar/bar.jar!/"),
-                       Arrays.asList("jar://" + getRoot() + "/foo/foo-sources.jar!/"),
-                       Arrays.asList("jar://" + getRoot() + "/foo/foo-javadoc.jar!/"));
+//    assertProjectLibraries("Maven: xxx:yyy:1");
+    assertModuleLibDep("m1", "Maven: xxx:yyy:1", "jar://" + getRoot() + "/m1/foo.jar!/");
+    assertModuleLibDep("m2", "Maven: xxx:yyy:1", "jar://" + getRoot() + "/m2/foo.jar!/");
   }
 
-  public void testUpdateRootEntriesWithActualPath() throws Exception {
+  public void testUpdateRootEntriesWithActualPath() {
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
                   "<version>1</version>" +
@@ -1659,7 +1702,7 @@ public class DependenciesImportingTest extends MavenImportingTestCase {
                        "jar://" + getRepositoryPath() + "/junit/junit/4.0/junit-4.0-javadoc.jar!/");
   }
 
-  public void testUpdateRootEntriesWithActualPathForDependenciesWithClassifiers() throws Exception {
+  public void testUpdateRootEntriesWithActualPathForDependenciesWithClassifiers() {
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
                   "<version>1</version>" +
@@ -1692,7 +1735,7 @@ public class DependenciesImportingTest extends MavenImportingTestCase {
                        "jar://" + getRepositoryPath() + "/org/testng/testng/5.8/testng-5.8-javadoc.jar!/");
   }
 
-  public void testDoNotPopulateSameRootEntriesOnEveryImport() throws Exception {
+  public void testDoNotPopulateSameRootEntriesOnEveryImport() {
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
                   "<version>1</version>" +
@@ -1721,7 +1764,7 @@ public class DependenciesImportingTest extends MavenImportingTestCase {
                        Arrays.asList("jar://" + getRepositoryPath() + "/junit/junit/4.0/junit-4.0-javadoc.jar!/"));
   }
 
-  public void testDoNotPopulateSameRootEntriesOnEveryImportForSystemLibraries() throws Exception {
+  public void testDoNotPopulateSameRootEntriesOnEveryImportForSystemLibraries() {
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
                   "<version>1</version>" +
@@ -1738,8 +1781,8 @@ public class DependenciesImportingTest extends MavenImportingTestCase {
 
     assertModuleLibDep("project", "Maven: xxx:yyy:1",
                        Arrays.asList("jar://" + getRoot() + "/foo/bar.jar!/"),
-                       Collections.<String>emptyList(),
-                       Collections.<String>emptyList());
+                       Collections.emptyList(),
+                       Collections.emptyList());
 
     scheduleResolveAll();
     resolveDependenciesAndImport();
@@ -1748,11 +1791,11 @@ public class DependenciesImportingTest extends MavenImportingTestCase {
 
     assertModuleLibDep("project", "Maven: xxx:yyy:1",
                        Arrays.asList("jar://" + getRoot() + "/foo/bar.jar!/"),
-                       Collections.<String>emptyList(),
-                       Collections.<String>emptyList());
+                       Collections.emptyList(),
+                       Collections.emptyList());
   }
 
-  public void testRemovingPreviousSystemPathForForSystemLibraries() throws Exception {
+  public void testRemovingPreviousSystemPathForForSystemLibraries() {
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
                   "<version>1</version>" +
@@ -1769,8 +1812,8 @@ public class DependenciesImportingTest extends MavenImportingTestCase {
 
     assertModuleLibDep("project", "Maven: xxx:yyy:1",
                        Arrays.asList("jar://" + getRoot() + "/foo/bar.jar!/"),
-                       Collections.<String>emptyList(),
-                       Collections.<String>emptyList());
+                       Collections.emptyList(),
+                       Collections.emptyList());
 
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
@@ -1791,11 +1834,11 @@ public class DependenciesImportingTest extends MavenImportingTestCase {
 
     assertModuleLibDep("project", "Maven: xxx:yyy:1",
                        Arrays.asList("jar://" + getRoot() + "/foo/xxx.jar!/"),
-                       Collections.<String>emptyList(),
-                       Collections.<String>emptyList());
+                       Collections.emptyList(),
+                       Collections.emptyList());
   }
 
-  public void testRemovingUnusedLibraries() throws Exception {
+  public void testRemovingUnusedLibraries() {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +
@@ -1880,7 +1923,7 @@ public class DependenciesImportingTest extends MavenImportingTestCase {
                            "Maven: group:lib3:1");
   }
 
-  public void testDoNoRemoveUnusedLibraryIfItWasChanged() throws Exception {
+  public void testDoNoRemoveUnusedLibraryIfItWasChanged() {
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
                   "<version>1</version>" +
@@ -1919,7 +1962,7 @@ public class DependenciesImportingTest extends MavenImportingTestCase {
                            "Maven: group:lib2:1");
   }
 
-  public void testDoNoRemoveUserProjectLibraries() throws Exception {
+  public void testDoNoRemoveUserProjectLibraries() {
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
                   "<version>1</version>");
@@ -1938,7 +1981,7 @@ public class DependenciesImportingTest extends MavenImportingTestCase {
     assertModuleLibDeps("project", "lib");
   }
 
-  public void testDoNoRemoveUnusedUserProjectLibraries() throws Exception {
+  public void testDoNoRemoveUnusedUserProjectLibraries() {
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
                   "<version>1</version>");
@@ -1955,7 +1998,7 @@ public class DependenciesImportingTest extends MavenImportingTestCase {
     assertProjectLibraries("lib");
   }
 
-  public void testRemovingUnusedLibrariesIfProjectRemoved() throws Exception {
+  public void testRemovingUnusedLibrariesIfProjectRemoved() {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +
@@ -2009,7 +2052,7 @@ public class DependenciesImportingTest extends MavenImportingTestCase {
     assertProjectLibraries("Maven: group:lib1:1");
   }
 
-  public void testRemovingUnusedLibraryWithClassifier() throws Exception {
+  public void testRemovingUnusedLibraryWithClassifier() {
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
                   "<version>1</version>" +
@@ -2041,51 +2084,39 @@ public class DependenciesImportingTest extends MavenImportingTestCase {
   }
 
   private Library createProjectLibrary(final String libraryName) {
-    AccessToken accessToken = WriteAction.start();
-    try {
-      return ProjectLibraryTable.getInstance(myProject).createLibrary(libraryName);
-    }
-    finally {
-      accessToken.finish();
-    }
+    return WriteAction.compute(() -> ProjectLibraryTable.getInstance(myProject).createLibrary(libraryName));
   }
 
   private void createAndAddProjectLibrary(final String moduleName, final String libraryName) {
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      public void run() {
-        Library lib = createProjectLibrary(libraryName);
-        ModuleRootModificationUtil.addDependency(getModule(moduleName), lib);
-      }
+    ApplicationManager.getApplication().runWriteAction(() -> {
+      Library lib = createProjectLibrary(libraryName);
+      ModuleRootModificationUtil.addDependency(getModule(moduleName), lib);
     });
   }
 
   private void clearLibraryRoots(final String libraryName, final OrderRootType... types) {
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      public void run() {
-        Library lib = ProjectLibraryTable.getInstance(myProject).getLibraryByName(libraryName);
-        Library.ModifiableModel model = lib.getModifiableModel();
-        for (OrderRootType eachType : types) {
-          for (String each : model.getUrls(eachType)) {
-            model.removeRoot(each, eachType);
-          }
+    ApplicationManager.getApplication().runWriteAction(() -> {
+      Library lib = ProjectLibraryTable.getInstance(myProject).getLibraryByName(libraryName);
+      Library.ModifiableModel model = lib.getModifiableModel();
+      for (OrderRootType eachType : types) {
+        for (String each : model.getUrls(eachType)) {
+          model.removeRoot(each, eachType);
         }
-        model.commit();
       }
+      model.commit();
     });
   }
 
   private void addLibraryRoot(final String libraryName, final OrderRootType type, final String path) {
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      public void run() {
-        Library lib = ProjectLibraryTable.getInstance(myProject).getLibraryByName(libraryName);
-        Library.ModifiableModel model = lib.getModifiableModel();
-        model.addRoot(path, type);
-        model.commit();
-      }
+    ApplicationManager.getApplication().runWriteAction(() -> {
+      Library lib = ProjectLibraryTable.getInstance(myProject).getLibraryByName(libraryName);
+      Library.ModifiableModel model = lib.getModifiableModel();
+      model.addRoot(path, type);
+      model.commit();
     });
   }
 
-  public void testEjbDependenciesInJarProject() throws Exception {
+  public void testEjbDependenciesInJarProject() {
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
                   "<version>1</version>" +
@@ -2109,18 +2140,16 @@ public class DependenciesImportingTest extends MavenImportingTestCase {
     assertModuleLibDeps("project", "Maven: foo:foo:ejb:1", "Maven: foo:bar:ejb-client:client:1");
   }
 
-  public void testDoNotFailOnAbsentAppLibrary() throws Exception {
+  public void testDoNotFailOnAbsentAppLibrary() {
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
                   "<version>1</version>");
 
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      public void run() {
-        LibraryTable appTable = LibraryTablesRegistrar.getInstance().getLibraryTable();
-        Library lib = appTable.createLibrary("foo");
-        ModuleRootModificationUtil.addDependency(getModule("project"), lib);
-        appTable.removeLibrary(lib);
-      }
+    ApplicationManager.getApplication().runWriteAction(() -> {
+      LibraryTable appTable = LibraryTablesRegistrar.getInstance().getLibraryTable();
+      Library lib = appTable.createLibrary("foo");
+      ModuleRootModificationUtil.addDependency(getModule("project"), lib);
+      appTable.removeLibrary(lib);
     });
 
 
@@ -2154,7 +2183,7 @@ public class DependenciesImportingTest extends MavenImportingTestCase {
                   "<repositories>" +
                   "  <repository>" +
                   "    <id>central</id>" +
-                  "    <url>file://localhost/${basedir}/repo</url>" +
+                  "    <url>file://localhost/" + repoPath + "</url>" +
                   "  </repository>" +
                   "</repositories>");
 
@@ -2211,6 +2240,10 @@ public class DependenciesImportingTest extends MavenImportingTestCase {
   //}
   //
   public void testVersionRangeInDependencyManagementDoesntBreakIndirectDependency() throws Exception {
+    MavenCustomRepositoryHelper helper = new MavenCustomRepositoryHelper(myDir, "local1");
+    String repoPath = helper.getTestDataPath("local1");
+    setRepositoryPath(repoPath);
+
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +
@@ -2258,5 +2291,180 @@ public class DependenciesImportingTest extends MavenImportingTestCase {
     importProject();
 
     assertModuleLibDeps("m", "Maven: asm:asm-attrs:2.2.1", "Maven: asm:asm:2.2.1");
+  }
+
+  public void testDependencyToIgnoredProject() {
+    createProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>project</artifactId>" +
+                     "<packaging>pom</packaging>" +
+                     "<version>1</version>" +
+
+                     "<modules>" +
+                     "  <module>m1</module>" +
+                     "  <module>m2</module>" +
+                     "</modules>");
+
+    createModulePom("m1", "<groupId>test</groupId>" +
+                          "<artifactId>m1</artifactId>" +
+                          "<version>1</version>" +
+
+                          "<dependencies>" +
+                          "  <dependency>" +
+                          "    <groupId>test</groupId>" +
+                          "    <artifactId>m2</artifactId>" +
+                          "    <version>2</version>" +
+                          "  </dependency>" +
+                          "</dependencies>");
+
+    VirtualFile m2 = createModulePom("m2", "<groupId>test</groupId>" +
+                                           "<artifactId>m2</artifactId>" +
+                                           "<version>2</version>");
+
+    importProject();
+
+    assertModules("project", "m1", "m2");
+    assertModuleModuleDeps("m1", "m2");
+
+    configConfirmationForYesAnswer();
+
+    myProjectsManager.setIgnoredFilesPaths(Collections.singletonList(m2.getPath()));
+    myProjectsManager.forceUpdateProjects(myProjectsManager.getProjects());
+    importProject();
+
+    assertModules("project", "m1");
+    assertModuleLibDeps("m1", "Maven: test:m2:2");
+
+    assertModuleLibDep("m1", "Maven: test:m2:2",
+                       "jar://" + getRepositoryPath() + "/test/m2/2/m2-2.jar!/",
+                       "jar://" + getRepositoryPath() + "/test/m2/2/m2-2-sources.jar!/",
+                       "jar://" + getRepositoryPath() + "/test/m2/2/m2-2-javadoc.jar!/");
+  }
+
+  public void testSaveJdkPosition() {
+    createProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>project</artifactId>" +
+                     "<packaging>pom</packaging>" +
+                     "<version>1</version>" +
+
+                     "<modules>" +
+                     "  <module>m1</module>" +
+                     "  <module>m2</module>" +
+                     "</modules>");
+
+    createModulePom("m1", "<groupId>test</groupId>" +
+                          "<artifactId>m1</artifactId>" +
+                          "<version>1</version>" +
+
+                          "<dependencies>" +
+                          "  <dependency>" +
+                          "    <groupId>test</groupId>" +
+                          "    <artifactId>m2</artifactId>" +
+                          "    <version>1</version>" +
+                          "  </dependency>" +
+                          "  <dependency>" +
+                          "    <groupId>junit</groupId>" +
+                          "    <artifactId>junit</artifactId>" +
+                          "    <version>4.0</version>" +
+                          "  </dependency>" +
+
+                          "</dependencies>");
+
+    createModulePom("m2", "<groupId>test</groupId>" +
+                          "<artifactId>m2</artifactId>" +
+                          "<version>1</version>");
+
+    importProject();
+
+    WriteAction.runAndWait(() -> {
+      ModifiableRootModel rootModel = ModuleRootManager.getInstance(getModule("m1")).getModifiableModel();
+      OrderEntry[] orderEntries = rootModel.getOrderEntries().clone();
+      assert orderEntries.length == 4;
+      assert orderEntries[0] instanceof JdkOrderEntry;
+      assert orderEntries[1] instanceof ModuleSourceOrderEntry;
+      assert ((ModuleOrderEntry)orderEntries[2]).getModuleName().equals("m2");
+      assert "Maven: junit:junit:4.0".equals(((LibraryOrderEntry)orderEntries[3]).getLibraryName());
+
+      rootModel.rearrangeOrderEntries(new OrderEntry[]{orderEntries[2], orderEntries[3], orderEntries[0], orderEntries[1]});
+
+      rootModel.commit();
+    });
+
+    resolveDependenciesAndImport();
+
+    // JDK position was saved
+    OrderEntry[] orderEntries = ModuleRootManager.getInstance(getModule("m1")).getOrderEntries();
+    assert orderEntries.length == 4;
+    assert ((ModuleOrderEntry)orderEntries[0]).getModuleName().equals("m2");
+    assert "Maven: junit:junit:4.0".equals(((LibraryOrderEntry)orderEntries[1]).getLibraryName());
+    assert orderEntries[2] instanceof JdkOrderEntry;
+    assert orderEntries[3] instanceof ModuleSourceOrderEntry;
+  }
+
+  public void testSaveJdkPositionSystemDependency() {
+    createProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>m1</artifactId>" +
+                     "<version>1</version>" +
+
+                     "<dependencies>" +
+                     "  <dependency>" +
+                     "    <groupId>test</groupId>" +
+                     "    <artifactId>systemDep</artifactId>" +
+                     "    <version>1</version>" +
+                     "    <scope>system</scope>" +
+                     "    <systemPath>${java.home}/lib/rt.jar</systemPath>" +
+                     "  </dependency>" +
+                     "  <dependency>" +
+                     "    <groupId>junit</groupId>" +
+                     "    <artifactId>junit</artifactId>" +
+                     "    <version>4.0</version>" +
+                     "  </dependency>" +
+
+                     "</dependencies>");
+    importProject();
+
+    WriteAction.runAndWait(() -> {
+      ModifiableRootModel rootModel = ModuleRootManager.getInstance(getModule("m1")).getModifiableModel();
+      OrderEntry[] orderEntries = rootModel.getOrderEntries().clone();
+      assert orderEntries.length == 4;
+      assert orderEntries[0] instanceof JdkOrderEntry;
+      assert orderEntries[1] instanceof ModuleSourceOrderEntry;
+      assert "Maven: test:systemDep:1".equals(((LibraryOrderEntry)orderEntries[2]).getLibraryName());
+      assert "Maven: junit:junit:4.0".equals(((LibraryOrderEntry)orderEntries[3]).getLibraryName());
+
+      rootModel.rearrangeOrderEntries(new OrderEntry[]{orderEntries[2], orderEntries[3], orderEntries[0], orderEntries[1]});
+
+      rootModel.commit();
+    });
+
+    resolveDependenciesAndImport();
+
+    // JDK position was saved
+    OrderEntry[] orderEntries = ModuleRootManager.getInstance(getModule("m1")).getOrderEntries();
+    assert orderEntries.length == 4;
+    assert "Maven: test:systemDep:1".equals(((LibraryOrderEntry)orderEntries[0]).getLibraryName());
+    assert "Maven: junit:junit:4.0".equals(((LibraryOrderEntry)orderEntries[1]).getLibraryName());
+    assert orderEntries[2] instanceof JdkOrderEntry;
+    assert orderEntries[3] instanceof ModuleSourceOrderEntry;
+  }
+
+  public void testBundleDependencyType() {
+    importProject("<groupId>test</groupId>" +
+                  "<artifactId>project</artifactId>" +
+                  "<version>1</version>" +
+
+                  "<dependencies>" +
+                  "  <dependency>" +
+                  "    <groupId>com.google.guava</groupId>" +
+                  "    <artifactId>guava</artifactId>" +
+                  "    <version>15.0</version>" +
+                  "    <type>bundle</type>" +
+                  "  </dependency>" +
+                  "</dependencies>");
+
+    assertProjectLibraries("Maven: com.google.guava:guava:15.0");
+    assertModuleLibDep("project", "Maven: com.google.guava:guava:15.0",
+                       "jar://" + getRepositoryPath() + "/com/google/guava/guava/15.0/guava-15.0.jar!/",
+                       "jar://" + getRepositoryPath() + "/com/google/guava/guava/15.0/guava-15.0-sources.jar!/",
+                       "jar://" + getRepositoryPath() + "/com/google/guava/guava/15.0/guava-15.0-javadoc.jar!/");
   }
 }

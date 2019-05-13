@@ -1,5 +1,5 @@
 /*
- * Copyright 2008-2012 Bas Leijdekkers
+ * Copyright 2008-2017 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,11 +25,13 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.util.ui.CheckBox;
 import com.intellij.util.ui.FormBuilder;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.psiutils.ParenthesesUtils;
 import com.siyeh.ig.psiutils.TypeUtils;
 import com.siyeh.ig.ui.TextField;
 import com.siyeh.ig.ui.UiUtils;
@@ -39,26 +41,41 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.awt.*;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
 public class LogStatementGuardedByLogConditionInspection extends BaseInspection {
 
+  final List<String> logMethodNameList = new ArrayList<>();
+  final List<String> logConditionMethodNameList = new ArrayList<>();
   @SuppressWarnings({"PublicField"})
   public String loggerClassName = "java.util.logging.Logger";
-  @SuppressWarnings({"PublicField"})
   @NonNls
+  @SuppressWarnings({"PublicField"})
   public String loggerMethodAndconditionMethodNames =
     "fine,isLoggable(java.util.logging.Level.FINE)," +
     "finer,isLoggable(java.util.logging.Level.FINER)," +
     "finest,isLoggable(java.util.logging.Level.FINEST)";
-  final List<String> logMethodNameList = new ArrayList();
-  final List<String> logConditionMethodNameList = new ArrayList();
+  @SuppressWarnings("PublicField")
+  public boolean flagAllUnguarded = false;
 
   public LogStatementGuardedByLogConditionInspection() {
-    parseString(loggerMethodAndconditionMethodNames, logMethodNameList, logConditionMethodNameList);
+    parseString(this.loggerMethodAndconditionMethodNames, this.logMethodNameList, this.logConditionMethodNameList);
+  }
+
+  @Override
+  public JComponent createOptionsPanel() {
+    final TextField loggerClassNameField = new TextField(this, "loggerClassName");
+    final ListTable table = new ListTable(new ListWrappingTableModel(Arrays.asList(logMethodNameList, logConditionMethodNameList),
+                                                                     InspectionGadgetsBundle.message("log.method.name"),
+                                                                     InspectionGadgetsBundle.message("log.condition.text")));
+    return new FormBuilder()
+      .addLabeledComponent(InspectionGadgetsBundle.message("logger.name.option"), loggerClassNameField)
+      .addComponentFillVertically(UiUtils.createAddRemovePanel(table), 0)
+      .addComponent(new CheckBox(InspectionGadgetsBundle.message("log.statement.guarded.by.log.condition.flag.all.unguarded.option"),
+                                 this, "flagAllUnguarded"))
+      .getPanel();
   }
 
   @Override
@@ -74,29 +91,33 @@ public class LogStatementGuardedByLogConditionInspection extends BaseInspection 
   }
 
   @Override
-  public JComponent createOptionsPanel() {
-    final JPanel panel = new JPanel(new BorderLayout());
-    final JLabel classNameLabel = new JLabel(InspectionGadgetsBundle.message("logger.name.option"));
-    classNameLabel.setHorizontalAlignment(SwingConstants.TRAILING);
-    final TextField loggerClassNameField = new TextField(this, "loggerClassName");
-    final ListTable table = new ListTable(new ListWrappingTableModel(Arrays.asList(logMethodNameList, logConditionMethodNameList),
-                                                                     InspectionGadgetsBundle.message("log.method.name"),
-                                                                     InspectionGadgetsBundle.message("log.condition.text")));
-    panel.add(UiUtils.createAddRemovePanel(table), BorderLayout.CENTER);
-    panel.add(FormBuilder.createFormBuilder().addLabeledComponent(classNameLabel, loggerClassNameField).getPanel(), BorderLayout.NORTH);
-    return panel;
-  }
-
-  @Override
   @Nullable
   protected InspectionGadgetsFix buildFix(Object... infos) {
     return new LogStatementGuardedByLogConditionFix();
   }
 
+  @Override
+  public BaseInspectionVisitor buildVisitor() {
+    return new LogStatementGuardedByLogConditionVisitor();
+  }
+
+  @Override
+  public void readSettings(@NotNull Element element) throws InvalidDataException {
+    super.readSettings(element);
+    parseString(loggerMethodAndconditionMethodNames, logMethodNameList, logConditionMethodNameList);
+  }
+
+  @Override
+  public void writeSettings(@NotNull Element element) throws WriteExternalException {
+    loggerMethodAndconditionMethodNames = formatString(logMethodNameList, logConditionMethodNameList);
+    super.writeSettings(element);
+  }
+
   private class LogStatementGuardedByLogConditionFix extends InspectionGadgetsFix {
 
+    @Override
     @NotNull
-    public String getName() {
+    public String getFamilyName() {
       return InspectionGadgetsBundle.message("log.statement.guarded.by.log.condition.quickfix");
     }
 
@@ -104,12 +125,11 @@ public class LogStatementGuardedByLogConditionInspection extends BaseInspection 
     protected void doFix(Project project, ProblemDescriptor descriptor) {
       final PsiElement element = descriptor.getPsiElement();
       final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)element.getParent().getParent();
-      final PsiStatement statement = PsiTreeUtil.getParentOfType(
-        methodCallExpression, PsiStatement.class);
+      final PsiStatement statement = PsiTreeUtil.getParentOfType(methodCallExpression, PsiStatement.class);
       if (statement == null) {
         return;
       }
-      final List<PsiStatement> logStatements = new ArrayList();
+      final List<PsiStatement> logStatements = new ArrayList<>();
       logStatements.add(statement);
       final PsiReferenceExpression methodExpression = methodCallExpression.getMethodExpression();
       final String referenceName = methodExpression.getReferenceName();
@@ -131,16 +151,10 @@ public class LogStatementGuardedByLogConditionInspection extends BaseInspection 
       if (qualifier == null) {
         return;
       }
-      @NonNls
-      final StringBuilder ifStatementText = new StringBuilder("if (");
-      ifStatementText.append(qualifier.getText());
-      ifStatementText.append('.');
       final int index = logMethodNameList.indexOf(referenceName);
       final String conditionMethodText = logConditionMethodNameList.get(index);
-      ifStatementText.append(conditionMethodText);
-      ifStatementText.append(") {}");
-      final PsiIfStatement ifStatement = (PsiIfStatement)factory.createStatementFromText(
-          ifStatementText.toString(), statement);
+      @NonNls final String ifStatementText = "if (" + qualifier.getText() + '.' + conditionMethodText + ") {}";
+      final PsiIfStatement ifStatement = (PsiIfStatement)factory.createStatementFromText(ifStatementText, statement);
       final PsiBlockStatement blockStatement = (PsiBlockStatement)ifStatement.getThenBranch();
       if (blockStatement == null) {
         return;
@@ -151,8 +165,15 @@ public class LogStatementGuardedByLogConditionInspection extends BaseInspection 
       }
       final PsiStatement firstStatement = logStatements.get(0);
       final PsiElement parent = firstStatement.getParent();
-      final PsiElement result = parent.addBefore(ifStatement, firstStatement);
       final JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(project);
+      if (parent instanceof PsiIfStatement && ((PsiIfStatement)parent).getElseBranch() != null) {
+        final PsiBlockStatement newBlockStatement = (PsiBlockStatement)factory.createStatementFromText("{}", statement);
+        newBlockStatement.getCodeBlock().add(ifStatement);
+        final PsiElement result = firstStatement.replace(newBlockStatement);
+        codeStyleManager.shortenClassReferences(result);
+        return;
+      }
+      final PsiElement result = parent.addBefore(ifStatement, firstStatement);
       codeStyleManager.shortenClassReferences(result);
       for (PsiStatement logStatement : logStatements) {
         logStatement.delete();
@@ -178,16 +199,8 @@ public class LogStatementGuardedByLogConditionInspection extends BaseInspection 
         return false;
       }
       final PsiExpression qualifier = methodExpression.getQualifierExpression();
-      if (qualifier == null) {
-        return false;
-      }
-      return TypeUtils.expressionHasTypeOrSubtype(qualifier, loggerClassName);
+      return qualifier != null && TypeUtils.expressionHasTypeOrSubtype(qualifier, loggerClassName);
     }
-  }
-
-  @Override
-  public BaseInspectionVisitor buildVisitor() {
-    return new LogStatementGuardedByLogConditionVisitor();
   }
 
   private class LogStatementGuardedByLogConditionVisitor extends BaseInspectionVisitor {
@@ -201,9 +214,6 @@ public class LogStatementGuardedByLogConditionInspection extends BaseInspection 
         return;
       }
       final PsiExpression qualifier = methodExpression.getQualifierExpression();
-      if (qualifier == null) {
-        return;
-      }
       if (!TypeUtils.expressionHasTypeOrSubtype(qualifier, loggerClassName)) {
         return;
       }
@@ -215,9 +225,17 @@ public class LogStatementGuardedByLogConditionInspection extends BaseInspection 
       if (arguments.length == 0) {
         return;
       }
-      final PsiExpression firstArgument = arguments[0];
-      if (PsiUtil.isConstantExpression(firstArgument)) {
-        return;
+      if (!flagAllUnguarded) {
+        boolean constant = true;
+        for (PsiExpression argument : arguments) {
+          if (!PsiUtil.isConstantExpression(argument)) {
+            constant = false;
+            break;
+          }
+        }
+        if (constant) {
+          return;
+        }
       }
       registerMethodCallError(expression);
     }
@@ -237,17 +255,18 @@ public class LogStatementGuardedByLogConditionInspection extends BaseInspection 
     }
 
     private boolean isLogGuardCheck(@Nullable PsiExpression expression, String logMethodName) {
+      expression = ParenthesesUtils.stripParentheses(expression);
       if (expression instanceof PsiMethodCallExpression) {
         final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)expression;
         final PsiReferenceExpression methodExpression = methodCallExpression.getMethodExpression();
         final PsiExpression qualifier = methodExpression.getQualifierExpression();
-        if (qualifier == null) {
-          return false;
-        }
         if (!TypeUtils.expressionHasTypeOrSubtype(qualifier, loggerClassName)) {
           return false;
         }
         final String referenceName = methodExpression.getReferenceName();
+        if (referenceName == null) {
+          return false;
+        }
         final int index = logMethodNameList.indexOf(logMethodName);
         final String conditionName = logConditionMethodNameList.get(index);
         return conditionName.startsWith(referenceName);
@@ -263,17 +282,5 @@ public class LogStatementGuardedByLogConditionInspection extends BaseInspection 
       }
       return false;
     }
-  }
-
-  @Override
-  public void readSettings(Element element) throws InvalidDataException {
-    super.readSettings(element);
-    parseString(loggerMethodAndconditionMethodNames, logMethodNameList, logConditionMethodNameList);
-  }
-
-  @Override
-  public void writeSettings(Element element) throws WriteExternalException {
-    loggerMethodAndconditionMethodNames = formatString(logMethodNameList, logConditionMethodNameList);
-    super.writeSettings(element);
   }
 }

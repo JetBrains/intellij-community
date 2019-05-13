@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,61 +21,61 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.compiler.CompilerBundle;
 import com.intellij.openapi.compiler.CompilerManager;
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.packaging.artifacts.Artifact;
-import com.intellij.packaging.impl.artifacts.ArtifactBySourceFileFinder;
 import com.intellij.psi.*;
+import com.intellij.task.ProjectTaskManager;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 
 public class CompileAction extends CompileActionBase {
+  @Override
   protected void doAction(DataContext dataContext, Project project) {
-    final Module module = LangDataKeys.MODULE_CONTEXT.getData(dataContext);
+    final Module module = dataContext.getData(LangDataKeys.MODULE_CONTEXT);
     if (module != null) {
-      CompilerManager.getInstance(project).compile(module, null);
+      ProjectTaskManager.getInstance(project).rebuild(module);
     }
     else {
-      VirtualFile[] files = getCompilableFiles(project, PlatformDataKeys.VIRTUAL_FILE_ARRAY.getData(dataContext));
+      VirtualFile[] files = getCompilableFiles(project, dataContext.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY));
       if (files.length > 0) {
-        CompilerManager.getInstance(project).compile(files, null);
+        ProjectTaskManager.getInstance(project).compile(files);
       }
     }
 
   }
 
-  public void update(AnActionEvent event) {
-    super.update(event);
-    Presentation presentation = event.getPresentation();
+  @Override
+  public void update(@NotNull AnActionEvent e) {
+    super.update(e);
+    Presentation presentation = e.getPresentation();
     if (!presentation.isEnabled()) {
       return;
     }
-    DataContext dataContext = event.getDataContext();
 
-    presentation.setText(ActionsBundle.actionText(IdeActions.ACTION_COMPILE));
+    presentation.setText(ActionsBundle.actionText(RECOMPILE_FILES_ID_MOD));
     presentation.setVisible(true);
 
-    Project project = PlatformDataKeys.PROJECT.getData(dataContext);
+    Project project = e.getProject();
     if (project == null) {
       presentation.setEnabled(false);
       return;
     }
 
     CompilerConfiguration compilerConfiguration = CompilerConfiguration.getInstance(project);
-    final Module module = LangDataKeys.MODULE_CONTEXT.getData(dataContext);
+    final Module module = e.getData(LangDataKeys.MODULE_CONTEXT);
+    boolean forFiles = false;
 
-    final VirtualFile[] files = getCompilableFiles(project, PlatformDataKeys.VIRTUAL_FILE_ARRAY.getData(dataContext));
+    final VirtualFile[] files = getCompilableFiles(project, e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY));
     if (module == null && files.length == 0) {
       presentation.setEnabled(false);
-      presentation.setVisible(!ActionPlaces.isPopupPlace(event.getPlace()));
+      presentation.setVisible(!ActionPlaces.isPopupPlace(e.getPlace()));
       return;
     }
 
@@ -92,7 +92,7 @@ public class CompileAction extends CompileActionBase {
         }
       }
       else {
-        PsiElement element = LangDataKeys.PSI_ELEMENT.getData(dataContext);
+        PsiElement element = e.getData(CommonDataKeys.PSI_ELEMENT);
         if (element instanceof PsiPackage) {
           aPackage = (PsiPackage)element;
         }
@@ -107,13 +107,15 @@ public class CompileAction extends CompileActionBase {
         elementDescription = "'" + name + "'";
       }
       else if (files.length == 1) {
+        forFiles = true;
         final VirtualFile file = files[0];
         FileType fileType = file.getFileType();
-        if (CompilerManager.getInstance(project).isCompilableFileType(fileType) || isCompilableResourceFile(project, compilerConfiguration, file)) {
+        if (CompilerManager.getInstance(project).isCompilableFileType(fileType) ||
+            compilerConfiguration.isCompilableResourceFile(project, file)) {
           elementDescription = "'" + file.getName() + "'";
         }
         else {
-          if (!ActionPlaces.MAIN_MENU.equals(event.getPlace())) {
+          if (!ActionPlaces.isMainMenuOrActionSearch(e.getPlace())) {
             // the action should be invisible in popups for non-java files
             presentation.setEnabled(false);
             presentation.setVisible(false);
@@ -122,6 +124,7 @@ public class CompileAction extends CompileActionBase {
         }
       }
       else {
+        forFiles = true;
         elementDescription = CompilerBundle.message("action.compile.description.selected.files");
       }
     }
@@ -131,20 +134,22 @@ public class CompileAction extends CompileActionBase {
       return;
     }
 
-    presentation.setText(createPresentationText(elementDescription), true);
+    presentation.setText(createPresentationText(elementDescription, forFiles), true);
     presentation.setEnabled(true);
   }
 
-  private static String createPresentationText(String elementDescription) {
-    StringBuffer buffer = new StringBuffer(40);
-    buffer.append(ActionsBundle.actionText(IdeActions.ACTION_COMPILE)).append(" ");
+  private final static String RECOMPILE_FILES_ID_MOD = IdeActions.ACTION_COMPILE + "File";
+
+  private static String createPresentationText(String elementDescription, boolean forFiles) {
+    StringBuilder buffer = new StringBuilder(40);
+    buffer.append(ActionsBundle.actionText(forFiles? RECOMPILE_FILES_ID_MOD : IdeActions.ACTION_COMPILE)).append(" ");
     int length = elementDescription.length();
     if (length > 23) {
       if (StringUtil.startsWithChar(elementDescription, '\'')) {
         buffer.append("'");
       }
       buffer.append("...");
-      buffer.append(elementDescription.substring(length - 20, length));
+      buffer.append(elementDescription, length - 20, length);
     }
     else {
       buffer.append(elementDescription);
@@ -158,10 +163,9 @@ public class CompileAction extends CompileActionBase {
     }
     final PsiManager psiManager = PsiManager.getInstance(project);
     final CompilerConfiguration compilerConfiguration = CompilerConfiguration.getInstance(project);
-    final FileTypeManager typeManager = FileTypeManager.getInstance();
     final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
     final CompilerManager compilerManager = CompilerManager.getInstance(project);
-    final List<VirtualFile> filesToCompile = new ArrayList<VirtualFile>();
+    final List<VirtualFile> filesToCompile = new ArrayList<>();
     for (final VirtualFile file : files) {
       if (!fileIndex.isInSourceContent(file)) {
         continue;
@@ -177,20 +181,12 @@ public class CompileAction extends CompileActionBase {
       }
       else {
         FileType fileType = file.getFileType();
-        if (!(compilerManager.isCompilableFileType(fileType) || isCompilableResourceFile(project, compilerConfiguration, file))) {
+        if (!(compilerManager.isCompilableFileType(fileType) || compilerConfiguration.isCompilableResourceFile(project, file))) {
           continue;
         }
       }
       filesToCompile.add(file);
     }
-    return VfsUtil.toVirtualFileArray(filesToCompile);
-  }
-
-  private static boolean isCompilableResourceFile(final Project project, final CompilerConfiguration compilerConfiguration, final VirtualFile file) {
-    if (!compilerConfiguration.isResourceFile(file)) {
-      return false;
-    }
-    final Collection<? extends Artifact> artifacts = ArtifactBySourceFileFinder.getInstance(project).findArtifacts(file);
-    return artifacts.isEmpty();
+    return VfsUtilCore.toVirtualFileArray(filesToCompile);
   }
 }

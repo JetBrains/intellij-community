@@ -40,7 +40,6 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.netbeans.lib.cvsclient.ClientEnvironment;
@@ -65,7 +64,6 @@ import org.netbeans.lib.cvsclient.util.IIgnoreFileFilter;
 
 import java.io.File;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -120,54 +118,51 @@ public abstract class CvsCommandOperation extends CvsOperation implements IFileI
 
   private void doExecute(final CvsExecutionEnvironment executionEnvironment, boolean underReadAction) throws VcsException {
     final VcsException[] exc = new VcsException[1];
-    final Runnable action = new Runnable() {
-      @Override
-      public void run() {
+    final Runnable action = () -> {
+      try {
+        final ReadWriteStatistics statistics = executionEnvironment.getReadWriteStatistics();
+        final Collection<CvsRootProvider> allCvsRoots;
         try {
-          final ReadWriteStatistics statistics = executionEnvironment.getReadWriteStatistics();
-          final Collection<CvsRootProvider> allCvsRoots;
+          allCvsRoots = getAllCvsRoots();
+        }
+        catch (CannotFindCvsRootException e) {
+          throw createVcsExceptionOn(e, null);
+        }
+
+        final IProgressViewer progressViewer = new IProgressViewer() {
+
+          @Override
+          public void setProgress(double value) {
+            final ProgressIndicator progressIndicator = ProgressManager.getInstance().getProgressIndicator();
+            if (progressIndicator != null) progressIndicator.setFraction(value);
+          }
+        };
+        int count = 0;
+        final double step = 1.0 / allCvsRoots.size();
+        for (CvsRootProvider cvsRootProvider : allCvsRoots) {
           try {
-            allCvsRoots = getAllCvsRoots();
+            final double lowerBound = step * count;
+            final RangeProgressViewer partialProgress = new RangeProgressViewer(progressViewer, lowerBound, lowerBound + step);
+            myLastProcessedCvsRoot = cvsRootProvider.getCvsRootAsString();
+            execute(cvsRootProvider, executionEnvironment, statistics, partialProgress);
+            count++;
           }
-          catch (CannotFindCvsRootException e) {
-            throw createVcsExceptionOn(e, null);
+          catch (IOCommandException e) {
+            LOG.info(e);
+            throw createVcsExceptionOn(e.getIOException(), cvsRootProvider.getCvsRootAsString());
           }
-
-          final IProgressViewer progressViewer = new IProgressViewer() {
-
-            @Override
-            public void setProgress(double value) {
-              final ProgressIndicator progressIndicator = ProgressManager.getInstance().getProgressIndicator();
-              if (progressIndicator != null) progressIndicator.setFraction(value);
+          catch (CommandException e) {
+            LOG.info(e);
+            final Exception underlyingException = e.getUnderlyingException();
+            if (underlyingException != null) {
+              LOG.info(underlyingException);
             }
-          };
-          int count = 0;
-          final double step = 1.0 / allCvsRoots.size();
-          for (CvsRootProvider cvsRootProvider : allCvsRoots) {
-            try {
-              final double lowerBound = step * count;
-              final RangeProgressViewer partialProgress = new RangeProgressViewer(progressViewer, lowerBound, lowerBound + step);
-              myLastProcessedCvsRoot = cvsRootProvider.getCvsRootAsString();
-              execute(cvsRootProvider, executionEnvironment, statistics, partialProgress);
-              count++;
-            }
-            catch (IOCommandException e) {
-              LOG.info(e);
-              throw createVcsExceptionOn(e.getIOException(), cvsRootProvider.getCvsRootAsString());
-            }
-            catch (CommandException e) {
-              LOG.info(e);
-              final Exception underlyingException = e.getUnderlyingException();
-              if (underlyingException != null) {
-                LOG.info(underlyingException);
-              }
-              throw createVcsExceptionOn(underlyingException == null ? e : underlyingException, cvsRootProvider.getCvsRootAsString());
-            }
+            throw createVcsExceptionOn(underlyingException == null ? e : underlyingException, cvsRootProvider.getCvsRootAsString());
           }
         }
-        catch (VcsException e) {
-          exc[0] = e;
-        }
+      }
+      catch (VcsException e) {
+        exc[0] = e;
       }
     };
     if (underReadAction) {
@@ -191,9 +186,9 @@ public abstract class CvsCommandOperation extends CvsOperation implements IFileI
   private static String getMessageFrom(String initialMessage, Throwable e) {
     if (e == null) return initialMessage;
     String result = initialMessage;
-    if (result != null && result.length() > 0) return result;
+    if (result != null && !result.isEmpty()) return result;
     result = e.getLocalizedMessage();
-    if (result == null || result.length() == 0) result = e.getMessage();
+    if (result == null || result.isEmpty()) result = e.getMessage();
     return getMessageFrom(result, e.getCause());
   }
 
@@ -262,25 +257,6 @@ public abstract class CvsCommandOperation extends CvsOperation implements IFileI
         command.execute(requestProcessor, eventManager, eventManager, clientEnvironment, progressViewer);
       }
       catch (AuthenticationException e) {
-        if (! root.isOffline()) {
-          ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
-            @Override
-            public void run() {
-              final LoginPerformer performer =
-                new LoginPerformer(executionEnvironment.getProject(), Collections.<CvsEnvironment>singletonList(root), new Consumer<VcsException>() {
-                  @Override
-                  public void consume(VcsException e) {
-                    executionEnvironment.getErrorProcessor().addError(e);
-                    LOG.info(e);
-                  }
-                });
-              // for pserver to check password matches connection
-              performer.setForceCheck(true);                       
-              performer.loginAll();
-            }
-          });
-          return;
-        }
         throw root.processException(new CommandException(e, "Authentication problem"));
       }
       cvsMessagesTranslator.operationCompleted();
@@ -418,9 +394,9 @@ public abstract class CvsCommandOperation extends CvsOperation implements IFileI
     private final IClientEnvironment myClientEnvironment;
     private final CvsEntriesManager myCvsEntriesManager;
     private final UpdatedFilesManager myUpdatedFilesManager;
-    private final Map<File, Entry> myFileToPreviousEntryMap = new HashMap<File, Entry>();
+    private final Map<File, Entry> myFileToPreviousEntryMap = new HashMap<>();
 
-    public MergeSupportingEntryListener(IClientEnvironment clientEnvironment,
+    MergeSupportingEntryListener(IClientEnvironment clientEnvironment,
                                         CvsEntriesManager cvsEntriesManager,
                                         UpdatedFilesManager mergedFilesCollector) {
       myClientEnvironment = clientEnvironment;

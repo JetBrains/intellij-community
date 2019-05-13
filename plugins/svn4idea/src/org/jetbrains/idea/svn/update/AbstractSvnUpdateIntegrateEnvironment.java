@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.update;
 
 import com.intellij.openapi.options.Configurable;
@@ -41,18 +27,19 @@ import org.jetbrains.idea.svn.actions.SvnMergeProvider;
 
 import java.io.File;
 import java.util.*;
+import java.util.stream.Collectors;
 
 public abstract class AbstractSvnUpdateIntegrateEnvironment implements UpdateEnvironment {
   protected final SvnVcs myVcs;
   private final ProjectLevelVcsManager myVcsManager;
   @NonNls public static final String REPLACED_ID = "replaced";
-  @NonNls public static final String EXTERNAL_ID = "external";
 
   protected AbstractSvnUpdateIntegrateEnvironment(final SvnVcs vcs) {
     myVcs = vcs;
     myVcsManager = ProjectLevelVcsManager.getInstance(vcs.getProject());
   }
 
+  @Override
   public void fillGroups(UpdatedFiles updatedFiles) {
     updatedFiles.registerGroup(new FileGroup(VcsBundle.message("update.group.name.merged.with.property.conflicts"),
                                        VcsBundle.message("status.group.name.will.be.merged.with.property.conflicts"), false,
@@ -62,6 +49,7 @@ public abstract class AbstractSvnUpdateIntegrateEnvironment implements UpdateEnv
                                        FileGroup.MERGED_WITH_TREE_CONFLICT, false));
   }
 
+  @Override
   @NotNull
   public UpdateSession updateDirectories(@NotNull final FilePath[] contentRoots,
                                          final UpdatedFiles updatedFiles,
@@ -72,20 +60,16 @@ public abstract class AbstractSvnUpdateIntegrateEnvironment implements UpdateEnv
       context.set(new SvnUpdateContext(myVcs, contentRoots));
     }
 
-    final ArrayList<VcsException> exceptions = new ArrayList<VcsException>();
+    final ArrayList<VcsException> exceptions = new ArrayList<>();
     UpdateEventHandler eventHandler = new UpdateEventHandler(myVcs, progressIndicator, (SvnUpdateContext) context.get());
     eventHandler.setUpdatedFiles(updatedFiles);
 
     boolean totalUpdate = true;
     AbstractUpdateIntegrateCrawler crawler = createCrawler(eventHandler, totalUpdate, exceptions, updatedFiles);
 
-    Collection<VirtualFile> updatedRoots = new HashSet<VirtualFile>();
-    Arrays.sort(contentRoots, new Comparator<FilePath>() {
-      public int compare(FilePath o1, FilePath o2) {
-        return SystemInfo.isFileSystemCaseSensitive ? o1.getPath().replace("/", "\\").compareTo(o2.getPath().replace("/", "\\")) :
-          o1.getPath().replace("/", "\\").compareToIgnoreCase(o2.getPath().replace("/", "\\"));
-      }
-    });
+    Collection<VirtualFile> updatedRoots = new HashSet<>();
+    Arrays.sort(contentRoots, (o1, o2) -> SystemInfo.isFileSystemCaseSensitive ? o1.getPath().replace("/", "\\")
+      .compareTo(o2.getPath().replace("/", "\\")) : o1.getPath().replace("/", "\\").compareToIgnoreCase(o2.getPath().replace("/", "\\")));
     for (FilePath contentRoot : contentRoots) {
       if (progressIndicator != null) {
         progressIndicator.checkCanceled();
@@ -93,17 +77,13 @@ public abstract class AbstractSvnUpdateIntegrateEnvironment implements UpdateEnv
       final File ioRoot = contentRoot.getIOFile();
       if (! ((SvnUpdateContext)context.get()).shouldRunFor(ioRoot)) continue;
 
-      Collection<VirtualFile> roots = SvnUtil.crawlWCRoots(myVcs.getProject(), ioRoot, crawler, progressIndicator);
-      updatedRoots.addAll(roots);
+      updatedRoots.addAll(SvnUtil.crawlWCRoots(myVcs, ioRoot, crawler, progressIndicator));
     }
     if (updatedRoots.isEmpty()) {
-      WaitForProgressToShow.runOrInvokeLaterAboveProgress(new Runnable() {
-        public void run() {
-          Messages.showErrorDialog(myVcs.getProject(), SvnBundle.message("message.text.update.no.directories.found"),
-                                   SvnBundle.message("messate.text.update.error"));
-        }
-      }, null, myVcs.getProject());
-      return new UpdateSessionAdapter(Collections.<VcsException>emptyList(), true);
+      WaitForProgressToShow.runOrInvokeLaterAboveProgress(() -> Messages
+        .showErrorDialog(myVcs.getProject(), SvnBundle.message("message.text.update.no.directories.found"),
+                         SvnBundle.message("messate.text.update.error")), null, myVcs.getProject());
+      return new UpdateSessionAdapter(Collections.emptyList(), true);
     }
 
     return new MyUpdateSessionAdapter(contentRoots, updatedFiles, exceptions);
@@ -123,6 +103,7 @@ public abstract class AbstractSvnUpdateIntegrateEnvironment implements UpdateEnv
 
       if (! isDryRun()) {
         myGroupWorkers = Arrays.asList(new MyTextConflictWorker(), new MyConflictWorker(FileGroup.MERGED_WITH_PROPERTY_CONFLICT_ID) {
+          @Override
           protected List<VirtualFile> merge() {
             return null;
           }
@@ -134,17 +115,14 @@ public abstract class AbstractSvnUpdateIntegrateEnvironment implements UpdateEnv
 
     // update switched/ignored status of directories
     private void dirtyRoots() {
-      final Collection<VirtualFile> vfColl = new ArrayList<VirtualFile>(myContentRoots.length);
-      for (FilePath contentRoot: myContentRoots) {
-        final VirtualFile vf = contentRoot.getVirtualFile();
-        if (vf != null) {
-          vfColl.add(vf);
-        }
-      }
+      final Collection<VirtualFile> vfColl = Arrays.stream(myContentRoots).map(FilePath::getVirtualFile)
+        .filter(Objects::nonNull).collect(Collectors.toList());
       myDirtyScopeManager.filesDirty(vfColl, null);
     }
 
+    @Override
     public void onRefreshFilesCompleted() {
+      // TODO: why do we need to mark all roots as dirty here???
       dirtyRoots();
 
       for (Runnable groupWorker : myGroupWorkers) {
@@ -154,13 +132,14 @@ public abstract class AbstractSvnUpdateIntegrateEnvironment implements UpdateEnv
 
     // not a conflict worker; to correctly show replaced items
     private class MyReplacedWorker implements Runnable {
+      @Override
       public void run() {
         final FileGroup replacedGroup = myUpdatedFiles.getGroupById(REPLACED_ID);
         final FileGroup deletedGroup = myUpdatedFiles.getGroupById(FileGroup.REMOVED_FROM_REPOSITORY_ID);
         if ((deletedGroup != null) && (replacedGroup != null) && (! deletedGroup.isEmpty()) && (! replacedGroup.isEmpty())) {
-          final Set<String> replacedFiles = new HashSet<String>(replacedGroup.getFiles());
-          final Collection<String> deletedFiles = new HashSet<String>(deletedGroup.getFiles());
-          
+          final Set<String> replacedFiles = new HashSet<>(replacedGroup.getFiles());
+          final Collection<String> deletedFiles = new HashSet<>(deletedGroup.getFiles());
+
           for (String deletedFile : deletedFiles) {
             if (replacedFiles.contains(deletedFile)) {
               deletedGroup.remove(deletedFile);
@@ -172,11 +151,12 @@ public abstract class AbstractSvnUpdateIntegrateEnvironment implements UpdateEnv
 
     // at the moment no resolve, only refresh files & statuses
     private class MyTreeConflictWorker implements Runnable {
+      @Override
       public void run() {
         final LocalFileSystem lfs = LocalFileSystem.getInstance();
         final FileGroup conflictedGroup = myUpdatedFiles.getGroupById(FileGroup.MERGED_WITH_TREE_CONFLICT);
         final Collection<String> conflictedFiles = conflictedGroup.getFiles();
-        final Collection<VirtualFile> parents = new ArrayList<VirtualFile>();
+        final Collection<VirtualFile> parents = new ArrayList<>();
 
         if ((conflictedFiles != null) && (! conflictedFiles.isEmpty())) {
           for (final String conflictedFile : conflictedFiles) {
@@ -199,11 +179,7 @@ public abstract class AbstractSvnUpdateIntegrateEnvironment implements UpdateEnv
         }
 
         if (! parents.isEmpty()) {
-          RefreshQueue.getInstance().refresh(true, true, new Runnable() {
-            public void run() {
-              myDirtyScopeManager.filesDirty(null, parents);
-            }
-          }, parents);
+          RefreshQueue.getInstance().refresh(true, true, () -> myDirtyScopeManager.filesDirty(null, parents), parents);
         }
       }
     }
@@ -213,6 +189,7 @@ public abstract class AbstractSvnUpdateIntegrateEnvironment implements UpdateEnv
         super(FileGroup.MERGED_WITH_CONFLICT_ID);
       }
 
+      @Override
       protected List<VirtualFile> merge() {
         final List<VirtualFile> writable = prepareWritable(myFiles);
         final AbstractVcsHelper vcsHelper = AbstractVcsHelper.getInstance(myVcs.getProject());
@@ -228,14 +205,14 @@ public abstract class AbstractSvnUpdateIntegrateEnvironment implements UpdateEnv
 
       protected MyConflictWorker(final String groupId) {
         this.groupId = groupId;
-        myFiles = new ArrayList<VirtualFile>();
+        myFiles = new ArrayList<>();
         myLfs = LocalFileSystem.getInstance();
         myPlVcsManager = ProjectLevelVcsManager.getInstance(myVcs.getProject());
       }
 
       // for reuse
       protected List<VirtualFile> prepareWritable(final Collection<VirtualFile> files) {
-        final List<VirtualFile> writable = new ArrayList<VirtualFile>();
+        final List<VirtualFile> writable = new ArrayList<>();
         for (VirtualFile vf : files) {
           if (myVcs.equals(myPlVcsManager.getVcsFor(vf))) {
             writable.add(vf);
@@ -251,6 +228,7 @@ public abstract class AbstractSvnUpdateIntegrateEnvironment implements UpdateEnv
       @Nullable
       protected abstract List<VirtualFile> merge();
 
+      @Override
       public void run() {
         fillAndRefreshFiles();
         if (! myFiles.isEmpty()) {
@@ -278,7 +256,7 @@ public abstract class AbstractSvnUpdateIntegrateEnvironment implements UpdateEnv
       protected void fillAndRefreshFiles() {
         final FileGroup conflictedGroup = myUpdatedFiles.getGroupById(groupId);
         final Collection<String> conflictedFiles = conflictedGroup.getFiles();
-        final Collection<VirtualFile> parents = new ArrayList<VirtualFile>();
+        final Collection<VirtualFile> parents = new ArrayList<>();
 
         if ((conflictedFiles != null) && (! conflictedFiles.isEmpty())) {
           for (final String conflictedFile : conflictedFiles) {
@@ -313,6 +291,7 @@ public abstract class AbstractSvnUpdateIntegrateEnvironment implements UpdateEnv
                                                  boolean totalUpdate,
                                                  ArrayList<VcsException> exceptions, UpdatedFiles updatedFiles);
 
+  @Override
   @Nullable
   public abstract Configurable createConfigurable(Collection<FilePath> collection);
 }

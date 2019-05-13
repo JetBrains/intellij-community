@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,7 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.VerticalFlowLayout;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -40,13 +41,13 @@ public class RemoveInvalidElementsDialog extends DialogWrapper {
   private JPanel myContentPanel;
   private JPanel myMainPanel;
   private JLabel myDescriptionLabel;
-  private final Map<JCheckBox, ConfigurationErrorDescription> myCheckboxes = new HashMap<JCheckBox, ConfigurationErrorDescription>();
+  private final Map<JCheckBox, ConfigurationErrorDescription> myCheckboxes = new HashMap<>();
 
   private RemoveInvalidElementsDialog(final String title,
                                       ConfigurationErrorType type,
                                       String invalidElements,
                                       final Project project,
-                                      List<ConfigurationErrorDescription> errors) {
+                                      List<? extends ConfigurationErrorDescription> errors) {
     super(project, true);
     setTitle(title);
     myDescriptionLabel.setText(ProjectBundle.message(type.canIgnore() ? "label.text.0.cannot.be.loaded.ignore" : "label.text.0.cannot.be.loaded.remove", invalidElements));
@@ -62,7 +63,7 @@ public class RemoveInvalidElementsDialog extends DialogWrapper {
       panel.add(checkBox, constraints);
       constraints.anchor = GridBagConstraints.NORTHWEST;
       constraints.insets.top = 5;
-      panel.add(new JLabel("<html><body>" + StringUtil.replace(error.getDescription(), "\n", "<br>") + "</body></html>"), constraints);
+      panel.add(new JLabel(XmlStringUtil.wrapInHtml(StringUtil.replace(error.getDescription(), "\n", "<br>"))), constraints);
       constraints.weightx = 1;
       panel.add(new JPanel(), constraints);
       myContentPanel.add(panel);
@@ -73,35 +74,37 @@ public class RemoveInvalidElementsDialog extends DialogWrapper {
   }
 
 
-  public static void showDialog(@NotNull Project project,
-                                @NotNull String title,
-                                ConfigurationErrorType type,
-                                @NotNull String invalidElements,
-                                @NotNull List<ConfigurationErrorDescription> errors) {
+  /**
+   * @return {@code true} if the problems are resolved
+   */
+  public static boolean showDialog(@NotNull Project project, @NotNull String title, ConfigurationErrorType type,
+                                   @NotNull String invalidElements, @NotNull List<? extends ConfigurationErrorDescription> errors) {
     if (errors.isEmpty()) {
-      return;
+      return true;
     }
     if (errors.size() == 1) {
       ConfigurationErrorDescription error = errors.get(0);
       String message = error.getDescription() + "\n" + error.getIgnoreConfirmationMessage();
       final int answer = Messages.showYesNoDialog(project, message, title, Messages.getErrorIcon());
-      if (answer == 0) {
+      if (answer == Messages.YES) {
         error.ignoreInvalidElement();
+        return true;
       }
-      return;
+      return false;
     }
 
     RemoveInvalidElementsDialog dialog = new RemoveInvalidElementsDialog(title, type, invalidElements, project, errors);
-    dialog.show();
-    if (dialog.isOK()) {
+    if (dialog.showAndGet()) {
       for (ConfigurationErrorDescription errorDescription : dialog.getSelectedItems()) {
         errorDescription.ignoreInvalidElement();
       }
+      return true;
     }
+    return false;
   }
 
   private List<ConfigurationErrorDescription> getSelectedItems() {
-    List<ConfigurationErrorDescription> items = new ArrayList<ConfigurationErrorDescription>();
+    List<ConfigurationErrorDescription> items = new ArrayList<>();
     for (Map.Entry<JCheckBox, ConfigurationErrorDescription> entry : myCheckboxes.entrySet()) {
       if (entry.getKey().isSelected()) {
         items.add(entry.getValue());

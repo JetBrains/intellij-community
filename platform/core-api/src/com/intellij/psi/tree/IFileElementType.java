@@ -22,6 +22,9 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+/**
+ * A superclass for all element types for root AST nodes in a {@link com.intellij.psi.PsiFile}.
+ */
 public class IFileElementType extends ILazyParseableElementType {
   public IFileElementType(@Nullable final Language language) {
     super("FILE", language);
@@ -31,13 +34,16 @@ public class IFileElementType extends ILazyParseableElementType {
     super(debugName, language);
   }
 
+  /**
+   * Allows to construct file element types without registering them, as in {@link IElementType#IElementType(String, Language, boolean)}.
+   */
   public IFileElementType(@NonNls @NotNull final String debugName, @Nullable final Language language, boolean register) {
     super(debugName, language, register);
   }
 
   @Nullable
   @Override
-  public ASTNode parseContents(final ASTNode chameleon) {
+  public ASTNode parseContents(@NotNull final ASTNode chameleon) {
     final PsiElement psi = chameleon.getPsi();
     assert psi != null : "Bad chameleon: " + chameleon;
     return doParseContents(chameleon, psi);

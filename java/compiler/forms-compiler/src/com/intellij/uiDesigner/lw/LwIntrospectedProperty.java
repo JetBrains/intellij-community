@@ -40,18 +40,19 @@ public abstract class LwIntrospectedProperty implements IProperty {
 
   /**
    * @return never null
-   */ 
+   */
+  @Override
   public final String getName(){
     return myName;
   }
 
   /**
    * @return never null
-   */ 
+   */
   public final String getPropertyClassName(){
     return myPropertyClassName;
   }
-  
+
   public final String getReadMethodName() {
     return "get" + Character.toUpperCase(myName.charAt(0)) + myName.substring(1);
   }
@@ -71,14 +72,15 @@ public abstract class LwIntrospectedProperty implements IProperty {
   /**
    * @param element element that contains serialized property data. This element was
    * written by {@link com.intellij.uiDesigner.propertyInspector.IntrospectedProperty#write(Object, com.intellij.uiDesigner.XmlWriter)}
-   * method. So <code>read</code> and <code>write</code> methods should be consistent.
+   * method. So {@code read} and {@code write} methods should be consistent.
    *
-   * @return property value. Should never return <code>null</code>. For example,
-   * value can be <code>java.lang.Integer</code> for <code>IntroIntProperty</code>.
+   * @return property value. Should never return {@code null}. For example,
+   * value can be {@code java.lang.Integer} for {@code IntroIntProperty}.
    *
    */
   public abstract Object read(Element element) throws Exception;
 
+  @Override
   public Object getPropertyValue(final IComponent component) {
     return ((LwComponent) component).getPropertyValue(this);
   }

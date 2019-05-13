@@ -25,7 +25,7 @@ final class MyEditorState implements FileEditorState{
   private final transient long myDocumentModificationStamp; // should not be serialized
   private final String[] mySelectedComponentIds;
 
-  public MyEditorState(final long modificationStamp, @NotNull final String[] selectedComponents){
+  MyEditorState(final long modificationStamp, @NotNull final String[] selectedComponents){
     myDocumentModificationStamp = modificationStamp;
     mySelectedComponentIds = selectedComponents;
   }
@@ -50,6 +50,7 @@ final class MyEditorState implements FileEditorState{
     return (int)(myDocumentModificationStamp ^ (myDocumentModificationStamp >>> 32));
   }
 
+  @Override
   public boolean canBeMergedWith(FileEditorState otherState, FileEditorStateLevel level) {
     return otherState instanceof MyEditorState;
   }

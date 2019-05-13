@@ -1,30 +1,20 @@
 
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.migration;
 
 import com.intellij.lang.Language;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.event.DocumentEvent;
+import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.psi.*;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.ui.EditorTextField;
 import com.intellij.ui.LanguageTextField;
+import com.intellij.util.ui.JBUI;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -45,18 +35,21 @@ public class EditMigrationEntryDialog extends DialogWrapper{
     init();
   }
 
+  @Override
   public JComponent getPreferredFocusedComponent() {
     return myOldNameField;
   }
 
+  @Override
   protected JComponent createCenterPanel() {
     return null;
   }
 
+  @Override
   protected JComponent createNorthPanel() {
     JPanel panel = new JPanel(new GridBagLayout());
     GridBagConstraints gbConstraints = new GridBagConstraints();
-    gbConstraints.insets = new Insets(4, 4, 4, 4);
+    gbConstraints.insets = JBUI.insets(4);
     gbConstraints.weighty = 0;
 
     gbConstraints.gridwidth = GridBagConstraints.RELATIVE;
@@ -114,9 +107,9 @@ public class EditMigrationEntryDialog extends DialogWrapper{
     panel.setPreferredSize(new Dimension(300, panel.getPreferredSize().height));
     panel.add(myNewNameField, gbConstraints);
 
-    final com.intellij.openapi.editor.event.DocumentAdapter documentAdapter = new com.intellij.openapi.editor.event.DocumentAdapter() {
+    final DocumentListener documentAdapter = new DocumentListener() {
       @Override
-      public void documentChanged(com.intellij.openapi.editor.event.DocumentEvent e) {
+      public void documentChanged(@NotNull DocumentEvent e) {
         validateOKButton();
       }
     };
@@ -130,12 +123,12 @@ public class EditMigrationEntryDialog extends DialogWrapper{
     String text = myOldNameField.getText();
     text = text.trim();
     PsiManager manager = PsiManager.getInstance(myProject);
-    if (!JavaPsiFacade.getInstance(manager.getProject()).getNameHelper().isQualifiedName(text)){
+    if (!PsiNameHelper.getInstance(manager.getProject()).isQualifiedName(text)){
       isEnabled = false;
     }
     text = myNewNameField.getText();
     text = text.trim();
-    if (!JavaPsiFacade.getInstance(manager.getProject()).getNameHelper().isQualifiedName(text)){
+    if (!PsiNameHelper.getInstance(manager.getProject()).isQualifiedName(text)){
       isEnabled = false;
     }
     setOKActionEnabled(isEnabled);

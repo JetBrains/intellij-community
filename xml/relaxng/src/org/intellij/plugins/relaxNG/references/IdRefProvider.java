@@ -23,7 +23,7 @@ import com.intellij.patterns.XmlAttributeValuePattern;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.PsiReferenceBase;
-import com.intellij.psi.impl.source.resolve.reference.PsiReferenceProviderBase;
+import com.intellij.psi.PsiReferenceProvider;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.AttributeValueSelfReference;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlAttribute;
@@ -40,10 +40,11 @@ import java.util.Set;
 import static com.intellij.patterns.XmlPatterns.xmlAttribute;
 import static com.intellij.patterns.XmlPatterns.xmlAttributeValue;
 
-public class IdRefProvider extends PsiReferenceProviderBase {
+public class IdRefProvider extends PsiReferenceProvider {
   public static final HasIdRefTypeCondition HAS_ID_REF_TYPE = new HasIdRefTypeCondition();
   public static final HasIdTypeCondition HAS_ID_TYPE = new HasIdTypeCondition();
 
+  @Override
   @NotNull
   public PsiReference[] getReferencesByElement(@NotNull PsiElement element, @NotNull ProcessingContext context) {
     final XmlAttributeValue value = (XmlAttributeValue)element;
@@ -68,20 +69,23 @@ public class IdRefProvider extends PsiReferenceProviderBase {
 
     private final AttributeValueCondition myCondition;
 
-    public IdReference(XmlAttributeValue element) {
+    IdReference(XmlAttributeValue element) {
       super(element, TextRange.from(1, element.getTextLength() - 2), true);
       myCondition = new AttributeValueCondition(element.getValue());
     }
 
+    @Override
     public PsiElement resolve() {
       final ProcessingContext context = new ProcessingContext();
       final ResolvingVisitor visitor = new ResolvingVisitor(PATTERN.with(myCondition).save(TARGET), context) {
+        @Override
         public void visitXmlTag(XmlTag tag) {
           super.visitXmlTag(tag);
           if (shouldContinue()) {
             visitSubTags(tag);
           }
         }
+        @Override
         protected boolean shouldContinue() {
           return context.get(TARGET) == null;
         }
@@ -99,12 +103,14 @@ public class IdRefProvider extends PsiReferenceProviderBase {
       }
     }
 
+    @Override
     @NotNull
     public Object[] getVariants() {
       final ProcessingContext context = new ProcessingContext();
-      context.put(VARIANTS, new HashSet<XmlAttributeValue>());
+      context.put(VARIANTS, new HashSet<>());
 
       final ResolvingVisitor visitor = new ResolvingVisitor(PATTERN.with(AddValueCondition.create(VARIANTS)), context) {
+        @Override
         public void visitXmlTag(XmlTag tag) {
           super.visitXmlTag(tag);
           visitSubTags(tag);
@@ -128,20 +134,22 @@ public class IdRefProvider extends PsiReferenceProviderBase {
   }
 
   static class HasIdTypeCondition extends PatternCondition<XmlAttributeValue> {
-    public HasIdTypeCondition() {
+    HasIdTypeCondition() {
       super("IdType");
     }
 
+    @Override
     public boolean accepts(@NotNull XmlAttributeValue xmlAttributeValue, ProcessingContext context) {
       return hasIdType(xmlAttributeValue);
     }
   }
 
   static class HasIdRefTypeCondition extends PatternCondition<XmlAttributeValue> {
-    public HasIdRefTypeCondition() {
+    HasIdRefTypeCondition() {
       super("IdRef");
     }
 
+    @Override
     public boolean accepts(@NotNull XmlAttributeValue xmlAttributeValue,  ProcessingContext context) {
       return hasIdRefType(xmlAttributeValue);
     }

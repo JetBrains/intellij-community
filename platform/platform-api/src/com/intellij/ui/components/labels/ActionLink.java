@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,12 +15,18 @@
  */
 package com.intellij.ui.components.labels;
 
-import com.intellij.ide.DataManager;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionPlaces;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.util.ui.EmptyIcon;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
 import java.awt.*;
@@ -30,30 +36,28 @@ import java.awt.event.InputEvent;
  * @author Konstantin Bulenkov
  */
 public class ActionLink extends LinkLabel implements DataProvider {
-  private static final EmptyIcon ICON = new EmptyIcon(0, 12);
+  private static final EmptyIcon ICON = JBUI.scale(EmptyIcon.create(0, 12));
   private final AnAction myAction;
-  private String myPlace = ActionPlaces.UNKNOWN;
+  private final String myPlace = ActionPlaces.UNKNOWN;
   private InputEvent myEvent;
   private Color myVisitedColor;
   private Color myActiveColor;
   private Color myNormalColor;
 
   public ActionLink(String text, @NotNull AnAction action) {
-    super(text, ICON);
+    this(text, ICON, action);
+  }
+
+  public ActionLink(String text, Icon icon, @NotNull AnAction action) {
+    this(text, icon, action, null);
+  }
+
+  public ActionLink(String text, Icon icon, @NotNull AnAction action, @Nullable final Runnable onDone) {
+    super(text, icon);
     setListener(new LinkListener() {
       @Override
       public void linkSelected(LinkLabel aSource, Object aLinkData) {
-        final Presentation presentation = (Presentation)myAction.getTemplatePresentation().clone();
-        final AnActionEvent event = new AnActionEvent(myEvent,
-                                                      DataManager.getInstance().getDataContext(ActionLink.this),
-                                                      myPlace,
-                                                      presentation,
-                                                      ActionManager.getInstance(),
-                                                      0);
-        myAction.update(event);
-        if (event.getPresentation().isEnabled() && event.getPresentation().isVisible()) {
-          myAction.actionPerformed(event);
-        }
+        ActionUtil.invokeAction(myAction, ActionLink.this, myPlace, myEvent, onDone);
       }
     }, null);
     myAction = action;
@@ -74,6 +78,7 @@ public class ActionLink extends LinkLabel implements DataProvider {
     return myActiveColor == null ? super.getActive() : myActiveColor;
   }
 
+  @Override
   protected Color getTextColor() {
     return myUnderline ? getActiveColor() : getNormal();
   }
@@ -96,7 +101,7 @@ public class ActionLink extends LinkLabel implements DataProvider {
   }
 
   @Override
-  public Object getData(@NonNls String dataId) {
+  public Object getData(@NotNull @NonNls String dataId) {
     if (PlatformDataKeys.DOMINANT_HINT_AREA_RECTANGLE.is(dataId)) {
       final Point p = SwingUtilities.getRoot(this).getLocationOnScreen();
       return new Rectangle(p.x, p.y + getHeight(), 0, 0);
@@ -106,5 +111,10 @@ public class ActionLink extends LinkLabel implements DataProvider {
     }
 
     return null;
+  }
+
+  @TestOnly
+  public AnAction getAction() {
+    return myAction;
   }
 }

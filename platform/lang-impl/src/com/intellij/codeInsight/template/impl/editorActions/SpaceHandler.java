@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,44 +13,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.intellij.codeInsight.template.impl.editorActions;
 
+import com.intellij.codeInsight.editorActions.TypedHandlerDelegate;
 import com.intellij.codeInsight.template.TemplateManager;
-import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
 import com.intellij.codeInsight.template.impl.TemplateSettings;
-import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.actionSystem.TypedActionHandler;
+import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
+import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 
-public class SpaceHandler extends TypedActionHandlerBase {
-  public SpaceHandler(TypedActionHandler originalHandler) {
-    super(originalHandler);
-  }
-
+public class SpaceHandler extends TypedHandlerDelegate {
+  @NotNull
   @Override
-  public void execute(@NotNull Editor editor, char charTyped, @NotNull DataContext dataContext) {
-    if (charTyped != ' ') {
-      if (myOriginalHandler != null) myOriginalHandler.execute(editor, charTyped, dataContext);
-      return;
+  public Result beforeCharTyped(char charTyped, @NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file, @NotNull FileType fileType) {
+    if (charTyped == TemplateSettings.SPACE_CHAR && TemplateManager.getInstance(project).startTemplate(editor, TemplateSettings.SPACE_CHAR)) {
+      return Result.STOP;
     }
 
-    Project project = PlatformDataKeys.PROJECT.getData(dataContext);
-    if (project == null) {
-      if (myOriginalHandler != null) myOriginalHandler.execute(editor, charTyped, dataContext);
-      return;
-    }
-
-    TemplateManagerImpl templateManager = (TemplateManagerImpl)TemplateManager.getInstance(project);
-    if (templateManager == null) {
-      throw new AssertionError(project + "; " + project.isDisposed());
-    }
-
-    if (!templateManager.startTemplate(editor, TemplateSettings.SPACE_CHAR)) {
-      if (myOriginalHandler != null) myOriginalHandler.execute(editor, charTyped, dataContext);
-    }
+    return super.beforeCharTyped(charTyped, project, editor, file, fileType);
   }
 }

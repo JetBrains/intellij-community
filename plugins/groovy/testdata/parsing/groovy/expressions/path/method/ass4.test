@@ -13,7 +13,7 @@ Groovy script
         Reference expression
           PsiElement(identifier)('a')
         PsiElement(=)('=')
-        PsiErrorElement:Expression expected
+        PsiErrorElement:<expression> expected, got ','
           <empty list>
       PsiWhiteSpace('\n')
       PsiElement(,)(',')

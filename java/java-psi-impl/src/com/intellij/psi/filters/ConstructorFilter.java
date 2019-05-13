@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,26 +18,18 @@ package com.intellij.psi.filters;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 
-/**
- * Created by IntelliJ IDEA.
- * User: ik
- * Date: 28.01.2003
- * Time: 21:22:31
- * To change this template use Options | File Templates.
- */
 public class ConstructorFilter extends ClassFilter {
-  public ConstructorFilter(){
+  public ConstructorFilter() {
     super(PsiMethod.class);
   }
 
   @Override
-  public boolean isAcceptable(Object element, PsiElement context){
-    if(element instanceof PsiMethod){
-      return ((PsiMethod)element).isConstructor();
-    }
-    return false;
+  public boolean isAcceptable(Object element, PsiElement context) {
+    return element instanceof PsiMethod && ((PsiMethod)element).isConstructor();
   }
-  public String toString(){
+
+  @Override
+  public String toString() {
     return "constructor";
   }
 }

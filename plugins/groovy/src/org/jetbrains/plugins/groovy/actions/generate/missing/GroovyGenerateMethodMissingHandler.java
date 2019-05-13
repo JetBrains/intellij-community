@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,13 +21,11 @@ import com.intellij.codeInsight.generation.GenerationInfo;
 import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.ide.fileTemplates.JavaTemplateUtil;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.PsiClass;
@@ -67,22 +65,24 @@ public class GroovyGenerateMethodMissingHandler extends GenerateMembersHandlerBa
     throws IncorrectOperationException {
 
     final String templName = JavaTemplateUtil.TEMPLATE_FROM_USAGE_METHOD_BODY;
-    final FileTemplate template = FileTemplateManager.getInstance().getCodeTemplate(templName);
+    final FileTemplate template = FileTemplateManager.getInstance(aClass.getProject()).getCodeTemplate(templName);
 
     final GrMethod method = genMethod(aClass, template);
     return method != null
-           ? Collections.singletonList(new GroovyGenerationInfo<GrMethod>(method, true))
-           : Collections.<GenerationInfo>emptyList();
+           ? Collections.singletonList(new GroovyGenerationInfo<>(method, true))
+           : Collections.emptyList();
   }
 
   @Nullable
   private static GrMethod genMethod(PsiClass aClass, FileTemplate template) {
-    Properties properties = FileTemplateManager.getInstance().getDefaultProperties(aClass.getProject());
+    Properties properties = FileTemplateManager.getInstance(aClass.getProject()).getDefaultProperties();
     properties.setProperty(FileTemplate.ATTRIBUTE_RETURN_TYPE, "java.lang.Object");
     properties.setProperty(FileTemplate.ATTRIBUTE_DEFAULT_RETURN_VALUE, "null");
     properties.setProperty(FileTemplate.ATTRIBUTE_CALL_SUPER, "");
-    properties.setProperty(FileTemplate.ATTRIBUTE_CLASS_NAME, aClass.getQualifiedName());
-    properties.setProperty(FileTemplate.ATTRIBUTE_SIMPLE_CLASS_NAME, aClass.getName());
+    String fqn = aClass.getQualifiedName();
+    if (fqn != null) properties.setProperty(FileTemplate.ATTRIBUTE_CLASS_NAME, fqn);
+    String className = aClass.getName();
+    if (className != null) properties.setProperty(FileTemplate.ATTRIBUTE_SIMPLE_CLASS_NAME, className);
     properties.setProperty(FileTemplate.ATTRIBUTE_METHOD_NAME, "methodMissing");
 
     String bodyText;
@@ -100,11 +100,6 @@ public class GroovyGenerateMethodMissingHandler extends GenerateMembersHandlerBa
   @Override
   protected GenerationInfo[] generateMemberPrototypes(PsiClass aClass, ClassMember originalMember) throws IncorrectOperationException {
     return GenerationInfo.EMPTY_ARRAY;
-  }
-
-  @Override
-  public boolean startInWriteAction() {
-    return true;
   }
 
   @Nullable
@@ -127,18 +122,16 @@ public class GroovyGenerateMethodMissingHandler extends GenerateMembersHandlerBa
 
       if (Messages.showYesNoDialog(project, text,
                                    GroovyCodeInsightBundle.message("generate.method.missing.already.defined.title"),
-                                   Messages.getQuestionIcon()) == DialogWrapper.OK_EXIT_CODE) {
+                                   Messages.getQuestionIcon()) == Messages.YES) {
         final PsiMethod finalMethod = method;
-        if (!ApplicationManager.getApplication().runWriteAction(new Computable<Boolean>() {
-          public Boolean compute() {
-            try {
-              finalMethod.delete();
-              return Boolean.TRUE;
-            }
-            catch (IncorrectOperationException e) {
-              LOG.error(e);
-              return Boolean.FALSE;
-            }
+        if (!WriteAction.compute(() -> {
+          try {
+            finalMethod.delete();
+            return Boolean.TRUE;
+          }
+          catch (IncorrectOperationException e) {
+            LOG.error(e);
+            return Boolean.FALSE;
           }
         }).booleanValue()) {
           return null;

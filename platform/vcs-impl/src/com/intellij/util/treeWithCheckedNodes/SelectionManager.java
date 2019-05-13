@@ -1,28 +1,11 @@
-/*
- * Copyright 2000-2011 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.treeWithCheckedNodes;
 
 import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.vcs.impl.CollectionsDelta;
-import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vcs.changes.ui.PlusMinus;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.PairProcessor;
-import com.intellij.util.PlusMinus;
-import com.intellij.util.Processor;
-import com.intellij.util.TreeNodeState;
 import com.intellij.util.containers.Convertor;
 import org.jetbrains.annotations.Nullable;
 
@@ -31,22 +14,21 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 
+import static com.intellij.util.containers.ContainerUtil.subtract;
+
 /**
 * @author irengrig
-*         Date: 2/7/11
-*         Time: 10:43 AM
  *
  * see {@link SelectedState}
 */
 public class SelectionManager {
   private final SelectedState<VirtualFile> myState;
-  private final Convertor<DefaultMutableTreeNode, VirtualFile> myNodeConvertor;
-  @Nullable
-  private PlusMinus<VirtualFile> mySelectionChangeListener;
+  private final Convertor<? super DefaultMutableTreeNode, ? extends VirtualFile> myNodeConvertor;
+  private PlusMinus<? super VirtualFile> mySelectionChangeListener;
 
-  public SelectionManager(int selectedSize, int queueSize, final Convertor<DefaultMutableTreeNode, VirtualFile> nodeConvertor) {
+  public SelectionManager(int selectedSize, int queueSize, final Convertor<? super DefaultMutableTreeNode, ? extends VirtualFile> nodeConvertor) {
     myNodeConvertor = nodeConvertor;
-    myState = new SelectedState<VirtualFile>(selectedSize, queueSize);
+    myState = new SelectedState<>(selectedSize, queueSize);
   }
 
   public void toggleSelection(final DefaultMutableTreeNode node) {
@@ -58,7 +40,7 @@ public class SelectionManager {
     if (TreeNodeState.HAVE_SELECTED_ABOVE.equals(state)) return;
     if (TreeNodeState.CLEAR.equals(state) && (! myState.canAddSelection())) return;
 
-    final HashSet<VirtualFile> old = new HashSet<VirtualFile>(myState.getSelected());
+    final HashSet<VirtualFile> old = new HashSet<>(myState.getSelected());
 
     final TreeNodeState futureState =
       myState.putAndPass(vf, TreeNodeState.SELECTED.equals(state) ? TreeNodeState.CLEAR : TreeNodeState.SELECTED);
@@ -66,52 +48,35 @@ public class SelectionManager {
     // for those possibly duplicate nodes (i.e. when we have root for module and root for VCS root, each file is shown twice in a tree ->
     // clear all suspicious cached)
     if (! TreeNodeState.SELECTED.equals(futureState)) {
-      myState.clearAllCachedMatching(new Processor<VirtualFile>() {
-        @Override
-        public boolean process(VirtualFile virtualFile) {
-          return VfsUtil.isAncestor(virtualFile, vf, false);
-        }
-      });
+      myState.clearAllCachedMatching(virtualFile -> VfsUtilCore.isAncestor(virtualFile, vf, false));
     }
-    stateWorker.iterateParents(myState, new PairProcessor<VirtualFile, TreeNodeState>() {
-      @Override
-      public boolean process(VirtualFile virtualFile, TreeNodeState state) {
-        if (TreeNodeState.SELECTED.equals(futureState)) {
-          myState.putAndPass(virtualFile, TreeNodeState.HAVE_SELECTED_BELOW);
-        } else {
-          myState.remove(virtualFile);
-        }
-        return true;
+    stateWorker.iterateParents(myState, (virtualFile, state1) -> {
+      if (TreeNodeState.SELECTED.equals(futureState)) {
+        myState.putAndPass(virtualFile, TreeNodeState.HAVE_SELECTED_BELOW);
+      } else {
+        myState.remove(virtualFile);
       }
+      return true;
     });
     // todo vf, vf - what is correct?
-    myState.clearAllCachedMatching(new Processor<VirtualFile>() {
-      @Override
-      public boolean process(VirtualFile vf) {
-        return VfsUtil.isAncestor(stateWorker.getVf(), vf, false);
-      }
-    });
+    myState.clearAllCachedMatching(vf1 -> VfsUtilCore.isAncestor(stateWorker.getVf(), vf1, false));
     for (VirtualFile selected : myState.getSelected()) {
-      if (VfsUtil.isAncestor(stateWorker.getVf(), selected, true)) {
+      if (VfsUtilCore.isAncestor(stateWorker.getVf(), selected, true)) {
         myState.remove(selected);
       }
     }
     final Set<VirtualFile> selectedAfter = myState.getSelected();
     if (mySelectionChangeListener != null && ! old.equals(selectedAfter)) {
-      final Set<VirtualFile> removed = CollectionsDelta.notInSecond(old, selectedAfter);
-      final Set<VirtualFile> newlyAdded = CollectionsDelta.notInSecond(selectedAfter, old);
-      if (newlyAdded != null) {
-        for (VirtualFile file : newlyAdded) {
-          if (mySelectionChangeListener != null) {
-            mySelectionChangeListener.plus(file);
-          }
+      final Collection<VirtualFile> removed = subtract(old, selectedAfter);
+      final Collection<VirtualFile> newlyAdded = subtract(selectedAfter, old);
+      for (VirtualFile file : newlyAdded) {
+        if (mySelectionChangeListener != null) {
+          mySelectionChangeListener.plus(file);
         }
       }
-      if (removed != null) {
-        for (VirtualFile file : removed) {
-          if (mySelectionChangeListener != null) {
-            mySelectionChangeListener.minus(file);
-          }
+      for (VirtualFile file : removed) {
+        if (mySelectionChangeListener != null) {
+          mySelectionChangeListener.minus(file);
         }
       }
     }
@@ -121,7 +86,7 @@ public class SelectionManager {
     return myState.canAddSelection();
   }
 
-  public void setSelection(Collection<VirtualFile> files) {
+  public void setSelection(Collection<? extends VirtualFile> files) {
     myState.setSelection(files);
     for (VirtualFile file : files) {
       if (mySelectionChangeListener != null) {
@@ -140,24 +105,21 @@ public class SelectionManager {
     final TreeNodeState stateSelf = myState.get(stateWorker.getVf());
     if (stateSelf != null) return stateSelf;
 
-    final Ref<TreeNodeState> result = new Ref<TreeNodeState>();
-    stateWorker.iterateParents(myState, new PairProcessor<VirtualFile, TreeNodeState>() {
-      @Override
-      public boolean process(VirtualFile virtualFile, TreeNodeState state) {
-        if (state != null) {
-          if (TreeNodeState.SELECTED.equals(state) || TreeNodeState.HAVE_SELECTED_ABOVE.equals(state)) {
-            result.set(myState.putAndPass(stateWorker.getVf(), TreeNodeState.HAVE_SELECTED_ABOVE));
-          }
-          return false; // exit
+    final Ref<TreeNodeState> result = new Ref<>();
+    stateWorker.iterateParents(myState, (virtualFile, state) -> {
+      if (state != null) {
+        if (TreeNodeState.SELECTED.equals(state) || TreeNodeState.HAVE_SELECTED_ABOVE.equals(state)) {
+          result.set(myState.putAndPass(stateWorker.getVf(), TreeNodeState.HAVE_SELECTED_ABOVE));
         }
-        return true;
+        return false; // exit
       }
+      return true;
     });
 
     if (! result.isNull()) return  result.get();
 
     for (VirtualFile selected : myState.getSelected()) {
-      if (VfsUtil.isAncestor(stateWorker.getVf(), selected, true)) {
+      if (VfsUtilCore.isAncestor(stateWorker.getVf(), selected, true)) {
         return myState.putAndPass(stateWorker.getVf(), TreeNodeState.HAVE_SELECTED_BELOW);
       }
     }
@@ -166,12 +128,7 @@ public class SelectionManager {
 
   public void removeSelection(final VirtualFile elementAt) {
     myState.remove(elementAt);
-    myState.clearAllCachedMatching(new Processor<VirtualFile>() {
-      @Override
-      public boolean process(VirtualFile virtualFile) {
-        return VfsUtil.isAncestor(virtualFile, elementAt, false) || VfsUtil.isAncestor(elementAt, virtualFile, false);
-      }
-    });
+    myState.clearAllCachedMatching(f -> VfsUtilCore.isAncestor(f, elementAt, false) || VfsUtilCore.isAncestor(elementAt, f, false));
     if (mySelectionChangeListener != null) {
       mySelectionChangeListener.minus(elementAt);
     }
@@ -179,10 +136,10 @@ public class SelectionManager {
 
   private static class StateWorker {
     private final DefaultMutableTreeNode myNode;
-    private final Convertor<DefaultMutableTreeNode, VirtualFile> myConvertor;
-    private VirtualFile myVf;
+    private final Convertor<? super DefaultMutableTreeNode, ? extends VirtualFile> myConvertor;
+    private final VirtualFile myVf;
 
-    private StateWorker(DefaultMutableTreeNode node, final Convertor<DefaultMutableTreeNode, VirtualFile> convertor) {
+    private StateWorker(DefaultMutableTreeNode node, final Convertor<? super DefaultMutableTreeNode, ? extends VirtualFile> convertor) {
       myNode = node;
       myConvertor = convertor;
       myVf = myConvertor.convert(node);
@@ -192,7 +149,7 @@ public class SelectionManager {
       return myVf;
     }
 
-    public void iterateParents(final SelectedState<VirtualFile> states, final PairProcessor<VirtualFile, TreeNodeState> parentsProcessor) {
+    public void iterateParents(final SelectedState<? super VirtualFile> states, final PairProcessor<? super VirtualFile, ? super TreeNodeState> parentsProcessor) {
       DefaultMutableTreeNode current = (DefaultMutableTreeNode) myNode.getParent();
       // up cycle
       while (current != null) {
@@ -206,11 +163,7 @@ public class SelectionManager {
     }
   }
 
-  public PlusMinus<VirtualFile> getSelectionChangeListener() {
-    return mySelectionChangeListener;
-  }
-
-  public void setSelectionChangeListener(PlusMinus<VirtualFile> selectionChangeListener) {
+  public void setSelectionChangeListener(@Nullable PlusMinus<? super VirtualFile> selectionChangeListener) {
     mySelectionChangeListener = selectionChangeListener;
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -45,7 +45,7 @@ public interface ViewContext extends Disposable {
   @Nullable
   Tab getTabFor(final Grid grid);
 
-  View getStateFor(Content content);
+  View getStateFor(@NotNull Content content);
 
   void saveUiState();
 
@@ -53,6 +53,7 @@ public interface ViewContext extends Disposable {
 
   ContentManager getContentManager();
 
+  @NotNull
   ActionManager getActionManager();
 
   IdeFocusManager getFocusManager();
@@ -61,9 +62,9 @@ public interface ViewContext extends Disposable {
 
   GridCell findCellFor(@NotNull final Content content);
 
-  Grid findGridFor(Content content);
+  Grid findGridFor(@NotNull Content content);
 
-  ActionCallback select(Content content, boolean requestFocus);
+  ActionCallback select(@NotNull Content content, boolean requestFocus);
 
   boolean isStateBeingRestored();
 

@@ -55,7 +55,7 @@ public class StringScanner {
       return true;
     }
     final char ch = myText.charAt(myPosition);
-    return ch == '\n' || ch == '\r';
+    return ch == '\n';
   }
 
   /**
@@ -69,7 +69,7 @@ public class StringScanner {
       final char ch = myText.charAt(myPosition++);
       if (hasMoreData()) {
         final char ch2 = myText.charAt(myPosition);
-        if (ch == '\n' && ch2 == '\r' || ch == '\r' && ch2 == '\n') {
+        if (ch == '\r' && ch2 == '\n') {
           myPosition++;
         }
       }
@@ -103,6 +103,7 @@ public class StringScanner {
    * @param boundaryChar a boundary character
    * @return a token
    */
+  @NotNull
   public String boundedToken(final char boundaryChar) {
     return boundedToken(boundaryChar, false);
   }
@@ -115,6 +116,7 @@ public class StringScanner {
    * @param ignoreEol    if true, the end of line is considered as normal character and consumed
    * @return a token
    */
+  @NotNull
   public String boundedToken(char boundaryChar, boolean ignoreEol) {
     int start = myPosition;
     for (; myPosition < myText.length(); myPosition++) {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,8 @@ package com.intellij.execution.filters;
 
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
@@ -30,7 +32,7 @@ import java.util.List;
 public class CompositeInputFilter implements InputFilter {
   private static final Logger LOG = Logger.getInstance(CompositeInputFilter.class);
 
-  private final List<Pair<InputFilter, Boolean /* is dumb aware */>> myFilters = ContainerUtilRt.newArrayList();
+  private final List<InputFilterWrapper> myFilters = ContainerUtilRt.newArrayList();
   private final DumbService myDumbService;
 
   public CompositeInputFilter(@NotNull Project project) {
@@ -39,13 +41,12 @@ public class CompositeInputFilter implements InputFilter {
 
   @Override
   @Nullable
-  public Pair<String, ConsoleViewContentType> applyFilter(final String text, final ConsoleViewContentType contentType) {
+  public List<Pair<String, ConsoleViewContentType>> applyFilter(@NotNull final String text, @NotNull final ConsoleViewContentType contentType) {
     boolean dumb = myDumbService.isDumb();
-    for (Pair<InputFilter, Boolean> pair : myFilters) {
-      if (!dumb || pair.second == Boolean.TRUE) {
+    for (InputFilterWrapper filter : myFilters) {
+      if (!dumb || filter.isDumbAware) {
         long t0 = System.currentTimeMillis();
-        InputFilter filter = pair.first;
-        Pair<String, ConsoleViewContentType> result = filter.applyFilter(text, contentType);
+        List<Pair<String, ConsoleViewContentType>> result = filter.applyFilter(text, contentType);
         t0 = System.currentTimeMillis() - t0;
         if (t0 > 100) {
           LOG.warn(filter.getClass().getSimpleName() + ".applyFilter() took " + t0 + " ms on '''" + text + "'''");
@@ -58,7 +59,37 @@ public class CompositeInputFilter implements InputFilter {
     return null;
   }
 
+  private static class InputFilterWrapper implements InputFilter {
+    @NotNull private final InputFilter myOriginal;
+    private boolean isBroken;
+    private final boolean isDumbAware;
+
+    InputFilterWrapper(@NotNull InputFilter original) {
+      isDumbAware = DumbService.isDumbAware(original);
+      myOriginal = original;
+    }
+
+    @Nullable
+    @Override
+    public List<Pair<String, ConsoleViewContentType>> applyFilter(@NotNull String text, @NotNull ConsoleViewContentType contentType) {
+      if (!isBroken) {
+        try {
+          return myOriginal.applyFilter(text, contentType);
+        }
+        catch (ProcessCanceledException ignored) {
+          ProgressManager.checkCanceled();
+        }
+        catch (Throwable e) {
+          isBroken = true;
+          LOG.error(e);
+        }
+      }
+      return null;
+    }
+  }
+
   public void addFilter(@NotNull final InputFilter filter) {
-    myFilters.add(Pair.create(filter, DumbService.isDumbAware(filter)));
+    InputFilterWrapper wrapper = new InputFilterWrapper(filter);
+    myFilters.add(wrapper);
   }
 }

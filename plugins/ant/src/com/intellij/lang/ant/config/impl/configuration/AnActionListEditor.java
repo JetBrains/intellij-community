@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,16 +17,12 @@ package com.intellij.lang.ant.config.impl.configuration;
 
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.lang.ant.AntBundle;
-import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.ActionPlaces;
-import com.intellij.openapi.actionSystem.ActionToolbar;
-import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Factory;
-import com.intellij.ui.ListScrollingUtil;
 import com.intellij.ui.ReorderableListController;
+import com.intellij.ui.ScrollingUtil;
 
 import javax.swing.*;
 import java.awt.*;
@@ -35,9 +31,9 @@ import java.util.Collection;
 import java.util.List;
 
 public class AnActionListEditor<T> extends JPanel {
-  private final Form<T> myForm = new Form<T>();
-  private final ArrayList<T> myRemoved = new ArrayList<T>();
-  private final ArrayList<T> myAdded = new ArrayList<T>();
+  private final Form<T> myForm = new Form<>();
+  private final ArrayList<T> myRemoved = new ArrayList<>();
+  private final ArrayList<T> myAdded = new ArrayList<>();
 
   public AnActionListEditor() {
     super(new BorderLayout());
@@ -48,6 +44,7 @@ public class AnActionListEditor<T> extends JPanel {
     ReorderableListController<T>.AddActionDescription description = myForm.getListActionsBuilder().addAddAction(
       AntBundle.message("add.action.name"), newItemFactory, true);
     description.addPostHandler(new ReorderableListController.ActionNotification<T>() {
+      @Override
       public void afterActionPerformed(T value) {
         myAdded.add(value);
       }
@@ -58,6 +55,7 @@ public class AnActionListEditor<T> extends JPanel {
   public void addRemoveButtonForAnt(final Condition<T> removeCondition, String actionName) {
     final ReorderableListController<T>.RemoveActionDescription description = myForm.getListActionsBuilder().addRemoveAction(actionName);
     description.addPostHandler(new ReorderableListController.ActionNotification<List<T>>() {
+      @Override
       public void afterActionPerformed(List<T> list) {
         for (T item : list) {
           if (myAdded.contains(item)) {
@@ -70,19 +68,17 @@ public class AnActionListEditor<T> extends JPanel {
       }
     });
     description.setEnableCondition(removeCondition);
-    description.setConfirmation(new Condition<List<T>>() {
-      public boolean value(final List<T> list) {
-        if (list.size() == 1) {
-          return Messages.showOkCancelDialog(description.getList(),
-                                             AntBundle.message("delete.selected.ant.configuration.confirmation.text"),
-                                             ExecutionBundle.message("delete.confirmation.dialog.title"),
-                                             Messages.getQuestionIcon()) == 0;
-        } else {
-          return Messages.showOkCancelDialog(description.getList(),
-                                             AntBundle.message("delete.selected.ant.configurations.confirmation.text"),
-                                             ExecutionBundle.message("delete.confirmation.dialog.title"),
-                                             Messages.getQuestionIcon()) == 0;
-        }
+    description.setConfirmation(list -> {
+      if (list.size() == 1) {
+        return Messages.showOkCancelDialog(description.getList(),
+                                           AntBundle.message("delete.selected.ant.configuration.confirmation.text"),
+                                           ExecutionBundle.message("delete.confirmation.dialog.title"),
+                                           Messages.getQuestionIcon()) == Messages.OK;
+      } else {
+        return Messages.showOkCancelDialog(description.getList(),
+                                           AntBundle.message("delete.selected.ant.configurations.confirmation.text"),
+                                           ExecutionBundle.message("delete.confirmation.dialog.title"),
+                                           Messages.getQuestionIcon()) == Messages.OK;
       }
     });
 
@@ -115,7 +111,7 @@ public class AnActionListEditor<T> extends JPanel {
     for (T item : items) {
       model.addElement(item);
     }
-    ListScrollingUtil.ensureSelectionExists(getList());
+    ScrollingUtil.ensureSelectionExists(getList());
   }
 
   public void updateItem(T item) {
@@ -133,15 +129,13 @@ public class AnActionListEditor<T> extends JPanel {
     private JList myList;
     private final ReorderableListToolbar<T> myListController;
 
-    public Form() {
+    Form() {
       myList.setModel(new DefaultListModel());
       if (ApplicationManager.getApplication() == null) {
-        myListController = new ReorderableListToolbar<T>(myList);
+        myListController = new ReorderableListToolbar<>(myList);
         return;  // Preview mode
       }
-      DefaultActionGroup actionGroup = new DefaultActionGroup();
-      ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, actionGroup, true);
-      myListController = new ReorderableListToolbar<T>(myList);
+      myListController = new ReorderableListToolbar<>(myList);
     }
 
     public void createToolbar() {
@@ -160,10 +154,10 @@ public class AnActionListEditor<T> extends JPanel {
 
     public void select(T item) {
       if (item != null) {
-        ListScrollingUtil.selectItem(myList, item);
+        ScrollingUtil.selectItem(myList, item);
       }
       else {
-        ListScrollingUtil.ensureSelectionExists(myList);
+        ScrollingUtil.ensureSelectionExists(myList);
       }
     }
 

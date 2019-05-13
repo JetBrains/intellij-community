@@ -17,8 +17,11 @@ package com.intellij.refactoring.safeDelete.usageInfo;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author ven
@@ -35,37 +38,42 @@ public class SafeDeleteExtendsClassUsageInfo extends SafeDeleteReferenceUsageInf
     LOG.assertTrue(mySubstitutor != null);
   }
 
+  @Override
   public PsiClass getReferencedElement() {
     return (PsiClass)super.getReferencedElement();
   }
 
+  @Override
   public void deleteElement() throws IncorrectOperationException {
     final PsiElement parent = getElement().getParent();
     LOG.assertTrue(parent instanceof PsiReferenceList);
     final PsiClass refClass = getReferencedElement();
-    final PsiElementFactory elementFactory = JavaPsiFacade.getInstance(refClass.getProject()).getElementFactory();
+    final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(refClass.getProject());
 
-    final PsiReferenceList extendsList = refClass.getExtendsList();
-    final PsiReferenceList extendingImplementsList = myExtendingClass.getImplementsList();
-    if (extendsList != null) {
-      final PsiClassType[] referenceTypes = extendsList.getReferencedTypes();
-      final PsiReferenceList listToAddExtends = refClass.isInterface() == myExtendingClass.isInterface() ? myExtendingClass.getExtendsList() : extendingImplementsList;
-      for (PsiClassType referenceType : referenceTypes) {
-        listToAddExtends.add(elementFactory.createReferenceElementByType((PsiClassType)mySubstitutor.substitute(referenceType)));
-      }
-    }
-
-    final PsiReferenceList implementsList = refClass.getImplementsList();
-    if (implementsList != null) {
-      final PsiClassType[] referenceTypes = implementsList.getReferencedTypes();
-      for (PsiClassType referenceType : referenceTypes) {
-        extendingImplementsList.add(elementFactory.createReferenceElementByType((PsiClassType)mySubstitutor.substitute(referenceType)));
-      }
-    }
+    boolean targetTypeParameter = myExtendingClass instanceof PsiTypeParameter;
+    copyExtendsList(refClass.getExtendsList(), refClass.isInterface() == myExtendingClass.isInterface() || targetTypeParameter, elementFactory);
+    copyExtendsList(refClass.getImplementsList(), targetTypeParameter, elementFactory);
 
     getElement().delete();
   }
 
+  private void copyExtendsList(@Nullable PsiReferenceList sourceExtendsList,
+                               boolean targetExtends,
+                               PsiElementFactory elementFactory) {
+    if (sourceExtendsList != null) {
+      final PsiClassType[] referenceTypes = sourceExtendsList.getReferencedTypes();
+      final PsiReferenceList targetExtendsList = targetExtends ? myExtendingClass.getExtendsList() : myExtendingClass.getImplementsList();
+      final PsiClassType[] existingRefTypes = targetExtendsList.getReferencedTypes();
+      for (PsiClassType referenceType : referenceTypes) {
+        if (ArrayUtilRt.find(existingRefTypes, referenceType) > -1) continue;
+        PsiClassType classType = (PsiClassType)mySubstitutor.substitute(referenceType);
+        PsiElement extendsRef = targetExtendsList.add(elementFactory.createReferenceElementByType(classType));
+        CodeStyleManager.getInstance(myExtendingClass.getProject()).reformat(extendsRef);
+      }
+    }
+  }
+
+  @Override
   public boolean isSafeDelete() {
     if (getElement() == null) return false;
     final PsiClass refClass = getReferencedElement();

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,14 +15,10 @@
  */
 package com.intellij.internal.anomalies;
 
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.objectTree.ObjectNode;
-import com.intellij.openapi.util.objectTree.ObjectTree;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -31,39 +27,28 @@ import java.awt.*;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.util.*;
+import java.util.Comparator;
+import java.util.Iterator;
+import java.util.Set;
+import java.util.TreeSet;
 
-/**
- * User: Vassiliy.Kudryashov
- */
 public class TopAnomaliesAction extends ActionGroup {
-  private static final Comparator<Pair<?, Integer>> COMPARATOR = new Comparator<Pair<?, Integer>>() {
-    @Override
-    public int compare(Pair<?, Integer> o1, Pair<?, Integer> o2) {
-      int i = o2.getSecond() - o1.getSecond();
-      if (i != 0) {
-        return i;
-      }
-      int h1 = o1.hashCode();
-      int h2 = o2.hashCode();
-      if (h1 > h2) {
-        return 1;
-      }
-      if (h1 < h2) {
-        return -1;
-      }
-      return 0;
+  private static final Comparator<Pair<?, Integer>> COMPARATOR = (o1, o2) -> {
+    int i = o2.getSecond() - o1.getSecond();
+    if (i != 0) {
+      return i;
     }
+    return Integer.compare(o1.hashCode(), o2.hashCode());
   };
   private static final int LIMIT = 10;
 
   private static final ResettableAction TOP_PARENTS = new ResettableAction("Parents") {
-    TreeSet<Pair<JComponent, Integer>> top = new TreeSet<Pair<JComponent, Integer>>(COMPARATOR);
-    TreeSet<Pair<JComponent, Integer>> old = new TreeSet<Pair<JComponent, Integer>>(COMPARATOR);
+    TreeSet<Pair<JComponent, Integer>> top = new TreeSet<>(COMPARATOR);
+    TreeSet<Pair<JComponent, Integer>> old = new TreeSet<>(COMPARATOR);
 
     @Override
-    public void update(AnActionEvent e) {
-      e.getPresentation().setText("Top " + LIMIT + " component parents");
+    public void update(@NotNull AnActionEvent e) {
+      e.getPresentation().setText("Top " + LIMIT + " Component Parents");
     }
 
     @Override
@@ -73,8 +58,8 @@ public class TopAnomaliesAction extends ActionGroup {
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
-      old = new TreeSet<Pair<JComponent, Integer>>(top);
+    public void actionPerformed(@NotNull AnActionEvent e) {
+      old = new TreeSet<>(top);
       top.clear();
       Window[] windows = Window.getWindows();
       for (Window window : windows) {
@@ -106,11 +91,11 @@ public class TopAnomaliesAction extends ActionGroup {
   };
 
   private static final ResettableAction TOP_UI_PROPERTIES = new ResettableAction("ClientProperties") {
-    TreeSet<Pair<JComponent, Integer>> top = new TreeSet<Pair<JComponent, Integer>>(COMPARATOR);
-    TreeSet<Pair<JComponent, Integer>> old = new TreeSet<Pair<JComponent, Integer>>(COMPARATOR);
+    TreeSet<Pair<JComponent, Integer>> top = new TreeSet<>(COMPARATOR);
+    TreeSet<Pair<JComponent, Integer>> old = new TreeSet<>(COMPARATOR);
 
     @Override
-    public void update(AnActionEvent e) {
+    public void update(@NotNull AnActionEvent e) {
       e.getPresentation().setText("Top " + LIMIT + " ClientProperties");
     }
 
@@ -121,8 +106,8 @@ public class TopAnomaliesAction extends ActionGroup {
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
-      old = new TreeSet<Pair<JComponent, Integer>>(top);
+    public void actionPerformed(@NotNull AnActionEvent e) {
+      old = new TreeSet<>(top);
       top.clear();
       Window[] windows = Window.getWindows();
       for (Window window : windows) {
@@ -152,13 +137,7 @@ public class TopAnomaliesAction extends ActionGroup {
           }
         }
       }
-      catch (NoSuchMethodException e) {
-      }
-      catch (InvocationTargetException e) {
-      }
-      catch (IllegalAccessException e) {
-      }
-      catch (NoSuchFieldException e) {
+      catch (NoSuchMethodException | NoSuchFieldException | IllegalAccessException | InvocationTargetException e) {
       }
       for (int i = 0; i < component.getComponentCount(); i++) {
         Component child = component.getComponent(i);
@@ -169,67 +148,24 @@ public class TopAnomaliesAction extends ActionGroup {
     }
   };
 
-  private static final ResettableAction TOP_DISPOSABLE = new ResettableAction("Disposable") {
-    TreeSet<Pair<Object, Integer>> top = new TreeSet<Pair<Object, Integer>>(COMPARATOR);
-    TreeSet<Pair<Object, Integer>> old = new TreeSet<Pair<Object, Integer>>(COMPARATOR);
 
-    @Override
-    public void update(AnActionEvent e) {
-      e.getPresentation().setText("Top " + LIMIT + "  disposables");
-    }
-
-    @Override
-    void reset() {
-      top.clear();
-      old.clear();
-    }
-
-    @Override
-    public void actionPerformed(AnActionEvent e) {
-      old = new TreeSet<Pair<Object, Integer>>(top);
-      top.clear();
-      ObjectTree<Disposable> tree = Disposer.getTree();
-      Set<Disposable> roots = tree.getRootObjects();
-      for (Disposable root : roots) {
-        checkDisposables(tree, root, top, LIMIT);
-      }
-      System.out.println("Top " + LIMIT + " disposables");
-      for (Pair<Object, Integer> pair : top) {
-        System.out.println(pair.first.getClass().getName() + " (" + pair.second + " related)" + getChange(old, pair.first, pair.second));
-      }
-    }
-
-    private void checkDisposables(ObjectTree tree, Object key, Set<Pair<Object, Integer>> top, int limit) {
-      ObjectNode node = tree.getNode(key);
-      if (node == null) {
-        return;
-      }
-      Collection children = node.getChildren();
-      top.add(Pair.create(key, children.size()));
-      trimToLimit(top, limit);
-      for (Object child : children) {
-        checkDisposables(tree, child, top, limit);
-      }
-    }
-  };
-
-  private static final ResettableAction RESET_THEM_ALL = new ResettableAction("Reset statistics") {
+  private static final ResettableAction RESET_THEM_ALL = new ResettableAction("Reset Statistics") {
     @Override
     void reset() {
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       for (ResettableAction action : CHILDREN) {
         action.reset();
       }
     }
   };
 
-  private static ResettableAction[] CHILDREN = {TOP_PARENTS, TOP_UI_PROPERTIES, TOP_DISPOSABLE, RESET_THEM_ALL};
+  private static final ResettableAction[] CHILDREN = {TOP_PARENTS, TOP_UI_PROPERTIES, RESET_THEM_ALL};
 
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     e.getPresentation().setText("Top " + LIMIT);
   }
 

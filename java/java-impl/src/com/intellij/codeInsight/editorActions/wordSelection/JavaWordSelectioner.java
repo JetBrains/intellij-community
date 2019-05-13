@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,8 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiJavaToken;
 import com.intellij.psi.PsiKeyword;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.util.PsiUtil;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Iterator;
 import java.util.List;
@@ -31,7 +33,7 @@ import java.util.List;
  */
 public class JavaWordSelectioner extends AbstractWordSelectioner {
   @Override
-  public boolean canSelect(PsiElement e) {
+  public boolean canSelect(@NotNull PsiElement e) {
     if (e instanceof PsiKeyword) {
       return true;
     }
@@ -43,9 +45,9 @@ public class JavaWordSelectioner extends AbstractWordSelectioner {
   }
 
   @Override
-  public List<TextRange> select(PsiElement e, CharSequence editorText, int cursorOffset, Editor editor) {
+  public List<TextRange> select(@NotNull PsiElement e, @NotNull CharSequence editorText, int cursorOffset, @NotNull Editor editor) {
     List<TextRange> ranges = super.select(e, editorText, cursorOffset, editor);
-    if (e instanceof PsiJavaToken && ((PsiJavaToken)e).getTokenType() == JavaTokenType.STRING_LITERAL) {
+    if (PsiUtil.isJavaToken(e, JavaTokenType.STRING_LITERAL)) {
       killRangesBreakingEscapes(e, ranges, e.getTextRange());
     }
     return ranges;

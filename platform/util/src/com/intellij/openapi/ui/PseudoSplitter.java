@@ -17,32 +17,13 @@ package com.intellij.openapi.ui;
 
 import javax.swing.*;
 
-/**
- * Created by IntelliJ IDEA.
- * User: Irina.Chernushina
- * Date: 12/3/11
- * Time: 6:13 PM
- */
 public class PseudoSplitter extends Splitter {
   private boolean myFirstIsFixed;
-  private boolean mySecondIsFixed;
   private int myFirstFixedSize;
-  private int mySecondFixedSize;
 
   public PseudoSplitter(boolean vertical) {
     super(vertical);
     myFirstIsFixed = false;
-    mySecondIsFixed = false;
-  }
-
-  public PseudoSplitter(boolean vertical, float proportion) {
-    super(vertical, proportion);
-    myFirstIsFixed = true;
-  }
-
-  public PseudoSplitter(boolean vertical, float proportion, float minProp, float maxProp) {
-    super(vertical, proportion, minProp, maxProp);
-    myFirstIsFixed = true;
   }
 
   private int getSizeForComp(final JComponent component) {
@@ -51,29 +32,19 @@ public class PseudoSplitter extends Splitter {
 
   public void fixFirst(final float proportion) {
     assert getFirstComponent() != null;
-    int comp = getSizeForComp(this);
-    myFirstFixedSize = (int)(comp * proportion - getDividerWidth());
+    int total = getSizeForComp(this);
+    myFirstFixedSize = (int)(proportion * (total - getDividerWidth()));
     myFirstIsFixed = true;
-    mySecondIsFixed = false;
   }
 
   public void fixFirst() {
     assert getFirstComponent() != null;
     myFirstFixedSize = getSizeForComp(getFirstComponent());
     myFirstIsFixed = true;
-    mySecondIsFixed = false;
-  }
-
-  public void fixSecond() {
-    assert getSecondComponent() != null;
-    mySecondFixedSize = getSizeForComp(getSecondComponent());
-    myFirstIsFixed = false;
-    mySecondIsFixed = true;
   }
 
   public void freeAll() {
     myFirstIsFixed = false;
-    mySecondIsFixed = false;
   }
 
   @Override
@@ -81,8 +52,6 @@ public class PseudoSplitter extends Splitter {
     int total = getSizeForComp(this);
     if (myFirstIsFixed) {
       myProportion = ((float)myFirstFixedSize) / (total - getDividerWidth());
-    } else if (mySecondIsFixed) {
-      myProportion = ((float)total - mySecondFixedSize) / (total - getDividerWidth());
     }
     super.doLayout();
   }
@@ -90,18 +59,13 @@ public class PseudoSplitter extends Splitter {
   @Override
   public void setProportion(float proportion) {
     boolean firstIsFixed = myFirstIsFixed;
-    boolean secondIsFixed = mySecondIsFixed;
     myFirstIsFixed = false;
-    mySecondIsFixed = false;
     super.setProportion(proportion);
     
     int total = getSizeForComp(this);
     if (firstIsFixed) {
       myFirstFixedSize = (int) (myProportion * (total - getDividerWidth()));
       myFirstIsFixed = true;
-    } else if (secondIsFixed) {
-      mySecondFixedSize = (int) ((1 - myProportion) * (total - getDividerWidth()));
-      mySecondIsFixed = true;
     }
   }
 }

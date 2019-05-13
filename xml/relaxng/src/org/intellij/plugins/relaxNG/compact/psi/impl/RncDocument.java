@@ -35,27 +35,33 @@ public class RncDocument extends RncElementImpl implements XmlDocument {
     super(node);
   }
 
+  @Override
   public XmlNSDescriptor getDefaultNSDescriptor(String namespace, boolean strict) {
     return null;
   }
 
+  @Override
   public XmlProlog getProlog() {
     return null;
   }
 
+  @Override
   @Nullable
   public XmlTag getRootTag() {
     return null;
   }
 
+  @Override
   public XmlNSDescriptor getRootTagNSDescriptor() {
     return null;
   }
 
+  @Override
   public boolean processElements(PsiElementProcessor processor, PsiElement place) {
     return false;
   }
 
+  @Override
   @Nullable
   public PsiMetaData getMetaData() {
     return MetaRegistry.getMeta(this);
@@ -75,6 +81,7 @@ public class RncDocument extends RncElementImpl implements XmlDocument {
     return super.findChildrenByClass(aClass);
   }
 
+  @Override
   public void accept(@NotNull RncElementVisitor visitor) {
     visitor.visitElement(this);
   }

@@ -19,7 +19,6 @@ package com.intellij.codeInsight.intention.impl.config;
 import com.intellij.ide.ui.search.SearchUtil;
 import com.intellij.ide.ui.search.SearchableOptionsRegistrar;
 import com.intellij.openapi.options.MasterDetails;
-import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.ui.DetailsComponent;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.GuiUtils;
@@ -42,8 +41,8 @@ public class IntentionSettingsPanel implements MasterDetails {
   private JPanel myTreePanel;
   private JPanel myDescriptionPanel;
   private DetailsComponent myDetailsComponent;
-  
-  private Alarm myResetAlarm = new Alarm();
+
+  private final Alarm myResetAlarm = new Alarm();
 
   public IntentionSettingsPanel() {
     myIntentionSettingsTree = new IntentionSettingsTree() {
@@ -51,16 +50,13 @@ public class IntentionSettingsPanel implements MasterDetails {
       protected void selectionChanged(Object selected) {
         if (selected instanceof IntentionActionMetaData) {
           final IntentionActionMetaData actionMetaData = (IntentionActionMetaData)selected;
-          final Runnable runnable = new Runnable() {
-            @Override
-            public void run() {
-              intentionSelected(actionMetaData);
-              if (myDetailsComponent != null) {
-                String[] text = new String[actionMetaData.myCategory.length + 1];
-                System.arraycopy(actionMetaData.myCategory, 0, text,0,actionMetaData.myCategory.length);
-                text[text.length - 1] = actionMetaData.getFamily();
-                myDetailsComponent.setText(text);
-              }
+          final Runnable runnable = () -> {
+            intentionSelected(actionMetaData);
+            if (myDetailsComponent != null) {
+              String[] text = new String[actionMetaData.myCategory.length + 1];
+              System.arraycopy(actionMetaData.myCategory, 0, text,0,actionMetaData.myCategory.length);
+              text[text.length - 1] = actionMetaData.getFamily();
+              myDetailsComponent.setText(text);
             }
           };
           myResetAlarm.cancelAllRequests();
@@ -78,9 +74,9 @@ public class IntentionSettingsPanel implements MasterDetails {
       protected List<IntentionActionMetaData> filterModel(String filter, final boolean force) {
         final List<IntentionActionMetaData> list = IntentionManagerSettings.getInstance().getMetaData();
         if (filter == null || filter.length() == 0) return list;
-        final HashSet<String> quoted = new HashSet<String>();
+        final HashSet<String> quoted = new HashSet<>();
         List<Set<String>> keySetList = SearchUtil.findKeys(filter, quoted);
-        List<IntentionActionMetaData> result = new ArrayList<IntentionActionMetaData>();
+        List<IntentionActionMetaData> result = new ArrayList<>();
         for (IntentionActionMetaData metaData : list) {
           if (isIntentionAccepted(metaData, filter, force, keySetList, quoted)){
             result.add(metaData);
@@ -114,12 +110,7 @@ public class IntentionSettingsPanel implements MasterDetails {
 
   public void reset() {
     myIntentionSettingsTree.reset();
-    SwingUtilities.invokeLater(new Runnable() {
-      @Override
-      public void run() {
-        myIntentionDescriptionPanel.init(myPanel.getWidth() / 2);
-      }
-    });
+    SwingUtilities.invokeLater(() -> myIntentionDescriptionPanel.init(myPanel.getWidth() / 2));
   }
 
   @Override
@@ -169,7 +160,7 @@ public class IntentionSettingsPanel implements MasterDetails {
   }
 
   private static boolean isIntentionAccepted(IntentionActionMetaData metaData, @NonNls String filter, boolean forceInclude,
-                                             final List<Set<String>> keySetList, final HashSet<String> quoted) {
+                                             final List<? extends Set<String>> keySetList, final HashSet<String> quoted) {
     if (StringUtil.containsIgnoreCase(metaData.getFamily(), filter)) {
       return true;
     }
@@ -189,11 +180,9 @@ public class IntentionSettingsPanel implements MasterDetails {
       }
       try {
         final TextDescriptor description = metaData.getDescription();
-        if (description != null) {
-          if (StringUtil.containsIgnoreCase(description.getText(), stripped)){
-            if (!forceInclude) return true;
-          } else if (forceInclude) return false;
-        }
+        if (StringUtil.containsIgnoreCase(description.getText(), stripped)){
+          if (!forceInclude) return true;
+        } else if (forceInclude) return false;
       }
       catch (IOException e) {
         //skip then
@@ -214,16 +203,10 @@ public class IntentionSettingsPanel implements MasterDetails {
     return forceInclude;
   }
 
-  public Runnable showOption(final SearchableConfigurable configurable, final String option) {
-    return new Runnable() {
-      @Override
-      public void run() {
-        myIntentionSettingsTree.filter(myIntentionSettingsTree.filterModel(option, true));
-        myIntentionSettingsTree.setFilter(option);
-      }
+  public Runnable showOption(final String option) {
+    return () -> {
+      myIntentionSettingsTree.filter(myIntentionSettingsTree.filterModel(option, true));
+      myIntentionSettingsTree.setFilter(option);
     };
-  }
-
-  public void clearSearch() {
   }
 }

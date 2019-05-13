@@ -1,21 +1,33 @@
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.naming;
 
-import com.siyeh.ig.BaseInspection;
-import com.siyeh.ig.IGInspectionTestCase;
+import com.intellij.testFramework.LightProjectDescriptor;
+import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
+import com.siyeh.ig.LightInspectionTestCase;
+import org.jetbrains.annotations.NotNull;
 
-public class OverloadedMethodsWithSameNumberOfParametersInspectionTest extends IGInspectionTestCase {
-
-  public void testIgnoreInconvertibleTypes() throws Exception {
-    doTest(new OverloadedMethodsWithSameNumberOfParametersInspection());
+public class OverloadedMethodsWithSameNumberOfParametersInspectionTest extends LightCodeInsightFixtureTestCase {
+  @Override
+  protected String getBasePath() {
+    return LightInspectionTestCase.INSPECTION_GADGETS_TEST_DATA_PATH + "com/siyeh/igtest/naming/overloaded_methods_with_same_number_of_parameters";
   }
 
-  public void testReportAll() throws Exception {
-    final OverloadedMethodsWithSameNumberOfParametersInspection inspection = new OverloadedMethodsWithSameNumberOfParametersInspection();
+  @NotNull
+  @Override
+  protected LightProjectDescriptor getProjectDescriptor() {
+    return JAVA_8;
+  }
+
+  public void testIgnoreInconvertibleTypes() {
+    myFixture.enableInspections(new OverloadedMethodsWithSameNumberOfParametersInspection());
+    myFixture.testHighlighting(getTestName(false) + ".java");
+  }
+
+  public void testReportAll() {
+    OverloadedMethodsWithSameNumberOfParametersInspection inspection = new OverloadedMethodsWithSameNumberOfParametersInspection();
     inspection.ignoreInconvertibleTypes = false;
-    doTest(inspection);
+    myFixture.enableInspections(inspection);
+    myFixture.testHighlighting(getTestName(false) + ".java");
   }
 
-  private void doTest(BaseInspection inspection) throws Exception {
-    doTest("com/siyeh/igtest/naming/overloaded_methods_with_same_number_of_parameters/" + getTestName(false), inspection);
-  }
 }

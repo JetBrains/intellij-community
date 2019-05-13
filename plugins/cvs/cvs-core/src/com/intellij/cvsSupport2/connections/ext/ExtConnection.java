@@ -1,27 +1,13 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.cvsSupport2.connections.ext;
 
+import com.intellij.CvsBundle;
 import com.intellij.cvsSupport2.config.ExtConfiguration;
 import com.intellij.cvsSupport2.connections.ConnectionOnProcess;
 import com.intellij.cvsSupport2.errorHandling.ErrorRegistry;
 import com.intellij.cvsSupport2.javacvsImpl.io.InputStreamWrapper;
 import com.intellij.cvsSupport2.javacvsImpl.io.ReadWriteStatistics;
 import com.intellij.execution.configurations.GeneralCommandLine;
-import com.intellij.CvsBundle;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NonNls;
 import org.netbeans.lib.cvsclient.ICvsCommandStopper;
@@ -49,9 +35,9 @@ public class ExtConnection extends ConnectionOnProcess {
   }
 
 
+  @Override
   public void open() throws AuthenticationException {
     try {
-      //noinspection HardCodedStringLiteral
       open(new String[]{"cvs", "server"}, null, null);
     }
     catch (IOException e) {
@@ -64,11 +50,7 @@ public class ExtConnection extends ConnectionOnProcess {
     if (isOpen()) throw new RuntimeException(CvsBundle.message("error.message.connection.already.open"));
 
     GeneralCommandLine command = createRshCommand(myHost, myUserName, myConfiguration);
-
-    for (String command1 : commands) {
-      command.addParameter(command1);
-    }
-
+    command.addParameters(commands);
     execute(command);
 
     if (expectedResult != null) {
@@ -76,20 +58,18 @@ public class ExtConnection extends ConnectionOnProcess {
     }
   }
 
-  @SuppressWarnings({"IOResourceOpenedButNotSafelyClosed"})
   private void check(ICvsCommandStopper stopper, String expectedResult) throws IOException, AuthenticationException {
     InputStreamWrapper streamWrapper = new InputStreamWrapper(myInputStream, stopper, new ReadWriteStatistics());
     try {
-      int i;
       StringBuilder buffer = new StringBuilder();
       while (true) {
-        i = streamWrapper.read();
+        int i = streamWrapper.read();
         if (i == -1 || i == '\n' || i == ' ' || i == '\r') break;
         buffer.append((char)i);
       }
       String read = buffer.toString().trim();
       if (!expectedResult.equals(read)) {
-        if (StringUtil.startsWithConcatenationOf(read, myUserName + "@", myHost)) {
+        if (StringUtil.startsWithConcatenation(read, myUserName, "@", myHost)) {
           throw new AuthenticationException(CvsBundle.message("exception.text.ext.server.rejected.access"), null);
         }
         else {
@@ -114,12 +94,12 @@ public class ExtConnection extends ConnectionOnProcess {
     command.addParameter("-l");
     command.addParameter(userName);
 
-    if (config.PRIVATE_KEY_FILE.length() > 0) {
+    if (!config.PRIVATE_KEY_FILE.isEmpty()) {
       command.addParameter("-i");
       command.addParameter(config.PRIVATE_KEY_FILE);
     }
 
-    if (config.ADDITIONAL_PARAMETERS.length() > 0) {
+    if (!config.ADDITIONAL_PARAMETERS.isEmpty()) {
       StringTokenizer parameters = new StringTokenizer(config.ADDITIONAL_PARAMETERS, " ");
       while (parameters.hasMoreTokens()) command.addParameter(parameters.nextToken());
     }

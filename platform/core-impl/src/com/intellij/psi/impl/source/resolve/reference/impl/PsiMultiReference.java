@@ -17,43 +17,34 @@
 package com.intellij.psi.impl.source.resolve.reference.impl;
 
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-/**
- * Created by IntelliJ IDEA.
- * User: ik
- * Date: 02.04.2003
- * Time: 12:22:03
- * To change this template use Options | File Templates.
- */
-
 public class PsiMultiReference implements PsiPolyVariantReference {
-  public static final Comparator<PsiReference> COMPARATOR = new Comparator<PsiReference>() {
-    @Override
-    public int compare(final PsiReference ref1, final PsiReference ref2) {
-      if (ref1.isSoft() && !ref2.isSoft()) return 1;
-      if (!ref1.isSoft() && ref2.isSoft()) return -1;
+  public static final Comparator<PsiReference> COMPARATOR = (ref1, ref2) -> {
+    boolean soft1 = ref1.isSoft();
+    boolean soft2 = ref2.isSoft();
+    if (soft1 != soft2) return soft1 ? 1 : -1;
 
-      boolean resolves1 = resolves(ref1);
-      boolean resolves2 = resolves(ref2);
-      if (resolves1 && !resolves2) return -1;
-      if (!resolves1 && resolves2) return 1;
+    boolean resolves1 = resolves(ref1);
+    boolean resolves2 = resolves(ref2);
+    if (resolves1 && !resolves2) return -1;
+    if (!resolves1 && resolves2) return 1;
 
-      final TextRange range1 = ref1.getRangeInElement();
-      final TextRange range2 = ref2.getRangeInElement();
+    final TextRange range1 = ref1.getRangeInElement();
+    final TextRange range2 = ref2.getRangeInElement();
 
-      if(TextRange.areSegmentsEqual(range1, range2)) return 0;
-      if(range1.getStartOffset() >= range2.getStartOffset() && range1.getEndOffset() <= range2.getEndOffset()) return -1;
-      if(range2.getStartOffset() >= range1.getStartOffset() && range2.getEndOffset() <= range1.getEndOffset()) return 1;
+    if(TextRange.areSegmentsEqual(range1, range2)) return 0;
+    if(range1.getStartOffset() >= range2.getStartOffset() && range1.getEndOffset() <= range2.getEndOffset()) return -1;
+    if(range2.getStartOffset() >= range1.getStartOffset() && range2.getEndOffset() <= range1.getEndOffset()) return 1;
 
-      return 0;
-    }
+    return 0;
   };
 
   private static boolean resolves(final PsiReference ref1) {
@@ -70,6 +61,7 @@ public class PsiMultiReference implements PsiPolyVariantReference {
     myElement = element;
   }
 
+  @NotNull
   public PsiReference[] getReferences() {
     return myReferences;
   }
@@ -82,22 +74,60 @@ public class PsiMultiReference implements PsiPolyVariantReference {
     return myReferences[0];
   }
 
+  @NotNull
   @Override
   public PsiElement getElement(){
     return myElement;
   }
 
+  @NotNull
   @Override
-  public TextRange getRangeInElement(){
+  public TextRange getRangeInElement() {
+    TextRange range = getRangeInElementIfSameForAll();
+    if (range != null) return range;
+
     final PsiReference chosenRef = chooseReference();
-    TextRange rangeInElement = chosenRef.getRangeInElement();
-    PsiElement element = chosenRef.getElement();
-    while(element != myElement) {
-      rangeInElement = rangeInElement.shiftRight(element.getStartOffsetInParent());
+    return getReferenceRange(chosenRef, myElement);
+  }
+
+  @Nullable
+  private TextRange getRangeInElementIfSameForAll() {
+    TextRange range = null;
+    for (PsiReference reference : getReferences()) {
+      TextRange refRange = getReferenceRange(reference, myElement);
+      if (range == null) {
+        range = refRange;
+      }
+      else {
+        if (!range.equals(refRange)) return null;
+      }
+    }
+    return range;
+  }
+
+  @NotNull
+  public static TextRange getReferenceRange(@NotNull PsiReference reference, @NotNull PsiElement inElement) {
+    TextRange rangeInElement = reference.getRangeInElement();
+    PsiElement refElement = reference.getElement();
+    PsiElement element = refElement;
+    while (element != inElement) {
+      int start = element.getStartOffsetInParent();
+      if (start + rangeInElement.getStartOffset() < 0) {
+        throw new IllegalArgumentException("Inconsistent reference range in #" + inElement.getLanguage().getID() + ":" +
+                                           "ref of " + reference.getClass() +
+                                           " on " + classAndRange(refElement) +
+                                           " with range " + reference.getRangeInElement() + ", " +
+                                           "requested range in PSI of " + classAndRange(inElement));
+      }
+      rangeInElement = rangeInElement.shiftRight(start);
       element = element.getParent();
       if (element instanceof PsiFile) break;
     }
     return rangeInElement;
+  }
+
+  private static String classAndRange(PsiElement psi) {
+    return psi.getClass() + " " + psi.getTextRange();
   }
 
   @Override
@@ -121,7 +151,7 @@ public class PsiMultiReference implements PsiPolyVariantReference {
   }
 
   @Override
-  public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException{
+  public PsiElement handleElementRename(@NotNull String newElementName) throws IncorrectOperationException{
     return chooseReference().handleElementRename(newElementName);
   }
 
@@ -131,7 +161,7 @@ public class PsiMultiReference implements PsiPolyVariantReference {
   }
 
   @Override
-  public boolean isReferenceTo(PsiElement element){
+  public boolean isReferenceTo(@NotNull PsiElement element){
     for (PsiReference reference : myReferences) {
       if (reference.isReferenceTo(element)) return true;
     }
@@ -141,7 +171,7 @@ public class PsiMultiReference implements PsiPolyVariantReference {
   @Override
   @NotNull
   public Object[] getVariants() {
-    Set<Object> variants = new HashSet<Object>();
+    Set<Object> variants = new HashSet<>();
     for(PsiReference ref: myReferences) {
       Object[] refVariants = ref.getVariants();
       ContainerUtil.addAll(variants, refVariants);
@@ -163,7 +193,7 @@ public class PsiMultiReference implements PsiPolyVariantReference {
   @NotNull
   public ResolveResult[] multiResolve(final boolean incompleteCode) {
     final PsiReference[] refs = getReferences();
-    Collection<ResolveResult> result = new LinkedHashSet<ResolveResult>(refs.length);
+    Collection<ResolveResult> result = new LinkedHashSet<>(refs.length);
     PsiElementResolveResult selfReference = null;
     for (PsiReference reference : refs) {
       if (reference instanceof PsiPolyVariantReference) {
@@ -186,11 +216,11 @@ public class PsiMultiReference implements PsiPolyVariantReference {
       result.add(selfReference); // if i the only one starring at the sun
     }
 
-    return result.toArray(new ResolveResult[result.size()]);
+    return result.toArray(ResolveResult.EMPTY_ARRAY);
   }
 
   @Override
   public String toString() {
-    return "PsiMultiReference{myReferences=" + Arrays.toString(myReferences) + '}';
+    return "PsiMultiReference{" + StringUtil.join(myReferences, r -> r.getClass().getName(), ",") + '}';
   }
 }

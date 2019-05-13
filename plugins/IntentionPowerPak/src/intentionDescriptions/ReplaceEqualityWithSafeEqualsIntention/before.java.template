@@ -1,5 +1,0 @@
-public class X {
-  boolean f(Object o, Object o1) {
-    return <spot>o == o1</spot>;
-  }
-}

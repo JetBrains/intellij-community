@@ -1,27 +1,17 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.ui;
 
 import com.intellij.icons.AllIcons;
+import com.intellij.openapi.options.OptionsBundle;
+import com.intellij.openapi.project.Project;
+import com.intellij.ui.IdeUICustomization;
+import com.intellij.ui.RelativeFont;
 import com.intellij.ui.components.labels.LinkLabel;
 import com.intellij.ui.components.labels.LinkListener;
 import com.intellij.ui.components.panels.NonOpaquePanel;
-import com.intellij.util.containers.HashMap;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.PlatformColors;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -29,30 +19,34 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
-public class Banner extends NonOpaquePanel implements PropertyChangeListener{
-
+class Banner extends NonOpaquePanel implements PropertyChangeListener{
   private int myBannerMinHeight;
   private final JComponent myText = new MyText();
-
+  private final JLabel myProjectIcon = new JLabel(AllIcons.General.ProjectConfigurable, SwingConstants.LEFT);
   private final NonOpaquePanel myActionsPanel = new NonOpaquePanel(new FlowLayout(FlowLayout.RIGHT, 2, 2));
 
-  private final Map<Action, LinkLabel> myActions = new HashMap<Action, LinkLabel>();
+  private final Map<Action, LinkLabel> myActions = new HashMap<>();
 
-  public Banner() {
+  Banner() {
     setLayout(new BorderLayout());
 
-    setBorder(new EmptyBorder(2, 6, 2, 4));
+    setBorder(JBUI.Borders.empty(2, 12, 2, 4));
 
-    add(myText, BorderLayout.CENTER);
+    myProjectIcon.setVisible(false);
+    myProjectIcon.setBorder(new EmptyBorder(0, 12, 0, 4));
+    add(myText, BorderLayout.WEST);
+    add(myProjectIcon, BorderLayout.CENTER);
     add(myActionsPanel, BorderLayout.EAST);
   }
 
   public void addAction(final Action action) {
     action.addPropertyChangeListener(this);
     final LinkLabel label = new LinkLabel(null, null, new LinkListener() {
+      @Override
       public void linkSelected(final LinkLabel aSource, final Object aLinkData) {
         action.actionPerformed(new ActionEvent(Banner.this, ActionEvent.ACTION_PERFORMED, Action.ACTION_COMMAND_KEY));
       }
@@ -75,10 +69,11 @@ public class Banner extends NonOpaquePanel implements PropertyChangeListener{
     label.setToolTipText((String)action.getValue(Action.SHORT_DESCRIPTION));
   }
 
+  @Override
   public void propertyChange(final PropertyChangeEvent evt) {
     final Object source = evt.getSource();
     if (source instanceof Action) {
-      updateAction(((Action)source));
+      updateAction((Action)source);
     }
   }
 
@@ -91,12 +86,14 @@ public class Banner extends NonOpaquePanel implements PropertyChangeListener{
     myActionsPanel.removeAll();
   }
 
+  @Override
   public Dimension getMinimumSize() {
     final Dimension size = super.getMinimumSize();
     size.height = Math.max(myBannerMinHeight, size.height);
     return size;
   }
 
+  @Override
   public Dimension getPreferredSize() {
     final Dimension size = super.getPreferredSize();
     size.height = getMinimumSize().height;
@@ -109,20 +106,29 @@ public class Banner extends NonOpaquePanel implements PropertyChangeListener{
     repaint();
   }
 
-  public void setText(@Nullable final String... text) {
-    myText.removeAll();
-    if (text == null) return;
+  public void forProject(Project project) {
+    if (project != null) {
+      myProjectIcon.setVisible(true);
+      String projectConceptName = IdeUICustomization.getInstance().getProjectConceptName();
+      myProjectIcon.setText(project.isDefault()
+                            ? OptionsBundle.message("configurable.default.project.tooltip", projectConceptName)
+                            : OptionsBundle.message("configurable.current.project.tooltip", projectConceptName));
+    } else {
+      myProjectIcon.setVisible(false);
+    }
+  }
 
+  public void setText(@NotNull final String... text) {
+    myText.removeAll();
     for (int i = 0; i < text.length; i++) {
-      final JLabel eachLabel = new JLabel(text[i], JLabel.CENTER);
-      final int gap = eachLabel.getIconTextGap();
-      eachLabel.setBorder(new EmptyBorder(0, 0, 0, gap));
-      eachLabel.setVerticalTextPosition(JLabel.TOP);
-      eachLabel.setFont(eachLabel.getFont().deriveFont(Font.BOLD, eachLabel.getFont().getSize()));
+      final JLabel eachLabel = new JLabel(text[i], SwingConstants.CENTER);
+      eachLabel.setBorder(new EmptyBorder(0, 0, 0, 5));
+      eachLabel.setFont(RelativeFont.BOLD.derive(eachLabel.getFont()));
       myText.add(eachLabel);
       if (i < text.length - 1) {
-        final JLabel eachIcon = new JLabel(AllIcons.General.ComboArrowRight, JLabel.CENTER);
-        eachIcon.setBorder(new EmptyBorder(0, 0, 0, gap));
+        final JLabel eachIcon = new JLabel("\u203A", SwingConstants.CENTER);
+        eachIcon.setFont(RelativeFont.HUGE.derive(eachIcon.getFont()));
+        eachIcon.setBorder(new EmptyBorder(0, 0, 0, 5));
         myText.add(eachIcon);
       }
     }

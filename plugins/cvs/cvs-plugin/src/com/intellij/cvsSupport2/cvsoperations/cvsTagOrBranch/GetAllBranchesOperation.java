@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,30 +21,38 @@ import com.intellij.cvsSupport2.cvsoperations.common.CvsExecutionEnvironment;
 import com.intellij.cvsSupport2.cvsoperations.common.LocalPathIndifferentOperation;
 import com.intellij.cvsSupport2.cvsoperations.cvsLog.RlogCommand;
 import com.intellij.cvsSupport2.history.CvsRevisionNumber;
-import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.NonNls;
 import org.netbeans.lib.cvsclient.command.Command;
 
 import java.util.Collection;
+import java.util.HashSet;
 
 public class GetAllBranchesOperation extends LocalPathIndifferentOperation implements BranchesProvider {
-  private final Collection<String> myTags = new HashSet<String>();
+  private final Collection<String> myTags = new HashSet<>();
   @NonNls private final static String START = "symbolic names:";
   @NonNls private final static String END = "keyword substitution:";
   private boolean myIsInBranchesMode = false;
-
+  private final String myModuleName;
 
   public GetAllBranchesOperation(CvsEnvironment environment) {
-    super(environment);
+    this(environment, ".");
   }
 
+  public GetAllBranchesOperation(CvsEnvironment environment, String moduleName) {
+    super(environment);
+    myModuleName = moduleName;
+  }
+
+  @Override
   protected Command createCommand(CvsRootProvider root, CvsExecutionEnvironment cvsExecutionEnvironment) {
     final RlogCommand command = new RlogCommand();
+    command.setModuleName(myModuleName);
     // TODO[yole]: it would be best to implement smarter handling similar to LoadHistoryOperation, but it's too cumbersome without a major refactoring
     command.setSuppressEmptyHeaders(false);  // see IDEADEV-14276
     return command;
   }
 
+  @Override
   public void messageSent(String message, final byte[] byteMessage, boolean error, boolean tagged) {
     if (error) return;
     if (tagged) return;
@@ -67,14 +75,17 @@ public class GetAllBranchesOperation extends LocalPathIndifferentOperation imple
     }
   }
 
+  @Override
   public Collection<String> getAllBranches(){
     return myTags;
   }
 
+  @Override
   public Collection<CvsRevisionNumber> getAllRevisions() {
     return null;
   }
 
+  @Override
   protected String getOperationName() {
     return "rlog";
   }

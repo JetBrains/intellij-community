@@ -1,10 +1,10 @@
-// "Create Method 'f'" "true"
+// "Create method 'f'" "true"
 class A {
     {
          f(() -> {});
     }
 
-    private void f(Object p0) {
-        <caret><selection>//To change body of created methods use File | Settings | File Templates.</selection>
+    private void f(Object o) {
+        <caret><selection></selection>
     }
 }

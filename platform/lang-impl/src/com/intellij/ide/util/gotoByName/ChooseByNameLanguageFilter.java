@@ -17,6 +17,7 @@ package com.intellij.ide.util.gotoByName;
 
 import com.intellij.lang.DependentLanguage;
 import com.intellij.lang.Language;
+import com.intellij.lang.LanguageUtil;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
@@ -52,20 +53,13 @@ public class ChooseByNameLanguageFilter extends ChooseByNameFilter<Language> {
   @Override
   protected Collection<Language> getAllFilterValues() {
     final Collection<Language> registeredLanguages = Language.getRegisteredLanguages();
-    List<Language> accepted = new ArrayList<Language>();
+    List<Language> accepted = new ArrayList<>();
     for (Language language : registeredLanguages) {
       if (language != Language.ANY && !(language instanceof DependentLanguage)) {
         accepted.add(language);
       }
     }
-    Collections.sort(accepted, BY_DISPLAY_NAME);
+    Collections.sort(accepted, LanguageUtil.LANGUAGE_COMPARATOR);
     return accepted;
   }
-
-  private static final Comparator<Language> BY_DISPLAY_NAME = new Comparator<Language>() {
-    @Override
-    public int compare(Language o1, Language o2) {
-      return o1.getDisplayName().compareTo(o2.getDisplayName());
-    }
-  };
 }

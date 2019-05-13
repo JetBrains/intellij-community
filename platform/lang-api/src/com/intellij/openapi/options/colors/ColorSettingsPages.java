@@ -16,6 +16,7 @@
 package com.intellij.openapi.options.colors;
 
 import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.editor.colors.ColorKey;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.util.Pair;
 import org.jetbrains.annotations.Nullable;
@@ -38,7 +39,8 @@ public abstract class ColorSettingsPages {
    *
    * @param page the instance of the page to register.
    *
-   * @deprecated Color settings pages should be registered as extensions with {@link com.intellij.openapi.options.colors.ColorSettingsPage#EP_NAME}
+   * Used only in special cases when pages are registered dynamically (Rider).
+   * Otherwise pages should be registered as extensions with {@link com.intellij.openapi.options.colors.ColorSettingsPage#EP_NAME}
    */
   public abstract void registerPage(ColorSettingsPage page);
 
@@ -50,6 +52,9 @@ public abstract class ColorSettingsPages {
   public abstract ColorSettingsPage[] getRegisteredPages();
 
   @Nullable
-  public abstract Pair<ColorSettingsPage,AttributesDescriptor> getAttributeDescriptor(TextAttributesKey key);
+  public abstract Pair<ColorAndFontDescriptorsProvider, AttributesDescriptor> getAttributeDescriptor(TextAttributesKey key);
+
+  @Nullable
+  public abstract Pair<ColorAndFontDescriptorsProvider, ColorDescriptor> getColorDescriptor(ColorKey key);
 
 }

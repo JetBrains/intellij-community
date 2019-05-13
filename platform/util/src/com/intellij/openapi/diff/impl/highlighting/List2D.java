@@ -18,11 +18,12 @@ package com.intellij.openapi.diff.impl.highlighting;
 import com.intellij.openapi.diff.ex.DiffFragment;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 class List2D {
-  private final ArrayList<List> myRows = new ArrayList<List>();
-  private ArrayList myCurrentRow = null;
+  private final List<List<DiffFragment>> myRows = new ArrayList<List<DiffFragment>>();
+  private List<DiffFragment> myCurrentRow = null;
 
   public void add(DiffFragment element) {
     ensureRowExists();
@@ -31,7 +32,7 @@ class List2D {
 
   private void ensureRowExists() {
     if (myCurrentRow == null) {
-      myCurrentRow = new ArrayList();
+      myCurrentRow = new ArrayList<DiffFragment>();
       myRows.add(myCurrentRow);
     }
   }
@@ -45,7 +46,7 @@ class List2D {
 
     DiffFragment[][] result = new DiffFragment[myRows.size()][];
     for (int i = 0; i < result.length; i++) {
-      List row = myRows.get(i);
+      List<DiffFragment> row = myRows.get(i);
       result[i] = new DiffFragment[row.size()];
       System.arraycopy(row.toArray(), 0, result[i], 0, row.size());
     }
@@ -54,9 +55,6 @@ class List2D {
 
   public void addAll(DiffFragment[] line) {
     ensureRowExists();
-    for (int i = 0; i < line.length; i++) {
-      DiffFragment value = line[i];
-      myCurrentRow.add(value);
-    }
+    Collections.addAll(myCurrentRow, line);
   }
 }

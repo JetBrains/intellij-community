@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ import com.intellij.psi.meta.PsiWritableMetaData;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -34,6 +35,7 @@ public class DomMetaData<T extends DomElement> implements PsiWritableMetaData, P
   @Nullable
   private GenericDomValue myNameElement;
 
+  @Override
   public final PsiElement getDeclaration() {
     return myElement.getXmlTag();
   }
@@ -42,11 +44,13 @@ public class DomMetaData<T extends DomElement> implements PsiWritableMetaData, P
     return myElement;
   }
 
+  @Override
   @NonNls
   public String getName(PsiElement context) {
     return getName();
   }
 
+  @Override
   @NonNls
   public final String getName() {
     final String s = ElementPresentationManager.getElementName(myElement);
@@ -56,6 +60,7 @@ public class DomMetaData<T extends DomElement> implements PsiWritableMetaData, P
     return value == null ? null : value.getStringValue();
   }
 
+  @Override
   public void init(PsiElement element) {
     myElement = (T) DomManager.getDomManager(element.getProject()).getDomElement((XmlTag)element);
     assert myElement != null : element;
@@ -71,7 +76,9 @@ public class DomMetaData<T extends DomElement> implements PsiWritableMetaData, P
     return myElement.getGenericInfo().getNameDomElement(t);
   }
 
-  public Object[] getDependences() {
+  @NotNull
+  @Override
+  public Object[] getDependencies() {
     final PsiElement declaration = getDeclaration();
     if (myElement != null && myElement.isValid()) {
       return new Object[]{DomUtil.getRoot(myElement), declaration};
@@ -79,16 +86,19 @@ public class DomMetaData<T extends DomElement> implements PsiWritableMetaData, P
     return new Object[]{declaration};
   }
 
+  @Override
   public void setName(String name) throws IncorrectOperationException {
     if (myNameElement != null) {
       myNameElement.setStringValue(name);
     }
   }
 
+  @Override
   public String getTypeName() {
     return ElementPresentationManager.getTypeNameForObject(myElement);
   }
 
+  @Override
   public Icon getIcon() {
     return ElementPresentationManager.getIcon(myElement);
   }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,14 +24,10 @@ import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * User: anna
- * Date: 1/18/12
- */
 public class RemoveTypeArgumentsFix extends LocalQuickFixAndIntentionActionOnPsiElement implements HighPriorityAction {
-  private static final Logger LOGGER = Logger.getInstance("#" + RemoveTypeArgumentsFix.class.getName());
+  private static final Logger LOGGER = Logger.getInstance(RemoveTypeArgumentsFix.class);
 
-  public RemoveTypeArgumentsFix(@Nullable PsiElement element) {
+  public RemoveTypeArgumentsFix(@NotNull PsiElement element) {
     super(element);
   }
 
@@ -52,7 +48,7 @@ public class RemoveTypeArgumentsFix extends LocalQuickFixAndIntentionActionOnPsi
                              @NotNull PsiFile file,
                              @NotNull PsiElement startElement,
                              @NotNull PsiElement endElement) {
-    return startElement instanceof PsiVariable && startElement.isValid() && ((PsiVariable)startElement).getTypeElement() != null;
+    return startElement instanceof PsiVariable && ((PsiVariable)startElement).getTypeElement() != null;
   }
 
   @Override

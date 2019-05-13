@@ -30,7 +30,6 @@ import java.util.Map;
 
 /**
 * @author Eugene Zhuravlev
-*         Date: 10/24/12
 */
 public class MavenResourcesTargetType extends ModuleBasedBuildTargetType<MavenResourcesTarget> {
   public static final MavenResourcesTargetType PRODUCTION = new MavenResourcesTargetType("maven-resources-production", false);
@@ -39,7 +38,7 @@ public class MavenResourcesTargetType extends ModuleBasedBuildTargetType<MavenRe
   private final boolean myIsTests;
 
   private MavenResourcesTargetType(final String typeId, boolean isTests) {
-    super(typeId);
+    super(typeId, true);
     myIsTests = isTests;
   }
 
@@ -50,7 +49,7 @@ public class MavenResourcesTargetType extends ModuleBasedBuildTargetType<MavenRe
   @NotNull
   @Override
   public List<MavenResourcesTarget> computeAllTargets(@NotNull JpsModel model) {
-    final List<MavenResourcesTarget> targets = new ArrayList<MavenResourcesTarget>();
+    final List<MavenResourcesTarget> targets = new ArrayList<>();
     final JpsMavenExtensionService service = JpsMavenExtensionService.getInstance();
     for (JpsModule module : model.getProject().getModules()) {
       if (service.getExtension(module) != null) {
@@ -63,7 +62,7 @@ public class MavenResourcesTargetType extends ModuleBasedBuildTargetType<MavenRe
   @NotNull
   @Override
   public BuildTargetLoader<MavenResourcesTarget> createLoader(@NotNull JpsModel model) {
-    final Map<String, JpsModule> modules = new HashMap<String, JpsModule>();
+    final Map<String, JpsModule> modules = new HashMap<>();
     for (JpsModule module : model.getProject().getModules()) {
       modules.put(module.getName(), module);
     }

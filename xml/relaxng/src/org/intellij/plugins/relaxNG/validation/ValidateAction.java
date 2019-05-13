@@ -19,14 +19,14 @@ package org.intellij.plugins.relaxNG.validation;
 import com.intellij.ide.errorTreeView.NewErrorTreeViewPanel;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.LangDataKeys;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.PsiElement;
@@ -44,6 +44,7 @@ import com.thaiopensource.validate.rng.CompactSchemaReader;
 import com.thaiopensource.validate.rng.RngProperty;
 import org.intellij.plugins.relaxNG.compact.RncFileType;
 import org.intellij.plugins.relaxNG.model.descriptors.RngElementDescriptor;
+import org.jetbrains.annotations.NotNull;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 import org.xml.sax.SAXParseException;
@@ -53,12 +54,6 @@ import java.io.IOException;
 import java.net.MalformedURLException;
 import java.util.concurrent.Future;
 
-/**
- * Created by IntelliJ IDEA.
- * User: sweinreuter
- * Date: 19.11.2007
- */
-@SuppressWarnings({ "ComponentNotRegistered" })
 public class ValidateAction extends AnAction {
   private static final String CONTENT_NAME = "Validate RELAX NG";
   private static final Key<NewErrorTreeViewPanel> KEY = Key.create("VALIDATING");
@@ -72,17 +67,19 @@ public class ValidateAction extends AnAction {
     setEnabledInModalContext(origAction.isEnabledInModalContext());
   }
 
-  public void actionPerformed(AnActionEvent e) {
+  @Override
+  public void actionPerformed(@NotNull AnActionEvent e) {
     if (!actionPerformedImpl(e)) {
       myOrigAction.actionPerformed(e);
     }
   }
 
-  public final void update(AnActionEvent e) {
+  @Override
+  public final void update(@NotNull AnActionEvent e) {
     super.update(e);
     myOrigAction.update(e);
 
-    final VirtualFile file = e.getData(PlatformDataKeys.VIRTUAL_FILE);
+    final VirtualFile file = e.getData(CommonDataKeys.VIRTUAL_FILE);
     if (file != null) {
       if (file.getUserData(IN_PROGRESS_KEY) == Boolean.TRUE) {
         e.getPresentation().setEnabled(false);
@@ -90,12 +87,12 @@ public class ValidateAction extends AnAction {
     }
   }
 
-  private boolean actionPerformedImpl(AnActionEvent e) {
-    final PsiFile file = e.getData(LangDataKeys.PSI_FILE);
+  private boolean actionPerformedImpl(@NotNull AnActionEvent e) {
+    final PsiFile file = e.getData(CommonDataKeys.PSI_FILE);
     if (file == null) {
       return false;
     }
-    final Project project = e.getData(PlatformDataKeys.PROJECT);
+    final Project project = e.getData(CommonDataKeys.PROJECT);
     if (project == null) {
       return false;
     }
@@ -123,58 +120,46 @@ public class ValidateAction extends AnAction {
 
     final MessageViewHelper helper = new MessageViewHelper(project, CONTENT_NAME, KEY);
 
-    helper.openMessageView(new Runnable() {
-      public void run() {
-        doRun(project, instanceFile, schemaFile);
-      }
-    });
+    helper.openMessageView(() -> doRun(project, instanceFile, schemaFile));
 
-    final Future<?> future = ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
-      public void run() {
-        ApplicationManager.getApplication().runReadAction(new Runnable() {
-          public void run() {
-            final MessageViewHelper.ErrorHandler eh = helper.new ErrorHandler();
+    final Future<?> future = ApplicationManager.getApplication().executeOnPooledThread(
+      () -> ApplicationManager.getApplication().runReadAction(() -> {
+        final MessageViewHelper.ErrorHandler eh = helper.new ErrorHandler();
 
-            instanceFile.putUserData(IN_PROGRESS_KEY, Boolean.TRUE);
-            try {
-              doValidation(instanceFile, schemaFile, eh);
-            } finally {
-              instanceFile.putUserData(IN_PROGRESS_KEY, null);
-            }
+        instanceFile.putUserData(IN_PROGRESS_KEY, Boolean.TRUE);
+        try {
+          doValidation(instanceFile, schemaFile, eh);
+        } finally {
+          instanceFile.putUserData(IN_PROGRESS_KEY, null);
+        }
 
-            SwingUtilities.invokeLater(
-              new Runnable() {
-                  public void run() {
-                    if (!eh.hadErrorOrWarning()) {
-                      SwingUtilities.invokeLater(
-                          new Runnable() {
-                            public void run() {
-                              helper.close();
-                              WindowManager.getInstance().getStatusBar(project).setInfo("No errors detected");
-                            }
-                          }
-                      );
-                    }
-                  }
+        SwingUtilities.invokeLater(
+          () -> {
+            if (!eh.hadErrorOrWarning()) {
+              SwingUtilities.invokeLater(
+                () -> {
+                  helper.close();
+                  WindowManager.getInstance().getStatusBar(project).setInfo("No errors detected");
                 }
-            );
+              );
+            }
           }
-        });
-      }
-    });
+        );
+      }));
 
     helper.setProcessController(new NewErrorTreeViewPanel.ProcessController() {
+      @Override
       public void stopProcess() {
         future.cancel(true);
       }
 
+      @Override
       public boolean isProcessStopped() {
         return future.isDone();
       }
     });
   }
 
-  @SuppressWarnings({ "ThrowableInstanceNeverThrown" })
   private static void doValidation(VirtualFile instanceFile, VirtualFile schemaFile, org.xml.sax.ErrorHandler eh) {
     final SchemaReader sr = schemaFile.getFileType() == RncFileType.getInstance() ?
             CompactSchemaReader.getInstance() :
@@ -187,14 +172,14 @@ public class ValidateAction extends AnAction {
     RngProperty.CHECK_ID_IDREF.add(properties);
 
     try {
-      final String schemaPath = RngParser.reallyFixIDEAUrl(schemaFile.getUrl());
+      final String schemaPath = VfsUtilCore.fixIDEAUrl(schemaFile.getUrl());
       try {
         final ValidationDriver driver = new ValidationDriver(properties.toPropertyMap(), sr);
         final InputSource in = ValidationDriver.uriOrFileInputSource(schemaPath);
         in.setEncoding(schemaFile.getCharset().name());
 
         if (driver.loadSchema(in)) {
-          final String path = RngParser.reallyFixIDEAUrl(instanceFile.getUrl());
+          final String path = VfsUtilCore.fixIDEAUrl(instanceFile.getUrl());
           try {
             driver.validate(ValidationDriver.uriOrFileInputSource(path));
           } catch (IOException e1) {
@@ -206,10 +191,8 @@ public class ValidateAction extends AnAction {
       } catch (IOException e1) {
         eh.fatalError(new SAXParseException(e1.getMessage(), null, UriOrFile.fileToUri(schemaPath), -1, -1, e1));
       }
-    } catch (SAXException e1) {
+    } catch (SAXException | MalformedURLException e1) {
       // huh?
-      Logger.getInstance(ValidateAction.class.getName()).error(e1);
-    } catch (MalformedURLException e1) {
       Logger.getInstance(ValidateAction.class.getName()).error(e1);
     }
   }
@@ -228,22 +211,27 @@ public class ValidateAction extends AnAction {
     return null;
   }
 
+  @Override
   public boolean displayTextInToolbar() {
     return myOrigAction.displayTextInToolbar();
   }
 
+  @Override
   public void setDefaultIcon(boolean b) {
     myOrigAction.setDefaultIcon(b);
   }
 
+  @Override
   public boolean isDefaultIcon() {
     return myOrigAction.isDefaultIcon();
   }
 
+  @Override
   public void setInjectedContext(boolean worksInInjected) {
     myOrigAction.setInjectedContext(worksInInjected);
   }
 
+  @Override
   public boolean isInInjectedContext() {
     return myOrigAction.isInInjectedContext();
   }

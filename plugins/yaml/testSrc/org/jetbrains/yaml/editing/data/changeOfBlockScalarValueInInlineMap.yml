@@ -1,0 +1,3 @@
+- a: |
+   text <caret> here
+  b: hello

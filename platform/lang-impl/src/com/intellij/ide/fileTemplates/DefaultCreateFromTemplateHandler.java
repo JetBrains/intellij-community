@@ -27,6 +27,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileFactory;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Map;
 
@@ -34,17 +35,20 @@ import java.util.Map;
  * @author yole
  */
 public class DefaultCreateFromTemplateHandler implements CreateFromTemplateHandler {
-  public boolean handlesTemplate(final FileTemplate template) {
+  @Override
+  public boolean handlesTemplate(@NotNull final FileTemplate template) {
     return true;
   }
 
-  public PsiElement createFromTemplate(final Project project, final PsiDirectory directory, String fileName, final FileTemplate template,
-                                       final String templateText,
-                                       final Map<String, Object> props) throws IncorrectOperationException {
+  @NotNull
+  @Override
+  public PsiElement createFromTemplate(@NotNull final Project project, @NotNull final PsiDirectory directory, String fileName, @NotNull final FileTemplate template,
+                                       @NotNull final String templateText,
+                                       @NotNull final Map<String, Object> props) throws IncorrectOperationException {
     fileName = checkAppendExtension(fileName, template);
 
     if (FileTypeManager.getInstance().isFileIgnored(fileName)) {
-      throw new IncorrectOperationException("This filename is ignored (Settings | File Types | Ignore files and folders)");
+      throw new IncorrectOperationException("This filename is ignored (Settings | Editor | File Types | Ignore files and folders)");
     }
 
     directory.checkCreateFile(fileName);
@@ -59,7 +63,7 @@ public class DefaultCreateFromTemplateHandler implements CreateFromTemplateHandl
     return file;
   }
 
-  protected String checkAppendExtension(String fileName, final FileTemplate template) {
+  protected String checkAppendExtension(String fileName, @NotNull FileTemplate template) {
     final String suggestedFileNameEnd = "." + template.getExtension();
 
     if (!fileName.endsWith(suggestedFileNameEnd)) {
@@ -68,7 +72,8 @@ public class DefaultCreateFromTemplateHandler implements CreateFromTemplateHandl
     return fileName;
   }
 
-  public boolean canCreate(final PsiDirectory[] dirs) {
+  @Override
+  public boolean canCreate(@NotNull final PsiDirectory[] dirs) {
     return true;
   }
 
@@ -77,13 +82,20 @@ public class DefaultCreateFromTemplateHandler implements CreateFromTemplateHandl
     return true;
   }
 
+  @NotNull
   @Override
   public String getErrorMessage() {
     return IdeBundle.message("title.cannot.create.file");
   }
 
   @Override
-  public void prepareProperties(Map<String, Object> props) {
+  public void prepareProperties(@NotNull Map<String, Object> props, String filename, @NotNull FileTemplate template) {
+    String fileName = checkAppendExtension(filename, template);
+    props.put(FileTemplate.ATTRIBUTE_FILE_NAME, fileName);
+  }
+
+  @Override
+  public void prepareProperties(@NotNull Map<String, Object> props) {
     // ignore
   }
 }

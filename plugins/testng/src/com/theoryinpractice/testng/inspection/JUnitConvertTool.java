@@ -1,22 +1,9 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.theoryinpractice.testng.inspection;
 
-import com.intellij.codeInsight.CodeInsightUtilBase;
+import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInspection.*;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.pom.java.LanguageLevel;
@@ -24,20 +11,37 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.util.PsiElementFilter;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.refactoring.typeMigration.TypeConversionDescriptor;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.ContainerUtil;
 import com.theoryinpractice.testng.util.TestNGUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 /**
- * @author Hani Suleiman Date: Aug 3, 2005 Time: 3:34:56 AM
+ * @author Hani Suleiman
  */
-public class JUnitConvertTool extends BaseJavaLocalInspectionTool {
+public class JUnitConvertTool extends AbstractBaseJavaLocalInspectionTool {
 
   private static final Logger LOG = Logger.getInstance("TestNG QuickFix");
-  private static final String DISPLAY_NAME = "Convert JUnit Tests to TestNG";
+  private static final String DISPLAY_NAME = "JUnit Test can be converted to TestNG";
+  private static final Map<String, String> ANNOTATIONS_MAP;
+
   public static final String QUICKFIX_NAME = "Convert TestCase to TestNG";
+
+  static {
+    ANNOTATIONS_MAP = new HashMap<>();
+    ANNOTATIONS_MAP.put("org.junit.Test", "@org.testng.annotations.Test");
+    ANNOTATIONS_MAP.put("org.junit.BeforeClass", "@org.testng.annotations.BeforeClass");
+    ANNOTATIONS_MAP.put("org.junit.Before", "@org.testng.annotations.BeforeMethod");
+    ANNOTATIONS_MAP.put("org.junit.AfterClass", "@org.testng.annotations.AfterClass");
+    ANNOTATIONS_MAP.put("org.junit.After", "@org.testng.annotations.AfterMethod");
+  }
 
   @NotNull
   @Override
@@ -60,7 +64,7 @@ public class JUnitConvertTool extends BaseJavaLocalInspectionTool {
   @Override
   @Nullable
   public ProblemDescriptor[] checkClass(@NotNull PsiClass psiClass, @NotNull InspectionManager manager, boolean isOnTheFly) {
-    if (TestNGUtil.inheritsJUnitTestCase(psiClass) || TestNGUtil.containsJunitAnnotions(psiClass)) {
+    if (TestNGUtil.inheritsJUnitTestCase(psiClass) || TestNGUtil.containsJunitAnnotations(psiClass)) {
       final PsiIdentifier nameIdentifier = psiClass.getNameIdentifier();
       ProblemDescriptor descriptor = manager.createProblemDescriptor(nameIdentifier != null ? nameIdentifier : psiClass, "TestCase can be converted to TestNG",
                                                                      new JUnitConverterQuickFix(),
@@ -72,26 +76,35 @@ public class JUnitConvertTool extends BaseJavaLocalInspectionTool {
 
   public static class JUnitConverterQuickFix implements LocalQuickFix {
 
+    @Override
     @NotNull
-    public String getName() {
+    public String getFamilyName() {
       return QUICKFIX_NAME;
     }
 
-     @NotNull
-    public String getFamilyName() {
-      return getName();
+    @Override
+    public boolean startInWriteAction() {
+      return false;
     }
 
+    @Override
     public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      if (!CodeInsightUtilBase.preparePsiElementForWrite(descriptor.getPsiElement())) return;
       final PsiClass psiClass = PsiTreeUtil.getParentOfType(descriptor.getPsiElement(), PsiClass.class);
-      if (!TestNGUtil.checkTestNGInClasspath(psiClass)) return;
+      if (psiClass == null || !TestNGUtil.checkTestNGInClasspath(psiClass)) return;
+      if (!FileModificationService.getInstance().preparePsiElementsForWrite(psiClass)) return;
+      WriteAction.run(() -> doFix(project, psiClass));
+    }
+
+    private static void doFix(@NotNull Project project, PsiClass psiClass) {
       try {
         final PsiManager manager = PsiManager.getInstance(project);
         final PsiElementFactory factory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();
         final PsiJavaFile javaFile = (PsiJavaFile)psiClass.getContainingFile();
 
+
         for (PsiMethod method : psiClass.getMethods()) {
+          final PsiMethodCallExpression[] methodCalls = getTestCaseCalls(method);
+
           if (method.isConstructor()) {
             convertJUnitConstructor(method);
           }
@@ -100,92 +113,56 @@ public class JUnitConvertTool extends BaseJavaLocalInspectionTool {
               addMethodJavadoc(factory, method);
             }
             else {
-              if (TestNGUtil.containsJunitAnnotions(method)) {
-                convertJunitAnnotions(factory, method);
+              if (TestNGUtil.containsJunitAnnotations(method)) {
+                convertJunitAnnotations(factory, method);
+              } else {
+                addMethodAnnotations(factory, method);
               }
-              addMethodAnnotations(factory, method);
             }
           }
 
-          final PsiMethodCallExpression[] methodCalls = getTestCaseCalls(method);
           for (PsiMethodCallExpression methodCall : methodCalls) {
             PsiMethod assertMethod = methodCall.resolveMethod();
             if (assertMethod == null) {
               continue;
             }
-            PsiAssertStatement assertStatement = null;
             @NonNls String methodName = assertMethod.getName();
             PsiExpression[] expressions = methodCall.getArgumentList().getExpressions();
             final PsiStatement methodCallStatement = PsiTreeUtil.getParentOfType(methodCall, PsiStatement.class);
             LOG.assertTrue(methodCallStatement != null);
-            if ("assertTrue".equals(methodName) || "assertFalse".equals(methodName)) {
-              if (expressions.length == 1) {
-                assertStatement = createAssert(factory, null, methodCall);
-                final PsiExpression assertCondition = assertStatement.getAssertCondition();
-                LOG.assertTrue(assertCondition != null);
-                assertCondition.replace(expressions[0]);
-              }
-              else if (expressions.length == 2) {
-                assertStatement = createAssert(factory, expressions[0], methodCall);
-                final PsiExpression assertCondition = assertStatement.getAssertCondition();
-                LOG.assertTrue(assertCondition != null);
-                assertCondition.replace(expressions[1]);
-              }
-
-              if ("assertFalse".equals(methodName) && assertStatement != null) {
-                PsiExpression assertCondition = assertStatement.getAssertCondition();
-                LOG.assertTrue(assertCondition != null);
-                assertCondition.replace(factory.createExpressionFromText("!(" + assertCondition.getText() + ')',
-                                                                         PsiTreeUtil.getParentOfType(assertCondition,
-                                                                                                     PsiMethodCallExpression.class)));
-              }
-            }
-            else if ("assertNull".equals(methodName) || "assertNotNull".equals(methodName)) {
-              String operator = "assertNull".equals(methodName) ? "==" : "!=";
-              if (expressions.length == 1) {
-                assertStatement = createAssert(factory, null, methodCall);
-                PsiExpression expression =
-                  factory.createExpressionFromText(expressions[0].getText() + ' ' + operator + " null", assertStatement);
-                final PsiExpression assertCondition = assertStatement.getAssertCondition();
-                LOG.assertTrue(assertCondition != null);
-                assertCondition.replace(expression);
-              }
-              else if (expressions.length == 2) {
-                assertStatement = createAssert(factory, expressions[0], methodCall.getParent());
-                PsiExpression expression =
-                  factory.createExpressionFromText(expressions[1].getText() + ' ' + operator + " null", assertStatement);
-                final PsiExpression assertCondition = assertStatement.getAssertCondition();
-                LOG.assertTrue(assertCondition != null);
-                assertCondition.replace(expression);
-              }
+            final String qualifierTemplate = methodCall.getMethodExpression().getQualifierExpression() != null ? "$qualifier$." : "";
+            final String searchTemplate;
+            final String replaceTemplate;
+            if ("assertNull".equals(methodName) || "assertNotNull".equals(methodName) || "assertTrue".equals(methodName) || "assertFalse".equals(methodName)) {
+              boolean hasMessage = expressions.length == 2;
+              searchTemplate = qualifierTemplate + "$method$($object$ " + (hasMessage ? ",$msg$" : "") + ")";
+              replaceTemplate = "org.testng.Assert.$method$(" + (hasMessage ? "$msg$," : "") + "$object$)";
             }
             else if ("fail".equals(methodName)) {
-              if (expressions.length == 0) {
-                assertStatement = createAssert(factory, null, methodCall);
-              }
-              else if (expressions.length == 1) {
-                assertStatement = createAssert(factory, expressions[0], methodCall);
-              }
+              boolean hasMessage = expressions.length == 1;
+              searchTemplate = qualifierTemplate + "$method$(" + (hasMessage ? "$msg$" : "") + ")";
+              replaceTemplate = "org.testng.Assert.$method$(" + (hasMessage ? "$msg$" : "") + ")";
+            }
+            else if ("assertThat".equals(methodName)) {
+              String paramTemplate = (expressions.length == 3 ? "$msg$," : "") + "$actual$, $matcher$";
+              searchTemplate = qualifierTemplate + "assertThat(" + paramTemplate + ")";
+              replaceTemplate = "org.hamcrest.MatcherAssert.assertThat(" + paramTemplate +")";
             }
             else {
-              //if it's a 3 arg, the error message goes at the end
-              PsiElement inserted = null;
-              if (expressions.length == 2) {
-                inserted = methodCallStatement
-                  .replace(factory.createStatementFromText("org.testng.Assert." + methodCall.getText() + ";", methodCall.getParent()));
-              }
-              else if (expressions.length == 3) {
-                @NonNls String call = "org.testng.Assert." + methodName + '(' + expressions[2].getText() + ", " + expressions[1].getText() +
-                                      ", " + expressions[0].getText() + ");";
-                inserted = methodCallStatement.replace(factory.createStatementFromText(call, methodCall.getParent()));
-              }
-              if (inserted != null) {
-                JavaCodeStyleManager.getInstance(project).shortenClassReferences(inserted);
+              boolean hasMessage = hasMessage(methodCall);
+              if ((hasMessage && expressions.length == 4) || (!hasMessage && expressions.length == 3)) {
+                searchTemplate = qualifierTemplate + "$method$";
+                replaceTemplate = "org.testng.AssertJUnit.$method$";
+              } else {
+                String replaceMethodWildCard = "$method$";
+                if (methodName.equals("assertArrayEquals")) {
+                  replaceMethodWildCard = "assertEquals";
+                }
+                searchTemplate = qualifierTemplate + "$method$(" + (hasMessage ? "$msg$, " : "")  + "$expected$, $actual$" + ")";
+                replaceTemplate = "org.testng.Assert." + replaceMethodWildCard + "($actual$, $expected$ " + (hasMessage ? ", $msg$" : "") + ")";
               }
             }
-            if (assertStatement != null) {
-              methodCallStatement.replace(assertStatement);
-            }
+            TypeConversionDescriptor.replaceExpression(methodCall, searchTemplate, replaceTemplate);
           }
         }
         final PsiClass superClass = psiClass.getSuperClass();
@@ -196,38 +173,44 @@ public class JUnitConvertTool extends BaseJavaLocalInspectionTool {
             element.delete();
           }
         }
-        JavaCodeStyleManager.getInstance(project).optimizeImports(javaFile);//delete unused imports
+        final JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(project);
+        codeStyleManager.optimizeImports(javaFile);//delete unused imports
+        codeStyleManager.shortenClassReferences(javaFile);
       }
       catch (IncorrectOperationException e) {
         LOG.error("Error converting testcase", e);
       }
     }
 
-
-
-    private static void convertJunitAnnotions(PsiElementFactory factory, PsiMethod method) throws IncorrectOperationException {
-      PsiAnnotation[] annotations = method.getModifierList().getAnnotations();
-      for (PsiAnnotation annotation : annotations) {
-        PsiAnnotation newAnnotation = null;
-        if ("org.junit.Test".equals(annotation.getQualifiedName())) {
-          newAnnotation = factory.createAnnotationFromText("@org.testng.annotations.Test", method);
-        }
-        else if ("org.junit.BeforeClass".equals(annotation.getQualifiedName())) {
-          newAnnotation = factory.createAnnotationFromText("@org.testng.annotations.BeforeClass", method);
-        }
-        else if ("org.junit.Before".equals(annotation.getQualifiedName())) {
-          newAnnotation = factory.createAnnotationFromText("@org.testng.annotations.BeforeMethod", method);
-        }
-        else if ("org.junit.AfterClass".equals(annotation.getQualifiedName())) {
-          newAnnotation = factory.createAnnotationFromText("@org.testng.annotations.AfterClass", method);
-        }
-        else if ("org.junit.After".equals(annotation.getQualifiedName())) {
-          newAnnotation = factory.createAnnotationFromText("@org.testng.annotations.AfterMethod", method);
-        }
-        if (newAnnotation != null) {
-          JavaCodeStyleManager.getInstance(annotation.getProject()).shortenClassReferences(annotation.replace(newAnnotation));
+    private static boolean hasMessage(PsiMethodCallExpression expression) {
+      final PsiExpression[] expressions = expression.getArgumentList().getExpressions();
+      if (expressions.length == 4) {
+        return true;
+      }
+      final PsiMethod method = expression.resolveMethod();
+      LOG.assertTrue(method != null);
+      for (PsiParameter parameter : method.getParameterList().getParameters()) {
+        final PsiType type = parameter.getType();
+        if (type instanceof PsiClassType) {
+          final PsiClass resolvedClass = ((PsiClassType)type).resolve();
+          if (resolvedClass != null && CommonClassNames.JAVA_LANG_STRING.equals(resolvedClass.getQualifiedName())) {
+            return true;
+          }
         }
       }
+      return false;
+    }
+
+    private static List<PsiElement> convertJunitAnnotations(final PsiElementFactory factory, final PsiMethod method) throws IncorrectOperationException {
+      PsiAnnotation[] annotations = method.getModifierList().getAnnotations();
+      return ContainerUtil.mapNotNull(annotations, annotation -> {
+        final String testNgAnnotation = ANNOTATIONS_MAP.get(annotation.getQualifiedName());
+        if (testNgAnnotation != null) {
+          final PsiAnnotation newAnnotation = factory.createAnnotationFromText("@org.testng.annotations.Test", method);
+          return annotation.replace(newAnnotation);
+        }
+        return null;
+      });
     }
 
     private static void convertJUnitConstructor(PsiMethod method) {
@@ -238,7 +221,7 @@ public class JUnitConvertTool extends BaseJavaLocalInspectionTool {
           PsiExpression expression = statement.getExpression();
           if (expression instanceof PsiMethodCallExpression) {
             PsiMethodCallExpression methodCall = (PsiMethodCallExpression)expression;
-            if (methodCall.getArgumentList().getExpressions().length == 1) {
+            if (methodCall.getArgumentList().getExpressionCount() == 1) {
               PsiMethod resolved = methodCall.resolveMethod();
               if (resolved != null && "junit.framework.TestCase".equals(resolved.getContainingClass().getQualifiedName()) &&
                   "TestCase".equals(resolved.getName())) {
@@ -257,11 +240,23 @@ public class JUnitConvertTool extends BaseJavaLocalInspectionTool {
 
     private static PsiMethodCallExpression[] getTestCaseCalls(PsiMethod method) {
       PsiElement[] methodCalls = PsiTreeUtil.collectElements(method, new PsiElementFilter() {
+        @Override
         public boolean isAccepted(PsiElement element) {
           if (!(element instanceof PsiMethodCallExpression)) return false;
           final PsiMethodCallExpression methodCall = (PsiMethodCallExpression)element;
           final PsiMethod method = methodCall.resolveMethod();
-          return method != null && "junit.framework.Assert".equals(method.getContainingClass().getQualifiedName());
+          if (method != null) {
+            final PsiClass containingClass = method.getContainingClass();
+            if (containingClass != null) {
+              final String qualifiedName = containingClass.getQualifiedName();
+              if ("junit.framework.Assert".equals(qualifiedName) ||
+                  "org.junit.Assert".equals(qualifiedName) ||
+                  "junit.framework.TestCase".equals(qualifiedName)) {
+                return true;
+              }
+            }
+          }
+          return false;
         }
       });
       PsiMethodCallExpression[] expressions = new PsiMethodCallExpression[methodCalls.length];
@@ -273,10 +268,10 @@ public class JUnitConvertTool extends BaseJavaLocalInspectionTool {
       if (method.getName().startsWith("test")) {
         addMethodJavadocLine(factory, method, " * @testng.test");
       }
-      else if ("setUp".equals(method.getName()) && method.getParameterList().getParameters().length == 0) {
+      else if ("setUp".equals(method.getName()) && method.getParameterList().isEmpty()) {
         addMethodJavadocLine(factory, method, " * @testng.before-test");
       }
-      else if ("tearDown".equals(method.getName()) && method.getParameterList().getParameters().length == 0) {
+      else if ("tearDown".equals(method.getName()) && method.getParameterList().isEmpty()) {
         addMethodJavadocLine(factory, method, " * @testng.after-test");
       }
     }
@@ -285,9 +280,9 @@ public class JUnitConvertTool extends BaseJavaLocalInspectionTool {
       throws IncorrectOperationException {
       PsiComment newComment;
       PsiElement comment = method.getFirstChild();
-      if (comment != null && comment instanceof PsiComment) {
+      if (comment instanceof PsiComment) {
         String[] commentLines = comment.getText().split("\n");
-        StringBuffer buf = new StringBuffer();
+        StringBuilder buf = new StringBuilder();
         for (int i = 0; i < commentLines.length; i++) {
           String commentLine = commentLines[i];
           // last line, append our new comment entry
@@ -304,54 +299,29 @@ public class JUnitConvertTool extends BaseJavaLocalInspectionTool {
 
         newComment = factory.createCommentFromText(commentString, null);
         comment.replace(newComment);
-
       }
       else {
-        String commentString;
-
-        StringBuffer commentBuffer = new StringBuffer();
-        commentBuffer.append("/**\n");
-        commentBuffer.append(javaDocLine);
-        commentBuffer.append('\n');
-        commentBuffer.append(" */");
-
-        commentString = commentBuffer.toString();
-        newComment = factory.createCommentFromText(commentString, null);
+        newComment = factory.createCommentFromText("/**\n" + javaDocLine + "\n */", null);
 
         method.addBefore(newComment, comment);
       }
     }
 
-    private static void addMethodAnnotations(PsiElementFactory factory, PsiMethod method) throws IncorrectOperationException {
+    private static PsiElement addMethodAnnotations(PsiElementFactory factory, PsiMethod method) throws IncorrectOperationException {
       PsiAnnotation annotation = null;
       if (method.getName().startsWith("test")) {
         annotation = factory.createAnnotationFromText("@org.testng.annotations.Test", method);
       }
-      else if ("setUp".equals(method.getName()) && method.getParameterList().getParameters().length == 0) {
+      else if ("setUp".equals(method.getName()) && method.getParameterList().isEmpty()) {
         annotation = factory.createAnnotationFromText("@org.testng.annotations.BeforeMethod", method);
       }
-      else if ("tearDown".equals(method.getName()) && method.getParameterList().getParameters().length == 0) {
+      else if ("tearDown".equals(method.getName()) && method.getParameterList().isEmpty()) {
         annotation = factory.createAnnotationFromText("@org.testng.annotations.AfterMethod", method);
       }
       if (annotation != null) {
-        JavaCodeStyleManager.getInstance(annotation.getProject()).shortenClassReferences(method.getModifierList().addAfter(annotation, null));
+        return method.getModifierList().addAfter(annotation, null);
       }
-    }
-
-    private static PsiAssertStatement createAssert(PsiElementFactory factory, PsiExpression description, PsiElement context)
-      throws IncorrectOperationException {
-      PsiAssertStatement assertStatement;
-      if (description == null) {
-        assertStatement = (PsiAssertStatement)factory.createStatementFromText("assert false;", context.getParent());
-        return assertStatement;
-      }
-      else {
-        assertStatement = (PsiAssertStatement)factory.createStatementFromText("assert false : \"x\";", context.getParent());
-        final PsiExpression assertDescription = assertStatement.getAssertDescription();
-        assert assertDescription != null;
-        assertDescription.replace(description);
-      }
-      return assertStatement;
+      return null;
     }
   }
 }

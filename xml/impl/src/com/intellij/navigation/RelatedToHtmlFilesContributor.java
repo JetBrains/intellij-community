@@ -29,6 +29,6 @@ public abstract class RelatedToHtmlFilesContributor {
   public static final ExtensionPointName<RelatedToHtmlFilesContributor> EP_NAME =
     ExtensionPointName.create("com.intellij.xml.relatedToHtmlFilesContributor");
 
-  public abstract void fillRelatedFiles(@NotNull XmlFile xmlFile, @NotNull Set<PsiFile> resultSet);
+  public abstract void fillRelatedFiles(@NotNull XmlFile xmlFile, @NotNull Set<? super PsiFile> resultSet);
   public abstract String getGroupName();
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,27 +17,19 @@ package com.intellij.psi.tree;
 
 import com.intellij.lang.Language;
 import com.intellij.testFramework.PlatformTestUtil;
-import com.intellij.util.ArrayUtil;
-import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.Random;
+import java.util.Set;
 
 import static org.junit.Assert.*;
 
-@RunWith(Parameterized.class)
 public class TokenSetTest {
-  @Parameterized.Parameters
-  public static List<Object[]> data() {
-    return Collections.nCopies(10, ArrayUtil.EMPTY_OBJECT_ARRAY);
-     	}
-
   private static IElementType T1, T2, T3, T4, T5, T6;
   private TokenSet S1, S12, S3, S34, S5;
 
@@ -60,7 +52,6 @@ public class TokenSetTest {
     S3 = TokenSet.create(T3);
     S34 = TokenSet.create(T3, T4);
     S5 = TokenSet.create(T5);
-
   }
 
   @Test
@@ -72,7 +63,7 @@ public class TokenSetTest {
   }
 
   @Test
-  public void getTypes() throws Exception {
+  public void getTypes() {
     assertArrayEquals(IElementType.EMPTY_ARRAY, TokenSet.EMPTY.getTypes());
     assertArrayEquals(new IElementType[]{T1, T2}, S12.getTypes());
     assertArrayEquals(new IElementType[]{T3, T4}, S34.getTypes());
@@ -93,22 +84,11 @@ public class TokenSetTest {
     check(TokenSet.andSet(S12, S34));
   }
 
-  @SuppressWarnings("deprecation")
   @Test
-  public void andNot() throws Exception {
+  public void andNot() {
     final TokenSet S123 = TokenSet.orSet(S12, S3);
-    check(S123.minus(S12), T3);
-    check(S123.minus(S5), T1, T2, T3);
     check(TokenSet.andNot(S123, S12), T3);
     check(TokenSet.andNot(S123, S5), T1, T2, T3);
-  }
-
-  @SuppressWarnings("deprecation")
-  @Test
-  public void not() throws Exception {
-    checkNot(TokenSet.not(S12), T1, T2);
-    checkNot(TokenSet.not(S34), T3, T4);
-    checkNot(TokenSet.not(S5), T5);
   }
 
   private static void fakeElements(int from, int to) {
@@ -129,33 +109,18 @@ public class TokenSetTest {
     }
   }
 
-  private static void checkNot(@NotNull TokenSet set, @NotNull IElementType... elements) {
-    final Set<IElementType> expected = ContainerUtil.newHashSet(elements);
-    for (IElementType t : Arrays.asList(T1, T2, T3, T4, T5, T6)) {
-      if (!expected.contains(t)) {
-        assertTrue("missed: " + t, set.contains(t));
-      }
-      else {
-        assertFalse("unexpected: " + t, set.contains(t));
-      }
-    }
-  }
-
 
   @Test
-  public void performance() throws Exception {
+  public void performance() {
     final IElementType[] elementTypes = IElementType.enumerate(IElementType.TRUE);
     final TokenSet set = TokenSet.create();
     final int shift = new Random().nextInt(500000);
 
-    PlatformTestUtil.startPerformanceTest("TokenSet.contains() performance", 25, new ThrowableRunnable() {
-      @Override
-      public void run() throws Throwable {
-        for (int i = 0; i < 1000000; i++) {
-          final IElementType next = elementTypes[((i + shift) % elementTypes.length)];
-          assertFalse(set.contains(next));
-        }
+    PlatformTestUtil.startPerformanceTest("TokenSet.contains()", 25, () -> {
+      for (int i = 0; i < 1000000; i++) {
+        final IElementType next = elementTypes[(i + shift) % elementTypes.length];
+        assertFalse(set.contains(next));
       }
-    }).cpuBound().assertTiming();
+    }).useLegacyScaling().assertTiming();
   }
 }

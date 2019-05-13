@@ -18,7 +18,7 @@ package com.intellij.psi;
 import com.intellij.util.IncorrectOperationException;
 
 /**
- * Represents a reference to the member imported by a Java <code>import static</code>
+ * Represents a reference to the member imported by a Java {@code import static}
  * statement.
  *
  * @author dsl

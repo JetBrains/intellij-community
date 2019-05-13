@@ -31,21 +31,25 @@ public class MockLanguageFileType extends LanguageFileType {
     super(Language.ANY);
   }
 
+  @Override
   @NotNull
   public String getName() {
     return "Mock";
   }
 
+  @Override
   @NotNull
   public String getDescription() {
     return "Mock";
   }
 
+  @Override
   @NotNull
   public String getDefaultExtension() {
     return ".mockExtensionThatProbablyWon'tEverExist";
   }
 
+  @Override
   public Icon getIcon() {
     return null;
   }

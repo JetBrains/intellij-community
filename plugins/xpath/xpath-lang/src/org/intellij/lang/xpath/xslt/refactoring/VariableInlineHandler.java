@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2010 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.intellij.lang.xpath.xslt.refactoring;
 
 import com.intellij.codeInsight.highlighting.HighlightManager;
@@ -42,7 +28,6 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
-import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Processor;
 import com.intellij.util.Query;
@@ -66,11 +51,6 @@ import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Collection;
 
-/*
-* Created by IntelliJ IDEA.
-* User: sweinreuter
-* Date: 24.11.10
-*/
 public class VariableInlineHandler extends InlineActionHandler {
   private static final String NAME = "Inline";
   private static final String TITLE = "XSLT - " + NAME;
@@ -110,25 +90,25 @@ public class VariableInlineHandler extends InlineActionHandler {
 
   public static void invoke(@NotNull final XPathVariable variable, Editor editor) {
 
-    final String type = LanguageFindUsages.INSTANCE.forLanguage(variable.getLanguage()).getType(variable);
+    final String type = LanguageFindUsages.getType(variable);
     final Project project = variable.getProject();
 
     final XmlTag tag = ((XsltElement)variable).getTag();
     final String expression = tag.getAttributeValue("select");
     if (expression == null) {
       CommonRefactoringUtil.showErrorHint(project, editor,
-              MessageFormat
-                      .format("{0} ''{1}'' has no value.", StringUtil.capitalize(type), variable.getName()),
-              TITLE, null);
+                                          MessageFormat
+                                            .format("{0} ''{1}'' has no value.", StringUtil.capitalize(type), variable.getName()),
+                                          TITLE, null);
       return;
     }
 
     final Collection<PsiReference> references =
-            ReferencesSearch.search(variable, new LocalSearchScope(tag.getParentTag()), false).findAll();
+      ReferencesSearch.search(variable, new LocalSearchScope(tag.getParentTag()), false).findAll();
     if (references.size() == 0) {
       CommonRefactoringUtil.showErrorHint(project, editor,
-              MessageFormat.format("{0} ''{1}'' is never used.", variable.getName()),
-              TITLE, null);
+                                          MessageFormat.format("{0} ''{1}'' is never used.", variable.getName()),
+                                          TITLE, null);
       return;
     }
 
@@ -138,10 +118,12 @@ public class VariableInlineHandler extends InlineActionHandler {
       hasExternalRefs = !query.forEach(new Processor<PsiReference>() {
         int allRefs = 0;
 
+        @Override
         public boolean process(PsiReference psiReference) {
           if (++allRefs > references.size()) {
             return false;
-          } else if (!references.contains(psiReference)) {
+          }
+          else if (!references.contains(psiReference)) {
             return false;
           }
           return true;
@@ -150,24 +132,22 @@ public class VariableInlineHandler extends InlineActionHandler {
     }
 
     final HighlightManager highlighter = HighlightManager.getInstance(project);
-    final ArrayList<RangeHighlighter> highlighters = new ArrayList<RangeHighlighter>();
-    final PsiReference[] psiReferences = references.toArray(new PsiReference[references.size()]);
-    TextRange[] ranges = ContainerUtil.map2Array(psiReferences, TextRange.class, new Function<PsiReference, TextRange>() {
-      public TextRange fun(PsiReference s) {
-        final PsiElement psiElement = s.getElement();
-        final XmlAttributeValue context = PsiTreeUtil.getContextOfType(psiElement, XmlAttributeValue.class, true);
-        if (psiElement instanceof XPathElement && context != null) {
-          return XsltCodeInsightUtil.getRangeInsideHostingFile((XPathElement)psiElement).cutOut(s.getRangeInElement());
-        }
-        return psiElement.getTextRange().cutOut(s.getRangeInElement());
+    final ArrayList<RangeHighlighter> highlighters = new ArrayList<>();
+    final PsiReference[] psiReferences = references.toArray(PsiReference.EMPTY_ARRAY);
+    TextRange[] ranges = ContainerUtil.map2Array(psiReferences, TextRange.class, s -> {
+      final PsiElement psiElement = s.getElement();
+      final XmlAttributeValue context = PsiTreeUtil.getContextOfType(psiElement, XmlAttributeValue.class, true);
+      if (psiElement instanceof XPathElement && context != null) {
+        return XsltCodeInsightUtil.getRangeInsideHostingFile((XPathElement)psiElement).cutOut(s.getRangeInElement());
       }
+      return psiElement.getTextRange().cutOut(s.getRangeInElement());
     });
     final Editor e = editor instanceof EditorWindow ? ((EditorWindow)editor).getDelegate() : editor;
     for (TextRange range : ranges) {
       final TextAttributes textAttributes = EditorColors.SEARCH_RESULT_ATTRIBUTES.getDefaultAttributes();
       final Color color = getScrollmarkColor(textAttributes);
       highlighter.addOccurrenceHighlight(e, range.getStartOffset(), range.getEndOffset(), textAttributes,
-              HighlightManagerImpl.HIDE_BY_ESCAPE, highlighters, color);
+                                         HighlightManagerImpl.HIDE_BY_ESCAPE, highlighters, color);
     }
 
     highlighter.addOccurrenceHighlights(e, new PsiElement[]{((XsltVariable)variable).getNameIdentifier()},
@@ -175,50 +155,50 @@ public class VariableInlineHandler extends InlineActionHandler {
 
     if (!hasExternalRefs) {
       if (!ApplicationManager.getApplication().isUnitTestMode() &&
-              Messages.showYesNoDialog(MessageFormat.format("Inline {0} ''{1}''? ({2} occurrence{3})",
-              type,
-              variable.getName(),
-              String.valueOf(references.size()),
-              references.size() > 1 ? "s" : ""),
-              TITLE, Messages.getQuestionIcon()) != 0) {
+          Messages.showYesNoDialog(MessageFormat.format("Inline {0} ''{1}''? ({2} occurrence{3})",
+                                                        type,
+                                                        variable.getName(),
+                                                        String.valueOf(references.size()),
+                                                        references.size() > 1 ? "s" : ""),
+                                   TITLE, Messages.getQuestionIcon()) != Messages.YES) {
         return;
       }
-    } else {
+    }
+    else {
       if (!ApplicationManager.getApplication().isUnitTestMode() &&
-              Messages.showYesNoDialog(MessageFormat.format("Inline {0} ''{1}''? ({2} local occurrence{3})\n" +
-              "\nWarning: It is being used in external files. Its declaration will not be removed.",
-              type,
-              variable.getName(),
-              String.valueOf(references.size()),
-              references.size() > 1 ? "s" : ""),
-              TITLE, Messages.getWarningIcon()) != 0) {
+          Messages.showYesNoDialog(MessageFormat.format("Inline {0} ''{1}''? ({2} local occurrence{3})\n" +
+                                                        "\nWarning: It is being used in external files. Its declaration will not be removed.",
+                                                        type,
+                                                        variable.getName(),
+                                                        String.valueOf(references.size()),
+                                                        references.size() > 1 ? "s" : ""),
+                                   TITLE, Messages.getWarningIcon()) != Messages.YES) {
         return;
       }
     }
 
     final boolean hasRefs = hasExternalRefs;
-    new WriteCommandAction.Simple(project, "XSLT.Inline", tag.getContainingFile()) {
-      @Override
-      protected void run() throws Throwable {
-        try {
-          for (PsiReference psiReference : references) {
-            final PsiElement element = psiReference.getElement();
-            if (element instanceof XPathElement) {
-              final XPathElement newExpr = XPathChangeUtil.createExpression(element, expression);
-              element.replace(newExpr);
-            } else {
-              assert false;
-            }
+    WriteCommandAction.writeCommandAction(project, tag.getContainingFile()).withName("XSLT.Inline").run(() -> {
+      try {
+        for (PsiReference psiReference : references) {
+          final PsiElement element = psiReference.getElement();
+          if (element instanceof XPathElement) {
+            final XPathElement newExpr = XPathChangeUtil.createExpression(element, expression);
+            element.replace(newExpr);
           }
+          else {
+            assert false;
+          }
+        }
 
-          if (!hasRefs) {
-            tag.delete();
-          }
-        } catch (IncorrectOperationException e) {
-          Logger.getInstance(VariableInlineHandler.class.getName()).error(e);
+        if (!hasRefs) {
+          tag.delete();
         }
       }
-    }.execute();
+      catch (IncorrectOperationException ex) {
+        Logger.getInstance(VariableInlineHandler.class.getName()).error(ex);
+      }
+    });
   }
 
   @Nullable

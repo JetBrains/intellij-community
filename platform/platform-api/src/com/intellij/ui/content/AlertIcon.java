@@ -20,9 +20,9 @@ import java.awt.*;
 
 public class AlertIcon implements Icon {
 
-  private Icon myIcon;
-  private int myVShift;
-  private int myHShift;
+  private final Icon myIcon;
+  private final int myVShift;
+  private final int myHShift;
 
   public AlertIcon(final Icon icon) {
     this(icon, 0, 0);
@@ -46,14 +46,17 @@ public class AlertIcon implements Icon {
     return myHShift;
   }
 
+  @Override
   public void paintIcon(final Component c, final Graphics g, final int x, final int y) {
     myIcon.paintIcon(c, g, x + myHShift, y + myVShift);
   }
 
+  @Override
   public int getIconWidth() {
     return myIcon.getIconWidth();
   }
 
+  @Override
   public int getIconHeight() {
     return myIcon.getIconHeight();
   }

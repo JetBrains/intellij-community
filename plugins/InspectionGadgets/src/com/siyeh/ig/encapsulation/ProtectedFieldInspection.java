@@ -27,6 +27,12 @@ import org.jetbrains.annotations.NotNull;
 public class ProtectedFieldInspection extends BaseInspection {
 
   @Override
+  protected InspectionGadgetsFix buildFix(Object... infos) {
+    final PsiField field = (PsiField)infos[0];
+    return new EncapsulateVariableFix(field.getName());
+  }
+
+  @Override
   @NotNull
   public String getDisplayName() {
     return InspectionGadgetsBundle.message("protected.field.display.name");
@@ -37,12 +43,6 @@ public class ProtectedFieldInspection extends BaseInspection {
   public String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "protected.field.problem.descriptor");
-  }
-
-  @Override
-  protected InspectionGadgetsFix buildFix(Object... infos) {
-    final PsiField field = (PsiField)infos[0];
-    return new EncapsulateVariableFix(field.getName());
   }
 
   @Override

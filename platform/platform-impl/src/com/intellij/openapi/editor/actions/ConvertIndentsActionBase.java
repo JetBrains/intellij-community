@@ -17,6 +17,7 @@ package com.intellij.openapi.editor.actions;
 
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.SelectionModel;
@@ -24,6 +25,8 @@ import com.intellij.openapi.editor.actionSystem.EditorAction;
 import com.intellij.openapi.editor.actionSystem.EditorWriteActionHandler;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.DocumentUtil;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author yole
@@ -47,47 +50,49 @@ public abstract class ConvertIndentsActionBase extends EditorAction {
   }
 
   private static int processIndents(Document document, int tabSize, TextRange textRange, IndentBuilder indentBuilder) {
-    int changedLines = 0;
-    int startLine = document.getLineNumber(textRange.getStartOffset());
-    int endLine = document.getLineNumber(textRange.getEndOffset());
-    for (int line = startLine; line <= endLine; line++) {
-      int indent = 0;
-      final int lineStart = document.getLineStartOffset(line);
-      final int lineEnd = document.getLineEndOffset(line);
-      int indentEnd = lineStart;
-      for(int offset = Math.max(lineStart, textRange.getStartOffset()); offset < lineEnd; offset++) {
-        char c = document.getCharsSequence().charAt(offset);
-        if (c == ' ') {
-          indent++;
+    int[] changedLines = {0};
+    DocumentUtil.executeInBulk(document, true, () -> {
+      int startLine = document.getLineNumber(textRange.getStartOffset());
+      int endLine = document.getLineNumber(textRange.getEndOffset());
+      for (int line = startLine; line <= endLine; line++) {
+        int indent = 0;
+        final int lineStart = document.getLineStartOffset(line);
+        final int lineEnd = document.getLineEndOffset(line);
+        int indentEnd = lineEnd;
+        for(int offset = Math.max(lineStart, textRange.getStartOffset()); offset < lineEnd; offset++) {
+          char c = document.getCharsSequence().charAt(offset);
+          if (c == ' ') {
+            indent++;
+          }
+          else if (c == '\t') {
+            indent = ((indent / tabSize) + 1) * tabSize;
+          }
+          else {
+            indentEnd = offset;
+            break;
+          }
         }
-        else if (c == '\t') {
-          indent = ((indent / tabSize) + 1) * tabSize;
-        }
-        else {
-          indentEnd = offset;
-          break;
+        if (indent > 0) {
+          String oldIndent = document.getCharsSequence().subSequence(lineStart, indentEnd).toString();
+          String newIndent = indentBuilder.buildIndent(indent, tabSize);
+          if (!oldIndent.equals(newIndent)) {
+            document.replaceString(lineStart, indentEnd, newIndent);
+            changedLines[0]++;
+          }
         }
       }
-      if (indent > 0) {
-        String oldIndent = document.getCharsSequence().subSequence(lineStart, indentEnd).toString();
-        String newIndent = indentBuilder.buildIndent(indent, tabSize);
-        if (!oldIndent.equals(newIndent)) {
-          document.replaceString(lineStart, indentEnd, newIndent);
-          changedLines++;
-        }
-      }
-    }
-    return changedLines;
+    });
+    return changedLines[0];
   }
 
-  private static IndentBuilder tabIndentBuilder = new IndentBuilder() {
+  private static final IndentBuilder tabIndentBuilder = new IndentBuilder() {
     @Override
     public String buildIndent(int length, int tabSize) {
       return StringUtil.repeatSymbol('\t', length / tabSize) + StringUtil.repeatSymbol(' ', length % tabSize);
     }
   };
 
-  private static IndentBuilder spaceIndentBuilder = new IndentBuilder() {
+  private static final IndentBuilder spaceIndentBuilder = new IndentBuilder() {
     @Override
     public String buildIndent(int length, int tabSize) {
       return StringUtil.repeatSymbol(' ', length);
@@ -98,18 +103,11 @@ public abstract class ConvertIndentsActionBase extends EditorAction {
 
   private class Handler extends EditorWriteActionHandler {
     @Override
-    public void executeWriteAction(final Editor editor, DataContext dataContext) {
+    public void executeWriteAction(final Editor editor, @Nullable Caret caret, DataContext dataContext) {
       final SelectionModel selectionModel = editor.getSelectionModel();
       int changedLines = 0;
       if (selectionModel.hasSelection()) {
         changedLines = performAction(editor, new TextRange(selectionModel.getSelectionStart(), selectionModel.getSelectionEnd()));
-      }
-      else if (selectionModel.hasBlockSelection()) {
-        final int[] starts = selectionModel.getBlockSelectionStarts();
-        final int[] ends = selectionModel.getBlockSelectionEnds();
-        for (int i = 0; i < starts.length; i++) {
-          changedLines += performAction(editor, new TextRange(starts [i], ends [i]));
-        }
       }
       else {
         changedLines += performAction(editor, new TextRange(0, editor.getDocument().getTextLength()));

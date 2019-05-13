@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package com.intellij.cvsSupport2.cvsIgnore;
 
 import com.intellij.cvsSupport2.application.CvsEntriesManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.vfs.VirtualFile;
 import org.netbeans.lib.cvsclient.util.SimpleStringPattern;
 
 import java.io.*;
@@ -66,11 +67,20 @@ public class IgnoredFilesInfoImpl implements IgnoredFilesInfo {
       new SimpleStringPattern("core")
   };
 
-  public static IgnoredFilesInfo EMPTY_FILTER = new IgnoredFilesInfoImpl(){
+  public static final IgnoredFilesInfo EMPTY_FILTER = new IgnoredFilesInfoImpl(){
+    @Override
     public boolean shouldBeIgnored(String fileName) {
       if (checkPatterns(CvsEntriesManager.getInstance().getUserDirIgnores().getPatterns(), fileName)) return true;
       if (checkPatterns(PREDEFINED_PATTERNS, fileName)) return true;
       return false;
+    }
+
+    @Override
+    public boolean shouldBeIgnored(VirtualFile file) {
+      final String fileName = file.getName();
+      if (checkPatterns(CvsEntriesManager.getInstance().getUserDirIgnores().getPatterns(), fileName)) return true;
+      if (file.isDirectory()) return false;
+      return checkPatterns(PREDEFINED_PATTERNS, fileName);
     }
   };
 
@@ -120,9 +130,16 @@ public class IgnoredFilesInfoImpl implements IgnoredFilesInfo {
     myPatterns = getPattensFor(cvsIgnoreFile);
   }
 
+  @Override
   public boolean shouldBeIgnored(String fileName) {
     if (EMPTY_FILTER.shouldBeIgnored(fileName)) return true;
     return checkPatterns(myPatterns, fileName);
+  }
+
+  @Override
+  public boolean shouldBeIgnored(VirtualFile file) {
+    if (EMPTY_FILTER.shouldBeIgnored(file)) return true;
+    return checkPatterns(myPatterns, file.getName());
   }
 
   protected static boolean checkPatterns(List<SimpleStringPattern> patterns, String fileName) {

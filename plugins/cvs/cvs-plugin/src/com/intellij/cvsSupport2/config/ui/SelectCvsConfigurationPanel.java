@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -90,13 +90,12 @@ public class SelectCvsConfigurationPanel extends JPanel {
   public void editConfigurations() {
     final CvsApplicationLevelConfiguration configuration = CvsApplicationLevelConfiguration.getInstance();
     final CvsConfigurationsListEditor cvsConfigurationsListEditor =
-      new CvsConfigurationsListEditor(new ArrayList<CvsRootConfiguration>(configuration.CONFIGURATIONS), myProject);
+      new CvsConfigurationsListEditor(new ArrayList<>(configuration.CONFIGURATIONS), myProject);
     final CvsRootConfiguration selectedConfiguration = getSelectedConfiguration();
     if (selectedConfiguration != null) {
       cvsConfigurationsListEditor.selectConfiguration(selectedConfiguration);
     }
-    cvsConfigurationsListEditor.show();
-    if (cvsConfigurationsListEditor.isOK()) {
+    if (cvsConfigurationsListEditor.showAndGet()) {
       configuration.CONFIGURATIONS = cvsConfigurationsListEditor.getConfigurations();
       fillModel(cvsConfigurationsListEditor.getSelectedConfiguration());
     }

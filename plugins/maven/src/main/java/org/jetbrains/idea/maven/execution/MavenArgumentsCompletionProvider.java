@@ -2,11 +2,11 @@ package org.jetbrains.idea.maven.execution;
 
 import com.intellij.codeInsight.completion.CompletionResultSet;
 import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.openapi.externalSystem.service.execution.cmd.CommandLineCompletionProvider;
 import com.intellij.openapi.project.Project;
 import groovyjarjarcommonscli.OptionBuilder;
 import groovyjarjarcommonscli.Options;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.idea.maven.execution.cmd.CommandLineCompletionProvider;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.utils.MavenUtil;
 

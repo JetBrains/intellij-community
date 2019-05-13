@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,6 @@ package com.intellij.psi.impl.source.tree.java;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.tree.ChildRoleBase;
 import com.intellij.psi.tree.IElementType;
@@ -27,6 +26,7 @@ import org.jetbrains.annotations.NotNull;
 
 public class PsiExpressionListImpl extends CompositePsiElement implements PsiExpressionList {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.java.PsiExpressionListImpl");
+  private volatile PsiExpression[] myExpressions;
 
   public PsiExpressionListImpl() {
     super(JavaElementType.EXPRESSION_LIST);
@@ -35,14 +35,40 @@ public class PsiExpressionListImpl extends CompositePsiElement implements PsiExp
   @Override
   @NotNull
   public PsiExpression[] getExpressions() {
-    return getChildrenAsPsiElements(ElementType.EXPRESSION_BIT_SET, PsiExpression.ARRAY_FACTORY);
+    PsiExpression[] expressions = myExpressions;
+    if (expressions == null) {
+      expressions = getChildrenAsPsiElements(ElementType.EXPRESSION_BIT_SET, PsiExpression.ARRAY_FACTORY);
+      if (expressions.length > 10) {
+        myExpressions = expressions;
+      }
+    }
+    return expressions;
+  }
+
+  @Override
+  public void clearCaches() {
+    super.clearCaches();
+    myExpressions = null;
+  }
+
+  @Override
+  public int getExpressionCount() {
+    PsiExpression[] expressions = myExpressions;
+    if (expressions != null) return expressions.length;
+    
+    return countChildren(ElementType.EXPRESSION_BIT_SET);
+  }
+
+  @Override
+  public boolean isEmpty() {
+    return findChildByType(ElementType.EXPRESSION_BIT_SET) == null;
   }
 
   @Override
   @NotNull
   public PsiType[] getExpressionTypes() {
     PsiExpression[] expressions = getExpressions();
-    PsiType[] types = new PsiType[expressions.length];
+    PsiType[] types = PsiType.createArray(expressions.length);
 
     for (int i = 0; i < types.length; i++) {
       types[i] = expressions[i].getType();
@@ -72,7 +98,7 @@ public class PsiExpressionListImpl extends CompositePsiElement implements PsiExp
   }
 
   @Override
-  public int getChildRole(ASTNode child) {
+  public int getChildRole(@NotNull ASTNode child) {
     LOG.assertTrue(child.getTreeParent() == this);
     IElementType i = child.getElementType();
     if (i == JavaTokenType.COMMA) {
@@ -123,24 +149,7 @@ public class PsiExpressionListImpl extends CompositePsiElement implements PsiExp
     }
     TreeElement firstAdded = super.addInternal(first, last, anchor, before);
     if (ElementType.EXPRESSION_BIT_SET.contains(first.getElementType())) {
-      ASTNode element = first;
-      for (ASTNode child = element.getTreeNext(); child != null; child = child.getTreeNext()) {
-        if (child.getElementType() == JavaTokenType.COMMA) break;
-        if (ElementType.EXPRESSION_BIT_SET.contains(child.getElementType())) {
-          TreeElement comma = Factory.createSingleLeafElement(JavaTokenType.COMMA, ",", 0, 1, treeCharTab, getManager());
-          super.addInternal(comma, comma, element, Boolean.FALSE);
-          break;
-        }
-      }
-      for (ASTNode child = element.getTreePrev(); child != null; child = child.getTreePrev()) {
-        final IElementType t = child.getElementType();
-        if (t == JavaTokenType.COMMA) break;
-        if (ElementType.EXPRESSION_BIT_SET.contains(t) || ElementType.JAVA_COMMENT_BIT_SET.contains(t)) {
-          TreeElement comma = Factory.createSingleLeafElement(JavaTokenType.COMMA, ",", 0, 1, treeCharTab, getManager());
-          super.addInternal(comma, comma, child, Boolean.FALSE);
-          break;
-        }
-      }
+      JavaSourceUtil.addSeparatingComma(this, first, ElementType.EXPRESSION_BIT_SET);
     }
     return firstAdded;
   }
@@ -148,17 +157,9 @@ public class PsiExpressionListImpl extends CompositePsiElement implements PsiExp
   @Override
   public void deleteChildInternal(@NotNull ASTNode child) {
     if (ElementType.EXPRESSION_BIT_SET.contains(child.getElementType())) {
-      ASTNode next = PsiImplUtil.skipWhitespaceAndComments(child.getTreeNext());
-      if (next != null && next.getElementType() == JavaTokenType.COMMA) {
-        deleteChildInternal(next);
-      }
-      else {
-        ASTNode prev = PsiImplUtil.skipWhitespaceAndCommentsBack(child.getTreePrev());
-        if (prev != null && prev.getElementType() == JavaTokenType.COMMA) {
-          deleteChildInternal(prev);
-        }
-      }
+      JavaSourceUtil.deleteSeparatingComma(this, child);
     }
+
     super.deleteChildInternal(child);
   }
 
@@ -172,6 +173,7 @@ public class PsiExpressionListImpl extends CompositePsiElement implements PsiExp
     }
   }
 
+  @Override
   public String toString() {
     return "PsiExpressionList";
   }

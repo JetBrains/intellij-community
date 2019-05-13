@@ -19,47 +19,83 @@
  */
 package com.intellij.psi.impl.source.codeStyle;
 
+import com.intellij.application.options.CodeStyle;
 import com.intellij.codeStyle.CodeStyleFacade;
+import com.intellij.lang.Language;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.project.Project;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleManager;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
+import com.intellij.psi.codeStyle.joinLines.JoinedLinesSpacingCalculator;
+import com.intellij.psi.codeStyle.lineIndent.LineIndentProvider;
+import com.intellij.psi.codeStyle.lineIndent.LineIndentProviderEP;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import static java.lang.Math.max;
+
 public class CodeStyleFacadeImpl extends CodeStyleFacade {
-  private final Project myProject;
+  private final @Nullable Project myProject;
 
   public CodeStyleFacadeImpl() {
     this(null);
   }
 
-  public CodeStyleFacadeImpl(final Project project) {
+  public CodeStyleFacadeImpl(final @Nullable Project project) {
     myProject = project;
   }
 
   @Override
+  @Deprecated
   public int getIndentSize(final FileType fileType) {
-    return CodeStyleSettingsManager.getSettings(myProject).getIndentSize(fileType);
+    return CodeStyle.getProjectOrDefaultSettings(myProject).getIndentSize(fileType);
   }
 
   @Override
   @Nullable
+  @Deprecated
   public String getLineIndent(@NotNull final Document document, int offset) {
     if (myProject == null) return null;
+    PsiDocumentManager.getInstance(myProject).commitDocument(document);
     return CodeStyleManager.getInstance(myProject).getLineIndent(document, offset);
   }
 
   @Override
-  public String getLineSeparator() {
-    return CodeStyleSettingsManager.getSettings(myProject).getLineSeparator();
+  public String getLineIndent(@NotNull Editor editor, @Nullable Language language, int offset, boolean allowDocCommit) {
+    if (myProject == null) return null;
+    LineIndentProvider lineIndentProvider = LineIndentProviderEP.findLineIndentProvider(language);
+    String indent = lineIndentProvider != null ? lineIndentProvider.getLineIndent(myProject, editor, language, offset) : null;
+    if (indent == LineIndentProvider.DO_NOT_ADJUST) {
+      return allowDocCommit ? null : indent;
+    }
+    //noinspection deprecation
+    return indent != null ? indent : (allowDocCommit ? getLineIndent(editor.getDocument(), offset) : null);
   }
 
   @Override
-  public boolean projectUsesOwnSettings() {
-    return myProject != null && CodeStyleSettingsManager.getInstance(myProject).USE_PER_PROJECT_SETTINGS;
+  public int getJoinedLinesSpacing(@NotNull Editor editor, @Nullable Language language, int offset, boolean allowDocCommit) {
+    if (myProject == null) return 0;
+    LineIndentProvider lineIndentProvider = LineIndentProviderEP.findLineIndentProvider(language);
+    int space = lineIndentProvider instanceof JoinedLinesSpacingCalculator
+                ? ((JoinedLinesSpacingCalculator)lineIndentProvider).getJoinedLinesSpacing(myProject, editor, language, offset)
+                : -1;
+    if (space < 0 && allowDocCommit) {
+      final Document document = editor.getDocument();
+      PsiDocumentManager.getInstance(myProject).commitDocument(document);
+      PsiFile file = PsiDocumentManager.getInstance(myProject).getPsiFile(document);
+      if (file == null) return 0;
+      return max(0, CodeStyleManager.getInstance(myProject).getSpacing(file, offset));
+    }
+    return max(0, space);
+  }
+
+  @Override
+  public String getLineSeparator() {
+    return CodeStyle.getProjectOrDefaultSettings(myProject).getLineSeparator();
   }
 
   @Override
@@ -68,27 +104,17 @@ public class CodeStyleFacadeImpl extends CodeStyleFacade {
   }
 
   @Override
-  public int getRightMargin() {
-    return CodeStyleSettingsManager.getSettings(myProject).RIGHT_MARGIN;
-  }
-
-  @Override
-  public boolean isWrapWhenTypingReachesRightMargin() {
-    return CodeStyleSettingsManager.getSettings(myProject).WRAP_WHEN_TYPING_REACHES_RIGHT_MARGIN;
+  public int getRightMargin(Language language) {
+    return CodeStyle.getProjectOrDefaultSettings(myProject).getRightMargin(language);
   }
 
   @Override
   public int getTabSize(final FileType fileType) {
-    return CodeStyleSettingsManager.getSettings(myProject).getTabSize(fileType);
-  }
-
-  @Override
-  public boolean isSmartTabs(final FileType fileType) {
-    return CodeStyleSettingsManager.getSettings(myProject).isSmartTabs(fileType);
+    return CodeStyle.getProjectOrDefaultSettings(myProject).getTabSize(fileType);
   }
 
   @Override
   public boolean useTabCharacter(final FileType fileType) {
-    return CodeStyleSettingsManager.getSettings(myProject).useTabCharacter(fileType);
+    return CodeStyle.getProjectOrDefaultSettings(myProject).useTabCharacter(fileType);
   }
 }

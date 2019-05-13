@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,51 +20,53 @@ import com.intellij.execution.CantRunException;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.configurations.JavaParameters;
-import com.intellij.execution.process.DefaultJavaProcessHandler;
+import com.intellij.execution.process.OSProcessHandler;
 import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.notification.NotificationDisplayType;
 import com.intellij.notification.NotificationGroup;
 import com.intellij.notification.NotificationType;
-import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JavaSdkType;
-import com.intellij.openapi.projectRoots.JdkUtil;
 import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.projectRoots.SdkTypeId;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.OrderRootType;
-import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.JavaPsiFacade;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiRecursiveElementWalkingVisitor;
+import com.intellij.psi.*;
+import com.intellij.psi.search.LocalSearchScope;
+import com.intellij.psi.search.searches.ReferencesSearch;
+import com.intellij.psi.util.CachedValueProvider;
+import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.*;
+import com.intellij.util.ExceptionUtil;
+import com.intellij.util.Function;
+import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.PathUtil;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotation;
+import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.runner.DefaultGroovyScriptRunner;
 import org.jetbrains.plugins.groovy.runner.GroovyScriptRunConfiguration;
-import org.jetbrains.plugins.groovy.runner.GroovyScriptRunner;
 
 import java.io.File;
 import java.net.MalformedURLException;
@@ -78,33 +80,72 @@ import java.util.*;
 public class GrabDependencies implements IntentionAction {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.plugins.groovy.grape.GrabDependencies");
 
-  public static final String GRAB_ANNO = "groovy.lang.Grab";
-  public static final String GRAPES_ANNO = "groovy.lang.Grapes";
-  public static final String GRAB_EXCLUDE_ANNO = "groovy.lang.GrabExclude";
-  public static final String GRAB_RESOLVER_ANNO = "groovy.lang.GrabResolver";
   private static final NotificationGroup NOTIFICATION_GROUP = new NotificationGroup("Grape", NotificationDisplayType.BALLOON, true);
+  public static final String GRAPE_RUNNER = "org.jetbrains.plugins.groovy.grape.GrapeRunner";
 
+  @Override
   @NotNull
   public String getText() {
     return "Grab the artifacts";
   }
 
+  @Override
   @NotNull
   public String getFamilyName() {
     return "Grab";
   }
 
+  @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    final GrAnnotation anno = PsiTreeUtil.findElementOfClassAtOffset(file, editor.getCaretModel().getOffset(), GrAnnotation.class, false);
-    if (anno == null) {
-      return false;
+    if (!isCorrectModule(file)) return false;
+
+    int offset = editor.getCaretModel().getOffset();
+    final GrAnnotation anno = PsiTreeUtil.findElementOfClassAtOffset(file, offset, GrAnnotation.class, false);
+    if (anno != null && isGrabAnnotation(anno)) {
+      return true;
     }
 
+    PsiElement at = file.findElementAt(offset);
+    if (at != null && isUnresolvedRefName(at) && findGrab(file) != null) {
+      return true;
+    }
+
+    return false;
+  }
+
+  private static PsiAnnotation findGrab(final PsiFile file) {
+    if (!(file instanceof GroovyFile)) return null;
+
+    return CachedValuesManager.getCachedValue(file, () -> {
+      PsiClass grab = JavaPsiFacade.getInstance(file.getProject()).findClass(GrabAnnos.GRAB_ANNO, file.getResolveScope());
+      final Ref<PsiAnnotation> result = Ref.create();
+      if (grab != null) {
+        ReferencesSearch.search(grab, new LocalSearchScope(file)).forEach(reference -> {
+          if (reference instanceof GrCodeReferenceElement) {
+            PsiElement parent = ((GrCodeReferenceElement)reference).getParent();
+            if (parent instanceof PsiAnnotation) {
+              result.set((PsiAnnotation)parent);
+              return false;
+            }
+          }
+          return true;
+        });
+      }
+      return CachedValueProvider.Result.create(result.get(), file);
+    });
+  }
+
+  private static boolean isUnresolvedRefName(@NotNull PsiElement at) {
+    PsiElement parent = at.getParent();
+    return parent instanceof GrReferenceElement && ((GrReferenceElement)parent).getReferenceNameElement() == at && ((GrReferenceElement)parent).resolve() == null;
+  }
+
+  private static boolean isGrabAnnotation(@NotNull GrAnnotation anno) {
     final String qname = anno.getQualifiedName();
-    if (qname == null || !(qname.startsWith(GRAB_ANNO) || GRAPES_ANNO.equals(qname))) {
-      return false;
-    }
+    return qname != null && (qname.startsWith(GrabAnnos.GRAB_ANNO) || GrabAnnos.GRAPES_ANNO.equals(qname));
+  }
 
+  private static boolean isCorrectModule(PsiFile file) {
     final Module module = ModuleUtilCore.findModuleForPsiElement(file);
     if (module == null) {
       return false;
@@ -118,8 +159,9 @@ public class GrabDependencies implements IntentionAction {
     return file.getOriginalFile().getVirtualFile() != null && sdk.getSdkType() instanceof JavaSdkType;
   }
 
+  @Override
   public void invoke(@NotNull final Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-    final Module module = ModuleUtil.findModuleForPsiElement(file);
+    final Module module = ModuleUtilCore.findModuleForPsiElement(file);
     assert module != null;
 
     final VirtualFile vfile = file.getOriginalFile().getVirtualFile();
@@ -133,42 +175,29 @@ public class GrabDependencies implements IntentionAction {
 
     Map<String, String> queries = prepareQueries(file);
 
-    final Sdk sdk = ModuleRootManager.getInstance(module).getSdk();
-    assert sdk != null;
-    SdkTypeId sdkType = sdk.getSdkType();
-    assert sdkType instanceof JavaSdkType;
-    final String exePath = ((JavaSdkType)sdkType).getVMExecutablePath(sdk);
-
-    final Map<String, GeneralCommandLine> lines = new HashMap<String, GeneralCommandLine>();
+    final Map<String, GeneralCommandLine> lines = new HashMap<>();
     for (String grabText : queries.keySet()) {
       final JavaParameters javaParameters = GroovyScriptRunConfiguration.createJavaParametersWithSdk(module);
       //debug
-      //javaParameters.getVMParametersList().add("-Xdebug"); javaParameters.getVMParametersList().add("-Xrunjdwp:transport=dt_socket,server=y,suspend=y,address=5239");
+      //javaParameters.getVMParametersList().add("-Xdebug");
+      //javaParameters.getVMParametersList().add("-Xrunjdwp:transport=dt_socket,server=y,suspend=y,address=5239");
 
-      DefaultGroovyScriptRunner
-        .configureGenericGroovyRunner(javaParameters, module, "org.jetbrains.plugins.groovy.grape.GrapeRunner", false);
-      PathsList list;
       try {
-        list = GroovyScriptRunner.getClassPathFromRootModel(module, ProjectRootManager.getInstance(project).getFileIndex().isInTestSourceContent(vfile), javaParameters, true);
+        DefaultGroovyScriptRunner.configureGenericGroovyRunner(javaParameters, module, GRAPE_RUNNER, false, true, true, false);
+        javaParameters.getClassPath().add(PathUtil.getJarPathForClass(GrapeRunner.class));
+        javaParameters.getProgramParametersList().add(queries.get(grabText));
+        javaParameters.setUseDynamicClasspath(true);
+        lines.put(grabText, javaParameters.toCommandLine());
       }
       catch (CantRunException e) {
-        NOTIFICATION_GROUP.createNotification("Can't run @Grab: " + ExceptionUtil.getMessage(e), ExceptionUtil.getThrowableText(e), NotificationType.ERROR, null).notify(project);
+        String title = "Can't run @Grab: " + ExceptionUtil.getMessage(e);
+        NOTIFICATION_GROUP.createNotification(title, ExceptionUtil.getThrowableText(e), NotificationType.ERROR, null).notify(project);
         return;
       }
-      if (list == null) {
-        list = new PathsList();
-      }
-      list.add(PathUtil.getJarPathForClass(GrapeRunner.class));
-
-      javaParameters.getProgramParametersList().add("--classpath");
-      javaParameters.getProgramParametersList().add(list.getPathsString());
-      javaParameters.getProgramParametersList().add(queries.get(grabText));
-
-      lines.put(grabText, JdkUtil.setupJVMCommandLine(exePath, javaParameters, true));
     }
 
-    ProgressManager.getInstance().run(new Task.Backgroundable(project, "Processing @Grab annotations") {
-
+    ProgressManager.getInstance().run(new Task.Backgroundable(project, "Processing @Grab Annotations") {
+      @Override
       public void run(@NotNull ProgressIndicator indicator) {
         int jarCount = 0;
         String messages = "";
@@ -193,36 +222,29 @@ public class GrabDependencies implements IntentionAction {
         NOTIFICATION_GROUP.createNotification(title, finalMessages, NotificationType.INFORMATION, null).notify(project);
       }
     });
-
-
   }
 
   static Map<String, String> prepareQueries(PsiFile file) {
-    final Set<GrAnnotation> grabs = new LinkedHashSet<GrAnnotation>();
-    final Set<GrAnnotation> excludes = new THashSet<GrAnnotation>();
-    final Set<GrAnnotation> resolvers = new THashSet<GrAnnotation>();
+    final Set<GrAnnotation> grabs = new LinkedHashSet<>();
+    final Set<GrAnnotation> excludes = new THashSet<>();
+    final Set<GrAnnotation> resolvers = new THashSet<>();
     file.acceptChildren(new PsiRecursiveElementWalkingVisitor() {
       @Override
       public void visitElement(PsiElement element) {
         if (element instanceof GrAnnotation) {
           GrAnnotation anno = (GrAnnotation)element;
           String qname = anno.getQualifiedName();
-          if (GRAB_ANNO.equals(qname)) grabs.add(anno);
-          else if (GRAB_EXCLUDE_ANNO.equals(qname)) excludes.add(anno);
-          else if (GRAB_RESOLVER_ANNO.equals(qname)) resolvers.add(anno);
+          if (GrabAnnos.GRAB_ANNO.equals(qname)) grabs.add(anno);
+          else if (GrabAnnos.GRAB_EXCLUDE_ANNO.equals(qname)) excludes.add(anno);
+          else if (GrabAnnos.GRAB_RESOLVER_ANNO.equals(qname)) resolvers.add(anno);
         }
         super.visitElement(element);
       }
     });
 
-    Function<GrAnnotation, String> mapper = new Function<GrAnnotation, String>() {
-      @Override
-      public String fun(GrAnnotation grAnnotation) {
-        return grAnnotation.getText();
-      }
-    };
+    Function<GrAnnotation, String> mapper = grAnnotation -> grAnnotation.getText();
     String common = StringUtil.join(excludes, mapper, " ") + " " + StringUtil.join(resolvers, mapper, " ");
-    LinkedHashMap<String, String> result = new LinkedHashMap<String, String>();
+    LinkedHashMap<String, String> result = new LinkedHashMap<>();
     for (GrAnnotation grab : grabs) {
       String grabText = grab.getText();
       result.put(grabText, (grabText + " " + common).trim());
@@ -230,22 +252,23 @@ public class GrabDependencies implements IntentionAction {
     return result;
   }
 
+  @Override
   public boolean startInWriteAction() {
     return false;
   }
 
-  private static class GrapeProcessHandler extends DefaultJavaProcessHandler {
+  private static class GrapeProcessHandler extends OSProcessHandler {
     private final StringBuilder myStdOut = new StringBuilder();
     private final StringBuilder myStdErr = new StringBuilder();
     private final Module myModule;
 
-    public GrapeProcessHandler(GeneralCommandLine commandLine, Module module) throws ExecutionException {
+    GrapeProcessHandler(GeneralCommandLine commandLine, Module module) throws ExecutionException {
       super(commandLine);
       myModule = module;
     }
 
     @Override
-    public void notifyTextAvailable(String text, Key outputType) {
+    public void notifyTextAvailable(@NotNull String text, @NotNull Key outputType) {
       text = StringUtil.convertLineSeparators(text);
       if (LOG.isDebugEnabled()) {
         LOG.debug(outputType + text);
@@ -296,7 +319,7 @@ public class GrabDependencies implements IntentionAction {
     @Override
     protected void notifyProcessTerminated(int exitCode) {
       try {
-        final List<VirtualFile> jars = new ArrayList<VirtualFile>();
+        final List<VirtualFile> jars = new ArrayList<>();
         for (String line : myStdOut.toString().split("\n")) {
           if (line.startsWith(GrapeRunner.URL_PREFIX)) {
             try {
@@ -306,29 +329,24 @@ public class GrabDependencies implements IntentionAction {
                 ContainerUtil.addIfNotNull(jars, LocalFileSystem.getInstance().refreshAndFindFileByIoFile(libFile));
               }
             }
-            catch (MalformedURLException e) {
-              LOG.error(e);
-            }
-            catch (URISyntaxException e) {
+            catch (MalformedURLException | URISyntaxException e) {
               LOG.error(e);
             }
           }
         }
-        new WriteAction() {
-          protected void run(Result result) throws Throwable {
-            jarCount = jars.size();
-            messages = jarCount + " jar";
-            if (jarCount != 1) {
-              messages += "s";
-            }
-            if (jarCount == 0) {
-              messages += "<br>" + myStdOut.toString().replaceAll("\n", "<br>") + "<p>" + myStdErr.toString().replaceAll("\n", "<br>");
-            }
-            if (!jars.isEmpty()) {
-              addGrapeDependencies(jars);
-            }
+        WriteAction.runAndWait(() -> {
+          jarCount = jars.size();
+          messages = jarCount + " jar";
+          if (jarCount != 1) {
+            messages += "s";
           }
-        }.execute();
+          if (jarCount == 0) {
+            messages += "<br>" + myStdOut.toString().replaceAll("\n", "<br>") + "<p>" + myStdErr.toString().replaceAll("\n", "<br>");
+          }
+          if (!jars.isEmpty()) {
+            addGrapeDependencies(jars);
+          }
+        });
       }
       finally {
         super.notifyProcessTerminated(exitCode);

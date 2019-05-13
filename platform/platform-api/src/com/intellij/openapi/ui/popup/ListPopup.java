@@ -23,8 +23,7 @@ import java.awt.event.InputEvent;
  * A popup window displaying a list of items (or other actions).
  *
  * @author mike
- * @see com.intellij.openapi.ui.popup.JBPopupFactory#createActionGroupPopup
- * @see com.intellij.openapi.ui.popup.JBPopupFactory#createWizardStep
+ * @see JBPopupFactory#createActionGroupPopup
  * @since 6.0
  */
 public interface ListPopup extends JBPopup {
@@ -49,7 +48,6 @@ public interface ListPopup extends JBPopup {
 
   /**
    * If default selection is set, then handleSelect is invoked without showing a popup
-   * @param autoHandle
    */
   void setHandleAutoSelectionBeforeShow(boolean autoHandle);
 

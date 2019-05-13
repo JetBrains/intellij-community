@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.ui.popup;
 
@@ -23,7 +9,9 @@ import com.intellij.openapi.ui.popup.LightweightWindowEvent;
 import com.intellij.ui.ListenerUtil;
 import com.intellij.ui.ScreenUtil;
 import com.intellij.ui.awt.RelativePoint;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -36,17 +24,18 @@ import java.awt.event.MouseEvent;
  * @author max
  */
 public class FramelessNotificationPopup {
-  private JComponent myContent;
-  public static final Dimension myPreferredContentSize = new Dimension(300, 100);
-  private JBPopup myPopup;
+  private final JComponent myContent;
+  public static final Dimension myPreferredContentSize = JBUI.size(300, 100);
+  private final JBPopup myPopup;
   private int myTimerTick;
-  private Color myBackgroud;
+  private final Color myBackgroud;
   private final boolean myUseDefaultPreferredSize;
   private final static int FADE_IN_TICKS = 60;
   private final static int SHOW_TIME_TICKS = FADE_IN_TICKS + 300;
   private final static int FADE_OUT_TICKS = SHOW_TIME_TICKS + 60;
 
   private final ActionListener myFadeTracker = new ActionListener() {
+    @Override
     public void actionPerformed(ActionEvent e) {
       Window popupWindow = SwingUtilities.windowForComponent(myContent);
       if (popupWindow != null) {
@@ -65,7 +54,7 @@ public class FramelessNotificationPopup {
     }
   };
   private final Timer myFadeInTimer;
-  private ActionListener myActionListener;
+  private final ActionListener myActionListener;
 
   public FramelessNotificationPopup(final JComponent owner, final JComponent content, Color backgroud) {
     this(owner, content, backgroud, true, null);
@@ -85,7 +74,8 @@ public class FramelessNotificationPopup {
       .setMovable(true)
       .setLocateWithinScreenBounds(false)
       .setAlpha(0.2f).addListener(new JBPopupAdapter() {
-      public void onClosed(LightweightWindowEvent event) {
+      @Override
+      public void onClosed(@NotNull LightweightWindowEvent event) {
         if (myFadeInTimer.isRunning()) {
           myFadeInTimer.stop();
         }
@@ -112,7 +102,7 @@ public class FramelessNotificationPopup {
   private class ContentComponent extends JPanel {
     private final MouseAdapter myMouseListener;
 
-    public ContentComponent(JComponent content) {
+    ContentComponent(JComponent content) {
       super(new BorderLayout());
       add(content, BorderLayout.CENTER);
       setBackground(myBackgroud);
@@ -157,6 +147,7 @@ public class FramelessNotificationPopup {
       ListenerUtil.removeMouseListener(this, myMouseListener);
     }
 
+    @Override
     public Dimension getPreferredSize() {
       if (myUseDefaultPreferredSize) {
         return myPreferredContentSize;

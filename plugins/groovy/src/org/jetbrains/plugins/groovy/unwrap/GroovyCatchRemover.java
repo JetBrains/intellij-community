@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package org.jetbrains.plugins.groovy.unwrap;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrCatchClause;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrTryCatchStatement;
 
@@ -26,7 +27,8 @@ public class GroovyCatchRemover extends GroovyUnwrapper {
     super(CodeInsightBundle.message("remove.catch"));
   }
 
-  public boolean isApplicableTo(PsiElement e) {
+  @Override
+  public boolean isApplicableTo(@NotNull PsiElement e) {
     return e instanceof GrCatchClause && tryHasSeveralCatches(e);
   }
 

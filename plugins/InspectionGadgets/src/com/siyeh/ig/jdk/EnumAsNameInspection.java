@@ -26,6 +26,11 @@ import org.jetbrains.annotations.NotNull;
 public class EnumAsNameInspection extends BaseInspection {
 
   @Override
+  protected InspectionGadgetsFix buildFix(Object... infos) {
+    return new RenameFix();
+  }
+
+  @Override
   @NotNull
   public String getID() {
     return "EnumAsIdentifier";
@@ -43,11 +48,6 @@ public class EnumAsNameInspection extends BaseInspection {
   public String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "use.enum.as.identifier.problem.descriptor");
-  }
-
-  @Override
-  protected InspectionGadgetsFix buildFix(Object... infos) {
-    return new RenameFix();
   }
 
   @Override

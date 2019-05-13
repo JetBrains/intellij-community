@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,44 +17,59 @@ package com.intellij.execution.testframework.sm;
 
 import com.intellij.execution.Location;
 import com.intellij.execution.testframework.sm.runner.SMTestProxy;
-import com.intellij.testFramework.LightProjectDescriptor;
+import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.roots.ModuleRootModificationUtil;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase;
+
+import java.util.Collections;
 
 /**
  * @author Roman Chernyatchik
  */
-public class FileUrlLocationTest extends SMLightFixtureTestCase {
-  @Override
-  protected LightProjectDescriptor getProjectDescriptor() {
-    return LightProjectDescriptor.EMPTY_PROJECT_DESCRIPTOR;
+public class FileUrlLocationTest extends LightPlatformCodeInsightFixtureTestCase {
+  public void testExcluded() {
+    myFixture.addFileToProject("secondary/my_example_spec.xml", "");
+    ModuleRootModificationUtil.updateExcludedFolders(myModule, ModuleRootManager.getInstance(myModule).getContentRoots()[0], Collections.emptyList(), Collections.singletonList("/src"));
+     VirtualFile file = myFixture.configureByText(
+      "my_example_spec.xml",
+      "\n" +
+      "<describe>\n" +
+      "    <a id='1'></a>\n" +
+      "</describe>\n" +
+      "\n").getVirtualFile();
+
+    doTest(1, file.getPath(), 2, -1);
   }
 
-  public void testSpecNavigation() throws Throwable {
-    createAndAddFile("my_example_spec.xml",
-                     "\n" +
-                     "<describe>\n" +
-                     "    <a></a>\n" +
-                     "</describe>\n" +
-                     "\n");
+  public void testSpecNavigation() {
+    VirtualFile file = myFixture.configureByText(
+      "my_example_spec.xml",
+      "\n" +
+      "<describe>\n" +
+      "    <a id='1'></a>\n" +
+      "</describe>\n" +
+      "\n").getVirtualFile();
 
-    final String path = myFixture.getFile().getVirtualFile().getPath();
-    doTest(1, "<", path, 2);
-    doTest(16, "<", path, 3);
+    doTest(1, file.getPath(), 2, -1);
+    doTest(16, file.getPath(), 3, -1);
+    doTest(2, file.getPath(), 2, 5);
+    doTest(19, file.getPath(), 3, 8);
+    doTest(0, file.getPath(), 100, -1);
+    doTest(11, file.getPath(), 2, 100);
   }
 
-  private void doTest(final int expectedOffset, final String expectedStartsWith,
-                      final String filePath, final int lineNum) {
-    final SMTestProxy testProxy =
-        new SMTestProxy("myTest", false, "file://" + filePath + ":" + lineNum);
-    testProxy.setLocator(new CompositeTestLocationProvider(null));
+  private void doTest(int expectedOffset, String filePath, int lineNum, int columnNumber) {
+    SMTestProxy testProxy = new SMTestProxy("myTest", false, "file://" + filePath + ":" + lineNum
+                                                             + (columnNumber > 0 ? (":" + columnNumber) : ""));
+    testProxy.setLocator(FileUrlProvider.INSTANCE);
 
-    final Location location = testProxy.getLocation(getProject());
+    Location location = testProxy.getLocation(getProject(), GlobalSearchScope.allScope(getProject()));
     assertNotNull(location);
-    assertNotNull(location.getPsiElement());
-
-    //System.out.println(location.getPsiElement().getText());
-    //System.out.println(location.getPsiElement().getTextOffset());
-    assertEquals(expectedOffset, location.getPsiElement().getTextOffset());
-    final String element = location.getPsiElement().getText();
-    assertTrue(element, element.startsWith(expectedStartsWith));
+    PsiElement element = location.getPsiElement();
+    assertNotNull(element);
+    assertEquals(expectedOffset, element.getTextOffset());
   }
 }

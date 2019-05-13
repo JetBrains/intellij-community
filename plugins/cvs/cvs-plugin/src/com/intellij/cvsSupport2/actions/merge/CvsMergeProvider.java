@@ -38,7 +38,7 @@ public class CvsMergeProvider implements MergeProvider {
 
   @Override
   @NotNull
-  public MergeData loadRevisions(VirtualFile file) throws VcsException {
+  public MergeData loadRevisions(@NotNull VirtualFile file) throws VcsException {
     try {
       final Entry entry = CvsEntriesManager.getInstance().getEntryFor(file);
       final File cvsFile = CvsVfsUtil.getFileFor(file);
@@ -68,13 +68,13 @@ public class CvsMergeProvider implements MergeProvider {
   }
 
   @Override
-  public void conflictResolvedForFile(VirtualFile file) {
+  public void conflictResolvedForFile(@NotNull VirtualFile file) {
     CvsUtil.resolveConflict(file);
     CvsEntriesManager.getInstance().clearCachedEntriesFor(file.getParent());
   }
 
   @Override
-  public boolean isBinary(VirtualFile file) {
+  public boolean isBinary(@NotNull VirtualFile file) {
     return false;
   }
 }

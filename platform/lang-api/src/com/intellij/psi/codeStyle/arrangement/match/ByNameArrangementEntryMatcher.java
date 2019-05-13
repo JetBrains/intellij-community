@@ -20,66 +20,23 @@ import com.intellij.psi.codeStyle.arrangement.NameAwareArrangementEntry;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.regex.Pattern;
-
 /**
  * @author Denis Zhdanov
- * @since 7/19/12 6:36 PM
  */
-public class ByNameArrangementEntryMatcher implements ArrangementEntryMatcher {
-
-  @NotNull private final String myPattern;
-
-  @Nullable private final Pattern myCompiledPattern;
+public class ByNameArrangementEntryMatcher extends AbstractRegexpArrangementMatcher {
 
   public ByNameArrangementEntryMatcher(@NotNull String pattern) {
-    myPattern = pattern;
-    Pattern p = null;
-    try {
-      p = Pattern.compile(pattern);
-    }
-    catch (Exception e) {
-      // ignore
-    }
-    myCompiledPattern = p;
+    super(pattern);
   }
 
+  @Nullable
   @Override
-  public boolean isMatched(@NotNull ArrangementEntry entry) {
-    if (myCompiledPattern == null) {
-      return false;
-    }
+  protected String getTextToMatch(@NotNull ArrangementEntry entry) {
     if (entry instanceof NameAwareArrangementEntry) {
-      String name = ((NameAwareArrangementEntry)entry).getName();
-      if (name == null) {
-        return false;
-      }
-      return myCompiledPattern.matcher(name).matches();
+      return  ((NameAwareArrangementEntry)entry).getName();
     }
-    return false;
-  }
-
-  @NotNull
-  public String getPattern() {
-    return myPattern;
-  }
-
-  @Override
-  public int hashCode() {
-    return myPattern.hashCode();
-  }
-
-  @Override
-  public boolean equals(Object o) {
-    if (this == o) return true;
-    if (o == null || getClass() != o.getClass()) return false;
-
-    ByNameArrangementEntryMatcher that = (ByNameArrangementEntryMatcher)o;
-    return myPattern.equals(that.myPattern);
-  }
-
-  @Override
-  public String toString() {
-    return String.format("with name like '%s'", myPattern);
+    else {
+      return null;
+    }
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ import com.intellij.cvsSupport2.config.CvsApplicationLevelConfiguration;
 import com.intellij.cvsSupport2.config.CvsRootConfiguration;
 import com.intellij.cvsSupport2.config.ui.CvsConfigurationsListEditor;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -28,13 +29,13 @@ import java.util.List;
  */
 public class ConfigureCvsRootsAction extends CvsGlobalAction {
 
-  public void actionPerformed(AnActionEvent e) {
+  @Override
+  public void actionPerformed(@NotNull AnActionEvent e) {
     final CvsApplicationLevelConfiguration configuration = CvsApplicationLevelConfiguration.getInstance();
     final List<CvsRootConfiguration> configurations = configuration.CONFIGURATIONS;
     final CvsConfigurationsListEditor cvsConfigurationsListEditor =
-      new CvsConfigurationsListEditor(new ArrayList<CvsRootConfiguration>(configurations), e.getProject());
-    cvsConfigurationsListEditor.show();
-    if (cvsConfigurationsListEditor.isOK()) {
+      new CvsConfigurationsListEditor(new ArrayList<>(configurations), e.getProject());
+    if (cvsConfigurationsListEditor.showAndGet()) {
       configuration.CONFIGURATIONS = cvsConfigurationsListEditor.getConfigurations();
     }
   }

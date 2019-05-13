@@ -3,7 +3,7 @@ PsiJavaFile:TypeParams3.java
     PsiJavaToken:LT('<')
     PsiTypeParameter:T
       PsiIdentifier:T('T')
-      PsiElement(EXTENDS_BOUND_LIST)
+      PsiReferenceList
         <empty list>
     PsiWhiteSpace(' ')
     PsiErrorElement:Unexpected identifier

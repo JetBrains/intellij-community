@@ -1,0 +1,11 @@
+deprecated: Appearance.png; to be removed in IDEA 2020
+deprecated: CodeStyle.png; to be removed in IDEA 2020
+deprecated: Compiler.png; to be removed in IDEA 2020
+deprecated: Editor.png; to be removed in IDEA 2020
+deprecated: FileColors.png; to be removed in IDEA 2020
+deprecated: FileTypes.png; to be removed in IDEA 2020
+deprecated: General.png; to be removed in IDEA 2020
+deprecated: Keymap.png; to be removed in IDEA 2020
+deprecated: Plugins.png; to be removed in IDEA 2020
+deprecated: Updates.png; to be removed in IDEA 2020
+deprecated: VersionControl.png; to be removed in IDEA 2020

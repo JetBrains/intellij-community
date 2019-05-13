@@ -1,0 +1,29 @@
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+plugins {
+  id 'com.jfrog.bintray' version '1.8.4'
+}
+
+def bintrayPkg = System.properties.pkg
+def bintrayVersion = System.properties.version
+def bintrayPath = System.properties.path
+
+bintray {
+  publish = true
+  user = System.properties.user
+  key = System.properties.key
+  pkg {
+    userOrg = 'jetbrains'
+    repo = 'intellij-third-party-dependencies'
+    name = bintrayPkg
+    version {
+      name = bintrayVersion
+    }
+  }
+  filesSpec {
+    from bintrayPath
+    into "./$bintrayPkg/$bintrayVersion/"
+    rename {
+      bintrayPkg + bintrayPath.substring(bintrayPath.indexOf('.'))
+    }
+  }
+}

@@ -34,19 +34,13 @@ import org.intellij.plugins.relaxNG.references.FileReferenceUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * Created by IntelliJ IDEA.
- * User: sweinreuter
- * Date: 29.08.2007
- */
 abstract class RncFileReferenceImpl extends RncElementImpl implements RncFileReference {
-  public RncFileReferenceImpl(ASTNode node) {
+  RncFileReferenceImpl(ASTNode node) {
     super(node);
   }
 
   @NotNull
   @Override
-  @SuppressWarnings({ "SSBasedInspection" })
   public PsiReference[] getReferences() {
     final ASTNode literal = getNode().findChildByType(RncTokenTypes.LITERAL);
     if (literal == null) return PsiReference.EMPTY_ARRAY;
@@ -60,6 +54,7 @@ abstract class RncFileReferenceImpl extends RncElementImpl implements RncFileRef
     return FileReferenceUtil.restrict(set, FileReferenceUtil.byType(RncFileType.getInstance()));
   }
 
+  @Override
   public RncFile getReferencedFile() {
     final String href = getFileReference();
     if (href != null) {
@@ -71,6 +66,7 @@ abstract class RncFileReferenceImpl extends RncElementImpl implements RncFileRef
     return null;
   }
 
+  @Override
   @Nullable
   public String getFileReference() {
     final ASTNode element = getNode().findChildByType(RncTokenTypes.LITERAL);
@@ -79,6 +75,7 @@ abstract class RncFileReferenceImpl extends RncElementImpl implements RncFileRef
     return s.substring(1, s.length() - 1);
   }
 
+  @Override
   public TextRange getReferenceRange() {
     final ASTNode literal = getNode().findChildByType(RncTokenTypes.LITERAL);
     if (literal == null) return TextRange.from(0, 0);

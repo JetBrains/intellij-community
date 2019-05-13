@@ -25,11 +25,15 @@ import java.util.List;
 
 public interface ChangeNodeDecorator {
   void decorate(final Change change, final SimpleColoredComponent component, boolean isShowFlatten);
+
+  void preDecorate(Change change, ChangesBrowserNodeRenderer renderer, boolean isShowFlatten);
+
+
   @Nullable
-  List<Pair<String, Stress>> stressPartsOfFileName(final Change change, final String parentPath);
+  @Deprecated
+  default List<Pair<String, Stress>> stressPartsOfFileName(final Change change, final String parentPath) { return null; }
 
-  void preDecorate(Change change, ChangesBrowserNodeRenderer renderer, boolean showFlatten);
-
+  @Deprecated
   enum Stress {
     BOLD(SimpleTextAttributes.STYLE_BOLD),
     ITALIC(SimpleTextAttributes.STYLE_ITALIC),
@@ -39,7 +43,7 @@ public interface ChangeNodeDecorator {
     @SimpleTextAttributes.StyleAttributeConstant
     private final int myFontStyle;
 
-    private Stress(@SimpleTextAttributes.StyleAttributeConstant int fontStyle) {
+    Stress(@SimpleTextAttributes.StyleAttributeConstant int fontStyle) {
       myFontStyle = fontStyle;
     }
 

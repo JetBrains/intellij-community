@@ -13,36 +13,30 @@
 package org.zmlx.hg4idea;
 
 import com.intellij.execution.ExecutableValidator;
-import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
-import org.zmlx.hg4idea.command.HgVersionCommand;
+import org.zmlx.hg4idea.util.HgUtil;
 
 public class HgExecutableValidator extends ExecutableValidator {
-
-  private final HgVcs myVcs;
-
-  public HgExecutableValidator(@NotNull Project project, @NotNull HgVcs vcs) {
+  public HgExecutableValidator(@NotNull Project project) {
     super(project,
           HgVcsMessages.message("hg4idea.executable.notification.title"),
           HgVcsMessages.message("hg4idea.executable.notification.description"));
-    myVcs = vcs;
   }
 
   @Override
   protected String getCurrentExecutable() {
-    return myVcs.getGlobalSettings().getHgExecutable();
+    return HgExecutableManager.getInstance().getHgExecutable(myProject);
   }
 
   @NotNull
   @Override
-  protected Configurable getConfigurable() {
-    return myVcs.getConfigurable();
+  protected String getConfigurableDisplayName() {
+    return HgProjectConfigurable.DISPLAY_NAME;
   }
 
   @Override
   public boolean isExecutableValid(@NotNull String executable) {
-    return new HgVersionCommand().isValid(executable, myVcs.getGlobalSettings().isRunViaBash());
+    return HgUtil.isExecutableValid(executable);
   }
-
 }

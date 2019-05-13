@@ -22,17 +22,17 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.List;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * @author nik
  */
 public class ConfigFileMetaDataRegistryImpl implements ConfigFileMetaDataRegistry {
-  private final List<ConfigFileMetaData> myMetaData = new ArrayList<ConfigFileMetaData>();
-  private final Map<String, ConfigFileMetaData> myId2MetaData = new HashMap<String, ConfigFileMetaData>();
+  private final List<ConfigFileMetaData> myMetaData = new ArrayList<>();
+  private final Map<String, ConfigFileMetaData> myId2MetaData = new HashMap<>();
   private ConfigFileMetaData[] myCachedMetaData;
 
   public ConfigFileMetaDataRegistryImpl() {
@@ -44,19 +44,22 @@ public class ConfigFileMetaDataRegistryImpl implements ConfigFileMetaDataRegistr
     }
   }
 
+  @Override
   @NotNull
   public ConfigFileMetaData[] getMetaData() {
     if (myCachedMetaData == null) {
-      myCachedMetaData = myMetaData.toArray(new ConfigFileMetaData[myMetaData.size()]);
+      myCachedMetaData = myMetaData.toArray(new ConfigFileMetaData[0]);
     }
     return myCachedMetaData;
   }
 
+  @Override
   @Nullable
   public ConfigFileMetaData findMetaData(@NonNls @NotNull final String id) {
     return myId2MetaData.get(id);
   }
 
+  @Override
   public void registerMetaData(@NotNull final ConfigFileMetaData... metaData) {
     for (ConfigFileMetaData data : metaData) {
       myMetaData.add(data);

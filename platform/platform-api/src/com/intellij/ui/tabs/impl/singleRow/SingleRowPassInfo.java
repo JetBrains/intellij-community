@@ -21,6 +21,7 @@ import com.intellij.ui.tabs.impl.LayoutPassInfo;
 
 import javax.swing.*;
 import java.awt.*;
+import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -35,8 +36,8 @@ public class SingleRowPassInfo extends LayoutPassInfo {
   final int moreRectAxisSize;
   public Rectangle moreRect;
 
-  public JComponent hToolbar;
-  public JComponent vToolbar;
+  public WeakReference<JComponent> hToolbar;
+  public WeakReference<JComponent> vToolbar;
 
   public Rectangle firstGhost;
   public boolean firstGhostVisible;
@@ -46,7 +47,7 @@ public class SingleRowPassInfo extends LayoutPassInfo {
 
   public Insets insets;
 
-  public JComponent comp;
+  public WeakReference<JComponent> comp;
   public Rectangle tabRectangle;
   final int scrollOffset;
 
@@ -56,36 +57,43 @@ public class SingleRowPassInfo extends LayoutPassInfo {
     JBTabsImpl tabs = layout.myTabs;
     layoutSize = tabs.getSize();
     contentCount = tabs.getTabCount();
-    toLayout = new ArrayList<TabInfo>();
-    toDrop = new ArrayList<TabInfo>();
+    toLayout = new ArrayList<>();
+    toDrop = new ArrayList<>();
     moreRectAxisSize = layout.getStrategy().getMoreRectAxisSize();
     scrollOffset = layout.getScrollOffset();
   }
 
+  @Override
   public TabInfo getPreviousFor(final TabInfo info) {
     return getPrevious(myVisibleInfos, myVisibleInfos.indexOf(info));
   }
 
+  @Override
   public TabInfo getNextFor(final TabInfo info) {
     return getNext(myVisibleInfos, myVisibleInfos.indexOf(info));
   }
 
+  @Override
   public int getRowCount() {
     return 1;
   }
 
+  @Override
   public int getColumnCount(final int row) {
     return myVisibleInfos.size();
   }
 
+  @Override
   public TabInfo getTabAt(final int row, final int column) {
     return myVisibleInfos.get(column);
   }
 
+  @Override
   public Rectangle getHeaderRectangle() {
     return (Rectangle)tabRectangle.clone();
   }
 
+  @Override
   public boolean hasCurveSpaceFor(final TabInfo tabInfo) {
     return true;
   }

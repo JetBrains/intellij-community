@@ -3,6 +3,6 @@
 class A{
   void test(){
     List list = null;
-    Object o = li<caret>st.get(0);
+    Object o = list.ge<caret>t(0);
   }
 }

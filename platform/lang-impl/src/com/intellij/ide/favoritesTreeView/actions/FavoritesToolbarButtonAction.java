@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,16 +21,18 @@ import com.intellij.ide.favoritesTreeView.FavoritesViewTreeBuilder;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Toggleable;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.ui.AnActionButton;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
 /**
  * @author Konstantin Bulenkov
  */
-public abstract class FavoritesToolbarButtonAction extends AnActionButton implements Toggleable {
+public abstract class FavoritesToolbarButtonAction extends AnActionButton implements Toggleable, DumbAware {
   private FavoritesViewTreeBuilder myBuilder;
   private FavoritesViewSettings mySettings;
 
@@ -61,13 +63,13 @@ public abstract class FavoritesToolbarButtonAction extends AnActionButton implem
   }
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     setOption(!isOptionEnabled());
     myBuilder.updateFromRootCB();
   }
 
   @Override
-  public void updateButton(AnActionEvent e) {
+  public void updateButton(@NotNull AnActionEvent e) {
     super.updateButton(e);
     e.getPresentation().putClientProperty(SELECTED_PROPERTY, isOptionEnabled());
   }

@@ -16,7 +16,7 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.CodeInsightUtil;
-import com.intellij.codeInsight.CodeInsightUtilBase;
+import com.intellij.codeInsight.CodeInsightUtilCore;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.template.Template;
 import com.intellij.codeInsight.template.TemplateBuilderImpl;
@@ -33,16 +33,10 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-/**
- * Created by IntelliJ IDEA.
- * User: ven
- * Date: May 12, 2003
- * Time: 6:41:19 PM
- * To change this template use Options | File Templates.
- */
 public abstract class CreateConstructorFromThisOrSuperFix extends CreateFromUsageBaseFix {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.quickfix.CreateConstructorFromThisOrSuperFix");
 
@@ -78,7 +72,7 @@ public abstract class CreateConstructorFromThisOrSuperFix extends CreateFromUsag
   protected void invokeImpl(PsiClass targetClass) {
     final PsiFile callSite = myMethodCall.getContainingFile();
     final Project project = myMethodCall.getProject();
-    PsiElementFactory elementFactory = JavaPsiFacade.getInstance(project).getElementFactory();
+    PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(project);
 
     IdeDocumentHistory.getInstance(project).includeCurrentPlaceAsChangePlace();
 
@@ -95,7 +89,7 @@ public abstract class CreateConstructorFromThisOrSuperFix extends CreateFromUsag
       templateBuilder.setEndVariableAfter(constructor.getBody().getLBrace());
       final RangeMarker rangeMarker = psiFile.getViewProvider().getDocument().createRangeMarker(myMethodCall.getTextRange());
 
-      constructor = CodeInsightUtilBase.forcePsiPostprocessAndRestoreElement(constructor);
+      constructor = CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(constructor);
 
       targetClass = constructor.getContainingClass();
       myMethodCall = CodeInsightUtil.findElementInRange(psiFile, rangeMarker.getStartOffset(), rangeMarker.getEndOffset(), myMethodCall.getClass());
@@ -112,22 +106,19 @@ public abstract class CreateConstructorFromThisOrSuperFix extends CreateFromUsag
 
       startTemplate(editor, template, project, new TemplateEditingAdapter() {
         @Override
-        public void templateFinished(Template template, boolean brokenOff) {
-          ApplicationManager.getApplication().runWriteAction(new Runnable() {
-            @Override
-            public void run() {
-              try {
-                PsiDocumentManager.getInstance(project).commitDocument(editor.getDocument());
-                final int offset = editor.getCaretModel().getOffset();
-                PsiMethod constructor = PsiTreeUtil.findElementOfClassAtOffset(file, offset, PsiMethod.class, false);
-                CreateFromUsageUtils.setupMethodBody(constructor);
-                CreateFromUsageUtils.setupEditor(constructor, editor);
+        public void templateFinished(@NotNull Template template, boolean brokenOff) {
+          ApplicationManager.getApplication().runWriteAction(() -> {
+            try {
+              PsiDocumentManager.getInstance(project).commitDocument(editor.getDocument());
+              final int offset = editor.getCaretModel().getOffset();
+              PsiMethod constructor1 = PsiTreeUtil.findElementOfClassAtOffset(file, offset, PsiMethod.class, false);
+              CreateFromUsageUtils.setupMethodBody(constructor1);
+              CreateFromUsageUtils.setupEditor(constructor1, editor);
 
-                UndoUtil.markPsiFileForUndo(callSite);
-              }
-              catch (IncorrectOperationException e) {
-                LOG.error(e);
-              }
+              UndoUtil.markPsiFileForUndo(callSite);
+            }
+            catch (IncorrectOperationException e) {
+              LOG.error(e);
             }
           });
         }
@@ -144,12 +135,12 @@ public abstract class CreateConstructorFromThisOrSuperFix extends CreateFromUsag
     PsiMethod method = (PsiMethod) methodCall.getMethodExpression().resolve();
     PsiExpressionList argumentList = methodCall.getArgumentList();
     List<PsiClass> classes = getTargetClasses(element);
-    return classes.size() > 0 && !CreateFromUsageUtils.shouldCreateConstructor(classes.get(0), argumentList, method);
+    return !classes.isEmpty() && !CreateFromUsageUtils.shouldCreateConstructor(classes.get(0), argumentList, method);
   }
 
   @Override
   protected PsiElement getElement() {
-    if (!myMethodCall.isValid() || !myMethodCall.getManager().isInProject(myMethodCall)) return null;
+    if (!myMethodCall.isValid() || !canModify(myMethodCall)) return null;
     return myMethodCall;
   }
 }

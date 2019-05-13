@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,8 +18,8 @@ package com.intellij.uiDesigner.snapShooter;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.net.URLClassLoader;
 import java.net.URL;
+import java.net.URLClassLoader;
 
 /**
  * @author yole
@@ -44,7 +44,7 @@ public class SnapShooter {
       Thread.currentThread().setContextClassLoader(loader);
     }
 
-    final Thread thread = new Thread(new SnapShooterDaemon(port));
+    final Thread thread = new Thread(new SnapShooterDaemon(port),"snapshooter");
     thread.setDaemon(true);
     thread.start();
 
@@ -63,7 +63,7 @@ public class SnapShooter {
   }
 
   private static void ensureAccess(Object reflectionObject) {
-    // need to call setAccessible here in order to be able to launch package-local classes
+    // need to call setAccessible here in order to be able to launch package-private classes
     // calling setAccessible() via reflection because the method is missing from java version 1.1.x
     final Class aClass = reflectionObject.getClass();
     try {

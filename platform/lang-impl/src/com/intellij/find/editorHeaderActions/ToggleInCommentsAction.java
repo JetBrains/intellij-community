@@ -1,22 +1,9 @@
 package com.intellij.find.editorHeaderActions;
 
-import com.intellij.find.EditorSearchComponent;
-import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.find.FindModel;
 
-public class ToggleInCommentsAction extends EditorHeaderToggleAction implements SecondaryHeaderAction {
-  private static final String TEXT = "In &Comments Only";
-
-  public ToggleInCommentsAction(EditorSearchComponent editorSearchComponent) {
-    super(editorSearchComponent, TEXT);
-  }
-
-  @Override
-  public boolean isSelected(AnActionEvent e) {
-    return getEditorSearchComponent().getFindModel().isInCommentsOnly();
-  }
-
-  @Override
-  public void setSelected(AnActionEvent e, boolean state) {
-    getEditorSearchComponent().getFindModel().setInCommentsOnly(state);
+public class ToggleInCommentsAction extends EditorHeaderSetSearchContextAction {
+  public ToggleInCommentsAction() {
+    super("In &Comments", FindModel.SearchContext.IN_COMMENTS);
   }
 }

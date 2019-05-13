@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,11 +23,16 @@ public class MavenWorkspaceSettings {
   public MavenGeneralSettings generalSettings = new MavenGeneralSettings();
   public MavenImportingSettings importingSettings = new MavenImportingSettings();
 
-  public List<String> enabledProfiles = new ArrayList<String>();
+  public List<String> enabledProfiles = new ArrayList<>();
+  public List<String> disabledProfiles = new ArrayList<>();
 
   public void setEnabledProfiles(Collection<String> profiles) {
     enabledProfiles.clear();
     enabledProfiles.addAll(profiles);
   }
 
+  public void setDisabledProfiles(Collection<String> profiles) {
+    disabledProfiles.clear();
+    disabledProfiles.addAll(profiles);
+  }
 }

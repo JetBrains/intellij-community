@@ -1,3 +1,18 @@
+/*
+ * Copyright 2000-2017 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.intellij.openapi.diff.impl.highlighting;
 
 import com.intellij.openapi.diff.ex.DiffFragment;
@@ -209,10 +224,11 @@ public class UtilTest extends TestCase {
       last};
     lines = Util.uniteFormattingOnly(lines);
     CHECK.compareAll(new DiffFragment[][]{
-      first,
-      new DiffFragment[]{inline1, inline2, inline3, inline4},
-      last},
-                     lines);
+                       first,
+                       new DiffFragment[]{inline1, inline2, inline3, inline4},
+                       last},
+                     lines
+    );
   }
 
   public void testConcatenateEquals() {
@@ -246,7 +262,8 @@ public class UtilTest extends TestCase {
     CHECK.singleElement(Util.cutFirst(new DiffFragment[]{
                           DiffFragment.unchanged("ab", "ac")
                         }),
-                        DiffFragment.unchanged("b", "c"));
+                        DiffFragment.unchanged("b", "c")
+    );
 
     CHECK.compareAll(new DiffFragment[]{
                        new DiffFragment(null, "c")
@@ -264,7 +281,8 @@ public class UtilTest extends TestCase {
                      Util.cutFirst(new DiffFragment[]{
                        new DiffFragment(null, "ab"),
                        new DiffFragment("c", "d")
-                     }));
+                     })
+    );
   }
 
   public void testCutFirst2() {
@@ -292,5 +310,9 @@ public class UtilTest extends TestCase {
                        new DiffFragment("?)\");", "?)\");")
                      }));
 
+  }
+
+  public static void assertEquals(CharSequence obj1, CharSequence obj2) {
+    assertEquals(obj1.toString(), obj2.toString());
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,12 +16,8 @@
 
 package com.intellij.usageView;
 
-import com.intellij.psi.ElementDescriptionLocation;
-import com.intellij.psi.ElementDescriptionProvider;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.*;
 import com.intellij.psi.impl.file.PsiDirectoryFactory;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -33,6 +29,7 @@ public class UsageViewLongNameLocation extends ElementDescriptionLocation {
 
   public static final UsageViewLongNameLocation INSTANCE = new UsageViewLongNameLocation();
 
+  @NotNull
   @Override
   public ElementDescriptionProvider getDefaultProvider() {
     return DEFAULT_PROVIDER;
@@ -45,7 +42,11 @@ public class UsageViewLongNameLocation extends ElementDescriptionLocation {
         if (element instanceof PsiDirectory) {
           return PsiDirectoryFactory.getInstance(element.getProject()).getQualifiedName((PsiDirectory)element, true);
         }
-        return "";
+        if (element instanceof PsiQualifiedNamedElement) {
+          return ((PsiQualifiedNamedElement)element).getQualifiedName();
+        }
+        return UsageViewShortNameLocation.INSTANCE.getDefaultProvider().getElementDescription(
+          element, UsageViewShortNameLocation.INSTANCE);
       }
       return null;
     }

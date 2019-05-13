@@ -21,20 +21,23 @@ public final class AntMain2 {
 
   public static void main(String[] args) throws ClassNotFoundException, NoSuchMethodException, IllegalAccessException, InvocationTargetException {
     IdeaAntLogger2.guardStreams();
-
-    // first try to use the new way of launching ant
+    
+    // as we build classpath ourselves, and ensure all libraries are added to classpath, 
+    // preferred way for us to run ant will be using the traditional ant entry point, via the "Main" class 
     try {
-      final Class antLauncher = Class.forName("org.apache.tools.ant.launch.Launcher");
-      //noinspection HardCodedStringLiteral
-      antLauncher.getMethod("main", new Class[]{args.getClass()}).invoke(null, new Object[]{args});
+      final Class antMain = Class.forName("org.apache.tools.ant.Main");
+      antMain.getMethod("main", new Class[]{args.getClass()}).invoke(null, new Object[]{args});
       return;
     }
     catch (ClassNotFoundException e) {
-      // ignore and try older variant
+      // ignore
     }
+    
+    // fallback: try the newer approach, launcher
+    // This approach is less preferred in our case, but still...
+    // From the ant documentation: "You should start the launcher with the most minimal classpath possible, generally just the ant-launcher.jar."
+    final Class antLauncher = Class.forName("org.apache.tools.ant.launch.Launcher");
+    antLauncher.getMethod("main", new Class[]{args.getClass()}).invoke(null, new Object[]{args});
 
-    final Class antMain = Class.forName("org.apache.tools.ant.Main");
-    //noinspection HardCodedStringLiteral
-    antMain.getMethod("main", new Class[]{args.getClass()}).invoke(null, new Object[]{args});
   }
 }

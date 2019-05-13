@@ -1,27 +1,13 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.merge;
 
 import com.intellij.history.Label;
 import com.intellij.history.LocalHistory;
 import com.intellij.ide.util.ElementsChooser;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.AbstractVcsHelper;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
-import com.intellij.openapi.vcs.TransactionRunnable;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.ex.ProjectLevelVcsManagerEx;
 import com.intellij.openapi.vcs.update.ActionInfo;
@@ -29,24 +15,19 @@ import com.intellij.openapi.vcs.update.FileGroup;
 import com.intellij.openapi.vcs.update.UpdateInfoTree;
 import com.intellij.openapi.vcs.update.UpdatedFiles;
 import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.ui.GuiUtils;
+import com.intellij.vcs.ViewUpdateInfoNotification;
 import git4idea.GitRevisionNumber;
-import git4idea.GitUtil;
 import git4idea.GitVcs;
-import git4idea.actions.GitRepositoryAction;
 import git4idea.i18n.GitBundle;
-import git4idea.repo.GitRepositoryFiles;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.io.File;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+
+import static com.intellij.util.containers.ContainerUtil.mapNotNull;
 
 /**
  * Utilities for merge
@@ -101,6 +82,7 @@ public class GitMergeUtil {
         strategy.setSelectedItem(DEFAULT_STRATEGY);
       }
 
+      @Override
       public void elementMarkChanged(final String element, final boolean isMarked) {
         final List<String> elements = branchChooser.getMarkedElements();
         if (elements.size() == 0) {
@@ -128,79 +110,34 @@ public class GitMergeUtil {
    * @param actionName  the action name
    * @param actionInfo  the information about the action
    */
-  public static void showUpdates(GitRepositoryAction action,
-                                 final Project project,
+  public static void showUpdates(final Project project,
                                  final List<VcsException> exceptions,
                                  final VirtualFile root,
                                  final GitRevisionNumber currentRev,
                                  final Label beforeLabel,
                                  final String actionName,
                                  final ActionInfo actionInfo) {
-    final UpdatedFiles files = UpdatedFiles.create();
+    UpdatedFiles files = UpdatedFiles.create();
     MergeChangeCollector collector = new MergeChangeCollector(project, root, currentRev);
     collector.collect(files, exceptions);
-    if (exceptions.size() != 0) {
-      return;
-    }
-    action.delayTask(new TransactionRunnable() {
-      public void run(List<VcsException> exceptionList) {
-        UIUtil.invokeLaterIfNeeded(new Runnable() {
-          @Override
-          public void run() {
-            ProjectLevelVcsManagerEx manager = (ProjectLevelVcsManagerEx)ProjectLevelVcsManager.getInstance(project);
-            UpdateInfoTree tree = manager.showUpdateProjectInfo(files, actionName, actionInfo, false);
-            tree.setBefore(beforeLabel);
-            tree.setAfter(LocalHistory.getInstance().putSystemLabel(project, "After update"));
-          }
-        });
+    if (!exceptions.isEmpty()) return;
+
+    GuiUtils.invokeLaterIfNeeded(() -> {
+      ProjectLevelVcsManagerEx manager = (ProjectLevelVcsManagerEx)ProjectLevelVcsManager.getInstance(project);
+      UpdateInfoTree tree = manager.showUpdateProjectInfo(files, actionName, actionInfo, false);
+      if (tree != null) {
+        tree.setBefore(beforeLabel);
+        tree.setAfter(LocalHistory.getInstance().putSystemLabel(project, "After update"));
+        ViewUpdateInfoNotification.focusUpdateInfoTree(project, tree);
       }
-    });
-    final Collection<String> unmergedNames = files.getGroupById(FileGroup.MERGED_WITH_CONFLICT_ID).getFiles();
+    }, ModalityState.defaultModalityState());
+
+    Collection<String> unmergedNames = files.getGroupById(FileGroup.MERGED_WITH_CONFLICT_ID).getFiles();
     if (!unmergedNames.isEmpty()) {
-      action.delayTask(new TransactionRunnable() {
-        public void run(List<VcsException> exceptionList) {
-          LocalFileSystem lfs = LocalFileSystem.getInstance();
-          final ArrayList<VirtualFile> unmerged = new ArrayList<VirtualFile>();
-          for (String fileName : unmergedNames) {
-            VirtualFile f = lfs.findFileByPath(fileName);
-            if (f != null) {
-              unmerged.add(f);
-            }
-          }
-          UIUtil.invokeLaterIfNeeded(new Runnable() {
-            @Override
-            public void run() {
-              GitVcs vcs = GitVcs.getInstance(project);
-              if (vcs != null) {
-                AbstractVcsHelper.getInstance(project).showMergeDialog(unmerged, vcs.getMergeProvider());
-              }
-            }
-          });
-        }
-      });
+      List<VirtualFile> unmerged = mapNotNull(unmergedNames, name -> LocalFileSystem.getInstance().findFileByPath(name));
+      GuiUtils.invokeLaterIfNeeded(() -> {
+        AbstractVcsHelper.getInstance(project).showMergeDialog(unmerged, GitVcs.getInstance(project).getMergeProvider());
+      }, ModalityState.defaultModalityState());
     }
-  }
-
-
-  /**
-   * @param root the vcs root
-   * @return the path to merge head file
-   */
-  @Nullable
-  private static File getMergeHead(@NotNull VirtualFile root) {
-    File gitDir = new File(VfsUtilCore.virtualToIoFile(root), GitUtil.DOT_GIT);
-    File f = new File(gitDir, GitRepositoryFiles.MERGE_HEAD);
-    if (f.exists()) {
-      return f;
-    }
-    return null;
-  }
-
-  /**
-   * @return true if merge is going on for the given git root, false if there is no merge operation in progress.
-   */
-  @Deprecated
-  public static boolean isMergeInProgress(@NotNull VirtualFile root) {
-    return getMergeHead(root) != null;
   }
 }

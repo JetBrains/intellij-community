@@ -48,17 +48,9 @@ public final class CopyResourcesUtil {
   }
 
   private static File copyStreamToFile(final InputStream stream, final File file) throws IOException {
-    try {
-      final FileOutputStream outputStream = new FileOutputStream(file);
-      try {
-        FileUtil.copy(stream, outputStream);
-      }
-      finally {
-        outputStream.close();
-      }
-    }
-    finally {
-      stream.close();
+    try (InputStream inputStream = stream;
+         FileOutputStream outputStream = new FileOutputStream(file)) {
+      FileUtil.copy(inputStream, outputStream);
     }
     return file;
   }
@@ -93,7 +85,7 @@ public final class CopyResourcesUtil {
       "VerticalInfo",
     };
 
-    List<File> copied = new ArrayList<File>();
+    List<File> copied = new ArrayList<>();
     for (String runtimeClass : runtimeClasses) {
       copied.add(copyClass(targetDir, "com/intellij/uiDesigner/core/" + runtimeClass, deleteOnExit));
     }

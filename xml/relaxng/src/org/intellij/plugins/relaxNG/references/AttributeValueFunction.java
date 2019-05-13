@@ -23,11 +23,12 @@ import com.intellij.util.containers.ContainerUtil;
 import java.util.Set;
 
 class AttributeValueFunction implements Function<XmlAttributeValue, String> {
+  @Override
   public String fun(XmlAttributeValue value) {
     return value.getValue();
   }
 
-  public static String[] toStrings(Set<XmlAttributeValue> values) {
+  public static String[] toStrings(Set<? extends XmlAttributeValue> values) {
     return ContainerUtil.map2Array(values, String.class, new AttributeValueFunction());
   }
 }

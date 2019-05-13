@@ -1,11 +1,23 @@
 /*
- * Copyright (c) 2006 JetBrains s.r.o. All Rights Reserved.
+ * Copyright 2000-2015 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 package com.intellij.util.io;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.testFramework.PlatformTestUtil;
-import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.containers.IntObjectCache;
 import gnu.trove.THashMap;
 import junit.framework.TestCase;
@@ -15,6 +27,7 @@ import java.io.IOException;
 import java.util.*;
 
 public class BTreeEnumeratorTest extends TestCase {
+  private static final Logger LOG = Logger.getInstance(BTreeEnumeratorTest.class);
   private static final String COLLISION_1 = "";
   private static final String COLLISION_2 = "\u0000";
   private static final String UTF_1 = "\ue534";
@@ -27,7 +40,7 @@ public class BTreeEnumeratorTest extends TestCase {
     "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
 
   static class TestStringEnumerator extends PersistentBTreeEnumerator<String> {
-    public TestStringEnumerator(File file) throws IOException {
+    TestStringEnumerator(File file) throws IOException {
       super(file, new EnumeratorStringDescriptor(), 4096);
     }
   }
@@ -43,11 +56,15 @@ public class BTreeEnumeratorTest extends TestCase {
 
   @Override
   protected void tearDown() throws Exception {
-    myEnumerator.close();
-    FileUtil.delete(myFile);
-    FileUtil.delete(new File(myFile.getParentFile(), myFile.getName() + ".len"));
-    assertTrue(!myFile.exists());
-    super.tearDown();
+    try {
+      myEnumerator.close();
+      IOUtil.deleteAllFilesStartingWith(myFile);
+      assertTrue(!myFile.exists());
+    }
+    finally {
+      super.tearDown();
+      
+    }
   }
 
   public void testAddEqualStrings() throws IOException {
@@ -57,14 +74,14 @@ public class BTreeEnumeratorTest extends TestCase {
   }
 
   public void testAddEqualStringsAndMuchGarbage() throws IOException {
-    final Map<Integer,String> strings = new THashMap<Integer, String>(10001);
+    final Map<Integer,String> strings = new THashMap<>(10001);
     String s = "IntelliJ IDEA";
     final int index = myEnumerator.enumerate(s);
     strings.put(index, s);
 
     // clear strings and nodes cache
     for (int i = 0; i < 10000; ++i) {
-      final String v = Integer.toString(i) + "Just another string";
+      final String v = i + "Just another string";
       final int idx = myEnumerator.enumerate(v);
       assertEquals(v, myEnumerator.valueOf(idx));
       strings.put(idx, v);
@@ -74,8 +91,8 @@ public class BTreeEnumeratorTest extends TestCase {
       assertEquals((int)e.getKey(), myEnumerator.enumerate(e.getValue()));
     }
 
-    final Set<String> enumerated = new HashSet<String>(myEnumerator.getAllDataObjects(null));
-    assertEquals(new HashSet<String>(strings.values()), enumerated);
+    final Set<String> enumerated = new HashSet<>(myEnumerator.getAllDataObjects(null));
+    assertEquals(new HashSet<>(strings.values()), enumerated);
   }
 
   public void testCollision() throws Exception {
@@ -85,25 +102,25 @@ public class BTreeEnumeratorTest extends TestCase {
 
     assertEquals(COLLISION_1, myEnumerator.valueOf(id1));
     assertEquals(COLLISION_2, myEnumerator.valueOf(id2));
-    assertEquals(new HashSet<String>(Arrays.asList(COLLISION_1, COLLISION_2)), new HashSet<String>(myEnumerator.getAllDataObjects(null)));
+    assertEquals(new HashSet<>(Arrays.asList(COLLISION_1, COLLISION_2)), new HashSet<>(myEnumerator.getAllDataObjects(null)));
   }
 
   public void testCollision1() throws Exception {
     int id1 = myEnumerator.enumerate(COLLISION_1);
     
     assertEquals(id1, myEnumerator.tryEnumerate(COLLISION_1));
-    assertEquals(PersistentEnumerator.NULL_ID, myEnumerator.tryEnumerate(COLLISION_2));
+    assertEquals(PersistentEnumeratorBase.NULL_ID, myEnumerator.tryEnumerate(COLLISION_2));
     
     int id2 = myEnumerator.enumerate(COLLISION_2);
     assertFalse(id1 == id2);
 
     assertEquals(id1, myEnumerator.tryEnumerate(COLLISION_1));
     assertEquals(id2, myEnumerator.tryEnumerate(COLLISION_2));
-    assertEquals(PersistentEnumerator.NULL_ID, myEnumerator.tryEnumerate("some string"));
+    assertEquals(PersistentEnumeratorBase.NULL_ID, myEnumerator.tryEnumerate("some string"));
     
     assertEquals(COLLISION_1, myEnumerator.valueOf(id1));
     assertEquals(COLLISION_2, myEnumerator.valueOf(id2));
-    assertEquals(new HashSet<String>(Arrays.asList(COLLISION_1, COLLISION_2)), new HashSet<String>(myEnumerator.getAllDataObjects(null)));
+    assertEquals(new HashSet<>(Arrays.asList(COLLISION_1, COLLISION_2)), new HashSet<>(myEnumerator.getAllDataObjects(null)));
   }
 
 
@@ -114,11 +131,11 @@ public class BTreeEnumeratorTest extends TestCase {
 
     assertEquals(UTF_1, myEnumerator.valueOf(id1));
     assertEquals(UTF_2, myEnumerator.valueOf(id2));
-    assertEquals(new HashSet<String>(Arrays.asList(UTF_1, UTF_2)), new HashSet<String>(myEnumerator.getAllDataObjects(null)));
+    assertEquals(new HashSet<>(Arrays.asList(UTF_1, UTF_2)), new HashSet<>(myEnumerator.getAllDataObjects(null)));
   }
 
   public void testOpeningClosing() throws IOException {
-    ArrayList<String> strings = new ArrayList<String>(2000);
+    ArrayList<String> strings = new ArrayList<>(2000);
     for (int i = 0; i < 2000; ++i) {
       strings.add(createRandomString());
     }
@@ -138,18 +155,18 @@ public class BTreeEnumeratorTest extends TestCase {
       myEnumerator.close();
       myEnumerator = new TestStringEnumerator(myFile);
     }
-    final HashSet<String> allStringsSet = new HashSet<String>(strings);
-    assertEquals(allStringsSet, new HashSet<String>(myEnumerator.getAllDataObjects(null)));
+    final HashSet<String> allStringsSet = new HashSet<>(strings);
+    assertEquals(allStringsSet, new HashSet<>(myEnumerator.getAllDataObjects(null)));
 
     final String additionalString = createRandomString();
     allStringsSet.add(additionalString);
     myEnumerator.enumerate(additionalString);
     assertTrue(myEnumerator.isDirty());
-    assertEquals(allStringsSet, new HashSet<String>(myEnumerator.getAllDataObjects(null)));
+    assertEquals(allStringsSet, new HashSet<>(myEnumerator.getAllDataObjects(null)));
   }
 
   public void testPerformance() throws IOException {
-    final IntObjectCache<String> stringCache = new IntObjectCache<String>(2000);
+    final IntObjectCache<String> stringCache = new IntObjectCache<>(2000);
     final IntObjectCache.DeletedPairsListener listener = new IntObjectCache.DeletedPairsListener() {
       @Override
       public void objectRemoved(final int key, final Object value) {
@@ -162,20 +179,17 @@ public class BTreeEnumeratorTest extends TestCase {
       }
     };
 
-    PlatformTestUtil.startPerformanceTest("PersistentStringEnumerator performance failed", 2500, new ThrowableRunnable() {
-      @Override
-      public void run() throws Exception {
-        stringCache.addDeletedPairsListener(listener);
-        for (int i = 0; i < 100000; ++i) {
-          final String string = createRandomString();
-          stringCache.cacheObject(myEnumerator.enumerate(string), string);
-        }
-        stringCache.removeDeletedPairsListener(listener);
-        stringCache.removeAll();
+    PlatformTestUtil.startPerformanceTest("PersistentStringEnumerator", 1000, () -> {
+      stringCache.addDeletedPairsListener(listener);
+      for (int i = 0; i < 100000; ++i) {
+        final String string = createRandomString();
+        stringCache.cacheObject(myEnumerator.enumerate(string), string);
       }
+      stringCache.removeDeletedPairsListener(listener);
+      stringCache.removeAll();
     }).assertTiming();
     myEnumerator.close();
-    System.out.printf("File size = %d bytes\n", myFile.length());
+    LOG.debug(String.format("File size = %d bytes\n", myFile.length()));
   }
 
   private static final StringBuilder builder = new StringBuilder(100);

@@ -23,32 +23,37 @@ import com.intellij.lang.Language;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.intellij.plugins.intelliLang.Configuration;
-import org.intellij.plugins.intelliLang.inject.InjectedLanguage;
+import org.intellij.plugins.intelliLang.inject.InjectorUtils;
 import org.intellij.plugins.intelliLang.pattern.PatternValidator;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 public class UnknownLanguageID extends LocalInspectionTool {
 
+  @Override
   @NotNull
   public HighlightDisplayLevel getDefaultLevel() {
     return HighlightDisplayLevel.ERROR;
   }
 
+  @Override
   public boolean isEnabledByDefault() {
     return true;
   }
 
+  @Override
   @NotNull
   public String getGroupDisplayName() {
     return PatternValidator.LANGUAGE_INJECTION;
   }
 
+  @Override
   @NotNull
   public String getDisplayName() {
     return "Unknown Language ID";
   }
 
+  @Override
   @NotNull
   public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, boolean isOnTheFly) {
     return new JavaElementVisitor() {
@@ -68,7 +73,7 @@ public class UnknownLanguageID extends LocalInspectionTool {
                 final Object id = JavaPsiFacade.getInstance(expression.getProject()).
                   getConstantEvaluationHelper().computeConstantExpression(expression);
                 if (id instanceof String) {
-                  final Language language = InjectedLanguage.findLanguageById((String)id);
+                  Language language = InjectorUtils.getLanguageByString((String)id);
                   if (language == null) {
                     holder.registerProblem(expression, "Unknown language '" + id + "'", ProblemHighlightType.LIKE_UNKNOWN_SYMBOL);
                   }
@@ -81,6 +86,7 @@ public class UnknownLanguageID extends LocalInspectionTool {
     };
   }
 
+  @Override
   @NotNull
   @NonNls
   public String getShortName() {

@@ -30,7 +30,7 @@ import java.util.List;
  */
 public class JvmPsiTypeConverterImpl extends JvmPsiTypeConverter implements CustomReferenceConverter<PsiType> {
 
-  private static final BidirectionalMap<PsiType, Character> ourPrimitiveTypes = new BidirectionalMap<PsiType, Character>();
+  private static final BidirectionalMap<PsiType, Character> ourPrimitiveTypes = new BidirectionalMap<>();
 
   private static final JavaClassReferenceProvider JVM_REFERENCE_PROVIDER = new JavaClassReferenceProvider();
   private static final JavaClassReferenceProvider REFERENCE_PROVIDER = new JavaClassReferenceProvider();
@@ -53,6 +53,7 @@ public class JvmPsiTypeConverterImpl extends JvmPsiTypeConverter implements Cust
     ourPrimitiveTypes.put(PsiType.BOOLEAN, 'Z');
   }
 
+  @Override
   public PsiType fromString(final String s, final ConvertContext context) {
     return convertFromString(s, context);
   }
@@ -84,7 +85,7 @@ public class JvmPsiTypeConverterImpl extends JvmPsiTypeConverter implements Cust
       return null;
     }
     if (Arrays.binarySearch(CanonicalPsiTypeConverterImpl.PRIMITIVES, s) >= 0) {
-      return JavaPsiFacade.getInstance(context.getProject()).getElementFactory().createPrimitiveType(s);
+      return JavaPsiFacade.getElementFactory(context.getProject()).createPrimitiveType(s);
     }
     final PsiClass aClass1 = DomJavaUtil.findClass(s, context.getFile(), context.getModule(), context.getSearchScope());
     return aClass1 == null ? null : createType(aClass1);
@@ -100,13 +101,14 @@ public class JvmPsiTypeConverterImpl extends JvmPsiTypeConverter implements Cust
   }
 
   private static PsiClassType createType(final PsiClass aClass) {
-    return JavaPsiFacade.getInstance(aClass.getProject()).getElementFactory().createType(aClass);
+    return JavaPsiFacade.getElementFactory(aClass.getProject()).createType(aClass);
   }
 
   private static PsiType makeArray(final int dimensions, final PsiType type) {
     return dimensions == 0 ? type : makeArray(dimensions - 1, new PsiArrayType(type));
   }
 
+  @Override
   public String toString(final PsiType psiType, final ConvertContext context) {
     return convertToString(psiType);
   }
@@ -136,6 +138,7 @@ public class JvmPsiTypeConverterImpl extends JvmPsiTypeConverter implements Cust
     return null;
   }
 
+  @Override
   @NotNull
   public PsiReference[] createReferences(GenericDomValue<PsiType> value, PsiElement element, ConvertContext context) {
     final PsiType psiType = value.getValue();

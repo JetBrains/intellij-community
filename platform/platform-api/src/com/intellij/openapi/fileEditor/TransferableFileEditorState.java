@@ -46,4 +46,6 @@ public interface TransferableFileEditorState extends FileEditorState {
    * @param options name-value string mapping
    */
   void setTransferableOptions(Map<String, String> options);
+
+  void setCopiedFromMasterEditor();
 }

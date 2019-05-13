@@ -1,34 +1,4 @@
-/*
- * Copyright (c) 2004 JetBrains s.r.o. All  Rights Reserved.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- *
- * -Redistributions of source code must retain the above copyright
- *  notice, this list of conditions and the following disclaimer.
- *
- * -Redistribution in binary form must reproduct the above copyright
- *  notice, this list of conditions and the following disclaimer in
- *  the documentation and/or other materials provided with the distribution.
- *
- * Neither the name of JetBrains or IntelliJ IDEA
- * may be used to endorse or promote products derived from this software
- * without specific prior written permission.
- *
- * This software is provided "AS IS," without a warranty of any kind. ALL
- * EXPRESS OR IMPLIED CONDITIONS, REPRESENTATIONS AND WARRANTIES, INCLUDING
- * ANY IMPLIED WARRANTY OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE
- * OR NON-INFRINGEMENT, ARE HEREBY EXCLUDED. JETBRAINS AND ITS LICENSORS SHALL NOT
- * BE LIABLE FOR ANY DAMAGES OR LIABILITIES SUFFERED BY LICENSEE AS A RESULT
- * OF OR RELATING TO USE, MODIFICATION OR DISTRIBUTION OF THE SOFTWARE OR ITS
- * DERIVATIVES. IN NO EVENT WILL JETBRAINS OR ITS LICENSORS BE LIABLE FOR ANY LOST
- * REVENUE, PROFIT OR DATA, OR FOR DIRECT, INDIRECT, SPECIAL, CONSEQUENTIAL,
- * INCIDENTAL OR PUNITIVE DAMAGES, HOWEVER CAUSED AND REGARDLESS OF THE THEORY
- * OF LIABILITY, ARISING OUT OF THE USE OF OR INABILITY TO USE SOFTWARE, EVEN
- * IF JETBRAINS HAS BEEN ADVISED OF THE POSSIBILITY OF SUCH DAMAGES.
- *
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.projectView;
 
 import com.intellij.ide.DataManager;
@@ -37,32 +7,39 @@ import com.intellij.ide.projectView.impl.AbstractProjectViewPSIPane;
 import com.intellij.ide.projectView.impl.ProjectViewImpl;
 import com.intellij.ide.projectView.impl.ProjectViewPane;
 import com.intellij.ide.projectView.impl.ProjectViewToolWindowFactory;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.LangDataKeys;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.CharsetToolkit;
+import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.psi.*;
 import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.testFramework.PsiTestUtil;
+import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
 import java.io.IOException;
 
 @SuppressWarnings({"HardCodedStringLiteral"})
 public class NavigateFromSourceTest extends BaseProjectViewTestCase {
-  public void testShowClassMembers() throws Exception {
+  public void testShowClassMembers() {
     useStandardProviders();
     final PsiClass[] classes = JavaDirectoryService.getInstance().getClasses(getPackageDirectory());
     sortClassesByName(classes);
     PsiClass psiClass = classes[0];
 
-    final AbstractProjectViewPSIPane pane = createPane();
+    final AbstractProjectViewPSIPane pane = myStructure.createPane();
     final PsiFile containingFile = psiClass.getContainingFile();
     final VirtualFile virtualFile = containingFile.getVirtualFile();
 
-    checkNavigateFromSourceBehaviour(psiClass, virtualFile, pane);
+    myStructure.checkNavigateFromSourceBehaviour(psiClass, virtualFile, pane);
 
     PlatformTestUtil.assertTreeEqual(pane.getTree(), "-Project\n" +
                                                      " -PsiDirectory: showClassMembers\n" +
@@ -91,8 +68,7 @@ public class NavigateFromSourceTest extends BaseProjectViewTestCase {
                                                                                           "  -PsiDirectory: src\n" +
                                                                                           "   -PsiDirectory: com\n" +
                                                                                           "    -PsiDirectory: package1\n" +
-                                                                                          "     -Class1.java\n" +
-                                                                                          "      [Class1]\n" +
+                                                                                          "     [Class1]\n" +
                                                                                           "     Class2\n" +
                                                                                           getRootFiles() +
                                                                                           " +External Libraries\n");
@@ -100,7 +76,7 @@ public class NavigateFromSourceTest extends BaseProjectViewTestCase {
     doTestMultipleSelection(pane, ((PsiJavaFile)containingFile).getClasses()[0]);
   }
 
-  public void testAutoscrollFromSourceOnOpening() throws Exception {
+  public void testAutoscrollFromSourceOnOpening() {
     final PsiClass[] classes = JavaDirectoryService.getInstance().getClasses(getPackageDirectory());
     PsiClass psiClass = classes[0];
 
@@ -115,10 +91,11 @@ public class NavigateFromSourceTest extends BaseProjectViewTestCase {
     new ProjectViewToolWindowFactory().createToolWindowContent(getProject(), toolWindow);
 
     projectView.changeView(ProjectViewPane.ID);
+    UIUtil.dispatchAllInvocationEvents();
 
     JComponent component = ((ProjectViewImpl)projectView).getComponent();
     DataContext context = DataManager.getInstance().getDataContext(component);
-    PsiElement element = LangDataKeys.PSI_ELEMENT.getData(context);
+    PsiElement element = CommonDataKeys.PSI_FILE.getData(context);
     assertEquals("Class1.java", ((PsiJavaFile)element).getName());
   }
 
@@ -131,28 +108,55 @@ public class NavigateFromSourceTest extends BaseProjectViewTestCase {
 
     pane.select(psiClass, psiClass.getContainingFile().getVirtualFile(), true);
 
-    assertEquals(10, tree.getSelectionCount());
+    assertEquals(8, tree.getSelectionCount());
   }
 
   private static void changeClassTextAndTryToNavigate(final String newClassString,
                                                       PsiJavaFile psiFile,
                                                       final AbstractProjectViewPSIPane pane,
-                                                      final String expected) throws IOException, InterruptedException {
+                                                      final String expected) {
     PsiClass psiClass = psiFile.getClasses()[0];
     final VirtualFile virtualFile = psiClass.getContainingFile().getVirtualFile();
     final JTree tree = pane.getTree();
-    writeToFile(virtualFile, newClassString.getBytes());
+    setBinaryContent(virtualFile, newClassString.getBytes(CharsetToolkit.UTF8_CHARSET));
 
     PlatformTestUtil.waitForAlarm(600);
 
     psiClass = psiFile.getClasses()[0];
     pane.select(psiClass, virtualFile, true);
+    PlatformTestUtil.waitWhileBusy(tree);
     PlatformTestUtil.assertTreeEqual(tree, expected, true);
   }
 
-  private static void writeToFile(final VirtualFile virtualFile, final byte[] b) throws IOException {
-    virtualFile.setBinaryContent(b);
+  public void testSelectFileInArchiveUnderModuleGroup() throws IOException {
+    Project project = getProject();
+    VirtualFile root = getContentRoot();
+
+    // create grouped module on top level to create ModuleGroupNode
+    VirtualFile moduleRoot = WriteAction.computeAndWait(() -> root.getParent().createChildDirectory(project, "module"));
+    Module module = createModule("group.module");
+    PsiTestUtil.addContentRoot(module, moduleRoot);
+
+    // move archive from default module to the created one
+    VirtualFile archive = root.findChild("test.jar");
+    WriteAction.runAndWait(() -> archive.move(project, moduleRoot));
+    PsiTestUtil.addLibrary(module, archive.getPath()); // only libraries are expanded now
+
+    AbstractProjectViewPSIPane pane = myStructure.createPane();
+    // select archived file in the Project View
+    VirtualFile file = JarFileSystem.getInstance().getJarRootForLocalFile(archive).findChild("Main.class");
+    pane.select(PsiManager.getInstance(project).findFile(file), file, false);
+    PlatformTestUtil.waitWhileBusy(pane.getTree());
+    PlatformTestUtil.assertTreeEqual(pane.getTree(), "-Project\n" +
+                                                     " -Group: group\n" +
+                                                     "  -PsiDirectory: module\n" +
+                                                     "   -test.jar\n" +
+                                                     "    PsiDirectory: META-INF\n" +
+                                                     "    [Main]\n" +
+                                                     " PsiDirectory: selectFileInArchiveUnderModuleGroup\n" +
+                                                     " group.module.iml\n" +
+                                                     getRootFiles() +
+                                                     " +External Libraries\n"
+      , true);
   }
-
-
 }

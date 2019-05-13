@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,54 +15,34 @@
  */
 package com.intellij.util.ui;
 
+import com.intellij.openapi.ui.GraphicsConfig;
+import com.intellij.ui.Gray;
+import com.intellij.ui.JBColor;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
+import java.awt.image.BufferedImage;
 
 /**
- * User: Vassiliy.Kudryashov
+ * @author Vassiliy Kudryashov
+ * @author Konstantin Bulenkov
+ *
+ * @deprecated use {@link com.intellij.util.ui.ColorsIcon} instead
  */
-public class TwoColorsIcon extends EmptyIcon {
-  @NotNull private final Color myColor1;
-  @NotNull private final Color myColor2;
-
-  public TwoColorsIcon(int size, @NotNull Color color1, @NotNull Color color2) {
-    super(size, size);
-    myColor1 = color1;
-    myColor2 = color2;
+@Deprecated
+public class TwoColorsIcon extends ColorsIcon {
+  public TwoColorsIcon(int size, @Nullable Color color1, @Nullable Color secondColor) {
+    super(size, color1, secondColor);
   }
 
-  @Override
-  public void paintIcon(final Component component, final Graphics g, final int x, final int y) {
-    final int w = getIconWidth();
-    final int h = getIconHeight();
-    GraphicsUtil.setupAAPainting(g);
-    g.setColor(myColor1);
-    g.fillPolygon(new int[]{x, x + w, x}, new int[]{y, y, y + h}, 3);
-    g.setColor(myColor2);
-    g.fillPolygon(new int[]{x + w, x + w, x}, new int[]{y, y + h, y + h}, 3);
+  protected TwoColorsIcon(TwoColorsIcon icon) {
+    super(icon);
   }
 
+  @NotNull
   @Override
-  public boolean equals(Object o) {
-    if (this == o) return true;
-    if (o == null || getClass() != o.getClass()) return false;
-    if (!super.equals(o)) return false;
-
-    TwoColorsIcon icon = (TwoColorsIcon)o;
-
-    if (getIconWidth() != icon.getIconWidth()) return false;
-    if (getIconHeight() != icon.getIconHeight()) return false;
-    if (!myColor1.equals(icon.myColor1)) return false;
-    if (!myColor2.equals(icon.myColor2)) return false;
-    return true;
-  }
-
-  @Override
-  public int hashCode() {
-    int result = super.hashCode();
-    result = 31 * result + myColor1.hashCode();
-    result = 31 * result + myColor2.hashCode();
-    return result;
+  public TwoColorsIcon copy() {
+    return new TwoColorsIcon(this);
   }
 }

@@ -1,27 +1,18 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.compiler.server;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.util.containers.ConcurrentHashSet;
-import org.jboss.netty.channel.*;
+import com.intellij.util.containers.ContainerUtil;
+import io.netty.channel.Channel;
+import io.netty.channel.ChannelHandler;
+import io.netty.channel.ChannelHandlerContext;
+import io.netty.util.AttributeKey;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.io.SimpleChannelInboundHandlerAdapter;
 import org.jetbrains.jps.api.CmdlineProtoUtil;
 import org.jetbrains.jps.api.CmdlineRemoteProto;
+import org.jetbrains.jps.api.RequestFuture;
 
 import java.util.Map;
 import java.util.Set;
@@ -30,67 +21,113 @@ import java.util.concurrent.ConcurrentHashMap;
 
 /**
 * @author Eugene Zhuravlev
-*         Date: 4/25/12
 */
-class BuildMessageDispatcher extends SimpleChannelHandler {
+@ChannelHandler.Sharable
+class BuildMessageDispatcher extends SimpleChannelInboundHandlerAdapter<CmdlineRemoteProto.Message> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.compiler.server.BuildMessageDispatcher");
-  private final Map<UUID, SessionData> myMessageHandlers = new ConcurrentHashMap<UUID, SessionData>();
-  private final Set<UUID> myCanceledSessions = new ConcurrentHashSet<UUID>();
 
-  public void registerBuildMessageHandler(UUID sessionId,
-                                          BuilderMessageHandler handler,
-                                          CmdlineRemoteProto.Message.ControllerMessage params) {
-    myMessageHandlers.put(sessionId, new SessionData(sessionId, handler, params));
+  private static final AttributeKey<SessionData> SESSION_DATA = AttributeKey.valueOf("BuildMessageDispatcher.sessionData");
+
+  private final Map<UUID, SessionData> mySessionDescriptors = new ConcurrentHashMap<>(16, 0.75f, 1);
+  private final Set<UUID> myCanceledSessions = ContainerUtil.newConcurrentSet();
+
+  public void registerBuildMessageHandler(@NotNull final RequestFuture<? extends BuilderMessageHandler> future, @Nullable CmdlineRemoteProto.Message.ControllerMessage params) {
+    final BuilderMessageHandler wrappedHandler = new DelegatingMessageHandler() {
+      @Override
+      protected BuilderMessageHandler getDelegateHandler() {
+        return future.getMessageHandler();
+      }
+
+      @Override
+      public void sessionTerminated(@NotNull UUID sessionId) {
+        try {
+          super.sessionTerminated(sessionId);
+        }
+        finally {
+          future.setDone();
+        }
+      }
+    };
+    final UUID sessionId = future.getRequestID();
+    mySessionDescriptors.put(sessionId, new SessionData(sessionId, wrappedHandler, params));
   }
 
   @Nullable
   public BuilderMessageHandler unregisterBuildMessageHandler(UUID sessionId) {
     myCanceledSessions.remove(sessionId);
-    final SessionData data = myMessageHandlers.remove(sessionId);
-    return data != null? data.handler : null;
+    final SessionData data = mySessionDescriptors.remove(sessionId);
+    if (data == null) {
+      return null;
+    }
+    final Channel channel = data.channel;
+    if (channel != null) {
+      // cleanup the attribute so that session data is not leaked
+      channel.attr(SESSION_DATA).set(null);
+    }
+    return data.handler;
   }
 
   public void cancelSession(UUID sessionId) {
     if (myCanceledSessions.add(sessionId)) {
       final Channel channel = getConnectedChannel(sessionId);
       if (channel != null) {
-        Channels.write(channel, CmdlineProtoUtil.toMessage(sessionId, CmdlineProtoUtil.createCancelCommand()));
+        channel.writeAndFlush(CmdlineProtoUtil.toMessage(sessionId, CmdlineProtoUtil.createCancelCommand()));
       }
     }
   }
 
   @Nullable
-  public Channel getConnectedChannel(final UUID sessionId) {
+  public Channel getConnectedChannel(@NotNull UUID sessionId) {
     final Channel channel = getAssociatedChannel(sessionId);
-    return channel != null && channel.isConnected()? channel : null;
+    return channel != null && channel.isActive()? channel : null;
   }
 
   @Nullable
-  public Channel getAssociatedChannel(final UUID sessionId) {
-    final SessionData data = myMessageHandlers.get(sessionId);
+  public Channel getAssociatedChannel(@NotNull UUID sessionId) {
+    final SessionData data = mySessionDescriptors.get(sessionId);
     return data != null? data.channel : null;
   }
 
+  public boolean sendBuildParameters(@NotNull final UUID preloadedSessionId, @NotNull CmdlineRemoteProto.Message.ControllerMessage params) {
+    boolean succeeded = false;
+    final SessionData sessionData = mySessionDescriptors.get(preloadedSessionId);
+    if (sessionData != null) {
+      //noinspection SynchronizationOnLocalVariableOrMethodParameter
+      synchronized (sessionData) {
+        if (sessionData.state == SessionData.State.WAITING_PARAMS) {
+          sessionData.state = SessionData.State.RUNNING;
+          final Channel channel = sessionData.channel;
+          if (channel != null && channel.isActive()) {
+            sessionData.handler.buildStarted(preloadedSessionId);
+            channel.writeAndFlush(CmdlineProtoUtil.toMessage(preloadedSessionId, params));
+            succeeded = true;
+          }
+        }
+        else {
+          if (sessionData.state == SessionData.State.INITIAL) {
+            sessionData.params = params;
+            succeeded = true;
+          }
+        }
+      }
+    }
+    return succeeded;
+  }
 
   @Override
-  public void messageReceived(ChannelHandlerContext ctx, MessageEvent e) throws Exception {
-    final CmdlineRemoteProto.Message message = (CmdlineRemoteProto.Message)e.getMessage();
-
-    SessionData sessionData = (SessionData)ctx.getAttachment();
-
-    UUID sessionId;
-    if (sessionData == null) {
+  protected void messageReceived(ChannelHandlerContext context, CmdlineRemoteProto.Message message) {
+    SessionData sessionData = context.channel().attr(SESSION_DATA).get();
+    final boolean isFirstMessage = sessionData == null;
+    final UUID sessionId;
+    if (isFirstMessage) {
       // this is the first message for this session, so fill session data with missing info
       final CmdlineRemoteProto.Message.UUID id = message.getSessionId();
       sessionId = new UUID(id.getMostSigBits(), id.getLeastSigBits());
 
-      sessionData = myMessageHandlers.get(sessionId);
+      sessionData = mySessionDescriptors.get(sessionId);
       if (sessionData != null) {
-        sessionData.channel = ctx.getChannel();
-        ctx.setAttachment(sessionData);
-      }
-      if (myCanceledSessions.contains(sessionId)) {
-        Channels.write(ctx.getChannel(), CmdlineProtoUtil.toMessage(sessionId, CmdlineProtoUtil.createCancelCommand()));
+        sessionData.channel = context.channel();
+        context.channel().attr(SESSION_DATA).set(sessionData);
       }
     }
     else {
@@ -98,50 +135,76 @@ class BuildMessageDispatcher extends SimpleChannelHandler {
     }
 
     final BuilderMessageHandler handler = sessionData != null? sessionData.handler : null;
-    if (handler == null) {
-      // todo
-      LOG.info("No message handler registered for session " + sessionId);
-      return;
-    }
+    try {
+      if (handler == null) {
+        if (!isBuilderEvent(message)) {
+          // do not pollute logs, just silently skip events in case handler is missing
+          LOG.info("No message handler registered for session " + sessionId);
+        }
+        return;
+      }
 
-    final CmdlineRemoteProto.Message.Type messageType = message.getType();
-    switch (messageType) {
-      case FAILURE:
-        handler.handleFailure(sessionId, message.getFailure());
-        break;
+      final CmdlineRemoteProto.Message.Type messageType = message.getType();
+      switch (messageType) {
+        case FAILURE:
+          handler.handleFailure(sessionId, message.getFailure());
+          break;
 
-      case BUILDER_MESSAGE:
-        final CmdlineRemoteProto.Message.BuilderMessage builderMessage = message.getBuilderMessage();
-        final CmdlineRemoteProto.Message.BuilderMessage.Type msgType = builderMessage.getType();
-        if (msgType == CmdlineRemoteProto.Message.BuilderMessage.Type.PARAM_REQUEST) {
-          final CmdlineRemoteProto.Message.ControllerMessage params = sessionData.params;
-          if (params != null) {
-            handler.buildStarted(sessionId);
-            sessionData.params = null;
-            Channels.write(ctx.getChannel(), CmdlineProtoUtil.toMessage(sessionId, params));
+        case BUILDER_MESSAGE:
+          final CmdlineRemoteProto.Message.BuilderMessage builderMessage = message.getBuilderMessage();
+          final CmdlineRemoteProto.Message.BuilderMessage.Type msgType = builderMessage.getType();
+          if (msgType == CmdlineRemoteProto.Message.BuilderMessage.Type.PARAM_REQUEST) {
+            //noinspection SynchronizationOnLocalVariableOrMethodParameter
+            synchronized (sessionData) {
+              final CmdlineRemoteProto.Message.ControllerMessage params = sessionData.params;
+              if (params != null) {
+                sessionData.state = SessionData.State.RUNNING;
+                handler.buildStarted(sessionId);
+                sessionData.params = null;
+                context.writeAndFlush(CmdlineProtoUtil.toMessage(sessionId, params));
+              }
+              else {
+                if (sessionData.state == SessionData.State.INITIAL) {
+                  sessionData.state = SessionData.State.WAITING_PARAMS;
+                }
+                else {
+                  // this message is expected to be sent only once.
+                  // To be on the safe side, cancel the session
+                  cancelSession(sessionId);
+                }
+              }
+            }
           }
           else {
-            cancelSession(sessionId);
+            handler.handleBuildMessage(context.channel(), sessionId, builderMessage);
           }
-        }
-        else {
-          handler.handleBuildMessage(ctx.getChannel(), sessionId, builderMessage);
-        }
-        break;
+          break;
 
-      default:
-        LOG.info("Unsupported message type " + messageType);
-        break;
+        default:
+          LOG.info("Unsupported message type " + messageType);
+          break;
+      }
+    }
+    finally {
+      if ((isFirstMessage && myCanceledSessions.contains(sessionId)) || (handler == null && !isBuilderEvent(message))) {
+        // handle the case when the session had been cancelled before communication even started  
+        // or if message handling is not possible due to missing handler
+        context.channel().writeAndFlush(CmdlineProtoUtil.toMessage(sessionId, CmdlineProtoUtil.createCancelCommand()));
+      }
     }
   }
 
+  private static boolean isBuilderEvent(CmdlineRemoteProto.Message message) {
+    return message.hasBuilderMessage() && message.getBuilderMessage().getType() == CmdlineRemoteProto.Message.BuilderMessage.Type.BUILD_EVENT;
+  }
+
   @Override
-  public void channelClosed(ChannelHandlerContext ctx, ChannelStateEvent e) throws Exception {
+  public void channelInactive(ChannelHandlerContext context) throws Exception {
     try {
-      super.channelClosed(ctx, e);
+      super.channelInactive(context);
     }
     finally {
-      final SessionData sessionData = (SessionData)ctx.getAttachment();
+      final SessionData sessionData = context.channel().attr(SESSION_DATA).get();
       if (sessionData != null) {
         final BuilderMessageHandler handler = unregisterBuildMessageHandler(sessionData.sessionId);
         if (handler != null) {
@@ -153,40 +216,26 @@ class BuildMessageDispatcher extends SimpleChannelHandler {
   }
 
   @Override
-  public void exceptionCaught(ChannelHandlerContext ctx, ExceptionEvent e) throws Exception {
-    final Throwable cause = e.getCause();
+  public void exceptionCaught(ChannelHandlerContext context, Throwable cause) {
     if (cause != null) {
       LOG.info(cause);
-    }
-    ctx.sendUpstream(e);
-  }
-
-  @Override
-  public void channelDisconnected(ChannelHandlerContext ctx, ChannelStateEvent e) throws Exception {
-    try {
-      super.channelDisconnected(ctx, e);
-    }
-    finally {
-      final SessionData sessionData = (SessionData)ctx.getAttachment();
-      if (sessionData != null) { // this is the context corresponding to some session
-        final Channel channel = e.getChannel();
-        ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
-          @Override
-          public void run() {
-            channel.close();
-          }
-        });
-      }
     }
   }
 
   private static final class SessionData {
+    enum State {
+      INITIAL, WAITING_PARAMS, RUNNING
+    }
+
+    @NotNull
     final UUID sessionId;
+    @NotNull
     final BuilderMessageHandler handler;
     volatile CmdlineRemoteProto.Message.ControllerMessage params;
     volatile Channel channel;
+    State state = State.INITIAL;
 
-    private SessionData(UUID sessionId, BuilderMessageHandler handler, CmdlineRemoteProto.Message.ControllerMessage params) {
+    private SessionData(@NotNull UUID sessionId, @NotNull BuilderMessageHandler handler, CmdlineRemoteProto.Message.ControllerMessage params) {
       this.sessionId = sessionId;
       this.handler = handler;
       this.params = params;

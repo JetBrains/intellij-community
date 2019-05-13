@@ -15,9 +15,9 @@
  */
 package com.intellij.util.download.impl;
 
-import com.intellij.util.download.DownloadableFileDescription;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Conditions;
+import com.intellij.util.download.DownloadableFileDescription;
 import com.intellij.util.text.UniqueNameGenerator;
 import org.jetbrains.annotations.NotNull;
 
@@ -56,7 +56,7 @@ public class DownloadableFileDescriptionImpl implements DownloadableFileDescript
   @NotNull
   @Override
   public String getDefaultFileName() {
-    return generateFileName(Conditions.<String>alwaysTrue());
+    return generateFileName(Conditions.alwaysTrue());
   }
 
   @NotNull

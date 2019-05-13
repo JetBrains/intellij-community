@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,19 +16,16 @@
 package com.intellij.designer;
 
 import com.intellij.designer.designSurface.DesignerEditorPanel;
-import com.intellij.ide.structureView.StructureViewBuilder;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorLocation;
 import com.intellij.openapi.fileEditor.FileEditorState;
 import com.intellij.openapi.fileEditor.FileEditorStateLevel;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.LightVirtualFile;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.beans.PropertyChangeListener;
@@ -37,23 +34,16 @@ import java.beans.PropertyChangeListener;
  * @author Alexander Lobas
  */
 public abstract class DesignerEditor extends UserDataHolderBase implements FileEditor {
-  private final DesignerEditorPanel myDesignerPanel;
+  protected final DesignerEditorPanel myDesignerPanel;
 
   public DesignerEditor(Project project, VirtualFile file) {
     if (file instanceof LightVirtualFile) {
       file = ((LightVirtualFile)file).getOriginalFile();
     }
-    Module module = findModule(project, file);
-    if (module == null) {
-      throw new IllegalArgumentException("No module for file " + file + " in project " + project);
-    }
-    myDesignerPanel = createDesignerPanel(project, module, file);
+    myDesignerPanel = createDesignerPanel(project, findModule(project, file), file);
   }
 
-  @Nullable
-  protected Module findModule(Project project, VirtualFile file) {
-    return ModuleUtilCore.findModuleForFile(file, project);
-  }
+  protected abstract Module findModule(Project project, VirtualFile file);
 
   @NotNull
   protected abstract DesignerEditorPanel createDesignerPanel(Project project, Module module, VirtualFile file);
@@ -71,6 +61,12 @@ public abstract class DesignerEditor extends UserDataHolderBase implements FileE
   @Override
   public final JComponent getPreferredFocusedComponent() {
     return myDesignerPanel.getPreferredFocusedComponent();
+  }
+
+  @NotNull
+  @Override
+  public String getName() {
+    return "Design";
   }
 
   @Override
@@ -118,11 +114,6 @@ public abstract class DesignerEditor extends UserDataHolderBase implements FileE
 
   @Override
   public FileEditorLocation getCurrentLocation() {
-    return null;
-  }
-
-  @Override
-  public StructureViewBuilder getStructureViewBuilder() {
     return null;
   }
 }

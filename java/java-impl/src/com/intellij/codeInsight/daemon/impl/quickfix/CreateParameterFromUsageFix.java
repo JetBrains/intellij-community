@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,11 +18,14 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.ide.util.SuperMethodWarningUtil;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.Result;
+import com.intellij.openapi.application.TransactionGuard;
+import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.changeSignature.ChangeSignatureProcessor;
@@ -67,56 +70,71 @@ public class CreateParameterFromUsageFix extends CreateVarFromUsageFix {
 
   @Override
   protected void invokeImpl(PsiClass targetClass) {
-    if (CreateFromUsageUtils.isValidReference(myReferenceExpression, true)) return;
+    TransactionGuard.getInstance().submitTransactionLater(targetClass.getProject(), () -> {
+      if (!myReferenceExpression.isValid()) return;
+      if (CreateFromUsageUtils.isValidReference(myReferenceExpression, false)) return;
 
-    final Project project = myReferenceExpression.getProject();
+      final Project project = myReferenceExpression.getProject();
 
-    PsiType[] expectedTypes = CreateFromUsageUtils.guessType(myReferenceExpression, false);
-    PsiType type = expectedTypes[0];
+      PsiType[] expectedTypes = CreateFromUsageUtils.guessType(myReferenceExpression, false);
+      PsiType type = expectedTypes[0];
 
-    String varName = myReferenceExpression.getReferenceName();
-    PsiMethod method = PsiTreeUtil.getParentOfType(myReferenceExpression, PsiMethod.class);
-    LOG.assertTrue(method != null);
-    method = IntroduceParameterHandler.chooseEnclosingMethod(method);
-    if (method == null) return;
+      final String varName = myReferenceExpression.getReferenceName();
+      PsiMethod method = PsiTreeUtil.getParentOfType(myReferenceExpression, PsiMethod.class);
+      LOG.assertTrue(method != null);
+      method = IntroduceParameterHandler.chooseEnclosingMethod(method);
+      if (method == null) return;
 
-    method = SuperMethodWarningUtil.checkSuperMethod(method, RefactoringBundle.message("to.refactor"));
-    if (method == null) return;
+      method = SuperMethodWarningUtil.checkSuperMethod(method, RefactoringBundle.message("to.refactor"));
+      if (method == null) return;
 
-    final List<ParameterInfoImpl> parameterInfos =
-      new ArrayList<ParameterInfoImpl>(Arrays.asList(ParameterInfoImpl.fromMethod(method)));
-    ParameterInfoImpl parameterInfo = new ParameterInfoImpl(-1, varName, type, PsiTypesUtil.getDefaultValueOfType(type), false);
-    if (!method.isVarArgs()) {
-      parameterInfos.add(parameterInfo);
-    }
-    else {
-      parameterInfos.add(parameterInfos.size() - 1, parameterInfo);
-    }
+      final List<ParameterInfoImpl> parameterInfos =
+        new ArrayList<>(Arrays.asList(ParameterInfoImpl.fromMethod(method)));
+      ParameterInfoImpl parameterInfo = new ParameterInfoImpl(-1, varName, type, varName, false);
+      if (!method.isVarArgs()) {
+        parameterInfos.add(parameterInfo);
+      }
+      else {
+        parameterInfos.add(parameterInfos.size() - 1, parameterInfo);
+      }
 
-    if (ApplicationManager.getApplication().isUnitTestMode()) {
-      ParameterInfoImpl[] array = parameterInfos.toArray(new ParameterInfoImpl[parameterInfos.size()]);
-      String modifier = PsiUtil.getAccessModifier(PsiUtil.getAccessLevel(method.getModifierList()));
-      ChangeSignatureProcessor processor =
-        new ChangeSignatureProcessor(project, method, false, modifier, method.getName(), method.getReturnType(), array);
-      processor.run();
-    }
-    else {
-      final PsiMethod finalMethod = method;
-      ApplicationManager.getApplication().invokeLater(new Runnable() {
-        @Override
-        public void run() {
-          if (project.isDisposed()) return;
-          try {
-            JavaChangeSignatureDialog dialog = JavaChangeSignatureDialog.createAndPreselectNew(project, finalMethod, parameterInfos, true, myReferenceExpression);
-            dialog.setParameterInfos(parameterInfos);
-            dialog.show();
-          }
-          catch (Exception e) {
-            throw new RuntimeException(e);
+      if (ApplicationManager.getApplication().isUnitTestMode()) {
+        ParameterInfoImpl[] array = parameterInfos.toArray(new ParameterInfoImpl[0]);
+        String modifier = PsiUtil.getAccessModifier(PsiUtil.getAccessLevel(method.getModifierList()));
+        ChangeSignatureProcessor processor =
+          new ChangeSignatureProcessor(project, method, false, modifier, method.getName(), method.getReturnType(), array);
+        processor.run();
+      }
+      else {
+        try {
+          JavaChangeSignatureDialog dialog =
+            JavaChangeSignatureDialog.createAndPreselectNew(project, method, parameterInfos, true, myReferenceExpression);
+          dialog.setParameterInfos(parameterInfos);
+          if (dialog.showAndGet()) {
+            for (ParameterInfoImpl info : parameterInfos) {
+              if (info.getOldIndex() == -1) {
+                final String newParamName = info.getName();
+                if (!Comparing.strEqual(varName, newParamName)) {
+                  final PsiExpression newExpr =
+                    JavaPsiFacade.getElementFactory(project).createExpressionFromText(newParamName, method);
+                  WriteCommandAction.writeCommandAction(project).run(() -> {
+                    final PsiReferenceExpression[] refs =
+                      CreateFromUsageUtils.collectExpressions(myReferenceExpression, PsiMember.class, PsiFile.class);
+                    for (PsiReferenceExpression ref : refs) {
+                      ref.replace(newExpr.copy());
+                    }
+                  });
+                }
+                break;
+              }
+            }
           }
         }
-      });
-    }
+        catch (Exception e) {
+          throw new RuntimeException(e);
+        }
+      }
+    });
   }
 
   @Override

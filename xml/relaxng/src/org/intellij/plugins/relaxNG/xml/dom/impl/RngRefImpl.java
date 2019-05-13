@@ -24,17 +24,13 @@ import org.intellij.plugins.relaxNG.xml.dom.RngRef;
 
 import java.util.Set;
 
-/**
- * Created by IntelliJ IDEA.
- * User: sweinreuter
- * Date: 05.09.2007
- */
 public abstract class RngRefImpl extends RngDomElementBase implements RngRef {
   @Override
   public void accept(Visitor visitor) {
     visitor.visitRef(this);
   }
 
+  @Override
   public Define getPattern() {
     final XmlAttributeValue value = getName().getXmlAttributeValue();
     if (value == null) return null;
@@ -59,6 +55,7 @@ public abstract class RngRefImpl extends RngDomElementBase implements RngRef {
     return getParentOfType(RngGrammar.class, true);
   }
 
+  @Override
   public String getReferencedName() {
     return getName().getValue();
   }

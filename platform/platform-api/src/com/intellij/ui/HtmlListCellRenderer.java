@@ -15,7 +15,6 @@
  */
 package com.intellij.ui;
 
-import com.intellij.util.StringBuilderSpinAllocator;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -32,7 +31,7 @@ public abstract class HtmlListCellRenderer<T> extends ListCellRendererWrapper<T>
 
   @Override
   public final void customize(final JList list, final T value, final int index, final boolean selected, final boolean hasFocus) {
-    myText = StringBuilderSpinAllocator.alloc();
+    myText = new StringBuilder();
     try {
       doCustomize(list, value, index, selected, hasFocus);
 
@@ -46,7 +45,6 @@ public abstract class HtmlListCellRenderer<T> extends ListCellRendererWrapper<T>
       }
     }
     finally {
-      StringBuilderSpinAllocator.dispose(myText);
       myText = null;
     }
   }

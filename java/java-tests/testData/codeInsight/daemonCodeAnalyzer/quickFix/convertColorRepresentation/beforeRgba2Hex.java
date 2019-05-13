@@ -1,4 +1,4 @@
-// "Convert to 'new Color(0x2564788c,true)'" "true"
+// "Convert to 'new Color(0x8c256478,true)'" "true"
 
 package java.awt;
 

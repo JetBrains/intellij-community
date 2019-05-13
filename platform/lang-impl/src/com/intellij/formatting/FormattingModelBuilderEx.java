@@ -24,7 +24,6 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Denis Zhdanov
- * @since 8/22/12 2:23 PM
  */
 public interface FormattingModelBuilderEx extends FormattingModelBuilder {
   
@@ -49,9 +48,12 @@ public interface FormattingModelBuilderEx extends FormattingModelBuilder {
    * @param ranges    given file's ranges to reformat
    * @param settings  code style settings holder
    * @return          indent options to use for the target formatting operation (if any adjustment is required);
-   *                  <code>null</code> to trigger default algorithm usage
+   *                  {@code null} to trigger default algorithm usage
+   * @deprecated Use {@code com.intellij.psi.codeStyle.FileIndentOptionsProvider} instead.
+   * @see com.intellij.psi.codeStyle.FileIndentOptionsProvider
    */
   @Nullable
+  @Deprecated
   CommonCodeStyleSettings.IndentOptions getIndentOptionsToUse(@NotNull PsiFile file,
                                                               @NotNull FormatTextRanges ranges,
                                                               @NotNull CodeStyleSettings settings);

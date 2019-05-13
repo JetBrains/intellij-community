@@ -25,8 +25,12 @@ import org.jetbrains.annotations.Nullable;
 public abstract class LocalHistory {
   public static final Object VFS_EVENT_REQUESTOR = new Object();
 
+  private static class LocalHistoryHolder {
+    static final LocalHistory ourInstance = ApplicationManager.getApplication().getComponent(LocalHistory.class);
+  }
+
   public static LocalHistory getInstance() {
-    return ApplicationManager.getApplication().getComponent(LocalHistory.class);
+    return LocalHistoryHolder.ourInstance;
   }
 
   public abstract LocalHistoryAction startAction(@Nullable String name);
@@ -43,4 +47,5 @@ public abstract class LocalHistory {
   public abstract byte[] getByteContent(VirtualFile f, FileRevisionTimestampComparator c);
 
   public abstract boolean isUnderControl(VirtualFile f);
+
 }

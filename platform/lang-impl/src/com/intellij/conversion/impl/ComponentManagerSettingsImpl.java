@@ -33,6 +33,7 @@ public class ComponentManagerSettingsImpl extends XmlBasedSettingsImpl implement
     super(file, context);
   }
 
+  @Override
   public Element getComponentElement(@NotNull @NonNls String componentName) {
     return mySettingsFile.findComponent(componentName);
   }

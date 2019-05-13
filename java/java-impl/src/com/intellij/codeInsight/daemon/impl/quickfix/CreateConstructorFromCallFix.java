@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,7 @@
  */
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
-import com.intellij.codeInsight.CodeInsightUtilBase;
+import com.intellij.codeInsight.CodeInsightUtilCore;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.generation.OverrideImplementUtil;
 import com.intellij.codeInsight.template.Template;
@@ -41,7 +41,7 @@ public class CreateConstructorFromCallFix extends CreateFromUsageBaseFix {
 
   private final PsiConstructorCall myConstructorCall;
 
-  public CreateConstructorFromCallFix(PsiConstructorCall constructorCall) {
+  public CreateConstructorFromCallFix(@NotNull PsiConstructorCall constructorCall) {
     myConstructorCall = constructorCall;
   }
 
@@ -53,7 +53,8 @@ public class CreateConstructorFromCallFix extends CreateFromUsageBaseFix {
   @Override
   protected void invokeImpl(final PsiClass targetClass) {
     final Project project = myConstructorCall.getProject();
-    PsiElementFactory elementFactory = JavaPsiFacade.getInstance(project).getElementFactory();
+    JVMElementFactory elementFactory = JVMElementFactories.getFactory(targetClass.getLanguage(), project);
+    if (elementFactory == null) elementFactory = JavaPsiFacade.getElementFactory(project);
 
     try {
       PsiMethod constructor = (PsiMethod)targetClass.add(elementFactory.createConstructor());
@@ -64,7 +65,7 @@ public class CreateConstructorFromCallFix extends CreateFromUsageBaseFix {
                                                  getTargetSubstitutor(myConstructorCall));
       final PsiMethod superConstructor = CreateClassFromNewFix.setupSuperCall(targetClass, constructor, templateBuilder);
 
-      constructor = CodeInsightUtilBase.forcePsiPostprocessAndRestoreElement(constructor);
+      constructor = CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(constructor);
       Template template = templateBuilder.buildTemplate();
       final Editor editor = positionCursor(project, targetClass.getContainingFile(), targetClass);
       if (editor == null) return;
@@ -74,24 +75,21 @@ public class CreateConstructorFromCallFix extends CreateFromUsageBaseFix {
 
       startTemplate(editor, template, project, new TemplateEditingAdapter() {
         @Override
-        public void templateFinished(Template template, boolean brokenOff) {
-          ApplicationManager.getApplication().runWriteAction(new Runnable() {
-            @Override
-            public void run() {
-              try {
-                PsiDocumentManager.getInstance(project).commitDocument(editor.getDocument());
-                final int offset = editor.getCaretModel().getOffset();
-                PsiMethod constructor = PsiTreeUtil.findElementOfClassAtOffset(file, offset, PsiMethod.class, false);
-                if (superConstructor == null) {
-                  CreateFromUsageUtils.setupMethodBody(constructor);
-                } else {
-                  OverrideImplementUtil.setupMethodBody(constructor, superConstructor, targetClass);
-                }
-                CreateFromUsageUtils.setupEditor(constructor, editor);
+        public void templateFinished(@NotNull Template template, boolean brokenOff) {
+          ApplicationManager.getApplication().runWriteAction(() -> {
+            try {
+              PsiDocumentManager.getInstance(project).commitDocument(editor.getDocument());
+              final int offset = editor.getCaretModel().getOffset();
+              PsiMethod constructor1 = PsiTreeUtil.findElementOfClassAtOffset(file, offset, PsiMethod.class, false);
+              if (superConstructor == null) {
+                CreateFromUsageUtils.setupMethodBody(constructor1);
+              } else {
+                OverrideImplementUtil.setupMethodBody(constructor1, superConstructor, targetClass);
               }
-              catch (IncorrectOperationException e) {
-                LOG.error(e);
-              }
+              CreateFromUsageUtils.setupEditor(constructor1, editor);
+            }
+            catch (IncorrectOperationException e) {
+              LOG.error(e);
             }
           });
         }
@@ -123,7 +121,7 @@ public class CreateConstructorFromCallFix extends CreateFromUsageBaseFix {
 
   @Override
   protected PsiElement getElement() {
-    if (!myConstructorCall.isValid() || !myConstructorCall.getManager().isInProject(myConstructorCall)) return null;
+    if (!myConstructorCall.isValid() || !canModify(myConstructorCall)) return null;
 
     PsiExpressionList argumentList = myConstructorCall.getArgumentList();
     if (argumentList == null) return null;
@@ -154,7 +152,7 @@ public class CreateConstructorFromCallFix extends CreateFromUsageBaseFix {
     PsiElement element = getElement(myConstructorCall);
 
     PsiFile targetFile = getTargetFile(myConstructorCall);
-    if (targetFile != null && !targetFile.getManager().isInProject(targetFile)) {
+    if (targetFile != null && !canModify(targetFile)) {
       return false;
     }
 

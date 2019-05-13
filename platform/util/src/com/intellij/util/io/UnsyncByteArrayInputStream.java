@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,32 +15,39 @@
  */
 package com.intellij.util.io;
 
+import org.jetbrains.annotations.NotNull;
+
 import java.io.InputStream;
 
+@SuppressWarnings("NonSynchronizedMethodOverridesSynchronizedMethod")
 public class UnsyncByteArrayInputStream extends InputStream {
   protected byte[] myBuffer;
   private int myPosition;
   private int myCount;
   private int myMarkedPosition;
 
-  public UnsyncByteArrayInputStream(byte buf[]) {
+  public UnsyncByteArrayInputStream(@NotNull byte[] buf) {
     this(buf, 0, buf.length);
   }
 
-  public UnsyncByteArrayInputStream(byte buf[], int offset, int length) {
-    this.myBuffer = buf;
-    this.myPosition = offset;
-    this.myCount = length;
+  public UnsyncByteArrayInputStream(@NotNull byte[] buf, int offset, int length) {
+    init(buf, offset, length);
   }
 
+  public void init(@NotNull byte[] buf, int offset, int length) {
+    myBuffer = buf;
+    myPosition = offset;
+    myCount = length;
+  }
+
+  @Override
   public int read() {
-    return (myPosition < myCount) ? (myBuffer[myPosition++] & 0xff) : -1;
+    return myPosition < myCount ? myBuffer[myPosition++] & 0xff : -1;
   }
 
-  public int read(byte b[], int off, int len) {
-    if (b == null) {
-      throw new NullPointerException();
-    } else if (off < 0 || len < 0 || len > b.length - off) {
+  @Override
+  public int read(@NotNull byte[] b, int off, int len) {
+    if (off < 0 || len < 0 || len > b.length - off) {
       throw new IndexOutOfBoundsException();
     }
     if (myPosition >= myCount) {
@@ -57,6 +64,7 @@ public class UnsyncByteArrayInputStream extends InputStream {
     return len;
   }
 
+  @Override
   public long skip(long n) {
     if (myPosition + n > myCount) {
       n = myCount - myPosition;
@@ -68,6 +76,7 @@ public class UnsyncByteArrayInputStream extends InputStream {
     return n;
   }
 
+  @Override
   public int available() {
     return myCount - myPosition;
   }
@@ -78,10 +87,11 @@ public class UnsyncByteArrayInputStream extends InputStream {
   }
 
   @Override
-  public void mark(int readlimit) {
+  public void mark(int readLimit) {
     myMarkedPosition = myPosition;
   }
 
+  @Override
   public void reset() {
     myPosition = myMarkedPosition;
   }

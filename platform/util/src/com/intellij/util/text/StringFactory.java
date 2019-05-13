@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,47 +15,48 @@
  */
 package com.intellij.util.text;
 
+import com.intellij.ReviseWhenPortedToJDK;
+import com.intellij.openapi.util.SystemInfo;
 import org.jetbrains.annotations.NotNull;
 
 import java.lang.reflect.Constructor;
 
+@ReviseWhenPortedToJDK("9")
 public class StringFactory {
-  private static final Constructor<String> sharingCtr;   // String(char[], boolean)
-  private static final Constructor<String> oldSharingCtr; // String(int offset, int count, char value[]) in ancient java 1.6
+  // String(char[], boolean). Works since JDK1.7, earlier JDKs have too slow reflection anyway
+  private static final Constructor<String> ourConstructor;
 
   static {
-    Constructor<String> newC = null;
-    Constructor<String> oldC = null;
-    try {
-      newC = String.class.getDeclaredConstructor(char[].class, boolean.class);
-      newC.setAccessible(true);
-    }
-    catch (NoSuchMethodException e) {
+    Constructor<String> constructor = null;
+    // makes no sense in JDK9 because new String(char[],boolean) there parses and copies array too.
+    if (!SystemInfo.IS_AT_LEAST_JAVA9) {
       try {
-        oldC = String.class.getDeclaredConstructor(int.class, int.class, char[].class);
-        oldC.setAccessible(true);
+        constructor = String.class.getDeclaredConstructor(char[].class, boolean.class);
+        constructor.setAccessible(true);
       }
-      catch (NoSuchMethodException ignored) {
-
+      catch (Throwable ignored) {
+        constructor = null; // setAccessible fails without explicit permission on Java 9
       }
     }
-    sharingCtr = newC;
-    oldSharingCtr = oldC;
+    ourConstructor = constructor;
   }
 
+  /**
+   * @return new instance of String which backed by given char array.
+   *
+   * CAUTION! EXTREMELY DANGEROUS!! DO NOT USE THIS METHOD UNLESS YOU ARE REALLY DESPERATE!!!
+   */
   @NotNull
   public static String createShared(@NotNull char[] chars) {
-    try {
-      if (sharingCtr != null) {
-        return sharingCtr.newInstance(chars, true);
+    if (ourConstructor != null) {
+      try {
+        return ourConstructor.newInstance(chars, Boolean.TRUE);
       }
-      if (oldSharingCtr != null) {
-        return oldSharingCtr.newInstance(0, chars.length, chars);
+      catch (Exception e) {
+        throw new RuntimeException(e);
       }
-      return new String(chars);
     }
-    catch (Exception e) {
-      throw new RuntimeException(e);
-    }
+
+    return new String(chars);
   }
 }

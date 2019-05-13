@@ -16,7 +16,6 @@
 package com.siyeh.ig.junit;
 
 import com.intellij.psi.PsiClass;
-import com.intellij.psi.util.InheritanceUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -26,6 +25,11 @@ import com.siyeh.ig.psiutils.TestUtils;
 import org.jetbrains.annotations.NotNull;
 
 public class TestCaseInProductCodeInspection extends BaseInspection {
+
+  @Override
+  protected InspectionGadgetsFix buildFix(Object... infos) {
+    return new MoveClassFix();
+  }
 
   @Override
   @NotNull
@@ -48,11 +52,6 @@ public class TestCaseInProductCodeInspection extends BaseInspection {
   }
 
   @Override
-  protected InspectionGadgetsFix buildFix(Object... infos) {
-    return new MoveClassFix();
-  }
-
-  @Override
   protected boolean buildQuickFixesOnlyForOnTheFlyErrors() {
     return true;
   }
@@ -62,16 +61,11 @@ public class TestCaseInProductCodeInspection extends BaseInspection {
     return new TestCaseInProductCodeVisitor();
   }
 
-  private static class TestCaseInProductCodeVisitor
-    extends BaseInspectionVisitor {
+  private static class TestCaseInProductCodeVisitor extends BaseInspectionVisitor {
 
     @Override
     public void visitClass(@NotNull PsiClass aClass) {
-      if (TestUtils.isTest(aClass)) {
-        return;
-      }
-      if (!InheritanceUtil.isInheritor(aClass,
-                                       "junit.framework.TestCase")) {
+      if (TestUtils.isInTestSourceContent(aClass) || !TestUtils.isJUnitTestClass(aClass)) {
         return;
       }
       registerClassError(aClass);

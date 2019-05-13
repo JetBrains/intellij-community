@@ -15,7 +15,14 @@
  */
 package org.intellij.lang.xpath.xslt.refactoring.introduceVariable;
 
+import com.intellij.lang.ASTNode;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.xml.XmlAttribute;
+import com.intellij.psi.xml.XmlTag;
+import com.intellij.util.IncorrectOperationException;
 import org.intellij.lang.xpath.psi.XPathExpression;
 import org.intellij.lang.xpath.psi.XPathVariableReference;
 import org.intellij.lang.xpath.psi.impl.XPathChangeUtil;
@@ -23,28 +30,22 @@ import org.intellij.lang.xpath.xslt.XsltSupport;
 import org.intellij.lang.xpath.xslt.refactoring.BaseIntroduceAction;
 import org.intellij.lang.xpath.xslt.util.XsltCodeInsightUtil;
 
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.xml.XmlAttribute;
-import com.intellij.psi.xml.XmlTag;
-import com.intellij.util.IncorrectOperationException;
-import com.intellij.lang.ASTNode;
-
 import java.util.List;
 import java.util.Set;
 
-@SuppressWarnings({"ComponentNotRegistered"})
 public class XsltIntroduceVariableAction extends BaseIntroduceAction<IntroduceVariableOptions> {
 
+    @Override
     public String getRefactoringName() {
         return "Introduce Variable";
     }
 
+    @Override
     protected String getCommandName() {
         return "Introduce XSLT Variable";
     }
 
+    @Override
     protected boolean extractImpl(XPathExpression expression, Set<XPathExpression> matchingExpressions, List<XmlTag> otherMatches, IntroduceVariableOptions dlg) {
         final XmlAttribute attribute = PsiTreeUtil.getContextOfType(expression, XmlAttribute.class, true);
         assert attribute != null;
@@ -55,7 +56,7 @@ public class XsltIntroduceVariableAction extends BaseIntroduceAction<IntroduceVa
                     attribute.getParent(),
                     XsltCodeInsightUtil.getUsageBlock(expression),
                     name,
-                    dlg.isReplaceAll() ? otherMatches.toArray(new XmlTag[otherMatches.size()]) : XmlTag.EMPTY);
+                    dlg.isReplaceAll() ? otherMatches.toArray(XmlTag.EMPTY) : XmlTag.EMPTY);
 
             final XmlTag parentTag = insertionPoint.getParentTag();
             assert parentTag != null : "Could not locate position to create variable at";
@@ -89,6 +90,7 @@ public class XsltIntroduceVariableAction extends BaseIntroduceAction<IntroduceVa
         }
     }
 
+    @Override
     protected IntroduceVariableOptions getSettings(XPathExpression expression, Set<XPathExpression> matchingExpressions) {
         final IntroduceVariableDialog dlg = new IntroduceVariableDialog(expression, matchingExpressions.size() + 1);
         dlg.show();

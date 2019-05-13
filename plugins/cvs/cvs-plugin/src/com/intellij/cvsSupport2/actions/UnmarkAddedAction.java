@@ -27,6 +27,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.vcs.actions.VcsContext;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 
@@ -42,24 +43,24 @@ public class UnmarkAddedAction extends AnAction{
     myVisibility.addCondition(ActionOnSelectedElement.FILES_ARE_LOCALLY_ADDED);
   }
 
-  public void update(AnActionEvent e) {
+  @Override
+  public void update(@NotNull AnActionEvent e) {
     myVisibility.applyToEvent(e);
   }
 
-  public void actionPerformed(AnActionEvent e) {
+  @Override
+  public void actionPerformed(@NotNull AnActionEvent e) {
     VcsContext context = CvsContextWrapper.createCachedInstance(e);
     final VirtualFile[] selectedFiles = context.getSelectedFiles();
-    ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
-      public void run() {
-        ProgressIndicator progressIndicator = ProgressManager.getInstance().getProgressIndicator();
-        for (int i = 0; i < selectedFiles.length; i++) {
-          File file = CvsVfsUtil.getFileFor(selectedFiles[i]);
-          if (progressIndicator != null){
-            progressIndicator.setFraction((double)i/(double)selectedFiles.length);
-            progressIndicator.setText(file.getAbsolutePath());
-          }
-          CvsUtil.removeEntryFor(file);
+    ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
+      ProgressIndicator progressIndicator = ProgressManager.getInstance().getProgressIndicator();
+      for (int i = 0; i < selectedFiles.length; i++) {
+        File file = CvsVfsUtil.getFileFor(selectedFiles[i]);
+        if (progressIndicator != null){
+          progressIndicator.setFraction((double)i/(double)selectedFiles.length);
+          progressIndicator.setText(file.getAbsolutePath());
         }
+        CvsUtil.removeEntryFor(file);
       }
     }, CvsBundle.message("operation.name.undo.add"), true, context.getProject());
     VirtualFileManager.getInstance().asyncRefresh(null);

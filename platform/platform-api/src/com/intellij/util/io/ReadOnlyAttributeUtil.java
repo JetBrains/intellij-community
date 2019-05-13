@@ -17,21 +17,20 @@ package com.intellij.util.io;
 
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 
 import java.io.IOException;
 
 public class ReadOnlyAttributeUtil {
   /**
-   * Sets specified read-only status for the spcified <code>file</code>.
+   * Sets specified read-only status for the spcified {@code file}.
    * This method can be performed only for files which are in local file system.
    *
    * @param file           file which read-only attribute to be changed.
    * @param readOnlyStatus new read-only status.
    * @throws java.lang.IllegalArgumentException
-   *                     if passed <code>file</code> doesn't
+   *                     if passed {@code file} doesn't
    *                     belong to the local file system.
-   * @throws IOException if some <code>IOException</code> occurred.
+   * @throws IOException if some {@code IOException} occurred.
    */
   public static void setReadOnlyAttribute(VirtualFile file, boolean readOnlyStatus) throws IOException {
     if (file.getFileSystem().isReadOnly()) {
@@ -42,14 +41,7 @@ public class ReadOnlyAttributeUtil {
       return;
     }
 
-    if (file instanceof NewVirtualFile) {
-      ((NewVirtualFile)file).setWritable(!readOnlyStatus);
-    }
-    else {
-      String path = file.getPresentableUrl();
-      setReadOnlyAttribute(path, readOnlyStatus);
-      file.refresh(false, false);
-    }
+    file.setWritable(!readOnlyStatus);
   }
 
   public static void setReadOnlyAttribute(String path, boolean readOnlyStatus) throws IOException {

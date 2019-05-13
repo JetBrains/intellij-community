@@ -43,41 +43,40 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-/*
-* Created by IntelliJ IDEA.
-* User: sweinreuter
-* Date: 04.12.2007
-*/
 public final class ModelAnnotator implements Annotator, DomElementsAnnotator {
 
+  @Override
   public void annotate(@NotNull PsiElement psiElement, @NotNull AnnotationHolder holder) {
     if (psiElement instanceof CommonElement) {
-      ((CommonElement)psiElement).accept(new MyAnnotator<PsiElement>(CommonAnnotationHolder.create(holder)));
+      ((CommonElement)psiElement).accept(new MyAnnotator<>(CommonAnnotationHolder.create(holder)));
     }
   }
 
+  @Override
   public void annotate(DomElement element, DomElementAnnotationHolder holder) {
     if (element instanceof RngDomElement) {
-      ((RngDomElement)element).accept(new MyAnnotator<DomElement>(CommonAnnotationHolder.create(holder)));
+      ((RngDomElement)element).accept(new MyAnnotator<>(CommonAnnotationHolder.create(holder)));
     }
   }
 
-  private final class MyAnnotator<T> extends CommonElement.Visitor {
+  private static final class MyAnnotator<T> extends CommonElement.Visitor {
     private final CommonAnnotationHolder<T> myHolder;
 
-    public MyAnnotator(CommonAnnotationHolder<T> holder) {
+    MyAnnotator(CommonAnnotationHolder<T> holder) {
       myHolder = holder;
     }
 
+    @Override
     public void visitDefine(final Define define) {
       final PsiElement element = define.getPsiElement();
       if (element != null) {
         final XmlFile xmlFile = (XmlFile)element.getContainingFile();
 
-        final List<Define> result = new SmartList<Define>();
+        final List<Define> result = new SmartList<>();
         final OverriddenDefineSearcher searcher = new OverriddenDefineSearcher(define, xmlFile, result);
 
         final PsiElementProcessor.FindElement<XmlFile> processor = new PsiElementProcessor.FindElement<XmlFile>() {
+          @Override
           public boolean execute(@NotNull XmlFile file) {
             final Grammar grammar = GrammarFactory.getGrammar(file);
             if (grammar == null) return true;
@@ -102,6 +101,7 @@ public final class ModelAnnotator implements Annotator, DomElementsAnnotator {
       a.setGutterIconRenderer(renderer);
     }
 
+    @Override
     public void visitInclude(Include inc) {
       final Define[] overrides = inc.getOverrides();
       for (Define define : overrides) {

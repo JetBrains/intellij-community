@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,12 +16,18 @@
 
 package com.intellij.codeInsight.template.impl;
 
-import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.psi.PsiFile;
 
 /**
- * @author yole
+ * When an template is started, allows to prepare the editor before actual template expanding.
+ * 
+ * For example, for some XML-based languages it make sense to check whether text of template contains 
+ * unescaped character and insert CDATA-element to the editor before template expanding.
+ *
+ * @see TemplateOptionalProcessor
+ * @see com.intellij.codeInsight.template.TemplateSubstitutor 
  */
 public interface TemplatePreprocessor {
   ExtensionPointName<TemplatePreprocessor> EP_NAME = ExtensionPointName.create("com.intellij.liveTemplatePreprocessor");

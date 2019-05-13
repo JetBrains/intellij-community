@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,7 @@
  */
 package com.intellij.spellchecker.inspections;
 
-import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.util.TextRange;
@@ -32,15 +32,10 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-
 public abstract class BaseSplitter implements Splitter {
-
-  static final Logger LOG = Logger.getInstance("#com.intellij.spellchecker.inspections.BaseSplitter");
-
   public static final int MIN_RANGE_LENGTH = 3;
 
-
-  protected static void addWord(@NotNull Consumer<TextRange> consumer, boolean ignore, @Nullable TextRange found) {
+  protected static void addWord(@NotNull Consumer<? super TextRange> consumer, boolean ignore, @Nullable TextRange found) {
     if (found == null || ignore) {
       return;
     }
@@ -51,8 +46,7 @@ public abstract class BaseSplitter implements Splitter {
     consumer.consume(found);
   }
 
-
-  protected static boolean isAllWordsAreUpperCased(@NotNull String text, @NotNull List<TextRange> words) {
+  protected static boolean isAllWordsAreUpperCased(@NotNull String text, @NotNull List<? extends TextRange> words) {
     for (TextRange word : words) {
       CharacterIterator it = new StringCharacterIterator(text, word.getStartOffset(), word.getEndOffset(), word.getStartOffset());
       for (char c = it.first(); c != CharacterIterator.DONE; c = it.next()) {
@@ -62,10 +56,9 @@ public abstract class BaseSplitter implements Splitter {
       }
     }
     return true;
-
   }
 
-  protected static boolean containsShortWord(@NotNull List<TextRange> words) {
+  protected static boolean containsShortWord(@NotNull List<? extends TextRange> words) {
     for (TextRange word : words) {
       if (word.getLength() < MIN_RANGE_LENGTH) {
         return true;
@@ -96,12 +89,12 @@ public abstract class BaseSplitter implements Splitter {
 
   @NotNull
   static protected List<TextRange> excludeByPattern(String text, TextRange range, @NotNull Pattern toExclude, int groupToInclude) {
-    List<TextRange> toCheck = new SmartList<TextRange>();
+    List<TextRange> toCheck = new SmartList<>();
     int from = range.getStartOffset();
     int till;
     boolean addLast = true;
-    Matcher matcher = toExclude.matcher(StringUtil.newBombedCharSequence(range.substring(text), 500));
     try {
+      Matcher matcher = toExclude.matcher(newBombedCharSequence(text, range));
       while (matcher.find()) {
         checkCancelled();
         TextRange found = matcherRange(range, matcher);
@@ -130,15 +123,31 @@ public abstract class BaseSplitter implements Splitter {
       return toCheck;
     }
     catch (ProcessCanceledException e) {
-      //LOG.warn("Matching took too long: >>>" + range.substring(text) + "<<< " + toExclude);
       return Collections.singletonList(range);
-      //return Collections.emptyList();
     }
   }
 
-  public static void checkCancelled() {
-    ProgressIndicatorProvider.checkCanceled();
+  protected static CharSequence newBombedCharSequence(String text, TextRange range) {
+    return newBombedCharSequence(range.substring(text));
   }
 
+  protected static CharSequence newBombedCharSequence(final String substring) {
+    final long myTime = System.currentTimeMillis() + 500;
+    return new StringUtil.BombedCharSequence(substring) {
+      @Override
+      protected void checkCanceled() {
+        //todo[anna] if (ApplicationManager.getApplication().isHeadlessEnvironment()) return;
+        long l = System.currentTimeMillis();
+        if (l >= myTime) {
+          throw new ProcessCanceledException();
+        }
+      }
+    };
+  }
 
+  public static void checkCancelled() {
+    if (ApplicationManager.getApplication() != null) {
+      ProgressIndicatorProvider.checkCanceled();
+    }
+  }
 }

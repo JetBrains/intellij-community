@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,37 +15,86 @@
  */
 package com.siyeh.ipp;
 
+import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInsight.intention.IntentionActionDelegate;
 import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.testFramework.fixtures.CodeInsightTestUtil;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
+import com.intellij.util.SmartList;
+import org.intellij.lang.annotations.Language;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+
+import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public abstract class IPPTestCase extends LightCodeInsightFixtureTestCase {
+
+  private static final Pattern PATTERN = Pattern.compile("/\\*_(.*)\\*/");
+
   @Override
   protected String getBasePath() {
     return PluginPathManager.getPluginHomePathRelative("IntentionPowerPak") + "/test/com/siyeh/ipp/" + getRelativePath();
   }
 
-  protected abstract String getRelativePath();
+  @NonNls
+  protected String getRelativePath() {
+    return "";
+  }
 
   protected void doTest() {
     doTest(getIntentionName());
   }
 
-  protected void doTest(String intentionName) {
+  protected void doTest(@NotNull String intentionName) {
     final String testName = getTestName(false);
     CodeInsightTestUtil.doIntentionTest(myFixture, intentionName, testName + ".java", testName + "_after.java");
+  }
+
+  protected void doTest(@NotNull @Language("JAVA") String before, @NotNull @Language("JAVA") String after) {
+    final Matcher matcher = PATTERN.matcher(before);
+    assertTrue("No caret and intention name specified", matcher.find());
+    myFixture.configureByText("a.java", matcher.replaceFirst("<caret>"));
+    myFixture.launchAction(myFixture.findSingleIntention(matcher.group(1)));
+    myFixture.checkResult(after);
+  }
+
+  protected void doTestIntentionNotAvailable(@NotNull @Language("JAVA") String source) {
+    final Matcher matcher = PATTERN.matcher(source);
+    assertTrue("No caret and intention name specified", matcher.find());
+    myFixture.configureByText("a.java", matcher.replaceFirst("<caret>"));
+    final String intentionName = matcher.group(1);
+    assertEmpty("Intention \'" + intentionName + "\' is available but should not", myFixture.filterAvailableIntentions(intentionName));
   }
 
   protected void assertIntentionNotAvailable() {
     assertIntentionNotAvailable(getIntentionName());
   }
 
-  protected void assertIntentionNotAvailable(final String intentionName) {
+  protected void assertIntentionNotAvailable(@NotNull final String intentionName) {
     final String testName = getTestName(false);
     myFixture.configureByFile(testName + ".java");
-    assertEmpty("Intention \'" + intentionName + "\' is available but should not",
-                myFixture.filterAvailableIntentions(intentionName));
+    assertEmpty("Intention \'" + intentionName + "\' is available but should not", myFixture.filterAvailableIntentions(intentionName));
   }
 
-  protected abstract String getIntentionName();
+  protected void assertIntentionNotAvailable(Class<? extends IntentionAction> intentionClass) {
+    myFixture.configureByFile(getTestName(false) + ".java");
+    final List<IntentionAction> result = new SmartList<>();
+    for (final IntentionAction intention : myFixture.getAvailableIntentions()) {
+      if (intentionClass.isInstance(intention)) {
+        result.add(intention);
+      }
+      else if (intention instanceof IntentionActionDelegate) {
+        if (intentionClass.isInstance(((IntentionActionDelegate)intention).getDelegate())) {
+          result.add(intention);
+        }
+      }
+    }
+    assertEmpty("Intention of class \'" + intentionClass + "\' is available but should not", result);
+  }
+
+  protected String getIntentionName() {
+    return null;
+  }
 }

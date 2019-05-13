@@ -1,0 +1,9 @@
+<idea-plugin>
+  <idea-version since-build="3000"/>
+  <application-components>
+    <component>
+      <implementation-class></implementation-class>
+      <interface-class>I<caret>ntf</interface-class>
+    </component>
+  </application-components>
+</idea-plugin>

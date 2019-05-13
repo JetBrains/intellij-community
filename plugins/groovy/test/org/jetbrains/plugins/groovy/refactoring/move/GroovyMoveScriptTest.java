@@ -16,10 +16,11 @@
 
 package org.jetbrains.plugins.groovy.refactoring.move;
 
-import com.intellij.openapi.application.Result;
-import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.vfs.*;
+import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VfsUtilCore;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.refactoring.PackageWrapper;
@@ -44,15 +45,15 @@ public class GroovyMoveScriptTest extends LightCodeInsightFixtureTestCase {
     return TestUtils.getTestDataPath() + "refactoring/move/moveScript/";
   }
 
-  public void testMoveScriptBasic() throws Exception {
+  public void testMoveScriptBasic() {
     doTest(new String[]{"a/Script.groovy"}, "b");
   }
 
-  public void testUpdateReferences() throws Exception {
+  public void testUpdateReferences() {
     doTest(new String[]{"a/Script.groovy"}, "b");
   }
 
-  public void testMultiMove() throws Exception {
+  public void testMultiMove() {
     doTest(new String[]{"a/Script.groovy", "a/Script2.groovy"}, "b");
   }
 
@@ -85,17 +86,12 @@ public class GroovyMoveScriptTest extends LightCodeInsightFixtureTestCase {
     assertNotNull("Directory " + newDirName + " not found", psiDirectory);
 
     final PsiPackage pkg = JavaDirectoryService.getInstance().getPackage(psiDirectory);
-    List<PsiClass> classList = new ArrayList<PsiClass>();
+    List<PsiClass> classList = new ArrayList<>();
     for (PsiFile file : files) {
       Collections.addAll(classList, ((PsiClassOwner)file).getClasses());
     }
-    final PsiClass[] classes = classList.toArray(new PsiClass[classList.size()]);
-    new WriteCommandAction(myFixture.getProject()) {
-      @Override
-      protected void run(Result result) throws Throwable {
-        new MoveClassesOrPackagesProcessor(getProject(), classes, new SingleSourceRootMoveDestination(PackageWrapper.create(pkg), psiDirectory), true, true, null).run();
-      }
-    }.execute();
+    final PsiClass[] classes = classList.toArray(PsiClass.EMPTY_ARRAY);
+    new MoveClassesOrPackagesProcessor(getProject(), classes, new SingleSourceRootMoveDestination(PackageWrapper.create(pkg), psiDirectory), true, true, null).run();
 
     PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
     FileDocumentManager.getInstance().saveAllDocuments();
@@ -113,7 +109,7 @@ public class GroovyMoveScriptTest extends LightCodeInsightFixtureTestCase {
 
     VirtualFileManager.getInstance().syncRefresh();
     try {
-      PlatformTestUtil.assertDirectoriesEqual(expectedRoot, actualRoot, VirtualFileFilter.ALL);
+      PlatformTestUtil.assertDirectoriesEqual(expectedRoot, actualRoot);
     }
     catch (IOException e) {
       throw new RuntimeException(e);

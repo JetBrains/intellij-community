@@ -1,24 +1,10 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.uiDesigner.make;
 
+import com.intellij.uiDesigner.core.GridConstraints;
+import com.intellij.uiDesigner.core.GridLayoutManager;
 import com.intellij.uiDesigner.lw.LwComponent;
 import com.intellij.uiDesigner.lw.LwContainer;
-import com.intellij.uiDesigner.core.GridLayoutManager;
-import com.intellij.uiDesigner.core.GridConstraints;
 import gnu.trove.TIntObjectHashMap;
 import org.jetbrains.annotations.NonNls;
 
@@ -78,6 +64,7 @@ public class GridLayoutSourceGenerator extends LayoutSourceGenerator {
     }
   }
 
+  @Override
   public void generateComponentLayout(final LwComponent component, final FormSourceCodeGenerator generator,
                                       final String variable, final String parentVariable) {
     generator.startMethodCall(parentVariable, "add");
@@ -109,7 +96,6 @@ public class GridLayoutSourceGenerator extends LayoutSourceGenerator {
   private static void pushSizePolicy(final FormSourceCodeGenerator generator, final int value) {
     final String className = GridConstraints.class.getName();
 
-    //noinspection NonConstantStringShouldBeStringBuffer
     @NonNls String presentation;
     if (GridConstraints.SIZEPOLICY_FIXED == value) {
       presentation = className + ".SIZEPOLICY_FIXED";
@@ -149,7 +135,7 @@ public class GridLayoutSourceGenerator extends LayoutSourceGenerator {
   }
 
   private static TIntObjectHashMap<String> fillMap(final Class<GridConstraints> aClass, @NonNls final String prefix) {
-    final TIntObjectHashMap<String> map = new TIntObjectHashMap<String>();
+    final TIntObjectHashMap<String> map = new TIntObjectHashMap<>();
 
     final Field[] fields = aClass.getFields();
     for (final Field field : fields) {

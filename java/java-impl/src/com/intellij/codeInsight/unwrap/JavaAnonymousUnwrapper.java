@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,9 @@ package com.intellij.codeInsight.unwrap;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
@@ -28,13 +30,13 @@ public class JavaAnonymousUnwrapper extends JavaUnwrapper {
   }
 
   @Override
-  public boolean isApplicableTo(PsiElement e) {
+  public boolean isApplicableTo(@NotNull PsiElement e) {
     return e instanceof PsiAnonymousClass
            && ((PsiAnonymousClass)e).getMethods().length <= 1;
   }
 
   @Override
-  public PsiElement collectAffectedElements(PsiElement e, List<PsiElement> toExtract) {
+  public PsiElement collectAffectedElements(@NotNull PsiElement e, @NotNull List<PsiElement> toExtract) {
     super.collectAffectedElements(e, toExtract);
     return findElementToExtractFrom(e);
   }
@@ -43,25 +45,51 @@ public class JavaAnonymousUnwrapper extends JavaUnwrapper {
   protected void doUnwrap(PsiElement element, Context context) throws IncorrectOperationException {
     PsiElement from = findElementToExtractFrom(element);
 
-    for (PsiMethod m : ((PsiAnonymousClass)element).getMethods()) {
+    final PsiMethod[] methods = ((PsiAnonymousClass)element).getMethods();
+
+    if (methods.length == 1) {
+      final PsiCodeBlock body = methods[0].getBody();
+      if (body != null) {
+        final PsiStatement[] statements = body.getStatements();
+        if (statements.length == 1 && statements[0] instanceof PsiReturnStatement) {
+          final PsiExpression returnValue = ((PsiReturnStatement)statements[0]).getReturnValue();
+          if (toAssignment(context, from, returnValue)) return;
+        }
+      }
+    }
+
+    for (PsiMethod m : methods) {
       context.extractFromCodeBlock(m.getBody(), from);
     }
 
     PsiElement next = from.getNextSibling();
-    if (next instanceof PsiJavaToken && ((PsiJavaToken)next).getTokenType() == JavaTokenType.SEMICOLON) {
+    if (PsiUtil.isJavaToken(next, JavaTokenType.SEMICOLON)) {
       context.deleteExactly(from.getNextSibling());
     }
     context.deleteExactly(from);
   }
 
-  private static PsiElement findElementToExtractFrom(PsiElement el) {
+  public static boolean toAssignment(Context context, PsiElement from, PsiExpression returnValue) {
+    if (from instanceof PsiDeclarationStatement) {
+      final PsiElement[] declaredElements = ((PsiDeclarationStatement)from).getDeclaredElements();
+      if (declaredElements.length == 1 && declaredElements[0] instanceof PsiVariable) {
+        context.setInitializer((PsiVariable)declaredElements[0], returnValue);
+        return true;
+      }
+    }
+    return false;
+  }
+
+  public static PsiElement findElementToExtractFrom(PsiElement el) {
     if (el.getParent() instanceof PsiNewExpression) el = el.getParent();
     el = findTopmostParentOfType(el, PsiMethodCallExpression.class);
     el = findTopmostParentOfType(el, PsiAssignmentExpression.class);
     el = findTopmostParentOfType(el, PsiDeclarationStatement.class);
-
-    while (el.getParent() instanceof PsiExpressionStatement) {
-      el = el.getParent();
+    
+    PsiElement parent = el.getParent();
+    while (parent instanceof PsiExpressionStatement || parent instanceof PsiReturnStatement) {
+      el = parent;
+      parent = el.getParent();
     }
 
     return el;
@@ -69,8 +97,7 @@ public class JavaAnonymousUnwrapper extends JavaUnwrapper {
 
   private static PsiElement findTopmostParentOfType(PsiElement el, Class<? extends PsiElement> clazz) {
     while (true) {
-      @SuppressWarnings({"unchecked"})
-      PsiElement temp = PsiTreeUtil.getParentOfType(el, clazz, true, PsiAnonymousClass.class);
+      PsiElement temp = PsiTreeUtil.getParentOfType(el, clazz, true, PsiAnonymousClass.class, PsiLambdaExpression.class);
       if (temp == null || temp instanceof PsiFile) return el;
       el = temp;
     }

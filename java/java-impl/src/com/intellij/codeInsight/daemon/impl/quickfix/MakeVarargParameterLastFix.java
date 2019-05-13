@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,9 +17,10 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.codeInsight.CodeInsightUtilBase;
+import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiParameter;
 import com.intellij.util.IncorrectOperationException;
@@ -29,7 +30,7 @@ import org.jetbrains.annotations.NotNull;
  * @author ven
  */
 public class MakeVarargParameterLastFix implements IntentionAction {
-  public MakeVarargParameterLastFix(PsiParameter parameter) {
+  public MakeVarargParameterLastFix(@NotNull PsiParameter parameter) {
     myParameter = parameter;
   }
 
@@ -49,12 +50,17 @@ public class MakeVarargParameterLastFix implements IntentionAction {
 
   @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    return myParameter.isValid() && myParameter.getManager().isInProject(myParameter);
+    return myParameter.isValid() && BaseIntentionAction.canModify(myParameter);
+  }
+
+  @NotNull
+  @Override
+  public PsiElement getElementToMakeWritable(@NotNull PsiFile file) {
+    return myParameter;
   }
 
   @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-    if (!CodeInsightUtilBase.preparePsiElementForWrite(myParameter)) return;
     myParameter.getParent().add(myParameter);
     myParameter.delete();
   }

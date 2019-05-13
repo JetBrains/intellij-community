@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,20 +16,16 @@
 package com.intellij.debugger.ui;
 
 import com.intellij.codeInsight.hint.HintManager;
-import com.intellij.codeInsight.hint.HintManagerImpl;
 import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.DebuggerInvocationUtil;
-import com.intellij.debugger.DebuggerManagerEx;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.engine.events.DebuggerContextCommandImpl;
 import com.intellij.debugger.impl.DebuggerContextImpl;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Computable;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.Nullable;
 
@@ -40,18 +36,16 @@ public abstract class EditorEvaluationCommand<T> extends DebuggerContextCommandI
   protected final PsiElement myElement;
   @Nullable private final Editor myEditor;
   protected final ProgressIndicator myProgressIndicator;
-  private final DebuggerContextImpl myDebuggerContext;
 
   public EditorEvaluationCommand(@Nullable Editor editor, PsiElement expression, DebuggerContextImpl context,
                                  final ProgressIndicator indicator) {
     super(context);
-    Project project = expression.getProject();
     myProgressIndicator = indicator;
     myEditor = editor;
     myElement = expression;
-    myDebuggerContext = (DebuggerManagerEx.getInstanceEx(project)).getContext();
   }
 
+  @Override
   public Priority getPriority() {
     return Priority.HIGH;
   }
@@ -59,25 +53,19 @@ public abstract class EditorEvaluationCommand<T> extends DebuggerContextCommandI
   protected abstract T evaluate(EvaluationContextImpl evaluationContext) throws EvaluateException;
 
   public T evaluate() throws EvaluateException {
-    myProgressIndicator.setText(DebuggerBundle.message("progress.evaluating", ApplicationManager.getApplication().runReadAction(new Computable<String>() {
-            public String compute() {
-              return myElement.getText();
-            }
-          })));
+    myProgressIndicator.setText(DebuggerBundle.message("progress.evaluating", ReadAction.compute(myElement::getText)));
 
     try {
-      T result = evaluate(myDebuggerContext.createEvaluationContext());
+      T result = evaluate(getDebuggerContext().createEvaluationContext());
 
       if (myProgressIndicator.isCanceled()) throw new ProcessCanceledException();
 
       return result;
     } catch (final EvaluateException e) {
       if (myEditor != null) {
-        DebuggerInvocationUtil.invokeLater(myDebuggerContext.getProject(), new Runnable() {
-          public void run() {
-            showEvaluationHint(myEditor, myElement, e);
-          }
-        }, myProgressIndicator.getModalityState());
+        DebuggerInvocationUtil.invokeLater(myElement.getProject(),
+                                           () -> showEvaluationHint(myEditor, myElement, e),
+                                           myProgressIndicator.getModalityState());
       }
       throw e;
     }
@@ -87,8 +75,8 @@ public abstract class EditorEvaluationCommand<T> extends DebuggerContextCommandI
     if (myEditor.isDisposed() || !myEditor.getComponent().isVisible()) return;
 
     HintManager.getInstance().showErrorHint(myEditor, e.getMessage(), myElement.getTextRange().getStartOffset(),
-                                            myElement.getTextRange().getEndOffset(), HintManagerImpl.UNDER,
-                                            HintManagerImpl.HIDE_BY_ESCAPE | HintManagerImpl.HIDE_BY_TEXT_CHANGE,
+                                            myElement.getTextRange().getEndOffset(), HintManager.UNDER,
+                                            HintManager.HIDE_BY_ESCAPE | HintManager.HIDE_BY_TEXT_CHANGE,
                                             1500);
   }
 

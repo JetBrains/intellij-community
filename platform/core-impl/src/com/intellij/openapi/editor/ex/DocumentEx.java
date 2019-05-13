@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,26 +21,31 @@ import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Collections;
 import java.util.List;
 
 public interface DocumentEx extends Document {
-  void setStripTrailingSpacesEnabled(boolean isEnabled);
+  default void setStripTrailingSpacesEnabled(boolean isEnabled) {
+  }
 
-  @NotNull LineIterator createLineIterator();
+  @NotNull
+  LineIterator createLineIterator();
 
   void setModificationStamp(long modificationStamp);
 
-  void addEditReadOnlyListener(@NotNull EditReadOnlyListener listener);
+  default void addEditReadOnlyListener(@NotNull EditReadOnlyListener listener) {
+  }
 
-  void removeEditReadOnlyListener(@NotNull EditReadOnlyListener listener);
+  default void removeEditReadOnlyListener(@NotNull EditReadOnlyListener listener) {
+  }
 
   void replaceText(@NotNull CharSequence chars, long newModificationStamp);
 
   /**
-   * Moves text from the <code>[src start; src end)</code> range to the <code>dstOffset</code> offset.
+   * Moves text from the {@code [srcStart; srcEnd)} range to the {@code dstOffset} offset.
    * <p/>
    * The benefit to use this method over usual {@link #deleteString(int, int)} and {@link #replaceString(int, int, CharSequence)}
-   * is that {@link #createRangeMarker(int, int, boolean) range markers} from the <code>[srcStart; srcEnd)</code> range have
+   * is that {@link #createRangeMarker(int, int, boolean) range markers} from the {@code [srcStart; srcEnd)} range have
    * a chance to be preserved.
    *
    * @param srcStart  start offset of the text to move (inclusive)
@@ -49,26 +54,66 @@ public interface DocumentEx extends Document {
    */
   void moveText(int srcStart, int srcEnd, int dstOffset);
 
-  int getListenersCount();
+  default void suppressGuardedExceptions() {
+  }
+  default void unSuppressGuardedExceptions() {
+  }
 
-  void suppressGuardedExceptions();
-  void unSuppressGuardedExceptions();
+  default boolean isInEventsHandling() {
+    return false;
+  }
 
-  boolean isInEventsHandling();
-
-  void clearLineModificationFlags();
+  default void clearLineModificationFlags() {
+  }
 
   boolean removeRangeMarker(@NotNull RangeMarkerEx rangeMarker);
 
-  boolean isInBulkUpdate();
+  void registerRangeMarker(@NotNull RangeMarkerEx rangeMarker,
+                           int start,
+                           int end,
+                           boolean greedyToLeft,
+                           boolean greedyToRight,
+                           int layer);
 
-  void setInBulkUpdate(boolean value);
+  default boolean isInBulkUpdate() {
+    return false;
+  }
+
+  /**
+   * Enters or exits 'bulk' mode for processing of document changes. Bulk mode should be used when a large number of document changes
+   * are applied in batch (without user interaction for each change). In this mode, to improve performance, some activities that usually
+   * happen on each document change will be muted, with reconciliation happening on bulk mode exit.
+   * <br>
+   * Certain operations shouldn't be invoked in bulk mode as they can return invalid results or lead to exception. They include: querying 
+   * or updating folding or soft wrap data, editor position recalculation functions (offset to logical position, logical to visual position, 
+   * etc), querying or updating caret position or selection state. 
+   */
+  default void setInBulkUpdate(boolean value) {
+  }
 
   @NotNull
-  List<RangeMarker> getGuardedBlocks();
+  default List<RangeMarker> getGuardedBlocks() {
+    return Collections.emptyList();
+  }
 
-  boolean processRangeMarkers(@NotNull Processor<RangeMarker> processor);
-  boolean processRangeMarkersOverlappingWith(int start, int end, @NotNull Processor<RangeMarker> processor);
+  /**
+   * Get all range markers
+   * and hand them to the {@code processor} in their {@link RangeMarker#getStartOffset()} order
+   */
+  boolean processRangeMarkers(@NotNull Processor<? super RangeMarker> processor);
+
+  /**
+   * Get range markers which {@link com.intellij.openapi.util.TextRange#intersects(int, int)} the specified range
+   * and hand them to the {@code processor} in their {@link RangeMarker#getStartOffset()} order
+   */
+  boolean processRangeMarkersOverlappingWith(int start, int end, @NotNull Processor<? super RangeMarker> processor);
+
+  /**
+   * @return modification stamp. Guaranteed to be strictly increasing on each change unlike the {@link #getModificationStamp()} which can change arbitrarily.
+   */
+  default int getModificationSequence() {
+    return 0;
+  }
 }
 
 

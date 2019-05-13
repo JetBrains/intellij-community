@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions;
 
 import com.intellij.ide.IdeBundle;
@@ -25,6 +11,7 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.FileStatusManager;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 
@@ -33,9 +20,9 @@ import java.util.ArrayList;
  */
 public abstract class CloseEditorsActionBase extends AnAction implements DumbAware {
   protected ArrayList<Pair<EditorComposite, EditorWindow>> getFilesToClose (final AnActionEvent event) {
-    final ArrayList<Pair<EditorComposite, EditorWindow>> res = new ArrayList<Pair<EditorComposite, EditorWindow>>();
+    final ArrayList<Pair<EditorComposite, EditorWindow>> res = new ArrayList<>();
     final DataContext dataContext = event.getDataContext();
-    final Project project = event.getData(PlatformDataKeys.PROJECT);
+    final Project project = event.getData(CommonDataKeys.PROJECT);
     final FileEditorManagerEx editorManager = FileEditorManagerEx.getInstanceEx(project);
     final EditorWindow editorWindow = EditorWindow.DATA_KEY.getData(dataContext);
     final EditorWindow[] windows;
@@ -51,7 +38,7 @@ public abstract class CloseEditorsActionBase extends AnAction implements DumbAwa
         final EditorWindow window = windows [i];
         final EditorComposite [] editors = window.getEditors ();
         for (final EditorComposite editor : editors) {
-          if (isFileToClose(editor, window)) {
+          if (isFileToClose(editor, window) || isFileToCloseInContext(event.getDataContext(), editor, window)) {
             res.add(Pair.create(editor, window));
           }
         }
@@ -62,29 +49,33 @@ public abstract class CloseEditorsActionBase extends AnAction implements DumbAwa
 
   protected abstract boolean isFileToClose(EditorComposite editor, EditorWindow window);
 
-  public void actionPerformed(final AnActionEvent e) {
-    final Project project = e.getData(PlatformDataKeys.PROJECT);
+  protected boolean isFileToCloseInContext(DataContext dataContext, EditorComposite editor, EditorWindow window) {
+    return false;
+  }
+
+  @Override
+  public void actionPerformed(@NotNull final AnActionEvent e) {
+    final Project project = e.getData(CommonDataKeys.PROJECT);
     final CommandProcessor commandProcessor = CommandProcessor.getInstance();
     commandProcessor.executeCommand(
-      project, new Runnable(){
-        public void run() {
-          final ArrayList<Pair<EditorComposite, EditorWindow>> filesToClose = getFilesToClose (e);
-          for (int i = 0; i != filesToClose.size (); ++ i) {
-            final Pair<EditorComposite, EditorWindow> we = filesToClose.get(i);
-            we.getSecond ().closeFile (we.getFirst ().getFile ());
-          }
+      project, () -> {
+        final ArrayList<Pair<EditorComposite, EditorWindow>> filesToClose = getFilesToClose (e);
+        for (int i = 0; i != filesToClose.size (); ++ i) {
+          final Pair<EditorComposite, EditorWindow> we = filesToClose.get(i);
+          we.getSecond ().closeFile (we.getFirst ().getFile ());
         }
       }, IdeBundle.message("command.close.all.unmodified.editors"), null
     );
   }
 
-  public void update(final AnActionEvent event){
+  @Override
+  public void update(@NotNull final AnActionEvent event){
     final Presentation presentation = event.getPresentation();
     final DataContext dataContext = event.getDataContext();
     final EditorWindow editorWindow = EditorWindow.DATA_KEY.getData(dataContext);
     final boolean inSplitter = editorWindow != null && editorWindow.inSplitter();
     presentation.setText(getPresentationText(inSplitter));
-    final Project project = event.getData(PlatformDataKeys.PROJECT);
+    final Project project = event.getData(CommonDataKeys.PROJECT);
     boolean enabled = (project != null && isActionEnabled(project, event));
     if (ActionPlaces.isPopupPlace(event.getPlace())) {
       presentation.setVisible(enabled);

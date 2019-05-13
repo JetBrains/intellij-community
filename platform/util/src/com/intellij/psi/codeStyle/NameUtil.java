@@ -1,20 +1,7 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.codeStyle;
 
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
@@ -36,12 +23,14 @@ public class NameUtil {
 
   private NameUtil() {}
 
-  public static List<String> nameToWordsLowerCase(String name){
+  @NotNull
+  public static List<String> nameToWordsLowerCase(@NotNull String name){
     return ContainerUtil.map(nameToWords(name), LOWERCASE_MAPPING);
   }
 
-  public static String[] nameToWords(String name){
-    ArrayList<String> array = new ArrayList<String>();
+  @NotNull
+  public static String[] nameToWords(@NotNull String name){
+    List<String> array = new ArrayList<String>();
     int index = 0;
 
     while(index < name.length()){
@@ -82,11 +71,13 @@ public class NameUtil {
     return ArrayUtil.toStringArray(array);
   }
 
-  public static String buildRegexp(String pattern, int exactPrefixLen, boolean allowToUpper, boolean allowToLower) {
+  @NotNull
+  public static String buildRegexp(@NotNull String pattern, int exactPrefixLen, boolean allowToUpper, boolean allowToLower) {
     return buildRegexp(pattern, exactPrefixLen, allowToUpper, allowToLower, false, false);
   }
 
-  public static String buildRegexp(String pattern,
+  @NotNull
+  public static String buildRegexp(@NotNull String pattern,
                                    int exactPrefixLen,
                                    boolean allowToUpper,
                                    boolean allowToLower,
@@ -234,6 +225,7 @@ public class NameUtil {
    * @param name the identifier to split.
    * @return the array of strings into which the identifier has been split.
    */
+  @NotNull
   public static String[] splitNameIntoWords(@NotNull String name) {
     final String[] underlineDelimited = name.split("_");
     List<String> result = new ArrayList<String>();
@@ -243,11 +235,13 @@ public class NameUtil {
     return ArrayUtil.toStringArray(result);
   }
 
-  public static List<String> getSuggestionsByName(String name,
-                                                   String prefix,
-                                                   String suffix,
-                                                   boolean upperCaseStyle,
-                                                   boolean preferLongerNames, boolean isArray) {
+  @NotNull
+  public static List<String> getSuggestionsByName(@NotNull String name,
+                                                  @NotNull String prefix,
+                                                  @NotNull String suffix,
+                                                  boolean upperCaseStyle,
+                                                  boolean preferLongerNames,
+                                                  boolean isArray) {
     ArrayList<String> answer = new ArrayList<String>();
     String[] words = nameToWords(name);
 
@@ -267,11 +261,12 @@ public class NameUtil {
     return answer;
   }
 
-  private static String compoundSuggestion(String prefix,
+  @NotNull
+  private static String compoundSuggestion(@NotNull String prefix,
                                            boolean upperCaseStyle,
-                                           String[] words,
+                                           @NotNull String[] words,
                                            int wordCount,
-                                           String startWord,
+                                           @NotNull String startWord,
                                            char c,
                                            boolean isArray,
                                            boolean skip_) {
@@ -326,6 +321,42 @@ public class NameUtil {
     return suggestion;
   }
 
+  static int nextWord(@NotNull String text, int start) {
+    if (!Character.isLetterOrDigit(text.charAt(start))) {
+      return start + 1;
+    }
+
+    int i = start;
+    while (i < text.length() && Character.isDigit(text.charAt(i))) i++;
+    if (i > start) {
+      // digits form a separate hump
+      return i;
+    }
+
+    while (i < text.length() && Character.isUpperCase(text.charAt(i))) i++;
+    
+    if (i > start + 1) {
+      // several consecutive uppercase letter form a hump
+      if (i == text.length() || !Character.isLetter(text.charAt(i))) {
+        return i;
+      }
+      return i - 1;
+    }
+
+    if (i == start) i++;
+    while (i < text.length() && Character.isLetter(text.charAt(i)) && !isWordStart(text, i)) i++;
+    return i;
+  }
+
+  private static void addAllWords(@NotNull String text, @NotNull List<? super String> result) {
+    int start = 0;
+    while (start < text.length()) {
+      int next = nextWord(text, start);
+      result.add(text.substring(start, next));
+      start = next;
+    }
+  }
+
   static boolean isWordStart(String text, int i) {
     char c = text.charAt(i);
     if (Character.isUpperCase(c)) {
@@ -341,93 +372,112 @@ public class NameUtil {
     if (!Character.isLetter(c)) {
       return false;
     }
-    return i == 0 || !Character.isLetterOrDigit(text.charAt(i - 1));
+    return i == 0 || !Character.isLetterOrDigit(text.charAt(i - 1)) || isHardCodedWordStart(text, i);
   }
 
-  static boolean isWordStart(char p) {
-    return Character.isUpperCase(p) || Character.isDigit(p);
-  }
-
-  static int nextWord(String text, int start) {
-    if (!Character.isLetterOrDigit(text.charAt(start))) {
-      return start + 1;
-    }
-
-    int i = start;
-    boolean prevIsLetterOrDigit = i > 0 && Character.isLetterOrDigit(text.charAt(i - 1));
-    while (i < text.length()) {
-      char c = text.charAt(i);
-      if (!isWordStart(c)) {
-        if (!Character.isLetterOrDigit(c)) {
-          break;
-        }
-        if (prevIsLetterOrDigit) {
-          break;
-        }
-      }
-      prevIsLetterOrDigit = true;
-      i++;
-    }
-
-    if (i > start + 1) {
-      if (i == text.length() || !Character.isLetterOrDigit(text.charAt(i))) {
-        return i;
-      }
-      return i - 1;
-    }
-    /*boolean */prevIsLetterOrDigit = i > 0 && Character.isLetterOrDigit(text.charAt(i - 1));
-    while (i < text.length()){
-      char c = text.charAt(i);
-      if (!Character.isLetterOrDigit(c)) break;
-      if (isWordStart(c)) break;
-      if (!prevIsLetterOrDigit) break;
-      prevIsLetterOrDigit = true;
-      i++;
-    }
-    return i;
-  }
-
-  private static void addAllWords(String text, List<String> result) {
-    int start = 0;
-    while (start < text.length()) {
-      int next = nextWord(text, start);
-      result.add(text.substring(start, next));
-      start = next;
-    }
-  }
-
-  static boolean isWordSeparator(char c) {
-    return Character.isWhitespace(c) || c == '_' || c == '-' || c == ':';
+  private static boolean isHardCodedWordStart(String text, int i) {
+    return text.charAt(i) == 'l' &&
+           i < text.length() - 1 && text.charAt(i + 1) == 'n' &&
+           (text.length() == i + 2 || isWordStart(text, i + 2));
   }
 
   /**
    * @deprecated use com.intellij.util.text.Matcher
    */
+  @Deprecated
   public interface Matcher {
-    boolean matches(String name);
+    boolean matches(@NotNull String name);
   }
 
-  @SuppressWarnings("UnusedDeclaration")
+  @NotNull
+  public static com.intellij.util.text.Matcher buildMatcher(@NotNull String pattern, int exactPrefixLen, 
+                                                            boolean allowToUpper, boolean allowToLower) {
+    MatchingCaseSensitivity options = !allowToLower && !allowToUpper ? MatchingCaseSensitivity.ALL
+                                                                     : exactPrefixLen > 0 ? MatchingCaseSensitivity.FIRST_LETTER
+                                                                                          : MatchingCaseSensitivity.NONE;
+    return buildMatcher(pattern, options);
+  }
+
   @Deprecated
-  public static com.intellij.util.text.Matcher buildCompletionMatcher(String pattern, int exactPrefixLen, boolean allowToUpper, boolean allowToLower) {
+  @NotNull
+  public static com.intellij.util.text.Matcher buildMatcher(@NotNull String pattern, int exactPrefixLen, boolean allowToUpper, boolean allowToLower, boolean lowerCaseWords) {
     MatchingCaseSensitivity options = !allowToLower && !allowToUpper ? MatchingCaseSensitivity.ALL : exactPrefixLen > 0 ? MatchingCaseSensitivity.FIRST_LETTER : MatchingCaseSensitivity.NONE;
     return buildMatcher(pattern, options);
   }
 
-  public static com.intellij.util.text.Matcher buildMatcher(String pattern, int exactPrefixLen, boolean allowToUpper, boolean allowToLower) {
-    MatchingCaseSensitivity options = !allowToLower && !allowToUpper ? MatchingCaseSensitivity.ALL : exactPrefixLen > 0 ? MatchingCaseSensitivity.FIRST_LETTER : MatchingCaseSensitivity.NONE;
-    return buildMatcher(pattern, options);
+  public static class MatcherBuilder {
+    private final String pattern;
+    private String separators = "";
+    private MatchingCaseSensitivity caseSensitivity = MatchingCaseSensitivity.NONE;
+
+    public MatcherBuilder(String pattern) {
+      this.pattern = pattern;
+    }
+
+    public MatcherBuilder withCaseSensitivity(MatchingCaseSensitivity caseSensitivity) {
+      this.caseSensitivity = caseSensitivity;
+      return this;
+    }
+
+    public MatcherBuilder withSeparators(String separators) {
+      this.separators = separators;
+      return this;
+    }
+
+    public MinusculeMatcher build() {
+      return Registry.is("ide.completion.typo.tolerance") ? FixingLayoutTypoTolerantMatcher.create(pattern, caseSensitivity, separators)
+                                                          : new FixingLayoutMatcher(pattern, caseSensitivity, separators);
+    }
   }
 
-  @SuppressWarnings("UnusedParameters")
-  @Deprecated
-  public static com.intellij.util.text.Matcher buildMatcher(String pattern, int exactPrefixLen, boolean allowToUpper, boolean allowToLower, boolean lowerCaseWords) {
-    MatchingCaseSensitivity options = !allowToLower && !allowToUpper ? MatchingCaseSensitivity.ALL : exactPrefixLen > 0 ? MatchingCaseSensitivity.FIRST_LETTER : MatchingCaseSensitivity.NONE;
-    return buildMatcher(pattern, options);
+  @NotNull
+  public static MatcherBuilder buildMatcher(@NotNull String pattern) {
+    return new MatcherBuilder(pattern);
   }
 
+  @NotNull
   public static MinusculeMatcher buildMatcher(@NotNull String pattern, @NotNull MatchingCaseSensitivity options) {
-    return new MinusculeMatcher(pattern, options);
+    return buildMatcher(pattern).withCaseSensitivity(options).build();
+  }
+
+  public static MinusculeMatcher buildMatcherWithFallback(@NotNull String pattern,
+                                                          @NotNull String fallbackPattern,
+                                                          @NotNull MatchingCaseSensitivity options) {
+    return pattern.equals(fallbackPattern) ?
+           buildMatcher(pattern, options) :
+           new MatcherWithFallback(buildMatcher(pattern, options), buildMatcher(fallbackPattern, options));
+  }
+
+  @NotNull
+  public static String capitalizeAndUnderscore(@NotNull String name) {
+    return splitWords(name, '_', new Function<String, String>() {
+      @Override
+      public String fun(String s) {
+        return StringUtil.toUpperCase(s);
+      }
+    });
+  }
+
+  @NotNull
+  public static String splitWords(@NotNull String text, char separator, @NotNull Function<? super String, String> transformWord) {
+    final String[] words = nameToWords(text);
+    boolean insertSeparator = false;
+    final StringBuilder buf = new StringBuilder();
+    for (String word : words) {
+      if (!Character.isLetterOrDigit(word.charAt(0))) {
+        buf.append(separator);
+        insertSeparator = false;
+        continue;
+      }
+      if (insertSeparator) {
+        buf.append(separator);
+      } else {
+        insertSeparator = true;
+      }
+      buf.append(transformWord.fun(word));
+    }
+    return buf.toString();
+
   }
 
   public enum MatchingCaseSensitivity {

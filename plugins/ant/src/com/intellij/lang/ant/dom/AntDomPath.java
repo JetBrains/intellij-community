@@ -25,14 +25,14 @@ import java.util.Set;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Jun 22, 2010
  */
 public abstract class AntDomPath extends AntDomPathElement{
 
-  @NotNull 
+  @Override
+  @NotNull
   protected List<File> getFiles(AntDomPattern pattern, Set<AntFilesProvider> processed) {
     final List<File> files = super.getFiles(pattern, processed);
-    
+
     for (Iterator<AntDomElement> iterator = getAntChildrenIterator(); iterator.hasNext();) {
       AntDomElement child = iterator.next();
       if (child instanceof AntFilesProvider) {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,13 +18,18 @@ package com.intellij.ide.fileTemplates.ui;
 
 import com.intellij.CommonBundle;
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.actions.CreateFileAction;
 import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.ide.fileTemplates.FileTemplateUtil;
 import com.intellij.ide.fileTemplates.actions.AttributesDefaults;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.WriteAction;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
@@ -38,6 +43,7 @@ import java.awt.*;
 import java.util.Properties;
 
 public class CreateFromTemplateDialog extends DialogWrapper {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.ide.fileTemplates.ui.CreateFromTemplateDialog");
   @NotNull private final PsiDirectory myDirectory;
   @NotNull private final Project myProject;
   private PsiElement myCreatedElement;
@@ -57,7 +63,7 @@ public class CreateFromTemplateDialog extends DialogWrapper {
     myTemplate = template;
     setTitle(IdeBundle.message("title.new.from.template", template.getName()));
 
-    myDefaultProperties = defaultProperties == null ? FileTemplateManager.getInstance().getDefaultProperties(project) : defaultProperties;
+    myDefaultProperties = defaultProperties == null ? FileTemplateManager.getInstance(project).getDefaultProperties() : defaultProperties;
     FileTemplateUtil.fillDefaultProperties(myDefaultProperties, directory);
     boolean mustEnterName = FileTemplateUtil.findHandler(template).isNameRequired();
     if (attributesDefaults != null && attributesDefaults.isFixedName()) {
@@ -67,7 +73,7 @@ public class CreateFromTemplateDialog extends DialogWrapper {
 
     String[] unsetAttributes = null;
     try {
-      unsetAttributes = myTemplate.getUnsetAttributes(myDefaultProperties);
+      unsetAttributes = myTemplate.getUnsetAttributes(myDefaultProperties, project);
     }
     catch (ParseException e) {
       showErrorDialog(e);
@@ -85,6 +91,11 @@ public class CreateFromTemplateDialog extends DialogWrapper {
   }
 
   public PsiElement create(){
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      doCreate(myTemplate.getName() + "." + myTemplate.getExtension());
+      Disposer.dispose(getDisposable());
+      return myCreatedElement;
+    }
     if (myAttrPanel != null) {
       if (myAttrPanel.hasSomethingToAsk()) {
         show();
@@ -96,6 +107,7 @@ public class CreateFromTemplateDialog extends DialogWrapper {
     return myCreatedElement;
   }
 
+  @Override
   protected void doOKAction(){
     String fileName = myAttrPanel.getFileName();
     if (fileName != null && fileName.length() == 0) {
@@ -109,10 +121,19 @@ public class CreateFromTemplateDialog extends DialogWrapper {
     }
   }
 
-  private void doCreate(@Nullable final String fileName)  {
+  private void doCreate(@Nullable String fileName)  {
     try {
-      myCreatedElement = FileTemplateUtil.createFromTemplate(myTemplate, fileName, myAttrPanel.getProperties(myDefaultProperties),
-                                                             myDirectory);
+      String newName = fileName;
+      PsiDirectory directory = myDirectory;
+      if (fileName != null) {
+        final String finalFileName = fileName;
+        CreateFileAction.MkDirs mkDirs =
+          WriteAction.compute(() -> new CreateFileAction.MkDirs(finalFileName, myDirectory));
+        newName = mkDirs.newName;
+        directory = mkDirs.directory;
+      }
+      Properties properties = myAttrPanel.getProperties(myDefaultProperties);
+      myCreatedElement = FileTemplateUtil.createFromTemplate(myTemplate, newName, properties, directory);
     }
     catch (Exception e) {
       showErrorDialog(e);
@@ -124,6 +145,7 @@ public class CreateFromTemplateDialog extends DialogWrapper {
   }
 
   private void showErrorDialog(final Exception e) {
+    LOG.info(e);
     Messages.showMessageDialog(myProject, filterMessage(e.getMessage()), getErrorMessage(), Messages.getErrorIcon());
   }
 
@@ -133,7 +155,10 @@ public class CreateFromTemplateDialog extends DialogWrapper {
 
   @Nullable
   private String filterMessage(String message){
-    if (message == null) return null;
+    if (message == null) {
+      message = "unknown error";
+    }
+
     @NonNls String ioExceptionPrefix = "java.io.IOException:";
     if (message.startsWith(ioExceptionPrefix)){
       return message.substring(ioExceptionPrefix.length());
@@ -145,6 +170,7 @@ public class CreateFromTemplateDialog extends DialogWrapper {
     return IdeBundle.message("error.unable.to.parse.template.message", myTemplate.getName(), message);
   }
 
+  @Override
   protected JComponent createCenterPanel(){
     myAttrPanel.ensureFitToScreen(200, 200);
     JPanel centerPanel = new JPanel(new GridBagLayout());
@@ -152,6 +178,7 @@ public class CreateFromTemplateDialog extends DialogWrapper {
     return centerPanel;
   }
 
+  @Override
   public JComponent getPreferredFocusedComponent(){
     return IdeFocusTraversalPolicy.getPreferredFocusedComponent(myAttrComponent);
   }

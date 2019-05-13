@@ -26,6 +26,7 @@ import com.intellij.psi.PsiReference;
 import com.intellij.psi.ReferenceRange;
 import com.intellij.psi.impl.source.resolve.reference.impl.PsiMultiReference;
 import com.intellij.util.PairConsumer;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.HashSet;
 import java.util.LinkedHashSet;
@@ -38,7 +39,7 @@ public class LegacyCompletionContributor extends CompletionContributor {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.completion.LegacyCompletionContributor");
 
   @Override
-  public void fillCompletionVariants(CompletionParameters parameters, CompletionResultSet _result) {
+  public void fillCompletionVariants(@NotNull CompletionParameters parameters, @NotNull CompletionResultSet _result) {
     if (parameters.getCompletionType() != CompletionType.BASIC) {
       return;
     }
@@ -50,11 +51,11 @@ public class LegacyCompletionContributor extends CompletionContributor {
 
     completeReference(parameters, result);
 
-    final Set<LookupElement> lookupSet = new LinkedHashSet<LookupElement>();
-    final Set<CompletionVariant> keywordVariants = new HashSet<CompletionVariant>();
+    final Set<LookupElement> lookupSet = new LinkedHashSet<>();
+    final Set<CompletionVariant> keywordVariants = new HashSet<>();
     PsiFile file = parameters.getOriginalFile();
     completionData.addKeywordVariants(keywordVariants, insertedElement, file);
-    completionData.completeKeywordsBySet(lookupSet, keywordVariants, insertedElement, result.getPrefixMatcher(), file);
+    completionData.completeKeywordsBySet(lookupSet, keywordVariants);
     result.addAllElements(lookupSet);
   }
 
@@ -65,17 +66,18 @@ public class LegacyCompletionContributor extends CompletionContributor {
     }
 
     final Ref<Boolean> hasVariants = Ref.create(false);
-    processReferences(parameters, result, new PairConsumer<PsiReference, CompletionResultSet>() {
-      @Override
-      public void consume(final PsiReference reference, final CompletionResultSet resultSet) {
-        final Set<LookupElement> lookupSet = new LinkedHashSet<LookupElement>();
-        completionData
-          .completeReference(reference, lookupSet, parameters.getPosition(), parameters.getOriginalFile(), parameters.getOffset());
-        for (final LookupElement item : lookupSet) {
-          if (resultSet.getPrefixMatcher().prefixMatches(item)) {
-            hasVariants.set(true);
-            resultSet.addElement(item);
+    processReferences(parameters, result, (reference, resultSet) -> {
+      final Set<LookupElement> lookupSet = new LinkedHashSet<>();
+      completionData.completeReference(reference, lookupSet, parameters.getPosition(), parameters.getOriginalFile());
+      for (final LookupElement item : lookupSet) {
+        if (resultSet.getPrefixMatcher().prefixMatches(item)) {
+          if (!item.isValid()) {
+            LOG.error(completionData + " has returned an invalid lookup element " + item + " of " + item.getClass() +
+                      " in " + parameters.getOriginalFile() + " of " + parameters.getOriginalFile().getClass() +
+                      "; reference=" + reference + " of " + reference.getClass());
           }
+          hasVariants.set(true);
+          resultSet.addElement(item);
         }
       }
     });

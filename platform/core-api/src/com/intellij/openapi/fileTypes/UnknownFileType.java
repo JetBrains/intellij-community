@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,20 +16,12 @@
 package com.intellij.openapi.fileTypes;
 
 import com.intellij.icons.AllIcons;
-import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
 public class UnknownFileType implements FileType {
-  private static final NotNullLazyValue<Icon> ICON = new NotNullLazyValue<Icon>() {
-    @NotNull
-    @Override
-    protected Icon compute() {
-      return AllIcons.FileTypes.Unknown;
-    }
-  };
   public static final FileType INSTANCE = new UnknownFileType();
 
   private UnknownFileType() {}
@@ -43,7 +35,7 @@ public class UnknownFileType implements FileType {
   @Override
   @NotNull
   public String getDescription() {
-    return "UNKNOWN";
+    return "Unknown";
   }
 
   @Override
@@ -54,7 +46,7 @@ public class UnknownFileType implements FileType {
 
   @Override
   public Icon getIcon() {
-    return ICON.getValue();
+    return AllIcons.FileTypes.Unknown;
   }
 
   @Override
@@ -68,7 +60,7 @@ public class UnknownFileType implements FileType {
   }
 
   @Override
-  public String getCharset(@NotNull VirtualFile file, final byte[] content) {
+  public String getCharset(@NotNull VirtualFile file, @NotNull final byte[] content) {
     return null;
   }
 }

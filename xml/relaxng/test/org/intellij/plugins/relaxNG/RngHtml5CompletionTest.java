@@ -15,12 +15,9 @@
  */
 package org.intellij.plugins.relaxNG;
 
-import com.intellij.javaee.ExternalResourceManagerImpl;
-
 /**
  * @author Eugene.Kudelevsky
  */
-@SuppressWarnings({"JUnitTestClassNamingConvention"})
 public class RngHtml5CompletionTest extends HighlightingTestBase {
 
   @Override
@@ -28,79 +25,71 @@ public class RngHtml5CompletionTest extends HighlightingTestBase {
     return "completion";
   }
 
-  @Override
-  protected void init() {
-    super.init();
-
-    ExternalResourceManagerImpl.addTestResource("http://www.w3.org/1999/xhtml/html5", toAbsolutePath("/highlighting/html5/html5.rnc"),
-                                                myTestRootDisposable);
-  }
-
-  public void testHtml5_1() throws Throwable {
+  public void testHtml5_1() {
     myTestFixture.testCompletionTyping("html5_1.xml", "\n", "html5_1_after.xml");
   }
 
-  public void testHtml5_2() throws Throwable {
+  public void testHtml5_2() {
     doTestCompletion("html5_2");
   }
 
-  public void testHtml5_3() throws Throwable {
+  public void testHtml5_3() {
     doTestCompletion("html5_3");
   }
 
-  public void testHtml5_4() throws Throwable {
+  public void testHtml5_4() {
     doTestCompletion("html5_4");
   }
 
-  public void testHtml5_5() throws Throwable {
+  public void testHtml5_5() {
     doTestCompletion("html5_5");
   }
 
-  public void testHtml5_6() throws Throwable {
+  public void testHtml5_6() {
     doTestCompletion("html5_6");
   }
 
-  public void testHtml5_7() throws Throwable {
+  public void testHtml5_7() {
     doTestCompletion("html5_7");
   }
 
-  public void testHtml5_8() throws Throwable {
+  public void testHtml5_8() {
     doTestCompletion("html5_8");
   }
 
-  public void testHtml5_9() throws Throwable {
+  public void testHtml5_9() {
     doTestCompletion("html5_9");
   }
 
-  public void testHtml5_10() throws Throwable {
+  public void testHtml5_10() {
     doTestCompletion("html5_10");
   }
 
-  public void testHtml5_11() throws Throwable {
-    doTestCompletion("html5_11");
+  public void testHtml5_11() {
+    myTestFixture.testCompletionTyping("/html5_11.xml", "\n", "/html5_11_after.xml");
   }
 
-  public void testHtml5_12() throws Throwable {
+  public void testHtml5_12() {
     doTestCompletion("html5_12");
   }
 
-  public void testHtml5_13() throws Throwable {
-    doTestCompletion("html5_13");
+  public void testHtml5_13() {
+    myTestFixture.testCompletionTyping("/html5_13.xml", "\n", "/html5_13_after.xml");
   }
 
-  public void testHtml5_14() throws Throwable {
+  public void testHtml5_14() {
     doTestCompletion("html5_14");
   }
 
-  public void testHtml5_15() throws Throwable {
-    doTestCompletion("html5_15");
+  public void testHtml5_15() {
+    myTestFixture.testCompletionTyping("/html5_15.xml", "\n", "/html5_15_after.xml");
   }
 
-  public void testHtml5_16() throws Throwable {
+  public void testHtml5_16() {
     myTestFixture.testCompletionTyping("html5_16.xml", "\n", "html5_16_after.xml");
   }
 
-  public void testHtml5_17() throws Throwable {
-    doTestCompletion("html5_17");
+  public void testHtml5_overwritten_attributes() {
+    myTestFixture.testCompletionTyping("html5_overwritten_attributes.xml", "a\n", "html5_overwritten_attributes_after.xml");
   }
 }

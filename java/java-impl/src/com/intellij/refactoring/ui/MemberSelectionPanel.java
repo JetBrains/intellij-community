@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,28 +14,18 @@
  * limitations under the License.
  */
 
-/*
- * Created by IntelliJ IDEA.
- * User: dsl
- * Date: 18.06.2002
- * Time: 13:19:44
- * To change template for new class use
- * Code Style | Class Templates options (Tools | IDE Options).
- */
 package com.intellij.refactoring.ui;
 
+import com.intellij.psi.PsiMember;
 import com.intellij.refactoring.util.classMembers.MemberInfo;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.SeparatorFactory;
-import com.intellij.ui.TableUtil;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.FocusAdapter;
-import java.awt.event.FocusEvent;
 import java.util.List;
 
-public class MemberSelectionPanel extends JPanel {
+public class MemberSelectionPanel extends AbstractMemberSelectionPanel<PsiMember, MemberInfo> {
   private final MemberSelectionTable myTable;
 
   /**
@@ -55,6 +45,7 @@ public class MemberSelectionPanel extends JPanel {
     return new MemberSelectionTable(memberInfo, abstractColumnHeader);
   }
 
+  @Override
   public MemberSelectionTable getTable() {
     return myTable;
   }

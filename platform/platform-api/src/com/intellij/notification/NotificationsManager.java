@@ -25,13 +25,12 @@ import org.jetbrains.annotations.Nullable;
  * @author spleaner
  */
 public abstract class NotificationsManager {
-
   public static NotificationsManager getNotificationsManager() {
     return ApplicationManager.getApplication().getComponent(NotificationsManager.class);
   }
 
   public abstract void expire(@NotNull final Notification notification);
 
-  public abstract <T extends Notification> T[] getNotificationsOfType(Class<T> klass, @Nullable Project project); 
-
+  @NotNull
+  public abstract <T extends Notification> T[] getNotificationsOfType(@NotNull Class<T> klass, @Nullable Project project);
 }

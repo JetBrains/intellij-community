@@ -1,0 +1,203 @@
+import org.gradle.internal.os.OperatingSystem
+
+import java.util.concurrent.TimeUnit
+
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+task setupJdks(dependsOn: ['setupJdk18', 'checkJdk18', 'setupJdk16'])
+cleanSetupJdks.dependsOn('cleanSetupJdk18', 'cleanSetupJdk16', 'cleanDownloadJdk18')
+
+def jdkRepo = 'https://cache-redirector.jetbrains.com'
+project.ext.jdkVersion = '1.8'
+
+def jdkDir = System.getProperty('intellij.build.jdks.target.dir')?.with {
+  def jdkDir = new File(it)
+  jdkDir.mkdirs()
+  jdkDir
+} ?: "${intellijProjectDir()}/build/jdk"
+
+project.ext.jdk18OutputDir = "${System.getProperty("intellij.jdk18.output.dir", "") ?: "$jdkDir/$jdkVersion"}"
+
+task downloadJdk18 {
+  def arch = jdk18Arch()
+  def platform = currentPlatformName()
+
+  def artifactName = "jbsdk8${jdkBuild}_${platform}_${arch}.tar.gz"
+  def outputFile = "$project.buildDir/jbsdk/${artifactName}"
+
+  inputs.property('build', jdkBuild)
+  outputs.file(outputFile)
+  doLast {
+    logger.info("Downloading up JDK $jdkVersion to compile (using $jdkRepo repo)")
+    download {
+      src "$jdkRepo/intellij-jdk/${artifactName}"
+      dest outputFile
+      tempAndMove true
+      timeout TimeUnit.MINUTES.toMillis(30).toInteger()
+    }
+  }
+}
+
+task setupJdk18(dependsOn: downloadJdk18) {
+  def outputDir = jdk18OutputDir
+  def downloadOutputs = downloadJdk18.outputs.files
+
+  inputs.files(downloadOutputs)
+  inputs.property("jdk18OutputDir", outputDir)
+  outputs.dir(outputDir)
+  doLast {
+    logger.info("Setting up JDK $jdkVersion to compile")
+    unpackJdk(downloadOutputs.singleFile, outputDir)
+  }
+}
+
+def unpackJdk(jdkArchive, outputDir) {
+  logger.info("Unpacking $jdkArchive to ${outputDir}")
+  if (file(outputDir).exists()) {
+    delete(outputDir)
+  }
+  def currentOs = OperatingSystem.current()
+  if (currentOs.isWindows()) {
+    copy {
+      from tarTree(jdkArchive)
+      into outputDir
+    }
+  }
+  else {
+    exec { commandLine 'mkdir', '-p', outputDir }
+    exec { commandLine 'tar', 'xpf', "$jdkArchive.absolutePath", '--directory', outputDir }
+    if (currentOs.isMacOsX() && file("${outputDir}/jdk/Contents").exists()) {
+      exec { commandLine 'mv', "${outputDir}/jdk/Contents", outputDir }
+      exec { commandLine 'rm', '-rf', "${outputDir}/jdk" }
+    }
+  }
+}
+
+static def jdk18Arch() {
+  def arch = System.getProperty("intellij.jdk18.arch", "")
+  if (arch == '32') return 'x86'
+  if (arch == '64') return 'x64'
+  def os = OperatingSystem.current()
+  return !os.isWindows() || System.getenv("ProgramFiles(x86)") != null ? 'x64' : 'x86'
+}
+
+static def currentPlatformName() {
+  def os = OperatingSystem.current()
+  if (os.isWindows()) {
+    "windows"
+  }
+  else if (os.isMacOsX()) {
+    "osx"
+  }
+  else {
+    "linux"
+  }
+}
+
+// JDK 1.6
+repositories {
+  maven {
+    url 'http://repo.labs.intellij.net/java'
+  }
+}
+
+configurations {
+  jdk16
+}
+
+dependencies {
+  jdk16 "jetbrains:jre:${jdk16Version()}@tar.gz"
+}
+
+task setupJdk16(dependsOn: configurations.jdk16) {
+  if (!inJetBrainsNetwork) {
+    return
+  }
+
+  def jdkArchive = { configurations.jdk16.singleFile }
+  def outputDir = "$jdkDir/1.6"
+  inputs.file(jdkArchive)
+  outputs.dir(outputDir)
+
+  doLast {
+    logger.info("Setting up JDK 1.6 to compile")
+    unpackJdk(jdkArchive.call(), outputDir)
+    deleteBrokenSymlink(outputDir)
+    createMissingLauncher(outputDir)
+  }
+}
+
+// Gradle dies on trying to process broken links: https://issues.gradle.org/browse/GRADLE-1843
+private void deleteBrokenSymlink(String outputDir) {
+  if (OperatingSystem.current().isMacOsX()) {
+    def pluginJar = file("$outputDir/Contents/Home/lib/plugin.jar")
+    if (!pluginJar.exists()) {
+      if (!pluginJar.delete()) {
+        logger.info("Couldn't remove plugin.jar from JDK 1.6")
+      }
+    }
+  }
+}
+
+// some JPS builders rely on a launcher presence in <JDK>/bin directory
+private void createMissingLauncher(String outputDir) {
+  if (!new File(outputDir, "bin").exists() && new File(outputDir, "jre/bin").exists()) {
+    copy {
+      from file(new File(outputDir, "jre/bin"))
+      into file(new File(outputDir, "bin"))
+      include 'java*'
+    }
+  }
+}
+
+setupJdk16.onlyIf { inJetBrainsNetwork }
+
+def intellijProjectDir() {
+  def projectDir = project.file("../..")
+  if (projectDir.name == 'community') {
+    while (new File(projectDir.parentFile, ".idea").exists() && !new File(projectDir.parentFile, '.idea/.notIdeaProject').exists()) {
+      projectDir = projectDir.parentFile
+    }
+    return projectDir
+  }
+  return projectDir
+}
+
+static def jdk16Version() {
+  def os = OperatingSystem.current()
+  if (os.isWindows()) {
+    def suffix = System.getenv("ProgramFiles(x86)") != null ? "x64" : "i586"
+    return "6.45:windows_$suffix"
+  }
+  else if (os.isMacOsX()) {
+    return '6.65:macosx_x64'
+  }
+  return '6.45:linux_x64'
+}
+
+task checkJdk18(dependsOn: setupJdk18) {
+  doLast {
+    def path = OperatingSystem.current().isMacOsX() ? "$jdk18OutputDir/Contents/Home/bin" : "$jdk18OutputDir/bin"
+    def project = project
+    new ByteArrayOutputStream().withStream { output ->
+      project.exec {
+        standardOutput = output
+        errorOutput = output
+        commandLine file("$path/java"), '-XshowSettings:properties', '-version'
+      }
+      String vendor = null
+      String version = null
+      output.toString().readLines().each {
+        if (it.contains('java.vendor =')) {
+          vendor = it
+        }
+        else if (it.contains('java.runtime.version =')) {
+          version = it
+        }
+      }
+      println(vendor)
+      println(version)
+      if (!vendor?.contains('JetBrains')) throw new IllegalStateException('java.vendor is not JetBrains')
+      if (!version?.contains(jdkVersion)) throw new IllegalStateException("java.runtime.version is not $jdkVersion")
+    }
+  }
+}

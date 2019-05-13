@@ -26,6 +26,18 @@ import org.jetbrains.annotations.NotNull;
 
 public class ExtendsThreadInspection extends BaseInspection {
 
+  /**
+   * @see com.siyeh.ig.inheritance.ExtendsConcreteCollectionInspection#buildFix(java.lang.Object...)
+   */
+  @Override
+  protected InspectionGadgetsFix buildFix(Object... infos) {
+    final PsiClass aClass = (PsiClass)infos[0];
+    if (aClass instanceof PsiAnonymousClass) {
+      return null;
+    }
+    return new ReplaceInheritanceWithDelegationFix();
+  }
+
   @Override
   @NotNull
   public String getID() {
@@ -47,18 +59,6 @@ public class ExtendsThreadInspection extends BaseInspection {
     } else {
       return InspectionGadgetsBundle.message("extends.thread.problem.descriptor");
     }
-  }
-
-  /**
-   * @see com.siyeh.ig.inheritance.ExtendsConcreteCollectionInspection#buildFix(java.lang.Object...)
-   */
-  @Override
-  protected InspectionGadgetsFix buildFix(Object... infos) {
-    final PsiClass aClass = (PsiClass)infos[0];
-    if (aClass instanceof PsiAnonymousClass) {
-      return null;
-    }
-    return new ReplaceInheritanceWithDelegationFix();
   }
 
   @Override

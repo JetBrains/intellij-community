@@ -14,12 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * Created by IntelliJ IDEA.
- * User: yole
- * Date: 20.10.2006
- * Time: 17:18:38
- */
 package com.intellij.openapi.vcs.versionBrowser;
 
 import com.intellij.openapi.vcs.AbstractVcs;
@@ -44,28 +38,33 @@ public class CommittedChangeListImpl implements CommittedChangeList {
     myCommitDate = commitDate;
     myName = name;
     myComment = comment;
-    myChanges = new ArrayList<Change>(changes);
+    myChanges = new ArrayList<>(changes);
     myNumber = number;
   }
 
+  @Override
   public String getCommitterName() {
     return myCommitterName;
   }
 
+  @Override
   public Date getCommitDate() {
     return myCommitDate;
   }
 
+  @Override
   public long getNumber() {
     return myNumber;
   }
 
-  public AbstractVcs getVcs() {
+  @Override
+  public String getBranch() {
     return null;
   }
 
-  public Collection<Change> getChangesWithMovedTrees() {
-    return getChangesWithMovedTreesImpl(this);
+  @Override
+  public AbstractVcs getVcs() {
+    return null;
   }
 
   @Override
@@ -78,19 +77,18 @@ public class CommittedChangeListImpl implements CommittedChangeList {
     myComment = newMessage;
   }
 
-  public static Collection<Change> getChangesWithMovedTreesImpl(final CommittedChangeList list) {
-    return list.getChanges();
-  }
-
+  @Override
   public Collection<Change> getChanges() {
     return myChanges;
   }
 
+  @Override
   @NotNull
   public String getName() {
     return myName;
   }
 
+  @Override
   public String getComment() {
     return myComment;
   }

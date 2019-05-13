@@ -27,21 +27,18 @@ import org.intellij.plugins.relaxNG.compact.psi.util.RenameUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * Created by IntelliJ IDEA.
- * User: sweinreuter
- * Date: 16.08.2007
- */
 public class RncDeclImpl extends RncElementImpl implements RncDecl {
   public RncDeclImpl(ASTNode node) {
     super(node);
   }
 
+  @Override
   public String getPrefix() {
     final ASTNode ns = findIdentifierNode();
     return ns != null ? EscapeUtil.unescapeText(ns) : null;
   }
 
+  @Override
   public String getDeclaredNamespace() {
     final ASTNode ns = getNode().findChildByType(RncTokenTypes.LITERAL);
     return ns != null ? EscapeUtil.parseLiteralValue(ns) : null;
@@ -74,6 +71,7 @@ public class RncDeclImpl extends RncElementImpl implements RncDecl {
     return s != null ? s : "";
   }
 
+  @Override
   public PsiElement setName(@NonNls @NotNull String name) throws IncorrectOperationException {
     final ASTNode node = findIdentifierNode();
     if (node == null) return this;
@@ -81,6 +79,7 @@ public class RncDeclImpl extends RncElementImpl implements RncDecl {
     return this;
   }
 
+  @Override
   public void accept(@NotNull RncElementVisitor visitor) {
     visitor.visitElement(this);
   }

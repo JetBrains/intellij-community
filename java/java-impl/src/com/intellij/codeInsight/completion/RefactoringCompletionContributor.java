@@ -24,38 +24,36 @@ import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.psi.PsiClass;
 import com.intellij.refactoring.ui.ClassNameReferenceEditor;
 import com.intellij.util.Consumer;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author peter
  */
 public class RefactoringCompletionContributor extends CompletionContributor {
   @Override
-  public void fillCompletionVariants(CompletionParameters parameters, final CompletionResultSet resultSet) {
+  public void fillCompletionVariants(@NotNull CompletionParameters parameters, @NotNull final CompletionResultSet resultSet) {
     if (parameters.getOriginalFile().getUserData(ClassNameReferenceEditor.CLASS_NAME_REFERENCE_FRAGMENT) == null) {
       return;
     }
     
-    resultSet.runRemainingContributors(parameters, new Consumer<CompletionResult>() {
-      @Override
-      public void consume(CompletionResult result) {
-        LookupElement element = result.getLookupElement();
-        Object object = element.getObject();
-        if (object instanceof PsiClass) {
-          Module module = ModuleUtil.findModuleForPsiElement((PsiClass)object);
-          if (module != null) {
-            resultSet.consume(LookupElementDecorator.withRenderer(element, new AppendModuleName(module)));
-            return;
-          }
+    resultSet.runRemainingContributors(parameters, result -> {
+      LookupElement element = result.getLookupElement();
+      Object object = element.getObject();
+      if (object instanceof PsiClass) {
+        Module module = ModuleUtil.findModuleForPsiElement((PsiClass)object);
+        if (module != null) {
+          resultSet.consume(LookupElementDecorator.withRenderer(element, new AppendModuleName(module)));
+          return;
         }
-        resultSet.passResult(result);
       }
+      resultSet.passResult(result);
     });
   }
 
   private static class AppendModuleName extends LookupElementRenderer<LookupElementDecorator<LookupElement>> {
     private final Module myModule;
 
-    public AppendModuleName(Module module) {
+    AppendModuleName(Module module) {
       myModule = module;
     }
 

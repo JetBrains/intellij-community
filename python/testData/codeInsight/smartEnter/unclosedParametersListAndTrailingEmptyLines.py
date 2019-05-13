@@ -1,0 +1,2 @@
+def fun<caret>c(
+

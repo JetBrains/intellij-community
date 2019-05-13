@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,29 +18,37 @@ package com.intellij.psi.formatter.java;
 import com.intellij.formatting.*;
 import com.intellij.formatting.alignment.AlignmentStrategy;
 import com.intellij.lang.ASTNode;
+import com.intellij.psi.JavaDocTokenType;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
+import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.psi.formatter.FormatterUtil;
-import com.intellij.psi.impl.source.tree.ElementType;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
 
 public class DocCommentBlock extends AbstractJavaBlock{
-  public DocCommentBlock(final ASTNode node, final Wrap wrap, final Alignment alignment, final Indent indent, CommonCodeStyleSettings settings) {
-    super(node, wrap, alignment, indent, settings);
+  public DocCommentBlock(ASTNode node,
+                         Wrap wrap,
+                         Alignment alignment,
+                         Indent indent,
+                         CommonCodeStyleSettings settings,
+                         JavaCodeStyleSettings javaSettings,
+                         @NotNull FormattingMode formattingMode)
+  {
+    super(node, wrap, alignment, indent, settings, javaSettings, formattingMode);
   }
 
   @Override
   protected List<Block> buildChildren() {
-    final ArrayList<Block> result = new ArrayList<Block>();
+    final ArrayList<Block> result = new ArrayList<>();
 
     ASTNode child = myNode.getFirstChildNode();
     while (child != null) {
-      if (child.getElementType() == ElementType.DOC_COMMENT_START) {
-        result.add(createJavaBlock(child, mySettings, Indent.getNoneIndent(), null, AlignmentStrategy.getNullStrategy()));
-      } else if (!FormatterUtil.containsWhiteSpacesOnly(child) && child.getText().trim().length() > 0){
-        result.add(createJavaBlock(child, mySettings, Indent.getSpaceIndent(1), null, AlignmentStrategy.getNullStrategy()));
+      if (child.getElementType() == JavaDocTokenType.DOC_COMMENT_START) {
+        result.add(createJavaBlock(child, mySettings, myJavaSettings, Indent.getNoneIndent(), null, AlignmentStrategy.getNullStrategy(), getFormattingMode()));
+      } else if (!FormatterUtil.containsWhiteSpacesOnly(child) && !child.getText().trim().isEmpty()){
+        result.add(createJavaBlock(child, mySettings, myJavaSettings, Indent.getSpaceIndent(1), null, AlignmentStrategy.getNullStrategy(), getFormattingMode()));
       }
       child = child.getTreeNext();
     }

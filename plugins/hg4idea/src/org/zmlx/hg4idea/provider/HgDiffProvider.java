@@ -14,18 +14,18 @@ package org.zmlx.hg4idea.provider;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FilePath;
-import com.intellij.openapi.vcs.ObjectsConvertor;
+import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.diff.DiffProvider;
 import com.intellij.openapi.vcs.diff.ItemLatestState;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
-import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcsUtil.VcsUtil;
 import org.zmlx.hg4idea.HgContentRevision;
 import org.zmlx.hg4idea.HgFile;
 import org.zmlx.hg4idea.HgRevisionNumber;
 import org.zmlx.hg4idea.command.HgWorkingCopyRevisionsCommand;
+import org.zmlx.hg4idea.util.HgUtil;
 
 public class HgDiffProvider implements DiffProvider {
 
@@ -35,16 +35,18 @@ public class HgDiffProvider implements DiffProvider {
     this.project = project;
   }
 
+  @Override
   public VcsRevisionNumber getCurrentRevision(VirtualFile file) {
     VirtualFile vcsRoot = VcsUtil.getVcsRootFor(project, file);
     if (vcsRoot == null) {
       return null;
     }
 
-    FilePath filePath = ObjectsConvertor.VIRTUAL_FILEPATH.convert(file);
+    FilePath filePath = VcsUtil.getFilePath(file);
     return new HgWorkingCopyRevisionsCommand(project).parents(vcsRoot, filePath).first;
   }
 
+  @Override
   public ItemLatestState getLastRevision(VirtualFile file) {
     VirtualFile vcsRoot = VcsUtil.getVcsRootFor(project, file);
     if (vcsRoot == null) {
@@ -57,6 +59,7 @@ public class HgDiffProvider implements DiffProvider {
     return new ItemLatestState(revision, file.exists(), true);
   }
 
+  @Override
   public ItemLatestState getLastRevision(FilePath filePath) {
     VirtualFile vcsRoot = VcsUtil.getVcsRootFor(project, filePath);
     if (vcsRoot == null) {
@@ -77,10 +80,12 @@ public class HgDiffProvider implements DiffProvider {
     return new ItemLatestState(currentRevision, fileExists, true);
   }
 
+  @Override
   public VcsRevisionNumber getLatestCommittedRevision(VirtualFile vcsRoot) {
     return new HgWorkingCopyRevisionsCommand(project).tip(vcsRoot);
   }
 
+  @Override
   public ContentRevision createFileContent(VcsRevisionNumber revisionNumber, VirtualFile file) {
     if (file == null) {
       return null;
@@ -95,8 +100,8 @@ public class HgDiffProvider implements DiffProvider {
     if (hgRevisionNumber.isWorkingVersion()) {
       throw new IllegalStateException("Should not compare against working copy");
     }
-    HgFile hgFile = new HgFile(vcsRoot, VfsUtil.virtualToIoFile(file));
-    return new HgContentRevision(project, hgFile, hgRevisionNumber);
+    HgFile hgFile = new HgFile(vcsRoot, HgUtil.getOriginalFileName(VcsUtil.getFilePath(file), ChangeListManager.getInstance(project)));
+    return HgContentRevision.create(project, hgFile, hgRevisionNumber);
   }
 
 }

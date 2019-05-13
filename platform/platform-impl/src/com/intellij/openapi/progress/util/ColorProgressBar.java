@@ -1,20 +1,7 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.progress.util;
 
+import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.ui.GraphicsConfig;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.Gray;
@@ -36,11 +23,21 @@ import java.awt.geom.Rectangle2D;
 public class ColorProgressBar extends JComponent {
   private static final Dimension PREFERRED_SIZE = new Dimension(146, 17);
 
-  public static final Color GREEN = new JBColor(new Color(0x2fd432), new Color(0x287528));
-  public static final Color RED = new Color(0xd2451e);
+  public static final Color GREEN = new JBColor(() -> {
+    UISettings settings = UISettings.getInstance();
+    return settings == null || null == settings.getColorBlindness()
+           ? new JBColor(new Color(0x6cad74), new Color(0x4a8c53))
+           : new JBColor(new Color(0x6ca69c), new Color(0x639990));
+  });
+  public static final Color RED = new JBColor(() -> {
+    UISettings settings = UISettings.getInstance();
+    return settings == null || null == settings.getColorBlindness()
+           ? new JBColor(new Color(0xd67b76), new Color(0xe55757))
+           : new JBColor(new Color(0xcc7447), new Color(0xcc7447));
+  });
+  public static final Color RED_TEXT = new JBColor(new Color(0xb81708), new Color(0xdb5c5c));
   public static final Color BLUE = new JBColor(new Color(1, 68, 208), JBColor.blue);
-  public static final Color YELLOW = new Color(0xd4b721);
-
+  public static final Color YELLOW = new JBColor(new Color(0xa67a21), new Color(0x91703a));
   private static final Color SHADOW1 = new JBColor(Gray._190, UIUtil.getBorderColor()) ;
   private static final Color SHADOW2 = Gray._105;
 
@@ -111,6 +108,7 @@ public class ColorProgressBar extends JComponent {
     return (int)(bricksTotal * fraction) + 1;
   }
 
+  @Override
   protected void paintComponent(Graphics g) {
     super.paintComponent(g);
 
@@ -188,16 +186,19 @@ public class ColorProgressBar extends JComponent {
     config.restore();
   }
 
+  @Override
   public Dimension getPreferredSize() {
     return PREFERRED_SIZE;
   }
 
+  @Override
   public Dimension getMaximumSize() {
     Dimension dimension = getPreferredSize();
     dimension.width = Short.MAX_VALUE;
     return dimension;
   }
 
+  @Override
   public Dimension getMinimumSize() {
     Dimension dimension = getPreferredSize();
     dimension.width = 13;
@@ -213,6 +214,7 @@ public class ColorProgressBar extends JComponent {
     JFrame frame = new JFrame("ColorProgressBar Test");
     frame.addWindowListener(
       new WindowAdapter() {
+        @Override
         public void windowClosing(WindowEvent e) {
           System.exit(0);
         }
@@ -229,6 +231,7 @@ public class ColorProgressBar extends JComponent {
     frame.setVisible(true);
     JButton b = new JButton ("X");
     b.addActionListener(new ActionListener () {
+      @Override
       public void actionPerformed(ActionEvent e) {
          colorProgressBar.setFraction(1);
       }

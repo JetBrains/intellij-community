@@ -1,6 +1,6 @@
 class C {
     {
-        for(String s   :collection) {
+        for(String s:collection) {
         }
     }
 }

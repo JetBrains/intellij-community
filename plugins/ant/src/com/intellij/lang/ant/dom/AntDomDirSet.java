@@ -17,7 +17,6 @@ package com.intellij.lang.ant.dom;
 
 import com.intellij.lang.ant.AntFilesProvider;
 import com.intellij.psi.PsiFileSystemItem;
-import com.intellij.util.StringBuilderSpinAllocator;
 import com.intellij.util.xml.Attribute;
 import com.intellij.util.xml.Convert;
 import com.intellij.util.xml.GenericAttributeValue;
@@ -32,7 +31,6 @@ import java.util.Set;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Jun 22, 2010
  */
 public abstract class AntDomDirSet extends AntDomFilesProviderImpl{
 
@@ -44,6 +42,7 @@ public abstract class AntDomDirSet extends AntDomFilesProviderImpl{
   @Convert(value = AntPathConverter.class)
   public abstract GenericAttributeValue<PsiFileSystemItem> getFile();
 
+  @Override
   @NotNull
   protected List<File> getFiles(@Nullable AntDomPattern pattern, Set<AntFilesProvider> processed) {
     assert pattern != null;
@@ -52,7 +51,7 @@ public abstract class AntDomDirSet extends AntDomFilesProviderImpl{
       // if singleFile is specified, there are no implicit includes
       final File root = getCanonicalFile(getDir().getStringValue());
       if (root != null) {
-        final ArrayList<File> files = new ArrayList<File>();
+        final ArrayList<File> files = new ArrayList<>();
         if (singleFile != null && singleFile.isDirectory()) {
           files.add(singleFile);
         }
@@ -62,7 +61,7 @@ public abstract class AntDomDirSet extends AntDomFilesProviderImpl{
     }
 
     if (singleFile != null && singleFile.isDirectory()) {
-      Collections.singletonList(singleFile);
+      return Collections.singletonList(singleFile);
     }
 
     return Collections.emptyList();
@@ -98,13 +97,7 @@ public abstract class AntDomDirSet extends AntDomFilesProviderImpl{
       if (parentPath.length() == 0) {
         return name;
       }
-      final StringBuilder builder = StringBuilderSpinAllocator.alloc();
-      try {
-        return builder.append(parentPath).append("/").append(name).toString();
-      }
-      finally {
-        StringBuilderSpinAllocator.dispose(builder);
-      }
+      return parentPath + "/" + name;
     }
 
   }

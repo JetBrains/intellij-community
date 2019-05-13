@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,6 @@ package com.intellij.util.xml.ui.actions.generate;
 
 import com.intellij.codeInsight.CodeInsightActionHandler;
 import com.intellij.codeInsight.actions.CodeInsightAction;
-import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -30,9 +29,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
-/**
- * User: Sergey.Vasiliev
- */
 public class GenerateDomElementAction extends CodeInsightAction {
 
   protected final GenerateDomElementProvider myProvider;
@@ -50,29 +46,28 @@ public class GenerateDomElementAction extends CodeInsightAction {
       this(generateProvider, null);
   }
 
+  @Override
   @NotNull
   protected CodeInsightActionHandler getHandler() {
     return new CodeInsightActionHandler() {
+      @Override
       public void invoke(@NotNull final Project project, @NotNull final Editor editor, @NotNull final PsiFile file) {
-        final Runnable runnable = new Runnable() {
-          public void run() {
-            final DomElement element = myProvider.generate(project, editor, file);
-            myProvider.navigate(element);
-          }
+        final Runnable runnable = () -> {
+          final DomElement element = myProvider.generate(project, editor, file);
+          myProvider.navigate(element);
         };
         
         if (GenerateDomElementAction.this.startInWriteAction()) {
-          new WriteCommandAction(project, file) {
-            protected void run(final Result result) throws Throwable {
-              runnable.run();
-            }
-          }.execute();
+          WriteCommandAction.writeCommandAction(project, file).run(() -> {
+            runnable.run();
+          });
         }
         else {
           runnable.run();
         }
       }
 
+      @Override
       public boolean startInWriteAction() {
         return false;
       }
@@ -83,6 +78,7 @@ public class GenerateDomElementAction extends CodeInsightAction {
     return true;
   }
 
+  @Override
   protected boolean isValidForFile(@NotNull final Project project, @NotNull final Editor editor, @NotNull final PsiFile file) {
     final DomElement element = DomUtil.getContextElement(editor);
     return element != null && myProvider.isAvailableForElement(element);

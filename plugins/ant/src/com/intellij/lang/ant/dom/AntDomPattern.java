@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,11 +29,10 @@ import java.util.regex.Pattern;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: May 2, 2007
  */
 public class AntDomPattern extends AntDomRecursiveVisitor {
-  private static final List<Pattern> ourDefaultExcludes = new ArrayList<Pattern>(getDefaultExcludes(true));
-  private static final List<Pattern> ourCaseInsensitiveDefaultExcludes = new ArrayList<Pattern>(getDefaultExcludes(false));
+  private static final List<Pattern> ourDefaultExcludes = new ArrayList<>(getDefaultExcludes(true));
+  private static final List<Pattern> ourCaseInsensitiveDefaultExcludes = new ArrayList<>(getDefaultExcludes(false));
   private final boolean myCaseSensitive;
   private static final String ourSeparatorPattern = Pattern.quote("/");
 
@@ -58,9 +57,9 @@ public class AntDomPattern extends AntDomRecursiveVisitor {
     );
   }
 
-  private final List<Pattern> myIncludePatterns = new ArrayList<Pattern>();
-  private final List<Pattern> myExcludePatterns = new ArrayList<Pattern>();
-  private final List<PrefixItem[]> myCouldBeIncludedPatterns = new ArrayList<PrefixItem[]>();
+  private final List<Pattern> myIncludePatterns = new ArrayList<>();
+  private final List<Pattern> myExcludePatterns = new ArrayList<>();
+  private final List<PrefixItem[]> myCouldBeIncludedPatterns = new ArrayList<>();
 
   AntDomPattern(final boolean caseSensitive) {
     myCaseSensitive = caseSensitive;
@@ -70,6 +69,7 @@ public class AntDomPattern extends AntDomRecursiveVisitor {
     return myIncludePatterns.size() > 0;
   }
 
+  @Override
   public void visitAntDomElement(AntDomElement element) {
     // todo: add support to includefile and excludefile
     if ("include".equals(element.getXmlElementName()) && !(element instanceof AntDomInclude)) {
@@ -124,7 +124,7 @@ public class AntDomPattern extends AntDomRecursiveVisitor {
     String normalizedPattern = antPattern.endsWith("/") || antPattern.endsWith(File.separator)? antPattern.replace(File.separatorChar, '/') + "**" : antPattern.replace(File.separatorChar, '/');
     if (normalizedPattern.startsWith("/") && normalizedPattern.length() > 1) {
       // cut first leading slash if any
-      normalizedPattern = normalizedPattern.substring(1, normalizedPattern.length());
+      normalizedPattern = normalizedPattern.substring(1);
     }
     if (!normalizedPattern.startsWith("/")) {
       final String[] patDirs = normalizedPattern.split(ourSeparatorPattern);
@@ -221,12 +221,12 @@ public class AntDomPattern extends AntDomRecursiveVisitor {
     if (strIdxStart > strIdxEnd) {
       // String is exhausted
       return true;
-    } 
+    }
 
     if (patIdxStart > patIdxEnd) {
       // String not exhausted, but pattern is. Failure.
       return false;
-    } 
+    }
 
     // pattern now holds ** while string is not exhausted
     // this will generate false positives but we can live with that.
@@ -237,18 +237,13 @@ public class AntDomPattern extends AntDomRecursiveVisitor {
     if (myIncludePatterns.size() == 0) {
       return true;
     }
-    for (PrefixItem[] couldBeIncludedPattern : myCouldBeIncludedPatterns) {
-      if (matchPatternStart(couldBeIncludedPattern, relativePath)) {
-        return true;
-      }
-    }
-    return false;
+    return myCouldBeIncludedPatterns.stream().anyMatch(couldBeIncludedPattern -> matchPatternStart(couldBeIncludedPattern, relativePath));
   }
-  
+
   private class PrefixItem {
     private final String myStrPattern;
     private Pattern myCompiledPattern;
-    public PrefixItem(String strPattern) {
+    PrefixItem(String strPattern) {
       myStrPattern = strPattern;
     }
 

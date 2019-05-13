@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,17 +23,16 @@ import org.jetbrains.annotations.NotNull;
  * @author yole
  */
 public class CoreLanguageLevelProjectExtension extends LanguageLevelProjectExtension {
+  private LanguageLevel myLanguageLevel = LanguageLevel.HIGHEST;
+
   @NotNull
   @Override
   public LanguageLevel getLanguageLevel() {
-    return LanguageLevel.JDK_1_6;
+    return myLanguageLevel;
   }
 
   @Override
   public void setLanguageLevel(@NotNull LanguageLevel languageLevel) {
-  }
-
-  @Override
-  public void reloadProjectOnLanguageLevelChange(@NotNull LanguageLevel languageLevel, boolean forceReload) {
+    myLanguageLevel = languageLevel;
   }
 }

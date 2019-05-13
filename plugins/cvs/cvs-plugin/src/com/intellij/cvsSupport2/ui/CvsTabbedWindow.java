@@ -1,17 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 package com.intellij.cvsSupport2.ui;
 
@@ -20,80 +8,58 @@ import com.intellij.cvsSupport2.config.ui.ConfigureCvsGlobalSettingsDialog;
 import com.intellij.cvsSupport2.config.ui.CvsConfigurationsListEditor;
 import com.intellij.cvsSupport2.errorHandling.CvsException;
 import com.intellij.icons.AllIcons;
-import com.intellij.lifecycle.PeriodicalTasksCloser;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.actionSystem.ActionGroup;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
+import com.intellij.openapi.editor.EditorSettings;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.wm.ToolWindow;
-import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
-import com.intellij.ui.content.*;
+import com.intellij.ui.content.Content;
+import com.intellij.ui.content.ContentManager;
+import com.intellij.ui.content.ContentManagerAdapter;
+import com.intellij.ui.content.ContentManagerEvent;
 import com.intellij.ui.errorView.ContentManagerProvider;
 import com.intellij.ui.errorView.ErrorViewFactory;
 import com.intellij.util.ui.ErrorTreeView;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.Objects;
 
-/**
- * author: lesya
- */
-public class CvsTabbedWindow {
+public class CvsTabbedWindow implements Disposable {
   private final Project myProject;
   private Editor myOutput = null;
   private ErrorTreeView myErrorsView;
-  private boolean myIsInitialized;
-  private boolean myIsDisposed;
-
-  private static final Logger LOG = Logger.getInstance("#com.intellij.cvsSupport2.ui.CvsTabbedWindow");
-  private ContentManager myContentManager;
 
   public CvsTabbedWindow(Project project) {
     myProject = project;
-    Disposer.register(project, new Disposable() {
-      public void dispose() {
-        if (myOutput != null) {
-          EditorFactory.getInstance().releaseEditor(myOutput);
-          myOutput = null;
-        }
-        if (myErrorsView != null) {
-          myErrorsView.dispose();
-          myErrorsView = null;
-        }
 
-        LOG.assertTrue(!myIsDisposed);
-        try {
-          if (!myIsInitialized) return;
-          ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(myProject);
-          toolWindowManager.unregisterToolWindow(ToolWindowId.CVS);
-        }
-        finally {
-          myIsDisposed = true;
-        }
-      }
-    });
+    ApplicationManager.getApplication().invokeLater(() -> initToolWindow());
   }
 
-  private void initialize() {
-    if (myIsInitialized) {
+  private void initToolWindow() {
+    if (myProject.isDisposed()) {
       return;
     }
 
-    myIsInitialized = true;
-    myIsDisposed = false;
-
-    myContentManager = ContentFactory.SERVICE.getInstance().createContentManager(true, myProject);
-    myContentManager.addContentManagerListener(new ContentManagerAdapter() {
-      public void contentRemoved(ContentManagerEvent event) {
-        JComponent component = event.getContent().getComponent();
-        JComponent removedComponent = component instanceof CvsTabbedWindowComponent ?
-                                      ((CvsTabbedWindowComponent)component).getComponent() : component;
+    final ToolWindow toolWindow = getToolWindow();
+    final ContentManager contentManager = toolWindow.getContentManager();
+    contentManager.addContentManagerListener(new ContentManagerAdapter() {
+      @Override
+      public void contentRemoved(@NotNull ContentManagerEvent event) {
+        final JComponent component = event.getContent().getComponent();
+        final JComponent removedComponent = component instanceof CvsTabbedWindowComponent ?
+                                            ((CvsTabbedWindowComponent)component).getComponent() : component;
         if (removedComponent == myErrorsView) {
           myErrorsView.dispose();
           myErrorsView = null;
@@ -104,146 +70,133 @@ public class CvsTabbedWindow {
         }
       }
     });
+    toolWindow.installWatcher(contentManager);
+  }
 
-    ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(myProject);
-    ToolWindow toolWindow =
-      toolWindowManager.registerToolWindow(ToolWindowId.CVS, myContentManager.getComponent(), ToolWindowAnchor.BOTTOM);
-    toolWindow.setIcon(AllIcons.Providers.Cvs);
-    toolWindow.installWatcher(myContentManager);
+  @Override
+  public void dispose() {
+    if (myOutput != null) {
+      EditorFactory.getInstance().releaseEditor(myOutput);
+      myOutput = null;
+    }
+    if (myErrorsView != null) {
+      myErrorsView.dispose();
+      myErrorsView = null;
+    }
+  }
+
+  @NotNull
+  private ToolWindow getToolWindow() {
+    final ToolWindow toolWindow = ToolWindowManager.getInstance(myProject).getToolWindow(ToolWindowId.VCS);
+    assert toolWindow != null : "Version Control ToolWindow should be available at this point.";
+    return toolWindow;
   }
 
   public static CvsTabbedWindow getInstance(Project project) {
-    return PeriodicalTasksCloser.getInstance().safeGetService(project, CvsTabbedWindow.class);
-  }
-
-  private int getComponentAt(int i, boolean select) {
-    if (select) getContentManager().setSelectedContent(getContentManager().getContent(i));
-    return i;
+    return ServiceManager.getService(project, CvsTabbedWindow.class);
   }
 
   public interface DeactivateListener {
     void deactivated();
   }
 
-  public int addTab(String s,
-                    JComponent component,
-                    boolean selectTab,
-                    boolean replaceContent,
-                    boolean lockable,
-                    boolean addDefaultToolbar,
-                    @Nullable final ActionGroup toolbarActions,
-                    @NonNls String helpId) {
-
-    int existing = getComponentNumNamed(s);
-    if (existing != -1) {
-      Content existingContent = getContentManager().getContent(existing);
+  public void addTab(String title,
+                     JComponent component,
+                     boolean selectTab,
+                     boolean replaceContent,
+                     boolean lockable,
+                     boolean addDefaultToolbar,
+                     @Nullable final ActionGroup toolbarActions,
+                     @NonNls String helpId) {
+    final ContentManager contentManager = getToolWindow().getContentManager();
+    final Content existingContent = contentManager.findContent(title);
+    if (existingContent != null) {
       final JComponent existingComponent = existingContent.getComponent();
       if (existingComponent instanceof DeactivateListener) {
         ((DeactivateListener) existingComponent).deactivated();
       }
-      if (! replaceContent) {
-        getContentManager().setSelectedContent(existingContent);
-        return existing;
+      if (!replaceContent) {
+        contentManager.setSelectedContent(existingContent);
+        return;
       }
       else if (!existingContent.isPinned()) {
-        getContentManager().removeContent(existingContent, true);
+        contentManager.removeContent(existingContent, true);
         existingContent.release();
       }
     }
-
-    CvsTabbedWindowComponent newComponent = new CvsTabbedWindowComponent(component,
-                                                                         addDefaultToolbar, toolbarActions, getContentManager(), helpId);
-    Content content = ContentFactory.SERVICE.getInstance().createContent(newComponent.getShownComponent(), s, lockable);
+    final CvsTabbedWindowComponent newComponent =
+      new CvsTabbedWindowComponent(component, addDefaultToolbar, toolbarActions, contentManager, helpId);
+    final Content content = contentManager.getFactory().createContent(newComponent.getShownComponent(), title, lockable);
     newComponent.setContent(content);
-    getContentManager().addContent(content);
-
-    return getComponentAt(getContentManager().getContentCount() - 1, selectTab);
-  }
-
-  private int getComponentNumNamed(String s) {
-    for (int i = 0; i < getContentManager().getContentCount(); i++) {
-      if (s.equals(getContentManager().getContent(i).getDisplayName())) {
-        return i;
-      }
+    contentManager.addContent(content);
+    if (selectTab) {
+      getToolWindow().activate(null, false);
     }
-    return -1;
-  }
-
-  public Editor addOutput(Editor output) {
-    LOG.assertTrue(myOutput == null);
-    if (myOutput == null) {
-      addTab(CvsBundle.message("tab.title.cvs.output"), output.getComponent(), false, false, false, true, null, "cvs.cvsOutput");
-      myOutput = output;
-    }
-    return myOutput;
   }
 
   public ErrorTreeView getErrorsTreeView() {
     if (myErrorsView == null) {
       myErrorsView = ErrorViewFactory.SERVICE.getInstance()
-        .createErrorTreeView(myProject, null, true, new AnAction[]{(DefaultActionGroup)ActionManager.getInstance().getAction("CvsActions")},
+        .createErrorTreeView(myProject, null, true, new AnAction[]{ActionManager.getInstance().getAction("CvsActions")},
                              new AnAction[]{new GlobalCvsSettingsAction(), new ReconfigureCvsRootAction()}, new ContentManagerProvider() {
+          @Override
           public ContentManager getParentContent() {
-            return getContentManager();
+            return getToolWindow().getContentManager();
           }
         });
       addTab(CvsBundle.message("tab.title.errors"), myErrorsView.getComponent(), true, false, true, false, null, "cvs.errors");
     }
+    getToolWindow().activate(null, false);
     return myErrorsView;
   }
 
-  public void hideErrors() {
-    //if (myErrorsView == null) return;
-    //Content content = getContent(myErrorsView);
-    //removeContent(content);
-    //myErrorsView = null;
-  }
-
-  public void ensureVisible(Project project) {
-    if (project == null) return;
-    ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(project);
-    if (toolWindowManager != null) {
-      ToolWindow toolWindow = toolWindowManager.getToolWindow(ToolWindowId.CVS);
-      if (toolWindow != null) {
-        toolWindow.activate(null, false);
-      }
-    }
-  }
-
-  public ContentManager getContentManager() {
-    initialize();
-    return myContentManager;
-  }
-
   public Editor getOutput() {
+    if (myOutput == null) {
+      final Editor outputEditor = createOutputEditor(myProject);
+      addTab(CvsBundle.message("tab.title.cvs.output"), outputEditor.getComponent(), false, false, false, true, null, "cvs.cvsOutput");
+      myOutput = outputEditor;
+    }
     return myOutput;
   }
 
+  @NotNull
+  private static Editor createOutputEditor(Project project) {
+    final Editor result = EditorFactory.getInstance().createViewer(EditorFactory.getInstance().createDocument(""), project);
+    final EditorSettings editorSettings = result.getSettings();
+    editorSettings.setLineMarkerAreaShown(false);
+    editorSettings.setLineNumbersShown(false);
+    editorSettings.setIndentGuidesShown(false);
+    editorSettings.setFoldingOutlineShown(false);
+    return result;
+  }
+
   private static class GlobalCvsSettingsAction extends AnAction {
-    public GlobalCvsSettingsAction() {
+    GlobalCvsSettingsAction() {
       super(CvsBundle.message("configure.global.cvs.settings.action.name"), null, AllIcons.Nodes.Cvs_global);
     }
 
-    public void actionPerformed(AnActionEvent e) {
+    @Override
+    public void actionPerformed(@NotNull AnActionEvent e) {
       new ConfigureCvsGlobalSettingsDialog(e.getProject()).show();
     }
   }
 
   private class ReconfigureCvsRootAction extends AnAction {
-    public ReconfigureCvsRootAction() {
+    ReconfigureCvsRootAction() {
       super(CvsBundle.message("action.name.reconfigure.cvs.root"), null, AllIcons.Nodes.Cvs_roots);
     }
 
-    public void update(AnActionEvent e) {
+    @Override
+    public void update(@NotNull AnActionEvent e) {
       super.update(e);
       Object data = ErrorTreeView.CURRENT_EXCEPTION_DATA_KEY.getData(e.getDataContext());
       e.getPresentation().setEnabled(data instanceof CvsException);
-
     }
 
-    public void actionPerformed(AnActionEvent e) {
+    @Override
+    public void actionPerformed(@NotNull AnActionEvent e) {
       Object data = ErrorTreeView.CURRENT_EXCEPTION_DATA_KEY.getData(e.getDataContext());
-      CvsConfigurationsListEditor.reconfigureCvsRoot(((CvsException)data).getCvsRoot(), myProject);
+      CvsConfigurationsListEditor.reconfigureCvsRoot(((CvsException)Objects.requireNonNull(data)).getCvsRoot(), myProject);
     }
   }
 }

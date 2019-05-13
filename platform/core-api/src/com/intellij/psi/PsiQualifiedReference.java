@@ -21,7 +21,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author peter
  */
-public interface PsiQualifiedReference extends PsiElement, PsiReference {
+public interface PsiQualifiedReference extends PsiReference {
   /**
    * Returns the qualifier of the reference (the element representing the content up to the
    * last period).

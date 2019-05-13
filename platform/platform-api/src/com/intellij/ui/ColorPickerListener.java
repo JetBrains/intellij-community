@@ -20,7 +20,6 @@ import org.jetbrains.annotations.Nullable;
 import java.awt.*;
 
 public interface ColorPickerListener {
-  ColorPickerListener[] EMPTY_ARRAY = new ColorPickerListener[0];
 
   /**
    * Color was changed by user
@@ -30,7 +29,7 @@ public interface ColorPickerListener {
 
   /**
    * Dialog was closed
-   * @param color resulting color or <code>null</code> if dialog was cancelled
+   * @param color resulting color or {@code null} if dialog was cancelled
    */
   void closed(@Nullable Color color);
 }

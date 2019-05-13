@@ -23,7 +23,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ContentIterator;
-import com.intellij.openapi.roots.FileIndex;
+import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VfsUtil;
@@ -46,10 +46,11 @@ public class OneProjectItemCompileScope extends ExportableUserDataHolderBase imp
     myUrl = file.isDirectory()? url + "/" : url;
   }
 
+  @Override
   @NotNull
   public VirtualFile[] getFiles(final FileType fileType, final boolean inSourceOnly) {
-    final List<VirtualFile> files = new ArrayList<VirtualFile>(1);
-    final FileIndex projectFileIndex = ProjectRootManager.getInstance(myProject).getFileIndex();
+    final List<VirtualFile> files = new ArrayList<>(1);
+    final ProjectFileIndex projectFileIndex = ProjectRootManager.getInstance(myProject).getFileIndex();
     final ContentIterator iterator = new CompilerContentIterator(fileType, projectFileIndex, inSourceOnly, files);
     if (myFile.isDirectory()){
       projectFileIndex.iterateContentUnderDirectory(myFile, iterator);
@@ -60,13 +61,15 @@ public class OneProjectItemCompileScope extends ExportableUserDataHolderBase imp
     return VfsUtil.toVirtualFileArray(files);
   }
 
-  public boolean belongs(String url) {
+  @Override
+  public boolean belongs(@NotNull String url) {
     if (myFile.isDirectory()){
       return FileUtil.startsWith(url, myUrl);
     }
     return FileUtil.pathsEqual(url, myUrl);
   }
 
+  @Override
   @NotNull
   public Module[] getAffectedModules() {
     final Module module = ModuleUtil.findModuleForFile(myFile, myProject);

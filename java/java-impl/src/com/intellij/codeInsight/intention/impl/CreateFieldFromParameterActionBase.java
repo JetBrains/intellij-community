@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,7 @@
 package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeInsight.CodeInsightBundle;
-import com.intellij.codeInsight.CodeInsightUtilBase;
+import com.intellij.codeInsight.FileModificationService;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -61,11 +61,11 @@ public abstract class CreateFieldFromParameterActionBase extends BaseIntentionAc
   @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) {
     final PsiParameter myParameter = FieldFromParameterUtils.findParameterAtCursor(file, editor);
-    if (myParameter == null || !CodeInsightUtilBase.prepareFileForWrite(file)) return;
+    if (myParameter == null || !FileModificationService.getInstance().prepareFileForWrite(file)) return;
 
     IdeDocumentHistory.getInstance(project).includeCurrentPlaceAsChangePlace();
     try {
-      processParameter(project, myParameter, !ApplicationManager.getApplication().isUnitTestMode());
+      processParameter(project, myParameter, !ApplicationManager.getApplication().isHeadlessEnvironment());
     }
     catch (IncorrectOperationException e) {
       LOG.error(e);
@@ -92,7 +92,7 @@ public abstract class CreateFieldFromParameterActionBase extends BaseIntentionAc
     String[] names = suggestedNameInfo.names;
 
     if (isInteractive) {
-      List<String> namesList = new ArrayList<String>();
+      List<String> namesList = new ArrayList<>();
       ContainerUtil.addAll(namesList, names);
       String defaultName = styleManager.propertyNameToVariableName(propertyName, kind);
       if (namesList.contains(defaultName)) {
@@ -110,9 +110,9 @@ public abstract class CreateFieldFromParameterActionBase extends BaseIntentionAc
         method.isConstructor(),
         type
       );
-      dialog.show();
-
-      if (!dialog.isOK()) return;
+      if (!dialog.showAndGet()) {
+        return;
+      }
       fieldNameToCalc = dialog.getEnteredName();
       isFinalToCalc = dialog.isDeclareFinal();
 
@@ -125,15 +125,12 @@ public abstract class CreateFieldFromParameterActionBase extends BaseIntentionAc
 
     final boolean isFinal = isFinalToCalc;
     final String fieldName = fieldNameToCalc;
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
-      public void run() {
-        try {
-          performRefactoring(project, targetClass, method, myParameter, type, fieldName, isMethodStatic, isFinal);
-        }
-        catch (IncorrectOperationException e) {
-          LOG.error(e);
-        }
+    ApplicationManager.getApplication().runWriteAction(() -> {
+      try {
+        performRefactoring(project, targetClass, method, myParameter, type, fieldName, isMethodStatic, isFinal);
+      }
+      catch (IncorrectOperationException e) {
+        LOG.error(e);
       }
     });
   }

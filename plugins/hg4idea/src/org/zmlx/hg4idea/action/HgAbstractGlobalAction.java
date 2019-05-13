@@ -12,65 +12,69 @@
 // limitations under the License.
 package org.zmlx.hg4idea.action;
 
-import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.ObjectUtils;
+import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NotNull;
+import org.zmlx.hg4idea.HgVcs;
+import org.zmlx.hg4idea.repo.HgRepository;
+import org.zmlx.hg4idea.repo.HgRepositoryManager;
 import org.zmlx.hg4idea.util.HgUtil;
 
-import javax.swing.*;
-import java.lang.reflect.InvocationTargetException;
+import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 
-abstract class HgAbstractGlobalAction extends AnAction {
-  protected HgAbstractGlobalAction(Icon icon) {
-    super(icon);
-  }
+public abstract class HgAbstractGlobalAction extends DumbAwareAction {
 
-  protected HgAbstractGlobalAction() {
-  }
-
-  private static final Logger LOG = Logger.getInstance(HgAbstractGlobalAction.class.getName());
-
-  public void actionPerformed(AnActionEvent event) {
+  @Override
+  public void actionPerformed(@NotNull AnActionEvent event) {
     final DataContext dataContext = event.getDataContext();
-    final Project project = PlatformDataKeys.PROJECT.getData(dataContext);
+    final Project project = CommonDataKeys.PROJECT.getData(dataContext);
     if (project == null) {
       return;
     }
-    execute(project, HgUtil.getHgRepositories(project));
+    VirtualFile[] files = event.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY);
+    final HgRepositoryManager repositoryManager = HgUtil.getRepositoryManager(project);
+    List<HgRepository> repositories = repositoryManager.getRepositories();
+    if (!repositories.isEmpty()) {
+      List<HgRepository> selectedRepositories = files != null
+                                                ? HgActionUtil.collectRepositoriesFromFiles(repositoryManager, Arrays.asList(files))
+                                                : ContainerUtil.emptyList();
+
+      execute(project, repositories,
+              selectedRepositories.isEmpty() ? Collections.singletonList(HgUtil.getCurrentRepository(project)) : selectedRepositories);
+    }
   }
 
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     super.update(e);
+    boolean enabled = isEnabled(e);
+    e.getPresentation().setEnabled(enabled);
+  }
 
-    Presentation presentation = e.getPresentation();
-    final DataContext dataContext = e.getDataContext();
+  protected abstract void execute(@NotNull Project project,
+                                  @NotNull Collection<HgRepository> repositories,
+                                  @NotNull List<HgRepository> selectedRepositories);
 
-    Project project = PlatformDataKeys.PROJECT.getData(dataContext);
+  public boolean isEnabled(AnActionEvent e) {
+    Project project = e.getData(CommonDataKeys.PROJECT);
     if (project == null) {
-      presentation.setEnabled(false);
+      return false;
     }
+    HgVcs vcs = ObjectUtils.assertNotNull(HgVcs.getInstance(project));
+    final VirtualFile[] roots = ProjectLevelVcsManager.getInstance(project).getRootsUnderVcs(vcs);
+    if (roots == null || roots.length == 0) {
+      return false;
+    }
+    return true;
   }
-
-  protected abstract void execute(Project project, Collection<VirtualFile> repositories);
-
-  protected static void handleException(Project project, Exception e) {
-    LOG.info(e);
-    new HgCommandResultNotifier(project).notifyError(null, "Error", e.getMessage());
-  }
-
-  protected void markDirtyAndHandleErrors(Project project, VirtualFile repository) {
-    try {
-      HgUtil.markDirectoryDirty(project, repository);
-    }
-    catch (InvocationTargetException e) {
-      handleException(project, e);
-    }
-    catch (InterruptedException e) {
-      handleException(project, e);
-    }
-  }
-
 }

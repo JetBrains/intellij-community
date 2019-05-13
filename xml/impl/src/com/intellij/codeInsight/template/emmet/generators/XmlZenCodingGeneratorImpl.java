@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,18 +15,20 @@
  */
 package com.intellij.codeInsight.template.emmet.generators;
 
+import com.intellij.application.options.emmet.EmmetOptions;
+import com.intellij.codeInsight.template.CustomTemplateCallback;
 import com.intellij.codeInsight.template.HtmlTextContextType;
 import com.intellij.codeInsight.template.emmet.ZenCodingUtil;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
 import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.xml.XmlChildRole;
@@ -35,8 +37,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author Eugene.Kudelevsky
@@ -48,34 +50,38 @@ public class XmlZenCodingGeneratorImpl extends XmlZenCodingGenerator {
     return type == StdFileTypes.XHTML || type == StdFileTypes.JSPX || type == StdFileTypes.XML;
   }
 
+  @Override
   @NotNull
   public String toString(@NotNull XmlTag tag,
-                         @NotNull List<Pair<String, String>> attribute2Value,
+                         @NotNull Map<String, String> attributes,
                          boolean hasChildren,
                          @NotNull PsiElement context) {
     FileType fileType = context.getContainingFile().getFileType();
     if (isTrueXml(fileType)) {
-      closeUnclosingTags(tag);
+      CommandProcessor.getInstance().runUndoTransparentAction(() -> closeUnclosingTags(tag));
     }
     return tag.getContainingFile().getText();
   }
 
+  @Override
   @NotNull
-  public String buildAttributesString(@NotNull List<Pair<String, String>> attribute2value,
+  public String buildAttributesString(@NotNull Map<String, String> attributes,
                                       boolean hasChildren,
                                       int numberInIteration,
                                       int totalIterations, @Nullable String surroundedText) {
     StringBuilder result = new StringBuilder();
-    for (Iterator<Pair<String, String>> it = attribute2value.iterator(); it.hasNext();) {
-      Pair<String, String> pair = it.next();
-      String name = pair.first;
-      String value = ZenCodingUtil.getValue(pair.second, numberInIteration, totalIterations, surroundedText);
+    for (Map.Entry<String, String> entry : attributes.entrySet()) {
+      String name = entry.getKey();
+      String value = ZenCodingUtil.getValue(entry.getValue(), numberInIteration, totalIterations, surroundedText);
       result.append(getAttributeString(name, value));
-      if (it.hasNext()) {
-        result.append(' ');
-      }
+      result.append(' ');
     }
-    return result.toString();
+    return result.toString().trim();
+  }
+
+  @Override
+  public boolean isMyContext(@NotNull CustomTemplateCallback callback, boolean wrapping) {
+    return isMyContext(callback.getContext(), wrapping);
   }
 
   public boolean isMyContext(@NotNull PsiElement context, boolean wrapping) {
@@ -86,10 +92,17 @@ public class XmlZenCodingGeneratorImpl extends XmlZenCodingGenerator {
     return language instanceof XMLLanguage;
   }
 
+  @Override
   public String getSuffix() {
     return "html";
   }
 
+  @Override
+  public boolean isEnabled() {
+    return EmmetOptions.getInstance().isEmmetEnabled();
+  }
+
+  @Override
   public boolean isAppliedByDefault(@NotNull PsiElement context) {
     return true;
   }
@@ -98,20 +111,19 @@ public class XmlZenCodingGeneratorImpl extends XmlZenCodingGenerator {
     return name + "=\"" + value + '"';
   }
 
-  @SuppressWarnings({"ConstantConditions"})
   private static void closeUnclosingTags(@NotNull XmlTag root) {
-    final List<SmartPsiElementPointer<XmlTag>> tagToClose = new ArrayList<SmartPsiElementPointer<XmlTag>>();
+    final List<SmartPsiElementPointer<XmlTag>> tagToClose = new ArrayList<>();
     Project project = root.getProject();
     final SmartPointerManager pointerManager = SmartPointerManager.getInstance(project);
     root.accept(new XmlRecursiveElementVisitor() {
       @Override
       public void visitXmlTag(final XmlTag tag) {
         if (!isTagClosed(tag)) {
-          tagToClose.add(pointerManager.createLazyPointer(tag));
+          tagToClose.add(pointerManager.createSmartPsiElementPointer(tag));
         }
       }
     });
-    PsiDocumentManager documentManager = PsiDocumentManager.getInstance(project);
+    final PsiDocumentManager documentManager = PsiDocumentManager.getInstance(project);
     for (final SmartPsiElementPointer<XmlTag> pointer : tagToClose) {
       final XmlTag tag = pointer.getElement();
       if (tag != null) {
@@ -121,17 +133,17 @@ public class XmlZenCodingGeneratorImpl extends XmlZenCodingGenerator {
           VirtualFile file = tag.getContainingFile().getVirtualFile();
           if (file != null) {
             final Document document = FileDocumentManager.getInstance().getDocument(file);
-            documentManager.doPostponedOperationsAndUnblockDocument(document);
-            ApplicationManager.getApplication().runWriteAction(new Runnable() {
-              public void run() {
+            if (document != null) {
+              documentManager.doPostponedOperationsAndUnblockDocument(document);
+              ApplicationManager.getApplication().runWriteAction(() -> {
                 document.replaceString(offset, tag.getTextRange().getEndOffset(), "/>");
-              }
-            });
+                documentManager.commitDocument(document);
+              });
+            }
           }
         }
       }
     }
-    documentManager.commitAllDocuments();
   }
 
   private static boolean isTagClosed(@NotNull XmlTag tag) {

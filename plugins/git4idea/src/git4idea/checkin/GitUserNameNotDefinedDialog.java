@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,7 @@ package git4idea.checkin;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.ValidationInfo;
-import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.components.JBCheckBox;
@@ -26,6 +26,8 @@ import com.intellij.ui.components.JBLabel;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.ui.GridBag;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.xml.util.XmlStringUtil;
+import git4idea.config.GitVcsSettings;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -39,32 +41,31 @@ import static com.intellij.openapi.util.text.StringUtil.isEmptyOrSpaces;
 import static com.intellij.util.ui.UIUtil.DEFAULT_HGAP;
 import static com.intellij.util.ui.UIUtil.DEFAULT_VGAP;
 
-/**
- * @author Kirill Likhodedov
- */
 class GitUserNameNotDefinedDialog extends DialogWrapper {
 
-  @NotNull private final Collection<VirtualFile> myRootsWithUndefinedProps;
-  @NotNull private final Collection<VirtualFile> myAllRootsAffectedByCommit;
-  @Nullable private final Pair<String,String> myProposedValues;
+  @NotNull private final Collection<? extends VirtualFile> myRootsWithUndefinedProps;
+  @NotNull private final Collection<? extends VirtualFile> myAllRootsAffectedByCommit;
+  @Nullable private final Couple<String> myProposedValues;
+  @NotNull private final GitVcsSettings mySettings;
 
   private JTextField myNameTextField;
   private JTextField myEmailTextField;
   private JBCheckBox myGlobalCheckbox;
 
   GitUserNameNotDefinedDialog(@NotNull Project project,
-                                        @NotNull Collection<VirtualFile> rootsWithUndefinedProps, 
-                                        @NotNull Collection<VirtualFile> allRootsAffectedByCommit,
-                                        @NotNull Map<VirtualFile, Pair<String, String>> rootsWithDefinedProps) {
+                              @NotNull Collection<? extends VirtualFile> rootsWithUndefinedProps,
+                              @NotNull Collection<? extends VirtualFile> allRootsAffectedByCommit,
+                              @NotNull Map<VirtualFile, Couple<String>> rootsWithDefinedProps) {
     super(project, false);
     myRootsWithUndefinedProps = rootsWithUndefinedProps;
     myAllRootsAffectedByCommit = allRootsAffectedByCommit;
+    mySettings = GitVcsSettings.getInstance(project);
 
     myProposedValues = calcProposedValues(rootsWithDefinedProps);
 
     setTitle("Git User Name Is Not Defined");
     setOKButtonText("Set and Commit");
-    
+
     init();
   }
 
@@ -86,12 +87,12 @@ class GitUserNameNotDefinedDialog extends DialogWrapper {
   }
 
   @Nullable
-  private static Pair<String, String> calcProposedValues(Map<VirtualFile, Pair<String, String>> rootsWithDefinedProps) {
+  private static Couple<String> calcProposedValues(Map<VirtualFile, Couple<String>> rootsWithDefinedProps) {
     if (rootsWithDefinedProps.isEmpty()) {
       return null;
     }
-    Iterator<Map.Entry<VirtualFile,Pair<String,String>>> iterator = rootsWithDefinedProps.entrySet().iterator();
-    Pair<String, String> firstValue = iterator.next().getValue();
+    Iterator<Map.Entry<VirtualFile,Couple<String>>> iterator = rootsWithDefinedProps.entrySet().iterator();
+    Couple<String> firstValue = iterator.next().getValue();
     while (iterator.hasNext()) {
       // nothing to propose if there are different values set in different repositories
       if (!firstValue.equals(iterator.next().getValue())) {
@@ -103,10 +104,10 @@ class GitUserNameNotDefinedDialog extends DialogWrapper {
 
   @Override
   protected JComponent createCenterPanel() {
-    
+
     JLabel icon = new JLabel(UIUtil.getWarningIcon(), SwingConstants.LEFT);
     JLabel description = new JLabel(getMessageText());
-    
+
     myNameTextField = new JTextField(20);
     JBLabel nameLabel = new JBLabel("Name: ");
     nameLabel.setDisplayedMnemonic('n');
@@ -125,7 +126,7 @@ class GitUserNameNotDefinedDialog extends DialogWrapper {
       myNameTextField.setText(SystemProperties.getUserName());
     }
 
-    myGlobalCheckbox = new JBCheckBox("Set properties globally", true);
+    myGlobalCheckbox = new JBCheckBox("Set properties globally", mySettings.shouldSetUserNameGlobally());
     myGlobalCheckbox.setMnemonic('g');
 
     JPanel rootPanel = new JPanel(new GridBagLayout());
@@ -133,7 +134,7 @@ class GitUserNameNotDefinedDialog extends DialogWrapper {
       .setDefaultInsets(new Insets(0, 0, DEFAULT_VGAP, DEFAULT_HGAP))
       .setDefaultAnchor(GridBagConstraints.LINE_START)
       .setDefaultFill(GridBagConstraints.HORIZONTAL);
-    
+
     rootPanel.add(description, g.nextLine().next().coverLine(3).pady(DEFAULT_HGAP));
     rootPanel.add(icon, g.nextLine().next().coverColumn(3));
     rootPanel.add(nameLabel, g.next().fillCellNone().insets(new Insets(0, 6, DEFAULT_VGAP, DEFAULT_HGAP)));
@@ -159,7 +160,7 @@ class GitUserNameNotDefinedDialog extends DialogWrapper {
     for (VirtualFile root : myRootsWithUndefinedProps) {
       text += root.getPresentableUrl() + "<br/>";
     }
-    return "<html>" + text + "</html>";
+    return XmlStringUtil.wrapInHtml(text);
   }
 
   public String getUserName() {

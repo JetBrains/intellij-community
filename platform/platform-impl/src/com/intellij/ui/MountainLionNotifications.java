@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,29 +25,31 @@ import com.intellij.ui.mac.foundation.ID;
 import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Set;
-
 import static com.intellij.ui.mac.foundation.Foundation.invoke;
 import static com.intellij.ui.mac.foundation.Foundation.nsString;
 
 /**
  * @author Dennis.Ushakov
  */
-public class MountainLionNotifications implements MacNotifications {
-  private static MountainLionNotifications ourNotifications;
+class MountainLionNotifications implements SystemNotificationsImpl.Notifier {
+  private static MountainLionNotifications ourInstance;
 
-  public MountainLionNotifications() {
+  public static synchronized MountainLionNotifications getInstance() {
+    if (ourInstance == null) {
+      ourInstance = new MountainLionNotifications();
+    }
+    return ourInstance;
+  }
+
+  private MountainLionNotifications() {
     final MessageBusConnection connection = ApplicationManager.getApplication().getMessageBus().connect();
     connection.subscribe(ApplicationActivationListener.TOPIC, new ApplicationActivationListener() {
       @Override
-      public void applicationActivated(IdeFrame ideFrame) {
+      public void applicationActivated(@NotNull IdeFrame ideFrame) {
         cleanupDeliveredNotifications();
       }
-
-      @Override
-      public void applicationDeactivated(IdeFrame ideFrame) {}
     });
-    connection.subscribe(AppLifecycleListener.TOPIC, new AppLifecycleListener.Adapter() {
+    connection.subscribe(AppLifecycleListener.TOPIC, new AppLifecycleListener() {
       @Override
       public void appClosing() {
         cleanupDeliveredNotifications();
@@ -55,24 +57,16 @@ public class MountainLionNotifications implements MacNotifications {
     });
   }
 
-  public static synchronized MacNotifications getNotifications() {
-    if (ourNotifications == null) {
-      ourNotifications = new MountainLionNotifications();
-    }
-
-    return ourNotifications;
-  }
-
   @Override
-  public void notify(Set<String> allNotifications, @NotNull String notificationName, String title, String description) {
+  public void notify(@NotNull String name, @NotNull String title, @NotNull String description) {
     final ID notification = invoke(Foundation.getObjcClass("NSUserNotification"), "new");
-    invoke(notification, "setTitle:", nsString(StringUtil.stripHtml(title == null ? "" : title, true).replace("%", "%%")));
-    invoke(notification, "setInformativeText:", nsString(StringUtil.stripHtml(description == null ? "" : description, true).replace("%", "%%")));
+    invoke(notification, "setTitle:", nsString(StringUtil.stripHtml(title, true).replace("%", "%%")));
+    invoke(notification, "setInformativeText:", nsString(StringUtil.stripHtml(description, true).replace("%", "%%")));
     final ID center = invoke(Foundation.getObjcClass("NSUserNotificationCenter"), "defaultUserNotificationCenter");
     invoke(center, "deliverNotification:", notification);
   }
 
-  public static void cleanupDeliveredNotifications() {
+  private static void cleanupDeliveredNotifications() {
     final ID center = invoke(Foundation.getObjcClass("NSUserNotificationCenter"), "defaultUserNotificationCenter");
     invoke(center, "removeAllDeliveredNotifications");
   }

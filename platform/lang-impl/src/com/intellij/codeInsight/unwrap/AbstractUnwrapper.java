@@ -16,34 +16,37 @@
 package com.intellij.codeInsight.unwrap;
 
 import com.intellij.openapi.editor.Editor;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiElement;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
 public abstract class AbstractUnwrapper<C extends AbstractUnwrapper.AbstractContext> implements Unwrapper {
+  @NotNull
   private final String myDescription;
 
-  public AbstractUnwrapper(String description) {
+  public AbstractUnwrapper(@NotNull String description) {
     myDescription = description;
   }
 
   @Override
-  public abstract boolean isApplicableTo(PsiElement e);
+  public abstract boolean isApplicableTo(@NotNull PsiElement e);
 
   @Override
-  public void collectElementsToIgnore(PsiElement element, Set<PsiElement> result) {
+  public void collectElementsToIgnore(@NotNull PsiElement element, @NotNull Set<PsiElement> result) {
   }
 
+  @NotNull
   @Override
-  public String getDescription(PsiElement e) {
+  public String getDescription(@NotNull PsiElement e) {
     return myDescription;
   }
 
   @Override
-  public PsiElement collectAffectedElements(PsiElement e, List<PsiElement> toExtract) {
+  public PsiElement collectAffectedElements(@NotNull PsiElement e, @NotNull List<PsiElement> toExtract) {
     try {
       C c = createContext();
       doUnwrap(e, c);
@@ -55,8 +58,9 @@ public abstract class AbstractUnwrapper<C extends AbstractUnwrapper.AbstractCont
     }
   }
 
+  @NotNull
   @Override
-  public List<PsiElement> unwrap(Editor editor, PsiElement element) throws IncorrectOperationException {
+  public List<PsiElement> unwrap(@NotNull Editor editor, @NotNull PsiElement element) throws IncorrectOperationException {
     C c = createContext();
     c.myIsEffective = true;
     doUnwrap(element, c);
@@ -68,7 +72,7 @@ public abstract class AbstractUnwrapper<C extends AbstractUnwrapper.AbstractCont
   protected abstract C createContext();
 
   public abstract static class AbstractContext {
-    protected final List<PsiElement> myElementsToExtract = new ArrayList<PsiElement>();
+    protected final List<PsiElement> myElementsToExtract = new ArrayList<>();
     protected boolean myIsEffective;
 
     public void addElementToExtract(PsiElement e) {
@@ -84,13 +88,11 @@ public abstract class AbstractUnwrapper<C extends AbstractUnwrapper.AbstractCont
     protected void extract(PsiElement first, PsiElement last, PsiElement from) throws IncorrectOperationException {
       // trim leading empty spaces
       while (first != last && isWhiteSpace(first)) {
-        //noinspection ConstantConditions
         first = first.getNextSibling();
       }
 
       // trim trailing empty spaces
       while (last != first && isWhiteSpace(last)) {
-        //noinspection ConstantConditions
         last = last.getPrevSibling();
       }
 
@@ -99,7 +101,7 @@ public abstract class AbstractUnwrapper<C extends AbstractUnwrapper.AbstractCont
 
       PsiElement toExtract = first;
       if (myIsEffective) {
-        toExtract = from.getParent().addRangeBefore(first, last, from);
+        toExtract = addRangeBefore(first, last, from.getParent(), from);
       }
 
       do {
@@ -112,6 +114,22 @@ public abstract class AbstractUnwrapper<C extends AbstractUnwrapper.AbstractCont
       while (first != null && first.getPrevSibling() != last);
     }
 
+    /**
+     * Adds range [first, last] before anchor under parent.
+     *
+     * @param first
+     * @param last
+     * @param parent
+     * @param anchor
+     * @return the first child element which was actually added
+     */
+    protected PsiElement addRangeBefore(@NotNull PsiElement first,
+                                        @NotNull PsiElement last,
+                                        @NotNull PsiElement parent,
+                                        @NotNull PsiElement anchor) throws IncorrectOperationException {
+      return parent.addRangeBefore(first, last, anchor);
+    }
+
     public void delete(PsiElement e) throws IncorrectOperationException {
       if (myIsEffective) e.delete();
     }
@@ -122,6 +140,10 @@ public abstract class AbstractUnwrapper<C extends AbstractUnwrapper.AbstractCont
         // it attempts to remove not only the element but sometimes whole expression.
         e.getParent().deleteChildRange(e, e);
       }
+    }
+
+    public final boolean isEffective() {
+      return myIsEffective;
     }
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ import com.intellij.icons.AllIcons;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.projectRoots.*;
 import org.jdom.Element;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.util.HashMap;
@@ -27,44 +28,45 @@ import java.util.Map;
 /**
  * Used as a plug for all SDKs which type cannot be determined (for example, plugin that registered a custom type has been deinstalled)
  * @author Eugene Zhuravlev
- *         Date: Dec 11, 2004
  */
 public class UnknownSdkType extends SdkType{
-  private static final Map<String, UnknownSdkType> ourTypeNameToInstanceMap = new HashMap<String, UnknownSdkType>();
+  private static final Map<String, UnknownSdkType> ourTypeNameToInstanceMap = new HashMap<>();
 
   /**
    * @param typeName the name of the SDK type that this SDK serves as a plug for
    */
-  private UnknownSdkType(String typeName) {
+  private UnknownSdkType(@NotNull String typeName) {
     super(typeName);
   }
 
-  public static UnknownSdkType getInstance(String typeName) {
-    UnknownSdkType instance = ourTypeNameToInstanceMap.get(typeName);
-    if (instance == null) {
-      instance = new UnknownSdkType(typeName);
-      ourTypeNameToInstanceMap.put(typeName, instance);
-    }                                                                  
-    return instance;
+  @NotNull
+  public static UnknownSdkType getInstance(@NotNull String typeName) {
+    return ourTypeNameToInstanceMap.computeIfAbsent(typeName, UnknownSdkType::new);
   }
 
+  @Override
   public String suggestHomePath() {
     return null;
   }
 
+  @Override
   public boolean isValidSdkHome(String path) {
     return false;
   }
 
+  @Override
   public String getVersionString(String sdkHome) {
     return "";
   }
 
+  @NotNull
+  @Override
   public String suggestSdkName(String currentSdkName, String sdkHome) {
     return currentSdkName;
   }
 
-  public AdditionalDataConfigurable createAdditionalDataConfigurable(SdkModel sdkModel, SdkModificator sdkModificator) {
+  @Override
+  public AdditionalDataConfigurable createAdditionalDataConfigurable(@NotNull SdkModel sdkModel, @NotNull SdkModificator sdkModificator) {
     return null;
   }
 
@@ -80,13 +82,17 @@ public class UnknownSdkType extends SdkType{
     return null;
   }
 
-  public void saveAdditionalData(SdkAdditionalData additionalData, Element additional) {
+  @Override
+  public void saveAdditionalData(@NotNull SdkAdditionalData additionalData, @NotNull Element additional) {
   }
 
+  @NotNull
+  @Override
   public String getPresentableName() {
     return ProjectBundle.message("sdk.unknown.name");
   }
 
+  @Override
   public Icon getIcon() {
     return AllIcons.Nodes.UnknownJdk;
   }

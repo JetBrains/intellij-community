@@ -26,12 +26,11 @@ import java.util.Set;
  * Enumerates formatting processing states.
  * 
  * @author Denis Zhdanov
- * @since 2/10/11 2:50 PM
  */
 public enum FormattingStateId {
 
   /**
-   * Corresponds to {@link InitialInfoBuilder#buildFrom(Block, int, CompositeBlockWrapper, WrapImpl, Block, boolean)}.
+   * Corresponds to {@link InitialInfoBuilder#buildFrom(Block, int, CompositeBlockWrapper, WrapImpl, Block)}.
    * <p/>
    * I.e. the first thing formatter does retrieval of all {@link Block code blocks} from target {@link FormattingModel model}
    * and wrapping them in order to be able to store information about modified white spaces. That processing may trigger
@@ -45,6 +44,8 @@ public enum FormattingStateId {
    * and modifies their {@link WhiteSpace white spaces} according to the current {@link CodeStyleSettings code style settings}.
    */
   PROCESSING_BLOCKS(1),
+
+  EXPANDING_CHILDREN_INDENTS(5),
 
   /**
    * This element corresponds to formatting phase when all {@link AbstractBlockWrapper wrapped code blocks} are processed and it's
@@ -68,7 +69,7 @@ public enum FormattingStateId {
   }
 
   /**
-   * @return      <code>'weight'</code> of the current state. Basically, it's assumed that every processing iteration of the state
+   * @return      {@code 'weight'} of the current state. Basically, it's assumed that every processing iteration of the state
    *              with greater weight is executed longer that processing iteration of the state with the lower weight
    */
   public double getProgressWeight() {

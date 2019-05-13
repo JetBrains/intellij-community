@@ -1,197 +1,179 @@
-/*
- * Copyright 2000-2010 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
-/*
- * User: anna
- * Date: 11-Jun-2010
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.junit;
 
 import com.intellij.execution.CantRunException;
+import com.intellij.execution.ConfigurationUtil;
+import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.JavaExecutionUtil;
-import com.intellij.execution.configurations.JavaParameters;
 import com.intellij.execution.configurations.RuntimeConfigurationException;
 import com.intellij.execution.configurations.RuntimeConfigurationWarning;
 import com.intellij.execution.runners.ExecutionEnvironment;
+import com.intellij.execution.testframework.SourceScope;
 import com.intellij.execution.util.JavaParametersUtil;
+import com.intellij.execution.util.ProgramParametersUtil;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleUtil;
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.Task;
-import com.intellij.openapi.progress.impl.BackgroundableProcessIndicator;
-import com.intellij.openapi.progress.impl.ProgressManagerImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiMethod;
-import com.intellij.psi.PsiPackage;
+import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
-import com.intellij.util.Function;
-import com.intellij.util.FunctionUtil;
+import com.intellij.refactoring.listeners.RefactoringElementListenerComposite;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.IOException;
-import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.Set;
 
 public class TestsPattern extends TestPackage {
-  public TestsPattern(final Project project,
-                      final JUnitConfiguration configuration,
-                      ExecutionEnvironment environment) {
-    super(project, configuration, environment);
+  public TestsPattern(JUnitConfiguration configuration, ExecutionEnvironment environment) {
+    super(configuration, environment);
   }
 
   @Override
   protected TestClassFilter getClassFilter(JUnitConfiguration.Data data) throws CantRunException {
-    return TestClassFilter.create(getSourceScope(), myConfiguration.getConfigurationModule().getModule(), data.getPatternPresentation());
+    return TestClassFilter.create(getSourceScope(), getConfiguration().getConfigurationModule().getModule(), data.getPatternPresentation());
   }
 
+  @NotNull
   @Override
-  protected String getPackageName(JUnitConfiguration.Data data) throws CantRunException {
+  protected String getPackageName(JUnitConfiguration.Data data) {
     return "";
   }
 
   @Override
-  public Task findTests() {
-    final JUnitConfiguration.Data data = myConfiguration.getPersistentData();
-    final Project project = myConfiguration.getProject();
-    final Set<String> classNames = new HashSet<String>();
-    for (String className : data.getPatterns()) {
-      final PsiClass psiClass = JavaExecutionUtil.findMainClass(project,
-                                                                className.contains(",")
-                                                                ? className.substring(0, className.indexOf(','))
-                                                                : className,
-                                                                GlobalSearchScope.allScope(project));
-      if (psiClass != null && JUnitUtil.isTestClass(psiClass)) {
-        classNames.add(className);
-      }
-    }
-
-    if (classNames.size() == data.getPatterns().size()) {
-      final SearchForTestsTask task = new SearchForTestsTask(project, "Searching for tests...", true) {
-        @Override
-        public void run(@NotNull ProgressIndicator indicator) {
-          try {
-            mySocket = myServerSocket.accept();
-            addClassesListToJavaParameters(classNames,
-                                           StringUtil.isEmpty(data.METHOD_NAME)
-                                           ? FunctionUtil.<String>id()
-                                           : new Function<String, String>() {
-                                             @Override
-                                             public String fun(String className) {
-                                               return className;
-                                             }
-                                           }, "", false, true);
-          }
-          catch (IOException e) {
-            LOG.info(e);
-          }
-          catch (Throwable e) {
-            LOG.error(e);
-          }
-        }
-
-        @Override
-        public void onSuccess() {
-          finish();
-        }
-      };
-      mySearchForTestsIndicator = new BackgroundableProcessIndicator(task);
-      ProgressManagerImpl.runProcessWithProgressAsynchronously(task, mySearchForTestsIndicator);
-      return task;
-    }
-
-    return super.findTests();
+  protected boolean filterOutputByDirectoryForJunit5(Set<PsiClass> classNames) {
+    return super.filterOutputByDirectoryForJunit5(classNames) && classNames.isEmpty();
   }
 
-  protected void configureClasspath() throws CantRunException {
-    final JUnitConfiguration.Data data = myConfiguration.getPersistentData();
-    final Project project = myConfiguration.getProject();
-    final Set<Module> modules = new HashSet<Module>();
+  @Override
+  protected void searchTests5(Module module, TestClassFilter classFilter, Set<PsiClass> classes) {
+    searchTests(module, classFilter, classes, true);
+  }
+
+  @Override
+  protected void searchTests(Module module, TestClassFilter classFilter, Set<PsiClass> classes) {
+    searchTests(module, classFilter, classes, false);
+  }
+
+  private void searchTests(Module module, TestClassFilter classFilter, Set<PsiClass> classes, boolean junit5) {
+    JUnitConfiguration.Data data = getConfiguration().getPersistentData();
+    Project project = getConfiguration().getProject();
     for (String className : data.getPatterns()) {
-      final PsiClass psiClass = JavaExecutionUtil.findMainClass(project,
-                                                                className.contains(",")
-                                                                ? className.substring(0, className.indexOf(','))
-                                                                : className,
-                                                                GlobalSearchScope.allScope(project));
-      if (psiClass != null && JUnitUtil.isTestClass(psiClass)) {
-        modules.add(ModuleUtil.findModuleForPsiElement(psiClass));
+      final PsiClass psiClass = ReadAction.compute(() -> getTestClass(project, className));
+      if (psiClass != null) {
+        if (ReadAction.compute(() -> JUnitUtil.isTestClass(psiClass))) {
+          classes.add(psiClass); //with method, comma separated
+        }
       }
-    }
-
-    final String jreHome = myConfiguration.isAlternativeJrePathEnabled() ? myConfiguration.getAlternativeJrePath() : null;
-
-    Module module = myConfiguration.getConfigurationModule().getModule();
-    if (module == null && modules.size() == 1) {
-      final Module nextModule = modules.iterator().next();
-      if (nextModule != null) {
-        module = nextModule;
+      else {
+        classes.clear();
+        if (!junit5) {//junit 5 process tests automatically
+          ConfigurationUtil.findAllTestClasses(classFilter, module, classes);
+        }
+        return;
       }
-    }
-
-    if (module != null) {
-      JavaParametersUtil.configureModule(module, myJavaParameters, JavaParameters.JDK_AND_CLASSES_AND_TESTS, jreHome);
-    }
-    else {
-      JavaParametersUtil
-        .configureProject(myConfiguration.getProject(), myJavaParameters, JavaParameters.JDK_AND_CLASSES_AND_TESTS, jreHome);
     }
   }
 
   @Override
+  protected String getFilters(Set<PsiClass> foundClasses, String packageName) {
+    return foundClasses.isEmpty() ? getConfiguration().getPersistentData().getPatternPresentation() : "";
+  }
+
+  private PsiClass getTestClass(Project project, String className) {
+    SourceScope sourceScope = getSourceScope();
+    GlobalSearchScope searchScope = sourceScope != null ? sourceScope.getGlobalSearchScope() : GlobalSearchScope.allScope(project);
+    return JavaExecutionUtil.findMainClass(project, className.contains(",") ? StringUtil.getPackageName(className, ',') : className, searchScope);
+  }
+
+  @Override
+  protected boolean configureByModule(Module module) {
+    return module != null;
+  }
+
+  @Override
   public String suggestActionName() {
-    final String configurationName = myConfiguration.getName();
-    if (!myConfiguration.isGeneratedName()) {
-    }
-    return "'" + configurationName + "'"; //todo
+    return null;
   }
 
   @Nullable
   @Override
   public RefactoringElementListener getListener(PsiElement element, JUnitConfiguration configuration) {
-    return null;
+    final RefactoringElementListenerComposite composite = new RefactoringElementListenerComposite();
+    final JUnitConfiguration.Data data = configuration.getPersistentData();
+    final Set<String> patterns = data.getPatterns();
+    for (final String pattern : patterns) {
+      final PsiClass testClass = getTestClass(configuration.getProject(), pattern.trim());
+      if (testClass != null && testClass.equals(element)) {
+        final RefactoringElementListener listeners =
+          RefactoringListeners.getListeners(testClass, new RefactoringListeners.Accessor<PsiClass>() {
+            private String myOldName = testClass.getQualifiedName();
+
+            @Override
+            public void setName(String qualifiedName) {
+              final Set<String> replaced = new LinkedHashSet<>();
+              for (String currentPattern : patterns) {
+                if (myOldName.equals(currentPattern)) {
+                  replaced.add(qualifiedName);
+                  myOldName = qualifiedName;
+                }
+                else {
+                  replaced.add(currentPattern);
+                }
+              }
+              patterns.clear();
+              patterns.addAll(replaced);
+            }
+
+            @Override
+            public PsiClass getPsiElement() {
+              return testClass;
+            }
+
+            @Override
+            public void setPsiElement(PsiClass psiElement) {
+              if (psiElement == testClass) {
+                setName(psiElement.getQualifiedName());
+              }
+            }
+          });
+        if (listeners != null) {
+          composite.addListener(listeners);
+        }
+      }
+    }
+    return composite;
   }
 
   @Override
   public boolean isConfiguredByElement(JUnitConfiguration configuration,
                                        PsiClass testClass,
                                        PsiMethod testMethod,
-                                       PsiPackage testPackage) {
-    /*if (testMethod != null && Comparing.strEqual(testMethod.getName(), configuration.getPersistentData().METHOD_NAME)) {
-      return true;
-    }*/
+                                       PsiPackage testPackage,
+                                       PsiDirectory testDir) {
     return false;
   }
 
   @Override
   public void checkConfiguration() throws RuntimeConfigurationException {
-    final JUnitConfiguration.Data data = myConfiguration.getPersistentData();
+    JavaParametersUtil.checkAlternativeJRE(getConfiguration());
+    ProgramParametersUtil.checkWorkingDirectoryExist(getConfiguration(), getConfiguration().getProject(),
+                                                     getConfiguration().getConfigurationModule().getModule());
+    final JUnitConfiguration.Data data = getConfiguration().getPersistentData();
     final Set<String> patterns = data.getPatterns();
     if (patterns.isEmpty()) {
-      throw new RuntimeConfigurationWarning("No pattern selected");
+      throw new RuntimeConfigurationWarning(ExecutionBundle.message("no.pattern.error.message"));
     }
-    final GlobalSearchScope searchScope = GlobalSearchScope.allScope(myConfiguration.getProject());
+    final GlobalSearchScope searchScope = GlobalSearchScope.allScope(getConfiguration().getProject());
     for (String pattern : patterns) {
       final String className = pattern.contains(",") ? StringUtil.getPackageName(pattern, ',') : pattern;
-      final PsiClass psiClass = JavaExecutionUtil.findMainClass(myConfiguration.getProject(), className, searchScope);
+      final PsiClass psiClass = JavaExecutionUtil.findMainClass(getConfiguration().getProject(), className, searchScope);
       if (psiClass != null && !JUnitUtil.isTestClass(psiClass)) {
-        throw new RuntimeConfigurationWarning("Class " + className + " not a test");
+        throw new RuntimeConfigurationWarning(ExecutionBundle.message("class.not.test.error.message", className));
+      }
+      if (psiClass == null && !pattern.contains("*")) {
+        throw new RuntimeConfigurationWarning(ExecutionBundle.message("class.not.found.error.message", className));
       }
     }
   }

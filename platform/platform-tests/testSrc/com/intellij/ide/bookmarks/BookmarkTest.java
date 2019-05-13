@@ -17,9 +17,6 @@ package com.intellij.ide.bookmarks;
 
 import junit.framework.TestCase;
 
-/**
- * User: Vassiliy.Kudryashov
- */
 public class BookmarkTest extends TestCase {
   public void testIcons() {
     String availableMnemonics = "1234567890ABCDEFGHIJKLMNOPQRSTUVWXYZ";

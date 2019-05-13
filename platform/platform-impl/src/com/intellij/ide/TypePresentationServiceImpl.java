@@ -1,28 +1,15 @@
-/*
- * Copyright 2000-2011 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide;
 
-import com.intellij.ide.presentation.*;
-import com.intellij.openapi.extensions.Extensions;
+import com.intellij.ide.presentation.Presentation;
+import com.intellij.ide.presentation.PresentationProvider;
+import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.util.ClassExtension;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.NullableLazyValue;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.FactoryMap;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -35,6 +22,9 @@ import java.util.Set;
  * @author peter
  */
 public class TypePresentationServiceImpl extends TypePresentationService {
+
+  private static final ExtensionPointName<PresentationProvider> PROVIDER_EP = ExtensionPointName.create("com.intellij.presentationProvider");
+  private static final ClassExtension<PresentationProvider> PROVIDERS = new ClassExtension<>(PROVIDER_EP.getName());
 
   @Override
   public Icon getIcon(Object o) {
@@ -76,10 +66,10 @@ public class TypePresentationServiceImpl extends TypePresentationService {
   }
 
   public TypePresentationServiceImpl() {
-    for(TypeIconEP ep: Extensions.getExtensions(TypeIconEP.EP_NAME)) {
+    for(TypeIconEP ep: TypeIconEP.EP_NAME.getExtensionList()) {
       myIcons.put(ep.className, ep.getIcon());
     }
-    for(TypeNameEP ep: Extensions.getExtensions(TypeNameEP.EP_NAME)) {
+    for(TypeNameEP ep: TypeNameEP.EP_NAME.getExtensionList()) {
       myNames.put(ep.className, ep.getTypeName());
     }
   }
@@ -88,7 +78,11 @@ public class TypePresentationServiceImpl extends TypePresentationService {
   private PresentationTemplate createPresentationTemplate(Class<?> type) {
     Presentation presentation = type.getAnnotation(Presentation.class);
     if (presentation != null) {
-      return new PresentationTemplateImpl(presentation, type);
+      return new AnnotationBasedTemplate(presentation, type);
+    }
+    PresentationProvider provider = PROVIDERS.forClass(type);
+    if (provider != null) {
+      return new ProviderBasedTemplate(provider);
     }
     final NullableLazyValue<Icon> icon = myIcons.get(type.getName());
     final NullableLazyValue<String> typeName = myNames.get(type.getName());
@@ -118,37 +112,89 @@ public class TypePresentationServiceImpl extends TypePresentationService {
     return null;
   }
 
-  private final Map<String, NullableLazyValue<Icon>> myIcons = new HashMap<String, NullableLazyValue<Icon>>();
-  private final Map<String, NullableLazyValue<String>> myNames = new HashMap<String, NullableLazyValue<String>>();
-  @SuppressWarnings({"MismatchedQueryAndUpdateOfCollection"})
-  private final FactoryMap<Class, Set<PresentationTemplate>> mySuperClasses = new ConcurrentFactoryMap<Class, Set<PresentationTemplate>>() {
-    @Override
-    protected Set<PresentationTemplate> create(Class key) {
-      LinkedHashSet<PresentationTemplate> templates = new LinkedHashSet<PresentationTemplate>();
-      walkSupers(key, new LinkedHashSet<Class>(), templates);
+  private final Map<String, NullableLazyValue<Icon>> myIcons = new HashMap<>();
+  private final Map<String, NullableLazyValue<String>> myNames = new HashMap<>();
+  private final Map<Class, Set<PresentationTemplate>> mySuperClasses = ConcurrentFactoryMap.createMap(key-> {
+      LinkedHashSet<PresentationTemplate> templates = new LinkedHashSet<>();
+      walkSupers(key, new LinkedHashSet<>(), templates);
       return templates;
     }
+  );
 
-    private void walkSupers(Class aClass, Set<Class> classes, Set<PresentationTemplate> templates) {
-      if (!classes.add(aClass)) {
-        return;
-      }
-      ContainerUtil.addIfNotNull(createPresentationTemplate(aClass), templates);
-      final Class superClass = aClass.getSuperclass();
-      if (superClass != null) {
-        walkSupers(superClass, classes, templates);
-      }
-
-      for (Class intf : aClass.getInterfaces()) {
-        walkSupers(intf, classes, templates);
-      }
+  private void walkSupers(Class aClass, Set<? super Class> classes, Set<? super PresentationTemplate> templates) {
+    if (!classes.add(aClass)) {
+      return;
     }
-  };
+    ContainerUtil.addIfNotNull(templates, createPresentationTemplate(aClass));
+    final Class superClass = aClass.getSuperclass();
+    if (superClass != null) {
+      walkSupers(superClass, classes, templates);
+    }
 
-  /**
-   * @author Dmitry Avdeev
-   */
-  public static class PresentationTemplateImpl implements PresentationTemplate {
+    for (Class intf : aClass.getInterfaces()) {
+      walkSupers(intf, classes, templates);
+    }
+  }
+
+  /** @noinspection unchecked*/
+  public static class ProviderBasedTemplate implements PresentationTemplate {
+
+    private final PresentationProvider myProvider;
+
+    public ProviderBasedTemplate(PresentationProvider provider) {
+      myProvider = provider;
+    }
+
+    @Nullable
+    @Override
+    public Icon getIcon(Object o, int flags) {
+      return myProvider instanceof PresentationTemplate ?
+             ((PresentationTemplate)myProvider).getIcon(o, flags) :
+             myProvider.getIcon(o);
+    }
+
+    @Nullable
+    @Override
+    public String getName(Object o) {
+      return myProvider.getName(o);
+    }
+
+    @Nullable
+    @Override
+    public String getTypeName() {
+      return myProvider instanceof PresentationTemplate ?
+             ((PresentationTemplate)myProvider).getTypeName() : null;
+    }
+
+    @Override
+    public String getTypeName(Object o) {
+      return myProvider.getTypeName(o);
+    }
+  }
+
+  public static class PresentationTemplateImpl extends ProviderBasedTemplate {
+
+    public PresentationTemplateImpl(Presentation presentation, Class<?> aClass) {
+      super(new AnnotationBasedTemplate(presentation, aClass));
+    }
+  }
+
+  /** @noinspection unchecked*/
+  private static class AnnotationBasedTemplate extends PresentationProvider<Object> implements PresentationTemplate {
+
+    private final Presentation myPresentation;
+    private final Class<?> myClass;
+
+    AnnotationBasedTemplate(Presentation presentation, Class<?> aClass) {
+      myPresentation = presentation;
+      myClass = aClass;
+    }
+
+    @Override
+    @Nullable
+    public Icon getIcon(Object o) {
+      return getIcon(o, 0);
+    }
 
     @Override
     @Nullable
@@ -186,14 +232,6 @@ public class TypePresentationServiceImpl extends TypePresentationService {
       PresentationProvider namer = myPresentationProvider.getValue();
       return namer == null ? null : namer.getName(o);
     }
-
-    public PresentationTemplateImpl(Presentation presentation, Class<?> aClass) {
-      this.myPresentation = presentation;
-      myClass = aClass;
-    }
-
-    private final Presentation myPresentation;
-    private final Class<?> myClass;
 
     private final NullableLazyValue<Icon> myIcon = new NullableLazyValue<Icon>() {
       @Override

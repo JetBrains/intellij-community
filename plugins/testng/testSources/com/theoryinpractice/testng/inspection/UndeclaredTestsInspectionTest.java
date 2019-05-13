@@ -14,15 +14,12 @@
  * limitations under the License.
  */
 
-/*
- * User: anna
- * Date: 18-Jun-2007
- */
 package com.theoryinpractice.testng.inspection;
 
 import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.testFramework.InspectionTestCase;
 import com.intellij.util.ui.UIUtil;
+import com.theoryinpractice.testng.util.TestNGUtil;
 import org.jetbrains.annotations.NonNls;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
@@ -36,36 +33,33 @@ public class UndeclaredTestsInspectionTest extends InspectionTestCase {
     return "test";
   }
 
+  @Override
   @BeforeMethod
-  protected void setUp() throws Exception {
-    UIUtil.invokeAndWaitIfNeeded(new Runnable() {
-      @Override
-      public void run() {
-        try {
-          UndeclaredTestsInspectionTest.super.setUp();
-        }
-        catch (Exception e) {
-          throw new RuntimeException(e);
-        }
+  protected void setUp() {
+    UIUtil.invokeAndWaitIfNeeded((Runnable)() -> {
+      try {
+        UndeclaredTestsInspectionTest.super.setUp();
+      }
+      catch (Exception e) {
+        throw new RuntimeException(e);
       }
     });
   }
 
+  @Override
   @AfterMethod
-  protected void tearDown() throws Exception {
-    UIUtil.invokeAndWaitIfNeeded(new Runnable() {
-      @Override
-      public void run() {
-        try {
-          UndeclaredTestsInspectionTest.super.tearDown();
-        }
-        catch (Exception e) {
-          throw new RuntimeException(e);
-        }
+  protected void tearDown() {
+    UIUtil.invokeAndWaitIfNeeded((Runnable)() -> {
+      try {
+        UndeclaredTestsInspectionTest.super.tearDown();
+      }
+      catch (Exception e) {
+        throw new RuntimeException(e);
       }
     });
   }
 
+  @Override
   @NonNls
   protected String getTestDataPath() {
     return PluginPathManager.getPluginHomePath("testng") + "/testData/inspection";
@@ -73,20 +67,18 @@ public class UndeclaredTestsInspectionTest extends InspectionTestCase {
 
   @DataProvider
   public Object[][] data() {
-    return new Object[][]{{"declared"}, {"undeclared"}, {"packageDeclared"}, {"packageNonDeclared"}, {"commented"}, {"commented1"}};
+    return new Object[][]{{"declared"}, {"undeclared"}, {"packageDeclared"}, {"inSubPackage"}, {"incorrectSubPackage"}, {"packageNonDeclared"}, {"commented"}, {"commented1"}};
   }
 
   @Test(dataProvider = "data")
-  public void doTest(final String name) throws Exception {
-    UIUtil.invokeAndWaitIfNeeded(new Runnable() {
-      @Override
-      public void run() {
-        try {
-          doTest("undeclaredTests/" + name, new UndeclaredTestInspection());
-        }
-        catch (Exception e) {
-          throw new RuntimeException(e);
-        }
+  public void doTest(final String name) {
+    UIUtil.invokeAndWaitIfNeeded((Runnable)() -> {
+      try {
+        TestNGUtil.hasDocTagsSupport = true;
+        doTest("undeclaredTests/" + name, new UndeclaredTestInspection());
+      }
+      catch (Exception e) {
+        throw new RuntimeException(e);
       }
     });
   }

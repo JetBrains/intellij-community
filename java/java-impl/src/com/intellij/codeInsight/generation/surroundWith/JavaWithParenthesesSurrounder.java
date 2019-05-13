@@ -25,16 +25,16 @@ import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.refactoring.introduceVariable.IntroduceVariableBase;
 import com.intellij.util.IncorrectOperationException;
 
-class JavaWithParenthesesSurrounder extends JavaExpressionSurrounder{
+public class JavaWithParenthesesSurrounder extends JavaExpressionSurrounder{
   @Override
   public boolean isApplicable(PsiExpression expr) {
-    return true;
+    return !PsiType.VOID.equals(expr.getType());
   }
 
   @Override
   public TextRange surroundExpression(Project project, Editor editor, PsiExpression expr) throws IncorrectOperationException {
     PsiManager manager = expr.getManager();
-    PsiElementFactory factory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();
+    PsiElementFactory factory = JavaPsiFacade.getElementFactory(manager.getProject());
     CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(project);
 
     PsiParenthesizedExpression parenthExpr = (PsiParenthesizedExpression)factory.createExpressionFromText("(a)", null);

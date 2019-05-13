@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package org.jetbrains.plugins.groovy.completion
 
 import com.intellij.codeInsight.completion.CompletionType
+import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.roots.ContentEntry
 import com.intellij.openapi.roots.ModifiableRootModel
@@ -23,8 +24,10 @@ import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.vfs.JarFileSystem
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.psi.PsiClass
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.fixtures.DefaultLightProjectDescriptor
+import org.jetbrains.annotations.NotNull
 import org.jetbrains.plugins.groovy.util.TestUtils
 /**
  * @author Maxim.Medvedev
@@ -32,60 +35,78 @@ import org.jetbrains.plugins.groovy.util.TestUtils
 class GrCompletionWithLibraryTest extends GroovyCompletionTestBase {
   final LightProjectDescriptor projectDescriptor = new DefaultLightProjectDescriptor() {
     @Override
-    public void configureModule(Module module, ModifiableRootModel model, ContentEntry contentEntry) {
-      final Library.ModifiableModel modifiableModel = model.moduleLibraryTable.createLibrary("GROOVY").modifiableModel;
-      final VirtualFile groovyJar = JarFileSystem.instance.refreshAndFindFileByPath(TestUtils.mockGroovy1_7LibraryName + "!/");
-      modifiableModel.addRoot(groovyJar, OrderRootType.CLASSES);
-      modifiableModel.commit();
+    void configureModule(@NotNull Module module, @NotNull ModifiableRootModel model, @NotNull ContentEntry contentEntry) {
+      final Library.ModifiableModel modifiableModel = model.moduleLibraryTable.createLibrary("GROOVY").modifiableModel
+      final VirtualFile groovyJar = JarFileSystem.instance.refreshAndFindFileByPath(TestUtils.mockGroovy1_7LibraryName + "!/")
+      modifiableModel.addRoot(groovyJar, OrderRootType.CLASSES)
+      modifiableModel.commit()
     }
   }
 
   final String basePath = TestUtils.testDataPath + "groovy/completion/"
 
-  public void testCategoryMethod() {doBasicTest()}
-  public void testCategoryProperty() {doCompletionTest(null, null, '\n', CompletionType.BASIC)}
-  public void testMultipleCategories() {doVariantableTest(null, "", CompletionType.BASIC, CompletionResult.contain, 'getMd5', 'getMd52')}
-  public void testCategoryForArray() {doCompletionTest(null, null, '\n', CompletionType.BASIC)}
+  void testCategoryMethod() { doBasicTest() }
 
-  public void testArrayLikeAccessForList() throws Throwable {doBasicTest(); }
-  public void testArrayLikeAccessForMap() throws Throwable {doBasicTest();}
+  void testCategoryProperty() { doCompletionTest(null, null, '\n', CompletionType.BASIC) }
 
-  public void testEachMethodForList() throws Throwable {doBasicTest();}
-  public void testEachMethodForMapWithKeyValue() throws Throwable {doBasicTest();}
-  public void testEachMethodForMapWithEntry() throws Throwable {doBasicTest();}
-  public void testWithMethod() throws Throwable {doBasicTest();}
-  public void testInjectMethodForCollection() throws Throwable {doBasicTest();}
-  public void testInjectMethodForArray() throws Throwable {doBasicTest();}
-  public void testInjectMethodForMap() throws Throwable {doBasicTest();}
-  public void testClosureDefaultParameterInEachMethod() throws Throwable {doBasicTest();}
-  public void testEachMethodForRanges() throws Throwable {doBasicTest();}
-  public void testEachMethodForEnumRanges() throws Throwable {
+  void testMultipleCategories() { doVariantableTest(null, "", CompletionType.BASIC, CompletionResult.contain, 'getMd5', 'getMd52') }
+
+  void testMultipleCategories2() { doVariantableTest(null, "", CompletionType.BASIC, CompletionResult.contain, 'getMd5', 'getMd52') }
+
+  void testMultipleCategories3() { doVariantableTest(null, "", CompletionType.BASIC, CompletionResult.contain, 'getMd5', 'getMd52') }
+
+  void testCategoryForArray() { doCompletionTest(null, null, '\n', CompletionType.BASIC) }
+
+  void testArrayLikeAccessForList() throws Throwable { doBasicTest() }
+
+  void testArrayLikeAccessForMap() throws Throwable { doBasicTest() }
+
+  void testEachMethodForList() throws Throwable { doBasicTest() }
+
+  void testEachMethodForMapWithKeyValue() throws Throwable { doBasicTest() }
+
+  void testEachMethodForMapWithEntry() throws Throwable { doBasicTest() }
+
+  void testWithMethod() throws Throwable { doBasicTest() }
+
+  void testInjectMethodForCollection() throws Throwable { doBasicTest() }
+
+  void testInjectMethodForArray() throws Throwable { doBasicTest() }
+
+  void testInjectMethodForMap() throws Throwable { doBasicTest() }
+
+  void testClosureDefaultParameterInEachMethod() throws Throwable { doBasicTest() }
+
+  void testEachMethodForRanges() throws Throwable { doBasicTest() }
+
+  void testEachMethodForEnumRanges() throws Throwable {
     myFixture.configureByFile(getTestName(false) + ".groovy")
     myFixture.completeBasic()
     myFixture.type('\n')
-    myFixture.checkResultByFile(getTestName(false) + "_after.groovy");
+    myFixture.checkResultByFile(getTestName(false) + "_after.groovy")
   }
 
-  public void testPrintlnSpace() { checkCompletion 'print<caret>', 'l ', "println <caret>" }
-  public void testHashCodeSpace() { checkCompletion 'if ("".h<caret>', ' ', 'if ("".hashCode() <caret>' }
+  void testPrintlnSpace() { checkCompletion 'print<caret>', 'l ', "println <caret>" }
 
-  public void testTwoMethodWithSameName() {
+  void testHashCodeSpace() { checkCompletion 'if ("".h<caret>', ' ', 'if ("".hashCode() <caret>' }
+
+  void testTwoMethodWithSameName() {
     doVariantableTest "fooo", "fooo"
   }
 
-  public void testIteratorNext() {
+  void testIteratorNext() {
     doHasVariantsTest('next', 'notify')
   }
 
-  public void testGstringExtendsString() {
+  void testGstringExtendsString() {
     doBasicTest()
   }
 
-  public void testCompletionInEachClosure() {
+  void testCompletionInEachClosure() {
     doHasVariantsTest('intValue', 'intdiv')
   }
 
-  public void testEllipsisTypeCompletion() {
+  void testEllipsisTypeCompletion() {
     myFixture.configureByText "a.groovy", """
 def foo(def... args) {
   args.si<caret>
@@ -97,7 +118,7 @@ def foo(def... args) {
 }"""
   }
 
-  public void testBoxForinParams() {
+  void testBoxForinParams() {
     myFixture.configureByText "A.groovy", """
 for (def ch: "abc".toCharArray()) {
   print ch.toUpperCa<caret>
@@ -109,15 +130,15 @@ for (def ch: "abc".toCharArray()) {
 }"""
   }
 
-  public void testEachSpace() throws Exception {
+  void testEachSpace() throws Exception {
     checkCompletion '[].ea<caret>', ' ', '[].each <caret>'
   }
 
-  public void testEachBrace() throws Exception {
+  void testEachBrace() throws Exception {
     checkCompletion '[].ea<caret> {}', '\n', '[].each {<caret>}'
   }
 
-  public void testDeclaredMembersGoFirst() {
+  void testDeclaredMembersGoFirst() {
     myFixture.configureByText "a.groovy", """
       class Foo {
         def superProp
@@ -149,28 +170,30 @@ overridden
 thisProp
 fromSuper
 fromSuper2
+metaClass
 metaPropertyValues
 properties
 superProp
-class
-equals
 getProperty
-hashCode
-identity
 invokeMethod
-metaClass
+setProperty
+equals
+hashCode
+toString
+class
+identity
+with
 notify
 notifyAll
-setProperty
-toString
 wait
 wait
 wait
-with
 getThisProp
 setThisProp
 getSuperProp
 setSuperProp
+getMetaClass
+setMetaClass
 addShutdownHook
 any
 any
@@ -192,8 +215,6 @@ findIndexValues
 findLastIndexOf
 findLastIndexOf
 getAt
-getClass
-getMetaClass
 getMetaPropertyValues
 getProperties
 grep
@@ -214,17 +235,41 @@ println
 putAt
 respondsTo
 respondsTo
-setMetaClass
 split
 sprintf
 sprintf
 use
 use
-use\
+use
+getClass\
 '''.split('\n')
   }
 
   void testListCompletionVariantsFromDGM() {
     doVariantableTest('drop', 'dropWhile')
+  }
+
+  void testGStringConcatenationCompletion() {
+    myFixture.testCompletionVariants(getTestName(false) + ".groovy", "substring", "substring", "subSequence")
+  }
+
+  void testCompleteClassClashingWithGroovyUtilTuple() {
+    myFixture.addClass('package p; public class Tuple {}')
+
+    def file = myFixture.configureByText('a.groovy', 'print new Tupl<caret>')
+    LookupElement[] elements = myFixture.completeBasic()
+    LookupElement tuple = elements.find { it.psiElement instanceof PsiClass && it.psiElement.qualifiedName == 'p.Tuple'}
+    assertNotNull(elements as String, tuple)
+
+    LookupElement groovyUtilTuple = elements.find { it.psiElement instanceof PsiClass && it.psiElement.qualifiedName == 'groovy.lang.Tuple'}
+    assertNotNull(elements as String, groovyUtilTuple)
+
+    lookup.finishLookup('\n' as char, tuple)
+
+    myFixture.checkResult('''\
+import p.Tuple
+
+print new Tuple()\
+''')
   }
 }

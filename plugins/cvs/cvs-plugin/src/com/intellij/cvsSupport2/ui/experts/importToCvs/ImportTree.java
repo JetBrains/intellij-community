@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,17 +30,15 @@ import com.intellij.openapi.fileChooser.FileElement;
 import com.intellij.openapi.fileChooser.FileSystemTree;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ProjectFileIndex;
-import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.IconUtil;
 import com.intellij.util.PlatformIcons;
-import com.intellij.util.containers.HashMap;
-import com.intellij.util.containers.HashSet;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.netbeans.lib.cvsclient.file.AbstractFileObject;
 import org.netbeans.lib.cvsclient.file.ICvsFileSystem;
@@ -50,14 +48,16 @@ import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
 import java.io.File;
 import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 
 /**
  * @author lesya
  */
 public class ImportTree extends NodeRenderer {
-  private final Collection<VirtualFile> myExcludedFiles = new HashSet<VirtualFile>();
-  private final Collection<VirtualFile> myIncludedFiles = new HashSet<VirtualFile>();
+  private final Collection<VirtualFile> myExcludedFiles = new HashSet<>();
+  private final Collection<VirtualFile> myIncludedFiles = new HashSet<>();
   private final Project myProject;
   private final FileSystemTree myFileSystemTree;
   private final CvsWizard myWizard;
@@ -68,7 +68,8 @@ public class ImportTree extends NodeRenderer {
     myWizard = wizard;
   }
 
-  public void customizeCellRenderer(JTree tree, Object value, boolean selected, boolean expanded, boolean leaf, int row, boolean hasFocus) {
+  @Override
+  public void customizeCellRenderer(@NotNull JTree tree, Object value, boolean selected, boolean expanded, boolean leaf, int row, boolean hasFocus) {
     if (customize(tree, value, selected, expanded, leaf, row, hasFocus)) return;
     super.customizeCellRenderer(tree, value, selected, expanded, leaf, row, hasFocus);
   }
@@ -99,13 +100,15 @@ public class ImportTree extends NodeRenderer {
 
   public AnAction createExcludeAction() {
     return new AnAction(CvsBundle.message("import.wizard.exclude.from.import.action.name"), null, PlatformIcons.DELETE_ICON) {
-      public void update(AnActionEvent e) {
+      @Override
+      public void update(@NotNull AnActionEvent e) {
         final VirtualFile[] selectedFiles = myFileSystemTree.getSelectedFiles();
         final Presentation presentation = e.getPresentation();
         presentation.setEnabled(isAtLeastOneFileIncluded(selectedFiles));
       }
 
-      public void actionPerformed(AnActionEvent e) {
+      @Override
+      public void actionPerformed(@NotNull AnActionEvent e) {
         final VirtualFile[] selectedFiles = myFileSystemTree.getSelectedFiles();
         for (VirtualFile selectedFile : selectedFiles) {
           exclude(selectedFile);
@@ -128,13 +131,15 @@ public class ImportTree extends NodeRenderer {
 
   public AnAction createIncludeAction() {
     return new AnAction(CvsBundle.message("import.wizard.include.to.import.action.name"), null, IconUtil.getAddIcon()) {
-      public void update(AnActionEvent e) {
+      @Override
+      public void update(@NotNull AnActionEvent e) {
         final VirtualFile[] selectedFiles = myFileSystemTree.getSelectedFiles();
         final Presentation presentation = e.getPresentation();
         presentation.setEnabled(isAtLeastOneFileExcluded(selectedFiles));
       }
 
-      public void actionPerformed(AnActionEvent e) {
+      @Override
+      public void actionPerformed(@NotNull AnActionEvent e) {
         final VirtualFile[] selectedFiles = myFileSystemTree.getSelectedFiles();
         for (VirtualFile selectedFile : selectedFiles) {
           include(selectedFile);
@@ -150,12 +155,11 @@ public class ImportTree extends NodeRenderer {
     if (myProject == null) {
       return;
     }
-    final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(myProject).getFileIndex();
-    if (!fileIndex.isIgnored(selectedFile)) {
+    if (!isIgnoredByVcs(selectedFile)) {
       return;
     }
     final VirtualFile parent = selectedFile.getParent();
-    if (parent != null && fileIndex.isIgnored(parent)) {
+    if (parent != null && isIgnoredByVcs(parent)) {
       return;
     }
     for (final VirtualFile excludedFile : myExcludedFiles) {
@@ -182,12 +186,11 @@ public class ImportTree extends NodeRenderer {
       if (myProject == null) {
         continue;
       }
-      final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(myProject).getFileIndex();
-      if (!fileIndex.isIgnored(selectedFile)) {
+      if (!isIgnoredByVcs(selectedFile)) {
         continue;
       }
       final VirtualFile parent = selectedFile.getParent();
-      if (parent == null || fileIndex.isIgnored(parent) || myExcludedFiles.contains(parent)) {
+      if (parent == null || isIgnoredByVcs(parent) || myExcludedFiles.contains(parent)) {
         continue;
       }
       if (!myIncludedFiles.contains(selectedFile)) {
@@ -211,7 +214,7 @@ public class ImportTree extends NodeRenderer {
         return true;
       }
     }
-    if (myProject == null || !ProjectRootManager.getInstance(myProject).getFileIndex().isIgnored(file)) {
+    if (myProject == null || !isIgnoredByVcs(file)) {
       return false;
     }
     for (VirtualFile includedFile : myIncludedFiles) {
@@ -223,26 +226,27 @@ public class ImportTree extends NodeRenderer {
   }
 
   public IIgnoreFileFilter getIgnoreFileFilter() {
-    final Collection<File> excludedFiles = new HashSet<File>();
+    final Collection<File> excludedFiles = new HashSet<>();
     for (final VirtualFile excludedFile : myExcludedFiles) {
       excludedFiles.add(CvsVfsUtil.getFileFor(excludedFile));
     }
-    final Collection<File> includedFiles = new HashSet<File>();
+    final Collection<File> includedFiles = new HashSet<>();
     for (VirtualFile includedFile : myIncludedFiles) {
       includedFiles.add(CvsVfsUtil.getFileFor(includedFile));
     }
 
     return new IIgnoreFileFilter() {
-      private final Map<File, IgnoredFilesInfo> myParentToIgnoresMap = new HashMap<File, IgnoredFilesInfo>();
+      private final Map<File, IgnoredFilesInfo> myParentToIgnoresMap = new HashMap<>();
 
+      @Override
       public boolean shouldBeIgnored(AbstractFileObject abstractFileObject, ICvsFileSystem cvsFileSystem) {
         final File file = cvsFileSystem.getLocalFileSystem().getFile(abstractFileObject);
         if (file.isDirectory() && file.getName().equals(CvsUtil.CVS)) return true;
 
         if (FileTypeManager.getInstance().isFileIgnored(abstractFileObject.getName())) return true;
+        final VirtualFile vFile = LocalFileSystem.getInstance().findFileByIoFile(file);
         if (myProject != null && !includedFiles.contains(file)) {
-          final VirtualFile vFile = LocalFileSystem.getInstance().findFileByIoFile(file);
-          if (vFile != null && ProjectRootManager.getInstance(myProject).getFileIndex().isIgnored(vFile)) {
+          if (vFile != null && isIgnoredByVcs(vFile)) {
             return true;
           }
         }
@@ -253,8 +257,12 @@ public class ImportTree extends NodeRenderer {
         if (!myParentToIgnoresMap.containsKey(parentFile)) {
           myParentToIgnoresMap.put(parentFile, IgnoredFilesInfoImpl.createForFile(new File(parentFile, CvsUtil.CVS_IGNORE_FILE)));
         }
-        return myParentToIgnoresMap.get(parentFile).shouldBeIgnored(file.getName());
+        return myParentToIgnoresMap.get(parentFile).shouldBeIgnored(vFile);
       }
     };
+  }
+
+  private boolean isIgnoredByVcs(VirtualFile vFile) {
+    return myProject != null && ProjectLevelVcsManager.getInstance(myProject).isIgnored(vFile);
   }
 }

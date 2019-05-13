@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package com.intellij.debugger;
 
 import com.intellij.debugger.requests.ClassPrepareRequestor;
+import com.intellij.openapi.fileTypes.FileType;
 import com.sun.jdi.Location;
 import com.sun.jdi.ReferenceType;
 import com.sun.jdi.request.ClassPrepareRequest;
@@ -23,6 +24,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
+import java.util.Set;
 
 /**
  * Manages the correspondence between source positions and bytecode locations during JVM debugging.
@@ -50,7 +52,7 @@ public interface PositionManager {
    * @see com.intellij.debugger.engine.jdi.VirtualMachineProxy#classesByName
    */
   @NotNull
-  List<ReferenceType> getAllClasses(SourcePosition classPosition) throws NoDataException;
+  List<ReferenceType> getAllClasses(@NotNull SourcePosition classPosition) throws NoDataException;
 
   /**
    * Returns the list of bytecode locations in a specific class corresponding to the specified position in the source code.
@@ -62,7 +64,7 @@ public interface PositionManager {
    * @see ReferenceType#locationsOfLine(int)
    */
   @NotNull
-  List<Location> locationsOfLine(ReferenceType type, SourcePosition position) throws NoDataException;
+  List<Location> locationsOfLine(@NotNull ReferenceType type, @NotNull SourcePosition position) throws NoDataException;
 
   /**
    * Called to request the JVM to notify the debugger engine when a class corresponding to a breakpoint location is loaded.
@@ -75,5 +77,14 @@ public interface PositionManager {
    * @throws NoDataException if the position is not in the code managed by this {@code PositionManager}
    */
   @Nullable
-  ClassPrepareRequest createPrepareRequest(ClassPrepareRequestor requestor, SourcePosition position) throws NoDataException;
+  ClassPrepareRequest createPrepareRequest(@NotNull ClassPrepareRequestor requestor, @NotNull SourcePosition position) throws NoDataException;
+
+  /**
+   * Return file types this position manager accepts
+   * @return set of accepted file types, or null if it accepts all
+   */
+  @Nullable
+  default Set<? extends FileType> getAcceptedFileTypes() {
+    return null;
+  }
 }

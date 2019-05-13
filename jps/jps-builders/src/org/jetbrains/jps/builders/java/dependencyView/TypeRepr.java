@@ -1,36 +1,22 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.jps.builders.java.dependencyView;
 
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.io.DataExternalizer;
-import org.jetbrains.asm4.Type;
+import com.intellij.util.io.DataInputOutputUtil;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.jps.builders.storage.BuildDataCorruptedException;
+import org.jetbrains.org.objectweb.asm.Type;
 
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Set;
 
 /**
  * @author: db
- * Date: 14.02.11
  */
-class TypeRepr {
+public class TypeRepr {
   private static final byte PRIMITIVE_TYPE = 0x0;
   private static final byte CLASS_TYPE = 0x1;
   private static final byte ARRAY_TYPE = 0x2;
@@ -44,6 +30,7 @@ class TypeRepr {
 
     void updateClassUsages(DependencyContext context, int owner, Set<UsageRepr.Usage> s);
     String getDescr(DependencyContext context);
+    @Override
     void save(DataOutput out);
   }
 
@@ -64,10 +51,10 @@ class TypeRepr {
     public void save(final DataOutput out) {
       try {
         out.writeByte(PRIMITIVE_TYPE);
-        out.writeInt(type);
+        DataInputOutputUtil.writeINT(out, type);
       }
       catch (IOException e) {
-        throw new RuntimeException(e);
+        throw new BuildDataCorruptedException(e);
       }
     }
 
@@ -77,10 +64,10 @@ class TypeRepr {
 
     PrimitiveType(final DataInput in) {
       try {
-        type = in.readInt();
+        type = DataInputOutputUtil.readINT(in);
       }
       catch (IOException e) {
-        throw new RuntimeException(e);
+        throw new BuildDataCorruptedException(e);
       }
     }
 
@@ -149,14 +136,14 @@ class TypeRepr {
         elementType.save(out);
       }
       catch (IOException e) {
-        throw new RuntimeException(e);
+        throw new BuildDataCorruptedException(e);
       }
     }
   }
 
   public static class ClassType implements AbstractType {
+    public static final ClassType[] EMPTY_ARRAY = new ClassType[0];
     public final int className;
-    public final AbstractType[] typeArgs;
 
     @Override
     public String getDescr(final DependencyContext context) {
@@ -170,26 +157,14 @@ class TypeRepr {
 
     ClassType(final int className) {
       this.className = className;
-      typeArgs = EMPTY_TYPE_ARRAY;
     }
 
-    ClassType(final DependencyContext context, final DataInput in) {
+    ClassType(final DataInput in) {
       try {
-        className = in.readInt();
-        final int size = in.readInt();
-        if (size == 0) {
-          typeArgs = EMPTY_TYPE_ARRAY;
-        }
-        else {
-          typeArgs = new AbstractType[size];
-          final DataExternalizer<AbstractType> externalizer = externalizer(context);
-          for (int i = 0; i < size; i++) {
-            typeArgs[i] = externalizer.read(in);
-          }
-        }
+        className = DataInputOutputUtil.readINT(in);
       }
       catch (IOException e) {
-        throw new RuntimeException(e);
+        throw new BuildDataCorruptedException(e);
       }
     }
 
@@ -198,33 +173,26 @@ class TypeRepr {
       if (this == o) return true;
       if (o == null || getClass() != o.getClass()) return false;
 
-      final ClassType classType = (ClassType)o;
+      ClassType type = (ClassType)o;
 
-      if (className != classType.className) return false;
-      if (!Arrays.equals(typeArgs, classType.typeArgs)) return false;
+      if (className != type.className) return false;
 
       return true;
     }
 
     @Override
     public int hashCode() {
-      int result = className;
-      result = 31 * result + (typeArgs != null ? Arrays.hashCode(typeArgs) : 0);
-      return result;
+      return className;
     }
 
     @Override
     public void save(final DataOutput out) {
       try {
         out.writeByte(CLASS_TYPE);
-        out.writeInt(className);
-        out.writeInt(typeArgs.length);
-        for (AbstractType t : typeArgs) {
-          t.save(out);
-        }
+        DataInputOutputUtil.writeINT(out, className);
       }
       catch (IOException e) {
-        throw new RuntimeException(e);
+        throw new BuildDataCorruptedException(e);
       }
     }
   }
@@ -241,42 +209,39 @@ class TypeRepr {
     return acc;
   }
 
-  public static Collection<AbstractType> createClassType(final DependencyContext context,
-                                                         final Collection<String> args,
-                                                         final Collection<AbstractType> acc) {
-    if (args != null) {
-      for (String a : args) {
-        acc.add(createClassType(context, context.get(a)));
-      }
-    }
-
-    return acc;
-  }
-
   public static ClassType createClassType(final DependencyContext context, final int s) {
     return (ClassType)context.getType(new ClassType(s));
   }
 
   public static AbstractType getType(final DependencyContext context, final int descr) {
-    final Type t = Type.getType(context.getValue(descr));
+    return getType(InternedString.create(context, descr));
+  }
+  public static AbstractType getType(final DependencyContext context, final String descr) {
+    return getType(InternedString.create(context, descr));
+  }
+
+  public static AbstractType getType(InternedString descr) {
+    final DependencyContext context = descr.getContext();
+    final Type t = Type.getType(descr.asString());
 
     switch (t.getSort()) {
       case Type.OBJECT:
-        return context.getType(new ClassType(context.get(StringUtil.replaceChar(t.getClassName(), '.', '/'))));
+        return context.getType(new ClassType(context.get(t.getClassName().replace('.', '/'))));
 
       case Type.ARRAY:
         return context.getType(new ArrayType(getType(context, t.getElementType())));
 
       default:
-        return context.getType(new PrimitiveType(descr));
+        return context.getType(new PrimitiveType(descr.asInt()));
     }
   }
 
   public static AbstractType getType(final DependencyContext context, final Type t) {
-    return getType(context, context.get(t.getDescriptor()));
+    return getType(context, t.getDescriptor());
   }
 
   public static AbstractType[] getType(final DependencyContext context, final Type[] t) {
+    if(t.length == 0) return AbstractType.EMPTY_TYPE_ARRAY;
     final AbstractType[] r = new AbstractType[t.length];
 
     for (int i = 0; i < r.length; i++) {
@@ -286,15 +251,34 @@ class TypeRepr {
     return r;
   }
 
+  public static DataExternalizer<ClassType> classTypeExternalizer(final DependencyContext context) {
+    final DataExternalizer<AbstractType> delegate = externalizer(context);
+    return new DataExternalizer<ClassType>() {
+      @Override
+      public void save(@NotNull DataOutput out, ClassType value) throws IOException {
+        delegate.save(out, value);
+      }
+
+      @Override
+      public ClassType read(@NotNull DataInput in) throws IOException {
+        final AbstractType read = delegate.read(in);
+        if (read instanceof ClassType) {
+          return (ClassType)read;
+        }
+        throw new IOException("Expected: "+ ClassType.class.getName() + "; Actual: " + (read == null? "null" : read.getClass().getName()));
+      }
+    };
+  }
+
   public static DataExternalizer<AbstractType> externalizer(final DependencyContext context) {
     return new DataExternalizer<AbstractType>() {
       @Override
-      public void save(final DataOutput out, final AbstractType value) throws IOException {
+      public void save(@NotNull final DataOutput out, final AbstractType value) throws IOException {
         value.save(out);
       }
 
       @Override
-      public AbstractType read(final DataInput in) throws IOException {
+      public AbstractType read(@NotNull final DataInput in) throws IOException {
         AbstractType elementType;
         int level = 0;
 
@@ -307,7 +291,7 @@ class TypeRepr {
               break loop;
 
             case CLASS_TYPE:
-              elementType = context.getType(new ClassType(context, in));
+              elementType = context.getType(new ClassType(in));
               break loop;
 
             case ARRAY_TYPE:

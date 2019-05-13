@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,8 +19,6 @@ import com.intellij.openapi.vcs.VcsException;
 
 /**
  * @author irengrig
- *         Date: 7/13/11
- *         Time: 5:52 PM
  */
 public class VcsAppendableHistoryPartnerAdapter implements VcsAppendableHistorySessionPartner {
   private VcsAbstractHistorySession mySession;
@@ -39,18 +37,6 @@ public class VcsAppendableHistoryPartnerAdapter implements VcsAppendableHistoryS
   @Override
   public void reportException(VcsException exception) {
     myException = exception;
-  }
-
-  @Override
-  public void finished() {
-  }
-
-  @Override
-  public void forceRefresh() {
-  }
-
-  @Override
-  public void beforeRefresh() {
   }
 
   public void check() throws VcsException {

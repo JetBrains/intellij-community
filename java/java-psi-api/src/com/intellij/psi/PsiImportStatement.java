@@ -18,7 +18,7 @@ package com.intellij.psi;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * Represents a Java <code>import</code> statement.
+ * Represents a Java {@code import} statement.
  */
 public interface PsiImportStatement extends PsiImportStatementBase {
   /**

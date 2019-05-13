@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,6 +27,7 @@ import org.jetbrains.annotations.NotNull;
  */
 public abstract class BasicDomElementsInspection<T extends DomElement> extends DomElementsInspection<T> {
 
+  @SafeVarargs
   public BasicDomElementsInspection(@NotNull Class<? extends T> domClass, Class<? extends T>... additionalClasses) {
     super(domClass, additionalClasses);
   }
@@ -43,16 +44,17 @@ public abstract class BasicDomElementsInspection<T extends DomElement> extends D
   }
 
   /**
-   * The default implementations checks for resolve problems (if {@link #shouldCheckResolveProblems(com.intellij.util.xml.GenericDomValue)}
+   * The default implementations checks for resolve problems (if {@link #shouldCheckResolveProblems(GenericDomValue)}
    * returns true), then runs annotators (see {@link com.intellij.util.xml.DomFileDescription#createAnnotator()}),
    * checks for {@link com.intellij.util.xml.Required} and {@link com.intellij.util.xml.ExtendClass} annotation
    * problems, checks for name identity (see {@link com.intellij.util.xml.NameValue} annotation) and custom annotation
-   * checkers (see {@link com.intellij.util.xml.highlighting.DomCustomAnnotationChecker}).
+   * checkers (see {@link DomCustomAnnotationChecker}).
    *
    * @param element element to check
    * @param holder  a place to add problems to
    * @param helper  helper object
    */
+  @Override
   protected void checkDomElement(DomElement element, DomElementAnnotationHolder holder, DomHighlightingHelper helper) {
     final int oldSize = holder.getSize();
     if (element instanceof GenericDomValue) {
@@ -61,8 +63,10 @@ public abstract class BasicDomElementsInspection<T extends DomElement> extends D
         helper.checkResolveProblems(genericDomValue, holder);
       }
     }
-    for (final Class<? extends T> aClass : getDomClasses()) {
-      helper.runAnnotators(element, holder, aClass);
+    if (!holder.getFileElement().getFileDescription().isAutomaticHighlightingEnabled()) {
+      for (Class<? extends T> aClass : getDomClasses()) {
+        helper.runAnnotators(element, holder, aClass);
+      }
     }
     if (oldSize != holder.getSize()) return;
 

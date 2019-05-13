@@ -31,10 +31,12 @@ public final class ExecuteAfterCompilationEvent extends ExecutionEvent {
     return ourInstance;
   }
 
+  @Override
   public String getTypeId() {
     return TYPE_ID;
   }
 
+  @Override
   public String getPresentableName() {
     return AntBundle.message("ant.event.after.compilation.presentable.name");
   }

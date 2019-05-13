@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,31 +17,21 @@ package com.intellij.tools;
 
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.options.SchemeManagerFactory;
 import com.intellij.openapi.options.SchemeProcessor;
-import com.intellij.openapi.options.SchemesManagerFactory;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author traff
- */
 public class ToolManager extends BaseToolManager<Tool> {
-  public ToolManager(ActionManagerEx actionManagerEx,
-                     SchemesManagerFactory factory) {
-    super(actionManagerEx, factory);
+  public ToolManager(@NotNull ActionManagerEx actionManagerEx, @NotNull SchemeManagerFactory factory) {
+    super(actionManagerEx, factory, "tools", ToolsBundle.message("tools.settings"));
   }
 
   @Override
-  protected String getSchemesPath() {
-    return "$ROOT_CONFIG$/tools";
-  }
-
-  @Override
-  protected SchemeProcessor<ToolsGroup<Tool>> createProcessor() {
+  protected SchemeProcessor<ToolsGroup<Tool>, ToolsGroup<Tool>> createProcessor() {
     return new ToolsProcessor<Tool>() {
-
       @Override
       protected ToolsGroup<Tool> createToolsGroup(String groupName) {
-        return new ToolsGroup<Tool>(groupName);
+        return new ToolsGroup<>(groupName);
       }
 
       @Override
@@ -58,10 +48,5 @@ public class ToolManager extends BaseToolManager<Tool> {
 
   public static ToolManager getInstance() {
     return ApplicationManager.getApplication().getComponent(ToolManager.class);
-  }
-
-  @NotNull
-  public String getComponentName() {
-    return "ToolManager";
   }
 }

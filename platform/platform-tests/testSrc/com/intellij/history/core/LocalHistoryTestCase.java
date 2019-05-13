@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,27 +23,66 @@ import com.intellij.history.core.tree.Entry;
 import com.intellij.history.core.tree.FileEntry;
 import com.intellij.history.core.tree.RootEntry;
 import com.intellij.history.integration.TestVirtualFile;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Clock;
+import com.intellij.testFramework.EdtTestUtil;
+import com.intellij.testFramework.TestLoggerFactory;
+import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
+import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.junit.AfterClass;
 import org.junit.Assert;
+import org.junit.BeforeClass;
+import org.junit.Rule;
+import org.junit.rules.TestRule;
 
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
 public abstract class LocalHistoryTestCase extends Assert {
+  @Rule
+  public TestRule watcher = TestLoggerFactory.createTestWatcher();
+
   private static long myCurrentId = 0;
+  private static IdeaProjectTestFixture fixture; // to initialize FSRecords
 
   public static long nextId() {
     return myCurrentId++;
   }
 
   protected static byte[] b(String s) {
-    return s.getBytes();
+    return s.getBytes(StandardCharsets.UTF_8);
   }
 
   protected static Content c(String data) {
     return data == null ? null : new TestContent(b(data));
+  }
+
+  @BeforeClass
+  public static void setupFSRecords() {
+    EdtTestUtil.runInEdtAndWait(() -> {
+      fixture = IdeaTestFixtureFactory.getFixtureFactory().createFixtureBuilder("ddd").getFixture();
+      fixture.setUp();
+      ApplicationManager.getApplication().runWriteAction(() -> {
+        assert fixture.getProject() != null;
+      });
+    });
+  }
+
+  @AfterClass
+  public static void tearDownFSRecords() {
+    ApplicationManager.getApplication().invokeAndWait(() -> {
+      try {
+        fixture.tearDown();
+        fixture = null;
+      }
+      catch (Exception e) {
+        throw new RuntimeException(e);
+      }
+    });
   }
 
   public CreateFileChange createFile(RootEntry root, String path) {
@@ -125,7 +164,7 @@ public abstract class LocalHistoryTestCase extends Assert {
       }
     }
     facade.endChangeSet(changeSetName);
-    return (ChangeSet)facade.getChangeListInTests().getChangesInTests().get(0);
+    return facade.getChangeListInTests().getChangesInTests().get(0);
   }
 
   public static List<Revision> collectRevisions(LocalHistoryFacade facade, RootEntry root, String path, String projectId, @Nullable String pattern) {
@@ -138,11 +177,13 @@ public abstract class LocalHistoryTestCase extends Assert {
     return v.getChanges();
   }
 
-  public static <T> T[] array(T... objects) {
+  @SafeVarargs
+  public static <T> T[] array(@NotNull T... objects) {
     return objects;
   }
 
-  public static <T> List<T> list(T... objects) {
+  @SafeVarargs
+  public static <T> List<T> list(@NotNull T... objects) {
     return Arrays.asList(objects);
   }
 
@@ -176,7 +217,7 @@ public abstract class LocalHistoryTestCase extends Assert {
   }
 
   protected static void assertEquals(Object[] expected, Collection actual) {
-    assertArrayEquals(actual.toString(), expected, actual.toArray());
+    Assert.assertArrayEquals(actual.toString(), expected, actual.toArray());
   }
 
   protected static TestVirtualFile testDir(String name) {

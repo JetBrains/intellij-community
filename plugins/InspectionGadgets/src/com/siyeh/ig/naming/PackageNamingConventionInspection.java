@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,31 +16,24 @@
 package com.siyeh.ig.naming;
 
 import com.intellij.analysis.AnalysisScope;
-import com.intellij.codeInspection.CommonProblemDescriptor;
-import com.intellij.codeInspection.GlobalInspectionContext;
-import com.intellij.codeInspection.InspectionManager;
+import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.reference.RefEntity;
 import com.intellij.codeInspection.reference.RefPackage;
+import com.intellij.codeInspection.ui.ConventionOptionsPanel;
 import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.ui.DocumentAdapter;
-import com.intellij.util.ui.RegExFormatter;
-import com.intellij.util.ui.RegExInputVerifier;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.PsiJavaCodeReferenceElement;
+import com.intellij.psi.PsiPackageStatement;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseGlobalInspection;
+import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.BaseSharedLocalInspection;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.event.DocumentEvent;
-import javax.swing.event.DocumentListener;
-import javax.swing.text.Document;
-import javax.swing.text.InternationalFormatter;
-import java.awt.*;
-import java.text.NumberFormat;
-import java.text.ParseException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -64,43 +57,38 @@ public class PackageNamingConventionInspection extends BaseGlobalInspection {
    */
   public int m_maxLength = DEFAULT_MAX_LENGTH;
 
-  private Pattern m_regexPattern = Pattern.compile(m_regex);
+  protected Pattern m_regexPattern = Pattern.compile(m_regex);
 
   @NotNull
   @Override
   public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "package.naming.convention.display.name");
+    return InspectionGadgetsBundle.message("package.naming.convention.display.name");
   }
 
   @Override
   @Nullable
-  public CommonProblemDescriptor[] checkElement(
-    RefEntity refEntity, AnalysisScope analysisScope,
-    InspectionManager inspectionManager,
-    GlobalInspectionContext globalInspectionContext) {
+  public CommonProblemDescriptor[] checkElement(@NotNull RefEntity refEntity, @NotNull AnalysisScope analysisScope,
+                                                @NotNull InspectionManager inspectionManager,
+                                                @NotNull GlobalInspectionContext globalInspectionContext) {
     if (!(refEntity instanceof RefPackage)) {
       return null;
     }
-    @NonNls final String name = refEntity.getName();
-    if (name == null || "default package".equals(name)) {
+    @NonNls final String name = StringUtil.getShortName(refEntity.getQualifiedName());
+    if (InspectionsBundle.message("inspection.reference.default.package").equals(name)) {
       return null;
     }
 
     final int length = name.length();
+    if (length == 0) {
+      return null;
+    }
     if (length < m_minLength) {
-      final String errorString =
-        InspectionGadgetsBundle.message(
-          "package.naming.convention.problem.descriptor.short",
-          name);
-      return new CommonProblemDescriptor[]{
-        inspectionManager.createProblemDescriptor(errorString)};
+      final String errorString = InspectionGadgetsBundle.message("package.naming.convention.problem.descriptor.short", name);
+      return new CommonProblemDescriptor[]{inspectionManager.createProblemDescriptor(errorString)};
     }
     if (length > m_maxLength) {
-      final String errorString =
-        InspectionGadgetsBundle.message("package.naming.convention.problem.descriptor.long", name);
-      return new CommonProblemDescriptor[]{
-        inspectionManager.createProblemDescriptor(errorString)};
+      final String errorString = InspectionGadgetsBundle.message("package.naming.convention.problem.descriptor.long", name);
+      return new CommonProblemDescriptor[]{inspectionManager.createProblemDescriptor(errorString)};
     }
     final Matcher matcher = m_regexPattern.matcher(name);
     if (matcher.matches()) {
@@ -109,124 +97,88 @@ public class PackageNamingConventionInspection extends BaseGlobalInspection {
     else {
       final String errorString =
         InspectionGadgetsBundle.message("package.naming.convention.problem.descriptor.regex.mismatch", name, m_regex);
-      return new CommonProblemDescriptor[]{
-        inspectionManager.createProblemDescriptor(errorString)};
+      return new CommonProblemDescriptor[]{inspectionManager.createProblemDescriptor(errorString)};
     }
   }
 
   @Override
-  public void readSettings(Element element) throws InvalidDataException {
+  public void readSettings(@NotNull Element element) throws InvalidDataException {
     super.readSettings(element);
     m_regexPattern = Pattern.compile(m_regex);
   }
 
-  private static final int REGEX_COLUMN_COUNT = 25;
-
   @Override
   public JComponent createOptionsPanel() {
-    final GridBagLayout layout = new GridBagLayout();
-    final JPanel panel = new JPanel(layout);
+    return new ConventionOptionsPanel(this, "m_minLength", "m_maxLength", "m_regex", "m_regexPattern");
+  }
 
-    final JLabel patternLabel = new JLabel(InspectionGadgetsBundle.message("convention.pattern.option"));
-    final JLabel minLengthLabel = new JLabel(InspectionGadgetsBundle.message("convention.min.length.option"));
-    final JLabel maxLengthLabel = new JLabel(InspectionGadgetsBundle.message("convention.max.length.option"));
+  boolean isValid(String name) {
+    final int length = name.length();
+    if (length < m_minLength) {
+      return false;
+    }
+    if (m_maxLength > 0 && length > m_maxLength) {
+      return false;
+    }
+    final Matcher matcher = m_regexPattern.matcher(name);
+    return matcher.matches();
+  }
 
-    final NumberFormat numberFormat = NumberFormat.getIntegerInstance();
-    numberFormat.setParseIntegerOnly(true);
-    numberFormat.setMinimumIntegerDigits(1);
-    numberFormat.setMaximumIntegerDigits(2);
-    final InternationalFormatter formatter =
-      new InternationalFormatter(numberFormat);
-    formatter.setAllowsInvalid(false);
-    formatter.setCommitsOnValidEdit(true);
+  @Override
+  @Nullable
+  public LocalInspectionTool getSharedLocalInspectionTool() {
+    return new LocalPackageNamingConventionInspection(this);
+  }
 
-    final JFormattedTextField minLengthField =
-      new JFormattedTextField(formatter);
-    final Font panelFont = panel.getFont();
-    minLengthField.setFont(panelFont);
-    minLengthField.setValue(m_minLength);
-    minLengthField.setColumns(2);
-    UIUtil.fixFormattedField(minLengthField);
+  private static class LocalPackageNamingConventionInspection extends BaseSharedLocalInspection<PackageNamingConventionInspection> {
 
-    final JFormattedTextField maxLengthField =
-      new JFormattedTextField(formatter);
-    maxLengthField.setFont(panelFont);
-    maxLengthField.setValue(m_maxLength);
-    maxLengthField.setColumns(2);
-    UIUtil.fixFormattedField(maxLengthField);
+    LocalPackageNamingConventionInspection(PackageNamingConventionInspection inspection) {
+      super(inspection);
+    }
 
-    final JFormattedTextField regexField =
-      new JFormattedTextField(new RegExFormatter());
-    regexField.setFont(panelFont);
-    regexField.setValue(m_regexPattern);
-    regexField.setColumns(REGEX_COLUMN_COUNT);
-    regexField.setInputVerifier(new RegExInputVerifier());
-    regexField.setFocusLostBehavior(JFormattedTextField.COMMIT);
-    UIUtil.fixFormattedField(regexField);
-    final DocumentListener listener = new DocumentAdapter() {
-      @Override
-      public void textChanged(DocumentEvent e) {
-        try {
-          regexField.commitEdit();
-          minLengthField.commitEdit();
-          maxLengthField.commitEdit();
-          m_regexPattern = (Pattern)regexField.getValue();
-          m_regex = m_regexPattern.pattern();
-          m_minLength = ((Number)minLengthField.getValue()).intValue();
-          m_maxLength = ((Number)maxLengthField.getValue()).intValue();
-        }
-        catch (ParseException e1) {
-          // No luck this time
-        }
+    @NotNull
+    @Override
+    protected String buildErrorString(Object... infos) {
+      final String name = (String)infos[0];
+      if (name.length() < mySettingsDelegate.m_minLength) {
+        return InspectionGadgetsBundle.message("package.naming.convention.problem.descriptor.short", name);
       }
-    };
-    final Document regexDocument = regexField.getDocument();
-    regexDocument.addDocumentListener(listener);
-    final Document minLengthDocument = minLengthField.getDocument();
-    minLengthDocument.addDocumentListener(listener);
-    final Document maxLengthDocument = maxLengthField.getDocument();
-    maxLengthDocument.addDocumentListener(listener);
+      else if (name.length() > mySettingsDelegate.m_maxLength) {
+        return InspectionGadgetsBundle.message("package.naming.convention.problem.descriptor.long", name);
+      }
+      else {
+        return InspectionGadgetsBundle.message("package.naming.convention.problem.descriptor.regex.mismatch",
+                                               name, mySettingsDelegate.m_regex);
+      }
+    }
 
-    final GridBagConstraints constraints = new GridBagConstraints();
-    constraints.gridx = 0;
-    constraints.gridy = 0;
-    constraints.weightx = 0.0;
-    constraints.insets.right = UIUtil.DEFAULT_HGAP;
-    constraints.anchor = GridBagConstraints.BASELINE_LEADING;
-    constraints.fill = GridBagConstraints.HORIZONTAL;
-    panel.add(patternLabel, constraints);
+    @Override
+    public BaseInspectionVisitor buildVisitor() {
+      return new BaseInspectionVisitor() {
 
-    constraints.gridx = 1;
-    constraints.gridy = 0;
-    constraints.weightx = 1.0;
-    constraints.insets.right = 0;
-    panel.add(regexField, constraints);
-
-    constraints.gridx = 0;
-    constraints.gridy = 1;
-    constraints.weightx = 0.0;
-    constraints.insets.right = UIUtil.DEFAULT_HGAP;
-    panel.add(minLengthLabel, constraints);
-
-    constraints.gridx = 1;
-    constraints.gridy = 1;
-    constraints.weightx = 1;
-    constraints.insets.right = 0;
-    panel.add(minLengthField, constraints);
-
-    constraints.gridx = 0;
-    constraints.gridy = 2;
-    constraints.weightx = 0;
-    constraints.insets.right = UIUtil.DEFAULT_HGAP;
-    panel.add(maxLengthLabel, constraints);
-
-    constraints.gridx = 1;
-    constraints.gridy = 2;
-    constraints.weightx = 1;
-    constraints.weighty = 1;
-    constraints.insets.right = 0;
-    panel.add(maxLengthField, constraints);
-
-    return panel;
+        @Override
+        public void visitPackageStatement(PsiPackageStatement statement) {
+          final PsiJavaCodeReferenceElement reference = statement.getPackageReference();
+          if (reference == null) {
+            return;
+          }
+          final String text = reference.getText();
+          int start = 0;
+          int index = text.indexOf('.', start);
+          while (index > 0) {
+            final String name = text.substring(start, index);
+            if (!mySettingsDelegate.isValid(name)) {
+              registerErrorAtOffset(reference, start, index - start, name);
+            }
+            start = index + 1;
+            index = text.indexOf('.', start);
+          }
+          final String lastName = text.substring(start);
+          if (!lastName.isEmpty() && !mySettingsDelegate.isValid(lastName)) {
+            registerErrorAtOffset(reference, start, lastName.length(), lastName);
+          }
+        }
+      };
+    }
   }
 }

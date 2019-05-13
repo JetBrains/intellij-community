@@ -890,8 +890,7 @@ public class GridBagConverterTest extends TestCase {
 
   private static void applyConversionResults(final JPanel panel, final GridBagConverter converter) {
     GridBagConverter.Result[] results = converter.convert();
-    for(int i=0; i<results.length; i++)  {
-      GridBagConverter.Result result = results [i];
+    for (GridBagConverter.Result result : results) {
       JComponent component = result.isFillerPanel ? new JPanel() : result.component;
       if (result.minimumSize != null) {
         component.setMinimumSize(result.minimumSize);

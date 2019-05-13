@@ -41,13 +41,14 @@ class ResolvingVisitor extends XmlElementVisitor implements PsiElementProcessor 
   private final ProcessingContext myProcessingContext;
   private XmlNamedElementPattern myIncludePattern;
 
-  public ResolvingVisitor(XmlAttributeValuePattern pattern, ProcessingContext context) {
+  ResolvingVisitor(XmlAttributeValuePattern pattern, ProcessingContext context) {
     myPattern = pattern;
     myProcessingContext = context;
 
-    myProcessingContext.put(VISITED_KEY, new THashSet<XmlFile>());
+    myProcessingContext.put(VISITED_KEY, new THashSet<>());
   }
 
+  @Override
   public void visitXmlDocument(@Nullable XmlDocument document) {
     if (document != null) {
       final XmlTag rootTag = document.getRootTag();
@@ -61,6 +62,7 @@ class ResolvingVisitor extends XmlElementVisitor implements PsiElementProcessor 
     myIncludePattern = includePattern;
   }
 
+  @Override
   public void visitXmlAttribute(XmlAttribute attribute) {
     if (myIncludePattern != null && myIncludePattern.accepts(attribute, myProcessingContext)) {
       final String value = attribute.getValue();
@@ -79,7 +81,7 @@ class ResolvingVisitor extends XmlElementVisitor implements PsiElementProcessor 
     myPattern.accepts(attribute.getValueElement(), myProcessingContext);
   }
 
-  @SuppressWarnings({ "ForLoopReplaceableByForEach" })
+  @Override
   public void visitXmlTag(XmlTag tag) {
     visitAttributes(tag);
   }
@@ -115,6 +117,7 @@ class ResolvingVisitor extends XmlElementVisitor implements PsiElementProcessor 
     rootTag.processElements(this, attribute);
   }
 
+  @Override
   public boolean execute(@NotNull PsiElement element) {
     element.accept(this);
     return shouldContinue();

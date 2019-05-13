@@ -1,43 +1,108 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
-/*
- * User: anna
- * Date: 20-Feb-2008
- */
 package com.intellij.execution.testframework;
 
 import com.intellij.debugger.DebuggerManagerEx;
 import com.intellij.debugger.impl.DebuggerSession;
+import com.intellij.execution.CommonJavaRunConfigurationParameters;
 import com.intellij.execution.Executor;
-import com.intellij.openapi.project.Project;
-import com.intellij.util.config.Storage;
+import com.intellij.execution.Location;
+import com.intellij.execution.PsiLocation;
+import com.intellij.execution.configurations.JavaRunConfigurationModule;
+import com.intellij.execution.configurations.ModuleBasedConfiguration;
+import com.intellij.execution.configurations.RunConfiguration;
+import com.intellij.execution.stacktrace.StackTraceLine;
+import com.intellij.execution.testframework.sm.runner.SMTRunnerConsoleProperties;
+import com.intellij.openapi.diff.LineTokenizer;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.fileEditor.OpenFileDescriptor;
+import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.registry.Registry;
+import com.intellij.pom.Navigatable;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiMethod;
+import org.jdom.Element;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.tree.TreeSelectionModel;
 import java.util.Collection;
+import java.util.Iterator;
 
-public abstract class JavaAwareTestConsoleProperties extends TestConsoleProperties {
-  public JavaAwareTestConsoleProperties(final Storage storage, Project project, Executor executor) {
-    super(storage, project, executor);
+public abstract class JavaAwareTestConsoleProperties<T extends ModuleBasedConfiguration<JavaRunConfigurationModule, Element> & CommonJavaRunConfigurationParameters> extends SMTRunnerConsoleProperties {
+  public JavaAwareTestConsoleProperties(final String testFrameworkName, RunConfiguration configuration, Executor executor) {
+    super(configuration, testFrameworkName, executor);
+    setPrintTestingStartedTime(false);
   }
 
   @Override
   public boolean isPaused() {
     final DebuggerSession debuggerSession = getDebugSession();
     return debuggerSession != null && debuggerSession.isPaused();
+  }
+
+  @Override
+  public T getConfiguration() {
+    return (T)super.getConfiguration();
+  }
+
+  @Override
+  public int getSelectionMode() {
+    return TreeSelectionModel.DISCONTIGUOUS_TREE_SELECTION;
+  }
+
+  @Override
+  public boolean fixEmptySuite() {
+    return ResetConfigurationModuleAdapter.tryWithAnotherModule(getConfiguration(), isDebug());
+  }
+
+  @Nullable
+  @Override
+  public Navigatable getErrorNavigatable(@NotNull Location<?> location, @NotNull String stacktrace) {
+    //navigate to the first stack trace
+    return getStackTraceErrorNavigatable(location, stacktrace);
+  }
+
+  @Nullable
+  public static Navigatable getStackTraceErrorNavigatable(@NotNull Location<?> location, @NotNull String stacktrace) {
+    final PsiLocation<?> psiLocation = location.toPsiLocation();
+    final PsiClass containingClass = psiLocation.getParentElement(PsiClass.class);
+    if (containingClass == null) return null;
+    final String qualifiedName = containingClass.getQualifiedName();
+    if (qualifiedName == null) return null;
+    PsiMethod containingMethod = null;
+    for (Iterator<Location<PsiMethod>> iterator = psiLocation.getAncestors(PsiMethod.class, false); iterator.hasNext();) {
+      final PsiMethod psiMethod = iterator.next().getPsiElement();
+      if (containingClass.equals(psiMethod.getContainingClass())) containingMethod = psiMethod;
+    }
+    if (containingMethod == null) return null;
+    String methodName = containingMethod.getName();
+    StackTraceLine lastLine = null;
+    final String[] stackTrace = new LineTokenizer(stacktrace).execute();
+    for (String aStackTrace : stackTrace) {
+      final StackTraceLine line = new StackTraceLine(containingClass.getProject(), aStackTrace);
+      if (methodName.equals(line.getMethodName()) && qualifiedName.equals(line.getClassName())) {
+        lastLine = line;
+        break;
+      }
+    }
+    if (lastLine != null) {
+      try {
+        int lineNumber = lastLine.getLineNumber();
+        PsiFile psiFile = containingClass.getContainingFile();
+        Document document = PsiDocumentManager.getInstance(containingClass.getProject()).getDocument(psiFile);
+        TextRange textRange = containingMethod.getTextRange();
+        if (textRange == null || document == null || 
+            lineNumber < 0 || lineNumber >= document.getLineCount() || 
+            textRange.contains(document.getLineStartOffset(lineNumber))) {
+          return new OpenFileDescriptor(containingClass.getProject(), psiFile.getVirtualFile(), lineNumber, 0);
+        }
+      }
+      catch (NumberFormatException ignored) { }
+    }     
+    return null;
   }
 
   @Nullable
@@ -51,4 +116,8 @@ public abstract class JavaAwareTestConsoleProperties extends TestConsoleProperti
     return null;
   }
 
+  @Override
+  public boolean isEditable() {
+    return Registry.is("editable.java.test.console");
+  }
 }

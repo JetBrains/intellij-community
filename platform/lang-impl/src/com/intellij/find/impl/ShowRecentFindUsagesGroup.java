@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,15 +16,12 @@
 
 package com.intellij.find.impl;
 
-import com.intellij.find.FindBundle;
 import com.intellij.find.FindManager;
 import com.intellij.find.findUsages.FindUsagesManager;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.search.ProjectScope;
-import com.intellij.usageView.UsageViewUtil;
+import com.intellij.usages.ConfigurableUsageTarget;
 import com.intellij.usages.impl.UsageViewImpl;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -38,8 +35,8 @@ import java.util.List;
  */
 public class ShowRecentFindUsagesGroup extends ActionGroup {
   @Override
-  public void update(final AnActionEvent e) {
-    Project project = e.getData(PlatformDataKeys.PROJECT);
+  public void update(@NotNull final AnActionEvent e) {
+    Project project = e.getData(CommonDataKeys.PROJECT);
     e.getPresentation().setEnabled(project != null);
     e.getPresentation().setVisible(project != null);
   }
@@ -48,34 +45,29 @@ public class ShowRecentFindUsagesGroup extends ActionGroup {
   @NotNull
   public AnAction[] getChildren(@Nullable final AnActionEvent e) {
     if (e == null) return EMPTY_ARRAY;
-    Project project = e.getData(PlatformDataKeys.PROJECT);
-    if (project == null) return EMPTY_ARRAY;
+    Project project = e.getData(CommonDataKeys.PROJECT);
+    if (project == null || DumbService.isDumb(project)) return EMPTY_ARRAY;
     final FindUsagesManager findUsagesManager = ((FindManagerImpl)FindManager.getInstance(project)).getFindUsagesManager();
-    List<FindUsagesManager.SearchData> history = new ArrayList<FindUsagesManager.SearchData>(findUsagesManager.getFindUsageHistory());
+    List<ConfigurableUsageTarget> history = new ArrayList<>(findUsagesManager.getHistory().getAll());
     Collections.reverse(history);
 
     String description =
       ActionManager.getInstance().getAction(UsageViewImpl.SHOW_RECENT_FIND_USAGES_ACTION_ID).getTemplatePresentation().getDescription();
 
-    List<AnAction> children = new ArrayList<AnAction>(history.size());
-    for (final FindUsagesManager.SearchData data : history) {
-      if (data.myElements == null) {
+    List<AnAction> children = new ArrayList<>(history.size());
+    for (final ConfigurableUsageTarget usageTarget : history) {
+      if (!usageTarget.isValid()) {
         continue;
       }
-      PsiElement psiElement = data.myElements[0].getElement();
-      if (psiElement == null) continue;
-      String scopeString = data.myOptions.searchScope == null ? null : data.myOptions.searchScope.getDisplayName();
-      String text = FindBundle.message("recent.find.usages.action.popup", StringUtil.capitalize(UsageViewUtil.getType(psiElement)),
-                                       UsageViewUtil.getDescriptiveName(psiElement),
-                                       scopeString == null ? ProjectScope.getAllScope(psiElement.getProject()).getDisplayName() : scopeString);
-      AnAction action = new AnAction(text, description, psiElement.getIcon(0)) {
+      String text = usageTarget.getLongDescriptiveName();
+      AnAction action = new AnAction(text, description, null) {
         @Override
-        public void actionPerformed(final AnActionEvent e) {
-          findUsagesManager.rerunAndRecallFromHistory(data);
+        public void actionPerformed(@NotNull final AnActionEvent e) {
+          findUsagesManager.rerunAndRecallFromHistory(usageTarget);
         }
       };
       children.add(action);
     }
-    return children.toArray(new AnAction[children.size()]);
+    return children.toArray(AnAction.EMPTY_ARRAY);
   }
 }

@@ -1,0 +1,14 @@
+PyFile:EmptySubscription.py
+  PyAssignmentStatement
+    PyTargetExpression: s
+      PsiElement(Py:IDENTIFIER)('s')
+    PsiWhiteSpace(' ')
+    PsiElement(Py:EQ)('=')
+    PsiWhiteSpace(' ')
+    PySubscriptionExpression
+      PyStringLiteralExpression: 
+        PsiElement(Py:SINGLE_QUOTED_STRING)('''')
+      PsiElement(Py:LBRACKET)('[')
+      PsiErrorElement:expression expected
+        <empty list>
+      PsiElement(Py:RBRACKET)(']')

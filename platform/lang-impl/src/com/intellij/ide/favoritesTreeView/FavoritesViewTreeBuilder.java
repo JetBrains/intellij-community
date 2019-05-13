@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2011 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.favoritesTreeView;
 
 import com.intellij.ProjectTopics;
@@ -26,23 +12,21 @@ import com.intellij.ide.util.treeView.AbstractTreeStructure;
 import com.intellij.ide.util.treeView.AbstractTreeUpdater;
 import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.openapi.fileTypes.StdFileTypes;
-import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ModuleRootAdapter;
 import com.intellij.openapi.roots.ModuleRootEvent;
+import com.intellij.openapi.roots.ModuleRootListener;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vcs.FileStatusListener;
 import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiManager;
-import com.intellij.psi.SmartPsiElementPointer;
+import com.intellij.psi.*;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.concurrency.Promise;
+import org.jetbrains.concurrency.Promises;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
@@ -52,10 +36,6 @@ import javax.swing.tree.DefaultTreeModel;
  * @author Konstantin Bulenkov
  */
 public class FavoritesViewTreeBuilder extends BaseProjectTreeBuilder {
-  private final ProjectViewPsiTreeChangeListener myPsiTreeChangeListener;
-  private final FileStatusListener myFileStatusListener;
-  private final CopyPasteUtil.DefaultCopyPasteListener myCopyPasteListener;
-  private final FavoritesListener myFavoritesListener;
 
   public FavoritesViewTreeBuilder(@NotNull Project project,
                                   JTree tree,
@@ -67,7 +47,7 @@ public class FavoritesViewTreeBuilder extends BaseProjectTreeBuilder {
           treeStructure,
           new FavoritesComparator(ProjectView.getInstance(project), FavoritesProjectViewPane.ID));
     final MessageBusConnection bus = myProject.getMessageBus().connect(this);
-    myPsiTreeChangeListener = new ProjectViewPsiTreeChangeListener(myProject) {
+    ProjectViewPsiTreeChangeListener psiTreeChangeListener = new ProjectViewPsiTreeChangeListener(myProject) {
       @Override
       protected DefaultMutableTreeNode getRootNode() {
         return FavoritesViewTreeBuilder.this.getRootNode();
@@ -85,7 +65,8 @@ public class FavoritesViewTreeBuilder extends BaseProjectTreeBuilder {
 
       @Override
       protected void childrenChanged(PsiElement parent, final boolean stopProcessingForThisModificationCount) {
-        if (findNodeByElement(parent) == null) {
+        PsiElement containingFile = parent instanceof PsiDirectory ? parent : parent.getContainingFile();
+        if (containingFile != null && findNodeByElement(containingFile) == null) {
           queueUpdate(true);
         }
         else {
@@ -93,36 +74,35 @@ public class FavoritesViewTreeBuilder extends BaseProjectTreeBuilder {
         }
       }
     };
-    bus.subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootAdapter() {
+    bus.subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootListener() {
       @Override
-      public void rootsChanged(ModuleRootEvent event) {
+      public void rootsChanged(@NotNull ModuleRootEvent event) {
         queueUpdate(true);
       }
     });
-    PsiManager.getInstance(myProject).addPsiTreeChangeListener(myPsiTreeChangeListener);
-    myFileStatusListener = new MyFileStatusListener();
-    FileStatusManager.getInstance(myProject).addFileStatusListener(myFileStatusListener);
-    myCopyPasteListener = new CopyPasteUtil.DefaultCopyPasteListener(getUpdater());
-    CopyPasteManager.getInstance().addContentChangedListener(myCopyPasteListener);
+    PsiManager.getInstance(myProject).addPsiTreeChangeListener(psiTreeChangeListener, this);
+    FileStatusListener fileStatusListener = new MyFileStatusListener();
+    FileStatusManager.getInstance(myProject).addFileStatusListener(fileStatusListener, this);
+    CopyPasteUtil.addDefaultListener(this, this::addSubtreeToUpdateByElement);
 
-    myFavoritesListener = new FavoritesListener() {
+    FavoritesListener favoritesListener = new FavoritesListener() {
       @Override
       public void rootsChanged() {
         updateFromRoot();
       }
 
       @Override
-      public void listAdded(String listName) {
+      public void listAdded(@NotNull String listName) {
         updateFromRoot();
       }
 
       @Override
-      public void listRemoved(String listName) {
+      public void listRemoved(@NotNull String listName) {
         updateFromRoot();
       }
     };
     initRootNode();
-    FavoritesManager.getInstance(myProject).addFavoritesListener(myFavoritesListener);
+    FavoritesManager.getInstance(myProject).addFavoritesListener(favoritesListener, this);
   }
 
   @NotNull
@@ -143,23 +123,22 @@ public class FavoritesViewTreeBuilder extends BaseProjectTreeBuilder {
     updateFromRootCB();
   }
 
-  @Override
   @NotNull
   public ActionCallback updateFromRootCB() {
     getStructure().rootsChanged();
-    if (isDisposed()) return new ActionCallback.Done();
+    if (isDisposed()) return ActionCallback.DONE;
     getUpdater().cancelAllRequests();
-    return super.updateFromRootCB();
+    return queueUpdate();
   }
 
   @NotNull
   @Override
-  public ActionCallback select(Object element, VirtualFile file, boolean requestFocus) {
+  public Promise<Object> selectAsync(Object element, VirtualFile file, boolean requestFocus) {
     final DefaultMutableTreeNode node = findSmartFirstLevelNodeByElement(element);
     if (node != null) {
-      return TreeUtil.selectInTree(node, requestFocus, getTree());
+      return Promises.toPromise(TreeUtil.selectInTree(node, requestFocus, getTree()));
     }
-    return super.select(element, file, requestFocus);
+    return super.selectAsync(element, file, requestFocus);
   }
 
   @Nullable
@@ -177,7 +156,7 @@ public class FavoritesViewTreeBuilder extends BaseProjectTreeBuilder {
   }
 
   @Override
-  protected Object findNodeByElement(Object element) {
+  protected Object findNodeByElement(@NotNull Object element) {
     final Object node = findSmartFirstLevelNodeByElement(element);
     if (node != null) return node;
     return super.findNodeByElement(element);
@@ -209,16 +188,6 @@ public class FavoritesViewTreeBuilder extends BaseProjectTreeBuilder {
   }
 
   @Override
-  public final void dispose() {
-    super.dispose();
-    FavoritesManager.getInstance(myProject).removeFavoritesListener(myFavoritesListener);
-
-    PsiManager.getInstance(myProject).removePsiTreeChangeListener(myPsiTreeChangeListener);
-    FileStatusManager.getInstance(myProject).removeFileStatusListener(myFileStatusListener);
-    CopyPasteManager.getInstance().removeContentChangedListener(myCopyPasteListener);
-  }
-
-  @Override
   protected boolean isAlwaysShowPlus(NodeDescriptor nodeDescriptor) {
     final Object[] childElements = getStructure().getChildElements(nodeDescriptor);
     return childElements != null && childElements.length > 0;
@@ -246,10 +215,10 @@ public class FavoritesViewTreeBuilder extends BaseProjectTreeBuilder {
         element = psiManager.findFile(vFile);
       }
 
-      if (!getUpdater().addSubtreeToUpdateByElement(element) &&
+      if (!addSubtreeToUpdateByElement(element) &&
           element instanceof PsiFile &&
           ((PsiFile)element).getFileType() == StdFileTypes.JAVA) {
-        getUpdater().addSubtreeToUpdateByElement(((PsiFile)element).getContainingDirectory());
+        addSubtreeToUpdateByElement(((PsiFile)element).getContainingDirectory());
       }
     }
   }

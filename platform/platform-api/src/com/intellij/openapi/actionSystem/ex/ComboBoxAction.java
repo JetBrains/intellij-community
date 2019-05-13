@@ -1,62 +1,92 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.actionSystem.ex;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
+import com.intellij.ide.HelpTooltip;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.keymap.KeymapUtil;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
-import com.intellij.ui.ColorUtil;
-import com.intellij.ui.IdeBorderFactory;
-import com.intellij.ui.awt.RelativePoint;
-import com.intellij.util.ui.GraphicsUtil;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.openapi.wm.IdeFrame;
+import com.intellij.openapi.wm.WindowManager;
+import com.intellij.ui.UserActivityProviderComponent;
+import com.intellij.util.ui.*;
+import com.intellij.util.ui.accessibility.ScreenReader;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseMotionAdapter;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 
 public abstract class ComboBoxAction extends AnAction implements CustomComponentAction {
-  private static final Icon DISABLED_ARROW_ICON = IconLoader.getDisabledIcon(AllIcons.General.ComboArrow);
+  private static Icon myIcon = null;
+  private static Icon myDisabledIcon = null;
+  private static Icon myWin10ComboDropTriangleIcon = null;
+
+  public static Icon getArrowIcon(boolean enabled) {
+    if (UIUtil.isUnderWin10LookAndFeel()) {
+      if (myWin10ComboDropTriangleIcon == null) {
+        myWin10ComboDropTriangleIcon = IconLoader.findLafIcon("win10/comboDropTriangle", ComboBoxAction.class, true);
+      }
+      return myWin10ComboDropTriangleIcon;
+    }
+    if (myIcon != AllIcons.General.ArrowDown) {
+      myIcon = AllIcons.General.ArrowDown;
+      myDisabledIcon = IconLoader.getDisabledIcon(myIcon);
+    }
+    return enabled ? myIcon : myDisabledIcon;
+  }
 
   private boolean mySmallVariant = true;
-  private DataContext myDataContext;
+  private String myPopupTitle;
 
   protected ComboBoxAction() {
   }
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
+    Project project = e.getProject();
+    if (project == null) return;
+
+    JFrame frame = WindowManager.getInstance().getFrame(project);
+    if (!(frame instanceof IdeFrame)) return;
+
+    ListPopup popup = createActionPopup(e.getDataContext(), ((IdeFrame)frame).getComponent(), null);
+    popup.showCenteredInCurrentWindow(project);
   }
 
+  @NotNull
+  private ListPopup createActionPopup(@NotNull DataContext context, @NotNull JComponent component, @Nullable Runnable disposeCallback) {
+    DefaultActionGroup group = createPopupActionGroup(component, context);
+    ListPopup popup = JBPopupFactory.getInstance().createActionGroupPopup(
+      myPopupTitle, group, context, false, shouldShowDisabledActions(), false, disposeCallback, getMaxRows(), getPreselectCondition());
+    popup.setMinimumSize(new Dimension(getMinWidth(), getMinHeight()));
+    return popup;
+  }
+
+  @NotNull
   @Override
-  public JComponent createCustomComponent(Presentation presentation) {
+  public JComponent createCustomComponent(@NotNull Presentation presentation) {
     JPanel panel = new JPanel(new GridBagLayout());
     ComboBoxButton button = createComboBoxButton(presentation);
     panel.add(button,
-              new GridBagConstraints(0, 0, 1, 1, 1, 1, GridBagConstraints.CENTER, GridBagConstraints.BOTH, new Insets(0, 3, 0, 3), 0, 0));
+              new GridBagConstraints(0, 0, 1, 1, 1, 1, GridBagConstraints.CENTER, GridBagConstraints.BOTH, JBUI.insets(0, 3), 0, 0));
     return panel;
   }
 
@@ -72,14 +102,21 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
     mySmallVariant = smallVariant;
   }
 
-  @Override
-  public void update(AnActionEvent e) {
-    super.update(e);
-    myDataContext = e.getDataContext();
+  public void setPopupTitle(String popupTitle) {
+    myPopupTitle = popupTitle;
+  }
+
+  protected boolean shouldShowDisabledActions() {
+    return false;
   }
 
   @NotNull
   protected abstract DefaultActionGroup createPopupActionGroup(JComponent button);
+
+  @NotNull
+  protected DefaultActionGroup createPopupActionGroup(JComponent button, @NotNull  DataContext dataContext) {
+    return createPopupActionGroup(button);
+  }
 
   protected int getMaxRows() {
     return 30;
@@ -93,56 +130,28 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
     return 1;
   }
 
-  protected class ComboBoxButton extends JButton {
+  protected class ComboBoxButton extends JButton implements UserActivityProviderComponent {
     private final Presentation myPresentation;
     private boolean myForcePressed = false;
     private PropertyChangeListener myButtonSynchronizer;
-    private boolean myMouseInside = false;
-    private JBPopup myPopup;
+    private String myTooltipText;
 
     public ComboBoxButton(Presentation presentation) {
       myPresentation = presentation;
+      myTooltipText = myPresentation.getDescription();
+
       setModel(new MyButtonModel());
+      getModel().setEnabled(myPresentation.isEnabled());
+      setVisible(presentation.isVisible());
       setHorizontalAlignment(LEFT);
-      setFocusable(false);
-      Insets margins = getMargin();
-      setMargin(new Insets(margins.top, 2, margins.bottom, 2));
+      setFocusable(ScreenReader.isActive());
+      putClientProperty("styleCombo", ComboBoxAction.this);
+      setMargin(JBUI.insets(0, 5, 0, 2));
       if (isSmallVariant()) {
-        setBorder(IdeBorderFactory.createEmptyBorder(0, 2, 0, 2));
-        if (!UIUtil.isUnderGTKLookAndFeel()) {
-          setFont(UIUtil.getLabelFont().deriveFont(11.0f));
-        }
+        setFont(JBUI.Fonts.toolbarSmallComboBoxFont());
       }
-      addActionListener(
-        new ActionListener() {
-          @Override
-          public void actionPerformed(ActionEvent e) {
-            if (!myForcePressed) {
-              IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(new Runnable() {
-                @Override
-                public void run() {
-                  showPopup();
-                }
-              });
-            }
-          }
-        }
-      );
 
-      //noinspection HardCodedStringLiteral
       addMouseListener(new MouseAdapter() {
-        @Override
-        public void mouseEntered(MouseEvent e) {
-          myMouseInside = true;
-          repaint();
-        }
-
-        @Override
-        public void mouseExited(MouseEvent e) {
-          myMouseInside = false;
-          repaint();
-        }
-
         @Override
         public void mousePressed(final MouseEvent e) {
           if (SwingUtilities.isLeftMouseButton(e)) {
@@ -150,93 +159,64 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
             doClick();
           }
         }
-
-        @Override
-        public void mouseReleased(MouseEvent e) {
-          dispatchEventToPopup(e);
-        }
       });
-      addMouseMotionListener(new MouseMotionListener() {
+      addMouseMotionListener(new MouseMotionAdapter() {
         @Override
         public void mouseDragged(MouseEvent e) {
-          mouseMoved(new MouseEvent(e.getComponent(),
-                                    MouseEvent.MOUSE_MOVED,
-                                    e.getWhen(),
-                                    e.getModifiers(),
-                                    e.getX(),
-                                    e.getY(),
-                                    e.getClickCount(),
-                                    e.isPopupTrigger(),
-                                    e.getButton()));
-        }
-
-        @Override
-        public void mouseMoved(MouseEvent e) {
-          dispatchEventToPopup(e);
+          mouseMoved(MouseEventAdapter.convert(e, e.getComponent(),
+                                               MouseEvent.MOUSE_MOVED,
+                                               e.getWhen(),
+                                               e.getModifiers() | e.getModifiersEx(),
+                                               e.getX(),
+                                               e.getY()));
         }
       });
     }
-    // Event forwarding. We need it if user does press-and-drag gesture for opening popup and choosing item there.
-    // It works in JComboBox, here we provide the same behavior
-    private void dispatchEventToPopup(MouseEvent e) {
-      if (myPopup != null && myPopup.isVisible()) {
-        JComponent content = myPopup.getContent();
-        Rectangle rectangle = content.getBounds();
-        Point location = rectangle.getLocation();
-        SwingUtilities.convertPointToScreen(location, content);
-        Point eventPoint = e.getLocationOnScreen();
-        rectangle.setLocation(location);
-        if (rectangle.contains(eventPoint)) {
-          MouseEvent event = SwingUtilities.convertMouseEvent(e.getComponent(), e, myPopup.getContent());
-          Component component = SwingUtilities.getDeepestComponentAt(content, event.getX(), event.getY());
-          if (component != null)
-            component.dispatchEvent(event);
-        }
+
+    @Override
+    protected void fireActionPerformed(ActionEvent event) {
+      if (!myForcePressed) {
+        IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> showPopup());
       }
     }
 
-    public void showPopup() {
+    @NotNull
+    private Runnable setForcePressed() {
       myForcePressed = true;
       repaint();
 
-      Runnable onDispose = new Runnable() {
-        @Override
-        public void run() {
-          // give button chance to handle action listener
-          UIUtil.invokeLaterIfNeeded(new Runnable() {
-            @Override
-            public void run() {
-              myForcePressed = false;
-              myPopup = null;
-            }
-          });
+      return () -> {
+        // give the button a chance to handle action listener
+        ApplicationManager.getApplication().invokeLater(() -> {
+          myForcePressed = false;
           repaint();
-        }
+        }, ModalityState.any());
+        repaint();
+        fireStateChanged();
       };
-
-      myPopup = createPopup(onDispose);
-      myPopup.show(new RelativePoint(this, new Point(0, getHeight() - 1)));
     }
 
     @Nullable
     @Override
     public String getToolTipText() {
-      return myForcePressed ? null : super.getToolTipText();
+      return myForcePressed || Registry.is("ide.helptooltip.enabled") ? null : super.getToolTipText();
+    }
+
+    public void showPopup() {
+      JBPopup popup = createPopup(setForcePressed());
+      if (Registry.is("ide.helptooltip.enabled")) {
+        HelpTooltip.setMasterPopup(this, popup);
+      }
+
+      popup.showUnderneathOf(this);
     }
 
     protected JBPopup createPopup(Runnable onDispose) {
-      DefaultActionGroup group = createPopupActionGroup(this);
-
-      DataContext context = getDataContext();
-      myDataContext = null;
-      final ListPopup popup = JBPopupFactory.getInstance().createActionGroupPopup(
-        null, group, context, JBPopupFactory.ActionSelectionAid.SPEEDSEARCH, false, onDispose, getMaxRows());
-      popup.setMinimumSize(new Dimension(getMinWidth(), getMinHeight()));
-      return popup;
+      return createActionPopup(getDataContext(), this, onDispose);
     }
 
     protected DataContext getDataContext() {
-      return myDataContext == null ? DataManager.getInstance().getDataContext(this) : myDataContext;
+      return DataManager.getInstance().getDataContext(this);
     }
 
     @Override
@@ -245,6 +225,7 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
         myPresentation.removePropertyChangeListener(myButtonSynchronizer);
         myButtonSynchronizer = null;
       }
+      HelpTooltip.dispose(this);
       super.removeNotify();
     }
 
@@ -260,22 +241,19 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
 
     private void initButton() {
       setIcon(myPresentation.getIcon());
-      setEnabled(myPresentation.isEnabled());
       setText(myPresentation.getText());
-      updateTooltipText(myPresentation.getDescription());
+      myTooltipText = myPresentation.getDescription();
+      updateTooltipText();
       updateButtonSize();
     }
 
-    private void updateTooltipText(String description) {
-      String tooltip = AnAction.createTooltipText(description, ComboBoxAction.this);
-      setToolTipText(!tooltip.isEmpty() ? tooltip : null);
-    }
-
-    @Override
-    public void updateUI() {
-      super.updateUI();
-      if (!UIUtil.isUnderGTKLookAndFeel()) {
-        setBorder(UIUtil.getButtonBorder());
+    private void updateTooltipText() {
+      String tooltip = KeymapUtil.createTooltipText(myTooltipText, ComboBoxAction.this);
+      if (Registry.is("ide.helptooltip.enabled") && StringUtil.isNotEmpty(tooltip)) {
+        HelpTooltip.dispose(this);
+        new HelpTooltip().setDescription(tooltip).setLocation(HelpTooltip.Alignment.BOTTOM).installOn(this);
+      } else {
+        setToolTipText(!tooltip.isEmpty() ? tooltip : null);
       }
     }
 
@@ -300,7 +278,8 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
           updateButtonSize();
         }
         else if (Presentation.PROP_DESCRIPTION.equals(propertyName)) {
-          updateTooltipText((String)evt.getNewValue());
+          myTooltipText = (String)evt.getNewValue();
+          updateTooltipText();
         }
         else if (Presentation.PROP_ICON.equals(propertyName)) {
           setIcon((Icon)evt.getNewValue());
@@ -313,115 +292,69 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
     }
 
     @Override
-    public Insets getInsets() {
-      final Insets insets = super.getInsets();
-      return new Insets(insets.top, insets.left, insets.bottom, insets.right + AllIcons.General.ComboArrow.getIconWidth());
-    }
-
-    @Override
-    public Insets getInsets(Insets insets) {
-      final Insets result = super.getInsets(insets);
-
-      if (UIUtil.isUnderNimbusLookAndFeel() && !isSmallVariant()) {
-        result.top += 2;
-        result.left += 8;
-        result.bottom += 2;
-        result.right += 4 + AllIcons.General.ComboArrow.getIconWidth();
-      }
-      else {
-        result.right += AllIcons.General.ComboArrow.getIconWidth();
-      }
-
-      return result;
-    }
-
-    @Override
     public boolean isOpaque() {
       return !isSmallVariant();
     }
 
     @Override
     public Dimension getPreferredSize() {
-      final boolean isEmpty = getIcon() == null && StringUtil.isEmpty(getText());
-      int width = isEmpty ? 10 + AllIcons.General.ComboArrow.getIconWidth() : super.getPreferredSize().width;
-      if (isSmallVariant()) width += 4;
-      return new Dimension(width, isSmallVariant() ? 19 : UIUtil.isUnderNimbusLookAndFeel() ? 24 : 21);
+      Dimension prefSize = super.getPreferredSize();
+      int width = prefSize.width
+                  + (myPresentation != null && isArrowVisible(myPresentation) ? getArrowIcon(isEnabled()).getIconWidth() : 0)
+                  + (StringUtil.isNotEmpty(getText()) ? getIconTextGap() : 0)
+                  + (UIUtil.isUnderWin10LookAndFeel() ? JBUI.scale(6) : 0);
+
+      Dimension size = new Dimension(width, isSmallVariant() ? JBUI.scale(24) : Math.max(JBUI.scale(24), prefSize.height));
+      JBInsets.addTo(size, getMargin());
+      return size;
+    }
+
+    @Override
+    public Dimension getMinimumSize() {
+      return new Dimension(super.getMinimumSize().width, getPreferredSize().height);
+    }
+
+    @Override
+    public Font getFont() {
+      return isSmallVariant() ? UIUtil.getToolbarFont() : UIUtil.getLabelFont();
+    }
+
+    @Override
+    protected Graphics getComponentGraphics(Graphics graphics) {
+      return JBSwingUtilities.runGlobalCGTransform(this, super.getComponentGraphics(graphics));
     }
 
     @Override
     public void paint(Graphics g) {
-      GraphicsUtil.setupAntialiasing(g);
-
-      final boolean isEmpty = getIcon() == null && StringUtil.isEmpty(getText());
-      final Dimension size = getSize();
-      if (isSmallVariant()) {
-        final Graphics2D g2 = (Graphics2D)g;
-        g2.setColor(UIUtil.getControlColor());
-        final int w = getWidth();
-        final int h = getHeight();
-        if (getModel().isArmed() && getModel().isPressed()) {
-          g2.setPaint(UIUtil.getGradientPaint(0, 0, UIUtil.getControlColor(), 0, h, ColorUtil.shift(UIUtil.getControlColor(), 0.8)));
-        }
-        else {
-          g2.setPaint(
-            UIUtil.getGradientPaint(0, 0, ColorUtil.shift(UIUtil.getControlColor(), 1.1), 0, h, ColorUtil.shift(UIUtil.getControlColor(), 0.9)));
-        }
-        g2.fillRect(2, 0, w - 2, h);
-        GraphicsUtil.setupAntialiasing(g2);
-        if (!UIUtil.isUnderDarcula()) {
-          if (!myMouseInside) {
-            g2.setPaint(UIUtil.getGradientPaint(0, 0, UIUtil.getBorderColor(), 0, h, UIUtil.getBorderColor().darker()));
-          } else {
-            g2.setPaint(UIUtil.getGradientPaint(0, 0, UIUtil.getBorderColor().darker(), 0, h, UIUtil.getBorderColor().darker().darker()));
-          }
-        } else {
-          if (!myMouseInside) {
-            g2.setPaint(UIUtil.getGradientPaint(0, 0, ColorUtil.shift(UIUtil.getControlColor(), 1.2), 0, h, ColorUtil.shift(UIUtil.getControlColor(), 1.3)));
-          } else {
-            g2.setPaint(UIUtil.getGradientPaint(0, 0, ColorUtil.shift(UIUtil.getControlColor(), 1.4), 0, h, ColorUtil.shift(UIUtil.getControlColor(), 1.5)));
-          }
-        }
-
-        g2.drawRect(2, 0, w - 3, h - 1);
-
-        final Icon icon = getIcon();
-        int x = 7;
-        if (icon != null) {
-          icon.paintIcon(null, g, x, (size.height - icon.getIconHeight()) / 2);
-          x += icon.getIconWidth() + 3;
-        }
-        if (!StringUtil.isEmpty(getText())) {
-          final Font font = getFont();
-          g2.setFont(font);
-          g2.setColor(UIManager.getColor("Panel.foreground"));
-          g2.drawString(getText(), x, (size.height + font.getSize()) / 2 - 1);
-        }
+      super.paint(g);
+      if (!isArrowVisible(myPresentation)) {
+        return;
       }
-      else {
-        paintComponent(g);
-      }
-      final Insets insets = super.getInsets();
-      final Icon icon = isEnabled() ? AllIcons.General.ComboArrow : DISABLED_ARROW_ICON;
-      final int x;
-      if (isEmpty) {
-        x = (size.width - icon.getIconWidth()) / 2;
-      }
-      else {
-        if (isSmallVariant()) {
-          x = size.width - icon.getIconWidth() - insets.right + 1;
-        }
-        else {
-          x = size.width - icon.getIconWidth() - insets.right + (UIUtil.isUnderNimbusLookAndFeel() ? -3 : 2);
-        }
-      }
+      Icon icon = getArrowIcon(isEnabled());
+      int x = getWidth() - icon.getIconWidth() - getInsets().right - getMargin().right -
+              (UIUtil.isUnderWin10LookAndFeel() ? JBUI.scale(3) : 0); // Different icons correction
 
-      icon.paintIcon(null, g, x, (size.height - icon.getIconHeight()) / 2);
-      g.setPaintMode();
+      icon.paintIcon(null, g, x, (getHeight() - icon.getIconHeight()) / 2);
+    }
+
+    protected boolean isArrowVisible(@NotNull Presentation presentation) {
+      return true;
+    }
+
+    @Override public void updateUI() {
+      super.updateUI();
+      setMargin(JBUI.insets(0, 5, 0, 2));
+      updateButtonSize();
+      updateTooltipText();
     }
 
     protected void updateButtonSize() {
       invalidate();
       repaint();
+      setSize(getPreferredSize());
+      repaint();
     }
   }
+
+  protected Condition<AnAction> getPreselectCondition() { return null; }
 }

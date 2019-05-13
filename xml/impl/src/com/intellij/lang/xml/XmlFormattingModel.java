@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,7 +22,6 @@ package com.intellij.lang.xml;
 import com.intellij.formatting.Block;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiWhiteSpace;
@@ -32,7 +31,7 @@ import com.intellij.psi.formatter.FormattingDocumentModelImpl;
 import com.intellij.psi.formatter.PsiBasedFormattingModel;
 import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.xml.XmlElementType;
+import com.intellij.psi.xml.XmlTokenType;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
@@ -40,34 +39,13 @@ public class XmlFormattingModel extends PsiBasedFormattingModel {
   private static final Logger LOG =
       Logger.getInstance("#com.intellij.psi.impl.source.codeStyle.PsiBasedFormatterModelWithShiftIndentInside");
 
-  private final Project myProject;
-
   public XmlFormattingModel(final PsiFile file,
                                                      final Block rootBlock,
                                                      final FormattingDocumentModelImpl documentModel) {
     super(file, rootBlock, documentModel);
-    myProject = file.getProject();
   }
 
-  public TextRange shiftIndentInsideRange(TextRange textRange, int shift) {
-    return shiftIndentInsideWithPsi(textRange, shift);
-  }
-
-  public void commitChanges() {
-  }
-
-
-  private TextRange shiftIndentInsideWithPsi(final TextRange textRange, final int shift) {
-    final int offset = textRange.getStartOffset();
-
-    ASTNode leafElement = findElementAt(offset);
-    while (leafElement != null && !leafElement.getTextRange().equals(textRange)) {
-      leafElement = leafElement.getTreeParent();
-    }
-
-    return textRange;
-  }
-
+  @Override
   protected String replaceWithPsiInLeaf(final TextRange textRange, String whiteSpace, ASTNode leafElement) {
      if (!myCanModifyAllWhiteSpaces) {
        if (leafElement.getElementType() == TokenType.WHITE_SPACE) return null;
@@ -91,7 +69,7 @@ public class XmlFormattingModel extends PsiBasedFormattingModel {
          }
 
          final @NonNls String cdataEndMarker = "]]>";
-         if(type == XmlElementType.XML_CDATA_END && whiteSpace.indexOf(cdataEndMarker) == -1) {
+         if(type == XmlTokenType.XML_CDATA_END && whiteSpace.indexOf(cdataEndMarker) == -1) {
            final ASTNode at = findElementAt(prevNode.getStartOffset());
 
            if (at != null && at.getPsi() instanceof PsiWhiteSpace) {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,32 +15,55 @@
  */
 package com.intellij.execution.rmi;
 
+import com.intellij.execution.rmi.ssl.SslSocketFactory;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.naming.Context;
 import javax.naming.NamingException;
 import javax.naming.spi.InitialContextFactory;
+import java.io.IOException;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
+import java.net.Inet6Address;
+import java.net.InetAddress;
+import java.net.ServerSocket;
 import java.rmi.Remote;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
-import java.rmi.server.ExportException;
-import java.rmi.server.UnicastRemoteObject;
+import java.rmi.server.*;
+import java.security.Security;
 import java.util.Hashtable;
 import java.util.Random;
 
 public class RemoteServer {
+
+  public static final String SERVER_HOSTNAME = "java.rmi.server.hostname";
+
+  static {
+    // Radar #5755208: Command line Java applications need a way to launch without a Dock icon.
+    System.setProperty("apple.awt.UIElement", "true");
+  }
+
   private static Remote ourRemote;
 
   @SuppressWarnings("UseOfSystemOutOrSystemErr")
   protected static void start(Remote remote) throws Exception {
     setupRMI();
     banJNDI();
+    setupSSL();
 
     if (ourRemote != null) throw new AssertionError("Already started");
     ourRemote = remote;
+
+    RMIClientSocketFactory clientSocketFactory = RMISocketFactory.getDefaultSocketFactory();
+    RMIServerSocketFactory serverSocketFactory = new RMIServerSocketFactory() {
+      InetAddress loopbackAddress = InetAddress.getByName(getLoopbackAddress());
+      public ServerSocket createServerSocket(int port) throws IOException {
+        return new ServerSocket(port, 0, loopbackAddress);
+      }
+    };
 
     Registry registry;
     int port;
@@ -48,7 +71,7 @@ public class RemoteServer {
       port = random.nextInt(0xffff);
       if (port < 4000) continue;
       try {
-        registry = LocateRegistry.createRegistry(port);
+        registry = LocateRegistry.createRegistry(port, clientSocketFactory, serverSocketFactory);
         break;
       }
       catch (ExportException ignored) { }
@@ -56,13 +79,13 @@ public class RemoteServer {
 
     try {
       Remote stub = UnicastRemoteObject.exportObject(ourRemote, 0);
-      final String name = remote.getClass().getSimpleName() + Integer.toHexString(stub.hashCode());
+      String name = remote.getClass().getSimpleName() + Integer.toHexString(stub.hashCode());
       registry.bind(name, stub);
 
       String id = port + "/" + name;
       System.out.println("Port/ID: " + id);
 
-      long waitTime = 2 * 60 * 1000L;
+      long waitTime = RemoteDeadHand.PING_TIMEOUT;
       Object lock = new Object();
       //noinspection InfiniteLoopStatement
       while (true) {
@@ -85,7 +108,9 @@ public class RemoteServer {
     // if we are behind a firewall, if the network connection is lost, etc.
 
     // do not use domain or http address for server
-    System.setProperty("java.rmi.server.hostname", "localhost");
+    if (System.getProperty(SERVER_HOSTNAME) == null) {
+      System.setProperty(SERVER_HOSTNAME, getLoopbackAddress());
+    }
     // do not use HTTP tunnelling
     System.setProperty("java.rmi.server.disableHttp", "true");
   }
@@ -96,17 +121,38 @@ public class RemoteServer {
     }
   }
 
+  private static void setupSSL() {
+    boolean caCert = System.getProperty(SslSocketFactory.SSL_CA_CERT_PATH) != null;
+    boolean clientCert = System.getProperty(SslSocketFactory.SSL_CLIENT_CERT_PATH) != null;
+    boolean clientKey = System.getProperty(SslSocketFactory.SSL_CLIENT_KEY_PATH) != null;
+    if (caCert || clientCert && clientKey) {
+      Security.setProperty("ssl.SocketFactory.provider", "com.intellij.execution.rmi.ssl.SslSocketFactory");
+    }
+  }
+
+  @NotNull
+  private static String getLoopbackAddress() {
+    boolean ipv6 = false;
+    try {
+      ipv6 = InetAddress.getByName(null) instanceof Inet6Address;
+    }
+    catch (IOException ignore) {}
+    return ipv6 ? "::1" : "127.0.0.1";
+  }
+
   @SuppressWarnings("UnusedDeclaration")
   public static class Jndi implements InitialContextFactory, InvocationHandler {
-    @Override
-    public Context getInitialContext(final Hashtable<?, ?> environment) throws NamingException {
+    @NotNull
+    public Context getInitialContext(Hashtable<?, ?> environment) {
       return (Context)Proxy.newProxyInstance(getClass().getClassLoader(), new Class[]{Context.class}, this);
     }
 
     @Nullable
-    @Override
-    public Object invoke(final Object proxy, final Method method, final Object[] args) throws Throwable {
-      return null;
+    public Object invoke(Object proxy, @NotNull Method method, Object[] args) throws Throwable {
+      if (Object.class.equals(method.getDeclaringClass())) {
+        return method.invoke(this, args);
+      }
+      throw new NamingException("JNDI service is disabled");
     }
   }
 }

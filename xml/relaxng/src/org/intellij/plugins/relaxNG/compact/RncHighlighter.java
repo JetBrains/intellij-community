@@ -18,7 +18,7 @@ package org.intellij.plugins.relaxNG.compact;
 
 import com.intellij.lexer.Lexer;
 import com.intellij.openapi.editor.HighlighterColors;
-import com.intellij.openapi.editor.SyntaxHighlighterColors;
+import com.intellij.openapi.editor.DefaultLanguageHighlighterColors;
 import com.intellij.openapi.editor.colors.CodeInsightColors;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.fileTypes.SyntaxHighlighterBase;
@@ -29,12 +29,8 @@ import org.jetbrains.annotations.NotNull;
 import java.util.HashMap;
 import java.util.Map;
 
-/**
- * Created by IntelliJ IDEA.
- * User: sweinreuter
- * Date: 04.08.2007
- */
 public class RncHighlighter extends SyntaxHighlighterBase {
+  @Override
   @NotNull
   public Lexer getHighlightingLexer() {
     return new CompactSyntaxLexerAdapter();
@@ -43,32 +39,33 @@ public class RncHighlighter extends SyntaxHighlighterBase {
   private static final Map<IElementType, TextAttributesKey> ourMap1;
 
   static {
-    ourMap1 = new HashMap<IElementType, TextAttributesKey>();
+    ourMap1 = new HashMap<>();
 
-    fillMap(ourMap1, RncTokenTypes.KEYWORDS, SyntaxHighlighterColors.KEYWORD);
-    fillMap(ourMap1, RncTokenTypes.OPERATORS, SyntaxHighlighterColors.OPERATION_SIGN);
+    fillMap(ourMap1, RncTokenTypes.KEYWORDS, DefaultLanguageHighlighterColors.KEYWORD);
+    fillMap(ourMap1, RncTokenTypes.OPERATORS, DefaultLanguageHighlighterColors.OPERATION_SIGN);
 
-    fillMap(ourMap1, RncTokenTypes.STRINGS, SyntaxHighlighterColors.STRING);
+    fillMap(ourMap1, RncTokenTypes.STRINGS, DefaultLanguageHighlighterColors.STRING);
 
-    ourMap1.put(RncTokenTypes.LBRACE, SyntaxHighlighterColors.BRACES);
-    ourMap1.put(RncTokenTypes.RBRACE, SyntaxHighlighterColors.BRACES);
+    ourMap1.put(RncTokenTypes.LBRACE, DefaultLanguageHighlighterColors.BRACES);
+    ourMap1.put(RncTokenTypes.RBRACE, DefaultLanguageHighlighterColors.BRACES);
 
-    ourMap1.put(RncTokenTypes.LBRACKET, SyntaxHighlighterColors.BRACKETS);
-    ourMap1.put(RncTokenTypes.RBRACKET, SyntaxHighlighterColors.BRACKETS);
+    ourMap1.put(RncTokenTypes.LBRACKET, DefaultLanguageHighlighterColors.BRACKETS);
+    ourMap1.put(RncTokenTypes.RBRACKET, DefaultLanguageHighlighterColors.BRACKETS);
 
-    ourMap1.put(RncTokenTypes.LPAREN, SyntaxHighlighterColors.PARENTHS);
-    ourMap1.put(RncTokenTypes.RPAREN, SyntaxHighlighterColors.PARENTHS);
+    ourMap1.put(RncTokenTypes.LPAREN, DefaultLanguageHighlighterColors.PARENTHESES);
+    ourMap1.put(RncTokenTypes.RPAREN, DefaultLanguageHighlighterColors.PARENTHESES);
 
-    ourMap1.put(RncTokenTypes.COMMA, SyntaxHighlighterColors.COMMA);
+    ourMap1.put(RncTokenTypes.COMMA, DefaultLanguageHighlighterColors.COMMA);
 
-    fillMap(ourMap1, RncTokenTypes.DOC_TOKENS, SyntaxHighlighterColors.DOC_COMMENT);
-    fillMap(ourMap1, RncTokenTypes.COMMENTS, SyntaxHighlighterColors.LINE_COMMENT);
+    fillMap(ourMap1, RncTokenTypes.DOC_TOKENS, DefaultLanguageHighlighterColors.DOC_COMMENT);
+    fillMap(ourMap1, RncTokenTypes.COMMENTS, DefaultLanguageHighlighterColors.LINE_COMMENT);
 
-    fillMap(ourMap1, RncTokenTypes.IDENTIFIERS, CodeInsightColors.LOCAL_VARIABLE_ATTRIBUTES);
+    fillMap(ourMap1, RncTokenTypes.IDENTIFIERS, DefaultLanguageHighlighterColors.LOCAL_VARIABLE);
 
     ourMap1.put(RncTokenTypes.ILLEGAL_CHAR, HighlighterColors.BAD_CHARACTER);
   }
 
+  @Override
   @NotNull
   public TextAttributesKey[] getTokenHighlights(IElementType tokenType) {
     return pack(ourMap1.get(tokenType));

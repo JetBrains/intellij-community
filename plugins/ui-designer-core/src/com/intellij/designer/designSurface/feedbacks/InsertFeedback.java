@@ -21,7 +21,7 @@ import java.awt.*;
  * @author Alexander Lobas
  */
 public class InsertFeedback extends LineInsertFeedback {
-  private boolean myCross;
+  protected boolean myCross;
 
   public InsertFeedback(Color color) {
     super(color, false);

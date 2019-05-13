@@ -5,6 +5,6 @@ class Foo {
         def a = 5;
 
         f = a + 5
-        print <selection>f</selection>
+        print f<caret>
   }
 }

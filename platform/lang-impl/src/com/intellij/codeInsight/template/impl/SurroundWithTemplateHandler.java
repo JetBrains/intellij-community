@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,21 +18,20 @@ package com.intellij.codeInsight.template.impl;
 
 import com.intellij.codeInsight.CodeInsightActionHandler;
 import com.intellij.codeInsight.CodeInsightBundle;
-import com.intellij.codeInsight.CodeInsightUtilBase;
+import com.intellij.codeInsight.generation.surroundWith.SurroundWithHandler;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.template.CustomLiveTemplate;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.EditorModificationUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
-import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -43,7 +42,7 @@ import java.util.Set;
 public class SurroundWithTemplateHandler implements CodeInsightActionHandler {
   @Override
   public void invoke(@NotNull final Project project, @NotNull final Editor editor, @NotNull PsiFile file) {
-    if (!CodeInsightUtilBase.prepareEditorForWrite(editor)) return;
+    if (!EditorModificationUtil.checkModificationAllowed(editor)) return;
     DefaultActionGroup group = createActionGroup(project, editor, file);
     if (group == null) return;
 
@@ -58,20 +57,17 @@ public class SurroundWithTemplateHandler implements CodeInsightActionHandler {
   @Nullable
   public static DefaultActionGroup createActionGroup(Project project, Editor editor, PsiFile file) {
     if (!editor.getSelectionModel().hasSelection()) {
-      editor.getSelectionModel().selectLineAtCaret();
+      SurroundWithHandler.selectLogicalLineContentsAtCaret(editor);
       if (!editor.getSelectionModel().hasSelection()) return null;
     }
-    PsiDocumentManager.getInstance(project).commitDocument(editor.getDocument());
-    List<CustomLiveTemplate> customTemplates = getApplicableCustomTemplates(editor, file);
-    ArrayList<TemplateImpl> templates = getApplicableTemplates(editor, file, true);
+    List<CustomLiveTemplate> customTemplates = TemplateManagerImpl.listApplicableCustomTemplates(editor, file, true);
+    List<TemplateImpl> templates = TemplateManagerImpl.listApplicableTemplateWithInsertingDummyIdentifier(editor, file, true);
     if (templates.isEmpty() && customTemplates.isEmpty()) {
       HintManager.getInstance().showErrorHint(editor, CodeInsightBundle.message("templates.surround.no.defined"));
       return null;
     }
 
-    if (!CodeInsightUtilBase.preparePsiElementForWrite(file)) return null;
-
-    Set<Character> usedMnemonicsSet = new HashSet<Character>();
+    Set<Character> usedMnemonicsSet = new HashSet<>();
     DefaultActionGroup group = new DefaultActionGroup();
 
     for (TemplateImpl template : templates) {
@@ -82,51 +78,5 @@ public class SurroundWithTemplateHandler implements CodeInsightActionHandler {
       group.add(new WrapWithCustomTemplateAction(customTemplate, editor, file, usedMnemonicsSet));
     }
     return group;
-  }
-
-  @Override
-  public boolean startInWriteAction() {
-    return true;
-  }
-
-  public static List<CustomLiveTemplate> getApplicableCustomTemplates(Editor editor, PsiFile file) {
-    List<CustomLiveTemplate> result = new ArrayList<CustomLiveTemplate>();
-    for (CustomLiveTemplate template : CustomLiveTemplate.EP_NAME.getExtensions()) {
-      if (template.supportsWrapping() && isApplicable(template, editor, file)) {
-        result.add(template);
-      }
-    }
-    return result;
-  }
-
-  public static boolean isApplicable(CustomLiveTemplate template, Editor editor, PsiFile file) {
-    return template.isApplicable(file, editor.getSelectionModel().getSelectionStart(), true);
-  }
-
-  public static ArrayList<TemplateImpl> getApplicableTemplates(Editor editor, PsiFile file, boolean selection) {
-
-    int startOffset = editor.getCaretModel().getOffset();
-    if (selection && editor.getSelectionModel().hasSelection()) {
-      startOffset = editor.getSelectionModel().getSelectionStart();
-    }
-
-    file = insertDummyIdentifier(editor, file);
-
-    ArrayList<TemplateImpl> list = new ArrayList<TemplateImpl>();
-    for (TemplateImpl template : TemplateSettings.getInstance().getTemplates()) {
-      if (!template.isDeactivated() &&
-          template.isSelectionTemplate() == selection &&
-          TemplateManagerImpl.isApplicable(file, startOffset, template)) {
-        list.add(template);
-      }
-    }
-    return list;
-  }
-
-  public static PsiFile insertDummyIdentifier(final Editor editor, PsiFile file) {
-    boolean selection = editor.getSelectionModel().hasSelection();
-    final int startOffset = selection ? editor.getSelectionModel().getSelectionStart() : editor.getCaretModel().getOffset();
-    final int endOffset = selection ? editor.getSelectionModel().getSelectionEnd() : startOffset;
-    return TemplateManagerImpl.insertDummyIdentifier(file, startOffset, endOffset);
   }
 }

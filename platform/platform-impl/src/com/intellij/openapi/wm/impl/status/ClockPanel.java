@@ -15,29 +15,28 @@
  */
 package com.intellij.openapi.wm.impl.status;
 
-import com.intellij.openapi.wm.CustomStatusBarWidget;
-import com.intellij.openapi.wm.StatusBar;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.util.concurrency.EdtExecutorService;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Line2D;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
 
 import static java.awt.RenderingHints.KEY_ANTIALIASING;
 import static java.util.Calendar.*;
 
-/**
- * User: Vassiliy.Kudryashov
- */
-public class ClockPanel extends JComponent implements CustomStatusBarWidget {
-  @NonNls public static final String WIDGET_ID = "Clock";
+public class ClockPanel extends JComponent {
+  private static final int TOP = 1 << 0 | 1 << 2 | 1 << 3 | 1 << 5 | 1 << 6 | 1 << 7 | 1 << 8 | 1 << 9;
+  private static final int TOP_LEFT = 1 << 0 | 1 << 4 | 1 << 5 | 1 << 6 | 1 << 8 | 1 << 9;
+  private static final int TOP_RIGHT = 1 << 0 | 1 << 1 | 1 << 2 | 1 << 3 | 1 << 4 | 1 << 7 | 1 << 8 | 1 << 9;
+  private static final int MIDDLE = 1 << 2 | 1 << 3 | 1 << 4 | 1 << 5 | 1 << 6 | 1 << 8 | 1 << 9;
+  private static final int BOTTOM_LEFT = 1 << 0 | 1 << 2 | 1 << 6 | 1 << 8;
+  private static final int BOTTOM_RIGHT = 1 << 0 | 1 << 1 | 1 << 3 | 1 << 4 | 1 << 5 | 1 << 6 | 1 << 7 | 1 << 8 | 1 << 9;
+  private static final int BOTTOM = 1 << 0 | 1 << 2 | 1 << 3 | 1 << 5 | 1 << 6 | 1 << 8 | 1 << 9;
   //              top
   //              ---
   //    top-left |   | top-right
@@ -47,57 +46,23 @@ public class ClockPanel extends JComponent implements CustomStatusBarWidget {
   //             |   |
   //              ---
   //            bottom
-  private static final int[] MASK = new int[]{
-    1 << 0 | 1 << 2 | 1 << 3 | 1 << 5 | 1 << 6 | 1 << 7 | 1 << 8 | 1 << 9,//top
-    1 << 0 | 1 << 4 | 1 << 5 | 1 << 6 | 1 << 8 | 1 << 9,//top-left
-    1 << 0 | 1 << 1 | 1 << 2 | 1 << 3 | 1 << 4 | 1 << 7 | 1 << 8 | 1 << 9,//top-right
-    1 << 2 | 1 << 3 | 1 << 4 | 1 << 5 | 1 << 6 | 1 << 8 | 1 << 9,//middle
-    1 << 0 | 1 << 2 | 1 << 6 | 1 << 8,//bottom-left
-    1 << 0 | 1 << 1 | 1 << 3 | 1 << 4 | 1 << 5 | 1 << 6 | 1 << 7 | 1 << 8 | 1 << 9,//bottom-right
-    1 << 0 | 1 << 2 | 1 << 3 | 1 << 5 | 1 << 6 | 1 << 8 | 1 << 9//bottom
-  };//1005, 881, 927, 892, 325, 1019, 877 (geek mode)
 
   protected final Calendar myCalendar;
-  private final Timer myTimer;
   private final boolean is24Hours;
+  private ScheduledFuture<?> myScheduledFuture;
+  private final Runnable myRepaintRunnable = () -> this.repaint();
 
   public ClockPanel() {
     myCalendar = getInstance();
     is24Hours = new SimpleDateFormat().toLocalizedPattern().contains("H");
-    myTimer = new Timer(50, new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        repaint();
-      }
-    });
   }
 
-  @NotNull
-  @Override
-  public String ID() {
-    return WIDGET_ID;
-  }
-
-  @Override
-  public void install(@NotNull StatusBar statusBar) {
-    myTimer.start();
-  }
-
-  @Override
-  public void dispose() {
-    myTimer.stop();
-  }
-
-
-  @Override
-  public JComponent getComponent() {
-    return this;
-  }
-
-  @Nullable
-  @Override
-  public WidgetPresentation getPresentation(@NotNull PlatformType type) {
-    return null;
+  private void scheduleNextRepaint() {
+    if (myScheduledFuture != null && !myScheduledFuture.isDone()) {
+      myScheduledFuture.cancel(false);
+    }
+    myCalendar.setTimeInMillis(System.currentTimeMillis());
+    myScheduledFuture = EdtExecutorService.getScheduledExecutorInstance().schedule(myRepaintRunnable, 60 - myCalendar.get(SECOND), TimeUnit.SECONDS);
   }
 
   @Override
@@ -110,7 +75,7 @@ public class ClockPanel extends JComponent implements CustomStatusBarWidget {
     else {
       height = super.getPreferredSize().height;
     }
-    return new Dimension((int)(height * 2.75), height);
+    return new Dimension((int)(height * 2.5), height);
   }
 
   @Override
@@ -124,7 +89,7 @@ public class ClockPanel extends JComponent implements CustomStatusBarWidget {
     try {
       g.setRenderingHint(KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
       g.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, RenderingHints.VALUE_STROKE_PURE);
-      int h = getHeight() - 4;
+      int h = (int)(getHeight() *.8);
       int w = h / 2;
       float thickness = h * .1F;
       AffineTransform transform = g.getTransform();
@@ -139,9 +104,12 @@ public class ClockPanel extends JComponent implements CustomStatusBarWidget {
       g.setColor(UIManager.getColor("Label.foreground"));
       myCalendar.setTimeInMillis(System.currentTimeMillis());
       int hours = myCalendar.get(is24Hours ? HOUR_OF_DAY : HOUR);
+      if (hours == 0 && !is24Hours) {
+        hours = 12;
+      }
       int minutes = myCalendar.get(MINUTE);
       int x = 0;
-      int y = 2;
+      int y = (getHeight() - h) / 2;
       boolean eveningDot = !is24Hours && myCalendar.get(HOUR_OF_DAY) > 11;
       if (eveningDot) {
         g.setStroke(new BasicStroke(thickness * 2, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
@@ -152,14 +120,13 @@ public class ClockPanel extends JComponent implements CustomStatusBarWidget {
       x += w + thickness * 2;
       paintDigit(g, x, y, w, h, thickness, hours % 10);
       x += w + thickness * 2;
-      if (myCalendar.get(MILLISECOND) <= 500) {
-        g.draw(new Line2D.Float(x, y + h / 2 - thickness * 2, x, y + h / 2 - thickness * 2 + thickness / 20));
-        g.draw(new Line2D.Float(x, y + h / 2 + thickness * 2, x, y + h / 2 + thickness * 2 + thickness / 20));
-      }
+      g.draw(new Line2D.Float(x, y + h / 2 - thickness * 2, x, y + h / 2 - thickness * 2 + thickness / 20));
+      g.draw(new Line2D.Float(x, y + h / 2 + thickness * 2, x, y + h / 2 + thickness * 2 + thickness / 20));
       x += thickness * 2;
       paintDigit(g, x, y, w, h, thickness, minutes / 10);
       x += w + thickness * 2;
       paintDigit(g, x, y, w, h, thickness, minutes % 10);
+      scheduleNextRepaint();
     }
     finally {
       g.dispose();
@@ -172,12 +139,12 @@ public class ClockPanel extends JComponent implements CustomStatusBarWidget {
     float t54 = t * 5 / 4;
     float t34 = t * 3 / 4;
     float t2 = t / 2;
-    if ((digit & MASK[0]) != 0) g.draw(new Line2D.Float(x + t54, y + t2, x + width - t54, y + t2));
-    if ((digit & MASK[1]) != 0) g.draw(new Line2D.Float(x + t2, y + t54, x + t2, y + h2 - t34));
-    if ((digit & MASK[2]) != 0) g.draw(new Line2D.Float(x + width - t2, y + t54, x + width - t2, y + h2 - t34));
-    if ((digit & MASK[3]) != 0) g.draw(new Line2D.Float(x + t54, y + h2, x + width - t54, y + h2));
-    if ((digit & MASK[4]) != 0) g.draw(new Line2D.Float(x + t2, y + h2 + t34, x + t2, y + height - t54));
-    if ((digit & MASK[5]) != 0) g.draw(new Line2D.Float(x + width - t2, y + h2 + t34, x + width - t2, y + height - t54));
-    if ((digit & MASK[6]) != 0) g.draw(new Line2D.Float(x + t54, y + height - t2, x + width - t54, y + height - t2));
+    if ((digit & TOP) != 0) g.draw(new Line2D.Float(x + t54, y + t2, x + width - t54, y + t2));
+    if ((digit & TOP_LEFT) != 0) g.draw(new Line2D.Float(x + t2, y + t54, x + t2, y + h2 - t34));
+    if ((digit & TOP_RIGHT) != 0) g.draw(new Line2D.Float(x + width - t2, y + t54, x + width - t2, y + h2 - t34));
+    if ((digit & MIDDLE) != 0) g.draw(new Line2D.Float(x + t54, y + h2, x + width - t54, y + h2));
+    if ((digit & BOTTOM_LEFT) != 0) g.draw(new Line2D.Float(x + t2, y + h2 + t34, x + t2, y + height - t54));
+    if ((digit & BOTTOM_RIGHT) != 0) g.draw(new Line2D.Float(x + width - t2, y + h2 + t34, x + width - t2, y + height - t54));
+    if ((digit & BOTTOM) != 0) g.draw(new Line2D.Float(x + t54, y + height - t2, x + width - t54, y + height - t2));
   }
 }

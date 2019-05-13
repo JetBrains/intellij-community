@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,15 +15,19 @@
  */
 package com.siyeh.ig.bugs;
 
-import com.siyeh.ig.IGInspectionTestCase;
+import com.intellij.codeInspection.InspectionProfileEntry;
+import com.siyeh.ig.LightInspectionTestCase;
+import org.jetbrains.annotations.Nullable;
 
-public class CovariantEqualsInspectionTest extends IGInspectionTestCase {
+public class CovariantEqualsInspectionTest extends LightInspectionTestCase {
 
-  public void testInterf() throws Exception {
+  public void testCovariantEquals() {
     doTest();
   }
 
-  private void doTest() throws Exception {
-    doTest("com/siyeh/igtest/bugs/covariantEquals/" + getTestName(true), new CovariantEqualsInspection());
+  @Nullable
+  @Override
+  protected InspectionProfileEntry getInspection() {
+    return new CovariantEqualsInspection();
   }
 }

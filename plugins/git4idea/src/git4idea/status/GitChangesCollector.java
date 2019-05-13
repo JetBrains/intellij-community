@@ -17,15 +17,19 @@ package git4idea.status;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vcs.*;
+import com.intellij.openapi.vcs.AbstractVcs;
+import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vcs.ProjectLevelVcsManager;
+import com.intellij.openapi.vcs.VcsRoot;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.changes.VcsDirtyScope;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.File;
 import java.util.*;
 
 /**
@@ -42,7 +46,7 @@ abstract class GitChangesCollector {
   @NotNull private final VcsDirtyScope myDirtyScope;
   @NotNull private final ChangeListManager myChangeListManager;
   @NotNull private final ProjectLevelVcsManager myVcsManager;
-  @NotNull private AbstractVcs myVcs;
+  @NotNull private final AbstractVcs myVcs;
 
 
   GitChangesCollector(@NotNull Project project, @NotNull ChangeListManager changeListManager, @NotNull ProjectLevelVcsManager vcsManager,
@@ -72,7 +76,7 @@ abstract class GitChangesCollector {
    * @return the set of dirty paths to check, the paths are automatically collapsed if the summary length more than limit
    */
   protected Collection<FilePath> dirtyPaths(boolean includeChanges) {
-    final List<String> allPaths = new ArrayList<String>();
+    final List<String> allPaths = new ArrayList<>();
 
     for (FilePath p : myDirtyScope.getRecursivelyDirtyDirectories()) {
       addToPaths(p, allPaths);
@@ -104,12 +108,7 @@ abstract class GitChangesCollector {
 
     removeCommonParents(allPaths);
 
-    final List<FilePath> paths = new ArrayList<FilePath>(allPaths.size());
-    for (String p : allPaths) {
-      final File file = new File(p);
-      paths.add(new FilePathImpl(file, file.isDirectory()));
-    }
-    return paths;
+    return ContainerUtil.map(allPaths, VcsUtil::getFilePath);
   }
 
   protected void addToPaths(FilePath pathToAdd, List<String> paths) {
@@ -126,7 +125,7 @@ abstract class GitChangesCollector {
     Iterator<String> it = allPaths.iterator();
     while (it.hasNext()) {
       String path = it.next();
-      if (prevPath != null && FileUtil.startsWith(path, prevPath)) {      // the file is under previous file, so enough to check the parent
+      if (prevPath != null && FileUtil.startsWith(path, prevPath, true)) { // the file is under previous file, so enough to check the parent
         it.remove();
       }
       else {

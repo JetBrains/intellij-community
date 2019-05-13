@@ -13,8 +13,6 @@
 package com.intellij.vcsUtil;
 
 import com.intellij.ide.passwordSafe.PasswordSafe;
-import com.intellij.ide.passwordSafe.config.PasswordSafeSettings;
-import com.intellij.ide.passwordSafe.impl.PasswordSafeImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.text.StringUtil;
@@ -25,7 +23,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 
 public class AuthDialog extends DialogWrapper {
-  private AuthenticationPanel authPanel;
+  private final AuthenticationPanel authPanel;
 
   /**
    * If password if prefilled, it is expected to continue remembering it.
@@ -35,16 +33,16 @@ public class AuthDialog extends DialogWrapper {
   public AuthDialog(@NotNull Project project, @NotNull String title, @Nullable String description, @Nullable String login, @Nullable String password, boolean rememberByDefault) {
     super(project, false);
     setTitle(title);
-    boolean rememberPassword = decideOnShowRememberPasswordOption(password, rememberByDefault);
+    Boolean rememberPassword = decideOnShowRememberPasswordOption(password, rememberByDefault);
     authPanel = new AuthenticationPanel(description, login, password, rememberPassword);
     init();
   }
 
-  private static boolean decideOnShowRememberPasswordOption(@Nullable String password, boolean rememberByDefault) {
-    final PasswordSafeImpl passwordSafe = (PasswordSafeImpl)PasswordSafe.getInstance();
+  @Nullable
+  private static Boolean decideOnShowRememberPasswordOption(@Nullable String password, boolean rememberByDefault) {
     // if password saving is disabled, don't show the checkbox.
-    if (passwordSafe.getSettings().getProviderType().equals(PasswordSafeSettings.ProviderType.DO_NOT_STORE)) {
-      return false;
+    if (PasswordSafe.getInstance().isMemoryOnly()) {
+      return null;
     }
     // if password is prefilled, it is expected to continue remembering it.
     if (!StringUtil.isEmptyOrSpaces(password)) {
@@ -53,6 +51,7 @@ public class AuthDialog extends DialogWrapper {
     return rememberByDefault;
   }
 
+  @Override
   protected JComponent createCenterPanel() {
     return authPanel;
   }
@@ -62,10 +61,12 @@ public class AuthDialog extends DialogWrapper {
     return authPanel.getPreferredFocusedComponent();
   }
 
+  @NotNull
   public String getUsername() {
     return authPanel.getLogin();
   }
 
+  @NotNull
   public String getPassword() {
     return String.valueOf(authPanel.getPassword());
   }

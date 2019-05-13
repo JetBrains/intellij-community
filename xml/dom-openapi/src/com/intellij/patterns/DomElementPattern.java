@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,11 +15,11 @@
  */
 package com.intellij.patterns;
 
+import com.intellij.util.ProcessingContext;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomElementVisitor;
 import com.intellij.util.xml.reflect.AbstractDomChildrenDescription;
 import com.intellij.util.xml.reflect.DomChildrenDescription;
-import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -38,18 +38,21 @@ public class DomElementPattern<T extends DomElement,Self extends DomElementPatte
     super(condition);
   }
 
+  @Override
   protected DomElement getParent(@NotNull DomElement t) {
     return t.getParent();
   }
 
+  @Override
   protected DomElement[] getChildren(@NotNull final DomElement domElement) {
-    final List<DomElement> children = new ArrayList<DomElement>();
+    final List<DomElement> children = new ArrayList<>();
     domElement.acceptChildren(new DomElementVisitor() {
+      @Override
       public void visitDomElement(final DomElement element) {
         children.add(element);
       }
     });
-    return children.toArray(new DomElement[children.size()]);
+    return children.toArray(DomElement.EMPTY_ARRAY);
   }
 
   public static class Capture<T extends DomElement> extends DomElementPattern<T, Capture<T>> {
@@ -61,11 +64,12 @@ public class DomElementPattern<T extends DomElement,Self extends DomElementPatte
 
   public Self withChild(@NonNls @NotNull final String localName, final ElementPattern pattern) {
     return with(new PatternCondition<T>("withChild") {
+      @Override
       public boolean accepts(@NotNull final T t, final ProcessingContext context) {
         for (final AbstractDomChildrenDescription description : t.getGenericInfo().getChildrenDescriptions()) {
           if (!(description instanceof DomChildrenDescription) || localName.equals(((DomChildrenDescription)description).getXmlElementName())) {
             for (final DomElement element : description.getValues(t)) {
-              if (localName.equals(element.getXmlElementName()) && pattern.getCondition().accepts(element, context)) {
+              if (localName.equals(element.getXmlElementName()) && pattern.accepts(element, context)) {
                 return true;
               }
             }

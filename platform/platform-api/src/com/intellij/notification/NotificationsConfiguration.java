@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,14 +16,15 @@
 package com.intellij.notification;
 
 import com.intellij.openapi.application.ApplicationManager;
-import org.jetbrains.annotations.NotNull;
 
-public abstract class NotificationsConfiguration implements Notifications {
-  public abstract void changeSettings(String groupDisplayName, NotificationDisplayType displayType, boolean shouldLog);
+public abstract class NotificationsConfiguration extends NotificationsAdapter {
+  /**
+   * If notification group ID starts with this prefix it wouldn't be shown in Preferences
+   */
+  public static final String LIGHTWEIGHT_PREFIX = "LIGHTWEIGHT";
+  public abstract void changeSettings(String groupDisplayName, NotificationDisplayType displayType, boolean shouldLog, boolean shouldReadAloud);
 
   public static NotificationsConfiguration getNotificationsConfiguration() {
     return ApplicationManager.getApplication().getComponent(NotificationsConfiguration.class);
   }
-
-  public abstract void registerToolWindowCapability(@NotNull String groupId, @NotNull String toolWindowId);
 }

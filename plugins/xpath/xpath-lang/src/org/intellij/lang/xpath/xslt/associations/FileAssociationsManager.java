@@ -15,19 +15,22 @@
  */
 package org.intellij.lang.xpath.xslt.associations;
 
-import com.intellij.psi.PsiFile;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.SimpleModificationTracker;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiFile;
 
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
-public abstract class FileAssociationsManager {
-    public static final FileType[] XML_FILES = new FileType[]{ StdFileTypes.XML, StdFileTypes.XHTML };
-    public static final List<FileType> XML_FILES_LIST = Arrays.asList(XML_FILES);
+public abstract class FileAssociationsManager extends SimpleModificationTracker {
+    public static class Holder {
+        public static final FileType[] XML_FILES = {StdFileTypes.XML, StdFileTypes.XHTML};
+        public static final List<FileType> XML_FILES_LIST = Arrays.asList(XML_FILES);
+    }
 
     public abstract void removeAssociations(PsiFile file);
 

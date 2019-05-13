@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2011 Dave Griffith, Bas Leijdekkers
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,51 +15,29 @@
  */
 package com.siyeh.ig.assignment;
 
+import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.ExtractParameterAsLocalVariableFix;
-import com.siyeh.ig.psiutils.WellFormednessUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
-public class AssignmentToForLoopParameterInspection
-  extends BaseInspection {
+/**
+ * @author Bas Leijdekkers
+ */
+public class AssignmentToForLoopParameterInspection extends BaseInspection {
 
   /**
    * @noinspection PublicField for externalization purposes
    */
   public boolean m_checkForeachParameters = false;
-
-  @Override
-  @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "assignment.to.for.loop.parameter.display.name");
-  }
-
-  @Override
-  @NotNull
-  public String buildErrorString(Object... infos) {
-    return InspectionGadgetsBundle.message(
-      "assignment.to.for.loop.parameter.problem.descriptor");
-  }
-
-  @Override
-  @Nullable
-  public JComponent createOptionsPanel() {
-    return new SingleCheckboxOptionsPanel(
-      InspectionGadgetsBundle.message(
-        "assignment.to.for.loop.parameter.check.foreach.option"),
-      this, "m_checkForeachParameters");
-  }
 
   @Override
   protected InspectionGadgetsFix buildFix(Object... infos) {
@@ -71,6 +49,25 @@ public class AssignmentToForLoopParameterInspection
   }
 
   @Override
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message("assignment.to.for.loop.parameter.display.name");
+  }
+
+  @Override
+  @NotNull
+  public String buildErrorString(Object... infos) {
+    return InspectionGadgetsBundle.message("assignment.to.for.loop.parameter.problem.descriptor");
+  }
+
+  @Override
+  @Nullable
+  public JComponent createOptionsPanel() {
+    return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message("assignment.to.for.loop.parameter.check.foreach.option"),
+                                          this, "m_checkForeachParameters");
+  }
+
+  @Override
   public BaseInspectionVisitor buildVisitor() {
     return new AssignmentToForLoopParameterVisitor();
   }
@@ -79,10 +76,9 @@ public class AssignmentToForLoopParameterInspection
     extends BaseInspectionVisitor {
 
     @Override
-    public void visitAssignmentExpression(
-      @NotNull PsiAssignmentExpression expression) {
+    public void visitAssignmentExpression(@NotNull PsiAssignmentExpression expression) {
       super.visitAssignmentExpression(expression);
-      if (!WellFormednessUtils.isWellFormed(expression)) {
+      if (expression.getRExpression() == null) {
         return;
       }
       final PsiExpression lhs = expression.getLExpression();
@@ -91,9 +87,9 @@ public class AssignmentToForLoopParameterInspection
     }
 
     @Override
-    public void visitPrefixExpression(
-      @NotNull PsiPrefixExpression expression) {
-      super.visitPrefixExpression(expression);
+    public void visitUnaryExpression(
+      @NotNull PsiUnaryExpression expression) {
+      super.visitUnaryExpression(expression);
       final IElementType tokenType = expression.getOperationTokenType();
       if (!tokenType.equals(JavaTokenType.PLUSPLUS) &&
           !tokenType.equals(JavaTokenType.MINUSMINUS)) {
@@ -103,20 +99,6 @@ public class AssignmentToForLoopParameterInspection
       if (operand == null) {
         return;
       }
-      checkForForLoopParam(operand);
-      checkForForeachLoopParam(operand);  //sensible due to autoboxing/unboxing
-    }
-
-    @Override
-    public void visitPostfixExpression(
-      @NotNull PsiPostfixExpression expression) {
-      super.visitPostfixExpression(expression);
-      final IElementType tokenType = expression.getOperationTokenType();
-      if (!tokenType.equals(JavaTokenType.PLUSPLUS) &&
-          !tokenType.equals(JavaTokenType.MINUSMINUS)) {
-        return;
-      }
-      final PsiExpression operand = expression.getOperand();
       checkForForLoopParam(operand);
       checkForForeachLoopParam(operand);  //sensible due to autoboxing/unboxing
     }
@@ -177,13 +159,9 @@ public class AssignmentToForLoopParameterInspection
       registerError(expression, Boolean.TRUE);
     }
 
-    private boolean isInForStatementBody(PsiExpression expression,
-                                         PsiForStatement statement) {
+    private boolean isInForStatementBody(PsiExpression expression, PsiForStatement statement) {
       final PsiStatement body = statement.getBody();
-      if (body == null) {
-        return false;
-      }
-      return PsiTreeUtil.isAncestor(body, expression, true);
+      return body != null && PsiTreeUtil.isAncestor(body, expression, true);
     }
   }
 }

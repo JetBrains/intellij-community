@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,22 +23,18 @@ import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.util.ArrayFactory;
-import com.intellij.util.containers.HashMap;
+import java.util.HashMap;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Map;
 
 public class PsiImportListImpl extends JavaStubPsiElement<PsiImportListStub> implements PsiImportList {
-  private volatile Map<String,PsiImportStatement> myClassNameToImportMap = null;
-  private volatile Map<String,PsiImportStatement> myPackageNameToImportMap = null;
-  private volatile Map<String,PsiImportStatementBase> myNameToSingleImportMap = null;
-  private static final PsiImportStatementBase[] EMPTY_ARRAY = new PsiImportStatementBase[0];
-  private static final ArrayFactory<PsiImportStatementBase> ARRAY_FACTORY = new ArrayFactory<PsiImportStatementBase>() {
-    @Override
-    public PsiImportStatementBase[] create(final int count) {
-      return count == 0 ? EMPTY_ARRAY : new PsiImportStatementBase[count];
-    }
-  };
+  private volatile Map<String,PsiImportStatement> myClassNameToImportMap;
+  private volatile Map<String,PsiImportStatement> myPackageNameToImportMap;
+  private volatile Map<String,PsiImportStatementBase> myNameToSingleImportMap;
+  private static final PsiImportStatementBase[] EMPTY_ARRAY = PsiImportStatementBase.EMPTY_ARRAY;
+  private static final ArrayFactory<PsiImportStatementBase> ARRAY_FACTORY =
+    count -> count == 0 ? EMPTY_ARRAY : new PsiImportStatementBase[count];
 
   public PsiImportListImpl(final PsiImportListStub stub) {
     super(stub, JavaStubElementTypes.IMPORT_LIST);
@@ -131,9 +127,9 @@ public class PsiImportListImpl extends JavaStubPsiElement<PsiImportListStub> imp
   }
 
   private void initializeMaps() {
-    Map<String, PsiImportStatement> classNameToImportMap = new HashMap<String, PsiImportStatement>();
-    Map<String, PsiImportStatement> packageNameToImportMap = new HashMap<String, PsiImportStatement>();
-    Map<String, PsiImportStatementBase> nameToSingleImportMap = new HashMap<String, PsiImportStatementBase>();
+    Map<String, PsiImportStatement> classNameToImportMap = new HashMap<>();
+    Map<String, PsiImportStatement> packageNameToImportMap = new HashMap<>();
+    Map<String, PsiImportStatementBase> nameToSingleImportMap = new HashMap<>();
     PsiImportStatement[] imports = getImportStatements();
     for (PsiImportStatement anImport : imports) {
       String qName = anImport.getQualifiedName();
@@ -174,6 +170,7 @@ public class PsiImportListImpl extends JavaStubPsiElement<PsiImportListStub> imp
     }
   }
 
+  @Override
   public String toString() {
     return "PsiImportList";
   }

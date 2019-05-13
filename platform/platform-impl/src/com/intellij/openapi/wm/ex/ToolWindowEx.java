@@ -29,6 +29,7 @@ public interface ToolWindowEx extends ToolWindow {
   @NonNls String PROP_AVAILABLE = "available";
   @NonNls String PROP_ICON = "icon";
   @NonNls String PROP_TITLE = "title";
+  @NonNls String PROP_STRIPE_TITLE = "stripe-title";
 
   /**
    * Removes specified property change listener.
@@ -53,6 +54,8 @@ public interface ToolWindowEx extends ToolWindow {
   void setAdditionalGearActions(@Nullable ActionGroup additionalGearActions);
 
   void setTitleActions(AnAction... actions);
+
+  void setTabActions(AnAction... actions);
 
   void setUseLastFocusedOnActivation(boolean focus);
 

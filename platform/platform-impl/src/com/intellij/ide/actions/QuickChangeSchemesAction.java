@@ -1,30 +1,17 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions;
 
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @author max
  */
 public class QuickChangeSchemesAction extends QuickSwitchSchemeAction implements DumbAware {
+  @Override
   protected void fillActions(Project project, @NotNull DefaultActionGroup group, @NotNull DataContext dataContext) {
     final AnAction[] actions = getGroup().getChildren(null);
     for (AnAction action : actions) {
@@ -32,16 +19,18 @@ public class QuickChangeSchemesAction extends QuickSwitchSchemeAction implements
     }
   }
 
-  public void actionPerformed(AnActionEvent e) {
+  @Override
+  protected String getPopupTitle(@NotNull AnActionEvent e) {
+    return "Switch...";
+  }
+
+  @Override
+  public void actionPerformed(@NotNull AnActionEvent e) {
     super.actionPerformed(e);
     FeatureUsageTracker.getInstance().triggerFeatureUsed("ui.scheme.quickswitch");
   }
 
-  protected boolean isEnabled() {
-    return true;
-  }
-
-  private DefaultActionGroup getGroup() {
+  private static DefaultActionGroup getGroup() {
     return (DefaultActionGroup)ActionManager.getInstance().getAction(IdeActions.GROUP_CHANGE_SCHEME);
   }
 }

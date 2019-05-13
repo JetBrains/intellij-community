@@ -17,11 +17,11 @@ package com.intellij.cvsSupport2.cvsoperations.common;
 
 import com.intellij.cvsSupport2.application.CvsEntriesManager;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 import org.netbeans.lib.cvsclient.admin.Entry;
 import org.netbeans.lib.cvsclient.event.IMessageListener;
 import org.netbeans.lib.cvsclient.file.ICvsFileSystem;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.util.*;
@@ -38,8 +38,8 @@ public class UpdatedFilesManager implements IMessageListener {
   @NonNls private final static String MERGED_FILE_MESSAGE_PREFIX = "RCS file: ";
   @NonNls private final static String MERGED_FILE_MESSAGE_POSTFIX = ",v";
 
-  private final Map<File, CurrentMergedFileInfo> myMergedFiles = new HashMap<File, CurrentMergedFileInfo>();
-  private final Set<File> myCreatedBySecondParty = new HashSet<File>();
+  private final Map<File, CurrentMergedFileInfo> myMergedFiles = new HashMap<>();
+  private final Set<File> myCreatedBySecondParty = new HashSet<>();
 
   private ICvsFileSystem myCvsFileSystem;
   @NonNls private static final String CREATED_BY_SECOND_PARTY_PREFIX = "cvs server: conflict: ";
@@ -48,11 +48,11 @@ public class UpdatedFilesManager implements IMessageListener {
 
 
   private CurrentMergedFileInfo myCurrentMergedFile;
-  private final Collection<Entry> myNewlyCreatedEntries = new HashSet<Entry>();
-  private final Collection<File> myNonUpdatedFiles = new HashSet<File>();
+  private final Collection<Entry> myNewlyCreatedEntries = new HashSet<>();
+  private final Collection<File> myNonUpdatedFiles = new HashSet<>();
 
   public static class CurrentMergedFileInfo {
-    private final List<String> myRevisions = new ArrayList<String>();
+    private final List<String> myRevisions = new ArrayList<>();
     private Entry myCurrentRevision;
 
     public void addRevisions(final String firstRevision, final String secondRevision) {
@@ -85,6 +85,7 @@ public class UpdatedFilesManager implements IMessageListener {
     myCvsFileSystem = cvsFileSystem;
   }
 
+  @Override
   public void messageSent(String message, final byte[] byteMessage, boolean error, boolean tagged) {
     if (message.startsWith(MERGED_FILE_MESSAGE_PREFIX)) {
       String pathInRepository = message.substring(MERGED_FILE_MESSAGE_PREFIX.length(),
@@ -192,6 +193,7 @@ public class UpdatedFilesManager implements IMessageListener {
     return myNonUpdatedFiles.contains(file);
   }
 
+  @Override
   public void binaryMessageSent(final byte[] bytes) {
   }
 }

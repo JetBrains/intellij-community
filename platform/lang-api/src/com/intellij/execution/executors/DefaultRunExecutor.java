@@ -20,6 +20,7 @@ import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.Executor;
 import com.intellij.execution.ExecutorRegistry;
 import com.intellij.icons.AllIcons;
+import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.ui.UIBundle;
 import org.jetbrains.annotations.NonNls;
@@ -33,46 +34,56 @@ import javax.swing.*;
 public class DefaultRunExecutor extends Executor {
   @NonNls public static final String EXECUTOR_ID = ToolWindowId.RUN;
 
+  @Override
   @NotNull
   public String getStartActionText() {
     return ExecutionBundle.message("default.runner.start.action.text");
   }
 
+  @Override
   public String getToolWindowId() {
     return ToolWindowId.RUN;
   }
 
+  @Override
   public Icon getToolWindowIcon() {
     return AllIcons.Toolwindows.ToolWindowRun;
   }
 
+  @Override
   @NotNull
   public Icon getIcon() {
     return AllIcons.Actions.Execute;
   }
 
+  @Override
   public Icon getDisabledIcon() {
-    return AllIcons.Process.DisabledRun;
+    return IconLoader.getDisabledIcon(getIcon());
   }
 
+  @Override
   public String getDescription() {
     return ExecutionBundle.message("standard.runner.description");
   }
 
+  @Override
   @NotNull
   public String getActionName() {
     return UIBundle.message("tool.window.name.run");
   }
 
+  @Override
   @NotNull
   public String getId() {
     return EXECUTOR_ID;
   }
 
+  @Override
   public String getContextActionId() {
     return "RunClass";
   }
 
+  @Override
   public String getHelpId() {
     return "ideaInterface.run";
   }

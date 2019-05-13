@@ -1,0 +1,2 @@
+class Handler(object):
+    pass

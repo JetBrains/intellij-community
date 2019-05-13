@@ -17,9 +17,12 @@ package org.intellij.images.editor.actions;
 
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.project.DumbAware;
 import org.intellij.images.editor.ImageEditor;
 import org.intellij.images.editor.ImageZoomModel;
 import org.intellij.images.editor.actionSystem.ImageEditorActionUtil;
+import org.intellij.images.ui.ImageComponentDecorator;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * Resize image to actual size.
@@ -28,20 +31,23 @@ import org.intellij.images.editor.actionSystem.ImageEditorActionUtil;
  * @see ImageEditor#getZoomModel()
  * @see ImageZoomModel#setZoomFactor
  */
-public final class ActualSizeAction extends AnAction {
-    public void actionPerformed(AnActionEvent e) {
-        ImageEditor editor = ImageEditorActionUtil.getValidEditor(e);
-        if (editor != null) {
-            ImageZoomModel zoomModel = editor.getZoomModel();
+public final class ActualSizeAction extends AnAction implements DumbAware {
+    @Override
+    public void actionPerformed(@NotNull AnActionEvent e) {
+        ImageComponentDecorator decorator = ImageEditorActionUtil.getImageComponentDecorator(e);
+        if (decorator != null) {
+            ImageZoomModel zoomModel = decorator.getZoomModel();
             zoomModel.setZoomFactor(1.0d);
+            zoomModel.setZoomLevelChanged(true);
         }
     }
 
-    public void update(AnActionEvent e) {
+    @Override
+    public void update(@NotNull AnActionEvent e) {
         super.update(e);
         if (ImageEditorActionUtil.setEnabled(e)) {
-            ImageEditor editor = ImageEditorActionUtil.getValidEditor(e);
-            ImageZoomModel zoomModel = editor.getZoomModel();
+            ImageComponentDecorator decorator = ImageEditorActionUtil.getImageComponentDecorator(e);
+            ImageZoomModel zoomModel = decorator.getZoomModel();
             e.getPresentation().setEnabled(zoomModel.getZoomFactor() != 1.0d);
         }
     }

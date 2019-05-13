@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,7 +31,6 @@ import org.jetbrains.idea.maven.utils.Strings;
 
 import javax.swing.*;
 import java.util.Collection;
-import java.util.Comparator;
 
 public class MavenIgnoredFilesConfigurable implements SearchableConfigurable, Configurable.NoScroll {
   private static final char SEPARATOR = ',';
@@ -50,27 +49,32 @@ public class MavenIgnoredFilesConfigurable implements SearchableConfigurable, Co
   }
 
   private void createUIComponents() {
-    myIgnoredFilesPathsChooser = new ElementsChooser<String>(true);
+    myIgnoredFilesPathsChooser = new ElementsChooser<>(true);
     myIgnoredFilesPathsChooser.getEmptyText().setText(ProjectBundle.message("maven.ingored.no.file"));
   }
 
+  @Override
   public JComponent createComponent() {
     return myMainPanel;
   }
 
+  @Override
   public void disposeUIResources() {
   }
 
+  @Override
   public boolean isModified() {
     return !MavenUtil.equalAsSets(myOriginallyIgnoredFilesPaths, myIgnoredFilesPathsChooser.getMarkedElements()) ||
            !myOriginallyIgnoredFilesPatterns.equals(myIgnoredFilesPattersEditor.getText());
   }
 
+  @Override
   public void apply() throws ConfigurationException {
     myManager.setIgnoredFilesPaths(myIgnoredFilesPathsChooser.getMarkedElements());
     myManager.setIgnoredFilesPatterns(Strings.tokenize(myIgnoredFilesPattersEditor.getText(), Strings.WHITESPACE + SEPARATOR));
   }
 
+  @Override
   public void reset() {
     myOriginallyIgnoredFilesPaths = myManager.getIgnoredFilesPaths();
     myOriginallyIgnoredFilesPatterns = Strings.detokenize(myManager.getIgnoredFilesPatterns(), SEPARATOR);
@@ -78,31 +82,26 @@ public class MavenIgnoredFilesConfigurable implements SearchableConfigurable, Co
     MavenUIUtil.setElements(myIgnoredFilesPathsChooser,
                             MavenUtil.collectPaths(myManager.getProjectsFiles()),
                             myOriginallyIgnoredFilesPaths,
-                            new Comparator<String>() {
-                              public int compare(String o1, String o2) {
-                                return FileUtil.comparePaths(o1, o2);
-                              }
-                            });
+                            (o1, o2) -> FileUtil.comparePaths(o1, o2));
     myIgnoredFilesPattersEditor.setText(myOriginallyIgnoredFilesPatterns);
   }
 
+  @Override
   @Nls
   public String getDisplayName() {
     return ProjectBundle.message("maven.tab.ignored.files");
   }
 
+  @Override
   @Nullable
   @NonNls
   public String getHelpTopic() {
     return "reference.settings.project.maven.ignored.files";
   }
 
+  @Override
   @NotNull
   public String getId() {
     return getHelpTopic();
-  }
-
-  public Runnable enableSearch(String option) {
-    return null;
   }
 }

@@ -1,23 +1,38 @@
 <idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude">
-  <xi:include href="/componentSets/Xml.xml" xpointer="xpointer(/components/*)"/>
-  <xi:include href="/META-INF/XmlActions.xml" xpointer="xpointer(/component/*)"/>
-  <xi:include href="/META-INF/DomPlugin.xml" xpointer="xpointer(/idea-plugin/*)"/>
-  <xi:include href="/META-INF/relaxng-plugin.xml" xpointer="xpointer(/idea-plugin/*)"/>
+  <xi:include href="/componentSets/Xml.xml" xpointer="xpointer(/idea-plugin/*)">
+    <xi:fallback/>
+  </xi:include>
+  <xi:include href="/META-INF/XmlActions.xml" xpointer="xpointer(/idea-plugin/*)"/>
+  <xi:include href="/META-INF/DomPlugin.xml" xpointer="xpointer(/idea-plugin/*)">
+    <xi:fallback/>
+  </xi:include>
+  <xi:include href="/META-INF/relaxng-plugin.xml" xpointer="xpointer(/idea-plugin/*)">
+    <xi:fallback/>
+  </xi:include>
 
   <application-components>
     <component>
-      <implementation-class>com.intellij.javaee.DefaultHtmlDoctypeInitialConfigurator</implementation-class>
+      <implementation-class>com.intellij.codeInsight.editorActions.XmlTagNameSynchronizer</implementation-class>
     </component>
   </application-components>
 
   <extensionPoints>
 
+    <!-- EP to block language injection into script tag-->
+    <extensionPoint name="html.htmlScriptInjectionBlocker" beanClass="com.intellij.lang.LanguageExtensionPoint">
+      <with attribute="implementationClass" implements="com.intellij.psi.impl.source.html.HtmlScriptInjectionBlocker"/>
+    </extensionPoint>
+
     <extensionPoint name="xml.startTagEndToken"
-                    interface="com.intellij.psi.xml.XmlChildRole$StartTagEndTokenProvider"/>
+                    interface="com.intellij.psi.xml.StartTagEndTokenProvider"/>
     <extensionPoint name="xml.schemaProvider"
                     interface="com.intellij.xml.XmlSchemaProvider"/>
     <extensionPoint name="xml.xmlExtension"
                     interface="com.intellij.xml.XmlExtension"/>
+    <extensionPoint name="xml.namespaceHelper"
+                    interface="com.intellij.xml.XmlNamespaceHelper"/>
+    <extensionPoint name="xml.tagNameProvider"
+                    interface="com.intellij.xml.XmlTagNameProvider"/>
     <extensionPoint name="xml.fileNSInfoProvider"
                     interface="com.intellij.psi.xml.XmlFileNSInfoProvider"/>
     <extensionPoint name="xml.attributeDescriptorsProvider"
@@ -29,8 +44,8 @@
 
     <extensionPoint name="xml.xmlSuppressionProvider"
                     interface="com.intellij.codeInspection.XmlSuppressionProvider"/>
-
-    <extensionPoint name="breadcrumbsInfoProvider" interface="com.intellij.xml.breadcrumbs.BreadcrumbsInfoProvider"/>
+    <extensionPoint name="xml.nsColorProvider"
+                    interface="com.intellij.codeInsight.daemon.impl.analysis.XmlNSColorProvider"/>
 
     <extensionPoint name="breadcrumbsPresentationProvider" interface="com.intellij.xml.breadcrumbs.BreadcrumbsPresentationProvider"/>
 
@@ -60,10 +75,12 @@
     <extensionPoint name="xml.relatedToHtmlFilesContributor" interface="com.intellij.navigation.RelatedToHtmlFilesContributor"/>
 
     <extensionPoint name="xml.xmlTagRuleProvider" interface="com.intellij.xml.XmlTagRuleProvider"/>
-    <extensionPoint name="html.embeddedTokenTypesProvider" interface="com.intellij.lexer.HtmlEmbeddedTokenTypesProvider"/>
+    <extensionPoint name="embeddedTokenTypesProvider" interface="com.intellij.lexer.EmbeddedTokenTypesProvider"/>
+    <extensionPoint name="embeddedTokenHighlighter" interface="com.intellij.ide.highlighter.EmbeddedTokenHighlighter"/>
     <extensionPoint name="xml.html5SchemaProvider" interface="com.intellij.xml.Html5SchemaProvider"/>
+    <extensionPoint name="xml.implicitIdRefProvider" interface="com.intellij.psi.impl.source.resolve.reference.impl.providers.ImplicitIdRefProvider"/>
 
-    <extensionPoint qualifiedName="org.jetbrains.urlOpener" interface="com.intellij.ide.browsers.UrlOpener"/>
+    <extensionPoint qualifiedName="org.jetbrains.javaScriptDebuggerStarter" interface="com.intellij.ide.browsers.JavaScriptDebuggerStarter"/>
 
     <extensionPoint name="html.scriptContentProvider"
                     beanClass="com.intellij.lang.LanguageExtensionPoint">
@@ -74,31 +91,57 @@
                     beanClass="com.intellij.lang.LanguageExtensionPoint">
       <with attribute="implementationClass" implements="com.intellij.lang.HtmlInlineScriptTokenTypesProvider"/>
     </extensionPoint>
+
+    <extensionPoint name="html.attributeValueProvider" interface="com.intellij.html.impl.providers.HtmlAttributeValueProvider"/>
+
+    <extensionPoint name="xml.psiPolicy"
+                    beanClass="com.intellij.lang.LanguageExtensionPoint">
+      <with attribute="implementationClass" implements="com.intellij.psi.impl.source.xml.XmlPsiPolicy"/>
+    </extensionPoint>
+
+    <extensionPoint name="xml.undefinedElementFixProvider" interface="com.intellij.xml.XmlUndefinedElementFixProvider"/>
+
+    <extensionPoint name="html.codestyle.panel" interface="com.intellij.application.options.HtmlCodeStylePanelExtension"/>
+    <extensionPoint name="html.scriptDocumentationProvider" interface="com.intellij.lang.documentation.DocumentationProvider"/>
   </extensionPoints>
 
   <project-components>
     <component>
       <implementation-class>com.intellij.codeInsight.daemon.impl.tagTreeHighlighting.XmlTagTreeHighlightingPassFactory</implementation-class>
-      <skipForDefaultProject/>
     </component>
   </project-components>
 
   <extensions defaultExtensionNs="com.intellij">
+    <psi.treeChangePreprocessor implementation="com.intellij.xml.XmlPsiTreeChangePreprocessor"/>
+    <tipAndTrick file="TagNameCompletion.html"/>
+
     <fileTypeFactory implementation="com.intellij.xml.XmlFileTypeFactory"/>
+
+    <bidiRegionsSeparator language="XML" implementationClass="com.intellij.openapi.editor.bidi.XmlBidiRegionsSeparator"/>
+
+    <lang.syntaxHighlighterFactory language="XML" implementationClass="com.intellij.lang.xml.XmlSyntaxHighlighterFactory"/>
+    <lang.syntaxHighlighterFactory language="HTML" implementationClass="com.intellij.lang.html.HtmlSyntaxHighlighterFactory"/>
+    <lang.syntaxHighlighterFactory language="XHTML" implementationClass="com.intellij.lang.xhtml.XhtmlSyntaxHighlighterFactory"/>
+    <lang.syntaxHighlighterFactory language="DTD" implementationClass="com.intellij.lang.dtd.DtdSyntaxHighlighterFactory"/>
+
+    <annotator language="XML" implementationClass="com.intellij.codeInsight.daemon.impl.analysis.XmlNsPrefixAnnotator"/>
+    <annotator language="XML" implementationClass="com.intellij.codeInsight.daemon.impl.analysis.XmlNamespaceAnnotator"/>
 
     <renameHandler id="xmlTagRenameHandler" implementation="com.intellij.xml.refactoring.XmlTagRenameHandler"/>
     <renameHandler implementation="com.intellij.xml.refactoring.SchemaPrefixRenameHandler" order="before xmlTagRenameHandler"/>
     <refactoring.inlineHandler language="XML" implementationClass="com.intellij.xml.refactoring.XmlInlineHandler"/>
 
-    <lang.literalEscaper language="XML" implementationClass="com.intellij.lang.xml.XmlLiteralEscaper"/>
-
     <completion.contributor language="any" implementationClass="com.intellij.codeInsight.completion.XmlCompletionContributor" id="xml"
                             order="first"/>
+    <completion.contributor language="any" implementationClass="com.intellij.codeInsight.completion.HtmlCompletionContributor" id="html"/>
+    <completion.contributor language="any" implementationClass="com.intellij.codeInsight.completion.XmlNonFirstCompletionContributor" id="xmlNonFirst" order="after xml"/>
 
-    <completion.contributor language="XML" implementationClass="com.intellij.codeInsight.completion.XmlNoVariantsDelegator" order="after xml"/>
+    <completion.contributor language="DTD" implementationClass="com.intellij.codeInsight.completion.DtdCompletionContributor" id="dtd" />
+    <completion.contributor language="XML" implementationClass="com.intellij.codeInsight.completion.XmlNoVariantsDelegator" order="before xmlNonFirst"/>
+    <completion.contributor language="XML" implementationClass="com.intellij.codeInsight.completion.XmlLocationCompletionContributor" id="xmlLocation"/>
 
-    <completion.confidence language="XML" implementationClass="com.intellij.codeInsight.completion.XmlNameCompletionConfidence" id="xml"/>
-    <completion.confidence language="HTML" implementationClass="com.intellij.codeInsight.completion.XmlNameCompletionConfidence" id="html"/>
+    <completion.confidence language="HTML" implementationClass="com.intellij.codeInsight.completion.HtmlTextCompletionConfidence" id="htmlText"/>
+    <completion.confidence language="XHTML" implementationClass="com.intellij.codeInsight.completion.HtmlTextCompletionConfidence" id="xhtmlText"/>
 
     <lookup.charFilter implementation="com.intellij.codeInsight.completion.XmlCharFilter" id="xml"/>
 
@@ -118,22 +161,33 @@
     <codeInsight.lineMarkerProvider language="XHTML" implementationClass="com.intellij.html.HtmlLineMarkerProvider"/>
 
     <breadcrumbsInfoProvider implementation="com.intellij.xml.breadcrumbs.XmlLanguageBreadcrumbsInfoProvider"/>
-    <editorSmartKeysConfigurable instance="com.intellij.application.options.editor.WebEditorOptionsProvider"/>
+    <editorSmartKeysConfigurable instance="com.intellij.application.options.editor.WebEditorOptionsProvider"
+                                 id="editor.preferences.webOptions"
+                                 key="web.editor.configuration.title"
+                                 bundle="messages.XmlBundle"/>
     <editorAppearanceConfigurable instance="com.intellij.application.options.editor.WebEditorAppearanceConfigurable"
                                   id="WebEditorAppearanceConfigurable"/>
 
     <editorAppearanceConfigurable instance="com.intellij.codeInsight.daemon.impl.tagTreeHighlighting.XmlTagTreeHighlightingConfigurable"/>
 
+    <applicationConfigurable parentId="preferences.editor" id="editor.breadcrumbs"
+                             key="configurable.breadcrumbs" bundle="messages.ApplicationBundle"
+                             instance="com.intellij.xml.breadcrumbs.BreadcrumbsConfigurable"/>
+
     <autoImportOptionsProvider instance="com.intellij.application.options.XmlAutoImportOptionsProvider"/>
 
     <highlightErrorFilter implementation="com.intellij.codeInsight.highlighting.HtmlClosingTagErrorFilter"/>
+    <highlightErrorFilter implementation="com.intellij.codeInsight.highlighting.InjectedHtmlErrorFilter"/>
 
     <applicationService serviceInterface="com.intellij.javaee.ExternalResourceManager"
-                        serviceImplementation="com.intellij.javaee.ExternalResourceManagerImpl"/>
+                        serviceImplementation="com.intellij.javaee.ExternalResourceManagerExImpl"/>
+
+    <applicationService serviceInterface="com.intellij.codeInspection.XmlQuickFixFactory"
+                        serviceImplementation="com.intellij.codeInspection.XmlQuickFixFactoryImpl"/>
 
     <standardResourceProvider implementation="com.intellij.javaee.InternalResourceProvider"/>
 
-    <projectService serviceInterface="com.intellij.javaee.ProjectResources"
+    <projectService serviceInterface="com.intellij.javaee.ExternalResourceManagerExImpl"
                     serviceImplementation="com.intellij.javaee.ProjectResources"/>
 
     <roots.watchedRootsProvider implementation="com.intellij.codeInsight.daemon.impl.quickfix.FetchExtResourceAction"/>
@@ -145,50 +199,43 @@
     <include.provider implementation="com.intellij.xml.util.XIncludeProvider"/>
     <indexedRootsProvider implementation="com.intellij.javaee.ExternalResourcesRootsProvider"/>
 
-    <applicationService serviceInterface="com.intellij.application.options.editor.WebEditorOptions"
-                        serviceImplementation="com.intellij.application.options.editor.WebEditorOptions"/>
-    <exportable serviceInterface="com.intellij.application.options.editor.WebEditorOptions"/>
+    <applicationService serviceImplementation="com.intellij.application.options.editor.WebEditorOptions"/>
 
-    <applicationConfigurable provider="com.intellij.application.options.emmet.EmmetConfigurableProvider"/>
-    <applicationService serviceInterface="com.intellij.application.options.emmet.EmmetOptions"
-                        serviceImplementation="com.intellij.application.options.emmet.EmmetOptions"/>
-    <exportable serviceInterface="com.intellij.application.options.emmet.EmmetOptions"/>
+    <applicationConfigurable groupId="editor" key="emmet.configuration.title" bundle="messages.XmlBundle" id="reference.idesettings.emmet"
+                             dynamic="true" provider="com.intellij.application.options.emmet.EmmetConfigurableProvider"/>
+    <applicationService serviceImplementation="com.intellij.application.options.emmet.EmmetOptions"/>
 
+    <applicationService serviceImplementation="com.intellij.application.options.editor.XmlFoldingSettings"/>
 
-    <applicationService serviceInterface="com.intellij.application.options.editor.XmlFoldingSettings"
-                        serviceImplementation="com.intellij.application.options.editor.XmlFoldingSettings"/>
+    <applicationService serviceImplementation="com.intellij.application.options.XmlSettings"/>
 
-    <exportable serviceInterface="com.intellij.application.options.editor.XmlFoldingSettings"/>
-
-    <applicationService serviceInterface="com.intellij.application.options.XmlSettings"
-                        serviceImplementation="com.intellij.application.options.XmlSettings"/>
-    <exportable serviceInterface="com.intellij.application.options.XmlSettings"/>
-
-    <applicationService serviceInterface="com.intellij.ide.browsers.BrowsersConfiguration"
-                        serviceImplementation="com.intellij.ide.browsers.BrowsersConfiguration"/>
+    <applicationService serviceImplementation="com.intellij.ide.browsers.WebBrowserManager"/>
 
     <projectService serviceInterface="com.intellij.psi.XmlElementFactory"
                     serviceImplementation="com.intellij.psi.XmlElementFactoryImpl"/>
 
     <highlightVisitor implementation="com.intellij.codeInsight.daemon.impl.analysis.XmlHighlightVisitor"/>
 
+    <xml.zenCodingGenerator implementation="com.intellij.codeInsight.template.emmet.generators.XmlZenCodingGeneratorImpl" order="last"/>
     <customLiveTemplate implementation="com.intellij.codeInsight.template.emmet.ZenCodingTemplate"/>
+    <editorTypedHandler implementationClass="com.intellij.codeInsight.template.emmet.EmmetPreviewTypedHandler" id="emmetPreview"/>
+    <lookup.actionProvider implementation="com.intellij.codeInsight.template.emmet.completion.EmmetLookupActionProvider"/>
 
     <externalAnnotator language="XML" implementationClass="com.intellij.lang.xml.XMLExternalAnnotator"/>
-    <externalAnnotator language="HTML" implementationClass="com.intellij.lang.xml.XMLExternalAnnotator"/>
-    <externalAnnotator language="XHTML" implementationClass="com.intellij.lang.xml.XMLExternalAnnotator"/>
-    <externalAnnotator language="JSP" implementationClass="com.intellij.lang.xml.XMLExternalAnnotator"/>
-    <externalAnnotator language="JSPX" implementationClass="com.intellij.lang.xml.XMLExternalAnnotator"/>
 
     <lang.parserDefinition language="DTD" implementationClass="com.intellij.lang.dtd.DTDParserDefinition"/>
     <lang.parserDefinition language="XML" implementationClass="com.intellij.lang.xml.XMLParserDefinition"/>
     <lang.parserDefinition language="HTML" implementationClass="com.intellij.lang.html.HTMLParserDefinition"/>
     <lang.parserDefinition language="XHTML" implementationClass="com.intellij.lang.xhtml.XHTMLParserDefinition"/>
 
+    <lang.treePatcher language="HTML" implementationClass="com.intellij.lang.xml.XmlTemplateTreePatcher"/>
+    <lang.treePatcher language="XML" implementationClass="com.intellij.lang.xml.XmlTemplateTreePatcher"/>
+
     <lang.formatter language="XML" implementationClass="com.intellij.lang.xml.XmlFormattingModelBuilder"/>
     <lang.whiteSpaceFormattingStrategy language="XML"
                                        implementationClass="com.intellij.lang.xml.XmlWhiteSpaceFormattingStrategy"/>
     <lang.formatter language="HTML" implementationClass="com.intellij.lang.html.HtmlFormattingModelBuilder"/>
+    <preFormatProcessor implementation="com.intellij.lang.html.HtmlQuotesFormatPreprocessor"/>
     <lang.formatter language="XHTML" implementationClass="com.intellij.lang.xhtml.XhtmlFormattingModelBuilder"/>
     <lang.lineWrapStrategy language="XML" implementationClass="com.intellij.psi.formatter.MarkupLineWrapPositionStrategy"/>
     <lang.lineWrapStrategy language="HTML" implementationClass="com.intellij.psi.formatter.MarkupLineWrapPositionStrategy"/>
@@ -209,6 +256,8 @@
     <lang.unwrapDescriptor language="XHTML" implementationClass="com.intellij.lang.xml.XmlUnwrapDescriptor"/>
     <lang.unwrapDescriptor language="JSP" implementationClass="com.intellij.lang.xml.XmlUnwrapDescriptor"/>
     <lang.unwrapDescriptor language="JSPX" implementationClass="com.intellij.lang.xml.XmlUnwrapDescriptor"/>
+
+    <targetElementEvaluator language="XML" implementationClass="com.intellij.codeInsight.XmlTargetElementEvaluator"/>
 
     <lang.findUsagesProvider language="DTD" implementationClass="com.intellij.lang.xml.XmlFindUsagesProvider"/>
     <lang.findUsagesProvider language="XML" implementationClass="com.intellij.lang.xml.XmlFindUsagesProvider"/>
@@ -260,31 +309,32 @@
     <quoteHandler fileType="XML" className="com.intellij.codeInsight.editorActions.XmlQuoteHandler"/>
     <quoteHandler fileType="HTML" className="com.intellij.codeInsight.editorActions.HtmlQuoteHandler"/>
     <quoteHandler fileType="XHTML" className="com.intellij.codeInsight.editorActions.HtmlQuoteHandler"/>
+    <selectionDequotingFilter implementation="com.intellij.codeInsight.editorActions.XmlDequotingFilter"/>
 
-    <completionData fileType="XML" className="com.intellij.codeInsight.completion.XmlCompletionData"/>
-    <completionData fileType="HTML" className="com.intellij.codeInsight.completion.HtmlCompletionData"/>
-    <completionData fileType="XHTML" className="com.intellij.codeInsight.completion.XHtmlCompletionData"/>
-    <completionData fileType="DTD" className="com.intellij.codeInsight.completion.DtdCompletionData"/>
-
+    <referenceProviderType key="Path References Provider" implementationClass="com.intellij.psi.impl.source.resolve.reference.impl.providers.JspxIncludePathReferenceProvider"/>
     <psi.referenceContributor implementation="com.intellij.xml.util.XmlReferenceContributor"/>
     <!--<pom.declarationSearcher implementation="com.intellij.psi.impl.source.resolve.reference.impl.providers.IdDeclarationSearcher"/>-->
     <anchorReferenceProvider implementation="com.intellij.xml.util.AnchorPathReferenceProvider"/>
+    <psi.fileReferenceHelper implementation="com.intellij.codeInsight.daemon.impl.analysis.HtmlFileReferenceHelper"/>
 
     <extendWordSelectionHandler implementation="com.intellij.codeInsight.editorActions.HtmlSelectioner"/>
     <extendWordSelectionHandler implementation="com.intellij.codeInsight.editorActions.XmlTagSelectioner"/>
     <extendWordSelectionHandler implementation="com.intellij.codeInsight.editorActions.XmlCDATAContentSelectioner"/>
     <extendWordSelectionHandler implementation="com.intellij.codeInsight.editorActions.DtdSelectioner"/>
     <extendWordSelectionHandler implementation="com.intellij.codeInsight.editorActions.XmlElementSelectioner"/>
-    <extendWordSelectionHandler implementation="com.intellij.codeInsight.editorActions.XmlTokenSelectioner"/>
+    <extendWordSelectionHandler id="xmlTokenSelectioner" implementation="com.intellij.codeInsight.editorActions.XmlTokenSelectioner"/>
     <extendWordSelectionHandler implementation="com.intellij.codeInsight.editorActions.XmlLineSelectioner"/>
 
 
     <typedHandler implementation="com.intellij.codeInsight.editorActions.XmlSlashTypedHandler" id="xmlSlash"/>
+    <typedHandler implementation="com.intellij.codeInsight.editorActions.XmlEqTypedHandler" id="xmlEq"/>
+    <typedHandler implementation="com.intellij.codeInsight.editorActions.XmlPiTypedHandler" id="xmlDecl"/>
     <typedHandler implementation="com.intellij.codeInsight.editorActions.XmlGtTypedHandler" id="xmlGt"/>
     <typedHandler implementation="com.intellij.codeInsight.editorActions.XmlAutoPopupHandler" id="xmlAuto"/>
 
     <!--
     <copyPastePreProcessor implementation="com.intellij.codeInsight.editorActions.XmlCopyPastePreProcessor"/>
+    <copyPastePreProcessor implementation="com.intellij.codeInsight.editorActions.HtmlCopyPastePreProcessor"/>
     -->
 
     <syntaxHighlighter key="IDEA_PROJECT" implementationClass="com.intellij.ide.highlighter.XmlFileHighlighter"/>
@@ -301,6 +351,7 @@
     <liveTemplateContext implementation="com.intellij.codeInsight.template.HtmlContextType"/>
     <liveTemplateContext implementation="com.intellij.codeInsight.template.XslTextContextType"/>
     <liveTemplateContext implementation="com.intellij.codeInsight.template.XmlContextType"/>
+    <liveTemplateContext implementation="com.intellij.codeInsight.template.XmlTextContextType"/>
 
     <errorQuickFixProvider implementation="com.intellij.codeInsight.daemon.impl.analysis.XmlErrorQuickFixProvider"/>
 
@@ -310,8 +361,10 @@
                            implementationClass="com.intellij.psi.impl.source.resolve.reference.impl.providers.URIReferenceProvider"/>
     <referenceProviderType key="Schema references provider"
                            implementationClass="com.intellij.psi.impl.source.resolve.reference.impl.providers.SchemaReferencesProvider"/>
+    <multiHostInjector implementation="com.intellij.psi.impl.source.resolve.reference.impl.providers.XsdRegExpInjector"/>
+    <lang.parserDefinition language="XsdRegExp" implementationClass="com.intellij.psi.impl.source.resolve.reference.impl.providers.XsdRegExpParserDefinition"/>
 
-    <renamePsiElementProcessor implementation="com.intellij.refactoring.rename.RenameXmlAttributeProcessor"/>
+    <renamePsiElementProcessor implementation="com.intellij.refactoring.rename.RenameXmlAttributeProcessor" id="xmlAttribute"/>
     <lang.importOptimizer id="XML" language="XML" implementationClass="com.intellij.refactoring.XmlImportOptimizer"/>
 
     <readWriteAccessDetector implementation="com.intellij.codeInsight.highlighting.XmlReadWriteAccessDetector"/>
@@ -326,8 +379,13 @@
 
     <statementUpDownMover implementation="com.intellij.codeInsight.editorActions.moveUpDown.XmlMover" id="xml" order="before line"/>
 
+    <moveLeftRightHandler language="XML"
+                          implementationClass="com.intellij.codeInsight.editorActions.moveLeftRight.XmlMoveLeftRightHandler"/>
+
     <applicationService serviceInterface="com.intellij.ide.browsers.WebBrowserService"
                         serviceImplementation="com.intellij.ide.browsers.impl.WebBrowserServiceImpl"/>
+
+    <applicationService serviceInterface="com.intellij.ide.browsers.BrowserLauncher" serviceImplementation="com.intellij.ide.browsers.BrowserLauncherImpl"/>
 
     <patterns.patternClass className="com.intellij.patterns.XmlPatterns" alias="xml"/>
 
@@ -337,53 +395,97 @@
 
     <iconProvider implementation="com.intellij.xml.util.XmlIconProvider"/>
 
-    <localInspection language="XML" shortName="CheckTagEmptyBody" bundle="messages.XmlBundle" key="xml.inspections.check.tag.empty.body"
-                     groupKey="xml.inspections.group.name" enabledByDefault="true" level="WARNING"
+    <localInspection language="XML" shortName="CheckTagEmptyBody" enabledByDefault="true" level="WARNING"
+                     bundle="messages.XmlBundle" key="xml.inspections.check.tag.empty.body"
+                     groupBundle="messages.XmlBundle" groupKey="xml.inspections.group.name"
                      implementationClass="com.intellij.xml.util.CheckTagEmptyBodyInspection"/>
-    <!-- TODO: assign it to XML & DTD -->
-    <localInspection shortName="CheckDtdRefs" bundle="messages.XmlBundle" key="xml.inspections.check.dtd.references" groupName="XML"
-                     enabledByDefault="true" level="ERROR" implementationClass="com.intellij.xml.util.CheckDtdReferencesInspection"/>
-    <localInspection language="XML" shortName="CheckEmptyScriptTag" bundle="messages.XmlBundle" key="html.inspections.check.empty.tag" groupName="HTML"
-                     enabledByDefault="true" level="WARNING" implementationClass="com.intellij.xml.util.CheckEmptyTagInspection"/>
-    <localInspection language="XML" shortName="CheckValidXmlInScriptTagBody" bundle="messages.XmlBundle" key="html.inspections.check.valid.script.tag"
-                     groupName="HTML" enabledByDefault="true" level="ERROR"
-                     implementationClass="com.intellij.xml.util.CheckValidXmlInScriptBodyInspection"/>
-    <localInspection language="XML" shortName="CheckXmlFileWithXercesValidator" bundle="messages.XmlBundle" key="xml.inspections.check.file.with.xerces"
-                     groupName="XML" enabledByDefault="true" level="ERROR"
-                     implementationClass="com.intellij.xml.util.CheckXmlFileWithXercesValidatorInspection"/>
-    <localInspection language="XML" shortName="XmlDuplicatedId" bundle="messages.XmlBundle" key="xml.inspections.duplicate.id"
-                     groupKey="xml.inspections.group.name" enabledByDefault="true" level="ERROR" runForWholeFile="true" unfair="true"
+
+    <localInspection language="XML" shortName="CheckDtdRefs" enabledByDefault="true" level="ERROR"
+                     bundle="messages.XmlBundle" key="xml.inspections.check.dtd.references"
+                     groupBundle="messages.XmlBundle" groupKey="xml.inspections.group.name"
+                     implementationClass="com.intellij.xml.util.CheckDtdReferencesInspection"/>
+    <localInspection language="XML" shortName="CheckXmlFileWithXercesValidator" enabledByDefault="true" level="ERROR"
+                     bundle="messages.XmlBundle" key="xml.inspections.check.file.with.xerces"
+                     groupBundle="messages.XmlBundle" groupKey="xml.inspections.group.name"
+                     implementationClass="com.intellij.xml.util.CheckXmlFileWithXercesValidatorInspection" unfair="true"/>
+    <localInspection language="XML" enabledByDefault="true" level="ERROR" runForWholeFile="true" unfair="true"
+                     bundle="messages.XmlBundle" key="xml.inspections.duplicate.id"
+                     groupBundle="messages.XmlBundle" groupKey="xml.inspections.group.name"
                      implementationClass="com.intellij.xml.util.XmlDuplicatedIdInspection"/>
-    <localInspection language="XML" shortName="RequiredAttributes" bundle="messages.InspectionsBundle" key="inspection.required.attributes.display.name"
-                     groupName="HTML" enabledByDefault="true" level="WARNING"
-                     implementationClass="com.intellij.codeInspection.htmlInspections.RequiredAttributesInspection" unfair="true"/>
-    <localInspection language="XML" shortName="HtmlExtraClosingTag" bundle="messages.XmlBundle" key="html.inspection.extra.closing.tag" groupName="HTML"
-                     enabledByDefault="true" level="ERROR"
-                     implementationClass="com.intellij.codeInspection.htmlInspections.HtmlExtraClosingTagInspection"/>
-    <localInspection language="XML" shortName="XmlWrongRootElement" bundle="messages.XmlBundle" key="xml.inspection.wrong.root.element" groupName="XML"
+    <localInspection language="XML" bundle="messages.XmlBundle" key="xml.inspections.invalid.id"
+                     groupBundle="messages.XmlBundle" groupKey="xml.inspections.group.name"
+                     enabledByDefault="true" level="ERROR" runForWholeFile="true" unfair="true"
+                     implementationClass="com.intellij.xml.util.XmlInvalidIdInspection"/>
+    <localInspection language="XML" shortName="XmlWrongRootElement"
+                     bundle="messages.XmlBundle" key="xml.inspection.wrong.root.element"
+                     groupBundle="messages.XmlBundle" groupKey="xml.inspections.group.name"
                      enabledByDefault="true" level="ERROR"
                      implementationClass="com.intellij.codeInspection.htmlInspections.XmlWrongRootElementInspection"/>
-    <localInspection language="XML" shortName="HtmlUnknownTag" bundle="messages.XmlBundle" key="html.inspections.unknown.tag" groupName="HTML"
-                     enabledByDefault="true" level="WARNING"
-                     implementationClass="com.intellij.codeInspection.htmlInspections.HtmlUnknownTagInspection"/>
-    <localInspection language="XML" shortName="HtmlUnknownAttribute" bundle="messages.XmlBundle" key="html.inspections.unknown.attribute" groupName="HTML"
-                     enabledByDefault="true" level="WARNING"
-                     implementationClass="com.intellij.codeInspection.htmlInspections.HtmlUnknownAttributeInspection"/>
-    <localInspection language="XML" shortName="XmlUnboundNsPrefix" bundle="messages.XmlBundle" key="xml.inspections.unbound.prefix"
-                     groupKey="xml.inspections.group.name" enabledByDefault="true" level="WARNING"
+    <localInspection language="XML" shortName="XmlUnboundNsPrefix" enabledByDefault="true" level="WARNING"
+                     bundle="messages.XmlBundle" key="xml.inspections.unbound.prefix"
+                     groupBundle="messages.XmlBundle" groupKey="xml.inspections.group.name"
                      implementationClass="com.intellij.codeInsight.daemon.impl.analysis.XmlUnboundNsPrefixInspection"/>
-    <localInspection language="XML" shortName="XmlUnusedNamespaceDeclaration" displayName="Unused XML schema declaration"
-                     groupKey="xml.inspections.group.name" bundle="messages.XmlBundle" enabledByDefault="true" level="WARNING"
+    <localInspection language="XML" shortName="XmlUnusedNamespaceDeclaration" enabledByDefault="true" level="WARNING"
+                     bundle="messages.XmlBundle" key="xml.inspections.unused.schema"
+                     groupBundle="messages.XmlBundle" groupKey="xml.inspections.group.name"
                      implementationClass="com.intellij.codeInsight.daemon.impl.analysis.XmlUnusedNamespaceInspection"/>
-    <localInspection language="XML" implementationClass="com.intellij.codeInsight.daemon.impl.analysis.XmlPathReferenceInspection"
-                     displayName="File path resolving in XML"
-                     groupName="XML" enabledByDefault="true" level="ERROR"/>
-    <localInspection language="XML" shortName="HtmlUnknownTarget" bundle="messages.XmlBundle" key="html.inspections.unknown.target" groupName="HTML"
-                     enabledByDefault="true" level="WARNING"
+    <localInspection language="XML" enabledByDefault="true" level="ERROR"
+                     bundle="messages.XmlBundle" key="xml.inspections.path.resolve"
+                     groupBundle="messages.XmlBundle" groupKey="xml.inspections.group.name"
+                     implementationClass="com.intellij.codeInsight.daemon.impl.analysis.XmlPathReferenceInspection"/>
+    <localInspection language="XML" enabledByDefault="true" level="WARNING"
+                     bundle="messages.XmlBundle" key="xml.inspections.default.attribute.value"
+                     groupBundle="messages.XmlBundle" groupKey="xml.inspections.group.name"
+                     implementationClass="com.intellij.codeInsight.daemon.impl.analysis.XmlDefaultAttributeValueInspection"/>
+    <localInspection language="XML" enabledByDefault="true" level="WARNING"
+                     bundle="messages.XmlBundle" key="xml.inspections.deprecated"
+                     groupBundle="messages.XmlBundle" groupKey="xml.inspections.group.name"
+                     implementationClass="com.intellij.codeInsight.daemon.impl.analysis.XmlDeprecatedElementInspection"/>
+
+    <localInspection language="XML" shortName="CheckEmptyScriptTag" enabledByDefault="true" level="WARNING"
+                     bundle="messages.XmlBundle" key="html.inspections.check.empty.tag"
+                     groupBundle="messages.XmlBundle" groupKey="html.inspections.group.name"
+                     implementationClass="com.intellij.xml.util.CheckEmptyTagInspection"/>
+    <localInspection language="XML" shortName="CheckValidXmlInScriptTagBody" enabledByDefault="true" level="ERROR"
+                     bundle="messages.XmlBundle" key="html.inspections.check.valid.script.tag"
+                     groupBundle="messages.XmlBundle" groupKey="html.inspections.group.name"
+                     implementationClass="com.intellij.xml.util.CheckValidXmlInScriptBodyInspection"/>
+    <localInspection language="XML" shortName="RequiredAttributes" enabledByDefault="true" level="WARNING"
+                     bundle="messages.InspectionsBundle" key="inspection.required.attributes.display.name"
+                     groupBundle="messages.XmlBundle" groupKey="html.inspections.group.name"
+                     implementationClass="com.intellij.codeInspection.htmlInspections.RequiredAttributesInspection"/>
+    <localInspection language="HTML" shortName="HtmlExtraClosingTag" enabledByDefault="true" level="WARNING"
+                     bundle="messages.XmlBundle" key="html.inspection.extra.closing.tag"
+                     groupBundle="messages.XmlBundle" groupKey="html.inspections.group.name"
+                     implementationClass="com.intellij.codeInspection.htmlInspections.HtmlExtraClosingTagInspection"/>
+    <localInspection language="HTML" shortName="HtmlUnknownTag" enabledByDefault="true" level="WARNING"
+                     bundle="messages.XmlBundle" key="html.inspections.unknown.tag"
+                     groupBundle="messages.XmlBundle" groupKey="html.inspections.group.name"
+                     implementationClass="com.intellij.codeInspection.htmlInspections.HtmlUnknownTagInspection"/>
+    <localInspection language="HTML" shortName="HtmlUnknownAttribute" enabledByDefault="true" level="WARNING"
+                     bundle="messages.XmlBundle" key="html.inspections.unknown.attribute"
+                     groupBundle="messages.XmlBundle" groupKey="html.inspections.group.name"
+                     implementationClass="com.intellij.codeInspection.htmlInspections.HtmlUnknownAttributeInspection"/>
+    <localInspection language="HTML" enabledByDefault="true" level="WARNING"
+                     bundle="messages.XmlBundle" key="html.inspections.unknown.boolean.attribute"
+                     groupBundle="messages.XmlBundle" groupKey="html.inspections.group.name"
+                     implementationClass="com.intellij.codeInspection.htmlInspections.HtmlUnknownBooleanAttributeInspection"/>
+    <localInspection language="HTML" enabledByDefault="true" level="INFORMATION"
+                     bundle="messages.XmlBundle" key="html.inspections.missing.closing.tag"
+                     groupBundle="messages.XmlBundle" groupKey="html.inspections.group.name"
+                     implementationClass="com.intellij.codeInspection.htmlInspections.HtmlMissingClosingTagInspection"/>
+    <localInspection language="XML" shortName="HtmlUnknownTarget" enabledByDefault="true" level="WARNING"
+                     bundle="messages.XmlBundle" key="html.inspections.unknown.target"
+                     groupBundle="messages.XmlBundle" groupKey="html.inspections.group.name"
                      implementationClass="com.intellij.codeInsight.daemon.impl.analysis.HtmlUnknownTargetInspection"/>
+    <localInspection language="XML" shortName="HtmlUnknownAnchorTarget" enabledByDefault="true" level="WARNING"
+                     bundle="messages.XmlBundle" key="html.inspections.unknown.anchor"
+                     groupBundle="messages.XmlBundle" groupKey="html.inspections.group.name"
+                     implementationClass="com.intellij.codeInsight.daemon.impl.analysis.HtmlUnknownAnchorTargetInspection"/>
 
-
-    <globalInspection shortName="XmlHighlighting" displayName="XML highlighting" groupName="General" enabledByDefault="true" level="ERROR"
+    <globalInspection language="XML" shortName="XmlHighlighting" enabledByDefault="true" level="ERROR"
+                      bundle="messages.XmlBundle" key="xml.inspections.global"
+                      groupBundle="messages.XmlBundle" groupKey="xml.inspections.group.name"
                       implementationClass="com.intellij.codeInsight.daemon.impl.analysis.XmlHighlightVisitorBasedInspection"/>
 
     <codeFoldingOptionsProvider instance="com.intellij.application.options.editor.XmlCodeFoldingOptionsProvider"/>
@@ -393,11 +495,11 @@
 
     <metaDataContributor implementation="com.intellij.xml.util.XmlApplicationComponent"/>
 
-    <browserSettingsProvider instance="com.intellij.ide.browsers.impl.BrowserSettingsProviderImpl"/>
-
     <xml.xmlSuppressionProvider implementation="com.intellij.codeInspection.DefaultXmlSuppressionProvider" order="last"/>
 
     <multiHostInjector implementation="com.intellij.psi.impl.source.html.HtmlConditionalCommentInjector"/>
+    <multiHostInjector implementation="com.intellij.psi.impl.source.html.HtmlScriptLanguageInjector"/>
+    <html.scriptContentProvider language="HTML" implementationClass="com.intellij.psi.impl.source.html.TemplateHtmlScriptContentProvider"/>
 
     <gotoRelatedProvider implementation="com.intellij.navigation.HtmlGotoRelatedProvider"/>
     <xml.relatedToHtmlFilesContributor implementation="com.intellij.navigation.LinkedToHtmlFilesContributor"/>
@@ -405,6 +507,30 @@
     <intentionAction>
       <category>XML</category>
       <className>com.intellij.xml.actions.XmlSplitTagAction</className>
+    </intentionAction>
+    <intentionAction>
+      <category>XML</category>
+      <className>com.intellij.xml.util.CollapseTagIntention</className>
+    </intentionAction>
+    <intentionAction>
+      <category>XML</category>
+      <className>com.intellij.codeInsight.daemon.impl.analysis.RemoveAttributeIntentionFix</className>
+    </intentionAction>
+    <intentionAction>
+      <category>XML</category>
+      <className>com.intellij.codeInsight.daemon.impl.analysis.RemoveTagAndPromoteChildrenIntentionAction</className>
+    </intentionAction>
+    <intentionAction>
+      <category>XML</category>
+      <className>com.intellij.codeInsight.daemon.impl.analysis.CDataToTextIntention</className>
+    </intentionAction>
+    <intentionAction>
+      <category>XML</category>
+      <className>com.intellij.codeInsight.daemon.impl.analysis.TextToCDataIntention</className>
+    </intentionAction>
+    <intentionAction>
+      <category>XML</category>
+      <className>com.intellij.codeInsight.daemon.impl.analysis.RearrangeAttributesIntention</className>
     </intentionAction>
     <intentionAction>
       <category>XML</category>
@@ -418,6 +544,10 @@
     <intentionAction>
       <category>XML</category>
       <className>com.intellij.codeInsight.daemon.impl.quickfix.ManuallySetupExtResourceAction</className>
+    </intentionAction>
+    <intentionAction>
+      <category>XML</category>
+      <className>com.intellij.codeInsight.daemon.impl.quickfix.FetchExtResourceAction</className>
     </intentionAction>
 
     <intentionAction>
@@ -445,6 +575,9 @@
     <todoIndexer filetype="HTML" implementationClass="com.intellij.psi.impl.cache.impl.idCache.HtmlTodoIndexer"/>
     <todoIndexer filetype="XHTML" implementationClass="com.intellij.psi.impl.cache.impl.idCache.XHtmlTodoIndexer"/>
 
+    <indexPatternBuilder implementation="com.intellij.psi.impl.cache.impl.idCache.HtmlIndexPatternBuilder" order="after xml"/>
+    <indexPatternBuilder implementation="com.intellij.psi.impl.cache.impl.idCache.XmlIndexPatternBuilder" id="xml"/>
+
     <elementSignatureProvider implementation="com.intellij.codeInsight.folding.impl.XmlElementSignatureProvider"/>
 
     <vcsSelectionProvider implementation="com.intellij.vcsUtil.XmlVcsSelectionProvider"/>
@@ -453,12 +586,35 @@
     <renameInputValidator implementation="com.intellij.lang.xml.XmlAttributeValueRenameValidator"/>
 
     <xml.attributeDescriptorsProvider implementation="com.intellij.html.impl.Html5CustomAttributeDescriptorsProvider"/>
-    <xml.attributeDescriptorsProvider implementation="com.intellij.html.impl.MicrodataAttributeDescriptorsProvider"/>
 
     <breadcrumbsPresentationProvider implementation="com.intellij.codeInsight.daemon.impl.tagTreeHighlighting.XmlTagTreeBreadcrumbsPresentationProvider"/>
     <daemon.changeLocalityDetector implementation="com.intellij.xml.XmlChangeLocalityDetector"/>
     <xmlStructureViewBuilderProvider implementation="com.intellij.lang.html.structureView.HtmlStructureViewBuilderProvider"/>
     <lang.rearranger language="XML" implementationClass="com.intellij.xml.arrangement.XmlRearranger"/>
+    <lang.rearranger language="HTML" implementationClass="com.intellij.xml.arrangement.HtmlRearranger"/>
+
+    <xml.psiPolicy language="HTML" implementationClass="com.intellij.psi.impl.source.xml.behavior.EncodeEachSymbolPolicy"/>
+    <xml.psiPolicy language="XHTML" implementationClass="com.intellij.psi.impl.source.xml.behavior.EncodeEachSymbolPolicy"/>
+
+    <xml.tagNameProvider implementation="com.intellij.psi.impl.source.xml.DefaultXmlTagNameProvider"/>
+    <xml.fileNSInfoProvider implementation="com.intellij.xml.util.HtmlFileNSInfoProvider"/>
+
+    <codeInsight.unresolvedReferenceQuickFixProvider
+        implementation="com.intellij.psi.impl.source.resolve.reference.impl.providers.SchemaReferenceQuickFixProvider"/>
+    <codeInsight.unresolvedReferenceQuickFixProvider
+        implementation="com.intellij.psi.impl.source.resolve.reference.impl.providers.URLReferenceQuickFixProvider"/>
+    <codeInsight.unresolvedReferenceQuickFixProvider
+        implementation="com.intellij.psi.impl.source.resolve.reference.impl.providers.DependentNSReferenceQuickFixProvider"/>
+
+    <selectInTarget implementation="com.intellij.ide.browsers.actions.SelectInDefaultBrowserTarget"/>
+    <xml.xmlExtension implementation="com.intellij.xml.HtmlXmlExtension"/>
+
+    <applicationConfigurable groupId="tools" groupWeight="160" instance="com.intellij.ide.browsers.BrowserSettings" id="reference.settings.ide.settings.web.browsers"
+                             key="browsers.settings" bundle="messages.IdeBundle"/>
+    <lang.inspectionSuppressor language="XML" implementationClass="com.intellij.codeInspection.XmlInspectionSuppressor"/>
+    <smartPointer.anchorProvider implementation="com.intellij.psi.impl.smartPointers.XmlAnchorProvider"/>
+
+    <stepsBeforeRunProvider implementation="com.intellij.ide.browsers.LaunchBrowserBeforeRunTaskProvider"/>
   </extensions>
   <extensions defaultExtensionNs="org.jetbrains">
     <urlOpener implementation="com.intellij.ide.browsers.impl.DefaultUrlOpener" order="last"/>

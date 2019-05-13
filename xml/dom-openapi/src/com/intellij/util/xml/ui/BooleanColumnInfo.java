@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,18 +30,22 @@ public class BooleanColumnInfo extends DomColumnInfo<GenericDomValue<Boolean>, B
     super(name, new BooleanTableCellRenderer());
   }
 
+  @Override
   public TableCellEditor getEditor(GenericDomValue<Boolean> value) {
     return new DefaultCellEditor(new JCheckBox());
   }
 
+  @Override
   public final Class<Boolean> getColumnClass() {
     return Boolean.class;
   }
 
+  @Override
   public final void setValue(final GenericDomValue<Boolean> o, final Boolean aValue) {
     o.setValue(aValue);
   }
 
+  @Override
   public final Boolean valueOf(GenericDomValue<Boolean> object) {
     final Boolean value = object.getValue();
     return value == null ? Boolean.FALSE : value;

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.editor.ex;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.editor.FoldRegion;
 import com.intellij.openapi.editor.FoldingGroup;
 import com.intellij.openapi.editor.FoldingModel;
@@ -23,6 +24,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
+import java.util.List;
 
 /**
  * @author max
@@ -31,12 +33,14 @@ public interface FoldingModelEx extends FoldingModel {
   void setFoldingEnabled(boolean isEnabled);
   boolean isFoldingEnabled();
 
-  FoldRegion getFoldingPlaceholderAt(Point p);
+  FoldRegion getFoldingPlaceholderAt(@NotNull Point p);
 
   boolean intersectsRegion(int startOffset, int endOffset);
 
-  FoldRegion fetchOutermost(int offset);
-
+  /**
+   * Returns an index in an array returned by {@link #fetchTopLevel()} method, for the last folding region lying entirely before given
+   * offset (region can touch given offset at its right edge).
+   */
   int getLastCollapsedRegionBefore(int offset);
 
   TextAttributes getPlaceholderAttributes();
@@ -47,9 +51,16 @@ public interface FoldingModelEx extends FoldingModel {
   FoldRegion createFoldRegion(int startOffset, int endOffset, @NotNull String placeholder, @Nullable FoldingGroup group,
                               boolean neverExpands);
 
-  boolean addListener(@NotNull FoldingListener listener);
+  void addListener(@NotNull FoldingListener listener, @NotNull Disposable parentDisposable);
 
-  boolean removeListener(@NotNull FoldingListener listener);
+  void clearFoldRegions();
 
   void rebuild();
+  
+  @NotNull
+  List<FoldRegion> getGroupedRegions(FoldingGroup group);
+  
+  void clearDocumentRangesModificationStatus();
+  
+  boolean hasDocumentRegionChangedFor(@NotNull FoldRegion region);
 }

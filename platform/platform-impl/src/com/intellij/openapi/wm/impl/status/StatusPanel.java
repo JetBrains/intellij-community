@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,19 +27,21 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.ui.JBMenuItem;
 import com.intellij.openapi.ui.JBPopupMenu;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.Trinity;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.ui.ClickListener;
-import com.intellij.ui.JBColor;
 import com.intellij.util.Alarm;
 import com.intellij.util.text.DateFormatUtil;
+import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.accessibility.AccessibleContext;
+import javax.accessibility.AccessibleRole;
 import javax.swing.*;
-import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.awt.datatransfer.StringSelection;
 import java.awt.event.ActionEvent;
@@ -51,7 +53,7 @@ import java.awt.event.MouseEvent;
  */
 class StatusPanel extends JPanel {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.wm.impl.status.StatusPanel");
-  private boolean myLogMode;
+  private Notification myCurrentNotification;
   private int myTimeStart;
   private boolean myDirty;
   private boolean myAfterClick;
@@ -95,17 +97,17 @@ class StatusPanel extends JPanel {
   StatusPanel() {
     super(new BorderLayout());
 
-    setOpaque(isOpaque() && !SystemInfo.isMac);
+    setOpaque(false);
 
-    myTextPanel.setBorder(new EmptyBorder(0, 5, 0, 0));
+    myTextPanel.setBorder(JBUI.Borders.emptyLeft(5));
     new ClickListener() {
       @Override
-      public boolean onClick(MouseEvent e, int clickCount) {
-        if (myLogMode || myAfterClick) {
-          EventLog.toggleLog(getActiveProject());
+      public boolean onClick(@NotNull MouseEvent e, int clickCount) {
+        if (myCurrentNotification != null || myAfterClick) {
+          EventLog.toggleLog(getActiveProject(), myCurrentNotification);
           myAfterClick = true;
           myTextPanel.setExplicitSize(myTextPanel.getSize());
-          myTextPanel.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+          UIUtil.setCursor(myTextPanel, Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         }
         return true;
       }
@@ -118,8 +120,8 @@ class StatusPanel extends JPanel {
         myTextPanel.setExplicitSize(null);
         myTextPanel.revalidate();
         myAfterClick = false;
-        if (!myLogMode) {
-          myTextPanel.setCursor(Cursor.getDefaultCursor());
+        if (myCurrentNotification == null) {
+          UIUtil.setCursor(myTextPanel, Cursor.getDefaultCursor());
         }
       }
 
@@ -134,13 +136,6 @@ class StatusPanel extends JPanel {
     });
 
     add(myTextPanel, BorderLayout.WEST);
-
-    JPanel panel = new JPanel();
-    panel.setOpaque(isOpaque());
-    JLabel label = new JLabel("aaa");
-    label.setBackground(JBColor.YELLOW);
-    add(panel, BorderLayout.CENTER);
-
   }
 
   private Action createCopyAction() {
@@ -198,14 +193,14 @@ class StatusPanel extends JPanel {
     final Project project = getActiveProject();
     final Trinity<Notification, String, Long> statusMessage = EventLog.getStatusMessage(project);
     final Alarm alarm = getAlarm();
-    myLogMode = StringUtil.isEmpty(nonLogText) && statusMessage != null && alarm != null;
+    myCurrentNotification = StringUtil.isEmpty(nonLogText) && statusMessage != null && alarm != null ? statusMessage.first : null;
 
     if (alarm != null) {
       alarm.cancelAllRequests();
     }
 
-    if (myLogMode) {
-      myTextPanel.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+    if (myCurrentNotification != null) {
+      UIUtil.setCursor(myTextPanel, Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
       new Runnable() {
         @Override
         public void run() {
@@ -224,23 +219,34 @@ class StatusPanel extends JPanel {
     }
     else {
       myTimeStart = -1;
-      myTextPanel.setCursor(Cursor.getDefaultCursor());
+      UIUtil.setCursor(myTextPanel, Cursor.getDefaultCursor());
       myDirty = true;
       setStatusText(nonLogText);
     }
 
-    return myLogMode;
+    return myCurrentNotification != null;
   }
 
   private void setStatusText(String text) {
     myTextPanel.setText(text);
-    if (!myAfterClick) {
-      myTextPanel.revalidate();
-    }
   }
 
   public String getText() {
     return myTextPanel.getText();
   }
 
+  @Override
+  public AccessibleContext getAccessibleContext() {
+    if (accessibleContext == null) {
+      accessibleContext = new AccessibleStatusPanel();
+    }
+    return accessibleContext;
+  }
+
+  protected class AccessibleStatusPanel extends AccessibleJPanel {
+    @Override
+    public AccessibleRole getAccessibleRole() {
+      return AccessibleRole.STATUS_BAR;
+    }
+  }
 }

@@ -1,19 +1,20 @@
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.gant;
 
 import com.intellij.lang.ant.AntIntrospector;
 import com.intellij.lang.ant.dom.AntDomExtender;
-import com.intellij.openapi.util.Computable;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.light.LightMethodBuilder;
 import com.intellij.psi.scope.PsiScopeProcessor;
-import icons.JetgroovyIcons;
+import icons.AntIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.GroovyFileType;
+import org.jetbrains.plugins.groovy.GroovyLanguage;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrBuilderMethod;
-import org.jetbrains.plugins.groovy.lang.psi.impl.GrMapType;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightParameter;
+import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
+import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtilKt;
 
 import java.util.Collections;
 
@@ -24,21 +25,16 @@ class AntBuilderMethod extends LightMethodBuilder implements GrBuilderMethod {
   private final PsiFile myPlace;
   @Nullable private final Class myAntClass;
 
-  public AntBuilderMethod(PsiFile place, String name, PsiType closureType, @Nullable Class antClass, final PsiType stringType) {
-    super(place.getManager(), GroovyFileType.GROOVY_LANGUAGE, name);
+  AntBuilderMethod(PsiFile place, String name, PsiType closureType, @Nullable Class antClass, final PsiType stringType) {
+    super(place.getManager(), GroovyLanguage.INSTANCE, name);
     myPlace = place;
     myAntClass = antClass;
     setModifiers(PsiModifier.PUBLIC);
-    addParameter("args", GrMapType.create(place.getResolveScope()));
-    setBaseIcon(JetgroovyIcons.Groovy.Ant_task);
+    addParameter("args", GroovyCommonClassNames.JAVA_UTIL_LINKED_HASH_MAP);
+    setBaseIcon(AntIcons.Task);
     addParameter(new GrLightParameter("singleArg", stringType, this).setOptional(true));
     addParameter(new GrLightParameter("body", closureType, this).setOptional(true));
-    setMethodReturnType(new Computable<PsiType>() {
-      @Override
-      public PsiType compute() {
-        return PsiType.getJavaLangObject(getManager(), getResolveScope());
-      }
-    });
+    setMethodReturnType(() -> PsiType.getJavaLangObject(getManager(), getResolveScope()));
   }
 
   @NotNull
@@ -54,6 +50,7 @@ class AntBuilderMethod extends LightMethodBuilder implements GrBuilderMethod {
   }
 
   public boolean processNestedElements(PsiScopeProcessor processor) {
+    if (!ResolveUtilKt.shouldProcessMethods(processor)) return true;
     final AntIntrospector introspector = AntDomExtender.getIntrospector(myAntClass);
     if (introspector != null) {
       String expectedName = ResolveUtil.getNameHint(processor);

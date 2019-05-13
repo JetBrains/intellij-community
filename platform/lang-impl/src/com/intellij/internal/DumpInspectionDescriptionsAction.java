@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,7 @@
 package com.intellij.internal;
 
 import com.intellij.codeInspection.InspectionProfile;
-import com.intellij.codeInspection.InspectionProfileEntry;
+import com.intellij.codeInspection.ex.InspectionToolWrapper;
 import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
@@ -30,6 +30,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.util.ResourceUtil;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.BufferedWriter;
 import java.io.File;
@@ -40,7 +41,6 @@ import java.util.Map;
 
 /**
  * @author stathik
- * Date: Nov 6, 2003
  */
 public class DumpInspectionDescriptionsAction extends AnAction implements DumbAware {
   private static final Logger LOG = Logger.getInstance("#com.intellij.internal.DumpInspectionDescriptionsAction");
@@ -50,9 +50,9 @@ public class DumpInspectionDescriptionsAction extends AnAction implements DumbAw
   }
 
   @Override
-  public void actionPerformed(final AnActionEvent event) {
-    final InspectionProfile profile = (InspectionProfile)InspectionProfileManager.getInstance().getRootProfile();
-    final InspectionProfileEntry[] tools = profile.getInspectionTools(null);
+  public void actionPerformed(@NotNull final AnActionEvent event) {
+    final InspectionProfile profile = InspectionProfileManager.getInstance().getCurrentProfile();
+    final InspectionToolWrapper[] tools = profile.getInspectionTools(null);
 
     final Collection<String> classes = ContainerUtil.newTreeSet();
     final Map<String, Collection<String>> groups = ContainerUtil.newTreeMap();
@@ -64,17 +64,17 @@ public class DumpInspectionDescriptionsAction extends AnAction implements DumbAw
       return;
     }
 
-    for (InspectionProfileEntry tool : tools) {
-      classes.add(getInspectionClass(tool).getName());
+    for (InspectionToolWrapper toolWrapper : tools) {
+      classes.add(getInspectionClass(toolWrapper).getName());
 
-      final String group = getGroupName(tool);
+      final String group = getGroupName(toolWrapper);
       Collection<String> names = groups.get(group);
       if (names == null) groups.put(group, (names = ContainerUtil.newTreeSet()));
-      names.add(tool.getShortName());
+      names.add(toolWrapper.getShortName());
 
-      final URL url = getDescriptionUrl(tool);
+      final URL url = getDescriptionUrl(toolWrapper);
       if (url != null) {
-        doDump(new File(descDirectory, tool.getShortName() + ".html"), new Processor() {
+        doDump(new File(descDirectory, toolWrapper.getShortName() + ".html"), new Processor() {
           @Override public void process(BufferedWriter writer) throws Exception {
             writer.write(ResourceUtil.loadText(url));
           }
@@ -116,18 +116,18 @@ public class DumpInspectionDescriptionsAction extends AnAction implements DumbAw
     }
   }
 
-  private static Class getInspectionClass(final InspectionProfileEntry tool) {
-    return tool instanceof LocalInspectionToolWrapper ? ((LocalInspectionToolWrapper)tool).getTool().getClass() : tool.getClass();
+  private static Class getInspectionClass(final InspectionToolWrapper toolWrapper) {
+    return toolWrapper instanceof LocalInspectionToolWrapper ? ((LocalInspectionToolWrapper)toolWrapper).getTool().getClass() : toolWrapper.getClass();
   }
 
-  private static String getGroupName(final InspectionProfileEntry tool) {
-    final String name = tool.getGroupDisplayName();
+  private static String getGroupName(final InspectionToolWrapper toolWrapper) {
+    final String name = toolWrapper.getGroupDisplayName();
     return StringUtil.isEmptyOrSpaces(name) ? "General" : name;
   }
 
-  private static URL getDescriptionUrl(final InspectionProfileEntry tool) {
-    final Class aClass = getInspectionClass(tool);
-    return ResourceUtil.getResource(aClass, "/inspectionDescriptions", tool.getShortName() + ".html");
+  private static URL getDescriptionUrl(final InspectionToolWrapper toolWrapper) {
+    final Class aClass = getInspectionClass(toolWrapper);
+    return ResourceUtil.getResource(aClass, "/inspectionDescriptions", toolWrapper.getShortName() + ".html");
   }
 
   private interface Processor {
@@ -135,15 +135,9 @@ public class DumpInspectionDescriptionsAction extends AnAction implements DumbAw
   }
 
   private static boolean doDump(final File file, final Processor processor) {
-    try {
-      final BufferedWriter writer = new BufferedWriter(new FileWriter(file));
-      try {
-        processor.process(writer);
-        return true;
-      }
-      finally {
-        writer.close();
-      }
+    try (BufferedWriter writer = new BufferedWriter(new FileWriter(file))) {
+      processor.process(writer);
+      return true;
     }
     catch (Exception e) {
       LOG.error(e);

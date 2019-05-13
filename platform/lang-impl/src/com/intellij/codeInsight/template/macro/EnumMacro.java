@@ -53,7 +53,7 @@ public class EnumMacro extends Macro {
   @Override
   public LookupElement[] calculateLookupItems(@NotNull Expression[] params, ExpressionContext context) {
     if (params.length ==0) return null;
-    Set<LookupElement> set = new LinkedHashSet<LookupElement>();
+    Set<LookupElement> set = new LinkedHashSet<>();
 
     for (Expression param : params) {
       Result object = param.calculateResult(context);
@@ -61,7 +61,7 @@ public class EnumMacro extends Macro {
         set.add(LookupElementBuilder.create(object.toString()));
       }
     }
-    return set.toArray(new LookupElement[set.size()]);
+    return set.toArray(LookupElement.EMPTY_ARRAY);
   }
 
 }

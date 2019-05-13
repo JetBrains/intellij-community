@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,37 +16,40 @@
 package org.jetbrains.jps.client;
 
 import com.google.protobuf.MessageLite;
-import org.jboss.netty.channel.ChannelHandlerContext;
-import org.jboss.netty.channel.ChannelStateEvent;
-import org.jboss.netty.channel.MessageEvent;
-import org.jboss.netty.channel.SimpleChannelHandler;
+import io.netty.channel.ChannelHandler;
+import io.netty.channel.ChannelHandlerContext;
+import io.netty.channel.SimpleChannelInboundHandler;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.api.RequestFuture;
+import org.jetbrains.jps.javac.JavacRemoteProto;
 
 import java.util.ArrayList;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.Executor;
 
 /**
 * @author Eugene Zhuravlev
-*         Date: 1/22/12
 */
-final class ProtobufClientMessageHandler<T extends ProtobufResponseHandler> extends SimpleChannelHandler {
-  private final ConcurrentHashMap<UUID, RequestFuture<T>> myHandlers = new ConcurrentHashMap<UUID, RequestFuture<T>>();
+@ChannelHandler.Sharable
+final class ProtobufClientMessageHandler<T extends ProtobufResponseHandler> extends SimpleChannelInboundHandler<MessageLite> {
+  private final ConcurrentMap<UUID, RequestFuture<T>> myHandlers = new ConcurrentHashMap<>(16, 0.75f, 1);
   @NotNull
   private final UUIDGetter myUuidGetter;
   private final SimpleProtobufClient myClient;
   private final Executor myAsyncExec;
 
-  public ProtobufClientMessageHandler(@NotNull UUIDGetter uuidGetter, SimpleProtobufClient client, Executor asyncExec) {
+  ProtobufClientMessageHandler(@NotNull UUIDGetter uuidGetter, SimpleProtobufClient client, Executor asyncExec) {
     myUuidGetter = uuidGetter;
     myClient = client;
     myAsyncExec = asyncExec;
   }
 
-  public final void messageReceived(ChannelHandlerContext ctx, MessageEvent e) throws Exception {
-    final UUID messageUUID = myUuidGetter.getSessionUUID(e);
+  @Override
+  public final void channelRead0(ChannelHandlerContext context, MessageLite message) throws Exception {
+    final UUID messageUUID = myUuidGetter.getSessionUUID((JavacRemoteProto.Message)message);
     final RequestFuture<T> future = myHandlers.get(messageUUID);
     final T handler = future != null ? future.getMessageHandler() : null;
     if (handler == null) {
@@ -55,7 +58,7 @@ final class ProtobufClientMessageHandler<T extends ProtobufResponseHandler> exte
     else {
       boolean terminateSession = false;
       try {
-        terminateSession = handler.handleMessage((MessageLite)e.getMessage());
+        terminateSession = handler.handleMessage(message);
       }
       catch (Exception ex) {
         terminateSession = true;
@@ -78,8 +81,9 @@ final class ProtobufClientMessageHandler<T extends ProtobufResponseHandler> exte
           try {
             handler.sessionTerminated();
           }
-          catch (Throwable ignored) {
-            ignored.printStackTrace();
+          catch (Throwable e) {
+            //noinspection CallToPrintStackTrace
+            e.printStackTrace();
           }
         }
       }
@@ -89,30 +93,24 @@ final class ProtobufClientMessageHandler<T extends ProtobufResponseHandler> exte
     }
   }
 
-  public void channelClosed(ChannelHandlerContext ctx, ChannelStateEvent e) throws Exception {
-    try {
-      super.channelClosed(ctx, e);
-    }
-    finally {
-      for (UUID uuid : new ArrayList<UUID>(myHandlers.keySet())) {
-        terminateSession(uuid);
-      }
-    }
-  }
-
   @Override
-  public void channelDisconnected(ChannelHandlerContext ctx, ChannelStateEvent e) throws Exception {
+  public void channelInactive(ChannelHandlerContext context) throws Exception {
     try {
-      super.channelDisconnected(ctx, e);
+      super.channelInactive(context);
     }
     finally {
-      // make sure the client is in disconnected state
-      myAsyncExec.execute(new Runnable() {
-        @Override
-        public void run() {
-          myClient.disconnect();
+      try {
+        //invoke 'keySet()' method via 'Map' class because ConcurrentHashMap#keySet() has return type ('KeySetView') which doesn't exist in JDK 1.6/1.7
+        Set<UUID> keys = myHandlers.keySet();
+
+        for (UUID uuid : new ArrayList<>(keys)) {
+          terminateSession(uuid);
         }
-      });
+      }
+      finally {
+        // make sure the client is in disconnected state
+        myAsyncExec.execute(() -> myClient.disconnect());
+      }
     }
   }
 

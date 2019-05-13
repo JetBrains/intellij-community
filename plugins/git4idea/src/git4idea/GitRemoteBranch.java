@@ -23,8 +23,8 @@ import org.jetbrains.annotations.NotNull;
  */
 public abstract class GitRemoteBranch extends GitBranch {
 
-  protected GitRemoteBranch(@NotNull String name, @NotNull Hash hash) {
-    super(name, hash);
+  protected GitRemoteBranch(@NotNull String name) {
+    super(name);
   }
 
   /**
@@ -46,5 +46,10 @@ public abstract class GitRemoteBranch extends GitBranch {
 
   @NotNull
   public abstract GitRemote getRemote();
+
+  @Override
+  public boolean isRemote() {
+    return true;
+  }
 
 }

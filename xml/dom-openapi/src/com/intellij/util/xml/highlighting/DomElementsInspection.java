@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,7 +27,6 @@ import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.Consumer;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xml.*;
 import com.intellij.util.xml.reflect.AbstractDomChildrenDescription;
@@ -36,7 +35,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 
@@ -50,7 +48,7 @@ public abstract class DomElementsInspection<T extends DomElement> extends XmlSup
   private final Set<Class<? extends T>> myDomClasses;
 
   public DomElementsInspection(Class<? extends T> domClass, @NotNull Class<? extends T>... additionalClasses) {
-    myDomClasses = new THashSet<Class<? extends T>>(Arrays.asList(additionalClasses));
+    myDomClasses = new THashSet<>(Arrays.asList(additionalClasses));
     myDomClasses.add(domClass);
   }
 
@@ -65,6 +63,7 @@ public abstract class DomElementsInspection<T extends DomElement> extends XmlSup
     final DomHighlightingHelper helper =
       DomElementAnnotationsManager.getInstance(domFileElement.getManager().getProject()).getHighlightingHelper();
     final Consumer<DomElement> consumer = new Consumer<DomElement>() {
+      @Override
       public void consume(final DomElement element) {
         checkChildren(element, this);
         checkDomElement(element, holder, helper);
@@ -73,8 +72,7 @@ public abstract class DomElementsInspection<T extends DomElement> extends XmlSup
     consumer.consume(domFileElement.getRootElement());
   }
 
-  @SuppressWarnings({"MethodMayBeStatic"})
-  protected void checkChildren(final DomElement element, Consumer<DomElement> visitor) {
+  protected void checkChildren(final DomElement element, Consumer<? super DomElement> visitor) {
     final XmlElement xmlElement = element.getXmlElement();
     if (xmlElement instanceof XmlTag) {
       for (final DomElement child : DomUtil.getDefinedChildren(element, true, true)) {
@@ -111,6 +109,7 @@ public abstract class DomElementsInspection<T extends DomElement> extends XmlSup
    * Override {@link #checkFileElement(com.intellij.util.xml.DomFileElement, DomElementAnnotationHolder)} (which is preferred) or
    * {@link #checkDomElement(com.intellij.util.xml.DomElement, DomElementAnnotationHolder, DomHighlightingHelper)} instead.
    */
+  @Override
   @Nullable
   public ProblemDescriptor[] checkFile(@NotNull PsiFile file, @NotNull InspectionManager manager, boolean isOnTheFly) {
     if (file instanceof XmlFile && (file.isPhysical() || ApplicationManager.getApplication().isUnitTestMode())) {
@@ -125,11 +124,13 @@ public abstract class DomElementsInspection<T extends DomElement> extends XmlSup
     return null;
   }
 
+  @Override
   @NotNull
   public HighlightDisplayLevel getDefaultLevel() {
     return HighlightDisplayLevel.ERROR;
   }
 
+  @Override
   public boolean isEnabledByDefault() {
     return true;
   }
@@ -140,19 +141,15 @@ public abstract class DomElementsInspection<T extends DomElement> extends XmlSup
   @Nullable
   protected ProblemDescriptor[] checkDomFile(@NotNull final DomFileElement<T> domFileElement,
                                              @NotNull final InspectionManager manager,
-                                             @SuppressWarnings("UnusedParameters") final boolean isOnTheFly) {
+                                             final boolean isOnTheFly) {
     final DomElementAnnotationsManager annotationsManager = DomElementAnnotationsManager.getInstance(manager.getProject());
 
     final List<DomElementProblemDescriptor> list = annotationsManager.checkFileElement(domFileElement, this, isOnTheFly);
     if (list.isEmpty()) return ProblemDescriptor.EMPTY_ARRAY;
 
     List<ProblemDescriptor> problems =
-      ContainerUtil.concat(list, new Function<DomElementProblemDescriptor, Collection<? extends ProblemDescriptor>>() {
-        public Collection<ProblemDescriptor> fun(final DomElementProblemDescriptor s) {
-          return annotationsManager.createProblemDescriptors(manager, s);
-        }
-      });
-    return problems.toArray(new ProblemDescriptor[problems.size()]);
+      ContainerUtil.concat(list, s -> annotationsManager.createProblemDescriptors(manager, s));
+    return problems.toArray(ProblemDescriptor.EMPTY_ARRAY);
   }
 
   /**

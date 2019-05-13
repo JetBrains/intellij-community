@@ -1,23 +1,23 @@
 import org.jetbrains.annotations.Nullable;
-public class BrokenAlignment {
+class BrokenAlignment {
 
   void main(Data data) {
     if (data.text != null) {
       System.out.println(data.text.hashCode());
     }
 
-    data = new Data(null, <warning descr="Passing 'null' argument to non annotated parameter">null</warning>);
-    System.out.println(<warning descr="Method invocation 'data.text.hashCode()' may produce 'java.lang.NullPointerException'">data.text.hashCode()</warning>);
+    data = new Data(null, <warning descr="Passing 'null' argument to non-annotated parameter">null</warning>);
+    System.out.println(data.text.<warning descr="Method invocation 'hashCode' may produce 'NullPointerException'">hashCode</warning>());
 
     if (data.inner != null) {
       System.out.println(data.inner.hashCode());
-      System.out.println(<warning descr="Method invocation 'data.inner.text.hashCode()' may produce 'java.lang.NullPointerException'">data.inner.text.hashCode()</warning>);
+      System.out.println(data.inner.text.<warning descr="Method invocation 'hashCode' may produce 'NullPointerException'">hashCode</warning>());
       if (<warning descr="Condition 'data.inner != null' is always 'true'">data.inner != null</warning>) {
         System.out.println(data.inner.hashCode());
       }
 
-      data = new Data(null, <warning descr="Passing 'null' argument to non annotated parameter">null</warning>);
-      System.out.println(<warning descr="Method invocation 'data.inner.hashCode()' may produce 'java.lang.NullPointerException'">data.inner.hashCode()</warning>);
+      data = new Data(null, <warning descr="Passing 'null' argument to non-annotated parameter">null</warning>);
+      System.out.println(data.inner.<warning descr="Method invocation 'hashCode' may produce 'NullPointerException'">hashCode</warning>());
     }
   }
 

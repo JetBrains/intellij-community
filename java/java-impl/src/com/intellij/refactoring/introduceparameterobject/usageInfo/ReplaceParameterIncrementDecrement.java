@@ -22,7 +22,7 @@ import com.intellij.refactoring.util.FixableUsageInfo;
 import com.intellij.util.IncorrectOperationException;
 
 public class ReplaceParameterIncrementDecrement extends FixableUsageInfo {
-  private final PsiExpression expression;
+  private final PsiUnaryExpression expression;
   private final String newParameterName;
   private final String parameterSetterName;
   private final String parameterGetterName;
@@ -36,25 +36,18 @@ public class ReplaceParameterIncrementDecrement extends FixableUsageInfo {
     this.parameterSetterName = parameterSetterName;
     this.parameterGetterName = parameterGetterName;
     this.newParameterName = newParameterName;
-    final PsiPrefixExpression prefixExpr = PsiTreeUtil.getParentOfType(element, PsiPrefixExpression.class);
-    if (prefixExpr != null) {
-      expression = prefixExpr;
-    }
-    else {
-      expression = PsiTreeUtil.getParentOfType(element, PsiPostfixExpression.class);
-    }
+    this.expression = PsiTreeUtil.getParentOfType(element, PsiUnaryExpression.class);
   }
 
+  @Override
   public void fixUsage() throws IncorrectOperationException {
-    final PsiJavaToken sign = expression instanceof PsiPrefixExpression
-                              ? ((PsiPrefixExpression)expression).getOperationSign()
-                              : ((PsiPostfixExpression)expression).getOperationSign();
+    final PsiJavaToken sign = expression.getOperationSign();
     final String operator = sign.getText();
     final String strippedOperator = operator.substring(0, operator.length() - 1);
     final String newExpression =
       newParameterName + '.' + parameterSetterName + '(' + newParameterName + '.' + parameterGetterName + "()" + strippedOperator + "1)";
     if (expression.getParent() instanceof PsiBinaryExpression) {
-      final PsiElementFactory factory = JavaPsiFacade.getInstance(expression.getProject()).getElementFactory();
+      final PsiElementFactory factory = JavaPsiFacade.getElementFactory(expression.getProject());
       final PsiStatement statement = PsiTreeUtil.getParentOfType(expression, PsiStatement.class);
       statement.getParent().addBefore(factory.createStatementFromText(newExpression + ";", expression), statement);
       expression.replace(factory.createExpressionFromText(newParameterName + "." + parameterGetterName + "()", expression));

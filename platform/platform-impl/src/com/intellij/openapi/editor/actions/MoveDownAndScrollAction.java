@@ -14,20 +14,15 @@
  * limitations under the License.
  */
 
-/*
- * Created by IntelliJ IDEA.
- * User: max
- * Date: May 14, 2002
- * Time: 6:20:22 PM
- * To change template for new class use 
- * Code Style | Class Templates options (Tools | IDE Options).
- */
 package com.intellij.openapi.editor.actions;
 
+import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actionSystem.EditorAction;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.actionSystem.DataContext;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class MoveDownAndScrollAction extends EditorAction {
   public MoveDownAndScrollAction() {
@@ -35,9 +30,18 @@ public class MoveDownAndScrollAction extends EditorAction {
   }
 
   private static class Handler extends EditorActionHandler {
+    private Handler() {
+      super(true);
+    }
+
     @Override
-    public void execute(Editor editor, DataContext dataContext) {
-      EditorActionUtil.moveCaretRelativelyAndScroll(editor, 0, 1, false);
+    public void doExecute(@NotNull Editor editor, @Nullable Caret caret, DataContext dataContext) {
+      if (caret == editor.getCaretModel().getPrimaryCaret()) {
+        EditorActionUtil.moveCaretRelativelyAndScroll(editor, 0, 1, false);
+      }
+      else {
+        editor.getCaretModel().moveCaretRelatively(0, 1, false, false, false);
+      }
     }
   }
 }

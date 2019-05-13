@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,8 +22,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 
 public class RegistryCheckBox extends CheckBoxWithDescription {
-
-  private RegistryValue myValue;
+  private final RegistryValue myValue;
 
   public RegistryCheckBox(RegistryValue value) {
     this(value, value.getDescription(), null);
@@ -31,6 +30,7 @@ public class RegistryCheckBox extends CheckBoxWithDescription {
 
   public RegistryCheckBox(RegistryValue value, String text, @Nullable String longDescription) {
     super(new JCheckBox(text), longDescription);
+
     myValue = value;
     getCheckBox().setSelected(myValue.asBoolean());
   }
@@ -42,5 +42,4 @@ public class RegistryCheckBox extends CheckBoxWithDescription {
   public void save() {
     myValue.setValue(Boolean.valueOf(getCheckBox().isSelected()).toString());
   }
-
 }

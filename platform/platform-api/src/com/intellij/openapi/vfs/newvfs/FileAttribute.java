@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,7 +21,7 @@ package com.intellij.openapi.vfs.newvfs;
 
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.io.DataInputOutputUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -29,72 +29,47 @@ import org.jetbrains.annotations.Nullable;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
-import java.util.HashSet;
 import java.util.Set;
 
 public class FileAttribute {
-  private static final Set<String> ourRegisteredIds = new HashSet<String>();
+  private static final Set<String> ourRegisteredIds = ContainerUtil.newConcurrentSet();
+  private static final int UNDEFINED_VERSION = -1;
   private final String myId;
   private final int myVersion;
   private final boolean myFixedSize;
 
-  /**
-   * @deprecated
-   * @see #FileAttribute(String, int, boolean)
-   */
-  public FileAttribute(@NonNls final String id, int version) {
-    this(id, version, false);
+  public FileAttribute(@NonNls @NotNull String id) {
+    this(id, UNDEFINED_VERSION, false);
   }
 
-  public FileAttribute(@NonNls final String id, int version, boolean fixedSize) {
-    myId = id;
-    myVersion = version;
-    myFixedSize = fixedSize;
+  public FileAttribute(@NonNls @NotNull String id, int version, boolean fixedSize) {
+    this(version, fixedSize, id);
     boolean added = ourRegisteredIds.add(id);
     assert added : "Attribute id='" + id+ "' is not unique";
   }
 
-  @Nullable
-  public DataInputStream readAttribute(VirtualFile file) {
-    DataInputStream stream = ManagingFS.getInstance().readAttribute(file, this);
-    if (stream != null) {
-      try {
-        int actualVersion = DataInputOutputUtil.readINT(stream);
-        if (actualVersion != myVersion) {
-          stream.close();
-          return null;
-        }
-      }
-      catch (IOException e) {
-        return null;
-      }
-    }
-    return stream;
+  private FileAttribute(int version, boolean fixedSize,@NotNull String id) {
+    myId = id;
+    myVersion = version;
+    myFixedSize = fixedSize;
   }
 
-  public DataOutputStream writeAttribute(VirtualFile file) {
-    final DataOutputStream stream = ManagingFS.getInstance().writeAttribute(file, this);
-    try {
-      DataInputOutputUtil.writeINT(stream, myVersion);
-    }
-    catch (IOException e) {
-      throw new RuntimeException(e);
-    }
+  @Nullable
+  public DataInputStream readAttribute(@NotNull VirtualFile file) {
+    return ManagingFS.getInstance().readAttribute(file, this);
+  }
 
-    return stream;
+  @NotNull
+  public DataOutputStream writeAttribute(@NotNull VirtualFile file) {
+    return ManagingFS.getInstance().writeAttribute(file, this);
   }
 
   @Nullable
   public byte[] readAttributeBytes(VirtualFile file) throws IOException {
-    final DataInputStream stream = readAttribute(file);
-    if (stream == null) return null;
-
-    try {
+    try (DataInputStream stream = readAttribute(file)) {
+      if (stream == null) return null;
       int len = stream.readInt();
       return FileUtil.loadBytes(stream, len);
-    }
-    finally {
-      stream.close();
     }
   }
 
@@ -103,21 +78,31 @@ public class FileAttribute {
   }
 
   public void writeAttributeBytes(VirtualFile file, byte[] bytes, int offset, int len) throws IOException {
-    final DataOutputStream stream = writeAttribute(file);
-    try {
+    try (DataOutputStream stream = writeAttribute(file)) {
       stream.writeInt(len);
       stream.write(bytes, offset, len);
     }
-    finally {
-      stream.close();
-    }
   }
 
+  @NotNull
   public String getId() {
     return myId;
   }
 
   public boolean isFixedSize() {
     return myFixedSize;
+  }
+
+  @NotNull
+  public FileAttribute newVersion(int newVersion) {
+    return new FileAttribute(newVersion, myFixedSize, myId);
+  }
+
+  public int getVersion() {
+    return myVersion;
+  }
+
+  public boolean isVersioned() {
+    return myVersion != UNDEFINED_VERSION;
   }
 }

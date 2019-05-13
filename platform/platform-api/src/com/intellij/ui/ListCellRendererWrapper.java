@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,11 +15,18 @@
  */
 package com.intellij.ui;
 
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Pair;
+import com.intellij.util.containers.FList;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.plaf.basic.BasicComboBoxRenderer;
 import java.awt.*;
+
+import static com.intellij.openapi.util.Pair.pair;
 
 /**
  * Please use this wrapper in case you need simple cell renderer with text and icon.
@@ -27,9 +34,8 @@ import java.awt.*;
  * is used instead of DefaultComboBoxRenderer.
  *
  * @author oleg
- * @since 30.09.2010
  */
-public abstract class ListCellRendererWrapper<T> implements ListCellRenderer {
+public abstract class ListCellRendererWrapper<T> implements ListCellRenderer<T> {
   private final ListCellRenderer myDefaultRenderer;
 
   private boolean mySeparator;
@@ -39,18 +45,19 @@ public abstract class ListCellRendererWrapper<T> implements ListCellRenderer {
   private Color myForeground;
   private Color myBackground;
   private Font myFont;
+  private FList<Pair<Object, Object>> myProperties = FList.emptyList();
 
+  @SuppressWarnings("UndesirableClassUsage")
   public ListCellRendererWrapper() {
-    myDefaultRenderer = new JComboBox().getRenderer();
-    assert myDefaultRenderer != null : "LaF: " + UIManager.getLookAndFeel();
+    ListCellRenderer renderer = new JComboBox().getRenderer();
+    if (renderer == null) {
+      renderer = new BasicComboBoxRenderer();
+      Logger.getInstance(this.getClass()).error("LaF: " + UIManager.getLookAndFeel());
+    }
+    myDefaultRenderer = renderer;
   }
 
-  /** @deprecated please use {@linkplain #ListCellRendererWrapper()} (to remove in IDEA 13) */
-  @SuppressWarnings("UnusedDeclaration") public ListCellRendererWrapper(final JComboBox comboBox) { this(); }
-
-  /** @deprecated please use {@linkplain #ListCellRendererWrapper()} (to remove in IDEA 13) */
-  @SuppressWarnings("UnusedDeclaration") public ListCellRendererWrapper(final ListCellRenderer listCellRenderer) { this(); }
-
+  @Override
   public final Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
     mySeparator = false;
     myIcon = null;
@@ -59,23 +66,16 @@ public abstract class ListCellRendererWrapper<T> implements ListCellRenderer {
     myBackground = null;
     myFont = null;
     myToolTipText = null;
+    myProperties = FList.emptyList();
 
     @SuppressWarnings("unchecked") final T t = (T)value;
     customize(list, t, index, isSelected, cellHasFocus);
 
     if (mySeparator) {
-      final TitledSeparator separator = new TitledSeparator(myText);
-      separator.setBorder(BorderFactory.createEmptyBorder(0, 2, 0, 0));
-      if (!UIUtil.isUnderGTKLookAndFeel()) {
-        separator.setOpaque(false);
-        separator.setBackground(UIUtil.TRANSPARENT_COLOR);
-        separator.getLabel().setOpaque(false);
-        separator.getLabel().setBackground(UIUtil.TRANSPARENT_COLOR);
-      }
-      return separator;
+      return createSeparator(myText);
     }
 
-    final Component component = myDefaultRenderer.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+    @SuppressWarnings("unchecked") final Component component = myDefaultRenderer.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
     if (component instanceof JLabel) {
       final JLabel label = (JLabel)component;
       label.setIcon(myIcon);
@@ -84,13 +84,27 @@ public abstract class ListCellRendererWrapper<T> implements ListCellRenderer {
       if (myBackground != null && !isSelected) label.setBackground(myBackground);
       if (myFont != null) label.setFont(myFont);
       label.setToolTipText(myToolTipText);
+      for (Pair<Object, Object> pair : myProperties) {
+        label.putClientProperty(pair.first, pair.second);
+      }
     }
     return component;
   }
 
+  @NotNull
+  public static Component createSeparator(@Nullable String text) {
+    final TitledSeparator separator = new TitledSeparator(text);
+    separator.setBorder(BorderFactory.createEmptyBorder(0, 2, 0, 0));
+    separator.setOpaque(false);
+    separator.setBackground(UIUtil.TRANSPARENT_COLOR);
+    separator.getLabel().setOpaque(false);
+    separator.getLabel().setBackground(UIUtil.TRANSPARENT_COLOR);
+    return separator;
+  }
+
   /**
    * Implement this method to configure text and icon for given value.
-   * Use {@link #setIcon(javax.swing.Icon)} and {@link #setText(String)} methods.
+   * Use {@link #setIcon(Icon)} and {@link #setText(String)} methods.
    *
    * @param list     The JList we're painting.
    * @param value    The value returned by list.getModel().getElementAt(index).
@@ -126,5 +140,9 @@ public abstract class ListCellRendererWrapper<T> implements ListCellRenderer {
 
   public final void setFont(@Nullable final Font font) {
     myFont = font;
+  }
+
+  public final void setClientProperty(@NotNull final Object key, @Nullable final Object value) {
+    myProperties = myProperties.prepend(pair(key, value));
   }
 }

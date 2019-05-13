@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,8 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -38,12 +40,12 @@ public abstract class CreateClassFromUsageBaseFix extends BaseIntentionAction {
 
   public CreateClassFromUsageBaseFix(CreateClassKind kind, final PsiJavaCodeReferenceElement refElement) {
     myKind = kind;
-    myRefElement = SmartPointerManager.getInstance(refElement.getProject()).createLazyPointer(refElement);
+    myRefElement = SmartPointerManager.getInstance(refElement.getProject()).createSmartPsiElementPointer(refElement);
   }
 
   protected abstract String getText(String varName);
 
-  private boolean isAvailableInContext(final @NotNull PsiJavaCodeReferenceElement element) {
+  private boolean isAvailableInContext(@NotNull final PsiJavaCodeReferenceElement element) {
     PsiElement parent = element.getParent();
 
     if (myKind == CreateClassKind.ANNOTATION) {
@@ -104,15 +106,27 @@ public abstract class CreateClassFromUsageBaseFix extends BaseIntentionAction {
   public boolean isAvailable(@NotNull final Project project, final Editor editor, final PsiFile file) {
     final PsiJavaCodeReferenceElement element = getRefElement();
     if (element == null ||
-        !element.getManager().isInProject(element) ||
-        CreateFromUsageUtils.isValidReference(element, true)) return false;
+        !element.getManager().isInProject(element)) {
+      return false;
+    }
+    JavaResolveResult[] results = element.multiResolve(true);
+    if (results.length > 0 && results[0].getElement() instanceof PsiClass) {
+      return false;
+    }
     final String refName = element.getReferenceName();
-    if (refName == null || !checkClassName(refName)) return false;
+    if (refName == null || 
+        PsiTreeUtil.getParentOfType(element, PsiTypeElement.class, PsiReferenceList.class) == null && !checkClassName(refName)) return false;
     PsiElement nameElement = element.getReferenceNameElement();
     if (nameElement == null) return false;
     PsiElement parent = element.getParent();
     if (parent instanceof PsiExpression && !(parent instanceof PsiReferenceExpression)) return false;
     if (!isAvailableInContext(element)) return false;
+    final String superClassName = getSuperClassName(element);
+    if (superClassName != null) {
+      if (superClassName.equals(CommonClassNames.JAVA_LANG_ENUM) && myKind != CreateClassKind.ENUM) return false;
+      final PsiClass psiClass = JavaPsiFacade.getInstance(project).findClass(superClassName, GlobalSearchScope.allScope(project));
+      if (psiClass != null && psiClass.hasModifierProperty(PsiModifier.FINAL)) return false;
+    }
     final int offset = editor.getCaretModel().getOffset();
     if (CreateFromUsageUtils.shouldShowTag(offset, nameElement, element)) {
       setText(getText(nameElement.getText()));
@@ -149,7 +163,8 @@ public abstract class CreateClassFromUsageBaseFix extends BaseIntentionAction {
         final PsiClassType.ClassResolveResult classResolveResult = PsiUtil.resolveGenericsClassInType(expectedTypes[0].getType());
         final PsiClass psiClass = classResolveResult.getElement();
         if (psiClass != null && CommonClassNames.JAVA_LANG_CLASS.equals(psiClass.getQualifiedName())) {
-          PsiType psiType = classResolveResult.getSubstitutor().substitute(psiClass.getTypeParameters()[0]);
+          final PsiTypeParameter[] typeParameters = psiClass.getTypeParameters();
+          PsiType psiType = typeParameters.length == 1 ? classResolveResult.getSubstitutor().substitute(typeParameters[0]) : null;
           if (psiType instanceof PsiWildcardType && ((PsiWildcardType)psiType).isExtends()) {
             psiType = ((PsiWildcardType)psiType).getExtendsBound();
           }

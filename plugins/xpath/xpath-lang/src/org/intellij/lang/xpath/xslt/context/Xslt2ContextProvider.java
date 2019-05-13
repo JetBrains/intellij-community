@@ -161,14 +161,14 @@ public class Xslt2ContextProvider extends XsltContextProviderBase {
   }
 
   private static class MyFunctionProvider implements ParameterizedCachedValueProvider<Map<Pair<QName, Integer>, Function>, XmlFile> {
-    private static ParameterizedCachedValueProvider<Map<Pair<QName,Integer>,Function>,XmlFile> INSTANCE = new MyFunctionProvider();
+    private static final ParameterizedCachedValueProvider<Map<Pair<QName,Integer>,Function>,XmlFile> INSTANCE = new MyFunctionProvider();
 
     @Override
     public CachedValueProvider.Result<Map<Pair<QName, Integer>, Function>> compute(XmlFile param) {
       final XmlTag rootTag = param.getRootTag();
       assert rootTag != null;
 
-      final Map<Pair<QName, Integer>, Function> candidates = new HashMap<Pair<QName, Integer>, Function>();
+      final Map<Pair<QName, Integer>, Function> candidates = new HashMap<>();
       final XsltFunction[] functions = XsltElementFactory.getInstance().wrapElement(rootTag, XsltStylesheet.class).getFunctions();
       for (XsltFunction function : functions) {
         candidates.put(Pair.create(function.getQName(), function.getParameters().length), function);

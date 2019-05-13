@@ -31,6 +31,7 @@ import javax.swing.*;
 import javax.swing.event.EventListenerList;
 import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
+import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.util.ArrayList;
@@ -94,7 +95,7 @@ public final class TreeEditableArea implements EditableArea, FeedbackTreeLayer, 
   @NotNull
   @Override
   public List<RadComponent> getSelection() {
-    return new ArrayList<RadComponent>(getRawSelection());
+    return new ArrayList<>(getRawSelection());
   }
 
   @Override
@@ -178,7 +179,7 @@ public final class TreeEditableArea implements EditableArea, FeedbackTreeLayer, 
     myCanvasSelection = canvasSelection;
   }
 
-//////////////////////////////////////////////////////////////////////////////////////////
+  //////////////////////////////////////////////////////////////////////////////////////////
   //
   // Visual
   //
@@ -272,9 +273,10 @@ public final class TreeEditableArea implements EditableArea, FeedbackTreeLayer, 
   //
   //////////////////////////////////////////////////////////////////////////////////////////
 
-  private TreePath getPath(RadComponent component) {
+  private TreePath getPath(@NotNull RadComponent component) {
     // TODO: I don't know better way gets tree path for element
-    return new TreePath(myTreeBuilder.getNodeForElement(component).getPath());
+    DefaultMutableTreeNode node = myTreeBuilder.getNodeForElement(component);
+    return node == null ? null : new TreePath(node.getPath());
   }
 
   @Override
@@ -295,13 +297,18 @@ public final class TreeEditableArea implements EditableArea, FeedbackTreeLayer, 
   }
 
   @Override
-  public boolean isBeforeLocation(RadComponent component, int x, int y) {
+  public void unmark() {
+    myTree.mark(null, -1);
+  }
+
+  @Override
+  public boolean isBeforeLocation(@NotNull RadComponent component, int x, int y) {
     Rectangle bounds = myTree.getPathBounds(getPath(component));
     return bounds != null && y - bounds.y < myTree.getEdgeSize();
   }
 
   @Override
-  public boolean isAfterLocation(RadComponent component, int x, int y) {
+  public boolean isAfterLocation(@NotNull RadComponent component, int x, int y) {
     Rectangle bounds = myTree.getPathBounds(getPath(component));
     return bounds != null && bounds.getMaxY() - y < myTree.getEdgeSize();
   }

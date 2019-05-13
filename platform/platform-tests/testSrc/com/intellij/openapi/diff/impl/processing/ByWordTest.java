@@ -1,3 +1,4 @@
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.diff.impl.processing;
 
 import com.intellij.openapi.diff.ex.DiffFragment;
@@ -8,7 +9,6 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.util.Assertion;
 import com.intellij.util.StringConvertion;
 import com.intellij.util.diff.FilesTooBigForDiffException;
-import gnu.trove.Equality;
 import junit.framework.AssertionFailedError;
 import junit.framework.TestCase;
 
@@ -106,13 +106,10 @@ public class ByWordTest extends TestCase {
   public void testExtractWords() {
     String text = "a b, c.d\n\n  x\n y";
     Word[] words = ByWord.buildWords(text, ComparisonPolicy.DEFAULT);
-    CHECK.setEquality(new Equality() {
-      @Override
-      public boolean equals(Object o1, Object o2) {
-        Word word1 = (Word)o1;
-        Word word2 = (Word)o2;
-        return word1.getStart() == word2.getStart() && word1.getEnd() == word2.getEnd();
-      }
+    CHECK.setEquality((o1, o2) -> {
+      Word word1 = (Word)o1;
+      Word word2 = (Word)o2;
+      return word1.getStart() == word2.getStart() && word1.getEnd() == word2.getEnd();
     });
     CHECK.setStringConvertion(StringConvertion.DEFAULT);
     CHECK.compareAll(new Word[]{new Formatting(text, new TextRange(0, 0)),

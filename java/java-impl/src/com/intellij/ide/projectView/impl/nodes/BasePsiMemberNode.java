@@ -14,10 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * User: anna
- * Date: 17-Jan-2008
- */
 package com.intellij.ide.projectView.impl.nodes;
 
 import com.intellij.ide.projectView.ViewSettings;
@@ -25,9 +21,10 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDocCommentOwner;
 import com.intellij.psi.PsiModifierListOwner;
 import com.intellij.psi.impl.ElementPresentationUtil;
+import org.jetbrains.annotations.NotNull;
 
 public abstract class BasePsiMemberNode<T extends PsiModifierListOwner> extends BasePsiNode<T>{
-  protected BasePsiMemberNode(Project project, T value, ViewSettings viewSettings) {
+  protected BasePsiMemberNode(Project project, @NotNull T value, ViewSettings viewSettings) {
     super(project, value, viewSettings);
   }
 

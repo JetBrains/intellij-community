@@ -15,6 +15,8 @@
  */
 package com.siyeh.ipp.interfacetoclass;
 
+import com.intellij.codeInsight.AnnotationUtil;
+import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.search.SearchScope;
@@ -23,6 +25,7 @@ import com.siyeh.ipp.base.PsiElementPredicate;
 
 class ConvertInterfaceToClassPredicate implements PsiElementPredicate {
 
+  @Override
   public boolean satisfiedBy(PsiElement element) {
     final PsiElement parent = element.getParent();
     if (!(parent instanceof PsiClass)) {
@@ -45,6 +48,6 @@ class ConvertInterfaceToClassPredicate implements PsiElementPredicate {
         return false;
       }
     }
-    return true;
+    return !AnnotationUtil.isAnnotated(aClass, CommonClassNames.JAVA_LANG_FUNCTIONAL_INTERFACE, 0);
   }
 }

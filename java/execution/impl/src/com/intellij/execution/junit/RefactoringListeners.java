@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,6 +26,7 @@ import com.intellij.refactoring.listeners.RefactoringElementAdapter;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
 import com.intellij.refactoring.listeners.UndoRefactoringElementListener;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class RefactoringListeners {
   public static RefactoringElementListener getListener(final PsiPackage psiPackage, final Accessor<PsiPackage> accessor) {
@@ -74,14 +75,17 @@ public class RefactoringListeners {
       myConfiguration = configuration;
     }
 
+    @Override
     public PsiClass getPsiElement() {
       return myConfiguration.getMainClass();
     }
 
+    @Override
     public void setPsiElement(final PsiClass psiClass) {
       myConfiguration.setMainClass(psiClass);
     }
 
+    @Override
     public void setName(final String qualifiedName) {
       myConfiguration.setMainClassName(qualifiedName);
     }
@@ -89,14 +93,15 @@ public class RefactoringListeners {
 
   private static abstract class RenameElement<T extends PsiElement> extends RefactoringElementAdapter
                                                                     implements UndoRefactoringElementListener{
-    private final Accessor<T> myAccessor;
+    private final Accessor<? super T> myAccessor;
     private final String myPath;
 
-    public RenameElement(final Accessor<T> accessor, final String path) {
+    RenameElement(final Accessor<? super T> accessor, final String path) {
       myAccessor = accessor;
       myPath = path;
     }
 
+    @Override
     public void elementRenamedOrMoved(@NotNull final PsiElement newElement) {
       T newElement1 = (T)newElement;
       String qualifiedName = getQualifiedName(newElement1);
@@ -112,6 +117,7 @@ public class RefactoringListeners {
       }
     }
 
+    @Nullable
     protected abstract T findNewElement(T newParent, String qualifiedName);
 
     protected abstract String getQualifiedName(T element);
@@ -123,31 +129,64 @@ public class RefactoringListeners {
   }
 
   private static class RefactorPackage extends RenameElement<PsiPackage> {
-    public RefactorPackage(final Accessor<PsiPackage> accessor, final String path) {
+    RefactorPackage(final Accessor<? super PsiPackage> accessor, final String path) {
       super(accessor, path);
     }
 
+    @Override
     public PsiPackage findNewElement(final PsiPackage psiPackage, final String qualifiedName) {
       return JavaPsiFacade.getInstance(psiPackage.getProject()).findPackage(qualifiedName);
     }
 
+    @Override
     public String getQualifiedName(final PsiPackage psiPackage) {
       return psiPackage.getQualifiedName();
     }
   }
 
   private static class RefactorClass extends RenameElement<PsiClass> {
-    public RefactorClass(final Accessor<PsiClass> accessor, final String path) {
+    RefactorClass(final Accessor<? super PsiClass> accessor, final String path) {
       super(accessor, path);
     }
 
+    @Override
+    @Nullable
     public PsiClass findNewElement(final PsiClass psiClass, final String qualifiedName) {
+      final Module module = JavaExecutionUtil.findModule(psiClass);
+      if (module == null) {
+        return null;
+      }
       return JavaPsiFacade.getInstance(psiClass.getProject())
-        .findClass(qualifiedName.replace('$', '.'), GlobalSearchScope.moduleScope(JavaExecutionUtil.findModule(psiClass)));
+        .findClass(qualifiedName.replace('$', '.'), GlobalSearchScope.moduleScope(module));
     }
 
+    @Override
     public String getQualifiedName(final PsiClass psiClass) {
       return psiClass.getQualifiedName();
+    }
+  }
+
+  public static class RefactorPackageByClass extends RenameElement<PsiClass> {
+    public RefactorPackageByClass(final Accessor<? super PsiClass> accessor) {
+      super(accessor, "*");
+    }
+
+    @Override
+    @Nullable
+    public PsiClass findNewElement(final PsiClass psiClass, final String qualifiedName) {
+      final Module module = JavaExecutionUtil.findModule(psiClass);
+      if (module == null) {
+        return null;
+      }
+      return JavaPsiFacade.getInstance(psiClass.getProject())
+        .findClass(qualifiedName.replace('$', '.').replace("\\*", psiClass.getName()),
+                   GlobalSearchScope.moduleScope(module));
+    }
+
+    @Override
+    public String getQualifiedName(final PsiClass psiClass) {
+      final String qualifiedName = psiClass.getQualifiedName();
+      return qualifiedName != null ? StringUtil.getPackageName(qualifiedName) : null;
     }
   }
 
@@ -157,15 +196,15 @@ public class RefactoringListeners {
     private final RefactoringListeners.Accessor<PsiClass> myAccessor;
     private final String myInpackageName;
 
-    public ClassPackageAccessor(final RefactoringListeners.Accessor<PsiClass> accessor) {
+    ClassPackageAccessor(final RefactoringListeners.Accessor<PsiClass> accessor) {
       myAccessor = accessor;
       PsiClass aClass = myAccessor.getPsiElement();
       aClass = (PsiClass)aClass.getOriginalElement();
       myContainingPackage = JavaDirectoryService.getInstance().getPackage(aClass.getContainingFile().getContainingDirectory());
       myModule = JavaExecutionUtil.findModule(aClass);
       final String classQName = aClass.getQualifiedName();
-      final String classPackageQName = myContainingPackage.getQualifiedName();
-      if (classQName.startsWith(classPackageQName)) {
+      final String classPackageQName = myContainingPackage != null ? myContainingPackage.getQualifiedName() : null;
+      if (classQName != null && classPackageQName != null && classQName.startsWith(classPackageQName)) {
         final String inpackageName = classQName.substring(classPackageQName.length());
         if (StringUtil.startsWithChar(inpackageName, '.')) {
           myInpackageName = inpackageName.substring(1);
@@ -179,10 +218,12 @@ public class RefactoringListeners {
       }
     }
 
+    @Override
     public PsiPackage getPsiElement() {
       return myContainingPackage;
     }
 
+    @Override
     public void setPsiElement(final PsiPackage psiPackage) {
       if (myInpackageName == null) return; //we can do nothing
       final String classQName = getClassQName(psiPackage.getQualifiedName());
@@ -195,6 +236,7 @@ public class RefactoringListeners {
       }
     }
 
+    @Override
     public void setName(final String qualifiedName) {
       myAccessor.setName(getClassQName(qualifiedName));
     }

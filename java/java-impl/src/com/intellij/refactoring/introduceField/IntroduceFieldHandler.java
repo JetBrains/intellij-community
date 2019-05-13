@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,10 +43,12 @@ public class IntroduceFieldHandler extends BaseExpressionToFieldHandler {
     super(false);
   }
 
+  @Override
   protected String getRefactoringName() {
     return REFACTORING_NAME;
   }
 
+  @Override
   protected boolean validClass(PsiClass parentClass, Editor editor) {
     if (parentClass.isInterface()) {
       String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("cannot.introduce.field.in.interface"));
@@ -58,10 +60,12 @@ public class IntroduceFieldHandler extends BaseExpressionToFieldHandler {
     }
   }
 
+  @Override
   protected String getHelpID() {
     return HelpID.INTRODUCE_FIELD;
   }
 
+  @Override
   public void invoke(@NotNull final Project project, final Editor editor, PsiFile file, DataContext dataContext) {
     if (!CommonRefactoringUtil.checkReadOnlyStatus(project, file)) return;
     PsiDocumentManager.getInstance(project).commitAllDocuments();
@@ -69,21 +73,15 @@ public class IntroduceFieldHandler extends BaseExpressionToFieldHandler {
     ElementToWorkOn.processElementToWorkOn(editor, file, REFACTORING_NAME, HelpID.INTRODUCE_FIELD, project, getElementProcessor(project, editor));
   }
 
+  @Override
   protected Settings showRefactoringDialog(Project project, Editor editor, PsiClass parentClass, PsiExpression expr,
                                            PsiType type,
                                            PsiExpression[] occurrences, PsiElement anchorElement, PsiElement anchorElementIfAll) {
     final AbstractInplaceIntroducer activeIntroducer = AbstractInplaceIntroducer.getActiveIntroducer(editor);
 
-    PsiLocalVariable localVariable = null;
-    if (expr instanceof PsiReferenceExpression) {
-      PsiElement ref = ((PsiReferenceExpression)expr).resolve();
-      if (ref instanceof PsiLocalVariable) {
-        localVariable = (PsiLocalVariable)ref;
-      }
-    }
-    else if (anchorElement instanceof PsiLocalVariable) {
-      localVariable = (PsiLocalVariable)anchorElement;
-    }
+    ElementToWorkOn elementToWorkOn = ElementToWorkOn.adjustElements(expr, anchorElement);
+    PsiLocalVariable localVariable = elementToWorkOn.getLocalVariable();
+    expr = elementToWorkOn.getExpression();
 
     String enteredName = null;
     boolean replaceAll = false;
@@ -112,7 +110,8 @@ public class IntroduceFieldHandler extends BaseExpressionToFieldHandler {
     }
     int occurrencesNumber = occurrences.length;
     final boolean currentMethodConstructor = containingMethod != null && containingMethod.isConstructor();
-    final boolean allowInitInMethod = (!currentMethodConstructor || !isInSuperOrThis) && (anchorElement instanceof PsiLocalVariable || anchorElement instanceof PsiStatement);
+    final boolean allowInitInMethod = (!currentMethodConstructor || !isInSuperOrThis) &&
+                                      (anchorElement instanceof PsiLocalVariable || anchorElement instanceof PsiStatement);
     final boolean allowInitInMethodIfAll = (!currentMethodConstructor || !isInSuperOrThis) && anchorElementIfAll instanceof PsiStatement;
 
     if (editor != null && editor.getSettings().isVariableInplaceRenameEnabled() &&
@@ -136,9 +135,7 @@ public class IntroduceFieldHandler extends BaseExpressionToFieldHandler {
       enteredName
     );
     dialog.setReplaceAllOccurrences(replaceAll);
-    dialog.show();
-
-    if (!dialog.isOK()) {
+    if (!dialog.showAndGet()) {
       if (occurrencesNumber > 1) {
         WindowManager.getInstance().getStatusBar(project).setInfo(RefactoringBundle.message("press.escape.to.remove.the.highlighting"));
       }
@@ -151,10 +148,10 @@ public class IntroduceFieldHandler extends BaseExpressionToFieldHandler {
 
 
     return new Settings(dialog.getEnteredName(), expr, occurrences, dialog.isReplaceAllOccurrences(),
-                                           declareStatic, dialog.isDeclareFinal(),
-                                           dialog.getInitializerPlace(), dialog.getFieldVisibility(),
-                                           localVariable,
-                                           dialog.getFieldType(), localVariable != null, (TargetDestination)null, false, false);
+                        declareStatic, dialog.isDeclareFinal(),
+                        dialog.getInitializerPlace(), dialog.getFieldVisibility(),
+                        localVariable,
+                        dialog.getFieldType(), localVariable != null, (TargetDestination)null, false, false);
   }
 
   @Override
@@ -177,15 +174,17 @@ public class IntroduceFieldHandler extends BaseExpressionToFieldHandler {
     return myInplaceIntroduceFieldPopup;
   }
 
-  private static boolean isInSuperOrThis(PsiExpression occurrence) {
+  static boolean isInSuperOrThis(PsiExpression occurrence) {
     return !NotInSuperCallOccurrenceFilter.INSTANCE.isOK(occurrence) || !NotInThisCallFilter.INSTANCE.isOK(occurrence);
   }
 
+  @Override
   protected OccurrenceManager createOccurrenceManager(final PsiExpression selectedExpr, final PsiClass parentClass) {
     final OccurrenceFilter occurrenceFilter = isInSuperOrThis(selectedExpr) ? null : MY_OCCURRENCE_FILTER;
     return new ExpressionOccurrenceManager(selectedExpr, parentClass, occurrenceFilter, true);
   }
 
+  @Override
   protected boolean invokeImpl(final Project project, PsiLocalVariable localVariable, final Editor editor) {
     final PsiElement parent = localVariable.getParent();
     if (!(parent instanceof PsiDeclarationStatement)) {
@@ -216,6 +215,7 @@ public class IntroduceFieldHandler extends BaseExpressionToFieldHandler {
   }
 
   private static class MyOccurrenceFilter implements OccurrenceFilter {
+    @Override
     public boolean isOK(PsiExpression occurrence) {
       return !isInSuperOrThis(occurrence);
     }

@@ -22,13 +22,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 
-/**
- * Created with IntelliJ IDEA.
- * User: zajac
- * Date: 23.05.12
- * Time: 15:57
- * To change this template use File | Settings | File Templates.
- */
 public class XBreakpointGroupingByTypeRule<B> extends XBreakpointGroupingRule<B, XBreakpointTypeGroup> {
 
   public XBreakpointGroupingByTypeRule() {

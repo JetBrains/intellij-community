@@ -21,7 +21,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -30,7 +29,10 @@ import java.util.regex.Pattern;
  * @author yole
  */
 public class ThreadDumpParser {
-  private static final Pattern ourThreadStartPattern = Pattern.compile("^\\s*\"(.+)\".+(prio=\\d+ (?:os_prio=[^\\s]+ )?tid=[^\\s]+ nid=[^\\s]+|Id=\\d+) ([^\\[]+)");
+  private static final Pattern ourThreadStartPattern = Pattern.compile("^\"(.+)\".+(prio=\\d+ (?:os_prio=[^\\s]+ )?tid=[^\\s]+ nid=[^\\s]+|[Ii][Dd]=\\d+) ([^\\[]+)");
+  private static final Pattern ourForcedThreadStartPattern = Pattern.compile("^Thread (\\d+): \\(state = (.+)\\)");
+  private static final Pattern ourYourkitThreadStartPattern = Pattern.compile("(.+) \\[([A-Z_, ]*)]");
+  private static final Pattern ourYourkitThreadStartPattern2 = Pattern.compile("(.+) (?:State:)? (.+) CPU usage on sample: .+");
   private static final Pattern ourThreadStatePattern = Pattern.compile("java\\.lang\\.Thread\\.State: (.+) \\((.+)\\)");
   private static final Pattern ourThreadStatePattern2 = Pattern.compile("java\\.lang\\.Thread\\.State: (.+)");
   private static final Pattern ourWaitingForLockPattern = Pattern.compile("- waiting (on|to lock) <(.+)>");
@@ -38,12 +40,13 @@ public class ThreadDumpParser {
   @NonNls private static final String PUMP_EVENT = "java.awt.EventDispatchThread.pumpOneEventForFilters";
   private static final Pattern ourIdleTimerThreadPattern = Pattern.compile("java.lang.Object.wait\\([^()]+\\)\\s+at java.util.TimerThread.mainLoop");
   private static final Pattern ourIdleSwingTimerThreadPattern = Pattern.compile("java.lang.Object.wait\\([^()]+\\)\\s+at javax.swing.TimerQueue.run");
+  private static final String AT_JAVA_LANG_OBJECT_WAIT = "at java.lang.Object.wait(";
 
   private ThreadDumpParser() {
   }
 
   public static List<ThreadState> parse(String threadDump) {
-    List<ThreadState> result = new ArrayList<ThreadState>();
+    List<ThreadState> result = new ArrayList<>();
     StringBuilder lastThreadStack = new StringBuilder();
     ThreadState lastThreadState = null;
     boolean expectingThreadState = false;
@@ -52,7 +55,7 @@ public class ThreadDumpParser {
       if (line.startsWith("============") || line.contains("Java-level deadlock")) {
         break;
       }
-      ThreadState state = tryParseThreadStart(line);
+      ThreadState state = tryParseThreadStart(line.trim());
       if (state != null) {
         if (lastThreadState != null) {
           lastThreadState.setStackTrace(lastThreadStack.toString(), !haveNonEmptyStackTrace);
@@ -82,34 +85,39 @@ public class ThreadDumpParser {
     for(ThreadState threadState: result) {
       inferThreadStateDetail(threadState);
 
-      final String s = findWaitingForLock(threadState.getStackTrace());
-      if (s != null) {
-        for(ThreadState lockOwner : result) {
-          if (lockOwner == threadState) {
-            continue;
-          }
-          final String marker = "- locked <" + s + ">";
-          if (lockOwner.getStackTrace().contains(marker)) {
-            if (threadState.isAwaitedBy(lockOwner)) {
-              threadState.addDeadlockedThread(lockOwner);
-              lockOwner.addDeadlockedThread(threadState);
-            }
-            lockOwner.addWaitingThread(threadState);
-            break;
-          }
+      String lockId = findWaitingForLock(threadState.getStackTrace());
+      ThreadState lockOwner = findLockOwner(result, lockId, true);
+      if (lockOwner == null) {
+        lockOwner = findLockOwner(result, lockId, false);
+      }
+      if (lockOwner != null) {
+        if (threadState.isAwaitedBy(lockOwner)) {
+          threadState.addDeadlockedThread(lockOwner);
+          lockOwner.addDeadlockedThread(threadState);
         }
+        lockOwner.addWaitingThread(threadState);
       }
     }
     sortThreads(result);
     return result;
   }
 
-  public static void sortThreads(List<ThreadState> result) {
-    Collections.sort(result, new Comparator<ThreadState>() {
-      public int compare(final ThreadState o1, final ThreadState o2) {
-        return getInterestLevel(o2) - getInterestLevel(o1);
+  @Nullable
+  private static ThreadState findLockOwner(List<ThreadState> result, @Nullable String lockId, boolean ignoreWaiting) {
+    if (lockId == null) return null;
+
+    final String marker = "- locked <" + lockId + ">";
+    for(ThreadState lockOwner : result) {
+      String trace = lockOwner.getStackTrace();
+      if (trace.contains(marker) && (!ignoreWaiting || !trace.contains(AT_JAVA_LANG_OBJECT_WAIT))) {
+        return lockOwner;
       }
-    });
+    }
+    return null;
+  }
+
+  public static void sortThreads(List<? extends ThreadState> result) {
+    Collections.sort(result, (o1, o2) -> getInterestLevel(o2) - getInterestLevel(o1));
   }
 
   @Nullable
@@ -182,7 +190,7 @@ public class ThreadDumpParser {
   }
 
   @Nullable
-  private static ThreadState tryParseThreadStart(final String line) {
+  private static ThreadState tryParseThreadStart(String line) {
     Matcher m = ourThreadStartPattern.matcher(line);
     if (m.find()) {
       final ThreadState state = new ThreadState(m.group(1), m.group(3));
@@ -191,6 +199,38 @@ public class ThreadDumpParser {
       }
       return state;
     }
+
+    m = ourForcedThreadStartPattern.matcher(line);
+    if (m.matches()) {
+      return new ThreadState(m.group(1), m.group(2));
+    }
+
+    boolean daemon = line.contains(" [DAEMON]");
+    if (daemon) {
+      line = StringUtil.replace(line, " [DAEMON]", "");
+    }
+
+    m = matchYourKit(line);
+    if (m != null) {
+      ThreadState state = new ThreadState(m.group(1), m.group(2));
+      state.setDaemon(daemon);
+      return state;
+    }
+    return null;
+  }
+
+  @Nullable
+  private static Matcher matchYourKit(String line) {
+    if (line.contains("[")) {
+      Matcher m = ourYourkitThreadStartPattern.matcher(line);
+      if (m.matches()) return m;
+    }
+
+    if (line.contains("CPU usage on sample:")) {
+      Matcher m = ourYourkitThreadStartPattern2.matcher(line);
+      if (m.matches()) return m;
+    }
+
     return null;
   }
 

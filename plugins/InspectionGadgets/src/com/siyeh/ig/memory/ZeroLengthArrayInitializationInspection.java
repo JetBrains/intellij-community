@@ -23,11 +23,19 @@ import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.IntroduceConstantFix;
+import com.siyeh.ig.psiutils.ConstructionUtils;
 import com.siyeh.ig.psiutils.ExpressionUtils;
+import org.intellij.lang.annotations.Pattern;
 import org.jetbrains.annotations.NotNull;
 
 public class ZeroLengthArrayInitializationInspection extends BaseInspection {
 
+  @Override
+  protected InspectionGadgetsFix buildFix(Object... infos) {
+    return new IntroduceConstantFix();
+  }
+
+  @Pattern(VALID_ID_PATTERN)
   @Override
   @NotNull
   public String getID() {
@@ -54,11 +62,6 @@ public class ZeroLengthArrayInitializationInspection extends BaseInspection {
   }
 
   @Override
-  protected InspectionGadgetsFix buildFix(Object... infos) {
-    return new IntroduceConstantFix();
-  }
-
-  @Override
   protected boolean buildQuickFixesOnlyForOnTheFlyErrors() {
     return true;
   }
@@ -70,7 +73,7 @@ public class ZeroLengthArrayInitializationInspection extends BaseInspection {
     public void visitNewExpression(
       @NotNull PsiNewExpression expression) {
       super.visitNewExpression(expression);
-      if (!ExpressionUtils.isZeroLengthArrayConstruction(expression)) {
+      if (!ConstructionUtils.isEmptyArrayInitializer(expression)) {
         return;
       }
       if (ExpressionUtils.isDeclaredConstant(expression)) {

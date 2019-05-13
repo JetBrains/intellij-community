@@ -21,7 +21,6 @@ import java.util.List;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Jul 8, 2010
  */
 public abstract class AntDomMacroDef extends AntDomNamedElement{
   @Attribute("uri")

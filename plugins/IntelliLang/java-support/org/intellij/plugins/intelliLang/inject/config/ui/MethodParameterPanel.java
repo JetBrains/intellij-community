@@ -19,41 +19,42 @@ import com.intellij.ide.util.TreeClassChooser;
 import com.intellij.ide.util.TreeClassChooserFactory;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
+import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.Condition;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiFormatUtil;
+import com.intellij.psi.util.PsiFormatUtilBase;
 import com.intellij.ui.*;
 import com.intellij.ui.dualView.TreeTableView;
 import com.intellij.ui.treeStructure.treetable.ListTreeTableModelOnColumns;
 import com.intellij.ui.treeStructure.treetable.TreeColumnInfo;
-import com.intellij.util.Function;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.Convertor;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.tree.TreeUtil;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import org.intellij.plugins.intelliLang.inject.config.MethodParameterInjection;
 import org.intellij.plugins.intelliLang.util.PsiUtilEx;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.table.TableCellEditor;
 import javax.swing.table.TableCellRenderer;
 import javax.swing.tree.DefaultMutableTreeNode;
-import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Enumeration;
 
 public class MethodParameterPanel extends AbstractInjectionPanel<MethodParameterInjection> {
 
@@ -68,46 +69,44 @@ public class MethodParameterPanel extends AbstractInjectionPanel<MethodParameter
   private final ReferenceEditorWithBrowseButton myClassField;
   private DefaultMutableTreeNode myRootNode;
 
-  private final THashMap<PsiMethod, MethodParameterInjection.MethodInfo> myData = new THashMap<PsiMethod, MethodParameterInjection.MethodInfo>();
+  private final THashMap<PsiMethod, MethodParameterInjection.MethodInfo> myData = new THashMap<>();
 
   public MethodParameterPanel(MethodParameterInjection injection, final Project project) {
     super(injection, project);
     $$$setupUI$$$();
 
-    myClassField = new ReferenceEditorWithBrowseButton(new BrowseClassListener(project), project, new Function<String, Document>() {
-      public Document fun(String s) {
-        final Document document = PsiUtilEx.createDocument(s, project);
-        document.addDocumentListener(new DocumentAdapter() {
-          @Override
-          public void documentChanged(final DocumentEvent e) {
-            updateParamTree();
-            updateTree();
-          }
-        });
-        return document;
-      }
+    myClassField = new ReferenceEditorWithBrowseButton(new BrowseClassListener(project), project, s -> {
+      final Document document = PsiUtilEx.createDocument(s, project);
+      document.addDocumentListener(new DocumentListener() {
+        @Override
+        public void documentChanged(@NotNull final DocumentEvent e) {
+          updateParamTree();
+          updateTree();
+        }
+      });
+      return document;
     }, "");
     myClassPanel.add(myClassField, BorderLayout.CENTER);
     myParamsTable.getTree().setShowsRootHandles(true);
     myParamsTable.getTree().setCellRenderer(new ColoredTreeCellRenderer() {
-
-      public void customizeCellRenderer(final JTree tree,
-                                        final Object value,
-                                        final boolean selected,
-                                        final boolean expanded,
-                                        final boolean leaf,
-                                        final int row,
-                                        final boolean hasFocus) {
+      @Override
+      public void customizeCellRenderer(@NotNull JTree tree,
+                                        Object value,
+                                        boolean selected,
+                                        boolean expanded,
+                                        boolean leaf,
+                                        int row,
+                                        boolean hasFocus) {
 
         final Object o = ((DefaultMutableTreeNode)value).getUserObject();
         setIcon(o instanceof PsiMethod ? PlatformIcons.METHOD_ICON : o instanceof PsiParameter ? PlatformIcons.PARAMETER_ICON : null);
         final String name;
         if (o instanceof PsiMethod) {
-          name = PsiFormatUtil.formatMethod((PsiMethod)o, PsiSubstitutor.EMPTY, PsiFormatUtil.SHOW_NAME | PsiFormatUtil.SHOW_PARAMETERS,
-                                            PsiFormatUtil.SHOW_NAME | PsiFormatUtil.SHOW_TYPE);
+          name = PsiFormatUtil.formatMethod((PsiMethod)o, PsiSubstitutor.EMPTY, PsiFormatUtilBase.SHOW_NAME | PsiFormatUtilBase.SHOW_PARAMETERS,
+                                            PsiFormatUtilBase.SHOW_NAME | PsiFormatUtilBase.SHOW_TYPE);
         }
         else if (o instanceof PsiParameter) {
-          name = PsiFormatUtil.formatVariable((PsiParameter)o, PsiFormatUtil.SHOW_NAME | PsiFormatUtil.SHOW_TYPE, PsiSubstitutor.EMPTY);
+          name = PsiFormatUtil.formatVariable((PsiParameter)o, PsiFormatUtilBase.SHOW_NAME | PsiFormatUtilBase.SHOW_TYPE, PsiSubstitutor.EMPTY);
         }
         else name = null;
         final boolean missing = o instanceof PsiElement && !((PsiElement)o).isPhysical();
@@ -118,16 +117,13 @@ public class MethodParameterPanel extends AbstractInjectionPanel<MethodParameter
 
     });
     init(injection.copy());
-    new TreeTableSpeedSearch(myParamsTable, new Convertor<TreePath, String>() {
-      @Nullable
-      public String convert(final TreePath o) {
-        final Object userObject = ((DefaultMutableTreeNode)o.getLastPathComponent()).getUserObject();
-        return userObject instanceof PsiNamedElement? ((PsiNamedElement)userObject).getName() : null;
-      }
+    new TreeTableSpeedSearch(myParamsTable, o -> {
+      final Object userObject = ((DefaultMutableTreeNode)o.getLastPathComponent()).getUserObject();
+      return userObject instanceof PsiNamedElement? ((PsiNamedElement)userObject).getName() : null;
     });
     new AnAction("Toggle") {
       @Override
-      public void actionPerformed(final AnActionEvent e) {
+      public void actionPerformed(@NotNull final AnActionEvent e) {
         performToggleAction();
       }
     }.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_SPACE, 0)), myParamsTable);
@@ -160,10 +156,7 @@ public class MethodParameterPanel extends AbstractInjectionPanel<MethodParameter
     try {
       return ((PsiTypeCodeFragment)psiFile).getType();
     }
-    catch (PsiTypeCodeFragment.TypeSyntaxException e1) {
-      return null;
-    }
-    catch (PsiTypeCodeFragment.NoTypeException e1) {
+    catch (PsiTypeCodeFragment.TypeSyntaxException | PsiTypeCodeFragment.NoTypeException e1) {
       return null;
     }
   }
@@ -179,27 +172,22 @@ public class MethodParameterPanel extends AbstractInjectionPanel<MethodParameter
 
   private void rebuildTreeModel() {
     myData.clear();
-    ApplicationManager.getApplication().runReadAction(new Runnable() {
-      public void run() {
-        final PsiType classType = getClassType();
-        final PsiClass[] classes = classType instanceof PsiClassType? JavaPsiFacade.getInstance(myProject).
-          findClasses(classType.getCanonicalText(), GlobalSearchScope.allScope(myProject)) : PsiClass.EMPTY_ARRAY;
-        if (classes.length == 0) return;
-        final THashSet<String> visitedSignatures = new THashSet<String>();
-        for (PsiClass psiClass : classes) {
-          for (PsiMethod method : psiClass.getMethods()) {
-            final PsiModifierList modifiers = method.getModifierList();
-            if (modifiers.hasModifierProperty(PsiModifier.PRIVATE) || modifiers.hasModifierProperty(PsiModifier.PACKAGE_LOCAL)) continue;
-            if (MethodParameterInjection.isInjectable(method.getReturnType(), method.getProject()) ||
-                ContainerUtil.find(method.getParameterList().getParameters(), new Condition<PsiParameter>() {
-                  public boolean value(PsiParameter p) {
-                    return MethodParameterInjection.isInjectable(p.getType(), p.getProject());
-                  }
-                }) != null) {
-              final MethodParameterInjection.MethodInfo info = MethodParameterInjection.createMethodInfo(method);
-              if (!visitedSignatures.add(info.getMethodSignature())) continue;
-              myData.put(method, info);
-            }
+    ApplicationManager.getApplication().runReadAction(() -> {
+      final PsiType classType = getClassType();
+      final PsiClass[] classes = classType instanceof PsiClassType? JavaPsiFacade.getInstance(myProject).
+        findClasses(classType.getCanonicalText(), GlobalSearchScope.allScope(myProject)) : PsiClass.EMPTY_ARRAY;
+      if (classes.length == 0) return;
+      final THashSet<String> visitedSignatures = new THashSet<>();
+      for (PsiClass psiClass : classes) {
+        for (PsiMethod method : psiClass.getMethods()) {
+          final PsiModifierList modifiers = method.getModifierList();
+          if (modifiers.hasModifierProperty(PsiModifier.PRIVATE) || modifiers.hasModifierProperty(PsiModifier.PACKAGE_LOCAL)) continue;
+          if (MethodParameterInjection.isInjectable(method.getReturnType(), method.getProject()) ||
+              ContainerUtil.find(method.getParameterList().getParameters(),
+                                 p -> MethodParameterInjection.isInjectable(p.getType(), p.getProject())) != null) {
+            final MethodParameterInjection.MethodInfo info = MethodParameterInjection.createMethodInfo(method);
+            if (!visitedSignatures.add(info.getMethodSignature())) continue;
+            myData.put(method, info);
           }
         }
       }
@@ -208,13 +196,11 @@ public class MethodParameterPanel extends AbstractInjectionPanel<MethodParameter
 
   private void refreshTreeStructure() {
     myRootNode.removeAllChildren();
-    final ArrayList<PsiMethod> methods = new ArrayList<PsiMethod>(myData.keySet());
-    Collections.sort(methods, new Comparator<PsiMethod>() {
-      public int compare(final PsiMethod o1, final PsiMethod o2) {
-        final int names = o1.getName().compareTo(o2.getName());
-        if (names != 0) return names;
-        return o1.getParameterList().getParametersCount() - o2.getParameterList().getParametersCount();
-      }
+    final ArrayList<PsiMethod> methods = new ArrayList<>(myData.keySet());
+    Collections.sort(methods, (o1, o2) -> {
+      final int names = o1.getName().compareTo(o2.getName());
+      if (names != 0) return names;
+      return o1.getParameterList().getParametersCount() - o2.getParameterList().getParametersCount();
     });
     for (PsiMethod method : methods) {
       final PsiParameter[] params = method.getParameterList().getParameters();
@@ -239,27 +225,23 @@ public class MethodParameterPanel extends AbstractInjectionPanel<MethodParameter
   }
 
 
+  @Override
   protected void apply(final MethodParameterInjection other) {
-    final boolean applyMethods = ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
-      public Boolean compute() {
-        other.setClassName(getClassName());
-        return getClassType() != null;
-      }
+    final boolean applyMethods = ReadAction.compute(() -> {
+      other.setClassName(getClassName());
+      return getClassType() != null;
     }).booleanValue();
     if (applyMethods) {
-      other.setMethodInfos(ContainerUtil.findAll(myData.values(), new Condition<MethodParameterInjection.MethodInfo>() {
-        public boolean value(final MethodParameterInjection.MethodInfo methodInfo) {
-          return methodInfo.isEnabled();
-        }
-      }));
+      other.setMethodInfos(ContainerUtil.findAll(myData.values(), methodInfo -> methodInfo.isEnabled()));
     }
   }
 
+  @Override
   protected void resetImpl() {
     setPsiClass(myOrigInjection.getClassName());
 
     rebuildTreeModel();
-    final THashMap<String, MethodParameterInjection.MethodInfo> map = new THashMap<String, MethodParameterInjection.MethodInfo>();
+    final THashMap<String, MethodParameterInjection.MethodInfo> map = new THashMap<>();
     for (PsiMethod method : myData.keySet()) {
       final MethodParameterInjection.MethodInfo methodInfo = myData.get(method);
       map.put(methodInfo.getMethodSignature(), methodInfo);
@@ -283,6 +265,7 @@ public class MethodParameterPanel extends AbstractInjectionPanel<MethodParameter
     }
   }
 
+  @Override
   public JPanel getComponent() {
     return myRoot;
   }
@@ -291,7 +274,7 @@ public class MethodParameterPanel extends AbstractInjectionPanel<MethodParameter
     myLanguagePanel = new LanguagePanel(myProject, myOrigInjection);
     myRootNode = new DefaultMutableTreeNode(null, true);
     myParamsTable = new MyView(new ListTreeTableModelOnColumns(myRootNode, createColumnInfos()));
-    myAdvancedPanel = new AdvancedPanel(myProject, myOrigInjection);    
+    myAdvancedPanel = new AdvancedPanel(myProject, myOrigInjection);
   }
 
   @Nullable
@@ -333,46 +316,54 @@ public class MethodParameterPanel extends AbstractInjectionPanel<MethodParameter
         new ColumnInfo<DefaultMutableTreeNode, Boolean>(" ") { // "" for the first column's name isn't a good idea
           final BooleanTableCellRenderer myRenderer = new BooleanTableCellRenderer();
 
+          @Override
           public Boolean valueOf(DefaultMutableTreeNode o) {
             return isNodeSelected(o);
           }
 
+          @Override
           public int getWidth(JTable table) {
             return myRenderer.getPreferredSize().width;
           }
 
+          @Override
           public TableCellEditor getEditor(DefaultMutableTreeNode o) {
             return new DefaultCellEditor(new JCheckBox());
           }
 
+          @Override
           public TableCellRenderer getRenderer(DefaultMutableTreeNode o) {
             myRenderer.setEnabled(isCellEditable(o));
             return myRenderer;
           }
 
+          @Override
           public void setValue(DefaultMutableTreeNode o, Boolean value) {
             setNodeSelected(o, Boolean.TRUE.equals(value));
           }
 
+          @Override
           public Class<Boolean> getColumnClass() {
             return Boolean.class;
           }
 
+          @Override
           public boolean isCellEditable(DefaultMutableTreeNode o) {
             return valueOf(o) != null;
           }
 
-        }, new TreeColumnInfo("Method/Parameters")
+        }, new TreeColumnInfo(" ")
     };
   }
 
   private class BrowseClassListener implements ActionListener {
     private final Project myProject;
 
-    public BrowseClassListener(Project project) {
+    BrowseClassListener(Project project) {
       myProject = project;
     }
 
+    @Override
     public void actionPerformed(ActionEvent e) {
       final TreeClassChooserFactory factory = TreeClassChooserFactory.getInstance(myProject);
       final TreeClassChooser chooser = factory.createAllProjectScopeChooser("Select Class");
@@ -386,17 +377,18 @@ public class MethodParameterPanel extends AbstractInjectionPanel<MethodParameter
     }
   }
 
-  private class MyView extends TreeTableView implements TypeSafeDataProvider {
-    public MyView(ListTreeTableModelOnColumns treeTableModel) {
+  private static class MyView extends TreeTableView implements TypeSafeDataProvider {
+    MyView(ListTreeTableModelOnColumns treeTableModel) {
       super(treeTableModel);
     }
 
-    public void calcData(final DataKey key, final DataSink sink) {
-      if (LangDataKeys.PSI_ELEMENT.equals(key)) {
+    @Override
+    public void calcData(@NotNull final DataKey key, @NotNull final DataSink sink) {
+      if (CommonDataKeys.PSI_ELEMENT.equals(key)) {
         final Collection selection = getSelection();
         if (!selection.isEmpty()) {
           final Object o = ((DefaultMutableTreeNode)selection.iterator().next()).getUserObject();
-          if (o instanceof PsiElement) sink.put(LangDataKeys.PSI_ELEMENT, (PsiElement)o);
+          if (o instanceof PsiElement) sink.put(CommonDataKeys.PSI_ELEMENT, (PsiElement)o);
         }
       }
     }

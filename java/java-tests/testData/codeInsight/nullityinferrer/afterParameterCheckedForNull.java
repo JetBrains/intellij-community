@@ -13,13 +13,13 @@ class Test {
 
   @Nullable
   String foo1(@Nullable String str) {
-    if (str == null);
+    if (str == null) return "null";
     return (str);
   }
 
   @NotNull
   String foo2(@Nullable String str) {
-    if (str == null);
+    if (str == null) return "null";
     return ((String)str);
   }
 

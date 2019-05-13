@@ -26,8 +26,8 @@ import org.jetbrains.annotations.Nullable;
  * @author Kirill Likhodedov
  */
 public class GitBranchPair {
-  private @NotNull GitLocalBranch myBranch;
-  private @Nullable GitRemoteBranch myDestBranch;
+  private @NotNull final GitLocalBranch myBranch;
+  private @Nullable final GitRemoteBranch myDestBranch;
 
   public GitBranchPair(@NotNull GitLocalBranch branch, @Nullable GitRemoteBranch destination) {
     myBranch = branch;

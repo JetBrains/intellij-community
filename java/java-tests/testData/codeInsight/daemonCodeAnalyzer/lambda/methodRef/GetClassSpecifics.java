@@ -1,15 +1,16 @@
 import java.util.List;
+
 class GetClassTest {
     interface GetCl {
-        Class<? extends List> _();
+        Class<? extends List> m();
     }
 
     interface GetClReturnTypeProblems {
-        Class<List<String>> _();
+        Class<List<String>> m();
     }
 
     void test(int[] iarr, List<String> ls) {
         GetCl c4 = ls::getClass;
-        <error descr="Incompatible types. Found: '<method reference>', required: 'GetClassTest.GetClReturnTypeProblems'">GetClReturnTypeProblems c5 = ls::getClass;</error>
+        GetClReturnTypeProblems c5 = <error descr="Bad return type in method reference: cannot convert java.lang.Class<? extends java.util.List<java.lang.String>> to java.lang.Class<java.util.List<java.lang.String>>">ls::getClass</error>;
     }
 }

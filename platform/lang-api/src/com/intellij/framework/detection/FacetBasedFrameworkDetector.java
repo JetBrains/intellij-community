@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package com.intellij.framework.detection;
 
 import com.intellij.facet.*;
 import com.intellij.framework.FrameworkType;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -36,10 +37,17 @@ import java.util.Set;
  * @author nik
  */
 public abstract class FacetBasedFrameworkDetector<F extends Facet, C extends FacetConfiguration> extends FrameworkDetector {
-  public FacetBasedFrameworkDetector(String detectorId) {
+  private static final Logger LOG = Logger.getInstance(FacetBasedFrameworkDetector.class);
+
+  protected FacetBasedFrameworkDetector(String detectorId) {
     super(detectorId);
   }
 
+  protected FacetBasedFrameworkDetector(@NotNull String detectorId, int detectorVersion) {
+    super(detectorId, detectorVersion);
+  }
+
+  @NotNull
   public abstract FacetType<F, C> getFacetType();
 
   /**
@@ -79,7 +87,10 @@ public abstract class FacetBasedFrameworkDetector<F extends Facet, C extends Fac
 
   @Override
   public FrameworkType getFrameworkType() {
-    return createFrameworkType(getFacetType());
+    FacetType<F, C> type = getFacetType();
+    //noinspection ConstantConditions todo[nik] remove later: this is added to find implementations which incorrectly return 'null' from 'getFacetType'
+    LOG.assertTrue(type != null, "'getFacetType' returns 'null' in " + getClass());
+    return createFrameworkType(type);
   }
 
   static FrameworkType createFrameworkType(final FacetType<?, ?> facetType) {
@@ -100,7 +111,7 @@ public abstract class FacetBasedFrameworkDetector<F extends Facet, C extends Fac
     private final FacetType<?, ?> myFacetType;
     private final Icon myIcon;
 
-    public FacetBasedFrameworkType(FacetType<?, ?> facetType) {
+    FacetBasedFrameworkType(@NotNull FacetType<?, ?> facetType) {
       super(facetType.getStringId());
       myFacetType = facetType;
       final Icon icon = myFacetType.getIcon();

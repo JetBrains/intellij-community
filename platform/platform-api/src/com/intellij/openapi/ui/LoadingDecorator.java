@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.ui;
 
+import com.intellij.ide.RemoteDesktopService;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.ui.components.JBLayeredPane;
@@ -23,6 +24,7 @@ import com.intellij.util.Alarm;
 import com.intellij.util.ui.Animator;
 import com.intellij.util.ui.AsyncProcessIcon;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -30,7 +32,7 @@ import java.awt.image.BufferedImage;
 
 public class LoadingDecorator {
 
-  JLayeredPane myPane = new MyLayeredPane();
+  JLayeredPane myPane;
 
   LoadingLayer myLoadingLayer;
   Animator myFadeOutAnimator;
@@ -40,32 +42,63 @@ public class LoadingDecorator {
   boolean myStartRequest;
 
 
-  public LoadingDecorator(JComponent content, Disposable parent, int startDelayMs) {
-    myLoadingLayer = new LoadingLayer();
+  public LoadingDecorator(JComponent content, @NotNull Disposable parent, int startDelayMs) {
+    this(content, parent, startDelayMs, false);
+  }
+
+  public LoadingDecorator(JComponent content, @NotNull Disposable parent, int startDelayMs, boolean useMinimumSize) {
+    this(content, parent, startDelayMs, useMinimumSize, new AsyncProcessIcon.Big("Loading"));
+  }
+
+  public LoadingDecorator(JComponent content, @NotNull Disposable parent, int startDelayMs, boolean useMinimumSize, @NotNull AsyncProcessIcon icon) {
+    myPane = new MyLayeredPane(useMinimumSize ? content : null);
+    myLoadingLayer = new LoadingLayer(icon);
     myDelay = startDelayMs;
-    myStartAlarm = new Alarm(Alarm.ThreadToUse.SHARED_THREAD, parent);
+    myStartAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, parent);
 
     setLoadingText("Loading...");
 
 
-    myFadeOutAnimator = new Animator("Loading", 10, 500, false) {
+    myFadeOutAnimator = new Animator("Loading", 10, RemoteDesktopService.isRemoteSession()? 2500 : 500, false) {
+      @Override
       public void paintNow(final int frame, final int totalFrames, final int cycle) {
         myLoadingLayer.setAlpha(1f - ((float)frame) / ((float)totalFrames));
       }
 
       @Override
       protected void paintCycleEnd() {
-        myLoadingLayer.setVisible(false);
+        myLoadingLayer.setAlpha(0); // paint with zero alpha before hiding completely
+        hideLoadingLayer();
         myLoadingLayer.setAlpha(-1);
       }
     };
     Disposer.register(parent, myFadeOutAnimator);
 
 
-    myPane.add(content, 0, JLayeredPane.DEFAULT_LAYER);
-    myPane.add(myLoadingLayer, 1, JLayeredPane.DRAG_LAYER);
+    myPane.add(content, JLayeredPane.DEFAULT_LAYER, 0);
 
     Disposer.register(parent, myLoadingLayer.myProgress);
+  }
+
+  /**
+   * Removes a loading layer to restore a blit-accelerated scrolling.
+   */
+  private void hideLoadingLayer() {
+    myPane.remove(myLoadingLayer);
+    myLoadingLayer.setVisible(false);
+  }
+
+  /* Placing the invisible layer on top of JViewport suppresses blit-accelerated scrolling
+     as JViewport.canUseWindowBlitter() doesn't take component's visibility into account.
+
+     We need to add / remove the loading layer on demand to preserve the blit-based scrolling.
+
+     Blit-acceleration copies as much of the rendered area as possible and then repaints only newly exposed region.
+     This helps to improve scrolling performance and to reduce CPU usage (especially if drawing is compute-intensive). */
+  private void addLoadingLayerOnDemand() {
+    if (myPane != myLoadingLayer.getParent()) {
+      myPane.add(myLoadingLayer, JLayeredPane.DRAG_LAYER, 1);
+    }
   }
 
   protected NonOpaquePanel customizeLoadingLayer(JPanel parent, JLabel text, AsyncProcessIcon icon) {
@@ -93,22 +126,18 @@ public class LoadingDecorator {
 
     myStartRequest = true;
     if (myDelay > 0) {
-      myStartAlarm.addRequest(new Runnable() {
-        public void run() {
-          UIUtil.invokeLaterIfNeeded(new Runnable() {
-            public void run() {
-              if (!myStartRequest) return;
-              _startLoading(takeSnapshot);
-            }
-          });
-        }
-      }, myDelay);
-    } else {
+      myStartAlarm.addRequest(() -> UIUtil.invokeLaterIfNeeded(() -> {
+        if (!myStartRequest) return;
+        _startLoading(takeSnapshot);
+      }), myDelay);
+    }
+    else {
       _startLoading(takeSnapshot);
     }
   }
 
-  private void _startLoading(final boolean takeSnapshot) {
+  protected void _startLoading(final boolean takeSnapshot) {
+    addLoadingLayerOnDemand();
     myLoadingLayer.setVisible(true, takeSnapshot);
   }
 
@@ -131,7 +160,7 @@ public class LoadingDecorator {
   }
 
   public boolean isLoading() {
-    return myLoadingLayer.isVisible();
+    return myLoadingLayer.isLoading();
   }
 
   private class LoadingLayer extends JPanel {
@@ -140,16 +169,17 @@ public class LoadingDecorator {
     private BufferedImage mySnapshot;
     private Color mySnapshotBg;
 
-    private final AsyncProcessIcon myProgress = new AsyncProcessIcon.Big("Loading");
+    private final AsyncProcessIcon myProgress;
 
     private boolean myVisible;
 
     private float myCurrentAlpha;
     private final NonOpaquePanel myTextComponent;
 
-    private LoadingLayer() {
+    private LoadingLayer(@NotNull AsyncProcessIcon processIcon) {
       setOpaque(false);
       setVisible(false);
+      myProgress = processIcon;
       myProgress.setOpaque(false);
       myTextComponent = customizeLoadingLayer(this, myText, myProgress);
       myProgress.suspend();
@@ -161,14 +191,13 @@ public class LoadingDecorator {
       if (myVisible && !visible && myCurrentAlpha != -1) return;
 
       myVisible = visible;
+      myFadeOutAnimator.reset();
       if (myVisible) {
         setVisible(myVisible);
         myCurrentAlpha = -1;
-      }
 
-      if (myVisible) {
         if (takeSnapshot && getWidth() > 0 && getHeight() > 0) {
-          mySnapshot = UIUtil.createImage(getWidth(), getHeight(), BufferedImage.TYPE_INT_RGB);
+          mySnapshot = UIUtil.createImage(getGraphics(), getWidth(), getHeight(), BufferedImage.TYPE_INT_RGB);
           final Graphics2D g = mySnapshot.createGraphics();
           myPane.paint(g);
           final Component opaque = UIUtil.findNearestOpaque(this);
@@ -176,13 +205,19 @@ public class LoadingDecorator {
           g.dispose();
         }
         myProgress.resume();
-      } else {
+
+        myFadeOutAnimator.suspend();
+      }
+      else {
         disposeSnapshot();
         myProgress.suspend();
 
-        myFadeOutAnimator.reset();
         myFadeOutAnimator.resume();
       }
+    }
+
+    public boolean isLoading() {
+      return myVisible;
     }
 
     private void disposeSnapshot() {
@@ -200,7 +235,8 @@ public class LoadingDecorator {
           g.setColor(new Color(200, 200, 200, 240));
           g.fillRect(0, 0, getWidth(), getHeight());
           return;
-        } else {
+        }
+        else {
           disposeSnapshot();
         }
       }
@@ -225,7 +261,30 @@ public class LoadingDecorator {
     }
   }
 
-  private static class MyLayeredPane extends JBLayeredPane {
+  public interface CursorAware {
+  }
+
+  private static class MyLayeredPane extends JBLayeredPane implements CursorAware {
+    private final JComponent myContent;
+
+    private MyLayeredPane(JComponent content) {
+      myContent = content;
+    }
+
+    @Override
+    public Dimension getMinimumSize() {
+      return myContent != null && !isMinimumSizeSet()
+             ? myContent.getMinimumSize()
+             : super.getMinimumSize();
+    }
+
+    @Override
+    public Dimension getPreferredSize() {
+      return myContent != null && !isPreferredSizeSet()
+             ? myContent.getPreferredSize()
+             : super.getPreferredSize();
+    }
+
     @Override
     public void doLayout() {
       super.doLayout();
@@ -233,7 +292,8 @@ public class LoadingDecorator {
         final Component each = getComponent(i);
         if (each instanceof Icon) {
           each.setBounds(0, 0, each.getWidth(), each.getHeight());
-        } else {
+        }
+        else {
           each.setBounds(0, 0, getWidth(), getHeight());
         }
       }

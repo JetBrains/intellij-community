@@ -14,10 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * User: anna
- * Date: 19-Nov-2008
- */
 package com.intellij.refactoring.extractclass.usageInfo;
 
 import com.intellij.openapi.project.Project;
@@ -36,6 +32,7 @@ public class BindJavadocReference extends FixableUsageInfo {
     myFieldName = fieldName;
   }
 
+  @Override
   public void fixUsage() throws IncorrectOperationException {
     final PsiElement element = getElement();
     if (element != null && element.isValid()) {

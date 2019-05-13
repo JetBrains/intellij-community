@@ -31,7 +31,6 @@ import java.io.File;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Apr 26, 2010
  */
 public class AntPathConverter extends Converter<PsiFileSystemItem> implements CustomReferenceConverter<PsiFileSystemItem>{
 
@@ -103,6 +102,7 @@ public class AntPathConverter extends Converter<PsiFileSystemItem> implements Cu
   }
 
 
+  @Override
   @NotNull
   public PsiReference[] createReferences(GenericDomValue<PsiFileSystemItem> genericDomValue, PsiElement element, ConvertContext context) {
     if (genericDomValue instanceof GenericAttributeValue) {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,140 +17,10 @@
 package com.intellij.ide.hierarchy;
 
 import com.intellij.ide.util.treeView.AbstractTreeBuilder;
-import com.intellij.ide.util.treeView.NodeDescriptor;
-import com.intellij.ide.util.treeView.TreeBuilderUtil;
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.util.StatusBarProgress;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.vcs.FileStatusListener;
-import com.intellij.openapi.vcs.FileStatusManager;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiManager;
-import com.intellij.psi.PsiTreeChangeAdapter;
-import com.intellij.psi.PsiTreeChangeEvent;
-import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-import javax.swing.tree.DefaultTreeModel;
-import java.util.ArrayList;
-import java.util.Comparator;
-
+@Deprecated
 public class HierarchyTreeBuilder extends AbstractTreeBuilder {
-  public HierarchyTreeBuilder(@NotNull Project project,
-                              final JTree tree,
-                              final DefaultTreeModel treeModel,
-                              final HierarchyTreeStructure treeStructure,
-                              final Comparator<NodeDescriptor> comparator) {
-    super(tree, treeModel, treeStructure, comparator);
-
-    initRootNode();
-    PsiManager.getInstance(project).addPsiTreeChangeListener(new MyPsiTreeChangeListener(), this);
-    FileStatusManager.getInstance(project).addFileStatusListener(new MyFileStatusListener(), this);
-
-    Disposer.register(project, this);
-  }
-
-  @NotNull
-  public Pair<ArrayList<Object>, ArrayList<Object>> storeExpandedAndSelectedInfo() {
-    final ArrayList<Object> pathsToExpand = new ArrayList<Object>();
-    final ArrayList<Object> selectionPaths = new ArrayList<Object>();
-    TreeBuilderUtil.storePaths(this, getRootNode(), pathsToExpand, selectionPaths, true);
-    return new Pair<ArrayList<Object>, ArrayList<Object>>(pathsToExpand, selectionPaths);
-  }
-
-  public final void restoreExpandedAndSelectedInfo(@NotNull Pair<ArrayList<Object>, ArrayList<Object>> pair) {
-    TreeBuilderUtil.restorePaths(this, pair.first, pair.second, true);
-  }
-
-  @Override
-  protected boolean isAlwaysShowPlus(final NodeDescriptor nodeDescriptor) {
-    return ((HierarchyTreeStructure) getTreeStructure()).isAlwaysShowPlus();
-  }
-
-  @Override
-  protected boolean isAutoExpandNode(final NodeDescriptor nodeDescriptor) {
-    return getTreeStructure().getRootElement().equals(nodeDescriptor.getElement())
-           || !(nodeDescriptor instanceof HierarchyNodeDescriptor);
-  }
-
-  @Override
-  protected final boolean isSmartExpand() {
-    return false;
-  }
-
-  @Override
-  protected final boolean isDisposeOnCollapsing(final NodeDescriptor nodeDescriptor) {
-    return false; // prevents problems with building descriptors for invalidated elements
-  }
-
-
-  private MyStatusBarProgress myProgress;
-  @Override
-  @NotNull
-  protected ProgressIndicator createProgressIndicator() {
-    return myProgress = new MyStatusBarProgress();
-  }
-
-  public void setProgressIndicator(@NotNull ProgressIndicator indicator) {
-    myProgress.setSecondaryIndicator(indicator);
-  }
-
-  private static class MyStatusBarProgress extends StatusBarProgress {
-    private ProgressIndicator mySecondaryIndicator;
-
-    public void setSecondaryIndicator(ProgressIndicator indicator) {
-      mySecondaryIndicator = indicator;
-    }
-
-    @Override
-    public boolean isCanceled() {
-      return super.isCanceled() || mySecondaryIndicator != null && mySecondaryIndicator.isCanceled();
-    }
-  }
-
-  private final class MyPsiTreeChangeListener extends PsiTreeChangeAdapter {
-    @Override
-    public final void childAdded(@NotNull final PsiTreeChangeEvent event) {
-      getUpdater().addSubtreeToUpdate(getRootNode());
-    }
-
-    @Override
-    public final void childRemoved(@NotNull final PsiTreeChangeEvent event) {
-      getUpdater().addSubtreeToUpdate(getRootNode());
-    }
-
-    @Override
-    public final void childReplaced(@NotNull final PsiTreeChangeEvent event) {
-      getUpdater().addSubtreeToUpdate(getRootNode());
-    }
-
-    @Override
-    public final void childMoved(@NotNull final PsiTreeChangeEvent event) {
-      getUpdater().addSubtreeToUpdate(getRootNode());
-    }
-
-    @Override
-    public final void childrenChanged(@NotNull final PsiTreeChangeEvent event) {
-      getUpdater().addSubtreeToUpdate(getRootNode());
-    }
-
-    @Override
-    public final void propertyChanged(@NotNull final PsiTreeChangeEvent event) {
-      getUpdater().addSubtreeToUpdate(getRootNode());
-    }
-  }
-
-  private final class MyFileStatusListener implements FileStatusListener {
-    @Override
-    public final void fileStatusesChanged() {
-      getUpdater().addSubtreeToUpdate(getRootNode());
-    }
-
-    @Override
-    public final void fileStatusChanged(@NotNull final VirtualFile virtualFile) {
-      getUpdater().addSubtreeToUpdate(getRootNode());
-    }
+  HierarchyTreeBuilder() {
+    throw new IllegalStateException();
   }
 }

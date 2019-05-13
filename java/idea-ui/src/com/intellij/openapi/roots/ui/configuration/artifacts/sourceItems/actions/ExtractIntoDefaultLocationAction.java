@@ -45,7 +45,7 @@ public class ExtractIntoDefaultLocationAction extends PutIntoDefaultLocationActi
   }
 
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     final String pathForClasses = myArtifactEditor.getArtifact().getArtifactType().getDefaultPathFor(PackagingElementOutputKind.DIRECTORIES_WITH_CLASSES);
     final Presentation presentation = e.getPresentation();
     if (onlyJarsSelected() && pathForClasses != null) {
@@ -67,10 +67,10 @@ public class ExtractIntoDefaultLocationAction extends PutIntoDefaultLocationActi
   }
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     final String pathForClasses = myArtifactEditor.getArtifact().getArtifactType().getDefaultPathFor(PackagingElementOutputKind.DIRECTORIES_WITH_CLASSES);
     if (pathForClasses != null) {
-      final List<PackagingElement<?>> extracted = new ArrayList<PackagingElement<?>>();
+      final List<PackagingElement<?>> extracted = new ArrayList<>();
       for (PackagingSourceItem item : mySourceItemsTree.getSelectedItems()) {
         final ArtifactEditorContext context = myArtifactEditor.getContext();
         final List<? extends PackagingElement<?>> elements = item.createElements(context);

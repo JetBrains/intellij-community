@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,24 +15,25 @@
  */
 package com.intellij.codeInsight.generation;
 
-import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.*;
+import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.codeStyle.JavaCodeStyleManager;
+import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
+import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.MethodSignature;
 import com.intellij.psi.util.MethodSignatureUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.java.generate.GenerationUtil;
+import org.jetbrains.java.generate.template.TemplateResource;
 
-import java.text.MessageFormat;
 import java.util.*;
 
 /**
@@ -40,70 +41,64 @@ import java.util.*;
  */
 public class GenerateEqualsHelper implements Runnable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.generation.GenerateEqualsHelper");
+
+  @NonNls private static final String INSTANCE_NAME = "instanceBaseName";
+  @NonNls private static final String BASE_PARAM_NAME = "baseParamName";
+  @NonNls private static final String SUPER_PARAM_NAME = "superParamName";
+  @NonNls private static final String SUPER_HAS_EQUALS = "superHasEquals";
+  @NonNls private static final String CHECK_PARAMETER_WITH_INSTANCEOF = "checkParameterWithInstanceof";
+  @NonNls private static final String SUPER_HAS_HASH_CODE = "superHasHashCode";
+
   private final PsiClass myClass;
   private final PsiField[] myEqualsFields;
   private final PsiField[] myHashCodeFields;
   private final HashSet<PsiField> myNonNullSet;
   private final PsiElementFactory myFactory;
-  private String myParameterName;
-
-  @NonNls private static final String BASE_OBJECT_PARAMETER_NAME = "object";
-  @NonNls private static final String BASE_OBJECT_LOCAL_NAME = "that";
-  @NonNls private static final String RESULT_VARIABLE = "result";
-  @NonNls private static final String TEMP_VARIABLE = "temp";
-
-  private String myClassInstanceName;
-
-  @NonNls private static final HashMap<String, MessageFormat> PRIMITIVE_HASHCODE_FORMAT = new HashMap<String, MessageFormat>();
   private final boolean mySuperHasHashCode;
   private final CodeStyleManager myCodeStyleManager;
   private final JavaCodeStyleManager myJavaCodeStyleManager;
   private final Project myProject;
   private final boolean myCheckParameterWithInstanceof;
+  private final boolean myUseAccessors;
+
+  public GenerateEqualsHelper(Project project,
+                            PsiClass aClass,
+                            PsiField[] equalsFields,
+                            PsiField[] hashCodeFields,
+                            PsiField[] nonNullFields,
+                            boolean useInstanceofToCheckParameterType) {
+    this(project, aClass, equalsFields, hashCodeFields, nonNullFields, useInstanceofToCheckParameterType, false);
+  }
 
   public GenerateEqualsHelper(Project project,
                               PsiClass aClass,
                               PsiField[] equalsFields,
                               PsiField[] hashCodeFields,
                               PsiField[] nonNullFields,
-                              boolean useInstanceofToCheckParameterType) {
+                              boolean useInstanceofToCheckParameterType,
+                              boolean useAccessors) {
     myClass = aClass;
     myEqualsFields = equalsFields;
     myHashCodeFields = hashCodeFields;
     myProject = project;
     myCheckParameterWithInstanceof = useInstanceofToCheckParameterType;
+    myUseAccessors = useAccessors;
 
-    myNonNullSet = new HashSet<PsiField>();
+    myNonNullSet = new HashSet<>();
     ContainerUtil.addAll(myNonNullSet, nonNullFields);
     final PsiManager manager = PsiManager.getInstance(project);
 
-    myFactory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();
+    myFactory = JavaPsiFacade.getElementFactory(manager.getProject());
 
     mySuperHasHashCode = superMethodExists(getHashCodeSignature());
     myCodeStyleManager = CodeStyleManager.getInstance(manager.getProject());
     myJavaCodeStyleManager = JavaCodeStyleManager.getInstance(manager.getProject());
   }
 
-  private static String getUniqueLocalVarName(String base, PsiField[] fields) {
-    String id = base;
-    int index = 0;
-    while (true) {
-      if (index > 0) {
-        id = base + index;
-      }
-      index++;
-      boolean anyEqual = false;
-      for (PsiField equalsField : fields) {
-        if (id.equals(equalsField.getName())) {
-          anyEqual = true;
-          break;
-        }
-      }
-      if (!anyEqual) break;
-    }
+  private static boolean shouldAddOverrideAnnotation(PsiElement context) {
+    JavaCodeStyleSettings style = JavaCodeStyleSettings.getInstance(context.getContainingFile());
 
-
-    return id;
+    return style.INSERT_OVERRIDE_ANNOTATION && PsiUtil.isLanguageLevel5OrHigher(context);
   }
 
   @Override
@@ -121,20 +116,19 @@ public class GenerateEqualsHelper implements Runnable {
 
   public Collection<PsiMethod> generateMembers() throws IncorrectOperationException {
     PsiMethod equals = null;
-    if (myEqualsFields != null && findMethod(myClass, getEqualsSignature(myProject, myClass.getResolveScope())) == null) {
+    if (myEqualsFields != null && GenerateEqualsHandler.needToGenerateMethod(findMethod(myClass, getEqualsSignature(myProject, myClass.getResolveScope())))) {
       equals = createEquals();
     }
 
     PsiMethod hashCode = null;
-    if (myHashCodeFields != null && findMethod(myClass, getHashCodeSignature()) == null) {
+    if (myHashCodeFields != null && GenerateEqualsHandler.needToGenerateMethod(findMethod(myClass, getHashCodeSignature()))) {
       if (myHashCodeFields.length > 0) {
         hashCode = createHashCode();
       }
       else {
         if (!mySuperHasHashCode) {
           @NonNls String text = "";
-          CodeStyleSettings styleSettings = CodeStyleSettingsManager.getSettings(myProject);
-          if (GenerateMembersUtil.shouldAddOverrideAnnotation(myClass, false)) {
+          if (shouldAddOverrideAnnotation(myClass)) {
             text += "@Override\n";
           }
 
@@ -158,348 +152,115 @@ public class GenerateEqualsHelper implements Runnable {
     }
   }
 
+  public static Map<String, PsiType> getEqualsImplicitVars(Project project) {
+    final Map<String, PsiType> map = new LinkedHashMap<>();
+    final PsiType stringType = project != null ? PsiType.getJavaLangString(PsiManager.getInstance(project), GlobalSearchScope.allScope(project))
+                                               : PsiType.NULL;
+    map.put(INSTANCE_NAME, stringType);
+    map.put(BASE_PARAM_NAME, stringType);
+    map.put(SUPER_PARAM_NAME, stringType);
+    map.put(CHECK_PARAMETER_WITH_INSTANCEOF, PsiType.BOOLEAN);
+    map.put(SUPER_HAS_EQUALS, PsiType.BOOLEAN);
+    return map;
+  }
 
+  public static Map<String, PsiType> getHashCodeImplicitVars() {
+    final Map<String, PsiType> map = new LinkedHashMap<>();
+    map.put(SUPER_HAS_HASH_CODE, PsiType.BOOLEAN);
+    return map;
+  }
+  
   private PsiMethod createEquals() throws IncorrectOperationException {
-    JavaCodeStyleManager codeStyleManager = myJavaCodeStyleManager;
+    JavaCodeStyleSettings styleSettings = JavaCodeStyleSettings.getInstance(myClass.getContainingFile());
+    ArrayList<PsiField> equalsFields = new ArrayList<>();
+    ContainerUtil.addAll(equalsFields, myEqualsFields);
+    Collections.sort(equalsFields, EqualsFieldsComparator.INSTANCE);
+
+    final HashMap<String, Object> contextMap = new HashMap<>();
+
+    final PsiType classType = JavaPsiFacade.getElementFactory(myClass.getProject()).createType(myClass);
+    final JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(myClass.getProject());
+    String[] nameSuggestions = codeStyleManager
+      .suggestVariableName(VariableKind.LOCAL_VARIABLE, null, null, classType).names;
+    String instanceBaseName = nameSuggestions.length > 0 && nameSuggestions[0].length() < 10 ? nameSuggestions[0] : "that";
+    contextMap.put(INSTANCE_NAME, instanceBaseName);
+
     final PsiType objectType = PsiType.getJavaLangObject(myClass.getManager(), myClass.getResolveScope());
-    String[] nameSuggestions = codeStyleManager.suggestVariableName(VariableKind.PARAMETER, null, null, objectType).names;
-    final String objectBaseName = nameSuggestions.length > 0 ? nameSuggestions[0] : BASE_OBJECT_PARAMETER_NAME;
-    myParameterName = getUniqueLocalVarName(objectBaseName, myEqualsFields);
-    final PsiType classType = myFactory.createType(myClass);
-    nameSuggestions = codeStyleManager.suggestVariableName(VariableKind.LOCAL_VARIABLE, null, null, classType).names;
-    String instanceBaseName = nameSuggestions.length > 0 && nameSuggestions[0].length() < 10 ? nameSuggestions[0] : BASE_OBJECT_LOCAL_NAME;
-    myClassInstanceName = getUniqueLocalVarName(instanceBaseName, myEqualsFields);
+    nameSuggestions = codeStyleManager.suggestVariableName(VariableKind.PARAMETER, null, null, objectType).names;
+    final String objectBaseName = nameSuggestions.length > 0 ? nameSuggestions[0] : "object";
+    contextMap.put(BASE_PARAM_NAME, objectBaseName);
+    final MethodSignature equalsSignature = getEqualsSignature(myProject, myClass.getResolveScope());
 
-    @NonNls StringBuffer buffer = new StringBuffer();
-    CodeStyleSettings styleSettings = CodeStyleSettingsManager.getSettings(myProject);
-    if (GenerateMembersUtil.shouldAddOverrideAnnotation(myClass, false)) {
-      buffer.append("@Override\n");
+    PsiMethod superEquals = MethodSignatureUtil.findMethodBySignature(myClass, equalsSignature, true);
+    if (superEquals != null) {
+      contextMap.put(SUPER_PARAM_NAME, superEquals.getParameterList().getParameters()[0].getName());
     }
-    buffer.append("public boolean equals(Object ").append(myParameterName).append(") {\n");
-    addEqualsPrologue(buffer);
-    if (myEqualsFields.length > 0) {
-      addClassInstance(buffer);
+    
+    contextMap.put(SUPER_HAS_EQUALS, superMethodExists(equalsSignature));
+    contextMap.put(CHECK_PARAMETER_WITH_INSTANCEOF, myCheckParameterWithInstanceof);
 
-      ArrayList<PsiField> equalsFields = new ArrayList<PsiField>();
-      ContainerUtil.addAll(equalsFields, myEqualsFields);
-      Collections.sort(equalsFields, EqualsFieldsComparator.INSTANCE);
-
-      for (PsiField field : equalsFields) {
-        if (!field.hasModifierProperty(PsiModifier.STATIC)) {
-          final PsiType type = field.getType();
-          if (type instanceof PsiArrayType) {
-            addArrayEquals(buffer, field);
-          }
-          else if (type instanceof PsiPrimitiveType) {
-            if (PsiType.DOUBLE.equals(type) || PsiType.FLOAT.equals(type)) {
-              addDoubleFieldComparison(buffer, field);
-            }
-            else {
-              addPrimitiveFieldComparison(buffer, field);
-            }
-          }
-          else {
-            if (type instanceof PsiClassType) {
-              final PsiClass aClass = ((PsiClassType)type).resolve();
-              if (aClass != null && aClass.isEnum()) {
-                addPrimitiveFieldComparison(buffer, field);
-                continue;
-              }
-            }
-            addFieldComparison(buffer, field);
-          }
-        }
-      }
+    final String methodText = GenerationUtil
+      .velocityGenerateCode(myClass, equalsFields, myNonNullSet, new HashMap<>(), contextMap,
+                            EqualsHashCodeTemplatesManager.getInstance().getDefaultEqualsTemplate().getTemplate(), 0, false, myUseAccessors);
+    PsiMethod result;
+    try {
+      result = myFactory.createMethodFromText(methodText, myClass);
     }
-    buffer.append("\nreturn true;\n}");
-    PsiMethod result = myFactory.createMethodFromText(buffer.toString(), myClass);
-    final PsiParameter parameter = result.getParameterList().getParameters()[0];
+    catch (IncorrectOperationException e) {
+      return null;
+    }
+    final PsiParameter[] parameters = result.getParameterList().getParameters();
+    if (parameters.length != 1) return null;
+    final PsiParameter parameter = parameters[0];
     PsiUtil.setModifierProperty(parameter, PsiModifier.FINAL, styleSettings.GENERATE_FINAL_PARAMETERS);
 
     PsiMethod method = (PsiMethod)myCodeStyleManager.reformat(result);
+    if (superEquals != null) {
+      OverrideImplementUtil.annotateOnOverrideImplement(method, myClass, superEquals);
+    }
     method = (PsiMethod)myJavaCodeStyleManager.shortenClassReferences(method);
     return method;
   }
-
-  private void addDoubleFieldComparison(final StringBuffer buffer, final PsiField field) {
-    @NonNls final String type = PsiType.DOUBLE.equals(field.getType()) ? "Double" : "Float";
-    final Object[] parameters = new Object[]{type, myClassInstanceName, field.getName()};
-    DOUBLE_FIELD_COMPARER_MF.format(parameters, buffer, null);
-  }
-
-  @NonNls private static final MessageFormat ARRAY_COMPARER_MF =
-    new MessageFormat("if(!java.util.Arrays.equals({1}, {0}.{1})) return false;\n");
-  @NonNls private static final MessageFormat FIELD_COMPARER_MF =
-    new MessageFormat("if({1}!=null ? !{1}.equals({0}.{1}) : {0}.{1}!= null)return false;\n");
-  @NonNls private static final MessageFormat NON_NULL_FIELD_COMPARER_MF = new MessageFormat("if(!{1}.equals({0}.{1}))return false;\n");
-  @NonNls private static final MessageFormat PRIMITIVE_FIELD_COMPARER_MF = new MessageFormat("if({1}!={0}.{1})return false;\n");
-  @NonNls private static final MessageFormat DOUBLE_FIELD_COMPARER_MF =
-    new MessageFormat("if({0}.compare({1}.{2}, {2}) != 0)return false;\n");
-
-  private void addArrayEquals(StringBuffer buffer, PsiField field) {
-    final PsiType fieldType = field.getType();
-    if (isNestedArray(fieldType)) {
-      buffer.append(" ");
-      buffer.append(CodeInsightBundle.message("generate.equals.compare.nested.arrays.comment", field.getName()));
-      buffer.append("\n");
-      return;
-    }
-    if (isArrayOfObjects(fieldType)) {
-      buffer.append(" ");
-      buffer.append(CodeInsightBundle.message("generate.equals.compare.arrays.comment"));
-      buffer.append("\n");
-    }
-
-    ARRAY_COMPARER_MF.format(getComparerFormatParameters(field), buffer, null);
-  }
-
-  private Object[] getComparerFormatParameters(PsiField field) {
-    return new Object[]{myClassInstanceName, field.getName()};
-  }
-
-
-  private void addFieldComparison(StringBuffer buffer, PsiField field) {
-    boolean canBeNull = !myNonNullSet.contains(field);
-    if (canBeNull) {
-      FIELD_COMPARER_MF.format(getComparerFormatParameters(field), buffer, null);
-    }
-    else {
-      NON_NULL_FIELD_COMPARER_MF.format(getComparerFormatParameters(field), buffer, null);
-    }
-  }
-
-  private void addPrimitiveFieldComparison(StringBuffer buffer, PsiField field) {
-    PRIMITIVE_FIELD_COMPARER_MF.format(getComparerFormatParameters(field), buffer, null);
-  }
-
-  @SuppressWarnings("HardCodedStringLiteral")
-  private void addInstanceOfToText(@NonNls StringBuffer buffer, String returnValue) {
-    if (myCheckParameterWithInstanceof) {
-      buffer.append("if(!(").append(myParameterName).append(" instanceof ").append(myClass.getName())
-        .append(")) " + "return ").append(returnValue).append(";\n");
-    }
-    else {
-      buffer.append("if(").append(myParameterName).append("== null || getClass() != ").append(myParameterName)
-        .append(".getClass()) " + "return ").append(returnValue).append(";\n");
-    }
-  }
-
-  private void addEqualsPrologue(@NonNls StringBuffer buffer) {
-    buffer.append("if(this==");
-    buffer.append(myParameterName);
-    buffer.append(") return true;\n");
-    if (!superMethodExists(getEqualsSignature(myProject, myClass.getResolveScope()))) {
-      addInstanceOfToText(buffer, Boolean.toString(false));
-    }
-    else {
-      addInstanceOfToText(buffer, Boolean.toString(false));
-      buffer.append("if(!super.equals(");
-      buffer.append(myParameterName);
-      buffer.append(")) return false;\n");
-    }
-  }
-
-  private void addClassInstance(@NonNls StringBuffer buffer) {
-    buffer.append("\n");
-    // A a = (A) object;
-    CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(myCodeStyleManager.getProject());
-    if (settings.GENERATE_FINAL_LOCALS) {
-      buffer.append("final ");
-    }
-
-    buffer.append(myClass.getName());
-    buffer.append(" ").append(myClassInstanceName).append(" = (");
-    buffer.append(myClass.getName());
-    buffer.append(")");
-    buffer.append(myParameterName);
-    buffer.append(";\n\n");
-  }
-
 
   private boolean superMethodExists(MethodSignature methodSignature) {
     LOG.assertTrue(myClass.isValid());
     PsiMethod superEquals = MethodSignatureUtil.findMethodBySignature(myClass, methodSignature, true);
     if (superEquals == null) return true;
+    PsiClass containingClass = superEquals.getContainingClass();
+    //implicit equals e.g. generated by lombok
+    if (containingClass == myClass) {
+      return Arrays.stream(superEquals.findSuperMethods()).anyMatch(superMethod -> {
+        PsiClass superClass = superMethod.getContainingClass();
+        return !superMethod.hasModifierProperty(PsiModifier.ABSTRACT) &&
+                superClass != null &&
+               !CommonClassNames.JAVA_LANG_OBJECT.equals(superClass.getQualifiedName());
+      });
+    }
     if (superEquals.hasModifierProperty(PsiModifier.ABSTRACT)) return false;
-    return !CommonClassNames.JAVA_LANG_OBJECT.equals(superEquals.getContainingClass().getQualifiedName());
+    if (containingClass == null) return false;
+    return !CommonClassNames.JAVA_LANG_OBJECT.equals(containingClass.getQualifiedName());
   }
 
   private PsiMethod createHashCode() throws IncorrectOperationException {
-    @NonNls StringBuilder buffer = new StringBuilder();
+    final HashMap<String, Object> contextMap = new HashMap<>();
+    contextMap.put(SUPER_HAS_HASH_CODE, mySuperHasHashCode);
 
-    CodeStyleSettings styleSettings = CodeStyleSettingsManager.getSettings(myProject);
-    if (GenerateMembersUtil.shouldAddOverrideAnnotation(myClass, false)) {
-      buffer.append("@Override\n");
+    final String methodText = GenerationUtil
+      .velocityGenerateCode(myClass, Arrays.asList(myHashCodeFields), myNonNullSet, new HashMap<>(), contextMap,
+                            EqualsHashCodeTemplatesManager.getInstance().getDefaultHashcodeTemplate().getTemplate(), 0, false, myUseAccessors);
+    PsiMethod hashCode;
+    try {
+      hashCode = myFactory.createMethodFromText(methodText, null);
     }
-    buffer.append("public int hashCode() {\n");
-    if (!mySuperHasHashCode && myHashCodeFields.length == 1) {
-      PsiField field = myHashCodeFields[0];
-      final String tempName = addTempForOneField(field, buffer);
-      buffer.append("return ");
-      if (field.getType() instanceof PsiPrimitiveType) {
-        addPrimitiveFieldHashCode(buffer, field, tempName);
-      }
-      else {
-        addFieldHashCode(buffer, field, false);
-      }
-      buffer.append(";\n}");
-    }
-    else if (myHashCodeFields.length > 0) {
-      CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(myCodeStyleManager.getProject());
-      final String resultName = getUniqueLocalVarName(settings.LOCAL_VARIABLE_NAME_PREFIX + RESULT_VARIABLE, myHashCodeFields);
-
-      buffer.append("int ");
-      buffer.append(resultName);
-
-      boolean resultAssigned = false;
-      boolean resultDeclarationCompleted = false;
-      if (mySuperHasHashCode) {
-        buffer.append(" = ");
-        addSuperHashCode(buffer);
-        buffer.append(";\n");
-        resultAssigned = true;
-        resultDeclarationCompleted = true;
-      }
-      String tempName = addTempDeclaration(buffer, resultDeclarationCompleted);
-      if (tempName != null) {
-        resultDeclarationCompleted = true;
-      }
-      for (PsiField field : myHashCodeFields) {
-        addTempAssignment(field, buffer, tempName);
-        if (resultDeclarationCompleted) {
-          buffer.append(resultName);
-        }
-
-        buffer.append(" = ");
-        if (resultAssigned) {
-          buffer.append("31*");
-          buffer.append(resultName);
-          buffer.append(" + ");
-        }
-        if (field.getType() instanceof PsiPrimitiveType) {
-          addPrimitiveFieldHashCode(buffer, field, tempName);
-        }
-        else {
-          addFieldHashCode(buffer, field, resultAssigned);
-        }
-        buffer.append(";\n");
-        resultAssigned = true;
-        resultDeclarationCompleted = true;
-      }
-      buffer.append("return ");
-      buffer.append(resultName);
-      buffer.append(";\n}");
-    }
-    else {
-      buffer.append("return 0;\n}");
-    }
-    PsiMethod hashCode = myFactory.createMethodFromText(buffer.toString(), null);
-    hashCode = (PsiMethod)myJavaCodeStyleManager.shortenClassReferences(hashCode);
-    return (PsiMethod)myCodeStyleManager.reformat(hashCode);
-  }
-
-  private static void addTempAssignment(PsiField field, StringBuilder buffer, String tempName) {
-    if (PsiType.DOUBLE.equals(field.getType())) {
-      buffer.append(tempName);
-      addTempForDoubleInitialization(field, buffer);
-    }
-  }
-
-  private static void addTempForDoubleInitialization(PsiField field, @NonNls StringBuilder buffer) {
-    buffer.append(" = ");
-    buffer.append(field.getName());
-    buffer.append(" != +0.0d ? Double.doubleToLongBits(");
-    buffer.append(field.getName());
-    buffer.append(") : 0L;\n");
-  }
-
-  private String addTempDeclaration(@NonNls StringBuilder buffer, boolean resultDeclarationCompleted) {
-    for (PsiField hashCodeField : myHashCodeFields) {
-      if (PsiType.DOUBLE.equals(hashCodeField.getType())) {
-        final String name = getUniqueLocalVarName(TEMP_VARIABLE, myHashCodeFields);
-        if (!resultDeclarationCompleted) {
-          buffer.append("\n;");
-        }
-        buffer.append("long ");
-        buffer.append(name);
-        buffer.append(";\n");
-        return name;
-      }
-    }
-    return null;
-  }
-
-  @SuppressWarnings("HardCodedStringLiteral")
-  private String addTempForOneField(PsiField field, StringBuilder buffer) {
-    if (PsiType.DOUBLE.equals(field.getType())) {
-      final String name = getUniqueLocalVarName(TEMP_VARIABLE, myHashCodeFields);
-      CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(myCodeStyleManager.getProject());
-      if (settings.GENERATE_FINAL_LOCALS) {
-        buffer.append("final ");
-      }
-      buffer.append("long ").append(name);
-      addTempForDoubleInitialization(field, buffer);
-      return name;
-    }
-    else {
+    catch (IncorrectOperationException e) {
       return null;
     }
-  }
-
-  private static void addPrimitiveFieldHashCode(StringBuilder buffer, PsiField field, String tempName) {
-    MessageFormat format = PRIMITIVE_HASHCODE_FORMAT.get(field.getType().getCanonicalText());
-    buffer.append(format.format(new Object[]{field.getName(), tempName}));
-  }
-
-  private void addFieldHashCode(@NonNls StringBuilder buffer, PsiField field, boolean brace) {
-    final String name = field.getName();
-    if (myNonNullSet.contains(field)) {
-      adjustHashCodeToArrays(buffer, field, name);
+    final PsiMethod superHashCode = MethodSignatureUtil.findMethodBySignature(myClass, getHashCodeSignature(), true);
+    if (superHashCode != null) {
+      OverrideImplementUtil.annotateOnOverrideImplement(hashCode, myClass, superHashCode);
     }
-    else {
-      if (brace) {
-        buffer.append("(");
-      }
-      buffer.append(name);
-      buffer.append(" != null ? ");
-      adjustHashCodeToArrays(buffer, field, name);
-      buffer.append(" : 0");
-      if (brace) {
-        buffer.append(")");
-      }
-    }
-  }
-
-  private static void adjustHashCodeToArrays(@NonNls StringBuilder buffer, final PsiField field, final String name) {
-    if (field.getType() instanceof PsiArrayType && hasArraysHashCode(field)) {
-      buffer.append("java.util.Arrays.hashCode(");
-      buffer.append(name);
-      buffer.append(")");
-    }
-    else {
-      buffer.append(name);
-      buffer.append(".hashCode()");
-    }
-  }
-
-  private static boolean hasArraysHashCode(final PsiField field) {
-    // the method was added in JDK 1.5 - check for actual method presence rather than language level
-    Module module = ModuleUtilCore.findModuleForPsiElement(field);
-    if (module == null) return false;
-    PsiClass arraysClass = JavaPsiFacade.getInstance(field.getProject()).findClass("java.util.Arrays", module.getModuleWithLibrariesScope());
-    if (arraysClass == null) return false;
-    final PsiMethod[] methods = arraysClass.findMethodsByName("hashCode", false);
-    return methods.length > 0;
-  }
-
-  @SuppressWarnings("HardCodedStringLiteral")
-  private void addSuperHashCode(StringBuilder buffer) {
-    if (mySuperHasHashCode) {
-      buffer.append("super.hashCode()");
-    }
-    else {
-      buffer.append("0");
-    }
+    hashCode = (PsiMethod)myJavaCodeStyleManager.shortenClassReferences(hashCode);
+    return (PsiMethod)myCodeStyleManager.reformat(hashCode);
   }
 
 
@@ -511,6 +272,25 @@ public class GenerateEqualsHelper implements Runnable {
     return MethodSignatureUtil.findMethodBySignature(aClass, signature, false);
   }
 
+  public void executeWithDefaultTemplateWhenNotApplicable() {
+    EqualsHashCodeTemplatesManager manager = EqualsHashCodeTemplatesManager.getInstance();
+    String baseName = manager.getDefaultTemplateBaseName();
+    try {
+      TemplateResource defaultTemplate = manager.getDefaultTemplate();
+      String className = defaultTemplate.getClassName();
+      if (className != null) {
+        PsiClass usedClass = JavaPsiFacade.getInstance(myClass.getProject()).findClass(className, myClass.getResolveScope());
+        if (usedClass == null || PsiUtil.getLanguageLevel(myClass).isLessThan(PsiUtil.getLanguageLevel(usedClass))) {
+          manager.setDefaultTemplate(EqualsHashCodeTemplatesManager.INTELLI_J_DEFAULT);
+        }
+      }
+      run();
+    }
+    finally {
+      manager.setDefaultTemplate(baseName);
+    }
+  }
+
   static class EqualsFieldsComparator implements Comparator<PsiField> {
     public static final EqualsFieldsComparator INSTANCE = new EqualsFieldsComparator();
 
@@ -518,37 +298,8 @@ public class GenerateEqualsHelper implements Runnable {
     public int compare(PsiField f1, PsiField f2) {
       if (f1.getType() instanceof PsiPrimitiveType && !(f2.getType() instanceof PsiPrimitiveType)) return -1;
       if (!(f1.getType() instanceof PsiPrimitiveType) && f2.getType() instanceof PsiPrimitiveType) return 1;
-      final String name1 = f1.getName();
-      final String name2 = f2.getName();
-      assert name1 != null && name2 != null;
-      return name1.compareTo(name2);
+      return PsiUtilCore.compareElementsByPosition(f1, f2);
     }
-  }
-
-  static {
-    initPrimitiveHashcodeFormats();
-  }
-
-  @SuppressWarnings("HardCodedStringLiteral")
-  private static void initPrimitiveHashcodeFormats() {
-    PRIMITIVE_HASHCODE_FORMAT.put("byte", new MessageFormat("(int) {0}"));
-    PRIMITIVE_HASHCODE_FORMAT.put("short", new MessageFormat("(int) {0}"));
-    PRIMITIVE_HASHCODE_FORMAT.put("int", new MessageFormat("{0}"));
-    PRIMITIVE_HASHCODE_FORMAT.put("long", new MessageFormat("(int) ({0} ^ ({0} >>> 32))"));
-    PRIMITIVE_HASHCODE_FORMAT.put("boolean", new MessageFormat("({0} ? 1 : 0)"));
-
-    PRIMITIVE_HASHCODE_FORMAT.put("float", new MessageFormat("({0} != +0.0f ? Float.floatToIntBits({0}) : 0)"));
-    PRIMITIVE_HASHCODE_FORMAT.put("double", new MessageFormat("(int) ({1} ^ ({1} >>> 32))"));
-
-    PRIMITIVE_HASHCODE_FORMAT.put("char", new MessageFormat("(int) {0}"));
-    PRIMITIVE_HASHCODE_FORMAT.put("void", new MessageFormat("0"));
-    PRIMITIVE_HASHCODE_FORMAT.put("void", new MessageFormat("({0} ? 1 : 0)"));
-  }
-
-  public static boolean isNestedArray(PsiType aType) {
-    if (!(aType instanceof PsiArrayType)) return false;
-    final PsiType componentType = ((PsiArrayType)aType).getComponentType();
-    return componentType instanceof PsiArrayType;
   }
 
   public static boolean isArrayOfObjects(PsiType aType) {

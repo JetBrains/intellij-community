@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,16 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.intellij.refactoring.move.moveFilesOrDirectories;
 
+import com.intellij.ide.scratch.ScratchFileService;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.refactoring.move.MoveCallback;
 import com.intellij.refactoring.move.MoveHandlerDelegate;
 import org.jetbrains.annotations.Nullable;
@@ -33,8 +36,9 @@ import java.util.HashSet;
 public class MoveFilesOrDirectoriesHandler extends MoveHandlerDelegate {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.move.moveFilesOrDirectories.MoveFilesOrDirectoriesHandler");
 
+  @Override
   public boolean canMove(final PsiElement[] elements, final PsiElement targetContainer) {
-    HashSet<String> names = new HashSet<String>();
+    HashSet<String> names = new HashSet<>();
     for (PsiElement element : elements) {
       if (element instanceof PsiFile) {
         PsiFile file = (PsiFile)element;
@@ -49,20 +53,20 @@ public class MoveFilesOrDirectoriesHandler extends MoveHandlerDelegate {
       }
     }
 
-    PsiElement[] filteredElements = PsiTreeUtil.filterAncestors(elements);
-    if (filteredElements.length != elements.length) {
-      // there are nested dirs
-      return false;
-    }
     return super.canMove(elements, targetContainer);
   }
 
-  public boolean isValidTarget(final PsiElement psiElement, PsiElement[] sources) {
-    return isValidTarget(psiElement);
+  @Override
+  public boolean isValidTarget(final PsiElement targetElement, PsiElement[] sources) {
+    return isValidTarget(targetElement);
   }
 
   public static boolean isValidTarget(PsiElement psiElement) {
-    return (psiElement instanceof PsiDirectory || psiElement instanceof PsiDirectoryContainer) && psiElement.getManager().isInProject(psiElement);
+    if (psiElement == null) return true;
+    if (!(psiElement instanceof PsiDirectory || psiElement instanceof PsiDirectoryContainer)) return false;
+    if (psiElement.getManager().isInProject(psiElement)) return true;
+    VirtualFile virtualFile = PsiUtilCore.getVirtualFile(psiElement);
+    return ScratchFileService.isInScratchRoot(virtualFile) || virtualFile != null && ProjectRootManager.getInstance(psiElement.getProject()).getFileIndex().isExcluded(virtualFile);
   }
 
   public void doMove(final PsiElement[] elements, final PsiElement targetContainer) {
@@ -70,14 +74,26 @@ public class MoveFilesOrDirectoriesHandler extends MoveHandlerDelegate {
     doMove(project, elements, targetContainer, null);
   }
 
-  public void doMove(final Project project, final PsiElement[] elements, final PsiElement targetContainer, @Nullable final MoveCallback callback) {
-    if (!LOG.assertTrue(targetContainer == null || targetContainer instanceof PsiDirectory || targetContainer instanceof PsiDirectoryContainer, 
-                        "container: " + targetContainer + "; elements: " + Arrays.toString(elements))) {
-      return;
-    }
-    MoveFilesOrDirectoriesUtil.doMove(project, adjustForMove(project, elements, targetContainer), new PsiElement[] {targetContainer}, callback);
+
+  @Nullable
+  @Override
+  public PsiElement[] adjustForMove(Project project, PsiElement[] sourceElements, PsiElement targetElement) {
+    return PsiTreeUtil.filterAncestors(sourceElements);
   }
 
+  @Override
+  public void doMove(final Project project, final PsiElement[] elements, final PsiElement targetContainer, @Nullable final MoveCallback callback) {
+    if (!LOG.assertTrue(targetContainer == null || targetContainer instanceof PsiDirectory || targetContainer instanceof PsiDirectoryContainer,
+                        "container: " + targetContainer + "; elements: " + Arrays.toString(elements) + "; working handler: " + toString())) {
+      return;
+    }
+    final PsiElement[] adjustedElements = adjustForMove(project, elements, targetContainer);
+    if (adjustedElements != null) {
+      MoveFilesOrDirectoriesUtil.doMove(project, adjustedElements, new PsiElement[] {targetContainer}, callback);
+    }
+  }
+
+  @Override
   public boolean tryToMove(final PsiElement element, final Project project, final DataContext dataContext, final PsiReference reference,
                            final Editor editor) {
     if ((element instanceof PsiFile && ((PsiFile)element).getVirtualFile() != null)

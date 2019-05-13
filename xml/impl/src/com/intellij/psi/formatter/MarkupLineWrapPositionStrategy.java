@@ -19,16 +19,16 @@ import com.intellij.openapi.editor.LineWrapPositionStrategy;
 import com.intellij.openapi.editor.PsiAwareDefaultLineWrapPositionStrategy;
 import com.intellij.psi.TokenType;
 import com.intellij.psi.xml.XmlElementType;
+import com.intellij.psi.xml.XmlTokenType;
 
 /**
  * {@link LineWrapPositionStrategy} for markup languages like XML, HTML etc.
  * 
  * @author Denis Zhdanov
- * @since 5/11/11 7:42 PM
  */
 public class MarkupLineWrapPositionStrategy extends PsiAwareDefaultLineWrapPositionStrategy {
 
   public MarkupLineWrapPositionStrategy() {
-    super(true, XmlElementType.XML_TEXT, TokenType.WHITE_SPACE);
+    super(true, XmlElementType.XML_TEXT, XmlTokenType.XML_COMMENT_CHARACTERS, TokenType.WHITE_SPACE);
   }
 }

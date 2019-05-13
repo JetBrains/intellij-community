@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,43 +15,45 @@
  */
 package com.intellij.usages.impl;
 
-import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.usages.UsageView;
+import com.intellij.util.BitUtil;
+import com.intellij.util.Consumer;
 import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.tree.DefaultMutableTreeNode;
-import javax.swing.tree.DefaultTreeModel;
+import java.util.Vector;
 
 /**
  * @author max
  */
 public abstract class Node extends DefaultMutableTreeNode {
-  protected final DefaultTreeModel myTreeModel;
-  private String myText;
+  private int myCachedTextHash;
 
-  private byte flags;
-  private static final int INVALID_FLAG = 0;
-  private static final int READ_ONLY_FLAG = 1;
-  private static final int READ_ONLY_COMPUTED_FLAG = 2;
-  private static final int EXCLUDED_FLAG = 3;
-  private static final int UPDATED_FLAG = 4;
+  private byte myCachedFlags; // guarded by this; bit packed flags below:
 
-  @MagicConstant(intValues = {INVALID_FLAG, READ_ONLY_FLAG, READ_ONLY_COMPUTED_FLAG, EXCLUDED_FLAG, UPDATED_FLAG})
-  @interface FlagConstant {}
+  private static final byte CACHED_INVALID_MASK = 1;
+  private static final byte CACHED_READ_ONLY_MASK = 1 << 1;
+  private static final byte READ_ONLY_COMPUTED_MASK = 1 << 2;
+  static final byte EXCLUDED_MASK = 1 << 3;
+  private static final byte UPDATED_MASK = 1 << 4;
+  private static final byte FORCE_UPDATE_REQUESTED_MASK = 1 << 5;
 
-  private boolean isFlagSet(@FlagConstant int flag) {
-    int state = flags >> flag;
-    return (state & 1) != 0;
+  @MagicConstant(intValues = {
+    CACHED_INVALID_MASK, CACHED_READ_ONLY_MASK, READ_ONLY_COMPUTED_MASK,
+    EXCLUDED_MASK, UPDATED_MASK, FORCE_UPDATE_REQUESTED_MASK})
+  private @interface FlagConstant {}
+
+  private synchronized boolean isFlagSet(@FlagConstant byte mask) {
+    return BitUtil.isSet(myCachedFlags, mask);
   }
 
-  private void setFlag(@FlagConstant int flag, boolean value) {
-    int state = value ? 1 : 0;
-    flags = (byte)(flags & ~(1 << flag) | state << flag);
+  private synchronized void setFlag(@FlagConstant byte mask, boolean value) {
+    myCachedFlags = BitUtil.set(myCachedFlags, mask, value);
   }
 
-  protected Node(@NotNull DefaultTreeModel model) {
-    myTreeModel = model;
+  Node() {
   }
 
   /**
@@ -59,65 +61,103 @@ public abstract class Node extends DefaultMutableTreeNode {
    */
   public abstract String tree2string(int indent, String lineSeparator);
 
+  /**
+   * isDataXXX methods perform actual (expensive) data computation.
+   * Called from {@link #update(UsageView, Consumer)})
+   * to be compared later with cached data stored in {@link #myCachedFlags} and {@link #myCachedTextHash}
+   */
   protected abstract boolean isDataValid();
   protected abstract boolean isDataReadOnly();
   protected abstract boolean isDataExcluded();
+
+  protected void updateCachedPresentation() {}
+
+  @NotNull
   protected abstract String getText(@NotNull UsageView view);
 
   public final boolean isValid() {
-    return !isFlagSet(INVALID_FLAG);
+    return !isFlagSet(CACHED_INVALID_MASK);
   }
 
   public final boolean isReadOnly() {
     boolean result;
-    boolean computed = isFlagSet(READ_ONLY_COMPUTED_FLAG);
+    boolean computed = isFlagSet(READ_ONLY_COMPUTED_MASK);
     if (computed) {
-      result = isFlagSet(READ_ONLY_FLAG);
+      result = isFlagSet(CACHED_READ_ONLY_MASK);
     }
     else {
       result = isDataReadOnly();
-      setFlag(READ_ONLY_COMPUTED_FLAG, true);
-      setFlag(READ_ONLY_FLAG, result);
+      setFlag(READ_ONLY_COMPUTED_MASK, true);
+      setFlag(CACHED_READ_ONLY_MASK, result);
     }
     return result;
   }
 
   public final boolean isExcluded() {
-    return isFlagSet(EXCLUDED_FLAG);
+    return isFlagSet(EXCLUDED_MASK);
   }
 
-  public final void update(@NotNull UsageView view) {
+  final void update(@NotNull UsageView view, @NotNull Consumer<? super Node> edtNodeChangedQueue) {
+    // performance: always update in background because smart pointer' isValid() can cause PSI chameleons expansion which is ridiculously expensive in cpp
+    assert !ApplicationManager.getApplication().isDispatchThread();
     boolean isDataValid = isDataValid();
     boolean isReadOnly = isDataReadOnly();
-    boolean isExcluded = isDataExcluded();
     String text = getText(view);
+    updateCachedPresentation();
+    doUpdate(edtNodeChangedQueue, isDataValid, isReadOnly, text);
+  }
 
+  private synchronized void doUpdate(@NotNull Consumer<? super Node> edtNodeChangedQueue,
+                                     boolean isDataValid,
+                                     boolean isReadOnly,
+                                     String text) {
     boolean cachedValid = isValid();
-    boolean cachedExcluded = isFlagSet(EXCLUDED_FLAG);
-    boolean cachedReadOnly = isFlagSet(READ_ONLY_FLAG);
+    boolean cachedReadOnly = isFlagSet(CACHED_READ_ONLY_MASK);
 
-    if (isDataValid != cachedValid || isReadOnly != cachedReadOnly || isExcluded != cachedExcluded || !Comparing.equal(myText, text)) {
-      setFlag(INVALID_FLAG, !isDataValid);
-      setFlag(READ_ONLY_FLAG, isReadOnly);
-      setFlag(EXCLUDED_FLAG, isExcluded);
+    if (isDataValid != cachedValid ||
+        isReadOnly != cachedReadOnly ||
+        myCachedTextHash != text.hashCode() ||
+        isFlagSet(FORCE_UPDATE_REQUESTED_MASK)) {
+      setFlag(CACHED_INVALID_MASK, !isDataValid);
+      setFlag(CACHED_READ_ONLY_MASK, isReadOnly);
+      setFlag(FORCE_UPDATE_REQUESTED_MASK, false);
 
-      myText = text;
+      myCachedTextHash = text.hashCode();
       updateNotify();
-      myTreeModel.nodeChanged(this);
+      edtNodeChangedQueue.consume(this);
     }
-    setFlag(UPDATED_FLAG, true);
+    setFlag(UPDATED_MASK, true);
   }
 
-  public void markNeedUpdate() {
-    setFlag(UPDATED_FLAG, false);
+  void markNeedUpdate() {
+    setFlag(UPDATED_MASK, false);
   }
-  public boolean needsUpdate() {
-    return !isFlagSet(UPDATED_FLAG);
+  boolean needsUpdate() {
+    return !isFlagSet(UPDATED_MASK);
+  }
+
+  void forceUpdate() {
+    setFlag(FORCE_UPDATE_REQUESTED_MASK, true);
   }
 
   /**
    * Override to perform node-specific updates 
    */
   protected void updateNotify() {
+  }
+
+  // same as DefaultMutableTreeNode.insert() except it doesn't try to remove the newChild from its parent since we know it's new
+  void insertNewNode(@NotNull Node newChild, int childIndex) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
+    if (children == null) {
+      children = new Vector();
+    }
+    //noinspection unchecked
+    children.insertElementAt(newChild, childIndex);
+  }
+
+  void setExcluded(boolean excluded, @NotNull Consumer<? super Node> edtNodeChangedQueue) {
+    setFlag(EXCLUDED_MASK, excluded);
+    edtNodeChangedQueue.consume(this);
   }
 }

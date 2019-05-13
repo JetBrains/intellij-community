@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,11 +15,9 @@
  */
 package org.jetbrains.plugins.groovy.intentions
 
-import com.intellij.codeInsight.intention.impl.config.IntentionActionWrapper
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
-import org.jetbrains.plugins.groovy.intentions.declaration.GrCreateFieldForParameterIntention
+import org.jetbrains.annotations.NotNull
 import org.jetbrains.plugins.groovy.util.TestUtils
-
 /**
  * @author Max Medvedev
  */
@@ -29,38 +27,31 @@ class CreateFieldFromParameterTest extends LightCodeInsightFixtureTestCase {
     "${TestUtils.testDataPath}intentions/createFieldFromParameter/"
   }
 
-  void test1() {doTest()}
-  void test2() {doTest()}
-  void test3() {doTest()}
-  void test4() {doTest()}
-  void _test5() {doTest()}
-  void _test6() {doTest()}
-  void _test7() {doTest()}
-  void test8() {doTest()}
-  void testArrayType() {doTest()}
-  void testBoundListTypeParameter() {doTest()}
-  void _testCaretOnMethod() {doTest()}
-  void _testCaretOnMethodWithOnlyAssignedParams() {doTest()}
-  void _testCaretOnMethodWithoutParams() {doTest()}
-  void testClassTypeParameter() {doTest()}
-  void testListClassTypeParameter() {doTest()}
-  void testListTypeParameter() {doTest()}
-  void _testNotNull() {doTest()}
-  void _testNullable() {doTest()}
-  void testSimpleTypeParameter() {doTest()}
-  void testTypeParameter() {doTest()}
+  void test1() {doTest("Create field for parameter 'id'")}
+  void test2() {doTest("Create field for parameter 'test'")}
+  void test3() {doTest("Create field for parameter 'length'")}
+  void test4() {doTest("Create field for parameter 'p1'")}
+  void _test5() {doTest("")}
+  void _test6() {doTest("")}
+  void _test7() {doTest("")}
+  void test8() {doTest("Create field for parameter 'p1'")}
+  void testArrayType() {doTest("Create field for parameter 'p1'")}
+  void testBoundListTypeParameter() {doTest("Create field for parameter 'p1'")}
+  void _testCaretOnMethod() {doTest("")}
+  void _testCaretOnMethodWithOnlyAssignedParams() {doTest("")}
+  void _testCaretOnMethodWithoutParams() {doTest("")}
+  void testClassTypeParameter() {doTest("Create field for parameter 'p1'")}
+  void testListClassTypeParameter() {doTest("Create field for parameter 'p1'")}
+  void testListTypeParameter() {doTest("Create field for parameter 'p1'")}
+  void _testNotNull() {doTest("")}
+  void _testNullable() {doTest("")}
+  void testSimpleTypeParameter() {doTest("Create field for parameter 'p1'")}
+  void testTypeParameter() {doTest("Create field for parameter 'p1'")}
 
-  private void doTest() {
+  private void doTest(@NotNull String hint) {
     myFixture.configureByFile("before${getTestName(false)}.groovy")
-    def intentions = myFixture.availableIntentions
-    for (intention in intentions) {
-      if (intention instanceof IntentionActionWrapper) intention = intention.delegate
-      if (intention instanceof GrCreateFieldForParameterIntention) {
-        intention.invoke(myFixture.project, myFixture.editor, myFixture.file)
-        doPostponedFormatting(project)
-        break
-      }
-    }
+    def intention = myFixture.findSingleIntention(hint)
+    myFixture.launchAction(intention)
     myFixture.checkResultByFile("after${getTestName(false)}.groovy")
   }
 }

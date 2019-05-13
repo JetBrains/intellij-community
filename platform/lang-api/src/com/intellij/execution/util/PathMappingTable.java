@@ -16,22 +16,30 @@
 
 package com.intellij.execution.util;
 
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.PathMappingSettings;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.ListTableModel;
-import com.intellij.util.PathMappingSettings;
 
 final class PathMappingTable extends ListTableWithButtons<PathMappingSettings.PathMapping> {
+  PathMappingTable() {
+    getTableView().getEmptyText().setText("No mappings");
+  }
+
   @Override
   protected ListTableModel createListModel() {
     ColumnInfo local = new ElementsColumnInfoBase<PathMappingSettings.PathMapping>("Local path") {
+      @Override
       public String valueOf(PathMappingSettings.PathMapping pathMapping) {
         return pathMapping.getLocalRoot();
       }
 
+      @Override
       public boolean isCellEditable(PathMappingSettings.PathMapping pathMapping) {
         return canDeleteElement(pathMapping);
       }
 
+      @Override
       public void setValue(PathMappingSettings.PathMapping pathMapping, String s) {
         if (s.equals(valueOf(pathMapping))) {
           return;
@@ -47,14 +55,17 @@ final class PathMappingTable extends ListTableWithButtons<PathMappingSettings.Pa
     };
 
     ColumnInfo remote = new ElementsColumnInfoBase<PathMappingSettings.PathMapping>("Remote path") {
+      @Override
       public String valueOf(PathMappingSettings.PathMapping pathMapping) {
         return pathMapping.getRemoteRoot();
       }
 
+      @Override
       public boolean isCellEditable(PathMappingSettings.PathMapping pathMapping) {
         return canDeleteElement(pathMapping);
       }
 
+      @Override
       public void setValue(PathMappingSettings.PathMapping pathMapping, String s) {
         if (s.equals(valueOf(pathMapping))) {
           return;
@@ -69,7 +80,7 @@ final class PathMappingTable extends ListTableWithButtons<PathMappingSettings.Pa
       }
     };
 
-    return new ListTableModel((new ColumnInfo[]{local, remote}));
+    return new ListTableModel(local, remote);
   }
 
 
@@ -80,6 +91,11 @@ final class PathMappingTable extends ListTableWithButtons<PathMappingSettings.Pa
   @Override
   protected PathMappingSettings.PathMapping createElement() {
     return new PathMappingSettings.PathMapping();
+  }
+
+  @Override
+  protected boolean isEmpty(PathMappingSettings.PathMapping element) {
+    return StringUtil.isEmpty(element.getLocalRoot()) && StringUtil.isEmpty(element.getRemoteRoot());
   }
 
   @Override

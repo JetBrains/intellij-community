@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,12 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.intellij.ide.caches;
 
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 
@@ -32,22 +32,22 @@ public class FileContent extends UserDataHolderBase {
   private long myCachedTimeStamp = -1;
   private Boolean myCachedWritable;
 
-  public FileContent(VirtualFile virtualFile) {
+  public FileContent(@NotNull VirtualFile virtualFile) {
     myVirtualFile = virtualFile;
   }
 
-  public void cache() throws IOException {
-    getBytes();
-    getLength();
-    getTimeStamp();
-    isWritable();
-  }
-
+  @NotNull
   public byte[] getBytes() throws IOException {
     if (myCachedBytes == null) {
-      myCachedBytes = myVirtualFile.contentsToByteArray(false);
+      if (myVirtualFile.isValid()) {
+        myCachedTimeStamp = myVirtualFile.getTimeStamp();
+        myCachedBytes = myVirtualFile.contentsToByteArray(false);
+      }
+      else {
+        myCachedTimeStamp = -1;
+        myCachedBytes = ArrayUtil.EMPTY_BYTE_ARRAY;
+      }
     }
-
     return myCachedBytes;
   }
 
@@ -56,6 +56,7 @@ public class FileContent extends UserDataHolderBase {
     myCachedLength = 0;
   }
 
+  @NotNull
   public VirtualFile getVirtualFile() {
     return myVirtualFile;
   }

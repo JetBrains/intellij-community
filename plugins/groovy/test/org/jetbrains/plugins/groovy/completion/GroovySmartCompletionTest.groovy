@@ -1,65 +1,55 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.plugins.groovy.completion
+
 import com.intellij.codeInsight.completion.CompletionType
 import com.intellij.codeInsight.completion.StaticallyImportable
 import org.jetbrains.plugins.groovy.util.TestUtils
+
 /**
  * @author peter
  */
-public class GroovySmartCompletionTest extends GroovyCompletionTestBase {
+class GroovySmartCompletionTest extends GroovyCompletionTestBase {
   @Override
   protected String getBasePath() {
-    return "${TestUtils.testDataPath}groovy/completion/smart";
+    return "${TestUtils.testDataPath}groovy/completion/smart"
   }
 
-  public void testSmartCompletionAfterNewInDeclaration() throws Throwable {
-    myFixture.configureByFile(getTestName(false) + ".groovy");
-    myFixture.complete(CompletionType.SMART);
-    assertOrderedEquals(myFixture.lookupElementStrings, "Bar", "Foo");
+  void testSmartCompletionAfterNewInDeclaration() throws Throwable {
+    myFixture.configureByFile(getTestName(false) + ".groovy")
+    myFixture.complete(CompletionType.SMART)
+    assertOrderedEquals(myFixture.lookupElementStrings, "Bar", "Foo")
   }
 
-  public void testCaretAfterSmartCompletionAfterNewInDeclaration() throws Throwable { doSmartTest(); }
+  void testCaretAfterSmartCompletionAfterNewInDeclaration() throws Throwable { doSmartTest() }
 
-  public void testSmartCompletionAfterNewInDeclarationWithArray() throws Throwable { doSmartTest(); }
+  void testSmartCompletionAfterNewInDeclarationWithArray() throws Throwable { doSmartTest() }
 
-  public void testSmartCompletionAfterNewInDeclarationWithIntArray() throws Throwable { doSmartTest(); }
+  void testSmartCompletionAfterNewInDeclarationWithIntArray() throws Throwable { doSmartTest() }
 
-  public void testShortenNamesInSmartCompletionAfterNewInDeclaration() throws Throwable { doSmartTest(); }
+  void testShortenNamesInSmartCompletionAfterNewInDeclaration() throws Throwable { doSmartTest() }
 
-  public void testSmartAfterNewInCall() throws Throwable { doSmartTest(); }
+  void testSmartAfterNewInCall() throws Throwable { doSmartTest() }
 
-  public void testInnerClassInStaticMethodCompletion() throws Throwable { doVariantableTest(null, "", CompletionType.SMART, CompletionResult.notContain, 'Inner'); }
-
-  public void testSmartCompletionInAssignmentExpression() throws Throwable { doSmartTest(); }
-
-  public void testSimpleMethodParameter() throws Throwable {
-    doSmartCompletion("d1", "d2");
+  void testInnerClassInStaticMethodCompletion() throws Throwable {
+    doVariantableTest(null, "", CompletionType.SMART, CompletionResult.notContain, 'Inner')
   }
 
-  public void testReturnStatement() throws Exception {
-    doSmartCompletion("b", "b1", "b2", "foo");
+  void testSmartCompletionInAssignmentExpression() throws Throwable { doSmartTest() }
+
+  void testSimpleMethodParameter() throws Throwable {
+    doSmartCompletion("d1", "d2")
   }
 
-  public void testIncSmartCompletion() throws Exception {
-    doSmartCompletion("a", "b");
+  void testReturnStatement() throws Exception {
+    doSmartCompletion("b", "b1", "b2", "foo")
   }
 
-  public void testInheritConstructorsAnnotation() throws Throwable {
+  void testIncSmartCompletion() throws Exception {
+    doSmartCompletion("a", "b")
+  }
+
+  void testInheritConstructorsAnnotation() throws Throwable {
     myFixture.addFileToProject("groovy/transform/InheritConstructors.java", "package groovy.transform;\n" +
                                                                             "\n" +
                                                                             "import java.lang.annotation.ElementType;\n" +
@@ -68,30 +58,33 @@ public class GroovySmartCompletionTest extends GroovyCompletionTestBase {
                                                                             "import java.lang.annotation.Target;@Retention(RetentionPolicy.SOURCE)\n" +
                                                                             "@Target({ElementType.TYPE})\n" +
                                                                             "public @interface InheritConstructors {\n" +
-                                                                            "}");
-    doSmartTest();
+                                                                            "}")
+    doSmartTest()
   }
 
-  public void testSmartCastCompletion() {doSmartTest();}
-  public void testSmartCastCompletionWithoutRParenth() {doSmartTest();}
-  public void testSmartCastCompletionWithRParenth() {doSmartTest();}
+  void testSmartCastCompletion() { doSmartTest() }
 
-  public void testDontCompletePrivateMembers() {doSmartCompletion "foo1", "foo2", "getFoo1", "getFoo2"}
+  void testSmartCastCompletionWithoutRParenth() { doSmartTest() }
 
-  public void testEnumMembersInAssignment() {doSmartCompletion "IN_STOCK", "NOWHERE", "ORDERED" }
-  public void testEnumMembersInAssignmentInsideEnum() {doSmartCompletion "IN_STOCK", "NOWHERE", "ORDERED", "next", "previous", "valueOf" }
+  void testSmartCastCompletionWithRParenth() { doSmartTest() }
 
-  public void testPreferVarargElement() {
+  void testDontCompletePrivateMembers() { doSmartCompletion "foo1", "foo2", "getFoo1", "getFoo2" }
+
+  void testEnumMembersInAssignment() { doSmartCompletion "IN_STOCK", "NOWHERE", "ORDERED", "valueOf" }
+
+  void testEnumMembersInAssignmentInsideEnum() { doSmartCompletion "IN_STOCK", "NOWHERE", "ORDERED", "next", "previous", "valueOf" }
+
+  void testPreferVarargElement() {
     doCompletionTest(null, null, '\n', CompletionType.SMART)
   }
 
-  public void testGlobalStaticMembers() {
-    myFixture.configureByFile(getTestName(false) + ".groovy");
-    myFixture.complete(CompletionType.SMART, 2);
+  void testGlobalStaticMembers() {
+    myFixture.configureByFile(getTestName(false) + ".groovy")
+    myFixture.complete(CompletionType.SMART, 2)
     assertOrderedEquals(myFixture.lookupElementStrings, 'SUBSTRING', 'createExpected', 'createSubGeneric', 'SUB_RAW')
   }
 
-  public void testGlobalStaticMembersForString() {
+  void testGlobalStaticMembersForString() {
     myFixture.configureByText('a.groovy', ''''\
 class Foo {
   public static String string(){}
@@ -108,15 +101,15 @@ String s = <caret>
                         'string')
   }
 
-  public void testGlobalListCreators() {
-    myFixture.configureByFile(getTestName(false) + ".groovy");
-    myFixture.complete(CompletionType.SMART, 2);
+  void testGlobalListCreators() {
+    myFixture.configureByFile(getTestName(false) + ".groovy")
+    myFixture.complete(CompletionType.SMART, 2)
     assertOrderedEquals(myFixture.lookupElementStrings, 'createGenericList', 'createStringList')
   }
 
-  void testNativeList() {doSmartCompletion('a1', 'a2')};
+  void testNativeList() {doSmartCompletion('a1', 'a2')}
 
-  public void testMembersImportStatically() {
+  void testMembersImportStatically() {
     myFixture.addClass("""
 class Expected {
   public static final Expected fooField;
@@ -135,7 +128,7 @@ class Expected {
 Expected exp = fooField'''
   }
 
-  public void testThrow() {
+  void testThrow() {
     myFixture.configureByText('_a.groovy', '''\
 throw new RunEx<caret>
 ''')
@@ -155,8 +148,8 @@ Runnable r = new Run<caret>
 ''', '''\
 Runnable r = new Runnable() {
     @Override
-    void run() {
-        <caret><selection>//To change body of implemented methods use File | Settings | File Templates.</selection>
+    void run() {<caret><selection></selection>
+
     }
 }
 ''')
@@ -176,5 +169,89 @@ aaaa = 123
 
 foo(aaaa<caret>)
 ''')
+  }
+
+  void testFieldWithInstanceof() {
+    addCompileStatic()
+    doSmartTest('''\
+@CompileStatic
+class A {
+  def field
+  def foo(int x) {}
+  def bar() {
+    if (field instanceof Integer) {
+      foo(fiel<caret>)
+    }
+  }
+}
+''', '''\
+@CompileStatic
+class A {
+  def field
+  def foo(int x) {}
+  def bar() {
+    if (field instanceof Integer) {
+      foo(field)
+    }
+  }
+}
+''')
+  }
+
+  void testFieldWithAssignment() {
+    addCompileStatic()
+    myFixture.configureByText('a.groovy', '''\
+import groovy.transform.CompileStatic
+@CompileStatic
+class A {
+  def field
+  def foo(int x) {}
+  
+  def bar() {
+    field = 1
+    foo(fiel<caret>)
+  }
+}
+''')
+
+    myFixture.complete(CompletionType.SMART)
+    assertEquals([], myFixture.lookupElementStrings)
+  }
+
+  void testQualifiedNameAfterNew() {
+    myFixture.addClass('''\
+package foo;
+public class User<T> {}
+''')
+    doSmartTest('''\
+class User {
+}
+def a(foo.User<String> f){}
+
+a(new Us<caret>)
+''', '''\
+class User {
+}
+def a(foo.User<String> f){}
+
+a(new foo.User<String>()<caret>)
+''')
+  }
+
+  void testBinaryExpr() {
+    doSmartTest('''
+class A {
+  def plus(String s) {}
+}
+
+print new A() + new <caret>
+''', '''
+class A {
+  def plus(String s) {}
+}
+
+print new A() + new String(<caret>)
+'''
+)
   }
 }

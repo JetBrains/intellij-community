@@ -17,9 +17,10 @@ package com.intellij.project.model.impl.module;
 
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.*;
+import com.intellij.openapi.roots.ContentEntry;
+import com.intellij.openapi.roots.ModuleRootModel;
+import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.roots.impl.RootModelBase;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
 import com.intellij.project.model.impl.module.content.JpsContentEntry;
 import org.jetbrains.annotations.NotNull;
@@ -43,11 +44,11 @@ public class JpsRootModel extends RootModelBase implements ModuleRootModel {
   public JpsRootModel(Module module, JpsModule jpsModule) {
     myModule = module;
     myJpsModule = jpsModule;
-    myContentEntries = new ArrayList<ContentEntry>();
+    myContentEntries = new ArrayList<>();
     for (String contentRoot : myJpsModule.getContentRootsList().getUrls()) {
       myContentEntries.add(new JpsContentEntry(jpsModule, this, contentRoot));
     }
-    myOrderEntries = new ArrayList<OrderEntry>();
+    myOrderEntries = new ArrayList<>();
     for (JpsDependencyElement element : myJpsModule.getDependenciesList().getDependencies()) {
       myOrderEntries.add(JpsOrderEntryFactory.createOrderEntry(this, element));
     }
@@ -71,33 +72,11 @@ public class JpsRootModel extends RootModelBase implements ModuleRootModel {
   @NotNull
   @Override
   public OrderEntry[] getOrderEntries() {
-    return myOrderEntries.toArray(new OrderEntry[myOrderEntries.size()]);
+    return myOrderEntries.toArray(OrderEntry.EMPTY_ARRAY);
   }
 
   @Override
-  public VirtualFile getExplodedDirectory() {
-    throw new UnsupportedOperationException("'getExplodedDirectory' not implemented in " + getClass().getName());
-  }
-
-  @Override
-  public String getExplodedDirectoryUrl() {
-    throw new UnsupportedOperationException("'getExplodedDirectoryUrl' not implemented in " + getClass().getName());
-  }
-
-  @NotNull
-  @Override
-  public VirtualFile[] getRootPaths(OrderRootType rootType) {
-    throw new UnsupportedOperationException("'getRootPaths' not implemented in " + getClass().getName());
-  }
-
-  @NotNull
-  @Override
-  public String[] getRootUrls(OrderRootType rootType) {
-    throw new UnsupportedOperationException("'getRootUrls' not implemented in " + getClass().getName());
-  }
-
-  @Override
-  public <T> T getModuleExtension(Class<T> klass) {
+  public <T> T getModuleExtension(@NotNull Class<T> klass) {
     throw new UnsupportedOperationException("'getModuleExtension' not implemented in " + getClass().getName());
   }
 

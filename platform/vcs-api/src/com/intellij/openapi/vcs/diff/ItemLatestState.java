@@ -24,14 +24,14 @@ public class ItemLatestState {
   private final boolean myDefaultHead;
   /** version number */
   private final VcsRevisionNumber myNumber;
-  /** true if the item still exists in the remote reposistory */
+  /** true if the item still exists in the remote repository */
   private final boolean myItemExists;
 
   /**
    * A constructor
    *
    * @param number version number
-   * @param itemExists true if the item still exists in the remote reposistory
+   * @param itemExists true if the item still exists in the remote repository
    * @param defaultHead
    */
 
@@ -49,7 +49,7 @@ public class ItemLatestState {
   }
 
   /**
-   * @return true if the item exists in the remote reposistory
+   * @return true if the item exists in the remote repository
    */
   public boolean isItemExists() {
     return myItemExists;

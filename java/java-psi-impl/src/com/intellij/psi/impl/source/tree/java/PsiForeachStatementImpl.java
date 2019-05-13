@@ -21,7 +21,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.source.Constants;
 import com.intellij.psi.impl.source.tree.ChildRole;
-import com.intellij.psi.impl.source.tree.CompositePsiElement;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.tree.ChildRoleBase;
 import com.intellij.psi.tree.IElementType;
@@ -30,7 +29,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author dsl
  */
-public class PsiForeachStatementImpl extends CompositePsiElement implements PsiForeachStatement, Constants {
+public class PsiForeachStatementImpl extends PsiLoopStatementImpl implements PsiForeachStatement, Constants {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.java.PsiForeachStatementImpl");
   public PsiForeachStatementImpl() {
     super(FOREACH_STATEMENT);
@@ -95,7 +94,7 @@ public class PsiForeachStatementImpl extends CompositePsiElement implements PsiF
   }
 
   @Override
-  public int getChildRole(ASTNode child) {
+  public int getChildRole(@NotNull ASTNode child) {
     LOG.assertTrue(child.getTreeParent() == this);
 
     IElementType i = child.getElementType();
@@ -127,6 +126,7 @@ public class PsiForeachStatementImpl extends CompositePsiElement implements PsiF
     }
   }
 
+  @Override
   public String toString() {
     return "PsiForeachStatement";
   }
@@ -134,7 +134,7 @@ public class PsiForeachStatementImpl extends CompositePsiElement implements PsiF
   @Override
   public boolean processDeclarations(@NotNull PsiScopeProcessor processor, @NotNull ResolveState state, PsiElement lastParent, @NotNull PsiElement place) {
     processor.handleEvent(PsiScopeProcessor.Event.SET_DECLARATION_HOLDER, this);
-    if (lastParent == null || lastParent.getParent() != this /*|| lastParent == getIteratedValue()*/)
+    if (lastParent == null || lastParent.getParent() != this || lastParent == getIteratedValue())
       // Parent element should not see our vars
       return true;
 

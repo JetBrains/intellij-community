@@ -3,8 +3,11 @@ package com.intellij.refactoring.move.moveClassesOrPackages;
 import com.intellij.codeInsight.ChangeContextUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
+import com.intellij.psi.util.FileTypeUtils;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.refactoring.PackageWrapper;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
 import com.intellij.refactoring.util.RefactoringConflictsUtil;
 import com.intellij.usageView.UsageInfo;
@@ -22,7 +25,7 @@ public class JavaMoveDirectoryWithClassesHelper extends MoveDirectoryWithClasses
                          boolean searchInComments,
                          boolean searchInNonJavaFiles,
                          Project project) {
-    final Set<String> packageNames = new HashSet<String>();
+    final Set<String> packageNames = new HashSet<>();
     for (PsiFile psiFile : filesToMove) {
       if (psiFile instanceof PsiClassOwner) {
         final PsiClass[] classes = ((PsiClassOwner)psiFile).getClasses();
@@ -46,10 +49,10 @@ public class JavaMoveDirectoryWithClassesHelper extends MoveDirectoryWithClasses
           }
         }
         if (remainsNothing) {
-          for (PsiReference reference : ReferencesSearch.search(aPackage)) {
+          for (PsiReference reference : ReferencesSearch.search(aPackage, GlobalSearchScope.projectScope(project))) {
             final PsiElement element = reference.getElement();
             final PsiImportStatementBase statementBase = PsiTreeUtil.getParentOfType(element, PsiImportStatementBase.class);
-            if (statementBase != null && statementBase.isOnDemand()) {
+            if (statementBase != null && statementBase.isOnDemand() && !isUnderRefactoring(statementBase, directoriesToMove)) {
               usages.add(new RemoveOnDemandImportStatementsUsageInfo(statementBase));
             }
           }
@@ -58,9 +61,9 @@ public class JavaMoveDirectoryWithClassesHelper extends MoveDirectoryWithClasses
     }
   }
 
-  private static boolean isUnderRefactoring(PsiDirectory packageDirectory, PsiDirectory[] directoriesToMove) {
+  private static boolean isUnderRefactoring(PsiElement psiElement, PsiDirectory[] directoriesToMove) {
     for (PsiDirectory directory : directoriesToMove) {
-      if (PsiTreeUtil.isAncestor(directory, packageDirectory, true)) {
+      if (PsiTreeUtil.isAncestor(directory, psiElement, true)) {
         return true;
       }
     }
@@ -76,12 +79,17 @@ public class JavaMoveDirectoryWithClassesHelper extends MoveDirectoryWithClasses
     if (!(file instanceof PsiClassOwner)) {
       return false;
     }
-    
-    if (!JspPsiUtil.isInJspFile(file)) {
+
+    final PsiClass[] classes = ((PsiClassOwner)file).getClasses();
+    if (classes.length == 0) {
       return false;
     }
 
-    for (PsiClass psiClass : ((PsiClassOwner)file).getClasses()) {
+    if (FileTypeUtils.isInServerPageFile(file)) {
+      return false;
+    }
+
+    for (PsiClass psiClass : classes) {
       final PsiClass newClass = MoveClassesOrPackagesUtil.doMoveClass(psiClass, moveDestination);
       oldToNewElementsMapping.put(psiClass, newClass);
       listener.elementMoved(newClass);
@@ -108,6 +116,12 @@ public class JavaMoveDirectoryWithClassesHelper extends MoveDirectoryWithClasses
                                PsiDirectory directory,
                                MultiMap<PsiElement, String> conflicts) {
     RefactoringConflictsUtil.analyzeModuleConflicts(project, files, infos, directory, conflicts);
+    if (directory != null) {
+      PsiPackage aPackage = JavaDirectoryService.getInstance().getPackage(directory);
+      if (aPackage != null) {
+        MoveClassesOrPackagesProcessor.detectPackageLocalsUsed(conflicts, files.toArray(PsiElement.EMPTY_ARRAY), new PackageWrapper(aPackage));
+      }
+    }
   }
 
   @Override
@@ -121,7 +135,7 @@ public class JavaMoveDirectoryWithClassesHelper extends MoveDirectoryWithClasses
   }
 
   private static class RemoveOnDemandImportStatementsUsageInfo extends UsageInfo {
-    public RemoveOnDemandImportStatementsUsageInfo(PsiImportStatementBase statementBase) {
+    RemoveOnDemandImportStatementsUsageInfo(PsiImportStatementBase statementBase) {
       super(statementBase);
     }
   }

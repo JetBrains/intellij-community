@@ -16,6 +16,8 @@
 package git4idea.validators;
 
 import com.intellij.openapi.ui.InputValidator;
+import com.intellij.openapi.util.text.StringUtil;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.regex.Pattern;
 
@@ -23,15 +25,13 @@ import java.util.regex.Pattern;
  * Checks that the specified String is a valid Git reference name.
  * See <a href="http://www.kernel.org/pub/software/scm/git/docs/git-check-ref-format.html">
  * http://www.kernel.org/pub/software/scm/git/docs/git-check-ref-format.html</a>
- *
- * @author Kirill Likhodedov
  */
 public final class GitRefNameValidator implements InputValidator {
 
   private static final GitRefNameValidator INSTANCE = new GitRefNameValidator();
 
   // illegal control characters - from 0 to 31 and 7F (DEL)
-  private static String CONTROL_CHARS;
+  private static final String CONTROL_CHARS;
   static {
     StringBuilder sb = new StringBuilder();
     sb.append("[");
@@ -44,6 +44,7 @@ public final class GitRefNameValidator implements InputValidator {
   }
   private static final Pattern ILLEGAL = Pattern.compile(
     "(^\\.)|" +                             // begins with a dot
+    "(^-)|" +                                 // begins with '-'
     "[ ~:\\^\\?\\*\\[\\\\]+|(@\\{)+|" +     // contains invalid character: space, one of ~:^?*[\ or @{ sequence
     "(\\.\\.)+|" +                          // two dots in a row
     "(([\\./]|\\.lock)$)|" +                // ends with dot, slash or ".lock"
@@ -58,11 +59,16 @@ public final class GitRefNameValidator implements InputValidator {
 
   @Override
   public boolean checkInput(String inputString) {
-    return !ILLEGAL.matcher(inputString).find();
+    return !StringUtil.isEmptyOrSpaces(inputString) && !ILLEGAL.matcher(inputString).find();
   }
 
   @Override
   public boolean canClose(String inputString) {
     return checkInput(inputString);
+  }
+
+  @NotNull
+  public String cleanUpBranchName(@NotNull String branchName) {
+    return branchName.replaceAll(ILLEGAL.pattern(), "_").replaceAll("\"", "");
   }
 }

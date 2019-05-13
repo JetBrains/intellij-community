@@ -29,9 +29,6 @@ import org.intellij.lang.xpath.validation.ExpectedTypeUtil;
 import org.intellij.lang.xpath.validation.inspections.quickfix.XPathQuickFixFactory;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-
-import javax.swing.*;
 
 public class RedundantTypeConversion extends XPathInspection {
     @NonNls
@@ -39,31 +36,31 @@ public class RedundantTypeConversion extends XPathInspection {
 
     public boolean CHECK_ANY = false;
 
+    @Override
     @NotNull
     public String getDisplayName() {
         return "Redundant Type Conversion";
     }
 
+    @Override
     @NotNull
     @NonNls
     public String getShortName() {
         return SHORT_NAME;
     }
 
+    @Override
     public boolean isEnabledByDefault() {
         return true;
     }
 
+    @Override
     protected Visitor createVisitor(InspectionManager manager, boolean isOnTheFly) {
         return new MyElementVisitor(manager, isOnTheFly);
     }
 
-    @Nullable
-    public JComponent createOptionsPanel() {
-        return null;
-    }
-
-    protected boolean acceptsLanguage(Language language) {
+  @Override
+  protected boolean acceptsLanguage(Language language) {
       return language == XPathFileType.XPATH.getLanguage() || language == XPathFileType.XPATH2.getLanguage();
     }
 
@@ -73,11 +70,12 @@ public class RedundantTypeConversion extends XPathInspection {
             super(manager, isOnTheFly);
         }
 
+        @Override
         protected void checkExpression(final @NotNull XPathExpression expr) {
             if (ExpectedTypeUtil.isExplicitConversion(expr)) {
                 final XPathExpression expression = ExpectedTypeUtil.unparenthesize(expr);
                 assert expression != null;
-                
+
                 final XPathType convertedType = ((XPathFunctionCall)expression).getArgumentList()[0].getType();
                 if (isSameType(expression, convertedType)) {
                     final XPathQuickFixFactory fixFactory = ContextProvider.getContextProvider(expression).getQuickFixFactory();

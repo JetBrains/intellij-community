@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,11 @@
  */
 package com.intellij.openapi.editor.impl;
 
-import com.intellij.util.ui.UIUtil;
+import com.intellij.ide.ui.UISettings;
+import com.intellij.ide.ui.UISettingsListener;
+import com.intellij.ui.JBColor;
+import com.intellij.ui.border.CustomLineBorder;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -23,29 +27,22 @@ import java.awt.*;
 /**
  * @author gregsh
  */
-public class EditorHeaderComponent extends JPanel {
-  private final Color GRADIENT_C1;
-  private final Color GRADIENT_C2;
-
+public class EditorHeaderComponent extends JPanel implements UISettingsListener {
   public EditorHeaderComponent() {
     super(new BorderLayout(0, 0));
-    GRADIENT_C1 = getBackground();
-    GRADIENT_C2 = new Color(Math.max(0, GRADIENT_C1.getRed() - 0x18), Math.max(0, GRADIENT_C1.getGreen() - 0x18),
-                            Math.max(0, GRADIENT_C1.getBlue() - 0x18));
+    uiSettingsChanged(UISettings.getInstance());
   }
 
   @Override
-  protected void paintComponent(Graphics g) {
-    super.paintComponent(g);
-    final Graphics2D g2d = (Graphics2D)g;
+  public void paint(@NotNull Graphics g) {
+    UISettings.setupAntialiasing(g);
+    super.paint(g);
+  }
 
-    if (!UIUtil.isUnderGTKLookAndFeel()) {
-      g2d.setPaint(UIUtil.getGradientPaint(0, 0, GRADIENT_C1, 0, getHeight(), GRADIENT_C2));
-      g2d.fillRect(1, 1, getWidth(), getHeight() - 1);
-      g2d.setPaint(null);
-    }
-
-    g.setColor(UIUtil.getBorderColor());
-    g.drawLine(0, getHeight() - 1, getWidth(), getHeight() - 1);
+  @Override
+  public void uiSettingsChanged(UISettings uiSettings) {
+    boolean topBorderRequired = uiSettings.getEditorTabPlacement() != SwingConstants.TOP &&
+                                (uiSettings.getShowNavigationBar() || uiSettings.getShowMainToolbar());
+    setBorder(new CustomLineBorder(JBColor.border(), topBorderRequired ? 1 : 0, 0, 1, 0));
   }
 }

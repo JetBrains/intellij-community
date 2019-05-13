@@ -1,3 +1,18 @@
+/*
+ * Copyright 2000-2016 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.intellij.tasks.lighthouse;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -10,7 +25,7 @@ import com.intellij.tasks.impl.BaseRepositoryImpl;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.annotations.Tag;
-import icons.TasksIcons;
+import icons.TasksCoreIcons;
 import org.apache.commons.httpclient.HttpClient;
 import org.apache.commons.httpclient.HttpMethod;
 import org.apache.commons.httpclient.methods.GetMethod;
@@ -53,6 +68,7 @@ public class LighthouseRepository extends BaseRepositoryImpl {
     super(type);
   }
 
+  @NotNull
   @Override
   public BaseRepository clone() {
     return new LighthouseRepository(this);
@@ -83,7 +99,7 @@ public class LighthouseRepository extends BaseRepositoryImpl {
     if (!StringUtil.isEmpty(query)) {
       url += encodeUrl(query);
     }
-    final List<Task> tasks = new ArrayList<Task>();
+    final List<Task> tasks = new ArrayList<>();
     int page = 1;
     final HttpClient client = login();
     while (tasks.size() < max) {
@@ -96,18 +112,14 @@ public class LighthouseRepository extends BaseRepositoryImpl {
         throw new Exception("Error fetching issues for: " + url + ", HTTP status code: " + method.getStatusCode() +
                           "\n" + element.getText());
       }
-      @SuppressWarnings({"unchecked"})
-      List<Object> children = element.getChildren("ticket");
 
-      List<Task> taskList = ContainerUtil.mapNotNull(children, new NullableFunction<Object, Task>() {
-        public Task fun(Object o) {
-          return createIssue((Element)o);
-        }
-      });
+      List<Element> children = element.getChildren("ticket");
+
+      List<Task> taskList = ContainerUtil.mapNotNull(children, (NullableFunction<Element, Task>)o -> createIssue(o));
       tasks.addAll(taskList);
       page++;
     }
-    return tasks.toArray(new Task[tasks.size()]);
+    return tasks.toArray(Task.EMPTY_ARRAY);
   }
 
   @Nullable
@@ -122,8 +134,8 @@ public class LighthouseRepository extends BaseRepositoryImpl {
     }
     final String description = element.getChildText("original-body");
     final boolean isClosed = "true".equals(element.getChildText("closed"));
-    final Ref<Date> updated = new Ref<Date>();
-    final Ref<Date> created = new Ref<Date>();
+    final Ref<Date> updated = new Ref<>();
+    final Ref<Date> created = new Ref<>();
     try {
       updated.set(parseDate(element, "updated-at"));
       created.set(parseDate(element, "created-at"));
@@ -154,6 +166,7 @@ public class LighthouseRepository extends BaseRepositoryImpl {
         return summary;
       }
 
+      @Override
       public String getDescription() {
         return description;
       }
@@ -161,13 +174,13 @@ public class LighthouseRepository extends BaseRepositoryImpl {
       @NotNull
       @Override
       public Comment[] getComments() {
-        return new Comment[0];
+        return Comment.EMPTY_ARRAY;
       }
 
       @NotNull
       @Override
       public Icon getIcon() {
-        return TasksIcons.Lighthouse;
+        return TasksCoreIcons.Lighthouse;
       }
 
       @NotNull
@@ -212,8 +225,9 @@ public class LighthouseRepository extends BaseRepositoryImpl {
     return null;
   }
 
+  @Override
   @Nullable
-  public String extractId(String taskName) {
+  public String extractId(@NotNull String taskName) {
     Matcher matcher = myPattern.matcher(taskName);
     return matcher.find() ? matcher.group(1) : null;
   }
@@ -257,7 +271,7 @@ public class LighthouseRepository extends BaseRepositoryImpl {
 
   @Nullable
   @Override
-  public Task findTask(String id) throws Exception {
+  public Task findTask(@NotNull String id) throws Exception {
     final String[] split = id.split("\\-");
     final String projectId = split[0];
     final String realId = split[1];

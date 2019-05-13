@@ -32,24 +32,25 @@ import org.jetbrains.annotations.NotNull;
  * @author yole
  */
 public class PlatformProjectConfigurator implements DirectoryProjectConfigurator {
+  @Override
   public void configureProject(final Project project, @NotNull final VirtualFile baseDir, final Ref<Module> moduleRef) {
     final ModuleManager moduleManager = ModuleManager.getInstance(project);
     final Module[] modules = moduleManager.getModules();
     if (modules.length == 0) {
-      ApplicationManager.getApplication().runWriteAction(new Runnable() {
-        public void run() {
-          String moduleName = baseDir.getName().replace(":", "");     // correct module name when opening root of drive as project (RUBY-5181)
-          String imlName = baseDir.getPath() + "/.idea/" + moduleName + ModuleFileType.DOT_DEFAULT_EXTENSION;
-          final Module module = moduleManager.newModule(imlName, ModuleTypeManager.getInstance().getDefaultModuleType().getId());
-          ModuleRootManager rootManager = ModuleRootManager.getInstance(module);
-          ModifiableRootModel rootModel = rootManager.getModifiableModel();
-          if (rootModel.getContentRoots().length == 0) {
-            rootModel.addContentEntry(baseDir);
-          }
-          rootModel.inheritSdk();
-          rootModel.commit();
-          moduleRef.set(module);
+      ApplicationManager.getApplication().runWriteAction(() -> {
+        String moduleName = baseDir.getName().replace(":", "");     // correct module name when opening root of drive as project (RUBY-5181)
+        String imlName = baseDir.getPath() + "/.idea/" + moduleName + ModuleFileType.DOT_DEFAULT_EXTENSION;
+        ModuleTypeManager instance = ModuleTypeManager.getInstance();
+        String id = instance == null ? "unknown" : instance.getDefaultModuleType().getId();
+        final Module module = moduleManager.newModule(imlName, id);
+        ModuleRootManager rootManager = ModuleRootManager.getInstance(module);
+        ModifiableRootModel rootModel = rootManager.getModifiableModel();
+        if (rootModel.getContentRoots().length == 0) {
+          rootModel.addContentEntry(baseDir);
         }
+        rootModel.inheritSdk();
+        rootModel.commit();
+        moduleRef.set(module);
       });
     }
   }

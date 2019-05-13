@@ -15,8 +15,7 @@
  */
 package com.intellij.codeInspection.actions;
 
-import com.intellij.codeInsight.CodeInsightUtilBase;
-import com.intellij.codeInsight.TargetElementUtilBase;
+import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -24,7 +23,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.MethodSignatureUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.containers.HashMap;
+import java.util.HashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -36,19 +35,22 @@ import java.util.Set;
 public class UnimplementInterfaceAction implements IntentionAction {
   private String myName = "Interface";
 
+  @Override
   @NotNull
   public String getText() {
     return "Unimplement " + myName;
   }
 
+  @Override
   @NotNull
   public String getFamilyName() {
     return "Unimplement Interface/Class";
   }
 
+  @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
     if (!(file instanceof PsiJavaFile)) return false;
-    final PsiReference psiReference = TargetElementUtilBase.findReference(editor);
+    final PsiReference psiReference = TargetElementUtil.findReference(editor);
     if (psiReference == null) return false;
 
     final PsiReferenceList referenceList = PsiTreeUtil.getParentOfType(psiReference.getElement(), PsiReferenceList.class);
@@ -63,7 +65,7 @@ public class UnimplementInterfaceAction implements IntentionAction {
     if (referenceElement == null) return false;
 
     final PsiElement target = referenceElement.resolve();
-    if (target == null || !(target instanceof PsiClass)) return false;
+    if (!(target instanceof PsiClass)) return false;
 
     PsiClass targetClass = (PsiClass)target;
     if (targetClass.isInterface()) {
@@ -72,7 +74,7 @@ public class UnimplementInterfaceAction implements IntentionAction {
     else {
       myName = "Class";
     }
-    
+
     return true;
   }
 
@@ -88,10 +90,9 @@ public class UnimplementInterfaceAction implements IntentionAction {
     return (PsiJavaCodeReferenceElement)element;
   }
 
+  @Override
   public void invoke(@NotNull final Project project, final Editor editor, final PsiFile file) throws IncorrectOperationException {
-    if (!CodeInsightUtilBase.preparePsiElementForWrite(file)) return;
-
-    final PsiReference psiReference = TargetElementUtilBase.findReference(editor);
+    final PsiReference psiReference = TargetElementUtil.findReference(editor);
     if (psiReference == null) return;
 
     final PsiReferenceList referenceList = PsiTreeUtil.getParentOfType(psiReference.getElement(), PsiReferenceList.class);
@@ -106,11 +107,11 @@ public class UnimplementInterfaceAction implements IntentionAction {
     if (element == null) return;
 
     final PsiElement target = element.resolve();
-    if (target == null || !(target instanceof PsiClass)) return;
+    if (!(target instanceof PsiClass)) return;
 
     PsiClass targetClass = (PsiClass)target;
 
-    final Map<PsiMethod, PsiMethod> implementations = new HashMap<PsiMethod, PsiMethod>();
+    final Map<PsiMethod, PsiMethod> implementations = new HashMap<>();
     for (PsiMethod psiMethod : targetClass.getAllMethods()) {
       final PsiMethod implementingMethod = MethodSignatureUtil.findMethodBySuperMethod(psiClass, psiMethod, false);
       if (implementingMethod != null) {
@@ -119,7 +120,9 @@ public class UnimplementInterfaceAction implements IntentionAction {
     }
     element.delete();
 
-    final Set<PsiMethod> superMethods = new HashSet<PsiMethod>();
+    if (target == psiClass) return;
+
+    final Set<PsiMethod> superMethods = new HashSet<>();
     for (PsiClass aClass : psiClass.getSupers()) {
       Collections.addAll(superMethods, aClass.getAllMethods());
     }
@@ -131,6 +134,7 @@ public class UnimplementInterfaceAction implements IntentionAction {
     }
   }
 
+  @Override
   public boolean startInWriteAction() {
     return true;
   }

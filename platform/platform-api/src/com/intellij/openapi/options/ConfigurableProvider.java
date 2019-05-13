@@ -29,4 +29,15 @@ public abstract class ConfigurableProvider {
   @Nullable
   public abstract Configurable createConfigurable();
 
+  /**
+   * Defines whether this provider creates a configurable or not.
+   * Note that the {@code createConfigurable} method will be called
+   * if this method returns {@code true}.
+   *
+   * @return {@code true} if this provider creates configurable,
+   *         {@code false} otherwise
+   */
+  public boolean canCreateConfigurable() {
+    return true;
+  }
 }

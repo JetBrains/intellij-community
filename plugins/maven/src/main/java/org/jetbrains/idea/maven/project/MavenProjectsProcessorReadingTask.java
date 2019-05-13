@@ -52,6 +52,7 @@ public class MavenProjectsProcessorReadingTask implements MavenProjectsProcessor
     myOnCompletion = onCompletion;
   }
 
+  @Override
   public void perform(Project project,
                       MavenEmbeddersManager embeddersManager,
                       MavenConsole console,

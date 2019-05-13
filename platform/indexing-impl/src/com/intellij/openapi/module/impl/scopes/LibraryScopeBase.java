@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,38 +27,41 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
 import java.util.LinkedHashSet;
+import java.util.Set;
 
 /**
  * @author nik
  */
 public abstract class LibraryScopeBase extends GlobalSearchScope {
-  private final LinkedHashSet<VirtualFile> myEntries;
-  private final ProjectFileIndex myIndex;
+  private final Set<VirtualFile> myEntries;
+  protected final ProjectFileIndex myIndex;
 
   public LibraryScopeBase(Project project, VirtualFile[] classes, VirtualFile[] sources) {
     super(project);
     myIndex = ProjectRootManager.getInstance(project).getFileIndex();
-    myEntries = new LinkedHashSet<VirtualFile>(classes.length + sources.length);
+    myEntries = new LinkedHashSet<>(classes.length + sources.length);
     Collections.addAll(myEntries, classes);
     Collections.addAll(myEntries, sources);
   }
 
-  public boolean contains(VirtualFile file) {
+  @Override
+  public boolean contains(@NotNull VirtualFile file) {
     return myEntries.contains(getFileRoot(file));
   }
 
   @Nullable
-  private VirtualFile getFileRoot(VirtualFile file) {
+  protected VirtualFile getFileRoot(@NotNull VirtualFile file) {
     if (myIndex.isInLibraryClasses(file)) {
       return myIndex.getClassRootForFile(file);
     }
-    if (myIndex.isInContent(file)) {
+    if (myIndex.isInLibrarySource(file)) {
       return myIndex.getSourceRootForFile(file);
     }
     return null;
   }
 
-  public int compare(VirtualFile file1, VirtualFile file2) {
+  @Override
+  public int compare(@NotNull VirtualFile file1, @NotNull VirtualFile file2) {
     final VirtualFile r1 = getFileRoot(file1);
     final VirtualFile r2 = getFileRoot(file2);
     for (VirtualFile root : myEntries) {
@@ -68,11 +71,26 @@ public abstract class LibraryScopeBase extends GlobalSearchScope {
     return 0;
   }
 
+  @Override
   public boolean isSearchInModuleContent(@NotNull Module aModule) {
     return false;
   }
 
+  @Override
   public boolean isSearchInLibraries() {
     return true;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (!(o instanceof LibraryScopeBase)) return false;
+
+    return myEntries.equals(((LibraryScopeBase)o).myEntries);
+  }
+
+  @Override
+  public int calcHashCode() {
+    return myEntries.hashCode();
   }
 }

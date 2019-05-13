@@ -17,7 +17,6 @@ package com.intellij.cvsSupport2.ui.experts;
 
 import com.intellij.CvsBundle;
 import com.intellij.cvsSupport2.config.CvsRootConfiguration;
-import com.intellij.cvsSupport2.connections.CvsEnvironment;
 import com.intellij.cvsSupport2.connections.CvsRootException;
 import com.intellij.cvsSupport2.cvsBrowser.CvsElement;
 import com.intellij.cvsSupport2.cvsBrowser.CvsTree;
@@ -27,8 +26,6 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.vcs.VcsException;
-import com.intellij.util.Consumer;
 import org.intellij.lang.annotations.JdkConstants;
 import org.jetbrains.annotations.Nullable;
 
@@ -48,7 +45,7 @@ public class SelectCvsElementStep extends WizardStep {
   @JdkConstants.TreeSelectionMode private final int mySelectionMode;
   private final boolean myAllowRootSelection;
   private final boolean myShowModules;
-  private final Ref<Boolean> myErrors = new Ref<Boolean>();
+  private final Ref<Boolean> myErrors = new Ref<>();
 
   public SelectCvsElementStep(String title, CvsWizard wizard,
                               Project project,
@@ -75,13 +72,8 @@ public class SelectCvsElementStep extends WizardStep {
   private boolean isLogged(final CvsRootConfiguration selectedConfiguration) {
     myErrors.set(null);
     final LoginPerformer performer = new LoginPerformer(
-      myProject, Collections.<CvsEnvironment>singletonList(selectedConfiguration),
-      new Consumer<VcsException>() {
-        @Override
-        public void consume(VcsException e) {
-          myErrors.set(Boolean.TRUE);
-        }
-      });
+      myProject, Collections.singletonList(selectedConfiguration),
+      e -> myErrors.set(Boolean.TRUE));
     try {
       final boolean logged = performer.loginAll(false);
       return logged && myErrors.isNull();
@@ -99,12 +91,7 @@ public class SelectCvsElementStep extends WizardStep {
     }
     final boolean logged = isLogged(selectedConfiguration);
     if (logged) {
-      try {
-        myCvsTree.setCvsRootConfiguration((CvsRootConfiguration)selectedConfiguration.clone());
-      }
-      catch (CloneNotSupportedException e) {
-        throw new RuntimeException(e);
-      }
+      myCvsTree.setCvsRootConfiguration(selectedConfiguration.clone());
     }
     return logged;
   }
@@ -125,18 +112,10 @@ public class SelectCvsElementStep extends WizardStep {
 
   @Override
   protected JComponent createComponent() {
-    myCvsTree = new CvsTree(myProject, myAllowRootSelection, mySelectionMode, myShowModules, myShowFiles, new Consumer<VcsException>() {
-      @Override
-      public void consume(final VcsException e) {
-        myErrors.set(Boolean.TRUE);
-        ApplicationManager.getApplication().invokeLater(new Runnable() {
-
-          @Override
-          public void run() {
-            Messages.showErrorDialog(e.getMessage(), CvsBundle.message("error.title.cvs.error"));
-          }
-        }, ModalityState.any());
-      }
+    myCvsTree = new CvsTree(myProject, myAllowRootSelection, mySelectionMode, myShowModules, myShowFiles, e -> {
+      myErrors.set(Boolean.TRUE);
+      ApplicationManager.getApplication().invokeLater(
+        () -> Messages.showErrorDialog(e.getMessage(), CvsBundle.message("error.title.cvs.error")), ModalityState.any());
     });
     myCvsTree.init();
     myCvsTree.addSelectionObserver(new Observer() {

@@ -28,13 +28,13 @@ public class UpdateRootNode extends GroupTreeNode {
   private final Project myProject;
 
   public UpdateRootNode(UpdatedFiles updatedFiles, Project project, String rootName, ActionInfo actionInfo) {
-    super(rootName, false, SimpleTextAttributes.ERROR_ATTRIBUTES, project, Collections.<String, String>emptyMap(), null);
+    super(rootName, false, SimpleTextAttributes.ERROR_ATTRIBUTES, project, Collections.emptyMap(), null);
     myProject = project;
 
     addGroupsToNode(updatedFiles.getTopLevelGroups(), this, actionInfo);
   }
 
-  private void addGroupsToNode(List<FileGroup> groups, AbstractTreeNode owner, ActionInfo actionInfo) {
+  private void addGroupsToNode(List<? extends FileGroup> groups, AbstractTreeNode owner, ActionInfo actionInfo) {
     for (FileGroup fileGroup : groups) {
       GroupTreeNode node = addFileGroup(fileGroup, owner, actionInfo);
       if (node != null) {

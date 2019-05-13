@@ -6,6 +6,8 @@ class Stub {
 [Groovy script]
   [Class definition : Stub]
     [Modifiers]
+    [Extends clause]
+    [Implements clause]
     [Type definition body]
       [Variable definitions]
         [Modifiers]
@@ -15,3 +17,4 @@ class Stub {
         [Parameter list]
           [Parameter : i]
             [Modifiers]
+        [Throw clause]

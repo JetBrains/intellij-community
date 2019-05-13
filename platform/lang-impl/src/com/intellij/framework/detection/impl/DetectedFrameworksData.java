@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package com.intellij.framework.detection.impl;
 import com.intellij.framework.detection.DetectedFrameworkDescription;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.indexing.FileBasedIndex;
@@ -33,7 +34,10 @@ import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.File;
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Set;
 
 /**
  * @author nik
@@ -41,22 +45,21 @@ import java.util.*;
 public class DetectedFrameworksData {
   private static final Logger LOG = Logger.getInstance("#com.intellij.framework.detection.impl.DetectedFrameworksData");
   private PersistentHashMap<Integer,TIntHashSet> myExistentFrameworkFiles;
-  private TIntObjectHashMap<TIntHashSet> myNewFiles;
-  private MultiMap<Integer, DetectedFrameworkDescription> myDetectedFrameworks;
+  private final TIntObjectHashMap<TIntHashSet> myNewFiles;
+  private final MultiMap<Integer, DetectedFrameworkDescription> myDetectedFrameworks;
 
   public DetectedFrameworksData(Project project) {
-    myDetectedFrameworks = new MultiMap<Integer, DetectedFrameworkDescription>();
-    File file = new File(FrameworkDetectorRegistryImpl.getDetectionDirPath() + File.separator + project.getName() + "." + project.getLocationHash() +
-                         File.separator + "files");
-    myNewFiles = new TIntObjectHashMap<TIntHashSet>();
+    myDetectedFrameworks = new MultiMap<>();
+    File file = ProjectUtil.getProjectCachePath(project, FrameworkDetectorRegistryImpl.getDetectionDirPath(), true).resolve("files").toFile();
+    myNewFiles = new TIntObjectHashMap<>();
     try {
-      myExistentFrameworkFiles = new PersistentHashMap<Integer, TIntHashSet>(file, EnumeratorIntegerDescriptor.INSTANCE, new TIntHashSetExternalizer());
+      myExistentFrameworkFiles = new PersistentHashMap<>(file, EnumeratorIntegerDescriptor.INSTANCE, new TIntHashSetExternalizer());
     }
     catch (IOException e) {
       LOG.info(e);
       PersistentHashMap.deleteFilesStartingWith(file);
       try {
-        myExistentFrameworkFiles = new PersistentHashMap<Integer, TIntHashSet>(file, EnumeratorIntegerDescriptor.INSTANCE, new TIntHashSetExternalizer());
+        myExistentFrameworkFiles = new PersistentHashMap<>(file, EnumeratorIntegerDescriptor.INSTANCE, new TIntHashSetExternalizer());
       }
       catch (IOException e1) {
         LOG.error(e1);
@@ -87,7 +90,7 @@ public class DetectedFrameworksData {
     catch (IOException e) {
       LOG.info(e);
     }
-    final ArrayList<VirtualFile> newFiles = new ArrayList<VirtualFile>();
+    final ArrayList<VirtualFile> newFiles = new ArrayList<>();
     TIntHashSet newSet = new TIntHashSet();
     for (VirtualFile file : files) {
       final int fileId = FileBasedIndex.getFileId(file);
@@ -141,7 +144,7 @@ public class DetectedFrameworksData {
 
   private static class TIntHashSetExternalizer implements DataExternalizer<TIntHashSet> {
     @Override
-    public void save(DataOutput out, TIntHashSet value) throws IOException {
+    public void save(@NotNull DataOutput out, TIntHashSet value) throws IOException {
       out.writeInt(value.size());
       final TIntIterator iterator = value.iterator();
       while (iterator.hasNext()) {
@@ -150,7 +153,7 @@ public class DetectedFrameworksData {
     }
 
     @Override
-    public TIntHashSet read(DataInput in) throws IOException {
+    public TIntHashSet read(@NotNull DataInput in) throws IOException {
       int size = in.readInt();
       final TIntHashSet set = new TIntHashSet(size);
       while (size-- > 0) {

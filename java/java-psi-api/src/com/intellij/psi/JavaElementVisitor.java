@@ -1,25 +1,9 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi;
 
 import com.intellij.psi.javadoc.*;
 
-@SuppressWarnings({"JavaDoc"})
 public abstract class JavaElementVisitor extends PsiElementVisitor {
-
   public void visitAnonymousClass(PsiAnonymousClass aClass) {
     visitClass(aClass);
   }
@@ -208,6 +192,10 @@ public abstract class JavaElementVisitor extends PsiElementVisitor {
     visitVariable(parameter);
   }
 
+  public void visitReceiverParameter(PsiReceiverParameter parameter) {
+    visitVariable(parameter);
+  }
+
   public void visitParameterList(PsiParameterList list) {
     visitElement(list);
   }
@@ -216,12 +204,16 @@ public abstract class JavaElementVisitor extends PsiElementVisitor {
     visitExpression(expression);
   }
 
-  public void visitPostfixExpression(PsiPostfixExpression expression) {
+  public void visitUnaryExpression(PsiUnaryExpression expression) {
     visitExpression(expression);
   }
 
+  public void visitPostfixExpression(PsiPostfixExpression expression) {
+    visitUnaryExpression(expression);
+  }
+
   public void visitPrefixExpression(PsiPrefixExpression expression) {
-    visitExpression(expression);
+    visitUnaryExpression(expression);
   }
 
   public void visitReferenceElement(PsiJavaCodeReferenceElement reference) {
@@ -237,10 +229,9 @@ public abstract class JavaElementVisitor extends PsiElementVisitor {
    * If we'd call both visitReferenceElement and visitExpression in default implementation
    * of this method we can easily stuck with exponential algorithm if the derived visitor
    * extends visitElement() and accepts children there.
-   * PsiRecursiveElement visitor works that around and implements this method accordingly.
+   * {@link JavaRecursiveElementVisitor} knows that and implements this method accordingly.
    * All other visitor must decide themselves what implementation (visitReferenceElement() or visitExpression() or none or LOG.error())
    * is appropriate for them.
-   * @param expression
    */
   public void visitReferenceExpression(PsiReferenceExpression expression) {}
 
@@ -276,6 +267,10 @@ public abstract class JavaElementVisitor extends PsiElementVisitor {
     visitStatement(statement);
   }
 
+  public void visitSwitchLabeledRuleStatement(PsiSwitchLabeledRuleStatement statement) {
+    visitStatement(statement);
+  }
+
   public void visitSwitchStatement(PsiSwitchStatement statement) {
     visitStatement(statement);
   }
@@ -304,8 +299,12 @@ public abstract class JavaElementVisitor extends PsiElementVisitor {
     visitElement(resourceList);
   }
 
-  public void visitResourceVariable(PsiResourceVariable resourceVariable) {
-    visitLocalVariable(resourceVariable);
+  public void visitResourceVariable(PsiResourceVariable variable) {
+    visitLocalVariable(variable);
+  }
+
+  public void visitResourceExpression(PsiResourceExpression expression) {
+    visitElement(expression);
   }
 
   public void visitTypeElement(PsiTypeElement type) {
@@ -378,5 +377,37 @@ public abstract class JavaElementVisitor extends PsiElementVisitor {
 
   public void visitLambdaExpression(PsiLambdaExpression expression) {
     visitExpression(expression);
+  }
+
+  public void visitSwitchExpression(PsiSwitchExpression expression) {
+    visitExpression(expression);
+  }
+
+  public void visitModule(PsiJavaModule module) {
+    visitElement(module);
+  }
+
+  public void visitModuleReferenceElement(PsiJavaModuleReferenceElement refElement) {
+    visitElement(refElement);
+  }
+
+  public void visitModuleStatement(PsiStatement statement) {
+    visitStatement(statement);
+  }
+
+  public void visitRequiresStatement(PsiRequiresStatement statement) {
+    visitModuleStatement(statement);
+  }
+
+  public void visitPackageAccessibilityStatement(PsiPackageAccessibilityStatement statement) {
+    visitModuleStatement(statement);
+  }
+
+  public void visitUsesStatement(PsiUsesStatement statement) {
+    visitModuleStatement(statement);
+  }
+
+  public void visitProvidesStatement(PsiProvidesStatement statement) {
+    visitModuleStatement(statement);
   }
 }

@@ -1,23 +1,11 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.diagnostic;
 
 import com.intellij.openapi.extensions.PluginAware;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.util.Consumer;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 
@@ -30,8 +18,8 @@ public abstract class ErrorReportSubmitter implements PluginAware {
 
   /**
    * Called by the framework. Allows to identify the plugin that provided this extension.
-   * @param plugin
    */
+  @Override
   public void setPluginDescriptor(PluginDescriptor plugin) {
     myPlugin = plugin;
   }
@@ -44,33 +32,56 @@ public abstract class ErrorReportSubmitter implements PluginAware {
   }
 
   /**
-   * @return "Report to vendor" action text to be used in Error Reporter user interface. For example: "Report to JetBrains".
+   * @return an action text to be used in Error Reporter user interface, e.g. "Report to JetBrains".
    */
+  @NotNull
   public abstract String getReportActionText();
 
   /**
-   * This method is called whenever fatal error (aka exception) in plugin code had happened and user decided to report this problem to
-   * plugin vendor.
-   * @param events sequence of the fatal error descriptors. Fatal errors that happened immediately one after another most probably caused
-   * by first one that happened so it's a common practice to submit only first one. Array passed is guaranteed to have at least one element.
-   * @param parentComponent one usually wants to show up a dialog asking user for additional details and probably authentication info.
-   * parentComponent parameter is passed so dialog that would come up would be properly aligned with its parent dialog (IDE Fatal Errors).
-   * @return submission result status.
+   * @return a text of a privacy notice to be shown in the dialog (in HTML; links are allowed).
    */
-  public abstract SubmittedReportInfo submit(IdeaLoggingEvent[] events, Component parentComponent);
-
-  public void submitAsync(IdeaLoggingEvent[] events,
-                          String additionalInfo,
-                          Component parentComponent,
-                          Consumer<SubmittedReportInfo> consumer) {
-    consumer.consume(submit(events, parentComponent));
+  public String getPrivacyNoticeText() {
+    return null;
   }
 
-  public boolean trySubmitAsync(IdeaLoggingEvent[] events,
-                                String additionalInfo,
-                                Component parentComponent,
-                                Consumer<SubmittedReportInfo> consumer) {
-    submitAsync(events, additionalInfo, parentComponent, consumer);
+  /**
+   * This method is called whenever an exception in a plugin code had happened and a user decided to report a problem to the plugin vendor.
+   *
+   * @param events          a non-empty sequence of error descriptors.
+   * @param additionalInfo  additional information provided by a user.
+   * @param parentComponent UI component to use as a parent in any UI activity from a submitter.
+   * @param consumer        a callback to be called after sending is finished (or failed).
+   * @return {@code true} if reporting was started, {@code false} if a report can't be sent at the moment.
+   */
+  public boolean submit(@NotNull IdeaLoggingEvent[] events,
+                        @Nullable String additionalInfo,
+                        @NotNull Component parentComponent,
+                        @NotNull Consumer<SubmittedReportInfo> consumer) {
+    //noinspection deprecation
+    return trySubmitAsync(events, additionalInfo, parentComponent, consumer);
+  }
+
+  //<editor-fold desc="Deprecated stuff.">
+  /** @deprecated implement {@link #submit(IdeaLoggingEvent[], String, Component, Consumer)} instead (to be removed in IDEA 2019) */
+  @Deprecated
+  @SuppressWarnings("ALL")
+  public boolean trySubmitAsync(IdeaLoggingEvent[] events, String info, Component parent, Consumer<SubmittedReportInfo> consumer) {
+    submitAsync(events, info, parent, consumer);
     return true;
   }
+
+  /** @deprecated implement {@link #submit(IdeaLoggingEvent[], String, Component, Consumer)} instead (to be removed in IDEA 2019) */
+  @Deprecated
+  @SuppressWarnings("ALL")
+  public void submitAsync(IdeaLoggingEvent[] events, String info, Component parent, Consumer<SubmittedReportInfo> consumer) {
+    consumer.consume(submit(events, parent));
+  }
+
+  /** @deprecated implement {@link #submit(IdeaLoggingEvent[], String, Component, Consumer)} instead (to be removed in IDEA 2019) */
+  @Deprecated
+  @SuppressWarnings("ALL")
+  public SubmittedReportInfo submit(IdeaLoggingEvent[] events, Component parent) {
+    throw new UnsupportedOperationException("Deprecated API called");
+  }
+  //</editor-fold>
 }

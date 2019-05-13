@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,16 +15,25 @@
  */
 package com.intellij.openapi.util.registry;
 
+import com.intellij.openapi.Disposable;
+import org.jetbrains.annotations.NotNull;
+
+/**
+ * Listener for receiving notifications about registry value state changes.
+ * Use {@link RegistryValue#addListener(RegistryValueListener, Disposable)} to register a listener.
+ */
 public interface RegistryValueListener {
 
-  void beforeValueChanged(RegistryValue value);
-  void afterValueChanged(RegistryValue value);
+  void beforeValueChanged(@NotNull RegistryValue value);
+  void afterValueChanged(@NotNull RegistryValue value);
 
   class Adapter implements RegistryValueListener {
-    public void beforeValueChanged(RegistryValue value) {
+    @Override
+    public void beforeValueChanged(@NotNull RegistryValue value) {
     }
 
-    public void afterValueChanged(RegistryValue value) {
+    @Override
+    public void afterValueChanged(@NotNull RegistryValue value) {
     }
   }
 

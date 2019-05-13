@@ -1,0 +1,10 @@
+Types:
+PsiField:f : java.util.Set<B>
+PsiParameter:s : java.util.AbstractSet<B>
+PsiReferenceExpression:f : java.util.Set<B>
+PsiReferenceExpression:s : java.util.AbstractSet<B>
+
+Conversions:
+
+New expression type changes:
+Fails:

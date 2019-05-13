@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,9 +16,9 @@
 package com.intellij.psi.impl.source.resolve.reference.impl.providers;
 
 import com.intellij.psi.*;
-import com.intellij.psi.jsp.JspImplicitVariable;
 import com.intellij.psi.jsp.JspSpiUtil;
 import com.intellij.psi.util.PropertyUtil;
+import com.intellij.psi.util.PropertyUtilBase;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlTag;
@@ -62,8 +62,8 @@ public class MethodPropertyReference extends BasicAttributeValueReference {
           }
         } else if (psiElement instanceof PsiClass) {
           return (PsiClass)psiElement;
-        } else if (psiElement instanceof JspImplicitVariable) {
-          final PsiType type=((JspImplicitVariable)psiElement).getType();
+        } else if (psiElement instanceof PsiVariable) {
+          final PsiType type=((PsiVariable)psiElement).getType();
           if (type instanceof PsiClassType) {
             return ((PsiClassType)type).resolve();
           }
@@ -89,8 +89,8 @@ public class MethodPropertyReference extends BasicAttributeValueReference {
 
 
   @Override
-  public PsiElement handleElementRename(String _newElementName) throws IncorrectOperationException {
-    String newElementName = PropertyUtil.getPropertyName(_newElementName);
+  public PsiElement handleElementRename(@NotNull String _newElementName) throws IncorrectOperationException {
+    String newElementName = PropertyUtilBase.getPropertyName(_newElementName);
     if (newElementName == null) newElementName = _newElementName;
 
     return super.handleElementRename(newElementName);

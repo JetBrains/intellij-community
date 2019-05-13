@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,9 +37,6 @@ public class GroovyModelSerializerExtension extends JpsModelSerializerExtension 
       @Override
       public void loadExtension(@NotNull JpsProject project, @NotNull Element componentTag) {
         JpsGroovySettings configuration = XmlSerializer.deserialize(componentTag, JpsGroovySettings.class);
-        if (configuration == null) {
-          configuration = new JpsGroovySettings();
-        }
         configuration.initExcludes();
         project.getContainer().setChild(JpsGroovySettings.ROLE, configuration);
       }
@@ -47,6 +44,29 @@ public class GroovyModelSerializerExtension extends JpsModelSerializerExtension 
       @Override
       public void saveExtension(@NotNull JpsProject project, @NotNull Element componentTag) {
       }
-    });
+    }, new GreclipseSettingsSerializer());
   }
+
+  private static class GreclipseSettingsSerializer extends JpsProjectExtensionSerializer {
+    private GreclipseSettingsSerializer() {
+      super(GreclipseSettings.COMPONENT_FILE, GreclipseSettings.COMPONENT_NAME);
+    }
+
+    @Override
+    public void loadExtension(@NotNull JpsProject project, @NotNull Element componentTag) {
+      GreclipseSettings settings = XmlSerializer.deserialize(componentTag, GreclipseSettings.class);
+      GreclipseJpsCompilerSettings component = new GreclipseJpsCompilerSettings(settings);
+      project.getContainer().setChild(GreclipseJpsCompilerSettings.ROLE, component);
+    }
+
+    @Override
+    public void loadExtensionWithDefaultSettings(@NotNull JpsProject project) {
+      GreclipseJpsCompilerSettings component = new GreclipseJpsCompilerSettings(new GreclipseSettings());
+      project.getContainer().setChild(GreclipseJpsCompilerSettings.ROLE, component);
+    }
+
+    @Override
+    public void saveExtension(@NotNull JpsProject project, @NotNull Element componentTag) { }
+  }
+
 }

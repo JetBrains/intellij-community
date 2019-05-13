@@ -1,5 +1,5 @@
 import java.util.*;
-public class BugReportLambdaSquiggles<T> {
+class BugReportLambdaSquiggles<T> {
 
   private T t;
   public <V> List<V> flatMap(Mapper<T, List<V>> mapper) {

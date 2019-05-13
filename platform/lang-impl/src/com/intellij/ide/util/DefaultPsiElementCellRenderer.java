@@ -21,14 +21,17 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.presentation.java.SymbolPresentationUtil;
 
 public class DefaultPsiElementCellRenderer extends PsiElementListCellRenderer<PsiElement> {
+  @Override
   protected int getIconFlags() {
     return Iconable.ICON_FLAG_VISIBILITY;
   }
 
+  @Override
   public String getElementText(PsiElement element){
     return SymbolPresentationUtil.getSymbolPresentableText(element);
   }
 
+  @Override
   public String getContainerText(PsiElement element, final String name){
     return SymbolPresentationUtil.getSymbolContainerText(element);
   }

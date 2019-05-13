@@ -1,135 +1,138 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.xmlb;
 
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.JDOMUtil;
-import com.intellij.util.ArrayUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.xmlb.annotations.OptionTag;
 import org.jdom.Attribute;
-import org.jdom.Content;
 import org.jdom.Element;
-import org.jdom.Text;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
 import java.util.List;
 
-class OptionTagBinding implements Binding {
-  private final static Logger LOG = Logger.getInstance("#" + OptionTagBinding.class.getName());
-
-  private final Accessor accessor;
-  private final String myName;
-  private final Binding myBinding;
+class OptionTagBinding extends BasePrimitiveBinding {
   private final String myTagName;
   private final String myNameAttribute;
   private final String myValueAttribute;
 
-  public OptionTagBinding(Accessor accessor, @Nullable OptionTag optionTag) {
-    this.accessor = accessor;
-    myBinding = XmlSerializerImpl.getBinding(accessor);
-    if (optionTag != null) {
-      String name = optionTag.value();
-      myName = name.isEmpty() ? accessor.getName() : name;
-      myTagName = optionTag.tag();
-      myNameAttribute = optionTag.nameAttribute();
-      myValueAttribute = optionTag.valueAttribute();
-    }
-    else {
-      myName = accessor.getName();
+  OptionTagBinding(@NotNull MutableAccessor accessor, @Nullable OptionTag optionTag) {
+    super(accessor, optionTag == null ? null : optionTag.value(), optionTag == null ? null : optionTag.converter());
+
+    if (optionTag == null) {
       myTagName = Constants.OPTION;
       myNameAttribute = Constants.NAME;
       myValueAttribute = Constants.VALUE;
     }
+    else {
+      myNameAttribute = optionTag.nameAttribute();
+      myValueAttribute = optionTag.valueAttribute();
+
+      String tagName = optionTag.tag();
+      if (StringUtil.isEmpty(myNameAttribute) && Constants.OPTION.equals(tagName)) {
+        tagName = myAccessor.getName();
+      }
+      myTagName = tagName;
+    }
   }
 
-  public Object serialize(Object o, Object context, SerializationFilter filter) {
+  @Override
+  @Nullable
+  public Object serialize(@NotNull Object o, @Nullable SerializationFilter filter) {
+    Object value = myAccessor.read(o);
     Element targetElement = new Element(myTagName);
-    Object value = accessor.read(o);
 
-    targetElement.setAttribute(myNameAttribute, myName);
-
-    if (value == null) return targetElement;
-
-    Object node = myBinding.serialize(value, targetElement, filter);
-    if (node instanceof Text) {
-      Text text = (Text)node;
-      targetElement.setAttribute(myValueAttribute, text.getText());
+    if (!StringUtil.isEmpty(myNameAttribute)) {
+      targetElement.setAttribute(myNameAttribute, myName);
     }
-    else {
-      if (targetElement != node) {
-        JDOMUtil.addContent(targetElement, node);
+
+    if (value == null) {
+      return targetElement;
+    }
+
+    Converter<Object> converter = getConverter();
+    if (converter == null) {
+      if (myBinding == null) {
+        targetElement.setAttribute(myValueAttribute, JDOMUtil.removeControlChars(XmlSerializerImpl.convertToString(value)));
+      }
+      else if (myBinding instanceof BeanBinding && myValueAttribute.isEmpty()) {
+        ((BeanBinding)myBinding).serializeInto(value, targetElement, filter);
+      }
+      else {
+        Object node = myBinding.serialize(value, targetElement, filter);
+        if (node != null && targetElement != node) {
+          addContent(targetElement, node);
+        }
       }
     }
-
+    else {
+      String text = converter.toString(value);
+      if (text != null) {
+        targetElement.setAttribute(myValueAttribute, JDOMUtil.removeControlChars(text));
+      }
+    }
     return targetElement;
   }
 
-  public Object deserialize(Object o, @NotNull Object... nodes) {
-    if (nodes.length > 1) {
-      LOG.info("Duplicate options for " + o + " will be ignored");
-    }
-    assert nodes.length != 0 : "Empty nodes passed to: " + this;
-
-    Element element = ((Element)nodes[0]);
-    Attribute valueAttr = element.getAttribute(myValueAttribute);
-
-    if (valueAttr != null) {
-      Object value = myBinding.deserialize(o, valueAttr);
-      accessor.write(o, value);
-    }
-    else {
-      final Content[] childElements = JDOMUtil.getContent(element);
-      List<Object> children = new ArrayList<Object>();
-
-      for (final Content child : childElements) {
-        if (XmlSerializerImpl.isIgnoredNode(child)) continue;
-        children.add(child);
-      }
-
-      if (children.size() > 0) {
-        Object value = myBinding.deserialize(accessor.read(o), ArrayUtil.toObjectArray(children));
-        accessor.write(o, value);
+  @Override
+  @NotNull
+  public Object deserialize(@NotNull Object context, @NotNull Element element) {
+    Attribute valueAttribute = element.getAttribute(myValueAttribute);
+    if (valueAttribute == null) {
+      if (myValueAttribute.isEmpty()) {
+        assert myBinding != null;
+        myAccessor.set(context, myBinding.deserializeUnsafe(context, element));
       }
       else {
-        accessor.write(o, null);
+        List<Element> children = element.getChildren();
+        if (children.isEmpty()) {
+          myAccessor.set(context, null);
+        }
+        else {
+          assert myBinding != null;
+          Object oldValue = myAccessor.read(context);
+          Object newValue = Binding.deserializeList(myBinding, oldValue, children);
+          if (myAccessor.isFinal()) {
+            LOG.assertTrue(oldValue == newValue);
+          }
+          else {
+            myAccessor.set(context, newValue);
+          }
+        }
       }
     }
-
-    return o;
+    else {
+      String value = valueAttribute.getValue();
+      if (myConverter == null) {
+        try {
+          XmlSerializerImpl.doSet(context, value, myAccessor, XmlSerializerImpl.typeToClass(myAccessor.getGenericType()));
+        }
+        catch (Exception e) {
+          throw new RuntimeException("Cannot set value for field " + myName, e);
+        }
+      }
+      else {
+        myAccessor.set(context, myConverter.fromString(value));
+      }
+    }
+    return context;
   }
 
-  public boolean isBoundTo(Object node) {
-    if (!(node instanceof Element)) return false;
-    Element e = (Element)node;
-    if (!e.getName().equals(myTagName)) return false;
-    String name = e.getAttributeValue(myNameAttribute);
-    return name != null && name.equals(myName);
-  }
+  @Override
+  public boolean isBoundTo(@NotNull Element element) {
+    if (!element.getName().equals(myTagName)) {
+      return false;
+    }
 
-  public Class getBoundNodeType() {
-    throw new UnsupportedOperationException("Method getBoundNodeType is not supported in " + getClass());
+    String name = element.getAttributeValue(myNameAttribute);
+    if (StringUtil.isEmpty(myNameAttribute)) {
+      return name == null || name.equals(myName);
+    }
+    else {
+      return name != null && name.equals(myName);
+    }
   }
-
-  public void init() {
-  }
-
 
   @NonNls
   public String toString() {

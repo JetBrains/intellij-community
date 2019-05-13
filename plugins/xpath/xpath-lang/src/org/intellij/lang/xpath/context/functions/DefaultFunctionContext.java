@@ -15,7 +15,6 @@
  */
 package org.intellij.lang.xpath.context.functions;
 
-import com.intellij.openapi.util.Factory;
 import com.intellij.openapi.util.Pair;
 import org.intellij.lang.xpath.context.ContextType;
 import org.intellij.lang.xpath.context.XPathVersion;
@@ -38,7 +37,7 @@ public class DefaultFunctionContext extends AbstractFunctionContext {
 
     // XPath 1.0
 
-    final Map<Pair<QName, Integer>, Function> decls1 = new HashMap<Pair<QName, Integer>, Function>();
+    final Map<Pair<QName, Integer>, Function> decls1 = new HashMap<>();
 
     addFunction(decls1, new FunctionImpl("last", XPathType.NUMBER));
     addFunction(decls1, new FunctionImpl("position", XPathType.NUMBER));
@@ -113,7 +112,7 @@ public class DefaultFunctionContext extends AbstractFunctionContext {
 
     // XPath 2.0
 
-    final Map<Pair<QName, Integer>, Function> decls2 = new HashMap<Pair<QName, Integer>, Function>();
+    final Map<Pair<QName, Integer>, Function> decls2 = new HashMap<>();
 
     addFunction(decls2, "fn:base-uri() as xs:anyURI?");
     addFunction(decls2, "fn:base-uri($arg as node()?) as xs:anyURI?");
@@ -360,16 +359,12 @@ public class DefaultFunctionContext extends AbstractFunctionContext {
     decls.put(Pair.create(new QName(namespace, value.getName()), value.getParameters().length), value);
   }
 
+  @Override
   public boolean allowsExtensions() {
     return false;
   }
 
   public static FunctionContext getInstance(final ContextType type) {
-    return AbstractFunctionContext.getInstance(type, new Factory<FunctionContext>() {
-      @Override
-      public FunctionContext create() {
-        return new DefaultFunctionContext(type);
-      }
-    });
+    return AbstractFunctionContext.getInstance(type, () -> new DefaultFunctionContext(type));
   }
 }

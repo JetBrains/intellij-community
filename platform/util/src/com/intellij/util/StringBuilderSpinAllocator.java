@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,34 +18,17 @@ package com.intellij.util;
 
 /**
  * StringBuilderSpinAllocator reuses StringBuilder instances performing non-blocking allocation and dispose.
+ * @deprecated Use {@code new} {@link StringBuilder} and don't be smarter than necessary
  */
+@Deprecated
 public class StringBuilderSpinAllocator {
-
   private StringBuilderSpinAllocator() {
   }
 
-  private static class Creator implements SpinAllocator.ICreator<StringBuilder> {
-    public StringBuilder createInstance() {
-      return new StringBuilder();
-    }
-  }
-
-  private static class Disposer implements SpinAllocator.IDisposer<StringBuilder> {
-    public void disposeInstance(final StringBuilder instance) {
-      instance.setLength(0);
-      if (instance.capacity() > 1024) {
-        instance.trimToSize();
-      }
-    }
-  }
-
-  private static final SpinAllocator<StringBuilder> myAllocator = new SpinAllocator<StringBuilder>(new Creator(), new Disposer());
-
   public static StringBuilder alloc() {
-    return myAllocator.alloc();
+    return new StringBuilder();
   }
 
   public static void dispose(StringBuilder instance) {
-    myAllocator.dispose(instance);
   }
 }

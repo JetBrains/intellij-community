@@ -1,23 +1,11 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui;
 
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.PlatformColors;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.event.HyperlinkEvent;
@@ -26,14 +14,14 @@ import javax.swing.plaf.basic.BasicHTML;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author Eugene Belyaev
  */
 public class HoverHyperlinkLabel extends JLabel {
   private String myOriginalText;
-  private final ArrayList<HyperlinkListener> myListeners = new ArrayList<HyperlinkListener>();
+  private final List<HyperlinkListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
 
   public HoverHyperlinkLabel(String text) {
     this(text, PlatformColors.BLUE);
@@ -48,11 +36,13 @@ public class HoverHyperlinkLabel extends JLabel {
 
   private void setupListener() {
     addMouseListener(new MouseAdapter() {
+      @Override
       public void mouseEntered(MouseEvent e) {
         HoverHyperlinkLabel.super.setText(underlineTextInHtml(myOriginalText));
         setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
       }
 
+      @Override
       public void mouseExited(MouseEvent e) {
         HoverHyperlinkLabel.super.setText(myOriginalText);
         setCursor(Cursor.getDefaultCursor());
@@ -61,10 +51,9 @@ public class HoverHyperlinkLabel extends JLabel {
 
     new ClickListener() {
       @Override
-      public boolean onClick(MouseEvent e, int clickCount) {
-        HyperlinkListener[] listeners = myListeners.toArray(new HyperlinkListener[myListeners.size()]);
+      public boolean onClick(@NotNull MouseEvent e, int clickCount) {
         HyperlinkEvent event = new HyperlinkEvent(HoverHyperlinkLabel.this, HyperlinkEvent.EventType.ACTIVATED, null);
-        for (HyperlinkListener listener : listeners) {
+        for (HyperlinkListener listener : myListeners) {
           listener.hyperlinkUpdate(event);
         }
         return true;
@@ -72,6 +61,7 @@ public class HoverHyperlinkLabel extends JLabel {
     }.installOn(this);
   }
 
+  @Override
   public void setText(String text) {
     if (BasicHTML.isHTMLString(getText())) { // if is currently showing string as html
       super.setText(underlineTextInHtml(text));
@@ -83,7 +73,7 @@ public class HoverHyperlinkLabel extends JLabel {
   }
 
   @NonNls private static String underlineTextInHtml(final String text) {
-    return "<html><u>" + StringUtil.escapeXml(text) + "</u></html>";
+    return "<html><u>" + StringUtil.escapeXmlEntities(text) + "</u></html>";
   }
 
   public String getOriginalText() {

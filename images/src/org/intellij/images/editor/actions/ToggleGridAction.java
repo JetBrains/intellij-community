@@ -17,8 +17,11 @@ package org.intellij.images.editor.actions;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.ToggleAction;
+import com.intellij.openapi.project.DumbAware;
 import org.intellij.images.editor.ImageEditor;
 import org.intellij.images.editor.actionSystem.ImageEditorActionUtil;
+import org.intellij.images.ui.ImageComponentDecorator;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * Toggle grid lines over image.
@@ -26,20 +29,23 @@ import org.intellij.images.editor.actionSystem.ImageEditorActionUtil;
  * @author <a href="mailto:aefimov.box@gmail.com">Alexey Efimov</a>
  * @see ImageEditor#setGridVisible
  */
-public final class ToggleGridAction extends ToggleAction {
-  public boolean isSelected(AnActionEvent e) {
-    ImageEditor editor = ImageEditorActionUtil.getValidEditor(e);
-    return editor != null && editor.isGridVisible();
+public final class ToggleGridAction extends ToggleAction implements DumbAware {
+  @Override
+  public boolean isSelected(@NotNull AnActionEvent e) {
+    ImageComponentDecorator decorator = ImageEditorActionUtil.getImageComponentDecorator(e);
+    return decorator != null && decorator.isGridVisible();
   }
 
-  public void setSelected(AnActionEvent e, boolean state) {
-    ImageEditor editor = ImageEditorActionUtil.getValidEditor(e);
-    if (editor != null) {
-      editor.setGridVisible(state);
+  @Override
+  public void setSelected(@NotNull AnActionEvent e, boolean state) {
+    ImageComponentDecorator decorator = ImageEditorActionUtil.getImageComponentDecorator(e);
+    if (decorator != null) {
+      decorator.setGridVisible(state);
     }
   }
 
-  public void update(final AnActionEvent e) {
+  @Override
+  public void update(@NotNull final AnActionEvent e) {
     super.update(e);
     ImageEditorActionUtil.setEnabled(e);
     e.getPresentation().setText(isSelected(e) ? "Hide Grid" : "Show Grid");

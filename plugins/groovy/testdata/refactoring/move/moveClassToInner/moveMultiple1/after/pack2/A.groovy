@@ -5,6 +5,7 @@ public class A {
       Class2 a;
       Class2 b;
     }
+
     public static class Class2 {
     }
 }

@@ -15,10 +15,9 @@
  */
 package com.intellij.framework.library;
 
+import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.libraries.LibraryType;
-import com.intellij.openapi.roots.libraries.NewLibraryConfiguration;
-import com.intellij.openapi.roots.libraries.PersistentLibraryKind;
+import com.intellij.openapi.roots.libraries.*;
 import com.intellij.openapi.roots.libraries.ui.LibraryEditorComponent;
 import com.intellij.openapi.roots.libraries.ui.LibraryPropertiesEditor;
 import com.intellij.openapi.util.text.StringUtil;
@@ -27,19 +26,60 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.net.URL;
+import java.util.List;
 
 /**
  * @author nik
  */
-public class DownloadableLibraryType extends LibraryType<LibraryVersionProperties> {
+public abstract class DownloadableLibraryType extends LibraryType<LibraryVersionProperties> {
+  private final Icon myIcon;
   private final String myLibraryCategoryName;
   private final DownloadableLibraryDescription myLibraryDescription;
 
-  public DownloadableLibraryType(@NotNull PersistentLibraryKind<LibraryVersionProperties> kind, @NotNull String libraryCategoryName,
-                                 @NotNull DownloadableLibraryDescription description) {
-    super(kind);
+  /**
+   * Creates instance of library type. You also <strong>must</strong> override {@link #getLibraryTypeIcon()} method and return non-null value
+   * from it.
+   * @param libraryCategoryName presentable description of the library type
+   * @param libraryTypeId unique id of the library type, used for serialization
+   * @param groupId name of directory on https://frameworks.jetbrains.com site which contains information about available library versions
+   * @param localUrls URLs of xml files containing information about the library versions (see /contrib/osmorc/src/org/osmorc/facet/osgi.core.xml for example)
+   */
+  protected DownloadableLibraryType(@NotNull String libraryCategoryName,
+                               @NotNull String libraryTypeId,
+                               @NotNull String groupId,
+                               @NotNull URL... localUrls) {
+    this(libraryCategoryName, libraryTypeId, groupId, null, localUrls);
+  }
+
+  /**
+   * @deprecated use {@link #DownloadableLibraryType(String, String, String, URL...)} instead and override {@link #getLibraryTypeIcon()}
+   */
+  @Deprecated
+  public DownloadableLibraryType(@NotNull String libraryCategoryName,
+                                 @NotNull String libraryTypeId,
+                                 @NotNull String groupId,
+                                 @Nullable Icon icon,
+                                 @NotNull URL... localUrls) {
+    super(new PersistentLibraryKind<LibraryVersionProperties>(libraryTypeId) {
+      @NotNull
+      @Override
+      public LibraryVersionProperties createDefaultProperties() {
+        return new LibraryVersionProperties();
+      }
+    });
     myLibraryCategoryName = libraryCategoryName;
-    myLibraryDescription = description;
+    myLibraryDescription = DownloadableLibraryService.getInstance().createLibraryDescription(groupId, localUrls);
+    myIcon = icon;
+  }
+
+  @Nullable
+  private static LibraryVersionProperties detectVersion(List<VirtualFile> classesRoots, String detectionClass) {
+    if (!LibraryUtil.isClassAvailableInLibrary(classesRoots, detectionClass)) {
+      return null;
+    }
+    final String version = JarVersionDetectionUtil.detectJarVersion(detectionClass, classesRoots);
+    return new LibraryVersionProperties(version);
   }
 
   @Override
@@ -74,8 +114,28 @@ public class DownloadableLibraryType extends LibraryType<LibraryVersionPropertie
     return DownloadableLibraryService.getInstance().createDownloadableLibraryEditor(myLibraryDescription, editorComponent, this);
   }
 
+  @NotNull
+  public Icon getLibraryTypeIcon() {
+    if (myIcon == null) {
+      throw PluginManagerCore.createPluginException("'DownloadableLibraryType::getLibraryTypeIcon' isn't overriden or returns 'null' in " + getClass().getName(), null, getClass());
+    }
+    return myIcon;
+  }
+
   @Override
-  public Icon getIcon() {
+  @NotNull
+  public Icon getIcon(LibraryVersionProperties properties) {
+    return getLibraryTypeIcon();
+  }
+
+  protected abstract String[] getDetectionClassNames();
+
+  @Override
+  public LibraryVersionProperties detect(@NotNull List<VirtualFile> classesRoots) {
+    for (String className : getDetectionClassNames()) {
+      final LibraryVersionProperties versionProperties = detectVersion(classesRoots, className);
+      if (versionProperties != null) return versionProperties;
+    }
     return null;
   }
 }

@@ -16,18 +16,16 @@
 package com.intellij.tasks.fogbugz;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.PasswordUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.tasks.Comment;
-import com.intellij.tasks.Task;
-import com.intellij.tasks.TaskRepositoryType;
-import com.intellij.tasks.TaskType;
+import com.intellij.tasks.*;
 import com.intellij.tasks.impl.BaseRepository;
 import com.intellij.tasks.impl.BaseRepositoryImpl;
 import com.intellij.util.NotNullFunction;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.annotations.Tag;
-import icons.TasksIcons;
-import org.apache.commons.httpclient.HttpClient;
+import icons.TasksCoreIcons;
 import org.apache.commons.httpclient.methods.PostMethod;
 import org.jdom.Document;
 import org.jdom.Element;
@@ -47,9 +45,9 @@ import java.util.List;
  */
 @Tag("FogBugz")
 public class FogBugzRepository extends BaseRepositoryImpl {
-
   private static final Logger LOG = Logger.getInstance("#com.intellij.tasks.fogbugz.FogBugzRepository");
-  private transient String token;
+
+  private String myToken;
 
   public FogBugzRepository(TaskRepositoryType type) {
     super(type);
@@ -58,6 +56,12 @@ public class FogBugzRepository extends BaseRepositoryImpl {
 
   private FogBugzRepository(FogBugzRepository other) {
     super(other);
+    myToken = other.myToken;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    return super.equals(o) && Comparing.equal(myToken, ((FogBugzRepository)o).myToken);
   }
 
   @SuppressWarnings({"UnusedDeclaration"})
@@ -69,29 +73,27 @@ public class FogBugzRepository extends BaseRepositoryImpl {
     return getCases(StringUtil.notNullize(query));
   }
 
+  @SuppressWarnings("unchecked")
   private Task[] getCases(String q) throws Exception {
-    HttpClient client = login(getLoginMethod());
+    loginIfNeeded();
     PostMethod method = new PostMethod(getUrl() + "/api.asp");
-    method.addParameter("token", token);
+    method.addParameter("token", myToken);
     method.addParameter("cmd", "search");
     method.addParameter("q", q);
     method.addParameter("cols", "sTitle,fOpen,dtOpened,dtLastUpdated,ixCategory");
-    int status = client.executeMethod(method);
+    int status = getHttpClient().executeMethod(method);
     if (status != 200) {
       throw new Exception("Error listing cases: " + method.getStatusLine());
     }
     Document document = new SAXBuilder(false).build(method.getResponseBodyAsStream()).getDocument();
-    XPath path = XPath.newInstance("/response/cases/case");
+    List<Element> errorNodes = XPath.newInstance("/response/error").selectNodes(document);
+    if (!errorNodes.isEmpty()) {
+      throw new Exception("Error listing cases: " + errorNodes.get(0).getText());
+    }
     final XPath commentPath = XPath.newInstance("events/event");
-    @SuppressWarnings("unchecked") final List<Element> nodes = (List<Element>)path.selectNodes(document);
-    final List<Task> tasks = ContainerUtil.mapNotNull(nodes, new NotNullFunction<Element, Task>() {
-      @NotNull
-      @Override
-      public Task fun(Element element) {
-        return createCase(element, commentPath);
-      }
-    });
-    return tasks.toArray(new Task[tasks.size()]);
+    final List<Element> nodes = (List<Element>)XPath.newInstance("/response/cases/case").selectNodes(document);
+    final List<Task> tasks = ContainerUtil.mapNotNull(nodes, (NotNullFunction<Element, Task>)element -> createCase(element, commentPath));
+    return tasks.toArray(Task.EMPTY_ARRAY);
   }
 
   private static TaskType getType(Element element) {
@@ -169,13 +171,13 @@ public class FogBugzRepository extends BaseRepositoryImpl {
             };
           }
         });
-        return comments.toArray(new Comment[comments.size()]);
+        return comments.toArray(Comment.EMPTY_ARRAY);
       }
 
       @NotNull
       @Override
       public Icon getIcon() {
-        return TasksIcons.Fogbugz;
+        return TasksCoreIcons.Fogbugz;
       }
 
       @NotNull
@@ -211,12 +213,18 @@ public class FogBugzRepository extends BaseRepositoryImpl {
       public String getIssueUrl() {
         return getUrl() + "/default.asp?" + getId();
       }
+
+      @Nullable
+      @Override
+      public TaskRepository getRepository() {
+        return FogBugzRepository.this;
+      }
     };
   }
 
   @Nullable
   @Override
-  public Task findTask(String id) throws Exception {
+  public Task findTask(@NotNull String id) throws Exception {
     Task[] tasks = getCases(id);
     switch (tasks.length) {
       case 0:
@@ -229,14 +237,21 @@ public class FogBugzRepository extends BaseRepositoryImpl {
     }
   }
 
+  @NotNull
   @Override
   public BaseRepository clone() {
     return new FogBugzRepository(this);
   }
 
-  private HttpClient login(PostMethod method) throws Exception {
-    HttpClient client = getHttpClient();
-    int status = client.executeMethod(method);
+  private void loginIfNeeded() throws Exception {
+    if (StringUtil.isEmpty(myToken)) {
+      login(getLoginMethod());
+    }
+  }
+
+  private void login(@NotNull PostMethod method) throws Exception {
+    LOG.debug("Requesting new token");
+    int status = getHttpClient().executeMethod(method);
     if (status != 200) {
       throw new Exception("Error logging in: " + method.getStatusLine());
     }
@@ -247,10 +262,10 @@ public class FogBugzRepository extends BaseRepositoryImpl {
       Element error = (Element)XPath.newInstance("/response/error").selectSingleNode(document);
       throw new Exception(error == null ? "Error logging in" : error.getText());
     }
-    token = result.getTextTrim();
-    return client;
+    myToken = result.getTextTrim();
   }
 
+  @NotNull
   private PostMethod getLoginMethod() {
     PostMethod method = new PostMethod(getUrl() + "/api.asp");
     method.addParameter("cmd", "logon");
@@ -259,13 +274,37 @@ public class FogBugzRepository extends BaseRepositoryImpl {
     return method;
   }
 
+  @NotNull
+  private PostMethod getLogoutMethod() throws Exception {
+    PostMethod method = new PostMethod(getUrl() + "/api.asp");
+    method.addParameter("cmd", "logoff");
+    assert myToken != null;
+    method.addParameter("token", myToken);
+    return method;
+  }
+
   @Nullable
   @Override
   public CancellableConnection createCancellableConnection() {
-    return new HttpTestConnection<PostMethod>(getLoginMethod()) {
+    return new CancellableConnection() {
+      PostMethod myMethod;
+
       @Override
-      protected void doTest(PostMethod method) throws Exception {
-        login(method);
+      protected void doTest() throws Exception {
+        if (StringUtil.isNotEmpty(myToken)) {
+          myMethod = getLogoutMethod();
+          LOG.debug("Revoking previously used token");
+          getHttpClient().executeMethod(myMethod);
+        }
+        myMethod = getLoginMethod();
+        login(myMethod);
+      }
+
+      @Override
+      public void cancel() {
+        if (myMethod != null) {
+          myMethod.abort();
+        }
       }
     };
   }
@@ -283,6 +322,22 @@ public class FogBugzRepository extends BaseRepositoryImpl {
   @Override
   public String getComment() {
     return "{id} (e.g. 2344245), {summary}";
+  }
+
+  @Tag("token")
+  @NotNull
+  public String getEncodedToken() {
+    // The same approach as used for passwords in BaseRepository
+    return PasswordUtil.encodePassword(myToken);
+  }
+
+  @SuppressWarnings("unused")
+  public void setEncodedToken(@Nullable String token) {
+    try {
+      myToken = PasswordUtil.decodePassword(token);
+    }
+    catch (NumberFormatException ignored) {
+    }
   }
 
 }

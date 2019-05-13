@@ -1,37 +1,33 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.applet;
 
+import com.intellij.application.options.ModulesComboBox;
 import com.intellij.execution.ExecutionBundle;
+import com.intellij.execution.configurations.ConfigurationUtil;
 import com.intellij.execution.impl.CheckableRunConfigurationEditor;
-import com.intellij.execution.ui.AlternativeJREPanel;
 import com.intellij.execution.ui.ClassBrowser;
 import com.intellij.execution.ui.ConfigurationModuleSelector;
+import com.intellij.execution.ui.DefaultJreSelector;
+import com.intellij.execution.ui.JrePathEditor;
+import com.intellij.ide.util.ClassFilter;
+import com.intellij.ide.util.TreeClassChooser;
+import com.intellij.ide.util.TreeClassChooserFactory;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.LabeledComponent;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.table.TableView;
+import com.intellij.util.SmartList;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.ListTableModel;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -40,11 +36,37 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
-import java.util.*;
+import java.util.ArrayList;
 import java.util.List;
 
-public class AppletConfigurable extends SettingsEditor<AppletConfiguration> implements CheckableRunConfigurationEditor<AppletConfiguration>,
-                                                                                       PanelWithAnchor {
+public class AppletConfigurable extends SettingsEditor<AppletConfiguration>
+                                implements CheckableRunConfigurationEditor<AppletConfiguration>, PanelWithAnchor {
+  private static final String HTTP_PREFIX = "http:/";
+  private static final ColumnInfo[] PARAMETER_COLUMNS = {
+    new MyColumnInfo(ExecutionBundle.message("applet.configuration.parameter.name.column")) {
+      @Override
+      public String valueOf(final AppletParameter appletParameter) {
+        return appletParameter.getName();
+      }
+
+      @Override
+      public void setValue(final AppletParameter appletParameter, final String name) {
+        appletParameter.setName(name);
+      }
+    },
+    new MyColumnInfo(ExecutionBundle.message("applet.configuration.parameter.value.column")) {
+      @Override
+      public String valueOf(final AppletParameter appletParameter) {
+        return appletParameter.getValue();
+      }
+
+      @Override
+      public void setValue(final AppletParameter appletParameter, final String value) {
+        appletParameter.setValue(value);
+      }
+    }
+  };
+
   private JPanel myWholePanel;
   private JRadioButton myMainClass;
   private JRadioButton myURL;
@@ -56,54 +78,19 @@ public class AppletConfigurable extends SettingsEditor<AppletConfiguration> impl
   private TextFieldWithBrowseButton myHtmlFile;
   private JTextField myWidth;
   private JTextField myHeight;
-  private LabeledComponent<JComboBox> myModule;
+  private LabeledComponent<ModulesComboBox> myModule;
   private JPanel myTablePlace;
   private JBLabel myHtmlFileLabel;
   private JBLabel myClassNameLabel;
   private JBLabel myWidthLabel;
   private JLabel myHeightLabel;
-  private AlternativeJREPanel myAlternativeJREPanel;
-  private final ButtonGroup myAppletRadioButtonGroup;
+  private JrePathEditor myJrePathEditor;
   private JComponent anchor;
 
   private final Project myProject;
   private final ConfigurationModuleSelector myModuleSelector;
-
-  private static final ColumnInfo[] PARAMETER_COLUMNS = new ColumnInfo[]{
-    new MyColumnInfo(ExecutionBundle.message("applet.configuration.parameter.name.column")) {
-      public String valueOf(final AppletConfiguration.AppletParameter appletParameter) {
-        return appletParameter.getName();
-      }
-
-      public void setValue(final AppletConfiguration.AppletParameter appletParameter, final String name) {
-        appletParameter.setName(name);
-      }
-    },
-    new MyColumnInfo(ExecutionBundle.message("applet.configuration.parameter.value.column")) {
-      public String valueOf(final AppletConfiguration.AppletParameter appletParameter) {
-        return appletParameter.getValue();
-      }
-
-      public void setValue(final AppletConfiguration.AppletParameter appletParameter, final String value) {
-        appletParameter.setValue(value);
-      }
-    }
-  };
-  private final ListTableModel<AppletConfiguration.AppletParameter> myParameters;
+  private final ListTableModel<AppletParameter> myParameters;
   private final TableView myTable;
-  @NonNls
-  protected static final String HTTP_PREFIX = "http:/";
-
-  private void changePanel() {
-    if (myMainClass.isSelected()) {
-      myClassOptions.setVisible(true);
-      myHTMLOptions.setVisible(false);
-    }
-    else {
-      myHTMLOptions.setVisible(true);
-      myClassOptions.setVisible(false);
-    }
-  }
 
   public AppletConfigurable(final Project project) {
     myProject = project;
@@ -112,11 +99,11 @@ public class AppletConfigurable extends SettingsEditor<AppletConfiguration> impl
     myWidthLabel.setLabelFor(myWidth);
     myHeightLabel.setLabelFor(myHeight);
 
-
     myModuleSelector = new ConfigurationModuleSelector(project, getModuleComponent());
+    myJrePathEditor.setDefaultJreSelector(DefaultJreSelector.fromModuleDependencies(getModuleComponent(), true));
     myTablePlace.setLayout(new BorderLayout());
-    myParameters = new ListTableModel<AppletConfiguration.AppletParameter>(PARAMETER_COLUMNS);
-    myTable = new TableView(myParameters);
+    myParameters = new ListTableModel<>(PARAMETER_COLUMNS);
+    myTable = new TableView<>(myParameters);
     myTable.getEmptyText().setText(ExecutionBundle.message("no.parameters"));
     myTablePlace.add(
       ToolbarDecorator.createDecorator(myTable)
@@ -131,17 +118,18 @@ public class AppletConfigurable extends SettingsEditor<AppletConfiguration> impl
           removeParameter();
         }
       }).disableUpDownActions().createPanel(), BorderLayout.CENTER);
-    myAppletRadioButtonGroup = new ButtonGroup();
-    myAppletRadioButtonGroup.add(myMainClass);
-    myAppletRadioButtonGroup.add(myURL);
-    getVMParametersComponent().setDialogCaption(myVMParameters.getRawText());
+    ButtonGroup appletRadioButtonGroup = new ButtonGroup();
+    appletRadioButtonGroup.add(myMainClass);
+    appletRadioButtonGroup.add(myURL);
 
     myMainClass.addActionListener(new ActionListener() {
+      @Override
       public void actionPerformed(final ActionEvent e) {
         changePanel();
       }
     });
     myURL.addActionListener(new ActionListener() {
+      @Override
       public void actionPerformed(final ActionEvent e) {
         changePanel();
       }
@@ -151,11 +139,35 @@ public class AppletConfigurable extends SettingsEditor<AppletConfiguration> impl
                                                      FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor());
     getHtmlPathComponent().addBrowseFolderListener(ExecutionBundle.message("choose.html.file.dialog.title"), null, myProject,
                                                    FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor());
-    ClassBrowser.createAppletClassBrowser(myProject, myModuleSelector).setField(getClassNameComponent());
+
+    String title = ExecutionBundle.message("choose.applet.class.dialog.title");
+    new ClassBrowser.MainClassBrowser<EditorTextField>(myProject, myModuleSelector, title) {
+      @Override
+      protected TreeClassChooser createClassChooser(ClassFilter.ClassFilterWithScope classFilter) {
+        Project project = getProject();
+        Module module = myModuleSelector.getModule();
+        GlobalSearchScope scope =
+          module != null ? GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(module) : GlobalSearchScope.allScope(project);
+        PsiClass appletClass = JavaPsiFacade.getInstance(project).findClass("java.applet.Applet", scope);
+        return TreeClassChooserFactory.getInstance(project).createInheritanceClassChooser(
+          title, classFilter.getScope(), appletClass, false, false, ConfigurationUtil.PUBLIC_INSTANTIATABLE_CLASS);
+      }
+    }.setField(getClassNameComponent());
 
     myHTMLOptions.setVisible(false);
 
     setAnchor(myVMParameters.getLabel());
+  }
+
+  private void changePanel() {
+    if (myMainClass.isSelected()) {
+      myClassOptions.setVisible(true);
+      myHTMLOptions.setVisible(false);
+    }
+    else {
+      myHTMLOptions.setVisible(true);
+      myClassOptions.setVisible(false);
+    }
   }
 
   private void removeParameter() {
@@ -163,9 +175,8 @@ public class AppletConfigurable extends SettingsEditor<AppletConfiguration> impl
   }
 
   private void addParameter() {
-    final ArrayList<AppletConfiguration.AppletParameter> newItems =
-      new ArrayList<AppletConfiguration.AppletParameter>(myParameters.getItems());
-    final AppletConfiguration.AppletParameter parameter = new AppletConfiguration.AppletParameter("newParameter", "");
+    List<AppletParameter> newItems = new ArrayList<>(myParameters.getItems());
+    AppletParameter parameter = new AppletParameter("newParameter", "");
     newItems.add(parameter);
     myParameters.setItems(newItems);
 
@@ -174,7 +185,7 @@ public class AppletConfigurable extends SettingsEditor<AppletConfiguration> impl
     myTable.scrollRectToVisible(myTable.getCellRect(index, 0, true));
   }
 
-  private JComboBox getModuleComponent() {
+  private ModulesComboBox getModuleComponent() {
     return myModule.getComponent();
   }
 
@@ -182,10 +193,10 @@ public class AppletConfigurable extends SettingsEditor<AppletConfiguration> impl
     return myPolicyFile.getComponent();
   }
 
-  private static List<AppletConfiguration.AppletParameter> cloneParameters(final List<AppletConfiguration.AppletParameter> items) {
-    final List<AppletConfiguration.AppletParameter> params = new ArrayList<AppletConfiguration.AppletParameter>();
-    for (AppletConfiguration.AppletParameter appletParameter : items) {
-      params.add(new AppletConfiguration.AppletParameter(appletParameter.getName(), appletParameter.getValue()));
+  private static List<AppletParameter> cloneParameters(@NotNull List<AppletParameter> items) {
+    List<AppletParameter> params = new SmartList<>();
+    for (AppletParameter appletParameter : items) {
+      params.add(new AppletParameter(appletParameter.getName(), appletParameter.getValue()));
     }
     return params;
   }
@@ -202,44 +213,38 @@ public class AppletConfigurable extends SettingsEditor<AppletConfiguration> impl
     return myHtmlFile;
   }
 
-  private String toNull(String s) {
-    s = s.trim();
-    return s.length() == 0 ? null : s;
-  }
-
-  private String toSystemFormat(String s) {
+  private static String toSystemFormat(String s) {
     s = s.trim();
     return s.length() == 0 ? null : s.replace(File.separatorChar, '/');
   }
 
-  public void applyEditorTo(final AppletConfiguration configuration) {
+  @Override
+  public void applyEditorTo(@NotNull final AppletConfiguration configuration) {
     checkEditorData(configuration);
     myTable.stopEditing();
-    final List<AppletConfiguration.AppletParameter> params = cloneParameters(myParameters.getItems());
-    configuration.setAppletParameters(params);
+    configuration.getOptions().setAppletParameters(cloneParameters(myParameters.getItems()));
   }
 
-  public void resetEditorFrom(final AppletConfiguration configuration) {
-    getClassNameComponent().setText(configuration.MAIN_CLASS_NAME);
-    String presentableHtmlName = configuration.HTML_FILE_NAME;
+  @Override
+  public void resetEditorFrom(@NotNull AppletConfiguration runConfiguration) {
+    AppletConfigurationOptions configuration = runConfiguration.getOptions();
+    getClassNameComponent().setText(configuration.getMainClassName());
+    String presentableHtmlName = configuration.getHtmlFileName();
     if (presentableHtmlName != null && !StringUtil.startsWithIgnoreCase(presentableHtmlName, HTTP_PREFIX)) {
       presentableHtmlName = presentableHtmlName.replace('/', File.separatorChar);
     }
     getHtmlPathComponent().setText(presentableHtmlName);
-    getPolicyFileComponent().setText(configuration.getPolicyFile());
-    getVMParametersComponent().setText(configuration.VM_PARAMETERS);
-    getWidthComponent().setText(Integer.toString(configuration.WIDTH));
-    getHeightComponent().setText(Integer.toString(configuration.HEIGHT));
+    getPolicyFileComponent().setText(runConfiguration.getPolicyFile());
+    getVMParametersComponent().setText(configuration.getVmParameters());
+    getWidthComponent().setText(Integer.toString(configuration.getWidth()));
+    getHeightComponent().setText(Integer.toString(configuration.getHeight()));
 
-    (configuration.HTML_USED ? myURL : myMainClass).setSelected(true);
+    (configuration.getHtmlUsed() ? myURL : myMainClass).setSelected(true);
     changePanel();
 
-    final AppletConfiguration.AppletParameter[] appletParameters = configuration.getAppletParameters();
-    if (appletParameters != null) {
-      myParameters.setItems(cloneParameters(Arrays.asList(appletParameters)));
-    }
-    myModuleSelector.reset(configuration);
-    myAlternativeJREPanel.init(configuration.ALTERNATIVE_JRE_PATH, configuration.ALTERNATIVE_JRE_PATH_ENABLED);
+    myParameters.setItems(cloneParameters(configuration.getAppletParameters()));
+    myModuleSelector.reset(runConfiguration);
+    myJrePathEditor.setPathOrName(configuration.getAlternativeJrePath(), configuration.isAlternativeJrePathEnabled());
   }
 
   private RawCommandLineEditor getVMParametersComponent() {
@@ -250,34 +255,25 @@ public class AppletConfigurable extends SettingsEditor<AppletConfiguration> impl
     return myHeight;
   }
 
-
   @NotNull
+  @Override
   public JComponent createEditor() {
     return myWholePanel;
   }
 
-  public void disposeEditor() {
-  }
-
-  public void checkEditorData(final AppletConfiguration configuration) {
-    configuration.MAIN_CLASS_NAME = toNull(getClassNameComponent().getText());
-    configuration.HTML_FILE_NAME = toSystemFormat(getHtmlPathComponent().getText());
-    configuration.VM_PARAMETERS = toNull(getVMParametersComponent().getText());
-    configuration.setPolicyFile(getPolicyFileComponent().getText());
-    myModuleSelector.applyTo(configuration);
-    try {
-      configuration.WIDTH = Integer.parseInt(getWidthComponent().getText());
-    }
-    catch (NumberFormatException e) {
-    }
-    try {
-      configuration.HEIGHT = Integer.parseInt(getHeightComponent().getText());
-    }
-    catch (NumberFormatException e) {
-    }
-    configuration.HTML_USED = myURL.isSelected();
-    configuration.ALTERNATIVE_JRE_PATH = myAlternativeJREPanel.getPath();
-    configuration.ALTERNATIVE_JRE_PATH_ENABLED = myAlternativeJREPanel.isPathEnabled();
+  @Override
+  public void checkEditorData(@NotNull AppletConfiguration runConfiguration) {
+    AppletConfigurationOptions configuration = runConfiguration.getOptions();
+    runConfiguration.setMainClassName(getClassNameComponent().getText().trim());
+    configuration.setHtmlFileName(toSystemFormat(getHtmlPathComponent().getText()));
+    configuration.setVmParameters(getVMParametersComponent().getText().trim());
+    runConfiguration.setPolicyFile(getPolicyFileComponent().getText());
+    myModuleSelector.applyTo(runConfiguration);
+    try { configuration.setWidth(Integer.parseInt(getWidthComponent().getText())); } catch (NumberFormatException ignored) { }
+    try { configuration.setHeight(Integer.parseInt(getHeightComponent().getText())); } catch (NumberFormatException ignored) { }
+    configuration.setHtmlUsed(myURL.isSelected());
+    configuration.setAlternativeJrePath(myJrePathEditor.getJrePathOrName());
+    configuration.setAlternativeJrePathEnabled(myJrePathEditor.isAlternativeJreSelected());
   }
 
   private void createUIComponents() {
@@ -295,22 +291,24 @@ public class AppletConfigurable extends SettingsEditor<AppletConfiguration> impl
     myModule.setAnchor(anchor);
     myPolicyFile.setAnchor(anchor);
     myVMParameters.setAnchor(anchor);
-    myAlternativeJREPanel.setAnchor(anchor);
+    myJrePathEditor.setAnchor(anchor);
     myHtmlFileLabel.setAnchor(anchor);
   }
 
-  private static abstract class MyColumnInfo extends ColumnInfo<AppletConfiguration.AppletParameter, String> {
-    public MyColumnInfo(final String name) {
+  private static abstract class MyColumnInfo extends ColumnInfo<AppletParameter, String> {
+    MyColumnInfo(final String name) {
       super(name);
     }
 
-    public TableCellEditor getEditor(final AppletConfiguration.AppletParameter item) {
+    @Override
+    public TableCellEditor getEditor(final AppletParameter item) {
       final JTextField textField = new JTextField();
-      textField.setBorder(BorderFactory.createLineBorder(Color.BLACK));
+      textField.setBorder(BorderFactory.createLineBorder(JBColor.BLACK));
       return new DefaultCellEditor(textField);
     }
 
-    public boolean isCellEditable(final AppletConfiguration.AppletParameter appletParameter) {
+    @Override
+    public boolean isCellEditable(final AppletParameter appletParameter) {
       return true;
     }
   }

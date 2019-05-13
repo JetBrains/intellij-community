@@ -1,28 +1,13 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.formatter;
 
-import com.intellij.codeInsight.actions.ReformatAndOptimizeImportsProcessor;
+import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.actions.ReformatCodeProcessor;
 import com.intellij.lang.ASTFactory;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.vcs.checkin.ReformatBeforeCheckinHandler;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.TokenType;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
@@ -39,8 +24,9 @@ import java.util.Collections;
 
 public class FormatterUtil {
 
+  public static final String REFORMAT_BEFORE_COMMIT_COMMAND_NAME = CodeInsightBundle.message("process.reformat.code.before.commit");
   public static final Collection<String> FORMATTER_ACTION_NAMES = Collections.unmodifiableCollection(ContainerUtilRt.newHashSet(
-    ReformatAndOptimizeImportsProcessor.COMMAND_NAME, ReformatCodeProcessor.COMMAND_NAME, ReformatBeforeCheckinHandler.COMMAND_NAME
+    ReformatCodeProcessor.COMMAND_NAME, REFORMAT_BEFORE_COMMIT_COMMAND_NAME
   ));
 
   private FormatterUtil() {
@@ -141,6 +127,29 @@ public class FormatterUtil {
   }
 
   @Nullable
+  public static ASTNode getNextNonWhitespaceLeaf(@Nullable ASTNode node) {
+    if (node == null) return null;
+    ASTNode treeNext = node.getTreeNext();
+    if (treeNext != null) {
+      ASTNode candidate = TreeUtil.findFirstLeaf(treeNext);
+      if (candidate != null && !isWhitespaceOrEmpty(candidate)) {
+        return candidate;
+      }
+      else {
+        return getNextNonWhitespaceLeaf(candidate);
+      }
+    }
+    final ASTNode treeParent = node.getTreeParent();
+
+    if (treeParent == null || treeParent.getTreeParent() == null) {
+      return null;
+    }
+    else {
+      return getNextNonWhitespaceLeaf(treeParent);
+    }
+  }
+
+  @Nullable
   public static ASTNode getPreviousNonWhitespaceSibling(@Nullable ASTNode node) {
     ASTNode prevNode = node == null ? null : node.getTreePrev();
     while (prevNode != null && isWhitespaceOrEmpty(prevNode)) {
@@ -217,6 +226,19 @@ public class FormatterUtil {
     return nextNode.getElementType() == expectedType;
   }
 
+  public static boolean isFollowedBy(@Nullable ASTNode node, @NotNull TokenSet expectedTypes, TokenSet skipTypes) {
+    return isFollowedBy(node, expectedTypes, skipTypes.getTypes());
+  }
+
+  public static boolean isFollowedBy(@Nullable ASTNode node, @NotNull TokenSet expectedTypes, IElementType... skipTypes) {
+    ASTNode nextNode = node == null ? null : node.getTreeNext();
+    while (nextNode != null && (isWhitespaceOrEmpty(nextNode) || isOneOf(nextNode, skipTypes))) {
+      nextNode = nextNode.getTreeNext();
+    }
+    if (nextNode == null) return false;
+    return expectedTypes.contains(nextNode.getElementType());
+  }
+
   public static boolean isIncomplete(@Nullable ASTNode node) {
     ASTNode lastChild = node == null ? null : node.getLastChildNode();
     while (lastChild != null && lastChild.getElementType() == TokenType.WHITE_SPACE) {
@@ -271,7 +293,7 @@ public class FormatterUtil {
    * This method allows such 'inner element modifications', i.e. it receives information on what new text should be used
    * at the target inner element range and performs corresponding replacement by generating new leaf with adjusted text
    * and replacing the old one by it.
-   * 
+   *
    * @param newWhiteSpaceText  new text to use at the target inner element range
    * @param holder             target range holder
    * @param whiteSpaceRange    target range which text should be replaced by the given one
@@ -287,12 +309,18 @@ public class FormatterUtil {
 
     holder.getTreeParent().replaceChild(holder, newElement);
   }
-  
+
   public static void replaceWhiteSpace(final String whiteSpace,
                                        final ASTNode leafElement,
                                        final IElementType whiteSpaceToken,
-                                       final @Nullable TextRange textRange) {
+                                       @Nullable final TextRange textRange) {
     final CharTable charTable = SharedImplUtil.findCharTableByTree(leafElement);
+
+    if (textRange != null && textRange.getStartOffset() > leafElement.getTextRange().getStartOffset() &&
+        textRange.getEndOffset() < leafElement.getTextRange().getEndOffset()) {
+      replaceInnerWhiteSpace(whiteSpace, leafElement, textRange);
+      return;
+    }
 
     ASTNode treePrev = findPreviousWhiteSpace(leafElement, whiteSpaceToken);
     if (treePrev == null) {
@@ -300,11 +328,10 @@ public class FormatterUtil {
     }
 
     if (treePrev != null &&
-        treePrev.getText().trim().length() == 0 &&
+        treePrev.getText().trim().isEmpty() &&
         treePrev.getElementType() != whiteSpaceToken &&
         treePrev.getTextLength() > 0 &&
-        whiteSpace.length() >
-        0) {
+        !whiteSpace.isEmpty()) {
       LeafElement whiteSpaceElement =
         Factory.createSingleLeafElement(treePrev.getElementType(), whiteSpace, charTable, SharedImplUtil.getManagerByTree(leafElement));
 
@@ -316,20 +343,20 @@ public class FormatterUtil {
         Factory.createSingleLeafElement(whiteSpaceToken, whiteSpace, charTable, SharedImplUtil.getManagerByTree(leafElement));
 
       if (treePrev == null) {
-        if (whiteSpace.length() > 0) {
+        if (!whiteSpace.isEmpty()) {
           addWhiteSpace(leafElement, whiteSpaceElement);
         }
       }
       else {
         if (!(treePrev.getElementType() == whiteSpaceToken)) {
-          if (whiteSpace.length() > 0) {
+          if (!whiteSpace.isEmpty()) {
             addWhiteSpace(treePrev, whiteSpaceElement);
           }
         }
         else {
           if (treePrev.getElementType() == whiteSpaceToken) {
             final CompositeElement treeParent = (CompositeElement)treePrev.getTreeParent();
-            if (whiteSpace.length() > 0) {
+            if (!whiteSpace.isEmpty()) {
               //          LOG.assertTrue(textRange == null || treeParent.getTextRange().equals(textRange));
               treeParent.replaceChild(treePrev, whiteSpaceElement);
             }
@@ -379,7 +406,7 @@ public class FormatterUtil {
       if (treePrev.getElementType() == TokenType.WHITE_SPACE) {
         return treePrev;
       }
-      else if (treePrev.getTextLength() == 0) {
+      else if (treePrev.getTextLength() == 0 && isSpaceBeforeEmptyElement(treePrev)) {
         return getWsCandidate(treePrev);
       }
       else {
@@ -396,6 +423,14 @@ public class FormatterUtil {
     }
   }
 
+  private static boolean isSpaceBeforeEmptyElement(ASTNode node) {
+    if (node.getElementType().isLeftBound()) {
+      final ASTNode parent = node.getTreeParent();
+      return parent != null && parent.getFirstChildNode() == node;
+    }
+    return true;
+  }
+
   private static StringBuilder createNewLeafChars(final ASTNode leafElement, final TextRange textRange, final String whiteSpace) {
     final TextRange elementRange = leafElement.getTextRange();
     final String elementText = leafElement.getText();
@@ -403,7 +438,7 @@ public class FormatterUtil {
     final StringBuilder result = new StringBuilder();
 
     if (elementRange.getStartOffset() < textRange.getStartOffset()) {
-      result.append(elementText.substring(0, textRange.getStartOffset() - elementRange.getStartOffset()));
+      result.append(elementText, 0, textRange.getStartOffset() - elementRange.getStartOffset());
     }
 
     result.append(whiteSpace);
@@ -438,10 +473,10 @@ public class FormatterUtil {
     if (lastWS != null && !lastWS.getTextRange().equals(textRange)) {
       return;
     }
-    if (whiteSpace.length() == 0 && lastWS == null) {
+    if (whiteSpace.isEmpty() && lastWS == null) {
       return;
     }
-    if (lastWS != null && whiteSpace.length() == 0) {
+    if (lastWS != null && whiteSpace.isEmpty()) {
       lastWS.getTreeParent().removeRange(lastWS, null);
       return;
     }
@@ -458,7 +493,7 @@ public class FormatterUtil {
   }
 
   /**
-   * @return    <code>true</code> explicitly called 'reformat' is in  progress at the moment; <code>false</code> otherwise
+   * @return    {@code true} explicitly called 'reformat' is in  progress at the moment; {@code false} otherwise
    */
   public static boolean isFormatterCalledExplicitly() {
     return FORMATTER_ACTION_NAMES.contains(CommandProcessor.getInstance().getCurrentCommandName());

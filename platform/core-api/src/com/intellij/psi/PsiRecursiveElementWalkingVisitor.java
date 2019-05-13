@@ -24,7 +24,7 @@ import java.util.List;
  * Represents a PSI element visitor which recursively visits the children of the element
  * on which the visit was started.
  */
-public abstract class PsiRecursiveElementWalkingVisitor extends PsiElementVisitor  {
+public abstract class PsiRecursiveElementWalkingVisitor extends PsiElementVisitor implements PsiRecursiveVisitor {
   private final boolean myVisitAllFileRoots;
   private final PsiWalkingState myWalkingState = new PsiWalkingState(this){
     @Override

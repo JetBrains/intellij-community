@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,19 +17,17 @@ package git4idea.commands;
 
 import com.intellij.execution.ExecutionException;
 import com.intellij.ide.IdeBundle;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
-import git4idea.GitUtil;
-import git4idea.GitVcs;
+import git4idea.util.GitVcsConsoleWriter;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.ByteArrayOutputStream;
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.Charset;
+import java.util.Collections;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -37,51 +35,15 @@ import java.util.concurrent.atomic.AtomicReference;
  * The handler that allows consuming binary data as byte array
  */
 public class GitBinaryHandler extends GitHandler {
-  /**
-   * The logger
-   */
-  private static final Logger LOG = Logger.getInstance(GitBinaryHandler.class.getName());
-  /**
-   * Stdout stream
-   */
-  private final ByteArrayOutputStream myStdout = new ByteArrayOutputStream();
-  /**
-   * Stderr stream
-   */
-  private final ByteArrayOutputStream myStderr = new ByteArrayOutputStream();
-  /**
-   * The semaphore that waits for stream processing
-   */
-  private final Semaphore mySteamSemaphore = new Semaphore(0);
-  /**
-   * The size of buffer to use
-   */
   private static final int BUFFER_SIZE = 8 * 1024;
-  /**
-   * The exception to use
-   */
-  private AtomicReference<VcsException> myException = new AtomicReference<VcsException>();
 
-  /**
-   * A constructor
-   *
-   * @param project   a project
-   * @param directory a process directory
-   * @param command   a command to execute (if empty string, the parameter is ignored)
-   */
-  protected GitBinaryHandler(@NotNull Project project, @NotNull File directory, @NotNull GitCommand command) {
-    super(project, directory, command);
-  }
+  @NotNull private final ByteArrayOutputStream myStdout = new ByteArrayOutputStream();
+  @NotNull private final ByteArrayOutputStream myStderr = new ByteArrayOutputStream();
+  @NotNull private final Semaphore mySteamSemaphore = new Semaphore(0); // The semaphore that waits for stream processing
+  @NotNull private final AtomicReference<VcsException> myException = new AtomicReference<>();
 
-  /**
-   * A constructor
-   *
-   * @param project a project
-   * @param vcsRoot a vcs root
-   * @param command a command to execute (if empty string, the parameter is ignored)
-   */
-  public GitBinaryHandler(final Project project, final VirtualFile vcsRoot, final GitCommand command) {
-    super(project, vcsRoot, command);
+  public GitBinaryHandler(@NotNull Project project, @NotNull VirtualFile vcsRoot, @NotNull GitCommand command) {
+    super(project, vcsRoot, command, Collections.emptyList());
   }
 
   @Override
@@ -89,13 +51,10 @@ public class GitBinaryHandler extends GitHandler {
     return myCommandLine.createProcess();
   }
 
-  /**
-   * {@inheritDoc}
-   */
   @Override
   protected void startHandlingStreams() {
-    handleStream(myProcess.getErrorStream(), myStderr);
-    handleStream(myProcess.getInputStream(), myStdout);
+    handleStream(myProcess.getErrorStream(), myStderr, "Error stream copy of " + myCommandLine.getCommandLineString());
+    handleStream(myProcess.getInputStream(), myStdout, "Output stream copy of " + myCommandLine.getCommandLineString());
   }
 
   /**
@@ -104,62 +63,52 @@ public class GitBinaryHandler extends GitHandler {
    * @param in  the standard input
    * @param out the standard output
    */
-  private void handleStream(final InputStream in, final ByteArrayOutputStream out) {
-    Thread t = new Thread(new Runnable() {
-      @Override
-      public void run() {
-        try {
-          byte[] buffer = new byte[BUFFER_SIZE];
-          while (true) {
-            int rc = 0;
-            rc = in.read(buffer);
-            if (rc == -1) {
-              break;
-            }
-            out.write(buffer, 0, rc);
+  private void handleStream(final InputStream in, final ByteArrayOutputStream out, @NotNull String cmd) {
+    Thread t = new Thread(() -> {
+      try {
+        byte[] buffer = new byte[BUFFER_SIZE];
+        while (true) {
+          int rc = in.read(buffer);
+          if (rc == -1) {
+            break;
           }
-        }
-        catch (IOException e) {
-          //noinspection ThrowableInstanceNeverThrown
-          if (!myException.compareAndSet(null, new VcsException("Stream IO problem", e))) {
-            LOG.error("Problem reading stream", e);
-          }
-        }
-        finally {
-          mySteamSemaphore.release(1);
+          out.write(buffer, 0, rc);
         }
       }
-    }, "Stream copy thread");
+      catch (IOException e) {
+        if (!myException.compareAndSet(null, new VcsException("Stream IO problem", e))) {
+          LOG.error("Problem reading stream", e);
+        }
+      }
+      finally {
+        mySteamSemaphore.release(1);
+      }
+    }, cmd);
     t.setDaemon(true);
     t.start();
   }
 
-  /**
-   * {@inheritDoc}
-   */
   @Override
   public void destroyProcess() {
     myProcess.destroy();
   }
 
-  /**
-   * {@inheritDoc}
-   */
   @Override
   protected void waitForProcess() {
+    int exitCode;
     try {
       mySteamSemaphore.acquire(2);
       myProcess.waitFor();
-      int exitCode = myProcess.exitValue();
-      setExitCode(exitCode);
+      exitCode = myProcess.exitValue();
     }
     catch (InterruptedException e) {
       if (LOG.isDebugEnabled()) {
         LOG.debug("Ignoring process exception: ", e);
       }
-      setExitCode(255);
+      exitCode = 255;
     }
-    listeners().processTerminated(getExitCode());
+    setExitCode(exitCode);
+    listeners().processTerminated(exitCode);
   }
 
   /**
@@ -169,15 +118,18 @@ public class GitBinaryHandler extends GitHandler {
    * @throws VcsException in case of the problem with running git
    */
   public byte[] run() throws VcsException {
+    Project project = project();
+    GitVcsConsoleWriter vcsConsoleWriter = project != null
+                                           ? GitVcsConsoleWriter.getInstance(project)
+                                           : null;
+
     addListener(new GitHandlerListener() {
       @Override
       public void processTerminated(int exitCode) {
-        if (exitCode != 0 && !isIgnoredErrorCode(exitCode)) {
+        if (exitCode != 0) {
           Charset cs = getCharset();
-          cs = cs == null ? GitUtil.UTF8_CHARSET : cs;
           String message = new String(myStderr.toByteArray(), cs);
           if (message.length() == 0) {
-            //noinspection ThrowableResultOfMethodCallIgnored
             if (myException.get() != null) {
               message = IdeBundle.message("finished.with.exit.code.text.message", exitCode);
             }
@@ -186,12 +138,11 @@ public class GitBinaryHandler extends GitHandler {
             }
           }
           else {
-            if (!isStderrSuppressed()) {
-              GitVcs.getInstance(myProject).showErrorMessages(message);
+            if (vcsConsoleWriter != null && !isStderrSuppressed()) {
+              vcsConsoleWriter.showErrorMessage(message);
             }
           }
           if (message != null) {
-            //noinspection ThrowableInstanceNeverThrown
             VcsException e = myException.getAndSet(new VcsException(message));
             if (e != null) {
               LOG.warn("Dropping previous exception: ", e);
@@ -201,16 +152,23 @@ public class GitBinaryHandler extends GitHandler {
       }
 
       @Override
-      public void startFailed(Throwable exception) {
-        //noinspection ThrowableInstanceNeverThrown
+      public void startFailed(@NotNull Throwable exception) {
         VcsException e = myException.getAndSet(new VcsException("Start failed: " + exception.getMessage(), exception));
         if (e != null) {
           LOG.warn("Dropping previous exception: ", e);
         }
       }
     });
-    GitHandlerUtil.runInCurrentThread(this, null);
-    //noinspection ThrowableResultOfMethodCallIgnored
+    if (vcsConsoleWriter != null && !mySilent) {
+      vcsConsoleWriter.showCommandLine("[" + GitImpl.stringifyWorkingDir(project.getBasePath(), getWorkingDirectory()) + "] "
+                                       + printableCommandLine());
+    }
+    try {
+      runInCurrentThread();
+    }
+    catch (IOException e) {
+      throw new VcsException(e.getMessage(), e);
+    }
     if (myException.get() != null) {
       throw myException.get();
     }

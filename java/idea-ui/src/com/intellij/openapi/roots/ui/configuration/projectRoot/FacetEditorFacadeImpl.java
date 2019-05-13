@@ -37,8 +37,8 @@ public class FacetEditorFacadeImpl implements FacetEditorFacade {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.roots.ui.configuration.projectRoot.FacetEditorFacadeImpl");
   private final ModuleStructureConfigurable myStructureConfigurable;
   private final Runnable myTreeUpdater;
-  private final Map<Facet, MasterDetailsComponent.MyNode> myNodes = new HashMap<Facet, MasterDetailsComponent.MyNode>();
-  private final Map<Facet, FacetConfigurable> myConfigurables = new HashMap<Facet, FacetConfigurable>();
+  private final Map<Facet, MasterDetailsComponent.MyNode> myNodes = new HashMap<>();
+  private final Map<Facet, FacetConfigurable> myConfigurables = new HashMap<>();
 
   public FacetEditorFacadeImpl(final ModuleStructureConfigurable structureConfigurable, final Runnable treeUpdater) {
     myStructureConfigurable = structureConfigurable;
@@ -66,7 +66,7 @@ public class FacetEditorFacadeImpl implements FacetEditorFacade {
     final FacetStructureConfigurable facetStructureConfigurable = FacetStructureConfigurable.getInstance(myStructureConfigurable.getProject());
     final MasterDetailsComponent.MyNode facetTypeNode = facetStructureConfigurable.getOrCreateFacetTypeNode(facet.getType());
     LOG.assertTrue(facetTypeNode != null, "Cannot found node for " + facet.getType());
-    facetStructureConfigurable.addFacetNode(facetTypeNode, facet, this);
+    facetStructureConfigurable.addFacetNodes(facetTypeNode, Collections.singletonList(facet), this);
   }
 
   private MasterDetailsComponent.MyNode addFacetNode(final Facet facet, final MasterDetailsComponent.MyNode moduleNode) {
@@ -142,7 +142,7 @@ public class FacetEditorFacadeImpl implements FacetEditorFacade {
     final FacetModel facetModel = getFacetConfigurator().getFacetModel(selectedModule);
     final Collection<? extends Facet> facets = facetModel.getFacetsByType(type.getId());
 
-    final ArrayList<FacetInfo> infos = new ArrayList<FacetInfo>();
+    final ArrayList<FacetInfo> infos = new ArrayList<>();
     for (Facet facet : facets) {
       final FacetInfo facetInfo = getFacetConfigurator().getFacetInfo(facet);
       if (facetInfo != null) {

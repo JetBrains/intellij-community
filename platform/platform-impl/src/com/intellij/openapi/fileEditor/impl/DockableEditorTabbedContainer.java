@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2010 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.fileEditor.impl;
 
 import com.intellij.openapi.Disposable;
@@ -42,13 +28,13 @@ public class DockableEditorTabbedContainer implements DockContainer.Persistent {
   private final EditorsSplitters mySplitters;
   private final Project myProject;
 
-  private final CopyOnWriteArraySet<Listener> myListeners = new CopyOnWriteArraySet<Listener>();
+  private final CopyOnWriteArraySet<Listener> myListeners = new CopyOnWriteArraySet<>();
 
   private JBTabs myCurrentOver;
   private Image myCurrentOverImg;
   private TabInfo myCurrentOverInfo;
 
-  private boolean myDisposeWhenEmpty;
+  private final boolean myDisposeWhenEmpty;
 
   private boolean myWasEverShown;
 
@@ -74,13 +60,13 @@ public class DockableEditorTabbedContainer implements DockContainer.Persistent {
     return editors;
   }
 
-  void fireContentClosed(VirtualFile file) {
+  void fireContentClosed(@NotNull VirtualFile file) {
     for (Listener each : myListeners) {
       each.contentRemoved(file);
     }
   }
 
-  void fireContentOpen(VirtualFile file) {
+  void fireContentOpen(@NotNull VirtualFile file) {
     for (Listener each : myListeners) {
       each.contentAdded(file);
     }
@@ -88,6 +74,11 @@ public class DockableEditorTabbedContainer implements DockContainer.Persistent {
 
   @Override
   public RelativeRectangle getAcceptArea() {
+    return new RelativeRectangle(mySplitters);
+  }
+
+  @Override
+  public RelativeRectangle getAcceptAreaFallback() {
     JRootPane root = mySplitters.getRootPane();
     return root != null ? new RelativeRectangle(root) : new RelativeRectangle(mySplitters);
   }
@@ -100,7 +91,7 @@ public class DockableEditorTabbedContainer implements DockContainer.Persistent {
 
   @Nullable
   private JBTabs getTabsAt(DockableContent content, RelativePoint point) {
-    if (content instanceof EditorTabbedContainer.MyDragOutDelegate.DockableEditor) {
+    if (content instanceof EditorTabbedContainer.DockableEditor) {
       JBTabs targetTabs = mySplitters.getTabsAt(point);
       if (targetTabs != null) {
         return targetTabs;
@@ -135,7 +126,7 @@ public class DockableEditorTabbedContainer implements DockContainer.Persistent {
       }
     }
 
-    final EditorTabbedContainer.MyDragOutDelegate.DockableEditor dockableEditor = (EditorTabbedContainer.MyDragOutDelegate.DockableEditor)content;
+    final EditorTabbedContainer.DockableEditor dockableEditor = (EditorTabbedContainer.DockableEditor)content;
     VirtualFile file = dockableEditor.getFile();
 
 

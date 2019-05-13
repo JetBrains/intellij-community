@@ -1,6 +1,6 @@
 /*
  * Copyright 2006 ProductiveMe Inc.
- * Copyright 2013 JetBrains s.r.o.
+ * Copyright 2013-2018 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,33 +17,22 @@
 
 package com.pme.exe.res.vi;
 
-import com.pme.exe.Bin;
-import com.pme.util.OffsetTrackingInputStream;
-
-import java.io.DataInput;
-import java.io.IOException;
-
-public class StringFileInfo extends Bin.Structure {
+/**
+ * @author Sergey Zhulin
+ * Date: May 10, 2006
+ * Time: 8:01:15 PM
+ */
+public class StringFileInfo extends VersionInfoBin {
   public StringFileInfo() {
-    super("StringFileInfo");
-    addMember(new Word("wLength"));
-    addMember(new Word("wValueLength"));
-    addMember(new Word("wType"));
-    addMember(new WChar("szKey"));
-    addMember(new Padding(4));
+    super("StringFileInfo", "StringFileInfo", new VersionInfoFactory() {
+      @Override
+      public VersionInfoBin createChild(int index) {
+        return new StringTable("StringTable" + index);
+      }
+    });
   }
 
-  @Override
-  public void read(DataInput stream) throws IOException {
-    OffsetTrackingInputStream inputStream = (OffsetTrackingInputStream) stream;
-    long startOffset = inputStream.getOffset();
-    super.read(stream);
-    long length = getValue("wLength");
-    int i = 0;
-    while(inputStream.getOffset() < startOffset + length) {
-      StringTable stringTableReader = new StringTable("StringTable" + (i++));
-      stringTableReader.read(inputStream);
-      addMember(stringTableReader);
-    }
+  public StringTable getFirstStringTable() {
+    return (StringTable) getMember("StringTable0");
   }
 }

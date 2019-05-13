@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,6 @@
 package com.intellij.lang.ant.config.explorer;
 
 import com.intellij.execution.RunManagerEx;
-import com.intellij.icons.AllIcons;
 import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.lang.ant.config.*;
 import com.intellij.lang.ant.config.impl.AntBeforeRunTask;
@@ -39,6 +38,7 @@ import com.intellij.ui.JBColor;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.ui.UIUtil;
+import icons.AntIcons;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
@@ -50,12 +50,13 @@ final class AntTargetNodeDescriptor extends AntNodeDescriptor {
   private final AntBuildTargetBase myTarget;
   private CompositeAppearance myHighlightedText;
 
-  public AntTargetNodeDescriptor(final Project project, final NodeDescriptor parentDescriptor, final AntBuildTargetBase target) {
+  AntTargetNodeDescriptor(final Project project, final NodeDescriptor parentDescriptor, final AntBuildTargetBase target) {
     super(project, parentDescriptor);
     myTarget = target;
     myHighlightedText = new CompositeAppearance();
   }
 
+  @Override
   public Object getElement() {
     return myTarget;
   }
@@ -64,11 +65,12 @@ final class AntTargetNodeDescriptor extends AntNodeDescriptor {
     return myTarget;
   }
 
+  @Override
   public boolean update() {
     final CompositeAppearance oldText = myHighlightedText;
     final boolean isMeta = myTarget instanceof MetaTarget;
 
-    setIcon(isMeta ? AllIcons.Ant.MetaTarget : AllIcons.Ant.Target);
+    setIcon(isMeta ? AntIcons.MetaTarget : AntIcons.Target);
 
     myHighlightedText = new CompositeAppearance();
 
@@ -79,7 +81,7 @@ final class AntTargetNodeDescriptor extends AntNodeDescriptor {
     myHighlightedText.getEnding().addText(myTarget.getDisplayName(), nameAttributes);
 
     AntConfigurationBase antConfiguration = AntConfigurationBase.getInstance(myProject);
-    final ArrayList<String> addedNames = new ArrayList<String>(4);
+    final ArrayList<String> addedNames = new ArrayList<>(4);
     for (final ExecutionEvent event : antConfiguration.getEventsForTarget(myTarget)) {
       final String presentableName;
       if ((event instanceof ExecuteCompositeTargetEvent)) {
@@ -96,10 +98,9 @@ final class AntTargetNodeDescriptor extends AntNodeDescriptor {
         myHighlightedText.getEnding().addText(" (" + presentableName + ')', ourPostfixAttributes);
       }
     }
-    final RunManagerEx runManager = RunManagerEx.getInstanceEx(myProject);
     final VirtualFile vFile = buildFile.getVirtualFile();
     if (vFile != null) {
-      for (AntBeforeRunTask task : runManager.getBeforeRunTasks(AntBeforeRunTaskProvider.ID)) {
+      for (AntBeforeRunTask task : RunManagerEx.getInstanceEx(myProject).getBeforeRunTasks(AntBeforeRunTaskProvider.ID)) {
         if (task.isRunningTarget(myTarget)) {
           myHighlightedText.getEnding().addText(" (Before Run/Debug)", ourPostfixAttributes);
           break;
@@ -135,10 +136,12 @@ final class AntTargetNodeDescriptor extends AntNodeDescriptor {
     return myHighlightedText;
   }
 
+  @Override
   public boolean isAutoExpand() {
     return false;
   }
 
+  @Override
   public void customize(@NotNull SimpleColoredComponent component) {
     getHighlightedText().customize(component);
     component.setIcon(getIcon());

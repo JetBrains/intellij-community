@@ -1,9 +1,0 @@
-public class X {
-  int field = 0;
-  public X() {
-
-  }
-  void reset() {
-    field = -1;
-  }
-}

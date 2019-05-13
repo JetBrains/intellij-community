@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.designer.propertyTable;
 
 import com.intellij.designer.DesignerBundle;
@@ -23,6 +9,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.ActionButton;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.PopupHandler;
 import com.intellij.ui.ScrollPaneFactory;
@@ -36,6 +23,8 @@ import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import java.awt.*;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 
 /**
  * @author Alexander Lobas
@@ -53,11 +42,15 @@ public final class PropertyTablePanel extends JPanel implements ListSelectionLis
   private TablePanelActionPolicy myActionPolicy;
   private final JLabel myTitleLabel;
 
-  public PropertyTablePanel(Project project) {
-    myPropertyTable = new RadPropertyTable(project);
+  public PropertyTablePanel(final Project project) {
+    myPropertyTable = new RadPropertyTable(project) {
+      @Override
+      protected void updateEditActions() {
+        updateActions();
+      }
+    };
 
     setLayout(new GridBagLayout());
-    setBorder(IdeBorderFactory.createBorder(SideBorder.TOP));
 
     int gridX = 0;
 
@@ -65,7 +58,8 @@ public final class PropertyTablePanel extends JPanel implements ListSelectionLis
     myTitleLabel.setFont(UIUtil.getLabelFont(UIUtil.FontSize.SMALL));
     add(myTitleLabel,
         new GridBagConstraints(gridX++, 0, 1, 1, 0, 0, GridBagConstraints.CENTER, GridBagConstraints.HORIZONTAL,
-                               new Insets(2, 5, 2, 10), 0, 0));
+                               new Insets(2, 5, 2, 10), 0, 0)
+    );
 
     ActionManager actionManager = ActionManager.getInstance();
     DefaultActionGroup actionGroup = new DefaultActionGroup();
@@ -77,7 +71,7 @@ public final class PropertyTablePanel extends JPanel implements ListSelectionLis
     actionGroup.addSeparator();
 
     RestoreDefault restoreDefault = new RestoreDefault(myPropertyTable);
-    restoreDefault.registerCustomShortcutSet(actionManager.getAction(IdeActions.ACTION_DELETE).getShortcutSet(), null);
+    restoreDefault.registerCustomShortcutSet(actionManager.getAction(IdeActions.ACTION_DELETE).getShortcutSet(), myPropertyTable);
     actionGroup.add(restoreDefault);
 
     actionGroup.add(new ShowExpert(myPropertyTable));
@@ -85,22 +79,25 @@ public final class PropertyTablePanel extends JPanel implements ListSelectionLis
     myTabPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 5, 0));
     add(myTabPanel,
         new GridBagConstraints(gridX++, 0, 1, 1, 1, 0, GridBagConstraints.LINE_START, GridBagConstraints.NONE,
-                               new Insets(2, 0, 2, 0), 0, 0));
+                               new Insets(2, 0, 2, 0), 0, 0)
+    );
 
     myActionPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 5, 0));
     add(myActionPanel,
         new GridBagConstraints(gridX++, 0, 1, 1, 0, 0, GridBagConstraints.CENTER, GridBagConstraints.NONE,
-                               new Insets(2, 0, 2, 2), 0, 0));
+                               new Insets(2, 0, 2, 2), 0, 0)
+    );
 
     myActions = actionGroup.getChildren(null);
-    for (int i = 0; i < myActions.length; i++) {
-      AnAction action = myActions[i];
-      if (!(action instanceof Separator)) {
-        Presentation presentation = action.getTemplatePresentation();
-        ActionButton button = new ActionButton(action, presentation, ActionPlaces.UNKNOWN, ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE);
-        myActionPanel.add(button);
-        presentation.putClientProperty(BUTTON_KEY, button);
+    for (AnAction action : myActions) {
+      if (action instanceof Separator) {
+        continue;
       }
+
+      Presentation presentation = action.getTemplatePresentation();
+      ActionButton button = new ActionButton(action, presentation, ActionPlaces.UNKNOWN, ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE);
+      myActionPanel.add(button);
+      presentation.putClientProperty(BUTTON_KEY, button);
     }
 
     actionGroup.add(new ShowColumns(myPropertyTable));
@@ -119,6 +116,13 @@ public final class PropertyTablePanel extends JPanel implements ListSelectionLis
                                            new Insets(0, 0, 0, 0), 0, 0));
 
     myPropertyTable.setPropertyTablePanel(this);
+
+    addMouseListener(new MouseAdapter() {
+      @Override
+      public void mouseReleased(final MouseEvent e) {
+        IdeFocusManager.getInstance(project).requestFocus(myPropertyTable, true);
+      }
+    });
   }
 
   public void setArea(@Nullable DesignerEditorPanel designer, @Nullable EditableArea area) {
@@ -149,6 +153,10 @@ public final class PropertyTablePanel extends JPanel implements ListSelectionLis
       myActionPolicy = policy;
 
       for (AnAction action : myActions) {
+        if (action instanceof Separator) {
+          continue;
+        }
+
         boolean visible = policy.showAction(action);
 
         Presentation presentation = action.getTemplatePresentation();

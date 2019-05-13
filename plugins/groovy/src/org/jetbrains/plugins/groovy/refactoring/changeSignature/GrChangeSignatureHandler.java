@@ -1,24 +1,9 @@
-/*
- * Copyright 2000-2010 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.refactoring.changeSignature;
 
 import com.intellij.ide.util.SuperMethodWarningUtil;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.LangDataKeys;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.project.Project;
@@ -45,11 +30,12 @@ import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringBundle;
  */
 public class GrChangeSignatureHandler implements ChangeSignatureHandler {
 
+  @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file, DataContext dataContext) {
     editor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
     PsiElement element = findTargetMember(file, editor);
     if (element == null) {
-      element = LangDataKeys.PSI_ELEMENT.getData(dataContext);
+      element = CommonDataKeys.PSI_ELEMENT.getData(dataContext);
     }
     invokeOnElement(project, editor, element);
   }
@@ -65,9 +51,10 @@ public class GrChangeSignatureHandler implements ChangeSignatureHandler {
     }
   }
 
+  @Override
   public void invoke(@NotNull final Project project, @NotNull final PsiElement[] elements, final DataContext dataContext) {
     if (elements.length != 1) return;
-    Editor editor = dataContext == null ? null : PlatformDataKeys.EDITOR.getData(dataContext);
+    Editor editor = dataContext == null ? null : CommonDataKeys.EDITOR.getData(dataContext);
     invokeOnElement(project, editor, elements[0]);
   }
 
@@ -96,8 +83,9 @@ public class GrChangeSignatureHandler implements ChangeSignatureHandler {
     dialog.show();
   }
 
+  @Override
   @Nullable
-  public PsiElement findTargetMember(PsiFile file, Editor editor) {
+  public PsiElement findTargetMember(@NotNull PsiFile file, @NotNull Editor editor) {
     final PsiElement element = file.findElementAt(editor.getCaretModel().getOffset());
     final PsiElement targetMember = findTargetMember(element);
     if (targetMember != null) return targetMember;
@@ -109,8 +97,11 @@ public class GrChangeSignatureHandler implements ChangeSignatureHandler {
     return null;
   }
 
+  @Override
   @Nullable
-  public PsiElement findTargetMember(PsiElement element) {
+  public PsiElement findTargetMember(@Nullable PsiElement element) {
+    if (element == null) return null;
+
     final GrParameterList parameterList = PsiTreeUtil.getParentOfType(element, GrParameterList.class);
     if (parameterList != null) {
       final PsiElement parent = parameterList.getParent();

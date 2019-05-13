@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,15 +15,13 @@
  */
 package com.intellij.psi.util;
 
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
 
 public class MethodSignatureBackedByPsiMethod extends MethodSignatureBase {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.util.MethodSignatureBackedByPsiMethod");
-
   private final PsiMethod myMethod;
   private final boolean myIsRaw;
+  private final String myName;
 
   protected MethodSignatureBackedByPsiMethod(@NotNull PsiMethod method,
                                              @NotNull PsiSubstitutor substitutor,
@@ -32,16 +30,14 @@ public class MethodSignatureBackedByPsiMethod extends MethodSignatureBase {
                                              @NotNull PsiTypeParameter[] methodTypeParameters) {
     super(substitutor, parameterTypes, methodTypeParameters);
     myIsRaw = isRaw;
-    if (!method.isValid()) {
-      LOG.error("Invalid method: "+method, new PsiInvalidElementAccessException(method));
-    }
     myMethod = method;
+    myName = method.getName();
   }
 
   @NotNull
   @Override
   public String getName() {
-    return myMethod.getName();
+    return myName;
   }
 
   @Override
@@ -54,6 +50,7 @@ public class MethodSignatureBackedByPsiMethod extends MethodSignatureBase {
     return myMethod.isConstructor();
   }
 
+  @Override
   public boolean equals(Object o) {
     if (o instanceof MethodSignatureBackedByPsiMethod){ // optimization
       if (((MethodSignatureBackedByPsiMethod)o).myMethod == myMethod) return true;
@@ -67,24 +64,26 @@ public class MethodSignatureBackedByPsiMethod extends MethodSignatureBase {
     return myMethod;
   }
 
+  @NotNull
   public static MethodSignatureBackedByPsiMethod create(@NotNull PsiMethod method, @NotNull PsiSubstitutor substitutor) {
     return create(method, substitutor, PsiUtil.isRawSubstitutor(method, substitutor));
   }
 
+  @NotNull
   public static MethodSignatureBackedByPsiMethod create(@NotNull PsiMethod method, @NotNull PsiSubstitutor substitutor, boolean isRaw) {
     PsiTypeParameter[] methodTypeParameters = method.getTypeParameters();
     if (isRaw) {
-      substitutor = JavaPsiFacade.getInstance(method.getProject()).getElementFactory().createRawSubstitutor(substitutor, methodTypeParameters);
+      substitutor = JavaPsiFacade.getElementFactory(method.getProject()).createRawSubstitutor(substitutor, methodTypeParameters);
       methodTypeParameters = PsiTypeParameter.EMPTY_ARRAY;
     }
     
     assert substitutor.isValid();
 
     final PsiParameter[] parameters = method.getParameterList().getParameters();
-    PsiType[] parameterTypes = new PsiType[parameters.length];
+    PsiType[] parameterTypes = PsiType.createArray(parameters.length);
     for (int i = 0; i < parameterTypes.length; i++) {
-      PsiType type = parameters[i].getType();
-      assert type.isValid();
+      PsiParameter parameter = parameters[i];
+      PsiType type = parameter.getType();
       parameterTypes[i] = isRaw ? TypeConversionUtil.erasure(substitutor.substitute(type)) : type;
     }
 

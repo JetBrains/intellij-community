@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,119 +19,27 @@
  */
 package com.intellij.concurrency;
 
-import com.intellij.openapi.components.ServiceManager;
-import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.util.concurrency.AppExecutorUtil;
+import org.jetbrains.annotations.NotNull;
 
-import java.util.concurrent.*;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 public abstract class JobScheduler {
-  private static final ScheduledThreadPoolExecutor ourScheduledExecutorService;
-
-  static {
-    ScheduledThreadPoolExecutor executor = new ScheduledThreadPoolExecutor(1, new ThreadFactory() {
-      public Thread newThread(final Runnable r) {
-        final Thread thread = new Thread(r, "Periodic tasks thread");
-        thread.setDaemon(true);
-        thread.setPriority(Thread.NORM_PRIORITY);
-        return thread;
-      }
-    }) {
-      private final boolean doTiming = true;
-      @Override
-      protected <V> RunnableScheduledFuture<V> decorateTask(final Runnable runnable, final RunnableScheduledFuture<V> task) {
-        if (!doTiming) {
-          return super.decorateTask(runnable, task);
-        }
-        return new ExecutionTimeCheckedTask<V>(task, runnable, ExecutionTimeCheckedTask.TASK_LIMIT);
-      }
-
-      @Override
-      protected <V> RunnableScheduledFuture<V> decorateTask(Callable<V> callable, RunnableScheduledFuture<V> task) {
-        if (!doTiming) {
-          return super.decorateTask(callable, task);
-        }
-        return new ExecutionTimeCheckedTask<V>(task, callable, ExecutionTimeCheckedTask.TASK_LIMIT);
-      }
-    };
-    executor.setContinueExistingPeriodicTasksAfterShutdownPolicy(false);
-    executor.setExecuteExistingDelayedTasksAfterShutdownPolicy(false);
-    ourScheduledExecutorService = executor;
-  }
-
-  public static JobScheduler getInstance() {
-    return ServiceManager.getService(JobScheduler.class);
-  }
-
+  /**
+   * Returns application-wide instance of {@link ScheduledExecutorService} which is:
+   * <ul>
+   * <li>Unbounded. I.e. multiple {@link ScheduledExecutorService#schedule}(command, 0, TimeUnit.SECONDS) will lead to multiple executions of the {@code command} in parallel.</li>
+   * <li>Backed by the application thread pool. I.e. every scheduled task will be executed in IDEA own thread pool. See {@link com.intellij.openapi.application.Application#executeOnPooledThread(Runnable)}</li>
+   * <li>Non-shutdownable singleton. Any attempts to call {@link ExecutorService#shutdown()}, {@link ExecutorService#shutdownNow()} will be severely punished.</li>
+   * <li>{@link ScheduledExecutorService#scheduleAtFixedRate(Runnable, long, long, TimeUnit)} is disallowed because it's bad for hibernation.
+   *     Use {@link ScheduledExecutorService#scheduleWithFixedDelay(Runnable, long, long, TimeUnit)} instead.</li>
+   * </ul>
+   * If you need to execute only one task (when it's ready) at a time, you can use {@link AppExecutorUtil#createBoundedScheduledExecutorService(String, int)}.
+   */
+  @NotNull
   public static ScheduledExecutorService getScheduler() {
-    return ourScheduledExecutorService;
-  }
-
-  private static class ExecutionTimeCheckedTask<V> implements RunnableScheduledFuture<V> {
-    private static final int TASK_LIMIT = 50;
-    private static final Logger LOG = Logger.getInstance("#" + ExecutionTimeCheckedTask.class.getName());
-    private final RunnableScheduledFuture<V> task;
-    private final int limit;
-    private final Object traceRunnableOrCallable;
-
-    ExecutionTimeCheckedTask(RunnableScheduledFuture<V> _task, Object _traceRunnableOrCallable, int _limit) {
-      task = _task;
-      traceRunnableOrCallable = _traceRunnableOrCallable;
-      limit = _limit;
-    }
-
-    @Override
-    public boolean isPeriodic() {
-      return task.isPeriodic();
-    }
-
-    @Override
-    public long getDelay(TimeUnit unit) {
-      return task.getDelay(unit);
-    }
-
-    @Override
-    public int compareTo(Delayed o) {
-      return task.compareTo(o);
-    }
-
-    @Override
-    public void run() {
-      long started = System.currentTimeMillis();
-      try {
-        task.run();
-      } finally {
-        long executionTime = System.currentTimeMillis() - started;
-        if (executionTime > limit) {
-          String msg = limit + " ms execution limit failed for:" + traceRunnableOrCallable + "," + executionTime;
-          LOG.info(msg);
-          System.err.println(msg);
-        }
-      }
-    }
-
-    @Override
-    public boolean cancel(boolean mayInterruptIfRunning) {
-      return task.cancel(mayInterruptIfRunning);
-    }
-
-    @Override
-    public boolean isCancelled() {
-      return task.isCancelled();
-    }
-
-    @Override
-    public boolean isDone() {
-      return task.isDone();
-    }
-
-    @Override
-    public V get() throws InterruptedException, ExecutionException {
-      return task.get();
-    }
-
-    @Override
-    public V get(long timeout, TimeUnit unit) throws InterruptedException, ExecutionException, TimeoutException {
-      return task.get(timeout, unit);
-    }
+    return AppExecutorUtil.getAppScheduledExecutorService();
   }
 }

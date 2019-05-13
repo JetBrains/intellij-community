@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,19 +31,23 @@ public class DomStringWrapper extends DomWrapper<String>{
     myDomElement = domElement;
   }
 
+  @Override
   @NotNull
   public DomElement getExistingDomElement() {
     return myDomElement;
   }
 
+  @Override
   public DomElement getWrappedElement() {
     return myDomElement;
   }
 
+  @Override
   public void setValue(final String value) throws IllegalAccessException, InvocationTargetException {
     myDomElement.setStringValue(value);
   }
 
+  @Override
   public String getValue() throws IllegalAccessException, InvocationTargetException {
     return myDomElement.isValid() ? myDomElement.getStringValue() : null;
   }

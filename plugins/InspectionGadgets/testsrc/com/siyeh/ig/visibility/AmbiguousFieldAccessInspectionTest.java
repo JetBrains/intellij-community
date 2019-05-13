@@ -1,10 +1,16 @@
 package com.siyeh.ig.visibility;
 
-import com.siyeh.ig.IGInspectionTestCase;
+import com.intellij.codeInspection.InspectionProfileEntry;
+import com.siyeh.ig.LightInspectionTestCase;
+import org.jetbrains.annotations.Nullable;
 
-public class AmbiguousFieldAccessInspectionTest extends IGInspectionTestCase {
+public class AmbiguousFieldAccessInspectionTest extends LightInspectionTestCase {
 
-  public void test() throws Exception {
-    doTest("com/siyeh/igtest/visibility/ambiguous_field_access", new AmbiguousFieldAccessInspection());
+  public void testAmbiguousFieldAccess() { doTest(); }
+
+  @Nullable
+  @Override
+  protected InspectionProfileEntry getInspection() {
+    return new AmbiguousFieldAccessInspection();
   }
 }

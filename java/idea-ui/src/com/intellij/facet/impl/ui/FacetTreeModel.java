@@ -16,18 +16,18 @@
 
 package com.intellij.facet.impl.ui;
 
-import com.intellij.facet.FacetTypeId;
 import com.intellij.facet.FacetInfo;
 import com.intellij.facet.FacetType;
+import com.intellij.facet.FacetTypeId;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.containers.BidirectionalMap;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
-import java.util.Collection;
 
 /**
  * @author nik
@@ -35,8 +35,8 @@ import java.util.Collection;
 public class FacetTreeModel {
   private static final Logger LOG = Logger.getInstance("#com.intellij.facet.impl.ui.FacetTreeModel");
   private static final FacetInfo ROOT = new FacetInfo(null, "", null, null);
-  private final List<FacetInfo> myFacetInfos = new ArrayList<FacetInfo>();
-  private final BidirectionalMap<FacetInfo, FacetInfo> myParents = new BidirectionalMap<FacetInfo, FacetInfo>();
+  private final List<FacetInfo> myFacetInfos = new ArrayList<>();
+  private final BidirectionalMap<FacetInfo, FacetInfo> myParents = new BidirectionalMap<>();
 
   public void addFacetInfo(FacetInfo info) {
     myFacetInfos.add(info);
@@ -52,7 +52,7 @@ public class FacetTreeModel {
   }
 
   public FacetInfo[] getFacetInfos() {
-    return myFacetInfos.toArray(new FacetInfo[myFacetInfos.size()]);
+    return myFacetInfos.toArray(FacetInfo.EMPTY_ARRAY);
   }
 
   public void removeFacetInfo(@NotNull FacetInfo info) {
@@ -105,7 +105,7 @@ public class FacetTreeModel {
 
   public Collection<FacetInfo> getFacetInfos(final FacetType<?, ?> type) {
     final FacetInfo[] facetInfos = getFacetInfos();
-    List<FacetInfo> infos = new ArrayList<FacetInfo>();
+    List<FacetInfo> infos = new ArrayList<>();
     for (FacetInfo facetInfo : facetInfos) {
       if (facetInfo.getFacetType().equals(type)) {
         infos.add(facetInfo);

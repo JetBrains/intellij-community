@@ -20,12 +20,19 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.util.Collection;
+import java.util.Comparator;
 
 /**
  * @author nik
  */
 public abstract class XBreakpointGroupingRule<B, G extends XBreakpointGroup> {
+  public static final Comparator<XBreakpointGroupingRule> PRIORITY_COMPARATOR = (o1, o2) -> {
+    final int res = o2.getPriority() - o1.getPriority();
+    return res != 0 ? res : (o1.getId().compareTo(o2.getId()));
+  };
+
   private final String myId;
   private final String myPresentableName;
 
@@ -54,4 +61,9 @@ public abstract class XBreakpointGroupingRule<B, G extends XBreakpointGroup> {
 
   @Nullable
   public abstract G getGroup(@NotNull B breakpoint, @NotNull Collection<G> groups);
+
+  @Nullable
+  public Icon getIcon() {
+    return null;
+  }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,15 +17,14 @@ package com.intellij.debugger.ui.impl;
 
 import com.intellij.debugger.impl.DebuggerContextImpl;
 import com.intellij.debugger.impl.DebuggerContextListener;
+import com.intellij.debugger.impl.DebuggerSession;
 import com.intellij.debugger.impl.DebuggerStateManager;
 import com.intellij.debugger.ui.DebuggerView;
 import com.intellij.openapi.CompositeDisposable;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.ShortcutSet;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -42,14 +41,11 @@ public abstract class UpdatableDebuggerView extends JPanel implements DebuggerVi
     myProject = project;
     myStateManager = stateManager;
 
-    final DebuggerContextListener contextListener = new DebuggerContextListener() {
-      public void changeEvent(DebuggerContextImpl newContext, int event) {
-        UpdatableDebuggerView.this.changeEvent(newContext, event);
-      }
-    };
+    final DebuggerContextListener contextListener = this::changeEvent;
     myStateManager.addListener(contextListener);
 
     registerDisposable(new Disposable() {
+      @Override
       public void dispose() {
         myStateManager.removeListener(contextListener);
       }
@@ -57,7 +53,7 @@ public abstract class UpdatableDebuggerView extends JPanel implements DebuggerVi
 
   }
 
-  protected void changeEvent(final DebuggerContextImpl newContext, final int event) {
+  protected void changeEvent(final DebuggerContextImpl newContext, final DebuggerSession.Event event) {
     if (newContext.getDebuggerSession() != null) {
       rebuildIfVisible(event);
     }
@@ -67,15 +63,18 @@ public abstract class UpdatableDebuggerView extends JPanel implements DebuggerVi
     return myUpdateEnabled || isShowing();
   }
 
+  @Override
   public final void setUpdateEnabled(final boolean enabled) {
     myUpdateEnabled = enabled;
   }
 
+  @Override
   public final boolean isRefreshNeeded() {
     return myRefreshNeeded;
   }
 
-  public final void rebuildIfVisible(final int event) {
+  @Override
+  public final void rebuildIfVisible(final DebuggerSession.Event event) {
     if(isUpdateEnabled()) {
       myRefreshNeeded = false;
       rebuild(event);
@@ -85,12 +84,13 @@ public abstract class UpdatableDebuggerView extends JPanel implements DebuggerVi
     }
   }
 
-  protected abstract void rebuild(int event);
+  protected abstract void rebuild(DebuggerSession.Event event);
 
   protected final void registerDisposable(Disposable disposable) {
     myDisposables.add(disposable);
   }
 
+  @NotNull
   public DebuggerContextImpl getContext() {
     return myStateManager.getContext();
   }
@@ -105,15 +105,5 @@ public abstract class UpdatableDebuggerView extends JPanel implements DebuggerVi
 
   public void dispose() {
     Disposer.dispose(myDisposables);
-  }
-
-  protected void overrideShortcut(final JComponent forComponent, final String actionId, final ShortcutSet shortcutSet) {
-    final AnAction action = ActionManager.getInstance().getAction(actionId);
-    action.registerCustomShortcutSet(shortcutSet, forComponent);
-    registerDisposable(new Disposable() {
-      public void dispose() {
-        action.unregisterCustomShortcutSet(forComponent);
-      }
-    });
   }
 }

@@ -1,3 +1,4 @@
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.dom.refactorings.introduce;
 
 import com.intellij.find.FindManager;
@@ -6,9 +7,7 @@ import com.intellij.find.impl.FindInProjectUtil;
 import com.intellij.find.replaceInProject.ReplaceInProjectManager;
 import com.intellij.lang.Language;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -19,7 +18,6 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
-import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
@@ -30,6 +28,7 @@ import com.intellij.psi.xml.*;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.actions.BaseRefactoringAction;
 import com.intellij.usageView.UsageInfo;
+import com.intellij.usageView.UsageViewContentManager;
 import com.intellij.usages.*;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.hash.HashSet;
@@ -39,21 +38,24 @@ import org.jetbrains.idea.maven.dom.MavenDomProjectProcessorUtils;
 import org.jetbrains.idea.maven.dom.MavenDomUtil;
 import org.jetbrains.idea.maven.dom.model.MavenDomProjectModel;
 import org.jetbrains.idea.maven.dom.model.MavenDomProperties;
+import org.jetbrains.idea.maven.statistics.MavenActionsUsagesCollector;
 
 import java.util.*;
 
 public class IntroducePropertyAction extends BaseRefactoringAction {
-  private static String PREFIX = "${";
-  private static String SUFFIX = "}";
+  private static final String PREFIX = "${";
+  private static final String SUFFIX = "}";
 
   public IntroducePropertyAction() {
     setInjectedContext(true);
   }
 
+  @Override
   protected boolean isAvailableInEditorOnly() {
     return true;
   }
 
+  @Override
   protected boolean isEnabledOnElements(@NotNull PsiElement[] elements) {
     return false;
   }
@@ -63,6 +65,7 @@ public class IntroducePropertyAction extends BaseRefactoringAction {
     return true;
   }
 
+  @Override
   protected RefactoringActionHandler getHandler(@NotNull DataContext dataContext) {
     return new MyRefactoringActionHandler();
   }
@@ -82,7 +85,7 @@ public class IntroducePropertyAction extends BaseRefactoringAction {
   }
 
   @Nullable
-  public static Pair<XmlElement, TextRange> getSelectedElementAndTextRange(Editor editor, final PsiFile file) {
+  static Pair<XmlElement, TextRange> getSelectedElementAndTextRange(Editor editor, final PsiFile file) {
     final int startOffset = editor.getSelectionModel().getSelectionStart();
     final int endOffset = editor.getSelectionModel().getSelectionEnd();
 
@@ -95,14 +98,7 @@ public class IntroducePropertyAction extends BaseRefactoringAction {
     if (elementAt instanceof XmlToken) elementAt = elementAt.getParent();
 
     if (elementAt instanceof XmlText || elementAt instanceof XmlAttributeValue) {
-      TextRange range;
-
-      if (editor.getSelectionModel().hasSelection()) {
-        range = new TextRange(startOffset, endOffset);
-      }
-      else {
-        range = elementAt.getTextRange();
-      }
+      TextRange range = editor.getSelectionModel().hasSelection() ? new TextRange(startOffset, endOffset) : elementAt.getTextRange();
 
       return Pair.create((XmlElement)elementAt, range);
     }
@@ -111,7 +107,9 @@ public class IntroducePropertyAction extends BaseRefactoringAction {
   }
 
   private static class MyRefactoringActionHandler implements RefactoringActionHandler {
+    @Override
     public void invoke(@NotNull final Project project, final Editor editor, PsiFile file, DataContext dataContext) {
+      MavenActionsUsagesCollector.trigger(project, "IntroducePropertyAction");
       PsiDocumentManager.getInstance(project).commitAllDocuments();
 
       Pair<XmlElement, TextRange> elementAndRange = getSelectedElementAndTextRange(editor, file);
@@ -131,7 +129,7 @@ public class IntroducePropertyAction extends BaseRefactoringAction {
 
       if (model == null ||
           StringUtil.isEmptyOrSpaces(selectedString) ||
-          isInsideTextRanges(ranges, offsetInElement, offsetInElement + selectedString.length())) {
+          isIntersectWithRanges(ranges, offsetInElement, offsetInElement + selectedString.length())) {
         return;
       }
 
@@ -142,30 +140,28 @@ public class IntroducePropertyAction extends BaseRefactoringAction {
       if (dialog.getExitCode() != DialogWrapper.OK_EXIT_CODE) return;
 
       final String propertyName = dialog.getEnteredName();
-      final String replaceWith = PREFIX + propertyName + SUFFIX;
       final MavenDomProjectModel selectedProject = dialog.getSelectedProject();
 
       if (ReadonlyStatusHandler.getInstance(project).ensureFilesWritable(getFiles(file, selectedProject)).hasReadonlyFiles()) {
         return;
       }
 
-      new WriteCommandAction(project) {
-        @Override
-        protected void run(Result result) throws Throwable {
-          editor.getDocument().replaceString(range.getStartOffset(), range.getEndOffset(), replaceWith);
-          PsiDocumentManager.getInstance(project).commitAllDocuments();
+      final String replaceWith = PREFIX + propertyName + SUFFIX;
+      WriteCommandAction.runWriteCommandAction(project, () -> {
+        editor.getDocument().replaceString(range.getStartOffset(), range.getEndOffset(), replaceWith);
+        PsiDocumentManager.getInstance(project).commitAllDocuments();
 
-          createMavenProperty(selectedProject, propertyName, selectedString);
+        createMavenProperty(selectedProject, propertyName, selectedString);
 
-          PsiDocumentManager.getInstance(project).commitAllDocuments();
-        }
-      }.execute();
+        PsiDocumentManager.getInstance(project).commitAllDocuments();
+      });
 
       showFindUsages(project, propertyName, selectedString, replaceWith, selectedProject);
     }
 
-    private static VirtualFile[] getFiles(PsiFile file, MavenDomProjectModel model) {
-      Set<VirtualFile> virtualFiles = new HashSet<VirtualFile>();
+    @NotNull
+    private static List<VirtualFile> getFiles(PsiFile file, MavenDomProjectModel model) {
+      Set<VirtualFile> virtualFiles = new HashSet<>();
       VirtualFile virtualFile = file.getVirtualFile();
       if (virtualFile != null) {
         virtualFiles.add(virtualFile);
@@ -177,7 +173,7 @@ public class IntroducePropertyAction extends BaseRefactoringAction {
         if (vf != null) virtualFiles.add(vf);
       }
 
-      return VfsUtil.toVirtualFileArray(virtualFiles);
+      return new ArrayList<>(virtualFiles);
     }
 
     private static void createMavenProperty(@NotNull MavenDomProjectModel model,
@@ -208,21 +204,21 @@ public class IntroducePropertyAction extends BaseRefactoringAction {
       final FindUsagesProcessPresentation processPresentation = FindInProjectUtil.setupProcessPresentation(project, true, presentation);
 
       findManager.getFindInProjectModel().copyFrom(findModel);
-      final FindModel findModelCopy = (FindModel)findModel.clone();
+      final FindModel findModelCopy = findModel.clone();
 
       ReplaceInProjectManager.getInstance(project)
         .searchAndShowUsages(manager, new MyUsageSearcherFactory(model, propertyName, selectedString), findModelCopy, presentation,
-                             processPresentation,
-                             findManager);
+                             processPresentation
+        );
     }
 
     //IDEA-54113
     private static void assureFindToolWindowRegistered(@NotNull Project project) {
-      com.intellij.usageView.UsageViewManager uvm = com.intellij.usageView.UsageViewManager.getInstance(project);
+      UsageViewContentManager uvm = UsageViewContentManager.getInstance(project);
     }
 
     private static FindModel createFindModel(FindManager findManager, String selectedString, String replaceWith) {
-      FindModel findModel = (FindModel)findManager.getFindInProjectModel().clone();
+      FindModel findModel = findManager.getFindInProjectModel().clone();
 
       findModel.setStringToFind(selectedString);
       findModel.setStringToReplace(replaceWith);
@@ -234,6 +230,7 @@ public class IntroducePropertyAction extends BaseRefactoringAction {
       return findModel;
     }
 
+    @Override
     public void invoke(@NotNull Project project, @NotNull PsiElement[] elements, DataContext dataContext) {
     }
 
@@ -242,20 +239,20 @@ public class IntroducePropertyAction extends BaseRefactoringAction {
       private final String myPropertyName;
       private final String mySelectedString;
 
-      public MyUsageSearcherFactory(MavenDomProjectModel model, String propertyName, String selectedString) {
+      MyUsageSearcherFactory(MavenDomProjectModel model, String propertyName, String selectedString) {
         myModel = model;
         myPropertyName = propertyName;
         mySelectedString = selectedString;
       }
 
+      @Override
       public UsageSearcher create() {
         return new UsageSearcher() {
-          Set<UsageInfo> usages = new HashSet<UsageInfo>();
+          Set<UsageInfo> usages = new HashSet<>();
 
-          public void generate(final Processor<Usage> processor) {
-            AccessToken accessToken = ApplicationManager.getApplication().acquireReadActionLock();
-
-            try {
+          @Override
+          public void generate(@NotNull final Processor<Usage> processor) {
+            ApplicationManager.getApplication().runReadAction(() -> {
               collectUsages(myModel);
               for (MavenDomProjectModel model : MavenDomProjectProcessorUtils.getChildrenProjects(myModel)) {
                 collectUsages(model);
@@ -264,10 +261,7 @@ public class IntroducePropertyAction extends BaseRefactoringAction {
               for (UsageInfo usage : usages) {
                 processor.process(UsageInfo2UsageAdapter.CONVERTER.fun(usage));
               }
-            }
-            finally {
-              accessToken.finish();
-            }
+            });
           }
 
           private void collectUsages(@NotNull MavenDomProjectModel model) {
@@ -309,7 +303,7 @@ public class IntroducePropertyAction extends BaseRefactoringAction {
             int start = s.indexOf(mySelectedString);
             if (start == -1) return Collections.emptySet();
 
-            Set<UsageInfo> usages = new HashSet<UsageInfo>();
+            Set<UsageInfo> usages = new HashSet<>();
 
             List<TextRange> ranges = getPropertiesTextRanges(s);
             TextRange elementTextRange = xmlElement.getTextRange();
@@ -317,7 +311,7 @@ public class IntroducePropertyAction extends BaseRefactoringAction {
 
             do {
               int end = start + mySelectedString.length();
-              boolean isInsideProperty = isInsideTextRanges(ranges, start, end);
+              boolean isInsideProperty = isIntersectWithRanges(ranges, start, end);
               if (!isInsideProperty) {
                 usages
                   .add(new UsageInfo(containingFile, elementTextRange.getStartOffset() + start, elementTextRange.getStartOffset() + end));
@@ -334,7 +328,7 @@ public class IntroducePropertyAction extends BaseRefactoringAction {
   }
 
   private static List<TextRange> getPropertiesTextRanges(String s) {
-    List<TextRange> ranges = new ArrayList<TextRange>();
+    List<TextRange> ranges = new ArrayList<>();
     int startOffset = s.indexOf(PREFIX);
     while (startOffset >= 0) {
       int endOffset = s.indexOf(SUFFIX, startOffset);
@@ -355,12 +349,21 @@ public class IntroducePropertyAction extends BaseRefactoringAction {
     return ranges;
   }
 
-  private static boolean isInsideTextRanges(@NotNull Collection<TextRange> ranges, int start, int end) {
+  private static boolean isIntersectWithRanges(@NotNull Collection<TextRange> ranges, int start, int end) {
     for (TextRange range : ranges) {
-      if ((start >= range.getStartOffset() && (end <= range.getEndOffset() || start <= range.getEndOffset())) ||
-          (end <= range.getEndOffset() && (end > range.getStartOffset()))) {
-        return true;
+      if (start <= range.getStartOffset() && end >= range.getEndOffset()) {
+        continue; // range is inside [start, end]
       }
+
+      if (end <= range.getStartOffset()) {
+        continue; // range is on right
+      }
+
+      if (start >= range.getEndOffset()) {
+        continue; // range is on right
+      }
+
+      return true;
     }
     return false;
   }

@@ -1,4 +1,4 @@
-// "Fix all 'Constant conditions & exceptions' problems" "true"
+// "Fix all 'Constant conditions & exceptions' problems in file" "true"
 public class Test {
   void foo2() {
     int k = 0;

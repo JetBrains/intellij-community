@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import com.intellij.psi.xml.XmlTokenType;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.codeInsight.editorActions.wordSelection.PlainTextLineSelectioner;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
@@ -28,12 +29,13 @@ import java.util.List;
  * @author yole
  */
 public class XmlLineSelectioner extends ExtendWordSelectionHandlerBase {
-  public boolean canSelect(final PsiElement e) {
+  @Override
+  public boolean canSelect(@NotNull final PsiElement e) {
     return e instanceof XmlToken && ((XmlToken)e).getTokenType() == XmlTokenType.XML_DATA_CHARACTERS;
   }
 
   @Override
-  public List<TextRange> select(final PsiElement e, final CharSequence editorText, final int cursorOffset, final Editor editor) {
+  public List<TextRange> select(@NotNull final PsiElement e, @NotNull final CharSequence editorText, final int cursorOffset, @NotNull final Editor editor) {
     return PlainTextLineSelectioner.selectPlainTextLine(e, editorText, cursorOffset);
   }
 }

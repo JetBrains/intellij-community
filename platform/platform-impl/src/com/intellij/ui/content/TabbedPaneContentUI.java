@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.content;
 
 import com.intellij.openapi.actionSystem.*;
@@ -21,12 +7,14 @@ import com.intellij.ui.*;
 import com.intellij.ui.content.tabs.PinToolwindowTabAction;
 import com.intellij.ui.content.tabs.TabbedContentAction;
 import com.intellij.util.IJSwingUtilities;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.plaf.TabbedPaneUI;
 import java.awt.*;
+import java.awt.event.InputEvent;
 import java.awt.event.MouseEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
@@ -41,32 +29,34 @@ public class TabbedPaneContentUI implements ContentUI, PropertyChangeListener {
   public static final String POPUP_PLACE = "TabbedPanePopup";
 
   private ContentManager myManager;
-  private TabbedPaneWrapper myTabbedPaneWrapper;
+  private final TabbedPaneWrapper myTabbedPaneWrapper;
 
   /**
-   * Creates <code>TabbedPaneContentUI</code> with bottom tab placement.
+   * Creates {@code TabbedPaneContentUI} with bottom tab placement.
    */
   public TabbedPaneContentUI() {
-    this(JTabbedPane.BOTTOM);
+    this(SwingConstants.BOTTOM);
   }
 
   /**
-   * Creates <code>TabbedPaneContentUI</code> with cpecified tab placement.
+   * Creates {@code TabbedPaneContentUI} with specified tab placement.
    *
    * @param tabPlacement constant which defines where the tabs are located.
-   *                     Acceptable values are <code>javax.swing.JTabbedPane#TOP</code>,
-   *                     <code>javax.swing.JTabbedPane#LEFT</code>, <code>javax.swing.JTabbedPane#BOTTOM</code>
-   *                     and <code>javax.swing.JTabbedPane#RIGHT</code>.
+   *                     Acceptable values are {@code javax.swing.JTabbedPane#TOP},
+   *                     {@code javax.swing.JTabbedPane#LEFT}, {@code javax.swing.JTabbedPane#BOTTOM}
+   *                     and {@code javax.swing.JTabbedPane#RIGHT}.
    */
   public TabbedPaneContentUI(int tabPlacement) {
     myTabbedPaneWrapper = new MyTabbedPaneWrapper(tabPlacement);
   }
 
+  @Override
   public JComponent getComponent() {
     return myTabbedPaneWrapper.getComponent();
   }
 
-  public void setManager(ContentManager manager) {
+  @Override
+  public void setManager(@NotNull ContentManager manager) {
     if (myManager != null) {
       throw new IllegalStateException();
     }
@@ -74,6 +64,7 @@ public class TabbedPaneContentUI implements ContentUI, PropertyChangeListener {
     myManager.addContentManagerListener(new MyContentManagerListener());
   }
 
+  @Override
   public void propertyChange(PropertyChangeEvent e) {
     if (Content.PROP_DISPLAY_NAME.equals(e.getPropertyName())) {
       Content content = (Content)e.getSource();
@@ -112,27 +103,26 @@ public class TabbedPaneContentUI implements ContentUI, PropertyChangeListener {
 
   private Content getSelectedContent() {
     JComponent selectedComponent = myTabbedPaneWrapper.getSelectedComponent();
-    return myManager.getContent(selectedComponent);
+    return selectedComponent == null ? null : myManager.getContent(selectedComponent);
   }
 
-
-
-
   private class MyTabbedPaneWrapper extends TabbedPaneWrapper.AsJTabbedPane {
-    public MyTabbedPaneWrapper(int tabPlacement) {
+    MyTabbedPaneWrapper(int tabPlacement) {
       super(tabPlacement);
     }
 
+    @Override
     protected TabbedPane createTabbedPane(int tabPlacement) {
       return new MyTabbedPane(tabPlacement);
     }
 
+    @Override
     protected TabbedPaneHolder createTabbedPaneHolder() {
       return new MyTabbedPaneHolder(this);
     }
 
     private class MyTabbedPane extends TabbedPaneImpl {
-      public MyTabbedPane(int tabPlacement) {
+      MyTabbedPane(int tabPlacement) {
         super(tabPlacement);
         addMouseListener(new MyPopupHandler());
         enableEvents(AWTEvent.MOUSE_EVENT_MASK);
@@ -158,13 +148,14 @@ public class TabbedPaneContentUI implements ContentUI, PropertyChangeListener {
         menuSelectionManager.clearSelectedPath();
       }
 
+      @Override
       protected void processMouseEvent(MouseEvent e) {
         if (e.isPopupTrigger()) { // Popup doesn't activate clicked tab.
           showPopup(e.getX(), e.getY());
           return;
         }
 
-        if (!e.isShiftDown() && (MouseEvent.BUTTON1_MASK & e.getModifiers()) > 0) { // RightClick without Shift modifiers just select tab
+        if (!e.isShiftDown() && (InputEvent.BUTTON1_MASK & e.getModifiers()) > 0) { // RightClick without Shift modifiers just select tab
           if (MouseEvent.MOUSE_RELEASED == e.getID()) {
             TabbedPaneUI ui = getUI();
             int index = ui.tabForCoordinate(this, e.getX(), e.getY());
@@ -174,30 +165,32 @@ public class TabbedPaneContentUI implements ContentUI, PropertyChangeListener {
             hideMenu();
           }
         }
-        else if (e.isShiftDown() && (MouseEvent.BUTTON1_MASK & e.getModifiers()) > 0) { // Shift+LeftClick closes the tab
+        else if (e.isShiftDown() && (InputEvent.BUTTON1_MASK & e.getModifiers()) > 0) { // Shift+LeftClick closes the tab
           if (MouseEvent.MOUSE_RELEASED == e.getID()) {
             closeTabAt(e.getX(), e.getY());
             hideMenu();
           }
         }
-        else if ((MouseEvent.BUTTON2_MASK & e.getModifiers()) > 0) { // MouseWheelClick closes the tab
+        else if ((InputEvent.BUTTON2_MASK & e.getModifiers()) > 0) { // MouseWheelClick closes the tab
           if (MouseEvent.MOUSE_RELEASED == e.getID()) {
             closeTabAt(e.getX(), e.getY());
             hideMenu();
           }
         }
-        else if ((MouseEvent.BUTTON3_MASK & e.getModifiers()) > 0 && SystemInfo.isWindows) { // Right mouse button doesn't activate tab
+        else if ((InputEvent.BUTTON3_MASK & e.getModifiers()) > 0 && SystemInfo.isWindows) { // Right mouse button doesn't activate tab
         }
         else {
           super.processMouseEvent(e);
         }
       }
 
+      @Override
       protected ChangeListener createChangeListener() {
         return new MyModelListener();
       }
 
       private class MyModelListener extends ModelListener {
+        @Override
         public void stateChanged(ChangeEvent e) {
           Content content = getSelectedContent();
           if (content != null) {
@@ -208,8 +201,8 @@ public class TabbedPaneContentUI implements ContentUI, PropertyChangeListener {
       }
 
       /**
-       * @return content at the specified location.  <code>x</code> and <code>y</code> are in
-       *         tabbed pane coordinate system. The method returns <code>null</code> if there is no contnt at the
+       * @return content at the specified location.  {@code x} and {@code y} are in
+       *         tabbed pane coordinate system. The method returns {@code null} if there is no content at the
        *         specified location.
        */
       private Content getContentAt(int x, int y) {
@@ -222,6 +215,7 @@ public class TabbedPaneContentUI implements ContentUI, PropertyChangeListener {
       }
 
       protected class MyPopupHandler extends PopupHandler {
+        @Override
         public void invokePopup(Component comp, int x, int y) {
           if (myManager.getContentCount() == 0) return;
           showPopup(x, y);
@@ -229,7 +223,7 @@ public class TabbedPaneContentUI implements ContentUI, PropertyChangeListener {
       }
 
       /**
-       * Shows showPopup menu at the specified location. The <code>x</code> and <code>y</code> coordinates
+       * Shows showPopup menu at the specified location. The {@code x} and {@code y} coordinates
        * are in JTabbedPane coordinate system.
        */
       private void showPopup(int x, int y) {
@@ -249,11 +243,9 @@ public class TabbedPaneContentUI implements ContentUI, PropertyChangeListener {
         group.add(new TabbedContentAction.MyNextTabAction(myManager));
         group.add(new TabbedContentAction.MyPreviousTabAction(myManager));
         final List<AnAction> additionalActions = myManager.getAdditionalPopupActions(content);
-        if (additionalActions != null) {
+        if (!additionalActions.isEmpty()) {
           group.addSeparator();
-          for (AnAction anAction : additionalActions) {
-            group.add(anAction);
-          }
+          group.addAll(additionalActions);
         }
         ActionPopupMenu menu = ActionManager.getInstance().createActionPopupMenu(POPUP_PLACE, group);
         menu.getComponent().show(myTabbedPaneWrapper.getComponent(), x, y);
@@ -266,7 +258,8 @@ public class TabbedPaneContentUI implements ContentUI, PropertyChangeListener {
         super(wrapper);
       }
 
-      public Object getData(String dataId) {
+      @Override
+      public Object getData(@NotNull String dataId) {
         if (PlatformDataKeys.CONTENT_MANAGER.is(dataId)) {
           return myManager;
         }
@@ -279,7 +272,8 @@ public class TabbedPaneContentUI implements ContentUI, PropertyChangeListener {
   }
 
   private class MyContentManagerListener extends ContentManagerAdapter {
-    public void contentAdded(ContentManagerEvent event) {
+    @Override
+    public void contentAdded(@NotNull ContentManagerEvent event) {
       Content content = event.getContent();
       myTabbedPaneWrapper.insertTab(content.getTabName(),
                                     content.getIcon(),
@@ -289,58 +283,70 @@ public class TabbedPaneContentUI implements ContentUI, PropertyChangeListener {
       content.addPropertyChangeListener(TabbedPaneContentUI.this);
     }
 
-    public void contentRemoved(ContentManagerEvent event) {
+    @Override
+    public void contentRemoved(@NotNull ContentManagerEvent event) {
       event.getContent().removePropertyChangeListener(TabbedPaneContentUI.this);
       myTabbedPaneWrapper.removeTabAt(event.getIndex());
     }
 
-    public void selectionChanged(ContentManagerEvent event) {
+    @Override
+    public void selectionChanged(@NotNull ContentManagerEvent event) {
       int index = event.getIndex();
-      if (index != -1) {
+      if (index != -1 && event.getOperation() != ContentManagerEvent.ContentOperation.remove) {
         myTabbedPaneWrapper.setSelectedIndex(index);
       }
     }
   }
 
+  @Override
   public boolean isSingleSelection() {
     return true;
   }
 
+  @Override
   public boolean isToSelectAddedContent() {
     return false;
   }
 
+  @Override
   public boolean canBeEmptySelection() {
     return false;
   }
 
+  @Override
   public void beforeDispose() {
   }
 
-  public boolean canChangeSelectionTo(Content content, boolean implicit) {
+  @Override
+  public boolean canChangeSelectionTo(@NotNull Content content, boolean implicit) {
     return true;
   }
 
+  @NotNull
   @Override
   public String getCloseActionName() {
     return UIBundle.message("tabbed.pane.close.tab.action.name");
   }
 
+  @NotNull
   @Override
   public String getCloseAllButThisActionName() {
     return UIBundle.message("tabbed.pane.close.all.tabs.but.this.action.name");
   }
 
+  @NotNull
   @Override
   public String getPreviousContentActionName() {
     return "Select Previous Tab";
   }
 
+  @NotNull
   @Override
   public String getNextContentActionName() {
     return "Select Next Tab";
   }
 
+  @Override
   public void dispose() {
   }
 }

@@ -1,49 +1,38 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.codeInsight.daemon.impl;
 
-import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeHighlighting.TextEditorHighlightingPass;
+import com.intellij.codeInsight.daemon.DaemonBundle;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
-import com.intellij.codeInsight.daemon.impl.analysis.HighlightLevelUtil;
+import com.intellij.codeInsight.daemon.impl.analysis.FileHighlightingSetting;
+import com.intellij.codeInsight.daemon.impl.analysis.HighlightingSettingsPerFile;
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.PowerSaveMode;
 import com.intellij.lang.Language;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.ex.EditorMarkupModel;
 import com.intellij.openapi.editor.ex.MarkupModelEx;
 import com.intellij.openapi.editor.ex.RangeHighlighterEx;
 import com.intellij.openapi.editor.impl.DocumentMarkupModel;
-import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.editor.impl.EditorMarkupModelImpl;
 import com.intellij.openapi.editor.impl.event.MarkupModelListener;
 import com.intellij.openapi.editor.markup.ErrorStripeRenderer;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
+import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.FileViewProvider;
+import com.intellij.psi.PsiCompiledElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.ui.LayeredIcon;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.ui.EmptyIcon;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.io.storage.HeavyProcessLatch;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.xml.util.XmlStringUtil;
 import gnu.trove.TIntArrayList;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -51,37 +40,39 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.ArrayList;
-import java.util.Collections;
+import java.util.*;
 import java.util.List;
-import java.util.Set;
 
 public class TrafficLightRenderer implements ErrorStripeRenderer, Disposable {
-  private static final Icon IN_PROGRESS_ICON = AllIcons.General.ErrorsInProgress;
-  private static final Icon NO_ANALYSIS_ICON = AllIcons.General.NoAnalysis;
-  private static final Icon NO_ICON = new EmptyIcon(IN_PROGRESS_ICON.getIconWidth(), IN_PROGRESS_ICON.getIconHeight());
-  private static final Icon STARING_EYE_ICON = AllIcons.General.InspectionInProgress;
-
   private final Project myProject;
   private final Document myDocument;
   private final PsiFile myFile;
   private final DaemonCodeAnalyzerImpl myDaemonCodeAnalyzer;
   private final SeverityRegistrar mySeverityRegistrar;
+  private Icon icon;
+  String statistics;
+  String statusLabel;
+  String statusExtraLine;
+  boolean passStatusesVisible;
+  final Map<ProgressableTextEditorHighlightingPass, Pair<JProgressBar, JLabel>> passes = ContainerUtil.newLinkedHashMap();
+  static final int MAX = 100;
+  boolean progressBarsEnabled;
+  Boolean progressBarsCompleted;
 
   /**
    * array filled with number of highlighters with a given severity.
    * errorCount[idx] == number of highlighters of severity with index idx in this markup model.
    * severity index can be obtained via com.intellij.codeInsight.daemon.impl.SeverityRegistrar#getSeverityIdx(com.intellij.lang.annotation.HighlightSeverity)
    */
-  private int[] errorCount;
+  protected int[] errorCount;
 
   public TrafficLightRenderer(@Nullable Project project, Document document, PsiFile file) {
     myProject = project;
     myDaemonCodeAnalyzer = project == null ? null : (DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(project);
     myDocument = document;
     myFile = file;
-    mySeverityRegistrar = SeverityRegistrar.getInstance(myProject);
-    refresh();
+    mySeverityRegistrar = SeverityRegistrar.getSeverityRegistrar(myProject);
+    refresh(null);
 
     if (project != null) {
       final MarkupModelEx model = (MarkupModelEx)DocumentMarkupModel.forDocument(document, project, true);
@@ -90,55 +81,29 @@ public class TrafficLightRenderer implements ErrorStripeRenderer, Disposable {
         public void afterAdded(@NotNull RangeHighlighterEx highlighter) {
           incErrorCount(highlighter, 1);
         }
-  
+
         @Override
         public void beforeRemoved(@NotNull RangeHighlighterEx highlighter) {
           incErrorCount(highlighter, -1);
         }
-  
-        @Override
-        public void attributesChanged(@NotNull RangeHighlighterEx highlighter) {
-        }
       });
-      UIUtil.invokeLaterIfNeeded(new Runnable() {
-        public void run() {
-          for (RangeHighlighter rangeHighlighter : model.getAllHighlighters()) {
-            incErrorCount(rangeHighlighter, 1);
-          }
+      UIUtil.invokeLaterIfNeeded(() -> {
+        for (RangeHighlighter rangeHighlighter : model.getAllHighlighters()) {
+          incErrorCount(rangeHighlighter, 1);
         }
       });
     }
   }
 
-  private void refresh() {
+  @NotNull
+  public SeverityRegistrar getSeverityRegistrar() {
+    return mySeverityRegistrar;
+  }
+
+  protected void refresh(@Nullable EditorMarkupModelImpl editorMarkupModel) {
     int maxIndex = mySeverityRegistrar.getSeverityMaxIndex();
-    if (errorCount != null && maxIndex == errorCount.length) return;
-    int[] newErrors = new int[maxIndex+1];
-    if (errorCount != null) {
-      System.arraycopy(errorCount, 0, newErrors, 0, Math.min(errorCount.length, newErrors.length));
-    }
-    errorCount = newErrors;
-  }
-
-  public static void setOrRefreshErrorStripeRenderer(@NotNull EditorMarkupModel editorMarkupModel,
-                                                     @NotNull Project project,
-                                                     @NotNull Document document,
-                                                     PsiFile file) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
-    if (!editorMarkupModel.isErrorStripeVisible() || !DaemonCodeAnalyzer.getInstance(project).isHighlightingAvailable(file)) {
-      return;
-    }
-    ErrorStripeRenderer renderer = editorMarkupModel.getErrorStripeRenderer();
-    if (renderer instanceof TrafficLightRenderer) {
-      TrafficLightRenderer tlr = (TrafficLightRenderer)renderer;
-      tlr.refresh();
-      ((EditorMarkupModelImpl)editorMarkupModel).repaintVerticalScrollBar();
-      if (tlr.myFile == null || tlr.myFile.isValid()) return;
-      Disposer.dispose(tlr);
-    }
-    renderer = new TrafficLightRenderer(project, document, file);
-    Disposer.register(((EditorImpl)editorMarkupModel.getEditor()).getDisposable(), (Disposable)renderer);
-    editorMarkupModel.setErrorStripeRenderer(renderer);
+    if (errorCount != null && maxIndex + 1 == errorCount.length) return;
+    errorCount = new int[maxIndex + 1];
   }
 
   @Override
@@ -146,25 +111,33 @@ public class TrafficLightRenderer implements ErrorStripeRenderer, Disposable {
   }
 
   private void incErrorCount(RangeHighlighter highlighter, int delta) {
-    Object o = highlighter.getErrorStripeTooltip();
-    if (!(o instanceof HighlightInfo)) return;
-    HighlightInfo info = (HighlightInfo)o;
+    HighlightInfo info = HighlightInfo.fromRangeHighlighter(highlighter);
+    if (info == null) return;
     HighlightSeverity infoSeverity = info.getSeverity();
+    if (infoSeverity.myVal <= HighlightSeverity.INFORMATION.myVal) return;
     final int severityIdx = mySeverityRegistrar.getSeverityIdx(infoSeverity);
     if (severityIdx != -1) {
       errorCount[severityIdx] += delta;
     }
   }
 
-  public static class DaemonCodeAnalyzerStatus {
-    public boolean errorAnalyzingFinished; // all passes done
-    public List<ProgressableTextEditorHighlightingPass> passStati = Collections.emptyList();
-    public String[/*rootsNumber*/] noHighlightingRoots;
-    public String[/*rootsNumber*/] noInspectionRoots;
-    public int[] errorCount = ArrayUtil.EMPTY_INT_ARRAY;
-    public boolean enabled = true;
+  public boolean isValid() {
+    return myFile == null || myFile.isValid();
+  }
 
-    public int rootsNumber;
+  protected static class DaemonCodeAnalyzerStatus {
+    public boolean errorAnalyzingFinished; // all passes done
+    List<ProgressableTextEditorHighlightingPass> passStati = Collections.emptyList();
+    public int[] errorCount = ArrayUtil.EMPTY_INT_ARRAY;
+    // Used in Rider
+    public String reasonWhyDisabled;
+    // Used in Rider
+    public String reasonWhySuspended;
+
+    public DaemonCodeAnalyzerStatus() {
+    }
+
+    @Override
     public String toString() {
       @NonNls String s = "DS: finished=" + errorAnalyzingFinished;
       s += "; pass statuses: " + passStati.size() + "; ";
@@ -176,113 +149,205 @@ public class TrafficLightRenderer implements ErrorStripeRenderer, Disposable {
     }
   }
 
-  @Nullable
-  protected DaemonCodeAnalyzerStatus getDaemonCodeAnalyzerStatus(boolean fillErrorsCount, SeverityRegistrar severityRegistrar) {
-    if (myFile == null || myProject.isDisposed() || !myDaemonCodeAnalyzer.isHighlightingAvailable(myFile)) return null;
+  @NotNull
+  protected DaemonCodeAnalyzerStatus getDaemonCodeAnalyzerStatus(@NotNull SeverityRegistrar severityRegistrar) {
+    DaemonCodeAnalyzerStatus status = new DaemonCodeAnalyzerStatus();
+    if (myFile == null) {
+      status.reasonWhyDisabled = "No file";
+      status.errorAnalyzingFinished = true;
+      return status;
+    }
+    if (myProject != null && myProject.isDisposed()) {
+      status.reasonWhyDisabled = "Project is disposed";
+      status.errorAnalyzingFinished = true;
+      return status;
+    }
+    if (!myDaemonCodeAnalyzer.isHighlightingAvailable(myFile)) {
+      if (!myFile.isPhysical()) {
+        status.reasonWhyDisabled = "File is generated";
+        status.errorAnalyzingFinished = true;
+        return status;
+      }
+      if (myFile instanceof PsiCompiledElement) {
+        status.reasonWhyDisabled = "File is decompiled";
+        status.errorAnalyzingFinished = true;
+        return status;
+      }
+      final FileType fileType = myFile.getFileType();
+      if (fileType.isBinary()) {
+        status.reasonWhyDisabled = "File is binary";
+        status.errorAnalyzingFinished = true;
+        return status;
+      }
+      status.reasonWhyDisabled = "Highlighting is disabled for this file";
+      status.errorAnalyzingFinished = true;
+      return status;
+    }
 
-    List<String> noInspectionRoots = new ArrayList<String>();
-    List<String> noHighlightingRoots = new ArrayList<String>();
     FileViewProvider provider = myFile.getViewProvider();
     Set<Language> languages = provider.getLanguages();
+    HighlightingSettingsPerFile levelSettings = HighlightingSettingsPerFile.getInstance(myProject);
+    boolean shouldHighlight = languages.isEmpty();
     for (Language language : languages) {
       PsiFile root = provider.getPsi(language);
-      if (!HighlightLevelUtil.shouldHighlight(root)) {
-        noHighlightingRoots.add(language.getID());
-      }
-      else if (!HighlightLevelUtil.shouldInspect(root)) {
-        noInspectionRoots.add(language.getID());
-      }
+      FileHighlightingSetting level = levelSettings.getHighlightingSettingForRoot(root);
+      shouldHighlight |= level != FileHighlightingSetting.SKIP_HIGHLIGHTING;
     }
-    DaemonCodeAnalyzerStatus status = new DaemonCodeAnalyzerStatus();
-    status.noInspectionRoots = noInspectionRoots.isEmpty() ? null : ArrayUtil.toStringArray(noInspectionRoots);
-    status.noHighlightingRoots = noHighlightingRoots.isEmpty() ? null : ArrayUtil.toStringArray(noHighlightingRoots);
+    if (!shouldHighlight) {
+      status.reasonWhyDisabled = "Highlighting level is None";
+      status.errorAnalyzingFinished = true;
+      return status;
+    }
+
+    if (HeavyProcessLatch.INSTANCE.isRunning()) {
+      status.reasonWhySuspended = StringUtil.defaultIfEmpty(HeavyProcessLatch.INSTANCE.getRunningOperationName(), "Heavy operation is running");
+      status.errorAnalyzingFinished = true;
+      return status;
+    }
 
     status.errorCount = errorCount.clone();
-    status.rootsNumber = languages.size();
-    fillDaemonCodeAnalyzerErrorsStatus(status, fillErrorsCount, severityRegistrar);
     List<TextEditorHighlightingPass> passes = myDaemonCodeAnalyzer.getPassesToShowProgressFor(myDocument);
-    status.passStati = passes.isEmpty() ? Collections.<ProgressableTextEditorHighlightingPass>emptyList() :
-                       new ArrayList<ProgressableTextEditorHighlightingPass>(passes.size());
+    status.passStati = passes.isEmpty() ? Collections.emptyList() :
+                       new ArrayList<>(passes.size());
     //noinspection ForLoopReplaceableByForEach
     for (int i = 0; i < passes.size(); i++) {
       TextEditorHighlightingPass tepass = passes.get(i);
-      if (!(tepass instanceof ProgressableTextEditorHighlightingPass)) continue;
+      if (!(tepass instanceof ProgressableTextEditorHighlightingPass) ||
+          StringUtil.isEmpty(((ProgressableTextEditorHighlightingPass)tepass).getPresentableName())) {
+        continue;
+      }
       ProgressableTextEditorHighlightingPass pass = (ProgressableTextEditorHighlightingPass)tepass;
 
       if (pass.getProgress() < 0) continue;
       status.passStati.add(pass);
     }
     status.errorAnalyzingFinished = myDaemonCodeAnalyzer.isAllAnalysisFinished(myFile);
-    status.enabled = myDaemonCodeAnalyzer.isUpdateByTimerEnabled();
+    status.reasonWhySuspended = myDaemonCodeAnalyzer.isUpdateByTimerEnabled() ? null : "Highlighting is paused temporarily";
+    fillDaemonCodeAnalyzerErrorsStatus(status, severityRegistrar);
 
     return status;
   }
 
-  protected void fillDaemonCodeAnalyzerErrorsStatus(final DaemonCodeAnalyzerStatus status,
-                                                    final boolean fillErrorsCount,
-                                                    final SeverityRegistrar severityRegistrar) {
+  protected void fillDaemonCodeAnalyzerErrorsStatus(@NotNull DaemonCodeAnalyzerStatus status,
+                                                    @NotNull SeverityRegistrar severityRegistrar) {
   }
 
-  public final Project getProject() {
+  protected final Project getProject() {
     return myProject;
   }
 
   @Override
-  public String getTooltipMessage() {
-    // see TrafficProgressPanel
-    return null;
-  }
-
-  @Override
   public void paint(Component c, Graphics g, Rectangle r) {
-    DaemonCodeAnalyzerStatus status = getDaemonCodeAnalyzerStatus(false, mySeverityRegistrar);
+    DaemonCodeAnalyzerStatus status = getDaemonCodeAnalyzerStatus(mySeverityRegistrar);
     Icon icon = getIcon(status);
-
-    int height = icon.getIconHeight();
-    int width = icon.getIconWidth();
-    int x = r.x + (r.width - width) / 2;
-    int y = r.y + (r.height - height) / 2;
-    icon.paintIcon(c, g, x, y);
+    icon.paintIcon(c, g, r.x, r.y);
   }
 
-  private Icon getIcon(DaemonCodeAnalyzerStatus status) {
-    if (status == null) {
-      return NO_ICON;
-    }
-    if (status.noHighlightingRoots != null && status.noHighlightingRoots.length == status.rootsNumber) {
-      return NO_ANALYSIS_ICON;
-    }
-
-    Icon icon = HighlightDisplayLevel.DO_NOT_SHOW.getIcon();
-    for (int i = status.errorCount.length - 1; i >= 0; i--) {
-      if (status.errorCount[i] != 0) {
-        icon = mySeverityRegistrar.getRendererIconByIndex(i);
-        break;
-      }
-    }
-
-    if (status.errorAnalyzingFinished) {
-      if (myProject != null && DumbService.isDumb(myProject)) {
-        return new LayeredIcon(NO_ANALYSIS_ICON, icon, STARING_EYE_ICON);
-      }
-
+  @NotNull
+  private Icon getIcon(@NotNull DaemonCodeAnalyzerStatus status) {
+    updatePanel(status);
+    Icon icon = this.icon;
+    if (PowerSaveMode.isEnabled() || status.reasonWhySuspended != null || status.reasonWhyDisabled != null || status.errorAnalyzingFinished) {
       return icon;
     }
-    if (!status.enabled) return NO_ANALYSIS_ICON;
-
-    double progress = getOverallProgress(status);
-    TruncatingIcon trunc = new TruncatingIcon(icon, icon.getIconWidth(), (int)(icon.getIconHeight() * progress));
-
-    return new LayeredIcon(NO_ANALYSIS_ICON, trunc, STARING_EYE_ICON);
+    return AllIcons.General.InspectionsEye;
   }
 
-  private static double getOverallProgress(DaemonCodeAnalyzerStatus status) {
-    long advancement = 0;
-    long limit = 0;
-    for (ProgressableTextEditorHighlightingPass ps : status.passStati) {
-      advancement += ps.getProgressCount();
-      limit += ps.getProgressLimit();
+  // return true if panel needs to be rebuilt
+  boolean updatePanel(@NotNull DaemonCodeAnalyzerStatus status) {
+    progressBarsEnabled = false;
+    progressBarsCompleted = null;
+    statistics = "";
+    passStatusesVisible = false;
+    statusLabel = null;
+    statusExtraLine = null;
+
+    boolean result = false;
+    if (!status.passStati.equals(new ArrayList<>(passes.keySet()))) {
+      // passes set has changed
+      rebuildPassesMap(status);
+      result = true;
     }
-    return limit == 0 ? status.errorAnalyzingFinished ? 1 : 0 : advancement * 1.0 / limit;
+
+    if (PowerSaveMode.isEnabled()) {
+      statusLabel = "Code analysis is disabled in power save mode";
+      status.errorAnalyzingFinished = true;
+      icon = AllIcons.General.InspectionsTrafficOff;
+      return result;
+    }
+    if (status.reasonWhyDisabled != null) {
+      statusLabel = "No analysis has been performed";
+      statusExtraLine = "(" + status.reasonWhyDisabled + ")";
+      passStatusesVisible = true;
+      progressBarsCompleted = Boolean.FALSE;
+      icon = AllIcons.General.InspectionsTrafficOff;
+      return result;
+    }
+    if (status.reasonWhySuspended != null) {
+      statusLabel = "Code analysis has been suspended";
+      statusExtraLine = "(" + status.reasonWhySuspended + ")";
+      passStatusesVisible = true;
+      progressBarsCompleted = Boolean.FALSE;
+      icon = AllIcons.General.InspectionsPause;
+      return result;
+    }
+
+    int lastNotNullIndex = ArrayUtil.lastIndexOfNot(status.errorCount, 0);
+    Icon icon = lastNotNullIndex == -1 ? AllIcons.General.InspectionsOK : mySeverityRegistrar.getRendererIconByIndex(lastNotNullIndex);
+
+    if (status.errorAnalyzingFinished) {
+      boolean isDumb = myProject != null && DumbService.isDumb(myProject);
+      if (isDumb) {
+        statusLabel = "Shallow analysis completed";
+        statusExtraLine = "Complete results will be available after indexing";
+      }
+      else {
+        statusLabel = DaemonBundle.message("analysis.completed");
+      }
+      progressBarsCompleted = Boolean.TRUE;
+    }
+    else {
+      statusLabel = DaemonBundle.message("performing.code.analysis");
+      passStatusesVisible = true;
+      progressBarsEnabled = true;
+      progressBarsCompleted = null;
+    }
+
+    int currentSeverityErrors = 0;
+    @org.intellij.lang.annotations.Language("HTML")
+    String text = "";
+    for (int i = lastNotNullIndex; i >= 0; i--) {
+      int count = status.errorCount[i];
+      if (count > 0) {
+        final HighlightSeverity severity = mySeverityRegistrar.getSeverityByIndex(i);
+        String name = count > 1 ? StringUtil.pluralize(severity.getName().toLowerCase()) : severity.getName().toLowerCase();
+        text += status.errorAnalyzingFinished
+                ? DaemonBundle.message("errors.found", count, name)
+                : DaemonBundle.message("errors.found.so.far", count, name);
+        text += "<br>";
+        currentSeverityErrors += count;
+      }
+    }
+    if (currentSeverityErrors == 0) {
+      text += (status.errorAnalyzingFinished
+              ? DaemonBundle.message("no.errors.or.warnings.found")
+              : DaemonBundle.message("no.errors.or.warnings.found.so.far")) + "<br>";
+    }
+    statistics = XmlStringUtil.wrapInHtml(text);
+
+    this.icon = icon;
+    return result;
+  }
+
+  private void rebuildPassesMap(@NotNull DaemonCodeAnalyzerStatus status) {
+    passes.clear();
+    for (ProgressableTextEditorHighlightingPass pass : status.passStati) {
+      JProgressBar progressBar = new JProgressBar(0, MAX);
+      progressBar.setMaximum(MAX);
+      UIUtil.applyStyle(UIUtil.ComponentStyle.MINI, progressBar);
+      JLabel percentLabel = new JLabel();
+      percentLabel.setText(TrafficProgressPanel.MAX_TEXT);
+      passes.put(pass, Pair.create(progressBar, percentLabel));
+    }
   }
 }

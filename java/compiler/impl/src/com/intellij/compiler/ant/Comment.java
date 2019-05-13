@@ -20,7 +20,6 @@ import java.io.PrintWriter;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Mar 19, 2004
  */
 public class Comment extends Generator{
   private final String myComment;
@@ -39,6 +38,7 @@ public class Comment extends Generator{
     myCommentedData = commentedData;
   }
 
+  @Override
   public void generate(PrintWriter out) throws IOException {
     if (myComment != null) {
       out.print("<!-- ");

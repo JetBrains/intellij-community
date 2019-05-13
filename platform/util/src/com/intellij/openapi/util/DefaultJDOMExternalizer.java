@@ -1,24 +1,15 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 package com.intellij.openapi.util;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.util.ReflectionCache;
+import com.intellij.util.BitUtil;
+import com.intellij.util.ReflectionUtil;
+import com.intellij.util.xmlb.annotations.Transient;
 import org.jdom.Element;
 import org.jdom.Verifier;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
@@ -30,7 +21,8 @@ import java.util.List;
  * @deprecated {@link com.intellij.util.xmlb.XmlSerializer} should be used instead
  * @author mike
  */
-@SuppressWarnings({"HardCodedStringLiteral"})
+@Deprecated
+@SuppressWarnings("HardCodedStringLiteral")
 public class DefaultJDOMExternalizer {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.util.DefaultJDOMExternalizer");
 
@@ -38,23 +30,28 @@ public class DefaultJDOMExternalizer {
   }
 
   public interface JDOMFilter{
-    boolean isAccept(Field field);
+    boolean isAccept(@NotNull Field field);
   }
 
-  public static void writeExternal(Object data, Element parentNode) throws WriteExternalException {
+  public static void writeExternal(@NotNull Object data, @NotNull Element parentNode) throws WriteExternalException {
     writeExternal(data, parentNode, null);
   }
 
-  public static void writeExternal(Object data, Element parentNode, JDOMFilter filter) throws WriteExternalException {
+  public static void writeExternal(@NotNull Object data,
+                                   @NotNull Element parentNode,
+                                   @Nullable("null means all elements accepted") JDOMFilter filter) throws WriteExternalException {
     Field[] fields = data.getClass().getFields();
 
     for (Field field : fields) {
       if (field.getName().indexOf('$') >= 0) continue;
       int modifiers = field.getModifiers();
-      if ((modifiers & Modifier.PUBLIC) == 0 || (modifiers & Modifier.STATIC) != 0) continue;
+      if (!(Modifier.isPublic(modifiers) && !Modifier.isStatic(modifiers) &&
+          /*!Modifier.isFinal(modifiers) &&*/ !Modifier.isTransient(modifiers) &&
+          field.getAnnotation(Transient.class) == null)) continue;
+
       field.setAccessible(true); // class might be non-public
       Class type = field.getType();
-      if (filter != null && !filter.isAccept(field)) {
+      if (filter != null && !filter.isAccept(field) || field.getDeclaringClass().getAnnotation(Transient.class) != null) {
         continue;
       }
       String value = null;
@@ -91,13 +88,16 @@ public class DefaultJDOMExternalizer {
         else if (type.equals(String.class)) {
           value = filterXMLCharacters((String)field.get(data));
         }
+        else if (type.isEnum()) {
+          value = field.get(data).toString();
+        }
         else if (type.equals(Color.class)) {
           Color color = (Color)field.get(data);
           if (color != null) {
             value = Integer.toString(color.getRGB() & 0xFFFFFF, 16);
           }
         }
-        else if (ReflectionCache.isAssignable(JDOMExternalizable.class, type)) {
+        else if (ReflectionUtil.isAssignable(JDOMExternalizable.class, type)) {
           Element element = new Element("option");
           parentNode.addContent(element);
           element.setAttribute("name", field.getName());
@@ -127,36 +127,36 @@ public class DefaultJDOMExternalizer {
   }
 
   @Nullable
-  public static String filterXMLCharacters(String value) {
-    if (value != null) {
-      StringBuilder builder = null;
-      for (int i=0; i<value.length();i++) {
-        char c = value.charAt(i);
-        if (Verifier.isXMLCharacter(c)) {
-          if (builder != null) {
-            builder.append(c);
-          }
-        }
-        else {
-          if (builder == null) {
-            builder = new StringBuilder(value.length()+5);
-            builder.append(value, 0, i);
-          }
+  static String filterXMLCharacters(@Nullable String value) {
+    if (value == null) {
+      return null;
+    }
+
+    StringBuilder builder = null;
+    for (int i=0; i<value.length();i++) {
+      char c = value.charAt(i);
+      if (Verifier.isXMLCharacter(c)) {
+        if (builder != null) {
+          builder.append(c);
         }
       }
-      if (builder != null) {
-        value = builder.toString();
+      else {
+        if (builder == null) {
+          builder = new StringBuilder(value.length()+5);
+          builder.append(value, 0, i);
+        }
       }
+    }
+    if (builder != null) {
+      value = builder.toString();
     }
     return value;
   }
 
-  public static void readExternal(Object data, Element parentNode) throws InvalidDataException{
+  public static void readExternal(@NotNull Object data, Element parentNode) throws InvalidDataException{
     if (parentNode == null) return;
 
-    for (final Object o : parentNode.getChildren("option")) {
-      Element e = (Element)o;
-
+    for (Element e : parentNode.getChildren("option")) {
       String fieldName = e.getAttributeValue("name");
       if (fieldName == null) {
         throw new InvalidDataException();
@@ -165,12 +165,12 @@ public class DefaultJDOMExternalizer {
         Field field = data.getClass().getField(fieldName);
         Class type = field.getType();
         int modifiers = field.getModifiers();
-        if ((modifiers & Modifier.PUBLIC) == 0 || (modifiers & Modifier.STATIC) != 0) continue;
+        if (!BitUtil.isSet(modifiers, Modifier.PUBLIC) || BitUtil.isSet(modifiers, Modifier.STATIC)) continue;
         field.setAccessible(true); // class might be non-public
-        if ((modifiers & Modifier.FINAL) != 0) {
+        if (BitUtil.isSet(modifiers, Modifier.FINAL)) {
           // read external contents of final field
           Object value = field.get(data);
-          if (ReflectionCache.isInstance(value, JDOMExternalizable.class)) {
+          if (value instanceof JDOMExternalizable) {
             final List children = e.getChildren("value");
             for (Object child : children) {
               Element valueTag = (Element)child;
@@ -199,12 +199,8 @@ public class DefaultJDOMExternalizer {
               }
             }
             else if (type.equals(int.class)) {
-              try {
-                field.setInt(data, Integer.parseInt(value));
-              }
-              catch (NumberFormatException ex) {
-                throw new InvalidDataException();
-              }
+              int i = toInt(value);
+              field.setInt(data, i);
             }
             else if (type.equals(long.class)) {
               try {
@@ -252,33 +248,29 @@ public class DefaultJDOMExternalizer {
             }
           }
         }
+        else if (type.isEnum()) {
+          for (Object enumValue : type.getEnumConstants()) {
+            if (enumValue.toString().equals(value)) {
+              field.set(data, enumValue);
+              break;
+            }
+          }
+        }
         else if (type.equals(String.class)) {
           field.set(data, value);
         }
         else if (type.equals(Color.class)) {
-          if (value != null) {
-            try {
-              int rgb = Integer.parseInt(value, 16);
-              field.set(data, new Color(rgb));
-            }
-            catch (NumberFormatException ex) {
-              LOG.debug("Wrong color value: " + value, ex);
-              throw new InvalidDataException();
-            }
-          }
-          else {
-            field.set(data, null);
-          }
+          Color color = toColor(value);
+          field.set(data, color);
         }
-        else if (ReflectionCache.isAssignable(JDOMExternalizable.class, type)) {
-          final List children = e.getChildren("value");
+        else if (ReflectionUtil.isAssignable(JDOMExternalizable.class, type)) {
+          final List<Element> children = e.getChildren("value");
           if (!children.isEmpty()) {
             // compatibility with Selena's serialization which writes an empty tag for a bean which has a default value
             JDOMExternalizable object = null;
-            for (final Object o1 : children) {
-              Element el = (Element)o1;
+            for (Element element : children) {
               object = (JDOMExternalizable)type.newInstance();
-              object.readExternal(el);
+              object.readExternal(element);
             }
 
             field.set(data, object);
@@ -288,8 +280,7 @@ public class DefaultJDOMExternalizer {
           throw new InvalidDataException("wrong type: " + type);
         }
       }
-      catch (NoSuchFieldException ex) {
-        LOG.debug(ex);
+      catch (NoSuchFieldException ignore) {
       }
       catch (SecurityException ex) {
         throw new InvalidDataException();
@@ -301,5 +292,34 @@ public class DefaultJDOMExternalizer {
         throw new InvalidDataException();
       }
     }
+  }
+
+  public static int toInt(@NotNull String value) throws InvalidDataException {
+    int i;
+    try {
+      i = Integer.parseInt(value);
+    }
+    catch (NumberFormatException ex) {
+      throw new InvalidDataException(value, ex);
+    }
+    return i;
+  }
+
+  public static Color toColor(@Nullable String value) throws InvalidDataException {
+    Color color;
+    if (value == null) {
+      color = null;
+    }
+    else {
+      try {
+        int rgb = Integer.parseInt(value, 16);
+        color = new Color(rgb);
+      }
+      catch (NumberFormatException ex) {
+        LOG.debug("Wrong color value: " + value, ex);
+        throw new InvalidDataException("Wrong color value: " + value, ex);
+      }
+    }
+    return color;
   }
 }

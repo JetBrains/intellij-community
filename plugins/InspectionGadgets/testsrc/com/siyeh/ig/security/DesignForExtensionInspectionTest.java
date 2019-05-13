@@ -1,10 +1,16 @@
 package com.siyeh.ig.security;
 
-import com.siyeh.ig.IGInspectionTestCase;
+import com.intellij.codeInspection.InspectionProfileEntry;
+import com.siyeh.ig.LightInspectionTestCase;
+import org.jetbrains.annotations.Nullable;
 
-public class DesignForExtensionInspectionTest extends IGInspectionTestCase {
+public class DesignForExtensionInspectionTest extends LightInspectionTestCase {
 
-  public void test() throws Exception {
-    doTest("com/siyeh/igtest/security/design_for_extension", new DesignForExtensionInspection());
+  public void testDesignForExtension() { doTest(); }
+
+  @Nullable
+  @Override
+  protected InspectionProfileEntry getInspection() {
+    return new DesignForExtensionInspection();
   }
 }

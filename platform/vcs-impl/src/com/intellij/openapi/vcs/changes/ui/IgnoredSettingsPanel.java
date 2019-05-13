@@ -1,25 +1,5 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
-/*
- * Created by IntelliJ IDEA.
- * User: yole
- * Date: 20.12.2006
- * Time: 19:39:53
- */
 package com.intellij.openapi.vcs.changes.ui;
 
 import com.intellij.openapi.options.Configurable;
@@ -27,54 +7,61 @@ import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vcs.VcsBundle;
-import com.intellij.openapi.vcs.changes.ChangeListManager;
+import com.intellij.openapi.vcs.changes.ChangeListManagerImpl;
+import com.intellij.openapi.vcs.changes.IgnoreSettingsType;
 import com.intellij.openapi.vcs.changes.IgnoredFileBean;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBList;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.ui.speedSearch.SpeedSearchUtil;
+import com.intellij.util.Function;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.awt.*;
+import java.util.HashSet;
+import java.util.Set;
 
 public class IgnoredSettingsPanel implements SearchableConfigurable, Configurable.NoScroll {
-  private JBList myList;
+  private final JBList<IgnoredFileBean> myList;
   private JPanel myPanel;
   private final Project myProject;
-  private DefaultListModel myModel;
-  private final ChangeListManager myChangeListManager;
+  private DefaultListModel<IgnoredFileBean> myModel = new DefaultListModel<>();
+  private final ChangeListManagerImpl myChangeListManager;
+  private final Set<String> myDirectoriesManuallyRemovedFromIgnored = new HashSet<>();
 
   public IgnoredSettingsPanel(Project project) {
-    myList = new JBList();
+    myList = new JBList<>();
     myList.setCellRenderer(new MyCellRenderer());
     myList.getEmptyText().setText(VcsBundle.message("no.ignored.files"));
 
+    new ListSpeedSearch<>(myList, (Function<IgnoredFileBean, String>)bean -> {
+      return getBeanTextPresentation(bean);
+    });
     myProject = project;
-    myChangeListManager = ChangeListManager.getInstance(myProject);
+    myChangeListManager = ChangeListManagerImpl.getInstanceImpl(myProject);
   }
 
   private void setItems(final IgnoredFileBean[] filesToIgnore) {
-    myModel = new DefaultListModel();
+    myModel = new DefaultListModel<>();
     for (IgnoredFileBean bean : filesToIgnore) {
       myModel.addElement(bean);
     }
     myList.setModel(myModel);
   }
 
-  public IgnoredFileBean[] getItems() {
-    final int count = myList.getModel().getSize();
+  private IgnoredFileBean[] getItems() {
+    final int count = myModel.getSize();
     IgnoredFileBean[] result = new IgnoredFileBean[count];
     for (int i = 0; i < count; i++) {
-      result[i] = (IgnoredFileBean)myList.getModel().getElementAt(i);
+      result[i] = myModel.getElementAt(i);
     }
     return result;
   }
 
   private void addItem() {
     IgnoreUnversionedDialog dlg = new IgnoreUnversionedDialog(myProject);
-    dlg.show();
-    if (dlg.isOK()) {
+    if (dlg.showAndGet()) {
       final IgnoredFileBean[] ignoredFiles = dlg.getSelectedIgnoredFiles();
       for (IgnoredFileBean bean : ignoredFiles) {
         myModel.addElement(bean);
@@ -83,12 +70,11 @@ public class IgnoredSettingsPanel implements SearchableConfigurable, Configurabl
   }
 
   private void editItem() {
-    IgnoredFileBean bean = (IgnoredFileBean)myList.getSelectedValue();
+    IgnoredFileBean bean = myList.getSelectedValue();
     if (bean == null) return;
     IgnoreUnversionedDialog dlg = new IgnoreUnversionedDialog(myProject);
     dlg.setIgnoredFile(bean);
-    dlg.show();
-    if (dlg.isOK()) {
+    if (dlg.showAndGet()) {
       IgnoredFileBean[] beans = dlg.getSelectedIgnoredFiles();
       assert beans.length == 1;
       int selectedIndex = myList.getSelectedIndex();
@@ -97,38 +83,39 @@ public class IgnoredSettingsPanel implements SearchableConfigurable, Configurabl
   }
 
   private void deleteItems() {
-    boolean contigiousSelection = true;
-    int minSelectionIndex = myList.getSelectionModel().getMinSelectionIndex();
-    int maxSelectionIndex = myList.getSelectionModel().getMaxSelectionIndex();
-    for (int i = minSelectionIndex; i <= maxSelectionIndex; i++) {
-      if (!myList.getSelectionModel().isSelectedIndex(i)) {
-        contigiousSelection = false;
-        break;
+    for (IgnoredFileBean bean : myList.getSelectedValuesList()) {
+      if (bean.getType() == IgnoreSettingsType.UNDER_DIR) {
+        myDirectoriesManuallyRemovedFromIgnored.add(bean.getPath());
       }
     }
-    if (contigiousSelection) {
-      myModel.removeRange(minSelectionIndex, maxSelectionIndex);
-    }
-    else {
-      final Object[] selection = myList.getSelectedValues();
-      for (Object item : selection) {
-        myModel.removeElement(item);
-      }
-    }
+    ListUtil.removeSelectedItems(myList);
   }
 
+  @Override
   public void reset() {
     setItems(myChangeListManager.getFilesToIgnore());
+    myDirectoriesManuallyRemovedFromIgnored.clear();
+    myDirectoriesManuallyRemovedFromIgnored.addAll(myChangeListManager.getIgnoredFilesComponent().getDirectoriesManuallyRemovedFromIgnored());
   }
 
+  @Override
   public void apply() {
-    myChangeListManager.setFilesToIgnore(getItems());
+    IgnoredFileBean[] toIgnore = getItems();
+    myChangeListManager.setFilesToIgnore(toIgnore);
+    for (IgnoredFileBean bean : toIgnore) {
+      if (bean.getType() == IgnoreSettingsType.UNDER_DIR) {
+        myDirectoriesManuallyRemovedFromIgnored.remove(bean.getPath());
+      }
+    }
+    myChangeListManager.getIgnoredFilesComponent().setDirectoriesManuallyRemovedFromIgnored(myDirectoriesManuallyRemovedFromIgnored);
   }
 
+  @Override
   public boolean isModified() {
     return !Comparing.equal(myChangeListManager.getFilesToIgnore(), getItems());
   }
 
+  @Override
   public JComponent createComponent() {
     if (myPanel == null) {
       myPanel = ToolbarDecorator.createDecorator(myList)
@@ -152,47 +139,54 @@ public class IgnoredSettingsPanel implements SearchableConfigurable, Configurabl
     return myPanel;
   }
 
-  public void disposeUIResources() {
-  }
-
+  @Override
   @Nls
   public String getDisplayName() {
     return "Ignored Files";
   }
 
+  @NotNull
+  @Override
   public String getHelpTopic() {
     return "project.propVCSSupport.Ignored.Files";
   }
 
+  @Override
   @NotNull
   public String getId() {
     return getHelpTopic();
   }
 
-  public Runnable enableSearch(String option) {
+
+  @Nullable
+  private static String getBeanTextPresentation(IgnoredFileBean bean) {
+    IgnoreSettingsType type = bean.getType();
+
+    String path = bean.getPath();
+    String mask = bean.getMask();
+
+    if (type == IgnoreSettingsType.UNDER_DIR && path != null) {
+      return VcsBundle.message("ignored.configure.item.directory", path);
+    }
+    if (type == IgnoreSettingsType.FILE && path != null) {
+      return VcsBundle.message("ignored.configure.item.file", path);
+    }
+    if (type == IgnoreSettingsType.MASK && mask != null) {
+      return VcsBundle.message("ignored.configure.item.mask", mask);
+    }
+
     return null;
   }
 
-  private static class MyCellRenderer extends ColoredListCellRenderer {
-    protected void customizeCellRenderer(JList list, Object value, int index, boolean selected, boolean hasFocus) {
-      if (UIUtil.isUnderGTKLookAndFeel()) {
-        final Color background = selected ? UIUtil.getTreeSelectionBackground() : UIUtil.getTreeTextBackground();
-        UIUtil.changeBackGround(this, background);
+  private static class MyCellRenderer extends ColoredListCellRenderer<IgnoredFileBean> {
+    @Override
+    protected void customizeCellRenderer(@NotNull JList list, IgnoredFileBean bean, int index, boolean selected, boolean hasFocus) {
+      String text = getBeanTextPresentation(bean);
+      if (text != null) {
+        append(text, SimpleTextAttributes.REGULAR_ATTRIBUTES);
       }
 
-      IgnoredFileBean bean = (IgnoredFileBean)value;
-      final String path = bean.getPath();
-      if (path != null) {
-        if (path.endsWith("/")) {
-          append(VcsBundle.message("ignored.configure.item.directory", path), SimpleTextAttributes.REGULAR_ATTRIBUTES);
-        }
-        else {
-          append(VcsBundle.message("ignored.configure.item.file", path), SimpleTextAttributes.REGULAR_ATTRIBUTES);
-        }
-      }
-      else if (bean.getMask() != null) {
-        append(VcsBundle.message("ignored.configure.item.mask", bean.getMask()), SimpleTextAttributes.REGULAR_ATTRIBUTES);
-      }
+      SpeedSearchUtil.applySpeedSearchHighlighting(list, this, true, selected);
     }
   }
 }

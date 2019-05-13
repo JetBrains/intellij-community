@@ -16,6 +16,7 @@
 package com.intellij.ui.roots;
 
 import com.intellij.ui.ClickListener;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -24,18 +25,19 @@ import java.awt.event.MouseEvent;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Nov 3
  * @author 2003
  */
 public class IconActionComponent extends ScalableIconComponent {
   public IconActionComponent(Icon icon, Icon rolloverIcon, String tooltipText, final Runnable action) {
     super(icon, rolloverIcon);
     this.addMouseListener(new MouseAdapter() {
+      @Override
       public void mouseEntered(MouseEvent e) {
         setSelected(true);
         setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
       }
 
+      @Override
       public void mouseExited(MouseEvent e) {
         setSelected(false);
         setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
@@ -43,7 +45,7 @@ public class IconActionComponent extends ScalableIconComponent {
     });
     new ClickListener() {
       @Override
-      public boolean onClick(MouseEvent e, int clickCount) {
+      public boolean onClick(@NotNull MouseEvent e, int clickCount) {
         if (action != null) {
           action.run();
           return true;

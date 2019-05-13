@@ -19,10 +19,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 
-/**
- * User: anna
- * Date: 11-Nov-2005
- */
 public interface PopupOwner {
   @Nullable
   Point getBestPopupPosition();

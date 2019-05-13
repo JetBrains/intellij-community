@@ -92,8 +92,8 @@ public final class BorderType {
 
   public static BorderType valueOf(final String name){
     BorderType[] allTypes = getAllTypes();
-    for(int i=0; i<allTypes.length; i++) {
-      if (allTypes [i].getId().equals(name)) return allTypes [i];
+    for (BorderType type : allTypes) {
+      if (type.getId().equals(name)) return type;
     }
     throw new UnexpectedFormElementException("unknown type: "+name);
   }

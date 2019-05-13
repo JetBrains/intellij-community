@@ -16,6 +16,11 @@ abstract class Annotations {
     int[] ids() default { };
   }
 
+  @interface A5 {
+    boolean b() default false;
+    Class<? extends Number> value() default Integer.class;
+  }
+
   @A1 abstract void m1();
 
   @A2() abstract void m2a();
@@ -25,6 +30,8 @@ abstract class Annotations {
 
   @A4 abstract void m4a();
   @A4(ids = {42, 84}) abstract void m4b();
+
+  @A5(b = true, value = Integer.class) abstract void m5();
 
   @interface IndeterminateAnno {
     float f1() default Float.NEGATIVE_INFINITY;

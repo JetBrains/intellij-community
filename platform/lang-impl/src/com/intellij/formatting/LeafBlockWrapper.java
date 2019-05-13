@@ -16,11 +16,13 @@
 
 package com.intellij.formatting;
 
+import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-class LeafBlockWrapper extends AbstractBlockWrapper {
+public class LeafBlockWrapper extends AbstractBlockWrapper {
   private static final int CONTAIN_LINE_FEEDS = 4;
   private static final int READ_ONLY = 8;
   private static final int LEAF = 16;
@@ -44,8 +46,8 @@ class LeafBlockWrapper extends AbstractBlockWrapper {
    * @param isReadOnly          flag that indicates if target block is read-only
    */
   public LeafBlockWrapper(final Block block,
-                          CompositeBlockWrapper parent,
-                          WhiteSpace whiteSpaceBefore,
+                          @Nullable CompositeBlockWrapper parent,
+                          @NotNull WhiteSpace whiteSpaceBefore,
                           FormattingDocumentModel model,
                           CommonCodeStyleSettings.IndentOptions options,
                           LeafBlockWrapper previousTokenBlock,
@@ -54,9 +56,9 @@ class LeafBlockWrapper extends AbstractBlockWrapper {
     this(block, parent, whiteSpaceBefore, model, options, previousTokenBlock, isReadOnly, block.getTextRange());
   }
 
-  public LeafBlockWrapper(final Block block,
+  private LeafBlockWrapper(final Block block,
                           CompositeBlockWrapper parent,
-                          WhiteSpace whiteSpaceBefore,
+                          @NotNull WhiteSpace whiteSpaceBefore,
                           FormattingDocumentModel model,
                           CommonCodeStyleSettings.IndentOptions options,
                           LeafBlockWrapper previousTokenBlock,
@@ -70,7 +72,7 @@ class LeafBlockWrapper extends AbstractBlockWrapper {
     int flagsValue = myFlags;
     final boolean containsLineFeeds = model.getLineNumber(textRange.getStartOffset()) != lastLineNumber;
     flagsValue |= containsLineFeeds ? CONTAIN_LINE_FEEDS:0;
-        
+
     // We need to perform such a complex calculation because block construction algorithm is allowed to create 'leaf' blocks
     // that contain more than one token interleaved white space that contains either tabulations or line breaks.
     // E.g. consider the following code:
@@ -83,7 +85,7 @@ class LeafBlockWrapper extends AbstractBlockWrapper {
     int start = containsLineFeeds ? model.getLineStartOffset(lastLineNumber) : textRange.getStartOffset();
     int symbols = 0;
     CharSequence text = model.getDocument().getCharsSequence();
-    for (int i = start; i < textRange.getEndOffset(); i++) {      
+    for (int i = start; i < textRange.getEndOffset(); i++) {
       if (text.charAt(i) == '\t') {
         symbols += options.TAB_SIZE;
       } else {
@@ -125,7 +127,7 @@ class LeafBlockWrapper extends AbstractBlockWrapper {
   }
 
   @Override
-  protected IndentData getNumberOfSymbolsBeforeBlock() {
+  public IndentData getNumberOfSymbolsBeforeBlock() {
     int spaces = getWhiteSpace().getSpaces();
     int indentSpaces = getWhiteSpace().getIndentSpaces();
 
@@ -144,6 +146,7 @@ class LeafBlockWrapper extends AbstractBlockWrapper {
     return new IndentData(indentSpaces, spaces);
   }
 
+  @Override
   public void dispose() {
     super.dispose();
     myPreviousBlock = null;
@@ -187,7 +190,7 @@ class LeafBlockWrapper extends AbstractBlockWrapper {
     return myParent.getChildOffset(this, options, this.getStartOffset());
   }
 
-  public void setSpaceProperty(final SpacingImpl currentSpaceProperty) {
+  public void setSpaceProperty(@Nullable final SpacingImpl currentSpaceProperty) {
     mySpaceProperty = currentSpaceProperty;
   }
 
@@ -215,5 +218,10 @@ class LeafBlockWrapper extends AbstractBlockWrapper {
 
   public TextRange getTextRange() {
     return new TextRange(myStart, myEnd);
+  }
+
+  public boolean isEndOfCodeBlock() {
+    ASTNode node = getNode();
+    return node != null && node.getTextLength() == 1 && node.getChars().charAt(0) == '}';
   }
 }

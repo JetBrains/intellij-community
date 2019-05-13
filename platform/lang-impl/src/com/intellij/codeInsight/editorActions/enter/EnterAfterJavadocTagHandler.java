@@ -25,7 +25,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
+import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -35,7 +35,6 @@ import java.util.Set;
 
 /**
  * @author Denis Zhdanov
- * @since 1/20/11 12:32 PM
  */
 public class EnterAfterJavadocTagHandler extends EnterHandlerDelegateAdapter {
 
@@ -79,7 +78,9 @@ public class EnterAfterJavadocTagHandler extends EnterHandlerDelegateAdapter {
       
     originalHandler.execute(editor, dataContext);
     Project project = editor.getProject();
-    if (indentInsideJavadoc != null && project != null && CodeStyleSettingsManager.getSettings(project).JD_LEADING_ASTERISKS_ARE_ENABLED) {
+    if (indentInsideJavadoc != null &&
+        project != null &&
+        CodeStyleManager.getInstance(project).getDocCommentSettings(file).isLeadingAsteriskEnabled()) {
       document.insertString(editor.getCaretModel().getOffset(), "*" + indentInsideJavadoc);
     }
     
@@ -95,7 +96,7 @@ public class EnterAfterJavadocTagHandler extends EnterHandlerDelegateAdapter {
    * <pre>
    * <ol>
    *   <li>
-   *      if text line that contains given offset is non-first and non-last javadoc line (has <code>'*'</code>
+   *      if text line that contains given offset is non-first and non-last javadoc line (has {@code '*'}
    *      as a first non-white space symbol); 
    *   </li>
    *   <li>
@@ -126,7 +127,7 @@ public class EnterAfterJavadocTagHandler extends EnterHandlerDelegateAdapter {
 
     int startTagStartOffset = -1;
     int startTagEndOffset = -1;
-    Set<CharSequence> closedTags = new HashSet<CharSequence>();
+    Set<CharSequence> closedTags = new HashSet<>();
     CharSequence startTag = null;
     
     // Try to find start tag to the left of the given offset.
@@ -179,7 +180,7 @@ public class EnterAfterJavadocTagHandler extends EnterHandlerDelegateAdapter {
     // Try to find closing tag at or after the given offset.
     for (int i = offset; i < endOffset; i++) {
       char c = text.charAt(i);
-      if (c == '<' && i < endOffset && text.charAt(i + 1) == '/' && startTag != null 
+      if (c == '<' && i < endOffset - 2 && text.charAt(i + 1) == '/' && startTag != null
           && CharArrayUtil.regionMatches(text, i + 2, endOffset, startTag)) 
       {
         endTagStartOffset = i;

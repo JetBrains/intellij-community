@@ -24,11 +24,6 @@ import com.intellij.psi.xml.XmlToken;
 import org.intellij.lang.xpath.xslt.XsltSupport;
 import org.jetbrains.annotations.NotNull;
 
-/*
-* Created by IntelliJ IDEA.
-* User: sweinreuter
-* Date: 31.01.11
-*/
 public class XsltChangeLocalityDetector implements ChangeLocalityDetector {
   @Override
   public PsiElement getChangeHighlightingDirtyScopeFor(@NotNull PsiElement changedElement) {

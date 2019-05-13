@@ -29,8 +29,9 @@ public interface RootProvider {
   @NotNull String[] getUrls(@NotNull OrderRootType rootType);
   @NotNull VirtualFile[] getFiles(@NotNull OrderRootType rootType);
 
+  @FunctionalInterface
   interface RootSetChangedListener extends EventListener {
-    void rootSetChanged(RootProvider wrapper);
+    void rootSetChanged(@NotNull RootProvider wrapper);
   }
 
   void addRootSetChangedListener(@NotNull RootSetChangedListener listener);

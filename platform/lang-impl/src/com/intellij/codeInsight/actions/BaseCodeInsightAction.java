@@ -19,8 +19,8 @@ package com.intellij.codeInsight.actions;
 import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -43,10 +43,10 @@ public abstract class BaseCodeInsightAction extends CodeInsightAction {
 
   @Override
   @Nullable
-  protected Editor getEditor(@NotNull final DataContext dataContext, @NotNull final Project project) {
+  protected Editor getEditor(@NotNull final DataContext dataContext, @NotNull final Project project, boolean forUpdate) {
     Editor editor = getBaseEditor(dataContext, project);
     if (!myLookForInjectedEditor) return editor;
-    return getInjectedEditor(project, editor);
+    return getInjectedEditor(project, editor, !forUpdate);
   }
 
   public static Editor getInjectedEditor(@NotNull Project project, final Editor editor) {
@@ -67,15 +67,15 @@ public abstract class BaseCodeInsightAction extends CodeInsightAction {
   }
 
   @Nullable
-  protected Editor getBaseEditor(final DataContext dataContext, final Project project) {
-    return super.getEditor(dataContext, project);
+  protected Editor getBaseEditor(@NotNull final DataContext dataContext, @NotNull final Project project) {
+    return super.getEditor(dataContext, project, true);
   }
 
   @Override
-  public void update(AnActionEvent event) {
+  public void update(@NotNull AnActionEvent event) {
     Presentation presentation = event.getPresentation();
     DataContext dataContext = event.getDataContext();
-    Project project = PlatformDataKeys.PROJECT.getData(dataContext);
+    Project project = CommonDataKeys.PROJECT.getData(dataContext);
     if (project == null){
       presentation.setEnabled(false);
       return;

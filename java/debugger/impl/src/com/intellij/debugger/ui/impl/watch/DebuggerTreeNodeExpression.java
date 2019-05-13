@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.ui.impl.watch;
 
 import com.intellij.codeInsight.ChangeContextUtil;
@@ -25,21 +11,20 @@ import com.intellij.debugger.impl.DebuggerContextImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
-import com.intellij.pom.java.LanguageLevel;
+import com.intellij.openapi.util.Key;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.SmartHashSet;
 import com.sun.jdi.ObjectReference;
 import com.sun.jdi.ReferenceType;
 import com.sun.jdi.Value;
+import org.jetbrains.annotations.Nullable;
 
-/**
- * User: lex
- * Date: Oct 29, 2003
- * Time: 9:24:52 PM
- */
+import java.util.Set;
+
 public class DebuggerTreeNodeExpression {
   private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.ui.impl.watch.DebuggerTreeNodeExpression");
 
@@ -136,19 +121,18 @@ public class DebuggerTreeNodeExpression {
 
   private static boolean isSuperMethod(PsiMethod superMethod, PsiMethod overridingMethod) {
     PsiMethod[] superMethods = overridingMethod.findSuperMethods();
-      for (int i = 0; i < superMethods.length; i++) {
-        if (superMethods[i] == superMethod) {
-          return true;
-        }
-        else if (isSuperMethod(superMethod, superMethods[i])) {
-          return true;
-        }
+    for (PsiMethod method : superMethods) {
+      if (method == superMethod || isSuperMethod(superMethod, method)) {
+        return true;
       }
+    }
       return false;
     }
 
-  public static PsiExpression substituteThis(PsiExpression expressionWithThis, PsiExpression howToEvaluateThis, Value howToEvaluateThisValue)
+  @Nullable
+  public static PsiExpression substituteThis(@Nullable PsiElement expressionWithThis, PsiExpression howToEvaluateThis, Value howToEvaluateThisValue)
     throws EvaluateException {
+    if (!(expressionWithThis instanceof PsiExpression)) return null;
     PsiExpression result = (PsiExpression)expressionWithThis.copy();
 
     PsiClass thisClass = PsiTreeUtil.getContextOfType(result, PsiClass.class, true);
@@ -164,17 +148,14 @@ public class DebuggerTreeNodeExpression {
             castNeeded = false;
           }
         }
-        else if(type instanceof PsiArrayType) {
-          LanguageLevel languageLevel = PsiUtil.getLanguageLevel(expressionWithThis);
-          if(thisClass == JavaPsiFacade.getInstance(expressionWithThis.getProject()).getElementFactory().getArrayClass(languageLevel)) {
-            castNeeded = false;
-          }
+        else if (type instanceof PsiArrayType && PsiUtil.isArrayClass(thisClass)) {
+          castNeeded = false;
         }
       }
     }
 
     if (castNeeded) {
-      howToEvaluateThis = castToRuntimeType(howToEvaluateThis, howToEvaluateThisValue, howToEvaluateThis.getContext());
+      howToEvaluateThis = castToRuntimeType(howToEvaluateThis, howToEvaluateThisValue);
     }
 
     ChangeContextUtil.encodeContextInfo(result, false);
@@ -188,15 +169,19 @@ public class DebuggerTreeNodeExpression {
     }
 
     try {
-      return JavaPsiFacade.getInstance(howToEvaluateThis.getProject()).getElementFactory()
+      PsiExpression res = JavaPsiFacade.getElementFactory(howToEvaluateThis.getProject())
         .createExpressionFromText(psiExpression.getText(), howToEvaluateThis.getContext());
+      res.putUserData(ADDITIONAL_IMPORTS_KEY, howToEvaluateThis.getUserData(ADDITIONAL_IMPORTS_KEY));
+      return res;
     }
     catch (IncorrectOperationException e) {
       throw new EvaluateException(e.getMessage(), e);
     }
   }
 
-  public static PsiExpression castToRuntimeType(PsiExpression expression, Value value, PsiElement contextElement) throws EvaluateException {
+  public static final Key<Set<String>> ADDITIONAL_IMPORTS_KEY = Key.create("ADDITIONAL_IMPORTS");
+
+  public static PsiExpression castToRuntimeType(PsiExpression expression, Value value) throws EvaluateException {
     if (!(value instanceof ObjectReference)) {
       return expression;
     }
@@ -208,20 +193,28 @@ public class DebuggerTreeNodeExpression {
     
     Project project = expression.getProject();
 
-    PsiClass type = RuntimeTypeEvaluator.getCastableRuntimeType(project, value);
+    PsiType type = RuntimeTypeEvaluator.getCastableRuntimeType(project, value);
     if (type == null) {
       return expression;
     }
 
     PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(project);
+    String typeName = type.getCanonicalText();
     try {
       PsiParenthesizedExpression parenthExpression = (PsiParenthesizedExpression)elementFactory.createExpressionFromText(
-        "((" + type.getQualifiedName() + ")expression)", null);
+        "((" + typeName + ")expression)", null);
+      //noinspection ConstantConditions
       ((PsiTypeCastExpression)parenthExpression.getExpression()).getOperand().replace(expression);
+      Set<String> imports = expression.getUserData(ADDITIONAL_IMPORTS_KEY);
+      if (imports == null) {
+        imports = new SmartHashSet<>();
+      }
+      imports.add(typeName);
+      parenthExpression.putUserData(ADDITIONAL_IMPORTS_KEY, imports);
       return parenthExpression;
     }
     catch (IncorrectOperationException e) {
-      throw new EvaluateException(DebuggerBundle.message("error.invalid.type.name", type.getQualifiedName()), e);
+      throw new EvaluateException(DebuggerBundle.message("error.invalid.type.name", typeName), e);
     }
   }
 
@@ -258,7 +251,8 @@ public class DebuggerTreeNodeExpression {
 
   public static PsiExpression getEvaluationExpression(DebuggerTreeNodeImpl node, DebuggerContextImpl context) throws EvaluateException {
     if(node.getDescriptor() instanceof ValueDescriptorImpl) {
-      return ((ValueDescriptorImpl)node.getDescriptor()).getTreeEvaluation(node, context);
+      throw new IllegalStateException("Not supported any more");
+      //return ((ValueDescriptorImpl)node.getDescriptor()).getTreeEvaluation(node, context);
     }
     else {
       LOG.error(node.getDescriptor() != null ? node.getDescriptor().getClass().getName() : "null");
@@ -268,8 +262,8 @@ public class DebuggerTreeNodeExpression {
 
   public static TextWithImports createEvaluationText(final DebuggerTreeNodeImpl node, final DebuggerContextImpl context) throws EvaluateException {
     final EvaluateException[] ex = new EvaluateException[] {null};
-    final TextWithImports textWithImports = PsiDocumentManager.getInstance(context.getProject()).commitAndRunReadAction(new Computable<TextWithImports>() {
-      public TextWithImports compute() {
+    final TextWithImports textWithImports = PsiDocumentManager.getInstance(context.getProject()).commitAndRunReadAction(
+      (Computable<TextWithImports>)() -> {
         try {
           final PsiExpression expressionText = getEvaluationExpression(node, context);
           if (expressionText != null) {
@@ -280,8 +274,7 @@ public class DebuggerTreeNodeExpression {
           ex[0] = e;
         }
         return null;
-      }
-    });
+      });
     if (ex[0] != null) {
       throw ex[0];
     }
@@ -291,7 +284,7 @@ public class DebuggerTreeNodeExpression {
   private static class IncorrectOperationRuntimeException extends RuntimeException {
     private final IncorrectOperationException myException;
 
-    public IncorrectOperationRuntimeException(IncorrectOperationException exception) {
+    IncorrectOperationRuntimeException(IncorrectOperationException exception) {
       myException = exception;
     }
 

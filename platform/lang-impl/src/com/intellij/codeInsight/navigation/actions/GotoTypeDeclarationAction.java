@@ -1,29 +1,16 @@
-/*
- * Copyright 2000-2011 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.codeInsight.navigation.actions;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.intellij.codeInsight.CodeInsightActionHandler;
 import com.intellij.codeInsight.CodeInsightBundle;
-import com.intellij.codeInsight.TargetElementUtilBase;
+import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.codeInsight.actions.BaseCodeInsightAction;
 import com.intellij.codeInsight.navigation.NavigationUtil;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.DumbAware;
@@ -53,22 +40,29 @@ public class GotoTypeDeclarationAction extends BaseCodeInsightAction implements 
   }
 
   @Override
-  public void update(final AnActionEvent event) {
-    if (Extensions.getExtensions(TypeDeclarationProvider.EP_NAME).length == 0) {
+  public void update(@NotNull final AnActionEvent event) {
+    if (TypeDeclarationProvider.EP_NAME.getExtensionList().size() == 0) {
       event.getPresentation().setVisible(false);
+      return;
     }
-    else {
-      super.update(event);
+    for (TypeDeclarationProvider provider : TypeDeclarationProvider.EP_NAME.getExtensionList()) {
+      String text = provider.getActionText(event.getDataContext());
+      if (text != null) {
+        Presentation presentation = event.getPresentation();
+        presentation.setText(text);
+        break;
+      }
     }
+    super.update(event);
   }
 
   @Override
   public void invoke(@NotNull final Project project, @NotNull Editor editor, @NotNull PsiFile file) {
-    PsiDocumentManager.getInstance(project).commitAllDocuments();
-
-    int offset = editor.getCaretModel().getOffset();
+    DumbService.getInstance(project).setAlternativeResolveEnabled(true);
     try {
-      PsiElement[] symbolTypes = findSymbolTypes(editor, offset);
+      int offset = editor.getCaretModel().getOffset();
+      PsiElement[] symbolTypes = GotoDeclarationAction.underModalProgress(project, "Resolving Reference...",
+                                                                          () -> findSymbolTypes(editor, offset));
       if (symbolTypes == null || symbolTypes.length == 0) return;
       if (symbolTypes.length == 1) {
         navigate(project, symbolTypes[0]);
@@ -78,7 +72,10 @@ public class GotoTypeDeclarationAction extends BaseCodeInsightAction implements 
       }
     }
     catch (IndexNotReadyException e) {
-      DumbService.getInstance(project).showDumbModeNotification("Type information is not available during index update");
+      DumbService.getInstance(project).showDumbModeNotification("Navigation is not available here during index update");
+    }
+    finally {
+      DumbService.getInstance(project).setAlternativeResolveEnabled(false);
     }
   }
 
@@ -98,32 +95,35 @@ public class GotoTypeDeclarationAction extends BaseCodeInsightAction implements 
   }
 
   @Nullable
-  public static PsiElement findSymbolType(Editor editor, int offset) {
+  public static PsiElement findSymbolType(@NotNull Editor editor, int offset) {
     final PsiElement[] psiElements = findSymbolTypes(editor, offset);
     if (psiElements != null && psiElements.length > 0) return psiElements[0];
     return null;
   }
 
   @Nullable
-  public static PsiElement[] findSymbolTypes(Editor editor, int offset) {
-    PsiElement targetElement = TargetElementUtilBase.getInstance().findTargetElement(editor,
-      TargetElementUtilBase.REFERENCED_ELEMENT_ACCEPTED |
-      TargetElementUtilBase.ELEMENT_NAME_ACCEPTED |
-      TargetElementUtilBase.LOOKUP_ITEM_ACCEPTED,
-      offset);
+  @VisibleForTesting
+  public static PsiElement[] findSymbolTypes(@NotNull Editor editor, int offset) {
+    PsiElement targetElement = TargetElementUtil.getInstance().findTargetElement(editor,
+                                                                                     TargetElementUtil.REFERENCED_ELEMENT_ACCEPTED |
+                                                                                     TargetElementUtil.ELEMENT_NAME_ACCEPTED |
+                                                                                     TargetElementUtil.LOOKUP_ITEM_ACCEPTED,
+                                                                                     offset);
 
     if (targetElement != null) {
       final PsiElement[] symbolType = getSymbolTypeDeclarations(targetElement, editor, offset);
       return symbolType == null ? PsiElement.EMPTY_ARRAY : symbolType;
     }
 
-    final PsiReference psiReference = TargetElementUtilBase.findReference(editor, offset);
+    final PsiReference psiReference = TargetElementUtil.findReference(editor, offset);
     if (psiReference instanceof PsiPolyVariantReference) {
       final ResolveResult[] results = ((PsiPolyVariantReference)psiReference).multiResolve(false);
-      Set<PsiElement> types = new THashSet<PsiElement>();
+      Set<PsiElement> types = new THashSet<>();
 
       for(ResolveResult r: results) {
-        final PsiElement[] declarations = getSymbolTypeDeclarations(r.getElement(), editor, offset);
+        PsiElement element = r.getElement();
+        if (element == null) continue;
+        final PsiElement[] declarations = getSymbolTypeDeclarations(element, editor, offset);
         if (declarations != null) {
           for (PsiElement declaration : declarations) {
             assert declaration != null;
@@ -139,8 +139,8 @@ public class GotoTypeDeclarationAction extends BaseCodeInsightAction implements 
   }
 
   @Nullable
-  private static PsiElement[] getSymbolTypeDeclarations(final PsiElement targetElement, Editor editor, int offset) {
-    for(TypeDeclarationProvider provider: Extensions.getExtensions(TypeDeclarationProvider.EP_NAME)) {
+  private static PsiElement[] getSymbolTypeDeclarations(@NotNull PsiElement targetElement, Editor editor, int offset) {
+    for(TypeDeclarationProvider provider: TypeDeclarationProvider.EP_NAME.getExtensionList()) {
       PsiElement[] result;
       if (provider instanceof TypeDeclarationPlaceAwareProvider) {
         result = ((TypeDeclarationPlaceAwareProvider)provider).getSymbolTypeDeclarations(targetElement, editor, offset);

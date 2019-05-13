@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,7 +21,9 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Roman.Chernyatchik
+ * @deprecated use {@link PsiTreeChangePreprocessorBase} instead
  */
+@Deprecated
 public abstract class AbstractModificationTracker implements PsiTreeChangePreprocessor {
   private final PsiManagerImpl myPsiManager;
   private PsiModificationTrackerImpl myModificationTracker;
@@ -53,7 +55,7 @@ public abstract class AbstractModificationTracker implements PsiTreeChangePrepro
         }
 
       case CHILDREN_CHANGED :
-        if (event.isGenericChildrenChange()) return;
+        if (event.isGenericChange()) return;
         changedInsideCodeBlock = isInsideCodeBlock(event.getParent());
       break;
 

@@ -20,11 +20,13 @@ import com.intellij.designer.propertyTable.PropertyTableTab;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.ActionButton;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.project.DumbAware;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Alexander Lobas
  */
-public class TableTabAction extends ToggleAction {
+public class TableTabAction extends ToggleAction implements DumbAware {
   private final PropertyTablePanel myPanel;
   private final PropertyTableTab myTab;
   private final ActionButton myButton;
@@ -45,22 +47,21 @@ public class TableTabAction extends ToggleAction {
   }
 
   @Override
-  public boolean isSelected(AnActionEvent e) {
+  public boolean isSelected(@NotNull AnActionEvent e) {
+    return isSelected();
+  }
+
+  boolean isSelected() {
     return myTab == myPanel.getCurrentTab();
   }
 
   @Override
-  public void setSelected(AnActionEvent e, boolean state) {
+  public void setSelected(@NotNull AnActionEvent e, boolean state) {
     if (state) {
       myPanel.setCurrentTab(myTab);
     }
     else {
-      ApplicationManager.getApplication().invokeLater(new Runnable() {
-        @Override
-        public void run() {
-          updateState();
-        }
-      });
+      ApplicationManager.getApplication().invokeLater(() -> updateState());
     }
   }
 
@@ -69,7 +70,7 @@ public class TableTabAction extends ToggleAction {
   }
 
   public void updateState() {
-    getTemplatePresentation().putClientProperty(Toggleable.SELECTED_PROPERTY, Boolean.valueOf(isSelected(null)));
+    getTemplatePresentation().putClientProperty(Toggleable.SELECTED_PROPERTY, Boolean.valueOf(isSelected()));
     myButton.repaint();
   }
 }

@@ -19,7 +19,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * Represents an array access expession, for example, <code>i [1]</code>.
+ * Represents an array access expession, for example, {@code i [1]}.
  */
 public interface PsiArrayAccessExpression extends PsiExpression {
   /**

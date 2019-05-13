@@ -1,0 +1,1 @@
+"foo" + "ba<caret>r goo"

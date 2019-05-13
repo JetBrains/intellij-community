@@ -32,24 +32,28 @@ final class PatternsTableModel extends AbstractTableModel implements ItemRemovab
   };
   private final Class[] ourColumnClasses=new Class[]{Icon.class,Boolean.class,String.class};
 
-  private final List<TodoPattern> myPatterns;
+  private final List<? extends TodoPattern> myPatterns;
 
-  public PatternsTableModel(List<TodoPattern> patterns){
+  PatternsTableModel(List<? extends TodoPattern> patterns){
     myPatterns=patterns;
   }
 
+  @Override
   public String getColumnName(int column){
     return ourColumnNames[column];
   }
 
+  @Override
   public Class getColumnClass(int column){
     return ourColumnClasses[column];
   }
 
+  @Override
   public int getColumnCount(){
     return 3;
   }
 
+  @Override
   public int getRowCount(){
     return myPatterns.size();
   }
@@ -59,6 +63,7 @@ final class PatternsTableModel extends AbstractTableModel implements ItemRemovab
     return columnIndex == 1;
   }
 
+  @Override
   public Object getValueAt(int row,int column){
     TodoPattern pattern=myPatterns.get(row);
     switch(column){
@@ -74,6 +79,7 @@ final class PatternsTableModel extends AbstractTableModel implements ItemRemovab
     }
   }
 
+  @Override
   public void setValueAt(Object value,int row,int column){
     TodoPattern pattern=myPatterns.get(row);
     switch(column){
@@ -92,6 +98,7 @@ final class PatternsTableModel extends AbstractTableModel implements ItemRemovab
     }
   }
 
+  @Override
   public void removeRow(int index){
     myPatterns.remove(index);
     fireTableRowsDeleted(index,index);

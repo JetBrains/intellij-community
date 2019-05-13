@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,11 +24,11 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class SettingsEditorGroup<T> extends SettingsEditor<T> {
-  private final List<Pair<String, SettingsEditor<T>>> myEditors = new ArrayList<Pair<String, SettingsEditor<T>>>();
+  private final List<Pair<String, SettingsEditor<T>>> myEditors = new ArrayList<>();
 
   public void addEditor(String name, SettingsEditor<T> editor) {
     Disposer.register(this, editor);
-    myEditors.add(new Pair<String, SettingsEditor<T>>(name, editor));
+    myEditors.add(Pair.create(name, editor));
   }
 
   public void addGroup(SettingsEditorGroup<T> group) {
@@ -42,14 +42,14 @@ public class SettingsEditorGroup<T> extends SettingsEditor<T> {
     return myEditors;
   }
 
-  public void resetEditorFrom(T t) {}
-  public void applyEditorTo(T t) throws ConfigurationException {}
+  @Override
+  public void resetEditorFrom(@NotNull T t) {}
+  @Override
+  public void applyEditorTo(@NotNull T t) throws ConfigurationException {}
 
+  @Override
   @NotNull
   public JComponent createEditor() {
     throw new UnsupportedOperationException("This method should never be called!");
-  }
-
-  public void disposeEditor() {
   }
 }

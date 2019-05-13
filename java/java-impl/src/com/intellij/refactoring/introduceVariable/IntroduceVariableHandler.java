@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package com.intellij.refactoring.introduceVariable;
 
 import com.intellij.codeInsight.highlighting.HighlightManager;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
@@ -28,7 +29,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiExpression;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactoringBundle;
-import com.intellij.refactoring.introduce.inplace.OccurrencesChooser;
 import com.intellij.refactoring.ui.ConflictsDialog;
 import com.intellij.refactoring.ui.TypeSelectorManagerImpl;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
@@ -50,32 +50,35 @@ public class IntroduceVariableHandler extends IntroduceVariableBase {
                                                boolean declareFinalIfAll,
                                                boolean anyAssignmentLHS,
                                                final InputValidator validator,
-                                               PsiElement anchor, final OccurrencesChooser.ReplaceChoice replaceChoice) {
+                                               PsiElement anchor, JavaReplaceChoice replaceChoice) {
+    if (replaceChoice == null && ApplicationManager.getApplication().isUnitTestMode()) {
+      replaceChoice = JavaReplaceChoice.NO;
+    }
     if (replaceChoice != null) {
       return super.getSettings(project, editor, expr, occurrences, typeSelectorManager, declareFinalIfAll, anyAssignmentLHS, validator,
                                anchor, replaceChoice);
     }
-    ArrayList<RangeHighlighter> highlighters = new ArrayList<RangeHighlighter>();
+    ArrayList<RangeHighlighter> highlighters = new ArrayList<>();
     HighlightManager highlightManager = null;
     if (editor != null) {
       highlightManager = HighlightManager.getInstance(project);
       EditorColorsManager colorsManager = EditorColorsManager.getInstance();
       TextAttributes attributes = colorsManager.getGlobalScheme().getAttributes(EditorColors.SEARCH_RESULT_ATTRIBUTES);
-      if (occurrences.length > 1 ) {
+      if (occurrences.length > 1) {
         highlightManager.addOccurrenceHighlights(editor, occurrences, attributes, true, highlighters);
       }
     }
 
     IntroduceVariableDialog dialog = new IntroduceVariableDialog(
-            project, expr, occurrences.length, anyAssignmentLHS, declareFinalIfAll,
-            typeSelectorManager,
-            validator);
-    dialog.show();
-    if (!dialog.isOK()) {
+      project, expr, occurrences.length, anyAssignmentLHS, declareFinalIfAll,
+      typeSelectorManager,
+      validator);
+    if (!dialog.showAndGet()) {
       if (occurrences.length > 1) {
         WindowManager.getInstance().getStatusBar(project).setInfo(RefactoringBundle.message("press.escape.to.remove.the.highlighting"));
       }
-    } else {
+    }
+    else {
       if (editor != null) {
         for (RangeHighlighter highlighter : highlighters) {
           highlightManager.removeSegmentHighlighter(editor, highlighter);
@@ -86,10 +89,12 @@ public class IntroduceVariableHandler extends IntroduceVariableBase {
     return dialog;
   }
 
+  @Override
   protected void showErrorMessage(final Project project, Editor editor, String message) {
     CommonRefactoringUtil.showErrorHint(project, editor, message, REFACTORING_NAME, HelpID.INTRODUCE_VARIABLE);
   }
 
+  @Override
   protected boolean reportConflicts(final MultiMap<PsiElement,String> conflicts, final Project project, IntroduceVariableSettings dialog) {
     ConflictsDialog conflictsDialog = new ConflictsDialog(project, conflicts);
     conflictsDialog.show();
@@ -98,5 +103,10 @@ public class IntroduceVariableHandler extends IntroduceVariableBase {
       if (dialog instanceof DialogWrapper) ((DialogWrapper)dialog).close(DialogWrapper.CANCEL_EXIT_CODE);
     }
     return ok;
+  }
+
+  @Override
+  protected boolean acceptLocalVariable() {
+    return false;
   }
 }

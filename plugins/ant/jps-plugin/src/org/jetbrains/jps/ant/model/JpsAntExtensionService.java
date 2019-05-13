@@ -15,6 +15,7 @@
  */
 package org.jetbrains.jps.ant.model;
 
+import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -28,16 +29,16 @@ import org.jetbrains.jps.model.JpsGlobal;
 import org.jetbrains.jps.model.JpsModel;
 import org.jetbrains.jps.model.JpsProject;
 import org.jetbrains.jps.model.artifact.JpsArtifact;
-import org.jetbrains.jps.model.serialization.JpsGlobalLoader;
-import org.jetbrains.jps.model.serialization.PathMacroUtil;
 
 import java.io.File;
 import java.util.Collections;
+import java.util.HashMap;
 
 /**
  * @author nik
  */
 public class JpsAntExtensionService {
+  public static final String BUNDLED_ANT_PATH_PROPERTY = "jps.bundled.ant.path";
   private static final Logger LOG = Logger.getInstance(JpsAntExtensionService.class);
 
   @Nullable
@@ -68,19 +69,36 @@ public class JpsAntExtensionService {
     return project.getContainer().getChild(JpsAntConfigurationImpl.ROLE);
   }
 
-  @Nullable
-  private static JpsAntInstallation getBundledAntInstallation(@NotNull JpsGlobal global) {
-    String appHome = JpsGlobalLoader.getPathVariable(global, PathMacroUtil.APPLICATION_HOME_DIR);
-    if (appHome == null) {
-      LOG.debug(PathMacroUtil.APPLICATION_HOME_DIR + " path variable not found, bundled Ant won't be configured");
-      return null;
+  @NotNull
+  public static JpsAntConfiguration getOrCreateAntConfiguration(@NotNull JpsProject project) {
+    JpsAntConfiguration configuration = getAntConfiguration(project);
+    if (configuration != null) {
+      return configuration;
     }
+    JpsAntConfigurationImpl antConfiguration = new JpsAntConfigurationImpl(new HashMap<>(), null);
+    return project.getContainer().setChild(JpsAntConfigurationImpl.ROLE, antConfiguration);
+  }
 
-    File antHome = new File(appHome, "lib" + File.separator + "ant");
-    if (!antHome.exists()) {
-      File communityAntHome = new File(appHome, "community" + File.separator + "lib" + File.separator + "ant");
-      if (communityAntHome.exists()) {
-        antHome = communityAntHome;
+  @Nullable
+  private static JpsAntInstallation getBundledAntInstallation() {
+    String antPath = System.getProperty(BUNDLED_ANT_PATH_PROPERTY);
+    File antHome;
+    if (antPath != null) {
+      antHome = new File(antPath);
+    }
+    else {
+      final String appHome = PathManager.getHomePath();
+      if (appHome == null) {
+        LOG.debug("idea.home.path and " + BUNDLED_ANT_PATH_PROPERTY + " aren't specified, bundled Ant won't be configured");
+        return null;
+      }
+
+      antHome = new File(appHome, "lib" + File.separator + "ant");
+      if (!antHome.exists()) {
+        File communityAntHome = new File(appHome, "community" + File.separator + "lib" + File.separator + "ant");
+        if (communityAntHome.exists()) {
+          antHome = communityAntHome;
+        }
       }
     }
     if (!antHome.exists()) {
@@ -89,7 +107,7 @@ public class JpsAntExtensionService {
     }
 
     String antLib = new File(antHome, "lib").getAbsolutePath();
-    return new JpsAntInstallationImpl(antHome, "Bundled Ant", Collections.<String>emptyList(), Collections.singletonList(antLib));
+    return new JpsAntInstallationImpl(antHome, "Bundled Ant", Collections.emptyList(), Collections.singletonList(antLib));
   }
 
   @Nullable
@@ -104,7 +122,7 @@ public class JpsAntExtensionService {
       antInstallationName = options.getAntInstallationName();
     }
 
-    if (antInstallationName == null) return getBundledAntInstallation(model.getGlobal());
+    if (antInstallationName == null) return getBundledAntInstallation();
 
     return findAntInstallation(model, antInstallationName);
   }

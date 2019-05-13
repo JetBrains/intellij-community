@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,11 +20,11 @@
 package com.intellij.util.io.zip;
 
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.util.ArrayUtil;
+import org.jetbrains.annotations.NotNull;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.RandomAccessFile;
+import java.io.*;
 import java.util.zip.Inflater;
 import java.util.zip.InflaterInputStream;
 import java.util.zip.ZipEntry;
@@ -92,7 +92,7 @@ public class JBZipEntry implements Cloneable {
   /**
    * Sets the internal file attributes.
    *
-   * @param value an <code>int</code> value
+   * @param value an {@code int} value
    * @since 1.1
    */
   public void setInternalAttributes(int value) {
@@ -112,7 +112,7 @@ public class JBZipEntry implements Cloneable {
   /**
    * Sets the external file attributes.
    *
-   * @param value an <code>long</code> value
+   * @param value an {@code long} value
    * @since 1.1
    */
   public void setExternalAttributes(long value) {
@@ -131,7 +131,7 @@ public class JBZipEntry implements Cloneable {
    * Sets Unix permissions in a way that is understood by Info-Zip's
    * unzip command.
    *
-   * @param mode an <code>int</code> value
+   * @param mode an {@code int} value
    * @since Ant 1.5.2
    */
   public void setUnixMode(int mode) {
@@ -168,7 +168,7 @@ public class JBZipEntry implements Cloneable {
   /**
    * Set the platform (UNIX or FAT).
    *
-   * @param platform an <code>int</code> value - 0 is FAT, 3 is UNIX
+   * @param platform an {@code int} value - 0 is FAT, 3 is UNIX
    * @since 1.9
    */
   protected void setPlatform(int platform) {
@@ -369,9 +369,14 @@ public class JBZipEntry implements Cloneable {
   }
 
   private InputStream getInputStream() throws IOException {
+    myFile.ensureFlushed(getHeaderOffset() + JBZipFile.LFH_OFFSET_FOR_FILENAME_LENGTH + JBZipFile.WORD);
     long start = calcDataOffset();
-
-    BoundedInputStream bis = new BoundedInputStream(start, getCompressedSize());
+    long size = getCompressedSize();
+    myFile.ensureFlushed(start + size);
+    if (myFile.archive.length() < start + size) {
+      throw new EOFException();
+    }
+    BoundedInputStream bis = new BoundedInputStream(start, size);
     switch (getMethod()) {
       case ZipEntry.STORED:
         return bis;
@@ -449,6 +454,33 @@ public class JBZipEntry implements Cloneable {
     setData(bytes, time);
   }
 
+  public void setDataFromFile(File file) throws IOException {
+    if (file.length() < FileUtilRt.LARGE_FOR_CONTENT_LOADING / 2) {
+      //for small files its faster to load their whole content into memory so we can write it to zip sequentially
+      setData(FileUtil.loadFileBytes(file));
+    }
+    else {
+      doSetDataFromFile(file);
+    }
+  }
+
+  void doSetDataFromFile(File file) throws IOException {
+    InputStream input = new BufferedInputStream(new FileInputStream(file));
+    try {
+      myFile.getOutputStream().putNextEntryContent(this, file.length(), input);
+    }
+    finally {
+      input.close();
+    }
+  }
+
+  public void writeDataTo(OutputStream output) throws IOException {
+    if (size == -1) throw new IOException("no data");
+
+    InputStream stream = getInputStream();
+    FileUtil.copy(stream, (int)size, output);
+  }
+
   public byte[] getData() throws IOException {
     if (size == -1) throw new IOException("no data");
 
@@ -486,7 +518,8 @@ public class JBZipEntry implements Cloneable {
       loc = start;
     }
 
-    public int read(byte[] b, int off, int len) throws IOException {
+    @Override
+    public int read(@NotNull byte[] b, int off, int len) throws IOException {
       if (remaining <= 0) {
         if (addDummyByte) {
           addDummyByte = false;
@@ -516,6 +549,7 @@ public class JBZipEntry implements Cloneable {
       return ret;
     }
 
+    @Override
     public int read() throws IOException {
       if (remaining-- <= 0) {
         if (addDummyByte) {

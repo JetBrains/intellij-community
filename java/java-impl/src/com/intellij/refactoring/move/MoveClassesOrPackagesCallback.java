@@ -14,12 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * Created by IntelliJ IDEA.
- * User: yole
- * Date: 03.08.2006
- * Time: 17:44:12
- */
 package com.intellij.refactoring.move;
 
 import com.intellij.psi.PsiClass;

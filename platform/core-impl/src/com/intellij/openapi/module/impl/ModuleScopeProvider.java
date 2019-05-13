@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package com.intellij.openapi.module.impl;
 
 
 import com.intellij.psi.search.GlobalSearchScope;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * Author: dmitrylomov
@@ -27,8 +28,10 @@ public interface ModuleScopeProvider {
    *
    * @return scope including sources and tests, excluding libraries and dependencies.
    */
+  @NotNull
   GlobalSearchScope getModuleScope();
 
+  @NotNull
   GlobalSearchScope getModuleScope(boolean includeTests);
 
   /**
@@ -36,6 +39,7 @@ public interface ModuleScopeProvider {
    *
    * @return scope including sources, tests, and libraries, excluding dependencies.
    */
+  @NotNull
   GlobalSearchScope getModuleWithLibrariesScope();
 
   /**
@@ -43,14 +47,21 @@ public interface ModuleScopeProvider {
    *
    * @return scope including sources, tests, and dependencies, excluding libraries.
    */
+  @NotNull
   GlobalSearchScope getModuleWithDependenciesScope();
 
+  @NotNull
   GlobalSearchScope getModuleContentScope();
+  @NotNull
   GlobalSearchScope getModuleContentWithDependenciesScope();
 
+  @NotNull
   GlobalSearchScope getModuleWithDependenciesAndLibrariesScope(boolean includeTests);
+  @NotNull
   GlobalSearchScope getModuleWithDependentsScope();
+  @NotNull
   GlobalSearchScope getModuleTestsWithDependentsScope();
+  @NotNull
   GlobalSearchScope getModuleRuntimeScope(boolean includeTests);
 
   void clearCache();

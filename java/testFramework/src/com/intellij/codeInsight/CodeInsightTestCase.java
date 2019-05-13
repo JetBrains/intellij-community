@@ -1,34 +1,17 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight;
 
-import com.intellij.codeInsight.highlighting.HighlightUsagesHandler;
-import com.intellij.ide.DataManager;
+import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.injected.editor.EditorWindow;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.Result;
-import com.intellij.openapi.application.ex.PathManagerEx;
-import com.intellij.openapi.command.CommandProcessor;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.command.undo.UndoManager;
-import com.intellij.openapi.editor.*;
-import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
-import com.intellij.openapi.editor.actionSystem.EditorActionManager;
-import com.intellij.openapi.editor.actionSystem.TypedAction;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.EditorFactory;
+import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.impl.DocumentImpl;
 import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.fileEditor.FileEditorManager;
@@ -38,27 +21,25 @@ import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.roots.ContentEntry;
+import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VfsUtil;
-import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.*;
+import com.intellij.openapi.vfs.newvfs.impl.VfsRootAccess;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiPackage;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.search.ProjectScope;
-import com.intellij.testFramework.PsiTestCase;
-import com.intellij.testFramework.PsiTestData;
-import com.intellij.testFramework.PsiTestUtil;
-import com.intellij.testFramework.VfsTestUtil;
+import com.intellij.rt.execution.junit.FileComparisonFailure;
+import com.intellij.testFramework.*;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -68,6 +49,7 @@ import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author Mike
@@ -75,25 +57,36 @@ import java.util.List;
 public abstract class CodeInsightTestCase extends PsiTestCase {
   protected Editor myEditor;
 
-  protected Editor createEditor(VirtualFile file) {
+  protected Editor createEditor(@NotNull VirtualFile file) {
     final FileEditorManager instance = FileEditorManager.getInstance(myProject);
 
     if (file.getFileType().isBinary()) return null;
-
+    PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
     Editor editor = instance.openTextEditor(new OpenFileDescriptor(myProject, file, 0), false);
     ((EditorImpl)editor).setCaretActive();
+    PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
+    DaemonCodeAnalyzer.getInstance(getProject()).restart();
+
     return editor;
   }
 
   @Override
   protected void tearDown() throws Exception {
-    FileEditorManager editorManager = FileEditorManager.getInstance(myProject);
-    VirtualFile[] openFiles = editorManager.getOpenFiles();
-    for (VirtualFile openFile : openFiles) {
-      editorManager.closeFile(openFile);
+    try {
+      if (myProject != null) {
+        FileEditorManager editorManager = FileEditorManager.getInstance(myProject);
+        for (VirtualFile openFile : editorManager.getOpenFiles()) {
+          editorManager.closeFile(openFile);
+        }
+      }
     }
-    myEditor = null;
-    super.tearDown();
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
+    finally {
+      myEditor = null;
+      super.tearDown();
+    }
   }
 
   @Override
@@ -101,81 +94,83 @@ public abstract class CodeInsightTestCase extends PsiTestCase {
     return new CodeInsightTestData();
   }
 
-  public static final String CARET_MARKER = "<caret>";
-  @NonNls public static final String SELECTION_START_MARKER = "<selection>";
-  @NonNls public static final String SELECTION_END_MARKER = "</selection>";
-
-  protected void configureByFile(@NonNls String filePath) throws Exception {
+  protected void configureByFile(String filePath) throws Exception {
     configureByFile(filePath, null);
   }
-  protected VirtualFile configureByFiles(@Nullable String projectRoot,String... files) throws Exception {
+
+  /**
+   * @param files the first file will be loaded in editor
+   */
+  protected VirtualFile configureByFiles(@Nullable String projectRoot, @NotNull String... files) {
+    if (files.length == 0) return null;
     final VirtualFile[] vFiles = new VirtualFile[files.length];
     for (int i = 0; i < files.length; i++) {
-      String path = files[i];
-      final String fullPath = FileUtil.toSystemIndependentName(getTestDataPath() + path);
-      VirtualFile vFile = LocalFileSystem.getInstance().findFileByPath(fullPath);
-      vFiles[i] = vFile;
-      assertNotNull("file " + fullPath + " not found", vFile);
+      vFiles[i] = findVirtualFile(files[i]);
+      if (vFiles[i] != null) {
+        VfsTestUtil.assertFilePathEndsWithCaseSensitivePath(vFiles[i], files[i]);
+      }
     }
 
     File projectFile = projectRoot == null ? null : new File(getTestDataPath() + projectRoot);
 
-    return configureByFiles(projectFile, vFiles);
+    try {
+      return configureByFiles(projectFile, vFiles);
+    }
+    catch (IOException e) {
+      throw new RuntimeException(e);
+    }
   }
-  protected VirtualFile configureByFile(@NonNls String filePath, String projectRoot) throws Exception {
-    String fullPath = getTestDataPath() + filePath;
 
-    final VirtualFile vFile = LocalFileSystem.getInstance().findFileByPath(fullPath.replace(File.separatorChar, '/'));
-    assertNotNull("file " + fullPath + " not found", vFile);
-
+  protected VirtualFile configureByFile(String filePath, @Nullable String projectRoot) throws Exception {
+    VirtualFile vFile = findVirtualFile(filePath);
     File projectFile = projectRoot == null ? null : new File(getTestDataPath() + projectRoot);
 
     return configureByFile(vFile, projectFile);
   }
 
-  protected PsiFile configureByText(final FileType fileType, @NonNls final String text) throws Exception {
+  protected PsiFile configureByText(@NotNull FileType fileType, @NotNull final String text) {
     return configureByText(fileType, text, null);
   }
 
-  protected PsiFile configureByText(final FileType fileType, @NonNls final String text, @Nullable String _extension) throws Exception {
-    final String extension = _extension == null ? fileType.getDefaultExtension():_extension;
+  protected PsiFile configureByText(@NotNull final FileType fileType, @NotNull final String text, @Nullable String _extension) {
+    try {
+      final String extension = _extension == null ? fileType.getDefaultExtension() : _extension;
 
-    File dir = createTempDirectory();
-    final File tempFile = FileUtil.createTempFile(dir, "aaa", "." + extension, true);
-    final FileTypeManager fileTypeManager = FileTypeManager.getInstance();
-    if (fileTypeManager.getFileTypeByExtension(extension) != fileType) {
-      new WriteCommandAction(getProject()) {
-        @Override
-        protected void run(Result result) throws Exception {
+      File dir = createTempDirectory();
+      final File tempFile = FileUtil.createTempFile(dir, "tempFile", "." + extension, true);
+      final FileTypeManager fileTypeManager = FileTypeManager.getInstance();
+      if (fileTypeManager.getFileTypeByExtension(extension) != fileType) {
+        WriteCommandAction.writeCommandAction(getProject()).run(() -> {
           fileTypeManager.associateExtension(fileType, extension);
-        }
-      }.execute();
+        });
+      }
+      final VirtualFile vFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(tempFile);
+      assert vFile != null;
+      WriteAction.runAndWait(() -> {
+        vFile.setCharset(CharsetToolkit.UTF8_CHARSET);
+        VfsUtil.saveText(vFile, text);
+      });
+
+      final VirtualFile vdir = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(dir);
+
+      PsiTestUtil.addSourceRoot(myModule, vdir);
+
+      configureByExistingFile(vFile);
+
+      assertEquals(fileType, myFile.getVirtualFile().getFileType());
+      return myFile;
     }
-    final VirtualFile vFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(tempFile);
-    assert vFile != null;
-    VfsUtil.saveText(vFile, text);
-
-    final VirtualFile vdir = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(dir);
-
-    PsiTestUtil.addSourceRoot(myModule, vdir);
-
-    configureByExistingFile(vFile);
-
-    assertEquals(fileType, myFile.getVirtualFile().getFileType());
-    return myFile;
+    catch (IOException e) {
+      throw new RuntimeException(e);
+    }
   }
 
 
-  @Override
-  protected String getTestDataPath() {
-    return PathManagerEx.getTestDataPath();
-  }
-
-  protected void configureByFile(final VirtualFile vFile) throws IOException {
+  protected void configureByFile(@NotNull VirtualFile vFile) throws IOException {
     configureByFile(vFile, null);
   }
 
-  protected void configureByExistingFile(final VirtualFile virtualFile) {
+  protected void configureByExistingFile(@NotNull final VirtualFile virtualFile) {
     myFile = null;
     myEditor = null;
 
@@ -185,87 +180,80 @@ public abstract class CodeInsightTestCase extends PsiTestCase {
     final EditorInfo editorInfo = new EditorInfo(document.getText());
 
     final String newFileText = editorInfo.getNewFileText();
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
-      public void run() {
-        if (!document.getText().equals(newFileText)) {
-          document.setText(newFileText);
-        }
-
-        PsiFile file = myPsiManager.findFile(virtualFile);
-        if (myFile == null) myFile = file;
-
-        if (myEditor == null) myEditor = editor;
-
-        editorInfo.applyToEditor(editor);
+    ApplicationManager.getApplication().runWriteAction(() -> {
+      if (!document.getText().equals(newFileText)) {
+        document.setText(newFileText);
       }
+
+      PsiFile file = myPsiManager.findFile(virtualFile);
+      if (myFile == null) myFile = file;
+
+      if (myEditor == null) myEditor = editor;
+
+      editorInfo.applyToEditor(editor);
     });
 
 
     PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
   }
 
-  protected VirtualFile configureByFiles(@Nullable final File rawProjectRoot, final VirtualFile... vFiles) throws IOException {
+  public VirtualFile doConfigureByFiles(@Nullable final File rawProjectRoot, @NotNull final VirtualFile... vFiles) throws IOException {
+    return configureByFiles(rawProjectRoot, vFiles);
+  }
+
+  protected VirtualFile configureByFiles(@Nullable final File rawProjectRoot, @NotNull final VirtualFile... vFiles) throws IOException {
     myFile = null;
     myEditor = null;
 
     final File toDirIO = createTempDirectory();
     final VirtualFile toDir = getVirtualFile(toDirIO);
 
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
-      public void run() {
-        try {
-          final ModuleRootManager rootManager = ModuleRootManager.getInstance(myModule);
-          final ModifiableRootModel rootModel = rootManager.getModifiableModel();
-          if (clearModelBeforeConfiguring()) {
-            rootModel.clear();
-          }
-
-          // auxiliary files should be copied first
-          VirtualFile[] reversed = ArrayUtil.reverseArray(vFiles);
-          final LinkedHashMap<VirtualFile, EditorInfo> editorInfos;
-          if (rawProjectRoot != null) {
-            final File projectRoot = rawProjectRoot.getCanonicalFile();
-            FileUtil.copyDir(projectRoot, toDirIO);
-            VirtualFile fromDir = getVirtualFile(projectRoot);
-            editorInfos =
-              copyFilesFillingEditorInfos(fromDir, toDir, ContainerUtil.map2Array(reversed, String.class, new Function<VirtualFile, String>() {
-                @Override
-                public String fun(final VirtualFile s) {
-                  return s.getPath().substring(projectRoot.getPath().length());
-                }
-              }));
-
-            toDir.refresh(false, true);
-          }
-          else {
-            editorInfos = new LinkedHashMap<VirtualFile, EditorInfo>();
-            for (final VirtualFile vFile : reversed) {
-              VirtualFile parent = vFile.getParent();
-              assert parent.isDirectory() : parent;
-              editorInfos.putAll(copyFilesFillingEditorInfos(parent, toDir, vFile.getName()));
-            }
-          }
-
-          boolean sourceRootAdded = false;
-          if (isAddDirToContentRoot()) {
-            final ContentEntry contentEntry = rootModel.addContentEntry(toDir);
-            if (isAddDirToSource()) {
-              sourceRootAdded = true;
-              contentEntry.addSourceFolder(toDir, isAddDirToTests());
-            }
-          }
-          doCommitModel(rootModel);
-          if (sourceRootAdded) {
-            sourceRootAdded(toDir);
-          }
-
-          openEditorsAndActivateLast(editorInfos);
+    ApplicationManager.getApplication().runWriteAction(() -> {
+      try {
+        final ModuleRootManager rootManager = ModuleRootManager.getInstance(myModule);
+        final ModifiableRootModel rootModel = rootManager.getModifiableModel();
+        if (clearModelBeforeConfiguring()) {
+          rootModel.clear();
         }
-        catch (IOException e) {
-          LOG.error(e);
+
+        // auxiliary files should be copied first
+        VirtualFile[] reversed = ArrayUtil.reverseArray(vFiles);
+        Map<VirtualFile, EditorInfo> editorInfos;
+        if (rawProjectRoot != null) {
+          final File projectRoot = rawProjectRoot.getCanonicalFile();
+          FileUtil.copyDir(projectRoot, toDirIO);
+          VirtualFile fromDir = getVirtualFile(projectRoot);
+          editorInfos =
+            copyFilesFillingEditorInfos(fromDir, toDir, ContainerUtil.map2Array(reversed, String.class, s -> s.getPath().substring(projectRoot.getPath().length())));
+
+          toDir.refresh(false, true);
         }
+        else {
+          editorInfos = new LinkedHashMap<>();
+          for (final VirtualFile vFile : reversed) {
+            VirtualFile parent = vFile.getParent();
+            assert parent.isDirectory() : parent;
+            editorInfos.putAll(copyFilesFillingEditorInfos(parent, toDir, vFile.getName()));
+          }
+        }
+
+        boolean sourceRootAdded = false;
+        if (isAddDirToContentRoot()) {
+          final ContentEntry contentEntry = rootModel.addContentEntry(toDir);
+          if (isAddDirToSource()) {
+            sourceRootAdded = true;
+            contentEntry.addSourceFolder(toDir, isAddDirToTests());
+          }
+        }
+        doCommitModel(rootModel);
+        if (sourceRootAdded) {
+          sourceRootAdded(toDir);
+        }
+
+        openEditorsAndActivateLast(editorInfos);
+      }
+      catch (IOException e) {
+        LOG.error(e);
       }
     });
 
@@ -277,29 +265,31 @@ public abstract class CodeInsightTestCase extends PsiTestCase {
     return false;
   }
 
-  protected void doCommitModel(final ModifiableRootModel rootModel) {
+  protected void doCommitModel(@NotNull ModifiableRootModel rootModel) {
     rootModel.commit();
   }
 
   protected void sourceRootAdded(final VirtualFile dir) {
   }
 
-  protected LinkedHashMap<VirtualFile, EditorInfo> copyFilesFillingEditorInfos(String testDataFromDir,
-                                                                               final VirtualFile toDir,
-                                                                               final String... relativePaths) throws IOException {
+  @NotNull
+  protected Map<VirtualFile, EditorInfo> copyFilesFillingEditorInfos(@NotNull String testDataFromDir,
+                                                                     @NotNull VirtualFile toDir,
+                                                                     @NotNull String... relativePaths) throws IOException {
     if (!testDataFromDir.startsWith("/")) testDataFromDir = "/" + testDataFromDir;
     return copyFilesFillingEditorInfos(LocalFileSystem.getInstance().refreshAndFindFileByPath(getTestDataPath() + testDataFromDir), toDir, relativePaths);
   }
 
-  protected LinkedHashMap<VirtualFile, EditorInfo> copyFilesFillingEditorInfos(final VirtualFile fromDir, final VirtualFile toDir, final String... relativePaths) throws IOException {
-    LinkedHashMap<VirtualFile, EditorInfo> editorInfos = new LinkedHashMap<VirtualFile, EditorInfo>();
+  @NotNull
+  protected Map<VirtualFile, EditorInfo> copyFilesFillingEditorInfos(@NotNull VirtualFile fromDir,
+                                                                     @NotNull VirtualFile toDir,
+                                                                     @NotNull String... relativePaths) throws IOException {
+    Map<VirtualFile, EditorInfo> editorInfos = new LinkedHashMap<>();
 
-    List<OutputStream> streamsToClose = new ArrayList<OutputStream>();
+    List<OutputStream> streamsToClose = new ArrayList<>();
 
     for (String relativePath : relativePaths) {
-      if (relativePath.startsWith("/")) {
-        relativePath = relativePath.substring(1);
-      }
+      relativePath = StringUtil.trimStart(relativePath, "/");
       final VirtualFile fromFile = fromDir.findFileByRelativePath(relativePath);
       assertNotNull(fromDir.getPath() + "/" + relativePath, fromFile);
       VirtualFile toFile = toDir.findFileByRelativePath(relativePath);
@@ -319,79 +309,56 @@ public abstract class CodeInsightTestCase extends PsiTestCase {
     return editorInfos;
   }
 
-  /*protected LinkedHashMap<VirtualFile, EditorInfo> copyFilesFillingEditorInfos(final VirtualFile fromDir, final VirtualFile toDir) throws IOException {
-    final LinkedHashMap<VirtualFile, EditorInfo> map = new LinkedHashMap<VirtualFile, EditorInfo>();
-    copyFilesFillingEditorInfos(fromDir, toDir, map);
-    return map;
-  }
-
-
-  private void copyFilesFillingEditorInfos(final VirtualFile fromDir, final VirtualFile toDir, LinkedHashMap<VirtualFile, EditorInfo> editorInfos) throws IOException {
-
-    List<OutputStream> streamsToClose = new ArrayList<OutputStream>();
-
-    final VirtualFile[] files = fromDir.getChildren();
-    for (final VirtualFile fromFile : files) {
-      if (fromFile.isDirectory()) {
-        copyFilesFillingEditorInfos(fromFile, toDir.createChildDirectory(this, fromFile.getName()), editorInfos);
-      } else {
-        final VirtualFile toFile = toDir.createChildData(this, fromFile.getName());
-        editorInfos.put(toFile, copyContent(fromFile, toFile, streamsToClose));
-      }
-    }
-
-    for(int i = streamsToClose.size() -1; i >= 0 ; --i) {
-      streamsToClose.get(i).close();
-    }
-  }*/
-
-  private EditorInfo copyContent(final VirtualFile from, final VirtualFile to, final List<OutputStream> streamsToClose) throws IOException {
+  private EditorInfo copyContent(@NotNull VirtualFile from, @NotNull VirtualFile to, @NotNull List<? super OutputStream> streamsToClose) throws IOException {
     byte[] content = from.getFileType().isBinary() ? from.contentsToByteArray(): null;
-    final String fileText = from.getFileType().isBinary() ? null : StringUtil.convertLineSeparators(VfsUtil.loadText(from));
+    final String fileText = from.getFileType().isBinary() ? null : StringUtil.convertLineSeparators(VfsUtilCore.loadText(from));
 
-    EditorInfo editorInfo = fileText != null ? new EditorInfo(fileText) : null;
-    String newFileText = fileText != null ? editorInfo.getNewFileText() : null;
+    EditorInfo editorInfo = fileText == null ? null : new EditorInfo(fileText);
+    String newFileText = fileText == null ? null : editorInfo.getNewFileText();
     doWrite(newFileText, to, content, streamsToClose);
     return editorInfo;
   }
 
-  protected final void setActiveEditor(Editor editor) {
+  protected final void setActiveEditor(@NotNull Editor editor) {
     myEditor = editor;
     myFile = getPsiFile(editor.getDocument());
   }
 
-  protected List<Editor> openEditorsAndActivateLast(final LinkedHashMap<VirtualFile, EditorInfo> editorInfos) {
+  @NotNull
+  protected List<Editor> openEditorsAndActivateLast(@NotNull Map<VirtualFile, EditorInfo> editorInfos) {
     final List<Editor> list = openEditors(editorInfos);
     setActiveEditor(list.get(list.size() - 1));
     return list;
   }
 
-  protected final List<Editor> openEditors(final LinkedHashMap<VirtualFile, EditorInfo> editorInfos) {
-    return ContainerUtil.map(editorInfos.keySet(), new Function<VirtualFile, Editor>() {
-      @Override
-      public Editor fun(final VirtualFile newVFile) {
-        PsiFile file = myPsiManager.findFile(newVFile);
-        if (myFile == null) myFile = file;
+  @NotNull
+  protected final List<Editor> openEditors(@NotNull final Map<VirtualFile, EditorInfo> editorInfos) {
+    return ContainerUtil.map(editorInfos.keySet(), newVFile -> {
+      PsiFile file = myPsiManager.findFile(newVFile);
+      if (myFile == null) myFile = file;
 
-        Editor editor = createEditor(newVFile);
-        if (myEditor == null) myEditor = editor;
+      Editor editor = createEditor(newVFile);
+      if (myEditor == null) myEditor = editor;
 
-        EditorInfo editorInfo = editorInfos.get(newVFile);
-        if (editorInfo != null) {
-          editorInfo.applyToEditor(editor);
-        }
-        return editor;
+      EditorInfo editorInfo = editorInfos.get(newVFile);
+      if (editorInfo != null) {
+        editorInfo.applyToEditor(editor);
       }
+      return editor;
     });
   }
 
-  private void doWrite(final String newFileText, final VirtualFile newVFile, final byte[] content, final List<OutputStream> streamsToClose) throws IOException {
-    if (newFileText != null) {
-      VfsUtil.saveText(newVFile, newFileText);
-    } else {
+  private void doWrite(final String newFileText,
+                       @NotNull VirtualFile newVFile,
+                       byte[] content,
+                       @NotNull List<? super OutputStream> streamsToClose) throws IOException {
+    if (newFileText == null) {
       final OutputStream outputStream = newVFile.getOutputStream(this, -1, -1);
       outputStream.write(content);
       streamsToClose.add(outputStream);
+    }
+    else {
+      setFileText(newVFile, newFileText);
     }
   }
 
@@ -403,7 +370,7 @@ public abstract class CodeInsightTestCase extends PsiTestCase {
     return true;
   }
 
-  protected VirtualFile configureByFile(final VirtualFile vFile, final File projectRoot) throws IOException {
+  protected VirtualFile configureByFile(@NotNull VirtualFile vFile, File projectRoot) throws IOException {
     return configureByFiles(projectRoot, vFile);
   }
 
@@ -411,50 +378,15 @@ public abstract class CodeInsightTestCase extends PsiTestCase {
     return false;
   }
 
-  protected void setupCursorAndSelection(final Editor editor) {
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      public void run() {
-        Document document = editor.getDocument();
-        final String text = document.getText();
-
-        int caretIndex = text.indexOf(CARET_MARKER);
-        int selStartIndex = text.indexOf(SELECTION_START_MARKER);
-        int selEndIndex = text.indexOf(SELECTION_END_MARKER);
-
-        final RangeMarker caretMarker = caretIndex >= 0 ? document.createRangeMarker(caretIndex, caretIndex) : null;
-        final RangeMarker selStartMarker = selStartIndex >= 0 ? document.createRangeMarker(selStartIndex, selStartIndex) : null;
-        final RangeMarker selEndMarker = selEndIndex >= 0 ? document.createRangeMarker(selEndIndex, selEndIndex) : null;
-
-        if (caretMarker != null) {
-          document.deleteString(caretMarker.getStartOffset(), caretMarker.getStartOffset() + CARET_MARKER.length());
-        }
-        if (selStartMarker != null) {
-          document.deleteString(selStartMarker.getStartOffset(), selStartMarker.getStartOffset() + SELECTION_START_MARKER.length());
-        }
-        if (selEndMarker != null) {
-          document.deleteString(selEndMarker.getStartOffset(), selEndMarker.getStartOffset() + SELECTION_END_MARKER.length());
-        }
-
-        final String newText = document.getText();
-
-        if (caretMarker != null) {
-          int caretLine = StringUtil.offsetToLineNumber(newText, caretMarker.getStartOffset());
-          int caretCol = caretMarker.getStartOffset() - StringUtil.lineColToOffset(newText, caretLine, 0);
-          LogicalPosition pos = new LogicalPosition(caretLine, caretCol);
-          editor.getCaretModel().moveToLogicalPosition(pos);
-        }
-
-        if (selStartMarker != null) {
-          editor.getSelectionModel().setSelection(selStartMarker.getStartOffset(), selEndMarker.getStartOffset());
-        }
-
-        PsiDocumentManager.getInstance(myProject).commitAllDocuments();
-      }
-    });
+  protected void setupCursorAndSelection(@NotNull final Editor editor) {
+    Document document = editor.getDocument();
+    EditorTestUtil.CaretAndSelectionState caretState = EditorTestUtil.extractCaretAndSelectionMarkers(document);
+    EditorTestUtil.setCaretsAndSelection(editor, caretState);
+    PsiDocumentManager.getInstance(myProject).commitAllDocuments();
   }
 
   @Override
-  protected void configure(String path, String dataName) throws Exception {
+  protected void configure(@NotNull String path, String dataName) throws Exception {
     super.configure(path, dataName);
 
     myEditor = createEditor(myFile.getVirtualFile());
@@ -475,104 +407,54 @@ public abstract class CodeInsightTestCase extends PsiTestCase {
     myEditor.getSelectionModel().setSelection(selectionStart, selectionEnd);
   }
 
-  protected void checkResultByFile(@NonNls String filePath) throws Exception {
+  protected void checkResultByFile(@NotNull String filePath) throws Exception {
     checkResultByFile(filePath, false);
   }
 
-  protected void checkResultByFile(@NonNls final String filePath, final boolean stripTrailingSpaces) throws Exception {
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
-      public void run() {
-        getProject().getComponent(PostprocessReformattingAspect.class).doPostponedFormatting();
-        if (stripTrailingSpaces) {
-          ((DocumentImpl)myEditor.getDocument()).stripTrailingSpaces();
-        }
-
-        PsiDocumentManager.getInstance(myProject).commitAllDocuments();
-
-        String fullPath = getTestDataPath() + filePath;
-
-        final VirtualFile vFile = LocalFileSystem.getInstance().findFileByPath(fullPath.replace(File.separatorChar, '/'));
-        assertNotNull("Cannot find file " + fullPath, vFile);
-        String ft = null;
-        try {
-          ft = VfsUtil.loadText(vFile);
-        }
-        catch (IOException e) {
-          throw new RuntimeException(e);
-        }
-
-        String fileText = StringUtil.convertLineSeparators(ft);
-        Document document = EditorFactory.getInstance().createDocument(fileText);
-
-        int caretIndex = fileText.indexOf(CARET_MARKER);
-        int selStartIndex = fileText.indexOf(SELECTION_START_MARKER);
-        int selEndIndex = fileText.indexOf(SELECTION_END_MARKER);
-
-        final RangeMarker caretMarker = caretIndex >= 0 ? document.createRangeMarker(caretIndex, caretIndex) : null;
-        final RangeMarker selStartMarker = selStartIndex >= 0 ? document.createRangeMarker(selStartIndex, selStartIndex) : null;
-        final RangeMarker selEndMarker = selEndIndex >= 0 ? document.createRangeMarker(selEndIndex, selEndIndex) : null;
-
-        if (caretMarker != null) {
-          document.deleteString(caretMarker.getStartOffset(), caretMarker.getStartOffset() + CARET_MARKER.length());
-        }
-        if (selStartMarker != null) {
-          document.deleteString(selStartMarker.getStartOffset(), selStartMarker.getStartOffset() + SELECTION_START_MARKER.length());
-        }
-        if (selEndMarker != null) {
-          document.deleteString(selEndMarker.getStartOffset(), selEndMarker.getStartOffset() + SELECTION_END_MARKER.length());
-        }
-
-        String newFileText = document.getText();
-        String newFileText1 = newFileText;
-        if (stripTrailingSpaces) {
-          Document document1 = EditorFactory.getInstance().createDocument(newFileText);
-          ((DocumentImpl)document1).stripTrailingSpaces();
-          newFileText1 = document1.getText();
-        }
-
-        if (myEditor instanceof EditorWindow) {
-          myEditor = ((EditorWindow)myEditor).getDelegate();
-          myFile = PsiDocumentManager.getInstance(getProject()).getPsiFile(myEditor.getDocument());
-        }
-
-        String text = myFile.getText();
-        text = StringUtil.convertLineSeparators(text);
-
-        assertEquals("Text mismatch in file " + filePath, newFileText1, text);
-
-        if (caretMarker != null) {
-          int caretLine = StringUtil.offsetToLineNumber(newFileText, caretMarker.getStartOffset());
-          int caretCol = caretMarker.getStartOffset() - StringUtil.lineColToOffset(newFileText, caretLine, 0);
-
-          assertEquals("caretLine", caretLine + 1, myEditor.getCaretModel().getLogicalPosition().line + 1);
-          assertEquals("caretColumn", caretCol + 1, myEditor.getCaretModel().getLogicalPosition().column + 1);
-        }
-
-        if (selStartMarker != null && selEndMarker != null) {
-          int selStartLine = StringUtil.offsetToLineNumber(newFileText, selStartMarker.getStartOffset());
-          int selStartCol = selStartMarker.getStartOffset() - StringUtil.lineColToOffset(newFileText, selStartLine, 0);
-
-          int selEndLine = StringUtil.offsetToLineNumber(newFileText, selEndMarker.getEndOffset());
-          int selEndCol = selEndMarker.getEndOffset() - StringUtil.lineColToOffset(newFileText, selEndLine, 0);
-
-          assertEquals("selectionStartLine", selStartLine + 1,
-                       StringUtil.offsetToLineNumber(newFileText, myEditor.getSelectionModel().getSelectionStart()) + 1);
-
-          assertEquals("selectionStartCol", selStartCol + 1,
-                       myEditor.getSelectionModel().getSelectionStart() - StringUtil.lineColToOffset(newFileText, selStartLine, 0) + 1);
-
-          assertEquals("selectionEndLine", selEndLine + 1,
-                       StringUtil.offsetToLineNumber(newFileText, myEditor.getSelectionModel().getSelectionEnd()) + 1);
-
-          assertEquals("selectionEndCol", selEndCol + 1,
-                       myEditor.getSelectionModel().getSelectionEnd() - StringUtil.lineColToOffset(newFileText, selEndLine, 0) + 1);
-        }
-        else {
-          assertTrue("should has no selection, but was: ("+myEditor.getSelectionModel().getSelectionStart()+", "+myEditor.getSelectionModel().getSelectionEnd()+")",
-                     !myEditor.getSelectionModel().hasSelection());
-        }
+  protected void checkResultByFile(@NotNull final String filePath, final boolean stripTrailingSpaces) throws Exception {
+    WriteCommandAction.writeCommandAction(getProject()).run(() -> {
+      getProject().getComponent(PostprocessReformattingAspect.class).doPostponedFormatting();
+      if (stripTrailingSpaces) {
+        ((DocumentImpl)myEditor.getDocument()).stripTrailingSpaces(getProject());
       }
+
+      PsiDocumentManager.getInstance(myProject).commitAllDocuments();
+
+      VirtualFile vFile = findVirtualFile(filePath);
+
+      VfsTestUtil.assertFilePathEndsWithCaseSensitivePath(vFile, filePath);
+      String expectedText;
+      try {
+        expectedText = VfsUtilCore.loadText(vFile);
+      }
+      catch (IOException e) {
+        throw new RuntimeException(e);
+      }
+
+      expectedText = StringUtil.convertLineSeparators(expectedText);
+      Document document = EditorFactory.getInstance().createDocument(expectedText);
+
+      EditorTestUtil.CaretAndSelectionState caretState = EditorTestUtil.extractCaretAndSelectionMarkers(document);
+
+      expectedText = document.getText();
+      if (stripTrailingSpaces) {
+        Document document1 = EditorFactory.getInstance().createDocument(expectedText);
+        ((DocumentImpl)document1).stripTrailingSpaces(getProject());
+        expectedText = document1.getText();
+      }
+
+      if (myEditor instanceof EditorWindow) {
+        myEditor = ((EditorWindow)myEditor).getDelegate();
+      }
+      myFile = PsiDocumentManager.getInstance(getProject()).getPsiFile(myEditor.getDocument());
+
+      String actualText = StringUtil.convertLineSeparators(myFile.getText());
+
+      if (!Comparing.equal(expectedText, actualText)) {
+        throw new FileComparisonFailure("Text mismatch in file " + filePath, expectedText, actualText, vFile.getPath());
+      }
+
+      EditorTestUtil.verifyCaretAndSelectionState(myEditor, caretState);
     });
   }
 
@@ -609,19 +491,19 @@ public abstract class CodeInsightTestCase extends PsiTestCase {
     }
   }
 
-  @Override
-  public Object getData(String dataId) {
-    return PlatformDataKeys.EDITOR.is(dataId) ? myEditor : super.getData(dataId);
+  @NotNull
+  protected VirtualFile getVirtualFile(@NotNull String filePath) {
+    return findVirtualFile(filePath);
   }
 
-  protected VirtualFile getVirtualFile(@NonNls String filePath) {
-    String fullPath = getTestDataPath() + filePath;
-
-    final VirtualFile vFile = LocalFileSystem.getInstance().findFileByPath(fullPath.replace(File.separatorChar, '/'));
-    assertNotNull("file " + fullPath + " not found", vFile);
-    return vFile;
+  @NotNull
+  protected VirtualFile findVirtualFile(@NotNull String filePath) {
+    String absolutePath = getTestDataPath() + filePath;
+    VfsRootAccess.allowRootAccess(getTestRootDisposable(), absolutePath);
+    return VfsTestUtil.findFileByCaseSensitivePath(absolutePath);
   }
 
+  @NotNull
   protected String getTestRoot(){
     return FileUtil.toSystemIndependentName(getTestDataPath());
   }
@@ -631,40 +513,7 @@ public abstract class CodeInsightTestCase extends PsiTestCase {
   }
 
   protected void type(char c) {
-    type(c, getEditor());
-  }
-
-  protected static void type(char c, Editor editor) {
-    EditorActionManager actionManager = EditorActionManager.getInstance();
-    DataContext dataContext = DataManager.getInstance().getDataContext();
-    if (c == '\n') {
-      actionManager.getActionHandler(IdeActions.ACTION_EDITOR_ENTER).execute(editor, dataContext);
-      return;
-    }
-    TypedAction action = actionManager.getTypedAction();
-    action.actionPerformed(editor, c, dataContext);
-  }
-
-  protected void caretRight() {
-    EditorActionManager actionManager = EditorActionManager.getInstance();
-    EditorActionHandler action = actionManager.getActionHandler(IdeActions.ACTION_EDITOR_MOVE_CARET_RIGHT);
-    action.execute(getEditor(), DataManager.getInstance().getDataContext());
-  }
-  protected void caretUp() {
-    EditorActionManager actionManager = EditorActionManager.getInstance();
-    EditorActionHandler action = actionManager.getActionHandler(IdeActions.ACTION_EDITOR_MOVE_CARET_UP);
-    action.execute(getEditor(), DataManager.getInstance().getDataContext());
-  }
-  protected void deleteLine() {
-    EditorActionManager actionManager = EditorActionManager.getInstance();
-    EditorActionHandler action = actionManager.getActionHandler(IdeActions.ACTION_EDITOR_DELETE_LINE);
-    action.execute(getEditor(), DataManager.getInstance().getDataContext());
-  }
-
-  protected void type(@NonNls String s) {
-    for (char c : s.toCharArray()) {
-      type(c);
-    }
+    LightPlatformCodeInsightTestCase.type(c, getEditor(),getProject());
   }
 
   protected void undo() {
@@ -673,64 +522,67 @@ public abstract class CodeInsightTestCase extends PsiTestCase {
     undoManager.undo(textEditor);
   }
 
+  protected void caretLeft() {
+    caretLeft(getEditor());
+  }
+  protected void caretLeft(@NotNull Editor editor) {
+    LightPlatformCodeInsightTestCase.executeAction(IdeActions.ACTION_EDITOR_MOVE_CARET_LEFT, editor, getProject());
+  }
+  protected void caretRight() {
+    caretRight(getEditor());
+  }
+  protected void caretRight(@NotNull Editor editor) {
+    LightPlatformCodeInsightTestCase.executeAction(IdeActions.ACTION_EDITOR_MOVE_CARET_RIGHT, editor, getProject());
+  }
+  protected void caretUp() {
+    LightPlatformCodeInsightTestCase.executeAction(IdeActions.ACTION_EDITOR_MOVE_CARET_UP, myEditor, getProject());
+  }
+
+  protected void deleteLine() {
+    LightPlatformCodeInsightTestCase.deleteLine(myEditor,getProject());
+  }
+
+  protected void type(@NotNull String s) {
+    for (char c : s.toCharArray()) {
+      type(c);
+    }
+  }
+
   protected void backspace() {
     backspace(getEditor());
   }
-  protected void backspace(final Editor editor) {
-    CommandProcessor.getInstance().executeCommand(getProject(), new Runnable() {
-      @Override
-      public void run() {
-        EditorActionManager actionManager = EditorActionManager.getInstance();
-        EditorActionHandler actionHandler = actionManager.getActionHandler(IdeActions.ACTION_EDITOR_BACKSPACE);
 
-        actionHandler.execute(editor, DataManager.getInstance().getDataContext());
-      }
-    }, "backspace", editor.getDocument());
+  protected void backspace(@NotNull final Editor editor) {
+    LightPlatformCodeInsightTestCase.backspace(editor,getProject());
   }
 
-  protected void ctrlShiftF7() {
-    HighlightUsagesHandler.invoke(getProject(), getEditor(), getFile());
+  protected void ctrlW() {
+    LightPlatformCodeInsightTestCase.ctrlW(getEditor(),getProject());
   }
 
-  public static void ctrlW() {
-    AnAction action = ActionManager.getInstance().getAction(IdeActions.ACTION_EDITOR_SELECT_WORD_AT_CARET);
-    DataContext dataContext = DataManager.getInstance().getDataContext();
-    AnActionEvent event = new AnActionEvent(null, dataContext, "", action.getTemplatePresentation(), ActionManager.getInstance(), 0);
-    event.setInjectedContext(true);
-    action.actionPerformed(event);
+  protected void ctrlD() {
+    LightPlatformCodeInsightTestCase.ctrlD(getEditor(),getProject());
   }
 
-  public static void ctrlD() {
-    AnAction action = ActionManager.getInstance().getAction(IdeActions.ACTION_EDITOR_DUPLICATE);
-    DataContext dataContext = DataManager.getInstance().getDataContext();
-    AnActionEvent event = new AnActionEvent(null, dataContext, "", action.getTemplatePresentation(), ActionManager.getInstance(), 0);
-    event.setInjectedContext(true);
-    action.actionPerformed(event);
+  protected void delete(@NotNull final Editor editor) {
+    LightPlatformCodeInsightTestCase.delete(editor, getProject());
   }
 
   @NotNull
-  protected PsiClass findClass(@NotNull @NonNls final String name) {
+  protected PsiClass findClass(@NotNull final String name) {
     final PsiClass aClass = myJavaFacade.findClass(name, ProjectScope.getProjectScope(getProject()));
     assertNotNull("Class " + name + " not found", aClass);
     return aClass;
   }
 
   @NotNull
-  protected PsiPackage findPackage(@NotNull @NonNls final String name) {
+  protected PsiPackage findPackage(@NotNull final String name) {
     final PsiPackage aPackage = myJavaFacade.findPackage(name);
     assertNotNull("Package " + name + " not found", aPackage);
     return aPackage;
   }
 
-  protected void delete(@NotNull final Editor editor) {
-    CommandProcessor.getInstance().executeCommand(getProject(), new Runnable() {
-      @Override
-      public void run() {
-        EditorActionManager actionManager = EditorActionManager.getInstance();
-        EditorActionHandler actionHandler = actionManager.getActionHandler(IdeActions.ACTION_EDITOR_DELETE);
-
-        actionHandler.execute(editor, DataManager.getInstance().getDataContext());
-      }
-    }, "delete", editor.getDocument());
+  protected void setLanguageLevel(LanguageLevel level) {
+    LanguageLevelProjectExtension.getInstance(getProject()).setLanguageLevel(level);
   }
 }

@@ -36,10 +36,10 @@ import java.util.Set;
 
 public class DifferenceReverter extends Reverter {
   private final IdeaGateway myGateway;
-  private final List<Difference> myDiffs;
+  private final List<? extends Difference> myDiffs;
   private final Revision myLeftRevision;
 
-  public DifferenceReverter(Project p, LocalHistoryFacade vcs, IdeaGateway gw, List<Difference> diffs, Revision leftRevision) {
+  public DifferenceReverter(Project p, LocalHistoryFacade vcs, IdeaGateway gw, List<? extends Difference> diffs, Revision leftRevision) {
     super(p, vcs, gw);
     myGateway = gw;
     myDiffs = diffs;
@@ -53,7 +53,7 @@ public class DifferenceReverter extends Reverter {
 
   @Override
   protected List<VirtualFile> getFilesToClearROStatus() throws IOException {
-    LinkedHashSet<VirtualFile> files = new LinkedHashSet<VirtualFile>();
+    LinkedHashSet<VirtualFile> files = new LinkedHashSet<>();
     for (Difference each : myDiffs) {
       Entry l = each.getLeft();
       Entry r = each.getRight();
@@ -63,7 +63,7 @@ public class DifferenceReverter extends Reverter {
       f = r == null ? null : myGateway.findVirtualFile(r.getPath());
       if (f != null) files.add(f);
     }
-    return new ArrayList<VirtualFile>(files);
+    return new ArrayList<>(files);
   }
 
   @Override
@@ -72,7 +72,7 @@ public class DifferenceReverter extends Reverter {
   }
 
   public void doRevert(boolean revertContentChanges) throws IOException {
-    Set<String> vetoedFiles = new THashSet<String>();
+    Set<String> vetoedFiles = new THashSet<>();
 
     for (Difference each : ContainerUtil.iterateBackward(myDiffs)) {
       Entry l = each.getLeft();
@@ -132,6 +132,6 @@ public class DifferenceReverter extends Reverter {
   private void setContent(Entry l, VirtualFile file) throws IOException {
     Content c = l.getContent();
     if (!c.isAvailable()) return;
-    file.setBinaryContent(c.getBytes(), -1, l.getTimestamp());
+    file.setBinaryContent(c.getBytes());
   }
 }

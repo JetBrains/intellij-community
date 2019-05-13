@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,18 +17,16 @@ package org.jetbrains.plugins.groovy.lang.surroundWith;
 
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
 
-/**
- * User: Dmitry.Krasilschikov
- * Date: 25.05.2007
- */
 public class WithExprSurrounder extends GroovyConditionSurrounder {
-  protected TextRange surroundExpression(GrExpression expression, PsiElement context) {
+  @Override
+  protected TextRange surroundExpression(@NotNull GrExpression expression, PsiElement context) {
     GrMethodCallExpression call = (GrMethodCallExpression) GroovyPsiElementFactory.getInstance(expression.getProject()).createStatementFromText("with(a){4\n}", context);
     replaceToOldExpression(call.getExpressionArguments()[0], expression);
     call = expression.replaceWithStatement(call);
@@ -42,6 +40,7 @@ public class WithExprSurrounder extends GroovyConditionSurrounder {
     return new TextRange(offset, offset);
   }
 
+  @Override
   public String getTemplateDescription() {
     return "with (expr)";
   }

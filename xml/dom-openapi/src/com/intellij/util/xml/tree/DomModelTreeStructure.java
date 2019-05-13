@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package com.intellij.util.xml.tree;
 
 import com.intellij.ui.treeStructure.SimpleTreeStructure;
 import com.intellij.util.xml.DomElement;
+import org.jetbrains.annotations.NotNull;
 
 public class DomModelTreeStructure extends SimpleTreeStructure {
   private final DomElement myDomElement;
@@ -31,6 +32,8 @@ public class DomModelTreeStructure extends SimpleTreeStructure {
     return new BaseDomElementNode(myDomElement);
   }
 
+  @NotNull
+  @Override
   public AbstractDomElementNode getRootElement() {
     if (myRootNode == null) {
       myRootNode = createRoot(myDomElement);

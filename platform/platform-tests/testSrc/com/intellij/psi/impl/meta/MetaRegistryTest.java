@@ -1,10 +1,21 @@
 /*
- * Copyright (c) 2000-2006 JetBrains s.r.o. All Rights Reserved.
+ * Copyright 2000-2016 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 
 package com.intellij.psi.impl.meta;
 
-import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.filters.ElementFilter;
@@ -14,14 +25,14 @@ import com.intellij.psi.xml.XmlTag;
 import com.intellij.testFramework.LightPlatformTestCase;
 import com.intellij.testFramework.UsefulTestCase;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 /**
 * @author peter
 */
 public class MetaRegistryTest extends LightPlatformTestCase {
-
-  public void testChangingMetaData() throws Throwable {
-    final boolean[] flag = new boolean[]{false};
+  public void testChangingMetaData() {
+    final boolean[] flag = {false};
     MetaRegistry.addMetadataBinding(new ElementFilter() {
       @Override
       public boolean isAcceptable(Object element, PsiElement context) {
@@ -32,7 +43,7 @@ public class MetaRegistryTest extends LightPlatformTestCase {
       public boolean isClassAcceptable(Class hintClass) {
         return true;
       }
-    }, MyTrueMetaData.class, myTestRootDisposable);
+    }, MyTrueMetaData::new, getTestRootDisposable());
     MetaRegistry.addMetadataBinding(new ElementFilter() {
       @Override
       public boolean isAcceptable(Object element, PsiElement context) {
@@ -43,17 +54,14 @@ public class MetaRegistryTest extends LightPlatformTestCase {
       public boolean isClassAcceptable(Class hintClass) {
         return true;
       }
-    }, MyFalseMetaData.class, myTestRootDisposable);
+    }, MyFalseMetaData::new, getTestRootDisposable());
 
     final XmlTag tag = ((XmlFile)LightPlatformTestCase.createFile("a.xml", "<a/>")).getDocument().getRootTag();
     UsefulTestCase.assertInstanceOf(tag.getMetaData(), MyFalseMetaData.class);
     flag[0] = true;
-    new WriteCommandAction(LightPlatformTestCase.getProject()) {
-      @Override
-      protected void run(Result result) throws Throwable {
-        tag.setName("b");
-      }
-    }.execute();
+    WriteCommandAction.runWriteCommandAction(LightPlatformTestCase.getProject(), () -> {
+      tag.setName("b");
+    });
     UsefulTestCase.assertInstanceOf(tag.getMetaData(), MyTrueMetaData.class);
   }
 
@@ -65,8 +73,9 @@ public class MetaRegistryTest extends LightPlatformTestCase {
       return myDeclaration;
     }
 
+    @NotNull
     @Override
-    public Object[] getDependences() {
+    public Object[] getDependencies() {
       return new Object[]{myDeclaration};
     }
 

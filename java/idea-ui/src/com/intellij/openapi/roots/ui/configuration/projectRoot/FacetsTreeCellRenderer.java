@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -54,15 +54,7 @@ public class FacetsTreeCellRenderer extends GroupedElementsRenderer.Tree {
       if (configurable != null) {
         final Icon icon = configurable.getIcon(expanded);
         final boolean showSeparator = configurable instanceof FrameworkDetectionConfigurable;
-        int width = -1;
-        if (showSeparator && tree.isVisible()) {
-          final int treeWidth = tree.getVisibleRect().width;
-          if (treeWidth > 0) {
-            width = treeWidth;
-          }
-        }
-        final JComponent component = configureComponent(node.getDisplayName(), null, icon, icon, selected, showSeparator, null,
-                                                        width);
+        final JComponent component = configureComponent(node.getDisplayName(), null, icon, icon, selected, showSeparator, null, -1);
 
         myTextLabel.setOpaque(selected);
         return component;

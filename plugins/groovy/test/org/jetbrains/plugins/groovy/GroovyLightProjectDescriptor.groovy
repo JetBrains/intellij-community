@@ -1,45 +1,47 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy
 
 import com.intellij.openapi.module.Module
+import com.intellij.openapi.projectRoots.JavaSdk
+import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.ContentEntry
 import com.intellij.openapi.roots.ModifiableRootModel
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.vfs.JarFileSystem
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.testFramework.IdeaTestUtil
 import com.intellij.testFramework.fixtures.DefaultLightProjectDescriptor
+import groovy.transform.CompileStatic
+import org.jetbrains.annotations.NotNull
 
-import static org.jetbrains.plugins.groovy.util.TestUtils.getMockGroovy2_1LibraryName
+import static org.jetbrains.plugins.groovy.config.GroovyFacetUtil.getBundledGroovyJar
 
 /**
  * @author Max Medvedev
  */
+@CompileStatic
 class GroovyLightProjectDescriptor extends DefaultLightProjectDescriptor {
-  public static final GroovyLightProjectDescriptor INSTANCE = new GroovyLightProjectDescriptor()
+  public static final GroovyLightProjectDescriptor GROOVY_LATEST = new GroovyLightProjectDescriptor(bundledGroovyJar as String)
+  public static final GroovyLightProjectDescriptor GROOVY_LATEST_REAL_JDK = new GroovyLightProjectDescriptor(bundledGroovyJar as String) {
+    @Override
+    Sdk getSdk() {
+      return JavaSdk.getInstance().createJdk("TEST_JDK", IdeaTestUtil.requireRealJdkHome(), false)
+    }
+  }
+  private final String myLibPath
 
-  protected GroovyLightProjectDescriptor() {}
+  GroovyLightProjectDescriptor(String libPath) {
+    myLibPath = libPath
+  }
 
   @Override
-  public void configureModule(Module module, ModifiableRootModel model, ContentEntry contentEntry) {
-    final Library.ModifiableModel modifiableModel = model.moduleLibraryTable.createLibrary("GROOVY").modifiableModel;
-    final VirtualFile groovyJar = JarFileSystem.instance.refreshAndFindFileByPath("$mockGroovy2_1LibraryName!/");
-    assert groovyJar != null;
-    modifiableModel.addRoot(groovyJar, OrderRootType.CLASSES);
-    modifiableModel.commit();
+  void configureModule(@NotNull Module module, @NotNull ModifiableRootModel model, @NotNull ContentEntry contentEntry) {
+    super.configureModule(module, model, contentEntry)
+    final Library.ModifiableModel modifiableModel = model.moduleLibraryTable.createLibrary("GROOVY").modifiableModel
+    final VirtualFile groovyJar = JarFileSystem.instance.refreshAndFindFileByPath("${myLibPath}!/")
+    assert groovyJar != null
+    modifiableModel.addRoot(groovyJar, OrderRootType.CLASSES)
+    modifiableModel.commit()
   }
 }

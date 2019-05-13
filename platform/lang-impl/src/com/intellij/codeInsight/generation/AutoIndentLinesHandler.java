@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,6 +26,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.util.DocumentUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
@@ -34,22 +35,13 @@ public class AutoIndentLinesHandler implements CodeInsightActionHandler {
 
   @Override
   public void invoke(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
-    if (!CodeInsightUtilBase.prepareEditorForWrite(editor)) return;
-    PsiDocumentManager.getInstance(project).commitAllDocuments();
-
-    if (!FileDocumentManager.getInstance().requestWriting(editor.getDocument(), project)){
-      return;
-    }
-
     Document document = editor.getDocument();
     int startOffset;
     int endOffset;
-    RangeMarker selectionEndMarker = null;
-    if (editor.getSelectionModel().hasSelection()){
+    boolean hasSelection = editor.getSelectionModel().hasSelection();
+    if (hasSelection){
       startOffset = editor.getSelectionModel().getSelectionStart();
-      endOffset = editor.getSelectionModel().getSelectionEnd();
-      selectionEndMarker = document.createRangeMarker(endOffset, endOffset);
-      endOffset -= 1;
+      endOffset = editor.getSelectionModel().getSelectionEnd() - 1;
     }
     else{
       startOffset = endOffset = editor.getCaretModel().getOffset();
@@ -64,7 +56,7 @@ public class AutoIndentLinesHandler implements CodeInsightActionHandler {
       LOG.error(e);
     }
 
-    if (selectionEndMarker == null){
+    if (!hasSelection){
       if (line1 < document.getLineCount() - 1){
         if (document.getLineStartOffset(line1 + 1) + col >= document.getTextLength()) {
           col = document.getLineEndOffset(line1 + 1) - document.getLineStartOffset(line1 + 1);
@@ -74,11 +66,6 @@ public class AutoIndentLinesHandler implements CodeInsightActionHandler {
         editor.getSelectionModel().removeSelection();
         editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
       }
-    }
-    else{
-      if (!selectionEndMarker.isValid()) return;
-      endOffset = selectionEndMarker.getEndOffset();
-      editor.getSelectionModel().setSelection(startOffset, endOffset);
     }
   }
 
@@ -92,12 +79,7 @@ public class AutoIndentLinesHandler implements CodeInsightActionHandler {
         codeStyleManager.adjustLineIndent(file, lineStart);
       }
     } else {
-      codeStyleManager.adjustLineIndent(file, new TextRange(startOffset, endOffset));
+      codeStyleManager.adjustLineIndent(file, new TextRange(DocumentUtil.getLineStartOffset(startOffset, document), endOffset));
     }
-  }
-
-  @Override
-  public boolean startInWriteAction() {
-    return true;
   }
 }

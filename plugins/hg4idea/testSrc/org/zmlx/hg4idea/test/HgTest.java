@@ -23,6 +23,7 @@ import com.intellij.testFramework.vcs.AbstractVcsTestCase;
 import com.intellij.ui.GuiUtils;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcsUtil.VcsUtil;
+import hg4idea.test.HgPlatformTest;
 import org.jetbrains.annotations.Nullable;
 import org.picocontainer.MutablePicoContainer;
 import org.testng.annotations.AfterMethod;
@@ -36,7 +37,9 @@ import java.lang.reflect.Method;
 import static org.testng.Assert.assertTrue;
 
 /**
- * The ancestor of all hg4idea test cases.
+ * The ancestor of all intellij.vcs.hg test cases.
+ *
+ * @deprecated Use {@link HgPlatformTest}.
  */
 public abstract class HgTest extends AbstractVcsTestCase {
 
@@ -66,20 +69,16 @@ public abstract class HgTest extends AbstractVcsTestCase {
       final File pluginRoot = new File(PluginPathManager.getPluginHomePath(HgVcs.VCS_NAME));
       myClientBinaryPath = new File(pluginRoot, "testData/bin");
     }
-    HgVcs.setTestHgExecutablePath(myClientBinaryPath.getPath());
 
     myMainRepo = initRepositories();
     myProjectDir = new File(myMainRepo.getDirFixture().getTempDirPath());
 
-    UIUtil.invokeAndWaitIfNeeded(new Runnable() {
-      @Override
-      public void run() {
-        try {
-          initProject(myProjectDir, testMethod.getName());
-          activateVCS(HgVcs.VCS_NAME);
-        } catch (Exception e) {
-          e.printStackTrace();
-        }
+    UIUtil.invokeAndWaitIfNeeded((Runnable)() -> {
+      try {
+        initProject(myProjectDir, testMethod.getName());
+        activateVCS(HgVcs.VCS_NAME);
+      } catch (Exception e) {
+        e.printStackTrace();
       }
     });
 
@@ -91,22 +90,14 @@ public abstract class HgTest extends AbstractVcsTestCase {
 
   @AfterMethod
   protected void tearDown() throws Exception {
-    GuiUtils.runOrInvokeAndWait(new Runnable() {
-      @Override
-      public void run() {
-        try {
-          tearDownProject();
-          tearDownRepositories();
-        } catch (Exception e) {
-          e.printStackTrace();
-        }
+    GuiUtils.runOrInvokeAndWait(() -> {
+      try {
+        tearDownProject();
+        tearDownRepositories();
+      } catch (Exception e) {
+        e.printStackTrace();
       }
     });
-  }
-
-  @Override
-  protected String getPluginName() {
-    return "hg4idea";
   }
 
   protected abstract HgTestRepository initRepositories() throws Exception;

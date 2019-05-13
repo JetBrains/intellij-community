@@ -16,6 +16,7 @@
 package com.intellij.ui;
 
 import com.intellij.ide.CommandLineProcessor;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.io.URLUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -27,14 +28,18 @@ import java.util.List;
  * @author Dennis.Ushakov
  */
 public class CustomProtocolHandler {
+  public static final String LINE_NUMBER_ARG_NAME = "--line";
+
+  private static final Logger LOG = Logger.getInstance("#com.intellij.ui.CustomProtocolHandler");
   public boolean openLink(@NotNull URI uri) {
+    LOG.info("CustomProtocolHandler.openLink");
     final List<String> args = getOpenArgs(uri);
     return !args.isEmpty() && CommandLineProcessor.processExternalCommandLine(args, null) != null;
   }
 
   @NotNull
   public List<String> getOpenArgs(URI uri) {
-    final List<String> args = new ArrayList<String>();
+    final List<String> args = new ArrayList<>();
     final String query = uri.getQuery();
     String file = null;
     String line = null;
@@ -54,7 +59,7 @@ public class CustomProtocolHandler {
 
     if (file != null) {
       if (line != null) {
-        args.add("--line");
+        args.add(LINE_NUMBER_ARG_NAME);
         args.add(line);
       }
       args.add(file);

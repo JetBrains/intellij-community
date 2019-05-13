@@ -1,5 +1,5 @@
 /*
- * Copyright 2012 Bas Leijdekkers
+ * Copyright 2012-2014 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package com.siyeh.ig.fixes.performance;
 
+import com.intellij.codeInspection.CommonQuickFixBundle;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.IGQuickFixesTestCase;
 import com.siyeh.ig.performance.StringEqualsEmptyStringInspection;
@@ -26,9 +27,17 @@ public class StringEqualsEmptyStringFixTest extends IGQuickFixesTestCase {
     super.setUp();
     myFixture.enableInspections(new StringEqualsEmptyStringInspection());
     myRelativePath = "performance/replace_with_isempty";
-    myDefaultHint = InspectionGadgetsBundle.message("string.equals.empty.string.isempty.quickfix");
+    myDefaultHint = CommonQuickFixBundle.message("fix.replace.with.x", "isEmpty()");
   }
 
   public void testSimple() { doTest(); }
   public void testNullCheck() { doTest(); }
+  public void testNullCheckSuppress() {
+    StringEqualsEmptyStringInspection inspection = new StringEqualsEmptyStringInspection();
+    inspection.SUPPRESS_FOR_VALUES_WHICH_COULD_BE_NULL = true;
+    myFixture.enableInspections(inspection);
+    assertQuickfixNotAvailable();
+  }
+  public void testNullCheckAlreadyPresent() { doTest(); }
+  public void testTernary() { doTest(); }
 }

@@ -1,32 +1,23 @@
-/*
- * Copyright 2000-2011 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xdebugger.impl.actions.handlers;
 
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
-import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.evaluation.XDebuggerEvaluator;
-import com.intellij.xdebugger.frame.XStackFrame;
 import com.intellij.xdebugger.impl.XDebugSessionImpl;
+import com.intellij.xdebugger.impl.breakpoints.XExpressionImpl;
+import com.intellij.xdebugger.impl.frame.XWatchesViewImpl;
+import com.intellij.xdebugger.impl.ui.XDebugSessionTab;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.concurrency.Promise;
+import org.jetbrains.concurrency.Promises;
+
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeoutException;
 
 /**
  * @author nik
@@ -34,40 +25,54 @@ import org.jetbrains.annotations.Nullable;
 public class XAddToWatchesFromEditorActionHandler extends XDebuggerActionHandler {
   @Override
   protected boolean isEnabled(@NotNull XDebugSession session, DataContext dataContext) {
-    return getTextToEvaluate(dataContext, session) != null;
+    Promise<String> textPromise = getTextToEvaluate(dataContext, session);
+    // in the case of async expression evaluation just enable the action
+    if (textPromise.getState() == Promise.State.PENDING) {
+      return true;
+    }
+    // or disable on rejected
+    else if (textPromise.getState() == Promise.State.REJECTED) {
+      return false;
+    }
+    // else the promise is already fulfilled, get it's value
+    try {
+      return textPromise.blockingGet(0) != null;
+    }
+    catch (TimeoutException | ExecutionException e) {
+      return false;
+    }
   }
 
-  @Nullable
-  private static String getTextToEvaluate(DataContext dataContext, XDebugSession session) {
-    final Editor editor = PlatformDataKeys.EDITOR.getData(dataContext);
+
+  @NotNull
+  protected static Promise<String> getTextToEvaluate(DataContext dataContext, XDebugSession session) {
+    final Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
     if (editor == null) {
-      return null;
+      return Promises.resolvedPromise(null);
     }
 
     String text = editor.getSelectionModel().getSelectedText();
-    if (text == null && session.isSuspended()) {
-      final XStackFrame stackFrame = session.getCurrentStackFrame();
-      if (stackFrame != null) {
-        final XDebuggerEvaluator evaluator = stackFrame.getEvaluator();
-        if (evaluator != null) {
-          final int offset = editor.getCaretModel().getOffset();
-          final Document document = editor.getDocument();
-          final TextRange textRange = evaluator.getExpressionRangeAtOffset(session.getProject(), document, offset, false);
-          if (textRange != null) {
-            text = document.getText(textRange);
-          }
-        }
-      }
+    if (text != null) {
+      return Promises.resolvedPromise(StringUtil.nullize(text, true));
     }
-
-    return StringUtil.isEmptyOrSpaces(text) ? null : text;
+    XDebuggerEvaluator evaluator = session.getDebugProcess().getEvaluator();
+    if (evaluator != null) {
+      return XDebuggerEvaluateActionHandler.getExpressionText(evaluator, editor.getProject(), editor).then(s -> StringUtil.nullize(s, true));
+    }
+    return Promises.resolvedPromise(null);
   }
 
   @Override
   protected void perform(@NotNull XDebugSession session, DataContext dataContext) {
-    final String text = getTextToEvaluate(dataContext, session);
-    if (text == null) return;
-
-    ((XDebugSessionImpl)session).getSessionTab().getWatchesView().addWatchExpression(text, -1, true);
+    getTextToEvaluate(dataContext, session)
+      .onSuccess(text -> {
+        if (text == null) return;
+        UIUtil.invokeLaterIfNeeded(() -> {
+          XDebugSessionTab tab = ((XDebugSessionImpl)session).getSessionTab();
+          if (tab != null) {
+            ((XWatchesViewImpl)tab.getWatchesView()).addWatchExpression(XExpressionImpl.fromText(text), -1, true, true);
+          }
+        });
+      });
   }
 }

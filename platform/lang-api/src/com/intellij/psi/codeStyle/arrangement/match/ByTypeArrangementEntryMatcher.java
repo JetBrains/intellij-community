@@ -17,45 +17,53 @@ package com.intellij.psi.codeStyle.arrangement.match;
 
 import com.intellij.psi.codeStyle.arrangement.ArrangementEntry;
 import com.intellij.psi.codeStyle.arrangement.TypeAwareArrangementEntry;
+import com.intellij.psi.codeStyle.arrangement.model.ArrangementAtomMatchCondition;
+import com.intellij.psi.codeStyle.arrangement.std.ArrangementSettingsToken;
+import com.intellij.util.containers.ContainerUtilRt;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Arrays;
 import java.util.Collection;
-import java.util.EnumSet;
 import java.util.Set;
 
 /**
- * Filters {@link ArrangementEntry entries} by {@link TypeAwareArrangementEntry#getType() their types}.
+ * Filters {@link ArrangementEntry entries} by {@link TypeAwareArrangementEntry#getTypes() their types}.
  * <p/>
  * <b>Note:</b> type-unaware entry will not be matched by the current rule.
  * <p/>
  * Thread-safe.
  * 
  * @author Denis Zhdanov
- * @since 7/17/12 11:19 AM
  */
 public class ByTypeArrangementEntryMatcher implements ArrangementEntryMatcher {
 
-  @NotNull private final Set<ArrangementEntryType> myTypes = EnumSet.noneOf(ArrangementEntryType.class);
+  @NotNull private final Set<ArrangementAtomMatchCondition> myTypes = ContainerUtilRt.newHashSet();
 
-  public ByTypeArrangementEntryMatcher(@NotNull ArrangementEntryType... interestedTypes) {
-    this(Arrays.asList(interestedTypes));
+  public ByTypeArrangementEntryMatcher(@NotNull ArrangementAtomMatchCondition interestedType) {
+    myTypes.add(interestedType);
   }
 
-  public ByTypeArrangementEntryMatcher(@NotNull Collection<ArrangementEntryType> interestedTypes) {
+  public ByTypeArrangementEntryMatcher(@NotNull Collection<? extends ArrangementAtomMatchCondition> interestedTypes) {
     myTypes.addAll(interestedTypes);
   }
 
   @Override
   public boolean isMatched(@NotNull ArrangementEntry entry) {
     if (entry instanceof TypeAwareArrangementEntry) {
-      return ((TypeAwareArrangementEntry)entry).getTypes().containsAll(myTypes);
+      final Set<ArrangementSettingsToken> types = ((TypeAwareArrangementEntry)entry).getTypes();
+      for (ArrangementAtomMatchCondition condition : myTypes) {
+        final Object value = condition.getValue();
+        boolean isInverted = value instanceof Boolean && !((Boolean)value);
+        if (isInverted == types.contains(condition.getType())) {
+          return false;
+        }
+      }
+      return true;
     }
     return false;
   }
 
   @NotNull
-  public Set<ArrangementEntryType> getTypes() {
+  public Set<ArrangementAtomMatchCondition> getTypes() {
     return myTypes;
   }
 

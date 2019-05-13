@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurableEP;
 import com.intellij.openapi.options.ConfigurableGroup;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
@@ -27,31 +28,33 @@ import java.util.List;
 /**
  * @author nik
  */
-public abstract class ConfigurablesGroupBase implements ConfigurableGroup {
+@Deprecated
+abstract class ConfigurablesGroupBase implements ConfigurableGroup {
   private Configurable[] myChildren;
-  private ComponentManager myComponentManager;
+  private final ComponentManager myComponentManager;
   private final ExtensionPointName<ConfigurableEP<Configurable>> myConfigurablesExtensionPoint;
-  private final boolean myLoadComponents;
 
-  protected ConfigurablesGroupBase(ComponentManager componentManager, final ExtensionPointName<ConfigurableEP<Configurable>> configurablesExtensionPoint,
-                                   boolean loadComponents) {
+  protected ConfigurablesGroupBase(ComponentManager componentManager, final ExtensionPointName<ConfigurableEP<Configurable>> configurablesExtensionPoint) {
     myComponentManager = componentManager;
     myConfigurablesExtensionPoint = configurablesExtensionPoint;
-    myLoadComponents = loadComponents;
   }
 
+  @NotNull
   @Override
   public Configurable[] getConfigurables() {
     if (myChildren == null) {
-      final ConfigurableEP<Configurable>[] extensions = myComponentManager.getExtensions(myConfigurablesExtensionPoint);
-      Configurable[] components = myLoadComponents ? myComponentManager.getComponents(Configurable.class) : new Configurable[0];
+      if (myComponentManager.isDisposed()) {
+        return new Configurable[0];
+      }
 
-      List<Configurable> result = ConfigurableExtensionPointUtil.buildConfigurablesList(extensions, components, getConfigurableFilter());
-      myChildren = result.toArray(new Configurable[result.size()]);
+      ConfigurableEP<Configurable>[] extensions = myComponentManager.getExtensions(myConfigurablesExtensionPoint);
+      List<Configurable> result = ConfigurableExtensionPointUtil.buildConfigurablesList(extensions, getConfigurableFilter());
+      myChildren = result.toArray(new Configurable[0]);
     }
     return myChildren;
   }
 
   @Nullable
   protected abstract ConfigurableFilter getConfigurableFilter();
+
 }

@@ -17,12 +17,13 @@ package org.jetbrains.idea.maven.dom.model;
 
 import com.intellij.spellchecker.xml.NoSpellchecking;
 import com.intellij.util.xml.Convert;
+import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.GenericDomValue;
 import com.intellij.util.xml.Required;
 import org.jetbrains.idea.maven.dom.converters.MavenArtifactCoordinatesArtifactIdConverter;
 import org.jetbrains.idea.maven.dom.converters.MavenArtifactCoordinatesGroupIdConverter;
 
-public interface MavenDomShortArtifactCoordinates {
+public interface MavenDomShortArtifactCoordinates extends DomElement {
   @Required
   @NoSpellchecking
   @Convert(MavenArtifactCoordinatesGroupIdConverter.class)

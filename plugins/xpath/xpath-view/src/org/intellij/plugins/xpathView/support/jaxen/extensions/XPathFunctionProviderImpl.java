@@ -36,9 +36,9 @@ import java.util.Map;
  * Simple implementation that adds extension functions for file-type, file-name and file-extension
  */
 class XPathFunctionProviderImpl extends XPathFunctionProvider {
-    private final Map<QName, FunctionImplementation> myFunctions = new HashMap<QName, FunctionImplementation>();
+    private final Map<QName, FunctionImplementation> myFunctions = new HashMap<>();
 
-    public XPathFunctionProviderImpl() {
+    XPathFunctionProviderImpl() {
         // XPathView extensions
         myFunctions.put(new QName(null, "file-type"), new FileTypeFunction());
         myFunctions.put(new QName(null, "file-name"), new FileNameFunction());
@@ -52,58 +52,62 @@ class XPathFunctionProviderImpl extends XPathFunctionProvider {
         myFunctions.put(new QName(null, "ends-with"), new JaxenEndsWith());
     }
 
+    @Override
     @NotNull
     public Map<QName, ? extends Function> getFunctions(ContextType contextType) {
         if (contextType == XPathSupport.TYPE) {
             return myFunctions;
         } else {
-            //noinspection unchecked
-            return Collections.emptyMap();
+          return Collections.emptyMap();
         }
     }
 
     private static class JaxenEvaluate extends FunctionImplementation {
-        public JaxenEvaluate() {
+        JaxenEvaluate() {
             super("evaluate", XPathType.NODESET,
                     new Parameter(XPathType.STRING, Parameter.Kind.REQUIRED));
         }
 
+        @Override
         public org.jaxen.Function getImplementation() {
             return new EvaluateFunction();
         }
     }
 
     private static class JaxenLower extends FunctionImplementation {
-        public JaxenLower() {
+        JaxenLower() {
             super("lower-case", XPathType.STRING,
                     new Parameter(XPathType.STRING, Parameter.Kind.REQUIRED),
                     new Parameter(XPathType.STRING, Parameter.Kind.OPTIONAL));
         }
 
+        @Override
         public org.jaxen.Function getImplementation() {
             return new LowerFunction();
         }
     }
 
     private static class JaxenUpper extends FunctionImplementation {
-        public JaxenUpper() {
+        JaxenUpper() {
             super("upper-case", XPathType.STRING,
                     new Parameter(XPathType.STRING, Parameter.Kind.REQUIRED),
                     new Parameter(XPathType.STRING, Parameter.Kind.OPTIONAL));
         }
 
+        @Override
         public org.jaxen.Function getImplementation() {
             return new UpperFunction();
         }
     }
 
     private static class JaxenEndsWith extends FunctionImplementation {
-        public JaxenEndsWith() {
+        JaxenEndsWith() {
             super("ends-with", XPathType.BOOLEAN,
                     new Parameter(XPathType.STRING, Parameter.Kind.REQUIRED),
                     new Parameter(XPathType.STRING, Parameter.Kind.REQUIRED));
         }
 
+        @Override
         public org.jaxen.Function getImplementation() {
             return new EndsWithFunction();
         }

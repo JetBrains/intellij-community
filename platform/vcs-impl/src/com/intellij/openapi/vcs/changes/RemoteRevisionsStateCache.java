@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes;
 
 import com.intellij.openapi.project.Project;
@@ -20,6 +6,8 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.MultiMap;
+import com.intellij.vcsUtil.VcsUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
@@ -27,10 +15,14 @@ import java.util.*;
 
 public class RemoteRevisionsStateCache implements ChangesOnServerTracker {
   private final static long DISCRETE = 3600000;
-  // true -> changed
+  // All files that were checked during cache update and were not invalidated.
+  // pair.First - if file is changed (true means changed)
+  // pair.Second - vcs root where file belongs to
   private final Map<String, Pair<Boolean, VcsRoot>> myChanged;
 
+  // All files that needs to be checked during next cache update, grouped by vcs root
   private final MultiMap<VcsRoot, String> myQueries;
+  // All vcs roots for which cache update was performed with update timestamp
   private final Map<VcsRoot, Long> myTs;
   private final Object myLock;
   private final ProjectLevelVcsManager myVcsManager;
@@ -38,13 +30,14 @@ public class RemoteRevisionsStateCache implements ChangesOnServerTracker {
 
   RemoteRevisionsStateCache(final Project project) {
     myVcsManager = ProjectLevelVcsManager.getInstance(project);
-    myChanged = new HashMap<String, Pair<Boolean, VcsRoot>>();
-    myQueries = new MultiMap<VcsRoot, String>();
-    myTs = new HashMap<VcsRoot, Long>();
+    myChanged = new HashMap<>();
+    myQueries = new MultiMap<>();
+    myTs = new HashMap<>();
     myLock = new Object();
     myVcsConfiguration = VcsConfiguration.getInstance(project);
   }
 
+  @Override
   public void invalidate(final Collection<String> paths) {
     synchronized (myLock) {
       for (String path : paths) {
@@ -55,10 +48,13 @@ public class RemoteRevisionsStateCache implements ChangesOnServerTracker {
 
   @Nullable
   private VirtualFile getRootForPath(final String s) {
-    return myVcsManager.getVcsRootFor(new FilePathImpl(new File(s), false));
+    return myVcsManager.getVcsRootFor(VcsUtil.getFilePath(s, false));
   }
-  
-  public boolean isUpToDate(final Change change) {
+
+  @Override
+  public boolean isUpToDate(@NotNull Change change, @NotNull AbstractVcs vcs) {
+    if (!isSupportedFor(vcs)) return true;
+
     final List<File> files = ChangesUtil.getIoFilesFromChanges(Collections.singletonList(change));
     synchronized (myLock) {
       for (File file : files) {
@@ -70,26 +66,33 @@ public class RemoteRevisionsStateCache implements ChangesOnServerTracker {
     return true;
   }
 
-  public void plus(final Pair<String, AbstractVcs> pair) {
-    final VirtualFile root = getRootForPath(pair.getFirst());
+  @Override
+  public void changeUpdated(@NotNull String path, @NotNull AbstractVcs vcs) {
+    if (!isSupportedFor(vcs)) return;
+
+    final VirtualFile root = getRootForPath(path);
     if (root == null) return;
     synchronized (myLock) {
-      myQueries.putValue(new VcsRoot(pair.getSecond(), root), pair.getFirst());
+      myQueries.putValue(new VcsRoot(vcs, root), path);
     }
   }
 
-  public void minus(Pair<String, AbstractVcs> pair) {
-    final VirtualFile root = getRootForPath(pair.getFirst());
+  @Override
+  public void changeRemoved(@NotNull String path, @NotNull AbstractVcs vcs) {
+    if (!isSupportedFor(vcs)) return;
+
+    final VirtualFile root = getRootForPath(path);
     if (root == null) return;
     synchronized (myLock) {
-      final VcsRoot key = new VcsRoot(pair.getSecond(), root);
+      final VcsRoot key = new VcsRoot(vcs, root);
       if (myQueries.containsKey(key)) {
-        myQueries.removeValue(key, pair.getFirst());
+        myQueries.remove(key, path);
       }
-      myChanged.remove(pair.getFirst());
+      myChanged.remove(path);
     }
   }
 
+  @Override
   public void directoryMappingChanged() {
     // todo will work?
     synchronized (myLock) {
@@ -98,12 +101,14 @@ public class RemoteRevisionsStateCache implements ChangesOnServerTracker {
     }
   }
 
+  @Override
   public boolean updateStep() {
-    final MultiMap<VcsRoot, String> dirty = new MultiMap<VcsRoot, String>();
+    final MultiMap<VcsRoot, String> dirty = new MultiMap<>();
     final long oldPoint = System.currentTimeMillis() - (myVcsConfiguration.CHANGED_ON_SERVER_INTERVAL > 0 ?
-                                                        myVcsConfiguration.CHANGED_ON_SERVER_INTERVAL * 60000 : DISCRETE);
+                                                        myVcsConfiguration.CHANGED_ON_SERVER_INTERVAL * 60000L : DISCRETE);
 
     synchronized (myLock) {
+      // just copies myQueries MultiMap to dirty MultiMap
       for (VcsRoot root : myQueries.keySet()) {
         final Collection<String> collection = myQueries.get(root);
         for (String s : collection) {
@@ -112,15 +117,23 @@ public class RemoteRevisionsStateCache implements ChangesOnServerTracker {
       }
       myQueries.clear();
 
-      final Set<VcsRoot> roots = new HashSet<VcsRoot>();
+      // collect roots for which cache update should be performed (by timestamp)
+      final Set<VcsRoot> roots = new HashSet<>();
       for (Map.Entry<VcsRoot, Long> entry : myTs.entrySet()) {
+        // ignore timestamp, as still remote changes checking is required
+        // TODO: why not to add in roots anyway??? - as dirty is still checked when adding myChanged files.
         if (! dirty.get(entry.getKey()).isEmpty()) continue;
 
+        // update only if timeout expired
         final Long ts = entry.getValue();
         if ((ts == null) || (oldPoint > ts)) {
           roots.add(entry.getKey());
         }
       }
+
+      // Add dirty files from those vcs roots, that
+      // - needs to be update by timestamp criteria
+      // - that already contain files for update through manually added requests
       for (Map.Entry<String, Pair<Boolean, VcsRoot>> entry : myChanged.entrySet()) {
         final VcsRoot vcsRoot = entry.getValue().getSecond();
         if ((! dirty.get(vcsRoot).isEmpty()) || roots.contains(vcsRoot)) {
@@ -131,7 +144,7 @@ public class RemoteRevisionsStateCache implements ChangesOnServerTracker {
 
     if (dirty.isEmpty()) return false;
 
-    final Map<String, Pair<Boolean, VcsRoot>> results = new HashMap<String, Pair<Boolean, VcsRoot>>();
+    final Map<String, Pair<Boolean, VcsRoot>> results = new HashMap<>();
     for (VcsRoot vcsRoot : dirty.keySet()) {
       // todo - actually it means nothing since the only known VCS to use this scheme is Git and now it always allow
       // todo - background operations. when it changes, develop more flexible behavior here
@@ -142,7 +155,9 @@ public class RemoteRevisionsStateCache implements ChangesOnServerTracker {
       final Collection<String> paths = dirty.get(vcsRoot);
       final Collection<String> remotelyChanged = provider.getRemotelyChanged(vcsRoot.getPath(), paths);
       for (String path : paths) {
-        results.put(path, new Pair<Boolean, VcsRoot>(remotelyChanged.contains(path), vcsRoot));
+        // TODO: Contains invoked for each file - better to use Set (implementations just use List)
+        // TODO: Why to store boolean for changed or not - why not just remove such values from myChanged???
+        results.put(path, new Pair<>(remotelyChanged.contains(path), vcsRoot));
       }
     }
 
@@ -155,5 +170,9 @@ public class RemoteRevisionsStateCache implements ChangesOnServerTracker {
     }
 
     return true;
+  }
+
+  private static boolean isSupportedFor(@NotNull AbstractVcs vcs) {
+    return vcs.getTreeDiffProvider() != null;
   }
 }

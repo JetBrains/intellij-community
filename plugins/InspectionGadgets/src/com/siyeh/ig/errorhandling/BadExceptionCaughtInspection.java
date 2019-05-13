@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2012 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2014 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,14 +18,13 @@ package com.siyeh.ig.errorhandling;
 import com.intellij.codeInspection.ui.ListTable;
 import com.intellij.codeInspection.ui.ListWrappingTableModel;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.PsiCatchSection;
-import com.intellij.psi.PsiParameter;
-import com.intellij.psi.PsiType;
-import com.intellij.psi.PsiTypeElement;
+import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.fixes.SuppressForTestsScopeFix;
 import com.siyeh.ig.ui.ExternalizableStringSet;
 import com.siyeh.ig.ui.UiUtils;
 import org.jetbrains.annotations.NotNull;
@@ -35,32 +34,42 @@ import java.util.List;
 
 public class BadExceptionCaughtInspection extends BaseInspection {
 
-  /**
-   * @noinspection PublicField
-   */
+  @SuppressWarnings("PublicField")
   public String exceptionsString = "";
-
-  /**
-   * @noinspection PublicField
-   */
+  @SuppressWarnings("PublicField")
   public final ExternalizableStringSet exceptions =
     new ExternalizableStringSet(
       "java.lang.NullPointerException",
       "java.lang.IllegalMonitorStateException",
-      "java.lang.ArrayIndexOutOfBoundsException"
+      "java.lang.ArrayIndexOutOfBoundsException",
+      "java.lang.IndexOutOfBoundsException",
+      "java.util.ConcurrentModificationException"
     );
 
   public BadExceptionCaughtInspection() {
-    if (exceptionsString.length() != 0) {
+    if (!exceptionsString.isEmpty()) {
       exceptions.clear();
       final List<String> strings = StringUtil.split(exceptionsString, ",");
-      for (String string : strings) {
-        exceptions.add(string);
-      }
+      exceptions.addAll(strings);
       exceptionsString = "";
     }
   }
 
+  @Override
+  protected InspectionGadgetsFix buildFix(Object... infos) {
+    final PsiElement context = (PsiElement)infos[0];
+    return SuppressForTestsScopeFix.build(this, context);
+  }
+
+  @Override
+  public JComponent createOptionsPanel() {
+    final ListTable table =
+      new ListTable(new ListWrappingTableModel(exceptions, InspectionGadgetsBundle.message("exception.class.column.name")));
+    return UiUtils.createAddRemoveTreeClassChooserPanel(table, InspectionGadgetsBundle.message("choose.exception.class"),
+                                                        "java.lang.Throwable");
+  }
+
+  @Override
   @NotNull
   public String getID() {
     return "ProhibitedExceptionCaught";
@@ -76,14 +85,6 @@ public class BadExceptionCaughtInspection extends BaseInspection {
   @NotNull
   public String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message("bad.exception.caught.problem.descriptor");
-  }
-
-  @Override
-  public JComponent createOptionsPanel() {
-    final ListTable table =
-      new ListTable(new ListWrappingTableModel(exceptions, InspectionGadgetsBundle.message("exception.class.column.name")));
-    return UiUtils.createAddRemoveTreeClassChooserPanel(table, InspectionGadgetsBundle.message("choose.exception.class"),
-                                                        "java.lang.Throwable");
   }
 
   @Override
@@ -118,7 +119,7 @@ public class BadExceptionCaughtInspection extends BaseInspection {
     private void checkTypeElement(PsiTypeElement typeElement) {
       final PsiType type = typeElement.getType();
       if (exceptions.contains(type.getCanonicalText())) {
-        registerError(typeElement);
+        registerError(typeElement, typeElement);
       }
     }
   }

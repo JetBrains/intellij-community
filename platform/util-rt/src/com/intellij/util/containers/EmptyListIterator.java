@@ -26,32 +26,26 @@ public class EmptyListIterator<E> extends EmptyIterator<E> implements ListIterat
     return (EmptyListIterator<E>)INSTANCE;
   }
 
-  @Override
   public boolean hasPrevious() {
     return false;
   }
 
-  @Override
   public E previous() {
     throw new NoSuchElementException();
   }
 
-  @Override
   public int nextIndex() {
     return 0;
   }
 
-  @Override
   public int previousIndex() {
     return -1;
   }
 
-  @Override
   public void set(E e) {
     throw new IllegalStateException();
   }
 
-  @Override
   public void add(E e) {
     throw new UnsupportedOperationException();
   }

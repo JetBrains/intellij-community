@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.configurable;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -26,11 +12,13 @@ import com.intellij.openapi.vcs.IssueNavigationLink;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.ui.AnActionButton;
 import com.intellij.ui.AnActionButtonRunnable;
+import com.intellij.ui.DumbAwareActionButton;
 import com.intellij.ui.ToolbarDecorator;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.IconUtil;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.ListTableModel;
+import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
@@ -43,17 +31,19 @@ import java.util.List;
  * @author yole
  */
 public class IssueNavigationConfigurationPanel extends JPanel implements SearchableConfigurable, Configurable.NoScroll {
-  private JBTable myLinkTable;
+  private final JBTable myLinkTable;
   private final Project myProject;
   private List<IssueNavigationLink> myLinks;
   private ListTableModel<IssueNavigationLink> myModel;
 
   private final ColumnInfo<IssueNavigationLink, String> ISSUE_COLUMN = new ColumnInfo<IssueNavigationLink, String>(VcsBundle.message("issue.link.issue.column")) {
+    @Override
     public String valueOf(IssueNavigationLink issueNavigationLink) {
       return issueNavigationLink.getIssueRegexp();
     }
   };
   private final ColumnInfo<IssueNavigationLink, String> LINK_COLUMN = new ColumnInfo<IssueNavigationLink, String>(VcsBundle.message("issue.link.link.column")) {
+    @Override
     public String valueOf(IssueNavigationLink issueNavigationLink) {
       return issueNavigationLink.getLinkRegexp();
     }
@@ -65,8 +55,9 @@ public class IssueNavigationConfigurationPanel extends JPanel implements Searcha
     myLinkTable = new JBTable();
     myLinkTable.getEmptyText().setText(VcsBundle.message("issue.link.no.patterns"));
     reset();
-    add(new JLabel("<html>" + ApplicationNamesInfo.getInstance().getFullProductName() + " will search for the specified patterns in " +
-                   "checkin comments and link them to issues in your issue tracker:</html>"), BorderLayout.NORTH);
+    add(new JLabel(
+      XmlStringUtil.wrapInHtml(ApplicationNamesInfo.getInstance().getFullProductName() + " will search for the specified patterns in " +
+                               "checkin comments and link them to issues in your issue tracker:")), BorderLayout.NORTH);
     add(
       ToolbarDecorator.createDecorator(myLinkTable)
         .setAddAction(new AnActionButtonRunnable() {
@@ -74,8 +65,7 @@ public class IssueNavigationConfigurationPanel extends JPanel implements Searcha
           public void run(AnActionButton button) {
             IssueLinkConfigurationDialog dlg = new IssueLinkConfigurationDialog(myProject);
             dlg.setTitle(VcsBundle.message("issue.link.add.title"));
-            dlg.show();
-            if (dlg.isOK()) {
+            if (dlg.showAndGet()) {
               myLinks.add(dlg.getLink());
               myModel.fireTableDataChanged();
             }
@@ -84,7 +74,7 @@ public class IssueNavigationConfigurationPanel extends JPanel implements Searcha
         @Override
         public void run(AnActionButton button) {
           if (Messages.showOkCancelDialog(myProject, VcsBundle.message("issue.link.delete.prompt"),
-                                          VcsBundle.message("issue.link.delete.title"), Messages.getQuestionIcon()) == 0) {
+                                          VcsBundle.message("issue.link.delete.title"), Messages.getQuestionIcon()) == Messages.OK) {
             int selRow = myLinkTable.getSelectedRow();
             myLinks.remove(selRow);
             myModel.fireTableDataChanged();
@@ -99,21 +89,20 @@ public class IssueNavigationConfigurationPanel extends JPanel implements Searcha
       }).setEditAction(new AnActionButtonRunnable() {
         @Override
         public void run(AnActionButton button) {
-          IssueNavigationLink link = (IssueNavigationLink) myModel.getItem(myLinkTable.getSelectedRow());
+          IssueNavigationLink link = myModel.getItem(myLinkTable.getSelectedRow());
           IssueLinkConfigurationDialog dlg = new IssueLinkConfigurationDialog(myProject);
           dlg.setTitle(VcsBundle.message("issue.link.edit.title"));
           dlg.setLink(link);
-          dlg.show();
-          if (dlg.isOK()) {
+          if (dlg.showAndGet()) {
             final IssueNavigationLink editedLink = dlg.getLink();
             link.setIssueRegexp(editedLink.getIssueRegexp());
             link.setLinkRegexp(editedLink.getLinkRegexp());
             myModel.fireTableDataChanged();
           }
         }
-      }).addExtraAction(new AnActionButton("Add JIRA Pattern", IconUtil.getAddJiraPatternIcon()) {
+      }).addExtraAction(new DumbAwareActionButton("Add JIRA Pattern", IconUtil.getAddJiraPatternIcon()) {
         @Override
-        public void actionPerformed(AnActionEvent e) {
+        public void actionPerformed(@NotNull AnActionEvent e) {
           String s = Messages.showInputDialog(IssueNavigationConfigurationPanel.this, "Enter JIRA installation URL:",
                                               "Add JIRA Issue Navigation Pattern", Messages.getQuestionIcon());
           if (s == null) {
@@ -125,9 +114,9 @@ public class IssueNavigationConfigurationPanel extends JPanel implements Searcha
           myLinks.add(new IssueNavigationLink("[A-Z]+\\-\\d+", s + "browse/$0"));
           myModel.fireTableDataChanged();
         }
-      }).addExtraAction(new AnActionButton("Add YouTrack Pattern", IconUtil.getAddYouTrackPatternIcon()) {
+      }).addExtraAction(new DumbAwareActionButton("Add YouTrack Pattern", IconUtil.getAddYouTrackPatternIcon()) {
         @Override
-        public void actionPerformed(AnActionEvent e) {
+        public void actionPerformed(@NotNull AnActionEvent e) {
           String s = Messages.showInputDialog(IssueNavigationConfigurationPanel.this, "Enter YouTrack installation URL:",
                                               "Add YouTrack Issue Navigation Pattern", Messages.getQuestionIcon());
           if (s == null) {
@@ -143,51 +132,51 @@ public class IssueNavigationConfigurationPanel extends JPanel implements Searcha
         .disableUpDownActions().createPanel(), BorderLayout.CENTER);
   }
 
+  @Override
   public void apply() {
     IssueNavigationConfiguration configuration = IssueNavigationConfiguration.getInstance(myProject);
     configuration.setLinks(myLinks);
   }
 
+  @Override
   public boolean isModified() {
     IssueNavigationConfiguration configuration = IssueNavigationConfiguration.getInstance(myProject);
     return !myLinks.equals(configuration.getLinks());
   }
 
+  @Override
   public void reset() {
     IssueNavigationConfiguration configuration = IssueNavigationConfiguration.getInstance(myProject);
-    myLinks = new ArrayList<IssueNavigationLink>();
+    myLinks = new ArrayList<>();
     for(IssueNavigationLink link: configuration.getLinks()) {
       myLinks.add(new IssueNavigationLink(link.getIssueRegexp(), link.getLinkRegexp()));
     }
-    myModel = new ListTableModel<IssueNavigationLink>(
-      new ColumnInfo[] { ISSUE_COLUMN, LINK_COLUMN },
+    myModel = new ListTableModel<>(
+      new ColumnInfo[]{ISSUE_COLUMN, LINK_COLUMN},
       myLinks,
       0);
     myLinkTable.setModel(myModel);
   }
 
+    @Override
     @Nls
   public String getDisplayName() {
     return "Issue Navigation";
   }
 
+  @Override
   public String getHelpTopic() {
     return "project.propVCSSupport.Issue.Navigation";
   }
 
+  @Override
   @NotNull
   public String getId() {
     return getHelpTopic();
   }
 
-  public Runnable enableSearch(String option) {
-    return null;
-  }
-
+  @Override
   public JComponent createComponent() {
     return this;
-  }
-
-  public void disposeUIResources() {
   }
 }

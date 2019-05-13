@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package com.intellij.refactoring.move.moveClassesOrPackages;
 
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
@@ -47,39 +48,48 @@ public class AutocreatingSingleSourceRootMoveDestination extends AutocreatingMov
     mySourceRoot = sourceRoot;
   }
 
+  @Override
   public PackageWrapper getTargetPackage() {
     return myPackage;
   }
 
+  @Override
   public PsiDirectory getTargetIfExists(PsiDirectory source) {
     return RefactoringUtil.findPackageDirectoryInSourceRoot(myPackage, mySourceRoot);
   }
 
+  @Override
   public PsiDirectory getTargetIfExists(PsiFile source) {
     return RefactoringUtil.findPackageDirectoryInSourceRoot(myPackage, mySourceRoot);
   }
 
+  @Override
   public PsiDirectory getTargetDirectory(PsiDirectory source) throws IncorrectOperationException {
     return getDirectory();
   }
 
+  @Override
   public PsiDirectory getTargetDirectory(PsiFile source) throws IncorrectOperationException {
     return getDirectory();
   }
 
+  @Override
   @Nullable
   public String verify(PsiFile source) {
     return checkCanCreateInSourceRoot(mySourceRoot);
   }
 
+  @Override
   public String verify(PsiDirectory source) {
     return checkCanCreateInSourceRoot(mySourceRoot);
   }
 
+  @Override
   public String verify(PsiPackage aPackage) {
     return checkCanCreateInSourceRoot(mySourceRoot);
   }
 
+  @Override
   public void analyzeModuleConflicts(final Collection<PsiElement> elements,
                                      MultiMap<PsiElement,String> conflicts, final UsageInfo[] usages) {
     RefactoringConflictsUtil.analyzeModuleConflicts(getTargetPackage().getManager().getProject(), elements, usages, mySourceRoot, conflicts);
@@ -97,11 +107,18 @@ public class AutocreatingSingleSourceRootMoveDestination extends AutocreatingMov
     return true;
   }
 
-  PsiDirectory myTargetDirectory = null;
+  PsiDirectory myTargetDirectory;
   private PsiDirectory getDirectory() throws IncorrectOperationException {
     if (myTargetDirectory == null) {
-      myTargetDirectory = RefactoringUtil.createPackageDirectoryInSourceRoot(myPackage, mySourceRoot);
+      myTargetDirectory = WriteAction.compute(() -> {
+        try {
+          return RefactoringUtil.createPackageDirectoryInSourceRoot(myPackage, mySourceRoot);
+        }
+        catch (IncorrectOperationException e) {
+          return null;
+        }
+      });
     }
-    return RefactoringUtil.createPackageDirectoryInSourceRoot(myPackage, mySourceRoot);
+    return myTargetDirectory;
   }
 }

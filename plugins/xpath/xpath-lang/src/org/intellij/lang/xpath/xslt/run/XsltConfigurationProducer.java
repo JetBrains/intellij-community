@@ -1,23 +1,5 @@
-/*
- * Copyright 2000-2010 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
-/*
- * User: anna
- * Date: 13-May-2010
- */
 package org.intellij.lang.xpath.xslt.run;
 
 import com.intellij.execution.Location;
@@ -34,33 +16,33 @@ import org.intellij.lang.xpath.xslt.XsltSupport;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
+import java.util.List;
 
 public class XsltConfigurationProducer extends RuntimeConfigurationProducer{
-  private XmlFile myFile;
-
   public XsltConfigurationProducer() {
     super(XsltRunConfigType.getInstance());
   }
 
   @Override
   public PsiElement getSourceElement() {
-    return myFile;
+    return restoreSourceElement();
   }
 
   @Override
   protected RunnerAndConfigurationSettings createConfigurationByElement(Location location, ConfigurationContext context) {
     final XmlFile file = PsiTreeUtil.getParentOfType(location.getPsiElement(), XmlFile.class, false);
     if (file != null && file.isPhysical() && XsltSupport.isXsltFile(file)) {
-      myFile = file;
-      final Project project = myFile.getProject();
+      storeSourceElement(file);
+      final Project project = file.getProject();
       final RunnerAndConfigurationSettings settings =
-        RunManager.getInstance(project).createRunConfiguration(myFile.getName(), getConfigurationFactory());
-      ((XsltRunConfiguration)settings.getConfiguration()).initFromFile(myFile);
+        RunManager.getInstance(project).createConfiguration(file.getName(), getConfigurationFactory());
+      ((XsltRunConfiguration)settings.getConfiguration()).initFromFile(file);
       return settings;
     }
     return null;
   }
 
+  @Override
   public int compareTo(Object o) {
     return PREFERED;
   }
@@ -68,7 +50,7 @@ public class XsltConfigurationProducer extends RuntimeConfigurationProducer{
 
   @Override
   protected RunnerAndConfigurationSettings findExistingByElement(Location location,
-                                                                 @NotNull RunnerAndConfigurationSettings[] existingConfigurations,
+                                                                 @NotNull List<RunnerAndConfigurationSettings> existingConfigurations,
                                                                  ConfigurationContext context) {
     final XmlFile file = PsiTreeUtil.getParentOfType(location.getPsiElement(), XmlFile.class, false);
     if (file != null && file.isPhysical() && XsltSupport.isXsltFile(file)) {

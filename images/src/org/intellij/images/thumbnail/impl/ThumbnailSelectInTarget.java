@@ -17,21 +17,23 @@ package org.intellij.images.thumbnail.impl;
 
 import com.intellij.ide.SelectInContext;
 import com.intellij.ide.SelectInTarget;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.VirtualFile;
 import org.intellij.images.fileTypes.ImageFileTypeManager;
 import org.intellij.images.thumbnail.ThumbnailManager;
 import org.intellij.images.thumbnail.ThumbnailView;
 
 final class ThumbnailSelectInTarget implements SelectInTarget {
-  public ThumbnailSelectInTarget() {
+  ThumbnailSelectInTarget() {
   }
 
+  @Override
   public boolean canSelect(SelectInContext context) {
     VirtualFile virtualFile = context.getVirtualFile();
     return ImageFileTypeManager.getInstance().isImage(virtualFile) && virtualFile.getParent() != null;
   }
 
+  @Override
   public void selectIn(SelectInContext context, final boolean requestFocus) {
     VirtualFile virtualFile = context.getVirtualFile();
     VirtualFile parent = virtualFile.getParent();
@@ -49,14 +51,17 @@ final class ThumbnailSelectInTarget implements SelectInTarget {
     return getToolWindowId();
   }
 
+  @Override
   public String getToolWindowId() {
     return ThumbnailView.TOOLWINDOW_ID;
   }
 
+  @Override
   public String getMinorViewId() {
     return null;
   }
 
+  @Override
   public float getWeight() {
     return 10;
   }

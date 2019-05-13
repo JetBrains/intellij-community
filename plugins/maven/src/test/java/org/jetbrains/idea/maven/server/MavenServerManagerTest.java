@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,10 @@
  */
 package org.jetbrains.idea.maven.server;
 
+import com.intellij.execution.configurations.SimpleJavaParameters;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.text.VersionComparatorUtil;
 import org.jetbrains.idea.maven.MavenTestCase;
 
 import java.rmi.RemoteException;
@@ -28,37 +31,28 @@ public class MavenServerManagerTest extends MavenTestCase {
     //make sure all components are initialized to prevent deadlocks
     MavenServerManager.getInstance().getOrCreateWrappee();
 
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
-      public void run() {
-        Future result = ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
-          @Override
-          public void run() {
-            MavenServerManager.getInstance().shutdown(true);
-            try {
-              MavenServerManager.getInstance().getOrCreateWrappee();
-            }
-            catch (RemoteException e) {
-              throw new RuntimeException(e);
-            }
-          }
-        });
-
+    ApplicationManager.getApplication().runWriteAction(() -> {
+      Future result = ApplicationManager.getApplication().executeOnPooledThread(() -> {
+        MavenServerManager.getInstance().shutdown(true);
         try {
-          result.get(10, TimeUnit.SECONDS);
+          MavenServerManager.getInstance().getOrCreateWrappee();
         }
-        catch (InterruptedException e) {
+        catch (RemoteException e) {
           throw new RuntimeException(e);
         }
-        catch (java.util.concurrent.ExecutionException e) {
-          throw new RuntimeException(e);
-        }
-        catch (TimeoutException e) {
-          printThreadDump();
-          throw new RuntimeException(e);
-        }
-        result.cancel(true);
+      });
+
+      try {
+        result.get(10, TimeUnit.SECONDS);
       }
+      catch (InterruptedException | java.util.concurrent.ExecutionException e) {
+        throw new RuntimeException(e);
+      }
+      catch (TimeoutException e) {
+        printThreadDump();
+        throw new RuntimeException(e);
+      }
+      result.cancel(true);
     });
   }
 }

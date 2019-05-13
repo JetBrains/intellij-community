@@ -1,3 +1,18 @@
+/*
+ * Copyright 2000-2016 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package org.jetbrains.plugins.groovy.springloaded;
 
 import com.intellij.debugger.NoDataException;
@@ -5,8 +20,6 @@ import com.intellij.debugger.PositionManager;
 import com.intellij.debugger.SourcePosition;
 import com.intellij.debugger.engine.DebugProcess;
 import com.intellij.debugger.requests.ClassPrepareRequestor;
-import com.intellij.openapi.application.AccessToken;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
@@ -16,6 +29,7 @@ import com.intellij.psi.impl.source.PsiClassImpl;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.sun.jdi.AbsentInformationException;
 import com.sun.jdi.Location;
+import com.sun.jdi.ObjectCollectedException;
 import com.sun.jdi.ReferenceType;
 import com.sun.jdi.request.ClassPrepareRequest;
 import org.jetbrains.annotations.NotNull;
@@ -24,7 +38,10 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 import java.util.regex.Pattern;
 
 /**
@@ -43,68 +60,58 @@ public class SpringLoadedPositionManager implements PositionManager {
 
   @Override
   public SourcePosition getSourcePosition(@Nullable Location location) throws NoDataException {
-    throw new NoDataException();
+    throw NoDataException.INSTANCE;
   }
 
   @NotNull
   @Override
-  public List<ReferenceType> getAllClasses(final SourcePosition classPosition) throws NoDataException {
-    AccessToken accessToken = ReadAction.start();
+  public List<ReferenceType> getAllClasses(@NotNull final SourcePosition classPosition) throws NoDataException {
 
-    try {
-      String className = findEnclosingName(classPosition);
-      if (className == null) throw new NoDataException();
+    String className = ReadAction.compute(() -> findEnclosingName(classPosition));
+    if (className == null) throw NoDataException.INSTANCE;
 
-      List<ReferenceType> referenceTypes = myDebugProcess.getVirtualMachineProxy().classesByName(className);
-      if (referenceTypes.isEmpty()) throw new NoDataException();
+    int line = ReadAction.compute(() -> classPosition.getLine());
 
-      Set<ReferenceType> res = new HashSet<ReferenceType>();
+    List<ReferenceType> referenceTypes = myDebugProcess.getVirtualMachineProxy().classesByName(className);
+    if (referenceTypes.isEmpty()) throw NoDataException.INSTANCE;
 
-      for (ReferenceType referenceType : referenceTypes) {
-        findNested(res, referenceType, classPosition);
-      }
+    Set<ReferenceType> res = new HashSet<>();
 
-      if (res.isEmpty()) {
-        throw new NoDataException();
-      }
-
-      return new ArrayList<ReferenceType>(res);
+    for (ReferenceType referenceType : referenceTypes) {
+      findNested(res, referenceType, line);
     }
-    finally {
-      accessToken.finish();
+
+    if (res.isEmpty()) {
+      throw NoDataException.INSTANCE;
     }
+
+    return new ArrayList<>(res);
   }
 
   @NotNull
   @Override
-  public List<Location> locationsOfLine(ReferenceType type, SourcePosition position) throws NoDataException {
-    throw new NoDataException();
+  public List<Location> locationsOfLine(@NotNull ReferenceType type, @NotNull SourcePosition position) throws NoDataException {
+    throw NoDataException.INSTANCE;
   }
 
   @Nullable
   private static String findEnclosingName(final SourcePosition position) {
-    AccessToken accessToken = ApplicationManager.getApplication().acquireReadActionLock();
-
-    try {
-      PsiElement element = findElementAt(position);
-      while (true) {
-        element = PsiTreeUtil.getParentOfType(element, GrTypeDefinition.class, PsiClassImpl.class);
-        if (element == null
-            || (element instanceof GrTypeDefinition && !((GrTypeDefinition)element).isAnonymous())
-            || (element instanceof PsiClassImpl && ((PsiClassImpl)element).getName() != null)
-          ) {
-          break;
-        }
+    PsiElement element = findElementAt(position);
+    while (true) {
+      element = PsiTreeUtil.getParentOfType(element, GrTypeDefinition.class, PsiClassImpl.class);
+      if (element == null
+          || (element instanceof GrTypeDefinition && !((GrTypeDefinition)element).isAnonymous())
+          || (element instanceof PsiClassImpl && ((PsiClassImpl)element).getName() != null)
+        ) {
+        break;
       }
+    }
 
-      if (element != null) {
-        return getClassNameForJvm((PsiClass)element);
-      }
-      return null;
+    if (element != null) {
+      return getClassNameForJvm((PsiClass)element);
     }
-    finally {
-      accessToken.finish();
-    }
+
+    return null;
   }
 
   @Nullable
@@ -119,9 +126,8 @@ public class SpringLoadedPositionManager implements PositionManager {
 
   @Nullable
   private static String getOuterClassName(final SourcePosition position) {
-    AccessToken accessToken = ApplicationManager.getApplication().acquireReadActionLock();
 
-    try {
+    return ReadAction.compute(()->{
       PsiElement element = findElementAt(position);
       if (element == null) return null;
       PsiElement sourceImage = PsiTreeUtil.getParentOfType(element, GrClosableBlock.class, GrTypeDefinition.class, PsiClassImpl.class);
@@ -130,10 +136,7 @@ public class SpringLoadedPositionManager implements PositionManager {
         return getClassNameForJvm((PsiClass)sourceImage);
       }
       return null;
-    }
-    finally {
-      accessToken.finish();
-    }
+    });
   }
 
   @Nullable
@@ -144,10 +147,10 @@ public class SpringLoadedPositionManager implements PositionManager {
   }
 
   @Override
-  public ClassPrepareRequest createPrepareRequest(ClassPrepareRequestor requestor, SourcePosition position) throws NoDataException {
+  public ClassPrepareRequest createPrepareRequest(@NotNull ClassPrepareRequestor requestor, @NotNull SourcePosition position) throws NoDataException {
     String className = getOuterClassName(position);
     if (className == null) {
-      throw new NoDataException();
+      throw NoDataException.INSTANCE;
     }
 
     return myDebugProcess.getRequestsManager().createClassPrepareRequest(requestor, className + "*");
@@ -163,7 +166,7 @@ public class SpringLoadedPositionManager implements PositionManager {
       && GENERATED_CLASS_NAME.matcher(name.substring(ownerClassName.length())).matches();
   }
   
-  private static void findNested(Set<ReferenceType> res, ReferenceType fromClass, SourcePosition classPosition) {
+  private static void findNested(Set<ReferenceType> res, ReferenceType fromClass, int line) {
     if (!fromClass.isPrepared()) return;
 
     List<ReferenceType> nestedTypes = fromClass.nestedTypes();
@@ -179,20 +182,21 @@ public class SpringLoadedPositionManager implements PositionManager {
         }
       }
       else {
-        findNested(res, nested, classPosition);
+        findNested(res, nested, line);
       }
     }
 
     try {
-      final int lineNumber = classPosition.getLine() + 1;
+      final int lineNumber = line + 1;
 
       ReferenceType effectiveRef = springLoadedGeneratedClass == null ? fromClass : springLoadedGeneratedClass;
 
-      if (effectiveRef.locationsOfLine(lineNumber).size() > 0) {
+      if (!effectiveRef.locationsOfLine(lineNumber).isEmpty()) {
         res.add(effectiveRef);
       }
     }
-    catch (AbsentInformationException ignored) {
+    catch (ObjectCollectedException | AbsentInformationException ignored) {
+
     }
   }
 

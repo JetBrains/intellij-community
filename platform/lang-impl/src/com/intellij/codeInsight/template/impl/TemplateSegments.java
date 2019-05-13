@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,48 +22,48 @@ import com.intellij.openapi.editor.RangeMarker;
 
 import java.util.ArrayList;
 
-public class TemplateSegments {
-  private final ArrayList<RangeMarker> mySegments = new ArrayList<RangeMarker>();
+class TemplateSegments {
+  private final ArrayList<RangeMarker> mySegments = new ArrayList<>();
   private final Editor myEditor;
 
-  public TemplateSegments(Editor editor) {
+  TemplateSegments(Editor editor) {
     myEditor = editor;
   }
 
-  public int getSegmentStart(int i) {
+  int getSegmentStart(int i) {
     RangeMarker rangeMarker = mySegments.get(i);
     return rangeMarker.getStartOffset();
   }
 
-  public int getSegmentEnd(int i) {
+  int getSegmentEnd(int i) {
     RangeMarker rangeMarker = mySegments.get(i);
     return rangeMarker.getEndOffset();
   }
 
-  public boolean isValid(int i) {
+  boolean isValid(int i) {
     return mySegments.get(i).isValid();
   }
 
-  public void removeAll() {
+  void removeAll() {
     for (RangeMarker segment : mySegments) {
       segment.dispose();
     }
     mySegments.clear();
   }
 
-  public void addSegment(int start, int end) {
+  void addSegment(int start, int end) {
     RangeMarker rangeMarker = myEditor.getDocument().createRangeMarker(start, end);
     mySegments.add(rangeMarker);
   }
 
-  public void setSegmentsGreedy(boolean greedy) {
+  void setSegmentsGreedy(boolean greedy) {
     for (final RangeMarker segment : mySegments) {
       segment.setGreedyToRight(greedy);
       segment.setGreedyToLeft(greedy);
     }
   }
 
-  public boolean isInvalid() {
+  boolean isInvalid() {
     for (RangeMarker marker : mySegments) {
       if (!marker.isValid()) {
         return true;
@@ -72,17 +72,24 @@ public class TemplateSegments {
     return false;
   }
 
-  public void replaceSegmentAt(int index, int start, int end) {
+  void replaceSegmentAt(int index, int start, int end) {
+    replaceSegmentAt(index, start, end, false);
+  }
+
+  void replaceSegmentAt(int index, int start, int end, boolean preserveGreediness) {
     RangeMarker rangeMarker = mySegments.get(index);
+    boolean greedyToLeft = rangeMarker.isGreedyToLeft();
+    boolean greedyToRight = rangeMarker.isGreedyToRight();
     rangeMarker.dispose();
+    
     Document doc = myEditor.getDocument();
     rangeMarker = doc.createRangeMarker(start, end);
-    rangeMarker.setGreedyToLeft(true);
-    rangeMarker.setGreedyToRight(true);
+    rangeMarker.setGreedyToLeft(greedyToLeft || !preserveGreediness);
+    rangeMarker.setGreedyToRight(greedyToRight || !preserveGreediness);
     mySegments.set(index, rangeMarker);
   }
 
-  public void setNeighboursGreedy(final int segmentNumber, final boolean greedy) {
+  void setNeighboursGreedy(final int segmentNumber, final boolean greedy) {
     if (segmentNumber > 0) {
       final RangeMarker left = mySegments.get(segmentNumber - 1);
       left.setGreedyToLeft(greedy);
@@ -100,7 +107,7 @@ public class TemplateSegments {
    *
    * prevent two different segments to grow simultaneously if they both starts at the same offset.
    */
-  public void lockSegmentAtTheSameOffsetIfAny(final int number) {
+  void lockSegmentAtTheSameOffsetIfAny(final int number) {
     if (number == -1) {
       return;
     }
@@ -119,19 +126,7 @@ public class TemplateSegments {
     }
   }
 
-  public int getSegmentWithTheSameStart(int segmentNumber, int start) {
-    for (int i = segmentNumber + 1; i < mySegments.size(); i++) {
-      final RangeMarker segment = mySegments.get(i);
-      final int startOffset2 = segment.getStartOffset();
-      if (start == startOffset2) {
-        return i;
-      }
-    }
-
-    return -1;
-  }
-
-  public int getSegmentsCount() {
+  int getSegmentsCount() {
     return mySegments.size();
   }
 }

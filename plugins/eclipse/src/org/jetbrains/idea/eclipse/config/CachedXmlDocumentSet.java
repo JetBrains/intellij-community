@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,237 +15,77 @@
  */
 package org.jetbrains.idea.eclipse.config;
 
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.impl.storage.FileSet;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.containers.HashMap;
-import com.intellij.util.io.fs.IFile;
-import org.jdom.Document;
+import gnu.trove.THashMap;
+import org.jdom.Element;
 import org.jdom.JDOMException;
-import org.jdom.output.EclipseJDOMUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.*;
-import java.util.*;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 
-public class CachedXmlDocumentSet implements FileSet {
-  protected final Map<String, String> nameToDir = new HashMap<String, String>();
-  protected final Map<String, Document> savedContent = new HashMap<String, Document>();
-  protected final Map<String, Document> modifiedContent = new HashMap<String, Document>();
-  protected final Set<String> deletedContent = new HashSet<String>();
-  private final Project project;
+public class CachedXmlDocumentSet {
+  private final Map<String, String> nameToDir = new THashMap<>();
 
-  public CachedXmlDocumentSet(Project project) {
-    this.project = project;
+  @Nullable
+  public Element load(@NotNull String name, boolean refresh) throws IOException, JDOMException {
+    assert nameToDir.containsKey(name) : name;
+
+    VirtualFile file = getFile(name, refresh);
+    if (file == null) {
+      return null;
+    }
+
+    InputStream inputStream = file.getInputStream();
+    try {
+      return JDOMUtil.load(inputStream);
+    }
+    finally {
+      inputStream.close();
+    }
   }
 
-  public Document read (final String name) throws IOException, JDOMException {
-    return (Document)load(name).clone();
-  }
-
-  public void write(Document document, String name) throws IOException {
-    update((Document)document.clone(), name);
-  }
-
-  public String getParent(final String name) {
+  public String getParent(@NotNull String name) {
     return nameToDir.get(name);
   }
 
-  public void register(final String name, final String path) {
+  public void register(@NotNull String name, @NotNull String path) {
     nameToDir.put(name, path);
   }
 
-  protected void assertKnownName(final String name) {
-    assert nameToDir.containsKey(name) : name;
+  public void unregister(@NotNull String name) {
+    nameToDir.remove(name);
   }
 
-  public boolean exists(String name) {
-    assertKnownName(name);
-    return !deletedContent.contains(name) && getVFile(name) != null;
+  public boolean exists(@NotNull String name) {
+    return getFile(name, false) != null;
   }
 
   @Nullable
-  protected VirtualFile getVFile(final String name) {
-    final VirtualFile file = LocalFileSystem.getInstance().findFileByIoFile(new File(getParent(name), name));
-    if (file != null) {
+  VirtualFile getFile(@NotNull String name, boolean refresh) {
+    VirtualFile file = LocalFileSystem.getInstance().findFileByIoFile(new File(getParent(name), name));
+    if (file != null && refresh) {
       file.refresh(false, true);
-      if (!file.isValid()) return null;
+      if (!file.isValid()) {
+        return null;
+      }
     }
     return file;
   }
 
   @NotNull
-  private VirtualFile getOrCreateVFile(final String name) throws IOException {
-    final VirtualFile vFile = getVFile(name);
-    if (vFile != null) {
-      return vFile;
+  public List<String> getFilePaths() {
+    List<String> list = new ArrayList<>(nameToDir.size());
+    for (String name : nameToDir.keySet()) {
+      list.add(getParent(name) + '/' + name);
     }
-    else {
-      final VirtualFile vDir = LocalFileSystem.getInstance().findFileByIoFile(new File(getParent(name)));
-      if (vDir == null) {
-        throw new IOException(name + ": file not found");
-      }
-      final IOException[] ex = new IOException[1];
-      final VirtualFile file = ApplicationManager.getApplication().runWriteAction(new Computable<VirtualFile>() {
-        public VirtualFile compute() {
-          try {
-            return vDir.createChildData(this, name);
-          }
-          catch (IOException e) {
-            ex[0] = e;
-            return null;
-          }
-        }
-      });
-      if (ex[0] != null) throw ex[0];
-      return file;
-    }
+    return list;
   }
-
-  protected Document load(final String name) throws IOException, JDOMException {
-    assertKnownName(name);
-    final Document logical = modifiedContent.get(name);
-    if (logical != null) {
-      return logical;
-    }
-
-    Document physical = savedContent.get(name);
-    if (physical == null) {
-      final VirtualFile vFile = deletedContent.contains(name) ? null : getVFile(name);
-      if (vFile == null) {
-        throw new IOException(name + ": file does not exist");
-      }
-      final InputStream is = vFile.getInputStream();
-      try {
-        physical = JDOMUtil.loadDocument(is);
-      }
-      finally {
-        is.close();
-      }
-      savedContent.put(name, physical);
-    }
-    return physical;
-
-  }
-
-  public void preload() {
-    for (String key : nameToDir.keySet()) {
-      try {
-        load(key);
-      }
-      catch (IOException ignore) {
-      }
-      catch (JDOMException ignore) {
-      }
-    }
-  }
-
-  public void update(Document content, final String name) {
-    assertKnownName(name);
-    modifiedContent.put(name, content);
-    deletedContent.remove(name);
-  }
-
-  public void delete(String name) {
-    modifiedContent.remove(name);
-    savedContent.remove(name);
-    deletedContent.add(name);
-    //nameToDir.remove(name);
-  }
-
-  public void listFiles(final List<VirtualFile> list) {
-    Set<String> existingFiles = new HashSet<String>(savedContent.keySet());
-    existingFiles.addAll(modifiedContent.keySet());
-    for (String key : existingFiles) {
-      try {
-        if(getVFile(key)==null) {
-          savedContent.remove(key); // deleted on disk
-        }
-        list.add(getOrCreateVFile(key));
-      }
-      catch (IOException ignore) {
-      }
-    }
-    Set<String> newFiles = new HashSet<String>(nameToDir.keySet());
-    newFiles.removeAll(existingFiles);
-    for (String name : newFiles) {
-      VirtualFile vFile = getVFile(name);
-      if (vFile != null) {
-        list.add(vFile);
-      }
-    }
-  }
-
-  @Override
-  public void listModifiedFiles(List<VirtualFile> list) {
-    for (String key : modifiedContent.keySet()) {
-      try {
-        if (hasChanged(key)) {
-          list.add(getOrCreateVFile(key));
-        }
-      }
-      catch (IOException ignore) {
-      }
-    }
-  }
-
-  public boolean hasChanged() {
-    for (String key : modifiedContent.keySet()) {
-      if (hasChanged(key)) {
-        return true;
-      }
-    }
-    return !deletedContent.isEmpty();
-  }
-
-  private boolean hasChanged(final String key) {
-    final Document content = modifiedContent.get(key);
-    final Document physical1 = content == null ? null : content;
-    final Document physical2 = savedContent.get(key);
-    if (physical1 != null && physical2 != null) {
-      return !JDOMUtil.areDocumentsEqual(physical1, physical2);
-    }
-    return physical1 != physical2;
-  }
-
-  public void commit() throws IOException {
-    for (String key : modifiedContent.keySet()) {
-      if (hasChanged(key)) {
-        final Document content = modifiedContent.get(key);
-        if (content != null) {
-          final Writer writer = new OutputStreamWriter(getOrCreateVFile(key).getOutputStream(this), "UTF-8");
-          try {
-            EclipseJDOMUtil.output(content, writer, project);
-          }
-          finally {
-            writer.close();
-          }
-          savedContent.put(key, content);
-        }
-      }
-    }
-
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      public void run() {
-        for (String deleted : deletedContent) {
-          VirtualFile file = getVFile(deleted);
-          if (file != null) {
-            try {
-              file.delete(this);
-            }
-            catch (IOException ignore) {
-            }
-          }
-        }
-        deletedContent.clear();
-      }
-    });
-  }
-
-
 }

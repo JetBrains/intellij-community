@@ -20,13 +20,12 @@ package com.intellij.openapi.editor;
  * be used with almost any kind of text.
  *
  * @author Denis Zhdanov
- * @since Aug 25, 2010 11:33:00 AM
  */
 public class DefaultLineWrapPositionStrategy extends GenericLineWrapPositionStrategy {
 
   public DefaultLineWrapPositionStrategy() {
     // Commas.
-    addRule(new Rule(',', WrapCondition.AFTER, Rule.DEFAULT_WEIGHT * 1.4));
+    addRule(new Rule(',', WrapCondition.AFTER));
 
     // Symbols to wrap either before or after.
     addRule(new Rule(' '));

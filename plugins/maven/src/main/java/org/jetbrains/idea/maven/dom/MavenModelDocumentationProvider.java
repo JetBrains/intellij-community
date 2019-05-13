@@ -16,13 +16,13 @@
 package org.jetbrains.idea.maven.dom;
 
 import com.intellij.lang.documentation.DocumentationProvider;
+import com.intellij.lang.findUsages.DescriptiveNameUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.FakePsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.usageView.UsageViewTypeLocation;
-import com.intellij.usageView.UsageViewUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.dom.references.MavenPsiElementWrapper;
@@ -33,10 +33,12 @@ import java.util.Collections;
 import java.util.List;
 
 public class MavenModelDocumentationProvider implements DocumentationProvider, ElementDescriptionProvider {
+  @Override
   public String getQuickNavigateInfo(PsiElement element, PsiElement originalElement) {
     return getDoc(element, false);
   }
 
+  @Override
   public List<String> getUrlFor(PsiElement element, PsiElement originalElement) {
     element = getMavenElement(element);
     if (element == null) return null;
@@ -48,23 +50,27 @@ public class MavenModelDocumentationProvider implements DocumentationProvider, E
     return Collections.singletonList("http://maven.apache.org/ref/2.2.1/maven-model/maven.html");
   }
 
+  @Override
   public String generateDoc(PsiElement element, PsiElement originalElement) {
     return getDoc(element, true);
   }
 
+  @Override
   public PsiElement getDocumentationElementForLookupItem(PsiManager psiManager, Object object, PsiElement element) {
     return null;
   }
 
+  @Override
   public PsiElement getDocumentationElementForLink(PsiManager psiManager, String link, PsiElement context) {
     return null;
   }
 
   @Nullable
-  private String getDoc(PsiElement element, boolean html) {
+  private static String getDoc(PsiElement element, boolean html) {
     return getMavenElementDescription(element, DescKind.TYPE_NAME_VALUE, html);
   }
 
+  @Override
   public String getElementDescription(@NotNull PsiElement element, @NotNull ElementDescriptionLocation location) {
     return getMavenElementDescription(element, location instanceof UsageViewTypeLocation ? DescKind.TYPE : DescKind.NAME, false);
   }
@@ -101,11 +107,11 @@ public class MavenModelDocumentationProvider implements DocumentationProvider, E
   }
 
   private static String buildPropertyName(PsiElement e, boolean property) {
-    if (property) return UsageViewUtil.getDescriptiveName(e);
+    if (property) return DescriptiveNameUtil.getDescriptiveName(e);
 
-    List<String> path = new ArrayList<String>();
+    List<String> path = new ArrayList<>();
     do {
-      path.add(UsageViewUtil.getDescriptiveName(e));
+      path.add(DescriptiveNameUtil.getDescriptiveName(e));
     }
     while ((e = PsiTreeUtil.getParentOfType(e, XmlTag.class)) != null);
     Collections.reverse(path);

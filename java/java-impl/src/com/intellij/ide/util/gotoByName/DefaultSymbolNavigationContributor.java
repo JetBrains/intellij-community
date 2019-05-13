@@ -1,48 +1,48 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.util.gotoByName;
 
+import com.intellij.ide.actions.JavaQualifiedNameProvider;
 import com.intellij.ide.util.DefaultPsiElementCellRenderer;
 import com.intellij.navigation.ChooseByNameContributor;
+import com.intellij.navigation.ChooseByNameContributorEx;
+import com.intellij.navigation.GotoClassContributor;
 import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.Conditions;
+import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.MinusculeMatcher;
+import com.intellij.psi.codeStyle.NameUtil;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.PsiSearchScopeUtil;
 import com.intellij.psi.search.PsiShortNamesCache;
+import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.HashSet;
+import com.intellij.util.Processor;
+import com.intellij.util.indexing.FindSymbolParameters;
+import com.intellij.util.indexing.IdFilter;
+import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-public class DefaultSymbolNavigationContributor implements ChooseByNameContributor {
+public class DefaultSymbolNavigationContributor implements ChooseByNameContributorEx, GotoClassContributor {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.util.gotoByName.DefaultSymbolNavigationContributor");
 
   @Override
   @NotNull
   public String[] getNames(Project project, boolean includeNonProjectItems) {
     PsiShortNamesCache cache = PsiShortNamesCache.getInstance(project);
-    HashSet<String> set = new HashSet<String>();
-    cache.getAllMethodNames(set);
-    cache.getAllFieldNames(set);
-    cache.getAllClassNames(set);
+    Set<String> set = new HashSet<>();
+    Collections.addAll(set, cache.getAllMethodNames());
+    Collections.addAll(set, cache.getAllFieldNames());
+    Collections.addAll(set, cache.getAllClassNames());
     return ArrayUtil.toStringArray(set);
   }
 
@@ -52,45 +52,154 @@ public class DefaultSymbolNavigationContributor implements ChooseByNameContribut
     GlobalSearchScope scope = includeNonProjectItems ? GlobalSearchScope.allScope(project) : GlobalSearchScope.projectScope(project);
     PsiShortNamesCache cache = PsiShortNamesCache.getInstance(project);
 
-    PsiMethod[] methods = cache.getMethodsByName(name, scope);
-    methods = filterInheritedMethods(methods);
-    PsiField[] fields = cache.getFieldsByName(name, scope);
-    PsiClass[] classes = cache.getClassesByName(name, scope);
+    Condition<PsiMember> qualifiedMatcher = getQualifiedNameMatcher(pattern);
 
-    List<PsiMember> result = new ArrayList<PsiMember>();
-    ContainerUtil.addAll(result, methods);
-    ContainerUtil.addAll(result, fields);
-    ContainerUtil.addAll(result, classes);
-    filterOutNonOpenable(result);
-    PsiMember[] array = result.toArray(new PsiMember[result.size()]);
+    List<PsiMember> result = new ArrayList<>();
+    for (PsiMethod method : cache.getMethodsByName(name, scope)) {
+      if (!method.isConstructor() && isOpenable(method) && !hasSuperMethod(method, scope, qualifiedMatcher, pattern)) {
+        result.add(method);
+      }
+    }
+    for (PsiField field : cache.getFieldsByName(name, scope)) {
+      if (isOpenable(field)) {
+        result.add(field);
+      }
+    }
+    for (PsiClass aClass : cache.getClassesByName(name, scope)) {
+      if (isOpenable(aClass)) {
+        result.add(aClass);
+      }
+    }
+    PsiMember[] array = result.toArray(PsiMember.EMPTY_ARRAY);
     Arrays.sort(array, MyComparator.INSTANCE);
     return array;
   }
 
-  private static void filterOutNonOpenable(List<PsiMember> members) {
-    ListIterator<PsiMember> it = members.listIterator();
-    while (it.hasNext()) {
-      PsiMember member = it.next();
-      if (isNonOpenable(member)) {
-        it.remove();
+  @Nullable
+  @Override
+  public String getQualifiedName(NavigationItem item) {
+    if (item instanceof PsiClass) {
+      return DefaultClassNavigationContributor.getQualifiedNameForClass((PsiClass)item);
+    }
+    return null;
+  }
+
+  @Nullable
+  @Override
+  public String getQualifiedNameSeparator() {
+    return "$";
+  }
+
+  private static boolean isOpenable(PsiMember member) {
+    final PsiFile file = member.getContainingFile();
+    return file != null && file.getVirtualFile() != null;
+  }
+
+  private static boolean hasSuperMethodCandidates(final PsiMethod method,
+                                                  final GlobalSearchScope scope,
+                                                  final Condition<? super PsiMember> qualifiedMatcher) {
+    if (method.hasModifierProperty(PsiModifier.PRIVATE) || method.hasModifierProperty(PsiModifier.STATIC)) return false;
+
+    final PsiClass containingClass = method.getContainingClass();
+    if (containingClass == null) return false;
+
+    final int parametersCount = method.getParameterList().getParametersCount();
+    return !InheritanceUtil.processSupers(containingClass, false, superClass -> {
+      if (PsiSearchScopeUtil.isInScope(scope, superClass)) {
+        for (PsiMethod candidate : superClass.findMethodsByName(method.getName(), false)) {
+          if (parametersCount == candidate.getParameterList().getParametersCount() &&
+              !candidate.hasModifierProperty(PsiModifier.PRIVATE) &&
+              !candidate.hasModifierProperty(PsiModifier.STATIC) &&
+              qualifiedMatcher.value(candidate)) {
+            return false;
+          }
+        }
+      }
+      return true;
+    });
+
+  }
+
+  private static boolean hasSuperMethod(PsiMethod method, GlobalSearchScope scope, Condition<PsiMember> qualifiedMatcher, String pattern) {
+    if (pattern.contains(".") && Registry.is("ide.goto.symbol.include.overrides.on.qualified.patterns")) {
+      return false;
+    }
+
+    if (!hasSuperMethodCandidates(method, scope, qualifiedMatcher)) {
+      return false;
+    }
+
+    for (HierarchicalMethodSignature signature : method.getHierarchicalMethodSignature().getSuperSignatures()) {
+      PsiMethod superMethod = signature.getMethod();
+      if (PsiSearchScopeUtil.isInScope(scope, superMethod) && qualifiedMatcher.value(superMethod)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  @Override
+  public void processNames(@NotNull Processor<String> processor, @NotNull GlobalSearchScope scope, @Nullable IdFilter filter) {
+    PsiShortNamesCache cache = PsiShortNamesCache.getInstance(scope.getProject());
+    cache.processAllClassNames(processor, scope, filter);
+    cache.processAllFieldNames(processor, scope, filter);
+    cache.processAllMethodNames(processor, scope, filter);
+  }
+
+  @Override
+  public void processElementsWithName(@NotNull String name,
+                                      @NotNull final Processor<NavigationItem> processor,
+                                      @NotNull final FindSymbolParameters parameters) {
+
+    GlobalSearchScope scope = parameters.getSearchScope();
+    IdFilter filter = parameters.getIdFilter();
+    PsiShortNamesCache cache = PsiShortNamesCache.getInstance(scope.getProject());
+
+    String completePattern = parameters.getCompletePattern();
+    final Condition<PsiMember> qualifiedMatcher = getQualifiedNameMatcher(completePattern);
+
+    //noinspection UnusedDeclaration
+    final Set<PsiMethod> collectedMethods = new THashSet<>();
+    boolean success = cache.processFieldsWithName(name, field -> {
+      if (isOpenable(field) && qualifiedMatcher.value(field)) return processor.process(field);
+      return true;
+    }, scope, filter) &&
+                      cache.processClassesWithName(name, aClass -> {
+                        if (isOpenable(aClass) && qualifiedMatcher.value(aClass)) return processor.process(aClass);
+                        return true;
+                      }, scope, filter) &&
+                      cache.processMethodsWithName(name, method -> {
+                      if(!method.isConstructor() && isOpenable(method) && qualifiedMatcher.value(method)) {
+                        collectedMethods.add(method);
+                      }
+                      return true;
+                    }, scope, filter);
+    if (success) {
+      // hashSuperMethod accesses index and can not be invoked without risk of the deadlock in processMethodsWithName
+      Iterator<PsiMethod> iterator = collectedMethods.iterator();
+      while(iterator.hasNext()) {
+        PsiMethod method = iterator.next();
+        if (!hasSuperMethod(method, scope, qualifiedMatcher, completePattern) && !processor.process(method)) return;
+        ProgressManager.checkCanceled();
+        iterator.remove();
       }
     }
   }
 
-  private static boolean isNonOpenable(PsiMember member) {
-    return member.getContainingFile().getVirtualFile() == null;
-  }
-
-  private static PsiMethod[] filterInheritedMethods(PsiMethod[] methods) {
-    ArrayList<PsiMethod> list = new ArrayList<PsiMethod>(methods.length);
-    for (PsiMethod method : methods) {
-      ProgressManager.checkCanceled();
-      if (method.isConstructor()) continue;
-      PsiMethod[] supers = method.findSuperMethods();
-      if (supers.length > 0) continue;
-      list.add(method);
+  private static Condition<PsiMember> getQualifiedNameMatcher(String completePattern) {
+    if (completePattern.contains("#") && completePattern.endsWith(")")) {
+      return member -> member instanceof PsiMethod && JavaQualifiedNameProvider.hasQualifiedName(completePattern, (PsiMethod)member);
     }
-    return list.toArray(new PsiMethod[list.size()]);
+
+    if (completePattern.contains(".") || completePattern.contains("#")) {
+      String normalized = StringUtil.replace(StringUtil.replace(completePattern, "#", ".*"), ".", ".*");
+      MinusculeMatcher matcher = NameUtil.buildMatcher("*" + normalized).build();
+      return member -> {
+        String qualifiedName = PsiUtil.getMemberQualifiedName(member);
+        return qualifiedName != null && matcher.matches(qualifiedName);
+      };
+    }
+    return Conditions.alwaysTrue();
   }
 
   private static class MyComparator implements Comparator<PsiModifierListOwner>{
@@ -115,10 +224,10 @@ public class DefaultSymbolNavigationContributor implements ChooseByNameContribut
 
       if (element1 instanceof PsiMethod){
         LOG.assertTrue(element2 instanceof PsiMethod);
-        PsiParameter[] parms1 = ((PsiMethod)element1).getParameterList().getParameters();
-        PsiParameter[] parms2 = ((PsiMethod)element2).getParameterList().getParameters();
+        PsiParameter[] params1 = ((PsiMethod)element1).getParameterList().getParameters();
+        PsiParameter[] params2 = ((PsiMethod)element2).getParameterList().getParameters();
 
-        if (parms1.length != parms2.length) return parms1.length - parms2.length;
+        if (params1.length != params2.length) return params1.length - params2.length;
       }
 
       String text1 = myRenderer.getElementText(element1);
@@ -146,6 +255,32 @@ public class DefaultSymbolNavigationContributor implements ChooseByNameContribut
         LOG.error(element);
         return 0;
       }
+    }
+  }
+
+  public static class JavadocSeparatorContributor implements ChooseByNameContributor, GotoClassContributor {
+    @Nullable
+    @Override
+    public String getQualifiedName(NavigationItem item) {
+      return null;
+    }
+
+    @Nullable
+    @Override
+    public String getQualifiedNameSeparator() {
+      return "#";
+    }
+
+    @NotNull
+    @Override
+    public String[] getNames(Project project, boolean includeNonProjectItems) {
+      return ArrayUtil.EMPTY_STRING_ARRAY;
+    }
+
+    @NotNull
+    @Override
+    public NavigationItem[] getItemsByName(String name, String pattern, Project project, boolean includeNonProjectItems) {
+      return NavigationItem.EMPTY_NAVIGATION_ITEM_ARRAY;
     }
   }
 

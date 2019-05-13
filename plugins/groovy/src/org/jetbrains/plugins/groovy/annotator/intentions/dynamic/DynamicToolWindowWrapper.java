@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.annotator.intentions.dynamic;
 
 import com.intellij.ide.DeleteProvider;
@@ -22,7 +8,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.SimpleToolWindowPanel;
 import com.intellij.openapi.wm.IdeFocusManager;
@@ -44,9 +29,9 @@ import com.intellij.ui.treeStructure.treetable.TreeTableTree;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.Convertor;
 import com.intellij.util.ui.AbstractTableCellEditor;
 import com.intellij.util.ui.ColumnInfo;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import icons.JetgroovyIcons;
@@ -76,10 +61,6 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 
-/**
- * User: Dmitry.Krasilschikov
- * Date: 09.01.2008
- */
 public class DynamicToolWindowWrapper {
   private static final Logger LOG = Logger.getInstance(DynamicToolWindowWrapper.class);
 
@@ -112,10 +93,8 @@ public class DynamicToolWindowWrapper {
 
   public ToolWindow getToolWindow() {
     if (myToolWindow == null) {
-      myToolWindow = ToolWindowManager.getInstance(myProject).registerToolWindow(GroovyBundle.message("dynamic.tool.window.id"), true, ToolWindowAnchor.RIGHT);
-      myToolWindow.setIcon(JetgroovyIcons.Groovy.DynamicProperty_13);
-      myToolWindow.setTitle(GroovyBundle.message("dynamic.window"));
-      myToolWindow.setToHideOnEmptyContent(true);
+      myToolWindow = ToolWindowManager.getInstance(myProject).registerToolWindow(GroovyBundle.message("dynamic.tool.window.id"), false, ToolWindowAnchor.RIGHT);
+      myToolWindow.setIcon(JetgroovyIcons.Groovy.Groovy_13x13);
 
       final JPanel panel = buildBigPanel();
       final ContentManager contentManager = myToolWindow.getContentManager();
@@ -130,11 +109,6 @@ public class DynamicToolWindowWrapper {
   private JPanel buildBigPanel() {
     myBigPanel = new SimpleToolWindowPanel(true);
 
-    final ActionManager actionManager = ActionManager.getInstance();
-    final ActionGroup actionGroup = (ActionGroup)actionManager.getAction("Groovy.Dynamic.Toolbar");
-    ActionToolbar actionToolbar = actionManager.createActionToolbar("Groovy.Dynamic.Toolbar", actionGroup, true);
-    myBigPanel.setToolbar(actionToolbar.getComponent());
-
     myBigPanel.setBackground(UIUtil.getFieldForegroundColor());
 
     final JPanel panel = new JPanel(new BorderLayout());
@@ -145,9 +119,23 @@ public class DynamicToolWindowWrapper {
 
     panel.add(myTreeTablePanel);
     myBigPanel.setPreferredSize(new Dimension(200, myBigPanel.getHeight()));
+    myBigPanel.setToolbar(createToolbar().getComponent());
 
     myBigPanel.revalidate();
     return myBigPanel;
+  }
+
+  private static ActionToolbar createToolbar() {
+    return ActionManager.getInstance().createActionToolbar("Groovy.Dynamic.Toolbar", createActions(), true);
+  }
+
+  private static ActionGroup createActions() {
+    final DefaultActionGroup group = new DefaultActionGroup();
+    group.add(new RemoveDynamicAction());
+    group.add(Separator.getInstance());
+    group.add(new ExpandAllAction());
+    group.add(new CollapseAllAction());
+    return group;
   }
 
   public void rebuildTreePanel() {
@@ -158,8 +146,6 @@ public class DynamicToolWindowWrapper {
   }
 
   private void rebuildTreeView(DefaultMutableTreeNode root, boolean expandAll) {
-    PsiDocumentManager.getInstance(myProject).commitAllDocuments();
-
     myTreeTablePanel.removeAll();
 
     final JScrollPane treeTable = createTable(root);
@@ -217,27 +203,27 @@ public class DynamicToolWindowWrapper {
 
     myTreeTable = new MyTreeTable(myTreeTableModel);
 
-    new TreeTableSpeedSearch(myTreeTable, new Convertor<TreePath, String>() {
-      @Override
-      public String convert(TreePath o) {
-        final Object node = o.getLastPathComponent();
-        if (node instanceof DefaultMutableTreeNode) {
-          final Object object = ((DefaultMutableTreeNode)node).getUserObject();
-          if (object instanceof DNamedElement) {
-            return ((DNamedElement)object).getName();
-          }
+    new TreeTableSpeedSearch(myTreeTable, o -> {
+      final Object node = o.getLastPathComponent();
+      if (node instanceof DefaultMutableTreeNode) {
+        final Object object = ((DefaultMutableTreeNode)node).getUserObject();
+        if (object instanceof DNamedElement) {
+          return ((DNamedElement)object).getName();
         }
-        return "";
       }
+      return "";
     });
 
-    DefaultActionGroup group = new DefaultActionGroup();
-    group.add(ActionManager.getInstance().getAction(RemoveDynamicAction.GROOVY_DYNAMIC_REMOVE));
-    PopupHandler.installUnknownPopupHandler(myTreeTable, group, ActionManager.getInstance());
+    PopupHandler.installUnknownPopupHandler(
+      myTreeTable,
+      new DefaultActionGroup(new RemoveDynamicAction()),
+      ActionManager.getInstance()
+    );
 
     final MyColoredTreeCellRenderer treeCellRenderer = new MyColoredTreeCellRenderer();
 
     myTreeTable.setDefaultRenderer(String.class, new TableCellRenderer() {
+      @Override
       public Component getTableCellRendererComponent(JTable table,
                                                      Object value,
                                                      boolean isSelected,
@@ -268,6 +254,7 @@ public class DynamicToolWindowWrapper {
     final MyPropertyTypeCellEditor typeCellEditor = new MyPropertyTypeCellEditor();
 
     typeCellEditor.addCellEditorListener(new CellEditorListener() {
+      @Override
       public void editingStopped(ChangeEvent e) {
         final TreeTableTree tree = getTree();
 
@@ -320,22 +307,26 @@ public class DynamicToolWindowWrapper {
         }
       }
 
+      @Override
       public void editingCanceled(ChangeEvent e) {
         myTreeTable.editingCanceled(e);
       }
     });
 
     RefactoringListenerManager.getInstance(myProject).addListenerProvider(new RefactoringElementListenerProvider() {
+      @Override
       @Nullable
       public RefactoringElementListener getListener(final PsiElement element) {
         if (element instanceof PsiClass) {
           final String qualifiedName = ((PsiClass)element).getQualifiedName();
 
           return new RefactoringElementListener() {
+            @Override
             public void elementMoved(@NotNull PsiElement newElement) {
               renameElement(qualifiedName, newElement);
             }
 
+            @Override
             public void elementRenamed(@NotNull PsiElement newElement) {
               renameElement(qualifiedName, newElement);
             }
@@ -361,6 +352,7 @@ public class DynamicToolWindowWrapper {
     myTreeTable.setDefaultEditor(String.class, typeCellEditor);
 
     myTreeTable.registerKeyboardAction(new ActionListener() {
+      @Override
       public void actionPerformed(ActionEvent event) {
         final int selectionRow = myTreeTable.getTree().getLeadSelectionRow();
         myTreeTable.editCellAt(selectionRow, CLASS_OR_ELEMENT_NAME_COLUMN, event);
@@ -368,6 +360,7 @@ public class DynamicToolWindowWrapper {
     }, KeyStroke.getKeyStroke(KeyEvent.VK_F2, 0), JComponent.WHEN_FOCUSED);
 
     myTreeTable.registerKeyboardAction(new ActionListener() {
+      @Override
       public void actionPerformed(ActionEvent event) {
         final int selectionRow = myTreeTable.getTree().getLeadSelectionRow();
         myTreeTable.editCellAt(selectionRow, TYPE_COLUMN, event);
@@ -383,7 +376,7 @@ public class DynamicToolWindowWrapper {
 
     JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(myTreeTable);
 
-    scrollPane.setPreferredSize(new Dimension(600, 400));
+    scrollPane.setPreferredSize(JBUI.size(600, 400));
     return scrollPane;
   }
 
@@ -456,7 +449,7 @@ public class DynamicToolWindowWrapper {
                                              GroovyBundle.message("dynamic.property.deletion"), Messages.getQuestionIcon());
       }
 
-      if (result != DialogWrapper.OK_EXIT_CODE) return false;
+      if (result != Messages.OK) return false;
     }
 
     removeNamedElement(((DNamedElement)namedElement));
@@ -494,16 +487,18 @@ public class DynamicToolWindowWrapper {
   }
 
   private static class PropertyTypeColumnInfo extends ColumnInfo<DefaultMutableTreeNode, String> {
-    public PropertyTypeColumnInfo(String name) {
+    PropertyTypeColumnInfo(String name) {
       super(name);
     }
 
+    @Override
     public boolean isCellEditable(DefaultMutableTreeNode node) {
       final Object value = node.getUserObject();
 
       return !(value instanceof DClassElement);
     }
 
+    @Override
     public String valueOf(DefaultMutableTreeNode treeNode) {
       Object userObject = treeNode.getUserObject();
 
@@ -514,20 +509,23 @@ public class DynamicToolWindowWrapper {
   }
 
   private static class ClassColumnInfo extends ColumnInfo<DefaultMutableTreeNode, DNamedElement> {
-    public ClassColumnInfo(String name) {
+    ClassColumnInfo(String name) {
       super(name);
     }
 
+    @Override
     public boolean isCellEditable(DefaultMutableTreeNode treeNode) {
       final Object userObject = treeNode.getUserObject();
 
       return userObject instanceof DPropertyElement;
     }
 
+    @Override
     public Class getColumnClass() {
       return TreeTableModel.class;
     }
 
+    @Override
     public DNamedElement valueOf(DefaultMutableTreeNode treeNode) {
       Object userObject = treeNode.getUserObject();
       if (userObject instanceof DClassElement) return ((DClassElement)userObject);
@@ -545,7 +543,8 @@ public class DynamicToolWindowWrapper {
   }
 
   private static class MyColoredTreeCellRenderer extends ColoredTreeCellRenderer {
-    public void customizeCellRenderer(JTree tree,
+    @Override
+    public void customizeCellRenderer(@NotNull JTree tree,
                                       Object value,
                                       boolean selected,
                                       boolean expanded,
@@ -614,14 +613,11 @@ public class DynamicToolWindowWrapper {
     }
 
     private static String[] mapToUnqualified(final String[] argumentsNames) {
-      return ContainerUtil.map2Array(argumentsNames, String.class, new NullableFunction<String, String>() {
-        @Nullable
-        public String fun(final String s) {
-          if (s == null) return null;
-          int index = s.lastIndexOf(".");
-          if (index > 0 && index < s.length() - 1) return s.substring(index + 1);
-          return s;
-        }
+      return ContainerUtil.map2Array(argumentsNames, String.class, (NullableFunction<String, String>)s -> {
+        if (s == null) return null;
+        int index = s.lastIndexOf(".");
+        if (index > 0 && index < s.length() - 1) return s.substring(index + 1);
+        return s;
       });
     }
   }
@@ -629,15 +625,17 @@ public class DynamicToolWindowWrapper {
   private class MyPropertyTypeCellEditor extends AbstractTableCellEditor {
     final EditorTextField field;
 
-    public MyPropertyTypeCellEditor() {
+    MyPropertyTypeCellEditor() {
       final Document document = PsiDocumentManager.getInstance(myProject).getDocument(new GroovyCodeFragment(myProject, ""));
       field = new EditorTextField(document, myProject, GroovyFileType.GROOVY_FILE_TYPE);
     }
 
+    @Override
     public String getCellEditorValue() {
       return field.getText();
     }
 
+    @Override
     public Component getTableCellEditorComponent(JTable table, Object value, boolean isSelected, int row, int column) {
       if (value instanceof String) {
         field.setText(((String)value));
@@ -648,16 +646,17 @@ public class DynamicToolWindowWrapper {
   }
 
   private class MyTreeTable extends TreeTable implements DataProvider {
-    public MyTreeTable(TreeTableModel treeTableModel) {
+    MyTreeTable(TreeTableModel treeTableModel) {
       super(treeTableModel);
     }
 
+    @Override
     @Nullable
-    public Object getData(@NonNls String dataId) {
-      if (LangDataKeys.PSI_ELEMENT.is(dataId)) {
+    public Object getData(@NotNull @NonNls String dataId) {
+      if (CommonDataKeys.PSI_ELEMENT.is(dataId)) {
         return getSelectedElement();
       }
-      else if (LangDataKeys.PSI_FILE.is(dataId)) {
+      else if (CommonDataKeys.PSI_FILE.is(dataId)) {
         final PsiElement element = getSelectedElement();
 
         if (element == null) return null;

@@ -4,7 +4,7 @@ class Test {
     private int c;
     private final int d;
 
-    Test(int b, int d) {
+    public Test(int b, int d) {
         this.b = b;
         this.d = d;
     }

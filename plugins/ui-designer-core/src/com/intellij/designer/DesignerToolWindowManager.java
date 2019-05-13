@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,181 +15,128 @@
  */
 package com.intellij.designer;
 
-import com.intellij.designer.componentTree.ComponentTree;
-import com.intellij.designer.componentTree.ComponentTreeBuilder;
 import com.intellij.designer.designSurface.DesignerEditorPanel;
-import com.intellij.designer.propertyTable.PropertyTablePanel;
 import com.intellij.icons.AllIcons;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.ex.ToolWindowEx;
 import com.intellij.openapi.wm.impl.content.ToolWindowContentUi;
-import com.intellij.ui.IdeBorderFactory;
-import com.intellij.ui.ScrollPaneFactory;
-import com.intellij.ui.SideBorder;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
-import com.intellij.util.ui.tree.TreeUtil;
-import icons.UIDesignerNewIcons;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import javax.swing.*;
-import java.awt.*;
-import java.awt.event.ComponentAdapter;
-import java.awt.event.ComponentEvent;
 
 /**
  * @author Alexander Lobas
  */
 public final class DesignerToolWindowManager extends AbstractToolWindowManager {
-  private Splitter myToolWindowPanel;
-  private ComponentTree myComponentTree;
-  private ComponentTreeBuilder myTreeBuilder;
-  private PropertyTablePanel myPropertyTablePanel;
+  private DesignerToolWindow myToolWindowContent;
+
+  //////////////////////////////////////////////////////////////////////////////////////////
+  //
+  // Public Access
+  //
+  //////////////////////////////////////////////////////////////////////////////////////////
 
   public DesignerToolWindowManager(Project project, FileEditorManager fileEditorManager) {
     super(project, fileEditorManager);
   }
 
-
-  @Override
-  public void disposeComponent() {
-    clearTreeBuilder();
-    myComponentTree = null;
-    myPropertyTablePanel = null;
-  }
-
-  private void clearTreeBuilder() {
-    if (myTreeBuilder != null) {
-      Disposer.dispose(myTreeBuilder);
-      myTreeBuilder = null;
+  public static DesignerToolWindow getInstance(DesignerEditorPanel designer) {
+    DesignerToolWindowManager manager = getInstance(designer.getProject());
+    if (manager.isEditorMode()) {
+      return (DesignerToolWindow)manager.getContent(designer);
     }
+    return manager.myToolWindowContent;
   }
+
 
   public static DesignerToolWindowManager getInstance(Project project) {
     return project.getComponent(DesignerToolWindowManager.class);
   }
 
-  public void expandFromState() {
-    if (myTreeBuilder != null) {
-      myTreeBuilder.expandFromState();
-    }
-  }
-
-  public void refresh(boolean updateProperties) {
-    if (myTreeBuilder != null) {
-      if (updateProperties) {
-        myTreeBuilder.selectFromSurface();
-      }
-      else {
-        myTreeBuilder.queueUpdate();
-      }
-    }
-  }
-
-  public void updateInspections() {
-    if (myComponentTree != null) {
-      myComponentTree.updateInspections();
-    }
-    if (myPropertyTablePanel != null) {
-      myPropertyTablePanel.getPropertyTable().updateInspections();
-    }
-  }
-
-  @Override
-  protected void updateToolWindow(@Nullable DesignerEditorPanel designer) {
-    clearTreeBuilder();
-    myComponentTree.newModel();
-    if (designer == null) {
-      myComponentTree.setDesignerPanel(null);
-      myPropertyTablePanel.setArea(null, null);
-      myToolWindow.setAvailable(false, null);
-    }
-    else {
-      myComponentTree.setDesignerPanel(designer);
-      myTreeBuilder = new ComponentTreeBuilder(myComponentTree, designer);
-      myPropertyTablePanel.setArea(designer, myTreeBuilder.getTreeArea());
-      myToolWindow.setAvailable(true, null);
-      myToolWindow.show(null);
-    }
-  }
+  //////////////////////////////////////////////////////////////////////////////////////////
+  //
+  // Impl
+  //
+  //////////////////////////////////////////////////////////////////////////////////////////
 
   @Override
   protected void initToolWindow() {
-    myComponentTree = new ComponentTree();
-    JScrollPane treeScrollPane = ScrollPaneFactory.createScrollPane(myComponentTree);
-    treeScrollPane.setBorder(IdeBorderFactory.createBorder(SideBorder.BOTTOM));
-    treeScrollPane.setPreferredSize(new Dimension(250, -1));
-    myComponentTree.initQuickFixManager(treeScrollPane.getViewport());
+    if (myToolWindowContent == null) {
+      myToolWindowContent = new DesignerToolWindow(myProject, true);
+      Disposer.register(this, () -> myToolWindowContent.dispose());
+    }
 
-    myPropertyTablePanel = new PropertyTablePanel(myProject);
+    myToolWindow = ToolWindowManager.getInstance(myProject).registerToolWindow(DesignerBundle.message("designer.toolwindow.name"),
+                                                                               false, getAnchor(), myProject, true);
+    myToolWindow.setIcon(AllIcons.Toolwindows.ToolWindowUIDesigner);
 
-    myToolWindowPanel = new Splitter(true, 0.42f);
-    myToolWindowPanel.setFirstComponent(treeScrollPane);
-    myToolWindowPanel.setSecondComponent(myPropertyTablePanel);
-    myToolWindowPanel.addComponentListener(new ComponentAdapter() {
-      @Override
-      public void componentResized(ComponentEvent e) {
-        Dimension size = myToolWindowPanel.getSize();
-        boolean newVertical = size.width < size.height;
-        if (myToolWindowPanel.getOrientation() != newVertical) {
-          myToolWindowPanel.setOrientation(newVertical);
-        }
-      }
-    });
+    if (!ApplicationManager.getApplication().isHeadlessEnvironment()) {
+      myToolWindow.getComponent().putClientProperty(ToolWindowContentUi.HIDE_ID_LABEL, "true");
+    }
 
-    myToolWindow =
-      ToolWindowManager.getInstance(myProject)
-        .registerToolWindow(DesignerBundle.message("designer.toolwindow.name"), false, ToolWindowAnchor.LEFT, myProject, true);
-    myToolWindow.setIcon(UIDesignerNewIcons.ToolWindow);
-    myToolWindow.getComponent().putClientProperty(ToolWindowContentUi.HIDE_ID_LABEL, "true");
-
-    ((ToolWindowEx)myToolWindow).setTitleActions(createActions());
+    ((ToolWindowEx)myToolWindow).setTitleActions(myToolWindowContent.createActions());
+    initGearActions();
 
     ContentManager contentManager = myToolWindow.getContentManager();
     Content content =
-      contentManager.getFactory().createContent(myToolWindowPanel, DesignerBundle.message("designer.toolwindow.title"), false);
+      contentManager.getFactory()
+        .createContent(myToolWindowContent.getToolWindowPanel(), DesignerBundle.message("designer.toolwindow.title"), false);
     content.setCloseable(false);
-    content.setPreferredFocusableComponent(myComponentTree);
+    content.setPreferredFocusableComponent(myToolWindowContent.getComponentTree());
     contentManager.addContent(content);
     contentManager.setSelectedContent(content, true);
     myToolWindow.setAvailable(false, null);
   }
 
-  private AnAction[] createActions() {
-    AnAction expandAll = new AnAction("Expand All", null, AllIcons.Actions.Expandall) {
-      @Override
-      public void actionPerformed(AnActionEvent e) {
-        if (myTreeBuilder != null) {
-          myTreeBuilder.expandAll(null);
-        }
-      }
-    };
+  @Override
+  protected ToolWindowAnchor getAnchor() {
+    DesignerCustomizations customization = getCustomizations();
+    return customization != null ? customization.getStructureAnchor() : ToolWindowAnchor.LEFT;
+  }
 
-    AnAction collapseAll = new AnAction("Collapse All", null, AllIcons.Actions.Collapseall) {
-      @Override
-      public void actionPerformed(AnActionEvent e) {
-        if (myTreeBuilder != null) {
-          TreeUtil.collapseAll(myComponentTree, 1);
-        }
-      }
-    };
+  @Override
+  protected void updateToolWindow(@Nullable DesignerEditorPanelFacade designer) {
+    myToolWindowContent.update((DesignerEditorPanel)designer);
 
-    return new AnAction[]{expandAll, collapseAll};
+    if (designer == null) {
+      myToolWindow.setAvailable(false, null);
+    }
+    else {
+      myToolWindow.setAvailable(true, null);
+      myToolWindow.show(null);
+    }
   }
 
   @NotNull
-  @NonNls
   @Override
   public String getComponentName() {
     return "UIDesignerToolWindowManager2";
+  }
+
+  //////////////////////////////////////////////////////////////////////////////////////////
+  //
+  // Impl
+  //
+  //////////////////////////////////////////////////////////////////////////////////////////
+
+  @Override
+  protected LightToolWindow createContent(@NotNull DesignerEditorPanelFacade designer) {
+    DesignerToolWindow toolWindowContent = new DesignerToolWindow(myProject, false);
+    toolWindowContent.update((DesignerEditorPanel)designer);
+
+    return createContent(designer,
+                         toolWindowContent,
+                         DesignerBundle.message("designer.toolwindow.title"),
+                         AllIcons.Toolwindows.ToolWindowUIDesigner,
+                         toolWindowContent.getToolWindowPanel(),
+                         toolWindowContent.getComponentTree(),
+                         320,
+                         toolWindowContent.createActions());
   }
 }

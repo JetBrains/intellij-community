@@ -16,10 +16,17 @@
 package com.intellij.util.ui.update;
 
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
 
-public abstract class Update extends ComparableObject.Impl implements Runnable, Comparable {
+/**
+ * Describes a task for {@link MergingUpdateQueue}. Equal tasks (instances with the equal {@code identity} objects) are merged, i.e.
+ * only the first of them is executed. If some tasks are more generic than others override {@link #canEat(Update)} method.
+ *
+ * @see MergingUpdateQueue
+ */
+public abstract class Update extends ComparableObject.Impl implements Runnable {
 
   public static final int LOW_PRIORITY = 999;
   public static final int HIGH_PRIORITY = 10;
@@ -28,7 +35,7 @@ public abstract class Update extends ComparableObject.Impl implements Runnable, 
   private boolean myRejected;
   private final boolean myExecuteInWriteAction;
 
-  private int myPriority = LOW_PRIORITY;
+  private final int myPriority;
 
   public Update(@NonNls Object identity) {
     this(identity, false);
@@ -73,23 +80,15 @@ public abstract class Update extends ComparableObject.Impl implements Runnable, 
     return super.toString() + " Objects: " + Arrays.asList(getEqualityObjects());
   }
 
-  public int compareTo(Object o) {
-    Update another = (Update) o;
-
-    int weightResult = getPriority() < another.getPriority() ? -1 : (getPriority() == another.getPriority() ? 0 : 1);
-
-    if (weightResult == 0) {
-      return  equals(o) ? 0 : 1;
-    } 
-    else {
-      return weightResult;
-    }
-  }
-
-  public int getPriority() {
+  public final int getPriority() {
     return myPriority;
   }
 
+  /**
+   * Override this method and return {@code true} if this task is more generic than the passed {@code update}, e.g. this tasks repaint the
+   * whole frame and the passed task repaint some component on the frame. In that case the less generic tasks will be removed from the queue
+   * before execution.
+   */
   public boolean canEat(Update update) {
     return false;
   }
@@ -100,5 +99,14 @@ public abstract class Update extends ComparableObject.Impl implements Runnable, 
 
   public boolean isRejected() {
     return myRejected;
+  }
+
+  public static Update create(@NonNls Object identity, @NotNull Runnable runnable) {
+    return new Update(identity) {
+      @Override
+      public void run() {
+        runnable.run();
+      }
+    };
   }
 }

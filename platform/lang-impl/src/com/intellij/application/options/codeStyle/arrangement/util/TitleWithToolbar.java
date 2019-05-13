@@ -28,7 +28,6 @@ import java.awt.*;
 
 /**
  * @author Denis Zhdanov
- * @since 11/12/12 4:05 PM
  */
 public class TitleWithToolbar extends JPanel {
 
@@ -42,23 +41,31 @@ public class TitleWithToolbar extends JPanel {
     ActionGroup group = (ActionGroup)actionManager.getAction(actionGroupId);
     ActionToolbar actionToolbar = actionManager.createActionToolbar(place, group, true);
     actionToolbar.setTargetComponent(targetComponent);
+    actionToolbar.setLayoutPolicy(ActionToolbar.NOWRAP_LAYOUT_POLICY);
 
     add(new MyTitleComponent(title), new GridBag().weightx(1).anchor(GridBagConstraints.WEST).fillCellHorizontally());
     add(actionToolbar.getComponent(), new GridBag().anchor(GridBagConstraints.CENTER));
   }
 
   private class MyTitleComponent extends JComponent {
-    
+
+    private final Dimension myMinimumSize;
     @NotNull private final Border myBorder;
 
     MyTitleComponent(@NotNull String title) {
       myBorder = IdeBorderFactory.createTitledBorder(title);
+      Insets insets = myBorder.getBorderInsets(TitleWithToolbar.this);
+      myMinimumSize = new Dimension(1, insets.top);
     }
 
     @Override
     public Dimension getPreferredSize() {
-      Insets insets = myBorder.getBorderInsets(TitleWithToolbar.this);
-      return new Dimension(1, insets.top);
+      return myMinimumSize;
+    }
+
+    @Override
+    public Dimension getMinimumSize() {
+      return myMinimumSize;
     }
 
     @Override

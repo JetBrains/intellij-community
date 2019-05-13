@@ -64,6 +64,12 @@ public class PsiTypeVisitor<A> {
   }
 
   @Nullable
+  public A visitIntersectionType(PsiIntersectionType intersectionType) {
+    PsiType type = intersectionType.getConjuncts()[0];
+    return type.accept(this);
+  }
+
+  @Nullable
   public A visitDiamondType(PsiDiamondType diamondType) {
     return visitType(diamondType);
   }
@@ -72,14 +78,14 @@ public class PsiTypeVisitor<A> {
   public A visitLambdaExpressionType(PsiLambdaExpressionType lambdaExpressionType) {
     final PsiLambdaExpression lambdaExpression = lambdaExpressionType.getExpression();
     final PsiType interfaceType = lambdaExpression.getFunctionalInterfaceType();
-    if (interfaceType != null) return interfaceType.accept(this);
+    if (interfaceType != null && LambdaUtil.isFunctionalType(interfaceType)) return interfaceType.accept(this);
     return visitType(lambdaExpressionType);
   }
   
   public A visitMethodReferenceType(PsiMethodReferenceType methodReferenceType) {
     final PsiMethodReferenceExpression expression = methodReferenceType.getExpression();
     final PsiType interfaceType = expression.getFunctionalInterfaceType();
-    if (interfaceType != null) return interfaceType.accept(this);
+    if (interfaceType != null && LambdaUtil.isFunctionalType(interfaceType)) return interfaceType.accept(this);
     return visitType(methodReferenceType);
   }
 }

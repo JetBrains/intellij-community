@@ -193,6 +193,14 @@ class C {
     }
   }
 
+  void m11_5() {
+    try {}
+    catch (Exception e) {
+      //parentesis expr
+      throw (e);
+    }
+  }
+
   static class MyResource implements AutoCloseable {
     public void close() throws E1 { }
   }
@@ -225,6 +233,33 @@ class C {
     }
     catch (E2 e) {
       throw new RuntimeException(e);
+    }
+  }
+
+  void m14() {
+    try {
+      n14(42);
+    }
+    catch (E1 | E2 e) {
+      e.printStackTrace();
+      <error descr="Unhandled exceptions: C.E1, C.E2">throw e;</error>
+    }
+  }
+
+  private void n14(int i) throws E1, E2, RuntimeException {
+    if (i == 1) throw new E1();
+    if (i == 2) throw new E2();
+  }
+
+  private void m15() throws E1 {
+    try {
+      throw new E1();
+    }
+    catch (final E1 e1) {
+      throw e1;
+    }
+    catch (final E e) {
+      throw e;
     }
   }
 }

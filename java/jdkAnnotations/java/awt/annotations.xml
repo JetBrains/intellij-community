@@ -65,11 +65,23 @@
       <val name="intValues" val="{java.awt.BasicStroke.JOIN_BEVEL, java.awt.BasicStroke.JOIN_MITER, java.awt.BasicStroke.JOIN_ROUND}" />
     </annotation>
   </item>
-  <item name="java.awt.CardLayout void show(Container parent, java.lang.String) 1">
-    <annotation name="org.jetbrains.annotations.NonNls" />
-  </item>
   <item name="java.awt.CardLayout void show(java.awt.Container, java.lang.String) 1">
     <annotation name="org.jetbrains.annotations.NonNls" />
+  </item>
+  <item name='java.awt.Component java.awt.Cursor getCursor()'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.awt.Component java.awt.Point getLocation()'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.awt.Component java.awt.Point location()'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.awt.Component void setLocation(java.awt.Point) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.awt.Container void add(java.awt.Component, java.lang.Object) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
   <item name="java.awt.Container void addPropertyChangeListener(java.lang.String, java.beans.PropertyChangeListener) 0">
     <annotation name="org.jetbrains.annotations.NonNls" />
@@ -86,6 +98,9 @@
     <annotation name="org.intellij.lang.annotations.MagicConstant">
       <val name="valuesFromClass" val="java.awt.Cursor.class" />
     </annotation>
+  </item>
+  <item name='java.awt.Cursor java.awt.Cursor getPredefinedCursor(int)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
   <item name="java.awt.Cursor java.awt.Cursor getPredefinedCursor(int) 0">
     <annotation name="org.intellij.lang.annotations.MagicConstant">
@@ -122,6 +137,9 @@
       <val name="flags" val="{java.awt.Font.PLAIN, java.awt.Font.BOLD, java.awt.Font.ITALIC}" />
     </annotation>
   </item>
+  <item name='java.awt.Font java.awt.Font deriveFont(float)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
   <item name="java.awt.Font java.awt.Font deriveFont(int) 0">
     <annotation name="org.intellij.lang.annotations.MagicConstant">
       <val name="flags" val="{java.awt.Font.PLAIN, java.awt.Font.BOLD, java.awt.Font.ITALIC}" />
@@ -137,6 +155,12 @@
       <val name="flags" val="{java.awt.Font.PLAIN, java.awt.Font.BOLD, java.awt.Font.ITALIC}" />
     </annotation>
   </item>
+  <item name='java.awt.FontMetrics int stringWidth(java.lang.String) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.awt.Graphics void drawString(java.lang.String, int, int) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
   <item name="java.awt.KeyboardFocusManager void addPropertyChangeListener(java.lang.String, java.beans.PropertyChangeListener) 0">
     <annotation name="org.jetbrains.annotations.NonNls" />
   </item>
@@ -149,6 +173,9 @@
     <annotation name="org.intellij.lang.annotations.MagicConstant">
       <val name="intValues" val="{java.awt.Label.LEFT, java.awt.Label.CENTER, java.awt.Label.RIGHT}" />
     </annotation>
+  </item>
+  <item name='java.awt.Point Point(java.awt.Point) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
   <item name="java.awt.Rectangle Rectangle(java.awt.Dimension) 0">
     <annotation name="org.jetbrains.annotations.NotNull" />
@@ -229,6 +256,12 @@
     <annotation name="org.intellij.lang.annotations.MagicConstant">
       <val name="flagsFromClass" val="java.awt.event.InputEvent.class" />
     </annotation>
+  </item>
+  <item name='java.awt.Toolkit java.awt.Cursor createCustomCursor(java.awt.Image, java.awt.Point, java.lang.String)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.awt.Window void setLocation(java.awt.Point) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
 </root>
 

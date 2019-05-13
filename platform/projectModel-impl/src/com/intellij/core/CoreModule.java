@@ -1,17 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 package com.intellij.core;
 
@@ -28,9 +16,10 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.impl.ModuleEx;
 import com.intellij.openapi.module.impl.ModuleScopeProvider;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ModuleExtension;
+import com.intellij.openapi.roots.ModuleFileIndex;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.impl.DirectoryIndex;
+import com.intellij.openapi.roots.impl.ModuleFileIndexImpl;
 import com.intellij.openapi.roots.impl.ModuleRootManagerImpl;
 import com.intellij.openapi.roots.impl.ProjectRootManagerImpl;
 import com.intellij.openapi.util.Disposer;
@@ -57,7 +46,6 @@ public class CoreModule extends MockComponentManager implements ModuleEx {
     myPath = moduleFilePath;
 
     Extensions.instantiateArea(ExtensionAreas.IDEA_MODULE, this, null);
-    CoreApplicationEnvironment.registerExtensionPoint(Extensions.getArea(this), ModuleExtension.EP_NAME, ModuleExtension.class);
     Disposer.register(parentDisposable, new Disposable() {
       @Override
       public void dispose() {
@@ -68,22 +56,17 @@ public class CoreModule extends MockComponentManager implements ModuleEx {
 
     final ModuleRootManagerImpl moduleRootManager =
       new ModuleRootManagerImpl(this,
-                                DirectoryIndex.getInstance(project),
                                 ProjectRootManagerImpl.getInstanceImpl(project),
                                 VirtualFilePointerManager.getInstance()) {
         @Override
-        public void loadState(ModuleRootManagerState object) {
+        public void loadState(@NotNull ModuleRootManagerState object) {
           loadState(object, false);
         }
       };
-    Disposer.register(parentDisposable, new Disposable() {
-      @Override
-      public void dispose() {
-        moduleRootManager.disposeComponent();
-      }
-    });
+    Disposer.register(parentDisposable, moduleRootManager);
     getPicoContainer().registerComponentInstance(ModuleRootManager.class, moduleRootManager);
-    getPicoContainer().registerComponentInstance(PathMacroManager.class, new ModulePathMacroManager(PathMacros.getInstance(), this));
+    getPicoContainer().registerComponentInstance(PathMacroManager.class, createModulePathMacroManager(project));
+    getPicoContainer().registerComponentInstance(ModuleFileIndex.class, createModuleFileIndex(project));
     myModuleScopeProvider = createModuleScopeProvider();
   }
 
@@ -105,28 +88,13 @@ public class CoreModule extends MockComponentManager implements ModuleEx {
     return new CoreModuleScopeProvider();
   }
 
-  @Override
-  public void init() {
+  // used by Upsource
+  protected PathMacroManager createModulePathMacroManager(@SuppressWarnings("unused") @NotNull Project project) {
+    return new ModulePathMacroManager(PathMacros.getInstance(), this);
   }
 
-  @Override
-  public void loadModuleComponents() {
-  }
-
-  @Override
-  public void moduleAdded() {
-  }
-
-  @Override
-  public void projectOpened() {
-  }
-
-  @Override
-  public void projectClosed() {
-  }
-
-  @Override
-  public void rename(String newName) {
+  protected ModuleFileIndex createModuleFileIndex(@NotNull Project project) {
+    return new ModuleFileIndexImpl(this, DirectoryIndex.getInstance(project));
   }
 
   @Override
@@ -168,60 +136,65 @@ public class CoreModule extends MockComponentManager implements ModuleEx {
   }
 
   @Override
-  public void clearOption(@NotNull String optionName) {
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
   public String getOptionValue(@NotNull String optionName) {
     throw new UnsupportedOperationException();
   }
 
+  @NotNull
   @Override
   public GlobalSearchScope getModuleScope() {
     return myModuleScopeProvider.getModuleScope();
   }
 
+  @NotNull
   @Override
   public GlobalSearchScope getModuleScope(boolean includeTests) {
     return myModuleScopeProvider.getModuleScope(includeTests);
   }
 
+  @NotNull
   @Override
   public GlobalSearchScope getModuleWithLibrariesScope() {
     return myModuleScopeProvider.getModuleWithLibrariesScope();
   }
 
+  @NotNull
   @Override
   public GlobalSearchScope getModuleWithDependenciesScope() {
     return myModuleScopeProvider.getModuleWithDependenciesScope();
   }
 
+  @NotNull
   @Override
   public GlobalSearchScope getModuleContentScope() {
     return myModuleScopeProvider.getModuleContentScope();
   }
 
+  @NotNull
   @Override
   public GlobalSearchScope getModuleContentWithDependenciesScope() {
     return myModuleScopeProvider.getModuleContentWithDependenciesScope();
   }
 
+  @NotNull
   @Override
   public GlobalSearchScope getModuleWithDependenciesAndLibrariesScope(boolean includeTests) {
     return myModuleScopeProvider.getModuleWithDependenciesAndLibrariesScope(includeTests);
   }
 
+  @NotNull
   @Override
   public GlobalSearchScope getModuleWithDependentsScope() {
     return myModuleScopeProvider.getModuleWithDependentsScope();
   }
 
+  @NotNull
   @Override
   public GlobalSearchScope getModuleTestsWithDependentsScope() {
     return myModuleScopeProvider.getModuleTestsWithDependentsScope();
   }
 
+  @NotNull
   @Override
   public GlobalSearchScope getModuleRuntimeScope(boolean includeTests) {
     return myModuleScopeProvider.getModuleRuntimeScope(includeTests);

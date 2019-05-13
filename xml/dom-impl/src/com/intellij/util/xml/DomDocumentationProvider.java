@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,14 +29,17 @@ import java.util.List;
  */
 public class DomDocumentationProvider implements DocumentationProvider {
 
+  @Override
   public String getQuickNavigateInfo(final PsiElement element, PsiElement originalElement) {
     return null;
   }
 
+  @Override
   public List<String> getUrlFor(final PsiElement element, final PsiElement originalElement) {
     return null;
   }
 
+  @Override
   public String generateDoc(PsiElement element, final PsiElement originalElement) {
     if (element instanceof PomTargetPsiElement) {
       PomTarget target = ((PomTargetPsiElement)element).getTarget();
@@ -56,10 +59,12 @@ public class DomDocumentationProvider implements DocumentationProvider {
     return ElementPresentationManager.getDocumentationForElement(domElement);
   }
 
+  @Override
   public PsiElement getDocumentationElementForLookupItem(final PsiManager psiManager, final Object object, final PsiElement element) {
     return null;
   }
 
+  @Override
   public PsiElement getDocumentationElementForLink(final PsiManager psiManager, final String link, final PsiElement context) {
     return null;
   }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,94 +15,174 @@
  */
 package org.jetbrains.ether;
 
+import org.jetbrains.jps.model.JpsDummyElement;
+import org.jetbrains.jps.model.JpsModuleRootModificationUtil;
+import org.jetbrains.jps.model.library.sdk.JpsSdk;
+import org.jetbrains.jps.model.module.JpsModule;
+
 /**
  * @author: db
- * Date: 22.09.11
  */
 public class CommonTest extends IncrementalTestCase {
-  public CommonTest() throws Exception {
+  public CommonTest() {
     super("common");
   }
 
-  public void testAnonymous() throws Exception {
+  public void testAnonymous() {
     doTest();
   }
 
-  public void testChangeDefinitionToClass() throws Exception {
+  public void testChangeDefinitionToClass() {
     doTest();
   }
 
-  public void testChangeDefinitionToClass2() throws Exception {
+  public void testChangeDefinitionToClass2() {
     doTest();
   }
 
-  public void testDeleteClass() throws Exception {
+  public void testDeleteClass() {
     doTest();
   }
 
-  public void testDeleteClass1() throws Exception {
+  public void testDeleteClass1() {
     doTest();
   }
 
-  public void testDeleteClass2() throws Exception {
+  public void testDeleteClass2() {
     doTest();
   }
 
-  public void testDeleteClassAfterCompileErrors() throws Exception {
+  public void testDeleteClassAfterCompileErrors() {
     setupInitialProject();
-  
+
     doTestBuild(2);
   }
 
-  public void testDeleteClassPackageDoesntMatchRoot() throws Exception {
+  public void testDontMarkDependentsAfterCompileErrors() {
+    setupInitialProject();
+
+    doTestBuild(2);
+  }
+
+  public void testDeleteClassPackageDoesntMatchRoot() {
     doTest();
   }
 
-  public void testInner() throws Exception {
+  public void testInner() {
     doTest();
   }
 
-  public void testNoResourceDelete() throws Exception {
+  public void testNoResourceDelete() {
     doTest();
   }
 
-  public void testNoSecondFileCompile() throws Exception {
+  public void testNoSecondFileCompile() {
     doTest();
   }
 
-  public void testNoSecondFileCompile1() throws Exception {
+  public void testNoSecondFileCompile1() {
     doTest();
   }
 
-  public void testDependencyUpdate() throws Exception {
+  public void testDependencyUpdate() {
     doTest();
   }
 
-  public void testClass2Interface1() throws Exception {
+  public void testClass2Interface1() {
     doTest();
   }
 
-  public void testClass2Interface2() throws Exception {
+  public void testClass2Interface2() {
     doTest();
   }
 
-  public void testClass2Interface3() throws Exception {
+  public void testClass2Interface3() {
     doTest();
   }
 
-  public void testDeleteClass3() throws Exception {
-      doTest();
+  public void testDeleteClass3() {
+    doTest();
   }
 
-  public void testDeleteClass4() throws Exception {
-      doTest();
+  public void testDeleteClass4() {
+    doTest();
   }
 
-  public void testAddClass() throws Exception {
-      doTest();
+  public void testDeleteInnerClass() {
+    doTest();
   }
 
-  public void testAddDuplicateClass() throws Exception {
-      doTest();
+  public void testDeleteInnerClass1() {
+    doTest();
   }
+
+  public void testAddClass() {
+    doTest();
+  }
+
+  public void testAddDuplicateClass() {
+    doTest();
+  }
+
+  public void testAddClassHidingImportedClass() {
+    doTest();
+  }
+
+  public void testAddClassHidingImportedClass2() {
+    doTest();
+  }
+
+  public void testMoveClassToDependentModule() {
+    JpsModule moduleA = addModule("moduleA", "moduleA/src");
+    JpsModule moduleB = addModule("moduleB", "moduleB/src");
+    JpsModuleRootModificationUtil.addDependency(moduleB, moduleA);
+    doTestBuild(1).assertSuccessful();
+  }
+
+  public void testMoveClassToDependentModuleWithSameOutput() {
+    final JpsSdk<JpsDummyElement> sdk = getOrCreateJdk();
+    final String commonOutput = getAbsolutePath("out");
+    JpsModule moduleA = addModule("moduleA", new String[]{getAbsolutePath("moduleA/src")}, commonOutput, commonOutput, sdk);
+    JpsModule moduleB = addModule("moduleB", new String[]{getAbsolutePath("moduleB/src")}, commonOutput, commonOutput, sdk);
+    JpsModuleRootModificationUtil.addDependency(moduleB, moduleA);
+    doTestBuild(1).assertSuccessful();
+  }
+
+  public void testMoveClassFromJavaFileToDependentModule() {
+    JpsModule moduleA = addModule("moduleA", "moduleA/src");
+    JpsModule moduleB = addModule("moduleB", "moduleB/src");
+    JpsModuleRootModificationUtil.addDependency(moduleB, moduleA);
+    doTestBuild(1).assertSuccessful();
+  }
+
+  public void testCompileDependenciesOnMovedClassesInFirstRound() {
+    doTest().assertSuccessful();
+  }
+
+  public void testIntegrateOnSuperclassRemovedAndRestored() {
+    setupInitialProject();
+
+    doTestBuild(2);
+  }
+
+  public void testMoveToplevelClassToAnotherFile() {
+    doTest();
+  }
+
+  public void testMoveClassToAnotherRoot() {
+    doTest();
+  }
+
+  public void testIntegrateOnNonIncrementalMake() {
+    doTest();
+  }
+
+  // Disabled because now several classes with the same qName in different modules are not supporter
+  //
+  //public void testConflictingClasses() {
+  //  JpsModule module1 = addModule("module1", "module1/src");
+  //  JpsModule module2 = addModule("module2", "module2/src");
+  //  JpsModuleRootModificationUtil.addDependency(module2, module1);
+  //  doTestBuild(1).assertSuccessful();
+  //}
 }

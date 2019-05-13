@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,6 @@ package com.intellij.refactoring.extractMethod;
 import com.intellij.codeInsight.PsiEquivalenceUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.controlFlow.*;
 import com.intellij.psi.search.LocalSearchScope;
@@ -26,18 +25,18 @@ import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.RefactoringBundle;
-import com.intellij.util.containers.HashSet;
 import com.intellij.util.containers.IntArrayList;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
 public class ControlFlowWrapper {
-  private static final Logger LOG = Logger.getInstance("#" + ControlFlowWrapper.class.getName());
+  private static final Logger LOG = Logger.getInstance(ControlFlowWrapper.class);
 
   private final ControlFlow myControlFlow;
-  private int myFlowStart;
+  private final int myFlowStart;
 
-  private int myFlowEnd;
+  private final int myFlowEnd;
   private boolean myGenerateConditionalExit;
   private Collection<PsiStatement> myExitStatements;
   private PsiStatement myFirstExitStatementCopy;
@@ -56,40 +55,48 @@ public class ControlFlowWrapper {
       LOG.debug(myControlFlow.toString());
     }
 
-    myFlowStart = -1;
+    int flowStart = -1;
     int index = 0;
     while (index < elements.length) {
-      myFlowStart = myControlFlow.getStartOffset(elements[index]);
-      if (myFlowStart >= 0) break;
+      flowStart = myControlFlow.getStartOffset(elements[index]);
+      if (flowStart >= 0) break;
       index++;
     }
-    if (myFlowStart < 0) {
+    int flowEnd;
+    if (flowStart < 0) {
       // no executable code
-      myFlowStart = 0;
-      myFlowEnd = 0;
+      flowStart = 0;
+      flowEnd = 0;
     }
     else {
       index = elements.length - 1;
       while (true) {
-        myFlowEnd = myControlFlow.getEndOffset(elements[index]);
-        if (myFlowEnd >= 0) break;
+        flowEnd = myControlFlow.getEndOffset(elements[index]);
+        if (flowEnd >= 0) break;
         index--;
       }
     }
+    myFlowStart = flowStart;
+    myFlowEnd = flowEnd;
     if (LOG.isDebugEnabled()) {
       LOG.debug("start offset:" + myFlowStart);
       LOG.debug("end offset:" + myFlowEnd);
     }
   }
 
-  public PsiStatement getFirstExitStatementCopy() {
+  PsiStatement getFirstExitStatementCopy() {
     return myFirstExitStatementCopy;
   }
 
-  public Collection<PsiStatement> prepareExitStatements(final PsiElement[] elements) throws ExitStatementsNotSameException {
+  public Collection<PsiStatement> prepareExitStatements(@NotNull final PsiElement[] elements,
+                                                        @NotNull final PsiElement enclosingCodeFragment)
+    throws ExitStatementsNotSameException {
     myExitPoints = new IntArrayList();
     myExitStatements = ControlFlowUtil
       .findExitPointsAndStatements(myControlFlow, myFlowStart, myFlowEnd, myExitPoints, ControlFlowUtil.DEFAULT_EXIT_STATEMENTS_CLASSES);
+    if (ControlFlowUtil.hasObservableThrowExitPoints(myControlFlow, myFlowStart, myFlowEnd, elements, enclosingCodeFragment)) {
+      throw new ExitStatementsNotSameException();
+    }
     if (LOG.isDebugEnabled()) {
       LOG.debug("exit points:");
       for (int i = 0; i < myExitPoints.size(); i++) {
@@ -106,8 +113,8 @@ public class ControlFlowWrapper {
     }
 
     if (myExitPoints.size() != 1) {
-      areExitStatementsTheSame();
       myGenerateConditionalExit = true;
+      areExitStatementsTheSame();
     }
     return myExitStatements;
   }
@@ -131,22 +138,32 @@ public class ControlFlowWrapper {
     myFirstExitStatementCopy = (PsiStatement)first.copy();
   }
 
-  public boolean isGenerateConditionalExit() {
+  boolean isGenerateConditionalExit() {
     return myGenerateConditionalExit;
   }
 
-  public Collection<PsiStatement> getExitStatements() {
+  Collection<PsiStatement> getExitStatements() {
     return myExitStatements;
+  }
+
+  public boolean needVariableValueAfterEnd(@NotNull PsiVariable variable) {
+    return ControlFlowUtil.needVariableValueAt(variable, myControlFlow, myFlowEnd);
   }
 
   public static class ExitStatementsNotSameException extends Exception {}
 
 
+  @NotNull
   public PsiVariable[] getOutputVariables() {
+    return getOutputVariables(myGenerateConditionalExit);
+  }
+
+  @NotNull
+  PsiVariable[] getOutputVariables(boolean collectVariablesAtExitPoints) {
     PsiVariable[] myOutputVariables = ControlFlowUtil.getOutputVariables(myControlFlow, myFlowStart, myFlowEnd, myExitPoints.toArray());
-    if (myGenerateConditionalExit) {
+    if (collectVariablesAtExitPoints) {
       //variables declared in selected block used in return statements are to be considered output variables when extracting guard methods
-      final Set<PsiVariable> outputVariables = new HashSet<PsiVariable>(Arrays.asList(myOutputVariables));
+      final Set<PsiVariable> outputVariables = new HashSet<>(Arrays.asList(myOutputVariables));
       for (PsiStatement statement : myExitStatements) {
         statement.accept(new JavaRecursiveElementVisitor() {
 
@@ -176,13 +193,13 @@ public class ControlFlowWrapper {
         });
       }
 
-      myOutputVariables = outputVariables.toArray(new PsiVariable[outputVariables.size()]);
+      myOutputVariables = outputVariables.toArray(new PsiVariable[0]);
     }
     Arrays.sort(myOutputVariables, PsiUtil.BY_POSITION);
     return myOutputVariables;
   }
 
-  public boolean isReturnPresentBetween() {
+  boolean isReturnPresentBetween() {
     return ControlFlowUtil.returnPresentBetween(myControlFlow, myFlowStart, myFlowEnd);
   }
 
@@ -194,18 +211,11 @@ public class ControlFlowWrapper {
       for (PsiReference ref : ReferencesSearch.search(variable, scope)) {
         PsiElement element = ref.getElement();
         int elementOffset = myControlFlow.getStartOffset(element);
+        if (elementOffset == -1) {
+          continue Variables;
+        }
         if (elementOffset >= myFlowStart && elementOffset <= myFlowEnd) {
           if (!isInExitStatements(element, myExitStatements)) continue Variables;
-        }
-        if (elementOffset == -1) { //references in local/anonymous classes should not be skipped
-          final PsiClass psiClass = PsiTreeUtil.getParentOfType(element, PsiClass.class);
-          if (psiClass != null) {
-            final TextRange textRange = psiClass.getTextRange();
-            if (myControlFlow.getElement(myFlowStart).getTextOffset() <= textRange.getStartOffset() &&
-                textRange.getEndOffset() <= myControlFlow.getElement(myFlowEnd).getTextRange().getEndOffset()) {
-              continue Variables;
-            }
-          }
         }
       }
       iterator.remove();
@@ -232,16 +242,16 @@ public class ControlFlowWrapper {
     return true;
   }
 
-  public List<PsiVariable> getInputVariables(final PsiElement codeFragment, PsiElement[] elements) {
+  public List<PsiVariable> getInputVariables(final PsiElement codeFragment, PsiElement[] elements, PsiVariable[] outputVariables) {
     final List<PsiVariable> inputVariables = ControlFlowUtil.getInputVariables(myControlFlow, myFlowStart, myFlowEnd);
     List<PsiVariable> myInputVariables;
-    if (myGenerateConditionalExit) {
-      List<PsiVariable> inputVariableList = new ArrayList<PsiVariable>(inputVariables);
+    if (skipVariablesFromExitStatements(outputVariables)) {
+      List<PsiVariable> inputVariableList = new ArrayList<>(inputVariables);
       removeParametersUsedInExitsOnly(codeFragment, inputVariableList);
       myInputVariables = inputVariableList;
     }
     else {
-      List<PsiVariable> inputVariableList = new ArrayList<PsiVariable>(inputVariables);
+      List<PsiVariable> inputVariableList = new ArrayList<>(inputVariables);
       for (Iterator<PsiVariable> iterator = inputVariableList.iterator(); iterator.hasNext(); ) {
         PsiVariable variable = iterator.next();
         for (PsiElement element : elements) {
@@ -254,22 +264,20 @@ public class ControlFlowWrapper {
       myInputVariables = inputVariableList;
     }
     //varargs variables go last, otherwise order is induced by original ordering
-    Collections.sort(myInputVariables, new Comparator<PsiVariable>() {
-      public int compare(final PsiVariable v1, final PsiVariable v2) {
-        if (v1.getType() instanceof PsiEllipsisType) {
-          return 1;
-        }
-        if (v2.getType() instanceof PsiEllipsisType) {
-          return -1;
-        }
-        return v1.getTextOffset() - v2.getTextOffset();
+    Collections.sort(myInputVariables, (v1, v2) -> {
+      if (v1.getType() instanceof PsiEllipsisType) {
+        return 1;
       }
+      if (v2.getType() instanceof PsiEllipsisType) {
+        return -1;
+      }
+      return v1.getTextOffset() - v2.getTextOffset();
     });
     return myInputVariables;
   }
 
-  public PsiStatement getExitStatementCopy(PsiElement returnStatement,
-                                           final PsiElement[] elements) {
+  PsiStatement getExitStatementCopy(PsiElement returnStatement,
+                                    final PsiElement[] elements) {
     PsiStatement exitStatementCopy = null;
     // replace all exit-statements such as break's or continue's with appropriate return
     for (PsiStatement exitStatement : myExitStatements) {
@@ -315,31 +323,35 @@ public class ControlFlowWrapper {
     return exitStatementCopy;
   }
 
-  public List<PsiVariable> getUsedVariables(int start) {
+  private List<PsiVariable> getUsedVariables(int start) {
     return getUsedVariables(start, myControlFlow.getSize());
   }
 
-  public List<PsiVariable> getUsedVariables(int start, int end) {
+  private List<PsiVariable> getUsedVariables(int start, int end) {
     return ControlFlowUtil.getUsedVariables(myControlFlow, start, end);
   }
 
-  public Collection<ControlFlowUtil.VariableInfo> getInitializedTwice(int start) {
+  private Collection<ControlFlowUtil.VariableInfo> getInitializedTwice(int start) {
     return ControlFlowUtil.getInitializedTwice(myControlFlow, start, myControlFlow.getSize());
   }
 
-  public List<PsiVariable> getUsedVariables() {
+  List<PsiVariable> getUsedVariables() {
     return getUsedVariables(myFlowEnd);
   }
 
-  public List<PsiVariable> getUsedVariablesInBody() {
-    return getUsedVariables(myFlowStart, myFlowEnd);
+  List<PsiVariable> getUsedVariablesInBody(PsiElement codeFragment, PsiVariable[] outputVariables) {
+    final List<PsiVariable> variables = getUsedVariables(myFlowStart, myFlowEnd);
+    if (skipVariablesFromExitStatements(outputVariables)) {
+      removeParametersUsedInExitsOnly(codeFragment, variables);
+    }
+    return variables;
+  }
+
+  private boolean skipVariablesFromExitStatements(PsiVariable[] outputVariables) {
+    return myGenerateConditionalExit && outputVariables.length == 0;
   }
 
   public Collection<ControlFlowUtil.VariableInfo> getInitializedTwice() {
     return getInitializedTwice(myFlowEnd);
-  }
-
-  public void setGenerateConditionalExit(boolean generateConditionalExit) {
-    myGenerateConditionalExit = generateConditionalExit;
   }
 }

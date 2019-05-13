@@ -56,7 +56,7 @@ public abstract class PsiFileBase extends PsiFileImpl {
       }
     }
     throw new AssertionError(
-        "Language " + baseLanguage + " doesn't participate in view provider " + viewProvider + ": " + new ArrayList<Language>(languages));
+        "Language " + baseLanguage + " doesn't participate in view provider " + viewProvider + ": " + new ArrayList<>(languages));
   }
 
   @Override

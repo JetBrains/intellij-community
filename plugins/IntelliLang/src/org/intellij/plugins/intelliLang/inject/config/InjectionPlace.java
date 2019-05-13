@@ -28,18 +28,13 @@ public class InjectionPlace {
 
   public static final InjectionPlace[] EMPTY_ARRAY = new InjectionPlace[0];
 
-  public static final ArrayFactory<InjectionPlace> ARRAY_FACTORY = new ArrayFactory<InjectionPlace>() {
-    @Override
-    public InjectionPlace[] create(int count) {
-      return count == 0? EMPTY_ARRAY : new InjectionPlace[count];
-    }
-  };
+  public static final ArrayFactory<InjectionPlace> ARRAY_FACTORY = count -> count == 0 ? EMPTY_ARRAY : new InjectionPlace[count];
 
-  private final ElementPattern<PsiElement> myElementPattern;
   private final boolean myEnabled;
+  private final ElementPattern<? extends PsiElement> myElementPattern;
 
 
-  public InjectionPlace(final ElementPattern<PsiElement> myElementPattern, final boolean enabled) {
+  public InjectionPlace(ElementPattern<? extends PsiElement> myElementPattern, boolean enabled) {
     this.myElementPattern = myElementPattern;
     myEnabled = enabled;
   }
@@ -52,7 +47,7 @@ public class InjectionPlace {
     return myElementPattern.toString();
   }
 
-  public ElementPattern<PsiElement> getElementPattern() {
+  public ElementPattern<? extends PsiElement> getElementPattern() {
     return myElementPattern;
   }
 
@@ -75,5 +70,13 @@ public class InjectionPlace {
   @Override
   public int hashCode() {
     return myElementPattern.hashCode();
+  }
+
+  @Override
+  public String toString() {
+    return "InjectionPlace{" +
+           (myEnabled ? "+ " : "- ") +
+           myElementPattern +
+           '}';
   }
 }

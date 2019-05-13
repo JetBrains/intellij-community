@@ -1,37 +1,27 @@
-/*
- * Copyright 2000-2011 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.mvc;
 
 import com.intellij.ProjectTopics;
 import com.intellij.codeInsight.actions.ReformatCodeProcessor;
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.components.AbstractProjectComponent;
+import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
-import com.intellij.openapi.module.ModuleUtil;
+import com.intellij.openapi.module.ModuleUtilCore;
+import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
+import com.intellij.openapi.progress.util.ReadTask;
 import com.intellij.openapi.project.DumbAwareRunnable;
-import com.intellij.openapi.project.ModuleAdapter;
+import com.intellij.openapi.project.ModuleListener;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.SimpleModificationTracker;
 import com.intellij.openapi.util.Trinity;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.impl.BulkVirtualFileListenerAdapter;
@@ -41,75 +31,75 @@ import com.intellij.openapi.wm.ToolWindowEP;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
+import com.intellij.ui.GuiUtils;
+import com.intellij.util.concurrency.SequentialTaskExecutor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.plugins.groovy.mvc.MvcModuleStructureSynchronizer.SyncAction;
 import org.jetbrains.plugins.groovy.mvc.projectView.MvcToolWindowDescriptor;
 
 import java.util.*;
+import java.util.concurrent.ExecutorService;
 
-/**
- * @author peter
- */
-public class MvcModuleStructureSynchronizer extends AbstractProjectComponent {
-  private final Set<Pair<Object, SyncAction>> myActions = new LinkedHashSet<Pair<Object, SyncAction>>();
+public class MvcModuleStructureSynchronizer implements ProjectComponent {
+  private static final ExecutorService ourExecutor = SequentialTaskExecutor.createSequentialApplicationPoolExecutor("MvcModuleStructureSynchronizer Pool");
+  private final Set<Pair<Object, SyncAction>> myOrders = new LinkedHashSet<>();
+  private final Project myProject;
 
   private Set<VirtualFile> myPluginRoots = Collections.emptySet();
-
-  private long myModificationCount = 0;
 
   private boolean myOutOfModuleDirectoryCreatedActionAdded;
 
   public static boolean ourGrailsTestFlag;
 
-  private final ModificationTracker myModificationTracker = new ModificationTracker() {
-    @Override
-    public long getModificationCount() {
-      return myModificationCount;
-    }
-  };
+  private final SimpleModificationTracker myModificationTracker = new SimpleModificationTracker();
 
   public MvcModuleStructureSynchronizer(Project project) {
-    super(project);
+    myProject = project;
   }
 
-  public ModificationTracker getFileAndRootsModificationTracker() {
+  public SimpleModificationTracker getFileAndRootsModificationTracker() {
     return myModificationTracker;
   }
 
   @Override
   public void initComponent() {
     final MessageBusConnection connection = myProject.getMessageBus().connect();
-    connection.subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootAdapter() {
+    connection.subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootListener() {
       @Override
-      public void rootsChanged(ModuleRootEvent event) {
+      public void rootsChanged(@NotNull ModuleRootEvent event) {
+        myModificationTracker.incModificationCount();
         queue(SyncAction.SyncLibrariesInPluginsModule, myProject);
         queue(SyncAction.UpgradeFramework, myProject);
         queue(SyncAction.CreateAppStructureIfNeeded, myProject);
         queue(SyncAction.UpdateProjectStructure, myProject);
         queue(SyncAction.EnsureRunConfigurationExists, myProject);
-        myModificationCount++;
-
         updateProjectViewVisibility();
       }
     });
 
-    connection.subscribe(ProjectTopics.MODULES, new ModuleAdapter() {
+    connection.subscribe(ProjectTopics.MODULES, new ModuleListener() {
       @Override
-      public void moduleAdded(Project project, Module module) {
+      public void moduleAdded(@NotNull Project project, @NotNull Module module) {
         queue(SyncAction.UpdateProjectStructure, module);
         queue(SyncAction.CreateAppStructureIfNeeded, module);
       }
     });
 
-    connection.subscribe(VirtualFileManager.VFS_CHANGES, new BulkVirtualFileListenerAdapter(new VirtualFileAdapter() {
-      @Override
-      public void fileCreated(final VirtualFileEvent event) {
-        myModificationCount++;
+    connection.subscribe(VirtualFileManager.VFS_CHANGES, new BulkVirtualFileListenerAdapter(new VirtualFileListener() {
 
+      final ProjectFileIndex myFileIndex = ProjectFileIndex.getInstance(myProject);
+
+      @Override
+      public void fileCreated(@NotNull final VirtualFileEvent event) {
         final VirtualFile file = event.getFile();
+        if (!myFileIndex.isInContent(file)) return;
+
+        myModificationTracker.incModificationCount();
+
         final String fileName = event.getFileName();
         if (MvcModuleStructureUtil.APPLICATION_PROPERTIES.equals(fileName) || isApplicationDirectoryName(fileName)) {
           queue(SyncAction.UpdateProjectStructure, file);
@@ -144,36 +134,30 @@ public class MvcModuleStructureSynchronizer extends AbstractProjectComponent {
           if (framework == null) return;
 
           if (framework.isToReformatOnCreation(file) || file.isDirectory()) {
-            ApplicationManager.getApplication().invokeLater(new Runnable() {
-              @Override
-              public void run() {
-                if (!file.isValid()) return;
-                if (!framework.hasSupport(module)) return;
+            ApplicationManager.getApplication().invokeLater(() -> {
+              if (!file.isValid()) return;
+              if (!framework.hasSupport(module)) return;
 
-                final List<VirtualFile> files = new ArrayList<VirtualFile>();
+              final List<VirtualFile> files = new ArrayList<>();
 
-                if (file.isDirectory()) {
-                  ModuleRootManager.getInstance(module).getFileIndex().iterateContentUnderDirectory(file, new ContentIterator() {
-                    @Override
-                    public boolean processFile(VirtualFile fileOrDir) {
-                      if (!fileOrDir.isDirectory() && framework.isToReformatOnCreation(fileOrDir)) {
-                        files.add(file);
-                      }
-                      return true;
-                    }
-                  });
-                }
-                else {
-                  files.add(file);
-                }
-
-                PsiManager manager = PsiManager.getInstance(myProject);
-
-                for (VirtualFile virtualFile : files) {
-                  PsiFile psiFile = manager.findFile(virtualFile);
-                  if (psiFile != null) {
-                    new ReformatCodeProcessor(myProject, psiFile, null, false).run();
+              if (file.isDirectory()) {
+                ModuleRootManager.getInstance(module).getFileIndex().iterateContentUnderDirectory(file, fileOrDir -> {
+                  if (!fileOrDir.isDirectory() && framework.isToReformatOnCreation(fileOrDir)) {
+                    files.add(file);
                   }
+                  return true;
+                });
+              }
+              else {
+                files.add(file);
+              }
+
+              PsiManager manager = PsiManager.getInstance(myProject);
+
+              for (VirtualFile virtualFile : files) {
+                PsiFile psiFile = manager.findFile(virtualFile);
+                if (psiFile != null) {
+                  new ReformatCodeProcessor(myProject, psiFile, null, false).run();
                 }
               }
             }, module.getDisposed());
@@ -182,32 +166,38 @@ public class MvcModuleStructureSynchronizer extends AbstractProjectComponent {
       }
 
       @Override
-      public void fileDeleted(VirtualFileEvent event) {
-        myModificationCount++;
-
+      public void fileDeleted(@NotNull VirtualFileEvent event) {
         final VirtualFile file = event.getFile();
+
+        myModificationTracker.incModificationCount();
+
         if (isLibDirectory(file) || isLibDirectory(event.getParent())) {
           queue(SyncAction.UpdateProjectStructure, file);
         }
       }
 
       @Override
-      public void contentsChanged(VirtualFileEvent event) {
+      public void contentsChanged(@NotNull VirtualFileEvent event) {
+        final VirtualFile file = event.getFile();
+        if (!myFileIndex.isInContent(file)) return;
+
         final String fileName = event.getFileName();
         if (MvcModuleStructureUtil.APPLICATION_PROPERTIES.equals(fileName)) {
-          queue(SyncAction.UpdateProjectStructure, event.getFile());
+          queue(SyncAction.UpdateProjectStructure, file);
         }
       }
 
       @Override
-      public void fileMoved(VirtualFileMoveEvent event) {
-        myModificationCount++;
+      public void fileMoved(@NotNull VirtualFileMoveEvent event) {
+        if (!myFileIndex.isInContent(event.getFile())) return;
+        myModificationTracker.incModificationCount();
       }
 
       @Override
-      public void propertyChanged(VirtualFilePropertyEvent event) {
+      public void propertyChanged(@NotNull VirtualFilePropertyEvent event) {
+        if (!myFileIndex.isInContent(event.getFile())) return;
         if (VirtualFile.PROP_NAME.equals(event.getPropertyName())) {
-          myModificationCount++;
+          myModificationTracker.incModificationCount();
         }
       }
     }));
@@ -238,25 +228,65 @@ public class MvcModuleStructureSynchronizer extends AbstractProjectComponent {
     queue(SyncAction.CreateAppStructureIfNeeded, myProject);
   }
 
-  private void queue(SyncAction action, Object on) {
+  public void queue(SyncAction action, Object on) {
     ApplicationManager.getApplication().assertIsDispatchThread();
+    if (myProject.isDisposed()) return;
 
-    if (myActions.isEmpty()) {
-      if (myProject.isDisposed()) return;
-      StartupManager.getInstance(myProject).runWhenProjectIsInitialized(new DumbAwareRunnable() {
-        @Override
-        public void run() {
-          ApplicationManager.getApplication().invokeLater(new Runnable() {
-            @Override
-            public void run() {
-              runActions();
-            }
-          }, ModalityState.NON_MODAL);
-        }
-      });
+    boolean shouldSchedule;
+    synchronized (myOrders) {
+      shouldSchedule = myOrders.isEmpty();
+      myOrders.add(Pair.create(on, action));
+    }
+    if (shouldSchedule) {
+      StartupManager.getInstance(myProject).runWhenProjectIsInitialized((DumbAwareRunnable)() -> scheduleRunActions());
+    }
+  }
+
+  private void scheduleRunActions() {
+    if (myProject.isDisposed()) return;
+
+    final Application app = ApplicationManager.getApplication();
+    if (app.isUnitTestMode()) {
+      if (ourGrailsTestFlag && !myProject.isInitialized()) {
+        runActions(computeRawActions(takeOrderSnapshot()));
+      }
+      return;
     }
 
-    myActions.add(new Pair<Object, SyncAction>(on, action));
+    final Set<Pair<Object, SyncAction>> orderSnapshot = takeOrderSnapshot();
+    ReadTask task = new ReadTask() {
+
+      @NotNull
+      @Override
+      public Continuation performInReadAction(@NotNull final ProgressIndicator indicator) throws ProcessCanceledException {
+        final Set<Trinity<Module, SyncAction, MvcFramework>> actions = isUpToDate() ? computeRawActions(orderSnapshot)
+                                                                                    : Collections.emptySet();
+        return new Continuation(() -> {
+          if (isUpToDate()) {
+            runActions(actions);
+          }
+          else if (!indicator.isCanceled()) {
+            scheduleRunActions();
+          }
+        }, ModalityState.NON_MODAL);
+      }
+
+      @Override
+      public void onCanceled(@NotNull ProgressIndicator indicator) {
+        scheduleRunActions();
+      }
+
+      private boolean isUpToDate() {
+        return !myProject.isDisposed() && orderSnapshot.equals(takeOrderSnapshot());
+      }
+    };
+    GuiUtils.invokeLaterIfNeeded(() -> ProgressIndicatorUtils.scheduleWithWriteActionPriority(ourExecutor, task), ModalityState.NON_MODAL);
+  }
+
+  private LinkedHashSet<Pair<Object, SyncAction>> takeOrderSnapshot() {
+    synchronized (myOrders) {
+      return new LinkedHashSet<>(myOrders);
+    }
   }
 
   @NotNull
@@ -270,7 +300,7 @@ public class MvcModuleStructureSynchronizer extends AbstractProjectComponent {
     if (o instanceof VirtualFile) {
       final VirtualFile file = (VirtualFile)o;
       if (file.isValid()) {
-        final Module module = ModuleUtil.findModuleForFile(file, myProject);
+        final Module module = ModuleUtilCore.findModuleForFile(file, myProject);
         if (module == null) {
           return Collections.emptyList();
         }
@@ -283,41 +313,16 @@ public class MvcModuleStructureSynchronizer extends AbstractProjectComponent {
 
   @TestOnly
   public static void forceUpdateProject(Project project) {
-    project.getComponent(MvcModuleStructureSynchronizer.class).runActions();
+    MvcModuleStructureSynchronizer instance = project.getComponent(MvcModuleStructureSynchronizer.class);
+    instance.getFileAndRootsModificationTracker().incModificationCount();
+    instance.runActions(instance.computeRawActions(instance.takeOrderSnapshot()));
   }
 
-  private void runActions() {
+  private void runActions(Set<Trinity<Module, SyncAction, MvcFramework>> actions) {
     try {
-      if (myProject.isDisposed()) {
-        return;
-      }
-
-      if (ApplicationManager.getApplication().isUnitTestMode() && !ourGrailsTestFlag) {
-        return;
-      }
-
-      Pair<Object, SyncAction>[] actions = myActions.toArray(new Pair[myActions.size()]);
-      //get module by object and kill duplicates
-
-      final Set<Trinity<Module, SyncAction, MvcFramework>> rawActions = new LinkedHashSet<Trinity<Module, SyncAction, MvcFramework>>();
-
-      for (final Pair<Object, SyncAction> pair : actions) {
-        for (Module module : determineModuleBySyncActionObject(pair.first)) {
-          if (!module.isDisposed()) {
-            final MvcFramework framework = (pair.second == SyncAction.CreateAppStructureIfNeeded)
-                                           ? MvcFramework.getInstanceBySdk(module)
-                                           : MvcFramework.getInstance(module);
-
-            if (framework != null && !framework.isAuxModule(module)) {
-              rawActions.add(Trinity.create(module, pair.second, framework));
-            }
-          }
-        }
-      }
-
       boolean isProjectStructureUpdated = false;
 
-      for (final Trinity<Module, SyncAction, MvcFramework> rawAction : rawActions) {
+      for (final Trinity<Module, SyncAction, MvcFramework> rawAction : actions) {
         final Module module = rawAction.first;
         if (module.isDisposed()) {
           continue;
@@ -335,15 +340,38 @@ public class MvcModuleStructureSynchronizer extends AbstractProjectComponent {
       // if there were any actions added during performSyncAction, clear them too
       // all needed actions are already added to buffer and have thus been performed
       // otherwise you may get repetitive 'run create-app?' questions
-      myActions.clear();
+      synchronized (myOrders) {
+        myOrders.clear();
+      }
     }
   }
 
-  private enum SyncAction {
+  private Set<Trinity<Module, SyncAction, MvcFramework>> computeRawActions(Set<Pair<Object, SyncAction>> actions) {
+    //get module by object and kill duplicates
+    final Set<Trinity<Module, SyncAction, MvcFramework>> rawActions = new LinkedHashSet<>();
+    for (final Pair<Object, SyncAction> pair : actions) {
+      for (Module module : determineModuleBySyncActionObject(pair.first)) {
+        if (!module.isDisposed()) {
+          final MvcFramework framework = (pair.second == SyncAction.CreateAppStructureIfNeeded)
+                                         ? MvcFramework.getInstanceBySdk(module)
+                                         : MvcFramework.getInstance(module);
+
+          if (framework != null && !framework.isAuxModule(module)) {
+            rawActions.add(Trinity.create(module, pair.second, framework));
+          }
+        }
+      }
+    }
+    return rawActions;
+  }
+
+  public enum SyncAction {
     SyncLibrariesInPluginsModule {
       @Override
       void doAction(Module module, MvcFramework framework) {
-        framework.syncSdkAndLibrariesInPluginsModule(module);
+        if (MvcModuleStructureUtil.isEnabledStructureUpdate()) {
+          framework.syncSdkAndLibrariesInPluginsModule(module);
+        }
       }
     },
 
@@ -379,12 +407,12 @@ public class MvcModuleStructureSynchronizer extends AbstractProjectComponent {
       @Override
       void doAction(Module module, MvcFramework framework) {
         final Project project = module.getProject();
-        final MvcModuleStructureSynchronizer mvcModuleStructureSynchronizer = MvcModuleStructureSynchronizer.getInstance(project);
+        final MvcModuleStructureSynchronizer mvcModuleStructureSynchronizer = getInstance(project);
 
         if (mvcModuleStructureSynchronizer.myOutOfModuleDirectoryCreatedActionAdded) {
           mvcModuleStructureSynchronizer.myOutOfModuleDirectoryCreatedActionAdded = false;
 
-          Set<VirtualFile> roots = new HashSet<VirtualFile>();
+          Set<VirtualFile> roots = new HashSet<>();
 
           for (String rootPath : MvcWatchedRootProvider.getRootsToWatch(project)) {
             ContainerUtil.addIfNotNull(roots, LocalFileSystem.getInstance().findFileByPath(rootPath));
@@ -392,12 +420,7 @@ public class MvcModuleStructureSynchronizer extends AbstractProjectComponent {
 
           if (!roots.equals(mvcModuleStructureSynchronizer.myPluginRoots)) {
             mvcModuleStructureSynchronizer.myPluginRoots = roots;
-            ApplicationManager.getApplication().invokeLater(new Runnable() {
-              @Override
-              public void run() {
-                mvcModuleStructureSynchronizer.queue(UpdateProjectStructure, project);
-              }
-            });
+            ApplicationManager.getApplication().invokeLater(() -> mvcModuleStructureSynchronizer.queue(UpdateProjectStructure, project));
           }
         }
       }
@@ -407,39 +430,33 @@ public class MvcModuleStructureSynchronizer extends AbstractProjectComponent {
   }
 
   private void updateProjectViewVisibility() {
-    StartupManager.getInstance(myProject).runWhenProjectIsInitialized(new DumbAwareRunnable() {
-      @Override
-      public void run() {
-        ApplicationManager.getApplication().invokeLater(new Runnable() {
-          @Override
-          public void run() {
-            if (myProject.isDisposed()) return;
+    if (ApplicationManager.getApplication().isUnitTestMode()) return;
+    StartupManager.getInstance(myProject).runWhenProjectIsInitialized(
+      (DumbAwareRunnable)() -> ApplicationManager.getApplication().invokeLater(() -> {
+        if (myProject.isDisposed()) return;
 
-            for (ToolWindowEP ep : ToolWindowEP.EP_NAME.getExtensions()) {
-              if (MvcToolWindowDescriptor.class.isAssignableFrom(ep.getFactoryClass())) {
-                MvcToolWindowDescriptor descriptor = (MvcToolWindowDescriptor)ep.getToolWindowFactory();
-                String id = descriptor.getToolWindowId();
-                boolean shouldShow = MvcModuleStructureUtil.hasModulesWithSupport(myProject, descriptor.getFramework());
+        for (ToolWindowEP ep : ToolWindowEP.EP_NAME.getExtensions()) {
+          if (MvcToolWindowDescriptor.class.isAssignableFrom(ep.getFactoryClass())) {
+            MvcToolWindowDescriptor descriptor = (MvcToolWindowDescriptor)ep.getToolWindowFactory();
+            String id = descriptor.getToolWindowId();
+            boolean shouldShow = descriptor.value(myProject);
 
-                ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(myProject);
+            ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(myProject);
 
-                ToolWindow toolWindow = toolWindowManager.getToolWindow(id);
+            ToolWindow toolWindow = toolWindowManager.getToolWindow(id);
 
-                if (shouldShow && toolWindow == null) {
-                  toolWindow = toolWindowManager.registerToolWindow(id, true, ToolWindowAnchor.LEFT, myProject, true);
-                  toolWindow.setIcon(descriptor.getFramework().getToolWindowIcon());
-                  descriptor.createToolWindowContent(myProject, toolWindow);
-                }
-                else if (!shouldShow && toolWindow != null) {
-                  toolWindowManager.unregisterToolWindow(id);
-                  Disposer.dispose(toolWindow.getContentManager());
-                }
-              }
+            if (shouldShow && toolWindow == null) {
+              toolWindow = toolWindowManager.registerToolWindow(id, true, ToolWindowAnchor.LEFT, myProject, true);
+              toolWindow.setIcon(descriptor.getFramework().getToolWindowIcon());
+              descriptor.createToolWindowContent(myProject, toolWindow);
+            }
+            else if (!shouldShow && toolWindow != null) {
+              toolWindowManager.unregisterToolWindow(id);
+              Disposer.dispose(toolWindow.getContentManager());
             }
           }
-        });
-      }
-    });
+        }
+      }));
   }
 
 }

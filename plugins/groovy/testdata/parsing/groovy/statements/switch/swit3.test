@@ -38,7 +38,7 @@ Groovy script
       PsiWhiteSpace(' ')
       BREAK statement
         PsiElement(break)('break')
-    PsiElement(new line)('\n')
+      PsiElement(new line)('\n')
     Case section
       Case label
         PsiElement(default)('default')
@@ -55,5 +55,5 @@ Groovy script
           Arguments
             PsiElement(()('(')
             PsiElement())(')')
-    PsiElement(new line)('\n')
+      PsiElement(new line)('\n')
     PsiElement(})('}')

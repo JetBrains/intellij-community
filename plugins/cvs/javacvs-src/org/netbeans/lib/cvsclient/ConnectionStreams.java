@@ -17,7 +17,6 @@ import org.netbeans.lib.cvsclient.file.IReaderFactory;
 import org.netbeans.lib.cvsclient.file.IWriterFactory;
 import org.netbeans.lib.cvsclient.io.IStreamLogger;
 import org.netbeans.lib.cvsclient.util.BugLog;
-import org.jetbrains.annotations.NonNls;
 
 import java.io.*;
 import java.util.zip.Deflater;
@@ -43,8 +42,6 @@ public final class ConnectionStreams
 	private OutputStream outputStream;
 	private DeflaterOutputStream deflaterOutputStream;
 	private final String myCharset;
-  @NonNls private static final String UNTIL_HERE_THE_CONTENT_IS_GZIPPED_MESSAGE = "@until here the content is gzipped@";
-  @NonNls private static final String FROM_NOW_ON_THE_CONTENT_IS_GZIPPED_MESSAGE = "@from now on the content is gzipped@";
 
   // Setup ==================================================================
 
@@ -60,11 +57,13 @@ public final class ConnectionStreams
 		setOutputStream(connection.getOutputStream());
 	}
 
-	public Reader createReader(InputStream inputStream) {
+	@Override
+        public Reader createReader(InputStream inputStream) {
 		return new InputStreamReader(inputStream);
 	}
 
-	public Writer createWriter(OutputStream outputStream) {
+	@Override
+        public Writer createWriter(OutputStream outputStream) {
 		try {
 			return new OutputStreamWriter(outputStream, myCharset);
 		}
@@ -75,49 +74,57 @@ public final class ConnectionStreams
 
 	// Accessing ==============================================================
 
-	public IReaderFactory getReaderFactory() {
+	@Override
+        public IReaderFactory getReaderFactory() {
 		return this;
 	}
 
-	public IWriterFactory getWriterFactory() {
+	@Override
+        public IWriterFactory getWriterFactory() {
 		return this;
 	}
 
-	public InputStream getLoggedInputStream() {
+	@Override
+        public InputStream getLoggedInputStream() {
 		return loggedInputStream;
 	}
 
-	public OutputStream getLoggedOutputStream() {
+	@Override
+        public OutputStream getLoggedOutputStream() {
 		return loggedOutputStream;
 	}
 
-	public Reader getLoggedReader() {
+	@Override
+        public Reader getLoggedReader() {
 		return loggedReader;
 	}
 
-	public Writer getLoggedWriter() {
+	@Override
+        public Writer getLoggedWriter() {
 		return loggedWriter;
 	}
 
-	public InputStream getInputStream() {
+	@Override
+        public InputStream getInputStream() {
 		return inputStream;
 	}
 
-	public OutputStream getOutputStream() {
+	@Override
+        public OutputStream getOutputStream() {
 		return outputStream;
 	}
 
+  @Override
   public void flushForReading() throws IOException {
     loggedWriter.flush();
     if (deflaterOutputStream != null) {
       deflaterOutputStream.finish();
-
-      println(UNTIL_HERE_THE_CONTENT_IS_GZIPPED_MESSAGE, streamLogger.getOutputLogStream());
     }
     loggedOutputStream.flush();
   }
 
-	public void close() {
+	@Override
+        public void close() {
 		try {
 			if (loggedOutputStream != null) {
 				try {
@@ -155,9 +162,6 @@ public final class ConnectionStreams
 		loggedWriter.flush();
 		loggedOutputStream.flush();
 
-		println(FROM_NOW_ON_THE_CONTENT_IS_GZIPPED_MESSAGE, streamLogger.getInputLogStream());
-		println(FROM_NOW_ON_THE_CONTENT_IS_GZIPPED_MESSAGE, streamLogger.getOutputLogStream());
-
 		deflaterOutputStream = new DeflaterOutputStream(connection.getOutputStream(), new Deflater(6));
 		setOutputStream(deflaterOutputStream);
 
@@ -178,16 +182,5 @@ public final class ConnectionStreams
 
 		this.loggedOutputStream = streamLogger.createLoggingOutputStream(outputStream);
 		this.loggedWriter = createWriter(this.loggedOutputStream);
-	}
-
-	private void println(String text, OutputStream outputStream) throws IOException {
-		final OutputStreamWriter writerNoSpecialEncoding = new OutputStreamWriter(outputStream);
-		println(text, writerNoSpecialEncoding);
-		writerNoSpecialEncoding.flush();
-	}
-
-	private void println(String text, Writer writer) throws IOException {
-		writer.write(text);
-		writer.write('\n');
 	}
 }

@@ -36,43 +36,44 @@ import org.intellij.plugins.relaxNG.compact.psi.impl.RncElementImpl;
 import org.intellij.plugins.relaxNG.compact.psi.impl.RncFileImpl;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * Created by IntelliJ IDEA.
- * User: sweinreuter
- * Date: 10.08.2007
- */
 public class RncParserDefinition implements ParserDefinition {
-  public static final IFileElementType FILE_ELEMENT_TYPE = new IFileElementType(RngCompactLanguage.INSTANCE);
-  private static final TokenSet myCommentTypes = TokenSet.orSet(RncTokenTypes.COMMENTS, RncTokenTypes.DOC_TOKENS);
+  private static final IFileElementType FILE_ELEMENT_TYPE = new IFileElementType(RngCompactLanguage.INSTANCE);
 
+  @Override
   @NotNull
   public Lexer createLexer(Project project) {
     return new CompactSyntaxLexerAdapter();
   }
 
+  @Override
   public PsiParser createParser(Project project) {
     return new RncParser();
   }
 
+  @Override
   public IFileElementType getFileNodeType() {
     return FILE_ELEMENT_TYPE;
   }
 
+  @Override
   @NotNull
   public TokenSet getWhitespaceTokens() {
     return TokenSet.create(TokenType.WHITE_SPACE);
   }
 
+  @Override
   @NotNull
   public TokenSet getCommentTokens() {
-    return myCommentTypes;
+    return TokenSet.orSet(RncTokenTypes.COMMENTS, RncTokenTypes.DOC_TOKENS);
   }
 
+  @Override
   @NotNull
   public TokenSet getStringLiteralElements() {
     return TokenSet.create(RncTokenTypes.LITERAL);
   }
 
+  @Override
   @NotNull
   @SuppressWarnings({ "unchecked" })
   public PsiElement createElement(ASTNode node) {
@@ -85,19 +86,22 @@ public class RncParserDefinition implements ParserDefinition {
     return new MyRncElement(node);
   }
 
+  @Override
   public PsiFile createFile(FileViewProvider viewProvider) {
     return new RncFileImpl(viewProvider);
   }
 
-  public SpaceRequirements spaceExistanceTypeBetweenTokens(ASTNode left, ASTNode right) {
+  @Override
+  public SpaceRequirements spaceExistenceTypeBetweenTokens(ASTNode left, ASTNode right) {
     return SpaceRequirements.MAY;
   }
 
   private static class MyRncElement extends RncElementImpl {
-    public MyRncElement(ASTNode node) {
+    MyRncElement(ASTNode node) {
       super(node);
     }
 
+    @Override
     public void accept(@NotNull RncElementVisitor visitor) {
       visitor.visitElement(this);
     }

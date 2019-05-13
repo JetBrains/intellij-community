@@ -20,7 +20,6 @@ package org.jetbrains.idea.maven.execution;
 
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.JavaParameters;
-import com.intellij.execution.process.DefaultJavaProcessHandler;
 import com.intellij.execution.process.OSProcessHandler;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -51,13 +50,14 @@ public class MavenExternalExecutor extends MavenExecutor {
     super(parameters, RunnerBundle.message("external.executor.caption"), console);
 
     try {
-      myJavaParameters = MavenExternalParameters.createJavaParameters(project, myParameters, coreSettings, runnerSettings);
+      myJavaParameters = MavenExternalParameters.createJavaParameters(project, myParameters, coreSettings, runnerSettings, null);
     }
     catch (ExecutionException e) {
       myParameterCreationError = e;
     }
   }
 
+  @Override
   public boolean execute(final ProgressIndicator indicator) {
     displayProgress();
 
@@ -67,8 +67,9 @@ public class MavenExternalExecutor extends MavenExecutor {
       }
 
       myProcessHandler =
-        new DefaultJavaProcessHandler(myJavaParameters) {
-          public void notifyTextAvailable(String text, Key outputType) {
+        new OSProcessHandler(myJavaParameters.toCommandLine()) {
+          @Override
+          public void notifyTextAvailable(@NotNull String text, @NotNull Key outputType) {
             // todo move this logic to ConsoleAdapter class
             if (!myConsole.isSuppressed(text)) {
               super.notifyTextAvailable(text, outputType);
@@ -91,6 +92,7 @@ public class MavenExternalExecutor extends MavenExecutor {
     return printExitSummary();
   }
 
+  @Override
   void stop() {
     if (myProcessHandler != null) {
       myProcessHandler.destroyProcess();
@@ -109,11 +111,7 @@ public class MavenExternalExecutor extends MavenExecutor {
     if (indicator != null) {
       if (indicator.isCanceled()) {
         if (!isCancelled()) {
-          ApplicationManager.getApplication().invokeLater(new Runnable() {
-            public void run() {
-              cancel();
-            }
-          });
+          ApplicationManager.getApplication().invokeLater(() -> cancel());
         }
       }
       if (text.matches(PHASE_INFO_REGEXP)) {

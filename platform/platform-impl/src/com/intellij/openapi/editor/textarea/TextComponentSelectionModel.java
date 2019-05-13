@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,17 +17,19 @@ package com.intellij.openapi.editor.textarea;
 
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.IdeActions;
+import com.intellij.openapi.editor.EditorCopyPasteHelper;
 import com.intellij.openapi.editor.LogicalPosition;
-import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.editor.VisualPosition;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.editor.actionSystem.EditorActionManager;
 import com.intellij.openapi.editor.event.SelectionListener;
+import com.intellij.openapi.editor.impl.SelectionModelImpl;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import javax.swing.text.JTextComponent;
 
 /**
@@ -37,7 +39,7 @@ public class TextComponentSelectionModel implements SelectionModel {
   private final JTextComponent myTextComponent;
   private final TextComponentEditor myEditor;
 
-  public TextComponentSelectionModel(final JTextComponent textComponent, final TextComponentEditor textComponentEditor) {
+  public TextComponentSelectionModel(@NotNull JTextComponent textComponent, @NotNull TextComponentEditor textComponentEditor) {
     myTextComponent = textComponent;
     myEditor = textComponentEditor;
   }
@@ -70,6 +72,12 @@ public class TextComponentSelectionModel implements SelectionModel {
     return myTextComponent.getSelectedText();
   }
 
+  @Nullable
+  @Override
+  public String getSelectedText(boolean allCarets) {
+    return getSelectedText();
+  }
+
   @Override
   public int getLeadSelectionOffset() {
     final int caretPosition = myTextComponent.getCaretPosition();
@@ -87,6 +95,11 @@ public class TextComponentSelectionModel implements SelectionModel {
   @Override
   public boolean hasSelection() {
     return myTextComponent.getSelectionStart() != myTextComponent.getSelectionEnd();
+  }
+
+  @Override
+  public boolean hasSelection(boolean anyCaret) {
+    return hasSelection();
   }
 
   @Override
@@ -118,18 +131,23 @@ public class TextComponentSelectionModel implements SelectionModel {
   }
 
   @Override
-  public void addSelectionListener(final SelectionListener listener) {
+  public void removeSelection(boolean allCarets) {
+    removeSelection();
+  }
+
+  @Override
+  public void addSelectionListener(@NotNull final SelectionListener listener) {
     throw new UnsupportedOperationException("Not implemented");
   }
 
   @Override
-  public void removeSelectionListener(final SelectionListener listener) {
+  public void removeSelectionListener(@NotNull final SelectionListener listener) {
     throw new UnsupportedOperationException("Not implemented");
   }
 
   @Override
   public void selectLineAtCaret() {
-    throw new UnsupportedOperationException("Not implemented");
+    SelectionModelImpl.doSelectLineAtCaret(myEditor.getCaretModel().getPrimaryCaret());
   }
 
   @Override
@@ -138,26 +156,19 @@ public class TextComponentSelectionModel implements SelectionModel {
 
     EditorActionHandler handler = EditorActionManager.getInstance().getActionHandler(
       IdeActions.ACTION_EDITOR_SELECT_WORD_AT_CARET);
-    handler.execute(myEditor, DataManager.getInstance().getDataContext(myEditor.getComponent()));
+    handler.execute(myEditor, null, DataManager.getInstance().getDataContext(myEditor.getComponent()));
   }
 
   @Override
   public void copySelectionToClipboard() {
+    if (! (myTextComponent instanceof JPasswordField)) {
+      EditorCopyPasteHelper.getInstance().copySelectionToClipboard(myEditor);
+    }
+  }
+
+  @Override
+  public void setBlockSelection(@NotNull final LogicalPosition blockStart, @NotNull final LogicalPosition blockEnd) {
     throw new UnsupportedOperationException("Not implemented");
-  }
-
-  @Override
-  public void setBlockSelection(final LogicalPosition blockStart, final LogicalPosition blockEnd) {
-    throw new UnsupportedOperationException("Not implemented");
-  }
-
-  @Override
-  public void removeBlockSelection() {
-  }
-
-  @Override
-  public boolean hasBlockSelection() {
-    return false;
   }
 
   @Override
@@ -169,29 +180,6 @@ public class TextComponentSelectionModel implements SelectionModel {
   @Override
   @NotNull
   public int[] getBlockSelectionEnds() {
-    throw new UnsupportedOperationException("Not implemented");
-  }
-
-  @Override
-  @Nullable
-  public LogicalPosition getBlockStart() {
-    throw new UnsupportedOperationException("Not implemented");
-  }
-
-  @Override
-  @Nullable
-  public LogicalPosition getBlockEnd() {
-    throw new UnsupportedOperationException("Not implemented");
-  }
-
-  @Override
-  public boolean isBlockSelectionGuarded() {
-    throw new UnsupportedOperationException("Not implemented");
-  }
-
-  @Override
-  @Nullable
-  public RangeMarker getBlockSelectionGuard() {
     throw new UnsupportedOperationException("Not implemented");
   }
 

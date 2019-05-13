@@ -15,41 +15,50 @@
  */
 package com.intellij.openapi.wm;
 
-import com.intellij.ui.JBColor;
-
 import java.awt.*;
 
 public class AppIconScheme {
 
+  private static final Color TESTS_OK_COLOR = new Color(46, 191, 38);
+  private static final Color BUILD_OK_COLOR = new Color(51, 153, 255);
+  private static final Color INDEXING_OK_COLOR = new Color(255, 170, 0);
+  private static final Color ERROR_COLOR = Color.red;
+
   public interface Progress {
 
     static final Progress TESTS = new Progress() {
+      @Override
       public Color getOkColor() {
-        return JBColor.GREEN;
+        return TESTS_OK_COLOR;
       }
 
+      @Override
       public Color getErrorColor() {
-        return JBColor.RED;
+        return ERROR_COLOR;
       }
     };
 
     static final Progress BUILD = new Progress() {
+      @Override
       public Color getOkColor() {
-        return new Color(43, 104, 184);
+        return BUILD_OK_COLOR;
       }
 
+      @Override
       public Color getErrorColor() {
-        return JBColor.RED;
+        return ERROR_COLOR;
       }
     };
 
     static final Progress INDEXING = new Progress() {
+      @Override
       public Color getOkColor() {
-        return new Color(255, 153, 0);
+        return INDEXING_OK_COLOR;
       }
 
+      @Override
       public Color getErrorColor() {
-        return JBColor.RED;
+        return ERROR_COLOR;
       }
     };
 

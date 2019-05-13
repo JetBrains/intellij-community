@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,8 @@
 package com.intellij.openapi.project;
 
 import com.intellij.openapi.module.Module;
+import com.intellij.util.Function;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.EventListener;
 import java.util.List;
@@ -24,11 +26,15 @@ import java.util.List;
  * @author max
  */
 public interface ModuleListener extends EventListener {
-  void moduleAdded(Project project, Module module);
+  default void moduleAdded(@NotNull Project project, @NotNull Module module) {
+  }
 
-  void beforeModuleRemoved(Project project, Module module);
+  default void beforeModuleRemoved(@NotNull Project project, @NotNull Module module) {
+  }
 
-  void moduleRemoved(Project project, Module module);
+  default void moduleRemoved(@NotNull Project project, @NotNull Module module) {
+  }
 
-  void modulesRenamed(Project project, List<Module> modules);
+  default void modulesRenamed(@NotNull Project project, @NotNull List<Module> modules, @NotNull Function<Module, String> oldNameProvider) {
+  }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,20 +30,21 @@ import org.jetbrains.annotations.Nullable;
 public class Factory  {
   private Factory() {}
 
-  public static LeafElement createSingleLeafElement(IElementType type, CharSequence buffer, int startOffset, int endOffset, CharTable table, PsiManager manager, PsiFile originalFile) {
+  @NotNull
+  public static LeafElement createSingleLeafElement(@NotNull IElementType type, @NotNull CharSequence buffer, int startOffset, int endOffset, CharTable table, @NotNull PsiManager manager, PsiFile originalFile) {
     DummyHolder dummyHolder = DummyHolderFactory.createHolder(manager, table, type.getLanguage());
     dummyHolder.setOriginalFile(originalFile);
 
     FileElement holderElement = dummyHolder.getTreeElement();
     
-    LeafElement newElement = ASTFactory.leaf(type, holderElement.getCharTable().intern(
-      buffer, startOffset, endOffset));
+    LeafElement newElement = ASTFactory.leaf(type, holderElement.getCharTable().intern(buffer, startOffset, endOffset));
     holderElement.rawAddChildren(newElement);
     CodeEditUtil.setNodeGenerated(newElement, true);
     return newElement;
   }
 
-  public static LeafElement createSingleLeafElement(IElementType type, CharSequence buffer, int startOffset, int endOffset, CharTable table, PsiManager manager, boolean generatedFlag) {
+  @NotNull
+  public static LeafElement createSingleLeafElement(@NotNull IElementType type, @NotNull CharSequence buffer, int startOffset, int endOffset, CharTable table, @NotNull PsiManager manager, boolean generatedFlag) {
     final FileElement holderElement = DummyHolderFactory.createHolder(manager, table, type.getLanguage()).getTreeElement();
     final LeafElement newElement = ASTFactory.leaf(type, holderElement.getCharTable().intern(
       buffer, startOffset, endOffset));
@@ -52,22 +53,25 @@ public class Factory  {
     return newElement;
   }
 
-  public static LeafElement createSingleLeafElement(IElementType type, CharSequence buffer, CharTable table, PsiManager manager) {
+  @NotNull
+  public static LeafElement createSingleLeafElement(@NotNull IElementType type, @NotNull CharSequence buffer, CharTable table, @NotNull PsiManager manager) {
     return createSingleLeafElement(type, buffer, 0, buffer.length(), table, manager);
   }
 
-  public static LeafElement createSingleLeafElement(IElementType type, CharSequence buffer, int startOffset, int endOffset, @Nullable CharTable table, PsiManager manager) {
+  @NotNull
+  public static LeafElement createSingleLeafElement(@NotNull IElementType type, @NotNull CharSequence buffer, int startOffset, int endOffset, @Nullable CharTable table, @NotNull PsiManager manager) {
     return createSingleLeafElement(type, buffer, startOffset, endOffset, table, manager, true);
   }
 
-  public static CompositeElement createErrorElement(String description) {
+  @NotNull
+  public static CompositeElement createErrorElement(@NotNull String description) {
     return new PsiErrorElementImpl(description);
   }
 
   @NotNull
-  public static CompositeElement createCompositeElement(final IElementType type,
+  public static CompositeElement createCompositeElement(@NotNull IElementType type,
                                                         final CharTable charTableByTree,
-                                                        final PsiManager manager) {
+                                                        @NotNull PsiManager manager) {
     final FileElement treeElement = DummyHolderFactory.createHolder(manager, null, charTableByTree).getTreeElement();
     final CompositeElement composite = ASTFactory.composite(type);
     treeElement.rawAddChildren(composite);

@@ -10,20 +10,25 @@
 
 import os, sys
 from mercurial import util
+from mercurial.hgweb import common
 
 def launch(application):
-    util.set_binary(sys.stdin)
-    util.set_binary(sys.stdout)
+    util.setbinary(sys.stdin)
+    util.setbinary(sys.stdout)
 
     environ = dict(os.environ.iteritems())
     environ.setdefault('PATH_INFO', '')
     if environ.get('SERVER_SOFTWARE', '').startswith('Microsoft-IIS'):
-        # IIS includes script_name in path_info
+        # IIS includes script_name in PATH_INFO
         scriptname = environ['SCRIPT_NAME']
         if environ['PATH_INFO'].startswith(scriptname):
             environ['PATH_INFO'] = environ['PATH_INFO'][len(scriptname):]
 
-    environ['wsgi.input'] = sys.stdin
+    stdin = sys.stdin
+    if environ.get('HTTP_EXPECT', '').lower() == '100-continue':
+        stdin = common.continuereader(stdin, sys.stdout.write)
+
+    environ['wsgi.input'] = stdin
     environ['wsgi.errors'] = sys.stderr
     environ['wsgi.version'] = (1, 0)
     environ['wsgi.multithread'] = False
@@ -72,6 +77,7 @@ def launch(application):
     try:
         for chunk in content:
             write(chunk)
+        if not headers_sent:
+            write('')   # send headers now if body was empty
     finally:
-        if hasattr(content, 'close'):
-            content.close()
+        getattr(content, 'close', lambda : None)()

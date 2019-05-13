@@ -1,45 +1,34 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide;
 
-import com.intellij.ide.highlighter.ProjectFileType;
 import com.intellij.ide.impl.ProjectUtil;
+import com.intellij.ide.util.PsiNavigationSupport;
 import com.intellij.idea.StartupUtil;
-import com.intellij.openapi.application.ApplicationStarter;
-import com.intellij.openapi.application.ApplicationStarterEx;
+import com.intellij.openapi.application.*;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
+import com.intellij.openapi.fileEditor.impl.NonProjectFileWritingAccessProvider;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.IdeFrame;
-import com.intellij.platform.PlatformProjectOpenProcessor;
+import com.intellij.platform.CommandLineProjectOpenProcessor;
+import com.intellij.project.ProjectKt;
 import com.intellij.projectImport.ProjectOpenProcessor;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.io.File;
+import java.io.UnsupportedEncodingException;
+import java.net.URLDecoder;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -48,109 +37,105 @@ import java.util.List;
 public class CommandLineProcessor {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.CommandLineProcessor");
 
-  private CommandLineProcessor() {
-  }
-
-  public static void openFileOrProject(final String name) {
-    //noinspection SSBasedInspection
-    SwingUtilities.invokeLater(new Runnable() {
-      public void run() {
-        if (name != null) {
-          doOpenFileOrProject(name);
-        }
-      }
-    });
-  }
+  private CommandLineProcessor() { }
 
   @Nullable
-  private static Project doOpenFileOrProject(String name) {
-    final VirtualFile virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(name);
-    if (virtualFile == null) {
-      Messages.showErrorDialog("Cannot find file '" + name + "'", "Cannot find file");
-      return null;
-    }
-    ProjectOpenProcessor provider = ProjectOpenProcessor.getImportProvider(virtualFile);
-    if (provider instanceof PlatformProjectOpenProcessor && !virtualFile.isDirectory()) {
-      // HACK: PlatformProjectOpenProcessor agrees to open anything
-      provider = null;
-    }
-    if (provider != null ||
-        name.endsWith(ProjectFileType.DOT_DEFAULT_EXTENSION) ||
-        new File(name, Project.DIRECTORY_STORE_FOLDER).exists()) {
-      final Project result = ProjectUtil.openOrImport(name, null, true);
-      if (result == null) {
-        Messages.showErrorDialog("Cannot open project '" + name + "'", "Cannot open project");
+  private static Project doOpenFileOrProject(VirtualFile file) {
+    String path = file.getPath();
+    if (ProjectKt.isValidProjectPath(path) || ProjectOpenProcessor.getImportProvider(file) != null) {
+      Project project = ProjectUtil.openOrImport(path, null, true);
+      if (project == null) {
+        Messages.showErrorDialog("Cannot open project '" + FileUtil.toSystemDependentName(path) + "'", "Cannot Open Project");
       }
-      return result;
+      return project;
     }
     else {
-      return doOpenFile(virtualFile, -1);
+      return doOpenFile(file, -1, false);
     }
   }
 
   @Nullable
-  private static Project doOpenFile(VirtualFile virtualFile, int line) {
-    final Project[] projects = ProjectManager.getInstance().getOpenProjects();
-    if (projects.length == 0) {
-      final PlatformProjectOpenProcessor processor = PlatformProjectOpenProcessor.getInstanceIfItExists();
-      if (processor != null) {
-        return PlatformProjectOpenProcessor.doOpenProject(virtualFile, null, false, line, null, false);
+  private static Project doOpenFile(VirtualFile file, int line, boolean tempProject) {
+    Project[] projects = ProjectManager.getInstance().getOpenProjects();
+    if (projects.length == 0 || tempProject) {
+      Project project = CommandLineProjectOpenProcessor.getInstance().openProjectAndFile(file, line, tempProject);
+      if (project == null) {
+        Messages.showErrorDialog("No project found to open file in", "Cannot Open File");
       }
-      Messages.showErrorDialog("No project found to open file in", "Cannot open file");
-      return null;
+      return project;
     }
     else {
-      Project project = findBestProject(virtualFile, projects);
-      if (line == -1) {
-        new OpenFileDescriptor(project, virtualFile).navigate(true);
-      }
-      else {
-        new OpenFileDescriptor(project, virtualFile, line-1, 0).navigate(true);
-      }
+      NonProjectFileWritingAccessProvider.allowWriting(Collections.singletonList(file));
+      Project project = findBestProject(file, projects);
+      (line > 0 ? new OpenFileDescriptor(project, file, line - 1, 0) : PsiNavigationSupport.getInstance().createNavigatable(project, file, -1)).navigate(true);
       return project;
     }
   }
 
   @NotNull
-  private static Project findBestProject(VirtualFile virtualFile, Project[] projects) {
-    for (Project aProject : projects) {
-      if (ProjectRootManager.getInstance(aProject).getFileIndex().isInContent(virtualFile)) {
-        return aProject;
+  private static Project findBestProject(VirtualFile file, Project[] projects) {
+    for (Project project : projects) {
+      if (ProjectRootManager.getInstance(project).getFileIndex().isInContent(file)) {
+        return project;
       }
     }
+
     IdeFrame frame = IdeFocusManager.getGlobalInstance().getLastFocusedFrame();
-    Project project = frame == null ? null : frame.getProject();
-    return project != null ? project : projects[0];
+    if (frame != null) {
+      Project project = frame.getProject();
+      if (project != null) {
+        return project;
+      }
+    }
+
+    return projects[0];
   }
 
   @Nullable
   public static Project processExternalCommandLine(List<String> args, @Nullable String currentDirectory) {
-    if (args.size() > 0) {
-      LOG.info("External command line:");
-      for (String arg : args) {
-        LOG.info(arg);
+    LOG.info("External command line:");
+    LOG.info("Dir: " + currentDirectory);
+    for (String arg : args) LOG.info(arg);
+    LOG.info("-----");
+    if (args.isEmpty()) return null;
+
+    String command = args.get(0);
+    for (ApplicationStarter starter : ApplicationStarter.EP_NAME.getExtensionList()) {
+      if (command.equals(starter.getCommandName())) {
+        if (starter instanceof ApplicationStarterEx && ((ApplicationStarterEx)starter).canProcessExternalCommandLine()) {
+          LOG.info("Processing command with " + starter);
+          ((ApplicationStarterEx)starter).processExternalCommandLine(ArrayUtil.toStringArray(args), currentDirectory);
+        }
+        else {
+          String title = "Cannot execute command '" + command + "'";
+          String message = "Only one instance of " + ApplicationNamesInfo.getInstance().getProductName() + " can be run at a time.";
+          Messages.showErrorDialog(message, title);
+        }
+        return null;
       }
     }
-    LOG.info("-----");
-
-    if (args.size() > 0) {
-      String command = args.get(0);
-      for(ApplicationStarter starter: Extensions.getExtensions(ApplicationStarter.EP_NAME)) {
-        if (starter instanceof ApplicationStarterEx && command.equals(starter.getCommandName())) {
-          LOG.info("Processing command with " + starter);
-          ((ApplicationStarterEx) starter).processExternalCommandLine(ArrayUtil.toStringArray(args));
-          return null;
-        }
+    if (command.startsWith(JetBrainsProtocolHandler.PROTOCOL)) {
+      try {
+        String url = URLDecoder.decode(command, "UTF-8");
+        JetBrainsProtocolHandler.processJetBrainsLauncherParameters(url);
+        ApplicationManager.getApplication().invokeLater(() -> JBProtocolCommand.handleCurrentCommand());
       }
+      catch (UnsupportedEncodingException e) {
+        LOG.error(e);
+      }
+      return null;
     }
 
     Project lastOpenedProject = null;
     int line = -1;
-    for (int i = 0, argsSize = args.size(); i < argsSize; i++) {
+    boolean tempProject = false;
+
+    for (int i = 0; i < args.size(); i++) {
       String arg = args.get(i);
       if (arg.equals(StartupUtil.NO_SPLASH)) {
         continue;
       }
+
       if (arg.equals("-l") || arg.equals("--line")) {
         //noinspection AssignmentToForLoopParameter
         i++;
@@ -163,25 +148,43 @@ public class CommandLineProcessor {
         catch (NumberFormatException e) {
           line = -1;
         }
+        continue;
       }
-      else {
-        if (StringUtil.isQuotedString(arg)) {
-          arg = StringUtil.stripQuotesAroundValue(arg);
-        }
-        if (line != -1) {
-          final VirtualFile virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(arg);
-          if (virtualFile != null) {
-            lastOpenedProject = doOpenFile(virtualFile, line);
-          }
-          else {
-            Messages.showErrorDialog("Cannot find file '" + arg + "'", "Cannot find file");
-          }
+
+      if (arg.equals("--temp-project")) {
+        tempProject = true;
+        continue;
+      }
+
+      if (StringUtil.isQuotedString(arg)) {
+        arg = StringUtil.unquoteString(arg);
+      }
+      if (!new File(arg).isAbsolute()) {
+        arg = (currentDirectory != null ? new File(currentDirectory, arg) : new File(arg)).getAbsolutePath();
+      }
+
+      VirtualFile file = LocalFileSystem.getInstance().refreshAndFindFileByPath(arg);
+      if (line != -1 || tempProject) {
+        if (file != null && !file.isDirectory()) {
+          lastOpenedProject = doOpenFile(file, line, tempProject);
         }
         else {
-          lastOpenedProject = doOpenFileOrProject(arg);
+          Messages.showErrorDialog("Cannot find file '" + arg + "'", "Cannot Find File");
         }
       }
+      else {
+        if (file != null) {
+          lastOpenedProject = doOpenFileOrProject(file);
+        }
+        else {
+          Messages.showErrorDialog("Cannot find file '" + arg + "'", "Cannot Find File");
+        }
+      }
+
+      line = -1;
+      tempProject = false;
     }
+
     return lastOpenedProject;
   }
 }

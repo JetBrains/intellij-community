@@ -17,10 +17,11 @@ package com.intellij.openapi.vcs.changes.issueLinks;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.IssueNavigationConfiguration;
 import com.intellij.util.containers.Convertor;
-import com.intellij.xml.util.XmlTagUtilBase;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.xml.util.XmlStringUtil;
 
 import java.util.List;
 
@@ -37,9 +38,9 @@ public class IssueLinkHtmlRenderer {
   }
 
   @SuppressWarnings({"HardCodedStringLiteral"})
-  public static String formatTextWithLinks(final Project project, final String c, final Convertor<String, String> convertor) {
-    if (c == null) return "";
-    String comment = XmlTagUtilBase.escapeString(c, false);
+  public static String formatTextWithLinks(Project project, String str, Convertor<? super String, String> convertor) {
+    if (StringUtil.isEmpty(str)) return "";
+    String comment = XmlStringUtil.escapeString(str, false);
 
     StringBuilder commentBuilder = new StringBuilder();
     IssueNavigationConfiguration config = IssueNavigationConfiguration.getInstance(project);
@@ -57,7 +58,6 @@ public class IssueLinkHtmlRenderer {
     return comment.replace("\n", "<br>");
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
   public static String formatTextWithLinks(final Project project, final String c) {
     return formatTextWithLinks(project, c, Convertor.SELF);
   }

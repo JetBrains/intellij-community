@@ -1,20 +1,8 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.options.colors.pages;
 
+import com.intellij.codeHighlighting.RainbowHighlighter;
+import com.intellij.lang.Language;
 import com.intellij.openapi.editor.DefaultLanguageHighlighterColors;
 import com.intellij.openapi.editor.HighlighterColors;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
@@ -24,7 +12,7 @@ import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.openapi.options.OptionsBundle;
 import com.intellij.openapi.options.colors.AttributesDescriptor;
 import com.intellij.openapi.options.colors.ColorDescriptor;
-import com.intellij.openapi.options.colors.ColorSettingsPage;
+import com.intellij.openapi.options.colors.RainbowColorSettingsPage;
 import com.intellij.psi.codeStyle.DisplayPriority;
 import com.intellij.psi.codeStyle.DisplayPrioritySortable;
 import org.jetbrains.annotations.NonNls;
@@ -40,9 +28,8 @@ import java.util.Map;
  *
  * @author Rustam Vishnyakov
  */
-public class DefaultLanguageColorsPage implements ColorSettingsPage, DisplayPrioritySortable {
-
-  @NonNls private static final Map<String, TextAttributesKey> TAG_HIGHLIGHTING_MAP = new HashMap<String, TextAttributesKey>();
+public class DefaultLanguageColorsPage implements RainbowColorSettingsPage, DisplayPrioritySortable {
+  @NonNls private static final Map<String, TextAttributesKey> TAG_HIGHLIGHTING_MAP = RainbowHighlighter.createRainbowHLM();
 
   private final static TextAttributesKey FAKE_BAD_CHAR =
     TextAttributesKey.createTextAttributesKey("FAKE_BAD_CHAR", HighlighterColors.BAD_CHARACTER);
@@ -80,6 +67,7 @@ public class DefaultLanguageColorsPage implements ColorSettingsPage, DisplayPrio
     TAG_HIGHLIGHTING_MAP.put("interface", DefaultLanguageHighlighterColors.INTERFACE_NAME);
     TAG_HIGHLIGHTING_MAP.put("doc_markup", DefaultLanguageHighlighterColors.DOC_COMMENT_MARKUP);
     TAG_HIGHLIGHTING_MAP.put("doc_tag", DefaultLanguageHighlighterColors.DOC_COMMENT_TAG);
+    TAG_HIGHLIGHTING_MAP.put("doc_tag_value", DefaultLanguageHighlighterColors.DOC_COMMENT_TAG_VALUE);
     TAG_HIGHLIGHTING_MAP.put("valid_esc_seq", DefaultLanguageHighlighterColors.VALID_STRING_ESCAPE);
     TAG_HIGHLIGHTING_MAP.put("invalid_esc_seq", DefaultLanguageHighlighterColors.INVALID_STRING_ESCAPE);
     TAG_HIGHLIGHTING_MAP.put("predefined", DefaultLanguageHighlighterColors.PREDEFINED_SYMBOL);
@@ -87,6 +75,16 @@ public class DefaultLanguageColorsPage implements ColorSettingsPage, DisplayPrio
     TAG_HIGHLIGHTING_MAP.put("tag", DefaultLanguageHighlighterColors.MARKUP_TAG);
     TAG_HIGHLIGHTING_MAP.put("attribute", DefaultLanguageHighlighterColors.MARKUP_ATTRIBUTE);
     TAG_HIGHLIGHTING_MAP.put("entity", DefaultLanguageHighlighterColors.MARKUP_ENTITY);
+    TAG_HIGHLIGHTING_MAP.put("reassigned_parameter", DefaultLanguageHighlighterColors.REASSIGNED_PARAMETER);
+    TAG_HIGHLIGHTING_MAP.put("reassigned_local", DefaultLanguageHighlighterColors.REASSIGNED_LOCAL_VARIABLE);
+  }
+
+  @NonNls private static final Map<String, TextAttributesKey> INLINE_ELEMENTS = new HashMap<>();
+
+  static {
+    INLINE_ELEMENTS.put("parameter_hint", DefaultLanguageHighlighterColors.INLINE_PARAMETER_HINT);
+    INLINE_ELEMENTS.put("parameter_hint_highlighted", DefaultLanguageHighlighterColors.INLINE_PARAMETER_HINT_HIGHLIGHTED);
+    INLINE_ELEMENTS.put("parameter_hint_current", DefaultLanguageHighlighterColors.INLINE_PARAMETER_HINT_CURRENT);
   }
 
   private final static AttributesDescriptor[] ATTRIBUTES_DESCRIPTORS = {
@@ -129,6 +127,8 @@ public class DefaultLanguageColorsPage implements ColorSettingsPage, DisplayPrio
     new AttributesDescriptor(
       OptionsBundle.message("options.language.defaults.doc.tag"), DefaultLanguageHighlighterColors.DOC_COMMENT_TAG),
     new AttributesDescriptor(
+      OptionsBundle.message("options.language.defaults.doc.tag.value"), DefaultLanguageHighlighterColors.DOC_COMMENT_TAG_VALUE),
+    new AttributesDescriptor(
       OptionsBundle.message("options.language.defaults.label"), DefaultLanguageHighlighterColors.LABEL),
     new AttributesDescriptor(
       OptionsBundle.message("options.language.defaults.constant"), DefaultLanguageHighlighterColors.CONSTANT),
@@ -137,6 +137,8 @@ public class DefaultLanguageColorsPage implements ColorSettingsPage, DisplayPrio
     new AttributesDescriptor(
       OptionsBundle.message("options.language.defaults.local.variable"), DefaultLanguageHighlighterColors.LOCAL_VARIABLE),
     new AttributesDescriptor(
+      OptionsBundle.message("options.language.defaults.reassigned.local.variable"), DefaultLanguageHighlighterColors.REASSIGNED_LOCAL_VARIABLE),
+    new AttributesDescriptor(
       OptionsBundle.message("options.language.defaults.global.variable"), DefaultLanguageHighlighterColors.GLOBAL_VARIABLE),
     new AttributesDescriptor(
       OptionsBundle.message("options.language.defaults.function.declaration"), DefaultLanguageHighlighterColors.FUNCTION_DECLARATION),
@@ -144,6 +146,8 @@ public class DefaultLanguageColorsPage implements ColorSettingsPage, DisplayPrio
       OptionsBundle.message("options.language.defaults.function.call"), DefaultLanguageHighlighterColors.FUNCTION_CALL),
     new AttributesDescriptor(
       OptionsBundle.message("options.language.defaults.parameter"), DefaultLanguageHighlighterColors.PARAMETER),
+    new AttributesDescriptor(
+      OptionsBundle.message("options.language.defaults.reassigned.parameter"), DefaultLanguageHighlighterColors.REASSIGNED_PARAMETER),
     new AttributesDescriptor(
       OptionsBundle.message("options.language.defaults.interface.name"), DefaultLanguageHighlighterColors.INTERFACE_NAME),
     new AttributesDescriptor(
@@ -169,7 +173,16 @@ public class DefaultLanguageColorsPage implements ColorSettingsPage, DisplayPrio
       OptionsBundle.message("options.language.defaults.markup.entity"), DefaultLanguageHighlighterColors.MARKUP_ENTITY),
     new AttributesDescriptor(
       OptionsBundle.message("options.language.defaults.template.language"), DefaultLanguageHighlighterColors.TEMPLATE_LANGUAGE_COLOR),
-    
+
+    new AttributesDescriptor(
+      OptionsBundle.message("options.java.attribute.descriptor.inline.parameter.hint"), 
+      DefaultLanguageHighlighterColors.INLINE_PARAMETER_HINT),
+    new AttributesDescriptor(
+      OptionsBundle.message("options.java.attribute.descriptor.inline.parameter.hint.highlighted"), 
+      DefaultLanguageHighlighterColors.INLINE_PARAMETER_HINT_HIGHLIGHTED),
+    new AttributesDescriptor(
+      OptionsBundle.message("options.java.attribute.descriptor.inline.parameter.hint.current"), 
+      DefaultLanguageHighlighterColors.INLINE_PARAMETER_HINT_CURRENT)
   };
 
   @Nullable
@@ -200,17 +213,27 @@ public class DefaultLanguageColorsPage implements ColorSettingsPage, DisplayPrio
       "<brackets>[</brackets> Brackets <brackets>]</brackets>\n" +
       "<line_comment>// Line comment</line_comment>\n" +
       "<block_comment>/* Block comment */</block_comment>\n" +
-      "<doc_comment>/** \n" +
-      " * Doc comment\n" +
-      " * <doc_tag>@tag</doc_tag> <doc_markup><code>Markup</code></doc_markup>\n" +
-      " */</doc_comment>\n" +
       "<label>:Label</label>\n" +
       "<predefined>predefined_symbol()</predefined>\n" +
       "<const>CONSTANT</const>\n" +
       "Global <global_var>variable</global_var>\n" +
-      "Function <func_decl>declaration</func_decl> (<param>parameter</param>)\n" +
-      "    Local <local_var>variable</local_var>\n" +
-      "Function <func_call>call</func_call>()\n" +
+      "<doc_comment>/** \n" +
+      " * Doc comment\n" +
+      " * <doc_tag>@tag</doc_tag> <doc_markup><code></doc_markup>Markup<<doc_markup></code></doc_markup>" +
+      RainbowHighlighter.generatePaletteExample("\n * ") + "\n" +
+      " * <doc_tag>@param</doc_tag> <doc_tag_value>parameter1</doc_tag_value> documentation\n" +
+      " * <doc_tag>@param</doc_tag> <doc_tag_value>parameter2</doc_tag_value> documentation\n" +
+      " * <doc_tag>@param</doc_tag> <doc_tag_value>parameter3</doc_tag_value> documentation\n" +
+      " * <doc_tag>@param</doc_tag> <doc_tag_value>parameter4</doc_tag_value> documentation\n" +
+      " */</doc_comment>\n" +
+      "Function <func_decl>declaration</func_decl> (<param>parameter1</param> <param>parameter2</param> <param>parameter3</param> <param>parameter4</param>)\n" +
+      "    Local <local_var>variable1</local_var> <local_var>variable2</local_var> <local_var>variable3</local_var> <local_var>variable4</local_var>\n" +
+      "    Reassigned local <reassigned_local>variable</reassigned_local>\n" +
+      "    Reassigned <reassigned_parameter>parameter</reassigned_parameter>\n" +
+      "Function <func_call>call</func_call>(" +
+      "<parameter_hint p:>0, <parameter_hint param:>1, <parameter_hint parameterName:>2" +
+      ")\n" +
+      "Current function <func_call>call</func_call>(<parameter_hint_highlighted param:>0, <parameter_hint_current currentParam:>1)\n" +
       "Interface <interface>Name</interface>\n" +
       "<metadata>@Metadata</metadata>\n" +
       "Class <class_name>Name</class_name>\n" +
@@ -230,6 +253,12 @@ public class DefaultLanguageColorsPage implements ColorSettingsPage, DisplayPrio
     return TAG_HIGHLIGHTING_MAP;
   }
 
+  @Nullable
+  @Override
+  public Map<String, TextAttributesKey> getAdditionalInlineElementToDescriptorMap() {
+    return INLINE_ELEMENTS;
+  }
+
   @NotNull
   @Override
   public AttributesDescriptor[] getAttributeDescriptors() {
@@ -239,7 +268,7 @@ public class DefaultLanguageColorsPage implements ColorSettingsPage, DisplayPrio
   @NotNull
   @Override
   public ColorDescriptor[] getColorDescriptors() {
-    return new ColorDescriptor[0];
+    return ColorDescriptor.EMPTY_ARRAY;
   }
 
   @NotNull
@@ -251,5 +280,18 @@ public class DefaultLanguageColorsPage implements ColorSettingsPage, DisplayPrio
   @Override
   public DisplayPriority getPriority() {
     return DisplayPriority.GENERAL_SETTINGS;
+  }
+
+  @Override
+  public boolean isRainbowType(TextAttributesKey type) {
+    return DefaultLanguageHighlighterColors.LOCAL_VARIABLE.equals(type)
+           || DefaultLanguageHighlighterColors.PARAMETER.equals(type)
+           || DefaultLanguageHighlighterColors.DOC_COMMENT_TAG_VALUE.equals(type);
+  }
+
+  @Nullable
+  @Override
+  public Language getLanguage() {
+    return null;
   }
 }

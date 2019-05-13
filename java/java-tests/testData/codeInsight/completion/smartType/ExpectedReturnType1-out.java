@@ -18,7 +18,7 @@ interface I {
 }
 public class Test {
   public int m() {
-    I i = s -> s.contains();
+    I i = s -> s.isEmpty();
     return 0;
   }
 }

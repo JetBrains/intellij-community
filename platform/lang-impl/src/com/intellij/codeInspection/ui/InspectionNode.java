@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,55 +16,37 @@
 
 package com.intellij.codeInspection.ui;
 
-import com.intellij.codeInspection.ex.InspectionTool;
-import com.intellij.icons.AllIcons;
-import com.intellij.ui.LayeredIcon;
-import com.intellij.util.IconUtil;
+import com.intellij.codeInspection.ex.InspectionProfileImpl;
+import com.intellij.codeInspection.ex.InspectionToolWrapper;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.util.Enumeration;
-
-/**
- * @author max
- */
 public class InspectionNode extends InspectionTreeNode {
-  public static final Icon TOOL;
+  @NotNull private final InspectionToolWrapper myToolWrapper;
+  @NotNull private final InspectionProfileImpl myProfile;
 
-  static {
-    TOOL = LayeredIcon.create(AllIcons.Toolwindows.ToolWindowInspection, IconUtil.getEmptyIcon(false));
+  public InspectionNode(@NotNull InspectionToolWrapper toolWrapper,
+                        @NotNull InspectionProfileImpl profile,
+                        @NotNull InspectionTreeNode parent) {
+    super(parent);
+    myToolWrapper = toolWrapper;
+    myProfile = profile;
   }
 
-  private boolean myTooBigForOnlineRefresh = false;
-
-  public InspectionNode(InspectionTool tool) {
-    super(tool);
+  @NotNull
+  public InspectionToolWrapper getToolWrapper() {
+    return myToolWrapper;
   }
 
-  public String toString() {
-    return getTool().getDisplayName();
+  @Nullable
+  @Override
+  public String getTailText() {
+    final String shortName = getToolWrapper().getShortName();
+    return myProfile.getTools(shortName, null).isEnabled() ? null : "Disabled";
   }
 
-  public InspectionTool getTool() {
-    return (InspectionTool)getUserObject();
-  }
-
-  public Icon getIcon(boolean expanded) {
-    return TOOL;
-  }
-
-  public boolean isTooBigForOnlineRefresh() {
-    if(!myTooBigForOnlineRefresh) myTooBigForOnlineRefresh = getProblemCount()>1000;
-    return myTooBigForOnlineRefresh;
-  }
-
-  public int getProblemCount() {
-    int sum = 0;
-    Enumeration children = children();
-    while (children.hasMoreElements()) {
-      InspectionTreeNode child = (InspectionTreeNode)children.nextElement();
-      if (child instanceof InspectionNode) continue;
-      sum += child.getProblemCount();
-    }
-    return sum;
+  @Override
+  public String getPresentableText() {
+    return getToolWrapper().getDisplayName();
   }
 }

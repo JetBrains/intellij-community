@@ -26,10 +26,10 @@ import org.jetbrains.jps.model.module.JpsModuleSourceRootListener;
  * @author nik
  */
 public class JpsModuleSourceRootRole extends JpsElementChildRoleBase<JpsModuleSourceRoot> {
-  public static final JpsModuleSourceRootRole INSTANCE = new JpsModuleSourceRootRole();
+  private static final JpsModuleSourceRootRole INSTANCE = new JpsModuleSourceRootRole();
   public static final JpsElementCollectionRole<JpsModuleSourceRoot> ROOT_COLLECTION_ROLE = JpsElementCollectionRole.create(INSTANCE);
 
-  public JpsModuleSourceRootRole() {
+  private JpsModuleSourceRootRole() {
     super("module source root");
   }
 

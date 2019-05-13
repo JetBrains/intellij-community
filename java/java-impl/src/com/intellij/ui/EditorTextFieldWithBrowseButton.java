@@ -1,65 +1,54 @@
-/*
- * Copyright 2000-2011 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui;
 
+import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComponentWithBrowseButton;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
+import org.jetbrains.annotations.NotNull;
 
-/**
- * User: anna
- */
 public class EditorTextFieldWithBrowseButton extends ComponentWithBrowseButton<EditorTextField> implements TextAccessor {
   public EditorTextFieldWithBrowseButton(Project project, boolean isClassAccepted) {
     this(project, isClassAccepted, JavaCodeFragment.VisibilityChecker.EVERYTHING_VISIBLE);
   }
 
+  public EditorTextFieldWithBrowseButton(Project project, boolean isClassAccepted, JavaCodeFragment.VisibilityChecker visibilityChecker) {
+    this(project, isClassAccepted, visibilityChecker, JavaFileType.INSTANCE);
+  }
+
   public EditorTextFieldWithBrowseButton(Project project,
                                          boolean isClassAccepted,
-                                         final JavaCodeFragment.VisibilityChecker visibilityChecker) {
-    super(createEditorTextField(project, isClassAccepted, visibilityChecker), null);
+                                         JavaCodeFragment.VisibilityChecker visibilityChecker,
+                                         FileType fileType) {
+    super(createEditorTextField(project, isClassAccepted, visibilityChecker, fileType), null);
   }
 
   private static EditorTextField createEditorTextField(Project project,
                                                        boolean isClassAccepted,
-                                                       JavaCodeFragment.VisibilityChecker visibilityChecker) {
-    if (project.isDefault()) return new EditorTextField();
-    return new EditorTextField(createDocument("", project, isClassAccepted,
-                                             visibilityChecker), project, StdFileTypes.JAVA);
-  }
-
-  private static Document createDocument(final String text,
-                                         Project project,
-                                         boolean isClassesAccepted,
-                                         JavaCodeFragment.VisibilityChecker visibilityChecker) {
-    PsiElement defaultPackage = JavaPsiFacade.getInstance(project).findPackage("");
-    final JavaCodeFragmentFactory factory = JavaCodeFragmentFactory.getInstance(project);
-    final JavaCodeFragment fragment = factory.createReferenceCodeFragment(text, defaultPackage, true, isClassesAccepted);
-    fragment.setVisibilityChecker(visibilityChecker);
-    return PsiDocumentManager.getInstance(project).getDocument(fragment);
+                                                       JavaCodeFragment.VisibilityChecker visibilityChecker,
+                                                       FileType fileType) {
+    if (project.isDefault()) {
+      return new EditorTextField();
+    }
+    else {
+      PsiElement defaultPackage = JavaPsiFacade.getInstance(project).findPackage("");
+      JavaCodeFragmentFactory factory = JavaCodeFragmentFactory.getInstance(project);
+      JavaCodeFragment fragment = factory.createReferenceCodeFragment("", defaultPackage, true, isClassAccepted);
+      fragment.setVisibilityChecker(visibilityChecker);
+      Document document = PsiDocumentManager.getInstance(project).getDocument(fragment);
+      return new EditorTextField(document, project, fileType);
+    }
   }
 
   @Override
   public void setText(String text) {
-    if (text == null) text = "";
-    getChildComponent().setText(text);
+    getChildComponent().setText(StringUtil.notNullize(text));
   }
 
+  @NotNull
   @Override
   public String getText() {
     return getChildComponent().getText();

@@ -22,23 +22,20 @@ import org.jetbrains.annotations.NonNls;
 
 import java.util.List;
 
-/**
- * User: Sergey.Vasiliev
- */
 public class TooltipUtils {
   @NonNls private static final String MESSAGE_DELIMITER = "<hr size=1 noshade>";
 
-  public static String getTooltipText(List<DomElementProblemDescriptor> annotations) {
+  public static String getTooltipText(List<? extends DomElementProblemDescriptor> annotations) {
     if (annotations.size() == 0) return null;
 
     return getTooltipText(getMessages(annotations));
   }
   
-  public static String getTooltipText(List<DomElementProblemDescriptor> annotations, String[] messages) {
+  public static String getTooltipText(List<? extends DomElementProblemDescriptor> annotations, String[] messages) {
     return getTooltipText(ArrayUtil.mergeArrays(getMessages(annotations), messages));
   }
 
-  private static String[] getMessages(final List<DomElementProblemDescriptor> problems) {
+  private static String[] getMessages(final List<? extends DomElementProblemDescriptor> problems) {
     String[] messages = new String[problems.size()];
     for (int i = 0; i < problems.size(); i++) {
       messages[i] = problems.get(i).getDescriptionTemplate();

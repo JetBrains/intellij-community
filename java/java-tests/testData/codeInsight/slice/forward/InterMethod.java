@@ -1,4 +1,4 @@
-public class T2 {
+class T2 {
     int <caret>fff;
 
     public T2(int i) {

@@ -1,17 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 package com.intellij.openapi.roots.ui.configuration.projectRoot;
 
@@ -31,36 +19,27 @@ import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.ProjectStr
 import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.SdkProjectStructureElement;
 import com.intellij.openapi.ui.MasterDetailsComponent;
 import com.intellij.openapi.ui.NamedConfigurable;
-import com.intellij.util.Consumer;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.tree.TreePath;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+
+import static com.intellij.openapi.projectRoots.SimpleJavaSdkType.notSimpleJavaSdkType;
 
 public class JdkListConfigurable extends BaseStructureConfigurable {
+  @NotNull
   private final ProjectSdksModel myJdksTreeModel;
   private final SdkModel.Listener myListener = new SdkModel.Listener() {
     @Override
-    public void sdkAdded(Sdk sdk) {
-    }
-
-    @Override
-    public void beforeSdkRemove(Sdk sdk) {
-    }
-
-    @Override
-    public void sdkChanged(Sdk sdk, String previousName) {
+    public void sdkChanged(@NotNull Sdk sdk, String previousName) {
       updateName();
     }
 
     @Override
-    public void sdkHomeSelected(Sdk sdk, String newSdkHome) {
+    public void sdkHomeSelected(@NotNull Sdk sdk, @NotNull String newSdkHome) {
       updateName();
     }
 
@@ -68,7 +47,7 @@ public class JdkListConfigurable extends BaseStructureConfigurable {
       final TreePath path = myTree.getSelectionPath();
       if (path != null) {
         final NamedConfigurable configurable = ((MyNode)path.getLastPathComponent()).getConfigurable();
-        if (configurable != null && configurable instanceof JdkConfigurable) {
+        if (configurable instanceof JdkConfigurable) {
           configurable.updateName();
         }
       }
@@ -84,15 +63,6 @@ public class JdkListConfigurable extends BaseStructureConfigurable {
   @Override
   protected String getComponentStateKey() {
     return "JdkListConfigurable.UI";
-  }
-
-  @Override
-  protected void processRemovedItems() {
-  }
-
-  @Override
-  protected boolean wasObjectStored(final Object editableObject) {
-    return false;
   }
 
   @Override
@@ -116,12 +86,6 @@ public class JdkListConfigurable extends BaseStructureConfigurable {
   }
 
   @Override
-  @Nullable
-  public Runnable enableSearch(final String option) {
-    return null;
-  }
-
-  @Override
   protected void loadTree() {
     final Map<Sdk,Sdk> sdks = myJdksTreeModel.getProjectSdks();
     for (Sdk sdk : sdks.keySet()) {
@@ -134,7 +98,7 @@ public class JdkListConfigurable extends BaseStructureConfigurable {
   @NotNull
   @Override
   protected Collection<? extends ProjectStructureElement> getProjectStructureElements() {
-    final List<ProjectStructureElement> result = new ArrayList<ProjectStructureElement>();
+    final List<ProjectStructureElement> result = new ArrayList<>();
     for (Sdk sdk : myJdksTreeModel.getProjectSdks().values()) {
       result.add(new SdkProjectStructureElement(myContext, sdk));
     }
@@ -159,6 +123,7 @@ public class JdkListConfigurable extends BaseStructureConfigurable {
     myJdksTreeModel.disposeUIResources();
   }
 
+  @NotNull
   public ProjectSdksModel getJdksTreeModel() {
     return myJdksTreeModel;
   }
@@ -196,24 +161,19 @@ public class JdkListConfigurable extends BaseStructureConfigurable {
   @Override
   public AbstractAddGroup createAddAction() {
     return new AbstractAddGroup(ProjectBundle.message("add.new.jdk.text")) {
+      @NotNull
       @Override
       public AnAction[] getChildren(@Nullable final AnActionEvent e) {
         DefaultActionGroup group = new DefaultActionGroup(ProjectBundle.message("add.new.jdk.text"), true);
-        myJdksTreeModel.createAddActions(group, myTree, new Consumer<Sdk>() {
-          @Override
-          public void consume(final Sdk projectJdk) {
-            addJdkNode(projectJdk, true);
-          }
-        });
+        myJdksTreeModel.createAddActions(group, myTree, projectJdk -> addJdkNode(projectJdk, true), notSimpleJavaSdkType());
         return group.getChildren(null);
       }
     };
   }
 
   @Override
-  protected void removeJdk(final Sdk jdk) {
-    myJdksTreeModel.removeSdk(jdk);
-    myContext.getDaemonAnalyzer().removeElement(new SdkProjectStructureElement(myContext, jdk));
+  protected List<? extends RemoveConfigurableHandler<?>> getRemoveHandlers() {
+    return Collections.singletonList(new SdkRemoveHandler());
   }
 
   @Override
@@ -221,5 +181,20 @@ public class JdkListConfigurable extends BaseStructureConfigurable {
   @Nullable
   String getEmptySelectionString() {
     return "Select an SDK to view or edit its details here";
+  }
+
+  private class SdkRemoveHandler extends RemoveConfigurableHandler<Sdk> {
+    SdkRemoveHandler() {
+      super(JdkConfigurable.class);
+    }
+
+    @Override
+    public boolean remove(@NotNull Collection<? extends Sdk> sdks) {
+      for (Sdk sdk : sdks) {
+        myJdksTreeModel.removeSdk(sdk);
+        myContext.getDaemonAnalyzer().removeElement(new SdkProjectStructureElement(myContext, sdk));
+      }
+      return true;
+    }
   }
 }

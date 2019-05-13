@@ -27,7 +27,7 @@ class RootDirectoryContentProvider extends CompositeOperation implements Directo
   private final GetDirectoriesListViaUpdateOperation myDirectoryListOperation;
   private final GetModulesListOperation myModuleListOperation;
 
-  public RootDirectoryContentProvider(CvsEnvironment env){
+  RootDirectoryContentProvider(CvsEnvironment env){
     myDirectoryListOperation = new GetDirectoriesListViaUpdateOperation(env, ".");
     myModuleListOperation = new GetModulesListOperation(env);
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,8 +15,8 @@
  */
 package com.intellij.refactoring.replaceConstructorWithFactory;
 
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.project.Project;
@@ -36,6 +36,7 @@ public class ReplaceConstructorWithFactoryHandler
   public static final String REFACTORING_NAME = RefactoringBundle.message("replace.constructor.with.factory.method.title");
   private Project myProject;
 
+  @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file, DataContext dataContext) {
     int offset = editor.getCaretModel().getOffset();
     editor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
@@ -87,11 +88,12 @@ public class ReplaceConstructorWithFactoryHandler
     }
   }
 
+  @Override
   public void invoke(@NotNull Project project, @NotNull PsiElement[] elements, DataContext dataContext) {
     if (elements.length != 1) return;
 
     myProject = project;
-    Editor editor = PlatformDataKeys.EDITOR.getData(dataContext);
+    Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
     if (elements[0] instanceof PsiMethod) {
       final PsiMethod method = (PsiMethod)elements[0];
       invoke(method, editor);
@@ -112,15 +114,15 @@ public class ReplaceConstructorWithFactoryHandler
     final PsiMethod[] constructors = aClass.getConstructors();
     if (constructors.length > 0) {
       String message =
-              RefactoringBundle.message("class.does.not.have.implicit.default.consructor", aClass.getQualifiedName()) ;
+              RefactoringBundle.message("class.does.not.have.implicit.default.constructor", aClass.getQualifiedName()) ;
       CommonRefactoringUtil.showErrorHint(myProject, editor, message, REFACTORING_NAME, HelpID.REPLACE_CONSTRUCTOR_WITH_FACTORY);
       return;
     }
-    final int answer = Messages.showYesNoCancelDialog(myProject,
-                                                      RefactoringBundle.message("would.you.like.to.replace.default.constructor.of.0.with.factory.method", aClass.getQualifiedName()),
-                                                      REFACTORING_NAME, Messages.getQuestionIcon()
+    final int answer = Messages.showYesNoDialog(myProject,
+                                                RefactoringBundle.message("would.you.like.to.replace.default.constructor.of.0.with.factory.method", aClass.getQualifiedName()),
+                                                REFACTORING_NAME, Messages.getQuestionIcon()
     );
-    if (answer != 0) return;
+    if (answer != Messages.YES) return;
     if (!CommonRefactoringUtil.checkReadOnlyStatus(myProject, aClass)) return;
     new ReplaceConstructorWithFactoryDialog(myProject, null, aClass).show();
   }

@@ -18,13 +18,13 @@ package com.intellij.refactoring.typeMigration.ui;
 import com.intellij.ide.projectView.TreeStructureProvider;
 import com.intellij.ide.util.treeView.AbstractTreeStructureBase;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
 import java.util.List;
 
 /**
  * @author anna
- * Date: 11-Apr-2008
  */
 public class TypeMigrationTreeStructure extends AbstractTreeStructureBase {
   private MigrationRootNode myRoot;
@@ -33,28 +33,33 @@ public class TypeMigrationTreeStructure extends AbstractTreeStructureBase {
     super(project);
   }
 
-  public void setRoot(final MigrationRootNode root) {
+  public void setRoots(final MigrationRootNode root) {
     myRoot = root;
   }
 
+  @Override
   public List<TreeStructureProvider> getProviders() {
     return Collections.emptyList();
   }
 
+  @NotNull
+  @Override
   public Object getRootElement() {
     return myRoot;
   }
 
+  @Override
   public void commit() {
 
   }
 
+  @Override
   public boolean hasSomethingToCommit() {
     return false;
   }
 
   @Override
-  public boolean isToBuildChildrenInBackground(final Object element) {
+  public boolean isToBuildChildrenInBackground(@NotNull final Object element) {
     return true;
   }
 }

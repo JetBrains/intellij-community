@@ -19,11 +19,6 @@ package org.intellij.plugins.xsltDebugger.rt.engine.local;
 import org.intellij.plugins.xsltDebugger.rt.engine.Debugger;
 import org.intellij.plugins.xsltDebugger.rt.engine.Value;
 
-/**
- * Created by IntelliJ IDEA.
- * User: sweinreuter
- * Date: 23.05.2007
- */
 public class VariableImpl implements Debugger.Variable {
   private final boolean myGlobal;
   private final Kind myKind;

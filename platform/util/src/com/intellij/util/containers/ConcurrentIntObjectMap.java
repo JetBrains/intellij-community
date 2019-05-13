@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,13 +17,16 @@ package com.intellij.util.containers;
 
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Enumeration;
+
 /**
- * methods adapted from java.util.concurrent.ConcurrentMap to integer keys
+ * Base interface for concurrent int key -> value:V map
+ * Null values are NOT allowed
+ *
+ * Methods are adapted from {@link java.util.concurrent.ConcurrentMap} to integer keys
  * @see java.util.concurrent.ConcurrentMap
  */
-public interface ConcurrentIntObjectMap<V> {
-  // concurrency related methods
-
+public interface ConcurrentIntObjectMap<V> extends IntObjectMap<V> {
   /**
    * @return written value
    */
@@ -32,15 +35,23 @@ public interface ConcurrentIntObjectMap<V> {
   boolean remove(int key, @NotNull V value);
   boolean replace(int key, @NotNull V oldValue, @NotNull  V newValue);
 
-  // regular Map methods
-  V put(int key, @NotNull V value);
-  V get(int key);
-  V remove(int key);
-  boolean containsKey(int key);
-  void clear();
   @NotNull
-  Iterable<StripedLockIntObjectConcurrentHashMap.IntEntry<V>> entries();
+  Enumeration<V> elements();
 
-  @NotNull
-  int[] keys();
+  /**
+   * @return Approximate number of elements in the map.
+   * The usage is discouraged since
+   * First, in concurrent context it doesn't have much sense
+   * and Second, for weak- or soft- keyed maps it returns the total number of references
+   *         rather than alive values because otherwise it would be too expensive
+   */
+  @Override
+  int size();
+
+  /**
+   * @return the previous value associated with the specified key,
+   * or {@code null} if there was no mapping for the key
+   */
+  V putIfAbsent(int key, @NotNull V value);
+
 }

@@ -24,4 +24,8 @@ public interface InlineOptions {
   void close(int exitCode);
 
   boolean isPreviewUsages();
+
+  default boolean isKeepTheDeclaration() {
+    return false;
+  }
 }

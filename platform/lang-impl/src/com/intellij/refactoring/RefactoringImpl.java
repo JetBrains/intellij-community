@@ -28,38 +28,47 @@ public abstract class RefactoringImpl<T extends BaseRefactoringProcessor> implem
     myProcessor = refactoringProcessor;
   }
 
+  @Override
   public void setPreviewUsages(boolean value) {
     myProcessor.setPreviewUsages(value);
   }
 
+  @Override
   public boolean isPreviewUsages() {
     return myProcessor.isPreviewUsages();
   }
 
+  @Override
   public void setInteractive(Runnable prepareSuccessfulCallback) {
     myProcessor.setPrepareSuccessfulSwingThreadCallback(prepareSuccessfulCallback);
   }
 
+  @Override
   public boolean isInteractive() {
     return myProcessor.myPrepareSuccessfulSwingThreadCallback != null;
   }
 
+  @Override
   public UsageInfo[] findUsages() {
     return myProcessor.findUsages();
   }
 
+  @Override
   public boolean preprocessUsages(Ref<UsageInfo[]> usages) {
     return myProcessor.preprocessUsages(usages);
   }
 
+  @Override
   public boolean shouldPreviewUsages(UsageInfo[] usages) {
     return myProcessor.isPreviewUsages(usages);
   }
 
+  @Override
   public void doRefactoring(UsageInfo[] usages) {
     myProcessor.execute(usages);
   }
 
+  @Override
   public void run() {
     myProcessor.run();
   }

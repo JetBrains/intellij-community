@@ -6,29 +6,127 @@
 # GNU General Public License version 2 or any later version.
 
 from i18n import _
-import util, encoding
-import os, smtplib, socket, quopri
+import util, encoding, sslutil
+import os, smtplib, socket, quopri, time, sys
 import email.Header, email.MIMEText, email.Utils
+
+_oldheaderinit = email.Header.Header.__init__
+def _unifiedheaderinit(self, *args, **kw):
+    """
+    Python 2.7 introduces a backwards incompatible change
+    (Python issue1974, r70772) in email.Generator.Generator code:
+    pre-2.7 code passed "continuation_ws='\t'" to the Header
+    constructor, and 2.7 removed this parameter.
+
+    Default argument is continuation_ws=' ', which means that the
+    behaviour is different in <2.7 and 2.7
+
+    We consider the 2.7 behaviour to be preferable, but need
+    to have an unified behaviour for versions 2.4 to 2.7
+    """
+    # override continuation_ws
+    kw['continuation_ws'] = ' '
+    _oldheaderinit(self, *args, **kw)
+
+email.Header.Header.__dict__['__init__'] = _unifiedheaderinit
+
+class STARTTLS(smtplib.SMTP):
+    '''Derived class to verify the peer certificate for STARTTLS.
+
+    This class allows to pass any keyword arguments to SSL socket creation.
+    '''
+    def __init__(self, sslkwargs, **kwargs):
+        smtplib.SMTP.__init__(self, **kwargs)
+        self._sslkwargs = sslkwargs
+
+    def starttls(self, keyfile=None, certfile=None):
+        if not self.has_extn("starttls"):
+            msg = "STARTTLS extension not supported by server"
+            raise smtplib.SMTPException(msg)
+        (resp, reply) = self.docmd("STARTTLS")
+        if resp == 220:
+            self.sock = sslutil.ssl_wrap_socket(self.sock, keyfile, certfile,
+                                                **self._sslkwargs)
+            if not util.safehasattr(self.sock, "read"):
+                # using httplib.FakeSocket with Python 2.5.x or earlier
+                self.sock.read = self.sock.recv
+            self.file = smtplib.SSLFakeFile(self.sock)
+            self.helo_resp = None
+            self.ehlo_resp = None
+            self.esmtp_features = {}
+            self.does_esmtp = 0
+        return (resp, reply)
+
+if util.safehasattr(smtplib.SMTP, '_get_socket'):
+    class SMTPS(smtplib.SMTP):
+        '''Derived class to verify the peer certificate for SMTPS.
+
+        This class allows to pass any keyword arguments to SSL socket creation.
+        '''
+        def __init__(self, sslkwargs, keyfile=None, certfile=None, **kwargs):
+            self.keyfile = keyfile
+            self.certfile = certfile
+            smtplib.SMTP.__init__(self, **kwargs)
+            self.default_port = smtplib.SMTP_SSL_PORT
+            self._sslkwargs = sslkwargs
+
+        def _get_socket(self, host, port, timeout):
+            if self.debuglevel > 0:
+                print >> sys.stderr, 'connect:', (host, port)
+            new_socket = socket.create_connection((host, port), timeout)
+            new_socket = sslutil.ssl_wrap_socket(new_socket,
+                                                 self.keyfile, self.certfile,
+                                                 **self._sslkwargs)
+            self.file = smtplib.SSLFakeFile(new_socket)
+            return new_socket
+else:
+    def SMTPS(sslkwargs, keyfile=None, certfile=None, **kwargs):
+        raise util.Abort(_('SMTPS requires Python 2.6 or later'))
 
 def _smtp(ui):
     '''build an smtp connection and return a function to send mail'''
     local_hostname = ui.config('smtp', 'local_hostname')
-    s = smtplib.SMTP(local_hostname=local_hostname)
+    tls = ui.config('smtp', 'tls', 'none')
+    # backward compatible: when tls = true, we use starttls.
+    starttls = tls == 'starttls' or util.parsebool(tls)
+    smtps = tls == 'smtps'
+    if (starttls or smtps) and not util.safehasattr(socket, 'ssl'):
+        raise util.Abort(_("can't use TLS: Python SSL support not installed"))
     mailhost = ui.config('smtp', 'host')
     if not mailhost:
-        raise util.Abort(_('no [smtp]host in hgrc - cannot send mail'))
-    mailport = int(ui.config('smtp', 'port', 25))
+        raise util.Abort(_('smtp.host not configured - cannot send mail'))
+    verifycert = ui.config('smtp', 'verifycert', 'strict')
+    if verifycert not in ['strict', 'loose']:
+        if util.parsebool(verifycert) is not False:
+            raise util.Abort(_('invalid smtp.verifycert configuration: %s')
+                             % (verifycert))
+    if (starttls or smtps) and verifycert:
+        sslkwargs = sslutil.sslkwargs(ui, mailhost)
+    else:
+        sslkwargs = {}
+    if smtps:
+        ui.note(_('(using smtps)\n'))
+        s = SMTPS(sslkwargs, local_hostname=local_hostname)
+    elif starttls:
+        s = STARTTLS(sslkwargs, local_hostname=local_hostname)
+    else:
+        s = smtplib.SMTP(local_hostname=local_hostname)
+    if smtps:
+        defaultport = 465
+    else:
+        defaultport = 25
+    mailport = util.getport(ui.config('smtp', 'port', defaultport))
     ui.note(_('sending mail: smtp host %s, port %s\n') %
             (mailhost, mailport))
     s.connect(host=mailhost, port=mailport)
-    if ui.configbool('smtp', 'tls'):
-        if not hasattr(socket, 'ssl'):
-            raise util.Abort(_("can't use TLS: Python SSL support "
-                               "not installed"))
-        ui.note(_('(using tls)\n'))
+    if starttls:
+        ui.note(_('(using starttls)\n'))
         s.ehlo()
         s.starttls()
         s.ehlo()
+    if (starttls or smtps) and verifycert:
+        ui.note(_('(verifying remote certificate)\n'))
+        sslutil.validator(ui, mailhost)(s.sock, verifycert == 'strict')
     username = ui.config('smtp', 'username')
     password = ui.config('smtp', 'password')
     if username and not password:
@@ -64,17 +162,31 @@ def _sendmail(ui, sender, recipients, msg):
     if ret:
         raise util.Abort('%s %s' % (
             os.path.basename(program.split(None, 1)[0]),
-            util.explain_exit(ret)[0]))
+            util.explainexit(ret)[0]))
 
-def connect(ui):
+def _mbox(mbox, sender, recipients, msg):
+    '''write mails to mbox'''
+    fp = open(mbox, 'ab+')
+    # Should be time.asctime(), but Windows prints 2-characters day
+    # of month instead of one. Make them print the same thing.
+    date = time.strftime('%a %b %d %H:%M:%S %Y', time.localtime())
+    fp.write('From %s %s\n' % (sender, date))
+    fp.write(msg)
+    fp.write('\n\n')
+    fp.close()
+
+def connect(ui, mbox=None):
     '''make a mail connection. return a function to send mail.
     call as sendmail(sender, list-of-recipients, msg).'''
+    if mbox:
+        open(mbox, 'wb').close()
+        return lambda s, r, m: _mbox(mbox, s, r, m)
     if ui.config('email', 'method', 'smtp') == 'smtp':
         return _smtp(ui)
     return lambda s, r, m: _sendmail(ui, s, r, m)
 
-def sendmail(ui, sender, recipients, msg):
-    send = connect(ui)
+def sendmail(ui, sender, recipients, msg, mbox=None):
+    send = connect(ui, mbox=mbox)
     return send(sender, recipients, msg)
 
 def validateconfig(ui):
@@ -85,19 +197,14 @@ def validateconfig(ui):
             raise util.Abort(_('smtp specified as email transport, '
                                'but no smtp host configured'))
     else:
-        if not util.find_exe(method):
+        if not util.findexe(method):
             raise util.Abort(_('%r specified as email transport, '
                                'but not in PATH') % method)
 
 def mimetextpatch(s, subtype='plain', display=False):
-    '''If patch in utf-8 transfer-encode it.'''
-
-    enc = None
-    for line in s.splitlines():
-        if len(line) > 950:
-            s = quopri.encodestring(s)
-            enc = "quoted-printable"
-            break
+    '''Return MIME message suitable for a patch.
+    Charset will be detected as utf-8 or (possibly fake) us-ascii.
+    Transfer encodings will be used if necessary.'''
 
     cs = 'us-ascii'
     if not display:
@@ -111,7 +218,20 @@ def mimetextpatch(s, subtype='plain', display=False):
                 # We'll go with us-ascii as a fallback.
                 pass
 
-    msg = email.MIMEText.MIMEText(s, subtype, cs)
+    return mimetextqp(s, subtype, cs)
+
+def mimetextqp(body, subtype, charset):
+    '''Return MIME message.
+    Quoted-printable transfer encoding will be used if necessary.
+    '''
+    enc = None
+    for line in body.splitlines():
+        if len(line) > 950:
+            body = quopri.encodestring(body)
+            enc = "quoted-printable"
+            break
+
+    msg = email.MIMEText.MIMEText(body, subtype, charset)
     if enc:
         del msg['Content-Transfer-Encoding']
         msg['Content-Transfer-Encoding'] = enc
@@ -203,4 +323,4 @@ def mimeencode(ui, s, charsets=None, display=False):
     cs = 'us-ascii'
     if not display:
         s, cs = _encode(ui, s, charsets)
-    return email.MIMEText.MIMEText(s, 'plain', cs)
+    return mimetextqp(s, 'plain', cs)

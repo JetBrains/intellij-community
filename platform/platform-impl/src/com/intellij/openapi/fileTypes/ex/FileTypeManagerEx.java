@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,9 +16,8 @@
 package com.intellij.openapi.fileTypes.ex;
 
 import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.FileTypeFactory;
 import com.intellij.openapi.fileTypes.FileTypeManager;
-import com.intellij.openapi.fileTypes.impl.AbstractFileType;
-import com.intellij.openapi.options.SchemesManager;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -26,21 +25,26 @@ import org.jetbrains.annotations.NotNull;
  */
 public abstract class FileTypeManagerEx extends FileTypeManager{
   public static FileTypeManagerEx getInstanceEx(){
-    return (FileTypeManagerEx) getInstance();
+    return (FileTypeManagerEx)getInstance();
   }
 
-  public abstract void registerFileType(FileType fileType);
-  public abstract void unregisterFileType(FileType fileType);
+  /**
+   * @deprecated use {@link FileTypeFactory} instead
+   */
+  @Deprecated
+  public abstract void registerFileType(@NotNull FileType fileType);
+  /**
+   * @deprecated use {@link FileTypeFactory} instead
+   */
+  @Deprecated
+  public abstract void unregisterFileType(@NotNull FileType fileType);
 
-//  public abstract String getIgnoredFilesList();
-//  public abstract void setIgnoredFilesList(String list);
-  public abstract boolean isIgnoredFilesListEqualToCurrent(String list);
+  public abstract boolean isIgnoredFilesListEqualToCurrent(@NotNull String list);
 
-  @NotNull public abstract String getExtension(String fileName);
+  @NotNull
+  public abstract String getExtension(@NotNull String fileName);
 
   public abstract void fireFileTypesChanged();
 
   public abstract void fireBeforeFileTypesChanged();
-
-  public abstract SchemesManager<FileType, AbstractFileType> getSchemesManager();
 }

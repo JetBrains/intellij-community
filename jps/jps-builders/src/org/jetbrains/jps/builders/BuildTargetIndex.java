@@ -30,6 +30,11 @@ public interface BuildTargetIndex extends BuildTargetRegistry {
 
   List<BuildTargetChunk> getSortedTargetChunks(@NotNull CompileContext context);
 
+  /**
+   * Returns {@code true} if target is {@link BuildTargetType#isFileBased() file-based} and has no source roots so it may be skipped during build.
+   */
+  boolean isDummy(@NotNull BuildTarget<?> target);
+
   @Deprecated
   Set<BuildTarget<?>> getDependenciesRecursively(@NotNull BuildTarget<?> target, @NotNull CompileContext context);
 

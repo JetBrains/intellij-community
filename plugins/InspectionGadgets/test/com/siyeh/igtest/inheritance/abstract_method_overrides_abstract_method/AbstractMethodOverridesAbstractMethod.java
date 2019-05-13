@@ -1,6 +1,6 @@
 package com.siyeh.igtest.inheritance.abstract_method_overrides_abstract_method;
 
-
+import java.util.*;
 import org.jetbrains.annotations.Nullable;
 
 public abstract class AbstractMethodOverridesAbstractMethod {
@@ -27,7 +27,7 @@ abstract class Child extends AbstractMethodOverridesAbstractMethod
    */
   abstract void two();
 
-  public abstract void three();
+  public abstract void <warning descr="Abstract method 'three()' overrides abstract method">three</warning>();
 }
 
 class MethodTypeParams {
@@ -57,6 +57,64 @@ class SuperclassSubst {
     abstract class Bottom implements Top<String>
     {
         @Override
-        public abstract String getList();
+        public abstract String <warning descr="Abstract method 'getList()' overrides abstract method">getList</warning>();
     }
+}
+
+class Java8DefaultMethods {
+
+  interface A {
+    String method();
+  }
+
+  interface B {
+    default String method() {
+      return null;
+    }
+  }
+
+  //without override would inherit abstract & default - red code
+  interface C extends A, B {
+    @Override
+    String method();
+  }
+
+  interface Super
+  {
+      default void method()
+      {
+          System.out.println("super");
+      }
+  }
+  
+  interface Sub extends Super
+  {
+      @Override
+      default void method()
+      {
+          System.out.println("sub");
+      }
+  }
+}
+
+class CovariantReturnTypes {
+  interface A<T> {}
+  interface Foo {
+    A<? extends Number> test();
+  }
+
+  interface Bar extends Foo {
+    @Override
+    A<Integer> test();
+  }
+}
+
+class Vararg {
+  interface A {
+    void foo(int[] ints);
+  }
+
+  interface B extends A {
+    void foo(int... ints);
+  }
 }

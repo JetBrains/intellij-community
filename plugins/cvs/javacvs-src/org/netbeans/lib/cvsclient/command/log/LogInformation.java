@@ -38,7 +38,7 @@ public final class LogInformation {
 	private String totalRevisions;
 	private String selectedRevisions;
 	private String locks;
-	private final List<Revision> revisions = new ArrayList<Revision>();
+	private final List<Revision> revisions = new ArrayList<>();
 	private List<SymbolicName> symbolicNames;
 	private StringBuilder symNamesBuffer;
 
@@ -192,9 +192,7 @@ public final class LogInformation {
 	/** Search the revisions by number of revision. If not found, return null.
 	 */
 	public Revision getRevision(String number) {
-		final Iterator it = revisions.iterator();
-		while (it.hasNext()) {
-			Revision item = (Revision)it.next();
+		for (Revision item : revisions) {
 			if (item.getNumber().equals(number)) {
 				return item;
 			}
@@ -216,7 +214,7 @@ public final class LogInformation {
 	}
 
 	private void createSymNames() {
-		symbolicNames = new ArrayList<SymbolicName>();
+		symbolicNames = new ArrayList<>();
 		if (symNamesBuffer == null) {
 			return;
 		}
@@ -255,7 +253,7 @@ public final class LogInformation {
 		if (symbolicNames == null) {
 			createSymNames();
 		}
-		final List<SymbolicName> list = new ArrayList<SymbolicName>();
+		final List<SymbolicName> list = new ArrayList<>();
 		for (int i = 0; i < symbolicNames.size(); i++) {
 			final SymbolicName symbolicName = symbolicNames.get(i);
 			if (symbolicName.getRevision().equals(revNumber)) {
@@ -271,8 +269,7 @@ public final class LogInformation {
 		if (symbolicNames == null) {
 			createSymNames();
 		}
-		for (Iterator it = symbolicNames.iterator(); it.hasNext();) {
-			final SymbolicName item = (SymbolicName)it.next();
+		for (final SymbolicName item : symbolicNames) {
 			if (item.getName().equals(symName)) {
 				return item;
 			}

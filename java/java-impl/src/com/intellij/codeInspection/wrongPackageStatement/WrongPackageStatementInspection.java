@@ -21,6 +21,8 @@ import com.intellij.codeInspection.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.file.PsiDirectoryFactory;
+import com.intellij.psi.util.FileTypeUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -28,17 +30,21 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * User: anna
- * Date: 14-Nov-2005
- */
-public class WrongPackageStatementInspection extends BaseJavaLocalInspectionTool {
+public class WrongPackageStatementInspection extends AbstractBaseJavaLocalInspectionTool {
+  protected void addMoveToPackageFix(PsiFile file, String packName, List<? super LocalQuickFix> availableFixes) {
+    MoveToPackageFix moveToPackageFix = new MoveToPackageFix(packName);
+    if (moveToPackageFix.isAvailable(file)) {
+      availableFixes.add(moveToPackageFix);
+    }
+  }
+
+  @Override
   @Nullable
   public ProblemDescriptor[] checkFile(@NotNull PsiFile file, @NotNull InspectionManager manager, boolean isOnTheFly) {
     // does not work in tests since CodeInsightTestCase copies file into temporary location
     if (ApplicationManager.getApplication().isUnitTestMode()) return null;
     if (file instanceof PsiJavaFile) {
-      if (JspPsiUtil.isInJspFile(file)) return null;
+      if (FileTypeUtils.isInServerPageFile(file)) return null;
       PsiJavaFile javaFile = (PsiJavaFile)file;
 
       PsiDirectory directory = javaFile.getContainingDirectory();
@@ -55,26 +61,27 @@ public class WrongPackageStatementInspection extends BaseJavaLocalInspectionTool
       if (!Comparing.strEqual(packageName, "", true) && packageStatement == null) {
         String description = JavaErrorMessages.message("missing.package.statement", packageName);
 
-        return new ProblemDescriptor[]{manager.createProblemDescriptor(classes[0].getNameIdentifier(), description,
-                                                                       new AdjustPackageNameFix(packageName),
+        final LocalQuickFix fix =
+          PsiDirectoryFactory.getInstance(file.getProject()).isValidPackageName(packageName) ? new AdjustPackageNameFix(packageName) : null;
+        return new ProblemDescriptor[]{manager.createProblemDescriptor(classes[0].getNameIdentifier(), description, fix,
                                                                        ProblemHighlightType.GENERIC_ERROR_OR_WARNING, isOnTheFly)};
       }
       if (packageStatement != null) {
         final PsiJavaCodeReferenceElement packageReference = packageStatement.getPackageReference();
         PsiPackage classPackage = (PsiPackage)packageReference.resolve();
-        List<LocalQuickFix> availableFixes = new ArrayList<LocalQuickFix>();
+        List<LocalQuickFix> availableFixes = new ArrayList<>();
         if (classPackage == null || !Comparing.equal(dirPackage.getQualifiedName(), packageReference.getQualifiedName(), true)) {
-          availableFixes.add(new AdjustPackageNameFix(packageName));
-          MoveToPackageFix moveToPackageFix = new MoveToPackageFix(classPackage != null ? classPackage.getQualifiedName() : packageReference.getQualifiedName());
-          if (moveToPackageFix.isAvailable(file)) {
-            availableFixes.add(moveToPackageFix);
+          if (PsiDirectoryFactory.getInstance(file.getProject()).isValidPackageName(packageName)) {
+            availableFixes.add(new AdjustPackageNameFix(packageName));
           }
+          String packName = classPackage != null ? classPackage.getQualifiedName() : packageReference.getQualifiedName();
+          addMoveToPackageFix(file, packName, availableFixes);
         }
         if (!availableFixes.isEmpty()){
           String description = JavaErrorMessages.message("package.name.file.path.mismatch",
                                                          packageReference.getQualifiedName(),
                                                          dirPackage.getQualifiedName());
-          LocalQuickFix[] fixes = availableFixes.toArray(new LocalQuickFix[availableFixes.size()]);
+          LocalQuickFix[] fixes = availableFixes.toArray(LocalQuickFix.EMPTY_ARRAY);
           ProblemDescriptor descriptor =
             manager.createProblemDescriptor(packageStatement.getPackageReference(), description, isOnTheFly,
                                             fixes, ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
@@ -86,27 +93,32 @@ public class WrongPackageStatementInspection extends BaseJavaLocalInspectionTool
     return null;
   }
 
+  @Override
   @NotNull
   public String getGroupDisplayName() {
     return "";
   }
 
+  @Override
   @NotNull
   public HighlightDisplayLevel getDefaultLevel() {
     return HighlightDisplayLevel.ERROR;
   }
 
+  @Override
   @NotNull
   public String getDisplayName() {
     return InspectionsBundle.message("wrong.package.statement");
   }
 
+  @Override
   @NotNull
   @NonNls
   public String getShortName() {
     return "WrongPackageStatement";
   }
 
+  @Override
   public boolean isEnabledByDefault() {
     return true;
   }

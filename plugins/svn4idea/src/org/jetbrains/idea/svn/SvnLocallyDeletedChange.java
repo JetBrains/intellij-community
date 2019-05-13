@@ -22,9 +22,9 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 
 public class SvnLocallyDeletedChange extends LocallyDeletedChange {
-  private final ConflictState myConflictState;
+  @NotNull private final ConflictState myConflictState;
 
-  public SvnLocallyDeletedChange(@NotNull final FilePath path, final ConflictState state) {
+  public SvnLocallyDeletedChange(@NotNull FilePath path, @NotNull ConflictState state) {
     super(path);
     myConflictState = state;
   }
@@ -36,13 +36,12 @@ public class SvnLocallyDeletedChange extends LocallyDeletedChange {
 
   @Override
   public String getDescription() {
-    final String description = myConflictState.getDescription();
-    if (description != null) {
-      return SvnBundle.message("svn.changeview.locally.deleted.item.in.conflict.text", description);
-    }
-    return description;
+    String description = myConflictState.getDescription();
+
+    return description != null ? SvnBundle.message("svn.changeview.locally.deleted.item.in.conflict.text", description) : null;
   }
 
+  @NotNull
   public ConflictState getConflictState() {
     return myConflictState;
   }

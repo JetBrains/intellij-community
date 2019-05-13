@@ -1,54 +1,46 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.dialogs.browserCache;
 
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
+import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.vcs.VcsException;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnVcs;
+import org.jetbrains.idea.svn.api.Depth;
+import org.jetbrains.idea.svn.api.Revision;
+import org.jetbrains.idea.svn.api.Target;
+import org.jetbrains.idea.svn.browse.DirectoryEntry;
 import org.jetbrains.idea.svn.dialogs.RepositoryTreeNode;
-import org.jetbrains.idea.svn.dialogs.SvnAuthenticationProvider;
-import org.tmatesoft.svn.core.ISVNDirEntryHandler;
-import org.tmatesoft.svn.core.SVNDirEntry;
-import org.tmatesoft.svn.core.SVNErrorMessage;
-import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.io.SVNRepository;
 
-import javax.swing.*;
-import java.util.*;
+import java.util.List;
+import java.util.Queue;
+
+import static com.intellij.util.containers.ContainerUtil.newArrayList;
+import static com.intellij.util.containers.ContainerUtil.sorted;
 
 class RepositoryLoader extends Loader {
   // may be several requests if: several same-level nodes are expanded simultaneosly; or browser can be opening into some expanded state
-  private final Queue<Pair<RepositoryTreeNode, Expander>> myLoadQueue;
+  @NotNull private final Queue<Pair<RepositoryTreeNode, Expander>> myLoadQueue;
   private boolean myQueueProcessorActive;
 
-  RepositoryLoader(final SvnRepositoryCache cache) {
+  RepositoryLoader(@NotNull SvnRepositoryCache cache) {
     super(cache);
 
-    myLoadQueue = new LinkedList<Pair<RepositoryTreeNode, Expander>>();
+    myLoadQueue = ContainerUtil.newLinkedList();
     myQueueProcessorActive = false;
   }
 
-  public void load(final RepositoryTreeNode node, final Expander afterRefreshExpander) {
+  @Override
+  public void load(@NotNull RepositoryTreeNode node, @NotNull Expander afterRefreshExpander) {
     ApplicationManager.getApplication().assertIsDispatchThread();
 
-    final Pair<RepositoryTreeNode, Expander> data = new Pair<RepositoryTreeNode, Expander>(node, afterRefreshExpander);
+    final Pair<RepositoryTreeNode, Expander> data = Pair.create(node, afterRefreshExpander);
     if (! myQueueProcessorActive) {
       startLoadTask(data);
       myQueueProcessorActive = true;
@@ -57,13 +49,13 @@ class RepositoryLoader extends Loader {
     }
   }
 
-  private void setResults(final Pair<RepositoryTreeNode, Expander> data, final List<SVNDirEntry> children) {
-    myCache.put(data.first.getURL().toString(), children);
+  private void setResults(@NotNull Pair<RepositoryTreeNode, Expander> data, @NotNull List<DirectoryEntry> children) {
+    myCache.put(data.first.getURL(), children);
     refreshNode(data.first, children, data.second);
   }
 
-  private void setError(final Pair<RepositoryTreeNode, Expander> data, final SVNErrorMessage message) {
-    myCache.put(data.first.getURL().toString(), message);
+  private void setError(@NotNull Pair<RepositoryTreeNode, Expander> data, @NotNull String message) {
+    myCache.put(data.first.getURL(), message);
     refreshNodeError(data.first, message);
   }
 
@@ -83,71 +75,49 @@ class RepositoryLoader extends Loader {
     }
   }
 
-  private void startLoadTask(final Pair<RepositoryTreeNode, Expander> data) {
-    final ModalityState state = ModalityState.current();
-    ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
-      @Override
-      public void run() {
-        ProgressManager.getInstance().runProcess(new LoadTask(data), new EmptyProgressIndicator() {
-          @NotNull
-          @Override
-          public ModalityState getModalityState() {
-            return state;
-          }
-        });
-      }
-    });
+  private void startLoadTask(@NotNull final Pair<RepositoryTreeNode, Expander> data) {
+    ProgressManager.getInstance().runProcessWithProgressAsynchronously(new LoadTask(data), new EmptyProgressIndicator());
   }
 
-  public void forceRefresh(final String repositoryRootUrl) {
-    // ? remove
-  }
-
+  @Override
+  @NotNull
   protected NodeLoadState getNodeLoadState() {
     return NodeLoadState.REFRESHED;
   }
 
-  private class LoadTask implements Runnable {
-    private final Pair<RepositoryTreeNode, Expander> myData;
+  private class LoadTask extends Task.Backgroundable {
+    @NotNull private final Pair<RepositoryTreeNode, Expander> myData;
+    @NotNull private final List<DirectoryEntry> entries = newArrayList();
+    @Nullable private String error;
 
-    private LoadTask(final Pair<RepositoryTreeNode, Expander> data) {
+    private LoadTask(@NotNull Pair<RepositoryTreeNode, Expander> data) {
+      super(data.first.getVcs().getProject(), "Loading Child Entries");
       myData = data;
     }
 
-    public void run() {
-      final Collection<SVNDirEntry> entries = new TreeSet<SVNDirEntry>();
-      final RepositoryTreeNode node = myData.first;
-      final SvnVcs vcs = node.getVcs();
-      SVNRepository repository = null;
-      SvnAuthenticationProvider.forceInteractive();
-      try {
-        repository = vcs.createRepository(node.getURL().toString());
-        repository.getDir("", -1, null, new ISVNDirEntryHandler() {
-          public void handleDirEntry(final SVNDirEntry dirEntry) throws SVNException {
-            entries.add(dirEntry);
-          }
-        });
-      } catch (final SVNException e) {
-        SwingUtilities.invokeLater(new Runnable() {
-          public void run() {
-            setError(myData, e.getErrorMessage());
-            startNext();
-          }
-        });
-        return;
-      } finally {
-        SvnAuthenticationProvider.clearInteractive();
-        if (repository != null) {
-          repository.closeSession();
-        }
-      }
+    @Override
+    public void run(@NotNull ProgressIndicator indicator) {
+      RepositoryTreeNode node = myData.first;
+      SvnVcs vcs = node.getVcs();
+      Target target = Target.on(node.getURL());
 
-      SwingUtilities.invokeLater(new Runnable() {
-        public void run() {
-          setResults(myData, new ArrayList<SVNDirEntry>(entries));
-          startNext();
-        }
-      });
+      try {
+        vcs.getFactoryFromSettings().createBrowseClient().list(target, Revision.HEAD, Depth.IMMEDIATES, entries::add);
+      }
+      catch (VcsException e) {
+        error = e.getMessage();
+      }
+    }
+
+    @Override
+    public void onSuccess() {
+      if (error != null) {
+        setError(myData, error);
+      }
+      else {
+        setResults(myData, sorted(entries, DirectoryEntry.CASE_INSENSITIVE_ORDER));
+      }
+      startNext();
     }
   }
 }

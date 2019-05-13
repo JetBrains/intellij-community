@@ -75,7 +75,7 @@
           <text value="Recent Messages: "/>
         </properties>
       </component>
-      <component id="6c8fa" class="javax.swing.JComboBox" binding="myMessagesBox">
+      <component id="e6438" class="com.intellij.openapi.ui.ComboBox" binding="myMessagesBox">
         <constraints>
           <grid row="4" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
         </constraints>

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,29 +13,34 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.intellij.packageDependencies.ui;
 
-import com.intellij.analysis.AnalysisScopeBundle;
+import com.intellij.openapi.module.ModuleGrouper;
+import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.roots.ui.configuration.ProjectSettingsService;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.pom.NavigatableWithText;
 import com.intellij.psi.PsiFile;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.Set;
 
-public class ModuleNode extends PackageDependenciesNode implements NavigatableWithText{
-  private final Module myModule;
+public class ModuleNode extends PackageDependenciesNode implements NavigatableWithText {
+  private final @NotNull Module myModule;
+  private final ModuleGrouper myModuleGrouper;
 
-  public ModuleNode(Module module) {
+  public ModuleNode(@NotNull Module module, @Nullable ModuleGrouper moduleGrouper) {
     super(module.getProject());
-    myModule = module;    
+    myModule = module;
+    myModuleGrouper = moduleGrouper;
   }
 
-  public void fillFiles(Set<PsiFile> set, boolean recursively) {
+  @Override
+  public void fillFiles(Set<? super PsiFile> set, boolean recursively) {
     super.fillFiles(set, recursively);
     int count = getChildCount();
     for (int i = 0; i < count; i++) {
@@ -46,7 +51,7 @@ public class ModuleNode extends PackageDependenciesNode implements NavigatableWi
 
   @Override
   public boolean canNavigate() {
-    return myModule != null && !myModule.isDisposed();
+    return !myModule.isDisposed();
   }
 
   @Override
@@ -59,22 +64,26 @@ public class ModuleNode extends PackageDependenciesNode implements NavigatableWi
     ProjectSettingsService.getInstance(myModule.getProject()).openModuleSettings(myModule);
   }
 
+  @Override
   public Icon getIcon() {
-    return myModule == null || myModule.isDisposed() ? super.getIcon() : ModuleType.get(myModule).getIcon();
+    return myModule.isDisposed() ? super.getIcon() : ModuleType.get(myModule).getIcon();
   }
 
+  @Override
   public String toString() {
-    return myModule == null ? AnalysisScopeBundle.message("unknown.node.text") : myModule.getName();
+    return myModuleGrouper != null ? myModuleGrouper.getShortenedName(myModule) : myModule.getName();
   }
 
   public String getModuleName() {
     return myModule.getName();
   }
 
+  @NotNull
   public Module getModule() {
     return myModule;
   }
 
+  @Override
   public int getWeight() {
     return 1;
   }
@@ -87,21 +96,21 @@ public class ModuleNode extends PackageDependenciesNode implements NavigatableWi
     if (!(o instanceof ModuleNode)) return false;
 
     final ModuleNode moduleNode = (ModuleNode)o;
-
     return Comparing.equal(myModule, moduleNode.myModule);
   }
 
+  @Override
   public int hashCode() {
-    return myModule == null ? 0 : myModule.hashCode();
+    return myModule.hashCode();
   }
 
-
+  @Override
   public boolean isValid() {
-    return myModule != null && !myModule.isDisposed();
+    return !myModule.isDisposed();
   }
 
   @Override
   public String getNavigateActionText(boolean focusEditor) {
-    return "Open Module Settings";
+    return ActionsBundle.message("action.ModuleSettings.navigate");
   }
 }

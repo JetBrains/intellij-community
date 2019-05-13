@@ -17,15 +17,17 @@
 package org.jetbrains.idea.maven.model;
 
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.io.FileUtilRt;
+import com.intellij.openapi.util.text.StringUtilRt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.Serializable;
 
-public class MavenArtifact implements Serializable {
+public class MavenArtifact implements Serializable, MavenCoordinate {
+
+  static long serialVersionUID = 6389627095309274357L;
 
   public static final String MAVEN_LIB_PREFIX = "Maven: ";
 
@@ -46,6 +48,8 @@ public class MavenArtifact implements Serializable {
   private final boolean myStubbed;
 
   private transient volatile String myLibraryNameCache;
+
+  private transient volatile long myLastFileCheckTimeStamp; // File.exists() is a slow operation, don't run it more than once a second
 
   public MavenArtifact(String groupId,
                        String artifactId,
@@ -74,14 +78,17 @@ public class MavenArtifact implements Serializable {
     myStubbed = stubbed;
   }
 
+  @Override
   public String getGroupId() {
     return myGroupId;
   }
 
+  @Override
   public String getArtifactId() {
     return myArtifactId;
   }
 
+  @Override
   public String getVersion() {
     return myVersion;
   }
@@ -124,7 +131,21 @@ public class MavenArtifact implements Serializable {
   }
 
   public boolean isResolved() {
-    return myResolved && !myStubbed && myFile.exists();
+    if (myResolved && !myStubbed) {
+      long currentTime = System.currentTimeMillis();
+
+      if (myLastFileCheckTimeStamp + 2000 < currentTime) { // File.exists() is a slow operation, don't run it more than once a second
+        if (!myFile.exists()) {
+          return false; // Don't cache result if file is not exist.
+        }
+
+        myLastFileCheckTimeStamp = currentTime;
+      }
+
+      return true;
+    }
+
+    return false;
   }
 
   @NotNull
@@ -133,7 +154,7 @@ public class MavenArtifact implements Serializable {
   }
 
   public String getPath() {
-    return FileUtil.toSystemIndependentName(myFile.getPath());
+    return FileUtilRt.toSystemIndependentName(myFile.getPath());
   }
 
   public String getRelativePath() {
@@ -142,14 +163,17 @@ public class MavenArtifact implements Serializable {
 
   public String getFileNameWithBaseVersion(@Nullable String extraArtifactClassifier, @Nullable String customExtension) {
     StringBuilder res = new StringBuilder();
-    appendFileName(res, extraArtifactClassifier, customExtension);
+    appendFileName(res, extraArtifactClassifier, customExtension, true);
     return res.toString();
   }
 
-  private void appendFileName(StringBuilder result, @Nullable String extraArtifactClassifier, @Nullable String customExtension) {
+  private void appendFileName(StringBuilder result,
+                              @Nullable String extraArtifactClassifier,
+                              @Nullable String customExtension,
+                              boolean useBaseVersion) {
     result.append(myArtifactId);
     result.append('-');
-    result.append(myVersion);
+    result.append(useBaseVersion ? myBaseVersion : myVersion);
 
     String fullClassifier = getFullClassifier(extraArtifactClassifier);
     if (fullClassifier != null) {
@@ -169,13 +193,13 @@ public class MavenArtifact implements Serializable {
     result.append(myBaseVersion);
     result.append('/');
 
-    appendFileName(result, extraArtifactClassifier, customExtension);
+    appendFileName(result, extraArtifactClassifier, customExtension, false);
     return result.toString();
   }
 
   @Nullable
   public String getFullClassifier(@Nullable String extraClassifier) {
-    if (StringUtil.isEmptyOrSpaces(extraClassifier)) {
+    if (StringUtilRt.isEmptyOrSpaces(extraClassifier)) {
       return myClassifier;
     }
 
@@ -183,10 +207,10 @@ public class MavenArtifact implements Serializable {
     if (MavenConstants.TYPE_TEST_JAR.equals(myType) || "tests".equals(myClassifier)) {
       result += "test";
     }
-    if (!StringUtil.isEmptyOrSpaces(extraClassifier)) {
+    if (!StringUtilRt.isEmptyOrSpaces(extraClassifier)) {
       result += (!result.isEmpty() ? "-" + extraClassifier : extraClassifier);
     }
-    return StringUtil.isEmptyOrSpaces(result) ? null : result;
+    return StringUtilRt.isEmptyOrSpaces(result) ? null : result;
   }
 
   public String getPathForExtraArtifact(@Nullable String extraArtifactClassifier, @Nullable String customExtension) {
@@ -255,7 +279,7 @@ public class MavenArtifact implements Serializable {
     MavenId.append(builder, myGroupId);
     MavenId.append(builder, myArtifactId);
     MavenId.append(builder, myType);
-    if (!StringUtil.isEmptyOrSpaces(myClassifier)) MavenId.append(builder, myClassifier);
+    if (!StringUtilRt.isEmptyOrSpaces(myClassifier)) MavenId.append(builder, myClassifier);
     MavenId.append(builder, myVersion);
 
     return builder.toString();
@@ -267,9 +291,9 @@ public class MavenArtifact implements Serializable {
     MavenId.append(builder, myGroupId);
     MavenId.append(builder, myArtifactId);
     MavenId.append(builder, myType);
-    if (!StringUtil.isEmptyOrSpaces(myClassifier)) MavenId.append(builder, myClassifier);
+    if (!StringUtilRt.isEmptyOrSpaces(myClassifier)) MavenId.append(builder, myClassifier);
     MavenId.append(builder, myVersion);
-    if (!StringUtil.isEmptyOrSpaces(myScope)) MavenId.append(builder, myScope);
+    if (!StringUtilRt.isEmptyOrSpaces(myScope)) MavenId.append(builder, myScope);
 
     return builder.toString();
   }
@@ -282,11 +306,11 @@ public class MavenArtifact implements Serializable {
       MavenId.append(builder, myGroupId);
       MavenId.append(builder, myArtifactId);
 
-      if (!StringUtil.isEmptyOrSpaces(myType) && !MavenConstants.TYPE_JAR.equals(myType)) MavenId.append(builder, myType);
-      if (!StringUtil.isEmptyOrSpaces(myClassifier)) MavenId.append(builder, myClassifier);
+      if (!StringUtilRt.isEmptyOrSpaces(myType) && !MavenConstants.TYPE_JAR.equals(myType)) MavenId.append(builder, myType);
+      if (!StringUtilRt.isEmptyOrSpaces(myClassifier)) MavenId.append(builder, myClassifier);
 
-      String version = !StringUtil.isEmptyOrSpaces(myBaseVersion) ? myBaseVersion : myVersion;
-      if (!StringUtil.isEmptyOrSpaces(version)) MavenId.append(builder, version);
+      String version = !StringUtilRt.isEmptyOrSpaces(myBaseVersion) ? myBaseVersion : myVersion;
+      if (!StringUtilRt.isEmptyOrSpaces(version)) MavenId.append(builder, version);
 
       builder.insert(0, MAVEN_LIB_PREFIX);
 

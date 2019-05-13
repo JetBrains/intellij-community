@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,81 +26,72 @@ import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluateExceptionUtil;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.engine.evaluation.TextWithImports;
-import com.intellij.debugger.impl.DebuggerUtilsEx;
-import com.intellij.debugger.settings.NodeRendererSettings;
+import com.intellij.debugger.impl.DebuggerUtilsImpl;
 import com.intellij.debugger.ui.tree.UserExpressionDescriptor;
-import com.intellij.debugger.ui.tree.render.ClassRenderer;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiClass;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.JavaCodeFragment;
 import com.intellij.psi.PsiCodeFragment;
-import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.util.StringBuilderSpinAllocator;
-import com.sun.jdi.ObjectReference;
-import com.sun.jdi.Value;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiType;
+import com.sun.jdi.Type;
+import org.jetbrains.annotations.Nullable;
 
 public class UserExpressionDescriptorImpl extends EvaluationDescriptor implements UserExpressionDescriptor{
   private final ValueDescriptorImpl myParentDescriptor;
   private final String myTypeName;
   private final String myName;
+  private final int myEnumerationIndex;
 
-  public UserExpressionDescriptorImpl(Project project, ValueDescriptorImpl parent, String typeName, String name, TextWithImports text) {
+  public UserExpressionDescriptorImpl(Project project,
+                                      ValueDescriptorImpl parent,
+                                      String typeName,
+                                      String name,
+                                      TextWithImports text,
+                                      int enumerationIndex) {
     super(text, project);
     myParentDescriptor = parent;
     myTypeName = typeName;
     myName = name;
+    myEnumerationIndex = enumerationIndex;
   }
 
+  @Override
   public String getName() {
-    return myName;
+    return StringUtil.isEmpty(myName) ? myText.getText() : myName;
   }
 
-  public String calcValueName() {
-    StringBuilder buffer = StringBuilderSpinAllocator.alloc();
-    try {
-      buffer.append(getName());
-      buffer.append(": ");
-      final Value value = getValue();
-      if(value != null) {
-        final ClassRenderer classRenderer = NodeRendererSettings.getInstance().getClassRenderer();
-        buffer.append(classRenderer.renderTypeName(value.type().name()));
-      }
-
-      return buffer.toString();
-    }
-    finally {
-      StringBuilderSpinAllocator.dispose(buffer);
-    }
+  @Nullable
+  @Override
+  public String getDeclaredType() {
+    Type type = getType();
+    return type != null ? type.name() : null;
   }
 
+  @Override
   protected PsiCodeFragment getEvaluationCode(final StackFrameContext context) throws EvaluateException {
-    Value value = myParentDescriptor.getValue();
-
-    if(value instanceof ObjectReference) {
-      final String typeName = value.type().name();
-
-      final PsiClass psiClass = DebuggerUtilsEx.findClass(myTypeName, myProject, context.getDebugProcess().getSearchScope());
-
-      if (psiClass == null) {
-        throw EvaluateExceptionUtil.createEvaluateException(DebuggerBundle.message("evaluation.error.invalid.type.name", typeName));
-      }
-
-      final PsiCodeFragment fragment =
-        getEffectiveCodeFragmentFactory(psiClass).createCodeFragment(getEvaluationText(), psiClass, myProject);
-      fragment.forceResolveScope(GlobalSearchScope.allScope(myProject));
-      return fragment;
+    Pair<PsiElement, PsiType> psiClassAndType = DebuggerUtilsImpl.getPsiClassAndType(myTypeName, myProject);
+    if (psiClassAndType.first == null) {
+      throw EvaluateExceptionUtil.createEvaluateException(DebuggerBundle.message("evaluation.error.invalid.type.name", myTypeName));
     }
-    else {
-      throw EvaluateExceptionUtil.createEvaluateException(
-        DebuggerBundle.message("evaluation.error.objref.expected", myParentDescriptor.getName())
-      );
+    PsiCodeFragment fragment = createCodeFragment(psiClassAndType.first);
+    if (fragment instanceof JavaCodeFragment) {
+      ((JavaCodeFragment)fragment).setThisType(psiClassAndType.second);
     }
+    return fragment;
   }
 
   public ValueDescriptorImpl getParentDescriptor() {
     return myParentDescriptor;
   }
 
+  @Override
   protected EvaluationContextImpl getEvaluationContext(final EvaluationContextImpl evaluationContext) {
     return evaluationContext.createEvaluationContext(myParentDescriptor.getValue());
+  }
+
+  public int getEnumerationIndex() {
+    return myEnumerationIndex;
   }
 }

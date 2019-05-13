@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,13 +26,12 @@ import com.intellij.psi.impl.java.stubs.JavaStubElementTypes;
 import com.intellij.psi.impl.java.stubs.PsiTypeParameterListStub;
 import com.intellij.psi.impl.java.stubs.PsiTypeParameterStub;
 import com.intellij.psi.impl.light.LightEmptyImplementsList;
-import com.intellij.psi.impl.meta.MetaRegistry;
 import com.intellij.psi.impl.source.JavaStubPsiElement;
 import com.intellij.psi.javadoc.PsiDocComment;
-import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -45,13 +44,6 @@ import java.util.List;
  * @author dsl
  */
 public class PsiTypeParameterImpl extends JavaStubPsiElement<PsiTypeParameterStub> implements PsiTypeParameter {
-  private final LightEmptyImplementsList myLightEmptyImplementsList = new LightEmptyImplementsList(null) {
-    @Override
-    public PsiManager getManager() {
-      return PsiTypeParameterImpl.this.getManager();
-    }
-  };
-
   public PsiTypeParameterImpl(final PsiTypeParameterStub stub) {
     super(stub, JavaStubElementTypes.TYPE_PARAMETER);
   }
@@ -164,7 +156,7 @@ public class PsiTypeParameterImpl extends JavaStubPsiElement<PsiTypeParameterStu
     final PsiElement parentParent = parent.getParent();
     if (!(parentParent instanceof PsiTypeParameterListOwner)) {
       // Might be an error element;
-      return PsiTreeUtil.getParentOfType(this, PsiTypeParameterListOwner.class);
+      return null;
     }
 
     return (PsiTypeParameterListOwner)parentParent;
@@ -173,7 +165,7 @@ public class PsiTypeParameterImpl extends JavaStubPsiElement<PsiTypeParameterStu
 
   @Override
   public int getIndex() {
-    final PsiTypeParameterStub stub = getStub();
+    final PsiTypeParameterStub stub = getGreenStub();
     if (stub != null) {
       final PsiTypeParameterListStub parentStub = (PsiTypeParameterListStub)stub.getParentStub();
       return parentStub.getChildrenStubs().indexOf(stub);
@@ -201,12 +193,12 @@ public class PsiTypeParameterImpl extends JavaStubPsiElement<PsiTypeParameterStu
                                      @NotNull ResolveState state,
                                      PsiElement lastParent,
                                      @NotNull PsiElement place) {
-    return PsiClassImplUtil.processDeclarationsInClass(this, processor, state, null, lastParent, place, false);
+    return PsiClassImplUtil.processDeclarationsInClass(this, processor, state, null, lastParent, place, PsiUtil.getLanguageLevel(place), false);
   }
 
   @Override
   public String getName() {
-    final PsiTypeParameterStub stub = getStub();
+    final PsiTypeParameterStub stub = getGreenStub();
     if (stub != null) {
       return stub.getName();
     }
@@ -244,7 +236,7 @@ public class PsiTypeParameterImpl extends JavaStubPsiElement<PsiTypeParameterStu
 
   @Override
   public PsiReferenceList getImplementsList() {
-    return myLightEmptyImplementsList;
+    return new LightEmptyImplementsList(getManager());
   }
 
   @Override
@@ -300,6 +292,7 @@ public class PsiTypeParameterImpl extends JavaStubPsiElement<PsiTypeParameterStu
     return PsiClassImplUtil.getSuperClass(this);
   }
 
+  @NotNull
   @Override
   public PsiClass[] getInterfaces() {
     return PsiClassImplUtil.getInterfaces(this);
@@ -358,13 +351,10 @@ public class PsiTypeParameterImpl extends JavaStubPsiElement<PsiTypeParameterStu
     }
   }
 
+  @Override
   @NonNls
   public String toString() {
     return "PsiTypeParameter:" + getName();
-  }
-
-  public PsiMetaData getMetaData() {
-    return MetaRegistry.getMeta(this);
   }
 
   @Override

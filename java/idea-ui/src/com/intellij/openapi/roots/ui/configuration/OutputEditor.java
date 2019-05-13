@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,16 +14,11 @@
  * limitations under the License.
  */
 
-/*
- * Created by IntelliJ IDEA.
- * User: Anna.Kozlova
- * Date: 12-Aug-2006
- * Time: 20:14:02
- */
 package com.intellij.openapi.roots.ui.configuration;
 
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.ui.IdeBorderFactory;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
@@ -31,17 +26,23 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
+import java.util.Arrays;
+import java.util.List;
 
 public class OutputEditor extends ModuleElementsEditor {
+  public static final String NAME = ProjectBundle.message("project.roots.path.tab.title");
   private final BuildElementsEditor myCompilerOutputEditor;
   private final JavadocEditor myJavadocEditor;
   private final AnnotationsEditor myAnnotationsEditor;
+  private final List<ModuleElementsEditor> myEditors;
 
   protected OutputEditor(final ModuleConfigurationState state) {
     super(state);
     myCompilerOutputEditor = new BuildElementsEditor(state);
     myJavadocEditor = new JavadocEditor(state);
     myAnnotationsEditor = new AnnotationsEditor(state);
+    myEditors = Arrays.asList(myCompilerOutputEditor, myJavadocEditor, myAnnotationsEditor);
+    myEditors.forEach(editor -> editor.addListener(this::fireConfigurationChanged));
   }
 
   @Override
@@ -49,7 +50,7 @@ public class OutputEditor extends ModuleElementsEditor {
     final JPanel panel = new JPanel(new GridBagLayout());
     panel.setBorder(new EmptyBorder(UIUtil.PANEL_SMALL_INSETS));
     final GridBagConstraints gc =
-      new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.BOTH, new Insets(0, 0, 0, 0), 0, 0);
+      new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.BOTH, JBUI.emptyInsets(), 0, 0);
     panel.add(myCompilerOutputEditor.createComponentImpl(), gc);
     final JPanel javadocPanel = (JPanel)myJavadocEditor.createComponentImpl();
     javadocPanel.setBorder(IdeBorderFactory.createTitledBorder(myJavadocEditor.getDisplayName(), false));
@@ -63,32 +64,26 @@ public class OutputEditor extends ModuleElementsEditor {
 
   @Override
   public void saveData() {
-    myCompilerOutputEditor.saveData();
-    myJavadocEditor.saveData();
-    myAnnotationsEditor.saveData();
+    super.saveData();
+    myEditors.forEach(ModuleElementsEditor::saveData);
   }
 
   @Override
   public String getDisplayName() {
-    return ProjectBundle.message("project.roots.path.tab.title");
+    return NAME;
   }
-
 
   @Override
   public void moduleStateChanged() {
     super.moduleStateChanged();
-    myCompilerOutputEditor.moduleStateChanged();
-    myJavadocEditor.moduleStateChanged();
-    myAnnotationsEditor.moduleStateChanged();
+    myEditors.forEach(ModuleElementsEditor::moduleStateChanged);
   }
 
 
   @Override
   public void moduleCompileOutputChanged(final String baseUrl, final String moduleName) {
     super.moduleCompileOutputChanged(baseUrl, moduleName);
-    myCompilerOutputEditor.moduleCompileOutputChanged(baseUrl, moduleName);
-    myJavadocEditor.moduleCompileOutputChanged(baseUrl, moduleName);
-    myAnnotationsEditor.moduleCompileOutputChanged(baseUrl, moduleName);
+    myEditors.forEach(editor -> editor.moduleCompileOutputChanged(baseUrl, moduleName));
   }
 
   @Override

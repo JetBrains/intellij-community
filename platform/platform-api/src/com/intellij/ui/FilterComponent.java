@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,9 @@ package com.intellij.ui;
 
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.util.Alarm;
+import com.intellij.util.ui.accessibility.AccessibleContextUtil;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
@@ -34,7 +36,7 @@ import java.util.List;
 public abstract class FilterComponent extends JPanel {
   private final SearchTextFieldWithStoredHistory myFilter;
   private final Alarm myUpdateAlarm = new Alarm();
-  private boolean myOnTheFly;
+  private final boolean myOnTheFly;
 
   public FilterComponent(@NonNls String propertyName, int historySize) {
     this(propertyName, historySize, true);
@@ -47,12 +49,9 @@ public abstract class FilterComponent extends JPanel {
       @Override
       protected Runnable createItemChosenCallback(JList list) {
         final Runnable callback = super.createItemChosenCallback(list);
-        return new Runnable() {
-          @Override
-          public void run() {
-            callback.run();
-            filter();
-          }
+        return () -> {
+          callback.run();
+          filter();
         };
       }
 
@@ -60,14 +59,20 @@ public abstract class FilterComponent extends JPanel {
       protected Component getPopupLocationComponent() {
         return FilterComponent.this.getPopupLocationComponent();
       }
+
+      @Override
+      protected void onFocusLost() {
+        addCurrentTextToHistory();
+        super.onFocusLost();
+      }
     };
     myFilter.getTextEditor().addKeyListener(new KeyAdapter() {
       //to consume enter in combo box - do not process this event by default button from DialogWrapper
+      @Override
       public void keyPressed(final KeyEvent e) {
         if (e.getKeyCode() == KeyEvent.VK_ENTER) {
           e.consume();
-          myFilter.addCurrentTextToHistory();
-          filter();
+          userTriggeredFilter();
         } else if (e.getKeyCode() == KeyEvent.VK_ESCAPE) {
           onEscape(e);
         }
@@ -75,21 +80,25 @@ public abstract class FilterComponent extends JPanel {
     });
 
     myFilter.addDocumentListener(new DocumentListener() {
+      @Override
       public void insertUpdate(DocumentEvent e) {
         onChange();
       }
 
+      @Override
       public void removeUpdate(DocumentEvent e) {
         onChange();
       }
 
+      @Override
       public void changedUpdate(DocumentEvent e) {
         onChange();
       }
     });
 
     myFilter.setHistorySize(historySize);
-    add(myFilter, BorderLayout.CENTER);    
+    AccessibleContextUtil.setName(myFilter.getTextEditor(), "Message text filter");
+    add(myFilter, BorderLayout.CENTER);
   }
 
   protected JComponent getPopupLocationComponent() {
@@ -103,11 +112,7 @@ public abstract class FilterComponent extends JPanel {
   private void onChange() {
     if (myOnTheFly) {
       myUpdateAlarm.cancelAllRequests();
-      myUpdateAlarm.addRequest(new Runnable(){
-        public void run() {
-          onlineFilter();
-        }
-      }, 100, ModalityState.stateForComponent(myFilter));
+      myUpdateAlarm.addRequest(() -> onlineFilter(), 100, ModalityState.stateForComponent(myFilter));
     }
   }
 
@@ -119,7 +124,7 @@ public abstract class FilterComponent extends JPanel {
     myFilter.reset();
   }
 
-  protected void onEscape(KeyEvent e) {
+  protected void onEscape(@NotNull KeyEvent e) {
   }
 
   public String getFilter(){
@@ -138,6 +143,7 @@ public abstract class FilterComponent extends JPanel {
     myFilter.selectText();
   }
 
+  @Override
   public boolean requestFocusInWindow() {
     return myFilter.requestFocusInWindow();
   }
@@ -145,6 +151,11 @@ public abstract class FilterComponent extends JPanel {
   public abstract void filter();
 
   protected void onlineFilter(){
+    filter();
+  }
+
+  protected void userTriggeredFilter() {
+    myFilter.addCurrentTextToHistory();
     filter();
   }
 

@@ -23,6 +23,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.RefactoringBundle;
+import com.intellij.refactoring.util.RefactoringChangeUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.VisibilityUtil;
@@ -31,14 +32,10 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-/**
-* User: anna
-* Date: 1/16/12
-*/
 class MethodDuplicatesMatchProvider implements MatchProvider {
   private final PsiMethod myMethod;
   private final List<Match> myDuplicates;
-  private static final Logger LOG = Logger.getInstance("#" + MethodDuplicatesMatchProvider.class.getName());
+  private static final Logger LOG = Logger.getInstance(MethodDuplicatesMatchProvider.class);
 
   MethodDuplicatesMatchProvider(PsiMethod method, List<Match> duplicates) {
     myMethod = method;
@@ -46,19 +43,24 @@ class MethodDuplicatesMatchProvider implements MatchProvider {
   }
 
   @Override
+  public void prepareSignature(Match match) {
+    MatchUtil.changeSignature(match, myMethod);
+  }
+
+  @Override
   public PsiElement processMatch(Match match) throws IncorrectOperationException {
-    match.changeSignature(myMethod);
     final PsiClass containingClass = myMethod.getContainingClass();
-    if (isEssentialStaticContextAbsent(match)) {
+    if (isEssentialStaticContextAbsent(match, myMethod)) {
       PsiUtil.setModifierProperty(myMethod, PsiModifier.STATIC, true);
     }
 
-    final PsiElementFactory factory = JavaPsiFacade.getInstance(myMethod.getProject()).getElementFactory();
+    final PsiElementFactory factory = JavaPsiFacade.getElementFactory(myMethod.getProject());
     final boolean needQualifier = match.getInstanceExpression() != null;
-    final boolean needStaticQualifier = isExternal(match);
+    final boolean needStaticQualifier = isExternal(match, myMethod);
     final boolean nameConflicts = nameConflicts(match);
+    final String methodName = myMethod.isConstructor() ? "this" : myMethod.getName();
     @NonNls final String text = needQualifier || needStaticQualifier || nameConflicts
-                                ?  "q." + myMethod.getName() + "()": myMethod.getName() + "()";
+                                ?  "q." + methodName + "()": methodName + "()";
     PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)factory.createExpressionFromText(text, null);
     methodCallExpression = (PsiMethodCallExpression)CodeStyleManager.getInstance(myMethod.getManager()).reformat(methodCallExpression);
     final PsiParameter[] parameters = myMethod.getParameterList().getParameters();
@@ -83,9 +85,9 @@ class MethodDuplicatesMatchProvider implements MatchProvider {
       } else {
         final PsiClass psiClass = PsiTreeUtil.getParentOfType(match.getMatchStart(), PsiClass.class);
         if (psiClass != null && psiClass.isInheritor(containingClass, true)) {
-          qualifierExpression.replace(RefactoringUtil.createSuperExpression(containingClass.getManager(), null));
+          qualifierExpression.replace(RefactoringChangeUtil.createSuperExpression(containingClass.getManager(), null));
         } else {
-          qualifierExpression.replace(RefactoringUtil.createThisExpression(containingClass.getManager(), containingClass));
+          qualifierExpression.replace(RefactoringChangeUtil.createThisExpression(containingClass.getManager(), containingClass));
         }
       }
     }
@@ -108,15 +110,16 @@ class MethodDuplicatesMatchProvider implements MatchProvider {
 
 
 
-  private boolean isExternal(final Match match) {
+  private static boolean isExternal(final Match match, final PsiMethod method) {
     final PsiElement matchStart = match.getMatchStart();
-    final PsiClass containingClass = myMethod.getContainingClass();
+    final PsiClass containingClass = method.getContainingClass();
     if (PsiTreeUtil.isAncestor(containingClass, matchStart, false)) {
       return false;
     }
-    final PsiClass psiClass = PsiTreeUtil.getParentOfType(matchStart, PsiClass.class);
-    if (psiClass != null) {
+    PsiClass psiClass = PsiTreeUtil.getParentOfType(matchStart, PsiClass.class);
+    while (psiClass != null) {
       if (InheritanceUtil.isInheritorOrSelf(psiClass, containingClass, true)) return false;
+      psiClass = PsiTreeUtil.getParentOfType(psiClass, PsiClass.class);
     }
     return true;
   }
@@ -132,12 +135,28 @@ class MethodDuplicatesMatchProvider implements MatchProvider {
     return false;
   }
 
-  private boolean isEssentialStaticContextAbsent(final Match match) {
-    if (!myMethod.hasModifierProperty(PsiModifier.STATIC)) {
+  public static boolean isEssentialStaticContextAbsent(final Match match, final PsiMethod method) {
+    if (!method.hasModifierProperty(PsiModifier.STATIC)) {
       final PsiExpression instanceExpression = match.getInstanceExpression();
       if (instanceExpression != null) return false;
-      if (isExternal(match)) return true;
-      if (PsiTreeUtil.isAncestor(myMethod.getContainingClass(), match.getMatchStart(), false) && RefactoringUtil.isInStaticContext(match.getMatchStart(), myMethod.getContainingClass())) return true;
+      if (isExternal(match, method)) return true;
+
+      final PsiElement matchStart = match.getMatchStart();
+      final PsiClass containingClass = method.getContainingClass();
+
+      if (PsiTreeUtil.isAncestor(containingClass, matchStart, false)) {
+        if (RefactoringUtil.isInStaticContext(matchStart, containingClass)) return true;
+      }
+      else {
+        PsiClass psiClass = PsiTreeUtil.getParentOfType(matchStart, PsiClass.class);
+        while (psiClass != null) {
+          if (InheritanceUtil.isInheritorOrSelf(psiClass, containingClass, true)) {
+            if (RefactoringUtil.isInStaticContext(matchStart, psiClass)) return true;
+            break;
+          }
+          psiClass = PsiTreeUtil.getParentOfType(psiClass, PsiClass.class);
+        }
+      }
     }
     return false;
   }
@@ -148,7 +167,7 @@ class MethodDuplicatesMatchProvider implements MatchProvider {
   }
 
   @Override
-  public boolean hasDuplicates() {
+  public Boolean hasDuplicates() {
     return myDuplicates.isEmpty();
   }
 
@@ -157,8 +176,9 @@ class MethodDuplicatesMatchProvider implements MatchProvider {
   public String getConfirmDuplicatePrompt(final Match match) {
     final PsiElement matchStart = match.getMatchStart();
     String visibility = VisibilityUtil.getPossibleVisibility(myMethod, matchStart);
-    final boolean shouldBeStatic = isEssentialStaticContextAbsent(match);
-    final String signature = match.getChangedSignature(myMethod, myMethod.hasModifierProperty(PsiModifier.STATIC) || shouldBeStatic, visibility);
+    final boolean shouldBeStatic = isEssentialStaticContextAbsent(match, myMethod);
+    final String signature = MatchUtil
+      .getChangedSignature(match, myMethod, myMethod.hasModifierProperty(PsiModifier.STATIC) || shouldBeStatic, visibility);
     if (signature != null) {
       return RefactoringBundle.message("replace.this.code.fragment.and.change.signature", signature);
     }

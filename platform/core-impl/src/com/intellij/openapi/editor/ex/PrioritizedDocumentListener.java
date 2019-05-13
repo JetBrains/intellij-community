@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,12 +16,14 @@
 package com.intellij.openapi.editor.ex;
 
 import com.intellij.openapi.editor.event.DocumentListener;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Comparator;
 
 /**
  * @author max
  */
+@FunctionalInterface
 public interface PrioritizedDocumentListener extends DocumentListener {
   /**
    * Comparator that sorts {@link DocumentListener} objects by their {@link PrioritizedDocumentListener#getPriority() priorities} (if any).
@@ -37,12 +39,13 @@ public interface PrioritizedDocumentListener extends DocumentListener {
   Comparator<? super DocumentListener> COMPARATOR = new Comparator<Object>() {
     @Override
     public int compare(Object o1, Object o2) {
-      return getPriority(o1) - getPriority(o2);
+      return Integer.compare(getPriority(o1), getPriority(o2));
     }
 
-    private int getPriority(Object o) {
-      assert o != null;
-      if (o instanceof PrioritizedDocumentListener) return ((PrioritizedDocumentListener)o).getPriority();
+    private int getPriority(@NotNull Object o) {
+      if (o instanceof PrioritizedDocumentListener) {
+        return ((PrioritizedDocumentListener)o).getPriority();
+      }
       return Integer.MAX_VALUE;
     }
   };

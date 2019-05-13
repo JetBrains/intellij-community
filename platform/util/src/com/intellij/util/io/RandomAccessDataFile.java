@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ package com.intellij.util.io;
 
 import com.intellij.openapi.Forceable;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.vfs.CharsetToolkit;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.*;
@@ -29,29 +30,29 @@ import java.nio.ByteBuffer;
 public class RandomAccessDataFile implements Forceable, Closeable {
   protected static final Logger LOG = Logger.getInstance("#com.intellij.util.io.RandomAccessDataFile");
 
-  private final static OpenChannelsCache ourCache = new OpenChannelsCache(150, "rw");
-  private static int ourFilesCount = 0;
+  private static final OpenChannelsCache ourCache = new OpenChannelsCache(150, "rw");
+  private static int ourFilesCount;
 
   private final int myCount = ourFilesCount++;
   private final File myFile;
   private final PagePool myPool;
-  private long lastSeek = -1l;
+  private long lastSeek = -1L;
 
   private final byte[] myTypedIOBuffer = new byte[8];
 
   private final FileWriter log;
 
   private volatile long mySize;
-  private volatile boolean myIsDirty = false;
-  private volatile boolean myIsDisposed = false;
+  private volatile boolean myIsDirty;
+  private volatile boolean myIsDisposed;
 
   private static final boolean DEBUG = false;
 
-  public RandomAccessDataFile(final File file) throws IOException {
+  public RandomAccessDataFile(@NotNull File file) throws IOException {
     this(file, PagePool.SHARED);
   }
 
-  public RandomAccessDataFile(final File file, final PagePool pool) throws IOException {
+  public RandomAccessDataFile(@NotNull File file, @NotNull PagePool pool) throws IOException {
     myPool = pool;
     myFile = file;
     if (!file.exists()) {
@@ -138,27 +139,16 @@ public class RandomAccessDataFile implements Forceable, Closeable {
   }
 
   public String getUTF(long addr) {
-    try {
-      int len = getInt(addr);
-      byte[] bytes = new byte[len];
-      get(addr + 4, bytes, 0, len);
-      return new String(bytes, "UTF-8");
-    }
-    catch (UnsupportedEncodingException e) {
-      // Can't be
-      return "";
-    }
+    int len = getInt(addr);
+    byte[] bytes = new byte[len];
+    get(addr + 4, bytes, 0, len);
+    return new String(bytes, CharsetToolkit.UTF8_CHARSET);
   }
 
   public void putUTF(long addr, String value) {
-    try {
-      final byte[] bytes = value.getBytes("UTF-8");
-      putInt(addr, bytes.length);
-      put(addr + 4, bytes, 0, bytes.length);
-    }
-    catch (UnsupportedEncodingException e) {
-      // Can't be
-    }
+    final byte[] bytes = value.getBytes(CharsetToolkit.UTF8_CHARSET);
+    putInt(addr, bytes.length);
+    put(addr + 4, bytes, 0, bytes.length);
   }
 
   public long length() {
@@ -196,15 +186,37 @@ public class RandomAccessDataFile implements Forceable, Closeable {
     myIsDisposed = true;
   }
 
+  @Override
   public void close() {
     dispose();
   }
 
+  /**
+   * Flushes dirty pages to underlying buffers
+   */
+  @Override
   public void force() {
     assertNotDisposed();
     if (isDirty()) {
       myPool.flushPages(this);
       myIsDirty = false;
+    }
+  }
+
+  /**
+   * Flushes dirty pages to buffers and saves them to disk
+   */
+  public void sync() {
+    force();
+    try {
+      RandomAccessFile file = getRandomAccessFile();
+      file.getChannel().force(true);
+    }
+    catch (IOException ignored) {
+
+    }
+    finally {
+      releaseFile();
     }
   }
 
@@ -215,6 +227,7 @@ public class RandomAccessDataFile implements Forceable, Closeable {
     }
   }
 
+  @Override
   public boolean isDirty() {
     assertNotDisposed();
     return myIsDirty;
@@ -226,16 +239,16 @@ public class RandomAccessDataFile implements Forceable, Closeable {
 
   private void assertNotDisposed() {
     if (myIsDisposed) {
-      LOG.assertTrue(false, "storage file is disposed: " + myFile);
+      LOG.error("storage file is disposed: " + myFile);
     }
   }
 
-  public static int totalReads = 0;
-  public static long totalReadBytes = 0;
+  public static int totalReads;
+  public static long totalReadBytes;
 
-  public static int seekcount = 0;
-  public static int totalWrites = 0;
-  public static long totalWriteBytes = 0;
+  public static int seekcount;
+  public static int totalWrites;
+  public static long totalWriteBytes;
 
   void loadPage(final Page page) {
     assertNotDisposed();
@@ -313,6 +326,7 @@ public class RandomAccessDataFile implements Forceable, Closeable {
     file.seek(fileOffset);
   }
 
+  @Override
   public int hashCode() {
     return myCount;
   }

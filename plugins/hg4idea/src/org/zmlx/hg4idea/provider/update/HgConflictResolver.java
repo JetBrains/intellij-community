@@ -13,13 +13,12 @@
 package org.zmlx.hg4idea.provider.update;
 
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.AbstractVcsHelper;
 import com.intellij.openapi.vcs.update.FileGroup;
 import com.intellij.openapi.vcs.update.UpdatedFiles;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.vcsUtil.VcsUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.zmlx.hg4idea.HgFile;
 import org.zmlx.hg4idea.HgVcs;
@@ -31,6 +30,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import static com.intellij.dvcs.DvcsUtil.findVirtualFilesWithRefresh;
+import static com.intellij.dvcs.DvcsUtil.sortVirtualFilesByPresentation;
+
 public final class HgConflictResolver {
 
   @NotNull private final Project myProject;
@@ -40,46 +42,45 @@ public final class HgConflictResolver {
     this(project, null);
   }
 
-  public HgConflictResolver(Project project, UpdatedFiles updatedFiles) {
+  public HgConflictResolver(@NotNull Project project, UpdatedFiles updatedFiles) {
     this.myProject = project;
     this.updatedFiles = updatedFiles;
   }
 
   public void resolve(final VirtualFile repo) {
-    Map<HgFile, HgResolveStatusEnum> resolves = new HgResolveCommand(myProject).getListSynchronously(repo);
-    final List<VirtualFile> conflicts = new ArrayList<VirtualFile>();
-    for (Map.Entry<HgFile, HgResolveStatusEnum> entry : resolves.entrySet()) {
-      File file = entry.getKey().getFile();
-      String fileGroupId = null;
-      switch (entry.getValue()) {
-        case UNRESOLVED:
-          conflicts.add(VcsUtil.getVirtualFile(file));
-          fileGroupId = FileGroup.MERGED_WITH_CONFLICT_ID;
-          break;
-        case RESOLVED:
-          fileGroupId = FileGroup.MERGED_ID;
-          break;
-        default:
-      }
-      if (updatedFiles != null && fileGroupId != null) {
-        updatedFiles.getGroupById(FileGroup.UPDATED_ID).remove(file.getAbsolutePath());
-        //TODO get the correct revision to pass to the UpdatedFiles
-        updatedFiles.getGroupById(fileGroupId)
-          .add(file.getPath(), HgVcs.VCS_NAME, null); 
-      }
-    }
+    final Map<HgFile, HgResolveStatusEnum> resolves = new HgResolveCommand(myProject).getListSynchronously(repo);
+    final List<File> conflictFiles = new ArrayList<>();
 
-    if (conflicts.isEmpty()) {
-      return;
+    for (HgFile hgFile : resolves.keySet()) {
+      File file = hgFile.getFile();
+      if (resolves.get(hgFile) == HgResolveStatusEnum.UNRESOLVED) {
+        conflictFiles.add(file);
+        updateUpdatedFiles(file, true);
+      }
+      else {
+        updateUpdatedFiles(file, false);
+      }
     }
+    if (conflictFiles.isEmpty()) return;
 
     final HgVcs vcs = HgVcs.getInstance(myProject);
-    if (vcs == null) { return; }
-    ApplicationManager.getApplication().invokeAndWait(new Runnable() {
-      public void run() {
-        AbstractVcsHelper.getInstance(myProject).showMergeDialog(conflicts, vcs.getMergeProvider());
-      }
-    }, ModalityState.defaultModalityState());
+    if (vcs == null) return;
+    final List<VirtualFile> conflicts = sortVirtualFilesByPresentation(findVirtualFilesWithRefresh(conflictFiles));
+    ApplicationManager.getApplication().invokeAndWait(
+      () -> AbstractVcsHelper.getInstance(myProject).showMergeDialog(conflicts, vcs.getMergeProvider()));
   }
 
+  private void updateUpdatedFiles(@NotNull File file, boolean unresolved) {
+    if (updatedFiles != null) {
+      updatedFiles.getGroupById(FileGroup.UPDATED_ID).remove(file.getAbsolutePath());
+      //TODO get the correct revision to pass to the UpdatedFiles
+      updatedFiles.getGroupById(unresolved ? FileGroup.MERGED_WITH_CONFLICT_ID : FileGroup.MERGED_ID)
+        .add(file.getPath(), HgVcs.VCS_NAME, null);
+    }
+  }
+
+  public static boolean hasConflicts(final Project project, VirtualFile repo) {
+    Map<HgFile, HgResolveStatusEnum> resolves = new HgResolveCommand(project).getListSynchronously(repo);
+    return ContainerUtil.exists(resolves.values(), resolveStatus -> resolveStatus == HgResolveStatusEnum.UNRESOLVED);
+  }
 }

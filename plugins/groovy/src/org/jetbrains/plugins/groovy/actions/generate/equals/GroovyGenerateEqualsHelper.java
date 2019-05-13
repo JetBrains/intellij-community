@@ -1,33 +1,22 @@
-/*
- * Copyright 2000-2011 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o.
+// Use of this source code is governed by the Apache 2.0 license that can be
+// found in the LICENSE file.
 package org.jetbrains.plugins.groovy.actions.generate.equals;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.*;
+import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.codeStyle.JavaCodeStyleManager;
+import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
+import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.MethodSignature;
 import com.intellij.psi.util.MethodSignatureUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.StringBuilderSpinAllocator;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.actions.generate.GroovyCodeInsightBundle;
@@ -38,10 +27,6 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUt
 import java.text.MessageFormat;
 import java.util.*;
 
-/**
- * User: Dmitry.Krasilschikov
- * Date: 02.06.2008
- */
 public class GroovyGenerateEqualsHelper {
   private static final Logger LOG = Logger.getInstance(GroovyGenerateEqualsHelper.class);
 
@@ -60,12 +45,13 @@ public class GroovyGenerateEqualsHelper {
   private String myClassInstanceName;
 
   @NonNls
-  private static final HashMap<String, MessageFormat> PRIMITIVE_HASHCODE_FORMAT = new HashMap<String, MessageFormat>();
+  private static final HashMap<String, MessageFormat> PRIMITIVE_HASHCODE_FORMAT = new HashMap<>();
   private final boolean mySuperHasHashCode;
 //  private CodeStyleManager myCodeStyleManager;
 
   private final Project myProject;
   private final boolean myCheckParameterWithInstanceof;
+  private final PsiFile myFile;
 
   public GroovyGenerateEqualsHelper(Project project,
                                     PsiClass aClass,
@@ -79,13 +65,14 @@ public class GroovyGenerateEqualsHelper {
     myProject = project;
     myCheckParameterWithInstanceof = useInstanceofToCheckParameterType;
 
-    myNonNullSet = new HashSet<PsiField>();
+    myNonNullSet = new HashSet<>();
     ContainerUtil.addAll(myNonNullSet, nonNullFields);
 
     myFactory = GroovyPsiElementFactory.getInstance(project);
 
     mySuperHasHashCode = superMethodExists(getHashCodeSignature());
 //    myCodeStyleManager = CodeStyleManager.getInstance(myProject);
+    myFile = aClass.getContainingFile();
   }
 
   private static String getUniqueLocalVarName(String base, PsiField[] fields) {
@@ -152,7 +139,7 @@ public class GroovyGenerateEqualsHelper {
 
 
   private void addDoubleFieldComparison(final StringBuffer buffer, final PsiField field) {
-    final @NonNls String type = PsiType.DOUBLE.equals(field.getType()) ? "Double" : "Float";
+    @NonNls final String type = PsiType.DOUBLE.equals(field.getType()) ? "Double" : "Float";
     final Object[] parameters = new Object[]{type, myClassInstanceName, field.getName()};
     DOUBLE_FIELD_COMPARER_MF.format(parameters, buffer, null);
   }
@@ -186,7 +173,6 @@ public class GroovyGenerateEqualsHelper {
     FIELD_COMPARER_MF.format(getComparerFormatParameters(field), buffer, null);
   }
 
-  @SuppressWarnings("HardCodedStringLiteral")
   private void addInstanceOfToText(@NonNls StringBuffer buffer, String returnValue) {
     if (myCheckParameterWithInstanceof) {
       buffer.append("if (!(").append(myParameterName).append(" instanceof ").append(myClass.getName()).append(")) " + "return ")
@@ -197,7 +183,6 @@ public class GroovyGenerateEqualsHelper {
     }
   }
 
-  @SuppressWarnings("HardCodedStringLiteral")
   private void addEqualsPrologue(@NonNls StringBuffer buffer) {
     buffer.append("if (this.is(").append(myParameterName).append(")").append(") return true\n");
     if (!superMethodExists(getEqualsSignature(myProject, myClass.getResolveScope()))) {
@@ -213,7 +198,7 @@ public class GroovyGenerateEqualsHelper {
   private void addClassInstance(@NonNls StringBuffer buffer) {
     buffer.append("\n");
     // A a = (A) object;
-    CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(myProject);
+    JavaCodeStyleSettings settings = JavaCodeStyleSettings.getInstance(myFile);
     if (settings.GENERATE_FINAL_LOCALS) {
       buffer.append("final ");
     }
@@ -253,7 +238,7 @@ public class GroovyGenerateEqualsHelper {
     if (myEqualsFields.length > 0) {
       addClassInstance(buffer);
 
-      ArrayList<PsiField> equalsFields = new ArrayList<PsiField>();
+      ArrayList<PsiField> equalsFields = new ArrayList<>();
       ContainerUtil.addAll(equalsFields, myEqualsFields);
       Collections.sort(equalsFields, EqualsFieldsComparator.INSTANCE);
 
@@ -288,7 +273,7 @@ public class GroovyGenerateEqualsHelper {
 
     GrMethod result = myFactory.createMethodFromText(buffer.toString());
     final PsiParameter parameter = result.getParameterList().getParameters()[0];
-    PsiUtil.setModifierProperty(parameter, PsiModifier.FINAL, CodeStyleSettingsManager.getSettings(myProject).GENERATE_FINAL_PARAMETERS);
+    PsiUtil.setModifierProperty(parameter, PsiModifier.FINAL, JavaCodeStyleSettings.getInstance(myFile).GENERATE_FINAL_PARAMETERS);
 
     try {
       result = ((GrMethod) CodeStyleManager.getInstance(myProject).reformat(result));
@@ -302,72 +287,67 @@ public class GroovyGenerateEqualsHelper {
   @SuppressWarnings("HardCodedStringLiteral")
   private PsiMethod createHashCode() throws IncorrectOperationException {
 
-    StringBuilder buffer = StringBuilderSpinAllocator.alloc();
+    StringBuilder buffer = new StringBuilder();
 
-    try {
-      buffer.append("int hashCode() {\n");
-      if (!mySuperHasHashCode && myHashCodeFields.length == 1) {
-        PsiField field = myHashCodeFields[0];
-        final String tempName = addTempForOneField(field, buffer);
-        buffer.append("return ");
+    buffer.append("int hashCode() {\n");
+    if (!mySuperHasHashCode && myHashCodeFields.length == 1) {
+      PsiField field = myHashCodeFields[0];
+      final String tempName = addTempForOneField(field, buffer);
+      buffer.append("return ");
+      if (field.getType() instanceof PsiPrimitiveType) {
+        addPrimitiveFieldHashCode(buffer, field, tempName);
+      } else {
+        addFieldHashCode(buffer, field);
+      }
+      buffer.append("\n}");
+    } else if (myHashCodeFields.length > 0) {
+      JavaCodeStyleSettings settings = JavaCodeStyleSettings.getInstance(myFile);
+      final String resultName = getUniqueLocalVarName(settings.LOCAL_VARIABLE_NAME_PREFIX + RESULT_VARIABLE, myHashCodeFields);
+
+      buffer.append("int ");
+      buffer.append(resultName);
+
+      boolean resultAssigned = false;
+      if (mySuperHasHashCode) {
+        buffer.append(" = ");
+        addSuperHashCode(buffer);
+        resultAssigned = true;
+      }
+      buffer.append("\n");
+      String tempName = addTempDeclaration(buffer);
+      for (PsiField field : myHashCodeFields) {
+        addTempAssignment(field, buffer, tempName);
+        buffer.append(resultName);
+        buffer.append(" = ");
+        if (resultAssigned) {
+          buffer.append("31 * ");
+          buffer.append(resultName);
+          buffer.append(" + ");
+        }
         if (field.getType() instanceof PsiPrimitiveType) {
           addPrimitiveFieldHashCode(buffer, field, tempName);
         } else {
           addFieldHashCode(buffer, field);
         }
-        buffer.append("\n}");
-      } else if (myHashCodeFields.length > 0) {
-        CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(myProject);
-        final String resultName = getUniqueLocalVarName(settings.LOCAL_VARIABLE_NAME_PREFIX + RESULT_VARIABLE, myHashCodeFields);
-
-        buffer.append("int ");
-        buffer.append(resultName);
-
-        boolean resultAssigned = false;
-        if (mySuperHasHashCode) {
-          buffer.append(" = ");
-          addSuperHashCode(buffer);
-          resultAssigned = true;
-        }
-        buffer.append("\n");
-        String tempName = addTempDeclaration(buffer);
-        for (PsiField field : myHashCodeFields) {
-          addTempAssignment(field, buffer, tempName);
-          buffer.append(resultName);
-          buffer.append(" = ");
-          if (resultAssigned) {
-            buffer.append("31 * ");
-            buffer.append(resultName);
-            buffer.append(" + ");
-          }
-          if (field.getType() instanceof PsiPrimitiveType) {
-            addPrimitiveFieldHashCode(buffer, field, tempName);
-          } else {
-            addFieldHashCode(buffer, field);
-          }
-          buffer.append('\n');
-          resultAssigned = true;
-        }
-        buffer.append("return ");
-        buffer.append(resultName);
-        buffer.append("\n}");
-      } else {
-        buffer.append("return 0\n}");
+        buffer.append('\n');
+        resultAssigned = true;
       }
-      PsiMethod hashCode = myFactory.createMethodFromText(buffer.toString());
-
-      try {
-        hashCode = ((GrMethod) CodeStyleManager.getInstance(myProject).reformat(hashCode));
-      } catch (IncorrectOperationException e) {
-        LOG.error(e);
-      }
-
-//      reformatCode(hashCode);
-      return hashCode;
+      buffer.append("return ");
+      buffer.append(resultName);
+      buffer.append("\n}");
+    } else {
+      buffer.append("return 0\n}");
     }
-    finally {
-      StringBuilderSpinAllocator.dispose(buffer);
+    PsiMethod hashCode = myFactory.createMethodFromText(buffer.toString());
+
+    try {
+      hashCode = ((GrMethod) CodeStyleManager.getInstance(myProject).reformat(hashCode));
+    } catch (IncorrectOperationException e) {
+      LOG.error(e);
     }
+
+    //      reformatCode(hashCode);
+    return hashCode;
   }
 
   private static void addTempAssignment(PsiField field, StringBuilder buffer, String tempName) {
@@ -402,7 +382,7 @@ public class GroovyGenerateEqualsHelper {
   private String addTempForOneField(PsiField field, StringBuilder buffer) {
     if (PsiType.DOUBLE.equals(field.getType())) {
       final String name = getUniqueLocalVarName(TEMP_VARIABLE, myHashCodeFields);
-      CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(myProject);
+      JavaCodeStyleSettings settings = JavaCodeStyleSettings.getInstance(myFile);
       if (settings.GENERATE_FINAL_LOCALS) {
         buffer.append("final ");
       }
@@ -463,6 +443,7 @@ public class GroovyGenerateEqualsHelper {
   static class EqualsFieldsComparator implements Comparator<PsiField> {
     public static final EqualsFieldsComparator INSTANCE = new EqualsFieldsComparator();
 
+    @Override
     public int compare(PsiField f1, PsiField f2) {
       if (f1.getType() instanceof PsiPrimitiveType && !(f2.getType() instanceof PsiPrimitiveType)) return -1;
       if (!(f1.getType() instanceof PsiPrimitiveType) && f2.getType() instanceof PsiPrimitiveType) return 1;
@@ -489,7 +470,6 @@ public class GroovyGenerateEqualsHelper {
     PRIMITIVE_HASHCODE_FORMAT.put("double", new MessageFormat("(int) ({1} ^ ({1} >>> 32))"));
 
     PRIMITIVE_HASHCODE_FORMAT.put("char", new MessageFormat("(int) {0}"));
-    PRIMITIVE_HASHCODE_FORMAT.put("void", new MessageFormat("0"));
     PRIMITIVE_HASHCODE_FORMAT.put("void", new MessageFormat("({0} ? 1 : 0)"));
   }
 

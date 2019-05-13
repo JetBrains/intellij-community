@@ -34,6 +34,7 @@ public class MavenRepositoryUpdatePolicyConverter extends MavenConstantListConve
     return super.fromString(s, context);
   }
 
+  @Override
   protected Collection<String> getValues(@NotNull ConvertContext context) {
     return VALUES;
   }

@@ -1,23 +1,11 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.find.findUsages;
 
 import com.intellij.find.FindBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.search.ImplicitToStringSearcher;
+import com.intellij.psi.search.searches.ImplicitToStringSearch;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.StateRestoringCheckBox;
 import org.jetbrains.annotations.Nullable;
@@ -28,6 +16,7 @@ public class FindMethodUsagesDialog extends JavaFindUsagesDialog<JavaMethodFindU
   private StateRestoringCheckBox myCbUsages;
   private StateRestoringCheckBox myCbImplementingMethods;
   private StateRestoringCheckBox myCbOverridingMethods;
+  private StateRestoringCheckBox myCbImplicitToString;
   private boolean myHasFindWhatPanel;
 
   public FindMethodUsagesDialog(PsiElement element, Project project, FindUsagesOptions findUsagesOptions, boolean toShowInNewTab, boolean mustOpenInNewTab,
@@ -53,6 +42,9 @@ public class FindMethodUsagesDialog extends JavaFindUsagesDialog<JavaMethodFindU
     if (isToChange(myCbImplementingMethods)) {
       options.isImplementingMethods = isSelected(myCbImplementingMethods);
     }
+    if (isToChange(myCbImplicitToString)) {
+      options.isImplicitToString = isSelected(myCbImplicitToString);
+    }
     options.isCheckDeepInheritance = true;
   }
 
@@ -66,22 +58,33 @@ public class FindMethodUsagesDialog extends JavaFindUsagesDialog<JavaMethodFindU
 
     PsiMethod method = (PsiMethod) getPsiElement();
     PsiClass aClass = method.getContainingClass();
-    if (!method.isConstructor() &&
-            !method.hasModifierProperty(PsiModifier.STATIC) &&
-            !method.hasModifierProperty(PsiModifier.FINAL) &&
-            !method.hasModifierProperty(PsiModifier.PRIVATE) &&
-            aClass != null &&
-            !(aClass instanceof PsiAnonymousClass) &&
-            !aClass.hasModifierProperty(PsiModifier.FINAL)) {
-      if (method.hasModifierProperty(PsiModifier.ABSTRACT)) {
-        myCbImplementingMethods = addCheckboxToPanel(FindBundle.message("find.what.implementing.methods.checkbox"), getFindUsagesOptions().isImplementingMethods, findWhatPanel, true);
-      } else {
-        myCbOverridingMethods = addCheckboxToPanel(FindBundle.message("find.what.overriding.methods.checkbox"), getFindUsagesOptions().isOverridingMethods, findWhatPanel, true);
-      }
-    } else {
+    if (method.isConstructor() ||
+        method.hasModifierProperty(PsiModifier.STATIC) ||
+        method.hasModifierProperty(PsiModifier.FINAL) ||
+        method.hasModifierProperty(PsiModifier.PRIVATE) ||
+        aClass == null ||
+        aClass instanceof PsiAnonymousClass ||
+        aClass.hasModifierProperty(PsiModifier.FINAL)) {
       myHasFindWhatPanel = false;
-      return null; 
+      return null;
     }
+
+    if (method.hasModifierProperty(PsiModifier.ABSTRACT)) {
+      myCbImplementingMethods =
+        addCheckboxToPanel(FindBundle.message("find.what.implementing.methods.checkbox"), getFindUsagesOptions().isImplementingMethods,
+                           findWhatPanel, true);
+    }
+    else {
+      myCbOverridingMethods =
+        addCheckboxToPanel(FindBundle.message("find.what.overriding.methods.checkbox"), getFindUsagesOptions().isOverridingMethods,
+                           findWhatPanel, true);
+    }
+    if (ImplicitToStringSearch.isToStringMethod(method)) {
+      myCbImplicitToString =
+        addCheckboxToPanel(FindBundle.message("find.what.implicit.to.string.checkbox"), getFindUsagesOptions().isImplicitToString,
+                           findWhatPanel, true);
+    }
+
     myHasFindWhatPanel = true;
     return findWhatPanel;
 
@@ -106,8 +109,10 @@ public class FindMethodUsagesDialog extends JavaFindUsagesDialog<JavaMethodFindU
     if (!myHasFindWhatPanel) {
       setOKActionEnabled(true);
     } else {
-
-      boolean hasSelected = isSelected(myCbUsages) || isSelected(myCbImplementingMethods) || isSelected(myCbOverridingMethods);
+      boolean hasSelected = isSelected(myCbUsages) ||
+                            isSelected(myCbImplementingMethods) ||
+                            isSelected(myCbOverridingMethods) ||
+                            isSelected(myCbImplicitToString);
       setOKActionEnabled(hasSelected);
     }
   }

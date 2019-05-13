@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,15 +38,18 @@ public class FileColorsConfigurable implements SearchableConfigurable, Configura
     myProject = project;
   }
 
+  @Override
   @Nls
   public String getDisplayName() {
     return "File Colors";
   }
 
+  @Override
   public String getHelpTopic() {
     return "reference.settings.ide.settings.file-colors";
   }
 
+  @Override
   public JComponent createComponent() {
     if (myPanel == null) {
       myPanel = new FileColorsConfigurablePanel((FileColorManagerImpl) FileColorManager.getInstance(myProject));
@@ -55,18 +58,22 @@ public class FileColorsConfigurable implements SearchableConfigurable, Configura
     return myPanel;
   }
 
+  @Override
   public boolean isModified() {
     return myPanel != null && myPanel.isModified();
   }
 
+  @Override
   public void apply() throws ConfigurationException {
     if (myPanel != null) myPanel.apply();
   }
 
+  @Override
   public void reset() {
     if (myPanel != null) myPanel.reset();
   }
 
+  @Override
   public void disposeUIResources() {
     if (myPanel !=  null) {
       Disposer.dispose(myPanel);
@@ -78,10 +85,5 @@ public class FileColorsConfigurable implements SearchableConfigurable, Configura
   @Override
   public String getId() {
     return getHelpTopic();
-  }
-
-  @Override
-  public Runnable enableSearch(String option) {
-    return null;
   }
 }

@@ -17,11 +17,10 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.util.JavaPsiConstructorUtil;
 
 /**
  * @author yole
@@ -35,12 +34,23 @@ public class CreateInnerClassFromNewFix extends CreateClassFromNewFix {
 
   @Override
   public String getText(String varName) {
-    return QuickFixBundle.message("create.inner.class.from.usage.text", StringUtil.capitalize(CreateClassKind.CLASS.getDescription()), varName);
+    return QuickFixBundle.message("create.inner.class.from.usage.text", CreateClassKind.CLASS.getDescription(), varName);
   }
 
   @Override
   protected boolean isAllowOuterTargetClass() {
     return true;
+  }
+
+  @Override
+  protected boolean isValidElement(PsiElement element) {
+    PsiJavaCodeReferenceElement ref = element instanceof PsiNewExpression ? ((PsiNewExpression)element).getClassOrAnonymousClassReference() : null;
+    return ref != null && ref.resolve() != null;
+  }
+
+  @Override
+  protected boolean rejectQualifier(PsiExpression qualifier) {
+    return false;
   }
 
   @Override
@@ -50,40 +60,37 @@ public class CreateInnerClassFromNewFix extends CreateClassFromNewFix {
     assert ref != null;
     String refName = ref.getReferenceName();
     LOG.assertTrue(refName != null);
-    PsiElementFactory elementFactory = JavaPsiFacade.getInstance(newExpression.getProject()).getElementFactory();
+    PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(newExpression.getProject());
     PsiClass created = elementFactory.createClass(refName);
     final PsiModifierList modifierList = created.getModifierList();
     LOG.assertTrue(modifierList != null);
-    modifierList.setModifierProperty(PsiModifier.PRIVATE, true);
-    if (PsiUtil.getEnclosingStaticElement(newExpression, targetClass) != null || isInThisOrSuperCall(newExpression)) {
+    if (PsiTreeUtil.isAncestor(targetClass, newExpression, true)) {
+      if (targetClass.isInterface() || PsiUtil.isLocalOrAnonymousClass(targetClass)) {
+        modifierList.setModifierProperty(PsiModifier.PACKAGE_LOCAL, true);
+      } else {
+        modifierList.setModifierProperty(PsiModifier.PRIVATE, true);
+      }
+    }
+
+    if (!targetClass.isInterface() && 
+        newExpression.getQualifier() == null &&
+        (!PsiTreeUtil.isAncestor(targetClass, newExpression, true) || PsiUtil.getEnclosingStaticElement(newExpression, targetClass) != null || isInThisOrSuperCall(newExpression))) {
       modifierList.setModifierProperty(PsiModifier.STATIC, true);
     }
     created = (PsiClass)targetClass.add(created);
 
-    setupClassFromNewExpression(created, newExpression);
-
     setupGenericParameters(created, ref);
+    setupClassFromNewExpression(created, newExpression);
   }
 
   private static boolean isInThisOrSuperCall(PsiNewExpression newExpression) {
-    boolean inFirstConstructorLine = false;
     final PsiExpressionStatement expressionStatement = PsiTreeUtil.getParentOfType(newExpression, PsiExpressionStatement.class);
     if (expressionStatement != null) {
       final PsiExpression expression = expressionStatement.getExpression();
-      if (expression instanceof PsiMethodCallExpression) {
-        final PsiReferenceExpression methodExpression = ((PsiMethodCallExpression)expression).getMethodExpression();
-        final PsiElement resolve = methodExpression.resolve();
-        if (resolve instanceof PsiMethod && ((PsiMethod)resolve).isConstructor()) {
-          final PsiElement referenceNameElement = methodExpression.getReferenceNameElement();
-          if (referenceNameElement != null) {
-            if (Comparing.strEqual(referenceNameElement.getText(), PsiKeyword.THIS) ||
-                Comparing.strEqual(referenceNameElement.getText(), PsiKeyword.SUPER)) {
-              inFirstConstructorLine = true;
-            }
-          }
-        }
+      if (JavaPsiConstructorUtil.isConstructorCall(expression)) {
+        return true;
       }
     }
-    return inFirstConstructorLine;
+    return false;
   }
 }

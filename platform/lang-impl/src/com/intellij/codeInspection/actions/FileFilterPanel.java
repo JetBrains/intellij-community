@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,47 +15,49 @@
  */
 package com.intellij.codeInspection.actions;
 
+import com.intellij.analysis.AnalysisUIOptions;
 import com.intellij.find.impl.FindDialog;
 import com.intellij.find.impl.FindInProjectUtil;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.search.SearchScope;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.regex.Pattern;
+import java.awt.event.ActionListener;
 
 /**
  * @author Dmitry Avdeev
- *         Date: 10/11/11
  */
 class FileFilterPanel {
   private JCheckBox myUseFileMask;
   private JComboBox myFileMask;
   private JPanel myPanel;
 
-  void init() {
+  void init(AnalysisUIOptions options) {
     FindDialog.initFileFilter(myFileMask, myUseFileMask);
+    myUseFileMask.setSelected(StringUtil.isNotEmpty(options.FILE_MASK));
+    myFileMask.setEnabled(StringUtil.isNotEmpty(options.FILE_MASK));
+    myFileMask.setSelectedItem(options.FILE_MASK);
+    ActionListener listener = __ -> options.FILE_MASK = myUseFileMask.isSelected() ? (String)myFileMask.getSelectedItem() : null;
+    myUseFileMask.addActionListener(listener);
+    myFileMask.addActionListener(listener);
   }
 
   @Nullable
-  SearchScope getSearchScope() {
+  GlobalSearchScope getSearchScope() {
     if (!myUseFileMask.isSelected()) return null;
     String text = (String)myFileMask.getSelectedItem();
     if (text == null) return null;
 
-    final Pattern pattern = FindInProjectUtil.createFileMaskRegExp(text);
+    final Condition<CharSequence> patternCondition = FindInProjectUtil.createFileMaskCondition(text);
     return new GlobalSearchScope() {
       @Override
-      public boolean contains(VirtualFile file) {
-        return pattern == null || pattern.matcher(file.getName()).matches();
-      }
-
-      @Override
-      public int compare(VirtualFile file1, VirtualFile file2) {
-        return 0;
+      public boolean contains(@NotNull VirtualFile file) {
+        return patternCondition.value(file.getNameSequence());
       }
 
       @Override

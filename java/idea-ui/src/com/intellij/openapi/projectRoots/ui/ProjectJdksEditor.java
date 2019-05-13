@@ -17,6 +17,7 @@ package com.intellij.openapi.projectRoots.ui;
 
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
@@ -45,12 +46,7 @@ public class ProjectJdksEditor extends DialogWrapper {
   public ProjectJdksEditor(final Sdk jdk, Component parent, ProjectJdksConfigurable configurable) {
     super(parent, true);
     myConfigurable = configurable;
-    SwingUtilities.invokeLater(new Runnable(){
-      @Override
-      public void run() {
-        myConfigurable.selectNodeInTree(jdk != null ? jdk.getName() : null);
-      }
-    });
+    SwingUtilities.invokeLater(() -> myConfigurable.selectNodeInTree(jdk != null ? jdk.getName() : null));
     setTitle(ProjectBundle.message("sdk.configure.title"));
     Disposer.register(myDisposable, new Disposable() {
       @Override
@@ -65,7 +61,7 @@ public class ProjectJdksEditor extends DialogWrapper {
   }
 
   public ProjectJdksEditor(Sdk jdk, Component parent){
-    this(jdk, PlatformDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext()), parent);
+    this(jdk, CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext()), parent);
   }
 
   @Override

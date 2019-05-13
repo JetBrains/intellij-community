@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package com.intellij.debugger.impl.descriptors.data;
 import com.intellij.debugger.jdi.ThreadReferenceProxyImpl;
 import com.intellij.debugger.ui.impl.watch.ThreadDescriptorImpl;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.NotNull;
 
 public class ThreadData extends DescriptorData<ThreadDescriptorImpl> {
   private final ThreadReferenceProxyImpl myThread;
@@ -26,7 +27,8 @@ public class ThreadData extends DescriptorData<ThreadDescriptorImpl> {
     myThread = thread;
   }
 
-  protected ThreadDescriptorImpl createDescriptorImpl(Project project) {
+  @Override
+  protected ThreadDescriptorImpl createDescriptorImpl(@NotNull Project project) {
     return new ThreadDescriptorImpl(myThread);
   }
 
@@ -41,7 +43,8 @@ public class ThreadData extends DescriptorData<ThreadDescriptorImpl> {
     return myThread.hashCode();
   }
 
+  @Override
   public DisplayKey<ThreadDescriptorImpl> getDisplayKey() {
-    return new SimpleDisplayKey<ThreadDescriptorImpl>(myThread);
+    return new SimpleDisplayKey<>(myThread);
   }
 }

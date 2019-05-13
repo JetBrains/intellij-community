@@ -1,24 +1,14 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 
 package com.intellij.ui;
 
+import com.intellij.util.containers.ContainerUtilRt;
 import com.intellij.util.ui.EditableModel;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.*;
@@ -26,15 +16,30 @@ import java.util.*;
 /**
  * @author yole
  */
-public class CollectionListModel<T> extends AbstractListModel implements EditableModel {
+public class CollectionListModel<T> extends AbstractListModel<T> implements EditableModel {
   private final List<T> myItems;
 
-  public CollectionListModel(@NotNull final List<? extends T> items) {
-    myItems = new ArrayList<T>(items);
+  public CollectionListModel(@NotNull final Collection<? extends T> items) {
+    myItems = new ArrayList<>(items);
   }
 
-  public CollectionListModel(final T... items) {
-    myItems = new ArrayList<T>(Arrays.asList(items));
+  @SuppressWarnings("UnusedParameters")
+  public CollectionListModel(@NotNull List<T> items, boolean useListAsIs) {
+    myItems = items;
+  }
+
+  public CollectionListModel(@NotNull final List<? extends T> items) {
+    myItems = new ArrayList<>(items);
+  }
+
+  @SafeVarargs
+  public CollectionListModel(@NotNull T... items) {
+    myItems = ContainerUtilRt.newArrayList(items);
+  }
+
+  @NotNull
+  protected final List<T> getInternalList() {
+    return myItems;
   }
 
   @Override
@@ -53,26 +58,43 @@ public class CollectionListModel<T> extends AbstractListModel implements Editabl
     fireIntervalAdded(this, i, i);
   }
 
+  public void add(int i,final T element) {
+    myItems.add(i, element);
+    fireIntervalAdded(this, i, i);
+  }
+
   public void add(@NotNull final List<? extends T> elements) {
+    addAll(myItems.size(), elements);
+  }
+
+  public void addAll(int index, @NotNull final List<? extends T> elements) {
     if (elements.isEmpty()) return;
-    int i = myItems.size();
-    myItems.addAll(elements);
-    fireIntervalAdded(this, i, i + elements.size() - 1);
+
+    myItems.addAll(index, elements);
+    fireIntervalAdded(this, index, index + elements.size() - 1);
   }
 
-  public void remove(@NotNull final T element) {
-    int i = myItems.indexOf(element);
-    myItems.remove(element);
-    fireIntervalRemoved(this, i, i);
+  public void remove(@NotNull T element) {
+    int index = getElementIndex(element);
+    if (index != -1) {
+      remove(index);
+    }
   }
 
-  public void setElementAt(@NotNull final T element, final int index) {
-    myItems.set(index, element);
+  public void setElementAt(@NotNull final T item, final int index) {
+    itemReplaced(myItems.set(index, item), item);
     fireContentsChanged(this, index, index);
   }
 
+  @SuppressWarnings("UnusedParameters")
+  protected void itemReplaced(@NotNull T existingItem, @Nullable T newItem) {
+  }
+
   public void remove(final int index) {
-    myItems.remove(index);
+    T item = myItems.remove(index);
+    if (item != null) {
+      itemReplaced(item, null);
+    }
     fireIntervalRemoved(this, index, index);
   }
 
@@ -89,10 +111,15 @@ public class CollectionListModel<T> extends AbstractListModel implements Editabl
     fireContentsChanged(this, i, i);
   }
 
-  public void sort(final Comparator<T> comparator) {
+  public void allContentsChanged() {
+    fireContentsChanged(this, 0, myItems.size() - 1);
+  }
+
+  public void sort(final Comparator<? super T> comparator) {
     Collections.sort(myItems, comparator);
   }
 
+  @NotNull
   public List<T> getItems() {
     return Collections.unmodifiableList(myItems);
   }
@@ -130,6 +157,29 @@ public class CollectionListModel<T> extends AbstractListModel implements Editabl
   }
 
   public List<T> toList() {
-    return new ArrayList<T>(myItems);
+    return new ArrayList<>(myItems);
   }
+
+  public int getElementIndex(T item) {
+    return myItems.indexOf(item);
+  }
+
+  public boolean isEmpty() {
+    return myItems.isEmpty();
+  }
+
+  public boolean contains(T item) {
+    return getElementIndex(item) >= 0;
+  }
+
+  public void removeRange(int fromIndex, int toIndex) {
+    if (fromIndex > toIndex) {
+      throw new IllegalArgumentException("fromIndex must be <= toIndex");
+    }
+    for(int i = toIndex; i >= fromIndex; i--) {
+      itemReplaced(myItems.remove(i), null);
+    }
+    fireIntervalRemoved(this, fromIndex, toIndex);
+  }
+
 }

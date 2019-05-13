@@ -19,30 +19,39 @@ import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.RemoteConnection;
 import com.intellij.execution.configurations.RunProfileState;
 import com.sun.jdi.ThreadReference;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.EventListener;
 
 
-public interface DebugProcessListener extends EventListener{
+public interface DebugProcessListener extends EventListener {
   //executed in manager thread
-  void connectorIsReady();
+  default void connectorIsReady() {
+  }
 
   //executed in manager thread
-  void paused(SuspendContext suspendContext);
+  default void paused(@NotNull SuspendContext suspendContext) {
+  }
 
   //executed in manager thread
-  void resumed(SuspendContext suspendContext);
+  default void resumed(SuspendContext suspendContext) {
+  }
 
   //executed in manager thread
-  void processDetached(DebugProcess process, boolean closedByUser);
+  default void processDetached(@NotNull DebugProcess process, boolean closedByUser) {
+  }
 
   //executed in manager thread
-  void processAttached(DebugProcess process);
+  default void processAttached(@NotNull DebugProcess process) {
+  }
 
-  void attachException(RunProfileState state, ExecutionException exception, RemoteConnection remoteConnection);
-  
-  void threadStarted(DebugProcess proc, ThreadReference thread);
-  
-  void threadStopped(DebugProcess proc, ThreadReference thread);
+  default void attachException(RunProfileState state, ExecutionException exception, RemoteConnection remoteConnection) {
+  }
+
+  default void threadStarted(@NotNull DebugProcess proc, ThreadReference thread) {
+  }
+
+  default void threadStopped(@NotNull DebugProcess proc, ThreadReference thread) {
+  }
 }
 

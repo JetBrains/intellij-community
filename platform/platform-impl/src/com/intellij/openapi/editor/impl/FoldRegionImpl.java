@@ -1,50 +1,35 @@
-/*
- * Copyright 2000-2011 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
-/*
- * Created by IntelliJ IDEA.
- * User: max
- * Date: Apr 22, 2002
- * Time: 5:51:22 PM
- * To change template for new class use
- * Code Style | Class Templates options (Tools | IDE Options).
- */
 package com.intellij.openapi.editor.impl;
 
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.FoldRegion;
 import com.intellij.openapi.editor.FoldingGroup;
-import com.intellij.openapi.editor.ex.DocumentEx;
+import com.intellij.openapi.editor.event.DocumentEvent;
+import com.intellij.openapi.util.Key;
+import com.intellij.util.DocumentUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class FoldRegionImpl extends RangeMarkerImpl implements FoldRegion {
+public class FoldRegionImpl extends RangeMarkerWithGetterImpl implements FoldRegion {
+  private static final Key<Boolean> MUTE_INNER_HIGHLIGHTERS = Key.create("mute.inner.highlighters");
+
   private boolean myIsExpanded;
-  private final Editor myEditor;
+  private final EditorImpl myEditor;
   private final String myPlaceholderText;
   private final FoldingGroup myGroup;
   private final boolean myShouldNeverExpand;
+  private boolean myDocumentRegionWasChanged;
+  int mySizeBeforeUpdate; // temporary field used during update on document change
 
-  FoldRegionImpl(@NotNull Editor editor,
+  FoldRegionImpl(@NotNull EditorImpl editor,
                  int startOffset,
                  int endOffset,
                  @NotNull String placeholder,
                  @Nullable FoldingGroup group,
                  boolean shouldNeverExpand) {
-    super((DocumentEx)editor.getDocument(), startOffset, endOffset,true);
+    super(editor.getDocument(), startOffset, endOffset,false);
     myGroup = group;
     myShouldNeverExpand = shouldNeverExpand;
     myIsExpanded = true;
@@ -59,12 +44,16 @@ public class FoldRegionImpl extends RangeMarkerImpl implements FoldRegion {
 
   @Override
   public void setExpanded(boolean expanded) {
-    FoldingModelImpl foldingModel = (FoldingModelImpl)myEditor.getFoldingModel();
+    setExpanded(expanded, true);
+  }
+
+  void setExpanded(boolean expanded, boolean notify) {
+    FoldingModelImpl foldingModel = myEditor.getFoldingModel();
     if (myGroup == null) {
-      doSetExpanded(expanded, foldingModel, this);
+      doSetExpanded(expanded, foldingModel, this, notify);
     } else {
       for (final FoldRegion region : foldingModel.getGroupedRegions(myGroup)) {
-        doSetExpanded(expanded, foldingModel, region);
+        doSetExpanded(expanded, foldingModel, region, notify || region != this);
         // There is a possible case that we can't change expanded status of particular fold region (e.g. we can't collapse
         // if it contains caret). So, we revert all changes for the fold regions from the same group then.
         if (region.isExpanded() != expanded) {
@@ -72,7 +61,7 @@ public class FoldRegionImpl extends RangeMarkerImpl implements FoldRegion {
             if (regionToRevert == region) {
               break;
             }
-            doSetExpanded(!expanded, foldingModel, regionToRevert);
+            doSetExpanded(!expanded, foldingModel, regionToRevert, notify || region != this);
           }
           return;
         }
@@ -80,21 +69,21 @@ public class FoldRegionImpl extends RangeMarkerImpl implements FoldRegion {
     }
   }
 
-  private static void doSetExpanded(boolean expanded, FoldingModelImpl foldingModel, FoldRegion region) {
+  private static void doSetExpanded(boolean expanded, FoldingModelImpl foldingModel, FoldRegion region, boolean notify) {
     if (expanded) {
-      foldingModel.expandFoldRegion(region);
+      foldingModel.expandFoldRegion(region, notify);
     }
     else{
-      foldingModel.collapseFoldRegion(region);
+      foldingModel.collapseFoldRegion(region, notify);
     }
   }
 
   @Override
   public boolean isValid() {
-    return super.isValid() && intervalStart() + 1 < intervalEnd();
+    return super.isValid() && intervalStart() < intervalEnd();
   }
 
-  public void setExpandedInternal(boolean toExpand) {
+  void setExpandedInternal(boolean toExpand) {
     myIsExpanded = toExpand;
   }
 
@@ -119,7 +108,66 @@ public class FoldRegionImpl extends RangeMarkerImpl implements FoldRegion {
   public boolean shouldNeverExpand() {
     return myShouldNeverExpand;
   }
+  
+  boolean hasDocumentRegionChanged() {
+    return myDocumentRegionWasChanged;
+  }
+  
+  void resetDocumentRegionChanged() {
+    myDocumentRegionWasChanged = false;
+  }
 
+  @Override
+  protected void changedUpdateImpl(@NotNull DocumentEvent e) {
+    if (isValid()) {
+      int oldStart = intervalStart();
+      int oldEnd = intervalEnd();
+      int changeStart = e.getOffset();
+      int changeEnd = e.getOffset() + e.getOldLength();
+      if (changeStart < oldEnd && changeEnd > oldStart) myDocumentRegionWasChanged = true;
+    }
+    super.changedUpdateImpl(e);
+    if (isValid()) {
+      alignToSurrogateBoundaries();
+    }
+    else {
+      myEditor.getFoldingModel().removeRegionFromGroup(this);
+    }
+  }
+
+  @Override
+  protected void onReTarget(int startOffset, int endOffset, int destOffset) {
+    alignToSurrogateBoundaries();
+  }
+
+  private void alignToSurrogateBoundaries() {
+    Document document = getDocument();
+    int start = intervalStart();
+    int end = intervalEnd();
+    if (DocumentUtil.isInsideSurrogatePair(document, start)) {
+      setIntervalStart(start - 1);
+    }
+    if (DocumentUtil.isInsideSurrogatePair(document, end)) {
+      setIntervalEnd(end - 1);
+    }
+  }
+
+  @Override
+  public void setInnerHighlightersMuted(boolean value) {
+    putUserData(MUTE_INNER_HIGHLIGHTERS, value ? Boolean.TRUE : null);
+  }
+
+  @Override
+  public boolean areInnerHighlightersMuted() {
+    return Boolean.TRUE.equals(getUserData(MUTE_INNER_HIGHLIGHTERS));
+  }
+
+  @Override
+  public void dispose() {
+    myEditor.getFoldingModel().removeRegionFromTree(this);
+  }
+
+  @Override
   public String toString() {
     return "FoldRegion " + (myIsExpanded ? "-" : "+") + "(" + getStartOffset() + ":" + getEndOffset() + ")"
            + (isValid() ? "" : "(invalid)") + ", placeholder='" + myPlaceholderText + "'";

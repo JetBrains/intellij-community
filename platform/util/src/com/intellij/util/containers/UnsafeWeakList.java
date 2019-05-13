@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,74 +15,129 @@
  */
 package com.intellij.util.containers;
 
-import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Condition;
+import com.intellij.reference.SoftReference;
+import com.intellij.util.Function;
+import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.TestOnly;
 
+import java.lang.ref.ReferenceQueue;
+import java.lang.ref.WeakReference;
 import java.util.*;
 
 /**
- * Implementation of the {@link java.util.List} interface which:
+ * Implementation of the {@link Collection} interface which:
  * <ul>
- *  <li>Stores elements using weak semantics (see {@link java.lang.ref.WeakReference})</li>
+ *  <li>Stores elements using weak semantics (see {@link WeakReference})</li>
  *  <li>Automatically reclaims storage for garbage collected elements</li>
  *  <li>Is NOT thread safe</li>
+ *  <li>Is NOT RandomAccess, because garbage collector can remove element at any time</li>
+ *  <li>Does NOT support null elements</li>
  * </ul>
+ * Please note that since weak references can be collected at any time, index-based methods (like get(index))
+ * or size-based methods (like size()) are dangerous, misleading, error-inducing and are not supported.
+ * Instead, please use {@link #add(T)} and {@link #iterator()}.
  */
-public class UnsafeWeakList<T> extends AbstractList<T> {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.util.containers.UnsafeWeakList");
-  protected final WeakReferenceArray<T> myArray;
+public class UnsafeWeakList<T> extends AbstractCollection<T> {
+  protected final List<MyReference<T>> myList;
+  private final ReferenceQueue<T> myQueue = new ReferenceQueue<T>();
+  private int myAlive;
+  private int modCount;
+
+  private static class MyReference<T> extends WeakReference<T> {
+    private final int index;
+
+    private MyReference(int index, T referent, ReferenceQueue<? super T> queue) {
+      super(referent, queue);
+      this.index = index;
+    }
+  }
 
   public UnsafeWeakList() {
-    this(new WeakReferenceArray<T>());
+    myList = new ArrayList<MyReference<T>>();
   }
 
-  // For testing only
-  UnsafeWeakList(@NotNull WeakReferenceArray<T> array) {
-    myArray = array;
+  public UnsafeWeakList(int capacity) {
+    myList = new ArrayList<MyReference<T>>(capacity);
   }
 
-  @Override
-  public T get(int index) {
-    return myArray.get(index);
-  }
+  boolean processQueue() {
+    boolean processed = false;
+    MyReference<T> reference;
+    while ((reference = (MyReference<T>)myQueue.poll()) != null) {
+      int index = reference.index;
 
-  @Override
-  public boolean add(T element) {
-    tryReduceCapacity(-1);
-    myArray.add(element);
-    return true;
-  }
-
-  @Override
-  public boolean contains(Object o) {
-    return super.contains(o);
-  }
-
-  public boolean addIfAbsent(T element) {
-    tryReduceCapacity(-1);
-    if (contains(element)) return false;
-    myArray.add(element);
-    return true;
-  }
-
-  @Override
-  public void add(int index, T element) {
-    tryReduceCapacity(-1);
-    myArray.add(index, element);
-  }
-
-  @Override
-  public T remove(int index) {
-    tryReduceCapacity(-1);
-    return myArray.remove(index);
-  }
-
-  @Override
-  protected void removeRange(int fromIndex, int toIndex) {
-    for (int i = fromIndex; i < toIndex; i++) {
-      myArray.remove(i);
+      if (index < myList.size() && reference == myList.get(index)) { // list may have changed while the reference was dangling in queue
+        nullizeAt(index);
+      }
+      processed = true;
     }
-    tryReduceCapacity(-1);
+    if (myAlive < myList.size() / 2) {
+      reduceCapacity();
+    }
+    return processed;
+  }
+
+  private void nullizeAt(int index) {
+    myList.set(index, null);
+    myAlive--;
+    // do not incr modCount here because every iterator().remove() usages will throw
+  }
+
+  private void reduceCapacity() {
+    int toSaveAlive = 0;
+    for (int i=0; i<myList.size();i++) {
+      MyReference<T> reference = myList.get(i);
+      if (reference == null) continue;
+      T t = reference.get();
+      if (t == null) {
+        myAlive--;
+        continue;
+      }
+      if (toSaveAlive != i) {
+        myList.set(toSaveAlive, new MyReference<T>(toSaveAlive, t, myQueue));
+      }
+      toSaveAlive++;
+    }
+    if (toSaveAlive != myList.size()) {
+      myList.subList(toSaveAlive, myList.size()).clear();
+      modCount++;
+    }
+    myAlive = toSaveAlive;
+  }
+
+  private void append(@NotNull T element) {
+    myList.add(new MyReference<T>(myList.size(), element, myQueue));
+    myAlive++;
+    modCount++;
+  }
+
+  @Override
+  public boolean add(@NotNull T element) {
+    processQueue();
+    append(element);
+    return true;
+  }
+
+  public boolean addIfAbsent(@NotNull T element) {
+    processQueue();
+    if (contains(element)) return false;
+    append(element);
+    return true;
+  }
+
+  @Override
+  public void clear() {
+    processQueue();
+    myList.clear();
+    myAlive = 0;
+    modCount++;
+  }
+
+  @TestOnly
+  int listSize() {
+    return myList.size();
   }
 
   @NotNull
@@ -90,101 +145,139 @@ public class UnsafeWeakList<T> extends AbstractList<T> {
   public Iterator<T> iterator() {
     return new MyIterator();
   }
+  private class MyIterator implements Iterator<T> {
+    private final int startModCount;
+    private int curIndex;
+    private T curElement;
 
-  @Override
-  public int size() {
-    return myArray.size();
-  }
+    private int nextIndex = -1;
+    private T nextElement;
+    private boolean modified; // set this flag on modification and update modCount in the very end of iteration to avoid CME on each remove()
 
-  public void clear(int index) {
-    myArray.removeReference(index);
-  }
-
-  public List<T> toStrongList() {
-    List<T> result = new ArrayList<T>(myArray.size());
-    myArray.toStrongCollection(result);
-    return result;
-  }
-
-  private int tryReduceCapacity(int trackIndex) {
-    modCount++;
-    if (canReduceCapacity()) {
-      return myArray.reduceCapacity(trackIndex);
-    }
-    else {
-      return probablyCompress(trackIndex);
-    }
-  }
-
-  private int myCompressCountdown = 10;
-  private int probablyCompress(int trackIndex) {
-    myCompressCountdown--;
-    if (myCompressCountdown > 0) return trackIndex;
-    int newIndex = myArray.compress(trackIndex);
-    myCompressCountdown = myArray.size() + 10;
-    return newIndex;
-  }
-
-  private boolean canReduceCapacity() {
-    return WeakReferenceArray.MINIMUM_CAPACITY * 2 < myArray.getCapacity() &&
-           myArray.getCapacity() > myArray.getAliveCount() * 3;
-  }
-
-  protected class MyIterator implements Iterator<T> {
-    private int myNextIndex = -1;
-    private int myCurrentIndex = -1;
-    private T myNextElement = null;
-    private int myModCount = modCount;
-
-    public MyIterator() {
+    private MyIterator() {
+      startModCount = modCount;
       findNext();
     }
 
-    protected void findNext() {
-      myNextElement = null;
-      while (myNextElement == null) {
-        myNextIndex = myArray.nextValid(myNextIndex);
-        if (myNextIndex >= myArray.size()) {
-          myNextIndex = -1;
-          myNextElement = null;
-          return;
+    private void findNext() {
+      if (modCount != startModCount) throw new ConcurrentModificationException();
+      curIndex = nextIndex;
+      curElement = nextElement;
+      nextElement = null;
+      nextIndex = -1;
+      for (int i= curIndex +1; i<myList.size();i++) {
+        T t = SoftReference.dereference(myList.get(i));
+        if (t != null) {
+          nextElement = t;
+          nextIndex = i;
+          break;
         }
-        myNextElement = myArray.get(myNextIndex);
+      }
+      if (nextIndex == -1 && modified) {
+        modCount++;
       }
     }
 
     @Override
     public boolean hasNext() {
-      return myNextElement != null;
+      return nextElement != null;
     }
 
     @Override
     public T next() {
-      if (modCount != myModCount) throw new ConcurrentModificationException();
-      if (myNextElement == null) throw new NoSuchElementException();
-      T element = myNextElement;
-      myCurrentIndex = myNextIndex;
+      if (!hasNext()) throw new NoSuchElementException();
       findNext();
-      return element;
+      return curElement;
     }
 
     @Override
     public void remove() {
-      if (myCurrentIndex == -1) throw new IllegalStateException();
-      myArray.remove(myCurrentIndex);
-      final int removedIndex = myCurrentIndex;
-      int newIndex = tryReduceCapacity(myNextIndex);
-      myCurrentIndex = -1;
-      myModCount = modCount;
-      if (!hasNext()) return;
-      if (newIndex < 0) {
-        LOG.error(" was: " + myNextIndex +
-                  " got: " + newIndex +
-                  " size: " + myArray.size() +
-                  " current: " + removedIndex);
-      }
-      myNextIndex = newIndex;
-      LOG.assertTrue(myArray.get(myNextIndex) == myNextElement);
+      if (curElement == null) throw new NoSuchElementException();
+      int index = curIndex;
+      nullizeAt(index);
+      modified = true;
     }
+  }
+
+  @Override
+  public boolean remove(@NotNull Object o) {
+    processQueue();
+    for (int i = 0; i < myList.size(); i++) {
+      T t = SoftReference.dereference(myList.get(i));
+      if (t != null && t.equals(o)) {
+        nullizeAt(i);
+        modCount++;
+        return true;
+      }
+    }
+    return false;
+  }
+
+  @Override
+  public boolean addAll(@NotNull Collection<? extends T> c) {
+    processQueue();
+    return super.addAll(c);
+  }
+
+  @Override
+  public boolean removeAll(@NotNull Collection<?> c) {
+    processQueue();
+    return super.removeAll(c);
+  }
+
+  private static final Function<MyReference<Object>, Object> DEREF = new Function<MyReference<Object>, Object>() {
+    @Override
+    public Object fun(MyReference<Object> reference) {
+      return SoftReference.dereference(reference);
+    }
+  };
+  private static <X> Function<MyReference<X>, X> deref() {
+    //noinspection unchecked
+    return (Function)DEREF;
+  }
+  @NotNull
+  public List<T> toStrongList() {
+    return ContainerUtil.mapNotNull(myList, UnsafeWeakList.<T>deref());
+  }
+
+  /**
+   * Since weak references can be collected at any time,
+   * this method considered dangerous, misleading, error-inducing and are is not supported.
+   * Instead, please use {@link #add(T)} and {@link #iterator()}.
+   */
+  @Override
+  @Deprecated
+  public int size() {
+    throwNotAllowedException();
+    return -1;
+  }
+
+  private static void throwNotAllowedException() {
+    throw new IncorrectOperationException("index/size-based operations in UnsafeWeakList are not supported because they don't make sense in the presence of weak references. Use .iterator() (which retains its elements to avoid sudden GC) instead.");
+  }
+
+  @Override
+  public boolean isEmpty() {
+    if (myList.isEmpty()) return true;
+    Condition<MyReference<T>> notNull = notNull();
+    return ContainerUtil.find(myList, notNull) == null;
+  }
+
+  private static <T> Condition<MyReference<T>> notNull() {
+    //noinspection unchecked
+    return (Condition)NOT_NULL;
+  }
+  private static final Condition<MyReference<Object>> NOT_NULL = new Condition<MyReference<Object>>() {
+    @Override
+    public boolean value(MyReference<Object> reference) {
+      return SoftReference.dereference(reference) != null;
+    }
+  };
+
+  // (*@#ing plugins
+  @Deprecated
+  public T get(int index) {
+    throwNotAllowedException();
+    return null;
   }
 }

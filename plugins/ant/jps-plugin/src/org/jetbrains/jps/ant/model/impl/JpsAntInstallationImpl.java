@@ -34,7 +34,7 @@ public class JpsAntInstallationImpl extends JpsElementBase<JpsAntInstallationImp
   private final String myName;
   private final List<String> myClasspath;
   private final List<String> myJarDirectories;
-  public static final JpsElementChildRoleBase<JpsAntInstallation> ROLE = JpsElementChildRoleBase.create("ant installation");
+  private static final JpsElementChildRoleBase<JpsAntInstallation> ROLE = JpsElementChildRoleBase.create("ant installation");
   public static final JpsElementCollectionRole<JpsAntInstallation> COLLECTION_ROLE = JpsElementCollectionRole.create(ROLE);
 
   public JpsAntInstallationImpl(File antHome, String name, final List<String> classpath, List<String> jarDirectories) {
@@ -70,14 +70,14 @@ public class JpsAntInstallationImpl extends JpsElementBase<JpsAntInstallationImp
   }
 
   public static List<String> getClasspath(final List<String> classpath, final List<String> jarDirectories) {
-    List<String> result = new ArrayList<String>(classpath);
+    List<String> result = new ArrayList<>(classpath);
     for (String directory : jarDirectories) {
       addAllJarsFromDirectory(result, new File(directory));
     }
     return result;
   }
 
-  public static void addAllJarsFromDirectory(List<String> classpath, final File dir) {
+  public static void addAllJarsFromDirectory(List<? super String> classpath, final File dir) {
     File[] files = dir.listFiles();
     if (files != null) {
       for (File file : files) {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,17 +30,32 @@ import java.awt.*;
  * @author nik
  */
 public abstract class XFullValueEvaluator {
-  private String myLinkText;
+  private final String myLinkText;
+  private boolean myShowValuePopup = true;
 
-  /**
-   * @param linkText text of the link what will be appended to a variables tree node text
-   */
   protected XFullValueEvaluator() {
     this(XDebuggerBundle.message("node.test.show.full.value"));
   }
 
+  protected XFullValueEvaluator(int actualLength) {
+    this(XDebuggerBundle.message("node.text.ellipsis.truncated", actualLength));
+  }
+
+  /**
+   * @param linkText text of the link what will be appended to a variables tree node text
+   */
   protected XFullValueEvaluator(@NotNull String linkText) {
     myLinkText = linkText;
+  }
+
+  public boolean isShowValuePopup() {
+    return myShowValuePopup;
+  }
+
+  @NotNull
+  public XFullValueEvaluator setShowValuePopup(boolean value) {
+    myShowValuePopup = value;
+    return this;
   }
 
   /**
@@ -53,11 +68,9 @@ public abstract class XFullValueEvaluator {
     return myLinkText;
   }
 
-  public interface XFullValueEvaluationCallback extends Obsolescent {
+  public interface XFullValueEvaluationCallback extends Obsolescent, XValueCallback {
     void evaluated(@NotNull String fullValue);
 
     void evaluated(@NotNull String fullValue, @Nullable Font font);
-
-    void errorOccurred(@NotNull String errorMessage);
   }
 }

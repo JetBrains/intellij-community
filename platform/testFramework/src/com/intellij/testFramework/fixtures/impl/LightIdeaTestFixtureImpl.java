@@ -1,46 +1,32 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.testFramework.fixtures.impl;
 
+import com.intellij.application.options.CodeStyle;
 import com.intellij.codeInspection.LocalInspectionTool;
-import com.intellij.codeInspection.ex.InspectionTool;
 import com.intellij.idea.IdeaTestApplication;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.impl.DirectoryIndex;
-import com.intellij.openapi.roots.impl.DirectoryIndexImpl;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.psi.codeStyle.CodeStyleSchemes;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageManagerImpl;
-import com.intellij.testFramework.LightPlatformTestCase;
-import com.intellij.testFramework.LightProjectDescriptor;
-import com.intellij.testFramework.TestDataProvider;
+import com.intellij.testFramework.*;
 import com.intellij.testFramework.fixtures.LightIdeaTestFixture;
-import gnu.trove.THashMap;
+import org.jetbrains.annotations.NotNull;
+
+import java.util.concurrent.TimeUnit;
 
 /**
  * @author mike
  */
-class LightIdeaTestFixtureImpl extends BaseFixture implements LightIdeaTestFixture {
+@SuppressWarnings("TestOnlyProblems")
+public class LightIdeaTestFixtureImpl extends BaseFixture implements LightIdeaTestFixture {
   private final LightProjectDescriptor myProjectDescriptor;
+  private SdkLeakTracker myOldSdks;
+  private CodeStyleSettingsTracker myCodeStyleSettingsTracker;
 
-  public LightIdeaTestFixtureImpl(LightProjectDescriptor projectDescriptor) {
+  public LightIdeaTestFixtureImpl(@NotNull LightProjectDescriptor projectDescriptor) {
     myProjectDescriptor = projectDescriptor;
   }
 
@@ -49,35 +35,56 @@ class LightIdeaTestFixtureImpl extends BaseFixture implements LightIdeaTestFixtu
     super.setUp();
 
     IdeaTestApplication application = LightPlatformTestCase.initApplication();
-    LightPlatformTestCase.doSetup(myProjectDescriptor, LocalInspectionTool.EMPTY_ARRAY, new THashMap<String, InspectionTool>());
+    LightPlatformTestCase.doSetup(myProjectDescriptor, LocalInspectionTool.EMPTY_ARRAY, getTestRootDisposable());
     InjectedLanguageManagerImpl.pushInjectors(getProject());
-    storeSettings();
+
+    myCodeStyleSettingsTracker = new CodeStyleSettingsTracker(this::getCurrentCodeStyleSettings);
+
     application.setDataProvider(new TestDataProvider(getProject()));
+    myOldSdks = new SdkLeakTracker();
   }
 
   @Override
-  public void tearDown() throws Exception {
+  public void tearDown() {
     Project project = getProject();
-    CodeStyleSettingsManager.getInstance(project).dropTemporarySettings();
-    checkForSettingsDamage();
+    CodeStyle.dropTemporarySettings(project);
 
-    LightPlatformTestCase.doTearDown(project, LightPlatformTestCase.getApplication(), true);
-    super.tearDown();
-    InjectedLanguageManagerImpl.checkInjectorsAreDisposed(project);
-    PersistentFS.getInstance().clearIdCache();
-      ((DirectoryIndexImpl)DirectoryIndex.getInstance(project)).assertAncestorConsistent();
+    // don't use method references here to make stack trace reading easier
+    //noinspection Convert2MethodRef
+    new RunAll()
+      .append(() -> {
+        if (myCodeStyleSettingsTracker != null) {
+          myCodeStyleSettingsTracker.checkForSettingsDamage();
+        }
+      })
+      .append(() -> PlatformTestCase.waitForProjectLeakingThreads(project, 10, TimeUnit.SECONDS))
+      .append(() -> super.tearDown()) // call all disposables' dispose() while the project is still open
+      .append(() -> {
+        if (project != null) {
+          LightPlatformTestCase.doTearDown(project, LightPlatformTestCase.getApplication());
+        }
+      })
+      .append(() -> LightPlatformTestCase.checkEditorsReleased())
+      .append(() -> {
+        SdkLeakTracker oldSdks = myOldSdks;
+        if (oldSdks != null) {
+          oldSdks.checkForJdkTableLeaks();
+        }
+      })
+      .append(() -> InjectedLanguageManagerImpl.checkInjectorsAreDisposed(project))
+      .append(() -> PersistentFS.getInstance().clearIdCache())
+      .append(() -> PlatformTestCase.cleanupApplicationCaches(project))
+      .run();
   }
-
 
   @Override
   public Project getProject() {
     return LightPlatformTestCase.getProject();
   }
 
-  @Override
   protected CodeStyleSettings getCurrentCodeStyleSettings() {
     if (CodeStyleSchemes.getInstance().getCurrentScheme() == null) return new CodeStyleSettings();
-    return CodeStyleSettingsManager.getSettings(getProject());
+    return CodeStyle.getSettings(getProject());
   }
 
   @Override

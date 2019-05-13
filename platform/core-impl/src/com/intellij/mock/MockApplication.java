@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,25 +17,34 @@ package com.intellij.mock;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.*;
+import com.intellij.openapi.application.impl.AnyModalityState;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.ThrowableComputable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.ide.PooledThreadExecutor;
 
 import java.awt.*;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Future;
 
 public class MockApplication extends MockComponentManager implements Application {
-  private ModalityState MODALITY_STATE_NONE;
+  public static int INSTANCES_CREATED = 0;
 
   public MockApplication(@NotNull Disposable parentDisposable) {
     super(null, parentDisposable);
+    INSTANCES_CREATED++;
   }
 
   @Override
   public boolean isInternal() {
+    return false;
+  }
+
+  @Override
+  public boolean isEAP() {
     return false;
   }
 
@@ -86,15 +95,16 @@ public class MockApplication extends MockComponentManager implements Application
     return true;
   }
 
+  @NotNull
   @Override
   public Future<?> executeOnPooledThread(@NotNull Runnable action) {
-    new Thread(action).start();
-    return null; // ?
+    return PooledThreadExecutor.INSTANCE.submit(action);
   }
 
+  @NotNull
   @Override
   public <T> Future<T> executeOnPooledThread(@NotNull Callable<T> action) {
-    return null;
+    return PooledThreadExecutor.INSTANCE.submit(action);
   }
 
   @Override
@@ -141,18 +151,20 @@ public class MockApplication extends MockComponentManager implements Application
     return computation.compute();
   }
 
+  @NotNull
   @Override
   public AccessToken acquireReadActionLock() {
     return AccessToken.EMPTY_ACCESS_TOKEN;
   }
 
+  @NotNull
   @Override
   public AccessToken acquireWriteActionLock(@Nullable Class marker) {
     return AccessToken.EMPTY_ACCESS_TOKEN;
   }
 
   @Override
-  public boolean hasWriteAction(@Nullable Class<?> actionClass) {
+  public boolean hasWriteAction(@NotNull Class<?> actionClass) {
     return false;
   }
 
@@ -181,15 +193,7 @@ public class MockApplication extends MockComponentManager implements Application
   @NotNull
   @Override
   public ModalityState getNoneModalityState() {
-    if (MODALITY_STATE_NONE == null) {
-      MODALITY_STATE_NONE = new ModalityState() {
-        @Override
-        public boolean dominates(@NotNull ModalityState anotherState) {
-          return false;
-        }
-      };
-    }
-    return MODALITY_STATE_NONE;
+    return ModalityState.NON_MODAL;
   }
 
   @Override
@@ -218,15 +222,21 @@ public class MockApplication extends MockComponentManager implements Application
   public void invokeAndWait(@NotNull Runnable runnable, @NotNull ModalityState modalityState) {
   }
 
+  @Override
+  public void invokeAndWait(@NotNull Runnable runnable) throws ProcessCanceledException {
+    invokeAndWait(runnable, getDefaultModalityState());
+  }
+
   @NotNull
   @Override
   public ModalityState getCurrentModalityState() {
     return getNoneModalityState();
   }
 
+  @NotNull
   @Override
   public ModalityState getAnyModalityState() {
-    return getNoneModalityState();
+    return AnyModalityState.ANY;
   }
 
   @NotNull

@@ -1,4 +1,4 @@
-// "Invert If Condition" "true"
+// "Invert 'if' condition" "true"
 public class C {
     public static int main(String[] args) {
         if (!a) {

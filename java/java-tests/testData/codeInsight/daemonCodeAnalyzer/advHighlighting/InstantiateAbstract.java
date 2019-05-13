@@ -28,6 +28,7 @@ public class a {
 }
 abstract class c1 {
   abstract public void f1(int i);
+  Object o = new c1[0];
 }
 
 interface ii {

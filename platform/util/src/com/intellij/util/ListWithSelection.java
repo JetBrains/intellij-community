@@ -21,11 +21,11 @@ import java.util.Collection;
 public class ListWithSelection<E> extends ArrayList<E> {
   private E mySelection;
 
-  public ListWithSelection(Collection<E> collection) {
+  public ListWithSelection(Collection<? extends E> collection) {
     super(collection);
   }
 
-  public ListWithSelection(Collection<E> collection, E selection) {
+  public ListWithSelection(Collection<? extends E> collection, E selection) {
     this(collection);
     select(selection);
   }

@@ -1,18 +1,40 @@
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.imports;
 
-import com.siyeh.ig.IGInspectionTestCase;
+import com.intellij.testFramework.LightProjectDescriptor;
+import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
+import com.siyeh.ig.LightInspectionTestCase;
+import org.jetbrains.annotations.NotNull;
 
-public class StaticImportInspectionTest extends IGInspectionTestCase {
+public class StaticImportInspectionTest extends LightCodeInsightFixtureTestCase {
+  @Override
+  protected String getBasePath() {
+    return LightInspectionTestCase.INSPECTION_GADGETS_TEST_DATA_PATH + "com/siyeh/igtest/imports/static_import";
+  }
 
-  public void test() throws Exception {
-    final StaticImportInspection tool = new StaticImportInspection();
+  @NotNull
+  @Override
+  protected LightProjectDescriptor getProjectDescriptor() {
+    return JAVA_8;
+  }
+
+  public void testSimple() {
+    StaticImportInspection tool = new StaticImportInspection();
     tool.allowedClasses.add("java.util.Map");
-    doTest("com/siyeh/igtest/imports/static_import", tool);
+    myFixture.enableInspections(tool);
+    myFixture.testHighlighting(getTestName(false) + ".java");
   }
 
   public void testMethodAllowed() {
-    final StaticImportInspection tool = new StaticImportInspection();
+    StaticImportInspection tool = new StaticImportInspection();
     tool.ignoreSingeMethodImports = true;
-    doTest("com/siyeh/igtest/imports/static_import_method_allowed", tool);
+    myFixture.enableInspections(tool);
+    myFixture.testHighlighting(getTestName(false) + ".java");
   }
+
+  public void testReportNothingOnUnresolvedImport() {
+    myFixture.enableInspections(new StaticImportInspection());
+    myFixture.testHighlighting(getTestName(false) + ".java");
+  }
+
 }

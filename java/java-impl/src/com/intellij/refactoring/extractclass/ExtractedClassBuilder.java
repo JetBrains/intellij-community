@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,18 +15,16 @@
  */
 package com.intellij.refactoring.extractclass;
 
+import com.intellij.codeInsight.generation.GenerateMembersUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.util.PropertyUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.psi.MethodInheritanceUtils;
-import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 
@@ -38,24 +36,24 @@ import java.util.Set;
 class ExtractedClassBuilder {
   private static final Logger LOGGER = Logger.getInstance("com.siyeh.rpp.extractclass.ExtractedClassBuilder");
 
-  private String className = null;
-  private String packageName = null;
-  private final List<PsiField> fields = new ArrayList<PsiField>(5);
-  private final List<PsiMethod> methods = new ArrayList<PsiMethod>(5);
-  private final List<PsiClassInitializer> initializers = new ArrayList<PsiClassInitializer>(5);
-  private final List<PsiClass> innerClasses = new ArrayList<PsiClass>(5);
-  private final List<PsiClass> innerClassesToMakePublic = new ArrayList<PsiClass>(5);
-  private final List<PsiTypeParameter> typeParams = new ArrayList<PsiTypeParameter>();
-  private final List<PsiClass> interfaces = new ArrayList<PsiClass>();
+  private String className;
+  private String packageName;
+  private final List<PsiField> fields = new ArrayList<>(5);
+  private final List<PsiMethod> methods = new ArrayList<>(5);
+  private final List<PsiClassInitializer> initializers = new ArrayList<>(5);
+  private final List<PsiClass> innerClasses = new ArrayList<>(5);
+  private final List<PsiClass> innerClassesToMakePublic = new ArrayList<>(5);
+  private final List<PsiTypeParameter> typeParams = new ArrayList<>();
+  private final List<PsiClass> interfaces = new ArrayList<>();
 
-  private boolean requiresBackPointer = false;
-  private String originalClassName = null;
-  private String backPointerName = null;
+  private boolean requiresBackPointer;
+  private String originalClassName;
+  private String backPointerName;
   private Project myProject;
   private JavaCodeStyleManager myJavaCodeStyleManager;
   private Set<PsiField> myFieldsNeedingSetters;
   private Set<PsiField> myFieldsNeedingGetter;
-  private List<PsiField> enumConstantFields;
+  private List<? extends PsiField> enumConstantFields;
   private PsiType myEnumParameterType;
 
   public void setClassName(String className) {
@@ -89,18 +87,18 @@ class ExtractedClassBuilder {
     }
   }
 
-  public void setTypeArguments(List<PsiTypeParameter> typeParams) {
+  public void setTypeArguments(List<? extends PsiTypeParameter> typeParams) {
     this.typeParams.clear();
     this.typeParams.addAll(typeParams);
   }
 
-  public void setInterfaces(List<PsiClass> interfaces) {
+  public void setInterfaces(List<? extends PsiClass> interfaces) {
     this.interfaces.clear();
     this.interfaces.addAll(interfaces);
   }
 
 
-  public String buildBeanClass() {
+  public String buildBeanClass(boolean normalizeDeclaration) {
     if (requiresBackPointer) {
       calculateBackpointerName();
     }
@@ -152,7 +150,7 @@ class ExtractedClassBuilder {
       }
       out.append(' ' + backPointerName + ";");
     }
-    outputFieldsAndInitializers(out);
+    outputFieldsAndInitializers(out, normalizeDeclaration);
     if (hasEnumConstants()) {
       final String fieldName = getValueFieldName();
       out.append("\n").append("private ").append(myEnumParameterType.getCanonicalText()).append(" ").append(fieldName).append(";\n");
@@ -169,7 +167,7 @@ class ExtractedClassBuilder {
   }
 
   private String getterName() {//todo unique getterName: see also com.intellij.refactoring.extractclass.usageInfo.ReplaceStaticVariableAccess
-    return PropertyUtil.suggestGetterName("value", myEnumParameterType);
+    return GenerateMembersUtil.suggestGetterName("value", myEnumParameterType, myProject);
   }
 
   private boolean hasEnumConstants() {
@@ -255,24 +253,25 @@ class ExtractedClassBuilder {
   }
 
 
-  private void outputFieldsAndInitializers(final StringBuffer out) {
+  private void outputFieldsAndInitializers(final StringBuffer out, boolean normalizeDeclaration) {
     if (hasEnumConstants()) {
-      out.append(StringUtil.join(enumConstantFields, new Function<PsiField, String>() {
-        public String fun(PsiField field) {
-          final StringBuffer fieldStr = new StringBuffer(field.getName() + "(");
-          final PsiExpression initializer = field.getInitializer();
-          if (initializer != null) {
-            initializer.accept(new Mutator(fieldStr));
-          }
-          fieldStr.append(")");
-          return fieldStr.toString();
+      out.append(StringUtil.join(enumConstantFields, field -> {
+        final StringBuffer fieldStr = new StringBuffer(field.getName() + "(");
+        final PsiExpression initializer = field.getInitializer();
+        if (initializer != null) {
+          initializer.accept(new Mutator(fieldStr));
         }
+        fieldStr.append(")");
+        return fieldStr.toString();
       }, ", "));
       out.append(";");
     }
 
-    final List<PsiClassInitializer> remainingInitializers = new ArrayList<PsiClassInitializer>(initializers);
+    final List<PsiClassInitializer> remainingInitializers = new ArrayList<>(initializers);
     for (final PsiField field : fields) {
+      if (normalizeDeclaration) {
+        field.normalizeDeclaration();
+      }
       final Iterator<PsiClassInitializer> initializersIterator = remainingInitializers.iterator();
       final int fieldOffset = field.getTextRange().getStartOffset();
       while (initializersIterator.hasNext()) {
@@ -286,12 +285,12 @@ class ExtractedClassBuilder {
       field.accept(new Mutator(out));
 
       if (myFieldsNeedingGetter != null && myFieldsNeedingGetter.contains(field)) {
-        out.append(PropertyUtil.generateGetterPrototype(field).getText());
+        out.append(GenerateMembersUtil.generateGetterPrototype(field).getText());
         out.append("\n");
       }
 
       if (myFieldsNeedingSetters != null && myFieldsNeedingSetters.contains(field)) {
-        out.append(PropertyUtil.generateSetterPrototype(field).getText());
+        out.append(GenerateMembersUtil.generateSetterPrototype(field).getText());
         out.append("\n");
       }
     }
@@ -360,7 +359,7 @@ class ExtractedClassBuilder {
   }
 
   private boolean fieldIsExtracted(PsiField field) {
-    final ArrayList<PsiField> extractedFields = new ArrayList<PsiField>(fields);
+    final ArrayList<PsiField> extractedFields = new ArrayList<>(fields);
     extractedFields.addAll(enumConstantFields);
     if (extractedFields.contains(field)) return true;
 
@@ -368,7 +367,7 @@ class ExtractedClassBuilder {
     return innerClasses.contains(containingClass);
   }
 
-  public void setExtractAsEnum(List<PsiField> extractAsEnum) {
+  public void setExtractAsEnum(List<? extends PsiField> extractAsEnum) {
     this.enumConstantFields = extractAsEnum;
     if (hasEnumConstants()) {
       myEnumParameterType = enumConstantFields.get(0).getType();
@@ -384,6 +383,7 @@ class ExtractedClassBuilder {
       this.out = out;
     }
 
+    @Override
     public void visitElement(PsiElement element) {
 
       super.visitElement(element);
@@ -399,6 +399,7 @@ class ExtractedClassBuilder {
       }
     }
 
+    @Override
     public void visitReferenceExpression(PsiReferenceExpression expression) {
       final JavaResolveResult resolveResult = expression.advancedResolve(true);
       final boolean staticImported = resolveResult.getCurrentFileResolveScope() instanceof PsiImportStaticStatement;
@@ -433,8 +434,14 @@ class ExtractedClassBuilder {
               }
             }
             else {
-              out.append(backPointerName + '.' + PropertyUtil.suggestGetterName(field.getProject(), field) + "()");
+              out.append(backPointerName + '.' + GenerateMembersUtil.suggestGetterName(field) + "()");
             }
+          }
+        }
+        else if (referent instanceof PsiClass) {
+          String qualifiedName = ((PsiClass)referent).getQualifiedName();
+          if (qualifiedName != null) {
+            out.append(qualifiedName);
           }
         }
         else {
@@ -446,6 +453,7 @@ class ExtractedClassBuilder {
       }
     }
 
+    @Override
     public void visitAssignmentExpression(PsiAssignmentExpression expression) {
       PsiExpression lhs = expression.getLExpression();
       final PsiExpression rhs = expression.getRExpression();
@@ -476,16 +484,16 @@ class ExtractedClassBuilder {
     private void delegate(final PsiExpression rhs, final PsiField field, final PsiJavaToken sign, final IElementType tokenType,
                           final String fieldName) {
       if (tokenType.equals(JavaTokenType.EQ)) {
-        final String setterName = PropertyUtil.suggestSetterName(field.getProject(), field);
+        final String setterName = GenerateMembersUtil.suggestSetterName(field);
         out.append(fieldName + '.' + setterName + '(');
         rhs.accept(this);
         out.append(')');
       }
       else {
         final String operator = sign.getText().substring(0, sign.getTextLength() - 1);
-        final String setterName = PropertyUtil.suggestSetterName(field.getProject(), field);
+        final String setterName = GenerateMembersUtil.suggestSetterName(field);
         out.append(fieldName + '.' + setterName + '(');
-        final String getterName = PropertyUtil.suggestGetterName(field.getProject(), field);
+        final String getterName = GenerateMembersUtil.suggestGetterName(field);
         out.append(fieldName + '.' + getterName + "()");
         out.append(operator);
         rhs.accept(this);
@@ -494,16 +502,10 @@ class ExtractedClassBuilder {
     }
 
 
-    public void visitPostfixExpression(PsiPostfixExpression expression) {
-      outputUnaryExpression(expression, expression.getOperand(), expression.getOperationSign());
-    }
-
-    public void visitPrefixExpression(PsiPrefixExpression expression) {
-      outputUnaryExpression(expression, expression.getOperand(), expression.getOperationSign());
-    }
-
-    private void outputUnaryExpression(final PsiExpression expression, PsiExpression operand, final PsiJavaToken sign) {
-      final IElementType tokenType = sign.getTokenType();
+    @Override
+    public void visitUnaryExpression(PsiUnaryExpression expression) {
+      PsiExpression operand = expression.getOperand();
+      final IElementType tokenType = expression.getOperationSign().getTokenType();
       if (isBackpointerReference(operand) && (tokenType.equals(JavaTokenType.PLUSPLUS) || tokenType.equals(JavaTokenType.MINUSMINUS))) {
         while (operand instanceof PsiParenthesizedExpression) {
           operand = ((PsiParenthesizedExpression)operand).getExpression();
@@ -521,10 +523,10 @@ class ExtractedClassBuilder {
         assert field != null;
         if (!field.hasModifierProperty(PsiModifier.STATIC)) {
           out.append(backPointerName +
-                     '.' + PropertyUtil.suggestSetterName(field.getProject(), field) +
+                     '.' + GenerateMembersUtil.suggestSetterName(field) +
                      '(' +
                      backPointerName +
-                     '.' + PropertyUtil.suggestGetterName(field.getProject(), field) +
+                     '.' + GenerateMembersUtil.suggestGetterName(field) +
                      "()" +
                      operator +
                      "1)");
@@ -539,20 +541,18 @@ class ExtractedClassBuilder {
     }
 
     private boolean isBackpointerReference(PsiExpression expression) {
-      return BackpointerUtil.isBackpointerReference(expression, new Condition<PsiField>() {
-        public boolean value(final PsiField psiField) {
-          return !fieldIsExtracted(psiField);
-        }
-      });
+      return BackpointerUtil.isBackpointerReference(expression, psiField -> !fieldIsExtracted(psiField));
     }
 
 
+    @Override
     public void visitThisExpression(PsiThisExpression expression) {
       out.append(backPointerName);
     }
 
 
 
+    @Override
     public void visitMethodCallExpression(PsiMethodCallExpression call) {
       final PsiReferenceExpression expression = call.getMethodExpression();
       final JavaResolveResult resolveResult = expression.advancedResolve(false);
@@ -585,6 +585,7 @@ class ExtractedClassBuilder {
       }
     }
 
+    @Override
     public void visitReferenceElement(PsiJavaCodeReferenceElement reference) {
       final String referenceText = reference.getCanonicalText();
       out.append(referenceText);

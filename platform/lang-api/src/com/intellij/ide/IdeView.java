@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,8 +16,10 @@
 
 package com.intellij.ide;
 
+import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -25,7 +27,7 @@ import org.jetbrains.annotations.Nullable;
  * favorites or commander).
  *
  * @since 5.1
- * @see com.intellij.openapi.actionSystem.PlatformDataKeys#IDE_VIEW
+ * @see LangDataKeys#IDE_VIEW
  */
 public interface IdeView {
   /**
@@ -33,7 +35,8 @@ public interface IdeView {
    *
    * @param element the element to select.
    */
-  void selectElement(PsiElement element);
+  default void selectElement(PsiElement element) {
+  }
 
   /**
    * Returns the list of directories corresponding to the element currently selected in the view.
@@ -41,6 +44,7 @@ public interface IdeView {
    *
    * @return the list of directories, or an empty array if nothing is selected.
    */
+  @NotNull
   PsiDirectory[] getDirectories();
 
   /**

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,23 +20,39 @@ import com.intellij.codeInsight.CodeInsightActionHandler;
 import com.intellij.codeInsight.actions.BaseCodeInsightAction;
 import com.intellij.codeInsight.generation.AutoIndentLinesHandler;
 import com.intellij.lang.LanguageFormatting;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
+import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
+import com.intellij.util.DocumentUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class AutoIndentLinesAction extends BaseCodeInsightAction implements DumbAware {
+  @Nullable
+  @Override
+  protected Editor getEditor(@NotNull DataContext dataContext, @NotNull Project project, boolean forUpdate) {
+    Editor editor = getBaseEditor(dataContext, project);
+    if (editor == null) return null;
+    Document document = editor.getDocument();
+    PsiDocumentManager documentManager = PsiDocumentManager.getInstance(project);
+    PsiFile psiFile = documentManager.getCachedPsiFile(document);
+    if (psiFile == null) return editor;
+    if (!forUpdate) documentManager.commitAllDocuments();
+    int startLineOffset = DocumentUtil.getLineStartOffset(editor.getSelectionModel().getSelectionStart(), document);
+    return InjectedLanguageUtil.getEditorForInjectedLanguageNoCommit(editor, psiFile, startLineOffset);
+  }
+
   @NotNull
   @Override
   protected CodeInsightActionHandler getHandler() {
     return new AutoIndentLinesHandler();
-  }
-
-  public boolean startInWriteAction() {
-    return false;
   }
 
   @Override

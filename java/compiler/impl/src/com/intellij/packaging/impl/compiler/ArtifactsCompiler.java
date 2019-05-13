@@ -16,16 +16,12 @@
 package com.intellij.packaging.impl.compiler;
 
 import com.intellij.openapi.compiler.CompileContext;
+import com.intellij.openapi.compiler.CompileScope;
+import com.intellij.openapi.compiler.Compiler;
 import com.intellij.openapi.compiler.CompilerManager;
-import com.intellij.openapi.compiler.generic.CompileItem;
-import com.intellij.openapi.compiler.generic.GenericCompiler;
-import com.intellij.openapi.compiler.generic.GenericCompilerInstance;
-import com.intellij.openapi.compiler.generic.VirtualFilePersistentState;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.packaging.artifacts.Artifact;
-import com.intellij.util.io.DataExternalizer;
-import com.intellij.util.io.KeyDescriptor;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -35,12 +31,16 @@ import java.util.Set;
 /**
  * @author nik
  */
-public class ArtifactsCompiler extends GenericCompiler<String, VirtualFilePersistentState, ArtifactPackagingItemOutputState> {
+public class ArtifactsCompiler implements Compiler {
   private static final Key<Set<String>> WRITTEN_PATHS_KEY = Key.create("artifacts_written_paths");
   private static final Key<Set<Artifact>> CHANGED_ARTIFACTS = Key.create("affected_artifacts");
 
   public ArtifactsCompiler() {
-    super("artifacts_compiler", 0, GenericCompiler.CompileOrderPlace.PACKAGING);
+  }
+
+  @Override
+  public boolean validateConfiguration(CompileScope scope) {
+    return false;
   }
 
   @Nullable
@@ -52,7 +52,7 @@ public class ArtifactsCompiler extends GenericCompiler<String, VirtualFilePersis
   public static void addChangedArtifact(final CompileContext context, Artifact artifact) {
     Set<Artifact> artifacts = context.getUserData(CHANGED_ARTIFACTS);
     if (artifacts == null) {
-      artifacts = new THashSet<Artifact>();
+      artifacts = new THashSet<>();
       context.putUserData(CHANGED_ARTIFACTS, artifacts);
     }
     artifacts.add(artifact);
@@ -61,37 +61,13 @@ public class ArtifactsCompiler extends GenericCompiler<String, VirtualFilePersis
   public static void addWrittenPaths(final CompileContext context, Set<String> writtenPaths) {
     Set<String> paths = context.getUserData(WRITTEN_PATHS_KEY);
     if (paths == null) {
-      paths = new THashSet<String>();
+      paths = new THashSet<>();
       context.putUserData(WRITTEN_PATHS_KEY, paths);
     }
     paths.addAll(writtenPaths);
   }
 
-  @NotNull
   @Override
-  public KeyDescriptor<String> getItemKeyDescriptor() {
-    return STRING_KEY_DESCRIPTOR;
-  }
-
-  @NotNull
-  @Override
-  public DataExternalizer<VirtualFilePersistentState> getSourceStateExternalizer() {
-    return VirtualFilePersistentState.EXTERNALIZER;
-  }
-
-  @NotNull
-  @Override
-  public DataExternalizer<ArtifactPackagingItemOutputState> getOutputStateExternalizer() {
-    return new ArtifactPackagingItemExternalizer();
-  }
-
-  @NotNull
-  @Override
-  public GenericCompilerInstance<ArtifactBuildTarget, ? extends CompileItem<String, VirtualFilePersistentState, ArtifactPackagingItemOutputState>, String, VirtualFilePersistentState, ArtifactPackagingItemOutputState> createInstance(
-    @NotNull CompileContext context) {
-    return new ArtifactsCompilerInstance(context);
-  }
-
   @NotNull
   public String getDescription() {
     return "Artifacts Packaging Compiler";

@@ -19,9 +19,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlFile;
-import com.intellij.psi.xml.XmlTag;
-import com.intellij.util.Processor;
-import com.intellij.xml.util.HtmlUtil;
+import com.intellij.xml.util.HtmlLinkUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Set;
@@ -31,40 +29,37 @@ import java.util.Set;
  */
 public class LinkedToHtmlFilesContributor extends RelatedToHtmlFilesContributor {
   @Override
-  public void fillRelatedFiles(@NotNull final XmlFile xmlFile, @NotNull final Set<PsiFile> resultSet) {
-    HtmlUtil.processLinks(xmlFile, new Processor<XmlTag>() {
-      @Override
-      public boolean process(XmlTag tag) {
-        final XmlAttribute attribute = tag.getAttribute("href");
-        if (attribute == null) {
-          return true;
-        }
+  public void fillRelatedFiles(@NotNull final XmlFile xmlFile, @NotNull final Set<? super PsiFile> resultSet) {
+    HtmlLinkUtil.processLinks(xmlFile, tag -> {
+      final XmlAttribute attribute = tag.getAttribute("href");
+      if (attribute == null) {
+        return true;
+      }
 
-        final XmlAttributeValue link = attribute.getValueElement();
-        if (link == null) {
-          return true;
-        }
+      final XmlAttributeValue link = attribute.getValueElement();
+      if (link == null) {
+        return true;
+      }
 
-        for (PsiReference reference : link.getReferences()) {
-          if (reference instanceof PsiPolyVariantReference) {
-            final ResolveResult[] results = ((PsiPolyVariantReference)reference).multiResolve(false);
+      for (PsiReference reference : link.getReferences()) {
+        if (reference instanceof PsiPolyVariantReference) {
+          final ResolveResult[] results = ((PsiPolyVariantReference)reference).multiResolve(false);
 
-            for (ResolveResult result : results) {
-              final PsiElement resolvedElement = result.getElement();
-              if (resolvedElement instanceof PsiFile) {
-                resultSet.add((PsiFile)resolvedElement);
-              }
-            }
-          }
-          else {
-            final PsiElement resolvedElement = reference.resolve();
+          for (ResolveResult result : results) {
+            final PsiElement resolvedElement = result.getElement();
             if (resolvedElement instanceof PsiFile) {
               resultSet.add((PsiFile)resolvedElement);
             }
           }
         }
-        return true;
+        else {
+          final PsiElement resolvedElement = reference.resolve();
+          if (resolvedElement instanceof PsiFile) {
+            resultSet.add((PsiFile)resolvedElement);
+          }
+        }
       }
+      return true;
     });
   }
 

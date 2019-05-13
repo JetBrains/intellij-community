@@ -1,4 +1,4 @@
-<x <warning descr="AAATTR">aaa="dddd"</warning>>
+<x <warning descr="MyAnnotator">aaa="dddd"</warning>>
     <l>
       <warning desr="ENTITY">&nbsp;</warning>
     </l>

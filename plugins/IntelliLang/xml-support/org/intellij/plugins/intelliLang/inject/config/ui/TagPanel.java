@@ -16,19 +16,17 @@
 package org.intellij.plugins.intelliLang.inject.config.ui;
 
 import com.intellij.javaee.ExternalResourceManager;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Key;
 import com.intellij.ui.EditorTextField;
 import com.intellij.ui.LanguageTextField;
 import org.intellij.lang.regexp.RegExpLanguage;
 import org.intellij.plugins.intelliLang.inject.config.AbstractTagInjection;
 import org.intellij.plugins.intelliLang.inject.config.JspSupportProxy;
-import org.intellij.plugins.intelliLang.inject.config.XmlTagInjection;
 
 import javax.swing.*;
 import java.util.ArrayList;
@@ -43,14 +41,13 @@ public class TagPanel extends AbstractInjectionPanel<AbstractTagInjection> {
 
   private EditorTextField myLocalName;
   private ComboBox myNamespace;
-  private JCheckBox myApplyRecursivelyCheckBox;
+  private JCheckBox myWithSubtags;
 
   public TagPanel(Project project, AbstractTagInjection injection) {
     super(injection, project);
     $$$setupUI$$$();
 
     myNamespace.setModel(createNamespaceUriModel(myProject));
-    myLocalName.getDocument().addDocumentListener(new TreeUpdateListener());
   }
 
   public static ComboBoxModel createNamespaceUriModel(Project project) {
@@ -59,19 +56,15 @@ public class TagPanel extends AbstractInjectionPanel<AbstractTagInjection> {
       return new DefaultComboBoxModel(data.toArray());
     }
 
-    final List<String> urls = new ArrayList<String>(Arrays.asList(ExternalResourceManager.getInstance().getResourceUrls(null, true)));
+    final List<String> urls = new ArrayList<>(Arrays.asList(ExternalResourceManager.getInstance().getResourceUrls(null, true)));
     Collections.sort(urls);
 
     final JspSupportProxy jspSupport = JspSupportProxy.getInstance();
     if (jspSupport != null) {
-      final List<String> tlds = new ArrayList<String>();
+      final List<String> tlds = new ArrayList<>();
       final Module[] modules = ModuleManager.getInstance(project).getModules();
       for (final Module module : modules) {
-        final String[] tldUris = ApplicationManager.getApplication().runReadAction(new Computable<String[]>() {
-          public String[] compute() {
-            return jspSupport.getPossibleTldUris(module);
-          }
-        });
+        final String[] tldUris = ReadAction.compute(() -> jspSupport.getPossibleTldUris(module));
         for (String uri : tldUris) {
           if (!tlds.contains(uri)) {
             tlds.add(uri);
@@ -88,26 +81,23 @@ public class TagPanel extends AbstractInjectionPanel<AbstractTagInjection> {
     return new DefaultComboBoxModel(urls.toArray());
   }
 
+  @Override
   public JPanel getComponent() {
     return myRoot;
   }
 
+  @Override
   protected void resetImpl() {
     myLocalName.setText(myOrigInjection.getTagName());
     myNamespace.getEditor().setItem(myOrigInjection.getTagNamespace());
-    final boolean isXmlTag = myOrigInjection instanceof XmlTagInjection;
-    myApplyRecursivelyCheckBox.setVisible(isXmlTag);
-    if (isXmlTag) {
-      myApplyRecursivelyCheckBox.setSelected(((XmlTagInjection)myOrigInjection).isApplyToSubTagTexts());
-    }
+    myWithSubtags.setSelected(myOrigInjection.isApplyToSubTags());
   }
 
-  protected void apply(AbstractTagInjection i) {
-    i.setTagName(myLocalName.getText());
-    i.setTagNamespace(getNamespace());
-    if (i instanceof XmlTagInjection) {
-      ((XmlTagInjection)i).setApplyToSubTagTexts(myApplyRecursivelyCheckBox.isSelected());
-    }
+  @Override
+  protected void apply(AbstractTagInjection other) {
+    other.setTagName(myLocalName.getText());
+    other.setTagNamespace(getNamespace());
+    other.setApplyToSubTags(myWithSubtags.isSelected());
   }
 
   private String getNamespace() {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,23 +15,24 @@
  */
 package com.intellij.openapi.vcs.contentAnnotation;
 
+import com.intellij.execution.filters.ExceptionInfoCache;
 import com.intellij.execution.filters.ExceptionWorker;
 import com.intellij.execution.filters.Filter;
 import com.intellij.execution.filters.FilterMixin;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.DiffColors;
+import com.intellij.openapi.editor.DefaultLanguageHighlighterColors;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.colors.CodeInsightColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.localVcs.UpToDateLineNumberProvider;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.Trinity;
+import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vcs.impl.UpToDateLineNumberProviderImpl;
@@ -45,24 +46,18 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-/**
- * Created by IntelliJ IDEA.
- * User: Irina.Chernushina
- * Date: 8/5/11
- * Time: 8:39 PM
- */
 public class VcsContentAnnotationExceptionFilter implements Filter, FilterMixin {
   private final Project myProject;
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.contentAnnotation.VcsContentAnnotationExceptionFilter");
-  private final GlobalSearchScope myScope;
   private final VcsContentAnnotationSettings mySettings;
-  private Map<VirtualFile,VcsRevisionNumber> myRevNumbersCache;
+  private final Map<VirtualFile,VcsRevisionNumber> myRevNumbersCache;
+  private final ExceptionInfoCache myCache;
 
   public VcsContentAnnotationExceptionFilter(@NotNull GlobalSearchScope scope) {
-    myScope = scope;
     myProject = scope.getProject();
     mySettings = VcsContentAnnotationSettings.getInstance(myProject);
-    myRevNumbersCache = new HashMap<VirtualFile, VcsRevisionNumber>();
+    myRevNumbersCache = new HashMap<>();
+    myCache = new ExceptionInfoCache(scope);
   }
 
   private static class MyAdditionalHighlight extends AdditionalHighlight {
@@ -70,15 +65,16 @@ public class VcsContentAnnotationExceptionFilter implements Filter, FilterMixin 
       super(start, end);
     }
 
+    @NotNull
     @Override
     public TextAttributes getTextAttributes(@Nullable TextAttributes source) {
       EditorColorsScheme globalScheme = EditorColorsManager.getInstance().getGlobalScheme();
       final TextAttributes changedColor = globalScheme.getAttributes(DiffColors.DIFF_MODIFIED);
       if (source == null) {
-        TextAttributes atts =
-          globalScheme.getAttributes(CodeInsightColors.CLASS_NAME_ATTRIBUTES).clone();
-        atts.setBackgroundColor(changedColor.getBackgroundColor());
-        return atts;
+        TextAttributes attrs =
+          globalScheme.getAttributes(DefaultLanguageHighlighterColors.CLASS_NAME).clone();
+        attrs.setBackgroundColor(changedColor.getBackgroundColor());
+        return attrs;
       }
       TextAttributes clone = source.clone();
       clone.setBackgroundColor(changedColor.getBackgroundColor());
@@ -92,10 +88,10 @@ public class VcsContentAnnotationExceptionFilter implements Filter, FilterMixin 
   }
 
   @Override
-  public void applyHeavyFilter(final Document copiedFragment,
+  public void applyHeavyFilter(@NotNull final Document copiedFragment,
                                int startOffset,
                                int startLineNumber,
-                               Consumer<AdditionalHighlight> consumer) {
+                               @NotNull Consumer<AdditionalHighlight> consumer) {
     VcsContentAnnotation vcsContentAnnotation = VcsContentAnnotationImpl.getInstance(myProject);
     final LocalChangesCorrector localChangesCorrector = new LocalChangesCorrector(myProject);
     Trinity<PsiClass, PsiFile, String> previousLineResult = null;
@@ -103,16 +99,9 @@ public class VcsContentAnnotationExceptionFilter implements Filter, FilterMixin 
     for (int i = 0; i < copiedFragment.getLineCount(); i++) {
       final int lineStartOffset = copiedFragment.getLineStartOffset(i);
       final int lineEndOffset = copiedFragment.getLineEndOffset(i);
-      final ExceptionWorker worker = new ExceptionWorker(myProject, myScope);
-      final String[] lineText = new String[1];
-      ApplicationManager.getApplication().runReadAction(new Runnable() {
-        @Override
-        public void run() {
-          lineText[0] = copiedFragment.getText(new TextRange(lineStartOffset, lineEndOffset));
-          worker.execute(lineText[0], lineEndOffset);
-        }
-      });
-      if (worker.getResult() != null) {
+      final ExceptionWorker worker = new ExceptionWorker(myCache);
+      final String lineText = copiedFragment.getText(new TextRange(lineStartOffset, lineEndOffset));
+      if (ReadAction.compute(() -> worker.execute(lineText, lineEndOffset)) != null) {
         VirtualFile vf = worker.getFile().getVirtualFile();
         if (vf.getFileSystem().isReadOnly()) continue;
 
@@ -128,14 +117,19 @@ public class VcsContentAnnotationExceptionFilter implements Filter, FilterMixin 
         if (VcsRevisionNumber.NULL.equals(recentChangeRevision)) {
           recentChangeRevision = null;
         }
-        if (localChangesCorrector.isFileAlreadyIdentifiedAsChanged(vf) || ChangeListManager.isFileChanged(myProject, vf) ||
-            recentChangeRevision != null) {
+
+        FileStatus status = ChangeListManager.getInstance(myProject).getStatus(vf);
+        boolean isFileChanged = FileStatus.NOT_CHANGED.equals(status) ||
+                                FileStatus.UNKNOWN.equals(status) ||
+                                FileStatus.IGNORED.equals(status);
+
+        if (localChangesCorrector.isFileAlreadyIdentifiedAsChanged(vf) || isFileChanged || recentChangeRevision != null) {
           final Document document = getDocumentForFile(worker);
           if (document == null) return;
 
-          int startFileOffset = worker.getInfo().getThird().getStartOffset();
-          int idx = lineText[0].indexOf(':', startFileOffset);
-          int endIdx = idx == -1 ? worker.getInfo().getThird().getEndOffset() : idx;
+          int startFileOffset = worker.getInfo().fileLineRange.getStartOffset();
+          int idx = lineText.indexOf(':', startFileOffset);
+          int endIdx = idx == -1 ? worker.getInfo().fileLineRange.getEndOffset() : idx;
           consumer.consume(new MyAdditionalHighlight(startOffset + lineStartOffset + startFileOffset + 1, startOffset + lineStartOffset + endIdx));
 
           if (worker.getPsiClass() != null) {
@@ -155,18 +149,19 @@ public class VcsContentAnnotationExceptionFilter implements Filter, FilterMixin 
                 }
               }
               if (methodChanged) {
-                consumer.consume(new MyAdditionalHighlight(startOffset + lineStartOffset + worker.getInfo().getSecond().getStartOffset(),
-                                                           startOffset + lineStartOffset + worker.getInfo().getSecond().getEndOffset()));
+                consumer.consume(new MyAdditionalHighlight(startOffset + lineStartOffset + worker.getInfo().methodNameRange.getStartOffset(),
+                                                           startOffset + lineStartOffset + worker.getInfo().methodNameRange.getEndOffset()));
               }
             }
           }
         }
       }
       previousLineResult = worker.getResult() == null ? null :
-                           new Trinity<PsiClass, PsiFile, String>(worker.getPsiClass(), worker.getFile(), worker.getMethod());
+                           new Trinity<>(worker.getPsiClass(), worker.getFile(), worker.getMethod());
     }
   }
 
+  @NotNull
   @Override
   public String getUpdateMessage() {
     return "Checking recent changes...";
@@ -178,7 +173,7 @@ public class VcsContentAnnotationExceptionFilter implements Filter, FilterMixin 
 
     private LocalChangesCorrector(final Project project) {
       myProject = project;
-      myRecentlyChanged = new HashMap<VirtualFile, UpToDateLineNumberProvider>();
+      myRecentlyChanged = new HashMap<>();
     }
 
     public boolean isFileAlreadyIdentifiedAsChanged(final VirtualFile vf) {
@@ -187,23 +182,14 @@ public class VcsContentAnnotationExceptionFilter implements Filter, FilterMixin 
     
     public boolean isRangeChangedLocally(final VirtualFile vf, final Document document, final TextRange range) {
       final UpToDateLineNumberProvider provider = getProvider(vf, document);
-      return ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
-        @Override
-        public Boolean compute() {
-          return provider.isRangeChanged(range.getStartOffset(), range.getEndOffset());
-        }
-      });
+      return ReadAction.compute(() -> provider.isRangeChanged(range.getStartOffset(), range.getEndOffset()));
     }
     
     public TextRange getCorrectedRange(final VirtualFile vf, final Document document, final TextRange range) {
       final UpToDateLineNumberProvider provider = getProvider(vf, document);
       if (provider == null) return range;
-      return ApplicationManager.getApplication().runReadAction(new Computable<TextRange>() {
-        @Override
-        public TextRange compute() {
-          return new TextRange(provider.getLineNumber(range.getStartOffset()), provider.getLineNumber(range.getEndOffset()));
-        }
-      });
+      return ReadAction
+        .compute(() -> new TextRange(provider.getLineNumber(range.getStartOffset()), provider.getLineNumber(range.getEndOffset())));
     }
 
     private UpToDateLineNumberProvider getProvider(VirtualFile vf, Document document) {
@@ -216,45 +202,41 @@ public class VcsContentAnnotationExceptionFilter implements Filter, FilterMixin 
     }
   }
 
-  private Document getDocumentForFile(final ExceptionWorker worker) {
-    return ApplicationManager.getApplication().runReadAction(new Computable<Document>() {
-      @Override
-      public Document compute() {
-        final Document document = FileDocumentManager.getInstance().getDocument(worker.getFile().getVirtualFile());
-        if (document == null) {
-          LOG.info("can not get document for file: " + worker.getFile().getVirtualFile());
-          return null;
-        }
-        return document;
+  private static Document getDocumentForFile(final ExceptionWorker worker) {
+    return ReadAction.compute(() -> {
+      final Document document = FileDocumentManager.getInstance().getDocument(worker.getFile().getVirtualFile());
+      if (document == null) {
+        LOG.info("can not get document for file: " + worker.getFile().getVirtualFile());
+        return null;
       }
+      return document;
     });
   }
 
   // line numbers
-  private List<TextRange> findMethodRange(final ExceptionWorker worker, final Document document, final Trinity<PsiClass, PsiFile, String> previousLineResult) {
-    return ApplicationManager.getApplication().runReadAction(new Computable<List<TextRange>>() {
-      @Override
-      public List<TextRange> compute() {
-        List<TextRange> ranges = getTextRangeForMethod(worker, previousLineResult);
-        if (ranges == null) return null;
-        final List<TextRange> result = new ArrayList<TextRange>();
-        for (TextRange range : ranges) {
-          result.add(new TextRange(document.getLineNumber(range.getStartOffset()),
-                                       document.getLineNumber(range.getEndOffset())));
-        }
-        return result;
+  private static List<TextRange> findMethodRange(final ExceptionWorker worker,
+                                                 final Document document,
+                                                 final Trinity<PsiClass, PsiFile, String> previousLineResult) {
+    return ReadAction.compute(() -> {
+      List<TextRange> ranges = getTextRangeForMethod(worker, previousLineResult);
+      if (ranges == null) return null;
+      final List<TextRange> result = new ArrayList<>();
+      for (TextRange range : ranges) {
+        result.add(new TextRange(document.getLineNumber(range.getStartOffset()),
+                                 document.getLineNumber(range.getEndOffset())));
       }
+      return result;
     });
   }
 
   // null - check all
   @Nullable
-  private List<PsiMethod> selectMethod(final PsiMethod[] methods, final Trinity<PsiClass, PsiFile, String> previousLineResult) {
+  private static List<PsiMethod> selectMethod(final PsiMethod[] methods, final Trinity<PsiClass, PsiFile, String> previousLineResult) {
     if (previousLineResult == null || previousLineResult.getThird() == null) return null;
 
-    final List<PsiMethod> result = new SmartList<PsiMethod>();
+    final List<PsiMethod> result = new SmartList<>();
     for (final PsiMethod method : methods) {
-      method.accept(new JavaRecursiveElementWalkingVisitor() {
+      method.accept(new JavaRecursiveElementVisitor() {
         @Override
         public void visitCallExpression(PsiCallExpression callExpression) {
           final PsiMethod resolved = callExpression.resolveMethod();
@@ -270,7 +252,7 @@ public class VcsContentAnnotationExceptionFilter implements Filter, FilterMixin 
     return result;
   }
 
-  private List<TextRange> getTextRangeForMethod(final ExceptionWorker worker, Trinity<PsiClass, PsiFile, String> previousLineResult) {
+  private static List<TextRange> getTextRangeForMethod(final ExceptionWorker worker, Trinity<PsiClass, PsiFile, String> previousLineResult) {
     String method = worker.getMethod();
     PsiClass psiClass = worker.getPsiClass();
     PsiMethod[] methods;
@@ -290,7 +272,7 @@ public class VcsContentAnnotationExceptionFilter implements Filter, FilterMixin 
       } else {
         List<PsiMethod> selectedMethods = selectMethod(methods, previousLineResult);
         final List<PsiMethod> toIterate = selectedMethods == null ? Arrays.asList(methods) : selectedMethods;
-        final List<TextRange> result = new ArrayList<TextRange>();
+        final List<TextRange> result = new ArrayList<>();
         for (PsiMethod psiMethod : toIterate) {
           result.add(psiMethod.getTextRange());
         }

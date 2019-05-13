@@ -1,18 +1,3 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 class C {
   static class E extends Exception { }
   static class E1 extends E { }
@@ -25,7 +10,17 @@ class C {
     @Override public void close() throws E3 { }
   }
 
-  static interface I extends AutoCloseable { }
+  interface I extends AutoCloseable { }
+
+  interface Gen<E extends Exception> extends AutoCloseable {
+    @Override void close() throws E;
+
+    class Impl implements Gen<E2> {
+      @Override public void close() throws E2 { }
+    }
+  }
+
+  interface GenRT extends Gen<RuntimeException> { }
 
   void m1() {
     try (MyResource r = new MyResource()) { r.doSomething(); }
@@ -37,10 +32,10 @@ class C {
     try (<error descr="Unhandled exception from auto-closeable resource: C.E3">MyResource r = new MyResource()</error>) { }
     catch (E1 e) { }
 
-    try (MyResource r = <error descr="Unhandled exception: C.E1">new MyResource()</error>) { }
+    try (MyResource r = new <error descr="Unhandled exception: C.E1">MyResource</error>()) { }
     catch (E3 e) { }
 
-    try (MyResource r = <error descr="Unhandled exception: C.E1">new MyResource()</error>) { }
+    try (MyResource r = new <error descr="Unhandled exception: C.E1">MyResource</error>()) { }
 
     try (<error descr="Unhandled exception from auto-closeable resource: java.lang.Exception">I r = null</error>) { System.out.println(r); }
   }
@@ -54,7 +49,7 @@ class C {
   void m3(int p) throws Exception {
     try (MyResource r = new MyResource()) {
       r.doSomething();
-      <error descr="Cannot assign a value to final variable 'r'">r = null</error>;
+      <error descr="Cannot assign a value to final variable 'r'">r</error> = null;
       int <error descr="Variable 'r' is already defined in the scope">r</error> = 0;
     }
     catch (E e) {
@@ -89,5 +84,13 @@ class C {
 
     MyResource r;
     try (MyResource r1 = <error descr="Variable 'r' might not have been initialized">r</error>) { }
+  }
+
+  void m5() {
+    try (<error descr="Unhandled exception from auto-closeable resource: C.E2">Gen<E2> gen = new Gen.Impl()</error>) { }
+  }
+
+  void m6() {
+    try (GenRT gen = null) { }
   }
 }

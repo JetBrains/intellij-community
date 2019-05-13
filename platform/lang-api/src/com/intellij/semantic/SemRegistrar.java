@@ -19,12 +19,16 @@ import com.intellij.patterns.ElementPattern;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.NullableFunction;
 
+import java.util.Collection;
+
 /**
  * @see com.intellij.semantic.SemContributor#registerSemProviders(SemRegistrar)
  * @author peter
  */
 public interface SemRegistrar {
 
-  <T extends SemElement, V extends PsiElement> void registerSemElementProvider(SemKey<T> key, ElementPattern<? extends V> place, NullableFunction<V, T> provider);
+  <T extends SemElement, V extends PsiElement> void registerSemElementProvider(SemKey<T> key, ElementPattern<? extends V> place, NullableFunction<? super V, ? extends T> provider);
+
+  <T extends SemElement, V extends PsiElement> void registerRepeatableSemElementProvider(SemKey<T> key, ElementPattern<? extends V> place, NullableFunction<? super V, ? extends Collection<T>> provider);
 
 }

@@ -1,24 +1,9 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.openapi.vcs.changes.ui;
 
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
-import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
@@ -35,8 +20,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
+import java.awt.event.ItemListener;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -54,7 +38,7 @@ public class IgnoreUnversionedDialog extends DialogWrapper {
   private JTextField myIgnoreMaskTextField;
   private JPanel myPanel;
   private TextFieldWithBrowseButton myIgnoreFileTextField;
-  private List<VirtualFile> myFilesToIgnore;
+  private List<? extends VirtualFile> myFilesToIgnore;
   private final Project myProject;
   private boolean myInternalChange;
   private final IgnoredPathPresentation myPresentation;
@@ -70,7 +54,8 @@ public class IgnoreUnversionedDialog extends DialogWrapper {
                                                   project,
                                                   new FileChooserDescriptor(true, false, false, true, false, false));
     myIgnoreFileTextField.getTextField().getDocument().addDocumentListener(new DocumentAdapter() {
-      protected void textChanged(final DocumentEvent e) {
+      @Override
+      protected void textChanged(@NotNull final DocumentEvent e) {
         // on text change, clear remembered files to ignore
         if (!myInternalChange) {
           myFilesToIgnore = null;
@@ -81,26 +66,16 @@ public class IgnoreUnversionedDialog extends DialogWrapper {
                                                        "Select the directory which will not be tracked for changes",
                                                        project,
                                                        FileChooserDescriptorFactory.createSingleFolderDescriptor());
-    ActionListener listener = new ActionListener() {
-      public void actionPerformed(final ActionEvent e) {
-        updateControls();
-      }
-    };
-    myIgnoreAllFilesUnderRadioButton.addActionListener(listener);
-    myIgnoreAllFilesMatchingRadioButton.addActionListener(listener);
-    myIgnoreSpecifiedFileRadioButton.addActionListener(listener);
+    ItemListener listener = e -> updateControls();
+    myIgnoreAllFilesUnderRadioButton.addItemListener(listener);
+    myIgnoreAllFilesMatchingRadioButton.addItemListener(listener);
+    myIgnoreSpecifiedFileRadioButton.addItemListener(listener);
     updateControls();
   }
 
-  @NotNull
   @Override
-  protected Action[] createActions() {
-    return new Action[]{getOKAction(), getCancelAction(), getHelpAction()};
-  }
-
-  @Override
-  protected void doHelpAction() {
-    HelpManager.getInstance().invokeHelp("ignoreUnversionedFilesDialog");
+  protected String getHelpId() {
+    return "ignoreUnversionedFilesDialog";
   }
 
   private void updateControls() {
@@ -122,12 +97,13 @@ public class IgnoreUnversionedDialog extends DialogWrapper {
     return result;
   }
 
+  @Override
   @Nullable
   protected JComponent createCenterPanel() {
     return myPanel;
   }
 
-  private void setFilesToIgnore(List<VirtualFile> virtualFiles) {
+  private void setFilesToIgnore(List<? extends VirtualFile> virtualFiles) {
     assert virtualFiles.size() > 0;
     myFilesToIgnore = virtualFiles;
     myInternalChange = true;
@@ -167,7 +143,7 @@ public class IgnoreUnversionedDialog extends DialogWrapper {
       myIgnoreDirectoryTextField.setText(virtualFiles.get(0).getParent().getPresentableUrl());
     }
 
-    final Set<String> extensions = new HashSet<String>();
+    final Set<String> extensions = new HashSet<>();
     for(VirtualFile vf: virtualFiles) {
       final String extension = vf.getExtension();
       if (extension != null) {
@@ -224,7 +200,7 @@ public class IgnoreUnversionedDialog extends DialogWrapper {
   }
 
   private IgnoredFileBean[] getBeansFromFilesToIgnore(boolean onlyDirs) {
-    List<IgnoredFileBean> result = new ArrayList<IgnoredFileBean>();
+    List<IgnoredFileBean> result = new ArrayList<>();
     for (VirtualFile fileToIgnore : myFilesToIgnore) {
       String path = ChangesUtil.getProjectRelativePath(myProject, new File(fileToIgnore.getPath()));
       if (path != null) {
@@ -237,7 +213,7 @@ public class IgnoreUnversionedDialog extends DialogWrapper {
         }
       }
     }
-    return result.toArray(new IgnoredFileBean[result.size()]);
+    return result.toArray(new IgnoredFileBean[0]);
   }
 
   @Override @NonNls
@@ -245,16 +221,18 @@ public class IgnoreUnversionedDialog extends DialogWrapper {
     return "IgnoreUnversionedDialog";
   }
 
-  public static void ignoreSelectedFiles(final Project project, final List<VirtualFile> files) {
+  public static void ignoreSelectedFiles(@NotNull Project project, @NotNull List<? extends VirtualFile> files) {
     IgnoreUnversionedDialog dlg = new IgnoreUnversionedDialog(project);
     dlg.setFilesToIgnore(files);
-    dlg.show();
-    if (!dlg.isOK()) {
-      return;
-    }
-    final IgnoredFileBean[] ignoredFiles = dlg.getSelectedIgnoredFiles();
-    if (ignoredFiles.length > 0) {
-      ChangeListManager.getInstance(project).addFilesToIgnore(ignoredFiles);
+
+    if (dlg.showAndGet()) {
+      IgnoredFileBean[] ignoredFiles = dlg.getSelectedIgnoredFiles();
+
+      if (ignoredFiles.length > 0) {
+        ChangeListManager manager = ChangeListManager.getInstance(project);
+
+        manager.addFilesToIgnore(ignoredFiles);
+      }
     }
   }
 }

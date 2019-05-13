@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,7 @@
  */
 package com.intellij.util.xml.impl;
 
-import com.intellij.util.ReflectionCache;
+import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.ConcurrentClassMap;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomElementVisitor;
@@ -29,18 +29,18 @@ import java.lang.reflect.Method;
  */
 public class VisitorDescription {
   private final Class<? extends DomElementVisitor> myVisitorClass;
-  private final ConcurrentClassMap<Method> myMethods = new ConcurrentClassMap<Method>();
+  private final ConcurrentClassMap<Method> myMethods = new ConcurrentClassMap<>();
   @NonNls private static final String VISIT = "visit";
 
   public VisitorDescription(final Class<? extends DomElementVisitor> visitorClass) {
     myVisitorClass = visitorClass;
-    for (final Method method : ReflectionCache.getMethods(visitorClass)) {
+    for (final Method method : ReflectionUtil.getClassPublicMethods(visitorClass)) {
       final Class<?>[] parameterTypes = method.getParameterTypes();
       if (parameterTypes.length != 1) {
         continue;
       }
       final Class<?> domClass = parameterTypes[0];
-      if (!ReflectionCache.isAssignable(DomElement.class, domClass)) {
+      if (!ReflectionUtil.isAssignable(DomElement.class, domClass)) {
         continue;
       }
       final String methodName = method.getName();

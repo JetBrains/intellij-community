@@ -28,10 +28,10 @@ import com.intellij.util.PlatformIcons;
 * @author nik
 */
 class AddNewModuleLibraryAction extends AddItemPopupAction<Library> {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.roots.ui.configuration.classpath.AddNewModuleLibraryAction");
+  private static final Logger LOG = Logger.getInstance(AddNewModuleLibraryAction.class);
   private final StructureConfigurableContext myContext;
 
-  public AddNewModuleLibraryAction(final ClasspathPanel classpathPanel,
+  AddNewModuleLibraryAction(final ClasspathPanel classpathPanel,
                                    int actionIndex,
                                    StructureConfigurableContext context) {
     super(classpathPanel, actionIndex, ProjectBundle.message("classpath.add.simple.module.library.action"), PlatformIcons.JAR_ICON);

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,6 +26,7 @@ import org.jetbrains.annotations.Nullable;
  */
 public class DomDeclarationSearcher extends AbstractDomDeclarationSearcher {
 
+  @Override
   @Nullable
   protected DomTarget createDomTarget(DomElement parent, DomElement nameElement) {
     final NameValue nameValue = nameElement.getAnnotation(NameValue.class);

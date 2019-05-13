@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.facet.impl;
 
@@ -20,11 +6,12 @@ import com.intellij.ProjectTopics;
 import com.intellij.facet.*;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.project.ModuleAdapter;
+import com.intellij.openapi.module.ModuleManager;
+import com.intellij.openapi.project.ModuleListener;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.util.EventDispatcher;
-import com.intellij.util.containers.WeakHashMap;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NotNull;
@@ -36,30 +23,37 @@ import java.util.Map;
  * @author nik
  */
 public class ProjectWideFacetListenersRegistryImpl extends ProjectWideFacetListenersRegistry {
-  private final Map<FacetTypeId, EventDispatcher<ProjectWideFacetListener>> myDispatchers = new HashMap<FacetTypeId, EventDispatcher<ProjectWideFacetListener>>();
-  private final Map<FacetTypeId, WeakHashMap<Facet, Boolean>> myFacetsByType = new HashMap<FacetTypeId, WeakHashMap<Facet, Boolean>>();
-  private final Map<Module, MessageBusConnection> myModule2Connection = new HashMap<Module, MessageBusConnection>();
+  private final Map<FacetTypeId, EventDispatcher<ProjectWideFacetListener>> myDispatchers = new HashMap<>();
+  private final Map<FacetTypeId, Map<Facet, Boolean>> myFacetsByType = new HashMap<>();
+  private final Map<Module, MessageBusConnection> myModule2Connection = new HashMap<>();
   private final FacetManagerAdapter myFacetListener;
   private final EventDispatcher<ProjectWideFacetListener> myAllFacetsListener = EventDispatcher.create(ProjectWideFacetListener.class);
 
-  public ProjectWideFacetListenersRegistryImpl(MessageBus messageBus) {
+  public ProjectWideFacetListenersRegistryImpl(MessageBus messageBus, ModuleManager moduleManager) {
     myFacetListener = new MyFacetManagerAdapter();
-    messageBus.connect().subscribe(ProjectTopics.MODULES, new ModuleAdapter() {
-      public void moduleAdded(Project project, Module module) {
+    messageBus.connect().subscribe(ProjectTopics.MODULES, new ModuleListener() {
+      @Override
+      public void moduleAdded(@NotNull Project project, @NotNull Module module) {
         onModuleAdded(module);
       }
 
-      public void beforeModuleRemoved(final Project project, final Module module) {
+      @Override
+      public void beforeModuleRemoved(@NotNull final Project project, @NotNull final Module module) {
         Facet[] allFacets = FacetManager.getInstance(module).getAllFacets();
         for (Facet facet : allFacets) {
           onFacetRemoved(facet, true);
         }
       }
 
-      public void moduleRemoved(Project project, Module module) {
+      @Override
+      public void moduleRemoved(@NotNull Project project, @NotNull Module module) {
         onModuleRemoved(module);
       }
     });
+
+    for (Module module : moduleManager.getModules()) {
+      onModuleAdded(module);
+    }
   }
 
   private void onModuleRemoved(final Module module) {
@@ -86,9 +80,9 @@ public class ProjectWideFacetListenersRegistryImpl extends ProjectWideFacetListe
     connection.subscribe(FacetManager.FACETS_TOPIC, myFacetListener);
   }
 
-  private void onFacetRemoved(final Facet facet, final boolean before) {
+  private void onFacetRemoved(@NotNull Facet facet, final boolean before) {
     final FacetTypeId typeId = facet.getTypeId();
-    WeakHashMap<Facet, Boolean> facets = myFacetsByType.get(typeId);
+    Map<Facet, Boolean> facets = myFacetsByType.get(typeId);
     boolean lastFacet;
     if (facets != null) {
       facets.remove(facet);
@@ -131,12 +125,12 @@ public class ProjectWideFacetListenersRegistryImpl extends ProjectWideFacetListe
     return myAllFacetsListener.getMulticaster();
   }
 
-  private void onFacetAdded(final Facet facet) {
+  private void onFacetAdded(@NotNull Facet facet) {
     boolean firstFacet = myFacetsByType.isEmpty();
     final FacetTypeId typeId = facet.getTypeId();
-    WeakHashMap<Facet, Boolean> facets = myFacetsByType.get(typeId);
+    Map<Facet, Boolean> facets = myFacetsByType.get(typeId);
     if (facets == null) {
-      facets = new WeakHashMap<Facet, Boolean>();
+      facets = ContainerUtil.createWeakMap();
       myFacetsByType.put(typeId, facets);
     }
     boolean firstFacetOfType = facets.isEmpty();
@@ -146,7 +140,7 @@ public class ProjectWideFacetListenersRegistryImpl extends ProjectWideFacetListe
       getAllFacetsMulticaster().firstFacetAdded();
     }
     getAllFacetsMulticaster().facetAdded(facet);
-    
+
     final EventDispatcher<ProjectWideFacetListener> dispatcher = myDispatchers.get(typeId);
     if (dispatcher != null) {
       if (firstFacetOfType) {
@@ -157,7 +151,7 @@ public class ProjectWideFacetListenersRegistryImpl extends ProjectWideFacetListe
     }
   }
 
-  private void onFacetChanged(final Facet facet) {
+  private void onFacetChanged(@NotNull Facet facet) {
     final EventDispatcher<ProjectWideFacetListener> dispatcher = myDispatchers.get(facet.getTypeId());
     if (dispatcher != null) {
       //noinspection unchecked
@@ -166,6 +160,7 @@ public class ProjectWideFacetListenersRegistryImpl extends ProjectWideFacetListe
     getAllFacetsMulticaster().facetConfigurationChanged(facet);
   }
 
+  @Override
   public <F extends Facet> void registerListener(@NotNull FacetTypeId<F> typeId, @NotNull ProjectWideFacetListener<? extends F> listener) {
     EventDispatcher<ProjectWideFacetListener> dispatcher = myDispatchers.get(typeId);
     if (dispatcher == null) {
@@ -175,6 +170,7 @@ public class ProjectWideFacetListenersRegistryImpl extends ProjectWideFacetListe
     dispatcher.addListener(listener);
   }
 
+  @Override
   public <F extends Facet> void unregisterListener(@NotNull FacetTypeId<F> typeId, @NotNull ProjectWideFacetListener<? extends F> listener) {
     final EventDispatcher<ProjectWideFacetListener> dispatcher = myDispatchers.get(typeId);
     if (dispatcher != null) {
@@ -182,42 +178,51 @@ public class ProjectWideFacetListenersRegistryImpl extends ProjectWideFacetListe
     }
   }
 
+  @Override
   public <F extends Facet> void registerListener(@NotNull final FacetTypeId<F> typeId, @NotNull final ProjectWideFacetListener<? extends F> listener,
                                                  @NotNull final Disposable parentDisposable) {
     registerListener(typeId, listener);
     Disposer.register(parentDisposable, new Disposable() {
+      @Override
       public void dispose() {
         unregisterListener(typeId, listener);
       }
     });
   }
 
+  @Override
   public void registerListener(@NotNull final ProjectWideFacetListener<Facet> listener) {
     myAllFacetsListener.addListener(listener);
   }
 
+  @Override
   public void unregisterListener(@NotNull final ProjectWideFacetListener<Facet> listener) {
     myAllFacetsListener.removeListener(listener);
   }
 
+  @Override
   public void registerListener(@NotNull final ProjectWideFacetListener<Facet> listener, @NotNull final Disposable parentDisposable) {
     myAllFacetsListener.addListener(listener, parentDisposable);
   }
 
   private class MyFacetManagerAdapter extends FacetManagerAdapter {
 
+    @Override
     public void facetAdded(@NotNull Facet facet) {
       onFacetAdded(facet);
     }
 
+    @Override
     public void beforeFacetRemoved(@NotNull final Facet facet) {
       onFacetRemoved(facet, true);
     }
 
+    @Override
     public void facetRemoved(@NotNull Facet facet) {
       onFacetRemoved(facet, false);
     }
 
+    @Override
     public void facetConfigurationChanged(@NotNull final Facet facet) {
       onFacetChanged(facet);
     }

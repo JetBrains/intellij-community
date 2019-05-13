@@ -1,0 +1,96 @@
+package pkg;
+
+public class TestClassVar {
+   private boolean field_boolean = Math.random() > 0.0D;
+   public int field_int = 0;
+
+   public void testFieldSSAU() {
+      for(int var1 = 0; var1 < 10; ++var1) {// 26
+         try {
+            System.out.println();// 29
+         } finally {
+            if (this.field_boolean) {// 32
+               System.out.println();// 33
+            }
+
+         }
+      }
+
+   }// 37
+
+   public Long testFieldSSAU1() {
+      return new Long((long)(this.field_int++));// 40
+   }
+
+   public void testComplexPropagation() {
+      int var1 = 0;// 45
+
+      while(var1 < 10) {// 47
+         int var2;
+         for(var2 = var1; var1 < 10 && var1 == 0; ++var1) {// 49 51
+         }
+
+         if (var2 != var1) {// 54
+            System.out.println();// 55
+         }
+      }
+
+   }// 58
+}
+
+class 'pkg/TestClassVar' {
+   method 'testFieldSSAU ()V' {
+      0      7
+      1      7
+      3      7
+      5      7
+      8      9
+      b      9
+      1f      11
+      20      11
+      26      12
+      29      12
+      2e      7
+      34      18
+   }
+
+   method 'testFieldSSAU1 ()Ljava/lang/Long;' {
+      6      21
+      b      21
+      f      21
+      13      21
+   }
+
+   method 'testComplexPropagation ()V' {
+      0      25
+      1      25
+      3      27
+      5      27
+      9      29
+      b      29
+      d      29
+      11      29
+      14      29
+      1c      32
+      1f      33
+      22      33
+      28      37
+   }
+}
+
+Lines mapping:
+26 <-> 8
+29 <-> 10
+32 <-> 12
+33 <-> 13
+37 <-> 19
+40 <-> 22
+45 <-> 26
+47 <-> 28
+49 <-> 30
+51 <-> 30
+54 <-> 33
+55 <-> 34
+58 <-> 38
+Not mapped:
+57

@@ -21,6 +21,7 @@ package com.intellij.ide.actions;
 
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileTypes.FileTypeManager;
@@ -34,14 +35,14 @@ import java.io.IOException;
 
 public class PruneEmptyDirectoriesAction extends AnAction {
   @Override
-  public void update(AnActionEvent e) {
-    VirtualFile[] files = PlatformDataKeys.VIRTUAL_FILE_ARRAY.getData(e.getDataContext());
+  public void update(@NotNull AnActionEvent e) {
+    VirtualFile[] files = CommonDataKeys.VIRTUAL_FILE_ARRAY.getData(e.getDataContext());
     e.getPresentation().setEnabled(files != null && files.length > 0);
   }
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
-    VirtualFile[] files = PlatformDataKeys.VIRTUAL_FILE_ARRAY.getData(e.getDataContext());
+  public void actionPerformed(@NotNull AnActionEvent e) {
+    VirtualFile[] files = CommonDataKeys.VIRTUAL_FILE_ARRAY.getData(e.getDataContext());
     assert files != null;
 
     FileTypeManager ftManager = FileTypeManager.getInstance();
@@ -81,16 +82,14 @@ public class PruneEmptyDirectoriesAction extends AnAction {
   }
 
   private static void delete(final VirtualFile file) {
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      public void run() {
-        try {
-          file.delete(PruneEmptyDirectoriesAction.class);
-          //noinspection UseOfSystemOutOrSystemErr
-          System.out.println("Deleted: " + file.getPresentableUrl());
-        }
-        catch (IOException e) {
-          Messages.showErrorDialog("Cannot delete '" + file.getPresentableUrl() + "', " + e.getLocalizedMessage(), "IOException");
-        }
+    ApplicationManager.getApplication().runWriteAction(() -> {
+      try {
+        file.delete(PruneEmptyDirectoriesAction.class);
+        //noinspection UseOfSystemOutOrSystemErr
+        System.out.println("Deleted: " + file.getPresentableUrl());
+      }
+      catch (IOException e) {
+        Messages.showErrorDialog("Cannot delete '" + file.getPresentableUrl() + "', " + e.getLocalizedMessage(), "IOException");
       }
     });
   }

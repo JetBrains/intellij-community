@@ -32,17 +32,20 @@ public class TreeFileChooserFactoryImpl extends TreeFileChooserFactory {
     myProject = project;
   }
 
+  @Override
   @NotNull
   public TreeFileChooser createFileChooser(@NotNull String title, @Nullable PsiFile initialFile, @Nullable FileType fileType, @Nullable TreeFileChooser.PsiFileFilter filter) {
     return new TreeFileChooserDialog(myProject, title, initialFile, fileType, filter, false, false);
   }
 
+  @Override
   @NotNull
   public TreeFileChooser createFileChooser(@NotNull String title, @Nullable PsiFile initialFile, @Nullable FileType fileType, @Nullable TreeFileChooser.PsiFileFilter filter,
                                            boolean disableStructureProviders) {
     return new TreeFileChooserDialog(myProject, title, initialFile, fileType, filter, disableStructureProviders, false);
   }
 
+  @Override
   @NotNull
   public TreeFileChooser createFileChooser(@NotNull String title, @Nullable PsiFile initialFile, @Nullable FileType fileType, @Nullable TreeFileChooser.PsiFileFilter filter,
                                            boolean disableStructureProviders,

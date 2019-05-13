@@ -4,7 +4,7 @@ public class Main {
     Bar b = new Bar() {
         @Override
         void update() {
-            <selection>//To change body of implemented methods use File | Settings | File Templates.</selection>
+            <caret>
         }
     };
   }

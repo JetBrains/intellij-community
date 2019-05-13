@@ -1,0 +1,12 @@
+<html>
+<body>
+Reports <a href="http://www.c2.com/cgi/wiki?DoubleBraceInitialization">Double Brace Initialization</a>.
+Double brace initialization can cause memory leaks when used from a non-<b>static</b> context,
+because the anonymous <b>class</b> created will maintain a reference to the surrounding object.
+It has worse performance than regular initialization because of the additional class loading required.
+It can cause <b>equals()</b> comparisons to fail, if the <b>equals()</b> method does not accept subclasses as parameter (see link above).
+And finally, pre Java 9 it cannot be combined with the diamond operator, because that cannot be used with anonymous classes.
+<!-- tooltip end -->
+<p>
+</body>
+</html>

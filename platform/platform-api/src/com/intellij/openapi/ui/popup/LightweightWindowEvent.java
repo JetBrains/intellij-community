@@ -15,16 +15,18 @@
  */
 package com.intellij.openapi.ui.popup;
 
+import org.jetbrains.annotations.NotNull;
+
 public class LightweightWindowEvent {
 
   private final LightweightWindow myWindow;
-  private boolean myOk;
+  private final boolean myOk;
 
-  public LightweightWindowEvent(LightweightWindow window) {
+  public LightweightWindowEvent(@NotNull LightweightWindow window) {
     this(window, false);
   }
 
-  public LightweightWindowEvent(LightweightWindow window, boolean isOk) {
+  public LightweightWindowEvent(@NotNull LightweightWindow window, boolean isOk) {
     myWindow = window;
     myOk = isOk;
   }
@@ -33,10 +35,12 @@ public class LightweightWindowEvent {
     return myOk;
   }
 
+  @NotNull
   public Balloon asBalloon() {
     return (Balloon)myWindow;
   }
 
+  @NotNull
   public JBPopup asPopup() {
     return (JBPopup)myWindow;
   }

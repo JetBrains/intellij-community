@@ -19,7 +19,7 @@ interface I {
 public class Test {
   public int m() {
     I i = s -> {
-      return s.contains();
+      return s.isEmpty();
     };
     return 0;
   }

@@ -33,9 +33,10 @@ public class ErrorMessagesProcessor extends CvsMessagesAdapter implements ErrorP
   }
 
   public ErrorMessagesProcessor() {
-    this(new ArrayList<VcsException>());
+    this(new ArrayList<>());
   }
 
+  @Override
   public void addError(String message, String relativeFilePath, ICvsFileSystem cvsFileSystem, String cvsRoot, boolean warning) {
     VirtualFile vFile = getVirtualFile(cvsFileSystem, relativeFilePath);
     VcsException vcsException = new CvsException(message, cvsRoot);
@@ -50,10 +51,12 @@ public class ErrorMessagesProcessor extends CvsMessagesAdapter implements ErrorP
     return CvsVfsUtil.findFileByIoFile(cvsFileSystem.getLocalFileSystem().getFile(relativeFileName));
   }
 
+  @Override
   public List<VcsException> getErrors() {
     return myErrors;
   }
 
+  @Override
   public void addError(VcsException ex) {
     myErrors.add(ex);
   }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,12 +21,14 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.compiler.CompilerBundle;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
+import com.intellij.openapi.options.Configurable.NoScroll;
 import com.intellij.openapi.options.UnnamedConfigurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.*;
 import com.intellij.ui.table.JBTable;
 
@@ -42,11 +44,11 @@ import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.Arrays;
 
-public class ExcludedEntriesConfigurable implements UnnamedConfigurable {
+public class ExcludedEntriesConfigurable implements UnnamedConfigurable, NoScroll {
   private final Project myProject;
-  private final ArrayList<ExcludeEntryDescription> myExcludeEntryDescriptions = new ArrayList<ExcludeEntryDescription>();
+  private final ArrayList<ExcludeEntryDescription> myExcludeEntryDescriptions = new ArrayList<>();
   private final FileChooserDescriptor myDescriptor;
-  private final ExcludedEntriesConfiguration myConfiguration;
+  private final ExcludesConfiguration myConfiguration;
   private ExcludedEntriesPanel myExcludedEntriesPanel;
 
   public ExcludedEntriesConfigurable(Project project) {
@@ -54,12 +56,13 @@ public class ExcludedEntriesConfigurable implements UnnamedConfigurable {
          CompilerConfiguration.getInstance(project).getExcludedEntriesConfiguration());
   }
 
-  public ExcludedEntriesConfigurable(Project project, FileChooserDescriptor descriptor, final ExcludedEntriesConfiguration configuration) {
+  public ExcludedEntriesConfigurable(Project project, FileChooserDescriptor descriptor, final ExcludesConfiguration configuration) {
     myDescriptor = descriptor;
     myConfiguration = configuration;
     myProject = project;
   }
 
+  @Override
   public void reset() {
     ExcludeEntryDescription[] descriptions = myConfiguration.getExcludeEntryDescriptions();
     disposeMyDescriptions();
@@ -81,6 +84,7 @@ public class ExcludedEntriesConfigurable implements UnnamedConfigurable {
     myExcludeEntryDescriptions.clear();
   }
 
+  @Override
   public void apply() {
     myConfiguration.removeAllExcludeEntryDescriptions();
     for (ExcludeEntryDescription description : myExcludeEntryDescriptions) {
@@ -89,6 +93,7 @@ public class ExcludedEntriesConfigurable implements UnnamedConfigurable {
     FileStatusManager.getInstance(myProject).fileStatusesChanged(); // refresh exclude from compile status
   }
 
+  @Override
   public boolean isModified() {
     ExcludeEntryDescription[] excludeEntryDescriptions = myConfiguration.getExcludeEntryDescriptions();
     if(excludeEntryDescriptions.length != myExcludeEntryDescriptions.size()) {
@@ -103,6 +108,7 @@ public class ExcludedEntriesConfigurable implements UnnamedConfigurable {
     return false;
   }
 
+  @Override
   public JComponent createComponent() {
     if (myExcludedEntriesPanel == null) {
       myExcludedEntriesPanel = new ExcludedEntriesPanel();
@@ -110,6 +116,7 @@ public class ExcludedEntriesConfigurable implements UnnamedConfigurable {
     return myExcludedEntriesPanel;
   }
 
+  @Override
   public void disposeUIResources() {
     myExcludedEntriesPanel = null;
   }
@@ -118,18 +125,21 @@ public class ExcludedEntriesConfigurable implements UnnamedConfigurable {
     private JButton myRemoveButton;
     private JBTable myExcludedTable;
 
-    public ExcludedEntriesPanel() {
+    ExcludedEntriesPanel() {
       initPanel();
     }
 
+    @Override
     protected String getLabelText(){
       return null;
     }
 
+    @Override
     protected JButton[] createButtons(){
       final JButton addButton = new JButton(IdeBundle.message("button.add"));
       addButton.addActionListener(
         new ActionListener() {
+          @Override
           public void actionPerformed(ActionEvent e){
             addPath(myDescriptor);
           }
@@ -139,6 +149,7 @@ public class ExcludedEntriesConfigurable implements UnnamedConfigurable {
       myRemoveButton = new JButton(IdeBundle.message("button.remove"));
       myRemoveButton.addActionListener(
         new ActionListener(){
+          @Override
           public void actionPerformed(ActionEvent e){
             removePaths();
           }
@@ -146,6 +157,7 @@ public class ExcludedEntriesConfigurable implements UnnamedConfigurable {
       );
       myRemoveButton.setEnabled(false);
       myRemoveButton.getModel().addChangeListener(new ChangeListener() {
+        @Override
         public void stateChanged(ChangeEvent e) {
           if (myExcludedTable.getSelectedRow() == -1) {
             myRemoveButton.setEnabled(false);
@@ -226,9 +238,12 @@ public class ExcludedEntriesConfigurable implements UnnamedConfigurable {
       if(indexToSelect >= 0) {
         myExcludedTable.setRowSelectionInterval(indexToSelect, indexToSelect);
       }
-      myExcludedTable.requestFocus();
+      IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
+        IdeFocusManager.getGlobalInstance().requestFocus(myExcludedTable, true);
+      });
     }
 
+    @Override
     protected JComponent createMainComponent(){
       final String[] names = {
         CompilerBundle.message("exclude.from.compile.table.path.column.name"),
@@ -236,14 +251,17 @@ public class ExcludedEntriesConfigurable implements UnnamedConfigurable {
       };
       // Create a model of the data.
       TableModel dataModel = new AbstractTableModel() {
+        @Override
         public int getColumnCount() {
           return names.length;
         }
 
+        @Override
         public int getRowCount() {
           return myExcludeEntryDescriptions.size();
         }
 
+        @Override
         public Object getValueAt(int row, int col) {
           ExcludeEntryDescription description = myExcludeEntryDescriptions.get(row);
           if(col == 0) {
@@ -251,7 +269,7 @@ public class ExcludedEntriesConfigurable implements UnnamedConfigurable {
           }
           if(col == 1) {
             if(!description.isFile()) {
-              return description.isIncludeSubdirectories() ? Boolean.TRUE : Boolean.FALSE;
+              return description.isIncludeSubdirectories();
             }
             else {
               return null;
@@ -260,10 +278,12 @@ public class ExcludedEntriesConfigurable implements UnnamedConfigurable {
           return null;
         }
 
+        @Override
         public String getColumnName(int column) {
           return names[column];
         }
 
+        @Override
         public Class getColumnClass(int c) {
           if(c == 0) {
             return String.class;
@@ -274,6 +294,7 @@ public class ExcludedEntriesConfigurable implements UnnamedConfigurable {
           return null;
         }
 
+        @Override
         public boolean isCellEditable(int row, int col) {
           if(col == 1) {
             ExcludeEntryDescription description = myExcludeEntryDescriptions.get(row);
@@ -282,6 +303,7 @@ public class ExcludedEntriesConfigurable implements UnnamedConfigurable {
           return true;
         }
 
+        @Override
         public void setValueAt(Object aValue, int row, int col) {
           ExcludeEntryDescription description = myExcludeEntryDescriptions.get(row);
           if (col == 1) {
@@ -307,6 +329,7 @@ public class ExcludedEntriesConfigurable implements UnnamedConfigurable {
       cbColumn.setMaxWidth(cbWidth);
       myExcludedTable.getSelectionModel().setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
       myExcludedTable.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
+        @Override
         public void valueChanged(ListSelectionEvent e) {
           myRemoveButton.setEnabled(myExcludedTable.getSelectedRow() >= 0);
         }
@@ -340,10 +363,11 @@ public class ExcludedEntriesConfigurable implements UnnamedConfigurable {
   private static class BooleanRenderer extends JCheckBox implements TableCellRenderer {
     private final JPanel myPanel = new JPanel();
 
-    public BooleanRenderer() {
+    BooleanRenderer() {
       setHorizontalAlignment(CENTER);
     }
 
+    @Override
     public Component getTableCellRendererComponent(JTable table, Object value,
                                                    boolean isSelected, boolean hasFocus,
                                                    int row, int column) {
@@ -370,10 +394,11 @@ public class ExcludedEntriesConfigurable implements UnnamedConfigurable {
   }
 
   private class MyObjectRenderer extends DefaultTableCellRenderer {
-    public MyObjectRenderer() {
+    MyObjectRenderer() {
       setUI(new RightAlignedLabelUI());
     }
 
+    @Override
     public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
       final Component component = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
       final ExcludeEntryDescription description = myExcludeEntryDescriptions.get(row);

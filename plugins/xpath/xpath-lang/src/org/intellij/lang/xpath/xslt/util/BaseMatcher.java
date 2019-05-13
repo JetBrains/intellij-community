@@ -15,17 +15,17 @@
  */
 package org.intellij.lang.xpath.xslt.util;
 
-import org.intellij.lang.xpath.psi.impl.ResolveUtil;
-import org.intellij.lang.xpath.xslt.psi.XsltElementFactory;
-import org.intellij.lang.xpath.xslt.psi.XsltElement;
-
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.xml.XmlTag;
+import org.intellij.lang.xpath.psi.impl.ResolveUtil;
+import org.intellij.lang.xpath.xslt.psi.XsltElement;
+import org.intellij.lang.xpath.xslt.psi.XsltElementFactory;
 
 public abstract class BaseMatcher implements ResolveUtil.Matcher {
 
     protected abstract boolean matches(XmlTag element);
 
+    @Override
     public Result match(XmlTag element) {
         if (matches(element)) {
             return Result.create(transform(element));
@@ -37,6 +37,7 @@ public abstract class BaseMatcher implements ResolveUtil.Matcher {
         return XsltElementFactory.getInstance().wrapElement(element, XsltElement.class);
     }
 
+    @Override
     public boolean isRecursive() {
         return false;
     }

@@ -1,0 +1,4 @@
+public class X {
+  @DataPoint
+  public static int f = 0;
+}

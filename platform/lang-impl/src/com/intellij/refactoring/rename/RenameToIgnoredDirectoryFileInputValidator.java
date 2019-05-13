@@ -25,10 +25,6 @@ import com.intellij.psi.PsiFile;
 import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * User: anna
- * Date: 4/5/11
- */
 public class RenameToIgnoredDirectoryFileInputValidator implements RenameInputValidatorEx {
   @Nullable
   @Override
@@ -46,6 +42,6 @@ public class RenameToIgnoredDirectoryFileInputValidator implements RenameInputVa
 
   @Override
   public boolean isInputValid(String newName, PsiElement element, ProcessingContext context) {
-    return newName != null && newName.length() > 0 && newName.indexOf('\\') < 0 && newName.indexOf('/') < 0;
+    return newName != null && newName.length() > 0 && newName.indexOf('\\') < 0 && newName.indexOf('/') < 0 && newName.indexOf('\n') < 0;
   }
 }

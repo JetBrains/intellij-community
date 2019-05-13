@@ -24,7 +24,7 @@ PsiJavaFile:CompletionHack.java
           PsiJavaToken:LT('<')
           PsiTypeParameter:X
             PsiIdentifier:X('X')
-            PsiElement(EXTENDS_BOUND_LIST)
+            PsiReferenceList
               <empty list>
           PsiWhiteSpace(' ')
           PsiErrorElement:Unexpected identifier

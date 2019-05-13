@@ -1,0 +1,1 @@
+assertTrue(StrictMath.abs('_v1 - '_v2) < '_t);

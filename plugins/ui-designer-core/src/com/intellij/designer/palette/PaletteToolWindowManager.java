@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,10 +16,14 @@
 package com.intellij.designer.palette;
 
 import com.intellij.designer.AbstractToolWindowManager;
+import com.intellij.designer.DesignerCustomizations;
+import com.intellij.designer.DesignerEditorPanelFacade;
+import com.intellij.designer.LightToolWindow;
 import com.intellij.designer.designSurface.DesignerEditorPanel;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.ui.content.Content;
@@ -31,28 +35,46 @@ import org.jetbrains.annotations.Nullable;
  * @author Alexander Lobas
  */
 public class PaletteToolWindowManager extends AbstractToolWindowManager {
-  private final PalettePanel myToolWindowPanel = new PalettePanel();
+  private PalettePanel myToolWindowPanel;
+
+  //////////////////////////////////////////////////////////////////////////////////////////
+  //
+  // Public Access
+  //
+  //////////////////////////////////////////////////////////////////////////////////////////
 
   public PaletteToolWindowManager(Project project, FileEditorManager fileEditorManager) {
     super(project, fileEditorManager);
+  }
+
+  public static PalettePanel getInstance(DesignerEditorPanel designer) {
+    PaletteToolWindowManager manager = getInstance(designer.getProject());
+    if (manager.isEditorMode()) {
+      return (PalettePanel)manager.getContent(designer);
+    }
+    return manager.myToolWindowPanel;
   }
 
   public static PaletteToolWindowManager getInstance(Project project) {
     return project.getComponent(PaletteToolWindowManager.class);
   }
 
-  public void clearActiveItem() {
-    myToolWindowPanel.clearActiveItem();
-  }
-
-  public void refresh() {
-    myToolWindowPanel.repaint();
-  }
+  //////////////////////////////////////////////////////////////////////////////////////////
+  //
+  // Impl
+  //
+  //////////////////////////////////////////////////////////////////////////////////////////
 
   @Override
   protected void initToolWindow() {
-    myToolWindow = ToolWindowManager.getInstance(myProject).registerToolWindow("Palette\t", false, ToolWindowAnchor.RIGHT, myProject, true);
+    if (myToolWindowPanel == null) {
+      myToolWindowPanel = new PalettePanel();
+      Disposer.register(this, () -> myToolWindowPanel.dispose());
+    }
+
+    myToolWindow = ToolWindowManager.getInstance(myProject).registerToolWindow("Palette\t", false, getAnchor(), myProject, true);
     myToolWindow.setIcon(AllIcons.Toolwindows.ToolWindowPalette);
+    initGearActions();
 
     ContentManager contentManager = myToolWindow.getContentManager();
     Content content = contentManager.getFactory().createContent(myToolWindowPanel, null, false);
@@ -64,10 +86,16 @@ public class PaletteToolWindowManager extends AbstractToolWindowManager {
   }
 
   @Override
-  protected void updateToolWindow(@Nullable DesignerEditorPanel designer) {
-    myToolWindowPanel.loadPalette(designer);
+  protected ToolWindowAnchor getAnchor() {
+    DesignerCustomizations customization = getCustomizations();
+    return customization != null ? customization.getPaletteAnchor() : ToolWindowAnchor.RIGHT;
+  }
 
-    if (myToolWindowPanel.isEmpty()) {
+  @Override
+  protected void updateToolWindow(@Nullable DesignerEditorPanelFacade designer) {
+    myToolWindowPanel.loadPalette((DesignerEditorPanel)designer);
+
+    if (designer == null) {
       myToolWindow.setAvailable(false, null);
     }
     else {
@@ -76,14 +104,30 @@ public class PaletteToolWindowManager extends AbstractToolWindowManager {
     }
   }
 
-  @Override
-  public void disposeComponent() {
-    myToolWindowPanel.dispose();
-  }
-
   @NotNull
   @Override
   public String getComponentName() {
     return "PaletteToolWindowManager";
+  }
+
+  //////////////////////////////////////////////////////////////////////////////////////////
+  //
+  // Impl
+  //
+  //////////////////////////////////////////////////////////////////////////////////////////
+
+  @Override
+  protected LightToolWindow createContent(@NotNull DesignerEditorPanelFacade designer) {
+    PalettePanel palettePanel = new PalettePanel();
+    palettePanel.loadPalette((DesignerEditorPanel)designer);
+
+    return createContent(designer,
+                         palettePanel,
+                         "Palette",
+                         AllIcons.Toolwindows.ToolWindowPalette,
+                         palettePanel,
+                         palettePanel,
+                         180,
+                         null);
   }
 }

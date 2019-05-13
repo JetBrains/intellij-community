@@ -1,0 +1,15 @@
+<html>
+<body>
+Reports assignments and function calls where the name of the variable to which
+a value is assigned or the function parameter does not seem to match the name of the value assigned to it.
+For example:
+<pre><code><font color="#000080">
+  <b>int</b> x = 0;
+  <b>int</b> y = x;</font></code></pre> or <pre><code><font color="#000080">
+  <b>int</b> x = 0, y = 0;
+  Rectangle rc = <b>new</b> Rectangle(y, x, 20, 20);</font></code></pre>
+The configuration pane allows to specify the names which should not be used together: the error is reported
+if the parameter name or assignment target name contains words from one group and the name of the assigned or passed
+variable contains words from a different group.
+</body>
+</html>

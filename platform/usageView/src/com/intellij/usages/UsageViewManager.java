@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,10 +16,9 @@
 package com.intellij.usages;
 
 
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Factory;
 import com.intellij.psi.PsiElement;
 import com.intellij.usages.rules.PsiElementUsage;
@@ -43,7 +42,7 @@ public abstract class UsageViewManager {
   @NotNull
   public abstract UsageView showUsages(@NotNull UsageTarget[] searchedFor, @NotNull Usage[] foundUsages, @NotNull UsageViewPresentation presentation);
 
-  @Nullable ("in case no usages found or usage view not shown for one usage")
+  @Nullable ("returns null in case of no usages found or usage view not shown for one usage")
   public abstract UsageView searchAndShowUsages(@NotNull UsageTarget[] searchFor,
                                                 @NotNull Factory<UsageSearcher> searcherFactory,
                                                 boolean showPanelIfOnlyOneUsage,
@@ -53,7 +52,7 @@ public abstract class UsageViewManager {
 
   public interface UsageViewStateListener {
     void usageViewCreated(@NotNull UsageView usageView);
-    void findingUsagesFinished(UsageView usageView);
+    void findingUsagesFinished(@Nullable UsageView usageView);
   }
 
   public abstract void searchAndShowUsages(@NotNull UsageTarget[] searchFor,
@@ -67,21 +66,18 @@ public abstract class UsageViewManager {
 
   public static boolean isSelfUsage(@NotNull final Usage usage, @NotNull final UsageTarget[] searchForTarget) {
     if (!(usage instanceof PsiElementUsage)) return false;
-    return ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
-      @Override
-      public Boolean compute() {
-        final PsiElement element = ((PsiElementUsage)usage).getElement();
-        if (element == null) return false;
+    return ReadAction.compute(() -> {
+      final PsiElement element = ((PsiElementUsage)usage).getElement();
+      if (element == null) return false;
 
-        for (UsageTarget ut : searchForTarget) {
-          if (ut instanceof PsiElementUsageTarget) {
-            if (isSelfUsage(element, ((PsiElementUsageTarget)ut).getElement())) {
-              return true;
-            }
+      for (UsageTarget ut : searchForTarget) {
+        if (ut instanceof PsiElementUsageTarget) {
+          if (isSelfUsage(element, ((PsiElementUsageTarget)ut).getElement())) {
+            return true;
           }
         }
-        return false;
       }
+      return false;
     });
   }
 

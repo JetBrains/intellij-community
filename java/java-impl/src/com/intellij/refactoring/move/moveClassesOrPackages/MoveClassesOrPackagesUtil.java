@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,18 +17,22 @@ package com.intellij.refactoring.move.moveClassesOrPackages;
 
 import com.intellij.ide.util.DirectoryChooserUtil;
 import com.intellij.lang.java.JavaFindUsagesProvider;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.JavaProjectRootsUtil;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
+import com.intellij.psi.util.FileTypeUtils;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.MoveDestination;
 import com.intellij.refactoring.PackageWrapper;
 import com.intellij.refactoring.move.moveFilesOrDirectories.MoveFilesOrDirectoriesUtil;
@@ -37,7 +41,6 @@ import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.refactoring.util.TextOccurrencesUtil;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
@@ -56,8 +59,8 @@ public class MoveClassesOrPackagesUtil {
                                        final String newQName) {
     PsiManager manager = element.getManager();
 
-    ArrayList<UsageInfo> results = new ArrayList<UsageInfo>();
-    Set<PsiReference> foundReferences = new HashSet<PsiReference>();
+    ArrayList<UsageInfo> results = new ArrayList<>();
+    Set<PsiReference> foundReferences = new HashSet<>();
 
     GlobalSearchScope projectScope = GlobalSearchScope.projectScope(manager.getProject());
     for (PsiReference reference : ReferencesSearch.search(element, projectScope, false)) {
@@ -69,7 +72,7 @@ public class MoveClassesOrPackagesUtil {
 
     findNonCodeUsages(searchInStringsAndComments, searchInNonJavaFiles, element, newQName, results);
     preprocessUsages(results);
-    return results.toArray(new UsageInfo[results.size()]);
+    return results.toArray(UsageInfo.EMPTY_ARRAY);
   }
 
   private static void preprocessUsages(ArrayList<UsageInfo> results) {
@@ -82,7 +85,7 @@ public class MoveClassesOrPackagesUtil {
                                        boolean searchInNonJavaFiles,
                                        final PsiElement element,
                                        final String newQName,
-                                       ArrayList<UsageInfo> results) {
+                                       ArrayList<? super UsageInfo> results) {
     final String stringToSearch = getStringToSearch(element);
     if (stringToSearch == null) return;
     TextOccurrencesUtil.findNonCodeUsages(element, stringToSearch, searchInStringsAndComments, searchInNonJavaFiles, newQName, results);
@@ -97,6 +100,9 @@ public class MoveClassesOrPackagesUtil {
     }
     else if (element instanceof PsiDirectory) {
       return getStringToSearch(JavaDirectoryService.getInstance().getPackage((PsiDirectory)element));
+    }
+    else if (element instanceof PsiClassOwner) {
+      return ((PsiClassOwner)element).getName();
     }
     else {
       LOG.error("Unknown element type");
@@ -137,12 +143,10 @@ public class MoveClassesOrPackagesUtil {
   public static void moveDirectoryRecursively(PsiDirectory dir, PsiDirectory destination)
     throws IncorrectOperationException {
     if ( dir.getParentDirectory() == destination ) return;
-    moveDirectoryRecursively(dir, destination, new HashSet<VirtualFile>());
+    moveDirectoryRecursively(dir, destination, new HashSet<>());
   }
 
-  private static void moveDirectoryRecursively(PsiDirectory dir, PsiDirectory destination, HashSet<VirtualFile> movedPaths)
-    throws IncorrectOperationException {
-    final PsiManager manager = dir.getManager();
+  private static void moveDirectoryRecursively(PsiDirectory dir, PsiDirectory destination, HashSet<? super VirtualFile> movedPaths) throws IncorrectOperationException {
     final VirtualFile destVFile = destination.getVirtualFile();
     final VirtualFile sourceVFile = dir.getVirtualFile();
     if (movedPaths.contains(sourceVFile)) return;
@@ -228,15 +232,29 @@ public class MoveClassesOrPackagesUtil {
     final PsiPackage newPackage = JavaDirectoryService.getInstance().getPackage(moveDestination);
 
     newClass = aClass;
-    if (!moveDestination.equals(file.getContainingDirectory())) {
+    final PsiDirectory containingDirectory = file.getContainingDirectory();
+    if (!Comparing.equal(moveDestination.getVirtualFile(), containingDirectory != null ? containingDirectory.getVirtualFile() : null)) {
       LOG.assertTrue(file.getVirtualFile() != null, aClass);
+
+      Project project = file.getProject();
       MoveFilesOrDirectoriesUtil.doMoveFile(file, moveDestination);
-      if (file instanceof PsiClassOwner && newPackage != null && !JspPsiUtil.isInJspFile(file)) {
+
+      DumbService.getInstance(project).completeJustSubmittedTasks();
+
+      file = moveDestination.findFile(file.getName());
+
+    }
+
+    if (newPackage != null && file instanceof PsiClassOwner && !FileTypeUtils.isInServerPageFile(file) &&
+        !PsiUtil.isModuleFile(file)) {
+      String qualifiedName = newPackage.getQualifiedName();
+      if (!Comparing.strEqual(qualifiedName, ((PsiClassOwner)file).getPackageName()) && 
+          (qualifiedName.isEmpty() || PsiNameHelper.getInstance(file.getProject()).isQualifiedName(qualifiedName))) {
         // Do not rely on class instance identity retention after setPackageName (Scala)
         String aClassName = aClass.getName();
-        ((PsiClassOwner)file).setPackageName(newPackage.getQualifiedName());
+        ((PsiClassOwner)file).setPackageName(qualifiedName);
         newClass = findClassByName((PsiClassOwner)file, aClassName);
-        LOG.assertTrue(newClass != null);
+        LOG.assertTrue(newClass != null, "name:" + aClassName + " file:" + file + " classes:" + Arrays.toString(((PsiClassOwner)file).getClasses()));
       }
     }
     return newClass;
@@ -275,46 +293,39 @@ public class MoveClassesOrPackagesUtil {
 
     PsiDirectory[] directories = aPackage != null ? aPackage.getDirectories() : null;
     final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
-    final boolean filterOutSources = baseDir != null && fileIndex.isInTestSourceContent(baseDir.getVirtualFile());
-    if (directories != null && directories.length == 1 && !(filterOutSources &&
-                                                            !fileIndex.isInTestSourceContent(directories[0].getVirtualFile()))) {
+    final VirtualFile baseDirVirtualFile = baseDir != null ? baseDir.getVirtualFile() : null;
+    final boolean isBaseDirInTestSources = baseDirVirtualFile != null && fileIndex.isInTestSourceContent(baseDirVirtualFile);
+    if (directories != null && directories.length == 1 && (baseDirVirtualFile == null ||
+                                                           fileIndex.isInTestSourceContent(directories[0].getVirtualFile()) == isBaseDirInTestSources)) {
       directory = directories[0];
     }
     else {
-      final VirtualFile[] contentSourceRoots = ProjectRootManager.getInstance(project).getContentSourceRoots();
-      if (contentSourceRoots.length == 1 && !(filterOutSources && !fileIndex.isInTestSourceContent(contentSourceRoots[0]))) {
-        directory = ApplicationManager.getApplication().runWriteAction(new Computable<PsiDirectory>() {
-          @Override
-          public PsiDirectory compute() {
-            return RefactoringUtil.createPackageDirectoryInSourceRoot(packageWrapper, contentSourceRoots[0]);
-          }
-        });
+      final List<VirtualFile> contentSourceRoots = JavaProjectRootsUtil.getSuitableDestinationSourceRoots(project);
+      if (contentSourceRoots.size() == 1 && (baseDirVirtualFile == null || fileIndex.isInTestSourceContent(contentSourceRoots.get(0)) == isBaseDirInTestSources)) {
+        directory = WriteAction
+          .compute(() -> RefactoringUtil.createPackageDirectoryInSourceRoot(packageWrapper, contentSourceRoots.get(0)));
       }
       else {
         final VirtualFile sourceRootForFile = chooseSourceRoot(packageWrapper, contentSourceRoots, baseDir);
         if (sourceRootForFile == null) return null;
-        directory = ApplicationManager.getApplication().runWriteAction(new Computable<PsiDirectory>() {
-          @Override
-          public PsiDirectory compute() {
-            return new AutocreatingSingleSourceRootMoveDestination(packageWrapper, sourceRootForFile).getTargetDirectory((PsiDirectory)null);
-          }
-        });
+        directory = WriteAction.compute(
+          () -> new AutocreatingSingleSourceRootMoveDestination(packageWrapper, sourceRootForFile).getTargetDirectory((PsiDirectory)null));
       }
     }
     return directory;
   }
-  
+
   public static VirtualFile chooseSourceRoot(final PackageWrapper targetPackage,
-                                             final VirtualFile[] contentSourceRoots,
+                                             final List<? extends VirtualFile> contentSourceRoots,
                                              final PsiDirectory initialDirectory) {
     Project project = targetPackage.getManager().getProject();
     //ensure that there would be no duplicates: e.g. when one content root is subfolder of another root (configured via excluded roots)
-    LinkedHashSet<PsiDirectory> targetDirectories = new LinkedHashSet<PsiDirectory>();
-    Map<PsiDirectory, String> relativePathsToCreate = new HashMap<PsiDirectory,String>();
+    LinkedHashSet<PsiDirectory> targetDirectories = new LinkedHashSet<>();
+    Map<PsiDirectory, String> relativePathsToCreate = new HashMap<>();
     buildDirectoryList(targetPackage, contentSourceRoots, targetDirectories, relativePathsToCreate);
 
     final PsiDirectory selectedDirectory = DirectoryChooserUtil.chooseDirectory(
-      targetDirectories.toArray(new PsiDirectory[targetDirectories.size()]),
+      targetDirectories.toArray(PsiDirectory.EMPTY_ARRAY),
       initialDirectory,
       project,
       relativePathsToCreate
@@ -328,13 +339,14 @@ public class MoveClassesOrPackagesUtil {
   }
 
   public static void buildDirectoryList(PackageWrapper aPackage,
-                                        VirtualFile[] contentSourceRoots,
-                                        LinkedHashSet<PsiDirectory> targetDirectories,
+                                        List<? extends VirtualFile> contentSourceRoots,
+                                        LinkedHashSet<? super PsiDirectory> targetDirectories,
                                         Map<PsiDirectory, String> relativePathsToCreate) {
 
+    final PsiDirectory[] directories = aPackage.getDirectories();
     sourceRoots:
     for (VirtualFile root : contentSourceRoots) {
-      final PsiDirectory[] directories = aPackage.getDirectories();
+      if (!root.isDirectory()) continue;
       for (PsiDirectory directory : directories) {
         if (VfsUtil.isAncestor(root, directory.getVirtualFile(), false)) {
           targetDirectories.add(directory);
@@ -356,7 +368,7 @@ public class MoveClassesOrPackagesUtil {
         final PsiDirectory subdirectory = currentDirectory.findSubdirectory(shortName);
         if (subdirectory == null) {
           targetDirectories.add(currentDirectory);
-          final StringBuffer postfix = new StringBuffer();
+          final StringBuilder postfix = new StringBuilder();
           for (int k = j; k < shortNames.length; k++) {
             String name = shortNames[k];
             postfix.append(File.separatorChar);
@@ -370,7 +382,7 @@ public class MoveClassesOrPackagesUtil {
         }
       }
     }
-    LOG.assertTrue(targetDirectories.size() <= contentSourceRoots.length);
-    LOG.assertTrue(relativePathsToCreate.size() <= contentSourceRoots.length);
+    LOG.assertTrue(targetDirectories.size() <= contentSourceRoots.size());
+    LOG.assertTrue(relativePathsToCreate.size() <= contentSourceRoots.size());
   }
 }

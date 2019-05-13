@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,8 @@
  */
 package com.intellij.codeInsight.completion;
 
+import com.intellij.application.options.CodeStyle;
+import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.lang.Language;
 import com.intellij.openapi.editor.Document;
@@ -22,9 +24,8 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
-import com.intellij.psi.util.PsiUtilBase;
+import com.intellij.psi.util.PsiUtilCore;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -89,8 +90,8 @@ public class InsertionContext {
     return myOffsetMap;
   }
 
-  public OffsetKey trackOffset(int offset, boolean moveableToRight) {
-    final OffsetKey key = OffsetKey.create("tracked", moveableToRight);
+  public OffsetKey trackOffset(int offset, boolean movableToRight) {
+    final OffsetKey key = OffsetKey.create("tracked", movableToRight);
     getOffsetMap().addOffset(key, offset);
     return key;
   }
@@ -138,7 +139,13 @@ public class InsertionContext {
   }
 
   public CommonCodeStyleSettings getCodeStyleSettings() {
-    Language lang = PsiUtilBase.getLanguageAtOffset(getFile(), getTailOffset());
-    return CodeStyleSettingsManager.getSettings(getProject()).getCommonSettings(lang);
+    Language lang = PsiUtilCore.getLanguageAtOffset(getFile(), getTailOffset());
+    return CodeStyle.getLanguageSettings(getFile(), lang);
+  }
+
+  public static boolean shouldAddCompletionChar(char completionChar) {
+    return completionChar != Lookup.AUTO_INSERT_SELECT_CHAR &&
+           completionChar != Lookup.REPLACE_SELECT_CHAR &&
+           completionChar != Lookup.NORMAL_SELECT_CHAR;
   }
 }

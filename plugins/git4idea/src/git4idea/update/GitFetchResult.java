@@ -25,13 +25,14 @@ import static com.intellij.openapi.util.text.StringUtil.join;
 import static com.intellij.openapi.util.text.StringUtil.pluralize;
 
 /**
- * @author Kirill Likhodedov
+ * @deprecated Use {@link git4idea.fetch.GitFetchSupport}
  */
+@Deprecated
 public final class GitFetchResult {
 
   private final Type myType;
-  private Collection<Exception> myErrors = new ArrayList<Exception>();
-  private Collection<String> myPrunedRefs = new ArrayList<String>();
+  private Collection<Exception> myErrors = new ArrayList<>();
+  private final Collection<String> myPrunedRefs = new ArrayList<>();
 
   public enum Type {
     SUCCESS,

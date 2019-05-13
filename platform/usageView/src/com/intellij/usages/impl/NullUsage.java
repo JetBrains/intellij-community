@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,63 +16,12 @@
 
 package com.intellij.usages.impl;
 
-import com.intellij.openapi.fileEditor.FileEditorLocation;
-import com.intellij.usages.Usage;
-import com.intellij.usages.UsagePresentation;
-import org.jetbrains.annotations.NotNull;
-
 /**
  * @author cdr
  */
-public class NullUsage implements Usage {
+public class NullUsage extends UsageAdapter {
   public static final NullUsage INSTANCE = new NullUsage();
 
   private NullUsage() {
-  }
-
-  @Override
-  @NotNull
-  public UsagePresentation getPresentation() {
-    throw new IllegalAccessError();
-  }
-
-  @Override
-  public boolean isValid() {
-    return false;
-  }
-
-  @Override
-  public boolean isReadOnly() {
-    return false;
-  }
-
-  @Override
-  public FileEditorLocation getLocation() {
-    return null;
-  }
-
-  @Override
-  public void selectInEditor() {
-
-  }
-
-  @Override
-  public void highlightInEditor() {
-
-  }
-
-  @Override
-  public void navigate(final boolean requestFocus) {
-
-  }
-
-  @Override
-  public boolean canNavigate() {
-    return false;
-  }
-
-  @Override
-  public boolean canNavigateToSource() {
-    return false;
   }
 }

@@ -1,19 +1,4 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.intentions.conversions;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -28,10 +13,9 @@ import com.intellij.psi.util.MethodSignature;
 import com.intellij.psi.util.MethodSignatureUtil;
 import com.intellij.refactoring.ui.ConflictsDialog;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.containers.HashSet;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.groovy.GroovyFileType;
+import org.jetbrains.plugins.groovy.GroovyLanguage;
 import org.jetbrains.plugins.groovy.intentions.GroovyIntentionsBundle;
 import org.jetbrains.plugins.groovy.intentions.base.Intention;
 import org.jetbrains.plugins.groovy.intentions.base.PsiElementPredicate;
@@ -39,7 +23,6 @@ import org.jetbrains.plugins.groovy.lang.documentation.GroovyPresentationUtil;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifier;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
-import org.jetbrains.plugins.groovy.lang.psi.api.signatures.GrSignature;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentLabel;
@@ -53,6 +36,7 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.signatures.GrClosureSignatureU
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
 
 /**
@@ -69,23 +53,12 @@ public class ConvertClosureToMethodIntention extends Intention {
   }
 
   @Override
-  protected void processIntention(@NotNull PsiElement element, Project project, Editor editor) throws IncorrectOperationException {
-    final GrField field;
-    if (element.getParent() instanceof GrField) {
-      field = (GrField)element.getParent();
-    }
-    else {
-      final PsiReference ref = element.getReference();
-      LOG.assertTrue(ref != null);
-      PsiElement resolved = ref.resolve();
-      if (resolved instanceof GrAccessorMethod) {
-        resolved = ((GrAccessorMethod)resolved).getProperty();
-      }
-      LOG.assertTrue(resolved instanceof GrField);
-      field = (GrField)resolved;
-    }
+  protected void processIntention(@NotNull PsiElement element, @NotNull Project project, Editor editor) throws IncorrectOperationException {
+    final PsiElement parent = element.getParent();
+    if (!(parent instanceof GrField)) return;
 
-    final HashSet<PsiReference> usages = new HashSet<PsiReference>();
+    final GrField field = (GrField)parent;
+    final HashSet<PsiReference> usages = new HashSet<>();
     usages.addAll(ReferencesSearch.search(field).findAll());
     final GrAccessorMethod[] getters = field.getGetters();
     for (GrAccessorMethod getter : getters) {
@@ -97,13 +70,12 @@ public class ConvertClosureToMethodIntention extends Intention {
     }
 
     final String fieldName = field.getName();
-    LOG.assertTrue(fieldName != null);
-    final Collection<PsiElement> fieldUsages = new HashSet<PsiElement>();
-    MultiMap<PsiElement, String> conflicts = new MultiMap<PsiElement, String>();
+    final Collection<PsiElement> fieldUsages = new HashSet<>();
+    MultiMap<PsiElement, String> conflicts = new MultiMap<>();
     for (PsiReference usage : usages) {
       final PsiElement psiElement = usage.getElement();
       if (PsiUtil.isMethodUsage(psiElement)) continue;
-      if (!GroovyFileType.GROOVY_LANGUAGE.equals(psiElement.getLanguage())) {
+      if (!GroovyLanguage.INSTANCE.equals(psiElement.getLanguage())) {
         conflicts.putValue(psiElement, GroovyIntentionsBundle.message("closure.is.accessed.outside.of.groovy", fieldName));
       }
       else {
@@ -123,8 +95,9 @@ public class ConvertClosureToMethodIntention extends Intention {
     LOG.assertTrue(initializer != null);
     final PsiType type = initializer.getType();
     LOG.assertTrue(type instanceof GrClosureType);
-    final GrSignature signature = ((GrClosureType)type).getSignature();
-    final List<MethodSignature> signatures = GrClosureSignatureUtil.generateAllMethodSignaturesBySignature(fieldName, signature);
+    final List<MethodSignature> signatures = GrClosureSignatureUtil.generateAllMethodSignaturesBySignature(
+      fieldName, ((GrClosureType)type).getSignatures()
+    );
     for (MethodSignature s : signatures) {
       final PsiMethod method = MethodSignatureUtil.findMethodBySignature(containingClass, s, true);
       if (method != null) {
@@ -132,13 +105,8 @@ public class ConvertClosureToMethodIntention extends Intention {
                                                                   GroovyPresentationUtil.getSignaturePresentation(s)));
       }
     }
-    if (conflicts.size() > 0) {
-      final ConflictsDialog conflictsDialog = new ConflictsDialog(project, conflicts, new Runnable() {
-        @Override
-        public void run() {
-          execute(field, fieldUsages);
-        }
-      });
+    if (!conflicts.isEmpty()) {
+      final ConflictsDialog conflictsDialog = new ConflictsDialog(project, conflicts, () -> execute(field, fieldUsages));
       conflictsDialog.show();
       if (conflictsDialog.getExitCode() != DialogWrapper.OK_EXIT_CODE) return;
     }
@@ -170,73 +138,62 @@ public class ConvertClosureToMethodIntention extends Intention {
     builder.append(") {");
 
 
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      public void run() {
-        block.getParameterList().delete();
-        block.getLBrace().delete();
-        final PsiElement psiElement = PsiUtil.skipWhitespacesAndComments(block.getFirstChild(), true);
-        if (psiElement != null && "->".equals(psiElement.getText())) {
-          psiElement.delete();
-        }
-        builder.append(block.getText());
-        final GrMethod method = GroovyPsiElementFactory.getInstance(field.getProject()).createMethodFromText(builder.toString());
-        field.getParent().replace(method);
-        for (PsiElement usage : fieldUsages) {
-          if (usage instanceof GrReferenceExpression) {
-            final PsiElement parent = usage.getParent();
-            StringBuilder newRefText = new StringBuilder();
-            if (parent instanceof GrReferenceExpression &&
-                usage == ((GrReferenceExpression)parent).getQualifier() &&
-                "call".equals(((GrReferenceExpression)parent).getName())) {
-              newRefText.append(usage.getText());
-              usage = parent;
+    ApplicationManager.getApplication().runWriteAction(() -> {
+      block.getParameterList().delete();
+      block.getLBrace().delete();
+      final PsiElement psiElement = PsiUtil.skipWhitespacesAndComments(block.getFirstChild(), true);
+      if (psiElement != null && "->".equals(psiElement.getText())) {
+        psiElement.delete();
+      }
+      builder.append(block.getText());
+      final GrMethod method = GroovyPsiElementFactory.getInstance(field.getProject()).createMethodFromText(builder.toString());
+      field.getParent().replace(method);
+      for (PsiElement usage : fieldUsages) {
+        if (usage instanceof GrReferenceExpression) {
+          final PsiElement parent = usage.getParent();
+          StringBuilder newRefText = new StringBuilder();
+          if (parent instanceof GrReferenceExpression &&
+              usage == ((GrReferenceExpression)parent).getQualifier() &&
+              "call".equals(((GrReferenceExpression)parent).getReferenceName())) {
+            newRefText.append(usage.getText());
+            usage = parent;
+          }
+          else {
+            PsiElement qualifier = ((GrReferenceExpression)usage).getQualifier();
+            if (qualifier == null) {
+              if (parent instanceof GrReferenceExpression &&
+                  ((GrReferenceExpression)parent).getQualifier() != null &&
+                  usage != ((GrReferenceExpression)parent).getQualifier()) {
+                qualifier = ((GrReferenceExpression)parent).getQualifier();
+                usage = parent;
+              }
+            }
+
+            if (qualifier != null) {
+              newRefText.append(qualifier.getText()).append('.');
+              ((GrReferenceExpression)usage).setQualifier(null);
             }
             else {
-              PsiElement qualifier = ((GrReferenceExpression)usage).getQualifier();
-              if (qualifier == null) {
-                if (parent instanceof GrReferenceExpression &&
-                    ((GrReferenceExpression)parent).getQualifier() != null &&
-                    usage != ((GrReferenceExpression)parent).getQualifier()) {
-                  qualifier = ((GrReferenceExpression)parent).getQualifier();
-                  usage = parent;
-                }
-              }
-
-              if (qualifier != null) {
-                newRefText.append(qualifier.getText()).append('.');
-                ((GrReferenceExpression)usage).setQualifier(null);
-              }
-              else {
-                newRefText.append("this.");
-              }
-              newRefText.append('&').append(usage.getText());
+              newRefText.append("this.");
             }
-            usage.replace(factory.createReferenceExpressionFromText(newRefText.toString()));
+            newRefText.append('&').append(usage.getText());
           }
+          usage.replace(factory.createReferenceExpressionFromText(newRefText.toString()));
         }
       }
     });
   }
 
   private static class MyPredicate implements PsiElementPredicate {
-    public boolean satisfiedBy(PsiElement element) {
-      if (element.getLanguage() != GroovyFileType.GROOVY_LANGUAGE) return false;
-      final PsiReference ref = element.getReference();
-      GrField field;
-      if (ref != null) {
-        PsiElement resolved = ref.resolve();
-        if (resolved instanceof GrAccessorMethod) {
-          resolved = ((GrAccessorMethod)resolved).getProperty();
-        }
-        if (!(resolved instanceof GrField)) return false;
-        field = (GrField)resolved;
-      }
-      else {
-        final PsiElement parent = element.getParent();
-        if (!(parent instanceof GrField)) return false;
-        field = (GrField)parent;
-        if (field.getNameIdentifierGroovy() != element) return false;
-      }
+    @Override
+    public boolean satisfiedBy(@NotNull PsiElement element) {
+      if (element.getLanguage() != GroovyLanguage.INSTANCE) return false;
+
+      final PsiElement parent = element.getParent();
+      if (!(parent instanceof GrField)) return false;
+
+      final GrField field = (GrField)parent;
+      if (field.getNameIdentifierGroovy() != element) return false;
 
       final PsiElement varDeclaration = field.getParent();
       if (!(varDeclaration instanceof GrVariableDeclaration)) return false;

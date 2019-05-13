@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,22 +15,25 @@
  */
 package git4idea.branch;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationNamesInfo;
-import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vcs.changes.Change;
-import com.intellij.openapi.vcs.changes.ui.ChangesBrowser;
-import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.components.JBLabel;
-import com.intellij.util.ui.UIUtil;
-import git4idea.GitPlatformFacade;
+import com.intellij.util.ui.JBUI;
+import git4idea.DialogManager;
+import git4idea.ui.ChangesBrowserWithRollback;
+import git4idea.util.GitSimplePathsBrowser;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
+import java.util.Collection;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicInteger;
 
 import static com.intellij.openapi.util.text.StringUtil.capitalize;
 
@@ -39,45 +42,61 @@ import static com.intellij.openapi.util.text.StringUtil.capitalize;
  * "Your local changes to the following files would be overwritten by merge/checkout"
  * happens.
  * Displays the list of these files and proposes to make a "smart" merge or checkout.
- *
- * @author Kirill Likhodedov
  */
-class GitSmartOperationDialog extends DialogWrapper {
+public class GitSmartOperationDialog extends DialogWrapper {
 
-  public static final int SMART_EXIT_CODE = OK_EXIT_CODE;
-  public static final int FORCE_EXIT_CODE = NEXT_USER_EXIT_CODE;
-  
-  private final Project myProject;
-  private final List<Change> myChanges;
-  @NotNull private final String myOperationTitle;
-  private final boolean myForceButton;
+  public enum Choice {
+    SMART,
+    FORCE,
+    CANCEL;
 
-  /**
-   * Shows the dialog with the list of local changes preventing merge/checkout and returns the dialog exit code.
-   */
-  static int showAndGetAnswer(@NotNull final Project project, @NotNull final List<Change> changes, @NotNull final String operationTitle,
-                              final boolean forceButton) {
-    final AtomicInteger exitCode = new AtomicInteger();
-    UIUtil.invokeAndWaitIfNeeded(new Runnable() {
-      @Override
-      public void run() {
-        GitSmartOperationDialog dialog = new GitSmartOperationDialog(project, changes, operationTitle, forceButton);
-        ServiceManager.getService(project, GitPlatformFacade.class).showDialog(dialog);
-        exitCode.set(dialog.getExitCode());
-      }
-    });
-    return exitCode.get();
+    @NotNull
+    private static Choice fromDialogExitCode(int exitCode) {
+      if (exitCode == OK_EXIT_CODE) return SMART;
+      if (exitCode == FORCE_EXIT_CODE) return FORCE;
+      if (exitCode == CANCEL_EXIT_CODE) return CANCEL;
+      LOG.error("Unexpected exit code: " + exitCode);
+      return CANCEL;
+    }
   }
 
-  private GitSmartOperationDialog(@NotNull Project project, @NotNull List<Change> changes, @NotNull String operationTitle,
-                                  boolean forceButton) {
+  private static final Logger LOG = Logger.getInstance(GitSmartOperationDialog.class);
+  private static final int FORCE_EXIT_CODE = NEXT_USER_EXIT_CODE;
+
+  @NotNull private final JComponent myFileBrowser;
+  @NotNull private final String myOperationTitle;
+  @Nullable private final String myForceButton;
+
+  /**
+   * Shows the dialog with the list of local changes preventing merge/checkout and returns the user's choice.
+   */
+  @NotNull
+  static Choice show(@NotNull Project project,
+                     @NotNull List<Change> changes,
+                     @NotNull Collection<String> paths,
+                     @NotNull String operationTitle,
+                     @Nullable String forceButtonTitle) {
+    JComponent fileBrowser = !changes.isEmpty()
+                             ? new ChangesBrowserWithRollback(project, changes)
+                             : new GitSimplePathsBrowser(project, paths);
+    GitSmartOperationDialog dialog = new GitSmartOperationDialog(project, fileBrowser, operationTitle, forceButtonTitle);
+    if (fileBrowser instanceof Disposable) Disposer.register(dialog.getDisposable(), (Disposable)fileBrowser);
+    DialogManager.show(dialog);
+    return Choice.fromDialogExitCode(dialog.getExitCode());
+  }
+
+  private GitSmartOperationDialog(@NotNull Project project, @NotNull JComponent fileBrowser, @NotNull String operationTitle,
+                                  @Nullable String forceButton) {
     super(project);
-    myProject = project;
-    myChanges = changes;
+    myFileBrowser = fileBrowser;
     myOperationTitle = operationTitle;
     myForceButton = forceButton;
-    setOKButtonText("Smart " + capitalize(myOperationTitle));
-    setCancelButtonText("Don't " + capitalize(myOperationTitle));
+    String capitalizedOperation = capitalize(myOperationTitle);
+    setTitle("Git " + capitalizedOperation + " Problem");
+
+    setOKButtonText("Smart " + capitalizedOperation);
+    getOKAction().putValue(Action.SHORT_DESCRIPTION, "Stash local changes, " + operationTitle + ", unstash");
+    setCancelButtonText("Don't " + capitalizedOperation);
     getCancelAction().putValue(FOCUSED_ACTION, Boolean.TRUE);
     init();
   }
@@ -85,8 +104,8 @@ class GitSmartOperationDialog extends DialogWrapper {
   @NotNull
   @Override
   protected Action[] createLeftSideActions() {
-    if (myForceButton) {
-      return new Action[] {new ForceCheckoutAction(myOperationTitle) };
+    if (myForceButton != null) {
+      return new Action[]{new ForceCheckoutAction(myForceButton, myOperationTitle)};
     }
     return new Action[0];
   }
@@ -96,16 +115,13 @@ class GitSmartOperationDialog extends DialogWrapper {
     JBLabel description = new JBLabel("<html>Your local changes to the following files would be overwritten by " + myOperationTitle +
                                       ".<br/>" + ApplicationNamesInfo.getInstance().getFullProductName() + " can stash the changes, "
                                       + myOperationTitle + " and unstash them after that.</html>");
-    description.setBorder(IdeBorderFactory.createEmptyBorder(0, 0, 10, 0));
+    description.setBorder(JBUI.Borders.emptyBottom(10));
     return description;
   }
 
   @Override
   protected JComponent createCenterPanel() {
-    ChangesBrowser changesBrowser =
-      new ChangesBrowser(myProject, null, myChanges, null, false, true, null, ChangesBrowser.MyUseCase.LOCAL_CHANGES, null);
-    changesBrowser.setChangesToDisplay(myChanges);
-    return changesBrowser;
+    return myFileBrowser;
   }
 
   @Override
@@ -116,8 +132,9 @@ class GitSmartOperationDialog extends DialogWrapper {
 
   private class ForceCheckoutAction extends AbstractAction {
     
-    ForceCheckoutAction(@NotNull String operationTitle) {
-      super("&Force " + capitalize(operationTitle));
+    ForceCheckoutAction(@NotNull String buttonTitle, @NotNull String operationTitle) {
+      super(buttonTitle);
+      putValue(Action.SHORT_DESCRIPTION, capitalize(operationTitle) + " and overwrite local changes");
     }
     
     @Override
@@ -125,5 +142,4 @@ class GitSmartOperationDialog extends DialogWrapper {
       close(FORCE_EXIT_CODE);
     }
   }
-
 }

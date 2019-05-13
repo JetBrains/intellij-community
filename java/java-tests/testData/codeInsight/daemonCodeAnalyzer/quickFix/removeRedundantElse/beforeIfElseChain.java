@@ -1,4 +1,4 @@
-// "Remove Redundant 'else'" "false"
+// "Remove redundant 'else'" "false"
 class a {
   void foo() {
     int a = 0;

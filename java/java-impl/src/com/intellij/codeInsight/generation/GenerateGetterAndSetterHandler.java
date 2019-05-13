@@ -16,10 +16,19 @@
 package com.intellij.codeInsight.generation;
 
 import com.intellij.codeInsight.CodeInsightBundle;
+import com.intellij.codeInsight.hint.HintManager;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiClass;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
+import java.awt.*;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 
 public class GenerateGetterAndSetterHandler extends GenerateGetterSetterHandlerBase{
   private final GenerateGetterHandler myGenerateGetterHandler = new GenerateGetterHandler();
@@ -29,18 +38,38 @@ public class GenerateGetterAndSetterHandler extends GenerateGetterSetterHandlerB
     super(CodeInsightBundle.message("generate.getter.setter.title"));
   }
 
+  @Nullable
+  @Override
+  protected JComponent getHeaderPanel(Project project) {
+    final JPanel panel = new JPanel(new BorderLayout(2, 2));
+    panel.add(getHeaderPanel(project, GetterTemplatesManager.getInstance(), CodeInsightBundle.message("generate.getter.template")), BorderLayout.NORTH);
+    panel.add(getHeaderPanel(project, SetterTemplatesManager.getInstance(), CodeInsightBundle.message("generate.setter.template")), BorderLayout.SOUTH);
+    return panel;
+  }
+
   @Override
   public GenerationInfo[] generateMemberPrototypes(PsiClass aClass, ClassMember original) throws IncorrectOperationException {
-    ArrayList<GenerationInfo> array = new ArrayList<GenerationInfo>();
+    ArrayList<GenerationInfo> array = new ArrayList<>();
     GenerationInfo[] getters = myGenerateGetterHandler.generateMemberPrototypes(aClass, original);
     GenerationInfo[] setters = myGenerateSetterHandler.generateMemberPrototypes(aClass, original);
 
-    if (getters.length > 0 && setters.length > 0){
-      array.add(getters[0]);
-      array.add(setters[0]);
+    if (getters.length + setters.length > 0){
+      Collections.addAll(array, getters);
+      Collections.addAll(array, setters);
     }
 
-    return array.toArray(new GenerationInfo[array.size()]);
+    return array.toArray(GenerationInfo.EMPTY_ARRAY);
+  }
+
+  @Override
+  protected void notifyOnSuccess(Editor editor,
+                                 ClassMember[] members,
+                                 List<? extends GenerationInfo> generatedMembers) {
+    super.notifyOnSuccess(editor, members, generatedMembers);
+    if (Arrays.stream(members).anyMatch(fm -> fm instanceof PsiFieldMember && 
+                                              GetterSetterPrototypeProvider.isReadOnlyProperty(((PsiFieldMember)fm).getElement()))) {
+      HintManager.getInstance().showErrorHint(editor, "Setters for read-only fields were not generated", HintManager.ABOVE);
+    }
   }
 
   @Override

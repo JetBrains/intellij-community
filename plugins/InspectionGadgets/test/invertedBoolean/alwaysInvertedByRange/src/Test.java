@@ -10,6 +10,7 @@ class Test {
   }
 
   int bah() {
+    System.out.println(!foo());
     return bah();
   }
 }

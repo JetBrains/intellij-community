@@ -16,16 +16,23 @@
 
 package com.intellij.ide.actions;
 
-import com.intellij.ide.FileEditorProvider;
+import com.intellij.codeInsight.TargetElementUtil;
+import com.intellij.ide.FileEditorSelectInContext;
+import com.intellij.ide.FileSelectInContext;
 import com.intellij.ide.SelectInContext;
+import com.intellij.ide.SmartSelectInContext;
+import com.intellij.ide.structureView.StructureView;
+import com.intellij.ide.structureView.StructureViewBuilder;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.*;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiDocumentManager;
@@ -38,37 +45,30 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.awt.*;
 import java.awt.event.InputEvent;
 
-public abstract class SelectInContextImpl implements SelectInContext {
-  protected final PsiFile myPsiFile;
+public class SelectInContextImpl extends FileSelectInContext {
+  private final Object mySelector;
 
-  protected SelectInContextImpl(PsiFile psiFile) {
-    myPsiFile = psiFile;
+  private SelectInContextImpl(@NotNull PsiFile psiFile, @NotNull Object selector) {
+    super(psiFile.getProject(), psiFile.getViewProvider().getVirtualFile());
+    assert !(selector instanceof PsiElement) : "use SmartSelectInContext instead";
+    mySelector = selector;
   }
 
-  @NotNull
-  public Project getProject() {
-    return myPsiFile.getProject();
-  }
-
-
-  @NotNull
-  public VirtualFile getVirtualFile() {
-    final VirtualFile vFile = myPsiFile.getVirtualFile();
-    assert vFile != null;
-    return vFile;
-  }
-
+  @Override
   public Object getSelectorInFile() {
-    return myPsiFile;
+    return mySelector;
   }
 
   @Nullable
   public static SelectInContext createContext(AnActionEvent event) {
-    DataContext dataContext = event.getDataContext();
+    Project project = event.getProject();
+    FileEditor editor = event.getData(PlatformDataKeys.FILE_EDITOR);
+    VirtualFile virtualFile = event.getData(CommonDataKeys.VIRTUAL_FILE);
 
-    SelectInContext result = createEditorContext(dataContext);
+    SelectInContext result = createEditorContext(project, editor, virtualFile);
     if (result != null) {
       return result;
     }
@@ -78,64 +78,95 @@ public abstract class SelectInContextImpl implements SelectInContext {
       return null;
     }
 
-    SelectInContext selectInContext = SelectInContext.DATA_KEY.getData(dataContext);
-    if (selectInContext == null) {
-      selectInContext = createPsiContext(event);
+    result = event.getData(SelectInContext.DATA_KEY);
+    if (result != null) {
+      return result;
     }
 
-    if (selectInContext == null) {
-      Navigatable descriptor = PlatformDataKeys.NAVIGATABLE.getData(dataContext);
-      if (descriptor instanceof OpenFileDescriptor) {
-        final VirtualFile file = ((OpenFileDescriptor)descriptor).getFile();
-        if (file.isValid()) {
-          Project project = PlatformDataKeys.PROJECT.getData(dataContext);
-          selectInContext = OpenFileDescriptorContext.create(project, file);
-        }
-      }
+    result = createPsiContext(event);
+    if (result != null) {
+      return result;
     }
 
-    if (selectInContext == null) {
-      VirtualFile virtualFile = PlatformDataKeys.VIRTUAL_FILE.getData(dataContext);
-      Project project = PlatformDataKeys.PROJECT.getData(dataContext);
-      if (virtualFile != null && project != null) {
-        return new VirtualFileSelectInContext(project, virtualFile);
-      }
+    Navigatable descriptor = event.getData(CommonDataKeys.NAVIGATABLE);
+    result = descriptor instanceof OpenFileDescriptor ? createDescriptorContext((OpenFileDescriptor)descriptor) : null;
+    if (result != null) {
+      return result;
     }
 
-    return selectInContext;
+    if (virtualFile != null && project != null) {
+      return new FileSelectInContext(project, virtualFile, null);
+    }
+
+    return null;
   }
 
   @Nullable
-  private static SelectInContext createEditorContext(DataContext dataContext) {
-    final Project project = PlatformDataKeys.PROJECT.getData(dataContext);
-    final FileEditor editor = PlatformDataKeys.FILE_EDITOR.getData(dataContext);
-    return createEditorContext(project, editor);
+  private static SelectInContext createDescriptorContext(OpenFileDescriptor descriptor) {
+    VirtualFile file = descriptor.getFile();
+    Document document = !file.isValid() ? null : FileDocumentManager.getInstance().getDocument(file);
+    if (document == null) return null;
+    PsiFile psiFile = PsiDocumentManager.getInstance(descriptor.getProject()).getPsiFile(document);
+    if (psiFile == null) return null;
+    return new SmartSelectInContext(psiFile, psiFile, () -> {
+      descriptor.navigate(false);
+      FileEditor[] allEditors = FileEditorManager.getInstance(descriptor.getProject()).getAllEditors(descriptor.getFile());
+      return ArrayUtil.getFirstElement(allEditors);
+    });
   }
 
-  public static SelectInContext createEditorContext(Project project, FileEditor editor) {
+  private static SelectInContext createEditorContext(@Nullable Project project,
+                                                     @Nullable FileEditor editor,
+                                                     @Nullable VirtualFile contextFile) {
     if (project == null || editor == null) {
       return null;
     }
+
     VirtualFile file = FileEditorManagerEx.getInstanceEx(project).getFile(editor);
     if (file == null) {
-      return null;
+      file = contextFile;
     }
-    final PsiFile psiFile = PsiManager.getInstance(project).findFile(file);
+
+    PsiFile psiFile = file == null || !file.isValid() ? null : PsiManager.getInstance(project).findFile(file);
     if (psiFile == null) {
       return null;
     }
+
     if (editor instanceof TextEditor) {
-      return new TextEditorContext((TextEditor)editor, psiFile);
+      return new FileEditorSelectInContext(editor, psiFile) {
+        @Override
+        public Object getSelectorInFile() {
+          PsiFile file = getPsiFile();
+          if (file == null) return null;
+
+          if (file.getViewProvider() instanceof TemplateLanguageFileViewProvider) {
+            return super.getSelectorInFile();
+          }
+          Editor editor = getEditor();
+          if (editor == null) {
+            return super.getSelectorInFile();
+          }
+          int offset = TargetElementUtil.adjustOffset(file, editor.getDocument(), editor.getCaretModel().getOffset());
+          PsiElement element = file.findElementAt(offset);
+          return element != null ? element : super.getSelectorInFile();
+        }
+      };
     }
     else {
-      return new SimpleSelectInContext(psiFile);
+      StructureViewBuilder builder = editor.getStructureViewBuilder();
+      StructureView structureView = builder != null ? builder.createStructureView(editor, project) : null;
+      Object selectorInFile = structureView != null ? structureView.getTreeModel().getCurrentEditorElement() : null;
+      if (structureView != null) Disposer.dispose(structureView);
+      if (selectorInFile == null) return new SmartSelectInContext(psiFile, psiFile);
+      if (selectorInFile instanceof PsiElement) return new SmartSelectInContext(psiFile, (PsiElement)selectorInFile);
+      return new SelectInContextImpl(psiFile, selectorInFile);
     }
   }
 
   @Nullable
   private static SelectInContext createPsiContext(AnActionEvent event) {
     final DataContext dataContext = event.getDataContext();
-    PsiElement psiElement = LangDataKeys.PSI_ELEMENT.getData(dataContext);
+    PsiElement psiElement = CommonDataKeys.PSI_ELEMENT.getData(dataContext);
     if (psiElement == null || !psiElement.isValid()) {
       return null;
     }
@@ -143,7 +174,7 @@ public abstract class SelectInContextImpl implements SelectInContext {
     if (psiFile == null) {
       return null;
     }
-    return new SimpleSelectInContext(psiFile, psiElement);
+    return new SmartSelectInContext(psiFile, psiElement);
   }
 
   @Nullable
@@ -154,122 +185,8 @@ public abstract class SelectInContextImpl implements SelectInContext {
       return (JComponent)source;
     }
     else {
-      return safeCast(PlatformDataKeys.CONTEXT_COMPONENT.getData(event.getDataContext()), JComponent.class);
-    }
-  }
-
-  @Nullable
-  @SuppressWarnings({"unchecked"})
-  private static <T> T safeCast(final Object obj, final Class<T> expectedClass) {
-    if (expectedClass.isInstance(obj)) return (T)obj;
-    return null;
-  }
-
-  private static class TextEditorContext extends SelectInContextImpl {
-    private final TextEditor myEditor;
-
-    public TextEditorContext(TextEditor editor, PsiFile psiFile) {
-      super(psiFile);
-      myEditor = editor;
-    }
-
-    public FileEditorProvider getFileEditorProvider() {
-      return new FileEditorProvider() {
-        public FileEditor openFileEditor() {
-          return myEditor;
-        }
-      };
-    }
-
-    public Object getSelectorInFile() {
-      if (myPsiFile.getViewProvider() instanceof TemplateLanguageFileViewProvider) {
-        return super.getSelectorInFile();
-      }
-      final int offset = myEditor.getEditor().getCaretModel().getOffset();
-
-      if (offset >= 0 && offset < myPsiFile.getTextLength()) {
-        return myPsiFile.findElementAt(offset);
-      }
-      return super.getSelectorInFile();
-    }
-  }
-
-
-  private static class OpenFileDescriptorContext extends SelectInContextImpl {
-    public OpenFileDescriptorContext(PsiFile psiFile) {
-      super(psiFile);
-    }
-
-    public FileEditorProvider getFileEditorProvider() {
-      return new FileEditorProvider() {
-        public FileEditor openFileEditor() {
-          return FileEditorManager.getInstance(getProject()).openFile(getVirtualFile(), false)[0];
-        }
-      };
-    }
-
-    @Nullable
-    public static SelectInContext create(Project project, VirtualFile file) {
-      final Document document = FileDocumentManager.getInstance().getDocument(file);
-      if (document == null) return null;
-      final PsiFile psiFile = PsiDocumentManager.getInstance(project).getPsiFile(document);
-      if (psiFile == null) return null;
-      return new OpenFileDescriptorContext(psiFile);
-    }
-  }
-
-  private static class SimpleSelectInContext extends SelectInContextImpl {
-    private final PsiElement myElementToSelect;
-
-    public SimpleSelectInContext(PsiFile psiFile) {
-      this(psiFile, psiFile);
-    }
-
-    public FileEditorProvider getFileEditorProvider() {
-      return new FileEditorProvider() {
-        public FileEditor openFileEditor() {
-          final VirtualFile file = myElementToSelect.getContainingFile().getVirtualFile();
-          if (file == null) {
-            return null;
-          }
-          return ArrayUtil.getFirstElement(FileEditorManager.getInstance(getProject()).openFile(file, false));
-        }
-      };
-    }
-
-    public SimpleSelectInContext(PsiFile psiFile, PsiElement elementToSelect) {
-      super(psiFile);
-      myElementToSelect = elementToSelect;
-    }
-   }
-
-  private static class VirtualFileSelectInContext implements SelectInContext {
-    private final Project myProject;
-    private final VirtualFile myVirtualFile;
-
-    public VirtualFileSelectInContext(final Project project, final VirtualFile virtualFile) {
-      myProject = project;
-      myVirtualFile = virtualFile;
-    }
-
-    @NotNull
-    public Project getProject() {
-      return myProject;
-    }
-
-    @NotNull
-    public VirtualFile getVirtualFile() {
-      return myVirtualFile;
-    }
-
-    @Nullable
-    public Object getSelectorInFile() {
-      return myVirtualFile;
-    }
-
-    @Nullable
-    public FileEditorProvider getFileEditorProvider() {
-      return null;
+      Component component = event.getData(PlatformDataKeys.CONTEXT_COMPONENT);
+      return component instanceof JComponent ? (JComponent)component : null;
     }
   }
 }

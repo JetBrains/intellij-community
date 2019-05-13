@@ -16,21 +16,20 @@
 package com.intellij.application.options;
 
 import com.intellij.application.options.codeStyle.CodeStyleSchemesModel;
-import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.psi.codeStyle.CodeStyleConfigurable;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.util.Set;
 
-public abstract class CodeStyleAbstractConfigurable implements Configurable, OptionsContainingConfigurable {
+public abstract class CodeStyleAbstractConfigurable implements CodeStyleConfigurable, OptionsContainingConfigurable {
   private CodeStyleAbstractPanel myPanel;
   private final CodeStyleSettings mySettings;
   private final CodeStyleSettings myCloneSettings;
   private final String myDisplayName;
-  private CodeStyleSchemesModel myModel;
 
   public CodeStyleAbstractConfigurable(@NotNull CodeStyleSettings settings, CodeStyleSettings cloneSettings,
                                        final String displayName) {
@@ -47,7 +46,6 @@ public abstract class CodeStyleAbstractConfigurable implements Configurable, Opt
   @Override
   public JComponent createComponent() {
     myPanel = createPanel(myCloneSettings);
-    myPanel.setModel(myModel);
     return myPanel.getPanel();
   }
 
@@ -55,8 +53,19 @@ public abstract class CodeStyleAbstractConfigurable implements Configurable, Opt
 
   @Override
   public void apply() throws ConfigurationException {
+    apply(mySettings);
+  }
+
+  @Override
+  public void apply(@NotNull CodeStyleSettings settings) throws ConfigurationException {
     if (myPanel != null) {
-      myPanel.apply(mySettings);
+      try {
+        myPanel.apply(settings);
+      }
+      catch (ConfigurationException ce) {
+        ce.setOriginator(this);
+        throw ce;
+      }
     }
   }
 
@@ -65,11 +74,8 @@ public abstract class CodeStyleAbstractConfigurable implements Configurable, Opt
     reset(mySettings);
   }
 
-  public void resetFromClone(){
-    reset(myCloneSettings);
-  }
-
-  public void reset(CodeStyleSettings settings) {
+  @Override
+  public void reset(@NotNull CodeStyleSettings settings) {
     if (myPanel != null) {
       myPanel.reset(settings);
     }
@@ -92,11 +98,10 @@ public abstract class CodeStyleAbstractConfigurable implements Configurable, Opt
     return myPanel;
   }
 
-  public void setModel(final CodeStyleSchemesModel model) {
+  public void setModel(@NotNull CodeStyleSchemesModel model) {
     if (myPanel != null) {
       myPanel.setModel(model);
     }
-    myModel = model;
   }
 
   public void onSomethingChanged() {

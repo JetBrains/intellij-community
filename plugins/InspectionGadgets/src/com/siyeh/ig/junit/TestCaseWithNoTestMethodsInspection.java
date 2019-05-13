@@ -15,26 +15,30 @@
  */
 package com.siyeh.ig.junit;
 
+import com.intellij.codeInsight.TestFrameworks;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiMethod;
-import com.intellij.psi.PsiModifier;
-import com.intellij.psi.PsiTypeParameter;
-import com.intellij.psi.util.InheritanceUtil;
+import com.intellij.psi.*;
+import com.intellij.psi.util.PsiUtil;
+import com.intellij.testIntegration.JavaTestFramework;
+import com.intellij.testIntegration.TestFramework;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.psiutils.TestUtils;
+import org.intellij.lang.annotations.Pattern;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.Arrays;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 public class TestCaseWithNoTestMethodsInspection extends BaseInspection {
 
   @SuppressWarnings({"PublicField"})
-  public boolean ignoreSupers = false;
+  public boolean ignoreSupers = true;
 
+  @Pattern(VALID_ID_PATTERN)
   @Override
   @NotNull
   public String getID() {
@@ -69,42 +73,73 @@ public class TestCaseWithNoTestMethodsInspection extends BaseInspection {
     return new TestCaseWithNoTestMethodsVisitor();
   }
 
-  private class TestCaseWithNoTestMethodsVisitor
-    extends BaseInspectionVisitor {
+  private class TestCaseWithNoTestMethodsVisitor extends BaseInspectionVisitor {
 
     @Override
     public void visitClass(@NotNull PsiClass aClass) {
       if (aClass.isInterface()
           || aClass.isEnum()
           || aClass.isAnnotationType()
+          || PsiUtil.isLocalOrAnonymousClass(aClass)
           || aClass.hasModifierProperty(PsiModifier.ABSTRACT)) {
         return;
       }
       if (aClass instanceof PsiTypeParameter) {
         return;
       }
-      if (!InheritanceUtil.isInheritor(aClass,
-                                       "junit.framework.TestCase")) {
+
+      Set<TestFramework> applicableFrameworks = TestFrameworks.detectApplicableFrameworks(aClass);
+      if (applicableFrameworks.isEmpty()) {
         return;
       }
-      final PsiMethod[] methods = aClass.getMethods();
-      for (final PsiMethod method : methods) {
-        if (TestUtils.isJUnitTestMethod(method)) {
-          return;
-        }
+
+      Set<TestFramework> applicableToNestedClasses = applicableFrameworks.stream()
+        .filter(framework -> framework instanceof JavaTestFramework && ((JavaTestFramework)framework).acceptNestedClasses())
+        .collect(Collectors.toSet());
+      if (hasTestMethods(aClass, applicableFrameworks, applicableToNestedClasses, true)) {
+        return;
       }
+
       if (ignoreSupers) {
-        final PsiClass superClass = aClass.getSuperClass();
-        if (superClass != null) {
-          final PsiMethod[] superMethods = superClass.getMethods();
-          for (PsiMethod superMethod : superMethods) {
-            if (TestUtils.isJUnitTestMethod(superMethod)) {
-              return;
-            }
+        PsiManager manager = aClass.getManager();
+        PsiClass superClass = aClass.getSuperClass();
+        while (superClass != null && manager.isInProject(superClass)) {
+          if (hasTestMethods(superClass, applicableFrameworks, applicableToNestedClasses, false)) {
+            return;
           }
+          superClass = superClass.getSuperClass();
         }
       }
       registerClassError(aClass);
+    }
+
+    private boolean hasTestMethods(@NotNull PsiClass aClass,
+                                   Set<TestFramework> selfFrameworks,
+                                   Set<TestFramework> nestedTestFrameworks,
+                                   boolean checkSuite) {
+
+      PsiMethod[] methods = aClass.getMethods();
+
+      for (TestFramework framework : selfFrameworks) {
+        if (checkSuite && framework instanceof JavaTestFramework && ((JavaTestFramework)framework).isSuiteClass(aClass)) {
+          return true;
+        }
+
+        if (Arrays.stream(methods).anyMatch(method -> framework.isTestMethod(method, false))) {
+          return true;
+        }
+      }
+
+      if (!nestedTestFrameworks.isEmpty()) {
+        for (PsiClass innerClass : aClass.getInnerClasses()) {
+          if (!innerClass.hasModifierProperty(PsiModifier.STATIC) &&
+              hasTestMethods(innerClass, nestedTestFrameworks, nestedTestFrameworks, false)) {
+            return true;
+          }
+        }
+      }
+
+      return false;
     }
   }
 }

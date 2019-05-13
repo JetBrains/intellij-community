@@ -2,6 +2,7 @@ package com.intellij.openapi.roots;
 
 import com.intellij.facet.FacetManager;
 import com.intellij.facet.ModifiableFacetModel;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
@@ -11,7 +12,9 @@ import com.intellij.openapi.roots.ui.configuration.LibraryTableModifiableModelPr
 import com.intellij.openapi.roots.ui.configuration.ModuleEditor;
 import com.intellij.openapi.roots.ui.configuration.ModulesConfigurator;
 import com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurable;
+import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesModifiableModel;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.StructureConfigurableContext;
+import com.intellij.openapi.util.Disposer;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.Proxy;
@@ -102,8 +105,18 @@ public class IdeaModifiableModelsProvider implements ModifiableModelsProvider {
     return LibraryTablesRegistrar.getInstance().getLibraryTable(project).getModifiableModel();
   }
 
+  @Override
+  public void disposeLibraryTableModifiableModel(LibraryTable.ModifiableModel model) {
+    //IDEA should dispose this model instead of us, because it is was given from StructureConfigurableContext
+    if (!(model instanceof LibrariesModifiableModel)) {
+      Disposer.dispose(model);
+    }
+  }
+
   @Nullable
   private static StructureConfigurableContext getProjectStructureContext(Project project) {
+    if (ApplicationManager.getApplication().isHeadlessEnvironment()) return null;
+
     final ProjectStructureConfigurable structureConfigurable = ProjectStructureConfigurable.getInstance(project);
     return structureConfigurable.isUiInitialized() ? structureConfigurable.getContext() : null;
   }

@@ -26,7 +26,7 @@ import javax.swing.*;
 public interface Hint {
   /**
    * @param parentComponent    defines coordinate system where hint will be shown.
-   *                           Cannot be <code>null</code>.
+   *                           Cannot be {@code null}.
    * @param x                  x coordinate of hint in parent coordinate system
    * @param y                  y coordinate of hint in parent coordinate system
    * @param focusBackComponent component which should get focus when the hint will
@@ -55,13 +55,4 @@ public interface Hint {
   void pack();
 
   void setLocation(@NotNull RelativePoint point);
-
-  /**
-   * Pack and set location
-   * @param x
-   * @param y
-   * @deprecated use {@link Hint#setLocation(com.intellij.ui.awt.RelativePoint)} ()}
-   */
-  void updateBounds(int x, int y);
-
 }

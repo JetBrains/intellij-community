@@ -14,10 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * User: anna
- * Date: 25-Aug-2008
- */
 package com.intellij.refactoring.extractclass;
 
 import com.intellij.openapi.util.Condition;
@@ -27,7 +23,7 @@ public class BackpointerUtil {
   private BackpointerUtil() {
   }
 
-  public static boolean isBackpointerReference(PsiExpression expression, Condition<PsiField> value) {
+  public static boolean isBackpointerReference(PsiExpression expression, Condition<? super PsiField> value) {
     if (expression instanceof PsiParenthesizedExpression) {
       final PsiExpression contents = ((PsiParenthesizedExpression)expression).getExpression();
       return isBackpointerReference(contents, value);

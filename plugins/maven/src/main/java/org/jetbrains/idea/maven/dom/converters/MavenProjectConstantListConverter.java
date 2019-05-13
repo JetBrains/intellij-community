@@ -32,6 +32,7 @@ public abstract class MavenProjectConstantListConverter extends MavenConstantLis
     super(strict);
   }
 
+  @Override
   protected Collection<String> getValues(@NotNull ConvertContext context) {
     DomElement element = context.getInvocationElement();
 

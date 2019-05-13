@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,7 +21,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.dom.model.MavenDomConfiguration;
 import org.jetbrains.idea.maven.plugins.api.MavenParamLanguageProvider;
-import org.jetbrains.plugins.groovy.GroovyFileType;
+import org.jetbrains.plugins.groovy.GroovyLanguage;
 
 /**
  * @author Sergey Evdokimov
@@ -36,10 +36,10 @@ public class MavenGroovyLanguageProvider extends MavenParamLanguageProvider {
     String text = xmlText.getText();
 
     if (text.indexOf('\n') >= 0) { // URL or file path can not be multiline so it's a groovy code
-      return GroovyFileType.GROOVY_LANGUAGE;
+      return GroovyLanguage.INSTANCE;
     }
     if (text.indexOf('(') >= 0) { // URL or file path hardly contains '(', but code usually contain '('
-      return GroovyFileType.GROOVY_LANGUAGE;
+      return GroovyLanguage.INSTANCE;
     }
 
     return null;

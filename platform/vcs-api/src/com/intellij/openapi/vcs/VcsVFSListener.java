@@ -1,120 +1,106 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.openapi.vcs;
 
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.command.CommandAdapter;
 import com.intellij.openapi.command.CommandEvent;
-import com.intellij.openapi.command.CommandProcessor;
+import com.intellij.openapi.command.CommandListener;
+import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.actions.VcsContextFactory;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
-import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.util.SmartList;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcsUtil.VcsUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.util.*;
 
-/**
- * @author yole
- */
 public abstract class VcsVFSListener implements Disposable {
-  private VcsDirtyScopeManager myDirtyScopeManager;
+  protected static final Logger LOG = Logger.getInstance(VcsVFSListener.class);
+
   private final ProjectLevelVcsManager myVcsManager;
   private final VcsFileListenerContextHelper myVcsFileListenerContextHelper;
 
   protected static class MovedFileInfo {
+    @NotNull
     public final String myOldPath;
+    @NotNull
     public String myNewPath;
+    @NotNull
     private final VirtualFile myFile;
 
-    protected MovedFileInfo(VirtualFile file, final String newPath) {
+    MovedFileInfo(@NotNull VirtualFile file, @NotNull String newPath) {
       myOldPath = file.getPath();
       myNewPath = newPath;
       myFile = file;
+    }
+
+    @Override
+    public String toString() {
+      return String.format("MovedFileInfo{[%s] -> [%s]}", myOldPath, myNewPath);
     }
   }
 
   protected final Project myProject;
   protected final AbstractVcs myVcs;
   protected final ChangeListManager myChangeListManager;
-  protected final VcsShowConfirmationOption myAddOption;
+  private final VcsShowConfirmationOption myAddOption;
   protected final VcsShowConfirmationOption myRemoveOption;
-  protected final List<VirtualFile> myAddedFiles = new ArrayList<VirtualFile>();
-  protected final Map<VirtualFile, VirtualFile> myCopyFromMap = new HashMap<VirtualFile, VirtualFile>();
-  protected final List<VcsException> myExceptions = new SmartList<VcsException>();
-  protected final List<FilePath> myDeletedFiles = new ArrayList<FilePath>();
-  protected final List<FilePath> myDeletedWithoutConfirmFiles = new ArrayList<FilePath>();
-  protected final List<MovedFileInfo> myMovedFiles = new ArrayList<MovedFileInfo>();
-  protected final List<VirtualFile> myDirtyFiles = new ArrayList<VirtualFile>();
+  protected final List<VirtualFile> myAddedFiles = new ArrayList<>();
+  private final Map<VirtualFile, VirtualFile> myCopyFromMap = new HashMap<>();
+  protected final List<VcsException> myExceptions = new SmartList<>();
+  protected final List<FilePath> myDeletedFiles = new ArrayList<>();
+  protected final List<FilePath> myDeletedWithoutConfirmFiles = new ArrayList<>();
+  protected final List<MovedFileInfo> myMovedFiles = new ArrayList<>();
+  private final ProjectConfigurationFilesProcessor myProjectConfigurationFilesProcessor;
 
   protected enum VcsDeleteType {SILENT, CONFIRM, IGNORE}
 
-  protected VcsVFSListener(final Project project, final AbstractVcs vcs) {
+  protected VcsVFSListener(@NotNull Project project, @NotNull AbstractVcs vcs) {
     myProject = project;
     myVcs = vcs;
     myChangeListManager = ChangeListManager.getInstance(project);
-    myDirtyScopeManager = VcsDirtyScopeManager.getInstance(myProject);
-
-    final MyVirtualFileAdapter myVFSListener = new MyVirtualFileAdapter();
-    final MyCommandAdapter myCommandListener = new MyCommandAdapter();
 
     myVcsManager = ProjectLevelVcsManager.getInstance(project);
     myAddOption = myVcsManager.getStandardConfirmation(VcsConfiguration.StandardConfirmation.ADD, vcs);
     myRemoveOption = myVcsManager.getStandardConfirmation(VcsConfiguration.StandardConfirmation.REMOVE, vcs);
 
-    VirtualFileManager.getInstance().addVirtualFileListener(myVFSListener, this);
-    CommandProcessor.getInstance().addCommandListener(myCommandListener, this);
+    VirtualFileManager.getInstance().addVirtualFileListener(new MyVirtualFileListener(), this);
+    project.getMessageBus().connect(this).subscribe(CommandListener.TOPIC, new MyCommandAdapter());
     myVcsFileListenerContextHelper = VcsFileListenerContextHelper.getInstance(myProject);
+
+    myProjectConfigurationFilesProcessor = ServiceManager.getService(myProject, ProjectConfigurationFilesProcessor.class);
   }
 
+  @Override
   public void dispose() {
   }
 
-  protected boolean isEventIgnored(final VirtualFileEvent event, boolean putInDirty) {
+  protected boolean isEventIgnored(@NotNull VirtualFileEvent event) {
     if (event.isFromRefresh()) return true;
-    boolean vcsIgnored = !isUnderMyVcs(event.getFile());
-    if (vcsIgnored) {
-      myDirtyFiles.add(event.getFile());
-    }
-    return vcsIgnored;
+    return !isUnderMyVcs(event.getFile());
   }
 
-  private boolean isUnderMyVcs(VirtualFile file) {
+  private boolean isUnderMyVcs(@NotNull VirtualFile file) {
     return myVcsManager.getVcsFor(file) == myVcs &&
-           (myVcsManager.isFileInContent(file)) &&
+           myVcsManager.isFileInContent(file) &&
            !myChangeListManager.isIgnoredFile(file);
   }
 
   protected void executeAdd() {
     final List<VirtualFile> addedFiles = acquireAddedFiles();
-    for (Iterator<VirtualFile> iterator = addedFiles.iterator(); iterator.hasNext(); ) {
-      VirtualFile file = iterator.next();
-      if (myVcsFileListenerContextHelper.isAdditionIgnored(file)) {
-        iterator.remove();
-      }
-    }
+    LOG.debug("executeAdd. addedFiles: ", addedFiles);
+    addedFiles.removeIf(myVcsFileListenerContextHelper::isAdditionIgnored);
     final Map<VirtualFile, VirtualFile> copyFromMap = acquireCopiedFiles();
     if (! addedFiles.isEmpty()) {
       executeAdd(addedFiles, copyFromMap);
@@ -124,8 +110,9 @@ public abstract class VcsVFSListener implements Disposable {
   /**
    * @return get map of copied files and clear the map
    */
-  protected Map<VirtualFile, VirtualFile> acquireCopiedFiles() {
-    final Map<VirtualFile, VirtualFile> copyFromMap = new HashMap<VirtualFile, VirtualFile>(myCopyFromMap);
+  @NotNull
+  private Map<VirtualFile, VirtualFile> acquireCopiedFiles() {
+    final Map<VirtualFile, VirtualFile> copyFromMap = new HashMap<>(myCopyFromMap);
     myCopyFromMap.clear();
     return copyFromMap;
   }
@@ -133,8 +120,9 @@ public abstract class VcsVFSListener implements Disposable {
   /**
    * @return get list of added files and clear previous list
    */
-  protected List<VirtualFile> acquireAddedFiles() {
-    final List<VirtualFile> addedFiles = new ArrayList<VirtualFile>(myAddedFiles);
+  @NotNull
+  private List<VirtualFile> acquireAddedFiles() {
+    final List<VirtualFile> addedFiles = new ArrayList<>(myAddedFiles);
     myAddedFiles.clear();
     return addedFiles;
   }
@@ -145,8 +133,12 @@ public abstract class VcsVFSListener implements Disposable {
    * @param addedFiles  the added files
    * @param copyFromMap the copied files
    */
-  protected void executeAdd(List<VirtualFile> addedFiles, Map<VirtualFile, VirtualFile> copyFromMap) {
+  protected void executeAdd(@NotNull List<VirtualFile> addedFiles, @NotNull Map<VirtualFile, VirtualFile> copyFromMap) {
+    LOG.debug("executeAdd. add-option: ", myAddOption.getValue(), ", files to add: ", addedFiles);
     if (myAddOption.getValue() == VcsShowConfirmationOption.Value.DO_NOTHING_SILENTLY) return;
+
+    addedFiles = myProjectConfigurationFilesProcessor.processFiles(addedFiles, this);
+
     if (myAddOption.getValue() == VcsShowConfirmationOption.Value.DO_ACTION_SILENTLY) {
       performAdding(addedFiles, copyFromMap);
     }
@@ -157,12 +149,24 @@ public abstract class VcsVFSListener implements Disposable {
                                                                            getSingleFileAddTitle(), getSingleFileAddPromptTemplate(),
                                                                            myAddOption);
       if (filesToProcess != null) {
-        performAdding(new ArrayList<VirtualFile>(filesToProcess), copyFromMap);
+        performAdding(new ArrayList<>(filesToProcess), copyFromMap);
       }
     }
   }
 
-  private void addFileToDelete(VirtualFile file) {
+  protected void saveUnsavedVcsIgnoreFiles() {
+    FileDocumentManager fileDocumentManager = FileDocumentManager.getInstance();
+    Set<String> ignoreFileNames = VcsUtil.getVcsIgnoreFileNames(myProject);
+
+    for (Document document : fileDocumentManager.getUnsavedDocuments()) {
+      VirtualFile file = fileDocumentManager.getFile(document);
+      if (file != null && ignoreFileNames.contains(file.getName())) {
+        fileDocumentManager.saveDocument(document);
+      }
+    }
+  }
+
+  private void addFileToDelete(@NotNull VirtualFile file) {
     if (file.isDirectory() && file instanceof NewVirtualFile && !isDirectoryVersioningSupported()) {
       for (VirtualFile child : ((NewVirtualFile)file).getCachedChildren()) {
         addFileToDelete(child);
@@ -171,7 +175,7 @@ public abstract class VcsVFSListener implements Disposable {
     else {
       final VcsDeleteType type = needConfirmDeletion(file);
       final FilePath filePath =
-        VcsContextFactory.SERVICE.getInstance().createFilePathOnDeleted(new File(file.getPath()), file.isDirectory());
+        VcsContextFactory.SERVICE.getInstance().createFilePathOn(new File(file.getPath()), file.isDirectory());
       if (type == VcsDeleteType.CONFIRM) {
         myDeletedFiles.add(filePath);
       }
@@ -182,23 +186,13 @@ public abstract class VcsVFSListener implements Disposable {
   }
 
   protected void executeDelete() {
-    final List<FilePath> filesToDelete = new ArrayList<FilePath>(myDeletedWithoutConfirmFiles);
-    final List<FilePath> deletedFiles = new ArrayList<FilePath>(myDeletedFiles);
+    final List<FilePath> filesToDelete = new ArrayList<>(myDeletedWithoutConfirmFiles);
+    final List<FilePath> deletedFiles = new ArrayList<>(myDeletedFiles);
     myDeletedWithoutConfirmFiles.clear();
     myDeletedFiles.clear();
 
-    for (Iterator<FilePath> iterator = filesToDelete.iterator(); iterator.hasNext(); ) {
-      FilePath file = iterator.next();
-      if (myVcsFileListenerContextHelper.isDeletionIgnored(file)) {
-        iterator.remove();
-      }
-    }
-    for (Iterator<FilePath> iterator = deletedFiles.iterator(); iterator.hasNext(); ) {
-      FilePath file = iterator.next();
-      if (myVcsFileListenerContextHelper.isDeletionIgnored(file)) {
-        iterator.remove();
-      }
-    }
+    filesToDelete.removeIf(myVcsFileListenerContextHelper::isDeletionIgnored);
+    deletedFiles.removeIf(myVcsFileListenerContextHelper::isDeletionIgnored);
 
     if (deletedFiles.isEmpty() &&filesToDelete.isEmpty()) return;
 
@@ -223,24 +217,25 @@ public abstract class VcsVFSListener implements Disposable {
    * @return selected files or null (that is considered as empty file set)
    */
   @Nullable
-  protected Collection<FilePath> selectFilePathsToDelete(final List<FilePath> deletedFiles) {
+  protected Collection<FilePath> selectFilePathsToDelete(@NotNull List<FilePath> deletedFiles) {
     AbstractVcsHelper helper = AbstractVcsHelper.getInstance(myProject);
     return helper.selectFilePathsToProcess(deletedFiles, getDeleteTitle(), null, getSingleFileDeleteTitle(),
                                            getSingleFileDeletePromptTemplate(), myRemoveOption);
   }
 
-  protected void beforeContentsChange(VirtualFileEvent event, VirtualFile file) {
+  protected void beforeContentsChange(@NotNull VirtualFileEvent event, @NotNull VirtualFile file) {
   }
 
-  protected void fileAdded(VirtualFileEvent event, VirtualFile file) {
-    if (!isEventIgnored(event, true) && !myChangeListManager.isIgnoredFile(file) &&
+  protected void fileAdded(@NotNull VirtualFileEvent event, @NotNull VirtualFile file) {
+    if (!isEventIgnored(event) && !myChangeListManager.isIgnoredFile(file) &&
         (isDirectoryVersioningSupported() || !file.isDirectory())) {
+      LOG.debug("Adding [", file, "] to added files");
       myAddedFiles.add(event.getFile());
     }
   }
 
-  private void addFileToMove(final VirtualFile file, final String newParentPath, final String newName) {
-    if (file.isDirectory() && !file.isSymLink() && !isDirectoryVersioningSupported()) {
+  private void addFileToMove(@NotNull VirtualFile file, @NotNull String newParentPath, @NotNull String newName) {
+    if (file.isDirectory() && !file.is(VFileProperty.SYMLINK) && !isDirectoryVersioningSupported()) {
       @SuppressWarnings("UnsafeVfsRecursion") VirtualFile[] children = file.getChildren();
       if (children != null) {
         for (VirtualFile child : children) {
@@ -257,71 +252,81 @@ public abstract class VcsVFSListener implements Disposable {
     return true;
   }
 
-  protected void processMovedFile(VirtualFile file, String newParentPath, String newName) {
-    final FileStatus status = FileStatusManager.getInstance(myProject).getStatus(file);
-    if (status == FileStatus.IGNORED) {
-      if (file.getParent() != null) {
-        myDirtyFiles.add(file.getParent());
-        myDirtyFiles.add(file); // will be at new path
-      }
-    }
+  protected void processMovedFile(@NotNull VirtualFile file, @NotNull String newParentPath, @NotNull String newName) {
+    final FileStatus status = ChangeListManager.getInstance(myProject).getStatus(file);
+    LOG.debug("Checking moved file ", file, "; status=", status);
+
+    String newPath = newParentPath + "/" + newName;
     if (!(filterOutUnknownFiles() && status == FileStatus.UNKNOWN) && status != FileStatus.IGNORED) {
-      final String newPath = newParentPath + "/" + newName;
-      boolean foundExistingInfo = false;
-      for (MovedFileInfo info : myMovedFiles) {
-        if (Comparing.equal(info.myFile, file)) {
-          info.myNewPath = newPath;
-          foundExistingInfo = true;
-          break;
-        }
+      MovedFileInfo existingMovedFile = ContainerUtil.find(myMovedFiles, info -> Comparing.equal(info.myFile, file));
+      if (existingMovedFile != null) {
+        LOG.debug("Reusing existing moved file [" + file + "] with new path [" + newPath + "]");
+        existingMovedFile.myNewPath = newPath;
       }
-      if (!foundExistingInfo) {
+      else {
+        LOG.debug("Registered moved file ", file);
         myMovedFiles.add(new MovedFileInfo(file, newPath));
       }
+    }
+    else {
+      // If a file is moved on top of another file (overwrite), the VFS at first removes the original file,
+      // and then performs the "clean" move.
+      // But we don't need to handle this deletion by the VCS: it is not a real deletion, but just a trick to implement the overwrite.
+      // This situation is already handled in doNotDeleteAddedCopiedOrMovedFiles(), but that method is called at the end of the command,
+      // so it is not suitable for moving unversioned files: if an unversioned file is moved, it won't be recorded,
+      // won't affect doNotDeleteAddedCopiedOrMovedFiles(), and therefore won't save the file from deletion.
+      // Thus here goes a special handle for unversioned files overwrite-move.
+      myDeletedFiles.remove(VcsUtil.getFilePath(newPath));
     }
   }
 
   private void executeMoveRename() {
-    final List<MovedFileInfo> movedFiles = new ArrayList<MovedFileInfo>(myMovedFiles);
+    final List<MovedFileInfo> movedFiles = new ArrayList<>(myMovedFiles);
+    LOG.debug("executeMoveRename " + movedFiles);
     myMovedFiles.clear();
     performMoveRename(movedFiles);
   }
 
-  protected VcsDeleteType needConfirmDeletion(final VirtualFile file) {
+  @NotNull
+  protected VcsDeleteType needConfirmDeletion(@NotNull VirtualFile file) {
     return VcsDeleteType.CONFIRM;
   }
 
+  @NotNull
   protected abstract String getAddTitle();
 
+  @NotNull
   protected abstract String getSingleFileAddTitle();
 
+  @NotNull
   protected abstract String getSingleFileAddPromptTemplate();
 
-  protected abstract void performAdding(final Collection<VirtualFile> addedFiles, final Map<VirtualFile, VirtualFile> copyFromMap)
-    ;
+  protected abstract void performAdding(@NotNull Collection<VirtualFile> addedFiles, @NotNull Map<VirtualFile, VirtualFile> copyFromMap);
 
+  @NotNull
   protected abstract String getDeleteTitle();
 
   protected abstract String getSingleFileDeleteTitle();
 
   protected abstract String getSingleFileDeletePromptTemplate();
 
-  protected abstract void performDeletion(List<FilePath> filesToDelete);
+  protected abstract void performDeletion(@NotNull List<FilePath> filesToDelete);
 
-  protected abstract void performMoveRename(List<MovedFileInfo> movedFiles);
+  protected abstract void performMoveRename(@NotNull List<MovedFileInfo> movedFiles);
 
   protected abstract boolean isDirectoryVersioningSupported();
 
-  private class MyVirtualFileAdapter extends VirtualFileAdapter {
-    public void fileCreated(final VirtualFileEvent event) {
+  private class MyVirtualFileListener implements VirtualFileListener {
+    @Override
+    public void fileCreated(@NotNull final VirtualFileEvent event) {
       VirtualFile file = event.getFile();
-      if (isUnderMyVcs(file)) {
-        VcsVFSListener.this.fileAdded(event, file);
-      }
+      LOG.debug("fileCreated: ", file);
+      fileAdded(event, file);
     }
 
-    public void fileCopied(final VirtualFileCopyEvent event) {
-      if (isEventIgnored(event, true) || myChangeListManager.isIgnoredFile(event.getFile())) return;
+    @Override
+    public void fileCopied(@NotNull final VirtualFileCopyEvent event) {
+      if (isEventIgnored(event) || myChangeListManager.isIgnoredFile(event.getFile())) return;
       final AbstractVcs oldVcs = ProjectLevelVcsManager.getInstance(myProject).getVcsFor(event.getOriginalFile());
       if (oldVcs == myVcs) {
         final VirtualFile parent = event.getFile().getParent();
@@ -335,9 +340,10 @@ public abstract class VcsVFSListener implements Disposable {
       }
     }
 
-    public void beforeFileDeletion(final VirtualFileEvent event) {
+    @Override
+    public void beforeFileDeletion(@NotNull final VirtualFileEvent event) {
       final VirtualFile file = event.getFile();
-      if (isEventIgnored(event, true)) {
+      if (isEventIgnored(event)) {
         return;
       }
       if (!myChangeListManager.isIgnoredFile(file)) {
@@ -346,7 +352,7 @@ public abstract class VcsVFSListener implements Disposable {
       }
       // files are ignored, directories are handled recursively
       if (event.getFile().isDirectory()) {
-        final List<VirtualFile> list = new LinkedList<VirtualFile>();
+        final List<VirtualFile> list = new LinkedList<>();
         VcsUtil.collectFiles(file, list, true, isDirectoryVersioningSupported());
         for (VirtualFile child : list) {
           if (!myChangeListManager.isIgnoredFile(child)) {
@@ -356,10 +362,12 @@ public abstract class VcsVFSListener implements Disposable {
       }
     }
 
-    public void beforeFileMovement(final VirtualFileMoveEvent event) {
-      if (isEventIgnored(event, true)) return;
+    @Override
+    public void beforeFileMovement(@NotNull final VirtualFileMoveEvent event) {
+      if (isEventIgnored(event)) return;
       final VirtualFile file = event.getFile();
       final AbstractVcs newVcs = ProjectLevelVcsManager.getInstance(myProject).getVcsFor(event.getNewParent());
+      LOG.debug("beforeFileMovement ", event, " into ", newVcs);
       if (newVcs == myVcs) {
         addFileToMove(file, event.getNewParent().getPath(), file.getName());
       }
@@ -368,16 +376,19 @@ public abstract class VcsVFSListener implements Disposable {
       }
     }
 
-    public void fileMoved(final VirtualFileMoveEvent event) {
-      if (isEventIgnored(event, true)) return;
+    @Override
+    public void fileMoved(@NotNull final VirtualFileMoveEvent event) {
+      if (isEventIgnored(event)) return;
       final AbstractVcs oldVcs = ProjectLevelVcsManager.getInstance(myProject).getVcsFor(event.getOldParent());
       if (oldVcs != myVcs) {
         myAddedFiles.add(event.getFile());
       }
     }
 
-    public void beforePropertyChange(final VirtualFilePropertyEvent event) {
-      if (!isEventIgnored(event, false) && event.getPropertyName().equalsIgnoreCase(VirtualFile.PROP_NAME)) {
+    @Override
+    public void beforePropertyChange(@NotNull final VirtualFilePropertyEvent event) {
+      if (!isEventIgnored(event) && event.getPropertyName().equalsIgnoreCase(VirtualFile.PROP_NAME)) {
+        LOG.debug("before file rename ", event);
         String oldName = (String)event.getOldValue();
         String newName = (String)event.getNewValue();
         // in order to force a reparse of a file, the rename event can be fired with old name equal to new name -
@@ -393,7 +404,7 @@ public abstract class VcsVFSListener implements Disposable {
     }
 
     @Override
-    public void beforeContentsChange(VirtualFileEvent event) {
+    public void beforeContentsChange(@NotNull VirtualFileEvent event) {
       VirtualFile file = event.getFile();
       assert !file.isDirectory();
       if (isUnderMyVcs(file)) {
@@ -402,10 +413,11 @@ public abstract class VcsVFSListener implements Disposable {
     }
   }
 
-  private class MyCommandAdapter extends CommandAdapter {
+  private class MyCommandAdapter implements CommandListener {
     private int myCommandLevel;
 
-    public void commandStarted(final CommandEvent event) {
+    @Override
+    public void commandStarted(@NotNull final CommandEvent event) {
       if (myProject != event.getProject()) return;
       myCommandLevel++;
     }
@@ -413,7 +425,7 @@ public abstract class VcsVFSListener implements Disposable {
     private void checkMovedAddedSourceBack() {
       if (myAddedFiles.isEmpty() || myMovedFiles.isEmpty()) return;
 
-      final Map<String, VirtualFile> addedPaths = new HashMap<String, VirtualFile>(myAddedFiles.size());
+      final Map<String, VirtualFile> addedPaths = new HashMap<>(myAddedFiles.size());
       for (VirtualFile file : myAddedFiles) {
         addedPaths.put(file.getPath(), file);
       }
@@ -433,7 +445,7 @@ public abstract class VcsVFSListener implements Disposable {
     // If a file is scheduled for deletion, and at the same time for copying or addition, don't delete it.
     // It happens during Overwrite command or undo of overwrite.
     private void doNotDeleteAddedCopiedOrMovedFiles() {
-      Collection<String> copiedAddedMoved = new ArrayList<String>();
+      Collection<String> copiedAddedMoved = new ArrayList<>();
       for (VirtualFile file : myCopyFromMap.keySet()) {
         copiedAddedMoved.add(file.getPath());
       }
@@ -444,33 +456,16 @@ public abstract class VcsVFSListener implements Disposable {
         copiedAddedMoved.add(movedFileInfo.myNewPath);
       }
 
-      for (Iterator<FilePath> iterator = myDeletedFiles.iterator(); iterator.hasNext(); ) {
-        if (copiedAddedMoved.contains(FileUtil.toSystemIndependentName(iterator.next().getPath()))) {
-          iterator.remove();
-        }
-      }
-      for (Iterator<FilePath> iterator = myDeletedWithoutConfirmFiles.iterator(); iterator.hasNext(); ) {
-        if (copiedAddedMoved.contains(FileUtil.toSystemIndependentName(iterator.next().getPath()))) {
-          iterator.remove();
-        }
-      }
+      myDeletedFiles.removeIf(path -> copiedAddedMoved.contains(FileUtil.toSystemIndependentName(path.getPath())));
+      myDeletedWithoutConfirmFiles.removeIf(path -> copiedAddedMoved.contains(FileUtil.toSystemIndependentName(path.getPath())));
     }
 
-    public void commandFinished(final CommandEvent event) {
+    @Override
+    public void commandFinished(@NotNull final CommandEvent event) {
       if (myProject != event.getProject()) return;
       myCommandLevel--;
       if (myCommandLevel == 0) {
-        if (!myAddedFiles.isEmpty() || !myDeletedFiles.isEmpty() || !myDeletedWithoutConfirmFiles.isEmpty() || !myMovedFiles.isEmpty() ||
-            ! myDirtyFiles.isEmpty()) {
-          // avoid reentering commandFinished handler - saving the documents may cause a "before file deletion" event firing,
-          // which will cause closing the text editor, which will itself run a command that will be caught by this listener
-          myCommandLevel++;
-          try {
-            FileDocumentManager.getInstance().saveAllDocuments();
-          }
-          finally {
-            myCommandLevel--;
-          }
+        if (!myAddedFiles.isEmpty() || !myDeletedFiles.isEmpty() || !myDeletedWithoutConfirmFiles.isEmpty() || !myMovedFiles.isEmpty()) {
           doNotDeleteAddedCopiedOrMovedFiles();
           checkMovedAddedSourceBack();
           if (!myAddedFiles.isEmpty()) {
@@ -485,21 +480,6 @@ public abstract class VcsVFSListener implements Disposable {
           if (!myMovedFiles.isEmpty()) {
             executeMoveRename();
             myMovedFiles.clear();
-          }
-          if (! myDirtyFiles.isEmpty()) {
-            final List<VirtualFile> files = new ArrayList<VirtualFile>();
-            final List<VirtualFile> dirs = new ArrayList<VirtualFile>();
-            for (VirtualFile dirtyFile : myDirtyFiles) {
-              if (dirtyFile != null) {
-                if (dirtyFile.isDirectory()) {
-                  dirs.add(dirtyFile);
-                } else {
-                  files.add(dirtyFile);
-                }
-              }
-            }
-            myDirtyScopeManager.filesDirty(files, dirs);
-            myDirtyFiles.clear();
           }
           if (! myExceptions.isEmpty()) {
             AbstractVcsHelper.getInstance(myProject).showErrors(myExceptions, myVcs.getDisplayName() + " operations errors");

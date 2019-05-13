@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package org.jetbrains.idea.maven.dom.converters;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.RecursionManager;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -25,19 +26,20 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.xml.ConvertContext;
-import com.intellij.util.xml.DomElement;
-import com.intellij.util.xml.DomUtil;
-import com.intellij.util.xml.ResolvingConverter;
+import com.intellij.util.xml.*;
+import com.intellij.util.xml.impl.GenericDomValueReference;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.maven.dom.DependencyConflictId;
 import org.jetbrains.idea.maven.dom.MavenDomBundle;
-import org.jetbrains.idea.maven.dom.MavenDomUtil;
+import org.jetbrains.idea.maven.dom.MavenDomProjectProcessorUtils;
 import org.jetbrains.idea.maven.dom.model.*;
 import org.jetbrains.idea.maven.indices.MavenProjectIndicesManager;
+import org.jetbrains.idea.maven.model.MavenArtifact;
 import org.jetbrains.idea.maven.model.MavenId;
+import org.jetbrains.idea.maven.model.MavenPlugin;
 import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.utils.MavenArtifactUtil;
@@ -47,24 +49,27 @@ import java.util.Collection;
 import java.util.Set;
 
 public abstract class MavenArtifactCoordinatesConverter extends ResolvingConverter<String> implements MavenDomSoftAwareConverter {
+  @Override
   public String fromString(@Nullable @NonNls String s, ConvertContext context) {
     if (s == null) return null;
 
     MavenId id = MavenArtifactCoordinatesHelper.getId(context);
-    MavenProjectIndicesManager manager = MavenProjectIndicesManager.getInstance(getProject(context));
+    MavenProjectIndicesManager manager = MavenProjectIndicesManager.getInstance(context.getProject());
 
     return selectStrategy(context).isValid(id, manager, context) ? s : null;
   }
 
   protected abstract boolean doIsValid(MavenId id, MavenProjectIndicesManager manager, ConvertContext context);
 
+  @Override
   public String toString(@Nullable String s, ConvertContext context) {
     return s;
   }
 
+  @Override
   @NotNull
   public Collection<String> getVariants(ConvertContext context) {
-    MavenProjectIndicesManager manager = MavenProjectIndicesManager.getInstance(getProject(context));
+    MavenProjectIndicesManager manager = MavenProjectIndicesManager.getInstance(context.getProject());
     MavenId id = MavenArtifactCoordinatesHelper.getId(context);
 
     MavenDomShortArtifactCoordinates coordinates = MavenArtifactCoordinatesHelper.getCoordinates(context);
@@ -76,20 +81,15 @@ public abstract class MavenArtifactCoordinatesConverter extends ResolvingConvert
 
   @Override
   public PsiElement resolve(String o, ConvertContext context) {
-    Project p = getProject(context);
     MavenId id = MavenArtifactCoordinatesHelper.getId(context);
 
-    PsiFile result = selectStrategy(context).resolve(p, id);
+    PsiFile result = selectStrategy(context).resolve(id, context);
     return result != null ? result : super.resolve(o, context);
-  }
-
-  private static Project getProject(ConvertContext context) {
-    return context.getFile().getProject();
   }
 
   @Override
   public String getErrorMessage(@Nullable String s, ConvertContext context) {
-    return selectStrategy(context).getContextName() + " '''" + MavenArtifactCoordinatesHelper.getId(context) + "''' not found";
+    return selectStrategy(context).getContextName() + " '" + MavenArtifactCoordinatesHelper.getId(context) + "' not found";
   }
 
   @Override
@@ -97,6 +97,7 @@ public abstract class MavenArtifactCoordinatesConverter extends ResolvingConvert
     return ArrayUtil.append(super.getQuickFixes(context), new MyUpdateIndicesFix());
   }
 
+  @Override
   public boolean isSoft(@NotNull DomElement element) {
     DomElement dependencyOrPluginElement = element.getParent();
     if (dependencyOrPluginElement instanceof MavenDomDependency) {
@@ -119,30 +120,38 @@ public abstract class MavenArtifactCoordinatesConverter extends ResolvingConvert
     return false;
   }
 
+  @Nullable
+  protected MavenProject findMavenProject(ConvertContext context) {
+    PsiFile psiFile = context.getFile().getOriginalFile();
+    VirtualFile file = psiFile.getVirtualFile();
+    if (file == null) return null;
+
+    return MavenProjectsManager.getInstance(psiFile.getProject()).findProject(file);
+  }
+
   private ConverterStrategy selectStrategy(ConvertContext context) {
-    if (MavenDomUtil.getImmediateParent(context, MavenDomProjectModel.class) != null) {
+    DomElement parent = context.getInvocationElement().getParent();
+    if (parent instanceof MavenDomProjectModel) {
       return new ProjectStrategy();
     }
 
-    MavenDomParent parent = MavenDomUtil.getImmediateParent(context, MavenDomParent.class);
-    if (parent != null) {
-      return new ParentStrategy(parent);
+    if (parent instanceof MavenDomParent) {
+      return new ParentStrategy((MavenDomParent)parent);
     }
 
-    MavenDomDependency dependency = MavenDomUtil.getImmediateParent(context, MavenDomDependency.class);
-    if (dependency != null) {
-      return new DependencyStrategy(dependency);
+    if (parent instanceof MavenDomDependency) {
+      return new DependencyStrategy((MavenDomDependency)parent);
     }
 
-    if (MavenDomUtil.getImmediateParent(context, MavenDomExclusion.class) != null) {
+    if (parent instanceof MavenDomExclusion) {
       return new ExclusionStrategy();
     }
 
-    if (MavenDomUtil.getImmediateParent(context, MavenDomPlugin.class) != null) {
+    if (parent instanceof MavenDomPlugin) {
       return new PluginOrExtensionStrategy(true);
     }
 
-    if (MavenDomUtil.getImmediateParent(context, MavenDomExtension.class) != null) {
+    if (parent instanceof MavenDomExtension) {
       return new PluginOrExtensionStrategy(false);
     }
 
@@ -150,16 +159,24 @@ public abstract class MavenArtifactCoordinatesConverter extends ResolvingConvert
   }
 
   private static class MyUpdateIndicesFix implements LocalQuickFix {
+    @Override
     @NotNull
     public String getFamilyName() {
       return MavenDomBundle.message("inspection.group");
     }
 
+    @Override
     @NotNull
     public String getName() {
       return MavenDomBundle.message("fix.update.indices");
     }
 
+    @Override
+    public boolean startInWriteAction() {
+      return false;
+    }
+
+    @Override
     public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       MavenProjectIndicesManager.getInstance(project).scheduleUpdateAll();
     }
@@ -178,9 +195,9 @@ public abstract class MavenArtifactCoordinatesConverter extends ResolvingConvert
       return doGetVariants(id, manager);
     }
 
-    public PsiFile resolve(Project project, MavenId id) {
-      MavenProjectsManager projectsManager = MavenProjectsManager.getInstance(project);
-      PsiManager psiManager = PsiManager.getInstance(project);
+    public PsiFile resolve(MavenId id, ConvertContext context) {
+      PsiManager psiManager = context.getPsiManager();
+      MavenProjectsManager projectsManager = MavenProjectsManager.getInstance(psiManager.getProject());
 
       PsiFile result = resolveBySpecifiedPath();
       if (result != null) return result;
@@ -211,20 +228,20 @@ public abstract class MavenArtifactCoordinatesConverter extends ResolvingConvert
       return psiManager.findFile(virtualFile);
     }
 
-    protected File makeLocalRepositoryFile(MavenId id, File localRepostory) {
-      String relPath = ("" + id.getGroupId()).replace(".", "/");
+    private File makeLocalRepositoryFile(MavenId id, File localRepository) {
+      String relPath = (StringUtil.notNullize(id.getGroupId(), "null")).replace(".", "/");
 
       relPath += "/" + id.getArtifactId();
       relPath += "/" + id.getVersion();
       relPath += "/" + id.getArtifactId() + "-" + id.getVersion() + ".pom";
 
-      return new File(localRepostory, relPath);
+      return new File(localRepository, relPath);
     }
   }
 
   private class ProjectStrategy extends ConverterStrategy {
     @Override
-    public PsiFile resolve(Project project, MavenId id) {
+    public PsiFile resolve(MavenId id, ConvertContext context) {
       return null;
     }
 
@@ -237,7 +254,7 @@ public abstract class MavenArtifactCoordinatesConverter extends ResolvingConvert
   private class ParentStrategy extends ConverterStrategy {
     private final MavenDomParent myParent;
 
-    public ParentStrategy(MavenDomParent parent) {
+    ParentStrategy(MavenDomParent parent) {
       myParent = parent;
     }
 
@@ -255,13 +272,46 @@ public abstract class MavenArtifactCoordinatesConverter extends ResolvingConvert
   private class DependencyStrategy extends ConverterStrategy {
     private final MavenDomDependency myDependency;
 
-    public DependencyStrategy(MavenDomDependency dependency) {
+    DependencyStrategy(MavenDomDependency dependency) {
       myDependency = dependency;
     }
 
     @Override
     public String getContextName() {
       return "Dependency";
+    }
+
+    @Override
+    public PsiFile resolve(MavenId id, ConvertContext context) {
+      PsiFile res = super.resolve(id, context);
+      if (res != null) return res;
+
+      DomElement parent = context.getInvocationElement().getParent();
+      if (!(parent instanceof MavenDomDependency)) return null;
+
+      DependencyConflictId dependencyId = DependencyConflictId.create((MavenDomDependency)parent);
+      if (dependencyId == null) return null;
+
+      MavenProject mavenProject = findMavenProject(context);
+      if (mavenProject != null) {
+        MavenArtifact artifact = mavenProject.getDependencyArtifactIndex().findArtifacts(dependencyId);
+        if (artifact != null && artifact.isResolved()) {
+          return super.resolve(new MavenId(id.getGroupId(), id.getArtifactId(), artifact.getVersion()), context);
+        }
+      }
+
+      if (id.getVersion() == null) {
+        MavenDomDependency managedDependency = MavenDomProjectProcessorUtils.searchManagingDependency((MavenDomDependency)parent);
+        if (managedDependency != null) {
+          final GenericDomValue<String> managedDependencyArtifactId = managedDependency.getArtifactId();
+          return RecursionManager.doPreventingRecursion(managedDependencyArtifactId, false, () -> {
+            PsiElement res1 = new GenericDomValueReference(managedDependencyArtifactId).resolve();
+            return res1 instanceof PsiFile ? (PsiFile)res1 : null;
+          });
+        }
+      }
+
+      return null;
     }
 
     @Override
@@ -272,13 +322,13 @@ public abstract class MavenArtifactCoordinatesConverter extends ResolvingConvert
     @Override
     public Set<String> getVariants(MavenId id, MavenProjectIndicesManager manager, MavenDomShortArtifactCoordinates coordinates) {
       if (StringUtil.isEmpty(id.getGroupId())) {
-        Set<String> result = new THashSet<String>();
-        if (DomUtil.hasXml(coordinates.getGroupId())) {
-          for (String each : manager.getGroupIds()) {
-            id = new MavenId(each, id.getArtifactId(), id.getVersion());
-            result.addAll(super.getVariants(id, manager, coordinates));
-          }
+        Set<String> result = new THashSet<>();
+
+        for (String each : manager.getGroupIds()) {
+          id = new MavenId(each, id.getArtifactId(), id.getVersion());
+          result.addAll(super.getVariants(id, manager, coordinates));
         }
+
         return result;
       }
       return super.getVariants(id, manager, coordinates);
@@ -287,7 +337,7 @@ public abstract class MavenArtifactCoordinatesConverter extends ResolvingConvert
 
   private class ExclusionStrategy extends ConverterStrategy {
     @Override
-    public PsiFile resolve(Project project, MavenId id) {
+    public PsiFile resolve(MavenId id, ConvertContext context) {
       return null;
     }
 
@@ -300,15 +350,16 @@ public abstract class MavenArtifactCoordinatesConverter extends ResolvingConvert
   private class PluginOrExtensionStrategy extends ConverterStrategy {
     private final boolean myPlugin;
 
-    public PluginOrExtensionStrategy(boolean isPlugin) {
+    PluginOrExtensionStrategy(boolean isPlugin) {
       myPlugin = isPlugin;
     }
 
     @Override
     public String getContextName() {
-      return myPlugin ? "Plugin " : "Build Extension";
+      return myPlugin ? "Plugin" : "Build Extension";
     }
 
+    @Override
     public boolean isValid(MavenId id, MavenProjectIndicesManager manager, ConvertContext context) {
       if (StringUtil.isEmpty(id.getGroupId())) {
         for (String each : MavenArtifactUtil.DEFAULT_GROUPS) {
@@ -323,7 +374,7 @@ public abstract class MavenArtifactCoordinatesConverter extends ResolvingConvert
     @Override
     public Set<String> getVariants(MavenId id, MavenProjectIndicesManager manager, MavenDomShortArtifactCoordinates coordinates) {
       if (StringUtil.isEmpty(id.getGroupId())) {
-        Set<String> result = new THashSet<String>();
+        Set<String> result = new THashSet<>();
 
         for (String each : getGroupIdVariants(manager, coordinates)) {
           id = new MavenId(each, id.getArtifactId(), id.getVersion());
@@ -343,8 +394,33 @@ public abstract class MavenArtifactCoordinatesConverter extends ResolvingConvert
     }
 
     @Override
-    protected File makeLocalRepositoryFile(MavenId id, File localRepository) {
-      return MavenArtifactUtil.getArtifactFile(localRepository, id.getGroupId(), id.getArtifactId(), id.getVersion(), "pom");
+    public PsiFile resolve(MavenId id, ConvertContext context) {
+      PsiFile res = super.resolve(id, context);
+      if (res != null) return res;
+
+      // Try to resolve to imported plugin
+      MavenProject mavenProject = findMavenProject(context);
+      if (mavenProject != null) {
+        for (MavenPlugin plugin : mavenProject.getPlugins()) {
+          if (MavenArtifactUtil.isPluginIdEquals(id.getGroupId(), id.getArtifactId(), plugin.getGroupId(), plugin.getArtifactId())) {
+            return super.resolve(plugin.getMavenId(), context);
+          }
+        }
+      }
+
+      // Try to resolve to plugin with latest version
+      PsiManager psiManager = context.getPsiManager();
+      MavenProjectsManager projectsManager = MavenProjectsManager.getInstance(psiManager.getProject());
+
+      File artifactFile = MavenArtifactUtil
+        .getArtifactFile(projectsManager.getLocalRepository(), id.getGroupId(), id.getArtifactId(), id.getVersion(), "pom");
+
+      VirtualFile virtualFile = LocalFileSystem.getInstance().findFileByIoFile(artifactFile);
+      if (virtualFile != null) {
+        return psiManager.findFile(virtualFile);
+      }
+
+      return null;
     }
   }
 }

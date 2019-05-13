@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2017 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,63 +15,109 @@
  */
 package com.siyeh.ig.performance;
 
-import com.intellij.psi.PsiExpression;
+import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.openapi.util.JDOMExternalizer;
+import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.PsiExpressionList;
+import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiNewExpression;
 import com.intellij.psi.PsiType;
+import com.intellij.util.JdomKt;
+import com.intellij.util.ui.CheckBox;
+import com.intellij.util.ui.FormBuilder;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.psiutils.CollectionUtils;
+import com.siyeh.ig.psiutils.TypeUtils;
+import org.intellij.lang.annotations.Pattern;
+import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import javax.swing.*;
+import java.util.Set;
+import java.util.TreeSet;
 
 public class CollectionsMustHaveInitialCapacityInspection
   extends BaseInspection {
 
+  private final CollectionsListSettings mySettings = new CollectionsListSettings() {
+    @Override
+    protected Set<String> getDefaultSettings() {
+      final Set<String> classes = new TreeSet<>(DEFAULT_COLLECTION_LIST);
+      classes.add("java.util.BitSet");
+      return classes;
+    }
+  };
+  public boolean myIgnoreFields;
+
+  @Override
+  public void readSettings(@NotNull Element node) throws InvalidDataException {
+    mySettings.readSettings(node);
+    myIgnoreFields = JDOMExternalizer.readBoolean(node, "ignoreFields");
+  }
+
+  @Override
+  public void writeSettings(@NotNull Element node) throws WriteExternalException {
+    mySettings.writeSettings(node);
+    if (myIgnoreFields) {
+      JdomKt.addOptionTag(node, "ignoreFields", Boolean.toString(true), "setting");
+    }
+  }
+
+  @Nullable
+  @Override
+  public JComponent createOptionsPanel() {
+    return new FormBuilder()
+      .addComponentFillVertically(mySettings.createOptionsPanel(), 0)
+      .addComponent(new CheckBox("Don't report field initializers", this, "myIgnoreFields"))
+      .getPanel();
+  }
+
+  @Pattern(VALID_ID_PATTERN)
+  @Override
   @NotNull
   public String getID() {
     return "CollectionWithoutInitialCapacity";
   }
 
+  @Override
   @NotNull
   public String getDisplayName() {
     return InspectionGadgetsBundle.message(
       "collections.must.have.initial.capacity.display.name");
   }
 
+  @Override
   @NotNull
   protected String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "collections.must.have.initial.capacity.problem.descriptor");
   }
 
+  @Override
   public BaseInspectionVisitor buildVisitor() {
     return new CollectionInitialCapacityVisitor();
   }
 
-  private static class CollectionInitialCapacityVisitor
-    extends BaseInspectionVisitor {
+  private class CollectionInitialCapacityVisitor extends BaseInspectionVisitor {
 
     @Override
     public void visitNewExpression(@NotNull PsiNewExpression expression) {
       super.visitNewExpression(expression);
-      final PsiType type = expression.getType();
-
-      if (type == null) {
+      if (myIgnoreFields && expression.getParent() instanceof PsiField) {
         return;
       }
-      if (!CollectionUtils.isCollectionWithInitialCapacity(type)) {
+
+      final PsiType type = expression.getType();
+      if (!mySettings.getCollectionClassesRequiringCapacity().contains(TypeUtils.resolvedClassName(type))) {
         return;
       }
       final PsiExpressionList argumentList = expression.getArgumentList();
-      if (argumentList == null) {
+      if (argumentList == null || !argumentList.isEmpty()) {
         return;
       }
-      final PsiExpression[] parameters = argumentList.getExpressions();
-      if (parameters.length != 0) {
-        return;
-      }
-      registerError(expression);
+      registerNewExpressionError(expression);
     }
   }
 }

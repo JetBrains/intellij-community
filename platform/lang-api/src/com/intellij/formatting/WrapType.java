@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,8 +16,9 @@
 package com.intellij.formatting;
 
 import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
+import com.intellij.util.containers.ContainerUtil;
 
-import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -26,37 +27,34 @@ import java.util.Map;
  * @see Wrap#createWrap(WrapType, boolean)
  * @see Wrap#createChildWrap(Wrap, WrapType, boolean)
  */
-
 public enum WrapType {
-
   /**
    * A line break is always inserted before the start of the element.
    * This corresponds to the "Wrap always" setting in Global Code Style | Wrapping.
    */
-  ALWAYS(CodeStyleSettings.WRAP_ALWAYS),
+  ALWAYS(CommonCodeStyleSettings.WRAP_ALWAYS),
 
   /**
    * A line break is inserted before the start of the element if the right edge
    * of the element goes beyond the specified wrap margin.
    * This corresponds to the "Wrap if long" setting in Global Code Style | Wrapping.
    */
-  NORMAL(CodeStyleSettings.WRAP_AS_NEEDED),
+  NORMAL(CommonCodeStyleSettings.WRAP_AS_NEEDED),
 
   /**
    * A line break is never inserted before the start of the element.
    * This corresponds to the "Do not wrap" setting in Global Code Style | Wrapping.
    */
-  NONE(CodeStyleSettings.DO_NOT_WRAP),
+  NONE(CommonCodeStyleSettings.DO_NOT_WRAP),
 
   /**
    * A line break is inserted before the start of the element if it is a part
    * of list of elements of the same type and at least one of the elements was wrapped.
    * This corresponds to the "Chop down if long" setting in Global Code Style | Wrapping.
    */
-  CHOP_DOWN_IF_LONG(CodeStyleSettings.WRAP_ON_EVERY_ITEM);
+  CHOP_DOWN_IF_LONG(CommonCodeStyleSettings.WRAP_ON_EVERY_ITEM);
 
-  private static final Map<Integer, WrapType> LEGACY_MAPPINGS = new HashMap<Integer, WrapType>();
-
+  private static final Map<Integer, WrapType> LEGACY_MAPPINGS = ContainerUtil.newHashMap();
   static {
     for (WrapType wrapType : values()) {
       LEGACY_MAPPINGS.put(wrapType.getLegacyRepresentation(), wrapType);

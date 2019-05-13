@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.projectRoots;
 
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.EventListener;
@@ -58,14 +59,14 @@ public interface SdkModel {
      *
      * @param sdk the added JDK.
      */
-    void sdkAdded(Sdk sdk);
+    default void sdkAdded(@NotNull Sdk sdk) {}
 
     /**
      * Called before a JDK is removed.
      *
      * @param sdk the removed JDK.
      */
-    void beforeSdkRemove(Sdk sdk);
+    default void beforeSdkRemove(@NotNull Sdk sdk) {}
 
     /**
      * Called when a JDK has been changed or renamed.
@@ -74,14 +75,14 @@ public interface SdkModel {
      * @param previousName the old name of the changed or renamed JDK.
      * @since 5.0.1
      */
-    void sdkChanged(Sdk sdk, String previousName);
+    default void sdkChanged(@NotNull Sdk sdk, String previousName) {}
 
     /**
      * Called when the home directory of a JDK has been changed.
      * @param sdk        the changed JDK.
      * @param newSdkHome the new home directory.
      */
-    void sdkHomeSelected(Sdk sdk, String newSdkHome);
+    default void sdkHomeSelected(@NotNull Sdk sdk, @NotNull String newSdkHome) {}
 
   }
 

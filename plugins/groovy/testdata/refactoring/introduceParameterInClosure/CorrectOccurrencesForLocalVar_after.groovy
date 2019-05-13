@@ -4,7 +4,7 @@ clos = {print "foo"}
 clos()
 clos.call()
 
-clos = {String anObject -> print anObject }
+clos = { String anObject -> print anObject }
 clos("foo")
 clos.call("foo")
 

@@ -14,17 +14,14 @@
  * limitations under the License.
  */
 
-/*
- * User: anna
- * Date: 05-Aug-2009
- */
 package com.intellij.refactoring.move.moveClassesOrPackages;
 
 import com.intellij.codeInsight.ChangeContextUtil;
-import com.intellij.ide.projectView.impl.ProjectRootsUtil;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.roots.JavaProjectRootsUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
+import com.intellij.psi.util.FileTypeUtils;
 import com.intellij.refactoring.move.moveFilesOrDirectories.MoveFileHandler;
 import com.intellij.refactoring.util.MoveRenameUsageInfo;
 import com.intellij.usageView.UsageInfo;
@@ -41,8 +38,8 @@ public class MoveJavaFileHandler extends MoveFileHandler {
   @Override
   public boolean canProcessElement(PsiFile element) {
     return element instanceof PsiJavaFile &&
-           !JspPsiUtil.isInJspFile(element) &&
-           !ProjectRootsUtil.isOutsideSourceRoot(element) &&
+           !FileTypeUtils.isInServerPageFile(element) &&
+           !JavaProjectRootsUtil.isOutsideJavaSourceRoot(element) &&
            !(element instanceof PsiCompiledElement);
   }
 
@@ -55,13 +52,15 @@ public class MoveJavaFileHandler extends MoveFileHandler {
     }
   }
 
+  @Override
   public List<UsageInfo> findUsages(PsiFile psiFile, PsiDirectory newParent, boolean searchInComments, boolean searchInNonJavaFiles) {
-    final List<UsageInfo> result = new ArrayList<UsageInfo>();
+    final List<UsageInfo> result = new ArrayList<>();
     final PsiPackage newParentPackage = JavaDirectoryService.getInstance().getPackage(newParent);
     final String qualifiedName = newParentPackage == null ? "" : newParentPackage.getQualifiedName();
     for (PsiClass aClass : ((PsiJavaFile)psiFile).getClasses()) {
       Collections.addAll(result, MoveClassesOrPackagesUtil.findUsages(aClass, searchInComments, searchInNonJavaFiles,
-                                                                      StringUtil.getQualifiedName(qualifiedName, aClass.getName())));
+                                                                      StringUtil.getQualifiedName(qualifiedName,
+                                                                                                  StringUtil.notNullize(aClass.getName()))));
     }
     return result.isEmpty() ? null : result;
   }
@@ -94,7 +93,8 @@ public class MoveJavaFileHandler extends MoveFileHandler {
       final PsiPackage aPackage = JavaDirectoryService.getInstance().getPackage(containingDirectory);
       if (aPackage != null) {
         final String qualifiedName = aPackage.getQualifiedName();
-        final PsiPackageStatement packageStatement = qualifiedName.length() > 0
+        final PsiNameHelper helper = PsiNameHelper.getInstance(file.getProject());
+        final PsiPackageStatement packageStatement = !StringUtil.isEmptyOrSpaces(qualifiedName) && helper.isQualifiedName(qualifiedName)
                                                      ? JavaPsiFacade.getElementFactory(file.getProject()).createPackageStatement(qualifiedName)
                                                      : null;
         if (file instanceof PsiJavaFile) {

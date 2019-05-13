@@ -24,6 +24,7 @@ import com.intellij.history.core.tree.Entry;
 import com.intellij.history.core.tree.RootEntry;
 import com.intellij.openapi.util.Pair;
 import com.intellij.util.SmartList;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -58,8 +59,8 @@ public class ChangeRevision extends Revision {
     myName = changeSet.getName();
 
     List<String> allAffectedFiles = changeSet.getAffectedPaths();
-    List<String> someAffectedFiles = new SmartList<String>();
-    for (String each : allAffectedFiles.subList(0, Math.min(3, allAffectedFiles.size()))) {
+    List<String> someAffectedFiles = new SmartList<>();
+    for (String each : ContainerUtil.getFirstItems(allAffectedFiles, 3)) {
       someAffectedFiles.add(Paths.getNameOf(each));
     }
     myAffectedFiles = Pair.create(someAffectedFiles, allAffectedFiles.size());
@@ -107,5 +108,9 @@ public class ChangeRevision extends Revision {
 
   public String toString() {
     return getClass().getSimpleName() + ": " + myChangeToRevert;
+  }
+
+  public boolean containsChangeWithId(long id) {
+    return myChangeToRevert.getId() == id;
   }
 }

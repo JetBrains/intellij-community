@@ -1,11 +1,26 @@
 package com.siyeh.ig.style;
 
-import com.siyeh.ig.IGInspectionTestCase;
+import com.intellij.codeInspection.InspectionProfileEntry;
+import com.intellij.testFramework.LightProjectDescriptor;
+import com.siyeh.ig.LightInspectionTestCase;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-public class StringBufferReplaceableByStringInspectionTest extends IGInspectionTestCase {
+public class StringBufferReplaceableByStringInspectionTest extends LightInspectionTestCase {
 
-  public void test() throws Exception {
-    doTest("com/siyeh/igtest/performance/string_buffer_replaceable_by_string",
-           new StringBufferReplaceableByStringInspection());
+  public void testStringBufferReplaceableByString() {
+    doTest();
+  }
+
+  @NotNull
+  @Override
+  protected LightProjectDescriptor getProjectDescriptor() {
+    return JAVA_8;
+  }
+
+  @Nullable
+  @Override
+  protected InspectionProfileEntry getInspection() {
+    return new StringBufferReplaceableByStringInspection();
   }
 }

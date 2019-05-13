@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,7 +27,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.util.containers.HashSet;
+import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
@@ -37,6 +37,7 @@ import java.awt.*;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -49,25 +50,25 @@ public class ConvertProjectDialog extends DialogWrapper {
   private JTextPane myTextPane;
   private boolean myConverted;
   private final ConversionContextImpl myContext;
-  private final List<ConversionRunner> myConversionRunners;
+  private final List<? extends ConversionRunner> myConversionRunners;
   private final File myBackupDir;
   private final Set<File> myAffectedFiles;
   private boolean myNonExistingFilesMessageShown;
 
-  public ConvertProjectDialog(ConversionContextImpl context, final List<ConversionRunner> conversionRunners) {
+  public ConvertProjectDialog(ConversionContextImpl context, final List<? extends ConversionRunner> conversionRunners) {
     super(true);
     setTitle(IdeBundle.message("dialog.title.convert.project"));
     setModal(true);
     myContext = context;
     myConversionRunners = conversionRunners;
-    myAffectedFiles = new HashSet<File>();
+    myAffectedFiles = new HashSet<>();
     for (ConversionRunner conversionRunner : conversionRunners) {
       myAffectedFiles.addAll(conversionRunner.getAffectedFiles());
     }
 
     myBackupDir = ProjectConversionUtil.getBackupDir(context.getProjectBaseDir());
     myTextPane.setSize(new Dimension(350, Integer.MAX_VALUE));
-    StringBuilder message = new StringBuilder("<html>");
+    StringBuilder message = new StringBuilder();
     if (myConversionRunners.size() == 1 && myConversionRunners.get(0).getProvider().getConversionDialogText(context) != null) {
       message.append(myConversionRunners.get(0).getProvider().getConversionDialogText(context));
     }
@@ -76,10 +77,10 @@ public class ConvertProjectDialog extends DialogWrapper {
                                        ApplicationNamesInfo.getInstance().getFullProductName()));
     }
     message.append(IdeBundle.message("conversion.dialog.text.2", myBackupDir.getAbsolutePath()));
-    message.append("</html>");
-    Messages.configureMessagePaneUi(myTextPane, message.toString(), false);
+    Messages.configureMessagePaneUi(myTextPane, XmlStringUtil.wrapInHtml(message), null);
 
     myTextPane.addHyperlinkListener(new HyperlinkListener() {
+      @Override
       public void hyperlinkUpdate(HyperlinkEvent e) {
         if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
           @NonNls StringBuilder descriptions = new StringBuilder("<html>The following conversions will be performed:<br>");
@@ -105,11 +106,9 @@ public class ConvertProjectDialog extends DialogWrapper {
     final List<File> nonexistentFiles = myContext.getNonExistingModuleFiles();
     if (!nonexistentFiles.isEmpty() && !myNonExistingFilesMessageShown) {
       final String filesString = getFilesString(nonexistentFiles);
-      final int res = Messages.showYesNoDialog(getContentPane(), IdeBundle.message("message.files.doesn.t.exists.0.so.the.corresponding.modules.won.t.be.converted.do.you.want.to.continue",
-                                                                                   filesString),
-                                                                 IdeBundle.message("dialog.title.convert.project"),
-                                                                 Messages.getQuestionIcon());
-      if (res != 0) {
+      final String message = IdeBundle.message("message.text.files.do.not.exist", filesString);
+      final int res = Messages.showYesNoDialog(getContentPane(), message, IdeBundle.message("dialog.title.convert.project"), Messages.getQuestionIcon());
+      if (res != Messages.YES) {
         super.doOKAction();
         return;
       }
@@ -123,7 +122,7 @@ public class ConvertProjectDialog extends DialogWrapper {
       }
 
       ProjectConversionUtil.backupFiles(myAffectedFiles, myContext.getProjectBaseDir(), myBackupDir);
-      List<ConversionRunner> usedRunners = new ArrayList<ConversionRunner>();
+      List<ConversionRunner> usedRunners = new ArrayList<>();
       for (ConversionRunner runner : myConversionRunners) {
         if (runner.isConversionNeeded()) {
           runner.preProcess();
@@ -136,17 +135,13 @@ public class ConvertProjectDialog extends DialogWrapper {
       myConverted = true;
       super.doOKAction();
     }
-    catch (CannotConvertException e) {
-      LOG.info(e);
-      showErrorMessage(IdeBundle.message("error.cannot.convert.project", e.getMessage()));
-    }
-    catch (IOException e) {
+    catch (CannotConvertException | IOException e) {
       LOG.info(e);
       showErrorMessage(IdeBundle.message("error.cannot.convert.project", e.getMessage()));
     }
   }
 
-  private static String getFilesString(List<File> files) {
+  private static String getFilesString(List<? extends File> files) {
     StringBuilder buffer = new StringBuilder();
     for (File file : files) {
       buffer.append(file.getAbsolutePath()).append("<br>");
@@ -161,7 +156,7 @@ public class ConvertProjectDialog extends DialogWrapper {
                                                ApplicationNamesInfo.getInstance().getFullProductName(),
                                                getFilesString(files));
       final String[] options = {CommonBundle.getContinueButtonText(), CommonBundle.getCancelButtonText()};
-      if (Messages.showOkCancelDialog(myMainPanel, message, IdeBundle.message("dialog.title.convert.project"), options[0], options[1], null) != 0) {
+      if (Messages.showOkCancelDialog(myMainPanel, message, IdeBundle.message("dialog.title.convert.project"), options[0], options[1], null) != Messages.OK) {
         return false;
       }
       unlockFiles(files);
@@ -179,7 +174,7 @@ public class ConvertProjectDialog extends DialogWrapper {
     return ConversionRunner.getReadOnlyFiles(myAffectedFiles);
   }
 
-  private static void unlockFiles(final List<File> files) throws IOException {
+  private static void unlockFiles(final List<? extends File> files) throws IOException {
     for (File file : files) {
       FileUtil.setReadOnlyAttribute(file.getAbsolutePath(), false);
     }

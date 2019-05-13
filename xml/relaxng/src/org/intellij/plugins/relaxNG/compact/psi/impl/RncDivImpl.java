@@ -21,16 +21,12 @@ import org.intellij.plugins.relaxNG.compact.psi.RncDiv;
 import org.intellij.plugins.relaxNG.compact.psi.RncElementVisitor;
 import org.jetbrains.annotations.NotNull;
 
-/*
-* Created by IntelliJ IDEA.
-* User: sweinreuter
-* Date: 24.08.2007
-*/
 public class RncDivImpl extends RncElementImpl implements RncDiv {
   public RncDivImpl(ASTNode node) {
     super(node);
   }
 
+  @Override
   public void accept(@NotNull RncElementVisitor visitor) {
     visitor.visitDiv(this);
   }

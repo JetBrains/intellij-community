@@ -26,14 +26,8 @@ import javax.swing.*;
 import java.util.Comparator;
 import java.util.Set;
 
-/**
- * Created with IntelliJ IDEA.
- * User: Irina.Chernushina
- * Date: 6/7/12
- * Time: 4:17 PM
- */
-public interface FavoritesListProvider extends Comparator<FavoritesTreeNodeDescriptor> {
-  ExtensionPointName<FavoritesListProvider> EP_NAME = new ExtensionPointName<FavoritesListProvider>("com.intellij.favoritesListProvider");
+public interface FavoritesListProvider extends Comparator<FavoritesTreeNodeDescriptor>, Comparable<FavoritesListProvider> {
+  ExtensionPointName<FavoritesListProvider> EP_NAME = new ExtensionPointName<>("com.intellij.favoritesListProvider");
 
   String getListName(final Project project);
 
@@ -42,8 +36,9 @@ public interface FavoritesListProvider extends Comparator<FavoritesTreeNodeDescr
 
   boolean willHandle(@NotNull CommonActionsPanel.Buttons type, Project project, @NotNull Set<Object> selectedObjects);
 
-  void handle(@NotNull CommonActionsPanel.Buttons type, Project project, @NotNull Set<Object> selectedObjects);
+  void handle(@NotNull CommonActionsPanel.Buttons type, Project project, @NotNull Set<Object> selectedObjects, JComponent component);
 
+  int getWeight();
 
   @Nullable
   FavoritesListNode createFavoriteListNode(Project project);

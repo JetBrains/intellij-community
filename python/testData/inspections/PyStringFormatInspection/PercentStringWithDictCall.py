@@ -1,0 +1,1 @@
+var = "%s %s" % <warning descr="Too few arguments for format string">dict()</warning>, 1

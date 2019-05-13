@@ -23,7 +23,7 @@ import java.util.HashSet;
 public class IntObjectCacheTest extends TestCase {
   public void testResize() {
     final int SIZE = 4;
-    final IntObjectCache<String> cache = new IntObjectCache<String>(SIZE);
+    final IntObjectCache<String> cache = new IntObjectCache<>(SIZE);
     cache.addDeletedPairsListener(new IntObjectCache.DeletedPairsListener() {
       @Override
       public void objectRemoved(int key, Object value) {
@@ -47,7 +47,7 @@ public class IntObjectCacheTest extends TestCase {
   }
   
   public void intCacheIterator2() {
-      IntObjectCache<Integer> cache = new IntObjectCache<Integer>(4);
+      IntObjectCache<Integer> cache = new IntObjectCache<>(4);
       cache.cacheObject(0, 0);
       cache.cacheObject(1, 1);
       cache.cacheObject(2, 2);
@@ -55,7 +55,7 @@ public class IntObjectCacheTest extends TestCase {
       cache.cacheObject(3, 3);
       cache.tryKey(4);
       cache.cacheObject(4, 5);
-      HashSet<Object> values = new HashSet<Object>();
+      HashSet<Object> values = new HashSet<>();
       for (Object obj : cache) {
         values.add(obj);
       }

@@ -16,10 +16,13 @@
 package com.intellij.codeInsight.generation;
 
 import com.intellij.codeInsight.hint.HintManager;
+import com.intellij.lang.ContextAwareActionHandler;
 import com.intellij.lang.LanguageCodeInsightActionHandler;
+import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiCodeFragment;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiJavaFile;
 import org.jetbrains.annotations.NotNull;
@@ -27,15 +30,14 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author yole
  */
-public class JavaOverrideMethodsHandler implements LanguageCodeInsightActionHandler {
+public class JavaOverrideMethodsHandler implements ContextAwareActionHandler, LanguageCodeInsightActionHandler {
   @Override
   public boolean isValidFor(final Editor editor, final PsiFile file) {
-    if (!(file instanceof PsiJavaFile)) {
+    if (!(file instanceof PsiJavaFile) && !(file instanceof PsiCodeFragment)) {
       return false;
     }
 
-    PsiClass aClass = OverrideImplementUtil.getContextClass(file.getProject(), editor, file, true);
-    return aClass != null && !OverrideImplementUtil.getMethodSignaturesToOverride(aClass).isEmpty();
+    return OverrideImplementUtil.getContextClass(file.getProject(), editor, file, true) != null;
   }
 
   @Override
@@ -53,5 +55,11 @@ public class JavaOverrideMethodsHandler implements LanguageCodeInsightActionHand
   @Override
   public boolean startInWriteAction() {
     return false;
+  }
+
+  @Override
+  public boolean isAvailableForQuickList(@NotNull Editor editor, @NotNull PsiFile file, @NotNull DataContext dataContext) {
+    PsiClass aClass = OverrideImplementUtil.getContextClass(file.getProject(), editor, file, true);
+    return aClass != null && !OverrideImplementUtil.getMethodSignaturesToOverride(aClass).isEmpty();
   }
 }

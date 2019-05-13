@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,14 +23,10 @@ import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.ParamInfo;
 
 import java.util.*;
 
-/**
- * User: Dmitry.Krasilschikov
- * Date: 20.12.2007
- */
 public class DClassElement implements DNamedElement {
   public String myName;
-  public Set<DPropertyElement> myProperties = new HashSet<DPropertyElement>();
-  public Set<DMethodElement> myMethods = new HashSet<DMethodElement>();
+  public Set<DPropertyElement> myProperties = new HashSet<>();
+  public Set<DMethodElement> myMethods = new HashSet<>();
 
   @SuppressWarnings("UnusedDeclaration") //used for serialization
   public DClassElement() {
@@ -77,10 +73,12 @@ public class DClassElement implements DNamedElement {
     return myMethods;
   }
 
+  @Override
   public String getName() {
     return myName;
   }
 
+  @Override
   public void setName(String name) {
     myName = name;
   }

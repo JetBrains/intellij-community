@@ -16,8 +16,8 @@
 package com.intellij.cvsSupport2.cvsoperations.cvsWatch;
 
 import com.intellij.cvsSupport2.connections.CvsRootProvider;
-import com.intellij.cvsSupport2.cvsoperations.common.CvsOperationOnFiles;
 import com.intellij.cvsSupport2.cvsoperations.common.CvsExecutionEnvironment;
+import com.intellij.cvsSupport2.cvsoperations.common.CvsOperationOnFiles;
 import org.netbeans.lib.cvsclient.command.Command;
 import org.netbeans.lib.cvsclient.command.Watch;
 import org.netbeans.lib.cvsclient.command.watch.WatchCommand;
@@ -39,10 +39,12 @@ public class WatchOperation extends CvsOperationOnFiles{
     myWatch = watch;
   }
 
+  @Override
   protected String getOperationName() {
     return "watch";
   }
 
+  @Override
   protected Command createCommand(CvsRootProvider root, CvsExecutionEnvironment cvsExecutionEnvironment) {
     WatchCommand result = new WatchCommand();
     result.setWatchMode(myWatchMode);

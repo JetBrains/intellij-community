@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
@@ -28,7 +29,6 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.*;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.ReflectionCache;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ConcurrentFactoryMap;
@@ -42,26 +42,24 @@ import org.jetbrains.annotations.Nullable;
 import java.lang.reflect.Type;
 import java.lang.reflect.TypeVariable;
 import java.util.*;
+import java.util.concurrent.ConcurrentMap;
 
 /**
  * @author peter
  */
 public class DomUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.xml.DomUtil");
-  public static final TypeVariable<Class<GenericValue>> GENERIC_VALUE_TYPE_VARIABLE = ReflectionCache.getTypeParameters(GenericValue.class)[0];
+  public static final TypeVariable<Class<GenericValue>> GENERIC_VALUE_TYPE_VARIABLE = GenericValue.class.getTypeParameters()[0];
   private static final Class<Void> DUMMY = void.class;
   private static final Key<DomFileElement> FILE_ELEMENT_KEY = Key.create("dom file element");
 
-  private static final ConcurrentFactoryMap<Type, Class> ourTypeParameters = new ConcurrentFactoryMap<Type, Class>() {
-    @NotNull
-    protected Class create(final Type key) {
-      final Class<?> result = ReflectionUtil.substituteGenericType(GENERIC_VALUE_TYPE_VARIABLE, key);
+  private static final ConcurrentMap<Type, Class> ourTypeParameters = ConcurrentFactoryMap.createMap(key-> {
+      final Class<?> result = substituteGenericType(GENERIC_VALUE_TYPE_VARIABLE, key);
       return result == null ? DUMMY : result;
     }
-  };
-
-  private DomUtil() {
-  }
+  );
+  private static final ConcurrentMap<Couple<Type>, Class> ourVariableSubstitutions =
+    ConcurrentFactoryMap.createMap(key -> ReflectionUtil.substituteGenericType(key.first, key.second));
 
   public static Class extractParameterClassFromGenericType(Type type) {
     return getGenericValueParameter(type);
@@ -84,7 +82,7 @@ public class DomUtil {
 
   @NotNull
   public static String[] getElementNames(@NotNull Collection<? extends DomElement> list) {
-    ArrayList<String> result = new ArrayList<String>(list.size());
+    ArrayList<String> result = new ArrayList<>(list.size());
     if (list.size() > 0) {
       for (DomElement element: list) {
         String name = element.getGenericInfo().getElementName(element);
@@ -98,7 +96,7 @@ public class DomUtil {
 
   @NotNull
   public static List<XmlTag> getElementTags(@NotNull Collection<? extends DomElement> list) {
-    ArrayList<XmlTag> result = new ArrayList<XmlTag>(list.size());
+    ArrayList<XmlTag> result = new ArrayList<>(list.size());
     for (DomElement element: list) {
       XmlTag tag = element.getXmlTag();
       if (tag != null) {
@@ -124,7 +122,7 @@ public class DomUtil {
   @Nullable
   public static List<JavaMethod> getFixedPath(DomElement element) {
     assert element.isValid();
-    final LinkedList<JavaMethod> methods = new LinkedList<JavaMethod>();
+    final LinkedList<JavaMethod> methods = new LinkedList<>();
     while (true) {
       final DomElement parent = element.getParent();
       if (parent instanceof DomFileElement) {
@@ -154,6 +152,10 @@ public class DomUtil {
 
     final DomFixedChildDescription description = genericInfo.getFixedChildDescription(xmlElementName, namespace);
     return description != null ? description.getGetterMethod(description.getValues(parent).indexOf(element)) : null;
+  }
+
+  public static Class<?> substituteGenericType(Type genericType, Type classType) {
+    return ourVariableSubstitutions.get(Couple.of(genericType, classType));
   }
 
   @Nullable
@@ -191,7 +193,7 @@ public class DomUtil {
     final DomCollectionChildDescription childDescription =
       domGenericInfo.getCollectionChildDescription(tagName, element.getXmlElementNamespaceKey());
     if (childDescription != null) {
-      final ArrayList<DomElement> list = new ArrayList<DomElement>(childDescription.getValues(scope));
+      final ArrayList<DomElement> list = new ArrayList<>(childDescription.getValues(scope));
       list.remove(element);
       return list;
     }
@@ -199,8 +201,9 @@ public class DomUtil {
   }
 
   public static <T> List<T> getChildrenOfType(@NotNull final DomElement parent, final Class<T> type) {
-    final List<T> result = new SmartList<T>();
+    final List<T> result = new SmartList<>();
     parent.acceptChildren(new DomElementVisitor() {
+      @Override
       public void visitDomElement(final DomElement element) {
         if (type.isInstance(element)) {
           result.add((T)element);
@@ -212,8 +215,9 @@ public class DomUtil {
 
   public static List<DomElement> getDefinedChildren(@NotNull final DomElement parent, final boolean tags, final boolean attributes) {
     if (parent instanceof MergedObject) {
-      final SmartList<DomElement> result = new SmartList<DomElement>();
+      final SmartList<DomElement> result = new SmartList<>();
       parent.acceptChildren(new DomElementVisitor() {
+        @Override
         public void visitDomElement(final DomElement element) {
           if (hasXml(element)) {
             result.add(element);
@@ -229,14 +233,14 @@ public class DomUtil {
 
     if (parent instanceof DomFileElement) {
       final DomFileElement element = (DomFileElement)parent;
-      return tags ? Arrays.asList(element.getRootElement()) : Collections.<DomElement>emptyList();
+      return tags ? Arrays.asList(element.getRootElement()) : Collections.emptyList();
     }
 
     final XmlElement xmlElement = parent.getXmlElement();
     if (xmlElement instanceof XmlTag) {
       XmlTag tag = (XmlTag) xmlElement;
       final DomManager domManager = parent.getManager();
-      final SmartList<DomElement> result = new SmartList<DomElement>();
+      final SmartList<DomElement> result = new SmartList<>();
       if (attributes) {
         for (final XmlAttribute attribute : tag.getAttributes()) {
           if (!attribute.isValid()) {
@@ -245,7 +249,7 @@ public class DomUtil {
           }
           GenericAttributeValue element = domManager.getDomElement(attribute);
           if (checkHasXml(attribute, element)) {
-            ContainerUtil.addIfNotNull(element, result);
+            ContainerUtil.addIfNotNull(result, element);
           }
         }
       }
@@ -257,7 +261,7 @@ public class DomUtil {
           }
           DomElement element = domManager.getDomElement(subTag);
           if (checkHasXml(subTag, element)) {
-            ContainerUtil.addIfNotNull(element, result);
+            ContainerUtil.addIfNotNull(result, element);
           }
         }
       }
@@ -267,7 +271,7 @@ public class DomUtil {
   }
 
   private static boolean checkHasXml(XmlElement psi, DomElement dom) {
-    if (dom != null && dom.getXmlElement() == null) {
+    if (dom != null && !hasXml(dom)) {
       LOG.error("No xml for dom " + dom + "; attr=" + psi + ", physical=" + psi.isPhysical());
       return false;
     }
@@ -306,7 +310,7 @@ public class DomUtil {
   }
 
   public static Collection<Class> getAllInterfaces(final Class aClass, final Collection<Class> result) {
-    final Class[] interfaces = ReflectionCache.getInterfaces(aClass);
+    final Class[] interfaces = aClass.getInterfaces();
     ContainerUtil.addAll(result, interfaces);
     if (aClass.getSuperclass() != null) {
       getAllInterfaces(aClass.getSuperclass(), result);
@@ -351,7 +355,7 @@ public class DomUtil {
   }
 
   @Nullable
-  public static DomElement getDomElement(final Editor editor, final PsiFile file) {
+  public static DomElement getDomElement(@NotNull final Editor editor, @NotNull final PsiFile file) {
      return getDomElement(file.findElementAt(editor.getCaretModel().getOffset()));
   }
 
@@ -471,21 +475,21 @@ public class DomUtil {
   }
 
   public static boolean hasXml(@NotNull DomElement element) {
-    return element.getXmlElement() != null;
+    return element.exists();
   }
 
   public static Pair<TextRange, PsiElement> getProblemRange(final XmlTag tag) {
     final PsiElement startToken = XmlTagUtil.getStartTagNameElement(tag);
     if (startToken == null) {
-      return Pair.create(tag.getTextRange(), (PsiElement)tag);
+      return Pair.create(tag.getTextRange(), tag);
     }
 
-    return Pair.create(startToken.getTextRange().shiftRight(-tag.getTextRange().getStartOffset()), (PsiElement)tag);
+    return Pair.create(startToken.getTextRange().shiftRight(-tag.getTextRange().getStartOffset()), tag);
   }
 
   @SuppressWarnings("ForLoopReplaceableByForEach")
   public static <T extends DomElement> List<T> getChildrenOf(DomElement parent, final Class<T> type) {
-    final List<T> list = new SmartList<T>();
+    final List<T> list = new SmartList<>();
     List<? extends AbstractDomChildrenDescription> descriptions = parent.getGenericInfo().getChildrenDescriptions();
     for (int i = 0, descriptionsSize = descriptions.size(); i < descriptionsSize; i++) {
       AbstractDomChildrenDescription description = descriptions.get(i);

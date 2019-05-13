@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,8 @@
  */
 package com.intellij.openapi.vcs.changes.committed;
 
+import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.actions.VcsContext;
@@ -25,8 +27,7 @@ import com.intellij.openapi.vcs.update.AbstractCommonUpdateAction;
 import com.intellij.openapi.vcs.update.ActionInfo;
 import com.intellij.openapi.vcs.update.ScopeInfo;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
-import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.actionSystem.Presentation;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
@@ -38,15 +39,16 @@ public class GetCommittedChangelistAction extends AbstractCommonUpdateAction {
     super(ActionInfo.UPDATE, CHANGELIST, false);
   }
 
-  protected void actionPerformed(final VcsContext context) {
+  @Override
+  protected void actionPerformed(@NotNull final VcsContext context) {
     Collection<FilePath> filePaths = getFilePaths(context);
-    final List<ChangeList> selectedChangeLists = new ArrayList<ChangeList>();
+    final List<ChangeList> selectedChangeLists = new ArrayList<>();
     final ChangeList[] selectionFromContext = context.getSelectedChangeLists();
     if (selectionFromContext != null) {
       Collections.addAll(selectedChangeLists, selectionFromContext);
     }
     final List<CommittedChangeList> incomingChanges = CommittedChangesCache.getInstance(context.getProject()).getCachedIncomingChanges();
-    final List<CommittedChangeList> intersectingChanges = new ArrayList<CommittedChangeList>();
+    final List<CommittedChangeList> intersectingChanges = new ArrayList<>();
     if (incomingChanges != null) {
       for(CommittedChangeList changeList: incomingChanges) {
         if (!selectedChangeLists.contains(changeList)) {
@@ -63,16 +65,18 @@ public class GetCommittedChangelistAction extends AbstractCommonUpdateAction {
       int rc = Messages.showOkCancelDialog(
         context.getProject(), VcsBundle.message("get.committed.changes.intersecting.prompt", intersectingChanges.size(), selectedChangeLists.size()),
         VcsBundle.message("get.committed.changes.title"), Messages.getQuestionIcon());
-      if (rc != 0) return;
+      if (rc != Messages.OK) return;
     }
     super.actionPerformed(context);
   }
 
+  @Override
   protected boolean filterRootsBeforeAction() {
     return false;
   }
 
-  protected void update(final VcsContext vcsContext, final Presentation presentation) {
+  @Override
+  protected void update(@NotNull final VcsContext vcsContext, @NotNull final Presentation presentation) {
     super.update(vcsContext, presentation);
     final ChangeList[] changeLists = vcsContext.getSelectedChangeLists();
     presentation.setEnabled(presentation.isEnabled() &&
@@ -81,22 +85,25 @@ public class GetCommittedChangelistAction extends AbstractCommonUpdateAction {
   }
 
   private static final ScopeInfo CHANGELIST = new ScopeInfo() {
+    @Override
     public FilePath[] getRoots(final VcsContext context, final ActionInfo actionInfo) {
       final Collection<FilePath> filePaths = getFilePaths(context);
-      return filePaths.toArray(new FilePath[filePaths.size()]);
+      return filePaths.toArray(new FilePath[0]);
     }
 
+    @Override
     public String getScopeName(final VcsContext dataContext, final ActionInfo actionInfo) {
       return "Changelist";
     }
 
+    @Override
     public boolean filterExistsInVcs() {
       return false;
     }
   };
 
   private static Collection<FilePath> getFilePaths(final VcsContext context) {
-    final Set<FilePath> files = new HashSet<FilePath>();
+    final Set<FilePath> files = new HashSet<>();
     final ChangeList[] selectedChangeLists = context.getSelectedChangeLists();
     if (selectedChangeLists != null) {
       for(ChangeList changelist: selectedChangeLists) {

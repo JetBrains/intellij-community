@@ -15,34 +15,41 @@
  */
 package com.intellij.openapi.vcs.changes.shelf;
 
-import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.actionSystem.ToggleAction;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.NotNull;
 
-public class ShowHideRecycledAction extends AnAction {
+public class ShowHideRecycledAction extends ToggleAction implements DumbAware {
+
   @Override
-  public void update(final AnActionEvent e) {
-    final Project project = e.getData(PlatformDataKeys.PROJECT);
+  public void update(@NotNull final AnActionEvent e) {
+    super.update(e);
+    final Project project = getEventProject(e);
     final Presentation presentation = e.getPresentation();
-    if (project == null) {
-      presentation.setEnabled(false);
-      presentation.setVisible(false);
+    presentation.setEnabledAndVisible(project != null);
+    if (project != null) {
+      final boolean fromContextMenu = ShelvedChangesViewManager.SHELF_CONTEXT_MENU.equals(e.getPlace());
+      presentation.setText(ShelveChangesManager.getInstance(project).isShowRecycled() && !fromContextMenu ?
+                           "Hide Already Unshelved" : "Show Already Unshelved");
+      presentation.setIcon(fromContextMenu ? null : AllIcons.Vcs.Patch_applied);
     }
-    presentation.setEnabled(true);
-    presentation.setVisible(true);
-    final boolean show = ShelveChangesManager.getInstance(project).isShowRecycled();
-    presentation.setText(show ? "Hide Already Unshelved" : "Show Already Unshelved");
   }
 
-  public void actionPerformed(final AnActionEvent e) {
-    final Project project = e.getData(PlatformDataKeys.PROJECT);
-    if (project == null) {
-      return;
+  @Override
+  public boolean isSelected(@NotNull AnActionEvent e) {
+    final Project project = getEventProject(e);
+    return project != null && ShelveChangesManager.getInstance(project).isShowRecycled();
+  }
+
+  @Override
+  public void setSelected(@NotNull AnActionEvent e, boolean state) {
+    final Project project = getEventProject(e);
+    if (project != null) {
+      ShelveChangesManager.getInstance(project).setShowRecycled(state);
     }
-    final ShelveChangesManager manager = ShelveChangesManager.getInstance(project);
-    final boolean show = manager.isShowRecycled();
-    manager.setShowRecycled(! show);
   }
 }

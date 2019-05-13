@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,14 +16,13 @@
 package com.intellij.psi;
 
 import com.intellij.util.IncorrectOperationException;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * A PSI element which has a name and can be renamed (for example, a class or a method).
  */
-public interface PsiNamedElement extends PsiElement{
+public interface PsiNamedElement extends PsiElement {
   /**
    * The empty array of PSI named elements which can be reused to avoid unnecessary allocations.
    */
@@ -34,15 +33,16 @@ public interface PsiNamedElement extends PsiElement{
    *
    * @return the element name.
    */
-  @Nullable @NonNls String getName();
+  @Nullable
+  String getName();
 
   /**
    * Renames the element.
    *
    * @param name the new element name.
-   * @return the element corresponding to this element after the rename (either <code>this</code>
+   * @return the element corresponding to this element after the rename (either {@code this}
    * or a different element if the rename caused the element to be replaced).
    * @throws IncorrectOperationException if the modification is not supported or not possible for some reason.
    */
-  PsiElement setName(@NonNls @NotNull String name) throws IncorrectOperationException;
+  PsiElement setName(@NotNull String name) throws IncorrectOperationException;
 }

@@ -28,27 +28,33 @@ import org.intellij.plugins.intelliLang.util.RemoveAnnotationFix;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-public class InjectionNotApplicable extends LocalInspectionTool {
+import static com.intellij.codeInsight.AnnotationUtil.CHECK_EXTERNAL;
 
+public class InjectionNotApplicable extends LocalInspectionTool {
+  @Override
   @NotNull
   public HighlightDisplayLevel getDefaultLevel() {
     return HighlightDisplayLevel.ERROR;
   }
 
+  @Override
   public boolean isEnabledByDefault() {
     return true;
   }
 
+  @Override
   @NotNull
   public String getGroupDisplayName() {
     return PatternValidator.LANGUAGE_INJECTION;
   }
 
+  @Override
   @NotNull
   public String getDisplayName() {
     return "Injection Annotation not applicable";
   }
 
+  @Override
   @NotNull
   public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, boolean isOnTheFly) {
     return new JavaElementVisitor() {
@@ -62,7 +68,7 @@ public class InjectionNotApplicable extends LocalInspectionTool {
         }
         else if (name != null) {
           final PsiClass psiClass = JavaPsiFacade.getInstance(annotation.getProject()).findClass(name, annotation.getResolveScope());
-          if (psiClass != null && AnnotationUtil.isAnnotated(psiClass, annotationName, false, false)) {
+          if (psiClass != null && AnnotationUtil.isAnnotated(psiClass, annotationName, CHECK_EXTERNAL)) {
             checkAnnotation(annotation, holder);
           }
         }
@@ -90,6 +96,7 @@ public class InjectionNotApplicable extends LocalInspectionTool {
     holder.registerProblem(annotation, "Language Injection is only applicable to elements of type String", new RemoveAnnotationFix(this));
   }
 
+  @Override
   @NotNull
   @NonNls
   public String getShortName() {

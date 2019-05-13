@@ -1,73 +1,84 @@
-/*
- * Copyright 2000-2011 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.branch;
 
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.vcs.log.Hash;
+import git4idea.GitBranch;
 import git4idea.GitLocalBranch;
+import git4idea.GitReference;
 import git4idea.GitRemoteBranch;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashSet;
+import java.util.Map;
 
 /**
  * <p>
- *   Storage for local, remote and current branches.
- *   The reason of creating this special collection is that
- *   in the terms of performance, they are detected by {@link git4idea.repo.GitRepositoryReader} at once;
- *   and also usually both sets of branches are needed by components, but are treated differently,
- *   so it is more convenient to have them separated, but in a single container.
- * </p> 
- * 
+ * Storage for local, remote and current branches.
+ * The reason of creating this special collection is that
+ * in the terms of performance, they are detected by {@link git4idea.repo.GitRepositoryReader} at once;
+ * and also usually both sets of branches are needed by components, but are treated differently,
+ * so it is more convenient to have them separated, but in a single container.
+ * </p>
+ *
  * @author Kirill Likhodedov
  */
 public final class GitBranchesCollection {
-  
-  public static final GitBranchesCollection EMPTY = new GitBranchesCollection(Collections.<GitLocalBranch>emptyList(),
-                                                                              Collections.<GitRemoteBranch>emptyList());
 
-  private final Collection<GitLocalBranch> myLocalBranches;
-  private final Collection<GitRemoteBranch> myRemoteBranches;
+  public static final GitBranchesCollection EMPTY =
+    new GitBranchesCollection(Collections.emptyMap(), Collections.emptyMap());
 
-  public GitBranchesCollection(@NotNull Collection<GitLocalBranch> localBranches, @NotNull Collection<GitRemoteBranch> remoteBranches) {
+  @NotNull
+  private final Map<GitLocalBranch, Hash> myLocalBranches;
+  @NotNull
+  private final Map<GitRemoteBranch, Hash> myRemoteBranches;
+
+  public GitBranchesCollection(@NotNull Map<GitLocalBranch, Hash> localBranches, @NotNull Map<GitRemoteBranch, Hash> remoteBranches) {
     myRemoteBranches = remoteBranches;
     myLocalBranches = localBranches;
   }
 
-  /**
-   * Copy constructor. Sets inside are also copied.
-   */
-  public GitBranchesCollection(@NotNull GitBranchesCollection branches) {
-    this(branches.getLocalBranches(), branches.getRemoteBranches());
-  }
-
-  /**
-   * @return the copy of local branches set.
-   */
   @NotNull
   public Collection<GitLocalBranch> getLocalBranches() {
-    return new HashSet<GitLocalBranch>(myLocalBranches);
+    return Collections.unmodifiableCollection(myLocalBranches.keySet());
   }
 
-  /**
-   * @return the copy of remote branches set.
-   */
   @NotNull
   public Collection<GitRemoteBranch> getRemoteBranches() {
-    return new HashSet<GitRemoteBranch>(myRemoteBranches);
+    return Collections.unmodifiableCollection(myRemoteBranches.keySet());
   }
 
+  @Nullable
+  public Hash getHash(@NotNull GitBranch branch) {
+    if (branch instanceof  GitLocalBranch) return myLocalBranches.get(branch);
+    if (branch instanceof  GitRemoteBranch) return myRemoteBranches.get(branch);
+    return null;
+  }
+
+  public Collection<GitLocalBranch> findLocalBranchesByHash(Hash hash) {
+    return ContainerUtil.filter(myLocalBranches.keySet(), key -> myLocalBranches.get(key).equals(hash));
+  }
+
+  public Collection<GitRemoteBranch> findRemoteBranchesByHash(Hash hash) {
+    return ContainerUtil.filter(myRemoteBranches.keySet(), key -> myRemoteBranches.get(key).equals(hash));
+  }
+
+  @Nullable
+  public GitLocalBranch findLocalBranch(@NotNull String name) {
+    GitLocalBranch branch = new GitLocalBranch(name);
+    return myLocalBranches.containsKey(branch) ? branch : null;
+  }
+
+  @Nullable
+  public GitBranch findBranchByName(@NotNull String name) {
+    GitLocalBranch branch = findLocalBranch(name);
+    return branch != null ? branch : findByName(myRemoteBranches.keySet(), name);
+  }
+
+  @Nullable
+  private static <T extends GitBranch> T findByName(Collection<T> branches, @NotNull final String name) {
+    return ContainerUtil.find(branches, branch -> GitReference.BRANCH_NAME_HASHING_STRATEGY.equals(name, branch.getName()));
+  }
 }

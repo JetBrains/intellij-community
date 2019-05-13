@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,19 +25,19 @@ import org.jetbrains.plugins.groovy.util.TestUtils
 /**
  * @author Maxim.Medvedev
  */
-public class CodeBlockGenerationTest extends LightGroovyTestCase {
+class CodeBlockGenerationTest extends LightGroovyTestCase {
   final String basePath = TestUtils.testDataPath + 'refactoring/convertGroovyToJava/codeBlock'
 
   private void doTest() {
     final String testName = getTestName(true)
-    final PsiFile file = myFixture.configureByFile(testName + '.groovy');
+    final PsiFile file = myFixture.configureByFile(testName + '.groovy')
     assertInstanceOf file, GroovyFile
 
     GrTopStatement[] statements = file.topStatements
     final StringBuilder builder = new StringBuilder()
-    def generator = new CodeBlockGenerator(builder, new ExpressionContext(project));
+    def generator = new CodeBlockGenerator(builder, new ExpressionContext(project))
     for (def statement : statements) {
-      statement.accept(generator);
+      statement.accept(generator)
       builder.append('\n')
     }
 
@@ -45,7 +45,7 @@ public class CodeBlockGenerationTest extends LightGroovyTestCase {
     PostprocessReformattingAspect.getInstance(project).doPostponedFormatting()
     final String text = result.text
     final String expected = psiManager.findFile(myFixture.copyFileToProject(testName + '.java')).text
-    assertEquals expected, text
+    assertEquals expected.trim(), text.trim()
   }
 
   private addFile(String text) {
@@ -59,6 +59,9 @@ public class CodeBlockGenerationTest extends LightGroovyTestCase {
   void testSwitch3() { doTest() }
 
   void testSwitch4() { doTest() }
+
+  void testSwitch5() { doTest() }
+  void testSwitch6() { doTest() }
 
   void _testWhile1() { doTest() }
 
@@ -158,7 +161,10 @@ public final class Matcher {
 
   void testArrayAccess() { doTest() }
 
-  void testCastWithEquality() { doTest() }
+  void testCastWithEquality() {
+    addBigDecimal()
+    doTest()
+  }
 
   void testAsserts() { doTest() }
 
@@ -184,9 +190,19 @@ public final class Matcher {
 
   void testClassReference() { doTest() }
 
+  void testClassMethod() { doTest() }
+
   void testEquals() { doTest() }
 
   void testSelfNavigatingOperator() { doTest() }
 
   void testComparisonToNull() { doTest() }
+
+  void testStringConverting() { doTest() }
+
+  void testInWitchClassCheck() { doTest() }
+
+  void testSwitch() { doTest() }
+
+  void testPropSelection() { doTest() }
 }

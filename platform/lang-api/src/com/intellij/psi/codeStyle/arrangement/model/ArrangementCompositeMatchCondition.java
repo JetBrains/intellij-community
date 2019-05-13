@@ -16,7 +16,7 @@
 package com.intellij.psi.codeStyle.arrangement.model;
 
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.containers.HashSet;
+import java.util.HashSet;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
@@ -28,11 +28,10 @@ import java.util.Set;
  * Not thread-safe.
  * 
  * @author Denis Zhdanov
- * @since 8/8/12 1:18 PM
  */
 public class ArrangementCompositeMatchCondition implements ArrangementMatchCondition {
 
-  @NotNull private final Set<ArrangementMatchCondition> myOperands = new HashSet<ArrangementMatchCondition>();
+  @NotNull private final Set<ArrangementMatchCondition> myOperands = new HashSet<>();
 
   public ArrangementCompositeMatchCondition() {
   }

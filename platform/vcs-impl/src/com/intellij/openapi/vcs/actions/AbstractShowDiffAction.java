@@ -15,98 +15,93 @@
  */
 package com.intellij.openapi.vcs.actions;
 
-import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.AbstractVcs;
-import com.intellij.openapi.vcs.FilePathImpl;
+import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
+import com.intellij.openapi.vcs.changes.ChangesUtil;
 import com.intellij.openapi.vcs.diff.DiffProvider;
-import com.intellij.openapi.vcs.impl.BackgroundableActionEnabledHandler;
-import com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl;
+import com.intellij.openapi.vcs.impl.BackgroundableActionLock;
 import com.intellij.openapi.vcs.impl.VcsBackgroundableActions;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.vcsUtil.VcsUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public abstract class AbstractShowDiffAction extends AbstractVcsAction{
+import java.util.Objects;
+import java.util.stream.Stream;
 
-  protected void update(VcsContext vcsContext, Presentation presentation) {
-    updateDiffAction(presentation, vcsContext, getKey());
+import static com.intellij.util.ObjectUtils.assertNotNull;
+import static com.intellij.util.containers.UtilKt.getIfSingle;
+
+public abstract class AbstractShowDiffAction extends AbstractVcsAction {
+  @Override
+  protected void update(@NotNull VcsContext vcsContext, @NotNull Presentation presentation) {
+    updateDiffAction(presentation, vcsContext);
   }
 
-  protected static void updateDiffAction(final Presentation presentation, final VcsContext vcsContext,
-                                         final VcsBackgroundableActions actionKey) {
-    presentation.setEnabled(isEnabled(vcsContext, actionKey) != null);
+  protected static void updateDiffAction(@NotNull Presentation presentation,
+                                         @NotNull VcsContext vcsContext) {
+    presentation.setEnabled(isEnabled(vcsContext, true));
     presentation.setVisible(isVisible(vcsContext));
   }
 
-  protected boolean forceSyncUpdate(final AnActionEvent e) {
+  protected static boolean isVisible(@NotNull VcsContext vcsContext) {
+    Project project = vcsContext.getProject();
+    return project != null && hasDiffProviders(project);
+  }
+
+  private static boolean hasDiffProviders(@NotNull Project project) {
+    return Stream.of(ProjectLevelVcsManager.getInstance(project).getAllActiveVcss())
+      .map(AbstractVcs::getDiffProvider)
+      .anyMatch(Objects::nonNull);
+  }
+
+  protected static boolean isEnabled(@NotNull VcsContext vcsContext, boolean disableIfRunning) {
+    Project project = vcsContext.getProject();
+    if (project == null) return false;
+
+    if (!isVisible(vcsContext)) return false;
+
+    VirtualFile file = getIfSingle(vcsContext.getSelectedFilesStream());
+    if (file == null || file.isDirectory()) return false;
+
+    FilePath filePath = VcsUtil.getFilePath(file);
+
+    if (disableIfRunning) {
+      if (BackgroundableActionLock.isLocked(project, VcsBackgroundableActions.COMPARE_WITH, filePath)) {
+        return false;
+      }
+    }
+
+    AbstractVcs vcs = ChangesUtil.getVcsForFile(file, project);
+    if (vcs == null || vcs.getDiffProvider() == null) return false;
+
+    if (!AbstractVcs.fileInVcsByFileStatus(project, filePath)) return false;
+
     return true;
   }
 
-  protected abstract VcsBackgroundableActions getKey();
+  @Override
+  protected void actionPerformed(@NotNull VcsContext vcsContext) {
+    Project project = assertNotNull(vcsContext.getProject());
 
-  protected static boolean isVisible(final VcsContext vcsContext) {
-    final Project project = vcsContext.getProject();
-    if (project == null) return false;
-    final AbstractVcs[] vcss = ProjectLevelVcsManager.getInstance(project).getAllActiveVcss();
-    for (AbstractVcs vcs : vcss) {
-      if (vcs.getDiffProvider() != null) {
-        return true;
-      }
+    if (!ChangeListManager.getInstance(project).isFreezedWithNotification("Can not " + vcsContext.getActionName() + " now")) {
+      VirtualFile file = vcsContext.getSelectedFiles()[0];
+      AbstractVcs vcs = assertNotNull(ChangesUtil.getVcsForFile(file, project));
+      DiffProvider provider = assertNotNull(vcs.getDiffProvider());
+      Editor editor = vcsContext.getEditor();
+
+      getExecutor(provider, file, project, editor).showDiff();
     }
-    return false;
   }
 
-  @Nullable
-  protected static AbstractVcs isEnabled(final VcsContext vcsContext, @Nullable final VcsBackgroundableActions actionKey) {
-    if (!(isVisible(vcsContext))) return null;
-
-    final Project project = vcsContext.getProject();
-    if (project == null) return null;
-    final ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(project);
-
-    final VirtualFile[] selectedFilePaths = vcsContext.getSelectedFiles();
-    if (selectedFilePaths == null || selectedFilePaths.length != 1) return null;
-
-    final VirtualFile selectedFile = selectedFilePaths[0];
-    if (selectedFile.isDirectory()) return null;
-
-    if (actionKey != null) {
-      final BackgroundableActionEnabledHandler handler = ((ProjectLevelVcsManagerImpl)vcsManager).getBackgroundableActionHandler(actionKey);
-      if (handler.isInProgress(VcsBackgroundableActions.keyFrom(selectedFile))) return null;
-    }
-
-    final AbstractVcs vcs = vcsManager.getVcsFor(selectedFile);
-    if (vcs == null) return null;
-
-    final DiffProvider diffProvider = vcs.getDiffProvider();
-
-    if (diffProvider == null) return null;
-
-    if (AbstractVcs.fileInVcsByFileStatus(project, new FilePathImpl(selectedFile))) {
-      return vcs;
-    }
-    return null;
-  }
-
-
-  protected void actionPerformed(VcsContext vcsContext) {
-    final Project project = vcsContext.getProject();
-    if (project == null) return;
-    if (ChangeListManager.getInstance(project).isFreezedWithNotification("Can not " + vcsContext.getActionName() + " now")) return;
-    final VirtualFile selectedFile = vcsContext.getSelectedFiles()[0];
-
-    final ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(project);
-    final AbstractVcs vcs = vcsManager.getVcsFor(selectedFile);
-    final DiffProvider diffProvider = vcs.getDiffProvider();
-
-    final DiffActionExecutor actionExecutor = getExecutor(diffProvider, selectedFile, project);
-    actionExecutor.showDiff();
-  }
-
-  protected DiffActionExecutor getExecutor(final DiffProvider diffProvider, final VirtualFile selectedFile, final Project project) {
-    return new DiffActionExecutor.CompareToCurrentExecutor(diffProvider, selectedFile, project, getKey());
-  }
+  @NotNull
+  protected abstract DiffActionExecutor getExecutor(@NotNull DiffProvider diffProvider,
+                                                    @NotNull VirtualFile selectedFile,
+                                                    @NotNull Project project,
+                                                    @Nullable Editor editor);
 }

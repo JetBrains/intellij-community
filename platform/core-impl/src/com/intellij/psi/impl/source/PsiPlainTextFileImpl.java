@@ -28,7 +28,7 @@ public class PsiPlainTextFileImpl extends PsiFileImpl implements PsiPlainTextFil
 
   public PsiPlainTextFileImpl(FileViewProvider viewProvider) {
     super(PlainTextTokenTypes.PLAIN_TEXT_FILE, PlainTextTokenTypes.PLAIN_TEXT_FILE, viewProvider);
-    myFileType = viewProvider.getBaseLanguage() != PlainTextLanguage.INSTANCE ? PlainTextFileType.INSTANCE : viewProvider.getVirtualFile().getFileType();
+    myFileType = viewProvider.getBaseLanguage() != PlainTextLanguage.INSTANCE ? PlainTextFileType.INSTANCE : viewProvider.getFileType();
   }
 
   @Override
@@ -36,6 +36,7 @@ public class PsiPlainTextFileImpl extends PsiFileImpl implements PsiPlainTextFil
     visitor.visitPlainTextFile(this);
   }
 
+  @Override
   public String toString(){
     return "PsiFile(plain text):" + getName();
   }
@@ -49,6 +50,6 @@ public class PsiPlainTextFileImpl extends PsiFileImpl implements PsiPlainTextFil
   @Override
   @NotNull
   public PsiReference[] getReferences() {
-    return ReferenceProvidersRegistry.getReferencesFromProviders(this,PsiPlainTextFile.class);
+    return ReferenceProvidersRegistry.getReferencesFromProviders(this);
   }
 }

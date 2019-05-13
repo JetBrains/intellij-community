@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -48,7 +48,7 @@ public class CheckoutWizard extends CvsWizard {
                                                       TreeSelectionModel.DISCONTIGUOUS_TREE_SELECTION, true, true);
 
     mySelectLocationStep = new MySelectLocationStep(project);
-    myChooseModeStep = new ChooseCheckoutMode(this);
+    myChooseModeStep = new ChooseCheckoutMode(project, this);
 
     addStep(mySelectCVSConfigurationStep);
     addStep(mySelectCvsElementStep);
@@ -58,6 +58,7 @@ public class CheckoutWizard extends CvsWizard {
     init();
   }
 
+  @Override
   protected void doOKAction() {
     CvsApplicationLevelConfiguration config = CvsApplicationLevelConfiguration.getInstance();
 
@@ -81,6 +82,12 @@ public class CheckoutWizard extends CvsWizard {
     return mySelectCVSConfigurationStep.getSelectedConfiguration();
   }
 
+  public CvsRootConfiguration getConfigurationWithDateOrRevisionSettings() {
+    final CvsRootConfiguration configuration = getSelectedConfiguration().clone();
+    myChooseModeStep.saveDateOrRevisionSettings(configuration);
+    return configuration;
+  }
+
   public boolean useAlternativeCheckoutLocation() {
     return myChooseModeStep.useAlternativeCheckoutLocation();
   }
@@ -94,12 +101,13 @@ public class CheckoutWizard extends CvsWizard {
   }
 
   private class MySelectLocationStep extends SelectLocationStep {
-    public MySelectLocationStep(Project project) {
+    MySelectLocationStep(Project project) {
       super(CvsBundle.message("dialog.title.select.check.out.location"), CheckoutWizard.this, project, false);
       init();
     }
   }
 
+  @Override
   protected String getHelpID() {
     return "cvs.checkOutPrj";
   }

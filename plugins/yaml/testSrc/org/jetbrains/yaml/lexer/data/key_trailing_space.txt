@@ -1,0 +1,3 @@
+scalar key ('foo')
+whitespace ('   ')
+: (':')

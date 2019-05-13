@@ -1,0 +1,20 @@
+<html>
+<body>
+Reports deprecated classes, methods and fields which are used in your code nonetheless.
+<br>
+For example:
+
+<pre>
+<b><font color="#000080">class</font></b> MyCode {
+  @Deprecated
+  // warning: "Deprecated member is still used"
+  <b><font color="#000080">void</font></b> <span style="background-color: yellow;">oldMethod</span>() {}
+
+  <b><font color="#000080">void</font></b> newMethod() {
+    oldMethod(); // forgotten usage
+  }
+}
+</pre>
+(Usages from within deprecated places are ignored).
+</body>
+</html>

@@ -1,55 +1,41 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
-/*
- * User: anna
- * Date: 28-Nov-2008
- */
 package org.jetbrains.idea.eclipse;
 
+import com.intellij.application.options.ReplacePathToMacroMap;
+import com.intellij.configurationStore.JbXmlOutputter;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.PathMacros;
-import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.PluginPathManager;
+import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.components.PathMacroManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.StdModuleTypes;
+import com.intellij.openapi.module.impl.ModuleManagerImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.impl.ModuleRootManagerImpl;
 import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.project.IntelliJProjectConfiguration;
 import com.intellij.testFramework.IdeaTestCase;
-import junit.framework.Assert;
-import org.jdom.Document;
+import com.intellij.util.JdomKt;
+import com.intellij.util.PathUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.jdom.Element;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.idea.eclipse.conversion.EclipseClasspathReader;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.HashSet;
+import java.io.StringWriter;
+import java.nio.file.Paths;
+
+import static com.intellij.testFramework.assertions.Assertions.assertThat;
 
 public class EclipseImlTest extends IdeaTestCase {
-  @NonNls public static final String JUNIT = "JUNIT";
-
   @Override
   protected void setUp() throws Exception {
     super.setUp();
@@ -59,7 +45,8 @@ public class EclipseImlTest extends IdeaTestCase {
     final File currentTestRoot = new File(testRoot, getTestName(true));
     assertTrue(currentTestRoot.getAbsolutePath(), currentTestRoot.isDirectory());
 
-    FileUtil.copyDir(currentTestRoot, new File(getProject().getBaseDir().getPath()));
+    VirtualFile vTestRoot = LocalFileSystem.getInstance().findFileByIoFile(currentTestRoot);
+    copyDirContentsTo(vTestRoot, getProject().getBaseDir());
   }
 
   private void doTest() throws Exception {
@@ -67,53 +54,44 @@ public class EclipseImlTest extends IdeaTestCase {
   }
 
   protected static void doTest(final String relativePath, final Project project) throws Exception {
-    final String path = project.getBaseDir().getPath() + relativePath;
+    final String path = project.getBasePath() + relativePath;
 
     final File classpathFile = new File(path, EclipseXml.DOT_CLASSPATH_EXT);
-    String fileText = FileUtil.loadFile(classpathFile).replaceAll("\\$ROOT\\$", project.getBaseDir().getPath());
+    String fileText = FileUtil.loadFile(classpathFile).replaceAll("\\$ROOT\\$", project.getBasePath());
     if (!SystemInfo.isWindows) {
       fileText = fileText.replaceAll(EclipseXml.FILE_PROTOCOL + "/", EclipseXml.FILE_PROTOCOL);
     }
-    String communityAppDir = PathManager.getHomePath();
-    if (new File(PathManager.getHomePath(), "community").exists()) {
-      communityAppDir += "/community";
-    }
-    fileText = fileText.replaceAll("\\$" + JUNIT + "\\$", communityAppDir);
-    final Element classpathElement = JDOMUtil.loadDocument(fileText).getRootElement();
-    final Module module = ApplicationManager.getApplication().runWriteAction(new Computable<Module>() {
-      @Override
-      public Module compute() {
-        return ModuleManager.getInstance(project)
-          .newModule(new File(path) + File.separator + EclipseProjectFinder
-            .findProjectName(path) + IdeaXml.IML_EXT, StdModuleTypes.JAVA.getId());
-      }
-    });
+
+    final Element classpathElement = JdomKt.loadElement(fileText);
+    final Module module = WriteCommandAction.runWriteCommandAction(null, (Computable<Module>)() -> ModuleManager.getInstance(project)
+      .newModule(new File(path) + File.separator + EclipseProjectFinder
+        .findProjectName(path) + ModuleManagerImpl.IML_EXTENSION, StdModuleTypes.JAVA.getId()));
     final ModifiableRootModel rootModel = ModuleRootManager.getInstance(module).getModifiableModel();
-    final EclipseClasspathReader classpathReader = new EclipseClasspathReader(path, project, null);
+    EclipseClasspathReader classpathReader = new EclipseClasspathReader(path, project, null);
     classpathReader.init(rootModel);
-    classpathReader
-      .readClasspath(rootModel, new ArrayList<String>(), new ArrayList<String>(), new HashSet<String>(), new HashSet<String>(), null,
-                     classpathElement);
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      public void run() {
-        rootModel.commit();
-      }
-    });
+    classpathReader.readClasspath(rootModel, classpathElement);
+    ApplicationManager.getApplication().runWriteAction(rootModel::commit);
 
     final Element actualImlElement = new Element("root");
     ((ModuleRootManagerImpl)ModuleRootManager.getInstance(module)).getState().writeExternal(actualImlElement);
 
-    PathMacros.getInstance().setMacro(JUNIT, communityAppDir);
-    PathMacroManager.getInstance(module).collapsePaths(actualImlElement);
-    PathMacroManager.getInstance(project).collapsePaths(actualImlElement);
-    PathMacros.getInstance().removeMacro(JUNIT);
-
-    final Element expectedIml =
-      JDOMUtil.loadDocument(new File(project.getBaseDir().getPath() + "/expected", "expected.iml")).getRootElement();
-    Assert.assertTrue(new String(JDOMUtil.printDocument(new Document(actualImlElement), "\n")),
-                      JDOMUtil.areElementsEqual(expectedIml, actualImlElement));
+    String junit3Path = ContainerUtil.getFirstItem(IntelliJProjectConfiguration.getProjectLibraryClassesRootPaths("JUnit3"));
+    String junit4Path = ContainerUtil.find(IntelliJProjectConfiguration.getProjectLibraryClassesRootPaths("JUnit4"),
+                                           jarPath -> PathUtil.getFileName(jarPath).startsWith("junit"));
+    ReplacePathToMacroMap macroMap = new ReplacePathToMacroMap(PathMacroManager.getInstance(module).getReplacePathMap());
+    macroMap.addMacroReplacement(junit3Path, "JUNIT3_PATH");
+    macroMap.addMacroReplacement(junit4Path, "JUNIT4_PATH");
+    macroMap.addMacroReplacement(Paths.get(junit3Path).toRealPath().toString(), "JUNIT3_PATH");
+    macroMap.addMacroReplacement(Paths.get(junit4Path).toRealPath().toString(), "JUNIT4_PATH");
+    StringWriter writer = new StringWriter();
+    JbXmlOutputter xmlWriter = new JbXmlOutputter("\n", null, macroMap, null);
+    xmlWriter.output(actualImlElement, writer);
+    String actual = writer.toString();
+    if (actual.contains("jar://$MAVEN_REPOSITORY$/junit")) {
+      fail(actual + "\n\n" + macroMap.toString());
+    }
+    assertThat(actual).isEqualTo(Paths.get(project.getBasePath(), "expected", "expected.iml"));
   }
-
 
   public void testWorkspaceOnly() throws Exception {
     doTest();

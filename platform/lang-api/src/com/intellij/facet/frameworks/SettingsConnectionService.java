@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,18 +18,14 @@ package com.intellij.facet.frameworks;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.containers.hash.HashMap;
-import org.jdom.Document;
+import com.intellij.util.containers.ContainerUtilRt;
+import com.intellij.util.io.HttpRequests;
 import org.jdom.Element;
+import org.jdom.JDOMException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.net.HttpURLConnection;
-import java.net.MalformedURLException;
-import java.net.URL;
-import java.net.URLConnection;
+import java.util.Collections;
 import java.util.Map;
 
 public abstract class SettingsConnectionService {
@@ -37,23 +33,26 @@ public abstract class SettingsConnectionService {
 
   protected static final String SERVICE_URL_ATTR_NAME = "url";
 
-  private static final String myAgentID = "IntelliJ IDEA";
-
   private Map<String, String> myAttributesMap;
 
   @NotNull
   protected String[] getAttributeNames() {
-       return new String[] {SERVICE_URL_ATTR_NAME};
+    return new String[]{SERVICE_URL_ATTR_NAME};
   }
 
-  private String mySettingsUrl;
-  @Nullable private String myDefaultServiceUrl;
+  @Nullable
+  private final String mySettingsUrl;
+  @Nullable
+  private final String myDefaultServiceUrl;
 
-  protected SettingsConnectionService(@NotNull String settingsUrl, @Nullable String defaultServiceUrl) {
+  protected SettingsConnectionService(@Nullable String settingsUrl, @Nullable String defaultServiceUrl) {
     mySettingsUrl = settingsUrl;
     myDefaultServiceUrl = defaultServiceUrl;
   }
 
+  @SuppressWarnings("unused")
+  @Deprecated
+  @Nullable
   public String getSettingsUrl() {
     return mySettingsUrl;
   }
@@ -64,51 +63,37 @@ public abstract class SettingsConnectionService {
   }
 
   @Nullable
-  private Map<String, String> readSettings(String... attributes) {
-    Map<String, String> settings = new HashMap<String, String>();
-    try {
-      final URL url = new URL(getSettingsUrl());
-      final InputStream is = getStream(url);
-      final Document document = JDOMUtil.loadDocument(is);
-      final Element root = document.getRootElement();
-      for (String s : attributes) {
-        final String attributeValue = root.getAttributeValue(s);
-        if (StringUtil.isNotEmpty(attributeValue)) {
-          settings.put(s, attributeValue);
+  private Map<String, String> readSettings(final String... attributes) {
+    if (mySettingsUrl == null) return Collections.emptyMap();
+    return HttpRequests.request(mySettingsUrl)
+      .productNameAsUserAgent()
+      .connect(request -> {
+        Map<String, String> settings = ContainerUtilRt.newLinkedHashMap();
+        try {
+          Element root = JDOMUtil.load(request.getReader());
+          for (String s : attributes) {
+            String attributeValue = root.getAttributeValue(s);
+            if (StringUtil.isNotEmpty(attributeValue)) {
+              settings.put(s, attributeValue);
+            }
+          }
         }
-      }
-    }
-    catch (MalformedURLException e) {
-      LOG.error(e);
-    }
-    catch (IOException e) {
-      // no route to host, unknown host, etc.
-    }
-    catch (Exception e) {
-      LOG.error(e);
-    }
-
-    return settings;
-  }
-
-  private static InputStream getStream(URL url) throws IOException {
-    final URLConnection connection = url.openConnection();
-    if (connection instanceof HttpURLConnection) {
-      connection.setRequestProperty("User-agent", myAgentID);
-    }
-    return connection.getInputStream();
+        catch (JDOMException e) {
+          LOG.info(e);
+        }
+        return settings;
+      }, Collections.emptyMap(), LOG);
   }
 
   @Nullable
   public String getServiceUrl() {
     final String serviceUrl = getSettingValue(SERVICE_URL_ATTR_NAME);
-
     return serviceUrl == null ? getDefaultServiceUrl() : serviceUrl;
   }
 
   @Nullable
   protected String getSettingValue(@NotNull String attributeValue) {
-    if (myAttributesMap == null) {
+    if (myAttributesMap == null || myAttributesMap.isEmpty()) {
       myAttributesMap = readSettings(getAttributeNames());
     }
     return myAttributesMap != null ? myAttributesMap.get(attributeValue) : null;

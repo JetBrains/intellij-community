@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,11 +30,10 @@ import java.util.List;
 
 /**
  * @author ik
- * Date: 31.03.2003
  */
 public class ConflictFilterProcessor extends FilterScopeProcessor<CandidateInfo> implements NameHint {
   private final PsiConflictResolver[] myResolvers;
-  private JavaResolveResult[] myCachedResult = null;
+  private JavaResolveResult[] myCachedResult;
   protected String myName;
   protected final PsiElement myPlace;
   protected final PsiFile myPlaceFile;
@@ -43,17 +42,19 @@ public class ConflictFilterProcessor extends FilterScopeProcessor<CandidateInfo>
                                  @NotNull ElementFilter filter,
                                  @NotNull PsiConflictResolver[] resolvers,
                                  @NotNull List<CandidateInfo> container,
-                                 @NotNull PsiElement place) {
+                                 @NotNull PsiElement place,
+                                 PsiFile placeFile) {
     super(filter, container);
     myResolvers = resolvers;
     myName = name;
     myPlace = place;
-    myPlaceFile = place.getContainingFile();
+    myPlaceFile = placeFile;
   }
 
   @Override
-  public boolean execute(@NotNull PsiElement element, ResolveState state) {
-    if (myCachedResult != null && myCachedResult.length == 1 && myCachedResult[0].isAccessible()) {
+  public boolean execute(@NotNull PsiElement element, @NotNull ResolveState state) {
+    JavaResolveResult[] cachedResult = myCachedResult;
+    if (cachedResult != null && cachedResult.length == 1 && stopAtFoundResult(cachedResult[0])) {
       return false;
     }
     if (myName == null || PsiUtil.checkName(element, myName, myPlace)) {
@@ -62,8 +63,12 @@ public class ConflictFilterProcessor extends FilterScopeProcessor<CandidateInfo>
     return true;
   }
 
+  protected boolean stopAtFoundResult(JavaResolveResult cachedResult) {
+    return cachedResult.isAccessible();
+  }
+
   @Override
-  protected void add(PsiElement element, PsiSubstitutor substitutor) {
+  protected void add(@NotNull PsiElement element, @NotNull PsiSubstitutor substitutor) {
     add(new CandidateInfo(element, substitutor));
   }
 
@@ -73,7 +78,7 @@ public class ConflictFilterProcessor extends FilterScopeProcessor<CandidateInfo>
   }
 
   @Override
-  public void handleEvent(PsiScopeProcessor.Event event, Object associated) {
+  public void handleEvent(@NotNull PsiScopeProcessor.Event event, Object associated) {
     if (event == JavaScopeProcessorEvent.CHANGE_LEVEL && myName != null) {
       getResult();
     }
@@ -81,24 +86,27 @@ public class ConflictFilterProcessor extends FilterScopeProcessor<CandidateInfo>
 
   @NotNull
   public JavaResolveResult[] getResult() {
-    if (myCachedResult == null) {
-      final List<CandidateInfo> conflicts = getResults();
-      for (PsiConflictResolver resolver : myResolvers) {
-        CandidateInfo candidate = resolver.resolveConflict(conflicts);
-        if (candidate != null) {
-          conflicts.clear();
-          conflicts.add(candidate);
-          break;
+    JavaResolveResult[] cachedResult = myCachedResult;
+    if (cachedResult == null) {
+      List<CandidateInfo> conflicts = getResults();
+      if (!conflicts.isEmpty()) {
+        for (PsiConflictResolver resolver : myResolvers) {
+          CandidateInfo candidate = resolver.resolveConflict(conflicts);
+          if (candidate != null) {
+            conflicts.clear();
+            conflicts.add(candidate);
+            break;
+          }
         }
       }
-      myCachedResult = conflicts.toArray(new JavaResolveResult[conflicts.size()]);
+      myCachedResult = cachedResult = conflicts.toArray(JavaResolveResult.EMPTY_ARRAY);
     }
 
-    return myCachedResult;
+    return cachedResult;
   }
 
   @Override
-  public String getName(ResolveState state) {
+  public String getName(@NotNull ResolveState state) {
     return myName;
   }
 

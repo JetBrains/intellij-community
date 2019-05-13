@@ -8,7 +8,7 @@ class Demo {
         void method() {
             MyEventListener<Object> l = new MyEventListener<Object>() {
                 public void xxx(MyEvent<Object> event) {
-                    //To change body of implemented methods use File | Settings | File Templates.
+                  
                 }
             };
         }

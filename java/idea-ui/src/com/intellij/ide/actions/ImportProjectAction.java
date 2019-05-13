@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,22 +15,25 @@
  */
 package com.intellij.ide.actions;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.wm.impl.welcomeScreen.NewWelcomeScreen;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Dmitry Avdeev
- *         Date: 11/6/12
  */
 public class ImportProjectAction extends ImportModuleAction {
-
-
   @Override
-  public void actionPerformed(AnActionEvent e) {
-    doImport(null);
+  public void actionPerformed(@NotNull AnActionEvent e) {
+    ApplicationManager.getApplication().invokeLater(() -> doImport(null));
   }
 
   @Override
-  public void update(AnActionEvent e) {
-
+  public void update(@NotNull AnActionEvent e) {
+    if (NewWelcomeScreen.isNewWelcomeScreen(e)) {
+      e.getPresentation().setIcon(AllIcons.ToolbarDecorator.Import);
+    }
   }
 }

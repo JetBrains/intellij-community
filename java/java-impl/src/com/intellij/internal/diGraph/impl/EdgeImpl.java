@@ -15,18 +15,10 @@
  */
 package com.intellij.internal.diGraph.impl;
 
-import com.intellij.internal.diGraph.Edge;
 import com.intellij.internal.diGraph.Node;
-import com.intellij.internal.diGraph.analyzer.MarkedEdge;
 import com.intellij.internal.diGraph.analyzer.Mark;
+import com.intellij.internal.diGraph.analyzer.MarkedEdge;
 
-/**
- * Created by IntelliJ IDEA.
- * User: db
- * Date: 21.06.2003
- * Time: 23:38:12
- * To change this template use Options | File Templates.
- */
 public class EdgeImpl implements MarkedEdge {
   NodeImpl myBeg;
   NodeImpl myEnd;
@@ -42,18 +34,22 @@ public class EdgeImpl implements MarkedEdge {
     to.myIn.add(this);
   }
 
+  @Override
   public Node beg() {
     return myBeg;
   }
 
+  @Override
   public Node end() {
     return myEnd;
   }
 
+  @Override
   public Mark getMark(){
     return null;
   }
 
+  @Override
   public void setMark(Mark x){
 
   }

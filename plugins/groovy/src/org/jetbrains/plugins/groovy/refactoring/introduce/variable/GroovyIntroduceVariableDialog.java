@@ -1,22 +1,7 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.plugins.groovy.refactoring.introduce.variable;
 
-import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.ValidationInfo;
@@ -26,11 +11,11 @@ import com.intellij.refactoring.ui.NameSuggestionsField;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ui.GridBag;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
-import org.jetbrains.plugins.groovy.refactoring.GroovyNameSuggestionUtil;
-import org.jetbrains.plugins.groovy.refactoring.GroovyNamesUtil;
+import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyNamesUtil;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringBundle;
 import org.jetbrains.plugins.groovy.refactoring.introduce.GrIntroduceContext;
 import org.jetbrains.plugins.groovy.refactoring.introduce.GrIntroduceDialog;
@@ -39,8 +24,7 @@ import org.jetbrains.plugins.groovy.settings.GroovyApplicationSettings;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.Arrays;
-import java.util.List;
+import java.util.LinkedHashSet;
 
 public class GroovyIntroduceVariableDialog extends DialogWrapper implements GrIntroduceDialog<GroovyIntroduceVariableSettings> {
   private static final String REFACTORING_NAME = GroovyRefactoringBundle.message("introduce.variable.title");
@@ -49,6 +33,7 @@ public class GroovyIntroduceVariableDialog extends DialogWrapper implements GrIn
   private final GrExpression myExpression;
   private final int myOccurrencesCount;
   private final GrIntroduceVariableHandler.Validator myValidator;
+  private final GrIntroduceContext myContext;
 
   private NameSuggestionsField myNameField;
   private JCheckBox myCbIsFinal;
@@ -57,8 +42,9 @@ public class GroovyIntroduceVariableDialog extends DialogWrapper implements GrIn
 
   public GroovyIntroduceVariableDialog(GrIntroduceContext context, GrIntroduceVariableHandler.Validator validator) {
     super(context.getProject(), true);
+    myContext = context;
     myProject = context.getProject();
-    myExpression = context.getExpression();
+    myExpression = context.getStringPart() != null ? context.getStringPart().getLiteral() : context.getExpression();
     myOccurrencesCount = context.getOccurrences().length;
     myValidator = validator;
     init();
@@ -90,6 +76,7 @@ public class GroovyIntroduceVariableDialog extends DialogWrapper implements GrIn
     pack();
   }
 
+  @Override
   @Nullable
   protected JComponent createCenterPanel() {
     JPanel contentPane = new JPanel(new BorderLayout());
@@ -161,15 +148,16 @@ public class GroovyIntroduceVariableDialog extends DialogWrapper implements GrIn
   }
 
   private NameSuggestionsField setUpNameComboBox() {
-    List<String> possibleNames = Arrays.asList(GroovyNameSuggestionUtil.suggestVariableNames(myExpression, myValidator));
-
-    return new NameSuggestionsField(ArrayUtil.toStringArray(possibleNames), myProject, GroovyFileType.GROOVY_FILE_TYPE);
+    LinkedHashSet<String> names = suggestNames();
+    return new NameSuggestionsField(ArrayUtil.toStringArray(names), myProject, GroovyFileType.GROOVY_FILE_TYPE);
   }
 
+  @Override
   public JComponent getPreferredFocusedComponent() {
     return myNameField;
   }
 
+  @Override
   protected void doOKAction() {
     if (!myValidator.isOK(this)) {
       return;
@@ -181,17 +169,22 @@ public class GroovyIntroduceVariableDialog extends DialogWrapper implements GrIn
     super.doOKAction();
   }
 
-
-  protected void doHelpAction() {
-    HelpManager.getInstance().invokeHelp(HelpID.INTRODUCE_VARIABLE);
+  @Override
+  protected String getHelpId() {
+    return HelpID.INTRODUCE_VARIABLE;
   }
 
-  private void createUIComponents() {
+  private void createUIComponents() { }
 
-  }
-
+  @Override
   public GroovyIntroduceVariableSettings getSettings() {
     return new MyGroovyIntroduceVariableSettings(this);
+  }
+
+  @NotNull
+  @Override
+  public LinkedHashSet<String> suggestNames() {
+    return new GrVariableNameSuggester(myContext, myValidator).suggestNames();
   }
 
   private static class MyGroovyIntroduceVariableSettings implements GroovyIntroduceVariableSettings {
@@ -200,25 +193,29 @@ public class GroovyIntroduceVariableDialog extends DialogWrapper implements GrIn
     boolean myIsDeclareFinal;
     PsiType mySelectedType;
 
-    public MyGroovyIntroduceVariableSettings(GroovyIntroduceVariableDialog dialog) {
+    MyGroovyIntroduceVariableSettings(GroovyIntroduceVariableDialog dialog) {
       myEnteredName = dialog.getEnteredName();
       myIsReplaceAllOccurrences = dialog.isReplaceAllOccurrences();
       myIsDeclareFinal = dialog.isDeclareFinal();
       mySelectedType = dialog.getSelectedType();
     }
 
+    @Override
     public String getName() {
       return myEnteredName;
     }
 
+    @Override
     public boolean replaceAllOccurrences() {
       return myIsReplaceAllOccurrences;
     }
 
+    @Override
     public boolean isDeclareFinal() {
       return myIsDeclareFinal;
     }
 
+    @Override
     public PsiType getSelectedType() {
       return mySelectedType;
     }

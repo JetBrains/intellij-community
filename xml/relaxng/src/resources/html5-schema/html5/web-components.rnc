@@ -1,0 +1,55 @@
+datatypes w = "http://whattf.org/datatype-draft"
+namespace c = "http://n.validator.nu/custom-elements/"
+
+# #####################################################################
+##  RELAX NG Schema for HTML 5: Web Components
+# #####################################################################
+
+## Templates: <template>
+
+	template.elem =
+		element template { template.inner & template.attrs }
+	template.attrs =
+		( common.attrs )
+	template.inner =
+		(	common.inner.metadata
+		|	common.inner.flow
+		|	ol.inner
+		|	ul.inner
+		|	dl.inner
+		|	figure.inner
+		|	ruby.inner
+		|	object.inner.flow
+		|	object.inner.phrasing
+		|	video.inner.flow
+		|	video.inner.phrasing
+		|	audio.inner.flow
+		|	audio.inner.phrasing
+		|	table.inner
+		|	colgroup.inner
+		|	thead.inner
+		|	tbody.inner
+		|	tfoot.inner
+		|	tr.inner
+		|	fieldset.inner
+		|	select.inner
+		|	details.inner
+		)
+	common.elem.metadata |= template.elem
+	common.elem.phrasing |= template.elem
+	common.elem.script-supporting |= template.elem
+
+# also allow <script> wherever <template> is allowed
+	common.elem.script-supporting |= script.elem
+
+## Custom elements: <foo-bar>
+
+	common.elem.flow |= element c:* { common.inner.transparent.flow & attr.any* }
+	common.elem.phrasing |= element c:* { common.inner.phrasing & attr.any* }
+	attr.any = attribute * { text }
+
+## The "is" attribute
+	common.attrs.other &= attribute is { common.data.custom.element.name }?
+
+## The "slot" attribute
+	common.attrs.other &= attribute slot { text }?

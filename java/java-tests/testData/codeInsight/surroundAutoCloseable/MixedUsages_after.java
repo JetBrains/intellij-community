@@ -19,7 +19,7 @@ class C {
                 empty = false;
             }
             while (read != -1);
-        }
+        }//comment
         System.out.println(len);
         System.out.println(empty);
     }

@@ -19,7 +19,6 @@ import com.intellij.lang.LanguageExtension;
 
 /**
  * @author Denis Zhdanov
- * @since 4/11/11 2:21 PM
  */
 public class LanguageEmacsExtension extends LanguageExtension<EmacsProcessingHandler> {
   

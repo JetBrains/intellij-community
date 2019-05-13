@@ -15,7 +15,7 @@
  */
 package com.intellij.vcsUtil;
 
-import com.intellij.codeInsight.TargetElementUtilBase;
+import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -30,11 +30,12 @@ import org.jetbrains.annotations.Nullable;
  * @author yole
  */
 public class JavaVcsSelectionProvider implements VcsSelectionProvider {
+  @Override
   @Nullable
   public VcsSelection getSelection(final VcsContext context) {
     final Editor editor = context.getEditor();
     if (editor == null) return null;
-    PsiElement psiElement = TargetElementUtilBase.findTargetElement(editor, TargetElementUtilBase.ELEMENT_NAME_ACCEPTED);
+    PsiElement psiElement = TargetElementUtil.findTargetElement(editor, TargetElementUtil.ELEMENT_NAME_ACCEPTED);
     if (psiElement == null) {
       return null;
     }
@@ -80,6 +81,10 @@ public class JavaVcsSelectionProvider implements VcsSelectionProvider {
     }
 
     Document document = FileDocumentManager.getInstance().getDocument(virtualFile);
+    if (document == null) {
+      return null;
+    }
+
     return new VcsSelection(document, textRange, actionName);
   }
 }

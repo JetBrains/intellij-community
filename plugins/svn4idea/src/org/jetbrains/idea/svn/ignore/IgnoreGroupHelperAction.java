@@ -16,50 +16,57 @@
 package org.jetbrains.idea.svn.ignore;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vcs.AbstractVcs;
-import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.SvnStatusUtil;
 import org.jetbrains.idea.svn.SvnVcs;
-import org.jetbrains.idea.svn.actions.BasicAction;
 
-public class IgnoreGroupHelperAction extends BasicAction {
+import java.util.stream.Stream;
+
+import static com.intellij.util.ArrayUtil.isEmpty;
+
+public class IgnoreGroupHelperAction {
   private boolean myAllCanBeIgnored;
   private boolean myAllAreIgnored;
   private FileIterationListener myListener;
 
-  protected String getActionName(final AbstractVcs vcs) {
-    return null;
-  }
-
-  public void update(final AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     myAllAreIgnored = true;
     myAllCanBeIgnored = true;
 
-    super.update(e);
+    // TODO: This logic was taken from BasicAction.update(). Probably it'll be more convenient to share these conditions for correctness.
+    Project project = e.getProject();
+    SvnVcs vcs = project != null ? SvnVcs.getInstance(project) : null;
+    VirtualFile[] files = e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY);
+    boolean visible = project != null;
+
+    e.getPresentation().setEnabled(visible && vcs != null && !isEmpty(files) && isEnabled(vcs, files));
+    e.getPresentation().setVisible(visible);
   }
 
-  public void setFileIterationListener(final FileIterationListener listener) {
+  protected boolean isEnabled(@NotNull SvnVcs vcs, @NotNull VirtualFile[] files) {
+    return ProjectLevelVcsManager.getInstance(vcs.getProject()).checkAllFilesAreUnder(vcs, files) &&
+           Stream.of(files).allMatch(file -> isEnabled(vcs, file));
+  }
+
+  public void setFileIterationListener(FileIterationListener listener) {
     myListener = listener;
   }
 
-  private boolean isEnabledImpl(final SvnVcs vcs, final VirtualFile file) {
-    final ChangeListManager clManager = ChangeListManager.getInstance(vcs.getProject());
-
-    if (SvnStatusUtil.isIgnoredInAnySense(clManager, file)) {
+  private boolean isEnabledImpl(@NotNull SvnVcs vcs, @NotNull VirtualFile file) {
+    if (SvnStatusUtil.isIgnoredInAnySense(vcs.getProject(), file)) {
       myAllCanBeIgnored = false;
-      return myAllAreIgnored | myAllCanBeIgnored;
-    } else if (clManager.isUnversioned(file)) {
-      // check parent
-      final VirtualFile parent = file.getParent();
-      if (parent != null) {
-        if ((! SvnStatusUtil.isIgnoredInAnySense(clManager, parent)) && (! clManager.isUnversioned(parent))) {
-          myAllAreIgnored = false;
-          return myAllAreIgnored | myAllCanBeIgnored;
-        }
+      return myAllAreIgnored;
+    }
+    else if (ChangeListManager.getInstance(vcs.getProject()).isUnversioned(file)) {
+      VirtualFile parent = file.getParent();
+      if (parent != null && SvnStatusUtil.isUnderControl(vcs, parent)) {
+        myAllAreIgnored = false;
+        return myAllCanBeIgnored;
       }
     }
     myAllCanBeIgnored = false;
@@ -67,8 +74,8 @@ public class IgnoreGroupHelperAction extends BasicAction {
     return false;
   }
 
-  protected boolean isEnabled(final Project project, final SvnVcs vcs, final VirtualFile file) {
-    final boolean result = isEnabledImpl(vcs, file);
+  protected boolean isEnabled(@NotNull SvnVcs vcs, @NotNull VirtualFile file) {
+    boolean result = isEnabledImpl(vcs, file);
     if (result) {
       myListener.onFileEnabled(file);
     }
@@ -81,23 +88,5 @@ public class IgnoreGroupHelperAction extends BasicAction {
 
   public boolean allAreIgnored() {
     return myAllAreIgnored;
-  }
-
-  protected boolean needsFiles() {
-    return true;
-  }
-
-  protected void perform(final Project project, final SvnVcs activeVcs, final VirtualFile file, final DataContext context)
-      throws VcsException {
-
-  }
-
-  protected void batchPerform(final Project project, final SvnVcs activeVcs, final VirtualFile[] file, final DataContext context)
-      throws VcsException {
-
-  }
-
-  protected boolean isBatchAction() {
-    return false;
   }
 }

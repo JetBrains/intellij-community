@@ -1,6 +1,4 @@
-// "Create Inner Class 'MyTableModel'" "true"
-import javax.swing.*;
-import javax.swing.table.TableModel;
+// "Create inner class 'MyTableModel'" "true"
 
 public class Test {
     public static void main() {
@@ -10,3 +8,7 @@ public class Test {
     private static class MyTableModel implements TableModel {
     }
 }
+class JTable {
+  JTable(TableModel t) {}
+}
+interface TableModel {}

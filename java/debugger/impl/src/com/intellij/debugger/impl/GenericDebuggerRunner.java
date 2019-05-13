@@ -1,115 +1,171 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.impl;
 
+import com.intellij.debugger.DebugEnvironment;
+import com.intellij.debugger.DebuggerManagerEx;
+import com.intellij.debugger.DefaultDebugEnvironment;
+import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.debugger.engine.DebuggerUtils;
+import com.intellij.debugger.engine.JavaDebugProcess;
 import com.intellij.debugger.settings.DebuggerSettings;
-import com.intellij.debugger.ui.DebuggerPanelsManager;
+import com.intellij.execution.DefaultExecutionResult;
 import com.intellij.execution.ExecutionException;
+import com.intellij.execution.ExecutionResult;
 import com.intellij.execution.Executor;
 import com.intellij.execution.configurations.*;
 import com.intellij.execution.executors.DefaultDebugExecutor;
+import com.intellij.execution.process.KillableProcessHandler;
+import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.JavaPatchableProgramRunner;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.options.SettingsEditor;
-import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.xdebugger.XDebugProcess;
+import com.intellij.xdebugger.XDebugProcessStarter;
+import com.intellij.xdebugger.XDebugSession;
+import com.intellij.xdebugger.XDebuggerManager;
+import com.intellij.xdebugger.impl.XDebugSessionImpl;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class GenericDebuggerRunner extends JavaPatchableProgramRunner<GenericDebuggerRunnerSettings> {
+  @Override
   public boolean canRun(@NotNull final String executorId, @NotNull final RunProfile profile) {
     return executorId.equals(DefaultDebugExecutor.EXECUTOR_ID) && profile instanceof ModuleRunProfile
            && !(profile instanceof RunConfigurationWithSuppressedDefaultDebugAction);
   }
 
+  @Override
   @NotNull
   public String getRunnerId() {
     return DebuggingRunnerData.DEBUGGER_RUNNER_ID;
   }
 
-  protected RunContentDescriptor doExecute(final Project project, final Executor executor, final RunProfileState state, final RunContentDescriptor contentToReuse,
-                                           final ExecutionEnvironment env) throws ExecutionException {
+  @Override
+  protected RunContentDescriptor doExecute(@NotNull RunProfileState state, @NotNull ExecutionEnvironment env) throws ExecutionException {
     FileDocumentManager.getInstance().saveAllDocuments();
-    return createContentDescriptor(project, executor, state, contentToReuse, env);
+    return createContentDescriptor(state, env);
   }
 
   @Nullable
-  protected RunContentDescriptor createContentDescriptor(Project project, Executor executor, RunProfileState state,
-                                                         RunContentDescriptor contentToReuse,
-                                                         ExecutionEnvironment env) throws ExecutionException {
+  protected RunContentDescriptor createContentDescriptor(@NotNull RunProfileState state, @NotNull ExecutionEnvironment environment) throws ExecutionException {
     if (state instanceof JavaCommandLine) {
       final JavaParameters parameters = ((JavaCommandLine)state).getJavaParameters();
-      runCustomPatchers(parameters, state.getRunnerSettings(), executor);
-      RemoteConnection connection = DebuggerManagerImpl.createDebugParameters(parameters, true, DebuggerSettings.getInstance().DEBUGGER_TRANSPORT, "", false);
-      return attachVirtualMachine(project, executor, state, contentToReuse, env, connection, true);
+      runCustomPatchers(parameters, environment.getExecutor(), environment.getRunProfile());
+      boolean isPollConnection = true;
+      RemoteConnection connection = null;
+      if (state instanceof RemoteConnectionCreator) {
+        connection = ((RemoteConnectionCreator)state).createRemoteConnection(environment);
+        isPollConnection = ((RemoteConnectionCreator)state).isPollConnection();
+      }
+      if (connection == null) {
+        int transport = DebuggerSettings.getInstance().DEBUGGER_TRANSPORT;
+        connection = DebuggerManagerImpl.createDebugParameters(parameters,
+                                                               true,
+                                                               transport,
+                                                               transport == DebuggerSettings.SOCKET_TRANSPORT ? "0" : "",
+                                                               false);
+        isPollConnection = true;
+      }
+
+      // TODO: remove in 2019.1 where setShouldKillProcessSoftlyWithWinP is enabled by default in KillableProcessHandler
+      RunContentDescriptor descriptor = attachVirtualMachine(state, environment, connection, isPollConnection);
+      if (descriptor != null) {
+        ProcessHandler handler = descriptor.getProcessHandler();
+        if (handler instanceof KillableProcessHandler) {
+          ((KillableProcessHandler)handler).setShouldKillProcessSoftlyWithWinP(true);
+        }
+      }
+      return descriptor;
     }
     if (state instanceof PatchedRunnableState) {
-      final RemoteConnection connection = doPatch(new JavaParameters(), state.getRunnerSettings());
-      return attachVirtualMachine(project, executor, state, contentToReuse, env, connection, true);
+      final RemoteConnection connection = doPatch(new JavaParameters(), environment.getRunnerSettings(), true);
+      return attachVirtualMachine(state, environment, connection, true);
     }
     if (state instanceof RemoteState) {
-      final RemoteConnection connection = createRemoteDebugConnection((RemoteState)state, state.getRunnerSettings());
-      return attachVirtualMachine(project, executor, state, contentToReuse, env, connection, false);
+      final RemoteConnection connection = createRemoteDebugConnection((RemoteState)state, environment.getRunnerSettings());
+      return attachVirtualMachine(state, environment, connection, false);
     }
 
     return null;
   }
 
   @Nullable
-  protected RunContentDescriptor attachVirtualMachine(Project project, Executor executor, RunProfileState state,
-                                                      RunContentDescriptor contentToReuse,
-                                                      ExecutionEnvironment env, RemoteConnection connection, boolean pollConnection)
-    throws ExecutionException {
-    final DebuggerPanelsManager manager = DebuggerPanelsManager.getInstance(project);
-    return manager.attachVirtualMachine(executor, this, env, state, contentToReuse, connection, pollConnection);
+  protected RunContentDescriptor attachVirtualMachine(RunProfileState state,
+                                                      @NotNull ExecutionEnvironment env,
+                                                      RemoteConnection connection,
+                                                      boolean pollConnection) throws ExecutionException {
+    return attachVirtualMachine(state, env, connection, pollConnection ? DebugEnvironment.LOCAL_START_TIMEOUT : 0);
+  }
+
+
+  @Nullable
+  protected RunContentDescriptor attachVirtualMachine(RunProfileState state,
+                                                      @NotNull ExecutionEnvironment env,
+                                                      RemoteConnection connection,
+                                                      long pollTimeout) throws ExecutionException {
+    DebugEnvironment environment = new DefaultDebugEnvironment(env, state, connection, pollTimeout);
+    final DebuggerSession debuggerSession = DebuggerManagerEx.getInstanceEx(env.getProject()).attachVirtualMachine(environment);
+    if (debuggerSession == null) {
+      return null;
+    }
+
+    final DebugProcessImpl debugProcess = debuggerSession.getProcess();
+    return XDebuggerManager.getInstance(env.getProject()).startSession(env, new XDebugProcessStarter() {
+      @Override
+      @NotNull
+      public XDebugProcess start(@NotNull XDebugSession session) {
+        XDebugSessionImpl sessionImpl = (XDebugSessionImpl)session;
+        ExecutionResult executionResult = debugProcess.getExecutionResult();
+        sessionImpl.addExtraActions(executionResult.getActions());
+        if (executionResult instanceof DefaultExecutionResult) {
+          sessionImpl.addRestartActions(((DefaultExecutionResult)executionResult).getRestartActions());
+        }
+        return JavaDebugProcess.create(session, debuggerSession);
+      }
+    }).getRunContentDescriptor();
   }
 
   private static RemoteConnection createRemoteDebugConnection(RemoteState connection, final RunnerSettings settings) {
     final RemoteConnection remoteConnection = connection.getRemoteConnection();
 
-    GenericDebuggerRunnerSettings debuggerRunnerSettings = ((GenericDebuggerRunnerSettings)settings.getData());
+    GenericDebuggerRunnerSettings debuggerRunnerSettings = (GenericDebuggerRunnerSettings)settings;
 
     if (debuggerRunnerSettings != null) {
       remoteConnection.setUseSockets(debuggerRunnerSettings.getTransport() == DebuggerSettings.SOCKET_TRANSPORT);
-      remoteConnection.setAddress(debuggerRunnerSettings.DEBUG_PORT);
+      remoteConnection.setAddress(debuggerRunnerSettings.getDebugPort());
     }
 
     return remoteConnection;
   }
 
+  @Override
   public GenericDebuggerRunnerSettings createConfigurationData(ConfigurationInfoProvider settingsProvider) {
     return new GenericDebuggerRunnerSettings();
   }
 
-  public void patch(JavaParameters javaParameters, RunnerSettings settings, final boolean beforeExecution) throws ExecutionException {
-    doPatch(javaParameters, settings);
-    runCustomPatchers(javaParameters, settings, Executor.EXECUTOR_EXTENSION_NAME.findExtension(DefaultDebugExecutor.class));
+  @Override
+  public void patch(JavaParameters javaParameters, RunnerSettings settings, RunProfile runProfile, final boolean beforeExecution) throws ExecutionException {
+    doPatch(javaParameters, settings, beforeExecution);
+    runCustomPatchers(javaParameters, Executor.EXECUTOR_EXTENSION_NAME.findExtension(DefaultDebugExecutor.class), runProfile);
   }
 
-  private static RemoteConnection doPatch(final JavaParameters javaParameters, final RunnerSettings settings) throws ExecutionException {
-    final GenericDebuggerRunnerSettings debuggerSettings = ((GenericDebuggerRunnerSettings)settings.getData());
+  private static RemoteConnection doPatch(final JavaParameters javaParameters, final RunnerSettings settings, boolean beforeExecution)
+    throws ExecutionException {
+    final GenericDebuggerRunnerSettings debuggerSettings = ((GenericDebuggerRunnerSettings)settings);
     if (StringUtil.isEmpty(debuggerSettings.getDebugPort())) {
       debuggerSettings.setDebugPort(DebuggerUtils.getInstance().findAvailableDebugAddress(debuggerSettings.getTransport() == DebuggerSettings.SOCKET_TRANSPORT));
     }
-    return DebuggerManagerImpl.createDebugParameters(javaParameters, debuggerSettings, false);
+    return new RemoteConnectionBuilder(debuggerSettings.LOCAL, debuggerSettings.getTransport(), debuggerSettings.getDebugPort())
+      .asyncAgent(beforeExecution)
+      .memoryAgent(beforeExecution && Registry.is("debugger.enable.memory.agent"))
+      .create(javaParameters);
   }
 
+  @Override
   public SettingsEditor<GenericDebuggerRunnerSettings> getSettingsEditor(final Executor executor, RunConfiguration configuration) {
     if (configuration instanceof RunConfigurationWithRunnerSettings) {
       if (((RunConfigurationWithRunnerSettings)configuration).isSettingsNeeded()) {

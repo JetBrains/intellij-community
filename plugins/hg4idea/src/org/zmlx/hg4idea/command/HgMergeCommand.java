@@ -12,54 +12,107 @@
 // limitations under the License.
 package org.zmlx.hg4idea.command;
 
+import com.intellij.dvcs.DvcsUtil;
+import com.intellij.openapi.application.AccessToken;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.VcsNotifier;
+import com.intellij.openapi.vcs.update.UpdatedFiles;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.zmlx.hg4idea.HgVcs;
-import org.zmlx.hg4idea.execution.HgCommandExecutor;
 import org.zmlx.hg4idea.execution.HgCommandResult;
-import org.zmlx.hg4idea.execution.HgDeleteModifyPromptHandler;
+import org.zmlx.hg4idea.execution.HgPromptCommandExecutor;
+import org.zmlx.hg4idea.provider.update.HgConflictResolver;
+import org.zmlx.hg4idea.repo.HgRepository;
+import org.zmlx.hg4idea.util.HgErrorUtil;
+import org.zmlx.hg4idea.util.HgUtil;
 
 import java.util.LinkedList;
 import java.util.List;
 
+import static org.zmlx.hg4idea.util.HgErrorUtil.ensureSuccess;
+
 public class HgMergeCommand {
 
-  private final Project project;
-  private final VirtualFile repo;
+  @NotNull private final Project project;
+  @NotNull private final HgRepository repo;
+  @Nullable private String revision;
 
-  private String branch;
-  private String revision;
-
-  public HgMergeCommand(Project project, VirtualFile repo) {
+  public HgMergeCommand(@NotNull Project project, @NotNull HgRepository repo) {
     this.project = project;
     this.repo = repo;
   }
 
-  public void setBranch(String branch) {
-    this.branch = branch;
-  }
-
-  public void setRevision(String revision) {
+  private void setRevision(@NotNull String revision) {
     this.revision = revision;
   }
 
   @Nullable
-  public HgCommandResult execute() {
-    HgCommandExecutor commandExecutor = new HgCommandExecutor(project);
+  private HgCommandResult executeInCurrentThread() {
+    HgPromptCommandExecutor commandExecutor = new HgPromptCommandExecutor(project);
     commandExecutor.setShowOutput(true);
-    List<String> arguments = new LinkedList<String>();
+    List<String> arguments = new LinkedList<>();
     if (!StringUtil.isEmptyOrSpaces(revision)) {
       arguments.add("--rev");
       arguments.add(revision);
-    } else if (!StringUtil.isEmptyOrSpaces(branch)) {
-      arguments.add(branch);
     }
-    final HgCommandResult result =
-      commandExecutor.executeInCurrentThread(repo, "merge", arguments, new HgDeleteModifyPromptHandler());
-    project.getMessageBus().syncPublisher(HgVcs.BRANCH_TOPIC).update(project, null);
-    return result;
+    try (AccessToken ignore = DvcsUtil.workingTreeChangeStarted(project, "Merge")) {
+      HgCommandResult result = commandExecutor.executeInCurrentThread(repo.getRoot(), "merge", arguments);
+      repo.update();
+      return result;
+    }
   }
 
+  @Nullable
+  public HgCommandResult mergeSynchronously() throws VcsException {
+    HgCommandResult commandResult = ensureSuccess(executeInCurrentThread());
+    HgUtil.markDirectoryDirty(project, repo.getRoot());
+    return commandResult;
+  }
+
+  public static void mergeWith(@NotNull final HgRepository repository,
+                               @NotNull final String branchName,
+                               @NotNull final UpdatedFiles updatedFiles) {
+    mergeWith(repository, branchName, updatedFiles, null);
+  }
+
+  public static void mergeWith(@NotNull final HgRepository repository,
+                               @NotNull final String branchName,
+                               @NotNull final UpdatedFiles updatedFiles, @Nullable final Runnable onSuccessHandler) {
+    final Project project = repository.getProject();
+    final VirtualFile repositoryRoot = repository.getRoot();
+    final HgMergeCommand hgMergeCommand = new HgMergeCommand(project, repository);
+    hgMergeCommand.setRevision(branchName);//there is no difference between branch or revision or bookmark as parameter to merge,
+    // we need just a string
+    new Task.Backgroundable(project, "Merging Changes...") {
+      @Override
+      public void run(@NotNull ProgressIndicator indicator) {
+        try {
+          HgCommandResult result = hgMergeCommand.mergeSynchronously();
+          if (HgErrorUtil.isAncestorMergeError(result)) {
+            //skip and notify
+            VcsNotifier.getInstance(project).notifyMinorWarning("Merging is skipped for " + repositoryRoot.getPresentableName(),
+                                                                "Merging with a working directory ancestor has no effect");
+            return;
+          }
+          new HgConflictResolver(project, updatedFiles).resolve(repositoryRoot);
+          if (!HgConflictResolver.hasConflicts(project, repositoryRoot) && onSuccessHandler != null) {
+            onSuccessHandler.run();    // for example commit changes
+          }
+        }
+        catch (VcsException exception) {
+          if (exception.isWarning()) {
+            VcsNotifier.getInstance(project).notifyWarning("Warning during merge", exception.getMessage());
+          }
+          else {
+            VcsNotifier.getInstance(project).notifyError("Exception during merge", exception.getMessage());
+          }
+        }
+      }
+    }.queue();
+  }
 }

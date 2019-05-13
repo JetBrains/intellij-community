@@ -1,4 +1,4 @@
-// "Create Constructor" "true"
+// "Create constructor" "true"
 class Test {
     void foo() throws Ex1 {}
     void bar() throws Ex2 {}
@@ -15,7 +15,7 @@ class Test {
 
 class A {
     public A(Exception e) {
-        <selection>//To change body of created methods use File | Settings | File Templates.</selection>
+        <selection></selection>
     }
 }
 class Ex1 extends Exception {}

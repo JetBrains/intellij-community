@@ -1,0 +1,14 @@
+<html>
+<body>
+Reports on any calls to <b>toString()</b> used in string concatenations and as arguments to the
+<b>print()</b> and <b>println()</b> methods of <b>java.io.PrintWriter</b> and <b>java.io.PrintStream</b>, the <b>append()</b>
+method of <b>java.lang.StringBuilder</b> and <b>java.lang.StringBuffer</b> or the <b>trace()</b>, <b>debug()</b>, <b>info()</b>,
+<b>warn()</b> and <b>error()</b> methods of <b>org.slf4j.Logger</b>. In these cases the conversion
+to string will be handled by the underlying library methods and an explicit call to <b>toString()</b> is no needed.
+<p>
+Note that without the <b>toString()</b> call the expression will have slightly different semantics (the string <b>null</b> will be used instead of
+ throwing a <b>NullPointerException</b>).
+<!-- tooltip end -->
+<p>
+</body>
+</html>

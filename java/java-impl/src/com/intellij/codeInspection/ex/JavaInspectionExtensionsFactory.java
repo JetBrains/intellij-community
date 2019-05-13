@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,10 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * User: anna
- * Date: 20-Dec-2007
- */
 package com.intellij.codeInspection.ex;
 
 import com.intellij.codeInspection.HTMLComposer;
@@ -31,32 +27,39 @@ import com.intellij.codeInspection.reference.RefManager;
 import com.intellij.codeInspection.reference.RefManagerImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class JavaInspectionExtensionsFactory extends InspectionExtensionsFactory {
 
+  @Override
   public GlobalInspectionContextExtension createGlobalInspectionContextExtension() {
     return new GlobalJavaInspectionContextImpl();
   }
 
+  @Override
   public RefManagerExtension createRefManagerExtension(final RefManager refManager) {
     return new RefJavaManagerImpl((RefManagerImpl)refManager);
   }
 
+  @Override
   public HTMLComposerExtension createHTMLComposerExtension(final HTMLComposer composer) {
     return new HTMLJavaHTMLComposerImpl((HTMLComposerImpl)composer);
   }
 
-  public boolean isToCheckMember(final PsiElement element, final String id) {
+  @Override
+  public boolean isToCheckMember(@NotNull final PsiElement element, @NotNull final String id) {
     return SuppressManager.getInstance().getElementToolSuppressedIn(element, id) == null;
   }
 
+  @Override
   @Nullable
-  public String getSuppressedInspectionIdsIn(final PsiElement element) {
+  public String getSuppressedInspectionIdsIn(@NotNull final PsiElement element) {
     return SuppressManager.getInstance().getSuppressedInspectionIdsIn(element);
   }
 
-  public boolean isProjectConfiguredToRunInspections(final Project project, final boolean online) {
+  @Override
+  public boolean isProjectConfiguredToRunInspections(@NotNull final Project project, final boolean online) {
     return GlobalJavaInspectionContextImpl.isInspectionsEnabled(online, project);
   }
 }

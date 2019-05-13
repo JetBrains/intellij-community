@@ -1,6 +1,21 @@
+/*
+ * Copyright 2000-2016 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package org.jetbrains.plugins.groovy.refactoring.implExtQuickFix
 
-import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.psi.PsiFile
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
 import org.jetbrains.plugins.groovy.annotator.intentions.ChangeExtendsImplementsQuickFix
@@ -9,23 +24,27 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefini
 import org.jetbrains.plugins.groovy.util.TestUtils
 /**
  * User: Dmitry.Krasilschikov
- * Date: 11.10.2007
  */
-public class ImplementsExtendsQuickFixTest extends LightCodeInsightFixtureTestCase {
+class ImplementsExtendsQuickFixTest extends LightCodeInsightFixtureTestCase {
 
   final String basePath = TestUtils.testDataPath + "groovy/extendsImplementsFix/"
 
-  public void testClass1() { doTest() }
-  public void testExt1() { doTest() }
-  public void testImpl1() { doTest() }
-  public void testImpl2() { doTest() }
-  public void testImplext1() { doTest() }
-  public void testImplExt2() { doTest() }
-  public void testInterface1() { doTest() }
+  void testClass1() { doTest() }
+
+  void testExt1() { doTest() }
+
+  void testImpl1() { doTest() }
+
+  void testImpl2() { doTest() }
+
+  void testImplext1() { doTest() }
+
+  void testImplExt2() { doTest() }
+
+  void testInterface1() { doTest() }
 
 
-
-    public void doTest() {
+  void doTest() {
       final List<String> data = TestUtils.readInput(testDataPath + getTestName(true) + ".test")
       String fileText = data.get(0)
       final PsiFile psiFile = TestUtils.createPseudoPhysicalGroovyFile(project, fileText)
@@ -38,7 +57,7 @@ public class ImplementsExtendsQuickFixTest extends LightCodeInsightFixtureTestCa
       }
       else {
 
-        ApplicationManager.application.runWriteAction {
+        WriteCommandAction.runWriteCommandAction project, {
           ChangeExtendsImplementsQuickFix fix = new ChangeExtendsImplementsQuickFix(typeDefinition)
           fix.invoke(project, null, psiFile)
           doPostponedFormatting(project)

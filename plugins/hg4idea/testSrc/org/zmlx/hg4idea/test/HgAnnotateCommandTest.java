@@ -1,25 +1,10 @@
-/*
- * Copyright 2000-2011 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.zmlx.hg4idea.test;
 
 import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.openapi.util.io.FileUtil;
 import com.thoughtworks.xstream.XStream;
 import org.testng.annotations.BeforeClass;
-import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 import org.zmlx.hg4idea.HgRevisionNumber;
@@ -52,12 +37,6 @@ public class HgAnnotateCommandTest extends HgSingleUserTest {
   private File myOutputsDir;
   private List<HgAnnotationLine> myAnnotations;
 
-  @BeforeMethod
-  @Override
-  protected void setUp(Method testMethod) throws Exception {
-    super.setUp(testMethod);
-  }
-  
   @BeforeClass
   private void loadEthalonAnnotations() throws IOException {
     myPluginRoot = new File(PluginPathManager.getPluginHomePath(HgVcs.VCS_NAME));
@@ -67,12 +46,8 @@ public class HgAnnotateCommandTest extends HgSingleUserTest {
     final File etalonFile = new File(myAnnotateDataDir, "etalon");
 
     XStream xStream = new XStream();
-    FileReader reader = new FileReader(etalonFile);
-    try {
-      myAnnotations = (List<HgAnnotationLine>) xStream.fromXML(reader);
-    }
-    finally {
-      reader.close();
+    try (FileReader reader = new FileReader(etalonFile)) {
+      myAnnotations = (List<HgAnnotationLine>)xStream.fromXML(reader);
     }
   }
   
@@ -107,7 +82,7 @@ public class HgAnnotateCommandTest extends HgSingleUserTest {
     File outputFile = new File(myOutputsDir, "hg_1.9.0");
     String output = FileUtil.loadFile(outputFile);
     String[] split = output.split("(\n|\r|\r\n)");
-    List<HgAnnotationLine> annotationLines = new ArrayList<HgAnnotationLine>(split.length);
+    List<HgAnnotationLine> annotationLines = new ArrayList<>(split.length);
     
     Pattern pattern = Pattern.compile("\\s*(.+)\\s+(\\d+)\\s+([a-fA-F0-9]+)\\s+(\\d{4}-\\d{2}-\\d{2}):\\s*(\\d+): ?(.*)");
     for (String line : split) {
@@ -126,12 +101,8 @@ public class HgAnnotateCommandTest extends HgSingleUserTest {
     }
 
     XStream xStream = new XStream();
-    FileWriter writer = new FileWriter(etalonFile);
-    try {
+    try (FileWriter writer = new FileWriter(etalonFile)) {
       xStream.toXML(annotationLines, writer);
-    }
-    finally {
-      writer.close();
     }
   }
 

@@ -19,9 +19,9 @@ import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.core.GridLayoutManager;
 import com.intellij.uiDesigner.lw.LwComponent;
 import com.intellij.uiDesigner.lw.LwContainer;
-import org.jetbrains.asm4.Type;
-import org.jetbrains.asm4.commons.GeneratorAdapter;
-import org.jetbrains.asm4.commons.Method;
+import org.jetbrains.org.objectweb.asm.Type;
+import org.jetbrains.org.objectweb.asm.commons.GeneratorAdapter;
+import org.jetbrains.org.objectweb.asm.commons.Method;
 
 /**
  * @author yole
@@ -37,6 +37,7 @@ public class GridLayoutCodeGenerator extends LayoutCodeGenerator {
 
   public static GridLayoutCodeGenerator INSTANCE = new GridLayoutCodeGenerator();
 
+  @Override
   public void generateContainerLayout(final LwContainer lwContainer, final GeneratorAdapter generator, final int componentLocal) {
     if (lwContainer.isGrid()) {
       // arg 0: object
@@ -60,6 +61,7 @@ public class GridLayoutCodeGenerator extends LayoutCodeGenerator {
     }
   }
 
+  @Override
   public void generateComponentLayout(final LwComponent lwComponent,
                                       final GeneratorAdapter generator,
                                       final int componentLocal,

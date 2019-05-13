@@ -23,11 +23,11 @@ import com.intellij.cvsSupport2.cvsoperations.common.CvsExecutionEnvironment;
 import com.intellij.cvsSupport2.cvsoperations.common.LocalPathIndifferentOperation;
 import com.intellij.cvsSupport2.cvsoperations.common.LocalPathIndifferentOperationHelper;
 import com.intellij.openapi.vcs.FilePath;
-import com.intellij.util.containers.HashMap;
 import org.netbeans.lib.cvsclient.command.Command;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -37,14 +37,14 @@ public class RTagOperation extends LocalPathIndifferentOperation {
   private final boolean myOverrideExistings;
 
   public static RTagOperation[] createOn(FilePath[] files, String tagName, boolean overrideExisting) {
-    Map<CvsEnvironment, List<File>> envToFiles = new HashMap<CvsEnvironment, List<File>>();
+    Map<CvsEnvironment, List<File>> envToFiles = new HashMap<>();
     for (FilePath file : files) {
       CvsConnectionSettings cvsConnectionSettings = CvsUtil.getCvsConnectionSettings(file);
-      if (!envToFiles.containsKey(cvsConnectionSettings)) envToFiles.put(cvsConnectionSettings, new ArrayList<File>());
+      if (!envToFiles.containsKey(cvsConnectionSettings)) envToFiles.put(cvsConnectionSettings, new ArrayList<>());
       envToFiles.get(cvsConnectionSettings).add(file.getIOFile());
     }
 
-    ArrayList<RTagOperation> result = new ArrayList<RTagOperation>();
+    ArrayList<RTagOperation> result = new ArrayList<>();
     for (CvsEnvironment cvsEnvironment : envToFiles.keySet()) {
       RTagOperation rTagOperation = new RTagOperation(cvsEnvironment, tagName, overrideExisting);
       result.add(rTagOperation);
@@ -54,7 +54,7 @@ public class RTagOperation extends LocalPathIndifferentOperation {
       }
     }
 
-    return result.toArray(new RTagOperation[result.size()]);
+    return result.toArray(new RTagOperation[0]);
   }
 
   public RTagOperation(CvsEnvironment environment, String tagName, boolean overrideExisting) {
@@ -67,6 +67,7 @@ public class RTagOperation extends LocalPathIndifferentOperation {
     myHelper.addFile(CvsUtil.getCvsLightweightFileForFile(file));
   }
 
+  @Override
   protected Command createCommand(CvsRootProvider root, CvsExecutionEnvironment cvsExecutionEnvironment) {
     RtagCommand result = new RtagCommand(myTagName);
     myHelper.addFilesTo(result);
@@ -74,6 +75,7 @@ public class RTagOperation extends LocalPathIndifferentOperation {
     return result;
   }
 
+  @Override
   protected String getOperationName() {
     return "Tag";
   }

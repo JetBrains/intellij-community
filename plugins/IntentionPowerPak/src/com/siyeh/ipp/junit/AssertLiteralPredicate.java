@@ -22,6 +22,7 @@ import org.jetbrains.annotations.NonNls;
 
 class AssertLiteralPredicate implements PsiElementPredicate {
 
+  @Override
   public boolean satisfiedBy(PsiElement element) {
     if (!(element instanceof PsiMethodCallExpression)) {
       return false;
@@ -29,7 +30,7 @@ class AssertLiteralPredicate implements PsiElementPredicate {
     final PsiMethodCallExpression expression =
       (PsiMethodCallExpression)element;
     final PsiExpressionList args = expression.getArgumentList();
-    final int numExpressions = args.getExpressions().length;
+    final int numExpressions = args.getExpressionCount();
     if (numExpressions < 1 || numExpressions > 2) {
       return false;
     }

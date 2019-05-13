@@ -16,10 +16,11 @@
 package com.intellij.testFramework;
 
 import com.intellij.codeInspection.LocalInspectionTool;
-import com.intellij.codeInspection.ex.InspectionTool;
+import com.intellij.codeInspection.ex.InspectionToolWrapper;
 import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
 import com.intellij.testFramework.fixtures.CodeInsightFixtureTestCase;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author yole
@@ -29,7 +30,7 @@ public abstract class InspectionFixtureTestCase extends CodeInsightFixtureTestCa
     doTest(folderName, new LocalInspectionToolWrapper(tool));
   }
 
-  public void doTest(@NonNls String folderName, InspectionTool tool) throws Exception {
-    myFixture.testInspection(folderName, tool);
+  public void doTest(@NonNls String folderName, @NotNull InspectionToolWrapper toolWrapper) throws Exception {
+    myFixture.testInspection(folderName, toolWrapper);
   }
 }

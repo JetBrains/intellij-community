@@ -2,10 +2,9 @@
 Version=1.0
 Type=Application
 Name=$NAME$
-Exec="$SCRIPT$" %f
 Icon=$ICON$
-Comment=Develop with pleasure!
+Exec=$SCRIPT$ %f
+Comment=$COMMENT$
 Categories=Development;IDE;
 Terminal=false
-StartupNotify=true
 StartupWMClass=$WM_CLASS$

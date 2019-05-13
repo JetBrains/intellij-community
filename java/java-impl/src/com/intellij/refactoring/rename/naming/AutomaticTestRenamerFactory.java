@@ -1,87 +1,92 @@
-/*
- * Copyright 2000-2010 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.rename.naming;
 
-import com.intellij.openapi.project.Project;
-import com.intellij.psi.JavaPsiFacade;
+import com.intellij.codeInsight.TestFrameworks;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiTypeParameter;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.PsiShortNamesCache;
 import com.intellij.refactoring.JavaRefactoringSettings;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.usageView.UsageInfo;
+import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
+import java.util.regex.Pattern;
 
 /**
  * @author yole
  */
 public class AutomaticTestRenamerFactory implements AutomaticRenamerFactory {
-  public boolean isApplicable(final PsiElement element) {
-    if (element instanceof PsiClass) {
-      final String qualifiedName = ((PsiClass)element).getQualifiedName();
-      if (qualifiedName != null) {
-        return !qualifiedName.endsWith("Test") && !qualifiedName.endsWith("TestCase");
-      }
-    }
-    return false;
+  @Override
+  public boolean isApplicable(@NotNull PsiElement element) {
+    return element instanceof PsiClass &&
+           !(element instanceof PsiTypeParameter) &&
+           TestFrameworks.detectFramework((PsiClass)element) == null;
   }
 
+  @Override
   public String getOptionName() {
     return RefactoringBundle.message("rename.tests");
   }
 
+  @Override
   public boolean isEnabled() {
     return JavaRefactoringSettings.getInstance().isToRenameTests();
   }
 
-  public void setEnabled(final boolean enabled) {
+  @Override
+  public void setEnabled(boolean enabled) {
     JavaRefactoringSettings.getInstance().setRenameTests(enabled);
   }
 
-  public AutomaticRenamer createRenamer(final PsiElement element, final String newName, final Collection<UsageInfo> usages) {
+  @NotNull
+  @Override
+  public AutomaticRenamer createRenamer(PsiElement element, String newName, Collection<UsageInfo> usages) {
     return new TestsRenamer((PsiClass)element, newName);
   }
 
   private static class TestsRenamer extends AutomaticRenamer {
-    public TestsRenamer(PsiClass aClass, String newClassName) {
+    TestsRenamer(PsiClass aClass, String newClassName) {
+      Module module = ModuleUtilCore.findModuleForPsiElement(aClass);
+      if (module != null) {
+        GlobalSearchScope moduleScope = GlobalSearchScope.moduleWithDependentsScope(module);
 
-      appendTestClass(aClass, "Test");
-      appendTestClass(aClass, "TestCase");
+        PsiShortNamesCache cache = PsiShortNamesCache.getInstance(aClass.getProject());
 
-      suggestAllNames(aClass.getName(), newClassName);
-    }
+        Pattern pattern = Pattern.compile(".*" + aClass.getName() + ".*");
 
-    private void appendTestClass(PsiClass aClass, String testSuffix) {
-      final Project project = aClass.getProject();
-      final JavaPsiFacade facade = JavaPsiFacade.getInstance(project);
-      final PsiClass psiClassTest = facade.findClass(aClass.getQualifiedName() + testSuffix, GlobalSearchScope.projectScope(project));
-      if (psiClassTest != null) {
-        myElements.add(psiClassTest);
+        int count = 0;
+        for (String eachName : ContainerUtil.newHashSet(cache.getAllClassNames())) {
+          if (pattern.matcher(eachName).matches()) {
+            if (count ++ > 1000) break;
+            for (PsiClass eachClass : cache.getClassesByName(eachName, moduleScope)) {
+              if (TestFrameworks.detectFramework(eachClass) != null) {
+                myElements.add(eachClass);
+              }
+            }
+          }
+        }
+
+        suggestAllNames(aClass.getName(), newClassName);
       }
     }
 
+    @Override
     public String getDialogTitle() {
       return RefactoringBundle.message("rename.tests.title");
     }
 
+    @Override
     public String getDialogDescription() {
       return RefactoringBundle.message("rename.tests.with.the.following.names.to");
     }
 
+    @Override
     public String entityName() {
       return RefactoringBundle.message("entity.name.test");
     }

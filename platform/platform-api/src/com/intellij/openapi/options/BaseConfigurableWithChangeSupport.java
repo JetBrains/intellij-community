@@ -15,28 +15,29 @@
  */
 package com.intellij.openapi.options;
 
+import com.intellij.util.EventDispatcher;
+
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
-import java.util.ArrayList;
 
 public abstract class BaseConfigurableWithChangeSupport extends BaseConfigurable {
-  private final ArrayList<ChangeListener> myListeners = new ArrayList<ChangeListener>();
+  private final EventDispatcher<ChangeListener> myDispatcher = EventDispatcher.create(ChangeListener.class);
 
-  public void setModified(final boolean modified) {
+  @Override
+  public void setModified(boolean modified) {
     fireStateChanged();
     super.setModified(modified);
   }
 
-  public void addChangeListener(final ChangeListener listener) {
-    myListeners.add(listener);
+  public void addChangeListener(ChangeListener listener) {
+    myDispatcher.addListener(listener);
+  }
+
+  public void removeChangeListener(ChangeListener listener) {
+    myDispatcher.addListener(listener);
   }
 
   public void fireStateChanged() {
-    final ChangeEvent event = new ChangeEvent(this);
-    final ChangeListener[] listeners = myListeners.toArray(new ChangeListener[myListeners.size()]);
-    for (int i = 0; i < listeners.length; i++) {
-      final ChangeListener listener = listeners[i];
-      listener.stateChanged(event);
-    }
+    myDispatcher.getMulticaster().stateChanged(new ChangeEvent(this));
   }
 }

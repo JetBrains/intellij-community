@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,6 +31,7 @@ import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.openapi.vcs.actions.VcsContext;
 import com.intellij.openapi.vcs.ui.ReplaceFileConfirmationDialog;
 import com.intellij.util.ui.OptionsDialog;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -51,11 +52,13 @@ public class CheckoutFileAction extends ActionOnSelectedElement {
     visibility.addCondition(FILES_EXIST_IN_CVS);
   }
 
+  @Override
   protected String getTitle(VcsContext context) {
     return CvsBundle.getCheckoutOperationName();
   }
 
-  public void update(AnActionEvent e) {
+  @Override
+  public void update(@NotNull AnActionEvent e) {
     super.update(e);
     if (!e.getPresentation().isVisible()) {
       return;
@@ -65,6 +68,7 @@ public class CheckoutFileAction extends ActionOnSelectedElement {
     adjustName(CvsVcs2.getInstance(project).getCheckoutOptions().getValue(), e);
   }
 
+  @Override
   protected CvsHandler getCvsHandler(CvsContext context) {
     if (myModifiedFiles != null) {
       if (!myModifiedFiles.isEmpty()) {
@@ -82,14 +86,16 @@ public class CheckoutFileAction extends ActionOnSelectedElement {
     List<FilePath> files = Arrays.asList(filesArray);
     if (CvsVcs2.getInstance(project).getCheckoutOptions().getValue() || OptionsDialog.shiftIsPressed(context.getModifiers())) {
       CheckoutFileDialog checkoutFileDialog = new CheckoutFileDialog(project, files);
-      checkoutFileDialog.show();
-      if (!checkoutFileDialog.isOK()) return CvsHandler.NULL;
+      if (!checkoutFileDialog.showAndGet()) {
+        return CvsHandler.NULL;
+      }
     }
 
     return CommandCvsHandler.createCheckoutFileHandler(filesArray, CvsConfiguration.getInstance(project),
                                                        VcsConfiguration.getInstance(project).getCheckoutOption());
   }
 
+  @Override
   protected void beforeActionPerformed(VcsContext context) {
     super.beforeActionPerformed(context);
     myModifiedFiles =

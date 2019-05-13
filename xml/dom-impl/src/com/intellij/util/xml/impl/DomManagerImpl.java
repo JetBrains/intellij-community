@@ -1,16 +1,27 @@
+/*
+ * Copyright 2000-2017 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.intellij.util.xml.impl;
 
 import com.intellij.ide.highlighter.DomSupportEnabled;
-import com.intellij.ide.startup.StartupManagerEx;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.ServiceManager;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
-import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Factory;
@@ -24,14 +35,19 @@ import com.intellij.pom.event.PomModelEvent;
 import com.intellij.pom.event.PomModelListener;
 import com.intellij.pom.xml.XmlAspect;
 import com.intellij.pom.xml.XmlChangeSet;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiFileFactory;
+import com.intellij.psi.PsiManager;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
+import com.intellij.reference.SoftReference;
 import com.intellij.semantic.SemKey;
 import com.intellij.semantic.SemService;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
@@ -44,53 +60,49 @@ import net.sf.cglib.proxy.InvocationHandler;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import java.lang.ref.WeakReference;
 import java.lang.reflect.Type;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @author peter
  */
 public final class DomManagerImpl extends DomManager {
   private static final Key<Object> MOCK = Key.create("MockElement");
+
   static final Key<WeakReference<DomFileElementImpl>> CACHED_FILE_ELEMENT = Key.create("CACHED_FILE_ELEMENT");
   static final Key<DomFileDescription> MOCK_DESCRIPTION = Key.create("MockDescription");
-
   static final SemKey<FileDescriptionCachedValueProvider> FILE_DESCRIPTION_KEY = SemKey.createKey("FILE_DESCRIPTION_KEY");
-  public static final SemKey<DomInvocationHandler> DOM_HANDLER_KEY = SemKey.createKey("DOM_HANDLER_KEY");
+  static final SemKey<DomInvocationHandler> DOM_HANDLER_KEY = SemKey.createKey("DOM_HANDLER_KEY");
   static final SemKey<IndexedElementInvocationHandler> DOM_INDEXED_HANDLER_KEY = DOM_HANDLER_KEY.subKey("DOM_INDEXED_HANDLER_KEY");
   static final SemKey<CollectionElementInvocationHandler> DOM_COLLECTION_HANDLER_KEY = DOM_HANDLER_KEY.subKey("DOM_COLLECTION_HANDLER_KEY");
   static final SemKey<CollectionElementInvocationHandler> DOM_CUSTOM_HANDLER_KEY = DOM_HANDLER_KEY.subKey("DOM_CUSTOM_HANDLER_KEY");
   static final SemKey<AttributeChildInvocationHandler> DOM_ATTRIBUTE_HANDLER_KEY = DOM_HANDLER_KEY.subKey("DOM_ATTRIBUTE_HANDLER_KEY");
 
   private final EventDispatcher<DomEventListener> myListeners = EventDispatcher.create(DomEventListener.class);
-  private final ConverterManagerImpl myConverterManager;
-
-  private final GenericValueReferenceProvider myGenericValueReferenceProvider = new GenericValueReferenceProvider();
 
   private final Project myProject;
-  private final DomApplicationComponent myApplicationComponent;
-  private final PsiFileFactory myFileFactory;
-
-  private long myModificationCount;
-  private boolean myChanging;
-  private final ProjectFileIndex myFileIndex;
   private final SemService mySemService;
+  private final DomApplicationComponent myApplicationComponent;
 
-  public DomManagerImpl(final Project project, final XmlAspect xmlAspect) {
+  private boolean myChanging;
+
+  public DomManagerImpl(Project project) {
+    super(project);
     myProject = project;
     mySemService = SemService.getSemService(project);
-    myConverterManager = (ConverterManagerImpl)ServiceManager.getService(ConverterManager.class);
     myApplicationComponent = DomApplicationComponent.getInstance();
+
     final PomModel pomModel = PomManager.getModel(project);
     pomModel.addModelListener(new PomModelListener() {
-      public void modelChanged(PomModelEvent event) {
-        final XmlChangeSet changeSet = (XmlChangeSet)event.getChangeSet(xmlAspect);
-        if (changeSet != null && !myChanging) {
+      @Override
+      public void modelChanged(@NotNull PomModelEvent event) {
+        if (myChanging) return;
+        
+        final XmlChangeSet changeSet = (XmlChangeSet)event.getChangeSet(pomModel.getModelAspect(XmlAspect.class));
+        if (changeSet != null) {
           for (XmlFile file : changeSet.getChangedFiles()) {
             DomFileElementImpl<DomElement> element = getCachedFileElement(file);
             if (element != null) {
@@ -100,86 +112,48 @@ public final class DomManagerImpl extends DomManager {
         }
       }
 
-      public boolean isAspectChangeInteresting(PomModelAspect aspect) {
-        return xmlAspect.equals(aspect);
+      @Override
+      public boolean isAspectChangeInteresting(@NotNull PomModelAspect aspect) {
+        return aspect instanceof XmlAspect;
       }
     }, project);
 
-    myFileFactory = PsiFileFactory.getInstance(project);
+    VirtualFileManager.getInstance().addVirtualFileListener(new VirtualFileListener() {
+      private final List<DomEvent> myDeletionEvents = new SmartList<>();
 
-    final PsiManager psiManager = PsiManager.getInstance(project);
-
-    final Runnable setupVfsListeners = new Runnable() {
-      public void run() {
-        final VirtualFileAdapter listener = new VirtualFileAdapter() {
-          private final List<DomEvent> myDeletionEvents = new SmartList<DomEvent>();
-
-          public void contentsChanged(VirtualFileEvent event) {
-            if (event.isFromSave()) return;
-
-            processVfsChange(event.getFile());
-          }
-
-          public void fileCreated(VirtualFileEvent event) {
-            processVfsChange(event.getFile());
-          }
-
-          public void beforeFileDeletion(final VirtualFileEvent event) {
-            if (!project.isDisposed()) {
-              beforeFileDeletion(event.getFile());
-            }
-          }
-
-          private void beforeFileDeletion(final VirtualFile file) {
-            if (file.isDirectory() && file instanceof NewVirtualFile) {
-              for (final VirtualFile child : ((NewVirtualFile)file).getCachedChildren()) {
-                beforeFileDeletion(child);
-              }
-              return;
-            }
-
-            if (file.isValid() && StdFileTypes.XML.equals(file.getFileType())) {
-              final PsiFile psiFile = getCachedPsiFile(file);
-              if (psiFile instanceof XmlFile) {
-                Collections.addAll(myDeletionEvents, recomputeFileElement((XmlFile)psiFile));
-              }
-            }
-          }
-
-          public void fileDeleted(VirtualFileEvent event) {
-            if (!myDeletionEvents.isEmpty()) {
-              if (!project.isDisposed()) {
-                for (DomEvent domEvent : myDeletionEvents) {
-                  fireEvent(domEvent);
-                }
-              }
-              myDeletionEvents.clear();
-            }
-          }
-
-          public void propertyChanged(VirtualFilePropertyEvent event) {
-            final VirtualFile file = event.getFile();
-            if (!file.isDirectory() && VirtualFile.PROP_NAME.equals(event.getPropertyName())) {
-              processVfsChange(file);
-            }
-          }
-        };
-        VirtualFileManager.getInstance().addVirtualFileListener(listener, project);
+      @Override
+      public void contentsChanged(@NotNull VirtualFileEvent event) {
+        if (!event.isFromSave()) {
+          fireEvents(calcDomChangeEvents(event.getFile()));
+        }
       }
-    };
 
-    final StartupManager startupManager = StartupManager.getInstance(project);
-    if (!((StartupManagerEx)startupManager).startupActivityPassed()) {
-      startupManager.registerStartupActivity(setupVfsListeners);
-    } else {
-      setupVfsListeners.run();
-    }
+      @Override
+      public void fileMoved(@NotNull VirtualFileMoveEvent event) {
+        fireEvents(calcDomChangeEvents(event.getFile()));
+      }
 
-    myFileIndex = ProjectRootManager.getInstance(project).getFileIndex();
-  }
+      @Override
+      public void beforeFileDeletion(@NotNull final VirtualFileEvent event) {
+        myDeletionEvents.addAll(calcDomChangeEvents(event.getFile()));
+      }
 
-  private void processVfsChange(final VirtualFile file) {
-    processFileOrDirectoryChange(file);
+      @Override
+      public void fileDeleted(@NotNull VirtualFileEvent event) {
+        if (!myDeletionEvents.isEmpty()) {
+          fireEvents(myDeletionEvents);
+          myDeletionEvents.clear();
+        }
+      }
+
+      @Override
+      public void propertyChanged(@NotNull VirtualFilePropertyEvent event) {
+        final VirtualFile file = event.getFile();
+        if (!file.isDirectory() && VirtualFile.PROP_NAME.equals(event.getPropertyName())) {
+          fireEvents(calcDomChangeEvents(file));
+        }
+      }
+    }, myProject);
   }
 
   public long getPsiModificationCount() {
@@ -190,41 +164,41 @@ public final class DomManagerImpl extends DomManager {
     mySemService.setCachedSemElement(key, element, handler);
   }
 
-  private void processFileChange(final VirtualFile file) {
-    if (StdFileTypes.XML != file.getFileType()) return;
-    processFileChange(getCachedPsiFile(file));
-  }
-
   private PsiFile getCachedPsiFile(VirtualFile file) {
-    return ((PsiManagerEx)PsiManager.getInstance(myProject)).getFileManager().getCachedPsiFile(file);
+    return PsiManagerEx.getInstanceEx(myProject).getFileManager().getCachedPsiFile(file);
   }
 
-  private void processFileChange(final PsiFile file) {
-    if (file != null && StdFileTypes.XML.equals(file.getFileType()) && file instanceof XmlFile) {
-      for (final DomEvent event : recomputeFileElement((XmlFile)file)) {
-        fireEvent(event);
+  private List<DomEvent> calcDomChangeEvents(final VirtualFile file) {
+    if (!(file instanceof NewVirtualFile) || myProject.isDisposed()) {
+      return Collections.emptyList();
+    }
+
+    final List<DomEvent> events = ContainerUtil.newArrayList();
+    VfsUtilCore.visitChildrenRecursively(file, new VirtualFileVisitor() {
+      @Override
+      public boolean visitFile(@NotNull VirtualFile file) {
+        if (myProject.isDisposed() || !ProjectFileIndex.SERVICE.getInstance(myProject).isInContent(file)) {
+          return false;
+        }
+
+        if (!file.isDirectory() && StdFileTypes.XML == file.getFileType()) {
+          final PsiFile psiFile = getCachedPsiFile(file);
+          if (psiFile != null && StdFileTypes.XML.equals(psiFile.getFileType()) && psiFile instanceof XmlFile) {
+            final DomFileElementImpl domElement = getCachedFileElement((XmlFile)psiFile);
+            if (domElement != null) {
+              events.add(new DomEvent(domElement, false));
+            }
+          }
+        }
+        return true;
       }
-    }
-  }
 
-  static DomEvent[] recomputeFileElement(final XmlFile file) {
-    final DomFileElementImpl oldElement = getCachedFileElement(file);
-    return oldElement == null ? DomEvent.EMPTY_ARRAY : new DomEvent[]{new DomEvent(oldElement, false)};
-  }
-
-  private void processDirectoryChange(final VirtualFile directory) {
-    for (final VirtualFile file : directory.getChildren()) {
-      processFileOrDirectoryChange(file);
-    }
-  }
-
-  private void processFileOrDirectoryChange(final VirtualFile file) {
-    if (!myFileIndex.isInContent(file)) return;
-    if (!file.isDirectory()) {
-      processFileChange(file);
-    } else {
-      processDirectoryChange(file);
-    }
+      @Override
+      public Iterable<VirtualFile> getChildrenIterable(@NotNull VirtualFile file) {
+        return ((NewVirtualFile)file).getCachedChildren();
+      }
+    });
+    return events;
   }
 
   @SuppressWarnings({"MethodOverridesStaticMethodOfSuperclass"})
@@ -232,28 +206,34 @@ public final class DomManagerImpl extends DomManager {
     return (DomManagerImpl)DomManager.getDomManager(project);
   }
 
+  @Override
   public void addDomEventListener(DomEventListener listener, Disposable parentDisposable) {
     myListeners.addListener(listener, parentDisposable);
   }
 
+  @Override
   public final ConverterManager getConverterManager() {
-    return myConverterManager;
+    return ServiceManager.getService(ConverterManager.class);
   }
 
-  public final void addPsiReferenceFactoryForClass(Class clazz, PsiReferenceFactory psiReferenceFactory) {
-    myGenericValueReferenceProvider.addReferenceProviderForClass(clazz, psiReferenceFactory);
-  }
-
+  @Override
   public final ModelMerger createModelMerger() {
     return new ModelMergerImpl();
   }
 
-  final void fireEvent(DomEvent event) {
+  final void fireEvent(@NotNull DomEvent event) {
     if (mySemService.isInsideAtomicChange()) return;
-    myModificationCount++;
+    incModificationCount();
     myListeners.getMulticaster().eventOccured(event);
   }
 
+  private void fireEvents(@NotNull Collection<DomEvent> events) {
+    for (DomEvent event : events) {
+      fireEvent(event);
+    }
+  }
+
+  @Override
   public final DomGenericInfo getGenericInfo(final Type type) {
     return myApplicationComponent.getStaticGenericInfo(type);
   }
@@ -268,6 +248,7 @@ public final class DomManagerImpl extends DomManager {
     }
     final InvocationHandler handler = AdvancedProxy.getInvocationHandler(proxy);
     if (handler instanceof StableInvocationHandler) {
+      //noinspection unchecked
       final DomElement element = ((StableInvocationHandler<DomElement>)handler).getWrappedElement();
       return element == null ? null : getDomInvocationHandler(element);
     }
@@ -294,15 +275,16 @@ public final class DomManagerImpl extends DomManager {
     return myApplicationComponent;
   }
 
+  @Override
   public final Project getProject() {
     return myProject;
   }
 
+  @Override
   @NotNull
   public final <T extends DomElement> DomFileElementImpl<T> getFileElement(final XmlFile file, final Class<T> aClass, String rootTagName) {
-    //noinspection unchecked
     if (file.getUserData(MOCK_DESCRIPTION) == null) {
-      file.putUserData(MOCK_DESCRIPTION, new MockDomFileDescription<T>(aClass, rootTagName, file));
+      file.putUserData(MOCK_DESCRIPTION, new MockDomFileDescription<>(aClass, rootTagName, file.getViewProvider().getVirtualFile()));
       mySemService.clearCache();
     }
     final DomFileElementImpl<T> fileElement = getFileElement(file);
@@ -314,6 +296,7 @@ public final class DomManagerImpl extends DomManager {
   @SuppressWarnings({"unchecked"})
   @NotNull
   final <T extends DomElement> FileDescriptionCachedValueProvider<T> getOrCreateCachedValueProvider(final XmlFile xmlFile) {
+    //noinspection ConstantConditions
     return mySemService.getSemElement(FILE_DESCRIPTION_KEY, xmlFile);
   }
 
@@ -350,8 +333,9 @@ public final class DomManagerImpl extends DomManager {
     return oldChanging;
   }
 
+  @Override
   @Nullable
-  public final <T extends DomElement> DomFileElementImpl<T> getFileElement(XmlFile file) {
+  public final <T extends DomElement> DomFileElementImpl<T> getFileElement(@Nullable XmlFile file) {
     if (file == null) return null;
     if (!(file.getFileType() instanceof DomSupportEnabled)) return null;
     final VirtualFile virtualFile = file.getVirtualFile();
@@ -361,10 +345,11 @@ public final class DomManagerImpl extends DomManager {
 
   @Nullable
   static <T extends DomElement> DomFileElementImpl<T> getCachedFileElement(@NotNull XmlFile file) {
-    WeakReference<DomFileElementImpl> ref = file.getUserData(CACHED_FILE_ELEMENT);
-    return ref == null ? null : ref.get();
+    //noinspection unchecked
+    return SoftReference.dereference(file.getUserData(CACHED_FILE_ELEMENT));
   }
 
+  @Override
   @Nullable
   public final <T extends DomElement> DomFileElementImpl<T> getFileElement(XmlFile file, Class<T> domClass) {
     final DomFileDescription description = getDomFileDescription(file);
@@ -374,6 +359,7 @@ public final class DomManagerImpl extends DomManager {
     return null;
   }
 
+  @Override
   @Nullable
   public final DomElement getDomElement(final XmlTag element) {
     if (myChanging) return null;
@@ -382,6 +368,7 @@ public final class DomManagerImpl extends DomManager {
     return handler != null ? handler.getProxy() : null;
   }
 
+  @Override
   @Nullable
   public GenericAttributeValue getDomElement(final XmlAttribute attribute) {
     if (myChanging) return null;
@@ -403,6 +390,7 @@ public final class DomManagerImpl extends DomManager {
     return mySemService.getSemElement(DOM_HANDLER_KEY, tag);
   }
 
+  @Override
   @Nullable
   public AbstractDomChildrenDescription findChildrenDescription(@NotNull final XmlTag tag, @NotNull final DomElement parent) {
     return findChildrenDescription(tag, getDomInvocationHandler(parent));
@@ -428,86 +416,79 @@ public final class DomManagerImpl extends DomManager {
     return null;
   }
 
+  @Override
   public final <T extends DomElement> T createMockElement(final Class<T> aClass, final Module module, final boolean physical) {
-    final XmlFile file = (XmlFile)myFileFactory.createFileFromText("a.xml", StdFileTypes.XML, "", (long)0, physical);
+    final XmlFile file = (XmlFile)PsiFileFactory.getInstance(myProject).createFileFromText("a.xml", StdFileTypes.XML, "", (long)0, physical);
     file.putUserData(MOCK_ELEMENT_MODULE, module);
     file.putUserData(MOCK, new Object());
     return getFileElement(file, aClass, "I_sincerely_hope_that_nobody_will_have_such_a_root_tag_name").getRootElement();
   }
 
+  @Override
   public final boolean isMockElement(DomElement element) {
     return DomUtil.getFile(element).getUserData(MOCK) != null;
   }
 
-  public final <T extends DomElement> T createStableValue(final Factory<T> provider) {
-    return createStableValue(provider, new Condition<T>() {
-      public boolean value(T t) {
-        return t.isValid();
-      }
-    });
+  @Override
+  public final <T extends DomElement> T createStableValue(final Factory<? extends T> provider) {
+    return createStableValue(provider, t -> t.isValid());
   }
 
-  public final <T> T createStableValue(final Factory<T> provider, final Condition<T> validator) {
+  @Override
+  public final <T> T createStableValue(final Factory<? extends T> provider, final Condition<? super T> validator) {
     final T initial = provider.create();
     assert initial != null;
-    final StableInvocationHandler handler = new StableInvocationHandler<T>(initial, provider, validator);
+    final StableInvocationHandler handler = new StableInvocationHandler<>(initial, provider, validator);
 
-    final Set<Class> intf = new HashSet<Class>();
+    final Set<Class> intf = new HashSet<>();
     ContainerUtil.addAll(intf, initial.getClass().getInterfaces());
     intf.add(StableElement.class);
     //noinspection unchecked
 
-    return (T)AdvancedProxy.createProxy(initial.getClass().getSuperclass(), intf.toArray(new Class[intf.size()]),
+    return (T)AdvancedProxy.createProxy(initial.getClass().getSuperclass(), intf.toArray(ArrayUtil.EMPTY_CLASS_ARRAY),
                                         handler);
   }
 
+  @TestOnly
   public final <T extends DomElement> void registerFileDescription(final DomFileDescription<T> description, Disposable parentDisposable) {
     registerFileDescription(description);
-    Disposer.register(parentDisposable, new Disposable() {
-      public void dispose() {
-        getFileDescriptions(description.getRootTagName()).remove(description);
-        getAcceptingOtherRootTagNameDescriptions().remove(description);
-      }
-    });
+    Disposer.register(parentDisposable, () -> myApplicationComponent.removeDescription(description));
   }
 
+  @Override
   public final void registerFileDescription(final DomFileDescription description) {
     mySemService.clearCache();
 
     myApplicationComponent.registerFileDescription(description);
   }
 
+  @Override
   @NotNull
   public final DomElement getResolvingScope(GenericDomValue element) {
-    final DomFileDescription description = DomUtil.getFileElement(element).getFileDescription();
+    final DomFileDescription<?> description = DomUtil.getFileElement(element).getFileDescription();
     return description.getResolveScope(element);
   }
 
-  @Nullable
+  @Override
+  @NotNull
   public final DomElement getIdentityScope(DomElement element) {
     final DomFileDescription description = DomUtil.getFileElement(element).getFileDescription();
     return description.getIdentityScope(element);
   }
 
+  @Override
   public TypeChooserManager getTypeChooserManager() {
     return myApplicationComponent.getTypeChooserManager();
-  }
-
-  public long getModificationCount() {
-    return myModificationCount + PsiManager.getInstance(myProject).getModificationTracker().getOutOfCodeBlockModificationCount();
   }
 
   public void performAtomicChange(@NotNull Runnable change) {
     mySemService.performAtomicChange(change);
     if (!mySemService.isInsideAtomicChange()) {
-      myModificationCount++;
+      incModificationCount();
     }
   }
 
   public SemService getSemService() {
     return mySemService;
   }
-
-
-  private final static Logger LOG = Logger.getInstance(DomManagerImpl.class);
 }

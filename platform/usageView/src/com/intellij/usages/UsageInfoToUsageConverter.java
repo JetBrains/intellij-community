@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,12 +16,11 @@
 package com.intellij.usages;
 
 import com.intellij.codeInsight.highlighting.ReadWriteAccessDetector;
-import com.intellij.openapi.extensions.Extensions;
+import com.intellij.codeInsight.highlighting.ReadWriteUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.SmartPointerManager;
 import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.usageView.UsageInfo;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -31,7 +30,6 @@ import java.util.List;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Jan 17, 2005
  */
 public class UsageInfoToUsageConverter {
   private UsageInfoToUsageConverter() {
@@ -54,16 +52,9 @@ public class UsageInfoToUsageConverter {
       myAdditionalSearchedElements = convertToSmartPointers(additionalSearchedElements);
     }
 
-    private static final Function<SmartPsiElementPointer<PsiElement>,PsiElement> SMARTPOINTER_TO_ELEMENT_MAPPER = new Function<SmartPsiElementPointer<PsiElement>, PsiElement>() {
-      @Override
-      public PsiElement fun(final SmartPsiElementPointer<PsiElement> pointer) {
-        return pointer.getElement();
-      }
-    };
-
     @NotNull
-    private static PsiElement[] convertToPsiElements(@NotNull List<SmartPsiElementPointer<PsiElement>> primary) {
-      return ContainerUtil.map2Array(primary, PsiElement.class, SMARTPOINTER_TO_ELEMENT_MAPPER);
+    private static PsiElement[] convertToPsiElements(@NotNull List<? extends SmartPsiElementPointer<PsiElement>> primary) {
+      return ContainerUtil.toArray(ContainerUtil.mapNotNull(primary, SmartPsiElementPointer::getElement), PsiElement.ARRAY_FACTORY);
     }
 
     @NotNull
@@ -71,12 +62,7 @@ public class UsageInfoToUsageConverter {
       if (primaryElements.length == 0) return Collections.emptyList();
   
       final SmartPointerManager smartPointerManager = SmartPointerManager.getInstance(primaryElements[0].getProject());
-      return ContainerUtil.mapNotNull(primaryElements, new Function<PsiElement, SmartPsiElementPointer<PsiElement>>() {
-              @Override
-              public SmartPsiElementPointer<PsiElement> fun(final PsiElement s) {
-                return smartPointerManager.createSmartPsiElementPointer(s);
-              }
-            });
+      return ContainerUtil.mapNotNull(primaryElements, smartPointerManager::createSmartPsiElementPointer);
     }
 
     /**
@@ -99,7 +85,7 @@ public class UsageInfoToUsageConverter {
 
     @NotNull
     public List<PsiElement> getAllElements() {
-      List<PsiElement> result = new ArrayList<PsiElement>(myPrimarySearchedElements.size() + myAdditionalSearchedElements.size());
+      List<PsiElement> result = new ArrayList<>(myPrimarySearchedElements.size() + myAdditionalSearchedElements.size());
       for (SmartPsiElementPointer pointer : myPrimarySearchedElements) {
         PsiElement element = pointer.getElement();
         if (element != null) {
@@ -117,10 +103,7 @@ public class UsageInfoToUsageConverter {
 
     @NotNull
     public List<SmartPsiElementPointer<PsiElement>> getAllElementPointers() {
-      List<SmartPsiElementPointer<PsiElement>> result = new ArrayList<SmartPsiElementPointer<PsiElement>>(myPrimarySearchedElements.size() + myAdditionalSearchedElements.size());
-      result.addAll(myPrimarySearchedElements);
-      result.addAll(myAdditionalSearchedElements);
-      return result;
+      return ContainerUtil.concat(myPrimarySearchedElements, myAdditionalSearchedElements);
     }
   }
 
@@ -128,10 +111,15 @@ public class UsageInfoToUsageConverter {
   public static Usage convert(@NotNull TargetElementsDescriptor descriptor, @NotNull UsageInfo usageInfo) {
     PsiElement[] primaryElements = descriptor.getPrimaryElements();
 
+    return convert(primaryElements, usageInfo);
+  }
+
+  @NotNull
+  public static Usage convert(@NotNull PsiElement[] primaryElements, @NotNull UsageInfo usageInfo) {
     PsiElement usageElement = usageInfo.getElement();
-    for(ReadWriteAccessDetector detector: Extensions.getExtensions(ReadWriteAccessDetector.EP_NAME)) {
-      if (isReadWriteAccessibleElements(primaryElements, detector)) {
-        final ReadWriteAccessDetector.Access rwAccess = detector.getExpressionAccess(usageElement);
+    if (usageElement != null && primaryElements.length != 0) {
+      ReadWriteAccessDetector.Access rwAccess = ReadWriteUtil.getReadWriteAccess(primaryElements, usageElement);
+      if (rwAccess != null) {
         return new ReadWriteAccessUsageInfo2UsageAdapter(usageInfo,
                                                          rwAccess != ReadWriteAccessDetector.Access.Write,
                                                          rwAccess != ReadWriteAccessDetector.Access.Read);
@@ -149,13 +137,9 @@ public class UsageInfoToUsageConverter {
     return usages;
   }
 
-  private static boolean isReadWriteAccessibleElements(@NotNull PsiElement[] elements, @NotNull ReadWriteAccessDetector detector) {
-    if (elements.length == 0) {
-      return false;
-    }
-    for (PsiElement element : elements) {
-      if (!detector.isReadWriteAccessible(element)) return false;
-    }
-    return true;
+
+  @NotNull
+  public static Usage[] convert(@NotNull final PsiElement[] primaryElements, @NotNull UsageInfo[] usageInfos) {
+    return ContainerUtil.map(usageInfos, info -> convert(primaryElements, info), new Usage[usageInfos.length]);
   }
 }

@@ -21,7 +21,6 @@ import java.io.File;
 
 /**
  * @author: db
- * Date: 14.05.12
  */
 public class StorageDumper {
   private static class Env {

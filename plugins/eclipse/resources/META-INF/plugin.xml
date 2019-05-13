@@ -1,27 +1,46 @@
 <idea-plugin>
   <name>Eclipse Integration</name>
   <id>org.jetbrains.idea.eclipse</id>
-  <description>Provides possibility to import, export and synchronize Eclipse project files</description>
-  <version>3.0</version>
-  <vendor url="http://www.jetbrains.com" logo="/general/ijLogo.png">JetBrains s.r.o.</vendor>
+  <description>
+      <![CDATA[
+        This plugin enables integration with Eclipse and provides the following features:
+        <ul>
+        <li>Open Eclipse project in IntelliJ IDEA</li>
+        <li>Import Eclipse project into IntelliJ IDEA</li>
+        <li>Export IntelliJ IDEA project into Eclipse</li>
+        <li>Convert IntelliJ IDEA module to Eclipse-compatible format</li>
+        <li>Synchronize Eclipse project files</li>
+        </ul>
+        <p/>
+      ]]>
+    </description>
+
+  <vendor url="https://www.jetbrains.com">JetBrains</vendor>
   <extensions defaultExtensionNs="com.intellij">
     <classpathStorageProvider implementation="org.jetbrains.idea.eclipse.config.EclipseClasspathStorageProvider"/>
     <compileServer.plugin classpath="eclipse-jps-plugin.jar;common-eclipse-util.jar"/>
     <projectImportProvider implementation="org.jetbrains.idea.eclipse.importWizard.EclipseProjectImportProvider"/>
     <projectOpenProcessor id="EclipseProjectOpenProcessor" implementation="org.jetbrains.idea.eclipse.importWizard.EclipseProjectOpenProcessor"/>
     <projectImportBuilder implementation="org.jetbrains.idea.eclipse.importWizard.EclipseImportBuilder"/>
-    <errorHandler implementation="com.intellij.diagnostic.ITNReporter"/>
     <fileTypeFactory implementation="org.jetbrains.idea.eclipse.config.EclipseFileTypeFactory"/>
     <syntaxHighlighter key="Eclipse" implementationClass="com.intellij.ide.highlighter.XmlFileHighlighter"/>
+    <schemeImporter 
+        name="Eclipse XML Profile"
+        implementationClass="org.jetbrains.idea.eclipse.importer.EclipseCodeStyleSchemeImporter"
+        schemeClass="com.intellij.psi.codeStyle.CodeStyleScheme"/>
+    <schemeImporter 
+        name="Eclipse Color Theme (XML)"
+        implementationClass="org.jetbrains.idea.eclipse.importer.colors.EclipseColorSchemeImporter"
+        schemeClass="com.intellij.openapi.editor.colors.EditorColorsScheme"/>
+
+    <moduleService serviceImplementation="org.jetbrains.idea.eclipse.config.EclipseModuleManagerImpl"/>
   </extensions>
-  <module-components>
-    <component>
-      <implementation-class>org.jetbrains.idea.eclipse.config.EclipseModuleManagerImpl</implementation-class>
-    </component>
-  </module-components>
   <actions>
-    <action id="ExportToEclipse" class="org.jetbrains.idea.eclipse.export.ExportEclipseProjectsAction" text="Export to Eclipse...">
+    <action id="ExportToEclipse" class="org.jetbrains.idea.eclipse.export.ExportEclipseProjectsAction" text="Export Project to Eclipse...">
       <add-to-group group-id="ExportImportGroup" anchor="last"/>
     </action>
   </actions>
+  <extensionPoints>
+    <extensionPoint name="natureImporter" interface="org.jetbrains.idea.eclipse.importWizard.EclipseNatureImporter"/>
+  </extensionPoints>
 </idea-plugin>

@@ -1,32 +1,22 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.mac.foundation;
 
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.containers.HashMap;
+import com.intellij.openapi.vfs.CharsetToolkit;
+import com.intellij.util.ImageLoader;
 import com.sun.jna.*;
+import com.sun.jna.ptr.PointerByReference;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.awt.*;
 import java.io.File;
-import java.io.UnsupportedEncodingException;
-import java.util.Map;
+import java.util.*;
+import java.util.List;
 
 /**
  * @author spleaner
+ * see <a href="http://developer.apple.com/documentation/Cocoa/Reference/ObjCRuntimeRef/Reference/reference.html">Documentation</a>
  */
 public class Foundation {
   private static final FoundationLibrary myFoundationLibrary;
@@ -40,11 +30,8 @@ public class Foundation {
     Map<String, Object> foundationOptions = new HashMap<String, Object>();
     //foundationOptions.put(Library.OPTION_TYPE_MAPPER, FoundationTypeMapper.INSTANCE);
 
-    myFoundationLibrary = (FoundationLibrary)Native.loadLibrary("Foundation", FoundationLibrary.class, foundationOptions);
+    myFoundationLibrary = Native.loadLibrary("Foundation", FoundationLibrary.class, foundationOptions);
   }
-
-  static Callback ourRunnableCallback;
-
 
   public static void init() { /* fake method to init foundation */ }
 
@@ -74,8 +61,32 @@ public class Foundation {
     return invoke(getObjcClass(cls), createSelector(selector), args);
   }
 
+  public static ID safeInvoke(final String stringCls, final String stringSelector, Object... args) {
+    ID cls = getObjcClass(stringCls);
+    Pointer selector = createSelector(stringSelector);
+    if (invoke(cls, "respondsToSelector:", selector).intValue() == 0) {
+      throw new RuntimeException(String.format("Missing selector %s for %s", stringSelector, stringCls));
+    }
+    return invoke(cls, selector, args);
+  }
+
   public static ID invoke(final ID id, final String selector, Object... args) {
     return invoke(id, createSelector(selector), args);
+  }
+
+  public static double invoke_fpret(ID receiver, Pointer selector, Object... args) { return myFoundationLibrary.objc_msgSend_fpret(receiver, selector, args); }
+  public static double invoke_fpret(ID receiver, String selector, Object... args) { return myFoundationLibrary.objc_msgSend_fpret(receiver, createSelector(selector), args); }
+
+  public static boolean isNil(ID id) {
+    return id == null || ID.NIL.equals(id);
+  }
+
+  public static ID safeInvoke(final ID id, final String stringSelector, Object... args) {
+    Pointer selector = createSelector(stringSelector);
+    if (!id.equals(ID.NIL) && invoke(id, "respondsToSelector:", selector).intValue() == 0) {
+      throw new RuntimeException(String.format("Missing selector %s for %s", stringSelector, toStringViaUTF8(invoke(id, "description"))));
+    }
+    return invoke(id, selector, args);
   }
 
   public static ID allocateObjcClassPair(ID superCls, String name) {
@@ -90,6 +101,15 @@ public class Foundation {
     return myFoundationLibrary.class_respondsToSelector(cls, selectorName);
   }
 
+  /**
+   *
+   * @param cls The class to which to add a method.
+   * @param selectorName A selector that specifies the name of the method being added.
+   * @param impl A function which is the implementation of the new method. The function must take at least two arguments-self and _cmd.
+   * @param types An array of characters that describe the types of the arguments to the method.
+   *              See <a href="https://developer.apple.com/library/IOs/documentation/Cocoa/Conceptual/ObjCRuntimeGuide/Articles/ocrtTypeEncodings.html#//apple_ref/doc/uid/TP40008048-CH100"></a>
+   * @return true if the method was added successfully, otherwise false (for example, the class already contains a method implementation with that name).
+   */
   public static boolean addMethod(ID cls, Pointer selectorName, Callback impl, String types) {
     return myFoundationLibrary.class_addMethod(cls, selectorName, impl, types);
   }
@@ -144,21 +164,40 @@ public class Foundation {
     return isPackageAtPath(file.getPath());
   }
 
-  public static ID nsString(String s) {
-    // Use a byte[] rather than letting jna do the String -> char* marshalling itself.
-    // Turns out about 10% quicker for long strings.
-    try {
-      if (s.length() == 0) {
-        return invoke("NSString", "string");
+  private static class NSString {
+    private static final ID nsStringCls = getObjcClass("NSString");
+    private static final Pointer stringSel = createSelector("string");
+    private static final Pointer allocSel = createSelector("alloc");
+    private static final Pointer autoreleaseSel = createSelector("autorelease");
+    private static final Pointer initWithBytesLengthEncodingSel = createSelector("initWithBytes:length:encoding:");
+    private static final long nsEncodingUTF16LE = convertCFEncodingToNS(FoundationLibrary.kCFStringEncodingUTF16LE);
+
+    @NotNull
+    public static ID create(@NotNull String s) {
+      // Use a byte[] rather than letting jna do the String -> char* marshalling itself.
+      // Turns out about 10% quicker for long strings.
+      if (s.isEmpty()) {
+        return invoke(nsStringCls, stringSel);
       }
 
-      byte[] utf16Bytes = s.getBytes("UTF-16LE");
-      return invoke(invoke("NSString", "alloc"), "initWithBytes:length:encoding:", utf16Bytes, utf16Bytes.length,
-                    convertCFEncodingToNS(FoundationLibrary.kCFStringEncodingUTF16LE));
+      byte[] utf16Bytes = s.getBytes(CharsetToolkit.UTF_16LE_CHARSET);
+      return invoke(invoke(invoke(nsStringCls, allocSel),
+                           initWithBytesLengthEncodingSel, utf16Bytes, utf16Bytes.length, nsEncodingUTF16LE),
+                    autoreleaseSel);
     }
-    catch (UnsupportedEncodingException x) {
-      throw new RuntimeException(x);
-    }
+  }
+
+  @NotNull
+  public static ID nsString(@Nullable String s) {
+    return s == null ? ID.NIL : NSString.create(s);
+  }
+
+  public static ID nsUUID(@NotNull UUID uuid) {
+    return nsUUID(uuid.toString());
+  }
+
+  public static ID nsUUID(@NotNull String uuid) {
+    return invoke(invoke(invoke("NSUUID", "alloc"), "initWithUUIDString:", nsString(uuid)), "autorelease");
   }
 
   @Nullable
@@ -175,10 +214,22 @@ public class Foundation {
   }
 
   @Nullable
+  public static String getNSErrorText(@Nullable ID error) {
+    if (error == null || error.byteValue() == 0) return null;
+
+    String description = toStringViaUTF8(invoke(error, "localizedDescription"));
+    String recovery = toStringViaUTF8(invoke(error, "localizedRecoverySuggestion"));
+    if (recovery != null) description += "\n" + recovery;
+    return StringUtil.notNullize(description);
+  }
+
+  @Nullable
   public static String getEncodingName(long nsStringEncoding) {
     long cfEncoding = myFoundationLibrary.CFStringConvertNSStringEncodingToEncoding(nsStringEncoding);
     ID pointer = myFoundationLibrary.CFStringConvertEncodingToIANACharSetName(cfEncoding);
-    return toStringViaUTF8(pointer);
+    String name = toStringViaUTF8(pointer);
+    if ("macintosh".equals(name)) name = "MacRoman"; // JDK8 does not recognize IANA's "macintosh" alias
+    return name;
   }
 
   public static long getEncodingCode(@Nullable String encodingName) {
@@ -194,11 +245,15 @@ public class Foundation {
   }
 
   private static long convertCFEncodingToNS(long cfEncoding) {
-    return myFoundationLibrary.CFStringConvertEncodingToNSStringEncoding(cfEncoding) & 0xffffffffffl;  // trim to C-type limits
+    return myFoundationLibrary.CFStringConvertEncodingToNSStringEncoding(cfEncoding) & 0xffffffffffL;  // trim to C-type limits
   }
 
   public static void cfRetain(ID id) {
     myFoundationLibrary.CFRetain(id);
+  }
+
+  public static ID cgWindowListCreateImage(Foundation.NSRect screenBounds, int windowOption, ID windowID, int imageOption) {
+    return myFoundationLibrary.CGWindowListCreateImage(screenBounds, windowOption, windowID, imageOption);
   }
 
   public static void cfRelease(ID... ids) {
@@ -209,11 +264,16 @@ public class Foundation {
     }
   }
 
+  public static ID autorelease(ID id){
+    return Foundation.invoke(id, "autorelease");
+  }
+
   public static boolean isMainThread() {
     return invoke("NSThread", "isMainThread").intValue() > 0;
   }
 
-  private static Map<String, RunnableInfo> ourMainThreadRunnables = new HashMap<String, RunnableInfo>();
+  private static Callback ourRunnableCallback;
+  private static final Map<String, RunnableInfo> ourMainThreadRunnables = new HashMap<String, RunnableInfo>();
   private static long ourCurrentRunnableCount = 0;
   private static final Object RUNNABLE_LOCK = new Object();
 
@@ -227,38 +287,48 @@ public class Foundation {
     boolean myUseAutoreleasePool;
   }
 
-  public static void executeOnMainThread(final Runnable runnable, final boolean withAutoreleasePool, final boolean waitUntilDone) {
-    initRunnableSupport();
-
+  public static void executeOnMainThread(final boolean withAutoreleasePool, final boolean waitUntilDone, final Runnable runnable) {
+    String runnableCountString;
     synchronized (RUNNABLE_LOCK) {
-      ourCurrentRunnableCount++;
-      ourMainThreadRunnables.put(String.valueOf(ourCurrentRunnableCount), new RunnableInfo(runnable, withAutoreleasePool));
+      initRunnableSupport();
+
+      runnableCountString = String.valueOf(++ourCurrentRunnableCount);
+      ourMainThreadRunnables.put(runnableCountString, new RunnableInfo(runnable, withAutoreleasePool));
     }
 
+    // fixme: Use Grand Central Dispatch instead?
     final ID ideaRunnable = getObjcClass("IdeaRunnable");
     final ID runnableObject = invoke(invoke(ideaRunnable, "alloc"), "init");
+    final ID keyObject = invoke(nsString(runnableCountString), "retain");
     invoke(runnableObject, "performSelectorOnMainThread:withObject:waitUntilDone:", createSelector("run:"),
-           nsString(String.valueOf(ourCurrentRunnableCount)), Boolean.valueOf(waitUntilDone));
+           keyObject, Boolean.valueOf(waitUntilDone));
     invoke(runnableObject, "release");
   }
 
+  /**
+   * Registers idea runnable adapter class in ObjC runtime, if not registered yet.
+   * <p>
+   * Warning: NOT THREAD-SAFE! Must be called under lock. Danger of segmentation fault.
+   */
   private static void initRunnableSupport() {
     if (ourRunnableCallback == null) {
       final ID runnableClass = allocateObjcClassPair(getObjcClass("NSObject"), "IdeaRunnable");
       registerObjcClassPair(runnableClass);
 
       final Callback callback = new Callback() {
+        @SuppressWarnings("UnusedDeclaration")
         public void callback(ID self, String selector, ID keyObject) {
           final String key = toStringViaUTF8(keyObject);
-
+          invoke(keyObject, "release");
 
           RunnableInfo info;
           synchronized (RUNNABLE_LOCK) {
             info = ourMainThreadRunnables.remove(key);
           }
 
-          if (info == null) return;
-
+          if (info == null) {
+            return;
+          }
 
           ID pool = null;
           try {
@@ -283,7 +353,7 @@ public class Foundation {
   }
 
   public static class NSDictionary {
-    private ID myDelegate;
+    private final ID myDelegate;
 
     public NSDictionary(ID delegate) {
       myDelegate = delegate;
@@ -300,10 +370,39 @@ public class Foundation {
     public int count() {
       return invoke(myDelegate, "count").intValue();
     }
+
+    public NSArray keys() { return new NSArray(invoke(myDelegate, "allKeys")); }
+
+    @NotNull
+    public static Map<String, String> toStringMap(@Nullable ID delegate) {
+      Map<String, String> result = new HashMap<String, String>();
+      if (isNil(delegate)) {
+        return result;
+      }
+
+      NSDictionary dict = new NSDictionary(delegate);
+      NSArray keys = dict.keys();
+
+      for (int i = 0; i < keys.count(); i++) {
+        String key = toStringViaUTF8(keys.at(i));
+        String val = toStringViaUTF8(dict.get(key));
+        result.put(key, val);
+      }
+
+      return result;
+    }
+
+    public static ID toStringDictionary(@NotNull Map<String, String> map) {
+      ID dict = invoke("NSMutableDictionary", "dictionaryWithCapacity:", map.size());
+      for (Map.Entry<String, String> entry : map.entrySet()) {
+        invoke(dict, "setObject:forKey:", nsString(entry.getValue()), nsString(entry.getKey()));
+      }
+      return dict;
+    }
   }
 
   public static class NSArray {
-    private ID myDelegate;
+    private final ID myDelegate;
 
     public NSArray(ID delegate) {
       myDelegate = delegate;
@@ -316,10 +415,43 @@ public class Foundation {
     public ID at(int index) {
       return invoke(myDelegate, "objectAtIndex:", index);
     }
+
+    @NotNull
+    public List<ID> getList() {
+      List<ID> result = new ArrayList<ID>();
+      for (int i = 0; i < count(); i++) {
+        result.add(at(i));
+      }
+      return result;
+    }
+  }
+
+  public static class NSData {
+    private final ID myDelegate;
+
+    // delegate should not be nil
+    public NSData(@NotNull ID delegate) {
+      myDelegate = delegate;
+    }
+
+    public int length() {
+      return invoke(myDelegate, "length").intValue();
+    }
+
+    @NotNull
+    public byte[] bytes() {
+      Pointer data = new Pointer(invoke(myDelegate, "bytes").longValue());
+      return data.getByteArray(0, length());
+    }
+
+    @NotNull
+    public Image createImageFromBytes() {
+      return ImageLoader.loadFromBytes(bytes());
+    }
   }
 
   public static class NSAutoreleasePool {
-    private ID myDelegate;
+    private final ID myDelegate;
 
     public NSAutoreleasePool() {
       myDelegate = invoke(invoke("NSAutoreleasePool", "alloc"), "init");
@@ -331,16 +463,25 @@ public class Foundation {
   }
 
   public static class NSRect extends Structure implements Structure.ByValue {
+    private static final List __FIELDS = Arrays.asList("origin", "size");
+
     public NSPoint origin;
     public NSSize size;
 
     public NSRect(double x, double y, double w, double h) {
-      this.origin = new NSPoint(x, y);
-      this.size = new NSSize(w, h);
+      origin = new NSPoint(x, y);
+      size = new NSSize(w, h);
+    }
+
+    @Override
+    protected List getFieldOrder() {
+      return __FIELDS;
     }
   }
 
   public static class NSPoint extends Structure implements Structure.ByValue {
+    private static final List __FIELDS = Arrays.asList("x", "y");
+
     public CGFloat x;
     public CGFloat y;
 
@@ -353,9 +494,16 @@ public class Foundation {
       this.x = new CGFloat(x);
       this.y = new CGFloat(y);
     }
+
+    @Override
+    protected List getFieldOrder() {
+      return __FIELDS;
+    }
   }
 
   public static class NSSize extends Structure implements Structure.ByValue {
+    private static final List __FIELDS = Arrays.asList("width", "height");
+
     public CGFloat width;
     public CGFloat height;
 
@@ -367,6 +515,11 @@ public class Foundation {
     public NSSize(double width, double height) {
       this.width = new CGFloat(width);
       this.height = new CGFloat(height);
+    }
+
+    @Override
+    protected List getFieldOrder() {
+      return __FIELDS;
     }
   }
 
@@ -382,6 +535,7 @@ public class Foundation {
       value = d;
     }
 
+    @Override
     public Object fromNative(Object o, FromNativeContext fromNativeContext) {
       switch (Native.LONG_SIZE) {
         case 4:
@@ -392,6 +546,7 @@ public class Foundation {
       throw new IllegalStateException();
     }
 
+    @Override
     public Object toNative() {
       switch (Native.LONG_SIZE) {
         case 4:
@@ -402,6 +557,7 @@ public class Foundation {
       throw new IllegalStateException();
     }
 
+    @Override
     public Class<?> nativeType() {
       switch (Native.LONG_SIZE) {
         case 4:
@@ -410,6 +566,53 @@ public class Foundation {
           return Double.class;
       }
       throw new IllegalStateException();
+    }
+  }
+
+  public static ID fillArray(final Object[] a) {
+    final ID result = invoke("NSMutableArray", "array");
+    for (Object s : a) {
+      invoke(result, "addObject:", convertType(s));
+    }
+
+    return result;
+  }
+
+  public static ID createDict(@NotNull final String[] keys, @NotNull final Object[] values) {
+    final ID nsKeys = invoke("NSArray", "arrayWithObjects:", convertTypes(keys));
+    final ID nsData = invoke("NSArray", "arrayWithObjects:", convertTypes(values));
+    return invoke("NSDictionary", "dictionaryWithObjects:forKeys:", nsData, nsKeys);
+  }
+
+  @NotNull
+  public static PointerType createPointerReference() {
+    PointerType reference = new PointerByReference(new Memory(Native.POINTER_SIZE));
+    reference.getPointer().clear(Native.POINTER_SIZE);
+    return reference;
+  }
+
+  @NotNull
+  public static ID castPointerToNSError(@NotNull PointerType pointerType) {
+    return new ID(pointerType.getPointer().getLong(0));
+  }
+
+  private static Object[] convertTypes(@NotNull Object[] v) {
+    final Object[] result = new Object[v.length];
+    for (int i = 0; i < v.length; i++) {
+      result[i] = convertType(v[i]);
+    }
+    return result;
+  }
+
+  private static Object convertType(@NotNull Object o) {
+    if (o instanceof Pointer || o instanceof ID) {
+      return o;
+    }
+    else if (o instanceof String) {
+      return nsString((String)o);
+    }
+    else {
+      throw new IllegalArgumentException("Unsupported type! " + o.getClass());
     }
   }
 }

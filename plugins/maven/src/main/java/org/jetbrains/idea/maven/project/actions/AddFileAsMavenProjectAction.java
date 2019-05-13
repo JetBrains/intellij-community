@@ -16,11 +16,13 @@
 package org.jetbrains.idea.maven.project.actions;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
+import org.jetbrains.idea.maven.statistics.MavenActionsUsagesCollector;
 import org.jetbrains.idea.maven.utils.actions.MavenAction;
 import org.jetbrains.idea.maven.utils.actions.MavenActionUtil;
 
@@ -28,14 +30,17 @@ import java.util.Collections;
 
 public class AddFileAsMavenProjectAction extends MavenAction {
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
+    MavenActionsUsagesCollector.trigger(e.getProject(), this, e);
     final DataContext context = e.getDataContext();
     MavenProjectsManager manager = MavenActionUtil.getProjectsManager(context);
-    manager.addManagedFiles(Collections.singletonList(getSelectedFile(context)));
+    if (manager != null) {
+      manager.addManagedFilesOrUnignore(Collections.singletonList(getSelectedFile(context)));
+    }
   }
 
   @Override
-  protected boolean isAvailable(AnActionEvent e) {
+  protected boolean isAvailable(@NotNull AnActionEvent e) {
     final DataContext context = e.getDataContext();
     VirtualFile file = getSelectedFile(context);
     return super.isAvailable(e)
@@ -44,17 +49,17 @@ public class AddFileAsMavenProjectAction extends MavenAction {
   }
 
   @Override
-  protected boolean isVisible(AnActionEvent e) {
+  protected boolean isVisible(@NotNull AnActionEvent e) {
     return super.isVisible(e) && isAvailable(e);
   }
 
   private static boolean isExistingProjectFile(DataContext context, VirtualFile file) {
     MavenProjectsManager manager = MavenActionUtil.getProjectsManager(context);
-    return manager.findProject(file) != null;
+    return manager != null && manager.findProject(file) != null;
   }
 
   @Nullable
   private static VirtualFile getSelectedFile(DataContext context) {
-    return PlatformDataKeys.VIRTUAL_FILE.getData(context);
+    return CommonDataKeys.VIRTUAL_FILE.getData(context);
   }
 }

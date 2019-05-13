@@ -6,13 +6,15 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
+import com.intellij.openapi.util.Disposer;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Dennis.Ushakov
  */
 public class PlatformModifiableModelsProvider implements ModifiableModelsProvider {
   @Override
-  public ModifiableRootModel getModuleModifiableModel(final Module module) {
+  public ModifiableRootModel getModuleModifiableModel(@NotNull final Module module) {
     return ModuleRootManager.getInstance(module).getModifiableModel();
   }
 
@@ -44,5 +46,10 @@ public class PlatformModifiableModelsProvider implements ModifiableModelsProvide
   @Override
   public LibraryTable.ModifiableModel getLibraryTableModifiableModel(Project project) {
     return LibraryTablesRegistrar.getInstance().getLibraryTable(project).getModifiableModel();
+  }
+
+  @Override
+  public void disposeLibraryTableModifiableModel(LibraryTable.ModifiableModel model) {
+    Disposer.dispose(model);
   }
 }

@@ -14,11 +14,13 @@ public class PsiReferenceWrapper implements PsiReference {
     myOriginalPsiReference = originalPsiReference;
   }
 
+  @NotNull
   @Override
   public PsiElement getElement() {
     return myOriginalPsiReference.getElement();
   }
 
+  @NotNull
   @Override
   public TextRange getRangeInElement() {
     return myOriginalPsiReference.getRangeInElement();
@@ -36,7 +38,7 @@ public class PsiReferenceWrapper implements PsiReference {
   }
 
   @Override
-  public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {
+  public PsiElement handleElementRename(@NotNull String newElementName) throws IncorrectOperationException {
     return myOriginalPsiReference.handleElementRename(newElementName);
   }
 
@@ -46,7 +48,7 @@ public class PsiReferenceWrapper implements PsiReference {
   }
 
   @Override
-  public boolean isReferenceTo(PsiElement element) {
+  public boolean isReferenceTo(@NotNull PsiElement element) {
     return myOriginalPsiReference.isReferenceTo(element);
   }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,6 +35,7 @@ public class CodeWriter extends PrintWriter {
     myIndent = 2;
   }
 
+  @Override
   public void print(@NonNls String s) {
     possiblyIndent(s);
     super.print(s);
@@ -57,6 +58,7 @@ public class CodeWriter extends PrintWriter {
     return c == '(' || c == '[' || c == '{';
   }
 
+  @Override
   public void println() {
     ((PrintWriter)out).println();
     myNewLineStarted = true;
@@ -80,6 +82,7 @@ public class CodeWriter extends PrintWriter {
     }
   }
 
+  @Override
   public void println(String s) {
     StringTokenizer st = new StringTokenizer(s, "\r\n", false);
 

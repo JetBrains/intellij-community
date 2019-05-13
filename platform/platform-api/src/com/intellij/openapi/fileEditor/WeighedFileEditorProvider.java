@@ -15,10 +15,12 @@
  */
 package com.intellij.openapi.fileEditor;
 
+import com.intellij.openapi.project.PossiblyDumbAware;
+
 /**
  * @author peter
  */
-public abstract class WeighedFileEditorProvider implements FileEditorProvider{
+public abstract class WeighedFileEditorProvider implements FileEditorProvider, PossiblyDumbAware {
 
   double DEFAULT_WEIGHT = 1;
 
@@ -26,5 +28,9 @@ public abstract class WeighedFileEditorProvider implements FileEditorProvider{
    * @return double value used for editor ascending ordering 
    */
   public double getWeight() { return DEFAULT_WEIGHT; }
-  
+
+  @Override
+  public boolean isDumbAware() {
+    return true;
+  }
 }

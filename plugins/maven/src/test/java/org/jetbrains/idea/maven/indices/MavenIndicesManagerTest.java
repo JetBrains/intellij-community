@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,38 +32,45 @@ public class MavenIndicesManagerTest extends MavenIndicesTestCase {
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    myIndicesFixture = new MavenIndicesTestFixture(myDir, myProject);
+    myIndicesFixture = new MavenIndicesTestFixture(myDir.toPath(), myProject);
     myIndicesFixture.setUp();
   }
 
   @Override
   protected void tearDown() throws Exception {
-    myIndicesFixture.tearDown();
-    super.tearDown();
+    try {
+      myIndicesFixture.tearDown();
+    }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
+    finally {
+      super.tearDown();
+    }
   }
 
-  public void testEnsuringLocalRepositoryIndex() throws Exception {
+  public void testEnsuringLocalRepositoryIndex() {
     File dir1 = myIndicesFixture.getRepositoryHelper().getTestData("dir/foo");
     File dir2 = myIndicesFixture.getRepositoryHelper().getTestData("dir\\foo");
     File dir3 = myIndicesFixture.getRepositoryHelper().getTestData("dir\\foo\\");
     File dir4 = myIndicesFixture.getRepositoryHelper().getTestData("dir/bar");
 
     List<MavenIndex> indices1 = myIndicesFixture.getIndicesManager().ensureIndicesExist(myProject, dir1,
-                                                                                        Collections.<Pair<String, String>>emptyList());
+                                                                                        Collections.emptyList());
     assertEquals(1, indices1.size());
     assertTrue(myIndicesFixture.getIndicesManager().getIndices().contains(indices1.get(0)));
 
     assertEquals(indices1, myIndicesFixture.getIndicesManager().ensureIndicesExist(myProject, dir2,
-                                                                                   Collections.<Pair<String, String>>emptyList()));
+                                                                                   Collections.emptyList()));
     assertEquals(indices1, myIndicesFixture.getIndicesManager().ensureIndicesExist(myProject, dir3,
-                                                                                   Collections.<Pair<String, String>>emptyList()));
+                                                                                   Collections.emptyList()));
 
     List<MavenIndex> indices2 = myIndicesFixture.getIndicesManager().ensureIndicesExist(myProject, dir4,
-                                                                                        Collections.<Pair<String, String>>emptyList());
+                                                                                        Collections.emptyList());
     assertFalse(indices1.get(0).equals(indices2.get(0)));
   }
 
-  public void testEnsuringRemoteRepositoryIndex() throws Exception {
+  public void testEnsuringRemoteRepositoryIndex() {
     File local = myIndicesFixture.getRepositoryHelper().getTestData("dir");
     Pair<String, String> remote1 = Pair.create("id1", "http://foo/bar");
     Pair<String, String> remote2 = Pair.create("id1", "  http://foo\\bar\\\\  ");
@@ -74,18 +81,18 @@ public class MavenIndicesManagerTest extends MavenIndicesTestCase {
     assertEquals(2, myIndicesFixture.getIndicesManager().ensureIndicesExist(myProject, local, Collections.singleton(remote1)).size());
     assertEquals(2, myIndicesFixture.getIndicesManager().ensureIndicesExist(myProject, local, asList(remote1, remote2)).size());
     assertEquals(3, myIndicesFixture.getIndicesManager().ensureIndicesExist(myProject, local, asList(remote1, remote2, remote3)).size());
-    assertEquals(4, myIndicesFixture.getIndicesManager().ensureIndicesExist(myProject, local, asList(remote1, remote2, remote3, remote4)).size());
-    assertEquals(5, myIndicesFixture.getIndicesManager().ensureIndicesExist(myProject, local, asList(remote1, remote2, remote3, remote4, remote5)).size());
+    assertEquals(3, myIndicesFixture.getIndicesManager().ensureIndicesExist(myProject, local, asList(remote1, remote2, remote3, remote4)).size());
+    assertEquals(4, myIndicesFixture.getIndicesManager().ensureIndicesExist(myProject, local, asList(remote1, remote2, remote3, remote4, remote5)).size());
   }
 
-  public void testDefaultArchetypes() throws Exception {
+  public void testDefaultArchetypes() {
     assertArchetypeExists("org.apache.maven.archetypes:maven-archetype-quickstart:RELEASE");
   }
 
   public void testIndexedArchetypes() throws Exception {
     myIndicesFixture.getRepositoryHelper().addTestData("archetypes");
     myIndicesFixture.getIndicesManager().ensureIndicesExist(myProject, myIndicesFixture.getRepositoryHelper().getTestData("archetypes"),
-                                                            Collections.<Pair<String, String>>emptyList());
+                                                            Collections.emptyList());
 
     assertArchetypeExists("org.apache.maven.archetypes:maven-archetype-foobar:1.0");
   }
@@ -120,7 +127,7 @@ public class MavenIndicesManagerTest extends MavenIndicesTestCase {
 
   private void assertArchetypeExists(String archetypeId) {
     Set<MavenArchetype> achetypes = myIndicesFixture.getIndicesManager().getArchetypes();
-    List<String> actualNames = new ArrayList<String>();
+    List<String> actualNames = new ArrayList<>();
     for (MavenArchetype each : achetypes) {
       actualNames.add(each.groupId + ":" + each.artifactId + ":" + each.version);
     }

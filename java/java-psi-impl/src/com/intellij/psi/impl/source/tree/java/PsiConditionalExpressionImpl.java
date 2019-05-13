@@ -18,9 +18,12 @@ package com.intellij.psi.impl.source.tree.java;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.source.resolve.graphInference.InferenceSession;
+import com.intellij.psi.impl.source.resolve.graphInference.PsiPolyExpressionUtil;
 import com.intellij.psi.impl.source.tree.ChildRole;
 import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.impl.source.tree.JavaElementType;
+import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.tree.ChildRoleBase;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
@@ -62,6 +65,15 @@ public class PsiConditionalExpressionImpl extends ExpressionPsiElement implement
     if (type2 == null) return type1;
 
     if (type1.equals(type2)) return type1;
+
+    if (PsiUtil.isLanguageLevel8OrHigher(this) &&
+        PsiPolyExpressionUtil.isPolyExpression(this) &&
+        !MethodCandidateInfo.ourOverloadGuard.currentStack().contains(PsiUtil.skipParenthesizedExprUp(this.getParent()))) {
+      //15.25.3 Reference Conditional Expressions 
+      // The type of a poly reference conditional expression is the same as its target type.
+      return InferenceSession.getTargetType(this);
+    }
+
     final int typeRank1 = TypeConversionUtil.getTypeRank(type1);
     final int typeRank2 = TypeConversionUtil.getTypeRank(type2);
 
@@ -70,8 +82,12 @@ public class PsiConditionalExpressionImpl extends ExpressionPsiElement implement
     if (type2 instanceof PsiClassType && type1.equals(PsiPrimitiveType.getUnboxedType(type2))) return type1;
 
     if (TypeConversionUtil.isNumericType(typeRank1) && TypeConversionUtil.isNumericType(typeRank2)){
-      if (typeRank1 == TypeConversionUtil.BYTE_RANK && typeRank2 == TypeConversionUtil.SHORT_RANK) return type2;
-      if (typeRank1 == TypeConversionUtil.SHORT_RANK && typeRank2 == TypeConversionUtil.BYTE_RANK) return type1;
+      if (typeRank1 == TypeConversionUtil.BYTE_RANK && typeRank2 == TypeConversionUtil.SHORT_RANK) {
+        return type2 instanceof PsiPrimitiveType ? type2 : PsiPrimitiveType.getUnboxedType(type2);
+      }
+      if (typeRank1 == TypeConversionUtil.SHORT_RANK && typeRank2 == TypeConversionUtil.BYTE_RANK) {
+        return type1 instanceof PsiPrimitiveType ? type1 : PsiPrimitiveType.getUnboxedType(type1);
+      }
       if (typeRank2 == TypeConversionUtil.INT_RANK && (typeRank1 == TypeConversionUtil.BYTE_RANK || typeRank1 == TypeConversionUtil.SHORT_RANK || typeRank1 == TypeConversionUtil.CHAR_RANK)){
         if (TypeConversionUtil.areTypesAssignmentCompatible(type1, expr2)) return type1;
       }
@@ -97,7 +113,9 @@ public class PsiConditionalExpressionImpl extends ExpressionPsiElement implement
       if (type2 == null) return null;
     }
 
-    return GenericsUtil.getLeastUpperBound(type1, type2, getManager());
+    if (type1 instanceof PsiLambdaParameterType || type2 instanceof PsiLambdaParameterType) return null;
+    final PsiType leastUpperBound = GenericsUtil.getLeastUpperBound(type1, type2, getManager());
+    return leastUpperBound != null ? PsiUtil.captureToplevelWildcards(leastUpperBound, this) : null;
   }
 
   @Override
@@ -134,7 +152,7 @@ public class PsiConditionalExpressionImpl extends ExpressionPsiElement implement
   }
 
   @Override
-  public int getChildRole(ASTNode child) {
+  public int getChildRole(@NotNull ASTNode child) {
     LOG.assertTrue(child.getTreeParent() == this);
     if (ElementType.EXPRESSION_BIT_SET.contains(child.getElementType())){
       int role = getChildRole(child, ChildRole.CONDITION);
@@ -163,6 +181,7 @@ public class PsiConditionalExpressionImpl extends ExpressionPsiElement implement
     }
   }
 
+  @Override
   public String toString() {
     return "PsiConditionalExpression:" + getText();
   }

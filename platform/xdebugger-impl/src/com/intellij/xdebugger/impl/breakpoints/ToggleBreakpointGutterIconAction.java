@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,23 +15,29 @@
  */
 package com.intellij.xdebugger.impl.breakpoints;
 
+import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.xdebugger.XDebuggerBundle;
 import com.intellij.xdebugger.breakpoints.XBreakpoint;
+import org.jetbrains.annotations.NotNull;
 
 /**
 * @author nik
 */
-class ToggleBreakpointGutterIconAction extends AnAction {
-  private XBreakpoint<?> myBreakpoint;
+class ToggleBreakpointGutterIconAction extends DumbAwareAction {
+  private final XBreakpoint<?> myBreakpoint;
 
   ToggleBreakpointGutterIconAction(XBreakpoint<?> breakpoint) {
     super(breakpoint.isEnabled() ? XDebuggerBundle.message("xdebugger.disable.breakpoint.action.text") : XDebuggerBundle.message("xdebugger.enable.breakpoint.action.text"));
     this.myBreakpoint = breakpoint;
+    AnAction action = ActionManager.getInstance().getAction("ToggleBreakpointEnabled");
+    copyShortcutFrom(action);
   }
 
-  public void actionPerformed(final AnActionEvent e) {
+  @Override
+  public void actionPerformed(@NotNull final AnActionEvent e) {
     myBreakpoint.setEnabled(!myBreakpoint.isEnabled());
   }
 }

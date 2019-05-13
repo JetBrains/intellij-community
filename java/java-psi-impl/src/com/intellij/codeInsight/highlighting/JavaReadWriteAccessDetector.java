@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,20 +16,23 @@
 package com.intellij.codeInsight.highlighting;
 
 import com.intellij.psi.*;
-import com.intellij.psi.util.PropertyUtil;
+import com.intellij.psi.util.PropertyUtilBase;
 import com.intellij.psi.util.PsiUtil;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author yole
  */
 public class JavaReadWriteAccessDetector extends ReadWriteAccessDetector {
   @Override
-  public boolean isReadWriteAccessible(final PsiElement element) {
-    return element instanceof PsiVariable && !(element instanceof ImplicitVariable);
+  public boolean isReadWriteAccessible(@NotNull final PsiElement element) {
+    return element instanceof PsiVariable && !(element instanceof ImplicitVariable)
+           || element instanceof PsiClass
+           || element instanceof PsiAnnotationMethod && !(element instanceof PsiCompiledElement);
   }
 
   @Override
-  public boolean isDeclarationWriteAccess(final PsiElement element) {
+  public boolean isDeclarationWriteAccess(@NotNull final PsiElement element) {
     if (element instanceof PsiVariable && ((PsiVariable)element).getInitializer() != null) {
       return true;
     }
@@ -39,21 +42,28 @@ public class JavaReadWriteAccessDetector extends ReadWriteAccessDetector {
     return false;
   }
 
+  @NotNull
   @Override
-  public Access getReferenceAccess(final PsiElement referencedElement, final PsiReference reference) {
+  public Access getReferenceAccess(@NotNull final PsiElement referencedElement, @NotNull final PsiReference reference) {
     return getExpressionAccess(reference.getElement());
   }
 
+  @NotNull
   @Override
-  public Access getExpressionAccess(final PsiElement expression) {
-    if (!(expression instanceof PsiExpression)) return Access.Read;
+  public Access getExpressionAccess(@NotNull final PsiElement expression) {
+    if (!(expression instanceof PsiExpression)) {
+      if (expression instanceof PsiNameValuePair || expression instanceof PsiIdentifier) {
+        return Access.Write;
+      }
+      return Access.Read;
+    }
     PsiExpression expr = (PsiExpression) expression;
     boolean readAccess = PsiUtil.isAccessedForReading(expr);
     boolean writeAccess = PsiUtil.isAccessedForWriting(expr);
     if (!writeAccess && expr instanceof PsiReferenceExpression) {
       //when searching usages of fields, should show all found setters as a "only write usage"
       PsiElement actualReferee = ((PsiReferenceExpression) expr).resolve();
-      if (actualReferee instanceof PsiMethod && PropertyUtil.isSimplePropertySetter((PsiMethod)actualReferee)) {
+      if (actualReferee instanceof PsiMethod && PropertyUtilBase.isSimplePropertySetter((PsiMethod)actualReferee)) {
         writeAccess = true;
         readAccess = false;
       }

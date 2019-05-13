@@ -20,11 +20,13 @@ import com.intellij.codeInsight.editorActions.TypedHandlerDelegate;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.dom.MavenDomUtil;
 
 public class MavenTypedHandlerDelegate extends TypedHandlerDelegate {
+  @NotNull
   @Override
-  public Result charTyped(char c, Project project, Editor editor, PsiFile file) {
+  public Result charTyped(char c, @NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
     if (!CodeInsightSettings.getInstance().AUTOINSERT_PAIR_BRACKET) return Result.CONTINUE;
 
     if (c != '{') return Result.CONTINUE;
@@ -38,7 +40,7 @@ public class MavenTypedHandlerDelegate extends TypedHandlerDelegate {
     return Result.CONTINUE;
   }
 
-  private boolean shouldCloseBrace(Editor editor, int offset, char c) {
+  private static boolean shouldCloseBrace(Editor editor, int offset, char c) {
     CharSequence text = editor.getDocument().getCharsSequence();
 
     if (offset < 2) return false;

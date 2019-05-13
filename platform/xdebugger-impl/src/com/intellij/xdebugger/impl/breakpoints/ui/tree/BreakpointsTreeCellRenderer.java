@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,10 +21,14 @@ import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.xdebugger.breakpoints.ui.XBreakpointGroup;
 import com.intellij.xdebugger.impl.breakpoints.ui.BreakpointItem;
+import com.intellij.xdebugger.impl.breakpoints.ui.grouping.XBreakpointCustomGroup;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
 class BreakpointsTreeCellRenderer  {
+  private static final SimpleTextAttributes SIMPLE_CELL_ATTRIBUTES_BOLD = SimpleTextAttributes.SIMPLE_CELL_ATTRIBUTES.derive(SimpleTextAttributes.STYLE_BOLD, null, null, null);
+
   private static void customizeRenderer(Project project,
                                         Object value,
                                         boolean selected,
@@ -38,7 +42,12 @@ class BreakpointsTreeCellRenderer  {
     else if (value instanceof BreakpointsGroupNode) {
       XBreakpointGroup group = ((BreakpointsGroupNode)value).getGroup();
       renderer.setIcon(group.getIcon(expanded));
-      renderer.append(group.getName(), SimpleTextAttributes.SIMPLE_CELL_ATTRIBUTES);
+      if (group instanceof XBreakpointCustomGroup && ((XBreakpointCustomGroup)group).isDefault()) {
+        renderer.append(group.getName(), SIMPLE_CELL_ATTRIBUTES_BOLD);
+      }
+      else {
+        renderer.append(group.getName(), SimpleTextAttributes.SIMPLE_CELL_ATTRIBUTES);
+      }
     }
   }
 
@@ -63,7 +72,7 @@ class BreakpointsTreeCellRenderer  {
     }
 
     @Override
-    public void customizeCellRenderer(JTree tree,
+    public void customizeCellRenderer(@NotNull JTree tree,
                                       Object value,
                                       boolean selected,
                                       boolean expanded,

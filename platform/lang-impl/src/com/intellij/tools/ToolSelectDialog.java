@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,32 +17,17 @@ package com.intellij.tools;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.ui.MessageType;
-import com.intellij.openapi.ui.popup.Balloon;
-import com.intellij.openapi.ui.popup.JBPopupFactory;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.ui.awt.RelativePoint;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.event.TreeSelectionEvent;
-import javax.swing.event.TreeSelectionListener;
-import java.awt.*;
-import java.io.IOException;
 
-class ToolSelectDialog extends DialogWrapper {
-  private final ToolsPanel myToolsPanel = new ToolsPanel();
+public class ToolSelectDialog extends DialogWrapper {
+  private final BaseToolsPanel myToolsPanel;
 
-  protected ToolSelectDialog(@Nullable Project project, @Nullable String actionIdToSelect) {
+  public ToolSelectDialog(@Nullable Project project, @Nullable String actionIdToSelect, BaseToolsPanel toolsPanel) {
     super(project);
+    myToolsPanel = toolsPanel;
     myToolsPanel.reset();
-    setOKActionEnabled(myToolsPanel.getSingleSelectedTool() != null);
-    myToolsPanel.addSelectionListener(new TreeSelectionListener() {
-      @Override
-      public void valueChanged(TreeSelectionEvent e) {
-        setOKActionEnabled(myToolsPanel.getSingleSelectedTool() != null);
-      }
-    });
     init();
     pack();
     if (actionIdToSelect != null) {
@@ -53,17 +38,7 @@ class ToolSelectDialog extends DialogWrapper {
 
   @Override
   protected void doOKAction() {
-    try {
-      myToolsPanel.apply();
-    }
-    catch (IOException e) {
-      String message = ToolsBundle.message("tools.failed.to.save.changes.0", StringUtil.decapitalize(e.getMessage()));
-      final JLayeredPane pane = myToolsPanel.getRootPane().getLayeredPane();
-      JBPopupFactory.getInstance().createHtmlTextBalloonBuilder(message, MessageType.ERROR, null)
-        .setShowCallout(false).setFadeoutTime(3000).setHideOnAction(true).setHideOnClickOutside(true).setHideOnKeyOutside(true).
-        createBalloon().show(new RelativePoint(pane, new Point(pane.getWidth(), 0)), Balloon.Position.above);
-      return;
-    }
+    myToolsPanel.apply();
     super.doOKAction();
   }
 
@@ -73,11 +48,11 @@ class ToolSelectDialog extends DialogWrapper {
   }
 
   @Nullable
-  Tool getSelectedTool() {
+  public Tool getSelectedTool() {
     return myToolsPanel.getSingleSelectedTool();
   }
 
-  boolean isModified() {
+  public boolean isModified() {
     return myToolsPanel.isModified();
   }
 

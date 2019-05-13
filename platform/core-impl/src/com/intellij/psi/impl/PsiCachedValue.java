@@ -16,33 +16,46 @@
 
 package com.intellij.psi.impl;
 
-import com.intellij.psi.PsiManager;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiDirectory;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ProjectRootModificationTracker;
+import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.util.CachedValueBase;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Dmitry Avdeev
  */
 public abstract class PsiCachedValue<T> extends CachedValueBase<T> {
   private final PsiManager myManager;
-  protected long myLastPsiTimeStamp = -1;
+  protected volatile long myLastPsiTimeStamp = -1;
 
   public PsiCachedValue(@NotNull PsiManager manager) {
     myManager = manager;
   }
 
   @Override
-  protected Data<T> computeData(T value, Object[] dependencies) {
-    Data<T> data = super.computeData(value, dependencies);
+  protected void valueUpdated(@Nullable Object[] dependencies) {
+    myLastPsiTimeStamp = hasOnlyPhysicalPsiDependencies(dependencies) ? myManager.getModificationTracker().getModificationCount() : -1;
+  }
 
-    myLastPsiTimeStamp = myManager.getModificationTracker().getModificationCount();
+  private static boolean hasOnlyPhysicalPsiDependencies(@Nullable Object[] dependencies) {
+    return dependencies != null && dependencies.length > 0 &&
+           ContainerUtil.and(dependencies, PsiCachedValue::anyChangeImpliesPsiCounterChange);
+  }
 
-    return data;
+  private static boolean anyChangeImpliesPsiCounterChange(Object o) {
+    return o instanceof PsiElement && ((PsiElement)o).isValid() && ((PsiElement)o).isPhysical() ||
+           o instanceof ProjectRootModificationTracker ||
+           o instanceof PsiModificationTracker ||
+           o == PsiModificationTracker.MODIFICATION_COUNT ||
+           o == PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT ||
+           o == PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT;
   }
 
   @Override
@@ -52,10 +65,7 @@ public abstract class PsiCachedValue<T> extends CachedValueBase<T> {
 
   @Override
   protected boolean isDependencyOutOfDate(Object dependency, long oldTimeStamp) {
-    if (dependency instanceof PsiElement &&
-        myLastPsiTimeStamp == myManager.getModificationTracker().getModificationCount() &&
-        ((PsiElement)dependency).isValid() &&
-        ((PsiElement)dependency).isPhysical()) {
+    if (myLastPsiTimeStamp != -1 && myLastPsiTimeStamp == myManager.getModificationTracker().getModificationCount()) {
       return false;
     }
 
@@ -73,8 +83,7 @@ public abstract class PsiCachedValue<T> extends CachedValueBase<T> {
       PsiElement element = (PsiElement)dependency;
       if (!element.isValid()) return -1;
       PsiFile containingFile = element.getContainingFile();
-      if (containingFile == null) return -1;
-      return containingFile.getModificationStamp();
+      if (containingFile != null) return containingFile.getModificationStamp();
     }
 
     if (dependency == PsiModificationTracker.MODIFICATION_COUNT) {

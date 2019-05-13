@@ -21,6 +21,6 @@ class C {
             /* important comment */
             f();
             // another comment
-        } <caret>catch (Exception ignore) { }
+        } catch (Exception <caret>ignore) { }
     }
 }

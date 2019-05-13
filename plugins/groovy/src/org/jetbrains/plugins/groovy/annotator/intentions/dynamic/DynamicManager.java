@@ -16,7 +16,7 @@
 package org.jetbrains.plugins.groovy.annotator.intentions.dynamic;
 
 import com.intellij.openapi.components.PersistentStateComponent;
-import com.intellij.openapi.components.ProjectComponent;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiVariable;
@@ -28,15 +28,11 @@ import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.ui.DynamicEleme
 import java.util.Collection;
 import java.util.List;
 
-/**
- * User: Dmitry.Krasilschikov
- * Date: 23.11.2007
- */
-public abstract class DynamicManager implements ProjectComponent, PersistentStateComponent<DRootElement> {
+public abstract class DynamicManager implements PersistentStateComponent<DRootElement> {
 
   @NotNull
   public static DynamicManager getInstance(@NotNull Project project) {
-    return project.getComponent(DynamicManager.class);
+    return ServiceManager.getService(project, DynamicManager.class);
   }
 
   /**

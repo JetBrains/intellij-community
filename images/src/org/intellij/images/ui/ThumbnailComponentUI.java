@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@
 
 package org.intellij.images.ui;
 
+import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.ui.JBColor;
 import com.intellij.util.ui.UIUtil;
@@ -39,8 +40,6 @@ import java.awt.image.BufferedImage;
 public class ThumbnailComponentUI extends ComponentUI {
     @NonNls
     private static final String DOTS = "...";
-    @NonNls
-    private static final String THUMBNAIL_COMPONENT_ERROR_STRING = "ThumbnailComponent.errorString";
 
     private static final Color LINE_COLOR = new Color(0x8E, 0xA8, 0xCE);
     private static final Color PNG_COLOR = new Color(0x80, 0x00, 0x80);
@@ -50,15 +49,12 @@ public class ThumbnailComponentUI extends ComponentUI {
 
     private static final ThumbnailComponentUI ui = new ThumbnailComponentUI();
 
-    static {
-        UIManager.getDefaults().put(THUMBNAIL_COMPONENT_ERROR_STRING,
-                ImagesBundle.message("thumbnails.component.error.text"));
-    }
 
-
+    @Override
     public void paint(Graphics g, JComponent c) {
         ThumbnailComponent tc = (ThumbnailComponent) c;
         if (tc != null) {
+            UISettings.setupAntialiasing(g);
             paintBackground(g, tc);
 
             if (tc.isDirectory()) {
@@ -68,7 +64,7 @@ public class ThumbnailComponentUI extends ComponentUI {
             }
 
             // File name
-            paintFileName(g, tc);
+            if (tc.isDirectory() || tc.getImageComponent().isFileNameVisible()) paintFileName(g, tc);
         }
     }
 
@@ -90,10 +86,10 @@ public class ThumbnailComponentUI extends ComponentUI {
     }
 
     private void paintImageThumbnail(Graphics g, ThumbnailComponent tc) {
-        // Paint blank
-        ImagesIcons.ThumbnailBlank.paintIcon(tc, g, 5, 5);
-
         ImageComponent imageComponent = tc.getImageComponent();
+        // Paint blank
+        if (imageComponent.isFileSizeVisible()) ImagesIcons.ThumbnailBlank.paintIcon(tc, g, 5, 5);
+
         ImageDocument document = imageComponent.getDocument();
         BufferedImage image = document.getValue();
         if (image != null) {
@@ -102,7 +98,7 @@ public class ThumbnailComponentUI extends ComponentUI {
             paintError(g, tc);
         }
 
-        paintFileSize(g, tc);
+        if (imageComponent.isFileSizeVisible()) paintFileSize(g, tc);
     }
 
     private void paintBackground(Graphics g, ThumbnailComponent tc) {
@@ -113,21 +109,22 @@ public class ThumbnailComponentUI extends ComponentUI {
 
     private void paintImage(Graphics g, ThumbnailComponent tc) {
         ImageComponent imageComponent = tc.getImageComponent();
-        BufferedImage image = imageComponent.getDocument().getValue();
 
         int blankHeight = ImagesIcons.ThumbnailBlank.getIconHeight();
 
-        // Paint image info (and reduce height of text from available height)
-        blankHeight -= paintImageCaps(g, image);
-        // Paint image format (and reduce height of text from available height)
-        blankHeight -= paintFormatText(tc, g);
+        if (imageComponent.isFileSizeVisible()) {
+            // Paint image info (and reduce height of text from available height)
+            blankHeight -= paintImageCaps(g, imageComponent);
+            // Paint image format (and reduce height of text from available height)
+            blankHeight -= paintFormatText(tc, g);
+        }
 
         // Paint image
         paintThumbnail(g, imageComponent, blankHeight);
     }
 
-    private int paintImageCaps(Graphics g, BufferedImage image) {
-        String description = ImagesBundle.message("icon.dimensions", image.getWidth(), image.getHeight(), image.getColorModel().getPixelSize());
+    private int paintImageCaps(Graphics g, ImageComponent imageComponent) {
+        String description = imageComponent.getDescription();
 
         Font font = getSmallFont();
         FontMetrics fontMetrics = g.getFontMetrics(font);
@@ -263,7 +260,7 @@ public class ThumbnailComponentUI extends ComponentUI {
     }
 
     private String getSubmnailComponentErrorString() {
-        return UIManager.getString(THUMBNAIL_COMPONENT_ERROR_STRING);
+        return ImagesBundle.message("thumbnails.component.error.text");
     }
 
     private static Font getSmallFont() {
@@ -271,6 +268,7 @@ public class ThumbnailComponentUI extends ComponentUI {
         return labelFont.deriveFont(labelFont.getSize2D() - 2.0f);
     }
 
+    @Override
     public Dimension getPreferredSize(JComponent c) {
         Font labelFont = UIUtil.getLabelFont();
         FontMetrics fontMetrics = c.getFontMetrics(labelFont);

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package com.intellij.openapi.fileEditor.impl;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFrame;
@@ -24,14 +25,15 @@ import com.intellij.ui.docking.DockContainerFactory;
 import com.intellij.ui.docking.DockManager;
 import com.intellij.ui.docking.DockableContent;
 import org.jdom.Element;
+import org.jetbrains.annotations.NotNull;
 
 public class DockableEditorContainerFactory implements DockContainerFactory.Persistent {
 
   public static final String TYPE = "file-editors";
 
-  private Project myProject;
-  private FileEditorManagerImpl myFileEditorManager;
-  private DockManager myDockManager;
+  private final Project myProject;
+  private final FileEditorManagerImpl myFileEditorManager;
+  private final DockManager myDockManager;
 
   public DockableEditorContainerFactory(Project project, FileEditorManagerImpl fileEditorManager, DockManager dockManager) {
     this.myProject = project;
@@ -45,15 +47,15 @@ public class DockableEditorContainerFactory implements DockContainerFactory.Pers
   }
 
   private DockContainer createContainer(boolean loadingState) {
-    final Ref<DockableEditorTabbedContainer> containerRef = new Ref<DockableEditorTabbedContainer>();
+    final Ref<DockableEditorTabbedContainer> containerRef = new Ref<>();
     EditorsSplitters splitters = new EditorsSplitters(myFileEditorManager, myDockManager, false) {
       @Override
-      protected void afterFileClosed(VirtualFile file) {
+      protected void afterFileClosed(@NotNull VirtualFile file) {
         containerRef.get().fireContentClosed(file);
       }
 
       @Override
-      protected void afterFileOpen(VirtualFile file) {
+      protected void afterFileOpen(@NotNull VirtualFile file) {
         containerRef.get().fireContentOpen(file);
       }
 
@@ -71,6 +73,7 @@ public class DockableEditorContainerFactory implements DockContainerFactory.Pers
       splitters.createCurrentWindow();
     }
     final DockableEditorTabbedContainer container = new DockableEditorTabbedContainer(myProject, splitters, true);
+    Disposer.register(container, splitters);
     containerRef.set(container);
     container.getSplitters().startListeningFocus();
     return container;

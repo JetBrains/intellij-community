@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,12 +15,13 @@
  */
 package com.intellij.util.containers;
 
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
 /**
- * A drop-in replacement for {@link java.util.Stack} based on {@link java.util.ArrayList} (instead of {@link java.util.Vector})
+ * A drop-in replacement for {@link java.util.Stack} based on {@link ArrayList} (instead of {@link Vector})
  * and therefore is (1) not synchronized and (2) faster.
  *
  * @author max
@@ -32,11 +33,11 @@ public class Stack<T> extends ArrayList<T> {
     super(initialCapacity);
   }
 
-  public Stack(Collection<T> init) {
+  public Stack(@NotNull Collection<? extends T> init) {
     super(init);
   }
 
-  public Stack(T... items) {
+  public Stack(@NotNull T... items) {
     for (T item : items) {
       push(item);
     }

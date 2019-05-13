@@ -15,6 +15,9 @@
  */
 package com.intellij.psi;
 
+import com.intellij.psi.util.ConstantEvaluationOverflowException;
+import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.concurrent.ConcurrentMap;
@@ -23,7 +26,7 @@ import java.util.concurrent.ConcurrentMap;
  * Service for evaluating values of constant expressions.
  *
  * @author ven
- * @see com.intellij.psi.JavaPsiFacade#getConstantEvaluationHelper()
+ * @see JavaPsiFacade#getConstantEvaluationHelper()
  */
 public abstract class PsiConstantEvaluationHelper {
   /**
@@ -33,27 +36,29 @@ public abstract class PsiConstantEvaluationHelper {
    * @return the result of the evaluation, or null if the expression is not a constant expression.
    */
   @Nullable
-  public Object computeConstantExpression(PsiElement expression) {
+  @Contract("null -> null")
+  public Object computeConstantExpression(@Nullable PsiElement expression) {
     return computeConstantExpression(expression, false);
   }
 
   /**
    * Evaluates the value of the specified expression and optionally throws
-   * {@link com.intellij.psi.util.ConstantEvaluationOverflowException} if an overflow is detected
+   * {@link ConstantEvaluationOverflowException} if an overflow is detected
    * during the evaluation.
    *
    * @param expression the expression to evaluate.
    * @param throwExceptionOnOverflow if true, an exception is thrown if an overflow is detected during the evaluation.
    * @return the result of the evaluation, or null if the expression is not a constant expression.
    */
-  public abstract Object computeConstantExpression(PsiElement expression, boolean throwExceptionOnOverflow);
+  public abstract Object computeConstantExpression(@Nullable PsiElement expression, boolean throwExceptionOnOverflow);
 
-  public abstract Object computeExpression(PsiExpression expression, boolean throwExceptionOnOverflow,
+  public abstract Object computeExpression(@NotNull PsiExpression expression, boolean throwExceptionOnOverflow,
                                            @Nullable final AuxEvaluator auxEvaluator);
 
   public interface AuxEvaluator {
-    Object computeExpression(final PsiExpression expression, final AuxEvaluator auxEvaluator);
+    Object computeExpression(@NotNull PsiExpression expression, @NotNull AuxEvaluator auxEvaluator);
 
+    @NotNull
     ConcurrentMap<PsiElement, Object> getCacheMap(final boolean overflow);
   }
 }

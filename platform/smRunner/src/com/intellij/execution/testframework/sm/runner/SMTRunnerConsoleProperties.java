@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,17 +16,24 @@
 package com.intellij.execution.testframework.sm.runner;
 
 import com.intellij.execution.Executor;
-import com.intellij.execution.configurations.RuntimeConfiguration;
+import com.intellij.execution.Location;
+import com.intellij.execution.configurations.RunConfiguration;
+import com.intellij.execution.configurations.RunProfile;
 import com.intellij.execution.filters.CompositeFilter;
 import com.intellij.execution.filters.FileHyperlinkInfo;
 import com.intellij.execution.filters.Filter;
 import com.intellij.execution.filters.HyperlinkInfo;
 import com.intellij.execution.testframework.TestConsoleProperties;
-import com.intellij.execution.testframework.sm.SMStacktraceParser;
+import com.intellij.execution.testframework.actions.AbstractRerunFailedTestsAction;
+import com.intellij.execution.testframework.sm.SMStacktraceParserEx;
+import com.intellij.execution.testframework.sm.runner.history.actions.AbstractImportTestsAction;
+import com.intellij.execution.testframework.sm.runner.history.actions.ImportTestsGroup;
+import com.intellij.execution.ui.ConsoleView;
 import com.intellij.ide.util.PropertiesComponent;
+import com.intellij.ide.util.PsiNavigationSupport;
+import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -40,32 +47,75 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * @author: Roman Chernyatchik
+ * @author Roman Chernyatchik
+ * Use {@link SMRunnerConsolePropertiesProvider} so importer {@link AbstractImportTestsAction.ImportRunProfile#ImportRunProfile(VirtualFile, Project)}
+ * would be able to create properties by read configuration and test navigation, rerun failed tests etc. would work on imported results
  */
-public class SMTRunnerConsoleProperties extends TestConsoleProperties implements SMStacktraceParser {
-  private final RuntimeConfiguration myConfiguration;
-  protected final CompositeFilter myCustomFilter;
+public class SMTRunnerConsoleProperties extends TestConsoleProperties implements SMStacktraceParserEx {
+  private final RunProfile myConfiguration;
+  @NotNull private final String myTestFrameworkName;
+  private final CompositeFilter myCustomFilter;
+  private boolean myIdBasedTestTree = false;
+  private boolean myPrintTestingStartedTime = true;
 
   /**
    * @param config
    * @param testFrameworkName Prefix for storage which keeps runner settings. E.g. "RubyTestUnit"
    * @param executor
    */
-  public SMTRunnerConsoleProperties(@NotNull final RuntimeConfiguration config,
-                                    @NotNull final String testFrameworkName,
-                                    @NotNull final Executor executor)
-  {
-    super(new Storage.PropertiesComponentStorage(testFrameworkName + "Support.", PropertiesComponent.getInstance()),
-          config.getProject(),
-          executor);
+  public SMTRunnerConsoleProperties(@NotNull RunConfiguration config, @NotNull String testFrameworkName, @NotNull Executor executor) {
+    this(config.getProject(), config, testFrameworkName, executor);
+  }
+  
+  public SMTRunnerConsoleProperties(@NotNull Project project, 
+                                    @NotNull RunProfile config,
+                                    @NotNull String testFrameworkName, 
+                                    @NotNull Executor executor) {
+    super(getStorage(testFrameworkName), project, executor);
     myConfiguration = config;
-    myCustomFilter = new CompositeFilter(config.getProject());
+    myTestFrameworkName = testFrameworkName;
+    myCustomFilter = new CompositeFilter(project);
   }
 
-  public RuntimeConfiguration getConfiguration() {
+  @NotNull
+  private static Storage.PropertiesComponentStorage getStorage(String testFrameworkName) {
+    return new Storage.PropertiesComponentStorage(testFrameworkName + "Support.", PropertiesComponent.getInstance());
+  }
+
+  @Override
+  public RunProfile getConfiguration() {
     return myConfiguration;
   }
 
+  @Nullable
+  @Override
+  protected AnAction createImportAction() {
+    return new ImportTestsGroup(this);
+  }
+
+  public boolean isIdBasedTestTree() {
+    return myIdBasedTestTree;
+  }
+
+  public void setIdBasedTestTree(boolean idBasedTestTree) {
+    myIdBasedTestTree = idBasedTestTree;
+  }
+
+  public boolean isPrintTestingStartedTime() {
+    return myPrintTestingStartedTime;
+  }
+
+  public void setPrintTestingStartedTime(boolean printTestingStartedTime) {
+    myPrintTestingStartedTime = printTestingStartedTime;
+  }
+
+  @Nullable
+  @Override
+  public Navigatable getErrorNavigatable(@NotNull Location<?> location, @NotNull String stacktrace) {
+    return getErrorNavigatable(location.getProject(), stacktrace);
+  }
+
+  @Nullable
   @Override
   public Navigatable getErrorNavigatable(@NotNull final Project project, final @NotNull String stacktrace) {
     if (myCustomFilter.isEmpty()) {
@@ -77,9 +127,15 @@ public class SMTRunnerConsoleProperties extends TestConsoleProperties implements
     final int stacktraceLength = stacktrace.length();
     final String[] lines = StringUtil.splitByLines(stacktrace);
     for (String line : lines) {
-      final Filter.Result result = myCustomFilter.applyFilter(line, stacktraceLength);
-      if (result != null) {
-        final HyperlinkInfo info = result.hyperlinkInfo;
+      Filter.Result result;
+      try {
+        result = myCustomFilter.applyFilter(line, stacktraceLength);
+      }
+      catch (Throwable t) {
+        throw new RuntimeException("Error while applying " + myCustomFilter + " to '" + line + "'", t);
+      }
+      final HyperlinkInfo info = result != null ? result.getFirstHyperlinkInfo() : null;
+      if (info != null) {
 
         // covers 99% use existing cases
         if (info instanceof FileHyperlinkInfo) {
@@ -90,7 +146,7 @@ public class SMTRunnerConsoleProperties extends TestConsoleProperties implements
         return new Navigatable() {
           @Override
           public void navigate(boolean requestFocus) {
-            result.hyperlinkInfo.navigate(project);
+            info.navigate(project);
           }
 
           @Override
@@ -113,9 +169,8 @@ public class SMTRunnerConsoleProperties extends TestConsoleProperties implements
   }
 
   @Nullable
-  protected Navigatable findSuitableNavigatableForLine(@NotNull final Project project,
-                                                       @NotNull final VirtualFile file,
-                                                       final int line) {
+  @Deprecated
+  protected Navigatable findSuitableNavigatableForLine(@NotNull Project project, @NotNull VirtualFile file, int line) {
     // lets find first non-ws psi element
     
     final Document doc = FileDocumentManager.getInstance().getDocument(file);
@@ -134,6 +189,34 @@ public class SMTRunnerConsoleProperties extends TestConsoleProperties implements
       }
     }
 
-    return new OpenFileDescriptor(project, file, offset);
+    return PsiNavigationSupport.getInstance().createNavigatable(project, file, offset);
+  }
+
+  public boolean fixEmptySuite() {
+    return false;
+  }
+
+  @Nullable
+  public SMTestLocator getTestLocator() {
+    return null;
+  }
+
+  @Nullable
+  public TestProxyFilterProvider getFilterProvider() {
+    return null;
+  }
+  
+  @Nullable
+  public AbstractRerunFailedTestsAction createRerunFailedTestsAction(ConsoleView consoleView) {
+    return null;
+  }
+
+  @NotNull
+  public String getTestFrameworkName() {
+    return myTestFrameworkName;
+  }
+
+  public boolean isUndefined() {
+    return false;
   }
 }

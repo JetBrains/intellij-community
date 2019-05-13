@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,19 +31,19 @@ import java.awt.*;
  */
 public class DnDSupport implements DnDTarget, DnDSource, Disposable {
   private final JComponent myComponent;
-  private final Function<DnDActionInfo, DnDDragStartBean> myBeanProvider;
-  private final Function<DnDActionInfo, DnDImage> myImageProvider;
+  private final Function<? super DnDActionInfo, ? extends DnDDragStartBean> myBeanProvider;
+  private final Function<? super DnDActionInfo, ? extends DnDImage> myImageProvider;
   private final @Nullable DnDDropHandler myHandler;
   private final @Nullable DnDTargetChecker myChecker;
   private final Runnable myDropEndedCallback;
   private final DnDDropActionHandler myDropActionHandler;
   private final Runnable myCleanUpCallback;
-  private boolean myAsTarget;
-  private boolean myAsSource;
+  private final boolean myAsTarget;
+  private final boolean myAsSource;
 
   private DnDSupport(JComponent component,
-                     Function<DnDActionInfo, DnDDragStartBean> beanProvider,
-                     Function<DnDActionInfo, DnDImage> imageProvider,
+                     Function<? super DnDActionInfo, ? extends DnDDragStartBean> beanProvider,
+                     Function<? super DnDActionInfo, ? extends DnDImage> imageProvider,
                      DnDDropHandler handler,
                      DnDTargetChecker checker,
                      Runnable dropEndedCallback,
@@ -93,7 +93,7 @@ public class DnDSupport implements DnDTarget, DnDSource, Disposable {
       final DnDImage image = myImageProvider.fun(new DnDActionInfo(action, dragOrigin));
       if (image != null) {
         final Point point = image.getPoint();
-        return new Pair<Image, Point>(image.getImage(), point == null ? dragOrigin : point);
+        return Pair.create(image.getImage(), point == null ? dragOrigin : point);
       }
     }
     return null;
@@ -271,8 +271,8 @@ public class DnDSupport implements DnDTarget, DnDSource, Disposable {
                           disposable.get(),
                           dropActionHandler.get(),
                           cleanUp.get(),
-                          asSource.get(),
                           asTarget.get(),
+                          asSource.get(),
                           asNativeTarget.get());
       }
     };

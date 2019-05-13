@@ -1,186 +1,103 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.application.options;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathMacros;
-import com.intellij.openapi.application.PathManager;
-import com.intellij.openapi.components.ApplicationComponent;
-import com.intellij.openapi.components.ExpandMacroToPathMap;
+import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.NamedJDOMExternalizable;
-import com.intellij.openapi.util.RoamingTypeDisabled;
-import com.intellij.openapi.util.WriteExternalException;
-import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.AtomicClearableLazyValue;
+import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.HashMap;
+import com.intellij.util.containers.hash.LinkedHashMap;
+import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import org.jdom.Element;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.jps.model.serialization.JpsGlobalLoader;
 import org.jetbrains.jps.model.serialization.PathMacroUtil;
 
 import java.util.*;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
-/**
- * @author dsl
- */
-public class PathMacrosImpl extends PathMacros implements ApplicationComponent, NamedJDOMExternalizable, RoamingTypeDisabled {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.application.options.PathMacrosImpl");
-  private final Map<String, String> myLegacyMacros = new HashMap<String, String>();
-  private final Map<String, String> myMacros = new HashMap<String, String>();
-  private int myModificationStamp = 0;
+@State(
+  name = "PathMacrosImpl",
+  storages = @Storage(value = JpsGlobalLoader.PathVariablesSerializer.STORAGE_FILE_NAME, roamingType = RoamingType.PER_OS)
+)
+public class PathMacrosImpl extends PathMacros implements PersistentStateComponent<Element>, ModificationTracker {
+  public static final String IGNORED_MACRO_ELEMENT = "ignoredMacro";
+  public static final String MAVEN_REPOSITORY = "MAVEN_REPOSITORY";
+
+  private static final Logger LOG = Logger.getInstance(PathMacrosImpl.class);
+
+  private static final Set<String> SYSTEM_MACROS = new THashSet<>();
+
+  private final Map<String, String> myLegacyMacros = new THashMap<>();
+  private final Map<String, String> myMacros = new LinkedHashMap<>();
+  private long myModificationStamp = 0;
   private final ReentrantReadWriteLock myLock = new ReentrantReadWriteLock();
   private final List<String> myIgnoredMacros = ContainerUtil.createLockFreeCopyOnWriteList();
 
-  @NonNls
-  public static final String MACRO_ELEMENT = "macro";
-  @NonNls
-  public static final String NAME_ATTR = "name";
-  @NonNls
-  public static final String VALUE_ATTR = "value";
+  private final AtomicClearableLazyValue<Map<String, String>> myUserMacroMapCache = new AtomicClearableLazyValue<Map<String, String>>() {
+    @NotNull
+    @Override
+    protected Map<String, String> compute() {
+      myLock.readLock().lock();
+      try {
+        if (myMacros.isEmpty()) {
+          return Collections.emptyMap();
+        }
 
-  @NonNls
-  public static final String IGNORED_MACRO_ELEMENT = "ignoredMacro";
-
-  // predefined macros
-  @NonNls
-  public static final String APPLICATION_HOME_MACRO_NAME = PathMacroUtil.APPLICATION_HOME_DIR;
-  @NonNls
-  public static final String PROJECT_DIR_MACRO_NAME = PathMacroUtil.PROJECT_DIR_MACRO_NAME;
-  @NonNls
-  public static final String MODULE_DIR_MACRO_NAME = PathMacroUtil.MODULE_DIR_MACRO_NAME;
-  @NonNls
-  public static final String USER_HOME_MACRO_NAME = "USER_HOME";
-
-  private static final Set<String> SYSTEM_MACROS = new HashSet<String>();
-  @NonNls public static final String EXT_FILE_NAME = "path.macros";
+        LinkedHashMap<String, String> result = new LinkedHashMap<>();
+        result.putAll(myMacros);
+        return Collections.unmodifiableMap(result);
+      }
+      finally {
+        myLock.readLock().unlock();
+      }
+    }
+  };
 
   static {
-    SYSTEM_MACROS.add(APPLICATION_HOME_MACRO_NAME);
-    SYSTEM_MACROS.add(PROJECT_DIR_MACRO_NAME);
-    SYSTEM_MACROS.add(MODULE_DIR_MACRO_NAME);
-    SYSTEM_MACROS.add(USER_HOME_MACRO_NAME);
+    SYSTEM_MACROS.add(PathMacroUtil.APPLICATION_HOME_DIR);
+    SYSTEM_MACROS.add(PathMacroUtil.APPLICATION_PLUGINS_DIR);
+    SYSTEM_MACROS.add(PathMacroUtil.PROJECT_DIR_MACRO_NAME);
+    SYSTEM_MACROS.add(PathMacroUtil.MODULE_WORKING_DIR_NAME);
+    SYSTEM_MACROS.add(PathMacroUtil.MODULE_DIR_MACRO_NAME);
+    SYSTEM_MACROS.add(PathMacroUtil.USER_HOME_NAME);
   }
 
-  private static final Set<String> ourToolsMacros = ContainerUtil.immutableSet(
-    "ClasspathEntry",
-    "Classpath",
-    "ColumnNumber",
-    "FileClass",
-    "FileDir",
-    "FileParentDir",
-    "FileDirName",
-    "FileDirPathFromParent",
-    "FileDirRelativeToProjectRoot",
-    "/FileDirRelativeToProjectRoot",
-    "FileDirRelativeToSourcepath",
-    "/FileDirRelativeToSourcepath",
-    "FileExt",
-    "FileFQPackage",
-    "FileName",
-    "FileNameWithoutExtension",
-    "FilePackage",
-    "FilePath",
-    "FilePathRelativeToProjectRoot",
-    "/FilePathRelativeToProjectRoot",
-    "FilePathRelativeToSourcepath",
-    "/FilePathRelativeToSourcepath",
-    "FilePrompt",
-    "FileRelativeDir",
-    "/FileRelativeDir",
-    "FileRelativePath",
-    "/FileRelativePath",
-    "FileEncoding",
-    "JavaDocPath",
-    "JDKPath",
-    "LineNumber",
-    "ModuleFileDir",
-    "ModuleFilePath",
-    "ModuleName",
-    "ModuleSourcePath",
-    "ModuleSdkPath",
-    "OutputPath",
-    "PhpExecutable",
-    "ProjectFileDir",
-    "ProjectFilePath",
-    "ProjectName",
-    "Projectpath",
-    "Prompt",
-    "SourcepathEntry",
-    "Sourcepath",
-    "SHOW_CHANGES",
-    "SelectedText",
-    "SelectionStartLine",
-    "SelectionEndLine",
-    "SelectionStartColumn",
-    "SelectionEndColumn"
-  );
-
   public PathMacrosImpl() {
-    //setMacro(USER_HOME_MACRO_NAME, FileUtil.toSystemIndependentName(SystemProperties.getUserHome()));
   }
 
   public static PathMacrosImpl getInstanceEx() {
-    return (PathMacrosImpl)ApplicationManager.getApplication().getComponent(PathMacros.class);
+    return (PathMacrosImpl)getInstance();
+  }
+
+  @NotNull
+  @Override
+  public Set<String> getUserMacroNames() {
+    return myUserMacroMapCache.getValue().keySet();
   }
 
   @Override
   @NotNull
-  public String getComponentName() {
-    return "PathMacrosImpl";
+  public Map<String, String> getUserMacros() {
+    return myUserMacroMapCache.getValue();
   }
 
-  @Override
-  public void initComponent() {
+  @NotNull
+  public Set<String> getToolMacroNames() {
+    return Collections.emptySet();
   }
 
-  @Override
-  public void disposeComponent() {
-  }
-
-  @Override
-  public String getExternalFileName() {
-    return EXT_FILE_NAME;
-  }
-
-  @Override
-  public Set<String> getUserMacroNames() {
-    myLock.readLock().lock();
-    try {
-      return new THashSet<String>(myMacros.keySet()); // keyset should not escape the lock
-    }
-    finally {
-      myLock.readLock().unlock();
-    }
-  }
-
-  public static Set<String> getToolMacroNames() {
-    return ourToolsMacros;
-  }
-
+  @NotNull
   @Override
   public Set<String> getSystemMacroNames() {
     return SYSTEM_MACROS;
   }
 
+  @NotNull
   @Override
   public Collection<String> getIgnoredMacroNames() {
     return myIgnoredMacros;
@@ -188,8 +105,15 @@ public class PathMacrosImpl extends PathMacros implements ApplicationComponent, 
 
   @Override
   public void setIgnoredMacroNames(@NotNull final Collection<String> names) {
-    myIgnoredMacros.clear();
-    myIgnoredMacros.addAll(names);
+    try {
+      myLock.writeLock().lock();
+      myIgnoredMacros.clear();
+      myIgnoredMacros.addAll(names);
+    }
+    finally {
+      myModificationStamp++;
+      myLock.writeLock().unlock();
+    }
   }
 
   @Override
@@ -197,7 +121,8 @@ public class PathMacrosImpl extends PathMacros implements ApplicationComponent, 
     if (!myIgnoredMacros.contains(name)) myIgnoredMacros.add(name);
   }
 
-  public int getModificationStamp() {
+  @Override
+  public long getModificationCount() {
     myLock.readLock().lock();
     try {
       return myModificationStamp;
@@ -207,30 +132,20 @@ public class PathMacrosImpl extends PathMacros implements ApplicationComponent, 
     }
   }
 
-  public static Map<String, String> getGlobalSystemMacros() {
-    final Map<String, String> map = new HashMap<String, String>();
-    map.put(APPLICATION_HOME_MACRO_NAME, PathManager.getHomePath());
-    map.put(USER_HOME_MACRO_NAME, getUserHome());
-    return map;
-  }
-
   @Override
   public boolean isIgnoredMacroName(@NotNull String macro) {
     return myIgnoredMacros.contains(macro);
   }
 
+  @NotNull
   @Override
   public Set<String> getAllMacroNames() {
-    final Set<String> userMacroNames = getUserMacroNames();
-    final Set<String> systemMacroNames = getSystemMacroNames();
-    final Set<String> allNames = new HashSet<String>(userMacroNames.size() + systemMacroNames.size());
-    allNames.addAll(systemMacroNames);
-    allNames.addAll(userMacroNames);
-    return allNames;
+    return ContainerUtil.union(getUserMacroNames(), getSystemMacroNames());
   }
 
+  @Nullable
   @Override
-  public String getValue(String name) {
+  public String getValue(@NotNull String name) {
     try {
       myLock.readLock().lock();
       return myMacros.get(name);
@@ -245,18 +160,20 @@ public class PathMacrosImpl extends PathMacros implements ApplicationComponent, 
     try {
       myLock.writeLock().lock();
       myMacros.clear();
+      userMacroModified();
     }
     finally {
-      myModificationStamp++;
       myLock.writeLock().unlock();
     }
   }
 
+  @NotNull
   @Override
   public Collection<String> getLegacyMacroNames() {
     try {
       myLock.readLock().lock();
-      return new THashSet<String>(myLegacyMacros.keySet()); // keyset should not escape the lock
+      // keyset should not escape the lock
+      return new THashSet<>(myLegacyMacros.keySet());
     }
     finally {
       myLock.readLock().unlock();
@@ -264,16 +181,30 @@ public class PathMacrosImpl extends PathMacros implements ApplicationComponent, 
   }
 
   @Override
-  public void setMacro(@NotNull String name, @NotNull String value) {
-    if (value.trim().isEmpty()) return;
+  public void setMacro(@NotNull String name, @Nullable String value) {
     try {
       myLock.writeLock().lock();
-      myMacros.put(name, value);
+
+      if (StringUtil.isEmptyOrSpaces(value)) {
+        if (myMacros.remove(name) != null) {
+          userMacroModified();
+        }
+        return;
+      }
+
+      String prevValue = myMacros.put(name, value);
+      if (!value.equals(prevValue)) {
+        userMacroModified();
+      }
     }
     finally {
-      myModificationStamp++;
       myLock.writeLock().unlock();
     }
+  }
+
+  private void userMacroModified() {
+    myModificationStamp++;
+    myUserMacroMapCache.drop();
   }
 
   @Override
@@ -282,38 +213,64 @@ public class PathMacrosImpl extends PathMacros implements ApplicationComponent, 
       myLock.writeLock().lock();
       myLegacyMacros.put(name, value);
       myMacros.remove(name);
+      userMacroModified();
     }
     finally {
-      myModificationStamp++;
       myLock.writeLock().unlock();
     }
   }
 
   @Override
-  public void removeMacro(String name) {
+  public void removeMacro(@NotNull String name) {
     try {
       myLock.writeLock().lock();
-      final String value = myMacros.remove(name);
-      LOG.assertTrue(value != null);
+      LOG.assertTrue(myMacros.remove(name) != null);
+      userMacroModified();
     }
     finally {
-      myModificationStamp++;
       myLock.writeLock().unlock();
     }
   }
 
+  @Nullable
   @Override
-  public void readExternal(Element element) throws InvalidDataException {
+  public Element getState() {
+    try {
+      Element element = new Element("state");
+      myLock.readLock().lock();
+
+      for (Map.Entry<String, String> entry : myMacros.entrySet()) {
+        String value = entry.getValue();
+        if (!StringUtil.isEmptyOrSpaces(value)) {
+          final Element macro = new Element(JpsGlobalLoader.PathVariablesSerializer.MACRO_TAG);
+          macro.setAttribute(JpsGlobalLoader.PathVariablesSerializer.NAME_ATTRIBUTE, entry.getKey());
+          macro.setAttribute(JpsGlobalLoader.PathVariablesSerializer.VALUE_ATTRIBUTE, value);
+          element.addContent(macro);
+        }
+      }
+
+      for (final String macro : myIgnoredMacros) {
+        final Element macroElement = new Element(IGNORED_MACRO_ELEMENT);
+        macroElement.setAttribute(JpsGlobalLoader.PathVariablesSerializer.NAME_ATTRIBUTE, macro);
+        element.addContent(macroElement);
+      }
+      return element;
+    }
+    finally {
+      myLock.readLock().unlock();
+    }
+  }
+
+  @Override
+  public void loadState(@NotNull Element element) {
     try {
       myLock.writeLock().lock();
 
-      final List children = element.getChildren(MACRO_ELEMENT);
-      for (Object aChildren : children) {
-        Element macro = (Element)aChildren;
-        final String name = macro.getAttributeValue(NAME_ATTR);
-        String value = macro.getAttributeValue(VALUE_ATTR);
+      for (Element macro : element.getChildren(JpsGlobalLoader.PathVariablesSerializer.MACRO_TAG)) {
+        final String name = macro.getAttributeValue(JpsGlobalLoader.PathVariablesSerializer.NAME_ATTRIBUTE);
+        String value = macro.getAttributeValue(JpsGlobalLoader.PathVariablesSerializer.VALUE_ATTRIBUTE);
         if (name == null || value == null) {
-          throw new InvalidDataException();
+          continue;
         }
 
         if (SYSTEM_MACROS.contains(name)) {
@@ -327,60 +284,37 @@ public class PathMacrosImpl extends PathMacros implements ApplicationComponent, 
         myMacros.put(name, value);
       }
 
-      final List ignoredChildren = element.getChildren(IGNORED_MACRO_ELEMENT);
-      for (final Object child : ignoredChildren) {
-        final Element macroElement = (Element)child;
-        final String ignoredName = macroElement.getAttributeValue(NAME_ATTR);
-        if (ignoredName != null && !ignoredName.isEmpty() && !myIgnoredMacros.contains(ignoredName)) {
+      for (Element macroElement : element.getChildren(IGNORED_MACRO_ELEMENT)) {
+        String ignoredName = macroElement.getAttributeValue(JpsGlobalLoader.PathVariablesSerializer.NAME_ATTRIBUTE);
+        if (!StringUtil.isEmpty(ignoredName) && !myIgnoredMacros.contains(ignoredName)) {
           myIgnoredMacros.add(ignoredName);
         }
       }
-    }
-    finally {
-      myModificationStamp++;
-      myLock.writeLock().unlock();
-    }
-  }
 
-  @Override
-  public void writeExternal(Element element) throws WriteExternalException {
-    try {
-      myLock.writeLock().lock();
-
-      final Set<Map.Entry<String, String>> entries = myMacros.entrySet();
-      for (Map.Entry<String, String> entry : entries) {
-        final String value = entry.getValue();
-        if (value != null && !value.trim().isEmpty()) {
-          final Element macro = new Element(MACRO_ELEMENT);
-          macro.setAttribute(NAME_ATTR, entry.getKey());
-          macro.setAttribute(VALUE_ATTR, value);
-          element.addContent(macro);
-        }
-      }
-
-      for (final String macro : myIgnoredMacros) {
-        final Element macroElement = new Element(IGNORED_MACRO_ELEMENT);
-        macroElement.setAttribute(NAME_ATTR, macro);
-        element.addContent(macroElement);
-      }
+      userMacroModified();
     }
     finally {
       myLock.writeLock().unlock();
     }
   }
 
-  public void addMacroReplacements(ReplacePathToMacroMap result) {
-    for (final String name : getUserMacroNames()) {
-      final String value = getValue(name);
-      if (value != null && !value.trim().isEmpty()) result.addMacroReplacement(value, name);
+  public void addMacroReplacements(@NotNull ReplacePathToMacroMap result) {
+    Map<String, String> userMacros = getUserMacros();
+    for (String name : userMacros.keySet()) {
+      String value = userMacros.get(name);
+      if (!StringUtil.isEmptyOrSpaces(value)) {
+        result.addMacroReplacement(value, name);
+      }
     }
   }
 
-
-  public void addMacroExpands(ExpandMacroToPathMap result) {
-    for (final String name : getUserMacroNames()) {
-      final String value = getValue(name);
-      if (value != null && !value.trim().isEmpty()) result.addMacroExpand(name, value);
+  public void addMacroExpands(@NotNull ExpandMacroToPathMap result) {
+    Map<String, String> userMacros = getUserMacros();
+    for (String name : userMacros.keySet()) {
+      String value = userMacros.get(name);
+      if (!StringUtil.isEmptyOrSpaces(value)) {
+        result.addMacroExpand(name, value);
+      }
     }
 
     myLock.readLock().lock();
@@ -392,9 +326,5 @@ public class PathMacrosImpl extends PathMacros implements ApplicationComponent, 
     finally {
       myLock.readLock().unlock();
     }
-  }
-
-  public static String getUserHome() {
-    return StringUtil.trimEnd(FileUtil.toSystemIndependentName(SystemProperties.getUserHome()), "/");
   }
 }

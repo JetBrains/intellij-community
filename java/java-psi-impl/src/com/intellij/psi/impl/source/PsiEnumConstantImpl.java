@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,8 +29,11 @@ import com.intellij.psi.impl.java.stubs.PsiFieldStub;
 import com.intellij.psi.impl.source.tree.ChildRole;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.scope.PsiScopeProcessor;
+import com.intellij.psi.stub.JavaStubImplUtil;
+import com.intellij.psi.util.CachedValueProvider;
+import com.intellij.psi.util.CachedValuesManager;
+import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.ui.RowIcon;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.PlatformIcons;
 import org.jetbrains.annotations.NotNull;
@@ -52,6 +55,7 @@ public class PsiEnumConstantImpl extends JavaStubPsiElement<PsiFieldStub> implem
     super(node);
   }
 
+  @Override
   public String toString() {
     return "PsiEnumConstant:" + getName();
   }
@@ -120,7 +124,7 @@ public class PsiEnumConstantImpl extends JavaStubPsiElement<PsiFieldStub> implem
   @Override
   @NotNull
   public PsiType getType() {
-    return JavaPsiFacade.getInstance(getProject()).getElementFactory().createType(getContainingClass());
+    return JavaPsiFacade.getElementFactory(getProject()).createType(getContainingClass());
   }
 
   @Override
@@ -148,21 +152,19 @@ public class PsiEnumConstantImpl extends JavaStubPsiElement<PsiFieldStub> implem
 
   @Override
   public PsiMethod resolveMethod() {
-    PsiClass containingClass = getContainingClass();
-    LOG.assertTrue(containingClass != null);
-    final JavaPsiFacade facade = JavaPsiFacade.getInstance(getProject());
-    JavaResolveResult resolveResult = facade.getResolveHelper()
-      .resolveConstructor(facade.getElementFactory().createType(containingClass), getArgumentList(), this);
-    return (PsiMethod)resolveResult.getElement();
+    return (PsiMethod)resolveMethodGenerics().getElement();
   }
 
   @Override
   @NotNull
   public JavaResolveResult resolveMethodGenerics() {
-    PsiClass containingClass = getContainingClass();
-    LOG.assertTrue(containingClass != null);
-    final JavaPsiFacade facade = JavaPsiFacade.getInstance(getProject());
-    return facade.getResolveHelper().resolveConstructor(facade.getElementFactory().createType(containingClass), getArgumentList(), this);
+    return CachedValuesManager.getCachedValue(this, () -> {
+      PsiClass containingClass = getContainingClass();
+      LOG.assertTrue(containingClass != null);
+      final JavaPsiFacade facade = JavaPsiFacade.getInstance(getProject());
+      return new CachedValueProvider.Result<>(facade.getResolveHelper().resolveConstructor(facade.getElementFactory().createType(containingClass), getArgumentList(), this),
+                                              PsiModificationTracker.MODIFICATION_COUNT);
+    });
   }
 
   @Override
@@ -174,7 +176,7 @@ public class PsiEnumConstantImpl extends JavaStubPsiElement<PsiFieldStub> implem
   @Override
   @NotNull
   public String getName() {
-    final PsiFieldStub stub = getStub();
+    final PsiFieldStub stub = getGreenStub();
     if (stub != null) {
       return stub.getName();
     }
@@ -194,14 +196,7 @@ public class PsiEnumConstantImpl extends JavaStubPsiElement<PsiFieldStub> implem
 
   @Override
   public boolean isDeprecated() {
-    final PsiFieldStub stub = getStub();
-    if (stub != null) {
-      return stub.isDeprecated();
-    }
-
-    PsiDocComment docComment = getDocComment();
-    return docComment != null && docComment.findTagByName("deprecated") != null ||
-           getModifierList().findAnnotation("java.lang.Deprecated") != null;
+    return JavaStubImplUtil.isMemberDeprecated(this, getGreenStub());
   }
 
   @Override
@@ -226,11 +221,13 @@ public class PsiEnumConstantImpl extends JavaStubPsiElement<PsiFieldStub> implem
   }
 
   private class MyReference implements PsiJavaReference {
+    @NotNull
     @Override
     public PsiElement getElement() {
       return PsiEnumConstantImpl.this;
     }
 
+    @NotNull
     @Override
     public TextRange getRangeInElement() {
       PsiIdentifier nameIdentifier = getNameIdentifier();
@@ -244,7 +241,7 @@ public class PsiEnumConstantImpl extends JavaStubPsiElement<PsiFieldStub> implem
     }
 
     @Override
-    public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {
+    public PsiElement handleElementRename(@NotNull String newElementName) throws IncorrectOperationException {
       return getElement();
     }
 
@@ -254,13 +251,7 @@ public class PsiEnumConstantImpl extends JavaStubPsiElement<PsiFieldStub> implem
     }
 
     @Override
-    @NotNull
-    public Object[] getVariants() {
-      return ArrayUtil.EMPTY_OBJECT_ARRAY;
-    }
-
-    @Override
-    public void processVariants(PsiScopeProcessor processor) {
+    public void processVariants(@NotNull PsiScopeProcessor processor) {
     }
 
     @Override
@@ -291,7 +282,7 @@ public class PsiEnumConstantImpl extends JavaStubPsiElement<PsiFieldStub> implem
     }
 
     @Override
-    public boolean isReferenceTo(PsiElement element) {
+    public boolean isReferenceTo(@NotNull PsiElement element) {
       return element instanceof PsiMethod
              && ((PsiMethod)element).isConstructor()
              && ((PsiMethod)element).getContainingClass() == getContainingClass()
@@ -312,9 +303,5 @@ public class PsiEnumConstantImpl extends JavaStubPsiElement<PsiFieldStub> implem
   @Override
   public boolean isEquivalentTo(final PsiElement another) {
     return PsiClassImplUtil.isFieldEquivalentTo(this, another);
-  }
-  @Override
-  public PsiType getTypeNoResolve() {
-    return getType();
   }
 }

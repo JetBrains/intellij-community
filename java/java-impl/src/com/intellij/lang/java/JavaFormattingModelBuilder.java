@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,9 +19,7 @@
  */
 package com.intellij.lang.java;
 
-import com.intellij.formatting.Block;
-import com.intellij.formatting.FormattingModel;
-import com.intellij.formatting.FormattingModelBuilder;
+import com.intellij.formatting.*;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.TextRange;
@@ -31,6 +29,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.TokenType;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
+import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.psi.formatter.FormatterUtil;
 import com.intellij.psi.formatter.FormattingDocumentModelImpl;
 import com.intellij.psi.formatter.java.AbstractJavaBlock;
@@ -42,19 +41,35 @@ import com.intellij.psi.impl.source.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class JavaFormattingModelBuilder implements FormattingModelBuilder {
-
+public class JavaFormattingModelBuilder implements FormattingModelBuilderEx {
   private static final Logger LOG = Logger.getInstance("#com.intellij.lang.java.JavaFormattingModelBuilder");
 
   @Override
   @NotNull
-    public FormattingModel createModel(final PsiElement element, final CodeStyleSettings settings) {
+  public FormattingModel createModel(@NotNull final PsiElement element,
+                                     @NotNull final CodeStyleSettings settings,
+                                     @NotNull final FormattingMode formattingMode) {
     final FileElement fileElement = TreeUtil.getFileElement((TreeElement)SourceTreeToPsiMap.psiElementToTree(element));
     LOG.assertTrue(fileElement != null, "File element should not be null for " + element);
-    CommonCodeStyleSettings javaSettings = settings.getCommonSettings(JavaLanguage.INSTANCE);
-    Block block = AbstractJavaBlock.createJavaBlock(fileElement, javaSettings);
+    CommonCodeStyleSettings commonSettings = settings.getCommonSettings(JavaLanguage.INSTANCE);
+    JavaCodeStyleSettings customJavaSettings = settings.getCustomSettings(JavaCodeStyleSettings.class);
+    Block block = AbstractJavaBlock.newJavaBlock(fileElement, commonSettings, customJavaSettings, formattingMode);
     FormattingDocumentModelImpl model = FormattingDocumentModelImpl.createOn(element.getContainingFile());
     return new PsiBasedFormatterModelWithShiftIndentInside (element.getContainingFile(), block, model);
+  }
+
+  @Nullable
+  @Override
+  public CommonCodeStyleSettings.IndentOptions getIndentOptionsToUse(@NotNull PsiFile file,
+                                                                     @NotNull FormatTextRanges ranges,
+                                                                     @NotNull CodeStyleSettings settings) {
+    return null;
+  }
+
+  @NotNull
+  @Override
+  public FormattingModel createModel(PsiElement element, CodeStyleSettings settings) {
+    return createModel(element, settings, FormattingMode.REFORMAT);
   }
 
   @Override
@@ -91,11 +106,11 @@ public class JavaFormattingModelBuilder implements FormattingModelBuilder {
       return current.getTextRange();
     }
   }
-  
+
   /**
    * Checks if previous non-white space leaf of the given node is error element and combines formatting range relevant for it
    * with the range of the given node.
-   * 
+   *
    * @param node  target node
    * @return      given node range if there is no error-element before it; combined range otherwise
    */
@@ -115,7 +130,7 @@ public class JavaFormattingModelBuilder implements FormattingModelBuilder {
     }
     else {
       return new TextRange(range.getStartOffset(), node.getTextRange().getEndOffset());
-    } 
+    }
   }
 
   @Nullable
@@ -124,7 +139,7 @@ public class JavaFormattingModelBuilder implements FormattingModelBuilder {
     while (result != null) {
       PsiElement psi = result.getPsi();
       if (psi instanceof PsiExpression && !(psi.getParent() instanceof PsiExpression)) {
-        return result;
+        break;
       }
       result = result.getTreeParent();
     }

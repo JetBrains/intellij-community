@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,28 +16,31 @@
 
 package com.intellij.util.containers;
 
+import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 
 /*
  * @author max
  */
 public class LimitedPool<T> {
-  private final int capacity;
+  private final int maxCapacity;
   private final ObjectFactory<T> factory;
   private Object[] storage;
-  private int index = 0;
+  private int index;
 
-  public LimitedPool(final int capacity, ObjectFactory<T> factory) {
-    this.capacity = capacity;
+  public LimitedPool(final int maxCapacity, @NotNull ObjectFactory<T> factory) {
+    this.maxCapacity = maxCapacity;
     this.factory = factory;
     storage = new Object[10];
   }
 
   public interface ObjectFactory<T> {
+    @NotNull
     T create();
-    void cleanup(T t);
+    void cleanup(@NotNull T t);
   }
 
+  @NotNull
   public T alloc() {
     if (index == 0) return factory.create();
     int i = --index;
@@ -50,7 +53,7 @@ public class LimitedPool<T> {
   public void recycle(@NotNull T t) {
     factory.cleanup(t);
 
-    if (index >= capacity) return;
+    if (index >= maxCapacity) return;
 
     ensureCapacity();
     storage[index++] = t;
@@ -58,10 +61,8 @@ public class LimitedPool<T> {
 
   private void ensureCapacity() {
     if (storage.length <= index) {
-      int newCapacity = Math.min(capacity, storage.length * 3 / 2);
-      Object[] newStorage = new Object[newCapacity];
-      System.arraycopy(storage, 0, newStorage, 0, storage.length);
-      storage = newStorage;
+      int newCapacity = Math.min(maxCapacity, storage.length * 3 / 2);
+      storage = ArrayUtil.realloc(storage, newCapacity, ArrayUtil.OBJECT_ARRAY_FACTORY);
     }
   }
 }

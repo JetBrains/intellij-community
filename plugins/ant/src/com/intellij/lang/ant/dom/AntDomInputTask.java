@@ -24,14 +24,14 @@ import java.util.List;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Aug 12, 2010
  */
 public abstract class AntDomInputTask extends AntDomPropertyDefiningElement{
-  
+
   @Attribute("addproperty")
   @NameValue
   public abstract GenericAttributeValue<String> getAddPropertyName();
-  
+
+  @Override
   protected List<GenericAttributeValue<String>> getPropertyDefiningAttributes() {
     return Collections.singletonList(getAddPropertyName());
   }

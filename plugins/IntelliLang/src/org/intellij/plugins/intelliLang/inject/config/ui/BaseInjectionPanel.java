@@ -51,7 +51,7 @@ public class BaseInjectionPanel extends AbstractInjectionPanel<BaseInjection> {
 
   private JPanel myRoot;
   private JTextField myNameTextField;
-  private PatternCompiler<PsiElement> myHelper;
+  private final PatternCompiler<PsiElement> myHelper;
 
   public BaseInjectionPanel(BaseInjection injection, Project project) {
     super(injection, project);
@@ -82,6 +82,7 @@ public class BaseInjectionPanel extends AbstractInjectionPanel<BaseInjection> {
     init(injection.copy());
   }
 
+  @Override
   protected void apply(BaseInjection other) {
     final String displayName = myNameTextField.getText();
     if (StringUtil.isEmpty(displayName)) {
@@ -90,7 +91,7 @@ public class BaseInjectionPanel extends AbstractInjectionPanel<BaseInjection> {
     other.setDisplayName(displayName);
     boolean enabled = true;
     final StringBuilder sb = new StringBuilder();
-    final ArrayList<InjectionPlace> places = new ArrayList<InjectionPlace>();
+    final ArrayList<InjectionPlace> places = new ArrayList<>();
     for (String s : myTextArea.getText().split("\\s*\n\\s*")) {
       final boolean nextEnabled;
       if (s.startsWith("+")) {
@@ -118,7 +119,7 @@ public class BaseInjectionPanel extends AbstractInjectionPanel<BaseInjection> {
       places.add(new InjectionPlace(myHelper.compileElementPattern(text), enabled));
     }
     for (InjectionPlace place : places) {
-      ElementPattern<PsiElement> pattern = place.getElementPattern();
+      ElementPattern<? extends PsiElement> pattern = place.getElementPattern();
       if (pattern instanceof PatternCompilerImpl.LazyPresentablePattern) {
         try {
           ((PatternCompilerImpl.LazyPresentablePattern)pattern).compile();
@@ -128,9 +129,10 @@ public class BaseInjectionPanel extends AbstractInjectionPanel<BaseInjection> {
         }
       }
     }
-    other.setInjectionPlaces(places.toArray(new InjectionPlace[places.size()]));
+    other.setInjectionPlaces(places.toArray(InjectionPlace.EMPTY_ARRAY));
   }
 
+  @Override
   protected void resetImpl() {
     final StringBuilder sb = new StringBuilder();
     for (InjectionPlace place : myOrigInjection.getInjectionPlaces()) {
@@ -140,6 +142,7 @@ public class BaseInjectionPanel extends AbstractInjectionPanel<BaseInjection> {
     myNameTextField.setText(myOrigInjection.getDisplayName());
   }
 
+  @Override
   public JPanel getComponent() {
     return myRoot;
   }

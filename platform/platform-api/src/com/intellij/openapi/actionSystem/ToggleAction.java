@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.actionSystem;
 
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -23,8 +24,8 @@ import javax.swing.*;
  * An action which has a selected state, and which toggles its selected state when performed.
  * Can be used to represent a menu item with a checkbox, or a toolbar button which keeps its pressed state.
  */
+@SuppressWarnings("StaticInheritance")
 public abstract class ToggleAction extends AnAction implements Toggleable {
-
   public ToggleAction(){
   }
 
@@ -36,12 +37,12 @@ public abstract class ToggleAction extends AnAction implements Toggleable {
     super(text, description, icon);
   }
 
-  public final void actionPerformed(final AnActionEvent e){
+  @Override
+  public final void actionPerformed(@NotNull final AnActionEvent e){
     final boolean state = !isSelected(e);
     setSelected(e, state);
-    final Boolean selected = state ? Boolean.TRUE : Boolean.FALSE;
     final Presentation presentation = e.getPresentation();
-    presentation.putClientProperty(SELECTED_PROPERTY, selected);
+    presentation.putClientProperty(SELECTED_PROPERTY, state);
   }
 
   /**
@@ -49,18 +50,23 @@ public abstract class ToggleAction extends AnAction implements Toggleable {
    * @param e the action event representing the place and context in which the selected state is queried.
    * @return true if the action is selected, false otherwise
    */
-  public abstract boolean isSelected(AnActionEvent e);
+  public abstract boolean isSelected(@NotNull AnActionEvent e);
 
   /**
    * Sets the selected state of the action to the specified value.
    * @param e     the action event which caused the state change.
    * @param state the new selected state of the action.
    */
-  public abstract void setSelected(AnActionEvent e, boolean state);
+  public abstract void setSelected(@NotNull AnActionEvent e, boolean state);
 
-  public void update(final AnActionEvent e){
-    final Boolean selected = isSelected(e) ? Boolean.TRUE : Boolean.FALSE;
+  @Override
+  public void update(@NotNull final AnActionEvent e){
+    boolean selected = isSelected(e);
     final Presentation presentation = e.getPresentation();
     presentation.putClientProperty(SELECTED_PROPERTY, selected);
+    if (e.isFromContextMenu()) {
+      //force to show check marks instead of toggled icons in context menu
+      presentation.setIcon(null);
+    }
   }
 }

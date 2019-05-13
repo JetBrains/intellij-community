@@ -15,13 +15,20 @@
  */
 package com.intellij.util.ui;
 
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.ui.ComboBox;
+import org.jetbrains.annotations.NotNull;
+
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.KeyEvent;
 import java.text.DateFormatSymbols;
+import java.text.ParseException;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.Locale;
@@ -46,13 +53,13 @@ public class CalendarView extends JPanel {
     31
   };
 
-  private final JComboBox myDays = new JComboBox();
-  private final JComboBox myMonths = new JComboBox();
-  private final JSpinner myYears = new JSpinner(new IntegerSpinnerModel(0, -1));
+  private final JComboBox myDays = new ComboBox();
+  private final JComboBox myMonths = new ComboBox();
+  private final JSpinner myYears = new JSpinner(new SpinnerNumberModel(2013, 0, Integer.MAX_VALUE, 1));
 
-  private final JSpinner myHours = new JSpinner(new IntegerSpinnerModel(0, 24));
-  private final JSpinner myMinutes = new JSpinner(new IntegerSpinnerModel(0, 60));
-  private final JSpinner mySeconds = new JSpinner(new IntegerSpinnerModel(0, 60));
+  private final JSpinner myHours = new JSpinner(new SpinnerNumberModel(23, 0, 23, 1));
+  private final JSpinner myMinutes = new JSpinner(new SpinnerNumberModel(59, 0, 59, 1));
+  private final JSpinner mySeconds = new JSpinner(new SpinnerNumberModel(59, 0, 59, 1));
   private final Calendar myCalendar = Calendar.getInstance();
 
   public CalendarView() {
@@ -60,8 +67,11 @@ public class CalendarView extends JPanel {
 
     fillMonths();
 
-
+    JSpinner.NumberEditor editor = new JSpinner.NumberEditor(myYears, "####");
+    editor.getTextField().setColumns(4);
+    myYears.setEditor(editor);
     myYears.addChangeListener(new ChangeListener() {
+      @Override
       public void stateChanged(ChangeEvent e) {
         refresh();
       }
@@ -84,6 +94,11 @@ public class CalendarView extends JPanel {
     setMaximumSize(preferredSize);
   }
 
+  @NotNull
+  public Calendar getCalendar() {
+    return myCalendar;
+  }
+
   private void fillMonths() {
     DateFormatSymbols dateFormatSymbols = new DateFormatSymbols(Locale.getDefault());
 
@@ -91,6 +106,7 @@ public class CalendarView extends JPanel {
       myMonths.addItem(dateFormatSymbols.getMonths()[i]);
 
     myMonths.addActionListener(new ActionListener() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         refresh();
       }
@@ -106,6 +122,10 @@ public class CalendarView extends JPanel {
     myHours.setValue(new Integer(myCalendar.get(Calendar.HOUR_OF_DAY)));
     myMinutes.setValue(new Integer(myCalendar.get(Calendar.MINUTE)));
     mySeconds.setValue(new Integer(myCalendar.get(Calendar.SECOND)));
+  }
+
+  public JComponent getDaysCombo() {
+    return myDays;
   }
 
   private void addTimeFields() {
@@ -153,15 +173,42 @@ public class CalendarView extends JPanel {
   }
 
   public Date getDate() {
-    JSpinner spinner = myYears;
-    myCalendar.set(getIntValue(spinner), myMonths.getSelectedIndex(), myDays.getSelectedIndex() + 1,
+    commitSpinners();
+
+    //noinspection MagicConstant
+    myCalendar.set(getIntValue(myYears), myMonths.getSelectedIndex(), myDays.getSelectedIndex() + 1,
         getIntValue(myHours), getIntValue(myMinutes), getIntValue(mySeconds));
 
     return myCalendar.getTime();
   }
 
-  private int getIntValue(JSpinner spinner) {
-    return ((IntegerSpinnerModel) spinner.getModel()).getIntValue();
+  private static int getIntValue(JSpinner spinner) {
+    return ((Number)spinner.getModel().getValue()).intValue();
+  }
+
+  public void registerEnterHandler(final Runnable runnable) {
+    new AnAction() {
+      @Override
+      public void update(@NotNull AnActionEvent e) {
+        e.getPresentation().setEnabled(!myMonths.isPopupVisible() && !myDays.isPopupVisible());
+      }
+
+      @Override
+      public void actionPerformed(@NotNull AnActionEvent e) {
+        runnable.run();
+      }
+    }.registerCustomShortcutSet(KeyEvent.VK_ENTER, 0, this);
+  }
+
+  private void commitSpinners() {
+    try {
+      myYears.commitEdit();
+      myHours.commitEdit();
+      myMinutes.commitEdit();
+      mySeconds.commitEdit();
+    }
+    catch (ParseException ignore) {
+    }
   }
 }
 

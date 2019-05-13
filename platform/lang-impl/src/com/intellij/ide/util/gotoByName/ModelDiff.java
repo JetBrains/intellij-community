@@ -21,6 +21,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 public class ModelDiff {
@@ -38,19 +39,18 @@ public class ModelDiff {
       return null;
     }
 
-    List<Cmd> commands = new ArrayList<Cmd>();
+    List<Cmd> commands = new ArrayList<>();
     int inserted = 0;
     int deleted = 0;
     while (change != null) {
       if (change.deleted > 0) {
         final int start = change.line0 + inserted - deleted;
-        commands.add(new RemoveCmd<Object>(listModel, start, start + change.deleted - 1));
+        commands.add(new RemoveCmd<>(listModel, start, start + change.deleted - 1));
       }
 
       if (change.inserted > 0) {
-        for (int i = 0; i < change.inserted; i++) {
-          commands.add(new InsertCmd<Object>(listModel, change.line0 + i + inserted - deleted, newElements[change.line1 + i]));
-        }
+        List<Object> elements = new ArrayList<>(Arrays.asList(newElements).subList(change.line1, change.line1 + change.inserted));
+        commands.add(new InsertCmd<>(listModel, change.line0 + inserted - deleted, elements));
       }
 
       deleted += change.deleted;
@@ -67,6 +67,13 @@ public class ModelDiff {
 
   public interface Model<T> {
     void addToModel(int index, T element);
+
+    default void addAllToModel(int index, List<T> elements) {
+      for (int i = 0; i < elements.size(); i++) {
+        addToModel(index + i, elements.get(i));
+      }
+    }
+
     void removeRangeFromModel(int start, int end);
   }
 
@@ -102,23 +109,23 @@ public class ModelDiff {
   private static class InsertCmd<T> implements Cmd {
     private final Model<T> myListModel;
     private final int idx;
-    private final T element;
+    private final List<T> elements;
 
-    private InsertCmd(@NotNull Model<T> model, final int idx, @NotNull T element) {
+    private InsertCmd(@NotNull Model<T> model, final int idx, @NotNull List<T> elements) {
       myListModel = model;
       this.idx = idx;
-      this.element = element;
+      this.elements = elements;
     }
 
     @Override
     public void apply() {
       //System.out.println("Adding: "+this+"-> "+element);
-      myListModel.addToModel(idx, element);
+      myListModel.addAllToModel(idx, elements);
     }
 
     @Override
     public int translateSelection(int row) {
-      return idx > row ? row : row + 1;
+      return idx > row ? row : row + elements.size();
     }
     @Override
     public String toString() {

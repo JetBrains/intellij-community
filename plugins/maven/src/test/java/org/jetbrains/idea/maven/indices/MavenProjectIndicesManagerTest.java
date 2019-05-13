@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,17 +23,24 @@ public class MavenProjectIndicesManagerTest extends MavenIndicesTestCase {
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    myIndicesFixture = new MavenIndicesTestFixture(myDir, myProject);
+    myIndicesFixture = new MavenIndicesTestFixture(myDir.toPath(), myProject);
     myIndicesFixture.setUp();
   }
 
   @Override
   protected void tearDown() throws Exception {
-    myIndicesFixture.tearDown();
-    super.tearDown();
+    try {
+      myIndicesFixture.tearDown();
+    }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
+    finally {
+      super.tearDown();
+    }
   }
 
-  public void testAutomaticallyAddAndUpdateLocalRepository() throws Exception {
+  public void testAutomaticallyAddAndUpdateLocalRepository() {
     List<MavenIndex> indices = myIndicesFixture.getProjectIndicesManager().getIndices();
 
     assertEquals(1, indices.size());
@@ -43,7 +50,7 @@ public class MavenProjectIndicesManagerTest extends MavenIndicesTestCase {
     assertTrue(myIndicesFixture.getProjectIndicesManager().hasVersion("junit", "junit", "4.0"));
   }
 
-  public void testAutomaticallyAddRemoteRepositoriesOnProjectUpdate() throws Exception {
+  public void testAutomaticallyAddRemoteRepositoriesOnProjectUpdate() {
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
                   "<version>1</version>");
@@ -52,10 +59,10 @@ public class MavenProjectIndicesManagerTest extends MavenIndicesTestCase {
     assertEquals(2, indices.size());
 
     assertTrue(indices.get(0).getRepositoryPathOrUrl().endsWith("local1"));
-    assertEquals("http://repo1.maven.org/maven2", indices.get(1).getRepositoryPathOrUrl());
+    assertEquals("https://repo.maven.apache.org/maven2", indices.get(1).getRepositoryPathOrUrl());
   }
 
-  public void testUpdatingIndicesOnResolution() throws Exception {
+  public void testUpdatingIndicesOnResolution() {
     removeFromLocalRepository("junit/junit/4.0");
     myIndicesFixture.getProjectIndicesManager().scheduleUpdate(myIndicesFixture.getProjectIndicesManager().getIndices());
 
@@ -78,7 +85,7 @@ public class MavenProjectIndicesManagerTest extends MavenIndicesTestCase {
 
   public void testUpdatingIndexUsingMirrors() throws Exception {
     myIndicesFixture.tearDown();
-    myIndicesFixture = new MavenIndicesTestFixture(myDir, myProject, "local2", "remote_mirror");
+    myIndicesFixture = new MavenIndicesTestFixture(myDir.toPath(), myProject, "local2", "remote_mirror");
     myIndicesFixture.setUp();
 
     updateSettingsXmlFully("<settings>" +
@@ -127,7 +134,7 @@ public class MavenProjectIndicesManagerTest extends MavenIndicesTestCase {
     assertUnorderedElementsAreEqual(myIndicesFixture.getProjectIndicesManager().getGroupIds(), "test", "jmock", "junit");
 
     myIndicesFixture.tearDown();
-    myIndicesFixture = new MavenIndicesTestFixture(myDir, myProject, "local2", "remote_mirror");
+    myIndicesFixture = new MavenIndicesTestFixture(myDir.toPath(), myProject, "local2", "remote_mirror");
     myIndicesFixture.setUp();
 
     updateSettingsXmlFully("<settings>" +
@@ -147,7 +154,7 @@ public class MavenProjectIndicesManagerTest extends MavenIndicesTestCase {
 
   public void testCheckingLocalRepositoryForAbsentIndices() throws Exception {
     myIndicesFixture.tearDown();
-    myIndicesFixture = new MavenIndicesTestFixture(myDir, myProject, "local2");
+    myIndicesFixture = new MavenIndicesTestFixture(myDir.toPath(), myProject, "local2");
     myIndicesFixture.setUp();
 
     myIndicesFixture.addToRepository("local1");

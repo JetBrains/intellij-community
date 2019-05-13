@@ -24,7 +24,6 @@ import com.intellij.util.xml.GenericAttributeValue;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Aug 3, 2010
  */
 public abstract class AntDomAnt extends AntDomElement {
   public static final String DEFAULT_ANTFILE_NAME = "build.xml";
@@ -62,6 +61,7 @@ public abstract class AntDomAnt extends AntDomElement {
       super(true);
     }
 
+    @Override
     protected String getPathResolveRoot(ConvertContext context, AntDomProject antProject) {
       final AntDomAnt antElement = context.getInvocationElement().getParentOfType(AntDomAnt.class, false);
       if (antElement != null) {
@@ -81,6 +81,7 @@ public abstract class AntDomAnt extends AntDomElement {
       return super.getPathResolveRoot(context, antProject);
     }
 
+    @Override
     protected String getAttributeDefaultValue(ConvertContext context, GenericAttributeValue attribValue) {
       return DEFAULT_ANTFILE_NAME;
     }

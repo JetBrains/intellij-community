@@ -44,20 +44,15 @@ import java.util.*;
  * @author peter
  */
 public abstract class MembersGetter {
-  public static final Key<Boolean> EXPECTED_TYPE_INHERITOR_MEMBER = Key.create("EXPECTED_TYPE_INHERITOR_MEMBER");
-  private final Set<PsiMember> myImportedStatically = new HashSet<PsiMember>();
-  private final List<PsiClass> myPlaceClasses = new ArrayList<PsiClass>();
-  private final List<PsiMethod> myPlaceMethods = new ArrayList<PsiMethod>();
+  public static final Key<Boolean> EXPECTED_TYPE_MEMBER = Key.create("EXPECTED_TYPE_MEMBER");
+  private final Set<PsiMember> myImportedStatically = new HashSet<>();
+  private final List<PsiClass> myPlaceClasses = new ArrayList<>();
+  private final List<PsiMethod> myPlaceMethods = new ArrayList<>();
   protected final PsiElement myPlace;
 
   protected MembersGetter(StaticMemberProcessor processor, @NotNull final PsiElement place) {
     myPlace = place;
-    processor.processMembersOfRegisteredClasses(PrefixMatcher.ALWAYS_TRUE, new PairConsumer<PsiMember, PsiClass>() {
-      @Override
-      public void consume(PsiMember member, PsiClass psiClass) {
-        myImportedStatically.add(member);
-      }
-    });
+    processor.processMembersOfRegisteredClasses(PrefixMatcher.ALWAYS_TRUE, (member, psiClass) -> myImportedStatically.add(member));
 
     PsiClass current = PsiTreeUtil.getContextOfType(place, PsiClass.class);
     while (current != null) {
@@ -88,36 +83,33 @@ public abstract class MembersGetter {
     return true;
   }
 
-  public void processMembers(final Consumer<LookupElement> results, @Nullable final PsiClass where,
+  public void processMembers(final Consumer<? super LookupElement> results, @Nullable final PsiClass where,
                              final boolean acceptMethods, final boolean searchInheritors) {
-    if (where == null || CommonClassNames.JAVA_LANG_STRING.equals(where.getQualifiedName())) return;
+    if (where == null || isPrimitiveClass(where)) return;
 
     final boolean searchFactoryMethods = searchInheritors &&
                                    !CommonClassNames.JAVA_LANG_OBJECT.equals(where.getQualifiedName()) &&
-                                   !CommonClassNames.JAVA_LANG_STRING.equals(where.getQualifiedName());
+                                   !isPrimitiveClass(where);
 
     final Project project = myPlace.getProject();
     final GlobalSearchScope scope = myPlace.getResolveScope();
 
     final PsiClassType baseType = JavaPsiFacade.getElementFactory(project).createType(where);
-    Consumer<PsiType> consumer = new Consumer<PsiType>() {
-      @Override
-      public void consume(PsiType psiType) {
-        PsiClass psiClass = PsiUtil.resolveClassInType(psiType);
-        if (psiClass == null) {
-          return;
-        }
-        psiClass = CompletionUtil.getOriginalOrSelf(psiClass);
-        if (mayProcessMembers(psiClass)) {
-          final FilterScopeProcessor<PsiElement> declProcessor = new FilterScopeProcessor<PsiElement>(TrueFilter.INSTANCE);
-          psiClass.processDeclarations(declProcessor, ResolveState.initial(), null, myPlace);
-          doProcessMembers(acceptMethods, results, psiType != baseType, declProcessor.getResults());
+    Consumer<PsiType> consumer = psiType -> {
+      PsiClass psiClass = PsiUtil.resolveClassInType(psiType);
+      if (psiClass == null) {
+        return;
+      }
+      psiClass = CompletionUtil.getOriginalOrSelf(psiClass);
+      if (mayProcessMembers(psiClass)) {
+        final FilterScopeProcessor<PsiElement> declProcessor = new FilterScopeProcessor<>(TrueFilter.INSTANCE);
+        psiClass.processDeclarations(declProcessor, ResolveState.initial(), null, myPlace);
+        doProcessMembers(acceptMethods, results, psiType == baseType, declProcessor.getResults());
 
-          String name = psiClass.getName();
-          if (name != null && searchFactoryMethods) {
-            Collection<PsiMember> factoryMethods = JavaStaticMemberTypeIndex.getInstance().getStaticMembers(name, project, scope);
-            doProcessMembers(acceptMethods, results, psiType != baseType, factoryMethods);
-          }
+        String name = psiClass.getName();
+        if (name != null && searchFactoryMethods) {
+          Collection<PsiMember> factoryMethods = JavaStaticMemberTypeIndex.getInstance().getStaticMembers(name, project, scope);
+          doProcessMembers(acceptMethods, results, false, factoryMethods);
         }
       }
     };
@@ -127,9 +119,15 @@ public abstract class MembersGetter {
     }
   }
 
+  private static boolean isPrimitiveClass(PsiClass where) {
+    String qname = where.getQualifiedName();
+    if (qname == null || !qname.startsWith("java.lang.")) return false;
+    return CommonClassNames.JAVA_LANG_STRING.equals(qname) || InheritanceUtil.isInheritor(where, CommonClassNames.JAVA_LANG_NUMBER);
+  }
+
   private void doProcessMembers(boolean acceptMethods,
-                                Consumer<LookupElement> results,
-                                boolean isInheritor, Collection<? extends PsiElement> declarations) {
+                                Consumer<? super LookupElement> results,
+                                boolean isExpectedTypeMember, Collection<? extends PsiElement> declarations) {
     for (final PsiElement result : declarations) {
       if (result instanceof PsiMember && !(result instanceof PsiClass)) {
         final PsiMember member = (PsiMember)result;
@@ -144,7 +142,7 @@ public abstract class MembersGetter {
 
         final LookupElement item = result instanceof PsiMethod ? createMethodElement((PsiMethod)result) : createFieldElement((PsiField)result);
         if (item != null) {
-          item.putUserData(EXPECTED_TYPE_INHERITOR_MEMBER, isInheritor);
+          item.putUserData(EXPECTED_TYPE_MEMBER, isExpectedTypeMember);
           results.consume(AutoCompletionPolicy.NEVER_AUTOCOMPLETE.applyPolicy(item));
         }
       }

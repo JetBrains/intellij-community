@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,19 +16,23 @@
 package com.intellij.ui.tabs.impl;
 
 import com.intellij.ide.IdeBundle;
-import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.reference.SoftReference;
 import com.intellij.ui.InplaceButton;
 import com.intellij.ui.MouseDragHelper;
 import com.intellij.ui.ScreenUtil;
 import com.intellij.ui.awt.RelativePoint;
+import com.intellij.ui.tabs.JBTabsPosition;
 import com.intellij.ui.tabs.TabInfo;
 import com.intellij.ui.util.Axis;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseEvent;
+import java.lang.ref.Reference;
+import java.lang.ref.WeakReference;
 
 class DragHelper extends MouseDragHelper {
 
@@ -40,16 +44,16 @@ class DragHelper extends MouseDragHelper {
   private Dimension myHoldDelta;
 
   private TabInfo myDragOutSource;
-  private TabLabel myPressedTabLabel;
+  private Reference<TabLabel> myPressedTabLabel;
 
-  public DragHelper(JBTabsImpl tabs) {
+  DragHelper(JBTabsImpl tabs) {
     super(tabs, tabs);
     myTabs = tabs;
   }
 
 
   @Override
-  protected boolean isDragOut(MouseEvent event, Point dragToScreenPoint, Point startScreenPoint) {
+  protected boolean isDragOut(@NotNull MouseEvent event, @NotNull Point dragToScreenPoint, @NotNull Point startScreenPoint) {
     if (myDragSource == null || !myDragSource.canBeDraggedOut()) return false;
 
     TabLabel label = myTabs.myInfo2Label.get(myDragSource);
@@ -57,14 +61,12 @@ class DragHelper extends MouseDragHelper {
 
     int dX = dragToScreenPoint.x - startScreenPoint.x;
     int dY = dragToScreenPoint.y - startScreenPoint.y;
-    boolean dragOut =
-      myTabs.getEffectiveLayout().isDragOut(label, dX, dY);
 
-    return dragOut;
+    return myTabs.getEffectiveLayout().isDragOut(label, dX, dY);
   }
 
   @Override
-  protected void processDragOut(MouseEvent event, Point dragToScreenPoint, Point startScreenPoint, boolean justStarted) {
+  protected void processDragOut(@NotNull MouseEvent event, @NotNull Point dragToScreenPoint, @NotNull Point startScreenPoint, boolean justStarted) {
     TabInfo.DragOutDelegate delegate = myDragOutSource.getDragOutDelegate();
     if (justStarted) {
       delegate.dragOutStarted(event, myDragOutSource);
@@ -75,7 +77,7 @@ class DragHelper extends MouseDragHelper {
   }
 
   @Override
-  protected void processDragOutFinish(MouseEvent event) {
+  protected void processDragOutFinish(@NotNull MouseEvent event) {
     super.processDragOutFinish(event);
 
     myDragOutSource.getDragOutDelegate().dragOutFinished(event, myDragOutSource);
@@ -90,21 +92,24 @@ class DragHelper extends MouseDragHelper {
   protected void processMousePressed(MouseEvent event) {
     // since selection change can cause tabs to be reordered, we need to remember the tab on which the mouse was pressed, otherwise
     // we'll end up dragging the wrong tab (IDEA-65073)
-    myPressedTabLabel = findLabel(new RelativePoint(event).getPoint(myTabs));
+    TabLabel label = findLabel(new RelativePoint(event).getPoint(myTabs));
+    myPressedTabLabel = label == null ? null : new WeakReference<>(label);
   }
 
-  protected void processDrag(MouseEvent event, Point targetScreenPoint, Point startPointScreen) {
-    if (!myTabs.isTabDraggingEnabled() || !isDragSource(event)) return;
+  @Override
+  protected void processDrag(@NotNull MouseEvent event, @NotNull Point targetScreenPoint, @NotNull Point startPointScreen) {
+    if (!myTabs.isTabDraggingEnabled() || !isDragSource(event) || !MouseDragHelper.checkModifiers(event)) return;
 
     SwingUtilities.convertPointFromScreen(startPointScreen, myTabs);
 
     if (isDragJustStarted()) {
-      if (myPressedTabLabel == null) return;
+      TabLabel pressedTabLabel = SoftReference.dereference(myPressedTabLabel);
+      if (pressedTabLabel == null) return;
 
-      final Rectangle labelBounds = myPressedTabLabel.getBounds();
+      final Rectangle labelBounds = pressedTabLabel.getBounds();
 
       myHoldDelta = new Dimension(startPointScreen.x - labelBounds.x, startPointScreen.y - labelBounds.y);
-      myDragSource = myPressedTabLabel.getInfo();
+      myDragSource = pressedTabLabel.getInfo();
       myDragRec = new Rectangle(startPointScreen, labelBounds.getSize());
       myDragOriginalRec = (Rectangle)myDragRec.clone();
 
@@ -233,17 +238,17 @@ class DragHelper extends MouseDragHelper {
   }
 
   @Override
-  protected void processDragFinish(MouseEvent event, boolean willDragOutStart) {
+  protected void processDragFinish(@NotNull MouseEvent event, boolean willDragOutStart) {
     super.processDragFinish(event, willDragOutStart);
 
     endDrag(willDragOutStart);
 
-    final int place = UISettings.getInstance().EDITOR_TAB_PLACEMENT;
+    final JBTabsPosition position = myTabs.getTabsPosition();
 
-    if (!willDragOutStart && JBEditorTabs.isAlphabeticalMode() && place != SwingConstants.TOP && place != SwingConstants.BOTTOM) {
-      final Point p = new Point(event.getPoint());
-      SwingUtilities.convertPoint(event.getComponent(), p, myTabs);
-      if (myTabs.getVisibleRect().contains(p)) {
+    if (!willDragOutStart && myTabs.isAlphabeticalMode() && position != JBTabsPosition.top && position != JBTabsPosition.bottom) {
+      Point p = new Point(event.getPoint());
+      p = SwingUtilities.convertPoint(event.getComponent(), p, myTabs);
+      if (myTabs.getVisibleRect().contains(p) && myPressedOnScreenPoint.distance(new RelativePoint(event).getScreenPoint()) > 15) {
         final int answer = Messages.showOkCancelDialog(myTabs,
                                                        IdeBundle.message("alphabetical.mode.is.on.warning"),
                                                        IdeBundle.message("title.warning"),

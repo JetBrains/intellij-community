@@ -1,4 +1,4 @@
-// "Add Catch Clause(s)" "true"
+// "Add 'catch' clause(s)" "true"
 class Test {
     static class E1 extends Exception { }
     static class E2 extends Exception { }

@@ -29,7 +29,6 @@ import java.util.List;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Mar 16, 2004
  */
 public class Javac extends Tag {
 
@@ -45,7 +44,7 @@ public class Javac extends Tag {
     }
 
     private static Pair[] getAttributes(GenerationOptions genOptions, String outputDir, ModuleChunk moduleChunk) {
-        final List<Pair> pairs = new ArrayList<Pair>();
+        final List<Pair> pairs = new ArrayList<>();
         pairs.add(pair("destdir", outputDir));
         if (moduleChunk.getCustomCompilers().length == 0) {
             pairs.add(pair("debug", BuildProperties.propertyRef(BuildProperties.PROPERTY_COMPILER_GENERATE_DEBUG_INFO)));
@@ -56,7 +55,7 @@ public class Javac extends Tag {
                 pairs.add(pair("executable", getExecutable(moduleChunk.getName())));
             }
         }
-        return pairs.toArray(new Pair[pairs.size()]);
+        return pairs.toArray(new Pair[0]);
     }
 
     @Nullable

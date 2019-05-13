@@ -15,7 +15,8 @@
  */
 package com.intellij.psi.codeStyle.arrangement.match;
 
-import com.intellij.psi.codeStyle.arrangement.order.ArrangementEntryOrderType;
+import com.intellij.psi.codeStyle.arrangement.std.ArrangementSettingsToken;
+import com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -26,22 +27,21 @@ import org.jetbrains.annotations.NotNull;
  * Not thread-safe.
  * 
  * @author Denis Zhdanov
- * @since 7/17/12 11:07 AM
  */
 public class ArrangementMatchRule {
 
-  @NotNull public static final ArrangementEntryOrderType DEFAULT_ORDER_TYPE = ArrangementEntryOrderType.KEEP;
+  @NotNull public static final ArrangementSettingsToken DEFAULT_ORDER_TYPE = StdArrangementTokens.Order.KEEP;
 
-  @NotNull private final ArrangementEntryMatcher   myMatcher;
-  @NotNull private final ArrangementEntryOrderType myOrderType;
+  @NotNull private final ArrangementEntryMatcher  myMatcher;
+  @NotNull private final ArrangementSettingsToken myOrderType;
 
   public ArrangementMatchRule(@NotNull ArrangementEntryMatcher matcher) {
     this(matcher, DEFAULT_ORDER_TYPE);
   }
 
-  public ArrangementMatchRule(@NotNull ArrangementEntryMatcher matcher, @NotNull ArrangementEntryOrderType type) {
+  public ArrangementMatchRule(@NotNull ArrangementEntryMatcher matcher, @NotNull ArrangementSettingsToken orderType) {
     myMatcher = matcher;
-    myOrderType = type;
+    myOrderType = orderType;
   }
 
   @NotNull
@@ -50,7 +50,7 @@ public class ArrangementMatchRule {
   }
 
   @NotNull
-  public ArrangementEntryOrderType getOrderType() {
+  public ArrangementSettingsToken getOrderType() {
     return myOrderType;
   }
 

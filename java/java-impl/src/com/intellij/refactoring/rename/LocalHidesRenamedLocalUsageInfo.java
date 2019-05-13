@@ -14,20 +14,12 @@
  * limitations under the License.
  */
 
-/*
- * Created by IntelliJ IDEA.
- * User: dsl
- * Date: 05.06.2002
- * Time: 13:38:29
- * To change template for new class use 
- * Code Style | Class Templates options (Tools | IDE Options).
- */
 package com.intellij.refactoring.rename;
 
 import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.RefactoringBundle;
-import com.intellij.refactoring.util.RefactoringUIUtil;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
+import com.intellij.refactoring.util.RefactoringUIUtil;
 import com.intellij.usageView.UsageViewUtil;
 
 public class LocalHidesRenamedLocalUsageInfo extends UnresolvableCollisionUsageInfo {
@@ -38,6 +30,7 @@ public class LocalHidesRenamedLocalUsageInfo extends UnresolvableCollisionUsageI
     myConflictingElement = conflictingElement;
   }
 
+  @Override
   public String getDescription() {
 
     PsiElement element = getElement();

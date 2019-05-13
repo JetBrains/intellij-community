@@ -1,4 +1,4 @@
-// "Create Inner Class 'Inner'" "false"
+// "Create inner class 'Inner'" "false"
 import java.util.*;
 
 public class Test {

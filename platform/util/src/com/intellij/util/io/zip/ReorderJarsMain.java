@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,7 @@ package com.intellij.util.io.zip;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.HashMap;
+import java.util.HashMap;
 import com.intellij.util.lang.JarMemoryLoader;
 
 import java.io.File;
@@ -27,7 +27,6 @@ import java.util.*;
 
 /**
  * @author anna
- * @since 23-Apr-2009
  */
 @SuppressWarnings("CallToPrintStackTrace")
 public class ReorderJarsMain {
@@ -53,7 +52,9 @@ public class ReorderJarsMain {
         final JBZipFile zipFile = new JBZipFile(jarFile);
         final List<JBZipEntry> entries = zipFile.getEntries();
         final List<String> orderedEntries = toReorder.get(jarUrl);
+        assert orderedEntries.size() <= Short.MAX_VALUE : jarUrl;
         Collections.sort(entries, new Comparator<JBZipEntry>() {
+          @Override
           public int compare(JBZipEntry o1, JBZipEntry o2) {
             if ("META-INF/plugin.xml".equals(o2.getName())) return Integer.MAX_VALUE;
             if ("META-INF/plugin.xml".equals(o1.getName())) return -Integer.MAX_VALUE;
@@ -66,7 +67,7 @@ public class ReorderJarsMain {
           }
         });
 
-        final File tempJarFile = FileUtil.createTempFile("__reorder__", "__reorder__");
+        final File tempJarFile = FileUtil.createTempFile("__reorder__", "__reorder__", true);
         final JBZipFile file = new JBZipFile(tempJarFile);
 
         final JBZipEntry sizeEntry = file.getOrCreateEntry(JarMemoryLoader.SIZE_ENTRY);

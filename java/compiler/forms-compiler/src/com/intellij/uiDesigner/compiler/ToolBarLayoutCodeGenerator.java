@@ -17,8 +17,8 @@
 package com.intellij.uiDesigner.compiler;
 
 import com.intellij.uiDesigner.lw.LwComponent;
-import org.jetbrains.asm4.commons.GeneratorAdapter;
-import org.jetbrains.asm4.commons.Method;
+import org.jetbrains.org.objectweb.asm.commons.GeneratorAdapter;
+import org.jetbrains.org.objectweb.asm.commons.Method;
 
 /**
  * @author yole
@@ -26,6 +26,7 @@ import org.jetbrains.asm4.commons.Method;
 public class ToolBarLayoutCodeGenerator extends LayoutCodeGenerator {
   private final static Method ourAddMethod = Method.getMethod("java.awt.Component add(java.awt.Component)");
 
+  @Override
   public void generateComponentLayout(final LwComponent lwComponent,
                                       final GeneratorAdapter generator,
                                       final int componentLocal,

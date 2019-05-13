@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,6 @@ package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.CodeInsightBundle;
-import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -25,11 +24,11 @@ import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
-import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiConcatenationUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.siyeh.ig.psiutils.CommentTracker;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -54,13 +53,12 @@ public class ConcatenationToMessageFormatAction implements IntentionAction {
 
   @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-    if (!CodeInsightUtilBase.prepareFileForWrite(file)) return;
     final PsiElement element = findElementAtCaret(editor, file);
     PsiPolyadicExpression concatenation = getEnclosingLiteralConcatenation(element);
     if (concatenation == null) return;
     StringBuilder formatString = new StringBuilder();
-    List<PsiExpression> args = new ArrayList<PsiExpression>();
-    buildMessageFormatString(concatenation, formatString, args);
+    List<PsiExpression> args = new ArrayList<>();
+    PsiConcatenationUtil.buildFormatString(concatenation, formatString, args, false);
 
     final PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
     PsiMethodCallExpression call = (PsiMethodCallExpression)
@@ -83,57 +81,16 @@ public class ConcatenationToMessageFormatAction implements IntentionAction {
       argumentList.add(arrayArg);
     }
     call = (PsiMethodCallExpression) JavaCodeStyleManager.getInstance(project).shortenClassReferences(call);
-    call = (PsiMethodCallExpression) CodeStyleManager.getInstance(element.getManager().getProject()).reformat(call);
-    concatenation.replace(call);
-  }
-
-  public static void buildMessageFormatString(PsiExpression expression,
-                                              StringBuilder formatString,
-                                              List<PsiExpression> args)
-    throws IncorrectOperationException {
-    PsiConcatenationUtil.buildFormatString(expression, formatString, args, false);
-
-  }
-
-  private static void appendArgument(List<PsiExpression> args, PsiExpression argument, StringBuilder formatString) throws IncorrectOperationException {
-    formatString.append("{").append(args.size()).append("}");
-    args.add(getBoxedArgument(argument));
-  }
-
-  private static PsiExpression getBoxedArgument(PsiExpression arg) throws IncorrectOperationException {
-    arg = PsiUtil.deparenthesizeExpression(arg);
-    assert arg != null;
-    if (PsiUtil.isLanguageLevel5OrHigher(arg)) {
-      return arg;
-    }
-    final PsiType type = arg.getType();
-    if (!(type instanceof PsiPrimitiveType) || type.equals(PsiType.NULL)) {
-      return arg;
-    }
-    final PsiPrimitiveType primitiveType = (PsiPrimitiveType)type;
-    final String boxedQName = primitiveType.getBoxedTypeName();
-    if (boxedQName == null) {
-      return arg;
-    }
-    final GlobalSearchScope resolveScope = arg.getResolveScope();
-    final PsiElementFactory factory = JavaPsiFacade.getElementFactory(arg.getProject());
-    final PsiJavaCodeReferenceElement ref = factory.createReferenceElementByFQClassName(boxedQName, resolveScope);
-    final PsiNewExpression newExpr = (PsiNewExpression)factory.createExpressionFromText("new A(b)", null);
-    final PsiElement classRef = newExpr.getClassReference();
-    assert classRef != null;
-    classRef.replace(ref);
-    final PsiExpressionList argumentList = newExpr.getArgumentList();
-    assert argumentList != null;
-    argumentList.getExpressions()[0].replace(arg);
-    return newExpr;
+    call = (PsiMethodCallExpression) CodeStyleManager.getInstance(project).reformat(call);
+    new CommentTracker().replaceAndRestoreComments(concatenation, call);
   }
 
   @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
     if (PsiUtil.getLanguageLevel(file).compareTo(LanguageLevel.JDK_1_4) < 0) return false;
     final PsiElement element = findElementAtCaret(editor, file);
-    PsiPolyadicExpression binaryExpression = getEnclosingLiteralConcatenation(element);
-    return binaryExpression != null && !AnnotationUtil.isInsideAnnotation(binaryExpression);
+    final PsiPolyadicExpression concatenation = getEnclosingLiteralConcatenation(element);
+    return concatenation != null && !AnnotationUtil.isInsideAnnotation(concatenation) && !PsiUtil.isConstantExpression(concatenation);
   }
 
   @Nullable

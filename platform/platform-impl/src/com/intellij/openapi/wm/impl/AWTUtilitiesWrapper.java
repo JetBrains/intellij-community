@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,13 +44,7 @@ public class AWTUtilitiesWrapper {
       mSetWindowOpacity = awtUtilitiesClass.getMethod("setWindowOpacity", Window.class, float.class);
       mSetWindowOpaque = awtUtilitiesClass.getMethod("setWindowOpaque", Window.class, boolean.class);
     }
-    catch (NoSuchMethodException ex) {
-      // ignore
-    }
-    catch (SecurityException ex) {
-      // ignore
-    }
-    catch (ClassNotFoundException ex) {
+    catch (NoSuchMethodException | ClassNotFoundException | SecurityException ex) {
       // ignore
     }
   }
@@ -69,13 +63,7 @@ public class AWTUtilitiesWrapper {
         return ((Boolean)ret).booleanValue();
       }
     }
-    catch (IllegalAccessException ex) {
-      // ignore
-    }
-    catch (IllegalArgumentException ex) {
-      // ignore
-    }
-    catch (InvocationTargetException ex) {
+    catch (IllegalAccessException | InvocationTargetException | IllegalArgumentException ex) {
       // ignore
     }
     return false;
@@ -101,13 +89,7 @@ public class AWTUtilitiesWrapper {
     try {
       method.invoke(null, window, value);
     }
-    catch (IllegalAccessException ex) {
-      // ignore
-    }
-    catch (IllegalArgumentException ex) {
-      // ignore
-    }
-    catch (InvocationTargetException ex) {
+    catch (IllegalAccessException | InvocationTargetException | IllegalArgumentException ex) {
       // ignore
     }
   }

@@ -14,10 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * User: anna
- * Date: 02-Feb-2009
- */
 package com.intellij.refactoring.replaceConstructorWithBuilder.usageInfo;
 
 import com.intellij.openapi.util.Comparing;
@@ -41,13 +37,14 @@ public class ReplaceConstructorWithSettersChainInfo extends FixableUsageInfo {
     myParametersMap = parametersMap;
   }
 
+  @Override
   public void fixUsage() throws IncorrectOperationException {
     final PsiNewExpression expr = (PsiNewExpression)getElement();
     if (expr != null) {
-      final PsiElementFactory elementFactory = JavaPsiFacade.getInstance(expr.getProject()).getElementFactory();
+      final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(expr.getProject());
       final PsiMethod constructor = expr.resolveConstructor();
       if (constructor != null) {
-        StringBuffer buf = new StringBuffer();
+        StringBuilder buf = new StringBuilder();
         final PsiExpressionList argumentList = expr.getArgumentList();
         if (argumentList != null) {
           final PsiExpression[] args = argumentList.getExpressions();

@@ -22,11 +22,11 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.*;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleUtil;
+import com.intellij.openapi.module.ModuleUtilCore;
+import com.intellij.openapi.project.PossiblyDumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiDocumentManager;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.uiDesigner.FormEditingUtil;
 import com.intellij.uiDesigner.FormHighlightingPass;
@@ -43,47 +43,54 @@ import java.util.ArrayList;
  * @author Anton Katilin
  * @author Vladimir Kondratyev
  */
-public final class UIFormEditor extends UserDataHolderBase implements /*Navigatable*/FileEditor {
+public final class UIFormEditor extends UserDataHolderBase implements FileEditor, PossiblyDumbAware {
   private final VirtualFile myFile;
   private final GuiEditor myEditor;
   private UIFormEditor.MyBackgroundEditorHighlighter myBackgroundEditorHighlighter;
 
-  public UIFormEditor(final Project project, final VirtualFile file){
+  public UIFormEditor(@NotNull final Project project, @NotNull final VirtualFile file){
     final VirtualFile vf = file instanceof LightVirtualFile ? ((LightVirtualFile)file).getOriginalFile() : file;
-    final Module module = ModuleUtil.findModuleForFile(vf, project);
+    final Module module = ModuleUtilCore.findModuleForFile(vf, project);
     if (module == null) {
       throw new IllegalArgumentException("No module for file " + file + " in project " + project);
     }
     myFile = file;
-    myEditor = new GuiEditor(project, module, file);
+    myEditor = new GuiEditor(this, project, module, file);
   }
 
+  @Override
   @NotNull
   public JComponent getComponent(){
     return myEditor;
   }
 
+  @Override
   public void dispose() {
     myEditor.dispose();
   }
 
+  @Override
   public JComponent getPreferredFocusedComponent(){
     return myEditor.getPreferredFocusedComponent();
   }
 
+  @Override
   @NotNull
   public String getName(){
     return UIDesignerBundle.message("title.gui.designer");
   }
 
+  @NotNull
   public GuiEditor getEditor() {
     return myEditor;
   }
 
+  @Override
   public boolean isModified(){
     return false;
   }
 
+  @Override
   public boolean isValid(){
     //TODO[anton,vova] fire when changed
     return
@@ -91,20 +98,25 @@ public final class UIFormEditor extends UserDataHolderBase implements /*Navigata
       myFile.getFileType() == StdFileTypes.GUI_DESIGNER_FORM;
   }
 
+  @Override
   public void selectNotify(){
   }
 
+  @Override
   public void deselectNotify(){
   }
 
+  @Override
   public void addPropertyChangeListener(@NotNull final PropertyChangeListener listener){
     //TODO[anton,vova]
   }
 
+  @Override
   public void removePropertyChangeListener(@NotNull final PropertyChangeListener listener){
     //TODO[anton,vova]
   }
 
+  @Override
   public BackgroundEditorHighlighter getBackgroundHighlighter() {
     if (myBackgroundEditorHighlighter == null) {
       myBackgroundEditorHighlighter = new MyBackgroundEditorHighlighter(myEditor);
@@ -112,10 +124,12 @@ public final class UIFormEditor extends UserDataHolderBase implements /*Navigata
     return myBackgroundEditorHighlighter;
   }
 
+  @Override
   public FileEditorLocation getCurrentLocation() {
     return null;
   }
 
+  @Override
   @NotNull
   public FileEditorState getState(@NotNull final FileEditorStateLevel ignored) {
     final Document document = FileDocumentManager.getInstance().getCachedDocument(myFile);
@@ -128,6 +142,7 @@ public final class UIFormEditor extends UserDataHolderBase implements /*Navigata
     return new MyEditorState(modificationStamp, ids);
   }
 
+  @Override
   public void setState(@NotNull final FileEditorState state){
     FormEditingUtil.clearSelection(myEditor.getRootContainer());
     final String[] ids = ((MyEditorState)state).getSelectedComponentIds();
@@ -153,39 +168,30 @@ public final class UIFormEditor extends UserDataHolderBase implements /*Navigata
     }
   }
 
+  @Override
   public StructureViewBuilder getStructureViewBuilder() {
     return null;
   }
 
-  /*
-  public boolean canNavigateTo(@NotNull final Navigatable navigatable) {
-    if (navigatable instanceof ComponentNavigatable) {
-      return true;
-    }
-    return (navigatable instanceof OpenFileDescriptor) && (((OpenFileDescriptor)navigatable).getOffset() >= 0 || (
-      ((OpenFileDescriptor)navigatable).getLine() != -1 && ((OpenFileDescriptor)navigatable).getColumn() != -1));
+  @Override
+  public boolean isDumbAware() {
+    return false;
   }
 
-  public void navigateTo(@NotNull final Navigatable navigatable) {
-    if (navigatable instanceof ComponentNavigatable) {
-      String componentId = ((ComponentNavigatable))
-    }
-  }
-  */
-
-  private class MyBackgroundEditorHighlighter implements BackgroundEditorHighlighter {
+  private static class MyBackgroundEditorHighlighter implements BackgroundEditorHighlighter {
     private final HighlightingPass[] myPasses;
 
-    public MyBackgroundEditorHighlighter(final GuiEditor editor) {
+    MyBackgroundEditorHighlighter(final GuiEditor editor) {
       myPasses = new HighlightingPass[] { new FormHighlightingPass(editor) };
     }
 
+    @Override
     @NotNull
     public HighlightingPass[] createPassesForEditor() {
-      PsiDocumentManager.getInstance(myEditor.getProject()).commitAllDocuments();
       return myPasses;
     }
 
+    @Override
     @NotNull
     public HighlightingPass[] createPassesForVisibleArea() {
       return HighlightingPass.EMPTY_ARRAY;

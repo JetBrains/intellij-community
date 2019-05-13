@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,30 +17,28 @@ package com.intellij.psi.impl.cache;
 
 import com.intellij.lang.LighterAST;
 import com.intellij.lang.LighterASTNode;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.PsiNameHelper;
+import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.java.stubs.JavaStubElementTypes;
 import com.intellij.psi.impl.java.stubs.PsiAnnotationStub;
 import com.intellij.psi.impl.java.stubs.PsiClassStub;
+import com.intellij.psi.impl.java.stubs.PsiModifierListStub;
 import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.impl.source.tree.LightTreeUtil;
+import com.intellij.psi.stubs.StubBase;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.stubs.StubInputStream;
 import com.intellij.psi.stubs.StubOutputStream;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.SmartList;
-import com.intellij.util.io.StringRef;
-import gnu.trove.TIntObjectHashMap;
 import gnu.trove.TObjectIntHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 import static com.intellij.util.BitUtil.isSet;
@@ -49,70 +47,65 @@ import static com.intellij.util.BitUtil.isSet;
  * @author max
  */
 public class TypeInfo {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.cache.TypeInfo");
-
-  private static final TIntObjectHashMap<String> ourIndexFrequentType = new TIntObjectHashMap<String>();
-  private static final TObjectIntHashMap<String> ourFrequentTypeIndex = new TObjectIntHashMap<String>();
-
-  private static void registerFrequentType(String typeText) {
-    int index = ourFrequentTypeIndex.size() + 1;
-    assert index > 0 && index < 15 : "reserved: " + index + " (" + typeText + ")";
-    ourFrequentTypeIndex.put(typeText, index);
-    ourIndexFrequentType.put(index, typeText);
-  }
-
+  private static final String[] ourIndexFrequentType;
+  private static final TObjectIntHashMap<String> ourFrequentTypeIndex;
   static {
-    registerFrequentType("boolean");
-    registerFrequentType("byte");
-    registerFrequentType("char");
-    registerFrequentType("double");
-    registerFrequentType("float");
-    registerFrequentType("int");
-    registerFrequentType("long");
-    registerFrequentType("null");
-    registerFrequentType("short");
-    registerFrequentType("void");
-    registerFrequentType("Object");
-    registerFrequentType(CommonClassNames.JAVA_LANG_OBJECT);
-    registerFrequentType("String");
-    registerFrequentType(CommonClassNames.JAVA_LANG_STRING);
+    ourIndexFrequentType = new String[]{
+      "",
+      "boolean", "byte", "char", "double", "float", "int", "long", "null", "short", "void",
+      CommonClassNames.JAVA_LANG_OBJECT_SHORT, CommonClassNames.JAVA_LANG_OBJECT,
+      CommonClassNames.JAVA_LANG_STRING_SHORT, CommonClassNames.JAVA_LANG_STRING
+    };
+
+    ourFrequentTypeIndex = new TObjectIntHashMap<>();
+    for (int i = 0; i < ourIndexFrequentType.length; i++) {
+      ourFrequentTypeIndex.put(ourIndexFrequentType[i], i);
+    }
   }
 
-  private static final int NULL_FLAGS = 0x0F;
-  private static final int FREQUENT_INDEX_MASK = 0x0F;
-  private static final int HAS_ANNOTATIONS = 0x10;
-  private static final int HAS_ARRAY_COUNT = 0x20;
-  private static final int HAS_ELLIPSIS = 0x40;
+  private static final int FREQUENT_INDEX_MASK = 0x03F;
+  private static final int HAS_ARRAY_COUNT = 0x40;
+  private static final int HAS_ELLIPSIS = 0x80;
 
-  private static final TypeInfo NULL = new TypeInfo(null, (byte)0, false, Collections.<PsiAnnotationStub>emptyList());
+  private static final TypeInfo NULL = new TypeInfo(null, (byte)0, false, PsiAnnotationStub.EMPTY_ARRAY);
 
-  public final StringRef text;
+  public final String text;
   public final byte arrayCount;
   public final boolean isEllipsis;
-  private final List<PsiAnnotationStub> myAnnotationStubs;
 
-  public TypeInfo(StringRef _text, byte _arrayCount, boolean ellipsis, @NotNull List<PsiAnnotationStub> annotationStubs) {
-    text = _text;
-    arrayCount = _arrayCount;
-    isEllipsis = ellipsis;
+  private final PsiAnnotationStub[] myAnnotationStubs;
+
+  public TypeInfo(String text, byte arrayCount, boolean ellipsis, @NotNull PsiAnnotationStub[] annotationStubs) {
+    this.text = text == null ? null : internFrequentType(text);
+    this.arrayCount = arrayCount;
+    this.isEllipsis = ellipsis;
     myAnnotationStubs = annotationStubs;
   }
 
-  public TypeInfo(@NotNull TypeInfo typeInfo) {
-    text = typeInfo.text;
-    arrayCount = typeInfo.arrayCount;
-    isEllipsis = typeInfo.isEllipsis;
-    myAnnotationStubs = new SmartList<PsiAnnotationStub>(typeInfo.myAnnotationStubs);
-  }
+  @NotNull
+  public TypeInfo applyAnnotations(@NotNull StubBase<?> owner) {
+    PsiModifierListStub modifierList = owner.findChildStubByType(JavaStubElementTypes.MODIFIER_LIST);
+    if (modifierList == null) return this;
 
-  public void addAnnotation(PsiAnnotationStub annotation) {
-    myAnnotationStubs.add(annotation);
+    List<PsiAnnotationStub> annotationStubs = null;
+    for (StubElement child : modifierList.getChildrenStubs()) {
+      if (!(child instanceof PsiAnnotationStub)) continue;
+      PsiAnnotationStub annotationStub = (PsiAnnotationStub)child;
+      if (PsiImplUtil.isTypeAnnotation(annotationStub.getPsiElement())) {
+        if (annotationStubs == null) annotationStubs = new SmartList<>();
+        annotationStubs.add(annotationStub);
+      }
+    }
+
+    PsiAnnotationStub[] stubArray = PsiAnnotationStub.EMPTY_ARRAY;
+    if (annotationStubs != null) stubArray = annotationStubs.toArray(PsiAnnotationStub.EMPTY_ARRAY);
+    return new TypeInfo(text, arrayCount, isEllipsis, stubArray);
   }
 
   @NotNull
   public String getShortTypeText() {
     if (text == null) return "";
-    String name = PsiNameHelper.getShortClassName(text.getString());
+    String name = PsiNameHelper.getShortClassName(text);
     if (arrayCount > 0) {
       name += StringUtil.repeat("[]", arrayCount);
     }
@@ -135,7 +128,7 @@ public class TypeInfo {
   @NotNull
   public static TypeInfo create(@NotNull LighterAST tree, @NotNull LighterASTNode element, StubElement parentStub) {
     String text;
-    int arrayCount = 0;
+    byte arrayCount = 0;
     boolean isEllipsis = false;
 
     if (element.getTokenType() == JavaElementType.ENUM_CONSTANT) {
@@ -166,7 +159,7 @@ public class TypeInfo {
 
       assert typeElement != null : element + " in " + parentStub;
 
-      isEllipsis = (LightTreeUtil.firstChildOfType(tree, typeElement, JavaTokenType.ELLIPSIS) != null);
+      isEllipsis = LightTreeUtil.firstChildOfType(tree, typeElement, JavaTokenType.ELLIPSIS) != null;
 
       while (true) {
         LighterASTNode nested = LightTreeUtil.firstChildOfType(tree, typeElement, JavaElementType.TYPE);
@@ -178,9 +171,7 @@ public class TypeInfo {
       text = LightTreeUtil.toFilteredString(tree, typeElement, null);
     }
 
-    List<PsiAnnotationStub> annotations = Collections.emptyList();  // todo[r.sh] JDK 8 type annotations
-
-    return new TypeInfo(StringRef.fromString(text), (byte)arrayCount, isEllipsis, annotations);
+    return new TypeInfo(text, arrayCount, isEllipsis, PsiAnnotationStub.EMPTY_ARRAY);
   }
 
   @NotNull
@@ -193,9 +184,7 @@ public class TypeInfo {
       typeText = typeText.substring(0, typeText.length() - 2);
     }
 
-    StringRef text = StringRef.fromString(typeText);
-
-    return new TypeInfo(text, arrayCount, isEllipsis, Collections.<PsiAnnotationStub>emptyList());
+    return new TypeInfo(typeText, arrayCount, isEllipsis, PsiAnnotationStub.EMPTY_ARRAY);
   }
 
   @NotNull
@@ -210,65 +199,39 @@ public class TypeInfo {
   }
 
   @NotNull
-  public static TypeInfo readTYPE(@NotNull StubInputStream record, StubElement parentStub) throws IOException {
-    int flags = 0xFF & record.readByte();
-    if (flags == NULL_FLAGS) {
+  public static TypeInfo readTYPE(@NotNull StubInputStream record) throws IOException {
+    int flags = record.readByte() & 0xFF;
+    if (flags == FREQUENT_INDEX_MASK) {
       return NULL;
     }
 
-    int frequentIndex = FREQUENT_INDEX_MASK & flags;
-    boolean hasAnnotations = isSet(flags, HAS_ANNOTATIONS);
     byte arrayCount = isSet(flags, HAS_ARRAY_COUNT) ? record.readByte() : 0;
     boolean hasEllipsis = isSet(flags, HAS_ELLIPSIS);
 
-    StringRef text = frequentIndex == 0 ? record.readName() : StringRef.fromString(ourIndexFrequentType.get(frequentIndex));
+    int frequentIndex = FREQUENT_INDEX_MASK & flags;
+    String text = frequentIndex == 0 ? record.readNameString() : ourIndexFrequentType[frequentIndex];
 
-    List<PsiAnnotationStub> annotationStubs;
-    if (hasAnnotations) {
-      int size = 0xFF & record.readByte();
-      annotationStubs = new ArrayList<PsiAnnotationStub>(size);
-      for (int i = 0; i < size; i++) {
-        PsiAnnotationStub annotationStub = JavaStubElementTypes.ANNOTATION.deserialize(record, parentStub);
-        annotationStubs.add(annotationStub);
-      }
-    }
-    else {
-      annotationStubs = Collections.emptyList();
-    }
-
-    return new TypeInfo(text, arrayCount, hasEllipsis, annotationStubs);
+    return new TypeInfo(text, arrayCount, hasEllipsis, PsiAnnotationStub.EMPTY_ARRAY);
   }
 
   public static void writeTYPE(@NotNull StubOutputStream dataStream, @NotNull TypeInfo typeInfo) throws IOException {
     if (typeInfo == NULL) {
-      dataStream.writeByte(NULL_FLAGS);
+      dataStream.writeByte(FREQUENT_INDEX_MASK);
       return;
     }
 
-    boolean hasEllipsis = typeInfo.isEllipsis;
-    String text = typeInfo.text.getString();
+    String text = typeInfo.text;
     byte arrayCount = typeInfo.arrayCount;
     int frequentIndex = ourFrequentTypeIndex.get(text);
-    List<PsiAnnotationStub> annotations = typeInfo.myAnnotationStubs;
-    boolean hasAnnotations = !annotations.isEmpty();
-    int flags = (hasEllipsis ? HAS_ELLIPSIS : 0) |
-                (arrayCount != 0 ? HAS_ARRAY_COUNT : 0) |
-                (hasAnnotations ? HAS_ANNOTATIONS : 0) |
-                frequentIndex;
-
+    int flags = (typeInfo.isEllipsis ? HAS_ELLIPSIS : 0) | (arrayCount != 0 ? HAS_ARRAY_COUNT : 0) | frequentIndex;
     dataStream.writeByte(flags);
+
     if (arrayCount != 0) {
       dataStream.writeByte(arrayCount);
     }
+
     if (frequentIndex == 0) {
       dataStream.writeName(text);
-    }
-    if (hasAnnotations) {
-      LOG.assertTrue(annotations.size() < 256, annotations.size());
-      dataStream.writeByte(annotations.size());
-      for (PsiAnnotationStub annotation : annotations) {
-        dataStream.writeUTFFast(annotation.getText());
-      }
     }
   }
 
@@ -277,17 +240,17 @@ public class TypeInfo {
     if (typeInfo == NULL || typeInfo.text == null) {
       return null;
     }
-    if (typeInfo.arrayCount == 0 && typeInfo.myAnnotationStubs.isEmpty()) {
-      return typeInfo.text.getString();
+    if (typeInfo.arrayCount == 0 && typeInfo.myAnnotationStubs.length == 0) {
+      return typeInfo.text;
     }
 
     StringBuilder buf = new StringBuilder();
 
     for (PsiAnnotationStub stub : typeInfo.myAnnotationStubs) {
-      buf.append(stub.getText()).append(" ");
+      buf.append(stub.getText()).append(' ');
     }
 
-    buf.append(typeInfo.text.getString());
+    buf.append(typeInfo.text);
 
     int arrayCount = typeInfo.isEllipsis ? typeInfo.arrayCount - 1 : typeInfo.arrayCount;
     for (int i = 0; i < arrayCount; i++) {
@@ -297,6 +260,12 @@ public class TypeInfo {
       buf.append("...");
     }
 
-    return buf.toString();
+    return internFrequentType(buf.toString());
+  }
+
+  @NotNull
+  public static String internFrequentType(@NotNull String type) {
+    int frequentIndex = ourFrequentTypeIndex.get(type);
+    return frequentIndex == 0 ? type : ourIndexFrequentType[frequentIndex];
   }
 }

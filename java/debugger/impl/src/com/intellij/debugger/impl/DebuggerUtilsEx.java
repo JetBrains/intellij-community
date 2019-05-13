@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2011 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 /*
  * Class DebuggerUtilsEx
@@ -20,27 +6,61 @@
  */
 package com.intellij.debugger.impl;
 
+import com.intellij.application.options.CodeStyle;
 import com.intellij.debugger.DebuggerBundle;
-import com.intellij.debugger.engine.DebuggerManagerThreadImpl;
-import com.intellij.debugger.engine.DebuggerUtils;
-import com.intellij.debugger.engine.SuspendContextImpl;
+import com.intellij.debugger.SourcePosition;
+import com.intellij.debugger.engine.*;
 import com.intellij.debugger.engine.evaluation.*;
 import com.intellij.debugger.engine.evaluation.expression.EvaluatorBuilder;
+import com.intellij.debugger.engine.evaluation.expression.ExpressionEvaluator;
+import com.intellij.debugger.engine.evaluation.expression.UnBoxingEvaluator;
 import com.intellij.debugger.engine.requests.RequestManagerImpl;
+import com.intellij.debugger.jdi.JvmtiError;
 import com.intellij.debugger.jdi.VirtualMachineProxyImpl;
 import com.intellij.debugger.requests.Requestor;
-import com.intellij.debugger.ui.CompletionEditor;
 import com.intellij.debugger.ui.breakpoints.Breakpoint;
 import com.intellij.debugger.ui.tree.DebuggerTreeNode;
+import com.intellij.execution.filters.ExceptionFilters;
+import com.intellij.execution.filters.LineNumbersMapping;
+import com.intellij.execution.filters.TextConsoleBuilder;
+import com.intellij.execution.filters.TextConsoleBuilderFactory;
+import com.intellij.execution.ui.ConsoleView;
+import com.intellij.execution.ui.RunnerLayoutUi;
+import com.intellij.execution.ui.layout.impl.RunnerContentUi;
+import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ProjectFileIndex;
+import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.pom.Navigatable;
 import com.intellij.psi.*;
+import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.ui.classFilter.ClassFilter;
+import com.intellij.ui.content.Content;
+import com.intellij.unscramble.ThreadDumpPanel;
+import com.intellij.unscramble.ThreadState;
+import com.intellij.util.DocumentUtil;
 import com.intellij.util.SmartList;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.text.DateFormatUtil;
+import com.intellij.xdebugger.XDebugSession;
+import com.intellij.xdebugger.XDebuggerManager;
+import com.intellij.xdebugger.XSourcePosition;
+import com.intellij.xdebugger.frame.XValueNode;
+import com.intellij.xdebugger.impl.XSourcePositionImpl;
+import com.intellij.xdebugger.impl.ui.ExecutionPointHighlighter;
 import com.sun.jdi.*;
 import com.sun.jdi.event.Event;
 import com.sun.jdi.event.EventSet;
@@ -51,58 +71,63 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Function;
 import java.util.regex.PatternSyntaxException;
 
 public abstract class DebuggerUtilsEx extends DebuggerUtils {
   private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.impl.DebuggerUtilsEx");
 
-  private static final int MAX_LABEL_SIZE = 255;
-
   /**
    * @param context
-   * @return all CodeFragmentFactoryProviders that provide code fragment factories sutable in the context given
+   * @return all CodeFragmentFactoryProviders that provide code fragment factories suitable in the context given
    */
   public static List<CodeFragmentFactory> getCodeFragmentFactories(@Nullable PsiElement context) {
-    final DefaultCodeFragmentFactory defaultFactry = DefaultCodeFragmentFactory.getInstance();
+    final DefaultCodeFragmentFactory defaultFactory = DefaultCodeFragmentFactory.getInstance();
     final CodeFragmentFactory[] providers = ApplicationManager.getApplication().getExtensions(CodeFragmentFactory.EXTENSION_POINT_NAME);
-    final List<CodeFragmentFactory> suitableFactories = new ArrayList<CodeFragmentFactory>(providers.length);
+    final List<CodeFragmentFactory> suitableFactories = new ArrayList<>(providers.length);
     if (providers.length > 0) {
       for (CodeFragmentFactory factory : providers) {
-        if (factory != defaultFactry && factory.isContextAccepted(context)) {
+        if (factory != defaultFactory && factory.isContextAccepted(context)) {
           suitableFactories.add(factory);
         }
       }
     }
-    suitableFactories.add(defaultFactry); // let default factory be the last one
+    suitableFactories.add(defaultFactory); // let default factory be the last one
     return suitableFactories;
   }
-
 
   public static PsiMethod findPsiMethod(PsiFile file, int offset) {
     PsiElement element = null;
 
-    while(offset >= 0) {
+    while (offset >= 0) {
       element = file.findElementAt(offset);
-      if(element != null) break;
-      offset --;
+      if (element != null) {
+        break;
+      }
+      offset--;
     }
 
     for (; element != null; element = element.getParent()) {
-      if (element instanceof PsiClass) return null;
-      if (element instanceof PsiMethod) return (PsiMethod)element;
+      if (element instanceof PsiClass || element instanceof PsiLambdaExpression) {
+        return null;
+      }
+      if (element instanceof PsiMethod) {
+        return (PsiMethod)element;
+      }
     }
     return null;
   }
 
 
-  public static boolean isAssignableFrom(final String baseQualifiedName, ReferenceType checkedType) {
+  public static boolean isAssignableFrom(@NotNull final String baseQualifiedName, @NotNull ReferenceType checkedType) {
     if (CommonClassNames.JAVA_LANG_OBJECT.equals(baseQualifiedName)) {
       return true;
     }
     return getSuperClass(baseQualifiedName, checkedType) != null;
   }
 
-  public static ReferenceType getSuperClass(final String baseQualifiedName, ReferenceType checkedType) {
+  public static ReferenceType getSuperClass(@NotNull final String baseQualifiedName, @NotNull ReferenceType checkedType) {
     if (baseQualifiedName.equals(checkedType.name())) {
       return checkedType;
     }
@@ -116,9 +141,8 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
           return superClass;
         }
       }
-      List<InterfaceType> ifaces = classType.allInterfaces();
-      for (Iterator<InterfaceType> it = ifaces.iterator(); it.hasNext();) {
-        InterfaceType iface = it.next();
+      List<InterfaceType> interfaces = classType.allInterfaces();
+      for (InterfaceType iface : interfaces) {
         ReferenceType superClass = getSuperClass(baseQualifiedName, iface);
         if (superClass != null) {
           return superClass;
@@ -128,8 +152,7 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
 
     if (checkedType instanceof InterfaceType) {
       List<InterfaceType> list = ((InterfaceType)checkedType).superinterfaces();
-      for (Iterator<InterfaceType> it = list.iterator(); it.hasNext();) {
-        InterfaceType superInterface = it.next();
+      for (InterfaceType superInterface : list) {
         ReferenceType superClass = getSuperClass(baseQualifiedName, superInterface);
         if (superClass != null) {
           return superClass;
@@ -167,11 +190,10 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
 
   private static Set<String> myCharOrIntegers;
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
   public static boolean isCharOrIntegerArray(Value value) {
     if (value == null) return false;
     if (myCharOrIntegers == null) {
-      myCharOrIntegers = new HashSet<String>();
+      myCharOrIntegers = new HashSet<>();
       myCharOrIntegers.add("C");
       myCharOrIntegers.add("B");
       myCharOrIntegers.add("S");
@@ -183,13 +205,13 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
     int i;
     for (i = 0; signature.charAt(i) == '['; i++) ;
     if (i == 0) return false;
-    signature = signature.substring(i, signature.length());
+    signature = signature.substring(i);
     return myCharOrIntegers.contains(signature);
   }
 
   public static ClassFilter create(Element element) throws InvalidDataException {
     ClassFilter filter = new ClassFilter();
-    filter.readExternal(element);
+    DefaultJDOMExternalizer.readExternal(filter, element);
     return filter;
   }
 
@@ -208,41 +230,44 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
     return false;
   }
 
-  public static boolean isFiltered(String qName, ClassFilter[] classFilters) {
+  public static boolean isFiltered(@NotNull String qName, ClassFilter[] classFilters) {
     return isFiltered(qName, Arrays.asList(classFilters));
   }
-  
-  public static boolean isFiltered(String qName, List<ClassFilter> classFilters) {
-    if(qName.indexOf('[') != -1) {
+
+  public static boolean isFiltered(@NotNull String qName, List<? extends ClassFilter> classFilters) {
+    if (qName.indexOf('[') != -1) {
       return false; //is array
     }
 
-    for (ClassFilter filter : classFilters) {
-      if (isFiltered(filter, qName)) {
-        return true;
-      }
-    }
-    return false;
+    return classFilters.stream().anyMatch(filter -> isFiltered(filter, qName));
   }
 
-  public static ClassFilter[] readFilters(List children) throws InvalidDataException {
-    if (children == null || children.size() == 0) {
+  public static int getEnabledNumber(ClassFilter[] classFilters) {
+    return (int)Arrays.stream(classFilters).filter(ClassFilter::isEnabled).count();
+  }
+
+  public static ClassFilter[] readFilters(List<? extends Element> children) {
+    if (ContainerUtil.isEmpty(children)) {
       return ClassFilter.EMPTY_ARRAY;
     }
-    List<ClassFilter> classFiltersList = new ArrayList<ClassFilter>(children.size());
-    for (Iterator i = children.iterator(); i.hasNext();) {
-      final ClassFilter classFilter = new ClassFilter();
-      classFilter.readExternal((Element)i.next());
-      classFiltersList.add(classFilter);
+
+    ClassFilter[] filters = new ClassFilter[children.size()];
+    for (int i = 0, size = children.size(); i < size; i++) {
+      try {
+        filters[i] = create(children.get(i));
+      }
+      catch (InvalidDataException e) {
+        LOG.error(e);
+      }
     }
-    return classFiltersList.toArray(new ClassFilter[classFiltersList.size()]);
+    return filters;
   }
 
   public static void writeFilters(Element parentNode, @NonNls String tagName, ClassFilter[] filters) throws WriteExternalException {
     for (ClassFilter filter : filters) {
       Element element = new Element(tagName);
       parentNode.addContent(element);
-      filter.writeExternal(element);
+      DefaultJDOMExternalizer.writeExternal(filter, element);
     }
   }
 
@@ -250,49 +275,41 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
     if (filters1.length != filters2.length) {
       return false;
     }
-    final Set<ClassFilter> f1 = new HashSet<ClassFilter>(Math.max((int) (filters1.length/.75f) + 1, 16));
-    final Set<ClassFilter> f2 = new HashSet<ClassFilter>(Math.max((int) (filters2.length/.75f) + 1, 16));
-    for (ClassFilter filter : filters1) {
-      f1.add(filter);
-    }
-    for (ClassFilter aFilters2 : filters2) {
-      f2.add(aFilters2);
-    }
+    final Set<ClassFilter> f1 = new HashSet<>(Math.max((int)(filters1.length / .75f) + 1, 16));
+    final Set<ClassFilter> f2 = new HashSet<>(Math.max((int)(filters2.length / .75f) + 1, 16));
+    Collections.addAll(f1, filters1);
+    Collections.addAll(f2, filters2);
     return f2.equals(f1);
   }
 
-  private static boolean elementListsEqual(List<Element> l1, List<Element> l2) {
-    if(l1 == null) return l2 == null;
-    if(l2 == null) return false;
+  private static boolean elementListsEqual(List<? extends Element> l1, List<? extends Element> l2) {
+    if (l1 == null) return l2 == null;
+    if (l2 == null) return false;
 
-    if(l1.size() != l2.size()) return false;
+    if (l1.size() != l2.size()) return false;
 
-    Iterator<Element> i1 = l1.iterator();
-    Iterator<Element> i2 = l2.iterator();
+    Iterator<? extends Element> i1 = l1.iterator();
 
-    while (i2.hasNext()) {
+    for (Element aL2 : l2) {
       Element elem1 = i1.next();
-      Element elem2 = i2.next();
 
-      if(!elementsEqual(elem1, elem2)) return false;
+      if (!elementsEqual(elem1, aL2)) return false;
     }
     return true;
   }
 
-  private static boolean attributeListsEqual(List<Attribute> l1, List<Attribute> l2) {
-    if(l1 == null) return l2 == null;
-    if(l2 == null) return false;
+  private static boolean attributeListsEqual(List<? extends Attribute> l1, List<? extends Attribute> l2) {
+    if (l1 == null) return l2 == null;
+    if (l2 == null) return false;
 
-    if(l1.size() != l2.size()) return false;
+    if (l1.size() != l2.size()) return false;
 
-    Iterator<Attribute> i1 = l1.iterator();
-    Iterator<Attribute> i2 = l2.iterator();
+    Iterator<? extends Attribute> i1 = l1.iterator();
 
-    while (i2.hasNext()) {
+    for (Attribute aL2 : l2) {
       Attribute attr1 = i1.next();
-      Attribute attr2 = i2.next();
 
-      if (!Comparing.equal(attr1.getName(), attr2.getName()) || !Comparing.equal(attr1.getValue(), attr2.getValue())) {
+      if (!Comparing.equal(attr1.getName(), aL2.getName()) || !Comparing.equal(attr1.getValue(), aL2.getValue())) {
         return false;
       }
     }
@@ -300,23 +317,22 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
   }
 
   public static boolean elementsEqual(Element e1, Element e2) {
-    if(e1 == null) {
+    if (e1 == null) {
       return e2 == null;
     }
     if (!Comparing.equal(e1.getName(), e2.getName())) {
       return false;
     }
-    if (!elementListsEqual  ((List<Element>)e1.getChildren(), (List<Element>)e2.getChildren())) {
+    if (!elementListsEqual(e1.getChildren(), e2.getChildren())) {
       return false;
     }
-    if (!attributeListsEqual((List<Attribute>)e1.getAttributes(), (List<Attribute>)e2.getAttributes())) {
+    if (!attributeListsEqual(e1.getAttributes(), e2.getAttributes())) {
       return false;
     }
     return true;
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
-  public static boolean externalizableEqual(JDOMExternalizable  e1, JDOMExternalizable e2) {
+  public static boolean externalizableEqual(JDOMExternalizable e1, JDOMExternalizable e2) {
     Element root1 = new Element("root");
     Element root2 = new Element("root");
     try {
@@ -336,25 +352,22 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
   }
 
   @NotNull
-  public static List<Pair<Breakpoint, Event>> getEventDescriptors(SuspendContextImpl suspendContext) {
+  public static List<Pair<Breakpoint, Event>> getEventDescriptors(@Nullable SuspendContextImpl suspendContext) {
     DebuggerManagerThreadImpl.assertIsManagerThread();
-    if(suspendContext == null) {
-      return Collections.emptyList();
-    }
-    final EventSet events = suspendContext.getEventSet();
-    if(events == null) {
-      return Collections.emptyList();
-    }
-    final List<Pair<Breakpoint, Event>> eventDescriptors = new SmartList<Pair<Breakpoint, Event>>();
-
-    final RequestManagerImpl requestManager = suspendContext.getDebugProcess().getRequestsManager();
-    for (final Event event : events) {
-      final Requestor requestor = requestManager.findRequestor(event.request());
-      if (requestor instanceof Breakpoint) {
-        eventDescriptors.add(new Pair<Breakpoint, Event>((Breakpoint)requestor, event));
+    if (suspendContext != null) {
+      EventSet events = suspendContext.getEventSet();
+      if (!ContainerUtil.isEmpty(events)) {
+        List<Pair<Breakpoint, Event>> eventDescriptors = ContainerUtil.newSmartList();
+        for (Event event : events) {
+          Requestor requestor = RequestManagerImpl.findRequestor(event.request());
+          if (requestor instanceof Breakpoint) {
+            eventDescriptors.add(Pair.create((Breakpoint)requestor, event));
+          }
+        }
+        return eventDescriptors;
       }
     }
-    return eventDescriptors;
+    return Collections.emptyList();
   }
 
   public static TextWithImports getEditorText(final Editor editor) {
@@ -385,22 +398,77 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
     return null;
   }
 
-  public abstract DebuggerTreeNode  getSelectedNode    (DataContext context);
+  private static int myThreadDumpsCount = 0;
 
-  public abstract EvaluatorBuilder  getEvaluatorBuilder();
+  public static void addThreadDump(Project project, List<ThreadState> threads, RunnerLayoutUi ui, GlobalSearchScope searchScope) {
+    final TextConsoleBuilder consoleBuilder = TextConsoleBuilderFactory.getInstance().createBuilder(project);
+    consoleBuilder.filters(ExceptionFilters.getFilters(searchScope));
+    final ConsoleView consoleView = consoleBuilder.getConsole();
+    final DefaultActionGroup toolbarActions = new DefaultActionGroup();
+    consoleView.allowHeavyFilters();
+    final ThreadDumpPanel panel = new ThreadDumpPanel(project, consoleView, toolbarActions, threads);
 
-  public abstract CompletionEditor createEditor(Project project, PsiElement context, @NonNls String recentsId);
+    String id = "Dump " + DateFormatUtil.formatTimeWithSeconds(System.currentTimeMillis());
+    final Content content = ui.createContent(id + " " + myThreadDumpsCount, panel, id, null, null);
+    content.putUserData(RunnerContentUi.LIGHTWEIGHT_CONTENT_MARKER, Boolean.TRUE);
+    content.setCloseable(true);
+    content.setDescription("Thread Dump");
+    ui.addContent(content);
+    ui.selectAndFocus(content, true, true);
+    myThreadDumpsCount++;
+    Disposer.register(content, consoleView);
+    ui.selectAndFocus(content, true, false);
+    if (threads.size() > 0) {
+      panel.selectStackFrame(0);
+    }
+  }
 
-  @Nullable
-  public static CodeFragmentFactory getEffectiveCodeFragmentFactory(final PsiElement psiContext) {
-    final CodeFragmentFactory factory = ApplicationManager.getApplication().runReadAction(new Computable<CodeFragmentFactory>() {
-      public CodeFragmentFactory compute() {
-        final List<CodeFragmentFactory> codeFragmentFactories = getCodeFragmentFactories(psiContext);
-        // the list always contains at least DefaultCodeFragmentFactory
-        return codeFragmentFactories.get(0);
+  /**
+   * @deprecated use {@link EvaluationContext#keep(Value)} directly
+   */
+  @Deprecated
+  public static void keep(Value value, EvaluationContext context) {
+    context.keep(value);
+  }
+
+  public static StringReference mirrorOfString(@NotNull String s, VirtualMachineProxyImpl virtualMachineProxy, EvaluationContext context)
+    throws EvaluateException {
+    return context.computeAndKeep(() -> virtualMachineProxy.mirrorOf(s));
+  }
+
+  public static ArrayReference mirrorOfArray(@NotNull ArrayType arrayType, int dimension, EvaluationContext context)
+    throws EvaluateException {
+    return context.computeAndKeep(() -> context.getDebugProcess().newInstance(arrayType, dimension));
+  }
+
+  public abstract DebuggerTreeNode getSelectedNode(DataContext context);
+
+  public abstract EvaluatorBuilder getEvaluatorBuilder();
+
+  @NotNull
+  public static CodeFragmentFactory getCodeFragmentFactory(@Nullable PsiElement context, @Nullable FileType fileType) {
+    DefaultCodeFragmentFactory defaultFactory = DefaultCodeFragmentFactory.getInstance();
+    if (fileType == null) {
+      if (context == null) {
+        return defaultFactory;
       }
-    });
-    return factory != null? new CodeFragmentFactoryContextWrapper(factory) : null;
+      else {
+        PsiFile file = context.getContainingFile();
+        fileType = file != null ? file.getFileType() : null;
+      }
+    }
+    for (CodeFragmentFactory factory : ApplicationManager.getApplication().getExtensions(CodeFragmentFactory.EXTENSION_POINT_NAME)) {
+      if (factory != defaultFactory && (fileType == null || factory.getFileType().equals(fileType)) && factory.isContextAccepted(context)) {
+        return factory;
+      }
+    }
+    return defaultFactory;
+  }
+
+  @NotNull
+  public static CodeFragmentFactory findAppropriateCodeFragmentFactory(final TextWithImports text, final PsiElement context) {
+    CodeFragmentFactory factory = ReadAction.compute(() -> getCodeFragmentFactory(context, text.getFileType()));
+    return new CodeFragmentFactoryContextWrapper(factory);
   }
 
   private static class SigReader {
@@ -423,7 +491,8 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
       return buffer.length() <= pos;
     }
 
-    @NonNls String getSignature() {
+    @NonNls
+    String getSignature() {
       if (eof()) return "";
 
       switch (get()) {
@@ -453,7 +522,7 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
         case '[':
           return getSignature() + "[]";
         case '(':
-          StringBuffer result = new StringBuffer("(");
+          StringBuilder result = new StringBuilder("(");
           String separator = "";
           while (peek() != ')') {
             result.append(separator);
@@ -464,7 +533,7 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
           result.append(")");
           return getSignature() + " " + getClassName() + "." + getMethodName() + " " + result;
         default:
-//          LOG.assertTrue(false, "unknown signature " + buffer);
+          //          LOG.assertTrue(false, "unknown signature " + buffer);
           return null;
       }
     }
@@ -478,6 +547,14 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
     }
   }
 
+  public static String methodKey(Method m) {
+    return m.declaringType().name() + '.' + m.name() + m.signature();
+  }
+
+  public static String methodNameWithArguments(Method m) {
+    return m.name() + "(" + StringUtil.join(m.argumentTypeNames(), StringUtil::getShortName, ", ") + ")";
+  }
+
   public static String methodName(final Method m) {
     return methodName(signatureToName(m.declaringType().signature()), m.name(), m.signature());
   }
@@ -485,16 +562,18 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
   public static String methodName(final String className, final String methodName, final String signature) {
     try {
       return new SigReader(signature) {
+        @Override
         String getMethodName() {
           return methodName;
         }
 
+        @Override
         String getClassName() {
           return className;
         }
       }.getSignature();
     }
-    catch (Exception e) {
+    catch (Exception ignored) {
       if (LOG.isDebugEnabled()) {
         LOG.debug("Internal error : unknown signature" + signature);
       }
@@ -506,70 +585,165 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
     return new SigReader(s).getSignature();
   }
 
+  @Nullable
+  public static List<Location> allLineLocations(Method method) {
+    try {
+      return method.allLineLocations();
+    }
+    catch (AbsentInformationException ignored) {
+      return null;
+    }
+  }
+
+  @Nullable
+  public static List<Location> allLineLocations(ReferenceType cls) {
+    try {
+      return cls.allLineLocations();
+    }
+    catch (AbsentInformationException ignored) {
+      return null;
+    }
+    catch (ObjectCollectedException ignored) {
+      return Collections.emptyList();
+    }
+  }
+
+  public static int getLineNumber(Location location, boolean zeroBased) {
+    try {
+      return location.lineNumber() - (zeroBased ? 1 : 0);
+    }
+    catch (InternalError | IllegalArgumentException e) {
+      return -1;
+    }
+  }
+
+  public static String getSourceName(Location location, Function<? super Throwable, String> defaultName) {
+    try {
+      return location.sourceName();
+    }
+    catch (InternalError | AbsentInformationException e) {
+      return defaultName.apply(e);
+    }
+  }
+
+  public static boolean isVoid(@NotNull Method method) {
+    return "void".equals(method.returnTypeName());
+  }
+
+  @Nullable
+  public static Method getMethod(Location location) {
+    try {
+      return location.method();
+    }
+    catch (IllegalArgumentException e) { // Invalid method id
+      LOG.info(e);
+    }
+    return null;
+  }
+
+  public static List<Value> getArgumentValues(@NotNull StackFrame frame) {
+    try {
+      return frame.getArgumentValues();
+    }
+    catch (InternalException e) {
+      // From Oracle's forums:
+      // This could be a JPDA bug. Unexpected JDWP Error: 32 means that an 'opaque' frame was detected at the lower JPDA levels,
+      // typically a native frame.
+      if (e.errorCode() == JvmtiError.OPAQUE_FRAME /*opaque frame JDI bug*/ ) {
+        return Collections.emptyList();
+      }
+      else {
+        throw e;
+      }
+    }
+  }
+
   public static Value createValue(VirtualMachineProxyImpl vm, String expectedType, double value) {
-    if (PsiType.DOUBLE.getPresentableText().equals(expectedType)) {
+    if (PsiType.DOUBLE.getName().equals(expectedType)) {
       return vm.mirrorOf(value);
     }
-    if (PsiType.FLOAT.getPresentableText().equals(expectedType)) {
+    if (PsiType.FLOAT.getName().equals(expectedType)) {
       return vm.mirrorOf((float)value);
     }
-    return createValue(vm, expectedType, (long)value);
+    if (PsiType.LONG.getName().equals(expectedType)) {
+      return vm.mirrorOf((long)value);
+    }
+    if (PsiType.INT.getName().equals(expectedType)) {
+      return vm.mirrorOf((int)value);
+    }
+    if (PsiType.SHORT.getName().equals(expectedType)) {
+      return vm.mirrorOf((short)value);
+    }
+    if (PsiType.BYTE.getName().equals(expectedType)) {
+      return vm.mirrorOf((byte)value);
+    }
+    if (PsiType.CHAR.getName().equals(expectedType)) {
+      return vm.mirrorOf((char)value);
+    }
+    return null;
   }
 
   public static Value createValue(VirtualMachineProxyImpl vm, String expectedType, long value) {
-    if (PsiType.LONG.getPresentableText().equals(expectedType)) {
+    if (PsiType.LONG.getName().equals(expectedType)) {
       return vm.mirrorOf(value);
     }
-    if (PsiType.INT.getPresentableText().equals(expectedType)) {
+    if (PsiType.INT.getName().equals(expectedType)) {
       return vm.mirrorOf((int)value);
     }
-    if (PsiType.SHORT.getPresentableText().equals(expectedType)) {
+    if (PsiType.SHORT.getName().equals(expectedType)) {
       return vm.mirrorOf((short)value);
     }
-    if (PsiType.BYTE.getPresentableText().equals(expectedType)) {
+    if (PsiType.BYTE.getName().equals(expectedType)) {
       return vm.mirrorOf((byte)value);
     }
-    if (PsiType.CHAR.getPresentableText().equals(expectedType)) {
+    if (PsiType.CHAR.getName().equals(expectedType)) {
       return vm.mirrorOf((char)value);
     }
-    if (PsiType.DOUBLE.getPresentableText().equals(expectedType)) {
+    if (PsiType.DOUBLE.getName().equals(expectedType)) {
       return vm.mirrorOf((double)value);
     }
-    if (PsiType.FLOAT.getPresentableText().equals(expectedType)) {
+    if (PsiType.FLOAT.getName().equals(expectedType)) {
       return vm.mirrorOf((float)value);
     }
     return null;
   }
 
   public static Value createValue(VirtualMachineProxyImpl vm, String expectedType, boolean value) {
-    if (PsiType.BOOLEAN.getPresentableText().equals(expectedType)) {
+    if (PsiType.BOOLEAN.getName().equals(expectedType)) {
       return vm.mirrorOf(value);
     }
     return null;
   }
 
   public static Value createValue(VirtualMachineProxyImpl vm, String expectedType, char value) {
-    if (PsiType.CHAR.getPresentableText().equals(expectedType)) {
+    if (PsiType.CHAR.getName().equals(expectedType)) {
       return vm.mirrorOf(value);
     }
-    if (PsiType.LONG.getPresentableText().equals(expectedType)) {
+    if (PsiType.LONG.getName().equals(expectedType)) {
       return vm.mirrorOf((long)value);
     }
-    if (PsiType.INT.getPresentableText().equals(expectedType)) {
+    if (PsiType.INT.getName().equals(expectedType)) {
       return vm.mirrorOf((int)value);
     }
-    if (PsiType.SHORT.getPresentableText().equals(expectedType)) {
+    if (PsiType.SHORT.getName().equals(expectedType)) {
       return vm.mirrorOf((short)value);
     }
-    if (PsiType.BYTE.getPresentableText().equals(expectedType)) {
+    if (PsiType.BYTE.getName().equals(expectedType)) {
       return vm.mirrorOf((byte)value);
+    }
+    if (PsiType.DOUBLE.getName().equals(expectedType)) {
+      return vm.mirrorOf((double)value);
+    }
+    if (PsiType.FLOAT.getName().equals(expectedType)) {
+      return vm.mirrorOf((float)value);
     }
     return null;
   }
 
   public static String truncateString(final String str) {
-    if (str.length() > MAX_LABEL_SIZE) {
-      return str.substring(0, MAX_LABEL_SIZE) + "...";
+    // leave a small gap over XValueNode.MAX_VALUE_LENGTH to detect oversize
+    if (str.length() > XValueNode.MAX_VALUE_LENGTH + 5) {
+      return str.substring(0, XValueNode.MAX_VALUE_LENGTH + 5);
     }
     return str;
   }
@@ -595,5 +769,386 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
     }
   }
 
+  public static String prepareValueText(String text, Project project) {
+    text = StringUtil.unquoteString(text);
+    text = StringUtil.unescapeStringCharacters(text);
+    int tabSize = CodeStyle.getSettings(project).getTabSize(StdFileTypes.JAVA);
+    if (tabSize < 0) {
+      tabSize = 0;
+    }
+    return text.replace("\t", StringUtil.repeat(" ", tabSize));
+  }
 
+  private static final Key<Map<String, String>> DEBUGGER_ALTERNATIVE_SOURCE_MAPPING = Key.create("DEBUGGER_ALTERNATIVE_SOURCE_MAPPING");
+
+  public static void setAlternativeSourceUrl(String className, String source, Project project) {
+    Map<String, String> map = project.getUserData(DEBUGGER_ALTERNATIVE_SOURCE_MAPPING);
+    if (map == null) {
+      map = new ConcurrentHashMap<>();
+      project.putUserData(DEBUGGER_ALTERNATIVE_SOURCE_MAPPING, map);
+    }
+    map.put(className, source);
+  }
+
+  @Nullable
+  public static String getAlternativeSourceUrl(@Nullable String className, Project project) {
+    Map<String, String> map = project.getUserData(DEBUGGER_ALTERNATIVE_SOURCE_MAPPING);
+    return map != null ? map.get(className) : null;
+  }
+
+  @Nullable
+  public static XSourcePosition toXSourcePosition(@Nullable SourcePosition position) {
+    if (position != null) {
+      VirtualFile file = position.getFile().getVirtualFile();
+      if (file == null) {
+        file = position.getFile().getOriginalFile().getVirtualFile();
+      }
+      if (file != null) {
+        return new JavaXSourcePosition(position, file);
+      }
+    }
+    return null;
+  }
+
+  @Nullable
+  public static SourcePosition toSourcePosition(@Nullable XSourcePosition position, Project project) {
+    if (position != null) {
+      if (position instanceof JavaXSourcePosition) {
+        return ((JavaXSourcePosition)position).mySourcePosition;
+      }
+      PsiFile psiFile = getPsiFile(position, project);
+      if (psiFile != null) {
+        return SourcePosition.createFromLine(psiFile, position.getLine());
+      }
+    }
+    return null;
+  }
+
+  private static class JavaXSourcePosition implements XSourcePosition, ExecutionPointHighlighter.HighlighterProvider {
+    private final SourcePosition mySourcePosition;
+    @NotNull private final VirtualFile myFile;
+
+    JavaXSourcePosition(@NotNull SourcePosition sourcePosition, @NotNull VirtualFile file) {
+      mySourcePosition = sourcePosition;
+      myFile = file;
+    }
+
+    @Override
+    public int getLine() {
+      return mySourcePosition.getLine();
+    }
+
+    @Override
+    public int getOffset() {
+      return mySourcePosition.getOffset();
+    }
+
+    @NotNull
+    @Override
+    public VirtualFile getFile() {
+      return myFile;
+    }
+
+    @NotNull
+    @Override
+    public Navigatable createNavigatable(@NotNull Project project) {
+      return XSourcePositionImpl.doCreateOpenFileDescriptor(project, this);
+    }
+
+    @Nullable
+    @Override
+    public TextRange getHighlightRange() {
+      return intersectWithLine(SourcePositionHighlighter.getHighlightRangeFor(mySourcePosition), mySourcePosition.getFile(), getLine());
+    }
+  }
+
+  @Nullable
+  public static TextRange intersectWithLine(@Nullable TextRange range, @Nullable PsiFile file, int line) {
+    if (range != null && file != null) {
+      Document document = PsiDocumentManager.getInstance(file.getProject()).getDocument(file);
+      if (document != null) {
+        range = range.intersection(DocumentUtil.getLineTextRange(document, line));
+      }
+    }
+    return range;
+  }
+
+  @Nullable
+  public static PsiFile getPsiFile(@Nullable XSourcePosition position, Project project) {
+    ApplicationManager.getApplication().assertReadAccessAllowed();
+    if (position != null) {
+      VirtualFile file = position.getFile();
+      if (file.isValid()) {
+        return PsiManager.getInstance(project).findFile(file);
+      }
+    }
+    return null;
+  }
+
+  /**
+   * Decompiler aware version
+   */
+  @Nullable
+  public static PsiElement findElementAt(@Nullable PsiFile file, int offset) {
+    return file != null ? file.findElementAt(offset) : null;
+  }
+
+  public static String getLocationMethodQName(@NotNull Location location) {
+    StringBuilder res = new StringBuilder();
+    ReferenceType type = location.declaringType();
+    if (type != null) {
+      res.append(type.name()).append('.');
+    }
+    res.append(location.method().name());
+    return res.toString();
+  }
+
+  private static PsiElement getNextElement(PsiElement element) {
+    PsiElement sibling = element.getNextSibling();
+    if (sibling != null) return sibling;
+    element = element.getParent();
+    if (element != null) return getNextElement(element);
+    return null;
+  }
+
+  public static boolean isLambdaClassName(String typeName) {
+    return getLambdaBaseClassName(typeName) != null;
+  }
+
+  @Nullable
+  public static String getLambdaBaseClassName(String typeName) {
+    return StringUtil.substringBefore(typeName, "$$Lambda$");
+  }
+
+  public static boolean isLambdaName(@Nullable String name) {
+    return !StringUtil.isEmpty(name) && name.startsWith("lambda$");
+  }
+
+  public static boolean isLambda(@Nullable Method method) {
+    return method != null && isLambdaName(method.name());
+  }
+
+  public static final Comparator<Method> LAMBDA_ORDINAL_COMPARATOR = Comparator.comparingInt(m -> getLambdaOrdinal(m.name()));
+
+  public static int getLambdaOrdinal(@NotNull String name) {
+    return StringUtil.parseInt(StringUtil.substringAfterLast(name, "$"), -1);
+  }
+
+  public static List<PsiLambdaExpression> collectLambdas(@NotNull SourcePosition position, final boolean onlyOnTheLine) {
+    ApplicationManager.getApplication().assertReadAccessAllowed();
+    PsiFile file = position.getFile();
+    final int line = position.getLine();
+    final Document document = PsiDocumentManager.getInstance(file.getProject()).getDocument(file);
+    if (document == null || line >= document.getLineCount()) {
+      return Collections.emptyList();
+    }
+    PsiElement element = position.getElementAt();
+    if (element == null) {
+      return Collections.emptyList();
+    }
+    final TextRange lineRange = DocumentUtil.getLineTextRange(document, line);
+    do {
+      PsiElement parent = element.getParent();
+      if (parent == null || (parent.getTextOffset() < lineRange.getStartOffset())) {
+        break;
+      }
+      element = parent;
+    }
+    while (true);
+
+    final List<PsiLambdaExpression> lambdas = new SmartList<>();
+    final PsiElementVisitor lambdaCollector = new JavaRecursiveElementVisitor() {
+      @Override
+      public void visitLambdaExpression(PsiLambdaExpression expression) {
+        super.visitLambdaExpression(expression);
+        if (!onlyOnTheLine || getFirstElementOnTheLine(expression, document, line) != null) {
+          lambdas.add(expression);
+        }
+      }
+    };
+    element.accept(lambdaCollector);
+    for (PsiElement sibling = getNextElement(element); sibling != null; sibling = getNextElement(sibling)) {
+      if (!intersects(lineRange, sibling)) {
+        break;
+      }
+      sibling.accept(lambdaCollector);
+    }
+    // add initial lambda if we're inside already
+    PsiElement method = getContainingMethod(element);
+    if (method instanceof PsiLambdaExpression && !lambdas.contains(method)) {
+      lambdas.add((PsiLambdaExpression)method);
+    }
+    return lambdas;
+  }
+
+  @Nullable
+  public static PsiElement getBody(PsiElement method) {
+    if (method instanceof PsiParameterListOwner) {
+      return ((PsiParameterListOwner)method).getBody();
+    }
+    else if (method instanceof PsiClassInitializer) {
+      return ((PsiClassInitializer)method).getBody();
+    }
+    return null;
+  }
+
+  @NotNull
+  public static PsiParameter[] getParameters(PsiElement method) {
+    if (method instanceof PsiParameterListOwner) {
+      return ((PsiParameterListOwner)method).getParameterList().getParameters();
+    }
+    return PsiParameter.EMPTY_ARRAY;
+  }
+
+  public static boolean evaluateBoolean(ExpressionEvaluator evaluator, EvaluationContextImpl context) throws EvaluateException {
+    Object value = UnBoxingEvaluator.unbox(evaluator.evaluate(context), context);
+    if (!(value instanceof BooleanValue)) {
+      throw EvaluateExceptionUtil.createEvaluateException(DebuggerBundle.message("evaluation.error.boolean.expected"));
+    }
+    return ((BooleanValue)value).booleanValue();
+  }
+
+  public static boolean intersects(@NotNull TextRange range, @NotNull PsiElement elem) {
+    TextRange elemRange = elem.getTextRange();
+    return elemRange != null && elemRange.intersects(range);
+  }
+
+  @Nullable
+  public static PsiElement getFirstElementOnTheLine(PsiLambdaExpression lambda, Document document, int line) {
+    ApplicationManager.getApplication().assertReadAccessAllowed();
+    TextRange lineRange = DocumentUtil.getLineTextRange(document, line);
+    if (!intersects(lineRange, lambda)) return null;
+    PsiElement body = lambda.getBody();
+    if (body == null || !intersects(lineRange, body)) return null;
+    if (body instanceof PsiCodeBlock) {
+      PsiStatement[] statements = ((PsiCodeBlock)body).getStatements();
+      if (statements.length > 0) {
+        for (PsiStatement statement : statements) {
+          // return first statement starting on the line
+          if (lineRange.contains(statement.getTextOffset())) {
+            return statement;
+          }
+          // otherwise check all children
+          else if (intersects(lineRange, statement)) {
+            for (PsiElement element : SyntaxTraverser.psiTraverser(statement)) {
+              if (lineRange.contains(element.getTextOffset())) {
+                return element;
+              }
+            }
+          }
+        }
+        return null;
+      }
+    }
+    return body;
+  }
+
+  public static boolean inTheMethod(@NotNull SourcePosition pos, @NotNull PsiElement method) {
+    PsiElement elem = pos.getElementAt();
+    if (elem == null) return false;
+    return Comparing.equal(getContainingMethod(elem), method);
+  }
+
+  public static boolean inTheSameMethod(@NotNull SourcePosition pos1, @NotNull SourcePosition pos2) {
+    ApplicationManager.getApplication().assertReadAccessAllowed();
+    PsiElement elem1 = pos1.getElementAt();
+    PsiElement elem2 = pos2.getElementAt();
+    if (elem1 == null) return elem2 == null;
+    if (elem2 != null) {
+      PsiElement expectedMethod = getContainingMethod(elem1);
+      PsiElement currentMethod = getContainingMethod(elem2);
+      return Comparing.equal(expectedMethod, currentMethod);
+    }
+    return false;
+  }
+
+  public static boolean methodMatches(@NotNull PsiMethod psiMethod,
+                                      String className,
+                                      String name,
+                                      String signature,
+                                      DebugProcessImpl process) {
+    PsiClass containingClass = psiMethod.getContainingClass();
+    try {
+      return containingClass != null && Objects.equals(JVMNameUtil.getClassVMName(containingClass), className) &&
+             JVMNameUtil.getJVMMethodName(psiMethod).equals(name) &&
+             JVMNameUtil.getJVMSignature(psiMethod).getName(process).equals(signature);
+    }
+    catch (EvaluateException e) {
+      LOG.debug(e);
+      return false;
+    }
+  }
+
+  @Nullable
+  public static PsiElement getContainingMethod(@Nullable PsiElement elem) {
+    return PsiTreeUtil.getContextOfType(elem, PsiMethod.class, PsiLambdaExpression.class, PsiClassInitializer.class);
+  }
+
+  @Nullable
+  public static PsiElement getContainingMethod(@Nullable SourcePosition position) {
+    if (position == null) return null;
+    return getContainingMethod(position.getElementAt());
+  }
+
+  public static void disableCollection(ObjectReference reference) {
+    try {
+      reference.disableCollection();
+    }
+    catch (UnsupportedOperationException ignored) {
+      // ignore: some J2ME implementations does not provide this operation
+    }
+  }
+
+  public static void enableCollection(ObjectReference reference) {
+    try {
+      reference.enableCollection();
+    }
+    catch (UnsupportedOperationException ignored) {
+      // ignore: some J2ME implementations does not provide this operation
+    }
+  }
+
+  /**
+   * Provides mapping from decompiled file line number to the original source code line numbers
+   *
+   * @param psiFile      decompiled file
+   * @param originalLine zero-based decompiled file line number
+   * @return zero-based source code line number
+   */
+  public static int bytecodeToSourceLine(PsiFile psiFile, int originalLine) {
+    VirtualFile file = psiFile.getVirtualFile();
+    if (file != null) {
+      LineNumbersMapping mapping = file.getUserData(LineNumbersMapping.LINE_NUMBERS_MAPPING_KEY);
+      if (mapping != null) {
+        int line = mapping.bytecodeToSource(originalLine + 1);
+        if (line > -1) {
+          return line - 1;
+        }
+      }
+    }
+    return -1;
+  }
+
+  public static boolean isInLibraryContent(@Nullable VirtualFile file, @NotNull Project project) {
+    return ReadAction.compute(() -> {
+      if (file == null) {
+        return true;
+      }
+      else {
+        ProjectFileIndex projectFileIndex = ProjectRootManager.getInstance(project).getFileIndex();
+        return projectFileIndex.isInLibrary(file);
+      }
+    });
+  }
+
+  public static boolean isInJavaSession(AnActionEvent e) {
+    XDebugSession session = e.getData(XDebugSession.DATA_KEY);
+    if (session == null) {
+      Project project = e.getProject();
+      if (project != null) {
+        session = XDebuggerManager.getInstance(project).getCurrentSession();
+      }
+    }
+    return session != null && session.getDebugProcess() instanceof JavaDebugProcess;
+  }
 }

@@ -15,26 +15,24 @@
  */
 package org.intellij.lang.xpath.xslt.associations.impl;
 
+import com.intellij.openapi.fileChooser.FileChooserDescriptor;
+import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.FileTypeManager;
+import com.intellij.openapi.vfs.VirtualFile;
 import org.intellij.lang.xpath.xslt.associations.FileAssociationsManager;
 
-import com.intellij.openapi.fileChooser.FileChooserDescriptor;
-import com.intellij.openapi.fileTypes.FileTypeManager;
-import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.vfs.VirtualFile;
-
 public class AnyXMLDescriptor extends FileChooserDescriptor {
-    public static final AnyXMLDescriptor INSTANCE = new AnyXMLDescriptor();
-
     final FileTypeManager myFileTypeManager;
 
-    public AnyXMLDescriptor() {
-        super(true, false, false, false, false, true);
+    public AnyXMLDescriptor(boolean chooseMultiple) {
+        super(true, false, false, false, false, chooseMultiple);
         myFileTypeManager = FileTypeManager.getInstance();
     }
 
+    @Override
     public boolean isFileVisible(VirtualFile file, boolean showHiddenFiles) {
       final FileType fileType = file.getFileType();
         return file.isDirectory() || (super.isFileVisible(file, showHiddenFiles)
-                && FileAssociationsManager.XML_FILES_LIST.contains(fileType));
+                && FileAssociationsManager.Holder.XML_FILES_LIST.contains(fileType));
     }
 }

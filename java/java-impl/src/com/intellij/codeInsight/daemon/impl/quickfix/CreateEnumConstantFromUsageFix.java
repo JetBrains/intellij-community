@@ -15,12 +15,11 @@
  */
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
-import com.intellij.codeInsight.CodeInsightUtilBase;
+import com.intellij.codeInsight.CodeInsightUtilCore;
 import com.intellij.codeInsight.ExpectedTypeInfo;
 import com.intellij.codeInsight.ExpectedTypeUtil;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.intention.HighPriorityAction;
-import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.template.Template;
 import com.intellij.codeInsight.template.TemplateBuilderImpl;
 import com.intellij.openapi.diagnostic.Logger;
@@ -29,10 +28,11 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
-import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.Function;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Collections;
 import java.util.List;
 
 public class CreateEnumConstantFromUsageFix extends CreateVarFromUsageFix implements HighPriorityAction{
@@ -51,7 +51,7 @@ public class CreateEnumConstantFromUsageFix extends CreateVarFromUsageFix implem
     LOG.assertTrue(targetClass.isEnum());
     final String name = myReferenceExpression.getReferenceName();
     LOG.assertTrue(name != null);
-    final PsiElementFactory elementFactory = JavaPsiFacade.getInstance(myReferenceExpression.getProject()).getElementFactory();
+    final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(myReferenceExpression.getProject());
     PsiEnumConstant enumConstant = elementFactory.createEnumConstantFromText(name, null);
     enumConstant = (PsiEnumConstant)targetClass.add(enumConstant);
 
@@ -60,12 +60,7 @@ public class CreateEnumConstantFromUsageFix extends CreateVarFromUsageFix implem
       final PsiMethod constructor = constructors[0];
       final PsiParameter[] parameters = constructor.getParameterList().getParameters();
       if (parameters.length > 0) {
-        final String params = StringUtil.join(parameters, new Function<PsiParameter, String>() {
-          @Override
-          public String fun(PsiParameter psiParameter) {
-            return psiParameter.getName();
-          }
-        }, ",");
+        final String params = StringUtil.join(parameters, psiParameter -> psiParameter.getName(), ",");
         enumConstant = (PsiEnumConstant)enumConstant.replace(elementFactory.createEnumConstantFromText(name + "(" + params + ")", null));
         final TemplateBuilderImpl builder = new TemplateBuilderImpl(enumConstant);
 
@@ -75,7 +70,7 @@ public class CreateEnumConstantFromUsageFix extends CreateVarFromUsageFix implem
           builder.replaceElement(expression, new EmptyExpression());
         }
 
-        enumConstant = CodeInsightUtilBase.forcePsiPostprocessAndRestoreElement(enumConstant);
+        enumConstant = CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(enumConstant);
         final Template template = builder.buildTemplate();
 
         final Project project = targetClass.getProject();
@@ -89,6 +84,62 @@ public class CreateEnumConstantFromUsageFix extends CreateVarFromUsageFix implem
     }
   }
 
+  @NotNull
+  @Override
+  protected List<PsiClass> getTargetClasses(PsiElement element) {
+    final List<PsiClass> classes = super.getTargetClasses(element);
+    PsiClass enumClass = null;
+    for (PsiClass aClass : classes) {
+      if (aClass.isEnum()) {
+        if (enumClass == null) {
+          enumClass = aClass;
+        } else {
+          enumClass = null;
+          break;
+        }
+      }
+    }
+
+    if (enumClass != null) {
+      return Collections.singletonList(enumClass);
+    }
+
+    if (myReferenceExpression.isQualified()) {
+      final PsiClass aClass = getTargetClassByExpectedTypes(myReferenceExpression.getQualifierExpression());
+      if (aClass != null) {
+        return Collections.singletonList(aClass);
+      }
+    }
+    else {
+      final PsiClass targetClass = getTargetClassByExpectedTypes(myReferenceExpression);
+      if (targetClass != null) {
+        final PsiFile containingFile = myReferenceExpression.getContainingFile();
+        if (containingFile instanceof PsiJavaFile) {
+          final PsiImportList importList = ((PsiJavaFile)containingFile).getImportList();
+          if (importList != null) {
+            for (PsiImportStaticStatement statement : importList.getImportStaticStatements()) {
+              if (statement.isOnDemand() && targetClass.equals(statement.resolveTargetClass())) {
+                return Collections.singletonList(targetClass);
+              }
+            }
+          }
+        }
+      }
+    }
+
+    return Collections.emptyList();
+  }
+
+  private static PsiClass getTargetClassByExpectedTypes(PsiExpression expression) {
+    ExpectedTypeInfo[] typeInfos = CreateFromUsageUtils.guessExpectedTypes(expression, false);
+    for (final ExpectedTypeInfo typeInfo : typeInfos) {
+      final PsiClass psiClass = PsiUtil.resolveClassInClassTypeOnly(typeInfo.getType());
+      if (psiClass != null && psiClass.isEnum()) {
+        return psiClass;
+      }
+    }
+    return null;
+  }
 
   @Override
   protected boolean isAvailableImpl(int offset) {
@@ -97,7 +148,7 @@ public class CreateEnumConstantFromUsageFix extends CreateVarFromUsageFix implem
     final List<PsiClass> classes = getTargetClasses(element);
     if (classes.size() != 1 || !classes.get(0).isEnum()) return false;
     ExpectedTypeInfo[] typeInfos = CreateFromUsageUtils.guessExpectedTypes(myReferenceExpression, false);
-    PsiType enumType = JavaPsiFacade.getInstance(myReferenceExpression.getProject()).getElementFactory().createType(classes.get(0));
+    PsiType enumType = JavaPsiFacade.getElementFactory(myReferenceExpression.getProject()).createType(classes.get(0));
     for (final ExpectedTypeInfo typeInfo : typeInfos) {
       if (ExpectedTypeUtil.matches(enumType, typeInfo)) return true;
     }

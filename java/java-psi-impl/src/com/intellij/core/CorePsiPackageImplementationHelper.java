@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,41 +15,47 @@
  */
 package com.intellij.core;
 
+import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiPackage;
 import com.intellij.psi.impl.file.PsiPackageImplementationHelper;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.util.ArrayUtil;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author yole
  */
 public class CorePsiPackageImplementationHelper extends PsiPackageImplementationHelper {
+  private static final ModificationTracker[] EMPTY_DEPENDENCY = {ModificationTracker.NEVER_CHANGED};
+
+  @NotNull
   @Override
-  public GlobalSearchScope adjustAllScope(PsiPackage psiPackage, GlobalSearchScope globalSearchScope) {
+  public GlobalSearchScope adjustAllScope(@NotNull PsiPackage psiPackage, @NotNull GlobalSearchScope globalSearchScope) {
     return globalSearchScope;
   }
 
+  @NotNull
   @Override
-  public VirtualFile[] occursInPackagePrefixes(PsiPackage psiPackage) {
+  public VirtualFile[] occursInPackagePrefixes(@NotNull PsiPackage psiPackage) {
     return VirtualFile.EMPTY_ARRAY;
   }
 
   @Override
-  public void handleQualifiedNameChange(PsiPackage psiPackage, String newQualifiedName) {
+  public void handleQualifiedNameChange(@NotNull PsiPackage psiPackage, @NotNull String newQualifiedName) {
   }
 
   @Override
-  public void navigate(PsiPackage psiPackage, boolean requestFocus) {
+  public void navigate(@NotNull PsiPackage psiPackage, boolean requestFocus) {
   }
 
   @Override
-  public boolean packagePrefixExists(PsiPackage psiPackage) {
+  public boolean packagePrefixExists(@NotNull PsiPackage psiPackage) {
     return false;
   }
 
+  @NotNull
   @Override
-  public Object[] getDirectoryCachedValueDependencies(PsiPackage cachedValueProvider) {
-    return ArrayUtil.EMPTY_OBJECT_ARRAY;
+  public Object[] getDirectoryCachedValueDependencies(@NotNull PsiPackage cachedValueProvider) {
+    return EMPTY_DEPENDENCY;
   }
 }

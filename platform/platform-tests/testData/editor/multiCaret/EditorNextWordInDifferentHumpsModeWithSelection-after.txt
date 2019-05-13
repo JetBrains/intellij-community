@@ -1,0 +1,5 @@
+so<selection><caret>Me te</selection>xt
+other line<selection>
+<caret></selection>yet ano<selection>ther <caret></selection>line
+Heavily<selection>Humped<caret></selection>Word
+HeavilyHum<selection>ped<caret></selection>Word

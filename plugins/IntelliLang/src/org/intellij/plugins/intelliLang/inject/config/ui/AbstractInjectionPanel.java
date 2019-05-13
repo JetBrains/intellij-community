@@ -15,8 +15,6 @@
  */
 package org.intellij.plugins.intelliLang.inject.config.ui;
 
-import com.intellij.openapi.editor.event.DocumentAdapter;
-import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.ui.UIUtil;
 import org.intellij.plugins.intelliLang.inject.config.BaseInjection;
@@ -31,8 +29,8 @@ import java.util.List;
  * of nested forms
  */
 public abstract class AbstractInjectionPanel<T extends BaseInjection> implements InjectionPanel<T> {
-  private final List<Field> myOtherPanels = new ArrayList<Field>(3);
-  private final List<Runnable> myUpdaters = new ArrayList<Runnable>(1);
+  private final List<Field> myOtherPanels = new ArrayList<>(3);
+  private final List<Runnable> myUpdaters = new ArrayList<>(1);
 
   protected final Project myProject;
 
@@ -60,11 +58,13 @@ public abstract class AbstractInjectionPanel<T extends BaseInjection> implements
     }
   }
 
+  @Override
   public final T getInjection() {
     apply(myEditCopy);
     return myEditCopy;
   }
 
+  @Override
   @SuppressWarnings({"unchecked"})
   public final void init(@NotNull T copy) {
     myEditCopy = copy;
@@ -73,9 +73,9 @@ public abstract class AbstractInjectionPanel<T extends BaseInjection> implements
       final InjectionPanel p = getField(panel);
       p.init(copy);
     }
-    reset();
   }
 
+  @Override
   public final boolean isModified() {
     apply(myEditCopy);
 
@@ -87,34 +87,36 @@ public abstract class AbstractInjectionPanel<T extends BaseInjection> implements
     return !myEditCopy.equals(myOrigInjection);
   }
 
-  @SuppressWarnings({"unchecked"})
+  @Override
   public final void apply() {
-    apply(myOrigInjection);
-
     for (Field panel : myOtherPanels) {
       getField(panel).apply();
     }
-    myOrigInjection.generatePlaces();
-    myEditCopy.copyFrom(myOrigInjection);
+
+    // auto-generated name should go last
+    apply(myOrigInjection);
+    if (!myOtherPanels.isEmpty()) {
+      myOrigInjection.generatePlaces();
+      myEditCopy.copyFrom(myOrigInjection);
+    }
   }
 
   protected abstract void apply(T other);
 
-  @SuppressWarnings({"unchecked"})
+  @Override
   public final void reset() {
+    if (!myOtherPanels.isEmpty()) {
+      myEditCopy.copyFrom(myOrigInjection);
+    }
     for (Field panel : myOtherPanels) {
       getField(panel).reset();
     }
-    myEditCopy.copyFrom(myOrigInjection);
-    UIUtil.invokeAndWaitIfNeeded(new Runnable() {
-      public void run() {
-        resetImpl();
-      }
-    });
+    UIUtil.invokeAndWaitIfNeeded((Runnable)() -> resetImpl());
   }
 
   protected abstract void resetImpl();
 
+  @Override
   public void addUpdater(Runnable updater) {
     myUpdaters.add(updater);
     for (Field panel : myOtherPanels) {
@@ -136,12 +138,6 @@ public abstract class AbstractInjectionPanel<T extends BaseInjection> implements
     apply(myEditCopy);
     for (Runnable updater : myUpdaters) {
       updater.run();
-    }
-  }
-
-  protected class TreeUpdateListener extends DocumentAdapter {
-    public void documentChanged(DocumentEvent e) {
-      updateTree();
     }
   }
 }

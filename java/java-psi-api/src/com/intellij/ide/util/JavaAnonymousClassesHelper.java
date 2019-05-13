@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -48,9 +48,9 @@ public class JavaAnonymousClassesHelper {
   private static class AnonClassProvider implements ParameterizedCachedValueProvider<Map<PsiAnonymousClass, String>, PsiClass> {
     @Override
     public CachedValueProvider.Result<Map<PsiAnonymousClass, String>> compute(final PsiClass upper) {
-      final Map<PsiAnonymousClass, String> map = new THashMap<PsiAnonymousClass, String>();
+      final Map<PsiAnonymousClass, String> map = new THashMap<>();
       upper.accept(new JavaRecursiveElementWalkingVisitor() {
-        int index = 0;
+        int index;
 
         @Override
         public void visitAnonymousClass(PsiAnonymousClass aClass) {

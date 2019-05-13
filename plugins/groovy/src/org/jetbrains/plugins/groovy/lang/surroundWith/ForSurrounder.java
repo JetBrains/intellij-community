@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,11 +24,8 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrBlockStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrForStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrForClause;
 
-/**
- * User: Dmitry.Krasilschikov
- * Date: 25.05.2007
- */
 public class ForSurrounder extends GroovyManyStatementsSurrounder {
+  @Override
   protected GroovyPsiElement doSurroundElements(PsiElement[] elements, PsiElement context) throws IncorrectOperationException {
     GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(elements[0].getProject());
     GrForStatement whileStatement = (GrForStatement) factory.createStatementFromText("for(a in b){\n}", context);
@@ -36,6 +33,7 @@ public class ForSurrounder extends GroovyManyStatementsSurrounder {
     return whileStatement;
   }
 
+  @Override
   protected TextRange getSurroundSelectionRange(GroovyPsiElement element) {
     assert element instanceof GrForStatement;
     GrForClause clause = ((GrForStatement) element).getClause();
@@ -48,6 +46,7 @@ public class ForSurrounder extends GroovyManyStatementsSurrounder {
     return new TextRange(endOffset, endOffset);
   }
 
+  @Override
   public String getTemplateDescription() {
     return "for";
   }

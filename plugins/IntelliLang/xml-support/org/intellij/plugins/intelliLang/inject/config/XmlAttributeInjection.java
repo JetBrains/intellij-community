@@ -15,9 +15,7 @@
  */
 package org.intellij.plugins.intelliLang.inject.config;
 
-import com.intellij.openapi.util.JDOMExternalizer;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.patterns.compiler.PatternCompiler;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlAttributeValue;
@@ -25,9 +23,6 @@ import org.intellij.plugins.intelliLang.util.StringMatcher;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-
-import java.util.Collections;
-import java.util.List;
 
 import static org.intellij.plugins.intelliLang.inject.InjectorUtils.appendStringPattern;
 
@@ -61,8 +56,7 @@ public class XmlAttributeInjection extends AbstractTagInjection {
     return element instanceof XmlAttribute && matches((XmlAttribute)element);
   }
 
-  @NotNull
-  public String getDisplayName() {
+  public String getGeneratedName() {
     final String tag = getTagName();
     final String attributeName = getAttributeName();
     if (!attributeName.equals(StringMatcher.NONE.getPattern())) {
@@ -78,6 +72,7 @@ public class XmlAttributeInjection extends AbstractTagInjection {
 
   @Override
   public void generatePlaces() {
+    if (StringUtil.isEmpty(getDisplayName())) setDisplayName(getGeneratedName());
     setInjectionPlaces(new InjectionPlace(getCompiler().createElementPattern(getPatternString(this), getDisplayName()), true));
   }
 
@@ -99,23 +94,12 @@ public class XmlAttributeInjection extends AbstractTagInjection {
   public XmlAttributeInjection copyFrom(@NotNull BaseInjection o) {
     super.copyFrom(o);
     if (o instanceof XmlAttributeInjection) {
-      final XmlAttributeInjection other = (XmlAttributeInjection)o;
+      XmlAttributeInjection other = (XmlAttributeInjection)o;
+      setApplyToSubTags(other.isApplyToSubTags());
       setAttributeName(other.getAttributeName());
       setAttributeNamespace(other.getAttributeNamespace());
     }
     return this;
-  }
-
-  protected void readExternalImpl(Element e) {
-    super.readExternalImpl(e);
-    if (e.getAttribute("injector-id") == null) {
-      setAttributeName(JDOMExternalizer.readString(e, "ATT_NAME"));
-      setAttributeNamespace(JDOMExternalizer.readString(e, "ATT_NAMESPACE"));
-    }
-  }
-
-  protected void writeExternalImpl(Element e) {
-    super.writeExternalImpl(e);
   }
 
   @SuppressWarnings({"RedundantIfStatement"})
@@ -146,9 +130,9 @@ public class XmlAttributeInjection extends AbstractTagInjection {
     if (StringUtil.isNotEmpty(name)) appendStringPattern(result, ".withLocalName(", name, ")");
     if (StringUtil.isNotEmpty(namespace)) appendStringPattern(result, ".withNamespace(", namespace, ")");
     if (StringUtil.isNotEmpty(injection.getTagName()) || StringUtil.isNotEmpty(injection.getTagNamespace())) {
-      result.append(".withParent(").append(XmlTagInjection.getPatternString(injection)).append(")");
+      result.append(".").append(injection.isApplyToSubTags() ? "inside" : "withParent").append("(")
+        .append(XmlTagInjection.getPatternString(injection)).append(")");
     }
     return result.toString();
   }
-
 }

@@ -16,7 +16,7 @@
 
 package org.jetbrains.plugins.groovy;
 
-import com.intellij.codeInsight.TargetElementUtilBase;
+import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.openapi.util.Condition;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
@@ -43,71 +43,36 @@ public class GroovyGotoTest extends LightCodeInsightFixtureTestCase {
     for (String file : files) {
       myFixture.configureByFile(file);
     }
-    final TargetElementUtilBase targetUtil = TargetElementUtilBase.getInstance();
-    final PsiElement target = TargetElementUtilBase.findTargetElement(myFixture.getEditor(), targetUtil.getReferenceSearchFlags());
+    final TargetElementUtil targetUtil = TargetElementUtil.getInstance();
+    final PsiElement target = TargetElementUtil.findTargetElement(myFixture.getEditor(), targetUtil.getReferenceSearchFlags());
     assertTrue(verifier.value(target));
   }
 
-  public void testNewExpression() throws Throwable {
-    doTest(new Condition<PsiElement>() {
-      @Override
-      public boolean value(PsiElement element) {
-        return element instanceof GrMethod && ((GrMethod)element).isConstructor() && ((GrMethod)element).getParameters().length == 0;
-      }
-    });
+  public void testNewExpression() {
+    doTest(element -> element instanceof GrMethod && ((GrMethod)element).isConstructor() && ((GrMethod)element).getParameters().length == 0);
   }
 
-  public void testNewExpressionWithNamedArgs() throws Throwable {
-    doTest(new Condition<PsiElement>() {
-      @Override
-      public boolean value(PsiElement element) {
-        return element instanceof PsiClass;
-      }
-    });
+  public void testNewExpressionWithNamedArgs() {
+    doTest(element -> element instanceof PsiClass);
   }
 
-  public void testNewExpressionWithMapParameter() throws Throwable {
-    doTest(new Condition<PsiElement>() {
-      @Override
-      public boolean value(PsiElement element) {
-        return element instanceof GrMethod && ((GrMethod)element).isConstructor() && ((GrMethod)element).getParameters().length == 1;
-      }
-    });
+  public void testNewExpressionWithMapParameter() {
+    doTest(element -> element instanceof GrMethod && ((GrMethod)element).isConstructor() && ((GrMethod)element).getParameters().length == 1);
   }
 
-  public void testNewExpressionWithAnonymousClass() throws Throwable {
-    doTest(new Condition<PsiElement>() {
-      @Override
-      public boolean value(PsiElement element) {
-        return element instanceof GrMethod && ((GrMethod)element).isConstructor() && ((GrMethod)element).getParameters().length == 2;
-      }
-    });
+  public void testNewExpressionWithAnonymousClass() {
+    doTest(element -> element instanceof GrMethod && ((GrMethod)element).isConstructor() && ((GrMethod)element).getParameters().length == 2);
   }
 
-  public void testGroovyDocParameter1() throws Throwable {
-    doTest(new Condition<PsiElement>() {
-      @Override
-      public boolean value(PsiElement element) {
-        return element instanceof GrParameter && ((GrParameter)element).getName().equals("x");
-      }
-    });
+  public void testGroovyDocParameter1() {
+    doTest(element -> element instanceof GrParameter && ((GrParameter)element).getName().equals("x"));
   }
 
-  public void testGroovyDocParameter2() throws Throwable {
-    doTest(new Condition<PsiElement>() {
-      @Override
-      public boolean value(PsiElement element) {
-        return element instanceof GrParameter && ((GrParameter)element).getName().equals("x");
-      }
-    });
+  public void testGroovyDocParameter2() {
+    doTest(element -> element instanceof GrParameter && ((GrParameter)element).getName().equals("x"));
   }
 
   public void testConstructorWithSuperClassSameName() {
-    doTest(new Condition<PsiElement>() {
-      @Override
-      public boolean value(PsiElement element) {
-        return element instanceof PsiMethod && "p2.MyClass".equals(((PsiMethod)element).getContainingClass().getQualifiedName());
-      }
-    }, "p/MyClass.groovy", "p2/MyClass.groovy");
+    doTest(element -> element instanceof PsiMethod && "p2.MyClass".equals(((PsiMethod)element).getContainingClass().getQualifiedName()), "p/MyClass.groovy", "p2/MyClass.groovy");
   }
 }

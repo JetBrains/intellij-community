@@ -26,20 +26,21 @@ import java.util.List;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: May 25, 2010
  */
 public class AntDomPropertyValueConverter extends WrappingConverter{
 
+  @Override
   @NotNull public List<Converter> getConverters(@NotNull GenericDomValue domElement) {
     final String raw = domElement.getRawText();
     if (raw != null) {
       if (raw.contains("${") || raw.contains(File.separator) || (File.separatorChar != '/' && raw.contains("/"))) {
-        return Collections.<Converter>singletonList(new AntPathConverter());
+        return Collections.singletonList(new AntPathConverter());
       }
     }
     return Collections.emptyList();
   }
 
+  @Override
   public Converter getConverter(@NotNull GenericDomValue domElement) {
     final List<Converter> converterList = getConverters(domElement);
     return converterList.isEmpty()? null : converterList.get(0);

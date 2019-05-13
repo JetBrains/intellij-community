@@ -59,15 +59,16 @@ public class XsltDocumentationProvider implements DocumentationProvider {
     private SoftReference<Templates> myTemplates;
     private SoftReference<Document> myDocument;
 
+    @Override
     @Nullable
     public List<String> getUrlFor(PsiElement psiElement, PsiElement psiElement1) {
         if (psiElement instanceof XsltElement) return null;
 
         final String category;
         final String name;
-        final XmlTag tag = getTag(psiElement1);
-        if (tag != null) {
-            name = tag.getLocalName();
+        final String tagName = getTagName(psiElement);
+        if (tagName != null) {
+            name = tagName;
             category = "element";
         } else if (psiElement instanceof XPathFunction) {
             name = ((XPathFunction)psiElement).getName();
@@ -93,6 +94,7 @@ public class XsltDocumentationProvider implements DocumentationProvider {
         return null;
     }
 
+    @Override
     @Nullable
     public String generateDoc(PsiElement psiElement, PsiElement psiElement1) {
         if (psiElement instanceof DocElement) {
@@ -107,16 +109,16 @@ public class XsltDocumentationProvider implements DocumentationProvider {
                 p = p.getPrevSibling();
             }
             if (p instanceof XmlComment) {
-                final String commentText = XmlUtil.getCommentText((XmlComment)p);
-                return commentText != null ? commentText.replaceAll("&", "&amp;").replaceAll("<", "&lt;") : null;
+                final String commentText = ((XmlComment)p).getCommentText();
+                return commentText.replaceAll("&", "&amp;").replaceAll("<", "&lt;");
             } else {
                 return null;
             }
         }
 
-        final XmlTag tag = getTag(psiElement1);
-        if (tag != null) {
-            return getDocumentation(tag.getLocalName(), "element");
+        final String name = getTagName(psiElement);
+        if (name != null) {
+            return getDocumentation(name, "element");
         } else if (psiElement instanceof XPathFunction) {
             return getDocumentation(((XPathFunction)psiElement).getName(), "function");
         }
@@ -149,38 +151,39 @@ public class XsltDocumentationProvider implements DocumentationProvider {
     }
 
     @Nullable
-    private static XmlTag getTag(PsiElement psiElement1) {
-        if (psiElement1 == null) return null;
-        final PsiElement element;
-        if (psiElement1.getParent() instanceof XmlAttribute) {
-            final XmlAttribute xmlAttribute = ((XmlAttribute)psiElement1.getParent());
-            element = xmlAttribute.getParent();
-        } else {
-            element = psiElement1.getParent();
+    private static String getTagName(@Nullable PsiElement psiElement1) {
+      XmlTag xmlTag = PsiTreeUtil.getParentOfType(psiElement1, XmlTag.class, false);
+      if (xmlTag != null) {
+        if (XsltSupport.isXsltTag(xmlTag)) {
+          return xmlTag.getLocalName();
         }
-        if (element instanceof XmlTag) {
-            final XmlTag tag = (XmlTag)element;
-            if (XsltSupport.isXsltTag(tag)) {
-                return tag;
+        else if (XmlUtil.ourSchemaUrisList.contains(xmlTag.getNamespace())) {
+          PsiFile file = xmlTag.getContainingFile();
+          if (file instanceof XmlFile) {
+            XmlTag tag = ((XmlFile)file).getRootTag();
+            if (tag != null && XsltSupport.XSLT_NS.equals(tag.getAttributeValue("targetNamespace"))) {
+              return xmlTag.getAttributeValue("name");
             }
+          }
         }
-        return null;
+      }
+      return null;
     }
 
     private Document getDocumentationDocument() throws IOException, JDOMException {
-        Document d;
-        if (myDocument == null || ((d = myDocument.get()) == null)) {
+        Document d = com.intellij.reference.SoftReference.dereference(myDocument);
+        if (d == null) {
             d = new SAXBuilder().build(XsltSupport.class.getResource("resources/documentation.xml"));
-            myDocument = new SoftReference<Document>(d);
+            myDocument = new SoftReference<>(d);
         }
         return d;
     }
 
     private Templates getTemplate() throws TransformerConfigurationException, IOException {
-        Templates t;
-        if (myTemplates == null || (t = myTemplates.get()) == null) {
+        Templates t = com.intellij.reference.SoftReference.dereference(myTemplates);
+        if (t == null) {
             t = TransformerFactory.newInstance().newTemplates(makeSource("resources/documentation.xsl"));
-            myTemplates = new SoftReference<Templates>(t);
+            myTemplates = new SoftReference<>(t);
         }
         return t;
     }
@@ -190,6 +193,7 @@ public class XsltDocumentationProvider implements DocumentationProvider {
         return new StreamSource(resource.openStream(), resource.toExternalForm());
     }
 
+    @Override
     @Nullable
     public PsiElement getDocumentationElementForLookupItem(PsiManager mgr, Object object, PsiElement psiElement) {
         if (object instanceof String) {
@@ -199,7 +203,7 @@ public class XsltDocumentationProvider implements DocumentationProvider {
                     final String prefix = tag.getNamespacePrefix();
                     if (prefix.length() == 0) {
                         return new DocElement(mgr, psiElement, "element", (String)object);
-                    } else if (StringUtil.startsWithConcatenationOf(((String)object), prefix, ":")) {
+                    } else if (StringUtil.startsWithConcatenation(((String)object), prefix, ":")) {
                       return new DocElement(mgr, psiElement, "element", ((String)object).substring(prefix.length() + 1));
                     }
                 }
@@ -216,6 +220,7 @@ public class XsltDocumentationProvider implements DocumentationProvider {
         return null;
     }
 
+    @Override
     @Nullable
     public PsiElement getDocumentationElementForLink(PsiManager mgr, String string, PsiElement psiElement) {
         final String[] strings = string.split("\\$");
@@ -225,6 +230,7 @@ public class XsltDocumentationProvider implements DocumentationProvider {
         return null;
     }
 
+    @Override
     @Nullable
     public String getQuickNavigateInfo(PsiElement element, PsiElement originalElement) {
         return null;
@@ -235,7 +241,7 @@ public class XsltDocumentationProvider implements DocumentationProvider {
         private final String myCategory;
         private final String myName;
 
-        public DocElement(PsiManager mgr, PsiElement element, String category, String name) {
+        DocElement(PsiManager mgr, PsiElement element, String category, String name) {
             super(mgr, XsltLanguage.INSTANCE);
             myElement = element;
             myCategory = category;
@@ -246,18 +252,22 @@ public class XsltDocumentationProvider implements DocumentationProvider {
             return myCategory;
         }
 
+        @Override
         public PsiElement setName(@NotNull @NonNls String name) throws IncorrectOperationException {
             throw new IncorrectOperationException("Unsupported");
         }
 
+        @Override
         public String getName() {
             return myName;
         }
 
+        @Override
         public String toString() {
             return "DocElement";
         }
 
+        @Override
         public PsiElement copy() {
             return this;
         }
@@ -267,6 +277,7 @@ public class XsltDocumentationProvider implements DocumentationProvider {
             return myElement != null && myElement.isValid();
         }
 
+        @Override
         @Nullable
         public PsiFile getContainingFile() {
             if (!isValid()) {

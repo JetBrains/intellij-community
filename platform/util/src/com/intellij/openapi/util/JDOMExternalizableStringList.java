@@ -1,29 +1,20 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 package com.intellij.openapi.util;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.util.ReflectionUtil;
 import org.jdom.Element;
+import org.jdom.IllegalDataException;
 import org.jetbrains.annotations.NotNull;
-import sun.reflect.Reflection;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 
 @SuppressWarnings({"HardCodedStringLiteral"})
+@Deprecated
 public class JDOMExternalizableStringList extends ArrayList<String> implements JDOMExternalizable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.util.JDOMExternalizableStringList");
 
@@ -41,50 +32,59 @@ public class JDOMExternalizableStringList extends ArrayList<String> implements J
   public JDOMExternalizableStringList() {
   }
 
-  public JDOMExternalizableStringList(@NotNull Collection<? extends String> c) {
+  public JDOMExternalizableStringList(@NotNull Collection<String> c) {
     super(c);
   }
 
-  public void readExternal(Element element) throws InvalidDataException {
-    clear();
+  @Override
+  public void readExternal(Element element) {
+    readList(this, element);
+  }
 
-    for (final Object o : element.getChildren()) {
-      Element listElement = (Element)o;
-      if (ATTR_LIST.equals(listElement.getName())) {
-        final ClassLoader classLoader = Reflection.getCallerClass(2).getClassLoader();
-        for (final Object o1 : listElement.getChildren()) {
-          Element listItemElement = (Element)o1;
-          if (!ATTR_ITEM.equals(listItemElement.getName())) {
-            throw new InvalidDataException(
-              "Unable to read list item. Unknown element found: " + listItemElement.getName());
-          }
-          String itemClassString = listItemElement.getAttributeValue(ATTR_CLASS);
-          Class itemClass;
-          try {
-            itemClass = Class.forName(itemClassString, true, classLoader);
-          }
-          catch (ClassNotFoundException ex) {
-            throw new InvalidDataException(
-              "Unable to read list item: unable to load class: " + itemClassString + " \n" + ex.getMessage());
-          }
+  public static void readList(@NotNull List<? super String> strings, Element element) {
+    strings.clear();
 
-          String listItem = listItemElement.getAttributeValue(ATTR_VALUE);
-
-          LOG.assertTrue(String.class.equals(itemClass));
-
-          add(listItem);
+    Class callerClass = null;
+    for (Element listElement : element.getChildren(ATTR_LIST)) {
+      if (callerClass == null) {
+        callerClass = ReflectionUtil.findCallerClass(2);
+        assert callerClass != null;
+      }
+      final ClassLoader classLoader = callerClass.getClassLoader();
+      for (Element listItemElement : listElement.getChildren(ATTR_ITEM)) {
+        if (!ATTR_ITEM.equals(listItemElement.getName())) {
+          throw new IllegalDataException("Unable to read list item. Unknown element found: " + listItemElement.getName());
         }
+        String itemClassString = listItemElement.getAttributeValue(ATTR_CLASS);
+        Class itemClass;
+        try {
+          itemClass = itemClassString == null ? String.class : Class.forName(itemClassString, true, classLoader);
+        }
+        catch (ClassNotFoundException ex) {
+          throw new IllegalDataException("Unable to read list item: unable to load class: " + itemClassString + " \n" + ex.getMessage());
+        }
+
+        String listItem = listItemElement.getAttributeValue(ATTR_VALUE);
+
+        LOG.assertTrue(String.class.equals(itemClass));
+
+        strings.add(listItem);
       }
     }
   }
 
-  public void writeExternal(Element element) throws WriteExternalException {
-    int listSize = size();
+  @Override
+  public void writeExternal(Element element) {
+    writeList(this, element);
+  }
+
+  private static void writeList(@NotNull List<String> strings, @NotNull Element element) {
+    int listSize = strings.size();
     Element listElement = new Element(ATTR_LIST);
     listElement.setAttribute(ATTR_LISTSIZE, Integer.toString(listSize));
     element.addContent(listElement);
     for (int i = 0; i < listSize; i++) {
-      String listItem = get(i);
+      String listItem = strings.get(i);
       if (listItem != null) {
         Element itemElement = new Element(ATTR_ITEM);
         itemElement.setAttribute(ATTR_INDEX, Integer.toString(i));

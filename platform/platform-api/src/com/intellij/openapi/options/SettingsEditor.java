@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.options;
 
 import com.intellij.openapi.Disposable;
@@ -20,10 +6,10 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Factory;
 import com.intellij.ui.UserActivityListener;
 import com.intellij.ui.UserActivityWatcher;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -31,19 +17,21 @@ import java.util.List;
  * {@link #getComponent()} should be called before {@link #resetFrom(Object)}
  */
 public abstract class SettingsEditor<Settings> implements Disposable {
-  private List<SettingsEditorListener<Settings>> myListeners;
+  private final List<SettingsEditorListener<Settings>> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
   private UserActivityWatcher myWatcher;
   private boolean myIsInUpdate = false;
   private final Factory<Settings> mySettingsFactory;
   private CompositeSettingsEditor<Settings> myOwner;
   private JComponent myEditorComponent;
 
-  protected abstract void resetEditorFrom(Settings s);
-  protected abstract void applyEditorTo(Settings s) throws ConfigurationException;
+  protected abstract void resetEditorFrom(@NotNull Settings s);
+  protected abstract void applyEditorTo(@NotNull Settings s) throws ConfigurationException;
 
   @NotNull
   protected abstract JComponent createEditor();
-  protected abstract void disposeEditor();
+
+  protected void disposeEditor() {
+  }
 
   public SettingsEditor() {
     this(null);
@@ -52,6 +40,7 @@ public abstract class SettingsEditor<Settings> implements Disposable {
   public SettingsEditor(Factory<Settings> settingsFactory) {
     mySettingsFactory = settingsFactory;
     Disposer.register(this, new Disposable() {
+      @Override
       public void dispose() {
         disposeEditor();
         uninstallWatcher();
@@ -59,6 +48,7 @@ public abstract class SettingsEditor<Settings> implements Disposable {
     });
   }
 
+  @NotNull
   public Settings getSnapshot() throws ConfigurationException {
     if (myOwner != null) return myOwner.getSnapshot();
 
@@ -80,13 +70,19 @@ public abstract class SettingsEditor<Settings> implements Disposable {
   }
 
   public final void resetFrom(Settings s) {
-    myIsInUpdate = true;
+    bulkUpdate(() -> resetEditorFrom(s));
+  }
+
+  public final void bulkUpdate(Runnable runnable) {
+    boolean wasInUpdate = myIsInUpdate;
     try {
-      resetEditorFrom(s);
+      myIsInUpdate = true;
+      runnable.run();
     }
     finally {
-      myIsInUpdate = false;
+      myIsInUpdate = wasInUpdate;
     }
+    fireEditorStateChanged();
   }
 
   public final void applyTo(Settings s) throws ConfigurationException {
@@ -101,6 +97,7 @@ public abstract class SettingsEditor<Settings> implements Disposable {
     return myEditorComponent;
   }
 
+  @Override
   public final void dispose() {
   }
 
@@ -112,6 +109,7 @@ public abstract class SettingsEditor<Settings> implements Disposable {
     myWatcher = new UserActivityWatcher();
     myWatcher.register(c);
     UserActivityListener userActivityListener = new UserActivityListener() {
+      @Override
       public void stateChanged() {
         fireEditorStateChanged();
       }
@@ -120,20 +118,16 @@ public abstract class SettingsEditor<Settings> implements Disposable {
   }
 
   public final void addSettingsEditorListener(SettingsEditorListener<Settings> listener) {
-    if (myListeners == null) myListeners = new ArrayList<SettingsEditorListener<Settings>>();
     myListeners.add(listener);
   }
 
   public final void removeSettingsEditorListener(SettingsEditorListener<Settings> listener) {
-    if (myListeners == null) return;
     myListeners.remove(listener);
-    if (myListeners.size() == 0) myListeners = null;
   }
 
   protected final void fireEditorStateChanged() {
     if (myIsInUpdate || myListeners == null) return;
-    SettingsEditorListener[] listeners = myListeners.toArray(new SettingsEditorListener[myListeners.size()]);
-    for (SettingsEditorListener listener : listeners) {
+    for (SettingsEditorListener listener : myListeners) {
       listener.stateChanged(this);
     }
   }

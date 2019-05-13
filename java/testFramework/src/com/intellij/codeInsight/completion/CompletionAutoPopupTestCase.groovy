@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,8 @@ import com.intellij.codeInsight.lookup.LookupManager
 import com.intellij.codeInsight.lookup.impl.LookupImpl
 import com.intellij.testFramework.fixtures.CompletionAutoPopupTester
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
+import org.jetbrains.annotations.NotNull
+
 /**
  * @author peter
  */
@@ -35,10 +37,10 @@ abstract class CompletionAutoPopupTestCase extends LightCodeInsightFixtureTestCa
   }
 
   @Override protected boolean runInDispatchThread() {
-    return false;
+    return false
   }
 
-  @Override protected void invokeTestRunnable(Runnable runnable) {
+  @Override protected void invokeTestRunnable(@NotNull Runnable runnable) {
     myTester.runWithAutoPopupEnabled(runnable)
   }
 

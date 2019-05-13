@@ -13,9 +13,10 @@
 package org.netbeans.lib.cvsclient.admin;
 
 import com.intellij.openapi.util.io.FileUtil;
-import org.netbeans.lib.cvsclient.util.BugLog;
-import org.netbeans.lib.cvsclient.JavaCvsSrcBundle;
+import gnu.trove.THashMap;
 import org.jetbrains.annotations.NonNls;
+import org.netbeans.lib.cvsclient.JavaCvsSrcBundle;
+import org.netbeans.lib.cvsclient.util.BugLog;
 
 import java.io.*;
 import java.util.*;
@@ -27,7 +28,7 @@ public final class Entries {
 
   // Fields =================================================================
 
-  private final Map<String, Entry> fileNameToEntryMap = new HashMap<String, Entry>();
+  private final Map<String, Entry> fileNameToEntryMap = new THashMap<>();
   @NonNls private static final String DIRECTORY_PREFIX = "D";
 
   // Accessing ==============================================================
@@ -133,6 +134,7 @@ public final class Entries {
 
   private static final class EntriesComparator implements Comparator<Entry> {
 
+    @Override
     public int compare(Entry entry1, Entry entry2) {
       if (entry1.isDirectory() != entry2.isDirectory()) {
         if (entry1.isDirectory()) {

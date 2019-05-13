@@ -1,136 +1,121 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.ui.laf.darcula.ui;
 
-import com.intellij.ide.ui.laf.darcula.DarculaUIUtil;
-import com.intellij.openapi.ui.GraphicsConfig;
-import com.intellij.ui.Gray;
-import com.intellij.util.ui.EmptyIcon;
-import com.intellij.util.ui.UIUtil;
-import sun.swing.SwingUtilities2;
+import com.intellij.openapi.util.SystemInfo;
+import com.intellij.util.ui.*;
 
 import javax.swing.*;
 import javax.swing.plaf.ComponentUI;
-import javax.swing.plaf.IconUIResource;
 import javax.swing.plaf.basic.BasicHTML;
 import javax.swing.plaf.metal.MetalCheckBoxUI;
 import javax.swing.text.View;
 import java.awt.*;
+import java.beans.PropertyChangeListener;
+
+import static com.intellij.ide.ui.laf.darcula.DarculaUIUtil.isMultiLineHTML;
 
 /**
  * @author Konstantin Bulenkov
  */
 public class DarculaCheckBoxUI extends MetalCheckBoxUI {
-  @SuppressWarnings("MethodOverridesStaticMethodOfSuperclass")
+  private static final Icon DEFAULT_ICON = JBUI.scale(EmptyIcon.create(18)).asUIResource();
+
+  private final PropertyChangeListener textChangedListener = e -> updateTextPosition((AbstractButton)e.getSource());
+
+  @SuppressWarnings({"MethodOverridesStaticMethodOfSuperclass", "unused"})
   public static ComponentUI createUI(JComponent c) {
-    if (UIUtil.getParentOfType(CellRendererPane.class, c) != null) {
-      c.setBorder(null);
-    }
     return new DarculaCheckBoxUI();
   }
 
   @Override
-  public synchronized void paint(Graphics g2d, JComponent c) {
+  public void installUI(JComponent c) {
+    super.installUI(c);
+    if (UIUtil.getParentOfType(CellRendererPane.class, c) != null) {
+      c.setBorder(null);
+    }
+  }
+
+  @Override
+  public void installDefaults(AbstractButton b) {
+    super.installDefaults(b);
+    b.setIconTextGap(textIconGap());
+    updateTextPosition(b);
+  }
+
+  private static void updateTextPosition(AbstractButton b) {
+    b.setVerticalTextPosition(isMultiLineHTML(b.getText()) ? SwingConstants.TOP : SwingConstants.CENTER);
+  }
+
+  @Override
+  protected void installListeners(AbstractButton b) {
+    super.installListeners(b);
+    b.addPropertyChangeListener(AbstractButton.TEXT_CHANGED_PROPERTY, textChangedListener);
+  }
+
+  @Override
+  protected void uninstallListeners(AbstractButton button) {
+    super.uninstallListeners(button);
+    button.removePropertyChangeListener(AbstractButton.TEXT_CHANGED_PROPERTY, textChangedListener);
+  }
+
+  protected int textIconGap() {
+    return JBUI.scale(5);
+  }
+
+  @SuppressWarnings("NonSynchronizedMethodOverridesSynchronizedMethod")
+  @Override
+  public void paint(Graphics g2d, JComponent c) {
     Graphics2D g = (Graphics2D)g2d;
-    JCheckBox b = (JCheckBox) c;
-    final ButtonModel model = b.getModel();
-    final Dimension size = c.getSize();
-    final Font font = c.getFont();
+    Dimension size = c.getSize();
 
-    g.setFont(font);
-    FontMetrics fm = SwingUtilities2.getFontMetrics(c, g, font);
-
-    Rectangle viewRect = new Rectangle(size);
+    AbstractButton b = (AbstractButton) c;
+    Rectangle viewRect = updateViewRect(b, new Rectangle(size));
     Rectangle iconRect = new Rectangle();
     Rectangle textRect = new Rectangle();
 
-    Insets i = c.getInsets();
-    viewRect.x += i.left;
-    viewRect.y += i.top;
-    viewRect.width -= (i.right + viewRect.x);
-    viewRect.height -= (i.bottom + viewRect.y);
+    Font f = c.getFont();
+    g.setFont(f);
+    FontMetrics fm = UIUtilities.getFontMetrics(c, g, f);
 
-    String text = SwingUtilities.layoutCompoundLabel(c, fm, b.getText(), getDefaultIcon(),
-                                                     b.getVerticalAlignment(), b.getHorizontalAlignment(),
-                                                     b.getVerticalTextPosition(), b.getHorizontalTextPosition(),
-                                                     viewRect, iconRect, textRect, b.getIconTextGap());
+    String text = SwingUtilities.layoutCompoundLabel(
+      c, fm, b.getText(), getDefaultIcon(),
+      b.getVerticalAlignment(), b.getHorizontalAlignment(),
+      b.getVerticalTextPosition(), b.getHorizontalTextPosition(),
+      viewRect, iconRect, textRect, b.getIconTextGap());
 
-    //background
-    if(c.isOpaque()) {
+    if (c.isOpaque()) {
       g.setColor(b.getBackground());
-      g.fillRect(0,0, size.width, size.height);
+      g.fillRect(0, 0, size.width, size.height);
     }
 
-    final int x = iconRect.x + 3;
-    final int y = iconRect.y + 3;
-    final int w = iconRect.width - 6;
-    final int h = iconRect.height - 6;
-    final int u = 1;
+    drawCheckIcon(c, g, b, iconRect, b.isSelected(), b.isEnabled());
+    drawText(c, g, b, fm, textRect, text);
+  }
 
-    g.translate(x, y);
-    final Paint paint = UIUtil.getGradientPaint(w / 2, 0, b.getBackground().brighter(),
-                                                  w / 2, h, b.getBackground());
-    g.setPaint(paint);
-    g.fillRect(u, u, w - 2 * u, h - 2 * u);
-
-    //setup AA for lines
-    final GraphicsConfig config = new GraphicsConfig(g);
-    g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-    g.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, RenderingHints.VALUE_STROKE_DEFAULT);
-
-    final boolean armed = b.getModel().isArmed();
-
-    if (c.hasFocus()) {
-      g.setPaint(UIUtil.getGradientPaint(w/2, 1, armed ? Gray._100: Gray._120, w/2, h, armed ? Gray._55 : Gray._75));
-      g.fillRoundRect(0, 0, w - 2, h - 2, 4, 4);
-
-      DarculaUIUtil.paintFocusRing(g, 1, 1, w - 2, h - 2);
-    } else {
-      g.setPaint(UIUtil.getGradientPaint(w / 2, 1, Gray._110, w / 2, h, Gray._95));
-      g.fillRoundRect(0, 0, w , h , 4, 4);
-
-      g.setPaint(UIUtil.getGradientPaint(w / 2, 1, Gray._120.withAlpha(90), w / 2, h, Gray._105.withAlpha(90)));
-      g.drawRoundRect(0, 1, w, h - 1, 4, 4);
-
-      g.setPaint(Gray._40.withAlpha(180));
-      g.drawRoundRect(0, 0, w, h - 1, 4, 4);
+  protected Rectangle updateViewRect(AbstractButton b, Rectangle viewRect) {
+    if (!(b.getBorder() instanceof DarculaCheckBoxBorder)) {
+      JBInsets.removeFrom(viewRect, b.getInsets());
     }
+    return viewRect;
+  }
 
-    if (b.getModel().isSelected()) {
-      g.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, RenderingHints.VALUE_STROKE_PURE);
-      g.setStroke(new BasicStroke(u*2.0f, BasicStroke.CAP_ROUND,BasicStroke.JOIN_ROUND));
-      g.setPaint(Gray._30);
-      g.drawLine(4*u, 7*u, 7*u, 11*u);
-      g.drawLine(7*u, 11*u, w, 2*u);
-      g.setPaint(Gray._200);
-      g.drawLine(4*u, 5*u, 7*u, 9*u);
-      g.drawLine(7*u, 9*u, w, 0);
-    }
-    g.translate(-x, -y);
-    config.restore();
+  protected void drawCheckIcon(JComponent c, Graphics2D g, AbstractButton b, Rectangle iconRect, boolean selected, boolean enabled) {
+    String iconName = isIndeterminate(b) ? "checkBoxIndeterminate" : "checkBox";
+    Icon icon = LafIconLookup.getIcon(iconName, selected || isIndeterminate(b), c.hasFocus(), b.isEnabled());
+    icon.paintIcon(c, g, iconRect.x, iconRect.y);
+  }
 
+  protected void drawText(JComponent c, Graphics2D g, AbstractButton b, FontMetrics fm, Rectangle textRect, String text) {
     //text
     if(text != null) {
       View view = (View) c.getClientProperty(BasicHTML.propertyKey);
       if (view != null) {
         view.paint(g, textRect);
       } else {
-        g.setColor(model.isEnabled() ? b.getForeground() : getDisabledTextColor());
-        SwingUtilities2.drawStringUnderlineCharAt(c, g, text,
-                                                  b.getDisplayedMnemonicIndex(),
+        g.setColor(b.isEnabled() ? b.getForeground() : getDisabledTextColor());
+        final int mnemonicIndex = SystemInfo.isMac && !UIManager.getBoolean("Button.showMnemonics") ? -1 : b.getDisplayedMnemonicIndex();
+        UIUtilities.drawStringUnderlineCharAt(c, g, text,
+                                                  mnemonicIndex,
                                                   textRect.x,
                                                   textRect.y + fm.getAscent());
       }
@@ -138,7 +123,29 @@ public class DarculaCheckBoxUI extends MetalCheckBoxUI {
   }
 
   @Override
+  public Dimension getPreferredSize(JComponent c) {
+    return updatePreferredSize(c, super.getPreferredSize(c));
+  }
+
+  @Override
+  public Dimension getMaximumSize(JComponent c) {
+    return getPreferredSize(c);
+  }
+
+  protected Dimension updatePreferredSize(JComponent c, Dimension size) {
+    if (c.getBorder() instanceof DarculaCheckBoxBorder) {
+      JBInsets.removeFrom(size, c.getInsets());
+    }
+    return size;
+  }
+
+  @Override
   public Icon getDefaultIcon() {
-    return new IconUIResource(EmptyIcon.create(20));
+    return DEFAULT_ICON;
+  }
+
+  protected boolean isIndeterminate(AbstractButton checkBox) {
+    return "indeterminate".equals(checkBox.getClientProperty("JButton.selectedState")) ||
+      checkBox instanceof ThreeStateCheckBox && ((ThreeStateCheckBox)checkBox).getState() == ThreeStateCheckBox.State.DONT_CARE;
   }
 }

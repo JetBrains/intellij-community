@@ -1,3 +1,4 @@
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.intellij.plugins.relaxNG.model.resolve;
 
 import com.intellij.ide.highlighter.XmlFileType;
@@ -6,7 +7,6 @@ import com.intellij.navigation.ItemPresentation;
 import com.intellij.navigation.NavigationItem;
 import com.intellij.navigation.PsiElementNavigationItem;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
-import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.JarFileSystem;
@@ -23,6 +23,7 @@ import com.intellij.util.indexing.*;
 import com.intellij.util.io.EnumeratorStringDescriptor;
 import com.intellij.util.io.KeyDescriptor;
 import com.intellij.util.text.CharArrayUtil;
+import com.intellij.util.xml.NanoXmlBuilder;
 import com.intellij.util.xml.NanoXmlUtil;
 import org.intellij.plugins.relaxNG.ApplicationLoader;
 import org.intellij.plugins.relaxNG.compact.RncFileType;
@@ -36,11 +37,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.*;
 
-/*
-* Created by IntelliJ IDEA.
-* User: sweinreuter
-* Date: 09.06.2010
-*/
 public class RelaxSymbolIndex extends ScalarIndexExtension<String> {
   @NonNls
   public static final ID<String, Void> NAME = ID.create("RelaxSymbolIndex");
@@ -51,9 +47,31 @@ public class RelaxSymbolIndex extends ScalarIndexExtension<String> {
 
   public static NavigationItem[] getSymbolsByName(final String name, Project project, boolean includeNonProjectItems) {
     final GlobalSearchScope scope = includeNonProjectItems ? GlobalSearchScope.allScope(project) : GlobalSearchScope.projectScope(project);
-    final SymbolCollector processor = new SymbolCollector(name, project, scope);
-    FileBasedIndex.getInstance().processValues(NAME, name, null, processor, scope);
-    return processor.getResult();
+    final Collection<NavigationItem> result = new ArrayList<>();
+    PsiManager psiManager = PsiManager.getInstance(project);
+
+    for(VirtualFile file:FileBasedIndex.getInstance().getContainingFiles(NAME, name, scope)) {
+      final PsiFile psiFile = psiManager.findFile(file);
+
+      if (psiFile instanceof XmlFile) {
+        final Grammar grammar = GrammarFactory.getGrammar((XmlFile)psiFile);
+
+        if (grammar != null) {
+          grammar.acceptChildren(new CommonElement.Visitor() {
+            @Override
+            public void visitDefine(Define define) {
+              if (name.equals(define.getName())) {
+                final PsiElement psi = define.getPsiElement();
+                if (psi != null) {
+                  MyNavigationItem.add((NavigationItem)define.getPsiElement(), result);
+                }
+              }
+            }
+          });
+        }
+      }
+    }
+    return result.toArray(NavigationItem.EMPTY_NAVIGATION_ITEM_ARRAY);
   }
 
   @NotNull
@@ -68,13 +86,13 @@ public class RelaxSymbolIndex extends ScalarIndexExtension<String> {
     return new DataIndexer<String, Void, FileContent>() {
       @Override
       @NotNull
-      public Map<String, Void> map(FileContent inputData) {
-        final HashMap<String, Void> map = new HashMap<String, Void>();
+      public Map<String, Void> map(@NotNull FileContent inputData) {
+        final HashMap<String, Void> map = new HashMap<>();
         if (inputData.getFileType() == XmlFileType.INSTANCE) {
           CharSequence inputDataContentAsText = inputData.getContentAsText();
-          if (CharArrayUtil.indexOf(inputDataContentAsText, ApplicationLoader.RNG_NAMESPACE, 0) == -1) return Collections.EMPTY_MAP;
-          NanoXmlUtil.parse(CharArrayUtil.readerFromCharSequence(inputData.getContentAsText()), new NanoXmlUtil.IXMLBuilderAdapter() {
-            NanoXmlUtil.IXMLBuilderAdapter attributeHandler;
+          if (CharArrayUtil.indexOf(inputDataContentAsText, ApplicationLoader.RNG_NAMESPACE, 0) == -1) return Collections.emptyMap();
+          NanoXmlUtil.parse(CharArrayUtil.readerFromCharSequence(inputData.getContentAsText()), new NanoXmlBuilder() {
+            NanoXmlBuilder attributeHandler;
             int depth;
 
             @Override
@@ -85,13 +103,13 @@ public class RelaxSymbolIndex extends ScalarIndexExtension<String> {
             }
 
             @Override
-            public void startElement(String name, String nsPrefix, String nsURI, String systemID, int lineNr) throws Exception {
+            public void startElement(String name, String nsPrefix, String nsURI, String systemID, int lineNr) {
               attributeHandler = null;
               if (depth == 1 && ApplicationLoader.RNG_NAMESPACE.equals(nsURI)) {
                 if ("define".equals(name)) {
-                  attributeHandler = new NanoXmlUtil.IXMLBuilderAdapter() {
+                  attributeHandler = new NanoXmlBuilder() {
                     @Override
-                    public void addAttribute(String key, String nsPrefix, String nsURI, String value, String type) throws Exception {
+                    public void addAttribute(String key, String nsPrefix, String nsURI, String value, String type) {
                       if ("name".equals(key) && (nsURI == null || nsURI.length() == 0) && value != null) {
                         map.put(value, null);
                       }
@@ -103,7 +121,7 @@ public class RelaxSymbolIndex extends ScalarIndexExtension<String> {
             }
 
             @Override
-            public void endElement(String name, String nsPrefix, String nsURI) throws Exception {
+            public void endElement(String name, String nsPrefix, String nsURI) {
               attributeHandler = null;
               depth--;
             }
@@ -130,21 +148,19 @@ public class RelaxSymbolIndex extends ScalarIndexExtension<String> {
     };
   }
 
+  @NotNull
   @Override
   public KeyDescriptor<String> getKeyDescriptor() {
-    return new EnumeratorStringDescriptor();
+    return EnumeratorStringDescriptor.INSTANCE;
   }
 
+  @NotNull
   @Override
   public FileBasedIndex.InputFilter getInputFilter() {
-    return new FileBasedIndex.InputFilter() {
+    return new DefaultFileTypeSpecificInputFilter(StdFileTypes.XML, RncFileType.getInstance()) {
       @Override
-      public boolean acceptInput(VirtualFile file) {
-        if (file.getFileSystem() instanceof JarFileSystem) {
-          return false; // there is lots and lots of custom XML inside zip files
-        }
-        final FileType fileType = file.getFileType();
-        return fileType == StdFileTypes.XML || fileType == RncFileType.getInstance();
+      public boolean acceptInput(@NotNull VirtualFile file) {
+        return !(file.getFileSystem() instanceof JarFileSystem);
       }
     };
   }
@@ -157,48 +173,6 @@ public class RelaxSymbolIndex extends ScalarIndexExtension<String> {
   @Override
   public int getVersion() {
     return 0;
-  }
-
-  private static class SymbolCollector implements FileBasedIndex.ValueProcessor<Void> {
-    private final GlobalSearchScope myScope;
-    private final PsiManager myMgr;
-    private final String myName;
-
-    private final Collection<NavigationItem> myResult = new ArrayList<NavigationItem>();
-
-    public SymbolCollector(String name, Project project, GlobalSearchScope scope) {
-      myMgr = PsiManager.getInstance(project);
-      myScope = scope;
-      myName = name;
-    }
-
-    @Override
-    public boolean process(VirtualFile file, Void kind) {
-      if (myScope.contains(file)) {
-        final PsiFile psiFile = myMgr.findFile(file);
-        if (psiFile instanceof XmlFile) {
-          final Grammar grammar = GrammarFactory.getGrammar((XmlFile)psiFile);
-          if (grammar != null) {
-            grammar.acceptChildren(new CommonElement.Visitor() {
-              @Override
-              public void visitDefine(Define define) {
-                if (myName.equals(define.getName())) {
-                  final PsiElement psi = define.getPsiElement();
-                  if (psi != null) {
-                    MyNavigationItem.add((NavigationItem)define.getPsiElement(), myResult);
-                  }
-                }
-              }
-            });
-          }
-        }
-      }
-      return true;
-    }
-
-    public NavigationItem[] getResult() {
-      return myResult.toArray(new NavigationItem[myResult.size()]);
-    }
   }
 
   private static class MyNavigationItem implements PsiElementNavigationItem, ItemPresentation {
@@ -243,7 +217,7 @@ public class RelaxSymbolIndex extends ScalarIndexExtension<String> {
 
     @Override
     public ItemPresentation getPresentation() {
-      return myPresentation != null ? this : null;
+      return this;
     }
 
     @Override
@@ -266,7 +240,7 @@ public class RelaxSymbolIndex extends ScalarIndexExtension<String> {
       return myItem.canNavigateToSource();
     }
 
-    public static void add(final NavigationItem item, Collection<NavigationItem> symbolNavItems) {
+    public static void add(final NavigationItem item, Collection<? super NavigationItem> symbolNavItems) {
       final ItemPresentation presentation;
       if (item instanceof PsiMetaOwner) {
         final PsiMetaData data = ((PsiMetaOwner)item).getMetaData();
@@ -278,8 +252,8 @@ public class RelaxSymbolIndex extends ScalarIndexExtension<String> {
               return metaData.getName();
             }
 
+            @NotNull
             @Override
-            @Nullable
             public String getLocationString() {
               return MyNavigationItem.getLocationString((PsiElement)item);
             }

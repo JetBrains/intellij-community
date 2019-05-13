@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,6 @@ package com.intellij.codeInsight.lookup;
 
 import com.intellij.openapi.util.ClassConditionKey;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * What to do if there's only one element in completion lookup? Should IDEA show lookup or just insert this element? Call
@@ -55,23 +54,18 @@ public enum AutoCompletionPolicy {
     return new PolicyDecorator(element, this);
   }
 
-  @Nullable
-  public static AutoCompletionPolicy getPolicy(LookupElement element) {
-    final PolicyDecorator decorator = element.as(PolicyDecorator.CLASS_CONDITION_KEY);
-    if (decorator != null) {
-      return decorator.myPolicy;
-    }
-    return null;
-  }
-
   private static class PolicyDecorator extends LookupElementDecorator<LookupElement> {
     public static final ClassConditionKey<PolicyDecorator> CLASS_CONDITION_KEY = ClassConditionKey.create(PolicyDecorator.class);
     private final AutoCompletionPolicy myPolicy;
 
-    public PolicyDecorator(LookupElement element, AutoCompletionPolicy policy) {
+    PolicyDecorator(LookupElement element, AutoCompletionPolicy policy) {
       super(element);
       myPolicy = policy;
     }
 
+    @Override
+    public AutoCompletionPolicy getAutoCompletionPolicy() {
+      return myPolicy;
+    }
   }
 }

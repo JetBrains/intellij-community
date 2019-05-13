@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,8 +16,12 @@
 package com.intellij.usages.impl.rules;
 
 import com.intellij.injected.editor.VirtualFileWindow;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.DataKey;
+import com.intellij.openapi.actionSystem.DataSink;
+import com.intellij.openapi.actionSystem.TypeSafeDataProvider;
 import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.vcs.FileStatus;
@@ -25,11 +29,8 @@ import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
-import com.intellij.usages.NamedPresentably;
-import com.intellij.usages.Usage;
-import com.intellij.usages.UsageGroup;
-import com.intellij.usages.UsageView;
-import com.intellij.usages.rules.UsageGroupingRule;
+import com.intellij.usages.*;
+import com.intellij.usages.rules.SingleParentUsageGroupingRule;
 import com.intellij.usages.rules.UsageInFile;
 import com.intellij.util.IconUtil;
 import org.jetbrains.annotations.NotNull;
@@ -40,15 +41,16 @@ import javax.swing.*;
 /**
  * @author max
  */
-public class FileGroupingRule implements UsageGroupingRule {
+public class FileGroupingRule extends SingleParentUsageGroupingRule implements DumbAware {
   private final Project myProject;
 
   public FileGroupingRule(Project project) {
     myProject = project;
   }
 
+  @Nullable
   @Override
-  public UsageGroup groupUsage(@NotNull Usage usage) {
+  public UsageGroup getParentGroupFor(@NotNull Usage usage, @NotNull UsageTarget[] targets) {
     VirtualFile virtualFile;
     if (usage instanceof UsageInFile && (virtualFile = ((UsageInFile)usage).getFile()) != null) {
       return new FileUsageGroup(myProject, virtualFile);
@@ -56,7 +58,7 @@ public class FileGroupingRule implements UsageGroupingRule {
     return null;
   }
 
-  protected static class FileUsageGroup implements UsageGroup, TypeSafeDataProvider, NamedPresentably {
+  public static class FileUsageGroup implements UsageGroup, TypeSafeDataProvider, NamedPresentably {
     private final Project myProject;
     private final VirtualFile myFile;
     private String myPresentableName;
@@ -131,18 +133,23 @@ public class FileGroupingRule implements UsageGroupingRule {
     }
 
     @Override
-    public int compareTo(UsageGroup usageGroup) {
-      return getText(null).compareToIgnoreCase(usageGroup.getText(null));
+    public int compareTo(@NotNull UsageGroup otherGroup) {
+      int compareTexts = getText(null).compareToIgnoreCase(otherGroup.getText(null));
+      if (compareTexts != 0) return compareTexts;
+      if (otherGroup instanceof FileUsageGroup) {
+        return myFile.getPath().compareTo(((FileUsageGroup)otherGroup).myFile.getPath());
+      }
+      return 0;
     }
 
     @Override
-    public void calcData(final DataKey key, final DataSink sink) {
+    public void calcData(@NotNull final DataKey key, @NotNull final DataSink sink) {
       if (!isValid()) return;
-      if (key == PlatformDataKeys.VIRTUAL_FILE) {
-        sink.put(PlatformDataKeys.VIRTUAL_FILE, myFile);
+      if (key == CommonDataKeys.VIRTUAL_FILE) {
+        sink.put(CommonDataKeys.VIRTUAL_FILE, myFile);
       }
-      if (key == LangDataKeys.PSI_ELEMENT) {
-        sink.put(LangDataKeys.PSI_ELEMENT, getPsiFile());
+      if (key == CommonDataKeys.PSI_ELEMENT) {
+        sink.put(CommonDataKeys.PSI_ELEMENT, getPsiFile());
       }
     }
 

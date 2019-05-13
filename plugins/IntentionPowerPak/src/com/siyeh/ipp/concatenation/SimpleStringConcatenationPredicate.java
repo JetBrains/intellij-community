@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2012 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2015 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,23 +16,26 @@
 package com.siyeh.ipp.concatenation;
 
 import com.intellij.codeInsight.AnnotationUtil;
+import com.intellij.psi.PsiAnnotationMethod;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ipp.base.PsiElementPredicate;
-import com.siyeh.ipp.psiutils.ConcatenationUtils;
 
 class SimpleStringConcatenationPredicate implements PsiElementPredicate {
 
   private final boolean excludeConcatenationsInsideAnnotations;
 
-  public SimpleStringConcatenationPredicate(boolean excludeConcatenationsInsideAnnotations) {
+  SimpleStringConcatenationPredicate(boolean excludeConcatenationsInsideAnnotations) {
     this.excludeConcatenationsInsideAnnotations = excludeConcatenationsInsideAnnotations;
   }
 
   @Override
   public boolean satisfiedBy(PsiElement element) {
-    if (!ConcatenationUtils.isConcatenation(element)) {
+    if (!ExpressionUtils.isConcatenation(element)) {
       return false;
     }
-    return !(excludeConcatenationsInsideAnnotations && AnnotationUtil.isInsideAnnotation(element));
+    return !(excludeConcatenationsInsideAnnotations && (AnnotationUtil.isInsideAnnotation(element) || 
+                                                        PsiTreeUtil.getParentOfType(element, PsiAnnotationMethod.class) != null));
   }
 }

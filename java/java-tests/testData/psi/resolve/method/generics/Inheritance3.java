@@ -11,6 +11,6 @@ class Test{
     }
 
     {
-        new A<Integer>().new B<Boolean>().getT().<ref>byteValue();
+        new A<Integer>().new B<Boolean>().getT().<caret>byteValue();
     }
 }

@@ -33,7 +33,7 @@ class AddModuleDependencyAction extends AddItemPopupAction<Module> {
   private final StructureConfigurableContext myContext;
   private final ClasspathPanel myClasspathPanel;
 
-  public AddModuleDependencyAction(final ClasspathPanel classpathPanel,
+  AddModuleDependencyAction(final ClasspathPanel classpathPanel,
                                    int actionIndex,
                                    StructureConfigurableContext context) {
     super(classpathPanel, actionIndex, ProjectBundle.message("classpath.add.module.dependency.action"),
@@ -49,11 +49,11 @@ class AddModuleDependencyAction extends AddItemPopupAction<Module> {
 
   private List<Module> getNotAddedModules() {
     final ModifiableRootModel rootModel = myClasspathPanel.getRootModel();
-    Set<Module> addedModules = new HashSet<Module>(Arrays.asList(rootModel.getModuleDependencies(true)));
+    Set<Module> addedModules = new HashSet<>(Arrays.asList(rootModel.getModuleDependencies(true)));
     addedModules.add(rootModel.getModule());
 
     final Module[] modules = myClasspathPanel.getModuleConfigurationState().getModulesProvider().getModules();
-    final List<Module> elements = new ArrayList<Module>();
+    final List<Module> elements = new ArrayList<>();
     for (final Module module : modules) {
       if (!addedModules.contains(module)) {
         elements.add(module);
@@ -80,7 +80,7 @@ class AddModuleDependencyAction extends AddItemPopupAction<Module> {
     private final String myDescription;
     private final ClasspathPanel myClasspathPanel;
 
-    public ModuleChooser(final ClasspathPanel classpathPanel,
+    ModuleChooser(final ClasspathPanel classpathPanel,
                          final List<Module> items,
                          final String title,
                          String description) {

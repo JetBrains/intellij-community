@@ -704,7 +704,7 @@ Attributes:
 @value - message text
 @type - the type of message 
   error - indicate page processing errors (e.g. incorrect date format)
-  warning - system level waring
+  warning - system level warning
   info - "Look Here"; draws attention to a section of the page (e.g. "Bill has the file checked out")
   alert - indicate important information (e.g. user successfully added)
   instruction - "Look Here"; draws attention to a section of the page (e.g. "Bill has the file checked out")

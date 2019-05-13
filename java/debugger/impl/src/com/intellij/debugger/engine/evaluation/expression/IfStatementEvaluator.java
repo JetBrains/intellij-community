@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,15 +31,17 @@ public class IfStatementEvaluator implements Evaluator {
   private Modifier myModifier;
 
   public IfStatementEvaluator(Evaluator conditionEvaluator, Evaluator thenEvaluator, Evaluator elseEvaluator) {
-    myConditionEvaluator = new DisableGC(conditionEvaluator);
-    myThenEvaluator = new DisableGC(thenEvaluator);
-    myElseEvaluator = elseEvaluator == null ? null : new DisableGC(elseEvaluator);
+    myConditionEvaluator = DisableGC.create(conditionEvaluator);
+    myThenEvaluator = DisableGC.create(thenEvaluator);
+    myElseEvaluator = elseEvaluator == null ? null : DisableGC.create(elseEvaluator);
   }
 
+  @Override
   public Modifier getModifier() {
     return myModifier;
   }
 
+  @Override
   public Object evaluate(EvaluationContextImpl context) throws EvaluateException {
     Object value = myConditionEvaluator.evaluate(context);
     if(!(value instanceof BooleanValue)) {
@@ -54,7 +56,7 @@ public class IfStatementEvaluator implements Evaluator {
           value = myElseEvaluator.evaluate(context);
           myModifier = myElseEvaluator.getModifier();
         } else {
-          value = context.getDebugProcess().getVirtualMachineProxy().mirrorOf();
+          value = context.getDebugProcess().getVirtualMachineProxy().mirrorOfVoid();
           myModifier = null;
         }
       }

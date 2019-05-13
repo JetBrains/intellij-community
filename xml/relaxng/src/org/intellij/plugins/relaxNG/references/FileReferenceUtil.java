@@ -29,11 +29,6 @@ import org.jetbrains.annotations.Nullable;
 
 import static com.intellij.patterns.XmlPatterns.*;
 
-/**
- * Created by IntelliJ IDEA.
- * User: sweinreuter
- * Date: 29.08.2007
- */
 public class FileReferenceUtil {
 
   public static PsiReference[] restrict(FileReferenceSet set, final Condition<PsiFile> cond) {
@@ -43,12 +38,7 @@ public class FileReferenceUtil {
   public static PsiReference[] restrict(FileReferenceSet set, final Condition<PsiFile> cond, final Boolean soft) {
     final FileReference[] references = set.getAllReferences();
 
-    return ContainerUtil.map2Array(references, PsiReference.class, new NotNullFunction<FileReference, PsiReference>() {
-      @NotNull
-      public PsiReference fun(FileReference fileReference) {
-        return new MyFileReference(fileReference, cond, soft);
-      }
-    });
+    return ContainerUtil.map2Array(references, PsiReference.class, (NotNullFunction<FileReference, PsiReference>)fileReference -> new MyFileReference(fileReference, cond, soft));
   }
 
   public static Condition<PsiFile> byType(FileType instance) {
@@ -62,10 +52,11 @@ public class FileReferenceUtil {
   private static class TypeCondition implements Condition<PsiFile> {
     private final FileType myType;
 
-    public TypeCondition(FileType type) {
+    TypeCondition(FileType type) {
       myType = type;
     }
 
+    @Override
     public boolean value(PsiFile file) {
       return file.getFileType() == myType;
     }
@@ -74,10 +65,11 @@ public class FileReferenceUtil {
   private static class PatternCondition implements Condition<PsiFile> {
     private final PsiFilePattern myPattern;
 
-    public PatternCondition(PsiFilePattern pattern) {
+    PatternCondition(PsiFilePattern pattern) {
       myPattern = pattern;
     }
 
+    @Override
     public boolean value(PsiFile o) {
       return myPattern.accepts(o);
     }
@@ -87,7 +79,7 @@ public class FileReferenceUtil {
     private final Condition<PsiFile> myCond;
     private final Boolean mySoft;
 
-    public MyFileReference(FileReference fileReference, Condition<PsiFile> cond, @Nullable Boolean soft) {
+    MyFileReference(FileReference fileReference, Condition<PsiFile> cond, @Nullable Boolean soft) {
       super(fileReference.getFileReferenceSet(), fileReference.getRangeInElement(), fileReference.getIndex(), fileReference.getCanonicalText());
       myCond = cond;
       mySoft = soft;
@@ -109,32 +101,19 @@ public class FileReferenceUtil {
       return result;
     }
 
-    @Override
-    protected ResolveResult[] innerResolve() {
-      final ResolveResult[] results = super.innerResolve();
-      return ContainerUtil.findAll(results, new Condition<ResolveResult>() {
-        public boolean value(ResolveResult resolveResult) {
-          final PsiElement e = resolveResult.getElement();
-          return match(e, myCond);
-        }
-      }).toArray(ResolveResult.EMPTY_ARRAY);
-    }
-
     @NotNull
     @Override
     public Object[] getVariants() {
       final Object[] variants = super.getVariants();
-      return ContainerUtil.findAll(variants, new Condition<Object>() {
-        public boolean value(Object o) {
-          /*if (o instanceof CandidateInfo) {
-            o = ((CandidateInfo)o).getElement();
-          }*/
-          return match(o, myCond);
-        }
+      return ContainerUtil.findAll(variants, o -> {
+        /*if (o instanceof CandidateInfo) {
+          o = ((CandidateInfo)o).getElement();
+        }*/
+        return match(o, myCond);
       }).toArray();
     }
 
-    private static boolean match(Object o, Condition<PsiFile> cond) {
+    private static boolean match(Object o, Condition<? super PsiFile> cond) {
       return !(o instanceof PsiFileSystemItem) ||
               ((PsiFileSystemItem)o).isDirectory() ||
               (o instanceof PsiFile && cond.value((PsiFile)o));

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,16 +16,21 @@
 package com.intellij.ide.plugins;
 
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.plugins.sorters.SortByDownloadsAction;
+import com.intellij.ide.plugins.sorters.SortByRatingAction;
+import com.intellij.ide.plugins.sorters.SortByUpdatedAction;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ComboBoxAction;
+import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.updateSettings.impl.UpdateSettings;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.ui.DoubleClickListener;
 import com.intellij.ui.ScrollPaneFactory;
-import com.intellij.util.net.HTTPProxySettingsDialog;
+import com.intellij.ui.TableUtil;
+import com.intellij.util.net.HttpConfigurable;
 import com.intellij.util.ui.update.UiNotifyConnector;
 import org.jetbrains.annotations.NotNull;
 
@@ -35,17 +40,17 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
-import java.util.ArrayList;
+import java.util.List;
+import java.util.Locale;
 import java.util.TreeSet;
 
-/**
- * User: anna
- */
 public class AvailablePluginsManagerMain extends PluginManagerMain {
   public static final String MANAGE_REPOSITORIES = "Manage repositories...";
   public static final String N_A = "N/A";
 
-  private PluginManagerMain installed;
+  private static final InstalledPluginsState ourState = InstalledPluginsState.getInstance();
+
+  private final PluginManagerMain installed;
   private final String myVendorFilter;
 
   public AvailablePluginsManagerMain(PluginManagerMain installed, PluginManagerUISettings uiSettings, String vendorFilter) {
@@ -58,11 +63,11 @@ public class AvailablePluginsManagerMain extends PluginManagerMain {
       manageRepositoriesBtn.setMnemonic('m');
       manageRepositoriesBtn.addActionListener(new ActionListener() {
         @Override
-        public void actionPerformed(ActionEvent e) {
+        public void actionPerformed(@NotNull ActionEvent e) {
           if (ShowSettingsUtil.getInstance().editConfigurable(myActionsPanel, new PluginHostsConfigurable())) {
-            final ArrayList<String> pluginHosts = UpdateSettings.getInstance().myPluginHosts;
+            final List<String> pluginHosts = UpdateSettings.getInstance().getPluginHosts();
             if (!pluginHosts.contains(((AvailablePluginsTableModel)pluginsModel).getRepository())) {
-              ((AvailablePluginsTableModel)pluginsModel).setRepository(AvailablePluginsTableModel.ALL, myFilter.getFilter().toLowerCase());
+              ((AvailablePluginsTableModel)pluginsModel).setRepository(AvailablePluginsTableModel.ALL, myFilter.getFilter().toLowerCase(Locale.ENGLISH));
             }
             loadAvailablePlugins();
           }
@@ -73,35 +78,33 @@ public class AvailablePluginsManagerMain extends PluginManagerMain {
 
     final JButton httpProxySettingsButton = new JButton(IdeBundle.message("button.http.proxy.settings"));
     httpProxySettingsButton.addActionListener(new ActionListener() {
-      public void actionPerformed(ActionEvent e) {
-        HTTPProxySettingsDialog settingsDialog = new HTTPProxySettingsDialog();
-        settingsDialog.pack();
-        settingsDialog.show();
-        if (settingsDialog.isOK()) {
+      @Override
+      public void actionPerformed(@NotNull ActionEvent e) {
+        if (HttpConfigurable.editConfigurable(getMainPanel())) {
           loadAvailablePlugins();
         }
       }
     });
     myActionsPanel.add(httpProxySettingsButton, BorderLayout.WEST);
+    myPanelDescription.setVisible(false);
   }
 
   @Override
   protected JScrollPane createTable() {
     AvailablePluginsTableModel model = new AvailablePluginsTableModel();
     model.setVendor(myVendorFilter);
+    if (PluginManagerUISettings.getInstance().availableSortByStatus) {
+      model.setSortByStatus(true);
+    }
+
     pluginsModel = model;
     pluginTable = new PluginTable(pluginsModel);
-    pluginTable.getTableHeader().setReorderingAllowed(false);
-    pluginTable.setColumnWidth(PluginManagerColumnInfo.COLUMN_DOWNLOADS, 70);
-    pluginTable.setColumnWidth(PluginManagerColumnInfo.COLUMN_DATE, 80);
-    pluginTable.setColumnWidth(PluginManagerColumnInfo.COLUMN_RATE, 80);
-
     return ScrollPaneFactory.createScrollPane(pluginTable);
   }
 
   @Override
-  protected void installTableActions(final PluginTable pluginTable) {
-    super.installTableActions(pluginTable);
+  protected void installTableActions() {
+    super.installTableActions();
     new DoubleClickListener() {
       @Override
       protected boolean onDoubleClick(MouseEvent e) {
@@ -113,7 +116,8 @@ public class AvailablePluginsManagerMain extends PluginManagerMain {
     
     pluginTable.registerKeyboardAction(
       new ActionListener() {
-        public void actionPerformed(ActionEvent e) {
+        @Override
+        public void actionPerformed(@NotNull ActionEvent e) {
           installSelected(pluginTable);
         }
       },
@@ -130,16 +134,16 @@ public class AvailablePluginsManagerMain extends PluginManagerMain {
         if (descr instanceof PluginNode) {
           enabled &= !PluginManagerColumnInfo.isDownloaded((PluginNode)descr);
           if (((PluginNode)descr).getStatus() == PluginNode.STATUS_INSTALLED) {
-            enabled &= InstalledPluginsTableModel.hasNewerVersion(descr.getPluginId());
+            enabled &= ourState.hasNewerVersion(descr.getPluginId());
           }
         }
         else if (descr instanceof IdeaPluginDescriptorImpl) {
           PluginId id = descr.getPluginId();
-          enabled &= InstalledPluginsTableModel.hasNewerVersion(id);
+          enabled &= ourState.hasNewerVersion(id);
         }
       }
       if (enabled) {
-        new ActionInstallPlugin(this, installed).install();
+        new InstallPluginAction(this, installed).install(null);
       }
       return true;
     }
@@ -148,44 +152,59 @@ public class AvailablePluginsManagerMain extends PluginManagerMain {
 
   @Override
   public void reset() {
-    UiNotifyConnector.doWhenFirstShown(getPluginTable(), new Runnable() {
-      @Override
-      public void run() {
-        loadAvailablePlugins();
-      }
-    });
+    UiNotifyConnector.doWhenFirstShown(getPluginTable(), () -> loadAvailablePlugins());
     super.reset();
+  }
+
+  @Override
+  protected PluginManagerMain getAvailable() {
+    return this;
+  }
+
+  @Override
+  protected PluginManagerMain getInstalled() {
+    return installed;
   }
 
   @Override
   protected ActionGroup getActionGroup(boolean inToolbar) {
     DefaultActionGroup actionGroup = new DefaultActionGroup();
     actionGroup.add(new RefreshAction());
-    actionGroup.add(Separator.getInstance());
-    actionGroup.add(new ActionInstallPlugin(this, installed));
+
     if (inToolbar) {
-      actionGroup.add(new SortByStatusAction("Sort Installed First"));
       actionGroup.add(new MyFilterRepositoryAction());
       actionGroup.add(new MyFilterCategoryAction());
+    }
+    else {
+      actionGroup.add(createSortersGroup());
+      actionGroup.add(Separator.getInstance());
+      actionGroup.add(new InstallPluginAction(getAvailable(), getInstalled()));
     }
     return actionGroup;
   }
 
   @Override
   protected boolean acceptHost(String host) {
-    final String repository = ((AvailablePluginsTableModel)pluginsModel).getRepository();
-    if (AvailablePluginsTableModel.ALL.equals(repository)) return true;
-    return Comparing.equal(host, repository);
+    return ((AvailablePluginsTableModel)pluginsModel).isHostAccepted(host);
   }
 
   @Override
-  protected void propagateUpdates(ArrayList<IdeaPluginDescriptor> list) {
+  protected void propagateUpdates(List<IdeaPluginDescriptor> list) {
     installed.modifyPluginsList(list); //propagate updates
+  }
+
+  @Override
+  protected DefaultActionGroup createSortersGroup() {
+    final DefaultActionGroup group = super.createSortersGroup();
+    group.addAction(new SortByDownloadsAction(pluginTable, pluginsModel));
+    group.addAction(new SortByRatingAction(pluginTable, pluginsModel));
+    group.addAction(new SortByUpdatedAction(pluginTable, pluginsModel));
+    return group;
   }
 
   private class MyFilterCategoryAction extends ComboBoxAction implements DumbAware{
     @Override
-    public void update(AnActionEvent e) {
+    public void update(@NotNull AnActionEvent e) {
       super.update(e);
       String category = ((AvailablePluginsTableModel)pluginsModel).getCategory();
       if (category == null) {
@@ -211,10 +230,10 @@ public class AvailablePluginsManagerMain extends PluginManagerMain {
     }
 
     private AnAction createFilterByCategoryAction(final String availableCategory) {
-      return new AnAction(availableCategory) {
+      return new DumbAwareAction(availableCategory) {
         @Override
-        public void actionPerformed(AnActionEvent e) {
-          final String filter = myFilter.getFilter().toLowerCase();
+        public void actionPerformed(@NotNull AnActionEvent e) {
+          final String filter = myFilter.getFilter().toLowerCase(Locale.ENGLISH);
           ((AvailablePluginsTableModel)pluginsModel).setCategory(availableCategory, filter);
         }
       };
@@ -226,9 +245,10 @@ public class AvailablePluginsManagerMain extends PluginManagerMain {
     private static final int LENGTH = 15;
 
     @Override
-    public void update(AnActionEvent e) {
+    public void update(@NotNull AnActionEvent e) {
       super.update(e);
-      e.getPresentation().setVisible(!UpdateSettings.getInstance().myPluginHosts.isEmpty());
+      boolean empty = UpdateSettings.getInstance().getPluginHosts().isEmpty();
+      e.getPresentation().setVisible(!empty || ApplicationInfoEx.getInstanceEx().getBuiltinPluginsUrl() != null);
       String repository = ((AvailablePluginsTableModel)pluginsModel).getRepository();
       if (repository.length() > LENGTH) {
         repository = repository.substring(0, LENGTH) + "...";
@@ -242,18 +262,23 @@ public class AvailablePluginsManagerMain extends PluginManagerMain {
       final DefaultActionGroup gr = new DefaultActionGroup();
       gr.add(createFilterByRepositoryAction(AvailablePluginsTableModel.ALL));
       gr.add(createFilterByRepositoryAction(AvailablePluginsTableModel.JETBRAINS_REPO));
-      for (final String host : UpdateSettings.getInstance().myPluginHosts) {
+      if (ApplicationInfoEx.getInstanceEx().getBuiltinPluginsUrl() != null) {
+        gr.add(createFilterByRepositoryAction(AvailablePluginsTableModel.BUILTIN_REPO));
+      }
+
+      for (final String host : UpdateSettings.getInstance().getPluginHosts()) {
         gr.add(createFilterByRepositoryAction(host));
       }
       return gr;
     }
 
     private AnAction createFilterByRepositoryAction(final String host) {
-      return new AnAction(host) {
+      return new DumbAwareAction(host) {
         @Override
-        public void actionPerformed(AnActionEvent e) {
-          final String filter = myFilter.getFilter().toLowerCase();
+        public void actionPerformed(@NotNull AnActionEvent e) {
+          final String filter = myFilter.getFilter().toLowerCase(Locale.ENGLISH);
           ((AvailablePluginsTableModel)pluginsModel).setRepository(host, filter);
+          TableUtil.ensureSelectionExists(getPluginTable());
         }
       };
     }

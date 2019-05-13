@@ -1,21 +1,6 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.testframework.sm.runner;
 
-import com.intellij.execution.ExecutionException;
 import com.intellij.execution.Executor;
 import com.intellij.execution.configurations.*;
 import com.intellij.execution.runners.ExecutionEnvironment;
@@ -31,44 +16,47 @@ import javax.swing.*;
 /**
  * @author Roman Chernyatchik
  */
-public class MockRuntimeConfiguration extends RuntimeConfiguration {
+public final class MockRuntimeConfiguration extends LocatableConfigurationBase implements Cloneable, ModuleRunConfiguration {
   public MockRuntimeConfiguration(final Project project) {
-    super("", project, new MockConfigurationFactory());
+    super(project, new MockConfigurationFactory(), "");
   }
 
   @Override
-  public void readExternal(Element element) throws InvalidDataException {
+  public void readExternal(@NotNull Element element) throws InvalidDataException {
     //Do nothing
   }
 
   @Override
-  public void writeExternal(Element element) throws WriteExternalException {
+  public void writeExternal(@NotNull Element element) throws WriteExternalException {
     //Do nothing
   }
 
+  @NotNull
   @Override
   public SettingsEditor<? extends RunConfiguration> getConfigurationEditor() {
     return null;
   }
 
   @Override
-  public RunProfileState getState(@NotNull Executor executor, @NotNull ExecutionEnvironment env) throws ExecutionException {
+  public RunProfileState getState(@NotNull Executor executor, @NotNull ExecutionEnvironment env) {
     return null;
   }
 
   private static class MockConfigurationFactory extends ConfigurationFactory {
-    public MockConfigurationFactory() {
+    MockConfigurationFactory() {
       super(new MyConfigurationType());
     }
 
+    @NotNull
     @Override
-      public RunConfiguration createTemplateConfiguration(Project project) {
+      public RunConfiguration createTemplateConfiguration(@NotNull Project project) {
       return new MockRuntimeConfiguration(project);
     }
 
   }
 
   private static class MyConfigurationType implements ConfigurationType {
+    @NotNull
     @Override
     public String getDisplayName() {
       return "mock";

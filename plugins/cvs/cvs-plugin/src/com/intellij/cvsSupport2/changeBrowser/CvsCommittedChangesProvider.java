@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.cvsSupport2.changeBrowser;
 
 import com.intellij.CvsBundle;
@@ -38,7 +24,6 @@ import com.intellij.openapi.vcs.versionBrowser.ChangesBrowserSettingsEditor;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.AsynchConsumer;
-import com.intellij.util.Consumer;
 import gnu.trove.TObjectLongHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -63,15 +48,12 @@ public class CvsCommittedChangesProvider implements CachingCommittedChangesProvi
     myProject = project;
   }
 
-  @NotNull
-  public ChangeBrowserSettings createDefaultSettings() {
-    return new ChangeBrowserSettings();
-  }
-
+  @Override
   public ChangesBrowserSettingsEditor<ChangeBrowserSettings> createFilterUI(final boolean showDateFilter) {
     return new CvsVersionFilterComponent(showDateFilter);
   }
 
+  @Override
   @Nullable
   public VcsCommittedListsZipper getZipper() {
     return new MyZipper();
@@ -79,15 +61,17 @@ public class CvsCommittedChangesProvider implements CachingCommittedChangesProvi
 
   private static class MyZipper extends VcsCommittedListsZipperAdapter {
     private long lastNumber = 1;
-    private final TObjectLongHashMap<CommittedChangeListKey> numberCache = new TObjectLongHashMap<CommittedChangeListKey>();
+    private final TObjectLongHashMap<CommittedChangeListKey> numberCache = new TObjectLongHashMap<>();
 
     private MyZipper() {
       super(new GroupCreator() {
+        @Override
         public Object createKey(final RepositoryLocation location) {
           final CvsRepositoryLocation cvsLocation = (CvsRepositoryLocation) location;
           return cvsLocation.getEnvironment().getRepository();
         }
 
+        @Override
         public RepositoryLocationGroup createGroup(final Object key, final Collection<RepositoryLocation> locations) {
           final RepositoryLocationGroup group = new RepositoryLocationGroup((String) key);
           for (RepositoryLocation location : locations) {
@@ -119,6 +103,7 @@ public class CvsCommittedChangesProvider implements CachingCommittedChangesProvi
     }
   }
 
+  @Override
   @Nullable
   public CvsRepositoryLocation getLocationFor(final FilePath root) {
     if (!CvsUtil.fileIsUnderCvs(root.getIOFile())) {
@@ -130,19 +115,18 @@ public class CvsCommittedChangesProvider implements CachingCommittedChangesProvi
     return new CvsRepositoryLocation(root.getVirtualFile(), connectionSettings, module);
   }
 
-  public RepositoryLocation getLocationFor(final FilePath root, final String repositoryPath) {
-    return getLocationFor(root);
-  }
-
+  @Override
   public ChangeListColumn[] getColumns() {
     return new ChangeListColumn[] { ChangeListColumn.DATE, ChangeListColumn.NAME, ChangeListColumn.DESCRIPTION, BRANCH_COLUMN };
   }
 
+  @Override
   @Nullable
   public VcsCommittedViewAuxiliary createActions(final DecoratorManager manager, final RepositoryLocation location) {
     return null;
   }
 
+  @Override
   public int getUnlimitedCountValue() {
     return 0;
   }
@@ -162,14 +146,12 @@ public class CvsCommittedChangesProvider implements CachingCommittedChangesProvi
     }
     final CvsChangeListsBuilder builder = new CvsChangeListsBuilder(module, connectionSettings, myProject, vcsRoot);
 
-    final Ref<CvsChangeList> result = new Ref<CvsChangeList>();
-    final LoadHistoryOperation operation = new LoadHistoryOperation(connectionSettings, new Consumer<LogInformationWrapper>() {
-      public void consume(LogInformationWrapper wrapper) {
-        final List<Revision> revisions = wrapper.getRevisions();
-        if (revisions.isEmpty()) return;
-        final RevisionWrapper revision = new RevisionWrapper(wrapper.getFile(), revisions.get(0), null);
-        result.set(builder.addRevision(revision));
-      }
+    final Ref<CvsChangeList> result = new Ref<>();
+    final LoadHistoryOperation operation = new LoadHistoryOperation(connectionSettings, wrapper -> {
+      final List<Revision> revisions = wrapper.getRevisions();
+      if (revisions.isEmpty()) return;
+      final RevisionWrapper revision = new RevisionWrapper(wrapper.getFile(), revisions.get(0), null);
+      result.set(builder.addRevision(revision));
     }, cvsLocation.getModuleName(), number.asString());
     final CvsResult executionResult = operation.run(myProject);
 
@@ -189,18 +171,15 @@ public class CvsCommittedChangesProvider implements CachingCommittedChangesProvi
     final Date dateTo = new Date(t + CvsChangeList.SUITABLE_DIFF);
 
     final LoadHistoryOperation operation2 =
-      new LoadHistoryOperation(rootConnectionSettings, module, dateFrom, dateTo, new Consumer<LogInformationWrapper>() {
-        @Override
-        public void consume(LogInformationWrapper wrapper) {
-          final List<RevisionWrapper> wrappers = builder.revisionWrappersFromLog(wrapper);
-          if (wrappers != null) {
-            for (RevisionWrapper revisionWrapper : wrappers) {
-              if (result.get().containsFileRevision(revisionWrapper)) {
-                // otherwise a new change list will be created because the old change list already contains this file.
-                continue;
-              }
-              builder.addRevision(revisionWrapper);
+      new LoadHistoryOperation(rootConnectionSettings, module, dateFrom, dateTo, wrapper -> {
+        final List<RevisionWrapper> wrappers = builder.revisionWrappersFromLog(wrapper);
+        if (wrappers != null) {
+          for (RevisionWrapper revisionWrapper : wrappers) {
+            if (result.get().containsFileRevision(revisionWrapper)) {
+              // otherwise a new change list will be created because the old change list already contains this file.
+              continue;
             }
+            builder.addRevision(revisionWrapper);
           }
         }
       });
@@ -208,7 +187,7 @@ public class CvsCommittedChangesProvider implements CachingCommittedChangesProvi
     if (cvsResult.hasErrors()) {
       throw cvsResult.composeError();
     }
-    return new Pair<CvsChangeList, FilePath>(result.get(), filePath);
+    return Pair.create(result.get(), filePath);
   }
 
   @Override
@@ -221,6 +200,7 @@ public class CvsCommittedChangesProvider implements CachingCommittedChangesProvi
     return true;
   }
 
+  @Override
   public List<CvsChangeList> getCommittedChanges(ChangeBrowserSettings settings, RepositoryLocation location, final int maxCount)
     throws VcsException {
     final CvsRepositoryLocation cvsLocation = (CvsRepositoryLocation) location;
@@ -229,6 +209,7 @@ public class CvsCommittedChangesProvider implements CachingCommittedChangesProvi
     return loadCommittedChanges(settings, module, cvsLocation.getEnvironment(), rootFile);
   }
 
+  @Override
   public void loadCommittedChanges(ChangeBrowserSettings settings,
                                    RepositoryLocation location,
                                    int maxCount,
@@ -250,19 +231,17 @@ public class CvsCommittedChangesProvider implements CachingCommittedChangesProvi
         dateFrom = calendar.getTime();
       }
       final ChangeBrowserSettings.Filter filter = settings.createFilter();
-      final Set<CvsChangeList> controlSet = new HashSet<CvsChangeList>();
+      final Set<CvsChangeList> controlSet = new HashSet<>();
       final LoadHistoryOperation operation =
-        new LoadHistoryOperation(connectionSettings, module, dateFrom, dateTo, new Consumer<LogInformationWrapper>() {
-          public void consume(LogInformationWrapper wrapper) {
-            final List<RevisionWrapper> wrappers = builder.revisionWrappersFromLog(wrapper);
-            if (wrappers != null) {
-              for (RevisionWrapper revisionWrapper : wrappers) {
-                final CvsChangeList changeList = builder.addRevision(revisionWrapper);
-                if (controlSet.contains(changeList)) continue;
-                controlSet.add(changeList);
-                if (filter.accepts(changeList)) {
-                  consumer.consume(changeList);
-                }
+        new LoadHistoryOperation(connectionSettings, module, dateFrom, dateTo, wrapper -> {
+          final List<RevisionWrapper> wrappers = builder.revisionWrappersFromLog(wrapper);
+          if (wrappers != null) {
+            for (RevisionWrapper revisionWrapper : wrappers) {
+              final CvsChangeList changeList = builder.addRevision(revisionWrapper);
+              if (controlSet.contains(changeList)) continue;
+              controlSet.add(changeList);
+              if (filter.accepts(changeList)) {
+                consumer.consume(changeList);
               }
             }
           }
@@ -297,12 +276,7 @@ public class CvsCommittedChangesProvider implements CachingCommittedChangesProvi
       dateFrom = calendar.getTime();
     }
     final LoadHistoryOperation operation =
-      new LoadHistoryOperation(connectionSettings, module, dateFrom, dateTo, new Consumer<LogInformationWrapper>() {
-        @Override
-        public void consume(LogInformationWrapper logInformationWrapper) {
-          builder.add(logInformationWrapper);
-        }
-      });
+      new LoadHistoryOperation(connectionSettings, module, dateFrom, dateTo, logInformationWrapper -> builder.add(logInformationWrapper));
     final CvsResult executionResult = operation.run(myProject);
 
     if (executionResult.isCanceled()) {
@@ -318,35 +292,43 @@ public class CvsCommittedChangesProvider implements CachingCommittedChangesProvi
     }
   }
 
+  @Override
   public int getFormatVersion() {
     return 3;
   }
 
+  @Override
   public void writeChangeList(final DataOutput stream, final CvsChangeList list) throws IOException {
     list.writeToStream(stream);
   }
 
+  @Override
   public CvsChangeList readChangeList(final RepositoryLocation location, final DataInput stream) throws IOException {
     final CvsRepositoryLocation cvsLocation = (CvsRepositoryLocation) location;
     return new CvsChangeList(myProject, cvsLocation.getEnvironment(), cvsLocation.getRootFile(), stream);
   }
 
+  @Override
   public boolean isMaxCountSupported() {
     return false;
   }
 
+  @Override
   public Collection<FilePath> getIncomingFiles(final RepositoryLocation location) {
     return null;
   }
 
+  @Override
   public boolean refreshCacheByNumber() {
     return false;
   }
 
+  @Override
   public String getChangelistTitle() {
     return null;
   }
 
+  @Override
   public boolean isChangeLocallyAvailable(final FilePath filePath, @Nullable VcsRevisionNumber localRevision,
                                           VcsRevisionNumber changeRevision, final CvsChangeList changeList) {
     if (localRevision instanceof CvsRevisionNumber && changeRevision instanceof CvsRevisionNumber) {
@@ -404,15 +386,18 @@ public class CvsCommittedChangesProvider implements CachingCommittedChangesProvi
     return dirTag.substring(1);
   }
 
+  @Override
   public boolean refreshIncomingWithCommitted() {
     return true;
   }
 
   private final ChangeListColumn<CvsChangeList> BRANCH_COLUMN = new ChangeListColumn<CvsChangeList>() {
+    @Override
     public String getTitle() {
       return CvsBundle.message("changelist.column.branch");
     }
 
+    @Override
     public Object getValue(final CvsChangeList changeList) {
       final String branch = changeList.getBranch();
       return branch == null ? "HEAD" : branch;

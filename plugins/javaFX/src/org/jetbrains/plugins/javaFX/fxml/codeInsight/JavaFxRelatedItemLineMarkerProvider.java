@@ -33,58 +33,52 @@ import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.Function;
-import com.intellij.util.Processor;
+import com.intellij.util.Functions;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.javaFX.JavaFxControllerClassIndex;
+import org.jetbrains.plugins.javaFX.fxml.FxmlConstants;
 import org.jetbrains.plugins.javaFX.fxml.JavaFxFileTypeFactory;
 import org.jetbrains.plugins.javaFX.fxml.JavaFxPsiUtil;
+import org.jetbrains.plugins.javaFX.indexing.JavaFxControllerClassIndex;
 
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-/**
- * User: anna
- */
 public class JavaFxRelatedItemLineMarkerProvider extends RelatedItemLineMarkerProvider {
-  private static final Logger LOG = Logger.getInstance("#" + JavaFxRelatedItemLineMarkerProvider.class.getName());
+  private static final Logger LOG = Logger.getInstance(JavaFxRelatedItemLineMarkerProvider.class);
 
   @Override
-  protected void collectNavigationMarkers(@NotNull PsiElement element, final Collection<? super RelatedItemLineMarkerInfo> result) {
-    if (element instanceof PsiField) {
-      final PsiField field = (PsiField)element;
+  protected void collectNavigationMarkers(@NotNull PsiElement element, @NotNull final Collection<? super RelatedItemLineMarkerInfo> result) {
+    PsiElement f;
+    if (element instanceof PsiIdentifier && (f = element.getParent()) instanceof PsiField) {
+      final PsiField field = (PsiField)f;
       if (JavaFxPsiUtil.isVisibleInFxml(field) && !field.hasModifierProperty(PsiModifier.STATIC) && !field.hasModifierProperty(PsiModifier.FINAL)) {
         final PsiClass containingClass = field.getContainingClass();
         if (containingClass != null && containingClass.hasModifierProperty(PsiModifier.PUBLIC) && containingClass.getQualifiedName() != null) {
           final PsiMethod[] constructors = containingClass.getConstructors();
           boolean defaultConstructor = constructors.length == 0;
           for (PsiMethod constructor : constructors) {
-            if (constructor.getParameterList().getParametersCount() == 0) {
+            if (constructor.getParameterList().isEmpty()) {
               defaultConstructor = true;
               break;
             }
           }
           if (!defaultConstructor) return;
-          final ArrayList<GotoRelatedItem> targets = new ArrayList<GotoRelatedItem>();
-          collectTargets(field, targets, new Function<PsiElement, GotoRelatedItem>() {
-            @Override
-            public GotoRelatedItem fun(PsiElement element) {
-              return new GotoRelatedItem(element);
-            }
-          }, true);
+          final ArrayList<GotoRelatedItem> targets = new ArrayList<>();
+          collectTargets(field, targets, GotoRelatedItem::new, true);
           if (targets.isEmpty()) return;
 
-          result.add(new RelatedItemLineMarkerInfo<PsiField>(field, field.getNameIdentifier().getTextRange(),
-                                                             AllIcons.FileTypes.Xml, Pass.UPDATE_OVERRIDEN_MARKERS,  null,
-                                                             new JavaFXIdIconNavigationHandler(),  GutterIconRenderer.Alignment.LEFT,
-                                                             targets));
+          result.add(new RelatedItemLineMarkerInfo<>((PsiIdentifier)element, element.getTextRange(),
+                                                     AllIcons.FileTypes.Xml, Pass.LINE_MARKERS, null,
+                                                     new JavaFXIdIconNavigationHandler(), GutterIconRenderer.Alignment.LEFT,
+                                                     targets));
         }
       }
     }
   }
 
-  private static <T> void collectTargets(PsiField field, final ArrayList<T> targets, final Function<PsiElement, T> fun, final boolean stopAtFirst) {
+  private static <T> void collectTargets(PsiField field, List<T> targets, final Function<PsiElement, T> fun, final boolean stopAtFirst) {
     final PsiClass containingClass = field.getContainingClass();
     LOG.assertTrue(containingClass != null);
     final String qualifiedName = containingClass.getQualifiedName();
@@ -92,35 +86,36 @@ public class JavaFxRelatedItemLineMarkerProvider extends RelatedItemLineMarkerPr
     final List<VirtualFile> fxmls = JavaFxControllerClassIndex.findFxmlsWithController(field.getProject(), qualifiedName);
     if (fxmls.isEmpty()) return;
     ReferencesSearch.search(field, GlobalSearchScope.filesScope(field.getProject(), fxmls)).forEach(
-      new Processor<PsiReference>() {
-        @Override
-        public boolean process(PsiReference reference) {
-          final PsiElement referenceElement = reference.getElement();
-          if (referenceElement == null) return true;
-          final PsiFile containingFile = referenceElement.getContainingFile();
-          if (containingFile == null) return true;
-          if (!JavaFxFileTypeFactory.isFxml(containingFile)) return true;
-          if (!(referenceElement instanceof XmlAttributeValue)) return true;
-          final XmlAttributeValue attributeValue = (XmlAttributeValue)referenceElement;
-          final PsiElement parent = attributeValue.getParent();
-          if (!(parent instanceof XmlAttribute)) return true;
-          targets.add(fun.fun(parent));
-          return !stopAtFirst;
-        }
-    });
+      reference -> {
+        final PsiElement referenceElement = reference.getElement();
+        if (referenceElement == null) return true;
+        final PsiFile containingFile = referenceElement.getContainingFile();
+        if (containingFile == null) return true;
+        if (!JavaFxFileTypeFactory.isFxml(containingFile)) return true;
+        if (!(referenceElement instanceof XmlAttributeValue)) return true;
+        final XmlAttributeValue attributeValue = (XmlAttributeValue)referenceElement;
+        final PsiElement parent = attributeValue.getParent();
+        if (!(parent instanceof XmlAttribute)) return true;
+        if (!FxmlConstants.FX_ID.equals(((XmlAttribute)parent).getName())) return true;
+        targets.add(fun.fun(parent));
+        return !stopAtFirst;
+      });
   }
 
-  private static class JavaFXIdIconNavigationHandler implements GutterIconNavigationHandler<PsiField> {
+  private static class JavaFXIdIconNavigationHandler implements GutterIconNavigationHandler<PsiIdentifier> {
     @Override
-    public void navigate(MouseEvent e, PsiField field) {
-      final ArrayList<PsiElement> relatedItems = new ArrayList<PsiElement>();
-      collectTargets(field, relatedItems, Function.ID, false);
+    public void navigate(MouseEvent e, PsiIdentifier fieldName) {
+      List<PsiElement> relatedItems = new ArrayList<>();
+      PsiElement f = fieldName.getParent();
+      if (f instanceof PsiField) {
+        collectTargets((PsiField)f, relatedItems, Functions.id(), false);
+      }
       if (relatedItems.size() == 1) {
         NavigationUtil.activateFileWithPsiElement(relatedItems.get(0));
         return;
       }
       final JBPopup popup = NavigationUtil
-        .getPsiElementPopup(relatedItems.toArray(new PsiElement[relatedItems.size()]), "<html>Choose component with fx:id <b>" + field.getName() + "<b></html>");
+        .getPsiElementPopup(relatedItems.toArray(PsiElement.EMPTY_ARRAY), "<html>Choose component with fx:id <b>" + fieldName.getText() + "<b></html>");
       popup.show(new RelativePoint(e));
     }
   }

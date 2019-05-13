@@ -1,7 +1,7 @@
 PsiJavaFile:LambdaExpression7.java
   PsiParenthesizedExpression:(p -> null)
     PsiJavaToken:LPARENTH('(')
-    PsiLambdaExpression:p -> null
+    PsiLambdaExpression
       PsiParameterList:p
         PsiParameter:p
           PsiModifierList:

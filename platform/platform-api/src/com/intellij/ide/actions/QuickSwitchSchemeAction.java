@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
+import com.intellij.openapi.util.IconLoader;
 import com.intellij.util.ui.EmptyIcon;
 import org.jetbrains.annotations.NotNull;
 
@@ -31,9 +32,15 @@ import javax.swing.*;
  * @author max
  */
 public abstract class QuickSwitchSchemeAction extends AnAction implements DumbAware {
-  protected static final Icon ourCurrentAction = AllIcons.Diff.CurrentLine;
-  protected static final Icon ourNotCurrentAction = new EmptyIcon(ourCurrentAction.getIconWidth(), ourCurrentAction.getIconHeight());
-  @NotNull
+
+  protected static final Icon ourCurrentAction = AllIcons.Actions.Forward;
+  protected static final Icon ourNotCurrentAction = new IconLoader.LazyIcon() {
+    @Override
+    protected Icon compute() {
+      return EmptyIcon.create(ourCurrentAction.getIconWidth(), ourCurrentAction.getIconHeight());
+    }
+  };
+
   protected String myActionPlace = ActionPlaces.UNKNOWN;
 
   private final boolean myShowPopupWithNoActions;
@@ -47,8 +54,8 @@ public abstract class QuickSwitchSchemeAction extends AnAction implements DumbAw
   }
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
-    Project project = e.getData(PlatformDataKeys.PROJECT);
+  public void actionPerformed(@NotNull AnActionEvent e) {
+    Project project = e.getData(CommonDataKeys.PROJECT);
     DefaultActionGroup group = new DefaultActionGroup();
     fillActions(project, group, e.getDataContext());
     showPopup(e, group);
@@ -58,32 +65,41 @@ public abstract class QuickSwitchSchemeAction extends AnAction implements DumbAw
 
   private void showPopup(AnActionEvent e, DefaultActionGroup group) {
     if (!myShowPopupWithNoActions && group.getChildrenCount() == 0) return;
-    final ListPopup popup = JBPopupFactory.getInstance()
-      .createActionGroupPopup(getPopupTitle(e),
-                              group,
-                              e.getDataContext(), getAidMethod(),
-                              true, myActionPlace);
+    JBPopupFactory.ActionSelectionAid aid = getAidMethod();
+
+    ListPopup popup = JBPopupFactory.getInstance().createActionGroupPopup(
+      getPopupTitle(e), group, e.getDataContext(), aid, true, null, -1,
+      (a) -> a.getTemplatePresentation().getIcon() != ourCurrentAction,
+      myActionPlace);
 
     showPopup(e, popup);
   }
 
   protected void showPopup(AnActionEvent e, ListPopup popup) {
-    popup.showCenteredInCurrentWindow(e.getData(PlatformDataKeys.PROJECT));
+    Project project = e.getProject();
+    if (project != null) {
+      popup.showCenteredInCurrentWindow(project);
+    }
+    else {
+      popup.showInBestPositionFor(e.getDataContext());
+    }
   }
 
   protected JBPopupFactory.ActionSelectionAid getAidMethod() {
     return JBPopupFactory.ActionSelectionAid.NUMBERING;
   }
 
-  protected String getPopupTitle(AnActionEvent e) {
+  protected String getPopupTitle(@NotNull AnActionEvent e) {
     return e.getPresentation().getText();
   }
 
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     super.update(e);
-    e.getPresentation().setEnabled(e.getData(PlatformDataKeys.PROJECT) != null && isEnabled());
+    e.getPresentation().setEnabled(e.getData(CommonDataKeys.PROJECT) != null && isEnabled());
   }
 
-  protected abstract boolean isEnabled();
+  protected boolean isEnabled() {
+    return true;
+  }
 }

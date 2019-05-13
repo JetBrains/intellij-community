@@ -16,14 +16,13 @@
 package org.jetbrains.idea.maven.plugins.api;
 
 import com.intellij.lang.Language;
+import com.intellij.lang.html.HTMLLanguage;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.InjectedLanguagePlaces;
 import com.intellij.psi.LanguageInjector;
 import com.intellij.psi.PsiLanguageInjectionHost;
 import com.intellij.psi.xml.XmlText;
-import com.intellij.util.PairProcessor;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.idea.maven.dom.model.MavenDomConfiguration;
 
 /**
  * @author Sergey Evdokimov
@@ -38,24 +37,23 @@ public final class MavenPluginConfigurationLanguageInjector implements LanguageI
 
     if (!MavenPluginParamInfo.isSimpleText(xmlText)) return;
 
-    MavenPluginParamInfo.processParamInfo(xmlText, new PairProcessor<MavenPluginParamInfo.ParamInfo, MavenDomConfiguration>() {
-      @Override
-      public boolean process(MavenPluginParamInfo.ParamInfo info, MavenDomConfiguration configuration) {
-        Language language = info.getLanguage();
+    if (host.getContainingFile().getLanguage().is(HTMLLanguage.INSTANCE)) return;
 
-        if (language == null) {
-          MavenParamLanguageProvider provider = info.getLanguageProvider();
-          if (provider != null) {
-            language = provider.getLanguage(xmlText, configuration);
-          }
-        }
+    MavenPluginParamInfo.ParamInfoList infoList = MavenPluginParamInfo.getParamInfoList(xmlText);
+    for (MavenPluginParamInfo.ParamInfo info : infoList) {
+      Language language = info.getLanguage();
 
-        if (language != null) {
-          injectionPlacesRegistrar.addPlace(language, TextRange.from(0, host.getTextLength()), info.getLanguageInjectionPrefix(), info.getLanguageInjectionSuffix());
-          return false;
+      if (language == null) {
+        MavenParamLanguageProvider provider = info.getLanguageProvider();
+        if (provider != null) {
+          language = provider.getLanguage(xmlText, infoList.getDomCfg());
         }
-        return true;
       }
-    });
+
+      if (language != null) {
+        injectionPlacesRegistrar.addPlace(language, TextRange.from(0, host.getTextLength()), info.getLanguageInjectionPrefix(), info.getLanguageInjectionSuffix());
+        return;
+      }
+    }
   }
 }

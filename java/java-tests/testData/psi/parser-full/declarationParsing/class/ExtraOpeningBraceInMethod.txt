@@ -50,28 +50,33 @@ PsiJavaFile:ExtraOpeningBraceInMethod.java
             PsiJavaToken:LBRACE('{')
             PsiWhiteSpace('\n   ')
             PsiJavaToken:RBRACE('}')
-        PsiErrorElement:'}' expected
-          <empty list>
         PsiWhiteSpace('\n\n   ')
-    PsiMethod:testSomething
-      PsiModifierList:public
-        PsiKeyword:public('public')
-      PsiTypeParameterList
-        <empty list>
-      PsiWhiteSpace(' ')
-      PsiTypeElement:void
-        PsiKeyword:void('void')
-      PsiWhiteSpace(' ')
-      PsiIdentifier:testSomething('testSomething')
-      PsiParameterList:()
-        PsiJavaToken:LPARENTH('(')
-        PsiJavaToken:RPARENTH(')')
-      PsiReferenceList
-        <empty list>
-      PsiWhiteSpace(' ')
-      PsiCodeBlock
-        PsiJavaToken:LBRACE('{')
-        PsiWhiteSpace('\n\n   ')
+        PsiDeclarationStatement
+          PsiLocalVariable:testSomething
+            PsiModifierList:public
+              PsiKeyword:public('public')
+            PsiWhiteSpace(' ')
+            PsiTypeElement:void
+              PsiKeyword:void('void')
+            PsiWhiteSpace(' ')
+            PsiIdentifier:testSomething('testSomething')
+            PsiErrorElement:';' expected
+              <empty list>
+        PsiExpressionStatement
+          PsiParenthesizedExpression:()
+            PsiJavaToken:LPARENTH('(')
+            PsiErrorElement:Expression expected
+              <empty list>
+            PsiJavaToken:RPARENTH(')')
+          PsiErrorElement:';' expected
+            <empty list>
+        PsiWhiteSpace(' ')
+        PsiBlockStatement
+          PsiCodeBlock
+            PsiJavaToken:LBRACE('{')
+            PsiWhiteSpace('\n\n   ')
+            PsiJavaToken:RBRACE('}')
+        PsiWhiteSpace('\n\n')
         PsiJavaToken:RBRACE('}')
-    PsiWhiteSpace('\n\n')
-    PsiJavaToken:RBRACE('}')
+    PsiErrorElement:'}' expected
+      <empty list>

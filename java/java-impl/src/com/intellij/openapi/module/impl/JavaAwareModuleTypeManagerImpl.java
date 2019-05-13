@@ -14,10 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * User: anna
- * Date: 18-Feb-2008
- */
 package com.intellij.openapi.module.impl;
 
 import com.intellij.openapi.module.ModuleType;

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,44 +24,39 @@ import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import static com.intellij.patterns.PlatformPatterns.psiElement;
-
 /**
  * @author Danila Ponomarenko
+ * @author Konstantin Bulenkov
  */
 public abstract class BaseColorIntentionAction extends PsiElementBaseIntentionAction implements HighPriorityAction {
   protected static final String JAVA_AWT_COLOR = "java.awt.Color";
+  protected static final String COLOR_UI_RESOURCE = "javax.swing.plaf.ColorUIResource";
 
   @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, @NotNull PsiElement element) {
-    if (!psiElement().inside(psiElement(PsiNewExpression.class)).accepts(element)) {
-      return false;
-    }
-
-    final PsiNewExpression expression = PsiTreeUtil.getParentOfType(element, PsiNewExpression.class, false);
-    if (expression == null) {
-      return false;
-    }
-
-    return isJavaAwtColor(expression.getClassOrAnonymousClassReference()) && isValueArguments(expression.getArgumentList());
+    final PsiNewExpression expression = PsiTreeUtil.getParentOfType(element, PsiNewExpression.class, false, PsiMember.class, PsiCodeBlock.class);
+    return expression != null
+           && isJavaAwtColor(expression.getClassOrAnonymousClassReference())
+           && isValueArguments(expression.getArgumentList());
   }
 
   private static boolean isJavaAwtColor(@Nullable PsiJavaCodeReferenceElement ref) {
-    if (ref == null) {
-      return false;
-    }
+    final String fqn = getFqn(ref);
+    return JAVA_AWT_COLOR.equals(fqn) || COLOR_UI_RESOURCE.equals(fqn);
+  }
 
-    final PsiReference reference = ref.getReference();
-    if (reference == null) {
-      return false;
+  @Nullable
+  protected static String getFqn(@Nullable PsiJavaCodeReferenceElement ref) {
+    if (ref != null) {
+      final PsiReference reference = ref.getReference();
+      if (reference != null) {
+        final PsiElement psiElement = reference.resolve();
+        if (psiElement instanceof PsiClass) {
+          return ((PsiClass)psiElement).getQualifiedName();
+        }
+      }
     }
-
-    final PsiElement psiElement = reference.resolve();
-    if (psiElement instanceof PsiClass && JAVA_AWT_COLOR.equals(((PsiClass)psiElement).getQualifiedName())) {
-      return true;
-    }
-
-    return false;
+    return null;
   }
 
   private static boolean isValueArguments(@Nullable PsiExpressionList arguments) {

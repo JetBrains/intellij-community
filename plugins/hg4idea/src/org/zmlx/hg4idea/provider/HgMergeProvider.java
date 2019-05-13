@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,25 +17,29 @@ package org.zmlx.hg4idea.provider;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Couple;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.merge.MergeData;
 import com.intellij.openapi.vcs.merge.MergeProvider;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.ArrayUtil;
 import com.intellij.vcsUtil.VcsRunnable;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
-import org.zmlx.hg4idea.*;
+import org.zmlx.hg4idea.HgContentRevision;
+import org.zmlx.hg4idea.HgFile;
+import org.zmlx.hg4idea.HgRevisionNumber;
+import org.zmlx.hg4idea.HgVcsMessages;
 import org.zmlx.hg4idea.action.HgCommandResultNotifier;
-import org.zmlx.hg4idea.command.HgLogCommand;
-import org.zmlx.hg4idea.execution.HgCommandException;
-import org.zmlx.hg4idea.util.HgUtil;
 import org.zmlx.hg4idea.command.HgResolveCommand;
 import org.zmlx.hg4idea.command.HgWorkingCopyRevisionsCommand;
+import org.zmlx.hg4idea.execution.HgCommandResult;
+import org.zmlx.hg4idea.execution.HgPromptCommandExecutor;
+import org.zmlx.hg4idea.util.HgUtil;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -52,9 +56,10 @@ public class HgMergeProvider implements MergeProvider {
 
   @NotNull
   @Override
-  public MergeData loadRevisions(final VirtualFile file) throws VcsException {
+  public MergeData loadRevisions(@NotNull final VirtualFile file) throws VcsException {
     final MergeData mergeData = new MergeData();
     final VcsRunnable runnable = new VcsRunnable() {
+      @Override
       public void run() throws VcsException {
         final HgWorkingCopyRevisionsCommand command = new HgWorkingCopyRevisionsCommand(myProject);
         final VirtualFile repo = HgUtil.getHgRootOrThrow(myProject, file);
@@ -70,32 +75,46 @@ public class HgMergeProvider implements MergeProvider {
           // the second one is "their" revision pulled from the parent repo,
           // first parent is the local change.
           // to retrieve the base version we get the parent of the local change, i.e. the [only] parent of the first parent.
-          //Whick one is local revision depends on which one is merged with,
-          // i.e if you update to 17 revision and then merge it woth 23, so 17 is your local and 17->parent is your base revision.
+          //Which one is local revision depends on which one is merged with,
+          // i.e if you update to 17 revision and then merge it with 23, so 17 is your local and 17->parent is your base revision.
           // This may produce misunderstanding when you update your project with merging (your update firstly to next revisions  and then
           // merge with previous). see http://hgbook.red-bean.com/read/managing-releases-and-branchy-development.html
-          final Pair<HgRevisionNumber, HgRevisionNumber> parents = command.parents(repo, file);
+          final Couple<HgRevisionNumber> parents = command.parents(repo, file);
           serverRevisionNumber = parents.second;
           localRevisionNumber = parents.first;
-          final HgContentRevision local = new HgContentRevision(myProject, hgFile, localRevisionNumber);
+          final HgContentRevision local = HgContentRevision.create(myProject, hgFile, localRevisionNumber);
           mergeData.CURRENT = local.getContentAsBytes();
           // we are sure that we have a common ancestor, because otherwise we'll get "repository is unrelated" error while pulling,
           // due to different root changesets which is prohibited.
-          // Find common ancestor of two revisions : hg log -r "ancestor(rev1,ancestor(rev2,rev3))"
-          List<String> arguments = new ArrayList<String>();
-          arguments.add("-r");
-          arguments.add("\"ancestor(" + localRevisionNumber.getRevision() + ',' + serverRevisionNumber.getRevision() + ")\"");
-          final List<HgFileRevision> revisions;
-          try {
-            revisions = new HgLogCommand(myProject).execute(new HgFile(myProject, file), -1, false, arguments);
-            if (revisions != null && !revisions.isEmpty()) {
-              baseRevisionNumber = revisions.get(0).getRevisionNumber();
+          // Find common ancestor of two revisions : hg debugancestor rev1 rev2
+          // Using quotes may produce wrong escaping errors on Unix-type systems
+          List<String> arguments = new ArrayList<>();
+          String localChangeset = localRevisionNumber.getChangeset();
+          String serverChangeset = serverRevisionNumber.getChangeset();
+          arguments.add(StringUtil.isEmptyOrSpaces(localChangeset) ? localRevisionNumber.getRevision() : localChangeset);
+          arguments.add(StringUtil.isEmptyOrSpaces(serverChangeset) ? serverRevisionNumber.getRevision() : serverChangeset);
+          HgCommandResult result = new HgPromptCommandExecutor(myProject).executeInCurrentThread(repo, "debugancestor", arguments);
+          if (result != null) {
+            String output = result.getRawOutput();
+            final List<String> parts = StringUtil.split(output, ":");
+            if (parts.size() < 2) {
+              LOG.info("Couldn't parse result of debugancestor command execution " + arguments);
+              new HgCommandResultNotifier(myProject)
+                .notifyError(null, HgVcsMessages.message("hg4idea.error.debugancestor.command.execution"),
+                             HgVcsMessages.message("hg4idea.error.debugancestor.command.description"));
+            }
+            else {
+              baseRevisionNumber = HgRevisionNumber.getInstance(parts.get(0), parts.get(1));
             }
           }
-          catch (HgCommandException e) {
-            throw new VcsException(HgVcsMessages.message("hg4idea.error.log.command.execution"), e);
+          else {
+            LOG.info(HgVcsMessages.message("hg4idea.error.debugancestor.command.execution") + arguments);
+            new HgCommandResultNotifier(myProject)
+              .notifyError(null, HgVcsMessages.message("hg4idea.error.debugancestor.command.execution"),
+                           HgVcsMessages.message("hg4idea.error.debugancestor.command.description"));
           }
-        } else {
+        }
+        else {
           // 2. local changes are not checked in.
           // then there is only one parent, which is server changes.
           // local changes are retrieved from the file system, they are not in the Mercurial yet.
@@ -103,20 +122,18 @@ public class HgMergeProvider implements MergeProvider {
           serverRevisionNumber = command.parents(repo, file).first;
           baseRevisionNumber = command.parents(repo, file, serverRevisionNumber).first;
           final File origFile = new File(file.getPath() + ".orig");
-          try {
-            mergeData.CURRENT = VcsUtil.getFileByteContent(origFile);
-          } catch (IOException e) {
-            LOG.info("Couldn't retrieve byte content of the file: " + origFile.getPath(), e);
-          }
+          mergeData.CURRENT = VcsUtil.getFileByteContent(origFile);
         }
 
         if (baseRevisionNumber != null) {
-          final HgContentRevision base = new HgContentRevision(myProject, hgFile, baseRevisionNumber);
-          mergeData.ORIGINAL = base.getContentAsBytes();
-        } else { // no base revision means that the file was added simultaneously with different content in both repositories
-          mergeData.ORIGINAL = new byte[0];
+          final HgContentRevision base = HgContentRevision.create(myProject, hgFile, baseRevisionNumber);
+          //if file doesn't exist in ancestor revision the base revision should be empty
+          mergeData.ORIGINAL = base.getContent() != null ? base.getContentAsBytes() : ArrayUtil.EMPTY_BYTE_ARRAY;
         }
-        final HgContentRevision server = new HgContentRevision(myProject, hgFile, serverRevisionNumber);
+        else { // no base revision means that the file was added simultaneously with different content in both repositories
+          mergeData.ORIGINAL = ArrayUtil.EMPTY_BYTE_ARRAY;
+        }
+        final HgContentRevision server = HgContentRevision.create(myProject, hgFile, serverRevisionNumber);
         mergeData.LAST = server.getContentAsBytes();
         file.refresh(false, false);
       }
@@ -126,7 +143,7 @@ public class HgMergeProvider implements MergeProvider {
   }
 
   @Override
-  public void conflictResolvedForFile(VirtualFile file) {
+  public void conflictResolvedForFile(@NotNull VirtualFile file) {
     try {
       new HgResolveCommand(myProject).markResolved(HgUtil.getHgRootOrThrow(myProject, file), file);
     } catch (VcsException e) {
@@ -135,7 +152,7 @@ public class HgMergeProvider implements MergeProvider {
   }
 
   @Override
-  public boolean isBinary(VirtualFile file) {
+  public boolean isBinary(@NotNull VirtualFile file) {
     return file.getFileType().isBinary();
   }
 
@@ -147,7 +164,7 @@ public class HgMergeProvider implements MergeProvider {
    */
   private boolean wasFileCheckedIn(VirtualFile repo, VirtualFile file) {
     // in the case of merge if the file was checked in, it will have 2 parents after hg pull. If it wasn't, it would have only one parent
-    final Pair<HgRevisionNumber, HgRevisionNumber> parents = new HgWorkingCopyRevisionsCommand(myProject).parents(repo, file);
+    final Couple<HgRevisionNumber> parents = new HgWorkingCopyRevisionsCommand(myProject).parents(repo, file);
     return parents.second != null;
   }
 

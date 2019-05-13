@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,9 +15,10 @@
  */
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
-import com.intellij.codeInsight.CodeInsightUtilBase;
+import com.intellij.codeInsight.CodeInsightUtilCore;
 import com.intellij.codeInsight.completion.JavaLookupElementBuilder;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
+import com.intellij.codeInsight.generation.GenerateMembersUtil;
 import com.intellij.codeInsight.intention.HighPriorityAction;
 import com.intellij.codeInsight.intention.impl.TypeExpression;
 import com.intellij.codeInsight.lookup.LookupElement;
@@ -33,10 +34,13 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
-import com.intellij.psi.util.PropertyUtil;
+import com.intellij.psi.util.PointersKt;
+import com.intellij.psi.util.PropertyUtilBase;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -56,7 +60,7 @@ public class CreatePropertyFromUsageFix extends CreateFromUsageBaseFix implement
   @NonNls private static final String IS_PREFIX = "is";
   @NonNls private static final String SET_PREFIX = "set";
 
-  public CreatePropertyFromUsageFix(PsiMethodCallExpression methodCall) {
+  public CreatePropertyFromUsageFix(@NotNull PsiMethodCallExpression methodCall) {
     myMethodCall = methodCall;
   }
 
@@ -70,26 +74,25 @@ public class CreatePropertyFromUsageFix extends CreateFromUsageBaseFix implement
 
   @Override
   protected PsiElement getElement() {
-    if (!myMethodCall.isValid() || !myMethodCall.getManager().isInProject(myMethodCall)) return null;
+    if (!myMethodCall.isValid() || !canModify(myMethodCall)) return null;
     return myMethodCall;
   }
 
   @Override
   protected boolean isAvailableImpl(int offset) {
     if (CreateMethodFromUsageFix.hasErrorsInArgumentList(myMethodCall)) return false;
-    PsiReferenceExpression ref = myMethodCall.getMethodExpression();
     String methodName = myMethodCall.getMethodExpression().getReferenceName();
     LOG.assertTrue(methodName != null);
-    String propertyName = PropertyUtil.getPropertyName(methodName);
-    if (propertyName == null || propertyName.length() == 0) return false;
+    String propertyName = PropertyUtilBase.getPropertyName(methodName);
+    if (propertyName == null || propertyName.isEmpty()) return false;
 
     String getterOrSetter = null;
     if (methodName.startsWith(GET_PREFIX) || methodName.startsWith(IS_PREFIX)) {
-      if (myMethodCall.getArgumentList().getExpressions().length != 0) return false;
+      if (!myMethodCall.getArgumentList().isEmpty()) return false;
       getterOrSetter = QuickFixBundle.message("create.getter");
     }
     else if (methodName.startsWith(SET_PREFIX)) {
-      if (myMethodCall.getArgumentList().getExpressions().length != 1) return false;
+      if (myMethodCall.getArgumentList().getExpressionCount() != 1) return false;
       getterOrSetter = QuickFixBundle.message("create.setter");
     }
     else {
@@ -100,7 +103,7 @@ public class CreatePropertyFromUsageFix extends CreateFromUsageBaseFix implement
     if (classes.isEmpty()) return false;
 
     if (!checkTargetClasses(classes, methodName)) return false;
-    
+
     for (PsiClass aClass : classes) {
       if (!aClass.isInterface()) {
         setText(getterOrSetter);
@@ -111,20 +114,20 @@ public class CreatePropertyFromUsageFix extends CreateFromUsageBaseFix implement
     return false;
   }
 
-  protected boolean checkTargetClasses(List<PsiClass> classes, String methodName) {
+  protected boolean checkTargetClasses(List<? extends PsiClass> classes, String methodName) {
     return true;
   }
 
   static class FieldExpression extends Expression {
     private final String myDefaultFieldName;
-    private final PsiField myField;
-    private final PsiClass myClass;
-    private final PsiType[] myExpectedTypes;
+    private final SmartPsiElementPointer<PsiField> myField;
+    private final SmartPsiElementPointer<PsiClass> myClass;
+    private final List<SmartTypePointer> myExpectedTypes;
 
-    public FieldExpression(PsiField field, PsiClass aClass, PsiType[] expectedTypes) {
-      myField = field;
-      myClass = aClass;
-      myExpectedTypes = expectedTypes;
+    FieldExpression(final PsiField field, PsiClass aClass, PsiType[] expectedTypes) {
+      myField = PointersKt.createSmartPointer(field);
+      myClass = PointersKt.createSmartPointer(aClass);
+      myExpectedTypes = ContainerUtil.map(expectedTypes, type -> SmartTypePointerManager.getInstance(field.getProject()).createSmartTypePointer(type));
       myDefaultFieldName = field.getName();
     }
 
@@ -140,14 +143,17 @@ public class CreatePropertyFromUsageFix extends CreateFromUsageBaseFix implement
 
     @Override
     public LookupElement[] calculateLookupItems(ExpressionContext context) {
-      Set<LookupElement> set = new LinkedHashSet<LookupElement>();
-      set.add(JavaLookupElementBuilder.forField(myField).withTypeText(myField.getType().getPresentableText()));
-      PsiField[] fields = myClass.getFields();
-      for (PsiField otherField : fields) {
+      PsiField field = myField.getElement();
+      PsiClass psiClass = myClass.getElement();
+      if (field == null || psiClass == null) return LookupElement.EMPTY_ARRAY;
+
+      Set<LookupElement> set = new LinkedHashSet<>();
+      set.add(JavaLookupElementBuilder.forField(field).withTypeText(field.getType().getPresentableText()));
+      for (PsiField otherField : psiClass.getFields()) {
         if (!myDefaultFieldName.equals(otherField.getName())) {
           PsiType otherType = otherField.getType();
-          for (PsiType type : myExpectedTypes) {
-            if (type.equals(otherType)) {
+          for (SmartTypePointer pointer : myExpectedTypes) {
+            if (otherType.equals(pointer.getType())) {
               set.add(JavaLookupElementBuilder.forField(otherField).withTypeText(otherType.getPresentableText()));
             }
           }
@@ -155,7 +161,7 @@ public class CreatePropertyFromUsageFix extends CreateFromUsageBaseFix implement
       }
 
       if (set.size() < 2) return null;
-      return set.toArray(new LookupElement[set.size()]);
+      return set.toArray(LookupElement.EMPTY_ARRAY);
     }
   }
 
@@ -165,7 +171,7 @@ public class CreatePropertyFromUsageFix extends CreateFromUsageBaseFix implement
     List<PsiClass> all = super.getTargetClasses(element);
     if (all.isEmpty()) return all;
 
-    List<PsiClass> nonInterfaces = new ArrayList<PsiClass>();
+    List<PsiClass> nonInterfaces = new ArrayList<>();
     for (PsiClass aClass : all) {
       if (!aClass.isInterface()) nonInterfaces.add(aClass);
     }
@@ -176,7 +182,7 @@ public class CreatePropertyFromUsageFix extends CreateFromUsageBaseFix implement
   protected void invokeImpl(PsiClass targetClass) {
     PsiManager manager = myMethodCall.getManager();
     final Project project = manager.getProject();
-    PsiElementFactory factory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();
+    PsiElementFactory factory = JavaPsiFacade.getElementFactory(manager.getProject());
 
     boolean isStatic = false;
     PsiExpression qualifierExpression = myMethodCall.getMethodExpression().getQualifierExpression();
@@ -208,7 +214,7 @@ public class CreatePropertyFromUsageFix extends CreateFromUsageBaseFix implement
       expectedTypes = new PsiType[]{type};
     }
     else {
-      type = myMethodCall.getArgumentList().getExpressions()[0].getType();
+      type = RefactoringUtil.getTypeByExpression(myMethodCall.getArgumentList().getExpressions()[0]);
       if (type == null || PsiType.NULL.equals(type)) type = PsiType.getJavaLangObject(manager, myMethodCall.getResolveScope());
       expectedTypes = new PsiType[]{type};
     }
@@ -226,14 +232,14 @@ public class CreatePropertyFromUsageFix extends CreateFromUsageBaseFix implement
     PsiElement typeReference;
     PsiCodeBlock body;
     if (callText.startsWith(GET_PREFIX) || callText.startsWith(IS_PREFIX)) {
-      accessor = (PsiMethod)targetClass.add(PropertyUtil.generateGetterPrototype(field));
+      accessor = (PsiMethod)targetClass.add(GenerateMembersUtil.generateSimpleGetterPrototype(field));
       body = accessor.getBody();
       LOG.assertTrue(body != null, accessor.getText());
       fieldReference = ((PsiReturnStatement)body.getStatements()[0]).getReturnValue();
       typeReference = accessor.getReturnTypeElement();
     }
     else {
-      accessor = (PsiMethod)targetClass.add(PropertyUtil.generateSetterPrototype(field, targetClass));
+      accessor = (PsiMethod)targetClass.add(GenerateMembersUtil.generateSimpleSetterPrototype(field, targetClass));
       body = accessor.getBody();
       LOG.assertTrue(body != null, accessor.getText());
       PsiAssignmentExpression expr = (PsiAssignmentExpression)((PsiExpressionStatement)body.getStatements()[0]).getExpression();
@@ -248,7 +254,7 @@ public class CreatePropertyFromUsageFix extends CreateFromUsageBaseFix implement
     builder.replaceElement(fieldReference, FIELD_VARIABLE, new FieldExpression(field, targetClass, expectedTypes), true);
     builder.setEndVariableAfter(body.getLBrace());
 
-    accessor = CodeInsightUtilBase.forcePsiPostprocessAndRestoreElement(accessor);
+    accessor = CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(accessor);
     LOG.assertTrue(accessor != null);
     targetClass = accessor.getContainingClass();
     LOG.assertTrue(targetClass != null);
@@ -263,52 +269,46 @@ public class CreatePropertyFromUsageFix extends CreateFromUsageBaseFix implement
     final boolean isStatic1 = isStatic;
     startTemplate(editor, template, project, new TemplateEditingAdapter() {
       @Override
-      public void beforeTemplateFinished(final TemplateState state, Template template) {
-        ApplicationManager.getApplication().runWriteAction(new Runnable() {
-          @Override
-          public void run() {
-            String fieldName = state.getVariableValue(FIELD_VARIABLE).getText();
-            if (!JavaPsiFacade.getInstance(project).getNameHelper().isIdentifier(fieldName)) return;
-            String fieldType = state.getVariableValue(TYPE_VARIABLE).getText();
+      public void beforeTemplateFinished(@NotNull final TemplateState state, Template template) {
+        ApplicationManager.getApplication().runWriteAction(() -> {
+          String fieldName1 = state.getVariableValue(FIELD_VARIABLE).getText();
+          if (!PsiNameHelper.getInstance(project).isIdentifier(fieldName1)) return;
+          String fieldType = state.getVariableValue(TYPE_VARIABLE).getText();
 
-            PsiElement element = file.findElementAt(editor.getCaretModel().getOffset());
-            PsiClass aClass = PsiTreeUtil.getParentOfType(element, PsiClass.class);
-            if (aClass == null) return;
-            PsiField field = aClass.findFieldByName(fieldName, true);
-            if (field != null){
-              CreatePropertyFromUsageFix.this.beforeTemplateFinished(aClass, field);
-              return;
-            }
-            PsiElementFactory factory = JavaPsiFacade.getInstance(aClass.getProject()).getElementFactory();
+          PsiElement element = file.findElementAt(editor.getCaretModel().getOffset());
+          PsiClass aClass = PsiTreeUtil.getParentOfType(element, PsiClass.class);
+          if (aClass == null) return;
+          PsiField field1 = aClass.findFieldByName(fieldName1, true);
+          if (field1 != null){
+            CreatePropertyFromUsageFix.this.beforeTemplateFinished(aClass, field1);
+            return;
+          }
+          PsiElementFactory factory1 = JavaPsiFacade.getElementFactory(aClass.getProject());
+          try {
+            PsiType type1 = factory1.createTypeFromText(fieldType, aClass);
             try {
-              PsiType type = factory.createTypeFromText(fieldType, aClass);
-              try {
-                field = factory.createField(fieldName, type);
-                field = (PsiField)aClass.add(field);
-                PsiUtil.setModifierProperty(field, PsiModifier.STATIC, isStatic1);
-                CreatePropertyFromUsageFix.this.beforeTemplateFinished(aClass, field);
-              }
-              catch (IncorrectOperationException e) {
-                LOG.error(e);
-              }
+              field1 = factory1.createField(fieldName1, type1);
+              field1 = (PsiField)aClass.add(field1);
+              PsiUtil.setModifierProperty(field1, PsiModifier.STATIC, isStatic1);
+              CreatePropertyFromUsageFix.this.beforeTemplateFinished(aClass, field1);
             }
             catch (IncorrectOperationException e) {
+              LOG.error(e);
             }
+          }
+          catch (IncorrectOperationException e) {
           }
         });
       }
 
       @Override
-      public void templateFinished(Template template, boolean brokenOff) {
+      public void templateFinished(@NotNull Template template, boolean brokenOff) {
         PsiDocumentManager.getInstance(project).commitDocument(editor.getDocument());
         final int offset = editor.getCaretModel().getOffset();
         final PsiMethod generatedMethod = PsiTreeUtil.findElementOfClassAtOffset(file, offset, PsiMethod.class, false);
         if (generatedMethod != null) {
-          ApplicationManager.getApplication().runWriteAction(new Runnable() {
-            @Override
-            public void run() {
-              CodeStyleManager.getInstance(project).reformat(generatedMethod);
-            }
+          ApplicationManager.getApplication().runWriteAction(() -> {
+            CodeStyleManager.getInstance(project).reformat(generatedMethod);
           });
         }
       }
@@ -324,8 +324,8 @@ public class CreatePropertyFromUsageFix extends CreateFromUsageBaseFix implement
   private static String getVariableName(PsiMethodCallExpression methodCall, boolean isStatic) {
     JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(methodCall.getProject());
     String methodName = methodCall.getMethodExpression().getReferenceName();
-    String propertyName = PropertyUtil.getPropertyName(methodName);
-    if (propertyName != null && propertyName.length() > 0) {
+    String propertyName = PropertyUtilBase.getPropertyName(methodName);
+    if (propertyName != null && !propertyName.isEmpty()) {
       VariableKind kind = isStatic ? VariableKind.STATIC_FIELD : VariableKind.FIELD;
       return codeStyleManager.propertyNameToVariableName(propertyName, kind);
     }

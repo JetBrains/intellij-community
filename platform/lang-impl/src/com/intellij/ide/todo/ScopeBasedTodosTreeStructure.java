@@ -14,58 +14,46 @@
  * limitations under the License.
  */
 
-/*
- * User: anna
- * Date: 27-Jul-2007
- */
 package com.intellij.ide.todo;
 
 import com.intellij.ide.todo.nodes.ToDoRootNode;
 import com.intellij.ide.util.scopeChooser.ScopeChooserCombo;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vcs.changes.Change;
-import com.intellij.openapi.vcs.changes.ChangeListManager;
-import com.intellij.openapi.vfs.VfsUtil;
-import com.intellij.packageDependencies.DependencyValidationManager;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.search.scope.packageSet.NamedScope;
-import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
-import com.intellij.psi.search.scope.packageSet.PackageSet;
-
-import javax.swing.*;
-import java.util.Collection;
+import com.intellij.psi.search.SearchScope;
 
 public class ScopeBasedTodosTreeStructure extends TodoTreeStructure {
-  private JComboBox myScopes;
+  private final ScopeChooserCombo myScopes;
 
-  public ScopeBasedTodosTreeStructure(Project project, JComboBox scopes) {
+  public ScopeBasedTodosTreeStructure(Project project, ScopeChooserCombo scopes) {
     super(project);
     myScopes = scopes;
   }
 
+  @Override
   public boolean accept(final PsiFile psiFile) {
     if (!psiFile.isValid()) return false;
-    boolean isAffected = false;
-    final ScopeBasedTodosPanel.ScopeWrapper scope = (ScopeBasedTodosPanel.ScopeWrapper)myScopes.getSelectedItem();
-    if (scope != null) {
-      final PackageSet value = scope.getNamedScope().getValue();
-      if (value != null) {
-        isAffected = value.contains(psiFile, NamedScopesHolder.getHolder(myProject, scope.getName(), DependencyValidationManager.getInstance(myProject)));
-      }
-    }
+
+    SearchScope scope = myScopes.getSelectedScope();
+    VirtualFile file = psiFile.getVirtualFile();
+    boolean isAffected = scope != null && file != null && scope.contains(file);
     return isAffected && (myTodoFilter != null && myTodoFilter.accept(mySearchHelper, psiFile) ||
                           (myTodoFilter == null && mySearchHelper.getTodoItemsCount(psiFile) > 0));
   }
 
+  @Override
   public boolean getIsPackagesShown() {
     return myArePackagesShown;
   }
 
+  @Override
   Object getFirstSelectableElement() {
     return ((ToDoRootNode)myRootElement).getSummaryNode();
   }
 
+  @Override
   protected AbstractTreeNode createRootElement() {
     return new ToDoRootNode(myProject, new Object(), myBuilder, mySummaryElement);
   }

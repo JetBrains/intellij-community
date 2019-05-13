@@ -16,8 +16,8 @@
 package com.intellij.util;
 
 import com.intellij.ide.DataManager;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.Nullable;
 
@@ -35,11 +35,12 @@ public class EditSourceOnEnterKeyHandler{
   public static void install(final JTree tree){
     tree.addKeyListener(
       new KeyAdapter() {
+        @Override
         public void keyPressed(KeyEvent e) {
           if (KeyEvent.VK_ENTER == e.getKeyCode()) {
             DataContext dataContext = DataManager.getInstance().getDataContext(tree);
 
-            Project project = PlatformDataKeys.PROJECT.getData(dataContext);
+            Project project = CommonDataKeys.PROJECT.getData(dataContext);
             if (project == null) return;
 
             OpenSourceUtil.openSourcesFrom(dataContext, false);
@@ -52,6 +53,7 @@ public class EditSourceOnEnterKeyHandler{
   public static void install(final JComponent component,
                            @Nullable final Runnable whenPerformed) {
     component.registerKeyboardAction(new ActionListener() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         DataContext dataContext = DataManager.getInstance().getDataContext(component);
         OpenSourceUtil.openSourcesFrom(dataContext, true);
@@ -63,6 +65,7 @@ public class EditSourceOnEnterKeyHandler{
   public static void install(@Nullable final Runnable before, final JComponent component,
                            @Nullable final Runnable whenPerformed) {
     component.registerKeyboardAction(new ActionListener() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         DataContext dataContext = DataManager.getInstance().getDataContext(component);
         if (before != null) before.run();

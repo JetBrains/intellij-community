@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,19 +14,15 @@
  * limitations under the License.
  */
 
-/*
- * User: anna
- * Date: 19-Dec-2006
- */
 package com.intellij.compiler.ant.taskdefs;
 
 import com.intellij.compiler.ant.Tag;
-import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Couple;
 import org.jetbrains.annotations.NonNls;
 
 public class Zip extends Tag {
   public Zip(@NonNls final String destFile) {
     //noinspection HardCodedStringLiteral
-    super("zip", new Pair[] {Pair.create("destfile", destFile)});
+    super("zip", Couple.of("destfile", destFile));
   }
 }

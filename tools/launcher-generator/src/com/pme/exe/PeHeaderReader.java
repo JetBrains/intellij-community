@@ -1,6 +1,6 @@
 /*
  * Copyright 2006 ProductiveMe Inc.
- * Copyright 2013 JetBrains s.r.o.
+ * Copyright 2013-2018 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,30 +17,31 @@
 
 package com.pme.exe;
 
-import java.io.IOException;
-import java.io.DataInput;
-
 /**
+ * @author Sergey Zhulin
  * Date: Mar 31, 2006
  * Time: 5:00:49 PM
  */
 public class PeHeaderReader extends Bin.Structure{
-  private Bin.Value myStartOffset;
+  private final ImageFileHeader myImageFileHeader;
 
-  public PeHeaderReader( Bin.Value startOffset ){
+  public PeHeaderReader(Bin.Value startOffset, ExeFormat exeFormat) {
     super( "PE Header" );
-    myStartOffset = startOffset;
-    addOffsetHolder( myStartOffset );
+    addOffsetHolder(startOffset);
     addMember( new DWord( "Signature" ) );
-    ImageFileHeader imageFileHeader = new ImageFileHeader();
-    addMember( imageFileHeader );
-    addMember( new ImageOptionalHeader() );
-    Bin.Value numberOfSections = imageFileHeader.getValueMember( "NumberOfSections" );
+    myImageFileHeader = new ImageFileHeader();
+    addMember(myImageFileHeader);
+    if (exeFormat == ExeFormat.UNKNOWN) {
+      return;
+    }
+    addMember(new ImageOptionalHeader(exeFormat));
+    Bin.Value numberOfSections = myImageFileHeader.getValueMember("NumberOfSections");
     ArrayOfBins imageSectionHeaders = new ArrayOfBins( "ImageSectionHeaders", ImageSectionHeader.class, numberOfSections );
     imageSectionHeaders.setCountHolder( numberOfSections );
     addMember( imageSectionHeaders );
   }
-  public void read(DataInput stream) throws IOException {
-    super.read( stream );
+
+  public ImageFileHeader getImageFileHeader() {
+    return myImageFileHeader;
   }
 }

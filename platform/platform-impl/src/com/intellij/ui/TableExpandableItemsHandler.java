@@ -1,27 +1,15 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui;
 
 import com.intellij.openapi.util.Pair;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
+import javax.swing.table.JTableHeader;
 import javax.swing.table.TableColumnModel;
 import javax.swing.table.TableModel;
 import java.awt.*;
@@ -70,12 +58,7 @@ public class TableExpandableItemsHandler extends AbstractExpandableItemsHandler<
       public void tableChanged(final TableModelEvent e) {
         // This method may be called from TableModelListener (before selection model update)
         // http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=4730055
-        SwingUtilities.invokeLater(new Runnable() {
-          @Override
-          public void run() {
-            updateSelection(table);
-          }
-        });
+        SwingUtilities.invokeLater(() -> updateSelection(table));
       }
     };
 
@@ -105,28 +88,25 @@ public class TableExpandableItemsHandler extends AbstractExpandableItemsHandler<
     return myComponent.getCellRect(tableCellKey.row, tableCellKey.column, false);
   }
 
+  @Override
+  @Nullable
   public Pair<Component, Rectangle> getCellRendererAndBounds(TableCell key) {
-    Rectangle cellRect = getCellRect(key);
-
-    int modelColumnIndex = myComponent.convertColumnIndexToModel(key.column);
-    final int modelRowIndex = myComponent.convertRowIndexToModel(key.row);
-    TableModel model = myComponent.getModel();
-    if (key.row < 0 || key.row >= model.getRowCount() || key.column < 0 || key.column >= model.getColumnCount()) {
+    if (key.row < 0 || key.row >= myComponent.getRowCount() ||
+        key.column < 0 || key.column >= myComponent.getColumnCount() ||
+        key.row == myComponent.getEditingRow() && key.column == myComponent.getEditingColumn() ||
+        hasDraggingOrResizingColumn()) {
       return null;
     }
 
-    Component renderer = myComponent
-      .getCellRenderer(key.row, key.column)
-      .getTableCellRendererComponent(myComponent,
-                                     model.getValueAt(modelRowIndex, modelColumnIndex),
-                                     myComponent.getSelectionModel().isSelectedIndex(key.row),
-                                     myComponent.hasFocus(),
-                                     key.row, key.column);
+    Rectangle cellRect = getCellRect(key);
+    Component renderer = myComponent.prepareRenderer(myComponent.getCellRenderer(key.row, key.column), key.row, key.column);
+    AppUIUtil.targetToDevice(renderer, myComponent);
     cellRect.width = renderer.getPreferredSize().width;
 
     return Pair.create(renderer, cellRect);
   }
 
+  @Override
   public Rectangle getVisibleRect(TableCell key) {
     Rectangle columnVisibleRect = myComponent.getVisibleRect();
     Rectangle cellRect = getCellRect(key);
@@ -136,6 +116,7 @@ public class TableExpandableItemsHandler extends AbstractExpandableItemsHandler<
     return columnVisibleRect;
   }
 
+  @Override
   public TableCell getCellKeyForPoint(Point point) {
     int rowIndex = myComponent.rowAtPoint(point);
     if (rowIndex == -1) {
@@ -148,5 +129,10 @@ public class TableExpandableItemsHandler extends AbstractExpandableItemsHandler<
     }
 
     return new TableCell(rowIndex, columnIndex);
+  }
+
+  private boolean hasDraggingOrResizingColumn() {
+    JTableHeader header = myComponent.getTableHeader();
+    return header != null && (header.getResizingColumn() != null || header.getDraggedColumn() != null);
   }
 }

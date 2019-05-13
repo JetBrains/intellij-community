@@ -1,0 +1,18 @@
+PsiJavaFile:LocalVar5.java
+  PsiDeclarationStatement
+    PsiLocalVariable:x
+      PsiModifierList:@A
+        PsiAnnotation
+          PsiJavaToken:AT('@')
+          PsiJavaCodeReferenceElement:A
+            PsiIdentifier:A('A')
+            PsiReferenceParameterList
+              <empty list>
+          PsiAnnotationParameterList
+            <empty list>
+      PsiWhiteSpace(' ')
+      PsiTypeElement:var
+        PsiKeyword:var('var')
+      PsiWhiteSpace(' ')
+      PsiIdentifier:x('x')
+      PsiJavaToken:SEMICOLON(';')

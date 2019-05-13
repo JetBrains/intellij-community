@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,8 +15,8 @@
  */
 package com.intellij.util.xml.ui;
 
-import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.ui.SimpleTextAttributes;
@@ -34,6 +34,7 @@ import java.lang.reflect.InvocationTargetException;
  * @author peter
  */
 public abstract class BaseControl<Bound extends JComponent, T> extends DomUIControl implements Highlightable {
+  private static final Logger LOG = Logger.getInstance(BaseControl.class);
   public static final Color ERROR_BACKGROUND = new Color(255,204,204);
   public static final Color ERROR_FOREGROUND = SimpleTextAttributes.ERROR_ATTRIBUTES.getFgColor();
   public static final Color WARNING_BACKGROUND = new Color(255,255,204);
@@ -90,9 +91,11 @@ public abstract class BaseControl<Bound extends JComponent, T> extends DomUICont
     final JComponent component = getComponentToListenFocusLost(myBoundComponent);
     if (component != null) {
       component.addFocusListener(new FocusListener() {
+        @Override
         public void focusGained(FocusEvent e) {
         }
 
+        @Override
         public void focusLost(FocusEvent e) {
           if (!e.isTemporary() && isValid()) {
             commit();
@@ -111,18 +114,22 @@ public abstract class BaseControl<Bound extends JComponent, T> extends DomUICont
 
   protected abstract Bound createMainComponent(Bound boundedComponent);
 
+  @Override
   public void bind(JComponent component) {
     initialize((Bound)component);
   }
 
+  @Override
   public void addCommitListener(CommitListener listener) {
     myDispatcher.addListener(listener);
   }
 
+  @Override
   public void removeCommitListener(CommitListener listener) {
     myDispatcher.removeListener(listener);
   }
 
+  @Override
   public final DomElement getDomElement() {
     return myDomWrapper.getWrappedElement();
   }
@@ -131,14 +138,17 @@ public abstract class BaseControl<Bound extends JComponent, T> extends DomUICont
     return myDomWrapper;
   }
 
+  @Override
   public final Bound getComponent() {
     checkInitialized();
     return myBoundComponent;
   }
 
+  @Override
   public void dispose() {
   }
 
+  @Override
   public final void commit() {
     if (isValid() && !isCommitted()) {
       setValueToXml(getValue());
@@ -160,6 +170,7 @@ public abstract class BaseControl<Bound extends JComponent, T> extends DomUICont
     return valueInXml instanceof String && valueInControl instanceof String && ((String)valueInXml).trim().equals(((String)valueInControl).trim());
   }
 
+  @Override
   public final void reset() {
     if (!myCommitting) {
       doReset();
@@ -167,6 +178,7 @@ public abstract class BaseControl<Bound extends JComponent, T> extends DomUICont
     }
   }
 
+  @Override
   public void updateHighlighting() {
     updateComponent();
   }
@@ -194,11 +206,14 @@ public abstract class BaseControl<Bound extends JComponent, T> extends DomUICont
     try {
       final CommitListener multicaster = myDispatcher.getMulticaster();
       multicaster.beforeCommit(this);
-      new WriteCommandAction(getProject(), getDomWrapper().getFile()) {
-        protected void run(Result result) throws Throwable {
+      try {
+        WriteCommandAction.writeCommandAction(getProject(), getDomWrapper().getFile()).run(() -> {
           doCommit(value);
-        }
-      }.execute();
+        });
+      }
+      catch (ReflectiveOperationException e) {
+        LOG.error(e);
+      }
       multicaster.afterCommit(this);
     }
     finally {
@@ -218,19 +233,18 @@ public abstract class BaseControl<Bound extends JComponent, T> extends DomUICont
     try {
       return myDomWrapper.getValue();
     }
-    catch (IllegalAccessException e) {
-      throw new RuntimeException(e);
-    }
-    catch (InvocationTargetException e) {
+    catch (IllegalAccessException | InvocationTargetException e) {
       throw new RuntimeException(e);
     }
   }
 
 
+  @Override
   public boolean canNavigate(DomElement element) {
     return false;
   }
 
+  @Override
   public void navigate(DomElement element) {
   }
 

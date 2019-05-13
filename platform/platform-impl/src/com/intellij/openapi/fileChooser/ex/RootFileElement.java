@@ -30,17 +30,21 @@ import java.util.List;
 import java.util.Set;
 
 public class RootFileElement extends FileElement {
-  private final VirtualFile[] myFiles;
+  private VirtualFile[] myFiles;
   private Object[] myChildren;
 
-  public RootFileElement(@NotNull final VirtualFile[] files, final String name, final boolean showFileSystemRoots) {
+  public RootFileElement(@NotNull VirtualFile[] files, String name, boolean showFileSystemRoots) {
     super(files.length == 1 ? files[0] : null, name);
-    myFiles = files.length == 0 && showFileSystemRoots ? getFileSystemRoots() : files;
+    myFiles = files.length == 0 && showFileSystemRoots ? null : files;
   }
 
   public Object[] getChildren() {
     if (myChildren == null) {
-      final List<FileElement> children = new ArrayList<FileElement>();
+      if (myFiles == null) {
+        myFiles = getFileSystemRoots();
+      }
+
+      List<FileElement> children = new ArrayList<>();
       for (final VirtualFile file : myFiles) {
         if (file != null) {
           children.add(new FileElement(file, file.getPresentableUrl()));
@@ -53,7 +57,7 @@ public class RootFileElement extends FileElement {
 
   private static VirtualFile[] getFileSystemRoots() {
     final LocalFileSystem localFileSystem = LocalFileSystem.getInstance();
-    final Set<VirtualFile> roots = new HashSet<VirtualFile>();
+    final Set<VirtualFile> roots = new HashSet<>();
     final File[] ioRoots = File.listRoots();
     if (ioRoots != null) {
       for (final File root : ioRoots) {

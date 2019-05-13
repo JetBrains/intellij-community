@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,14 +18,12 @@ package com.intellij.ui;
 import com.intellij.openapi.util.Pair;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.ui.UIUtil;
-import com.intellij.util.ui.tree.WideSelectionTreeUI;
 
 import javax.swing.*;
 import javax.swing.event.TreeModelEvent;
 import javax.swing.event.TreeModelListener;
 import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
-import javax.swing.plaf.TreeUI;
 import javax.swing.tree.TreeCellRenderer;
 import javax.swing.tree.TreeModel;
 import javax.swing.tree.TreePath;
@@ -38,6 +36,7 @@ public class TreeExpandableItemsHandler extends AbstractExpandableItemsHandler<I
   protected TreeExpandableItemsHandler(final JTree tree) {
     super(tree);
     final TreeSelectionListener selectionListener = new TreeSelectionListener() {
+      @Override
       public void valueChanged(TreeSelectionEvent e) {
         updateSelection(tree);
       }
@@ -97,14 +96,16 @@ public class TreeExpandableItemsHandler extends AbstractExpandableItemsHandler<I
 
   private void updateSelection(JTree tree) {
     int selection = tree.getSelectionCount() == 1 ? tree.getSelectionModel().getLeadSelectionRow() : -1;
-    handleSelectionChange(selection == -1 ? null : new Integer(selection));
+    handleSelectionChange(selection == -1 ? null : selection);
   }
 
+  @Override
   protected Integer getCellKeyForPoint(Point point) {
     int rowIndex = myComponent.getRowForLocation(point.x, point.y);
-    return rowIndex != -1 ? new Integer(rowIndex) : null;
+    return rowIndex != -1 ? rowIndex : null;
   }
 
+  @Override
   protected Pair<Component, Rectangle> getCellRendererAndBounds(Integer key) {
     int rowIndex = key.intValue();
 
@@ -131,42 +132,31 @@ public class TreeExpandableItemsHandler extends AbstractExpandableItemsHandler<I
   }
 
   @Override
-  protected Dimension getImageSize(int width, int height) {
-    final TreeUI ui = myComponent.getUI();
-    return new Dimension(width, ui instanceof WideSelectionTreeUI && ((WideSelectionTreeUI)ui).isWideSelection() ? height - 1 : height);
-  }
-
-  @Override
-  protected void doFillBackground(final int height, final int width, final Graphics2D g) {
-    final TreeUI ui = myComponent.getUI();
-    super.doFillBackground(ui instanceof WideSelectionTreeUI && ((WideSelectionTreeUI)ui).isWideSelection() ? height - 1 : height, width, g);
-  }
-
-  @Override
-  protected void doPaintTooltipImage(final Component rComponent,
-                                     final Rectangle cellBounds,
-                                     final int height,
-                                     final Graphics2D g,
+  protected void doPaintTooltipImage(Component rComponent,
+                                     Rectangle cellBounds,
+                                     Graphics2D g,
                                      Integer key) {
-    final boolean opaque = rComponent.isOpaque();
+    boolean opaque = rComponent.isOpaque();
     if (rComponent instanceof JComponent) {
       ((JComponent)rComponent).setOpaque(true);
     }
 
     if (myComponent.isRowSelected(key)) {
       rComponent.setBackground(UIUtil.getTreeSelectionBackground(myComponent.hasFocus()));
-    } else {
-      Color bg = UIUtil.getTreeTextBackground();
+    }
+    else {
+      Color bg = UIUtil.getTreeBackground();
       if (myComponent instanceof Tree && ((Tree)myComponent).isFileColorsEnabled()) {
-          final Color color = ((Tree)myComponent).getFileColorForPath(myComponent.getPathForRow(key));
-          if (color != null) {
-            bg = color;
-          }
+        TreePath path = myComponent.getPathForRow(key);
+        Color color = path == null ? null : ((Tree)myComponent).getFileColorForPath(path);
+        if (color != null) {
+          bg = color;
+        }
       }
       rComponent.setBackground(bg);
     }
-    
-    super.doPaintTooltipImage(rComponent, cellBounds, height, g, key);
+
+    super.doPaintTooltipImage(rComponent, cellBounds, g, key);
 
     if (rComponent instanceof JComponent) {
       ((JComponent)rComponent).setOpaque(opaque);

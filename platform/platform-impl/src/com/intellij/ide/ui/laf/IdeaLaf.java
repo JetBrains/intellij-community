@@ -1,25 +1,11 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.ui.laf;
 
 import com.intellij.icons.AllIcons;
+import com.intellij.openapi.util.Pair;
 import com.intellij.ui.ColoredSideBorder;
 import com.intellij.ui.plaf.beg.*;
-import com.sun.java.swing.plaf.windows.WindowsLookAndFeel;
-import com.sun.java.swing.plaf.windows.WindowsTreeUI;
+import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
 import javax.swing.border.Border;
@@ -34,11 +20,19 @@ public final class IdeaLaf extends MetalLookAndFeel {
 
   public static final ColorUIResource TOOLTIP_BACKGROUND_COLOR = new ColorUIResource(255, 255, 231);
 
+  @Override
   public void initComponentDefaults(UIDefaults defaults) {
     super.initComponentDefaults(defaults);
     LafManagerImpl.initInputMapDefaults(defaults);
     initIdeaDefaults(defaults);
-    LafManagerImpl.initFontDefaults(defaults, "Tahoma", 11);
+
+    Pair<String, Integer> systemFont = UIUtil.getSystemFontData();
+    if (systemFont != null) {
+      LafManagerImpl.initFontDefaults(defaults, UIUtil.getFontWithFallback(systemFont.first, Font.PLAIN, systemFont.second));
+    }
+    else {
+      LafManagerImpl.initFontDefaults(defaults, UIUtil.getFontWithFallback("Tahoma", Font.PLAIN, 11));
+    }
   }
 
   @SuppressWarnings({"HardCodedStringLiteral"})
@@ -77,17 +71,17 @@ public final class IdeaLaf extends MetalLookAndFeel {
     defaults.put("Tree.ancestorInputMap", null);
     defaults.put("FileView.directoryIcon", AllIcons.Nodes.Folder);
     defaults.put("FileChooser.upFolderIcon", AllIcons.Nodes.UpFolder);
-    defaults.put("FileChooser.newFolderIcon", AllIcons.Nodes.NewFolder);
+    defaults.put("FileChooser.newFolderIcon", AllIcons.Nodes.Folder);
     defaults.put("FileChooser.homeFolderIcon", AllIcons.Nodes.HomeFolder);
     defaults.put("OptionPane.errorIcon", AllIcons.General.ErrorDialog);
     defaults.put("OptionPane.informationIcon", AllIcons.General.InformationDialog);
     defaults.put("OptionPane.warningIcon", AllIcons.General.WarningDialog);
     defaults.put("OptionPane.questionIcon", AllIcons.General.QuestionDialog);
-    defaults.put("Tree.openIcon", LookAndFeel.makeIcon(WindowsLookAndFeel.class, "icons/TreeOpen.gif"));
-    defaults.put("Tree.closedIcon", LookAndFeel.makeIcon(WindowsLookAndFeel.class, "icons/TreeClosed.gif"));
-    defaults.put("Tree.leafIcon", LookAndFeel.makeIcon(WindowsLookAndFeel.class, "icons/TreeLeaf.gif"));
-    defaults.put("Tree.expandedIcon", WindowsTreeUI.ExpandedIcon.createExpandedIcon());
-    defaults.put("Tree.collapsedIcon", WindowsTreeUI.CollapsedIcon.createCollapsedIcon());
+    //defaults.put("Tree.openIcon", LookAndFeel.makeIcon(WindowsLookAndFeel.class, "icons/TreeOpen.gif"));
+    //defaults.put("Tree.closedIcon", LookAndFeel.makeIcon(WindowsLookAndFeel.class, "icons/TreeClosed.gif"));
+    //defaults.put("Tree.leafIcon", LookAndFeel.makeIcon(WindowsLookAndFeel.class, "icons/TreeLeaf.gif"));
+    //defaults.put("Tree.expandedIcon", WindowsTreeUI.ExpandedIcon.createExpandedIcon());
+    //defaults.put("Tree.collapsedIcon", WindowsTreeUI.CollapsedIcon.createCollapsedIcon());
     defaults.put("Table.ancestorInputMap", new UIDefaults.LazyInputMap(new Object[] {
                        "ctrl C", "copy",
                        "ctrl V", "paste",

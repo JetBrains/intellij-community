@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,6 +28,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.*;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.text.CharArrayUtil;
+import com.intellij.xml.util.CheckEmptyTagInspection;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -37,6 +38,7 @@ import org.jetbrains.annotations.Nullable;
 public class XmlSmartEnterProcessor extends SmartEnterProcessor {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.completion.XmlSmartEnterProcessor");
 
+  @Override
   public boolean process(@NotNull final Project project, @NotNull final Editor editor, @NotNull final PsiFile psiFile) {
     return completeEndTag(project, editor, psiFile);
   }
@@ -56,7 +58,7 @@ public class XmlSmartEnterProcessor extends SmartEnterProcessor {
         int caretAt = editor.getCaretModel().getOffset();
         final CharSequence text = doc.getCharsSequence();
         final int probableCommaOffset = CharArrayUtil.shiftForward(text, insertionOffset, " \t");
-        final PsiElement siebling = tagAtCaret.getNextSibling();
+        final PsiElement sibling = tagAtCaret.getNextSibling();
         int caretTo = caretAt;
         char ch;
 
@@ -86,11 +88,12 @@ public class XmlSmartEnterProcessor extends SmartEnterProcessor {
 
           final PsiElement element = psiFile.findElementAt(probableCommaOffset);
           final XmlTag tag = PsiTreeUtil.getParentOfType(element, XmlTag.class);
-          final CharSequence text2insert = getClosingPart(xmlAttribute, tagAtCaret, false);
+          boolean shouldInsertClosingTag = shouldAfterWrapTextWithTag(caretAt, probableCommaOffset) || shouldInsertClosingTag(xmlAttribute, tagAtCaret);
+          final CharSequence text2insert = getClosingPart(xmlAttribute, tagAtCaret, !shouldInsertClosingTag);
 
           if (tag != null && tag.getTextRange().getStartOffset() == probableCommaOffset) {
             doc.insertString(caretAt, text2insert);
-            if (shouldInsertClosingTag(xmlAttribute, tagAtCaret)) {
+            if (shouldInsertClosingTag) {
               doc.insertString(tag.getTextRange().getEndOffset() + text2insert.length(), "</" + tagAtCaret.getName() + ">");
             }
 
@@ -98,30 +101,30 @@ public class XmlSmartEnterProcessor extends SmartEnterProcessor {
           }
           else {
             doc.insertString(caretAt, text2insert);
-            if (shouldInsertClosingTag(xmlAttribute, tagAtCaret)) {
+            if (shouldInsertClosingTag) {
               doc.insertString(probableCommaOffset + text2insert.length(), "</" + tagNameText + ">");
             }
 
             caretTo = probableCommaOffset + text2insert.length();
           }
         }
-        else if (siebling instanceof XmlTag && siebling.getTextRange().getStartOffset() == caretAt) {
+        else if (sibling instanceof XmlTag && sibling.getTextRange().getStartOffset() == caretAt) {
           final XmlAttribute xmlAttribute = PsiTreeUtil.getParentOfType(atCaret, XmlAttribute.class, false, XmlTag.class);
           final CharSequence text2insert = getClosingPart(xmlAttribute, tagAtCaret, false);
 
           doc.insertString(caretAt, text2insert);
           if (shouldInsertClosingTag(xmlAttribute, tagAtCaret)) {
-            doc.insertString(siebling.getTextRange().getEndOffset() + text2insert.length(), "</" + tagAtCaret.getName() + ">");
+            doc.insertString(sibling.getTextRange().getEndOffset() + text2insert.length(), "</" + tagAtCaret.getName() + ">");
           }
 
-          caretTo = siebling.getTextRange().getEndOffset() + text2insert.length();
+          caretTo = sibling.getTextRange().getEndOffset() + text2insert.length();
         }
         else if (probableCommaOffset >= text.length() || ((ch = text.charAt(probableCommaOffset)) != '/' && ch != '>')) {
           final XmlAttribute xmlAttribute = PsiTreeUtil.getParentOfType(atCaret, XmlAttribute.class, false, XmlTag.class);
-          final CharSequence text2insert = getClosingPart(xmlAttribute, tagAtCaret, true);
+          final String text2insert = getClosingPart(xmlAttribute, tagAtCaret, true);
 
           doc.insertString(insertionOffset, text2insert);
-          caretTo = insertionOffset + text2insert.length();
+          caretTo = insertionOffset + text2insert.indexOf('>') + 1;
         }
 
         commitChanges(project, editor, psiFile, caretTo, null);
@@ -151,6 +154,10 @@ public class XmlSmartEnterProcessor extends SmartEnterProcessor {
       LOG.error(e);
     }
     return false;
+  }
+
+  protected boolean shouldAfterWrapTextWithTag(int caretAt, int probableCommaOffset) {
+    return probableCommaOffset > caretAt;
   }
 
   private void commitChanges(Project project, Editor editor, PsiFile psiFile, int caretOffset, @Nullable XmlTag tagToReformat) {
@@ -189,11 +196,14 @@ public class XmlSmartEnterProcessor extends SmartEnterProcessor {
   }
 
   protected boolean shouldInsertClosingTag(final XmlAttribute xmlAttribute, final XmlTag tagAtCaret) {
-    return true;
+    return xmlAttribute == null || getClosingQuote(xmlAttribute).length() != 0;
   }
 
   protected String getClosingPart(final XmlAttribute xmlAttribute, final XmlTag tagAtCaret, final boolean emptyTag) {
-    return getClosingQuote(xmlAttribute) + (emptyTag ? "/>" : ">");
+    return getClosingQuote(xmlAttribute) +
+           (emptyTag ?
+              CheckEmptyTagInspection.isTagWithEmptyEndNotAllowed(tagAtCaret) ? "></" + tagAtCaret.getName() + ">"  : "/>" :
+              ">");
   }
 
   @NotNull

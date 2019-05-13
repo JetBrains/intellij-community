@@ -1,372 +1,397 @@
-/*
- * Copyright 2000-2011 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.util.gotoByName;
 
 import com.intellij.concurrency.JobLauncher;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.progress.ProgressIndicatorProvider;
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiCompiledElement;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.SmartPointerManager;
+import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.psi.codeStyle.MinusculeMatcher;
 import com.intellij.psi.codeStyle.NameUtil;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.proximity.PsiProximityComparator;
-import com.intellij.util.Function;
-import com.intellij.util.Processor;
-import com.intellij.util.SmartList;
+import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.text.Matcher;
-import gnu.trove.THashSet;
+import com.intellij.util.containers.FList;
+import com.intellij.util.indexing.FindSymbolParameters;
+import com.intellij.util.indexing.IdFilter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.lang.ref.WeakReference;
 import java.util.*;
 
 public class DefaultChooseByNameItemProvider implements ChooseByNameItemProvider {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.util.gotoByName.ChooseByNameIdea");
-  private WeakReference<PsiElement> myContext;
+  private static final String UNIVERSAL_SEPARATOR = "\u0000";
+  private final SmartPsiElementPointer myContext;
 
-  public DefaultChooseByNameItemProvider(PsiElement context) {
-    myContext = new WeakReference<PsiElement>(context);
-  }
-
-  private enum MatchingMode {
-    CASE_SENSITIVE,
-    CASE_INSENSITIVE,
-    STRICT_CASE_INSENSITIVE
+  public DefaultChooseByNameItemProvider(@Nullable PsiElement context) {
+    myContext = context == null ? null : SmartPointerManager.getInstance(context.getProject()).createSmartPsiElementPointer(context);
   }
 
   @Override
-  public boolean filterElements(@NotNull ChooseByNameBase base,
-                                @NotNull String pattern,
+  public boolean filterElements(@NotNull final ChooseByNameBase base,
+                                @NotNull final String pattern,
                                 boolean everywhere,
-                                @NotNull ProgressIndicator indicator,
-                                @NotNull Processor<Object> consumer) {
-    String namePattern = getNamePattern(base, pattern);
-    String qualifierPattern = getQualifierPattern(base, pattern);
-
-    ChooseByNameModel model = base.getModel();
-    boolean empty = namePattern.isEmpty() ||
-                    namePattern.equals("@") && model instanceof GotoClassModel2;    // TODO[yole]: remove implicit dependency
-    if (empty && !base.canShowListForEmptyPattern()) return true;
-
-    Set<String> names = new THashSet<String>(Arrays.asList(base.getNames(everywhere)));
-
-    if (base.isSearchInAnyPlace() && !namePattern.trim().isEmpty()) {
-      String middleMatchPattern = "*" + namePattern + (namePattern.charAt(namePattern.length() - 1) == ' ' ? "" : "*");
-
-      // consume elements matching by prefix case-sensitively
-      Integer elementsConsumed = consumeElements(base, everywhere, indicator, consumer, namePattern, qualifierPattern, names,
-                                                 MatchingMode.CASE_SENSITIVE, false);
-      if (elementsConsumed == null) return false;
-
-      if (elementsConsumed == 0) {
-        // search for strict prefixes case-insensitively
-        elementsConsumed = consumeElements(base, everywhere, indicator, consumer, namePattern,
-                                           qualifierPattern, names, MatchingMode.STRICT_CASE_INSENSITIVE, false);
-        if (elementsConsumed == null) return false;
-
-        // search with original pattern without case sensitivity, don't add separator before found items
-        // result: items matched by prefix will always be above middle-matched items
-        Integer elementsConsumed2 = consumeElements(base, everywhere, indicator, consumer, namePattern,
-                                                    qualifierPattern, names, MatchingMode.CASE_INSENSITIVE, false);
-        if (elementsConsumed2 == null) return false;
-
-        elementsConsumed += elementsConsumed2;
-      }
-
-      // search with broadest criteria - middle match pattern, without case sensitivity
-      elementsConsumed = consumeElements(base, everywhere, indicator, consumer, middleMatchPattern,
-                                         qualifierPattern, names, MatchingMode.CASE_INSENSITIVE, elementsConsumed > 0);
-      return elementsConsumed != null;
-    }
-    else {
-      Integer elementsConsumed = consumeElements(base, everywhere, indicator, consumer, namePattern, qualifierPattern, names,
-                                                 MatchingMode.CASE_INSENSITIVE, false);
-      return elementsConsumed != null;
-    }
+                                @NotNull final ProgressIndicator indicator,
+                                @NotNull final Processor<Object> consumer) {
+    return filterElements(base, pattern, everywhere, indicator,
+                          myContext == null ? null : myContext.getElement(),
+                          () -> base.getNames(everywhere), consumer);
   }
 
   /**
-   * @return null if consumer returned false, number of consumed elements otherwise.
+   * Filters and sorts elements in the given choose by name popup according to the given pattern.
+   *
+   * @param everywhere If true, also return non-project items
+   * @param indicator Progress indicator which can be used to cancel the operation
+   * @param context The PSI element currently open in the editor (used for proximity ordering of returned results)
+   * @param consumer The consumer to which the results (normally NavigationItem instances) are passed
+   * @return true if the operation completed normally, false if it was interrupted
    */
-  @Nullable
-  private Integer consumeElements(@NotNull ChooseByNameBase base,
-                                  boolean everywhere,
-                                  @NotNull ProgressIndicator indicator,
-                                  @NotNull Processor<Object> consumer,
-                                  @NotNull String namePattern,
-                                  @NotNull String qualifierPattern,
-                                  @NotNull Set<String> allNames,
-                                  @NotNull MatchingMode matchingMode,
-                                  boolean needSeparator) {
-    ChooseByNameModel model = base.getModel();
-    List<String> namesList = new ArrayList<String>();
-    getNamesByPattern(base, new ArrayList<String>(allNames), indicator, namesList, namePattern, matchingMode);
-    allNames.removeAll(namesList);
-    sortNamesList(namePattern, namesList);
+  public static boolean filterElements(@NotNull ChooseByNameViewModel base,
+                                       @NotNull String pattern,
+                                       boolean everywhere,
+                                       @NotNull ProgressIndicator indicator,
+                                       @Nullable PsiElement context,
+                                       @NotNull Processor<Object> consumer) {
+    return filterElements(base, pattern, everywhere, indicator, context, null, consumer);
+  }
+
+  private static boolean filterElements(@NotNull ChooseByNameViewModel base,
+                                       @NotNull String pattern,
+                                       boolean everywhere,
+                                       @NotNull ProgressIndicator indicator,
+                                       @Nullable PsiElement context,
+                                       @Nullable Producer<String[]> allNamesProducer,
+                                       @NotNull Processor<Object> consumer) {
+    if (base.getProject() != null) base.getProject().putUserData(ChooseByNamePopup.CURRENT_SEARCH_PATTERN, pattern);
+
+    String namePattern = getNamePattern(base, pattern);
+    boolean preferStartMatches = !pattern.startsWith("*");
+
+    List<MatchResult> namesList =
+      getSortedNamesForAllWildcards(base, pattern, everywhere, indicator, allNamesProducer, namePattern, preferStartMatches);
 
     indicator.checkCanceled();
 
-    List<Object> sameNameElements = new SmartList<Object>();
-    List<Pair<String, MinusculeMatcher>> patternsAndMatchers = getPatternsAndMatchers(qualifierPattern, base);
-    int elementsConsumed = 0;
+    return processByNames(base, everywhere, indicator, context, consumer, preferStartMatches, namesList,
+                          createParameters(base, pattern, everywhere));
+  }
 
-    for (String name : namesList) {
-      indicator.checkCanceled();
+  @NotNull
+  private static List<MatchResult> getSortedNamesForAllWildcards(@NotNull ChooseByNameViewModel base,
+                                                                 @NotNull String pattern,
+                                                                 boolean everywhere,
+                                                                 @NotNull ProgressIndicator indicator,
+                                                                 @Nullable Producer<String[]> allNamesProducer,
+                                                                 String namePattern, boolean preferStartMatches) {
+    String matchingPattern = convertToMatchingPattern(base, namePattern);
+    if (matchingPattern.isEmpty() && !base.canShowListForEmptyPattern()) return Collections.emptyList();
 
-      // use interruptible call if possible
-      Object[] elements = model instanceof ContributorsBasedGotoByModel ?
-                                ((ContributorsBasedGotoByModel)model).getElementsByName(name, everywhere, namePattern, indicator)
-                                : model.getElementsByName(name, everywhere, namePattern);
-      if (elements.length > 1) {
-        sameNameElements.clear();
-        for (final Object element : elements) {
-          indicator.checkCanceled();
-          if (matchesQualifier(element, base, patternsAndMatchers)) {
-            sameNameElements.add(element);
+    List<MatchResult> result = getSortedNames(base, pattern, everywhere, indicator, allNamesProducer, matchingPattern, preferStartMatches);
+    if (!namePattern.contains("*")) return result;
+    
+    Set<String> allNames = new HashSet<>(ContainerUtil.map(result, mr -> mr.elementName));
+    for (int i = 1; i < namePattern.length() - 1; i++) {
+      if (namePattern.charAt(i) == '*') {
+        List<MatchResult> namesForSuffix = getSortedNames(base, pattern, everywhere, indicator, allNamesProducer,
+                                                          convertToMatchingPattern(base, namePattern.substring(i + 1)),
+                                                          preferStartMatches);
+        for (MatchResult mr : namesForSuffix) {
+          if (allNames.add(mr.elementName)) {
+            result.add(mr);
           }
         }
-        sortByProximity(base, sameNameElements);
-        for (Object element : sameNameElements) {
-          if (needSeparator && !consumer.process(ChooseByNameBase.NON_PREFIX_SEPARATOR)) return null;
-          if (!consumer.process(element)) return null;
-          needSeparator = false;
-          elementsConsumed++;
-        }
-      }
-      else if (elements.length == 1 && matchesQualifier(elements[0], base, patternsAndMatchers)) {
-        if (needSeparator && !consumer.process(ChooseByNameBase.NON_PREFIX_SEPARATOR)) return null;
-        if (!consumer.process(elements[0])) return null;
-        needSeparator = false;
-        elementsConsumed++;
       }
     }
-    return elementsConsumed;
-  }
-
-  protected void sortNamesList(@NotNull String namePattern, @NotNull List<String> namesList) {
-    // Here we sort using namePattern to have similar logic with empty qualified patten case
-    Collections.sort(namesList, new MatchesComparator(namePattern));
-  }
-
-  private void sortByProximity(@NotNull ChooseByNameBase base, @NotNull List<Object> sameNameElements) {
-    final ChooseByNameModel model = base.getModel();
-    if (model instanceof Comparator) {
-      //noinspection unchecked
-      Collections.sort(sameNameElements, (Comparator)model);
-    }
-    else {
-      Collections.sort(sameNameElements, new PathProximityComparator(model, myContext.get()));
-    }
+    return result;
   }
 
   @NotNull
-  private static String getQualifierPattern(@NotNull ChooseByNameBase base, @NotNull String pattern) {
-    final String[] separators = base.getModel().getSeparators();
-    int lastSeparatorOccurrence = 0;
-    for (String separator : separators) {
-      lastSeparatorOccurrence = Math.max(lastSeparatorOccurrence, pattern.lastIndexOf(separator));
+  private static List<MatchResult> getSortedNames(@NotNull ChooseByNameViewModel base,
+                                                  @NotNull String pattern,
+                                                  boolean everywhere,
+                                                  @NotNull ProgressIndicator indicator,
+                                                  @Nullable Producer<String[]> allNamesProducer,
+                                                  String namePattern, boolean preferStartMatches) {
+    List<MatchResult> namesList = getAllNames(base, pattern, everywhere, indicator, allNamesProducer, namePattern);
+
+    indicator.checkCanceled();
+
+    long started = System.currentTimeMillis();
+    Collections.sort(namesList, Comparator.comparing((MatchResult mr) -> !pattern.equalsIgnoreCase(mr.elementName))
+                                          .thenComparing((MatchResult mr) -> !namePattern.equalsIgnoreCase(mr.elementName))
+                                          .thenComparing((mr1, mr2) -> mr1.compareWith(mr2, preferStartMatches)));
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("sorted:"+ (System.currentTimeMillis() - started) + ",results:" + namesList.size());
     }
-    return pattern.substring(0, lastSeparatorOccurrence);
+    return namesList;
   }
 
   @NotNull
-  public static String getNamePattern(@NotNull ChooseByNameBase base, String pattern) {
-    pattern = base.transformPattern(pattern);
+  private static List<MatchResult> getAllNames(@NotNull ChooseByNameViewModel base,
+                                               @NotNull String fullPattern,
+                                               boolean everywhere,
+                                               @NotNull ProgressIndicator indicator,
+                                               @Nullable Producer<String[]> allNamesProducer,
+                                               String namePattern) {
+    List<MatchResult> namesList = new ArrayList<>();
+
+    final CollectConsumer<MatchResult> collect = new SynchronizedCollectConsumer<>(namesList);
 
     ChooseByNameModel model = base.getModel();
+    if (model instanceof ChooseByNameModelEx) {
+      indicator.checkCanceled();
+      long started = System.currentTimeMillis();
+      MinusculeMatcher matcher = buildPatternMatcher(namePattern);
+      ((ChooseByNameModelEx)model).processNames(sequence -> {
+        indicator.checkCanceled();
+        MatchResult result = matches(base, fullPattern, matcher, sequence);
+        if (result != null) {
+          collect.consume(result);
+          return true;
+        }
+        return false;
+      }, everywhere);
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("loaded + matched:"+ (System.currentTimeMillis() - started)+ "," + collect.getResult().size());
+      }
+    } else {
+      if (allNamesProducer == null) {
+        throw new IllegalArgumentException("Need to specify allNamesProducer when using a model which isn't a ChooseByNameModelEx");
+      }
+      String[] names = allNamesProducer.produce();
+      long started = System.currentTimeMillis();
+      processNamesByPattern(base, names, namePattern, indicator, collect);
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("matched:"+ (System.currentTimeMillis() - started)+ "," + names.length);
+      }
+    }
+    return namesList;
+  }
+
+  @NotNull
+  private static FindSymbolParameters createParameters(@NotNull ChooseByNameViewModel base, @NotNull String pattern, boolean everywhere) {
+    ChooseByNameModel model = base.getModel();
+    IdFilter idFilter = model instanceof ContributorsBasedGotoByModel ? ((ContributorsBasedGotoByModel)model).getIdFilter(everywhere) : null;
+    GlobalSearchScope searchScope = FindSymbolParameters.searchScopeFor(base.getProject(), everywhere);
+    return new FindSymbolParameters(pattern, getNamePattern(base, pattern), searchScope, idFilter);
+  }
+
+  private static boolean processByNames(@NotNull ChooseByNameViewModel base,
+                                        boolean everywhere,
+                                        @NotNull ProgressIndicator indicator,
+                                        @Nullable PsiElement context,
+                                        @NotNull Processor<Object> consumer,
+                                        boolean preferStartMatches,
+                                        List<? extends MatchResult> namesList,
+                                        FindSymbolParameters parameters) {
+    List<Object> sameNameElements = new SmartList<>();
+    final Map<Object, MatchResult> qualifierMatchResults = ContainerUtil.newIdentityTroveMap();
+
+    ChooseByNameModel model = base.getModel();
+    Comparator<Object> weightComparator = new Comparator<Object>() {
+      @SuppressWarnings("unchecked")
+      Comparator<Object> modelComparator = model instanceof Comparator ? (Comparator<Object>)model :
+                                           new PathProximityComparator(context);
+
+      @Override
+      public int compare(Object o1, Object o2) {
+        int result = modelComparator.compare(o1, o2);
+        return result != 0 ? result : qualifierMatchResults.get(o1).compareWith(qualifierMatchResults.get(o2), preferStartMatches);
+      }
+    };
+
+    MinusculeMatcher fullMatcher = getFullMatcher(parameters, base);
+
+    for (MatchResult result : namesList) {
+      indicator.checkCanceled();
+      String name = result.elementName;
+
+      // use interruptible call if possible
+      Object[] elements = model instanceof ContributorsBasedGotoByModel
+                          ? ((ContributorsBasedGotoByModel)model).getElementsByName(name, parameters, indicator)
+                          : model.getElementsByName(name, everywhere, getNamePattern(base, parameters.getCompletePattern()));
+      if (elements.length > 1) {
+        sameNameElements.clear();
+        qualifierMatchResults.clear();
+        for (final Object element : elements) {
+          indicator.checkCanceled();
+          MatchResult qualifierResult = matchQualifiedName(model, fullMatcher, element);
+          if (qualifierResult != null) {
+            sameNameElements.add(element);
+            qualifierMatchResults.put(element, qualifierResult);
+          }
+        }
+        Collections.sort(sameNameElements, weightComparator);
+        if (!ContainerUtil.process(sameNameElements, consumer)) return false;
+      }
+      else if (elements.length == 1 && matchQualifiedName(model, fullMatcher, elements[0]) != null) {
+        if (!consumer.process(elements[0])) return false;
+      }
+    }
+    return true;
+  }
+
+  @NotNull
+  protected PathProximityComparator getPathProximityComparator() {
+    return new PathProximityComparator(myContext == null ? null : myContext.getElement());
+  }
+
+  @NotNull
+  private static MinusculeMatcher getFullMatcher(FindSymbolParameters parameters, ChooseByNameViewModel base) {
+    String fullRawPattern = buildFullPattern(base, parameters.getCompletePattern());
+    String fullNamePattern = buildFullPattern(base, base.transformPattern(parameters.getCompletePattern()));
+
+    return NameUtil.buildMatcherWithFallback(fullRawPattern, fullNamePattern, NameUtil.MatchingCaseSensitivity.NONE);
+  }
+
+  @NotNull
+  private static String buildFullPattern(ChooseByNameViewModel base, String pattern) {
+    String fullPattern = "*" + removeModelSpecificMarkup(base.getModel(), pattern);
+    for (String separator : base.getModel().getSeparators()) {
+      fullPattern = StringUtil.replace(fullPattern, separator, "*" + UNIVERSAL_SEPARATOR + "*");
+    }
+    return fullPattern;
+  }
+
+  @NotNull
+  private static String getNamePattern(@NotNull ChooseByNameViewModel base, String pattern) {
+    String transformedPattern = base.transformPattern(pattern);
+    return getNamePattern(base.getModel(), transformedPattern);
+  }
+
+  private static String getNamePattern(ChooseByNameModel model, String pattern) {
     final String[] separators = model.getSeparators();
     int lastSeparatorOccurrence = 0;
     for (String separator : separators) {
-      final int idx = pattern.lastIndexOf(separator);
+      int idx = pattern.lastIndexOf(separator);
+      if (idx == pattern.length() - 1) {  // avoid empty name
+        idx = pattern.lastIndexOf(separator, idx - 1);
+      }
       lastSeparatorOccurrence = Math.max(lastSeparatorOccurrence, idx == -1 ? idx : idx + separator.length());
     }
 
     return pattern.substring(lastSeparatorOccurrence);
   }
 
-  @NotNull
-  private static List<String> split(@NotNull String s, @NotNull ChooseByNameBase base) {
-    List<String> answer = new ArrayList<String>();
-    for (String token : StringUtil.tokenize(s, StringUtil.join(base.getModel().getSeparators(), ""))) {
-      if (!token.isEmpty()) {
-        answer.add(token);
-      }
+  @Nullable
+  private static MatchResult matchQualifiedName(ChooseByNameModel model, MinusculeMatcher fullMatcher, Object element) {
+    String fullName = model.getFullName(element);
+    if (fullName == null) return null;
+    
+    for (String separator : model.getSeparators()) {
+      fullName = StringUtil.replace(fullName, separator, UNIVERSAL_SEPARATOR);
     }
-
-    return answer.isEmpty() ? Collections.singletonList(s) : answer;
-  }
-
-  private static boolean matchesQualifier(@NotNull Object element,
-                                          @NotNull final ChooseByNameBase base,
-                                          @NotNull List<Pair<String, MinusculeMatcher>> patternsAndMatchers) {
-    final String name = base.getModel().getFullName(element);
-    if (name == null) return false;
-
-    final List<String> suspects = split(name, base);
-
-    try {
-      int matchPosition = 0;
-      patterns:
-      for (Pair<String, MinusculeMatcher> patternAndMatcher : patternsAndMatchers) {
-        final String pattern = patternAndMatcher.first;
-        final MinusculeMatcher matcher = patternAndMatcher.second;
-        if (!pattern.isEmpty()) {
-          for (int j = matchPosition; j < suspects.size() - 1; j++) {
-            String suspect = suspects.get(j);
-            if (matches(base, pattern, matcher, suspect)) {
-              matchPosition = j + 1;
-              continue patterns;
-            }
-          }
-
-          return false;
-        }
-      }
-    }
-    catch (Exception e) {
-      // Do nothing. No matches appears valid result for "bad" pattern
-      return false;
-    }
-
-    return true;
-  }
-
-  @NotNull
-  private static List<Pair<String, MinusculeMatcher>> getPatternsAndMatchers(@NotNull String qualifierPattern, @NotNull final ChooseByNameBase base) {
-    return ContainerUtil.map2List(split(qualifierPattern, base), new Function<String, Pair<String, MinusculeMatcher>>() {
-      @NotNull
-      @Override
-      public Pair<String, MinusculeMatcher> fun(String s) {
-        return Pair.create(getNamePattern(base, s), buildPatternMatcher(getNamePattern(base, s), NameUtil.MatchingCaseSensitivity.NONE));
-      }
-    });
+    return matchName(fullMatcher, fullName);
   }
 
   @NotNull
   @Override
   public List<String> filterNames(@NotNull ChooseByNameBase base, @NotNull String[] names, @NotNull String pattern) {
-    List<String> res = new ArrayList<String>();
-    getNamesByPattern(base, Arrays.asList(names), null, res, pattern, MatchingMode.CASE_INSENSITIVE);
-    return res;
-  }
+    pattern = convertToMatchingPattern(base, pattern);
+    if (pattern.isEmpty() && !base.canShowListForEmptyPattern()) return Collections.emptyList();
 
-  private static void getNamesByPattern(@NotNull final ChooseByNameBase base,
-                                        @NotNull List<String> names,
-                                        @Nullable ProgressIndicator indicator,
-                                        @NotNull final List<String> outListFiltered, // matched items
-                                        @NotNull String pattern,
-                                        @NotNull MatchingMode matchingMode) throws ProcessCanceledException {
-    if (!base.canShowListForEmptyPattern()) {
-      LOG.assertTrue(!pattern.isEmpty(), base);
-    }
-
-    if (StringUtil.startsWithChar(pattern, '@') && base.getModel() instanceof GotoClassModel2) {
-      pattern = pattern.substring(1);
-    }
-
-    final String finalPattern = pattern;
-    final Matcher matcher;
-
-    switch (matchingMode) {
-      case CASE_SENSITIVE:
-        matcher = buildPatternMatcher(pattern, NameUtil.MatchingCaseSensitivity.ALL);
-        break;
-      case CASE_INSENSITIVE:
-        matcher = buildPatternMatcher(pattern, NameUtil.MatchingCaseSensitivity.NONE);
-        break;
-      case STRICT_CASE_INSENSITIVE:
-        matcher = new Matcher() {
-          @Override
-          public boolean matches(@NotNull String name) {
-            return StringUtil.startsWithIgnoreCase(name, finalPattern);
-          }
-        };
-        break;
-      default:
-        return;
-    }
-
-    JobLauncher.getInstance().invokeConcurrentlyUnderProgress(names, indicator, false, new Processor<String>() {
-      @Override
-      public boolean process(String name) {
-        if (matches(base, finalPattern, matcher, name)) {
-          synchronized (outListFiltered) {
-            outListFiltered.add(name);
-          }
-        }
-        return true;
+    final List<String> filtered = new ArrayList<>();
+    processNamesByPattern(base, names, pattern, ProgressIndicatorProvider.getGlobalProgressIndicator(), result -> {
+      synchronized (filtered) {
+        filtered.add(result.elementName);
       }
     });
+    synchronized (filtered) {
+      return filtered;
+    }
   }
 
-  private static boolean matches(@NotNull ChooseByNameBase base,
-                                 @NotNull String pattern,
-                                 @NotNull Matcher matcher,
-                                 @Nullable String name) {
-    if (name == null) {
-      return false;
-    }
-    boolean matches = false;
-    if (base.getModel() instanceof CustomMatcherModel) {
-      if (((CustomMatcherModel)base.getModel()).matches(name, pattern)) {
-        matches = true;
+  private static void processNamesByPattern(@NotNull final ChooseByNameViewModel base,
+                                            @NotNull final String[] names,
+                                            @NotNull final String pattern,
+                                            final ProgressIndicator indicator,
+                                            @NotNull final Consumer<? super MatchResult> consumer) {
+    MinusculeMatcher matcher = buildPatternMatcher(pattern);
+    Processor<String> processor = name -> {
+      ProgressManager.checkCanceled();
+      MatchResult result = matches(base, pattern, matcher, name);
+      if (result != null) {
+        consumer.consume(result);
       }
+      return true;
+    };
+    if (!JobLauncher.getInstance().invokeConcurrentlyUnderProgress(Arrays.asList(names), indicator, processor)) {
+      throw new ProcessCanceledException();
     }
-    else if (pattern.isEmpty() || matcher.matches(name)) {
-      matches = true;
-    }
-    return matches;
   }
 
   @NotNull
-  private static MinusculeMatcher buildPatternMatcher(@NotNull String pattern, @NotNull NameUtil.MatchingCaseSensitivity caseSensitivity) {
-    return NameUtil.buildMatcher(pattern, caseSensitivity);
+  private static String convertToMatchingPattern(@NotNull ChooseByNameViewModel base, @NotNull String pattern) {
+    return addSearchAnywherePatternDecorationIfNeeded(base, removeModelSpecificMarkup(base.getModel(), pattern));
   }
 
-  private static class MatchesComparator implements Comparator<String> {
-    private final String myOriginalPattern;
-
-    private MatchesComparator(@NotNull final String originalPattern) {
-      myOriginalPattern = originalPattern.trim();
+  @NotNull
+  private static String addSearchAnywherePatternDecorationIfNeeded(@NotNull ChooseByNameViewModel base, @NotNull String pattern) {
+    String trimmedPattern;
+    if (base.isSearchInAnyPlace() && !(trimmedPattern = pattern.trim()).isEmpty() && trimmedPattern.length() > 1) {
+      pattern = "*" + pattern;
     }
-
-    @Override
-    public int compare(@NotNull final String a, @NotNull final String b) {
-      boolean aStarts = a.startsWith(myOriginalPattern);
-      boolean bStarts = b.startsWith(myOriginalPattern);
-      if (aStarts && bStarts) return a.compareToIgnoreCase(b);
-      if (aStarts) return -1;
-      if (bStarts) return 1;
-      return a.compareToIgnoreCase(b);
-    }
+    return pattern;
   }
 
-  private static class PathProximityComparator implements Comparator<Object> {
-    private final ChooseByNameModel myModel;
+  @NotNull
+  private static String removeModelSpecificMarkup(@NotNull ChooseByNameModel model, @NotNull String pattern) {
+    if (model instanceof ContributorsBasedGotoByModel) {
+      pattern = ((ContributorsBasedGotoByModel)model).removeModelSpecificMarkup(pattern);
+    }
+    return pattern;
+  }
+
+  @Nullable
+  protected static MatchResult matches(@NotNull ChooseByNameViewModel base,
+                                     @NotNull String pattern,
+                                     @NotNull MinusculeMatcher matcher,
+                                     @Nullable String name) {
+    if (name == null) {
+      return null;
+    }
+    if (base.getModel() instanceof CustomMatcherModel) {
+      try {
+        return ((CustomMatcherModel)base.getModel()).matches(name, pattern) ? new MatchResult(name, 0, true) : null;
+      }
+      catch (Exception e) {
+        LOG.info(e);
+        return null; // no matches appears valid result for "bad" pattern
+      }
+    }
+    return matchName(matcher, name);
+  }
+
+  @Nullable
+  private static MatchResult matchName(@NotNull MinusculeMatcher matcher, @NotNull String name) {
+    FList<TextRange> fragments = matcher.matchingFragments(name);
+    return fragments != null ? new MatchResult(name, matcher.matchingDegree(name, false, fragments), MinusculeMatcher.isStartMatch(fragments)) : null;
+  }
+
+  @NotNull
+  private static MinusculeMatcher buildPatternMatcher(@NotNull String pattern) {
+    return NameUtil.buildMatcher(pattern, NameUtil.MatchingCaseSensitivity.NONE);
+  }
+
+  protected static class PathProximityComparator implements Comparator<Object> {
     @NotNull private final PsiProximityComparator myProximityComparator;
 
-    private PathProximityComparator(@NotNull ChooseByNameModel model, @Nullable final PsiElement context) {
-      myModel = model;
+    private PathProximityComparator(@Nullable final PsiElement context) {
       myProximityComparator = new PsiProximityComparator(context);
+    }
+
+    private static boolean isCompiledWithoutSource(Object o) {
+      return o instanceof PsiCompiledElement && ((PsiCompiledElement)o).getNavigationElement() == o;
     }
 
     @Override
@@ -374,28 +399,9 @@ public class DefaultChooseByNameItemProvider implements ChooseByNameItemProvider
       int rc = myProximityComparator.compare(o1, o2);
       if (rc != 0) return rc;
 
-      int compare = Comparing.compare(myModel.getFullName(o1), myModel.getFullName(o2));
-      if (compare == 0) {
-        int o1Weight;
-        int o2Weight;
-
-        if (o1 instanceof PsiCompiledElement) {
-          PsiElement navElement = ((PsiCompiledElement)o1).getNavigationElement();
-          o1Weight = navElement != o1 ? 0 : 1;
-        } else {
-          o1Weight = 0;
-        }
-
-        if (o2 instanceof PsiCompiledElement) {
-          PsiElement navElement = ((PsiCompiledElement)o2).getNavigationElement();
-          o2Weight = navElement != o2 ? 0 : 1;
-        } else {
-          o2Weight = 0;
-        }
-
-        compare = o1Weight - o2Weight;
-      }
-      return compare;
+      int o1Weight = isCompiledWithoutSource(o1) ? 1 : 0;
+      int o2Weight = isCompiledWithoutSource(o2) ? 1 : 0;
+      return o1Weight - o2Weight;
     }
   }
 }

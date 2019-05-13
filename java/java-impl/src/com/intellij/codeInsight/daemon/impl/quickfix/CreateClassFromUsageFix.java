@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,16 +15,16 @@
  */
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
+import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
-import com.intellij.codeInsight.CodeInsightUtilBase;
+import com.intellij.ide.util.PsiNavigationSupport;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiJavaCodeReferenceElement;
 import com.intellij.util.IncorrectOperationException;
@@ -41,37 +41,37 @@ public class CreateClassFromUsageFix extends CreateClassFromUsageBaseFix {
 
   @Override
   public String getText(String varName) {
-    return QuickFixBundle.message("create.class.from.usage.text", StringUtil.capitalize(myKind.getDescription()), varName);
+    return QuickFixBundle.message("create.class.from.usage.text", myKind.getDescription(), varName);
   }
 
 
   @Override
   public void invoke(@NotNull final Project project, final Editor editor, final PsiFile file) {
+    PsiDocumentManager.getInstance(project).commitAllDocuments();
     final PsiJavaCodeReferenceElement element = getRefElement();
-    assert element != null;
-    if (!CodeInsightUtilBase.preparePsiElementForWrite(element)) return;
+    if (element == null) return;
+    if (!FileModificationService.getInstance().preparePsiElementForWrite(element)) return;
     final String superClassName = getSuperClassName(element);
     final PsiClass aClass = CreateFromUsageUtils.createClass(element, myKind, superClassName);
     if (aClass == null) return;
 
     ApplicationManager.getApplication().runWriteAction(
-      new Runnable() {
-        @Override
-        public void run() {
-          PsiJavaCodeReferenceElement refElement = element;
-          try {
-            refElement = (PsiJavaCodeReferenceElement)refElement.bindToElement(aClass);
-          }
-          catch (IncorrectOperationException e) {
-            LOG.error(e);
-          }
-
-          IdeDocumentHistory.getInstance(project).includeCurrentPlaceAsChangePlace();
-
-          OpenFileDescriptor descriptor = new OpenFileDescriptor(refElement.getProject(), aClass.getContainingFile().getVirtualFile(),
-                                                                 aClass.getTextOffset());
-          FileEditorManager.getInstance(aClass.getProject()).openTextEditor(descriptor, true);
+      () -> {
+        PsiJavaCodeReferenceElement refElement = element;
+        try {
+          refElement = (PsiJavaCodeReferenceElement)refElement.bindToElement(aClass);
         }
+        catch (IncorrectOperationException e) {
+          LOG.error(e);
+        }
+
+        IdeDocumentHistory.getInstance(project).includeCurrentPlaceAsChangePlace();
+
+        Navigatable descriptor = PsiNavigationSupport.getInstance().createNavigatable(refElement.getProject(),
+                                                                                      aClass.getContainingFile()
+                                                                                            .getVirtualFile(),
+                                                                                      aClass.getTextOffset());
+        descriptor.navigate(true);
       }
     );
   }

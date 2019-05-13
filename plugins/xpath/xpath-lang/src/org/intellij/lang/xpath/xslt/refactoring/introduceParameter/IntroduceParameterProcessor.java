@@ -15,15 +15,6 @@
  */
 package org.intellij.lang.xpath.xslt.refactoring.introduceParameter;
 
-import org.intellij.lang.xpath.psi.XPathExpression;
-import org.intellij.lang.xpath.psi.XPathVariableReference;
-import org.intellij.lang.xpath.psi.impl.XPathChangeUtil;
-import org.intellij.lang.xpath.xslt.XsltSupport;
-import org.intellij.lang.xpath.xslt.psi.XsltElementFactory;
-import org.intellij.lang.xpath.xslt.psi.XsltTemplate;
-import org.intellij.lang.xpath.xslt.refactoring.RefactoringUtil;
-import org.intellij.lang.xpath.xslt.util.XsltCodeInsightUtil;
-
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
@@ -38,6 +29,14 @@ import com.intellij.refactoring.ui.UsageViewDescriptorAdapter;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.util.IncorrectOperationException;
+import org.intellij.lang.xpath.psi.XPathExpression;
+import org.intellij.lang.xpath.psi.XPathVariableReference;
+import org.intellij.lang.xpath.psi.impl.XPathChangeUtil;
+import org.intellij.lang.xpath.xslt.XsltSupport;
+import org.intellij.lang.xpath.xslt.psi.XsltElementFactory;
+import org.intellij.lang.xpath.xslt.psi.XsltTemplate;
+import org.intellij.lang.xpath.xslt.refactoring.RefactoringUtil;
+import org.intellij.lang.xpath.xslt.util.XsltCodeInsightUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -49,11 +48,11 @@ class IntroduceParameterProcessor extends BaseRefactoringProcessor {
 
     private final XsltTemplate myTemplate;
 
-    public IntroduceParameterProcessor(Project project, XPathExpression expression, Set<XPathExpression> otherExpressions, IntroduceParameterOptions settings) {
+    IntroduceParameterProcessor(Project project, XPathExpression expression, Set<XPathExpression> otherExpressions, IntroduceParameterOptions settings) {
         super(project);
         mySettings = settings;
         myExpression = expression;
-        myOtherExpressions = settings.isReplaceAll() ? otherExpressions : Collections.<XPathExpression>emptySet();
+        myOtherExpressions = settings.isReplaceAll() ? otherExpressions : Collections.emptySet();
 
         final XmlTag templateTag = XsltCodeInsightUtil.getTemplateTag(myExpression, true, true);
         myTemplate = templateTag != null ? XsltElementFactory.getInstance().wrapElement(templateTag, XsltTemplate.class) : null;
@@ -62,11 +61,13 @@ class IntroduceParameterProcessor extends BaseRefactoringProcessor {
     }
 
 
+    @Override
     @NotNull
-    protected UsageViewDescriptor createUsageViewDescriptor(UsageInfo[] usageInfos) {
+    protected UsageViewDescriptor createUsageViewDescriptor(@NotNull UsageInfo[] usageInfos) {
         return new MyUsageViewDescriptorAdapter();
     }
 
+    @Override
     @NotNull
     protected UsageInfo[] findUsages() {
         int usageCount = myOtherExpressions.size() + 1;
@@ -76,7 +77,7 @@ class IntroduceParameterProcessor extends BaseRefactoringProcessor {
             assert myTemplate != null;
 
             final Collection<PsiReference> references = ReferencesSearch.search(myTemplate, myTemplate.getUseScope(), false).findAll();
-            callsToUpdate = new ArrayList<PsiElement>(references.size());
+            callsToUpdate = new ArrayList<>(references.size());
             for (PsiReference reference : references) {
                 final PsiElement e = reference.getElement();
                 final XmlTag tag = PsiTreeUtil.getContextOfType(e, XmlTag.class, true);
@@ -86,8 +87,7 @@ class IntroduceParameterProcessor extends BaseRefactoringProcessor {
             }
             usageCount += callsToUpdate.size();
         } else {
-            //noinspection unchecked
-            callsToUpdate = Collections.emptyList();
+          callsToUpdate = Collections.emptyList();
         }
 
         final UsageInfo[] usageInfos = new UsageInfo[usageCount];
@@ -103,11 +103,8 @@ class IntroduceParameterProcessor extends BaseRefactoringProcessor {
         return usageInfos;
     }
 
-    protected void refreshElements(PsiElement[] psiElements) {
-        // TODO When's that called? What should it do?
-    }
-
-    protected void performRefactoring(UsageInfo[] usageInfos) {
+  @Override
+  protected void performRefactoring(@NotNull UsageInfo[] usageInfos) {
         XmlTag tag;
         if (myTemplate != null) {
             tag = myTemplate.getTag();
@@ -164,17 +161,21 @@ class IntroduceParameterProcessor extends BaseRefactoringProcessor {
         }
     }
 
+    @Override
+    @NotNull
     protected String getCommandName() {
         return XsltIntroduceParameterAction.COMMAND_NAME;
     }
 
     private class MyUsageViewDescriptorAdapter extends UsageViewDescriptorAdapter {
 
+        @Override
         @NotNull
         public PsiElement[] getElements() {
             return new PsiElement[]{ myTemplate };
         }
 
+        @Override
         public String getProcessedElementsHeader() {
             return "Adding parameter to template";
         }

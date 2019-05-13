@@ -24,18 +24,18 @@ import java.util.List;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Aug 11, 2010
  */
 public abstract class AntDomAntCallParam extends AntDomPropertyDefiningElement{
 
   @Attribute("name")
   @NameValue
   public abstract GenericAttributeValue<String> getName();
-  
+
   @Attribute("value")
   public abstract GenericAttributeValue<String> getValue();
 
 
+  @Override
   protected List<GenericAttributeValue<String>> getPropertyDefiningAttributes() {
     return Collections.singletonList(getName());
   }

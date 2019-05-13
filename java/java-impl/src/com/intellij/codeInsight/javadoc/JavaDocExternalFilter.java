@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.javadoc;
 
 import com.intellij.codeInsight.documentation.AbstractExternalFilter;
@@ -20,81 +6,62 @@ import com.intellij.codeInsight.documentation.DocumentationManager;
 import com.intellij.codeInsight.documentation.PlatformDocumentationUtil;
 import com.intellij.ide.BrowserUtil;
 import com.intellij.lang.java.JavaDocumentationProvider;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.NullableComputable;
-import com.intellij.openapi.util.Trinity;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.JavaPsiFacade;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
-import com.intellij.psi.search.GlobalSearchScope;
-import org.jetbrains.annotations.NonNls;
+import com.intellij.util.Url;
+import com.intellij.util.Urls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.builtInWebServer.BuiltInServerOptions;
+import org.jetbrains.builtInWebServer.WebServerPathToFileManager;
 
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-/**
- * Created by IntelliJ IDEA.
- * User: db
- * Date: May 2, 2003
- * Time: 8:35:34 PM
- * To change this template use Options | File Templates.
- */
+import static com.intellij.openapi.util.Pair.pair;
 
 public class JavaDocExternalFilter extends AbstractExternalFilter {
   private final Project myProject;
-  
-  private static final Trinity<Pattern, Pattern, Boolean> ourPackageInfoSettings = Trinity.create(
+  private PsiElement myElement;
+
+  private static final ParseSettings ourPackageInfoSettings = new ParseSettings(
     Pattern.compile("package\\s+[^\\s]+\\s+description", Pattern.CASE_INSENSITIVE),
     Pattern.compile("START OF BOTTOM NAVBAR", Pattern.CASE_INSENSITIVE),
-    Boolean.TRUE
+    true, false
   );
-  
-  protected static @NonNls final Pattern ourHTMLsuffix = Pattern.compile("[.][hH][tT][mM][lL]?");
-  protected static @NonNls final Pattern ourParentFolderprefix = Pattern.compile("^[.][.]/");
-  protected static @NonNls final Pattern ourAnchorsuffix = Pattern.compile("#(.*)$");
-  protected static @NonNls final Pattern ourHTMLFilesuffix = Pattern.compile("/([^/]*[.][hH][tT][mM][lL]?)$");
-  private static @NonNls final Pattern ourHREFselector = Pattern.compile("<A.*?HREF=\"([^>\"]*)\"", Pattern.CASE_INSENSITIVE|Pattern.DOTALL);
-  private static @NonNls final Pattern ourMethodHeading = Pattern.compile("<H3>(.+?)</H3>", Pattern.CASE_INSENSITIVE|Pattern.DOTALL);
-  protected static @NonNls final String DOC_ELEMENT_PROTOCOL = "doc_element://";
-  @NonNls protected static final String H2 = "</H2>";
-  @NonNls protected static final String HTML_CLOSE = "</HTML>";
-  @NonNls protected static final String HTML = "<HTML>";
 
-  private final RefConvertor[] myReferenceConvertors = new RefConvertor[]{
-    new RefConvertor(ourHREFselector) {
+  private static final Pattern HREF_SELECTOR = Pattern.compile("<A.*?HREF=\"([^>\"]*)\"", Pattern.CASE_INSENSITIVE | Pattern.DOTALL);
+  private static final Pattern METHOD_HEADING = Pattern.compile("<H[34]>(.+?)</H[34]>", Pattern.CASE_INSENSITIVE | Pattern.DOTALL);
+
+  private final RefConvertor[] myReferenceConverters = {
+    new RefConvertor(HREF_SELECTOR) {
       @Override
       protected String convertReference(String root, String href) {
         if (BrowserUtil.isAbsoluteURL(href)) {
           return href;
         }
-
-        if (StringUtil.startsWithChar(href, '#')) {
-          return DOC_ELEMENT_PROTOCOL + root + href;
+        String reference = JavaDocInfoGenerator.createReferenceForRelativeLink(href, myElement);
+        if (reference == null) {
+          if (href.startsWith("#")) {
+            return root + href;
+          }
+          else {
+            String nakedRoot = ourHtmlFileSuffix.matcher(root).replaceAll("/");
+            return doAnnihilate(nakedRoot + href);
+          }
         }
-
-        String nakedRoot = ourHTMLFilesuffix.matcher(root).replaceAll("/");
-
-        String stripped = ourHTMLsuffix.matcher(href).replaceAll("");
-        int len = stripped.length();
-
-        do stripped = ourParentFolderprefix.matcher(stripped).replaceAll(""); while (len > (len = stripped.length()));
-
-        final String elementRef = stripped.replaceAll("/", ".");
-        final String classRef = ourAnchorsuffix.matcher(elementRef).replaceAll("");
-
-        return
-          (JavaPsiFacade.getInstance(myProject).findClass(classRef, GlobalSearchScope.allScope(myProject)) != null)
-          ? DocumentationManager.PSI_ELEMENT_PROTOCOL + elementRef
-          : DOC_ELEMENT_PROTOCOL + doAnnihilate(nakedRoot + href);
+        else {
+          return reference;
+        }
       }
-    },
-
-    myIMGConvertor
+    }
   };
 
   public JavaDocExternalFilter(Project project) {
@@ -102,48 +69,69 @@ public class JavaDocExternalFilter extends AbstractExternalFilter {
   }
 
   @Override
-  protected RefConvertor[] getRefConvertors() {
-    return myReferenceConvertors;
+  protected RefConvertor[] getRefConverters() {
+    return myReferenceConverters;
   }
 
   @Nullable
   public static String filterInternalDocInfo(String text) {
-    if (text == null) {
-      return null;
-    }
-    text = PlatformDocumentationUtil.fixupText(text);
-    return text;
+    return text == null ? null : PlatformDocumentationUtil.fixupText(text);
   }
 
-  @Override
   @Nullable
-   public String getExternalDocInfoForElement(final String docURL, final PsiElement element) throws Exception {
-     String externalDoc = super.getExternalDocInfoForElement(docURL, element);
-     if (externalDoc != null) {
-       if (element instanceof PsiMethod) {
-         final String className = ApplicationManager.getApplication().runReadAction(
-             new NullableComputable<String>() {
-               @Override
-               @Nullable
-               public String compute() {
-                 PsiClass aClass = ((PsiMethod)element).getContainingClass();
-                 return aClass == null ? null : aClass.getQualifiedName();
-               }
-             }
-         );
-         Matcher matcher = ourMethodHeading.matcher(externalDoc);
-         final StringBuilder buffer = new StringBuilder();
-         DocumentationManager.createHyperlink(buffer, className, className, false);
-         //noinspection HardCodedStringLiteral
-         return matcher.replaceFirst("<H3>" + buffer.toString() + "</H3>");
+  @Override
+  public String getExternalDocInfoForElement(@NotNull String docURL, PsiElement element) throws Exception {
+    String externalDoc = null;
+    myElement = element;
+
+    String projectPath = "/" + myProject.getName() + "/";
+    String builtInServer = "http://localhost:" + BuiltInServerOptions.getInstance().getEffectiveBuiltInServerPort() + projectPath;
+    if (docURL.startsWith(builtInServer)) {
+      Url url = Urls.parseFromIdea(docURL);
+      if (url != null) {
+        VirtualFile file = WebServerPathToFileManager.getInstance(myProject).findVirtualFile(url.getPath().substring(projectPath.length()));
+        if (file != null) {
+          StringBuilder result = new StringBuilder();
+          try (InputStreamReader reader = new InputStreamReader(file.getInputStream(), StandardCharsets.UTF_8)) {
+            doBuildFromStream(docURL, reader, result);
+          }
+          externalDoc = correctDocText(docURL, result);
+        }
       }
     }
+
+    if (externalDoc == null) {
+      externalDoc = super.getExternalDocInfoForElement(docURL, element);
+    }
+
+    if (externalDoc == null) {
+      return null;
+    }
+
+    if (element instanceof PsiMethod) {
+      Pair<String, String> classNameAndPresentation = ReadAction.compute(
+        () -> {
+          PsiClass aClass = ((PsiMethod)element).getContainingClass();
+          if (aClass != null) {
+            String qName = aClass.getQualifiedName();
+            return pair(qName, qName + JavaDocInfoGenerator.generateTypeParameters(aClass, true));
+          }
+          return null;
+        }
+      );
+      if (classNameAndPresentation == null) return externalDoc;
+      Matcher matcher = METHOD_HEADING.matcher(externalDoc);
+      StringBuilder buffer = new StringBuilder("<h3>");
+      DocumentationManager.createHyperlink(buffer, classNameAndPresentation.first, classNameAndPresentation.second, false);
+      return matcher.replaceFirst(buffer.append("</h3>").toString());
+    }
+
     return externalDoc;
   }
 
   @NotNull
   @Override
-  protected Trinity<Pattern, Pattern, Boolean> getParseSettings(@NotNull String url) {
+  protected ParseSettings getParseSettings(@NotNull String url) {
     return url.endsWith(JavaDocumentationProvider.PACKAGE_SUMMARY_FILE) ? ourPackageInfoSettings : super.getParseSettings(url);
   }
 }

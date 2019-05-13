@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,18 +20,17 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.ide.favoritesTreeView.FavoritesManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.InputValidator;
 import com.intellij.openapi.ui.Messages;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-/**
- * User: anna
- * Date: Feb 24, 2005
- */
-public class AddNewFavoritesListAction extends AnAction {
-  public void actionPerformed(AnActionEvent e) {
+public class AddNewFavoritesListAction extends AnAction implements DumbAware {
+  @Override
+  public void actionPerformed(@NotNull AnActionEvent e) {
     final Project project = e.getProject();
     if (project != null) {
       doAddNewFavoritesList(project);
@@ -45,10 +44,12 @@ public class AddNewFavoritesListAction extends AnAction {
                                                  IdeBundle.message("title.add.new.favorites.list"),
                                                  Messages.getInformationIcon(),
                                                  getUniqueName(project), new InputValidator() {
+      @Override
       public boolean checkInput(String inputString) {
         return inputString != null && inputString.trim().length() > 0;
       }
 
+      @Override
       public boolean canClose(String inputString) {
         inputString = inputString.trim();
         if (favoritesManager.getAvailableFavoritesListNames().contains(inputString)) {

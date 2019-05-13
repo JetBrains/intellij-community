@@ -18,9 +18,13 @@ package com.intellij.psi;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * Represents a Java <code>return</code> statement.
+ * Represents a Java {@code return} statement.
  */
 public interface PsiReturnStatement extends PsiStatement {
+  /**
+   * @since 14
+   */
+  PsiReturnStatement[] EMPTY_ARRAY = new PsiReturnStatement[0];
   /**
    * Returns the expression representing the value returned by the statement.
    *

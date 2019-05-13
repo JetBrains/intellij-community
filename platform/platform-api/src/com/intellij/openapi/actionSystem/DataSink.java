@@ -14,12 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * Created by IntelliJ IDEA.
- * User: yole
- * Date: 23.10.2006
- * Time: 18:40:56
- */
 package com.intellij.openapi.actionSystem;
 
 public interface DataSink {

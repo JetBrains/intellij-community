@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,6 @@ package com.intellij.util.io;
 
 import com.intellij.openapi.Forceable;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.CommonProcessors;
 import com.intellij.util.IncorrectOperationException;
@@ -28,8 +27,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
-import java.io.*;
-import java.nio.ByteBuffer;
+import java.io.Closeable;
+import java.io.File;
+import java.io.Flushable;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -38,46 +39,49 @@ import java.util.List;
  * @author max
  * @author jeka
  */
-abstract class PersistentEnumeratorBase<Data> implements Forceable, Closeable {
+public abstract class PersistentEnumeratorBase<Data> implements Forceable, Closeable {
   protected static final Logger LOG = Logger.getInstance("#com.intellij.util.io.PersistentEnumerator");
   protected static final int NULL_ID = 0;
 
   private static final int META_DATA_OFFSET = 4;
-  protected static final int DATA_START = META_DATA_OFFSET + 16;
-
-  protected final ResizeableMappedFile myStorage;
-  private final byte[] myKeyStoreFileBuffer;
-  private volatile int myKeyStoreFileLength;
-  private volatile int myKeyStoreBufferPosition;
-  private final ResizeableMappedFile myKeyStorage;
-
-  private boolean myClosed = false;
-  private boolean myDirty = false;
-  protected final KeyDescriptor<Data> myDataDescriptor;
-
+  static final int DATA_START = META_DATA_OFFSET + 16;
   private static final CacheKey ourFlyweight = new FlyweightKey();
 
+  protected final ResizeableMappedFile myStorage;
+  private final boolean myAssumeDifferentSerializedBytesMeansObjectsInequality;
+  private final AppendableStorageBackedByResizableMappedFile myKeyStorage;
+  final KeyDescriptor<Data> myDataDescriptor;
   protected final File myFile;
-  private boolean myCorrupted = false;
-  private final MyDataIS myKeyReadStream;
   private final Version myVersion;
-  private RecordBufferHandler<PersistentEnumeratorBase> myRecordHandler;
-  private volatile boolean myDirtyStatusUpdateInProgress;
-  private Flushable myMarkCleanCallback;
   private final boolean myDoCaching;
 
+  private volatile boolean myDirtyStatusUpdateInProgress;
+
+  private boolean myClosed;
+  private boolean myDirty;
+  private boolean myCorrupted;
+  private RecordBufferHandler<PersistentEnumeratorBase> myRecordHandler;
+  private Flushable myMarkCleanCallback;
+
   public static class Version {
+    private static final int DIRTY_MAGIC = 0xbabe1977;
+    private static final int CORRECTLY_CLOSED_MAGIC = 0xebabafd;
+
     private final int correctlyClosedMagic;
     private final int dirtyMagic;
 
-    public Version(int _correctlyClosedMagic, int _dirtyMagic) {
+    public Version(int version) {
+      this(CORRECTLY_CLOSED_MAGIC + version, DIRTY_MAGIC);
+    }
+
+    private Version(int _correctlyClosedMagic, int _dirtyMagic) {
       correctlyClosedMagic = _correctlyClosedMagic;
       dirtyMagic = _dirtyMagic;
       assert correctlyClosedMagic != dirtyMagic;
     }
   }
-  
-  public abstract static class RecordBufferHandler<T extends PersistentEnumeratorBase> {
+
+  abstract static class RecordBufferHandler<T extends PersistentEnumeratorBase> {
     abstract int recordWriteOffset(T enumerator, byte[] buf);
     @NotNull
     abstract byte[] getRecordBuffer(T enumerator);
@@ -98,6 +102,7 @@ abstract class PersistentEnumeratorBase<Data> implements Forceable, Closeable {
       return this;
     }
 
+    @Override
     public boolean equals(final Object o) {
       if (this == o) return true;
       if (!(o instanceof CacheKey)) return false;
@@ -110,6 +115,7 @@ abstract class PersistentEnumeratorBase<Data> implements Forceable, Closeable {
       return true;
     }
 
+    @Override
     public int hashCode() {
       return key.hashCode();
     }
@@ -135,8 +141,17 @@ abstract class PersistentEnumeratorBase<Data> implements Forceable, Closeable {
   }
 
   public static class CorruptedException extends IOException {
-    @SuppressWarnings({"HardCodedStringLiteral"})
     public CorruptedException(File file) {
+      this("PersistentEnumerator storage corrupted " + file.getPath());
+    }
+
+    protected CorruptedException(String message) {
+      super(message);
+    }
+  }
+
+  public static class VersionUpdatedException extends CorruptedException {
+    VersionUpdatedException(@NotNull File file) {
       super("PersistentEnumerator storage corrupted " + file.getPath());
     }
   }
@@ -155,7 +170,7 @@ abstract class PersistentEnumeratorBase<Data> implements Forceable, Closeable {
     myDoCaching = doCaching;
 
     if (!file.exists()) {
-      FileUtil.delete(keystreamFile());
+      FileUtil.delete(keyStreamFile());
       if (!FileUtil.createIfDoesntExist(file)) {
         throw new IOException("Cannot create empty file: " + file);
       }
@@ -202,6 +217,7 @@ abstract class PersistentEnumeratorBase<Data> implements Forceable, Closeable {
         }
         if (sign != myVersion.correctlyClosedMagic) {
           myStorage.close();
+          if (sign != myVersion.dirtyMagic) throw new VersionUpdatedException(file);
           throw new CorruptedException(file);
         }
       }
@@ -212,29 +228,36 @@ abstract class PersistentEnumeratorBase<Data> implements Forceable, Closeable {
 
     if (myDataDescriptor instanceof InlineKeyDescriptor) {
       myKeyStorage = null;
-      myKeyReadStream = null;
-      myKeyStoreFileBuffer = null;
     }
     else {
-      myKeyStorage = new ResizeableMappedFile(keystreamFile(), initialSize, myStorage.getPagedFileStorage().getStorageLockContext(), PagedFileStorage.MB, false);
-      myKeyReadStream = new MyDataIS(myKeyStorage);
-      myKeyStoreFileLength = (int)myKeyStorage.length();
-      myKeyStoreFileBuffer = new byte[initialSize];
+      try {
+        myKeyStorage = new AppendableStorageBackedByResizableMappedFile(keyStreamFile(), initialSize, myStorage.getPagedFileStorage().getStorageLockContext(), PagedFileStorage.MB, false);
+      }
+      catch (IOException e) {
+        myStorage.close();
+        throw e;
+      }
+      catch (Throwable e) {
+        LOG.info(e);
+        myStorage.close();
+        throw new CorruptedException(file);
+      }
     }
+    myAssumeDifferentSerializedBytesMeansObjectsInequality = myDataDescriptor instanceof DifferentSerializableBytesImplyNonEqualityPolicy;
   }
 
-  public void lockStorage() {
+  void lockStorage() {
     myStorage.getPagedFileStorage().lock();
   }
 
-  public void unlockStorage() {
+  void unlockStorage() {
     myStorage.getPagedFileStorage().unlock();
   }
 
   protected abstract void setupEmptyFile() throws IOException;
 
   @NotNull
-  public final RecordBufferHandler<PersistentEnumeratorBase> getRecordHandler() {
+  final RecordBufferHandler<PersistentEnumeratorBase> getRecordHandler() {
     return myRecordHandler;
   }
 
@@ -242,7 +265,7 @@ abstract class PersistentEnumeratorBase<Data> implements Forceable, Closeable {
     myRecordHandler = recordHandler;
   }
 
-  public void setMarkCleanCallback(Flushable markCleanCallback) {
+  void setMarkCleanCallback(Flushable markCleanCallback) {
     myMarkCleanCallback = markCleanCallback;
   }
 
@@ -266,13 +289,14 @@ abstract class PersistentEnumeratorBase<Data> implements Forceable, Closeable {
     try {
       id = enumerateImpl(value, onlyCheckForExisting, saveNewValue);
     }
-    catch (IOException io) {
-      markCorrupted();
-      throw io;
-    }
     catch (Throwable e) {
-      markCorrupted();
-      LOG.info(e);
+      if (!isCorrupted()) {
+        markCorrupted();
+        LOG.info("Marking corrupted:" + myFile, e);
+      }
+
+      //noinspection InstanceofCatchParameter
+      if (e instanceof IOException) throw (IOException)e;
       throw new IOException(e);
     }
 
@@ -293,7 +317,7 @@ abstract class PersistentEnumeratorBase<Data> implements Forceable, Closeable {
     boolean accept(int id);
   }
 
-  protected void putMetaData(long data) throws IOException {
+  protected void putMetaData(long data) {
     lockStorage();
     try {
       if (myStorage.length() < META_DATA_OFFSET + 8 || getMetaData() != data) myStorage.putLong(META_DATA_OFFSET, data);
@@ -303,7 +327,7 @@ abstract class PersistentEnumeratorBase<Data> implements Forceable, Closeable {
     }
   }
 
-  protected long getMetaData() throws IOException {
+  protected long getMetaData() {
     lockStorage();
     try {
       return myStorage.getLong(META_DATA_OFFSET);
@@ -313,7 +337,7 @@ abstract class PersistentEnumeratorBase<Data> implements Forceable, Closeable {
     }
   }
 
-  protected void putMetaData2(long data) throws IOException {
+  void putMetaData2(long data) {
     lockStorage();
     try {
       if (myStorage.length() < META_DATA_OFFSET + 16 || getMetaData2() != data) myStorage.putLong(META_DATA_OFFSET + 8, data);
@@ -323,7 +347,7 @@ abstract class PersistentEnumeratorBase<Data> implements Forceable, Closeable {
     }
   }
 
-  protected long getMetaData2() throws IOException {
+  long getMetaData2() {
     lockStorage();
     try {
       return myStorage.getLong(META_DATA_OFFSET + 8);
@@ -333,7 +357,7 @@ abstract class PersistentEnumeratorBase<Data> implements Forceable, Closeable {
     }
   }
 
-  public boolean processAllDataObject(final Processor<Data> processor, @Nullable final DataFilter filter) throws IOException {
+  public boolean processAllDataObject(@NotNull final Processor<? super Data> processor, @Nullable final DataFilter filter) throws IOException {
     return traverseAllRecords(new RecordsProcessor() {
       @Override
       public boolean process(final int record) throws IOException {
@@ -346,6 +370,7 @@ abstract class PersistentEnumeratorBase<Data> implements Forceable, Closeable {
 
   }
 
+  @NotNull
   public Collection<Data> getAllDataObjects(@Nullable final DataFilter filter) throws IOException {
     final List<Data> values = new ArrayList<Data>();
     processAllDataObject(new CommonProcessors.CollectProcessor<Data>(values), filter);
@@ -373,59 +398,11 @@ abstract class PersistentEnumeratorBase<Data> implements Forceable, Closeable {
 
     // check if previous serialized state is the same as for value
     // this is much faster than myDataDescriptor.isEqualTo(valueOf(idx), value) for identical objects
-    final boolean sameValue[] = new boolean[1];    // TODO: key storage lock
+    // TODO: key storage lock
     final int addr = indexToAddr(idx);
-    OutputStream comparer;
 
-    if (myKeyStoreFileLength <= addr) {
-      comparer = new OutputStream() {
-        int address = addr - myKeyStoreFileLength;
-        boolean same = true;
-        @Override
-        public void write(int b) throws IOException {
-          if (same) {
-            same = address < myKeyStoreBufferPosition && myKeyStoreFileBuffer[address++] == (byte)b;
-          }
-        }
-        @Override
-        public void close() throws IOException {
-          sameValue[0]  = same;
-        }
-      };
-    } else {
-      comparer = new OutputStream() {
-        int base = addr;
-        int address = myKeyStorage.getPagedFileStorage().getOffsetInPage(addr);
-        boolean same = true;
-        ByteBuffer buffer = myKeyStorage.getPagedFileStorage().getByteBuffer(addr, false);
-        final int myPageSize = myKeyStorage.getPagedFileStorage().myPageSize;
-
-        @Override
-        public void write(int b) throws IOException {
-          if (same) {
-            if (myPageSize == address && address < myKeyStoreFileLength) {    // reached end of current byte buffer
-              base += address;
-              buffer = myKeyStorage.getPagedFileStorage().getByteBuffer(base, false);
-              address = 0;
-            }
-            same = address < myKeyStoreFileLength && buffer.get(address++) == (byte)b;
-          }
-        }
-
-        @Override
-        public void close() throws IOException {
-          sameValue[0]  = same;
-        }
-      };
-
-    }
-
-    DataOutput out = new DataOutputStream(comparer);
-    myDataDescriptor.save(out, value);
-    comparer.close();
-
-    if (sameValue[0]) return true;
-
+    if (myKeyStorage.checkBytesAreTheSame(addr, value, myDataDescriptor)) return true;
+    if (myAssumeDifferentSerializedBytesMeansObjectsInequality) return false;
     return myDataDescriptor.isEqual(valueOf(idx), value);
   }
 
@@ -433,28 +410,7 @@ abstract class PersistentEnumeratorBase<Data> implements Forceable, Closeable {
     try {
       markDirty(true);
 
-      final int dataOff = myKeyStorage != null ? myKeyStoreBufferPosition + myKeyStoreFileLength : ((InlineKeyDescriptor<Data>)myDataDescriptor).toInt(value);
-
-      if (myKeyStorage != null) {
-        final BufferExposingByteArrayOutputStream bos = new BufferExposingByteArrayOutputStream();
-        DataOutput out = new DataOutputStream(bos);
-        myDataDescriptor.save(out, value);
-        final int size = bos.size();
-        final byte[] buffer = bos.getInternalBuffer();
-
-        if (size > myKeyStoreFileBuffer.length) {
-          flushKeyStoreBuffer();
-          myKeyStorage.put(dataOff, buffer, 0, size);
-          myKeyStoreFileLength += size;
-        } else {
-          if (size > myKeyStoreFileBuffer.length - myKeyStoreBufferPosition) {
-            flushKeyStoreBuffer();
-          }
-          // myKeyStoreFileBuffer will contain complete records
-          System.arraycopy(buffer, 0, myKeyStoreFileBuffer, myKeyStoreBufferPosition, size);
-          myKeyStoreBufferPosition += size;
-        }
-      }
+      final int dataOff = doWriteData(value);
 
       return setupValueId(hashCode, dataOff);
     }
@@ -463,12 +419,17 @@ abstract class PersistentEnumeratorBase<Data> implements Forceable, Closeable {
     }
   }
 
-  private void flushKeyStoreBuffer() throws IOException {
-    if (myKeyStoreBufferPosition > 0) {
-      myKeyStorage.put(myKeyStoreFileLength, myKeyStoreFileBuffer, 0, myKeyStoreBufferPosition);
-      myKeyStoreFileLength += myKeyStoreBufferPosition;
-      myKeyStoreBufferPosition = 0;
+  public int getLargestId() {
+    assert myKeyStorage != null;
+    return myKeyStorage.getCurrentLength();
+  }
+
+  protected int doWriteData(Data value) throws IOException {
+    if (myKeyStorage != null) {
+      return myKeyStorage.append(value, myDataDescriptor);
+
     }
+    return ((InlineKeyDescriptor<Data>)myDataDescriptor).toInt(value);
   }
 
   protected int setupValueId(int hashCode, int dataOff) {
@@ -480,56 +441,40 @@ abstract class PersistentEnumeratorBase<Data> implements Forceable, Closeable {
     return pos;
   }
 
-  protected boolean iterateData(final Processor<Data> processor) throws IOException {
-    lockStorage();
+  public boolean iterateData(@NotNull Processor<? super Data> processor) throws IOException {
+    if (myKeyStorage == null) {
+      throw new UnsupportedOperationException("Iteration over InlineIntegerKeyDescriptors is not supported");
+    }
+
+    lockStorage(); // todo locking in key storage
     try {
-      if (myKeyStorage == null) {
-        throw new UnsupportedOperationException("Iteration over InlineIntegerKeyDescriptors is not supported");
-      }
-
-      flushKeyStoreBuffer();
       myKeyStorage.force();
-
-      DataInputStream keysStream = new DataInputStream(new BufferedInputStream(new LimitedInputStream(new FileInputStream(keystreamFile()),
-                                                                                                      myKeyStoreFileLength)));
-      try {
-        try {
-          while (true) {
-            Data key = myDataDescriptor.read(keysStream);
-            if (!processor.process(key)) return false;
-          }
-        }
-        catch (EOFException e) {
-          // Done
-        }
-        return true;
-      }
-      finally {
-        keysStream.close();
-      }
     }
     finally {
       unlockStorage();
     }
+
+    return myKeyStorage.processAll(processor, myDataDescriptor);
   }
 
-  private File keystreamFile() {
+  private File keyStreamFile() {
     return new File(myFile.getPath() + ".keystream");
   }
 
   public Data valueOf(int idx) throws IOException {
-    lockStorage();
     try {
-      int addr = indexToAddr(idx);
 
-      if (myKeyReadStream == null) return ((InlineKeyDescriptor<Data>)myDataDescriptor).fromInt(addr);
+      lockStorage();
+      try {
+        int addr = indexToAddr(idx);
 
-      if (myKeyStoreFileLength <= addr) {
-        return myDataDescriptor.read(new DataInputStream(new UnsyncByteArrayInputStream(myKeyStoreFileBuffer, addr - myKeyStoreFileLength, myKeyStoreBufferPosition)));
+        if (myKeyStorage == null) return ((InlineKeyDescriptor<Data>)myDataDescriptor).fromInt(addr);
+        return myKeyStorage.read(addr, myDataDescriptor);
       }
-      // we do not need to flushKeyBuffer since we store complete records
-      myKeyReadStream.setup(addr, myKeyStoreFileLength);
-      return myDataDescriptor.read(myKeyReadStream);
+      finally {
+        unlockStorage();
+      }
+
     }
     catch (IOException io) {
       markCorrupted();
@@ -539,12 +484,9 @@ abstract class PersistentEnumeratorBase<Data> implements Forceable, Closeable {
       markCorrupted();
       throw new RuntimeException(e);
     }
-    finally {
-      unlockStorage();
-    }
   }
 
-  int reenumerate(Data key) throws IOException {
+  int reEnumerate(Data key) throws IOException {
     if (!canReEnumerate()) throw new IncorrectOperationException();
     return doEnumerate(key, false, true);
   }
@@ -554,28 +496,6 @@ abstract class PersistentEnumeratorBase<Data> implements Forceable, Closeable {
   }
 
   protected abstract int indexToAddr(int idx);
-
-  private static class MyDataIS extends DataInputStream {
-    private MyDataIS(ResizeableMappedFile raf) {
-      super(new MyBufferedIS(new MappedFileInputStream(raf, 0, 0)));
-    }
-
-    public void setup(long pos, long limit) {
-      ((MyBufferedIS)in).setup(pos, limit);
-    }
-  }
-
-  private static class MyBufferedIS extends BufferedInputStream {
-    public MyBufferedIS(final InputStream in) {
-      super(in, 512);
-    }
-
-    public void setup(long pos, long limit) {
-      this.pos = 0;
-      count = 0;
-      ((MappedFileInputStream)in).setup(pos, limit);
-    }
-  }
 
   @Override
   public synchronized void close() throws IOException {
@@ -594,7 +514,6 @@ abstract class PersistentEnumeratorBase<Data> implements Forceable, Closeable {
   protected void doClose() throws IOException {
     try {
       if (myKeyStorage != null) {
-        flushKeyStoreBuffer();
         myKeyStorage.close();
       }
       flush();
@@ -611,6 +530,10 @@ abstract class PersistentEnumeratorBase<Data> implements Forceable, Closeable {
   @Override
   public synchronized boolean isDirty() {
     return myDirty;
+  }
+
+  public synchronized boolean isCorrupted() {
+    return myCorrupted;
   }
 
   private synchronized void flush() throws IOException {
@@ -636,7 +559,6 @@ abstract class PersistentEnumeratorBase<Data> implements Forceable, Closeable {
 
     try {
       if (myKeyStorage != null) {
-        flushKeyStoreBuffer();
         myKeyStorage.force();
       }
       flush();
@@ -682,6 +604,7 @@ abstract class PersistentEnumeratorBase<Data> implements Forceable, Closeable {
   protected synchronized void markCorrupted() {
     if (!myCorrupted) {
       myCorrupted = true;
+      if (LOG.isDebugEnabled()) LOG.debug("Marking corrupted:" + myFile, new Throwable());
       try {
         markDirty(true);
         force();
@@ -693,7 +616,7 @@ abstract class PersistentEnumeratorBase<Data> implements Forceable, Closeable {
   }
 
   private static class FlyweightKey extends CacheKey {
-    public FlyweightKey() {
+    FlyweightKey() {
       super(null, null);
     }
 

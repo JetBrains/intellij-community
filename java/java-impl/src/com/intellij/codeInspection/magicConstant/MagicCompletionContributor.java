@@ -17,18 +17,22 @@ package com.intellij.codeInspection.magicConstant;
 
 import com.intellij.codeInsight.ExpectedTypeInfo;
 import com.intellij.codeInsight.completion.*;
-import com.intellij.codeInsight.lookup.*;
+import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.codeInsight.lookup.LookupElementBuilder;
+import com.intellij.codeInsight.lookup.LookupItemUtil;
+import com.intellij.codeInsight.lookup.VariableLookupItem;
+import com.intellij.openapi.util.Pair;
 import com.intellij.patterns.ElementPattern;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.Consumer;
 import gnu.trove.THashSet;
 import gnu.trove.TObjectHashingStrategy;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.Arrays;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 import static com.intellij.patterns.PlatformPatterns.psiElement;
 
@@ -36,7 +40,7 @@ public class MagicCompletionContributor extends CompletionContributor {
   private static final ElementPattern<PsiElement> IN_METHOD_CALL_ARGUMENT =
     psiElement().withParent(psiElement(PsiReferenceExpression.class).inside(psiElement(PsiExpressionList.class).withParent(PsiCall.class)));
   private static final ElementPattern<PsiElement> IN_BINARY_COMPARISON =
-    psiElement().withParent(psiElement(PsiReferenceExpression.class).inside(psiElement(PsiBinaryExpression.class)));
+    psiElement().withParent(psiElement(PsiReferenceExpression.class).inside(psiElement(PsiPolyadicExpression.class)));
   private static final ElementPattern<PsiElement> IN_ASSIGNMENT =
     psiElement().withParent(psiElement(PsiReferenceExpression.class).inside(psiElement(PsiAssignmentExpression.class)));
   private static final ElementPattern<PsiElement> IN_RETURN =
@@ -46,14 +50,55 @@ public class MagicCompletionContributor extends CompletionContributor {
   private static final int PRIORITY = 100;
 
   @Override
-  public void fillCompletionVariants(final CompletionParameters parameters, final CompletionResultSet result) {
+  public void fillCompletionVariants(@NotNull final CompletionParameters parameters, @NotNull final CompletionResultSet result) {
     //if (parameters.getCompletionType() != CompletionType.SMART) return;
     PsiElement pos = parameters.getPosition();
-    MagicConstantInspection.AllowedValues allowedValues = null;
+    if (JavaKeywordCompletion.AFTER_DOT.accepts(pos)) {
+      return;
+    }
 
+    MagicConstantInspection.AllowedValues allowedValues = getAllowedValues(pos);
+    if (allowedValues == null) return;
+
+    addCompletionVariants(parameters, result, pos, allowedValues);
+  }
+
+  @Nullable
+  public static MagicConstantInspection.AllowedValues getAllowedValues(@NotNull PsiElement pos) {
+    MagicConstantInspection.AllowedValues allowedValues = null;
+    for (Pair<PsiModifierListOwner, PsiType> pair : getMembersWithAllowedValues(pos)) {
+      MagicConstantInspection.AllowedValues values = MagicConstantInspection.getAllowedValues(pair.first, pair.second, null);
+      if (values == null) continue;
+      if (allowedValues == null) {
+        allowedValues = values;
+        continue;
+      }
+      if (!allowedValues.equals(values)) return null;
+    }
+    return allowedValues;
+  }
+
+  @Nullable
+  private static PsiModifierListOwner resolveExpression(@Nullable PsiExpression expression) {
+    expression = PsiUtil.skipParenthesizedExprDown(expression);
+    if (expression instanceof PsiMethodCallExpression) {
+      return ((PsiMethodCallExpression)expression).resolveMethod();
+    }
+    if (expression instanceof PsiReferenceExpression) {
+      PsiElement resolved = ((PsiReferenceExpression)expression).resolve();
+      if (resolved instanceof PsiModifierListOwner) {
+        return (PsiModifierListOwner)resolved;
+      }
+    }
+    return null;
+  }
+
+  @NotNull
+  public static List<Pair<PsiModifierListOwner, PsiType>> getMembersWithAllowedValues(@NotNull PsiElement pos) {
+    Set<Pair<PsiModifierListOwner, PsiType>> result = new THashSet<>();
     if (IN_METHOD_CALL_ARGUMENT.accepts(pos)) {
       PsiCall call = PsiTreeUtil.getParentOfType(pos, PsiCall.class);
-      if (!(call instanceof PsiExpression)) return;
+      if (!(call instanceof PsiExpression)) return Collections.emptyList();
       PsiType type = ((PsiExpression)call).getType();
 
       PsiResolveHelper resolveHelper = JavaPsiFacade.getInstance(call.getProject()).getResolveHelper();
@@ -64,7 +109,7 @@ public class MagicCompletionContributor extends CompletionContributor {
                                       : JavaResolveResult.EMPTY_ARRAY;
       for (JavaResolveResult resolveResult : methods) {
         PsiElement element = resolveResult.getElement();
-        if (!(element instanceof PsiMethod)) return;
+        if (!(element instanceof PsiMethod)) return Collections.emptyList();
         PsiMethod method = (PsiMethod)element;
         if (!resolveHelper.isAccessible(method, call, null)) continue;
         PsiElement argument = pos;
@@ -75,59 +120,69 @@ public class MagicCompletionContributor extends CompletionContributor {
         PsiParameter[] params = method.getParameterList().getParameters();
         if (i >= params.length) continue;
         PsiParameter parameter = params[i];
-        MagicConstantInspection.AllowedValues values =
-          parameter == null ? null : MagicConstantInspection.getAllowedValues(parameter, parameter.getType(), null);
-        if (values == null) continue;
-        if (allowedValues == null) {
-          allowedValues = values;
-          continue;
-        }
-        if (!allowedValues.equals(values)) return;
+        result.add(Pair.create(parameter, parameter.getType()));
       }
     }
     else if (IN_BINARY_COMPARISON.accepts(pos)) {
-      PsiBinaryExpression exp = PsiTreeUtil.getParentOfType(pos, PsiBinaryExpression.class);
+      PsiPolyadicExpression exp = PsiTreeUtil.getParentOfType(pos, PsiPolyadicExpression.class);
       if (exp != null && (exp.getOperationTokenType() == JavaTokenType.EQEQ || exp.getOperationTokenType() == JavaTokenType.NE)) {
-        PsiExpression l = exp.getLOperand();
-        PsiElement resolved;
-        if (l instanceof PsiReferenceExpression && (resolved = ((PsiReferenceExpression)l).resolve()) instanceof PsiModifierListOwner) {
-          allowedValues = MagicConstantInspection.getAllowedValues((PsiModifierListOwner)resolved, l.getType(), null);
-        }
-        PsiExpression r = exp.getROperand();
-        if (allowedValues == null && r instanceof PsiReferenceExpression && (resolved = ((PsiReferenceExpression)r).resolve()) instanceof PsiModifierListOwner) {
-          allowedValues = MagicConstantInspection.getAllowedValues((PsiModifierListOwner)resolved, r.getType(), null);
+        for (PsiExpression operand : exp.getOperands()) {
+          PsiModifierListOwner resolved = resolveExpression(operand);
+          if (resolved != null) {
+            result.add(Pair.create(resolved, operand.getType()));
+            // if something interesting assigned to this variable, e.g. magic method, suggest its magic too
+            MagicConstantInspection.processValuesFlownTo(operand, pos.getContainingFile(), pos.getManager(), expression -> {
+              PsiModifierListOwner assigned = resolveExpression(expression);
+              if (assigned != null) {
+                result.add(Pair.create(assigned, operand.getType()));
+              }
+              return true;
+            });
+          }
         }
       }
     }
     else if (IN_ASSIGNMENT.accepts(pos)) {
       PsiAssignmentExpression assignment = PsiTreeUtil.getParentOfType(pos, PsiAssignmentExpression.class);
-      PsiElement resolved;
       PsiExpression l = assignment == null ? null : assignment.getLExpression();
-      if (assignment != null && PsiTreeUtil.isAncestor(assignment.getRExpression(), pos, false) && l instanceof PsiReferenceExpression && (resolved = ((PsiReferenceExpression)l).resolve()) instanceof PsiModifierListOwner) {
-        allowedValues = MagicConstantInspection.getAllowedValues((PsiModifierListOwner)resolved, l.getType(), null);
+      PsiModifierListOwner resolved = resolveExpression(l);
+      if (resolved != null && PsiTreeUtil.isAncestor(assignment.getRExpression(), pos, false)) {
+        result.add(Pair.create(resolved, l.getType()));
       }
     }
     else if (IN_RETURN.accepts(pos)) {
       PsiReturnStatement statement = PsiTreeUtil.getParentOfType(pos, PsiReturnStatement.class);
       PsiExpression l = statement == null ? null : statement.getReturnValue();
-      PsiMethod method = PsiTreeUtil.getParentOfType(l, PsiMethod.class);
-      if (method != null) {
-        allowedValues = MagicConstantInspection.getAllowedValues(method, method.getReturnType(), null);
+      PsiElement element = PsiTreeUtil.getParentOfType(l, PsiMethod.class, PsiLambdaExpression.class);
+      if (element instanceof PsiMethod) {
+        result.add(Pair.create((PsiModifierListOwner)element, ((PsiMethod)element).getReturnType()));
+      }
+      else if (element instanceof PsiLambdaExpression) {
+        final PsiType interfaceType = ((PsiLambdaExpression)element).getFunctionalInterfaceType();
+        final PsiMethod interfaceMethod = LambdaUtil.getFunctionalInterfaceMethod(interfaceType);
+        if (interfaceMethod != null) {
+          result.add(Pair.create(interfaceMethod, LambdaUtil.getFunctionalInterfaceReturnType(interfaceType)));
+        }
       }
     }
     else if (IN_ANNOTATION_INITIALIZER.accepts(pos)) {
       PsiNameValuePair pair = (PsiNameValuePair)pos.getParent().getParent();
-      PsiAnnotationMemberValue value = pair.getValue();
-      if (!(value instanceof PsiExpression)) return;
-      PsiReference ref = pair.getReference();
-      if (ref == null) return;
-      PsiMethod method = (PsiMethod)ref.resolve();
-      if (method == null) return;
-      allowedValues = MagicConstantInspection.getAllowedValues(method, method.getReturnType(), null);
+      if (pair.getValue() instanceof PsiExpression) {
+        PsiReference ref = pair.getReference();
+        PsiMethod method = ref == null ? null : (PsiMethod)ref.resolve();
+        if (method != null) {
+          result.add(Pair.create(method, method.getReturnType()));
+        }
+      }
     }
-    if (allowedValues == null) return;
+    return new ArrayList<>(result);
+  }
 
-    final Set<PsiElement> allowed = new THashSet<PsiElement>(new TObjectHashingStrategy<PsiElement>() {
+  private static void addCompletionVariants(@NotNull final CompletionParameters parameters,
+                                            @NotNull final CompletionResultSet result,
+                                            PsiElement pos,
+                                            MagicConstantInspection.AllowedValues allowedValues) {
+    final Set<PsiElement> allowed = new THashSet<>(new TObjectHashingStrategy<PsiElement>() {
       @Override
       public int computeHashCode(PsiElement object) {
         return 0;
@@ -141,7 +196,7 @@ public class MagicCompletionContributor extends CompletionContributor {
     if (allowedValues.canBeOred) {
       PsiElementFactory factory = JavaPsiFacade.getElementFactory(pos.getProject());
       PsiExpression zero = factory.createExpressionFromText("0", pos);
-      result.addElement(PrioritizedLookupElement.withPriority(LookupElementBuilder.create(zero,"0"), PRIORITY-1));
+      result.addElement(PrioritizedLookupElement.withPriority(LookupElementBuilder.create(zero, "0"), PRIORITY - 1));
       PsiExpression minusOne = factory.createExpressionFromText("-1", pos);
       result.addElement(PrioritizedLookupElement.withPriority(LookupElementBuilder.create(minusOne,"-1"), PRIORITY-1));
       allowed.add(zero);
@@ -170,16 +225,13 @@ public class MagicCompletionContributor extends CompletionContributor {
       allowed.add(value);
     }
 
-    result.runRemainingContributors(parameters, new Consumer<CompletionResult>() {
-      @Override
-      public void consume(CompletionResult completionResult) {
-        LookupElement element = completionResult.getLookupElement();
-        Object object = element.getObject();
-        if (object instanceof PsiElement && allowed.contains(object)) {
-          return;
-        }
-        result.passResult(completionResult);
+    result.runRemainingContributors(parameters, completionResult -> {
+      LookupElement element = completionResult.getLookupElement();
+      Object object = element.getObject();
+      if (object instanceof PsiElement && allowed.contains(object)) {
+        return;
       }
+      result.passResult(completionResult);
     });
   }
 
@@ -190,5 +242,5 @@ public class MagicCompletionContributor extends CompletionContributor {
     return element;
   }
 }
-  
+
 

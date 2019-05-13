@@ -22,8 +22,11 @@ import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.Consumer;
 
+import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
+
+import static com.intellij.ui.JBColor.blue;
 
 /**
  * @author yole
@@ -42,16 +45,11 @@ public class IssueLinkRenderer {
   }
 
   public List<String> appendTextWithLinks(final String text, final SimpleTextAttributes baseStyle) {
-    return appendTextWithLinks(text, baseStyle, new Consumer<String>() {
-      @Override
-      public void consume(String s) {
-        append(s, baseStyle);
-      }
-    });
+    return appendTextWithLinks(text, baseStyle, s -> append(s, baseStyle));
   }
 
-  public List<String> appendTextWithLinks(final String text, final SimpleTextAttributes baseStyle, final Consumer<String> consumer) {
-    final List<String> pieces = new ArrayList<String>();
+  public List<String> appendTextWithLinks(final String text, final SimpleTextAttributes baseStyle, final Consumer<? super String> consumer) {
+    final List<String> pieces = new ArrayList<>();
     final List<IssueNavigationConfiguration.LinkMatch> list = myIssueNavigationConfiguration.findIssueLinks(text);
     int pos = 0;
     final SimpleTextAttributes linkAttributes = getLinkAttributes(baseStyle);
@@ -84,7 +82,9 @@ public class IssueLinkRenderer {
   }
 
   private static SimpleTextAttributes getLinkAttributes(final SimpleTextAttributes baseStyle) {
-    return (baseStyle.getStyle() & SimpleTextAttributes.STYLE_BOLD) != 0 ?
-           SimpleTextAttributes.LINK_BOLD_ATTRIBUTES : SimpleTextAttributes.LINK_ATTRIBUTES;
+    Color color = baseStyle.getFgColor();
+    int alpha = color != null ? color.getAlpha() : 255;
+    @SuppressWarnings("UseJBColor") Color resultColor = new Color(blue.getRed(), blue.getGreen(), blue.getBlue(), alpha);
+    return new SimpleTextAttributes(baseStyle.getStyle() | SimpleTextAttributes.STYLE_UNDERLINE, resultColor);
   }
 }

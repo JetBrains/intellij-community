@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2012 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2018 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,15 +15,18 @@
  */
 package com.siyeh.ig.style;
 
-import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
+import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
+import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PropertyUtil;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.JavaPsiConstructorUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.IntroduceVariableFix;
-import com.siyeh.ig.psiutils.ExpressionUtils;
+import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -34,6 +37,22 @@ public class NestedMethodCallInspection extends BaseInspection {
    * @noinspection PublicField
    */
   public boolean m_ignoreFieldInitializations = true;
+  public boolean ignoreStaticMethods = false;
+  public boolean ignoreGetterCalls = false;
+
+  @Override
+  public JComponent createOptionsPanel() {
+    final MultipleCheckboxOptionsPanel panel = new MultipleCheckboxOptionsPanel(this);
+    panel.addCheckbox(InspectionGadgetsBundle.message("nested.method.call.ignore.option"), "m_ignoreFieldInitializations");
+    panel.addCheckbox(InspectionGadgetsBundle.message("ignore.calls.to.static.methods"), "ignoreStaticMethods");
+    panel.addCheckbox(InspectionGadgetsBundle.message("ignore.calls.to.property.getters"), "ignoreGetterCalls");
+    return panel;
+  }
+
+  @Override
+  protected InspectionGadgetsFix buildFix(Object... infos) {
+    return new IntroduceVariableFix(false);
+  }
 
   @Override
   @NotNull
@@ -48,19 +67,15 @@ public class NestedMethodCallInspection extends BaseInspection {
   }
 
   @Override
-  public JComponent createOptionsPanel() {
-    return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message("nested.method.call.ignore.option"),
-      this, "m_ignoreFieldInitializations");
-  }
-
-  @Override
   public BaseInspectionVisitor buildVisitor() {
     return new NestedMethodCallVisitor();
   }
 
   @Override
-  protected InspectionGadgetsFix buildFix(Object... infos) {
-    return new IntroduceVariableFix(false);
+  public void writeSettings(@NotNull Element node) throws WriteExternalException {
+    defaultWriteSettings(node, "ignoreStaticMethods", "ignoreGetterCalls");
+    writeBooleanOption(node, "ignoreStaticMethods", false);
+    writeBooleanOption(node, "ignoreGetterCalls", false);
   }
 
   @Override
@@ -74,11 +89,8 @@ public class NestedMethodCallInspection extends BaseInspection {
     public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
       super.visitMethodCallExpression(expression);
       PsiExpression outerExpression = expression;
-      while (outerExpression != null && outerExpression.getParent() instanceof PsiExpression) {
+      while (outerExpression.getParent() instanceof PsiExpression) {
         outerExpression = (PsiExpression)outerExpression.getParent();
-      }
-      if (outerExpression == null) {
-        return;
       }
       final PsiElement parent = outerExpression.getParent();
       if (!(parent instanceof PsiExpressionList)) {
@@ -88,7 +100,7 @@ public class NestedMethodCallInspection extends BaseInspection {
       if (!(grandParent instanceof PsiCallExpression)) {
         return;
       }
-      if (ExpressionUtils.isConstructorInvocation(grandParent)) {
+      if (JavaPsiConstructorUtil.isConstructorCall(grandParent)) {
         //ignore nested method calls at the start of a constructor,
         //where they can't be extracted
         return;
@@ -96,6 +108,18 @@ public class NestedMethodCallInspection extends BaseInspection {
       if (m_ignoreFieldInitializations) {
         final PsiElement field = PsiTreeUtil.getParentOfType(expression, PsiField.class);
         if (field != null) {
+          return;
+        }
+      }
+      final PsiMethod method = expression.resolveMethod();
+      if (method == null) {
+        return;
+      }
+      if (ignoreStaticMethods || ignoreGetterCalls) {
+        if (ignoreStaticMethods && method.hasModifierProperty(PsiModifier.STATIC)) {
+          return;
+        }
+        if (ignoreGetterCalls && PropertyUtil.isSimpleGetter(method)) {
           return;
         }
       }

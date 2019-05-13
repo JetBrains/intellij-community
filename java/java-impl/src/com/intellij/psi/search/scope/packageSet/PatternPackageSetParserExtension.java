@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,10 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * User: anna
- * Date: 25-Jan-2008
- */
 package com.intellij.psi.search.scope.packageSet;
 
 import com.intellij.analysis.AnalysisScopeBundle;
@@ -54,7 +50,7 @@ public class PatternPackageSetParserExtension implements PackageSetParserExtensi
       scope = PatternPackageSet.SCOPE_PROBLEM;
     } else if (PatternPackageSet.SCOPE_LIBRARY.equals(id)) {
       scope = PatternPackageSet.SCOPE_LIBRARY;
-    } else if (id.trim().length() > 0) {
+    } else if (!id.trim().isEmpty()) {
       scope = null;
     }
     final CharSequence buf = lexer.getBufferSequence();
@@ -73,7 +69,7 @@ public class PatternPackageSetParserExtension implements PackageSetParserExtensi
   }
 
   private static String parseAspectJPattern(Lexer lexer) throws ParsingException {
-    StringBuffer pattern = new StringBuffer();
+    StringBuilder pattern = new StringBuilder();
     boolean wasIdentifier = false;
     while (true) {
       if (lexer.getTokenType() == ScopeTokenTypes.DOT) {
@@ -85,7 +81,7 @@ public class PatternPackageSetParserExtension implements PackageSetParserExtensi
         wasIdentifier = false;
       }
       else if (lexer.getTokenType() == ScopeTokenTypes.IDENTIFIER) {
-        if (wasIdentifier) error(AnalysisScopeBundle.message("error.packageset.token.expectations", getTokenText(lexer)), lexer);
+        if (wasIdentifier) error(AnalysisScopeBundle.message("error.package.set.token.expectations", getTokenText(lexer)), lexer);
         wasIdentifier = true;
         pattern.append(getTokenText(lexer));
       }
@@ -96,7 +92,7 @@ public class PatternPackageSetParserExtension implements PackageSetParserExtensi
     }
 
     if (pattern.length() == 0) {
-      error(AnalysisScopeBundle.message("error.packageset.pattern.expectations"), lexer);
+      error(AnalysisScopeBundle.message("error.package.set.pattern.expectations"), lexer);
     }
 
     return pattern.toString();
@@ -111,6 +107,6 @@ public class PatternPackageSetParserExtension implements PackageSetParserExtensi
 
   private static void error(String message, Lexer lexer) throws ParsingException {
     throw new ParsingException(
-      AnalysisScopeBundle.message("error.packageset.position.parsing.error", message, (lexer.getTokenStart() + 1)));
+      AnalysisScopeBundle.message("error.package.set.position.parsing.error", message, (lexer.getTokenStart() + 1)));
   }
 }

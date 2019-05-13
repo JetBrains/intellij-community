@@ -18,15 +18,6 @@ def _dirname(f):
         return ""
     return f[:s]
 
-def _dirs(files):
-    d = set()
-    for f in files:
-        f = _dirname(f)
-        while f not in d:
-            d.add(f)
-            f = _dirname(f)
-    return d
-
 def _findlimit(repo, a, b):
     """Find the earliest revision that's an ancestor of a or b but not both,
     None if no such revision exists.
@@ -84,22 +75,136 @@ def _findlimit(repo, a, b):
         return None
     return limit
 
-def copies(repo, c1, c2, ca, checkdirs=False):
+def _chain(src, dst, a, b):
+    '''chain two sets of copies a->b'''
+    t = a.copy()
+    for k, v in b.iteritems():
+        if v in t:
+            # found a chain
+            if t[v] != k:
+                # file wasn't renamed back to itself
+                t[k] = t[v]
+            if v not in dst:
+                # chain was a rename, not a copy
+                del t[v]
+        if v in src:
+            # file is a copy of an existing file
+            t[k] = v
+
+    # remove criss-crossed copies
+    for k, v in t.items():
+        if k in src and v in dst:
+            del t[k]
+
+    return t
+
+def _tracefile(fctx, actx):
+    '''return file context that is the ancestor of fctx present in actx'''
+    stop = actx.rev()
+    am = actx.manifest()
+
+    for f in fctx.ancestors():
+        if am.get(f.path(), None) == f.filenode():
+            return f
+        if f.rev() < stop:
+            return None
+
+def _dirstatecopies(d):
+    ds = d._repo.dirstate
+    c = ds.copies().copy()
+    for k in c.keys():
+        if ds[k] not in 'anm':
+            del c[k]
+    return c
+
+def _forwardcopies(a, b):
+    '''find {dst@b: src@a} copy mapping where a is an ancestor of b'''
+
+    # check for working copy
+    w = None
+    if b.rev() is None:
+        w = b
+        b = w.p1()
+        if a == b:
+            # short-circuit to avoid issues with merge states
+            return _dirstatecopies(w)
+
+    # find where new files came from
+    # we currently don't try to find where old files went, too expensive
+    # this means we can miss a case like 'hg rm b; hg cp a b'
+    cm = {}
+    missing = set(b.manifest().iterkeys())
+    missing.difference_update(a.manifest().iterkeys())
+
+    for f in missing:
+        ofctx = _tracefile(b[f], a)
+        if ofctx:
+            cm[f] = ofctx.path()
+
+    # combine copies from dirstate if necessary
+    if w is not None:
+        cm = _chain(a, w, cm, _dirstatecopies(w))
+
+    return cm
+
+def _backwardrenames(a, b):
+    # Even though we're not taking copies into account, 1:n rename situations
+    # can still exist (e.g. hg cp a b; hg mv a c). In those cases we
+    # arbitrarily pick one of the renames.
+    f = _forwardcopies(b, a)
+    r = {}
+    for k, v in sorted(f.iteritems()):
+        # remove copies
+        if v in a:
+            continue
+        r[v] = k
+    return r
+
+def pathcopies(x, y):
+    '''find {dst@y: src@x} copy mapping for directed compare'''
+    if x == y or not x or not y:
+        return {}
+    a = y.ancestor(x)
+    if a == x:
+        return _forwardcopies(x, y)
+    if a == y:
+        return _backwardrenames(x, y)
+    return _chain(x, y, _backwardrenames(x, a), _forwardcopies(a, y))
+
+def mergecopies(repo, c1, c2, ca):
     """
-    Find moves and copies between context c1 and c2
+    Find moves and copies between context c1 and c2 that are relevant
+    for merging.
+
+    Returns four dicts: "copy", "movewithdir", "diverge", and
+    "renamedelete".
+
+    "copy" is a mapping from destination name -> source name,
+    where source is in c1 and destination is in c2 or vice-versa.
+
+    "movewithdir" is a mapping from source name -> destination name,
+    where the file at source present in one context but not the other
+    needs to be moved to destination by the merge process, because the
+    other context moved the directory it is in.
+
+    "diverge" is a mapping of source name -> list of destination names
+    for divergent renames.
+
+    "renamedelete" is a mapping of source name -> list of destination
+    names for files deleted in c1 that were renamed in c2 or vice-versa.
     """
     # avoid silly behavior for update from empty dir
     if not c1 or not c2 or c1 == c2:
-        return {}, {}
+        return {}, {}, {}, {}
 
     # avoid silly behavior for parent -> working dir
-    if c2.node() is None and c1.node() == repo.dirstate.parents()[0]:
-        return repo.dirstate.copies(), {}
+    if c2.node() is None and c1.node() == repo.dirstate.p1():
+        return repo.dirstate.copies(), {}, {}, {}
 
     limit = _findlimit(repo, c1.rev(), c2.rev())
     if limit is None:
         # no common ancestor, no copies
-        return {}, {}
+        return {}, {}, {}, {}
     m1 = c1.manifest()
     m2 = c2.manifest()
     ma = ca.manifest()
@@ -113,6 +218,7 @@ def copies(repo, c1, c2, ca, checkdirs=False):
 
     ctx = util.lrucachefunc(makectx)
     copy = {}
+    movewithdir = {}
     fullcopy = {}
     diverge = {}
 
@@ -134,7 +240,7 @@ def copies(repo, c1, c2, ca, checkdirs=False):
             if f2r is None:
                 f2 = g2.next()
 
-            while 1:
+            while True:
                 f1r, f2r = f1.rev(), f2.rev()
                 if f1r > f2r:
                     f1 = g1.next()
@@ -193,31 +299,44 @@ def copies(repo, c1, c2, ca, checkdirs=False):
     for f in u2:
         checkcopies(f, m2, m1)
 
+    renamedelete = {}
+    renamedelete2 = set()
     diverge2 = set()
     for of, fl in diverge.items():
-        if len(fl) == 1:
-            del diverge[of] # not actually divergent
+        if len(fl) == 1 or of in c1 or of in c2:
+            del diverge[of] # not actually divergent, or not a rename
+            if of not in c1 and of not in c2:
+                # renamed on one side, deleted on the other side, but filter
+                # out files that have been renamed and then deleted
+                renamedelete[of] = [f for f in fl if f in c1 or f in c2]
+                renamedelete2.update(fl) # reverse map for below
         else:
             diverge2.update(fl) # reverse map for below
 
     if fullcopy:
-        repo.ui.debug("  all copies found (* = to merge, ! = divergent):\n")
-        for f in fullcopy:
+        repo.ui.debug("  all copies found (* = to merge, ! = divergent, "
+                      "% = renamed and deleted):\n")
+        for f in sorted(fullcopy):
             note = ""
             if f in copy:
                 note += "*"
             if f in diverge2:
                 note += "!"
-            repo.ui.debug("   %s -> %s %s\n" % (f, fullcopy[f], note))
+            if f in renamedelete2:
+                note += "%"
+            repo.ui.debug("   src: '%s' -> dst: '%s' %s\n" % (fullcopy[f], f,
+                                                              note))
     del diverge2
 
-    if not fullcopy or not checkdirs:
-        return copy, diverge
+    if not fullcopy:
+        return copy, movewithdir, diverge, renamedelete
 
     repo.ui.debug("  checking for directory renames\n")
 
     # generate a directory move map
-    d1, d2 = _dirs(m1), _dirs(m2)
+    d1, d2 = c1.dirs(), c2.dirs()
+    d1.addpath('/')
+    d2.addpath('/')
     invalid = set()
     dirmove = {}
 
@@ -247,10 +366,11 @@ def copies(repo, c1, c2, ca, checkdirs=False):
     del d1, d2, invalid
 
     if not dirmove:
-        return copy, diverge
+        return copy, movewithdir, diverge, renamedelete
 
     for d in dirmove:
-        repo.ui.debug("  dir %s -> %s\n" % (d, dirmove[d]))
+        repo.ui.debug("   discovered dir src: '%s' -> dst: '%s'\n" %
+                      (d, dirmove[d]))
 
     # check unaccounted nonoverlapping files against directory moves
     for f in u1 + u2:
@@ -260,8 +380,9 @@ def copies(repo, c1, c2, ca, checkdirs=False):
                     # new file added in a directory that was moved, move it
                     df = dirmove[d] + f[len(d):]
                     if df not in copy:
-                        copy[f] = df
-                        repo.ui.debug("  file %s -> %s\n" % (f, copy[f]))
+                        movewithdir[f] = df
+                        repo.ui.debug(("   pending file src: '%s' -> "
+                                       "dst: '%s'\n") % (f, df))
                     break
 
-    return copy, diverge
+    return copy, movewithdir, diverge, renamedelete

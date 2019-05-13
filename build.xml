@@ -1,41 +1,59 @@
-<project name="IntelliJ IDEA Community Edition" default="all">
-  <property name="project.home" value="${basedir}"/>
-  <property name="out.dir" value="${project.home}/out"/>
-  <property name="tmp.dir" value="${project.home}/out/tmp"/>
-  <property name="gant.home" value="${project.home}/build/lib/gant"/>
+<!--
+ This build script compiles, build distribution archives and run tests in IntelliJ IDEA Community Edition. Build process can be customized
+ via options, see org.jetbrains.intellij.build.BuildOptions and org.jetbrains.intellij.build.TestingOptions classes for details. System properties
+ from these classes can be passed as Ant properties in the command line, e.g. run 'ant -Dintellij.build.output.root=/path/to/dir' to
+ specify custom output directory.
 
-  <target name="cleanup">
-    <delete dir="${out.dir}" failonerror="false"/>
-  </target>
+ Note that this script is for building IntelliJ IDEA Community Edition only. If you want to build your own product based on IntelliJ Platform,
+ create a gant script for it, see javadoc for org.jetbrains.intellij.build package for details.
+ -->
+<project name="IntelliJ IDEA Community Edition" default="build">
+  <property name="project.home" value="${basedir}"/>
 
   <target name="init">
-    <mkdir dir="${out.dir}"/>
-    <mkdir dir="${tmp.dir}"/>
+    <condition property="gradle.executable" value="${project.home}/build/dependencies/gradlew.bat"
+               else="${project.home}/build/dependencies/gradlew">
+      <os family="windows"/>
+    </condition>
+    <exec executable="${gradle.executable}" dir="${project.home}/build/dependencies" failonerror="true">
+      <env key="JAVA_HOME" value="${java.home}"/>
+      <arg value="--no-daemon"/>
+      <arg value="setupKotlinPlugin"/>
+    </exec>
+    <propertyset id="intellij.build.properties">
+      <propertyref name="build.number"/>
+      <propertyref prefix="intellij.build."/>
+    </propertyset>
   </target>
 
   <macrodef name="call_gant">
     <attribute name="script" />
+    <attribute name="target" default="default"/>
     <sequential>
       <java failonerror="true" jar="${project.home}/lib/ant/lib/ant-launcher.jar" fork="true">
-        <jvmarg line="-Xmx512m -XX:MaxPermSize=152m"/>
-
-        <arg line="&quot;-Dgant.script=@{script}&quot;"/>
-        <arg line="&quot;-Dteamcity.build.tempDir=${tmp.dir}&quot;"/>
-        <arg line="&quot;-Didea.test.group=ALL_EXCLUDE_DEFINED&quot;"/>
-        <arg line="-lib ${gant.home}/lib/"/>
+        <jvmarg line="-Xmx912m"/>
+        <sysproperty key="jna.nosys" value="true" />
+        <sysproperty key="java.awt.headless" value="true"/>
+        <sysproperty key="gant.script" value="@{script}"/>
+        <sysproperty key="gant.target" value="@{target}"/>
+        <syspropertyset refid="intellij.build.properties"/>
         <arg value="-f"/>
         <arg value="${project.home}/build/gant.xml"/>
       </java>
     </sequential>
   </macrodef>
 
+  <!-- build distribution archives for IntelliJ Community Edition in out/idea-ce/artifacts directory -->
   <target name="build" depends="init">
-    <call_gant script="${project.home}/build/scripts/dist.gant"/>
+    <call_gant script="${project.home}/build/scripts/idea_community.gant"/>
   </target>
 
   <target name="test" depends="init">
-    <call_gant script="${project.home}/build/scripts/tests.gant"/>
+    <call_gant script="${project.home}/build/scripts/tests_in_community.gant"/>
   </target>
 
-  <target name="all" depends="cleanup,build"/>
+  <!-- Creates an updater-full.jar in ${intellij.build.output.root}/artifacts, it includes 'intellij.platform.updater' module with all its dependencies -->
+  <target name="fullupdater" depends="init">
+    <call_gant script="${project.home}/build/scripts/idea_community.gant" target="updater-full"/>
+  </target>
 </project>

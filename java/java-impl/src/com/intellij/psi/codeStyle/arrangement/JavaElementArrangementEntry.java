@@ -17,33 +17,31 @@ package com.intellij.psi.codeStyle.arrangement;
 
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.codeStyle.arrangement.match.ArrangementEntryType;
-import com.intellij.psi.codeStyle.arrangement.match.ArrangementModifier;
+import com.intellij.psi.codeStyle.arrangement.std.ArrangementSettingsToken;
+import com.intellij.util.containers.ContainerUtilRt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.EnumSet;
 import java.util.Set;
 
 /**
  * Not thread-safe.
  * 
  * @author Denis Zhdanov
- * @since 7/20/12 4:50 PM
  */
 public class JavaElementArrangementEntry extends DefaultArrangementEntry
   implements TypeAwareArrangementEntry, NameAwareArrangementEntry,ModifierAwareArrangementEntry
 {
 
-  private final Set<ArrangementModifier> myModifiers = EnumSet.noneOf(ArrangementModifier.class);
+  @NotNull private final Set<ArrangementSettingsToken> myModifiers = ContainerUtilRt.newHashSet();
+  @NotNull private final Set<ArrangementSettingsToken> myTypes     = ContainerUtilRt.newHashSet();
 
-  @NotNull private final  Set<ArrangementEntryType> myTypes;
-  @NotNull private final  ArrangementEntryType      myType;
-  @Nullable private final String                    myName;
+  @NotNull private final  ArrangementSettingsToken myType;
+  @Nullable private final String                   myName;
 
   public JavaElementArrangementEntry(@Nullable ArrangementEntry parent,
                                      @NotNull TextRange range,
-                                     @NotNull ArrangementEntryType type,
+                                     @NotNull ArrangementSettingsToken type,
                                      @Nullable String name,
                                      boolean canBeMatched)
   {
@@ -53,26 +51,23 @@ public class JavaElementArrangementEntry extends DefaultArrangementEntry
   public JavaElementArrangementEntry(@Nullable ArrangementEntry parent,
                                      int startOffset,
                                      int endOffset,
-                                     @NotNull ArrangementEntryType type,
+                                     @NotNull ArrangementSettingsToken type,
                                      @Nullable String name,
                                      boolean canBeArranged)
   {
     super(parent, startOffset, endOffset, canBeArranged);
     myType = type;
-    myTypes = EnumSet.of(type);
-    if (myType == ArrangementEntryType.CONSTRUCTOR) {
-      myTypes.add(ArrangementEntryType.METHOD);
-    }
+    myTypes.add(type);
     myName = name;
   }
 
   @NotNull
   @Override
-  public Set<ArrangementModifier> getModifiers() {
+  public Set<ArrangementSettingsToken> getModifiers() {
     return myModifiers;
   }
 
-  public void addModifier(@NotNull ArrangementModifier modifier) {
+  public void addModifier(@NotNull ArrangementSettingsToken modifier) {
     myModifiers.add(modifier);
   }
 
@@ -84,12 +79,12 @@ public class JavaElementArrangementEntry extends DefaultArrangementEntry
 
   @NotNull
   @Override
-  public Set<ArrangementEntryType> getTypes() {
+  public Set<ArrangementSettingsToken> getTypes() {
     return myTypes;
   }
 
   @NotNull
-  public ArrangementEntryType getType() {
+  public ArrangementSettingsToken getType() {
     return myType;
   }
 

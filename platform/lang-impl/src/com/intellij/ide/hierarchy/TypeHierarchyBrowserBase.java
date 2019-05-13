@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,15 +24,19 @@ import com.intellij.ide.util.DeleteHandler;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
+import com.intellij.ui.PopupHandler;
 import org.jetbrains.annotations.NotNull;
+
+import javax.swing.*;
+import java.util.Map;
 
 public abstract class TypeHierarchyBrowserBase extends HierarchyBrowserBaseEx {
 
-  @SuppressWarnings({"UnresolvedPropertyKey"})
+  @SuppressWarnings("UnresolvedPropertyKey")
   public static final String TYPE_HIERARCHY_TYPE = IdeBundle.message("title.hierarchy.class");
-  @SuppressWarnings({"UnresolvedPropertyKey"})
+  @SuppressWarnings("UnresolvedPropertyKey")
   public static final String SUBTYPES_HIERARCHY_TYPE = IdeBundle.message("title.hierarchy.subtypes");
-  @SuppressWarnings({"UnresolvedPropertyKey"})
+  @SuppressWarnings("UnresolvedPropertyKey")
   public static final String SUPERTYPES_HIERARCHY_TYPE = IdeBundle.message("title.hierarchy.supertypes");
 
   private boolean myIsInterface;
@@ -40,13 +44,43 @@ public abstract class TypeHierarchyBrowserBase extends HierarchyBrowserBaseEx {
   private final MyDeleteProvider myDeleteElementProvider = new MyDeleteProvider();
 
   public static final DataKey<TypeHierarchyBrowserBase> DATA_KEY = DataKey.create("com.intellij.ide.hierarchy.TypeHierarchyBrowserBase");
-  @Deprecated public static final String TYPE_HIERARCHY_BROWSER_DATA_KEY = DATA_KEY.getName();
 
   public TypeHierarchyBrowserBase(final Project project, final PsiElement element) {
     super(project, element);
   }
 
-  protected abstract boolean isInterface(PsiElement psiElement);
+  protected abstract boolean isInterface(@NotNull PsiElement psiElement);
+
+  protected void createTreeAndSetupCommonActions(@NotNull Map<String, JTree> trees, @NotNull String typeHierarchyActionGroupName) {
+    ActionGroup group = (ActionGroup)ActionManager.getInstance().getAction(typeHierarchyActionGroupName);
+    createTreeAndSetupCommonActions(trees, group);
+  }
+
+  protected void createTreeAndSetupCommonActions(@NotNull Map<String, JTree> trees, @NotNull ActionGroup group) {
+    final BaseOnThisTypeAction baseOnThisTypeAction = createBaseOnThisAction();
+    final JTree tree1 = createTree(true);
+    PopupHandler.installPopupHandler(tree1, group, ActionPlaces.TYPE_HIERARCHY_VIEW_POPUP, ActionManager.getInstance());
+    baseOnThisTypeAction
+      .registerCustomShortcutSet(ActionManager.getInstance().getAction(IdeActions.ACTION_TYPE_HIERARCHY).getShortcutSet(), tree1);
+    trees.put(TYPE_HIERARCHY_TYPE, tree1);
+
+    final JTree tree2 = createTree(true);
+    PopupHandler.installPopupHandler(tree2, group, ActionPlaces.TYPE_HIERARCHY_VIEW_POPUP, ActionManager.getInstance());
+    baseOnThisTypeAction
+      .registerCustomShortcutSet(ActionManager.getInstance().getAction(IdeActions.ACTION_TYPE_HIERARCHY).getShortcutSet(), tree2);
+    trees.put(SUPERTYPES_HIERARCHY_TYPE, tree2);
+
+    final JTree tree3 = createTree(true);
+    PopupHandler.installPopupHandler(tree3, group, ActionPlaces.TYPE_HIERARCHY_VIEW_POPUP, ActionManager.getInstance());
+    baseOnThisTypeAction
+      .registerCustomShortcutSet(ActionManager.getInstance().getAction(IdeActions.ACTION_TYPE_HIERARCHY).getShortcutSet(), tree3);
+    trees.put(SUBTYPES_HIERARCHY_TYPE, tree3);
+  }
+
+  @NotNull
+  protected BaseOnThisTypeAction createBaseOnThisAction() {
+    return new BaseOnThisTypeAction();
+  }
 
   protected abstract boolean canBeDeleted(PsiElement psiElement);
 
@@ -63,7 +97,7 @@ public abstract class TypeHierarchyBrowserBase extends HierarchyBrowserBaseEx {
   }
 
   @Override
-  protected void prependActions(final DefaultActionGroup actionGroup) {
+  protected void prependActions(@NotNull final DefaultActionGroup actionGroup) {
     actionGroup.add(new ViewClassHierarchyAction());
     actionGroup.add(new ViewSupertypesHierarchyAction());
     actionGroup.add(new ViewSubtypesHierarchyAction());
@@ -83,7 +117,7 @@ public abstract class TypeHierarchyBrowserBase extends HierarchyBrowserBaseEx {
   }
 
   @Override
-  public final Object getData(final String dataId) {
+  public final Object getData(@NotNull final String dataId) {
     if (PlatformDataKeys.DELETE_ELEMENT_PROVIDER.is(dataId)) {
       return myDeleteElementProvider;
     }
@@ -132,11 +166,11 @@ public abstract class TypeHierarchyBrowserBase extends HierarchyBrowserBaseEx {
   protected static class BaseOnThisTypeAction extends BaseOnThisElementAction {
 
     public BaseOnThisTypeAction() {
-      super("", IdeActions.ACTION_TYPE_HIERARCHY, DATA_KEY.getName());
+      super("", DATA_KEY.getName(), LanguageTypeHierarchy.INSTANCE);
     }
 
     @Override
-    protected String correctViewType(HierarchyBrowserBaseEx browser, String viewType) {
+    protected String correctViewType(@NotNull HierarchyBrowserBaseEx browser, String viewType) {
       if (((TypeHierarchyBrowserBase)browser).myIsInterface && TYPE_HIERARCHY_TYPE.equals(viewType)) return SUBTYPES_HIERARCHY_TYPE;
       return viewType;
     }

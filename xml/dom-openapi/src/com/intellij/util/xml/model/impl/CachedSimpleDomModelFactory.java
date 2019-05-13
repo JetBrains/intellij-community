@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,9 +27,6 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * User: Sergey.Vasiliev
- */
 public abstract class CachedSimpleDomModelFactory<T extends DomElement, M extends DomModel<T>, Scope extends UserDataHolder> extends
                                                                                                                              SimpleDomModelFactory<T, M>
     implements CachedDomModelFactory<T,M,Scope> {
@@ -43,17 +40,19 @@ public abstract class CachedSimpleDomModelFactory<T extends DomElement, M extend
     super(aClass, modelMerger);
 
     myModelCache = new DomModelCache<M, XmlFile>(project, name + " model") {
+       @Override
        @NotNull
        protected CachedValueProvider.Result<M> computeValue(@NotNull XmlFile file) {
          file = (XmlFile)file.getOriginalFile();
 
          final Scope scope = getModelScope(file);
          final M model = computeModel(file, scope);
-         return new CachedValueProvider.Result<M>(model, computeDependencies(model, scope));
+         return new CachedValueProvider.Result<>(model, computeDependencies(model, scope));
       }
     };
   }
 
+  @Override
   @Nullable
   public M getModelByConfigFile(@Nullable XmlFile psiFile) {
     if (psiFile == null) {

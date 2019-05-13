@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,9 +32,6 @@ import com.intellij.util.Function;
 import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * User: Sergey.Vasiliev
- */
 public class DomElementsHighlightingUtil {
   private DomElementsHighlightingUtil() {
   }
@@ -42,12 +39,8 @@ public class DomElementsHighlightingUtil {
   @Nullable
   public static ProblemDescriptor createProblemDescriptors(final InspectionManager manager, final DomElementProblemDescriptor problemDescriptor) {
     final ProblemHighlightType type = getProblemHighlightType(problemDescriptor);
-    return createProblemDescriptors(problemDescriptor, new Function<Pair<TextRange, PsiElement>, ProblemDescriptor>() {
-      public ProblemDescriptor fun(final Pair<TextRange, PsiElement> s) {
-        return manager
-          .createProblemDescriptor(s.second, s.first, problemDescriptor.getDescriptionTemplate(), type, true, problemDescriptor.getFixes());
-      }
-    });
+    return createProblemDescriptors(problemDescriptor, s -> manager
+      .createProblemDescriptor(s.second, s.first, problemDescriptor.getDescriptionTemplate(), type, true, problemDescriptor.getFixes()));
   }
 
   // TODO: move it to DomElementProblemDescriptorImpl
@@ -67,42 +60,39 @@ public class DomElementsHighlightingUtil {
   @Nullable
   public static Annotation createAnnotation(final DomElementProblemDescriptor problemDescriptor) {
 
-    return createProblemDescriptors(problemDescriptor, new Function<Pair<TextRange, PsiElement>, Annotation>() {
-      public Annotation fun(final Pair<TextRange, PsiElement> s) {
-        String text = problemDescriptor.getDescriptionTemplate();
-        if (StringUtil.isEmpty(text)) text = null;
-        final HighlightSeverity severity = problemDescriptor.getHighlightSeverity();
+    return createProblemDescriptors(problemDescriptor, s -> {
+      String text = problemDescriptor.getDescriptionTemplate();
+      if (StringUtil.isEmpty(text)) text = null;
+      final HighlightSeverity severity = problemDescriptor.getHighlightSeverity();
 
-        TextRange range = s.first;
-        if (text == null) range = TextRange.from(range.getStartOffset(), 0);
-        range = range.shiftRight(s.second.getTextRange().getStartOffset());
-        final Annotation annotation = createAnnotation(severity, range, text);
+      TextRange range = s.first;
+      if (text == null) range = TextRange.from(range.getStartOffset(), 0);
+      range = range.shiftRight(s.second.getTextRange().getStartOffset());
+      final Annotation annotation = createAnnotation(severity, range, text);
 
-        if (problemDescriptor instanceof DomElementResolveProblemDescriptor) {
-          annotation.setTextAttributes(CodeInsightColors.WRONG_REFERENCES_ATTRIBUTES);
-        }
-
-        for(LocalQuickFix fix:problemDescriptor.getFixes()) {
-          if (fix instanceof IntentionAction) annotation.registerFix((IntentionAction)fix);
-        }
-        return annotation;
+      if (problemDescriptor instanceof DomElementResolveProblemDescriptor) {
+        annotation.setTextAttributes(CodeInsightColors.WRONG_REFERENCES_ATTRIBUTES);
       }
+
+      for(LocalQuickFix fix:problemDescriptor.getFixes()) {
+        if (fix instanceof IntentionAction) annotation.registerFix((IntentionAction)fix);
+      }
+      return annotation;
     });
   }
 
   private static Annotation createAnnotation(final HighlightSeverity severity,
                                              final TextRange range,
                                              final String text) {
-    String tooltip = text == null ? null : "<html><body>" + XmlStringUtil.escapeString(text) + "</body></html>";
+    String tooltip = text == null ? null : XmlStringUtil.wrapInHtml(XmlStringUtil.escapeString(text));
     return new Annotation(range.getStartOffset(), range.getEndOffset(), severity, text, tooltip);
   }
 
   @Nullable
-  private static <T> T createProblemDescriptors(final DomElementProblemDescriptor problemDescriptor,
-                                                      final Function<Pair<TextRange, PsiElement>, T> creator) {
+  private static <T> T createProblemDescriptors(DomElementProblemDescriptor problemDescriptor, Function<? super Pair<TextRange, PsiElement>, ? extends T> creator) {
 
     final Pair<TextRange, PsiElement> range = ((DomElementProblemDescriptorImpl)problemDescriptor).getProblemRange();
-    return range == DomElementProblemDescriptorImpl.NO_PROBLEM ? null : creator.fun(range);
+    return range == DomElementProblemDescriptorImpl.NO_PROBLEM || !range.second.isPhysical() ? null : creator.fun(range);
   }
 
 }

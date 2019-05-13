@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,8 +15,8 @@
  */
 package com.intellij.cvsSupport2.actions;
 
+import com.intellij.CvsBundle;
 import com.intellij.cvsSupport2.actions.cvsContext.CvsContext;
-import com.intellij.openapi.vcs.actions.VcsContext;
 import com.intellij.cvsSupport2.cvshandlers.CommandCvsHandler;
 import com.intellij.cvsSupport2.cvshandlers.CvsHandler;
 import com.intellij.cvsSupport2.cvsoperations.cvsWatch.WatcherInfo;
@@ -24,8 +24,10 @@ import com.intellij.cvsSupport2.cvsoperations.cvsWatch.WatchersOperation;
 import com.intellij.cvsSupport2.cvsoperations.cvsWatch.ui.WatchersPanel;
 import com.intellij.cvsSupport2.ui.CvsTabbedWindow;
 import com.intellij.cvsSupport2.util.CvsVfsUtil;
-import com.intellij.openapi.ui.Messages;
-import com.intellij.CvsBundle;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.MessageType;
+import com.intellij.openapi.vcs.actions.VcsContext;
+import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 
 import java.util.List;
 
@@ -35,15 +37,18 @@ import java.util.List;
 public class ViewWatchersAction extends AbstractActionFromEditGroup {
   private WatchersOperation myWatchersOperation;
 
+  @Override
   protected String getTitle(VcsContext context) {
     return CvsBundle.getViewEditorsOperationName();
   }
 
+  @Override
   protected CvsHandler getCvsHandler(CvsContext context) {
     myWatchersOperation = new WatchersOperation(context.getSelectedFiles());
-    return new CommandCvsHandler(com.intellij.CvsBundle.message("operation.name.veiw.watchers"), myWatchersOperation);
+    return new CommandCvsHandler(CvsBundle.message("operation.name.veiw.watchers"), myWatchersOperation);
   }
 
+  @Override
   protected void onActionPerformed(CvsContext context,
                                    CvsTabbedWindow tabbedWindow,
                                    boolean successfully,
@@ -52,13 +57,17 @@ public class ViewWatchersAction extends AbstractActionFromEditGroup {
     if (successfully) {
       List<WatcherInfo> watchers = myWatchersOperation.getWatchers();
       String filePath = CvsVfsUtil.getFileFor(context.getSelectedFile()).getAbsolutePath();
+      final Project project = context.getProject();
+      if (project == null) {
+        return;
+      }
       if (watchers.isEmpty()) {
-        Messages.showMessageDialog(CvsBundle.message("message.error.no.watchers.for.file", filePath), CvsBundle.message("message.error.no.watchers.for.file.title"), Messages.getInformationIcon());
+        VcsBalloonProblemNotifier.showOverChangesView(project, CvsBundle.message("message.error.no.watchers.for.file", filePath),
+                                                      MessageType.INFO);
       }
       else {
         tabbedWindow.addTab(CvsBundle.message("message.watchers.for.file", filePath), new WatchersPanel(watchers), true, true, true, true,
                             null, "cvs.watchers");
-        tabbedWindow.ensureVisible(context.getProject());
       }
     }
   }

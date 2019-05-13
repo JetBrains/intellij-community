@@ -1,0 +1,23 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="IDEA with Python plugin" type="Application" factoryName="Application">
+    <log_file alias="idea.log" path="$PROJECT_DIR$/system/log/idea.log" />
+    <option name="MAIN_CLASS_NAME" value="com.intellij.idea.Main" />
+    <module name="intellij.python.community.plugin.main" />
+    <option name="VM_PARAMETERS" value="-ea -Xmx192m -Didea.is.internal=true -Didea.config.path=../config -Didea.system.path=../system" />
+    <option name="WORKING_DIRECTORY" value="file://$PROJECT_DIR$/bin" />
+    <RunnerSettings RunnerId="Debug">
+      <option name="DEBUG_PORT" value="" />
+      <option name="TRANSPORT" value="0" />
+      <option name="LOCAL" value="true" />
+    </RunnerSettings>
+    <RunnerSettings RunnerId="Profile ">
+      <option name="myExternalizedOptions" />
+    </RunnerSettings>
+    <ConfigurationWrapper RunnerId="Debug" />
+    <method>
+      <option name="BuildArtifacts" enabled="true">
+        <artifact name="debugger-agent" />
+      </option>
+    </method>
+  </configuration>
+</component>

@@ -1,0 +1,112 @@
+{
+  "html": {
+    "elements": {
+      "summary": {
+        "__compat": {
+          "mdn_url": "https://developer.mozilla.org/docs/Web/HTML/Element/summary",
+          "support": {
+            "chrome": {
+              "version_added": "12"
+            },
+            "chrome_android": {
+              "version_added": true
+            },
+            "edge": {
+              "version_added": false,
+              "notes": "<a href='https://developer.microsoft.com/en-us/microsoft-edge/platform/status/detailssummary?filter=f3f0000bf&search=details'>In development</a>."
+            },
+            "edge_mobile": {
+              "version_added": false,
+              "notes": "<a href='https://developer.microsoft.com/en-us/microsoft-edge/platform/status/detailssummary?filter=f3f0000bf&search=details'>In development</a>."
+            },
+            "firefox": {
+              "version_added": "49"
+            },
+            "firefox_android": {
+              "version_added": "49"
+            },
+            "ie": {
+              "version_added": false
+            },
+            "opera": {
+              "version_added": "15"
+            },
+            "opera_android": {
+              "version_added": "14"
+            },
+            "safari": {
+              "version_added": "6"
+            },
+            "safari_ios": {
+              "version_added": false
+            },
+            "samsunginternet_android": {
+              "version_added": true
+            },
+            "webview_android": {
+              "version_added": "4"
+            }
+          },
+          "status": {
+            "experimental": false,
+            "standard_track": true,
+            "deprecated": false
+          }
+        },
+        "display_list_item": {
+          "__compat": {
+            "description": "<code>display: list-item</code>",
+            "support": {
+              "chrome": {
+                "version_added": false,
+                "notes": "Chrome currently doesn't use <code>display: list-item</code> on the <code>&lt;summary&gt;</code> element, so <code>display: block</code> will not automatically hide the disclosure widget. Instead, use the non-standard pseudo-element <code>::-webit-details-marker</code> to change the disclosure widget in Chrome. See <a href='https://crbug.com/590014'>Chrome bug 590014</a> for details."
+              },
+              "chrome_android": {
+                "version_added": false,
+                "notes": "Chrome currently doesn't use <code>display: list-item</code> on the <code>&lt;summary&gt;</code> element, so <code>display: block</code> will not automatically hide the disclosure widget. Instead, use the non-standard pseudo-element <code>::-webit-details-marker</code> to change the disclosure widget in Chrome. See <a href='https://crbug.com/590014'>Chrome bug 590014</a> for details."
+              },
+              "edge": {
+                "version_added": false
+              },
+              "edge_mobile": {
+                "version_added": false
+              },
+              "firefox": {
+                "version_added": "49"
+              },
+              "firefox_android": {
+                "version_added": "49"
+              },
+              "ie": {
+                "version_added": false
+              },
+              "opera": {
+                "version_added": false
+              },
+              "opera_android": {
+                "version_added": false
+              },
+              "safari": {
+                "version_added": false
+              },
+              "safari_ios": {
+                "version_added": false
+              },
+              "samsunginternet_android": {
+                "version_added": false
+              },
+              "webview_android": {
+                "version_added": false
+              }
+            },
+            "status": {
+              "experimental": false,
+              "standard_track": true,
+              "deprecated": false
+            }
+          }
+        }
+      }
+    }
+  }
+}

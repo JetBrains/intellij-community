@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,11 +19,9 @@ package com.intellij.util.xml.highlighting;
 import com.intellij.codeInsight.daemon.impl.SeverityRegistrar;
 import com.intellij.lang.annotation.Annotation;
 import com.intellij.lang.annotation.HighlightSeverity;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Factory;
 import com.intellij.util.Function;
 import com.intellij.util.SmartList;
-import com.intellij.util.containers.ConcurrentHashMap;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomElementVisitor;
@@ -38,32 +36,23 @@ import java.util.*;
 
 public class DomElementsProblemsHolderImpl implements DomElementsProblemsHolder {
   private final Map<DomElement, Map<Class<? extends DomElementsInspection>, List<DomElementProblemDescriptor>>> myCachedErrors =
-    new ConcurrentHashMap<DomElement, Map<Class<? extends DomElementsInspection>, List<DomElementProblemDescriptor>>>();
+    ContainerUtil.newConcurrentMap();
   private final Map<DomElement, Map<Class<? extends DomElementsInspection>, List<DomElementProblemDescriptor>>> myCachedChildrenErrors =
-    new ConcurrentHashMap<DomElement, Map<Class<? extends DomElementsInspection>, List<DomElementProblemDescriptor>>>();
-  private final List<Annotation> myAnnotations = new ArrayList<Annotation>();
+    ContainerUtil.newConcurrentMap();
+  private final List<Annotation> myAnnotations = new ArrayList<>();
 
   private final Function<DomElement, List<DomElementProblemDescriptor>> myDomProblemsGetter =
-    new Function<DomElement, List<DomElementProblemDescriptor>>() {
-      public List<DomElementProblemDescriptor> fun(final DomElement s) {
-        final Map<Class<? extends DomElementsInspection>, List<DomElementProblemDescriptor>> map = myCachedErrors.get(s);
-        return map != null ? ContainerUtil.concat(map.values()) : Collections.<DomElementProblemDescriptor>emptyList();
-      }
+    s -> {
+      final Map<Class<? extends DomElementsInspection>, List<DomElementProblemDescriptor>> map = myCachedErrors.get(s);
+      return map != null ? ContainerUtil.concat(map.values()) : Collections.emptyList();
     };
 
   private final DomFileElement myElement;
 
-  private static final Factory<Map<Class<? extends DomElementsInspection>,List<DomElementProblemDescriptor>>> CONCURRENT_HASH_MAP_FACTORY = new Factory<Map<Class<? extends DomElementsInspection>, List<DomElementProblemDescriptor>>>() {
-    public Map<Class<? extends DomElementsInspection>, List<DomElementProblemDescriptor>> create() {
-      return new ConcurrentHashMap<Class<? extends DomElementsInspection>, List<DomElementProblemDescriptor>>();
-    }
-  };
-  private static final Factory<List<DomElementProblemDescriptor>> SMART_LIST_FACTORY = new Factory<List<DomElementProblemDescriptor>>() {
-    public List<DomElementProblemDescriptor> create() {
-      return new SmartList<DomElementProblemDescriptor>();
-    }
-  };
-  private final Set<Class<? extends DomElementsInspection>> myPassedInspections = new THashSet<Class<? extends DomElementsInspection>>();
+  private static final Factory<Map<Class<? extends DomElementsInspection>,List<DomElementProblemDescriptor>>> CONCURRENT_HASH_MAP_FACTORY =
+    () -> ContainerUtil.newConcurrentMap();
+  private static final Factory<List<DomElementProblemDescriptor>> SMART_LIST_FACTORY = () -> new SmartList<>();
+  private final Set<Class<? extends DomElementsInspection>> myPassedInspections = new THashSet<>();
 
   public DomElementsProblemsHolderImpl(final DomFileElement element) {
     myElement = element;
@@ -79,6 +68,7 @@ public class DomElementsProblemsHolderImpl implements DomElementsProblemsHolder 
     myPassedInspections.add(inspectionClass);
   }
 
+  @Override
   public final boolean isInspectionCompleted(@NotNull final DomElementsInspection inspection) {
     return isInspectionCompleted(inspection.getClass());
   }
@@ -99,16 +89,14 @@ public class DomElementsProblemsHolderImpl implements DomElementsProblemsHolder 
     myCachedChildrenErrors.clear();
   }
 
+  @Override
   @NotNull
   public synchronized List<DomElementProblemDescriptor> getProblems(DomElement domElement) {
     if (domElement == null || !domElement.isValid()) return Collections.emptyList();
     return myDomProblemsGetter.fun(domElement);
   }
 
-  public List<DomElementProblemDescriptor> getProblems(final DomElement domElement, boolean includeXmlProblems) {
-    return getProblems(domElement);
-  }
-
+  @Override
   public List<DomElementProblemDescriptor> getProblems(final DomElement domElement,
                                                        final boolean includeXmlProblems,
                                                        final boolean withChildren) {
@@ -126,12 +114,10 @@ public class DomElementsProblemsHolderImpl implements DomElementsProblemsHolder 
     return getProblems(domElement, withChildren, minSeverity);
   }
 
+  @Override
   public List<DomElementProblemDescriptor> getProblems(final DomElement domElement, final boolean withChildren, final HighlightSeverity minSeverity) {
-    return ContainerUtil.findAll(getProblems(domElement, true, withChildren), new Condition<DomElementProblemDescriptor>() {
-      public boolean value(final DomElementProblemDescriptor object) {
-        return SeverityRegistrar.getInstance(domElement.getManager().getProject()).compare(object.getHighlightSeverity(), minSeverity) >= 0;
-      }
-    });
+    return ContainerUtil.findAll(getProblems(domElement, true, withChildren),
+                                 object -> SeverityRegistrar.getSeverityRegistrar(domElement.getManager().getProject()).compare(object.getHighlightSeverity(), minSeverity) >= 0);
 
   }
 
@@ -142,7 +128,7 @@ public class DomElementsProblemsHolderImpl implements DomElementsProblemsHolder 
       return map;
     }
 
-    final Map<Class<? extends DomElementsInspection>, List<DomElementProblemDescriptor>> problems = new THashMap<Class<? extends DomElementsInspection>, List<DomElementProblemDescriptor>>();
+    final Map<Class<? extends DomElementsInspection>, List<DomElementProblemDescriptor>> problems = new THashMap<>();
     if (domElement == myElement) {
       for (Map<Class<? extends DomElementsInspection>, List<DomElementProblemDescriptor>> listMap : myCachedErrors.values()) {
         mergeMaps(problems, listMap);
@@ -151,6 +137,7 @@ public class DomElementsProblemsHolderImpl implements DomElementsProblemsHolder 
       mergeMaps(problems, myCachedErrors.get(domElement));
       if (DomUtil.hasXml(domElement)) {
         domElement.acceptChildren(new DomElementVisitor() {
+          @Override
           public void visitDomElement(DomElement element) {
             mergeMaps(problems, getProblemsMap(element));
           }
@@ -169,15 +156,17 @@ public class DomElementsProblemsHolderImpl implements DomElementsProblemsHolder 
     }
   }
 
+  @Override
   public List<DomElementProblemDescriptor> getAllProblems() {
     return getProblems(myElement, false, true);
   }
 
+  @Override
   public List<DomElementProblemDescriptor> getAllProblems(@NotNull DomElementsInspection inspection) {
     if (!myElement.isValid()) {
       return Collections.emptyList();
     }
     final List<DomElementProblemDescriptor> list = getProblemsMap(myElement).get(inspection.getClass());
-    return list != null ? new ArrayList<DomElementProblemDescriptor>(list) : Collections.<DomElementProblemDescriptor>emptyList();
+    return list != null ? new ArrayList<>(list) : Collections.emptyList();
   }
 }

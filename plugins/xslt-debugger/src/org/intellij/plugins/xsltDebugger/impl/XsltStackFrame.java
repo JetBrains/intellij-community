@@ -2,7 +2,7 @@ package org.intellij.plugins.xsltDebugger.impl;
 
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.ui.SimpleColoredComponent;
+import com.intellij.ui.ColoredTextContainer;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.PlatformIcons;
 import com.intellij.xdebugger.XSourcePosition;
@@ -23,7 +23,7 @@ import java.util.List;
 public class XsltStackFrame extends XStackFrame {
   private final Debugger.Frame myFrame;
   private final XsltDebuggerSession myDebuggerSession;
-  private XSourcePosition myPosition;
+  private final XSourcePosition myPosition;
 
   public XsltStackFrame(Debugger.Frame frame, XsltDebuggerSession debuggerSession) {
     myFrame = frame;
@@ -47,17 +47,17 @@ public class XsltStackFrame extends XStackFrame {
   }
 
   @Override
-  public void customizePresentation(SimpleColoredComponent component) {
+  public void customizePresentation(@NotNull ColoredTextContainer component) {
     if (myDebuggerSession.getCurrentState() == Debugger.State.SUSPENDED) {
       try {
         _customizePresentation(component);
-      } catch (VMPausedException ignore) {
-      } catch (DebuggerStoppedException ignore) {
+      }
+      catch (VMPausedException | DebuggerStoppedException ignore) {
       }
     }
   }
 
-  private void _customizePresentation(SimpleColoredComponent component) {
+  private void _customizePresentation(ColoredTextContainer component) {
     final Debugger.Frame frame = myFrame;
     if (frame instanceof Debugger.StyleFrame) {
       component.append(((Debugger.StyleFrame)frame).getInstruction(), SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
@@ -78,7 +78,7 @@ public class XsltStackFrame extends XStackFrame {
       } else {
         component.append(frame.getURI() + ":" + frame.getLineNumber(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
       }
-    } catch (Exception e) {
+    } catch (Exception ignored) {
       component.append(frame.getURI() + ":" + frame.getLineNumber(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
     }
   }
@@ -96,7 +96,7 @@ public class XsltStackFrame extends XStackFrame {
       } else {
         super.computeChildren(node);
       }
-    } catch (VMPausedException e) {
+    } catch (VMPausedException ignored) {
       node.setErrorMessage(VMPausedException.MESSAGE);
     }
   }
@@ -108,7 +108,7 @@ public class XsltStackFrame extends XStackFrame {
   private static class MyValue extends XValue {
     private final Debugger.Variable myVariable;
 
-    public MyValue(Debugger.Variable variable) {
+    MyValue(Debugger.Variable variable) {
       myVariable = variable;
     }
 
@@ -130,7 +130,7 @@ public class XsltStackFrame extends XStackFrame {
 
       final Value v = myVariable.getValue();
       if (v.getType() == Value.XPathType.STRING) {
-        node.setPresentation(icon, v.getType().getName(), "'" + String.valueOf(v.getValue()) + "'", false);
+        node.setPresentation(icon, v.getType().getName(), "'" + v.getValue() + "'", false);
       } else {
         final boolean hasChildren = myVariable.getValue().getValue() instanceof Value.NodeSet;
         node.setPresentation(icon, v.getType().getName(), String.valueOf(v.getValue()), hasChildren);
@@ -167,7 +167,7 @@ public class XsltStackFrame extends XStackFrame {
     private static class NodeValue extends XValue {
       private final Value.Node myNode;
 
-      public NodeValue(Value.Node n) {
+      NodeValue(Value.Node n) {
         myNode = n;
       }
 
@@ -186,7 +186,7 @@ public class XsltStackFrame extends XStackFrame {
   private static class MyEvaluator extends XDebuggerEvaluator {
     private final Debugger.StyleFrame myFrame;
 
-    public MyEvaluator(Debugger.StyleFrame frame) {
+    MyEvaluator(Debugger.StyleFrame frame) {
       myFrame = frame;
     }
 
@@ -196,11 +196,11 @@ public class XsltStackFrame extends XStackFrame {
     }
 
     @Override
-    public void evaluate(@NotNull String expression, XEvaluationCallback callback, @Nullable XSourcePosition expressionPosition) {
+    public void evaluate(@NotNull String expression, @NotNull XEvaluationCallback callback, @Nullable XSourcePosition expressionPosition) {
       try {
         final Value eval = myFrame.eval(expression);
         callback.evaluated(new MyValue(new ExpressionResult(eval)));
-      } catch (VMPausedException e) {
+      } catch (VMPausedException ignored) {
         callback.errorOccurred(VMPausedException.MESSAGE);
       } catch (Debugger.EvaluationException e) {
         callback.errorOccurred(e.getMessage() != null ? e.getMessage() : e.toString());
@@ -210,31 +210,36 @@ public class XsltStackFrame extends XStackFrame {
     private static class ExpressionResult implements Debugger.Variable {
       private final Value myValue;
 
-      public ExpressionResult(Value value) {
+      ExpressionResult(Value value) {
         myValue = value;
       }
 
-      @SuppressWarnings({ "ConstantConditions" })
+      @Override
       public String getURI() {
         return null;
       }
 
+      @Override
       public int getLineNumber() {
         return -1;
       }
 
+      @Override
       public boolean isGlobal() {
         return false;
       }
 
+      @Override
       public Kind getKind() {
         return Kind.EXPRESSION;
       }
 
+      @Override
       public String getName() {
         return "result";
       }
 
+      @Override
       public Value getValue() {
         return myValue;
       }

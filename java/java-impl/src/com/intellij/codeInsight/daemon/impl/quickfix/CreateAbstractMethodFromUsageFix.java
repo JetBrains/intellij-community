@@ -24,7 +24,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class CreateAbstractMethodFromUsageFix extends CreateMethodFromUsageFix {
-  public CreateAbstractMethodFromUsageFix(PsiMethodCallExpression methodCall) {
+  public CreateAbstractMethodFromUsageFix(@NotNull PsiMethodCallExpression methodCall) {
     super(methodCall);
   }
 
@@ -36,7 +36,7 @@ public class CreateAbstractMethodFromUsageFix extends CreateMethodFromUsageFix {
   @NotNull
   @Override
   protected List<PsiClass> getTargetClasses(PsiElement element) {
-    List<PsiClass> result = new ArrayList<PsiClass>();
+    List<PsiClass> result = new ArrayList<>();
     PsiReferenceExpression expr = getMethodCall().getMethodExpression();
     for (PsiClass each : super.getTargetClasses(element)) {
       if (PsiUtil.isAbstractClass(each) && !each.isInterface() && !shouldCreateStaticMember(expr, each)) result.add(each);
@@ -45,13 +45,13 @@ public class CreateAbstractMethodFromUsageFix extends CreateMethodFromUsageFix {
   }
 
   @Override
-  protected String getVisibility(PsiClass parentClass, PsiClass targetClass) {
+  protected String getVisibility(PsiClass parentClass, @NotNull PsiClass targetClass) {
     String result = super.getVisibility(parentClass, targetClass);
     return PsiModifier.PUBLIC.equals(result) ? result : PsiModifier.PROTECTED;
   }
 
   @Override
-  protected boolean shouldBeAbstract(PsiClass targetClass) {
+  protected boolean shouldBeAbstract(PsiReferenceExpression expression, PsiClass targetClass) {
     return true;
   }
 }

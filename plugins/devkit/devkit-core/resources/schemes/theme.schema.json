@@ -1,0 +1,145 @@
+{
+  "version": "0.1",
+  "definitions": {
+    "color": {
+      "type": "string",
+      "pattern": "^#[0-9a-fA-F]{6}([0-9a-fA-F]{2})?$",
+      "title": "Color",
+      "description": "Color in #RRGGBB format",
+      "examples": ["#123abc"]
+    }
+  },
+  "type": "object",
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "required": ["name", "dark", "author", "ui"],
+  "properties": {
+    "name": {
+      "type": "string",
+      "title": "Theme name",
+      "description": "Theme name",
+      "default": "",
+      "examples": [
+        "My Brand New Theme"
+      ]
+    },
+    "dark": {
+      "type": "boolean",
+      "title": "Dark theme",
+      "description": "If 'true' then Darcula theme will be used as the base for modification, otherwise Light theme will be used.",
+      "default": false,
+      "examples": [
+        true
+      ]
+    },
+    "author": {
+      "type": "string",
+      "title": "Theme author",
+      "description": "The author of the theme",
+      "default": "",
+      "examples": [
+        "John Doe"
+      ]
+    },
+    "editorScheme": {
+      "type": "string",
+      "title": "Path to the editor schema xml file starting with '/'",
+      "default": "",
+      "pattern": "^/",
+      "examples": [
+        "/editorScheme.xml"
+      ]
+    },
+    "ui": {
+      "type": "object"
+    },
+    "background": {
+      "type": "object",
+      "required": ["image"],
+      "title": "Background image",
+      "description": "Background image for entire window",
+      "properties": {
+        "image": {
+          "type": "string",
+          "title": "Path to the background image",
+          "description": "Path to the background image starting with '/'",
+          "default": "",
+          "examples": [
+            "/background.jpg"
+          ]
+        },
+        "transparency": {
+          "type": "integer",
+          "title": "Transparency for background image.",
+          "description": "An integer from 0 to 100.",
+          "default": 10,
+          "minimum": 0,
+          "maximum": 100,
+          "examples": [
+            10
+          ]
+        },
+        "fill": {
+          "type": "string",
+          "title": "Background image filling options",
+          "default": "scale",
+          "description": "Background image filling options. One of the following values: plain, scale, tile",
+          "enum": ["plain", "scale", "tile"],
+          "examples": [
+            "scale"
+          ]
+        },
+        "anchor": {
+          "type": "string",
+          "title": "Background image anchor",
+          "default": "center",
+          "description": "Background image anchor. One of the following values: top_left, top_center, top_right, middle_left, center, middle_right, bottom_left, bottom_center, bottom_right",
+          "enum": ["top_left", "top_center", "top_right", "middle_left", "center", "middle_right", "bottom_left", "bottom_center", "bottom_right"],
+          "examples": [
+            "center"
+          ]
+        }
+      }
+    },
+    "icons": {
+      "type": "object",
+      "patternProperties": {
+        "^/": {
+          "type": "string",
+          "pattern": "^/"
+        },
+        "^[^/]": {
+          "type": "object",
+          "patternProperties": {
+            "^/": {
+              "type": "string",
+              "pattern": "^/"
+            }
+          }
+        }
+      },
+      "properties": {
+        "ColorPalette": {
+          "type": "object",
+          "properties": {
+            "Actions.Red": {"$ref": "#/definitions/color"},
+            "Actions.Yellow": {"$ref": "#/definitions/color"},
+            "Actions.Green": {"$ref": "#/definitions/color"},
+            "Actions.Blue": {"$ref": "#/definitions/color"},
+            "Actions.Grey": {"$ref": "#/definitions/color"},
+            "Objects.Grey": {"$ref": "#/definitions/color"},
+            "Objects.Blue": {"$ref": "#/definitions/color"},
+            "Objects.Green": {"$ref": "#/definitions/color"},
+            "Objects.Yellow": {"$ref": "#/definitions/color"},
+            "Objects.YellowDark": {"$ref": "#/definitions/color"},
+            "Objects.Purple": {"$ref": "#/definitions/color"},
+            "Objects.Pink": {"$ref": "#/definitions/color"},
+            "Objects.Red": {"$ref": "#/definitions/color"},
+            "Objects.RedStatus": {"$ref": "#/definitions/color"},
+            "Objects.GreenAndroid": {"$ref": "#/definitions/color"},
+            "Objects.BlackText": {"$ref": "#/definitions/color"}
+          }
+        }
+      }
+    }
+  }
+}

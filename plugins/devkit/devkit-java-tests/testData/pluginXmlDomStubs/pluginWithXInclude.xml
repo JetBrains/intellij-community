@@ -1,0 +1,15 @@
+<idea-plugin>
+
+    <id>foo</id>
+
+    <extensionPoints>
+        <extensionPoint name="bar"/>
+    </extensionPoints>
+
+    <extensions defaultExtensionNs="foo">
+
+        <bar/>
+        <extension/>
+    </extensions>
+
+</idea-plugin>

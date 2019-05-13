@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2011 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2015 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,36 +15,25 @@
  */
 package com.siyeh.ig.naming;
 
+import com.intellij.codeInspection.ui.ConventionOptionsPanel;
 import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.ui.DocumentAdapter;
-import com.intellij.util.ui.RegExFormatter;
-import com.intellij.util.ui.RegExInputVerifier;
-import com.intellij.util.ui.UIUtil;
 import com.siyeh.HardcodedMethodConstants;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
-import com.siyeh.ig.ui.BlankFiller;
+import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.fixes.RenameFix;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import javax.swing.event.DocumentEvent;
-import javax.swing.event.DocumentListener;
-import javax.swing.text.Document;
-import javax.swing.text.InternationalFormatter;
-import java.awt.*;
-import java.text.NumberFormat;
-import java.text.ParseException;
-import java.util.Collection;
-import java.util.Collections;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public abstract class ConventionInspection extends BaseInspection {
 
+  public static final JComponent[] EMPTY_JCOMPONENT_ARRAY = {};
   /**
-   * public fields for the DefaultJDomExternalizer
-   *
    * @noinspection PublicField
    */
   public String m_regex = getDefaultRegex();
@@ -56,7 +45,26 @@ public abstract class ConventionInspection extends BaseInspection {
    * @noinspection PublicField
    */
   public int m_maxLength = getDefaultMaxLength();
+
   protected Pattern m_regexPattern = Pattern.compile(m_regex);
+
+  @Override
+  @NotNull
+  protected final String buildErrorString(Object... infos) {
+    final String name = (String)infos[0];
+    final int length = name.length();
+    if (length < getMinLength()) {
+      return InspectionGadgetsBundle.message("naming.convention.problem.descriptor.short", getElementDescription(),
+                                             Integer.valueOf(length), Integer.valueOf(getMinLength()));
+    }
+    else if (getMaxLength() > 0 && length > getMaxLength()) {
+      return InspectionGadgetsBundle.message("naming.convention.problem.descriptor.long", getElementDescription(),
+                                             Integer.valueOf(length), Integer.valueOf(getMaxLength()));
+    }
+    return InspectionGadgetsBundle.message("naming.convention.problem.descriptor.regex.mismatch", getElementDescription(), getRegex());
+  }
+
+  protected abstract String getElementDescription();
 
   @NonNls
   protected abstract String getDefaultRegex();
@@ -82,7 +90,7 @@ public abstract class ConventionInspection extends BaseInspection {
     if (length < m_minLength) {
       return false;
     }
-    if (length > m_maxLength) {
+    if (m_maxLength > 0 && length > m_maxLength) {
       return false;
     }
     if (HardcodedMethodConstants.SERIAL_VERSION_UID.equals(name)) {
@@ -93,137 +101,28 @@ public abstract class ConventionInspection extends BaseInspection {
   }
 
   @Override
-  public void readSettings(Element element) throws InvalidDataException {
+  public void readSettings(@NotNull Element element) throws InvalidDataException {
     super.readSettings(element);
     m_regexPattern = Pattern.compile(m_regex);
   }
 
-  private static final int REGEX_COLUMN_COUNT = 25;
-
-  public Collection<? extends JComponent> createExtraOptions() {
-    return Collections.emptyList();
+  @NotNull
+  public JComponent[] createExtraOptions() {
+    return EMPTY_JCOMPONENT_ARRAY;
   }
 
   @Override
   public final JComponent createOptionsPanel() {
-    final GridBagLayout layout = new GridBagLayout();
-    final JPanel panel = new JPanel(layout);
+    return new ConventionOptionsPanel(this, "m_minLength", "m_maxLength", "m_regex", "m_regexPattern", createExtraOptions());
+  }
 
-    final JLabel patternLabel = new JLabel(
-      InspectionGadgetsBundle.message("convention.pattern.option"));
-    final JLabel minLengthLabel = new JLabel(
-      InspectionGadgetsBundle.message("convention.min.length.option"));
-    final JLabel maxLengthLabel = new JLabel(
-      InspectionGadgetsBundle.message("convention.max.length.option"));
+  @Override
+  protected boolean buildQuickFixesOnlyForOnTheFlyErrors() {
+    return true;
+  }
 
-    final NumberFormat numberFormat = NumberFormat.getIntegerInstance();
-    numberFormat.setParseIntegerOnly(true);
-    numberFormat.setMinimumIntegerDigits(1);
-    numberFormat.setMaximumIntegerDigits(2);
-    final InternationalFormatter formatter =
-      new InternationalFormatter(numberFormat);
-    formatter.setAllowsInvalid(true);
-    formatter.setCommitsOnValidEdit(true);
-
-    final JFormattedTextField minLengthField =
-      new JFormattedTextField(formatter);
-    final Font panelFont = panel.getFont();
-    minLengthField.setFont(panelFont);
-    minLengthField.setValue(Integer.valueOf(m_minLength));
-    minLengthField.setColumns(2);
-    UIUtil.fixFormattedField(minLengthField);
-
-    final JFormattedTextField maxLengthField =
-      new JFormattedTextField(formatter);
-    maxLengthField.setFont(panelFont);
-    maxLengthField.setValue(Integer.valueOf(m_maxLength));
-    maxLengthField.setColumns(2);
-    UIUtil.fixFormattedField(minLengthField);
-
-    final JFormattedTextField regexField =
-      new JFormattedTextField(new RegExFormatter());
-    regexField.setFont(panelFont);
-    regexField.setValue(m_regexPattern);
-    regexField.setColumns(REGEX_COLUMN_COUNT);
-    regexField.setInputVerifier(new RegExInputVerifier());
-    regexField.setFocusLostBehavior(JFormattedTextField.COMMIT);
-    UIUtil.fixFormattedField(minLengthField);
-    final DocumentListener listener = new DocumentAdapter() {
-      @Override
-      public void textChanged(DocumentEvent evt) {
-        try {
-          regexField.commitEdit();
-          minLengthField.commitEdit();
-          maxLengthField.commitEdit();
-          m_regexPattern = (Pattern)regexField.getValue();
-          m_regex = m_regexPattern.pattern();
-          m_minLength = ((Number)minLengthField.getValue()).intValue();
-          m_maxLength = ((Number)maxLengthField.getValue()).intValue();
-        }
-        catch (ParseException e) {
-          // No luck this time
-        }
-      }
-    };
-    final Document regexDocument = regexField.getDocument();
-    regexDocument.addDocumentListener(listener);
-    final Document minLengthDocument = minLengthField.getDocument();
-    minLengthDocument.addDocumentListener(listener);
-    final Document maxLengthDocument = maxLengthField.getDocument();
-    maxLengthDocument.addDocumentListener(listener);
-
-    final GridBagConstraints constraints = new GridBagConstraints();
-    constraints.gridx = 0;
-    constraints.gridy = 0;
-    constraints.weightx = 0.0;
-    constraints.insets.right = UIUtil.DEFAULT_HGAP;
-    constraints.anchor = GridBagConstraints.BASELINE_LEADING;
-    constraints.fill = GridBagConstraints.HORIZONTAL;
-    panel.add(patternLabel, constraints);
-
-    constraints.gridx = 1;
-    constraints.gridy = 0;
-    constraints.weightx = 1.0;
-    constraints.insets.right = 0;
-    panel.add(regexField, constraints);
-
-    constraints.gridx = 0;
-    constraints.gridy = 1;
-    constraints.weightx = 0.0;
-    constraints.insets.right = UIUtil.DEFAULT_HGAP;
-    panel.add(minLengthLabel, constraints);
-
-    constraints.gridx = 1;
-    constraints.gridy = 1;
-    constraints.weightx = 1;
-    constraints.insets.right = 0;
-    panel.add(minLengthField, constraints);
-
-    constraints.gridx = 0;
-    constraints.gridy = 2;
-    constraints.weightx = 0;
-    constraints.insets.right = UIUtil.DEFAULT_HGAP;
-    panel.add(maxLengthLabel, constraints);
-
-    constraints.gridx = 1;
-    constraints.gridy = 2;
-    constraints.weightx = 1;
-    constraints.insets.right = 0;
-    panel.add(maxLengthField, constraints);
-
-    final Collection<? extends JComponent> extraOptions =
-      createExtraOptions();
-    constraints.gridx = 0;
-    constraints.gridwidth = 2;
-    for (JComponent extraOption : extraOptions) {
-      constraints.gridy++;
-      panel.add(extraOption, constraints);
-    }
-
-    constraints.gridy++;
-    constraints.weighty = 1.0;
-    panel.add(new BlankFiller(), constraints);
-
-    return panel;
+  @Override
+  protected InspectionGadgetsFix buildFix(Object... infos) {
+    return new RenameFix();
   }
 }

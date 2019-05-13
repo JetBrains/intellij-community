@@ -1,31 +1,17 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.uiDesigner.binding;
 
 import com.intellij.lang.cacheBuilder.SimpleWordsScanner;
 import com.intellij.lang.cacheBuilder.WordOccurrence;
-import com.intellij.util.Processor;
-import com.intellij.uiDesigner.lw.LwRootContainer;
-import com.intellij.uiDesigner.lw.IComponent;
-import com.intellij.uiDesigner.compiler.Utils;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.uiDesigner.FormEditingUtil;
 import com.intellij.uiDesigner.compiler.AlienFormFileException;
 import com.intellij.uiDesigner.compiler.UnexpectedFormElementException;
-import com.intellij.uiDesigner.FormEditingUtil;
-import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.uiDesigner.compiler.Utils;
+import com.intellij.uiDesigner.lw.IComponent;
+import com.intellij.uiDesigner.lw.LwRootContainer;
+import com.intellij.util.Processor;
 import org.jdom.input.JDOMParseException;
 
 /**
@@ -48,6 +34,7 @@ public class FormWordsScanner extends SimpleWordsScanner {
       FormEditingUtil.iterate(container,
                               new FormEditingUtil.ComponentVisitor() {
                                 WordOccurrence occurence;
+                                @Override
                                 public boolean visit(IComponent iComponent) {
                                   String componentClassName = iComponent.getComponentClassName();
                                   processClassAndPackagesNames(componentClassName, processor);
@@ -61,13 +48,7 @@ public class FormWordsScanner extends SimpleWordsScanner {
                                 }
                               });
     }
-    catch(AlienFormFileException ex) {
-      // ignore
-    }
-    catch(UnexpectedFormElementException ex) {
-      // ignore
-    }
-    catch(JDOMParseException ex) {
+    catch(AlienFormFileException | JDOMParseException | UnexpectedFormElementException ex) {
       // ignore
     }
     catch (Exception e) {
@@ -75,11 +56,11 @@ public class FormWordsScanner extends SimpleWordsScanner {
     }
   }
 
-  private static void processClassAndPackagesNames(String qName, final Processor<WordOccurrence> processor) {
+  private static void processClassAndPackagesNames(String qName, final Processor<? super WordOccurrence> processor) {
     WordOccurrence occurrence = new WordOccurrence(qName, 0, qName.length(), WordOccurrence.Kind.FOREIGN_LANGUAGE);
     processor.process(occurrence);
     int idx = qName.lastIndexOf('.');
-    
+
     while (idx > 0) {
       qName = qName.substring(0, idx);
       occurrence.init(qName, 0,qName.length(),WordOccurrence.Kind.FOREIGN_LANGUAGE);

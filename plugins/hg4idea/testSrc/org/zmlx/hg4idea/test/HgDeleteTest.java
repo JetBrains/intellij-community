@@ -13,6 +13,7 @@
 package org.zmlx.hg4idea.test;
 
 import com.intellij.openapi.vcs.VcsConfiguration;
+import com.intellij.openapi.vcs.VcsTestUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.testng.Assert;
 import org.testng.annotations.Test;
@@ -40,7 +41,7 @@ public class HgDeleteTest extends HgSingleUserTest {
   }
 
   @Test
-  public void testDeleteNewFile() throws Exception {
+  public void testDeleteNewFile() {
     VirtualFile file = createFileInCommand("a.txt", "new file content");
     deleteFileInCommand(file);
     Assert.assertFalse(file.exists());
@@ -50,7 +51,7 @@ public class HgDeleteTest extends HgSingleUserTest {
   public void testDeleteModifiedFile() throws Exception {
     VirtualFile file = createFileInCommand("a.txt", "new file content");
     runHgOnProjectRepo("commit", "-m", "added file");
-    editFileInCommand(myProject, file, "even newer content");
+    VcsTestUtil.editFileInCommand(myProject, file, "even newer content");
     verify(runHgOnProjectRepo("status"), HgTestOutputParser.modified("a.txt"));
     deleteFileInCommand(file);
     verify(runHgOnProjectRepo("status"), HgTestOutputParser.removed("a.txt"));
@@ -72,7 +73,7 @@ public class HgDeleteTest extends HgSingleUserTest {
    * 3. File shouldn't be prompted for removal from repository.
    */
   @Test
-  public void testNewlyAddedFileShouldNotBePromptedForRemoval() throws Exception {
+  public void testNewlyAddedFileShouldNotBePromptedForRemoval() {
     showConfirmation(VcsConfiguration.StandardConfirmation.REMOVE);
     final VirtualFile vf = createFileInCommand("a.txt", null);
     final HgMockVcsHelper helper = registerMockVcsHelper();
@@ -94,7 +95,7 @@ public class HgDeleteTest extends HgSingleUserTest {
    * 5. File shouldn't be prompted for removal from repository.
    */
   @Test
-  public void testJustDeletedAndThenAddedFileShouldNotBePromptedForRemoval() throws Exception {
+  public void testJustDeletedAndThenAddedFileShouldNotBePromptedForRemoval() {
     VirtualFile vf = createFileInCommand("a.txt", null);
     myChangeListManager.commitFiles(vf);
     deleteFileInCommand(vf);
@@ -109,7 +110,7 @@ public class HgDeleteTest extends HgSingleUserTest {
         fail("No dialog should be invoked, because newly added file should be silently removed from the repository");
       }
     });
-    deleteFileInCommand(myProject, vf);
+    VcsTestUtil.deleteFileInCommand(myProject, vf);
   }
 
 }

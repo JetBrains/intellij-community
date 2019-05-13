@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,6 @@ package com.intellij.lang.folding;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
 import com.intellij.openapi.editor.FoldingGroup;
-import com.intellij.openapi.util.ProperTextRange;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.ObjectUtils;
@@ -31,6 +30,11 @@ import java.util.Set;
 /**
  * Defines a single folding region in the code.
  *
+ * <p><a name="Dependencies"><b>Dependencies</b></a></p>
+ * Dependencies are objects (in particular, instances of {@link com.intellij.openapi.util.ModificationTracker}, 
+ * more info - {@link com.intellij.psi.util.CachedValueProvider.Result#getDependencyItems here}), 
+ * which can be tracked for changes, that should trigger folding regions recalculation for an editor (initiating code folding pass). 
+ * 
  * @author max
  * @see FoldingBuilder
  */
@@ -42,13 +46,14 @@ public class FoldingDescriptor {
   @Nullable private final FoldingGroup myGroup;
   private final Set<Object> myDependencies;
   private final boolean myNeverExpands;
+  private boolean myCanBeRemovedWhenCollapsed;
 
   /**
    * Creates a folding region related to the specified AST node and covering the specified
    * text range.
    * @param node  The node to which the folding region is related. The node is then passed to
-   *              {@link FoldingBuilder#getPlaceholderText(com.intellij.lang.ASTNode)} and
-   *              {@link FoldingBuilder#isCollapsedByDefault(com.intellij.lang.ASTNode)}.
+   *              {@link FoldingBuilder#getPlaceholderText(ASTNode)} and
+   *              {@link FoldingBuilder#isCollapsedByDefault(ASTNode)}.
    * @param range The folded text range.
    */
   public FoldingDescriptor(@NotNull ASTNode node, @NotNull TextRange range) {
@@ -59,20 +64,29 @@ public class FoldingDescriptor {
     this(ObjectUtils.assertNotNull(element.getNode()), range, null);
   }
 
+  /**
+   * Creates a folding region related to the specified AST node and covering the specified
+   * text range.
+   * @param node  The node to which the folding region is related. The node is then passed to
+   *              {@link FoldingBuilder#getPlaceholderText(ASTNode)} and
+   *              {@link FoldingBuilder#isCollapsedByDefault(ASTNode)}.
+   * @param range The folded text range.
+   * @param group Regions with the same group instance expand and collapse together.
+   */
   public FoldingDescriptor(@NotNull ASTNode node, @NotNull TextRange range, @Nullable FoldingGroup group) {
-    this(node, range, group, Collections.<Object>emptySet());
+    this(node, range, group, Collections.emptySet());
   }
 
   /**
    * Creates a folding region related to the specified AST node and covering the specified
    * text range.
    * @param node  The node to which the folding region is related. The node is then passed to
-   *              {@link com.intellij.lang.folding.FoldingBuilder#getPlaceholderText(com.intellij.lang.ASTNode)} and
-   *              {@link com.intellij.lang.folding.FoldingBuilder#isCollapsedByDefault(com.intellij.lang.ASTNode)}.
+   *              {@link FoldingBuilder#getPlaceholderText(ASTNode)} and
+   *              {@link FoldingBuilder#isCollapsedByDefault(ASTNode)}.
    * @param range The folded text range.
    * @param group Regions with the same group instance expand and collapse together.
    * @param dependencies folding dependencies: other files or elements that could change
-   * folding description
+   * folding description, see <a href="#Dependencies">Dependencies</a>
    */
   public FoldingDescriptor(@NotNull ASTNode node, @NotNull TextRange range, @Nullable FoldingGroup group, Set<Object> dependencies) {
     this(node, range, group, dependencies, false);
@@ -82,11 +96,11 @@ public class FoldingDescriptor {
    * Creates a folding region related to the specified AST node and covering the specified
    * text range.
    * @param node  The node to which the folding region is related. The node is then passed to
-   *              {@link com.intellij.lang.folding.FoldingBuilder#getPlaceholderText(com.intellij.lang.ASTNode)} and
-   *              {@link com.intellij.lang.folding.FoldingBuilder#isCollapsedByDefault(com.intellij.lang.ASTNode)}.
+   *              {@link FoldingBuilder#getPlaceholderText(ASTNode)} and
+   *              {@link FoldingBuilder#isCollapsedByDefault(ASTNode)}.
    * @param range The folded text range.
    * @param group Regions with the same group instance expand and collapse together.
-   * @param dependencies folding dependencies: other files or elements that could change
+   * @param dependencies folding dependencies: other files or elements that could change, see <a href="#Dependencies">Dependencies</a>
    * @param neverExpands shall be true for fold regions that must not be ever expanded.
    */
   public FoldingDescriptor(@NotNull ASTNode node,
@@ -94,13 +108,12 @@ public class FoldingDescriptor {
                            @Nullable FoldingGroup group,
                            Set<Object> dependencies,
                            boolean neverExpands) {
-    assert range.getStartOffset() + 1 < range.getEndOffset() : range + ", text: " + node.getText() + ", language = " + node.getPsi().getLanguage();
+    assert range.getLength() > 0 : range + ", text: " + node.getText() + ", language = " + node.getPsi().getLanguage();
     myElement = node;
-    ProperTextRange.assertProperRange(range);
     myRange = range;
     myGroup = group;
-    assert getRange().getLength() >= 2 : "range:" + getRange();
     myDependencies = dependencies;
+    assert !myDependencies.contains(null);
     myNeverExpands = neverExpands;
   }
 
@@ -148,6 +161,18 @@ public class FoldingDescriptor {
 
   public boolean isNonExpandable() {
     return myNeverExpands;
+  }
+
+  public boolean canBeRemovedWhenCollapsed() {
+    return myCanBeRemovedWhenCollapsed;
+  }
+
+  /**
+   * By default, collapsed regions are not removed automatically, even if related PSI elements become invalid.
+   * This method allows to override default behaviour for specific regions.
+   */
+  public void setCanBeRemovedWhenCollapsed(boolean canBeRemovedWhenCollapsed) {
+    myCanBeRemovedWhenCollapsed = canBeRemovedWhenCollapsed;
   }
 
   @SuppressWarnings("HardCodedStringLiteral")

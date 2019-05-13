@@ -1,29 +1,12 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
-/**
- * @author cdr
- */
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -31,28 +14,31 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 
-public class HighlightInfoComposite extends HighlightInfo {
-  @NonNls private static final String HTML_HEADER = "<html>";
-  @NonNls private static final String BODY_HEADER = "<body>";
-  @NonNls private static final String HTML_FOOTER = "</html>";
-  @NonNls private static final String BODY_FOOTER = "</body>";
+class HighlightInfoComposite extends HighlightInfo {
   @NonNls private static final String LINE_BREAK = "<hr size=1 noshade>";
 
-  public HighlightInfoComposite(@NotNull List<HighlightInfo> infos) {
-    super(infos.get(0).type, infos.get(0).startOffset, infos.get(0).endOffset, createCompositeDescription(infos), createCompositeTooltip(infos));
-    text = infos.get(0).text;
-    highlighter = infos.get(0).highlighter;
-    group = infos.get(0).group;
-    List EMPTY = ContainerUtil.emptyList();
-    List<Pair<IntentionActionDescriptor, RangeMarker>> markers = EMPTY;
-    List<Pair<IntentionActionDescriptor, TextRange>> ranges = EMPTY;
+  static HighlightInfoComposite create(@NotNull List<? extends HighlightInfo> infos) {
+    // derive composite's offsets from an info with tooltip, if present
+    HighlightInfo anchorInfo = ContainerUtil.find(infos, info -> info.getToolTip() != null);
+    if (anchorInfo == null) anchorInfo = infos.get(0);
+    return new HighlightInfoComposite(infos, anchorInfo);
+  }
+
+  private HighlightInfoComposite(@NotNull List<? extends HighlightInfo> infos, @NotNull HighlightInfo anchorInfo) {
+    super(null, null, anchorInfo.type, anchorInfo.startOffset, anchorInfo.endOffset,
+          createCompositeDescription(infos), createCompositeTooltip(infos), anchorInfo.type.getSeverity(null), false, null, false, 0,
+          anchorInfo.getProblemGroup(), anchorInfo.getGutterIconRenderer());
+    highlighter = anchorInfo.getHighlighter();
+    setGroup(anchorInfo.getGroup());
+    List<Pair<IntentionActionDescriptor, RangeMarker>> markers = ContainerUtil.emptyList();
+    List<Pair<IntentionActionDescriptor, TextRange>> ranges = ContainerUtil.emptyList();
     for (HighlightInfo info : infos) {
       if (info.quickFixActionMarkers != null) {
-        if (markers == EMPTY) markers = new ArrayList<Pair<IntentionActionDescriptor,RangeMarker>>();
+        if (markers == ContainerUtil.<Pair<IntentionActionDescriptor, RangeMarker>>emptyList()) markers = new ArrayList<>();
         markers.addAll(info.quickFixActionMarkers);
       }
       if (info.quickFixActionRanges != null) {
-        if (ranges == EMPTY) ranges = new ArrayList<Pair<IntentionActionDescriptor, TextRange>>();
+        if (ranges == ContainerUtil.<Pair<IntentionActionDescriptor, TextRange>>emptyList()) ranges = new ArrayList<>();
         ranges.addAll(info.quickFixActionRanges);
       }
     }
@@ -61,11 +47,11 @@ public class HighlightInfoComposite extends HighlightInfo {
   }
 
   @Nullable
-  private static String createCompositeDescription(List<HighlightInfo> infos) {
+  private static String createCompositeDescription(List<? extends HighlightInfo> infos) {
     StringBuilder description = new StringBuilder();
     boolean isNull = true;
     for (HighlightInfo info : infos) {
-      String itemDescription = info.description;
+      String itemDescription = info.getDescription();
       if (itemDescription != null) {
         itemDescription = itemDescription.trim();
         description.append(itemDescription);
@@ -81,26 +67,21 @@ public class HighlightInfoComposite extends HighlightInfo {
   }
 
   @Nullable
-  private static String createCompositeTooltip(List<HighlightInfo> infos) {
+  private static String createCompositeTooltip(@NotNull List<? extends HighlightInfo> infos) {
     StringBuilder result = new StringBuilder();
     for (HighlightInfo info : infos) {
-      String toolTip = info.toolTip;
+      String toolTip = info.getToolTip();
       if (toolTip != null) {
         if (result.length() != 0) {
           result.append(LINE_BREAK);
         }
-        toolTip = StringUtil.trimStart(toolTip, HTML_HEADER);
-        toolTip = StringUtil.trimStart(toolTip, BODY_HEADER);
-        toolTip = StringUtil.trimEnd(toolTip, HTML_FOOTER);
-        toolTip = StringUtil.trimEnd(toolTip, BODY_FOOTER);
+        toolTip = XmlStringUtil.stripHtml(toolTip);
         result.append(toolTip);
       }
     }
     if (result.length() == 0) {
       return null;
     }
-    result.insert(0, HTML_HEADER);
-    result.append(HTML_FOOTER);
-    return result.toString();
+    return XmlStringUtil.wrapInHtml(result);
   }
 }

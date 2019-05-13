@@ -1,27 +1,14 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.cvsSupport2.connections;
 
 import com.intellij.cvsSupport2.errorHandling.ErrorRegistry;
 import com.intellij.execution.configurations.GeneralCommandLine;
+import com.intellij.execution.configurations.GeneralCommandLine.ParentEnvironmentType;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
-import com.intellij.util.EnvironmentUtil;
+import com.intellij.util.TimeoutUtil;
 import com.intellij.util.concurrency.Semaphore;
 import org.netbeans.lib.cvsclient.connection.AuthenticationException;
 import org.netbeans.lib.cvsclient.connection.IConnection;
@@ -34,7 +21,7 @@ import java.util.concurrent.Future;
 /**
  * author: lesya
  */
-@SuppressWarnings({"NonPrivateFieldAccessedInSynchronizedContext", "FieldAccessedSynchronizedAndUnsynchronized", "IOResourceOpenedButNotSafelyClosed"})
+@SuppressWarnings({"NonPrivateFieldAccessedInSynchronizedContext", "FieldAccessedSynchronizedAndUnsynchronized"})
 public abstract class ConnectionOnProcess implements IConnection {
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.cvsSupport2.connections.ConnectionOnProcess");
@@ -46,7 +33,7 @@ public abstract class ConnectionOnProcess implements IConnection {
   private final ErrorRegistry myErrorRegistry;
 
   private boolean myContainsError = false;
-  
+
   protected final StringBuffer myErrorText = new StringBuffer();
   private Future<?> myStdErrFuture;
   private ReadProcessThread myErrThread;
@@ -58,6 +45,7 @@ public abstract class ConnectionOnProcess implements IConnection {
     myErrorRegistry = errorRegistry;
     }
 
+  @Override
   public synchronized void close() throws IOException {
     if (myWaitForThreadFuture != null) {
       myWaitForThreadFuture.cancel(true);
@@ -69,23 +57,14 @@ public abstract class ConnectionOnProcess implements IConnection {
     try {
       if (myInputStream != null && !myContainsError) {
           myInputStream.close();
-          try {
-              Thread.sleep(10);
-          } catch (InterruptedException e) {
-              //ignore
-          }
+        TimeoutUtil.sleep(10);
       }
     }
     finally {
       try {
         if (myOutputStream != null && !myContainsError) {
             myOutputStream.close();
-            try {
-                Thread.sleep(10);
-            } catch (InterruptedException e) {
-                //ignore
-            }
-
+          TimeoutUtil.sleep(10);
         }
         try {
           if (myErrThread != null) {
@@ -118,35 +97,41 @@ public abstract class ConnectionOnProcess implements IConnection {
 
   }
 
+  @Override
   public InputStream getInputStream() {
     return myInputStream;
   }
 
+  @Override
   public OutputStream getOutputStream() {
     return myOutputStream;
   }
 
   public abstract void open() throws AuthenticationException;
 
+  @Override
   public String getRepository() {
     return myRepository;
   }
 
+  @Override
   public void verify(IStreamLogger streamLogger) throws AuthenticationException {
     open(streamLogger);
   }
 
+  @Override
   public void open(IStreamLogger streamLogger) throws AuthenticationException {
     open();
   }
 
   protected synchronized void execute(GeneralCommandLine commandLine) throws AuthenticationException {
     try {
-      commandLine.setEnvParams(EnvironmentUtil.getEnvironmentProperties());
+      commandLine.withParentEnvironmentType(ParentEnvironmentType.CONSOLE);
       myProcess = commandLine.createProcess();
 
       myErrThread = new ReadProcessThread(
         new BufferedReader(new InputStreamReader(myProcess.getErrorStream(), EncodingManager.getInstance().getDefaultCharset()))) {
+        @Override
         protected void textAvailable(String s) {
           myErrorText.append(s);
           myErrorRegistry.registerError(s);
@@ -170,16 +155,14 @@ public abstract class ConnectionOnProcess implements IConnection {
   private void waitForProcess(Application application) {
     myWaitSemaphore = new Semaphore();
     myWaitSemaphore.down();
-    myWaitForThreadFuture = application.executeOnPooledThread(new Runnable() {
-      public void run() {
-        try {
-          myProcess.waitFor();
-        }
-        catch (InterruptedException ignored) {
-        }
-        finally {
-          myWaitSemaphore.up();
-        }
+    myWaitForThreadFuture = application.executeOnPooledThread(() -> {
+      try {
+        myProcess.waitFor();
+      }
+      catch (InterruptedException ignored) {
+      }
+      finally {
+        myWaitSemaphore.up();
       }
     });
   }
@@ -204,7 +187,7 @@ public abstract class ConnectionOnProcess implements IConnection {
     private boolean myIsProcessTerminated = false;
     private final char[] myBuffer = new char[8192];
 
-    public ReadProcessThread(final Reader reader) {
+    ReadProcessThread(final Reader reader) {
       myReader = reader;
     }
 
@@ -212,14 +195,11 @@ public abstract class ConnectionOnProcess implements IConnection {
       myIsProcessTerminated = isProcessTerminated;
     }
 
+    @Override
     public void run() {
       try {
         while (readAvailable()) {
-          try {
-            Thread.sleep(50L);
-          }
-          catch (InterruptedException ignore) {
-          }
+          TimeoutUtil.sleep(50L);
         }
       }
       catch (Exception e) {

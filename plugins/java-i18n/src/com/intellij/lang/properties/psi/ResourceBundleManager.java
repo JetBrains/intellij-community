@@ -42,7 +42,7 @@ public abstract class ResourceBundleManager {
   public abstract PsiClass getResourceBundle();
 
   public List<String> suggestPropertiesFiles(){
-    return I18nUtil.defaultGetPropertyFiles(myProject);
+    return I18nUtil.defaultSuggestPropertiesFiles(myProject);
   }
 
   @Nullable

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,10 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-/*
- * @author max
- */
 package com.intellij.psi.impl.java.stubs.impl;
 
 import com.intellij.psi.JavaPsiFacade;
@@ -29,23 +25,22 @@ import com.intellij.psi.impl.source.PsiJavaCodeReferenceElementImpl;
 import com.intellij.psi.stubs.StubBase;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.reference.SoftReference;
+import com.intellij.util.BitUtil;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.io.StringRef;
 import org.jetbrains.annotations.Nullable;
 
+/**
+ * @author max
+ */
 public class PsiImportStatementStubImpl extends StubBase<PsiImportStatementBase> implements PsiImportStatementStub {
   private final byte myFlags;
-  private final StringRef myText;
-  private SoftReference<PsiJavaCodeReferenceElement> myReference = null;
+  private final String myText;
+  private SoftReference<PsiJavaCodeReferenceElement> myReference;
 
-  private final static int ON_DEMAND = 0x01;
-  private final static int STATIC = 0x02;
+  private static final int ON_DEMAND = 0x01;
+  private static final int STATIC = 0x02;
 
   public PsiImportStatementStubImpl(final StubElement parent, final String text, final byte flags) {
-    this(parent, StringRef.fromString(text), flags);
-  }
-
-  public PsiImportStatementStubImpl(final StubElement parent, final StringRef text, final byte flags) {
     super(parent, isStatic(flags) ? JavaStubElementTypes.IMPORT_STATIC_STATEMENT : JavaStubElementTypes.IMPORT_STATEMENT);
     myText = text;
     myFlags = flags;
@@ -57,12 +52,12 @@ public class PsiImportStatementStubImpl extends StubBase<PsiImportStatementBase>
   }
 
   private static boolean isStatic(final byte flags) {
-    return (flags & STATIC) != 0;
+    return BitUtil.isSet(flags, STATIC);
   }
 
   @Override
   public boolean isOnDemand() {
-    return (myFlags & ON_DEMAND) != 0;
+    return BitUtil.isSet(myFlags, ON_DEMAND);
   }
 
   public byte getFlags() {
@@ -71,16 +66,16 @@ public class PsiImportStatementStubImpl extends StubBase<PsiImportStatementBase>
 
   @Override
   public String getImportReferenceText() {
-    return StringRef.toString(myText);
+    return myText;
   }
 
   @Override
   @Nullable
   public PsiJavaCodeReferenceElement getReference() {
-    PsiJavaCodeReferenceElement ref = myReference != null ? myReference.get() : null;
+    PsiJavaCodeReferenceElement ref = SoftReference.dereference(myReference);
     if (ref == null) {
       ref = isStatic() ? getStaticReference() : getRegularReference();
-      myReference = new SoftReference<PsiJavaCodeReferenceElement>(ref);
+      myReference = new SoftReference<>(ref);
     }
     return ref;
   }
@@ -101,7 +96,7 @@ public class PsiImportStatementStubImpl extends StubBase<PsiImportStatementBase>
     final PsiJavaCodeReferenceElement refElement = createReference();
     if (refElement == null) return null;
     if (isOnDemand() && refElement instanceof PsiJavaCodeReferenceElementImpl) {
-      ((PsiJavaCodeReferenceElementImpl)refElement).setKindWhenDummy(PsiJavaCodeReferenceElementImpl.CLASS_FQ_NAME_KIND);
+      ((PsiJavaCodeReferenceElementImpl)refElement).setKindWhenDummy(PsiJavaCodeReferenceElementImpl.Kind.CLASS_FQ_NAME_KIND);
     }
     return refElement;
   }
@@ -111,8 +106,8 @@ public class PsiImportStatementStubImpl extends StubBase<PsiImportStatementBase>
     final PsiJavaCodeReferenceElement refElement = createReference();
     if (refElement == null) return null;
     ((PsiJavaCodeReferenceElementImpl)refElement).setKindWhenDummy(
-      isOnDemand() ? PsiJavaCodeReferenceElementImpl.CLASS_FQ_OR_PACKAGE_NAME_KIND
-                   : PsiJavaCodeReferenceElementImpl.CLASS_FQ_NAME_KIND);
+      isOnDemand() ? PsiJavaCodeReferenceElementImpl.Kind.CLASS_FQ_OR_PACKAGE_NAME_KIND
+                   : PsiJavaCodeReferenceElementImpl.Kind.CLASS_FQ_NAME_KIND);
     return refElement;
   }
 

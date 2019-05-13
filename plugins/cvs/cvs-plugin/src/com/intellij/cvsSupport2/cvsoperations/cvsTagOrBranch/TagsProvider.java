@@ -24,5 +24,5 @@ import org.jetbrains.annotations.Nullable;
  */
 public interface TagsProvider {
   @Nullable
-  CvsCommandOperation getOperation() throws VcsException;
+  CvsCommandOperation getOperation();
 }

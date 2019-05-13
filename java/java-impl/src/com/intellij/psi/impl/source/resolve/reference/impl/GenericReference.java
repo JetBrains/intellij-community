@@ -15,21 +15,16 @@
  */
 package com.intellij.psi.impl.source.resolve.reference.impl;
 
+import com.intellij.codeInsight.daemon.EmptyResolveMessageProvider;
 import com.intellij.psi.*;
 import com.intellij.psi.PsiReferenceProvider;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.GenericReferenceProvider;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * Created by IntelliJ IDEA.
- * User: ik
- * Date: 27.03.2003
- * Time: 17:33:24
- * To change this template use Options | File Templates.
- */
-public abstract class GenericReference extends CachingReference {
+public abstract class GenericReference extends CachingReference implements EmptyResolveMessageProvider {
   public static final GenericReference[] EMPTY_ARRAY = new GenericReference[0];
 
   @Nullable
@@ -51,7 +46,7 @@ public abstract class GenericReference extends CachingReference {
 
   @Override
   @Nullable
-  public PsiElement handleElementRename(String string) throws IncorrectOperationException {
+  public PsiElement handleElementRename(@NotNull String string) throws IncorrectOperationException {
     final PsiElement element = getElement();
     if (element != null) {
       ElementManipulator<PsiElement> man = ElementManipulators.getManipulator(element);

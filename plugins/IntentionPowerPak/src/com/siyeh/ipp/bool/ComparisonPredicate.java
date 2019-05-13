@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2017 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,24 +18,16 @@ package com.siyeh.ipp.bool;
 import com.intellij.psi.PsiBinaryExpression;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiExpression;
+import com.siyeh.ig.psiutils.ComparisonUtils;
 import com.siyeh.ipp.base.PsiElementPredicate;
-import com.siyeh.ipp.psiutils.ComparisonUtils;
 import com.siyeh.ipp.psiutils.ErrorUtil;
 
 class ComparisonPredicate implements PsiElementPredicate {
 
+  @Override
   public boolean satisfiedBy(PsiElement element) {
-    if (!(element instanceof PsiBinaryExpression)) {
-      return false;
-    }
-    final PsiBinaryExpression expression = (PsiBinaryExpression)element;
-    final PsiExpression rhs = expression.getROperand();
-    if (rhs == null) {
-      return false;
-    }
-    if (!ComparisonUtils.isComparison((PsiExpression)element)) {
-      return false;
-    }
-    return !ErrorUtil.containsError(element);
+    return element instanceof PsiBinaryExpression &&
+           ComparisonUtils.isComparison((PsiExpression)element) &&
+           !ErrorUtil.containsDeepError(element);
   }
 }

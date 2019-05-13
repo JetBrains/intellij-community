@@ -21,12 +21,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import java.io.IOException;
 import java.util.List;
 
-/**
- * Created with IntelliJ IDEA.
- * User: Irina.Chernushina
- * Date: 6/9/12
- * Time: 4:11 PM
- */
 public class NoteSerializable implements WorkingSetSerializable<NoteNode, NoteNode> {
 
   @Override
@@ -41,9 +35,9 @@ public class NoteSerializable implements WorkingSetSerializable<NoteNode, NoteNo
 
   @Override
   public void serializeMe(NoteNode t, StringBuilder oos) throws IOException {
-    oos.append(StringUtil.escapeXml(t.getText()));
+    oos.append(StringUtil.escapeXmlEntities(t.getText()));
     oos.append("<>");
-    oos.append(String.valueOf(t.isReadonly()));
+    oos.append(t.isReadonly());
     oos.append("<>");
   }
 
@@ -51,7 +45,7 @@ public class NoteSerializable implements WorkingSetSerializable<NoteNode, NoteNo
   public NoteNode deserializeMe(Project project, String ois) throws IOException {
     final List<String> strings = StringUtil.split(ois, "<>", true);
     if (strings.size() == 2) {
-      return new NoteNode(StringUtil.unescapeXml(strings.get(0)), Boolean.parseBoolean(strings.get(1)));
+      return new NoteNode(StringUtil.unescapeXmlEntities(strings.get(0)), Boolean.parseBoolean(strings.get(1)));
     }
     return null;
   }

@@ -1,398 +1,209 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.checkin;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.impl.patch.formove.FilePathComparator;
-import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
-import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.CheckinProjectPanel;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.Change;
-import com.intellij.openapi.vcs.changes.ChangeList;
 import com.intellij.openapi.vcs.changes.ChangesUtil;
-import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.checkin.CheckinEnvironment;
-import com.intellij.openapi.vcs.ui.Refreshable;
 import com.intellij.openapi.vcs.ui.RefreshableOnComponent;
 import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.util.FunctionUtil;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.PairConsumer;
-import org.jetbrains.annotations.NonNls;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.Convertor;
+import com.intellij.util.containers.MultiMap;
+import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.svn.SvnBundle;
-import org.jetbrains.idea.svn.SvnConfiguration;
-import org.jetbrains.idea.svn.SvnUtil;
-import org.jetbrains.idea.svn.SvnVcs;
-import org.tmatesoft.svn.core.SVNCancelException;
-import org.tmatesoft.svn.core.SVNCommitInfo;
-import org.tmatesoft.svn.core.SVNDepth;
-import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.wc.*;
+import org.jetbrains.idea.svn.*;
+import org.jetbrains.idea.svn.api.Depth;
+import org.jetbrains.idea.svn.api.ProgressEvent;
+import org.jetbrains.idea.svn.api.ProgressTracker;
+import org.jetbrains.idea.svn.api.Url;
+import org.jetbrains.idea.svn.commandLine.SvnBindException;
+import org.jetbrains.idea.svn.status.Status;
+import org.jetbrains.idea.svn.status.StatusType;
 
 import javax.swing.*;
 import java.awt.*;
 import java.io.File;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 
 public class SvnCheckinEnvironment implements CheckinEnvironment {
-  private static final Logger LOG = Logger.getInstance("#org.jetbrains.idea.svn.checkin.SvnCheckinEnvironment");
-  private final SvnVcs mySvnVcs;
 
-  public SvnCheckinEnvironment(SvnVcs svnVcs) {
+  private static final Logger LOG = Logger.getInstance(SvnCheckinEnvironment.class);
+  @NotNull private final SvnVcs mySvnVcs;
+
+  public SvnCheckinEnvironment(@NotNull SvnVcs svnVcs) {
     mySvnVcs = svnVcs;
   }
 
+  @Override
   public RefreshableOnComponent createAdditionalOptionsPanel(CheckinProjectPanel panel,
                                                              PairConsumer<Object, Object> additionalDataConsumer) {
-    return new KeepLocksComponent(panel);
+    return new KeepLocksComponent();
   }
 
-  @Nullable
-  public String getDefaultMessageFor(FilePath[] filesToCheckin) {
-    return null;
-  }
-
+  @Override
   @Nullable
   public String getHelpId() {
     return null;
   }
 
-
-  private List<VcsException> commitInt(List<File> paths, final String comment, final boolean force, final boolean recursive,
-                                       final Set<String> feedback) {
-    final List<VcsException> exception = new ArrayList<VcsException>();
-    final List<File> committables = getCommitables(paths);
-
-    final SVNCommitClient committer = mySvnVcs.createCommitClient();
-
-    final ProgressIndicator progress = ProgressManager.getInstance().getProgressIndicator();
-    final Collection<VirtualFile> deletedFiles = new ArrayList<VirtualFile>();
-    if (progress != null) {
-      committer.setEventHandler(new ISVNEventHandler() {
-        public void handleEvent(final SVNEvent event, double p) {
-          final String path = SvnUtil.getPathForProgress(event);
-          if (path == null) {
-            return;
-          }
-          if (event.getAction() == SVNEventAction.COMMIT_ADDED) {
-            progress.setText2(SvnBundle.message("progress.text2.adding", path));
-          }
-          else if (event.getAction() == SVNEventAction.COMMIT_DELETED) {
-            @NonNls final String filePath = "file://" + event.getFile().getAbsolutePath().replace(File.separatorChar, '/');
-            VirtualFile vf = ApplicationManager.getApplication().runReadAction(new Computable<VirtualFile>() {
-              @Nullable public VirtualFile compute() {
-                return VirtualFileManager.getInstance().findFileByUrl(filePath);
-              }
-            });
-            if (vf != null) {
-              deletedFiles.add(vf);
-            }
-            progress.setText2(SvnBundle.message("progress.text2.deleting", path));
-          }
-          else if (event.getAction() == SVNEventAction.COMMIT_MODIFIED) {
-            progress.setText2(SvnBundle.message("progress.text2.sending", path));
-          }
-          else if (event.getAction() == SVNEventAction.COMMIT_REPLACED) {
-            progress.setText2(SvnBundle.message("progress.text2.replacing", path));
-          }
-          else if (event.getAction() == SVNEventAction.COMMIT_DELTA_SENT) {
-            progress.setText2(SvnBundle.message("progress.text2.transmitting.delta", path));
-          }
-          // do not need COMMIT_COMPLETED: same info is get another way
-        }
-
-        public void checkCancelled() throws SVNCancelException {
-          try {
-            progress.checkCanceled();
-          }
-          catch(ProcessCanceledException ex) {
-            throw new SVNCancelException();
-          }
-        }
-      });
-    }
-
-    if (progress != null) {
-      doCommit(committables, progress, committer, comment, force, recursive, exception, feedback);
-    }
-    else if (ApplicationManager.getApplication().isDispatchThread()) {
-      ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
-        public void run() {
-          ProgressIndicator p = ProgressManager.getInstance().getProgressIndicator();
-          doCommit(committables, p, committer, comment, force, recursive, exception, feedback);
-        }
-      }, SvnBundle.message("progress.title.commit"), false, mySvnVcs.getProject());
-    }
-    else {
-      doCommit(committables, progress, committer, comment, force, recursive, exception, feedback);
-    }
-
-    for(VirtualFile f : deletedFiles) {
-      f.putUserData(VirtualFile.REQUESTOR_MARKER, this);
-    }
-    return exception;
-  }
-
-  private void doCommit(List<File> committables,
-                        ProgressIndicator progress,
-                        SVNCommitClient committer,
+  private void doCommit(@NotNull Collection<FilePath> committables,
                         String comment,
-                        boolean force,
-                        boolean recursive,
-                        List<VcsException> exception, final Set<String> feedback) {
-    final Collection<List<File>> collections = SvnUtil.splitFilesIntoWc(mySvnVcs, committables);
-    for (List<File> collection : collections) {
-      doCommitOneWc(collection, progress, committer, comment, force, recursive, exception, feedback);
+                        List<VcsException> exception,
+                        final Set<String> feedback) {
+    //noinspection unchecked
+    MultiMap<Pair<Url, WorkingCopyFormat>, FilePath> map = SvnUtil.splitIntoRepositoriesMap(mySvnVcs, committables, Convertor.SELF);
+
+    for (Map.Entry<Pair<Url, WorkingCopyFormat>, Collection<FilePath>> entry : map.entrySet()) {
+      try {
+        doCommitOneRepo(entry.getValue(), comment, exception, feedback, entry.getKey().getSecond());
+      }
+      catch (VcsException e) {
+        LOG.info(e);
+        exception.add(e);
+      }
     }
   }
 
-  private void doCommitOneWc(Collection<File> committables,
-                          ProgressIndicator progress,
-                          SVNCommitClient committer,
-                          String comment,
-                          boolean force,
-                          boolean recursive,
-                          List<VcsException> exception, final Set<String> feedback) {
+  private void doCommitOneRepo(@NotNull Collection<FilePath> committables,
+                               String comment,
+                               List<VcsException> exception,
+                               final Set<String> feedback,
+                               @NotNull WorkingCopyFormat format)
+  throws VcsException {
     if (committables.isEmpty()) {
       return;
     }
-    File[] pathsToCommit = committables.toArray(new File[committables.size()]);
-    boolean keepLocks = SvnConfiguration.getInstance(mySvnVcs.getProject()).isKeepLocks();
-    SVNCommitPacket[] commitPackets = null;
-    SVNCommitInfo[] results;
-    try {
-      commitPackets = committer.doCollectCommitItems(pathsToCommit, keepLocks, force, SVNDepth.EMPTY, true, null);
-      results = committer.doCommit(commitPackets, keepLocks, comment);
-      commitPackets = null;
-    }
-    catch (SVNException e) {
-      // exception on collecting commitables.
-      exception.add(new VcsException(e));
-      LOG.info(e);
-      return;
-    }
-    finally {
-      if (commitPackets != null) {
-        for (int i = 0; i < commitPackets.length; i++) {
-          SVNCommitPacket commitPacket = commitPackets[i];
-          try {
-            commitPacket.dispose();
-          }
-          catch (SVNException e) {
-            //
-          }
-        }
-      }
-    }
-    final StringBuffer committedRevisions = new StringBuffer();
-    for (SVNCommitInfo result : results) {
-      if (result.getErrorMessage() != null) {
-        exception.add(new VcsException(result.getErrorMessage().getFullMessage()));
-      }
-      else if (result != SVNCommitInfo.NULL && result.getNewRevision() > 0) {
+
+    CommitInfo[] results = mySvnVcs.getFactory(format).createCheckinClient().commit(ChangesUtil.filePathsToFiles(committables), comment);
+
+    final StringBuilder committedRevisions = new StringBuilder();
+    for (CommitInfo result : results) {
+      if (result != CommitInfo.EMPTY && result.getRevisionNumber() > 0) {
         if (committedRevisions.length() > 0) {
           committedRevisions.append(", ");
         }
-        committedRevisions.append(result.getNewRevision());
+        committedRevisions.append(result.getRevisionNumber());
       }
     }
     if (committedRevisions.length() > 0) {
-      final Project project = mySvnVcs.getProject();
-      final String message = SvnBundle.message("status.text.comitted.revision", committedRevisions);
-      if (feedback == null) {
-        ApplicationManager.getApplication().invokeLater(new Runnable() {
-                                                          public void run() {
-                                                            new VcsBalloonProblemNotifier(project, message, MessageType.INFO).run();
-                                                          }
-                                                        }, new Condition<Object>() {
-          @Override
-          public boolean value(Object o) {
-            return (! project.isOpen()) || project.isDisposed();
-          }
-        });
-      } else {
-        feedback.add("Subversion: " + message);
-      }
+      reportCommittedRevisions(feedback, committedRevisions.toString());
     }
   }
 
-  private static class Adder {
-    private final List<File> myResult = new ArrayList<File>();
-    private final Set<String> myDuplicatesControlSet = new HashSet<String>();
-
-    public void add(final File file) {
-      final String path = file.getAbsolutePath();
-      if (! myDuplicatesControlSet.contains(path)) {
-        myResult.add(file);
-        myDuplicatesControlSet.add(path);
-      }
-    }
-
-    public List<File> getResult() {
-      return myResult;
+  private void reportCommittedRevisions(Set<String> feedback, String committedRevisions) {
+    final Project project = mySvnVcs.getProject();
+    final String message = SvnBundle.message("status.text.comitted.revision", committedRevisions);
+    if (feedback == null) {
+      ApplicationManager.getApplication().invokeLater(() -> new VcsBalloonProblemNotifier(project, message, MessageType.INFO).run(),
+                                                      o -> (!project.isOpen()) || project.isDisposed());
+    } else {
+      feedback.add("Subversion: " + message);
     }
   }
 
-  private List<File> getCommitables(List<File> paths) {
-    final Adder adder = new Adder();
+  @NotNull
+  private Collection<FilePath> getCommitables(@NotNull List<Change> changes) {
+    THashSet<FilePath> result = ContainerUtil.newTroveSet(ChangesUtil.CASE_SENSITIVE_FILE_PATH_HASHING_STRATEGY);
 
-    SVNStatusClient statusClient = mySvnVcs.createStatusClient();
-    for (File path : paths) {
-      File file = path.getAbsoluteFile();
-      adder.add(file);
-      if (file.getParentFile() != null) {
-        addParents(statusClient, file.getParentFile(), adder);
+    ChangesUtil.getPaths(changes.stream()).forEach(path -> {
+      if (result.add(path)) {
+        addParents(result, path);
       }
-    }
-    return adder.getResult();
-  }
+    });
 
-  private static void addParents(SVNStatusClient statusClient, File file, final Adder adder) {
-    SVNStatus status;
-    try {
-      status = statusClient.doStatus(file, false);
-    }
-    catch (SVNException e) {
-      return;
-    }
-    if (status != null &&
-        (SvnVcs.svnStatusIs(status, SVNStatusType.STATUS_ADDED) ||
-         SvnVcs.svnStatusIs(status, SVNStatusType.STATUS_REPLACED))) {
-      // file should be added
-      adder.add(file);
-      file = file.getParentFile();
-      if (file != null) {
-        addParents(statusClient, file, adder);
-      }
-    }
-  }
-
-  private static List<File> collectPaths(final List<Change> changes) {
-    // case sensitive..
-    ArrayList<File> result = new ArrayList<File>();
-
-    final Set<String> pathesSet = new HashSet<String>();
-    for (Change change : changes) {
-      final ContentRevision beforeRevision = change.getBeforeRevision();
-      final ContentRevision afterRevision = change.getAfterRevision();
-      if (beforeRevision != null) {
-        pathesSet.add(beforeRevision.getFile().getIOFile().getAbsolutePath());
-      }
-      if (afterRevision != null) {
-        pathesSet.add(afterRevision.getFile().getIOFile().getAbsolutePath());
-      }
-    }
-
-    for (String s : pathesSet) {
-      result.add(new File(s));
-    }
     return result;
   }
 
+  private void addParents(@NotNull Collection<FilePath> paths, @NotNull FilePath path) {
+    FilePath parent = path;
+
+    while ((parent = parent.getParentPath()) != null && isAddedOrReplaced(parent)) {
+      paths.add(parent);
+    }
+  }
+
+  private boolean isAddedOrReplaced(@NotNull FilePath file) {
+    Status status = getStatus(file);
+
+    return status != null && status.is(StatusType.STATUS_ADDED, StatusType.STATUS_REPLACED);
+  }
+
+  @Nullable
+  private Status getStatus(@NotNull FilePath file) {
+    Status result = null;
+
+    try {
+      result = mySvnVcs.getFactory(file.getIOFile()).createStatusClient().doStatus(file.getIOFile(), false);
+    }
+    catch (SvnBindException e) {
+      LOG.info(e);
+    }
+
+    return result;
+  }
+
+  @Override
   public String getCheckinOperationName() {
     return SvnBundle.message("checkin.operation.name");
   }
 
+  @Override
   public List<VcsException> commit(List<Change> changes,
-                                   String preparedComment,
+                                   final String preparedComment,
                                    @NotNull NullableFunction<Object, Object> parametersHolder,
-                                   Set<String> feedback) {
-    return commitInt(collectPaths(changes), preparedComment, true, false, feedback);
+                                   final Set<String> feedback) {
+    final List<VcsException> exception = new ArrayList<>();
+    final Collection<FilePath> committables = getCommitables(changes);
+    final ProgressIndicator progress = ProgressManager.getInstance().getProgressIndicator();
+
+    if (progress != null) {
+      doCommit(committables, preparedComment, exception, feedback);
+    }
+    else if (ApplicationManager.getApplication().isDispatchThread()) {
+      ProgressManager.getInstance().runProcessWithProgressSynchronously(
+        () -> doCommit(committables, preparedComment, exception, feedback), SvnBundle.message("progress.title.commit"), false,
+        mySvnVcs.getProject());
+    }
+    else {
+      doCommit(committables, preparedComment, exception, feedback);
+    }
+
+    return exception;
   }
 
+  @Override
   public List<VcsException> commit(List<Change> changes, String preparedComment) {
-    return commit(changes, preparedComment, FunctionUtil.<Object, Object>nullConstant(), null);
+    return commit(changes, preparedComment, FunctionUtil.nullConstant(), null);
   }
 
+  @Override
   public List<VcsException> scheduleMissingFileForDeletion(List<FilePath> filePaths) {
-    List<VcsException> exceptions = new ArrayList<VcsException>();
-    final SVNWCClient wcClient = mySvnVcs.createWCClient();
-
+    List<VcsException> exceptions = new ArrayList<>();
     List<File> files = ChangesUtil.filePathsToFiles(filePaths);
+
     for (File file : files) {
       try {
-        wcClient.doDelete(file, true, false);
+        mySvnVcs.getFactory(file).createDeleteClient().delete(file, true, false, null);
       }
-      catch (SVNException e) {
-        exceptions.add(new VcsException(e));
-      }
-    }
-
-    return exceptions;
-  }
-
-  public List<VcsException> scheduleUnversionedFilesForAddition(List<VirtualFile> files) {
-    final List<VcsException> result = new ArrayList<VcsException>();
-    final SVNWCClient wcClient = mySvnVcs.createWCClient();
-
-    final List<SVNException> exceptionList = scheduleUnversionedFilesForAddition(wcClient, files);
-    for (SVNException svnException : exceptionList) {
-      result.add(new VcsException(svnException));
-    }
-    return result;
-  }
-
-  public static List<SVNException> scheduleUnversionedFilesForAddition(SVNWCClient wcClient, List<VirtualFile> files) {
-    return scheduleUnversionedFilesForAddition(wcClient, files, false);
-  }
-
-  public static List<SVNException> scheduleUnversionedFilesForAddition(SVNWCClient wcClient, List<VirtualFile> files, final boolean recursive) {
-    List<SVNException> exceptions = new ArrayList<SVNException>();
-
-    Collections.sort(files, FilePathComparator.getInstance());
-
-    wcClient.setEventHandler(new ISVNEventHandler() {
-      @Override
-      public void handleEvent(SVNEvent event, double progress) throws SVNException {
-        final ProgressManager pm = ProgressManager.getInstance();
-        final ProgressIndicator pi = pm.getProgressIndicator();
-        if (pi != null && event.getFile() != null) {
-          File file = event.getFile();
-          pi.setText(SvnBundle.message("progress.text2.adding", file.getName() + " (" + file.getParent() + ")"));
-        }
-      }
-
-      @Override
-      public void checkCancelled() throws SVNCancelException {
-        final ProgressManager pm = ProgressManager.getInstance();
-        final ProgressIndicator pi = pm.getProgressIndicator();
-        if (pi != null) {
-          if (pi.isCanceled()) throw new SVNCancelException();
-        }
-      }
-    });
-    for (VirtualFile file : files) {
-      try {
-        wcClient.doAdd(new File(FileUtil.toSystemDependentName(file.getPath())), true, false, true, recursive);
-      }
-      catch (SVNException e) {
+      catch (VcsException e) {
         exceptions.add(e);
       }
     }
@@ -400,8 +211,45 @@ public class SvnCheckinEnvironment implements CheckinEnvironment {
     return exceptions;
   }
 
-  public boolean keepChangeListAfterCommit(ChangeList changeList) {
-    return false;
+  @Override
+  public List<VcsException> scheduleUnversionedFilesForAddition(List<VirtualFile> files) {
+    return scheduleUnversionedFilesForAddition(mySvnVcs, files);
+  }
+
+  public static List<VcsException> scheduleUnversionedFilesForAddition(@NotNull SvnVcs vcs, List<? extends VirtualFile> files) {
+    return scheduleUnversionedFilesForAddition(vcs, files, false);
+  }
+
+  public static List<VcsException> scheduleUnversionedFilesForAddition(@NotNull SvnVcs vcs, List<? extends VirtualFile> files, final boolean recursive) {
+    Collections.sort(files, FilePathComparator.getInstance());
+
+    ProgressTracker eventHandler = new SvnProgressCanceller() {
+      @Override
+      public void consume(ProgressEvent event) {
+        // TODO: indicator is null here when invoking "Add" action
+        ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
+        File file = event.getFile();
+
+        if (indicator != null && file != null) {
+          indicator.setText(SvnBundle.message("progress.text2.adding", file.getName() + " (" + file.getParent() + ")"));
+        }
+      }
+    };
+    List<VcsException> exceptions = new ArrayList<>();
+    Depth depth = Depth.allOrEmpty(recursive);
+
+    for (VirtualFile file : files) {
+      try {
+        File convertedFile = VfsUtilCore.virtualToIoFile(file);
+
+        vcs.getFactory(convertedFile).createAddClient().add(convertedFile, depth, true, false, true, eventHandler);
+      }
+      catch (VcsException e) {
+        exceptions.add(e);
+      }
+    }
+
+    return exceptions;
   }
 
   @Override
@@ -410,12 +258,13 @@ public class SvnCheckinEnvironment implements CheckinEnvironment {
   }
 
   private class KeepLocksComponent implements RefreshableOnComponent {
-    private final JCheckBox myKeepLocksBox;
-    private boolean myIsKeepLocks;
-    private final JPanel myPanel;
-    private final JCheckBox myAutoUpdate;
 
-    public KeepLocksComponent(final Refreshable panel) {
+    @NotNull private final JCheckBox myKeepLocksBox;
+    private boolean myIsKeepLocks;
+    @NotNull private final JPanel myPanel;
+    @NotNull private final JCheckBox myAutoUpdate;
+
+    KeepLocksComponent() {
 
       myPanel = new JPanel(new BorderLayout());
       myKeepLocksBox = new JCheckBox(SvnBundle.message("checkbox.chckin.keep.files.locked"));
@@ -426,32 +275,35 @@ public class SvnCheckinEnvironment implements CheckinEnvironment {
       myPanel.add(myKeepLocksBox, BorderLayout.CENTER);
     }
 
+    @Override
     public JComponent getComponent() {
       return myPanel;
     }
 
     public boolean isKeepLocks() {
-      return myKeepLocksBox != null && myKeepLocksBox.isSelected();
+      return myKeepLocksBox.isSelected();
     }
 
     public boolean isAutoUpdate() {
-      return myAutoUpdate != null && myAutoUpdate.isSelected();
+      return myAutoUpdate.isSelected();
     }
 
+    @Override
     public void refresh() {
     }
 
+    @Override
     public void saveState() {
       final SvnConfiguration configuration = mySvnVcs.getSvnConfiguration();
       configuration.setKeepLocks(isKeepLocks());
       configuration.setAutoUpdateAfterCommit(isAutoUpdate());
     }
 
+    @Override
     public void restoreState() {
       final SvnConfiguration configuration = mySvnVcs.getSvnConfiguration();
       myIsKeepLocks = configuration.isKeepLocks();
       myAutoUpdate.setSelected(configuration.isAutoUpdateAfterCommit());
     }
   }
-
 }

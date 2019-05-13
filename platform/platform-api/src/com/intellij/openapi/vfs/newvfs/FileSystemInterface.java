@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -49,28 +49,27 @@ public interface FileSystemInterface {
   @Nullable
   String resolveSymLink(@NotNull VirtualFile file);
 
-  boolean isSpecialFile(@NotNull VirtualFile file);
-
+  @NotNull
   VirtualFile createChildDirectory(@Nullable Object requestor, @NotNull VirtualFile parent, @NotNull String dir) throws IOException;
+
+  @NotNull
   VirtualFile createChildFile(@Nullable Object requestor, @NotNull VirtualFile parent, @NotNull String file) throws IOException;
 
   void deleteFile(final Object requestor, @NotNull VirtualFile file) throws IOException;
   void moveFile(final Object requestor, @NotNull VirtualFile file, @NotNull VirtualFile newParent) throws IOException;
   void renameFile(final Object requestor, @NotNull VirtualFile file, @NotNull String newName) throws IOException;
+
+  @NotNull
   VirtualFile copyFile(final Object requestor, @NotNull VirtualFile file, @NotNull VirtualFile newParent, @NotNull String copyName) throws IOException;
 
   @NotNull
   byte[] contentsToByteArray(@NotNull VirtualFile file) throws IOException;
 
-  /**
-   * Does NOT strip the BOM from the beginning of the stream, unlike the {@link com.intellij.openapi.vfs.VirtualFile#getInputStream()}
-   */
+  /** Does NOT strip the BOM from the beginning of the stream, unlike the {@link VirtualFile#getInputStream()} */
   @NotNull
   InputStream getInputStream(@NotNull VirtualFile file) throws IOException;
 
-  /**
-   * Does NOT add the BOM to the beginning of the stream, unlike the {@link com.intellij.openapi.vfs.VirtualFile#getOutputStream(Object)}
-   */
+  /** Does NOT add the BOM to the beginning of the stream, unlike the {@link VirtualFile#getOutputStream(Object)} */
   @NotNull
   OutputStream getOutputStream(@NotNull VirtualFile file, final Object requestor, final long modStamp, final long timeStamp) throws IOException;
 

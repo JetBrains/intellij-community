@@ -21,9 +21,9 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
-import java.util.ArrayList;
 
 /**
  * @author peter
@@ -39,7 +39,7 @@ public class ExcludingActionGroup extends ActionGroup {
   }
 
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     myDelegate.update(e);
   }
 
@@ -48,9 +48,10 @@ public class ExcludingActionGroup extends ActionGroup {
     return myDelegate.isDumbAware();
   }
 
+  @Override
   @NotNull
   public AnAction[] getChildren(@Nullable AnActionEvent e) {
-    List<AnAction> result = new ArrayList<AnAction>();
+    List<AnAction> result = new ArrayList<>();
     for (AnAction action : myDelegate.getChildren(e)) {
       if (myExcludes.contains(action)) {
         continue;
@@ -61,6 +62,6 @@ public class ExcludingActionGroup extends ActionGroup {
         result.add(action);
       }
     }
-    return result.toArray(new AnAction[result.size()]);
+    return result.toArray(AnAction.EMPTY_ARRAY);
   }
 }

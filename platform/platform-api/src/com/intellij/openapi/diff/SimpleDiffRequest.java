@@ -22,6 +22,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * Two contents for general diff
  */
+@Deprecated
 public class SimpleDiffRequest extends DiffRequest {
   private final DiffContent[] myContents = new DiffContent[2];
   private final String[] myContentTitles = new String[2];
@@ -32,11 +33,14 @@ public class SimpleDiffRequest extends DiffRequest {
     myWindowTitle = windowTitle;
   }
 
+  @Override
   @NotNull
   public DiffContent[] getContents() { return myContents; }
 
+  @Override
   public String[] getContentTitles() { return myContentTitles; }
 
+  @Override
   public String getWindowTitle() { return myWindowTitle; }
 
   public void setContents(@NotNull DiffContent content1, @NotNull DiffContent content2) {
@@ -71,10 +75,11 @@ public class SimpleDiffRequest extends DiffRequest {
     private final String[] myContentTitles = new String[2];
     private final VirtualFile[] myVirtualFiles = new VirtualFile[2];
 
-    public FileDiffRequest(Project project, String title) {
+    FileDiffRequest(Project project, String title) {
       super(project, title);
     }
 
+    @Override
     @NotNull
     public DiffContent[] getContents() {
       return new DiffContent[]{
@@ -83,6 +88,7 @@ public class SimpleDiffRequest extends DiffRequest {
       };
     }
 
+    @Override
     public String[] getContentTitles() {
       return myContentTitles;
     }

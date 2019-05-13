@@ -1,0 +1,7 @@
+public abstract class X {
+    abstract void f();
+}
+abstract class Y extends X {
+    <spot>void f() {
+    }</spot>
+}

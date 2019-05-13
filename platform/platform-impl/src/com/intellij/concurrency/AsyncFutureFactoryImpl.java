@@ -15,6 +15,8 @@
  */
 package com.intellij.concurrency;
 
+import org.jetbrains.annotations.NotNull;
+
 /**
  * Author: dmitrylomov
  */
@@ -22,8 +24,9 @@ public class AsyncFutureFactoryImpl extends AsyncFutureFactory {
   public AsyncFutureFactoryImpl() {
   }
 
+  @NotNull
   @Override
   public <V> AsyncFutureResult<V> createAsyncFutureResult() {
-    return new AsyncFutureResultImpl<V>();
+    return new AsyncFutureResultImpl<>();
   }
 }

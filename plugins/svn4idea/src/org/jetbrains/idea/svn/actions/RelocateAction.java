@@ -1,93 +1,81 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.actions;
 
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.WaitForProgressToShow;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.SvnStatusUtil;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.dialogs.RelocateDialog;
-import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.SVNURL;
-import org.tmatesoft.svn.core.wc.SVNInfo;
-import org.tmatesoft.svn.core.wc.SVNUpdateClient;
+import org.jetbrains.idea.svn.info.Info;
 
 import java.io.File;
 
-/**
- * @author yole
- */
+import static com.intellij.util.WaitForProgressToShow.runOrInvokeLaterAboveProgress;
+import static org.jetbrains.idea.svn.SvnUtil.createUrl;
+
 public class RelocateAction extends BasicAction {
-  protected String getActionName(final AbstractVcs vcs) {
+
+  private static final Logger LOG = Logger.getInstance(RelocateAction.class);
+
+  @NotNull
+  @Override
+  protected String getActionName() {
     return "Relocate working copy to a different URL";
   }
 
-  protected boolean isEnabled(final Project project, final SvnVcs vcs, final VirtualFile file) {
-    return SvnStatusUtil.isUnderControl(project, file);
+  @Override
+  protected boolean isEnabled(@NotNull SvnVcs vcs, @NotNull VirtualFile file) {
+    return SvnStatusUtil.isUnderControl(vcs, file);
   }
 
-  protected boolean needsFiles() {
-    return true;
-  }
+  @Override
+  protected void perform(@NotNull SvnVcs vcs, @NotNull VirtualFile file, @NotNull DataContext context) {
+    Info info = vcs.getInfo(file);
+    if (info == null) {
+      LOG.info("Could not get info for " + file);
+      return;
+    }
 
-  protected void perform(final Project project, final SvnVcs activeVcs, final VirtualFile file, DataContext context) throws VcsException {
-    SVNInfo info = activeVcs.getInfo(file);
-    assert info != null;
-    RelocateDialog dlg = new RelocateDialog(project, info.getURL());
-    dlg.show();
-    if (!dlg.isOK()) return;
-    final String beforeURL = dlg.getBeforeURL();
-    final String afterURL = dlg.getAfterURL();
+    RelocateDialog dlg = new RelocateDialog(vcs.getProject(), info.getUrl());
+    if (!dlg.showAndGet()) {
+      return;
+    }
+    String beforeURL = dlg.getBeforeURL();
+    String afterURL = dlg.getAfterURL();
     if (beforeURL.equals(afterURL)) return;
-    ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
-      public void run() {
-        final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
-        if (indicator != null) {
-          indicator.setIndeterminate(true);
-        }
-        final SVNUpdateClient client = activeVcs.createUpdateClient();
-        try {
-          client.doRelocate(new File(file.getPath()),
-                            SVNURL.parseURIEncoded(beforeURL),
-                            SVNURL.parseURIEncoded(afterURL),
-                            true);
-          VcsDirtyScopeManager.getInstance(project).markEverythingDirty();
-        }
-        catch (final SVNException e) {
-          WaitForProgressToShow.runOrInvokeLaterAboveProgress(new Runnable() {
-            public void run() {
-              Messages.showErrorDialog(project, "Error relocating working copy: " + e.getMessage(), "Relocate Working Copy");
-            }
-          }, null, project);
-        }
+    ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
+      ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
+      if (indicator != null) {
+        indicator.setIndeterminate(true);
       }
-    }, "Relocating Working Copy", false, project);
+
+      try {
+        File path = VfsUtilCore.virtualToIoFile(file);
+
+        vcs.getFactory(path).createRelocateClient().relocate(path, createUrl(beforeURL, false), createUrl(afterURL, false));
+        VcsDirtyScopeManager.getInstance(vcs.getProject()).markEverythingDirty();
+      }
+      catch (VcsException e) {
+        runOrInvokeLaterAboveProgress(
+          () -> Messages.showErrorDialog(vcs.getProject(), "Error relocating working copy: " + e.getMessage(), "Relocate Working Copy"),
+          null, vcs.getProject());
+      }
+    }, "Relocating Working Copy", false, vcs.getProject());
   }
 
-  protected void batchPerform(Project project, SvnVcs activeVcs, VirtualFile[] file, DataContext context) throws VcsException {
+  @Override
+  protected void batchPerform(@NotNull SvnVcs vcs, @NotNull VirtualFile[] files, @NotNull DataContext context) {
   }
 
+  @Override
   protected boolean isBatchAction() {
     return false;
   }

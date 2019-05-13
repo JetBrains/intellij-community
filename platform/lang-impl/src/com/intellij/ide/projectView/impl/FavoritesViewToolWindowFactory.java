@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,19 +24,23 @@ import com.intellij.openapi.wm.ToolWindowFactory;
 import com.intellij.openapi.wm.ex.ToolWindowEx;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Konstantin Bulenkov
  */
 public class FavoritesViewToolWindowFactory implements ToolWindowFactory, DumbAware {
   @Override
-  public void createToolWindowContent(Project project, ToolWindow toolWindow) {
-    if (toolWindow != null) {
-      final ContentManager contentManager = toolWindow.getContentManager();
-      final FavoritesTreeViewPanel panel = new FavoritesPanel(project).getPanel();
-      panel.setupToolWindow((ToolWindowEx)toolWindow);
-      final Content content = contentManager.getFactory().createContent(panel, null, false);
-      contentManager.addContent(content);
-    }
+  public void createToolWindowContent(@NotNull Project project, @NotNull ToolWindow toolWindow) {
+    final ContentManager contentManager = toolWindow.getContentManager();
+    final FavoritesTreeViewPanel panel = new FavoritesPanel(project).getPanel();
+    panel.setupToolWindow((ToolWindowEx)toolWindow);
+    final Content content = contentManager.getFactory().createContent(panel, null, false);
+    contentManager.addContent(content);
+  }
+
+  @Override
+  public boolean isDoNotActivateOnStart() {
+    return true;
   }
 }

@@ -11,6 +11,6 @@ abstract class B implements A{
                     final String pppppppppppp6,
                     final String pppppppppppp7,
                     final String pppppppppppp8) {
-        <caret><selection>//To change body of implemented methods use File | Settings | File Templates.</selection>
+        <caret>
     }
 }

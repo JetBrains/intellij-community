@@ -1,3 +1,4 @@
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.intellij.lang.xpath.xslt.associations.impl;
 
 import com.intellij.ide.projectView.ProjectViewNode;
@@ -12,10 +13,7 @@ import com.intellij.ide.util.treeView.TreeState;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.Progressive;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.psi.PsiFile;
 import com.intellij.ui.*;
@@ -23,12 +21,10 @@ import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.IconUtil;
-import com.intellij.util.config.StorageAccessors;
 import com.intellij.util.ui.UIUtil;
 import icons.XpathIcons;
 import org.intellij.lang.xpath.xslt.XsltSupport;
 import org.intellij.lang.xpath.xslt.associations.FileAssociationsManager;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -46,19 +42,16 @@ import java.util.Collections;
 import java.util.List;
 
 class AssociationsEditor {
-  @NonNls private static final String DIVIDER_PROPORTION = "dividerProportion";
-
   private JPanel myComponent;
   private JBList myList;
   private Tree myTree;
-  private Splitter mySplitter;
-  private final StorageAccessors myProperties = StorageAccessors.createGlobal("AssociationsEditor");
+  private JBSplitter mySplitter;
 
   private final AssociationsModel myListModel;
   private final TransactionalManager myManager;
   private final ProjectTreeBuilder myBuilder;
 
-  public AssociationsEditor(final Project project, final TreeState oldState) {
+  AssociationsEditor(final Project project, final TreeState oldState) {
     myManager = ((FileAssociationsManagerImpl)FileAssociationsManager.getInstance(project)).getTempManager();
 
     initUI();
@@ -68,39 +61,33 @@ class AssociationsEditor {
 
     myBuilder = new ProjectTreeBuilder(project, myTree, treeModel, new MyGroupByTypeComparator(), new MyProjectStructure(project));
 
-    myTree.expandRow(0);
     myTree.setCellRenderer(new MyNodeRenderer(myManager));
     new TreeSpeedSearch(myTree);
 
-    SwingUtilities.invokeLater(new Runnable() {
-      @Override
-      public void run() {
-        ApplicationManager.getApplication().invokeLater(new Runnable() {
-          @Override
-          public void run() {
-            if (oldState == null) {
-              expandTree(treeModel);
-            }
-            else {
-              oldState.applyTo(myTree);
-            }
-          }
-        });
+    SwingUtilities.invokeLater(() -> ApplicationManager.getApplication().invokeLater(() -> {
+      if (oldState == null) {
+        expandTree(treeModel);
       }
-    });
+      else {
+        oldState.applyTo(myTree);
+      }
+    }));
 
     myListModel = new AssociationsModel(myTree, myManager);
     myListModel.addListDataListener(new ListDataListener() {
+      @Override
       public void intervalAdded(ListDataEvent listDataEvent) {
         myTree.invalidate();
         myTree.repaint();
       }
 
+      @Override
       public void intervalRemoved(ListDataEvent listDataEvent) {
         myTree.invalidate();
         myTree.repaint();
       }
 
+      @Override
       public void contentsChanged(ListDataEvent listDataEvent) {
       }
     });
@@ -110,7 +97,7 @@ class AssociationsEditor {
 
   private void initUI() {
     myComponent = new JPanel(new BorderLayout());
-    mySplitter = new Splitter(false, 0.3f);
+    mySplitter = new JBSplitter("AssociationsEditor.dividerProportion", 0.3f);
     myComponent.add(mySplitter, BorderLayout.CENTER);
 
     JPanel leftPanel = new JPanel(new BorderLayout());
@@ -131,21 +118,15 @@ class AssociationsEditor {
       .disableUpDownActions().disableAddAction().disableRemoveAction().createPanel();
     UIUtil.addBorder(rightPanel, IdeBorderFactory.createTitledBorder("Associated Files", false, new Insets(0, 0, 0, 0)));
     mySplitter.setSecondComponent(rightPanel);
-
-    final float dividerProportion = myProperties.getFloat(DIVIDER_PROPORTION, 0.3f);
-    mySplitter.setProportion(dividerProportion);
   }
 
   private void expandTree(DefaultTreeModel newModel) {
     final TreePath rootPath = new TreePath(newModel.getRoot());
 
     final Object element = myBuilder.getTreeStructure().getRootElement();
-    myBuilder.batch(new Progressive() {
-      @Override
-      public void run(@NotNull ProgressIndicator indicator) {
-        myBuilder.expand(element, null);
-        myBuilder.expand(myBuilder.getTreeStructure().getChildElements(element), null);
-      }
+    myBuilder.batch(indicator -> {
+      myBuilder.expand(element, null);
+      myBuilder.expand(myBuilder.getTreeStructure().getChildElements(element), null);
     });
 
     myTree.setSelectionPath(rootPath);
@@ -192,42 +173,39 @@ class AssociationsEditor {
   }
 
   public void dispose() {
-    myProperties.setFloat(DIVIDER_PROPORTION, mySplitter.getProportion());
     Disposer.dispose(myBuilder);
     myManager.dispose();
   }
 
   public void select(final PsiFile file) {
-    myBuilder.getReady(this).doWhenDone(new Runnable() {
-      @Override
-      public void run() {
-        myBuilder.select(file, file.getVirtualFile(), true);
-      }
-    });
+    myBuilder.getReady(this).doWhenDone(() -> myBuilder.selectAsync(file, file.getVirtualFile(), true));
   }
 
   class AddAssociationActionWrapper extends AddAssociationAction {
-    public AddAssociationActionWrapper() {
+    AddAssociationActionWrapper() {
       super(myManager);
     }
 
-    public void actionPerformed(AnActionEvent e) {
+    @Override
+    public void actionPerformed(@NotNull AnActionEvent e) {
       final PsiFile selection = (PsiFile)getTreeSelection(myTree);
       addAssociation(selection);
       myListModel.update(selection);
     }
 
-    public void update(AnActionEvent e) {
+    @Override
+    public void update(@NotNull AnActionEvent e) {
       e.getPresentation().setEnabled(getTreeSelection(myTree) instanceof PsiFile);
     }
   }
 
   class RemoveAssociationAction extends AnAction {
-    public RemoveAssociationAction() {
+    RemoveAssociationAction() {
       super("Remove", "Remove Association", IconUtil.getRemoveIcon());
     }
 
-    public void actionPerformed(AnActionEvent e) {
+    @Override
+    public void actionPerformed(@NotNull AnActionEvent e) {
       final PsiFile selection = (PsiFile)getTreeSelection(myTree);
       final PsiFile listSelection = (PsiFile)getListSelection();
 
@@ -235,7 +213,8 @@ class AssociationsEditor {
       myListModel.update(selection);
     }
 
-    public void update(AnActionEvent e) {
+    @Override
+    public void update(@NotNull AnActionEvent e) {
       e.getPresentation().setEnabled(getListSelection() instanceof PsiFile);
     }
 
@@ -245,10 +224,11 @@ class AssociationsEditor {
   }
 
   private static class MyGroupByTypeComparator extends GroupByTypeComparator {
-    public MyGroupByTypeComparator() {
+    MyGroupByTypeComparator() {
       super(true);
     }
 
+    @Override
     protected boolean isSortByType() {
       return false;
     }
@@ -257,7 +237,7 @@ class AssociationsEditor {
   @SuppressWarnings({"ALL"})
   private static class MyProjectStructure extends AbstractProjectTreeStructure {
 
-    public MyProjectStructure(Project project) {
+    public MyProjectStructure(@NotNull Project project) {
       super(project);
     }
 
@@ -265,7 +245,9 @@ class AssociationsEditor {
       return Collections.EMPTY_LIST;
     }
 
-    public Object[] getChildElements(Object obj) {
+    @NotNull
+    @Override
+    public Object[] getChildElements(@NotNull Object obj) {
       final Object[] childElements = super.getChildElements(obj);
       List l = new ArrayList(childElements.length);
       for (Object o : childElements) {
@@ -285,6 +267,7 @@ class AssociationsEditor {
       return l.size() != childElements.length ? (Object[])l.toArray(new Object[l.size()]) : childElements;
     }
 
+    @Override
     public boolean isShowMembers() {
       return false;
     }
@@ -315,21 +298,24 @@ class AssociationsEditor {
     private final FileAssociationsManager myManager;
     private PsiFile[] myFiles;
 
-    public AssociationsModel(Tree tree, FileAssociationsManager manager) {
+    AssociationsModel(Tree tree, FileAssociationsManager manager) {
       myTree = tree;
       myManager = manager;
       myFiles = PsiFile.EMPTY_ARRAY;
       myTree.addTreeSelectionListener(this);
     }
 
+    @Override
     public int getSize() {
       return myFiles.length;
     }
 
+    @Override
     public Object getElementAt(int index) {
       return myFiles[index];
     }
 
+    @Override
     public void valueChanged(TreeSelectionEvent e) {
       final Object selection = getTreeSelection(myTree);
       if (selection instanceof PsiFile) {
@@ -355,11 +341,12 @@ class AssociationsEditor {
     private final DefaultMutableTreeNode myTemp = new DefaultMutableTreeNode();
     private final FileAssociationsManager myManager;
 
-    public MyNodeRenderer(FileAssociationsManager manager) {
+    MyNodeRenderer(FileAssociationsManager manager) {
       myManager = manager;
     }
 
-    public void customizeCellRenderer(JTree tree,
+    @Override
+    public void customizeCellRenderer(@NotNull JTree tree,
                                       Object value,
                                       boolean selected,
                                       boolean expanded,
@@ -383,7 +370,7 @@ class AssociationsEditor {
     private static class MyNodeDescriptor extends NodeDescriptor<PsiFileNode> {
       private final PsiFileNode myNode;
 
-      public MyNodeDescriptor(NodeDescriptor<PsiFileNode> nodeDescriptor) {
+      MyNodeDescriptor(NodeDescriptor<PsiFileNode> nodeDescriptor) {
         super(nodeDescriptor.getProject(), null);
         myName = nodeDescriptor.toString();
         setIcon(LayeredIcon.create(nodeDescriptor.getIcon(), XpathIcons.Association_small));
@@ -391,10 +378,12 @@ class AssociationsEditor {
         myNode = nodeDescriptor.getElement();
       }
 
+      @Override
       public boolean update() {
         return false;
       }
 
+      @Override
       public PsiFileNode getElement() {
         return myNode;
       }
@@ -402,15 +391,17 @@ class AssociationsEditor {
   }
 
   private static class MyCellRenderer extends PsiElementListCellRenderer<PsiFile> {
+    @Override
     public String getElementText(PsiFile file) {
       return file.getName();
     }
 
+    @Override
     protected String getContainerText(PsiFile psiElement, String string) {
-      //noinspection ConstantConditions
       return "(" + psiElement.getVirtualFile().getParent().getPresentableUrl() + ")";
     }
 
+    @Override
     protected int getIconFlags() {
       return 0;
     }

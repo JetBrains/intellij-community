@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,17 +17,25 @@ package com.intellij.find.impl;
 
 import com.intellij.codeInsight.hint.HintUtil;
 import com.intellij.ide.BrowserUtil;
+import com.intellij.openapi.Disposable;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.popup.ComponentPopupBuilder;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.util.MinimizeButton;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.ui.ColorUtil;
 import com.intellij.ui.ScrollPaneFactory;
+import com.intellij.ui.components.labels.LinkLabel;
+import com.intellij.ui.components.labels.LinkListener;
+import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;
-import javax.swing.text.BadLocationException;
-import javax.swing.text.html.HTMLEditorKit;
 import java.awt.*;
 
 /**
@@ -37,14 +45,14 @@ public class RegExHelpPopup extends JPanel {
   private final JEditorPane myEditorPane;
   private final JScrollPane myScrollPane;
 
-  public RegExHelpPopup() throws BadLocationException {
+  public RegExHelpPopup() {
     setLayout(new BorderLayout());
 
     myEditorPane = new JEditorPane();
     myEditorPane.setEditable(false);
-    myEditorPane.setEditorKit(new HTMLEditorKit());
+    myEditorPane.setEditorKit(UIUtil.getHTMLEditorKit());
     myEditorPane.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
-    myEditorPane.setBackground(HintUtil.INFORMATION_COLOR);
+    myEditorPane.setBackground(HintUtil.getInformationColor());
 
     myEditorPane.setText("<html><h2> Summary of regular-expression constructs</h2> \n" +
                          " \n" +
@@ -52,8 +60,12 @@ public class RegExHelpPopup extends JPanel {
                          "  summary=\"Regular expression constructs, and what they match\"> \n" +
                          " \n" +
                          " <tr align=\"left\"> \n" +
-                         " <th bgcolor=\"#CCCCFF\" align=\"left\" id=\"construct\">Construct</th> \n" +
-                         " <th bgcolor=\"#CCCCFF\" align=\"left\" id=\"matches\">Matches</th> \n" +
+                         " <th bgcolor=\"" +
+                         ColorUtil.toHtmlColor(UIUtil.getLabelBackground()) +
+                         "\" align=\"left\" id=\"construct\">Construct</th> \n" +
+                         " <th bgcolor=\"" +
+                         ColorUtil.toHtmlColor(UIUtil.getLabelBackground()) +
+                         "\" align=\"left\" id=\"matches\">Matches</th> \n" +
                          " </tr> \n" +
                          " \n" +
                          " <tr><th>&nbsp;</th></tr> \n" +
@@ -328,16 +340,56 @@ public class RegExHelpPopup extends JPanel {
     add(myScrollPane, BorderLayout.CENTER);
   }
 
+  @NotNull
+  public static LinkLabel createRegExLink(@NotNull String title, @Nullable final Component owner, @Nullable final Logger logger) {
+    final Runnable action = createRegExLinkRunnable(owner, logger);
+    return new LinkLabel<>(title, null, new LinkListener<Object>() {
+
+      @Override
+      public void linkSelected(LinkLabel aSource, Object aLinkData) {
+        action.run();
+      }
+    });
+  }
+
+  @NotNull
+  public static Runnable createRegExLinkRunnable(@Nullable final Component owner, @Nullable final Logger logger) {
+    return new Runnable() {
+      JBPopup helpPopup;
+
+      @Override
+      public void run() {
+          if (helpPopup != null && !helpPopup.isDisposed() && helpPopup.isVisible()) {
+            return;
+          }
+        RegExHelpPopup content = new RegExHelpPopup();
+        final ComponentPopupBuilder builder = JBPopupFactory.getInstance().createComponentPopupBuilder(content, content);
+          helpPopup = builder.setCancelOnClickOutside(false).setBelongsToGlobalPopupStack(true).setFocusable(true).setRequestFocus(true)
+            .setMovable(true).setResizable(true)
+            .setCancelOnOtherWindowOpen(false).setCancelButton(new MinimizeButton("Hide"))
+            .setTitle("Regular expressions syntax").setDimensionServiceKey(null, "RegExHelpPopup", true).createPopup();
+          Disposer.register(helpPopup, new Disposable() {
+            @Override
+            public void dispose() {
+              destroyPopup();
+            }
+          });
+          if (owner != null) {
+            helpPopup.showInCenterOf(owner);
+          }
+          else {
+            helpPopup.showInFocusCenter();
+          }
+      }
+
+      private void destroyPopup() {
+        helpPopup = null;
+      }
+    };
+  }
+
   @Override
   public Dimension getPreferredSize() {
-    return new Dimension(600, 300);
+    return JBUI.size(600, 300);
   }
-
-  public static JBPopup createRegExHelpPopup() throws BadLocationException {
-    final ComponentPopupBuilder builder = JBPopupFactory.getInstance().createComponentPopupBuilder(new RegExHelpPopup(), null);
-    return builder.setCancelOnClickOutside(false).setBelongsToGlobalPopupStack(true).setFocusable(true).setRequestFocus(true).setMovable(true).setResizable(true)
-      .setCancelOnOtherWindowOpen(false).setCancelButton(new MinimizeButton("Hide"))
-      .setTitle("Regular expressions syntax").setDimensionServiceKey(null, "RegExHelpPopup", true).createPopup();
-  }
-
 }

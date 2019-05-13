@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.uiDesigner.quickFixes;
 
 import com.intellij.CommonBundle;
@@ -51,6 +37,7 @@ public final class CreateClassToBindFix extends QuickFix{
     myClassName = className;
   }
 
+  @Override
   public void run() {
     final Project project = myEditor.getProject();
     final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
@@ -65,64 +52,50 @@ public final class CreateClassToBindFix extends QuickFix{
     }
 
     ApplicationManager.getApplication().runWriteAction(
-      new Runnable() {
-        public void run() {
-          CommandProcessor.getInstance().executeCommand(
-            project,
-            new Runnable() {
-              public void run() {
-                // 1. Create all necessary packages
-                final int indexOfLastDot = myClassName.lastIndexOf('.');
-                final String packageName = myClassName.substring(0, indexOfLastDot != -1 ? indexOfLastDot : 0);
-                final PsiDirectory psiDirectory;
-                if(packageName.length() > 0){
-                  final PackageWrapper packageWrapper = new PackageWrapper(PsiManager.getInstance(project), packageName);
-                  try {
-                    psiDirectory = RefactoringUtil.createPackageDirectoryInSourceRoot(packageWrapper, sourceRoot);
-                    LOG.assertTrue(psiDirectory != null);
-                  }
-                  catch (final IncorrectOperationException e) {
-                    ApplicationManager.getApplication().invokeLater(new Runnable(){
-                                        public void run() {
-                                          Messages.showErrorDialog(
-                                            myEditor,
-                                            UIDesignerBundle.message("error.cannot.create.package", packageName, e.getMessage()),
-                                            CommonBundle.getErrorTitle()
-                                          );
-                                        }
-                                      });
-                    return;
-                  }
-                }
-                else{
-                  psiDirectory = PsiManager.getInstance(project).findDirectory(sourceRoot);
-                  LOG.assertTrue(psiDirectory != null);
-                }
+      () -> CommandProcessor.getInstance().executeCommand(
+        project,
+        () -> {
+          // 1. Create all necessary packages
+          final int indexOfLastDot = myClassName.lastIndexOf('.');
+          final String packageName = myClassName.substring(0, indexOfLastDot != -1 ? indexOfLastDot : 0);
+          final PsiDirectory psiDirectory;
+          if(packageName.length() > 0){
+            final PackageWrapper packageWrapper = new PackageWrapper(PsiManager.getInstance(project), packageName);
+            try {
+              psiDirectory = RefactoringUtil.createPackageDirectoryInSourceRoot(packageWrapper, sourceRoot);
+              LOG.assertTrue(psiDirectory != null);
+            }
+            catch (final IncorrectOperationException e) {
+              ApplicationManager.getApplication().invokeLater(() -> Messages.showErrorDialog(
+                myEditor,
+                UIDesignerBundle.message("error.cannot.create.package", packageName, e.getMessage()),
+                CommonBundle.getErrorTitle()
+              ));
+              return;
+            }
+          }
+          else{
+            psiDirectory = PsiManager.getInstance(project).findDirectory(sourceRoot);
+            LOG.assertTrue(psiDirectory != null);
+          }
 
-                // 2. Create class in the package
-                try {
-                  final String name = myClassName.substring(indexOfLastDot != -1 ? indexOfLastDot + 1 : 0);
-                  final PsiClass aClass = JavaDirectoryService.getInstance().createClass(psiDirectory, name);
-                  createBoundFields(aClass);
-                }
-                catch (final IncorrectOperationException e) {
-                  ApplicationManager.getApplication().invokeLater(new Runnable() {
-                                    public void run() {
-                                      Messages.showErrorDialog(
-                                        myEditor,
-                                        UIDesignerBundle.message("error.cannot.create.class", packageName, e.getMessage()),
-                                        CommonBundle.getErrorTitle()
-                                      );
-                                    }
-                                  });
-                }
-              }
-            },
-            getName(),
-            null
-          );
-        }
-      }
+          // 2. Create class in the package
+          try {
+            final String name = myClassName.substring(indexOfLastDot != -1 ? indexOfLastDot + 1 : 0);
+            final PsiClass aClass = JavaDirectoryService.getInstance().createClass(psiDirectory, name);
+            createBoundFields(aClass);
+          }
+          catch (final IncorrectOperationException e) {
+            ApplicationManager.getApplication().invokeLater(() -> Messages.showErrorDialog(
+              myEditor,
+              UIDesignerBundle.message("error.cannot.create.class", packageName, e.getMessage()),
+              CommonBundle.getErrorTitle()
+            ));
+          }
+        },
+        getName(),
+        null
+      )
     );
   }
 
@@ -131,8 +104,9 @@ public final class CreateClassToBindFix extends QuickFix{
     final GlobalSearchScope scope = GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(module);
     final PsiManager psiManager = PsiManager.getInstance(myEditor.getProject());
 
-    final Ref<IncorrectOperationException> exception = new Ref<IncorrectOperationException>();
+    final Ref<IncorrectOperationException> exception = new Ref<>();
     FormEditingUtil.iterate(myEditor.getRootContainer(), new FormEditingUtil.ComponentVisitor() {
+      @Override
       public boolean visit(final IComponent component) {
         if (component.getBinding() != null) {
           final PsiClass fieldClass = JavaPsiFacade.getInstance(psiManager.getProject()).findClass(component.getComponentClassName(), scope);

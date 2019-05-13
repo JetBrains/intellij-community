@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,31 +15,64 @@
  */
 package com.intellij.util.containers;
 
+import com.intellij.util.IncorrectOperationException;
 import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
-public class OrderedSet<T> extends AbstractList<T> implements Set<T>, RandomAccess {
+// have to extend ArrayList because otherwise the spliterator() methods declared in Set and List are in conflict
+public class OrderedSet<T> extends ArrayList<T> implements Set<T>, RandomAccess {
   private final OpenTHashSet<T> myHashSet;
-  private final ArrayList<T> myElements;
 
   public OrderedSet() {
     this(ContainerUtil.<T>canonicalStrategy());
   }
 
-  public OrderedSet(TObjectHashingStrategy<T> hashingStrategy) {
+  public OrderedSet(@NotNull Collection<? extends T> set) {
+    super(set.size());
+    myHashSet = new OpenTHashSet<T>(set.size());
+    addAll(set);
+  }
+
+  public OrderedSet(@NotNull TObjectHashingStrategy<T> hashingStrategy) {
     this(hashingStrategy, 4);
   }
 
-  public OrderedSet(TObjectHashingStrategy<T> hashingStrategy, int capacity) {
+  public OrderedSet(@NotNull TObjectHashingStrategy<T> hashingStrategy, int capacity) {
+    super(capacity);
     myHashSet = new OpenTHashSet<T>(capacity, hashingStrategy);
-    myElements = new ArrayList<T>(capacity);
+  }
+
+  public OrderedSet(int capacity) {
+    this(ContainerUtil.<T>canonicalStrategy(), capacity);
   }
 
   @Override
-  public int size() {
-    return myElements.size();
+  public boolean removeAll(@NotNull Collection<?> c) {
+    boolean removed = false;
+    for (Object o : c) {
+      removed |= remove(o);
+    }
+    return removed;
+  }
+
+  @Override
+  public boolean retainAll(@NotNull Collection<?> c) {
+    boolean removed = false;
+    for (int i = size() - 1; i >= 0; i--) {
+      Object o = get(i);
+      if (!c.contains(o)) {
+        removed |= remove(o);
+      }
+    }
+    return removed;
+  }
+
+  @NotNull
+  @Override
+  public List<T> subList(int fromIndex, int toIndex) {
+    throw new IncorrectOperationException();
   }
 
   @Override
@@ -48,9 +81,18 @@ public class OrderedSet<T> extends AbstractList<T> implements Set<T>, RandomAcce
   }
 
   @Override
+  public boolean addAll(@NotNull Collection<? extends T> c) {
+    boolean result = false;
+    for (T t : c) {
+      result |= add(t);
+    }
+    return result;
+  }
+
+  @Override
   public boolean add(T o) {
-    if (myHashSet.add(o)){
-      myElements.add(o);
+    if (myHashSet.add(o)) {
+      super.add(o);
       return true;
     }
     return false;
@@ -58,8 +100,8 @@ public class OrderedSet<T> extends AbstractList<T> implements Set<T>, RandomAcce
 
   @Override
   public boolean remove(Object o) {
-    if (myHashSet.remove(o)){
-      myElements.remove(o);
+    if (myHashSet.remove(o)) {
+      super.remove(o);
       return true;
     }
     return false;
@@ -68,73 +110,46 @@ public class OrderedSet<T> extends AbstractList<T> implements Set<T>, RandomAcce
   @Override
   public void clear() {
     myHashSet.clear();
-    myElements.clear();
-  }
-
-  @NotNull
-  @Override
-  public Object[] toArray() {
-    return myElements.toArray();
-  }
-
-  @NotNull
-  @Override
-  public <T> T[] toArray(T[] a) {
-    return myElements.toArray(a);
+    super.clear();
   }
 
   @Override
-  public boolean addAll(final int index, final Collection<? extends T> c) {
+  public boolean addAll(int index, @NotNull Collection<? extends T> c) {
     throw new UnsupportedOperationException();
   }
 
   @Override
-  public T get(final int index) {
-    return myElements.get(index);
-  }
-
-  @Override
-  public T set(final int index, final T element) {
-    final T removed = remove(index);
+  public T set(int index, @NotNull T element) {
+    T removed = remove(index);
     add(index, element);
     return removed;
   }
 
   @Override
-  public void add(final int index, final T element) {
-    if (myHashSet.add(element)){
-      myElements.add(index, element);
+  public void add(int index, @NotNull T element) {
+    if (myHashSet.add(element)) {
+      super.add(index, element);
     }
   }
 
   @Override
-  public T remove(final int index) {
-    final T t = myElements.remove(index);
+  public T remove(int index) {
+    T t = super.remove(index);
     myHashSet.remove(t);
     return t;
   }
 
   @Override
-  public int indexOf(final Object o) {
-    final int index = myHashSet.index((T)o);
-    return index >= 0? myElements.indexOf(myHashSet.get(index)) : -1;
+  public int indexOf(Object o) {
+    @SuppressWarnings("unchecked") T t = (T)o;
+    int index = myHashSet.index(t);
+    return index >= 0 ? super.indexOf(myHashSet.get(index)) : -1;
   }
 
   @Override
-  public int lastIndexOf(final Object o) {
-    final int index = myHashSet.index((T)o);
-    return index >= 0 ? myElements.lastIndexOf(myHashSet.get(index)) : -1;
-  }
-
-  @NotNull
-  @Override
-  public ListIterator<T> listIterator() {
-    return myElements.listIterator();
-  }
-
-  @NotNull
-  @Override
-  public ListIterator<T> listIterator(final int index) {
-    return myElements.listIterator(index);
+  public int lastIndexOf(Object o) {
+    @SuppressWarnings("unchecked") T t = (T)o;
+    int index = myHashSet.index(t);
+    return index >= 0 ? super.lastIndexOf(myHashSet.get(index)) : -1;
   }
 }

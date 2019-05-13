@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,31 +17,29 @@ package com.intellij.usages;
 
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.util.Factory;
-import org.jetbrains.annotations.NonNls;
+import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.Collection;
+import java.util.Collections;
 
 /**
  * @author max
  */
 public class FindUsagesProcessPresentation {
-  @NonNls
-  public static final String NAME_WITH_MNEMONIC_KEY = "NameWithMnemonic";
+  private final UsageViewPresentation myUsageViewPresentation;
 
-  private List<Action> myNotFoundActions;
   private boolean myShowPanelIfOnlyOneUsage;
   private boolean myShowNotFoundMessage;
   private Factory<ProgressIndicator> myProgressIndicatorFactory;
+  private Collection<VirtualFile> myLargeFiles;
+  private boolean myShowFindOptionsPrompt = true;
+  private volatile Runnable mySearchWithProjectFiles;
+  private volatile boolean myCanceled;
 
-  public void addNotFoundAction(Action action) {
-    if (myNotFoundActions == null) myNotFoundActions = new ArrayList<Action>();
-    myNotFoundActions.add(action);
-  }
-
-  public List<Action> getNotFoundActions() {
-    return myNotFoundActions;
+  public FindUsagesProcessPresentation(@NotNull UsageViewPresentation presentation) {
+    myUsageViewPresentation = presentation;
   }
 
   public boolean isShowNotFoundMessage() {
@@ -64,8 +62,49 @@ public class FindUsagesProcessPresentation {
     return myProgressIndicatorFactory;
   }
 
-  public void setProgressIndicatorFactory(final Factory<ProgressIndicator> progressIndicatorFactory) {
+  public void setProgressIndicatorFactory(@NotNull Factory<ProgressIndicator> progressIndicatorFactory) {
     myProgressIndicatorFactory = progressIndicatorFactory;
   }
+
+  @Nullable
+  public Runnable searchIncludingProjectFileUsages() {
+    return mySearchWithProjectFiles;
+  }
+
+  public void projectFileUsagesFound(@NotNull Runnable searchWithProjectFiles) {
+    mySearchWithProjectFiles = searchWithProjectFiles;
+  }
+
+  public void setLargeFilesWereNotScanned(@NotNull Collection<VirtualFile> largeFiles) {
+    myLargeFiles = largeFiles;
+  }
+
+  @NotNull
+  public Collection<VirtualFile> getLargeFiles() {
+    return myLargeFiles == null ? Collections.emptyList() : myLargeFiles;
+  }
+
+  public boolean isShowFindOptionsPrompt() {
+    return myShowFindOptionsPrompt;
+  }
+
+  @NotNull
+  public UsageViewPresentation getUsageViewPresentation() {
+    return myUsageViewPresentation;
+  }
+
+  public void setShowFindOptionsPrompt(boolean showFindOptionsPrompt) {
+    myShowFindOptionsPrompt = showFindOptionsPrompt;
+  }
+
+
+  public void setCanceled(boolean canceled) {
+    myCanceled = canceled;
+  }
+
+  public boolean isCanceled() {
+    return myCanceled;
+  }
 }
+
 

@@ -1,0 +1,13 @@
+def foo() {
+  4 <caret>
+}
+-----
+as
+false
+in
+instanceof
+new
+null
+super
+this
+true

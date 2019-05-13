@@ -16,10 +16,10 @@
 package com.intellij.codeInsight.hint;
 
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
-import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.NotNull;
 
 public class EscapeHandler extends EditorActionHandler {
   private final EditorActionHandler myOriginalHandler;
@@ -29,24 +29,16 @@ public class EscapeHandler extends EditorActionHandler {
   }
 
   @Override
-  public void execute(Editor editor, DataContext dataContext) {
-    Project project = PlatformDataKeys.PROJECT.getData(dataContext);
-    if (project == null || !HintManagerImpl.getInstanceImpl().hideHints(HintManager.HIDE_BY_ESCAPE | HintManager.HIDE_BY_ANY_KEY, true, false)) {
-      myOriginalHandler.execute(editor, dataContext);
+  public void doExecute(@NotNull Editor editor, Caret caret, DataContext dataContext) {
+    if (HintManagerImpl.getInstanceImpl().hideHints(HintManager.HIDE_BY_ESCAPE | HintManager.HIDE_BY_ANY_KEY, true, false)) {
+      return;
     }
+    myOriginalHandler.execute(editor, caret, dataContext);
   }
 
   @Override
-  public boolean isEnabled(Editor editor, DataContext dataContext) {
-    Project project = PlatformDataKeys.PROJECT.getData(dataContext);
-
-    if (project != null) {
-      HintManagerImpl hintManager = HintManagerImpl.getInstanceImpl();
-      if (hintManager.isEscapeHandlerEnabled()) {
-        return true;
-      }
-    }
-
-    return myOriginalHandler.isEnabled(editor, dataContext);
+  public boolean isEnabledForCaret(@NotNull Editor editor, @NotNull Caret caret, DataContext dataContext) {
+    HintManagerImpl hintManager = HintManagerImpl.getInstanceImpl();
+    return hintManager.isEscapeHandlerEnabled() || myOriginalHandler.isEnabled(editor, caret, dataContext);
   }
 }

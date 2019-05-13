@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.uiDesigner.compiler;
 
 import com.intellij.compiler.instrumentation.InstrumentationClassFinder;
@@ -20,12 +6,12 @@ import com.intellij.uiDesigner.core.SupportCode;
 import com.intellij.uiDesigner.lw.LwComponent;
 import com.intellij.uiDesigner.lw.LwIntrospectedProperty;
 import com.intellij.uiDesigner.lw.StringDescriptor;
-import org.jetbrains.asm4.Label;
-import org.jetbrains.asm4.MethodVisitor;
-import org.jetbrains.asm4.Opcodes;
-import org.jetbrains.asm4.Type;
-import org.jetbrains.asm4.commons.GeneratorAdapter;
-import org.jetbrains.asm4.commons.Method;
+import org.jetbrains.org.objectweb.asm.Label;
+import org.jetbrains.org.objectweb.asm.MethodVisitor;
+import org.jetbrains.org.objectweb.asm.Opcodes;
+import org.jetbrains.org.objectweb.asm.Type;
+import org.jetbrains.org.objectweb.asm.commons.GeneratorAdapter;
+import org.jetbrains.org.objectweb.asm.commons.Method;
 
 import javax.swing.*;
 import java.io.IOException;
@@ -49,6 +35,7 @@ public class StringPropertyCodeGenerator extends PropertyCodeGenerator implement
   private final Set myClassesRequiringLoadButtonText = new HashSet();
   private boolean myHaveSetDisplayedMnemonicIndex = false;
 
+  @Override
   public void generateClassStart(AsmCodeGenerator.FormClassVisitor visitor, final String name, final InstrumentationClassFinder classFinder) {
     myClassesRequiringLoadLabelText.remove(name);
     myClassesRequiringLoadButtonText.remove(name);
@@ -63,10 +50,12 @@ public class StringPropertyCodeGenerator extends PropertyCodeGenerator implement
     }
   }
 
+  @Override
   public boolean generateCustomSetValue(final LwComponent lwComponent,
                                         final InstrumentationClassFinder.PseudoClass componentClass,
                                         final LwIntrospectedProperty property,
                                         final GeneratorAdapter generator,
+                                        GetFontMethodProvider fontMethodProvider,
                                         final int componentLocal,
                                         final String formClassName) throws IOException, ClassNotFoundException {
     final InstrumentationClassFinder.PseudoClass abstractButtonClass = componentClass.getFinder().loadClass(AbstractButton.class.getName());
@@ -131,6 +120,7 @@ public class StringPropertyCodeGenerator extends PropertyCodeGenerator implement
     return false;
   }
 
+  @Override
   public void generatePushValue(final GeneratorAdapter generator, final Object value) {
     StringDescriptor descriptor = (StringDescriptor) value;
     if (descriptor == null) {
@@ -147,6 +137,7 @@ public class StringPropertyCodeGenerator extends PropertyCodeGenerator implement
     }
   }
 
+  @Override
   public void generateClassEnd(AsmCodeGenerator.FormClassVisitor visitor) {
     if (myClassesRequiringLoadLabelText.contains(visitor.getClassName())) {
       generateLoadTextMethod(visitor, AsmCodeGenerator.LOAD_LABEL_TEXT_METHOD, "javax/swing/JLabel", "setDisplayedMnemonic");
@@ -164,7 +155,7 @@ public class StringPropertyCodeGenerator extends PropertyCodeGenerator implement
     mv.visitCode();
     mv.visitTypeInsn(NEW, "java/lang/StringBuffer");
     mv.visitInsn(DUP);
-    mv.visitMethodInsn(INVOKESPECIAL, "java/lang/StringBuffer", "<init>", "()V");
+    mv.visitMethodInsn(INVOKESPECIAL, "java/lang/StringBuffer", "<init>", "()V", false);
     mv.visitVarInsn(ASTORE, 3);
     mv.visitInsn(ICONST_0);
     mv.visitVarInsn(ISTORE, 4);
@@ -178,19 +169,19 @@ public class StringPropertyCodeGenerator extends PropertyCodeGenerator implement
     mv.visitLabel(l0);
     mv.visitVarInsn(ILOAD, 7);
     mv.visitVarInsn(ALOAD, 2);
-    mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/String", "length", "()I");
+    mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/String", "length", "()I", false);
     Label l1 = new Label();
     mv.visitJumpInsn(IF_ICMPGE, l1);
     mv.visitVarInsn(ALOAD, 2);
     mv.visitVarInsn(ILOAD, 7);
-    mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/String", "charAt", "(I)C");
+    mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/String", "charAt", "(I)C", false);
     mv.visitIntInsn(BIPUSH, 38);
     Label l2 = new Label();
     mv.visitJumpInsn(IF_ICMPNE, l2);
     mv.visitIincInsn(7, 1);
     mv.visitVarInsn(ILOAD, 7);
     mv.visitVarInsn(ALOAD, 2);
-    mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/String", "length", "()I");
+    mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/String", "length", "()I", false);
     Label l3 = new Label();
     mv.visitJumpInsn(IF_ICMPNE, l3);
     mv.visitJumpInsn(GOTO, l1);
@@ -199,42 +190,42 @@ public class StringPropertyCodeGenerator extends PropertyCodeGenerator implement
     mv.visitJumpInsn(IFNE, l2);
     mv.visitVarInsn(ALOAD, 2);
     mv.visitVarInsn(ILOAD, 7);
-    mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/String", "charAt", "(I)C");
+    mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/String", "charAt", "(I)C", false);
     mv.visitIntInsn(BIPUSH, 38);
     mv.visitJumpInsn(IF_ICMPEQ, l2);
     mv.visitInsn(ICONST_1);
     mv.visitVarInsn(ISTORE, 4);
     mv.visitVarInsn(ALOAD, 2);
     mv.visitVarInsn(ILOAD, 7);
-    mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/String", "charAt", "(I)C");
+    mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/String", "charAt", "(I)C", false);
     mv.visitVarInsn(ISTORE, 5);
     mv.visitVarInsn(ALOAD, 3);
-    mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/StringBuffer", "length", "()I");
+    mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/StringBuffer", "length", "()I", false);
     mv.visitVarInsn(ISTORE, 6);
     mv.visitLabel(l2);
     mv.visitVarInsn(ALOAD, 3);
     mv.visitVarInsn(ALOAD, 2);
     mv.visitVarInsn(ILOAD, 7);
-    mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/String", "charAt", "(I)C");
-    mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/StringBuffer", "append", "(C)Ljava/lang/StringBuffer;");
+    mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/String", "charAt", "(I)C", false);
+    mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/StringBuffer", "append", "(C)Ljava/lang/StringBuffer;", false);
     mv.visitInsn(POP);
     mv.visitIincInsn(7, 1);
     mv.visitJumpInsn(GOTO, l0);
     mv.visitLabel(l1);
     mv.visitVarInsn(ALOAD, 1);
     mv.visitVarInsn(ALOAD, 3);
-    mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/StringBuffer", "toString", "()Ljava/lang/String;");
-    mv.visitMethodInsn(INVOKEVIRTUAL, componentClass, "setText", "(Ljava/lang/String;)V");
+    mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/StringBuffer", "toString", "()Ljava/lang/String;", false);
+    mv.visitMethodInsn(INVOKEVIRTUAL, componentClass, "setText", "(Ljava/lang/String;)V", false);
     mv.visitVarInsn(ILOAD, 4);
     Label l4 = new Label();
     mv.visitJumpInsn(IFEQ, l4);
     mv.visitVarInsn(ALOAD, 1);
     mv.visitVarInsn(ILOAD, 5);
-    mv.visitMethodInsn(INVOKEVIRTUAL, componentClass, setMnemonicMethodName, "(C)V");
+    mv.visitMethodInsn(INVOKEVIRTUAL, componentClass, setMnemonicMethodName, "(C)V", false);
     if (myHaveSetDisplayedMnemonicIndex) {
       mv.visitVarInsn(ALOAD, 1);
       mv.visitVarInsn(ILOAD, 6);
-      mv.visitMethodInsn(INVOKEVIRTUAL, componentClass, "setDisplayedMnemonicIndex", "(I)V");
+      mv.visitMethodInsn(INVOKEVIRTUAL, componentClass, "setDisplayedMnemonicIndex", "(I)V", false);
     }
     mv.visitLabel(l4);
     mv.visitInsn(RETURN);

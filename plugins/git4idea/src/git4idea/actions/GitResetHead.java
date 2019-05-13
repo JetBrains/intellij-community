@@ -1,33 +1,22 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.actions;
 
+import com.intellij.dvcs.DvcsUtil;
+import com.intellij.openapi.application.AccessToken;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.VcsNotifier;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import git4idea.GitUtil;
-import git4idea.commands.GitHandlerUtil;
-import git4idea.commands.GitLineHandler;
+import git4idea.commands.Git;
+import git4idea.commands.GitCommandResult;
 import git4idea.i18n.GitBundle;
 import git4idea.repo.GitRepositoryManager;
 import git4idea.ui.GitResetDialog;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
-import java.util.Set;
 
 /**
  * The reset action
@@ -36,6 +25,7 @@ public class GitResetHead extends GitRepositoryAction {
   /**
    * {@inheritDoc}
    */
+  @Override
   @NotNull
   protected String getActionName() {
     return GitBundle.getString("reset.action.name");
@@ -44,20 +34,32 @@ public class GitResetHead extends GitRepositoryAction {
   /**
    * {@inheritDoc}
    */
+  @Override
   protected void perform(@NotNull Project project,
                          @NotNull List<VirtualFile> gitRoots,
-                         @NotNull VirtualFile defaultRoot,
-                         Set<VirtualFile> affectedRoots,
-                         List<VcsException> exceptions) throws VcsException {
+                         @NotNull VirtualFile defaultRoot) {
     GitResetDialog d = new GitResetDialog(project, gitRoots, defaultRoot);
-    d.show();
-    if (!d.isOK()) {
+    if (!d.showAndGet()) {
       return;
     }
-    GitLineHandler h = d.handler();
-    affectedRoots.add(d.getGitRoot());
-    GitHandlerUtil.doSynchronously(h, GitBundle.getString("resetting.title"), h.printableCommandLine());
-    GitRepositoryManager manager = GitUtil.getRepositoryManager(project);
-    manager.updateRepository(d.getGitRoot());
+
+    new Task.Backgroundable(project, GitBundle.getString("resetting.title"), true) {
+      @Override
+      public void run(@NotNull ProgressIndicator indicator) {
+        try (AccessToken ignored = DvcsUtil.workingTreeChangeStarted(project, getActionName())) {
+          GitCommandResult result = Git.getInstance().runCommand(d.handler());
+          if (!result.success()) {
+            VcsNotifier.getInstance(project).notifyError(GitBundle.getString("resetting.title"),
+                                                         result.getErrorOutputAsHtmlString());
+          }
+        }
+      }
+
+      @Override
+      public void onFinished() {
+        GitRepositoryManager.getInstance(project).updateRepository(d.getGitRoot());
+        VfsUtil.markDirtyAndRefresh(true, true, false, d.getGitRoot());
+      }
+    }.queue();
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,31 +17,39 @@ package com.intellij.openapi.actionSystem.impl;
 
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.WeakHashMap;
+import java.util.Map;
 
 public class PresentationFactory {
-  private final WeakHashMap<AnAction,Presentation> myAction2Presentation;
+  private final Map<AnAction,Presentation> myAction2Presentation = ContainerUtil.createWeakMap();
 
-  public PresentationFactory() {
-    myAction2Presentation = new WeakHashMap<AnAction, Presentation>();
-  }
-
+  @NotNull
   public final Presentation getPresentation(@NotNull AnAction action){
+    ApplicationManager.getApplication().assertIsDispatchThread();
     Presentation presentation = myAction2Presentation.get(action);
     if (presentation == null || !action.isDefaultIcon()){
-      presentation = action.getTemplatePresentation().clone();
-      myAction2Presentation.put(action, processPresentation(presentation));
+      Presentation templatePresentation = action.getTemplatePresentation();
+      if (presentation == null) {
+        presentation = templatePresentation.clone();
+        myAction2Presentation.put(action, presentation);
+      }
+      if (!action.isDefaultIcon()) {
+        presentation.setIcon(templatePresentation.getIcon());
+        presentation.setDisabledIcon(templatePresentation.getDisabledIcon());
+      }
+      processPresentation(presentation);
     }
     return presentation;
   }
 
-  protected Presentation processPresentation(Presentation presentation) {
-    return presentation;
+  protected void processPresentation(Presentation presentation) {
   }
 
   public void reset() {
+    ApplicationManager.getApplication().assertIsDispatchThread();
     myAction2Presentation.clear();
   }
 }

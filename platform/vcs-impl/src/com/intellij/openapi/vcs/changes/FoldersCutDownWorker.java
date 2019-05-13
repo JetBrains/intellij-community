@@ -25,17 +25,19 @@ public class FoldersCutDownWorker {
   private final Set<String> myPaths;
 
   public FoldersCutDownWorker() {
-    myPaths = new HashSet<String>();
+    myPaths = new HashSet<>();
   }
 
   public boolean addCurrent(final VirtualFile file) {
+    String filePath = file.getPath();
+
     for (String path : myPaths) {
-      if (FileUtil.startsWith(file.getPath(), path)) {
+      if (FileUtil.startsWith(filePath, path)) {
         return false;
       }
     }
 
-    myPaths.add(file.getPath());
+    myPaths.add(filePath);
     return true;
   }
 }

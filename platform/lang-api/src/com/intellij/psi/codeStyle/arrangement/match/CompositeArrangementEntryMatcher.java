@@ -22,11 +22,10 @@ import java.util.*;
 
 /**
  * @author Denis Zhdanov
- * @since 7/17/12 11:26 AM
  */
 public class CompositeArrangementEntryMatcher implements ArrangementEntryMatcher {
 
-  @NotNull private final Set<ArrangementEntryMatcher> myMatchers = new HashSet<ArrangementEntryMatcher>();
+  @NotNull private final Set<ArrangementEntryMatcher> myMatchers = new HashSet<>();
 
   public CompositeArrangementEntryMatcher(@NotNull ArrangementEntryMatcher... matchers) {
     myMatchers.addAll(Arrays.asList(matchers));

@@ -25,6 +25,7 @@ import com.intellij.ide.util.PsiElementListCellRenderer;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
+import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.module.Module;
@@ -40,24 +41,26 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiShortNamesCache;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.RefactoringActionHandlerFactory;
-import com.intellij.ui.components.JBList;
 import com.intellij.util.IncorrectOperationException;
-import org.codehaus.groovy.util.ListHashMap;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
 
+import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
  * @author cdr
  */
 public class MoveClassToModuleFix implements IntentionAction {
-  private final Map<PsiClass, Module> myModules = new ListHashMap<PsiClass, Module>();
+  private final Map<PsiClass, Module> myModules = new LinkedHashMap<>();
   private final String myReferenceName;
   private final Module myCurrentModule;
   private final PsiDirectory mySourceRoot;
-  private static final Logger LOG = Logger.getInstance("#" + MoveClassToModuleFix.class.getName());
+  private static final Logger LOG = Logger.getInstance(MoveClassToModuleFix.class);
 
   public MoveClassToModuleFix(String referenceName, Module currentModule, PsiDirectory root, PsiElement psiElement) {
     myReferenceName = referenceName;
@@ -100,7 +103,7 @@ public class MoveClassToModuleFix implements IntentionAction {
 
   @Override
   public boolean isAvailable(@NotNull final Project project, final Editor editor, final PsiFile file) {
-    return !myModules.isEmpty();
+    return !myModules.isEmpty() && myModules.keySet().stream().allMatch(PsiElement::isValid);
   }
 
   @Override
@@ -110,37 +113,32 @@ public class MoveClassToModuleFix implements IntentionAction {
     }
     else {
       LOG.assertTrue(editor != null);
-      final JBList list = new JBList(myModules.keySet());
-      list.setCellRenderer(new PsiElementListCellRenderer<PsiClass>() {
-        @Override
-        public String getElementText(PsiClass psiClass) {
-          return psiClass.getQualifiedName(); 
-        }
-
-        @Nullable
-        @Override
-        protected String getContainerText(PsiClass element, String name) {
-          return null;
-        }
-
-        @Override
-        protected int getIconFlags() {
-          return 0;
-        }
-      });
-      JBPopupFactory.getInstance().createListPopupBuilder(list)
+      JBPopupFactory.getInstance()
+        .createPopupChooserBuilder(ContainerUtil.newArrayList(myModules.keySet()))
         .setTitle("Choose Class to Move")
+        .setRenderer(new PsiElementListCellRenderer<PsiClass>() {
+          @Override
+          public String getElementText(PsiClass psiClass) {
+            return psiClass.getQualifiedName();
+          }
+
+          @Nullable
+          @Override
+          protected String getContainerText(PsiClass element, String name) {
+            return null;
+          }
+
+          @Override
+          protected int getIconFlags() {
+            return 0;
+          }
+        })
         .setMovable(false)
         .setResizable(false)
         .setRequestFocus(true)
-        .setItemChoosenCallback(new Runnable() {
-          public void run() {
-            final Object value = list.getSelectedValue();
-            if (value instanceof PsiClass) {
-              moveClass(project, editor, file, (PsiClass)value);
-            }
-          }
-        }).createPopup().showInBestPositionFor(editor);
+        .setItemChosenCallback((value) -> TransactionGuard.getInstance().submitTransactionAndWait(() -> moveClass(project, editor, file, value)))
+        .createPopup()
+        .showInBestPositionFor(editor);
     }
   }
 
@@ -153,7 +151,7 @@ public class MoveClassToModuleFix implements IntentionAction {
     PsiDirectory directory = PackageUtil
       .findOrCreateDirectoryForPackage(myCurrentModule, StringUtil.getPackageName(fqName), mySourceRoot, true);
     DataContext context = SimpleDataContext.getSimpleContext(LangDataKeys.TARGET_PSI_ELEMENT.getName(), directory, dataContext);
-    
+
     moveHandler.invoke(project, new PsiElement[]{aClass}, context);
     PsiReference reference = file.findReferenceAt(editor.getCaretModel().getOffset());
     PsiClass newClass = JavaPsiFacade.getInstance(project).findClass(fqName, GlobalSearchScope.moduleScope(myCurrentModule));
@@ -183,9 +181,9 @@ public class MoveClassToModuleFix implements IntentionAction {
     final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
     final Module currentModule = fileIndex.getModuleForFile(classVFile);
     if (currentModule == null) return;
-    VirtualFile[] sourceRoots = ModuleRootManager.getInstance(currentModule).getSourceRoots();
-    if (sourceRoots.length == 0) return;
-    final PsiDirectory sourceDirectory = PsiManager.getInstance(project).findDirectory(sourceRoots[0]);
+    List<VirtualFile> sourceRoots = ModuleRootManager.getInstance(currentModule).getSourceRoots(JavaModuleSourceRootTypes.SOURCES);
+    if (sourceRoots.isEmpty()) return;
+    final PsiDirectory sourceDirectory = PsiManager.getInstance(project).findDirectory(sourceRoots.get(0));
     if (sourceDirectory == null) return;
 
     VirtualFile vsourceRoot = fileIndex.getSourceRootForFile(classVFile);

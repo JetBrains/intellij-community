@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,55 +15,39 @@
  */
 package com.intellij.codeInsight.template.emmet.filters;
 
-import com.intellij.codeInsight.template.emmet.generators.XmlZenCodingGenerator;
+import com.intellij.codeInsight.template.XslTextContextType;
 import com.intellij.codeInsight.template.emmet.generators.XmlZenCodingGeneratorImpl;
 import com.intellij.codeInsight.template.emmet.nodes.GenerationNode;
 import com.intellij.codeInsight.template.emmet.tokens.TemplateToken;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.xml.XmlAttribute;
-import com.intellij.psi.xml.XmlDocument;
 import com.intellij.psi.xml.XmlTag;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author Eugene.Kudelevsky
- */
 public class XslZenCodingFilter extends ZenCodingFilter {
-  private final XmlZenCodingGenerator myDelegate = new XmlZenCodingGeneratorImpl();
+  private final XmlZenCodingGeneratorImpl myDelegate = new XmlZenCodingGeneratorImpl();
   @NonNls private static final String SELECT_ATTR_NAME = "select";
 
   @NotNull
   @Override
   public GenerationNode filterNode(@NotNull final GenerationNode node) {
     TemplateToken token = node.getTemplateToken();
-    if (token != null) {
-      XmlDocument document = token.getFile().getDocument();
-      if (document != null) {
-        final XmlTag tag = document.getRootTag();
-        if (tag != null) {
-          for (Pair<String, String> pair : token.getAttribute2Value()) {
-            if (SELECT_ATTR_NAME.equals(pair.first)) {
-              return node;
-            }
-          }
-          ApplicationManager.getApplication().runWriteAction(new Runnable() {
-            @Override
-            public void run() {
-              if (isOurTag(tag, node.getChildren().size() > 0)) {
-                XmlAttribute attribute = tag.getAttribute(SELECT_ATTR_NAME);
-                if (attribute != null) {
-                  attribute.delete();
-                }
-              }
-            }
-          });
-          return node;
-        }
+    final XmlTag tag = token != null ? token.getXmlTag() : null;
+    if (tag != null) {
+      if (token.getAttributes().containsKey(SELECT_ATTR_NAME)) {
+        return node;
       }
+      ApplicationManager.getApplication().runWriteAction(() -> {
+        if (isOurTag(tag, node.getChildren().size() > 0)) {
+          XmlAttribute attribute = tag.getAttribute(SELECT_ATTR_NAME);
+          if (attribute != null) {
+            attribute.delete();
+          }
+        }
+      });
+      return node;
     }
     return node;
   }
@@ -90,7 +74,12 @@ public class XslZenCodingFilter extends ZenCodingFilter {
 
   @Override
   public boolean isAppliedByDefault(@NotNull PsiElement context) {
-    VirtualFile vFile = context.getContainingFile().getVirtualFile();
-    return vFile != null && "xsl".equals(vFile.getExtension());
+    return XslTextContextType.isXslOrXsltFile(context.getContainingFile()) || super.isAppliedByDefault(context);
+  }
+
+  @NotNull
+  @Override
+  public String getDisplayName() {
+    return "XSL tuning";
   }
 }

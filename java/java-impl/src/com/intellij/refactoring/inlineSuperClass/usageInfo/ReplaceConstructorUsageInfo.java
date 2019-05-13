@@ -14,17 +14,12 @@
  * limitations under the License.
  */
 
-/*
- * User: anna
- * Date: 29-Aug-2008
- */
 package com.intellij.refactoring.inlineSuperClass.usageInfo;
 
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.refactoring.util.FixableUsageInfo;
-import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
 
 public class ReplaceConstructorUsageInfo extends FixableUsageInfo{
@@ -38,8 +33,10 @@ public class ReplaceConstructorUsageInfo extends FixableUsageInfo{
     final PsiMethod[] constructors = targetClasses[0].getConstructors();
     final PsiMethod constructor = element.resolveConstructor();
     if (constructor == null) {
-      if (constructors.length == 1 && constructors[0].getParameterList().getParametersCount() > 0 || constructors.length > 1) {
-        myConflict = CONSTRUCTOR_MATCHING_SUPER_NOT_FOUND;
+      if (element.getArgumentList() != null) {
+        if (constructors.length == 1 && !constructors[0].getParameterList().isEmpty() || constructors.length > 1) {
+          myConflict = CONSTRUCTOR_MATCHING_SUPER_NOT_FOUND;
+        }
       }
     } else {
       final PsiParameter[] superParameters = constructor.getParameterList().getParameters();
@@ -78,11 +75,8 @@ public class ReplaceConstructorUsageInfo extends FixableUsageInfo{
     }
 
     if (targetClasses.length > 1) {
-      final String conflict = "Constructor " + element.getText() + " can be replaced with any of " + StringUtil.join(targetClasses, new Function<PsiClass, String>() {
-        public String fun(final PsiClass psiClass) {
-          return psiClass.getQualifiedName();
-        }
-      }, ", ");
+      final String conflict = "Constructor " + element.getText() + " can be replaced with any of " + StringUtil.join(targetClasses,
+                                                                                                                     psiClass -> psiClass.getQualifiedName(), ", ");
       appendConflict(conflict);
     }
   }
@@ -95,12 +89,13 @@ public class ReplaceConstructorUsageInfo extends FixableUsageInfo{
     }
   }
 
+  @Override
   public void fixUsage() throws IncorrectOperationException {
     final PsiNewExpression newExpression = (PsiNewExpression)getElement();
     if (newExpression != null) {
-      final PsiElementFactory elementFactory = JavaPsiFacade.getInstance(newExpression.getProject()).getElementFactory();
+      final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(newExpression.getProject());
 
-      final StringBuffer buf = new StringBuffer();
+      final StringBuilder buf = new StringBuilder();
       buf.append("new ").append(myNewType.getCanonicalText());
       final PsiArrayInitializerExpression arrayInitializer = newExpression.getArrayInitializer();
       final PsiType newExpressionType = newExpression.getType();
@@ -115,11 +110,7 @@ public class ReplaceConstructorUsageInfo extends FixableUsageInfo{
         final PsiExpression[] arrayDimensions = newExpression.getArrayDimensions();
         if (arrayDimensions.length > 0) {
           buf.append("[");
-          buf.append(StringUtil.join(arrayDimensions, new Function<PsiExpression, String>() {
-            public String fun(PsiExpression psiExpression) {
-              return psiExpression.getText();
-            }
-          }, "]["));
+          buf.append(StringUtil.join(arrayDimensions, psiExpression -> psiExpression.getText(), "]["));
           buf.append("]");
           for (int i = 0; i < newExpressionType.getArrayDimensions() - arrayDimensions.length; i++) {
             buf.append("[]");
@@ -136,6 +127,7 @@ public class ReplaceConstructorUsageInfo extends FixableUsageInfo{
     }
   }
 
+  @Override
   public String getConflictMessage() {
     return myConflict;
   }

@@ -15,13 +15,12 @@
  */
 package com.intellij.openapi.updateSettings.impl;
 
-import com.intellij.util.IJSwingUtilities;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.application.ApplicationNamesInfo;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.Iterator;
 
 /**
  * @author nik
@@ -35,18 +34,27 @@ public class LabelTextReplacingUtil {
    * in text of component's labels
    */
   public static void replaceText(JComponent component) {
-    final Iterator<Component> children = IJSwingUtilities.getChildren(component);
-    while (children.hasNext()) {
-      Component child = children.next();
+    for (Component child : UIUtil.uiTraverser(component)) {
       if (child instanceof JLabel) {
         final JLabel label = (JLabel)child;
         String oldText = label.getText();
-        if (oldText == null) continue;
-        String newText = StringUtil.replace(oldText, "$PRODUCT$", ApplicationNamesInfo.getInstance().getProductName());
-        newText = StringUtil.replace(newText, "$FULLNAME$", ApplicationNamesInfo.getInstance().getFullProductName());
-        label.setText(newText);
+        if (oldText != null) {
+          label.setText(doReplace(oldText));
+        }
+      }
+      else if (child instanceof AbstractButton) {
+        AbstractButton button = (AbstractButton)child;
+        String oldText = button.getText();
+        if (oldText != null) {
+          button.setText(doReplace(oldText));
+        }
       }
     }
   }
 
+  private static String doReplace(String oldText) {
+    String newText = StringUtil.replace(oldText, "$PRODUCT$", ApplicationNamesInfo.getInstance().getProductName());
+    newText = StringUtil.replace(newText, "$FULLNAME$", ApplicationNamesInfo.getInstance().getFullProductName());
+    return newText;
+  }
 }

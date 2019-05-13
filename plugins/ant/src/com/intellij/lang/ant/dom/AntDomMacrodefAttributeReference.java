@@ -24,7 +24,7 @@ import com.intellij.pom.references.PomService;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.impl.source.resolve.ResolveCache;
-import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomTarget;
 import com.intellij.util.xml.DomUtil;
@@ -36,7 +36,6 @@ import java.util.List;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Aug 16, 2010
  */
 public class AntDomMacrodefAttributeReference extends AntDomReferenceBase{
 
@@ -44,38 +43,38 @@ public class AntDomMacrodefAttributeReference extends AntDomReferenceBase{
     super(element, range, true);
   }
 
+  @Override
   public String getUnresolvedMessagePattern() {
     return AntBundle.message("unknown.macro.attribute", getCanonicalText());
   }
 
+  @Override
   public PsiElement resolve() {
     return ResolveCache.getInstance(getElement().getProject()).resolveWithCaching(this, MyResolver.INSTANCE, false, false);
   }
 
-  @NotNull 
+  @Override
+  @NotNull
   public Object[] getVariants() {
     final AntDomMacroDef parentMacrodef = getParentMacrodef();
     if (parentMacrodef != null) {
-      final List variants = new ArrayList();
+      final List<Object> variants = new ArrayList<>();
       for (AntDomMacrodefAttribute attribute : parentMacrodef.getMacroAttributes()) {
         final String attribName = attribute.getName().getStringValue();
-        if (attribName != null && attribName.length() > 0) {
+        if (attribName != null && !attribName.isEmpty()) {
           final LookupElementBuilder builder = LookupElementBuilder.create(attribName);
           final LookupElement element = AutoCompletionPolicy.GIVE_CHANCE_TO_OVERWRITE.applyPolicy(builder);
           variants.add(element);
         }
       }
-      return ContainerUtil.toArray(variants, new Object[variants.size()]);
+      return ArrayUtil.toObjectArray(variants);
     }
     return EMPTY_ARRAY;
   }
 
-  @Nullable 
+  @Nullable
   private AntDomMacroDef getParentMacrodef() {
     final PsiElement element = getElement();
-    if (element == null) {
-      return null;
-    }
     final DomElement domElement = DomUtil.getDomElement(element);
     if (domElement == null) {
       return null;
@@ -84,14 +83,12 @@ public class AntDomMacrodefAttributeReference extends AntDomReferenceBase{
   }
 
   private static class MyResolver implements ResolveCache.Resolver {
-    
+
     static final MyResolver INSTANCE = new MyResolver();
-    
+
+    @Override
     public PsiElement resolve(@NotNull PsiReference psiReference, boolean incompleteCode) {
       final PsiElement element = psiReference.getElement();
-      if (element == null) {
-        return null;
-      }
       final DomElement domElement = DomUtil.getDomElement(element);
       if (domElement == null) {
         return null;

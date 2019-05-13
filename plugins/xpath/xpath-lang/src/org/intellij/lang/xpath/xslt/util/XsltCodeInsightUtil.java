@@ -41,15 +41,12 @@ import java.util.*;
 
 public class XsltCodeInsightUtil {
     public static final PsiElementFilter XSLT_PARAM_FILTER = new PsiElementFilter() {
+        @Override
         public boolean isAccepted(PsiElement element) {
             return element instanceof XmlTag && XsltSupport.isParam((XmlTag)element);
         }
     };
-    public static final Comparator<PsiElement> POSITION_COMPARATOR = new Comparator<PsiElement>() {
-        public int compare(PsiElement o1, PsiElement o2) {
-            return o1.getTextOffset() - o2.getTextOffset();
-        }
-    };
+    public static final Comparator<PsiElement> POSITION_COMPARATOR = (o1, o2) -> o1.getTextOffset() - o2.getTextOffset();
 
     private XsltCodeInsightUtil() {
     }
@@ -79,6 +76,7 @@ public class XsltCodeInsightUtil {
     public static PsiElement findFirstRealTagChild(@NotNull XmlTag xmlTag) {
         final PsiElement[] child = new PsiElement[1];
         xmlTag.processElements(new PsiElementProcessor() {
+            @Override
             public boolean execute(@NotNull PsiElement element) {
                 if (element instanceof XmlToken) {
                     if (((XmlToken)element).getTokenType() == XmlTokenType.XML_TAG_END) {
@@ -113,9 +111,9 @@ public class XsltCodeInsightUtil {
 
     @Nullable
     public static XmlTag findLastParam(XmlTag templateTag) {
-        final ArrayList<XmlTag> list = new ArrayList<XmlTag>();
+        final ArrayList<XmlTag> list = new ArrayList<>();
         final PsiElementProcessor.CollectFilteredElements<XmlTag> processor =
-                new PsiElementProcessor.CollectFilteredElements<XmlTag>(XSLT_PARAM_FILTER, list);
+          new PsiElementProcessor.CollectFilteredElements<>(XSLT_PARAM_FILTER, list);
         templateTag.processElements(processor, templateTag);
 
         return list.size() > 0 ? list.get(list.size() - 1) : null;
@@ -154,6 +152,7 @@ public class XsltCodeInsightUtil {
     public static XmlTag findLastWithParam(XmlTag templateTag) {
         final XmlTag[] lastParam = new XmlTag[1];
         templateTag.processElements(new PsiElementProcessor() {
+            @Override
             public boolean execute(@NotNull PsiElement element) {
                 if (element instanceof XmlTag) {
                     if ("with-param".equals(((XmlTag)element).getLocalName())) {
@@ -170,12 +169,13 @@ public class XsltCodeInsightUtil {
 
     public static XmlTag findVariableInsertionPoint(final XmlTag currentUsageTag, PsiElement usageBlock, final String referenceName, XmlTag... moreUsages) {
       // sort tags by document order
-      final Set<XmlTag> usages = new TreeSet<XmlTag>(POSITION_COMPARATOR);
+      final Set<XmlTag> usages = new TreeSet<>(POSITION_COMPARATOR);
       usages.add(currentUsageTag);
       ContainerUtil.addAll(usages, moreUsages);
 
       // collect all other possible unresolved references with the same name in the current template
       usageBlock.accept(new PsiRecursiveElementVisitor() {
+        @Override
         public void visitElement(PsiElement element) {
           if (element instanceof XPathVariableReference) {
             visitXPathVariableReference(((XPathVariableReference)element));

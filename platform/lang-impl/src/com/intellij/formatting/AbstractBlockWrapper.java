@@ -16,6 +16,7 @@
 
 package com.intellij.formatting;
 
+import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
@@ -34,11 +35,12 @@ import static java.util.Arrays.asList;
  */
 public abstract class AbstractBlockWrapper {
 
-  private static final Set<IndentImpl.Type> RELATIVE_INDENT_TYPES = new HashSet<IndentImpl.Type>(asList(
+  private static final Set<IndentImpl.Type> RELATIVE_INDENT_TYPES = new HashSet<>(asList(
     Indent.Type.NORMAL, Indent.Type.CONTINUATION, Indent.Type.CONTINUATION_WITHOUT_FIRST
   ));
 
-  protected WhiteSpace            myWhiteSpace;
+  private @NotNull final WhiteSpace myWhiteSpaceBefore;
+
   protected CompositeBlockWrapper myParent;
   protected int                   myStart;
   protected int                   myEnd;
@@ -53,12 +55,13 @@ public abstract class AbstractBlockWrapper {
   private   IndentImpl myIndent           = null;
   private AlignmentImpl myAlignment;
   private WrapImpl      myWrap;
+  private final ASTNode myNode;
 
   public AbstractBlockWrapper(final Block block,
-                              final WhiteSpace whiteSpace,
+                              final @NotNull WhiteSpace whiteSpaceBefore,
                               final CompositeBlockWrapper parent,
                               final TextRange textRange) {
-    myWhiteSpace = whiteSpace;
+    myWhiteSpaceBefore = whiteSpaceBefore;
     myParent = parent;
     myStart = textRange.getStartOffset();
     myEnd = textRange.getEndOffset();
@@ -67,6 +70,7 @@ public abstract class AbstractBlockWrapper {
     myAlignment = (AlignmentImpl)block.getAlignment();
     myWrap = (WrapImpl)block.getWrap();
     myLanguage = deriveLanguage(block);
+    myNode = block instanceof ASTBlock ? ((ASTBlock) block).getNode() : null;
   }
 
   @Nullable
@@ -76,13 +80,35 @@ public abstract class AbstractBlockWrapper {
     }
     return null;
   }
-  
+
+  /**
+   * Returns the whitespace preceding the block.
+   *
+   * @return the whitespace preceding the block
+   */
+  @NotNull
   public WhiteSpace getWhiteSpace() {
-    return myWhiteSpace;
+    return myWhiteSpaceBefore;
   }
 
+  /**
+   * Returns the AST node corresponding to the block, if known.
+   *
+   * @return the AST node or null
+   */
+  @Nullable
+  public ASTNode getNode() {
+    return myNode;
+  }
+
+  /**
+   * Returns the list of wraps for this block and its parent blocks that start at the same offset. The returned list is ordered from top
+   * to bottom (higher-level wraps go first). Stops if the wrap for a block is marked as "ignore parent wraps".
+   *
+   * @return the list of wraps.
+   */
   public ArrayList<WrapImpl> getWraps() {
-    final ArrayList<WrapImpl> result = new ArrayList<WrapImpl>(3);
+    final ArrayList<WrapImpl> result = new ArrayList<>(3);
     AbstractBlockWrapper current = this;
     while(current != null && current.getStartOffset() == getStartOffset()) {
       final WrapImpl wrap = current.getOwnWrap();
@@ -150,7 +176,7 @@ public abstract class AbstractBlockWrapper {
   }
 
   /**
-   * @return    wrap object configured for the current block wrapper if any; <code>null</code> otherwise
+   * @return    wrap object configured for the current block wrapper if any; {@code null} otherwise
    */
   public WrapImpl getOwnWrap() {
     return myWrap;
@@ -202,33 +228,7 @@ public abstract class AbstractBlockWrapper {
       //    }
       AlignmentImpl alignment = child.getAlignment();
       if (alignment != null) {
-        // Generally, we want to handle situation like the one below:
-        //   test("text", new Runnable() { 
-        //            @Override
-        //            public void run() {
-        //            }
-        //        },
-        //        new Runnable() {
-        //            @Override
-        //            public void run() {
-        //            }
-        //        }
-        //   );
-        // I.e. we want 'run()' method from the first anonymous class to be aligned with the 'run()' method of the second anonymous class.
-
-        AbstractBlockWrapper anchorBlock = alignment.getOffsetRespBlockBefore(child);
-        if (anchorBlock == null) {
-          anchorBlock = this;
-          if (anchorBlock instanceof CompositeBlockWrapper) {
-            List<AbstractBlockWrapper> children = ((CompositeBlockWrapper)anchorBlock).getChildren();
-            for (AbstractBlockWrapper c : children) {
-              if (c.getStartOffset() != getStartOffset()) {
-                anchorBlock = c;
-                break;
-              }
-            }
-          }
-        }
+        AbstractBlockWrapper anchorBlock = getAnchorBlock(child, targetBlockStartOffset, alignment);
         return anchorBlock.getNumberOfSymbolsBeforeBlock();
       }
       childIndent = CoreFormatterUtil.getIndent(options, child, getStartOffset());
@@ -297,12 +297,44 @@ public abstract class AbstractBlockWrapper {
     }
   }
 
+  @NotNull
+  private AbstractBlockWrapper getAnchorBlock(AbstractBlockWrapper child, int targetBlockStartOffset, AlignmentImpl alignment) {
+    // Generally, we want to handle situation like the one below:
+    //   test("text", new Runnable() { 
+    //            @Override
+    //            public void run() {
+    //            }
+    //        },
+    //        new Runnable() {
+    //            @Override
+    //            public void run() {
+    //            }
+    //        }
+    //   );
+    // I.e. we want 'run()' method from the first anonymous class to be aligned with the 'run()' method of the second anonymous class.
+
+    AbstractBlockWrapper anchorBlock = alignment.getOffsetRespBlockBefore(child);
+    if (anchorBlock == null) {
+      anchorBlock = this;
+      if (anchorBlock instanceof CompositeBlockWrapper) {
+        List<AbstractBlockWrapper> children = ((CompositeBlockWrapper)anchorBlock).getChildren();
+        for (AbstractBlockWrapper c : children) {
+          if (c.getStartOffset() != getStartOffset() && c.getStartOffset() < targetBlockStartOffset) {
+            anchorBlock = c;
+            break;
+          }
+        }
+      }
+    }
+    return anchorBlock;
+  }
+
   /**
    * Allows to answer if current wrapped block has a child block that is located before given block and has line feed.
    *
    * @param child   target child block to process
-   * @return        <code>true</code> if current block has a child that is located before the given block and contains line feed;
-   *                <code>false</code> otherwise
+   * @return        {@code true} if current block has a child that is located before the given block and contains line feed;
+   *                {@code false} otherwise
    */
   protected abstract boolean indentAlreadyUsedBefore(final AbstractBlockWrapper child);
 
@@ -313,10 +345,10 @@ public abstract class AbstractBlockWrapper {
    *
    * @return    object that encapsulates information about number of symbols before the current block
    */
-  protected abstract IndentData getNumberOfSymbolsBeforeBlock();
+  public abstract IndentData getNumberOfSymbolsBeforeBlock();
 
   /**
-   * @return    previous block for the current block if any; <code>null</code> otherwise
+   * @return    previous block for the current block if any; {@code null} otherwise
    */
   @Nullable
   protected abstract LeafBlockWrapper getPreviousBlock();
@@ -342,7 +374,7 @@ public abstract class AbstractBlockWrapper {
 
     IndentData indent = getIndent(indentOption, index, childIndent);
     if (childIndent.isRelativeToDirectParent()) {
-      return new IndentData(indent.getIndentSpaces() + CoreFormatterUtil.getOffsetBefore(CoreFormatterUtil.getFirstLeaf(this)),
+      return new IndentData(indent.getIndentSpaces() + CoreFormatterUtil.getStartColumn(CoreFormatterUtil.getFirstLeaf(this)),
                             indent.getSpaces());
     }
     if (myParent == null || (myFlags & CAN_USE_FIRST_CHILD_INDENT_AS_BLOCK_INDENT) != 0 && getWhiteSpace().containsLineFeeds()) {
@@ -364,7 +396,7 @@ public abstract class AbstractBlockWrapper {
    * </ul>
    *
    * @return    alignment of the current block or it's ancestor that starts at the same offset as the current if any;
-   *            <code>null</code> otherwise
+   *            {@code null} otherwise
    */
   @Nullable
   public AlignmentImpl getAlignmentAtStartOffset() {
@@ -396,13 +428,13 @@ public abstract class AbstractBlockWrapper {
    * sub-blocks that are located on new lines should also be indented to the point of composite block start.
    * <p/>
    * This method takes care about constructing target absolute indent of the given child block assuming that it's parent
-   * (referenced by <code>'this'</code>) or it's ancestor that starts at the same offset is aligned.
+   * (referenced by {@code 'this'}) or it's ancestor that starts at the same offset is aligned.
    *
    * @param indentFromParent    basic indent of given child from the current parent block
    * @param child               child block of the current aligned composite block
    * @return                    absolute indent to use for the given child block of the current composite block if alignment-affected
    *                            indent should be used for it;
-   *                            <code>null</code> otherwise
+   *                            {@code null} otherwise
    */
   @Nullable
   private IndentData createAlignmentIndent(IndentData indentFromParent, AbstractBlockWrapper child) {
@@ -471,10 +503,10 @@ public abstract class AbstractBlockWrapper {
   }
 
   /**
-   * Applies given indent value to '<code>indentFromParent'</code> property of the current wrapped block.
+   * Applies given indent value to '{@code indentFromParent'} property of the current wrapped block.
    * <p/>
-   * Given value is also applied to '<code>indentFromParent'</code> properties of all parents of the current wrapped block if the
-   * value is defined (not <code>null</code>).
+   * Given value is also applied to '{@code indentFromParent'} properties of all parents of the current wrapped block if the
+   * value is defined (not {@code null}).
    * <p/>
    * This property is used later during
    * {@link LeafBlockWrapper#calculateOffset(CommonCodeStyleSettings.IndentOptions)} leaf block offset calculation}.
@@ -496,7 +528,7 @@ public abstract class AbstractBlockWrapper {
    * {@link WhiteSpace white space} contains line feeds.
    *
    * @return    first parent block that starts before the current block and which white space contains line feeds if any;
-   *            <code>null</code> otherwise
+   *            {@code null} otherwise
    */
   @Nullable
   protected AbstractBlockWrapper findFirstIndentedParent() {
@@ -505,7 +537,7 @@ public abstract class AbstractBlockWrapper {
     return myParent.findFirstIndentedParent();
   }
 
-  public void setIndent(final IndentImpl indent) {
+  public void setIndent(@Nullable final IndentImpl indent) {
     myIndent = indent;
   }
 
@@ -523,7 +555,6 @@ public abstract class AbstractBlockWrapper {
     myIndent = null;
     myIndentFromParent = null;
     myParent = null;
-    myWhiteSpace = null;
   }
 
   @Override

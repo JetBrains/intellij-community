@@ -1,94 +1,100 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.xmlb;
 
-import com.intellij.openapi.util.JDOMUtil;
-import com.intellij.util.ArrayUtil;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.annotations.Tag;
 import org.jdom.Element;
 import org.jdom.Text;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
 
-class TagBinding implements Binding {
-  private final Accessor accessor;
-  private final Tag myTagAnnotation;
-  private final String myTagName;
-  private final Binding binding;
+class TagBinding extends BasePrimitiveBinding implements MultiNodeBinding {
+  private final String myTextIfEmpty;
 
-  public TagBinding(Accessor accessor, Tag tagAnnotation) {
-    this.accessor = accessor;
-    myTagAnnotation = tagAnnotation;
-    myTagName = tagAnnotation.value();
-    binding = XmlSerializerImpl.getBinding(accessor);
+  TagBinding(@NotNull MutableAccessor accessor, @NotNull Tag tagAnnotation) {
+    super(accessor, tagAnnotation.value(), null);
+
+    myTextIfEmpty = tagAnnotation.textIfEmpty();
   }
 
-  public Object serialize(Object o, Object context, SerializationFilter filter) {
-    Object value = accessor.read(o);
-    if (value == null) return context;
+  TagBinding(@NotNull MutableAccessor accessor, @NotNull String suggestedName) {
+    super(accessor, suggestedName, null);
 
-    Element v = new Element(myTagName);
+    myTextIfEmpty = "";
+  }
 
-    Object node = binding.serialize(value, v, filter);
-    if (node != v) {
-      JDOMUtil.addContent(v, node);
+  @Nullable
+  @Override
+  public Object serialize(@NotNull Object o, @Nullable SerializationFilter filter) {
+    Object value = myAccessor.read(o);
+    if (value == null) {
+      return null;
     }
 
-    return v;
-  }
-
-  public Object deserialize(Object o, @NotNull Object... nodes) {
-    assert nodes.length > 0;
-    Object[] children;
-    if (nodes.length == 1) {
-      children = JDOMUtil.getContent((Element)nodes[0]);
+    Element serialized = new Element(myName);
+    if (myBinding == null) {
+      serialized.addContent(new Text(XmlSerializerImpl.convertToString(value)));
     }
     else {
-      String name = ((Element)nodes[0]).getName();
-      List<Object> childrenList = new ArrayList<Object>();
-      for (Object node : nodes) {
-        assert ((Element)node).getName().equals(name);
-        ContainerUtil.addAll(childrenList, JDOMUtil.getContent((Element)node));
+      Object node = myBinding.serialize(value, serialized, filter);
+      if (node != null && node != serialized) {
+        addContent(serialized, node);
       }
-
-      children = ArrayUtil.toObjectArray(childrenList);
     }
+    return serialized;
+  }
 
-    if (children.length == 0) {
-      children = new Object[] {new Text(myTagAnnotation.textIfEmpty())};
+  @Nullable
+  @Override
+  public Object deserializeList(@NotNull Object context, @NotNull List<? extends Element> elements) {
+    List<Element> children;
+    if (elements.size() == 1) {
+      children = elements.get(0).getChildren();
     }
-
-    Object v = binding.deserialize(accessor.read(o), children);
-    Object value = XmlSerializerImpl.convert(v, accessor.getValueClass());
-    accessor.write(o, value);
-    return o;
+    else {
+      String name = elements.get(0).getName();
+      children = new ArrayList<Element>();
+      for (Element element : elements) {
+        assert element.getName().equals(name);
+        children.addAll(element.getChildren());
+      }
+    }
+    deserialize(context, children);
+    return context;
   }
 
-  public boolean isBoundTo(Object node) {
-    return node instanceof Element && ((Element)node).getName().equals(myTagName);
+  @Override
+  public boolean isMulti() {
+    return myBinding instanceof MultiNodeBinding && ((MultiNodeBinding)myBinding).isMulti();
   }
 
-  public Class getBoundNodeType() {
-    throw new UnsupportedOperationException("Method getBoundNodeType is not supported in " + getClass());
+  @Override
+  @NotNull
+  public Object deserialize(@NotNull Object context, @NotNull Element element) {
+    if (myBinding == null) {
+      String value = XmlSerializerImpl.getTextValue(element, myTextIfEmpty);
+      XmlSerializerImpl.doSet(context, value, myAccessor, XmlSerializerImpl.typeToClass(myAccessor.getGenericType()));
+    }
+    else {
+      deserialize(context, element.getChildren());
+    }
+    return context;
   }
 
-  public void init() {
+  private void deserialize(@NotNull Object context, @NotNull List<? extends Element> children) {
+    assert myBinding != null;
+    if (myBinding instanceof BeanBinding && myAccessor.isFinal()) {
+      ((BeanBinding)myBinding).deserializeInto(context, children.get(0));
+    }
+    else {
+      myAccessor.set(context, Binding.deserializeList(myBinding, myAccessor.read(context), children));
+    }
+  }
+
+  @Override
+  public boolean isBoundTo(@NotNull Element element) {
+    return element.getName().equals(myName);
   }
 }

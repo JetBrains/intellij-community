@@ -1,10 +1,19 @@
 package com.siyeh.ig.naming;
 
-import com.siyeh.ig.IGInspectionTestCase;
+import com.intellij.codeInspection.InspectionProfileEntry;
+import org.jetbrains.annotations.Nullable;
 
-public class ConstantNamingConventionInspectionTest extends IGInspectionTestCase {
+public class ConstantNamingConventionInspectionTest extends AbstractFieldNamingConventionInspectionTest {
 
-  public void test() throws Exception {
-    doTest("com/siyeh/igtest/naming/constant_naming_convention", new ConstantNamingConventionInspection());
+  public void testConstantNamingConvention() {
+    doTest();
+  }
+
+  @Nullable
+  @Override
+  protected InspectionProfileEntry getInspection() {
+    FieldNamingConventionInspection inspection = new FieldNamingConventionInspection();
+    inspection.setEnabled(true,new ConstantNamingConvention().getShortName());
+    return inspection;
   }
 }

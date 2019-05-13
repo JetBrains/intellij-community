@@ -29,11 +29,11 @@ import com.intellij.openapi.vcs.checkin.CheckinHandler;
 import com.intellij.openapi.vcs.checkin.VcsCheckinHandlerFactory;
 import com.intellij.openapi.vcs.ui.RefreshableOnComponent;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
+import java.util.HashSet;
 
 /**
  * @author yole
@@ -48,13 +48,14 @@ class CvsCheckinHandlerFactory extends VcsCheckinHandlerFactory {
   @Override
   protected CheckinHandler createVcsHandler(final CheckinProjectPanel panel) {
     return new CheckinHandler() {
+      @Override
       @Nullable
       public RefreshableOnComponent getAfterCheckinConfigurationPanel(Disposable parentDisposable) {
         final Project project = panel.getProject();
         final CvsVcs2 cvs = CvsVcs2.getInstance(project);
         final ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(project);
         final Collection<VirtualFile> roots = panel.getRoots();
-        final Collection<FilePath> files = new HashSet<FilePath>();
+        final Collection<FilePath> files = new HashSet<>();
         for (VirtualFile root : roots) {
           final VcsRoot vcsRoot = vcsManager.getVcsRootObjectFor(root);
           if (vcsRoot == null || vcsRoot.getVcs() != cvs) {

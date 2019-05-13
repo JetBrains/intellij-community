@@ -1,162 +1,214 @@
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.projectWizard;
 
 import com.intellij.ide.actions.ImportModuleAction;
 import com.intellij.ide.impl.NewProjectUtil;
-import com.intellij.ide.util.newProjectWizard.AddModuleWizard;
+import com.intellij.ide.util.newProjectWizard.AbstractProjectWizard;
 import com.intellij.ide.util.newProjectWizard.SelectTemplateSettings;
-import com.intellij.ide.util.newProjectWizard.SelectTemplateStep;
 import com.intellij.ide.util.projectWizard.ModuleWizardStep;
+import com.intellij.ide.wizard.Step;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkTypeId;
+import com.intellij.openapi.projectRoots.SimpleJavaSdkType;
+import com.intellij.openapi.projectRoots.impl.JavaAwareProjectJdkTableImpl;
+import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.roots.ui.configuration.DefaultModulesProvider;
 import com.intellij.openapi.roots.ui.configuration.actions.NewModuleAction;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.platform.ProjectTemplate;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.projectImport.ProjectImportProvider;
 import com.intellij.testFramework.PlatformTestCase;
+import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.util.Consumer;
+import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.Arrays;
+import java.util.function.Supplier;
 
 /**
  * @author Dmitry Avdeev
- *         Date: 10/29/12
  */
-public abstract class ProjectWizardTestCase extends PlatformTestCase {
-
-  protected final List<Sdk> mySdks = new ArrayList<Sdk>();
-  protected AddModuleWizard myWizard;
+public abstract class ProjectWizardTestCase<T extends AbstractProjectWizard> extends PlatformTestCase {
+  protected static final String DEFAULT_SDK = "default";
+  protected T myWizard;
   @Nullable
   private Project myCreatedProject;
+  private Sdk myOldDefaultProjectSdk;
+  private LanguageLevel myOldLevel;
 
-  protected Project createProjectFromTemplate(String group, String name, @Nullable Consumer<ModuleWizardStep> adjuster) throws IOException {
+  @Override
+  protected void setUp() throws Exception {
+    super.setUp();
+    myOldLevel = LanguageLevelProjectExtension.getInstance(ProjectManager.getInstance().getDefaultProject()).getLanguageLevel();
+    myOldDefaultProjectSdk = ProjectRootManager.getInstance(myProjectManager.getDefaultProject()).getProjectSdk();
+    Sdk projectSdk = ProjectRootManager.getInstance(getProject()).getProjectSdk();
+    for (final Sdk jdk : ProjectJdkTable.getInstance().getAllJdks()) {
+      if (projectSdk != jdk) {
+        ApplicationManager.getApplication().runWriteAction(() -> ProjectJdkTable.getInstance().removeJdk(jdk));
+      }
+    }
+    ProjectTypeStep.resetGroupForTests();
+  }
+
+  @Override
+  public void tearDown() throws Exception {
+    try {
+      if (myWizard != null) {
+        Disposer.dispose(myWizard.getDisposable());
+        myWizard = null;
+      }
+      if (myCreatedProject != null) {
+        PlatformTestUtil.forceCloseProjectWithoutSaving(myCreatedProject);
+        myCreatedProject = null;
+      }
+      ApplicationManager.getApplication().runWriteAction(() -> {
+        LanguageLevelProjectExtension extension =
+          LanguageLevelProjectExtension.getInstance(ProjectManager.getInstance().getDefaultProject());
+        extension.setDefault(null);
+        extension.setLanguageLevel(myOldLevel);
+        ProjectRootManager.getInstance(myProjectManager.getDefaultProject()).setProjectSdk(myOldDefaultProjectSdk);
+        JavaAwareProjectJdkTableImpl.removeInternalJdkInTests();
+      });
+      SelectTemplateSettings.getInstance().setLastTemplate(null, null);
+      UIUtil.dispatchAllInvocationEvents(); // let vfs update pass
+      LaterInvocator.dispatchPendingFlushes();
+    }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
+    finally {
+      super.tearDown();
+    }
+  }
+
+  protected Project createProjectFromTemplate(@NotNull String group, @Nullable String name, @Nullable Consumer<? super Step> adjuster) throws IOException {
     runWizard(group, name, null, adjuster);
     try {
       myCreatedProject = NewProjectUtil.createFromWizard(myWizard, null);
     }
     catch (Throwable e) {
-      myCreatedProject = ContainerUtil.find(myProjectManager.getOpenProjects(), new Condition<Project>() {
-        @Override
-        public boolean value(Project project) {
-          return myWizard.getProjectName().equals(project.getName());
-        }
-      });
+      myCreatedProject = ContainerUtil.find(myProjectManager.getOpenProjects(),
+                                            project -> myWizard.getProjectName().equals(project.getName()));
       throw new RuntimeException(e);
     }
     assertNotNull(myCreatedProject);
     UIUtil.dispatchAllInvocationEvents();
 
     Project[] projects = myProjectManager.getOpenProjects();
-    assertEquals(2, projects.length);
+    assertEquals(Arrays.asList(projects).toString(), 2, projects.length);
     return myCreatedProject;
   }
 
   @Nullable
-  protected Module createModuleFromTemplate(String group, String name, @Nullable Consumer<ModuleWizardStep> adjuster) throws IOException {
-    runWizard(group, name, getProject(), adjuster);
-    return createModuleFromWizard();
+  protected Module createModuleFromTemplate(String group, String name, @Nullable Consumer<? super Step> adjuster) throws IOException {
+    return createModuleFromTemplate(group, name, getProject(), adjuster);
   }
 
-  protected Module createModuleFromWizard() {
-    return new NewModuleAction().createModuleFromWizard(myProject, null, myWizard);
+  @Nullable
+  protected Module createModuleFromTemplate(String group, String name, @NotNull Project project, @Nullable Consumer<? super Step> adjuster)
+    throws IOException {
+    runWizard(group, name, project, adjuster);
+    return createModuleFromWizard(project);
   }
 
-  protected void runWizard(String group, String name, Project project, @Nullable Consumer<ModuleWizardStep> adjuster) throws IOException {
+  protected Module createModuleFromWizard(@NotNull Project project) {
+    return new NewModuleAction().createModuleFromWizard(project, null, myWizard);
+  }
 
+  protected void runWizard(@NotNull String group,
+                           @Nullable final String name,
+                           @Nullable Project project,
+                           @Nullable final Consumer<? super Step> adjuster) throws IOException {
     createWizard(project);
-    SelectTemplateStep step = (SelectTemplateStep)myWizard.getCurrentStepObject();
-    boolean condition = step.setSelectedTemplate(group, name);
-    if (!condition) {
-      throw new IllegalArgumentException(group + "/" + name + " template not found");
-    }
-    ProjectTemplate template = step.getSelectedTemplate();
-    assertNotNull(template);
-
-    if (adjuster != null) {
-      adjuster.consume(step);
+    ProjectTypeStep step = (ProjectTypeStep)myWizard.getCurrentStepObject();
+    if (!step.setSelectedTemplate(group, name)) {
+      throw new IllegalArgumentException(group + '/' + name + " template not found, available groups " + step.availableTemplateGroupsToString());
     }
 
-    runWizard(adjuster);
+    runWizard(step1 -> {
+      if (name != null && step1 instanceof ChooseTemplateStep) {
+        ((ChooseTemplateStep)step1).setSelectedTemplate(name);
+      }
+      if (adjuster != null) {
+        adjuster.consume(step1);
+      }
+    });
   }
 
-  protected void createWizard(Project project) throws IOException {
+  protected void runWizard(@Nullable Consumer<? super Step> adjuster) {
+    while (true) {
+      ModuleWizardStep currentStep = myWizard.getCurrentStepObject();
+      if (adjuster != null) {
+        adjuster.consume(currentStep);
+      }
+      if (myWizard.isLast()) {
+        break;
+      }
+      myWizard.doNextAction();
+      if (currentStep == myWizard.getCurrentStepObject()) {
+        throw new RuntimeException(currentStep + " is not validated");
+      }
+    }
+    myWizard.doFinishAction();
+  }
+
+  protected void createWizard(@Nullable Project project) throws IOException {
     File directory = FileUtil.createTempDirectory(getName(), "new", false);
     myFilesToDelete.add(directory);
-    myWizard = new AddModuleWizard(project, DefaultModulesProvider.createForProject(project), directory.getPath());
+    if (myWizard != null) {
+      Disposer.dispose(myWizard.getDisposable());
+      myWizard = null;
+    }
+    myWizard = createWizard(project, directory);
     UIUtil.dispatchAllInvocationEvents(); // to make default selection applied
   }
 
-  protected void runWizard(Consumer<ModuleWizardStep> adjuster) {
-    while (!myWizard.isLast()) {
-      myWizard.doNextAction();
-      if (adjuster != null) {
-        adjuster.consume(myWizard.getCurrentStepObject());
-      }
-    }
-    myWizard.doOk();
+  protected Project createProject(Consumer<? super Step> adjuster) throws IOException {
+    createWizard(null);
+    runWizard(adjuster);
+    myCreatedProject = NewProjectUtil.createFromWizard(myWizard, null);
+    return myCreatedProject;
   }
 
-  @Override
-  protected void setUp() throws Exception {
-    super.setUp();
-    Sdk projectSdk = ProjectRootManager.getInstance(getProject()).getProjectSdk();
-    Sdk[] jdks = ProjectJdkTable.getInstance().getAllJdks();
-    for (final Sdk jdk : jdks) {
-      if (projectSdk != jdk) {
-        ApplicationManager.getApplication().runWriteAction(new Runnable() {
-          public void run() {
-            ProjectJdkTable.getInstance().removeJdk(jdk);
-          }
-        });
-      }
-    }
+  protected T createWizard(Project project, File directory) {
+    throw new RuntimeException();
   }
 
-  @Override
-  public void tearDown() throws Exception {
-    if (myWizard != null) {
-      Disposer.dispose(myWizard.getDisposable());
-    }
-    if (myCreatedProject != null) {
-      myProjectManager.closeProject(myCreatedProject);
-      ApplicationManager.getApplication().runWriteAction(new Runnable() {
-        @Override
-        public void run() {
-          Disposer.dispose(myCreatedProject);
-        }
-      });
-    }
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      public void run() {
-        for (Sdk sdk : mySdks) {
-          ProjectJdkTable.getInstance().removeJdk(sdk);
-        }
-      }
+  protected void configureJdk() {
+    ApplicationManager.getApplication().runWriteAction(() -> {
+      addSdk(new SimpleJavaSdkType().createJdk(DEFAULT_SDK, SystemProperties.getJavaHome()));
+      addSdk(new SimpleJavaSdkType().createJdk("_other", SystemProperties.getJavaHome()));
+
+      System.out.println("ProjectWizardTestCase.configureJdk:");
+      System.out.println(Arrays.asList(ProjectJdkTable.getInstance().getAllJdks()));
     });
-    SelectTemplateSettings.getInstance().setLastTemplate(null, null);
-    super.tearDown();
+  }
+
+  protected void addSdk(final Sdk sdk) {
+    ApplicationManager.getApplication().runWriteAction(() -> ProjectJdkTable.getInstance().addJdk(sdk, getTestRootDisposable()));
   }
 
   protected Module importModuleFrom(ProjectImportProvider provider, String path) {
     return importFrom(path, getProject(), null, provider);
   }
 
-  protected Module importProjectFrom(String path, Consumer<ModuleWizardStep> adjuster, ProjectImportProvider... providers) {
+  protected Module importProjectFrom(String path, Consumer<? super Step> adjuster, ProjectImportProvider... providers) {
     Module module = importFrom(path, null, adjuster, providers);
     if (module != null) {
       myCreatedProject = module.getProject();
@@ -165,28 +217,35 @@ public abstract class ProjectWizardTestCase extends PlatformTestCase {
   }
 
   private Module importFrom(String path,
-                            @Nullable Project project, Consumer<ModuleWizardStep> adjuster,
+                            @Nullable Project project, Consumer<? super Step> adjuster,
                             final ProjectImportProvider... providers) {
+    return computeInWriteSafeContext(() -> doImportModule(path, project, adjuster, providers));
+  }
+
+  private Module doImportModule(String path, @Nullable Project project, Consumer<? super Step> adjuster, ProjectImportProvider[] providers) {
     VirtualFile file = LocalFileSystem.getInstance().refreshAndFindFileByPath(path);
     assertNotNull("Can't find " + path, file);
     assertTrue(providers[0].canImport(file, project));
 
-    myWizard = ImportModuleAction.createImportWizard(project, null, file, providers);
+    //noinspection unchecked
+    myWizard = (T)ImportModuleAction.createImportWizard(project, null, file, providers);
+    assertNotNull(myWizard);
     if (myWizard.getStepCount() > 0) {
       runWizard(adjuster);
     }
-    List<Module> modules = ImportModuleAction.createFromWizard(project, myWizard);
-    return modules == null || modules.isEmpty() ? null : modules.get(0);
+    return ContainerUtil.getFirstItem(ImportModuleAction.createFromWizard(project, myWizard));
+  }
+
+  private static <T> T computeInWriteSafeContext(Supplier<T> supplier) {
+    Ref<T> module = Ref.create();
+    ApplicationManager.getApplication().invokeLater(() -> module.set(supplier.get()));
+    UIUtil.dispatchAllInvocationEvents();
+    return module.get();
   }
 
   protected Sdk createSdk(String name, SdkTypeId sdkType) {
     final Sdk sdk = ProjectJdkTable.getInstance().createSdk(name, sdkType);
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      public void run() {
-        ProjectJdkTable.getInstance().addJdk(sdk);
-      }
-    });
-    mySdks.add(sdk);
+    ApplicationManager.getApplication().runWriteAction(() -> ProjectJdkTable.getInstance().addJdk(sdk, getTestRootDisposable()));
     return sdk;
   }
 }

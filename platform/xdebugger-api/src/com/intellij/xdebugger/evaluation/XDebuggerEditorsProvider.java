@@ -1,52 +1,57 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xdebugger.evaluation;
 
+import com.intellij.lang.Language;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.project.Project;
+import com.intellij.xdebugger.XDebuggerUtil;
+import com.intellij.xdebugger.XExpression;
 import com.intellij.xdebugger.XSourcePosition;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author nik
- */
-public abstract class XDebuggerEditorsProvider {
+import java.util.Collection;
+import java.util.Collections;
 
+public abstract class XDebuggerEditorsProvider {
   @NotNull
   public abstract FileType getFileType();
 
-  /**
-   * @deprecated use createDocument(Project,String,XSourcePosition,EvaluationMode) instead
-   * @return
-   */
+  /** @deprecated Use {@link #createDocument(Project, XExpression, XSourcePosition, EvaluationMode)} instead */
   @NotNull
   @Deprecated
-  @SuppressWarnings("MethodMayBeStatic")
-  public Document createDocument(@NotNull Project project, @NotNull String text, @Nullable XSourcePosition sourcePosition) {
-    throw new UnsupportedOperationException("This method should not be called");
-  }
-
-  @NotNull
+  @SuppressWarnings("DeprecatedIsStillUsed")
   public Document createDocument(@NotNull Project project,
                                  @NotNull String text,
                                  @Nullable XSourcePosition sourcePosition,
                                  @NotNull EvaluationMode mode) {
-    return createDocument(project, text, sourcePosition);
+    throw new AbstractMethodError();
   }
 
+  @NotNull
+  @SuppressWarnings("deprecation")
+  public Document createDocument(@NotNull Project project,
+                                 @NotNull XExpression expression,
+                                 @Nullable XSourcePosition sourcePosition,
+                                 @NotNull EvaluationMode mode) {
+    return createDocument(project, expression.getExpression(), sourcePosition, mode);
+  }
+
+  @NotNull
+  public Collection<Language> getSupportedLanguages(@NotNull Project project, @Nullable XSourcePosition sourcePosition) {
+    FileType type = getFileType();
+    return type instanceof LanguageFileType ? Collections.singleton(((LanguageFileType)type).getLanguage()) : Collections.emptyList();
+  }
+
+  @NotNull
+  public XExpression createExpression(@NotNull Project project, @NotNull Document document, @Nullable Language language, @NotNull EvaluationMode mode) {
+    return XDebuggerUtil.getInstance().createExpression(document.getText(), language, null, mode);
+  }
+
+  @NotNull
+  public InlineDebuggerHelper getInlineDebuggerHelper() {
+    return InlineDebuggerHelper.DEFAULT;
+  }
 }

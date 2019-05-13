@@ -20,20 +20,33 @@ package org.jetbrains.jps.gant;
  */
 public class DefaultBuildInfoPrinter implements BuildInfoPrinter {
   @Override
-  public void printProgressMessage(JpsGantProjectBuilder project, String message) {
-    project.info(message);
+  public void printProgressMessage(JpsGantProjectBuilder builder, String message) {
+    builder.info(message);
   }
 
   @Override
-  public void printCompilationErrors(JpsGantProjectBuilder project, String compilerName, String messages) {
-    project.error(messages);
+  public void printBlockOpenedMessage(JpsGantProjectBuilder builder, String blockId) {
   }
 
   @Override
-  public void printCompilationFinish(JpsGantProjectBuilder project, String compilerName) {
+  public void printBlockClosedMessage(JpsGantProjectBuilder builder, String blockId) {
   }
 
   @Override
-  public void printCompilationStart(JpsGantProjectBuilder project, String compilerName) {
+  public void printStatisticsMessage(JpsGantProjectBuilder builder, String key, String value) {
+    builder.info("Build statistics: " + key + " = " + value);
+  }
+
+  @Override
+  public void printCompilationErrors(JpsGantProjectBuilder builder, String compilerName, String messages) {
+    builder.error(messages);
+  }
+
+  @Override
+  public void printCompilationFinish(JpsGantProjectBuilder builder, String compilerName) {
+  }
+
+  @Override
+  public void printCompilationStart(JpsGantProjectBuilder builder, String compilerName) {
   }
 }

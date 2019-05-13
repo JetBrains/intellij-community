@@ -25,7 +25,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collection;
 
 public abstract class MavenConstantListConverter extends ResolvingConverter<String> {
-  private boolean myStrict;
+  private final boolean myStrict;
 
   protected MavenConstantListConverter() {
     this(true);
@@ -41,10 +41,12 @@ public abstract class MavenConstantListConverter extends ResolvingConverter<Stri
     return getValues(context).contains(s) ? s : null;
   }
 
+  @Override
   public String toString(@Nullable String s, ConvertContext context) {
     return s;
   }
 
+  @Override
   @NotNull
   public Collection<String> getVariants(ConvertContext context) {
     return getValues(context);

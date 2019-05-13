@@ -21,11 +21,10 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Dmitry Avdeev
- *         Date: 7/27/12
  */
 public interface PsiNameValuePairStub extends StubElement<PsiNameValuePair> {
 
-  String getName();
+  @Nullable String getName();
 
   @Nullable
   String getValue();

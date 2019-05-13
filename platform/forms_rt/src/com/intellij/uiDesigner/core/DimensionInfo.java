@@ -20,7 +20,7 @@ import java.util.ArrayList;
 
 /**
  * public for test purposes
- * @noinspection AbstractMethodCallInConstructor,RedundantCast
+ * @noinspection AbstractMethodCallInConstructor
  */
 public abstract class DimensionInfo {
   private final int[] myCell;

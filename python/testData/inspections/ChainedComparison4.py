@@ -1,0 +1,1 @@
+a = <weak_warning descr="Simplify chained comparison">0 <= <caret>x < top and 0 >= y > top</weak_warning>

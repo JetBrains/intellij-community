@@ -24,12 +24,13 @@ public class OutputListener extends ProcessAdapter {
     this.err = err;
   }
 
-  public void onTextAvailable(ProcessEvent event, Key outputType) {
+  @Override
+  public void onTextAvailable(@NotNull ProcessEvent event, @NotNull Key outputType) {
     if (outputType == ProcessOutputTypes.STDERR) {
       err.append(event.getText());
     }
     else if (outputType == ProcessOutputTypes.SYSTEM) {
-      // skip 
+      // skip
     }
     else {
       out.append(event.getText());
@@ -37,7 +38,7 @@ public class OutputListener extends ProcessAdapter {
   }
 
   @Override
-  public void processTerminated(ProcessEvent event) {
+  public void processTerminated(@NotNull ProcessEvent event) {
     myExitCode = event.getExitCode();
   }
 

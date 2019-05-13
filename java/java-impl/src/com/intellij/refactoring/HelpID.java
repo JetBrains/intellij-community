@@ -76,7 +76,6 @@ public class HelpID {
   public static final String METHOD_DUPLICATES          = "refactoring.replaceMethodCodeDuplicates";
   public static final String CHANGE_CLASS_SIGNATURE     = "change.class.signature.dialog";
   public static final String MOVE_INSTANCE_METHOD       = "refactoring.moveInstMethod";
-  public static final String INVERT_BOOLEAN             = "refactoring.invertBoolean";
   public static final String EXTRACT_METHOD_OBJECT = "refactoring.extractMethodObject";
   public static final String REPLACE_CONSTRUCTOR_WITH_BUILDER = "refactoring.replaceConstructorWithBuilder";
   @NonNls public static final String ExtractClass = "refactorj.extractClass";

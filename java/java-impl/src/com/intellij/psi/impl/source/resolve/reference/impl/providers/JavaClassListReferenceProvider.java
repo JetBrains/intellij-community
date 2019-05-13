@@ -32,13 +32,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-/**
- * Created by IntelliJ IDEA.
- * User: ik
- * Date: 05.06.2003
- * Time: 20:27:59
- * To change this template use Options | File Templates.
- */
 public class JavaClassListReferenceProvider extends JavaClassReferenceProvider {
 
   public JavaClassListReferenceProvider() {
@@ -67,9 +60,9 @@ public class JavaClassListReferenceProvider extends JavaClassReferenceProvider {
       @NotNull
       @Override
       protected Set<String> compute() {
-        final Set<String> knownTopLevelPackages = new HashSet<String>();
-        final List<PsiElement> defaultPackages = getDefaultPackages(position.getProject());
-        for (final PsiElement pack : defaultPackages) {
+        Set<String> knownTopLevelPackages = new HashSet<>();
+        List<PsiPackage> defaultPackages = getDefaultPackages(position.getProject());
+        for (PsiElement pack : defaultPackages) {
           if (pack instanceof PsiPackage) {
             knownTopLevelPackages.add(((PsiPackage)pack).getName());
           }
@@ -77,7 +70,7 @@ public class JavaClassListReferenceProvider extends JavaClassReferenceProvider {
         return knownTopLevelPackages;
       }
     };
-    final List<PsiReference> results = new ArrayList<PsiReference>();
+    final List<PsiReference> results = new ArrayList<>();
 
     for(int dot = str.indexOf('.'); dot > 0; dot = str.indexOf('.', dot + 1)) {
       int start = dot;
@@ -101,11 +94,16 @@ public class JavaClassListReferenceProvider extends JavaClassReferenceProvider {
           public boolean isSoft() {
             return true;
           }
+
+          @Override
+          public boolean isAllowDollarInNames() {
+            return true;
+          }
         }.getAllReferences());
         ProgressManager.checkCanceled();
       }
     }
-    return ContainerUtil.toArray(results, new PsiReference[results.size()]);
+    return results.toArray(PsiReference.EMPTY_ARRAY);
   }
 
   @Override

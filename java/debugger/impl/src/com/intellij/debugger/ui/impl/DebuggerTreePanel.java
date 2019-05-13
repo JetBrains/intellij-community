@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 /*
  * @author Eugene Zhuravlev
@@ -20,28 +6,41 @@
 package com.intellij.debugger.ui.impl;
 
 import com.intellij.debugger.impl.DebuggerContextImpl;
+import com.intellij.debugger.impl.DebuggerSession;
 import com.intellij.debugger.impl.DebuggerStateManager;
 import com.intellij.debugger.ui.impl.watch.DebuggerTree;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.keymap.KeymapManager;
+import com.intellij.openapi.actionSystem.ActionPopupMenu;
+import com.intellij.openapi.actionSystem.DataKey;
+import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
 import com.intellij.ui.PopupHandler;
-import com.intellij.util.Alarm;
+import com.intellij.util.SingleAlarm;
 import com.intellij.xdebugger.impl.actions.XDebuggerActions;
+import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
 import com.sun.jdi.VMDisconnectedException;
+import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
 import java.awt.*;
-import java.awt.event.KeyEvent;
 
-public abstract class DebuggerTreePanel extends UpdatableDebuggerView implements DataProvider {
+public abstract class DebuggerTreePanel extends UpdatableDebuggerView implements DataProvider, Disposable {
   public static final DataKey<DebuggerTreePanel> DATA_KEY = DataKey.create("DebuggerPanel");
   
-  private final Alarm myRebuildAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
+  private final SingleAlarm myRebuildAlarm = new SingleAlarm(() -> {
+    try {
+      final DebuggerContextImpl context = getContext();
+      if(context.getDebuggerSession() != null) {
+        getTree().rebuild(context);
+      }
+    }
+    catch (VMDisconnectedException ignored) {
+    }
+
+  }, 100);
+
   protected DebuggerTree myTree;
 
   public DebuggerTreePanel(Project project, DebuggerStateManager stateManager) {
@@ -49,6 +48,7 @@ public abstract class DebuggerTreePanel extends UpdatableDebuggerView implements
     myTree = createTreeView();
 
     final PopupHandler popupHandler = new PopupHandler() {
+      @Override
       public void invokePopup(Component comp, int x, int y) {
         ActionPopupMenu popupMenu = createPopupMenu();
         if (popupMenu != null) {
@@ -59,42 +59,38 @@ public abstract class DebuggerTreePanel extends UpdatableDebuggerView implements
     myTree.addMouseListener(popupHandler);
 
     setFocusTraversalPolicy(new IdeFocusTraversalPolicy() {
+      @Override
       public Component getDefaultComponentImpl(Container focusCycleRoot) {
         return myTree;
       }
     });
 
     registerDisposable(new Disposable() {
+      @Override
       public void dispose() {
         myTree.removeMouseListener(popupHandler);
       }
     });
 
-    final Shortcut[] shortcuts = KeymapManager.getInstance().getActiveKeymap().getShortcuts("ToggleBookmark");
-    final CustomShortcutSet shortcutSet = shortcuts.length > 0? new CustomShortcutSet(shortcuts) : new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_F11, 0));
-    overrideShortcut(myTree, XDebuggerActions.MARK_OBJECT, shortcutSet);
+    DebuggerUIUtil.registerActionOnComponent(XDebuggerActions.MARK_OBJECT, myTree, this);
   }
 
   protected abstract DebuggerTree createTreeView();
 
-
-  protected void rebuild(int event) {
-    myRebuildAlarm.cancelAllRequests();
-    myRebuildAlarm.addRequest(new Runnable() {
-      public void run() {
-        try {
-          final DebuggerContextImpl context = getContext();
-          if(context.getDebuggerSession() != null) {
-            getTree().rebuild(context);
-          }
-        }
-        catch (VMDisconnectedException e) {
-          // ignored
-        }
-      }
-    }, 100, ModalityState.NON_MODAL);
+  @Override
+  protected void changeEvent(DebuggerContextImpl newContext, DebuggerSession.Event event) {
+    super.changeEvent(newContext, event);
+    if (event == DebuggerSession.Event.DISPOSE) {
+      getTree().getNodeFactory().dispose();
+    }
   }
 
+  @Override
+  protected void rebuild(DebuggerSession.Event event) {
+    myRebuildAlarm.cancelAndRequest();
+  }
+
+  @Override
   public void dispose() {
     Disposer.dispose(myRebuildAlarm);
     try {
@@ -121,14 +117,16 @@ public abstract class DebuggerTreePanel extends UpdatableDebuggerView implements
     myTree.removeAllChildren();
   }
 
-  public Object getData(String dataId) {
-    if (DebuggerTreePanel.DATA_KEY.is(dataId)) {
+  @Override
+  public Object getData(@NotNull String dataId) {
+    if (DATA_KEY.is(dataId)) {
       return this;
     }
     return null;
   }
 
+  @Override
   public void requestFocus() {
-    getTree().requestFocus();
+    IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(getTree(), true));
   }
 }

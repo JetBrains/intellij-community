@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,32 +15,46 @@
  */
 package com.intellij.psi.formatter.java;
 
-import com.intellij.formatting.Alignment;
-import com.intellij.formatting.Block;
-import com.intellij.formatting.Indent;
-import com.intellij.formatting.Wrap;
+import com.intellij.formatting.*;
 import com.intellij.formatting.alignment.AlignmentStrategy;
 import com.intellij.lang.ASTNode;
+import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
+import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.psi.formatter.FormatterUtil;
 import com.intellij.psi.impl.source.tree.ElementType;
+import com.intellij.psi.impl.source.tree.JavaElementType;
+import com.intellij.psi.tree.IElementType;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
 
 public class ExtendsListBlock extends AbstractJavaBlock{
-  public ExtendsListBlock(final ASTNode node, final Wrap wrap, final Alignment alignment, CommonCodeStyleSettings settings) {
-    super(node, wrap, alignment, Indent.getNoneIndent(), settings);
+  public ExtendsListBlock(ASTNode node,
+                          Wrap wrap,
+                          Alignment alignment,
+                          CommonCodeStyleSettings settings,
+                          JavaCodeStyleSettings javaSettings,
+                          @NotNull FormattingMode formattingMode)
+  {
+    super(node, wrap, alignment, Indent.getNoneIndent(), settings, javaSettings, formattingMode);
   }
   
-  public ExtendsListBlock(final ASTNode node, final Wrap wrap, final AlignmentStrategy alignmentStrategy, CommonCodeStyleSettings settings) {
-    super(node, wrap, alignmentStrategy, Indent.getNoneIndent(), settings);
+  public ExtendsListBlock(ASTNode node,
+                          Wrap wrap,
+                          AlignmentStrategy alignmentStrategy,
+                          CommonCodeStyleSettings settings,
+                          JavaCodeStyleSettings javaSettings,
+                          @NotNull FormattingMode formattingMode)
+  {
+    super(node, wrap, alignmentStrategy, Indent.getNoneIndent(), settings, javaSettings, formattingMode);
   }
 
   @Override
   protected List<Block> buildChildren() {
-    final ArrayList<Block> result = new ArrayList<Block>();
-    ArrayList<Block> elementsExceptKeyword = new ArrayList<Block>();
+    final ArrayList<Block> result = new ArrayList<>();
+    ArrayList<Block> elementsExceptKeyword = new ArrayList<>();
     myChildAlignment = createChildAlignment();
     myChildIndent = Indent.getContinuationIndent(myIndentSettings.USE_RELATIVE_INDENTS);
     myUseChildAttributes = true;
@@ -51,18 +65,20 @@ public class ExtendsListBlock extends AbstractJavaBlock{
 
     while (child != null) {
       if (!FormatterUtil.containsWhiteSpacesOnly(child) && child.getTextLength() > 0){
-        if (ElementType.KEYWORD_BIT_SET.contains(child.getElementType())) {
+        IElementType elementType = child.getElementType();
+        if (ElementType.KEYWORD_BIT_SET.contains(elementType)) {
           if (!elementsExceptKeyword.isEmpty()) {
-            result.add(new SyntheticCodeBlock(elementsExceptKeyword, null,  mySettings, Indent.getNoneIndent(), null));
-            elementsExceptKeyword = new ArrayList<Block>();
+            result.add(new SyntheticCodeBlock(elementsExceptKeyword, null,  mySettings, myJavaSettings, Indent.getNoneIndent(), null));
+            elementsExceptKeyword = new ArrayList<>();
           }
-          result.add(createJavaBlock(child, mySettings, myChildIndent, arrangeChildWrap(child, childWrap), alignment));
+          Indent indent = mySettings.ALIGN_THROWS_KEYWORD 
+                          && elementType == JavaTokenType.THROWS_KEYWORD ? Indent.getNoneIndent() : myChildIndent;
+          
+          result.add(createJavaBlock(child, mySettings, myJavaSettings, indent, arrangeChildWrap(child, childWrap), alignment, getFormattingMode()));
         } else {
-          if (myAlignmentStrategy != null) {
-            Alignment candidate = myAlignmentStrategy.getAlignment(child.getElementType());
-            if (candidate != null) {
-              alignment = myChildAlignment = candidate;
-            }
+          Alignment candidate = myAlignmentStrategy.getAlignment(elementType);
+          if (candidate != null) {
+            alignment = myChildAlignment = candidate;
           }
           processChild(elementsExceptKeyword, child, myChildAlignment, childWrap, myChildIndent);
         }
@@ -70,7 +86,7 @@ public class ExtendsListBlock extends AbstractJavaBlock{
       child = child.getTreeNext();
     }
     if (!elementsExceptKeyword.isEmpty()) {
-      result.add(new SyntheticCodeBlock(elementsExceptKeyword, alignment,  mySettings, Indent.getNoneIndent(), null));
+      result.add(new SyntheticCodeBlock(elementsExceptKeyword, alignment,  mySettings, myJavaSettings, Indent.getNoneIndent(), null));
     }
 
     return result;
@@ -78,9 +94,9 @@ public class ExtendsListBlock extends AbstractJavaBlock{
   }
 
   private boolean alignList() {
-    if (myNode.getElementType() == ElementType.EXTENDS_LIST || myNode.getElementType() == ElementType.IMPLEMENTS_LIST) {
+    if (myNode.getElementType() == JavaElementType.EXTENDS_LIST || myNode.getElementType() == JavaElementType.IMPLEMENTS_LIST) {
       return mySettings.ALIGN_MULTILINE_EXTENDS_LIST;
-    } else if (myNode.getElementType() == ElementType.THROWS_LIST) {
+    } else if (myNode.getElementType() == JavaElementType.THROWS_LIST) {
       return mySettings.ALIGN_MULTILINE_THROWS_LIST;
     }
     return false;

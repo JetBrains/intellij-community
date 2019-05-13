@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package com.intellij.packaging.impl.artifacts;
 
 import com.intellij.CommonBundle;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
@@ -25,6 +26,7 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.packaging.artifacts.ArtifactTemplate;
@@ -34,8 +36,6 @@ import com.intellij.packaging.impl.elements.ManifestFileUtil;
 import com.intellij.packaging.impl.elements.ProductionModuleOutputElementType;
 import com.intellij.packaging.impl.elements.TestModuleOutputElementType;
 import com.intellij.util.CommonProcessors;
-import com.intellij.util.PathUtil;
-import com.intellij.util.Processor;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.Nullable;
 
@@ -48,7 +48,7 @@ import java.util.*;
 public class JarFromModulesTemplate extends ArtifactTemplate {
   private static final Logger LOG = Logger.getInstance("#com.intellij.packaging.impl.artifacts.JarFromModulesTemplate");
 
-  private PackagingElementResolvingContext myContext;
+  private final PackagingElementResolvingContext myContext;
 
   public JarFromModulesTemplate(PackagingElementResolvingContext context) {
     myContext = context;
@@ -57,8 +57,7 @@ public class JarFromModulesTemplate extends ArtifactTemplate {
   @Override
   public NewArtifactConfiguration createArtifact() {
     JarArtifactFromModulesDialog dialog = new JarArtifactFromModulesDialog(myContext);
-    dialog.show();
-    if (!dialog.isOK()) {
+    if (!dialog.showAndGet()) {
       return null;
     }
 
@@ -76,7 +75,12 @@ public class JarFromModulesTemplate extends ArtifactTemplate {
     if (mainClassName != null && !mainClassName.isEmpty() || !extractLibrariesToJar) {
       final VirtualFile directory;
       try {
-        directory = VfsUtil.createDirectoryIfMissing(directoryForManifest);
+        directory = ApplicationManager.getApplication().runWriteAction(new ThrowableComputable<VirtualFile, IOException>() {
+          @Override
+          public VirtualFile compute() throws IOException {
+            return VfsUtil.createDirectoryIfMissing(directoryForManifest);
+          }
+        });
       }
       catch (IOException e) {
         LOG.info(e);
@@ -100,24 +104,21 @@ public class JarFromModulesTemplate extends ArtifactTemplate {
 
     OrderEnumerator orderEnumerator = ProjectRootManager.getInstance(project).orderEntries(Arrays.asList(modules));
 
-    final Set<Library> libraries = new THashSet<Library>();
+    final Set<Library> libraries = new THashSet<>();
     if (!includeTests) {
       orderEnumerator = orderEnumerator.productionOnly();
     }
     final ModulesProvider modulesProvider = myContext.getModulesProvider();
     final OrderEnumerator enumerator = orderEnumerator.using(modulesProvider).withoutSdk().runtimeOnly().recursively();
-    enumerator.forEachLibrary(new CommonProcessors.CollectProcessor<Library>(libraries));
-    enumerator.forEachModule(new Processor<Module>() {
-      @Override
-      public boolean process(Module module) {
-        if (ProductionModuleOutputElementType.ELEMENT_TYPE.isSuitableModule(modulesProvider, module)) {
-          archive.addOrFindChild(factory.createModuleOutput(module));
-        }
-        if (includeTests && TestModuleOutputElementType.ELEMENT_TYPE.isSuitableModule(modulesProvider, module)) {
-          archive.addOrFindChild(factory.createTestModuleOutput(module));
-        }
-        return true;
+    enumerator.forEachLibrary(new CommonProcessors.CollectProcessor<>(libraries));
+    enumerator.forEachModule(module -> {
+      if (ProductionModuleOutputElementType.ELEMENT_TYPE.isSuitableModule(modulesProvider, module)) {
+        archive.addOrFindChild(factory.createModuleOutput(module));
       }
+      if (includeTests && TestModuleOutputElementType.ELEMENT_TYPE.isSuitableModule(modulesProvider, module)) {
+        archive.addOrFindChild(factory.createTestModuleOutput(module));
+      }
+      return true;
     });
 
     final JarArtifactType jarArtifactType = JarArtifactType.getInstance();
@@ -132,7 +133,7 @@ public class JarFromModulesTemplate extends ArtifactTemplate {
     }
     else {
       final ArtifactRootElement<?> root = factory.createArtifactRootElement();
-      List<String> classpath = new ArrayList<String>();
+      List<String> classpath = new ArrayList<>();
       root.addOrFindChild(archive);
       addLibraries(libraries, root, archive, classpath);
       ManifestFileUtil.updateManifest(manifestFile, mainClassName, classpath, true);
@@ -140,8 +141,8 @@ public class JarFromModulesTemplate extends ArtifactTemplate {
     }
   }
 
-  private void addLibraries(Set<Library> libraries, ArtifactRootElement<?> root, CompositePackagingElement<?> archive,
-                            List<String> classpath) {
+  private void addLibraries(Set<? extends Library> libraries, ArtifactRootElement<?> root, CompositePackagingElement<?> archive,
+                            List<? super String> classpath) {
     PackagingElementFactory factory = PackagingElementFactory.getInstance();
     for (Library library : libraries) {
       if (LibraryPackagingElement.getKindForLibrary(library).containsDirectoriesWithClasses()) {
@@ -150,7 +151,7 @@ public class JarFromModulesTemplate extends ArtifactTemplate {
             archive.addOrFindChild(factory.createDirectoryCopyWithParentDirectories(classesRoot.getPath(), "/"));
           }
           else {
-            final PackagingElement<?> child = factory.createFileCopyWithParentDirectories(PathUtil.getLocalFile(classesRoot).getPath(), "/");
+            final PackagingElement<?> child = factory.createFileCopyWithParentDirectories(VfsUtil.getLocalFile(classesRoot).getPath(), "/");
             root.addOrFindChild(child);
             classpath.addAll(ManifestFileUtil.getClasspathForElements(Collections.singletonList(child), myContext, PlainArtifactType.getInstance()));
           }
@@ -165,7 +166,7 @@ public class JarFromModulesTemplate extends ArtifactTemplate {
     }
   }
 
-  private static void addExtractedLibrariesToJar(CompositePackagingElement<?> archive, PackagingElementFactory factory, Set<Library> libraries) {
+  private static void addExtractedLibrariesToJar(CompositePackagingElement<?> archive, PackagingElementFactory factory, Set<? extends Library> libraries) {
     for (Library library : libraries) {
       if (LibraryPackagingElement.getKindForLibrary(library).containsJarFiles()) {
         for (VirtualFile classesRoot : library.getFiles(OrderRootType.CLASSES)) {

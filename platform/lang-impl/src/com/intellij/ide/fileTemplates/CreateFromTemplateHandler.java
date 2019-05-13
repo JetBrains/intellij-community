@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,14 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.intellij.ide.fileTemplates;
 
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Map;
 
@@ -30,13 +31,29 @@ import java.util.Map;
 public interface CreateFromTemplateHandler {
   ExtensionPointName<CreateFromTemplateHandler> EP_NAME = ExtensionPointName.create("com.intellij.createFromTemplateHandler");
 
-  boolean handlesTemplate(FileTemplate template);
-  PsiElement createFromTemplate(Project project, PsiDirectory directory, final String fileName, FileTemplate template, String templateText,
-                                Map<String, Object> props) throws IncorrectOperationException;
+  boolean handlesTemplate(@NotNull FileTemplate template);
 
-  boolean canCreate(final PsiDirectory[] dirs);
+  @NotNull
+  PsiElement createFromTemplate(@NotNull Project project,
+                                @NotNull PsiDirectory directory,
+                                String fileName,
+                                @NotNull FileTemplate template,
+                                @NotNull String templateText,
+                                @NotNull Map<String, Object> props) throws IncorrectOperationException;
+
+  boolean canCreate(@NotNull PsiDirectory[] dirs);
+
   boolean isNameRequired();
+
+  @NotNull
   String getErrorMessage();
 
-  void prepareProperties(Map<String, Object> props);
+  void prepareProperties(@NotNull Map<String, Object> props);
+
+  default void prepareProperties(@NotNull Map<String, Object> props, String fileName, @NotNull FileTemplate template) {}
+
+  @NotNull
+  default String commandName(@NotNull FileTemplate template) {
+    return IdeBundle.message("command.create.file.from.template");
+  }
 }

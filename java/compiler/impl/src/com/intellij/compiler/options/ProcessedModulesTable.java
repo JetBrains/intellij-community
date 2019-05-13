@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,20 +22,23 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ui.configuration.ChooseModulesDialog;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.SpeedSearchBase;
 import com.intellij.ui.SpeedSearchComparator;
 import com.intellij.ui.TableUtil;
 import com.intellij.ui.ToolbarDecorator;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.ui.EditableModel;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.table.*;
 import java.awt.*;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 
 public class ProcessedModulesTable extends JPanel {
   private JBTable myTable = null;
@@ -49,7 +52,7 @@ public class ProcessedModulesTable extends JPanel {
     myTable.getEmptyText().setText("No modules configured");
 
     //myTable.setShowGrid(false);
-    myTable.setIntercellSpacing(new Dimension(0, 0));
+    myTable.setIntercellSpacing(JBUI.emptySize());
     myTable.setAutoResizeMode(JTable.AUTO_RESIZE_LAST_COLUMN);
     myTable.setColumnSelectionAllowed(false);
 
@@ -71,11 +74,12 @@ public class ProcessedModulesTable extends JPanel {
 
     final JPanel panel = ToolbarDecorator.createDecorator(myTable)
       .disableUpDownActions()
-      .setPreferredSize(new Dimension(100, 155))
+      .setPreferredSize(JBUI.size(100, 155))
       .createPanel();
     add(panel, BorderLayout.CENTER);
 
     final SpeedSearchBase<JBTable> speedSearch = new SpeedSearchBase<JBTable>(myTable) {
+      @Override
       public int getSelectedIndex() {
         return myTable.getSelectedRow();
       }
@@ -85,6 +89,8 @@ public class ProcessedModulesTable extends JPanel {
         return myTable.convertRowIndexToModel(viewIndex);
       }
 
+      @NotNull
+      @Override
       public Object[] getAllElements() {
         final int count = myTableModel.getRowCount();
         Object[] elements = new Object[count];
@@ -94,10 +100,12 @@ public class ProcessedModulesTable extends JPanel {
         return elements;
       }
 
+      @Override
       public String getElementText(Object element) {
         return ((Module)element).getName() + " (" + FileUtil.toSystemDependentName(((Module)element).getModuleFilePath()) + ")";
       }
 
+      @Override
       public void selectElement(Object element, String selectedText) {
         final int count = myTableModel.getRowCount();
         for (int row = 0; row < count; row++) {
@@ -139,7 +147,9 @@ public class ProcessedModulesTable extends JPanel {
   public void addModule(Module element, String dirName) {
     myTableModel.addElement(element, dirName);
     selectRow(myTableModel.getRowCount() - 1);
-    myTable.requestFocus();
+    IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
+      IdeFocusManager.getGlobalInstance().requestFocus(myTable, true);
+    });
   }
 
   public void removeModule(Module element) {
@@ -160,7 +170,9 @@ public class ProcessedModulesTable extends JPanel {
         myTable.getSelectionModel().clearSelection();
       }
     }
-    myTable.requestFocus();
+    IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
+      IdeFocusManager.getGlobalInstance().requestFocus(myTable, true);
+    });
   }
 
   public void removeAllElements() {
@@ -184,7 +196,7 @@ public class ProcessedModulesTable extends JPanel {
   }
 
   public List<Module> getSelectedElements() {
-    final List<Module> elements = new ArrayList<Module>();
+    final List<Module> elements = new ArrayList<>();
     final int[] selectedRows = myTable.getSelectedRows();
     for (int selectedRow : selectedRows) {
       if (selectedRow < 0) {
@@ -203,7 +215,9 @@ public class ProcessedModulesTable extends JPanel {
     final int[] rows = getElementsRows(elements);
     TableUtil.selectRows(myTable, rows);
     TableUtil.scrollSelectionToVisible(myTable);
-    myTable.requestFocus();
+    IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
+      IdeFocusManager.getGlobalInstance().requestFocus(myTable, true);
+    });
   }
 
   private int[] getElementsRows(final Collection<? extends Module> elements) {
@@ -217,18 +231,19 @@ public class ProcessedModulesTable extends JPanel {
 
   public List<Pair<Module, String>> getAllModules() {
     final int count = myTableModel.getRowCount();
-    List<Pair<Module, String>> elements = new ArrayList<Pair<Module, String>>();
+    List<Pair<Module, String>> elements = new ArrayList<>();
     for (int idx = 0; idx < count; idx++) {
       final Module module = myTableModel.getModuleAt(idx);
-      elements.add(new Pair<Module, String>(module, myTableModel.getGenDirName(module)));
+      elements.add(Pair.create(module, myTableModel.getGenDirName(module)));
     }
     return elements;
   }
 
-  public void sort(Comparator<Module> comparator) {
+  public void sort(Comparator<? super Module> comparator) {
     myTableModel.sort(comparator);
   }
 
+  @Override
   public void setEnabled(boolean enabled) {
     super.setEnabled(enabled);
     myTable.setRowSelectionAllowed(enabled);
@@ -259,8 +274,8 @@ public class ProcessedModulesTable extends JPanel {
   }
 
   private final class MyTableModel extends AbstractTableModel implements EditableModel {
-    private final List<Module> myElements = new ArrayList<Module>();
-    private final Map<Module, String> myDirNameMap = new HashMap<Module, String>();
+    private final List<Module> myElements = new ArrayList<>();
+    private final Map<Module, String> myDirNameMap = new HashMap<>();
     public final int ELEMENT_COLUMN_INDEX = 0;
     public final int DIRNAME_COLUMN_INDEX = 1;
     private final Project myProject;
@@ -269,7 +284,7 @@ public class ProcessedModulesTable extends JPanel {
       myProject = project;
     }
 
-    public void sort(Comparator<Module> comparator) {
+    public void sort(Comparator<? super Module> comparator) {
       Collections.sort(myElements, comparator);
       fireTableDataChanged();
     }
@@ -297,18 +312,19 @@ public class ProcessedModulesTable extends JPanel {
 
     @Override
     public void addRow() {
-      final Set<Module> projectModules = new HashSet<Module>(Arrays.asList(ModuleManager.getInstance(myProject).getModules()));
+      final Set<Module> projectModules = new HashSet<>(Arrays.asList(ModuleManager.getInstance(myProject).getModules()));
       projectModules.removeAll(getAllModules());
-      final ChooseModulesDialog chooser = new ChooseModulesDialog(ProcessedModulesTable.this, new ArrayList<Module>(projectModules), "ChooseModule");
-      chooser.show();
-      if (chooser.isOK()) {
+      final ChooseModulesDialog chooser =
+        new ChooseModulesDialog(ProcessedModulesTable.this, new ArrayList<>(projectModules), "ChooseModule");
+      if (chooser.showAndGet()) {
         final List<Module> chosen = chooser.getChosenElements();
         for (Module module : chosen) {
           addElement(module, null);
         }
-      }      
+      }
     }
 
+    @Override
     public void removeRow(int idx) {
       final Module element = myElements.remove(idx);
       myDirNameMap.remove(element);
@@ -341,14 +357,17 @@ public class ProcessedModulesTable extends JPanel {
       fireTableDataChanged();
     }
 
+    @Override
     public int getRowCount() {
       return myElements.size();
     }
 
+    @Override
     public int getColumnCount() {
       return 2;
     }
 
+    @Override
     @Nullable
     public Object getValueAt(int rowIndex, int columnIndex) {
       Module element = myElements.get(rowIndex);
@@ -361,6 +380,7 @@ public class ProcessedModulesTable extends JPanel {
       return null;
     }
 
+    @Override
     public void setValueAt(Object value, int rowIndex, int columnIndex) {
       if (columnIndex == DIRNAME_COLUMN_INDEX) {
         final Module module = myElements.get(rowIndex);
@@ -383,6 +403,7 @@ public class ProcessedModulesTable extends JPanel {
       }
     }
 
+    @Override
     public Class getColumnClass(int columnIndex) {
       if (columnIndex == DIRNAME_COLUMN_INDEX) {
         return String.class;
@@ -390,6 +411,7 @@ public class ProcessedModulesTable extends JPanel {
       return super.getColumnClass(columnIndex);
     }
 
+    @Override
     public boolean isCellEditable(int rowIndex, int columnIndex) {
       if (!ProcessedModulesTable.this.isEnabled()) {
         return false;
@@ -408,6 +430,7 @@ public class ProcessedModulesTable extends JPanel {
   }
 
   private class MyElementColumnCellRenderer extends DefaultTableCellRenderer {
+    @Override
     public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
       final Color color = UIUtil.getTableFocusCellBackground();
       Component component;

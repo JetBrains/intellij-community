@@ -17,9 +17,9 @@ package com.intellij.uiDesigner.compiler;
 
 import com.intellij.uiDesigner.lw.LwComponent;
 import com.intellij.uiDesigner.lw.LwSplitPane;
-import org.jetbrains.asm4.Type;
-import org.jetbrains.asm4.commons.GeneratorAdapter;
-import org.jetbrains.asm4.commons.Method;
+import org.jetbrains.org.objectweb.asm.Type;
+import org.jetbrains.org.objectweb.asm.commons.GeneratorAdapter;
+import org.jetbrains.org.objectweb.asm.commons.Method;
 
 import javax.swing.*;
 
@@ -31,6 +31,7 @@ public class SplitPaneLayoutCodeGenerator extends LayoutCodeGenerator {
   private final Method mySetLeftMethod = Method.getMethod("void setLeftComponent(java.awt.Component)");
   private final Method mySetRightMethod = Method.getMethod("void setRightComponent(java.awt.Component)");
 
+  @Override
   public void generateComponentLayout(final LwComponent lwComponent,
                                       final GeneratorAdapter generator,
                                       final int componentLocal,

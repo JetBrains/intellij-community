@@ -22,6 +22,7 @@ import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Alexander Lobas
@@ -36,11 +37,11 @@ public class RestoreDefault extends AnAction implements IPropertyTableAction {
     String text = DesignerBundle.message("designer.properties.restore_default");
     presentation.setText(text);
     presentation.setDescription(text);
-    presentation.setIcon(AllIcons.Actions.Reset_to_default);
+    presentation.setIcon(AllIcons.General.Reset);
   }
 
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     setEnabled(myTable, e.getPresentation());
   }
 
@@ -52,7 +53,7 @@ public class RestoreDefault extends AnAction implements IPropertyTableAction {
   private static void setEnabled(RadPropertyTable table, Presentation presentation) {
     try {
       Property property = table.getSelectionProperty();
-      presentation.setEnabled(property != null && !table.isDefault(property));
+      presentation.setEnabled(property != null && !table.isEditing() && !table.isDefault(property));
     }
     catch (Exception e) {
       presentation.setEnabled(false);
@@ -60,7 +61,7 @@ public class RestoreDefault extends AnAction implements IPropertyTableAction {
   }
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     myTable.restoreDefaultValue();
     setEnabled(myTable, getTemplatePresentation());
   }

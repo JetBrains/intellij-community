@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,6 @@ package com.intellij.codeInsight.daemon;
 import com.intellij.ide.PowerSaveMode;
 import com.intellij.openapi.editor.HectorComponentPanel;
 import com.intellij.openapi.editor.HectorComponentPanelsProvider;
-import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 
@@ -31,7 +30,7 @@ public class PowerSaveHectorProvider implements HectorComponentPanelsProvider {
   @Override
   public HectorComponentPanel createConfigurable(@NotNull PsiFile file) {
     return new HectorComponentPanel() {
-      private JCheckBox myCheckBox = new JCheckBox("Power Save Mode");
+      private final JCheckBox myCheckBox = new JCheckBox("Power Save Mode");
 
       @Override
       public JComponent createComponent() {
@@ -44,17 +43,13 @@ public class PowerSaveHectorProvider implements HectorComponentPanelsProvider {
       }
 
       @Override
-      public void apply() throws ConfigurationException {
+      public void apply() {
         PowerSaveMode.setEnabled(myCheckBox.isSelected());
       }
 
       @Override
       public void reset() {
         myCheckBox.setSelected(PowerSaveMode.isEnabled());
-      }
-
-      @Override
-      public void disposeUIResources() {
       }
     };
   }

@@ -52,11 +52,12 @@ public class LibraryElementType extends ComplexPackagingElementType<LibraryPacka
     return !getAllLibraries(context).isEmpty();
   }
 
+  @Override
   @NotNull
   public List<? extends LibraryPackagingElement> chooseAndCreate(@NotNull ArtifactEditorContext context, @NotNull Artifact artifact,
                                                                   @NotNull CompositePackagingElement<?> parent) {
     final List<Library> selected = context.chooseLibraries(ProjectBundle.message("dialog.title.packaging.choose.library"));
-    final List<LibraryPackagingElement> elements = new ArrayList<LibraryPackagingElement>();
+    final List<LibraryPackagingElement> elements = new ArrayList<>();
     for (Library library : selected) {
       elements.add(new LibraryPackagingElement(library.getTable().getTableLevel(), library.getName(), null));
     }
@@ -64,12 +65,13 @@ public class LibraryElementType extends ComplexPackagingElementType<LibraryPacka
   }
 
   private static List<Library> getAllLibraries(ArtifactEditorContext context) {
-    List<Library> libraries = new ArrayList<Library>();
+    List<Library> libraries = new ArrayList<>();
     ContainerUtil.addAll(libraries, LibraryTablesRegistrar.getInstance().getLibraryTable().getLibraries());
     ContainerUtil.addAll(libraries, LibraryTablesRegistrar.getInstance().getLibraryTable(context.getProject()).getLibraries());
     return libraries;
   }
 
+  @Override
   @NotNull
   public LibraryPackagingElement createEmpty(@NotNull Project project) {
     return new LibraryPackagingElement();

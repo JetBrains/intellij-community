@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,7 @@ import com.intellij.lang.findUsages.EmptyFindUsagesProvider;
 import com.intellij.lang.findUsages.LanguageFindUsages;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.EditorGutter;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
@@ -32,20 +33,25 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.usages.UsageTarget;
 import com.intellij.usages.UsageView;
+import org.jetbrains.annotations.NotNull;
 
 public class FindUsagesInFileAction extends AnAction {
-
   public FindUsagesInFileAction() {
     setInjectedContext(true);
   }
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public boolean startInTransaction() {
+    return true;
+  }
+
+  @Override
+  public void actionPerformed(@NotNull AnActionEvent e) {
     DataContext dataContext = e.getDataContext();
-    final Project project = PlatformDataKeys.PROJECT.getData(dataContext);
+    final Project project = CommonDataKeys.PROJECT.getData(dataContext);
     if (project == null) return;
     PsiDocumentManager.getInstance(project).commitAllDocuments();
-    Editor editor = PlatformDataKeys.EDITOR.getData(dataContext);
+    Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
 
     UsageTarget[] usageTargets = UsageView.USAGE_TARGETS_KEY.getData(dataContext);
     if (usageTargets != null) {
@@ -68,17 +74,19 @@ public class FindUsagesInFileAction extends AnAction {
   }
 
   @Override
-  public void update(AnActionEvent event){
+  public void update(@NotNull AnActionEvent event){
     updateFindUsagesAction(event);
   }
 
   private static boolean isEnabled(DataContext dataContext) {
-    Project project = PlatformDataKeys.PROJECT.getData(dataContext);
-    if (project == null) {
+    Project project = CommonDataKeys.PROJECT.getData(dataContext);
+    if (project == null ||
+        EditorGutter.KEY.getData(dataContext) != null ||
+        Boolean.TRUE.equals(dataContext.getData(CommonDataKeys.EDITOR_VIRTUAL_SPACE))) {
       return false;
     }
 
-    Editor editor = PlatformDataKeys.EDITOR.getData(dataContext);
+    Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
     if (editor == null) {
       UsageTarget[] target = UsageView.USAGE_TARGETS_KEY.getData(dataContext);
       return target != null && target.length > 0;
@@ -97,7 +105,7 @@ public class FindUsagesInFileAction extends AnAction {
     }
   }
 
-  public static void updateFindUsagesAction(AnActionEvent event) {
+  public static void updateFindUsagesAction(@NotNull AnActionEvent event) {
     Presentation presentation = event.getPresentation();
     DataContext dataContext = event.getDataContext();
     boolean enabled = isEnabled(dataContext);

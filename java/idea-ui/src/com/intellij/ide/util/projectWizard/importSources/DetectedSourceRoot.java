@@ -22,7 +22,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 
 public abstract class DetectedSourceRoot extends DetectedProjectRoot {
-  private String myPackagePrefix;
+  private final String myPackagePrefix;
 
   public DetectedSourceRoot(final File directory, @Nullable String packagePrefix) {
     super(directory);

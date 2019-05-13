@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,29 +36,31 @@ final class AntExplorerTreeStructure extends AbstractTreeStructure {
   private final Project myProject;
   private final Object myRoot = new Object();
   private boolean myFilteredTargets = false;
-  private static final Comparator<AntBuildTarget> ourTargetComparator = new Comparator<AntBuildTarget>() {
-    @Override
-    public int compare(final AntBuildTarget target1, final AntBuildTarget target2) {
-      final String name1 = target1.getDisplayName();
-      if (name1 == null) return Integer.MIN_VALUE;
-      final String name2 = target2.getDisplayName();
-      if (name2 == null) return Integer.MAX_VALUE;
-      return name1.compareToIgnoreCase(name2);
-    }
+  private static final Comparator<AntBuildTarget> ourTargetComparator = (target1, target2) -> {
+    final String name1 = target1.getDisplayName();
+    if (name1 == null) return Integer.MIN_VALUE;
+    final String name2 = target2.getDisplayName();
+    if (name2 == null) return Integer.MAX_VALUE;
+    return name1.compareToIgnoreCase(name2);
   };
 
-  public AntExplorerTreeStructure(final Project project) {
+  AntExplorerTreeStructure(final Project project) {
     myProject = project;
   }
 
   @Override
-  public boolean isToBuildChildrenInBackground(final Object element) {
+  public boolean isToBuildChildrenInBackground(@NotNull final Object element) {
     return true;
   }
 
   @Override
+  public boolean isAlwaysLeaf(@NotNull Object element) {
+    return element != myRoot && !(element instanceof AntBuildFile);
+  }
+
+  @Override
   @NotNull
-  public AntNodeDescriptor createDescriptor(Object element, NodeDescriptor parentDescriptor) {
+  public AntNodeDescriptor createDescriptor(@NotNull Object element, NodeDescriptor parentDescriptor) {
     if (element == myRoot) {
       return new RootNodeDescriptor(myProject, parentDescriptor);
     }
@@ -79,15 +81,15 @@ final class AntExplorerTreeStructure extends AbstractTreeStructure {
     return null;
   }
 
+  @NotNull
   @Override
-  public Object[] getChildElements(Object element) {
+  public Object[] getChildElements(@NotNull Object element) {
     final AntConfiguration configuration = AntConfiguration.getInstance(myProject);
     if (element == myRoot) {
       if (!configuration.isInitialized()) {
         return new Object[] {AntBundle.message("loading.ant.config.progress")};
       }
-      final AntBuildFile[] buildFiles = configuration.getBuildFiles();
-      return buildFiles.length != 0 ? buildFiles : new Object[]{AntBundle.message("ant.tree.structure.no.build.files.message")};
+      return configuration.getBuildFileList().isEmpty() ? new Object[]{AntBundle.message("ant.tree.structure.no.build.files.message")} : configuration.getBuildFiles();
     }
 
     if (element instanceof AntBuildFile) {
@@ -95,14 +97,14 @@ final class AntExplorerTreeStructure extends AbstractTreeStructure {
       final AntBuildModel model = buildFile.getModel();
 
       final List<AntBuildTarget> targets =
-        new ArrayList<AntBuildTarget>(Arrays.asList(myFilteredTargets ? model.getFilteredTargets() : model.getTargets()));
+        new ArrayList<>(Arrays.asList(myFilteredTargets ? model.getFilteredTargets() : model.getTargets()));
       Collections.sort(targets, ourTargetComparator);
 
       final List<AntBuildTarget> metaTargets = Arrays.asList(configuration.getMetaTargets(buildFile));
       Collections.sort(metaTargets, ourTargetComparator);
       targets.addAll(metaTargets);
 
-      return targets.toArray(new AntBuildTarget[targets.size()]);
+      return targets.toArray(new AntBuildTarget[0]);
     }
 
     return ArrayUtil.EMPTY_OBJECT_ARRAY;
@@ -110,7 +112,7 @@ final class AntExplorerTreeStructure extends AbstractTreeStructure {
 
   @Override
   @Nullable
-  public Object getParentElement(Object element) {
+  public Object getParentElement(@NotNull Object element) {
     if (element instanceof AntBuildTarget) {
       if (element instanceof MetaTarget) {
         return ((MetaTarget)element).getBuildFile();
@@ -141,6 +143,7 @@ final class AntExplorerTreeStructure extends AbstractTreeStructure {
     return asyncCommitDocuments(myProject);
   }
 
+  @NotNull
   @Override
   public Object getRootElement() {
     return myRoot;
@@ -151,7 +154,7 @@ final class AntExplorerTreeStructure extends AbstractTreeStructure {
   }
 
   private final class RootNodeDescriptor extends AntNodeDescriptor {
-    public RootNodeDescriptor(Project project, NodeDescriptor parentDescriptor) {
+    RootNodeDescriptor(Project project, NodeDescriptor parentDescriptor) {
       super(project, parentDescriptor);
     }
 
@@ -173,7 +176,7 @@ final class AntExplorerTreeStructure extends AbstractTreeStructure {
   }
 
   private static final class TextInfoNodeDescriptor extends AntNodeDescriptor {
-    public TextInfoNodeDescriptor(Project project, NodeDescriptor parentDescriptor, String text) {
+    TextInfoNodeDescriptor(Project project, NodeDescriptor parentDescriptor, String text) {
       super(project, parentDescriptor);
       myName = text;
       myColor = JBColor.blue;

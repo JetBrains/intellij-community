@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,19 +15,24 @@
  */
 package org.jetbrains.jps.api;
 
-import java.util.concurrent.*;
+import org.jetbrains.annotations.NotNull;
+
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Semaphore;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: 5/3/12
  */
-public class BasicFuture<T> implements Future<T> {
-  protected final Semaphore mySemaphore = new Semaphore(1);
+public class BasicFuture<T> implements TaskFuture<T> {
+  private final Semaphore mySemaphore = new Semaphore(1);
   private final AtomicBoolean myDone = new AtomicBoolean(false);
   private final AtomicBoolean myCanceledState = new AtomicBoolean(false);
 
   public BasicFuture() {
+    mySemaphore.acquireUninterruptibly();
   }
 
   public void setDone() {
@@ -36,6 +41,7 @@ public class BasicFuture<T> implements Future<T> {
     }
   }
 
+  @Override
   public boolean cancel(boolean mayInterruptIfRunning) {
     if (isDone()) {
       return false;
@@ -54,28 +60,36 @@ public class BasicFuture<T> implements Future<T> {
   protected void performCancel() throws Exception {
   }
 
+  @Override
   public boolean isCancelled() {
     return myCanceledState.get();
   }
 
+  @Override
   public boolean isDone() {
     return myDone.get();
   }
 
+  @Override
   public void waitFor() {
     try {
       while (!isDone()) {
-        mySemaphore.tryAcquire(100L, TimeUnit.MILLISECONDS);
+        if (mySemaphore.tryAcquire(100L, TimeUnit.MILLISECONDS)) {
+          mySemaphore.release();
+        }
       }
     }
     catch (InterruptedException ignored) {
     }
   }
 
+  @Override
   public boolean waitFor(long timeout, TimeUnit unit) {
     try {
       if (!isDone()) {
-        mySemaphore.tryAcquire(timeout, unit);
+        if (mySemaphore.tryAcquire(timeout, unit)) {
+          mySemaphore.release();
+        }
       }
     }
     catch (InterruptedException ignored) {
@@ -83,12 +97,14 @@ public class BasicFuture<T> implements Future<T> {
     return isDone();
   }
 
+  @Override
   public T get() throws InterruptedException, ExecutionException {
     waitFor();
     return null;
   }
 
-  public T get(long timeout, TimeUnit unit) throws InterruptedException, ExecutionException, TimeoutException {
+  @Override
+  public T get(long timeout, @NotNull TimeUnit unit) throws InterruptedException, ExecutionException, TimeoutException {
     if (!waitFor(timeout, unit)) {
       throw new TimeoutException();
     }

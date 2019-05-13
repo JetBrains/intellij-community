@@ -15,7 +15,7 @@
  */
 package com.siyeh.ipp.psiutils;
 
-import com.intellij.codeInsight.CodeInsightUtilBase;
+import com.intellij.codeInsight.CodeInsightUtilCore;
 import com.intellij.codeInsight.highlighting.HighlightManager;
 import com.intellij.codeInsight.template.Expression;
 import com.intellij.codeInsight.template.Template;
@@ -62,43 +62,39 @@ public class HighlightUtil {
       return;
     }
     final Application application = ApplicationManager.getApplication();
-    application.invokeLater(new Runnable() {
-      public void run() {
-        final PsiElement[] elements = PsiUtilCore.toPsiElementArray(elementCollection);
-        final PsiElement firstElement = elements[0];
-        if (!firstElement.isValid()) {
-          return;
-        }
-        final Project project = firstElement.getProject();
-        final FileEditorManager editorManager = FileEditorManager.getInstance(project);
-        final EditorColorsManager editorColorsManager = EditorColorsManager.getInstance();
-        final Editor editor = editorManager.getSelectedTextEditor();
-        if (editor == null) {
-          return;
-        }
-        final EditorColorsScheme globalScheme = editorColorsManager.getGlobalScheme();
-        final TextAttributes textattributes = globalScheme.getAttributes(
-            EditorColors.SEARCH_RESULT_ATTRIBUTES);
-        final HighlightManager highlightManager = HighlightManager.getInstance(project);
-        highlightManager.addOccurrenceHighlights(editor, elements, textattributes, true, null);
-        final FindManager findmanager = FindManager.getInstance(project);
-        FindModel findmodel = findmanager.getFindNextModel();
-        if (findmodel == null) {
-          findmodel = findmanager.getFindInFileModel();
-        }
-        findmodel.setSearchHighlighters(true);
-        findmanager.setFindWasPerformed();
-        findmanager.setFindNextModel(findmodel);
-        application.invokeLater(new Runnable() {
-          public void run() {
-            final WindowManager windowManager = WindowManager.getInstance();
-            final StatusBar statusBar = windowManager.getStatusBar(project);
-            if (statusBar != null) {
-              statusBar.setInfo(statusBarText);
-            }
-          }
-        });
+    application.invokeLater(() -> {
+      final PsiElement[] elements = PsiUtilCore.toPsiElementArray(elementCollection);
+      final PsiElement firstElement = elements[0];
+      if (!firstElement.isValid()) {
+        return;
       }
+      final Project project = firstElement.getProject();
+      final FileEditorManager editorManager = FileEditorManager.getInstance(project);
+      final EditorColorsManager editorColorsManager = EditorColorsManager.getInstance();
+      final Editor editor = editorManager.getSelectedTextEditor();
+      if (editor == null) {
+        return;
+      }
+      final EditorColorsScheme globalScheme = editorColorsManager.getGlobalScheme();
+      final TextAttributes textattributes = globalScheme.getAttributes(
+          EditorColors.SEARCH_RESULT_ATTRIBUTES);
+      final HighlightManager highlightManager = HighlightManager.getInstance(project);
+      highlightManager.addOccurrenceHighlights(editor, elements, textattributes, true, null);
+      final FindManager findmanager = FindManager.getInstance(project);
+      FindModel findmodel = findmanager.getFindNextModel();
+      if (findmodel == null) {
+        findmodel = findmanager.getFindInFileModel();
+      }
+      findmodel.setSearchHighlighters(true);
+      findmanager.setFindWasPerformed();
+      findmanager.setFindNextModel(findmodel);
+      application.invokeLater(() -> {
+        final WindowManager windowManager = WindowManager.getInstance();
+        final StatusBar statusBar = windowManager.getStatusBar(project);
+        if (statusBar != null) {
+          statusBar.setInfo(statusBarText);
+        }
+      });
     });
   }
 
@@ -132,7 +128,7 @@ public class HighlightUtil {
   }
 
   public static void showRenameTemplate(PsiElement context, PsiNameIdentifierOwner element) {
-    context = CodeInsightUtilBase.forcePsiPostprocessAndRestoreElement(context);
+    context = CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(context);
     final Query<PsiReference> query = ReferencesSearch.search(element, element.getUseScope());
     final Collection<PsiReference> references = query.findAll();
     final Project project = context.getProject();

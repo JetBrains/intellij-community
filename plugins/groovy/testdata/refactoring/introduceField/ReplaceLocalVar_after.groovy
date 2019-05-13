@@ -5,6 +5,6 @@ class Bar {
         f = 5
 
         f++;
-        print <selection>f</selection>
+        print f<caret>
     }
 }

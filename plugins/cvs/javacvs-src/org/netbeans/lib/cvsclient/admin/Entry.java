@@ -64,8 +64,9 @@ public final class Entry implements Cloneable {
 
   public static SyncDateFormat getLastModifiedDateFormatter() {
     if (lastModifiedDateFormatter == null) {
-      lastModifiedDateFormatter = new SyncDateFormat(new SimpleDateFormat(LAST_MODIFIED_DATE_FORMAT_ATR, Locale.US));
-      lastModifiedDateFormatter.setTimeZone(TimeZone.getTimeZone(TIME_ZONE_FORMAT_STR));
+      SimpleDateFormat delegate = new SimpleDateFormat(LAST_MODIFIED_DATE_FORMAT_ATR, Locale.US);
+      delegate.setTimeZone(TimeZone.getTimeZone(TIME_ZONE_FORMAT_STR));
+      lastModifiedDateFormatter = new SyncDateFormat(delegate);
     }
     return lastModifiedDateFormatter;
   }
@@ -116,7 +117,7 @@ public final class Entry implements Cloneable {
    * Create the standard CVS 1.10 entry line format.
    */
   public String toString() {
-    final StringBuffer buf = new StringBuffer();
+    final StringBuilder buf = new StringBuilder();
     if (directory) {
       buf.append(DIRECTORY_PREFIX);
     }
@@ -455,7 +456,7 @@ public final class Entry implements Cloneable {
   }
 
   public String getStickyData() {
-    StringBuffer buf = new StringBuffer();
+    StringBuilder buf = new StringBuilder();
     if (stickyTag != null) {
       buf.append(STICKY_TAG_REVISION_PREFIX);
       buf.append(stickyTag);
@@ -472,6 +473,7 @@ public final class Entry implements Cloneable {
     return buf.toString();
   }
 
+  @Override
   public Object clone() throws CloneNotSupportedException {
     return super.clone();
   }

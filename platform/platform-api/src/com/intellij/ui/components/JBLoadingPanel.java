@@ -19,6 +19,8 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.ui.LoadingDecorator;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.components.panels.NonOpaquePanel;
+import com.intellij.util.NotNullFunction;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.AsyncProcessIcon;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -26,7 +28,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.ArrayList;
 import java.util.Collection;
 
 /**
@@ -35,22 +36,36 @@ import java.util.Collection;
 public class JBLoadingPanel extends JPanel {
   private final JPanel myPanel;
   final LoadingDecorator myDecorator;
-  private Collection<JBLoadingPanelListener> myListeners = new ArrayList<JBLoadingPanelListener>();
+  private final Collection<JBLoadingPanelListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
 
   public JBLoadingPanel(@Nullable LayoutManager manager, @NotNull Disposable parent) {
-    super(new BorderLayout());
-    myPanel = manager == null ? new JPanel() : new JPanel(manager);
-    myDecorator = new LoadingDecorator(myPanel, parent, -1) {
+    this(manager, parent, -1);
+  }
+
+  public JBLoadingPanel(@Nullable LayoutManager manager, @NotNull Disposable parent, int startDelayMs) {
+    this(manager, panel -> new LoadingDecorator(panel, parent, startDelayMs) {
       @Override
       protected NonOpaquePanel customizeLoadingLayer(JPanel parent, JLabel text, AsyncProcessIcon icon) {
         final NonOpaquePanel panel = super.customizeLoadingLayer(parent, text, icon);
-        final Font font = text.getFont();
-        text.setFont(font.deriveFont(font.getStyle(), font.getSize() + 6));
-        text.setForeground(ColorUtil.toAlpha(UIUtil.getLabelForeground(), 150));
+        customizeStatusText(text);
         return panel;
       }
-    };
+    });
+  }
+
+  public JBLoadingPanel(@Nullable LayoutManager manager, @NotNull NotNullFunction<? super JPanel, ? extends LoadingDecorator> createLoadingDecorator) {
+    super(new BorderLayout());
+    myPanel = manager == null ? new JPanel() : new JPanel(manager);
+    myPanel.setOpaque(false);
+    myPanel.setFocusable(false);
+    myDecorator = createLoadingDecorator.fun(myPanel);
     super.add(myDecorator.getComponent(), BorderLayout.CENTER);
+  }
+
+  public static void customizeStatusText(JLabel text) {
+    Font font = text.getFont();
+    text.setFont(font.deriveFont(font.getStyle(), font.getSize() + 6));
+    text.setForeground(ColorUtil.toAlpha(UIUtil.getLabelForeground(), 150));
   }
 
   public void setLoadingText(String text) {
@@ -74,7 +89,7 @@ public class JBLoadingPanel extends JPanel {
       listener.onLoadingStart();
     }
   }
-  
+
   public void addListener(@NotNull JBLoadingPanelListener listener) {
     myListeners.add(listener);
   }
@@ -99,6 +114,7 @@ public class JBLoadingPanel extends JPanel {
 
   @Override
   public void add(Component comp, Object constraints) {
+
     myPanel.add(comp, constraints);
   }
 

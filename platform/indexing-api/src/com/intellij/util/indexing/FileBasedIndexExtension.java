@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,8 +18,6 @@ package com.intellij.util.indexing;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.util.io.DataExternalizer;
-import com.intellij.util.io.KeyDescriptor;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
@@ -27,28 +25,24 @@ import java.util.Collections;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Dec 26, 2007
  * V class MUST have equals / hashcode properly defined!!!
  */
-public abstract class FileBasedIndexExtension<K, V> {
+public abstract class FileBasedIndexExtension<K, V> extends IndexExtension<K, V, FileContent>{
   public static final ExtensionPointName<FileBasedIndexExtension> EXTENSION_POINT_NAME = ExtensionPointName.create("com.intellij.fileBasedIndex");
-  public static final int DEFAULT_CACHE_SIZE = 1024;
+  private static final int DEFAULT_CACHE_SIZE = 1024;
 
   @NotNull
+  @Override
   public abstract ID<K, V> getName();
 
   @NotNull
-  public abstract DataIndexer<K, V, FileContent> getIndexer();
-  
-  public abstract KeyDescriptor<K> getKeyDescriptor();
-  
-  public abstract DataExternalizer<V> getValueExternalizer();
-  
   public abstract FileBasedIndex.InputFilter getInputFilter();
   
   public abstract boolean dependsOnFileContent();
-  
-  public abstract int getVersion();
+
+  public boolean indexDirectories() {
+    return false;
+  }
 
   /**
    * @see FileBasedIndexExtension#DEFAULT_CACHE_SIZE
@@ -64,14 +58,22 @@ public abstract class FileBasedIndexExtension<K, V> {
    *
    * Use carefully, because indexing large files may influence index update speed dramatically.
    *
-   * @see com.intellij.openapi.vfs.PersistentFSConstants#MAX_INTELLISENSE_FILESIZE
+   * @see com.intellij.openapi.vfs.PersistentFSConstants#getMaxIntellisenseFileSize()
    */
   @NotNull
   public Collection<FileType> getFileTypesWithSizeLimitNotApplicable() {
     return Collections.emptyList();
   }
 
-  public boolean isKeyHighlySelective() {
+  public boolean keyIsUniqueForIndexedFile() {
+    return false;
+  }
+
+  public boolean traceKeyHashToVirtualFileMapping() {
+    return false;
+  }
+
+  public boolean hasSnapshotMapping() {
     return false;
   }
 }

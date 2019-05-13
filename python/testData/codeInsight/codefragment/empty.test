@@ -1,0 +1,8 @@
+import foo
+<begin>
+print("Foo was imported")
+<end>
+foo.do_something
+<result>
+In:
+Out:

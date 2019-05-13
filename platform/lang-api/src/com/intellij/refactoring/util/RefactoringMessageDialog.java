@@ -1,26 +1,11 @@
-/*
- * Copyright 2000-2011 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.util;
 
-import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.MultiLineLabelUI;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -33,7 +18,7 @@ public class RefactoringMessageDialog extends DialogWrapper {
   private final Icon myIcon;
   private final boolean myIsCancelButtonVisible;
 
-  public RefactoringMessageDialog(String title, String message, String helpTopic, @NonNls String iconId, boolean showCancelButton, Project project) {
+  public RefactoringMessageDialog(String title, String message, String helpTopic, String iconId, boolean showCancelButton, Project project) {
     super(project, false);
     setTitle(title);
     myMessage = message;
@@ -46,7 +31,7 @@ public class RefactoringMessageDialog extends DialogWrapper {
   @NotNull
   @Override
   protected Action[] createActions() {
-    List<Action> actions = new ArrayList<Action>();
+    List<Action> actions = new ArrayList<>();
     actions.add(getOKAction());
     if (myIsCancelButtonVisible) {
       actions.add(getCancelAction());
@@ -54,7 +39,7 @@ public class RefactoringMessageDialog extends DialogWrapper {
     if (myHelpTopic != null) {
       actions.add(getHelpAction());
     }
-    return actions.toArray(new Action[actions.size()]);
+    return actions.toArray(new Action[0]);
   }
 
   @Override
@@ -78,8 +63,9 @@ public class RefactoringMessageDialog extends DialogWrapper {
     return null;
   }
 
+  @Nullable
   @Override
-  protected void doHelpAction() {
-    HelpManager.getInstance().invokeHelp(myHelpTopic);
+  protected String getHelpId() {
+    return myHelpTopic;
   }
 }

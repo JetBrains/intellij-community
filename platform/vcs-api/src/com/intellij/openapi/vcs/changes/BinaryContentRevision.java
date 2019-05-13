@@ -16,21 +16,27 @@
 
 package com.intellij.openapi.vcs.changes;
 
-import org.jetbrains.annotations.Nullable;
 import com.intellij.openapi.vcs.VcsException;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author yole
  */
-public interface BinaryContentRevision extends ContentRevision {
+public interface BinaryContentRevision extends ByteBackedContentRevision {
   /**
    * Content of the revision. Implementers are encouraged to lazy implement this especially when it requires connection to the
    * version control server or something.
-   * Might return null in case if file path denotes a directory or content is impossible to retreive.
+   * Might return null in case if file path denotes a directory or content is impossible to retrieve.
    *
    * @return content of the revision
    * @throws com.intellij.openapi.vcs.VcsException in case when content retrieval fails
    */
   @Nullable
   byte[] getBinaryContent() throws VcsException;
+
+  @Nullable
+  @Override
+  default byte[] getContentAsBytes() throws VcsException {
+    return getBinaryContent();
+  }
 }

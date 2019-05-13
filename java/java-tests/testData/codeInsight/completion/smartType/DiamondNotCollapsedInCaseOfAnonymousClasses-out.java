@@ -3,27 +3,27 @@ class MyClass {
     MyDD<String> d = new MyDD<String>() {
         @Override
         public int hashCode() {
-            <selection>return super.hashCode();    //To change body of overridden methods use File | Settings | File Templates.</selection>
+            <selection>return super.hashCode();</selection>
         }
 
         @Override
         public boolean equals(Object obj) {
-            return super.equals(obj);    //To change body of overridden methods use File | Settings | File Templates.
+            return super.equals(obj);
         }
 
         @Override
         protected Object clone() throws CloneNotSupportedException {
-            return super.clone();    //To change body of overridden methods use File | Settings | File Templates.
+            return super.clone();
         }
 
         @Override
         public String toString() {
-            return super.toString();    //To change body of overridden methods use File | Settings | File Templates.
+            return super.toString();
         }
 
         @Override
         protected void finalize() throws Throwable {
-            super.finalize();    //To change body of overridden methods use File | Settings | File Templates.
+            super.finalize();
         }
     };
   }

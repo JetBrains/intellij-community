@@ -33,9 +33,9 @@ import java.awt.*;
  * @author nik
  */
 public class EditExistingLibraryDialog extends LibraryEditorDialogBase {
-  private ExistingLibraryEditor myLibraryEditor;
-  private boolean myCommitChanges;
-  private LibraryTable.ModifiableModel myTableModifiableModel;
+  private final ExistingLibraryEditor myLibraryEditor;
+  private final boolean myCommitChanges;
+  private final LibraryTable.ModifiableModel myTableModifiableModel;
 
   public static EditExistingLibraryDialog createDialog(Component parent,
                                                        LibraryTableModifiableModelProvider modelProvider,
@@ -96,6 +96,12 @@ public class EditExistingLibraryDialog extends LibraryEditorDialogBase {
   @Override
   protected LibraryTable.ModifiableModel getTableModifiableModel() {
     return myTableModifiableModel;
+  }
+
+  @Nullable
+  @Override
+  protected String getHelpId() {
+    return "Configure_Library_Dialog";
   }
 
   @Override

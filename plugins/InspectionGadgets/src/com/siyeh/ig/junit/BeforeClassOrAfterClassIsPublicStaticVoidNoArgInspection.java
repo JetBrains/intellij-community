@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2009 Dave Griffith, Bas Leijdekkers
+ * Copyright 2006-2016 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,14 +15,8 @@
  */
 package com.siyeh.ig.junit;
 
-import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.openapi.project.Project;
+import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.psi.*;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiFormatUtil;
-import com.intellij.refactoring.changeSignature.ChangeSignatureProcessor;
-import com.intellij.refactoring.changeSignature.ParameterInfoImpl;
-import com.intellij.util.IncorrectOperationException;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -30,8 +24,26 @@ import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.TestUtils;
 import org.jetbrains.annotations.NotNull;
 
-public class BeforeClassOrAfterClassIsPublicStaticVoidNoArgInspection
-  extends BaseInspection {
+import java.util.Arrays;
+
+import static com.intellij.codeInsight.AnnotationUtil.CHECK_HIERARCHY;
+
+public class BeforeClassOrAfterClassIsPublicStaticVoidNoArgInspection extends
+                                                                      BaseInspection {
+
+  private static final String[] STATIC_CONFIGS = {
+    "org.junit.BeforeClass",
+    "org.junit.AfterClass",
+    "org.junit.jupiter.api.BeforeAll",
+    "org.junit.jupiter.api.AfterAll"
+  };
+
+  @Override
+  protected InspectionGadgetsFix buildFix(Object... infos) {
+    final PsiMethod method = (PsiMethod)infos[0];
+    String targetModifier = isJunit4Annotation((String)infos[1]) ? PsiModifier.PUBLIC : PsiModifier.PACKAGE_LOCAL;
+    return new MakePublicStaticVoidFix(method, true, targetModifier);
+  }
 
   @Override
   @NotNull
@@ -50,7 +62,7 @@ public class BeforeClassOrAfterClassIsPublicStaticVoidNoArgInspection
   @NotNull
   protected String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
-      "before.class.or.after.class.is.public.static.void.no.arg.problem.descriptor");
+      "before.class.or.after.class.is.public.static.void.no.arg.problem.descriptor", infos[1]);
   }
 
   @Override
@@ -58,21 +70,19 @@ public class BeforeClassOrAfterClassIsPublicStaticVoidNoArgInspection
     return new BeforeClassOrAfterClassIsPublicStaticVoidNoArgVisitor();
   }
 
-  @Override
-  protected InspectionGadgetsFix buildFix(Object... infos) {
-    if (infos.length != 1) return null;
-    final Object name = infos[0];
-    if (!(name instanceof String)) return null;
-    return new MakePublicStaticVoidFix((String)name);
+  protected static boolean isJunit4Annotation(String annotation) {
+    return annotation.endsWith("Class");
   }
 
-  private static class BeforeClassOrAfterClassIsPublicStaticVoidNoArgVisitor
-    extends BaseInspectionVisitor {
+  private static class BeforeClassOrAfterClassIsPublicStaticVoidNoArgVisitor extends BaseInspectionVisitor {
 
     @Override
     public void visitMethod(@NotNull PsiMethod method) {
       //note: no call to super;
-      if (!TestUtils.isJUnit4BeforeClassOrAfterClassMethod(method)) {
+      String annotation = Arrays.stream(STATIC_CONFIGS)
+        .filter(anno -> AnnotationUtil.isAnnotated(method, anno, CHECK_HIERARCHY))
+        .findFirst().orElse(null);
+      if (annotation == null) {
         return;
       }
       final PsiType returnType = method.getReturnType();
@@ -85,54 +95,12 @@ public class BeforeClassOrAfterClassIsPublicStaticVoidNoArgInspection
       }
 
       final PsiParameterList parameterList = method.getParameterList();
-      if (parameterList.getParametersCount() != 0 ||
+      boolean junit4Annotation = isJunit4Annotation(annotation);
+      if (junit4Annotation && (!parameterList.isEmpty() || !method.hasModifierProperty(PsiModifier.PUBLIC)) ||
           !returnType.equals(PsiType.VOID) ||
-          !method.hasModifierProperty(PsiModifier.PUBLIC) ||
-          !method.hasModifierProperty(PsiModifier.STATIC)) {
-        registerMethodError(method, "Change signature of \'" +
-                                    PsiFormatUtil.formatMethod(method, PsiSubstitutor.EMPTY,
-                                                               PsiFormatUtil.SHOW_NAME |
-                                                               PsiFormatUtil.SHOW_MODIFIERS |
-                                                               PsiFormatUtil.SHOW_PARAMETERS |
-                                                               PsiFormatUtil.SHOW_TYPE,
-                                                               PsiFormatUtil.SHOW_TYPE) +
-                                    "\' to \'public static void " +
-                                    method.getName() +
-                                    "()\'");
+          !method.hasModifierProperty(PsiModifier.STATIC) && (junit4Annotation || !TestUtils.testInstancePerClass(targetClass))) {
+        registerMethodError(method, method, annotation);
       }
-    }
-  }
-
-  private static class MakePublicStaticVoidFix extends InspectionGadgetsFix {
-    private final String myName;
-
-    public MakePublicStaticVoidFix(String name) {
-      myName = name;
-    }
-
-    protected void doFix(final Project project, ProblemDescriptor descriptor) throws IncorrectOperationException {
-      final PsiMethod method = PsiTreeUtil.getParentOfType(descriptor.getPsiElement(), PsiMethod.class);
-      if (method != null) {
-        final PsiModifierList modifierList = method.getModifierList();
-        if (!modifierList.hasModifierProperty(PsiModifier.PUBLIC)) {
-          modifierList.setModifierProperty(PsiModifier.PUBLIC, true);
-        }
-        if (!modifierList.hasModifierProperty(PsiModifier.STATIC)) {
-          modifierList.setModifierProperty(PsiModifier.STATIC, true);
-        }
-
-        if (method.getReturnType() != PsiType.VOID) {
-          ChangeSignatureProcessor csp =
-            new ChangeSignatureProcessor(project, method, false, PsiModifier.PUBLIC, method.getName(), PsiType.VOID,
-                                         new ParameterInfoImpl[0]);
-          csp.run();
-        }
-      }
-    }
-
-    @NotNull
-    public String getName() {
-      return myName;
     }
   }
 }

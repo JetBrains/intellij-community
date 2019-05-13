@@ -1,0 +1,17 @@
+# Pytype blacklist. Files will not be tested with pytype.
+
+# pytype has its own version of these files, and thus doesn't mind if it
+# can't parse the typeshed version:
+stdlib/2/__builtin__.pyi
+stdlib/2/builtins.pyi
+stdlib/2/typing.pyi
+stdlib/3/builtins.pyi
+stdlib/3/typing.pyi
+stdlib/3/collections/__init__.pyi # parse only
+
+# builtins not found
+stdlib/2/os/__init__.pyi # parse only
+
+# pytype doesn't yet support aliases with implicit type parameters
+# (e.g., here, FutureT = Future[T])
+stdlib/3/asyncio/tasks.pyi

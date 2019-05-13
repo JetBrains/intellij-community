@@ -1,0 +1,37 @@
+<?xml version='1.0'?>
+<!DOCTYPE xs:schema SYSTEM "XMLSchema.dtd" [
+<!ELEMENT p ANY>
+<!ELEMENT a ANY>
+<!ATTLIST a href CDATA #IMPLIED>
+<!ELEMENT hr ANY>
+<!ELEMENT h1 ANY>
+<!ELEMENT br ANY>
+]>
+<xs:schema targetNamespace="http://www.w3.org/2001/XMLSchema-instance"
+           xmlns:xs="http://www.w3.org/2001/XMLSchema"
+           xmlns="http://www.w3.org/1999/xhtml">
+  <xs:annotation>
+   <xs:documentation>
+    <h1>XML Schema instance namespace</h1>
+    <p>See <a href="http://www.w3.org/TR/xmlschema-1/">the XML Schema
+       Recommendation</a> for an introduction</p>
+
+
+    <hr />
+    $Date: 2001/03/16 20:25:57 $<br />
+    $Id: XMLSchema-instance.xsd,v 1.4 2001/03/16 20:25:57 ht Exp $
+  </xs:documentation>
+ </xs:annotation>
+ <xs:annotation>
+  <xs:documentation><p>This schema should never be used as such:
+                    <a href="http://www.w3.org/TR/xmlschema-1/#no-xsi">the XML
+                    Schema Recommendation</a> forbids the declaration of
+                    attributes in this namespace</p>
+  </xs:documentation>
+ </xs:annotation>
+
+ <xs:attribute name="nil"/>
+ <xs:attribute name="type"/>
+ <xs:attribute name="schemaLocation"/>
+ <xs:attribute name="noNamespaceSchemaLocation"/>
+</xs:schema>

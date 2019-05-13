@@ -21,9 +21,8 @@ import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.RefactoringImpl;
 import com.intellij.refactoring.SafeDeleteRefactoring;
 import com.intellij.refactoring.safeDelete.SafeDeleteProcessor;
+import com.intellij.util.containers.ContainerUtil;
 
-import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 
 /**
@@ -34,23 +33,28 @@ public class SafeDeleteRefactoringImpl extends RefactoringImpl<SafeDeleteProcess
     super(SafeDeleteProcessor.createInstance(project, EmptyRunnable.INSTANCE, elements, true, true));
   }
 
+  @Override
   public List<PsiElement> getElements() {
     final PsiElement[] elements = myProcessor.getElements();
-    return Collections.unmodifiableList(Arrays.asList(elements));
+    return ContainerUtil.immutableList(elements);
   }
 
+  @Override
   public boolean isSearchInComments() {
     return myProcessor.isSearchInCommentsAndStrings();
   }
 
+  @Override
   public void setSearchInComments(boolean value) {
     myProcessor.setSearchInCommentsAndStrings(value);
   }
 
+  @Override
   public void setSearchInNonJavaFiles(boolean value) {
     myProcessor.setSearchNonJava(value);
   }
 
+  @Override
   public boolean isSearchInNonJavaFiles() {
     return myProcessor.isSearchNonJava();
   }

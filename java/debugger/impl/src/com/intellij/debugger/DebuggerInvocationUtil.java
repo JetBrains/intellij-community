@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,76 +19,66 @@ import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Computable;
 import com.intellij.psi.PsiDocumentManager;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
 public class DebuggerInvocationUtil {
-  public static void swingInvokeLater(final Project project, @NotNull final Runnable runnable) {
-    SwingUtilities.invokeLater(new Runnable() {
-      public void run() {
-        if (project != null && !project.isDisposed()) {
-          runnable.run();
-        }
-      }
-    });
-  }
-  public static void invokeLater(final Project project, @NotNull final Runnable runnable) {
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
-      public void run() {
-        if (project != null && !project.isDisposed()) {
-          runnable.run();
-        }
-      }
-    });
-  }
+  public static void swingInvokeLater(@Nullable final Project project, @NotNull final Runnable runnable) {
+    if (project == null) {
+      return;
+    }
 
-  public static void invokeLater(final Project project, @NotNull final Runnable runnable, ModalityState state) {
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
-      public void run() {
-        if(project == null || project.isDisposed()) return;
-
+    SwingUtilities.invokeLater(() -> {
+      if (!project.isDisposed()) {
         runnable.run();
       }
-    }, state);
+    });
+  }
+
+  public static void invokeLater(@Nullable Project project, @NotNull Runnable runnable) {
+    if (project != null) {
+      ApplicationManager.getApplication().invokeLater(runnable, project.getDisposed());
+    }
+  }
+
+  public static void invokeLater(@Nullable Project project, @NotNull Runnable runnable, ModalityState state) {
+    if (project != null) {
+      ApplicationManager.getApplication().invokeLater(runnable, state, project.getDisposed());
+    }
   }
 
   public static void invokeAndWait(final Project project, @NotNull final Runnable runnable, ModalityState state) {
-    ApplicationManager.getApplication().invokeAndWait(new Runnable() {
-      public void run() {
-        if(project == null || project.isDisposed()) return;
-
-        runnable.run();
-      }
-    }, state);
+    if (project != null) {
+      ApplicationManager.getApplication().invokeAndWait(() -> {
+        if (!project.isDisposed()) {
+          runnable.run();
+        }
+      }, state);
+    }
   }
 
-  public static  <T> T commitAndRunReadAction(Project project, final EvaluatingComputable<T> computable) throws EvaluateException {
-    final Throwable[] ex = new Throwable[] { null };
-    T result = PsiDocumentManager.getInstance(project).commitAndRunReadAction(new Computable<T>() {
-          public T compute() {
-            try {
-              return computable.compute();
-            }
-            catch (RuntimeException e) {
-              ex[0] = e;
-            }
-            catch (Exception th) {
-              ex[0] = th;
-            }
+  public static <T> T commitAndRunReadAction(Project project, final EvaluatingComputable<T> computable) throws EvaluateException {
+    final Throwable[] ex = new Throwable[]{null};
+    T result = PsiDocumentManager.getInstance(project).commitAndRunReadAction(() -> {
+      try {
+        return computable.compute();
+      }
+      catch (RuntimeException | EvaluateException e) {
+        ex[0] = e;
+      }
 
-            return null;
-          }
-        });
+      return null;
+    });
 
-    if(ex[0] != null) {
-      if(ex[0] instanceof RuntimeException) {
+    if (ex[0] != null) {
+      if (ex[0] instanceof RuntimeException) {
         throw (RuntimeException)ex[0];
       }
       else {
-        throw (EvaluateException) ex[0];
+        throw (EvaluateException)ex[0];
       }
     }
 

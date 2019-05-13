@@ -25,7 +25,6 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Mar 28, 2008
  */
 public interface FileContent extends UserDataHolder {
   @NotNull
@@ -37,6 +36,7 @@ public interface FileContent extends UserDataHolder {
   @NotNull
   String getFileName();
 
+  @NotNull
   byte[] getContent();
 
   @NotNull

@@ -26,7 +26,7 @@ import org.jetbrains.jps.model.library.JpsLibraryListener;
  * @author nik
  */
 public class JpsLibraryRole extends JpsElementChildRoleBase<JpsLibrary> {
-  public static final JpsLibraryRole INSTANCE = new JpsLibraryRole();
+  private static final JpsLibraryRole INSTANCE = new JpsLibraryRole();
   public static final JpsElementCollectionRole<JpsLibrary> LIBRARIES_COLLECTION_ROLE = JpsElementCollectionRole.create(INSTANCE);
 
   private JpsLibraryRole() {

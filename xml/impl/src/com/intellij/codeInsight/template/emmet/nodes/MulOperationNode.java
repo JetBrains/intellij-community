@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package com.intellij.codeInsight.template.emmet.nodes;
 
 import com.intellij.codeInsight.template.CustomTemplateCallback;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -47,11 +48,16 @@ public class MulOperationNode extends ZenCodingNode {
                                      int totalIterations, String surroundedText,
                                      CustomTemplateCallback callback,
                                      boolean insertSurroundedTextAtTheEnd, GenerationNode parent) {
-    List<GenerationNode> result = new ArrayList<GenerationNode>();
+    List<GenerationNode> result = new ArrayList<>();
     for (int i = 0; i < myRightOperand; i++) {
       result.addAll(myLeftOperand.expand(i, myRightOperand, surroundedText, callback, insertSurroundedTextAtTheEnd, parent));
     }
     return result;
+  }
+
+  @Override
+  public int getApproximateOutputLength(@Nullable CustomTemplateCallback callback) {
+    return myLeftOperand.getApproximateOutputLength(callback) * myRightOperand;
   }
 
   @Override

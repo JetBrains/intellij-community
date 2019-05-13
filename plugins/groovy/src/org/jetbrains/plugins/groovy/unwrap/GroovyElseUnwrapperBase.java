@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,28 +16,28 @@
 package org.jetbrains.plugins.groovy.unwrap;
 
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiIfStatement;
-import com.intellij.psi.PsiStatement;
+import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrIfStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
-import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
 import java.util.Set;
 
 public abstract class GroovyElseUnwrapperBase extends GroovyUnwrapper {
-  public GroovyElseUnwrapperBase(String description) {
+  public GroovyElseUnwrapperBase(@NotNull String description) {
     super(description);
   }
 
-  public boolean isApplicableTo(PsiElement e) {
+  @Override
+  public boolean isApplicableTo(@NotNull PsiElement e) {
     return (isElseBlock(e) || isElseKeyword(e)) && isValidConstruct(e);
   }
 
   private static boolean isElseKeyword(PsiElement e) {
     PsiElement p = e.getParent();
-    return p instanceof GrIfStatement && PsiUtil.isLeafElementOfType(e, GroovyTokenTypes.kELSE);
+    return p instanceof GrIfStatement && PsiImplUtil.isLeafElementOfType(e, GroovyTokenTypes.kELSE);
   }
 
   private static boolean isValidConstruct(PsiElement e) {
@@ -45,7 +45,7 @@ public abstract class GroovyElseUnwrapperBase extends GroovyUnwrapper {
   }
 
   @Override
-  public void collectElementsToIgnore(PsiElement element, Set<PsiElement> result) {
+  public void collectElementsToIgnore(@NotNull PsiElement element, @NotNull Set<PsiElement> result) {
     PsiElement parent = element.getParent();
 
     while (parent instanceof GrIfStatement) {

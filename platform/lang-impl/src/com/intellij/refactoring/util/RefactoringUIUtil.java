@@ -16,16 +16,26 @@
 
 package com.intellij.refactoring.util;
 
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.NonNls;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.ElementDescriptionUtil;
-import com.intellij.openapi.project.Project;
+import com.intellij.codeInsight.lookup.LookupManager;
+import com.intellij.lang.findUsages.DescriptiveNameUtil;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.ex.FocusChangeListener;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.util.IncorrectOperationException;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.ElementDescriptionUtil;
+import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.RefactoringBundle;
+import com.intellij.ui.EditorSettingsProvider;
 import com.intellij.usageView.UsageViewUtil;
+import com.intellij.util.Function;
+import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+
+import java.util.Arrays;
 
 /**
  * @author yole
@@ -48,22 +58,27 @@ public class RefactoringUIUtil {
     }
 
     final String s = message;
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
-      public void run() {
-        Messages.showMessageDialog(project, s, RefactoringBundle.message("error.title"), Messages.getErrorIcon());
-      }
-    });
+    ApplicationManager.getApplication().invokeLater(
+      () -> Messages.showMessageDialog(project, s, RefactoringBundle.message("error.title"), Messages.getErrorIcon()));
   }
 
   public static String calculatePsiElementDescriptionList(PsiElement[] elements) {
-    StringBuilder buffer = new StringBuilder();
-    for (int i = 0; i < elements.length; i++) {
-      if (i > 0) buffer.append(", ");
-      buffer.append(UsageViewUtil.getType(elements[i]));
-      buffer.append(" ");
-      buffer.append(UsageViewUtil.getDescriptiveName(elements[i]));
+    final Function<PsiElement, String> presentationFun = element -> UsageViewUtil.getType(element) +
+                                                                    " " +
+                                                                    DescriptiveNameUtil.getDescriptiveName(element);
+    return StringUtil.join(ContainerUtil.map2LinkedSet(Arrays.asList(elements), presentationFun), ", ");
+  }
+
+  public static final EditorSettingsProvider SELECT_ALL_ON_FOCUS = editor -> editor.addFocusListener(new FocusChangeListener() {
+    @Override
+    public void focusGained(@NotNull Editor editor) {
+      if (LookupManager.getActiveLookup(editor) == null) {
+        editor.getSelectionModel().setSelection(0, editor.getDocument().getTextLength());
+      }
     }
 
-    return buffer.toString();
-  }
+    @Override
+    public void focusLost(@NotNull Editor editor) {
+    }
+  });
 }

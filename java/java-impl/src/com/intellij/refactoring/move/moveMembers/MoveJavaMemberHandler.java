@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,8 @@
 package com.intellij.refactoring.move.moveMembers;
 
 import com.intellij.codeInsight.ChangeContextUtil;
+import com.intellij.codeInsight.ExpectedTypeInfo;
+import com.intellij.codeInsight.ExpectedTypesProvider;
 import com.intellij.codeInsight.highlighting.ReadWriteAccessDetector;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -32,7 +34,10 @@ import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Set;
 
 /**
  * @author Maxim.Medvedev
@@ -56,9 +61,9 @@ public class MoveJavaMemberHandler implements MoveMemberHandler {
           }
         }
         else {
-          if (qualifier instanceof PsiReferenceExpression &&
+          if (qualifier instanceof PsiReferenceExpression && member.getContainingClass() != null &&
               ((PsiReferenceExpression)qualifier).isReferenceTo(member.getContainingClass())) {
-            return new MoveMembersProcessor.MoveMembersUsageInfo(member, refExpr, null, qualifier, psiReference);  // change qualifier
+            return new MoveMembersProcessor.MoveMembersUsageInfo(member, refExpr, targetClass, qualifier, psiReference);  // change qualifier
           }
         }
       }
@@ -77,10 +82,10 @@ public class MoveJavaMemberHandler implements MoveMemberHandler {
 
   @Override
   public void checkConflictsOnUsage(@NotNull MoveMembersProcessor.MoveMembersUsageInfo usageInfo,
-                                    @Nullable String newVisibility,
                                     @Nullable PsiModifierList modifierListCopy,
                                     @NotNull PsiClass targetClass,
                                     @NotNull Set<PsiMember> membersToMove,
+                                    @NotNull MoveMembersOptions moveMembersOptions,
                                     @NotNull MultiMap<PsiElement, String> conflicts) {
     final PsiElement element = usageInfo.getElement();
     if (element == null) return;
@@ -94,6 +99,7 @@ public class MoveJavaMemberHandler implements MoveMemberHandler {
       }
 
       if (!JavaResolveUtil.isAccessible(member, targetClass, modifierListCopy, element, accessObjectClass, null)) {
+        String newVisibility = moveMembersOptions.getExplicitMemberVisibility();
         String visibility = newVisibility != null ? newVisibility : VisibilityUtil.getVisibilityStringToDisplay(member);
         String message = RefactoringBundle.message("0.with.1.visibility.is.not.accessible.from.2",
                                                    RefactoringUIUtil.getDescription(member, false),
@@ -112,12 +118,33 @@ public class MoveJavaMemberHandler implements MoveMemberHandler {
           conflicts.putValue(element, CommonRefactoringUtil.capitalize(message));
         }
       }
+    } else if (member instanceof PsiField &&
+               usageInfo.reference instanceof PsiExpression &&
+               member.hasModifierProperty(PsiModifier.FINAL) &&
+               PsiUtil.isAccessedForWriting((PsiExpression)usageInfo.reference) &&
+               !RefactoringHierarchyUtil.willBeInTargetClass(usageInfo.reference, membersToMove, targetClass, true)) {
+      conflicts.putValue(usageInfo.member, "final variable initializer won't be available after move.");
+    }
+
+    if (toBeConvertedToEnum(moveMembersOptions, member, targetClass) && !isEnumAcceptable(element, targetClass)) {
+      conflicts.putValue(element, "Enum type won't be applicable in the current context");
     }
 
     final PsiReference reference = usageInfo.getReference();
     if (reference != null) {
       RefactoringConflictsUtil.checkAccessibilityConflicts(reference, member, modifierListCopy, targetClass, membersToMove, conflicts);
     }
+  }
+
+  private static boolean isEnumAcceptable(PsiElement element, PsiClass targetClass) {
+    if (element instanceof PsiExpression) {
+      ExpectedTypeInfo[] types = ExpectedTypesProvider.getExpectedTypes((PsiExpression)element, false);
+      if (types.length == 1) {
+        PsiType type = types[0].getType();
+        return type.isAssignableFrom(JavaPsiFacade.getElementFactory(element.getProject()).createType(targetClass));
+      }
+    }
+    return false;
   }
 
   @Override
@@ -137,7 +164,7 @@ public class MoveJavaMemberHandler implements MoveMemberHandler {
   }
 
   protected static boolean hasMethod(PsiClass targetClass, PsiMethod method) {
-    PsiMethod[] targetClassMethods = targetClass.getMethods();
+    PsiMethod[] targetClassMethods = targetClass.findMethodsByName(method.getName(), true);
     for (PsiMethod candidate : targetClassMethods) {
       if (candidate != method &&
           MethodSignatureUtil.areSignaturesEqual(method.getSignature(PsiSubstitutor.EMPTY),
@@ -149,15 +176,8 @@ public class MoveJavaMemberHandler implements MoveMemberHandler {
   }
 
   protected static boolean hasField(PsiClass targetClass, PsiField field) {
-    String fieldName = field.getName();
-    PsiField[] targetClassFields = targetClass.getFields();
-    for (PsiField candidate : targetClassFields) {
-      if (candidate != field &&
-          fieldName.equals(candidate.getName())) {
-        return true;
-      }
-    }
-    return false;
+    final PsiField fieldByName = targetClass.findFieldByName(field.getName(), true);
+    return fieldByName != null && fieldByName != field;
   }
 
   @Override
@@ -173,21 +193,22 @@ public class MoveJavaMemberHandler implements MoveMemberHandler {
           changeQualifier(refExpr, usage.qualifierClass, usage.member);
         }
         else {
-          final PsiReferenceParameterList parameterList = refExpr.getParameterList();
-          if (parameterList != null && parameterList.getTypeArguments().length == 0){
-            refExpr.setQualifierExpression(null);
-          } else {
-            final Project project = element.getProject();
-            final PsiClass targetClass =
-              JavaPsiFacade.getInstance(project).findClass(options.getTargetClassName(), GlobalSearchScope.projectScope(project));
-            if (targetClass != null) {
+          final Project project = element.getProject();
+          final PsiClass targetClass =
+            JavaPsiFacade.getInstance(project).findClass(options.getTargetClassName(), GlobalSearchScope.projectScope(project));
+          if (targetClass != null) {
+            final PsiReferenceParameterList parameterList = refExpr.getParameterList();
+            if ((targetClass.isEnum() || PsiTreeUtil.isAncestor(targetClass, element, true)) && parameterList != null && parameterList.getTypeArguments().length == 0 && !(refExpr instanceof PsiMethodReferenceExpression)) {
+              refExpr.setQualifierExpression(null);
+            }
+            else {
               changeQualifier(refExpr, targetClass, usage.member);
             }
           }
         }
       }
       else { // no qualifier
-        if (usage.qualifierClass != null && PsiTreeUtil.getParentOfType(refExpr, PsiSwitchLabelStatement.class) == null) {
+        if (usage.qualifierClass != null && (!usage.qualifierClass.isEnum() || PsiTreeUtil.getParentOfType(refExpr, PsiSwitchLabelStatement.class) == null)) {
           changeQualifier(refExpr, usage.qualifierClass, usage.member);
         }
       }
@@ -197,11 +218,11 @@ public class MoveJavaMemberHandler implements MoveMemberHandler {
   }
 
   protected static void changeQualifier(PsiReferenceExpression refExpr, PsiClass aClass, PsiMember member) throws IncorrectOperationException {
-    if (RefactoringUtil.hasOnDemandStaticImport(refExpr, aClass)) {
+    if (RefactoringUtil.hasOnDemandStaticImport(refExpr, aClass) && !(refExpr instanceof PsiMethodReferenceExpression)) {
       refExpr.setQualifierExpression(null);
     }
-    else if (!RefactoringUtil.hasStaticImportOn(refExpr, member)){
-      PsiElementFactory factory = JavaPsiFacade.getInstance(refExpr.getProject()).getElementFactory();
+    else if (!ImportsUtil.hasStaticImportOn(refExpr, member, false) || refExpr.getQualifierExpression() != null){
+      PsiElementFactory factory = JavaPsiFacade.getElementFactory(refExpr.getProject());
       refExpr.setQualifierExpression(factory.createReferenceExpression(aClass));
     }
   }
@@ -216,9 +237,7 @@ public class MoveJavaMemberHandler implements MoveMemberHandler {
     ChangeContextUtil.encodeContextInfo(member, true);
 
     final PsiMember memberCopy;
-    if (options.makeEnumConstant() &&
-        member instanceof PsiVariable &&
-        EnumConstantsUtil.isSuitableForEnumConstant(((PsiVariable)member).getType(), targetClass)) {
+    if (toBeConvertedToEnum(options, member, targetClass)) {
       memberCopy = EnumConstantsUtil.createEnumConstant(targetClass, member.getName(), ((PsiVariable)member).getInitializer());
     }
     else {
@@ -237,6 +256,14 @@ public class MoveJavaMemberHandler implements MoveMemberHandler {
     return anchor != null ? (PsiMember)targetClass.addAfter(memberCopy, anchor) : (PsiMember)targetClass.add(memberCopy);
   }
 
+  private static boolean toBeConvertedToEnum(@NotNull MoveMembersOptions options,
+                                             @NotNull PsiMember member,
+                                             @NotNull PsiClass targetClass) {
+    return options.makeEnumConstant() &&
+           member instanceof PsiVariable &&
+           EnumConstantsUtil.isSuitableForEnumConstant(((PsiVariable)member).getType(), targetClass);
+  }
+
   @Override
   public void decodeContextInfo(@NotNull PsiElement scope) {
     ChangeContextUtil.decodeContextInfo(scope, null, null);
@@ -244,9 +271,9 @@ public class MoveJavaMemberHandler implements MoveMemberHandler {
 
   @Override
   @Nullable
-  public PsiElement getAnchor(@NotNull final PsiMember member, @NotNull final PsiClass targetClass) {
+  public PsiElement getAnchor(@NotNull final PsiMember member, @NotNull final PsiClass targetClass, final Set<PsiMember> membersToMove) {
     if (member instanceof PsiField && member.hasModifierProperty(PsiModifier.STATIC)) {
-      final List<PsiField> afterFields = new ArrayList<PsiField>();
+      final List<PsiField> afterFields = new ArrayList<>();
       final PsiExpression psiExpression = ((PsiField)member).getInitializer();
       if (psiExpression != null) {
         psiExpression.accept(new JavaRecursiveElementWalkingVisitor() {
@@ -256,7 +283,7 @@ public class MoveJavaMemberHandler implements MoveMemberHandler {
             final PsiElement psiElement = expression.resolve();
             if (psiElement instanceof PsiField) {
               final PsiField psiField = (PsiField)psiElement;
-              if (psiField.getContainingClass() == targetClass && !afterFields.contains(psiField)) {
+              if ((psiField.getContainingClass() == targetClass || membersToMove.contains(psiField))&& !afterFields.contains(psiField)) {
                 afterFields.add(psiField);
               }
             }
@@ -265,18 +292,14 @@ public class MoveJavaMemberHandler implements MoveMemberHandler {
       }
 
       if (!afterFields.isEmpty()) {
-        Collections.sort(afterFields, new Comparator<PsiField>() {
-          public int compare(final PsiField o1, final PsiField o2) {
-            return -PsiUtilCore.compareElementsByPosition(o1, o2);
-          }
-        });
+        Collections.sort(afterFields, (o1, o2) -> -PsiUtilCore.compareElementsByPosition(o1, o2));
         return afterFields.get(0);
       }
 
-      final List<PsiField> beforeFields = new ArrayList<PsiField>();
+      final List<PsiField> beforeFields = new ArrayList<>();
       for (PsiReference psiReference : ReferencesSearch.search(member, new LocalSearchScope(targetClass))) {
         final PsiField fieldWithReference = PsiTreeUtil.getParentOfType(psiReference.getElement(), PsiField.class);
-        if (fieldWithReference != null && !afterFields.contains(fieldWithReference)) {
+        if (fieldWithReference != null && !afterFields.contains(fieldWithReference) && fieldWithReference.getContainingClass() == targetClass) {
           beforeFields.add(fieldWithReference);
         }
       }

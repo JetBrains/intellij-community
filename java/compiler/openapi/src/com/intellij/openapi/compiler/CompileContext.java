@@ -38,7 +38,7 @@ public interface CompileContext extends UserDataHolder {
    * @param lineNum   a line number, -1 if not available.
    * @param columnNum a column number, -1 if not available.
    */
-  void addMessage(CompilerMessageCategory category, String message, @Nullable String url, int lineNum, int columnNum);
+  void addMessage(@NotNull CompilerMessageCategory category, String message, @Nullable String url, int lineNum, int columnNum);
 
   /**
    * Allows to add a message to be shown in Compiler message view, with a specified Navigatable
@@ -52,7 +52,7 @@ public interface CompileContext extends UserDataHolder {
    * @param navigatable the navigatable pointing to the error location.
    * @since 6.0
    */
-  void addMessage(CompilerMessageCategory category, String message, @Nullable String url, int lineNum, int columnNum,
+  void addMessage(@NotNull CompilerMessageCategory category, String message, @Nullable String url, int lineNum, int columnNum,
                   Navigatable navigatable);
 
   /**
@@ -61,7 +61,8 @@ public interface CompileContext extends UserDataHolder {
    * @param category the category for which messages are requested.
    * @return all compiler messages of the specified category
    */
-  CompilerMessage[] getMessages(CompilerMessageCategory category);
+  @NotNull
+  CompilerMessage[] getMessages(@NotNull CompilerMessageCategory category);
 
   /**
    * Returns the count of messages of the specified category added during the current compile session.
@@ -69,7 +70,7 @@ public interface CompileContext extends UserDataHolder {
    * @param category the category for which messages are requested.
    * @return the number of messages of the specified category
    */
-  int getMessageCount(CompilerMessageCategory category);
+  int getMessageCount(@Nullable CompilerMessageCategory category);
 
   /**
    * Returns the progress indicator of the compilation process.
@@ -100,6 +101,11 @@ public interface CompileContext extends UserDataHolder {
    */
   void requestRebuildNextTime(String message);
 
+  boolean isRebuildRequested();
+
+  @Nullable
+  String getRebuildReason();
+
   /**
    * Returns the module to which the specified file belongs. This method is aware of the file->module mapping
    * for generated files.
@@ -107,21 +113,7 @@ public interface CompileContext extends UserDataHolder {
    * @param file the file to check.
    * @return the module to which the file belongs
    */
-  Module getModuleByFile(VirtualFile file);
-
-  /**
-   * Returns the source roots for the specified module.
-   *
-   * @return module's source roots as well as source roots for generated sources that are attributed to the module
-   */
-  VirtualFile[] getSourceRoots(Module module);
-
-  /**
-   * Returns the list of all output directories.
-   *
-   * @return a list of all configured output directories from all modules (including output directories for tests)
-   */
-  VirtualFile[] getAllOutputDirectories();
+  Module getModuleByFile(@NotNull VirtualFile file);
 
   /**
    * Returns the output directory for the specified module.
@@ -130,7 +122,7 @@ public interface CompileContext extends UserDataHolder {
    * @return the output directory for the module specified, null if corresponding VirtualFile is not valid or directory not specified
    */
   @Nullable
-  VirtualFile getModuleOutputDirectory(Module module);
+  VirtualFile getModuleOutputDirectory(@NotNull Module module);
 
   /**
    * Returns the test output directory for the specified module.
@@ -148,6 +140,8 @@ public interface CompileContext extends UserDataHolder {
    * @return true if compilation is incremental. 
    */
   boolean isMake();
+
+  boolean isAutomake();
 
   boolean isRebuild();
 

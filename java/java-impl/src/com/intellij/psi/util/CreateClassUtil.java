@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,31 +18,22 @@ package com.intellij.psi.util;
 import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.ide.fileTemplates.JavaCreateFromTemplateHandler;
-import com.intellij.ide.util.DirectoryChooserUtil;
 import com.intellij.ide.util.PackageUtil;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.roots.impl.DirectoryIndex;
-import com.intellij.openapi.roots.impl.DirectoryInfo;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
-import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.text.StringTokenizer;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 
@@ -89,7 +80,7 @@ public class CreateClassUtil {
         aClass = JavaDirectoryService.getInstance().createClass(directory, rawClassName);
       }
       else {
-        final FileTemplateManager fileTemplateManager = FileTemplateManager.getInstance();
+        final FileTemplateManager fileTemplateManager = FileTemplateManager.getInstance(project);
         FileTemplate fileTemplate = fileTemplateManager.getJ2eeTemplate(templateName);
         LOG.assertTrue(fileTemplate != null, templateName + " not found");
         final String text = fileTemplate.getText(attributes);
@@ -98,7 +89,7 @@ public class CreateClassUtil {
       return (PsiClass)JavaCodeStyleManager.getInstance(project).shortenClassReferences(aClass);
     }
     catch (IOException e) {
-      throw new IncorrectOperationException(e.toString(), e);
+      throw new IncorrectOperationException(e);
     }
   }
 
@@ -121,53 +112,6 @@ public class CreateClassUtil {
     return directoryRoot;
   }
 
-  @Nullable
-  public static PsiDirectory getRootDirectory(PsiClass aClass) {
-    return getSourceRootDirectory(aClass.getContainingFile().getContainingDirectory());
-  }
-
-  @Nullable
-  private static PsiDirectory getSourceRootDirectory(PsiDirectory directory) {
-    PsiManager manager = directory.getManager();
-    DirectoryIndex directoryIndex = DirectoryIndex.getInstance(manager.getProject());
-    DirectoryInfo info = directoryIndex.getInfoForDirectory(directory.getVirtualFile());
-    if (info == null || !info.hasSourceRoot()) return null;
-    return manager.findDirectory(info.getSourceRoot());
-  }
-
-  @Nullable
-  public static PsiDirectory obtainDirectoryRootForPackage(final Module module, final String packageName) {
-    final Project project = module.getProject();
-    GlobalSearchScope scope = GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(module);
-    final PsiPackage aPackage = JavaPsiFacade.getInstance(project).findPackage(packageName);
-    if (aPackage != null) {
-      PsiDirectory[] directories = aPackage.getDirectories(scope);
-      if (directories.length == 1) return getSourceRootDirectory(directories[0]);
-    }
-
-    final VirtualFile[] sourceRoots = ModuleRootManager.getInstance(module).getSourceRoots();
-    List<PsiDirectory> directoryList = new ArrayList<PsiDirectory>();
-    for (VirtualFile sourceRoot : sourceRoots) {
-      final PsiDirectory directory = PsiManager.getInstance(project).findDirectory(sourceRoot);
-      directoryList.add(directory);
-    }
-    PsiDirectory[] sourceDirectories = directoryList.toArray(new PsiDirectory[directoryList.size()]);
-
-    return DirectoryChooserUtil.selectDirectory(project, sourceDirectories, null, File.separatorChar + packageName.replace('.', File.separatorChar));
-  }
-
-  @Nullable
-  public static PsiDirectory getRoot(Module module, String className) {
-    String aPackage = extractPackage(className);
-    PsiManager psiManager = PsiManager.getInstance(module.getProject());
-    PsiPackage psiPackage = JavaPsiFacade.getInstance(psiManager.getProject()).findPackage(aPackage);
-    if (psiPackage == null) return null;
-    PsiDirectory[] directories = psiPackage.getDirectories(GlobalSearchScope.moduleScope(module));
-    if (directories.length == 0) return null;
-
-    return directories[0];
-  }
-
   public static String extractClassName(String fqName) {
     return StringUtil.getShortName(fqName);
   }
@@ -188,13 +132,13 @@ public class CreateClassUtil {
 
   @Nullable
   public static PsiClass createClassNamed(String newClassName, String templateName, @NotNull PsiDirectory directory) throws IncorrectOperationException {
-    return createClassNamed(newClassName, FileTemplateManager.getInstance().getDefaultProperties(directory.getProject()), templateName, directory);
+    return createClassNamed(newClassName, FileTemplateManager.getInstance(directory.getProject()).getDefaultProperties(), templateName, directory);
   }
 
   @Nullable
   public static PsiClass createClassNamed(String newClassName, Map classProperties, String templateName, @NotNull PsiDirectory directory)
     throws IncorrectOperationException {
-    Properties defaultProperties = FileTemplateManager.getInstance().getDefaultProperties(directory.getProject());
+    Properties defaultProperties = FileTemplateManager.getInstance(directory.getProject()).getDefaultProperties();
     Properties properties = new Properties(defaultProperties);
     properties.putAll(classProperties);
 
@@ -235,7 +179,7 @@ public class CreateClassUtil {
     try {
       final Properties properties = ApplicationManager.getApplication().isUnitTestMode() ?
                                     new Properties() :
-                                    FileTemplateManager.getInstance().getDefaultProperties(classDirectory.getProject());
+                                    FileTemplateManager.getInstance(classDirectory.getProject()).getDefaultProperties();
       return createClassNamed(className, new Properties(properties), templateName, classDirectory);
     }
     catch (IncorrectOperationException e) {

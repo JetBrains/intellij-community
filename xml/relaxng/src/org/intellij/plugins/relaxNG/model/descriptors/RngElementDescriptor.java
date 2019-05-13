@@ -16,24 +16,34 @@
 
 package org.intellij.plugins.relaxNG.model.descriptors;
 
+import com.intellij.lang.ASTNode;
+import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.impl.FakePsiElement;
+import com.intellij.psi.impl.PsiCachedValueImpl;
+import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.psi.util.*;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlTag;
-import com.intellij.util.ArrayUtil;
-import com.intellij.util.containers.HashMap;
+import com.intellij.util.AstLoadingFilter;
 import com.intellij.xml.XmlAttributeDescriptor;
 import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.XmlElementsGroup;
 import com.intellij.xml.XmlNSDescriptor;
+import org.intellij.plugins.relaxNG.compact.RncElementTypes;
 import org.intellij.plugins.relaxNG.compact.RncFileType;
 import org.intellij.plugins.relaxNG.validation.RngSchemaValidator;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.kohsuke.rngom.digested.*;
 import org.kohsuke.rngom.nc.NameClass;
@@ -51,23 +61,36 @@ public class RngElementDescriptor implements XmlElementDescriptor {
 
   private final DElementPattern myElementPattern;
   protected final RngNsDescriptor myNsDescriptor;
+  private final PsiCachedValueImpl<PsiElement> myCachedElement;
 
-  private volatile SmartPsiElementPointer<? extends PsiElement> myDeclaration;
 
   RngElementDescriptor(RngNsDescriptor nsDescriptor, DElementPattern pattern) {
     myNsDescriptor = nsDescriptor;
     myElementPattern = pattern;
+    myCachedElement = new PsiCachedValueImpl<>(nsDescriptor.getDescriptorFile().getManager(), () -> {
+      final PsiElement decl = myNsDescriptor.getDeclaration();
+      if (decl == null/* || !decl.isValid()*/) {
+        return CachedValueProvider.Result.create(null, ModificationTracker.EVER_CHANGED);
+      }
+
+      final PsiElement element = getDeclarationImpl(decl, myElementPattern.getLocation());
+      
+      return CachedValueProvider.Result.create(element, element.getContainingFile());
+    });
   }
 
+  @Override
   public String getQualifiedName() {
     final QName qName = getQName();
     return qName != null ? format(qName, "") : "#unknown";
   }
 
+  @Override
   public String getDefaultName() {
     return getName();
   }
 
+  @Override
   public XmlElementDescriptor[] getElementsDescriptors(XmlTag context) {
     if (context == null) {
       return EMPTY_ARRAY;
@@ -98,23 +121,21 @@ public class RngElementDescriptor implements XmlElementDescriptor {
     return getElementDescriptor(childTag, null);
   }
 
+  @Override
   public final XmlElementDescriptor getElementDescriptor(final XmlTag childTag, XmlTag contextTag) {
-    final XmlElementDescriptor value = getCachedValue(childTag, this, DESCR_KEY, new ParameterizedCachedValueProvider<XmlElementDescriptor, RngElementDescriptor>() {
-      public CachedValueProvider.Result<XmlElementDescriptor> compute(RngElementDescriptor p) {
-        final XmlElementDescriptor descriptor = p.findElementDescriptor(childTag);
-        return CachedValueProvider.Result.create(descriptor, p.getDependences(), childTag);
-      }
+    final XmlElementDescriptor value = getCachedValue(childTag, this, DESCR_KEY, p -> {
+      final XmlElementDescriptor descriptor = p.findElementDescriptor(childTag);
+      return CachedValueProvider.Result.create(descriptor, p.getDependencies(), childTag);
     });
     return value == NULL ? null : value;
   }
 
+  @Override
   public final XmlAttributeDescriptor[] getAttributesDescriptors(@Nullable final XmlTag context) {
     if (context != null) {
-      return getCachedValue(context, this, ATTRS_KEY, new ParameterizedCachedValueProvider<XmlAttributeDescriptor[], RngElementDescriptor>() {
-        public CachedValueProvider.Result<XmlAttributeDescriptor[]> compute(RngElementDescriptor p) {
-          final XmlAttributeDescriptor[] value = p.collectAttributeDescriptors(context);
-          return CachedValueProvider.Result.create(value, p.getDependences(), context);
-        }
+      return getCachedValue(context, this, ATTRS_KEY, p -> {
+        final XmlAttributeDescriptor[] value = p.collectAttributeDescriptors(context);
+        return CachedValueProvider.Result.create(value, p.getDependencies(), context);
       });
     } else {
       return collectAttributeDescriptors(null);
@@ -131,7 +152,7 @@ public class RngElementDescriptor implements XmlElementDescriptor {
   }
 
   protected XmlAttributeDescriptor[] computeAttributeDescriptors(final Map<DAttributePattern, Pair<? extends Map<String, String>, Boolean>> map) {
-    final Map<QName, RngXmlAttributeDescriptor> name2descriptor = new HashMap<QName, RngXmlAttributeDescriptor>();
+    final Map<QName, RngXmlAttributeDescriptor> name2descriptor = new HashMap<>();
 
     for (DAttributePattern pattern : map.keySet()) {
       final Pair<? extends Map<String, String>, Boolean> value = map.get(pattern);
@@ -149,13 +170,15 @@ public class RngElementDescriptor implements XmlElementDescriptor {
     }
 
     final Collection<RngXmlAttributeDescriptor> result = name2descriptor.values();
-    return result.toArray(new RngXmlAttributeDescriptor[result.size()]);
+    return result.toArray(new RngXmlAttributeDescriptor[0]);
   }
 
+  @Override
   public final XmlAttributeDescriptor getAttributeDescriptor(String attributeName, @Nullable XmlTag context) {
     return getAttributeDescriptor("", attributeName);
   }
 
+  @Override
   public final XmlAttributeDescriptor getAttributeDescriptor(XmlAttribute attribute) {
     return getAttributeDescriptor(attribute.getNamespace(), attribute.getLocalName());
   }
@@ -186,6 +209,7 @@ public class RngElementDescriptor implements XmlElementDescriptor {
     }
   }
 
+  @Override
   public XmlNSDescriptor getNSDescriptor() {
     return myNsDescriptor;
   }
@@ -196,6 +220,7 @@ public class RngElementDescriptor implements XmlElementDescriptor {
   }
 
   // is this actually used anywhere?
+  @Override
   public int getContentType() {
     final DPattern child = myElementPattern.getChild();
     if (child instanceof DEmptyPattern) {
@@ -214,26 +239,9 @@ public class RngElementDescriptor implements XmlElementDescriptor {
     return null;
   }
 
+  @Override
   public PsiElement getDeclaration() {
-    if (myDeclaration != null) {
-      final PsiElement element = myDeclaration.getElement();
-      if (element != null && element.isValid()) {
-        return element;
-      }
-    }
-
-    final PsiElement decl = myNsDescriptor.getDeclaration();
-    if (decl == null/* || !decl.isValid()*/) {
-      myDeclaration = null;
-      System.out.println("decl is null");
-      return null;
-    }
-
-    final PsiElement element = getDeclarationImpl(decl, myElementPattern.getLocation());
-    if (element != null && element != decl) {
-      myDeclaration = SmartPointerManager.getInstance(decl.getProject()).createSmartPsiElementPointer(element);
-    }
-    return element;
+    return myCachedElement.getValue();
   }
 
   public PsiElement getDeclaration(Locator location) {
@@ -244,7 +252,7 @@ public class RngElementDescriptor implements XmlElementDescriptor {
     return getDeclarationImpl(element, location);
   }
 
-  private PsiElement getDeclarationImpl(PsiElement decl, Locator location) {
+  private static PsiElement getDeclarationImpl(PsiElement decl, Locator location) {
     final VirtualFile virtualFile = RngSchemaValidator.findVirtualFile(location.getSystemId());
     if (virtualFile == null) {
       return decl;
@@ -256,27 +264,37 @@ public class RngElementDescriptor implements XmlElementDescriptor {
       return decl;
     }
 
+    return AstLoadingFilter.forceAllowTreeLoading(file, () -> getDeclarationImpl(project, decl, location, file));
+  }
+
+  @Nullable
+  private static PsiElement getDeclarationImpl(@NotNull Project project, PsiElement decl, Locator location, PsiFile file) {
     final int column = location.getColumnNumber();
     final int line = location.getLineNumber();
 
     final Document document = PsiDocumentManager.getInstance(project).getDocument(file);
     assert document != null;
 
+    if (line <= 0 || document.getLineCount() < line - 1) {
+      return decl;
+    }
     final int startOffset = document.getLineStartOffset(line - 1);
 
     final PsiElement at;
     if (column > 0) {
       if (decl.getContainingFile().getFileType() == RncFileType.getInstance()) {
-        return file.findElementAt(startOffset + column);
+        return new RncLocationPsiElement(file, startOffset, column);
       }
       at = file.findElementAt(startOffset + column - 2);
     } else {
-      at = PsiTreeUtil.nextLeaf(file.findElementAt(startOffset));
+      PsiElement element = file.findElementAt(startOffset);
+      at = element != null ? PsiTreeUtil.nextLeaf(element) : null;
     }
 
     return PsiTreeUtil.getParentOfType(at, XmlTag.class);
   }
 
+  @Override
   @NonNls
   public String getName(PsiElement context) {
     final QName qName = getQName();
@@ -288,6 +306,7 @@ public class RngElementDescriptor implements XmlElementDescriptor {
     return format(qName, prefix != null ? prefix : qName.getPrefix());
   }
 
+  @Override
   @NonNls
   public String getName() {
     final QName qName = getQName();
@@ -311,6 +330,7 @@ public class RngElementDescriptor implements XmlElementDescriptor {
     return iterator.next();
   }
 
+  @Override
   public void init(PsiElement element) {
 
   }
@@ -330,41 +350,46 @@ public class RngElementDescriptor implements XmlElementDescriptor {
     return myElementPattern.hashCode();
   }
 
-  public Object[] getDependences() {
-    if (myDeclaration != null) {
-      return ArrayUtil.append(myNsDescriptor.getDependences(), myDeclaration.getElement());
-    } else {
-      return myNsDescriptor.getDependences();
-    }
+  @NotNull
+  @Override
+  public Object[] getDependencies() {
+    return myNsDescriptor.getDependencies();
   }
 
   private static class MyNameClassVisitor implements NameClassVisitor<Integer> {
     public static final MyNameClassVisitor INSTANCE = new MyNameClassVisitor();
 
+    @Override
     public Integer visitAnyName() {
       return CONTENT_TYPE_ANY;
     }
 
+    @Override
     public Integer visitAnyNameExcept(NameClass nc) {
       return CONTENT_TYPE_ANY;
     }
 
+    @Override
     public Integer visitChoice(NameClass nc1, NameClass nc2) {
       return CONTENT_TYPE_CHILDREN;
     }
 
+    @Override
     public Integer visitName(QName name) {
       return CONTENT_TYPE_CHILDREN;
     }
 
+    @Override
     public Integer visitNsName(String ns) {
       return CONTENT_TYPE_CHILDREN;
     }
 
+    @Override
     public Integer visitNsNameExcept(String ns, NameClass nc) {
       return CONTENT_TYPE_CHILDREN;
     }
 
+    @Override
     public Integer visitNull() {
       return CONTENT_TYPE_EMPTY;
     }
@@ -372,5 +397,55 @@ public class RngElementDescriptor implements XmlElementDescriptor {
 
   public DElementPattern getElementPattern() {
     return myElementPattern;
+  }
+
+  private static class RncLocationPsiElement extends FakePsiElement implements NavigationItem {
+    private final PsiFile myFile;
+    private final int myStartOffset;
+    private final int myColumn;
+
+    private RncLocationPsiElement(PsiFile file, int startOffset, int column) {
+      myFile = file;
+      myStartOffset = startOffset;
+      myColumn = column;
+    }
+
+    @Override
+    public String getName() {
+      return getNavigationElement().getText();
+    }
+
+    @NotNull
+    @Override
+    public PsiElement getNavigationElement() {
+      final PsiElement rncElement = myFile.findElementAt(myStartOffset + myColumn);
+      final ASTNode pattern = rncElement != null ? TreeUtil.findParent(rncElement.getNode(), RncElementTypes.PATTERN) : null;
+      final ASTNode nameClass = pattern != null ? pattern.findChildByType(RncElementTypes.NAME_CLASS) : null;
+      //noinspection ConstantConditions
+      return nameClass != null ? nameClass.getPsi() : rncElement;
+    }
+
+    @Override
+    public PsiElement getParent() {
+      return getNavigationElement();
+    }
+
+    @Override
+    public PsiFile getContainingFile() {
+      return myFile;
+    }
+
+    @Override
+    public boolean equals(Object another) {
+      return another instanceof RncLocationPsiElement &&
+             ((RncLocationPsiElement)another).myFile == myFile &&
+             ((RncLocationPsiElement)another).myStartOffset == myStartOffset &&
+             ((RncLocationPsiElement)another).myColumn == myColumn;
+    }
+
+    @Override
+    public int hashCode() {
+      return Objects.hash(myFile, myStartOffset, myColumn);
+    }
   }
 }

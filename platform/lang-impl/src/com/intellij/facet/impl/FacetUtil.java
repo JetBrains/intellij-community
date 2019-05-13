@@ -1,30 +1,15 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.facet.impl;
 
+import com.intellij.configurationStore.ComponentSerializationUtil;
 import com.intellij.facet.*;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
-import com.intellij.util.ReflectionUtil;
 import com.intellij.util.xmlb.SkipDefaultValuesSerializationFilters;
 import com.intellij.util.xmlb.XmlSerializer;
 import org.jdom.Element;
@@ -32,7 +17,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.serialization.facet.JpsFacetSerializer;
 
-import java.lang.reflect.TypeVariable;
 import java.util.Arrays;
 
 /**
@@ -43,11 +27,9 @@ public class FacetUtil {
   public static <F extends Facet> F addFacet(Module module, FacetType<F, ?> type) {
     final ModifiableFacetModel model = FacetManager.getInstance(module).createModifiableModel();
     final F facet = createFacet(module, type);
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      public void run() {
-        model.addFacet(facet);
-        model.commit();
-      }
+    ApplicationManager.getApplication().runWriteAction(() -> {
+      model.addFacet(facet);
+      model.commit();
     });
     return facet;
   }
@@ -57,17 +39,15 @@ public class FacetUtil {
   }
 
   public static void deleteFacet(final Facet facet) {
-    new WriteAction() {
-      protected void run(final Result result) {
-        if (!isRegistered(facet)) {
-          return;
-        }
-
-        ModifiableFacetModel model = FacetManager.getInstance(facet.getModule()).createModifiableModel();
-        model.removeFacet(facet);
-        model.commit();
+    WriteAction.runAndWait(() -> {
+      if (!isRegistered(facet)) {
+        return;
       }
-    }.execute();
+
+      ModifiableFacetModel model = FacetManager.getInstance(facet.getModule()).createModifiableModel();
+      model.removeFacet(facet);
+      model.commit();
+    });
   }
 
   public static boolean isRegistered(Facet facet) {
@@ -78,9 +58,7 @@ public class FacetUtil {
       throws InvalidDataException {
     if (config != null) {
       if (configuration instanceof PersistentStateComponent) {
-        TypeVariable<Class<PersistentStateComponent>> variable = PersistentStateComponent.class.getTypeParameters()[0];
-        Class<?> stateClass = ReflectionUtil.getRawType(ReflectionUtil.resolveVariableInHierarchy(variable, configuration.getClass()));
-        ((PersistentStateComponent)configuration).loadState(XmlSerializer.deserialize(config, stateClass));
+        ComponentSerializationUtil.loadComponentState((PersistentStateComponent)configuration, config);
       }
       else {
         configuration.readExternal(config);

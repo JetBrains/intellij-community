@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,18 +15,20 @@
  */
 package com.intellij.util.ui;
 
+import com.intellij.ui.Gray;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
+
+import static java.lang.Math.ceil;
 
 /**
  * @author Konstantin Bulenkov
  */
 public class ColorIcon extends EmptyIcon {
   private final Color myColor;
-  private boolean myBorder;
-  private int myColorSize;
-
+  private final boolean myBorder;
+  private final int myColorSize;
 
   public ColorIcon(int size, int colorSize, @NotNull Color color, final boolean border) {
     super(size, size);
@@ -43,6 +45,19 @@ public class ColorIcon extends EmptyIcon {
     this(size, color, false);
   }
 
+  protected ColorIcon(ColorIcon icon) {
+    super(icon);
+    myColor = icon.myColor;
+    myBorder = icon.myBorder;
+    myColorSize = icon.myColorSize;
+  }
+
+  @NotNull
+  @Override
+  public ColorIcon copy() {
+    return new ColorIcon(this);
+  }
+
   public Color getIconColor() {
     return myColor;
   }
@@ -52,16 +67,21 @@ public class ColorIcon extends EmptyIcon {
     final int iconWidth = getIconWidth();
     final int iconHeight = getIconHeight();
     g.setColor(getIconColor());
+
+    final int size = getColorSize();
+    final int x = i + (iconWidth - size) / 2;
+    final int y = j + (iconHeight - size) / 2;
     
-    final int x = i + (iconWidth - myColorSize) / 2;
-    final int y = j + (iconHeight - myColorSize) / 2;
-    
-    g.fillRect(x, y, myColorSize, myColorSize);
+    g.fillRect(x, y, size, size);
     
     if (myBorder) {
-      g.setColor(Color.BLACK);
-      g.drawRect(x, y, myColorSize, myColorSize);
+      g.setColor(Gray.x00.withAlpha(40));
+      g.drawRect(x, y, size, size);
     }
+  }
+
+  private int getColorSize() {
+    return (int)ceil(scaleVal(myColorSize));
   }
 
   @Override

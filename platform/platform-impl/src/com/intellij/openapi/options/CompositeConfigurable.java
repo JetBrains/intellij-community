@@ -15,23 +15,28 @@
  */
 package com.intellij.openapi.options;
 
+import org.jetbrains.annotations.NotNull;
+
 import java.util.List;
 
 public abstract class CompositeConfigurable<T extends UnnamedConfigurable> extends BaseConfigurable {
   private List<T> myConfigurables;
 
+  @Override
   public void reset() {
     for (T configurable : getConfigurables()) {
       configurable.reset();
     }
   }
 
+  @Override
   public void apply() throws ConfigurationException {
     for (T configurable : getConfigurables()) {
       configurable.apply();
     }
   }
 
+  @Override
   public boolean isModified() {
     for (T configurable : getConfigurables()) {
       if (configurable.isModified()) {
@@ -41,6 +46,7 @@ public abstract class CompositeConfigurable<T extends UnnamedConfigurable> exten
     return false;
   }
 
+  @Override
   public void disposeUIResources() {
     if (myConfigurables != null) {
       for (final T myConfigurable : myConfigurables) {
@@ -50,8 +56,10 @@ public abstract class CompositeConfigurable<T extends UnnamedConfigurable> exten
     }
   }
 
+  @NotNull
   protected abstract List<T> createConfigurables();
 
+  @NotNull
   public List<T> getConfigurables() {
     if (myConfigurables == null) {
       myConfigurables = createConfigurables();

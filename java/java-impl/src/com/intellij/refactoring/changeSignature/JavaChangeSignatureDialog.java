@@ -1,44 +1,34 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.changeSignature;
 
 import com.intellij.codeInsight.completion.CompletionResultSet;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
+import com.intellij.codeInspection.dataFlow.JavaMethodContractUtil;
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CustomShortcutSet;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorFontType;
-import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
+import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.ValidationInfo;
-import com.intellij.openapi.ui.VerticalFlowLayout;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.SuggestedNameInfo;
 import com.intellij.psi.codeStyle.VariableKind;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.changeSignature.inCallers.JavaCallerChooser;
@@ -48,17 +38,24 @@ import com.intellij.refactoring.ui.JavaComboBoxVisibilityPanel;
 import com.intellij.refactoring.ui.VisibilityPanelBase;
 import com.intellij.refactoring.util.CanonicalTypes;
 import com.intellij.refactoring.util.RefactoringMessageUtil;
-import com.intellij.refactoring.util.RefactoringUtil;
-import com.intellij.ui.*;
-import com.intellij.ui.components.JBLabel;
+import com.intellij.ui.AnActionButton;
+import com.intellij.ui.EditorTextField;
+import com.intellij.ui.TableColumnAnimator;
+import com.intellij.ui.ToolbarDecorator;
 import com.intellij.ui.table.JBTable;
 import com.intellij.ui.table.TableView;
 import com.intellij.ui.treeStructure.Tree;
+import com.intellij.usageView.UsageInfo;
 import com.intellij.util.*;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.DialogUtil;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.table.EditorTextFieldJBTableRowRenderer;
 import com.intellij.util.ui.table.JBTableRow;
 import com.intellij.util.ui.table.JBTableRowEditor;
+import com.intellij.util.ui.table.JBTableRowRenderer;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -72,6 +69,7 @@ import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Set;
 
 import static com.intellij.refactoring.changeSignature.ChangeSignatureHandler.REFACTORING_NAME;
@@ -85,18 +83,30 @@ public class JavaChangeSignatureDialog extends ChangeSignatureDialogBase<Paramet
   private AnActionButton myPropExceptionsButton;
   private Tree myExceptionPropagationTree;
 
-  public JavaChangeSignatureDialog(Project project, PsiMethod method, boolean allowDelegation, PsiElement context) {
+  public JavaChangeSignatureDialog(@NotNull Project project, @NotNull PsiMethod method, boolean allowDelegation, PsiElement context) {
     this(project, new JavaMethodDescriptor(method), allowDelegation, context);
   }
 
-  protected JavaChangeSignatureDialog(Project project, JavaMethodDescriptor descriptor, boolean allowDelegation, PsiElement context) {
+  protected JavaChangeSignatureDialog(@NotNull Project project, @NotNull JavaMethodDescriptor descriptor, boolean allowDelegation, PsiElement context) {
     super(project, descriptor, allowDelegation, context);
   }
 
-  public static JavaChangeSignatureDialog createAndPreselectNew(final Project project,
-                                                                final PsiMethod method,
-                                                                final List<ParameterInfoImpl> parameterInfos,
-                                                                final boolean allowDelegation, final PsiReferenceExpression refExpr) {
+  @NotNull
+  public static JavaChangeSignatureDialog createAndPreselectNew(@NotNull Project project,
+                                                                @NotNull PsiMethod method,
+                                                                @NotNull List<? extends ParameterInfoImpl> parameterInfos,
+                                                                final boolean allowDelegation,
+                                                                final PsiReferenceExpression refExpr) {
+    return createAndPreselectNew(project, method, parameterInfos, allowDelegation, refExpr, null);
+  }
+
+  @NotNull
+  public static JavaChangeSignatureDialog createAndPreselectNew(@NotNull Project project,
+                                                                @NotNull PsiMethod method,
+                                                                @NotNull List<? extends ParameterInfoImpl> parameterInfos,
+                                                                final boolean allowDelegation,
+                                                                final PsiReferenceExpression refExpr,
+                                                                @Nullable Consumer<? super List<ParameterInfoImpl>> callback) {
     return new JavaChangeSignatureDialog(project, method, allowDelegation, refExpr) {
       @Override
       protected int getSelectedIdx() {
@@ -108,7 +118,38 @@ public class JavaChangeSignatureDialog extends ChangeSignatureDialogBase<Paramet
         }
         return super.getSelectedIdx();
       }
+
+      @Override
+      protected BaseRefactoringProcessor createRefactoringProcessor() {
+        final List<ParameterInfoImpl> parameters = getParameters();
+        return new ChangeSignatureProcessor(myProject,
+                                            myMethod.getMethod(),
+                                            isGenerateDelegate(),
+                                            getVisibility(),
+                                            getMethodName(),
+                                            getReturnType(),
+                                            parameters.toArray(new ParameterInfoImpl[0]),
+                                            getExceptions(),
+                                            myMethodsToPropagateParameters,
+                                            myMethodsToPropagateExceptions) {
+          @Override
+          protected void performRefactoring(@NotNull UsageInfo[] usages) {
+            super.performRefactoring(usages);
+            if (callback != null) {
+              callback.consume(getParameters());
+            }
+          }
+        };
+      }
     };
+  }
+
+  @Nullable
+  @Override
+  @PsiModifier.ModifierConstant
+  protected String getVisibility() {
+    //noinspection MagicConstant
+    return super.getVisibility();
   }
 
   @Override
@@ -146,6 +187,7 @@ public class JavaChangeSignatureDialog extends ChangeSignatureDialogBase<Paramet
     return true;
   }
 
+  @Override
   @NotNull
   protected List<Pair<String,JPanel>> createAdditionalPanels() {
     // this method is invoked before constructor body
@@ -157,9 +199,9 @@ public class JavaChangeSignatureDialog extends ChangeSignatureDialogBase<Paramet
     table.setRowHeight(20);
     table.getColumnModel().getColumn(0).setCellRenderer(new CodeFragmentTableCellRenderer(myProject));
     final JavaCodeFragmentTableCellEditor cellEditor = new JavaCodeFragmentTableCellEditor(myProject);
-    cellEditor.addDocumentListener(new DocumentAdapter() {
+    cellEditor.addDocumentListener(new DocumentListener() {
       @Override
-      public void documentChanged(DocumentEvent e) {
+      public void documentChanged(@NotNull DocumentEvent e) {
         final int row = table.getSelectedRow();
         final int col = table.getSelectedColumn();
         myExceptionsModel.setValueAt(cellEditor.getCellEditorValue(), row, col);
@@ -171,16 +213,13 @@ public class JavaChangeSignatureDialog extends ChangeSignatureDialogBase<Paramet
     table.getSelectionModel().setSelectionInterval(0, 0);
     table.setSurrendersFocusOnKeystroke(true);
 
-    myPropExceptionsButton = new AnActionButton(RefactoringBundle.message("changeSignature.propagate.exceptions.title"), null, PlatformIcons.NEW_EXCEPTION) {
+    myPropExceptionsButton = new AnActionButton(RefactoringBundle.message("changeSignature.propagate.exceptions.title"), null, AllIcons.Hierarchy.Supertypes) {
       @Override
-      public void actionPerformed(AnActionEvent e) {
-        final Ref<JavaCallerChooser> chooser = new Ref<JavaCallerChooser>();
-        Consumer<Set<PsiMethod>> callback = new Consumer<Set<PsiMethod>>() {
-          @Override
-          public void consume(Set<PsiMethod> psiMethods) {
-            myMethodsToPropagateExceptions = psiMethods;
-            myExceptionPropagationTree = chooser.get().getTree();
-          }
+      public void actionPerformed(@NotNull AnActionEvent e) {
+        final Ref<JavaCallerChooser> chooser = new Ref<>();
+        Consumer<Set<PsiMethod>> callback = psiMethods -> {
+          myMethodsToPropagateExceptions = psiMethods;
+          myExceptionPropagationTree = chooser.get().getTree();
         };
         chooser.set(new JavaCallerChooser(myMethod.getMethod(),
                                           myProject,
@@ -193,11 +232,11 @@ public class JavaChangeSignatureDialog extends ChangeSignatureDialogBase<Paramet
     myPropExceptionsButton.setShortcut(CustomShortcutSet.fromString("alt X"));
 
     final JPanel panel = ToolbarDecorator.createDecorator(table).addExtraAction(myPropExceptionsButton).createPanel();
-    panel.setBorder(IdeBorderFactory.createEmptyBorder(0));
+    panel.setBorder(JBUI.Borders.empty());
 
     myExceptionsModel.addTableModelListener(mySignatureUpdater);
 
-    final ArrayList<Pair<String, JPanel>> result = new ArrayList<Pair<String, JPanel>>();
+    final ArrayList<Pair<String, JPanel>> result = new ArrayList<>();
     final String message = RefactoringBundle.message("changeSignature.exceptions.panel.border.title");
     result.add(Pair.create(message, panel));
     return result;
@@ -208,8 +247,9 @@ public class JavaChangeSignatureDialog extends ChangeSignatureDialogBase<Paramet
     return StdFileTypes.JAVA;
   }
 
+  @NotNull
   @Override
-  protected JavaParameterTableModel createParametersInfoModel(JavaMethodDescriptor descriptor) {
+  protected JavaParameterTableModel createParametersInfoModel(@NotNull JavaMethodDescriptor descriptor) {
     final PsiParameterList parameterList = descriptor.getMethod().getParameterList();
     return new JavaParameterTableModel(parameterList, myDefaultValueContext, this);
   }
@@ -220,54 +260,170 @@ public class JavaChangeSignatureDialog extends ChangeSignatureDialogBase<Paramet
   }
 
   @Override
-  protected boolean isEmptyRow(ParameterTableModelItemBase<ParameterInfoImpl> row) {
-    if (!StringUtil.isEmpty(row.parameter.getName())) return false;
-    if (!StringUtil.isEmpty(row.parameter.getTypeText())) return false;
-    return true;
-  }
+  protected ParametersListTable createParametersListTable() {
+    return new ParametersListTable() {
+      private final EditorTextFieldJBTableRowRenderer myRowRenderer =
+        new EditorTextFieldJBTableRowRenderer(getProject(), JavaChangeSignatureDialog.this.getFileType(), myDisposable) {
+        @Override
+        protected String getText(JTable table, int row) {
+          ParameterTableModelItemBase<ParameterInfoImpl> item = getRowItem(row);
+          final String typeText = item.typeCodeFragment.getText();
+          final String separator = StringUtil.repeatSymbol(' ', getTypesMaxLength() - typeText.length() + 1);
+          String text = typeText + separator + item.parameter.getName();
+          final String defaultValue = item.defaultValueCodeFragment.getText();
+          String tail = "";
+          if (StringUtil.isNotEmpty(defaultValue)) {
+            tail += " default value = " + defaultValue;
+          }
+          if (item.parameter.isUseAnySingleVariable()) {
+            if (StringUtil.isNotEmpty(defaultValue)) {
+              tail += ";";
+            }
+            tail += " Use any var.";
+          }
+          if (!StringUtil.isEmpty(tail)) {
+            text += " //" + tail;
+          }
+          return " " + text;
+        }
+      };
 
-  @Override
-  protected JComponent getRowPresentation(ParameterTableModelItemBase<ParameterInfoImpl> item, boolean selected, final boolean focused) {
-    final JPanel panel = new JPanel(new BorderLayout());
-    final String typeText = item.typeCodeFragment.getText();
-    final String separator = StringUtil.repeatSymbol(' ', getTypesMaxLength() - typeText.length() + 1);
-    String text = typeText + separator + item.parameter.getName();
-    final String defaultValue = item.defaultValueCodeFragment.getText();
-    String tail = "";
-    if (StringUtil.isNotEmpty(defaultValue)) {
-      tail += " default value = " + defaultValue;
-    }
-    if (item.parameter.isUseAnySingleVariable()) {
-      if (StringUtil.isNotEmpty(defaultValue)) {
-        tail += ";";
-      }
-      tail += " Use any var.";
-    }
-    if (!StringUtil.isEmpty(tail)) {
-      text += " //" + tail;
-    }
-    final EditorTextField field = new EditorTextField(" " + text, getProject(), getFileType()) {
       @Override
-      protected boolean shouldHaveBorder() {
-        return false;
+      protected JBTableRowRenderer getRowRenderer(int row) {
+        return myRowRenderer;
+      }
+
+      @NotNull
+      @Override
+      protected JBTableRowEditor getRowEditor(final ParameterTableModelItemBase<ParameterInfoImpl> item) {
+        return new JBTableRowEditor() {
+          private EditorTextField myTypeEditor;
+          private EditorTextField myNameEditor;
+          private EditorTextField myDefaultValueEditor;
+          private JCheckBox myAnyVar;
+
+          @Override
+          public void prepareEditor(JTable table, int row) {
+            setLayout(new BorderLayout());
+            final Document document = PsiDocumentManager.getInstance(getProject()).getDocument(item.typeCodeFragment);
+            myTypeEditor = new EditorTextField(document, getProject(), getFileType());
+            myTypeEditor.addDocumentListener(mySignatureUpdater);
+            myTypeEditor.setPreferredWidth(getTable().getWidth() / 2);
+            myTypeEditor.addDocumentListener(new RowEditorChangeListener(0));
+            add(createLabeledPanel("Type:", myTypeEditor), BorderLayout.WEST);
+
+            myNameEditor = new EditorTextField(item.parameter.getName(), getProject(), getFileType());
+            myNameEditor.addDocumentListener(mySignatureUpdater);
+            myNameEditor.addDocumentListener(new RowEditorChangeListener(1));
+            add(createLabeledPanel("Name:", myNameEditor), BorderLayout.CENTER);
+            new TextFieldCompletionProvider() {
+
+              @Override
+              protected void addCompletionVariants(@NotNull String text,
+                                                   int offset,
+                                                   @NotNull String prefix,
+                                                   @NotNull CompletionResultSet result) {
+                final PsiCodeFragment fragment = item.typeCodeFragment;
+                if (fragment instanceof PsiTypeCodeFragment) {
+                  final PsiType type;
+                  try {
+                    type = ((PsiTypeCodeFragment)fragment).getType();
+                  }
+                  catch (Exception e) {
+                    return;
+                  }
+                  final SuggestedNameInfo info = JavaCodeStyleManager.getInstance(myProject)
+                    .suggestVariableName(VariableKind.PARAMETER, null, null, type);
+
+                  for (String completionVariant : info.names) {
+                    final LookupElementBuilder element = LookupElementBuilder.create(completionVariant);
+                    result.addElement(element.withLookupString(completionVariant.toLowerCase(Locale.ENGLISH)));
+                  }
+                }
+              }
+            }.apply(myNameEditor, item.parameter.getName());
+
+            if (!item.isEllipsisType() && item.parameter.getOldIndex() == -1) {
+              final JPanel additionalPanel = new JPanel(new BorderLayout());
+              final Document doc = PsiDocumentManager.getInstance(getProject()).getDocument(item.defaultValueCodeFragment);
+              myDefaultValueEditor = new EditorTextField(doc, getProject(), getFileType());
+              ((PsiExpressionCodeFragment)item.defaultValueCodeFragment).setExpectedType(getRowType(item));
+              myDefaultValueEditor.setPreferredWidth(getTable().getWidth() / 2);
+              myDefaultValueEditor.addDocumentListener(new RowEditorChangeListener(2));
+              additionalPanel.add(createLabeledPanel("Default value:", myDefaultValueEditor), BorderLayout.WEST);
+
+              if (!isGenerateDelegate()) {
+                myAnyVar = new JCheckBox("&Use Any Var");
+                UIUtil.applyStyle(UIUtil.ComponentStyle.SMALL, myAnyVar);
+                DialogUtil.registerMnemonic(myAnyVar, '&');
+                myAnyVar.addActionListener(new ActionListener() {
+                  @Override
+                  public void actionPerformed(ActionEvent e) {
+                    item.parameter.setUseAnySingleVariable(myAnyVar.isSelected());
+                  }
+                });
+                final JPanel anyVarPanel = new JPanel(new BorderLayout());
+                anyVarPanel.add(myAnyVar, BorderLayout.SOUTH);
+                UIUtil.addInsets(anyVarPanel, JBUI.insetsBottom(8));
+                additionalPanel.add(anyVarPanel, BorderLayout.CENTER);
+                //additionalPanel.setPreferredSize(new Dimension(t.getWidth() / 3, -1));
+              }
+              add(additionalPanel, BorderLayout.SOUTH);
+            }
+          }
+
+          @Override
+          public JBTableRow getValue() {
+            return new JBTableRow() {
+              @Override
+              public Object getValueAt(int column) {
+                switch (column) {
+                  case 0: return item.typeCodeFragment;
+                  case 1: return myNameEditor.getText().trim();
+                  case 2: return item.defaultValueCodeFragment;
+                  case 3: return myAnyVar != null && myAnyVar.isSelected();
+                }
+                return null;
+              }
+            };
+          }
+
+          @Override
+          public JComponent getPreferredFocusedComponent() {
+            final MouseEvent me = getMouseEvent();
+            if (me == null) {
+              return myTypeEditor.getFocusTarget();
+            }
+            final double x = me.getPoint().getX();
+            return x <= getTypesColumnWidth()
+                   ? myTypeEditor.getFocusTarget()
+                   : myDefaultValueEditor == null || x <= getNamesColumnWidth()
+                     ? myNameEditor.getFocusTarget()
+                     : myDefaultValueEditor.getFocusTarget();
+          }
+
+          @Override
+          public JComponent[] getFocusableComponents() {
+            final List<JComponent> focusable = new ArrayList<>();
+            focusable.add(myTypeEditor.getFocusTarget());
+            focusable.add(myNameEditor.getFocusTarget());
+            if (myDefaultValueEditor != null) {
+              focusable.add(myDefaultValueEditor.getFocusTarget());
+            }
+            if (myAnyVar != null) {
+              focusable.add(myAnyVar);
+            }
+            return focusable.toArray(new JComponent[0]);
+          }
+        };
+      }
+
+      @Override
+      protected boolean isRowEmpty(int row) {
+        ParameterInfoImpl parameter = getRowItem(row).parameter;
+        return StringUtil.isEmpty(parameter.getName()) && StringUtil.isEmpty(parameter.getTypeText());
       }
     };
-
-    Font font = EditorColorsManager.getInstance().getGlobalScheme().getFont(EditorFontType.PLAIN);
-    font = new Font(font.getFontName(), font.getStyle(), 12);
-    field.setFont(font);
-
-    if (selected && focused) {
-      panel.setBackground(UIUtil.getTableSelectionBackground());
-      field.setAsRendererWithSelection(UIUtil.getTableSelectionBackground(), UIUtil.getTableSelectionForeground());
-    } else {
-      panel.setBackground(UIUtil.getTableBackground());
-      if (selected && !focused) {
-        panel.setBorder(new DottedBorder(UIUtil.getTableForeground()));
-      }
-    }
-    panel.add(field, BorderLayout.WEST);
-    return panel;
   }
 
   private int getTypesMaxLength() {
@@ -278,7 +434,7 @@ public class JavaChangeSignatureDialog extends ChangeSignatureDialogBase<Paramet
     }
     return len;
   }
-  
+
   private int getNamesMaxLength() {
     int len = 0;
     for (ParameterTableModelItemBase<ParameterInfoImpl> item : myParametersTableModel.getItems()) {
@@ -286,8 +442,8 @@ public class JavaChangeSignatureDialog extends ChangeSignatureDialogBase<Paramet
       len = Math.max(len, text == null ? 0 : text.length());
     }
     return len;
-  }  
-  
+  }
+
   private int getColumnWidth(int index) {
     int letters = getTypesMaxLength() + (index == 0 ? 1 : getNamesMaxLength() + 2);
     Font font = EditorColorsManager.getInstance().getGlobalScheme().getFont(EditorFontType.PLAIN);
@@ -297,176 +453,21 @@ public class JavaChangeSignatureDialog extends ChangeSignatureDialogBase<Paramet
 
   private int getTypesColumnWidth() {
     return  getColumnWidth(0);
-  }    
-  
+  }
+
   private int getNamesColumnWidth() {
     return getColumnWidth(1);
   }
 
-  @Override
-  protected JBTableRowEditor getTableEditor(final JTable t, final ParameterTableModelItemBase<ParameterInfoImpl> item) {
-    return new JBTableRowEditor() {
-      private EditorTextField myTypeEditor;
-      private EditorTextField myNameEditor;
-      private EditorTextField myDefaultValueEditor;      
-      private JCheckBox myAnyVar;
-
-      class MyDocumentListener extends DocumentAdapter {
-        private int myColumn;
-
-        private MyDocumentListener(int column) {
-          myColumn = column;
-        }
-
-        @Override
-        public void documentChanged(DocumentEvent e) {
-          fireDocumentChanged(e, myColumn);
-        }
-      }
-
-      @Override
-      public void prepareEditor(JTable table, int row) {
-        setLayout(new BorderLayout());
-        final JPanel typePanel = new JPanel(new VerticalFlowLayout(VerticalFlowLayout.TOP, 4, 2, true, false));
-        final Document document = PsiDocumentManager.getInstance(getProject()).getDocument(item.typeCodeFragment);
-        myTypeEditor = new EditorTextField(document, getProject(), getFileType());
-        myTypeEditor.addDocumentListener(mySignatureUpdater);
-        final JBLabel typeLabel = new JBLabel("Type:", UIUtil.ComponentStyle.SMALL);
-        IJSwingUtilities.adjustComponentsOnMac(typeLabel, myTypeEditor);
-        typePanel.add(typeLabel);
-        typePanel.add(myTypeEditor);
-        myTypeEditor.setPreferredWidth(t.getWidth() / 2);
-        myTypeEditor.addDocumentListener(new MyDocumentListener(0));
-        add(typePanel, BorderLayout.WEST);
-
-        final JPanel namePanel = new JPanel(new VerticalFlowLayout(VerticalFlowLayout.TOP, 4, 2, true, false));
-        myNameEditor = new EditorTextField(item.parameter.getName(), getProject(), getFileType());
-        myNameEditor.addDocumentListener(mySignatureUpdater);
-        myNameEditor.addDocumentListener(new MyDocumentListener(1));
-        final JBLabel nameLabel = new JBLabel("Name:", UIUtil.ComponentStyle.SMALL);
-        IJSwingUtilities.adjustComponentsOnMac(nameLabel, myNameEditor);
-        namePanel.add(nameLabel);
-        namePanel.add(myNameEditor);
-        add(namePanel, BorderLayout.CENTER);
-        new TextFieldCompletionProvider() {
-
-          @Override
-          protected void addCompletionVariants(@NotNull String text,
-                                               int offset,
-                                               @NotNull String prefix,
-                                               @NotNull CompletionResultSet result) {
-            final PsiCodeFragment fragment = item.typeCodeFragment;
-            if (fragment instanceof PsiTypeCodeFragment) {
-              final PsiType type;
-              try {
-                type = ((PsiTypeCodeFragment)fragment).getType();
-              }
-              catch (Exception e) {
-                return;
-              }
-              final SuggestedNameInfo info = JavaCodeStyleManager.getInstance(myProject)
-                .suggestVariableName(VariableKind.PARAMETER, null, null, type);
-
-              for (String completionVariant : info.names) {
-                final LookupElementBuilder element = LookupElementBuilder.create(completionVariant);
-                result.addElement(element.withLookupString(completionVariant.toLowerCase()));
-              }
-            }
-          }
-        }.apply(myNameEditor, item.parameter.getName());
-
-        if (!item.isEllipsisType() && item.parameter.getOldIndex() == -1) {
-          final JPanel additionalPanel = new JPanel(new BorderLayout());
-          final JPanel defaultValuePanel = new JPanel(new VerticalFlowLayout(VerticalFlowLayout.TOP, 4, 2, true, false));
-          final Document doc = PsiDocumentManager.getInstance(getProject()).getDocument(item.defaultValueCodeFragment);
-          myDefaultValueEditor = new EditorTextField(doc, getProject(), getFileType());
-          ((PsiExpressionCodeFragment)item.defaultValueCodeFragment).setExpectedType(getRowType(item));
-          final JBLabel defaultValueLabel = new JBLabel("Default value:", UIUtil.ComponentStyle.SMALL);
-          IJSwingUtilities.adjustComponentsOnMac(defaultValueLabel, myDefaultValueEditor);
-          defaultValuePanel.add(defaultValueLabel);
-          defaultValuePanel.add(myDefaultValueEditor);
-          myDefaultValueEditor.setPreferredWidth(t.getWidth() / 2);
-          myDefaultValueEditor.addDocumentListener(new MyDocumentListener(2));
-          additionalPanel.add(defaultValuePanel, BorderLayout.WEST);
-
-          if (!isGenerateDelegate()) {
-            myAnyVar = new JCheckBox("&Use Any Var");
-            UIUtil.applyStyle(UIUtil.ComponentStyle.SMALL, myAnyVar);
-            DialogUtil.registerMnemonic(myAnyVar, '&');
-            myAnyVar.addActionListener(new ActionListener() {
-              @Override
-              public void actionPerformed(ActionEvent e) {
-                item.parameter.setUseAnySingleVariable(myAnyVar.isSelected());
-              }
-            });
-            final JPanel anyVarPanel = new JPanel(new BorderLayout());
-            anyVarPanel.add(myAnyVar, BorderLayout.SOUTH);
-            UIUtil.addInsets(anyVarPanel, new Insets(0,0,8,0));
-            additionalPanel.add(anyVarPanel, BorderLayout.CENTER);
-            //additionalPanel.setPreferredSize(new Dimension(t.getWidth() / 3, -1));
-          }
-          add(additionalPanel, BorderLayout.SOUTH);
-        }
-      }
-
-      @Override
-      public JBTableRow getValue() {
-        return new JBTableRow() {
-          @Override
-          public Object getValueAt(int column) {
-            switch (column) {
-              case 0: return item.typeCodeFragment;
-              case 1: return myNameEditor.getText().trim();
-              case 2: return item.defaultValueCodeFragment;
-              case 3: return myAnyVar != null && myAnyVar.isSelected();
-            }
-            return null;
-          }
-        };
-      }
-
-      @Override
-      public JComponent getPreferredFocusedComponent() {
-        final MouseEvent me = getMouseEvent();
-        if (me == null) {
-          return myTypeEditor.getFocusTarget();
-        }
-        final double x = me.getPoint().getX();
-        return x <= getTypesColumnWidth()
-               ? myTypeEditor.getFocusTarget()
-               : myDefaultValueEditor == null || x <= getNamesColumnWidth()
-                 ? myNameEditor.getFocusTarget()
-                 : myDefaultValueEditor.getFocusTarget();
-      }
-
-      @Override
-      public JComponent[] getFocusableComponents() {
-        final List<JComponent> focusable = new ArrayList<JComponent>();
-        focusable.add(myTypeEditor.getFocusTarget());
-        focusable.add(myNameEditor.getFocusTarget());
-        if (myDefaultValueEditor != null) {
-          focusable.add(myDefaultValueEditor.getFocusTarget());
-        }
-        if (myAnyVar != null) {
-          focusable.add(myAnyVar);
-        }
-        return focusable.toArray(new JComponent[focusable.size()]);
-      }
-    };
-  }
-  
   @Nullable
   private static PsiType getRowType(ParameterTableModelItemBase<ParameterInfoImpl> item) {
     try {
       return ((PsiTypeCodeFragment)item.typeCodeFragment).getType();
     }
-    catch (PsiTypeCodeFragment.TypeSyntaxException e) {
+    catch (PsiTypeCodeFragment.TypeSyntaxException | PsiTypeCodeFragment.NoTypeException e) {
       return null;
     }
-    catch (PsiTypeCodeFragment.NoTypeException e) {
-      return null;
-    }
-  }    
+  }
 
   @Override
   protected void customizeParametersTable(TableView<ParameterTableModelItemBase<ParameterInfoImpl>> table) {
@@ -484,12 +485,7 @@ public class JavaChangeSignatureDialog extends ChangeSignatureDialogBase<Paramet
           animator.setStep(48);
           animator.addColumn(defaultValue, (t.getWidth() - 48) / 3);
           animator.addColumn(varArg, 48);
-          animator.startAndDoWhenDone(new Runnable() {
-            @Override
-            public void run() {
-              t.editCellAt(t.getRowCount() - 1, 0);
-            }
-          });
+          animator.startAndDoWhenDone(() -> t.editCellAt(t.getRowCount() - 1, 0));
           animator.start();
         }
       }
@@ -514,7 +510,7 @@ public class JavaChangeSignatureDialog extends ChangeSignatureDialogBase<Paramet
                                         getVisibility(),
                                         getMethodName(),
                                         getReturnType(),
-                                        parameters.toArray(new ParameterInfoImpl[parameters.size()]),
+                                        parameters.toArray(new ParameterInfoImpl[0]),
                                         getExceptions(),
                                         myMethodsToPropagateParameters,
                                         myMethodsToPropagateExceptions);
@@ -527,10 +523,7 @@ public class JavaChangeSignatureDialog extends ChangeSignatureDialogBase<Paramet
         final PsiType type = ((PsiTypeCodeFragment)myReturnTypeCodeFragment).getType();
         return CanonicalTypes.createTypeWrapper(type);
       }
-      catch (PsiTypeCodeFragment.TypeSyntaxException e) {
-        return null;
-      }
-      catch (PsiTypeCodeFragment.NoTypeException e) {
+      catch (PsiTypeCodeFragment.TypeSyntaxException | PsiTypeCodeFragment.NoTypeException e) {
         return null;
       }
     }
@@ -557,10 +550,10 @@ public class JavaChangeSignatureDialog extends ChangeSignatureDialogBase<Paramet
   @Override
   protected String validateAndCommitData() {
     PsiManager manager = PsiManager.getInstance(myProject);
-    PsiElementFactory factory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();
+    PsiElementFactory factory = JavaPsiFacade.getElementFactory(manager.getProject());
 
     String name = getMethodName();
-    if (!JavaPsiFacade.getInstance(manager.getProject()).getNameHelper().isIdentifier(name)) {
+    if (!PsiNameHelper.getInstance(manager.getProject()).isIdentifier(name)) {
       return RefactoringMessageUtil.getIncorrectIdentifierMessage(name);
     }
 
@@ -569,11 +562,15 @@ public class JavaChangeSignatureDialog extends ChangeSignatureDialogBase<Paramet
         ((PsiTypeCodeFragment)myReturnTypeCodeFragment).getType();
       }
       catch (PsiTypeCodeFragment.TypeSyntaxException e) {
-        myReturnTypeField.requestFocus();
+        IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
+          IdeFocusManager.getGlobalInstance().requestFocus(myReturnTypeField, true);
+        });
         return RefactoringBundle.message("changeSignature.wrong.return.type", myReturnTypeCodeFragment.getText());
       }
       catch (PsiTypeCodeFragment.NoTypeException e) {
-        myReturnTypeField.requestFocus();
+        IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
+          IdeFocusManager.getGlobalInstance().requestFocus(myReturnTypeField, true);
+        });
         return RefactoringBundle.message("changeSignature.no.return.type");
       }
     }
@@ -584,7 +581,7 @@ public class JavaChangeSignatureDialog extends ChangeSignatureDialogBase<Paramet
     for (int i = 0; i < newParametersNumber; i++) {
       final ParameterTableModelItemBase<ParameterInfoImpl> item = parameterInfos.get(i);
 
-      if (!JavaPsiFacade.getInstance(manager.getProject()).getNameHelper().isIdentifier(item.parameter.getName())) {
+      if (!PsiNameHelper.getInstance(manager.getProject()).isIdentifier(item.parameter.getName())) {
         return RefactoringMessageUtil.getIncorrectIdentifierMessage(item.parameter.getName());
       }
 
@@ -596,7 +593,7 @@ public class JavaChangeSignatureDialog extends ChangeSignatureDialogBase<Paramet
                                          item.typeCodeFragment.getText(),
                                          item.parameter.getName());
       } catch (PsiTypeCodeFragment.NoTypeException e) {
-        return RefactoringBundle.message("changeSignature.no.type.for.parameter", item.parameter.getName());
+        return RefactoringBundle.message("changeSignature.no.type.for.parameter", "return", item.parameter.getName());
       }
 
       item.parameter.setType(type);
@@ -606,14 +603,9 @@ public class JavaChangeSignatureDialog extends ChangeSignatureDialogBase<Paramet
       }
 
       if (item.parameter.oldParameterIndex < 0) {
-        item.parameter.defaultValue = ApplicationManager.getApplication().runWriteAction(new Computable<String>() {
-          @Override
-          public String compute() {
-            return JavaCodeStyleManager.getInstance(myProject).qualifyClassReferences(item.defaultValueCodeFragment).getText();
-          }
-        });
-        String def = item.parameter.defaultValue;
-        def = def.trim();
+        String def = WriteCommandAction.runWriteCommandAction(myProject,
+                                                              (Computable<String>)() -> JavaCodeStyleManager.getInstance(myProject).qualifyClassReferences(item.defaultValueCodeFragment).getText().trim());
+        item.parameter.defaultValue = def;
         if (!(type instanceof PsiEllipsisType)) {
           try {
             if (!StringUtil.isEmpty(def)) {
@@ -638,7 +630,7 @@ public class JavaChangeSignatureDialog extends ChangeSignatureDialogBase<Paramet
           return RefactoringBundle.message("changeSignature.wrong.type.for.exception", typeCodeFragment.getText());
         }
 
-        PsiClassType throwable = JavaPsiFacade.getInstance(myProject).getElementFactory()
+        PsiClassType throwable = JavaPsiFacade.getElementFactory(myProject)
           .createTypeByFQClassName("java.lang.Throwable", type.getResolveScope());
         if (!throwable.isAssignableFrom(type)) {
           return RefactoringBundle.message("changeSignature.not.throwable.type", typeCodeFragment.getText());
@@ -656,21 +648,21 @@ public class JavaChangeSignatureDialog extends ChangeSignatureDialogBase<Paramet
     // warnings
     try {
       if (myMethod.canChangeReturnType() == MethodDescriptor.ReadWriteOption.ReadWrite) {
-        if (!RefactoringUtil.isResolvableType(((PsiTypeCodeFragment)myReturnTypeCodeFragment).getType())) {
+        if (PsiTypesUtil.hasUnresolvedComponents(((PsiTypeCodeFragment)myReturnTypeCodeFragment).getType())) {
           if (Messages.showOkCancelDialog(myProject, RefactoringBundle
             .message("changeSignature.cannot.resolve.return.type", myReturnTypeCodeFragment.getText()),
-                                          RefactoringBundle.message("changeSignature.refactoring.name"), Messages.getWarningIcon()) != 0) {
+                                          RefactoringBundle.message("changeSignature.refactoring.name"), Messages.getWarningIcon()) != Messages.OK) {
             return EXIT_SILENTLY;
           }
         }
       }
       for (ParameterTableModelItemBase<ParameterInfoImpl> item : parameterInfos) {
 
-        if (!RefactoringUtil.isResolvableType(((PsiTypeCodeFragment)item.typeCodeFragment).getType())) {
+        if (PsiTypesUtil.hasUnresolvedComponents(((PsiTypeCodeFragment)item.typeCodeFragment).getType())) {
           if (Messages.showOkCancelDialog(myProject, RefactoringBundle
             .message("changeSignature.cannot.resolve.parameter.type", item.typeCodeFragment.getText(), item.parameter.getName()),
                                           RefactoringBundle.message("changeSignature.refactoring.name"), Messages.getWarningIcon()) !=
-              0) {
+              Messages.OK) {
             return EXIT_SILENTLY;
           }
         }
@@ -687,7 +679,7 @@ public class JavaChangeSignatureDialog extends ChangeSignatureDialogBase<Paramet
       for (final ParameterTableModelItemBase<ParameterInfoImpl> item : myParametersTableModel.getItems()) {
         if (item.parameter.oldParameterIndex < 0) {
           if (StringUtil.isEmpty(item.defaultValueCodeFragment.getText()))
-            return new ValidationInfo("Default value is missing. In the method call, the new parameter value will be left blank");
+            return new ValidationInfo("Default value is missing. Method calls will contain blanks instead of the new parameter value.");
         }
       }
     }
@@ -704,34 +696,55 @@ public class JavaChangeSignatureDialog extends ChangeSignatureDialogBase<Paramet
     return doCalculateSignature(myMethod.getMethod());
   }
 
+  static String getModifiersText(PsiModifierList list, String newVisibility) {
+    final String oldVisibility = VisibilityUtil.getVisibilityModifier(list);
+    List<String> modifierKeywords = StreamEx.of(PsiTreeUtil.findChildrenOfType(list, PsiKeyword.class))
+                                            .map(PsiElement::getText)
+                                            .toList();
+    if (!oldVisibility.equals(newVisibility)) {
+      if (oldVisibility.equals(PsiModifier.PACKAGE_LOCAL)) {
+        modifierKeywords.add(0, PsiModifier.PACKAGE_LOCAL);
+      }
+      if (newVisibility.equals(PsiModifier.PACKAGE_LOCAL)) {
+        modifierKeywords.remove(oldVisibility);
+      } else {
+        modifierKeywords.replaceAll(m -> m.equals(oldVisibility) ? newVisibility : m);
+      }
+    }
+    return String.join(" ", modifierKeywords);
+  }
+
+  private String getAnnotationText(PsiMethod method, PsiModifierList modifierList) {
+    PsiAnnotation annotation = modifierList.findAnnotation(JavaMethodContractUtil.ORG_JETBRAINS_ANNOTATIONS_CONTRACT);
+    if (annotation != null) {
+      String[] oldNames = ContainerUtil.map2Array(method.getParameterList().getParameters(), String.class, PsiParameter::getName);
+      JavaParameterInfo[] parameters =
+        ContainerUtil.map2Array(myParametersTableModel.getItems(), JavaParameterInfo.class, item -> item.parameter);
+      try {
+        PsiAnnotation converted = ContractConverter.convertContract(method, oldNames, parameters);
+        if (converted != null && converted != annotation) {
+          String text = converted.getText();
+          return text.replaceFirst("^@"+JavaMethodContractUtil.ORG_JETBRAINS_ANNOTATIONS_CONTRACT, "@Contract");
+        }
+      }
+      catch (ContractConverter.ContractConversionException ignored) {
+      }
+      return annotation.getText();
+    }
+    return "";
+  }
+
   protected String doCalculateSignature(PsiMethod method) {
     final StringBuilder buffer = new StringBuilder();
     final PsiModifierList modifierList = method.getModifierList();
-    String modifiers = modifierList.getText();
-    final String oldModifier = VisibilityUtil.getVisibilityModifier(modifierList);
-    final String newModifier = getVisibility();
-    String newModifierStr = VisibilityUtil.getVisibilityString(newModifier);
-    if (!newModifier.equals(oldModifier)) {
-      int index = modifiers.indexOf(oldModifier);
-      if (index >= 0) {
-        final StringBuilder buf = new StringBuilder(modifiers);
-        buf.replace(index,
-                    index + oldModifier.length() + ("".equals(newModifierStr) ? 1 : 0),
-                    newModifierStr);
-        modifiers = buf.toString();
-      } else {
-        if (!StringUtil.isEmpty(newModifierStr)) {
-          newModifierStr += " ";
-        }
-        modifiers = newModifierStr + modifiers;
-      }
+    final String annotationText = getAnnotationText(method, modifierList);
+    buffer.append(annotationText);
+    if (!annotationText.isEmpty()) {
+      buffer.append("\n");
     }
-
+    final String modifiers = getModifiersText(modifierList, ObjectUtils.notNull(getVisibility(), PsiModifier.PACKAGE_LOCAL));
     buffer.append(modifiers);
-    if (modifiers.length() > 0 &&
-        !StringUtil.endsWithChar(modifiers, '\n') &&
-        !StringUtil.endsWithChar(modifiers, '\r') &&
-        !StringUtil.endsWithChar(modifiers, ' ')) {
+    if (!modifiers.isEmpty()) {
       buffer.append(" ");
     }
 
@@ -745,7 +758,8 @@ public class JavaChangeSignatureDialog extends ChangeSignatureDialogBase<Paramet
     buffer.append(getMethodName());
     buffer.append("(");
 
-    String indent = StringUtil.repeatSymbol(' ', buffer.length());
+    final int lineBreakIdx = buffer.lastIndexOf("\n");
+    String indent = StringUtil.repeatSymbol(' ', lineBreakIdx >= 0 ? buffer.length() - lineBreakIdx - 1 : buffer.length());
     List<ParameterTableModelItemBase<ParameterInfoImpl>> items = myParametersTableModel.getItems();
     int curIndent = indent.length();
     for (int i = 0; i < items.size(); i++) {

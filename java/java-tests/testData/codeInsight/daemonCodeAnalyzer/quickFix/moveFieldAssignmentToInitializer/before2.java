@@ -1,4 +1,4 @@
-// "Move assignment to field declaration" "true"
+// "Move assignment to field declaration" "INFORMATION"
 
 class X {
   int f;

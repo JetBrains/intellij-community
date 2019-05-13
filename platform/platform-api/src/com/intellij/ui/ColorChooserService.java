@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,9 +16,12 @@
 package com.intellij.ui;
 
 import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
+import java.util.List;
 
 /**
  * @author Konstantin Bulenkov
@@ -28,7 +31,14 @@ public abstract class ColorChooserService {
     return ServiceManager.getService(ColorChooserService.class);
   }
 
+  /**
+   * @deprecated this overload does not work with headless implementation, use one with the Project instead
+   */
+  @Deprecated
   @Nullable
-  public abstract Color showDialog(Component parent, String caption, Color preselectedColor, boolean enableOpacity,
-                                   ColorPickerListener[] listeners);
+  public abstract Color showDialog(Component parent, @Nls(capitalization = Nls.Capitalization.Title) String caption, Color preselectedColor, boolean enableOpacity,
+                                   List<ColorPickerListener> listeners, boolean opacityInPercent);
+  @Nullable
+  public abstract Color showDialog(Project project, Component parent, @Nls(capitalization = Nls.Capitalization.Title) String caption, Color preselectedColor, boolean enableOpacity,
+                                   List<ColorPickerListener> listeners, boolean opacityInPercent);
 }

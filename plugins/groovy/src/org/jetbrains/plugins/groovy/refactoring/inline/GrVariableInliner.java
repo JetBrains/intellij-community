@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@ import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.PsiSubstitutor;
+import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.PsiFormatUtilBase;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
@@ -38,11 +39,10 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCall;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAccessorMethod;
+import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringBundle;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
-
-import static org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil.LOG;
-import static org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil.skipParentheses;
+import org.jetbrains.plugins.groovy.refactoring.introduce.GrIntroduceHandlerBase;
 
 /**
  * @author Max Medvedev
@@ -57,14 +57,17 @@ public class GrVariableInliner implements InlineHandler.Inliner {
     }
     else {
       initializer = variable.getInitializerGroovy();
-      LOG.assertTrue(initializer != null);
+      PsiUtil.LOG.assertTrue(initializer != null);
     }
-    myTempExpr = (GrExpression)skipParentheses(initializer, false);
+
+    myTempExpr = GrIntroduceHandlerBase.insertExplicitCastIfNeeded(variable, initializer);
+
   }
 
+  @Override
   @Nullable
   public MultiMap<PsiElement, String> getConflicts(@NotNull PsiReference reference, @NotNull PsiElement referenced) {
-    MultiMap<PsiElement, String> conflicts = new MultiMap<PsiElement, String>();
+    MultiMap<PsiElement, String> conflicts = new MultiMap<>();
     GrExpression expr = (GrExpression)reference.getElement();
     if (expr.getParent() instanceof GrAssignmentExpression) {
       GrAssignmentExpression parent = (GrAssignmentExpression)expr.getParent();
@@ -87,6 +90,7 @@ public class GrVariableInliner implements InlineHandler.Inliner {
     return conflicts;
   }
 
+  @Override
   public void inlineUsage(@NotNull final UsageInfo usage, @NotNull final PsiElement referenced) {
     inlineReference(usage, referenced, myTempExpr);
   }
@@ -112,6 +116,7 @@ public class GrVariableInliner implements InlineHandler.Inliner {
 
     GrExpression newExpr = exprToBeReplaced.replaceWithExpression((GrExpression)initializer.copy(), true);
     final Project project = usage.getProject();
+    JavaCodeStyleManager.getInstance(project).shortenClassReferences(newExpr);
     Editor editor = FileEditorManager.getInstance(project).getSelectedTextEditor();
     GroovyRefactoringUtil.highlightOccurrences(project, editor, new PsiElement[]{newExpr});
     WindowManager.getInstance().getStatusBar(project).setInfo(GroovyRefactoringBundle.message("press.escape.to.remove.the.highlighting"));

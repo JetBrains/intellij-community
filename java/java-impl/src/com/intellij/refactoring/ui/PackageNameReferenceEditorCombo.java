@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,11 +32,11 @@ public class PackageNameReferenceEditorCombo extends ReferenceEditorComboWithBro
                                          final String recentsKey, final String chooserTitle) {
     super(null, text, project, false, recentsKey);
     addActionListener(new ActionListener() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         final PackageChooserDialog chooser = new PackageChooserDialog(chooserTitle, project);
         chooser.selectPackage(getText());
-        chooser.show();
-        if (chooser.isOK()) {
+        if (chooser.showAndGet()) {
           final PsiPackage aPackage = chooser.getSelectedPackage();
           if (aPackage != null) {
             setText(aPackage.getQualifiedName());

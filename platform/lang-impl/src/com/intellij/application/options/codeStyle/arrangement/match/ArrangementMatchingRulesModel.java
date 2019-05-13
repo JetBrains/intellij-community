@@ -16,7 +16,7 @@
 package com.intellij.application.options.codeStyle.arrangement.match;
 
 import com.intellij.application.options.codeStyle.arrangement.ArrangementConstants;
-import com.intellij.application.options.codeStyle.arrangement.component.ArrangementEditorAware;
+import com.intellij.application.options.codeStyle.arrangement.ui.ArrangementEditorAware;
 import com.intellij.openapi.diagnostic.Logger;
 import org.jetbrains.annotations.NotNull;
 
@@ -24,12 +24,10 @@ import javax.swing.table.DefaultTableModel;
 
 /**
  * @author Denis Zhdanov
- * @since 11/7/12 3:00 PM
  */
-@SuppressWarnings("unchecked")
 public class ArrangementMatchingRulesModel extends DefaultTableModel {
 
-  private static final Logger LOG = Logger.getInstance("#" + ArrangementMatchingRulesModel.class.getName());
+  private static final Logger LOG = Logger.getInstance(ArrangementMatchingRulesModel.class);
 
   @Override
   public int getColumnCount() {

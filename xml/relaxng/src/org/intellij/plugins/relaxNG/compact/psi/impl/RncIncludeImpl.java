@@ -26,11 +26,6 @@ import org.intellij.plugins.relaxNG.compact.psi.RncElementVisitor;
 import org.intellij.plugins.relaxNG.compact.psi.RncInclude;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * Created by IntelliJ IDEA.
- * User: sweinreuter
- * Date: 10.08.2007
- */
 public class RncIncludeImpl extends RncFileReferenceImpl implements RncInclude {
   public RncIncludeImpl(ASTNode node) {
     super(node);
@@ -47,6 +42,7 @@ public class RncIncludeImpl extends RncFileReferenceImpl implements RncInclude {
     return super.processDeclarations(processor, substitutor, lastParent, place);
   }
 
+  @Override
   public void accept(@NotNull RncElementVisitor visitor) {
     visitor.visitInclude(this);
   }
@@ -56,10 +52,12 @@ public class RncIncludeImpl extends RncFileReferenceImpl implements RncInclude {
     visitor.visitInclude(this);
   }
 
+  @Override
   public PsiFile getInclude() {
     return getReferencedFile();
   }
 
+  @Override
   @NotNull
   public RncDefine[] getOverrides() {
     // TODO: DIVs?

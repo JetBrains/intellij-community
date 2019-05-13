@@ -1,98 +1,122 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.console;
 
+import com.intellij.AppTopics;
+import com.intellij.CommonBundle;
 import com.intellij.codeInsight.lookup.LookupManager;
-import com.intellij.execution.process.ConsoleHistoryModel;
+import com.intellij.execution.console.ConsoleHistoryModel.Entry;
+import com.intellij.ide.scratch.ScratchFileService;
+import com.intellij.idea.ActionsBundle;
 import com.intellij.lang.Language;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.EmptyAction;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.command.undo.UndoConstants;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.actions.ContentChooser;
 import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.ex.util.LexerEditorHighlighter;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.fileEditor.FileDocumentManagerListener;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.openapi.fileTypes.SyntaxHighlighterFactory;
-import com.intellij.openapi.keymap.KeymapUtil;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ex.ProjectEx;
+import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.text.CharFilter;
-import com.intellij.openapi.util.text.StringHash;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.CharsetToolkit;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileFactory;
 import com.intellij.testFramework.LightVirtualFile;
-import com.intellij.util.ObjectUtils;
+import com.intellij.util.PathUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.SafeFileOutputStream;
-import com.thoughtworks.xstream.io.HierarchicalStreamReader;
-import com.thoughtworks.xstream.io.xml.XppReader;
+import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.xmlpull.v1.XmlPullParserFactory;
-import org.xmlpull.v1.XmlSerializer;
+import org.jetbrains.annotations.TestOnly;
 
+import javax.swing.*;
+import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
-import java.io.*;
-import java.nio.charset.Charset;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.ListIterator;
+import java.io.IOException;
+import java.io.OutputStreamWriter;
+import java.io.Writer;
+import java.util.*;
 
 /**
  * @author gregsh
  */
 public class ConsoleHistoryController {
-
   private static final Logger LOG = Logger.getInstance("com.intellij.execution.console.ConsoleHistoryController");
 
-  private final LanguageConsoleImpl myConsole;
-  private final AnAction myHistoryNext = new MyAction(true);
-  private final AnAction myHistoryPrev = new MyAction(false);
+  private final static Map<LanguageConsoleView, ConsoleHistoryController> ourControllers =
+    ContainerUtil.createConcurrentWeakMap(ContainerUtil.identityStrategy());
+
+  private final LanguageConsoleView myConsole;
+  private final AnAction myHistoryNext = new MyAction(true, getKeystrokesUpDown(true));
+  private final AnAction myHistoryPrev = new MyAction(false, getKeystrokesUpDown(false));
   private final AnAction myBrowseHistory = new MyBrowseAction();
   private boolean myMultiline;
   private ModelHelper myHelper;
   private long myLastSaveStamp;
 
-  public ConsoleHistoryController(@NotNull final String type,
-                                  @Nullable final String persistenceId,
-                                  @NotNull final LanguageConsoleImpl console,
-                                  @NotNull final ConsoleHistoryModel model) {
-    this(type, persistenceId, console, model, Charset.defaultCharset());
+  @Deprecated
+  public ConsoleHistoryController(@NotNull String type, @Nullable String persistenceId, @NotNull LanguageConsoleView console) {
+    this(new ConsoleRootType(type, null) { }, persistenceId, console);
   }
-  public ConsoleHistoryController(@NotNull final String type,
-                                  @Nullable final String persistenceId,
-                                  @NotNull final LanguageConsoleImpl console,
-                                  @NotNull final ConsoleHistoryModel model,
-                                  @NotNull final Charset charset)
-  {
-    String id = persistenceId == null || StringUtil.isEmpty(persistenceId) ? console.getProject().getPresentableUrl() : persistenceId;
-    myHelper = new ModelHelper(type, id, model, charset);
+
+  public ConsoleHistoryController(@NotNull ConsoleRootType rootType, @Nullable String persistenceId, @NotNull LanguageConsoleView console) {
+    this(rootType, fixNullPersistenceId(persistenceId, console), console,
+         ConsoleHistoryModelProvider.findModelForConsole(fixNullPersistenceId(persistenceId, console), console));
+  }
+
+  private ConsoleHistoryController(@NotNull ConsoleRootType rootType, @NotNull String persistenceId,
+                                   @NotNull LanguageConsoleView console, @NotNull ConsoleHistoryModel model) {
+    myHelper = new ModelHelper(rootType, persistenceId, model);
     myConsole = console;
+  }
+
+  @TestOnly
+  public void setModel(@NotNull ConsoleHistoryModel model){
+    myHelper = new ModelHelper(myHelper.myRootType, myHelper.myId, model);
+  }
+
+  //@Nullable
+  public static ConsoleHistoryController getController(@NotNull LanguageConsoleView console) {
+    return ourControllers.get(console);
+  }
+
+  public static void addToHistory(@NotNull LanguageConsoleView consoleView, @Nullable String command) {
+    ConsoleHistoryController controller = getController(consoleView);
+    if (controller != null) {
+      controller.addToHistory(command);
+    }
+  }
+
+  public void addToHistory(@Nullable String command) {
+    getModel().addToHistory(command);
+  }
+
+  public boolean hasHistory() {
+    return !getModel().isEmpty();
+  }
+
+  @NotNull
+  private static String fixNullPersistenceId(@Nullable String persistenceId, @NotNull LanguageConsoleView console) {
+    if (StringUtil.isNotEmpty(persistenceId)) return persistenceId;
+    String url = console.getProject().getPresentableUrl();
+    return StringUtil.isNotEmpty(url) ? url : "default";
   }
 
   public boolean isMultiline() {
@@ -104,25 +128,42 @@ public class ConsoleHistoryController {
     return this;
   }
 
-  public ConsoleHistoryModel getModel() {
+  ConsoleHistoryModel getModel() {
     return myHelper.getModel();
   }
 
   public void install() {
-    if (myHelper.getId() != null) {
-      ApplicationManager.getApplication().getMessageBus().connect(myConsole).subscribe(
-        ProjectEx.ProjectSaved.TOPIC, new ProjectEx.ProjectSaved() {
+    MessageBusConnection busConnection = myConsole.getProject().getMessageBus().connect(myConsole);
+    busConnection
+      .subscribe(ProjectEx.ProjectSaved.TOPIC, new ProjectEx.ProjectSaved() {
         @Override
-        public void saved(@NotNull final Project project) {
-          saveHistory();
+        public void duringSave(@NotNull Project project) {
+          ApplicationManager.getApplication().invokeAndWait(() -> saveHistory());
         }
       });
-      Disposer.register(myConsole, new Disposable() {
-        @Override
-        public void dispose() {
+    busConnection.subscribe(AppTopics.FILE_DOCUMENT_SYNC, new FileDocumentManagerListener() {
+      @Override
+      public void beforeDocumentSaving(@NotNull Document document) {
+        if (document == myConsole.getEditorDocument()) {
           saveHistory();
         }
-      });
+      }
+    });
+
+    ConsoleHistoryController original = ourControllers.put(myConsole, this);
+    LOG.assertTrue(original == null,
+                   "History controller already installed for: " + myConsole.getTitle());
+    Disposer.register(myConsole, new Disposable() {
+      @Override
+      public void dispose() {
+        ConsoleHistoryController controller = getController(myConsole);
+        if (controller == ConsoleHistoryController.this) {
+          ourControllers.remove(myConsole);
+        }
+        saveHistory();
+      }
+    });
+    if (myHelper.getModel().getHistorySize() == 0) {
       loadHistory(myHelper.getId());
     }
     configureActions();
@@ -138,9 +179,8 @@ public class ConsoleHistoryController {
     EmptyAction.setupAction(myHistoryPrev, "Console.History.Previous", null);
     EmptyAction.setupAction(myBrowseHistory, "Console.History.Browse", null);
     if (!myMultiline) {
-      EmptyAction.setupAction(myBrowseHistory, "Console.History.BrowseTW", null);
-      myHistoryNext.registerCustomShortcutSet(KeyEvent.VK_UP, 0, null);
-      myHistoryPrev.registerCustomShortcutSet(KeyEvent.VK_DOWN, 0, null);
+      addShortcuts(myHistoryNext, getShortcutUpDown(true));
+      addShortcuts(myHistoryPrev, getShortcutUpDown(false));
     }
     myHistoryNext.registerCustomShortcutSet(myHistoryNext.getShortcutSet(), myConsole.getCurrentEditor().getComponent());
     myHistoryPrev.registerCustomShortcutSet(myHistoryPrev.getShortcutSet(), myConsole.getCurrentEditor().getComponent());
@@ -157,29 +197,19 @@ public class ConsoleHistoryController {
     boolean result = myHelper.loadHistory(id);
     String userValue = myHelper.getContent();
     if (prev != userValue && userValue != null) {
-      setConsoleText(userValue, false, false);
+      setConsoleText(new Entry(userValue, -1), false, false);
     }
     return result;
   }
 
   private void saveHistory() {
-    if (myLastSaveStamp == getCurrentTimeStamp()) return;
+    if (myLastSaveStamp == getCurrentTimeStamp()) {
+      return;
+    }
+
     myHelper.setContent(myConsole.getEditorDocument().getText());
     myHelper.saveHistory();
     myLastSaveStamp = getCurrentTimeStamp();
-  }
-
-  private static void cleanupOldFiles(final File dir) {
-    final long keep10weeks = 10 * 1000L * 60 * 60 * 24 * 7;
-    final long curTime = System.currentTimeMillis();
-    File[] files = dir.listFiles();
-    if (files != null) {
-      for (File file : files) {
-        if (file.isFile() && file.getName().endsWith(".hist.xml") && curTime - file.lastModified() > keep10weeks) {
-          file.delete();
-        }
-      }
-    }
   }
 
   public AnAction getHistoryNext() {
@@ -194,87 +224,89 @@ public class ConsoleHistoryController {
     return myBrowseHistory;
   }
 
-  protected void setConsoleText(final String command, final boolean storeUserText, final boolean regularMode) {
+  protected void setConsoleText(final Entry command, final boolean storeUserText, final boolean regularMode) {
+    if (regularMode && myMultiline && StringUtil.isEmptyOrSpaces(command.getText())) return;
     final Editor editor = myConsole.getCurrentEditor();
     final Document document = editor.getDocument();
-    new WriteCommandAction.Simple(myConsole.getProject()) {
-      @Override
-      public void run() {
-        if (storeUserText) {
-          myHelper.setContent(document.getText());
-        }
-        String text = StringUtil.notNullize(command);
-        int offset;
-        if (regularMode) {
-          if (myMultiline) {
-            if (text.isEmpty()) return;
-            int selectionStart = editor.getSelectionModel().getSelectionStart();
-            int selectionEnd = editor.getSelectionModel().getSelectionEnd();
-            int caretOffset = editor.getCaretModel().getOffset();
-            int line = document.getLineNumber(caretOffset);
-            int lineStartOffset = document.getLineStartOffset(line);
-            if (selectionStart == lineStartOffset) document.deleteString(selectionStart, selectionEnd);
-            String trimmedLine = document.getText(new TextRange(lineStartOffset, document.getLineEndOffset(line))).trim();
-            if (StringUtil.findFirst(trimmedLine, new CharFilter() {
-              @Override
-              public boolean accept(char ch) {
-                return ch == '\'' || ch == '\"' || ch == '_' || Character.isLetterOrDigit(ch);
-              }
-            }) > -1) {
-              text += "\n";
-            }
-            document.insertString(lineStartOffset, text);
-            offset = lineStartOffset;
-            editor.getSelectionModel().setSelection(lineStartOffset, lineStartOffset + text.length());
-          }
-          else {
-            document.setText(text);
-            offset = document.getTextLength();
-          }
+    WriteCommandAction.writeCommandAction(myConsole.getProject()).run(() -> {
+      if (storeUserText) {
+        String text = document.getText();
+        if (Comparing.equal(command.getText(), text) && myHelper.getContent() != null) return;
+        myHelper.setContent(text);
+        myHelper.getModel().setContent(text);
+      }
+      String text = StringUtil.notNullize(command.getText());
+      int offset;
+      if (regularMode) {
+        if (myMultiline) {
+          offset = insertTextMultiline(text, editor, document);
         }
         else {
-          offset = 0;
-          try {
-            document.putUserData(UndoConstants.DONT_RECORD_UNDO, Boolean.TRUE);
-            document.setText(text);
-          }
-          finally {
-            document.putUserData(UndoConstants.DONT_RECORD_UNDO, null);
-          }
+          document.setText(text);
+          offset = command.getOffset() == -1 ? document.getTextLength() : command.getOffset();
         }
-        editor.getCaretModel().moveToOffset(offset);
-        editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
       }
-    }.execute();
+      else {
+        offset = 0;
+        try {
+          document.putUserData(UndoConstants.DONT_RECORD_UNDO, Boolean.TRUE);
+          document.setText(text);
+        }
+        finally {
+          document.putUserData(UndoConstants.DONT_RECORD_UNDO, null);
+        }
+      }
+      editor.getCaretModel().moveToOffset(offset);
+      editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
+    });
   }
 
+  protected int insertTextMultiline(String text, Editor editor, Document document) {
+    TextRange selection = EditorUtil.getSelectionInAnyMode(editor);
 
-  private class MyAction extends AnAction {
-    private boolean myNext;
+    int start = document.getLineStartOffset(document.getLineNumber(selection.getStartOffset()));
+    int end = document.getLineEndOffset(document.getLineNumber(selection.getEndOffset()));
 
-    public MyAction(final boolean next) {
+    document.replaceString(start, end, text);
+    editor.getSelectionModel().setSelection(start, start + text.length());
+    return start;
+  }
+
+  private class MyAction extends DumbAwareAction {
+    private final boolean myNext;
+
+    @NotNull
+    private final Collection<KeyStroke> myUpDownKeystrokes;
+
+    MyAction(final boolean next, @NotNull Collection<KeyStroke> upDownKeystrokes) {
       myNext = next;
+      myUpDownKeystrokes = upDownKeystrokes;
       getTemplatePresentation().setVisible(false);
     }
 
     @Override
-    public void actionPerformed(final AnActionEvent e) {
-      final String command;
-      if (myNext) {
-        command = getModel().getHistoryNext();
-        if (!myMultiline && command == null) return;
-      }
-      else {
-        if (!myMultiline && getModel().getHistoryCursor() < 0) return;
-        command = ObjectUtils.chooseNotNull(getModel().getHistoryPrev(), myMultiline ? "" : StringUtil.notNullize(myHelper.getContent()));
-      }
-      setConsoleText(command, myNext && getModel().getHistoryCursor() == 0, true);
+    public void actionPerformed(@NotNull final AnActionEvent e) {
+      boolean hasHistory = getModel().hasHistory(); // need to check before next line's side effect
+      Entry command = myNext ? getModel().getHistoryNext() : getModel().getHistoryPrev();
+      if (!myMultiline && command == null) return;
+      setConsoleText(command, myNext && !hasHistory, true);
     }
 
     @Override
-    public void update(final AnActionEvent e) {
+    public void update(@NotNull final AnActionEvent e) {
       super.update(e);
-      e.getPresentation().setEnabled(myMultiline || canMoveInEditor(myNext));
+      boolean enabled = myMultiline || !isUpDownKey(e) || canMoveInEditor(myNext);
+      //enabled &= getModel().hasHistory(myNext);
+      e.getPresentation().setEnabled(enabled);
+    }
+
+    private boolean isUpDownKey(@NotNull AnActionEvent e) {
+      final InputEvent event = e.getInputEvent();
+      if (!(event instanceof KeyEvent)) {
+        return false;
+      }
+      final KeyStroke keyStroke = KeyStroke.getKeyStrokeForEvent((KeyEvent)event);
+      return myUpDownKeystrokes.contains(keyStroke);
     }
   }
 
@@ -291,26 +323,29 @@ public class ConsoleHistoryController {
     else {
       final int lineCount = document.getLineCount();
       return (lineCount == 0 || document.getLineNumber(caretModel.getOffset()) == lineCount - 1) &&
-             StringUtil.isEmptyOrSpaces(document.getText().substring(caretModel.getOffset()));
+             (StringUtil.isEmptyOrSpaces(document.getText().substring(caretModel.getOffset())) || myHelper.getModel().prevOnLastLine());
     }
   }
 
 
 
-  private class MyBrowseAction extends AnAction {
+  private class MyBrowseAction extends DumbAwareAction {
 
     @Override
-    public void update(final AnActionEvent e) {
-      e.getPresentation().setEnabled(getModel().getHistorySize() > 0);
+    public void update(@NotNull AnActionEvent e) {
+      boolean enabled = hasHistory();
+      e.getPresentation().setEnabled(enabled);
     }
 
     @Override
-    public void actionPerformed(final AnActionEvent e) {
-      String s1 = KeymapUtil.getFirstKeyboardShortcutText(myHistoryNext);
-      String s2 = KeymapUtil.getFirstKeyboardShortcutText(myHistoryPrev);
-      String title = myConsole.getTitle() + " History" +
-                     (StringUtil.isNotEmpty(s1) && StringUtil.isNotEmpty(s2) ?" (" +s1+ " and " +s2+ " while in editor)" : "");
-      final ContentChooser<String> chooser = new ContentChooser<String>(myConsole.getProject(), title, true) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
+      String title = myConsole.getTitle() + " History";
+      final ContentChooser<String> chooser = new ContentChooser<String>(myConsole.getProject(), title, true, true) {
+        {
+          setOKButtonText(ActionsBundle.actionText(IdeActions.ACTION_EDITOR_PASTE));
+          setOKButtonMnemonic('P');
+          setCancelButtonText(CommonBundle.getCloseButtonText());
+        }
 
         @Override
         protected void removeContentAt(String content) {
@@ -322,9 +357,10 @@ public class ConsoleHistoryController {
           return content;
         }
 
+        @NotNull
         @Override
         protected List<String> getContents() {
-          return getModel().getHistory();
+          return getModel().getEntries();
         }
 
         @Override
@@ -334,9 +370,9 @@ public class ConsoleHistoryController {
           Project project = consoleFile.getProject();
 
           PsiFile psiFile = PsiFileFactory.getInstance(project).createFileFromText(
-            "a."+consoleFile.getFileType().getDefaultExtension(),
+            "a." + consoleFile.getFileType().getDefaultExtension(),
             language,
-            StringUtil.convertLineSeparators(new String(text)), false, true);
+            StringUtil.convertLineSeparators(text), false, true);
           VirtualFile virtualFile = psiFile.getViewProvider().getVirtualFile();
           if (virtualFile instanceof LightVirtualFile) ((LightVirtualFile)virtualFile).setWritable(false);
           Document document = FileDocumentManager.getInstance().getDocument(virtualFile);
@@ -346,34 +382,32 @@ public class ConsoleHistoryController {
           editor.getSettings().setLineMarkerAreaShown(false);
           editor.getSettings().setIndentGuidesShown(false);
 
-          SyntaxHighlighter highlighter = SyntaxHighlighterFactory.getSyntaxHighlighter(language, project, psiFile.getViewProvider().getVirtualFile());
+          SyntaxHighlighter highlighter =
+            SyntaxHighlighterFactory.getSyntaxHighlighter(language, project, psiFile.getViewProvider().getVirtualFile());
           editor.setHighlighter(new LexerEditorHighlighter(highlighter, editor.getColorsScheme()));
           return editor;
         }
       };
       chooser.setContentIcon(null);
       chooser.setSplitterOrientation(false);
-      chooser.setSelectedIndex(Math.max(getModel().getHistoryCursor(), 0));
-      chooser.show();
-      if (chooser.isOK()) {
-        setConsoleText(chooser.getSelectedText(), false, true);
+      chooser.setSelectedIndex(Math.max(0, getModel().getHistorySize() - 1));
+
+      if (chooser.showAndGet() && myConsole.getCurrentEditor().getComponent().isShowing()) {
+        setConsoleText(new Entry(chooser.getSelectedText(), -1), false, true);
       }
     }
   }
-  
+
   public static class ModelHelper {
-    private final String myType;
+    private final ConsoleRootType myRootType;
     private final String myId;
     private final ConsoleHistoryModel myModel;
     private String myContent;
-    @NotNull
-    private final Charset myCharset;
 
-    public ModelHelper(String type, String id, ConsoleHistoryModel model, @NotNull Charset charset) {
-      myType = type;
+    public ModelHelper(ConsoleRootType rootType, String id, ConsoleHistoryModel model) {
+      myRootType = rootType;
       myId = id;
       myModel = model;
-      myCharset = charset;
     }
 
     public ConsoleHistoryModel getModel() {
@@ -392,111 +426,96 @@ public class ConsoleHistoryController {
       return myContent;
     }
 
-    private String getHistoryFilePath(final String id) {
-      return PathManager.getSystemPath() + File.separator +
-             "userHistory" + File.separator +
-             myType + Long.toHexString(StringHash.calc(id)) + ".hist.xml";
-    }
-
     public boolean loadHistory(String id) {
-      File file = new File(getHistoryFilePath(id));
-      if (!file.exists()) return false;
-      HierarchicalStreamReader xmlReader = null;
       try {
-        xmlReader = new XppReader(new InputStreamReader(new FileInputStream(file), myCharset));
-        String text = loadHistory(xmlReader, id);
-        if (text != null) {
-          myContent = text;
-          return true;
+        VirtualFile file = myRootType.isHidden() ? null :
+                           HistoryRootType.getInstance().findFile(null, getHistoryName(myRootType, id), ScratchFileService.Option.existing_only);
+        if (file == null) {
+          return false;
         }
+        String[] split = FileUtil.loadFile(VfsUtilCore.virtualToIoFile(file), file.getCharset()).split(myRootType.getEntrySeparator());
+        getModel().resetEntries(Arrays.asList(split));
+        return true;
       }
-      catch (Exception ex) {
-        LOG.error(ex);
+      catch (Exception ignored) {
+        return false;
       }
-      finally {
-        if (xmlReader != null) {
-          xmlReader.close();
-        }
-      }
-      return false;
     }
 
     private void saveHistory() {
-      final File file = new File(getHistoryFilePath(myId));
-      final File dir = file.getParentFile();
-      if (!dir.exists() && !dir.mkdirs() || !dir.isDirectory()) {
-        LOG.error("failed to create folder: " + dir.getAbsolutePath());
-        return;
-      }
-
-      OutputStream os = null;
       try {
-        final XmlSerializer serializer = XmlPullParserFactory.newInstance().newSerializer();
-        try {
-          serializer.setProperty("http://xmlpull.org/v1/doc/properties.html#serializer-indentation", "  ");
-        }
-        catch (Exception e) {
-          // not recognized
-        }
-        serializer.setOutput(os = new SafeFileOutputStream(file), myCharset.name());
-        saveHistory(serializer);
+        if (getModel().isEmpty()) return;
+        WriteAction.run(() -> {
+          VirtualFile file = HistoryRootType.getInstance().findFile(null, getHistoryName(myRootType, myId), ScratchFileService.Option.create_if_missing);
+          try (Writer out = new OutputStreamWriter(new SafeFileOutputStream(VfsUtilCore.virtualToIoFile(file)), file.getCharset())) {
+            boolean first = true;
+            for (String entry : getModel().getEntries()) {
+              if (first) first = false;
+              else out.write(myRootType.getEntrySeparator());
+              out.write(entry);
+            }
+            out.flush();
+          }
+        });
       }
       catch (Exception ex) {
         LOG.error(ex);
       }
-      finally {
-        try {
-          os.close();
-        }
-        catch (Exception e) {
-          // nothing
-        }
+    }
+  }
+
+  @NotNull
+  private static String getHistoryName(@NotNull ConsoleRootType rootType, @NotNull String id) {
+    return rootType.getConsoleTypeId() + "/" +
+           PathUtil.makeFileName(rootType.getHistoryPathName(id), rootType.getDefaultFileExtension());
+  }
+
+  @Nullable
+  public static VirtualFile getContentFile(@NotNull final ConsoleRootType rootType, @NotNull String id, ScratchFileService.Option option) {
+    final String pathName = PathUtil.makeFileName(rootType.getContentPathName(id), rootType.getDefaultFileExtension());
+    try {
+      return rootType.findFile(null, pathName, option);
+    }
+    catch (final IOException e) {
+      LOG.warn(e);
+      ApplicationManager.getApplication().invokeLater(() -> {
+        String message = String.format("Unable to open '%s/%s'\nReason: %s", rootType.getId(), pathName, e.getLocalizedMessage());
+        Messages.showErrorDialog(message, "Unable to Open File");
+      });
+      return null;
+    }
+  }
+
+  private static ShortcutSet getShortcutUpDown(boolean isUp) {
+    AnAction action = ActionManager.getInstance().getActionOrStub(isUp ?
+                                                                  IdeActions.ACTION_EDITOR_MOVE_CARET_UP :
+                                                                  IdeActions.ACTION_EDITOR_MOVE_CARET_DOWN);
+    if (action != null) {
+      return action.getShortcutSet();
+    }
+    return new CustomShortcutSet(KeyStroke.getKeyStroke(isUp ? KeyEvent.VK_UP : KeyEvent.VK_DOWN, 0));
+  }
+
+  private static void addShortcuts(@NotNull AnAction action, @NotNull ShortcutSet newShortcuts) {
+    if (action.getShortcutSet().getShortcuts().length == 0) {
+      action.registerCustomShortcutSet(newShortcuts, null);
+    }
+    else {
+      action.registerCustomShortcutSet(new CompositeShortcutSet(action.getShortcutSet(), newShortcuts), null);
+    }
+  }
+
+  private static Collection<KeyStroke> getKeystrokesUpDown(boolean isUp) {
+    Collection<KeyStroke> result = new ArrayList<>();
+
+    final ShortcutSet shortcutSet = getShortcutUpDown(isUp);
+    for (Shortcut shortcut : shortcutSet.getShortcuts()) {
+      if (shortcut.isKeyboard() && ((KeyboardShortcut)shortcut).getSecondKeyStroke() == null) {
+        result.add(((KeyboardShortcut)shortcut).getFirstKeyStroke());
       }
-      cleanupOldFiles(dir);
     }
 
-    @Nullable
-    private String loadHistory(final HierarchicalStreamReader in, final String expectedId) {
-      if (!in.getNodeName().equals("console-history")) return null;
-      final String id = in.getAttribute("id");
-      if (!expectedId.equals(id)) return null;
-      final ArrayList<String> entries = new ArrayList<String>();
-      String consoleContent = null;
-      while (in.hasMoreChildren()) {
-        in.moveDown();
-        if ("history-entry".equals(in.getNodeName())) {
-          entries.add(in.getValue());
-        }
-        else if ("console-content".equals(in.getNodeName())) {
-          consoleContent = in.getValue();
-        }
-        in.moveUp();
-      }
-      for (ListIterator<String> iterator = entries.listIterator(entries.size()); iterator.hasPrevious(); ) {
-        final String entry = iterator.previous();
-        getModel().addToHistory(entry);
-      }
-      return consoleContent;
-    }
-
-    private void saveHistory(final XmlSerializer out) throws IOException {
-      out.startDocument(CharsetToolkit.UTF8, null);
-      out.startTag(null, "console-history");
-      out.attribute(null, "id", myId);
-      for (String s : getModel().getHistory()) {
-        out.startTag(null, "history-entry");
-        out.text(s);
-        out.endTag(null, "history-entry");
-      }
-      String current = myContent;
-      if (StringUtil.isNotEmpty(current)) {
-        out.startTag(null, "console-content");
-        out.text(current);
-        out.endTag(null, "console-content");
-      }
-      out.endTag(null, "console-history");
-      out.endDocument();
-    }
+    return result;
   }
 
 }

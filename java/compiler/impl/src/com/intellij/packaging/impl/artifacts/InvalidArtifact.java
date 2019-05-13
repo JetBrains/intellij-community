@@ -15,6 +15,7 @@
  */
 package com.intellij.packaging.impl.artifacts;
 
+import com.intellij.openapi.roots.ProjectModelExternalSource;
 import com.intellij.packaging.elements.PackagingElementFactory;
 import org.jetbrains.jps.model.serialization.artifact.ArtifactState;
 
@@ -22,11 +23,12 @@ import org.jetbrains.jps.model.serialization.artifact.ArtifactState;
  * @author nik
  */
 public class InvalidArtifact extends ArtifactImpl {
-  private ArtifactState myState;
+  private final ArtifactState myState;
   private final String myErrorMessage;
 
-  public InvalidArtifact(ArtifactState state, String errorMessage) {
-    super(state.getName(), InvalidArtifactType.getInstance(), false, PackagingElementFactory.getInstance().createArtifactRootElement(), "");
+  public InvalidArtifact(ArtifactState state, String errorMessage, ProjectModelExternalSource externalSource) {
+    super(state.getName(), InvalidArtifactType.getInstance(), false, PackagingElementFactory.getInstance().createArtifactRootElement(), "",
+          externalSource);
     myState = state;
     myErrorMessage = errorMessage;
   }

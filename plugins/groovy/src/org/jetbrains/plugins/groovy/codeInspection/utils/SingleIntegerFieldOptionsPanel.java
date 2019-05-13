@@ -38,14 +38,17 @@ public class SingleIntegerFieldOptionsPanel extends JPanel {
     valueField.setColumns(2);
     final Document document = valueField.getDocument();
     document.addDocumentListener(new DocumentListener() {
+      @Override
       public void changedUpdate(DocumentEvent e) {
         textChanged();
       }
 
+      @Override
       public void insertUpdate(DocumentEvent e) {
         textChanged();
       }
 
+      @Override
       public void removeUpdate(DocumentEvent e) {
         textChanged();
       }

@@ -1,48 +1,34 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.dialogs;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.ui.ScrollPaneFactory;
-import org.jetbrains.annotations.NonNls;
+import com.intellij.util.net.ssl.CertificateInfoPanel;
+import com.intellij.util.net.ssl.CertificateWrapper;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.SvnBundle;
-import org.tmatesoft.svn.core.auth.ISVNAuthenticationProvider;
+import org.jetbrains.idea.svn.auth.AcceptResult;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
-import java.security.MessageDigest;
 import java.security.cert.X509Certificate;
 
-/**
- * @author alex
- */
 public class ServerSSLDialog extends DialogWrapper {
 
-  private final X509Certificate myCertificate;
+  @NotNull private final String myCertificateInfo;
   private Action myTempAction;
-  private int myResult;
-  @NonNls public static final String ALGORITHM_SHA1 = "SHA1";
+  private AcceptResult myResult;
 
-  protected ServerSSLDialog(final Project project, X509Certificate cert, boolean store) {
+  public ServerSSLDialog(final Project project, @NotNull X509Certificate cert, boolean store) {
+    this(project, getServerCertificateInfo(cert), store);
+  }
+
+  public ServerSSLDialog(final Project project, @NotNull String certificateInfo, boolean store) {
     super(project, true);
-    myCertificate = cert;
-    myResult = ISVNAuthenticationProvider.REJECTED;
+    myCertificateInfo = certificateInfo;
+    myResult = AcceptResult.REJECTED;
     setOKButtonText(SvnBundle.message("button.text.ssl.accept"));
     setOKActionEnabled(store);
     setCancelButtonText(SvnBundle.message("button.text.ssl.reject"));
@@ -51,10 +37,12 @@ public class ServerSSLDialog extends DialogWrapper {
     init();
   }
 
+  @Override
   public boolean shouldCloseOnCross() {
     return false;
   }
 
+  @Override
   @NotNull
   protected Action[] createActions() {
     return new Action[]{getOKAction(), getTempAction(), getCancelAction()};
@@ -63,8 +51,9 @@ public class ServerSSLDialog extends DialogWrapper {
   private Action getTempAction() {
     if (myTempAction == null) {
       myTempAction = new AbstractAction(SvnBundle.message("server.ssl.accept.temporary.action.name")) {
+        @Override
         public void actionPerformed(ActionEvent e) {
-          myResult = ISVNAuthenticationProvider.ACCEPTED_TEMPORARY;
+          myResult = AcceptResult.ACCEPTED_TEMPORARILY;
           close(0);
         }
       };
@@ -72,72 +61,54 @@ public class ServerSSLDialog extends DialogWrapper {
     return myTempAction;
   }
 
+  @Override
   protected void doOKAction() {
-    myResult = ISVNAuthenticationProvider.ACCEPTED;
+    myResult = AcceptResult.ACCEPTED_PERMANENTLY;
     super.doOKAction();
   }
 
+  @Override
   public void doCancelAction() {
-    myResult = ISVNAuthenticationProvider.REJECTED;
+    myResult = AcceptResult.REJECTED;
     super.doCancelAction();
   }
 
-  public int getResult() {
+  public AcceptResult getResult() {
     return myResult;
   }
 
+  @Override
   protected String getDimensionServiceKey() {
     return "svn.sslDialog";
   }
 
+  @Override
   protected JComponent createCenterPanel() {
     JPanel panel = new JPanel(new BorderLayout(5,5));
     panel.add(new JLabel(SvnBundle.message("label.ssl.server.provided.certificate")), BorderLayout.NORTH);
     JTextArea area = new JTextArea(5, 50);
-    area.setText(getServerCertificateInfo(myCertificate));
+    area.setText(myCertificateInfo);
     area.setEditable(false);
     panel.add(ScrollPaneFactory.createScrollPane(area), BorderLayout.CENTER);
 
     return panel;
   }
 
-  private static String getFingerprint(X509Certificate cert) {
-        StringBuffer s = new StringBuffer();
-        try  {
-           MessageDigest md = MessageDigest.getInstance(ALGORITHM_SHA1);
-           md.update(cert.getEncoded());
-           byte[] digest = md.digest();
-           for (int i= 0; i < digest.length; i++)  {
-              if (i != 0) {
-                  s.append(':');
-              }
-              int b = digest[i] & 0xFF;
-              String hex = Integer.toHexString(b);
-              if (hex.length() == 1) {
-                  s.append('0');
-              }
-              s.append(hex.toLowerCase());
-           }
-        } catch (Exception e)  {
-          //
-        }
-        return s.toString();
-     }
-
-  @SuppressWarnings({"HardCodedStringLiteral"})
-  private static String getServerCertificateInfo(X509Certificate cert) {
-      StringBuffer info = new StringBuffer();
-      info.append(" - Subject: ");
-      info.append(cert.getSubjectDN().getName());
-      info.append('\n');
-      info.append(" - Valid: ");
-      info.append("from ").append(cert.getNotBefore()).append(" until ").append(cert.getNotAfter());
-      info.append('\n');
-      info.append(" - Issuer: ");
-      info.append(cert.getIssuerDN().getName());
-      info.append('\n');
-      info.append(" - Fingerprint: ");
-      info.append(getFingerprint(cert));
-      return info.toString();
+  @SuppressWarnings({"HardCodedStringLiteral", "StringBufferReplaceableByString"})
+  @NotNull
+  private static String getServerCertificateInfo(@NotNull X509Certificate cert) {
+    return new StringBuilder()
+      .append(" - Subject: ")
+      .append(cert.getSubjectDN().getName())
+      .append('\n')
+      .append(" - Valid: ")
+      .append("from ").append(cert.getNotBefore()).append(" until ").append(cert.getNotAfter())
+      .append('\n')
+      .append(" - Issuer: ")
+      .append(cert.getIssuerDN().getName())
+      .append('\n')
+      .append(" - Fingerprint: ")
+      .append(CertificateInfoPanel.formatHex(new CertificateWrapper(cert).getSha1Fingerprint(), false))
+      .toString();
   }
 }

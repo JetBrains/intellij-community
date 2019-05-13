@@ -15,66 +15,117 @@
  */
 package com.intellij.openapi.diff.impl.patch.apply;
 
+import com.intellij.diff.util.IntPair;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.impl.patch.ApplyPatchStatus;
 import com.intellij.openapi.diff.impl.patch.PatchHunk;
 import com.intellij.openapi.diff.impl.patch.PatchLine;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.UnfairTextRange;
 import com.intellij.openapi.util.text.LineTokenizer;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vcs.changes.patch.AppliedTextPatch;
 import com.intellij.util.BeforeAfter;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-/**
- * Created by IntelliJ IDEA.
- * User: Irina.Chernushina
- * Date: 9/27/11
- * Time: 3:59 PM
- */
+import static com.intellij.openapi.diff.impl.patch.ApplyPatchStatus.ALREADY_APPLIED;
+import static com.intellij.openapi.diff.impl.patch.ApplyPatchStatus.SUCCESS;
+
 public class GenericPatchApplier {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.diff.impl.patch.apply.GenericPatchApplier");
   private final static int ourMaxWalk = 1000;
   
   private final TreeMap<TextRange, MyAppliedData> myTransformations;
   private final List<String> myLines;
-  private final List<PatchHunk> myHunks;
+  private final List<? extends PatchHunk> myHunks;
+  private final boolean myBaseFileEndsWithNewLine;
   private boolean myHadAlreadyAppliedMet;
 
   private final ArrayList<SplitHunk> myNotBound;
   private final ArrayList<SplitHunk> myNotExact;
   private boolean mySuppressNewLineInEnd;
-  
-  private void debug(final String s) {
+  @NotNull private final List<AppliedTextPatch.AppliedSplitPatchHunk> myAppliedInfo;
+  private static final IntPair EMPTY_OFFSET = new IntPair(0, 0);
+
+  private static void debug(final String s) {
     if (LOG.isDebugEnabled()) {
       LOG.debug(s);
     }
   }
 
-  public GenericPatchApplier(final CharSequence text, List<PatchHunk> hunks) {
+  public GenericPatchApplier(final CharSequence text, List<? extends PatchHunk> hunks) {
     debug("GenericPatchApplier created, hunks: " + hunks.size());
-    myLines = new ArrayList<String>();
+    myLines = new ArrayList<>();
     Collections.addAll(myLines, LineTokenizer.tokenize(text, false));
+    myBaseFileEndsWithNewLine = StringUtil.endsWithLineBreak(text);
     myHunks = hunks;
-    myTransformations = new TreeMap<TextRange, MyAppliedData>(new Comparator<TextRange>() {
-      @Override
-      public int compare(TextRange o1, TextRange o2) {
-        return new Integer(o1.getStartOffset()).compareTo(new Integer(o2.getStartOffset()));
-      }
-    });
-    myNotExact = new ArrayList<SplitHunk>();
-    myNotBound = new ArrayList<SplitHunk>();
+    final Comparator<TextRange> textRangeComparator = Comparator.comparingInt(TextRange::getStartOffset);
+    myTransformations = new TreeMap<>(textRangeComparator);
+    myNotExact = new ArrayList<>();
+    myNotBound = new ArrayList<>();
+    myAppliedInfo = new ArrayList<>();
+  }
+
+  @Nullable
+  public static AppliedPatch apply(CharSequence text, List<? extends PatchHunk> hunks) {
+    String patchedText = PlainSimplePatchApplier.apply(text, hunks);
+    if (patchedText != null) {
+      return new AppliedPatch(patchedText, SUCCESS);
+    }
+
+    GenericPatchApplier applier = new GenericPatchApplier(text, hunks);
+    boolean success = applier.execute();
+
+    if (!success) return null;
+
+    return new AppliedPatch(applier.getAfter(), applier.getStatus());
+  }
+
+  @NotNull
+  public static AppliedSomehowPatch applySomehow(CharSequence text, List<? extends PatchHunk> hunks) {
+    String patchedText = PlainSimplePatchApplier.apply(text, hunks);
+    if (patchedText != null) {
+      return new AppliedSomehowPatch(patchedText, SUCCESS, false);
+    }
+
+    GenericPatchApplier applier = new GenericPatchApplier(text, hunks);
+    boolean success = applier.execute();
+
+    if (!success) applier.trySolveSomehow();
+
+    return new AppliedSomehowPatch(applier.getAfter(), applier.getStatus(), !success);
+  }
+
+  public static class AppliedPatch {
+    @NotNull public final String patchedText;
+    @NotNull public final ApplyPatchStatus status;
+
+    public AppliedPatch(@NotNull String patchedText, @NotNull ApplyPatchStatus status) {
+      this.patchedText = patchedText;
+      this.status = status;
+    }
+  }
+
+  public static class AppliedSomehowPatch extends AppliedPatch {
+    public final boolean isAppliedSomehow;
+
+    public AppliedSomehowPatch(@NotNull String text, @NotNull ApplyPatchStatus status, boolean isAppliedSomehow) {
+      super(text, status);
+      this.isAppliedSomehow = isAppliedSomehow;
+    }
   }
 
   public ApplyPatchStatus getStatus() {
     if (! myNotExact.isEmpty()) {
       return ApplyPatchStatus.FAILURE;
     } else {
-      if (myTransformations.isEmpty() && myHadAlreadyAppliedMet) return ApplyPatchStatus.ALREADY_APPLIED;
+      if (myTransformations.isEmpty() && myHadAlreadyAppliedMet) return ALREADY_APPLIED;
       boolean haveAlreadyApplied = myHadAlreadyAppliedMet;
       boolean haveTrue = false;
       for (MyAppliedData data : myTransformations.values()) {
@@ -84,7 +135,7 @@ public class GenericPatchApplier {
           haveTrue = true;
         }
       }
-      if (haveAlreadyApplied && ! haveTrue) return ApplyPatchStatus.ALREADY_APPLIED;
+      if (haveAlreadyApplied && ! haveTrue) return ALREADY_APPLIED;
       if (haveAlreadyApplied) return ApplyPatchStatus.PARTIAL;
       return ApplyPatchStatus.SUCCESS;
     }
@@ -97,7 +148,7 @@ public class GenericPatchApplier {
       for (Map.Entry<TextRange, MyAppliedData> entry : myTransformations.entrySet()) {
         final TextRange key = entry.getKey();
         final MyAppliedData value = entry.getValue();
-        LOG.info(String.valueOf(cnt) +
+        LOG.info(cnt +
                  " lines " +
                  key.getStartOffset() +
                  ":" +
@@ -110,7 +161,7 @@ public class GenericPatchApplier {
   }
 
   public int weightContextMatch(final int maxWalk, final int maxPartsToCheck) {
-    final List<SplitHunk> hunks = new ArrayList<SplitHunk>(myHunks.size());
+    final List<SplitHunk> hunks = new ArrayList<>(myHunks.size());
     for (PatchHunk hunk : myHunks) {
       hunks.addAll(SplitHunk.read(hunk));
     }
@@ -119,8 +170,8 @@ public class GenericPatchApplier {
     for (SplitHunk hunk : hunks) {
       final SplitHunk copy = createWithAllContextCopy(hunk);
       if (copy.isInsertion()) continue;
-      if (testForPartialContextMatch(copy, new ExactMatchSolver(copy), maxWalk)) {
-        ++ cntPlus;
+      if (testForPartialContextMatch(copy, new ExactMatchSolver(copy), maxWalk, null)) {
+        ++cntPlus;
       }
       -- cnt;
       if (cnt == 0) break;
@@ -139,7 +190,7 @@ public class GenericPatchApplier {
     for (Iterator<SplitHunk> iterator = myNotExact.iterator(); iterator.hasNext(); ) {
       SplitHunk splitHunk = iterator.next();
       final SplitHunk copy = createWithAllContextCopy(splitHunk);
-      if (testForExactMatch(copy)) {
+      if (testForExactMatch(copy, splitHunk)) {
         iterator.remove();
       }
     }
@@ -152,34 +203,56 @@ public class GenericPatchApplier {
       SplitHunk hunk = iterator.next();
       final SplitHunk copy = createWithAllContextCopy(hunk);
       if (copy.isInsertion()) continue;
-      if (testForPartialContextMatch(copy, new ExactMatchSolver(copy), ourMaxWalk)) {
+      if (testForPartialContextMatch(copy, new ExactMatchSolver(copy), ourMaxWalk, hunk)) {
         iterator.remove();
       }
     }
     printTransformations("after exact but without context");
-    for (SplitHunk hunk : myNotExact) {
-      complementInsertAndDelete(hunk);
-    }
     for (Iterator<SplitHunk> iterator = myNotExact.iterator(); iterator.hasNext(); ) {
       SplitHunk hunk = iterator.next();
-      if (hunk.isInsertion()) continue;
-      if (testForPartialContextMatch(hunk, new ExactMatchSolver(hunk), ourMaxWalk)) {
+      SplitHunk original = copySplitHunk(hunk, hunk.getContextAfter(), hunk.getContextBefore());
+      complementInsertAndDelete(hunk);
+      if (hunk.isInsertion()) {
+        processAppliedInfoForUnApplied(original);
+        continue;
+      }
+      if (testForPartialContextMatch(hunk, new ExactMatchSolver(hunk), ourMaxWalk, original)) {
         iterator.remove();
+      }
+      else {
+        processAppliedInfoForUnApplied(original);
       }
     }
     printTransformations("after variable place match");
-
     return myNotExact.isEmpty();
   }
 
-  private SplitHunk createWithAllContextCopy(final SplitHunk hunk) {
-    final SplitHunk copy = new SplitHunk(hunk.getStartLineBefore(), new ArrayList<BeforeAfter<List<String>>>(hunk.getPatchSteps()),
-                                              new ArrayList<String>(),
-                                              new ArrayList<String>());
+  @NotNull
+  private static SplitHunk copySplitHunk(@NotNull SplitHunk hunk, @NotNull List<String> contextAfter, @NotNull List<String> contextBefore) {
+    ArrayList<BeforeAfter<List<String>>> steps = new ArrayList<>();
+    for (BeforeAfter<List<String>> step : hunk.getPatchSteps()) {
+      steps.add(new BeforeAfter<>(new ArrayList<>(step.getBefore()), new ArrayList<>(step.getAfter())));
+    }
+    return new SplitHunk(hunk.getStartLineBefore(), hunk.getStartLineAfter(), steps, new ArrayList<>(contextAfter),
+                         new ArrayList<>(contextBefore));
+  }
+
+  private static SplitHunk createWithAllContextCopy(final SplitHunk hunk) {
+    final SplitHunk copy = copySplitHunk(hunk, new ArrayList<>(), new ArrayList<>());
 
     final List<BeforeAfter<List<String>>> steps = copy.getPatchSteps();
+    if (steps.isEmpty()) {
+      int contextSize = hunk.getContextBefore().size() + hunk.getContextAfter().size();
+      LOG.warn(constructHunkWarnMessage(hunk.getStartLineBefore(), hunk.getStartLineAfter(), contextSize, contextSize));
+      StringBuilder sb = new StringBuilder();
+      StringUtil.join(hunk.getContextBefore(), "\n", sb);
+      StringUtil.join(hunk.getContextAfter(), "\n", sb);
+      LOG.debug(sb.toString());
+      return copy;
+    }
     final BeforeAfter<List<String>> first = steps.get(0);
-    final BeforeAfter<List<String>> last = steps.get(steps.size() - 1);
+    final int lastStepIndex = steps.size() - 1;
+    final BeforeAfter<List<String>> last = steps.get(lastStepIndex);
 
     final BeforeAfter<List<String>> firstCopy = copyBeforeAfter(first);
     steps.set(0, firstCopy);
@@ -193,16 +266,22 @@ public class GenericPatchApplier {
       final BeforeAfter<List<String>> lastCopy = copyBeforeAfter(last);
       lastCopy.getBefore().addAll(hunk.getContextAfter());
       lastCopy.getAfter().addAll(hunk.getContextAfter());
+      steps.set(lastStepIndex, lastCopy);
     }
     return copy;
   }
 
-  private BeforeAfter<List<String>> copyBeforeAfter(BeforeAfter<List<String>> first) {
-    return new BeforeAfter<List<String>>(new ArrayList<String>(first.getBefore()),
-                                                                              new ArrayList<String>(first.getAfter()));
+  @NotNull
+  private static String constructHunkWarnMessage(int startLineBefore, int startLineAfter, int sizeBefore, int sizeAfter) {
+    return String.format("Can't detect hunk modification lines for: -%d,%d +%d,%d", startLineBefore, sizeBefore,
+                         startLineAfter, sizeAfter);
   }
 
-  private void complementInsertAndDelete(final SplitHunk hunk) {
+  private static BeforeAfter<List<String>> copyBeforeAfter(BeforeAfter<List<String>> first) {
+    return new BeforeAfter<>(new ArrayList<>(first.getBefore()), new ArrayList<>(first.getAfter()));
+  }
+
+  private static void complementInsertAndDelete(final SplitHunk hunk) {
     final List<BeforeAfter<List<String>>> steps = hunk.getPatchSteps();
     final BeforeAfter<List<String>> first = steps.get(0);
     final BeforeAfter<List<String>> last = steps.get(steps.size() - 1);
@@ -225,7 +304,7 @@ public class GenericPatchApplier {
     }
   }
 
-  private boolean complementIfShort(final SplitHunk hunk) {
+  private static boolean complementIfShort(final SplitHunk hunk) {
     final List<BeforeAfter<List<String>>> steps = hunk.getPatchSteps();
     if (steps.size() > 1) return false;
     final BeforeAfter<List<String>> first = steps.get(0);
@@ -254,16 +333,16 @@ public class GenericPatchApplier {
 
   // applies in a way that patch _can_ be solved manually even in the case of total mismatch
   public void trySolveSomehow() {
-    assert ! myNotExact.isEmpty();
-    for (Iterator<SplitHunk> iterator = myNotExact.iterator(); iterator.hasNext(); ) {
-      final SplitHunk hunk = iterator.next();
+    assert !myNotExact.isEmpty();
+    for (final SplitHunk hunk : myNotExact) {
       hunk.cutSameTail();
-      if (! testForPartialContextMatch(hunk, new LongTryMismatchSolver(hunk), ourMaxWalk)) {
+      if (!testForPartialContextMatch(hunk, new LongTryMismatchSolver(hunk), ourMaxWalk, null)) {
         if (complementIfShort(hunk)) {
-          if (! testForPartialContextMatch(hunk, new LongTryMismatchSolver(hunk), ourMaxWalk)) {
+          if (!testForPartialContextMatch(hunk, new LongTryMismatchSolver(hunk), ourMaxWalk, null)) {
             myNotBound.add(hunk);
           }
-        } else {
+        }
+        else {
           myNotBound.add(hunk);
         }
       }
@@ -271,26 +350,28 @@ public class GenericPatchApplier {
     Collections.sort(myNotBound, HunksComparator.getInstance());
     myNotExact.clear();
   }
-  
-  private boolean testForPartialContextMatch(final SplitHunk splitHunk, final MismatchSolver mismatchSolver, final int maxWalkFromBinding) {
-    final List<BeforeAfter<List<String>>> steps = splitHunk.getPatchSteps();
-    final BeforeAfter<List<String>> first = steps.get(0);
+
+  private boolean testForPartialContextMatch(final SplitHunk splitHunkWithExtendedContext,
+                                             final MismatchSolver mismatchSolver,
+                                             final int maxWalkFromBinding, @Nullable final SplitHunk originalSplitHunk) {
+    final List<BeforeAfter<List<String>>> steps = splitHunkWithExtendedContext.getPatchSteps();
     final BetterPoint betterPoint = new BetterPoint();
 
-    if (splitHunk.isInsertion()) return false;
+    if (splitHunkWithExtendedContext.isInsertion()) return false;
 
     // if it is not just insertion, then in first step will be both parts
     final Iterator<FirstLineDescriptor> iterator = mismatchSolver.getStartLineVariationsIterator();
-    while (iterator.hasNext() && (betterPoint.getPoint() == null || ! betterPoint.getPoint().idealFound())) {
+    while (iterator.hasNext() && (betterPoint.getPoint() == null || !betterPoint.getPoint().idealFound())) {
       final FirstLineDescriptor descriptor = iterator.next();
 
       final Iterator<Integer> matchingIterator =
-        getMatchingIterator(descriptor.getLine(), splitHunk.getStartLineBefore() + descriptor.getOffset(), maxWalkFromBinding);
-      while (matchingIterator.hasNext() && (betterPoint.getPoint() == null || ! betterPoint.getPoint().idealFound())) {
+        getMatchingIterator(descriptor.getLine(), splitHunkWithExtendedContext.getStartLineBefore() + descriptor.getOffset(),
+                            maxWalkFromBinding);
+      while (matchingIterator.hasNext() && (betterPoint.getPoint() == null || !betterPoint.getPoint().idealFound())) {
         final Integer lineNumber = matchingIterator.next();
 
         // go back and forward from point
-        final List<BeforeAfter<List<String>>> patchSteps = splitHunk.getPatchSteps();
+        final List<BeforeAfter<List<String>>> patchSteps = splitHunkWithExtendedContext.getPatchSteps();
         final BeforeAfter<List<String>> step = patchSteps.get(descriptor.getStepNumber());
         final FragmentResult fragmentResult = checkFragmented(lineNumber, descriptor.getOffsetInStep(), step, descriptor.isIsInBefore());
 
@@ -322,7 +403,7 @@ public class GenericPatchApplier {
           }
         }
 
-        final TextRange textRangeInOldDocument = new TextRange(fragmentResult.getStart(), fragmentResult.getEnd());
+        final TextRange textRangeInOldDocument = new UnfairTextRange(fragmentResult.getStart(), fragmentResult.getEnd());
         // ignore too short fragments
         //if (pointCanBeUsed(textRangeInOldDocument) && (! mismatchSolver.isAllowMismatch() || fragmentResult.getEnd() - fragmentResult.getStart() > 1)) {
         if (pointCanBeUsed(textRangeInOldDocument)) {
@@ -330,8 +411,8 @@ public class GenericPatchApplier {
           final int commonPart = fragmentResult.getEnd() - fragmentResult.getStart() + 1;
           int contextDistance = 0;
           if (distance == 0 || commonPart < 2) {
-            final int distanceBack = getDistanceBack(fragmentResult.getStart() - 1, splitHunk.getContextBefore());
-            final int distanceInContextAfter = getDistance(fragmentResult.getEnd() + 1, splitHunk.getContextAfter());
+            final int distanceBack = getDistanceBack(fragmentResult.getStart() - 1, splitHunkWithExtendedContext.getContextBefore());
+            final int distanceInContextAfter = getDistance(fragmentResult.getEnd() + 1, splitHunkWithExtendedContext.getContextAfter());
             contextDistance = distanceBack + distanceInContextAfter;
           }
           betterPoint.feed(new Point(distance, textRangeInOldDocument, fragmentResult.isContainAlreadyApplied(), contextDistance, commonPart));
@@ -343,12 +424,20 @@ public class GenericPatchApplier {
     if (! mismatchSolver.isAllowMismatch()) {
       if (pointPoint.getDistance() > 0) return false;
       if (pointPoint.myCommon < 2) {
-        final int contextCommon = splitHunk.getContextBefore().size() + splitHunk.getContextAfter().size() - pointPoint.myContextDistance;
+        final int contextCommon =
+          splitHunkWithExtendedContext.getContextBefore().size() + splitHunkWithExtendedContext.getContextAfter().size() -
+          pointPoint.myContextDistance;
         if (contextCommon == 0) return false;
       }
     }
-    putCutIntoTransformations(pointPoint.getInOldDocument(), new MyAppliedData(splitHunk.getAfterAll(), pointPoint.myUsesAlreadyApplied,
-        false, pointPoint.getDistance() == 0, ChangeType.REPLACE));
+    putCutIntoTransformations(pointPoint.getInOldDocument(), originalSplitHunk,
+                              new MyAppliedData(splitHunkWithExtendedContext.getAfterAll(), pointPoint.myUsesAlreadyApplied,
+                                                false, pointPoint.getDistance() == 0, ChangeType.REPLACE),
+                              originalSplitHunk == null ? EMPTY_OFFSET
+                                                        : new IntPair(
+                                                          originalSplitHunk.getContextBefore().size() -
+                                                          splitHunkWithExtendedContext.getContextBefore().size(),
+        originalSplitHunk.getContextAfter().size() - splitHunkWithExtendedContext.getContextAfter().size()));
     return true;
   }
 
@@ -374,6 +463,11 @@ public class GenericPatchApplier {
     fragmentResult.setStartAtEdge(startDistance == 0);
     fragmentResult.setEndAtEdge(endDistance == 0);
     return fragmentResult;
+  }
+
+  @NotNull
+  public List<AppliedTextPatch.AppliedSplitPatchHunk> getAppliedInfo() {
+    return myAppliedInfo;
   }
 
   private static class FragmentResult {
@@ -456,13 +550,25 @@ public class GenericPatchApplier {
   }
 
   public void putCutIntoTransformations(TextRange range, final MyAppliedData value) {
+    putCutIntoTransformations(range, null, value, EMPTY_OFFSET);
+  }
+
+  public void putCutIntoTransformations(TextRange range,
+                                        @Nullable SplitHunk splitHunk,
+                                        final MyAppliedData value,
+                                        @NotNull IntPair contextOffsetInPatchSteps) {
     // cut last lines but not the very first
     final List<String> list = value.getList();
+    //last line should be taken from includeConsumer even it seems to be equal with base context line( they can differ with line separator)
+    boolean eofHunkAndLastLineShouldBeChanged =
+      containsLastLine(range) && splitHunk != null && splitHunk.getContextAfter().isEmpty() && !splitHunk.getAfterAll().isEmpty();
     int cnt = list.size() - 1;
     int i = range.getEndOffset();
-    for (; i > range.getStartOffset() && cnt >= 0; i--, cnt--) {
-      if (! list.get(cnt).equals(myLines.get(i))) {
-        break;
+    if (!eofHunkAndLastLineShouldBeChanged) {
+      for (; i > range.getStartOffset() && cnt >= 0; i--, cnt--) {
+        if (!list.get(cnt).equals(myLines.get(i))) {
+          break;
+        }
       }
     }
     int endSize = list.size();
@@ -473,8 +579,9 @@ public class GenericPatchApplier {
     int j = range.getStartOffset();
 
     if (endSize > 0) {
-      for (; j < range.getEndOffset() && cntStart < list.size(); j++, cntStart++) {
-        if (! list.get(cntStart).equals(myLines.get(j))) {
+      int lastProcessedIndex = eofHunkAndLastLineShouldBeChanged ? list.size() - 1 : list.size();
+      for (; j < range.getEndOffset() && cntStart < lastProcessedIndex; j++, cntStart++) {
+        if (!list.get(cntStart).equals(myLines.get(j))) {
           break;
         }
       }
@@ -486,31 +593,59 @@ public class GenericPatchApplier {
         if (list.size() == (range.getLength() + 1)) {
           // for already applied
           myHadAlreadyAppliedMet = value.isHaveAlreadyApplied();
-        } else {
-          // deletion
-          myTransformations.put(new TextRange(j, i + (cntStart - endSize)), new MyAppliedData(Collections.<String>emptyList(), value.isHaveAlreadyApplied(),
-                                                                   value.isPlaceCoinside(), value.isChangedCoinside(), value.myChangeType));
+          processAppliedInfo(splitHunk, range, contextOffsetInPatchSteps,
+                             AppliedTextPatch.HunkStatus.ALREADY_APPLIED);
         }
-      } else {
+        else {
+          // deletion
+          final UnfairTextRange textRange = new UnfairTextRange(j, i + (cntStart - endSize));
+          myTransformations.put(textRange, new MyAppliedData(Collections.emptyList(), value.isHaveAlreadyApplied(),
+                                                             value.isPlaceCoinside(), value.isChangedCoinside(), value.myChangeType));
+          processAppliedInfo(splitHunk, range, contextOffsetInPatchSteps, AppliedTextPatch.HunkStatus.EXACTLY_APPLIED);
+        }
+      }
+      else {
         if (i < j) {
           // insert case
           // just took one line
           assert cntStart > 0;
           final MyAppliedData newData =
-            new MyAppliedData(new ArrayList<String>(list.subList(cntStart - (j - i), endSize)), value.isHaveAlreadyApplied(), value.isPlaceCoinside(),
-                            value.isChangedCoinside(), value.myChangeType);
+            new MyAppliedData(new ArrayList<>(list.subList(cntStart - (j - i), endSize)), value.isHaveAlreadyApplied(),
+                              value.isPlaceCoinside(),
+                              value.isChangedCoinside(), value.myChangeType);
           final TextRange newRange = new TextRange(i, i);
           myTransformations.put(newRange, newData);
+          processAppliedInfo(splitHunk, range, contextOffsetInPatchSteps, AppliedTextPatch.HunkStatus.EXACTLY_APPLIED);
           return;
         }
         final MyAppliedData newData =
-          new MyAppliedData(new ArrayList<String>(list.subList(cntStart, endSize)), value.isHaveAlreadyApplied(), value.isPlaceCoinside(),
-                          value.isChangedCoinside(), value.myChangeType);
+          new MyAppliedData(new ArrayList<>(list.subList(cntStart, endSize)), value.isHaveAlreadyApplied(), value.isPlaceCoinside(),
+                            value.isChangedCoinside(), value.myChangeType);
         final TextRange newRange = new TextRange(j, i);
         myTransformations.put(newRange, newData);
+        processAppliedInfo(splitHunk, range, contextOffsetInPatchSteps, AppliedTextPatch.HunkStatus.EXACTLY_APPLIED);
       }
-    } else {
+    }
+    else {
       myTransformations.put(range, value);
+      processAppliedInfo(splitHunk, range, contextOffsetInPatchSteps, AppliedTextPatch.HunkStatus.EXACTLY_APPLIED);
+    }
+  }
+
+
+  private void processAppliedInfoForUnApplied(@NotNull SplitHunk original) {
+    myAppliedInfo.add(new AppliedTextPatch.AppliedSplitPatchHunk(original, -1, -1, AppliedTextPatch.HunkStatus.NOT_APPLIED));
+  }
+
+  private void processAppliedInfo(@Nullable SplitHunk hunk, @NotNull TextRange lineWithPartContextApplied,
+                                  @NotNull IntPair contextRangeShift,
+                                  AppliedTextPatch.HunkStatus hunkStatus) {
+    if (hunk != null) {
+      // +1 to the end  because end range is always not included -> [i;j); except add modification;
+      int newStart = lineWithPartContextApplied.getStartOffset() + contextRangeShift.val1;
+      int newEnd = hunk.isInsertion() && hunkStatus != AppliedTextPatch.HunkStatus.ALREADY_APPLIED
+                   ? newStart : lineWithPartContextApplied.getEndOffset() + 1 - contextRangeShift.val2;
+      myAppliedInfo.add(new AppliedTextPatch.AppliedSplitPatchHunk(hunk, newStart, newEnd, hunkStatus));
     }
   }
 
@@ -538,11 +673,11 @@ public class GenericPatchApplier {
   }
 
   private static class Point {
-    private int myDistance;
-    private int myContextDistance;
-    private int myCommon;
+    private final int myDistance;
+    private final int myContextDistance;
+    private final int myCommon;
     private final boolean myUsesAlreadyApplied;
-    private TextRange myInOldDocument;
+    private final TextRange myInOldDocument;
 
     private Point(int distance, TextRange inOldDocument, boolean usesAlreadyApplied, int contextDistance, int common) {
       myDistance = distance;
@@ -572,11 +707,11 @@ public class GenericPatchApplier {
     }
   }
 
-  private class SequentialStepsChecker implements SequenceDescriptor {
+  private class SequentialStepsChecker {
     private int myDistance;
     // in the end, will be [excluding] end of changing interval
     private int myIdx;
-    private int myStartIdx;
+    private final int myStartIdx;
     private final boolean myForward;
     private boolean myUsesAlreadyApplied;
 
@@ -590,34 +725,32 @@ public class GenericPatchApplier {
       return myUsesAlreadyApplied;
     }
 
-    @Override
     public int getDistance() {
       return myDistance;
     }
 
-    public void go(final List<BeforeAfter<List<String>>> steps) {
-      final Consumer<BeforeAfter<List<String>>> stepConsumer = new Consumer<BeforeAfter<List<String>>>() {
-        @Override
-        public void consume(BeforeAfter<List<String>> listBeforeAfter) {
-          if (myDistance == 0) {
-            // until this point, it all had being doing well
-            if (listBeforeAfter.getBefore().isEmpty()) {
-              // just take it
-              return;
-            }
-            final FragmentMatcher fragmentMatcher = new FragmentMatcher(myIdx, listBeforeAfter);
-            final Pair<Integer, Boolean> pair = fragmentMatcher.find(true);
-            myDistance = pair.getFirst();
-            if (myDistance == 0) {
-              myIdx += pair.getSecond() ? listBeforeAfter.getBefore().size() : listBeforeAfter.getAfter().size();
-            } else {
-              myIdx += (pair.getSecond() ? listBeforeAfter.getBefore().size() : listBeforeAfter.getAfter().size()) - pair.getFirst();
-            }
-            myUsesAlreadyApplied = ! pair.getSecond();
-          } else {
-            // we just count the distance
-            myDistance += listBeforeAfter.getBefore().size();
+    public void go(final List<? extends BeforeAfter<List<String>>> steps) {
+      final Consumer<BeforeAfter<List<String>>> stepConsumer = listBeforeAfter -> {
+        if (myDistance == 0) {
+          // until this point, it all had being doing well
+          if (listBeforeAfter.getBefore().isEmpty()) {
+            // just take it
+            return;
           }
+          final FragmentMatcher fragmentMatcher = new FragmentMatcher(myIdx, listBeforeAfter);
+          final Pair<Integer, Boolean> pair = fragmentMatcher.find(true);
+          myDistance = pair.getFirst();
+          if (myDistance == 0) {
+            myIdx += pair.getSecond() ? listBeforeAfter.getBefore().size() : listBeforeAfter.getAfter().size();
+          }
+          else {
+            myIdx += (pair.getSecond() ? listBeforeAfter.getBefore().size() : listBeforeAfter.getAfter().size()) - pair.getFirst();
+          }
+          myUsesAlreadyApplied = !pair.getSecond();
+        }
+        else {
+          // we just count the distance
+          myDistance += listBeforeAfter.getBefore().size();
         }
       };
 
@@ -633,7 +766,6 @@ public class GenericPatchApplier {
       }
     }
     
-    @Override
     public int getSizeOfFragmentToBeReplaced() {
       return myForward ? (myIdx - myStartIdx) : (myStartIdx - myIdx);
     }
@@ -723,7 +855,7 @@ public class GenericPatchApplier {
     private final boolean myAllowMismatch;
 
     protected MismatchSolver(boolean allowMismatch) {
-      myResult = new ArrayList<FirstLineDescriptor>();
+      myResult = new ArrayList<>();
       myAllowMismatch = allowMismatch;
     }
 
@@ -755,7 +887,7 @@ public class GenericPatchApplier {
       myLeftWalk = leftWalk;
 
       myDirection = direction;
-      myCurrentIdx = start - 1;
+      myCurrentIdx = direction ? start - 1 : start; 
       step();
     }
 
@@ -790,7 +922,7 @@ public class GenericPatchApplier {
           }
         }
       } else {
-        int i = myCurrentIdx;
+        int i = myCurrentIdx - 1;
         int maxWalk = Math.max(-1, i - myLeftWalk);
         myCurrentIdx = -1;
         for (; i >= 0 && i > maxWalk && i < myLines.size(); i--) {
@@ -811,13 +943,14 @@ public class GenericPatchApplier {
     }
   }
 
-  private boolean testForExactMatch(final SplitHunk splitHunk) {
+  private boolean testForExactMatch(final SplitHunk splitHunk, final SplitHunk originalHunk) {
     final int offset = splitHunk.getContextBefore().size();
     final List<BeforeAfter<List<String>>> steps = splitHunk.getPatchSteps();
     if (splitHunk.isInsertion()) {
-      final boolean emptyFile = myLines.isEmpty() || myLines.size() == 1 && myLines.get(0).trim().length() == 0;
+      final boolean emptyFile = myLines.isEmpty() || myLines.size() == 1 && myLines.get(0).trim().isEmpty();
       if (emptyFile) {
         myNotBound.add(splitHunk);
+        processAppliedInfoForUnApplied(splitHunk);
       }
       return emptyFile;
     }
@@ -845,26 +978,25 @@ public class GenericPatchApplier {
       cnt += length;
       //idx += length - 1;
     }
-    putCutIntoTransformations(new TextRange(idx, idx + cnt - 1),
-                              new MyAppliedData(splitHunk.getAfterAll(), hadAlreadyApplied, true, true, ChangeType.REPLACE));
+    putCutIntoTransformations(new TextRange(idx, idx + cnt - 1), originalHunk,
+                              new MyAppliedData(splitHunk.getAfterAll(), hadAlreadyApplied, true, true, ChangeType.REPLACE), new IntPair(
+        originalHunk.getContextBefore().size() - splitHunk.getContextBefore().size(),
+        originalHunk.getContextAfter().size() - splitHunk.getContextAfter().size()));
     return true;
   }
 
   // will not find consider fragments that intersect
   private class FragmentMatcher {
-    private int myIdx;
+    private final int myIdx;
     private int myOffsetIdxInHunk;
     // if we set index in hunk != 0, then we will check only one side
     private Boolean myBeforeSide;
-    private boolean myIsInBefore;
-    private int myIdxInHunk;
     private final BeforeAfter<List<String>> myBeforeAfter;
 
     private FragmentMatcher(int idx, BeforeAfter<List<String>> beforeAfter) {
       myOffsetIdxInHunk = 0;
       myIdx = idx;
       myBeforeAfter = beforeAfter;
-      myIdxInHunk = 0;
       //myBeforeSide = true;
     }
     
@@ -872,9 +1004,9 @@ public class GenericPatchApplier {
       myOffsetIdxInHunk = startInHunk;
       myBeforeSide = beforeSide;
       if (myBeforeSide) {
-        assert myBeforeAfter.getBefore().size() > myOffsetIdxInHunk || (myOffsetIdxInHunk == 0 && myBeforeAfter.getBefore().size() == 0);
+        assert myBeforeAfter.getBefore().size() > myOffsetIdxInHunk || (myOffsetIdxInHunk == 0 && myBeforeAfter.getBefore().isEmpty());
       } else {
-        assert myBeforeAfter.getAfter().size() > myOffsetIdxInHunk || (myOffsetIdxInHunk == 0 && myBeforeAfter.getAfter().size() == 0);
+        assert myBeforeAfter.getAfter().size() > myOffsetIdxInHunk || (myOffsetIdxInHunk == 0 && myBeforeAfter.getAfter().isEmpty());
       }
     }
 
@@ -883,17 +1015,17 @@ public class GenericPatchApplier {
       if (myBeforeSide != null) {
         if (myBeforeSide) {
           // check only one side
-          return new Pair<Integer, Boolean>(checkSide(myBeforeAfter.getBefore(), canMismatch), true);
+          return new Pair<>(checkSide(myBeforeAfter.getBefore(), canMismatch), true);
         } else {
           // check only one side
-          return new Pair<Integer, Boolean>(checkSide(myBeforeAfter.getAfter(), canMismatch), false);
+          return new Pair<>(checkSide(myBeforeAfter.getAfter(), canMismatch), false);
         }
       } else {
         final int beforeCheckResult = checkSide(myBeforeAfter.getBefore(), canMismatch);
         final int afterCheckResult = checkSide(myBeforeAfter.getAfter(), canMismatch);
 
-        final Pair<Integer, Boolean> beforePair = new Pair<Integer, Boolean>(beforeCheckResult, true);
-        final Pair<Integer, Boolean> afterPair = new Pair<Integer, Boolean>(afterCheckResult, false);
+        final Pair<Integer, Boolean> beforePair = new Pair<>(beforeCheckResult, true);
+        final Pair<Integer, Boolean> afterPair = new Pair<>(afterCheckResult, false);
         if (! canMismatch) {
           if (beforeCheckResult == 0) {
             return beforePair;
@@ -959,43 +1091,36 @@ public class GenericPatchApplier {
     final StringBuilder sb = new StringBuilder();
     // put not bind into the beginning
     for (SplitHunk hunk : myNotBound) {
-      linesToSb(sb, hunk.getAfterAll());
+      linesToSb(sb, hunk.getAfterAll(), true);
     }
-    iterateTransformations(new Consumer<TextRange>() {
-      @Override
-      public void consume(TextRange range) {
-        linesToSb(sb, myLines.subList(range.getStartOffset(), range.getEndOffset() + 1));
-      }
-    }, new Consumer<TextRange>() {
-      @Override
-      public void consume(TextRange range) {
-        final MyAppliedData appliedData = myTransformations.get(range);
-        if (appliedData.isInsertAfter()) {
-          if (sb.length() > 0) {
-            sb.append('\n');
-          }
-          sb.append(myLines.get(range.getStartOffset()));
-        }
-        linesToSb(sb, appliedData.getList());
-      }
+    iterateTransformations(range -> {
+      List<String> baseLineslist = myLines.subList(range.getStartOffset(), range.getEndOffset() + 1);
+      boolean withLineBreak = !containsLastLine(range) || myBaseFileEndsWithNewLine;
+      linesToSb(sb, baseLineslist, withLineBreak);
+    }, range -> {
+      final MyAppliedData appliedData = myTransformations.get(range);
+      List<String> list = appliedData.getList();
+      boolean withLineBreak = !containsLastLine(range) || !mySuppressNewLineInEnd;
+      linesToSb(sb, list, withLineBreak);
     });
-    if (! mySuppressNewLineInEnd) {
-      sb.append('\n');
-    }
     return sb.toString();
   }
 
-  private void linesToSb(final StringBuilder sb, final List<String> list) {
-    for (String s : list) {
-      if (sb.length() > 0) sb.append('\n');
-      sb.append(s);
+  private boolean containsLastLine(@NotNull TextRange range) {
+    return range.getEndOffset() == myLines.size() - 1;
+  }
+
+  private static void linesToSb(final StringBuilder sb, final List<String> list, boolean withEndLineBreak) {
+    StringUtil.join(list, "\n", sb);
+    if (!list.isEmpty() && withEndLineBreak) {
+      sb.append('\n');
     }
   }
 
   // indexes are passed inclusive
-  private void iterateTransformations(final Consumer<TextRange> consumerExcluded, final Consumer<TextRange> consumerIncluded) {
+  private void iterateTransformations(final Consumer<? super TextRange> consumerExcluded, final Consumer<? super TextRange> consumerIncluded) {
     if (myTransformations.isEmpty()) {
-      consumerExcluded.consume(new TextRange(0, myLines.size() - 1));
+      consumerExcluded.consume(new UnfairTextRange(0, myLines.size() - 1));
     } else {
       final Set<Map.Entry<TextRange,MyAppliedData>> entries = myTransformations.entrySet();
       final Iterator<Map.Entry<TextRange, MyAppliedData>> iterator = entries.iterator();
@@ -1012,7 +1137,7 @@ public class GenericPatchApplier {
       while (iterator.hasNext() && previousEnd < myLines.size()) {
         final Map.Entry<TextRange, MyAppliedData> entry = iterator.next();
         final TextRange key = entry.getKey();
-        consumerExcluded.consume(new TextRange(previousEnd, key.getStartOffset() - 1));
+        consumerExcluded.consume(new UnfairTextRange(previousEnd, key.getStartOffset() - 1));
         consumerIncluded.consume(key);
         previousEnd = key.getEndOffset() + 1;
       }
@@ -1025,14 +1150,16 @@ public class GenericPatchApplier {
   public static class SplitHunk {
     private final List<String> myContextBefore;
     private final List<String> myContextAfter;
-    private final List<BeforeAfter<List<String>>> myPatchSteps;
+    @NotNull private final List<BeforeAfter<List<String>>> myPatchSteps;
     private final int myStartLineBefore;
+    private final int myStartLineAfter;
 
-    public SplitHunk(int startLineBefore,
-                      List<BeforeAfter<List<String>>> patchSteps,
-                      List<String> contextAfter,
-                      List<String> contextBefore) {
+    public SplitHunk(int startLineBefore, int startLineAfter,
+                     @NotNull List<BeforeAfter<List<String>>> patchSteps,
+                     List<String> contextAfter,
+                     List<String> contextBefore) {
       myStartLineBefore = startLineBefore;
+      myStartLineAfter = startLineAfter;
       myPatchSteps = patchSteps;
       myContextAfter = contextAfter;
       myContextBefore = contextBefore;
@@ -1059,73 +1186,85 @@ public class GenericPatchApplier {
     }
 
     public static List<SplitHunk> read(final PatchHunk hunk) {
-      final List<SplitHunk> result = new ArrayList<SplitHunk>();
+      final List<SplitHunk> result = new ArrayList<>();
       final List<PatchLine> lines = hunk.getLines();
       int i = 0;
 
-      List<String> contextBefore = new ArrayList<String>();
+      List<String> contextBefore = new ArrayList<>();
       int newSize = 0;
+      int oldSize = 0;
       while (i < lines.size()) {
         final int inheritedContext = contextBefore.size();
-        final List<String> contextAfter = new ArrayList<String>();
-        final List<BeforeAfter<List<String>>> steps = new ArrayList<BeforeAfter<List<String>>>();
+        final List<String> contextAfter = new ArrayList<>();
+        final List<BeforeAfter<List<String>>> steps = new ArrayList<>();
         final int endIdx = readOne(lines, contextBefore, contextAfter, steps, i);
-        result.add(new SplitHunk(hunk.getStartLineBefore() + i - inheritedContext - newSize, steps, contextAfter, contextBefore));
+        int startLineBefore = hunk.getStartLineBefore();
+        int startLineAfter = hunk.getStartLineAfter();
+        if (steps.isEmpty()) {
+          // skip empty chunk, but warn
+          LOG.warn(constructHunkWarnMessage(startLineBefore, startLineAfter, hunk.getEndLineBefore() - startLineBefore,
+                                            hunk.getEndLineAfter() - startLineAfter));
+          LOG.debug("Wrong chunk text: " + hunk.getText());
+        }
+        else {
+          result.add(new SplitHunk(startLineBefore + i - inheritedContext - newSize,
+                                   startLineAfter + i - inheritedContext - oldSize, steps, contextAfter, contextBefore));
+        }
         for (BeforeAfter<List<String>> step : steps) {
           newSize += step.getAfter().size();
+          oldSize += step.getBefore().size();
         }
         i = endIdx;
         if (i < lines.size()) {
-          contextBefore = new ArrayList<String>();
-          contextBefore.addAll(contextAfter);
+          contextBefore = new ArrayList<>(contextAfter);
         }
       }
       return result;
     }
     
-    private static int readOne(final List<PatchLine> lines, final List<String> contextBefore, final List<String> contextAfter, 
-                               final List<BeforeAfter<List<String>>> steps, final int startI) {
+    private static int readOne(final List<? extends PatchLine> lines, final List<? super String> contextBefore, final List<? super String> contextAfter,
+                               final List<? super BeforeAfter<List<String>>> steps, final int startI) {
       int i = startI;
       for (; i < lines.size(); i++) {
         final PatchLine patchLine = lines.get(i);
-        if (! PatchLine.Type.CONTEXT.equals(patchLine.getType())) break;
+        if (PatchLine.Type.CONTEXT != patchLine.getType()) break;
         contextBefore.add(patchLine.getText());
       }
 
-      final boolean addFirst = i < lines.size() && PatchLine.Type.ADD.equals(lines.get(i).getType());
-      List<String> before = new ArrayList<String>();
-      List<String> after = new ArrayList<String>();
+      final boolean addFirst = i < lines.size() && PatchLine.Type.ADD == lines.get(i).getType();
+      List<String> before = new ArrayList<>();
+      List<String> after = new ArrayList<>();
       for (; i < lines.size(); i++) {
         final PatchLine patchLine = lines.get(i);
         final PatchLine.Type type = patchLine.getType();
-        if (PatchLine.Type.CONTEXT.equals(type)) {
+        if (PatchLine.Type.CONTEXT == type) {
           break;
         }
-        if (PatchLine.Type.ADD.equals(type)) {
+        if (PatchLine.Type.ADD == type) {
           if (addFirst && ! before.isEmpty()) {
             // new piece
-            steps.add(new BeforeAfter<List<String>>(before, after));
-            before = new ArrayList<String>();
-            after = new ArrayList<String>();
+            steps.add(new BeforeAfter<>(before, after));
+            before = new ArrayList<>();
+            after = new ArrayList<>();
           }
           after.add(patchLine.getText());
-        } else if (PatchLine.Type.REMOVE.equals(type)) {
+        } else if (PatchLine.Type.REMOVE == type) {
           if (! addFirst && ! after.isEmpty()) {
             // new piece
-            steps.add(new BeforeAfter<List<String>>(before, after));
-            before = new ArrayList<String>();
-            after = new ArrayList<String>();
+            steps.add(new BeforeAfter<>(before, after));
+            before = new ArrayList<>();
+            after = new ArrayList<>();
           }
           before.add(patchLine.getText());
         }
       }
       if (! before.isEmpty() || ! after.isEmpty()) {
-        steps.add(new BeforeAfter<List<String>>(before, after));
+        steps.add(new BeforeAfter<>(before, after));
       }
 
       for (; i < lines.size(); i++) {
         final PatchLine patchLine = lines.get(i);
-        if (! PatchLine.Type.CONTEXT.equals(patchLine.getType())) {
+        if (PatchLine.Type.CONTEXT != patchLine.getType()) {
           return i;
         }
         contextAfter.add(patchLine.getText());
@@ -1141,6 +1280,10 @@ public class GenericPatchApplier {
       return myStartLineBefore;
     }
 
+    public int getStartLineAfter() {
+      return myStartLineAfter;
+    }
+
     public List<String> getContextBefore() {
       return myContextBefore;
     }
@@ -1149,12 +1292,13 @@ public class GenericPatchApplier {
       return myContextAfter;
     }
 
+    @NotNull
     public List<BeforeAfter<List<String>>> getPatchSteps() {
       return myPatchSteps;
     }
     
     public List<String> getAfterAll() {
-      final ArrayList<String> after = new ArrayList<String>();
+      final ArrayList<String> after = new ArrayList<>();
       for (BeforeAfter<List<String>> step : myPatchSteps) {
         after.addAll(step.getAfter());
       }
@@ -1187,7 +1331,7 @@ public class GenericPatchApplier {
     
     public void cutToSize(final int size) {
       assert size > 0 && size < myList.size();
-      myList = new ArrayList<String>(myList.subList(0, size));
+      myList = new ArrayList<>(myList.subList(0, size));
     }
 
     public boolean isHaveAlreadyApplied() {
@@ -1201,14 +1345,9 @@ public class GenericPatchApplier {
     public boolean isChangedCoinside() {
       return myChangedCoinside;
     }
-
-    public boolean isInsertAfter() {
-      return ChangeType.INSERT_AFTER.equals(myChangeType);
-    }
   }
 
-  public static enum ChangeType {
-    INSERT_AFTER,
+  public enum ChangeType {
     REPLACE
   }
 
@@ -1225,7 +1364,7 @@ public class GenericPatchApplier {
 
     @Override
     public int compare(SplitHunk o1, SplitHunk o2) {
-      return Integer.valueOf(o1.getStartLineBefore()).compareTo(Integer.valueOf(o2.getStartLineBefore()));
+      return Integer.compare(o1.getStartLineBefore(), o2.getStartLineBefore());
     }
   }
 }

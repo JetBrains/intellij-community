@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,10 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-/*
- * @author max
- */
 package com.intellij.psi.impl.java.stubs.impl;
 
 import com.intellij.psi.PsiTypeParameter;
@@ -25,31 +21,30 @@ import com.intellij.psi.impl.java.stubs.PsiAnnotationStub;
 import com.intellij.psi.impl.java.stubs.PsiTypeParameterStub;
 import com.intellij.psi.stubs.StubBase;
 import com.intellij.psi.stubs.StubElement;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.io.StringRef;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
+/**
+ * @author max
+ */
 public class PsiTypeParameterStubImpl extends StubBase<PsiTypeParameter> implements PsiTypeParameterStub {
-  private final StringRef myName;
+  private final String myName;
 
-  public PsiTypeParameterStubImpl(final StubElement parent, final StringRef name) {
+  public PsiTypeParameterStubImpl(StubElement parent, String name) {
     super(parent, JavaStubElementTypes.TYPE_PARAMETER);
     myName = name;
   }
 
   @Override
   public String getName() {
-    return StringRef.toString(myName);
+    return myName;
   }
 
   @SuppressWarnings({"HardCodedStringLiteral"})
   public String toString() {
-    StringBuilder builder = new StringBuilder();
-    builder.append("PsiTypeParameter[").append(myName).append(']');
-    return builder.toString();
+    return "PsiTypeParameter[" + myName + ']';
   }
   
   @Override
@@ -57,11 +52,7 @@ public class PsiTypeParameterStubImpl extends StubBase<PsiTypeParameter> impleme
   public List<PsiAnnotationStub> getAnnotations() {
     List<StubElement> children = getChildrenStubs();
 
-    return ContainerUtil.mapNotNull(children, new Function<StubElement, PsiAnnotationStub>() {
-      @Override
-      public PsiAnnotationStub fun(StubElement stubElement) {
-        return stubElement instanceof PsiAnnotationStub ? (PsiAnnotationStub)stubElement : null;
-      }
-    });
+    return ContainerUtil.mapNotNull(children,
+                                    stubElement -> stubElement instanceof PsiAnnotationStub ? (PsiAnnotationStub)stubElement : null);
   }
 }

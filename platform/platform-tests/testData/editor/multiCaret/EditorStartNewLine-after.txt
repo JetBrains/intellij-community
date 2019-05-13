@@ -1,0 +1,7 @@
+some text
+<caret>
+<caret>
+another text
+<caret>
+some longer line here
+<caret>

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,10 +16,10 @@
 package com.intellij.uiDesigner.i18n;
 
 import com.intellij.codeInsight.CodeInsightBundle;
-import com.intellij.codeInsight.CodeInsightUtilBase;
-import com.intellij.codeInspection.i18n.JavaI18nUtil;
+import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInspection.i18n.JavaI18nizeQuickFixDialog;
 import com.intellij.lang.properties.psi.PropertiesFile;
+import com.intellij.lang.properties.references.I18nUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
@@ -44,10 +44,11 @@ import java.util.Collection;
 public abstract class I18nizeFormQuickFix extends QuickFix {
   private static final Logger LOG = Logger.getInstance("#com.intellij.uiDesigner.i18n.I18nizeFormQuickFix");
 
-  public I18nizeFormQuickFix(final GuiEditor editor, final String name, final RadComponent component) {
+  I18nizeFormQuickFix(final GuiEditor editor, final String name, final RadComponent component) {
     super(editor, name, component);
   }
 
+  @Override
   public void run() {
     final StringDescriptor descriptor = getStringDescriptorValue();
     final Project project = myEditor.getProject();
@@ -58,13 +59,13 @@ public abstract class I18nizeFormQuickFix extends QuickFix {
       return;
     }
     String initialValue = StringUtil.escapeStringCharacters(descriptor.getValue());
-    final JavaI18nizeQuickFixDialog dialog = new JavaI18nizeQuickFixDialog(project, psiFile, null, initialValue, null, false, false){
+    final JavaI18nizeQuickFixDialog dialog = new JavaI18nizeQuickFixDialog(project, psiFile, null, initialValue, null, false, false) {
+      @Override
       protected String getDimensionServiceKey() {
         return "#com.intellij.codeInsight.i18n.I18nizeQuickFixDialog_Form";
       }
     };
-    dialog.show();
-    if (!dialog.isOK()) {
+    if (!dialog.showAndGet()) {
       return;
     }
 
@@ -74,29 +75,23 @@ public abstract class I18nizeFormQuickFix extends QuickFix {
     final Collection<PropertiesFile> propertiesFiles = dialog.getAllPropertiesFiles();
     PropertiesFile aPropertiesFile = null;
     for (PropertiesFile file : propertiesFiles) {
-      if (!CodeInsightUtilBase.prepareFileForWrite(file.getContainingFile())) return;
+      if (!FileModificationService.getInstance().prepareFileForWrite(file.getContainingFile())) return;
       if (aPropertiesFile == null) {
         aPropertiesFile = file;
       }
     }
 
-    CommandProcessor.getInstance().executeCommand(project, new Runnable(){
-      public void run() {
-        ApplicationManager.getApplication().runWriteAction(new Runnable(){
-          public void run() {
-            try {
-              JavaI18nUtil.createProperty(project, propertiesFiles, dialog.getKey(), dialog.getValue());
-            }
-            catch (IncorrectOperationException e) {
-              LOG.error(e);
-            }
-          }
-        });
+    CommandProcessor.getInstance().executeCommand(project, () -> ApplicationManager.getApplication().runWriteAction(() -> {
+      try {
+        I18nUtil.createProperty(project, propertiesFiles, dialog.getKey(), dialog.getValue());
       }
-    }, CodeInsightBundle.message("quickfix.i18n.command.name"),project);
+      catch (IncorrectOperationException e) {
+        LOG.error(e);
+      }
+    }), CodeInsightBundle.message("quickfix.i18n.command.name"), project);
 
     // saving files is necessary to ensure correct reload of properties files by UI Designer
-    for(PropertiesFile file: propertiesFiles) {
+    for (PropertiesFile file : propertiesFiles) {
       FileDocumentManager.getInstance().saveDocument(PsiDocumentManager.getInstance(project).getDocument(file.getContainingFile()));
     }
 
@@ -105,7 +100,7 @@ public abstract class I18nizeFormQuickFix extends QuickFix {
       String packageName = fileIndex.getPackageNameByDirectory(aPropertiesFile.getVirtualFile().getParent());
       if (packageName != null) {
         String bundleName;
-        if (packageName.length() > 0) {
+        if (!packageName.isEmpty()) {
           bundleName = packageName + "." + aPropertiesFile.getResourceBundle().getBaseName();
         }
         else {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,10 +26,6 @@ import java.io.IOException;
  * @author jeka
  */
 public class PersistentEnumerator<Data> extends PersistentEnumeratorBase<Data> {
-  private static final int DIRTY_MAGIC = 0xbabe0589;
-  private static final int VERSION = 6;
-  private static final int CORRECTLY_CLOSED_MAGIC = 0xebabafac + VERSION;
-
   private static final int FIRST_VECTOR_OFFSET = DATA_START;
 
   private static final int BITS_PER_LEVEL = 4;
@@ -47,24 +43,29 @@ public class PersistentEnumerator<Data> extends PersistentEnumeratorBase<Data> {
   private static final int KEY_REF_OFFSET = KEY_HASHCODE_OFFSET + 4;
   private static final int RECORD_SIZE = KEY_REF_OFFSET + 4;
   private int valuesCount; // TODO: valuesCount should be persistent
-  private static final Version ourVersion = new Version(CORRECTLY_CLOSED_MAGIC, DIRTY_MAGIC);
+
+  static final int VERSION = 6;
+  private static final Version ourVersion = new Version(VERSION);
 
   public PersistentEnumerator(@NotNull File file, @NotNull KeyDescriptor<Data> dataDescriptor, int initialSize) throws IOException {
-    this(file, dataDescriptor, initialSize, null);
+    this(file, dataDescriptor, initialSize, null, 0);
   }
 
   public PersistentEnumerator(@NotNull File file,
                               @NotNull KeyDescriptor<Data> dataDescriptor,
                               int initialSize,
-                              @Nullable PagedFileStorage.StorageLockContext storageLockContext) throws IOException {
-    super(file, new ResizeableMappedFile(file, initialSize, storageLockContext, -1, false), dataDescriptor, initialSize, ourVersion,
+                              @Nullable PagedFileStorage.StorageLockContext storageLockContext,
+                              int version) throws IOException {
+    super(file, new ResizeableMappedFile(file, initialSize, storageLockContext, -1, false), dataDescriptor, initialSize, new Version(VERSION + version),
           new RecordBufferHandler(), true);
   }
 
+  @Override
   protected  void setupEmptyFile() throws IOException {
     allocVector(FIRST_VECTOR);
   }
 
+  @Override
   public synchronized boolean traverseAllRecords(@NotNull RecordsProcessor p) throws IOException {
     return traverseRecords(FIRST_VECTOR_OFFSET, SLOTS_PER_FIRST_VECTOR, p);
   }
@@ -73,9 +74,9 @@ public class PersistentEnumerator<Data> extends PersistentEnumeratorBase<Data> {
     lockStorage();
     try {
       for (int slotIdx = 0; slotIdx < slotsCount; slotIdx++) {
-        final int vector = myStorage.getInt(vectorStart + slotIdx * 4);
+        final int vector = myStorage.getInt(vectorStart + slotIdx * 4L);
         if (vector < 0) {
-          for (int record = -vector; record != 0; record = nextCanditate(record)) {
+          for (int record = -vector; record != 0; record = nextCandidate(record)) {
             if (!p.process(record)) return false;
           }
         }
@@ -90,6 +91,7 @@ public class PersistentEnumerator<Data> extends PersistentEnumeratorBase<Data> {
     }
   }
 
+  @Override
   protected synchronized int enumerateImpl(final Data value, final boolean onlyCheckForExisting, boolean saveNewValue) throws IOException {
     lockStorage();
     try {
@@ -139,7 +141,7 @@ public class PersistentEnumerator<Data> extends PersistentEnumeratorBase<Data> {
             return collision;
           }
 
-          collision = nextCanditate(collision);
+          collision = nextCandidate(collision);
         }
         while (collision != 0);
 
@@ -156,12 +158,12 @@ public class PersistentEnumerator<Data> extends PersistentEnumeratorBase<Data> {
             final int oldHCByte = hcByte(candidateHC, depth);
             if (valueHCByte == oldHCByte) {
               int newVector = allocVector(EMPTY_VECTOR);
-              myStorage.putInt(lastVector + oldHCByte * 4, newVector);
+              myStorage.putInt(lastVector + oldHCByte * 4L, newVector);
               lastVector = newVector;
             }
             else {
-              myStorage.putInt(lastVector + valueHCByte * 4, -newId);
-              myStorage.putInt(lastVector + oldHCByte * 4, vector);
+              myStorage.putInt(lastVector + valueHCByte * 4L, -newId);
+              myStorage.putInt(lastVector + oldHCByte * 4L, vector);
               break;
             }
             depth++;
@@ -181,6 +183,7 @@ public class PersistentEnumerator<Data> extends PersistentEnumeratorBase<Data> {
     }
   }
 
+  @Override
   protected int writeData(final Data value, int hashCode) {
     int id = super.writeData(value, hashCode);
     ++valuesCount;
@@ -208,7 +211,7 @@ public class PersistentEnumerator<Data> extends PersistentEnumeratorBase<Data> {
     return pos;
   }
 
-  private int nextCanditate(final int idx) throws IOException {
+  private int nextCandidate(final int idx) throws IOException {
     return -myStorage.getInt(idx);
   }
 
@@ -224,6 +227,7 @@ public class PersistentEnumerator<Data> extends PersistentEnumeratorBase<Data> {
   private static class RecordBufferHandler extends PersistentEnumeratorBase.RecordBufferHandler<PersistentEnumerator> {
     private final byte[] myBuffer = new byte[RECORD_SIZE];
 
+    @Override
     protected int recordWriteOffset(@NotNull PersistentEnumerator enumerator, byte[] buf) {
       return (int)enumerator.myStorage.length();
     }

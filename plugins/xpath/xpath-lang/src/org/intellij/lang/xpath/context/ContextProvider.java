@@ -124,7 +124,6 @@ public abstract class ContextProvider {
         return contextElement != null && contextElement.isValid();
     }
 
-    @SuppressWarnings({ "ClassReferencesSubclass" })
     private static ContextProvider getFromExtensionOrDefault(PsiFile psiFile) {
         if (psiFile instanceof XPathFile) {
             final ContextProvider instance = ContextProviderExtension.getInstance((XPathFile)psiFile);
@@ -136,7 +135,6 @@ public abstract class ContextProvider {
         return new DefaultProvider(PsiTreeUtil.getContextOfType(psiFile, XmlElement.class, true), psiFile.getLanguage());
     }
 
-    @SuppressWarnings({ "ClassReferencesSubclass" })
     @NotNull
     public static ContextProvider getContextProvider(PsiElement element) {
         return element instanceof XPathElement ?
@@ -236,45 +234,49 @@ public abstract class ContextProvider {
           // Another (possibly perferred) solution might be to make org.intellij.lang.xpath.xslt.impl.XsltImplicitUsagesProvider run
           // unconditionally or - even better - pull its functionality into the platform.
           if (flag == null) {
-            ApplicationManager.getApplication().invokeLater(new Runnable() {
-              @Override
-              public void run() {
-                if (file.getUserData(XML_FILE_WITH_XPATH_INJECTTION) == null) {
-                  file.putUserData(XML_FILE_WITH_XPATH_INJECTTION, Boolean.TRUE);
-                  if (!ApplicationManager.getApplication().isUnitTestMode()) { // TODO workaround for highlighting tests
-                    DaemonCodeAnalyzer.getInstance(file.getProject()).restart(file);
-                  }
+            ApplicationManager.getApplication().invokeLater(() -> {
+              if (file.getUserData(XML_FILE_WITH_XPATH_INJECTTION) == null) {
+                file.putUserData(XML_FILE_WITH_XPATH_INJECTTION, Boolean.TRUE);
+                // TODO workaround for highlighting tests
+                if (!ApplicationManager.getApplication().isHeadlessEnvironment()) {
+                  DaemonCodeAnalyzer.getInstance(file.getProject()).restart(file);
                 }
               }
             });
           }
         }
 
+        @Override
         @NotNull
         public ContextType getContextType() {
             return myContextType;
         }
 
+        @Override
         @Nullable
         public XmlElement getContextElement() {
             return myContextElement;
         }
 
+        @Override
         @Nullable
         public NamespaceContext getNamespaceContext() {
           return myNamespaceContext;
         }
 
+        @Override
         @Nullable
         public VariableContext getVariableContext() {
             return null;
         }
 
+        @Override
         @Nullable
         public Set<QName> getAttributes(boolean forValidation) {
             return null;
         }
 
+        @Override
         @Nullable
         public Set<QName> getElements(boolean forValidation) {
             return null;

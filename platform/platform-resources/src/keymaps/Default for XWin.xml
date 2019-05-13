@@ -1,0 +1,30 @@
+<keymap version="1" name="Default for XWin" disable-mnemonics="false" parent="$default">
+  <action id="ForceRunToCursor">
+    <keyboard-shortcut first-keystroke="control alt 9"/>
+  </action>
+  <action id="QuickEvaluateExpression">
+    <keyboard-shortcut first-keystroke="control alt 8"/>
+    <mouse-shortcut keystroke="control shift alt button1"/>
+  </action>
+  <action id="ActivateVersionControlToolWindow">
+    <keyboard-shortcut first-keystroke="alt 9"/>
+  </action>
+  <action id="ShowUsages">
+    <keyboard-shortcut first-keystroke="control alt 7"/>
+  </action>
+  <action id="ShowSettingsAndFindUsages">
+    <keyboard-shortcut first-keystroke="control shift alt 7"/>
+  </action>
+  <action id="SwitchCoverage">
+    <keyboard-shortcut first-keystroke="control alt 6"/>
+  </action>
+  <action id="Images.EditExternally">
+    <keyboard-shortcut first-keystroke="control alt 4"/>
+  </action>
+  <action id="ShowFilePath">
+    <keyboard-shortcut first-keystroke="control alt shift 2"/>
+  </action>
+  <action id="XDebugger.AttachToProcess">
+    <keyboard-shortcut first-keystroke="control alt 5"/>
+  </action>
+</keymap>

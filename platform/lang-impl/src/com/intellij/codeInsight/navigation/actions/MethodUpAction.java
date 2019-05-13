@@ -24,11 +24,17 @@ import com.intellij.ide.structureView.TreeBasedStructureViewBuilder;
 import com.intellij.ide.structureView.impl.TemplateLanguageStructureViewBuilder;
 import com.intellij.lang.LanguageStructureViewBuilder;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 
-public class MethodUpAction extends BaseCodeInsightAction {
+public class MethodUpAction extends BaseCodeInsightAction implements DumbAware {
+  public MethodUpAction() {
+    setEnabledInModalContext(true);
+  }
+
   @NotNull
   @Override
   protected CodeInsightActionHandler getHandler() {
@@ -46,7 +52,12 @@ public class MethodUpAction extends BaseCodeInsightAction {
   }
 
   static boolean checkValidForFile(final PsiFile file) {
-    final StructureViewBuilder structureViewBuilder = LanguageStructureViewBuilder.INSTANCE.getStructureViewBuilder(file);
-    return structureViewBuilder instanceof TreeBasedStructureViewBuilder || structureViewBuilder instanceof TemplateLanguageStructureViewBuilder;
+    try {
+      final StructureViewBuilder structureViewBuilder = LanguageStructureViewBuilder.INSTANCE.getStructureViewBuilder(file);
+      return structureViewBuilder instanceof TreeBasedStructureViewBuilder || structureViewBuilder instanceof TemplateLanguageStructureViewBuilder;
+    }
+    catch (IndexNotReadyException e) {
+      return false;
+    }
   }
 }

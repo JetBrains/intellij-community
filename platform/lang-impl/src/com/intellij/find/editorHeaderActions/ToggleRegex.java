@@ -15,37 +15,28 @@
  */
 package com.intellij.find.editorHeaderActions;
 
-import com.intellij.find.EditorSearchComponent;
 import com.intellij.find.FindModel;
 import com.intellij.find.FindSettings;
-import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.find.SearchSession;
+import org.jetbrains.annotations.NotNull;
 
 public class ToggleRegex extends EditorHeaderToggleAction {
-
-  private static final String REGEX = "&Regex";
-
-  @Override
-  public boolean isSelected(AnActionEvent e) {
-    return getEditorSearchComponent().getFindModel().isRegularExpressions();
+  public ToggleRegex() {
+    super("Rege&x");
   }
 
   @Override
-  public void update(AnActionEvent e) {
-    super.update(e);
-    e.getPresentation().setVisible(!getEditorSearchComponent().getFindModel().isMultiline());
+  protected boolean isSelected(@NotNull SearchSession session) {
+    return session.getFindModel().isRegularExpressions();
   }
 
   @Override
-  public void setSelected(AnActionEvent e, boolean state) {
-    final FindModel findModel = getEditorSearchComponent().getFindModel();
-    findModel.setRegularExpressions(state);
-    if (state) {
+  protected void setSelected(@NotNull SearchSession session, boolean selected) {
+    FindModel findModel = session.getFindModel();
+    findModel.setRegularExpressions(selected);
+    if (selected) {
       findModel.setWholeWordsOnly(false);
     }
-    FindSettings.getInstance().setLocalRegularExpressions(state);
-  }
-
-  public ToggleRegex(EditorSearchComponent editorSearchComponent) {
-    super(editorSearchComponent, REGEX);
+    FindSettings.getInstance().setLocalRegularExpressions(selected);
   }
 }

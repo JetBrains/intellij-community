@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,9 +16,9 @@
 package com.intellij.ide.util.projectWizard;
 
 import com.intellij.ide.util.BrowseFilesListener;
+import com.intellij.ide.wizard.CommitStepException;
 import com.intellij.ide.wizard.StepAdapter;
 import com.intellij.openapi.options.ConfigurationException;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.ui.FieldPanel;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
@@ -28,30 +28,37 @@ import java.awt.*;
 
 public abstract class ModuleWizardStep extends StepAdapter {
 
-  protected static final Icon ICON = IconLoader.getIcon("/addmodulewizard.png");
-  public static final ModuleWizardStep[] EMPTY_ARRAY = new ModuleWizardStep[0];
+  public static final ModuleWizardStep[] EMPTY_ARRAY = {};
 
+  @Override
   public abstract JComponent getComponent();
+
+  /** Commits data from UI into ModuleBuilder and WizardContext */
   public abstract void updateDataModel();
+
+  /** Update UI from ModuleBuilder and WizardContext */
+  public void updateStep() {
+    // empty by default
+  }
 
   @NonNls public String getHelpId() {
     return null;
   }
 
+  /**
+   * Validates user input before {@link #updateDataModel()} is called.
+   *
+   * @return {@code true} if input is valid, {@code false} otherwise
+   * @throws ConfigurationException if input is not valid and needs user attention. Exception message will be displayed to user
+   */
   public boolean validate() throws ConfigurationException {
     return true;
   }
 
   public void onStepLeaving() {
-    // empty by default
   }
 
-  public void updateStep() {
-    // empty by default
-  }
-
-  public Icon getIcon() {
-    return ICON;
+  public void onWizardFinished() throws CommitStepException {
   }
 
   public boolean isStepVisible() {

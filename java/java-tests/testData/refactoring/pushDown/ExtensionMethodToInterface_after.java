@@ -2,7 +2,7 @@ interface Base {
 }
 
 interface I2 extends Base {
-    void foo() default {
+    default void foo() {
         System.out.println("Hi there.");
     }
 }

@@ -21,6 +21,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlElement;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.containers.ContainerUtil;
 import org.intellij.lang.xpath.XPathFile;
@@ -41,42 +42,39 @@ public class CompletionLists {
   private CompletionLists() {
   }
 
-  public static final Set<String> NODE_TYPE_FUNCS = new HashSet<String>(Arrays.asList(
-          "text", "node", "comment", "processing-instruction"
+  public static final Set<String> NODE_TYPE_FUNCS = new HashSet<>(Arrays.asList(
+    "text", "node", "comment", "processing-instruction"
   ));
 
-  public static final Set<String> NODE_TYPE_FUNCS_V2 = new HashSet<String>(Arrays.asList(
-          "text", "node", "comment", "processing-instruction", "attribute", "element", "schema-element", "schema-attribute", "document-node"
+  public static final Set<String> NODE_TYPE_FUNCS_V2 = new HashSet<>(Arrays.asList(
+    "text", "node", "comment", "processing-instruction", "attribute", "element", "schema-element", "schema-attribute", "document-node"
   ));
 
-  public static final Set<String> OPERATORS = new HashSet<String>(Arrays.asList(
-          "mul", "div", "and", "or"
+  public static final Set<String> OPERATORS = new HashSet<>(Arrays.asList(
+    "mul", "div", "and", "or"
   ));
 
-  public static final Set<String> AXIS_NAMES = new HashSet<String>(Arrays.asList(
-          "ancestor",
-          "ancestor-or-self",
-          "attribute",
-          "child",
-          "descendant",
-          "descendant-or-self",
-          "following",
-          "following-sibling",
-          "namespace",
-          "parent",
-          "preceding",
-          "preceding-sibling",
-          "self"
+  public static final Set<String> AXIS_NAMES = new HashSet<>(Arrays.asList(
+    "ancestor",
+    "ancestor-or-self",
+    "attribute",
+    "child",
+    "descendant",
+    "descendant-or-self",
+    "following",
+    "following-sibling",
+    "namespace",
+    "parent",
+    "preceding",
+    "preceding-sibling",
+    "self"
   ));
 
-  private static final com.intellij.util.Function<String,Lookup> FUNCTION_MAPPING = new com.intellij.util.Function<String, Lookup>() {
-    @Override
-    public Lookup fun(String s) {
-      if (s.equals("processing-instruction")) {
-        return new FunctionLookup(s, s + "(pi-target?)");
-      } else {
-        return new FunctionLookup(s, s + "()");
-      }
+  private static final com.intellij.util.Function<String,Lookup> FUNCTION_MAPPING = s -> {
+    if (s.equals("processing-instruction")) {
+      return new FunctionLookup(s, s + "(pi-target?)");
+    } else {
+      return new FunctionLookup(s, s + "()");
     }
   };
 
@@ -109,7 +107,7 @@ public class CompletionLists {
     }
 
     final Map<Pair<QName, Integer>, ? extends Function> functions = contextProvider.getFunctionContext().getFunctions();
-    final List<Lookup> lookups = new ArrayList<Lookup>(functions.size());
+    final List<Lookup> lookups = new ArrayList<>(functions.size());
     for (Map.Entry<Pair<QName, Integer>, ? extends Function> entry : functions.entrySet()) {
       final Function functionDecl = entry.getValue();
       final QName f = entry.getKey().first;
@@ -137,7 +135,7 @@ public class CompletionLists {
     final VariableContext resolver = contextProvider.getVariableContext();
     if (resolver != null) {
       final Object[] variablesInScope = resolver.getVariablesInScope(reference);
-      final List<Lookup> lookups = new ArrayList<Lookup>(variablesInScope.length);
+      final List<Lookup> lookups = new ArrayList<>(variablesInScope.length);
       for (final Object o : variablesInScope) {
         if (o instanceof PsiNamedElement) {
           final String type;
@@ -154,7 +152,7 @@ public class CompletionLists {
           final String name = ((PsiNamedElement)o).getName();
           lookups.add(new VariableLookup("$" + name, type, ((PsiNamedElement)o).getIcon(0), (PsiElement)o));
         } else {
-          lookups.add(new VariableLookup("$" + String.valueOf(o), PlatformIcons.VARIABLE_ICON));
+          lookups.add(new VariableLookup("$" + o, PlatformIcons.VARIABLE_ICON));
         }
       }
       return lookups;
@@ -181,7 +179,7 @@ public class CompletionLists {
 
     final boolean insidePrefix = suffix.contains(INTELLIJ_IDEA_RULEZ + ":");
 
-    final Set<Lookup> list = new HashSet<Lookup>();
+    final Set<Lookup> list = new HashSet<>();
     addNameCompletions(contextProvider, element, list);
 
     final String namespacePrefix = prefixedName.getPrefix();
@@ -227,7 +225,7 @@ public class CompletionLists {
     return list;
   }
 
-  private static XPathNodeTest.PrincipalType addContextNames(XPathNodeTest element, ContextProvider contextProvider, PrefixedName prefixedName, Set<Lookup> list) {
+  private static XPathNodeTest.PrincipalType addContextNames(XPathNodeTest element, ContextProvider contextProvider, PrefixedName prefixedName, Set<? super Lookup> list) {
     final NamespaceContext namespaceContext = contextProvider.getNamespaceContext();
     final XmlElement context = contextProvider.getContextElement();
 
@@ -272,7 +270,7 @@ public class CompletionLists {
     return (p != null && p.length() > 0 ? p + ":" : "");
   }
 
-  private static void addNamespaceCompletions(NamespaceContext namespaceContext, Set<Lookup> list, XmlElement context) {
+  private static void addNamespaceCompletions(NamespaceContext namespaceContext, Set<? super Lookup> list, XmlElement context) {
     if (namespaceContext != null) {
       final Collection<String> knownPrefixes = namespaceContext.getKnownPrefixes(context);
       for (String prefix : knownPrefixes) {
@@ -283,17 +281,18 @@ public class CompletionLists {
     }
   }
 
-  private static void addNameCompletions(ContextProvider contextProvider, final XPathNodeTest element, final Set<Lookup> list) {
+  private static void addNameCompletions(ContextProvider contextProvider, final XPathNodeTest element, final Set<? super Lookup> list) {
     final PrefixedName prefixedName = element.getQName();
     final XPathNodeTest.PrincipalType principalType = element.getPrincipalType();
 
-    final Set<PsiFile> files = new HashSet<PsiFile>();
+    final Set<PsiFile> files = new HashSet<>();
     final XPathFile file = (XPathFile)element.getContainingFile();
     files.add(file);
     ContainerUtil.addAll(files, contextProvider.getRelatedFiles(file));
 
     for (PsiFile xpathFile : files) {
       xpathFile.accept(new PsiRecursiveElementVisitor() {
+        @Override
         public void visitElement(PsiElement e) {
           if (e instanceof XPathNodeTest) {
             final XPathNodeTest nodeTest = (XPathNodeTest)e;
@@ -349,7 +348,7 @@ public class CompletionLists {
   }
 
   public static Collection<Lookup> getAxisCompletions() {
-    final ArrayList<Lookup> lookups = new ArrayList<Lookup>(AXIS_NAMES.size());
+    final ArrayList<Lookup> lookups = new ArrayList<>(AXIS_NAMES.size());
     for (String s : AXIS_NAMES) {
       lookups.add(new AxisLookup(s));
     }
@@ -358,11 +357,11 @@ public class CompletionLists {
 
   @SuppressWarnings({"RawUseOfParameterizedType"})
   public static Class[] getAllInterfaces(Class<?> clazz) {
-    Set<Class> set = new HashSet<Class>();
+    Set<Class> set = new HashSet<>();
     do {
       ContainerUtil.addAll(set, clazz.getInterfaces());
       clazz = clazz.getSuperclass();
     } while (clazz != null);
-    return set.toArray(new Class[set.size()]);
+    return set.toArray(ArrayUtil.EMPTY_CLASS_ARRAY);
   }
 }

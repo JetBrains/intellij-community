@@ -1,3 +1,4 @@
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.intellij.lang.xpath.xslt.impl.references;
 
 import com.intellij.javaee.ExternalResourceManager;
@@ -43,6 +44,7 @@ public class XsltReferenceProvider extends PsiReferenceProvider {
   public XsltReferenceProvider() {
   }
 
+  @Override
   @NotNull
   public PsiReference[] getReferencesByElement(@NotNull PsiElement e, @NotNull ProcessingContext context) {
     final PsiElement element = e.getParent();
@@ -70,13 +72,14 @@ public class XsltReferenceProvider extends PsiReferenceProvider {
       myAttribute = attribute;
     }
 
+    @Override
     public Result<PsiReference[]> compute() {
       final PsiReference[] referencesImpl = getReferencesImpl(myAttribute);
       final Object[] refs = new PsiElement[referencesImpl.length];
       for (int i = 0; i < refs.length; i++) {
         refs[i] = referencesImpl[i].getElement();
       }
-      return new Result<PsiReference[]>(referencesImpl, ArrayUtil.append(refs, myAttribute.getValueElement()));
+      return new Result<>(referencesImpl, ArrayUtil.append(refs, myAttribute.getValueElement()));
     }
 
     private PsiReference[] getReferencesImpl(final XmlAttribute attribute) {
@@ -165,24 +168,25 @@ public class XsltReferenceProvider extends PsiReferenceProvider {
       private final XsltParameter myParam;
       private final XmlTag myTag;
 
-      public MySelfReference(XmlAttribute attribute, XsltParameter param) {
+      MySelfReference(XmlAttribute attribute, XsltParameter param) {
         super(attribute, param);
         myParam = param;
         myTag = param.getTag();
       }
 
 
-      public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {
+      @Override
+      public PsiElement handleElementRename(@NotNull String newElementName) throws IncorrectOperationException {
         if (!newElementName.equals(myParam.getName())) {
           myParam.setName(newElementName);
         }
         final XmlAttribute attribute = myParam.getNameAttribute();
         assert attribute != null;
-        //noinspection ConstantConditions
         return attribute.getValueElement();
       }
 
-      public boolean isReferenceTo(PsiElement element) {
+      @Override
+      public boolean isReferenceTo(@NotNull PsiElement element) {
         // self-reference is only a trick to enable rename/find usages etc. but it shouldn't actually
         // refer to itself because this would list the element to be renamed/searched for twice
         assert !super.isReferenceTo(element);
@@ -216,7 +220,7 @@ public class XsltReferenceProvider extends PsiReferenceProvider {
     final Matcher matcher = pattern.matcher(attribute.getValue());
 
     if (matcher.find()) {
-      final List<PsiReference> refs = new SmartList<PsiReference>();
+      final List<PsiReference> refs = new SmartList<>();
       do {
         final int start = matcher.start(1);
         if (start >= 0) {
@@ -225,7 +229,7 @@ public class XsltReferenceProvider extends PsiReferenceProvider {
       }
       while (matcher.find());
 
-      return refs.toArray(new PsiReference[refs.size()]);
+      return refs.toArray(PsiReference.EMPTY_ARRAY);
     }
     return PsiReference.EMPTY_ARRAY;
   }

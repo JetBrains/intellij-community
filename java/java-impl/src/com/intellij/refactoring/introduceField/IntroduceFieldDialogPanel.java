@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,15 +23,12 @@ import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.ui.JavaVisibilityPanel;
 import com.intellij.refactoring.ui.TypeSelectorManager;
 import com.intellij.ui.IdeBorderFactory;
+import com.intellij.util.ui.JBUI;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ItemListener;
 
-/**
- * User: anna
- * Date: 4/8/11
- */
 public class IntroduceFieldDialogPanel extends IntroduceFieldCentralPanel {
   private JRadioButton myRbInConstructor;
   private JRadioButton myRbInCurrentMethod;
@@ -53,17 +50,22 @@ public class IntroduceFieldDialogPanel extends IntroduceFieldCentralPanel {
           occurrences, allowInitInMethod, allowInitInMethodIfAll, typeSelectorManager);
   }
 
+  @Override
   protected void initializeControls(PsiExpression initializerExpression, BaseExpressionToFieldHandler.InitializationPlace ourLastInitializerPlace) {
     initializeInitializerPlace(initializerExpression, ourLastInitializerPlace);
     String ourLastVisibility = JavaRefactoringSettings.getInstance().INTRODUCE_FIELD_VISIBILITY;
+    if (ourLastVisibility == null) {
+      ourLastVisibility = PsiModifier.PRIVATE;
+    }
     myVisibilityPanel.setVisibility(ourLastVisibility);
     super.initializeControls(initializerExpression, ourLastInitializerPlace);
   }
 
+  @Override
   protected void initializeInitializerPlace(PsiExpression initializerExpression,
                                             BaseExpressionToFieldHandler.InitializationPlace ourLastInitializerPlace) {
     if (initializerExpression != null) {
-      setEnabledInitializationPlaces(initializerExpression, initializerExpression);
+      setEnabledInitializationPlaces(initializerExpression);
       if (!myAllowInitInMethod) {
         myRbInCurrentMethod.setEnabled(false);
       }
@@ -108,6 +110,7 @@ public class IntroduceFieldDialogPanel extends IntroduceFieldCentralPanel {
     }
   }
 
+  @Override
   public BaseExpressionToFieldHandler.InitializationPlace getInitializerPlace() {
     if (myRbInConstructor.isSelected()) {
       return BaseExpressionToFieldHandler.InitializationPlace.IN_CONSTRUCTOR;
@@ -126,10 +129,12 @@ public class IntroduceFieldDialogPanel extends IntroduceFieldCentralPanel {
     return BaseExpressionToFieldHandler.InitializationPlace.IN_FIELD_DECLARATION;
   }
 
+  @Override
   public String getFieldVisibility() {
     return myVisibilityPanel.getVisibility();
   }
 
+  @Override
   protected JComponent createInitializerPlacePanel(ItemListener itemListener, ItemListener finalUpdater) {
     JPanel mainPanel = new JPanel();
     mainPanel.setLayout(new BorderLayout());
@@ -195,18 +200,33 @@ public class IntroduceFieldDialogPanel extends IntroduceFieldCentralPanel {
   }
 
   @Override
-  protected boolean updateInitializationPlaceModel() {
-    myRbInFieldDeclaration.setEnabled(false);
-    myRbInConstructor.setEnabled(false);
-    if (myRbInSetUp != null) myRbInSetUp.setEnabled(false);
+  protected boolean updateInitializationPlaceModel(boolean initializedInSetup, boolean initializedInConstructor, boolean locals) {
+    if (locals) {
+      myRbInFieldDeclaration.setEnabled(false);
+    }
+    myRbInConstructor.setEnabled(initializedInConstructor);
     enableFinal(false);
+    if (myRbInSetUp != null){
+      if (!initializedInSetup) {
+        myRbInSetUp.setEnabled(false);
+      } else {
+        return true;
+      }
+    }
     return false;
   }
 
+  @Override
+  protected boolean hasSetUpChoice() {
+    return myRbInSetUp != null;
+  }
+
+  @Override
   public void setInitializeInFieldDeclaration() {
     myRbInFieldDeclaration.setSelected(true);
   }
 
+  @Override
   public void setVisibility(String visibility) {
     myVisibilityPanel.setVisibility(visibility);
   }
@@ -230,11 +250,12 @@ public class IntroduceFieldDialogPanel extends IntroduceFieldCentralPanel {
     }
   }
 
+  @Override
   protected JPanel composeWholePanel(JComponent initializerPlacePanel, JPanel checkboxPanel) {
     JPanel panel = new JPanel(new GridBagLayout());
     final GridBagConstraints constraints =
       new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 0, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE,
-                             new Insets(0, 0, 0, 0), 0, 0);
+                             JBUI.emptyInsets(), 0, 0);
     panel.add(initializerPlacePanel, constraints);
     panel.add(checkboxPanel, constraints);
     return panel;

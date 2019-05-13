@@ -1,0 +1,3 @@
+a = """This line is ok,
+       but "this" includes far too much
+       whitespace at the start"""

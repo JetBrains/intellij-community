@@ -39,6 +39,7 @@ public class XPath2TreatAsImpl extends XPath2ElementImpl implements XPath2TreatA
     return node != null ? node.getDeclaredType() : XPathType.UNKNOWN;
   }
 
+  @Override
   public void accept(XPath2ElementVisitor visitor) {
     visitor.visitXPath2TreatAs(this);
   }

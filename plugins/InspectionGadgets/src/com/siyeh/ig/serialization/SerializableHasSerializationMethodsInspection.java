@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2018 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,17 +15,20 @@
  */
 package com.siyeh.ig.serialization;
 
-import com.intellij.psi.PsiAnonymousClass;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiEnumConstantInitializer;
-import com.intellij.psi.PsiTypeParameter;
+import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.psi.*;
+import com.intellij.util.ui.CheckBox;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.psiutils.SerializationUtils;
+import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
-public class SerializableHasSerializationMethodsInspection
-  extends SerializableInspection {
+import javax.swing.*;
+
+public class SerializableHasSerializationMethodsInspection extends SerializableInspectionBase {
+
+  public boolean ignoreClassWithoutFields = false;
 
   @Override
   @NotNull
@@ -51,6 +54,19 @@ public class SerializableHasSerializationMethodsInspection
       return InspectionGadgetsBundle.message(
         "serializable.has.serialization.methods.problem.descriptor2");
     }
+  }
+
+  @NotNull
+  @Override
+  protected JComponent[] createAdditionalOptions() {
+    return new JComponent[] {new CheckBox(InspectionGadgetsBundle.message("serializable.has.serialization.methods.ignore.option"),
+                                          this, "ignoreClassWithoutFields")};
+  }
+
+  @Override
+  public void writeSettings(@NotNull Element node) throws WriteExternalException {
+    defaultWriteSettings(node, "ignoreClassWithoutFields");
+    writeBooleanOption(node, "ignoreClassWithoutFields", false);
   }
 
   @Override
@@ -88,6 +104,20 @@ public class SerializableHasSerializationMethodsInspection
       }
       if (isIgnoredSubclass(aClass)) {
         return;
+      }
+      if (ignoreClassWithoutFields) {
+        final PsiField[] fields = aClass.getFields();
+        boolean hasField = false;
+        for (PsiField field : fields) {
+          if (field.hasModifierProperty(PsiModifier.STATIC)) {
+            continue;
+          }
+          hasField = true;
+          break;
+        }
+        if (!hasField) {
+          return;
+        }
       }
       registerClassError(aClass, Boolean.valueOf(hasReadObject),
                          Boolean.valueOf(hasWriteObject));

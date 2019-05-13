@@ -35,10 +35,9 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
 public class PsiInlineDocTagImpl extends CompositePsiElement implements PsiInlineDocTag, Constants {
-  private static final TokenSet TAG_VALUE_BIT_SET = TokenSet.create(
-    DOC_TAG_VALUE_ELEMENT, DOC_METHOD_OR_FIELD_REF);
+  private static final TokenSet TAG_VALUE_BIT_SET = TokenSet.create(DOC_TAG_VALUE_ELEMENT, DOC_METHOD_OR_FIELD_REF);
   private static final TokenSet VALUE_BIT_SET = TokenSet.orSet(TAG_VALUE_BIT_SET, TokenSet.create(
-    JAVA_CODE_REFERENCE, DOC_TAG_VALUE_TOKEN, DOC_COMMENT_DATA, DOC_INLINE_TAG, DOC_REFERENCE_HOLDER, WHITE_SPACE, DOC_COMMENT_BAD_CHARACTER));
+    JAVA_CODE_REFERENCE, DOC_TAG_VALUE_TOKEN, WHITE_SPACE, DOC_COMMENT_DATA, DOC_INLINE_TAG, DOC_REFERENCE_HOLDER, DOC_COMMENT_BAD_CHARACTER));
 
   public PsiInlineDocTagImpl() {
     super(DOC_INLINE_TAG);
@@ -58,6 +57,7 @@ public class PsiInlineDocTagImpl extends CompositePsiElement implements PsiInlin
     return findPsiChildByType(DOC_TAG_NAME);
   }
 
+  @NotNull
   @Override
   public PsiElement[] getDataElements() {
     return getChildrenAsPsiElements(VALUE_BIT_SET, PsiElement.ARRAY_FACTORY);
@@ -68,6 +68,7 @@ public class PsiInlineDocTagImpl extends CompositePsiElement implements PsiInlin
     return (PsiDocTagValue)findPsiChildByType(TAG_VALUE_BIT_SET);
   }
 
+  @NotNull
   @Override
   public String getName() {
     final PsiElement nameElement = getNameElement();
@@ -76,7 +77,7 @@ public class PsiInlineDocTagImpl extends CompositePsiElement implements PsiInlin
   }
 
   @Override
-  public int getChildRole(ASTNode child) {
+  public int getChildRole(@NotNull ASTNode child) {
     assert child.getTreeParent() == this : child.getTreeParent();
     IElementType i = child.getElementType();
     if (i == DOC_TAG_NAME) {
@@ -109,6 +110,7 @@ public class PsiInlineDocTagImpl extends CompositePsiElement implements PsiInlin
     }
   }
 
+  @Override
   public String toString() {
     PsiElement nameElement = getNameElement();
     return "PsiInlineDocTag:" + (nameElement != null ? nameElement.getText() : null);

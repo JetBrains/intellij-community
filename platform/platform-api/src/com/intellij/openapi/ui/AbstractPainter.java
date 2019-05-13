@@ -16,20 +16,21 @@
 
 package com.intellij.openapi.ui;
 
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.Set;
-import java.util.HashSet;
+import java.util.List;
 
 public abstract class AbstractPainter implements Painter {
 
   private boolean myNeedsRepaint;
 
-  private final Set<Listener> myListeners = new HashSet<Listener>();
+  private final List<Listener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
 
 
+  @Override
   public boolean needsRepaint() {
     return myNeedsRepaint;
   }
@@ -45,10 +46,12 @@ public abstract class AbstractPainter implements Painter {
     }
   }
 
+  @Override
   public void addListener(final Listener listener) {
     myListeners.add(listener);
   }
 
+  @Override
   public void removeListener(final Listener listener) {
     myListeners.remove(listener);
   }
@@ -89,6 +92,7 @@ public abstract class AbstractPainter implements Painter {
     }
   }
 
+  @Override
   public final void paint(final Component component, final Graphics2D g) {
     myNeedsRepaint = false;
     executePaint(component, g);

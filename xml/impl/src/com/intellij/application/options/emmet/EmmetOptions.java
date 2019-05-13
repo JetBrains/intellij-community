@@ -1,85 +1,48 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.application.options.emmet;
 
-import com.intellij.application.options.editor.WebEditorOptions;
-import com.intellij.openapi.application.PathManager;
-import com.intellij.openapi.components.*;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.JDOMUtil;
+import com.intellij.codeInsight.template.emmet.filters.ZenCodingFilter;
+import com.intellij.codeInsight.template.impl.TemplateSettings;
+import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.components.State;
+import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.XmlSerializerUtil;
-import com.intellij.xml.XmlBundle;
-import org.jdom.Document;
-import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
-import java.util.List;
-import java.util.Map;
+import java.util.Set;
 
-import static com.google.common.collect.Lists.newLinkedList;
-import static com.google.common.collect.Maps.newHashMap;
-import static com.google.common.io.Resources.getResource;
-
-/**
- * User: zolotov
- * Date: 2/20/13
- */
 @State(
   name = "EmmetOptions",
-  storages = {
-    @Storage(
-      file = StoragePathMacros.APP_CONFIG + "/emmet.xml"
-    )}
+  storages = @Storage("emmet.xml")
 )
-public class EmmetOptions implements PersistentStateComponent<EmmetOptions>, ExportableComponent {
-  private boolean myEnableBemFilterByDefault = false;
-  private boolean myEmmetEnabled = WebEditorOptions.getInstance().isZenCodingEnabled();
-  private int myEmmetExpandShortcut = WebEditorOptions.getInstance().getZenCodingExpandShortcut();
-  private boolean myAutoInsertCssPrefixedEnabled = true;
-  @Nullable
-  private Map<String, Integer> prefixes = null;
+public class EmmetOptions implements PersistentStateComponent<EmmetOptions> {
+  private boolean myEmmetEnabled = true;
+  private int myEmmetExpandShortcut = TemplateSettings.TAB_CHAR;
+  private boolean myPreviewEnabled = false;
+  @NotNull
+  private Set<String> myFiltersEnabledByDefault = ContainerUtil.newHashSet();
+  private boolean myHrefAutoDetectEnabled = true;
+  private boolean myAddEditPointAtTheEndOfTemplate = false;
 
-  public void setPrefixInfo(List<CssPrefixInfo> prefixInfos) {
-    prefixes = newHashMap();
-    for (CssPrefixInfo state : prefixInfos) {
-      prefixes.put(state.getPropertyName(), state.toIntegerValue());
-    }
+  @NotNull private String myBemElementSeparator = "__";
+  @NotNull private String myBemModifierSeparator = "_";
+  @NotNull private String myBemShortElementPrefix = "-";
+
+  @NotNull
+  public Set<String> getFiltersEnabledByDefault() {
+    return myFiltersEnabledByDefault;
   }
 
-  public CssPrefixInfo getPrefixStateForProperty(String propertyName) {
-    return CssPrefixInfo.fromIntegerValue(propertyName, getPrefixes().get(propertyName));
+  public void setFiltersEnabledByDefault(@NotNull Set<String> filtersEnabledByDefault) {
+    myFiltersEnabledByDefault = filtersEnabledByDefault;
   }
 
-  public List<CssPrefixInfo> getAllPrefixInfo() {
-    List<CssPrefixInfo> result = newLinkedList();
-    for (Map.Entry<String, Integer> entry : getPrefixes().entrySet()) {
-      result.add(CssPrefixInfo.fromIntegerValue(entry.getKey(), entry.getValue()));
-    }
-    return result;
-  }
-
-  public boolean isBemFilterEnabledByDefault() {
-    return myEnableBemFilterByDefault;
-  }
-
-  public void setEnableBemFilterByDefault(boolean enableBemFilterByDefault) {
-    myEnableBemFilterByDefault = enableBemFilterByDefault;
+  public boolean isFilterEnabledByDefault(@NotNull ZenCodingFilter filter) {
+    return myFiltersEnabledByDefault.contains(filter.getSuffix());
   }
 
   public void setEmmetExpandShortcut(int emmetExpandShortcut) {
@@ -90,6 +53,14 @@ public class EmmetOptions implements PersistentStateComponent<EmmetOptions>, Exp
     return myEmmetExpandShortcut;
   }
 
+  public boolean isPreviewEnabled() {
+    return myPreviewEnabled;
+  }
+
+  public void setPreviewEnabled(boolean previewEnabled) {
+    myPreviewEnabled = previewEnabled;
+  }
+
   public boolean isEmmetEnabled() {
     return myEmmetEnabled;
   }
@@ -98,24 +69,47 @@ public class EmmetOptions implements PersistentStateComponent<EmmetOptions>, Exp
     myEmmetEnabled = emmetEnabled;
   }
 
-  public boolean isAutoInsertCssPrefixedEnabled() {
-    return myAutoInsertCssPrefixedEnabled;
+  public void setHrefAutoDetectEnabled(boolean hrefAutoDetectEnabled) {
+    myHrefAutoDetectEnabled = hrefAutoDetectEnabled;
   }
 
-  public void setAutoInsertCssPrefixedEnabled(boolean autoInsertCssPrefixedEnabled) {
-    myAutoInsertCssPrefixedEnabled = autoInsertCssPrefixedEnabled;
+  public boolean isHrefAutoDetectEnabled() {
+    return myHrefAutoDetectEnabled;
+  }
+
+  public boolean isAddEditPointAtTheEndOfTemplate() {
+    return myAddEditPointAtTheEndOfTemplate;
+  }
+
+  public void setAddEditPointAtTheEndOfTemplate(boolean addEditPointAtTheEndOfTemplate) {
+    myAddEditPointAtTheEndOfTemplate = addEditPointAtTheEndOfTemplate;
   }
 
   @NotNull
-  @Override
-  public File[] getExportFiles() {
-    return new File[]{PathManager.getOptionsFile("emmet")};
+  public String getBemElementSeparator() {
+    return myBemElementSeparator;
+  }
+
+  public void setBemElementSeparator(@Nullable String bemElementSeparator) {
+    myBemElementSeparator = StringUtil.notNullize(bemElementSeparator);
   }
 
   @NotNull
-  @Override
-  public String getPresentableName() {
-    return XmlBundle.message("emmet.configuration.title");
+  public String getBemModifierSeparator() {
+    return myBemModifierSeparator;
+  }
+
+  public void setBemModifierSeparator(@Nullable String bemModifierSeparator) {
+    myBemModifierSeparator = StringUtil.notNullize(bemModifierSeparator);
+  }
+
+  @NotNull
+  public String getBemShortElementPrefix() {
+    return myBemShortElementPrefix;
+  }
+
+  public void setBemShortElementPrefix(@Nullable String bemShortElementPrefix) {
+    myBemShortElementPrefix = StringUtil.notNullize(bemShortElementPrefix);
   }
 
   @Nullable
@@ -124,46 +118,12 @@ public class EmmetOptions implements PersistentStateComponent<EmmetOptions>, Exp
     return this;
   }
 
-  public void loadState(final EmmetOptions state) {
+  @Override
+  public void loadState(@NotNull final EmmetOptions state) {
     XmlSerializerUtil.copyBean(state, this);
   }
 
   public static EmmetOptions getInstance() {
     return ServiceManager.getService(EmmetOptions.class);
-  }
-
-  @SuppressWarnings("UnusedDeclaration")
-  @NotNull
-  public Map<String, Integer> getPrefixes() {
-    if (prefixes == null) {
-      prefixes = loadDefaultPrefixes();
-    }
-    return prefixes;
-  }
-
-  @SuppressWarnings("UnusedDeclaration")
-  public void setPrefixes(@Nullable Map<String, Integer> prefixes) {
-    this.prefixes = prefixes;
-  }
-
-  public static Map<String, Integer> loadDefaultPrefixes() {
-    Map<String, Integer> result = newHashMap();
-    try {
-      Document document = JDOMUtil.loadDocument(getResource(EmmetOptions.class, "emmet_default_options.xml"));
-      Element prefixesElement = document.getRootElement().getChild("prefixes");
-      if (prefixesElement != null) {
-        for (Object entry : prefixesElement.getChildren("entry")) {
-          Element entryElement = (Element)entry;
-          String propertyName = entryElement.getAttributeValue("key");
-          Integer value = StringUtil.parseInt(entryElement.getAttributeValue("value"), 0);
-          result.put(propertyName, value);
-        }
-      }
-    }
-    catch (Exception e) {
-      Logger.getInstance(EmmetOptions.class).warn(e);
-      return result;
-    }
-    return result;
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,6 @@ import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.lang.parameterInfo.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
-import com.intellij.util.Function;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -35,17 +34,12 @@ public class ReferenceParameterInfoHandler implements ParameterInfoHandler<PsiRe
   }
 
   @Override
-  public Object[] getParametersForDocumentation(final PsiTypeParameter p, final ParameterInfoContext context) {
-    return new Object[] {p};
-  }
-
-  @Override
   public boolean couldShowInLookup() {
     return false;
   }
 
   @Override
-  public PsiReferenceParameterList findElementForParameterInfo(final CreateParameterInfoContext context) {
+  public PsiReferenceParameterList findElementForParameterInfo(@NotNull final CreateParameterInfoContext context) {
     final PsiReferenceParameterList referenceParameterList =
       ParameterInfoUtils.findParentOfType(context.getFile(), context.getOffset(), PsiReferenceParameterList.class);
 
@@ -66,52 +60,36 @@ public class ReferenceParameterInfoHandler implements ParameterInfoHandler<PsiRe
   }
 
   @Override
-  public void showParameterInfo(@NotNull final PsiReferenceParameterList element, final CreateParameterInfoContext context) {
+  public void showParameterInfo(@NotNull final PsiReferenceParameterList element, @NotNull final CreateParameterInfoContext context) {
     context.showHint(element, element.getTextRange().getStartOffset() + 1, this);
   }
 
   @Override
-  public PsiReferenceParameterList findElementForUpdatingParameterInfo(final UpdateParameterInfoContext context) {
+  public PsiReferenceParameterList findElementForUpdatingParameterInfo(@NotNull final UpdateParameterInfoContext context) {
     return ParameterInfoUtils.findParentOfType(context.getFile(), context.getOffset(), PsiReferenceParameterList.class);
   }
 
   @Override
-  public void updateParameterInfo(@NotNull final PsiReferenceParameterList o, final UpdateParameterInfoContext context) {
-    int index = ParameterInfoUtils.getCurrentParameterIndex(o.getNode(), context.getOffset(), JavaTokenType.COMMA);
+  public void updateParameterInfo(@NotNull final PsiReferenceParameterList parameterOwner, @NotNull final UpdateParameterInfoContext context) {
+    int index = ParameterInfoUtils.getCurrentParameterIndex(parameterOwner.getNode(), context.getOffset(), JavaTokenType.COMMA);
     context.setCurrentParameter(index);
     final Object[] objectsToView = context.getObjectsToView();
     context.setHighlightedParameter(index < objectsToView.length && index >= 0 ? (PsiElement)objectsToView[index]:null);
   }
 
   @Override
-  @NotNull
-  public String getParameterCloseChars() {
-    return ",>";
-  }
-
-  @Override
-  public boolean tracksParameterIndex() {
-    return true;
-  }
-
-  @Override
-  public void updateUI(PsiTypeParameter o, ParameterInfoUIContext context) {
+  public void updateUI(PsiTypeParameter o, @NotNull ParameterInfoUIContext context) {
     updateTypeParameter(o, context);
   }
 
   private static void updateTypeParameter(PsiTypeParameter typeParameter, ParameterInfoUIContext context) {
-    @NonNls StringBuffer buffer = new StringBuffer();
+    @NonNls StringBuilder buffer = new StringBuilder();
     buffer.append(typeParameter.getName());
     int highlightEndOffset = buffer.length();
     buffer.append(" extends ");
     buffer.append(StringUtil.join(
       Arrays.asList(typeParameter.getSuperTypes()),
-      new Function<PsiClassType, String>() {
-        @Override
-        public String fun(final PsiClassType t) {
-          return t.getPresentableText();
-        }
-      }, ", "));
+      t -> t.getPresentableText(), ", "));
 
     context.setupUIComponentPresentation(buffer.toString(), 0, highlightEndOffset, false, false, false,
                                          context.getDefaultParameterColor());

@@ -25,13 +25,13 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Apr 21, 2010
  */
 public abstract class AntDomDirname extends AntDomPropertyDefiningTask {
   @Attribute("file")
   @Convert(value = AntPathConverter.class)
   public abstract GenericAttributeValue<PsiFileSystemItem> getFile();
 
+  @Override
   @Nullable
   protected final String calcPropertyValue(String propertyName) {
     final PsiFileSystemItem fsItem = getFile().getValue();

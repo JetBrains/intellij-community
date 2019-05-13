@@ -1,26 +1,13 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.options.colors;
 
+import com.intellij.openapi.editor.colors.ColorKey;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
-import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.fileTypes.SyntaxHighlighter;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import java.util.Map;
@@ -49,7 +36,7 @@ public interface ColorSettingsPage extends ColorAndFontDescriptorsProvider {
   /**
    * Returns the text shown in the preview pane. If some elements need to be highlighted in
    * the preview text which are not highlighted by the syntax highlighter, they need to be
-   * surrounded by XML-like tags, for example: <code>&lt;class&gt;MyClass&lt;/class&gt;</code>.
+   * surrounded by XML-like tags, for example: {@code <class>MyClass</class>}.
    * The mapping between the names of the tags and the text attribute keys used for highlighting
    * is defined by the {@link #getAdditionalHighlightingTagToDescriptorMap()} method.
    *
@@ -66,4 +53,12 @@ public interface ColorSettingsPage extends ColorAndFontDescriptorsProvider {
    * does not contain any additional highlighting tags.
    */
   @Nullable Map<String,TextAttributesKey> getAdditionalHighlightingTagToDescriptorMap();
+
+  @Nullable default Map<String,TextAttributesKey> getAdditionalInlineElementToDescriptorMap() { return null; }
+
+  /**
+   * Specifies tag-to-'color key' mapping for regions with presentation containing additional colors from color map. 
+   * It's used to implement navigation between the list of keys and regions in sample editor.
+   */
+  @Nullable default Map<String, ColorKey> getAdditionalHighlightingTagToColorKeyMap() { return null; }
 }

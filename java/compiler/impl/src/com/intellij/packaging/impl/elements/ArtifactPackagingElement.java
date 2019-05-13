@@ -1,26 +1,10 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.packaging.impl.elements;
 
 import com.intellij.compiler.ant.BuildProperties;
 import com.intellij.compiler.ant.Generator;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.artifacts.ArtifactPointer;
 import com.intellij.packaging.artifacts.ArtifactPointerManager;
@@ -58,6 +42,7 @@ public class ArtifactPackagingElement extends ComplexPackagingElement<ArtifactPa
     myArtifactPointer = artifactPointer;
   }
 
+  @Override
   public List<? extends PackagingElement<?>> getSubstitution(@NotNull PackagingElementResolvingContext context, @NotNull ArtifactType artifactType) {
     final Artifact artifact = findArtifact(context);
     if (artifact != null) {
@@ -67,7 +52,7 @@ public class ArtifactPackagingElement extends ComplexPackagingElement<ArtifactPa
         return substitution;
       }
 
-      final List<PackagingElement<?>> elements = new ArrayList<PackagingElement<?>>();
+      final List<PackagingElement<?>> elements = new ArrayList<>();
       final CompositePackagingElement<?> rootElement = artifact.getRootElement();
       if (rootElement instanceof ArtifactRootElement<?>) {
         elements.addAll(rootElement.getChildren());
@@ -80,6 +65,7 @@ public class ArtifactPackagingElement extends ComplexPackagingElement<ArtifactPa
     return null;
   }
 
+  @NotNull
   @Override
   public List<? extends Generator> computeAntInstructions(@NotNull PackagingElementResolvingContext resolvingContext, @NotNull AntCopyInstructionCreator creator,
                                                           @NotNull ArtifactAntGenerationContext generationContext,
@@ -96,50 +82,12 @@ public class ArtifactPackagingElement extends ComplexPackagingElement<ArtifactPa
   }
 
   @Override
-  public void computeIncrementalCompilerInstructions(@NotNull IncrementalCompilerInstructionCreator creator,
-                                                     @NotNull PackagingElementResolvingContext resolvingContext,
-                                                     @NotNull ArtifactIncrementalCompilerContext compilerContext,
-                                                     @NotNull ArtifactType artifactType) {
-    Artifact artifact = findArtifact(resolvingContext);
-    if (artifact == null) return;
-
-    if (StringUtil.isEmpty(artifact.getOutputPath())
-        || artifact.getArtifactType().getSubstitution(artifact, resolvingContext, artifactType) != null) {
-      super.computeIncrementalCompilerInstructions(creator, resolvingContext, compilerContext, artifactType);
-      return;
-    }
-
-    VirtualFile outputFile = artifact.getOutputFile();
-    if (outputFile == null) {
-      LOG.debug("Output file for " + artifact + " not found");
-      return;
-    }
-    if (!outputFile.isValid()) {
-      LOG.debug("Output file for " + artifact + "(" + outputFile + ") is not valid");
-      return;
-    }
-
-    if (outputFile.isDirectory()) {
-      creator.addDirectoryCopyInstructions(outputFile);
-    }
-    else {
-      creator.addFileCopyInstruction(outputFile, outputFile.getName());
-    }
-  }
-
-  @Override
-  protected ArtifactType getArtifactTypeForSubstitutedElements(PackagingElementResolvingContext resolvingContext, ArtifactType artifactType) {
-    final Artifact artifact = findArtifact(resolvingContext);
-    if (artifact != null) {
-      return artifact.getArtifactType();
-    }
-    return artifactType;
-  }
-
+  @NotNull
   public PackagingElementPresentation createPresentation(@NotNull ArtifactEditorContext context) {
     return new DelegatedPackagingElementPresentation(new ArtifactElementPresentation(myArtifactPointer, context));
   }
 
+  @Override
   public ArtifactPackagingElementState getState() {
     final ArtifactPackagingElementState state = new ArtifactPackagingElementState();
     if (myArtifactPointer != null) {
@@ -148,7 +96,8 @@ public class ArtifactPackagingElement extends ComplexPackagingElement<ArtifactPa
     return state;
   }
 
-  public void loadState(ArtifactPackagingElementState state) {
+  @Override
+  public void loadState(@NotNull ArtifactPackagingElementState state) {
     final String name = state.getArtifactName();
     myArtifactPointer = name != null ? ArtifactPointerManager.getInstance(myProject).createPointer(name) : null;
   }

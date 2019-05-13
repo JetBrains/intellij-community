@@ -17,9 +17,9 @@
 package com.intellij.uiDesigner.snapShooter;
 
 import com.intellij.uiDesigner.FormEditingUtil;
+import com.intellij.uiDesigner.palette.Palette;
 import com.intellij.uiDesigner.propertyInspector.IntrospectedProperty;
 import com.intellij.uiDesigner.propertyInspector.properties.IntroComponentProperty;
-import com.intellij.uiDesigner.palette.Palette;
 import com.intellij.uiDesigner.radComponents.RadButtonGroup;
 import com.intellij.uiDesigner.radComponents.RadComponent;
 import com.intellij.uiDesigner.radComponents.RadRootContainer;
@@ -33,22 +33,22 @@ import java.util.*;
 public class SnapshotContext {
   private final Palette myPalette;
   private final RadRootContainer myRootContainer;
-  private final Set<ButtonGroup> myButtonGroups = new HashSet<ButtonGroup>();
-  private final Map<JComponent, RadComponent> myImportMap = new HashMap<JComponent, RadComponent>();
+  private final Set<ButtonGroup> myButtonGroups = new HashSet<>();
+  private final Map<JComponent, RadComponent> myImportMap = new HashMap<>();
 
   private static class ComponentProperty {
     public JComponent owner;
     public String name;
     public JComponent value;
 
-    public ComponentProperty(final JComponent owner, final String name, final JComponent value) {
+    ComponentProperty(final JComponent owner, final String name, final JComponent value) {
       this.owner = owner;
       this.name = name;
       this.value = value;
     }
   }
 
-  private final List<ComponentProperty> myComponentProperties = new ArrayList<ComponentProperty>();
+  private final List<ComponentProperty> myComponentProperties = new ArrayList<>();
 
   public SnapshotContext() {
     myPalette = new Palette(null);
@@ -93,7 +93,6 @@ public class SnapshotContext {
       if (radOwner != null && radValue != null) {
         final IntrospectedProperty property = radOwner.getPalette().getIntrospectedProperty(radOwner, prop.name);
         assert property != null;
-        //noinspection unchecked
         IntroComponentProperty icp = (IntroComponentProperty) property;
         try {
           icp.setValue(radOwner, radValue.getId());

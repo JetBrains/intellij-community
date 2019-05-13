@@ -1,54 +1,48 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xdebugger.impl.breakpoints;
 
+import com.intellij.configurationStore.ComponentSerializationUtil;
 import com.intellij.icons.AllIcons;
-import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
-import com.intellij.openapi.actionSystem.Separator;
 import com.intellij.openapi.editor.markup.GutterDraggableObject;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.UserDataHolderBase;
+import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.Navigatable;
-import com.intellij.util.StringBuilderSpinAllocator;
+import com.intellij.ui.ColorUtil;
+import com.intellij.ui.JBColor;
+import com.intellij.ui.LayeredIcon;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.xmlb.SkipDefaultValuesSerializationFilters;
 import com.intellij.util.xmlb.XmlSerializer;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebuggerBundle;
-import com.intellij.xdebugger.XDebuggerManager;
+import com.intellij.xdebugger.XExpression;
 import com.intellij.xdebugger.XSourcePosition;
-import com.intellij.xdebugger.breakpoints.*;
+import com.intellij.xdebugger.breakpoints.SuspendPolicy;
+import com.intellij.xdebugger.breakpoints.XBreakpoint;
+import com.intellij.xdebugger.breakpoints.XBreakpointProperties;
+import com.intellij.xdebugger.breakpoints.XBreakpointType;
 import com.intellij.xdebugger.impl.DebuggerSupport;
 import com.intellij.xdebugger.impl.XDebugSessionImpl;
 import com.intellij.xdebugger.impl.XDebuggerSupport;
 import com.intellij.xdebugger.impl.XDebuggerUtilImpl;
 import com.intellij.xdebugger.impl.actions.EditBreakpointAction;
-import com.intellij.xdebugger.impl.actions.ViewBreakpointsAction;
-import com.intellij.xdebugger.impl.actions.XDebuggerActions;
+import com.intellij.xml.CommonXmlStrings;
+import com.intellij.xml.util.XmlStringUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.Collections;
 import java.util.List;
 
 /**
@@ -56,19 +50,25 @@ import java.util.List;
  */
 public class XBreakpointBase<Self extends XBreakpoint<P>, P extends XBreakpointProperties, S extends BreakpointState> extends UserDataHolderBase implements XBreakpoint<P>, Comparable<Self> {
   private static final SkipDefaultValuesSerializationFilters SERIALIZATION_FILTERS = new SkipDefaultValuesSerializationFilters();
-  @NonNls private static final String BR_NBSP = "<br>&nbsp;";
+  @NonNls private static final String BR_NBSP = "<br>" + CommonXmlStrings.NBSP;
   private final XBreakpointType<Self, P> myType;
   private final @Nullable P myProperties;
   protected final S myState;
   private final XBreakpointManagerImpl myBreakpointManager;
   private Icon myIcon;
   private CustomizedBreakpointPresentation myCustomizedPresentation;
+  private boolean myConditionEnabled = true;
+  private XExpression myCondition;
+  private boolean myLogExpressionEnabled = true;
+  private XExpression myLogExpression;
+  private volatile boolean myDisposed;
 
   public XBreakpointBase(final XBreakpointType<Self, P> type, XBreakpointManagerImpl breakpointManager, final @Nullable P properties, final S state) {
     myState = state;
     myType = type;
     myProperties = properties;
     myBreakpointManager = breakpointManager;
+    initExpressions();
   }
 
   protected XBreakpointBase(final XBreakpointType<Self, P> type, XBreakpointManagerImpl breakpointManager, S breakpointState) {
@@ -77,16 +77,21 @@ public class XBreakpointBase<Self extends XBreakpoint<P>, P extends XBreakpointP
     myBreakpointManager = breakpointManager;
     myProperties = type.createProperties();
     if (myProperties != null) {
-      //noinspection unchecked
-      Element element = myState.getPropertiesElement();
-      if (element != null) {
-        //noinspection unchecked
-        myProperties.loadState(XmlSerializer.deserialize(element, XDebuggerUtilImpl.getStateClass(myProperties.getClass())));
-      }
+      ComponentSerializationUtil.loadComponentState(myProperties, myState.getPropertiesElement());
     }
+    initExpressions();
   }
 
-  protected final Project getProject() {
+  private void initExpressions() {
+    myConditionEnabled = myState.isConditionEnabled();
+    BreakpointState.Condition condition = myState.getCondition();
+    myCondition = condition != null ? condition.toXExpression() : null;
+    myLogExpressionEnabled = myState.isLogExpressionEnabled();
+    BreakpointState.LogExpression expression = myState.getLogExpression();
+    myLogExpression = expression != null ? expression.toXExpression() : null;
+  }
+
+  public final Project getProject() {
     return myBreakpointManager.getProject();
   }
 
@@ -99,10 +104,12 @@ public class XBreakpointBase<Self extends XBreakpoint<P>, P extends XBreakpointP
     myBreakpointManager.fireBreakpointChanged(this);
   }
 
+  @Override
   public XSourcePosition getSourcePosition() {
     return getType().getSourcePosition(this);
   }
 
+  @Override
   public Navigatable getNavigatable() {
     XSourcePosition position = getSourcePosition();
     if (position == null) {
@@ -111,10 +118,12 @@ public class XBreakpointBase<Self extends XBreakpoint<P>, P extends XBreakpointP
     return position.createNavigatable(getProject());
   }
 
+  @Override
   public boolean isEnabled() {
     return myState.isEnabled();
   }
 
+  @Override
   public void setEnabled(final boolean enabled) {
     if (enabled != isEnabled()) {
       myState.setEnabled(enabled);
@@ -122,11 +131,13 @@ public class XBreakpointBase<Self extends XBreakpoint<P>, P extends XBreakpointP
     }
   }
 
+  @Override
   @NotNull
   public SuspendPolicy getSuspendPolicy() {
     return myState.getSuspendPolicy();
   }
 
+  @Override
   public void setSuspendPolicy(@NotNull SuspendPolicy policy) {
     if (myState.getSuspendPolicy() != policy) {
       myState.setSuspendPolicy(policy);
@@ -134,10 +145,12 @@ public class XBreakpointBase<Self extends XBreakpoint<P>, P extends XBreakpointP
     }
   }
 
+  @Override
   public boolean isLogMessage() {
     return myState.isLogMessage();
   }
 
+  @Override
   public void setLogMessage(final boolean logMessage) {
     if (logMessage != isLogMessage()) {
       myState.setLogMessage(logMessage);
@@ -145,24 +158,101 @@ public class XBreakpointBase<Self extends XBreakpoint<P>, P extends XBreakpointP
     }
   }
 
-  public String getLogExpression() {
-    return myState.getLogExpression();
+  @Override
+  public boolean isLogStack() {
+    return myState.isLogStack();
   }
 
-  public void setLogExpression(@Nullable final String expression) {
-    if (!Comparing.equal(getLogExpression(), expression)) {
-      myState.setLogExpression(expression);
+  @Override
+  public void setLogStack(final boolean logStack) {
+    if (logStack != isLogStack()) {
+      myState.setLogStack(logStack);
       fireBreakpointChanged();
     }
   }
 
-  public String getCondition() {
-    return myState.getCondition();
+  public boolean isConditionEnabled() {
+    return myConditionEnabled;
   }
 
+  public void setConditionEnabled(boolean conditionEnabled) {
+    if (myConditionEnabled != conditionEnabled) {
+      myConditionEnabled = conditionEnabled;
+      fireBreakpointChanged();
+    }
+  }
+
+  public boolean isLogExpressionEnabled() {
+    return myLogExpressionEnabled;
+  }
+
+  public void setLogExpressionEnabled(boolean logExpressionEnabled) {
+    if (myLogExpressionEnabled != logExpressionEnabled) {
+      myLogExpressionEnabled = logExpressionEnabled;
+      fireBreakpointChanged();
+    }
+  }
+
+  @Override
+  public String getLogExpression() {
+    XExpression expression = getLogExpressionObject();
+    return expression != null ? expression.getExpression() : null;
+  }
+
+  @Override
+  public void setLogExpression(@Nullable final String expression) {
+    if (!Comparing.equal(getLogExpression(), expression)) {
+      myLogExpression = XExpressionImpl.fromText(expression);
+      fireBreakpointChanged();
+    }
+  }
+
+  public XExpression getLogExpressionObjectInt() {
+    return myLogExpression;
+  }
+
+  @Nullable
+  @Override
+  public XExpression getLogExpressionObject() {
+    return myLogExpressionEnabled ? myLogExpression : null;
+  }
+
+  @Override
+  public void setLogExpressionObject(@Nullable XExpression expression) {
+    if (!Comparing.equal(myLogExpression, expression)) {
+      myLogExpression = expression;
+      fireBreakpointChanged();
+    }
+  }
+
+  @Override
+  public String getCondition() {
+    XExpression expression = getConditionExpression();
+    return expression != null ? expression.getExpression() : null;
+  }
+
+  @Override
   public void setCondition(@Nullable final String condition) {
     if (!Comparing.equal(condition, getCondition())) {
-      myState.setCondition(condition);
+      myCondition = XExpressionImpl.fromText(condition);
+      fireBreakpointChanged();
+    }
+  }
+
+  public XExpression getConditionExpressionInt() {
+    return myCondition;
+  }
+
+  @Nullable
+  @Override
+  public XExpression getConditionExpression() {
+    return myConditionEnabled ? myCondition : null;
+  }
+
+  @Override
+  public void setConditionExpression(@Nullable XExpression condition) {
+    if (!Comparing.equal(condition, myCondition)) {
+      myCondition = condition;
       fireBreakpointChanged();
     }
   }
@@ -176,18 +266,23 @@ public class XBreakpointBase<Self extends XBreakpoint<P>, P extends XBreakpointP
     return true;
   }
 
+  @Override
   @Nullable
   public P getProperties() {
     return myProperties;
   }
 
+  @Override
   @NotNull
   public XBreakpointType<Self,P> getType() {
     return myType;
   }
 
   public S getState() {
-    Element propertiesElement = myProperties != null ? XmlSerializer.serialize(myProperties.getState(), SERIALIZATION_FILTERS) : null;
+    Element propertiesElement =
+      myProperties == null ? null : JDOMUtil.internElement(XmlSerializer.serialize(myProperties.getState(), SERIALIZATION_FILTERS));
+    myState.setCondition(BreakpointState.Condition.create(!myConditionEnabled, myCondition));
+    myState.setLogExpression(BreakpointState.LogExpression.create(!myLogExpressionEnabled, myLogExpression));
     myState.setPropertiesElement(propertiesElement);
     return myState;
   }
@@ -200,7 +295,33 @@ public class XBreakpointBase<Self extends XBreakpoint<P>, P extends XBreakpointP
     myState.setDependencyState(state);
   }
 
-  public void dispose() {
+  @Nullable
+  public String getGroup() {
+    return myState.getGroup();
+  }
+
+  public void setGroup(String group) {
+    myState.setGroup(StringUtil.nullize(group));
+  }
+
+  public String getUserDescription() {
+    return myState.getDescription();
+  }
+
+  public void setUserDescription(String description) {
+    myState.setDescription(StringUtil.nullize(description));
+  }
+
+  public final void dispose() {
+    myDisposed = true;
+    doDispose();
+  }
+
+  protected void doDispose() {
+  }
+
+  public boolean isDisposed() {
+    return myDisposed;
   }
 
   @Override
@@ -214,96 +335,118 @@ public class XBreakpointBase<Self extends XBreakpoint<P>, P extends XBreakpointP
   }
 
   protected List<? extends AnAction> getAdditionalPopupMenuActions(XDebugSession session) {
-    return Collections.emptyList();
+    return getType().getAdditionalPopupMenuActions((Self)this, session);
   }
 
+  @NotNull
   public String getDescription() {
-    @NonNls StringBuilder builder = StringBuilderSpinAllocator.alloc();
-    try {
-      builder.append("<html><body>");
-      builder.append(XBreakpointUtil.getDisplayText(this));
+    @NonNls StringBuilder builder = new StringBuilder();
+    builder.append(CommonXmlStrings.HTML_START).append(CommonXmlStrings.BODY_START);
+    builder.append(XBreakpointUtil.getDisplayText(this));
 
-      String errorMessage = getErrorMessage();
-      if (errorMessage != null) {
-        builder.append(BR_NBSP);
-        builder.append("<font color=\"red\">");
-        builder.append(errorMessage);
-        builder.append("</font>");
-      }
-
-      SuspendPolicy suspendPolicy = getSuspendPolicy();
-      if (suspendPolicy == SuspendPolicy.THREAD) {
-        builder.append(BR_NBSP).append(XDebuggerBundle.message("xbreakpoint.tooltip.suspend.policy.thread"));
-      }
-      else if (suspendPolicy == SuspendPolicy.NONE) {
-        builder.append(BR_NBSP).append(XDebuggerBundle.message("xbreakpoint.tooltip.suspend.policy.none"));
-      }
-
-      String condition = getCondition();
-      if (condition != null) {
-        builder.append(BR_NBSP);
-        builder.append(XDebuggerBundle.message("xbreakpoint.tooltip.condition"));
-        builder.append("&nbsp;");
-        builder.append(condition);
-      }
-
-      if (isLogMessage()) {
-        builder.append(BR_NBSP).append(XDebuggerBundle.message("xbreakpoint.tooltip.log.message"));
-      }
-      String logExpression = getLogExpression();
-      if (logExpression != null) {
-        builder.append(BR_NBSP);
-        builder.append(XDebuggerBundle.message("xbreakpoint.tooltip.log.expression"));
-        builder.append("&nbsp;");
-        builder.append(logExpression);
-      }
-
-      XBreakpoint<?> masterBreakpoint = getBreakpointManager().getDependentBreakpointManager().getMasterBreakpoint(this);
-      if (masterBreakpoint != null) {
-        builder.append(BR_NBSP);
-        String str = XDebuggerBundle.message("xbreakpoint.tooltip.depends.on");
-        builder.append(str);
-        builder.append("&nbsp;");
-        builder.append(XBreakpointUtil.getDisplayText(masterBreakpoint));
-      }
-
-      builder.append("</body><html");
-      return builder.toString();
+    String errorMessage = getErrorMessage();
+    if (!StringUtil.isEmpty(errorMessage)) {
+      builder.append(BR_NBSP);
+      builder.append("<font color='#").append(ColorUtil.toHex(JBColor.RED)).append("'>");
+      builder.append(errorMessage);
+      builder.append("</font>");
     }
-    finally {
-      StringBuilderSpinAllocator.dispose(builder);
+
+    if (getSuspendPolicy() == SuspendPolicy.NONE) {
+      builder.append(BR_NBSP).append(XDebuggerBundle.message("xbreakpoint.tooltip.suspend.policy.none"));
     }
+    else if (getType().isSuspendThreadSupported()) {
+      builder.append(BR_NBSP);
+      //noinspection EnumSwitchStatementWhichMissesCases
+      switch (getSuspendPolicy()) {
+        case ALL:
+          builder.append(XDebuggerBundle.message("xbreakpoint.tooltip.suspend.policy.all"));
+          break;
+        case THREAD:
+          builder.append(XDebuggerBundle.message("xbreakpoint.tooltip.suspend.policy.thread"));
+          break;
+      }
+    }
+
+    String condition = getCondition();
+    if (!StringUtil.isEmpty(condition)) {
+      builder.append(BR_NBSP);
+      builder.append(XDebuggerBundle.message("xbreakpoint.tooltip.condition"));
+      builder.append(CommonXmlStrings.NBSP);
+      builder.append(XmlStringUtil.escapeString(condition));
+    }
+
+    if (isLogMessage()) {
+      builder.append(BR_NBSP).append(XDebuggerBundle.message("xbreakpoint.tooltip.log.message"));
+    }
+
+    if (isLogStack()) {
+      builder.append(BR_NBSP).append(XDebuggerBundle.message("xbreakpoint.tooltip.log.stack"));
+    }
+
+    String logExpression = getLogExpression();
+    if (!StringUtil.isEmpty(logExpression)) {
+      builder.append(BR_NBSP);
+      builder.append(XDebuggerBundle.message("xbreakpoint.tooltip.log.expression"));
+      builder.append(CommonXmlStrings.NBSP);
+      builder.append(XmlStringUtil.escapeString(logExpression));
+    }
+
+    XBreakpoint<?> masterBreakpoint = getBreakpointManager().getDependentBreakpointManager().getMasterBreakpoint(this);
+    if (masterBreakpoint != null) {
+      builder.append(BR_NBSP);
+      String str = XDebuggerBundle.message("xbreakpoint.tooltip.depends.on");
+      builder.append(str);
+      builder.append(CommonXmlStrings.NBSP);
+      builder.append(XBreakpointUtil.getShortText(masterBreakpoint));
+    }
+
+    builder.append(CommonXmlStrings.BODY_END).append(CommonXmlStrings.HTML_END);
+    return builder.toString();
   }
 
   protected void updateIcon() {
     final Icon icon = calculateSpecialIcon();
-    myIcon = icon != null ? icon : getType().getEnabledIcon();
+    setIcon(icon != null ? icon : getType().getEnabledIcon());
   }
 
   protected void setIcon(Icon icon) {
-    myIcon = icon;
+    if (!XDebuggerUtilImpl.isEmptyExpression(getConditionExpression())) {
+      LayeredIcon newIcon = new LayeredIcon(2);
+      newIcon.setIcon(icon, 0);
+      newIcon.setIcon(AllIcons.Debugger.Question_badge, 1, 10, 6);
+      myIcon = JBUI.scale(newIcon);
+    }
+    else {
+      myIcon = icon;
+    }
   }
 
   @Nullable
   protected final Icon calculateSpecialIcon() {
+    XDebugSessionImpl session = getBreakpointManager().getDebuggerManager().getCurrentSession();
     if (!isEnabled()) {
       // disabled icon takes precedence to other to visually distinguish it and provide feedback then it is enabled/disabled
       // (e.g. in case of mute-mode we would like to differentiate muted but enabled breakpoints from simply disabled ones)
-      return getType().getDisabledIcon();
+      if (session == null || !session.areBreakpointsMuted()) {
+        return getType().getDisabledIcon();
+      }
+      else {
+        return getType().getMutedDisabledIcon();
+      }
     }
 
-    XDebugSessionImpl session = getBreakpointManager().getDebuggerManager().getCurrentSession();
     if (session == null) {
       if (getBreakpointManager().getDependentBreakpointManager().getMasterBreakpoint(this) != null) {
-        return getType().getDisabledDependentIcon();
+        return getType().getInactiveDependentIcon();
       }
     }
     else {
       if (session.areBreakpointsMuted()) {
-        return AllIcons.Debugger.Db_muted_breakpoint;
+        return getType().getMutedEnabledIcon();
       }
-      if (session.isDisabledSlaveBreakpoint(this)) {
-        return getType().getDisabledDependentIcon();
+      if (session.isInactiveSlaveBreakpoint(this)) {
+        return getType().getInactiveDependentIcon();
       }
       CustomizedBreakpointPresentation presentation = session.getBreakpointPresentation(this);
       if (presentation != null) {
@@ -313,6 +456,11 @@ public class XBreakpointBase<Self extends XBreakpoint<P>, P extends XBreakpointP
         }
       }
     }
+
+    if (getSuspendPolicy() == SuspendPolicy.NONE) {
+      return getType().getSuspendNoneIcon();
+    }
+
     if (myCustomizedPresentation != null) {
       final Icon icon = myCustomizedPresentation.getIcon();
       if (icon != null) {
@@ -342,6 +490,10 @@ public class XBreakpointBase<Self extends XBreakpoint<P>, P extends XBreakpointP
     return myCustomizedPresentation != null ? myCustomizedPresentation.getErrorMessage() : null;
   }
 
+  CustomizedBreakpointPresentation getCustomizedPresentation() {
+    return myCustomizedPresentation;
+  }
+
   public void setCustomizedPresentation(CustomizedBreakpointPresentation presentation) {
     myCustomizedPresentation = presentation;
   }
@@ -356,54 +508,63 @@ public class XBreakpointBase<Self extends XBreakpoint<P>, P extends XBreakpointP
   }
 
   @Override
-  public int compareTo(Self self) {
+  public int compareTo(@NotNull Self self) {
     return myType.getBreakpointComparator().compare((Self)this, self);
   }
 
-  protected class BreakpointGutterIconRenderer extends GutterIconRenderer {
+  protected class BreakpointGutterIconRenderer extends GutterIconRenderer implements DumbAware {
+    @Override
     @NotNull
     public Icon getIcon() {
       return XBreakpointBase.this.getIcon();
     }
 
+    @NotNull
+    @Override
+    public String getAccessibleName() {
+      // [tav] todo: add "hit" state
+      return "icon: " + getType().getTitle() + (getCondition() != null ? " conditional" : "") + (!isEnabled() ? " disabled" : "");
+    }
+
+    @Override
     @Nullable
     public AnAction getClickAction() {
-      return new RemoveBreakpointGutterIconAction(XBreakpointBase.this);
+      if (Registry.is("debugger.click.disable.breakpoints")) {
+        return new ToggleBreakpointGutterIconAction(XBreakpointBase.this);
+      } else {
+        return new RemoveBreakpointGutterIconAction(XBreakpointBase.this);
+      }
+    }
+
+    @Override
+    @Nullable
+    public AnAction getMiddleButtonClickAction() {
+      if (!Registry.is("debugger.click.disable.breakpoints")) {
+        return new ToggleBreakpointGutterIconAction(XBreakpointBase.this);
+      } else {
+        return new RemoveBreakpointGutterIconAction(XBreakpointBase.this);
+      }
     }
 
     @Nullable
-    public AnAction getMiddleButtonClickAction() {
-      return new ToggleBreakpointGutterIconAction(XBreakpointBase.this);
+    @Override
+    public AnAction getRightButtonClickAction() {
+      return new EditBreakpointAction.ContextAction(this, XBreakpointBase.this, DebuggerSupport.getDebuggerSupport(XDebuggerSupport.class));
     }
 
+    @Nullable
+    @Override
+    public ActionGroup getPopupMenuActions() {
+      return new DefaultActionGroup(getAdditionalPopupMenuActions(getBreakpointManager().getDebuggerManager().getCurrentSession()));
+    }
+
+    @NotNull
     @Override
     public Alignment getAlignment() {
       return Alignment.RIGHT;
     }
 
-    @Nullable
-    public ActionGroup getPopupMenuActions() {
-      DefaultActionGroup group = new DefaultActionGroup();
-      final XDebuggerManager debuggerManager = XDebuggerManager.getInstance(getProject());
-
-
-      group.add(new EditBreakpointAction.ContextAction(this, XBreakpointBase.this, DebuggerSupport.getDebuggerSupport(XDebuggerSupport.class)));
-
-      group.add(new Separator());
-
-      if (!debuggerManager.getBreakpointManager().isDefaultBreakpoint(XBreakpointBase.this)) {
-        group.add(new RemoveBreakpointGutterIconAction(XBreakpointBase.this));
-      }
-      group.add(new ToggleBreakpointGutterIconAction(XBreakpointBase.this));
-      for (AnAction action : getAdditionalPopupMenuActions(debuggerManager.getCurrentSession())) {
-        group.add(action);
-      }
-      group.add(new Separator());
-
-      group.add(new ViewBreakpointsAction(ActionsBundle.actionText(XDebuggerActions.VIEW_BREAKPOINTS), XBreakpointBase.this));
-      return group;
-    }
-
+    @Override
     @Nullable
     public String getTooltipText() {
       return getDescription();

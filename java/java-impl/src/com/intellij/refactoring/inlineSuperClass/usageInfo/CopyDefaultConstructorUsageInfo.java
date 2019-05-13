@@ -14,10 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * User: anna
- * Date: 27-Aug-2008
- */
 package com.intellij.refactoring.inlineSuperClass.usageInfo;
 
 import com.intellij.psi.*;
@@ -32,11 +28,12 @@ public class CopyDefaultConstructorUsageInfo extends FixableUsageInfo{
 
 
   public CopyDefaultConstructorUsageInfo(PsiClass targetClass, PsiMethod constructor) {
-    super(targetClass);
+    super(constructor);
     myTargetClass = targetClass;
     myConstructor = constructor;
   }
 
+  @Override
   public void fixUsage() throws IncorrectOperationException {
     final PsiCodeBlock body = myConstructor.getBody();
     assert body != null;

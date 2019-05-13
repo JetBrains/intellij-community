@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<xs:schema targetNamespace="customBoolean" xmlns:test="customBoolean" xmlns:xs="http://www.w3.org/2001/XMLSchema" elementFormDefault="qualified">
+    <xs:element name="Test">
+        <xs:complexType>
+            <xs:sequence>
+                <xs:element name="Valid" type="test:boolean1"/>
+                <xs:element name="NotValid" type="test:boolean"/>
+            </xs:sequence>
+        </xs:complexType>
+    </xs:element>
+    <xs:simpleType name="boolean1">
+        <xs:union memberTypes="xs:string">
+            <xs:simpleType>
+                <xs:restriction base="xs:string">
+                    <xs:enumeration value="True" />
+                    <xs:enumeration value="False" />
+                    <xs:enumeration value="true" />
+                    <xs:enumeration value="false" />
+                </xs:restriction>
+            </xs:simpleType>
+        </xs:union>
+    </xs:simpleType>
+    <xs:simpleType name="boolean">
+        <xs:union memberTypes="xs:string">
+            <xs:simpleType>
+                <xs:restriction base="xs:string">
+                    <xs:enumeration value="True" />
+                    <xs:enumeration value="False" />
+                    <xs:enumeration value="true" />
+                    <xs:enumeration value="false" />
+                </xs:restriction>
+            </xs:simpleType>
+        </xs:union>
+    </xs:simpleType>
+</xs:schema>

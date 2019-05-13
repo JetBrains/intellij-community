@@ -19,14 +19,13 @@ import com.intellij.lang.Language;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * @author Denis Zhdanov
- * @since 6/26/12 11:22 AM
+ * Marker interface defining that code style settings for language returned by #getLanguage should be used when formatting block
+ * implementing this interface.
+ *
+ * E.g you have injected code which should be formatted accordingly to it's own language
  */
 public interface BlockEx extends Block {
 
-  /**
-   * @return    current block's language (is used to decide on what code style settings should be used for it) 
-   */
   @Nullable
   Language getLanguage();
 }

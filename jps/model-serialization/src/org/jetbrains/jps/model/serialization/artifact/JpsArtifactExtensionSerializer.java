@@ -25,8 +25,8 @@ import org.jetbrains.jps.model.JpsElementChildRole;
  * @author nik
  */
 public abstract class JpsArtifactExtensionSerializer<E extends JpsElement> {
-  private JpsElementChildRole<E> myRole;
-  private String myId;
+  private final JpsElementChildRole<E> myRole;
+  private final String myId;
 
   protected JpsArtifactExtensionSerializer(String id, JpsElementChildRole<E> role) {
     myId = id;

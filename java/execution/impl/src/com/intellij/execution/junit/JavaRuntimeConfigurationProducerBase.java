@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.junit;
 
 import com.intellij.execution.RunnerAndConfigurationSettings;
@@ -20,7 +6,6 @@ import com.intellij.execution.actions.ConfigurationContext;
 import com.intellij.execution.configurations.ConfigurationType;
 import com.intellij.execution.configurations.ModuleBasedConfiguration;
 import com.intellij.execution.impl.RunManagerImpl;
-import com.intellij.execution.testframework.TestSearchScope;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
@@ -29,6 +14,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.containers.hash.HashSet;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Set;
@@ -37,16 +23,8 @@ import java.util.Set;
  * @author spleaner
  */
 public abstract class JavaRuntimeConfigurationProducerBase extends RuntimeConfigurationProducer {
-
-  protected JavaRuntimeConfigurationProducerBase(final ConfigurationType configurationType) {
+  protected JavaRuntimeConfigurationProducerBase(@NotNull ConfigurationType configurationType) {
     super(configurationType);
-  }
-
-  protected static PsiMethod getContainingMethod(PsiElement element) {
-    while (element != null)
-      if (element instanceof PsiMethod) break;
-      else element = element.getParent();
-    return (PsiMethod) element;
   }
 
   @Nullable
@@ -70,19 +48,18 @@ public abstract class JavaRuntimeConfigurationProducerBase extends RuntimeConfig
       else {
         final VirtualFile virtualFile = directory.getVirtualFile();
         //choose default package when selection on content root
-        if (fileIndex.getContentRootForFile(virtualFile) == virtualFile) {
+        if (virtualFile.equals(fileIndex.getContentRootForFile(virtualFile))) {
           final Module module = ModuleUtilCore.findModuleForFile(virtualFile, project);
           if (module != null) {
-            final ContentEntry[] entries = ModuleRootManager.getInstance(module).getContentEntries();
-            for (ContentEntry entry : entries) {
+            for (ContentEntry entry : ModuleRootManager.getInstance(module).getContentEntries()) {
               if (virtualFile.equals(entry.getFile())) {
                 final SourceFolder[] folders = entry.getSourceFolders();
-                Set<String> packagePrefixes = new HashSet<String>();
+                Set<String> packagePrefixes = new HashSet<>();
                 for (SourceFolder folder : folders) {
                   packagePrefixes.add(folder.getPackagePrefix());
                 }
-                if (packagePrefixes.size() != 1) return null;
-                return JavaPsiFacade.getInstance(project).findPackage(packagePrefixes.iterator().next());
+                if (packagePrefixes.size() > 1) return null;
+                return JavaPsiFacade.getInstance(project).findPackage(packagePrefixes.isEmpty() ? "" : packagePrefixes.iterator().next());
               }
             }
           }
@@ -100,15 +77,6 @@ public abstract class JavaRuntimeConfigurationProducerBase extends RuntimeConfig
     return fileIndex.getSourceRootForFile(virtualFile) != null;
   }
 
-  protected TestSearchScope setupPackageConfiguration(ConfigurationContext context, Project project, ModuleBasedConfiguration configuration, TestSearchScope scope) {
-    if (scope != TestSearchScope.WHOLE_PROJECT) {
-      if (!setupConfigurationModule(context, configuration)) {
-        return TestSearchScope.WHOLE_PROJECT;
-      }
-    }
-    return scope;
-  }
-
   protected boolean setupConfigurationModule(@Nullable ConfigurationContext context, ModuleBasedConfiguration configuration) {
     if (context != null) {
       final RunnerAndConfigurationSettings template =
@@ -119,11 +87,19 @@ public abstract class JavaRuntimeConfigurationProducerBase extends RuntimeConfig
         configuration.setModule(predefinedModule);
         return true;
       }
-      else if (configuration.getConfigurationModule().getModule() == null && contextModule != null) {
-        configuration.setModule(contextModule);
+      final Module module = findModule(configuration, contextModule);
+      if (module != null) {
+        configuration.setModule(module);
         return true;
       }
     }
     return false;
+  }
+  
+  protected Module findModule(ModuleBasedConfiguration configuration, Module contextModule) {
+    if (configuration.getConfigurationModule().getModule() == null && contextModule != null) {
+      return contextModule;
+    }
+    return null;
   }
 }

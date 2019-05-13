@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,38 +27,44 @@ import java.util.Map;
 
 public class ActionGroupUtil {
   private static Presentation getPresentation(AnAction action, Map<AnAction, Presentation> action2presentation) {
-    Presentation presentation = action2presentation.get(action);
-    if (presentation == null) {
-      presentation = action.getTemplatePresentation().clone();
-      action2presentation.put(action, presentation);
-    }
-    return presentation;
+    return action2presentation.computeIfAbsent(action, k -> action.getTemplatePresentation().clone());
   }
 
+  @Deprecated
+  // Use #isGroupEmpty with isModalContext instead
   public static boolean isGroupEmpty(@NotNull ActionGroup actionGroup, @NotNull AnActionEvent e) {
-    return isGroupEmpty(actionGroup, e, new HashMap<AnAction, Presentation>());
+    return isGroupEmpty(actionGroup, e, new HashMap<>(), false);
+  }
+
+  public static boolean isGroupEmpty(@NotNull ActionGroup actionGroup, @NotNull AnActionEvent e, boolean isInModalContext) {
+    return isGroupEmpty(actionGroup, e, new HashMap<>(), isInModalContext);
   }
 
   private static boolean isGroupEmpty(@NotNull ActionGroup actionGroup,
                                                    @NotNull AnActionEvent e,
-                                                   @NotNull Map<AnAction, Presentation> action2presentation) {
+                                                   @NotNull Map<AnAction, Presentation> action2presentation,
+                                                   boolean inModalContext) {
     AnAction[] actions = actionGroup.getChildren(e);
     for (AnAction action : actions) {
-      if (action instanceof ActionGroup) {
-        if (!isGroupEmpty((ActionGroup)action, e, action2presentation)) {
+      if (action instanceof Separator) continue;
+      if (isActionEnabledAndVisible(action, e, inModalContext, action2presentation)) {
+        if (action instanceof ActionGroup) {
+          if (!isGroupEmpty((ActionGroup)action, e, action2presentation, inModalContext)) {
+            return false;
+          }
+          // else continue for-loop
+        }
+        else {
           return false;
         }
-      }
-      else if (!(action instanceof Separator) && isActionEnabledAndVisible(e, action2presentation, action)) {
-        return false;
       }
     }
     return true;
   }
 
   @Nullable
-  public static AnAction getSingleActiveAction(@NotNull ActionGroup actionGroup, @NotNull AnActionEvent e) {
-    List<AnAction> children = getEnabledChildren(actionGroup, e, new HashMap<AnAction, Presentation>());
+  public static AnAction getSingleActiveAction(@NotNull ActionGroup actionGroup, @NotNull AnActionEvent e, boolean isInModalContext) {
+    List<AnAction> children = getEnabledChildren(actionGroup, e, new HashMap<>(), isInModalContext);
     if (children.size() == 1) {
       return children.get(0);
     }
@@ -67,17 +73,18 @@ public class ActionGroupUtil {
 
   private static List<AnAction> getEnabledChildren(@NotNull ActionGroup actionGroup,
                                                    @NotNull AnActionEvent e,
-                                                   @NotNull Map<AnAction, Presentation> action2presentation) {
-    List<AnAction> result = new ArrayList<AnAction>();
+                                                   @NotNull Map<AnAction, Presentation> action2presentation,
+                                                   boolean isInModalContext) {
+    List<AnAction> result = new ArrayList<>();
     AnAction[] actions = actionGroup.getChildren(e);
     for (AnAction action : actions) {
       if (action instanceof ActionGroup) {
-        if (isActionEnabledAndVisible(e, action2presentation, action)) {
-          result.addAll(getEnabledChildren((ActionGroup)action, e, action2presentation));
+        if (isActionEnabledAndVisible(action, e, isInModalContext, action2presentation)) {
+          result.addAll(getEnabledChildren((ActionGroup)action, e, action2presentation, isInModalContext));
         }
       }
       else if (!(action instanceof Separator)) {
-        if (isActionEnabledAndVisible(e, action2presentation, action)) {
+        if (isActionEnabledAndVisible(action, e, isInModalContext, action2presentation)) {
           result.add(action);
         }
       }
@@ -85,18 +92,30 @@ public class ActionGroupUtil {
     return result;
   }
 
-  private static boolean isActionEnabledAndVisible(@NotNull final AnActionEvent e,
-                                                   @NotNull final Map<AnAction, Presentation> action2presentation,
-                                                   @NotNull final AnAction action) {
+  private static boolean isActionEnabledAndVisible(@NotNull AnAction action,
+                                                   @NotNull AnActionEvent e,
+                                                   boolean isInModalContext,
+                                                   @NotNull Map<AnAction, Presentation> action2presentation) {
     Presentation presentation = getPresentation(action, action2presentation);
-    AnActionEvent event = new AnActionEvent(e.getInputEvent(),
-                                            e.getDataContext(),
-                                            ActionPlaces.UNKNOWN,
-                                            presentation,
-                                            ActionManager.getInstance(),
-                                            e.getModifiers());
+    return isActionEnabledAndVisible(action, e, isInModalContext, presentation);
+  }
+
+  public static boolean isActionEnabledAndVisible(@NotNull AnAction action,
+                                                  @NotNull AnActionEvent e,
+                                                  boolean isInModalContext) {
+    Presentation presentation = action.getTemplatePresentation().clone();
+    return isActionEnabledAndVisible(action, e, isInModalContext, presentation);
+  }
+
+  private static boolean isActionEnabledAndVisible(@NotNull AnAction action,
+                                                   @NotNull AnActionEvent e,
+                                                   boolean isInModalContext,
+                                                   @NotNull Presentation presentation) {
+    AnActionEvent event = new AnActionEvent(
+      e.getInputEvent(), e.getDataContext(), e.getPlace(),
+      presentation, ActionManager.getInstance(), e.getModifiers());
     event.setInjectedContext(action.isInInjectedContext());
-    ActionUtil.performDumbAwareUpdate(action, event, false);
+    ActionUtil.performDumbAwareUpdate(isInModalContext, action, event, false);
 
     return presentation.isEnabled() && presentation.isVisible();
   }

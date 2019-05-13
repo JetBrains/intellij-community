@@ -4,7 +4,7 @@ interface i {
 }
 
 public class a implements i {
- void <error descr="'ff()' in 'a' clashes with 'ff()' in 'i'; attempting to assign weaker access privileges ('packageLocal'); was 'public'">ff</error>() {}
+ void <error descr="'ff()' in 'a' clashes with 'ff()' in 'i'; attempting to assign weaker access privileges ('package-private'); was 'public'">ff</error>() {}
 }
 class ai implements i {
  public <error descr="'ff()' in 'ai' clashes with 'ff()' in 'i'; attempting to use incompatible return type">int</error> ff() { return 0;}

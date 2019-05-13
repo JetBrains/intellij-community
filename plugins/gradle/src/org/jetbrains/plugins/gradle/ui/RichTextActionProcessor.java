@@ -1,13 +1,13 @@
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.ui;
 
 import com.intellij.ide.DataManager;
-import com.intellij.ide.ui.LafManager;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionButtonLook;
 import com.intellij.openapi.actionSystem.impl.ActionButton;
 import com.intellij.openapi.actionSystem.impl.PresentationFactory;
-import com.intellij.openapi.util.AsyncResult;
 import com.intellij.ui.ClickListener;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
@@ -18,10 +18,9 @@ import java.awt.event.MouseEvent;
 
 /**
  * @author Denis Zhdanov
- * @since 1/16/12 5:20 PM
  */
 public class RichTextActionProcessor implements RichTextControlBuilder.RichTextProcessor {
-  
+
   @Override
   public JComponent process(@NotNull String s) {
     final ActionManager actionManager = ActionManager.getInstance();
@@ -30,9 +29,9 @@ public class RichTextActionProcessor implements RichTextControlBuilder.RichTextP
       return null;
     }
     final Presentation presentation = action.getTemplatePresentation();
-    
+
     if (presentation.getIcon() != null) {
-      return new ActionButton(action, presentation.clone(), GradleConstants.TOOL_WINDOW_TOOLBAR_PLACE, new Dimension(0, 0)) {
+      return new ActionButton(action, presentation.clone(), GradleConstants.TOOL_WINDOW_TOOLBAR_PLACE, JBUI.emptySize()) {
         @Override
         protected void paintButtonLook(Graphics g) {
           // Don't draw border at the inline button.
@@ -45,6 +44,7 @@ public class RichTextActionProcessor implements RichTextControlBuilder.RichTextP
 
     final String text = action.getTemplatePresentation().getText();
     JLabel result = new JLabel(text) {
+      @Override
       public void paint(Graphics g) {
         super.paint(g);
         final int y = g.getClipBounds().height - getFontMetrics(getFont()).getDescent() + 2;
@@ -58,9 +58,8 @@ public class RichTextActionProcessor implements RichTextControlBuilder.RichTextP
 
     new ClickListener() {
       @Override
-      public boolean onClick(MouseEvent e, int clickCount) {
-        final AsyncResult<DataContext> callback = DataManager.getInstance().getDataContextFromFocus();
-        final DataContext context = callback.getResult();
+      public boolean onClick(@NotNull MouseEvent e, int clickCount) {
+        final DataContext context = DataManager.getInstance().getDataContextFromFocus().getResult();
         if (context == null) {
           return false;
         }

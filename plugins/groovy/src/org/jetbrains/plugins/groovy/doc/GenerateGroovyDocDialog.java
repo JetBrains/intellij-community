@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,23 +41,19 @@ public final class GenerateGroovyDocDialog extends DialogWrapper {
     init();
   }
 
+  @Override
   protected JComponent createCenterPanel() {
     myPanel = new GroovyDocGenerationPanel();
     myPanel.reset(myConfiguration);
     return myPanel.getPanel();
   }
 
+  @Override
   protected void doOKAction() {
     myPanel.apply(myConfiguration);
     if (checkDir(myConfiguration.OUTPUT_DIRECTORY, "output") && checkDir(myConfiguration.INPUT_DIRECTORY, "input")) {
       close(OK_EXIT_CODE);
     }
-  }
-
-  @Override
-  protected void dispose() {
-    super.dispose();
-    //Disposer.dispose(myPanel);
   }
 
   @Nullable
@@ -67,7 +63,7 @@ public final class GenerateGroovyDocDialog extends DialogWrapper {
   }
 
   private boolean checkDir(String dirName, String dirPrefix) {
-    if (dirName == null || dirName.trim().length() == 0) {
+    if (dirName == null || dirName.trim().isEmpty()) {
       Messages.showMessageDialog(myProject, GroovyDocBundle.message("groovydoc.generate.0.directory.not.specified", dirPrefix),
                                  CommonBundle.getErrorTitle(), Messages.getErrorIcon());
       return false;
@@ -84,7 +80,7 @@ public final class GenerateGroovyDocDialog extends DialogWrapper {
       int choice = Messages.showOkCancelDialog(myProject,
                                                GroovyDocBundle.message("groovydoc.generate.directory.not.exists", dirName),
                                                GroovyDocBundle.message("groovydoc.generate.message.title"), Messages.getWarningIcon());
-      if (choice != 0) return false;
+      if (choice != Messages.OK) return false;
       if (!dir.mkdirs()) {
         showError(GroovyDocBundle.message("groovydoc.generate.directory.creation.failed", dirName));
         return false;

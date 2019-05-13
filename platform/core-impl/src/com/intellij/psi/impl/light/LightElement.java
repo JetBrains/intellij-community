@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,7 +32,7 @@ public abstract class LightElement extends PsiElementBase {
   private final Language myLanguage;
   private volatile PsiElement myNavigationElement = this;
 
-  protected LightElement(PsiManager manager, final Language language) {
+  protected LightElement(@NotNull PsiManager manager, @NotNull Language language) {
     myManager = manager;
     myLanguage = language;
   }
@@ -126,6 +126,7 @@ public abstract class LightElement extends PsiElementBase {
     return false;
   }
 
+  @Override
   public abstract String toString();
 
   @Override

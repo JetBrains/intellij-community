@@ -42,7 +42,7 @@ public class Graphics2DLog extends Graphics2D {
     myPeer = (Graphics2D)g;
   }
 
-  @SuppressWarnings({"MethodMayBeStatic", "UseOfSystemOutOrSystemErr"})
+  @SuppressWarnings({"UseOfSystemOutOrSystemErr"})
   protected void log(String msg) {
     System.out.println(msg);
   }

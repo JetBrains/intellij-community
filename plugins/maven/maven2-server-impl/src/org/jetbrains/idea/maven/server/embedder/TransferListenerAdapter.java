@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,18 +15,18 @@
  */
 package org.jetbrains.idea.maven.server.embedder;
 
-import com.intellij.openapi.progress.ProcessCanceledException;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.containers.ConcurrentHashMap;
+import com.intellij.openapi.util.text.StringUtilRt;
 import org.apache.maven.wagon.events.TransferEvent;
 import org.apache.maven.wagon.events.TransferListener;
 import org.jetbrains.idea.maven.server.Maven2ServerGlobals;
+import org.jetbrains.idea.maven.server.MavenProcessCanceledRuntimeException;
 import org.jetbrains.idea.maven.server.MavenServerDownloadListener;
 import org.jetbrains.idea.maven.server.MavenServerProgressIndicator;
 
 import java.rmi.RemoteException;
 import java.text.MessageFormat;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class TransferListenerAdapter implements TransferListener {
   protected final MavenServerProgressIndicator myIndicator;
@@ -36,19 +36,21 @@ public class TransferListenerAdapter implements TransferListener {
     myIndicator = indicator;
   }
 
+  @Override
   public void transferInitiated(TransferEvent event) {
     checkCanceled();
   }
 
   private void checkCanceled() {
     try {
-      if (myIndicator.isCanceled()) throw new ProcessCanceledException();
+      if (myIndicator.isCanceled()) throw new MavenProcessCanceledRuntimeException();
     }
     catch (RemoteException e) {
       throw new RuntimeRemoteException(e);
     }
   }
 
+  @Override
   public void transferStarted(TransferEvent event) {
     checkCanceled();
 
@@ -59,6 +61,7 @@ public class TransferListenerAdapter implements TransferListener {
     updateProgress(resourceName, data);
   }
 
+  @Override
   public void transferProgress(TransferEvent event, byte[] bytes, int i) {
     checkCanceled();
 
@@ -68,6 +71,7 @@ public class TransferListenerAdapter implements TransferListener {
     updateProgress(resourceName, data);
   }
 
+  @Override
   public void transferCompleted(TransferEvent event) {
     try {
       MavenServerDownloadListener listener = Maven2ServerGlobals.getDownloadListener();
@@ -85,6 +89,7 @@ public class TransferListenerAdapter implements TransferListener {
     updateProgress(resourceName, data);
   }
 
+  @Override
   public void transferError(TransferEvent event) {
     checkCanceled();
 
@@ -96,6 +101,7 @@ public class TransferListenerAdapter implements TransferListener {
     }
   }
 
+  @Override
   public void debug(String s) {
     checkCanceled();
   }
@@ -111,9 +117,9 @@ public class TransferListenerAdapter implements TransferListener {
 
     String sizeInfo;
     if (data.finished || data.failed || data.total <= 0) {
-      sizeInfo = StringUtil.formatFileSize(data.downloaded);
+      sizeInfo = StringUtilRt.formatFileSize(data.downloaded);
     } else {
-      sizeInfo = ((int)100f * data.downloaded / data.total) + "% of " + StringUtil.formatFileSize(data.total);
+      sizeInfo = ((int)100f * data.downloaded / data.total) + "% of " + StringUtilRt.formatFileSize(data.total);
     }
 
     try {

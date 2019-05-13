@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,7 +31,7 @@ import javax.swing.*;
  */
 public class GrCodeStyleImportsPanelWrapper extends CodeStyleAbstractPanel {
 
-  private GrCodeStyleImportsPanel myImportsPanel;
+  private final GrCodeStyleImportsPanel myImportsPanel;
 
   protected GrCodeStyleImportsPanelWrapper(CodeStyleSettings settings) {
     super(settings);
@@ -62,12 +62,12 @@ public class GrCodeStyleImportsPanelWrapper extends CodeStyleAbstractPanel {
 
   @Override
   public void apply(CodeStyleSettings settings) {
-    myImportsPanel.apply(settings.getCustomSettings(GroovyCodeStyleSettings.class));
+    myImportsPanel.apply(settings);
   }
 
   @Override
   public boolean isModified(CodeStyleSettings settings) {
-    return myImportsPanel.isModified(settings.getCustomSettings(GroovyCodeStyleSettings.class));
+    return myImportsPanel.isModified(settings);
   }
 
   @Override
@@ -77,7 +77,7 @@ public class GrCodeStyleImportsPanelWrapper extends CodeStyleAbstractPanel {
 
   @Override
   protected void resetImpl(CodeStyleSettings settings) {
-    myImportsPanel.reset(settings.getCustomSettings(GroovyCodeStyleSettings.class));
+    myImportsPanel.reset(settings);
   }
 
   @Override

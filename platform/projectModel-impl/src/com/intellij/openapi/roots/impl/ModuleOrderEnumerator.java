@@ -18,9 +18,13 @@ package com.intellij.openapi.roots.impl;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.ModuleRootModel;
 import com.intellij.openapi.roots.OrderEntry;
+import com.intellij.openapi.roots.OrderEnumerationHandler;
+import com.intellij.util.PairProcessor;
 import com.intellij.util.Processor;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.List;
 
 /**
  * @author nik
@@ -28,19 +32,19 @@ import org.jetbrains.annotations.NotNull;
 public class ModuleOrderEnumerator extends OrderEnumeratorBase {
   private final ModuleRootModel myRootModel;
 
-  public ModuleOrderEnumerator(ModuleRootModel rootModel, final OrderRootsCache cache) {
-    super(rootModel.getModule(), rootModel.getModule().getProject(), cache);
+  ModuleOrderEnumerator(@NotNull ModuleRootModel rootModel, OrderRootsCache cache) {
+    super(cache);
     myRootModel = rootModel;
   }
 
   @Override
-  public void processRootModules(@NotNull Processor<Module> processor) {
+  public void processRootModules(@NotNull Processor<? super Module> processor) {
     processor.process(myRootModel.getModule());
   }
 
   @Override
-  public void forEach(@NotNull Processor<OrderEntry> processor) {
-    processEntries(myRootModel, processor, myRecursively ? new THashSet<Module>() : null, true);
+  protected void forEach(@NotNull PairProcessor<? super OrderEntry, ? super List<OrderEnumerationHandler>> processor) {
+    processEntries(myRootModel, processor, myRecursively ? new THashSet<>() : null, true, getCustomHandlers(myRootModel.getModule()));
   }
 
   @Override

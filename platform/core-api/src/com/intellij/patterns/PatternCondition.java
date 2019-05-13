@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,6 @@ package com.intellij.patterns;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.PairProcessor;
 import com.intellij.util.ProcessingContext;
-import com.intellij.util.ReflectionCache;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -109,11 +108,11 @@ public abstract class PatternCondition<T> {
   }
 
   // this code eats CPU, for debug purposes ONLY
-  public boolean processParameters(final PairProcessor<String, Object> processor) {
-    for (Class aClass = getClass(); aClass != null; aClass = ReflectionCache.getSuperClass(aClass)) {
+  public boolean processParameters(final PairProcessor<? super String, Object> processor) {
+    for (Class aClass = getClass(); aClass != null; aClass = aClass.getSuperclass()) {
       for (final Field field : aClass.getDeclaredFields()) {
         if (!Modifier.isStatic(field.getModifiers()) &&
-            (((field.getModifiers() & 0x1000 /*Modifer.SYNTHETIC*/) == 0 && !aClass.equals(PatternCondition.class))
+            (!field.isSynthetic() && !aClass.equals(PatternCondition.class)
              || field.getName().startsWith(PARAMETER_FIELD_PREFIX))) {
           final String name = field.getName();
           final String fixedName = name.startsWith(PARAMETER_FIELD_PREFIX) ?

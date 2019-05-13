@@ -25,6 +25,7 @@ public class LwIntroFontProperty extends LwIntrospectedProperty {
     super(name, "java.awt.Font");
   }
 
+  @Override
   public Object read(Element element) throws Exception {
     return LwXmlReader.getFontDescriptor(element);
   }

@@ -35,6 +35,8 @@ import java.util.regex.Pattern;
 
 /**
  * @author Dennis.Ushakov
+ *
+ * TODO: update to REST APIv5
  */
 @Tag("PivotalTracker")
 public class PivotalTrackerRepository extends BaseRepositoryImpl {
@@ -49,7 +51,7 @@ public class PivotalTrackerRepository extends BaseRepositoryImpl {
 
   {
     if (StringUtil.isEmpty(getUrl())) {
-      setUrl("http://www.pivotaltracker.com");
+      setUrl("https://www.pivotaltracker.com");
     }
   }
 
@@ -83,18 +85,13 @@ public class PivotalTrackerRepository extends BaseRepositoryImpl {
 
   @Override
   public Task[] getIssues(@Nullable final String query, final int max, final long since) throws Exception {
-    @SuppressWarnings({"unchecked"}) List<Object> children = getStories(query, max);
+    List<Element> children = getStories(query, max);
 
-    final List<Task> tasks = ContainerUtil.mapNotNull(children, new NullableFunction<Object, Task>() {
-      public Task fun(Object o) {
-        return createIssue((Element)o);
-      }
-    });
-    return tasks.toArray(new Task[tasks.size()]);
+    final List<Task> tasks = ContainerUtil.mapNotNull(children, (NullableFunction<Element, Task>)o -> createIssue(o));
+    return tasks.toArray(Task.EMPTY_ARRAY);
   }
 
-  @SuppressWarnings({"unchecked"})
-  private List<Object> getStories(@Nullable final String query, final int max) throws Exception {
+  private List<Element> getStories(@Nullable final String query, final int max) throws Exception {
     String url = API_URL + "/projects/" + myProjectId + "/stories";
     url += "?filter=" + encodeUrl("state:started,unstarted,unscheduled,rejected");
     if (!StringUtil.isEmpty(query)) {
@@ -136,8 +133,8 @@ public class PivotalTrackerRepository extends BaseRepositoryImpl {
                              "delivered".equals(element.getChildText("state")) ||
                              "finished".equals(element.getChildText("state"));
     final String description = element.getChildText("description");
-    final Ref<Date> updated = new Ref<Date>();
-    final Ref<Date> created = new Ref<Date>();
+    final Ref<Date> updated = new Ref<>();
+    final Ref<Date> created = new Ref<>();
     try {
       updated.set(parseDate(element, "updated_at"));
       created.set(parseDate(element, "created_at"));
@@ -169,6 +166,7 @@ public class PivotalTrackerRepository extends BaseRepositoryImpl {
         return summary;
       }
 
+      @Override
       public String getDescription() {
         return description;
       }
@@ -182,7 +180,7 @@ public class PivotalTrackerRepository extends BaseRepositoryImpl {
       @NotNull
       @Override
       public Icon getIcon() {
-        return IconLoader.getIcon(getCustomIcon(), LocalTask.class);
+        return IconLoader.getIcon(getCustomIcon(), PivotalTrackerRepository.class);
       }
 
       @NotNull
@@ -226,12 +224,11 @@ public class PivotalTrackerRepository extends BaseRepositoryImpl {
 
   private static Comment[] parseComments(Element notes) {
     if (notes == null) return Comment.EMPTY_ARRAY;
-    final List<Comment> result = new ArrayList<Comment>();
-    //noinspection unchecked
-    for (Element note : (List<Element>)notes.getChildren("note")) {
+    final List<Comment> result = new ArrayList<>();
+    for (Element note : notes.getChildren("note")) {
       final String text = note.getChildText("text");
       if (text == null) continue;
-      final Ref<Date> date = new Ref<Date>();
+      final Ref<Date> date = new Ref<>();
       try {
         date.set(parseDate(note, "noted_at"));
       } catch (ParseException e) {
@@ -240,7 +237,7 @@ public class PivotalTrackerRepository extends BaseRepositoryImpl {
       final String author = note.getChildText("author");
       result.add(new SimpleComment(date.get(), author, text));
     }
-    return result.toArray(new Comment[result.size()]);
+    return result.toArray(Comment.EMPTY_ARRAY);
   }
 
   @Nullable
@@ -262,7 +259,7 @@ public class PivotalTrackerRepository extends BaseRepositoryImpl {
 
   @Nullable
   @Override
-  public Task findTask(final String id) throws Exception {
+  public Task findTask(@NotNull final String id) throws Exception {
     final String realId = getRealId(id);
     if (realId == null) return null;
     final String url = API_URL + "/projects/" + myProjectId + "/stories/" + realId;
@@ -280,12 +277,14 @@ public class PivotalTrackerRepository extends BaseRepositoryImpl {
     return Comparing.strEqual(projectId, myProjectId) ? split[1] : null;
   }
 
+  @Override
   @Nullable
-  public String extractId(final String taskName) {
+  public String extractId(@NotNull final String taskName) {
     Matcher matcher = myPattern.matcher(taskName);
     return matcher.find() ? matcher.group(1) : null;
   }
 
+  @NotNull
   @Override
   public BaseRepository clone() {
     return new PivotalTrackerRepository(this);
@@ -294,12 +293,13 @@ public class PivotalTrackerRepository extends BaseRepositoryImpl {
   @Override
   protected void configureHttpMethod(final HttpMethod method) {
     method.addRequestHeader("X-TrackerToken", myAPIKey);
+    //method.setFollowRedirects(true);
   }
 
   public String getProjectId() {
     return myProjectId;
   }
-  
+
   public void setProjectId(final String projectId) {
     myProjectId = projectId;
     myPattern = Pattern.compile("(" + projectId + "\\-\\d+):\\s+");
@@ -321,7 +321,7 @@ public class PivotalTrackerRepository extends BaseRepositoryImpl {
 
   @Nullable
   @Override
-  public String getTaskComment(final Task task) {
+  public String getTaskComment(@NotNull final Task task) {
     if (isShouldFormatCommitMessage()) {
       final String id = task.getId();
       final String realId = getRealId(id);
@@ -333,21 +333,41 @@ public class PivotalTrackerRepository extends BaseRepositoryImpl {
   }
 
   @Override
-  public void setTaskState(Task task, TaskState state) throws Exception {
-    if (state != TaskState.IN_PROGRESS) super.setTaskState(task, state);
+  public void setTaskState(@NotNull Task task, @NotNull TaskState state) throws Exception {
     final String realId = getRealId(task.getId());
     if (realId == null) return;
+    final String stateName;
+    switch (state) {
+      case IN_PROGRESS:
+        stateName = "started";
+        break;
+      case RESOLVED:
+        stateName = "finished";
+        break;
+      // may add some others in future
+      default:
+        return;
+    }
     String url = API_URL + "/projects/" + myProjectId + "/stories/" + realId;
-    url +="?" + encodeUrl("story[current_state]") + "=" + encodeUrl("started");
+    url += "?" + encodeUrl("story[current_state]") + "=" + encodeUrl(stateName);
     LOG.info("Updating issue state by id: " + url);
     final HttpMethod method = doREST(url, HTTPMethod.PUT);
     final InputStream stream = method.getResponseBodyAsStream();
     final Element element = new SAXBuilder(false).build(stream).getRootElement();
-    final Task story = element.getName().equals("story") ? createIssue(element) : null;
-    if (story == null) {
-      throw new Exception("Error setting state for: " + url + ", HTTP status code: " + method.getStatusCode() +
-                                "\n" + element.getText());
+    if (!element.getName().equals("story")) {
+      if (element.getName().equals("errors")) {
+        throw new Exception(extractErrorMessage(element));
+      } else {
+        // unknown error, probably our fault
+        LOG.warn("Error setting state for: " + url + ", HTTP status code: " + method.getStatusCode());
+        throw new Exception(String.format("Cannot set state '%s' for issue.", stateName));
+      }
     }
+  }
+
+  @NotNull
+  private static String extractErrorMessage(@NotNull Element element) {
+    return StringUtil.notNullize(element.getChild("error").getText());
   }
 
   @Override
@@ -364,6 +384,14 @@ public class PivotalTrackerRepository extends BaseRepositoryImpl {
 
   @Override
   protected int getFeatures() {
-    return BASIC_HTTP_AUTHORIZATION;
+    return super.getFeatures() | BASIC_HTTP_AUTHORIZATION | STATE_UPDATING;
+  }
+
+  @Override
+  public void setUrl(String url) {
+    if (url.startsWith("http:")) {
+      url = "https:" + StringUtil.trimStart(url, "http:");
+    }
+    super.setUrl(url);
   }
 }

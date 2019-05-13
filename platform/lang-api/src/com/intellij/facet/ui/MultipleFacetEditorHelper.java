@@ -30,7 +30,7 @@ import javax.swing.*;
 public interface MultipleFacetEditorHelper {
 
   /**
-   * Binds <code>common</code> 3-state checkbox to checkboxes in facet editors in such a way that all changes in it will be propogated to
+   * Binds {@code common} 3-state checkbox to checkboxes in facet editors in such a way that all changes in it will be propogated to
    * target checkboxes.
    * @param common checkbox
    * @param editors editors

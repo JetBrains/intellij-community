@@ -27,7 +27,6 @@ import java.util.Set;
  * {@link Alignment.Anchor alignment acnhors}).
  * 
  * @author Denis Zhdanov
- * @since 4/28/11 3:55 PM
  */
 public interface BlockAlignmentProcessor {
   

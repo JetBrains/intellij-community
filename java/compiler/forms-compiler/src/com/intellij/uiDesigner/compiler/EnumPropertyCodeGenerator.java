@@ -16,13 +16,14 @@
 
 package com.intellij.uiDesigner.compiler;
 
-import org.jetbrains.asm4.Type;
-import org.jetbrains.asm4.commons.GeneratorAdapter;
+import org.jetbrains.org.objectweb.asm.Type;
+import org.jetbrains.org.objectweb.asm.commons.GeneratorAdapter;
 
 /**
  * @author yole
  */
 public class EnumPropertyCodeGenerator extends PropertyCodeGenerator {
+  @Override
   public void generatePushValue(final GeneratorAdapter generator, final Object value) {
     final Type enumType = Type.getType(value.getClass());
     generator.getStatic(enumType, value.toString(), enumType);

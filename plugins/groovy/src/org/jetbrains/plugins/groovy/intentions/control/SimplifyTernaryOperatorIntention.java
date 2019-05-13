@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,10 +23,10 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.intentions.base.Intention;
 import org.jetbrains.plugins.groovy.intentions.base.PsiElementPredicate;
-import org.jetbrains.plugins.groovy.intentions.utils.ParenthesesUtils;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrConditionalExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
+import org.jetbrains.plugins.groovy.lang.psi.impl.utils.ParenthesesUtils;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyConstantExpressionEvaluator;
 
 /**
@@ -36,11 +36,10 @@ import org.jetbrains.plugins.groovy.lang.psi.util.GroovyConstantExpressionEvalua
 public class SimplifyTernaryOperatorIntention extends Intention {
 
   @Override
-  protected void processIntention(@NotNull PsiElement element, Project project, Editor editor) throws IncorrectOperationException {
+  protected void processIntention(@NotNull PsiElement element, @NotNull Project project, Editor editor) throws IncorrectOperationException {
     if (!(element instanceof GrConditionalExpression)) {
       throw new IncorrectOperationException("Not invoked on a conditional");
     }
-    GroovyPsiElementFactory groovyPsiElementFactory = GroovyPsiElementFactory.getInstance(project);
     GrConditionalExpression condExp = (GrConditionalExpression)element;
     GrExpression thenBranch = condExp.getThenBranch();
     GrExpression elseBranch = condExp.getElseBranch();
@@ -53,13 +52,7 @@ public class SimplifyTernaryOperatorIntention extends Intention {
       String conditionExpText = getStringToPutIntoOrExpression(conditionExp);
       String elseExpText = getStringToPutIntoOrExpression(elseBranch);
       String newExp = conditionExpText + "||" + elseExpText;
-      int caretOffset = conditionExpText.length() + 2; // after "||"
-
-      GrExpression expressionFromText = groovyPsiElementFactory.createExpressionFromText(newExp, condExp.getContext());
-
-      expressionFromText = (GrExpression)condExp.replace(expressionFromText);
-
-      editor.getCaretModel().moveToOffset(expressionFromText.getTextOffset() + caretOffset); // just past "||"
+      manageReplace(editor, condExp, conditionExpText, newExp);
       return;
     }
 
@@ -73,14 +66,20 @@ public class SimplifyTernaryOperatorIntention extends Intention {
 
 
       String newExp = conditionExpText + "&&" + thenExpText;
-      int caretOffset = conditionExpText.length() + 2; // after "&&"
-      GrExpression expressionFromText = groovyPsiElementFactory.createExpressionFromText(newExp, condExp.getContext());
-
-      expressionFromText = (GrExpression)condExp.replace(expressionFromText);
-
-      editor.getCaretModel().moveToOffset(expressionFromText.getTextOffset() + caretOffset); // just past "&&"
+      manageReplace(editor, condExp, conditionExpText, newExp);
     }
+  }
 
+  private static void manageReplace(Editor editor,
+                                    GrConditionalExpression condExp,
+                                    String conditionExpText, String newExp) {
+    int caretOffset = conditionExpText.length() + 2; // after operation sign
+
+    GrExpression expressionFromText = GroovyPsiElementFactory.getInstance(editor.getProject()).createExpressionFromText(newExp, condExp .getContext());
+
+    expressionFromText = (GrExpression)condExp.replace(expressionFromText);
+
+    editor.getCaretModel().moveToOffset(expressionFromText.getTextOffset() + caretOffset); // just past operation sign
   }
 
   /**
@@ -113,7 +112,7 @@ public class SimplifyTernaryOperatorIntention extends Intention {
   protected PsiElementPredicate getElementPredicate() {
     return new PsiElementPredicate() {
       @Override
-      public boolean satisfiedBy(PsiElement element) {
+      public boolean satisfiedBy(@NotNull PsiElement element) {
         if (!(element instanceof GrConditionalExpression)) {
           return false;
         }

@@ -16,15 +16,14 @@
 package org.intellij.images.options.impl;
 
 import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.RoamingType;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
-import com.intellij.openapi.components.StoragePathMacros;
-import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.RoamingTypeDisabled;
 import com.intellij.openapi.util.WriteExternalException;
 import org.intellij.images.options.Options;
 import org.intellij.images.options.OptionsManager;
 import org.jdom.Element;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * Options configurable manager.
@@ -32,35 +31,26 @@ import org.jdom.Element;
  * @author <a href="mailto:aefimov.box@gmail.com">Alexey Efimov</a>
  */
 @State(
-    name = "Images.OptionsManager",
-    storages = {
-        @Storage(file = StoragePathMacros.APP_CONFIG + "/images.support.xml")
-    }
+  name = "Images.OptionsManager",
+  storages = @Storage(value = "images.support.xml", roamingType = RoamingType.DISABLED)
 )
-final class OptionsManagerImpl extends OptionsManager implements PersistentStateComponent<Element>, RoamingTypeDisabled {
+final class OptionsManagerImpl extends OptionsManager implements PersistentStateComponent<Element> {
   private final OptionsImpl options = new OptionsImpl();
 
+  @Override
   public Options getOptions() {
     return options;
   }
 
+  @Override
   public Element getState() {
     Element element = new Element("state");
-    try {
-      options.writeExternal(element);
-    }
-    catch (WriteExternalException e) {
-      throw new RuntimeException(e);
-    }
+    options.writeExternal(element);
     return element;
   }
 
-  public void loadState(final Element state) {
-    try {
-      options.readExternal(state);
-    }
-    catch (InvalidDataException e) {
-      throw new RuntimeException(e);
-    }
+  @Override
+  public void loadState(@NotNull final Element state) {
+    options.readExternal(state);
   }
 }

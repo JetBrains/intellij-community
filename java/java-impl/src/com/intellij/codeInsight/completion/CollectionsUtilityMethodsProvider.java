@@ -17,7 +17,6 @@ package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.lookup.AutoCompletionPolicy;
 import com.intellij.codeInsight.lookup.LookupElement;
-import com.intellij.openapi.util.Key;
 import com.intellij.psi.*;
 import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NonNls;
@@ -29,15 +28,14 @@ import static com.intellij.psi.CommonClassNames.*;
 * @author peter
 */
 class CollectionsUtilityMethodsProvider {
-  public static final Key<Boolean> COLLECTION_FACTORY = Key.create("CollectionFactory");
   private final PsiElement myElement;
   private final PsiType myExpectedType;
   private final PsiType myDefaultType;
-  @NotNull private final Consumer<LookupElement> myResult;
+  @NotNull private final Consumer<? super LookupElement> myResult;
 
   CollectionsUtilityMethodsProvider(PsiElement position,
                                     PsiType expectedType,
-                                    PsiType defaultType, @NotNull final Consumer<LookupElement> result) {
+                                    PsiType defaultType, @NotNull final Consumer<? super LookupElement> result) {
     myResult = result;
     myElement = position;
     myExpectedType = expectedType;
@@ -94,8 +92,7 @@ class CollectionsUtilityMethodsProvider {
     final PsiMethod method = methods[0];
     final JavaMethodCallElement item = new JavaMethodCallElement(method, false, false);
     item.setAutoCompletionPolicy(AutoCompletionPolicy.NEVER_AUTOCOMPLETE);
-    item.setInferenceSubstitutor(SmartCompletionDecorator.calculateMethodReturnTypeSubstitutor(method, expectedType), myElement);
-    item.putUserData(COLLECTION_FACTORY, true);
+    item.setInferenceSubstitutorFromExpectedType(myElement, expectedType);
     myResult.consume(item);
   }
 

@@ -16,11 +16,14 @@
 
 package com.intellij.ide.impl.dataRules;
 
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.LangDataKeys;
+import org.jetbrains.annotations.NotNull;
 
 public class PasteTargetRule implements GetDataRule {
-  public Object getData(DataProvider dataProvider) {
-    return LangDataKeys.PSI_ELEMENT.getData(dataProvider);
+  @Override
+  public Object getData(@NotNull DataProvider dataProvider) {
+    return CommonDataKeys.PSI_ELEMENT.getData(dataProvider);
   }
 }

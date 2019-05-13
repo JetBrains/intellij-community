@@ -22,10 +22,12 @@ import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.Nullable;
 
 public class FileParentDirMacro extends Macro {
+  @Override
   public String getName() {
     return "FileParentDir";
   }
 
+  @Override
   public String getDescription() {
     return IdeBundle.message("macro.file.parent.directory");
   }
@@ -43,6 +45,7 @@ public class FileParentDirMacro extends Macro {
     return parentPath(vFile);
   }
 
+  @Override
   public String expand(DataContext dataContext) {
     VirtualFile vFile = getVirtualDirOrParent(dataContext);
     return parentPath(vFile);

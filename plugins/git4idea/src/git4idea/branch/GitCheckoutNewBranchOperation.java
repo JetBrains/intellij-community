@@ -17,7 +17,7 @@ package git4idea.branch;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
-import git4idea.GitPlatformFacade;
+import com.intellij.openapi.vcs.VcsNotifier;
 import git4idea.commands.Git;
 import git4idea.commands.GitCommandResult;
 import git4idea.commands.GitCompoundResult;
@@ -31,17 +31,15 @@ import static git4idea.util.GitUIUtil.code;
 
 /**
  * Create new branch (starting from the current branch) and check it out.
- *
- * @author Kirill Likhodedov
  */
 class GitCheckoutNewBranchOperation extends GitBranchOperation {
 
   @NotNull private final Project myProject;
   @NotNull private final String myNewBranchName;
 
-  GitCheckoutNewBranchOperation(@NotNull Project project, GitPlatformFacade facade, @NotNull Git git, @NotNull GitBranchUiHandler uiHandler,
+  GitCheckoutNewBranchOperation(@NotNull Project project, @NotNull Git git, @NotNull GitBranchUiHandler uiHandler,
                                 @NotNull Collection<GitRepository> repositories, @NotNull String newBranchName) {
-    super(project, facade, git, uiHandler, repositories);
+    super(project, git, uiHandler, repositories);
     myNewBranchName = newBranchName;
     myProject = project;
   }
@@ -49,6 +47,7 @@ class GitCheckoutNewBranchOperation extends GitBranchOperation {
   @Override
   protected void execute() {
     boolean fatalErrorHappened = false;
+    notifyBranchWillChange();
     while (hasMoreRepositories() && !fatalErrorHappened) {
       final GitRepository repository = next();
 
@@ -71,6 +70,7 @@ class GitCheckoutNewBranchOperation extends GitBranchOperation {
 
     if (!fatalErrorHappened) {
       notifySuccess();
+      notifyBranchHasChanged(myNewBranchName);
       updateRecentBranch();
     }
   }
@@ -90,7 +90,7 @@ class GitCheckoutNewBranchOperation extends GitBranchOperation {
   protected String getRollbackProposal() {
     return "However checkout has succeeded for the following " + repositories() + ":<br/>" +
            successfulRepositoriesJoined() +
-           "<br/>You may rollback (checkout back to " + myCurrentBranchOrRev + " and delete " + myNewBranchName + ") not to let branches diverge.";
+           "<br/>You may rollback (checkout previous branch back, and delete " + myNewBranchName + ") not to let branches diverge.";
   }
 
   @NotNull
@@ -105,7 +105,7 @@ class GitCheckoutNewBranchOperation extends GitBranchOperation {
     GitCompoundResult deleteResult = new GitCompoundResult(myProject);
     Collection<GitRepository> repositories = getSuccessfulRepositories();
     for (GitRepository repository : repositories) {
-      GitCommandResult result = myGit.checkout(repository, myCurrentBranchOrRev, null, true);
+      GitCommandResult result = myGit.checkout(repository, myCurrentHeads.get(repository), null, true, false);
       checkoutResult.append(repository, result);
       if (result.success()) {
         deleteResult.append(repository, myGit.branchDelete(repository, myNewBranchName, false));
@@ -113,8 +113,9 @@ class GitCheckoutNewBranchOperation extends GitBranchOperation {
       refresh(repository);
     }
     if (checkoutResult.totalSuccess() && deleteResult.totalSuccess()) {
-      myUiHandler.notifySuccess("Rollback successful", String.format("Checked out %s and deleted %s on %s %s", code(myCurrentBranchOrRev), code(myNewBranchName),
-                                           StringUtil.pluralize("root", repositories.size()), successfulRepositoriesJoined()));
+      VcsNotifier.getInstance(myProject).notifySuccess("Rollback successful", String
+        .format("Checked out %s and deleted %s on %s %s", stringifyBranchesByRepos(myCurrentHeads), code(myNewBranchName),
+                StringUtil.pluralize("root", repositories.size()), successfulRepositoriesJoined()));
     }
     else {
       StringBuilder message = new StringBuilder();
@@ -126,7 +127,7 @@ class GitCheckoutNewBranchOperation extends GitBranchOperation {
         message.append("Errors during deleting ").append(code(myNewBranchName));
         message.append(deleteResult.getErrorOutputWithReposIndication());
       }
-      myUiHandler.notifyError("Error during rollback", message.toString());
+      VcsNotifier.getInstance(myProject).notifyError("Error during rollback", message.toString());
     }
   }
 

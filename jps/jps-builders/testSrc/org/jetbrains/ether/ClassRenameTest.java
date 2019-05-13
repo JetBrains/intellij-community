@@ -17,10 +17,9 @@ package org.jetbrains.ether;
 
 /**
  * @author: db
- * Date: 09.08.11
  */
 public class ClassRenameTest extends IncrementalTestCase {
-  public ClassRenameTest() throws Exception {
+  public ClassRenameTest() {
     super("changeName");
   }
 

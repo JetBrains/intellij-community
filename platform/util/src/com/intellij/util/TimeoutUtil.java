@@ -59,4 +59,8 @@ public final class TimeoutUtil {
     }
     catch (InterruptedException ignored) { }
   }
+
+  public static long getDurationMillis(long startNanoTime) {
+    return (System.nanoTime() - startNanoTime) / 1000000;
+  }
 }

@@ -1,10 +1,10 @@
 // "Add tag @param for parameter 'a'" "true"
 class a {
 
-/**
+/**<caret>
  * @param b
 */
-public void <caret>foo(int a, int b, in c){
+public void foo(int a, int b, in c){
 
 }
 }

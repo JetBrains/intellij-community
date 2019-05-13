@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,58 +21,64 @@ import com.intellij.codeInsight.template.emmet.generators.ZenCodingGenerator;
 import com.intellij.codeInsight.template.emmet.nodes.*;
 import com.intellij.codeInsight.template.emmet.tokens.*;
 import com.intellij.codeInsight.template.impl.TemplateImpl;
-import com.intellij.openapi.util.Pair;
+import com.intellij.lang.StdLanguages;
+import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.XmlElementFactory;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.xml.XmlTokenType;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Stack;
 import com.intellij.xml.util.HtmlUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import static com.intellij.openapi.util.Pair.pair;
 import static com.intellij.openapi.util.text.StringUtil.startsWithIgnoreCase;
 
-/**
- * User: zolotov
- * Date: 2/7/13
- */
 public class XmlEmmetParser extends EmmetParser {
+  public static final String DEFAULT_ATTRIBUTE_NAME = "%default";
+  public static final String BOOLEAN_ATTRIBUTE_VALUE = "%boolean";
+  
   private static final String DEFAULT_TAG = "div";
   private static final int DEFAULT_LOREM_LENGTH = 30;
   private static final Pattern LOREM_PATTERN = Pattern.compile("(lorem|lipsum)(\\d*)");
   @NonNls private static final String DEFAULT_INLINE_TAG = "span";
   @NonNls private static final String LOREM_KEYWORD = "lorem";
   @NonNls private static final String LIPSUM_KEYWORD = "lipsum";
-  private static final String ID = "id";
-  private static final String CLASS = "class";
 
   private boolean hasTagContext = false;
-  private final Stack<String> tagLevel = new Stack<String>();
+  private final Stack<String> tagLevel = new Stack<>();
 
-  private static Map<String, String> parentChildTagMapping = new HashMap<String, String>() {{
-    put("p", "span");
-    put("ul", "li");
-    put("ol", "li");
-    put("table", "tr");
-    put("tr", "td");
-    put("tbody", "tr");
-    put("thead", "tr");
-    put("tfoot", "tr");
-    put("colgroup", "col");
-    put("select", "option");
-    put("optgroup", "option");
-    put("audio", "source");
-    put("video", "source");
-    put("object", "param");
-    put("map", "area");
-  }};
+  private static final Map<String, String> parentChildTagMapping = ContainerUtil.newHashMap(
+    pair("p", "span"),
+    pair("ul", "li"),
+    pair("ol", "li"),
+    pair("table", "tr"),
+    pair("tr", "td"),
+    pair("tbody", "tr"),
+    pair("thead", "tr"),
+    pair("tfoot", "tr"),
+    pair("colgroup", "col"),
+    pair("select", "option"),
+    pair("optgroup", "option"),
+    pair("audio", "source"),
+    pair("video", "source"),
+    pair("object", "param"),
+    pair("map", "area"));
+
+  private final boolean isHtml;
 
   public XmlEmmetParser(List<ZenCodingToken> tokens,
                         CustomTemplateCallback callback,
@@ -83,14 +89,48 @@ public class XmlEmmetParser extends EmmetParser {
     if (surroundWithTemplate && parentTag != null && context.getNode().getElementType() == XmlTokenType.XML_START_TAG_START) {
       parentTag = PsiTreeUtil.getParentOfType(parentTag, XmlTag.class);
     }
+    isHtml = generator.isHtml(callback);
     if (parentTag != null) {
       hasTagContext = true;
       tagLevel.push(parentTag.getName());
     }
   }
 
+  @Nullable
+  private String parseAttributeName() {
+    StringBuilder name = new StringBuilder();
+    ZenCodingToken token = getToken();
+    while (token != null) {
+      if ((token instanceof IdentifierToken)) {
+        name.append(((IdentifierToken)token).getText());
+      }
+      else if (token instanceof OperationToken && 
+               (((OperationToken)token).getSign() == '+' || ((OperationToken)token).getSign() == '-')) {
+        name.append(((OperationToken)token).getSign());
+      }
+      else {
+        break;
+      }
+      advance();
+      token = getToken();
+    }
+
+    if (name.length() == 0) {
+      return null;
+    }
+
+    final XmlTag tag = XmlElementFactory.getInstance(myCallback.getProject()).createTagFromText("<tag " + name + "=''/>", StdLanguages.HTML);
+    XmlAttribute[] attributes = tag.getAttributes();
+    if (attributes.length == 1) {
+      return attributes[0].getName();
+    }
+    else {
+      return null;
+    }
+  }
+  
   @NotNull
-  private static String getAttributeValueByToken(@Nullable ZenCodingToken token) {
+  private static String getAttributeValueByToken(@Nullable ZenCodingToken token, boolean allowOperations) {
     if (token == null) {
       return "";
     }
@@ -98,11 +138,17 @@ public class XmlEmmetParser extends EmmetParser {
       final String text = ((StringLiteralToken)token).getText();
       return text.substring(1, text.length() - 1);
     }
+    else if (token instanceof TextToken) {
+      return ((TextToken)token).getText();
+    }
     else if (token instanceof IdentifierToken) {
       return ((IdentifierToken)token).getText();
     }
     else if (token instanceof NumberToken) {
       return Integer.toString(((NumberToken)token).getNumber());
+    }
+    else if (allowOperations && token instanceof OperationToken) {
+      return String.valueOf(((OperationToken)token).getSign());
     }
     else if (token == ZenCodingTokens.DOT || token == ZenCodingTokens.SHARP) {
       return token.toString();
@@ -130,17 +176,28 @@ public class XmlEmmetParser extends EmmetParser {
       return null;
     }
 
+    boolean forceSingleTag = false;
     TemplateImpl template = myCallback.findApplicableTemplate(templateKey);
+    if (template == null && StringUtil.endsWithChar(templateKey, '/')) {
+      forceSingleTag = true;
+      templateKey = StringUtil.trimEnd(templateKey, '/');
+    }
     if (template == null && !ZenCodingUtil.isXML11ValidQName(templateKey) && !StringUtil.containsChar(templateKey, '$')) {
       return null;
     }
 
-    final List<Pair<String, String>> attrList = parseSelectors();
-    if (mustHaveSelector && attrList.size() == 0) {
+    Map<String, String> attributes = parseSelectors();
+    if (mustHaveSelector && attributes.isEmpty()) {
       return null;
     }
 
-    final TemplateToken templateToken = new TemplateToken(templateKey, attrList);
+    ZenCodingToken currentToken = getToken();
+    if (currentToken instanceof IdentifierToken && "/".equals(((IdentifierToken)currentToken).getText())) {
+      advance();
+      forceSingleTag = true;
+    }
+
+    TemplateToken templateToken = new TemplateToken(templateKey, attributes, forceSingleTag);
     if (!setTemplate(templateToken, template)) {
       return null;
     }
@@ -154,7 +211,7 @@ public class XmlEmmetParser extends EmmetParser {
   }
 
   @Override
-  protected ZenCodingNode parseMoreOperation(@NotNull ZenCodingNode leftPart) {
+  protected ZenCodingNode parseMoreOperation(@Nullable ZenCodingNode leftPart) {
     String parentTag = getParentTag(leftPart);
     boolean hasParent = false;
     if (!Strings.isNullOrEmpty(parentTag)) {
@@ -172,9 +229,8 @@ public class XmlEmmetParser extends EmmetParser {
   }
 
   @Nullable
-  @Override
-  protected String getDefaultTemplateKey() {
-    return ZenCodingUtil.isHtml(myCallback) ? suggestTagName() : null;
+  private String getDefaultTemplateKey() {
+    return isHtml ? suggestTagName() : null;
   }
 
   @Nullable
@@ -198,19 +254,19 @@ public class XmlEmmetParser extends EmmetParser {
       int loremWordsCount = DEFAULT_LOREM_LENGTH;
       if (matcher.groupCount() > 1) {
         String group = matcher.group(2);
-        loremWordsCount = group.isEmpty() ? DEFAULT_LOREM_LENGTH : Integer.parseInt(group);
+        loremWordsCount = group == null || group.isEmpty() ? DEFAULT_LOREM_LENGTH : Integer.parseInt(group);
       }
 
-      final List<Pair<String, String>> attrList = parseSelectors();
+      final Map<String, String> attributes = parseSelectors();
       ZenCodingToken token = getToken();
       boolean isRepeating = token instanceof OperationToken && ((OperationToken)token).getSign() == '*';
-      if (!attrList.isEmpty() || isRepeating) {
+      if (!attributes.isEmpty() || isRepeating) {
         String wrapTag = suggestTagName();
         TemplateImpl template = myCallback.findApplicableTemplate(templateKey);
         if (template == null && !ZenCodingUtil.isXML11ValidQName(templateKey)) {
           return null;
         }
-        final TemplateToken templateToken = new TemplateToken(wrapTag, attrList);
+        final TemplateToken templateToken = new TemplateToken(wrapTag, attributes);
         if (!setTemplate(templateToken, template)) {
           return null;
         }
@@ -244,64 +300,34 @@ public class XmlEmmetParser extends EmmetParser {
     }
   }
 
-  @SuppressWarnings("unchecked")
   @NotNull
-  private List<Pair<String, String>> parseSelectors() {
-    final List<Pair<String, String>> result = new ArrayList<Pair<String, String>>();
-
-    int classAttrPosition = -1;
-    int idAttrPosition = -1;
-
-    final StringBuilder classAttrBuilder = new StringBuilder();
-    final StringBuilder idAttrBuilder = new StringBuilder();
-
-    while (true) {
-      final List<Pair<String, String>> attrList = parseSelector();
-      if (attrList == null) {
-        if (classAttrPosition != -1) {
-          result.set(classAttrPosition, new Pair<String, String>(CLASS, classAttrBuilder.toString()));
+  private Map<String, String> parseSelectors() {
+    final Map<String, String> result = ContainerUtil.newLinkedHashMap();
+    List<Couple<String>> attrList = parseSelector();
+    while (attrList != null) {
+      for (Couple<String> attr : attrList) {
+        if (getClassAttributeName().equals(attr.first)) {
+          result.put(getClassAttributeName(), (StringUtil.notNullize(result.get(getClassAttributeName())) + " " + attr.second).trim());
         }
-        if (idAttrPosition != -1) {
-          result.set(idAttrPosition, new Pair<String, String>(ID, idAttrBuilder.toString()));
-        }
-        return result;
-      }
-
-      for (Pair<String, String> attr : attrList) {
-        if (CLASS.equals(attr.first)) {
-          if (classAttrBuilder.length() > 0) {
-            classAttrBuilder.append(' ');
-          }
-          classAttrBuilder.append(attr.second);
-          if (classAttrPosition == -1) {
-            classAttrPosition = result.size();
-            result.add(attr);
-          }
-        }
-        else if (ID.equals(attr.first)) {
-          if (idAttrBuilder.length() > 0) {
-            idAttrBuilder.append(' ');
-          }
-          idAttrBuilder.append(attr.second);
-          if (idAttrPosition == -1) {
-            idAttrPosition = result.size();
-            result.add(attr);
-          }
+        else if (HtmlUtil.ID_ATTRIBUTE_NAME.equals(attr.first)) {
+          result.put(HtmlUtil.ID_ATTRIBUTE_NAME, (StringUtil.notNullize(result.get(HtmlUtil.ID_ATTRIBUTE_NAME)) + " " + attr.second).trim());
         }
         else {
-          result.add(attr);
+          result.put(attr.first, attr.second);
         }
       }
+      attrList = parseSelector();
     }
+    return result;
   }
 
   @Nullable
-  private List<Pair<String, String>> parseSelector() {
+  private List<Couple<String>> parseSelector() {
     ZenCodingToken token = getToken();
     if (token == ZenCodingTokens.OPENING_SQ_BRACKET) {
       advance();
-      final List<Pair<String, String>> attrList = parseAttributeList();
-      if (attrList == null || getToken() != ZenCodingTokens.CLOSING_SQ_BRACKET) {
+      final List<Couple<String>> attrList = parseAttributeList();
+      if (getToken() != ZenCodingTokens.CLOSING_SQ_BRACKET) {
         return null;
       }
       advance();
@@ -309,24 +335,29 @@ public class XmlEmmetParser extends EmmetParser {
     }
 
     if (token == ZenCodingTokens.DOT || token == ZenCodingTokens.SHARP) {
-      final String name = token == ZenCodingTokens.DOT ? CLASS : ID;
+      final String name = token == ZenCodingTokens.DOT ? getClassAttributeName() : HtmlUtil.ID_ATTRIBUTE_NAME;
       advance();
       token = getToken();
-      final String value = getAttributeValueByToken(token);
+      final String value = getAttributeValueByToken(token, false);
       if (!value.isEmpty()) {
         advance();
       }
-      return Collections.singletonList(new Pair<String, String>(name, value));
+      return Collections.singletonList(Couple.of(name, value));
     }
 
     return null;
   }
 
-  @Nullable
-  private List<Pair<String, String>> parseAttributeList() {
-    final List<Pair<String, String>> result = new ArrayList<Pair<String, String>>();
+  @NotNull
+  protected String getClassAttributeName() {
+    return HtmlUtil.CLASS_ATTRIBUTE_NAME;
+  }
+
+  @NotNull
+  private List<Couple<String>> parseAttributeList() {
+    final List<Couple<String>> result = new ArrayList<>();
     while (true) {
-      final Pair<String, String> attribute = parseAttribute();
+      final Couple<String> attribute = parseAttribute();
       if (attribute == null) {
         return result;
       }
@@ -341,34 +372,57 @@ public class XmlEmmetParser extends EmmetParser {
   }
 
   @Nullable
-  private Pair<String, String> parseAttribute() {
-    ZenCodingToken token = getToken();
-    if (!(token instanceof IdentifierToken)) {
-      return null;
+  private Couple<String> parseAttribute() {
+    final int position = getCurrentPosition();
+    String attributeName = parseAttributeName();
+    if (attributeName != null && !attributeName.isEmpty()) {
+      if (getToken() == ZenCodingTokens.DOT) {
+        if (isEndOfAttribute(nextToken(1))) {
+          // boolean attribute
+          advance(); // dot
+          return Couple.of(attributeName, BOOLEAN_ATTRIBUTE_VALUE);
+        }
+      }
+      else {
+        // attribute with value
+        if (getToken() == ZenCodingTokens.EQ) {
+          advance();
+          return Couple.of(attributeName, parseAttributeValue());
+        }
+        else {
+          return Couple.of(attributeName, "");
+        }
+      }
     }
+    restorePosition(position);
 
-    final String name = ((IdentifierToken)token).getText();
-
-    advance();
-    token = getToken();
-    if (token != ZenCodingTokens.EQ) {
-      return new Pair<String, String>(name, "");
+    final String impliedValue = parseAttributeValue();
+    if (!impliedValue.isEmpty()) {
+      // implied attribute
+      return Couple.of(DEFAULT_ATTRIBUTE_NAME, impliedValue);
     }
+    return null;
+  }
 
-    advance();
+  @NotNull
+  private String parseAttributeValue() {
+    ZenCodingToken token;
     final StringBuilder attrValueBuilder = new StringBuilder();
     String value;
     do {
       token = getToken();
-      value = getAttributeValueByToken(token);
+      value = getAttributeValueByToken(token, true);
       attrValueBuilder.append(value);
-      if (token != null && token != ZenCodingTokens.CLOSING_SQ_BRACKET
-          && token != ZenCodingTokens.SPACE && token != ZenCodingTokens.COMMA) {
+      if (!isEndOfAttribute(token)) {
         advance();
       }
     }
-    while (token != null && token != ZenCodingTokens.CLOSING_SQ_BRACKET
-           && token != ZenCodingTokens.SPACE && token != ZenCodingTokens.COMMA);
-    return new Pair<String, String>(name, attrValueBuilder.toString());
+    while (!isEndOfAttribute(token));
+    return attrValueBuilder.toString();
+  }
+
+  private static boolean isEndOfAttribute(@Nullable ZenCodingToken nextToken) {
+    return nextToken == null || nextToken == ZenCodingTokens.SPACE || nextToken == ZenCodingTokens.CLOSING_SQ_BRACKET 
+           || nextToken == ZenCodingTokens.COMMA;
   }
 }

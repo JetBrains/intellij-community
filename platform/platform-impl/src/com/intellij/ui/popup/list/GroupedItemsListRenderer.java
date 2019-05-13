@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,35 +19,38 @@ import com.intellij.openapi.ui.popup.ListItemDescriptor;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.ErrorLabel;
 import com.intellij.ui.GroupedElementsRenderer;
-import com.intellij.ui.components.panels.OpaquePanel;
+import com.intellij.util.ui.JBUI;
 
 import javax.swing.*;
 import java.awt.*;
 
-public class GroupedItemsListRenderer extends GroupedElementsRenderer.List implements ListCellRenderer {
-  protected ListItemDescriptor myDescriptor;
+public class GroupedItemsListRenderer<E> extends GroupedElementsRenderer.List implements ListCellRenderer<E> {
+  protected ListItemDescriptor<E> myDescriptor;
 
   protected JLabel myNextStepLabel;
+  protected int myCurrentIndex;
 
   public JLabel getNextStepLabel() {
     return myNextStepLabel;
   }
 
 
-  public GroupedItemsListRenderer(ListItemDescriptor descriptor) {
+  public GroupedItemsListRenderer(ListItemDescriptor<E> descriptor) {
     myDescriptor = descriptor;
   }
 
   @Override
-  public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
+  public Component getListCellRendererComponent(JList<? extends E> list, E value, int index, boolean isSelected, boolean cellHasFocus) {
     String caption = myDescriptor.getCaptionAboveOf(value);
     boolean hasSeparator = myDescriptor.hasSeparatorAboveOf(value);
     if (index == 0 && StringUtil.isEmptyOrSpaces(caption)) hasSeparator = false;
 
-    Icon icon = myDescriptor.getIconFor(value);
+    Icon icon = isSelected ? myDescriptor.getSelectedIconFor(value) : myDescriptor.getIconFor(value);
     final JComponent result = configureComponent(myDescriptor.getTextFor(value), myDescriptor.getTooltipFor(value),
                                                  icon, icon, isSelected, hasSeparator,
                                                  caption, -1);
+    myCurrentIndex = index;
+    myRendererComponent.setBackground(list.getBackground());
     customizeComponent(list, value, isSelected);
     return result;
   }
@@ -55,29 +58,24 @@ public class GroupedItemsListRenderer extends GroupedElementsRenderer.List imple
 
   @Override
   protected JComponent createItemComponent() {
-    myTextLabel = new ErrorLabel();
-    myTextLabel.setOpaque(true);
-    myTextLabel.setBorder(BorderFactory.createEmptyBorder(1, 1, 1, 1));
-
+    createLabel();
     return layoutComponent(myTextLabel);
   }
 
+  protected void createLabel() {
+    myTextLabel = new ErrorLabel();
+    myTextLabel.setBorder(JBUI.Borders.emptyBottom(1));
+    myTextLabel.setOpaque(true);
+  }
+
   protected final JComponent layoutComponent(JComponent middleItemComponent) {
-    JPanel result = new OpaquePanel(new BorderLayout(4, 4), Color.white);
-
     myNextStepLabel = new JLabel();
-    myNextStepLabel.setOpaque(true);
-
-    result.add(middleItemComponent, BorderLayout.CENTER);
-    result.add(myNextStepLabel, BorderLayout.EAST);
-
-    result.setBorder(getDefaultItemComponentBorder());
-
-    return result;
+    myNextStepLabel.setOpaque(false);
+    return JBUI.Panels.simplePanel(middleItemComponent)
+      .addToRight(myNextStepLabel)
+      .withBorder(getDefaultItemComponentBorder());
   }
 
-  protected void customizeComponent(JList list, Object value, boolean isSelected) {
+  protected void customizeComponent(JList<? extends E> list, E value, boolean isSelected) {
   }
-
-
 }

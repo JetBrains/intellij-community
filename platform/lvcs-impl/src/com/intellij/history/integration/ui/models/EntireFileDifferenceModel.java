@@ -16,13 +16,15 @@
 
 package com.intellij.history.integration.ui.models;
 
+import com.intellij.diff.DiffContentFactory;
+import com.intellij.diff.DiffContentFactoryEx;
+import com.intellij.diff.contents.DiffContent;
 import com.intellij.history.core.tree.Entry;
 import com.intellij.history.integration.IdeaGateway;
-import com.intellij.openapi.diff.DiffContent;
-import com.intellij.openapi.diff.DocumentContent;
-import com.intellij.openapi.diff.SimpleContent;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.VirtualFile;
 
 public class EntireFileDifferenceModel extends FileDifferenceModel {
   private final Entry myLeft;
@@ -67,14 +69,18 @@ public class EntireFileDifferenceModel extends FileDifferenceModel {
   @Override
   protected DiffContent getEditableRightDiffContent(RevisionProcessingProgress p) {
     Document d = getDocument();
-    return DocumentContent.fromDocument(myProject, d);
+    return DiffContentFactory.getInstance().create(myProject, d);
   }
 
-  private SimpleContent getDiffContent(Entry e) {
-    return createSimpleDiffContent(getContentOf(e), e);
-  }
-
-  private String getContentOf(Entry e) {
-    return e.getContent().getString(e, myGateway);
+  private DiffContent getDiffContent(Entry e) {
+    byte[] content = e.getContent().getBytes();
+    VirtualFile virtualFile = myGateway.findVirtualFile(e.getPath());
+    if (virtualFile != null) {
+      return DiffContentFactoryEx.getInstanceEx().createDocumentFromBytes(myProject, content, virtualFile);
+    }
+    else {
+      FileType fileType = myGateway.getFileType(e.getName());
+      return DiffContentFactoryEx.getInstanceEx().createDocumentFromBytes(myProject, content, fileType, e.getName());
+    }
   }
 }

@@ -46,14 +46,14 @@ public class PsiFilter<T extends PsiElement> {
   }
 
   public Visitor<T> createVisitor(List<T> elements) {
-    return new Visitor<T>(this, elements);
+    return new Visitor<>(this, elements);
   }
 
   public static class Visitor<T extends PsiElement> extends PsiRecursiveElementVisitor {
-    private final PsiFilter<T> filter;
-    private final List<T> elements;
+    private final PsiFilter<? super T> filter;
+    private final List<? super T> elements;
 
-    protected Visitor(final PsiFilter<T> filter, final List<T> elements) {
+    protected Visitor(final PsiFilter<? super T> filter, final List<? super T> elements) {
       this.filter = filter;
       this.elements = elements;
     }

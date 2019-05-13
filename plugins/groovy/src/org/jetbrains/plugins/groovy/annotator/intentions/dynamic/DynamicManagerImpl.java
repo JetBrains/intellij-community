@@ -1,34 +1,15 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.annotator.intentions.dynamic;
 
-import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
+import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
-import com.intellij.openapi.components.StoragePathMacros;
-import com.intellij.openapi.components.StorageScheme;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.wm.ToolWindow;
-import com.intellij.psi.*;
-import com.intellij.psi.impl.PsiModificationTrackerImpl;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiVariable;
 import com.intellij.ui.treeStructure.treetable.ListTreeTableModelOnColumns;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
@@ -43,16 +24,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
-/**
- * User: Dmitry.Krasilschikov
- * Date: 23.11.2007
- */
-@State(
-    name = "DynamicElementsStorage",
-    storages = {
-        @Storage( file = StoragePathMacros.PROJECT_FILE),
-        @Storage( file = StoragePathMacros.PROJECT_CONFIG_DIR + "/dynamic.xml", scheme = StorageScheme.DIRECTORY_BASED)
-})
+@State(name = "DynamicElementsStorage", storages = @Storage("dynamic.xml"))
 
 public class DynamicManagerImpl extends DynamicManager {
   private final Project myProject;
@@ -60,23 +32,13 @@ public class DynamicManagerImpl extends DynamicManager {
 
   public DynamicManagerImpl(final Project project) {
     myProject = project;
-    StartupManager.getInstance(project).registerPostStartupActivity(new Runnable() {
-      public void run() {
-        if (myRootElement.getContainingClasses().size() > 0) {
-          DynamicToolWindowWrapper.getInstance(project).getToolWindow(); //initialize myToolWindow
-        }
-      }
-    });
   }
 
   public Project getProject() {
     return myProject;
   }
 
-
-  public void initComponent() {
-  }
-
+  @Override
   public void addProperty(DynamicElementSettings settings) {
     assert settings != null;
     assert !settings.isMethod();
@@ -125,43 +87,41 @@ public class DynamicManagerImpl extends DynamicManager {
   private void addItemInTree(final DClassElement classElement, final DItemElement itemElement, final ToolWindow window) {
     final ListTreeTableModelOnColumns myTreeTableModel = DynamicToolWindowWrapper.getInstance(myProject).getTreeTableModel();
 
-    window.activate(new Runnable() {
-      public void run() {
-        final Object rootObject = myTreeTableModel.getRoot();
-        if (!(rootObject instanceof DefaultMutableTreeNode)) return;
-        final DefaultMutableTreeNode rootNode = (DefaultMutableTreeNode) rootObject;
+    window.activate(() -> {
+      final Object rootObject = myTreeTableModel.getRoot();
+      if (!(rootObject instanceof DefaultMutableTreeNode)) return;
+      final DefaultMutableTreeNode rootNode = (DefaultMutableTreeNode) rootObject;
 
-        DefaultMutableTreeNode node = new DefaultMutableTreeNode(itemElement);
-        if (rootNode.getChildCount() > 0) {
-          for (DefaultMutableTreeNode classNode = (DefaultMutableTreeNode) rootNode.getFirstChild();
-               classNode != null;
-               classNode = (DefaultMutableTreeNode) rootNode.getChildAfter(classNode)) {
+      DefaultMutableTreeNode node = new DefaultMutableTreeNode(itemElement);
+      if (rootNode.getChildCount() > 0) {
+        for (DefaultMutableTreeNode classNode = (DefaultMutableTreeNode) rootNode.getFirstChild();
+             classNode != null;
+             classNode = (DefaultMutableTreeNode) rootNode.getChildAfter(classNode)) {
 
-            final Object classRow = classNode.getUserObject();
-            if (!(classRow instanceof DClassElement)) return;
+          final Object classRow = classNode.getUserObject();
+          if (!(classRow instanceof DClassElement)) return;
 
-            DClassElement otherClassName = (DClassElement) classRow;
-            if (otherClassName.equals(classElement)) {
-              int index = getIndexToInsert(classNode, itemElement);
-              classNode.insert(node, index);
-              myTreeTableModel.nodesWereInserted(classNode, new int[]{index});
-              DynamicToolWindowWrapper.getInstance(myProject).setSelectedNode(node);
-              return;
-            }
+          DClassElement otherClassName = (DClassElement) classRow;
+          if (otherClassName.equals(classElement)) {
+            int index = getIndexToInsert(classNode, itemElement);
+            classNode.insert(node, index);
+            myTreeTableModel.nodesWereInserted(classNode, new int[]{index});
+            DynamicToolWindowWrapper.getInstance(myProject).setSelectedNode(node);
+            return;
           }
         }
-
-        // if there is no such class in tree
-        int index = getIndexToInsert(rootNode, classElement);
-        DefaultMutableTreeNode classNode = new DefaultMutableTreeNode(classElement);
-        rootNode.insert(classNode, index);
-        myTreeTableModel.nodesWereInserted(rootNode, new int[]{index});
-
-        classNode.add(node);
-        myTreeTableModel.nodesWereInserted(classNode, new int[]{0});
-
-        DynamicToolWindowWrapper.getInstance(myProject).setSelectedNode(node);
       }
+
+      // if there is no such class in tree
+      int index = getIndexToInsert(rootNode, classElement);
+      DefaultMutableTreeNode classNode = new DefaultMutableTreeNode(classElement);
+      rootNode.insert(classNode, index);
+      myTreeTableModel.nodesWereInserted(rootNode, new int[]{index});
+
+      classNode.add(node);
+      myTreeTableModel.nodesWereInserted(classNode, new int[]{0});
+
+      DynamicToolWindowWrapper.getInstance(myProject).setSelectedNode(node);
     }, true);
   }
 
@@ -183,6 +143,7 @@ public class DynamicManagerImpl extends DynamicManager {
     return res;
   }
 
+  @Override
   public void addMethod(DynamicElementSettings settings) {
     if (settings == null) return;
     assert settings.isMethod();
@@ -195,6 +156,7 @@ public class DynamicManagerImpl extends DynamicManager {
     addItemInTree(classElement, methodElement, window);
   }
 
+  @Override
   public void removeClassElement(DClassElement classElement) {
 
     final DRootElement rootElement = getRootElement();
@@ -209,6 +171,7 @@ public class DynamicManagerImpl extends DynamicManager {
     classElement.removeProperty(propertyElement);
   }
 
+  @Override
   @NotNull
   public Collection<DPropertyElement> findDynamicPropertiesOfClass(String className) {
     final DClassElement classElement = findClassElement(getRootElement(), className);
@@ -216,9 +179,10 @@ public class DynamicManagerImpl extends DynamicManager {
     if (classElement != null) {
       return classElement.getProperties();
     }
-    return new ArrayList<DPropertyElement>();
+    return new ArrayList<>();
   }
 
+  @Override
   @Nullable
   public String getPropertyType(String className, String propertyName) {
     final DPropertyElement dynamicProperty = findConcreteDynamicProperty(getRootElement(), className, propertyName);
@@ -227,6 +191,7 @@ public class DynamicManagerImpl extends DynamicManager {
     return dynamicProperty.getType();
   }
 
+  @Override
   @NotNull
   public Collection<DClassElement> getAllContainingClasses() {
     //TODO: use iterator
@@ -235,10 +200,12 @@ public class DynamicManagerImpl extends DynamicManager {
     return root.getContainingClasses();
   }
 
+  @Override
   public DRootElement getRootElement() {
     return myRootElement;
   }
 
+  @Override
   @Nullable
   public String replaceDynamicPropertyName(String className, String oldPropertyName, String newPropertyName) {
     final DClassElement classElement = findClassElement(getRootElement(), className);
@@ -255,6 +222,7 @@ public class DynamicManagerImpl extends DynamicManager {
     return newPropertyName;
   }
 
+  @Override
   @Nullable
   public String replaceDynamicPropertyType(String className, String propertyName, String oldPropertyType, String newPropertyType) {
     final DPropertyElement property = findConcreteDynamicProperty(className, propertyName);
@@ -283,6 +251,7 @@ public class DynamicManagerImpl extends DynamicManager {
 
   //  @Nullable
 
+  @Override
   public DMethodElement findConcreteDynamicMethod(String containingClassName, String name, String[] parameterTypes) {
     return findConcreteDynamicMethod(getRootElement(), containingClassName, name, parameterTypes);
   }
@@ -294,6 +263,7 @@ public class DynamicManagerImpl extends DynamicManager {
     classElement.removeMethod(methodElement);
   }
 
+  @Override
   public void removeItemElement(DItemElement element) {
     DClassElement classElement = getClassElementByItem(element);
     if (classElement == null) return;
@@ -307,6 +277,7 @@ public class DynamicManagerImpl extends DynamicManager {
     removeItemFromTree(element, classElement);
   }
 
+  @Override
   public void replaceDynamicMethodType(String className, String name, List<ParamInfo> myPairList, String oldType, String newType) {
     final DMethodElement method = findConcreteDynamicMethod(className, name, QuickfixUtil.getArgumentsTypes(myPairList));
 
@@ -315,6 +286,7 @@ public class DynamicManagerImpl extends DynamicManager {
     fireChange();
   }
 
+  @Override
   @NotNull
   public DClassElement getOrCreateClassElement(Project project, String className) {
     DClassElement classElement = DynamicManager.getInstance(myProject).getRootElement().getClassElement(className);
@@ -325,6 +297,7 @@ public class DynamicManagerImpl extends DynamicManager {
     return classElement;
   }
 
+  @Override
   @Nullable
   public DClassElement getClassElementByItem(DItemElement itemElement) {
     final Collection<DClassElement> classes = getAllContainingClasses();
@@ -334,6 +307,7 @@ public class DynamicManagerImpl extends DynamicManager {
     return null;
   }
 
+  @Override
   public void replaceDynamicMethodName(String className, String oldName, String newName, String[] types) {
     final DMethodElement oldMethodElement = findConcreteDynamicMethod(className, oldName, types);
     if (oldMethodElement != null) {
@@ -343,26 +317,21 @@ public class DynamicManagerImpl extends DynamicManager {
     fireChange();
   }
 
+  @Override
   public Iterable<PsiMethod> getMethods(final String classQname) {
     DClassElement classElement = getRootElement().getClassElement(classQname);
     if (classElement == null) return Collections.emptyList();
-    return ContainerUtil.map(classElement.getMethods(), new Function<DMethodElement, PsiMethod>() {
-      public PsiMethod fun(DMethodElement methodElement) {
-        return methodElement.getPsi(PsiManager.getInstance(myProject), classQname);
-      }
-    });
+    return ContainerUtil.map(classElement.getMethods(), methodElement -> methodElement.getPsi(PsiManager.getInstance(myProject), classQname));
   }
 
+  @Override
   public Iterable<PsiVariable> getProperties(final String classQname) {
     DClassElement classElement = getRootElement().getClassElement(classQname);
     if (classElement == null) return Collections.emptyList();
-    return ContainerUtil.map(classElement.getProperties(), new Function<DPropertyElement, PsiVariable>() {
-      public PsiVariable fun(DPropertyElement propertyElement) {
-        return propertyElement.getPsi(PsiManager.getInstance(myProject), classQname);
-      }
-    });
+    return ContainerUtil.map(classElement.getProperties(), propertyElement -> propertyElement.getPsi(PsiManager.getInstance(myProject), classQname));
   }
 
+  @Override
   public void replaceClassName(final DClassElement oldClassElement, String newClassName) {
     if (oldClassElement == null) return;
 
@@ -375,28 +344,20 @@ public class DynamicManagerImpl extends DynamicManager {
     fireChange();
   }
 
+  @Override
   public void fireChange() {
-    fireChangeCodeAnalyze();
+    TransactionGuard.submitTransaction(myProject, () -> PsiManager.getInstance(myProject).dropPsiCaches());
   }
 
-  private void fireChangeCodeAnalyze() {
-    final Editor textEditor = FileEditorManager.getInstance(myProject).getSelectedTextEditor();
-    if (textEditor == null) return;
-    final PsiFile file = PsiDocumentManager.getInstance(myProject).getPsiFile(textEditor.getDocument());
-    if (file == null) return;
-
-    ((PsiModificationTrackerImpl)PsiManager.getInstance(myProject).getModificationTracker()).incCounter();
-    DaemonCodeAnalyzer.getInstance(myProject).restart();
-  }
-
+  @Override
   @Nullable
   public DPropertyElement findConcreteDynamicProperty(final String containingClassName, final String propertyName) {
     return findConcreteDynamicProperty(getRootElement(), containingClassName, propertyName);
   }
 
   @Nullable
-  private static DPropertyElement findConcreteDynamicProperty(DRootElement rootElement, final String conatainingClassName, final String propertyName) {
-    final DClassElement classElement = rootElement.getClassElement(conatainingClassName);
+  private static DPropertyElement findConcreteDynamicProperty(DRootElement rootElement, final String containingClassName, final String propertyName) {
+    final DClassElement classElement = rootElement.getClassElement(containingClassName);
 
     if (classElement == null) return null;
 
@@ -404,40 +365,21 @@ public class DynamicManagerImpl extends DynamicManager {
   }
 
   @Nullable
-  private static DClassElement findClassElement(DRootElement rootElement, final String conatainingClassName) {
-    return rootElement.getClassElement(conatainingClassName);
+  private static DClassElement findClassElement(DRootElement rootElement, final String containingClassName) {
+    return rootElement.getClassElement(containingClassName);
   }
 
-  public void disposeComponent() {
-  }
-
-  @NotNull
-  public String getComponentName() {
-    return "DynamicManagerImpl";
-  }
-
-  public void projectOpened() {
-  }
-
-  public void projectClosed() {
-  }
-
-  /**
-   * On exit
-   */
+  @Override
   public DRootElement getState() {
-//    return XmlSerializer.serialize(myRootElement);
     return myRootElement;
   }
 
-  /*
-   * On loading
-   */
-  public void loadState(DRootElement element) {
-//    myRootElement = XmlSerializer.deserialize(element, myRootElement.getClass());
+  @Override
+  public void loadState(@NotNull DRootElement element) {
     myRootElement = element;
   }
 
+  @Override
   public DItemElement createDynamicElement(DynamicElementSettings settings) {
     DItemElement itemElement;
     if (settings.isMethod()) {

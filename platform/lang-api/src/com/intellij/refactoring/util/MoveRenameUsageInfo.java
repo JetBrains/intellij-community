@@ -15,15 +15,18 @@
  */
 package com.intellij.refactoring.util;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.usageView.UsageInfo;
+import com.intellij.util.Function;
 import org.jetbrains.annotations.Nullable;
 
 public class MoveRenameUsageInfo extends UsageInfo{
+  private static final Logger LOG = Logger.getInstance(MoveRenameUsageInfo.class);
   private SmartPsiElementPointer myReferencedElementPointer = null;
   private PsiElement myReferencedElement;
 
@@ -63,9 +66,11 @@ public class MoveRenameUsageInfo extends UsageInfo{
     if (reference != null) {
       Document document = PsiDocumentManager.getInstance(project).getDocument(containingFile);
       if (document != null) {
-        int elementStart = reference.getElement().getTextRange().getStartOffset();
-        myReferenceRangeMarker = document.createRangeMarker(elementStart + reference.getRangeInElement().getStartOffset(),
-                                                            elementStart + reference.getRangeInElement().getEndOffset());
+        final int elementStart = reference.getElement().getTextRange().getStartOffset();
+        final TextRange rangeInElement = reference.getRangeInElement();
+        LOG.assertTrue(elementStart + rangeInElement.getEndOffset() <= document.getTextLength(), reference);
+        myReferenceRangeMarker = document.createRangeMarker(elementStart + rangeInElement.getStartOffset(),
+                                                            elementStart + rangeInElement.getEndOffset());
       }
       myDynamicUsage = reference.resolve() == null;
     }
@@ -81,22 +86,44 @@ public class MoveRenameUsageInfo extends UsageInfo{
     return myReferencedElement;
   }
 
+  @Override
   @Nullable
   public PsiReference getReference() {
     if (myReference != null) {
       final PsiElement element = myReference.getElement();
-      if (element != null && element.isValid()) return myReference;
+      if (element != null && element.isValid()) {
+        if (myReferenceRangeMarker == null) {
+          return myReference;
+        }
+
+        final PsiReference reference = checkReferenceRange(element, start -> myReference);
+
+        if (reference != null) {
+          return reference;
+        }
+      }
     }
 
     if (myReferenceRangeMarker == null) return null;
     final PsiElement element = getElement();
-    if (element == null) return null;
+    if (element == null || !element.isValid()) {
+      return null;
+    }
+    return checkReferenceRange(element, start -> element.findReferenceAt(start));
+  }
+
+  @Nullable
+  private PsiReference checkReferenceRange(PsiElement element, Function<? super Integer, ? extends PsiReference> fn) {
     final int start = myReferenceRangeMarker.getStartOffset() - element.getTextRange().getStartOffset();
     final int end = myReferenceRangeMarker.getEndOffset() - element.getTextRange().getStartOffset();
-    final PsiReference reference = element.findReferenceAt(start);
-    if (reference == null) return null;
+    final PsiReference reference = fn.fun(start);
+    if (reference == null) {
+      return null;
+    }
     final TextRange rangeInElement = reference.getRangeInElement();
-    if (rangeInElement.getStartOffset() != start || rangeInElement.getEndOffset() != end) return null;
+    if (rangeInElement.getStartOffset() != start || rangeInElement.getEndOffset() != end) {
+      return null;
+    }
     return reference;
   }
 }

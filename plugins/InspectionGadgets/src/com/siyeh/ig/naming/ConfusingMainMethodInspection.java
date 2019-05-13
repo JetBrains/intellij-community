@@ -28,6 +28,11 @@ import org.jetbrains.annotations.NotNull;
 public class ConfusingMainMethodInspection extends BaseInspection {
 
   @Override
+  protected InspectionGadgetsFix buildFix(Object... infos) {
+    return new RenameFix();
+  }
+
+  @Override
   @NotNull
   public String getDisplayName() {
     return InspectionGadgetsBundle.message(
@@ -39,11 +44,6 @@ public class ConfusingMainMethodInspection extends BaseInspection {
   protected String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "confusing.main.method.problem.descriptor");
-  }
-
-  @Override
-  protected InspectionGadgetsFix buildFix(Object... infos) {
-    return new RenameFix();
   }
 
   @Override

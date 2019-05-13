@@ -1,6 +1,5 @@
 /*
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,178 +15,216 @@
  */
 package com.intellij.util.io;
 
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.util.TimeoutUtil;
+import com.intellij.openapi.util.registry.Registry;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.Reader;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
+import java.nio.charset.Charset;
 
 /**
  * @author traff
  */
-public abstract class BaseOutputReader {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.util.io.BaseOutputReader");
+public abstract class BaseOutputReader extends BaseDataReader {
+  /** See {@link #BaseOutputReader(Reader, Options)}, {@link #readAvailable}, and {@link #processInput} for reference. */
+  public static class Options {
+    public static final Options BLOCKING = withPolicy(SleepingPolicy.BLOCKING);
+    public static final Options NON_BLOCKING = withPolicy(SleepingPolicy.SIMPLE);
+
+    public SleepingPolicy policy() { return null; }
+    public boolean splitToLines() { return true; }
+    public boolean sendIncompleteLines() { return true; }
+    public boolean withSeparators() { return true; }
+
+    public static Options withPolicy(final SleepingPolicy policy) {
+      return new Options() {
+        @Override
+        public SleepingPolicy policy() {
+          return policy;
+        }
+      };
+    }
+
+    public static Options forMostlySilentProcess() {
+      if (Registry.is("output.reader.blocking.mode.for.mostly.silent.processes", true) ||
+          Registry.is("output.reader.blocking.mode", false)) {
+        return BLOCKING;
+      }
+      return NON_BLOCKING;
+    }
+  }
 
   protected final Reader myReader;
-  protected volatile boolean isStopped = false;
 
-  private final char[] myBuffer = new char[8192];
-  private final StringBuilder myTextBuffer = new StringBuilder();
-  private boolean skipLF = false;
+  private final Options myOptions;
+  private final char[] myInputBuffer = new char[8192];
+  private final StringBuilder myLineBuffer = new StringBuilder();
+  private boolean myCarry;
 
-  private Future<?> myFinishedFuture = null;
-  protected final @NotNull SleepingPolicy mySleepingPolicy;
+  public BaseOutputReader(@NotNull InputStream inputStream, @Nullable Charset charset) {
+    this(createInputStreamReader(inputStream, charset));
+  }
+
+  public BaseOutputReader(@NotNull InputStream inputStream, @Nullable Charset charset, @NotNull Options options) {
+    this(createInputStreamReader(inputStream, charset), options);
+  }
 
   public BaseOutputReader(@NotNull Reader reader) {
-    this(reader, null);
+    this(reader, new Options());
   }
 
-  public BaseOutputReader(@NotNull Reader reader, SleepingPolicy sleepingPolicy) {
+  public BaseOutputReader(@NotNull Reader reader, @NotNull Options options) {
+    super(options.policy());
+
+    if (options.policy() == SleepingPolicy.BLOCKING && !(reader instanceof BaseInputStreamReader)) {
+      throw new IllegalArgumentException("Blocking policy can be used only with BaseInputStreamReader, that doesn't lock on close");
+    }
+
+    if (options.policy() != SleepingPolicy.BLOCKING && !options.sendIncompleteLines()) {
+      throw new IllegalArgumentException("In non-blocking mode, the reader cannot produce complete lines reliably");
+    }
+
     myReader = reader;
-    mySleepingPolicy = sleepingPolicy != null ? sleepingPolicy: SleepingPolicy.SIMPLE;
+    myOptions = options;
   }
 
-  protected void start() {
-    if (myFinishedFuture == null) {
-      myFinishedFuture = executeOnPooledThread(new Runnable() {
-        public void run() {
-          doRun();
-        }
-      });
-    }
-  }
-
-  protected abstract Future<?> executeOnPooledThread(Runnable runnable);
-
-  public interface SleepingPolicy {
-    int sleepTimeWhenWasActive = 1;
-    int sleepTimeWhenIdle = 5;
-
-    SleepingPolicy SIMPLE = new SleepingPolicy() {
-      @Override
-      public int getTimeToSleep(boolean wasActive) {
-        return wasActive ? sleepTimeWhenWasActive : sleepTimeWhenIdle;
-      }
-    };
-
-    int getTimeToSleep(boolean wasActive);
-  }
-
-  public static class AdaptiveSleepingPolicy implements SleepingPolicy {
-    private final static int maxSleepTimeWhenIdle = 200;
-    private final static int maxIterationsWithCurrentSleepTime = 50;
-
-    private volatile int myIterationsWithCurrentTime;
-    private volatile int myCurrentSleepTime = sleepTimeWhenIdle;
-
-    @Override
-    public int getTimeToSleep(boolean wasActive) {
-      int currentSleepTime = myCurrentSleepTime; // volatile read
-      if (wasActive) currentSleepTime = sleepTimeWhenWasActive;
-      else if (currentSleepTime == sleepTimeWhenWasActive) {
-        currentSleepTime = sleepTimeWhenIdle;
-        myIterationsWithCurrentTime = 0;
-      }
-      else {
-        int iterationsWithCurrentTime = ++myIterationsWithCurrentTime;
-        if (iterationsWithCurrentTime >= maxIterationsWithCurrentSleepTime) {
-          myIterationsWithCurrentTime = 0;
-          currentSleepTime = Math.min(2* currentSleepTime, maxSleepTimeWhenIdle);
-        }
-      }
-
-      myCurrentSleepTime = currentSleepTime; // volatile write
-      return currentSleepTime;
-    }
-  }
-
-  protected void doRun() {
-    try {
-      while (true) {
-        boolean read = readAvailable();
-
-        if (isStopped) {
-          break;
-        }
-
-        TimeoutUtil.sleep(mySleepingPolicy.getTimeToSleep(read));
-      }
-    }
-    catch (IOException e) {
-      LOG.info(e);
-    }
-    catch (Exception e) {
-      LOG.error(e);
-    }
-    finally {
-      try {
-        myReader.close();
-      }
-      catch (IOException e) {
-        LOG.error("Can't close stream", e);
-      }
-    }
+  private static Reader createInputStreamReader(@NotNull InputStream stream, @Nullable Charset charset) {
+    return charset == null ? new BaseInputStreamReader(stream) : new BaseInputStreamReader(stream, charset);
   }
 
   /**
    * Reads as much data as possible without blocking.
+   * Relies on InputStream.ready method.
+   * When in doubt, take a look at {@link #readAvailableBlocking()}.
+   *
    * @return true if non-zero amount of data has been read
-   * @exception  IOException  If an I/O error occurs
+   * @throws IOException If an I/O error occurs
    */
-  protected final boolean readAvailable() throws IOException {
-    char[] buffer = myBuffer;
-    StringBuilder token = myTextBuffer;
-    token.setLength(0);
-
+  @Override
+  protected final boolean readAvailableNonBlocking() throws IOException {
     boolean read = false;
-    while (myReader.ready()) {
-      int n = myReader.read(buffer);
-      if (n <= 0) break;
-      read = true;
 
-      for (int i = 0; i < n; i++) {
-        char c = buffer[i];
-        if (skipLF && c != '\n') {
-          token.append('\r');
-        }
-
-        if (c == '\r') {
-          skipLF = true;
-        }
-        else {
-          skipLF = false;
-          token.append(c);
-        }
-
-        if (c == '\n') {
-          onTextAvailable(token.toString());
-          token.setLength(0);
+    try {
+      int n;
+      while (myReader.ready() && (n = myReader.read(myInputBuffer)) >= 0) {
+        if (n > 0) {
+          read = true;
+          processInput(myInputBuffer, myLineBuffer, n);
         }
       }
     }
-
-    if (token.length() != 0) {
-      onTextAvailable(token.toString());
-      token.setLength(0);
+    finally {
+      if (myCarry) {
+        myLineBuffer.append('\r');
+        myCarry = false;
+      }
+      if (myLineBuffer.length() > 0) {
+        sendText(myLineBuffer);
+      }
     }
+
     return read;
+  }
+
+  /**
+   * Reads data with blocking.
+   * Should be used in case when ready method always returns false for your input stream.
+   * Should be used if we want to to make our reader exit when end of stream reached.
+   * Could be used if we prefer IO-blocking over CPU sleeping.
+   *
+   * @return true if non-zero amount of data has been read, false if end of the stream is reached
+   * @throws IOException If an I/O error occurs
+   */
+  @Override
+  protected final boolean readAvailableBlocking() throws IOException {
+    boolean read = false;
+
+    try {
+      int n;
+      while ((n = myReader.read(myInputBuffer)) >= 0) {
+        if (n > 0) {
+          read = true;
+          processInput(myInputBuffer, myLineBuffer, n);
+        }
+      }
+    }
+    finally {
+      if (myCarry) {
+        myLineBuffer.append('\r');
+        myCarry = false;
+      }
+      if (myLineBuffer.length() > 0) {
+        sendText(myLineBuffer);
+      }
+    }
+
+    return read;
+  }
+
+  @SuppressWarnings("AssignmentToForLoopParameter")
+  private void processInput(char[] buffer, StringBuilder line, int n) {
+    if (myOptions.splitToLines()) {
+      for (int i = 0; i < n; i++) {
+        char c;
+        if (i == 0 && myCarry) {
+          c = '\r';
+          i--;
+          myCarry = false;
+        }
+        else {
+          c = buffer[i];
+        }
+
+        if (c == '\r') {
+          if (i + 1 == n) {
+            myCarry = true;
+            continue;
+          }
+          else if (buffer[i + 1] == '\n') {
+            continue;
+          }
+        }
+
+        if (c != '\n' || myOptions.sendIncompleteLines() || myOptions.withSeparators()) {
+          line.append(c);
+        }
+
+        if (c == '\n') {
+          sendText(line);
+        }
+      }
+
+      if (line.length() > 0 && myOptions.sendIncompleteLines()) {
+        sendText(line);
+      }
+    }
+    else {
+      onTextAvailable(new String(buffer, 0, n));
+    }
+  }
+
+  private void sendText(@NotNull StringBuilder line) {
+    String text = line.toString();
+    line.setLength(0);
+    onTextAvailable(text);
+  }
+
+  @Override
+  protected void close() throws IOException {
+    myReader.close();
   }
 
   protected abstract void onTextAvailable(@NotNull String text);
 
-  public void stop() {
-    isStopped = true;
+  //<editor-fold desc="Deprecated stuff.">
+
+  /** @deprecated use {@link #BaseOutputReader(Reader, Options)} (to be removed in IDEA 2018.1) */
+  @Deprecated
+  public BaseOutputReader(@NotNull Reader reader, @Nullable SleepingPolicy policy) {
+    this(reader, Options.withPolicy(policy));
   }
 
-  public void waitFor() throws InterruptedException {
-    try {
-      myFinishedFuture.get();
-    }
-    catch (ExecutionException e) {
-      LOG.error(e);
-    }
-  }
+  //</editor-fold>
 }

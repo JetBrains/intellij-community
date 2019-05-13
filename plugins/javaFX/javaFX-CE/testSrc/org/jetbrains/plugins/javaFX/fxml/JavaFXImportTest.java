@@ -27,18 +27,31 @@ public class JavaFXImportTest extends DaemonAnalyzerTestCase {
   @Override
   protected void setUpModule() {
     super.setUpModule();
-    PsiTestUtil.addLibrary(getModule(), "javafx", PluginPathManager.getPluginHomePath("javaFX") + "/testData", "jfxrt.jar");
+    AbstractJavaFXTestCase.addJavaFxJarAsLibrary(getModule());
   }
 
   public void testSimpleImport() throws Exception {
     doTest();
   }
-  
+
+  public void testTextField() throws Exception {
+    configureByFiles(null, getTestName(true) + ".fxml", getTestName(false) + ".java");
+    final List<HighlightInfo> infos = doHighlighting();
+    findAndInvokeIntentionAction(infos, "Import class", getEditor(), getFile());
+    checkResultByFile(getTestName(true) + "_after.fxml");
+  }
+
+  public void testInsets() throws Exception {
+    configureByFiles(null, getTestName(true) + ".fxml", getTestName(false) + ".java");
+    final List<HighlightInfo> infos = doHighlighting();
+    findAndInvokeIntentionAction(infos, "Import class", getEditor(), getFile());
+    checkResultByFile(getTestName(true) + "_after.fxml");
+  }
 
   private void doTest() throws Exception {
     configureByFiles(null, getTestName(true) + ".fxml");
     final List<HighlightInfo> infos = doHighlighting();
-    findAndInvokeIntentionAction(infos, "Import Class", getEditor(), getFile());
+    findAndInvokeIntentionAction(infos, "Import class", getEditor(), getFile());
     checkResultByFile(getTestName(true) + "_after.fxml");
   }
 

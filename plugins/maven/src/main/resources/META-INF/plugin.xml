@@ -2,55 +2,83 @@
   <id>org.jetbrains.idea.maven</id>
 
   <name>Maven Integration</name>
-  <description>Import Maven projects and execute Maven goals</description>
+  <description>
+      <![CDATA[
+      This plugin provides <a href="http://maven.apache.org/">Maven</a> support.
+      The following features are available:
+        <ul>
+        <li>Maven Projects tool window.</li>
+        <li>Dedicated module type.</li>
+        <li>Maven repositories support.</li>
+        <li>Full editing support for pom.xml file.</li>
+        <li>Possibility to import Maven projects.</li>
+        <li>Running and debugging Maven goals.</li>
+        <li>Compiling.</li>
+        </ul>
+      ]]>
+   </description>
   <vendor>JetBrains</vendor>
 
   <extensionPoints>
     <extensionPoint name="importer" interface="org.jetbrains.idea.maven.importing.MavenImporter"/>
+    <extensionPoint name="compiler" interface="org.jetbrains.idea.maven.importing.MavenCompilerExtension"/>
+    <extensionPoint name="manifestImporter" interface="org.jetbrains.idea.maven.importing.ManifestImporter"/>
     <extensionPoint name="additional.importing.settings" interface="org.jetbrains.idea.maven.project.AdditionalMavenImportingSettings"/>
     <extensionPoint name="archetypesProvider" interface="org.jetbrains.idea.maven.indices.MavenArchetypesProvider"/>
 
     <extensionPoint name="pluginDescriptor" beanClass="org.jetbrains.idea.maven.plugins.api.MavenPluginDescriptor" />
+
+    <extensionPoint name="repositoryProvider" interface="org.jetbrains.idea.maven.indices.MavenRepositoryProvider"/>
+    <extensionPoint name="executionEnvironmentProvider" interface="org.jetbrains.idea.maven.execution.build.MavenExecutionEnvironmentProvider"/>
+    <extensionPoint name="artifactBuilder" interface="org.jetbrains.idea.maven.execution.build.MavenArtifactBuilder"/>
   </extensionPoints>
 
   <depends>com.intellij.properties</depends>
   <depends optional="true" config-file="groovy-support.xml">org.intellij.groovy</depends>
+  <depends optional="true" config-file="errorProne-compiler-support.xml">Error-prone plugin</depends>
 
   <extensions defaultExtensionNs="com.intellij">
+    <applicationInitializedListener implementation="org.jetbrains.idea.maven.utils.MavenEnvironmentRegistrar"/>
+    <customJavadocTagProvider implementation="org.jetbrains.idea.maven.javadoc.MojoClassAnnotationTagProvider"/>
     <fileTypeFactory implementation="org.jetbrains.idea.maven.utils.MavenFileTypeFactory"/>
     <projectImportProvider implementation="org.jetbrains.idea.maven.wizards.MavenProjectImportProvider"/>
     <projectOpenProcessor implementation="org.jetbrains.idea.maven.wizards.MavenProjectOpenProcessor"/>
     <projectImportBuilder implementation="org.jetbrains.idea.maven.wizards.MavenProjectBuilder"/>
     <moduleBuilder builderClass="org.jetbrains.idea.maven.wizards.MavenModuleBuilder"/>
     <frameworkSupport implementation="org.jetbrains.idea.maven.wizards.MavenFrameworkSupportProvider"/>
+    <moduleExtension implementation="org.jetbrains.idea.maven.importing.MavenSourceFoldersModuleExtension"/>
+    <moduleService serviceImplementation="org.jetbrains.idea.maven.importing.MavenPomPathModuleService"/>
+    <moduleService serviceImplementation="org.jetbrains.idea.maven.importing.MavenAnnotationProcessorsModuleService"/>
 
     <applicationService serviceImplementation="org.jetbrains.idea.maven.server.MavenServerManager"/>
     <applicationService serviceImplementation="org.jetbrains.idea.maven.indices.MavenIndicesManager"/>
-    <applicationService serviceImplementation="org.jetbrains.idea.maven.services.MavenRepositoryServicesManager"/>
 
-    <projectConfigurable instance="org.jetbrains.idea.maven.utils.MavenSettings" id="MavenSettings" displayName="Maven" order="last">
+    <projectConfigurable groupId="build.tools" groupWeight="120" instance="org.jetbrains.idea.maven.utils.MavenSettings" id="MavenSettings" displayName="Maven" order="last">
       <configurable instance="org.jetbrains.idea.maven.project.MavenImportingConfigurable" id="reference.settings.project.maven.importing"
                     key="maven.tab.importing" bundle="ProjectBundle"/>
       <configurable instance="org.jetbrains.idea.maven.project.MavenIgnoredFilesConfigurable"
                     id="reference.settings.project.maven.ignored.files" key="maven.tab.ignored.files" bundle="ProjectBundle"/>
       <configurable instance="org.jetbrains.idea.maven.utils.MavenSettings$MyMavenRunnerConfigurable"
                     id="reference.settings.project.maven.runner" key="maven.tab.runner" bundle="RunnerBundle"/>
+      <configurable instance="org.jetbrains.idea.maven.project.MavenTestRunningConfigurable"
+                    id="reference.settings.project.maven.testRunning" key="maven.testRunning" bundle="ProjectBundle"
+                    nonDefaultProject="true"/>
       <configurable instance="org.jetbrains.idea.maven.indices.MavenRepositoriesConfigurable"
                     id="reference.settings.project.maven.repository.indices" key="maven.repositories.title" bundle="IndicesBundle"
                     nonDefaultProject="true"/>
     </projectConfigurable>
 
     <stepsBeforeRunProvider implementation="org.jetbrains.idea.maven.tasks.MavenBeforeRunTasksProvider"/>
-    <keymapExtension implementation="org.jetbrains.idea.maven.tasks.MavenKeymapExtension"/>
-    <errorHandler implementation="com.intellij.diagnostic.ITNReporter"/>
+    <externalSystemKeymapProvider implementation="org.jetbrains.idea.maven.tasks.MavenKeymapExtension"/>
+    <externalSystemWorkspaceContributor implementation="org.jetbrains.idea.maven.importing.MavenWorkspaceContributor"/>
+    <externalProjectWatcherContributor implementation="org.jetbrains.idea.maven.project.MavenProjectsManager$ExternalWatcherContributor"/>
     <configurationType implementation="org.jetbrains.idea.maven.execution.MavenRunConfigurationType"/>
     <configurationProducer implementation="org.jetbrains.idea.maven.execution.MavenConfigurationProducer"/>
     <orderEnumerationHandlerFactory implementation="org.jetbrains.idea.maven.execution.MavenOrderEnumeratorHandler$FactoryImpl"/>
 
     <junitPatcher implementation="org.jetbrains.idea.maven.execution.MavenJUnitPatcher" />
 
-    <compiler implementation="org.jetbrains.idea.maven.compiler.MavenResourceCompiler" order="last"/>
-    <compileServer.plugin classpath="maven-jps-plugin.jar;maven3/plexus-utils-2.0.6.jar"/>
+    <compileServer.plugin classpath="maven-jps-plugin.jar"/>
 
     <languageInjector implementation="org.jetbrains.idea.maven.plugins.api.MavenPluginConfigurationLanguageInjector"/>
 
@@ -68,11 +96,11 @@
     <projectTemplateFileProcessor implementation="org.jetbrains.idea.maven.utils.MavenTemplateFileProcessor"/>
 
     <xml.elementDescriptorProvider implementation="org.jetbrains.idea.maven.dom.MavenDomElementDescriptorProvider"/>
-    <dom.fileDescription implementation="org.jetbrains.idea.maven.dom.MavenDomProjectModelDescription"/>
-    <dom.fileDescription implementation="org.jetbrains.idea.maven.dom.MavenDomProfilesModelDescription"/>
-    <dom.fileDescription implementation="org.jetbrains.idea.maven.dom.MavenDomOldProfilesModelDescription"/>
-    <dom.fileDescription implementation="org.jetbrains.idea.maven.dom.MavenDomSettingsModelDescription"/>
-    <dom.fileDescription implementation="org.jetbrains.idea.maven.dom.MavenDomPluginModelDescription"/>
+    <dom.fileMetaData implementation="org.jetbrains.idea.maven.dom.MavenDomProjectModelDescription" rootTagName="project"/>
+    <dom.fileMetaData implementation="org.jetbrains.idea.maven.dom.MavenDomProfilesModelDescription" rootTagName="profilesXml"/>
+    <dom.fileMetaData implementation="org.jetbrains.idea.maven.dom.MavenDomOldProfilesModelDescription" rootTagName="profiles"/>
+    <dom.fileMetaData implementation="org.jetbrains.idea.maven.dom.MavenDomSettingsModelDescription" rootTagName="settings"/>
+    <dom.fileMetaData implementation="org.jetbrains.idea.maven.dom.MavenDomPluginModelDescription" rootTagName="plugin"/>
 
     <lang.documentationProvider language="XML" implementationClass="org.jetbrains.idea.maven.dom.MavenModelDocumentationProvider"
                                 order="first"/>
@@ -88,10 +116,16 @@
     <localInspection language="XML" shortName="MavenDuplicateDependenciesInspection" bundle="MavenDomBundle" key="inspection.duplicate.dependencies.name"
                      groupKey="inspection.group" enabledByDefault="true" level="WARNING"
                      implementationClass="org.jetbrains.idea.maven.dom.inspections.MavenDuplicateDependenciesInspection"/>
+    <localInspection language="XML" shortName="MavenDuplicatePluginInspection" bundle="MavenDomBundle" key="inspection.duplicate.plugin.declaration"
+                     groupKey="inspection.group" enabledByDefault="true" level="WARNING"
+                     implementationClass="org.jetbrains.idea.maven.dom.inspections.MavenDuplicatePluginInspection"/>
     <localInspection language="XML" shortName="MavenRedundantGroupId" bundle="MavenDomBundle" key="inspection.redundant.groupId.name"
                      groupKey="inspection.group" enabledByDefault="true" level="WARNING"
                      implementationClass="org.jetbrains.idea.maven.dom.inspections.MavenRedundantGroupIdInspection"/>
-
+    <localInspection language="XML" shortName="MavenPropertyInParent" bundle="MavenDomBundle" key="inspection.property.in.parent.name"
+                     groupKey="inspection.group" enabledByDefault="true" level="WARNING"
+                     implementationClass="org.jetbrains.idea.maven.dom.inspections.MavenPropertyInParentInspection"/>
+    <xml.xmlExtension implementation="org.jetbrains.idea.maven.dom.MavenXmlExtension"/>
     <dom.extender domClass="org.jetbrains.idea.maven.dom.model.MavenDomConfiguration"
                   extenderClass="org.jetbrains.idea.maven.dom.MavenPluginConfigurationDomExtender"/>
     <dom.extender domClass="org.jetbrains.idea.maven.dom.model.MavenDomConfigurationParameter"
@@ -105,6 +139,12 @@
     <completion.contributor language="XML"
                             implementationClass="org.jetbrains.idea.maven.dom.model.completion.MavenVersionCompletionContributor"/>
 
+    <completion.contributor language="XML"
+                            implementationClass="org.jetbrains.idea.maven.dom.model.completion.MavenPomXmlCompletionTagListenerContributor" order="first"/>
+
+    <completion.contributor language="XML"
+                            implementationClass="org.jetbrains.idea.maven.dom.model.completion.MavenDependenciesCompletionProvider"/>
+
     <psi.referenceContributor implementation="org.jetbrains.idea.maven.dom.references.MavenPropertyPsiReferenceContributor"/>
 
     <psi.referenceContributor language="XML" implementation="org.jetbrains.idea.maven.plugins.api.MavenPluginParamReferenceContributor" />
@@ -117,11 +157,11 @@
     <standardResourceProvider implementation="org.jetbrains.idea.maven.dom.MavenSchemaProvider"/>
 
     <projectService serviceImplementation="org.jetbrains.idea.maven.dom.MavenDomElementDescriptorHolder"/>
+    <projectService serviceImplementation="org.jetbrains.idea.maven.navigator.actions.ExecuteMavenGoalHistoryService"/>
     <applicationService serviceImplementation="org.jetbrains.idea.maven.dom.converters.MavenDomConvertersRegistry"/>
     <applicationService serviceImplementation="org.jetbrains.idea.maven.dom.converters.repositories.MavenRepositoriesProvider"/>
 
     <typedHandler implementation="org.jetbrains.idea.maven.dom.code.MavenTypedHandlerDelegate"/>
-    <library.type implementation="org.jetbrains.idea.maven.utils.library.RepositoryLibraryType"/>
     <backspaceHandlerDelegate implementation="org.jetbrains.idea.maven.dom.code.MavenBackspaceHandlerDelegate"/>
 
     <intentionAction>
@@ -131,7 +171,7 @@
     <problemHighlightFilter implementation="org.jetbrains.idea.maven.utils.ArchetypeResourceHighlightFilter" />
 
     <codeInsight.unresolvedReferenceQuickFixProvider
-        implementation="org.jetbrains.idea.maven.dom.intentions.ResolveReferenceQuickFixProvider"/>
+        implementation="org.jetbrains.idea.maven.dom.intentions.AddMavenDependencyQuickFixProvider"/>
 
     <gotoFileContributor implementation="org.jetbrains.idea.maven.utils.MavenGotoFileContributor"/>
     <gotoFileContributor implementation="org.jetbrains.idea.maven.utils.MavenGotoSettingsFileContributor"/>
@@ -143,18 +183,37 @@
 
     <projectService serviceImplementation="org.jetbrains.idea.maven.project.MavenWorkspaceSettingsComponent"/>
     <projectService serviceImplementation="org.jetbrains.idea.maven.execution.MavenRunner"/>
+    <projectService serviceImplementation="org.jetbrains.idea.maven.project.MavenProjectSettings"/>
 
+    <postStartupActivity implementation="org.jetbrains.idea.maven.utils.MavenRehighlighter$MavenRehighlighterPostStartupActivity"/>
+    <projectService serviceImplementation="org.jetbrains.idea.maven.utils.MavenRehighlighter"/>
+    <projectModelModifier implementation="org.jetbrains.idea.maven.importing.MavenProjectModelModifier"/>
+
+    <compiler.updateResourcesBuildContributor implementation="org.jetbrains.idea.maven.execution.MavenUpdateResourcesBuildContributor"/>
+
+    <projectTaskRunner implementation="org.jetbrains.idea.maven.execution.build.MavenProjectTaskRunner"/>
+    <runAnything.executionProvider implementation="org.jetbrains.idea.maven.execution.MavenRunAnythingProvider"/>
+    <runAnything.helpGroup implementation="org.jetbrains.idea.maven.execution.MavenRunAnythingHelpGroup"/>
+
+    <statistics.projectUsagesCollector implementation="org.jetbrains.idea.maven.statistics.MavenSettingsCollector"/>
+
+    <registryKey key="maven.import.compiler.arguments" defaultValue="true"
+                 description="Enable importing of the maven compiler plugin arguments"/>
   </extensions>
 
   <extensions defaultExtensionNs="org.jetbrains.idea.maven">
     <pluginDescriptor mavenId="org.apache.maven.plugins:maven-surefire-plugin">
       <param name="additionalClasspathElements/additionalClasspathElement" refProvider="org.jetbrains.idea.maven.plugins.api.common.MavenCommonParamReferenceProviders$DirPath"/>
       <param name="classpathDependencyExcludes/classpathDependencyExclude" refProvider="org.jetbrains.idea.maven.plugins.api.common.MavenCommonParamReferenceProviders$DependencyWithoutVersion"/>
+      <param name="dependenciesToScan/dependency" refProvider="org.jetbrains.idea.maven.plugins.api.common.MavenCommonParamReferenceProviders$DependencyWithoutVersion"/>
       <param name="forkMode" values="never, once, always, perthread" soft="true"/>
       <param name="junitArtifactName" refProvider="org.jetbrains.idea.maven.plugins.api.common.MavenCommonParamReferenceProviders$DependencyWithoutVersion"/>
       <param name="reportFormat" values="brief, plain" soft="true"/>
       <param name="runOrder" values="alphabetical, reversealphabetical, random, hourly, failedfirst, balanced, filesystem" soft="true"/>
       <param name="testNGArtifactName" refProvider="org.jetbrains.idea.maven.plugins.api.common.MavenCommonParamReferenceProviders$DependencyWithoutVersion"/>
+
+      <property name="surefire.threadNumber" insideConfigurationOnly="true" />
+      <property name="surefire.forkNumber" insideConfigurationOnly="true" />
     </pluginDescriptor>
 
     <pluginDescriptor mavenId="org.apache.maven.plugins:maven-failsafe-plugin">
@@ -182,10 +241,20 @@
       <param name="outputDirectory" refProvider="org.jetbrains.idea.maven.plugins.api.common.MavenCommonParamReferenceProviders$DirPath"/>
       <param name="filters/filter" refProvider="org.jetbrains.idea.maven.plugins.api.common.MavenCommonParamReferenceProviders$FilePath"/>
       <param name="resourceEncoding" refProvider="org.jetbrains.idea.maven.plugins.api.common.MavenCommonParamReferenceProviders$Encoding"/>
+
+      <param name="outputFileNameMapping" disableReferences="true"/>
     </pluginDescriptor>
 
     <pluginDescriptor mavenId="org.apache.maven.plugins:maven-acr-plugin">
       <param name="filters/filter" refProvider="org.jetbrains.idea.maven.plugins.api.common.MavenCommonParamReferenceProviders$FilePath"/>
+    </pluginDescriptor>
+
+    <pluginDescriptor mavenId="org.apache.maven.plugins:maven-assembly-plugin">
+      <param name="descriptors/descriptor" refProvider="org.jetbrains.idea.maven.plugins.api.common.MavenCommonParamReferenceProviders$FilePath"/>
+      <param name="encoding" refProvider="org.jetbrains.idea.maven.plugins.api.common.MavenCommonParamReferenceProviders$Encoding"/>
+      <param name="filters/filter" refProvider="org.jetbrains.idea.maven.plugins.api.common.MavenCommonParamReferenceProviders$FilePath"/>
+      <param name="formats/format" values="dir, zip, tar, tar.gz, tar.bz2" soft="true" />
+      <param name="tarLongFileMode" values="warn, fail, truncate, gnu, omit" />
     </pluginDescriptor>
 
     <pluginDescriptor mavenId="org.apache.maven.plugins:maven-invoker-plugin">
@@ -228,6 +297,14 @@
       <param name="javaScriptBuildnumberCallback" language="JavaScript" languageInjectionPrefix="function() {return a + " languageInjectionSuffix="}" />
     </pluginDescriptor>
 
+    <pluginDescriptor mavenId="org.codehaus.mojo:buildnumber-maven-plugin">
+      <property name="buildNumber"/>
+      <property name="timestamp"/>
+    </pluginDescriptor>
+
+    <pluginDescriptor mavenId="org.codehaus.mojo:build-helper-maven-plugin" goal="reserve-network-port"
+                      propertyGenerator="org.jetbrains.idea.maven.plugins.buildHelper.MavenBuildHelperPropertyGenerator"/>
+
     <pluginDescriptor mavenId="org.codehaus.mojo:sql-maven-plugin">
       <param name="sqlCommand" language="SQL"/>
     </pluginDescriptor>
@@ -241,14 +318,18 @@
 
     <pluginDescriptor mavenId="org.apache.maven.plugins:maven-resources-plugin">
       <param name="encoding" refProvider="org.jetbrains.idea.maven.plugins.api.common.MavenCommonParamReferenceProviders$Encoding"/>
-    </pluginDescriptor>
-  </extensions>
 
-  <application-components>
-    <component>
-      <implementation-class>org.jetbrains.idea.maven.utils.MavenEnvironmentRegistrar</implementation-class>
-    </component>
-  </application-components>
+      <param name="delimiters/delimiter" disableReferences="true"/>
+    </pluginDescriptor>
+
+    <importer implementation="org.jetbrains.idea.maven.importing.MavenCompilerImporter"/>
+    <importer implementation="org.jetbrains.idea.maven.importing.MavenCompilerAnnotationProcessorPathsImporter"/>
+    <importer implementation="org.jetbrains.idea.maven.importing.ExternalAnnotationsImporter"/>
+
+    <compiler implementation="org.jetbrains.idea.maven.importing.MavenCompilerJavacExtension"/>
+    <compiler implementation="org.jetbrains.idea.maven.importing.MavenCompilerEclipseExtension"/>
+    <executionEnvironmentProvider implementation="org.jetbrains.idea.maven.execution.MavenApplicationConfigurationExecutionEnvironmentProvider"/>
+  </extensions>
 
   <project-components>
     <component>
@@ -273,9 +354,6 @@
     <component>
       <implementation-class>org.jetbrains.idea.maven.utils.MavenImportNotifier</implementation-class>
     </component>
-    <component>
-      <implementation-class>org.jetbrains.idea.maven.utils.MavenRehighlighter</implementation-class>
-    </component>
   </project-components>
 
   <actions>
@@ -287,6 +365,10 @@
     <action id="Maven.ReimportProject" class="org.jetbrains.idea.maven.project.actions.ReimportProjectAction"
             text="Reimport" description="Reimport selected Maven projects"
             icon="AllIcons.Actions.Refresh">
+    </action>
+
+    <action id="Maven.ShowEffectivePom" class="org.jetbrains.idea.maven.project.actions.MavenShowEffectivePom"
+            text="Show Effective POM" description="Generate and show effective POM">
     </action>
 
     <action id="Maven.UpdateFolders" class="org.jetbrains.idea.maven.project.actions.UpdateFoldersAction"
@@ -384,7 +466,7 @@
     <action id="Maven.ShowSettings"
             class="org.jetbrains.idea.maven.project.actions.EditSettingsAction" text="Maven Settings"
             description="Edit Maven integration settings for the current project"
-            icon="AllIcons.General.ProjectSettings">
+            icon="AllIcons.General.Settings">
     </action>
 
     <action id="Maven.ToggleOffline"
@@ -399,9 +481,6 @@
             icon="AllIcons.Nodes.ExceptionClass">
     </action>
 
-    <action id="Maven.Help"
-            class="com.intellij.ide.actions.ContextHelpAction" text="Help"/>
-
     <action id="Maven.ExpandAll" class="org.jetbrains.idea.maven.navigator.actions.MavenTreeAction$ExpandAll" text="Expand All"
             icon="AllIcons.Actions.Expandall"
             use-shortcut-of="ExpandAll"/>
@@ -409,14 +488,50 @@
             icon="AllIcons.Actions.Collapseall"
             use-shortcut-of="CollapseAll"/>
 
+    <action id="Maven.ExecuteGoal" class="org.jetbrains.idea.maven.navigator.actions.MavenExecuteGoalAction" text="Execute Maven Goal"
+            icon="MavenIcons.ExecuteMavenGoal">
+    </action>
+
+    <action id="Maven.GroupProjects"
+            class="org.jetbrains.idea.maven.navigator.actions.GroupProjectsAction"
+            text="Group Modules"
+            description="Group projects according to Maven structure"
+            icon="AllIcons.Nodes.Folder"/>
+    <action id="Maven.ShowIgnored"
+            class="org.jetbrains.idea.maven.navigator.actions.ShowIgnoredProjectsAction"
+            text="Show Ignored Projects"
+            description="Show ignored projects"
+            icon="AllIcons.Actions.ShowHiddens"/>
+    <action id="Maven.ShowBasicPhasesOnly"
+            class="org.jetbrains.idea.maven.navigator.actions.ShowBasicPhasesOnlyAction"
+            text="Show Basic Phases Only"
+            description="Show basic phases only"
+            icon="AllIcons.General.Filter"/>
+    <action id="Maven.AlwaysShowArtifactId"
+            class="org.jetbrains.idea.maven.navigator.actions.AlwaysShowArtifactIdAction"
+            text="Always Show ArtifactId"
+            description="Always Show ArtifactId instead of project name"/>
+    <action id="Maven.ShowVersions"
+            class="org.jetbrains.idea.maven.navigator.actions.ShowVersionsAction"
+            text="Show version"
+            description="Show version for Maven project"/>
+
     <group id="Maven.TasksGroup">
       <action id="Maven.BeforeCompile"
-              class="org.jetbrains.idea.maven.tasks.actions.ToggleBeforeCompileTasksAction" text="Execute Before Make"
-              description="Execute selected phase/goal before Make">
+              class="org.jetbrains.idea.maven.tasks.actions.ToggleBeforeCompileTasksAction" text="Execute Before Build"
+              description="Execute selected phase/goal before Build">
       </action>
       <action id="Maven.AfterCompile"
-              class="org.jetbrains.idea.maven.tasks.actions.ToggleAfterCompileTasksAction" text="Execute After Make"
-              description="Execute selected phase/goal after Make">
+              class="org.jetbrains.idea.maven.tasks.actions.ToggleAfterCompileTasksAction" text="Execute After Build"
+              description="Execute selected phase/goal after Build">
+      </action>
+      <action id="Maven.BeforeRebuild"
+              class="org.jetbrains.idea.maven.tasks.actions.ToggleBeforeRebuildTasksAction" text="Execute Before Rebuild"
+              description="Execute selected phase/goal before full rebuild">
+      </action>
+      <action id="Maven.AfterRebuild"
+              class="org.jetbrains.idea.maven.tasks.actions.ToggleAfterRebuildTasksAction" text="Execute After Rebuild"
+              description="Execute selected phase/goal after full rebuild">
       </action>
       <action id="Maven.BeforeRun"
               class="org.jetbrains.idea.maven.tasks.actions.ToggleBeforeRunTaskAction" text="Execute Before Run/Debug..."
@@ -429,8 +544,7 @@
       </action>
     </group>
 
-    <group id="Maven.DownloadAllGroup" popup="true" class="org.jetbrains.idea.maven.project.actions.DownloadActionGroup"
-           icon="AllIcons.Actions.Download">
+    <group id="Maven.DownloadAllGroup">
       <reference id="Maven.DownloadAllSources"/>
       <reference id="Maven.DownloadAllDocs"/>
       <reference id="Maven.DownloadAllSourcesAndDocs"/>
@@ -439,35 +553,22 @@
     <group id="Maven.NavigatorActionsToolbar">
       <reference id="Maven.Reimport"/>
       <reference id="Maven.UpdateFolders"/>
-      <reference id="Maven.DownloadAllGroup"/>
+
+      <group id="Maven.DownloadAllGroupPopup" popup="true" class="org.jetbrains.idea.maven.project.actions.DownloadActionGroup"
+             text="Download Sources and/or Documentation"
+             icon="AllIcons.Actions.Download">
+        <reference id="Maven.DownloadAllGroup"/>
+      </group>
       <separator/>
       <reference id="Maven.AddManagedFiles"/>
       <separator/>
       <reference id="Maven.RunBuild"/>
+      <reference id="Maven.ExecuteGoal"/>
       <reference id="Maven.ToggleOffline"/>
       <reference id="Maven.ToggleSkipTests"/>
       <reference id="Maven.CollapseAll"/>
       <separator/>
       <reference id="Maven.ShowSettings"/>
-      <reference id="Maven.Help"/>
-      <action id="Maven.GroupProjects"
-              class="org.jetbrains.idea.maven.navigator.actions.GroupProjectsAction"
-              text="Group Modules"
-              description="Group projects according to Maven structure"
-              secondary="true"
-              icon="AllIcons.Nodes.Folder"/>
-      <action id="Maven.ShowIgnored"
-              class="org.jetbrains.idea.maven.navigator.actions.ShowIgnoredProjectsAction"
-              text="Show Ignored Projects"
-              description="Show ignored projects"
-              secondary="true"
-              icon="AllIcons.Actions.ShowHiddens"/>
-      <action id="Maven.ShowBasicPhasesOnly"
-              class="org.jetbrains.idea.maven.navigator.actions.ShowBasicPhasesOnlyAction"
-              text="Show Basic Phases Only"
-              description="Show basic phases only"
-              secondary="true"
-              icon="AllIcons.General.Filter"/>
     </group>
 
     <group id="Maven.DependencyMenu">
@@ -486,8 +587,9 @@
       <reference id="Maven.OpenSettingsXml"/>
       <reference id="Maven.OpenProfilesXml"/>
       <separator/>
-      <reference ref="Maven.DependencyMenu"/>
+      <reference id="Maven.DownloadAllGroup"/>
       <separator/>
+      <reference id="Maven.ShowEffectivePom"/>
     </group>
 
     <group id="Maven.NavigatorProjectMenu" popup="true">
@@ -499,9 +601,8 @@
       <reference id="EditSource"/>
     </group>
 
-    <group id="Maven.BuildMenu" popup="true">
-      <reference id="Maven.RunBuild"/>
-      <reference ref="RunContextGroup"/>
+    <group id="Maven.BuildMenu" popup="true"  class="org.jetbrains.idea.maven.navigator.actions.MavenBuildMenu">
+      <action id="Maven.CreateRunConfiguration" class="com.intellij.execution.actions.CreateAction"/>
       <separator/>
       <reference ref="Maven.TasksGroup"/>
     </group>
@@ -528,5 +629,16 @@
               class="org.jetbrains.idea.maven.dom.refactorings.extract.ExtractManagedDependenciesAction"
               use-shortcut-of="ExtractMethod"/>
     </group>
+
+    <group id="Maven.RunConfigurationMenu" popup="true" class="org.jetbrains.idea.maven.navigator.actions.MavenRunConfigurationMenu">
+      <separator/>
+      <action id="Maven.EditRunConfiguration"
+              text="Edit Run Configuration..." icon="AllIcons.Actions.Edit"
+              class="org.jetbrains.idea.maven.navigator.actions.EditMavenRunConfigurationAction" />
+      <action id="Maven.RemoveRunConfiguration"
+              text="Remove Run Configuration" icon="AllIcons.General.Remove"
+              class="org.jetbrains.idea.maven.navigator.actions.RemoveMavenRunConfigurationAction" />
+    </group>
+
   </actions>
 </idea-plugin>

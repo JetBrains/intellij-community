@@ -1,24 +1,9 @@
-/*
- * Copyright 2000-2011 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointName;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.util.Condition;
 import com.intellij.psi.PsiElement;
@@ -34,7 +19,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class CollectHighlightsUtil {
-  public static final ExtensionPointName<Condition<PsiElement>> EP_NAME = ExtensionPointName.create("com.intellij.elementsToHighlightFilter");
+  private static final ExtensionPointName<Condition<PsiElement>> EP_NAME = ExtensionPointName.create("com.intellij.elementsToHighlightFilter");
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.CollectHighlightsUtil");
 
@@ -51,7 +36,7 @@ public class CollectHighlightsUtil {
                                                     final int endOffset,
                                                     boolean includeAllParents) {
     PsiElement commonParent = findCommonParent(root, startOffset, endOffset);
-    if (commonParent == null) return new ArrayList<PsiElement>();
+    if (commonParent == null) return new ArrayList<>();
     final List<PsiElement> list = getElementsToHighlight(commonParent, startOffset, endOffset);
 
     PsiElement parent = commonParent;
@@ -67,18 +52,21 @@ public class CollectHighlightsUtil {
 
   private static final int STARTING_TREE_HEIGHT = 100;
 
+  static class FiltersHolder {
+    static final Condition<PsiElement>[] FILTERS = EP_NAME.getExtensions();
+  }
   @NotNull
-  private static List<PsiElement> getElementsToHighlight(@NotNull PsiElement commonParent, final int startOffset, final int endOffset) {
-    final List<PsiElement> result = new ArrayList<PsiElement>();
-    final int currentOffset = commonParent.getTextRange().getStartOffset();
-    final Condition<PsiElement>[] filters = Extensions.getExtensions(EP_NAME);
+  private static List<PsiElement> getElementsToHighlight(@NotNull PsiElement parent, final int startOffset, final int endOffset) {
+    final List<PsiElement> result = new ArrayList<>();
+    final int currentOffset = parent.getTextRange().getStartOffset();
+    final Condition<PsiElement>[] filters = FiltersHolder.FILTERS;
 
     int offset = currentOffset;
 
     final TIntStack starts = new TIntStack(STARTING_TREE_HEIGHT);
-    final Stack<PsiElement> elements = new Stack<PsiElement>(STARTING_TREE_HEIGHT);
-    final Stack<PsiElement> children = new Stack<PsiElement>(STARTING_TREE_HEIGHT);
-    PsiElement element = commonParent;
+    final Stack<PsiElement> elements = new Stack<>(STARTING_TREE_HEIGHT);
+    final Stack<PsiElement> children = new Stack<>(STARTING_TREE_HEIGHT);
+    PsiElement element = parent;
 
     PsiElement child = PsiUtilCore.NULL_PSI_ELEMENT;
     while (true) {
@@ -111,6 +99,7 @@ public class CollectHighlightsUtil {
         int start = starts.pop();
         if (startOffset <= start && offset <= endOffset) {
           assert element != null;
+          assert element != PsiUtilCore.NULL_PSI_ELEMENT;
           result.add(element);
         }
 
@@ -123,6 +112,7 @@ public class CollectHighlightsUtil {
         children.push(child.getNextSibling());
         starts.push(offset);
         assert element != null;
+        assert element != PsiUtilCore.NULL_PSI_ELEMENT;
         elements.push(element);
         element = child;
         child = PsiUtilCore.NULL_PSI_ELEMENT;
@@ -141,8 +131,10 @@ public class CollectHighlightsUtil {
     if (left == null || right == null) return null;
 
     PsiElement commonParent = PsiTreeUtil.findCommonParent(left, right);
-    LOG.assertTrue(commonParent != null);
-    LOG.assertTrue(commonParent.getTextRange() != null);
+    if (commonParent == null) {
+      LOG.error("No common parent for "+left+" and "+right+"; root: "+root+"; startOffset: "+startOffset+"; endOffset: "+endOffset);
+    }
+    LOG.assertTrue(commonParent.getTextRange() != null, commonParent);
 
     PsiElement parent = commonParent.getParent();
     while (parent != null && commonParent.getTextRange().equals(parent.getTextRange())) {

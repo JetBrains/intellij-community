@@ -1,30 +1,13 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.compiler.ant;
 
 import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.compiler.actions.GenerateAntBuildAction;
-import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
-import com.intellij.openapi.roots.impl.DirectoryIndex;
-import com.intellij.openapi.roots.impl.DirectoryIndexImpl;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 
@@ -48,23 +31,21 @@ public class GenerateAntApplication {
       GenerateAntMain.printHelp();
     }
 
-    SwingUtilities.invokeLater(new Runnable() {
-      public void run() {
-        ApplicationEx application = ApplicationManagerEx.getApplicationEx();
-        try {
-          logMessage(0, "Starting app... ");
-          application.doNotSave();
-          application.load(PathManager.getOptionsPath());
-          logMessageLn(0, "done");
+    SwingUtilities.invokeLater(() -> {
+      ApplicationEx application = ApplicationManagerEx.getApplicationEx();
+      try {
+        logMessage(0, "Starting app... ");
+        application.setSaveAllowed(false);
+        application.load();
+        logMessageLn(0, "done");
 
-          GenerateAntApplication.this.run();
-        }
-        catch (Exception e) {
-          GenerateAntApplication.LOG.error(e);
-        }
-        finally {
-          application.exit(true);
-        }
+        this.run();
+      }
+      catch (Exception e) {
+        LOG.error(e);
+      }
+      finally {
+        application.exit(true, true);
       }
     });
   }
@@ -81,9 +62,6 @@ public class GenerateAntApplication {
       logMessage(0, "Loading project...");
       myProject = ProjectManagerEx.getInstanceEx().loadProject(myProjectPath);
 
-      DirectoryIndexImpl dirIndex = (DirectoryIndexImpl)DirectoryIndex.getInstance(myProject);
-      dirIndex.initialize();
-
       logMessageLn(0, " done");
 
       GenerateAntBuildAction.generateSingleFileBuild(myProject,
@@ -94,11 +72,11 @@ public class GenerateAntApplication {
       logMessage(0, "Hello!");
     }
     catch (IOException e) {
-      GenerateAntApplication.LOG.error(e);
+      LOG.error(e);
       GenerateAntMain.printHelp();
     }
     catch (Exception e) {
-      GenerateAntApplication.LOG.error(e);
+      LOG.error(e);
       System.exit(1);
     }
   }

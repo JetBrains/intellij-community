@@ -28,4 +28,10 @@ public interface FileASTNode extends ASTNode {
   CharTable getCharTable();
 
   boolean isParsed();
+
+  /**
+   * @return a lighter AST object for this tree. The result is not guaranteed to be thread-safe, and not cached inside.
+   */
+  @NotNull
+  LighterAST getLighterAST();
 }

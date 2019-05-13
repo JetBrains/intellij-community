@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,77 +16,70 @@
 package com.intellij.psi;
 
 import com.intellij.lang.Language;
-import com.intellij.lang.LanguageParserDefinitions;
-import com.intellij.lang.ParserDefinition;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.command.undo.UndoConstants;
+import com.intellij.lang.LanguageUtil;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.extensions.Extensions;
-import com.intellij.openapi.file.exclude.ProjectFileExclusionManager;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
-import com.intellij.openapi.fileTypes.*;
+import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.PlainTextLanguage;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.FileIndexFacade;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.UserDataHolderBase;
-import com.intellij.openapi.vfs.NonPhysicalFileSystem;
 import com.intellij.openapi.vfs.PersistentFSConstants;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.impl.PsiManagerEx;
-import com.intellij.psi.impl.PsiManagerImpl;
-import com.intellij.psi.impl.file.PsiBinaryFileImpl;
-import com.intellij.psi.impl.file.PsiLargeFileImpl;
-import com.intellij.psi.impl.file.impl.FileManager;
+import com.intellij.psi.impl.DebugUtil;
+import com.intellij.psi.impl.PsiFileEx;
 import com.intellij.psi.impl.source.PsiFileImpl;
-import com.intellij.psi.impl.source.PsiPlainTextFileImpl;
 import com.intellij.psi.impl.source.tree.FileElement;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.testFramework.LightVirtualFile;
-import com.intellij.util.LocalTimeCounter;
-import com.intellij.util.ReflectionCache;
+import com.intellij.util.ReflectionUtil;
+import com.intellij.util.concurrency.AtomicFieldUpdater;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.lang.ref.SoftReference;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
-import java.util.concurrent.atomic.AtomicReference;
 
-public class SingleRootFileViewProvider extends UserDataHolderBase implements FileViewProvider {
+public class SingleRootFileViewProvider extends AbstractFileViewProvider implements FileViewProvider {
   private static final Key<Boolean> OUR_NO_SIZE_LIMIT_KEY = Key.create("no.size.limit");
-  private static final Logger LOG = Logger.getInstance("#" + SingleRootFileViewProvider.class.getCanonicalName());
-  @NotNull private final PsiManager myManager;
-  @NotNull private final VirtualFile myVirtualFile;
-  private final boolean myEventSystemEnabled;
-  private final boolean myPhysical;
-  private final AtomicReference<PsiFile> myPsiFile = new AtomicReference<PsiFile>();
-  private volatile Content myContent;
-  private volatile SoftReference<Document> myDocument;
+  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.SingleRootFileViewProvider");
+  @SuppressWarnings("unused")
+  private volatile PsiFile myPsiFile;
+  private static final AtomicFieldUpdater<SingleRootFileViewProvider, PsiFile> myPsiFileUpdater = AtomicFieldUpdater.forFieldOfType(SingleRootFileViewProvider.class, PsiFile.class);
   @NotNull private final Language myBaseLanguage;
-  private final ProjectFileExclusionManager myExclusionManager;
 
   public SingleRootFileViewProvider(@NotNull PsiManager manager, @NotNull VirtualFile file) {
     this(manager, file, true);
   }
 
-  public SingleRootFileViewProvider(@NotNull PsiManager manager, @NotNull VirtualFile virtualFile, final boolean physical) {
-    this(manager, virtualFile, physical, calcBaseLanguage(virtualFile, manager.getProject()));
+  public SingleRootFileViewProvider(@NotNull PsiManager manager,
+                                    @NotNull VirtualFile virtualFile,
+                                    final boolean eventSystemEnabled) {
+    this(manager, virtualFile, eventSystemEnabled, virtualFile.getFileType());
   }
 
-  protected SingleRootFileViewProvider(@NotNull PsiManager manager, @NotNull VirtualFile virtualFile, final boolean physical, @NotNull Language language) {
-    myManager = manager;
-    myVirtualFile = virtualFile;
-    myEventSystemEnabled = physical;
+  public SingleRootFileViewProvider(@NotNull PsiManager manager,
+                                    @NotNull VirtualFile virtualFile,
+                                    final boolean eventSystemEnabled,
+                                    @NotNull final FileType fileType) {
+    this(manager, virtualFile, eventSystemEnabled, calcBaseLanguage(virtualFile, manager.getProject(), fileType), fileType);
+  }
+
+  protected SingleRootFileViewProvider(@NotNull PsiManager manager,
+                                       @NotNull VirtualFile virtualFile,
+                                       final boolean eventSystemEnabled,
+                                       @NotNull Language language) {
+    this(manager, virtualFile, eventSystemEnabled, language, virtualFile.getFileType());
+  }
+
+  protected SingleRootFileViewProvider(@NotNull PsiManager manager,
+                                       @NotNull VirtualFile virtualFile,
+                                       final boolean eventSystemEnabled,
+                                       @NotNull Language language,
+                                       @NotNull FileType type) {
+    super(manager, virtualFile, eventSystemEnabled, type);
     myBaseLanguage = language;
-    setContent(new VirtualFileContent());
-    myPhysical = isEventSystemEnabled() &&
-                 !(virtualFile instanceof LightVirtualFile) &&
-                 !(virtualFile.getFileSystem() instanceof NonPhysicalFileSystem);
-    myExclusionManager = ProjectFileExclusionManager.SERVICE.getInstance(manager.getProject());
   }
 
   @Override
@@ -95,33 +88,13 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
     return myBaseLanguage;
   }
 
-  private static Language calcBaseLanguage(@NotNull VirtualFile file, @NotNull Project project) {
-    if (file instanceof LightVirtualFile) {
-      final Language language = ((LightVirtualFile)file).getLanguage();
-      if (language != null) {
-        return language;
-      }
-    }
-
-    FileType fileType = file.getFileType();
-    // Do not load content
-    if (fileType == UnknownFileType.INSTANCE) {
-      fileType = FileTypeRegistry.getInstance().detectFileTypeFromContent(file);
-    }
+  private static Language calcBaseLanguage(@NotNull VirtualFile file, @NotNull Project project, @NotNull final FileType fileType) {
     if (fileType.isBinary()) return Language.ANY;
     if (isTooLargeForIntelligence(file)) return PlainTextLanguage.INSTANCE;
 
-    if (fileType instanceof LanguageFileType) {
-      return LanguageSubstitutors.INSTANCE.substituteLanguage(((LanguageFileType)fileType).getLanguage(), file, project);
-    }
+    Language language = LanguageUtil.getLanguageForPsi(project, file);
 
-    final ContentBasedFileSubstitutor[] processors = Extensions.getExtensions(ContentBasedFileSubstitutor.EP_NAME);
-    for (ContentBasedFileSubstitutor processor : processors) {
-      Language language = processor.obtainLanguageForFile(file);
-      if (language != null) return language;
-    }
-
-    return PlainTextLanguage.INSTANCE;
+    return language != null ? language : PlainTextLanguage.INSTANCE;
   }
 
   @Override
@@ -131,123 +104,66 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
   }
 
   @Override
-  @Nullable
-  public final PsiFile getPsi(@NotNull Language target) {
-    if (!isPhysical()) {
-      FileManager fileManager = ((PsiManagerEx)myManager).getFileManager();
-      VirtualFile virtualFile = getVirtualFile();
-      if (fileManager.findCachedViewProvider(virtualFile) == null) {
-        fileManager.setViewProvider(virtualFile, this);
-      }
-    }
-    return getPsiInner(target);
+  @NotNull
+  public List<PsiFile> getAllFiles() {
+    return ContainerUtil.createMaybeSingletonList(getPsi(getBaseLanguage()));
   }
 
   @Override
-  @NotNull
-  public List<PsiFile> getAllFiles() {
-    return Collections.singletonList(getPsi(getBaseLanguage()));
-  }
-
   @Nullable
   protected PsiFile getPsiInner(@NotNull Language target) {
     if (target != getBaseLanguage()) {
       return null;
     }
-    PsiFile psiFile = myPsiFile.get();
+    PsiFile psiFile = myPsiFile;
     if (psiFile == null) {
       psiFile = createFile();
-      boolean set = myPsiFile.compareAndSet(null, psiFile);
-      if (!set) {
-        psiFile = myPsiFile.get();
+      if (psiFile == null) {
+        psiFile = PsiUtilCore.NULL_PSI_FILE;
+      }
+      boolean set = myPsiFileUpdater.compareAndSet(this, null, psiFile);
+      if (!set && psiFile != PsiUtilCore.NULL_PSI_FILE) {
+        PsiFile alreadyCreated = myPsiFile;
+        if (alreadyCreated == psiFile) {
+          LOG.error(this + ".createFile() must create new file instance but got the same: " + psiFile);
+        }
+        if (psiFile instanceof PsiFileEx) {
+          PsiFile finalPsiFile = psiFile;
+          DebugUtil.performPsiModification("invalidating throw-away copy", () ->
+            ((PsiFileEx)finalPsiFile).markInvalidated()
+          );
+        }
+        psiFile = alreadyCreated;
       }
     }
-    return psiFile;
+    return psiFile == PsiUtilCore.NULL_PSI_FILE ? null : psiFile;
   }
 
   @Override
-  public void beforeContentsSynchronized() {
-    unsetPsiContent();
+  public final PsiFile getCachedPsi(@NotNull Language target) {
+    if (target != getBaseLanguage()) return null;
+    PsiFile file = myPsiFile;
+    return file == PsiUtilCore.NULL_PSI_FILE ? null : file;
+  }
+
+  @NotNull
+  @Override
+  public final List<PsiFile> getCachedPsiFiles() {
+    return ContainerUtil.createMaybeSingletonList(getCachedPsi(getBaseLanguage()));
   }
 
   @Override
-  public void contentsSynchronized() {
-    unsetPsiContent();
-  }
-
-  private void unsetPsiContent() {
-    if (!(myContent instanceof PsiFileContent)) return;
-    final Document cachedDocument = getCachedDocument();
-    setContent(cachedDocument == null ? new VirtualFileContent() : new DocumentContent());
-  }
-
-  public void beforeDocumentChanged() {
-    final PsiFile psiFile = getCachedPsi(getBaseLanguage());
-    if (psiFile instanceof PsiFileImpl && ((PsiFileImpl)psiFile).isContentsLoaded() && getContent() instanceof DocumentContent) {
-      setContent(new PsiFileContent((PsiFileImpl)psiFile, getModificationStamp()));
-    }
-  }
-
-  @Override
-  public void rootChanged(@NotNull PsiFile psiFile) {
-    if (psiFile instanceof PsiFileImpl && ((PsiFileImpl)psiFile).isContentsLoaded()) {
-      setContent(new PsiFileContent((PsiFileImpl)psiFile, LocalTimeCounter.currentTime()));
-    }
-  }
-
-  @Override
-  public boolean isEventSystemEnabled() {
-    return myEventSystemEnabled;
-  }
-
-  @Override
-  public boolean isPhysical() {
-    return myPhysical;
-  }
-
-  @Override
-  public long getModificationStamp() {
-    return getContent().getModificationStamp();
-  }
-
-  @Override
-  public boolean supportsIncrementalReparse(@NotNull final Language rootLanguage) {
-    return true;
-  }
-
-
-  public PsiFile getCachedPsi(Language target) {
-    return myPsiFile.get();
-  }
-
-  public FileElement[] getKnownTreeRoots() {
-    PsiFile psiFile = myPsiFile.get();
-    if (psiFile == null || !(psiFile instanceof PsiFileImpl)) return new FileElement[0];
-    if (((PsiFileImpl)psiFile).getTreeElement() == null) return new FileElement[0];
-    return new FileElement[]{(FileElement)psiFile.getNode()};
+  @NotNull
+  public final List<FileElement> getKnownTreeRoots() {
+    PsiFile psiFile = getCachedPsi(getBaseLanguage());
+    if (!(psiFile instanceof PsiFileImpl)) return Collections.emptyList();
+    FileElement element = ((PsiFileImpl)psiFile).getTreeElement();
+    return ContainerUtil.createMaybeSingletonList(element);
   }
 
   private PsiFile createFile() {
     try {
-      final VirtualFile vFile = getVirtualFile();
-      if (vFile.isDirectory()) return null;
-      if (isIgnored()) return null;
-
-      final Project project = myManager.getProject();
-      if (isPhysical()) { // check directories consistency
-        final VirtualFile parent = vFile.getParent();
-        if (parent == null) return null;
-        final PsiDirectory psiDir = getManager().findDirectory(parent);
-        if (psiDir == null) {
-          FileIndexFacade indexFacade = FileIndexFacade.getInstance(project);
-          if (!indexFacade.isInLibrarySource(vFile) && !indexFacade.isInLibraryClasses(vFile)) {
-            return null;
-          }
-        }
-      }
-
-      FileType fileType = vFile.getFileType();
-      return createFile(project, vFile, fileType);
+      return shouldCreatePsi() ? createFile(getManager().getProject(), getVirtualFile(), getFileType()) : null;
     }
     catch (ProcessCanceledException e) {
       throw e;
@@ -258,51 +174,27 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
     }
   }
 
-  protected boolean isIgnored() {
-    final VirtualFile file = getVirtualFile();
-    if (file instanceof LightVirtualFile) return false;
-    if (myExclusionManager != null && myExclusionManager.isExcluded(file)) return true;
-    return FileTypeRegistry.getInstance().isFileIgnored(file);
-  }
-
-  @Nullable
-  protected PsiFile createFile(@NotNull Project project, @NotNull VirtualFile file, @NotNull FileType fileType) {
-    if (fileType.isBinary() || file.isSpecialFile()) {
-      return new PsiBinaryFileImpl((PsiManagerImpl)getManager(), this);
-    }
-    if (!isTooLargeForIntelligence(file)) {
-      final PsiFile psiFile = createFile(getBaseLanguage());
-      if (psiFile != null) return psiFile;
-    }
-
-    if (isTooLargeForContentLoading(file)) {
-      return new PsiLargeFileImpl((PsiManagerImpl)getManager(), this);
-    }
-
-    return new PsiPlainTextFileImpl(this);
-  }
-
-  @SuppressWarnings("UnusedDeclaration")
-  @Deprecated
-  public static boolean isTooLarge(@NotNull VirtualFile vFile) {
-    return isTooLargeForIntelligence(vFile);
-  }
-
   public static boolean isTooLargeForIntelligence(@NotNull VirtualFile vFile) {
     if (!checkFileSizeLimit(vFile)) return false;
     return fileSizeIsGreaterThan(vFile, PersistentFSConstants.getMaxIntellisenseFileSize());
   }
 
   public static boolean isTooLargeForContentLoading(@NotNull VirtualFile vFile) {
-    if (!checkFileSizeLimit(vFile)) return false;
     return fileSizeIsGreaterThan(vFile, PersistentFSConstants.FILE_LENGTH_TO_CACHE_THRESHOLD);
   }
 
   private static boolean checkFileSizeLimit(@NotNull VirtualFile vFile) {
-    return !Boolean.TRUE.equals(vFile.getUserData(OUR_NO_SIZE_LIMIT_KEY));
+    if (Boolean.TRUE.equals(vFile.getCopyableUserData(OUR_NO_SIZE_LIMIT_KEY))) {
+      return false;
+    }
+    if (vFile instanceof LightVirtualFile) {
+      VirtualFile original = ((LightVirtualFile)vFile).getOriginalFile();
+      if (original != null) return checkFileSizeLimit(original);
+    }
+    return true;
   }
   public static void doNotCheckFileSizeLimit(@NotNull VirtualFile vFile) {
-    vFile.putUserData(OUR_NO_SIZE_LIMIT_KEY, Boolean.TRUE);
+    vFile.putCopyableUserData(OUR_NO_SIZE_LIMIT_KEY, Boolean.TRUE);
   }
 
   public static boolean isTooLargeForIntelligence(@NotNull VirtualFile vFile, final long contentSize) {
@@ -310,7 +202,11 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
     return contentSize > PersistentFSConstants.getMaxIntellisenseFileSize();
   }
 
-  private static boolean fileSizeIsGreaterThan(@NotNull VirtualFile vFile, final long maxBytes) {
+  public static boolean isTooLargeForContentLoading(@NotNull VirtualFile vFile, final long contentSize) {
+    return contentSize > PersistentFSConstants.FILE_LENGTH_TO_CACHE_THRESHOLD;
+  }
+
+  public static boolean fileSizeIsGreaterThan(@NotNull VirtualFile vFile, final long maxBytes) {
     if (vFile instanceof LightVirtualFile) {
       // This is optimization in order to avoid conversion of [large] file contents to bytes
       final int lengthInChars = ((LightVirtualFile)vFile).getContent().length();
@@ -321,104 +217,16 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
     return vFile.getLength() > maxBytes;
   }
 
-  @Nullable
-  protected PsiFile createFile(@NotNull Language lang) {
-    if (lang != getBaseLanguage()) return null;
-    final ParserDefinition parserDefinition = LanguageParserDefinitions.INSTANCE.forLanguage(lang);
-    if (parserDefinition != null) {
-      return parserDefinition.createFile(this);
-    }
-    return null;
-  }
-
-  @Override
-  @NotNull
-  public PsiManager getManager() {
-    return myManager;
-  }
-
-  @Override
-  @NotNull
-  public CharSequence getContents() {
-    return getContent().getText();
-  }
-
-  @Override
-  @NotNull
-  public VirtualFile getVirtualFile() {
-    return myVirtualFile;
-  }
-
-  @Nullable
-  private Document getCachedDocument() {
-    final Document document = myDocument != null ? myDocument.get() : null;
-    if (document != null) return document;
-    return FileDocumentManager.getInstance().getCachedDocument(getVirtualFile());
-  }
-
-  @Override
-  public Document getDocument() {
-    Document document = myDocument != null ? myDocument.get() : null;
-    if (document == null/* TODO[ik] make this change && isEventSystemEnabled()*/) {
-      document = FileDocumentManager.getInstance().getDocument(getVirtualFile());
-      myDocument = new SoftReference<Document>(document);
-    }
-    if (document != null && getContent() instanceof VirtualFileContent) {
-      setContent(new DocumentContent());
-    }
-    return document;
-  }
-
-  @Override
-  public FileViewProvider clone() {
-    final VirtualFile origFile = getVirtualFile();
-    LightVirtualFile copy = new LightVirtualFile(origFile.getName(), origFile.getFileType(), getContents(), origFile.getCharset(), getModificationStamp());
-    copy.setOriginalFile(origFile);
-    copy.putUserData(UndoConstants.DONT_RECORD_UNDO, Boolean.TRUE);
-    copy.setCharset(origFile.getCharset());
-    return createCopy(copy);
-  }
-
   @NotNull
   @Override
   public SingleRootFileViewProvider createCopy(@NotNull final VirtualFile copy) {
-    return new SingleRootFileViewProvider(getManager(), copy, false, myBaseLanguage);
+    return new SingleRootFileViewProvider(getManager(), copy, false, getBaseLanguage());
   }
 
   @Override
   public PsiReference findReferenceAt(final int offset) {
-    final PsiFileImpl psiFile = (PsiFileImpl)getPsi(getBaseLanguage());
+    final PsiFile psiFile = getPsi(getBaseLanguage());
     return findReferenceAt(psiFile, offset);
-  }
-
-  @Override
-  public PsiElement findElementAt(final int offset, @NotNull final Language language) {
-    final PsiFile psiFile = getPsi(language);
-    return psiFile != null ? findElementAt(psiFile, offset) : null;
-  }
-
-  @Override
-  @Nullable
-  public PsiReference findReferenceAt(final int offset, @NotNull final Language language) {
-    final PsiFile psiFile = getPsi(language);
-    return psiFile != null ? findReferenceAt(psiFile, offset) : null;
-  }
-
-  @Nullable
-  private static PsiReference findReferenceAt(@Nullable final PsiFile psiFile, final int offset) {
-    if (psiFile == null) return null;
-    int offsetInElement = offset;
-    PsiElement child = psiFile.getFirstChild();
-    while (child != null) {
-      final int length = child.getTextLength();
-      if (length <= offsetInElement) {
-        offsetInElement -= length;
-        child = child.getNextSibling();
-        continue;
-      }
-      return child.findReferenceAt(offsetInElement);
-    }
-    return null;
   }
 
   @Override
@@ -429,133 +237,21 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
 
   @Override
   public PsiElement findElementAt(int offset, @NotNull Class<? extends Language> lang) {
-    if (!ReflectionCache.isAssignable(lang, getBaseLanguage().getClass())) return null;
+    if (!ReflectionUtil.isAssignable(lang, getBaseLanguage().getClass())) return null;
     return findElementAt(offset);
   }
 
-  @Nullable
-  protected static PsiElement findElementAt(@Nullable final PsiElement psiFile, final int offset) {
-    if (psiFile == null) return null;
-    int offsetInElement = offset;
-    PsiElement child = psiFile.getFirstChild();
-    while (child != null) {
-      final int length = child.getTextLength();
-      if (length <= offsetInElement) {
-        offsetInElement -= length;
-        child = child.getNextSibling();
-        continue;
-      }
-      return child.findElementAt(offsetInElement);
-    }
-    return null;
-  }
-
-  public void forceCachedPsi(final PsiFile psiFile) {
-    myPsiFile.set(psiFile);
-    ((PsiManagerEx)myManager).getFileManager().setViewProvider(getVirtualFile(), this);
-  }
-
-  private Content getContent() {
-    return myContent;
-  }
-
-  private void setContent(final Content content) {
-    // temporarily commented
-    //if (myPhysical) {
-    //  final Content oldContent = myContent;
-    //  if (oldContent != null && content.getModificationStamp() != oldContent.getModificationStamp()) {
-    //    ApplicationManager.getApplication().assertWriteAccessAllowed();
-    //  }
-    //}
-    myContent = content;
-  }
-
-  @Override
-  public String toString() {
-    return getClass().getSimpleName() + "{myVirtualFile=" + myVirtualFile + '}';
-  }
-
-  private interface Content {
-    CharSequence getText();
-
-    long getModificationStamp();
-  }
-
-  private class VirtualFileContent implements Content {
-    @Override
-    public CharSequence getText() {
-      final VirtualFile virtualFile = getVirtualFile();
-      if (virtualFile instanceof LightVirtualFile) {
-        Document doc = getCachedDocument();
-        if (doc != null) return doc.getCharsSequence();
-        return ((LightVirtualFile)virtualFile).getContent();
-      }
-
-      final Document document = getDocument();
-      if (document == null) {
-        return LoadTextUtil.loadText(virtualFile);
-      }
-      else {
-        return document.getCharsSequence();
-      }
-    }
-
-    @Override
-    public long getModificationStamp() {
-      return getVirtualFile().getModificationStamp();
-    }
-  }
-
-  private class DocumentContent implements Content {
-    @NotNull
-    @Override
-    public CharSequence getText() {
-      final Document document = getDocument();
-      assert document != null;
-      return document.getCharsSequence();
-    }
-
-    @Override
-    public long getModificationStamp() {
-      Document document = myDocument == null ? null : myDocument.get();
-      if (document != null) return document.getModificationStamp();
-      return myVirtualFile.getModificationStamp();
-    }
-  }
-
-  private class PsiFileContent implements Content {
-    private final PsiFileImpl myFile;
-    private CharSequence myContent = null;
-    private final long myModificationStamp;
-
-    private PsiFileContent(final PsiFileImpl file, final long modificationStamp) {
-      myFile = file;
-      myModificationStamp = modificationStamp;
-    }
-
-    @Override
-    public CharSequence getText() {
-      if (!myFile.isContentsLoaded()) {
-        unsetPsiContent();
-        return getContents();
-      }
-      if (myContent != null) return myContent;
-      return myContent = ApplicationManager.getApplication().runReadAction(new Computable<CharSequence>() {
-        @Override
-        @NotNull
-        public CharSequence compute() {
-          return myFile.calcTreeElement().getText();
+  public final void forceCachedPsi(@NotNull PsiFile psiFile) {
+    while (true) {
+      PsiFile prev = myPsiFile;
+      // jdk 6 doesn't have getAndSet()
+      if (myPsiFileUpdater.compareAndSet(this, prev, psiFile)) {
+        if (prev != psiFile && prev instanceof PsiFileEx) {
+          ((PsiFileEx)prev).markInvalidated();
         }
-      });
-    }
-
-    @Override
-    public long getModificationStamp() {
-      if (!myFile.isContentsLoaded()) {
-        unsetPsiContent();
-        return SingleRootFileViewProvider.this.getModificationStamp();
+        break;
       }
-      return myModificationStamp;
     }
+    getManager().getFileManager().setViewProvider(getVirtualFile(), this);
   }
 }

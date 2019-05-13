@@ -1,24 +1,10 @@
-/*
- * Copyright 2000-2011 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.editorActions;
 
 import com.intellij.codeInsight.template.TemplateManager;
 import com.intellij.formatting.FormatConstants;
-import com.intellij.psi.formatter.WhiteSpaceFormattingStrategy;
 import com.intellij.ide.DataManager;
+import com.intellij.lang.Language;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.editor.*;
@@ -28,9 +14,11 @@ import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.impl.TextChangeImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.psi.formatter.WhiteSpaceFormattingStrategy;
 import com.intellij.psi.formatter.WhiteSpaceFormattingStrategyFactory;
-import com.intellij.util.containers.WeakHashMap;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Map;
@@ -39,16 +27,15 @@ import java.util.Map;
  * Encapsulates logic for processing {@link EditorSettings#isWrapWhenTypingReachesRightMargin(Project)} option.
  *
  * @author Denis Zhdanov
- * @since 10/4/10 9:56 AM
  */
 public class AutoHardWrapHandler {
 
   /**
-   * This key is used as a flag that indicates if <code>'auto wrap line on typing'</code> activity is performed now.
+   * This key is used as a flag that indicates if {@code 'auto wrap line on typing'} activity is performed now.
    *
-   * @see CodeStyleSettings#WRAP_WHEN_TYPING_REACHES_RIGHT_MARGIN
+   * @see CodeStyleSettings#isWrapOnTyping(Language)
    */
-  public static final Key<Boolean> AUTO_WRAP_LINE_IN_PROGRESS_KEY = new Key<Boolean>("AUTO_WRAP_LINE_IN_PROGRESS");
+  public static final Key<Boolean> AUTO_WRAP_LINE_IN_PROGRESS_KEY = new Key<>("AUTO_WRAP_LINE_IN_PROGRESS");
 
   private static final AutoHardWrapHandler INSTANCE = new AutoHardWrapHandler();
 
@@ -60,9 +47,9 @@ public class AutoHardWrapHandler {
    * such line endings to be located on distinct lines.
    * <p/>
    * Hence, we remember last auto-wrap change per-document and merge it with the new auto-wrap if necessary. Current collection
-   * holds that <code>'document -> last auto-wrap change'</code> mappings.
+   * holds that {@code 'document -> last auto-wrap change'} mappings.
    */
-  private final Map<Document, AutoWrapChange> myAutoWrapChanges = new WeakHashMap<Document, AutoWrapChange>();
+  private final Map<Document, AutoWrapChange> myAutoWrapChanges = ContainerUtil.createWeakMap();
 
   public static AutoHardWrapHandler getInstance() {
     return INSTANCE;
@@ -93,8 +80,10 @@ public class AutoHardWrapHandler {
       change.charTyped(editor, modificationStampBeforeTyping);
     }
 
-    // Return eagerly if we don't need to auto-wrap line on right margin exceeding.
-    if (project == null || !editor.getSettings().isWrapWhenTypingReachesRightMargin(project)
+    // Return eagerly if we don't need to auto-wrap line, e.g. because of right margin exceeding.
+    if (/*editor.isOneLineMode()
+        || */project == null
+        || !editor.getSettings().isWrapWhenTypingReachesRightMargin(project)
         || (TemplateManager.getInstance(project) != null && TemplateManager.getInstance(project).getActiveTemplate(editor) != null))
     {
       return;
@@ -106,10 +95,16 @@ public class AutoHardWrapHandler {
     int startOffset = document.getLineStartOffset(line);
     int endOffset = document.getLineEndOffset(line);
 
+    final CharSequence endOfString = document.getCharsSequence().subSequence(caretOffset, endOffset);
+    final boolean endsWithSpaces = StringUtil.isEmptyOrSpaces(String.valueOf(endOfString));
     // Check if right margin is exceeded.
     int margin = editor.getSettings().getRightMargin(project);
-    VisualPosition visEndLinePosition = editor.offsetToVisualPosition(endOffset);
-    if (margin > visEndLinePosition.column) {
+    if (margin <= 0) {
+      return;
+    }
+
+    LogicalPosition logEndLinePosition = editor.offsetToLogicalPosition(endOffset);
+    if (margin >= logEndLinePosition.column) {
       if (change != null) {
         change.modificationStamp = document.getModificationStamp();
       }
@@ -139,23 +134,25 @@ public class AutoHardWrapHandler {
       myAutoWrapChanges.put(document, change);
     }
     else {
-      if (!change.isEmpty()) {
-        document.replaceString(change.change.getStart(), change.change.getEnd(), change.change.getText());
+      final int start = change.change.getStart();
+      final int end = change.change.getEnd();
+      if (!change.isEmpty() && start < end) {
+        document.replaceString(start, end, change.change.getText());
       }
       change.reset();
     }
     change.update(editor);
 
     // Is assumed to be max possible number of characters inserted on the visual line with caret.
-    int maxPreferredOffset = editor.logicalPositionToOffset(editor.visualToLogicalPosition(
-      new VisualPosition(caretModel.getVisualPosition().line, margin - FormatConstants.RESERVED_LINE_WRAP_WIDTH_IN_COLUMNS)
-    ));
+    int maxPreferredOffset = editor.logicalPositionToOffset(
+      new LogicalPosition(caretModel.getLogicalPosition().line, margin - FormatConstants.getReservedLineWrapWidthInColumns(editor))
+    );
 
     int wrapOffset = strategy.calculateWrapPosition(document, project, startOffset, endOffset, maxPreferredOffset, true, false);
     if (wrapOffset < 0) {
       return;
     }
-    
+
     WhiteSpaceFormattingStrategy formattingStrategy = WhiteSpaceFormattingStrategyFactory.getStrategy(editor);
     if (wrapOffset <= startOffset || wrapOffset > maxPreferredOffset
         || formattingStrategy.check(document.getCharsSequence(), startOffset, wrapOffset) >= wrapOffset)
@@ -170,20 +167,19 @@ public class AutoHardWrapHandler {
     final int baseCaretOffset = caretModel.getOffset();
     DocumentListener listener = new DocumentListener() {
       @Override
-      public void beforeDocumentChange(DocumentEvent event) {
+      public void beforeDocumentChange(@NotNull DocumentEvent event) {
         if (event.getOffset() < baseCaretOffset + caretOffsetDiff[0]) {
           caretOffsetDiff[0] += event.getNewLength() - event.getOldLength();
         }
 
-        if (event.getNewLength() <= event.getOldLength()) {
-          // There is a possible case that document fragment is removed because of auto-formatting. We don't want to process such events.
+        if (autoFormatted(event)) {
           return;
         }
         wrapIntroducedSymbolsNumber[0] += event.getNewLength() - event.getOldLength();
       }
 
-      @Override
-      public void documentChanged(DocumentEvent event) {
+      private boolean autoFormatted(DocumentEvent event) {
+        return event.getNewLength() <= event.getOldLength() && endsWithSpaces;
       }
     };
 

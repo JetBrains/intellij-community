@@ -63,6 +63,21 @@ public class IncrementalArtifactBuildingTest extends ArtifactBuilderTestCase {
     buildAllAndAssertUpToDate();
   }
 
+  public void testRemoveAllFilesFromArchive() {
+    String file1 = createFile("dir/a.txt");
+    String file2 = createFile("dir/b.txt");
+    final JpsArtifact a = addArtifact("a", archive("a.jar").parentDirCopy(file1));
+    buildAll();
+    assertOutput(a, fs().archive("a.jar").file("a.txt").file("b.txt"));
+
+    delete(file1);
+    delete(file2);
+    buildAll();
+    assertDeleted("out/artifacts/a/a.jar");
+    assertEmptyOutput(a);
+    buildAllAndAssertUpToDate();
+  }
+
   public void testPackChangedFile() {
     String file1 = createFile("dir/a.txt", "aaa");
     createFile("dir/b.txt", "bbb");
@@ -105,7 +120,7 @@ public class IncrementalArtifactBuildingTest extends ArtifactBuilderTestCase {
     buildAllAndAssertUpToDate();
   }
 
-  public void testNonExistentFileRoot() throws IOException {
+  public void testNonExistentFileRoot() {
     String file = getAbsolutePath("a.txt");
     JpsArtifact a = addArtifact(root().fileCopy(file));
     buildArtifacts(a);
@@ -123,7 +138,7 @@ public class IncrementalArtifactBuildingTest extends ArtifactBuilderTestCase {
     buildAllAndAssertUpToDate();
   }
 
-  public void testNonExistentDirectoryRoot() throws IOException {
+  public void testNonExistentDirectoryRoot() {
     String dir = getAbsolutePath("d");
     JpsArtifact a = addArtifact(root().dirCopy(dir));
     buildArtifacts(a);
@@ -207,7 +222,7 @@ public class IncrementalArtifactBuildingTest extends ArtifactBuilderTestCase {
     createFile("d/2.txt");
     JpsArtifact included = addArtifact("i", root().parentDirCopy(file1));
     JpsArtifact a = addArtifact(root().artifact(included));
-    makeAll();
+    buildAllModulesAndArtifacts();
     assertOutput(included, fs().file("1.txt").file("2.txt"));
     assertOutput(a, fs().file("1.txt").file("2.txt"));
 
@@ -218,7 +233,7 @@ public class IncrementalArtifactBuildingTest extends ArtifactBuilderTestCase {
     assertOutput(included, fs().file("2.txt"));
     assertOutput(a, fs().file("1.txt").file("2.txt"));
 
-    makeAll();
+    buildAllModulesAndArtifacts();
     assertOutput(a, fs().file("2.txt"));
   }
 
@@ -252,7 +267,7 @@ public class IncrementalArtifactBuildingTest extends ArtifactBuilderTestCase {
     assertDeletedAndCopied("out/artifacts/a/x.jar", "a/a.txt");
   }
 
-  public void testRenameFile() throws Exception {
+  public void testRenameFile() {
     final String file = createFile("a/a.txt");
     final JpsArtifact a = addArtifact(root().parentDirCopy(file));
     buildAll();
@@ -264,7 +279,7 @@ public class IncrementalArtifactBuildingTest extends ArtifactBuilderTestCase {
   }
 
   //IDEADEV-25840
-  public void testUpdateFileIfCaseOfLetterInNameChanged() throws Exception {
+  public void testUpdateFileIfCaseOfLetterInNameChanged() {
     final String file = createFile("a/a.txt");
     final JpsArtifact a = addArtifact("a", root().parentDirCopy(file));
     buildAll();
@@ -276,7 +291,7 @@ public class IncrementalArtifactBuildingTest extends ArtifactBuilderTestCase {
   }
 
   //IDEADEV-41556
-  public void testDeleteFilesFromSelectedArtifactsOnly() throws Exception {
+  public void testDeleteFilesFromSelectedArtifactsOnly() {
     final String file = createFile("a/a.txt");
     final JpsArtifact a1 = addArtifact("a1", root().parentDirCopy(file));
     final JpsArtifact a2 = addArtifact("a2", root().parentDirCopy(file));
@@ -296,7 +311,7 @@ public class IncrementalArtifactBuildingTest extends ArtifactBuilderTestCase {
   }
 
   //IDEA-51910
-  public void testTwoArtifactsWithSameOutput() throws Exception {
+  public void testTwoArtifactsWithSameOutput() {
     final String res1 = PathUtil.getParentPath(createFile("res1/a.txt", "1"));
     final String res2 = PathUtil.getParentPath(createFile("res2/a.txt", "2"));
     final JpsArtifact a1 = addArtifact("a1", root().dirCopy(res1));
@@ -313,4 +328,27 @@ public class IncrementalArtifactBuildingTest extends ArtifactBuilderTestCase {
     assertOutput(a2, fs().file("a.txt", "2"));
   }
 
+  //todo[nik] fix
+  //ZD-51993
+  public void _testFilesCopiedToTwoDifferentPlacesInArtifact() {
+    final String fileA = createFile("res/a.txt", "0");
+    final String fileB = createFile("res/b.txt", "0");
+    String dir = PathUtil.getParentPath(fileA);
+    JpsArtifact a = addArtifact("a", root()
+                                       .dir("d").dirCopy(dir).end()
+                                       .archive("a.zip").dirCopy(dir));
+    buildAll();
+
+    change(fileA, "1");
+    buildAll();
+    assertOutput(a, fs()
+                      .dir("d").file("a.txt", "1").file("b.txt", "0").end()
+                      .archive("a.zip").file("a.txt", "1").file("b.txt", "0"));
+
+    change(fileB, "1");
+    buildAll();
+    assertOutput(a, fs()
+                      .dir("d").file("a.txt", "1").file("b.txt", "1").end()
+                      .archive("a.zip").file("a.txt", "1").file("b.txt", "1"));
+  }
 }

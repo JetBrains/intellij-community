@@ -17,18 +17,17 @@ package com.intellij.openapi.roots.impl.libraries;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.libraries.LibraryTable;
-import com.intellij.openapi.roots.libraries.LibraryTablePresentation;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
 import com.intellij.openapi.Disposable;
 import com.intellij.util.SmartList;
-import com.intellij.util.containers.HashMap;
+import java.util.HashMap;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 import java.util.Map;
 
 public class LibraryTablesRegistrarImpl extends LibraryTablesRegistrar implements Disposable {
-  private static final Map<String, LibraryTable> myLibraryTables = new HashMap<String, LibraryTable>();
+  private static final Map<String, LibraryTable> myLibraryTables = new HashMap<>();
 
   @Override
   @NotNull
@@ -59,47 +58,8 @@ public class LibraryTablesRegistrarImpl extends LibraryTablesRegistrar implement
   }
 
   @Override
-  @NotNull
-  public LibraryTable registerLibraryTable(final String customLevel) {
-    LibraryTable table = new LibraryTableBase() {
-      @Override
-      public String getTableLevel() {
-        return customLevel;
-      }
-
-      @Override
-      public LibraryTablePresentation getPresentation() {
-        return new LibraryTablePresentation() {
-          @Override
-          public String getDisplayName(boolean plural) {
-            return customLevel;
-          }
-
-          @Override
-          public String getDescription() {
-            throw new UnsupportedOperationException("Method getDescription is not yet implemented in " + getClass().getName());
-          }
-
-          @Override
-          public String getLibraryTableEditorTitle() {
-            throw new UnsupportedOperationException("Method getLibraryTableEditorTitle is not yet implemented in " + getClass().getName());
-          }
-        };
-      }
-
-      @Override
-      public boolean isEditable() {
-        return false;
-      }
-    };
-
-    registerLibraryTable(table);
-    return table;
-  }
-
-  @Override
   public List<LibraryTable> getCustomLibraryTables() {
-    return new SmartList<LibraryTable>(myLibraryTables.values());
+    return new SmartList<>(myLibraryTables.values());
   }
 
   @Override

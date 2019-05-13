@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,7 @@ package com.intellij.util.xml.ui;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Factory;
 import com.intellij.openapi.util.Pair;
-import com.intellij.util.containers.HashMap;
+import java.util.HashMap;
 
 import javax.swing.*;
 import java.awt.*;
@@ -30,11 +30,11 @@ import java.util.Map;
  */
 public class ComboTableCellEditor extends DefaultCellEditor {
   private final boolean myNullable;
-  private final Factory<List<Pair<String, Icon>>> myDataFactory;
+  private final Factory<? extends List<Pair<String, Icon>>> myDataFactory;
   private Map<String, Icon> myData;
   private static final Pair<String,Icon> EMPTY = Pair.create(" ", null);
 
-  public ComboTableCellEditor(Factory<List<Pair<String, Icon>>> dataFactory, final boolean nullable) {
+  public ComboTableCellEditor(Factory<? extends List<Pair<String, Icon>>> dataFactory, final boolean nullable) {
     super(new JComboBox());
     myDataFactory = dataFactory;
     myNullable = nullable;
@@ -42,25 +42,23 @@ public class ComboTableCellEditor extends DefaultCellEditor {
     JComboBox comboBox = (JComboBox)editorComponent;
     comboBox.setBorder(null);
     comboBox.putClientProperty("JComboBox.isTableCellEditor", Boolean.TRUE);
-    ComboControl.initComboBox(comboBox, new Condition<String>() {
-      public boolean value(final String object) {
-        return myData != null && myData.containsKey(object) || myNullable && EMPTY.first == object;
-      }
-    });
+    ComboControl.initComboBox(comboBox, object -> myData != null && myData.containsKey(object) || myNullable && EMPTY.first == object);
   }
 
   public ComboTableCellEditor(Class<? extends Enum> anEnum, final boolean nullable) {
     this(ComboControl.createEnumFactory(anEnum), nullable);
   }
 
+  @Override
   public Object getCellEditorValue() {
     final Pair<String,Icon> cellEditorValue = (Pair<String,Icon>)super.getCellEditorValue();
     return EMPTY == cellEditorValue || null == cellEditorValue ? null : cellEditorValue.first;
   }
 
+  @Override
   public Component getTableCellEditorComponent(JTable table, Object value, boolean isSelected, int row, int column) {
     final List<Pair<String, Icon>> list = myDataFactory.create();
-    myData = new HashMap<String,Icon>();
+    myData = new HashMap<>();
 
     final JComboBox comboBox = (JComboBox)editorComponent;
     comboBox.removeAllItems();

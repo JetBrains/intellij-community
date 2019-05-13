@@ -14,10 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * User: anna
- * Date: 12-Jan-2010
- */
 package com.intellij.refactoring.rename.naming;
 
 import com.intellij.openapi.util.Comparing;
@@ -45,10 +41,12 @@ public class AutomaticParametersRenamer extends AutomaticRenamer {
     }
   }
 
+  @Override
   public String getDialogTitle() {
-    return "Rename parameters";
+    return "Rename Parameters";
   }
 
+  @Override
   public String getDialogDescription() {
     return "Rename parameter in hierarchy to:";
   }

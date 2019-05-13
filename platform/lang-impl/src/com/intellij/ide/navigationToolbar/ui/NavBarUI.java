@@ -24,7 +24,7 @@ import java.awt.*;
 
 /**
  * NavBar painting is delegated to NavBarUI components. To change NavBar view you should
- * implement NavBarUI interface or override some methods of  <code>AbstractNavBarUI</code>.
+ * implement NavBarUI interface or override some methods of  {@code AbstractNavBarUI}.
  *
  * If NavBar is visible on IdeFrame it's structure is the following:
  *
@@ -64,8 +64,6 @@ public interface NavBarUI {
    * @return alpha number from 0 to 255
    */
   short getSelectionAlpha();
-
-  boolean isDrawMacShadow(boolean selected, boolean focused);
 
   /**
    * NavBarItem offsets

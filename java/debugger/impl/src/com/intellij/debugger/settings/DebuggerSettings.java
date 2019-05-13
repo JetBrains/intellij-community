@@ -1,40 +1,31 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.settings;
 
 import com.intellij.debugger.impl.DebuggerUtilsEx;
-import com.intellij.openapi.components.NamedComponent;
+import com.intellij.openapi.Disposable;
+import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.components.State;
+import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.DefaultJDOMExternalizer;
-import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.JDOMExternalizable;
-import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.classFilter.ClassFilter;
+import com.intellij.util.EventDispatcher;
+import com.intellij.util.containers.hash.LinkedHashMap;
+import com.intellij.util.xmlb.SkipDefaultsSerializationFilter;
+import com.intellij.util.xmlb.XmlSerializer;
+import com.intellij.util.xmlb.annotations.Transient;
+import com.intellij.util.xmlb.annotations.XCollection;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
-public class DebuggerSettings implements JDOMExternalizable, NamedComponent, Cloneable {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.settings.DebuggerSettings");
+@State(name = "DebuggerSettings", storages = @Storage("debugger.xml"))
+public class DebuggerSettings implements Cloneable, PersistentStateComponent<Element> {
+  private static final Logger LOG = Logger.getInstance(DebuggerSettings.class);
   public static final int SOCKET_TRANSPORT = 0;
   public static final int SHMEM_TRANSPORT = 1;
 
@@ -42,39 +33,67 @@ public class DebuggerSettings implements JDOMExternalizable, NamedComponent, Clo
   @NonNls public static final String SUSPEND_THREAD = "SuspendThread";
   @NonNls public static final String SUSPEND_NONE = "SuspendNone";
 
-  @NonNls public static final String EVALUATE_FRAGMENT = "EvaluateFragment";
-  @NonNls public static final String EVALUATE_EXPRESSION = "EvaluateExpression";
-
   @NonNls public static final String RUN_HOTSWAP_ALWAYS = "RunHotswapAlways";
   @NonNls public static final String RUN_HOTSWAP_NEVER = "RunHotswapNever";
   @NonNls public static final String RUN_HOTSWAP_ASK = "RunHotswapAsk";
 
-  public boolean TRACING_FILTERS_ENABLED;
-  public int VALUE_LOOKUP_DELAY; // ms
+  @NonNls public static final String EVALUATE_FINALLY_ALWAYS = "EvaluateFinallyAlways";
+  @NonNls public static final String EVALUATE_FINALLY_NEVER = "EvaluateFinallyNever";
+  @NonNls public static final String EVALUATE_FINALLY_ASK = "EvaluateFinallyAsk";
+
+  private static final ClassFilter[] DEFAULT_STEPPING_FILTERS = new ClassFilter[]{
+    new ClassFilter("com.sun.*"),
+    new ClassFilter("java.*"),
+    new ClassFilter("javax.*"),
+    new ClassFilter("org.omg.*"),
+    new ClassFilter("sun.*"),
+    new ClassFilter("jdk.internal.*"),
+    new ClassFilter("junit.*"),
+    new ClassFilter("com.intellij.rt.*"),
+    new ClassFilter("com.yourkit.runtime.*"),
+    new ClassFilter("com.springsource.loaded.*"),
+    new ClassFilter("org.springsource.loaded.*"),
+    new ClassFilter("javassist.*"),
+    new ClassFilter("org.apache.webbeans.*"),
+    new ClassFilter("com.ibm.ws.*"),
+  };
+
+  public boolean TRACING_FILTERS_ENABLED = true;
   public int DEBUGGER_TRANSPORT;
-  public boolean FORCE_CLASSIC_VM;
+  public boolean FORCE_CLASSIC_VM = true;
   public boolean DISABLE_JIT;
-  public boolean HIDE_DEBUGGER_ON_PROCESS_TERMINATION;
+  public boolean SHOW_ALTERNATIVE_SOURCE = true;
   public boolean HOTSWAP_IN_BACKGROUND = true;
-  public boolean SKIP_SYNTHETIC_METHODS;
+  public boolean SKIP_SYNTHETIC_METHODS = true;
   public boolean SKIP_CONSTRUCTORS;
   public boolean SKIP_GETTERS;
-  public boolean SKIP_CLASSLOADERS;
+  public boolean SKIP_CLASSLOADERS = true;
 
-  public String EVALUATION_DIALOG_TYPE;
-  public String RUN_HOTSWAP_AFTER_COMPILE;
-  public boolean COMPILE_BEFORE_HOTSWAP;
-  public boolean HOTSWAP_HANG_WARNING_ENABLED = true;
+  public String RUN_HOTSWAP_AFTER_COMPILE = RUN_HOTSWAP_ASK;
+  public boolean COMPILE_BEFORE_HOTSWAP = true;
+  public boolean HOTSWAP_HANG_WARNING_ENABLED = false;
 
   public volatile boolean WATCH_RETURN_VALUES = false;
   public volatile boolean AUTO_VARIABLES_MODE = false;
-  public volatile boolean SHOW_LIBRARY_STACKFRAMES = true;
 
+  public volatile boolean KILL_PROCESS_IMMEDIATELY = false;
+  public volatile boolean ALWAYS_DEBUG = true;
 
-  private ClassFilter[] mySteppingFilters = ClassFilter.EMPTY_ARRAY;
+  public String EVALUATE_FINALLY_ON_POP_FRAME = EVALUATE_FINALLY_ASK;
 
-  private Map<String, ContentState> myContentStates = new HashMap<String, ContentState>();
+  public boolean RESUME_ONLY_CURRENT_THREAD = false;
 
+  private ClassFilter[] mySteppingFilters = DEFAULT_STEPPING_FILTERS;
+
+  public boolean INSTRUMENTING_AGENT = true;
+  private List<CapturePoint> myCapturePoints = new ArrayList<>();
+  public boolean CAPTURE_VARIABLES;
+  private final EventDispatcher<CapturePointsSettingsListener> myDispatcher = EventDispatcher.create(CapturePointsSettingsListener.class);
+
+  private Map<String, ContentState> myContentStates = new LinkedHashMap<>();
+
+  // transient - custom serialization
+  @Transient
   public ClassFilter[] getSteppingFilters() {
     final ClassFilter[] rv = new ClassFilter[mySteppingFilters.length];
     for (int idx = 0; idx < rv.length; idx++) {
@@ -83,50 +102,48 @@ public class DebuggerSettings implements JDOMExternalizable, NamedComponent, Clo
     return rv;
   }
 
-  void setSteppingFilters(ClassFilter[] steppingFilters) {
+  public static DebuggerSettings getInstance() {
+    return ServiceManager.getService(DebuggerSettings.class);
+  }
+
+  public void setSteppingFilters(ClassFilter[] steppingFilters) {
     mySteppingFilters = steppingFilters != null ? steppingFilters : ClassFilter.EMPTY_ARRAY;
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
-  public void readExternal(Element parentNode) throws InvalidDataException {
-    DefaultJDOMExternalizer.readExternal(this, parentNode);
-    List<ClassFilter> filtersList = new ArrayList<ClassFilter>();
-
-    for (final Object o : parentNode.getChildren("filter")) {
-      Element filter = (Element)o;
-      filtersList.add(DebuggerUtilsEx.create(filter));
-    }
-    setSteppingFilters(filtersList.toArray(new ClassFilter[filtersList.size()]));
-
-    filtersList.clear();
-
-    final List contents = parentNode.getChildren("content");
-    myContentStates.clear();
-    for (Object content : contents) {
-      final ContentState state = new ContentState((Element)content);
-      myContentStates.put(state.getType(), state);
-    }
-  }
-
-  @SuppressWarnings({"HardCodedStringLiteral"})
-  public void writeExternal(Element parentNode) throws WriteExternalException {
-    DefaultJDOMExternalizer.writeExternal(this, parentNode);
-    for (ClassFilter mySteppingFilter : mySteppingFilters) {
-      Element element = new Element("filter");
-      parentNode.addContent(element);
-      mySteppingFilter.writeExternal(element);
+  @Nullable
+  @Override
+  public Element getState() {
+    Element state = XmlSerializer.serialize(this, new SkipDefaultsSerializationFilter());
+    if (!Arrays.equals(DEFAULT_STEPPING_FILTERS, mySteppingFilters)) {
+      DebuggerUtilsEx.writeFilters(state, "filter", mySteppingFilters);
     }
 
     for (ContentState eachState : myContentStates.values()) {
       final Element content = new Element("content");
       if (eachState.write(content)) {
-        parentNode.addContent(content);
+        state.addContent(content);
       }
     }
+    return state;
   }
 
-  public static DebuggerSettings getInstance() {
-    return ServiceManager.getService(DebuggerSettings.class);
+  @Override
+  public void loadState(@NotNull Element state) {
+    XmlSerializer.deserializeInto(this, state);
+
+    List<Element> steppingFiltersElement = state.getChildren("filter");
+    if (steppingFiltersElement.isEmpty()) {
+      setSteppingFilters(DEFAULT_STEPPING_FILTERS);
+    }
+    else {
+      setSteppingFilters(DebuggerUtilsEx.readFilters(steppingFiltersElement));
+    }
+
+    myContentStates.clear();
+    for (Element content : state.getChildren("content")) {
+      ContentState contentState = new ContentState(content);
+      myContentStates.put(contentState.getType(), contentState);
+    }
   }
 
   public boolean equals(Object obj) {
@@ -135,26 +152,31 @@ public class DebuggerSettings implements JDOMExternalizable, NamedComponent, Clo
 
     return
       TRACING_FILTERS_ENABLED == secondSettings.TRACING_FILTERS_ENABLED &&
-      VALUE_LOOKUP_DELAY == secondSettings.VALUE_LOOKUP_DELAY &&
       DEBUGGER_TRANSPORT == secondSettings.DEBUGGER_TRANSPORT &&
+      StringUtil.equals(EVALUATE_FINALLY_ON_POP_FRAME, secondSettings.EVALUATE_FINALLY_ON_POP_FRAME) &&
       FORCE_CLASSIC_VM == secondSettings.FORCE_CLASSIC_VM &&
       DISABLE_JIT == secondSettings.DISABLE_JIT &&
-      HIDE_DEBUGGER_ON_PROCESS_TERMINATION == secondSettings.HIDE_DEBUGGER_ON_PROCESS_TERMINATION &&
+      SHOW_ALTERNATIVE_SOURCE == secondSettings.SHOW_ALTERNATIVE_SOURCE &&
+      KILL_PROCESS_IMMEDIATELY == secondSettings.KILL_PROCESS_IMMEDIATELY &&
+      ALWAYS_DEBUG == secondSettings.ALWAYS_DEBUG &&
       HOTSWAP_IN_BACKGROUND == secondSettings.HOTSWAP_IN_BACKGROUND &&
       SKIP_SYNTHETIC_METHODS == secondSettings.SKIP_SYNTHETIC_METHODS &&
       SKIP_CLASSLOADERS == secondSettings.SKIP_CLASSLOADERS &&
       SKIP_CONSTRUCTORS == secondSettings.SKIP_CONSTRUCTORS &&
       SKIP_GETTERS == secondSettings.SKIP_GETTERS &&
+      RESUME_ONLY_CURRENT_THREAD == secondSettings.RESUME_ONLY_CURRENT_THREAD &&
       COMPILE_BEFORE_HOTSWAP == secondSettings.COMPILE_BEFORE_HOTSWAP &&
       HOTSWAP_HANG_WARNING_ENABLED == secondSettings.HOTSWAP_HANG_WARNING_ENABLED &&
-      (RUN_HOTSWAP_AFTER_COMPILE != null ? RUN_HOTSWAP_AFTER_COMPILE.equals(secondSettings.RUN_HOTSWAP_AFTER_COMPILE) : secondSettings.RUN_HOTSWAP_AFTER_COMPILE == null) &&
-      DebuggerUtilsEx.filterEquals(mySteppingFilters, secondSettings.mySteppingFilters);
+      (Objects.equals(RUN_HOTSWAP_AFTER_COMPILE, secondSettings.RUN_HOTSWAP_AFTER_COMPILE)) &&
+      DebuggerUtilsEx.filterEquals(mySteppingFilters, secondSettings.mySteppingFilters) &&
+      myCapturePoints.equals(((DebuggerSettings)obj).myCapturePoints);
   }
 
+  @Override
   public DebuggerSettings clone() {
     try {
       final DebuggerSettings cloned = (DebuggerSettings)super.clone();
-      cloned.myContentStates = new HashMap<String, ContentState>();
+      cloned.myContentStates = new HashMap<>();
       for (Map.Entry<String, ContentState> entry : myContentStates.entrySet()) {
         cloned.myContentStates.put(entry.getKey(), entry.getValue().clone());
       }
@@ -162,6 +184,7 @@ public class DebuggerSettings implements JDOMExternalizable, NamedComponent, Clo
       for (int idx = 0; idx < mySteppingFilters.length; idx++) {
         cloned.mySteppingFilters[idx] = mySteppingFilters[idx].clone();
       }
+      cloned.myCapturePoints = cloneCapturePoints();
       return cloned;
     }
     catch (CloneNotSupportedException e) {
@@ -170,13 +193,37 @@ public class DebuggerSettings implements JDOMExternalizable, NamedComponent, Clo
     return null;
   }
 
-  @NotNull
-  public String getComponentName() {
-    return "DebuggerSettings";
+  List<CapturePoint> cloneCapturePoints() {
+    try {
+      ArrayList<CapturePoint> res = new ArrayList<>(myCapturePoints.size());
+      for (CapturePoint point : myCapturePoints) {
+        res.add(point.clone());
+      }
+      return res;
+    }
+    catch (CloneNotSupportedException e) {
+      LOG.error(e);
+    }
+    return Collections.emptyList();
+  }
+
+  @XCollection(propertyElementName = "capture-points")
+  public List<CapturePoint> getCapturePoints() {
+    return myCapturePoints;
+  }
+
+  // for serialization, do not remove
+  @SuppressWarnings("unused")
+  public void setCapturePoints(List<CapturePoint> capturePoints) {
+    myCapturePoints = capturePoints;
+    myDispatcher.getMulticaster().capturePointsChanged();
+  }
+
+  public void addCapturePointsSettingsListener(CapturePointsSettingsListener listener, Disposable disposable) {
+    myDispatcher.addListener(listener, disposable);
   }
 
   public static class ContentState implements Cloneable {
-
     private final String myType;
     private boolean myMinimized;
     private String mySelectedTab;
@@ -191,14 +238,14 @@ public class DebuggerSettings implements JDOMExternalizable, NamedComponent, Clo
 
     public ContentState(Element element) {
       myType = element.getAttributeValue("type");
-      myMinimized = "true".equalsIgnoreCase(element.getAttributeValue("minimized"));
-      myMaximized = "true".equalsIgnoreCase(element.getAttributeValue("maximized"));
+      myMinimized = Boolean.parseBoolean(element.getAttributeValue("minimized"));
+      myMaximized = Boolean.parseBoolean(element.getAttributeValue("maximized"));
       mySelectedTab = element.getAttributeValue("selected");
       final String split = element.getAttributeValue("split");
       if (split != null) {
         mySplitProportion = Double.valueOf(split);
       }
-      myDetached = "true".equalsIgnoreCase(element.getAttributeValue("detached"));
+      myDetached = Boolean.parseBoolean(element.getAttributeValue("detached"));
       myHorizontalToolbar = !"false".equalsIgnoreCase(element.getAttributeValue("horizontal"));
     }
 
@@ -209,7 +256,7 @@ public class DebuggerSettings implements JDOMExternalizable, NamedComponent, Clo
       if (mySelectedTab != null) {
         element.setAttribute("selected", mySelectedTab);
       }
-      element.setAttribute("split", new Double(mySplitProportion).toString());
+      element.setAttribute("split", Double.toString(mySplitProportion));
       element.setAttribute("detached", Boolean.valueOf(myDetached).toString());
       element.setAttribute("horizontal", Boolean.valueOf(myHorizontalToolbar).toString());
       return true;
@@ -267,8 +314,13 @@ public class DebuggerSettings implements JDOMExternalizable, NamedComponent, Clo
       myHorizontalToolbar = horizontalToolbar;
     }
 
+    @Override
     public ContentState clone() throws CloneNotSupportedException {
       return (ContentState)super.clone();
     }
+  }
+
+  public interface CapturePointsSettingsListener extends EventListener{
+    void capturePointsChanged();
   }
 }

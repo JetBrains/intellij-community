@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.parser
 
 import com.intellij.psi.PsiDocumentManager
@@ -27,27 +13,27 @@ class GroovyReparseTest extends LightCodeInsightFixtureTestCase {
 
   @Override
   protected String getBasePath() {
-    return TestUtils.getTestDataPath() + "reparse/";
+    return TestUtils.getTestDataPath() + "reparse/"
   }
 
   void checkReparse(String text, String type) {
-    myFixture.configureByText("a.groovy", text);
+    myFixture.configureByText("a.groovy", text)
     PsiDocumentManager.getInstance(project).commitAllDocuments()
-    final String psiBefore = DebugUtil.psiToString(myFixture.getFile(), false);
+    final String psiBefore = DebugUtil.psiToString(myFixture.getFile(), false)
 
-    myFixture.type(type);
+    myFixture.type(type)
     PsiDocumentManager.getInstance(project).commitAllDocuments()
-    final String psiAfter = DebugUtil.psiToString(myFixture.getFile(), false);
+    final String psiAfter = DebugUtil.psiToString(myFixture.getFile(), false)
 
-    myFixture.configureByText("a.txt", psiBefore.trim() + "\n---\n" + psiAfter.trim());
-    myFixture.checkResultByFile(getTestName(false) + ".txt");
+    myFixture.configureByText("a.txt", psiBefore.trim() + "\n---\n" + psiAfter.trim())
+    myFixture.checkResultByFile(getTestName(false) + ".txt")
   }
 
-  public void testCodeBlockReparse() throws IOException {
+  void testCodeBlockReparse() throws IOException {
     checkReparse("foo 'a', {<caret>}", '\n')
   }
 
-  public void testSwitchCaseIf() throws Exception {
+  void testSwitchCaseIf() throws Exception {
     checkReparse """
   def foo() {
     switch(x) {
@@ -58,7 +44,7 @@ class GroovyReparseTest extends LightCodeInsightFixtureTestCase {
 """, "if "
   }
 
-  public void testSwitchCaseDef() throws Exception {
+  void testSwitchCaseDef() throws Exception {
     checkReparse """
   def foo() {
     switch(x) {
@@ -69,7 +55,7 @@ class GroovyReparseTest extends LightCodeInsightFixtureTestCase {
 """, "def "
   }
 
-  public void testSwitchCaseFor() throws Exception {
+  void testSwitchCaseFor() throws Exception {
     checkReparse """
   def foo() {
     switch(x) {
@@ -79,7 +65,8 @@ class GroovyReparseTest extends LightCodeInsightFixtureTestCase {
   }
 """, "for "
   }
-  public void testSwitchCaseWhile() throws Exception {
+
+  void testSwitchCaseWhile() throws Exception {
     checkReparse """
   def foo() {
     switch(x) {
@@ -89,7 +76,8 @@ class GroovyReparseTest extends LightCodeInsightFixtureTestCase {
   }
 """, "while "
   }
-  public void testSwitchCaseDo() throws Exception {
+
+  void testSwitchCaseDo() throws Exception {
     checkReparse """
   def foo() {
     switch(x) {
@@ -99,7 +87,8 @@ class GroovyReparseTest extends LightCodeInsightFixtureTestCase {
   }
 """, "doo "
   }
-  public void testSwitchCaseSwitch() throws Exception {
+
+  void testSwitchCaseSwitch() throws Exception {
     checkReparse """
   def foo() {
     switch(x) {
@@ -110,7 +99,7 @@ class GroovyReparseTest extends LightCodeInsightFixtureTestCase {
 """, "switch "
   }
 
-  public void testSwitchCaseDot() throws Exception {
+  void testSwitchCaseDot() throws Exception {
     checkReparse """
   def foo() {
     switch(x) {
@@ -125,7 +114,7 @@ class GroovyReparseTest extends LightCodeInsightFixtureTestCase {
 """, "foo."
   }
 
-  public void testOpeningParenthesisAtBlockStart() {
+  void testOpeningParenthesisAtBlockStart() {
     checkReparse """
 def foo() {
     <caret>String home
@@ -137,7 +126,7 @@ def foo() {
 }""", "("
   }
 
-  public void testNoVariableName() {
+  void testNoVariableName() {
     checkReparse """
 def foo() {
     switch (w) {
@@ -153,7 +142,7 @@ def foo() {
 """, "\b"
   }
 
-  public void testSwitchRParen() {
+  void testSwitchRParen() {
     checkReparse """
 def foo() {
     switch (word w w)<caret> {
@@ -164,7 +153,7 @@ def foo() {
 """, "\b"
   }
 
-  public void testWhileRParen() {
+  void testWhileRParen() {
     checkReparse """
 def foo() {
   def cl = {
@@ -175,7 +164,7 @@ def foo() {
 }""", ";"
   }
 
-  public void testSynchronizedRParen() {
+  void testSynchronizedRParen() {
     checkReparse """
 def foo() {
   def cl = {
@@ -186,7 +175,7 @@ def foo() {
 }""", ";"
   }
 
-  public void testMultilineToNormalString() {
+  void testMultilineToNormalString() {
     checkReparse '''
 class a {
   def foo() {
@@ -200,5 +189,20 @@ class a {
 ''', '\b'
   }
 
+  void testNewLinesBetweenBlocks() {
+    checkReparse '''\
+class A {
 
+  void foo() {
+    id0(id1{id2
+  }
+
+  <selection> {
+    id3(}</selection>
+  }
+
+  void bar() {}
+}
+''', '\b'
+  }
 }

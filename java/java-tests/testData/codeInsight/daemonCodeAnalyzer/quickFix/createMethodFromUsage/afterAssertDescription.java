@@ -1,10 +1,10 @@
-// "Create Method 'f'" "true"
+// "Create method 'f'" "true"
 class A {
     {
          assert false: f();
     }
 
     private String f() {
-        <selection>return null;  //To change body of created methods use File | Settings | File Templates.</selection>
+        <selection>return null;</selection>
     }
 }

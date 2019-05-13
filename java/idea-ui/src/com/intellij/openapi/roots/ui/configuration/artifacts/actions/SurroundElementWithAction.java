@@ -16,9 +16,6 @@
 package com.intellij.openapi.roots.ui.configuration.artifacts.actions;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.CustomShortcutSet;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ui.configuration.artifacts.ArtifactEditorEx;
 import com.intellij.openapi.roots.ui.configuration.artifacts.LayoutTreeComponent;
@@ -39,14 +36,15 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import java.util.List;
 
+import static com.intellij.openapi.keymap.KeymapUtil.getActiveKeymapShortcuts;
+
 /**
  * @author nik
  */
 public class SurroundElementWithAction extends LayoutTreeActionBase {
   public SurroundElementWithAction(ArtifactEditorEx artifactEditor) {
     super("Surround With...", artifactEditor);
-    final CustomShortcutSet shortcutSet = new CustomShortcutSet(KeymapManager.getInstance().getActiveKeymap().getShortcuts("SurroundWith"));
-    registerCustomShortcutSet(shortcutSet, artifactEditor.getLayoutTreeComponent().getLayoutTree());
+    registerCustomShortcutSet(getActiveKeymapShortcuts("SurroundWith"), artifactEditor.getLayoutTreeComponent().getLayoutTree());
   }
 
   @Override
@@ -55,7 +53,7 @@ public class SurroundElementWithAction extends LayoutTreeActionBase {
   }
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     final LayoutTreeComponent treeComponent = myArtifactEditor.getLayoutTreeComponent();
     final LayoutTreeSelection selection = treeComponent.getSelection();
     final CompositePackagingElement<?> parent = selection.getCommonParentElement();
@@ -87,13 +85,7 @@ public class SurroundElementWithAction extends LayoutTreeActionBase {
 
         @Override
         public PopupStep onChosen(final CompositePackagingElementType selectedValue, boolean finalChoice) {
-          ApplicationManager.getApplication().invokeLater(new Runnable() {
-            @Override
-            public void run() {
-              surroundWith(selectedValue, parent, selected, treeComponent);
-            }
-          });
-          return FINAL_CHOICE;
+          return doFinalStep(() -> surroundWith(selectedValue, parent, selected, treeComponent));
         }
       }).showInBestPositionFor(e.getDataContext());
     }
@@ -108,17 +100,14 @@ public class SurroundElementWithAction extends LayoutTreeActionBase {
     final String baseName = PathUtil.suggestFileName(elementName);
     final CompositePackagingElement<?> newParent = type.createComposite(parent, baseName, myArtifactEditor.getContext());
     if (newParent != null) {
-      treeComponent.editLayout(new Runnable() {
-        @Override
-        public void run() {
-          for (PackagingElement<?> element : selected) {
-            newParent.addOrFindChild(ArtifactUtil.copyWithChildren(element, project));
-          }
-          for (PackagingElement<?> element : selected) {
-            parent.removeChild(element);
-          }
-          parent.addOrFindChild(newParent);
+      treeComponent.editLayout(() -> {
+        for (PackagingElement<?> element : selected) {
+          newParent.addOrFindChild(ArtifactUtil.copyWithChildren(element, project));
         }
+        for (PackagingElement<?> element : selected) {
+          parent.removeChild(element);
+        }
+        parent.addOrFindChild(newParent);
       });
       treeComponent.rebuildTree();
     }

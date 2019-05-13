@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,6 +32,12 @@ import org.jetbrains.annotations.Nullable;
  */
 public class NonFinalUtilityClassInspection extends BaseInspection {
 
+  @Nullable
+  @Override
+  protected InspectionGadgetsFix buildFix(Object... infos) {
+    return new MakeClassFinalFix((PsiClass)infos[0]);
+  }
+
   @Nls
   @NotNull
   @Override
@@ -43,12 +49,6 @@ public class NonFinalUtilityClassInspection extends BaseInspection {
   @Override
   protected String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message("non.final.utility.class.problem.descriptor");
-  }
-
-  @Nullable
-  @Override
-  protected InspectionGadgetsFix buildFix(Object... infos) {
-    return new MakeClassFinalFix((PsiClass)infos[0]);
   }
 
   @Override
@@ -64,7 +64,8 @@ public class NonFinalUtilityClassInspection extends BaseInspection {
       if (!UtilityClassUtil.isUtilityClass(aClass)) {
         return;
       }
-      if (aClass.hasModifierProperty(PsiModifier.FINAL)) {
+      if (aClass.hasModifierProperty(PsiModifier.FINAL) ||
+          aClass.hasModifierProperty(PsiModifier.ABSTRACT)) {
         return;
       }
       registerClassError(aClass, aClass);

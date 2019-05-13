@@ -15,7 +15,8 @@
  */
 package com.intellij.psi.codeStyle.arrangement.group;
 
-import com.intellij.psi.codeStyle.arrangement.order.ArrangementEntryOrderType;
+import com.intellij.psi.codeStyle.arrangement.std.ArrangementSettingsToken;
+import com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -24,30 +25,34 @@ import org.jetbrains.annotations.NotNull;
  * E.g. a rule might look like 'keep together class methods which implement methods from particular interface'.
  * 
  * @author Denis Zhdanov
- * @since 9/18/12 8:50 AM
  */
 public class ArrangementGroupingRule {
 
-  @NotNull private final ArrangementGroupingType   myGroupingType;
-  @NotNull private final ArrangementEntryOrderType myOrderType;
+  @NotNull private final ArrangementSettingsToken myGroupingType;
+  @NotNull private final ArrangementSettingsToken myOrderType;
 
-  public ArrangementGroupingRule(@NotNull ArrangementGroupingType groupingType) {
-    this(groupingType, ArrangementEntryOrderType.KEEP);
+  public ArrangementGroupingRule(@NotNull ArrangementSettingsToken groupingType) {
+    this(groupingType, StdArrangementTokens.Order.KEEP);
   }
-  
-  public ArrangementGroupingRule(@NotNull ArrangementGroupingType groupingType, @NotNull ArrangementEntryOrderType orderType) {
+
+  public ArrangementGroupingRule(@NotNull ArrangementSettingsToken groupingType, @NotNull ArrangementSettingsToken orderType) {
     myGroupingType = groupingType;
     myOrderType = orderType;
   }
 
   @NotNull
-  public ArrangementGroupingType getGroupingType() {
+  public ArrangementSettingsToken getGroupingType() {
     return myGroupingType;
   }
 
   @NotNull
-  public ArrangementEntryOrderType getOrderType() {
+  public ArrangementSettingsToken getOrderType() {
     return myOrderType;
+  }
+
+  @Override
+  public ArrangementGroupingRule clone() {
+    return new ArrangementGroupingRule(myGroupingType, myOrderType);
   }
 
   @Override

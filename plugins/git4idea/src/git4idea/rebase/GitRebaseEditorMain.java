@@ -74,25 +74,17 @@ public class GitRebaseEditorMain {
       System.exit(ERROR_EXIT_CODE);
       return;
     }
-    final String handlerValue = System.getenv(IDEA_REBASE_HANDER_NO);
-    if (handlerValue == null) {
+    String handlerId = System.getenv(IDEA_REBASE_HANDER_NO);
+    if (handlerId == null) {
       System.err.println("Handler no is not specified");
       System.exit(ERROR_EXIT_CODE);
     }
-    int handler;
-    try {
-      handler = Integer.parseInt(handlerValue);
-    }
-    catch (NumberFormatException ex) {
-      System.err.println("Invalid handler number: " + handlerValue);
-      System.exit(ERROR_EXIT_CODE);
-      return;
-    }
+
     String file = args[1];
     try {
       XmlRpcClientLite client = new XmlRpcClientLite("127.0.0.1", port);
-      Vector<Object> params = new Vector<Object>();
-      params.add(handler);
+      Vector<Object> params = new Vector<>();
+      params.add(handlerId);
       if (System.getProperty("os.name").toLowerCase().startsWith("windows") && file.startsWith(CYGDRIVE_PREFIX)) {
         int p = CYGDRIVE_PREFIX.length();
         file = file.substring(p, p + 1) + ":" + file.substring(p + 1);

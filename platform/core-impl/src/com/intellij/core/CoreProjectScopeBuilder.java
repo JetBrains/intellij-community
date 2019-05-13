@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package com.intellij.core;
 
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.UnloadedModuleDescription;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.FileIndexFacade;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -24,6 +25,8 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.ProjectScopeBuilder;
 import com.intellij.psi.search.ProjectScopeImpl;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.Collection;
 
 /**
  * @author yole
@@ -39,35 +42,40 @@ public class CoreProjectScopeBuilder extends ProjectScopeBuilder {
     myLibrariesScope = new CoreLibrariesScope();
   }
 
+  @NotNull
   @Override
   public GlobalSearchScope buildLibrariesScope() {
     return myLibrariesScope;
   }
 
+  @NotNull
   @Override
   public GlobalSearchScope buildAllScope() {
     return new EverythingGlobalScope();
   }
 
+  @NotNull
   @Override
   public GlobalSearchScope buildProjectScope() {
     return new ProjectScopeImpl(myProject, myFileIndexFacade);
   }
 
+  @NotNull
   @Override
   public GlobalSearchScope buildContentScope() {
     return new ContentSearchScope(myProject, myFileIndexFacade);
   }
 
+  @NotNull
+  @Override
+  public GlobalSearchScope buildEverythingScope() {
+    return new EverythingGlobalScope(myProject);
+  }
+
   private class CoreLibrariesScope extends GlobalSearchScope {
     @Override
-    public boolean contains(VirtualFile file) {
+    public boolean contains(@NotNull VirtualFile file) {
       return myFileIndexFacade.isInLibraryClasses(file) || myFileIndexFacade.isInLibrarySource(file);
-    }
-
-    @Override
-    public int compare(VirtualFile file1, VirtualFile file2) {
-      return 0;
     }
 
     @Override
@@ -91,13 +99,8 @@ public class CoreProjectScopeBuilder extends ProjectScopeBuilder {
     }
 
     @Override
-    public boolean contains(VirtualFile file) {
+    public boolean contains(@NotNull VirtualFile file) {
       return myFileIndexFacade.isInContent(file);
-    }
-
-    @Override
-    public int compare(VirtualFile file1, VirtualFile file2) {
-      return 0;
     }
 
     @Override
@@ -108,6 +111,12 @@ public class CoreProjectScopeBuilder extends ProjectScopeBuilder {
     @Override
     public boolean isSearchInLibraries() {
       return false;
+    }
+
+    @NotNull
+    @Override
+    public Collection<UnloadedModuleDescription> getUnloadedModulesBelongingToScope() {
+      return myFileIndexFacade.getUnloadedModuleDescriptions();
     }
   }
 }

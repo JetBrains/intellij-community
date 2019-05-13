@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.history;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -28,9 +14,9 @@ import com.intellij.openapi.vcs.changes.committed.CommittedChangesNavigation;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.idea.svn.SvnVcs;
-import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.SVNURL;
-import org.tmatesoft.svn.core.io.SVNRepository;
+import org.jetbrains.idea.svn.api.Revision;
+import org.jetbrains.idea.svn.commandLine.SvnBindException;
+import org.jetbrains.idea.svn.info.Info;
 
 import java.util.*;
 
@@ -41,7 +27,7 @@ public class SvnRevisionsNavigationMediator implements CommittedChangesNavigatio
 
   private final InternallyCachedProvider myInternallyCached;
   private final VisuallyCachedProvider myVisuallyCached;
-  
+
   private final List<List<Fragment>> myChunks;
   private boolean myCanNotGoBack;
   private int myCurrentIdx;
@@ -53,55 +39,49 @@ public class SvnRevisionsNavigationMediator implements CommittedChangesNavigatio
     myProject = project;
     final SvnVcs vcs = SvnVcs.getInstance(project);
 
-    myChunks = new LinkedList<List<Fragment>>();
+    myChunks = new LinkedList<>();
 
-    final SVNURL[] repositoryRoot = new SVNURL[1];
-    final long[] youngRevision = new long[1];
     final VcsException[] exception = new VcsException[1];
+    final Ref<Info> infoRef = new Ref<>();
 
-    Runnable process = new Runnable() {
-      @Override
-      public void run() {
-        SVNRepository repository = null;
-        try {
-          repository = vcs.createRepository(location.getURL());
-          youngRevision[0] = repository.getLatestRevision();
-          repositoryRoot[0] = repository.getRepositoryRoot(false);
-        }
-        catch (SVNException e) {
-          exception[0] = new VcsException(e);
-        }
-        finally {
-          if (repository != null) {
-            repository.closeSession();
-          }
-        }
+    Runnable process = () -> {
+      try {
+        infoRef.set(vcs.getInfo(location.toSvnUrl(), Revision.HEAD));
+      }
+      catch (SvnBindException e) {
+        exception[0] = e;
       }
     };
     underProgress(exception, process);
 
+    Info info = infoRef.get();
+    if (info == null || !info.getRevision().isValid() || info.getRepositoryRootUrl() == null) {
+      throw new VcsException("Could not get head info for " + location);
+    }
+
     final Iterator<ChangesBunch> visualIterator = project.isDefault() ? null :
-        CommittedChangesCache.getInstance(project).getBackBunchedIterator(vcs, vcsRoot, location, CHUNK_SIZE);
-    final Iterator<ChangesBunch> internalIterator = project.isDefault() ? null : LoadedRevisionsCache.getInstance(project).iterator(location.getURL());
+                                                  CommittedChangesCache.getInstance(project)
+                                                    .getBackBunchedIterator(vcs, vcsRoot, location, CHUNK_SIZE);
+    final Iterator<ChangesBunch> internalIterator =
+      project.isDefault() ? null : LoadedRevisionsCache.getInstance(project).iterator(location.getURL());
 
     myInternallyCached = (internalIterator == null) ? null : new InternallyCachedProvider(internalIterator, myProject);
     myVisuallyCached = (visualIterator == null) ? null : new VisuallyCachedProvider(visualIterator, myProject, location);
 
-    myChunkFactory = new BunchFactory(myInternallyCached, myVisuallyCached,
-                                      new LiveProvider(vcs, location, youngRevision[0], new SvnLogUtil(myProject, vcs, location, repositoryRoot[0])));
+    myChunkFactory = new BunchFactory(myInternallyCached, myVisuallyCached, new LiveProvider(vcs, location, info.getRevision().getNumber(),
+                                                                                             new SvnLogUtil(myProject, vcs, location,
+                                                                                                            info.getRepositoryRootUrl()),
+                                                                                             info.getRepositoryRootUrl()));
 
     myCurrentIdx = -1;
 
-    underProgress(exception, new Runnable() {
-      @Override
-      public void run() {
-        // init first screen
-        try {
-          goBack();
-        }
-        catch (VcsException e) {
-          exception[0] = e;
-        }
+    underProgress(exception, () -> {
+      // init first screen
+      try {
+        goBack();
+      }
+      catch (VcsException e) {
+        exception[0] = e;
       }
     });
   }
@@ -113,79 +93,80 @@ public class SvnRevisionsNavigationMediator implements CommittedChangesNavigatio
     if (exception[0] != null) {
       throw exception[0];
     }
-    if (! succeeded) {
+    if (!succeeded) {
       throw new ProcessCanceledException();
     }
   }
 
+  @Override
   public boolean canGoBack() {
-    return ((myCurrentIdx + 1) < myChunks.size()) || (! myCanNotGoBack);
+    return ((myCurrentIdx + 1) < myChunks.size()) || (!myCanNotGoBack);
   }
 
+  @Override
   public boolean canGoForward() {
     return myCurrentIdx > 0;
   }
 
+  @Override
   public void goBack() throws VcsException {
     if ((myCurrentIdx + 1) < myChunks.size()) {
-      ++ myCurrentIdx;
+      ++myCurrentIdx;
       return;
     }
 
-    final Ref<Boolean> canNotGoBackRef = new Ref<Boolean>();
-    final List<Fragment> fragments;
-    try {
-      fragments = myChunkFactory.goBack(CHUNK_SIZE, canNotGoBackRef);
-    }
-    catch (SVNException e) {
-      throw new VcsException(e);
-    }
+    final Ref<Boolean> canNotGoBackRef = new Ref<>();
+    final List<Fragment> fragments = myChunkFactory.goBack(CHUNK_SIZE, canNotGoBackRef);
     myCanNotGoBack = canNotGoBackRef.get().booleanValue();
 
-    if (! fragments.isEmpty()) {
+    if (!fragments.isEmpty()) {
       // load
-      ++ myCurrentIdx;
+      ++myCurrentIdx;
       myChunks.add(fragments);
     }
   }
 
+  @Override
   public void goForward() {
-    -- myCurrentIdx;
+    --myCurrentIdx;
   }
 
   public List<CommittedChangeList> getCurrent() {
     debugPrinting();
-    return (List<CommittedChangeList>) ((myChunks.isEmpty()) ? Collections.<List<CommittedChangeList>>emptyList() :
-                                        fragmentsToLists(myChunks.get(myCurrentIdx)));
+    return (List<CommittedChangeList>)((myChunks.isEmpty()) ? Collections.<List<CommittedChangeList>>emptyList() :
+                                       fragmentsToLists(myChunks.get(myCurrentIdx)));
   }
 
   private void debugPrinting() {
     LOG.debug("== showing screen (" + myCurrentIdx + "): ==");
-    if (! myChunks.isEmpty()) {
+    if (!myChunks.isEmpty()) {
       for (Fragment fragment : myChunks.get(myCurrentIdx)) {
         LOG.debug(fragment.getOrigin().toString() + " from: " + fragment.getList().get(0).getNumber() +
-                 " to: " + fragment.getList().get(fragment.getList().size() - 1).getNumber());
+                  " to: " + fragment.getList().get(fragment.getList().size() - 1).getNumber());
       }
     }
     LOG.debug("== end of screen ==");
   }
 
   private List<CommittedChangeList> fragmentsToLists(final List<Fragment> fragments) {
-    final List<CommittedChangeList> result = new ArrayList<CommittedChangeList>();
+    final List<CommittedChangeList> result = new ArrayList<>();
     for (Fragment fragment : fragments) {
       result.addAll(fragment.getList());
     }
     return result;
   }
 
+  @Override
   public void onBeforeClose() {
     if ((myVisuallyCached != null) && (myVisuallyCached.hadBeenSuccessfullyAccessed())) {
       myVisuallyCached.doCacheUpdate(myChunks);
       // keep also in internal cache
       InternallyCachedProvider.initCache(myChunks, myProject);
-    } else if (myInternallyCached != null) {
+    }
+    else if (myInternallyCached != null) {
       myInternallyCached.doCacheUpdate(myChunks);
-    } else {
+    }
+    else {
       InternallyCachedProvider.initCache(myChunks, myProject);
     }
   }
@@ -200,6 +181,7 @@ public class SvnRevisionsNavigationMediator implements CommittedChangesNavigatio
       myLocation = location;
     }
 
+    @Override
     public void doCacheUpdate(final List<List<Fragment>> fragmentsListList) {
       final List<CommittedChangeList> lists = getAllBeforeVisuallyCached(fragmentsListList);
       CommittedChangesCache.getInstance(myProject).submitExternallyLoaded(myLocation, myAlreadyReaded.getList().get(0).getNumber(), lists);
@@ -217,19 +199,20 @@ public class SvnRevisionsNavigationMediator implements CommittedChangesNavigatio
 
     @Override
     protected void addToLoaded(final ChangesBunch loaded) {
-      myHolesDetected |= (! loaded.isConsistentWithPrevious());
+      myHolesDetected |= (!loaded.isConsistentWithPrevious());
       super.addToLoaded(loaded);
     }
 
     public static void initCache(final List<List<Fragment>> fragmentListList, final Project project) {
       final List<CommittedChangeList> lists = getAllBeforeVisuallyCached(fragmentListList);
-      if (! lists.isEmpty()) {
+      if (!lists.isEmpty()) {
         LoadedRevisionsCache.getInstance(project).put(lists, false, null);
       }
     }
 
+    @Override
     public void doCacheUpdate(final List<List<Fragment>> fragmentsListList) {
-      final List<CommittedChangeList> lists = new ArrayList<CommittedChangeList>();
+      final List<CommittedChangeList> lists = new ArrayList<>();
       LoadedRevisionsCache.Bunch bindAddress = null;
       boolean consistent = false;
 
@@ -241,7 +224,7 @@ public class SvnRevisionsNavigationMediator implements CommittedChangesNavigatio
             final Fragment fragment = fragmentList.get(j);
             liveMet |= Origin.LIVE.equals(fragment.getOrigin());
             if (Origin.INTERNAL.equals(fragment.getOrigin())) {
-              bindAddress = ((LoadedRevisionsCache.Bunch) fragment.getOriginBunch()).getNext();
+              bindAddress = ((LoadedRevisionsCache.Bunch)fragment.getOriginBunch()).getNext();
               // latest element
               if ((i == (fragmentsListList.size() - 1)) && (j == (fragmentList.size() - 1))) {
                 lists.addAll(fragment.getOriginBunch().getList());
@@ -252,15 +235,16 @@ public class SvnRevisionsNavigationMediator implements CommittedChangesNavigatio
             lists.addAll(fragment.getList());
           }
         }
-        if (! liveMet) {
+        if (!liveMet) {
           return;
         }
-      } else {
+      }
+      else {
         // until _first_internally
         for (List<Fragment> fragmentList : fragmentsListList) {
           for (Fragment fragment : fragmentList) {
             if (Origin.INTERNAL.equals(fragment.getOrigin())) {
-              bindAddress = (LoadedRevisionsCache.Bunch) fragment.getOriginBunch();
+              bindAddress = (LoadedRevisionsCache.Bunch)fragment.getOriginBunch();
               consistent = true;
               break;
             }
@@ -269,7 +253,7 @@ public class SvnRevisionsNavigationMediator implements CommittedChangesNavigatio
         }
       }
 
-      if (! lists.isEmpty()) {
+      if (!lists.isEmpty()) {
         LoadedRevisionsCache.getInstance(myProject).put(lists, consistent, bindAddress);
       }
     }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,53 +13,56 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-/*
- * User: anna
- * Date: 23-Jan-2008
- */
 package com.intellij.ide.projectView.impl;
 
 import com.intellij.ide.projectView.ViewSettings;
 import com.intellij.ide.projectView.impl.nodes.PackageElement;
 import com.intellij.ide.projectView.impl.nodes.PackageUtil;
 import com.intellij.ide.projectView.impl.nodes.ProjectViewDirectoryHelper;
+import com.intellij.ide.projectView.impl.nodes.PsiFileSystemItemFilter;
 import com.intellij.ide.util.treeView.TreeViewUtil;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.FileIndexUtil;
 import com.intellij.openapi.roots.impl.DirectoryIndex;
-import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.JavaDirectoryService;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiPackage;
+import com.intellij.util.FontUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
 
+/**
+ * @author anna
+ */
 public class JavaProjectViewDirectoryHelper extends ProjectViewDirectoryHelper {
   public JavaProjectViewDirectoryHelper(Project project, DirectoryIndex index) {
     super(project, index);
   }
 
+  @Nullable
   @Override
-  public String getLocationString(@NotNull final PsiDirectory directory) {
+  public String getLocationString(@NotNull PsiDirectory directory, boolean includeUrl, boolean includeRootType) {
+    String result = null;
     PsiPackage aPackage = JavaDirectoryService.getInstance().getPackage(directory);
     if (ProjectRootsUtil.isSourceRoot(directory) && aPackage != null) {   //package prefix
-      return aPackage.getQualifiedName();
+      result = StringUtil.nullize(aPackage.getQualifiedName(), true);
     }
-    return super.getLocationString(directory);
+    String baseString = super.getLocationString(directory, includeUrl, includeRootType);
+    if (result == null) return baseString;
+    if (baseString == null) return result;
+    return result  + "," + FontUtil.spaceAndThinSpace() + baseString;
   }
 
   @Override
   public boolean isShowFQName(final ViewSettings settings, final Object parentValue, final PsiDirectory value) {
     PsiPackage aPackage;
-        return value != null
-               && !(parentValue instanceof Project)
-               && settings.isFlattenPackages()
-               && (aPackage = JavaDirectoryService.getInstance().getPackage(value)) != null
-               && !aPackage.getQualifiedName().isEmpty();
-
+    return value != null &&
+           !(parentValue instanceof Project) &&
+           settings.isFlattenPackages() &&
+           (aPackage = JavaDirectoryService.getInstance().getPackage(value)) != null &&
+           !aPackage.getQualifiedName().isEmpty();
   }
 
   @Nullable
@@ -68,9 +71,7 @@ public class JavaProjectViewDirectoryHelper extends ProjectViewDirectoryHelper {
     PsiPackage aPackage = JavaDirectoryService.getInstance().getPackage(directory);
 
     PsiPackage parentPackage;
-    if (!ProjectRootsUtil.isSourceRoot(directory) && aPackage != null && !aPackage.getQualifiedName().isEmpty() &&
-                              parentValue instanceof PsiDirectory) {
-
+    if (!ProjectRootsUtil.isSourceRoot(directory) && aPackage != null && !aPackage.getQualifiedName().isEmpty() && parentValue instanceof PsiDirectory) {
       parentPackage = JavaDirectoryService.getInstance().getPackage(((PsiDirectory)parentValue));
     }
     else if (ProjectRootsUtil.isSourceRoot(directory) && aPackage != null) {   //package prefix
@@ -82,7 +83,6 @@ public class JavaProjectViewDirectoryHelper extends ProjectViewDirectoryHelper {
     }
 
     return PackageUtil.getNodeName(settings, aPackage, parentPackage, directory.getName(), isShowFQName(settings, parentValue, directory));
-
   }
 
   @Override
@@ -91,13 +91,11 @@ public class JavaProjectViewDirectoryHelper extends ProjectViewDirectoryHelper {
   }
 
   @Override
-  public boolean showFileInLibClasses(final VirtualFile vFile) {
-    return !FileIndexUtil.isJavaSourceFile(getProject(), vFile);
-  }
-
-  @Override
-  public boolean isEmptyMiddleDirectory(final PsiDirectory directory, final boolean strictlyEmpty) {
-    return JavaDirectoryService.getInstance().getPackage(directory) != null && TreeViewUtil.isEmptyMiddlePackage(directory, strictlyEmpty);
+  public boolean isEmptyMiddleDirectory(final PsiDirectory directory,
+                                        final boolean strictlyEmpty,
+                                        @Nullable PsiFileSystemItemFilter filter) {
+    return JavaDirectoryService.getInstance().getPackage(directory) != null &&
+           TreeViewUtil.isEmptyMiddlePackage(directory, strictlyEmpty, filter);
   }
 
   @Override

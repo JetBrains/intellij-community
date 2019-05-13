@@ -16,7 +16,6 @@
 package com.intellij.execution.testframework.sm.runner;
 
 import com.intellij.testFramework.exceptionCases.AssertionErrorCase;
-import com.intellij.util.SystemProperties;
 
 /**
  * @author Roman Chernyatchik
@@ -28,7 +27,7 @@ public class TestSuiteStackTest extends BaseSMTRunnerTestCase {
   protected void setUp() throws Exception {
     super.setUp();
 
-    myTestSuiteStack = new TestSuiteStack();
+    myTestSuiteStack = new TestSuiteStack("from tests");
   }
 
   @Override
@@ -82,7 +81,7 @@ public class TestSuiteStackTest extends BaseSMTRunnerTestCase {
     });
   }
 
-  public void testPopEmptySuite_NormalMode() throws Throwable {
+  public void testPopEmptySuite_NormalMode() {
     assertNull(myTestSuiteStack.popSuite("some suite"));
   }
 
@@ -108,7 +107,7 @@ public class TestSuiteStackTest extends BaseSMTRunnerTestCase {
     assertEquals(4, myTestSuiteStack.getStackSize());
   }
 
-  public void testPopInconsistentSuite_NormalMode() throws Throwable {
+  public void testPopInconsistentSuite_NormalMode() {
     final String suiteName = mySuite.getName();
 
     myTestSuiteStack.pushSuite(createSuiteProxy("0"));
@@ -124,7 +123,7 @@ public class TestSuiteStackTest extends BaseSMTRunnerTestCase {
     assertEquals(1, myTestSuiteStack.getStackSize());
   }
 
-  public void testPopSuite() throws Throwable {
+  public void testPopSuite() {
     final String suiteName = mySuite.getName();
 
     myTestSuiteStack.pushSuite(mySuite);

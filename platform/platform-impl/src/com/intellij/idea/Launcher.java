@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,8 +30,8 @@ public class Launcher {
         String classpath = System.getProperty("java.class.path");
         try {
             final Process process = Runtime.getRuntime().exec("cmd " + javaVmExecutablePath + " -cp " + classpath + " com.intellij.idea.Main");
-            new Thread(new Redirector(process.getErrorStream(), System.err)).start();
-            new Thread(new Redirector(process.getInputStream(), System.out)).start();
+            new Thread(new Redirector(process.getErrorStream(), System.err), "Redirector err").start();
+            new Thread(new Redirector(process.getInputStream(), System.out), "Redirector out").start();
             process.waitFor();
         } catch (IOException e) {
             System.out.println("Can't launch java VM executable: " + e.getMessage());
@@ -44,7 +44,7 @@ public class Launcher {
         private final InputStream myInput;
         private final PrintStream myOutput;
 
-        public Redirector(InputStream input, PrintStream output) {
+        Redirector(InputStream input, PrintStream output) {
             myInput = input;
             myOutput = output;
         }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,50 +15,54 @@
  */
 package com.intellij.openapi.vfs;
 
-import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.ex.dummy.DummyFileSystem;
-import com.intellij.testFramework.PlatformLangTestCase;
+import com.intellij.testFramework.fixtures.BareTestFixtureTestCase;
+import org.jetbrains.annotations.NotNull;
+import org.junit.Test;
 
-public class DummyFileSystemTest extends PlatformLangTestCase {
-  private DummyFileSystem fs;
+import java.io.IOException;
 
-  @Override
-  protected void setUp() throws Exception {
-    super.setUp();
-    fs = new DummyFileSystem();
-  }
+import static com.intellij.openapi.util.Pair.pair;
 
-  public void testDeletionEvents() throws Exception {
-    final VirtualFile root = fs.createRoot("root");
-    VirtualFile f = new WriteAction<VirtualFile>() {
+public class DummyFileSystemTest extends BareTestFixtureTestCase {
+  @Test
+  public void testDeletionEvents() throws IOException {
+    DummyFileSystem fs = new DummyFileSystem();
+
+    Pair<VirtualFile, VirtualFile> pair = WriteAction.computeAndWait(() -> {
+      VirtualFile root = fs.createRoot("root");
+      VirtualFile file = root.createChildData(this, "f");
+      return pair(root, file);
+    });
+    VirtualFile root = pair.first;
+    VirtualFile file = pair.second;
+
+    VirtualFileEvent[] events = new VirtualFileEvent[2];
+
+    VirtualFileListener listener = new VirtualFileListener() {
       @Override
-      protected void run(Result<VirtualFile> result) throws Throwable {
-        VirtualFile res = root.createChildData(this, "f");
-        result.setResult(res);
-      }
-    }.execute().getResultObject();
-
-    final VirtualFileEvent[] events = new VirtualFileEvent[2];
-    fs.addVirtualFileListener(new VirtualFileAdapter() {
-      @Override
-      public void fileDeleted(VirtualFileEvent e) {
+      public void beforeFileDeletion(@NotNull VirtualFileEvent e) {
         events[0] = e;
       }
 
       @Override
-      public void beforeFileDeletion(VirtualFileEvent e) {
+      public void fileDeleted(@NotNull VirtualFileEvent e) {
         events[1] = e;
       }
-    });
+    };
+    fs.addVirtualFileListener(listener);
+    Disposer.register(getTestRootDisposable(), () -> fs.removeVirtualFileListener(listener));
 
-    f.delete(this);
+    WriteAction.runAndWait(() -> file.delete(this));
 
-    for (int i = 0; i < 2; i++) {
-      assertNotNull(events[i]);
-      assertEquals(f, events[i].getFile());
-      assertEquals("f", events[i].getFileName());
-      assertEquals(root, events[i].getParent());
+    for (VirtualFileEvent event : events) {
+      assertNotNull(event);
+      assertEquals(file, event.getFile());
+      assertEquals("f", event.getFileName());
+      assertEquals(root, event.getParent());
     }
   }
 }

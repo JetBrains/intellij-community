@@ -1,33 +1,24 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 package com.siyeh.ipp.trivialif;
 
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.tree.IElementType;
+import com.siyeh.ig.PsiReplacementUtil;
+import com.siyeh.ig.psiutils.CommentTracker;
+import com.siyeh.ig.psiutils.ParenthesesUtils;
 import com.siyeh.ipp.base.Intention;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import com.siyeh.ipp.psiutils.ErrorUtil;
-import com.siyeh.ipp.psiutils.ParenthesesUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * @author anna
- * Date: 2/2/12
  */
 public class ConvertToNestedIfIntention extends Intention {
 
@@ -36,6 +27,7 @@ public class ConvertToNestedIfIntention extends Intention {
   public PsiElementPredicate getElementPredicate() {
     return new PsiElementPredicate() {
 
+      @Override
       public boolean satisfiedBy(PsiElement element) {
         if (!(element instanceof PsiReturnStatement)) {
           return false;
@@ -59,35 +51,44 @@ public class ConvertToNestedIfIntention extends Intention {
     if (returnValue == null || ErrorUtil.containsDeepError(returnValue)) {
       return;
     }
-    final String newStatementText = buildIf(returnValue, new StringBuilder()).toString();
-    addStatementBefore(newStatementText, returnStatement);
-    replaceStatement("return false;", returnStatement);
+    CommentTracker tracker = new CommentTracker();
+    final String newStatementText = buildIf(returnValue, true, tracker, new StringBuilder()).toString();
+    final Project project = returnStatement.getProject();
+    final PsiElementFactory elementFactory = JavaPsiFacade.getInstance(project).getElementFactory();
+    final PsiBlockStatement blockStatement = (PsiBlockStatement)elementFactory.createStatementFromText("{" + newStatementText + "}", returnStatement);
+    final PsiElement parent = returnStatement.getParent();
+    if (parent instanceof PsiCodeBlock) {
+      for (PsiStatement st : blockStatement.getCodeBlock().getStatements()) {
+        CodeStyleManager.getInstance(project).reformat(parent.addBefore(st, returnStatement));
+      }
+      PsiReplacementUtil.replaceStatement(returnStatement, "return false;", tracker);
+    }
+    else {
+      blockStatement.getCodeBlock().add(elementFactory.createStatementFromText("return false;", returnStatement));
+      tracker.replaceAndRestoreComments(returnStatement, blockStatement);
+    }
   }
 
-  private static StringBuilder buildIf(@Nullable PsiExpression expression, StringBuilder out) {
+  private static StringBuilder buildIf(@Nullable PsiExpression expression,
+                                       boolean top,
+                                       CommentTracker tracker,
+                                       StringBuilder out) {
     if (expression instanceof PsiPolyadicExpression) {
       final PsiPolyadicExpression polyadicExpression = (PsiPolyadicExpression)expression;
       final PsiExpression[] operands = polyadicExpression.getOperands();
       final IElementType tokenType = polyadicExpression.getOperationTokenType();
       if (JavaTokenType.ANDAND.equals(tokenType)) {
         for (PsiExpression operand : operands) {
-          buildIf(operand, out);
+          buildIf(operand, false, tracker, out);
         }
-        if (!StringUtil.endsWith(out, "return true;")) {
+        if (top && !StringUtil.endsWith(out, "return true;")) {
           out.append("return true;");
         }
         return out;
       }
-      else if (JavaTokenType.OROR.equals(tokenType)) {
-        boolean insertElse = false;
+      else if (top && JavaTokenType.OROR.equals(tokenType)) {
         for (PsiExpression operand : operands) {
-          if (insertElse) {
-            out.append("else ");
-          }
-          else {
-            insertElse = true;
-          }
-          buildIf(operand, out);
+          buildIf(operand, false, tracker, out);
           if (!StringUtil.endsWith(out, "return true;")) {
             out.append("return true;");
           }
@@ -97,11 +98,11 @@ public class ConvertToNestedIfIntention extends Intention {
     }
     else if (expression instanceof PsiParenthesizedExpression) {
       final PsiParenthesizedExpression parenthesizedExpression = (PsiParenthesizedExpression)expression;
-      buildIf(parenthesizedExpression.getExpression(), out);
+      buildIf(parenthesizedExpression.getExpression(), top, tracker, out);
       return out;
     }
     if (expression != null) {
-      out.append("if(").append(expression.getText()).append(")");
+      out.append("if(").append(tracker.text(expression)).append(")");
     }
     return out;
   }

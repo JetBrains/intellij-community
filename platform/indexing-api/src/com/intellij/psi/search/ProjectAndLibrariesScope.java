@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,29 +17,43 @@
 package com.intellij.psi.search;
 
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleManager;
+import com.intellij.openapi.module.UnloadedModuleDescription;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiBundle;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 
+/**
+ * Scope for all things inside the project: files in the project content plus files in libraries/libraries sources
+ */
 public class ProjectAndLibrariesScope extends GlobalSearchScope {
   protected final ProjectFileIndex myProjectFileIndex;
+  protected final boolean mySearchOutsideRootModel;
+  private String myDisplayName = PsiBundle.message("psi.search.scope.project.and.libraries");
 
-  public ProjectAndLibrariesScope(final Project project) {
+  public ProjectAndLibrariesScope(Project project) {
+    this(project, false);
+  }
+
+  public ProjectAndLibrariesScope(Project project, boolean searchOutsideRootModel) {
     super(project);
     myProjectFileIndex = ProjectRootManager.getInstance(project).getFileIndex();
+    mySearchOutsideRootModel = searchOutsideRootModel;
   }
 
-  public boolean contains(VirtualFile file) {
-    return myProjectFileIndex.isInContent(file) ||
-           myProjectFileIndex.isInLibraryClasses(file) ||
-           myProjectFileIndex.isInLibrarySource(file);
+  @Override
+  public boolean contains(@NotNull VirtualFile file) {
+    return myProjectFileIndex.isInContent(file) || myProjectFileIndex.isInLibrary(file);
   }
 
-  public int compare(VirtualFile file1, VirtualFile file2) {
+  @Override
+  public int compare(@NotNull VirtualFile file1, @NotNull VirtualFile file2) {
     List<OrderEntry> entries1 = myProjectFileIndex.getOrderEntriesForFile(file1);
     List<OrderEntry> entries2 = myProjectFileIndex.getOrderEntriesForFile(file2);
     if (entries1.size() != entries2.size()) return 0;
@@ -67,28 +81,49 @@ public class ProjectAndLibrariesScope extends GlobalSearchScope {
     return res;
   }
 
+  @Override
+  public boolean isSearchOutsideRootModel() {
+    return mySearchOutsideRootModel;
+  }
+
+  @Override
   public boolean isSearchInModuleContent(@NotNull Module aModule) {
     return true;
   }
 
+  @Override
   public boolean isSearchInLibraries() {
     return true;
   }
 
-  public String getDisplayName() {
-    return PsiBundle.message("psi.search.scope.project.and.libraries");
+  @NotNull
+  @Override
+  public Collection<UnloadedModuleDescription> getUnloadedModulesBelongingToScope() {
+    Project project = getProject();
+    return project != null ? ModuleManager.getInstance(project).getUnloadedModuleDescriptions() : Collections.emptySet();
   }
 
+  @Override
+  @NotNull
+  public String getDisplayName() {
+    return myDisplayName;
+  }
+
+  public void setDisplayName(@NotNull String displayName) {
+    myDisplayName = displayName;
+  }
+
+  @Override
   @NotNull
   public GlobalSearchScope intersectWith(@NotNull final GlobalSearchScope scope) {
     if (scope.isSearchOutsideRootModel()) {
       return super.intersectWith(scope);
     }
 
-
     return scope;
   }
 
+  @Override
   @NotNull
   public GlobalSearchScope uniteWith(@NotNull final GlobalSearchScope scope) {
     if (scope.isSearchOutsideRootModel()) {
@@ -98,6 +133,7 @@ public class ProjectAndLibrariesScope extends GlobalSearchScope {
     return this;
   }
 
+  @Override
   public String toString() {
     return getDisplayName();
   }

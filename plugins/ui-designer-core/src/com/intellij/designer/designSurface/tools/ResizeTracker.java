@@ -128,7 +128,7 @@ public class ResizeTracker extends InputTool {
 
   private void executeCommand() {
     if (myExecuteEnabled) {
-      List<EditOperation> operations = new ArrayList<EditOperation>();
+      List<EditOperation> operations = new ArrayList<>();
       for (EditOperation operation : getOperations()) {
         if (operation.canExecute()) {
           operations.add(operation);
@@ -151,6 +151,7 @@ public class ResizeTracker extends InputTool {
   private void updateContext() {
     myContext.setArea(myArea);
     myContext.setInputEvent(myInputEvent);
+    myContext.setModifiers(myModifiers);
 
     Point move = new Point();
     Dimension size = new Dimension();
@@ -180,8 +181,8 @@ public class ResizeTracker extends InputTool {
 
   private List<EditOperation> getOperations() {
     if (myOperations == null) {
-      myContext.setComponents(new ArrayList<RadComponent>(myArea.getSelection()));
-      myOperations = new ArrayList<EditOperation>();
+      myContext.setComponents(new ArrayList<>(myArea.getSelection()));
+      myOperations = new ArrayList<>();
 
       for (RadComponent component : myContext.getComponents()) {
         EditOperation operation;
@@ -203,8 +204,32 @@ public class ResizeTracker extends InputTool {
 
   @Override
   public void keyPressed(KeyEvent event, EditableArea area) throws Exception {
+    boolean changedModifiers = event.getModifiers() != myModifiers;
+    super.keyPressed(event, area);
+
     if (event.getKeyCode() == KeyEvent.VK_ESCAPE) {
       myToolProvider.loadDefaultTool();
+    }
+    else if (changedModifiers) {
+      handleKeyEvent();
+    }
+  }
+
+  @Override
+  public void keyReleased(KeyEvent event, EditableArea area) throws Exception {
+    boolean changedModifiers = event.getModifiers() != myModifiers;
+    super.keyReleased(event, area);
+
+    if (changedModifiers) {
+      handleKeyEvent();
+    }
+  }
+
+  private void handleKeyEvent() {
+    if (myContext != null) {
+      updateContext();
+      showFeedback();
+      updateCommand();
     }
   }
 }

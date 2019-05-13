@@ -1,25 +1,4 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
-/*
- * Created by IntelliJ IDEA.
- * User: max
- * Date: Oct 22, 2006
- * Time: 9:49:16 PM
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.messages;
 
 import org.jetbrains.annotations.NonNls;
@@ -39,7 +18,7 @@ public class Topic<L> {
     this(displayName, listenerClass, BroadcastDirection.TO_CHILDREN);
   }
 
-  public Topic(@NonNls @NotNull String displayName, @NotNull Class<L> listenerClass, final BroadcastDirection broadcastDirection) {
+  public Topic(@NonNls @NotNull String displayName, @NotNull Class<L> listenerClass, @NotNull BroadcastDirection broadcastDirection) {
     myDisplayName = displayName;
     myListenerClass = listenerClass;
     myBroadcastDirection = broadcastDirection;
@@ -78,10 +57,12 @@ public class Topic<L> {
     return myDisplayName;
   }
 
+  @NotNull
   public static <L> Topic<L> create(@NonNls @NotNull String displayName, @NotNull Class<L> listenerClass) {
     return new Topic<L>(displayName, listenerClass);
   }
 
+  @NotNull
   public static <L> Topic<L> create(@NonNls @NotNull String displayName, @NotNull Class<L> listenerClass, BroadcastDirection direction) {
     return new Topic<L>(displayName, listenerClass, direction);
   }
@@ -90,13 +71,14 @@ public class Topic<L> {
    * @return    broadcasting strategy configured for the current topic. Default value is {@link BroadcastDirection#TO_CHILDREN}
    * @see BroadcastDirection
    */
+  @NotNull
   public BroadcastDirection getBroadcastDirection() {
     return myBroadcastDirection;
   }
 
   /**
    * {@link MessageBus Message buses} may be organised into {@link MessageBus#getParent() hierarchies}. That allows to provide
-   * additional messaging features like <code>'broadcasting'</code>. Here it means that messages sent to particular topic within
+   * additional messaging features like {@code 'broadcasting'}. Here it means that messages sent to particular topic within
    * particular message bus may be dispatched to subscribers of the same topic within another message buses.
    * <p/>
    * Current enum holds available broadcasting options.
@@ -114,8 +96,8 @@ public class Topic<L> {
      *    topic1 ---&gt; child-bus1     child-bus2 &lt;--- topic1
      * </pre>
      * <p/>
-     * Here subscribers of the <code>'topic1'</code> registered within the <code>'child-bus1'</code> and <code>'child-bus2'</code>
-     * will receive the message sent to the <code>'topic1'</code> topic at the <code>'parent-bus'</code>.
+     * Here subscribers of the {@code 'topic1'} registered within the {@code 'child-bus1'} and {@code 'child-bus2'}
+     * will receive the message sent to the {@code 'topic1'} topic at the {@code 'parent-bus'}.
      */
     TO_CHILDREN,
 
@@ -134,8 +116,8 @@ public class Topic<L> {
      *            child-bus &lt;--- topic1
      * </pre>
      * <p/>
-     * Here subscribers of the <code>topic1</code> registered within <code>'parent-bus'</code> will receive messages posted
-     * to the same topic within <code>'child-bus'</code>.
+     * Here subscribers of the {@code topic1} registered within {@code 'parent-bus'} will receive messages posted
+     * to the same topic within {@code 'child-bus'}.
      */
     TO_PARENT
   }

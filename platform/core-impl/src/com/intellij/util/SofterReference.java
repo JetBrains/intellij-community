@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package com.intellij.util;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.LowMemoryWatcher;
 import com.intellij.util.containers.WeakList;
 import org.jetbrains.annotations.NotNull;
@@ -32,26 +33,27 @@ import java.lang.ref.WeakReference;
  */
 public class SofterReference<T> {
   private volatile Reference<T> myRef;
-  private static final WeakList<SofterReference> ourRegistry = new WeakList<SofterReference>();
+  private static final WeakList<SofterReference> ourRegistry = new WeakList<>();
 
-  @SuppressWarnings("UnusedDeclaration") private static LowMemoryWatcher ourWatcher = LowMemoryWatcher.register(new Runnable() {
-    @Override
-    public void run() {
-      for (SofterReference reference : ourRegistry.copyAndClear()) {
-        reference.weaken();
-      }
+  private static void onLowMemory() {
+    for (SofterReference reference : ourRegistry.copyAndClear()) {
+      reference.weaken();
     }
-  });
+  }
+
+  static {
+    LowMemoryWatcher.register(() -> onLowMemory(), ApplicationManager.getApplication());
+  }
 
   public SofterReference(@NotNull T referent) {
     ourRegistry.add(this);
-    myRef = new SoftReference<T>(referent);
+    myRef = new SoftReference<>(referent);
   }
 
   private void weaken() {
     T o = myRef.get();
     if (o != null) {
-      myRef = new WeakReference<T>(o);
+      myRef = new WeakReference<>(o);
     }
   }
 
@@ -61,7 +63,7 @@ public class SofterReference<T> {
     T referent = ref.get();
     if (referent != null && ref instanceof WeakReference) {
       ourRegistry.add(this);
-      myRef = new SoftReference<T>(referent);
+      myRef = new SoftReference<>(referent);
     }
     return referent;
   }

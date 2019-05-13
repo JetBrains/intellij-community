@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,11 +16,16 @@
 package org.jetbrains.idea.maven.project;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.util.ConcurrencyUtil;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.idea.maven.importing.MavenExtraArtifactType;
 import org.jetbrains.idea.maven.model.*;
 import org.jetbrains.idea.maven.server.MavenEmbedderWrapper;
@@ -35,47 +40,52 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 public class MavenArtifactDownloader {
   private static final ThreadPoolExecutor EXECUTOR =
-    new ThreadPoolExecutor(5, Integer.MAX_VALUE, 60, TimeUnit.SECONDS, new LinkedBlockingQueue<Runnable>(), new ThreadFactory() {
-      AtomicInteger num = new AtomicInteger();
+    new ThreadPoolExecutor(0, Integer.MAX_VALUE, 1, TimeUnit.SECONDS, new LinkedBlockingQueue<>(), new ThreadFactory() {
+      private final AtomicInteger num = new AtomicInteger();
 
+      @NotNull
       @Override
-      public Thread newThread(Runnable r) {
+      public Thread newThread(@NotNull Runnable r) {
         return new Thread(r, "Maven Artifact Downloader " + num.getAndIncrement());
       }
     });
 
+  private final Project myProject;
   private final MavenProjectsTree myProjectsTree;
   private final Collection<MavenProject> myMavenProjects;
   private final Collection<MavenArtifact> myArtifacts;
   private final MavenProgressIndicator myProgress;
   private final MavenEmbedderWrapper myEmbedder;
 
-  public static DownloadResult download(MavenProjectsTree projectsTree,
+  public static DownloadResult download(@NotNull Project project,
+                                        MavenProjectsTree projectsTree,
                                         Collection<MavenProject> mavenProjects,
                                         @Nullable Collection<MavenArtifact> artifacts,
                                         boolean downloadSources,
                                         boolean downloadDocs,
                                         MavenEmbedderWrapper embedder,
                                         MavenProgressIndicator p) throws MavenProcessCanceledException {
-    return new MavenArtifactDownloader(projectsTree, mavenProjects, artifacts, embedder, p).download(downloadSources, downloadDocs);
+    return new MavenArtifactDownloader(project, projectsTree, mavenProjects, artifacts, embedder, p).download(downloadSources, downloadDocs);
   }
 
-  private MavenArtifactDownloader(MavenProjectsTree projectsTree,
+  private MavenArtifactDownloader(@NotNull Project project,
+                                  MavenProjectsTree projectsTree,
                                   Collection<MavenProject> mavenProjects,
                                   Collection<MavenArtifact> artifacts,
                                   MavenEmbedderWrapper embedder,
                                   MavenProgressIndicator p) {
+    myProject = project;
     myProjectsTree = projectsTree;
     myMavenProjects = mavenProjects;
-    myArtifacts = artifacts == null ? null : new THashSet<MavenArtifact>(artifacts);
+    myArtifacts = artifacts == null ? null : new THashSet<>(artifacts);
     myEmbedder = embedder;
     myProgress = p;
   }
 
   private DownloadResult download(boolean downloadSources, boolean downloadDocs) throws MavenProcessCanceledException {
-    List<File> downloadedFiles = new ArrayList<File>();
+    List<File> downloadedFiles = new ArrayList<>();
     try {
-      List<MavenExtraArtifactType> types = new ArrayList<MavenExtraArtifactType>(2);
+      List<MavenExtraArtifactType> types = new ArrayList<>(2);
       if (downloadSources) types.add(MavenExtraArtifactType.SOURCES);
       if (downloadDocs) types.add(MavenExtraArtifactType.DOCS);
 
@@ -91,12 +101,29 @@ public class MavenArtifactDownloader {
     }
     finally {
       boolean isAsync = !ApplicationManager.getApplication().isUnitTestMode();
-      LocalFileSystem.getInstance().refreshIoFiles(downloadedFiles, isAsync, false, null);
+
+      Set<File> filesToRefresh = new HashSet<>(); // We have to refresh parents of downloaded files, because some additional files  may have been download.
+      for (File file : downloadedFiles) {
+        filesToRefresh.add(file);
+        filesToRefresh.add(file.getParentFile());
+      }
+
+      LocalFileSystem.getInstance().refreshIoFiles(filesToRefresh, isAsync, false, null);
     }
   }
 
   private Map<MavenId, DownloadData> collectArtifactsToDownload(List<MavenExtraArtifactType> types) {
-    Map<MavenId, DownloadData> result = new THashMap<MavenId, DownloadData>();
+    Map<MavenId, DownloadData> result = new THashMap<>();
+
+    THashSet<String> dependencyTypesFromSettings = new THashSet<>();
+
+    if (!ReadAction.compute(()->{
+
+      if (myProject.isDisposed()) return false;
+
+      dependencyTypesFromSettings.addAll(MavenProjectsManager.getInstance(myProject).getImportingSettings().getDependencyTypesAsSet());
+      return true;
+    })) return result;
 
     for (MavenProject eachProject : myMavenProjects) {
       List<MavenRemoteRepository> repositories = eachProject.getRemoteRepositories();
@@ -106,7 +133,13 @@ public class MavenArtifactDownloader {
 
         if (MavenConstants.SCOPE_SYSTEM.equalsIgnoreCase(eachDependency.getScope())) continue;
         if (myProjectsTree.findProject(eachDependency.getMavenId()) != null) continue;
-        if (!eachProject.isSupportedDependency(eachDependency, SupportedRequestType.FOR_IMPORT)) continue;
+
+        String dependencyType = eachDependency.getType();
+
+        if (!dependencyTypesFromSettings.contains(dependencyType)
+            && !eachProject.getDependencyTypesFromImporters(SupportedRequestType.FOR_IMPORT).contains(dependencyType)) {
+          continue;
+        }
 
         MavenId id = eachDependency.getMavenId();
         DownloadData data = result.get(id);
@@ -128,7 +161,7 @@ public class MavenArtifactDownloader {
 
   private DownloadResult download(final Map<MavenId, DownloadData> toDownload,
                                   final List<File> downloadedFiles) throws MavenProcessCanceledException {
-    List<Future> futures = new ArrayList<Future>();
+    List<Future> futures = new ArrayList<>();
 
     final AtomicInteger downloaded = new AtomicInteger();
     int total = 0;
@@ -149,34 +182,34 @@ public class MavenArtifactDownloader {
 
         for (final DownloadElement eachElement : data.classifiersWithExtensions) {
           final int finalTotal = total;
-          futures.add(EXECUTOR.submit(new Runnable() {
-            public void run() {
-              try {
-                myProgress.checkCanceled();
-                myProgress.setFraction(((double)downloaded.getAndIncrement()) / finalTotal);
+          futures.add(EXECUTOR.submit(() -> {
+            try {
+              if (myProject.isDisposed()) return;
 
-                MavenArtifact a = myEmbedder.resolve(new MavenArtifactInfo(id, eachElement.extension, eachElement.classifier),
-                                                     new ArrayList<MavenRemoteRepository>(data.repositories));
-                File file = a.getFile();
-                if (file.exists()) {
-                  synchronized (downloadedFiles) {
-                    downloadedFiles.add(file);
+              myProgress.checkCanceled();
+              myProgress.setFraction(((double)downloaded.getAndIncrement()) / finalTotal);
 
-                    switch (eachElement.type) {
-                      case SOURCES:
-                        result.resolvedSources.add(id);
-                        result.unresolvedSources.remove(id);
-                        break;
-                      case DOCS:
-                        result.resolvedDocs.add(id);
-                        result.unresolvedDocs.remove(id);
-                        break;
-                    }
+              MavenArtifact a = myEmbedder.resolve(new MavenArtifactInfo(id, eachElement.extension, eachElement.classifier),
+                                                   new ArrayList<>(data.repositories));
+              File file = a.getFile();
+              if (file.exists()) {
+                synchronized (downloadedFiles) {
+                  downloadedFiles.add(file);
+
+                  switch (eachElement.type) {
+                    case SOURCES:
+                      result.resolvedSources.add(id);
+                      result.unresolvedSources.remove(id);
+                      break;
+                    case DOCS:
+                      result.resolvedDocs.add(id);
+                      result.unresolvedDocs.remove(id);
+                      break;
                   }
                 }
               }
-              catch (MavenProcessCanceledException ignore) {
-              }
+            }
+            catch (MavenProcessCanceledException ignore) {
             }
           }));
         }
@@ -197,8 +230,8 @@ public class MavenArtifactDownloader {
   }
 
   private static class DownloadData {
-    public final LinkedHashSet<MavenRemoteRepository> repositories = new LinkedHashSet<MavenRemoteRepository>();
-    public final LinkedHashSet<DownloadElement> classifiersWithExtensions = new LinkedHashSet<DownloadElement>();
+    public final LinkedHashSet<MavenRemoteRepository> repositories = new LinkedHashSet<>();
+    public final LinkedHashSet<DownloadElement> classifiersWithExtensions = new LinkedHashSet<>();
   }
 
   private static class DownloadElement {
@@ -206,7 +239,7 @@ public class MavenArtifactDownloader {
     public final String extension;
     public final MavenExtraArtifactType type;
 
-    public DownloadElement(String classifier, String extension, MavenExtraArtifactType type) {
+    DownloadElement(String classifier, String extension, MavenExtraArtifactType type) {
       this.classifier = classifier;
       this.extension = extension;
       this.type = type;
@@ -236,10 +269,15 @@ public class MavenArtifactDownloader {
   }
 
   public static class DownloadResult {
-    public final Set<MavenId> resolvedSources = new THashSet<MavenId>();
-    public final Set<MavenId> resolvedDocs = new THashSet<MavenId>();
+    public final Set<MavenId> resolvedSources = new THashSet<>();
+    public final Set<MavenId> resolvedDocs = new THashSet<>();
 
-    public final Set<MavenId> unresolvedSources = new THashSet<MavenId>();
-    public final Set<MavenId> unresolvedDocs = new THashSet<MavenId>();
+    public final Set<MavenId> unresolvedSources = new THashSet<>();
+    public final Set<MavenId> unresolvedDocs = new THashSet<>();
+  }
+
+  @TestOnly
+  public static void awaitQuiescence(long timeout, @NotNull TimeUnit unit) {
+    ConcurrencyUtil.awaitQuiescence(EXECUTOR, timeout, unit);
   }
 }

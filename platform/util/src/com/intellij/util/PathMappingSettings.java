@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,28 +23,32 @@ import com.intellij.util.xmlb.XmlSerializer;
 import com.intellij.util.xmlb.annotations.Attribute;
 import com.intellij.util.xmlb.annotations.Tag;
 import org.jdom.Element;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 
 /**
  * @author traff
  */
-public class PathMappingSettings implements Cloneable {
+public class PathMappingSettings extends AbstractPathMapper implements Cloneable {
+
   @NotNull
   private List<PathMapping> myPathMappings;
 
-  public PathMappingSettings(@Nullable final List<PathMapping> pathMappings) {
+  public PathMappingSettings(@Nullable final List<? extends PathMapping> pathMappings) {
     myPathMappings = create(pathMappings);
   }
 
   @NotNull
-  private static List<PathMapping> create(@Nullable final List<PathMapping> mappings) {
+  private static List<PathMapping> create(@Nullable final List<? extends PathMapping> mappings) {
     List<PathMapping> result = ContainerUtil.newArrayList();
     if (mappings != null) {
       for (PathMapping m : mappings) {
-        if (m != null && !isEmpty(m.myLocalRoot, m.myRemoteRoot)) {
+        if (m != null && !isAnyEmpty(m.getLocalRoot(), m.getRemoteRoot())) {
           result.add(m);
         }
       }
@@ -57,62 +61,11 @@ public class PathMappingSettings implements Cloneable {
   }
 
   @NotNull
-  public String convertToLocal(String remotePath) {
-    for (PathMapping mapping : myPathMappings) {
-      if (mapping.canReplaceRemote(remotePath)) {
-        return mapping.mapToLocal(remotePath);
-      }
-    }
-
-    return remotePath;
-  }
-
-  public String convertToRemote(String localPath) {
-    for (PathMapping mapping : myPathMappings) {
-      if (mapping.canReplaceLocal(localPath)) {
-        return mapping.mapToRemote(localPath);
-      }
-    }
-    return localPath;
-  }
-
-  public void add(PathMapping mapping) {
-    if (isEmpty(mapping.myLocalRoot, mapping.myRemoteRoot)) {
-      return;
-    }
-    myPathMappings.add(mapping);
-  }
-
-  public void addMapping(String local, String remote) {
-    PathMapping mapping = new PathMapping(local, remote);
-    if (isEmpty(mapping.myLocalRoot, mapping.myRemoteRoot)) {
-      return;
-    }
-    myPathMappings.add(mapping);
-  }
-
-  public boolean canReplaceRemote(String remotePath) {
-    for (PathMapping mapping : myPathMappings) {
-      if (mapping.canReplaceRemote(remotePath)) {
-        return true;
-      }
-    }
-    return false;
-  }
-
-  public boolean canReplaceLocal(String localPath) {
-    for (PathMapping mapping : myPathMappings) {
-      if (mapping.canReplaceLocal(localPath)) {
-        return true;
-      }
-    }
-    return false;
-  }
-
-  private static String norm(@NotNull String path) {
+  static String norm(@NotNull String path) {
     return FileUtil.toSystemIndependentName(path);
   }
 
+  @NotNull
   private static String normLocal(@NotNull String path) {
     if (SystemInfo.isWindows) {
       path = path.toLowerCase();
@@ -121,8 +74,74 @@ public class PathMappingSettings implements Cloneable {
     return norm(path);
   }
 
-  public boolean isUseMapping() {
-    return myPathMappings.size() > 0;
+  @Override
+  public boolean isEmpty() {
+    return myPathMappings.isEmpty();
+  }
+
+  public static class BestMappingSelector {
+    private int myBestWeight = -1;
+    private PathMapping myBest = null;
+
+    public void consider(PathMapping mapping, int weight) {
+      if (weight > myBestWeight) {
+        myBestWeight = weight;
+        myBest = mapping;
+      }
+    }
+
+    @Nullable
+    public PathMapping get() {
+      return myBest;
+    }
+  }
+
+  @NotNull
+  @Override
+  public String convertToLocal(@NotNull String remotePath) {
+    String localPath = convertToLocal(remotePath, myPathMappings);
+    return localPath != null ? localPath : remotePath;
+  }
+
+  @NotNull
+  @Override
+  public String convertToRemote(@NotNull String localPath) {
+    String remotePath = convertToRemote(localPath, myPathMappings);
+    return remotePath != null ? remotePath : localPath;
+  }
+
+  public void add(@Nullable PathMapping mapping) {
+    if (mapping == null) {
+      return;
+    }
+    if (isAnyEmpty(mapping.getLocalRoot(), mapping.getRemoteRoot())) {
+      return;
+    }
+    myPathMappings.add(mapping);
+  }
+
+  public void addMapping(@Nullable String local, @Nullable String remote) {
+    PathMapping mapping = new PathMapping(local, remote);
+    add(mapping);
+  }
+
+  public void addMappingCheckUnique(@NotNull String local, @NotNull String remote) {
+    for (PathMapping mapping : myPathMappings) {
+      if (pathEquals(local, mapping.getLocalRoot()) && pathEquals(remote, mapping.getRemoteRoot())) {
+        return;
+      }
+    }
+    addMapping(local, remote);
+  }
+
+  private static boolean pathEquals(@NotNull String path1, @NotNull String path2) {
+    return norm(path1).equals(norm(path2));
+  }
+
+  @Override
+  @NotNull
+  protected final Collection<PathMapping> getAvailablePathMappings() {
+    return Collections.unmodifiableCollection(myPathMappings);
   }
 
   @NotNull
@@ -130,22 +149,25 @@ public class PathMappingSettings implements Cloneable {
     return myPathMappings;
   }
 
-  public void setPathMappings(@Nullable final List<PathMapping> pathMappings) {
+  public void setPathMappings(@Nullable final List<? extends PathMapping> pathMappings) {
     myPathMappings = create(pathMappings);
   }
 
   @NotNull
-  public static String mapToLocal(String path, String remoteRoot, String localRoot) {
-    if (isEmpty(localRoot, remoteRoot)) {
+  public static String mapToLocal(@NotNull String path, @Nullable String remoteRoot, @Nullable String localRoot) {
+    if (isAnyEmpty(localRoot, remoteRoot)) {
       return path;
     }
     path = norm(path);
     String remotePrefix = norm(remoteRoot);
-    path = path.replace(remotePrefix, norm(localRoot));
+    if (canReplaceRemote(path, remotePrefix)) {
+      path = norm(localRoot) + path.substring(remotePrefix.length());
+    }
     return path;
   }
 
-  public static boolean isEmpty(String localRoot, String remoteRoot) {
+  @Contract(value = "null, _ -> true; _, null -> true", pure = true)
+  public static boolean isAnyEmpty(@Nullable String localRoot, @Nullable String remoteRoot) {
     return StringUtil.isEmpty(localRoot) || StringUtil.isEmpty(remoteRoot);
   }
 
@@ -164,14 +186,35 @@ public class PathMappingSettings implements Cloneable {
   }
 
   public static void writeExternal(@Nullable final Element element, @Nullable final PathMappingSettings mappings) {
-    if (element == null || mappings == null || !mappings.isUseMapping()) {
+    if (element == null || mappings == null || mappings.isEmpty()) {
       return;
     }
     element.addContent(XmlSerializer.serialize(mappings));
   }
 
-  public void addAll(PathMappingSettings settings) {
+  public void addAll(@NotNull PathMappingSettings settings) {
     myPathMappings.addAll(settings.getPathMappings());
+  }
+
+  public void addAll(@NotNull List<PathMapping> mappings) {
+    myPathMappings.addAll(mappings);
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+
+    PathMappingSettings settings = (PathMappingSettings)o;
+
+    if (!myPathMappings.equals(settings.myPathMappings)) return false;
+
+    return true;
+  }
+
+  @Override
+  public int hashCode() {
+    return myPathMappings.hashCode();
   }
 
   @Tag("mapping")
@@ -182,7 +225,7 @@ public class PathMappingSettings implements Cloneable {
     public PathMapping() {
     }
 
-    public PathMapping(String localRoot, String remoteRoot) {
+    public PathMapping(@Nullable String localRoot, @Nullable String remoteRoot) {
       myLocalRoot = normalize(localRoot);
       myRemoteRoot = normalize(remoteRoot);
     }
@@ -207,12 +250,20 @@ public class PathMappingSettings implements Cloneable {
       return myRemoteRoot;
     }
 
-    public void setLocalRoot(String localRoot) {
-      myLocalRoot = localRoot;
+    public int getLocalLen() {
+      return myLocalRoot != null ? myLocalRoot.length() : -1;
     }
 
-    public void setRemoteRoot(String remoteRoot) {
-      myRemoteRoot = remoteRoot;
+    public int getRemoteLen() {
+      return myRemoteRoot != null ? myRemoteRoot.length() : -1;
+    }
+
+    public void setLocalRoot(@Nullable String localRoot) {
+      myLocalRoot = normalize(localRoot);
+    }
+
+    public void setRemoteRoot(@Nullable String remoteRoot) {
+      myRemoteRoot = normalize(remoteRoot);
     }
 
     @NotNull
@@ -226,7 +277,12 @@ public class PathMappingSettings implements Cloneable {
       }
 
       String localPrefix = normLocal(myLocalRoot);
-      return localPrefix.length() > 0 && normLocal(path).startsWith(localPrefix);
+      if (localPrefix.isEmpty()) {
+        return false;
+      }
+      final String localPath = normLocal(path);
+      final int prefixLength = localPrefix.length();
+      return localPath.startsWith(localPrefix) && (localPath.length() == prefixLength || localPath.charAt(prefixLength) == '/');
     }
 
     public String mapToRemote(@NotNull String path) {
@@ -241,26 +297,59 @@ public class PathMappingSettings implements Cloneable {
     }
 
     private boolean isEmpty() {
-      return PathMappingSettings.isEmpty(myLocalRoot, myRemoteRoot);
+      return isAnyEmpty(myLocalRoot, myRemoteRoot);
     }
 
-    private static String trimSlash(String s) {
+    private static String trimSlash(@NotNull String s) {
+      if (s.equals("/")) {
+        return s;
+      }
       return StringUtil.trimEnd(s, "/");
     }
 
-    public boolean canReplaceRemote(String path) {
+    public boolean canReplaceRemote(@NotNull String path) {
       if (isEmpty()) {
         return false;
       }
 
-      path = norm(path);
-      String remotePrefix = norm(myRemoteRoot);
-      return myRemoteRoot.length() > 0 && path.startsWith(remotePrefix);
+      return PathMappingSettings.canReplaceRemote(path, myRemoteRoot);
     }
 
     @Override
     public PathMapping clone() {
       return new PathMapping(myLocalRoot, myRemoteRoot);
     }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+
+      PathMapping mapping = (PathMapping)o;
+
+      if (myLocalRoot != null ? !myLocalRoot.equals(mapping.myLocalRoot) : mapping.myLocalRoot != null) return false;
+      if (myRemoteRoot != null ? !myRemoteRoot.equals(mapping.myRemoteRoot) : mapping.myRemoteRoot != null) return false;
+
+      return true;
+    }
+
+    @Override
+    public String toString() {
+      return "{'" + myLocalRoot + "' <=> '" + myRemoteRoot + "'}";
+    }
+
+    @Override
+    public int hashCode() {
+      int result = myLocalRoot != null ? myLocalRoot.hashCode() : 0;
+      result = 31 * result + (myRemoteRoot != null ? myRemoteRoot.hashCode() : 0);
+      return result;
+    }
+  }
+
+  private static boolean canReplaceRemote(@NotNull String path, @NotNull String remotePrefix) {
+    path = norm(path);
+    remotePrefix = norm(remotePrefix);
+    return path.startsWith(remotePrefix) &&
+           (path.length() == remotePrefix.length() || remotePrefix.endsWith("/") || path.substring(remotePrefix.length()).startsWith("/"));
   }
 }

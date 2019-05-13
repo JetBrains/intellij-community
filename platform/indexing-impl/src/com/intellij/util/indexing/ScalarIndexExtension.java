@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,11 +17,8 @@
 package com.intellij.util.indexing;
 
 import com.intellij.util.io.DataExternalizer;
-import org.jetbrains.annotations.Nullable;
-
-import java.io.DataInput;
-import java.io.DataOutput;
-import java.io.IOException;
+import com.intellij.util.io.VoidDataExternalizer;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * A specialization of FileBasedIndexExtension allowing to create a mapping [DataObject -> List of files containing this object]
@@ -29,23 +26,15 @@ import java.io.IOException;
  */
 public abstract class ScalarIndexExtension<K> extends FileBasedIndexExtension<K, Void>{
 
-  public static final DataExternalizer<Void> VOID_DATA_EXTERNALIZER = new VoidDataExternalizer();
+  /**
+   * To remove in IDEA 2018.1. Use {@link VoidDataExternalizer#INSTANCE}
+   */
+  @Deprecated
+  public static final DataExternalizer<Void> VOID_DATA_EXTERNALIZER = VoidDataExternalizer.INSTANCE;
 
+  @NotNull
   @Override
   public final DataExternalizer<Void> getValueExternalizer() {
-    return VOID_DATA_EXTERNALIZER;
-  }
-
-  private static class VoidDataExternalizer implements DataExternalizer<Void> {
-
-    @Override
-    public void save(final DataOutput out, final Void value) throws IOException {
-    }
-
-    @Override
-    @Nullable
-    public Void read(final DataInput in) throws IOException {
-      return null;
-    }
+    return VoidDataExternalizer.INSTANCE;
   }
 }

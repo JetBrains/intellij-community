@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,9 +19,9 @@ import com.intellij.util.text.StringFactory;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * @author maxim
- * @since 18.07.2006
+ * @deprecated Please use {@link java.util.Base64} instead
  */
+@Deprecated
 public class Base64Converter {
   private static final char[] alphabet = {
     'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H',   //  0 to  7
@@ -33,7 +33,7 @@ public class Base64Converter {
     'w', 'x', 'y', 'z', '0', '1', '2', '3',   // 48 to 55
     '4', '5', '6', '7', '8', '9', '+', '/'};  // 56 to 63
 
-  private final static byte[] decodeTable = {
+  private static final byte[] decodeTable = {
     -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
     -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
     -1, -1, -1, -1, -1, -1, -1, 62, -1, -1, -1, 63, 52, 53, 54, 55, 56, 57,

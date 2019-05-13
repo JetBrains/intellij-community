@@ -1,7 +1,7 @@
 // unhandled exceptions from superclases/etc
 import java.io.*;
-import java.net.*;
-public class a  {
+
+class a  {
  a(int i) {}
 }
 
@@ -54,7 +54,7 @@ class A3 {
 
 // in initializer
 class Test{
-  final String s = <error descr="Unhandled exception: java.lang.Exception">makeString();</error>
+  final String s = <error descr="Unhandled exception: java.lang.Exception">makeString</error>();
   String makeString() throws Exception {throw new Exception();}
 }
 

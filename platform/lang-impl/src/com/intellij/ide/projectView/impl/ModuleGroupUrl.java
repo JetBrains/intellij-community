@@ -17,7 +17,10 @@
 package com.intellij.ide.projectView.impl;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NonNls;
+
+import java.util.List;
 
 
 public class ModuleGroupUrl extends AbstractUrl {
@@ -29,7 +32,7 @@ public class ModuleGroupUrl extends AbstractUrl {
 
   @Override
   public Object[] createPath(Project project) {
-    final String[] groupPath = url.split(";");
+    List<String> groupPath = StringUtil.split(url, ";");
     return new Object[]{new ModuleGroup(groupPath)};
   }
 
@@ -43,13 +46,7 @@ public class ModuleGroupUrl extends AbstractUrl {
     if (element instanceof ModuleGroup) {
       ModuleGroup group = (ModuleGroup)element;
       final String[] groupPath = group.getGroupPath();
-      StringBuffer sb = new StringBuffer();
-      for (int i = 0; i < groupPath.length; i++) {
-        String s = groupPath[i];
-        sb.append(s);
-        sb.append(";");
-      }
-      return new ModuleGroupUrl(sb.toString());
+      return new ModuleGroupUrl(StringUtil.join(groupPath, ";"));
     }
     return null;
   }

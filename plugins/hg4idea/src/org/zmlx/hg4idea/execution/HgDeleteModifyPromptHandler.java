@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.zmlx.hg4idea.execution;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -38,6 +24,7 @@ public class HgDeleteModifyPromptHandler implements HgPromptHandler {
     "\\slocal\\schanged(.+)which\\sremote\\sdeleted\\s.+");
 
 
+  @Override
   public HgPromptChoice promptUser(@NotNull final String message,
                                    @NotNull final HgPromptChoice[] choices,
                                    @NotNull final HgPromptChoice defaultChoice) {
@@ -62,30 +49,25 @@ public class HgDeleteModifyPromptHandler implements HgPromptHandler {
     final int[] chosen = new int[]{-1};
     try {
       EventQueue.invokeAndWait
-        (new Runnable() {
-          public void run() {
-            String[] choicePresentationArray = new String[choices.length];
-            for (int i = 0; i < choices.length; ++i) {
-              choicePresentationArray[i] = choices[i].toString();
-            }
-            chosen[0] = Messages
-              .showDialog(modifiedMessage, "Delete-Modify Conflict",
-                          choicePresentationArray, defaultChoice.getChosenIndex(),
-                          Messages.getQuestionIcon());
+        (() -> {
+          String[] choicePresentationArray = new String[choices.length];
+          for (int i = 0; i < choices.length; ++i) {
+            choicePresentationArray[i] = choices[i].toString();
           }
+          chosen[0] = Messages
+            .showDialog(modifiedMessage, "Delete-Modify Conflict",
+                        choicePresentationArray, defaultChoice.getChosenIndex(),
+                        Messages.getQuestionIcon());
         });
     }
-    catch (InterruptedException e) {
-      LOG.error(e);
-      return defaultChoice;
-    }
-    catch (InvocationTargetException e) {
+    catch (InterruptedException | InvocationTargetException e) {
       LOG.error(e);
       return defaultChoice;
     }
     return chosen[0] >= 0 ? choices[chosen[0]] : HgPromptChoice.ABORT;
   }
 
+  @Override
   public boolean shouldHandle(@Nullable String message) {
     if (message == null) {
       return false;

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,11 +18,11 @@ package com.intellij.openapi.editor.impl;
 import com.intellij.openapi.editor.ex.PrioritizedDocumentListener;
 
 /**
- * Holds values to use for common {@link PrioritizedDocumentListener prioritized document listeners} used within standard IntelliJ
- * editor.
+ * Document listeners are sorted according {@link PrioritizedDocumentListener#getPriority()}.
+ * (the smaller the priority value the sooner the listener will be called)
+ * Some standard priorities are listed here.
  *
  * @author Denis Zhdanov
- * @since Sep 13, 2010 2:30:48 PM
  */
 public class EditorDocumentPriorities {
 
@@ -33,10 +33,13 @@ public class EditorDocumentPriorities {
   public static final int RANGE_MARKER = 40;
 
   public static final int FOLD_MODEL = 60;
+  public static final int LOGICAL_POSITION_CACHE = 65;
+  public static final int EDITOR_TEXT_LAYOUT_CACHE = 70;
   public static final int LEXER_EDITOR = 80;
   public static final int SOFT_WRAP_MODEL = 100;
+  public static final int EDITOR_TEXT_WIDTH_CACHE = 110;
   public static final int CARET_MODEL = 120;
-  public static final int SELECTION_MODEL = 140;
+  public static final int INLAY_MODEL = 150;
   public static final int EDITOR_DOCUMENT_ADAPTER = 160;
 
   private EditorDocumentPriorities() {

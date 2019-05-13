@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -53,7 +53,7 @@ public class GroovyEditorTextProvider implements EditorTextProvider {
           }
         }
       }
-      if (result.length() == 0) {
+      if (result.isEmpty()) {
         result = element.getText();
       }
     }
@@ -83,6 +83,6 @@ public class GroovyEditorTextProvider implements EditorTextProvider {
   public Pair<PsiElement, TextRange> findExpression(PsiElement element, boolean allowMethodCalls) {
     PsiElement expression = findExpressionInner(element, allowMethodCalls);
     if (expression == null) return null;
-    return new Pair<PsiElement, TextRange>(expression, expression.getTextRange());
+    return Pair.create(expression, expression.getTextRange());
   }
 }

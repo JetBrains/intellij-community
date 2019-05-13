@@ -1,12 +1,10 @@
-
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.util.frameworkSupport;
 
-import com.intellij.CommonBundle;
 import com.intellij.facet.impl.DefaultFacetsProvider;
 import com.intellij.framework.addSupport.FrameworkSupportInModuleProvider;
 import com.intellij.ide.util.newProjectWizard.AddSupportForFrameworksPanel;
 import com.intellij.ide.util.newProjectWizard.impl.FrameworkSupportModelBase;
-import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.ProjectBundle;
@@ -15,7 +13,6 @@ import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContainer;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContainerFactory;
 import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
@@ -37,13 +34,13 @@ public class AddFrameworkSupportDialog extends DialogWrapper {
     myModule = module;
     final LibrariesContainer container = LibrariesContainerFactory.createContainer(module.getProject());
     final FrameworkSupportModelBase model = new FrameworkSupportModelImpl(module.getProject(), contentRootPath, container);
-    myAddSupportPanel = new AddSupportForFrameworksPanel(providers, model) {
+    myAddSupportPanel = new AddSupportForFrameworksPanel(providers, model, false, null) {
       @Override
       protected void onFrameworkStateChanged() {
         setOKActionEnabled(isOKActionEnabled());
       }
     };
-    
+
     setOKActionEnabled(isOKActionEnabled());
     Disposer.register(myDisposable, myAddSupportPanel);
     init();
@@ -70,24 +67,17 @@ public class AddFrameworkSupportDialog extends DialogWrapper {
     return myAddSupportPanel.hasSelectedFrameworks();
   }
 
+  @Override
   protected void doOKAction() {
     if (myAddSupportPanel.hasSelectedFrameworks()) {
-      if (!myAddSupportPanel.downloadLibraries()) {
-        int answer = Messages.showYesNoDialog(myAddSupportPanel.getMainPanel(),
-                                              ProjectBundle.message("warning.message.some.required.libraries.wasn.t.downloaded"),
-                                              CommonBundle.getWarningTitle(), Messages.getWarningIcon());
-        if (answer != 0) {
-          return;
-        }
-      }
+      if (!myAddSupportPanel.validate()) return;
+      if (!myAddSupportPanel.downloadLibraries(myAddSupportPanel.getMainPanel())) return;
 
-      new WriteAction() {
-        protected void run(final Result result) {
-          ModifiableRootModel model = ModuleRootManager.getInstance(myModule).getModifiableModel();
-          myAddSupportPanel.addSupport(myModule, model);
-          model.commit();
-        }
-      }.execute();
+      WriteAction.run(() -> {
+        ModifiableRootModel model = ModuleRootManager.getInstance(myModule).getModifiableModel();
+        myAddSupportPanel.addSupport(myModule, model);
+        model.commit();
+      });
     }
     super.doOKAction();
   }
@@ -102,6 +92,7 @@ public class AddFrameworkSupportDialog extends DialogWrapper {
     return "reference.frameworks.support.dialog";
   }
 
+  @Override
   protected JComponent createCenterPanel() {
     return myAddSupportPanel.getMainPanel();
   }

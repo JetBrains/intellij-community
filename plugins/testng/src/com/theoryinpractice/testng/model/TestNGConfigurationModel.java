@@ -17,7 +17,7 @@ package com.theoryinpractice.testng.model;
 
 import com.intellij.execution.JavaExecutionUtil;
 import com.intellij.execution.junit.JUnitUtil;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
@@ -32,7 +32,7 @@ import javax.swing.text.PlainDocument;
 import java.util.LinkedHashSet;
 
 /**
- * @author Hani Suleiman Date: Jul 21, 2005 Time: 1:20:14 PM
+ * @author Hani Suleiman
  */
 public class TestNGConfigurationModel
 {
@@ -46,7 +46,7 @@ public class TestNGConfigurationModel
     private final Project project;
 
     public TestNGConfigurationModel(Project project) {
-        type = TestType.INVALID;
+        type = TestType.CLASS;
         for (int i = 3; i < typeDocuments.length; i++)
             typeDocuments[i] = new PlainDocument();
 
@@ -58,9 +58,6 @@ public class TestNGConfigurationModel
     }
 
     public void setType(TestType type) {
-        if (type == this.type)
-            return;
-
         this.type = type;
         updateEditorType(type);
     }
@@ -111,11 +108,11 @@ public class TestNGConfigurationModel
             data.MAIN_CLASS_NAME = "";
             data.METHOD_NAME = "";
             data.SUITE_NAME = "";
-        } else if (TestType.METHOD == type || TestType.CLASS == type) {
+        } else if (TestType.METHOD == type || TestType.CLASS == type || TestType.SOURCE == type) {
             String className = getText(TestType.CLASS);
             data.GROUP_NAME = "";
             data.SUITE_NAME = "";
-            if (TestType.METHOD == type)
+            if (TestType.METHOD == type || TestType.SOURCE == type)
                 data.METHOD_NAME = getText(TestType.METHOD);
 
             PsiClass psiClass = !getProject().isDefault() && !StringUtil.isEmptyOrSpaces(className) ? JUnitUtil.findPsiClass(className, module, getProject()) : null;
@@ -132,7 +129,7 @@ public class TestNGConfigurationModel
             data.METHOD_NAME = "";
         }
         else if (TestType.PATTERN == type) {
-          final LinkedHashSet<String> set = new LinkedHashSet<String>();
+          final LinkedHashSet<String> set = new LinkedHashSet<>();
           final String[] patterns = getText(TestType.PATTERN).split("\\|\\|");
           for (String pattern : patterns) {
             if (pattern.length() > 0) {
@@ -204,11 +201,8 @@ public class TestNGConfigurationModel
             throw new RuntimeException(e);
         }
       }  else {
-        ApplicationManager.getApplication().runWriteAction(new Runnable() {
-          public void run() {
-            ((com.intellij.openapi.editor.Document)document).replaceString(0, ((com.intellij.openapi.editor.Document)document).getTextLength(), value);
-          }
-        });
+        WriteCommandAction.runWriteCommandAction(project, () -> ((com.intellij.openapi.editor.Document)document)
+          .replaceString(0, ((com.intellij.openapi.editor.Document)document).getTextLength(), value));
       }
 
     }

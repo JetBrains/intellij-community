@@ -18,13 +18,10 @@ package com.intellij.ide.todo;
 import com.intellij.openapi.project.Project;
 
 import javax.swing.*;
-import javax.swing.tree.DefaultTreeModel;
 
 /**
  * @author irengrig
- *         Date: 2/24/11
- *         Time: 10:51 AM
  */
 public interface TodoTreeBuilderFactory {
-  TodoTreeBuilder createTreeBuilder(JTree tree,DefaultTreeModel treeModel,Project project);
+  TodoTreeBuilder createTreeBuilder(JTree tree,Project project);
 }

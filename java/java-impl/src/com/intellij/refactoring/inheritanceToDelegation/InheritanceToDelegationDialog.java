@@ -1,21 +1,6 @@
-/*
- * Copyright 2000-2011 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.inheritanceToDelegation;
 
-import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -33,7 +18,7 @@ import com.intellij.refactoring.ui.NameSuggestionsField;
 import com.intellij.refactoring.ui.RefactoringDialog;
 import com.intellij.refactoring.util.classMembers.InterfaceMemberDependencyGraph;
 import com.intellij.refactoring.util.classMembers.MemberInfo;
-import com.intellij.util.containers.HashMap;
+import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -45,6 +30,7 @@ import java.awt.event.ItemListener;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 
 public class InheritanceToDelegationDialog extends RefactoringDialog {
   private final PsiClass[] mySuperClasses;
@@ -79,6 +65,7 @@ public class InheritanceToDelegationDialog extends RefactoringDialog {
     return myFieldNameField;
   }
 
+  @Override
   protected void dispose() {
     myInnerClassNameField.removeDataChangedListener(myDataChangedListener);
     myFieldNameField.removeDataChangedListener(myDataChangedListener);
@@ -108,7 +95,7 @@ public class InheritanceToDelegationDialog extends RefactoringDialog {
   @Override
   protected void canRun() throws ConfigurationException {
     final String fieldName = getFieldName();
-    final PsiNameHelper helper = JavaPsiFacade.getInstance(myProject).getNameHelper();
+    final PsiNameHelper helper = PsiNameHelper.getInstance(myProject);
     if (!helper.isIdentifier(fieldName)){
       throw new ConfigurationException("\'" + fieldName + "\' is invalid field name for delegation");
     }
@@ -128,17 +115,18 @@ public class InheritanceToDelegationDialog extends RefactoringDialog {
     return (PsiClass)myClassCombo.getSelectedItem();
   }
 
-
-  protected void doHelpAction() {
-    HelpManager.getInstance().invokeHelp(HelpID.INHERITANCE_TO_DELEGATION);
+  @Override
+  protected String getHelpId() {
+    return HelpID.INHERITANCE_TO_DELEGATION;
   }
 
+  @Override
   protected void doAction() {
     JavaRefactoringSettings.getInstance().INHERITANCE_TO_DELEGATION_DELEGATE_OTHER = myCbGenerateGetter.isSelected();
 
     final Collection<MemberInfo> selectedMemberInfos = getSelectedMemberInfos();
-    final ArrayList<PsiClass> implementedInterfaces = new ArrayList<PsiClass>();
-    final ArrayList<PsiMethod> delegatedMethods = new ArrayList<PsiMethod>();
+    final ArrayList<PsiClass> implementedInterfaces = new ArrayList<>();
+    final ArrayList<PsiMethod> delegatedMethods = new ArrayList<>();
 
     for (MemberInfo memberInfo : selectedMemberInfos) {
       final PsiElement member = memberInfo.getMember();
@@ -152,11 +140,12 @@ public class InheritanceToDelegationDialog extends RefactoringDialog {
     invokeRefactoring(new InheritanceToDelegationProcessor(myProject, myClass,
                                                            getSelectedTargetClass(), getFieldName(),
                                                            getInnerClassName(),
-                                                           implementedInterfaces.toArray(new PsiClass[implementedInterfaces.size()]),
-                                                           delegatedMethods.toArray(new PsiMethod[delegatedMethods.size()]),
+                                                           implementedInterfaces.toArray(PsiClass.EMPTY_ARRAY),
+                                                           delegatedMethods.toArray(PsiMethod.EMPTY_ARRAY),
                                                            isGenerateGetter(), isGenerateGetter()));
   }
 
+  @Override
   protected JComponent createNorthPanel() {
     JPanel panel = new JPanel(new GridBagLayout());
     GridBagConstraints gbc = new GridBagConstraints();
@@ -167,7 +156,7 @@ public class InheritanceToDelegationDialog extends RefactoringDialog {
     gbc.gridx = 0;
 
 
-    gbc.insets = new Insets(4, 0, 0, 8);
+    gbc.insets = JBUI.insets(4, 0, 0, 8);
     myClassCombo = new JComboBox(mySuperClasses);
     myClassCombo.setRenderer(new ClassCellRenderer(myClassCombo.getRenderer()));
     gbc.gridwidth = 2;
@@ -182,14 +171,14 @@ public class InheritanceToDelegationDialog extends RefactoringDialog {
 
     gbc.gridy++;
     gbc.gridwidth = 1;
-    gbc.insets = new Insets(4, 0, 4, 0);
+    gbc.insets = JBUI.insets(4, 0);
     final JLabel fieldNameLabel = new JLabel();
     panel.add(fieldNameLabel, gbc);
 
     myFieldNameField = new NameSuggestionsField(myProject);
     gbc.gridx++;
     gbc.gridwidth = GridBagConstraints.REMAINDER;
-    gbc.insets = new Insets(4, 0, 4, 8);
+    gbc.insets = JBUI.insets(4, 0, 4, 8);
     gbc.weightx = 1.0;
     panel.add(myFieldNameField.getComponent(), gbc);
     fieldNameLabel.setText(RefactoringBundle.message("field.name"));
@@ -198,7 +187,7 @@ public class InheritanceToDelegationDialog extends RefactoringDialog {
     gbc.gridx = 0;
     gbc.gridy++;
     gbc.gridwidth = 1;
-    gbc.insets = new Insets(4, 0, 4, 0);
+    gbc.insets = JBUI.insets(4, 0);
     gbc.weightx = 0.0;
     final JLabel innerClassNameLabel = new JLabel();
     panel.add(innerClassNameLabel, gbc);
@@ -210,7 +199,7 @@ public class InheritanceToDelegationDialog extends RefactoringDialog {
     myInnerClassNameField = new NameSuggestionsField(myProject);
     gbc.gridx++;
     gbc.gridwidth = GridBagConstraints.REMAINDER;
-    gbc.insets = new Insets(4, 4, 4, 8);
+    gbc.insets = JBUI.insets(4, 4, 4, 8);
     gbc.weightx = 1.0;
     panel.add(myInnerClassNameField.getComponent(), gbc);
     innerClassNameLabel.setText(RefactoringBundle.message("inner.class.name"));
@@ -221,11 +210,12 @@ public class InheritanceToDelegationDialog extends RefactoringDialog {
     }
     myInnerClassNameField.setVisible(innerClassNeeded);
     innerClassNameLabel.setVisible(innerClassNeeded);
-    
+
     return panel;
   }
 
 
+  @Override
   protected JComponent createCenterPanel() {
     JPanel panel = new JPanel(new GridBagLayout());
     GridBagConstraints gbc = new GridBagConstraints();
@@ -238,9 +228,9 @@ public class InheritanceToDelegationDialog extends RefactoringDialog {
 
     gbc.weighty = 1.0;
     gbc.gridwidth = 1;
-    gbc.insets = new Insets(4, 0, 4, 4);
+    gbc.insets = JBUI.insets(4, 0, 4, 4);
 
-    myMemberSelectionPanel = new MemberSelectionPanel(RefactoringBundle.message("delegate.members"), Collections.<MemberInfo>emptyList(), null);
+    myMemberSelectionPanel = new MemberSelectionPanel(RefactoringBundle.message("delegate.members"), Collections.emptyList(), null);
     panel.add(myMemberSelectionPanel, gbc);
     MyMemberInfoModel memberInfoModel = new InheritanceToDelegationDialog.MyMemberInfoModel();
     myMemberSelectionPanel.getTable().setMemberInfoModel(memberInfoModel);
@@ -248,7 +238,7 @@ public class InheritanceToDelegationDialog extends RefactoringDialog {
 
 
     gbc.gridy++;
-    gbc.insets = new Insets(4, 8, 0, 8);
+    gbc.insets = JBUI.insets(4, 8, 0, 8);
     gbc.weighty = 0.0;
     myCbGenerateGetter = new JCheckBox(RefactoringBundle.message("generate.getter.for.delegated.component"));
     myCbGenerateGetter.setFocusable(false);
@@ -262,7 +252,7 @@ public class InheritanceToDelegationDialog extends RefactoringDialog {
   private void updateTargetClass() {
     final PsiClass targetClass = getSelectedTargetClass();
     PsiManager psiManager = myClass.getManager();
-    PsiType superType = JavaPsiFacade.getInstance(psiManager.getProject()).getElementFactory().createType(targetClass);
+    PsiType superType = JavaPsiFacade.getElementFactory(psiManager.getProject()).createType(targetClass);
     SuggestedNameInfo suggestedNameInfo =
       JavaCodeStyleManager.getInstance(psiManager.getProject()).suggestVariableName(VariableKind.FIELD, null, null, superType);
     myFieldNameField.setSuggestions(suggestedNameInfo.names);
@@ -270,11 +260,7 @@ public class InheritanceToDelegationDialog extends RefactoringDialog {
     @NonNls final String suggestion = "My" + targetClass.getName();
     myInnerClassNameField.setSuggestions(new String[]{suggestion});
 
-    myDataChangedListener = new NameSuggestionsField.DataChanged() {
-      public void dataChanged() {
-        validateButtons();
-      }
-    };
+    myDataChangedListener = () -> validateButtons();
     myInnerClassNameField.addDataChangedListener(myDataChangedListener);
     myFieldNameField.addDataChangedListener(myDataChangedListener);
 
@@ -283,15 +269,16 @@ public class InheritanceToDelegationDialog extends RefactoringDialog {
   }
 
   private class MyMemberInfoModel implements MemberInfoModel<PsiMember, MemberInfo> {
-    final HashMap<PsiClass,InterfaceMemberDependencyGraph> myGraphs;
+    final HashMap<PsiClass,InterfaceMemberDependencyGraph<PsiMember, MemberInfo>> myGraphs;
 
-    public MyMemberInfoModel() {
-      myGraphs = new HashMap<PsiClass, InterfaceMemberDependencyGraph>();
+    MyMemberInfoModel() {
+      myGraphs = new HashMap<>();
       for (PsiClass superClass : mySuperClasses) {
-        myGraphs.put(superClass, new InterfaceMemberDependencyGraph(superClass));
+        myGraphs.put(superClass, new InterfaceMemberDependencyGraph<>(superClass));
       }
     }
 
+    @Override
     public boolean isMemberEnabled(MemberInfo memberInfo) {
       if (getGraph().getDependent().contains(memberInfo.getMember())) {
         return false;
@@ -301,31 +288,38 @@ public class InheritanceToDelegationDialog extends RefactoringDialog {
       }
     }
 
+    @Override
     public boolean isCheckedWhenDisabled(MemberInfo member) {
       return true;
     }
 
+    @Override
     public boolean isAbstractEnabled(MemberInfo member) {
       return false;
     }
 
+    @Override
     public boolean isAbstractWhenDisabled(MemberInfo member) {
       return false;
     }
 
+    @Override
     public Boolean isFixedAbstract(MemberInfo member) {
       return null;
     }
 
+    @Override
     public int checkForProblems(@NotNull MemberInfo member) {
       return OK;
     }
 
+    @Override
     public String getTooltipText(MemberInfo member) {
       return null;
     }
 
-    public void memberInfoChanged(MemberInfoChange<PsiMember, MemberInfo> event) {
+    @Override
+    public void memberInfoChanged(@NotNull MemberInfoChange<PsiMember, MemberInfo> event) {
       final Collection<MemberInfo> changedMembers = event.getChangedMembers();
 
       for (MemberInfo changedMember : changedMembers) {
@@ -333,12 +327,13 @@ public class InheritanceToDelegationDialog extends RefactoringDialog {
       }
     }
 
-    private InterfaceMemberDependencyGraph getGraph() {
+    private InterfaceMemberDependencyGraph<PsiMember, MemberInfo> getGraph() {
       return myGraphs.get(getSelectedTargetClass());
     }
   }
 
   private class MyClassComboItemListener implements ItemListener {
+    @Override
     public void itemStateChanged(ItemEvent e) {
       if (e.getStateChange() == ItemEvent.SELECTED) {
         updateTargetClass();

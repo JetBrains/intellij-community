@@ -1,0 +1,1 @@
+(lambda: 42).__<caret>

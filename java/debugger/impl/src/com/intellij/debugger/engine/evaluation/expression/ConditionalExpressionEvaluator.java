@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,10 +20,10 @@
  */
 package com.intellij.debugger.engine.evaluation.expression;
 
-import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
+import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluateExceptionUtil;
-import com.intellij.debugger.DebuggerBundle;
+import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.sun.jdi.BooleanValue;
 import com.sun.jdi.Value;
 
@@ -32,19 +32,16 @@ class ConditionalExpressionEvaluator implements Evaluator {
   private final Evaluator myThenEvaluator;
   private final Evaluator myElseEvaluator;
 
-  public ConditionalExpressionEvaluator(Evaluator conditionEvaluator, Evaluator thenEvaluator, Evaluator elseEvaluator) {
+  ConditionalExpressionEvaluator(Evaluator conditionEvaluator, Evaluator thenEvaluator, Evaluator elseEvaluator) {
     myConditionEvaluator = conditionEvaluator;
     myThenEvaluator = thenEvaluator;
     myElseEvaluator = elseEvaluator;
   }
 
-  public Modifier getModifier() {
-    return null;
-  }
-
+  @Override
   public Object evaluate(EvaluationContextImpl context) throws EvaluateException {
     Value condition = (Value)myConditionEvaluator.evaluate(context);
-    if (condition == null || !(condition instanceof BooleanValue)) {
+    if (!(condition instanceof BooleanValue)) {
       throw EvaluateExceptionUtil.createEvaluateException(DebuggerBundle.message("evaluation.error.boolean.condition.expected"));
     }
     return ((BooleanValue)condition).booleanValue()? myThenEvaluator.evaluate(context) : myElseEvaluator.evaluate(context);

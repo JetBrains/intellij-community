@@ -1,29 +1,15 @@
-/*
- * Copyright 2000-2011 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.source.tree.java;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.java.JavaLanguage;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.source.tree.*;
-import com.intellij.psi.scope.BaseScopeProcessor;
 import com.intellij.psi.scope.ElementClassHint;
 import com.intellij.psi.scope.NameHint;
 import com.intellij.psi.scope.PsiScopeProcessor;
@@ -59,6 +45,30 @@ public class PsiCodeBlockImpl extends LazyParseablePsiElement implements PsiCode
   }
 
   @Override
+  public int getStatementCount() {
+    ApplicationManager.getApplication().assertReadAccessAllowed();
+    // no lock is needed because all chameleons are expanded already
+    int count = 0;
+    for (ASTNode child = getFirstChildNode(); child != null; child = child.getTreeNext()) {
+      if (child.getPsi() instanceof PsiStatement) {
+        count++;
+      }
+    }
+    return count;
+  }
+
+  @Override
+  public boolean isEmpty() {
+    ApplicationManager.getApplication().assertReadAccessAllowed();
+    for (ASTNode child = getFirstChildNode(); child != null; child = child.getTreeNext()) {
+      if (child.getPsi() instanceof PsiStatement) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  @Override
   public PsiElement getFirstBodyElement() {
     final PsiJavaToken lBrace = getLBrace();
     if (lBrace == null) return null;
@@ -86,23 +96,23 @@ public class PsiCodeBlockImpl extends LazyParseablePsiElement implements PsiCode
     return (PsiJavaToken)findChildByRoleAsPsiElement(ChildRole.RBRACE);
   }
 
-  private volatile Set<String> myVariablesSet = null;
-  private volatile Set<String> myClassesSet = null;
-  private volatile boolean myConflict = false;
+  private volatile Set<String> myVariablesSet;
+  private volatile Set<String> myClassesSet;
+  private volatile boolean myConflict;
 
   // return Pair(classes, locals) or null if there was conflict
   @Nullable
-  private Pair<Set<String>, Set<String>> buildMaps() {
+  private Couple<Set<String>> buildMaps() {
     Set<String> set1 = myClassesSet;
     Set<String> set2 = myVariablesSet;
     boolean wasConflict = myConflict;
     if (set1 == null || set2 == null) {
-      final Set<String> localsSet = new THashSet<String>();
-      final Set<String> classesSet = new THashSet<String>();
-      final Ref<Boolean> conflict = new Ref<Boolean>(Boolean.FALSE);
-      PsiScopesUtil.walkChildrenScopes(this, new BaseScopeProcessor() {
+      final Set<String> localsSet = new THashSet<>();
+      final Set<String> classesSet = new THashSet<>();
+      final Ref<Boolean> conflict = new Ref<>(Boolean.FALSE);
+      PsiScopesUtil.walkChildrenScopes(this, new PsiScopeProcessor() {
         @Override
-        public boolean execute(@NotNull PsiElement element, ResolveState state) {
+        public boolean execute(@NotNull PsiElement element, @NotNull ResolveState state) {
           if (element instanceof PsiLocalVariable) {
             final PsiLocalVariable variable = (PsiLocalVariable)element;
             final String name = variable.getName();
@@ -125,11 +135,11 @@ public class PsiCodeBlockImpl extends LazyParseablePsiElement implements PsiCode
         }
       }, ResolveState.initial(), this, this);
 
-      myClassesSet = set1 = classesSet.isEmpty() ? Collections.<String>emptySet() : classesSet;
-      myVariablesSet = set2 = localsSet.isEmpty() ? Collections.<String>emptySet() : localsSet;
+      myClassesSet = set1 = classesSet.isEmpty() ? Collections.emptySet() : classesSet;
+      myVariablesSet = set2 = localsSet.isEmpty() ? Collections.emptySet() : localsSet;
       myConflict = wasConflict = conflict.get();
     }
-    return wasConflict ? null : Pair.create(set1, set2);
+    return wasConflict ? null : Couple.of(set1, set2);
   }
 
   @Override
@@ -146,13 +156,13 @@ public class PsiCodeBlockImpl extends LazyParseablePsiElement implements PsiCode
     }
 
     if (before == Boolean.TRUE) {
-      while (isNonJavaStatement(anchor)) {
+      while (anchor != null && isNonJavaStatement(anchor)) {
         anchor = anchor.getTreePrev();
         before = Boolean.FALSE;
       }
     }
     else if (before == Boolean.FALSE) {
-      while (isNonJavaStatement(anchor)) {
+      while (anchor != null && isNonJavaStatement(anchor)) {
         anchor = anchor.getTreeNext();
         before = Boolean.TRUE;
       }
@@ -182,7 +192,7 @@ public class PsiCodeBlockImpl extends LazyParseablePsiElement implements PsiCode
   }
 
   @Override
-  public int getChildRole(ASTNode child) {
+  public int getChildRole(@NotNull ASTNode child) {
     LOG.assertTrue(child.getTreeParent() == this);
     IElementType i = child.getElementType();
     if (i == JavaTokenType.LBRACE) {
@@ -206,6 +216,7 @@ public class PsiCodeBlockImpl extends LazyParseablePsiElement implements PsiCode
     }
   }
 
+  @Override
   public String toString() {
     return "PsiCodeBlock";
   }
@@ -218,7 +229,7 @@ public class PsiCodeBlockImpl extends LazyParseablePsiElement implements PsiCode
       // Parent element should not see our vars
       return true;
     }
-    Pair<Set<String>, Set<String>> pair = buildMaps();
+    Couple<Set<String>> pair = buildMaps();
     boolean conflict = pair == null;
     final Set<String> classesSet = conflict ? null : pair.getFirst();
     final Set<String> variablesSet = conflict ? null : pair.getSecond();

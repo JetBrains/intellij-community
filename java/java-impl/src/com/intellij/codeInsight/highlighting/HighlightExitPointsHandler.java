@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,6 @@
 package com.intellij.codeInsight.highlighting;
 
 import com.intellij.codeInsight.CodeInsightBundle;
-import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.featureStatistics.ProductivityFeatureNames;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -52,23 +51,18 @@ public class HighlightExitPointsHandler extends HighlightUsagesHandlerBase<PsiEl
 
   @Override
   public void computeUsages(final List<PsiElement> targets) {
-    FeatureUsageTracker.getInstance().triggerFeatureUsed(ProductivityFeatureNames.CODEASSISTS_HIGHLIGHT_RETURN);
-
     PsiElement parent = myTarget.getParent();
     if (!(parent instanceof PsiReturnStatement) && !(parent instanceof PsiThrowStatement)) return;
 
     PsiCodeBlock body = null;
-    final PsiLambdaExpression lambdaExpression = PsiTreeUtil.getParentOfType(myTarget, PsiLambdaExpression.class);
-    if (lambdaExpression != null) {
-      final PsiElement lambdaBody = lambdaExpression.getBody();
+    final PsiElement psiElement = PsiTreeUtil.getParentOfType(myTarget, PsiLambdaExpression.class, PsiMethod.class);
+    if (psiElement instanceof PsiLambdaExpression) {
+      final PsiElement lambdaBody = ((PsiLambdaExpression)psiElement).getBody();
       if (lambdaBody instanceof PsiCodeBlock) {
         body = (PsiCodeBlock)lambdaBody;
       }
-    }
-
-    if (body == null) {
-      PsiMethod method = PsiTreeUtil.getParentOfType(myTarget, PsiMethod.class);
-      body = method != null ? method.getBody() : null;
+    } else if (psiElement instanceof PsiMethod) {
+      body = ((PsiMethod)psiElement).getBody();
     }
 
     if (body == null) return;
@@ -145,5 +139,11 @@ public class HighlightExitPointsHandler extends HighlightUsagesHandlerBase<PsiEl
     }
     myStatusText = CodeInsightBundle.message("status.bar.exit.points.highlighted.message", exitStatements.size(),
                                                                       HighlightUsagesHandler.getShortcutText());
+  }
+
+  @Nullable
+  @Override
+  public String getFeatureId() {
+    return ProductivityFeatureNames.CODEASSISTS_HIGHLIGHT_RETURN;
   }
 }

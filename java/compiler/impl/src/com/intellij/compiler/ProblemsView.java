@@ -35,11 +35,10 @@ import java.util.UUID;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: 9/18/12
  */
 public abstract class ProblemsView {
 
-  private final Project myProject;
+  protected final Project myProject;
 
   public static class SERVICE {
     private SERVICE() {
@@ -61,7 +60,7 @@ public abstract class ProblemsView {
   public final void addMessage(CompilerMessage message, @NotNull UUID sessionId) {
     final VirtualFile file = message.getVirtualFile();
     Navigatable navigatable = message.getNavigatable();
-    if (navigatable == null && file != null) {
+    if (navigatable == null && file != null && !file.getFileType().isBinary()) {
       navigatable = new OpenFileDescriptor(myProject, file, -1, -1);
     }
     final CompilerMessageCategory category = message.getCategory();
@@ -82,7 +81,7 @@ public abstract class ProblemsView {
     if (!text.contains("\n")) {
       return new String[]{text};
     }
-    final List<String> lines = new ArrayList<String>();
+    final List<String> lines = new ArrayList<>();
     StringTokenizer tokenizer = new StringTokenizer(text, "\n", false);
     while (tokenizer.hasMoreTokens()) {
       lines.add(tokenizer.nextToken());

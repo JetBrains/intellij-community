@@ -65,7 +65,7 @@ public class PsiParenthesizedExpressionImpl extends ExpressionPsiElement impleme
   }
 
   @Override
-  public int getChildRole(ASTNode child) {
+  public int getChildRole(@NotNull ASTNode child) {
     LOG.assertTrue(child.getTreeParent() == this);
     IElementType i = child.getElementType();
     if (i == LPARENTH) {
@@ -92,6 +92,7 @@ public class PsiParenthesizedExpressionImpl extends ExpressionPsiElement impleme
     }
   }
 
+  @Override
   public String toString() {
     return "PsiParenthesizedExpression:" + getText();
   }

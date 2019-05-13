@@ -23,11 +23,6 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * Created by IntelliJ IDEA.
- * User: sweinreuter
- * Date: 03.10.2007
- */
 public class RngDomInspection extends BasicDomElementsInspection<RngDomElement> {
   public RngDomInspection() {
     super(RngDomElement.class);
@@ -44,18 +39,21 @@ public class RngDomInspection extends BasicDomElementsInspection<RngDomElement> 
     return true;
   }
 
+  @Override
   @Nls
   @NotNull
   public String getGroupDisplayName() {
     return BaseInspection.getRngGroupDisplayName();
   }
 
+  @Override
   @Nls
   @NotNull
   public String getDisplayName() {
     return "Unresolved References";
   }
 
+  @Override
   @NonNls
   @NotNull
   public String getShortName() {

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.plugins.groovy.lang.completion;
 
@@ -21,19 +7,20 @@ import com.intellij.codeInsight.TailType;
 import com.intellij.codeInsight.completion.InsertHandler;
 import com.intellij.codeInsight.completion.InsertionContext;
 import com.intellij.codeInsight.completion.util.MethodParenthesesHandler;
+import com.intellij.codeInsight.completion.util.ParenthesesInsertHandler;
 import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.openapi.editor.CaretModel;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
+import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.codeStyle.GroovyCodeStyleSettings;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotationNameValuePair;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrNewExpression;
@@ -49,7 +36,8 @@ import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
 public class GroovyInsertHandler implements InsertHandler<LookupElement> {
   public static final GroovyInsertHandler INSTANCE = new GroovyInsertHandler();
 
-  public void handleInsert(InsertionContext context, LookupElement item) {
+  @Override
+  public void handleInsert(@NotNull InsertionContext context, @NotNull LookupElement item) {
     @NonNls Object obj = item.getObject();
 
     PsiSubstitutor substitutor = PsiSubstitutor.EMPTY;
@@ -59,7 +47,7 @@ public class GroovyInsertHandler implements InsertHandler<LookupElement> {
     }
 
     if (obj instanceof PsiMethod) {
-      PsiMethod method = (PsiMethod)obj;
+      final PsiMethod method = (PsiMethod)obj;
       PsiParameter[] parameters = method.getParameterList().getParameters();
       Editor editor = context.getEditor();
       Document document = editor.getDocument();
@@ -130,7 +118,13 @@ public class GroovyInsertHandler implements InsertHandler<LookupElement> {
         return;
       }
 
-      new MethodParenthesesHandler(method, true).handleInsert(context, item);
+
+      CommonCodeStyleSettings settings = context.getCodeStyleSettings();
+      ParenthesesInsertHandler.getInstance(MethodParenthesesHandler.hasParams(item, context.getElements(), true, method),
+                                           settings.SPACE_BEFORE_METHOD_CALL_PARENTHESES,
+                                           settings.SPACE_WITHIN_METHOD_CALL_PARENTHESES,
+                                           true, true).handleInsert(context, item);
+
       AutoPopupController.getInstance(context.getProject()).autoPopupParameterInfo(editor, method);
       return;
     }
@@ -152,7 +146,7 @@ public class GroovyInsertHandler implements InsertHandler<LookupElement> {
           parent.getParent() instanceof GrNewExpression &&
           (offset == text.length() || !text.substring(offset).trim().startsWith("("))) {
         document.insertString(offset, "()");
-        if (GroovyCompletionUtil.hasConstructorParameters(clazz, (GroovyPsiElement)parent)) {
+        if (GroovyCompletionUtil.hasConstructorParameters(clazz, parent)) {
           caretModel.moveToOffset(offset + 1);
           return;
         }
@@ -168,13 +162,12 @@ public class GroovyInsertHandler implements InsertHandler<LookupElement> {
     }
 
     if (obj instanceof PsiPackage) {
-      AutoPopupController.getInstance(context.getProject()).scheduleAutoPopup(context.getEditor(), null);
+      AutoPopupController.getInstance(context.getProject()).scheduleAutoPopup(context.getEditor());
     }
   }
 
   private static boolean isSpaceBeforeClosure(PsiFile file) {
-    return CodeStyleSettingsManager.getSettings(file.getProject())
-      .getCustomSettings(GroovyCodeStyleSettings.class).SPACE_BEFORE_CLOSURE_LBRACE;
+    return GroovyCodeStyleSettings.getInstance(file).SPACE_BEFORE_CLOSURE_LBRACE;
   }
 
   private static boolean isAnnotationNameValuePair(Object obj, PsiElement parent) {

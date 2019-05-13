@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,10 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-/*
- * @author max
- */
 package com.intellij.openapi.vfs.newvfs.events;
 
 import com.intellij.openapi.vfs.VirtualFile;
@@ -24,9 +20,13 @@ import com.intellij.openapi.vfs.VirtualFileSystem;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+/**
+ * @author max
+ */
 public abstract class VFileEvent {
   private final boolean myIsFromRefresh;
   private final Object myRequestor;
+  private String myCachedPath;
 
   public VFileEvent(Object requestor, final boolean isFromRefresh) {
     myRequestor = requestor;
@@ -41,13 +41,30 @@ public abstract class VFileEvent {
     return myRequestor;
   }
 
-  public abstract String getPath();
+  /**
+   * Returns the file path (in system independent format) affected by this event.<br/><br/>
+   *
+   * Note that the path might be cached, thus can become out-of-date if requested later,
+   * asynchronously from the event dispatching procedure
+   * (e.g. {@code event.getPath()} can become not equal to {@code event.getFile().getPath()}).
+   */
+  @NotNull
+  public String getPath() {
+    String path = myCachedPath;
+    if (path == null) {
+      myCachedPath = path = computePath();
+    }
+    return path;
+  }
+
+  @NotNull
+  protected abstract String computePath();
 
   /**
    * Returns the VirtualFile which this event belongs to.
    * In some cases it may be null - it is not guaranteed that there is such file.
-   *
-   * NB: Use this method with caution, because {@link com.intellij.openapi.vfs.newvfs.events.VFileCreateEvent#getFile()} needs
+   * <p/>
+   * NB: Use this method with caution, because {@link VFileCreateEvent#getFile()} needs
    * {@link VirtualFile#findChild(String)} which may be a performance leak.
    */
   @Nullable
@@ -58,6 +75,9 @@ public abstract class VFileEvent {
 
   public abstract boolean isValid();
 
+  @Override
   public abstract int hashCode();
+
+  @Override
   public abstract boolean equals(Object o);
 }

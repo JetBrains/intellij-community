@@ -21,17 +21,16 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlAttributeValue;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 class SelfReference implements PsiReference {
   private final XmlAttributeValue myValue;
   private final PsiElement myTarget;
   private final int myStartOffset;
 
-  public SelfReference(XmlAttribute element, PsiElement target, int startOffset) {
+  SelfReference(XmlAttribute element, PsiElement target, int startOffset) {
     myTarget = target;
     myValue = element.getValueElement();
     myStartOffset = startOffset;
@@ -41,41 +40,46 @@ class SelfReference implements PsiReference {
     this(element, target, 0);
   }
 
+  @Override
+  @NotNull
   public PsiElement getElement() {
     return myValue;
   }
 
+  @Override
+  @NotNull
   public TextRange getRangeInElement() {
     return TextRange.from(1 + myStartOffset, myValue.getTextLength() - (2 + myStartOffset));
   }
 
+  @Override
   @Nullable
   public PsiElement resolve() {
     return myValue.isValid() ? myTarget : null;
   }
 
+  @Override
   @NotNull
   public String getCanonicalText() {
     return myValue.getText();
   }
 
-  public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {
+  @Override
+  public PsiElement handleElementRename(@NotNull String newElementName) throws IncorrectOperationException {
     return myValue;
   }
 
+  @Override
   public PsiElement bindToElement(@NotNull PsiElement element) throws IncorrectOperationException {
     return myValue;
   }
 
-  public boolean isReferenceTo(PsiElement element) {
+  @Override
+  public boolean isReferenceTo(@NotNull PsiElement element) {
     return false;
   }
 
-  @NotNull
-  public Object[] getVariants() {
-    return ArrayUtil.EMPTY_OBJECT_ARRAY;
-  }
-
+  @Override
   public boolean isSoft() {
     return false;
   }

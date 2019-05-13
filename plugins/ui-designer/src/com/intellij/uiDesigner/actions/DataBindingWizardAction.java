@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.uiDesigner.actions;
 
 import com.intellij.CommonBundle;
@@ -20,7 +6,7 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleUtil;
+import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -34,8 +20,7 @@ import com.intellij.uiDesigner.lw.LwRootContainer;
 import com.intellij.uiDesigner.wizard.DataBindingWizard;
 import com.intellij.uiDesigner.wizard.Generator;
 import com.intellij.uiDesigner.wizard.WizardData;
-
-import java.text.MessageFormat;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Anton Katilin
@@ -44,11 +29,14 @@ import java.text.MessageFormat;
 public final class DataBindingWizardAction extends AnAction{
   private static final Logger LOG = Logger.getInstance("#com.intellij.uiDesigner.actions.DataBindingWizardAction");
 
-  public void actionPerformed(final AnActionEvent e) {
+  @Override
+  public void actionPerformed(@NotNull final AnActionEvent e) {
     final Project project;
     final VirtualFile formFile;
     GuiEditor editor = FormEditingUtil.getActiveEditor(e.getDataContext());
-    assert editor != null;
+    if (editor == null) {
+      return;
+    }
     project = editor.getProject();
     formFile = editor.getFile();
 
@@ -56,7 +44,7 @@ public final class DataBindingWizardAction extends AnAction{
       final WizardData wizardData = new WizardData(project, formFile);
 
 
-      final Module module = ModuleUtil.findModuleForFile(formFile, wizardData.myProject);
+      final Module module = ModuleUtilCore.findModuleForFile(formFile, wizardData.myProject);
       LOG.assertTrue(module != null);
 
       final LwRootContainer[] rootContainer = new LwRootContainer[1];
@@ -97,16 +85,15 @@ public final class DataBindingWizardAction extends AnAction{
           UIDesignerBundle.message("action.bind.to.another.bean"), CommonBundle.getCancelButtonText()};
         final int result = Messages.showYesNoCancelDialog(
           project,
-          MessageFormat.format(UIDesignerBundle.message("info.data.binding.regenerate"),
-                               wizardData.myBeanClass.getQualifiedName()),
+          UIDesignerBundle.message("info.data.binding.regenerate", wizardData.myBeanClass.getQualifiedName()),
           UIDesignerBundle.message("title.data.binding"),
           variants[0], variants[1], variants[2],
           Messages.getQuestionIcon()
         );
-        if (result == 0) {
+        if (result == Messages.YES) {
           // do nothing here
         }
-        else if (result == 1) {
+        else if (result == Messages.NO) {
           wizardData.myBindToNewBean = true;
         }
         else {
@@ -114,7 +101,7 @@ public final class DataBindingWizardAction extends AnAction{
         }
       }
 
-      final DataBindingWizard wizard = new DataBindingWizard(project, formFile, wizardData);
+      final DataBindingWizard wizard = new DataBindingWizard(project, wizardData);
       wizard.show();
     }
     catch (Generator.MyException exc) {
@@ -126,7 +113,8 @@ public final class DataBindingWizardAction extends AnAction{
     }
   }
 
-  public void update(final AnActionEvent e) {
+  @Override
+  public void update(@NotNull final AnActionEvent e) {
     e.getPresentation().setVisible(FormEditingUtil.getActiveEditor(e.getDataContext()) != null);
   }
 

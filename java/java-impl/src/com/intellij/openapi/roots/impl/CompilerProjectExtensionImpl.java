@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,10 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * User: anna
- * Date: 27-Dec-2007
- */
 package com.intellij.openapi.roots.impl;
 
 import com.intellij.openapi.module.Module;
@@ -27,13 +23,12 @@ import com.intellij.openapi.roots.CompilerModuleExtension;
 import com.intellij.openapi.roots.CompilerProjectExtension;
 import com.intellij.openapi.roots.ProjectExtension;
 import com.intellij.openapi.roots.WatchedRootsProvider;
-import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
-import com.intellij.util.containers.HashSet;
+import java.util.HashSet;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -57,7 +52,6 @@ public class CompilerProjectExtensionImpl extends CompilerProjectExtension {
     final Element outputPathChild = element.getChild(OUTPUT_TAG);
     if (outputPathChild != null) {
       String outputPath = outputPathChild.getAttributeValue(URL);
-      assert myCompilerOutput == null;
       myCompilerOutput = VirtualFilePointerManager.getInstance().create(outputPath, myProject, null);
     }
   }
@@ -98,12 +92,13 @@ public class CompilerProjectExtensionImpl extends CompilerProjectExtension {
   public void setCompilerOutputUrl(String compilerOutputUrl) {
     VirtualFilePointer pointer = VirtualFilePointerManager.getInstance().create(compilerOutputUrl, myProject, null);
     setCompilerOutputPointer(pointer);
-    myCompilerOutputWatchRequest = LocalFileSystem.getInstance().replaceWatchedRoot(myCompilerOutputWatchRequest, compilerOutputUrl, true);
+    String path = VfsUtilCore.urlToPath(compilerOutputUrl);
+    myCompilerOutputWatchRequest = LocalFileSystem.getInstance().replaceWatchedRoot(myCompilerOutputWatchRequest, path, true);
   }
 
   @NotNull
   private Set<String> getRootsToWatch() {
-    final Set<String> rootsToWatch = new HashSet<String>();
+    final Set<String> rootsToWatch = new HashSet<>();
     Module[] modules = ModuleManager.getInstance(myProject).getModules();
     for (Module module : modules) {
       final String compilerOutputPath = ProjectRootManagerImpl.extractLocalPath(CompilerModuleExtension.getInstance(module).getCompilerOutputUrl());
@@ -137,12 +132,12 @@ public class CompilerProjectExtensionImpl extends CompilerProjectExtension {
     }
 
     @Override
-    public void readExternal(final Element element) throws InvalidDataException {
+    public void readExternal(@NotNull Element element) {
       getImpl(myProject).readExternal(element);
     }
 
     @Override
-    public void writeExternal(final Element element) throws WriteExternalException {
+    public void writeExternal(@NotNull Element element) {
       getImpl(myProject).writeExternal(element);
     }
   }

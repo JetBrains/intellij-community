@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,34 +32,41 @@ public class GuiFormFileType implements /*UIBased*/FileType {
   @NonNls public static final String DEFAULT_EXTENSION = "form";
   @NonNls public static final String DOT_DEFAULT_EXTENSION = "." + DEFAULT_EXTENSION;
 
+  @Override
   @NotNull
   public String getName() {
     return "GUI_DESIGNER_FORM";
   }
 
+  @Override
   @NotNull
   public String getDescription() {
     return IdeBundle.message("filetype.description.gui.designer.form");
   }
 
+  @Override
   @NotNull
   public String getDefaultExtension() {
     return DEFAULT_EXTENSION;
   }
 
+  @Override
   public Icon getIcon() {
     return PlatformIcons.UI_FORM_ICON;
   }
 
+  @Override
   public boolean isBinary() {
     return false;
   }
 
+  @Override
   public boolean isReadOnly() {
     return false;
   }
 
-  public String getCharset(@NotNull VirtualFile file, final byte[] content) {
+  @Override
+  public String getCharset(@NotNull VirtualFile file, @NotNull final byte[] content) {
     return CharsetToolkit.UTF8;
   }
 }

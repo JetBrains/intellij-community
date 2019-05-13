@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,11 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- */
-
-/*
- * User: anna
- * Date: 12-Jul-2007
  */
 package com.intellij.projectImport;
 
@@ -38,13 +33,11 @@ import com.intellij.openapi.roots.CompilerProjectExtension;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
-import org.jdom.JDOMException;
+import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -52,26 +45,29 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.io.File;
 import java.io.IOException;
-import java.util.Arrays;
-import java.util.Collection;
 
+/**
+ * @author anna
+ */
 public abstract class ProjectOpenProcessorBase<T extends ProjectImportBuilder> extends ProjectOpenProcessor {
-
   private final T myBuilder;
 
   protected ProjectOpenProcessorBase(@NotNull final T builder) {
     myBuilder = builder;
   }
 
+  @Override
   public String getName() {
     return getBuilder().getName();
   }
 
+  @Override
   @Nullable
   public Icon getIcon() {
     return getBuilder().getIcon();
   }
 
+  @Override
   public boolean canOpenProject(final VirtualFile file) {
     final String[] supported = getSupportedExtensions();
     if (supported != null) {
@@ -86,12 +82,9 @@ public abstract class ProjectOpenProcessorBase<T extends ProjectImportBuilder> e
     return false;
   }
 
-  private static Collection<VirtualFile> getFileChildren(VirtualFile file) {
-    if (file instanceof NewVirtualFile) {
-      return ((NewVirtualFile)file).getCachedChildren();
-    }
-
-    return Arrays.asList(file.getChildren());
+  @NotNull
+  private static VirtualFile[] getFileChildren(VirtualFile file) {
+    return ObjectUtils.chooseNotNull(file.getChildren(), VirtualFile.EMPTY_ARRAY);
   }
 
   protected static boolean canOpenFile(VirtualFile file, String[] supported) {
@@ -116,11 +109,12 @@ public abstract class ProjectOpenProcessorBase<T extends ProjectImportBuilder> e
   @Nullable
   public abstract String[] getSupportedExtensions();
 
+  @Override
   @Nullable
   public Project doOpenProject(@NotNull VirtualFile virtualFile, Project projectToClose, boolean forceOpenInNewFrame) {
     try {
       getBuilder().setUpdate(false);
-      final WizardContext wizardContext = new WizardContext(null);
+      final WizardContext wizardContext = new WizardContext(null, null);
       if (virtualFile.isDirectory()) {
         final String[] supported = getSupportedExtensions();
         for (VirtualFile file : getFileChildren(virtualFile)) {
@@ -166,28 +160,34 @@ public abstract class ProjectOpenProcessorBase<T extends ProjectImportBuilder> e
       }
 
       boolean shouldOpenExisting = false;
-      if (!ApplicationManager.getApplication().isHeadlessEnvironment() && (projectFile.exists() || dotIdeaFile.exists())) {
-        String existingName;
-        if (dotIdeaFile.exists()) {
-          existingName = "an existing project";
-          pathToOpen = dotIdeaFile.getParent();
+      boolean importToProject = true;
+      if (projectFile.exists() || dotIdeaFile.exists()) {
+        if (ApplicationManager.getApplication().isHeadlessEnvironment()) {
+          shouldOpenExisting = true;
+          importToProject = true;
         }
         else {
-          existingName = "'" + projectFile.getName() + "'";
-          pathToOpen = projectFilePath;
+          String existingName;
+          if (dotIdeaFile.exists()) {
+            existingName = "an existing project";
+            pathToOpen = dotIdeaFile.getParent();
+          }
+          else {
+            existingName = "'" + projectFile.getName() + "'";
+            pathToOpen = projectFilePath;
+          }
+          int result = Messages.showYesNoCancelDialog(
+            projectToClose,
+            IdeBundle.message("project.import.open.existing", existingName, projectFile.getParent(), virtualFile.getName()),
+            IdeBundle.message("title.open.project"),
+            IdeBundle.message("project.import.open.existing.openExisting"),
+            IdeBundle.message("project.import.open.existing.reimport"),
+            CommonBundle.message("button.cancel"),
+            Messages.getQuestionIcon());
+          if (result == Messages.CANCEL) return null;
+          shouldOpenExisting = result == Messages.YES;
+          importToProject = !shouldOpenExisting;
         }
-        int result = Messages.showYesNoCancelDialog(projectToClose,
-                                                    IdeBundle.message("project.import.open.existing",
-                                                                      existingName,
-                                                                      projectFile.getParent(),
-                                                                      virtualFile.getName()),
-                                                    IdeBundle.message("title.open.project"),
-                                                    IdeBundle.message("project.import.open.existing.openExisting"),
-                                                    IdeBundle.message("project.import.open.existing.reimport"),
-                                                    CommonBundle.message("button.cancel"),
-                                                    Messages.getQuestionIcon());
-        if (result == 2) return null;
-        shouldOpenExisting = result == 0;
       }
 
       final Project projectToOpen;
@@ -195,34 +195,33 @@ public abstract class ProjectOpenProcessorBase<T extends ProjectImportBuilder> e
         try {
           projectToOpen = ProjectManagerEx.getInstanceEx().loadProject(pathToOpen);
         }
-        catch (IOException e) {
-          return null;
-        }
-        catch (JDOMException e) {
-          return null;
-        }
-        catch (InvalidDataException e) {
+        catch (Exception e) {
           return null;
         }
       }
       else {
         projectToOpen = ProjectManagerEx.getInstanceEx().newProject(wizardContext.getProjectName(), pathToOpen, true, false);
+      }
+      if (projectToOpen == null) return null;
 
-        if (projectToOpen == null || !getBuilder().validate(projectToClose, projectToOpen)) {
+      if (importToProject) {
+        if (!getBuilder().validate(projectToClose, projectToOpen)) {
           return null;
         }
 
         projectToOpen.save();
 
+        ApplicationManager.getApplication().runWriteAction(() -> {
+          Sdk jdk1 = wizardContext.getProjectJdk();
+          if (jdk1 != null) {
+            NewProjectUtil.applyJdkToProject(projectToOpen, jdk1);
+          }
 
-        ApplicationManager.getApplication().runWriteAction(new Runnable() {
-          public void run() {
-            Sdk jdk = wizardContext.getProjectJdk();
-            if (jdk != null) NewProjectUtil.applyJdkToProject(projectToOpen, jdk);
-
-            final String projectDirPath = wizardContext.getProjectFileDirectory();
-            CompilerProjectExtension.getInstance(projectToOpen).setCompilerOutputUrl(getUrl(
-              StringUtil.endsWithChar(projectDirPath, '/') ? projectDirPath + "classes" : projectDirPath + "/classes"));
+          String projectDirPath = wizardContext.getProjectFileDirectory();
+          String path = projectDirPath + (StringUtil.endsWithChar(projectDirPath, '/') ? "classes" : "/classes");
+          CompilerProjectExtension extension = CompilerProjectExtension.getInstance(projectToOpen);
+          if (extension != null) {
+            extension.setCompilerOutputUrl(getUrl(path));
           }
         });
 
@@ -246,9 +245,7 @@ public abstract class ProjectOpenProcessorBase<T extends ProjectImportBuilder> e
     try {
       path = FileUtil.resolveShortWindowsName(path);
     }
-    catch (IOException e) {
-      //file doesn't exist
-    }
-    return VfsUtil.pathToUrl(FileUtil.toSystemIndependentName(path));
+    catch (IOException ignored) { }
+    return VfsUtilCore.pathToUrl(FileUtil.toSystemIndependentName(path));
   }
 }

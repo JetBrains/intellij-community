@@ -16,10 +16,7 @@
 package com.intellij.testFramework;
 
 import com.intellij.ide.DataManager;
-import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.*;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -27,12 +24,37 @@ import org.jetbrains.annotations.NotNull;
  */
 public class TestActionEvent extends AnActionEvent {
 
+  public boolean IsFromActionToolbar;
+  public boolean IsFromContextMenu;
+
   public TestActionEvent(@NotNull DataContext dataContext,
                          @NotNull AnAction action) {
-    super(null, dataContext, "", action.getTemplatePresentation(), ActionManager.getInstance(), 0);
+    super(null, dataContext, "", action.getTemplatePresentation().clone(), ActionManager.getInstance(), 0);
   }
 
   public TestActionEvent(@NotNull AnAction action) {
     this(DataManager.getInstance().getDataContext(), action);
+  }
+
+  public TestActionEvent(Presentation presentation) {
+    super(null, DataManager.getInstance().getDataContext(), "", presentation, ActionManager.getInstance(), 0);
+  }
+
+  public TestActionEvent(DataContext context) {
+    super(null, context, "", new Presentation(), ActionManager.getInstance(), 0);
+  }
+
+  public TestActionEvent() {
+    super(null, DataManager.getInstance().getDataContext(), "", new Presentation(), ActionManager.getInstance(), 0);
+  }
+
+  @Override
+  public boolean isFromActionToolbar() {
+    return IsFromActionToolbar;
+  }
+
+  @Override
+  public boolean isFromContextMenu() {
+    return IsFromContextMenu;
   }
 }

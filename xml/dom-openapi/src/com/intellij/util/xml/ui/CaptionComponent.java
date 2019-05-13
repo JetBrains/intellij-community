@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,9 +23,6 @@ import com.intellij.util.xml.DomElement;
 import javax.swing.*;
 import java.awt.*;
 
-/**
- * User: Sergey.Vasiliev
- */
 public class CaptionComponent extends JPanel implements Committable, Highlightable {
   private JPanel myRootPanel;
   private JLabel myCaptionLabel;
@@ -63,6 +60,7 @@ public class CaptionComponent extends JPanel implements Committable, Highlightab
     }
   }
 
+  @Override
   public void updateHighlighting() {
     CommittableUtil.updateHighlighting(myCommittableErrorPanel);
   }
@@ -105,13 +103,16 @@ public class CaptionComponent extends JPanel implements Committable, Highlightab
     updateBorder();
   }
 
+  @Override
   public final void commit() {
   }
 
+  @Override
   public void reset() {
     if (myCommittableErrorPanel != null) myCommittableErrorPanel.reset();
   }
 
+  @Override
   public final void dispose() {
   }
 

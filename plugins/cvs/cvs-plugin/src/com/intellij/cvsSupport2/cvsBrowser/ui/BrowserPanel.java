@@ -1,21 +1,8 @@
-/*
- * Copyright 2000-2011 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.cvsSupport2.cvsBrowser.ui;
 
 import com.intellij.CvsBundle;
+import com.intellij.cvsSupport2.CvsFilePath;
 import com.intellij.cvsSupport2.CvsVcs2;
 import com.intellij.cvsSupport2.actions.cvsContext.CvsContextAdapter;
 import com.intellij.cvsSupport2.actions.cvsContext.CvsLightweightFile;
@@ -33,12 +20,14 @@ import com.intellij.icons.AllIcons;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.AbstractVcsHelper;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.annotate.FileAnnotation;
+import com.intellij.openapi.vcs.history.VcsHistoryProvider;
 import com.intellij.openapi.vcs.vfs.VcsVirtualFile;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
@@ -47,6 +36,7 @@ import com.intellij.ui.TreeUIHelper;
 import com.intellij.util.Consumer;
 import com.intellij.util.OpenSourceUtil;
 import com.intellij.util.ui.tree.TreeUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -87,39 +77,39 @@ public class BrowserPanel extends JPanel implements DataProvider, CvsTabbedWindo
     DefaultActionGroup result = new DefaultActionGroup();
     result.add(new EditSourceAction());
     result.add(new MyCheckoutAction());
-    //TODO lesya
-    //result.add(new ShowLightCvsFileHistoryAction());
+    result.add(new MyHistoryAction());
     result.add(new MyAnnotateAction());
     result.add(new BrowseChangesAction());
     return result;
   }
 
-  private static class EditSourceAction extends AnAction {
-    public EditSourceAction() {
+  private static class EditSourceAction extends AnAction implements DumbAware {
+    EditSourceAction() {
       super(ActionsBundle.actionText("EditSource"),
             ActionsBundle.actionDescription("EditSource"),
             AllIcons.Actions.EditSource);
     }
 
-    public void actionPerformed(AnActionEvent e) {
-      final Navigatable[] navigatableArray = e.getData(PlatformDataKeys.NAVIGATABLE_ARRAY);
-      if (navigatableArray != null && navigatableArray.length > 0) {
-        OpenSourceUtil.navigate(navigatableArray);
-      }
+    @Override
+    public void actionPerformed(@NotNull AnActionEvent e) {
+      final Navigatable[] navigatableArray = e.getData(CommonDataKeys.NAVIGATABLE_ARRAY);
+      OpenSourceUtil.navigate(navigatableArray);
     }
 
-    public void update(final AnActionEvent e) {
-      final Navigatable[] navigatableArray = e.getData(PlatformDataKeys.NAVIGATABLE_ARRAY);
+    @Override
+    public void update(@NotNull final AnActionEvent e) {
+      final Navigatable[] navigatableArray = e.getData(CommonDataKeys.NAVIGATABLE_ARRAY);
       e.getPresentation().setEnabled(navigatableArray != null && navigatableArray.length > 0);
     }
   }
 
-  private class MyCheckoutAction extends AnAction {
-    public MyCheckoutAction() {
+  private class MyCheckoutAction extends AnAction implements DumbAware {
+    MyCheckoutAction() {
       super(CvsBundle.message("operation.name.check.out"), null, AllIcons.Actions.CheckOut);
     }
 
-    public void update(AnActionEvent e) {
+    @Override
+    public void update(@NotNull AnActionEvent e) {
       Presentation presentation = e.getPresentation();
       presentation.setEnabled(canPerformCheckout());
     }
@@ -129,7 +119,8 @@ public class BrowserPanel extends JPanel implements DataProvider, CvsTabbedWindo
       return (currentSelection.length == 1) && currentSelection[0].canBeCheckedOut();
     }
 
-    public void actionPerformed(AnActionEvent e) {
+    @Override
+    public void actionPerformed(@NotNull AnActionEvent e) {
       CvsElement[] cvsElements = myTree.getCurrentSelection();
 
       CvsElement selectedElement = cvsElements[0];
@@ -143,6 +134,7 @@ public class BrowserPanel extends JPanel implements DataProvider, CvsTabbedWindo
         false, CvsConfiguration.getInstance(myProject).MAKE_NEW_FILES_READONLY, VcsConfiguration.getInstance(myProject).getCheckoutOption());
 
       CvsContextAdapter context = new CvsContextAdapter() {
+        @Override
         public Project getProject() {
           return myProject;
         }
@@ -153,12 +145,43 @@ public class BrowserPanel extends JPanel implements DataProvider, CvsTabbedWindo
     }
   }
 
-  private class MyAnnotateAction extends AnAction {
-    public MyAnnotateAction() {
+  private class MyHistoryAction extends AnAction implements DumbAware {
+    MyHistoryAction() {
+      super(CvsBundle.message("operation.name.show.file.history"),
+            CvsBundle.message("operation.name.show.file.history.description"), AllIcons.Vcs.History);
+    }
+
+    @Override
+    public void update(@NotNull AnActionEvent e) {
+      Presentation presentation = e.getPresentation();
+      presentation.setVisible(true);
+      CvsLightweightFile cvsLightFile = getCvsLightFile();
+      presentation.setEnabled(cvsLightFile != null && cvsLightFile.getCvsFile() != null);
+    }
+
+    @Override
+    public void actionPerformed(@NotNull AnActionEvent e) {
+      final CvsElement[] currentSelection = myTree.getCurrentSelection();
+      if (currentSelection.length != 1) return;
+      final CvsElement cvsElement = currentSelection[0];
+      final VirtualFile virtualFile = cvsElement.getVirtualFile();
+      if (virtualFile == null || virtualFile.isDirectory()) return;
+      final CvsVcs2 vcs = CvsVcs2.getInstance(myProject);
+      final VcsHistoryProvider historyProvider = vcs.getVcsHistoryProvider();
+      final String moduleName = cvsElement.getElementPath();
+      final CvsRepositoryLocation location = new CvsRepositoryLocation(null, myCvsRootConfiguration, moduleName);
+      CvsFilePath filePath = new CvsFilePath(virtualFile.getPath(), virtualFile.isDirectory(), location);
+      AbstractVcsHelper.getInstance(myProject).showFileHistory(historyProvider, filePath, vcs);
+    }
+  }
+
+  private class MyAnnotateAction extends AnAction implements DumbAware {
+    MyAnnotateAction() {
       super(CvsBundle.message("operation.name.annotate"), null, AllIcons.Actions.Annotate);
     }
 
-    public void update(AnActionEvent e) {
+    @Override
+    public void update(@NotNull AnActionEvent e) {
       Presentation presentation = e.getPresentation();
       presentation.setVisible(true);
       CvsLightweightFile cvsLightFile = getCvsLightFile();
@@ -170,7 +193,8 @@ public class BrowserPanel extends JPanel implements DataProvider, CvsTabbedWindo
       }
     }
 
-    public void actionPerformed(AnActionEvent e) {
+    @Override
+    public void actionPerformed(@NotNull AnActionEvent e) {
       VcsVirtualFile vcsVirtualFile = (VcsVirtualFile)getCvsVirtualFile();
       try {
         final CvsVcs2 vcs = CvsVcs2.getInstance(myProject);
@@ -184,12 +208,13 @@ public class BrowserPanel extends JPanel implements DataProvider, CvsTabbedWindo
     }
   }
 
-  private class BrowseChangesAction extends AnAction {
-    public BrowseChangesAction() {
-      super(VcsBundle.message("browse.changes.action"), "", AllIcons.Actions.ShowChangesOnly);
+  private class BrowseChangesAction extends AnAction implements DumbAware {
+    BrowseChangesAction() {
+      super(VcsBundle.message("browse.changes.action"), "", AllIcons.Actions.Preview);
     }
 
-    public void actionPerformed(AnActionEvent e) {
+    @Override
+    public void actionPerformed(@NotNull AnActionEvent e) {
       CvsElement[] currentSelection = myTree.getCurrentSelection();
       assert currentSelection.length == 1;
       final String moduleName = currentSelection [0].getElementPath();
@@ -199,19 +224,21 @@ public class BrowserPanel extends JPanel implements DataProvider, CvsTabbedWindo
                                                                   VcsBundle.message("browse.changes.scope", moduleName), BrowserPanel.this);
     }
 
-    public void update(final AnActionEvent e) {
+    @Override
+    public void update(@NotNull final AnActionEvent e) {
       CvsElement[] currentSelection = myTree.getCurrentSelection();
       e.getPresentation().setEnabled(currentSelection.length == 1);
     }
   }
 
-  public Object getData(String dataId) {
-    if (PlatformDataKeys.NAVIGATABLE.is(dataId)) {
+  @Override
+  public Object getData(@NotNull String dataId) {
+    if (CommonDataKeys.NAVIGATABLE.is(dataId)) {
       VirtualFile cvsVirtualFile = getCvsVirtualFile();
       if (cvsVirtualFile == null || !cvsVirtualFile.isValid()) return null;
       return new OpenFileDescriptor(myProject, cvsVirtualFile);
     }
-    else if (PlatformDataKeys.PROJECT.is(dataId)) {
+    else if (CommonDataKeys.PROJECT.is(dataId)) {
       return myProject;
     }
     else {
@@ -236,6 +263,7 @@ public class BrowserPanel extends JPanel implements DataProvider, CvsTabbedWindo
     return new CvsLightweightFile(currentSelection[0].getCvsLightFile(), null);
   }
 
+  @Override
   public void deactivated() {
     myTree.deactivated();
   }

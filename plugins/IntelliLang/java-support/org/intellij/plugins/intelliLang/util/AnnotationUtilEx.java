@@ -19,10 +19,10 @@ import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiConstantEvaluationHelperImpl;
-import com.intellij.psi.search.searches.SuperMethodsSearch;
-import com.intellij.psi.util.MethodSignatureBackedByPsiMethod;
+import com.intellij.psi.util.CachedValueProvider;
+import com.intellij.psi.util.CachedValuesManager;
+import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -41,10 +41,10 @@ public class AnnotationUtilEx {
   }
 
   /**
-   * @see AnnotationUtilEx#getAnnotatedElementFor(com.intellij.psi.PsiElement, LookupType)
+   * @see AnnotationUtilEx#getAnnotatedElementFor(PsiElement, LookupType)
    */
   public enum LookupType {
-    PREFER_CONTEXT, PREFER_DECLARATION, CONTEXT_ONLY, DECLRARATION_ONLY
+    PREFER_CONTEXT, PREFER_DECLARATION, CONTEXT_ONLY, DECLARATION_ONLY
   }
 
   /**
@@ -55,13 +55,13 @@ public class AnnotationUtilEx {
   @Nullable
   public static PsiModifierListOwner getAnnotatedElementFor(@Nullable PsiElement element, LookupType type) {
     while (element != null) {
-      if (type == LookupType.PREFER_DECLARATION || type == LookupType.DECLRARATION_ONLY) {
+      if (type == LookupType.PREFER_DECLARATION || type == LookupType.DECLARATION_ONLY) {
         if (element instanceof PsiReferenceExpression) {
           final PsiElement e = ((PsiReferenceExpression)element).resolve();
           if (e instanceof PsiModifierListOwner) {
             return (PsiModifierListOwner)e;
           }
-          if (type == LookupType.DECLRARATION_ONLY) {
+          if (type == LookupType.DECLARATION_ONLY) {
             return null;
           }
         }
@@ -105,7 +105,7 @@ public class AnnotationUtilEx {
 
       // If no annotation has been found through the usage context, check if the element
       // (i.e. the element the reference refers to) is annotated itself
-      if (type != LookupType.DECLRARATION_ONLY) {
+      if (type != LookupType.DECLARATION_ONLY) {
         if (element instanceof PsiReferenceExpression) {
           final PsiElement e = ((PsiReferenceExpression)element).resolve();
           if (e instanceof PsiModifierListOwner) {
@@ -119,8 +119,8 @@ public class AnnotationUtilEx {
   }
 
   public interface AnnotatedElementVisitor {
-    boolean visitMethodParameter(PsiExpression expression, PsiCallExpression psiCallExpression);
-    boolean visitMethodReturnStatement(PsiReturnStatement parent, PsiMethod method);
+    boolean visitMethodParameter(PsiExpression expression, PsiCall psiCallExpression);
+    boolean visitMethodReturnStatement(PsiElement source, PsiMethod method);
     boolean visitVariable(PsiVariable variable);
     boolean visitAnnotationParameter(PsiNameValuePair nameValuePair, PsiAnnotation psiAnnotation);
     boolean visitReference(PsiReferenceExpression expression);
@@ -137,6 +137,7 @@ public class AnnotationUtilEx {
     final PsiElement parent = element.getParent();
 
     if (element instanceof PsiReferenceExpression) {
+      if (parent instanceof PsiReferenceExpression) return false; // skip qualified references
       if (!visitor.visitReference((PsiReferenceExpression)element)) return false;
     }
     else if (element instanceof PsiNameValuePair && parent != null && parent.getParent() instanceof PsiAnnotation) {
@@ -155,10 +156,17 @@ public class AnnotationUtilEx {
     else if (parent instanceof PsiConditionalExpression && ((PsiConditionalExpression)parent).getCondition() == element) {
       return false;
     }
-    else if (parent instanceof PsiReturnStatement) {
-      final PsiMethod m = PsiTreeUtil.getParentOfType(parent, PsiMethod.class);
+    else if (parent instanceof PsiFunctionalExpression) {
+      PsiMethod m = LambdaUtil.getFunctionalInterfaceMethod(parent);
       if (m != null) {
-        if (!visitor.visitMethodReturnStatement((PsiReturnStatement)parent, m)) return false;
+        if (!visitor.visitMethodReturnStatement(element, m)) return false;
+      }
+    }
+    else if (parent instanceof PsiReturnStatement) {
+      PsiElement e = PsiTreeUtil.getParentOfType(parent, PsiMethod.class, PsiFunctionalExpression.class);
+      PsiMethod m = e == null ? null : e instanceof PsiMethod ? (PsiMethod)e : LambdaUtil.getFunctionalInterfaceMethod(e);
+      if (m != null) {
+        if (!visitor.visitMethodReturnStatement(parent, m)) return false;
       }
     }
     else if (parent instanceof PsiVariable) {
@@ -170,8 +178,8 @@ public class AnnotationUtilEx {
     else if (parent instanceof PsiArrayInitializerMemberValue || parent instanceof PsiNameValuePair) {
       return true;
     }
-    else if (parent instanceof PsiExpressionList && parent.getParent() instanceof PsiCallExpression) {
-      return visitor.visitMethodParameter((PsiExpression)element, (PsiCallExpression)parent.getParent());
+    else if (parent instanceof PsiExpressionList && parent.getParent() instanceof PsiCall) {
+      return visitor.visitMethodParameter((PsiExpression)element, (PsiCall)parent.getParent());
     }
     return true;
   }
@@ -180,13 +188,13 @@ public class AnnotationUtilEx {
    * Utility method to obtain annotations of a specific type from the supplied PsiModifierListOwner.
    * For optimization reasons, this method only looks at elements of type java.lang.String.
    * <p/>
-   * The parameter <code>allowIndirect</code> determines if the method should look for indirect annotations, i.e.
+   * The parameter {@code allowIndirect} determines if the method should look for indirect annotations, i.e.
    * annotations which have themselves been annotated by the supplied annotation name. Currently, this only allows
    * one level of indirection and returns an array of [base-annotation, indirect annotation]
    * <p/>
-   * The <code>annotationName</code> parameter is a pair of the target annotation class' fully qualified name as a
+   * The {@code annotationName} parameter is a pair of the target annotation class' fully qualified name as a
    * String and as a Set. This is done for performance reasons because the Set is required by the
-   * {@link com.intellij.codeInsight.AnnotationUtil} utility class and allows to avoid unecessary object constructions.
+   * {@link AnnotationUtil} utility class and allows to avoid unnecessary object constructions.
    */
   @NotNull
   public static PsiAnnotation[] getAnnotationFrom(PsiModifierListOwner owner,
@@ -195,6 +203,23 @@ public class AnnotationUtilEx {
                                                   boolean inHierarchy) {
     if (!PsiUtilEx.isLanguageAnnotationTarget(owner)) return PsiAnnotation.EMPTY_ARRAY;
 
+    return getAnnotationsFromImpl(owner, annotationName, allowIndirect, inHierarchy);
+  }
+
+
+  /**
+   * The parameter {@code allowIndirect} determines if the method should look for indirect annotations, i.e.
+   * annotations which have themselves been annotated by the supplied annotation name. Currently, this only allows
+   * one level of indirection and returns an array of [base-annotation, indirect annotation]
+   * <p/>
+   * The {@code annotationName} parameter is a pair of the target annotation class' fully qualified name as a
+   * String and as a Set. This is done for performance reasons because the Set is required by the
+   * {@link AnnotationUtil} utility class and allows to avoid unnecessary object constructions.
+   */
+
+  public static PsiAnnotation[] getAnnotationsFromImpl(PsiModifierListOwner owner,
+                                                        Pair<String, ? extends Set<String>> annotationName,
+                                                        boolean allowIndirect, boolean inHierarchy) {
     final PsiAnnotation directAnnotation = inHierarchy?
       AnnotationUtil.findAnnotationInHierarchy(owner, annotationName.second) :
       AnnotationUtil.findAnnotation(owner, annotationName.second);
@@ -225,7 +250,7 @@ public class AnnotationUtilEx {
   }
 
   /**
-   * Calculates the value of the annotation's attribute referenced by the <code>attr</code> parameter by trying to
+   * Calculates the value of the annotation's attribute referenced by the {@code attr} parameter by trying to
    * find the attribute in the supplied list of annotations and calculating the constant value for the first attribute
    * it finds.
    */
@@ -241,66 +266,46 @@ public class AnnotationUtilEx {
   @Nullable
   public static String calcAnnotationValue(@NotNull PsiAnnotation annotation, @NonNls String attr) {
     PsiElement value = annotation.findAttributeValue(attr);
-    if (value instanceof PsiExpression) {
-      Object o = CONSTANT_EVALUATION_HELPER.computeConstantExpression(value);
-      if (o instanceof String) {
-        return (String)o;
-      }
+    Object o = CONSTANT_EVALUATION_HELPER.computeConstantExpression(value);
+    if (o instanceof String) {
+      return (String)o;
     }
     return null;
   }
 
   /**
-   * Returns all annotations for <code>listOwner</code>, possibly walking up the method hierarchy.
+   * Returns all annotations for {@code listOwner}, possibly walking up the method hierarchy.
    *
-   * @see com.intellij.codeInsight.AnnotationUtil#isAnnotated(com.intellij.psi.PsiModifierListOwner, java.lang.String, boolean)
+   * @see AnnotationUtil#getSuperAnnotationOwners(PsiModifierListOwner)
    */
-  private static PsiAnnotation[] getAnnotations(@NotNull PsiModifierListOwner listOwner, boolean inHierarchy) {
+  private static PsiAnnotation[] getAnnotations(@NotNull final PsiModifierListOwner listOwner, final boolean inHierarchy) {
     final PsiModifierList modifierList = listOwner.getModifierList();
-    if (modifierList == null) {
-      return PsiAnnotation.EMPTY_ARRAY;
-    }
     if (!inHierarchy) {
-      return modifierList.getAnnotations();
+      return modifierList == null ? PsiAnnotation.EMPTY_ARRAY : modifierList.getAnnotations();
     }
+    return CachedValuesManager.getCachedValue(listOwner, () -> CachedValueProvider.Result
+      .create(getHierarchyAnnotations(listOwner), PsiModificationTracker.MODIFICATION_COUNT));
+  }
+
+  private static PsiAnnotation[] getHierarchyAnnotations(PsiModifierListOwner listOwner) {
     final Set<PsiAnnotation> all = new HashSet<PsiAnnotation>() {
+      @Override
       public boolean add(PsiAnnotation o) {
         // don't overwrite "higher level" annotations
         return !contains(o) && super.add(o);
       }
     };
-    if (listOwner instanceof PsiMethod) {
+
+    PsiModifierList modifierList = listOwner.getModifierList();
+    if (modifierList != null) {
       ContainerUtil.addAll(all, modifierList.getAnnotations());
-      SuperMethodsSearch.search((PsiMethod)listOwner, null, true, true).forEach(new Processor<MethodSignatureBackedByPsiMethod>() {
-        public boolean process(final MethodSignatureBackedByPsiMethod superMethod) {
-          ContainerUtil.addAll(all, superMethod.getMethod().getModifierList().getAnnotations());
-          return true;
-        }
-      });
-      return all.toArray(new PsiAnnotation[all.size()]);
     }
-    if (listOwner instanceof PsiParameter) {
-      PsiParameter parameter = (PsiParameter)listOwner;
-      PsiElement declarationScope = parameter.getDeclarationScope();
-      PsiParameterList parameterList;
-      if (declarationScope instanceof PsiMethod && parameter.getParent() == (parameterList = ((PsiMethod)declarationScope).getParameterList())) {
-        PsiMethod method = (PsiMethod)declarationScope;
-        final int parameterIndex = parameterList.getParameterIndex(parameter);
+    for (PsiModifierListOwner superOwner : AnnotationUtil.getSuperAnnotationOwners(listOwner)) {
+      modifierList = superOwner.getModifierList();
+      if (modifierList != null) {
         ContainerUtil.addAll(all, modifierList.getAnnotations());
-        SuperMethodsSearch.search(method, null, true, true).forEach(new Processor<MethodSignatureBackedByPsiMethod>() {
-          public boolean process(final MethodSignatureBackedByPsiMethod superMethod) {
-            PsiParameter superParameter = superMethod.getMethod().getParameterList().getParameters()[parameterIndex];
-            PsiModifierList modifierList = superParameter.getModifierList();
-            if (modifierList != null) {
-              ContainerUtil.addAll(all, modifierList.getAnnotations());
-            }
-            return true;
-          }
-        });
-        return all.toArray(new PsiAnnotation[all.size()]);
       }
     }
-    return modifierList.getAnnotations();
+    return all.isEmpty() ? PsiAnnotation.EMPTY_ARRAY : all.toArray(PsiAnnotation.EMPTY_ARRAY);
   }
-
 }

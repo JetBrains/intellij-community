@@ -11,8 +11,8 @@ public class Test {
     return null;
   }
 
-  void fo<caret>o() {
-    //noinspection unchecked
+  void foo() {
+    //noinspection unc<caret>hecked
     foo(new ArrayList<String>()).addAll(foo1(new ArrayList<String>()));
   }
 }

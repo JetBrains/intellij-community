@@ -17,6 +17,7 @@ package org.intellij.images.thumbnail.impl;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Disposer;
 import org.intellij.images.thumbnail.ThumbnailManager;
 import org.intellij.images.thumbnail.ThumbnailView;
 import org.jetbrains.annotations.NotNull;
@@ -30,10 +31,11 @@ final class ThumbnailManagerImpl extends ThumbnailManager implements Disposable 
   private final Project project;
   private ThumbnailView thumbnailView;
 
-  public ThumbnailManagerImpl(Project project) {
+  ThumbnailManagerImpl(Project project) {
     this.project = project;
   }
 
+  @Override
   @NotNull
   public final ThumbnailView getThumbnailView() {
     if (thumbnailView == null) {
@@ -42,9 +44,10 @@ final class ThumbnailManagerImpl extends ThumbnailManager implements Disposable 
     return thumbnailView;
   }
 
+  @Override
   public void dispose() {
     if (thumbnailView != null) {
-      thumbnailView.dispose();
+      Disposer.dispose(thumbnailView);
       thumbnailView = null;
     }
   }

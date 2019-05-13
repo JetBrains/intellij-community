@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,7 +24,9 @@ import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
 
@@ -32,7 +34,7 @@ import java.util.Collections;
  * @author anna
  * @author Konstantin Bulenkov
  */
-public class SendToFavoritesAction extends AnAction {
+public class SendToFavoritesAction extends AnAction implements DumbAware {
   private final String toName;
 
   public SendToFavoritesAction(String name) {
@@ -40,7 +42,8 @@ public class SendToFavoritesAction extends AnAction {
     toName = name;
   }
 
-  public void actionPerformed(AnActionEvent e) {
+  @Override
+  public void actionPerformed(@NotNull AnActionEvent e) {
     final DataContext dataContext = e.getDataContext();
     Project project = e.getProject();
     final FavoritesManager favoritesManager = FavoritesManager.getInstance(project);
@@ -50,7 +53,7 @@ public class SendToFavoritesAction extends AnAction {
 
     for (FavoritesTreeNodeDescriptor root : roots) {
       FavoritesTreeNodeDescriptor listNode = root.getFavoritesRoot();
-      if (listNode != null && listNode.getElement() instanceof FavoritesListNode) {
+      if (listNode != null && listNode !=root && listNode.getElement() instanceof FavoritesListNode) {
         doSend(favoritesManager, new FavoritesTreeNodeDescriptor[]{root}, listNode.getElement().getName());
       }
     }
@@ -69,11 +72,12 @@ public class SendToFavoritesAction extends AnAction {
   }
 
 
-  public void update(AnActionEvent e) {
+  @Override
+  public void update(@NotNull AnActionEvent e) {
     e.getPresentation().setEnabled(isEnabled(e));
   }
 
-  static boolean isEnabled(AnActionEvent e) {
+  static boolean isEnabled(@NotNull AnActionEvent e) {
     Project project = e.getProject();
     if (project == null) {
       return false;
@@ -81,6 +85,11 @@ public class SendToFavoritesAction extends AnAction {
     FavoritesTreeNodeDescriptor[] roots = FavoritesTreeViewPanel.CONTEXT_FAVORITES_ROOTS_DATA_KEY.getData(e.getDataContext());
     if (roots == null || roots.length == 0) {
       return false;
+    }
+    for (FavoritesTreeNodeDescriptor root : roots) {
+      FavoritesTreeNodeDescriptor listNode = root.getFavoritesRoot();
+      if (listNode == null || listNode ==root || !(listNode.getElement() instanceof FavoritesListNode))
+        return false;
     }
     return true;
   }

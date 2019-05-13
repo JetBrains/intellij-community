@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,10 +14,6 @@
  * limitations under the License.
  */
 
-/**
- * created at Nov 21, 2001
- * @author Jeka
- */
 package com.intellij.refactoring.move.moveMembers;
 
 import com.intellij.openapi.project.Project;
@@ -53,7 +49,7 @@ public class MoveMembersImpl {
       return;
     }
     
-    final Set<PsiMember> preselectMembers = new HashSet<PsiMember>();
+    final Set<PsiMember> preselectMembers = new HashSet<>();
     for (PsiElement element : elements) {
       if (element instanceof PsiMember && !sourceClass.equals(((PsiMember)element).getContainingClass())) {
         String message = RefactoringBundle.getCannotRefactorMessage(

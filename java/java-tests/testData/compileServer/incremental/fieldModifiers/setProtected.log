@@ -1,12 +1,12 @@
 Cleaning output files:
-out/production/SetProtected/A.class
+out/production/SetProtected/qqq/A.class
 End of files
 Compiling files:
-src/A.java
+src/qqq/A.java
 End of files
 Cleaning output files:
-out/production/SetProtected/B.class
+out/production/SetProtected/ppp/D.class
 End of files
 Compiling files:
-src/B.java
+src/ppp/D.java
 End of files

@@ -36,18 +36,20 @@ import java.util.List;
 class RncBlock implements Block {
   private final ASTNode myNode;
 
-  public RncBlock(ASTNode element) {
+  RncBlock(ASTNode element) {
     myNode = element;
   }
 
+  @Override
   @NotNull
   public TextRange getTextRange() {
     return myNode.getTextRange();
   }
 
+  @Override
   @NotNull
   public List<Block> getSubBlocks() {
-    final List<Block> list = new ArrayList<Block>();
+    final List<Block> list = new ArrayList<>();
     ASTNode node = myNode.getFirstChildNode();
     while (node != null) {
       if (!RncTokenTypes.WHITESPACE.contains(node.getElementType()) && node.getTextLength() > 0) {
@@ -58,14 +60,17 @@ class RncBlock implements Block {
     return list;
   }
 
+  @Override
   @Nullable
   public Wrap getWrap() {
     // TODO
     return null;
   }
 
+  @Override
   @Nullable
   public Indent getIndent() {
+    if (myNode.getTreeParent() == null) return null;
     if (isTopLevel()) {
       return Indent.getAbsoluteNoneIndent();
     } else if (myNode.getTreeParent().getPsi() instanceof RncGrammar && !RncTokenTypes.BRACES.contains(myNode.getElementType())) {
@@ -82,12 +87,14 @@ class RncBlock implements Block {
             parent instanceof RncGrammar && parent.getParent() instanceof RncDocument;
   }
 
+  @Override
   @Nullable
   public Alignment getAlignment() {
     // TODO
     return null;
   }
 
+  @Override
   @Nullable
   public Spacing getSpacing(Block child1, @NotNull Block child2) {
     if (child1 == null) {
@@ -113,16 +120,19 @@ class RncBlock implements Block {
     return Spacing.createSpacing(0, Integer.MAX_VALUE, 1, true, 100);
   }
 
+  @Override
   @NotNull
   public ChildAttributes getChildAttributes(int newChildIndex) {
     return new ChildAttributes(null, null);
   }
 
+  @Override
   public boolean isIncomplete() {
     // TODO
     return false;
   }
 
+  @Override
   public boolean isLeaf() {
     // TODO
     return false;

@@ -17,39 +17,41 @@ package org.intellij.lang.regexp.psi.impl;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.tree.IElementType;
-
-import org.jetbrains.annotations.NotNull;
-
-import org.intellij.lang.regexp.psi.RegExpElementVisitor;
-import org.intellij.lang.regexp.psi.RegExpBoundary;
 import org.intellij.lang.regexp.RegExpTT;
+import org.intellij.lang.regexp.psi.RegExpBoundary;
+import org.intellij.lang.regexp.psi.RegExpElementVisitor;
+import org.jetbrains.annotations.NotNull;
 
 public class RegExpBoundaryImpl extends RegExpElementImpl implements RegExpBoundary {
     public RegExpBoundaryImpl(ASTNode astNode) {
         super(astNode);
     }
 
+    @Override
     @NotNull
     public Type getType() {
-        final IElementType type = getNode().getElementType();
+        final ASTNode child = getNode().getFirstChildNode();
+        assert child != null;
+        final IElementType type = child.getElementType();
         if (type == RegExpTT.CARET) {
             return Type.LINE_START;
         } else if (type == RegExpTT.DOLLAR) {
             return Type.LINE_END;
-        } else {
-            assert type == RegExpTT.BOUNDARY;
+        } else if (type == RegExpTT.BOUNDARY){
             final String s = getUnescapedText();
             if (s.equals("\\b")) {
                 return Type.WORD;
-            } else if (s.equals("\\B))")) {
+            } else if (s.equals("\\b{g}")) {
+                return Type.UNICODE_EXTENDED_GRAPHEME;
+            } else if (s.equals("\\B")) {
                 return Type.NON_WORD;
-            } else if (s.equals("\\A))")) {
+            } else if (s.equals("\\A")) {
                 return Type.BEGIN;
-            } else if (s.equals("\\Z))")) {
+            } else if (s.equals("\\Z")) {
                 return Type.END_NO_LINE_TERM;
-            } else if (s.equals("\\z))")) {
+            } else if (s.equals("\\z")) {
                 return Type.END;
-            } else if (s.equals("\\G))")) {
+            } else if (s.equals("\\G")) {
                 return Type.PREVIOUS_MATCH;
             }
         }
@@ -57,6 +59,7 @@ public class RegExpBoundaryImpl extends RegExpElementImpl implements RegExpBound
         return null;
     }
 
+    @Override
     public void accept(RegExpElementVisitor visitor) {
         visitor.visitRegExpBoundary(this);
     }

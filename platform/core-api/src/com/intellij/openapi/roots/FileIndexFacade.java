@@ -15,13 +15,18 @@
  */
 package com.intellij.openapi.roots;
 
+import com.intellij.injected.editor.VirtualFileWindow;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.UnloadedModuleDescription;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.search.GlobalSearchScope;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.Collection;
 
 /**
  * @author yole
@@ -37,28 +42,49 @@ public abstract class FileIndexFacade {
     return ServiceManager.getService(project, FileIndexFacade.class);
   }
 
-  public abstract boolean isInContent(VirtualFile file);
-  public abstract boolean isInSource(VirtualFile file);
-  public abstract boolean isInSourceContent(VirtualFile file);
-  public abstract boolean isInLibraryClasses(VirtualFile file);
+  public abstract boolean isInContent(@NotNull VirtualFile file);
+  public abstract boolean isInSource(@NotNull VirtualFile file);
+  public abstract boolean isInSourceContent(@NotNull VirtualFile file);
+  public abstract boolean isInLibraryClasses(@NotNull VirtualFile file);
 
-  public abstract boolean isInLibrarySource(VirtualFile file);
-  public abstract boolean isExcludedFile(VirtualFile file);
+  public abstract boolean isInLibrarySource(@NotNull VirtualFile file);
+  public abstract boolean isExcludedFile(@NotNull VirtualFile file);
+  public abstract boolean isUnderIgnored(@NotNull VirtualFile file);
 
   @Nullable
-  public abstract Module getModuleForFile(VirtualFile file);
+  public abstract Module getModuleForFile(@NotNull VirtualFile file);
 
   /**
-   * Checks if <code>file</code> is an ancestor of <code>baseDir</code> and none of the files
+   * Checks if {@code file} is an ancestor of {@code baseDir} and none of the files
    * between them are excluded from the project.
    *
    * @param baseDir the parent directory to check for ancestry.
    * @param child the child directory or file to check for ancestry.
    * @return true if it's a valid ancestor, false otherwise.
    */
-  public abstract boolean isValidAncestor(final VirtualFile baseDir, final VirtualFile child);
+  public abstract boolean isValidAncestor(@NotNull VirtualFile baseDir, @NotNull VirtualFile child);
 
   public boolean shouldBeFound(GlobalSearchScope scope, VirtualFile virtualFile) {
-    return (scope.isSearchOutsideRootModel() || isInContent(virtualFile) || isInLibrarySource(virtualFile)) && !virtualFile.getFileType().isBinary();
+    return scope.isSearchOutsideRootModel() || isInContent(virtualFile) || isInLibrarySource(virtualFile);
+  }
+
+  @NotNull public abstract ModificationTracker getRootModificationTracker();
+
+  /**
+   * @return descriptions of all modules which are unloaded from the project
+   * @see UnloadedModuleDescription
+   */
+  @NotNull
+  public abstract Collection<UnloadedModuleDescription> getUnloadedModuleDescriptions();
+
+  /**
+   * @return true if the {@code file} is {@link #isInContent} except when it's in {@link #isInLibraryClasses} and not in {@link #isInLibrarySource}
+   */
+  public boolean isInProjectScope(@NotNull VirtualFile file) {
+    if (file instanceof VirtualFileWindow) return true;
+
+    if (isInLibraryClasses(file) && !isInSourceContent(file)) return false;
+
+    return isInContent(file);
   }
 }

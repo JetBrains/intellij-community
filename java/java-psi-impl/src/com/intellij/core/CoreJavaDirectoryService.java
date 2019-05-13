@@ -25,6 +25,7 @@ import com.intellij.psi.impl.compiled.ClsFileImpl;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -41,28 +42,38 @@ public class CoreJavaDirectoryService extends JavaDirectoryService {
     return ServiceManager.getService(dir.getProject(), CoreJavaFileManager.class).getPackage(dir);
   }
 
+  @Nullable
+  @Override
+  public PsiPackage getPackageInSources(@NotNull PsiDirectory dir) {
+    return getPackage(dir);
+  }
+
   @NotNull
   @Override
   public PsiClass[] getClasses(@NotNull PsiDirectory dir) {
     LOG.assertTrue(dir.isValid());
+    return getPsiClasses(dir, dir.getFiles());
+  }
 
+  @NotNull
+  public static PsiClass[] getPsiClasses(@NotNull PsiDirectory dir, PsiFile[] psiFiles) {
     FileIndexFacade index = FileIndexFacade.getInstance(dir.getProject());
     VirtualFile virtualDir = dir.getVirtualFile();
     boolean onlyCompiled = index.isInLibraryClasses(virtualDir) && !index.isInSourceContent(virtualDir);
 
     List<PsiClass> classes = null;
-    for (PsiFile file : dir.getFiles()) {
+    for (PsiFile file : psiFiles) {
       if (onlyCompiled && !(file instanceof ClsFileImpl)) {
         continue;
       }
       if (file instanceof PsiClassOwner && file.getViewProvider().getLanguages().size() == 1) {
         PsiClass[] psiClasses = ((PsiClassOwner)file).getClasses();
         if (psiClasses.length == 0) continue;
-        if (classes == null) classes = new ArrayList<PsiClass>();
+        if (classes == null) classes = new ArrayList<>();
         ContainerUtil.addAll(classes, psiClasses);
       }
     }
-    return classes == null ? PsiClass.EMPTY_ARRAY : classes.toArray(new PsiClass[classes.size()]);
+    return classes == null ? PsiClass.EMPTY_ARRAY : classes.toArray(PsiClass.EMPTY_ARRAY);
   }
 
   @NotNull

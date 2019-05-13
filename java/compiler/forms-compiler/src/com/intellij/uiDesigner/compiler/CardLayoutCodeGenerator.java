@@ -17,9 +17,9 @@ package com.intellij.uiDesigner.compiler;
 
 import com.intellij.uiDesigner.UIFormXmlConstants;
 import com.intellij.uiDesigner.lw.LwComponent;
-import org.jetbrains.asm4.Type;
-import org.jetbrains.asm4.commons.GeneratorAdapter;
-import org.jetbrains.asm4.commons.Method;
+import org.jetbrains.org.objectweb.asm.Type;
+import org.jetbrains.org.objectweb.asm.commons.GeneratorAdapter;
+import org.jetbrains.org.objectweb.asm.commons.Method;
 
 import java.awt.*;
 
@@ -34,6 +34,7 @@ public class CardLayoutCodeGenerator extends SimpleLayoutCodeGenerator {
     super(Type.getType(CardLayout.class));
   }
 
+  @Override
   public void generateComponentLayout(LwComponent lwComponent,
                                       GeneratorAdapter generator,
                                       int componentLocal,

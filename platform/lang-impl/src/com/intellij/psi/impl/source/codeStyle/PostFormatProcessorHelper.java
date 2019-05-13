@@ -15,8 +15,10 @@
  */
 package com.intellij.psi.impl.source.codeStyle;
 
+import com.intellij.lang.Language;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -26,7 +28,17 @@ import org.jetbrains.annotations.Nullable;
  */
 public class PostFormatProcessorHelper {
   private final CommonCodeStyleSettings mySettings;
+  private int myDelta;
   private TextRange myResultTextRange;
+
+  /**
+   * @deprecated Use {@link #PostFormatProcessorHelper(CommonCodeStyleSettings)} first getting correct language settings
+   * with {@link CodeStyleSettings#getCommonSettings(Language)}!
+   */
+  @Deprecated
+  public PostFormatProcessorHelper(final CodeStyleSettings rootSettings) {
+    mySettings = rootSettings.getCommonSettings("");
+  }
 
   public PostFormatProcessorHelper(final CommonCodeStyleSettings settings) {
     mySettings = settings;
@@ -38,9 +50,19 @@ public class PostFormatProcessorHelper {
 
   public void updateResultRange(final int oldTextLength, final int newTextLength) {
     if (myResultTextRange == null) return;
-
+    int thisChange = newTextLength - oldTextLength;
+    myDelta += thisChange;
     myResultTextRange = new TextRange(myResultTextRange.getStartOffset(),
-                                      myResultTextRange.getEndOffset()  - oldTextLength + newTextLength);
+                                      myResultTextRange.getEndOffset() + thisChange);
+  }
+
+  public int mapOffset(int sourceOffset) {
+    return myDelta + sourceOffset;
+  }
+
+  @NotNull
+  public TextRange mapRange(@NotNull TextRange sourceRange) {
+    return new TextRange(myDelta + sourceRange.getStartOffset(), myDelta + sourceRange.getEndOffset());
   }
 
   public boolean isElementPartlyInRange(@NotNull final PsiElement element) {
@@ -71,6 +93,7 @@ public class PostFormatProcessorHelper {
 
   public void setResultTextRange(final TextRange resultTextRange) {
     myResultTextRange = resultTextRange;
+    myDelta = 0;
   }
 
   public TextRange getResultTextRange() {

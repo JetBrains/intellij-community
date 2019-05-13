@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,6 @@
 package com.intellij.psi;
 
 import com.intellij.psi.search.GlobalSearchScope;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -25,24 +24,21 @@ import org.jetbrains.annotations.NotNull;
 public class PsiMethodReferenceType extends PsiType {
   private final PsiMethodReferenceExpression myReference;
 
-  public PsiMethodReferenceType(@NotNull final PsiMethodReferenceExpression reference) {
+  public PsiMethodReferenceType(@NotNull PsiMethodReferenceExpression reference) {
     super(PsiAnnotation.EMPTY_ARRAY);
     myReference = reference;
   }
 
+  @NotNull
   @Override
   public String getPresentableText() {
-    return "<method reference>";
+    return getCanonicalText();
   }
 
+  @NotNull
   @Override
   public String getCanonicalText() {
-    return getPresentableText();
-  }
-
-  @Override
-  public String getInternalCanonicalText() {
-    return getPresentableText();
+    return "<method reference>";
   }
 
   @Override
@@ -51,12 +47,12 @@ public class PsiMethodReferenceType extends PsiType {
   }
 
   @Override
-  public boolean equalsToText(@NonNls final String text) {
+  public boolean equalsToText(@NotNull String text) {
     return false;
   }
 
   @Override
-  public <A> A accept(@NotNull final PsiTypeVisitor<A> visitor) {
+  public <A> A accept(@NotNull PsiTypeVisitor<A> visitor) {
     return visitor.visitMethodReferenceType(this);
   }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CustomShortcutSet;
 import com.intellij.openapi.editor.impl.EditorComponentImpl;
 import com.intellij.ui.EditorTextField;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
@@ -83,10 +84,10 @@ public class UpDownHandler {
       index += direction;
 
       if (index == size) {
-        if (!UISettings.getInstance().CYCLE_SCROLLING) return;
+        if (!UISettings.getInstance().getCycleScrolling()) return;
         index = 0;
       } else if (index == -1) {
-        if (!UISettings.getInstance().CYCLE_SCROLLING) return;
+        if (!UISettings.getInstance().getCycleScrolling()) return;
         index = size - 1;
       }
 
@@ -111,12 +112,12 @@ public class UpDownHandler {
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       myMover.move(myDirection);
     }
 
     @Override
-    public void update(AnActionEvent e) {
+    public void update(@NotNull AnActionEvent e) {
       final LookupEx lookup;
       if (myInput instanceof EditorTextField) {
         lookup = LookupManager.getActiveLookup(((EditorTextField)myInput).getEditor());
@@ -126,7 +127,10 @@ public class UpDownHandler {
         lookup = null;
       }
 
-      e.getPresentation().setEnabled(lookup == null);
+      JComboBox comboBox = UIUtil.findComponentOfType(myInput, JComboBox.class);
+      boolean popupMenuVisible = comboBox != null && comboBox.isPopupVisible();
+
+      e.getPresentation().setEnabled(lookup == null && !popupMenuVisible);
     }
   }
 }

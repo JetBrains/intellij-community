@@ -17,12 +17,15 @@ package com.intellij.openapi.vcs.changes;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NotNull;
+
+import java.util.List;
 
 /**
 * @author irengrig
 */
 class DummyChangesView implements ChangesViewI {
-  public DummyChangesView(Project project) {
+  DummyChangesView(Project project) {
   }
 
   @Override
@@ -38,10 +41,18 @@ class DummyChangesView implements ChangesViewI {
   }
 
   @Override
+  public void selectChanges(@NotNull List<? extends Change> changes) {
+  }
+
+  @Override
   public void updateProgressText(String text, boolean isError) {
   }
 
   @Override
   public void setBusy(boolean b) {
+  }
+
+  @Override
+  public void setGrouping(@NotNull String groupingKey) {
   }
 }

@@ -1,0 +1,9 @@
+{
+  "main": {
+    "<selection>property</selection>": {
+      "id": 'burndown',
+      "title": 'Burndown',
+      "xtype": 'app.widgets.BurndownDiagram'
+    }
+  }
+}

@@ -1,0 +1,1 @@
+x = [1, 2, 3<selection>, 4</selection>]

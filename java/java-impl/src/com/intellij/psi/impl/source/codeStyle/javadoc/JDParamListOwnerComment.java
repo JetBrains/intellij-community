@@ -14,36 +14,28 @@
  * limitations under the License.
  */
 
-/*
- * User: anna
- * Date: 30-Apr-2010
- */
 package com.intellij.psi.impl.source.codeStyle.javadoc;
 
-import com.intellij.formatting.IndentInfo;
-import com.intellij.ide.highlighter.JavaFileType;
-import com.intellij.psi.codeStyle.CodeStyleSettings;
-import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
-import org.jetbrains.annotations.NonNls;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.containers.ContainerUtilRt;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
+import java.util.List;
 
-public class JDParamListOwnerComment extends JDComment{
-  protected ArrayList<NameDesc> parmsList;
-  private static final @NonNls String PARAM_TAG = "@param ";
+public class JDParamListOwnerComment extends JDComment {
+  protected List<TagDescription> myParamsList;
 
-  public JDParamListOwnerComment(CommentFormatter formatter) {
+  public JDParamListOwnerComment(@NotNull CommentFormatter formatter) {
     super(formatter);
   }
 
   @Override
-  protected void generateSpecial(String prefix, StringBuffer sb) {
-     if (parmsList != null) {
+  protected void generateSpecial(@NotNull String prefix, @NotNull StringBuilder sb) {
+     if (myParamsList != null) {
       int before = sb.length();
-      generateList(prefix, sb, parmsList, PARAM_TAG,
+      generateList(prefix, sb, myParamsList, JDTag.PARAM.getWithEndWhitespace(),
                    myFormatter.getSettings().JD_ALIGN_PARAM_COMMENTS,
-                   myFormatter.getSettings().JD_MIN_PARM_NAME_LENGTH,
-                   myFormatter.getSettings().JD_MAX_PARM_NAME_LENGTH,
                    myFormatter.getSettings().JD_KEEP_EMPTY_PARAMETER,
                    myFormatter.getSettings().JD_PARAM_DESCRIPTION_ON_NEW_LINE
       );
@@ -56,35 +48,25 @@ public class JDParamListOwnerComment extends JDComment{
     }
   }
 
-  public NameDesc getParameter(String name) {
-    return getNameDesc(name, parmsList);
+  @Nullable
+  public TagDescription getParameter(@Nullable String name) {
+    return getNameDesc(name, myParamsList);
   }
 
-  public void removeParameter(NameDesc nd) {
-    if (parmsList == null) return;
-    parmsList.remove(nd);
-  }
-
-  public ArrayList<NameDesc> getParmsList() {
-    return parmsList;
-  }
-
-  public void addParameter(String name, String description) {
-    if (parmsList == null) {
-      parmsList = new ArrayList<NameDesc>();
+  public void addParameter(@NotNull String name, @Nullable String description) {
+    if (myParamsList == null) {
+      myParamsList = ContainerUtilRt.newArrayList();
     }
-    parmsList.add(new NameDesc(name, description));
+    myParamsList.add(new TagDescription(name, description));
   }
 
-  public void setParmsList(ArrayList<NameDesc> parmsList) {
-    this.parmsList = parmsList;
-  }
-
-  static NameDesc getNameDesc(String name, ArrayList<NameDesc> list) {
+  @Nullable
+  private static TagDescription getNameDesc(@Nullable String name, @Nullable List<TagDescription> list) {
     if (list == null) return null;
-    for (Object aList : list) {
-      NameDesc parameter = (NameDesc)aList;
-      if (parameter.name.equals(name)) return parameter;
+    for (TagDescription aList : list) {
+      if (aList.name.equals(name)) {
+        return aList;
+      }
     }
     return null;
   }
@@ -93,59 +75,69 @@ public class JDParamListOwnerComment extends JDComment{
    * Generates parameters or exceptions
    *
    */
-  protected void generateList(String prefix, StringBuffer sb, ArrayList<NameDesc> list, String tag, boolean align_comments,
-                            int min_name_length, int max_name_length, boolean generate_empty_tags, boolean wrapDescription)
+  protected void generateList(@NotNull final String prefix,
+                              @NotNull StringBuilder sb,
+                              @NotNull List<? extends TagDescription> tagBlocks,
+                              @NotNull String tag,
+                              boolean align_comments,
+                              boolean generate_empty_tags,
+                              boolean descriptionOnNewLine)
   {
-    CodeStyleSettings settings = myFormatter.getSettings();
-    CommonCodeStyleSettings.IndentOptions indentOptions = settings.getIndentOptions(JavaFileType.INSTANCE);
-    String continuationIndent = new IndentInfo(0, indentOptions.CONTINUATION_INDENT_SIZE, 0).generateNewWhiteSpace(indentOptions);
-    int max = 0;
-    if (align_comments && ! wrapDescription) {
-      for (Object aList : list) {
-        NameDesc nd = (NameDesc)aList;
-        int l = nd.name.length();
-        if (isNull(nd.desc) && !generate_empty_tags) continue;
-        if (l > max && l <= max_name_length) max = l;
-      }
-    }
+    int maxNameLength = maxTagDescriptionNameLength(tagBlocks, align_comments, generate_empty_tags, descriptionOnNewLine);
 
-    max = Math.max(max, min_name_length);
-
-    // create filler
-    StringBuffer fill = new StringBuffer(prefix.length() + tag.length() + max + 1);
+    StringBuilder fill = new StringBuilder(prefix.length() + tag.length() + maxNameLength + 1);
     fill.append(prefix);
-    int k = max + 1 + tag.length();
-    for (int i = 0; i < k; i++) fill.append(' ');
+    StringUtil.repeatSymbol(fill, ' ', maxNameLength + 1 + tag.length());
 
-    String wrapParametersPrefix = prefix + continuationIndent;
-    
-    for (Object aList1 : list) {
-      NameDesc nd = (NameDesc)aList1;
+    for (TagDescription nd : tagBlocks) {
       if (isNull(nd.desc) && !generate_empty_tags) continue;
-      if (wrapDescription && !isNull(nd.desc)) {
+
+      if (descriptionOnNewLine && !isNull(nd.desc)) {
         sb.append(prefix).append(tag).append(nd.name).append("\n");
-        sb.append(myFormatter.getParser().splitIntoCLines(nd.desc, wrapParametersPrefix));
+        sb.append(formatJDTagDescription(nd.desc, prefix + continuationIndent()));
       }
       else if (align_comments) {
-        sb.append(prefix);
-        sb.append(tag);
-        sb.append(nd.name);
-
-        if (nd.name.length() > max_name_length) {
-          sb.append('\n');
-          sb.append(myFormatter.getParser().splitIntoCLines(nd.desc, fill, true));
-        }
-        else {
-          int len = max - nd.name.length() + 1;
-          for (int j = 0; j < len; j++) {
-            sb.append(' ');
-          }
-          sb.append(myFormatter.getParser().splitIntoCLines(nd.desc, fill, false));
-        }
+        int spacesNumber = maxNameLength + 1 - nd.name.length();
+        String spaces = StringUtil.repeatSymbol(' ', Math.max(0, spacesNumber));
+        String firstLinePrefix = prefix + tag + nd.name + spaces;
+        sb.append(formatJDTagDescription(nd.desc, firstLinePrefix, fill));
       }
       else {
-        sb.append(myFormatter.getParser().splitIntoCLines(tag + nd.name + " " + nd.desc, prefix, true));
+        String description = (nd.desc == null) ? "" : nd.desc;
+        StringBuilder tagDescription = formatJDTagDescription(tag + nd.name + " " + description, prefix, prefix + javadocContinuationIndent());
+        sb.append(tagDescription);
       }
     }
   }
+
+  private static int maxTagDescriptionNameLength(@NotNull List<? extends TagDescription> tagBlocks,
+                                                 boolean align_comments,
+                                                 boolean generate_empty_tags,
+                                                 boolean descriptionOnNewLine)
+  {
+    int max = 0;
+
+    if (align_comments && !descriptionOnNewLine) {
+      for (TagDescription tagDescription: tagBlocks) {
+        int current = tagDescription.name.length();
+        if (isNull(tagDescription.desc) && !generate_empty_tags) continue;
+        if (current > max) {
+          max = current;
+        }
+      }
+    }
+
+    return max;
+  }
+
+  private StringBuilder formatJDTagDescription(@Nullable String description,
+                                               @NotNull CharSequence firstLinePrefix,
+                                               @NotNull CharSequence continuationPrefix) {
+    return myFormatter.getParser().formatJDTagDescription(description, firstLinePrefix, continuationPrefix);
+  }
+
+  private StringBuilder formatJDTagDescription(@Nullable String description, @NotNull CharSequence prefix) {
+    return formatJDTagDescription(description, prefix, prefix);
+  }
+
 }

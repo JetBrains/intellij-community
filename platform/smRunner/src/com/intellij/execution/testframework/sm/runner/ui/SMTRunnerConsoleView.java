@@ -15,55 +15,67 @@
  */
 package com.intellij.execution.testframework.sm.runner.ui;
 
-import com.intellij.execution.configurations.ConfigurationPerRunnerSettings;
-import com.intellij.execution.configurations.RunnerSettings;
 import com.intellij.execution.filters.HyperlinkInfo;
+import com.intellij.execution.process.ProcessHandler;
+import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.testframework.*;
-import com.intellij.execution.testframework.sm.SMRunnerUtil;
 import com.intellij.execution.testframework.sm.runner.SMTestProxy;
 import com.intellij.execution.testframework.ui.BaseTestsOutputConsoleView;
 import com.intellij.execution.testframework.ui.TestResultsPanel;
 import com.intellij.execution.ui.ConsoleViewContentType;
-import com.intellij.openapi.application.ModalityState;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.List;
 
 /**
  * @author: Roman Chernyatchik
  */
 public class SMTRunnerConsoleView extends BaseTestsOutputConsoleView {
   private SMTestRunnerResultsForm myResultsViewer;
-  private final RunnerSettings myRunnerSettings;
-  private final ConfigurationPerRunnerSettings myConfigurationPerRunnerSettings;
   @Nullable private final String mySplitterProperty;
+  private final List<AttachToProcessListener> myAttachToProcessListeners = ContainerUtil.createLockFreeCopyOnWriteList();
 
-  public SMTRunnerConsoleView(final TestConsoleProperties consoleProperties, final RunnerSettings runnerSettings,
-                              final ConfigurationPerRunnerSettings configurationPerRunnerSettings) {
-    this(consoleProperties, runnerSettings, configurationPerRunnerSettings, null);
+  /**
+   * @deprecated
+   */
+  @Deprecated
+  public SMTRunnerConsoleView(final TestConsoleProperties consoleProperties, final ExecutionEnvironment environment) {
+    this(consoleProperties, environment, null);
   }
 
   /**
-   * @param consoleProperties
-   * @param runnerSettings
-   * @param configurationPerRunnerSettings
+   * @deprecated
    * @param splitterProperty               Key to store(project level) latest value of testTree/consoleTab splitter. E.g. "RSpec.Splitter.Proportion"
    */
-  public SMTRunnerConsoleView(final TestConsoleProperties consoleProperties, final RunnerSettings runnerSettings,
-                              final ConfigurationPerRunnerSettings configurationPerRunnerSettings,
+  @Deprecated
+  public SMTRunnerConsoleView(final TestConsoleProperties consoleProperties,
+                              final ExecutionEnvironment environment,
                               @Nullable final String splitterProperty) {
     super(consoleProperties, null);
-    myRunnerSettings = runnerSettings;
-    myConfigurationPerRunnerSettings = configurationPerRunnerSettings;
     mySplitterProperty = splitterProperty;
   }
 
+  public SMTRunnerConsoleView(final TestConsoleProperties consoleProperties) {
+    this(consoleProperties, (String)null);
+  }
+
+  /**
+   * @param splitterProperty               Key to store(project level) latest value of testTree/consoleTab splitter. E.g. "RSpec.Splitter.Proportion"
+   */
+  public SMTRunnerConsoleView(final TestConsoleProperties consoleProperties,
+                              @Nullable final String splitterProperty) {
+    super(consoleProperties, null);
+    mySplitterProperty = splitterProperty;
+  }
+
+  @Override
   protected TestResultsPanel createTestResultsPanel() {
     // Results View
-    myResultsViewer = new SMTestRunnerResultsForm(myProperties.getConfiguration(),
-                                                  getConsole().getComponent(),
+    myResultsViewer = new SMTestRunnerResultsForm(getConsole().getComponent(),
                                                   getConsole().createConsoleActions(),
                                                   myProperties,
-                                                  myRunnerSettings, myConfigurationPerRunnerSettings,
                                                   mySplitterProperty);
     return myResultsViewer;
   }
@@ -74,19 +86,16 @@ public class SMTRunnerConsoleView extends BaseTestsOutputConsoleView {
 
     // Console
     myResultsViewer.addEventsListener(new TestResultsViewer.SMEventsAdapter() {
+      @Override
       public void onSelected(@Nullable final SMTestProxy selectedTestProxy,
                              @NotNull final TestResultsViewer viewer,
                              @NotNull final TestFrameworkRunningModel model) {
-        if (selectedTestProxy == null) {
+        if (selectedTestProxy == null || myResultsViewer.getTreeBuilder().isDisposed()) {
           return;
         }
 
         // print selected content
-        SMRunnerUtil.runInEventDispatchThread(new Runnable() {
-          public void run() {
-            getPrinter().updateOnTestSelected(selectedTestProxy);
-          }
-        }, ModalityState.NON_MODAL);
+        getPrinter().updateOnTestSelected(selectedTestProxy);
       }
     });
   }
@@ -102,8 +111,9 @@ public class SMTRunnerConsoleView extends BaseTestsOutputConsoleView {
    * @param contentType  given type
    */
   @Override
-  public void print(final String s, final ConsoleViewContentType contentType) {
+  public void print(@NotNull final String s, @NotNull final ConsoleViewContentType contentType) {
     myResultsViewer.getRoot().addLast(new Printable() {
+      @Override
       public void printOn(final Printer printer) {
         printer.print(s, contentType);
       }
@@ -117,8 +127,29 @@ public class SMTRunnerConsoleView extends BaseTestsOutputConsoleView {
    * @param info          HyperlinkInfo
    */
   @Override
-  public void printHyperlink(String hyperlinkText, HyperlinkInfo info) {
+  public void printHyperlink(@NotNull String hyperlinkText, HyperlinkInfo info) {
     myResultsViewer.getRoot().addLast(new HyperLink(hyperlinkText, info));
   }
 
+  @Override
+  public void attachToProcess(ProcessHandler processHandler) {
+    super.attachToProcess(processHandler);
+    for (AttachToProcessListener listener : myAttachToProcessListeners) {
+      listener.onAttachToProcess(processHandler);
+    }
+  }
+
+  public void addAttachToProcessListener(@NotNull AttachToProcessListener listener) {
+    myAttachToProcessListeners.add(listener);
+  }
+
+  public void remoteAttachToProcessListener(@NotNull AttachToProcessListener listener) {
+    myAttachToProcessListeners.remove(listener);
+  }
+
+  @Override
+  public void dispose() {
+    myAttachToProcessListeners.clear();
+    super.dispose();
+  }
 }

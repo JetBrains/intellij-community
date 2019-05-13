@@ -27,16 +27,13 @@ import org.intellij.plugins.relaxNG.xml.dom.RngDomElement;
 
 import java.util.List;
 
-/**
- * Created by IntelliJ IDEA.
- * User: sweinreuter
- * Date: 31.08.2007
- */
 public abstract class RngDomElementBase implements RngDomElement, Pattern<XmlElement> {
+  @Override
   public XmlElement getPsiElement() {
     return getXmlElement();
   }
 
+  @Override
   public void accept(Visitor visitor) {
     if (this instanceof Div) {
       visitor.visitDiv((Div)this); // TODO fix me
@@ -45,8 +42,10 @@ public abstract class RngDomElementBase implements RngDomElement, Pattern<XmlEle
     }
   }
 
+  @Override
   public void acceptChildren(final Visitor visitor) {
     acceptChildren(new DomElementVisitor() {
+      @Override
       public void visitDomElement(DomElement element) {
         if (element instanceof CommonElement) {
           ((CommonElement)element).accept(visitor);

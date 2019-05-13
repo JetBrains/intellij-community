@@ -1,0 +1,3 @@
+<!--Foo-->
+<!ELEMENT foo (#PCDATA)>
+<!ELEMENT bar (f<caret>oo)>

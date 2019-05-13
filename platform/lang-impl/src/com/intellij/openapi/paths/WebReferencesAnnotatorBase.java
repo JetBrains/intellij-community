@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2011 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.paths;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
@@ -26,10 +12,7 @@ import com.intellij.psi.PsiAnchor;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
-import com.intellij.util.containers.HashMap;
-import org.apache.commons.httpclient.HttpClient;
-import org.apache.commons.httpclient.HttpStatus;
-import org.apache.commons.httpclient.methods.GetMethod;
+import com.intellij.util.io.HttpRequests;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -37,6 +20,7 @@ import java.io.IOException;
 import java.net.UnknownHostException;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -45,7 +29,7 @@ import java.util.Map;
 public abstract class WebReferencesAnnotatorBase extends ExternalAnnotator<WebReferencesAnnotatorBase.MyInfo[], WebReferencesAnnotatorBase.MyInfo[]> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.paths.WebReferencesAnnotatorBase");
 
-  private final Map<String, MyFetchCacheEntry> myFetchCache = new HashMap<String, MyFetchCacheEntry>();
+  private final Map<String, MyFetchCacheEntry> myFetchCache = new HashMap<>();
   private final Object myFetchCacheLock = new Object();
   private static final long FETCH_CACHE_TIMEOUT = 10000;
 
@@ -77,7 +61,7 @@ public abstract class WebReferencesAnnotatorBase extends ExternalAnnotator<WebRe
   }
 
   @Override
-  public MyInfo[] collectionInformation(@NotNull PsiFile file) {
+  public MyInfo[] collectInformation(@NotNull PsiFile file) {
     final WebReference[] references = collectWebReferences(file);
     final MyInfo[] infos = new MyInfo[references.length];
 
@@ -117,7 +101,7 @@ public abstract class WebReferencesAnnotatorBase extends ExternalAnnotator<WebRe
 
   @Override
   public void apply(@NotNull PsiFile file, MyInfo[] infos, @NotNull AnnotationHolder holder) {
-    if (infos.length == 0) {
+    if (infos == null || infos.length == 0) {
       return;
     }
 
@@ -182,30 +166,29 @@ public abstract class WebReferencesAnnotatorBase extends ExternalAnnotator<WebRe
     }
   }
 
-  private static MyFetchResult doCheckUrl(String url) {
-    final HttpClient client = new HttpClient();
-    client.setTimeout(3000);
-    client.setConnectionTimeout(3000);
-    try {
-      final GetMethod method = new GetMethod(url);
-      final int code = client.executeMethod(method);
+  private static MyFetchResult doCheckUrl(@NotNull String url) {
+    if (url.startsWith("mailto")) {
+      return MyFetchResult.OK;
+    }
 
-      return code == HttpStatus.SC_OK || code == HttpStatus.SC_REQUEST_TIMEOUT 
-             ? MyFetchResult.OK 
-             : MyFetchResult.NONEXISTENCE;
+    try {
+      HttpRequests.request(url).connectTimeout(3000).readTimeout(3000).tryConnect();
     }
     catch (UnknownHostException e) {
       LOG.info(e);
       return MyFetchResult.UNKNOWN_HOST;
     }
+    catch (HttpRequests.HttpStatusException e) {
+      LOG.info(e);
+      return MyFetchResult.NONEXISTENCE;
+    }
     catch (IOException e) {
       LOG.info(e);
-      return MyFetchResult.OK;
     }
     catch (IllegalArgumentException e) {
       LOG.debug(e);
-      return MyFetchResult.OK;
     }
+    return MyFetchResult.OK;
   }
 
   private static class MyFetchCacheEntry {
@@ -227,7 +210,7 @@ public abstract class WebReferencesAnnotatorBase extends ExternalAnnotator<WebRe
     }
   }
   
-  private static enum MyFetchResult {
+  private enum MyFetchResult {
     OK, UNKNOWN_HOST, NONEXISTENCE
   }
 

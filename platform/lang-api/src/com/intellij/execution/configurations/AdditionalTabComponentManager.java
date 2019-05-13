@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,18 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-/*
- * Created by IntelliJ IDEA.
- * User: Anna.Kozlova
- * Date: 04-Sep-2006
- * Time: 18:30:23
- */
 package com.intellij.execution.configurations;
 
 import com.intellij.diagnostic.logging.AdditionalTabComponent;
+import org.jetbrains.annotations.NotNull;
 
 public interface AdditionalTabComponentManager {
-  void addAdditionalTabComponent(AdditionalTabComponent component, final String id);
-  void removeAdditionalTabComponent(AdditionalTabComponent component);
+  void addAdditionalTabComponent(@NotNull AdditionalTabComponent component, @NotNull String id);
+
+  void removeAdditionalTabComponent(@NotNull AdditionalTabComponent component);
 }

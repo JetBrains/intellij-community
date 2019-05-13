@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,15 +14,8 @@
  * limitations under the License.
  */
 
-/*
- * Created by IntelliJ IDEA.
- * User: Anna.Kozlova
- * Date: 21-Jul-2006
- * Time: 11:31:06
- */
 package com.intellij.lang.ant.config.impl;
 
-import com.intellij.icons.AllIcons;
 import com.intellij.lang.ant.AntBundle;
 import com.intellij.lang.ant.config.AntBuildFile;
 import com.intellij.lang.ant.config.AntBuildTarget;
@@ -32,8 +25,9 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.ui.*;
 import com.intellij.ui.treeStructure.Tree;
-import com.intellij.util.containers.Convertor;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.tree.TreeUtil;
+import icons.AntIcons;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
@@ -42,7 +36,6 @@ import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreePath;
-import java.awt.*;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
@@ -60,12 +53,12 @@ public class TargetChooserDialog extends DialogWrapper {
     init();
   }
 
+  @Override
   @Nullable
   protected JComponent createCenterPanel() {
-    final JPanel panel = new JPanel(new BorderLayout());
     myTree = initTree();
-    panel.add(ScrollPaneFactory.createScrollPane(myTree), BorderLayout.CENTER);
     myTree.addKeyListener(new KeyAdapter() {
+      @Override
       public void keyPressed(KeyEvent e) {
         if (KeyEvent.VK_ENTER == e.getKeyCode()) {
           doOKAction();
@@ -84,13 +77,14 @@ public class TargetChooserDialog extends DialogWrapper {
       }
     }.installOn(myTree);
 
-    return panel;
+    return JBUI.Panels.simplePanel(ScrollPaneFactory.createScrollPane(myTree));
   }
 
   private Tree initTree() {
     @NonNls final DefaultMutableTreeNode root = new DefaultMutableTreeNode("Root");
     final Tree tree = new Tree(root);
     tree.getSelectionModel().addTreeSelectionListener(new TreeSelectionListener() {
+      @Override
       public void valueChanged(TreeSelectionEvent e) {
         final TreePath selectionPath = tree.getSelectionPath();
         if (selectionPath != null) {
@@ -111,21 +105,18 @@ public class TargetChooserDialog extends DialogWrapper {
     tree.setShowsRootHandles(true);
     tree.setLineStyleAngled();
     TreeUtil.installActions(tree);
-    new TreeSpeedSearch(tree, new Convertor<TreePath, String>() {
-      public String convert(final TreePath path) {
-        final Object userObject = ((DefaultMutableTreeNode)path.getLastPathComponent()).getUserObject();
-        if (userObject instanceof AntTargetNodeDescriptor) {
-          final AntBuildTarget target = ((AntTargetNodeDescriptor)userObject).getAntTarget();
-          return target.getDisplayName();
-        }
-        return null;
+    new TreeSpeedSearch(tree, path -> {
+      final Object userObject = ((DefaultMutableTreeNode)path.getLastPathComponent()).getUserObject();
+      if (userObject instanceof AntTargetNodeDescriptor) {
+        final AntBuildTarget target = ((AntTargetNodeDescriptor)userObject).getAntTarget();
+        return target.getDisplayName();
       }
+      return null;
     });
 
     DefaultMutableTreeNode selectedNode = null;
     final AntConfiguration antConfiguration = AntConfigurationImpl.getInstance(myProject);
-    final AntBuildFile[] antBuildFiles = antConfiguration.getBuildFiles();
-    for (AntBuildFile buildFile : antBuildFiles) {
+    for (AntBuildFile buildFile : antConfiguration.getBuildFileList()) {
       final DefaultMutableTreeNode buildFileNode = new DefaultMutableTreeNode(buildFile);
       DefaultMutableTreeNode selection = processFileTargets(antConfiguration.getMetaTargets(buildFile), buildFile, buildFileNode);
       if (selection != null){
@@ -142,6 +133,7 @@ public class TargetChooserDialog extends DialogWrapper {
     return tree;
   }
 
+  @Override
   public JComponent getPreferredFocusedComponent() {
     return myTree;
   }
@@ -175,7 +167,7 @@ public class TargetChooserDialog extends DialogWrapper {
     private final AntBuildFile myBuildFile;
 
 
-    public AntTargetNodeDescriptor(final AntBuildTarget antTarget, final AntBuildFile buildFile) {
+    AntTargetNodeDescriptor(final AntBuildTarget antTarget, final AntBuildFile buildFile) {
       myAntTarget = antTarget;
       myBuildFile = buildFile;
     }
@@ -190,6 +182,7 @@ public class TargetChooserDialog extends DialogWrapper {
   }
 
   private static class MyTreeCellRenderer extends ColoredTreeCellRenderer {
+    @Override
     public void customizeCellRenderer(JTree tree,
                                       Object value,
                                       boolean selected,
@@ -209,7 +202,7 @@ public class TargetChooserDialog extends DialogWrapper {
           final String antTargetName = antTarget.getName();
           append(antTargetName, SimpleTextAttributes.REGULAR_ATTRIBUTES);
           boolean isMeta = antTarget instanceof MetaTarget;
-          setIcon(isMeta ? AllIcons.Ant.MetaTarget : AllIcons.Ant.Target);
+          setIcon(isMeta ? AntIcons.MetaTarget : AntIcons.Target);
         }
       }
     }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,20 +14,21 @@
  * limitations under the License.
  */
 
-/**
- * created at Oct 8, 2001
- * @author Jeka
- */
 package com.intellij.refactoring.util;
 
+import com.intellij.lang.findUsages.DescriptiveNameUtil;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.FileContextUtil;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
+import com.intellij.psi.util.MethodSignature;
+import com.intellij.psi.util.MethodSignatureUtil;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.RefactoringBundle;
-import com.intellij.usageView.UsageViewUtil;
-import com.intellij.util.Processor;
+import com.intellij.refactoring.ui.ConflictsDialog;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -54,27 +55,57 @@ public class ConflictsUtil {
     }
   }
 
+  /**
+   * Processes conflicts (possibly shows UI). In case we're running in unit test mode this method will
+   * throw {@link BaseRefactoringProcessor.ConflictsInTestsException} that can be handled inside a test.
+   * Thrown exception would contain conflicts' messages.
+   *
+   * @param project   project
+   * @param conflicts map with conflict messages and locations
+   * @return true if refactoring could proceed or false if refactoring should be cancelled
+   */
+  public static boolean processConflicts(@NotNull Project project, @NotNull MultiMap<PsiElement, String> conflicts) {
+    if (conflicts.isEmpty()) return true;
+
+    if (ApplicationManager.getApplication().isUnitTestMode() && !BaseRefactoringProcessor.ConflictsInTestsException.isTestIgnore()) {
+      throw new BaseRefactoringProcessor.ConflictsInTestsException(conflicts.values());
+    }
+
+    ConflictsDialog conflictsDialog = new ConflictsDialog(project, conflicts);
+    return conflictsDialog.showAndGet();
+  }
+
   public static void checkMethodConflicts(@Nullable PsiClass aClass,
-                                          PsiMethod refactoredMethod,
+                                          @Nullable PsiMethod refactoredMethod,
                                           final PsiMethod prototype,
                                           final MultiMap<PsiElement,String> conflicts) {
     if (prototype == null) return;
-    final String protoMethodInfo = getMethodPrototypeString(prototype);
+    String protoMethodInfo = getMethodPrototypeString(prototype);
 
     PsiMethod method = aClass != null ? aClass.findMethodBySignature(prototype, true) : null;
+    if (method == null && aClass != null) {
+      final MethodSignature signature = prototype.getSignature(PsiSubstitutor.EMPTY);
+      for (PsiMethod classMethod : aClass.getMethods()) {
+        if (MethodSignatureUtil.areSignaturesErasureEqual(signature, classMethod.getSignature(PsiSubstitutor.EMPTY))) {
+          method = classMethod;
+          protoMethodInfo = "with same erasure";
+          break;
+        }
+      }
+    }
 
-    if (method != null && method != refactoredMethod) {
+    if (method != null && method != refactoredMethod && !isStaticInterfaceMethods(aClass, refactoredMethod, method)) {
       if (aClass.equals(method.getContainingClass())) {
         final String classDescr = aClass instanceof PsiAnonymousClass ?
                                   RefactoringBundle.message("current.class") :
                                   RefactoringUIUtil.getDescription(aClass, false);
         conflicts.putValue(method, RefactoringBundle.message("method.0.is.already.defined.in.the.1",
-                                                getMethodPrototypeString(prototype),
+                                                protoMethodInfo,
                                                 classDescr));
       }
       else { // method somewhere in base class
         if (JavaPsiFacade.getInstance(method.getProject()).getResolveHelper().isAccessible(method, aClass, null)) {
-          String className = CommonRefactoringUtil.htmlEmphasize(UsageViewUtil.getDescriptiveName(method.getContainingClass()));
+          String className = CommonRefactoringUtil.htmlEmphasize(DescriptiveNameUtil.getDescriptiveName(method.getContainingClass()));
           if (PsiUtil.getAccessLevel(prototype.getModifierList()) >= PsiUtil.getAccessLevel(method.getModifierList()) ) {
             boolean isMethodAbstract = method.hasModifierProperty(PsiModifier.ABSTRACT);
             boolean isMyMethodAbstract = refactoredMethod != null && refactoredMethod.hasModifierProperty(PsiModifier.ABSTRACT);
@@ -91,17 +122,20 @@ public class ConflictsUtil {
       }
     }
     if (aClass != null && prototype.hasModifierProperty(PsiModifier.PRIVATE)) {
-      ClassInheritorsSearch.search(aClass).forEach(new Processor<PsiClass>() {
-        @Override
-        public boolean process(PsiClass aClass) {
-          final PsiMethod[] methods = aClass.findMethodsBySignature(prototype, false);
-          for (PsiMethod method : methods) {
-            conflicts.putValue(method, "Method " + RefactoringUIUtil.getDescription(method, true) + " will override method of the base class " + RefactoringUIUtil.getDescription(aClass, false));
-          }
-          return true;
+      ClassInheritorsSearch.search(aClass).forEach(aClass1 -> {
+        final PsiMethod[] methods = aClass1.findMethodsBySignature(prototype, false);
+        for (PsiMethod method1 : methods) {
+          conflicts.putValue(method1, "Method " + RefactoringUIUtil.getDescription(method1, true) + " will override method of the base class " + RefactoringUIUtil.getDescription(
+            aClass1, false));
         }
+        return true;
       });
     }
+  }
+
+  private static boolean isStaticInterfaceMethods(PsiClass aClass, PsiMethod refactoredMethod, PsiMethod method) {
+    return aClass.isInterface() && method.hasModifierProperty(PsiModifier.STATIC) &&
+           refactoredMethod != null && refactoredMethod.hasModifierProperty(PsiModifier.STATIC);
   }
 
   private static String getMethodPrototypeString(final PsiMethod prototype) {

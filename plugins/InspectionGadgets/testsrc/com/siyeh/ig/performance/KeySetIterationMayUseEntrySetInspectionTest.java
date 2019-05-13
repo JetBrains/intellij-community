@@ -1,11 +1,26 @@
 package com.siyeh.ig.performance;
 
-import com.siyeh.ig.IGInspectionTestCase;
+import com.intellij.codeInspection.InspectionProfileEntry;
+import com.intellij.testFramework.LightProjectDescriptor;
+import com.siyeh.ig.LightInspectionTestCase;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-public class KeySetIterationMayUseEntrySetInspectionTest extends IGInspectionTestCase {
+public class KeySetIterationMayUseEntrySetInspectionTest extends LightInspectionTestCase {
 
-  public void test() throws Exception {
-    doTest("com/siyeh/igtest/performance/key_set_iteration_may_use_entry_set",
-           new KeySetIterationMayUseEntrySetInspection());
+  public void testKeySetIterationMayUseEntrySet() {
+    doTest();
+  }
+
+  @NotNull
+  @Override
+  protected LightProjectDescriptor getProjectDescriptor() {
+    return JAVA_8;
+  }
+
+  @Nullable
+  @Override
+  protected InspectionProfileEntry getInspection() {
+    return new KeySetIterationMayUseEntrySetInspection();
   }
 }

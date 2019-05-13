@@ -19,8 +19,8 @@ package com.intellij.ide.wizard;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.IdeFocusManager;
+import com.intellij.ui.JBCardLayout;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -31,8 +31,8 @@ import java.util.Map;
 public class AbstractWizardEx extends AbstractWizard<AbstractWizardStepEx> {
 
   private final String myTitle;
-  private final Map<Object, Integer> myStepId2Index = new HashMap<Object, Integer>();
-  private final Map<Integer, AbstractWizardStepEx> myIndex2Step = new HashMap<Integer, AbstractWizardStepEx>();
+  private final Map<Object, Integer> myStepId2Index = new HashMap<>();
+  private final Map<Integer, AbstractWizardStepEx> myIndex2Step = new HashMap<>();
 
   public AbstractWizardEx(String title, @Nullable Project project, List<? extends AbstractWizardStepEx> steps) {
     super(title, project);
@@ -45,10 +45,12 @@ public class AbstractWizardEx extends AbstractWizard<AbstractWizardStepEx> {
       addStep(step);
 
       step.addStepListener(new AbstractWizardStepEx.Listener() {
+        @Override
         public void stateChanged() {
           updateButtons();
         }
 
+        @Override
         public void doNextAction() {
           if (getNextButton().isEnabled()) {
             AbstractWizardEx.this.doNextAction();
@@ -61,6 +63,7 @@ public class AbstractWizardEx extends AbstractWizard<AbstractWizardStepEx> {
     init();
   }
 
+  @Override
   protected void doPreviousAction() {
     // Commit data of current step
     final AbstractWizardStepEx currentStep = mySteps.get(myCurrentStep);
@@ -76,9 +79,10 @@ public class AbstractWizardEx extends AbstractWizard<AbstractWizardStepEx> {
     }
 
     myCurrentStep = getPreviousStep(myCurrentStep);
-    updateStep();
+    updateStep(JBCardLayout.SwipeDirection.BACKWARD);
   }
 
+  @Override
   protected void doNextAction() {
     // Commit data of current step
     final AbstractWizardStepEx currentStep = mySteps.get(myCurrentStep);
@@ -98,26 +102,30 @@ public class AbstractWizardEx extends AbstractWizard<AbstractWizardStepEx> {
       return;
     }
     myCurrentStep = getNextStep(myCurrentStep);
-    updateStep();
+    updateStep(JBCardLayout.SwipeDirection.FORWARD);
   }
 
+  @Override
   protected int getNextStep(final int step) {
     AbstractWizardStepEx stepObject = myIndex2Step.get(step);
     Object nextStepId = stepObject.getNextStepId();
     return myStepId2Index.get(nextStepId);
   }
 
+  @Override
   protected int getPreviousStep(final int step) {
     AbstractWizardStepEx stepObject = myIndex2Step.get(step);
     Object previousStepId = stepObject.getPreviousStepId();
     return myStepId2Index.get(previousStepId);
   }
 
+  @Override
   protected String getHelpID() {
     return getCurrentStepObject().getHelpId();
   }
 
 
+  @Override
   protected void updateStep() {
     super.updateStep();
     updateButtons();
@@ -130,6 +138,7 @@ public class AbstractWizardEx extends AbstractWizard<AbstractWizardStepEx> {
     }
   }
 
+  @Override
   protected void updateButtons() {
     super.updateButtons();
     getPreviousButton().setEnabled(getCurrentStepObject().getPreviousStepId() != null);
@@ -142,10 +151,12 @@ public class AbstractWizardEx extends AbstractWizard<AbstractWizardStepEx> {
     return getCurrentStepObject().isComplete();
   }
 
+  @Override
   protected boolean isLastStep() {
     return myIndex2Step.get(myCurrentStep).getNextStepId() == null;
   }
 
+  @Override
   protected boolean canFinish() {
     for (AbstractWizardStepEx step : mySteps) {
       if (!step.isComplete()) {

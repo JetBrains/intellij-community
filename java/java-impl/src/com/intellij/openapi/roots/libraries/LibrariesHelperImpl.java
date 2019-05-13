@@ -57,7 +57,7 @@ public class LibrariesHelperImpl extends LibrariesHelper {
       VirtualFile file = VirtualFileManager.getInstance().findFileByUrl(url);
       if (file == null) continue;
       if (!(file.getFileSystem() instanceof JarFileSystem) && !file.isDirectory()) {
-        file = JarFileSystem.getInstance().findFileByPath(file.getPath() + JarFileSystem.JAR_SEPARATOR);
+        file = JarFileSystem.getInstance().getJarRootForLocalFile(file);
       }
       if (file == null) continue;
       if (findInFile(file, new StringTokenizer(fqn, "."))) return true;

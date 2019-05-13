@@ -14,14 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * Created by IntelliJ IDEA.
- * User: dsl
- * Date: 09.07.2002
- * Time: 15:03:42
- * To change template for new class use
- * Code Style | Class Templates options (Tools | IDE Options).
- */
 package com.intellij.refactoring.classMembers;
 
 import com.intellij.psi.PsiElement;
@@ -40,21 +32,25 @@ public abstract class DependencyMemberInfoModel<T extends PsiElement, M extends 
   }
 
   public void setTooltipProvider(MemberInfoTooltipManager.TooltipProvider <T, M> tooltipProvider) {
-    myTooltipManager = new MemberInfoTooltipManager<T, M>(tooltipProvider);
+    myTooltipManager = new MemberInfoTooltipManager<>(tooltipProvider);
   }
 
+  @Override
   public boolean isAbstractEnabled(M member) {
     return true;
   }
 
+  @Override
   public boolean isAbstractWhenDisabled(M member) {
     return false;
   }
 
+  @Override
   public boolean isMemberEnabled(M member) {
     return true;
   }
 
+  @Override
   public int checkForProblems(@NotNull M memberInfo) {
     if (memberInfo.isChecked()) return OK;
     final T member = memberInfo.getMember();
@@ -69,7 +65,8 @@ public abstract class DependencyMemberInfoModel<T extends PsiElement, M extends 
     myMemberDependencyGraph = memberDependencyGraph;
   }
 
-  public void memberInfoChanged(MemberInfoChange<T, M> event) {
+  @Override
+  public void memberInfoChanged(@NotNull MemberInfoChange<T, M> event) {
     memberInfoChanged(event.getChangedMembers());
   }
 
@@ -80,6 +77,7 @@ public abstract class DependencyMemberInfoModel<T extends PsiElement, M extends 
     }
   }
 
+  @Override
   public String getTooltipText(M member) {
     if (myTooltipManager != null) {
       return myTooltipManager.getTooltip(member);

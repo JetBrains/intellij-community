@@ -1,72 +1,37 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.i18n;
 
-import com.intellij.ExtensionPoints;
-import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.CodeInsightBundle;
-import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInspection.*;
 import com.intellij.lang.properties.PropertiesReferenceManager;
 import com.intellij.lang.properties.psi.PropertiesFile;
-import com.intellij.openapi.extensions.ExtensionPoint;
-import com.intellij.openapi.extensions.Extensions;
+import com.intellij.lang.properties.references.I18nUtil;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleUtil;
+import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
+import com.intellij.psi.controlFlow.DefUseUtil;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
+import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
+import com.siyeh.ig.psiutils.ExpressionUtils;
+import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-/**
- * @author max
- * @author Konstantin Bulenkov
- */
-public class InvalidPropertyKeyInspection extends BaseJavaLocalInspectionTool {
-
-  @NotNull
-  public String getGroupDisplayName() {
-    return GroupNames.PROPERTIES_GROUP_NAME;
-  }
-
-  @NotNull
-  public String getDisplayName() {
-    return CodeInsightBundle.message("inspection.unresolved.property.key.reference.name");
-  }
-
+public class InvalidPropertyKeyInspection extends AbstractBaseJavaLocalInspectionTool {
+  @Override
   @NotNull
   public String getShortName() {
     return "UnresolvedPropertyKey";
-  }
-
-  @NotNull
-  public HighlightDisplayLevel getDefaultLevel() {
-    return HighlightDisplayLevel.ERROR;
-  }
-
-  public boolean isEnabledByDefault() {
-    return true;
   }
 
   @Override
@@ -79,30 +44,30 @@ public class InvalidPropertyKeyInspection extends BaseJavaLocalInspectionTool {
   @Nullable
   public ProblemDescriptor[] checkClass(@NotNull PsiClass aClass, @NotNull InspectionManager manager, boolean isOnTheFly) {
     final PsiClassInitializer[] initializers = aClass.getInitializers();
-    List<ProblemDescriptor> result = new ArrayList<ProblemDescriptor>();
+    List<ProblemDescriptor> result = new SmartList<>();
     for (PsiClassInitializer initializer : initializers) {
-      final ProblemDescriptor[] descriptors = checkElement(initializer, manager, isOnTheFly);
+      final ProblemDescriptor[] descriptors = checkElement(initializer.getBody(), manager, isOnTheFly);
       if (descriptors != null) {
         ContainerUtil.addAll(result, descriptors);
       }
     }
 
-    return result.isEmpty() ? null : result.toArray(new ProblemDescriptor[result.size()]);
+    return result.isEmpty() ? null : result.toArray(ProblemDescriptor.EMPTY_ARRAY);
   }
 
   @Override
   @Nullable
   public ProblemDescriptor[] checkField(@NotNull PsiField field, @NotNull InspectionManager manager, boolean isOnTheFly) {
-    List<ProblemDescriptor> result = new ArrayList<ProblemDescriptor>();
+    List<ProblemDescriptor> result = new SmartList<>();
     appendProblems(manager, isOnTheFly, result, field.getInitializer());
     appendProblems(manager, isOnTheFly, result, field.getModifierList());
     if (field instanceof PsiEnumConstant) {
       appendProblems(manager, isOnTheFly, result, ((PsiEnumConstant)field).getArgumentList());
     }
-    return result.isEmpty() ? null : result.toArray(new ProblemDescriptor[result.size()]);
+    return result.isEmpty() ? null : result.toArray(ProblemDescriptor.EMPTY_ARRAY);
   }
 
-  private static void appendProblems(InspectionManager manager, boolean isOnTheFly, List<ProblemDescriptor> result, PsiElement element) {
+  private static void appendProblems(InspectionManager manager, boolean isOnTheFly, List<? super ProblemDescriptor> result, PsiElement element) {
     if (element != null){
       final ProblemDescriptor[] descriptors = checkElement(element, manager, isOnTheFly);
       if (descriptors != null) {
@@ -115,32 +80,17 @@ public class InvalidPropertyKeyInspection extends BaseJavaLocalInspectionTool {
   private static ProblemDescriptor[] checkElement(PsiElement element, final InspectionManager manager, boolean onTheFly) {
     UnresolvedPropertyVisitor visitor = new UnresolvedPropertyVisitor(manager, onTheFly);
     element.accept(visitor);
-    List<ProblemDescriptor> problems = visitor.getProblems();
-    return problems.isEmpty() ? null : problems.toArray(new ProblemDescriptor[problems.size()]);
-  }
-
-  @Override
-  @Nullable
-  public ProblemDescriptor[] checkFile(@NotNull final PsiFile file, @NotNull final InspectionManager manager, boolean isOnTheFly) {
-    ExtensionPoint<FileCheckingInspection> point = Extensions.getRootArea().getExtensionPoint(ExtensionPoints.INVALID_PROPERTY_KEY_INSPECTION_TOOL);
-    final FileCheckingInspection[] fileCheckingInspections = point.getExtensions();
-    for (FileCheckingInspection obj : fileCheckingInspections) {
-      ProblemDescriptor[] descriptors = obj.checkFile(file, manager, isOnTheFly);
-      if (descriptors != null) {
-        return descriptors;
-      }
-    }
-
-    return null;
+    Map<PsiElement, ProblemDescriptor> problems = visitor.getProblems();
+    return problems.isEmpty() ? null : problems.values().toArray(ProblemDescriptor.EMPTY_ARRAY);
   }
 
   private static class UnresolvedPropertyVisitor extends JavaRecursiveElementWalkingVisitor {
     private final InspectionManager myManager;
-    private final List<ProblemDescriptor> myProblems = new ArrayList<ProblemDescriptor>();
+    private final Map<PsiElement, ProblemDescriptor> myProblems = new THashMap<>();
     private final boolean onTheFly;
 
 
-    public UnresolvedPropertyVisitor(final InspectionManager manager, boolean onTheFly) {
+    UnresolvedPropertyVisitor(final InspectionManager manager, boolean onTheFly) {
       myManager = manager;
       this.onTheFly = onTheFly;
     }
@@ -162,23 +112,83 @@ public class InvalidPropertyKeyInspection extends BaseJavaLocalInspectionTool {
     }
 
     @Override
-    public void visitLiteralExpression(PsiLiteralExpression expression) {
-      Object value = expression.getValue();
-      if (!(value instanceof String)) return;
-      String key = (String)value;
-      if (isComputablePropertyExpression(expression)) return;
-      Ref<String> resourceBundleName = new Ref<String>();
+    public void visitClassInitializer(PsiClassInitializer initializer) {
+    }
+
+    @Override
+    public void visitReferenceExpression(PsiReferenceExpression expression) {
+      super.visitReferenceExpression(expression);
+      if (isComputedPropertyExpression(expression)) {
+        return;
+      }
+      final PsiElement resolvedExpression = expression.resolve();
+      if (resolvedExpression instanceof PsiField) {
+        final PsiField field = (PsiField)resolvedExpression;
+        if (!field.hasModifierProperty(PsiModifier.FINAL)) {
+          return;
+        }
+        final PsiExpression initializer = field.getInitializer();
+        String key = computeStringValue(initializer);
+        visitPropertyKeyAnnotationParameter(expression, key,
+                                            field.getContainingFile() == expression.getContainingFile() ? initializer : expression);
+      }
+      else if (resolvedExpression instanceof PsiLocalVariable) {
+        checkLocalVariable((PsiLocalVariable)resolvedExpression, expression);
+      }
+    }
+
+    private void checkLocalVariable(@NotNull PsiLocalVariable variable, PsiReferenceExpression expression) {
+      PsiCodeBlock block = PsiTreeUtil.getParentOfType(variable, PsiCodeBlock.class);
+      if (block == null) return;
+      final PsiElement[] defs = DefUseUtil.getDefs(block, variable, expression);
+      for (PsiElement def : defs) {
+        if(def instanceof PsiLocalVariable) {
+          final PsiExpression initializer = PsiUtil.deparenthesizeExpression(((PsiLocalVariable)def).getInitializer());
+          visitPropertyKeyAnnotationParameter(expression, computeStringValue(initializer), initializer);
+        }
+        else if (def instanceof PsiReferenceExpression) {
+          final PsiAssignmentExpression assignment = ExpressionUtils.getAssignment(def.getParent());
+          if (assignment != null && assignment.getLExpression() == def) {
+            final PsiExpression rhs = PsiUtil.deparenthesizeExpression(assignment.getRExpression());
+            if (rhs instanceof PsiConditionalExpression) {
+              final PsiConditionalExpression conditionalExpression = (PsiConditionalExpression)rhs;
+              final PsiExpression thenExpression = conditionalExpression.getThenExpression();
+              final PsiExpression elseExpression = conditionalExpression.getElseExpression();
+              visitPropertyKeyAnnotationParameter(expression, computeStringValue(thenExpression), thenExpression);
+              visitPropertyKeyAnnotationParameter(expression, computeStringValue(elseExpression), elseExpression);
+            }
+            else {
+              visitPropertyKeyAnnotationParameter(expression, computeStringValue(rhs), rhs);
+            }
+          }
+        }
+      }
+    }
+
+    private static String computeStringValue(PsiExpression expression) {
+      if (expression instanceof PsiLiteralExpression) {
+        final Object value = ((PsiLiteralExpression)expression).getValue();
+        if (value instanceof String) {
+          return (String)value;
+        }
+      }
+      return null;
+    }
+
+    private void visitPropertyKeyAnnotationParameter(PsiExpression expression, String key, PsiExpression highlightedExpression) {
+      if (key == null) return;
+      Ref<String> resourceBundleName = new Ref<>();
       if (!JavaI18nUtil.isValidPropertyReference(myManager.getProject(), expression, key, resourceBundleName)) {
         String bundleName = resourceBundleName.get();
         if (bundleName != null) { // can be null if we were unable to resolve literal expression, e.g. when JDK was not set
-          appendPropertyKeyNotFoundProblem(bundleName, key, expression, myManager, myProblems, onTheFly);
+          appendPropertyKeyNotFoundProblem(bundleName, key, highlightedExpression, myManager, myProblems, onTheFly);
         }
       }
       else if (expression.getParent() instanceof PsiNameValuePair) {
         PsiNameValuePair nvp = (PsiNameValuePair)expression.getParent();
         if (Comparing.equal(nvp.getName(), AnnotationUtil.PROPERTY_KEY_RESOURCE_BUNDLE_PARAMETER)) {
           PropertiesReferenceManager manager = PropertiesReferenceManager.getInstance(expression.getProject());
-          Module module = ModuleUtil.findModuleForPsiElement(expression);
+          Module module = ModuleUtilCore.findModuleForPsiElement(expression);
           if (module != null) {
             List<PropertiesFile> propFiles = manager.findPropertiesFiles(module, key);
             if (propFiles.isEmpty()) {
@@ -187,18 +197,20 @@ public class InvalidPropertyKeyInspection extends BaseJavaLocalInspectionTool {
                                                                                   description,
                                                                                   (LocalQuickFix)null,
                                                                                   ProblemHighlightType.LIKE_UNKNOWN_SYMBOL, onTheFly);
-              myProblems.add(problem);
+              myProblems.putIfAbsent(expression, problem);
             }
           }
         }
       }
       else if (expression.getParent() instanceof PsiExpressionList && expression.getParent().getParent() instanceof PsiMethodCallExpression) {
-        final Map<String, Object> annotationParams = new HashMap<String, Object>();
-        annotationParams.put(AnnotationUtil.PROPERTY_KEY_RESOURCE_BUNDLE_PARAMETER, null);
-        if (!JavaI18nUtil.mustBePropertyKey(myManager.getProject(), expression, annotationParams)) return;
+        if (!JavaI18nUtil.mustBePropertyKey(expression, null)) return;
 
-        final int paramsCount = JavaI18nUtil.getPropertyValueParamsMaxCount(expression);
-        if (paramsCount == -1) return;
+        final SortedSet<Integer> paramsCount = JavaI18nUtil.getPropertyValueParamsCount(highlightedExpression, resourceBundleName.get());
+        if (paramsCount.isEmpty() || paramsCount.size() != 1 && resourceBundleName.get() == null) {
+          return;
+        }
+
+        final int maxParamCount = paramsCount.last();
 
         final PsiExpressionList expressions = (PsiExpressionList)expression.getParent();
         final PsiMethodCallExpression methodCall = (PsiMethodCallExpression)expressions.getParent();
@@ -206,14 +218,14 @@ public class InvalidPropertyKeyInspection extends BaseJavaLocalInspectionTool {
         final PsiExpression[] args = expressions.getExpressions();
         for (int i = 0; i < args.length; i++) {
           if (args[i] == expression) {
-            if (i + paramsCount >= args.length
+            if (i + maxParamCount >= args.length
                 && method != null
                 && method.getParameterList().getParametersCount() == i + 2
                 && method.getParameterList().getParameters()[i + 1].isVarArgs()
                 && !hasArrayTypeAt(i + 1, methodCall)) {
-              myProblems.add(myManager.createProblemDescriptor(methodCall,
-                                                               CodeInsightBundle.message("property.has.more.parameters.than.passed", key, paramsCount, args.length - i - 1),
-                                                               onTheFly, new LocalQuickFix[0],
+              myProblems.putIfAbsent(methodCall, myManager.createProblemDescriptor(methodCall,
+                                                               CodeInsightBundle.message("property.has.more.parameters.than.passed", key, maxParamCount, args.length - i - 1),
+                                                               onTheFly, LocalQuickFix.EMPTY_ARRAY,
                                                                ProblemHighlightType.GENERIC_ERROR));
             }
             break;
@@ -222,15 +234,23 @@ public class InvalidPropertyKeyInspection extends BaseJavaLocalInspectionTool {
       }
     }
 
+    @Override
+    public void visitLiteralExpression(PsiLiteralExpression expression) {
+      if (isComputedPropertyExpression(expression)) return;
+      visitPropertyKeyAnnotationParameter(expression, computeStringValue(expression), expression);
+    }
+
     private static void appendPropertyKeyNotFoundProblem(@NotNull String bundleName,
                                                          @NotNull String key,
-                                                         @NotNull PsiLiteralExpression expression,
+                                                         @NotNull PsiExpression expression,
                                                          @NotNull InspectionManager manager,
-                                                         @NotNull List<ProblemDescriptor> problems,
+                                                         @NotNull Map<PsiElement, ProblemDescriptor> problems,
                                                          boolean onTheFly) {
       final String description = CodeInsightBundle.message("inspection.unresolved.property.key.reference.message", key);
-      final List<PropertiesFile> propertiesFiles = filterNotInLibrary(expression.getProject(), JavaI18nUtil.propertiesFilesByBundleName(bundleName, expression));
-      problems.add(
+      final List<PropertiesFile> propertiesFiles = filterNotInLibrary(expression.getProject(),
+                                                                      I18nUtil.propertiesFilesByBundleName(bundleName, expression));
+      if (problems.containsKey(expression)) return;
+      problems.put(expression,
         manager.createProblemDescriptor(
           expression,
           description,
@@ -242,12 +262,12 @@ public class InvalidPropertyKeyInspection extends BaseJavaLocalInspectionTool {
 
     @NotNull
     private static List<PropertiesFile> filterNotInLibrary(@NotNull Project project,
-                                                           @NotNull List<PropertiesFile> propertiesFiles) {
+                                                           @NotNull List<? extends PropertiesFile> propertiesFiles) {
       final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
 
-      final List<PropertiesFile> result = new ArrayList<PropertiesFile>(propertiesFiles.size());
+      final List<PropertiesFile> result = new ArrayList<>(propertiesFiles.size());
       for (final PropertiesFile file : propertiesFiles) {
-        if (!fileIndex.isInLibraryClasses(file.getVirtualFile()) && !fileIndex.isInLibrarySource(file.getVirtualFile())) {
+        if (!fileIndex.isInLibrary(file.getVirtualFile())) {
           result.add(file);
         }
       }
@@ -260,12 +280,24 @@ public class InvalidPropertyKeyInspection extends BaseJavaLocalInspectionTool {
              && methodCall.getArgumentList().getExpressionTypes()[i] instanceof PsiArrayType;
     }
 
-    private static boolean isComputablePropertyExpression(PsiExpression expression) {
-      while (expression != null && expression.getParent() instanceof PsiParenthesizedExpression) expression = (PsiExpression)expression.getParent();
-      return expression != null && expression.getParent() instanceof PsiExpression;
+    private static boolean isComputedPropertyExpression(PsiExpression expression) {
+      PsiElement parent = expression.getParent();
+      while (true) {
+        if (parent instanceof PsiParenthesizedExpression ||
+            parent instanceof PsiConditionalExpression &&
+             (expression == ((PsiConditionalExpression)parent).getThenExpression() ||
+              expression == ((PsiConditionalExpression)parent).getElseExpression())) {
+          expression = (PsiExpression)parent;
+          parent = expression.getParent();
+        }
+        else {
+          break;
+        }
+      }
+      return parent instanceof PsiExpression;
     }
 
-    public List<ProblemDescriptor> getProblems() {
+    public Map<PsiElement, ProblemDescriptor> getProblems() {
       return myProblems;
     }
   }

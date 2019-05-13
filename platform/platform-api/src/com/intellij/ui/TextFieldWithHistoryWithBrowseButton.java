@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,11 +20,9 @@ import com.intellij.openapi.fileChooser.FileChooserFactory;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComponentWithBrowseButton;
 import com.intellij.openapi.ui.TextComponentAccessor;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * User: anna
- */
 public class TextFieldWithHistoryWithBrowseButton extends ComponentWithBrowseButton<TextFieldWithHistory> {
   public TextFieldWithHistoryWithBrowseButton() {
     super(new TextFieldWithHistory(), null);
@@ -47,7 +45,19 @@ public class TextFieldWithHistoryWithBrowseButton extends ComponentWithBrowseBut
                                       FileChooserDescriptor fileChooserDescriptor,
                                       TextComponentAccessor<TextFieldWithHistory> accessor,
                                       boolean autoRemoveOnHide) {
-    super.addBrowseFolderListener(title, description, project, fileChooserDescriptor, accessor, autoRemoveOnHide);
+    addBrowseFolderListener(title, description, project, fileChooserDescriptor, accessor);
     FileChooserFactory.getInstance().installFileCompletion(getChildComponent().getTextEditor(), fileChooserDescriptor, false, project);
+  }
+
+  public String getText() {
+    return getChildComponent().getText();
+  }
+
+  public void setText(@NotNull String text) {
+    getChildComponent().setText(text);
+  }
+
+  public void setTextAndAddToHistory(@NotNull String text) {
+    getChildComponent().setTextAndAddToHistory(text);
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,10 @@ package com.siyeh.ipp.concatenation;
 
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.IncorrectOperationException;
+import com.intellij.psi.util.PsiUtil;
+import com.siyeh.ig.PsiReplacementUtil;
+import com.siyeh.ig.psiutils.CommentTracker;
+import com.siyeh.ig.psiutils.ParenthesesUtils;
 import com.siyeh.ipp.base.Intention;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import org.jetbrains.annotations.NotNull;
@@ -34,7 +37,7 @@ public class MergeCallSequenceToChainIntention extends Intention {
   }
 
   @Override
-  protected void processIntention(@NotNull PsiElement element) throws IncorrectOperationException {
+  protected void processIntention(@NotNull PsiElement element) {
     if (!(element instanceof PsiExpressionStatement)) {
       return;
     }
@@ -50,25 +53,27 @@ public class MergeCallSequenceToChainIntention extends Intention {
       return;
     }
     PsiMethodCallExpression methodCallExpression = getRootMethodCallExpression((PsiMethodCallExpression)expression1);
+    CommentTracker tracker = new CommentTracker();
     while (true) {
       final PsiExpressionList argumentList = methodCallExpression.getArgumentList();
+      tracker.markUnchanged(argumentList);
       final PsiReferenceExpression methodExpression = methodCallExpression.getMethodExpression();
       final String methodName = methodExpression.getReferenceName();
       newMethodCallExpression.append('.').append(methodName).append(argumentList.getText());
-      final PsiElement parent = methodCallExpression.getParent();
+      final PsiElement parent = PsiUtil.skipParenthesizedExprUp(methodCallExpression.getParent());
       final PsiElement grandParent = parent.getParent();
       if (!(grandParent instanceof PsiMethodCallExpression)) {
         break;
       }
       methodCallExpression = (PsiMethodCallExpression)grandParent;
     }
-    replaceExpression(newMethodCallExpression.toString(), expression);
-    nextSibling.delete();
+    PsiReplacementUtil.replaceExpression(expression, newMethodCallExpression.toString());
+    tracker.deleteAndRestoreComments(nextSibling);
   }
 
-  public static PsiMethodCallExpression getRootMethodCallExpression(PsiMethodCallExpression expression) {
+  private static PsiMethodCallExpression getRootMethodCallExpression(PsiMethodCallExpression expression) {
     final PsiReferenceExpression methodExpression = expression.getMethodExpression();
-    final PsiExpression qualifierExpression = methodExpression.getQualifierExpression();
+    final PsiExpression qualifierExpression = ParenthesesUtils.stripParentheses(methodExpression.getQualifierExpression());
     if (qualifierExpression instanceof PsiMethodCallExpression) {
       final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)qualifierExpression;
       return getRootMethodCallExpression(methodCallExpression);

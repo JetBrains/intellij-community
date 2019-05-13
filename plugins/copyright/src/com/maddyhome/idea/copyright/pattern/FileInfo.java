@@ -18,7 +18,6 @@ package com.maddyhome.idea.copyright.pattern;
 
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiJavaFile;
 
 public class FileInfo
 {
@@ -39,26 +38,12 @@ public class FileInfo
 
     public String getClassName()
     {
-        if (file instanceof PsiJavaFile)
-        {
-            return ((PsiJavaFile)file).getClasses()[0].getName();
-        }
-        else
-        {
-            return getFileName();
-        }
+        return getFileName();
     }
 
     public String getQualifiedClassName()
     {
-        if (file instanceof PsiJavaFile)
-        {
-            return ((PsiJavaFile)file).getClasses()[0].getQualifiedName();
-        }
-        else
-        {
-            return getPathName();
-        }
+       return getPathName();
     }
 
     public DateInfo getLastModified()

@@ -21,14 +21,10 @@ import com.intellij.psi.PsiElement;
 import com.intellij.util.NotNullFunction;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * Created by IntelliJ IDEA.
-* User: sweinreuter
-* Date: 13.08.2007
-*/
 public final class PsiFunction implements NotNullFunction<ASTNode, PsiElement> {
   public static final PsiFunction INSTANCE = new PsiFunction();
 
+  @Override
   @NotNull
   public PsiElement fun(ASTNode astNode) {
     return astNode.getPsi();

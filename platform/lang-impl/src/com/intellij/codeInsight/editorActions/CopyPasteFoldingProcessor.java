@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,62 +24,66 @@ import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiFile;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.Transferable;
 import java.awt.datatransfer.UnsupportedFlavorException;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 
-public class CopyPasteFoldingProcessor implements CopyPastePostProcessor<FoldingTransferableData> {
+public class CopyPasteFoldingProcessor extends CopyPastePostProcessor<FoldingTransferableData> {
+  @NotNull
   @Override
-  public FoldingTransferableData collectTransferableData(final PsiFile file, final Editor editor, final int[] startOffsets, final int[] endOffsets) {
+  public List<FoldingTransferableData> collectTransferableData(final PsiFile file, final Editor editor, final int[] startOffsets, final int[] endOffsets) {
     // might be slow
     //CodeFoldingManager.getInstance(file.getManager().getProject()).updateFoldRegions(editor);
 
-    final ArrayList<FoldingTransferableData.FoldingData> list = new ArrayList<FoldingTransferableData.FoldingData>();
+    final ArrayList<FoldingData> list = new ArrayList<>();
     final FoldRegion[] regions = editor.getFoldingModel().getAllFoldRegions();
     for (final FoldRegion region : regions) {
       if (!region.isValid()) continue;
+      int refOffset = 0;
       for (int j = 0; j < startOffsets.length; j++) {
+        refOffset += startOffsets[j];
         if (startOffsets[j] <= region.getStartOffset() && region.getEndOffset() <= endOffsets[j]) {
           list.add(
-            new FoldingTransferableData.FoldingData(
-              region.getStartOffset() - startOffsets[j],
-              region.getEndOffset() - startOffsets[j],
+            new FoldingData(
+              region.getStartOffset() - refOffset, // offsets should be relative to clipboard contents start
+              region.getEndOffset() - refOffset,
               region.isExpanded()
             )
           );
+          break;
         }
+        refOffset -= endOffsets[j] + 1; // 1 accounts for line break inserted between contents corresponding to different carets
       }
     }
 
-    return new FoldingTransferableData(list.toArray(new FoldingTransferableData.FoldingData[list.size()]));
+    return Collections.singletonList(new FoldingTransferableData(list.toArray(new FoldingData[0])));
   }
 
+  @NotNull
   @Override
-  @Nullable
-  public FoldingTransferableData extractTransferableData(final Transferable content) {
+  public List<FoldingTransferableData> extractTransferableData(final Transferable content) {
     FoldingTransferableData foldingData = null;
     try {
-      final DataFlavor flavor = FoldingTransferableData.FoldingData.getDataFlavor();
+      final DataFlavor flavor = FoldingData.getDataFlavor();
       if (flavor != null) {
         foldingData = (FoldingTransferableData)content.getTransferData(flavor);
       }
     }
-    catch (UnsupportedFlavorException e) {
-      // do nothing
-    }
-    catch (IOException e) {
+    catch (UnsupportedFlavorException | IOException e) {
       // do nothing
     }
 
     if (foldingData != null) { // copy to prevent changing of original by convertLineSeparators
-      return foldingData.clone();
+      return Collections.singletonList(foldingData.clone());
     }
-    return null;
+    return Collections.emptyList();
   }
 
   @Override
@@ -88,18 +92,20 @@ public class CopyPasteFoldingProcessor implements CopyPastePostProcessor<Folding
                                       final RangeMarker bounds,
                                       int caretOffset,
                                       Ref<Boolean> indented,
-                                      final FoldingTransferableData value) {
+                                      final List<FoldingTransferableData> values) {
+    assert values.size() == 1;
+    final FoldingTransferableData value = values.get(0);
+    if (value.getData().length == 0) return;
+
     final CodeFoldingManagerImpl foldingManager = (CodeFoldingManagerImpl)CodeFoldingManager.getInstance(project);
+    if (foldingManager == null) return; // default project
     foldingManager.updateFoldRegions(editor, true);
 
-    Runnable operation = new Runnable() {
-      @Override
-      public void run() {
-        for (FoldingTransferableData.FoldingData data : value.getData()) {
-          FoldRegion region = foldingManager.findFoldRegion(editor, data.startOffset + bounds.getStartOffset(), data.endOffset + bounds.getStartOffset());
-          if (region != null) {
-            region.setExpanded(data.isExpanded);
-          }
+    Runnable operation = () -> {
+      for (FoldingData data : value.getData()) {
+        FoldRegion region = foldingManager.findFoldRegion(editor, data.startOffset + bounds.getStartOffset(), data.endOffset + bounds.getStartOffset());
+        if (region != null) {
+          region.setExpanded(data.isExpanded);
         }
       }
     };

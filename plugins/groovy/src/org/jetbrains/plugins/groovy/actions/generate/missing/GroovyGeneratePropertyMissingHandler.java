@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,13 +21,11 @@ import com.intellij.codeInsight.generation.GenerationInfo;
 import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.ide.fileTemplates.JavaTemplateUtil;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.PsiClass;
@@ -67,21 +65,21 @@ public class GroovyGeneratePropertyMissingHandler extends GenerateMembersHandler
     throws IncorrectOperationException {
 
     final String templName = JavaTemplateUtil.TEMPLATE_FROM_USAGE_METHOD_BODY;
-    final FileTemplate template = FileTemplateManager.getInstance().getCodeTemplate(templName);
+    final FileTemplate template = FileTemplateManager.getInstance(aClass.getProject()).getCodeTemplate(templName);
 
     final GrMethod getter = genGetter(aClass, template);
     final GrMethod setter = genSetter(aClass, template);
 
-    final ArrayList<GroovyGenerationInfo<GrMethod>> result = new ArrayList<GroovyGenerationInfo<GrMethod>>();
-    if (getter != null) result.add(new GroovyGenerationInfo<GrMethod>(getter, true));
-    if (setter != null) result.add(new GroovyGenerationInfo<GrMethod>(setter, true));
+    final ArrayList<GroovyGenerationInfo<GrMethod>> result = new ArrayList<>();
+    if (getter != null) result.add(new GroovyGenerationInfo<>(getter, true));
+    if (setter != null) result.add(new GroovyGenerationInfo<>(setter, true));
 
     return result;
   }
 
   @Nullable
   private static GrMethod genGetter(PsiClass aClass, FileTemplate template) {
-    Properties properties = FileTemplateManager.getInstance().getDefaultProperties(aClass.getProject());
+    Properties properties = FileTemplateManager.getInstance(aClass.getProject()).getDefaultProperties();
     properties.setProperty(FileTemplate.ATTRIBUTE_RETURN_TYPE, "java.lang.Object");
     properties.setProperty(FileTemplate.ATTRIBUTE_DEFAULT_RETURN_VALUE, "null");
     properties.setProperty(FileTemplate.ATTRIBUTE_CALL_SUPER, "");
@@ -102,7 +100,7 @@ public class GroovyGeneratePropertyMissingHandler extends GenerateMembersHandler
 
   @Nullable
   private static GrMethod genSetter(PsiClass aClass, FileTemplate template) {
-    Properties properties = FileTemplateManager.getInstance().getDefaultProperties(aClass.getProject());
+    Properties properties = FileTemplateManager.getInstance(aClass.getProject()).getDefaultProperties();
     properties.setProperty(FileTemplate.ATTRIBUTE_RETURN_TYPE, "void");
     properties.setProperty(FileTemplate.ATTRIBUTE_DEFAULT_RETURN_VALUE, "");
     properties.setProperty(FileTemplate.ATTRIBUTE_CALL_SUPER, "");
@@ -125,11 +123,6 @@ public class GroovyGeneratePropertyMissingHandler extends GenerateMembersHandler
   @Override
   protected GenerationInfo[] generateMemberPrototypes(PsiClass aClass, ClassMember originalMember) throws IncorrectOperationException {
     return GenerationInfo.EMPTY_ARRAY;
-  }
-
-  @Override
-  public boolean startInWriteAction() {
-    return true;
   }
 
   @Nullable
@@ -158,20 +151,18 @@ public class GroovyGeneratePropertyMissingHandler extends GenerateMembersHandler
 
       if (Messages.showYesNoDialog(project, text,
                                    GroovyCodeInsightBundle.message("generate.property.missing.already.defined.title"),
-                                   Messages.getQuestionIcon()) == DialogWrapper.OK_EXIT_CODE) {
+                                   Messages.getQuestionIcon()) == Messages.YES) {
         final PsiMethod finalGetter = getter;
         final PsiMethod finalSetter = setter;
-        if (!ApplicationManager.getApplication().runWriteAction(new Computable<Boolean>() {
-          public Boolean compute() {
-            try {
-              finalSetter.delete();
-              finalGetter.delete();
-              return Boolean.TRUE;
-            }
-            catch (IncorrectOperationException e) {
-              LOG.error(e);
-              return Boolean.FALSE;
-            }
+        if (!WriteAction.compute(() -> {
+          try {
+            finalSetter.delete();
+            finalGetter.delete();
+            return Boolean.TRUE;
+          }
+          catch (IncorrectOperationException e) {
+            LOG.error(e);
+            return Boolean.FALSE;
           }
         }).booleanValue()) {
           return null;

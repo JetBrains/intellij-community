@@ -27,11 +27,10 @@ import java.util.Collection;
  */
 
 class SelectedFiles extends AnyProcessedFiles {
-  private final Collection<VirtualFile> myFiles = new ArrayList<VirtualFile>();
+  private final Collection<VirtualFile> myFiles = new ArrayList<>();
 
-  public SelectedFiles(FilePath[] files) {
-    for (int i = 0; i < files.length; i++) {
-      FilePath file = files[i];
+  SelectedFiles(FilePath[] files) {
+    for (FilePath file : files) {
       VirtualFile virtualFile = file.getVirtualFile();
       if (virtualFile != null) {
         myFiles.add(virtualFile);
@@ -42,11 +41,12 @@ class SelectedFiles extends AnyProcessedFiles {
     }
   }
 
-  public SelectedFiles(VirtualFile[] files) {
+  SelectedFiles(VirtualFile[] files) {
     ContainerUtil.addAll(myFiles, files);
   }
 
 
+  @Override
   public Collection<VirtualFile> getFiles() {
     return myFiles;
   }

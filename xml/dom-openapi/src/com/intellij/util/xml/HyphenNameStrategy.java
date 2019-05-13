@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package com.intellij.util.xml;
 
 import com.intellij.psi.codeStyle.NameUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * This strategy splits property name into words, decapitalizes them and joins using hyphen as separator,
@@ -25,7 +26,9 @@ import com.intellij.openapi.util.text.StringUtil;
  * @author peter
  */
 public class HyphenNameStrategy extends DomNameStrategy {
-  public String convertName(String propertyName) {
+  @NotNull
+  @Override
+  public String convertName(@NotNull String propertyName) {
     final String[] words = NameUtil.nameToWords(propertyName);
     for (int i = 0; i < words.length; i++) {
       words[i] = StringUtil.decapitalize(words[i]);
@@ -33,6 +36,7 @@ public class HyphenNameStrategy extends DomNameStrategy {
     return StringUtil.join(words, "-");
   }
 
+  @Override
   public String splitIntoWords(final String tagName) {
     return tagName.replace('-', ' ');
   }

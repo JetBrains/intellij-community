@@ -1,20 +1,7 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.IconProvider;
 import com.intellij.ide.projectView.impl.ProjectRootsUtil;
 import com.intellij.openapi.module.Module;
@@ -22,9 +9,12 @@ import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.roots.ui.configuration.IconSet;
-import com.intellij.openapi.vfs.JarFileSystem;
+import com.intellij.openapi.roots.SourceFolder;
+import com.intellij.openapi.roots.ui.configuration.SourceRootPresentation;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.jrt.JrtFileSystem;
+import com.intellij.openapi.vfs.newvfs.ArchiveFileSystem;
 import com.intellij.psi.JavaDirectoryService;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
@@ -40,39 +30,43 @@ import javax.swing.*;
 public class JavaDirectoryIconProvider extends IconProvider implements DumbAware {
   @Override
   @Nullable
-  public Icon getIcon(@NotNull final PsiElement element, final int flags) {
+  public Icon getIcon(@NotNull PsiElement element, int flags) {
     if (element instanceof PsiDirectory) {
       final PsiDirectory psiDirectory = (PsiDirectory)element;
       final VirtualFile vFile = psiDirectory.getVirtualFile();
       final Project project = psiDirectory.getProject();
-      boolean isJarRoot = vFile.getParent() == null && vFile.getFileSystem() instanceof JarFileSystem;
-      boolean isContentRoot = ProjectRootsUtil.isModuleContentRoot(vFile, project);
-      boolean inTestSource = ProjectRootsUtil.isInTestSource(vFile, project);
-      boolean isSourceOrTestRoot = ProjectRootsUtil.isSourceOrTestRoot(vFile, project);
+
+      SourceFolder sourceFolder;
       Icon symbolIcon;
-      if (isJarRoot) {
+      if (vFile.getParent() == null && vFile.getFileSystem() instanceof ArchiveFileSystem) {
         symbolIcon = PlatformIcons.JAR_ICON;
       }
-      else if (isContentRoot) {
+      else if (ProjectRootsUtil.isModuleContentRoot(vFile, project)) {
         Module module = ProjectRootManager.getInstance(project).getFileIndex().getModuleForFile(vFile);
-        if (module != null) {
-          symbolIcon = ModuleType.get(module).getIcon();
-        }
-        else {
-          symbolIcon = PlatformIcons.CONTENT_ROOT_ICON_CLOSED;
-        }
+        symbolIcon = module == null || module.isDisposed() ? PlatformIcons.CONTENT_ROOT_ICON_CLOSED : ModuleType.get(module).getIcon();
       }
-      else if (isSourceOrTestRoot) {
-        symbolIcon = IconSet.getSourceRootIcon(inTestSource);
+      else if (ProjectRootsUtil.findUnloadedModuleByContentRoot(vFile, project) != null) {
+        symbolIcon = AllIcons.Modules.UnloadedModule;
+      }
+      else if ((sourceFolder = ProjectRootsUtil.getModuleSourceRoot(vFile, project)) != null) {
+        symbolIcon = SourceRootPresentation.getSourceRootIcon(sourceFolder);
+      }
+      else if (JrtFileSystem.isModuleRoot(vFile)) {
+        symbolIcon = AllIcons.Nodes.Module;
       }
       else if (JavaDirectoryService.getInstance().getPackage(psiDirectory) != null) {
         symbolIcon = PlatformIcons.PACKAGE_ICON;
       }
-      else {
-        symbolIcon = PlatformIcons.DIRECTORY_CLOSED_ICON;
+      else if (!Registry.is("ide.hide.excluded.files") && ProjectRootManager.getInstance(project).getFileIndex().isExcluded(vFile)) {
+        symbolIcon = AllIcons.Modules.ExcludeRoot;
       }
+      else {
+        symbolIcon = PlatformIcons.FOLDER_ICON;
+      }
+
       return ElementBase.createLayeredIcon(element, symbolIcon, 0);
     }
+
     return null;
   }
 }

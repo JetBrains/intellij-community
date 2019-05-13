@@ -30,6 +30,7 @@ public class HgRepositoryLocation implements RepositoryLocation {
     return myRoot;
   }
 
+  @Override
   public String toPresentableString() {
     return myUrl;
   }
@@ -39,12 +40,13 @@ public class HgRepositoryLocation implements RepositoryLocation {
     return toPresentableString();
   }
 
+  @Override
   public String getKey() {
     return myUrl;
   }
 
   @Override
-  public void onBeforeBatch() throws VcsException {
+  public void onBeforeBatch() {
   }
 
   @Override

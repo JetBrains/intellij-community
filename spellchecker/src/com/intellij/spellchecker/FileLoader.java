@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,18 +16,18 @@
 package com.intellij.spellchecker;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.spellchecker.dictionary.Loader;
 import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
+import java.io.InputStream;
+import java.nio.charset.Charset;
 
+import static com.intellij.openapi.vfs.VfsUtil.findFileByIoFile;
 
-@SuppressWarnings({"IOResourceOpenedButNotSafelyClosed"})
 public class FileLoader implements Loader {
-
   private static final Logger LOG = Logger.getInstance("#com.intellij.spellchecker.FileLoader");
 
   private final String url;
@@ -38,29 +38,27 @@ public class FileLoader implements Loader {
     this.name = name;
   }
 
+  public FileLoader(String url) {
+    this(url, url);
+  }
+
+  @Override
   public String getName() {
     return name;
   }
 
+  @Override
   public void load(@NotNull Consumer<String> consumer) {
-    File file = new File(url);
-    FileInputStream stream = null;
-    try {
-      stream = new FileInputStream(file);
-      StreamLoader loader = new StreamLoader(stream, file.getName());
-      loader.load(consumer);
+    final VirtualFile file = findFileByIoFile(new File(url), true);
+    if (file == null) {
+      return;
+    }
+    final Charset charset = file.getCharset();
+    try (InputStream stream = file.getInputStream()) {
+      StreamLoader.doLoad(stream, consumer, charset);
     }
     catch (Exception e) {
       LOG.error(e);
     }
-    finally {
-      try {
-        stream.close();
-      }
-      catch (IOException ignored) {
-      }
-    }
   }
-
-
 }

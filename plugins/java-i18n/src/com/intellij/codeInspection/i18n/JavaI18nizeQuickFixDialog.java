@@ -1,22 +1,4 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
-/**
- * @author cdr
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.i18n;
 
 import com.intellij.codeInsight.CodeInsightBundle;
@@ -30,7 +12,8 @@ import com.intellij.lang.properties.psi.PropertyCreationHandler;
 import com.intellij.lang.properties.psi.ResourceBundleManager;
 import com.intellij.lang.properties.references.I18nizeQuickFixDialog;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.event.DocumentAdapter;
+import com.intellij.openapi.editor.event.DocumentEvent;
+import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
@@ -52,8 +35,9 @@ import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;
 import java.awt.*;
 import java.io.IOException;
-import java.util.*;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 public class JavaI18nizeQuickFixDialog extends I18nizeQuickFixDialog {
   private final PsiLiteralExpression myLiteralExpression;
@@ -122,8 +106,9 @@ public class JavaI18nizeQuickFixDialog extends I18nizeQuickFixDialog {
       myRBEditorTextField = new EditorComboBox(document, myProject, StdFileTypes.JAVA);
       myResourceBundleSuggester.add(myRBEditorTextField, BorderLayout.CENTER);
       suggestAvailableResourceBundleExpressions();
-      myRBEditorTextField.addDocumentListener(new DocumentAdapter() {
-        public void documentChanged(com.intellij.openapi.editor.event.DocumentEvent e) {
+      myRBEditorTextField.addDocumentListener(new DocumentListener() {
+        @Override
+        public void documentChanged(@NotNull DocumentEvent e) {
           somethingChanged();
         }
       });
@@ -135,16 +120,14 @@ public class JavaI18nizeQuickFixDialog extends I18nizeQuickFixDialog {
     if (templateName != null) {
       HyperlinkLabel link = new HyperlinkLabel(CodeInsightBundle.message("i18nize.dialog.template.link.label"));
       link.addHyperlinkListener(new HyperlinkListener() {
+        @Override
         public void hyperlinkUpdate(HyperlinkEvent e) {
-          final FileTemplateConfigurable configurable = new FileTemplateConfigurable();
-          final FileTemplate template = FileTemplateManager.getInstance().getCodeTemplate(templateName);
-          SwingUtilities.invokeLater(new Runnable() {
-            public void run() {
-              configurable.setTemplate(template, null);
-            }
-          });
+          final FileTemplateConfigurable configurable = new FileTemplateConfigurable(myProject);
+          final FileTemplate template = FileTemplateManager.getInstance(myProject).getCodeTemplate(templateName);
+          SwingUtilities.invokeLater(() -> configurable.setTemplate(template, null));
           boolean ok = ShowSettingsUtil.getInstance().editConfigurable(myPanel, configurable);
           if (ok) {
+            FileTemplateManager.getInstance(myProject).saveAllTemplates();
             somethingChanged();
             if (myShowJavaCodeInfo) {
               suggestAvailableResourceBundleExpressions();
@@ -174,7 +157,7 @@ public class JavaI18nizeQuickFixDialog extends I18nizeQuickFixDialog {
     catch (ResourceBundleManager.ResourceBundleNotFoundException e) {
       final IntentionAction fix = e.getFix();
       if (fix != null) {
-        if (Messages.showOkCancelDialog(project, e.getMessage(), title, Messages.getErrorIcon()) == OK_EXIT_CODE) {
+        if (Messages.showOkCancelDialog(project, e.getMessage(), title, Messages.getErrorIcon()) == Messages.OK) {
           try {
             fix.invoke(project, null, file);
             return false;
@@ -199,7 +182,7 @@ public class JavaI18nizeQuickFixDialog extends I18nizeQuickFixDialog {
     if (templateName == null) return;
 
     if (myShowJavaCodeInfo) {
-      FileTemplate template = FileTemplateManager.getInstance().getCodeTemplate(templateName);
+      FileTemplate template = FileTemplateManager.getInstance(myProject).getCodeTemplate(templateName);
       boolean showResourceBundleSuggester = template.getText().contains("${" + RESOURCE_BUNDLE_OPTION_KEY + "}");
       myJavaCodeInfoPanel.setVisible(showResourceBundleSuggester);
     }
@@ -209,13 +192,10 @@ public class JavaI18nizeQuickFixDialog extends I18nizeQuickFixDialog {
     }
 
     myRBEditorTextField.setHistory(ArrayUtil.toStringArray(result));
-    SwingUtilities.invokeLater(new Runnable() {
-      public void run() {
-        myRBEditorTextField.setSelectedIndex(0);
-      }
-    });
+    SwingUtilities.invokeLater(() -> myRBEditorTextField.setSelectedIndex(0));
   }
 
+  @Override
   protected void somethingChanged() {
     if (myShowPreview) {
       myPreviewLabel.setText(getI18nizedText());
@@ -247,8 +227,8 @@ public class JavaI18nizeQuickFixDialog extends I18nizeQuickFixDialog {
 
     String templateName = getTemplateName();
     LOG.assertTrue(templateName != null);
-    FileTemplate template = FileTemplateManager.getInstance().getCodeTemplate(templateName);
-    Map<String, String> attributes = new THashMap<String, String>();
+    FileTemplate template = FileTemplateManager.getInstance(myProject).getCodeTemplate(templateName);
+    Map<String, String> attributes = new THashMap<>();
     attributes.put(PROPERTY_KEY_OPTION_KEY, propertyKey);
     attributes.put(RESOURCE_BUNDLE_OPTION_KEY, getResourceBundleText());
     attributes.put(PROPERTY_VALUE_ATTR, StringUtil.escapeStringCharacters(myDefaultPropertyValue));

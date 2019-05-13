@@ -1,0 +1,2 @@
+raise "exception"
+raise Exception()

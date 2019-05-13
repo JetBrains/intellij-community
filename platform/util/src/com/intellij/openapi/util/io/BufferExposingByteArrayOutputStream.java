@@ -25,6 +25,10 @@ public class BufferExposingByteArrayOutputStream extends UnsyncByteArrayOutputSt
     super(size);
   }
 
+  public BufferExposingByteArrayOutputStream(byte[] buffer) {
+    super(buffer);
+  }
+
   @NotNull
   public byte[] getInternalBuffer() {
     return myBuffer;

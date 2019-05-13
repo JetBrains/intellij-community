@@ -23,10 +23,10 @@ import java.util.List;
 class TableRow {
 
   private final TablePassInfo myData;
-  final List<TabInfo> myColumns = new ArrayList<TabInfo>();
+  final List<TabInfo> myColumns = new ArrayList<>();
   int width;
 
-  public TableRow(final TablePassInfo data) {
+  TableRow(final TablePassInfo data) {
     myData = data;
   }
 

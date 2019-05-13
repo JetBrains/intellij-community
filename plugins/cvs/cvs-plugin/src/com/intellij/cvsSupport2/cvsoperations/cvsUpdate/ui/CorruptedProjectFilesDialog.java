@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,20 +15,19 @@
  */
 package com.intellij.cvsSupport2.cvsoperations.cvsUpdate.ui;
 
+import com.intellij.cvsSupport2.Options;
 import com.intellij.cvsSupport2.config.CvsConfiguration;
 import com.intellij.cvsSupport2.cvsoperations.cvsUpdate.MergedWithConflictProjectOrModuleFile;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.Options;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -36,7 +35,6 @@ import java.awt.event.ActionEvent;
 import java.io.*;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.text.MessageFormat;
 
 public class CorruptedProjectFilesDialog extends DialogWrapper {
 
@@ -54,7 +52,7 @@ public class CorruptedProjectFilesDialog extends DialogWrapper {
   public CorruptedProjectFilesDialog(Project project,
                                      Collection<MergedWithConflictProjectOrModuleFile> mergedFiles) {
     super(project, true);
-    myCorruptedFiles = new ArrayList<MergedWithConflictProjectOrModuleFile>(mergedFiles);
+    myCorruptedFiles = new ArrayList<>(mergedFiles);
     myProject = project;
 
     myIconLabel.setIcon(Messages.getInformationIcon());
@@ -72,10 +70,12 @@ public class CorruptedProjectFilesDialog extends DialogWrapper {
     showNextFileInfo();
   }
 
+  @Override
   protected JComponent createCenterPanel() {
     return myPanel;
   }
 
+  @Override
   @NotNull
   protected Action[] createActions() {
     return new Action[]{new SkipFile(), new GetFile(), new SkipAll(), new GetAll()
@@ -118,20 +118,22 @@ public class CorruptedProjectFilesDialog extends DialogWrapper {
   }
 
   private class SkipFile extends AbstractAction {
-    public SkipFile() {
+    SkipFile() {
       putValue(NAME, com.intellij.CvsBundle.message("button.text.skip"));
     }
 
+    @Override
     public void actionPerformed(ActionEvent e) {
       onCurrentFileProcessed(false);
     }
   }
 
   private class GetFile extends AbstractAction {
-    public GetFile() {
+    GetFile() {
       putValue(NAME, com.intellij.CvsBundle.message("button.text.get"));
     }
 
+    @Override
     public void actionPerformed(ActionEvent e) {
       myCorruptedFiles.get(0).setShouldBeCheckedOut();
       onCurrentFileProcessed(true);
@@ -139,10 +141,11 @@ public class CorruptedProjectFilesDialog extends DialogWrapper {
   }
 
   private class SkipAll extends AbstractAction {
-    public SkipAll() {
+    SkipAll() {
       putValue(NAME, com.intellij.CvsBundle.message("button.text.skip.all"));
     }
 
+    @Override
     public void actionPerformed(ActionEvent e) {
       myCorruptedFiles.clear();
       onCurrentFileProcessed(false);
@@ -150,10 +153,11 @@ public class CorruptedProjectFilesDialog extends DialogWrapper {
   }
 
   private class GetAll extends AbstractAction {
-    public GetAll() {
+    GetAll() {
       putValue(NAME, com.intellij.CvsBundle.message("button.text.get.all"));
     }
 
+    @Override
     public void actionPerformed(ActionEvent e) {
       for (final MergedWithConflictProjectOrModuleFile myCorruptedFile : myCorruptedFiles) {
         myCorruptedFile.setShouldBeCheckedOut();
@@ -204,19 +208,18 @@ public class CorruptedProjectFilesDialog extends DialogWrapper {
       }
 
     }
-    catch (UnsupportedEncodingException e) {
-      LOG.error(e);
-    }
     catch (IOException e) {
       LOG.error(e);
     }
   }
 
+  @Override
   protected void doOKAction() {
     saveShowDialogOptions();
     super.doOKAction();
   }
 
+  @Override
   public void doCancelAction() {
     saveShowDialogOptions();
     super.doCancelAction();

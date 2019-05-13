@@ -15,12 +15,14 @@
  */
 package com.intellij.util.xml.ui;
 
+import org.jetbrains.annotations.NotNull;
+
 import java.util.EventListener;
 
 /**
  * @author peter
  */
 public interface CommitListener extends EventListener {
-  void beforeCommit(DomUIControl control);
-  void afterCommit(DomUIControl control);
+  void beforeCommit(@NotNull DomUIControl control);
+  void afterCommit(@NotNull DomUIControl control);
 }

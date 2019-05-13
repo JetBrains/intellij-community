@@ -1,3 +1,18 @@
+/*
+ * Copyright 2000-2014 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package org.jetbrains.plugins.groovy.mvc;
 
 import com.intellij.openapi.actionSystem.ActionPlaces;
@@ -17,9 +32,9 @@ public abstract class MvcActionBase extends DumbAwareAction {
   protected abstract void actionPerformed(@NotNull AnActionEvent e, @NotNull Module module, @NotNull MvcFramework framework);
   
   @Override
-  public final void actionPerformed(AnActionEvent e) {
+  public final void actionPerformed(@NotNull AnActionEvent e) {
     Pair<MvcFramework, Module> pair = guessFramework(e);
-    if (pair != null && isFrameworkSupported(pair.getFirst())) {
+    if (pair != null && isSupported(pair.getFirst(), pair.getSecond())) {
       actionPerformed(e, pair.getSecond(), pair.getFirst());
     }
   }
@@ -28,9 +43,14 @@ public abstract class MvcActionBase extends DumbAwareAction {
     return true;
   }
 
+  protected boolean isSupported(@NotNull MvcFramework framework, @NotNull Module module) {
+    return isFrameworkSupported(framework);
+  }
+
   @Nullable
   public static Pair<MvcFramework, Module> guessFramework(AnActionEvent event) {
-    final Module module = event.getData(event.getPlace().equals(ActionPlaces.MAIN_MENU) ? LangDataKeys.MODULE : LangDataKeys.MODULE_CONTEXT);
+    final Module module = event.getData(
+      ActionPlaces.isMainMenuOrActionSearch(event.getPlace()) ? LangDataKeys.MODULE : LangDataKeys.MODULE_CONTEXT);
 
     if (module != null) {
       MvcFramework commonPluginModuleFramework = MvcFramework.findCommonPluginModuleFramework(module);
@@ -39,7 +59,7 @@ public abstract class MvcActionBase extends DumbAwareAction {
         for (Module mod : ModuleManager.getInstance(module.getProject()).getModules()) {
           if (commonPluginModuleFramework.getCommonPluginsModuleName(mod).equals(module.getName())) {
             if (commonPluginModuleFramework.hasSupport(mod)) {
-              return new Pair<MvcFramework, Module>(commonPluginModuleFramework, mod);
+              return Pair.create(commonPluginModuleFramework, mod);
             }
 
             return null;
@@ -72,9 +92,10 @@ public abstract class MvcActionBase extends DumbAwareAction {
     return result;
   }
 
-  public final void update(AnActionEvent event) {
+  @Override
+  public final void update(@NotNull AnActionEvent event) {
     Pair<MvcFramework, Module> pair = guessFramework(event);
-    if (pair != null && isFrameworkSupported(pair.getFirst())) {
+    if (pair != null && isSupported(pair.getFirst(), pair.getSecond())) {
       event.getPresentation().setVisible(true);
       updateView(event, pair.getFirst(), pair.getSecond());
     }

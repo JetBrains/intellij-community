@@ -24,7 +24,7 @@ import com.intellij.openapi.keymap.KeymapGroup;
 import com.intellij.openapi.keymap.impl.ui.Group;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
-import com.intellij.util.containers.HashMap;
+import java.util.HashMap;
 
 import java.util.Arrays;
 
@@ -33,6 +33,7 @@ import java.util.Arrays;
  */
 public abstract class BaseToolKeymapExtension implements KeymapExtension {
 
+  @Override
   public KeymapGroup createGroup(final Condition<AnAction> filtered, final Project project) {
     final ActionManagerEx actionManager = ActionManagerEx.getInstanceEx();
     String[] ids = actionManager.getActionIds(getActionIdPrefix());
@@ -40,7 +41,7 @@ public abstract class BaseToolKeymapExtension implements KeymapExtension {
     Group group = new Group(getGroupName(), AllIcons.Nodes.KeymapTools);
 
 
-    HashMap<String, Group> toolGroupNameToGroup = new HashMap<String, Group>();
+    HashMap<String, Group> toolGroupNameToGroup = new HashMap<>();
 
     for (String id : ids) {
       if (filtered != null && !filtered.value(actionManager.getActionOrStub(id))) continue;

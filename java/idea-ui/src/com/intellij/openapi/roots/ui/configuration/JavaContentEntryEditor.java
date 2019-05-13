@@ -18,34 +18,42 @@ package com.intellij.openapi.roots.ui.configuration;
 import com.intellij.openapi.roots.CompilerModuleExtension;
 import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.ExcludeFolder;
-import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.roots.SourceFolder;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
+import java.util.List;
+
 public abstract class JavaContentEntryEditor extends ContentEntryEditor {
   private final CompilerModuleExtension myCompilerExtension;
 
-  public JavaContentEntryEditor(final String contentEntryUrl) {
-    super(contentEntryUrl, true, true);
+  public JavaContentEntryEditor(final String contentEntryUrl, List<ModuleSourceRootEditHandler<?>> moduleSourceRootEditHandlers) {
+    super(contentEntryUrl, moduleSourceRootEditHandlers);
     myCompilerExtension = getModel().getModuleExtension(CompilerModuleExtension.class);
   }
 
   @Override
   protected ContentRootPanel createContentRootPane() {
-    return new JavaContentRootPanel(this) {
+    return new ContentRootPanel(this, getEditHandlers()) {
       @Nullable
       @Override
       protected ContentEntry getContentEntry() {
         return JavaContentEntryEditor.this.getContentEntry();
+      }
+
+      @Nullable
+      @Override
+      protected JComponent createRootPropertiesEditor(ModuleSourceRootEditHandler<?> editor, SourceFolder folder) {
+        return editor.createPropertiesEditor(folder, this, myCallback);
       }
     };
   }
 
   @Override
   protected ExcludeFolder doAddExcludeFolder(@NotNull final VirtualFile file) {
-    final boolean isCompilerOutput = isCompilerOutput(file);
+    final boolean isCompilerOutput = isCompilerOutput(file.getUrl());
     if (isCompilerOutput) {
       myCompilerExtension.setExcludeOutput(true);
       return null;
@@ -54,32 +62,26 @@ public abstract class JavaContentEntryEditor extends ContentEntryEditor {
   }
 
   @Override
-  protected void doRemoveExcludeFolder(@NotNull final ExcludeFolder excludeFolder) {
-    final VirtualFile file = excludeFolder.getFile();
-    if (file != null) {
-      if (isCompilerOutput(file)) {
-        myCompilerExtension.setExcludeOutput(false);
-      }
+  protected void doRemoveExcludeFolder(@NotNull final String excludeRootUrl) {
+    if (isCompilerOutput(excludeRootUrl)) {
+      myCompilerExtension.setExcludeOutput(false);
     }
-    super.doRemoveExcludeFolder(excludeFolder);
+    super.doRemoveExcludeFolder(excludeRootUrl);
   }
 
-  private boolean isCompilerOutput(@NotNull final VirtualFile file) {
-    final VirtualFile compilerOutputPath = myCompilerExtension.getCompilerOutputPath();
-    if (file.equals(compilerOutputPath)) {
+  private boolean isCompilerOutput(@NotNull final String fileUrl) {
+    if (fileUrl.equals(myCompilerExtension.getCompilerOutputUrl())) {
       return true;
     }
 
-    final VirtualFile compilerOutputPathForTests = myCompilerExtension.getCompilerOutputPathForTests();
-    if (file.equals(compilerOutputPathForTests)) {
+    if (fileUrl.equals(myCompilerExtension.getCompilerOutputUrlForTests())) {
       return true;
     }
 
-    final String path = file.getPath();
     if (myCompilerExtension.isCompilerOutputPathInherited()) {
       final ProjectStructureConfigurable instance = ProjectStructureConfigurable.getInstance(getModel().getModule().getProject());
-      final String compilerOutput = VfsUtil.urlToPath(instance.getProjectConfig().getCompilerOutputUrl());
-      if (FileUtil.pathsEqual(compilerOutput, path)) {
+      final String compilerOutputUrl = instance.getProjectConfig().getCompilerOutputUrl();
+      if (fileUrl.equals(compilerOutputUrl)) {
         return true;
       }
     }

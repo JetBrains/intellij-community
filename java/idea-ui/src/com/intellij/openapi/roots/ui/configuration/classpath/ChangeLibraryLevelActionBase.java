@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,8 +18,6 @@ package com.intellij.openapi.roots.ui.configuration.classpath;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
-import com.intellij.openapi.application.AccessToken;
-import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -27,7 +25,6 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.impl.libraries.LibraryEx;
-import com.intellij.openapi.roots.impl.libraries.LibraryTableBase;
 import com.intellij.openapi.roots.impl.libraries.LibraryTableImplUtil;
 import com.intellij.openapi.roots.impl.libraries.LibraryTypeServiceImpl;
 import com.intellij.openapi.roots.libraries.Library;
@@ -41,8 +38,9 @@ import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.PathUtil;
+import com.intellij.openapi.vfs.newvfs.ArchiveFileSystem;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -80,22 +78,24 @@ public abstract class ChangeLibraryLevelActionBase extends AnAction {
     final String libPath = baseDir != null ? baseDir.getPath() + "/lib" : "";
     final VirtualFile[] classesRoots = library.getFiles(OrderRootType.CLASSES);
     boolean allowEmptyName = isConvertingToModuleLibrary() && classesRoots.length == 1;
-    final String libraryName = allowEmptyName ? "" : StringUtil.notNullize(library.getName(), LibraryTypeServiceImpl.suggestLibraryName(classesRoots));
+    final String libraryName =
+      allowEmptyName ? "" : StringUtil.notNullize(library.getName(), LibraryTypeServiceImpl.suggestLibraryName(classesRoots));
     final LibraryTableModifiableModelProvider provider = getModifiableTableModelProvider();
     final ChangeLibraryLevelDialog dialog = new ChangeLibraryLevelDialog(getParentComponent(), myProject, myCopy,
                                                                          libraryName, libPath, allowEmptyName, provider);
-    dialog.show();
-    if (!dialog.isOK()) {
+    if (!dialog.showAndGet()) {
       return null;
     }
 
-    final Set<File> fileToCopy = new LinkedHashSet<File>();
-    final Map<String, String> copiedFiles = new HashMap<String, String>();
+    final Set<File> fileToCopy = new LinkedHashSet<>();
+    final Map<String, String> copiedFiles = new HashMap<>();
     final String targetDirectoryPath = dialog.getDirectoryForFilesPath();
     if (targetDirectoryPath != null) {
       for (OrderRootType type : OrderRootType.getAllTypes()) {
         for (VirtualFile root : library.getFiles(type)) {
-          fileToCopy.add(VfsUtil.virtualToIoFile(PathUtil.getLocalFile(root)));
+          if (root.isInLocalFileSystem() || root.getFileSystem() instanceof ArchiveFileSystem) {
+            fileToCopy.add(VfsUtilCore.virtualToIoFile(VfsUtil.getLocalFile(root)));
+          }
         }
       }
       if (!copyOrMoveFiles(fileToCopy, targetDirectoryPath, copiedFiles)) {
@@ -103,17 +103,10 @@ public abstract class ChangeLibraryLevelActionBase extends AnAction {
       }
     }
 
-    final Library copied = ((LibraryTableBase.ModifiableModelEx)provider.getModifiableModel()).createLibrary(dialog.getLibraryName(), library.getKind());
+    final Library copied = provider.getModifiableModel().createLibrary(StringUtil.nullize(dialog.getLibraryName()), library.getKind());
     final LibraryEx.ModifiableModelEx model = (LibraryEx.ModifiableModelEx)copied.getModifiableModel();
     LibraryEditingUtil.copyLibrary(library, copiedFiles, model);
-
-    AccessToken token = WriteAction.start();
-    try {
-      model.commit();
-    }
-    finally {
-      token.finish();
-    }
+    WriteAction.run(() -> model.commit());
     return copied;
   }
 
@@ -155,21 +148,7 @@ public abstract class ChangeLibraryLevelActionBase extends AnAction {
             return;
           }
 
-          new WriteAction() {
-            @Override
-            protected void run(Result result) throws Throwable {
-              final VirtualFile virtualTo = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(to);
-              if (virtualTo != null) {
-                copiedFiles.put(FileUtil.toSystemIndependentName(from.getAbsolutePath()), virtualTo.getPath());
-              }
-              if (!myCopy) {
-                final VirtualFile parent = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(from.getParentFile());
-                if (parent != null) {
-                  parent.refresh(false, false);
-                }
-              }
-            }
-          }.execute();
+          copiedFiles.put(FileUtil.toSystemIndependentName(from.getAbsolutePath()), FileUtil.toSystemIndependentName(to.getAbsolutePath()));
         }
         finished.set(true);
       }
@@ -177,11 +156,25 @@ public abstract class ChangeLibraryLevelActionBase extends AnAction {
     if (!finished.get()) {
       return false;
     }
+
+    WriteAction.run(() -> {
+      for (Map.Entry<String, String> entry : copiedFiles.entrySet()) {
+        String fromPath = entry.getKey();
+        String toPath = entry.getValue();
+        LocalFileSystem.getInstance().refreshAndFindFileByPath(toPath);
+        if (!myCopy) {
+          final VirtualFile parent = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(new File(fromPath).getParentFile());
+          if (parent != null) {
+            parent.refresh(false, false);
+          }
+        }
+      }
+    });
     return true;
   }
 
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     final Presentation presentation = e.getPresentation();
     boolean enabled = isEnabled();
     presentation.setVisible(enabled);

@@ -32,12 +32,12 @@ public class CvsChangeListsBuilder {
   @NonNls private static final String INITIALLY_ADDED_ON_BRANCH = "was initially added on branch";
 
   private static class ChangeListKey extends Trinity<String, String, String> {
-    public ChangeListKey(final String branch, final String author, final String message) {
+    ChangeListKey(final String branch, final String author, final String message) {
       super(branch, author, message);
     }
   }
 
-  private final Map<ChangeListKey, List<CvsChangeList>> myCache = new HashMap<ChangeListKey, List<CvsChangeList>>();
+  private final Map<ChangeListKey, List<CvsChangeList>> myCache = new HashMap<>();
 
   private long myLastNumber = 0;
   private final String myRootPath;
@@ -53,7 +53,7 @@ public class CvsChangeListsBuilder {
   }
 
   public List<CvsChangeList> getVersions() {
-    final ArrayList<CvsChangeList> result = new ArrayList<CvsChangeList>();
+    final ArrayList<CvsChangeList> result = new ArrayList<>();
     for (List<CvsChangeList> versions : myCache.values()) {
       result.addAll(versions);
     }
@@ -87,7 +87,7 @@ public class CvsChangeListsBuilder {
       new CvsChangeList(myProject, myEnvironment, myRootFile, myLastNumber, message, date, author, myRootPath);
     myLastNumber += 1;
     if (!myCache.containsKey(key)) {
-      myCache.put(key, new ArrayList<CvsChangeList>());
+      myCache.put(key, new ArrayList<>());
     }
     myCache.get(key).add(result);
     return result;
@@ -99,10 +99,10 @@ public class CvsChangeListsBuilder {
     if (!CvsChangeList.isAncestor(myRootPath, file)) {
       return null;
     }
-    final List<RevisionWrapper> result = new ArrayList<RevisionWrapper>();
+    final List<RevisionWrapper> result = new ArrayList<>();
     for (Revision revision : log.getRevisions()) {
       if (revision != null) {
-        if (revision.getState().equals(CvsChangeList.DEAD_STATE) &&
+        if (CvsChangeList.DEAD_STATE.equals(revision.getState()) &&
             revision.getMessage().contains(INITIALLY_ADDED_ON_BRANCH)) {
           // ignore dead revision (otherwise it'll get stuck in incoming changes forever - it's considered a deletion and
           // the file is never actually deleted)

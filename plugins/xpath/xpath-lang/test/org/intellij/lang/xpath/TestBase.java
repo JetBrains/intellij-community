@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,22 +16,12 @@
 package org.intellij.lang.xpath;
 
 import com.intellij.openapi.application.PluginPathManager;
-import com.intellij.testFramework.PlatformTestCase;
 import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture;
 import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory;
 
-/*
-* Created by IntelliJ IDEA.
-* User: sweinreuter
-* Date: 17.12.2008
-*/
 public abstract class TestBase extends UsefulTestCase {
-
-  protected TestBase() {
-    PlatformTestCase.initPlatformLangPrefix();
-  }
 
   protected CodeInsightTestFixture myFixture;
 
@@ -53,7 +43,7 @@ public abstract class TestBase extends UsefulTestCase {
   }
 
   public static String getTestDataPath(String subPath) {
-    // path logic taken from RegExpSupport tests
+    // path logic taken from intellij.regexp tests
     final String def = PluginPathManager.getPluginHomePath("xpath") + "/xpath-lang/testData";
     return System.getProperty("idea.xpath.testdata-path", def) + "/" + subPath;
   }
@@ -62,9 +52,16 @@ public abstract class TestBase extends UsefulTestCase {
 
   @Override
   protected void tearDown() throws Exception {
-    myFixture.tearDown();
-    myFixture = null;
-    super.tearDown();
+    try {
+      myFixture.tearDown();
+    }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
+    finally {
+      myFixture = null;
+      super.tearDown();
+    }
   }
 
   protected String getTestFileName() {

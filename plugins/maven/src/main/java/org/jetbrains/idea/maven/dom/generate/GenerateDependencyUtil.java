@@ -24,8 +24,8 @@ import com.intellij.ide.util.MemberChooser;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiFile;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
+import icons.MavenIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.dom.MavenDomBundle;
@@ -44,21 +44,19 @@ public class GenerateDependencyUtil {
   }
 
   @NotNull
-  public static List<MavenDomDependency> chooseDependencies(Collection<MavenDomDependency> candidates, final Project project) {
-    List<MavenDomDependency> dependencies = new ArrayList<MavenDomDependency>();
+  public static List<MavenDomDependency> chooseDependencies(Collection<? extends MavenDomDependency> candidates, final Project project) {
+    List<MavenDomDependency> dependencies = new ArrayList<>();
 
     MavenDomProjectModelMember[] memberCandidates =
-      ContainerUtil.map2Array(candidates, MavenDomProjectModelMember.class, new Function<MavenDomDependency, MavenDomProjectModelMember>() {
-        public MavenDomProjectModelMember fun(MavenDomDependency dependency) {
-          return new MavenDomProjectModelMember(dependency);
-        }
-      });
+      ContainerUtil.map2Array(candidates, MavenDomProjectModelMember.class, dependency -> new MavenDomProjectModelMember(dependency));
     MemberChooser<MavenDomProjectModelMember> chooser =
       new MemberChooser<MavenDomProjectModelMember>(memberCandidates, true, true, project) {
+        @Override
         protected ShowContainersAction getShowContainersAction() {
-          return new ShowContainersAction(MavenDomBundle.message("chooser.show.project.files"), icons.MavenIcons.MavenProject);
+          return new ShowContainersAction(MavenDomBundle.message("chooser.show.project.files"), MavenIcons.MavenProject);
         }
 
+        @Override
         protected String getAllContainersNodeName() {
           return MavenDomBundle.message("all.dependencies");
         }
@@ -71,11 +69,7 @@ public class GenerateDependencyUtil {
     if (chooser.getExitCode() == MemberChooser.OK_EXIT_CODE) {
       final MavenDomProjectModelMember[] members = chooser.getSelectedElements(new MavenDomProjectModelMember[0]);
       if (members != null) {
-        dependencies.addAll(ContainerUtil.mapNotNull(members, new Function<MavenDomProjectModelMember, MavenDomDependency>() {
-          public MavenDomDependency fun(MavenDomProjectModelMember mavenDomProjectModelMember) {
-            return mavenDomProjectModelMember.getDependency();
-          }
-        }));
+        dependencies.addAll(ContainerUtil.mapNotNull(members, mavenDomProjectModelMember -> mavenDomProjectModelMember.getDependency()));
       }
     }
 
@@ -85,11 +79,12 @@ public class GenerateDependencyUtil {
   private static class MavenDomProjectModelMember extends MemberChooserObjectBase implements ClassMember {
     private final MavenDomDependency myDependency;
 
-    public MavenDomProjectModelMember(final MavenDomDependency dependency) {
+    MavenDomProjectModelMember(final MavenDomDependency dependency) {
       super(dependency.toString(), AllIcons.Nodes.PpLib);
       myDependency = dependency;
     }
 
+    @NotNull
     @Override
     public String getText() {
       StringBuffer sb = new StringBuffer();
@@ -108,6 +103,7 @@ public class GenerateDependencyUtil {
       }
     }
 
+    @Override
     public MemberChooserObject getParentNodeDelegate() {
       MavenDomDependency dependency = getDependency();
 
@@ -133,8 +129,8 @@ public class GenerateDependencyUtil {
 
     private static class MavenDomProjectModelFileMemberChooserObjectBase extends PsiElementMemberChooserObject {
 
-      public MavenDomProjectModelFileMemberChooserObjectBase(@NotNull final PsiFile psiFile, @Nullable String projectName) {
-        super(psiFile, StringUtil.isEmptyOrSpaces(projectName) ? psiFile.getName() : projectName, icons.MavenIcons.MavenProject);
+      MavenDomProjectModelFileMemberChooserObjectBase(@NotNull final PsiFile psiFile, @Nullable String projectName) {
+        super(psiFile, StringUtil.isEmptyOrSpaces(projectName) ? psiFile.getName() : projectName, MavenIcons.MavenProject);
       }
     }
   }

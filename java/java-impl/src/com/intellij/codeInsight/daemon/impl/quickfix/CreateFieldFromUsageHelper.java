@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,7 +29,7 @@ import org.jetbrains.annotations.NotNull;
  */
 public abstract class CreateFieldFromUsageHelper {
   private static final LanguageExtension<CreateFieldFromUsageHelper> EP_NAME =
-    new LanguageExtension<CreateFieldFromUsageHelper>("com.intellij.codeInsight.createFieldFromUsageHelper");
+    new LanguageExtension<>("com.intellij.codeInsight.createFieldFromUsageHelper");
 
   public static Template setupTemplate(PsiField field,
                                        Object expectedTypes,
@@ -55,5 +55,5 @@ public abstract class CreateFieldFromUsageHelper {
                                              PsiClass targetClass,
                                              Editor editor,
                                              PsiElement context,
-                                             boolean createConstantField, PsiSubstitutor substitutor);
+                                             boolean createConstantField, @NotNull PsiSubstitutor substitutor);
 }

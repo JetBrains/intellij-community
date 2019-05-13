@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,19 +14,10 @@
  * limitations under the License.
  */
 
-/*
-* Created by IntelliJ IDEA.
-* User: dsl
-* Date: Apr 15, 2002
-* Time: 1:25:37 PM
-* To change template for new class use
-* Code Style | Class Templates options (Tools | IDE Options).
-*/
 package com.intellij.refactoring.makeStatic;
 
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.LangDataKeys;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -41,7 +32,6 @@ import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
-import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -49,8 +39,9 @@ public class MakeStaticHandler implements RefactoringActionHandler {
   public static final String REFACTORING_NAME = RefactoringBundle.message("make.method.static.title");
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.makeMethodStatic.MakeMethodStaticHandler");
 
+  @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file, DataContext dataContext) {
-    PsiElement element = LangDataKeys.PSI_ELEMENT.getData(dataContext);
+    PsiElement element = CommonDataKeys.PSI_ELEMENT.getData(dataContext);
     editor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
     if (element == null) {
       element = file.findElementAt(editor.getCaretModel().getOffset());
@@ -70,6 +61,7 @@ public class MakeStaticHandler implements RefactoringActionHandler {
     invoke(project, new PsiElement[]{element}, dataContext);
   }
 
+  @Override
   public void invoke(@NotNull final Project project, @NotNull PsiElement[] elements, DataContext dataContext) {
     if(elements.length != 1 || !(elements[0] instanceof PsiTypeParameterListOwner)) return;
 
@@ -78,7 +70,7 @@ public class MakeStaticHandler implements RefactoringActionHandler {
 
     String error = validateTarget(member);
     if (error != null) {
-      Editor editor = PlatformDataKeys.EDITOR.getData(dataContext);
+      Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
       CommonRefactoringUtil.showErrorHint(project, editor, error, REFACTORING_NAME, HelpID.MAKE_METHOD_STATIC);
       return;
     }
@@ -100,25 +92,15 @@ public class MakeStaticHandler implements RefactoringActionHandler {
 
       final boolean[] hasMethodReferenceOnInstance = new boolean[] {false};
       if (member instanceof PsiMethod) {
-        if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
-          @Override
-          public void run() {
-            hasMethodReferenceOnInstance[0] = !MethodReferencesSearch.search((PsiMethod)member).forEach(new Processor<PsiReference>() {
-              @Override
-              public boolean process(PsiReference reference) {
-                final PsiElement element = reference.getElement();
-                if (element instanceof PsiMethodReferenceExpression) {
-                  return false;
-                }
-                return true;
-              }
-            });
-          }
-        }, "Search for method references", true, project)) return;
+        if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(
+          (Runnable)() -> hasMethodReferenceOnInstance[0] = !MethodReferencesSearch.search((PsiMethod)member).forEach(reference -> {
+            final PsiElement element = reference.getElement();
+            return !(element instanceof PsiMethodReferenceExpression);
+          }), "Search for method references", true, project)) return;
       }
 
       if (classRefsInMember.length > 0 || hasMethodReferenceOnInstance[0]) {
-        final PsiType type = JavaPsiFacade.getInstance(project).getElementFactory().createType(member.getContainingClass());
+        final PsiType type = JavaPsiFacade.getElementFactory(project).createType(member.getContainingClass());
         //TODO: callback
         String[] nameSuggestions =
                 JavaCodeStyleManager.getInstance(project).suggestVariableName(VariableKind.PARAMETER, null, null, type).names;

@@ -32,11 +32,13 @@ public class RemoveExplicitConversionFix extends ReplaceElementFix<XPathExpressi
         super(ExpectedTypeUtil.unparenthesize(expression));
     }
 
+    @Override
     @NotNull
     public String getText() {
         return "Remove Explicit Type Conversion";
     }
 
+    @Override
     @NotNull
     public String getFamilyName() {
         return "ImplicitTypeConversion";
@@ -51,6 +53,7 @@ public class RemoveExplicitConversionFix extends ReplaceElementFix<XPathExpressi
         && ((XPathFunctionCall)startElement).getArgumentList().length == 1;
     }
 
+    @Override
     public void invokeImpl(Project project, PsiFile file) throws IncorrectOperationException {
       PsiElement myElement = getStartElement();
       final XPathExpression arg0 = ((XPathFunctionCall)myElement).getArgumentList()[0];

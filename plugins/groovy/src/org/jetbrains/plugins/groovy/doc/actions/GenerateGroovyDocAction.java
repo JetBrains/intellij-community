@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,6 +27,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import org.apache.tools.ant.types.Path;
 import org.codehaus.groovy.ant.Groovydoc;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.doc.GenerateGroovyDocDialog;
 import org.jetbrains.plugins.groovy.doc.GroovyDocBundle;
 import org.jetbrains.plugins.groovy.doc.GroovyDocConfiguration;
@@ -37,9 +38,10 @@ import java.io.File;
 public final class GenerateGroovyDocAction extends AnAction implements DumbAware {
   @NonNls private static final String INDEX_HTML = "index.html";
 
-  public void actionPerformed(AnActionEvent e) {
+  @Override
+  public void actionPerformed(@NotNull AnActionEvent e) {
     final DataContext dataContext = e.getDataContext();
-    final Project project = PlatformDataKeys.PROJECT.getData(dataContext);
+    final Project project = CommonDataKeys.PROJECT.getData(dataContext);
 
     final Module module = LangDataKeys.MODULE.getData(dataContext);
     if (module == null) return;
@@ -52,15 +54,15 @@ public final class GenerateGroovyDocAction extends AnAction implements DumbAware
     }
 
     final GenerateGroovyDocDialog dialog = new GenerateGroovyDocDialog(project, configuration);
-    dialog.show();
-    if (!dialog.isOK()) {
+    if (!dialog.showAndGet()) {
       return;
     }
 
     generateGroovydoc(configuration, project);
   }
 
-  public void update(AnActionEvent event) {
+  @Override
+  public void update(@NotNull AnActionEvent event) {
     super.update(event);
     final Presentation presentation = event.getPresentation();
     Module module = LangDataKeys.MODULE.getData(event.getDataContext());
@@ -76,37 +78,35 @@ public final class GenerateGroovyDocAction extends AnAction implements DumbAware
   }
 
   private static void generateGroovydoc(final GroovyDocConfiguration configuration, final Project project) {
-    Runnable groovyDocRun = new Runnable() {
-      public void run() {
-        Groovydoc groovydoc = new Groovydoc();
-        groovydoc.setProject(new org.apache.tools.ant.Project());
-        groovydoc.setDestdir(new File(configuration.OUTPUT_DIRECTORY));
-        groovydoc.setPrivate(configuration.OPTION_IS_PRIVATE);
-        groovydoc.setUse(configuration.OPTION_IS_USE);
-        groovydoc.setWindowtitle(configuration.WINDOW_TITLE);
+    Runnable groovyDocRun = () -> {
+      Groovydoc groovydoc = new Groovydoc();
+      groovydoc.setProject(new org.apache.tools.ant.Project());
+      groovydoc.setDestdir(new File(configuration.OUTPUT_DIRECTORY));
+      groovydoc.setPrivate(configuration.OPTION_IS_PRIVATE);
+      groovydoc.setUse(configuration.OPTION_IS_USE);
+      groovydoc.setWindowtitle(configuration.WINDOW_TITLE);
 
-        final Path path = new Path(new org.apache.tools.ant.Project());
-        path.setPath(configuration.INPUT_DIRECTORY);
-        groovydoc.setSourcepath(path);
+      final Path path = new Path(new org.apache.tools.ant.Project());
+      path.setPath(configuration.INPUT_DIRECTORY);
+      groovydoc.setSourcepath(path);
 
-        String packages = "";
-        for (int i = 0; i < configuration.PACKAGES.length; i++) {
-          final String s = configuration.PACKAGES[i];
-          if (s != null && s.isEmpty()) continue;
+      String packages = "";
+      for (int i = 0; i < configuration.PACKAGES.length; i++) {
+        final String s = configuration.PACKAGES[i];
+        if (s != null && s.isEmpty()) continue;
 
-          if (i > 0) {
-            packages += ",";
-          }
-
-          packages += s;
+        if (i > 0) {
+          packages += ",";
         }
-        groovydoc.setPackagenames(packages);
 
-        final ProgressIndicator progressIndicator = ProgressManager.getInstance().getProgressIndicator();
-        progressIndicator.setIndeterminate(true);
-        progressIndicator.setText(GroovyDocBundle.message("groovy.doc.progress.indication.text"));
-        groovydoc.execute();
+        packages += s;
       }
+      groovydoc.setPackagenames(packages);
+
+      final ProgressIndicator progressIndicator = ProgressManager.getInstance().getProgressIndicator();
+      progressIndicator.setIndeterminate(true);
+      progressIndicator.setText(GroovyDocBundle.message("groovy.doc.progress.indication.text"));
+      groovydoc.execute();
     };
 
     ProgressManager.getInstance()

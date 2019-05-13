@@ -1,37 +1,38 @@
-<component>
-  <version codename="Community Edition" major="12" minor="1" eap="true"/>
-  <company name="JetBrains s.r.o." url="http://www.jetbrains.com/?fromIDE"/>
-  <build number="__BUILD_NUMBER__" date="__BUILD_DATE__"/>
-  <install-over minbuild="126.1" maxbuild="127.9999" version="12.1"/>
-  <logo url="/idea_community_logo.png" textcolor="ffffff" progressColor="ffaa16" progressY="236" progressTailIcon="/community_progress_tail.png"/>
-  <about url="/idea_community_about.png" foreground="ffffff" logoX="300" logoY="265" logoW="75" logoH="30"/>
-  <icon size32="/icon_CE.png" size16="/icon_CEsmall.png" size32opaque="/icon_CEwhite.png" size12="/toolwindows/toolWindowProject.png" size128="/icon_CE_128.png" ico="idea_CE.ico"/>
+<component xmlns="http://jetbrains.org/intellij/schema/application-info"
+           xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+           xsi:schemaLocation="http://jetbrains.org/intellij/schema/application-info http://jetbrains.org/intellij/schema/ApplicationInfo.xsd">
+  <version major="2019" minor="1" eap="true" suffix="Snapshot"/>
+  <company name="JetBrains s.r.o." url="https://www.jetbrains.com"/>
+  <build number="IC-__BUILD__" date="__BUILD_DATE__"/>
+  <logo url="/idea_community_logo.png" textcolor="ffffff" progressColor="ffffff" progressX="117" progressY="280" progressHeight="3" />
+  <about url="/idea_community_about.png" foreground="939598" copyrightForeground="939598" linkColor="095fdc" logoX="540" logoY="300" logoW="100" logoH="100"/>
+  <icon size32="/icon_CE.png" size16="/icon_CEsmall.png" size128="/icon_CE_128.png" ico="idea_CE.ico" svg="/idea-ce.svg"/>
+  <icon-eap svg="/idea-ce-eap.svg"/>
   <package code="__PACKAGE_CODE__"/>
-  <names product="IDEA" fullname="IntelliJ IDEA" script="idea"/>
+  <names product="IDEA" fullname="IntelliJ IDEA" edition="Community Edition" script="idea" motto="Capable and Ergonomic IDE for JVM"/>
 
-  <welcome-screen logo-url="/Logo_welcomeScreen.png"
-                  caption-url="/welcomeCaption_community.png" 
-                  slogan-url="/developSlogan_community.png"/>
+  <welcome-screen logo-url="/Logo_welcomeScreen_CE.png"/>
+  <customize-ide-wizard provider="com.intellij.ide.customize.CustomizeIdeaWizardStepsProvider"/>
 
-  <third-party url="http://www.jetbrains.org/"/>
+  <editor background-url="/idea_logo_welcome.png"/>
 
-  <editor background-url="/idea_logo_background.png"/>
-
+  <plugins url="http://plugins.jetbrains.com/" builtin-url="__BUILTIN_PLUGINS_URL__"/>
   <update-urls check="http://www.jetbrains.com/updates/updates.xml"
                patches="http://download.jetbrains.com/idea/"/>
 
   <help file="ideahelp.jar" root="idea"/>
-  <documentation url="http://www.jetbrains.com/idea/documentation"/>
-  <support url="http://www.jetbrains.com/support/idea/index.html"/>
-  <feedback eap-url="http://youtrack.jetbrains.com"
-            release-url="http://www.jetbrains.com/feedback/feedback.jsp?product=IDEA&amp;build=$BUILD&amp;timezone=$TIMEZONE&amp;eval=$EVAL"/>
-  <plugins url="http://plugins.jetbrains.com"/>
-  <whatsnew url="http://www.jetbrains.com/idea/whatsnew/index.html"/>
-  <keymap win="http://www.jetbrains.com/idea/docs/IntelliJIDEA_ReferenceCard.pdf"
-          mac="http://www.jetbrains.com/idea/docs/IntelliJIDEA_ReferenceCard_Mac.pdf"/>
+  <documentation url="https://www.jetbrains.com/help/idea"/>
+  <support url="https://intellij-support.jetbrains.com/hc/en-us/requests/new?ticket_form_id=66731&amp;product=IDEA&amp;build=$BUILD&amp;os=$OS&amp;timezone=$TIMEZONE"/>
+  <youtrack url="https://youtrack.jetbrains.com/newissue?project=IDEA&amp;clearDraft=true&amp;description=$DESCR" />
+  <feedback url="https://www.jetbrains.com/feedback/feedback.jsp?product=IDEA&amp;build=$BUILD&amp;timezone=$TIMEZONE&amp;eval=$EVAL"/>
+  <whatsnew url="https://www.jetbrains.com/idea/whatsnew/index.html"/>
+  <keymap win="https://www.jetbrains.com/idea/docs/IntelliJIDEA_ReferenceCard.pdf"
+          mac="https://www.jetbrains.com/idea/docs/IntelliJIDEA_ReferenceCard_Mac.pdf"/>
+  <jetbrains-tv url="https://www.youtube.com/user/intellijideavideo"/>
 
-  <plugins-page category="VCS Integration" title="Select VCS Integration Plugins"/>
-  <plugins-page title="Select Other Plugins"/>
-
-  <statistics settings="http://jetbrains.com/idea/statistics/stat-assistant.xml" service="http://jetbrains.com/idea/statistics/index.jsp"/>
+  <statistics settings="https://www.jetbrains.com/idea/statistics/stat-assistant.xml"
+              service="https://www.jetbrains.com/idea/statistics/index.jsp"
+              fus-settings="https://www.jetbrains.com/idea/statistics/fus-assistant.xml"
+              event-log-settings="https://www.jetbrains.com/idea/statistics/fus-lion-v3-assistant.xml"
+  />
 </component>

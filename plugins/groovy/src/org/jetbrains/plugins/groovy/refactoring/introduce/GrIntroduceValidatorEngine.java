@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,7 @@ import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
@@ -44,6 +45,7 @@ public class GrIntroduceValidatorEngine implements GrIntroduceHandlerBase.Valida
     myReporter = reporter;
   }
 
+  @Override
   public boolean isOK(GrIntroduceDialog dialog) {
     final GrIntroduceSettings settings = dialog.getSettings();
     if (settings == null) return false;
@@ -55,33 +57,45 @@ public class GrIntroduceValidatorEngine implements GrIntroduceHandlerBase.Valida
 
   private static boolean reportConflicts(final MultiMap<PsiElement, String> conflicts, final Project project) {
     ConflictsDialog conflictsDialog = new ConflictsDialog(project, conflicts);
-    conflictsDialog.show();
-    return conflictsDialog.isOK();
+    return conflictsDialog.showAndGet();
   }
 
   private MultiMap<PsiElement, String> isOKImpl(String varName, boolean replaceAllOccurrences) {
-    PsiElement firstOccurence;
-    if (replaceAllOccurrences) {
-      if (myContext.getOccurrences().length > 0) {
-        GroovyRefactoringUtil.sortOccurrences(myContext.getOccurrences());
-        firstOccurence = myContext.getOccurrences()[0];
-      }
-      else {
-        firstOccurence = myContext.getPlace();
-      }
-    }
-    else {
-      firstOccurence = myContext.getExpression();
-    }
-    final MultiMap<PsiElement, String> conflicts = new MultiMap<PsiElement, String>();
+    PsiElement firstOccurrence = getFirstOccurrence(replaceAllOccurrences);
+
+    final MultiMap<PsiElement, String> conflicts = new MultiMap<>();
     assert varName != null;
 
-    final int offset = firstOccurence.getTextRange().getStartOffset();
+    final int offset = firstOccurrence.getTextRange().getStartOffset();
+
     validateOccurrencesDown(myContext.getScope(), conflicts, varName, offset);
     if (!(myContext.getScope() instanceof GroovyFileBase)) {
       validateVariableOccurrencesUp(myContext.getScope(), conflicts, varName, offset);
     }
+
+    if (replaceAllOccurrences) {
+      for (PsiElement element : myContext.getOccurrences()) {
+        if (element == firstOccurrence) continue;
+        validateVariableOccurrencesUp(element, conflicts, varName, element.getTextRange().getStartOffset());
+      }
+    }
     return conflicts;
+  }
+
+  private PsiElement getFirstOccurrence(boolean replaceAllOccurrences) {
+    if (replaceAllOccurrences) {
+      if (myContext.getOccurrences().length > 0) {
+        GroovyRefactoringUtil.sortOccurrences(myContext.getOccurrences());
+        return myContext.getOccurrences()[0];
+      }
+      else {
+        return myContext.getPlace();
+      }
+    }
+    else {
+      final GrExpression expression = myContext.getExpression();
+      return expression != null ? expression : myContext.getStringPart().getLiteral();
+    }
   }
 
 
@@ -92,20 +106,15 @@ public class GrIntroduceValidatorEngine implements GrIntroduceHandlerBase.Valida
     MultiMap<PsiElement, String> list = isOKImpl(varName, allOccurences);
     String result = "";
     final String[] strings = ArrayUtil.toStringArray((Collection<String>)list.values());
-    Arrays.sort(strings, new Comparator<String>() {
-      @Override
-      public int compare(String o1, String o2) {
-        return o1.compareTo(o2);
-      }
-    });
+    Arrays.sort(strings, (o1, o2) -> o1.compareTo(o2));
 
     for (String s : strings) {
       result = result + s.replaceAll("<b><code>", "").replaceAll("</code></b>", "") + "\n";
     }
-    if (list.size() > 0) {
+    if (!list.isEmpty()) {
       result = result.substring(0, result.length() - 1);
     }
-    if (result.length() == 0) {
+    if (result.isEmpty()) {
       result = "ok";
     }
     return result;
@@ -117,8 +126,8 @@ public class GrIntroduceValidatorEngine implements GrIntroduceHandlerBase.Valida
    * @param varName      Variable name
    * @param startOffset
    */
-  private void validateOccurrencesDown(PsiElement startElement,
-                                       MultiMap<PsiElement, String> conflicts,
+  private void validateOccurrencesDown(@NotNull PsiElement startElement,
+                                       @NotNull MultiMap<PsiElement, String> conflicts,
                                        @NotNull String varName,
                                        double startOffset) {
     PsiElement child = startElement.getFirstChild();
@@ -134,11 +143,8 @@ public class GrIntroduceValidatorEngine implements GrIntroduceHandlerBase.Valida
       }
       if (child instanceof GrVariable) {
         myReporter.check(child, conflicts, varName);
-        validateOccurrencesDown(child, conflicts, varName, startOffset);
       }
-      else {
-        validateOccurrencesDown(child, conflicts, varName, startOffset);
-      }
+      validateOccurrencesDown(child, conflicts, varName, startOffset);
       child = child.getNextSibling();
     }
   }
@@ -172,19 +178,21 @@ public class GrIntroduceValidatorEngine implements GrIntroduceHandlerBase.Valida
   /**
    * Validates name to be suggested in context
    */
+  @Override
   public String validateName(String name, boolean increaseNumber) {
     String result = name;
-    if (isOKImpl(name, true).size() > 0 && !increaseNumber || name.length() == 0) {
+    if (!isOKImpl(name, true).isEmpty() && !increaseNumber || name.isEmpty()) {
       return "";
     }
     int i = 1;
-    while (isOKImpl(result, true).size() > 0) {
+    while (!isOKImpl(result, true).isEmpty()) {
       result = name + i;
       i++;
     }
     return result;
   }
 
+  @Override
   public Project getProject() {
     return myContext.getProject();
   }

@@ -7,6 +7,10 @@ Groovy script
     PsiElement(class)('class')
     PsiWhiteSpace(' ')
     PsiElement(identifier)('BacklogItem')
+    Extends clause
+      <empty list>
+    Implements clause
+      <empty list>
     PsiWhiteSpace(' ')
     Type definition body
       PsiElement({)('{')
@@ -20,7 +24,7 @@ Groovy script
         PsiWhiteSpace(' ')
         Field
           PsiElement(identifier)('code')
-      PsiErrorElement:';', '}' or new line expected
+      PsiErrorElement:';', new line or '}' expected, got 'String'
         <empty list>
       PsiWhiteSpace(' ')
       Variable definitions

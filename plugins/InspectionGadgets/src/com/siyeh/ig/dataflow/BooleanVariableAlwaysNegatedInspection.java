@@ -1,5 +1,5 @@
 /*
- * Copyright 2011 Bas Leijdekkers
+ * Copyright 2011-2013 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,29 +15,31 @@
  */
 package com.siyeh.ig.dataflow;
 
-import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.refactoring.invertBoolean.InvertBooleanDialog;
-import com.intellij.util.IncorrectOperationException;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.fixes.InvertBooleanFix;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 public class BooleanVariableAlwaysNegatedInspection extends BaseInspection {
 
+  @Override
+  protected InspectionGadgetsFix buildFix(Object... infos) {
+    final PsiVariable variable = (PsiVariable)infos[0];
+    return new InvertBooleanFix(InspectionGadgetsBundle.message("invert.quickfix", variable.getName()));
+  }
+
   @Nls
   @NotNull
   @Override
   public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "boolean.variable.always.inverted.display.name");
+    return InspectionGadgetsBundle.message("boolean.variable.always.inverted.display.name");
   }
 
   @NotNull
@@ -55,39 +57,8 @@ public class BooleanVariableAlwaysNegatedInspection extends BaseInspection {
   }
 
   @Override
-  protected InspectionGadgetsFix buildFix(Object... infos) {
-    final PsiVariable variable = (PsiVariable)infos[0];
-    return new BooleanVariableIsAlwaysNegatedFix(variable.getName());
-  }
-
-  private static class BooleanVariableIsAlwaysNegatedFix
-    extends InspectionGadgetsFix {
-
-    private final String name;
-
-    public BooleanVariableIsAlwaysNegatedFix(String name) {
-      this.name = name;
-    }
-
-    @NotNull
-    @Override
-    public String getName() {
-      return InspectionGadgetsBundle.message(
-        "boolean.variable.always.inverted.quickfix", name);
-    }
-
-    @Override
-    protected void doFix(Project project, ProblemDescriptor descriptor)
-      throws IncorrectOperationException {
-      final PsiElement element = descriptor.getPsiElement();
-      final PsiVariable variable =
-        PsiTreeUtil.getParentOfType(element, PsiVariable.class);
-      if (variable == null) {
-        return;
-      }
-      final InvertBooleanDialog dialog = new InvertBooleanDialog(variable);
-      dialog.show();
-    }
+  protected boolean buildQuickFixesOnlyForOnTheFlyErrors() {
+    return true;
   }
 
   @Override
@@ -95,8 +66,7 @@ public class BooleanVariableAlwaysNegatedInspection extends BaseInspection {
     return new BooleanVariableAlwaysNegatedVisitor();
   }
 
-  private static class BooleanVariableAlwaysNegatedVisitor
-    extends BaseInspectionVisitor {
+  private static class BooleanVariableAlwaysNegatedVisitor extends BaseInspectionVisitor {
 
     @Override
     public void visitField(PsiField field) {
@@ -113,35 +83,34 @@ public class BooleanVariableAlwaysNegatedInspection extends BaseInspection {
     @Override
     public void visitLocalVariable(PsiLocalVariable variable) {
       super.visitLocalVariable(variable);
-      final PsiCodeBlock codeBlock =
-        PsiTreeUtil.getParentOfType(variable, PsiCodeBlock.class);
+      final PsiCodeBlock codeBlock = PsiTreeUtil.getParentOfType(variable, PsiCodeBlock.class);
       if (!isAlwaysInvertedBoolean(variable, codeBlock)) {
         return;
       }
       registerVariableError(variable, variable);
     }
 
-    private static boolean isAlwaysInvertedBoolean(PsiVariable field,
-                                                   PsiElement context) {
+    private static boolean isAlwaysInvertedBoolean(@NotNull PsiVariable field, PsiElement context) {
+      if (context == null) {
+        return false;
+      }
       final PsiType type = field.getType();
       if (!PsiType.BOOLEAN.equals(type)) {
         return false;
       }
-      final AlwaysNegatedVisitor visitor =
-        new AlwaysNegatedVisitor(field);
+      final AlwaysNegatedVisitor visitor = new AlwaysNegatedVisitor(field);
       context.accept(visitor);
       return visitor.isRead() && visitor.isAlwaysNegated();
     }
   }
 
-  private static class AlwaysNegatedVisitor
-    extends JavaRecursiveElementVisitor {
+  private static class AlwaysNegatedVisitor extends JavaRecursiveElementWalkingVisitor {
 
     private final PsiVariable variable;
     private boolean alwaysNegated = true;
-    private boolean read = false;
+    private boolean read;
 
-    private AlwaysNegatedVisitor(PsiVariable variable) {
+    AlwaysNegatedVisitor(PsiVariable variable) {
       this.variable = variable;
     }
 
@@ -184,7 +153,7 @@ public class BooleanVariableAlwaysNegatedInspection extends BaseInspection {
       }
     }
 
-    public boolean isAlwaysNegated() {
+    boolean isAlwaysNegated() {
       return alwaysNegated;
     }
 

@@ -16,18 +16,26 @@
 
 package com.intellij.openapi.ui;
 
+import org.jetbrains.annotations.Nullable;
+
 public interface TestInputDialog {
 
   TestInputDialog DEFAULT = new TestInputDialog() {
+    @Override
     public String show(String message) {
       throw new RuntimeException(message);
     }
   };
   TestInputDialog OK = new TestInputDialog() {
+    @Override
     public String show(String message) {
       return "";
     }
   };
 
   String show(String message);
+
+  default String show(String message, @Nullable InputValidator validator) {
+    return show(message);
+  }
 }

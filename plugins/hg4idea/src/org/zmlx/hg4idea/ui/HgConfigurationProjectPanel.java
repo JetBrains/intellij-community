@@ -12,75 +12,136 @@
 // limitations under the License.
 package org.zmlx.hg4idea.ui;
 
-import com.intellij.openapi.options.ConfigurationException;
-import com.intellij.openapi.ui.TextFieldWithBrowseButton;
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.dvcs.branch.DvcsSyncSettings;
+import com.intellij.dvcs.ui.DvcsBundle;
+import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.options.ConfigurableUi;
+import com.intellij.openapi.progress.util.BackgroundTaskUtil;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.Messages;
+import com.intellij.ui.components.JBCheckBox;
+import com.intellij.util.ObjectUtils;
+import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.UI;
+import com.intellij.util.ui.VcsExecutablePathSelector;
+import com.intellij.util.ui.components.BorderLayoutPanel;
 import org.jetbrains.annotations.NotNull;
-import org.zmlx.hg4idea.HgProjectSettings;
-import org.zmlx.hg4idea.HgVcsMessages;
-import org.zmlx.hg4idea.command.HgVersionCommand;
+import org.zmlx.hg4idea.*;
+import org.zmlx.hg4idea.repo.HgRepositoryManager;
+import org.zmlx.hg4idea.util.HgVersion;
 
 import javax.swing.*;
+import java.util.Objects;
 
-public class HgConfigurationProjectPanel {
+public class HgConfigurationProjectPanel implements ConfigurableUi<HgProjectConfigurable.HgSettingsHolder> {
+  private final BorderLayoutPanel myMainPanel;
+  private final VcsExecutablePathSelector myExecutablePathSelector;
+  private final JBCheckBox myCheckIncomingOutgoingCbx;
+  private final JBCheckBox myIgnoredWhitespacesInAnnotationsCbx;
+  private final JBCheckBox mySyncControl;
 
-  @NotNull private final HgProjectSettings myProjectSettings;
+  @NotNull private final Project myProject;
 
-  private JPanel myMainPanel;
-  private JCheckBox myCheckIncomingOutgoingCbx;
-  private TextFieldWithBrowseButton myPathSelector;
-  private JCheckBox myRunHgAsBashCheckBox;
+  public HgConfigurationProjectPanel(@NotNull Project project) {
+    myProject = project;
 
-  public HgConfigurationProjectPanel(@NotNull HgProjectSettings projectSettings) {
-    myProjectSettings = projectSettings;
-    loadSettings();
+    JPanel panel = new JPanel();
+    panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
+
+    myExecutablePathSelector = new VcsExecutablePathSelector(this::testExecutable);
+    panel.add(myExecutablePathSelector.getMainPanel());
+
+    myCheckIncomingOutgoingCbx = new JBCheckBox(HgVcsMessages.message("hg4idea.configuration.check.incoming.outgoing"));
+    panel.add(UI.PanelFactory.panel(myCheckIncomingOutgoingCbx).createPanel());
+
+    myIgnoredWhitespacesInAnnotationsCbx = new JBCheckBox(HgVcsMessages.message("hg4idea.configuration.ignore.whitespace.in.annotate"));
+    panel.add(UI.PanelFactory.panel(myIgnoredWhitespacesInAnnotationsCbx).createPanel());
+
+    mySyncControl = new JBCheckBox(DvcsBundle.getString("sync.setting"));
+    JPanel mySyncControlPanel = ObjectUtils.notNull(UI.PanelFactory.panel(mySyncControl)
+      .withTooltip(DvcsBundle.message("sync.setting.description", "Mercurial"))
+      .createPanel());
+    if (!project.isDefault()) {
+      final HgRepositoryManager repositoryManager = ServiceManager.getService(project, HgRepositoryManager.class);
+      mySyncControlPanel.setVisible(repositoryManager != null && repositoryManager.moreThanOneRoot());
+    }
+    else {
+      mySyncControlPanel.setVisible(true);
+    }
+    panel.add(mySyncControlPanel);
+
+    myMainPanel = JBUI.Panels.simplePanel();
+    myMainPanel.addToTop(panel);
   }
 
-  public boolean isModified() {
-    boolean executableModified = !getCurrentPath().equals(myProjectSettings.getHgExecutable());
-    return executableModified || myCheckIncomingOutgoingCbx.isSelected() != myProjectSettings.isCheckIncomingOutgoing()
-           || myRunHgAsBashCheckBox.isSelected() != myProjectSettings.isRunViaBash();
+  private void testExecutable(@NotNull String executable) {
+    HgVersion version;
+    try {
+      version = HgVersion.identifyVersion(executable);
+    }
+    catch (Exception exception) {
+      Messages.showErrorDialog(myMainPanel, exception.getMessage(), HgVcsMessages.message("hg4idea.run.failed.title"));
+      return;
+    }
+    Messages.showInfoMessage(myMainPanel, String.format("Mercurial version is %s", version.toString()),
+                             HgVcsMessages.message("hg4idea.run.success.title")
+    );
   }
 
-  public void saveSettings() {
-    myProjectSettings.setCheckIncomingOutgoing(myCheckIncomingOutgoingCbx.isSelected());
-    myProjectSettings.setRunViaBash(myRunHgAsBashCheckBox.isSelected());
-    myProjectSettings.setHgExecutable(getCurrentPath());
+  @Override
+  public void reset(@NotNull HgProjectConfigurable.HgSettingsHolder settings) {
+    HgProjectSettings projectSettings = settings.getProjectSettings();
+
+    myExecutablePathSelector.reset(settings.getGlobalSettings().getHgExecutable(),
+                                   projectSettings.isHgExecutableOverridden(),
+                                   projectSettings.getHgExecutable(),
+                                   HgExecutableManager.getInstance().getDefaultExecutable());
+    myCheckIncomingOutgoingCbx.setSelected(projectSettings.isCheckIncomingOutgoing());
+    myIgnoredWhitespacesInAnnotationsCbx.setSelected(projectSettings.isWhitespacesIgnoredInAnnotations());
+    mySyncControl.setSelected(projectSettings.getSyncSetting() == DvcsSyncSettings.Value.SYNC);
   }
 
-  private String getCurrentPath() {
-    return myPathSelector.getText().trim();
+  @Override
+  public boolean isModified(@NotNull HgProjectConfigurable.HgSettingsHolder settings) {
+    HgProjectSettings projectSettings = settings.getProjectSettings();
+
+    return myExecutablePathSelector.isModified(settings.getGlobalSettings().getHgExecutable(),
+                                               projectSettings.isHgExecutableOverridden(),
+                                               projectSettings.getHgExecutable()) ||
+           myCheckIncomingOutgoingCbx.isSelected() != projectSettings.isCheckIncomingOutgoing() ||
+           ((projectSettings.getSyncSetting() == DvcsSyncSettings.Value.SYNC) != mySyncControl.isSelected()) ||
+           myIgnoredWhitespacesInAnnotationsCbx.isSelected() != projectSettings.isWhitespacesIgnoredInAnnotations();
   }
 
-  public void loadSettings() {
-    myCheckIncomingOutgoingCbx.setSelected(myProjectSettings.isCheckIncomingOutgoing() );
-    myRunHgAsBashCheckBox.setSelected(myProjectSettings.isRunViaBash());
-    myPathSelector.setText(myProjectSettings.getGlobalSettings().getHgExecutable());
-  }
+  @Override
+  public void apply(@NotNull HgProjectConfigurable.HgSettingsHolder settings) {
+    HgGlobalSettings globalSettings = settings.getGlobalSettings();
+    HgProjectSettings projectSettings = settings.getProjectSettings();
 
-  public JPanel getPanel() {
-    return myMainPanel;
-  }
-
-  public void validate() throws ConfigurationException {
-    String hgExecutable;
-    hgExecutable = getCurrentPath();
-    HgVersionCommand command = new HgVersionCommand();
-    if (!command.isValid(hgExecutable, myRunHgAsBashCheckBox.isSelected())) {
-      throw new ConfigurationException(
-        HgVcsMessages.message("hg4idea.configuration.executable.error", hgExecutable)
-      );
+    boolean executablePathOverridden = myExecutablePathSelector.isOverridden();
+    projectSettings.setHgExecutableOverridden(executablePathOverridden);
+    if (executablePathOverridden) {
+      projectSettings.setHgExecutable(myExecutablePathSelector.getCurrentPath());
+    }
+    else {
+      globalSettings.setHgExecutable(myExecutablePathSelector.getCurrentPath());
+      projectSettings.setHgExecutable(null);
+    }
+    projectSettings.setCheckIncomingOutgoing(myCheckIncomingOutgoingCbx.isSelected());
+    projectSettings.setIgnoreWhitespacesInAnnotations(myIgnoredWhitespacesInAnnotationsCbx.isSelected());
+    projectSettings.setSyncSetting(mySyncControl.isSelected() ? DvcsSyncSettings.Value.SYNC : DvcsSyncSettings.Value.DONT_SYNC);
+    Objects.requireNonNull(HgVcs.getInstance(myProject)).checkVersion();
+    if (myCheckIncomingOutgoingCbx.isSelected()) {
+      BackgroundTaskUtil.syncPublisher(myProject, HgVcs.INCOMING_OUTGOING_CHECK_TOPIC).show();
+    }
+    else {
+      BackgroundTaskUtil.syncPublisher(myProject, HgVcs.INCOMING_OUTGOING_CHECK_TOPIC).hide();
     }
   }
 
-  private void createUIComponents() {
-    myPathSelector = new HgSetExecutablePathPanel(myProjectSettings);
-    myRunHgAsBashCheckBox = new JCheckBox();
-    myRunHgAsBashCheckBox.setVisible(!SystemInfo.isWindows);
-  }
-
   @NotNull
-  public HgProjectSettings getProjectSettings() {
-    return myProjectSettings;
+  @Override
+  public JComponent getComponent() {
+    return myMainPanel;
   }
 }

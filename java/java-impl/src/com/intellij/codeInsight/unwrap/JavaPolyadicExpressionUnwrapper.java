@@ -20,9 +20,12 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiPolyadicExpression;
+import com.intellij.psi.PsiVariable;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.List;
 
 /**
  * @author Danila Ponomarenko
@@ -32,13 +35,14 @@ public class JavaPolyadicExpressionUnwrapper extends JavaUnwrapper {
     super("");
   }
 
+  @NotNull
   @Override
-  public String getDescription(PsiElement e) {
+  public String getDescription(@NotNull PsiElement e) {
     return CodeInsightBundle.message("unwrap.with.placeholder", e.getText());
   }
 
   @Override
-  public boolean isApplicableTo(PsiElement e) {
+  public boolean isApplicableTo(@NotNull PsiElement e) {
     if (!(e.getParent() instanceof PsiPolyadicExpression)) {
       return false;
     }
@@ -61,7 +65,18 @@ public class JavaPolyadicExpressionUnwrapper extends JavaUnwrapper {
     }
 
     context.extractElement(operand, parent);
-    context.delete(parent);
+    if (parent.getParent() instanceof PsiVariable) {
+      context.deleteExactly(parent);
+    }
+    else {
+      context.delete(parent);
+    }
+  }
+
+  @Override
+  public PsiElement collectAffectedElements(@NotNull PsiElement e, @NotNull List<PsiElement> toExtract) {
+    super.collectAffectedElements(e, toExtract);
+    return e.getParent();
   }
 
   @Nullable

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lang.java.parser;
 
 import com.intellij.codeInsight.daemon.JavaErrorMessages;
@@ -20,7 +6,6 @@ import com.intellij.lang.*;
 import com.intellij.lang.impl.PsiBuilderAdapter;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.lang.java.JavaParserDefinition;
-import com.intellij.lexer.JavaDocLexer;
 import com.intellij.lexer.Lexer;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
@@ -48,21 +33,15 @@ public class JavaParserUtil {
   private static final Key<LanguageLevel> LANG_LEVEL_KEY = Key.create("JavaParserUtil.LanguageLevel");
   private static final Key<Boolean> DEEP_PARSE_BLOCKS_IN_STATEMENTS = Key.create("JavaParserUtil.ParserExtender");
 
+  @FunctionalInterface
   public interface ParserWrapper {
     void parse(PsiBuilder builder);
   }
 
-  public static final WhitespacesAndCommentsBinder GREEDY_RIGHT_EDGE_PROCESSOR = new WhitespacesAndCommentsBinder() {
-    @Override
-    public int getEdgePosition(final List<IElementType> tokens, final boolean atStreamEdge, final TokenTextGetter getter) {
-      return tokens.size();
-    }
-  };
-
   private static class PrecedingWhitespacesAndCommentsBinder implements WhitespacesAndCommentsBinder {
     private final boolean myAfterEmptyImport;
 
-    public PrecedingWhitespacesAndCommentsBinder(final boolean afterImport) {
+    PrecedingWhitespacesAndCommentsBinder(final boolean afterImport) {
       this.myAfterEmptyImport = afterImport;
     }
 
@@ -80,13 +59,13 @@ public class JavaParserUtil {
       int result = tokens.size();
       for (int idx = tokens.size() - 1; idx >= 0; idx--) {
         final IElementType tokenType = tokens.get(idx);
-        if (ElementType.JAVA_WHITESPACE_BIT_SET.contains(tokenType)) {
+        if (TokenSet.WHITE_SPACE.contains(tokenType)) {
           if (StringUtil.getLineBreakCount(getter.get(idx)) > 1) break;
         }
         else if (ElementType.JAVA_PLAIN_COMMENT_BIT_SET.contains(tokenType)) {
           if (atStreamEdge ||
               (idx == 0 && myAfterEmptyImport) ||
-              (idx > 0 && ElementType.JAVA_WHITESPACE_BIT_SET.contains(tokens.get(idx - 1)) && StringUtil.containsLineBreak(getter.get(idx - 1)))) {
+              (idx > 0 && TokenSet.WHITE_SPACE.contains(tokens.get(idx - 1)) && StringUtil.containsLineBreak(getter.get(idx - 1)))) {
             result = idx;
           }
         }
@@ -105,7 +84,7 @@ public class JavaParserUtil {
       int result = 0;
       for (int idx = 0; idx < tokens.size(); idx++) {
         final IElementType tokenType = tokens.get(idx);
-        if (ElementType.JAVA_WHITESPACE_BIT_SET.contains(tokenType)) {
+        if (TokenSet.WHITE_SPACE.contains(tokenType)) {
           if (StringUtil.containsLineBreak(getter.get(idx))) break;
         }
         else if (ElementType.JAVA_PLAIN_COMMENT_BIT_SET.contains(tokenType)) {
@@ -118,7 +97,9 @@ public class JavaParserUtil {
     }
   }
 
-  private static final TokenSet PRECEDING_COMMENT_SET = ElementType.FULL_MEMBER_BIT_SET;
+  private static final TokenSet PRECEDING_COMMENT_SET = TokenSet.orSet(
+    TokenSet.create(JavaElementType.MODULE), ElementType.FULL_MEMBER_BIT_SET);
+
   private static final TokenSet TRAILING_COMMENT_SET = TokenSet.orSet(
     TokenSet.create(JavaElementType.PACKAGE_STATEMENT),
     ElementType.IMPORT_STATEMENT_BASE_BIT_SET, ElementType.FULL_MEMBER_BIT_SET, ElementType.JAVA_STATEMENT_BIT_SET);
@@ -130,22 +111,22 @@ public class JavaParserUtil {
   private JavaParserUtil() { }
 
   public static void setLanguageLevel(final PsiBuilder builder, final LanguageLevel level) {
-    builder.putUserDataUnprotected(LANG_LEVEL_KEY, level);
+    builder.putUserData(LANG_LEVEL_KEY, level);
   }
 
   @NotNull
   public static LanguageLevel getLanguageLevel(final PsiBuilder builder) {
-    final LanguageLevel level = builder.getUserDataUnprotected(LANG_LEVEL_KEY);
+    final LanguageLevel level = builder.getUserData(LANG_LEVEL_KEY);
     assert level != null : builder;
     return level;
   }
 
   public static void setParseStatementCodeBlocksDeep(final PsiBuilder builder, final boolean deep) {
-    builder.putUserDataUnprotected(DEEP_PARSE_BLOCKS_IN_STATEMENTS, deep);
+    builder.putUserData(DEEP_PARSE_BLOCKS_IN_STATEMENTS, deep);
   }
 
   public static boolean isParseStatementCodeBlocksDeep(final PsiBuilder builder) {
-    return Boolean.TRUE.equals(builder.getUserDataUnprotected(DEEP_PARSE_BLOCKS_IN_STATEMENTS));
+    return Boolean.TRUE.equals(builder.getUserData(DEEP_PARSE_BLOCKS_IN_STATEMENTS));
   }
 
   @NotNull
@@ -196,21 +177,20 @@ public class JavaParserUtil {
 
   @Nullable
   public static ASTNode parseFragment(final ASTNode chameleon, final ParserWrapper wrapper, final boolean eatAll, final LanguageLevel level) {
-    final PsiElement psi = (chameleon.getTreeParent() != null ? chameleon.getTreeParent().getPsi() : chameleon.getPsi());
+    final PsiElement psi = chameleon.getTreeParent() != null ? chameleon.getTreeParent().getPsi() : chameleon.getPsi();
     assert psi != null : chameleon;
     final Project project = psi.getProject();
 
     final PsiBuilderFactory factory = PsiBuilderFactory.getInstance();
     final Lexer lexer = chameleon.getElementType() == JavaDocElementType.DOC_COMMENT
-                        ? new JavaDocLexer(level.isAtLeast(LanguageLevel.JDK_1_5))
-                        : JavaParserDefinition.createLexer(level);
+                        ? JavaParserDefinition.createDocLexer(level) : JavaParserDefinition.createLexer(level);
     final PsiBuilder builder = factory.createBuilder(project, chameleon, lexer, chameleon.getElementType().getLanguage(), chameleon.getChars());
     setLanguageLevel(builder, level);
 
     final PsiBuilder.Marker root = builder.mark();
     wrapper.parse(builder);
     if (!builder.eof()) {
-      if (!eatAll) throw new AssertionError("Unexpected tokens");
+      if (!eatAll) throw new AssertionError("Unexpected token: '" + builder.getTokenText() + "'");
       final PsiBuilder.Marker extras = builder.mark();
       while (!builder.eof()) builder.advanceLexer();
       extras.error(JavaErrorMessages.message("unexpected.tokens"));
@@ -233,11 +213,11 @@ public class JavaParserUtil {
   }
 
   // used instead of PsiBuilder.error() as it keeps all subsequent error messages
-  public static void error(final PsiBuilder builder, final String message) {
+  public static void error(final PsiBuilder builder, @NotNull String message) {
     builder.mark().error(message);
   }
 
-  public static void error(final PsiBuilder builder, final String message, @Nullable final PsiBuilder.Marker before) {
+  public static void error(final PsiBuilder builder, @NotNull String message, @Nullable final PsiBuilder.Marker before) {
     if (before == null) {
       error(builder, message);
     }
@@ -306,7 +286,7 @@ public class JavaParserUtil {
     };
   }
 
-  public static PsiBuilder stoppingBuilder(final PsiBuilder builder, final Condition<Pair<IElementType, String>> condition) {
+  public static PsiBuilder stoppingBuilder(final PsiBuilder builder, final Condition<? super Pair<IElementType, String>> condition) {
     return new PsiBuilderAdapter(builder) {
       @Override
       public IElementType getTokenType() {

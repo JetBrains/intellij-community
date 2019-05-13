@@ -16,11 +16,11 @@
 package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeInsight.CodeInsightBundle;
-import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.JavaConstantExpressionEvaluator;
+import com.intellij.psi.util.ConstantEvaluationOverflowException;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
@@ -52,7 +52,13 @@ public class ConvertColorRepresentationIntentionAction extends BaseColorIntentio
       return false;
     }
 
-    final PsiExpressionList newArguments = createNewArguments(JavaPsiFacade.getElementFactory(project), constructor.getParameterList().getParameters(), arguments.getExpressions());
+    final PsiExpressionList newArguments;
+    try {
+      newArguments = createNewArguments(JavaPsiFacade.getElementFactory(project), constructor.getParameterList().getParameters(), arguments.getExpressions());
+    }
+    catch (ConstantEvaluationOverflowException e) {
+      return false;
+    }
 
     if (newArguments == null) {
       return false;
@@ -65,8 +71,6 @@ public class ConvertColorRepresentationIntentionAction extends BaseColorIntentio
 
   @Override
   public void invoke(@NotNull Project project, Editor editor, @NotNull PsiElement element) throws IncorrectOperationException {
-    if (!CodeInsightUtilBase.preparePsiElementForWrite(element)) return;
-
     final PsiNewExpression expression = PsiTreeUtil.getParentOfType(element, PsiNewExpression.class, false);
     if (expression == null) {
       return;
@@ -137,7 +141,7 @@ public class ConvertColorRepresentationIntentionAction extends BaseColorIntentio
 
   @Nullable
   private static String[] createArguments(@NotNull PsiExpression rgbExpression) {
-    return createArguments(rgbExpression, 3);
+    return createArguments(rgbExpression, false);
   }
 
   @Nullable
@@ -147,7 +151,7 @@ public class ConvertColorRepresentationIntentionAction extends BaseColorIntentio
     if (hasAlpha == null) {
       return null;
     }
-    return hasAlpha ? createArguments(rgbExpression, 4) : createArguments(rgbExpression);
+    return createArguments(rgbExpression, hasAlpha);
   }
 
   @Nullable
@@ -163,7 +167,7 @@ public class ConvertColorRepresentationIntentionAction extends BaseColorIntentio
                                           @NotNull PsiExpression gExpression,
                                           @NotNull PsiExpression bExpression,
                                           @NotNull PsiExpression aExpression) {
-    final Integer value = createInt(computeInteger(rExpression), computeInteger(gExpression), computeInteger(bExpression), computeInteger(aExpression));
+    final Integer value = createInt(computeInteger(aExpression), computeInteger(rExpression), computeInteger(gExpression), computeInteger(bExpression));
     if (value == null) {
       return null;
     }
@@ -176,15 +180,22 @@ public class ConvertColorRepresentationIntentionAction extends BaseColorIntentio
 
   @Nullable
   private static String[] createArguments(@NotNull PsiExpression rgbExpression,
-                                          int parts) {
-    final Integer rgb = computeInteger(rgbExpression);
-    if (rgb == null) {
+                                          boolean hasAlpha) {
+    final Integer argb = computeInteger(rgbExpression);
+    if (argb == null) {
       return null;
     }
 
-    final String[] result = new String[parts];
-    for (int i = 0; i < result.length; i++) {
-      result[result.length - i - 1] = String.valueOf(rgb >> (i * Byte.SIZE) & 0xFF);
+    final String[] result;
+    if (hasAlpha) {
+      result = new String[4]; // (r, g, b, a)
+      result[3] = String.valueOf(argb >> (3 * Byte.SIZE) & 0xFF);
+    }
+    else {
+      result = new String[3]; // (r, g, b)
+    }
+    for (int i = 0; i < 3; i++) {
+      result[2 - i] = String.valueOf(argb >> (i * Byte.SIZE) & 0xFF);
     }
     return result;
   }

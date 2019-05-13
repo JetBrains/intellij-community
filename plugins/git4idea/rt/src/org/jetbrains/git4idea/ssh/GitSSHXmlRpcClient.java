@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.git4idea.ssh;
 
 import org.apache.xmlrpc.XmlRpcClientLite;
@@ -41,15 +27,15 @@ public class GitSSHXmlRpcClient implements GitSSHHandler {
    * @throws IOException if there is IO problem
    */
   GitSSHXmlRpcClient(final int port, final boolean batchMode) throws IOException {
-    //noinspection HardCodedStringLiteral
     myClient = batchMode ? null : new XmlRpcClientLite("127.0.0.1", port);
   }
 
   /**
    * {@inheritDoc}
    */
+  @Override
   @SuppressWarnings("unchecked")
-  public boolean verifyServerHostKey(final int handler,
+  public boolean verifyServerHostKey(String token,
                                      final String hostname,
                                      final int port,
                                      final String serverHostKeyAlgorithm,
@@ -59,7 +45,7 @@ public class GitSSHXmlRpcClient implements GitSSHHandler {
       return false;
     }
     Vector parameters = new Vector();
-    parameters.add(handler);
+    parameters.add(token);
     parameters.add(hostname);
     parameters.add(port);
     parameters.add(serverHostKeyAlgorithm);
@@ -68,10 +54,7 @@ public class GitSSHXmlRpcClient implements GitSSHHandler {
     try {
       return ((Boolean)myClient.execute(methodName("verifyServerHostKey"), parameters)).booleanValue();
     }
-    catch (XmlRpcException e) {
-      throw new RuntimeException("Invocation failed " + e.getMessage(), e);
-    }
-    catch (IOException e) {
+    catch (XmlRpcException | IOException e) {
       throw new RuntimeException("Invocation failed " + e.getMessage(), e);
     }
   }
@@ -89,9 +72,10 @@ public class GitSSHXmlRpcClient implements GitSSHHandler {
   /**
    * {@inheritDoc}
    */
+  @Override
   @Nullable
   @SuppressWarnings("unchecked")
-  public String askPassphrase(final int handler,
+  public String askPassphrase(String token,
                               final String username,
                               final String keyPath,
                               final boolean resetPassword,
@@ -100,7 +84,7 @@ public class GitSSHXmlRpcClient implements GitSSHHandler {
       return null;
     }
     Vector parameters = new Vector();
-    parameters.add(handler);
+    parameters.add(token);
     parameters.add(username);
     parameters.add(keyPath);
     parameters.add(resetPassword);
@@ -108,10 +92,7 @@ public class GitSSHXmlRpcClient implements GitSSHHandler {
     try {
       return adjustNull(((String)myClient.execute(methodName("askPassphrase"), parameters)));
     }
-    catch (XmlRpcException e) {
-      throw new RuntimeException("Invocation failed " + e.getMessage(), e);
-    }
-    catch (IOException e) {
+    catch (XmlRpcException | IOException e) {
       throw new RuntimeException("Invocation failed " + e.getMessage(), e);
     }
   }
@@ -119,9 +100,10 @@ public class GitSSHXmlRpcClient implements GitSSHHandler {
   /**
    * {@inheritDoc}
    */
+  @Override
   @Nullable
   @SuppressWarnings("unchecked")
-  public Vector<String> replyToChallenge(final int handlerNo,
+  public Vector<String> replyToChallenge(String token,
                                          final String username,
                                          final String name,
                                          final String instruction,
@@ -133,7 +115,7 @@ public class GitSSHXmlRpcClient implements GitSSHHandler {
       return null;
     }
     Vector parameters = new Vector();
-    parameters.add(handlerNo);
+    parameters.add(token);
     parameters.add(username);
     parameters.add(name);
     parameters.add(instruction);
@@ -144,10 +126,7 @@ public class GitSSHXmlRpcClient implements GitSSHHandler {
     try {
       return adjustNull((Vector<String>)myClient.execute(methodName("replyToChallenge"), parameters));
     }
-    catch (XmlRpcException e) {
-      throw new RuntimeException("Invocation failed " + e.getMessage(), e);
-    }
-    catch (IOException e) {
+    catch (XmlRpcException | IOException e) {
       throw new RuntimeException("Invocation failed " + e.getMessage(), e);
     }
   }
@@ -155,49 +134,41 @@ public class GitSSHXmlRpcClient implements GitSSHHandler {
   /**
    * {@inheritDoc}
    */
+  @Override
   @Nullable
   @SuppressWarnings("unchecked")
-  public String askPassword(final int handlerNo, final String username, final boolean resetPassword, final String lastError) {
+  public String askPassword(String token, final String username, final boolean resetPassword, final String lastError) {
     if (myClient == null) {
       return null;
     }
     Vector parameters = new Vector();
-    parameters.add(handlerNo);
+    parameters.add(token);
     parameters.add(username);
     parameters.add(resetPassword);
     parameters.add(lastError);
     try {
       return adjustNull(((String)myClient.execute(methodName("askPassword"), parameters)));
     }
-    catch (XmlRpcException e) {
-      throw new RuntimeException("Invocation failed " + e.getMessage(), e);
-    }
-    catch (IOException e) {
+    catch (XmlRpcException | IOException e) {
       throw new RuntimeException("Invocation failed " + e.getMessage(), e);
     }
   }
 
-  /**
-   * {@inheritDoc}
-   */
   @Override
   @SuppressWarnings("unchecked")
-  public String setLastSuccessful(int handlerNo, String userName, String method, String error) {
+  public String setLastSuccessful(String token, String userName, String method, String error) {
     if (myClient == null) {
       return "";
     }
     Vector parameters = new Vector();
-    parameters.add(handlerNo);
+    parameters.add(token);
     parameters.add(userName);
     parameters.add(method);
     parameters.add(error);
     try {
       return (String)myClient.execute(methodName("setLastSuccessful"), parameters);
     }
-    catch (XmlRpcException e) {
-      throw new RuntimeException("Invocation failed " + e.getMessage(), e);
-    }
-    catch (IOException e) {
+    catch (XmlRpcException | IOException e) {
       throw new RuntimeException("Invocation failed " + e.getMessage(), e);
     }
   }
@@ -207,22 +178,18 @@ public class GitSSHXmlRpcClient implements GitSSHHandler {
    */
   @Override
   @SuppressWarnings("unchecked")
-  public String getLastSuccessful(int handlerNo, String userName) {
+  public String getLastSuccessful(String token, String userName) {
     if (myClient == null) {
       return "";
     }
     Vector parameters = new Vector();
-    parameters.add(handlerNo);
+    parameters.add(token);
     parameters.add(userName);
     try {
       return (String)myClient.execute(methodName("getLastSuccessful"), parameters);
     }
-    catch (XmlRpcException e) {
-      log("getLastSuccessful failed. handlerNo: " + handlerNo + ", userName: " + userName + ", client: " + myClient.getURL());
-      throw new RuntimeException("Invocation failed " + e.getMessage(), e);
-    }
-    catch (IOException e) {
-      log("getLastSuccessful failed. handlerNo: " + handlerNo + ", userName: " + userName + ", client: " + myClient.getURL());
+    catch (XmlRpcException | IOException e) {
+      log("getLastSuccessful failed. token: " + token + ", userName: " + userName + ", client: " + myClient.getURL());
       throw new RuntimeException("Invocation failed " + e.getMessage(), e);
     }
   }

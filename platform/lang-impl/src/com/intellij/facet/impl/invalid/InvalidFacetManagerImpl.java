@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.facet.impl.invalid;
 
 import com.intellij.facet.ProjectFacetManager;
@@ -22,8 +8,7 @@ import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.project.Project;
-import com.intellij.util.xmlb.annotations.AbstractCollection;
-import com.intellij.util.xmlb.annotations.Tag;
+import com.intellij.util.xmlb.annotations.XCollection;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.HashSet;
@@ -33,14 +18,7 @@ import java.util.Set;
 /**
  * @author nik
  */
-@State(
-    name = InvalidFacetManagerImpl.COMPONENT_NAME,
-    storages = {
-        @Storage(
-            file = StoragePathMacros.WORKSPACE_FILE
-        )
-    }
-)
+@State(name = InvalidFacetManagerImpl.COMPONENT_NAME, storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
 public class InvalidFacetManagerImpl extends InvalidFacetManager implements PersistentStateComponent<InvalidFacetManagerImpl.InvalidFacetManagerState> {
   public static final String COMPONENT_NAME = "InvalidFacetManager";
   private InvalidFacetManagerState myState = new InvalidFacetManagerState();
@@ -55,12 +33,13 @@ public class InvalidFacetManagerImpl extends InvalidFacetManager implements Pers
     return myState.getIgnoredFacets().contains(FacetPointersManager.constructId(facet));
   }
 
+  @Override
   public InvalidFacetManagerState getState() {
     return myState;
   }
 
   @Override
-  public void loadState(InvalidFacetManagerState state) {
+  public void loadState(@NotNull InvalidFacetManagerState state) {
     myState = state;
   }
 
@@ -81,10 +60,9 @@ public class InvalidFacetManagerImpl extends InvalidFacetManager implements Pers
   }
 
   public static class InvalidFacetManagerState {
-    private Set<String> myIgnoredFacets = new HashSet<String>();
+    private Set<String> myIgnoredFacets = new HashSet<>();
 
-    @Tag("ignored-facets")
-    @AbstractCollection(surroundWithTag = false, elementTag = "facet", elementValueAttribute = "id")
+    @XCollection(propertyElementName = "ignored-facets", elementName = "facet", valueAttributeName = "id")
     public Set<String> getIgnoredFacets() {
       return myIgnoredFacets;
     }

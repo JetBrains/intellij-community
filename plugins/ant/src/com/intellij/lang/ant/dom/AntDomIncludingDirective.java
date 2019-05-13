@@ -23,7 +23,6 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Apr 26, 2010
  */
 public abstract class AntDomIncludingDirective extends AntDomElement {
   private static final String DEFAULT_SEPARATOR = ".";

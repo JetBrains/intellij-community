@@ -21,7 +21,6 @@ import com.intellij.cvsSupport2.errorHandling.CannotFindCvsRootException;
 import com.intellij.cvsSupport2.util.CvsVfsUtil;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.containers.HashMap;
 import org.netbeans.lib.cvsclient.admin.IAdminReader;
 import org.netbeans.lib.cvsclient.command.AbstractCommand;
 import org.netbeans.lib.cvsclient.command.CommandAbortedException;
@@ -31,10 +30,11 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.Map;
 
 public abstract class CvsOperationOnFiles extends CvsCommandOperation {
-  protected Collection<File> myFiles = new ArrayList<File>();
+  protected Collection<File> myFiles = new ArrayList<>();
   private Map<CvsRootProvider, ArrayList<File>> myRootsToFiles;
 
   public CvsOperationOnFiles(IAdminReader reader) {
@@ -44,6 +44,7 @@ public abstract class CvsOperationOnFiles extends CvsCommandOperation {
   public CvsOperationOnFiles() {
   }
 
+  @Override
   public synchronized void execute(CvsExecutionEnvironment executionEnvironment, boolean underReadAction) throws VcsException, CommandAbortedException {
     synchronized (CvsOperation.class) {
       if (!myFiles.isEmpty()) {
@@ -77,7 +78,7 @@ public abstract class CvsOperationOnFiles extends CvsCommandOperation {
   protected File[] getFilesAsArray(CvsRootProvider root) {
     try {
       Collection<File> files = getRootsToFilesMap().get(root);
-      return files.toArray(new File[files.size()]);
+      return files.toArray(new File[0]);
     } catch (CannotFindCvsRootException e) {
       LOG.error(e);
       return new File[0];
@@ -109,19 +110,20 @@ public abstract class CvsOperationOnFiles extends CvsCommandOperation {
     return myFiles.size();
   }
 
+  @Override
   public int getFilesToProcessCount() {
     return getFilesCount();
   }
 
   private Map<CvsRootProvider, ArrayList<File>> buildRootsToFilesMap() throws CannotFindCvsRootException {
-    HashMap<CvsRootProvider,ArrayList<File>> result = new HashMap<CvsRootProvider, ArrayList<File>>();
+    HashMap<CvsRootProvider,ArrayList<File>> result = new HashMap<>();
     for (File file : myFiles) {
       CvsRootProvider cvsRoot = CvsRootProvider.createOn(file);
       if (cvsRoot == null) {
         throw new CannotFindCvsRootException(file);
       }
       else {
-        if (!result.containsKey(cvsRoot)) result.put(cvsRoot, new ArrayList<File>());
+        if (!result.containsKey(cvsRoot)) result.put(cvsRoot, new ArrayList<>());
         (result.get(cvsRoot)).add(file);
       }
     }
@@ -134,6 +136,7 @@ public abstract class CvsOperationOnFiles extends CvsCommandOperation {
     return myRootsToFiles;
   }
 
+  @Override
   protected Collection<CvsRootProvider> getAllCvsRoots() throws CannotFindCvsRootException {
     return getRootsToFilesMap().keySet();
   }

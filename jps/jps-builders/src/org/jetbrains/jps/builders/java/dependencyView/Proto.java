@@ -1,62 +1,57 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.jps.builders.java.dependencyView;
 
-import org.jetbrains.asm4.Opcodes;
+import com.intellij.util.io.DataInputOutputUtil;
+import gnu.trove.THashSet;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.jps.builders.storage.BuildDataCorruptedException;
+import org.jetbrains.org.objectweb.asm.Opcodes;
 
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
 import java.io.PrintStream;
+import java.util.Set;
 
 /**
  * @author: db
- * Date: 01.03.11
  */
 class Proto implements RW.Savable, Streamable {
   public final int access;
   public final int signature;
   public final int name;
+  @NotNull
+  public final Set<TypeRepr.ClassType> annotations;
 
-  protected Proto(final int access, final int signature, final int name) {
+  protected Proto(final int access, final int signature, final int name, Set<TypeRepr.ClassType> annotations) {
     this.access = access;
     this.signature = signature;
     this.name = name;
+    this.annotations = annotations;
   }
 
-  protected Proto(final DataInput in) {
+  protected Proto(final DependencyContext context, final DataInput in) {
     try {
-      access = in.readInt();
-      signature = in.readInt();
-      name = in.readInt();
+      access = DataInputOutputUtil.readINT(in);
+      signature = DataInputOutputUtil.readINT(in);
+      name = DataInputOutputUtil.readINT(in);
+      annotations = RW.read(TypeRepr.classTypeExternalizer(context), new THashSet<>(), in);
     }
     catch (IOException e) {
-      throw new RuntimeException(e);
+      throw new BuildDataCorruptedException(e);
     }
   }
 
   @Override
   public void save(final DataOutput out) {
     try {
-      out.writeInt(access);
-      out.writeInt(signature);
-      out.writeInt(name);
+      DataInputOutputUtil.writeINT(out, access);
+      DataInputOutputUtil.writeINT(out, signature);
+      DataInputOutputUtil.writeINT(out, name);
+      RW.save(annotations, out);
     }
     catch (IOException e) {
-      throw new RuntimeException(e);
+      throw new BuildDataCorruptedException(e);
     }
   }
 
@@ -129,6 +124,12 @@ class Proto implements RW.Savable, Streamable {
       diff |= Difference.SIGNATURE;
     }
 
+    final Difference.Specifier<TypeRepr.ClassType, Difference> ann = Difference.make(past.annotations, annotations);
+
+    if (!ann.unchanged()) {
+      diff |= Difference.ANNOTATIONS;
+    }
+
     final int base = diff;
 
     return new Difference() {
@@ -163,12 +164,18 @@ class Proto implements RW.Savable, Streamable {
       }
 
       @Override
-      public boolean weakedAccess() {
-        return Difference.weakerAccess(past.access, access);
+      public boolean accessRestricted() {
+        return Difference.weakerAccess(access, past.access);
+      }
+
+      @Override
+      public Specifier<TypeRepr.ClassType, Difference> annotations() {
+        return ann;
       }
     };
   }
 
+  @Override
   public void toStream(final DependencyContext context, final PrintStream stream) {
     final String d = this instanceof ClassRepr ? "      " : "          ";
 
@@ -176,14 +183,16 @@ class Proto implements RW.Savable, Streamable {
       stream.print("    Class ");
       stream.println(context.getValue(name));
     }
-
-    if (this instanceof MethodRepr) {
+    else if (this instanceof MethodRepr) {
       stream.print("        Method ");
       stream.println(context.getValue(name));
     }
-
-    if (this instanceof FieldRepr) {
+    else if (this instanceof FieldRepr) {
       stream.print("        Field ");
+      stream.println(context.getValue(name));
+    }
+    else if (this instanceof ModuleRepr) {
+      stream.print("        Module ");
       stream.println(context.getValue(name));
     }
 

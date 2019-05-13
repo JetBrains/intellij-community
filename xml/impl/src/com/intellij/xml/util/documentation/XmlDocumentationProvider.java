@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,6 @@
  */
 package com.intellij.xml.util.documentation;
 
-import com.intellij.codeInsight.completion.XmlCompletionData;
 import com.intellij.lang.Language;
 import com.intellij.lang.documentation.DocumentationProvider;
 import com.intellij.lang.documentation.DocumentationUtil;
@@ -34,10 +33,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.*;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Processor;
-import com.intellij.xml.XmlAttributeDescriptor;
-import com.intellij.xml.XmlBundle;
-import com.intellij.xml.XmlElementDescriptor;
-import com.intellij.xml.XmlNSDescriptor;
+import com.intellij.xml.*;
 import com.intellij.xml.impl.schema.*;
 import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.NonNls;
@@ -59,14 +55,20 @@ public class XmlDocumentationProvider implements DocumentationProvider {
   @NonNls private static final String BASE_SITEPOINT_URL = "http://reference.sitepoint.com/html/";
 
 
+  @Override
   @Nullable
   public String getQuickNavigateInfo(PsiElement element, PsiElement originalElement) {
     if (element instanceof SchemaPrefix) {
       return ((SchemaPrefix)element).getQuickNavigateInfo();
     }
+    if (element instanceof XmlEntityDecl) {
+      final XmlAttributeValue value = ((XmlEntityDecl)element).getValueElement();
+      return value != null ? value.getText() : null;
+    }
     return null;
   }
 
+  @Override
   public List<String> getUrlFor(PsiElement element, PsiElement originalElement) {
     if (element instanceof XmlTag) {
       XmlTag tag = (XmlTag)element;
@@ -87,14 +89,16 @@ public class XmlDocumentationProvider implements DocumentationProvider {
     return null;
   }
 
+  @Override
   public String generateDoc(PsiElement element, final PsiElement originalElement) {
     if (element instanceof XmlElementDecl) {
-      PsiElement curElement = findPreviousComment(element);
+      PsiElement curElement = XmlUtil.findPreviousComment(element);
 
       if (curElement!=null) {
         return formatDocFromComment(curElement, ((XmlElementDecl)element).getNameElement().getText());
       }
-    } else if (element instanceof XmlTag) {
+    }
+    else if (element instanceof XmlTag) {
       XmlTag tag = (XmlTag)element;
       MyPsiElementProcessor processor = new MyPsiElementProcessor();
       String name = tag.getAttributeValue(NAME_ATTR_NAME);
@@ -134,7 +138,7 @@ public class XmlDocumentationProvider implements DocumentationProvider {
         }
       }
       if (processor.result == null) {
-        final PsiElement comment = findPreviousComment(element);
+        final PsiElement comment = XmlUtil.findPreviousComment(element);
         if (comment != null) {
           return formatDocFromComment(comment, ((XmlTag)element).getName());
         }
@@ -149,7 +153,7 @@ public class XmlDocumentationProvider implements DocumentationProvider {
     } else if (element instanceof XmlAttributeDecl) {
       // Check for comment before attlist, it should not be right after previous declaration
       final PsiElement parent = element.getParent();
-      final PsiElement previousComment = findPreviousComment(parent);
+      final PsiElement previousComment = XmlUtil.findPreviousComment(parent);
       final String referenceName = ((XmlAttributeDecl)element).getNameElement().getText();
 
       if (previousComment instanceof PsiComment) {
@@ -175,15 +179,13 @@ public class XmlDocumentationProvider implements DocumentationProvider {
   }
 
   private static XmlTag findEnumerationValue(final String text, XmlTag tag) {
-    final Ref<XmlTag> enumerationTag = new Ref<XmlTag>();
+    final Ref<XmlTag> enumerationTag = new Ref<>();
 
-    Processor<XmlTag> processor = new Processor<XmlTag>() {
-      public boolean process(XmlTag xmlTag) {
-        if (text.equals(xmlTag.getAttributeValue(XmlUtil.VALUE_ATTR_NAME))) {
-          enumerationTag.set(xmlTag);
-        }
-        return true;
+    Processor<XmlTag> processor = xmlTag -> {
+      if (text.equals(xmlTag.getAttributeValue(XmlUtil.VALUE_ATTR_NAME))) {
+        enumerationTag.set(xmlTag);
       }
+      return true;
     };
     XmlUtil.processEnumerationValues(tag, processor);
 
@@ -247,26 +249,6 @@ public class XmlDocumentationProvider implements DocumentationProvider {
     return null;
   }
 
-  @Nullable
-  public static PsiElement findPreviousComment(final PsiElement element) {
-    PsiElement curElement = element;
-
-    while(curElement!=null && !(curElement instanceof XmlComment)) {
-      curElement = curElement.getPrevSibling();
-      if (curElement instanceof XmlText && StringUtil.isEmptyOrSpaces(curElement.getText())) {
-        continue;
-      }
-      if (!(curElement instanceof PsiWhiteSpace) &&
-          !(curElement instanceof XmlProlog) &&
-          !(curElement instanceof XmlComment)
-         ) {
-        curElement = null; // finding comment fails, we found another similar declaration
-        break;
-      }
-    }
-    return curElement;
-  }
-
   private String formatDocFromComment(final PsiElement curElement, final String name) {
     String text = curElement.getText();
     text = text.substring("<!--".length(),text.length()-"-->".length()).trim();
@@ -274,7 +256,7 @@ public class XmlDocumentationProvider implements DocumentationProvider {
     return generateDoc(text, name,null, null);
   }
 
-  private XmlTag getComplexOrSimpleTypeDefinition(PsiElement element, PsiElement originalElement) {
+  private static XmlTag getComplexOrSimpleTypeDefinition(PsiElement element, PsiElement originalElement) {
     XmlElementDescriptor descriptor = element.getUserData(DESCRIPTOR_KEY);
 
     XmlTag contextTag = null;
@@ -333,7 +315,13 @@ public class XmlDocumentationProvider implements DocumentationProvider {
     return builder.toString();
   }
 
+  @Override
   public PsiElement getDocumentationElementForLookupItem(final PsiManager psiManager, Object object, PsiElement element) {
+
+    if (object instanceof XmlExtension.TagInfo) {
+      return ((XmlExtension.TagInfo)object).getDeclaration();
+    }
+
     final PsiElement originalElement = element;
     boolean isAttrCompletion = element instanceof XmlAttribute;
 
@@ -367,7 +355,7 @@ public class XmlDocumentationProvider implements DocumentationProvider {
 
       if (object == null) return null;
       try {
-        @NonNls StringBuffer tagText = new StringBuffer(object.toString());
+        @NonNls StringBuilder tagText = new StringBuilder(object.toString());
         String namespacePrefix = XmlUtil.findPrefixByQualifiedName(object.toString());
         String namespace = xmlTag.getNamespaceByPrefix(namespacePrefix);
 
@@ -419,14 +407,13 @@ public class XmlDocumentationProvider implements DocumentationProvider {
     if (object instanceof String && originalElement != null) {
       PsiElement result = findDeclWithName((String)object, originalElement);
 
-      PsiElement originalElementParent;
-      if (result == null && element instanceof XmlTag && (originalElementParent = originalElement.getParent()) instanceof XmlAttributeValue) {
-        PsiElement originalElementGrandParent = originalElementParent.getParent();
-        XmlAttributeDescriptor descriptor = originalElementGrandParent instanceof XmlAttribute ?
-                                            ((XmlAttribute)originalElementGrandParent).getDescriptor():null;
-
-        if (descriptor != null && descriptor.getDeclaration() instanceof XmlTag) {
-          result = findEnumerationValue((String)object, (XmlTag)descriptor.getDeclaration());
+      if (result == null && element instanceof XmlTag) {
+        XmlAttribute attribute = PsiTreeUtil.getParentOfType(originalElement, XmlAttribute.class, false);
+        if (attribute != null) {
+          XmlAttributeDescriptor descriptor = attribute.getDescriptor();
+          if (descriptor != null && descriptor.getDeclaration() instanceof XmlTag) {
+            result = findEnumerationValue((String)object, (XmlTag)descriptor.getDeclaration());
+          }
         }
       }
       return result;
@@ -440,7 +427,7 @@ public class XmlDocumentationProvider implements DocumentationProvider {
   public static PsiElement findDeclWithName(final String name, final @NotNull PsiElement element) {
     final XmlFile containingXmlFile = XmlUtil.getContainingFile(element);
     final XmlTag nearestTag = PsiTreeUtil.getParentOfType(element, XmlTag.class, false);
-    final XmlFile xmlFile = nearestTag != null? XmlCompletionData.findDescriptorFile(nearestTag, containingXmlFile):containingXmlFile;
+    final XmlFile xmlFile = nearestTag != null && containingXmlFile != null ? XmlUtil.findDescriptorFile(nearestTag, containingXmlFile) : containingXmlFile;
 
     if (xmlFile != null) {
       final PsiElement[] result = new PsiElement[1];
@@ -448,6 +435,7 @@ public class XmlDocumentationProvider implements DocumentationProvider {
       XmlUtil.processXmlElements(
         xmlFile,
         new PsiElementProcessor() {
+          @Override
           public boolean execute(@NotNull final PsiElement element) {
             if (element instanceof XmlEntityDecl) {
               final XmlEntityDecl entityDecl = (XmlEntityDecl)element;
@@ -473,6 +461,7 @@ public class XmlDocumentationProvider implements DocumentationProvider {
     return null;
   }
 
+  @Override
   public PsiElement getDocumentationElementForLink(final PsiManager psiManager, String link, PsiElement context) {
     return null;
   }
@@ -485,6 +474,7 @@ public class XmlDocumentationProvider implements DocumentationProvider {
     private @NonNls static final String CDATA_PREFIX = "<![CDATA[";
     private @NonNls static final String CDATA_SUFFIX = "]]>";
 
+    @Override
     public boolean execute(@NotNull PsiElement element) {
       if (element instanceof XmlTag &&
           ((XmlTag)element).getLocalName().equals(DOCUMENTATION_ELEMENT_LOCAL_NAME)
@@ -498,9 +488,7 @@ public class XmlDocumentationProvider implements DocumentationProvider {
           withCData = true;
         }
 
-        if (result.endsWith(CDATA_SUFFIX)) {
-          result = result.substring(0, result.length() - CDATA_SUFFIX.length());
-        }
+        result = StringUtil.trimEnd(result, CDATA_SUFFIX);
         result = result.trim();
 
         if (withCData) {
@@ -522,7 +510,7 @@ public class XmlDocumentationProvider implements DocumentationProvider {
     }
   }
 
-  private static String escapeDocumentationTextText(final String result) {
-    return StringUtil.escapeXml(result).replaceAll("&apos;","'").replaceAll("\n","<br>\n");
+  private static String escapeDocumentationTextText(@NotNull String result) {
+    return StringUtil.escapeXmlEntities(result).replaceAll("&apos;", "'").replaceAll("\n", "<br>\n");
   }
 }

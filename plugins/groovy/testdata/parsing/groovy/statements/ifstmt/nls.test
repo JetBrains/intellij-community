@@ -1,0 +1,30 @@
+if (
+condition
+)
+
+
+a
+
+else
+
+
+b
+-----
+Groovy script
+  IF statement
+    PsiElement(if)('if')
+    PsiWhiteSpace(' ')
+    PsiElement(()('(')
+    PsiWhiteSpace('\n')
+    Reference expression
+      PsiElement(identifier)('condition')
+    PsiWhiteSpace('\n')
+    PsiElement())(')')
+    PsiElement(new line)('\n\n\n')
+    Reference expression
+      PsiElement(identifier)('a')
+    PsiElement(new line)('\n\n')
+    PsiElement(else)('else')
+    PsiElement(new line)('\n\n\n')
+    Reference expression
+      PsiElement(identifier)('b')

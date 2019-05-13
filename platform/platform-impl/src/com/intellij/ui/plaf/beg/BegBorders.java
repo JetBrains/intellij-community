@@ -1,21 +1,8 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.plaf.beg;
 
 
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
@@ -72,8 +59,8 @@ public class BegBorders {
   }
 
   public static class ButtonBorder extends AbstractBorder implements UIResource {
-    protected static Insets borderInsets = new Insets(3, 3, 3, 3);
 
+    @Override
     public void paintBorder(Component c, Graphics g, int x, int y, int w, int h) {
       AbstractButton button = (AbstractButton) c;
       ButtonModel model = button.getModel();
@@ -96,11 +83,14 @@ public class BegBorders {
       }
     }
 
+    @Override
     public Insets getBorderInsets(Component c) {
-      return borderInsets;
+      return JBUI.insets(3);
     }
 
+    @Override
     public Insets getBorderInsets(Component c, Insets newInsets) {
+      Insets borderInsets = JBUI.insets(3);
       newInsets.top = borderInsets.top;
       newInsets.left = borderInsets.left;
       newInsets.bottom = borderInsets.bottom;
@@ -112,6 +102,7 @@ public class BegBorders {
   public static class ScrollPaneBorder extends AbstractBorder implements UIResource {
     private static final Insets insets = new Insets(1, 1, 2, 2);
 
+    @Override
     public void paintBorder(Component c, Graphics g, int x, int y,
                             int w, int h) {
       JScrollPane scroll = (JScrollPane) c;
@@ -149,8 +140,9 @@ public class BegBorders {
       drawLineBorder(g, x, y, w, h);
     }
 
+    @Override
     public Insets getBorderInsets(Component c) {
-      return insets;
+      return (Insets)insets.clone();
     }
   }
 
@@ -159,10 +151,12 @@ public class BegBorders {
       super(null, 1);
     }
 
+    @Override
     public boolean isBorderOpaque() {
       return false;
     }
 
+    @Override
     public void paintBorder(Component c, Graphics g, int x, int y,
                             int w, int h) {
       if (!(c instanceof JTextComponent)) {

@@ -18,9 +18,6 @@ package com.intellij.testFramework.fixtures;
 import com.intellij.codeInsight.completion.CompletionType;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.text.CharFilter;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.PsiFile;
 import com.intellij.testFramework.UsefulTestCase;
 import org.jetbrains.annotations.NotNull;
 
@@ -33,10 +30,6 @@ import java.util.Scanner;
 
 import static org.junit.Assert.assertTrue;
 
-/**
- * User: Andrey.Vokin
- * Date: 2/13/13
- */
 public class CompletionTester {
   enum CheckType {EQUALS, INCLUDES, EXCLUDES}
 
@@ -71,9 +64,10 @@ public class CompletionTester {
     final int count = in.nextInt();
     final CheckType checkType = CheckType.valueOf(in.next());
 
-    final List<String> variants = new ArrayList<String>();
+    in.useDelimiter("\n");
+    final List<String> variants = new ArrayList<>();
     while (in.hasNext()) {
-      final String variant = StringUtil.strip(in.next(), CharFilter.NOT_WHITESPACE_FILTER);
+      final String variant = in.next().trim();
       if (variant.length() > 0) {
         variants.add(variant);
       }
@@ -86,7 +80,7 @@ public class CompletionTester {
     }
 
     if (checkType == CheckType.EQUALS) {
-      UsefulTestCase.assertSameElements(stringList, variants);
+      UsefulTestCase.assertOrderedEquals(stringList, variants);
     }
     else if (checkType == CheckType.INCLUDES) {
       variants.removeAll(stringList);

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.actionSystem.impl;
 
 import com.intellij.AbstractBundle;
@@ -20,20 +6,21 @@ import com.intellij.CommonBundle;
 import com.intellij.diagnostic.PluginException;
 import com.intellij.ide.ActivityTracker;
 import com.intellij.ide.DataManager;
+import com.intellij.ide.actions.ActionsCollector;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginManager;
+import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.idea.IdeaLogger;
+import com.intellij.internal.statistic.collectors.fus.actions.persistence.ActionIdProvider;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
+import com.intellij.openapi.actionSystem.ex.ActionPopupMenuListener;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.actionSystem.ex.AnActionListener;
-import com.intellij.openapi.application.Application;
-import com.intellij.openapi.application.ApplicationActivationListener;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.*;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
-import com.intellij.openapi.components.ApplicationComponent;
+import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.keymap.Keymap;
@@ -41,364 +28,159 @@ import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.keymap.ex.KeymapManagerEx;
 import com.intellij.openapi.progress.ProcessCanceledException;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.project.ProjectType;
+import com.intellij.openapi.util.ActionCallback;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
+import com.intellij.util.ObjectUtils;
+import com.intellij.util.ReflectionUtil;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.MultiMap;
+import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.MessageBusConnection;
+import com.intellij.util.pico.CachingConstructorInjectionComponentAdapter;
 import com.intellij.util.ui.UIUtil;
 import gnu.trove.THashMap;
-import gnu.trove.THashSet;
 import gnu.trove.TObjectIntHashMap;
 import org.jdom.Element;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.picocontainer.defaults.ConstructorInjectionComponentAdapter;
 
-import javax.swing.*;
 import javax.swing.Timer;
+import javax.swing.*;
 import java.awt.*;
-import java.awt.event.*;
-import java.lang.reflect.Constructor;
-import java.util.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.InputEvent;
+import java.awt.event.WindowEvent;
 import java.util.List;
+import java.util.*;
 
-public final class ActionManagerImpl extends ActionManagerEx implements ApplicationComponent {
+public final class ActionManagerImpl extends ActionManagerEx implements Disposable {
+  private static final String ACTION_ELEMENT_NAME = "action";
+  private static final String GROUP_ELEMENT_NAME = "group";
+  private static final String CLASS_ATTR_NAME = "class";
+  private static final String ID_ATTR_NAME = "id";
+  private static final String INTERNAL_ATTR_NAME = "internal";
+  private static final String ICON_ATTR_NAME = "icon";
+  private static final String ADD_TO_GROUP_ELEMENT_NAME = "add-to-group";
+  private static final String SHORTCUT_ELEMENT_NAME = "keyboard-shortcut";
+  private static final String MOUSE_SHORTCUT_ELEMENT_NAME = "mouse-shortcut";
+  private static final String DESCRIPTION = "description";
+  private static final String TEXT_ATTR_NAME = "text";
+  private static final String POPUP_ATTR_NAME = "popup";
+  private static final String COMPACT_ATTR_NAME = "compact";
+  private static final String SEPARATOR_ELEMENT_NAME = "separator";
+  private static final String REFERENCE_ELEMENT_NAME = "reference";
+  private static final String ABBREVIATION_ELEMENT_NAME = "abbreviation";
+  private static final String GROUPID_ATTR_NAME = "group-id";
+  private static final String ANCHOR_ELEMENT_NAME = "anchor";
+  private static final String FIRST = "first";
+  private static final String LAST = "last";
+  private static final String BEFORE = "before";
+  private static final String AFTER = "after";
+  private static final String SECONDARY = "secondary";
+  private static final String RELATIVE_TO_ACTION_ATTR_NAME = "relative-to-action";
+  private static final String FIRST_KEYSTROKE_ATTR_NAME = "first-keystroke";
+  private static final String SECOND_KEYSTROKE_ATTR_NAME = "second-keystroke";
+  private static final String REMOVE_SHORTCUT_ATTR_NAME = "remove";
+  private static final String REPLACE_SHORTCUT_ATTR_NAME = "replace-all";
+  private static final String KEYMAP_ATTR_NAME = "keymap";
+  private static final String KEYSTROKE_ATTR_NAME = "keystroke";
+  private static final String REF_ATTR_NAME = "ref";
+  private static final String VALUE_ATTR_NAME = "value";
+  private static final String ACTIONS_BUNDLE = "messages.ActionsBundle";
+  private static final String USE_SHORTCUT_OF_ATTR_NAME = "use-shortcut-of";
+  private static final String OVERRIDES_ATTR_NAME = "overrides";
+  private static final String KEEP_CONTENT_ATTR_NAME = "keep-content";
+  private static final String PROJECT_TYPE = "project-type";
+  private static final String UNREGISTER_ELEMENT_NAME = "unregister";
+
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.actionSystem.impl.ActionManagerImpl");
   private static final int DEACTIVATED_TIMER_DELAY = 5000;
   private static final int TIMER_DELAY = 500;
   private static final int UPDATE_DELAY_AFTER_TYPING = 500;
 
   private final Object myLock = new Object();
-  private final Map<String,Object> myId2Action = new THashMap<String, Object>();
-  private final Map<PluginId, THashSet<String>> myPlugin2Id = new THashMap<PluginId, THashSet<String>>();
-  private final TObjectIntHashMap<String> myId2Index = new TObjectIntHashMap<String>();
-  private final Map<Object,String> myAction2Id = new THashMap<Object, String>();
-  private final List<String> myNotRegisteredInternalActionIds = new ArrayList<String>();
-  private MyTimer myTimer;
-
-  private int myRegisteredActionsCount;
-  private final List<AnActionListener> myActionListeners = new ArrayList<AnActionListener>();
-  private AnActionListener[] myCachedActionListeners;
-  private String myLastPreformedActionId;
-  private final KeymapManager myKeymapManager;
+  private final Map<String,AnAction> myId2Action = new THashMap<>();
+  private final MultiMap<PluginId, String> myPlugin2Id = new MultiMap<>();
+  private final TObjectIntHashMap<String> myId2Index = new TObjectIntHashMap<>();
+  private final Map<Object,String> myAction2Id = new THashMap<>();
+  private final MultiMap<String,String> myId2GroupId = new MultiMap<>();
+  private final List<String> myNotRegisteredInternalActionIds = new ArrayList<>();
+  private final List<AnActionListener> myActionListeners = ContainerUtil.createLockFreeCopyOnWriteList();
+  private final List<ActionPopupMenuListener> myActionPopupMenuListeners = ContainerUtil.createLockFreeCopyOnWriteList();
+  private final KeymapManagerEx myKeymapManager;
   private final DataManager myDataManager;
+  private final List<Object/*ActionPopupMenuImpl|JBPopup*/> myPopups = new ArrayList<>();
+  private MyTimer myTimer;
+  private int myRegisteredActionsCount;
+  private String myLastPreformedActionId;
   private String myPrevPerformedActionId;
-  private long myLastTimeEditorWasTypedIn = 0;
-  @NonNls public static final String ACTION_ELEMENT_NAME = "action";
-  @NonNls public static final String GROUP_ELEMENT_NAME = "group";
-  @NonNls public static final String ACTIONS_ELEMENT_NAME = "actions";
-  @NonNls public static final String CLASS_ATTR_NAME = "class";
-  @NonNls public static final String ID_ATTR_NAME = "id";
-  @NonNls public static final String INTERNAL_ATTR_NAME = "internal";
-  @NonNls public static final String ICON_ATTR_NAME = "icon";
-  @NonNls public static final String ADD_TO_GROUP_ELEMENT_NAME = "add-to-group";
-  @NonNls public static final String SHORTCUT_ELEMENT_NAME = "keyboard-shortcut";
-  @NonNls public static final String MOUSE_SHORTCUT_ELEMENT_NAME = "mouse-shortcut";
-  @NonNls public static final String DESCRIPTION = "description";
-  @NonNls public static final String TEXT_ATTR_NAME = "text";
-  @NonNls public static final String POPUP_ATTR_NAME = "popup";
-  @NonNls public static final String SEPARATOR_ELEMENT_NAME = "separator";
-  @NonNls public static final String REFERENCE_ELEMENT_NAME = "reference";
-  @NonNls public static final String GROUPID_ATTR_NAME = "group-id";
-  @NonNls public static final String ANCHOR_ELEMENT_NAME = "anchor";
-  @NonNls public static final String FIRST = "first";
-  @NonNls public static final String LAST = "last";
-  @NonNls public static final String BEFORE = "before";
-  @NonNls public static final String AFTER = "after";
-  @NonNls public static final String SECONDARY = "secondary";
-  @NonNls public static final String RELATIVE_TO_ACTION_ATTR_NAME = "relative-to-action";
-  @NonNls public static final String FIRST_KEYSTROKE_ATTR_NAME = "first-keystroke";
-  @NonNls public static final String SECOND_KEYSTROKE_ATTR_NAME = "second-keystroke";
-  @NonNls public static final String REMOVE_SHORTCUT_ATTR_NAME = "remove";
-  @NonNls public static final String REPLACE_SHORTCUT_ATTR_NAME = "replace-all";
-  @NonNls public static final String KEYMAP_ATTR_NAME = "keymap";
-  @NonNls public static final String KEYSTROKE_ATTR_NAME = "keystroke";
-  @NonNls public static final String REF_ATTR_NAME = "ref";
-  @NonNls public static final String ACTIONS_BUNDLE = "messages.ActionsBundle";
-  @NonNls public static final String USE_SHORTCUT_OF_ATTR_NAME = "use-shortcut-of";
-
-  private final List<ActionPopupMenuImpl> myPopups = new ArrayList<ActionPopupMenuImpl>();
-
-  private final Map<AnAction, DataContext> myQueuedNotifications = new LinkedHashMap<AnAction, DataContext>();
-  private final Map<AnAction, AnActionEvent> myQueuedNotificationsEvents = new LinkedHashMap<AnAction, AnActionEvent>();
-
-  private Runnable myPreloadActionsRunnable;
+  private long myLastTimeEditorWasTypedIn;
   private boolean myTransparentOnlyUpdate;
+  private final Map<OverridingAction, AnAction> myBaseActions = new HashMap<>();
+  private final AnActionListener messageBusPublisher;
+  private int myAnonymousGroupIdCounter;
 
-  ActionManagerImpl(KeymapManager keymapManager, DataManager dataManager) {
-    myKeymapManager = keymapManager;
+  ActionManagerImpl(@NotNull KeymapManager keymapManager, DataManager dataManager, @NotNull MessageBus messageBus) {
+    myKeymapManager = (KeymapManagerEx)keymapManager;
     myDataManager = dataManager;
 
     registerPluginActions();
+    messageBusPublisher = messageBus.syncPublisher(AnActionListener.TOPIC);
   }
 
-  public void initComponent() {}
-
-  public void disposeComponent() {
-    if (myTimer != null) {
-      myTimer.stop();
-      myTimer = null;
-    }
-  }
-
-  public void addTimerListener(int delay, final TimerListener listener) {
-    _addTimerListener(listener, false);
-  }
-
-  public void removeTimerListener(TimerListener listener) {
-    _removeTimerListener(listener, false);
-  }
-
-  @Override
-  public void addTransparentTimerListener(int delay, TimerListener listener) {
-    _addTimerListener(listener, true);
-  }
-
-  @Override
-  public void removeTransparentTimerListener(TimerListener listener) {
-    _removeTimerListener(listener, true);
-  }
-
-  private void _addTimerListener(final TimerListener listener, boolean transparent) {
-    if (ApplicationManager.getApplication().isUnitTestMode()) return;
-    if (myTimer == null) {
-      myTimer = new MyTimer();
-      myTimer.start();
-    }
-
-    myTimer.addTimerListener(listener, transparent);
-  }
-
-  private void _removeTimerListener(TimerListener listener, boolean transparent) {
-    if (ApplicationManager.getApplication().isUnitTestMode()) return;
-    LOG.assertTrue(myTimer != null);
-
-    myTimer.removeTimerListener(listener, transparent);
-  }
-
-  public ActionPopupMenu createActionPopupMenu(String place, @NotNull ActionGroup group, @Nullable PresentationFactory presentationFactory) {
-    return new ActionPopupMenuImpl(place, group, this, presentationFactory);
-  }
-
-  public ActionPopupMenu createActionPopupMenu(String place, @NotNull ActionGroup group) {
-    return new ActionPopupMenuImpl(place, group, this, null);
-  }
-
-  public ActionToolbar createActionToolbar(final String place, final ActionGroup group, final boolean horizontal) {
-    return createActionToolbar(place, group, horizontal, false);
-  }
-
-  public ActionToolbar createActionToolbar(final String place, final ActionGroup group, final boolean horizontal, final boolean decorateButtons) {
-    return new ActionToolbarImpl(place, group, horizontal, decorateButtons, myDataManager, this, (KeymapManagerEx)myKeymapManager);
-  }
-
-
-  private void registerPluginActions() {
-    final IdeaPluginDescriptor[] plugins = PluginManager.getPlugins();
-    for (IdeaPluginDescriptor plugin : plugins) {
-      if (PluginManager.shouldSkipPlugin(plugin)) continue;
-      final List<Element> elementList = plugin.getActionsDescriptionElements();
-      if (elementList != null) {
-        for (Element e : elementList) {
-          processActionsChildElement(plugin.getPluginClassLoader(), plugin.getPluginId(), e);
-        }
-      }
-    }
-  }
-
-  public AnAction getAction(@NotNull String id) {
-    return getActionImpl(id, false);
-  }
-
-  private AnAction getActionImpl(String id, boolean canReturnStub) {
-    synchronized (myLock) {
-      AnAction action = (AnAction)myId2Action.get(id);
-      if (!canReturnStub && action instanceof ActionStub) {
-        action = convert((ActionStub)action);
-      }
-      return action;
-    }
-  }
-
-  /**
-   * Converts action's stub to normal action.
-   */
-  private AnAction convert(ActionStub stub) {
-    LOG.assertTrue(myAction2Id.containsKey(stub));
-    myAction2Id.remove(stub);
-
-    LOG.assertTrue(myId2Action.containsKey(stub.getId()));
-
-    AnAction action = (AnAction)myId2Action.remove(stub.getId());
-    LOG.assertTrue(action != null);
-    LOG.assertTrue(action.equals(stub));
-
+  @Nullable
+  static AnAction convertStub(ActionStub stub) {
     Object obj;
     String className = stub.getClassName();
     try {
-      Constructor<?> constructor = Class.forName(className, true, stub.getLoader()).getDeclaredConstructor();
-      constructor.setAccessible(true);
-      obj = constructor.newInstance();
+      Class<?> aClass = Class.forName(className, true, stub.getLoader());
+      obj = ReflectionUtil.newInstance(aClass);
     }
-    catch (ClassNotFoundException e) {
-      PluginId pluginId = stub.getPluginId();
-      if (pluginId != null) {
-        throw new PluginException("class with name \"" + className + "\" not found", e, pluginId);
-      }
-      else {
-        throw new IllegalStateException("class with name \"" + className + "\" not found");
-      }
+    catch (ProcessCanceledException e) {
+      throw e;
     }
-    catch(UnsupportedClassVersionError e) {
-      PluginId pluginId = stub.getPluginId();
-      if (pluginId != null) {
-        throw new PluginException(e, pluginId);
-      }
-      else {
-        throw new IllegalStateException(e);
-      }
-    }
-    catch (Exception e) {
-      PluginId pluginId = stub.getPluginId();
-      if (pluginId != null) {
-        throw new PluginException("cannot create class \"" + className + "\"", e, pluginId);
-      }
-      else {
-        throw new IllegalStateException("cannot create class \"" + className + "\"", e);
-      }
+    catch (Throwable e) {
+      LOG.error(new PluginException(e, stub.getPluginId()));
+      return null;
     }
 
     if (!(obj instanceof AnAction)) {
-      throw new IllegalStateException("class with name \"" + className + "\" should be instance of " + AnAction.class.getName());
+      LOG.error(new PluginException("class with name '" + className + "' must be an instance of '" + AnAction.class.getName()+"'; got "+obj, stub.getPluginId()));
+      return null;
     }
 
     AnAction anAction = (AnAction)obj;
     stub.initAction(anAction);
-    if (StringUtil.isNotEmpty(stub.getText())) {
-      anAction.getTemplatePresentation().setText(stub.getText());
-    }
     String iconPath = stub.getIconPath();
     if (iconPath != null) {
-      setIconFromClass(anAction.getClass(), anAction.getClass().getClassLoader(), iconPath, stub.getClassName(), anAction.getTemplatePresentation(), stub.getPluginId());
+      Class<? extends AnAction> actionClass = anAction.getClass();
+      setIconFromClass(actionClass, actionClass.getClassLoader(), iconPath, anAction.getTemplatePresentation(), stub.getPluginId());
     }
-
-    myId2Action.put(stub.getId(), obj);
-    myAction2Id.put(obj, stub.getId());
-
     return anAction;
   }
 
-  public String getId(@NotNull AnAction action) {
-    LOG.assertTrue(!(action instanceof ActionStub));
-    synchronized (myLock) {
-      return myAction2Id.get(action);
+  private static void processAbbreviationNode(Element e, String id) {
+    final String abbr = e.getAttributeValue(VALUE_ATTR_NAME);
+    if (!StringUtil.isEmpty(abbr)) {
+      final AbbreviationManagerImpl abbreviationManager = (AbbreviationManagerImpl)AbbreviationManager.getInstance();
+      abbreviationManager.register(abbr, id, true);
     }
-  }
-
-  public String[] getActionIds(@NotNull String idPrefix) {
-    synchronized (myLock) {
-      ArrayList<String> idList = new ArrayList<String>();
-      for (String id : myId2Action.keySet()) {
-        if (id.startsWith(idPrefix)) {
-          idList.add(id);
-        }
-      }
-      return ArrayUtil.toStringArray(idList);
-    }
-  }
-
-  public boolean isGroup(@NotNull String actionId) {
-    return getActionImpl(actionId, true) instanceof ActionGroup;
-  }
-
-  public JComponent createButtonToolbar(final String actionPlace, final ActionGroup messageActionGroup) {
-    return new ButtonToolbarImpl(actionPlace, messageActionGroup, myDataManager, this);
-  }
-
-  public AnAction getActionOrStub(String id) {
-    return getActionImpl(id, true);
-  }
-
-  /**
-   * @return instance of ActionGroup or ActionStub. The method never returns real subclasses
-   *         of <code>AnAction</code>.
-   */
-  @Nullable
-  private AnAction processActionElement(Element element, final ClassLoader loader, PluginId pluginId) {
-    final IdeaPluginDescriptor plugin = PluginManager.getPlugin(pluginId);
-    ResourceBundle bundle = getActionsResourceBundle(loader, plugin);
-
-    if (!ACTION_ELEMENT_NAME.equals(element.getName())) {
-      reportActionError(pluginId, "unexpected name of element \"" + element.getName() + "\"");
-      return null;
-    }
-    String className = element.getAttributeValue(CLASS_ATTR_NAME);
-    if (className == null || className.length() == 0) {
-      reportActionError(pluginId, "action element should have specified \"class\" attribute");
-      return null;
-    }
-    // read ID and register loaded action
-    String id = element.getAttributeValue(ID_ATTR_NAME);
-    if (id == null || id.length() == 0) {
-      id = StringUtil.getShortName(className);
-    }
-    if (Boolean.valueOf(element.getAttributeValue(INTERNAL_ATTR_NAME)).booleanValue() && !ApplicationManagerEx.getApplicationEx().isInternal()) {
-      myNotRegisteredInternalActionIds.add(id);
-      return null;
-    }
-
-    String text = loadTextForElement(element, bundle, id, ACTION_ELEMENT_NAME);
-
-    String iconPath = element.getAttributeValue(ICON_ATTR_NAME);
-
-    if (text == null) {
-      @NonNls String message = "'text' attribute is mandatory (action ID=" + id + ";" +
-                               (plugin == null ? "" : " plugin path: "+plugin.getPath()) + ")";
-      reportActionError(pluginId, message);
-      return null;
-    }
-
-    ActionStub stub = new ActionStub(className, id, text, loader, pluginId, iconPath);
-    Presentation presentation = stub.getTemplatePresentation();
-    presentation.setText(text);
-
-    // description
-
-    presentation.setDescription(loadDescriptionForElement(element, bundle, id, ACTION_ELEMENT_NAME));
-
-    // process all links and key bindings if any
-    for (final Object o : element.getChildren()) {
-      Element e = (Element)o;
-      if (ADD_TO_GROUP_ELEMENT_NAME.equals(e.getName())) {
-        processAddToGroupNode(stub, e, pluginId, isSecondary(e));
-      }
-      else if (SHORTCUT_ELEMENT_NAME.equals(e.getName())) {
-        processKeyboardShortcutNode(e, id, pluginId);
-      }
-      else if (MOUSE_SHORTCUT_ELEMENT_NAME.equals(e.getName())) {
-        processMouseShortcutNode(e, id, pluginId);
-      }
-      else {
-        reportActionError(pluginId, "unexpected name of element \"" + e.getName() + "\"");
-        return null;
-      }
-    }
-    if (element.getAttributeValue(USE_SHORTCUT_OF_ATTR_NAME) != null) {
-      ((KeymapManagerEx)myKeymapManager).bindShortcuts(element.getAttributeValue(USE_SHORTCUT_OF_ATTR_NAME), id);
-    }
-
-    // register action
-    registerAction(id, stub, pluginId);
-    return stub;
   }
 
   @Nullable
   private static ResourceBundle getActionsResourceBundle(ClassLoader loader, IdeaPluginDescriptor plugin) {
-    @NonNls final String resBundleName = plugin != null && !plugin.getPluginId().getIdString().equals("com.intellij") ? plugin.getResourceBundleBaseName() : ACTIONS_BUNDLE;
+    final String resBundleName = plugin != null && !PluginManagerCore.CORE_PLUGIN_ID.equals(plugin.getPluginId().getIdString())
+                                         ? plugin.getResourceBundleBaseName() : ACTIONS_BUNDLE;
     ResourceBundle bundle = null;
     if (resBundleName != null) {
       bundle = AbstractBundle.getResourceBundle(resBundleName, loader);
@@ -410,38 +192,39 @@ public final class ActionManagerImpl extends ActionManagerEx implements Applicat
     return "true".equalsIgnoreCase(element.getAttributeValue(SECONDARY));
   }
 
-  private static void setIcon(@Nullable final String iconPath, final String className, final ClassLoader loader, final Presentation presentation,
+  private static void setIcon(@Nullable final String iconPath,
+                              @NotNull String className,
+                              @NotNull ClassLoader loader,
+                              @NotNull Presentation presentation,
                               final PluginId pluginId) {
     if (iconPath == null) return;
 
     try {
       final Class actionClass = Class.forName(className, true, loader);
-      setIconFromClass(actionClass, loader, iconPath, className, presentation, pluginId);
+      setIconFromClass(actionClass, loader, iconPath, presentation, pluginId);
     }
-    catch (ClassNotFoundException e) {
-      LOG.error(e);
-      reportActionError(pluginId, "class with name \"" + className + "\" not found");
-    }
-    catch (NoClassDefFoundError e) {
+    catch (ClassNotFoundException | NoClassDefFoundError e) {
       LOG.error(e);
       reportActionError(pluginId, "class with name \"" + className + "\" not found");
     }
   }
 
-  private static void setIconFromClass(@NotNull final Class actionClass, @NotNull final ClassLoader classLoader, @NotNull final String iconPath, final String className,
-                                       final Presentation presentation, final PluginId pluginId) {
-
+  private static void setIconFromClass(@NotNull final Class actionClass,
+                                       @NotNull final ClassLoader classLoader,
+                                       @NotNull final String iconPath,
+                                       @NotNull Presentation presentation,
+                                       final PluginId pluginId) {
     final IconLoader.LazyIcon lazyIcon = new IconLoader.LazyIcon() {
       @Override
       protected Icon compute() {
         //try to find icon in idea class path
-        Icon icon = IconLoader.findIcon(iconPath, actionClass, true);
+        Icon icon = IconLoader.findIcon(iconPath, actionClass, true, false);
         if (icon == null) {
           icon = IconLoader.findIcon(iconPath, classLoader);
         }
 
         if (icon == null) {
-          reportActionError(pluginId, "Icon cannot be found in '" + iconPath + "', action class='" + className + "'");
+          reportActionError(pluginId, "Icon cannot be found in '" + iconPath + "', action '" + actionClass + "'");
         }
 
         return icon;
@@ -463,7 +246,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Applicat
   private static String loadDescriptionForElement(final Element element, final ResourceBundle bundle, final String id, String elementType) {
     final String value = element.getAttributeValue(DESCRIPTION);
     if (bundle != null) {
-      @NonNls final String key = elementType + "." + id + ".description";
+      final String key = elementType + "." + id + ".description";
       return CommonBundle.messageOrDefault(bundle, key, value == null ? "" : value);
     } else {
       return value;
@@ -473,6 +256,373 @@ public final class ActionManagerImpl extends ActionManagerEx implements Applicat
   private static String loadTextForElement(final Element element, final ResourceBundle bundle, final String id, String elementType) {
     final String value = element.getAttributeValue(TEXT_ATTR_NAME);
     return CommonBundle.messageOrDefault(bundle, elementType + "." + id + "." + TEXT_ATTR_NAME, value == null ? "" : value);
+  }
+
+  private static boolean checkRelativeToAction(final String relativeToActionId,
+                                               @NotNull final Anchor anchor,
+                                               @NotNull final String actionName,
+                                               @Nullable final PluginId pluginId) {
+    if ((Anchor.BEFORE == anchor || Anchor.AFTER == anchor) && relativeToActionId == null) {
+      reportActionError(pluginId, actionName + ": \"relative-to-action\" cannot be null if anchor is \"after\" or \"before\"");
+      return false;
+    }
+    return true;
+  }
+
+  @Nullable
+  private static Anchor parseAnchor(final String anchorStr,
+                                    @Nullable final String actionName,
+                                    @Nullable final PluginId pluginId) {
+    if (anchorStr == null) {
+      return Anchor.LAST;
+    }
+
+    if (FIRST.equalsIgnoreCase(anchorStr)) {
+      return Anchor.FIRST;
+    }
+    else if (LAST.equalsIgnoreCase(anchorStr)) {
+      return Anchor.LAST;
+    }
+    else if (BEFORE.equalsIgnoreCase(anchorStr)) {
+      return Anchor.BEFORE;
+    }
+    else if (AFTER.equalsIgnoreCase(anchorStr)) {
+      return Anchor.AFTER;
+    }
+    else {
+      reportActionError(pluginId, actionName + ": anchor should be one of the following constants: \"first\", \"last\", \"before\" or \"after\"");
+      return null;
+    }
+  }
+
+  private void processMouseShortcutNode(Element element, String actionId, PluginId pluginId) {
+    String keystrokeString = element.getAttributeValue(KEYSTROKE_ATTR_NAME);
+    if (keystrokeString == null || keystrokeString.trim().isEmpty()) {
+      reportActionError(pluginId, "\"keystroke\" attribute must be specified for action with id=" + actionId);
+      return;
+    }
+    MouseShortcut shortcut;
+    try {
+      shortcut = KeymapUtil.parseMouseShortcut(keystrokeString);
+    }
+    catch (Exception ex) {
+      reportActionError(pluginId, "\"keystroke\" attribute has invalid value for action with id=" + actionId);
+      return;
+    }
+
+    String keymapName = element.getAttributeValue(KEYMAP_ATTR_NAME);
+    if (keymapName == null || keymapName.isEmpty()) {
+      reportActionError(pluginId, "attribute \"keymap\" should be defined");
+      return;
+    }
+    Keymap keymap = myKeymapManager.getKeymap(keymapName);
+    if (keymap == null) {
+      reportActionError(pluginId, "keymap \"" + keymapName + "\" not found");
+      return;
+    }
+    processRemoveAndReplace(element, actionId, keymap, shortcut);
+  }
+
+  private static void assertActionIsGroupOrStub(final AnAction action) {
+    if (!(action instanceof ActionGroup || action instanceof ActionStub || action instanceof ChameleonAction)) {
+      LOG.error("Action : " + action + "; class: " + action.getClass());
+    }
+  }
+
+  private static void reportActionError(PluginId pluginId, @NotNull String message) {
+    reportActionError(pluginId, message, null);
+  }
+
+  private static void reportActionError(PluginId pluginId, @NotNull String message, @Nullable Throwable cause) {
+    if (pluginId != null) {
+      LOG.error(new PluginException(message, cause, pluginId));
+    }
+    else if (cause != null) {
+      LOG.error(message, cause);
+    }
+    else {
+      LOG.error(message);
+    }
+  }
+
+  private static void reportActionWarning(PluginId pluginId, @NotNull String message) {
+    if (pluginId == null) {
+      LOG.warn(message);
+    }
+    else {
+      LOG.warn(new PluginException(message, null, pluginId).getMessage());
+    }
+  }
+
+  private static String getPluginInfo(@Nullable PluginId id) {
+    if (id != null) {
+      final IdeaPluginDescriptor plugin = PluginManager.getPlugin(id);
+      if (plugin != null) {
+        String name = plugin.getName();
+        if (name == null) {
+          name = id.getIdString();
+        }
+        return " Plugin: " + name;
+      }
+    }
+    return "";
+  }
+
+  @NotNull
+  private static DataContext getContextBy(Component contextComponent) {
+    final DataManager dataManager = DataManager.getInstance();
+    return contextComponent != null ? dataManager.getDataContext(contextComponent) : dataManager.getDataContext();
+  }
+
+  @Override
+  public void dispose() {
+    if (myTimer != null) {
+      myTimer.stop();
+      myTimer = null;
+    }
+  }
+
+  @Override
+  public void addTimerListener(int delay, @NotNull final TimerListener listener) {
+    _addTimerListener(listener, false);
+  }
+
+  @Override
+  public void removeTimerListener(@NotNull TimerListener listener) {
+    _removeTimerListener(listener, false);
+  }
+
+  @Override
+  public void addTransparentTimerListener(int delay, @NotNull TimerListener listener) {
+    _addTimerListener(listener, true);
+  }
+
+  @Override
+  public void removeTransparentTimerListener(@NotNull TimerListener listener) {
+    _removeTimerListener(listener, true);
+  }
+
+  private void _addTimerListener(final TimerListener listener, boolean transparent) {
+    if (ApplicationManager.getApplication().isUnitTestMode()) return;
+    if (myTimer == null) {
+      myTimer = new MyTimer();
+      myTimer.start();
+    }
+
+    myTimer.addTimerListener(listener, transparent);
+  }
+
+  private void _removeTimerListener(TimerListener listener, boolean transparent) {
+    if (ApplicationManager.getApplication().isUnitTestMode()) return;
+    if (LOG.assertTrue(myTimer != null)) {
+      myTimer.removeTimerListener(listener, transparent);
+    }
+  }
+
+  public ActionPopupMenu createActionPopupMenu(@NotNull String place, @NotNull ActionGroup group, @Nullable PresentationFactory presentationFactory) {
+    return new ActionPopupMenuImpl(place, group, this, presentationFactory);
+  }
+
+  @NotNull
+  @Override
+  public ActionPopupMenu createActionPopupMenu(@NotNull String place, @NotNull ActionGroup group) {
+    return new ActionPopupMenuImpl(place, group, this, null);
+  }
+
+  @NotNull
+  @Override
+  public ActionToolbar createActionToolbar(@NotNull final String place, @NotNull final ActionGroup group, final boolean horizontal) {
+    return createActionToolbar(place, group, horizontal, false);
+  }
+
+  @NotNull
+  @Override
+  public ActionToolbar createActionToolbar(@NotNull final String place, @NotNull final ActionGroup group, final boolean horizontal, final boolean decorateButtons) {
+    return new ActionToolbarImpl(place, group, horizontal, decorateButtons, myDataManager, this, myKeymapManager);
+  }
+
+  private void registerPluginActions() {
+    final IdeaPluginDescriptor[] plugins = PluginManagerCore.getPlugins();
+    for (IdeaPluginDescriptor plugin : plugins) {
+      if (PluginManagerCore.shouldSkipPlugin(plugin)) continue;
+      final List<Element> elementList = plugin.getActionsDescriptionElements();
+      if (elementList != null) {
+        for (Element e : elementList) {
+          processActionsChildElement(plugin.getPluginClassLoader(), plugin.getPluginId(), e);
+        }
+      }
+    }
+  }
+
+  @Override
+  @Nullable
+  public AnAction getAction(@NotNull String id) {
+    return getActionImpl(id, false);
+  }
+
+  @Nullable
+  private AnAction getActionImpl(@NotNull String id, boolean canReturnStub) {
+    AnAction action;
+    synchronized (myLock) {
+      action = myId2Action.get(id);
+      if (canReturnStub || !(action instanceof ActionStub)) {
+        return action;
+      }
+    }
+    AnAction converted = convertStub((ActionStub)action);
+    if (converted == null) {
+      unregisterAction(id);
+      return null;
+    }
+
+    synchronized (myLock) {
+      action = myId2Action.get(id);
+      if (action instanceof ActionStub) {
+        action = replaceStub((ActionStub)action, converted);
+      }
+      return action;
+    }
+  }
+
+  @NotNull
+  private AnAction replaceStub(@NotNull ActionStub stub, AnAction anAction) {
+    LOG.assertTrue(myAction2Id.containsKey(stub));
+    myAction2Id.remove(stub);
+
+    LOG.assertTrue(myId2Action.containsKey(stub.getId()));
+
+    AnAction action = myId2Action.remove(stub.getId());
+    LOG.assertTrue(action != null);
+    LOG.assertTrue(action.equals(stub));
+
+    myAction2Id.put(anAction, stub.getId());
+
+    return addToMap(stub.getId(), anAction, stub.getPluginId(), stub.getProjectType());
+  }
+
+  @Override
+  public String getId(@NotNull AnAction action) {
+    if (action instanceof ActionStub) {
+      return ((ActionStub) action).getId();
+    }
+    synchronized (myLock) {
+      return myAction2Id.get(action);
+    }
+  }
+
+  @NotNull
+  @Override
+  public String[] getActionIds(@NotNull String idPrefix) {
+    synchronized (myLock) {
+      ArrayList<String> idList = new ArrayList<>();
+      for (String id : myId2Action.keySet()) {
+        if (id.startsWith(idPrefix)) {
+          idList.add(id);
+        }
+      }
+      return ArrayUtil.toStringArray(idList);
+    }
+  }
+
+  @Override
+  public boolean isGroup(@NotNull String actionId) {
+    return getActionImpl(actionId, true) instanceof ActionGroup;
+  }
+
+  @NotNull
+  @Override
+  public JComponent createButtonToolbar(@NotNull final String actionPlace, @NotNull final ActionGroup messageActionGroup) {
+    return new ButtonToolbarImpl(actionPlace, messageActionGroup, myDataManager, this);
+  }
+
+  @Override
+  public AnAction getActionOrStub(@NotNull String id) {
+    return getActionImpl(id, true);
+  }
+
+  /**
+   * @return instance of ActionGroup or ActionStub. The method never returns real subclasses of {@code AnAction}.
+   */
+  @Nullable
+  private AnAction processActionElement(Element element, final ClassLoader loader, PluginId pluginId) {
+    String className = element.getAttributeValue(CLASS_ATTR_NAME);
+    if (className == null || className.isEmpty()) {
+      reportActionError(pluginId, "action element should have specified \"class\" attribute");
+      return null;
+    }
+    // read ID and register loaded action
+    String id = obtainActionId(element, className);
+    if (Boolean.valueOf(element.getAttributeValue(INTERNAL_ATTR_NAME)).booleanValue() && !ApplicationManagerEx.getApplicationEx().isInternal()) {
+      myNotRegisteredInternalActionIds.add(id);
+      return null;
+    }
+
+    String iconPath = element.getAttributeValue(ICON_ATTR_NAME);
+    String projectType = element.getAttributeValue(PROJECT_TYPE);
+
+    ActionStub stub = new ActionStub(className, id, loader, pluginId, iconPath, projectType, () -> {
+      IdeaPluginDescriptor plugin = PluginManager.getPlugin(pluginId);
+      ResourceBundle bundle = getActionsResourceBundle(loader, plugin);
+      String text = loadTextForElement(element, bundle, id, ACTION_ELEMENT_NAME);
+      if (text == null) {
+        reportActionError(pluginId, "'text' attribute is mandatory (action ID=" + id + ";" +
+                                    (plugin == null ? "" : " plugin path: "+plugin.getPath()) + ")");
+      }
+      Presentation presentation = new Presentation();
+      presentation.setText(text);
+      presentation.setDescription(loadDescriptionForElement(element, bundle, id, ACTION_ELEMENT_NAME));
+      return presentation;
+    });
+
+    // process all links and key bindings if any
+    for (Element e : element.getChildren()) {
+      if (ADD_TO_GROUP_ELEMENT_NAME.equals(e.getName())) {
+        processAddToGroupNode(stub, e, pluginId, isSecondary(e));
+      }
+      else if (SHORTCUT_ELEMENT_NAME.equals(e.getName())) {
+        processKeyboardShortcutNode(e, id, pluginId);
+      }
+      else if (MOUSE_SHORTCUT_ELEMENT_NAME.equals(e.getName())) {
+        processMouseShortcutNode(e, id, pluginId);
+      }
+      else if (ABBREVIATION_ELEMENT_NAME.equals(e.getName())) {
+        processAbbreviationNode(e, id);
+      }
+      else {
+        reportActionError(pluginId, "unexpected name of element \"" + e.getName() + "\"");
+        return null;
+      }
+    }
+    if (element.getAttributeValue(USE_SHORTCUT_OF_ATTR_NAME) != null) {
+      myKeymapManager.bindShortcuts(element.getAttributeValue(USE_SHORTCUT_OF_ATTR_NAME), id);
+    }
+
+    registerOrReplaceActionInner(element, id, stub, pluginId);
+    return stub;
+  }
+
+  private static String obtainActionId(Element element, String className) {
+    String id = element.getAttributeValue(ID_ATTR_NAME);
+    return StringUtil.isEmpty(id) ? StringUtil.getShortName(className) : id;
+  }
+
+  private void registerOrReplaceActionInner(@NotNull Element element, @NotNull String id, @NotNull AnAction action, @Nullable PluginId pluginId) {
+    synchronized (myLock) {
+      if (Boolean.valueOf(element.getAttributeValue(OVERRIDES_ATTR_NAME))) {
+        if (getActionOrStub(id) == null) {
+          throw new RuntimeException(element.getName() + " '" + id + "' doesn't override anything");
+        }
+        AnAction prev = replaceAction(id, action, pluginId);
+        if (action instanceof DefaultActionGroup && prev instanceof DefaultActionGroup) {
+          if (Boolean.valueOf(element.getAttributeValue(KEEP_CONTENT_ATTR_NAME))) {
+            ((DefaultActionGroup)action).copyFromGroup((DefaultActionGroup)prev);
+          }
+        }
+      }
+      else {
+        registerAction(id, action, pluginId, element.getAttributeValue(PROJECT_TYPE));
+      }
+    }
   }
 
   private AnAction processGroupElement(Element element, final ClassLoader loader, PluginId pluginId) {
@@ -485,27 +635,38 @@ public final class ActionManagerImpl extends ActionManagerEx implements Applicat
     }
     String className = element.getAttributeValue(CLASS_ATTR_NAME);
     if (className == null) { // use default group if class isn't specified
-      className = DefaultActionGroup.class.getName();
+      className = "true".equals(element.getAttributeValue(COMPACT_ATTR_NAME))
+                  ? DefaultCompactActionGroup.class.getName()
+                  : DefaultActionGroup.class.getName();
     }
     try {
-      Class aClass = Class.forName(className, true, loader);
-      Object obj = new ConstructorInjectionComponentAdapter(className, aClass).getComponentInstance(ApplicationManager.getApplication().getPicoContainer());
+      ActionGroup group;
+      boolean customClass = false;
+      if (DefaultActionGroup.class.getName().equals(className)) {
+        group = new DefaultActionGroup();
+      } else if (DefaultCompactActionGroup.class.getName().equals(className)) {
+        group = new DefaultCompactActionGroup();
+      } else {
+        Class aClass = Class.forName(className, true, loader);
+        Object obj = new CachingConstructorInjectionComponentAdapter(className, aClass).getComponentInstance(ApplicationManager.getApplication().getPicoContainer());
 
-      if (!(obj instanceof ActionGroup)) {
-        reportActionError(pluginId, "class with name \"" + className + "\" should be instance of " + ActionGroup.class.getName());
-        return null;
-      }
-      if (element.getChildren().size() != element.getChildren(ADD_TO_GROUP_ELEMENT_NAME).size() ) {  //
-        if (!(obj instanceof DefaultActionGroup)) {
-          reportActionError(pluginId, "class with name \"" + className + "\" should be instance of " + DefaultActionGroup.class.getName() +
-                                      " because there are children specified");
+        if (!(obj instanceof ActionGroup)) {
+          reportActionError(pluginId, "class with name \"" + className + "\" should be instance of " + ActionGroup.class.getName());
           return null;
         }
+        if (element.getChildren().size() != element.getChildren(ADD_TO_GROUP_ELEMENT_NAME).size() ) {  //
+          if (!(obj instanceof DefaultActionGroup)) {
+            reportActionError(pluginId, "class with name \"" + className + "\" should be instance of " + DefaultActionGroup.class.getName() +
+                                        " because there are children specified");
+            return null;
+          }
+        }
+        customClass = true;
+        group = (ActionGroup)obj;
       }
-      ActionGroup group = (ActionGroup)obj;
       // read ID and register loaded group
       String id = element.getAttributeValue(ID_ATTR_NAME);
-      if (id != null && id.length() == 0) {
+      if (id != null && id.isEmpty()) {
         reportActionError(pluginId, "ID of the group cannot be an empty string");
         return null;
       }
@@ -514,9 +675,11 @@ public final class ActionManagerImpl extends ActionManagerEx implements Applicat
         return null;
       }
 
-      if (id != null) {
-        registerAction(id, group);
+      if (id == null) {
+        id = "<anonymous-group-" + myAnonymousGroupIdCounter++ + ">";
       }
+
+      registerOrReplaceActionInner(element, id, group, pluginId);
       Presentation presentation = group.getTemplatePresentation();
 
       // text
@@ -540,15 +703,18 @@ public final class ActionManagerImpl extends ActionManagerEx implements Applicat
       if (popup != null) {
         group.setPopup(Boolean.valueOf(popup).booleanValue());
       }
+      if (customClass && element.getAttributeValue(USE_SHORTCUT_OF_ATTR_NAME) != null) {
+        myKeymapManager.bindShortcuts(element.getAttributeValue(USE_SHORTCUT_OF_ATTR_NAME), id);
+      }
+
       // process all group's children. There are other groups, actions, references and links
-      for (final Object o : element.getChildren()) {
-        Element child = (Element)o;
+      for (Element child : element.getChildren()) {
         String name = child.getName();
         if (ACTION_ELEMENT_NAME.equals(name)) {
           AnAction action = processActionElement(child, loader, pluginId);
           if (action != null) {
             assertActionIsGroupOrStub(action);
-            ((DefaultActionGroup)group).addAction(action, Constraints.LAST, this).setAsSecondary(isSecondary(child));
+            addToGroupInner(group, action, Constraints.LAST, isSecondary(child));
           }
         }
         else if (SEPARATOR_ELEMENT_NAME.equals(name)) {
@@ -557,7 +723,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Applicat
         else if (GROUP_ELEMENT_NAME.equals(name)) {
           AnAction action = processGroupElement(child, loader, pluginId);
           if (action != null) {
-            ((DefaultActionGroup)group).add(action, this);
+            addToGroupInner(group, action, Constraints.LAST, false);
           }
         }
         else if (ADD_TO_GROUP_ELEMENT_NAME.equals(name)) {
@@ -566,7 +732,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Applicat
         else if (REFERENCE_ELEMENT_NAME.equals(name)) {
           AnAction action = processReferenceElement(child, pluginId);
           if (action != null) {
-            ((DefaultActionGroup)group).addAction(action, Constraints.LAST, this).setAsSecondary(isSecondary(child));
+            addToGroupInner(group, action, Constraints.LAST, isSecondary(child));
           }
         }
         else {
@@ -576,35 +742,18 @@ public final class ActionManagerImpl extends ActionManagerEx implements Applicat
       }
       return group;
     }
-    catch (ClassNotFoundException e) {
-      reportActionError(pluginId, "class with name \"" + className + "\" not found");
-      return null;
-    }
-    catch (NoClassDefFoundError e) {
-      reportActionError(pluginId, "class with name \"" + e.getMessage() + "\" not found");
-      return null;
-    }
-    catch(UnsupportedClassVersionError e) {
-      reportActionError(pluginId, "unsupported class version for " + className);
-      return null;
-    }
     catch (Exception e) {
-      final String message = "cannot create class \"" + className + "\"";
-      if (pluginId == null) {
-        LOG.error(message, e);
-      }
-      else {
-        LOG.error(new PluginException(message, e, pluginId));
-      }
+      String message = "cannot create class \"" + className + "\"";
+      reportActionError(pluginId, message, e);
       return null;
     }
   }
 
   private void processReferenceNode(final Element element, final PluginId pluginId) {
     final AnAction action = processReferenceElement(element, pluginId);
+    if (action == null) return;
 
-    for (final Object o : element.getChildren()) {
-      Element child = (Element)o;
+    for (Element child : element.getChildren()) {
       if (ADD_TO_GROUP_ELEMENT_NAME.equals(child.getName())) {
         processAddToGroupNode(action, child, pluginId, isSecondary(child));
       }
@@ -613,8 +762,6 @@ public final class ActionManagerImpl extends ActionManagerEx implements Applicat
 
   /**\
    * @param element description of link
-   * @param pluginId
-   * @param secondary
    */
   private void processAddToGroupNode(AnAction action, Element element, final PluginId pluginId, boolean secondary) {
     // Real subclasses of AnAction should not be here
@@ -622,7 +769,9 @@ public final class ActionManagerImpl extends ActionManagerEx implements Applicat
       assertActionIsGroupOrStub(action);
     }
 
-    String actionName = action instanceof ActionStub ? ((ActionStub)action).getClassName() : action.getClass().getName();
+    String actionName = String.format(
+      "%s (%s)", action instanceof ActionStub? ((ActionStub)action).getClassName() : action.getClass().getName(),
+      action instanceof ActionStub ? ((ActionStub)action).getId() : myAction2Id.get(action));
 
     if (!ADD_TO_GROUP_ELEMENT_NAME.equals(element.getName())) {
       reportActionError(pluginId, "unexpected name of element \"" + element.getName() + "\"");
@@ -636,8 +785,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Applicat
     }
 
     // anchor attribute
-    final Anchor anchor = parseAnchor(element.getAttributeValue(ANCHOR_ELEMENT_NAME),
-                                      actionName, pluginId);
+    final Anchor anchor = parseAnchor(element.getAttributeValue(ANCHOR_ELEMENT_NAME), actionName, pluginId);
     if (anchor == null) {
       return;
     }
@@ -646,52 +794,20 @@ public final class ActionManagerImpl extends ActionManagerEx implements Applicat
     if (!checkRelativeToAction(relativeToActionId, anchor, actionName, pluginId)) {
       return;
     }
-    final DefaultActionGroup group = (DefaultActionGroup)parentGroup;
-    group.addAction(action, new Constraints(anchor, relativeToActionId), this).setAsSecondary(secondary);
+    addToGroupInner(parentGroup, action, new Constraints(anchor, relativeToActionId), secondary);
   }
 
-  public static boolean checkRelativeToAction(final String relativeToActionId,
-                                       @NotNull final Anchor anchor,
-                                       @NotNull final String actionName,
-                                       @Nullable final PluginId pluginId) {
-    if ((Anchor.BEFORE == anchor || Anchor.AFTER == anchor) && relativeToActionId == null) {
-      reportActionError(pluginId, actionName + ": \"relative-to-action\" cannot be null if anchor is \"after\" or \"before\"");
-      return false;
-    }
-    return true;
-  }
-
-  @Nullable
-  public static Anchor parseAnchor(final String anchorStr,
-                            @Nullable final String actionName,
-                            @Nullable final PluginId pluginId) {
-    if (anchorStr == null) {
-      return Anchor.LAST;
-    }
-
-    if (FIRST.equalsIgnoreCase(anchorStr)) {
-      return Anchor.FIRST;
-    }
-    else if (LAST.equalsIgnoreCase(anchorStr)) {
-      return Anchor.LAST;
-    }
-    else if (BEFORE.equalsIgnoreCase(anchorStr)) {
-      return Anchor.BEFORE;
-    }
-    else if (AFTER.equalsIgnoreCase(anchorStr)) {
-      return Anchor.AFTER;
-    }
-    else {
-      reportActionError(pluginId, actionName + ": anchor should be one of the following constants: \"first\", \"last\", \"before\" or \"after\"");
-      return null;
-    }
+  private void addToGroupInner(AnAction group, AnAction action, Constraints constraints, boolean secondary) {
+    String actionId = action instanceof ActionStub ? ((ActionStub)action).getId() : myAction2Id.get(action);
+    ((DefaultActionGroup)group).addAction(action, constraints, this).setAsSecondary(secondary);
+    myId2GroupId.putValue(actionId, myAction2Id.get(group));
   }
 
   @Nullable
   public AnAction getParentGroup(final String groupId,
                                  @Nullable final String actionName,
                                  @Nullable final PluginId pluginId) {
-    if (groupId == null || groupId.length() == 0) {
+    if (groupId == null || groupId.isEmpty()) {
       reportActionError(pluginId, actionName + ": attribute \"group-id\" should be defined");
       return null;
     }
@@ -709,7 +825,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Applicat
   }
 
   /**
-   * @param parentGroup group which is the parent of the separator. It can be <code>null</code> in that
+   * @param parentGroup group which is the parent of the separator. It can be {@code null} in that
    *                    case separator will be added to group described in the <add-to-group ....> subelement.
    * @param element     XML element which represent separator.
    */
@@ -718,17 +834,39 @@ public final class ActionManagerImpl extends ActionManagerEx implements Applicat
       reportActionError(pluginId, "unexpected name of element \"" + element.getName() + "\"");
       return;
     }
-    Separator separator = Separator.getInstance();
+    String text = element.getAttributeValue(TEXT_ATTR_NAME);
+    Separator separator = text != null ? new Separator(text) : Separator.getInstance();
     if (parentGroup != null) {
       parentGroup.add(separator, this);
     }
     // try to find inner <add-to-parent...> tag
-    for (final Object o : element.getChildren()) {
-      Element child = (Element)o;
+    for (Element child : element.getChildren()) {
       if (ADD_TO_GROUP_ELEMENT_NAME.equals(child.getName())) {
         processAddToGroupNode(separator, child, pluginId, isSecondary(child));
       }
     }
+  }
+
+  private void processUnregisterNode(Element element, PluginId pluginId) {
+    String id = element.getAttributeValue(ID_ATTR_NAME);
+    if (id == null) {
+      reportActionError(pluginId, "'id' attribute is required for 'unregister' elements");
+      return;
+    }
+    AnAction action = getAction(id);
+    if (action == null) {
+      reportActionError(pluginId, "Trying to unregister non-existing action " + id);
+      return;
+    }
+
+    AbbreviationManager.getInstance().removeAllAbbreviations(id);
+    for (AnAction anAction : myId2Action.values()) {
+      if (anAction instanceof DefaultActionGroup) {
+        ((DefaultActionGroup) anAction).remove(action, id);
+      }
+    }
+
+    unregisterAction(id);
   }
 
   private void processKeyboardShortcutNode(Element element, String actionId, PluginId pluginId) {
@@ -754,59 +892,29 @@ public final class ActionManagerImpl extends ActionManagerEx implements Applicat
     }
 
     String keymapName = element.getAttributeValue(KEYMAP_ATTR_NAME);
-    if (keymapName == null || keymapName.trim().length() == 0) {
+    if (keymapName == null || keymapName.trim().isEmpty()) {
       reportActionError(pluginId, "attribute \"keymap\" should be defined");
       return;
     }
     Keymap keymap = myKeymapManager.getKeymap(keymapName);
     if (keymap == null) {
-      reportActionError(pluginId, "keymap \"" + keymapName + "\" not found");
+      reportActionWarning(pluginId, "keymap \"" + keymapName + "\" not found");
       return;
     }
-    final String removeOption = element.getAttributeValue(REMOVE_SHORTCUT_ATTR_NAME);
     final KeyboardShortcut shortcut = new KeyboardShortcut(firstKeyStroke, secondKeyStroke);
-    final String replaceOption = element.getAttributeValue(REPLACE_SHORTCUT_ATTR_NAME);
-    if (Boolean.valueOf(removeOption)) {
-      keymap.removeShortcut(actionId, shortcut);
-    }
-    if (Boolean.valueOf(replaceOption)) {
-      keymap.removeAllActionShortcuts(actionId);
-    }
-    if (!Boolean.valueOf(removeOption)) {
-      keymap.addShortcut(actionId, shortcut);
-    }
+    processRemoveAndReplace(element, actionId, keymap, shortcut);
   }
 
-  private static void processMouseShortcutNode(Element element, String actionId, PluginId pluginId) {
-    String keystrokeString = element.getAttributeValue(KEYSTROKE_ATTR_NAME);
-    if (keystrokeString == null || keystrokeString.trim().length() == 0) {
-      reportActionError(pluginId, "\"keystroke\" attribute must be specified for action with id=" + actionId);
-      return;
-    }
-    MouseShortcut shortcut;
-    try {
-      shortcut = KeymapUtil.parseMouseShortcut(keystrokeString);
-    }
-    catch (Exception ex) {
-      reportActionError(pluginId, "\"keystroke\" attribute has invalid value for action with id=" + actionId);
-      return;
-    }
-
-    String keymapName = element.getAttributeValue(KEYMAP_ATTR_NAME);
-    if (keymapName == null || keymapName.length() == 0) {
-      reportActionError(pluginId, "attribute \"keymap\" should be defined");
-      return;
-    }
-    Keymap keymap = KeymapManager.getInstance().getKeymap(keymapName);
-    if (keymap == null) {
-      reportActionError(pluginId, "keymap \"" + keymapName + "\" not found");
-      return;
-    }
-
-    final String removeOption = element.getAttributeValue(REMOVE_SHORTCUT_ATTR_NAME);
-    if (Boolean.valueOf(removeOption)) {
+  private static void processRemoveAndReplace(@NotNull Element element, String actionId, @NotNull Keymap keymap, @NotNull Shortcut shortcut) {
+    boolean remove = Boolean.parseBoolean(element.getAttributeValue(REMOVE_SHORTCUT_ATTR_NAME));
+    boolean replace = Boolean.parseBoolean(element.getAttributeValue(REPLACE_SHORTCUT_ATTR_NAME));
+    if (remove) {
       keymap.removeShortcut(actionId, shortcut);
-    } else {
+    }
+    if (replace) {
+      keymap.removeAllActionShortcuts(actionId);
+    }
+    if (!remove) {
       keymap.addShortcut(actionId, shortcut);
     }
   }
@@ -824,7 +932,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Applicat
       ref = element.getAttributeValue(ID_ATTR_NAME);
     }
 
-    if (ref == null || ref.length() == 0) {
+    if (ref == null || ref.isEmpty()) {
       reportActionError(pluginId, "ID of reference element should be defined");
       return null;
     }
@@ -858,74 +966,85 @@ public final class ActionManagerImpl extends ActionManagerEx implements Applicat
     else if (REFERENCE_ELEMENT_NAME.equals(name)) {
       processReferenceNode(child, pluginId);
     }
+    else if (UNREGISTER_ELEMENT_NAME.equals(name)) {
+      processUnregisterNode(child, pluginId);
+    }
     else {
       reportActionError(pluginId, "unexpected name of element \"" + name + "\n");
     }
   }
 
-  private static void assertActionIsGroupOrStub(final AnAction action) {
-    if (!(action instanceof ActionGroup || action instanceof ActionStub)) {
-      LOG.error("Action : " + action + "; class: " + action.getClass());
-    }
+  @Override
+  public void registerAction(@NotNull String actionId, @NotNull AnAction action, @Nullable PluginId pluginId) {
+    registerAction(actionId, action, pluginId, null);
   }
 
-  public void registerAction(@NotNull String actionId, @NotNull AnAction action, @Nullable PluginId pluginId) {
+  public void registerAction(@NotNull String actionId, @NotNull AnAction action, @Nullable PluginId pluginId, @Nullable String projectType) {
     synchronized (myLock) {
-      if (myId2Action.containsKey(actionId)) {
-        reportActionError(pluginId, "action with the ID \"" + actionId + "\" was already registered. Action being registered is " + action.toString() + 
-                                    "; Registered action is " +
-                                       myId2Action.get(actionId) + getPluginInfo(pluginId));
-        return;
-      }
+      if (addToMap(actionId, action, pluginId, projectType) == null) return;
       if (myAction2Id.containsKey(action)) {
         reportActionError(pluginId, "action was already registered for another ID. ID is " + myAction2Id.get(action) +
                                     getPluginInfo(pluginId));
         return;
       }
-      myId2Action.put(actionId, action);
       myId2Index.put(actionId, myRegisteredActionsCount++);
       myAction2Id.put(action, actionId);
       if (pluginId != null && !(action instanceof ActionGroup)){
-        THashSet<String> pluginActionIds = myPlugin2Id.get(pluginId);
-        if (pluginActionIds == null){
-          pluginActionIds = new THashSet<String>();
-          myPlugin2Id.put(pluginId, pluginActionIds);
-        }
-        pluginActionIds.add(actionId);
+        myPlugin2Id.putValue(pluginId, actionId);
       }
       action.registerCustomShortcutSet(new ProxyShortcutSet(actionId, myKeymapManager), null);
     }
   }
 
-  private static void reportActionError(final PluginId pluginId, @NonNls final String message) {
-    if (pluginId == null) {
-      LOG.error(message);
+  private AnAction addToMap(String actionId, AnAction action, PluginId pluginId, String projectType) {
+    if (projectType != null || myId2Action.containsKey(actionId)) {
+      return registerChameleon(actionId, action, pluginId, projectType);
     }
     else {
-      LOG.error(new PluginException(message, null, pluginId));
+      myId2Action.put(actionId, action);
+      return action;
     }
   }
 
-  @NonNls
-  private static String getPluginInfo(@Nullable PluginId id) {
-    if (id != null) {
-      final IdeaPluginDescriptor plugin = PluginManager.getPlugin(id);
-      if (plugin != null) {
-        String name = plugin.getName();
-        if (name == null) {
-          name = id.getIdString();
-        }
-        return " Plugin: " + name;
-      }
+  private AnAction registerChameleon(String actionId, AnAction action, PluginId pluginId, String projectType) {
+    ProjectType type = projectType == null ? null : new ProjectType(projectType);
+    // make sure id+projectType is unique
+    AnAction o = myId2Action.get(actionId);
+    ChameleonAction chameleonAction;
+    if (o == null) {
+      chameleonAction = new ChameleonAction(action, type);
+      myId2Action.put(actionId, chameleonAction);
+      return chameleonAction;
     }
-    return "";
+    if (o instanceof ChameleonAction) {
+      chameleonAction = (ChameleonAction)o;
+    }
+    else {
+      chameleonAction = new ChameleonAction(o, type);
+      myId2Action.put(actionId, chameleonAction);
+    }
+    AnAction old = chameleonAction.addAction(action, type);
+    if (old != null) {
+      reportActionError(pluginId,
+                        "action with the ID \"" + actionId + "\" was already registered. Action being registered is " + action +
+                        "; Registered action is " +
+                        myId2Action.get(actionId) + getPluginInfo(pluginId));
+      return null;
+    }
+    return chameleonAction;
   }
 
+  @Override
   public void registerAction(@NotNull String actionId, @NotNull AnAction action) {
     registerAction(actionId, action, null);
   }
 
+  @Override
   public void unregisterAction(@NotNull String actionId) {
+    unregisterAction(actionId, true);
+  }
+
+  private void unregisterAction(@NotNull String actionId, boolean removeFromGroups) {
     synchronized (myLock) {
       if (!myId2Action.containsKey(actionId)) {
         if (LOG.isDebugEnabled()) {
@@ -933,59 +1052,74 @@ public final class ActionManagerImpl extends ActionManagerEx implements Applicat
           return;
         }
       }
-      AnAction oldValue = (AnAction)myId2Action.remove(actionId);
+      AnAction oldValue = myId2Action.remove(actionId);
       myAction2Id.remove(oldValue);
       myId2Index.remove(actionId);
-      for (PluginId pluginName : myPlugin2Id.keySet()) {
-        final THashSet<String> pluginActions = myPlugin2Id.get(pluginName);
-        if (pluginActions != null) {
-          pluginActions.remove(actionId);
+
+      for (final Map.Entry<PluginId, Collection<String>> entry : myPlugin2Id.entrySet()) {
+        Collection<String> pluginActions = entry.getValue();
+        pluginActions.remove(actionId);
+      }
+      if (removeFromGroups) {
+        for (String groupId : myId2GroupId.get(actionId)) {
+          DefaultActionGroup group = ObjectUtils.assertNotNull((DefaultActionGroup)getActionOrStub(groupId));
+          group.remove(oldValue, actionId);
         }
+      }
+      if (oldValue instanceof ActionGroup) {
+        myId2GroupId.values().remove(actionId);
       }
     }
   }
 
   @NotNull
-  public String getComponentName() {
-    return "ActionManager";
-  }
-
+  @Override
   public Comparator<String> getRegistrationOrderComparator() {
-    return new Comparator<String>() {
-      public int compare(String id1, String id2) {
-        return myId2Index.get(id1) - myId2Index.get(id2);
+    return Comparator.comparingInt(myId2Index::get);
+  }
+
+  @NotNull
+  @Override
+  public String[] getPluginActions(@NotNull PluginId pluginName) {
+    return ArrayUtilRt.toStringArray(myPlugin2Id.get(pluginName));
+  }
+
+  public void addActionPopup(final Object menu) {
+    boolean added = myPopups.add(menu);
+    if (added && menu instanceof ActionPopupMenu) {
+      for (ActionPopupMenuListener listener : myActionPopupMenuListeners) {
+        listener.actionPopupMenuCreated((ActionPopupMenu)menu);
       }
-    };
-  }
-
-  public String[] getPluginActions(PluginId pluginName) {
-    if (myPlugin2Id.containsKey(pluginName)){
-      final THashSet<String> pluginActions = myPlugin2Id.get(pluginName);
-      return ArrayUtil.toStringArray(pluginActions);
     }
-    return ArrayUtil.EMPTY_STRING_ARRAY;
   }
 
-  public void addActionPopup(final ActionPopupMenuImpl menu) {
-    myPopups.add(menu);
-  }
-
-  public void removeActionPopup(final ActionPopupMenuImpl menu) {
+  void removeActionPopup(final Object menu) {
     final boolean removed = myPopups.remove(menu);
-    if (removed && myPopups.isEmpty()) {
-      flushActionPerformed();
+    if (removed && menu instanceof ActionPopupMenu) {
+      for (ActionPopupMenuListener listener : myActionPopupMenuListeners) {
+        listener.actionPopupMenuReleased((ActionPopupMenu)menu);
+      }
     }
   }
 
-  public void queueActionPerformedEvent(final AnAction action, DataContext context, AnActionEvent event) {
-    if (!myPopups.isEmpty()) {
-      myQueuedNotifications.put(action, context);
-    } else {
+  @Override
+  public void queueActionPerformedEvent(@NotNull final AnAction action, @NotNull DataContext context, @NotNull AnActionEvent event) {
+    if (myPopups.isEmpty()) {
       fireAfterActionPerformed(action, context, event);
     }
   }
 
+  public boolean isToolWindowContextMenuVisible() {
+    for (Object popup : myPopups) {
+      if (popup instanceof ActionPopupMenuImpl &&
+          ((ActionPopupMenuImpl)popup).isToolWindowContextMenu()) {
+        return true;
+      }
+    }
+    return false;
+  }
 
+  @Override
   public boolean isActionPopupStackEmpty() {
     return myPopups.isEmpty();
   }
@@ -995,70 +1129,88 @@ public final class ActionManagerImpl extends ActionManagerEx implements Applicat
     return myTransparentOnlyUpdate;
   }
 
-  private void flushActionPerformed() {
-    final Set<AnAction> actions = myQueuedNotifications.keySet();
-    for (final AnAction eachAction : actions) {
-      final DataContext eachContext = myQueuedNotifications.get(eachAction);
-      fireAfterActionPerformed(eachAction, eachContext, myQueuedNotificationsEvents.get(eachAction));
-    }
-    myQueuedNotifications.clear();
-    myQueuedNotificationsEvents.clear();
+  @Override
+  public void addActionPopupMenuListener(@NotNull ActionPopupMenuListener listener, @NotNull Disposable parentDisposable) {
+    myActionPopupMenuListeners.add(listener);
+    Disposer.register(parentDisposable, () -> myActionPopupMenuListeners.remove(listener));
   }
 
-  private AnActionListener[] getActionListeners() {
-    if (myCachedActionListeners == null) {
-      myCachedActionListeners = myActionListeners.toArray(new AnActionListener[myActionListeners.size()]);
-    }
-
-    return myCachedActionListeners;
+  @Override
+  public void replaceAction(@NotNull String actionId, @NotNull AnAction newAction) {
+    Class callerClass = ReflectionUtil.getGrandCallerClass();
+    PluginId pluginId = callerClass != null ? PluginManagerCore.getPluginByClassName(callerClass.getName()) : null;
+    replaceAction(actionId, newAction, pluginId);
   }
 
+  private AnAction replaceAction(@NotNull String actionId, @NotNull AnAction newAction, @Nullable PluginId pluginId) {
+    AnAction oldAction = newAction instanceof OverridingAction ? getAction(actionId) : getActionOrStub(actionId);
+    if (oldAction != null) {
+      if (newAction instanceof OverridingAction) {
+        myBaseActions.put((OverridingAction) newAction, oldAction);
+      }
+      boolean isGroup = oldAction instanceof ActionGroup;
+      if (isGroup != newAction instanceof ActionGroup) {
+        throw new IllegalStateException("cannot replace a group with an action and vice versa: " + actionId);
+      }
+      for (String groupId : myId2GroupId.get(actionId)) {
+        DefaultActionGroup group = (DefaultActionGroup) getActionOrStub(groupId);
+        if (group == null) {
+          throw new IllegalStateException("Trying to replace action which has been added to a non-existing group " + groupId);
+        }
+        group.replaceAction(oldAction, newAction);
+      }
+      unregisterAction(actionId, false);
+    }
+    registerAction(actionId, newAction, pluginId);
+    return oldAction;
+  }
+
+  /**
+   * Returns the action overridden by the specified overriding action (with overrides="true" in plugin.xml).
+   */
+  public AnAction getBaseAction(OverridingAction overridingAction) {
+    return myBaseActions.get(overridingAction);
+  }
+
+  @Override
   public void addAnActionListener(AnActionListener listener) {
     myActionListeners.add(listener);
-    myCachedActionListeners = null;
   }
 
-  public void addAnActionListener(final AnActionListener listener, final Disposable parentDisposable) {
-    addAnActionListener(listener);
-    Disposer.register(parentDisposable, new Disposable() {
-      public void dispose() {
-        removeAnActionListener(listener);
-      }
-    });
-  }
-
+  @Override
   public void removeAnActionListener(AnActionListener listener) {
     myActionListeners.remove(listener);
-    myCachedActionListeners = null;
   }
 
-  public void fireBeforeActionPerformed(AnAction action, DataContext dataContext, AnActionEvent event) {
-    if (action != null) {
-      myPrevPerformedActionId = myLastPreformedActionId;
-      myLastPreformedActionId = getId(action);
-      //noinspection AssignmentToStaticFieldFromInstanceMethod
-      IdeaLogger.ourLastActionId = myLastPreformedActionId;
+  @Override
+  public void fireBeforeActionPerformed(@NotNull AnAction action, @NotNull DataContext dataContext, @NotNull AnActionEvent event) {
+    myPrevPerformedActionId = myLastPreformedActionId;
+    myLastPreformedActionId = getId(action);
+    if (myLastPreformedActionId == null && action instanceof ActionIdProvider) {
+      myLastPreformedActionId = ((ActionIdProvider)action).getId();
     }
-    AnActionListener[] listeners = getActionListeners();
-    for (AnActionListener listener : listeners) {
+    //noinspection AssignmentToStaticFieldFromInstanceMethod
+    IdeaLogger.ourLastActionId = myLastPreformedActionId;
+    ActionsCollector.getInstance().record(action, event);
+    for (AnActionListener listener : myActionListeners) {
       listener.beforeActionPerformed(action, dataContext, event);
     }
+    messageBusPublisher.beforeActionPerformed(action, dataContext, event);
   }
 
-  public void fireAfterActionPerformed(AnAction action, DataContext dataContext, AnActionEvent event) {
-    if (action != null) {
-      myPrevPerformedActionId = myLastPreformedActionId;
-      myLastPreformedActionId = getId(action);
-      //noinspection AssignmentToStaticFieldFromInstanceMethod
-      IdeaLogger.ourLastActionId = myLastPreformedActionId;
-    }
-    AnActionListener[] listeners = getActionListeners();
-    for (AnActionListener listener : listeners) {
+  @Override
+  public void fireAfterActionPerformed(@NotNull AnAction action, @NotNull DataContext dataContext, @NotNull AnActionEvent event) {
+    myPrevPerformedActionId = myLastPreformedActionId;
+    myLastPreformedActionId = getId(action);
+    //noinspection AssignmentToStaticFieldFromInstanceMethod
+    IdeaLogger.ourLastActionId = myLastPreformedActionId;
+    for (AnActionListener listener : myActionListeners) {
       try {
         listener.afterActionPerformed(action, dataContext, event);
       }
       catch(AbstractMethodError ignored) { }
     }
+    messageBusPublisher.afterActionPerformed(action, dataContext, event);
   }
 
   @Override
@@ -1080,112 +1232,140 @@ public final class ActionManagerImpl extends ActionManagerEx implements Applicat
     return null;
   }
 
-  public void fireBeforeEditorTyping(char c, DataContext dataContext) {
+  @Override
+  public void fireBeforeEditorTyping(char c, @NotNull DataContext dataContext) {
     myLastTimeEditorWasTypedIn = System.currentTimeMillis();
-    AnActionListener[] listeners = getActionListeners();
-    for (AnActionListener listener : listeners) {
+    for (AnActionListener listener : myActionListeners) {
       listener.beforeEditorTyping(c, dataContext);
     }
+    messageBusPublisher.beforeEditorTyping(c, dataContext);
   }
 
+  @Override
   public String getLastPreformedActionId() {
     return myLastPreformedActionId;
   }
 
+  @Override
   public String getPrevPreformedActionId() {
     return myPrevPerformedActionId;
   }
 
   public Set<String> getActionIds(){
     synchronized (myLock) {
-      return new HashSet<String>(myId2Action.keySet());
+      return new HashSet<>(myId2Action.keySet());
     }
   }
 
-  private int myActionsPreloaded = 0;
+  public void preloadActions(ProgressIndicator indicator) {
+    Application application = ApplicationManager.getApplication();
 
-  public void preloadActions() {
-    if (myPreloadActionsRunnable == null) {
-      myPreloadActionsRunnable = new Runnable() {
-        public void run() {
-          doPreloadActions();
-        }
-      };
-      ApplicationManager.getApplication().executeOnPooledThread(myPreloadActionsRunnable);
-    }
-  }
+    for (String id : getActionIds()) {
+      indicator.checkCanceled();
+      if (application.isDisposeInProgress() || application.isDisposed()) return;
 
-  private void doPreloadActions() {
-    try {
-      Thread.sleep(5000); // wait for project initialization to complete
-    }
-    catch (InterruptedException e) {
-      // ignore
-    }
-    preloadActionGroup(IdeActions.GROUP_EDITOR_POPUP);
-    preloadActionGroup(IdeActions.GROUP_EDITOR_TAB_POPUP);
-    preloadActionGroup(IdeActions.GROUP_PROJECT_VIEW_POPUP);
-    preloadActionGroup(IdeActions.GROUP_MAIN_MENU);
-    // TODO anything else?
-    LOG.debug("Actions preloading completed");
-  }
-
-  public void preloadActionGroup(final String groupId) {
-    final AnAction action = getAction(groupId);
-    if (action instanceof ActionGroup) {
-      preloadActionGroup((ActionGroup) action);
-    }
-  }
-
-  private void preloadActionGroup(final ActionGroup group) {
-    final Application application = ApplicationManager.getApplication();
-    final AnAction[] children = application.runReadAction(new Computable<AnAction[]>() {
-      public AnAction[] compute() {
-        if (application.isDisposed()) {
-          return AnAction.EMPTY_ARRAY;
-        }
-
-        return group.getChildren(null);
-      }
-    });
-    for (AnAction action : children) {
+      AnAction action = getAction(id);
       if (action instanceof PreloadableAction) {
         ((PreloadableAction)action).preload();
       }
-      else if (action instanceof ActionGroup) {
-        preloadActionGroup((ActionGroup)action);
-      }
-      
-      myActionsPreloaded++;
-      if (myActionsPreloaded % 10 == 0) {
-        try {
-          //noinspection BusyWait
-          Thread.sleep(300);
-        }
-        catch (InterruptedException ignored) { }
-      }
+      // don't preload ActionGroup.getChildren() because that would un-stub child actions
+      // and make it impossible to replace the corresponding actions later
+      // (via unregisterAction+registerAction, as some app components do)
     }
   }
 
+  @NotNull
+  @Override
+  public ActionCallback tryToExecute(@NotNull final AnAction action, @NotNull final InputEvent inputEvent, @Nullable final Component contextComponent, @Nullable final String place,
+                                     boolean now) {
+
+    final Application app = ApplicationManager.getApplication();
+    assert app.isDispatchThread();
+
+    final ActionCallback result = new ActionCallback();
+    final Runnable doRunnable = () -> tryToExecuteNow(action, inputEvent, contextComponent, place, result);
+
+    if (now) {
+      doRunnable.run();
+    }
+    else {
+      //noinspection SSBasedInspection
+      SwingUtilities.invokeLater(doRunnable);
+    }
+
+    return result;
+  }
+
+  private void tryToExecuteNow(@NotNull AnAction action, final InputEvent inputEvent, final Component contextComponent, final String place, final ActionCallback result) {
+    final Presentation presentation = action.getTemplatePresentation().clone();
+
+    IdeFocusManager.findInstanceByContext(getContextBy(contextComponent)).doWhenFocusSettlesDown(
+      () -> ((TransactionGuardImpl)TransactionGuard.getInstance()).performUserActivity(() -> {
+        final DataContext context = getContextBy(contextComponent);
+
+        AnActionEvent event = new AnActionEvent(
+          inputEvent, context,
+          place != null ? place : ActionPlaces.UNKNOWN,
+          presentation, this,
+          inputEvent.getModifiersEx()
+        );
+
+        ActionUtil.performDumbAwareUpdate(LaterInvocator.isInModalContext(), action, event, false);
+        if (!event.getPresentation().isEnabled()) {
+          result.setRejected();
+          return;
+        }
+
+        ActionUtil.lastUpdateAndCheckDumb(action, event, false);
+        if (!event.getPresentation().isEnabled()) {
+          result.setRejected();
+          return;
+        }
+
+        Component component = PlatformDataKeys.CONTEXT_COMPONENT.getData(context);
+        if (component != null && !component.isShowing() && !ActionPlaces.TOUCHBAR_GENERAL.equals(place)) {
+          result.setRejected();
+          return;
+        }
+
+        fireBeforeActionPerformed(action, context, event);
+
+        UIUtil.addAwtListener(event1 -> {
+          if (event1.getID() == WindowEvent.WINDOW_OPENED || event1.getID() == WindowEvent.WINDOW_ACTIVATED) {
+            if (!result.isProcessed()) {
+              final WindowEvent we = (WindowEvent)event1;
+              IdeFocusManager.findInstanceByComponent(we.getWindow()).doWhenFocusSettlesDown(result.createSetDoneRunnable(),
+                                                                                             ModalityState.defaultModalityState());
+            }
+          }
+        }, AWTEvent.WINDOW_EVENT_MASK, result);
+
+        ActionUtil.performActionDumbAware(action, event);
+        result.setDone();
+        queueActionPerformedEvent(action, context, event);
+      }
+    ), ModalityState.defaultModalityState());
+  }
+
   private class MyTimer extends Timer implements ActionListener {
-    private final List<TimerListener> myTimerListeners = Collections.synchronizedList(new ArrayList<TimerListener>());
-    private final List<TimerListener> myTransparentTimerListeners = Collections.synchronizedList(new ArrayList<TimerListener>());
+    private final List<TimerListener> myTimerListeners = ContainerUtil.createLockFreeCopyOnWriteList();
+    private final List<TimerListener> myTransparentTimerListeners = ContainerUtil.createLockFreeCopyOnWriteList();
     private int myLastTimePerformed;
 
-    MyTimer() {
+    private MyTimer() {
       super(TIMER_DELAY, null);
       addActionListener(this);
       setRepeats(true);
       final MessageBusConnection connection = ApplicationManager.getApplication().getMessageBus().connect();
       connection.subscribe(ApplicationActivationListener.TOPIC, new ApplicationActivationListener() {
         @Override
-        public void applicationActivated(IdeFrame ideFrame) {
+        public void applicationActivated(@NotNull IdeFrame ideFrame) {
           setDelay(TIMER_DELAY);
           restart();
         }
 
         @Override
-        public void applicationDeactivated(IdeFrame ideFrame) {
+        public void applicationDeactivated(@NotNull IdeFrame ideFrame) {
           setDelay(DEACTIVATED_TIMER_DELAY);
         }
       });
@@ -1196,37 +1376,32 @@ public final class ActionManagerImpl extends ActionManagerEx implements Applicat
       return "Action manager timer";
     }
 
-    public void addTimerListener(TimerListener listener, boolean transparent){
-      if (transparent) {
-        myTransparentTimerListeners.add(listener);
-      } else {
-        myTimerListeners.add(listener);
-      }
+    void addTimerListener(@NotNull TimerListener listener, boolean transparent){
+      (transparent ? myTransparentTimerListeners : myTimerListeners).add(listener);
     }
 
-    public void removeTimerListener(TimerListener listener, boolean transparent){
-      if (transparent) {
-       myTransparentTimerListeners.remove(listener);
-      } else {
-        myTimerListeners.remove(listener);
-      }
+    void removeTimerListener(@NotNull TimerListener listener, boolean transparent){
+      (transparent ? myTransparentTimerListeners : myTimerListeners).remove(listener);
     }
 
+    @Override
     public void actionPerformed(ActionEvent e) {
       if (myLastTimeEditorWasTypedIn + UPDATE_DELAY_AFTER_TYPING > System.currentTimeMillis()) {
         return;
       }
 
-      if (IdeFocusManager.getInstance(null).isFocusBeingTransferred()) return;
-
       final int lastEventCount = myLastTimePerformed;
       myLastTimePerformed = ActivityTracker.getInstance().getCount();
+
+      if (myLastTimePerformed == lastEventCount && !Registry.is("actionSystem.always.update.toolbar.actions")) {
+        return;
+      }
 
       boolean transparentOnly = myLastTimePerformed == lastEventCount;
 
       try {
-        HashSet<TimerListener> notified = new HashSet<TimerListener>();
         myTransparentOnlyUpdate = transparentOnly;
+        Set<TimerListener> notified = new HashSet<>();
         notifyListeners(myTransparentTimerListeners, notified);
 
         if (transparentOnly) {
@@ -1240,21 +1415,18 @@ public final class ActionManagerImpl extends ActionManagerEx implements Applicat
       }
     }
 
-    private void notifyListeners(final List<TimerListener> timerListeners, final Set<TimerListener> notified) {
-      final TimerListener[] listeners = timerListeners.toArray(new TimerListener[timerListeners.size()]);
-      for (TimerListener listener : listeners) {
-        if (timerListeners.contains(listener)) {
-          if (!notified.contains(listener)) {
-            notified.add(listener);
-            runListenerAction(listener);
-          }
+    private void notifyListeners(final List<? extends TimerListener> timerListeners, final Set<? super TimerListener> notified) {
+      for (TimerListener listener : timerListeners) {
+        if (notified.add(listener)) {
+          runListenerAction(listener);
         }
       }
     }
 
-    private void runListenerAction(final TimerListener listener) {
+    private void runListenerAction(@NotNull TimerListener listener) {
       ModalityState modalityState = listener.getModalityState();
       if (modalityState == null) return;
+      LOG.debug("notify ", listener);
       if (!ModalityState.current().dominates(modalityState)) {
         try {
           listener.run();
@@ -1267,86 +1439,5 @@ public final class ActionManagerImpl extends ActionManagerEx implements Applicat
         }
       }
     }
-  }
-
-  public ActionCallback tryToExecute(@NotNull final AnAction action, @NotNull final InputEvent inputEvent, @Nullable final Component contextComponent, @Nullable final String place,
-                                     boolean now) {
-
-    final Application app = ApplicationManager.getApplication();
-    assert app.isDispatchThread();
-
-    final ActionCallback result = new ActionCallback();
-    final Runnable doRunnable = new Runnable() {
-      public void run() {
-        tryToExecuteNow(action, inputEvent, contextComponent, place, result);
-      }
-    };
-
-    if (now) {
-      doRunnable.run();
-    } else {
-      //noinspection SSBasedInspection
-      SwingUtilities.invokeLater(doRunnable);
-    }
-    
-    return result;
-
-  }
-
-  private void tryToExecuteNow(final AnAction action, final InputEvent inputEvent, final Component contextComponent, final String place, final ActionCallback result) {
-    final Presentation presentation = action.getTemplatePresentation().clone();
-
-    IdeFocusManager.findInstanceByContext(getContextBy(contextComponent)).doWhenFocusSettlesDown(new Runnable() {
-      public void run() {
-        final DataContext context = getContextBy(contextComponent);
-
-        AnActionEvent event = new AnActionEvent(
-          inputEvent, context,
-          place != null ? place : ActionPlaces.UNKNOWN,
-          presentation, ActionManagerImpl.this,
-          inputEvent.getModifiersEx()
-        );
-
-        ActionUtil.performDumbAwareUpdate(action, event, false);
-        if (!event.getPresentation().isEnabled()) {
-          result.setRejected();
-          return;
-        }
-
-        ActionUtil.lastUpdateAndCheckDumb(action, event, false);
-        if (!event.getPresentation().isEnabled()) {
-          result.setRejected();
-          return;
-        }
-
-        Component component = PlatformDataKeys.CONTEXT_COMPONENT.getData(context);
-        if (component != null && !component.isShowing()) {
-          result.setRejected();
-          return;
-        }
-
-        fireBeforeActionPerformed(action, context, event);
-
-        UIUtil.addAwtListener(new AWTEventListener() {
-          public void eventDispatched(AWTEvent event) {
-            if (event.getID() == WindowEvent.WINDOW_OPENED ||event.getID() == WindowEvent.WINDOW_ACTIVATED) {
-              if (!result.isProcessed()) {
-                final WindowEvent we = (WindowEvent)event;
-                IdeFocusManager.findInstanceByComponent(we.getWindow()).doWhenFocusSettlesDown(result.createSetDoneRunnable());
-              }
-            }
-          }
-        }, AWTEvent.WINDOW_EVENT_MASK, result);
-
-        action.actionPerformed(event);
-        result.setDone();
-        queueActionPerformedEvent(action, context, event);
-      }
-    });
-  }
-
-  private static DataContext getContextBy(Component contextComponent) {
-    final DataManager dataManager = DataManager.getInstance();
-    return contextComponent != null ? dataManager.getDataContext(contextComponent) : dataManager.getDataContext();
   }
 }

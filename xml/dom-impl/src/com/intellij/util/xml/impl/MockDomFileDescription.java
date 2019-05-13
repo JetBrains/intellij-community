@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,33 +15,35 @@
  */
 package com.intellij.util.xml.impl;
 
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.xml.DomFileDescription;
-import com.intellij.openapi.module.Module;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author peter
 */
 public class MockDomFileDescription<T> extends DomFileDescription<T> {
-  private final XmlFile myFile;
+  private final VirtualFile myFile;
 
-  public MockDomFileDescription(final Class<T> aClass, final String rootTagName, final XmlFile file) {
+  public MockDomFileDescription(final Class<T> aClass, final String rootTagName, @Nullable VirtualFile file) {
     super(aClass, rootTagName);
     myFile = file;
   }
 
+  @Override
   public boolean isMyFile(@NotNull final XmlFile xmlFile, final Module module) {
-    return myFile == xmlFile;
+    return xmlFile.getViewProvider().getVirtualFile().equals(myFile);
   }
 
+  @Override
   public boolean acceptsOtherRootTagNames() {
     return true;
   }
 
-  protected void initializeFileDescription() {
-  }
-
+  @Override
   public boolean isAutomaticHighlightingEnabled() {
     return false;
   }

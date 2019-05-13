@@ -16,8 +16,10 @@
 package com.intellij.ui;
 
 import com.intellij.openapi.components.ServiceManager;
+import com.intellij.util.containers.Convertor;
 
 import javax.swing.*;
+import javax.swing.tree.TreePath;
 
 /**
  * @author yole
@@ -30,20 +32,15 @@ public abstract class TreeUIHelper {
   /**
    * @deprecated use JBTree class instead, it will automatically configure tool tips 
    */
+  @Deprecated
   public abstract void installToolTipHandler(JTree tree);
-  /**
-   * @deprecated use JBTable class instead, it will automatically configure tool tips
-   */
-  public abstract void installToolTipHandler(JTable table);
-  /**
-   * @deprecated use JBLIst class instead, it will automatically configure tool tips 
-   */
-  public abstract void installToolTipHandler(JList list);
 
   public abstract void installEditSourceOnDoubleClick(JTree tree);
 
   public abstract void installTreeSpeedSearch(JTree tree);
-  public abstract void installListSpeedSearch(JList list);
+  public abstract void installListSpeedSearch(JList<?> list);
+  public abstract void installTreeSpeedSearch(JTree tree, Convertor<TreePath, String> convertor, boolean canExpand);
+  public abstract <T> void installListSpeedSearch(JList<T> list, Convertor<T, String> convertor);
 
   public abstract void installEditSourceOnEnterKeyHandler(JTree tree);
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,7 +24,7 @@ import com.intellij.ide.TypePresentationService;
 import com.intellij.psi.*;
 import com.intellij.psi.search.ProjectScope;
 import com.intellij.psi.util.PropertyMemberType;
-import com.intellij.psi.util.PropertyUtil;
+import com.intellij.psi.util.PropertyUtilBase;
 import com.intellij.util.xml.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -56,6 +56,7 @@ public abstract class AbstractMemberResolveConverter extends ResolvingConverter<
     return s;
   }
 
+  @Override
   public PsiMember fromString(final String s, final ConvertContext context) {
     if (s == null) return null;
     final PsiClass psiClass = getTargetClass(context);
@@ -67,11 +68,11 @@ public abstract class AbstractMemberResolveConverter extends ResolvingConverter<
           if (field != null) return field;
           break;
         case GETTER:
-          final PsiMethod getter = PropertyUtil.findPropertyGetter(psiClass, getPropertyName(s, context), false, isLookDeep());
+          final PsiMethod getter = PropertyUtilBase.findPropertyGetter(psiClass, getPropertyName(s, context), false, isLookDeep());
           if (getter != null) return getter;
           break;
         case SETTER:
-          final PsiMethod setter = PropertyUtil.findPropertySetter(psiClass, getPropertyName(s, context), false, isLookDeep());
+          final PsiMethod setter = PropertyUtilBase.findPropertySetter(psiClass, getPropertyName(s, context), false, isLookDeep());
           if (setter != null) return setter;
           break;
       }
@@ -80,22 +81,25 @@ public abstract class AbstractMemberResolveConverter extends ResolvingConverter<
   }
 
 
+  @Override
   public String toString(final PsiMember t, final ConvertContext context) {
     return t == null? null : getPropertyName(t.getName(), context);
   }
 
+  @Override
   public String getErrorMessage(final String s, final ConvertContext context) {
     final DomElement parent = context.getInvocationElement().getParent();
     assert parent != null;
     return CodeInsightBundle.message("error.cannot.resolve.0.1", TypePresentationService.getService().getTypeName(parent), s);
   }
 
+  @Override
   @NotNull
   public Collection<? extends PsiMember> getVariants(final ConvertContext context) {
     final PsiClass psiClass = getTargetClass(context);
     if (psiClass == null) return Collections.emptyList();
 
-    final ArrayList<PsiMember> list = new ArrayList<PsiMember>();
+    final ArrayList<PsiMember> list = new ArrayList<>();
     for (PsiField psiField : isLookDeep()? psiClass.getAllFields() : psiClass.getFields()) {
       if (fieldSuits(psiField)) {
         list.add(psiField);
@@ -110,16 +114,17 @@ public abstract class AbstractMemberResolveConverter extends ResolvingConverter<
   }
 
   protected boolean methodSuits(final PsiMethod psiMethod) {
-    return !psiMethod.isConstructor() && !psiMethod.hasModifierProperty(PsiModifier.STATIC) && PropertyUtil.getPropertyName(psiMethod) != null;
+    return !psiMethod.isConstructor() && !psiMethod.hasModifierProperty(PsiModifier.STATIC) && PropertyUtilBase.getPropertyName(psiMethod) != null;
   }
 
   protected boolean fieldSuits(final PsiField psiField) {
     return !psiField.hasModifierProperty(PsiModifier.STATIC);
   }
 
+  @Override
   public LocalQuickFix[] getQuickFixes(final ConvertContext context) {
     final String targetName = ((GenericValue)context.getInvocationElement()).getStringValue();
-    if (!JavaPsiFacade.getInstance(context.getProject()).getNameHelper().isIdentifier(targetName)) return super.getQuickFixes(context);
+    if (!PsiNameHelper.getInstance(context.getProject()).isIdentifier(targetName)) return super.getQuickFixes(context);
     final PsiClass targetClass = getTargetClass(context);
     if (targetClass == null) return super.getQuickFixes(context);
     final PropertyMemberType memberType = getMemberTypes(context)[0];
@@ -129,10 +134,12 @@ public abstract class AbstractMemberResolveConverter extends ResolvingConverter<
     return fix instanceof LocalQuickFix? new LocalQuickFix[] {(LocalQuickFix)fix} : super.getQuickFixes(context);
   }
 
+  @Override
   public void handleElementRename(final GenericDomValue<PsiMember> genericValue, final ConvertContext context, final String newElementName) {
     super.handleElementRename(genericValue, context, getPropertyName(newElementName, context));
   }
 
+  @Override
   public void bindReference(final GenericDomValue<PsiMember> genericValue, final ConvertContext context, final PsiElement newTarget) {
     if (newTarget instanceof PsiMember) {
       final String elementName = ((PsiMember)newTarget).getName();

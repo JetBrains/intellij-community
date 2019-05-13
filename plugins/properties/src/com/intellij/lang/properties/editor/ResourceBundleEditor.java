@@ -1,68 +1,73 @@
-/*
- * Copyright 2000-2011 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
-/**
- * @author Alexey
- */
 package com.intellij.lang.properties.editor;
 
 import com.intellij.codeHighlighting.BackgroundEditorHighlighter;
-import com.intellij.ide.FileEditorProvider;
+import com.intellij.codeInsight.FileModificationService;
+import com.intellij.ide.FileSelectInContext;
 import com.intellij.ide.SelectInContext;
 import com.intellij.ide.structureView.StructureViewBuilder;
 import com.intellij.ide.structureView.newStructureView.StructureViewComponent;
+import com.intellij.ide.ui.customization.CustomActionsSchema;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.util.treeView.AbstractTreeUi;
+import com.intellij.ide.util.treeView.smartTree.Sorter;
 import com.intellij.ide.util.treeView.smartTree.TreeElement;
 import com.intellij.lang.properties.IProperty;
+import com.intellij.lang.properties.PropertiesImplUtil;
 import com.intellij.lang.properties.PropertiesUtil;
 import com.intellij.lang.properties.ResourceBundle;
+import com.intellij.lang.properties.editor.inspections.incomplete.IncompletePropertyInspection;
 import com.intellij.lang.properties.psi.PropertiesFile;
-import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.lang.properties.psi.PropertiesResourceBundleUtil;
+import com.intellij.lang.properties.xml.XmlPropertiesFile;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.CommandProcessor;
+import com.intellij.openapi.command.WriteCommandAction;
+import com.intellij.openapi.command.impl.UndoManagerImpl;
+import com.intellij.openapi.command.undo.UndoConstants;
+import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
+import com.intellij.openapi.editor.actions.EditorActionUtil;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
-import com.intellij.openapi.editor.event.DocumentAdapter;
-import com.intellij.openapi.editor.event.DocumentEvent;
-import com.intellij.openapi.editor.event.DocumentListener;
+import com.intellij.openapi.editor.event.EditorMouseEvent;
+import com.intellij.openapi.editor.event.EditorMouseEventArea;
 import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.editor.ex.FocusChangeListener;
 import com.intellij.openapi.editor.ex.util.LexerEditorHighlighter;
 import com.intellij.openapi.fileEditor.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.*;
+import com.intellij.openapi.vfs.ReadonlyStatusHandler;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.openapi.wm.StatusBar;
+import com.intellij.openapi.wm.WindowManager;
+import com.intellij.pom.Navigatable;
 import com.intellij.psi.*;
-import com.intellij.ui.GuiUtils;
+import com.intellij.psi.xml.XmlFile;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.JBSplitter;
+import com.intellij.ui.OnePixelSplitter;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.Alarm;
+import com.intellij.util.EditorPopupHandler;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.ContainerUtilRt;
+import com.intellij.util.containers.JBIterable;
 import com.intellij.util.containers.Stack;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.tree.TreeUtil;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
@@ -73,92 +78,156 @@ import javax.swing.*;
 import javax.swing.border.TitledBorder;
 import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
-import javax.swing.tree.DefaultMutableTreeNode;
-import javax.swing.tree.TreePath;
 import java.awt.*;
-import java.awt.event.FocusAdapter;
-import java.awt.event.FocusEvent;
+import java.awt.event.KeyAdapter;
+import java.awt.event.KeyEvent;
 import java.beans.PropertyChangeListener;
-import java.util.*;
 import java.util.List;
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
-public class ResourceBundleEditor extends UserDataHolderBase implements FileEditor {
+public class ResourceBundleEditor extends UserDataHolderBase implements DocumentsEditor {
   private static final         Logger LOG                  =
     Logger.getInstance("#com.intellij.lang.properties.editor.ResourceBundleEditor");
   @NonNls private static final String VALUES               = "values";
   @NonNls private static final String NO_PROPERTY_SELECTED = "noPropertySelected";
+  public static final Key<ResourceBundleEditor> RESOURCE_BUNDLE_EDITOR_KEY = Key.create("resourceBundleEditor");
 
   private final StructureViewComponent      myStructureViewComponent;
-  private final Map<PropertiesFile, Editor> myEditors;
+  private final Map<VirtualFile, EditorEx> myEditors;
   private final ResourceBundle              myResourceBundle;
-  private final Map<PropertiesFile, JPanel> myTitledPanels;
+  private final ResourceBundlePropertiesUpdateManager myPropertiesInsertDeleteManager;
+  private final Map<VirtualFile, JPanel> myTitledPanels;
   private final JComponent                    myNoPropertySelectedPanel = new NoPropertySelectedPanel().getComponent();
-  private final Map<Editor, DocumentListener> myDocumentListeners       = new THashMap<Editor, DocumentListener>();
   private final Project           myProject;
   private final DataProviderPanel myDataProviderPanel;
   // user pressed backslash in the corresponding editor.
   // we cannot store it back to properties file right now, so just append the backslash to the editor and wait for the subsequent chars
-  private final Set<PropertiesFile> myBackSlashPressed     = new THashSet<PropertiesFile>();
-  private final Alarm               myUpdateEditorAlarm    = new Alarm();
+  private final Set<VirtualFile> myBackSlashPressed     = new THashSet<>();
   private final Alarm               mySelectionChangeAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
 
-  private JPanel              myPanel;
-  private JPanel              myValuesPanel;
-  private JPanel              myStructureViewPanel;
-  private JPanel              mySplitParent;
-  private boolean             myDisposed;
-  private VirtualFileListener myVfsListener;
+  private final JPanel              myValuesPanel;
+  private final JPanel              myStructureViewPanel;
+  private volatile boolean    myDisposed;
+  private ResourceBundleEditorFileListener myVfsListener;
   private Editor              mySelectedEditor;
+  private String              myPropertyToSelectWhenVisible;
+  private final ResourceBundleEditorHighlighter myHighlighter;
 
-  public ResourceBundleEditor(Project project, ResourceBundle resourceBundle) {
-    myProject = project;
-    GuiUtils.replaceJSplitPaneWithIDEASplitter(myPanel);
+  public ResourceBundleEditor(@NotNull ResourceBundle resourceBundle) {
+    myProject = resourceBundle.getProject();
+
+    final JPanel splitPanel = new JPanel();
+    myValuesPanel = new JPanel();
+    myStructureViewPanel = new JPanel();
+    JBSplitter splitter = new OnePixelSplitter(false);
+    splitter.setFirstComponent(myStructureViewPanel);
+    splitter.setSecondComponent(myValuesPanel);
+    splitter.setShowDividerControls(true);
+    splitter.setHonorComponentsMinimumSize(true);
+    splitter.setAndLoadSplitterProportionKey(getClass() + ".splitter");
+    splitPanel.setLayout(new BorderLayout());
+    splitPanel.add(splitter, BorderLayout.CENTER);
 
     myResourceBundle = resourceBundle;
-    myStructureViewComponent = new ResourceBundleStructureViewComponent(project, myResourceBundle, this);
+    myPropertiesInsertDeleteManager = new ResourceBundlePropertiesUpdateManager(resourceBundle);
+
+    myStructureViewComponent = new ResourceBundleStructureViewComponent(myResourceBundle, this);
     myStructureViewPanel.setLayout(new BorderLayout());
     myStructureViewPanel.add(myStructureViewComponent, BorderLayout.CENTER);
 
     myStructureViewComponent.getTree().getSelectionModel().addTreeSelectionListener(new TreeSelectionListener() {
-      private String selectedPropertyName;
-      private PropertiesFile selectedPropertiesFile;
+      private IProperty selectedProperty;
+      private VirtualFile selectedPropertiesFile;
 
+      @Override
       public void valueChanged(TreeSelectionEvent e) {
         // filter out temp unselect/select events
-        if (getSelectedPropertyName() == null) return;
-        if (!Comparing.strEqual(selectedPropertyName, getSelectedPropertyName())
-            || !Comparing.equal(selectedPropertiesFile, getSelectedPropertiesFile()))
-        {
-          selectedPropertyName = getSelectedPropertyName();
+        if (getSelectedElementIfOnlyOne() instanceof ResourceBundleFileStructureViewElement) {
+          ((CardLayout)myValuesPanel.getLayout()).show(myValuesPanel, NO_PROPERTY_SELECTED);
+          writePreviouslySelectedPropertyValue(e);
+          selectedPropertiesFile = null;
+          selectedProperty = null;
+          return;
+        }
+
+        if (Comparing.equal(e.getNewLeadSelectionPath(), e.getOldLeadSelectionPath()) || getSelectedProperty() == null) return;
+        if (!arePropertiesEquivalent(selectedProperty, getSelectedProperty()) ||
+            !Comparing.equal(selectedPropertiesFile, getSelectedPropertiesFile())) {
+          writePreviouslySelectedPropertyValue(e);
+          selectedProperty = getSelectedProperty();
           selectedPropertiesFile = getSelectedPropertiesFile();
           selectionChanged();
         }
       }
-    });
-    installPropertiesChangeListeners();
 
-    myEditors = new THashMap<PropertiesFile, Editor>();
-    myTitledPanels = new THashMap<PropertiesFile, JPanel>();
+      private void writePreviouslySelectedPropertyValue(TreeSelectionEvent e) {
+        if (selectedProperty != null && e.getOldLeadSelectionPath() != null) {
+          for (Map.Entry<VirtualFile, EditorEx> entry : myEditors.entrySet()) {
+            if (entry.getValue() == mySelectedEditor) {
+              writeEditorPropertyValue(selectedProperty.getName(), mySelectedEditor, entry.getKey());
+              break;
+            }
+          }
+        }
+      }
+
+      private boolean arePropertiesEquivalent(@Nullable IProperty oldSelected, @Nullable IProperty newSelected) {
+        if (oldSelected == newSelected) {
+          return true;
+        }
+        if (oldSelected == null || newSelected == null) {
+          return false;
+        }
+        final PsiElement oldPsiElement = oldSelected.getPsiElement();
+        if (!oldPsiElement.isValid()) {
+          return false;
+        }
+        return oldPsiElement.isEquivalentTo(newSelected.getPsiElement());
+      }
+    });
+
+    myEditors = new ConcurrentHashMap<>();
+    myTitledPanels = new THashMap<>();
     recreateEditorsPanel();
 
     TreeElement[] children = myStructureViewComponent.getTreeModel().getRoot().getChildren();
     if (children.length != 0) {
       TreeElement child = children[0];
-      String propName = ((ResourceBundlePropertyStructureViewElement)child).getValue();
-      setState(new ResourceBundleEditorState(propName));
+      IProperty property = ((PropertyStructureViewElement)child).getProperty();
+      if (property != null) {
+        String propName = property.getUnescapedKey();
+        setState(new ResourceBundleEditorState(propName));
+      }
     }
-    myDataProviderPanel = new DataProviderPanel(myPanel);
+    myDataProviderPanel = new DataProviderPanel(splitPanel);
 
-    getSplitter().setSplitterProportionKey(getClass() + ".splitter");
-    project.getMessageBus().connect(project).subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, new FileEditorManagerAdapter() {
+    installPropertiesChangeListeners();
+
+    myProject.getMessageBus().connect(myProject).subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, new FileEditorManagerListener() {
       @Override
-      public void selectionChanged(FileEditorManagerEvent event) {
+      public void selectionChanged(@NotNull FileEditorManagerEvent event) {
         onSelectionChanged(event);
       }
     });
+    myHighlighter = myResourceBundle.getDefaultPropertiesFile() instanceof XmlPropertiesFile ? null : new ResourceBundleEditorHighlighter(this);
+  }
+
+  public ResourceBundle getResourceBundle() {
+    return myResourceBundle;
+  }
+
+  public void updateTreeRoot() {
+    myStructureViewComponent.rebuild();
+  }
+
+  @NotNull
+  public ResourceBundlePropertiesUpdateManager getPropertiesInsertDeleteManager() {
+    return myPropertiesInsertDeleteManager;
   }
 
   private void onSelectionChanged(@NotNull FileEditorManagerEvent event) {
+    if (!myResourceBundle.isValid()) return;
     // Ignore events which don't target current editor.
     FileEditor oldEditor = event.getOldEditor();
     FileEditor newEditor = event.getNewEditor();
@@ -169,7 +238,11 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
     // We want to sync selected property key on selection change.
     if (newEditor == this) {
       if (oldEditor instanceof TextEditor) {
+        myPropertiesInsertDeleteManager.reload();
         setStructureViewSelectionFromPropertiesFile(((TextEditor)oldEditor).getEditor());
+      } else if (myPropertyToSelectWhenVisible != null) {
+        setStructureViewSelection(myPropertyToSelectWhenVisible);
+        myPropertyToSelectWhenVisible = null;
       }
     }
     else if (newEditor instanceof TextEditor) {
@@ -191,45 +264,54 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
   }
 
   private void setStructureViewSelection(@NotNull final String propertyName) {
-    JTree tree = myStructureViewComponent.getTree();
-    if (tree == null) {
+    if (myStructureViewComponent.isDisposed()) {
       return;
     }
-    
+    JTree tree = myStructureViewComponent.getTree();
     Object root = tree.getModel().getRoot();
     if (AbstractTreeUi.isLoadingChildrenFor(root)) {
-      mySelectionChangeAlarm.cancelAllRequests();
-      mySelectionChangeAlarm.addRequest(new Runnable() {
-        @Override
-        public void run() {
-          mySelectionChangeAlarm.cancelAllRequests();
-          setStructureViewSelection(propertyName); 
+      boolean isEditorVisible = false;
+      for (FileEditor editor : FileEditorManager.getInstance(myProject).getSelectedEditors()) {
+        if (editor == this) {
+          isEditorVisible = true;
+          break;
         }
+      }
+      if (!isEditorVisible) {
+        myPropertyToSelectWhenVisible = propertyName;
+        return;
+      }
+      mySelectionChangeAlarm.cancelAllRequests();
+      mySelectionChangeAlarm.addRequest(() -> {
+        mySelectionChangeAlarm.cancelAllRequests();
+        setStructureViewSelection(propertyName);
       }, 500);
       return;
     }
 
-    Stack<DefaultMutableTreeNode> toCheck = ContainerUtilRt.newStack();
-    toCheck.push((DefaultMutableTreeNode)root);
-    DefaultMutableTreeNode nodeToSelect = null;
+    Stack<TreeElement> toCheck = ContainerUtilRt.newStack();
+    toCheck.push(myStructureViewComponent.getTreeModel().getRoot());
+
     while (!toCheck.isEmpty()) {
-      DefaultMutableTreeNode node = toCheck.pop();
-      String value = getNodeValue(node);
-      if (propertyName.equals(value)) {
-        nodeToSelect = node;
-        break;
-      }
-      else {
-        for (int i = 0; i < node.getChildCount(); i++) {
-          toCheck.push((DefaultMutableTreeNode)node.getChildAt(i));
+      TreeElement element = toCheck.pop();
+      PsiElement value = element instanceof PropertyStructureViewElement
+                     ? ((PropertyStructureViewElement)element).getPsiElement()
+                     : null;
+      final IProperty property = PropertiesImplUtil.getProperty(value);
+      if (property != null && propertyName.equals(property.getUnescapedKey())) {
+        myStructureViewComponent.select(property, true);
+        selectionChanged();
+        return;
+      } else {
+        for (TreeElement treeElement : element.getChildren()) {
+          toCheck.push(treeElement);
         }
       }
     }
-    if (nodeToSelect != null) {
-      TreePath path = new TreePath(nodeToSelect.getPath());
-      tree.setSelectionPath(path);
-      tree.scrollPathToVisible(path);
-    }
+  }
+
+  public void flush() {
+    myVfsListener.flush();
   }
 
   @Nullable
@@ -258,23 +340,38 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
       }
     }
   }
-  
-  @Nullable
-  private static String getNodeValue(@NotNull DefaultMutableTreeNode node) {
-    Object userObject = node.getUserObject();
-    if (!(userObject instanceof AbstractTreeNode)) return null;
-    Object value = ((AbstractTreeNode)userObject).getValue();
-    return value instanceof ResourceBundlePropertyStructureViewElement ? ((ResourceBundlePropertyStructureViewElement)value).getValue()
-                                                                       : null;
+
+  private void writeEditorPropertyValue(final @Nullable String propertyName,
+                                        final @NotNull Editor editor,
+                                        final @NotNull VirtualFile propertiesFile) {
+    final String currentValue = editor.getDocument().getText();
+    final String currentSelectedProperty = propertyName ==  null ? getSelectedPropertyName() : propertyName;
+    if (currentSelectedProperty == null) {
+      return;
+    }
+
+    ApplicationManager.getApplication().runWriteAction(() -> WriteCommandAction.runWriteCommandAction(myProject, () -> {
+      try {
+        if (currentValue.isEmpty() &&
+            ResourceBundleEditorKeepEmptyValueToggleAction.keepEmptyProperties() &&
+            !propertiesFile.equals(myResourceBundle.getDefaultPropertiesFile().getVirtualFile())) {
+          myPropertiesInsertDeleteManager.deletePropertyIfExist(currentSelectedProperty, PropertiesImplUtil.getPropertiesFile(propertiesFile, myProject));
+        } else {
+          myPropertiesInsertDeleteManager.insertOrUpdateTranslation(currentSelectedProperty, currentValue, PropertiesImplUtil.getPropertiesFile(propertiesFile, myProject));
+        }
+      }
+      catch (final IncorrectOperationException e) {
+        LOG.error(e);
+      }
+    }));
   }
 
-  private void recreateEditorsPanel() {
-    myUpdateEditorAlarm.cancelAllRequests();
+  void recreateEditorsPanel() {
+    if (!myProject.isOpen() || myDisposed) return;
 
     myValuesPanel.removeAll();
     myValuesPanel.setLayout(new CardLayout());
 
-    if (!myProject.isOpen()) return;
     JPanel valuesPanelComponent = new MyJPanel(new GridBagLayout());
     myValuesPanel.add(new JBScrollPane(valuesPanelComponent){
       @Override
@@ -285,23 +382,53 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
     }, VALUES);
     myValuesPanel.add(myNoPropertySelectedPanel, NO_PROPERTY_SELECTED);
 
-    List<PropertiesFile> propertiesFiles = myResourceBundle.getPropertiesFiles(myProject);
+    final List<PropertiesFile> propertiesFiles = myResourceBundle.getPropertiesFiles();
 
     GridBagConstraints gc = new GridBagConstraints(0, 0, 0, 0, 0, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.BOTH,
-                                                   new Insets(5, 5, 5, 5), 0, 0);
+                                                   JBUI.insets(5), 0, 0);
     releaseAllEditors();
     myTitledPanels.clear();
     int y = 0;
+    Editor previousEditor = null;
+    Editor firstEditor = null;
     for (final PropertiesFile propertiesFile : propertiesFiles) {
-      final Editor editor = createEditor();
-      final Editor oldEditor = myEditors.put(propertiesFile, editor);
+      final EditorEx editor = createEditor();
+      final Editor oldEditor = myEditors.put(propertiesFile.getVirtualFile(), editor);
+      if (firstEditor == null) {
+        firstEditor = editor;
+      }
+      if (previousEditor != null) {
+        editor.putUserData(ChooseSubsequentPropertyValueEditorAction.PREV_EDITOR_KEY, previousEditor);
+        previousEditor.putUserData(ChooseSubsequentPropertyValueEditorAction.NEXT_EDITOR_KEY, editor);
+      }
+      previousEditor = editor;
       if (oldEditor != null) {
         EditorFactory.getInstance().releaseEditor(oldEditor);
       }
 
-      editor.getContentComponent().addFocusListener(new FocusAdapter() {
-        public void focusGained(FocusEvent e) {
+      editor.setViewer(!propertiesFile.getVirtualFile().isWritable());
+      editor.getContentComponent().addKeyListener(new KeyAdapter() {
+        @Override
+        public void keyTyped(KeyEvent e) {
+          if (editor.isViewer()) {
+            editor.setViewer(ReadonlyStatusHandler.getInstance(myProject)
+                               .ensureFilesWritable(Collections.singletonList(propertiesFile.getVirtualFile())).hasReadonlyFiles());
+          }
+        }
+      });
+
+      editor.addFocusListener(new FocusChangeListener() {
+        @Override
+        public void focusGained(@NotNull final Editor editor) {
           mySelectedEditor = editor;
+        }
+
+        @Override
+        public void focusLost(@NotNull final Editor editor) {
+          if (!editor.isViewer() && propertiesFile.getContainingFile().isValid()) {
+            writeEditorPropertyValue(null, editor, propertiesFile.getVirtualFile());
+            myVfsListener.flush();
+          }
         }
       });
       gc.gridx = 0;
@@ -312,23 +439,9 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
       gc.weighty = 1;
       gc.anchor = GridBagConstraints.CENTER;
 
-      Locale locale = propertiesFile.getLocale();
-      List<String> names = new ArrayList<String>();
-      if (!Comparing.strEqual(locale.getDisplayLanguage(), null)) {
-        names.add(locale.getDisplayLanguage());
-      }
-      if (!Comparing.strEqual(locale.getDisplayCountry(), null)) {
-        names.add(locale.getDisplayCountry());
-      }
-      if (!Comparing.strEqual(locale.getDisplayVariant(), null)) {
-        names.add(locale.getDisplayVariant());
-      }
-
       String title = propertiesFile.getName();
-      if (!names.isEmpty()) {
-        title += " ("+StringUtil.join(names, "/")+")";
-      }
-      JComponent comp = new JPanel(new BorderLayout()) {
+      title += PropertiesUtil.getPresentableLocale(propertiesFile.getLocale());
+      JPanel comp = new JPanel(new BorderLayout()) {
         @Override
         public Dimension getPreferredSize() {
           Insets insets = getBorder().getBorderInsets(this);
@@ -336,10 +449,14 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
         }
       };
       comp.add(editor.getComponent(), BorderLayout.CENTER);
-      comp.setBorder(IdeBorderFactory.createTitledBorder(title, true));
-      myTitledPanels.put(propertiesFile, (JPanel)comp);
+      comp.setBorder(IdeBorderFactory.createTitledBorder(title, false));
+      myTitledPanels.put(propertiesFile.getVirtualFile(), comp);
 
       valuesPanelComponent.add(comp, gc);
+    }
+    if (previousEditor != null) {
+      previousEditor.putUserData(ChooseSubsequentPropertyValueEditorAction.NEXT_EDITOR_KEY, firstEditor);
+      firstEditor.putUserData(ChooseSubsequentPropertyValueEditorAction.PREV_EDITOR_KEY, previousEditor);
     }
 
     gc.gridx = 0;
@@ -350,385 +467,331 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
     gc.weighty = 1;
 
     valuesPanelComponent.add(new JPanel(), gc);
+    selectionChanged();
     myValuesPanel.repaint();
+    updateEditorsFromProperties(true);
+  }
+
+  @NotNull
+  public static String getPropertyEditorValue(@Nullable final IProperty property) {
+    if (property == null) {
+      return "";
+    }
+    else {
+      String rawValue = property.getValue();
+      return rawValue == null ? "" : PropertiesResourceBundleUtil.fromPropertyValueToValueEditor(rawValue);
+    }
+  }
+
+  void updateEditorsFromProperties(final boolean checkIsUnderUndoRedoAction) {
+    String propertyName = getSelectedPropertyName();
+    ((CardLayout)myValuesPanel.getLayout()).show(myValuesPanel, propertyName == null ? NO_PROPERTY_SELECTED : VALUES);
+    if (propertyName == null) return;
+
+    final UndoManagerImpl undoManager = (UndoManagerImpl)UndoManager.getInstance(myProject);
+    for (final PropertiesFile propertiesFile : myResourceBundle.getPropertiesFiles()) {
+      final EditorEx editor = myEditors.get(propertiesFile.getVirtualFile());
+      if (editor == null) continue;
+      final IProperty property = propertiesFile.findPropertyByKey(propertyName);
+      final Document document = editor.getDocument();
+      CommandProcessor.getInstance().executeCommand(null, () -> ApplicationManager.getApplication().runWriteAction(() -> {
+        if (!checkIsUnderUndoRedoAction ||
+            !undoManager.isActive() ||
+            !(undoManager.isRedoInProgress() || undoManager.isUndoInProgress())) {
+          updateDocumentFromPropertyValue(getPropertyEditorValue(property), document,  propertiesFile.getVirtualFile());
+        }
+      }), "", this);
+      JPanel titledPanel = myTitledPanels.get(propertiesFile.getVirtualFile());
+      ((TitledBorder)titledPanel.getBorder()).setTitleColor(property == null ? JBColor.RED : UIUtil.getLabelTextForeground());
+      titledPanel.repaint();
+    }
   }
 
   private void installPropertiesChangeListeners() {
     final VirtualFileManager virtualFileManager = VirtualFileManager.getInstance();
     if (myVfsListener != null) {
-      assert false;
-      virtualFileManager.removeVirtualFileListener(myVfsListener);
+      throw new AssertionError("Listeners can't be initialized twice");
     }
-    myVfsListener = new VirtualFileAdapter() {
-      @Override
-      public void fileCreated(VirtualFileEvent event) {
-        if (PropertiesUtil.isPropertiesFile(event.getFile(), myProject)) {
-          recreateEditorsPanel();
-        }
-      }
+    myVfsListener = new ResourceBundleEditorFileListener(this);
 
-      @Override
-      public void fileDeleted(VirtualFileEvent event) {
-        for (PropertiesFile file : myEditors.keySet()) {
-          if (Comparing.equal(file.getVirtualFile(), event.getFile())) {
-            recreateEditorsPanel();
-            return;
-          }
-        }
-      }
-
-      @Override
-      public void propertyChanged(VirtualFilePropertyEvent event) {
-        if (PropertiesUtil.isPropertiesFile(event.getFile(), myProject)) {
-          if (VirtualFile.PROP_NAME.equals(event.getPropertyName())) {
-            recreateEditorsPanel();
-          }
-          else {
-            updateEditorsFromProperties();
-          }
-        }
-      }
-    };
-    
     virtualFileManager.addVirtualFileListener(myVfsListener, this);
     PsiTreeChangeAdapter psiTreeChangeAdapter = new PsiTreeChangeAdapter() {
+      @Override
       public void childAdded(@NotNull PsiTreeChangeEvent event) {
-        childrenChanged(event);
-      }
-
-      public void childRemoved(@NotNull PsiTreeChangeEvent event) {
-        childrenChanged(event);
-      }
-
-      public void childReplaced(@NotNull PsiTreeChangeEvent event) {
-        childrenChanged(event);
-      }
-
-      public void childMoved(@NotNull PsiTreeChangeEvent event) {
-        childrenChanged(event);
-      }
-
-      public void childrenChanged(@NotNull PsiTreeChangeEvent event) {
         final PsiFile file = event.getFile();
-        PropertiesFile propertiesFile = PropertiesUtil.getPropertiesFile(file);
-        if (propertiesFile == null) return;
-        if (!propertiesFile.getResourceBundle().equals(myResourceBundle)) return;
-        updateEditorsFromProperties();
+        if (file instanceof XmlFile) {
+          final PropertiesFile propertiesFile = PropertiesImplUtil.getPropertiesFile(file);
+          if (propertiesFile != null) {
+            final ResourceBundle bundle = propertiesFile.getResourceBundle();
+            if (bundle.equals(myResourceBundle) && !myEditors.containsKey(propertiesFile.getVirtualFile())) {
+              recreateEditorsPanel();
+            }
+          }
+        }
+      }
+
+      @Override
+      public void childRemoved(@NotNull PsiTreeChangeEvent event) {
+        final PsiFile file = event.getFile();
+        final PropertiesFile propertiesFile = PropertiesImplUtil.getPropertiesFile(file);
+        if (propertiesFile != null) {
+          final ResourceBundle bundle = propertiesFile.getResourceBundle();
+          if (bundle.equals(myResourceBundle) && myEditors.containsKey(propertiesFile.getVirtualFile())) {
+            final IProperty property = PropertiesImplUtil.getProperty(event.getParent());
+            if (property != null && Comparing.equal(property.getName(), getSelectedPropertyName())) {
+              updateEditorsFromProperties(false);
+            }
+          }
+        }
       }
     };
     PsiManager.getInstance(myProject).addPsiTreeChangeListener(psiTreeChangeAdapter, this);
   }
   private void selectionChanged() {
     myBackSlashPressed.clear();
-    UIUtil.invokeLaterIfNeeded(new Runnable() {
-      @Override
-      public void run() {
-        updateEditorsFromProperties();
+    UIUtil.invokeLaterIfNeeded(() -> {
+      updateEditorsFromProperties(true);
+      final StatusBar statusBar = WindowManager.getInstance().getStatusBar(myProject);
+      if (statusBar != null) {
+        statusBar.setInfo("Selected property: " + getSelectedPropertyName());
       }
     });
   }
 
-  private void updateEditorsFromProperties() {
-    myUpdateEditorAlarm.cancelAllRequests();
-    myUpdateEditorAlarm.addRequest(new Runnable() {
-      public void run() {
-        if (!isValid()) return;
-        // there is pending update which is going to change prop file anyway
-        if (myUpdatePsiAlarm.getActiveRequestCount() != 0) {
-          myUpdateEditorAlarm.cancelAllRequests();
-          myUpdateEditorAlarm.addRequest(this, 200);
-          return;
-        }
-        uninstallDocumentListeners();
-        try {
-          String propertyName = getSelectedPropertyName();
-          ((CardLayout)myValuesPanel.getLayout()).show(myValuesPanel, propertyName == null ? NO_PROPERTY_SELECTED : VALUES);
-          if (propertyName == null) return;
-
-          List<PropertiesFile> propertiesFiles = myResourceBundle.getPropertiesFiles(myProject);
-          for (final PropertiesFile propertiesFile : propertiesFiles) {
-            EditorEx editor = (EditorEx)myEditors.get(propertiesFile);
-            if (editor == null) continue;
-            reinitSettings(editor);
-            IProperty property = propertiesFile.findPropertyByKey(propertyName);
-            final String value;
-            if (property == null) {
-              value = "";
-            }
-            else {
-              String rawValue = property.getValue();
-              value = rawValue == null ? "" : ResourceBundleUtil.fromPropertyValueToValueEditor(rawValue); 
-            }
-            final Document document = editor.getDocument();
-            CommandProcessor.getInstance().executeCommand(null, new Runnable() {
-              public void run() {
-                ApplicationManager.getApplication().runWriteAction(new Runnable() {
-                  public void run() {
-                    updateDocumentFromPropertyValue(value, document, propertiesFile);
-                  }
-                });
-              }
-            }, "", this);
-
-            JPanel titledPanel = myTitledPanels.get(propertiesFile);
-            ((TitledBorder)titledPanel.getBorder()).setTitleColor(property == null ? JBColor.RED : UIUtil.getLabelTextForeground());
-            titledPanel.repaint();
-          }
-        }
-        finally {
-          installDocumentListeners();
-        }
-      }
-    }, 200);
-  }
-
   private void updateDocumentFromPropertyValue(final String value,
                                                final Document document,
-                                               final PropertiesFile propertiesFile) {
+                                               final VirtualFile propertiesFile) {
     @NonNls String text = value;
     if (myBackSlashPressed.contains(propertiesFile)) {
       text += "\\";
     }
+    document.putUserData(UndoConstants.DONT_RECORD_UNDO, Boolean.TRUE);
     document.replaceString(0, document.getTextLength(), text);
+    document.putUserData(UndoConstants.DONT_RECORD_UNDO, Boolean.FALSE);
   }
 
-  private void updatePropertyValueFromDocument(final String propertyName,
-                                               final PropertiesFile propertiesFile,
-                                               final String text) {
-    if (PropertiesUtil.isUnescapedBackSlashAtTheEnd(text)) {
-      myBackSlashPressed.add(propertiesFile);
+  @NotNull
+  private JBIterable<Object> getSelectedNodes() {
+    if (!isValid()) {
+      return JBIterable.empty();
     }
-    else {
-      myBackSlashPressed.remove(propertiesFile);
-    }
-    IProperty property = propertiesFile.findPropertyByKey(propertyName);
-    try {
-      if (property == null) {
-        propertiesFile.addProperty(propertyName, text);
-      }
-      else {
-        property.setValue(text);
-      }
-    }
-    catch (IncorrectOperationException e) {
-      LOG.error(e);
-    }
-  }
-
-  private void installDocumentListeners() {
-    List<PropertiesFile> propertiesFiles = myResourceBundle.getPropertiesFiles(myProject);
-    for (final PropertiesFile propertiesFile : propertiesFiles) {
-      final EditorEx editor = (EditorEx)myEditors.get(propertiesFile);
-      if (editor == null) continue;
-      DocumentAdapter listener = new DocumentAdapter() {
-        private String oldText;
-
-        public void beforeDocumentChange(DocumentEvent e) {
-          oldText = e.getDocument().getText();
-        }
-
-        public void documentChanged(DocumentEvent e) {
-          Document document = e.getDocument();
-          String text = document.getText();
-          updatePropertyValueFor(document, propertiesFile, text, oldText);
-        }
-      };
-      myDocumentListeners.put(editor, listener);
-      editor.getDocument().addDocumentListener(listener);
-    }
-  }
-
-  private void uninstallDocumentListeners() {
-    List<PropertiesFile> propertiesFiles = myResourceBundle.getPropertiesFiles(myProject);
-    for (final PropertiesFile propertiesFile : propertiesFiles) {
-      Editor editor = myEditors.get(propertiesFile);
-      DocumentListener listener = myDocumentListeners.remove(editor);
-      if (listener != null) {
-        editor.getDocument().removeDocumentListener(listener);
-      }
-    }
-  }
-
-  private final Alarm myUpdatePsiAlarm = new Alarm();
-  private void updatePropertyValueFor(final Document document, final PropertiesFile propertiesFile, final String text, final String oldText) {
-    myUpdatePsiAlarm.cancelAllRequests();
-    myUpdatePsiAlarm.addRequest(new Runnable() {
-      public void run() {
-        if (!isValid()) return;
-        CommandProcessor.getInstance().runUndoTransparentAction(new Runnable() {
-          public void run() {
-            ApplicationManager.getApplication().runWriteAction(new Runnable() {
-              public void run() {
-                Project project = propertiesFile.getProject();
-                PsiDocumentManager documentManager = PsiDocumentManager.getInstance(project);
-                documentManager.commitDocument(document);
-                Document propertiesFileDocument = documentManager.getDocument(propertiesFile.getContainingFile());
-                if (propertiesFileDocument == null) {
-                  return;
-                }
-                documentManager.commitDocument(propertiesFileDocument);
-
-                if (!FileDocumentManager.getInstance().requestWriting(document, project)) {
-                  uninstallDocumentListeners();
-                  try {
-                    document.replaceString(0, document.getTextLength(), oldText);
-                  }
-                  finally {
-                    installDocumentListeners();
-                  }
-                  return;
-                }
-                String propertyName = getSelectedPropertyName();
-                if (propertyName == null) return;
-                updatePropertyValueFromDocument(propertyName, propertiesFile, text);
-              }
-            });
-          }
-        });
-      }
-    }, 300, ModalityState.stateForComponent(getComponent()));
+    JTree tree = myStructureViewComponent.getTree();
+    return JBIterable.of(tree.getSelectionModel().getSelectionPaths())
+      .map(TreeUtil::getLastUserObject);
   }
 
   @Nullable
   private String getSelectedPropertyName() {
-    JTree tree = myStructureViewComponent.getTree();
-    if (tree == null) return null;
-    TreePath selected = tree.getSelectionModel().getSelectionPath();
-    if (selected == null) return null;
-    return getNodeValue((DefaultMutableTreeNode)selected.getLastPathComponent());
+    final IProperty selectedProperty = getSelectedProperty();
+    return selectedProperty == null ? null : selectedProperty.getName();
   }
 
+  @Nullable
+  IProperty getSelectedProperty() {
+    ResourceBundleEditorViewElement first = getSelectedNodes()
+      .filter(AbstractTreeNode.class)
+      .filterMap(AbstractTreeNode::getValue)
+      .filter(ResourceBundleEditorViewElement.class)
+      .first();
+    return first instanceof PropertyStructureViewElement ?
+           ((PropertyStructureViewElement)first).getProperty() : null;
+  }
+
+  @NotNull
+  public Collection<ResourceBundleEditorViewElement> getSelectedElements() {
+    return getSelectedNodes()
+      .filter(AbstractTreeNode.class)
+      .filterMap(AbstractTreeNode::getValue)
+      .filter(ResourceBundleEditorViewElement.class)
+      .toList();
+  }
+
+  @Nullable
+  public ResourceBundleEditorViewElement getSelectedElementIfOnlyOne() {
+    final Collection<ResourceBundleEditorViewElement> selectedElements = getSelectedElements();
+    return selectedElements.size() == 1 ? ContainerUtil.getFirstItem(selectedElements) : null;
+  }
+
+  public void selectNextIncompleteProperty() {
+    if (getSelectedNodes().size() != 1) {
+      return;
+    }
+    final IProperty selectedProperty = getSelectedProperty();
+    if (selectedProperty == null) {
+      return;
+    }
+
+    final ResourceBundleFileStructureViewElement root =
+      (ResourceBundleFileStructureViewElement)myStructureViewComponent.getTreeModel().getRoot();
+    final Set<String> propertyKeys = ResourceBundleFileStructureViewElement.getPropertiesMap(myResourceBundle, root.isShowOnlyIncomplete()).keySet();
+    final boolean isAlphaSorted = myStructureViewComponent.isActionActive(Sorter.ALPHA_SORTER_ID);
+    final List<String> keysOrder = new ArrayList<>(propertyKeys);
+    if (isAlphaSorted) {
+      Collections.sort(keysOrder);
+    }
+
+    final String currentKey = selectedProperty.getKey();
+    final int idx = keysOrder.indexOf(currentKey);
+    LOG.assertTrue(idx != -1);
+    final IncompletePropertyInspection incompletePropertyInspection =
+      IncompletePropertyInspection.getInstance(myResourceBundle.getDefaultPropertiesFile().getContainingFile());
+    for (int i = 1; i < keysOrder.size(); i++) {
+      int trimmedIndex = (i + idx) % keysOrder.size();
+      final String key = keysOrder.get(trimmedIndex);
+      if (!incompletePropertyInspection.isPropertyComplete(key, myResourceBundle)) {
+        selectProperty(key);
+        return;
+      }
+    }
+  }
+
+  @Override
   @NotNull
   public JComponent getComponent() {
     return myDataProviderPanel;
   }
 
-  private Object getData(final String dataId) {
+  public StructureViewComponent getStructureViewComponent() {
+    return myStructureViewComponent;
+  }
+
+  private Object getData(@NotNull String dataId) {
     if (SelectInContext.DATA_KEY.is(dataId)) {
-      return new SelectInContext(){
-        @NotNull
-        public Project getProject() {
-          return myProject;
-        }
-
-        @NotNull
-        public VirtualFile getVirtualFile() {
-          PropertiesFile selectedFile = getSelectedPropertiesFile();
-
-          VirtualFile virtualFile = selectedFile == null ? null : selectedFile.getVirtualFile();
-          assert virtualFile != null;
-          return virtualFile;
-        }
-
-        public Object getSelectorInFile() {
-          return getSelectedPropertiesFile();
-        }
-
-        public FileEditorProvider getFileEditorProvider() {
-          final PropertiesFile selectedPropertiesFile = getSelectedPropertiesFile();
-          if (selectedPropertiesFile == null) return null;
-          return new FileEditorProvider() {
-            public FileEditor openFileEditor() {
-              final VirtualFile file = selectedPropertiesFile.getVirtualFile();
-              if (file == null) {
-                return null;
-              }
-              return FileEditorManager.getInstance(getProject()).openFile(file, false)[0];
-
+      VirtualFile file = getSelectedPropertiesFile();
+      return file == null ? null : new FileSelectInContext(myProject, file);
+    }
+    else if (CommonDataKeys.NAVIGATABLE_ARRAY.is(dataId)) {
+      for (Map.Entry<VirtualFile, EditorEx> entry : myEditors.entrySet()) {
+        if (entry.getValue() == mySelectedEditor) {
+          final VirtualFile f = entry.getKey();
+          final String name = getSelectedPropertyName();
+          if (name != null) {
+            final PropertiesFile file = PropertiesImplUtil.getPropertiesFile(f, myProject);
+            LOG.assertTrue(file != null);
+            final List<IProperty> properties = file.findPropertiesByKey(name);
+            if (properties.isEmpty()) {
+              return new Navigatable[]{file.getContainingFile()};
+            } else {
+              return properties
+                .stream()
+                .map(IProperty::getPsiElement)
+                .map(PsiElement::getNavigationElement)
+                .filter(p -> p != null)
+                .toArray(Navigatable[]::new);
             }
-          };
+          }
         }
-      };
+      }
     }
     return null;
   }
 
-  private PropertiesFile getSelectedPropertiesFile() {
+  private VirtualFile getSelectedPropertiesFile() {
     if (mySelectedEditor == null) return null;
-    PropertiesFile selectedFile = null;
-    for (PropertiesFile file : myEditors.keySet()) {
-      Editor editor = myEditors.get(file);
+    VirtualFile selectedFile = null;
+    for (Map.Entry<VirtualFile, EditorEx> entry : myEditors.entrySet()) {
+      Editor editor = entry.getValue();
       if (editor == mySelectedEditor) {
-        selectedFile = file;
+        selectedFile = entry.getKey();
         break;
       }
     }
     return selectedFile;
   }
 
+  @Override
   public JComponent getPreferredFocusedComponent() {
     return myStructureViewPanel;
   }
 
+  @Override
   @NotNull
   public String getName() {
     return "Resource Bundle";
   }
 
+  @Override
   @NotNull
   public ResourceBundleEditorState getState(@NotNull FileEditorStateLevel level) {
     return new ResourceBundleEditorState(getSelectedPropertyName());
   }
 
-  private JBSplitter getSplitter() {
-    return (JBSplitter)mySplitParent.getComponents()[0];
-  }
-
-  public void setState(@NotNull FileEditorState state) {
-    ResourceBundleEditorState myState = (ResourceBundleEditorState)state;
-    String propertyName = myState.myPropertyName;
+  public void selectProperty(@Nullable final String propertyName) {
     if (propertyName != null) {
-      myStructureViewComponent.select(propertyName, true);
-      selectionChanged();
+      setStructureViewSelection(propertyName);
     }
   }
 
+  @Override
+  public void setState(@NotNull FileEditorState state) {
+    selectProperty(((ResourceBundleEditorState)state).getPropertyName());
+  }
+
+  @Override
   public boolean isModified() {
     return false;
   }
 
+  @Override
   public boolean isValid() {
     return !myDisposed && !myProject.isDisposed();
   }
 
+  @Override
   public void selectNotify() {
 
   }
 
+  @Override
   public void deselectNotify() {
-
+    final StatusBar statusBar = WindowManager.getInstance().getStatusBar(myProject);
+    if (statusBar != null) {
+      statusBar.setInfo("");
+    }
   }
 
+  @Override
   public void addPropertyChangeListener(@NotNull PropertyChangeListener listener) {
 
   }
 
+  @Override
   public void removePropertyChangeListener(@NotNull PropertyChangeListener listener) {
 
   }
 
+  @Override
   public BackgroundEditorHighlighter getBackgroundHighlighter() {
-    return null;
+    return myHighlighter;
   }
 
+  @Override
   public FileEditorLocation getCurrentLocation() {
     return null;
   }
 
+  @Override
   public StructureViewBuilder getStructureViewBuilder() {
     return null;
   }
 
+  @Override
   public void dispose() {
+    if (mySelectedEditor != null) {
+      for (final Map.Entry<VirtualFile, EditorEx> entry : myEditors.entrySet()) {
+        if (mySelectedEditor.equals(entry.getValue())) {
+          writeEditorPropertyValue(null, mySelectedEditor, entry.getKey());
+        }
+      }
+    }
     VirtualFileManager.getInstance().removeVirtualFileListener(myVfsListener);
-
     myDisposed = true;
     Disposer.dispose(myStructureViewComponent);
     releaseAllEditors();
   }
 
   private void releaseAllEditors() {
-    for (Editor editor : myEditors.values()) {
+    for (final Editor editor : myEditors.values()) {
       if (!editor.isDisposed()) {
         EditorFactory.getInstance().releaseEditor(editor);
       }
@@ -736,23 +799,15 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
     myEditors.clear();
   }
 
-  /**
-   * Renames target property if the one is available.
-   * <p/>
-   * <b>Note:</b> is assumed to be called under {@link WriteAction write action}.
-   * 
-   * @param oldName   old property name
-   * @param newName   new property name
-   */
-  public void renameProperty(@NotNull String oldName, @NotNull String newName) {
-    for (PropertiesFile properties : myResourceBundle.getPropertiesFiles(myProject)) {
-      IProperty property = properties.findPropertyByKey(oldName);
-      if (property != null) {
-        property.setName(newName);
-      }
-    }
+  @Override
+  public Document[] getDocuments() {
+    return ContainerUtil.map2Array(myEditors.keySet(), new Document[myEditors.size()], propertiesFile -> FileDocumentManager.getInstance().getDocument(propertiesFile));
   }
-  
+
+  Map<VirtualFile, EditorEx> getTranslationEditors() {
+    return myEditors;
+  }
+
   public static class ResourceBundleEditorState implements FileEditorState {
     private final String myPropertyName;
 
@@ -760,6 +815,7 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
       myPropertyName = propertyName;
     }
 
+    @Override
     public boolean canBeMergedWith(FileEditorState otherState, FileEditorStateLevel level) {
       return false;
     }
@@ -769,17 +825,19 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
     }
   }
 
-  private static Editor createEditor() {
+  private EditorEx createEditor() {
     EditorFactory editorFactory = EditorFactory.getInstance();
     Document document = editorFactory.createDocument("");
     EditorEx editor = (EditorEx)editorFactory.createEditor(document);
     reinitSettings(editor);
+    editor.putUserData(RESOURCE_BUNDLE_EDITOR_KEY, this);
     return editor;
   }
 
-  private static void reinitSettings(final EditorEx editor) {
+  private void reinitSettings(final EditorEx editor) {
     EditorColorsScheme scheme = EditorColorsManager.getInstance().getGlobalScheme();
     editor.setColorsScheme(scheme);
+    editor.setBorder(BorderFactory.createLineBorder(JBColor.border(), 1));
     EditorSettings settings = editor.getSettings();
     settings.setLineNumbersShown(false);
     settings.setWhitespacesShown(false);
@@ -790,9 +848,52 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
     settings.setAdditionalLinesCount(0);
     settings.setRightMarginShown(true);
     settings.setRightMargin(60);
-
+    settings.setVirtualSpace(false);
     editor.setHighlighter(new LexerEditorHighlighter(new PropertiesValueHighlighter(), scheme));
     editor.setVerticalScrollbarVisible(true);
+    editor.setContextMenuGroupId(null); // disabling default context menu
+    editor.addEditorMouseListener(new EditorPopupHandler() {
+          @Override
+          public void invokePopup(EditorMouseEvent event) {
+            if (!event.isConsumed() && event.getArea() == EditorMouseEventArea.EDITING_AREA) {
+              DefaultActionGroup group = new DefaultActionGroup();
+              group.add(CustomActionsSchema.getInstance().getCorrectedAction(IdeActions.GROUP_CUT_COPY_PASTE));
+              group.add(CustomActionsSchema.getInstance().getCorrectedAction(IdeActions.ACTION_EDIT_SOURCE));
+              group.addSeparator();
+              group.add(new AnAction("Propagate Value Across of Resource Bundle") {
+                @Override
+                public void actionPerformed(@NotNull AnActionEvent e) {
+                  final String valueToPropagate = editor.getDocument().getText();
+                  final String currentSelectedProperty = getSelectedPropertyName();
+                  if (currentSelectedProperty == null) {
+                    return;
+                  }
+                  ApplicationManager.getApplication().runWriteAction(() -> WriteCommandAction.runWriteCommandAction(myProject, () -> {
+                    try {
+                      final PropertiesFile[] propertiesFiles = myResourceBundle.getPropertiesFiles().stream().filter(f -> {
+                        final IProperty property = f.findPropertyByKey(currentSelectedProperty);
+                        return property == null || !valueToPropagate.equals(property.getValue());
+                      }).toArray(PropertiesFile[]::new);
+                      final PsiFile[] filesToPrepare = Arrays.stream(propertiesFiles).map(PropertiesFile::getContainingFile).toArray(PsiFile[]::new);
+                      if (FileModificationService.getInstance().preparePsiElementsForWrite(filesToPrepare)) {
+                        for (PropertiesFile file : propertiesFiles) {
+                          myPropertiesInsertDeleteManager.insertOrUpdateTranslation(currentSelectedProperty, valueToPropagate, file);
+                        }
+                        recreateEditorsPanel();
+                      }
+                    }
+                    catch (final IncorrectOperationException e1) {
+                      LOG.error(e1);
+                    }
+                  }));
+                }
+              });
+              EditorPopupHandler handler = EditorActionUtil.createEditorPopupHandler(group);
+              handler.invokePopup(event);
+              event.consume();
+            }
+          }
+      });
   }
 
   private class DataProviderPanel extends JPanel implements DataProvider {
@@ -801,8 +902,9 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
       add(panel, BorderLayout.CENTER);
     }
 
+    @Override
     @Nullable
-    public Object getData(String dataId) {
+    public Object getData(@NotNull String dataId) {
       return ResourceBundleEditor.this.getData(dataId);
     }
   }
@@ -812,26 +914,30 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
       super(layout);
     }
 
+    @Override
     public Dimension getPreferredScrollableViewportSize() {
       return getPreferredSize();
     }
 
+    @Override
     public int getScrollableUnitIncrement(Rectangle visibleRect, int orientation, int direction) {
       Editor editor = myEditors.values().iterator().next();
       return editor.getLineHeight()*4;
     }
 
+    @Override
     public int getScrollableBlockIncrement(Rectangle visibleRect, int orientation, int direction) {
       return visibleRect.height;
     }
 
+    @Override
     public boolean getScrollableTracksViewportWidth() {
       return true;
     }
 
+    @Override
     public boolean getScrollableTracksViewportHeight() {
       return false;
     }
   }
-
 }

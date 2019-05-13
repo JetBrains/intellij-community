@@ -1,0 +1,70 @@
+<idea-plugin>
+  <module value="com.intellij.modules.remoteServers"/>
+
+  <extensionPoints>
+    <extensionPoint name="remoteServer.type" interface="com.intellij.remoteServer.ServerType"/>
+    <extensionPoint name="remoteServer.deploymentSource.type" interface="com.intellij.remoteServer.configuration.deployment.DeploymentSourceType"/>
+    <extensionPoint name="remoteServer.viewContributor" interface="com.intellij.remoteServer.impl.runtime.ui.RemoteServersViewContributor"/>
+
+    <extensionPoint name="remoteServer.util.CloudDeploymentRuntimeProvider"
+                    interface="com.intellij.remoteServer.util.CloudDeploymentRuntimeProvider"/>
+    <extensionPoint name="remoteServer.runConfigurationExtension"
+                    interface="com.intellij.remoteServer.impl.configuration.deployment.DeployToServerRunConfigurationExtension"/>
+  </extensionPoints>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <applicationService serviceInterface="com.intellij.remoteServer.configuration.RemoteServersManager"
+                        serviceImplementation="com.intellij.remoteServer.impl.configuration.RemoteServersManagerImpl"/>
+    <applicationService serviceInterface="com.intellij.remoteServer.runtime.ServerConnectionManager"
+                        serviceImplementation="com.intellij.remoteServer.impl.runtime.ServerConnectionManagerImpl"/>
+    <applicationService serviceInterface="com.intellij.remoteServer.agent.RemoteAgentManager"
+                        serviceImplementation="com.intellij.remoteServer.agent.impl.RemoteAgentManagerImpl"/>
+    <applicationService serviceInterface="com.intellij.remoteServer.runtime.clientLibrary.ClientLibraryManager"
+                        serviceImplementation="com.intellij.remoteServer.impl.runtime.clientLibrary.ClientLibraryManagerImpl"/>
+    <applicationService serviceInterface="com.intellij.remoteServer.impl.configuration.deployment.DeployToServerRunConfigurationExtensionsManager"
+                        serviceImplementation="com.intellij.remoteServer.impl.configuration.deployment.DeployToServerRunConfigurationExtensionsManager"/>
+    <applicationConfigurable groupId="build"
+                             id="RemoteServers"
+                             provider="com.intellij.remoteServer.impl.configuration.RemoteServerListConfigurableProvider"/>
+    <search.optionContributor implementation="com.intellij.remoteServer.impl.configuration.RemoteServerSearchableOptionContributor"/>
+    <programRunner implementation="com.intellij.remoteServer.impl.runtime.DeployToServerRunner"/>
+    <projectService serviceInterface="com.intellij.remoteServer.runtime.ui.RemoteServersView"
+                    serviceImplementation="com.intellij.remoteServer.impl.runtime.ui.RemoteServersViewImpl"/>
+    <projectService serviceInterface="com.intellij.remoteServer.configuration.deployment.DeploymentConfigurationManager"
+                    serviceImplementation="com.intellij.remoteServer.impl.configuration.deployment.DeploymentConfigurationManagerImpl"/>
+    <remoteServer.deploymentSource.type implementation="com.intellij.remoteServer.impl.configuration.deployment.ModuleDeploymentSourceType"/>
+    <applicationService serviceInterface="com.intellij.remoteServer.impl.runtime.log.CloudTerminalProvider"
+                        serviceImplementation="com.intellij.remoteServer.impl.runtime.log.ConsoleTerminalProvider"/>
+    <toolWindow id="Application Servers" anchor="bottom" icon="RemoteServersIcons.ServersToolWindow"
+                factoryClass="com.intellij.remoteServer.impl.runtime.ui.DefaultServersToolWindowFactory"
+                conditionClass="com.intellij.remoteServer.impl.runtime.ui.DefaultServersToolWindowFactory"/>
+    <applicationInitializedListener implementation="com.intellij.remoteServer.impl.configuration.deployment.DeployToServerConfigurationTypesRegistrar"/>
+  </extensions>
+  <project-components>
+    <component>
+      <implementation-class>com.intellij.remoteServer.impl.runtime.ui.DefaultServersToolWindowManager</implementation-class>
+      <headless-implementation-class/>
+    </component>
+  </project-components>
+
+  <actions>
+    <group id="RemoteServersViewToolbar" text="Remote Servers">
+      <action id="RemoteServers.ConnectServer" class="com.intellij.remoteServer.impl.runtime.ui.tree.actions.RemoteServerConnectAction"/>
+      <action id="RemoteServers.DisconnectServer" class="com.intellij.remoteServer.impl.runtime.ui.tree.actions.RemoteServerDisconnectAction"/>
+      <action id="RemoteServers.EditServerConfig" class="com.intellij.remoteServer.impl.runtime.ui.tree.actions.RemoteServerConfigAction"/>
+      <action id="RemoteServers.ChooseServerDeployment" class="com.intellij.remoteServer.impl.runtime.ui.tree.actions.ChooseDeploymentAction"/>
+      <action id="RemoteServers.ChooseServerDeploymentWithDebug" class="com.intellij.remoteServer.impl.runtime.ui.tree.actions.ChooseDeploymentWithDebugAction"/>
+
+      <action id="Servers.Deploy" class="com.intellij.remoteServer.impl.runtime.ui.tree.actions.DeployAction"/>
+      <action id="Servers.Undeploy" class="com.intellij.remoteServer.impl.runtime.ui.tree.actions.UndeployAction"/>
+      <action id="Servers.DeployWithDebug" class="com.intellij.remoteServer.impl.runtime.ui.tree.actions.DeployWithDebugAction"/>
+      <action id="RemoteServers.EditDeploymentConfig" class="com.intellij.remoteServer.impl.runtime.ui.tree.actions.DeploymentConfigAction"/>
+
+      <add-to-group group-id="Other.KeymapGroup"/>
+    </group>
+    <group id="RemoteServersViewPopup"/>
+    <group id="RemoteServersViewToolbar.Top">
+      <add-to-group group-id="Other.KeymapGroup"/>
+    </group>
+  </actions>
+</idea-plugin>

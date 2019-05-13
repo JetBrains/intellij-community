@@ -20,46 +20,44 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.vcs.vfs.VcsFileSystem;
-import com.intellij.openapi.vcs.vfs.VcsVirtualFile;
+import com.intellij.openapi.vfs.CharsetToolkit;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.testFramework.LightVirtualFile;
+import org.jetbrains.annotations.NotNull;
 
-import java.io.UnsupportedEncodingException;
 import java.nio.charset.Charset;
 
-@SuppressWarnings({ "ComponentNotRegistered" })
 public class OpenOutputAction extends AnAction {
   private final AdditionalTabComponent myConsole;
 
   public OpenOutputAction(AdditionalTabComponent console) {
     super("Open in Editor");
     myConsole = console;
-    getTemplatePresentation().setIcon(AllIcons.Actions.Export);
+    getTemplatePresentation().setIcon(AllIcons.ToolbarDecorator.Export);
   }
 
-  public void actionPerformed(AnActionEvent e) {
-    final Editor editor = PlatformDataKeys.EDITOR.getData(DataManager.getInstance().getDataContext(myConsole.getComponent()));
+  @Override
+  public void actionPerformed(@NotNull AnActionEvent e) {
+    final Editor editor = CommonDataKeys.EDITOR.getData(DataManager.getInstance().getDataContext(myConsole.getComponent()));
     if (editor != null) {
-      try {
-        final byte[] content = editor.getDocument().getText().getBytes("UTF-8");
-        final String extension = "xml"; // TODO: get from output type
-        final VcsVirtualFile file = new VcsVirtualFile("XSLT Output." + extension, content, null, VcsFileSystem.getInstance()) {
-          @Override
-          public Charset getCharset() {
-            return Charset.forName("UTF-8");
-          }
-        };
-        FileEditorManager.getInstance(PlatformDataKeys.PROJECT.getData(e.getDataContext())).openFile(file, true);
-      } catch (UnsupportedEncodingException e1) {
-        throw new AssertionError(e);
-      }
+      final String extension = "xml"; // TODO: get from output type
+      final VirtualFile file = new LightVirtualFile("XSLT Output." + extension, editor.getDocument().getText()) {
+        @NotNull
+        @Override
+        public Charset getCharset() {
+          return CharsetToolkit.UTF8_CHARSET;
+        }
+      };
+      FileEditorManager.getInstance(e.getProject()).openFile(file, true);
     }
   }
 
-  public void update(AnActionEvent e) {
-    final Editor editor = PlatformDataKeys.EDITOR.getData(DataManager.getInstance().getDataContext(myConsole.getComponent()));
+  @Override
+  public void update(@NotNull AnActionEvent e) {
+    final Editor editor = CommonDataKeys.EDITOR.getData(DataManager.getInstance().getDataContext(myConsole.getComponent()));
     e.getPresentation().setEnabled(editor != null && editor.getDocument().getTextLength() > 0);
   }
 }

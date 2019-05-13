@@ -20,6 +20,7 @@ import com.intellij.framework.detection.FrameworkDetectionContext;
 import com.intellij.framework.detection.FrameworkDetector;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtilCore;
@@ -52,7 +53,7 @@ public class FrameworkDetectionProcessor {
   public FrameworkDetectionProcessor(ProgressIndicator progressIndicator, final FrameworkDetectionContext context) {
     myProgressIndicator = progressIndicator;
     final FrameworkDetector[] detectors = FrameworkDetector.EP_NAME.getExtensions();
-    myDetectorsByFileType = new MultiMap<FileType, FrameworkDetectorData>();
+    myDetectorsByFileType = new MultiMap<>();
     for (FrameworkDetector detector : detectors) {
       myDetectorsByFileType.putValue(detector.getFileType(), new FrameworkDetectorData(detector));
     }
@@ -60,13 +61,13 @@ public class FrameworkDetectionProcessor {
   }
 
   public List<? extends DetectedFrameworkDescription> processRoots(List<File> roots) {
-    myProcessedFiles = new HashSet<VirtualFile>();
+    myProcessedFiles = new HashSet<>();
     for (File root : roots) {
       VirtualFile virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(root);
       if (virtualFile == null) continue;
       collectSuitableFiles(virtualFile);
     }
-    List<DetectedFrameworkDescription> result = new ArrayList<DetectedFrameworkDescription>();
+    List<DetectedFrameworkDescription> result = new ArrayList<>();
     for (FrameworkDetectorData data : myDetectorsByFileType.values()) {
       result.addAll(data.myDetector.detect(data.mySuitableFiles, myContext));
     }
@@ -74,24 +75,27 @@ public class FrameworkDetectionProcessor {
   }
 
   private void collectSuitableFiles(@NotNull VirtualFile file) {
-    class CancelledException extends RuntimeException { }
-
     try {
       VfsUtilCore.visitChildrenRecursively(file, new VirtualFileVisitor() {
         @Override
         public boolean visitFile(@NotNull VirtualFile file) {
-          if (myProgressIndicator.isCanceled()) {
-            throw new CancelledException();
-          }
+          // Since this code is invoked from New Project Wizard it's very possible that VFS isn't loaded to memory yet, so we need to do it
+          // manually, otherwise refresh will do nothing
+          myProgressIndicator.checkCanceled();
+          return true;
+        }
+      });
+      file.refresh(false, true);
+
+      VfsUtilCore.visitChildrenRecursively(file, new VirtualFileVisitor() {
+        @Override
+        public boolean visitFile(@NotNull VirtualFile file) {
+          myProgressIndicator.checkCanceled();
           if (!myProcessedFiles.add(file)) {
             return false;
           }
 
-          if (file.isDirectory()) {
-            file.getChildren();  // initialize myChildren field to ensure that refresh will be really performed
-            file.refresh(false, false);
-          }
-          else {
+          if (!file.isDirectory()) {
             final FileType fileType = file.getFileType();
             if (myDetectorsByFileType.containsKey(fileType)) {
               myProgressIndicator.setText2(file.getPresentableUrl());
@@ -113,15 +117,16 @@ public class FrameworkDetectionProcessor {
         }
       });
     }
-    catch (CancelledException ignored) { }
+    catch (ProcessCanceledException ignored) {
+    }
   }
 
   private static class FrameworkDetectorData {
-    private FrameworkDetector myDetector;
+    private final FrameworkDetector myDetector;
     private final ElementPattern<FileContent> myFilePattern;
-    private final List<VirtualFile> mySuitableFiles = new ArrayList<VirtualFile>();
+    private final List<VirtualFile> mySuitableFiles = new ArrayList<>();
 
-    public FrameworkDetectorData(FrameworkDetector detector) {
+    FrameworkDetectorData(FrameworkDetector detector) {
       myDetector = detector;
       myFilePattern = detector.createSuitableFilePattern();
     }

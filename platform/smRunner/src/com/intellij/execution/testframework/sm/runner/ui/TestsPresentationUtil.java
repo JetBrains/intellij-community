@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,22 +17,17 @@ package com.intellij.execution.testframework.sm.runner.ui;
 
 import com.intellij.execution.testframework.PoolOfTestIcons;
 import com.intellij.execution.testframework.TestConsoleProperties;
-import com.intellij.execution.testframework.TestsUIUtil;
 import com.intellij.execution.testframework.sm.SMTestsRunnerBundle;
 import com.intellij.execution.testframework.sm.runner.SMTestProxy;
 import com.intellij.execution.testframework.sm.runner.states.TestStateInfo;
-import com.intellij.execution.testframework.ui.TestsProgressAnimator;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.ui.ColoredTableCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.awt.*;
-import java.util.List;
 import java.util.Set;
 
 import static com.intellij.execution.testframework.sm.runner.ui.SMPoolOfTestIcons.*;
@@ -42,25 +37,6 @@ import static com.intellij.execution.testframework.sm.runner.ui.SMPoolOfTestIcon
  */
 public class TestsPresentationUtil {
   @NonNls private static final String DOUBLE_SPACE = "  ";
-  @NonNls private static final String SECONDS_SUFFIX = " " + SMTestsRunnerBundle.message("sm.test.runner.ui.tests.tree.presentation.labels.seconds");
-  @NonNls private static final String MILLISECONDS_SUFFIX = " " + SMTestsRunnerBundle.message("sm.test.runner.ui.tests.tree.presentation.labels.milliseconds");
-  @NonNls private static final String WORLD_CREATION_TIME = "0" + SECONDS_SUFFIX;
-  @NonNls private static final String DURATION_UNKNOWN = SMTestsRunnerBundle.message(
-      "sm.test.runner.ui.tabs.statistics.columns.duration.unknown");
-  @NonNls private static final String DURATION_NO_TESTS = SMTestsRunnerBundle.message(
-      "sm.test.runner.ui.tabs.statistics.columns.duration.no.tests");
-  @NonNls private static final String DURATION_NOT_RUN = SMTestsRunnerBundle.message(
-      "sm.test.runner.ui.tabs.statistics.columns.duration.not.run");
-  @NonNls private static final String DURATION_RUNNING_PREFIX = SMTestsRunnerBundle.message(
-      "sm.test.runner.ui.tabs.statistics.columns.duration.prefix.running");
-  @NonNls private static final String DURATION_TERMINATED_PREFIX = SMTestsRunnerBundle.message(
-      "sm.test.runner.ui.tabs.statistics.columns.duration.prefix.terminated");
-  @NonNls private static final String COLON = ": ";
-  public static final SimpleTextAttributes PASSED_ATTRIBUTES = new SimpleTextAttributes(SimpleTextAttributes.STYLE_BOLD, TestsUIUtil.PASSED_COLOR);
-  public static final SimpleTextAttributes DEFFECT_ATTRIBUTES = new SimpleTextAttributes(SimpleTextAttributes.STYLE_BOLD, Color.RED);
-  public static final SimpleTextAttributes TERMINATED_ATTRIBUTES = new SimpleTextAttributes(SimpleTextAttributes.STYLE_BOLD, Color.ORANGE);
-  @NonNls private static final String RESULTS_NO_TESTS = SMTestsRunnerBundle.message(
-      "sm.test.runner.ui.tabs.statistics.columns.results.no.tests");
   @NonNls private static final String NO_NAME_TEST = SMTestsRunnerBundle.message(
       "sm.test.runner.ui.tests.tree.presentation.labels.test.noname");
   @NonNls private static final String UNKNOWN_TESTS_COUNT = "<...>";
@@ -87,8 +63,7 @@ public class TestsPresentationUtil {
     if (allCategories != null) {
       // if all categories is just one default tests category - let's do not add prefixes
 
-      if (allCategories.size() > 1
-          || (allCategories.size() == 1 && !DEFAULT_TESTS_CATEGORY.equals(allCategories.iterator().next()))) {
+      if (hasNonDefaultCategories(allCategories)) {
 
         sb.append(' ');
         boolean first = true;
@@ -126,11 +101,18 @@ public class TestsPresentationUtil {
     if (endTime != 0) {
       final long time = endTime - startTime;
       sb.append(DOUBLE_SPACE);
-      sb.append('(').append(convertToSecondsOrMs(time)).append(')');
+      sb.append('(').append(StringUtil.formatDuration(time, "\u2009")).append(')');
     }
     sb.append(DOUBLE_SPACE);
 
     return sb.toString();
+  }
+
+  public static boolean hasNonDefaultCategories(@Nullable Set<String> allCategories) {
+    if (allCategories == null) {
+      return false;
+    }
+    return allCategories.size() > 1 || (allCategories.size() == 1 && !DEFAULT_TESTS_CATEGORY.equals(allCategories.iterator().next()));
   }
 
   public static void formatRootNodeWithChildren(final SMTestProxy.SMRootTestProxy testProxy,
@@ -140,7 +122,10 @@ public class TestsPresentationUtil {
     final TestStateInfo.Magnitude magnitude = testProxy.getMagnitudeInfo();
 
     final String text;
-    if (magnitude == TestStateInfo.Magnitude.RUNNING_INDEX) {
+    final String presentableName = testProxy.getPresentation();
+    if (presentableName != null) {
+      text = presentableName;
+    } else if (magnitude == TestStateInfo.Magnitude.RUNNING_INDEX) {
       text = SMTestsRunnerBundle.message("sm.test.runner.ui.tests.tree.presentation.labels.running.tests");
     } else if (magnitude == TestStateInfo.Magnitude.TERMINATED_INDEX) {
       text = SMTestsRunnerBundle.message("sm.test.runner.ui.tests.tree.presentation.labels.was.terminated");
@@ -148,16 +133,23 @@ public class TestsPresentationUtil {
       text = SMTestsRunnerBundle.message("sm.test.runner.ui.tests.tree.presentation.labels.test.results");
     }
     renderer.append(text, SimpleTextAttributes.REGULAR_ATTRIBUTES);
+    final String comment = testProxy.getComment();
+    if (comment != null) {
+      renderer.append(" (" + comment + ")", SimpleTextAttributes.GRAY_ATTRIBUTES);
+    }
   }
 
   public static void formatRootNodeWithoutChildren(final SMTestProxy.SMRootTestProxy testProxy,
                                                    final TestTreeRenderer renderer) {
     final TestStateInfo.Magnitude magnitude = testProxy.getMagnitudeInfo();
     if (magnitude == TestStateInfo.Magnitude.RUNNING_INDEX) {
-      renderer.setIcon(getIcon(testProxy, renderer.getConsoleProperties()));
-      renderer.append(SMTestsRunnerBundle.message(
-          "sm.test.runner.ui.tests.tree.presentation.labels.instantiating.tests"),
-                      SimpleTextAttributes.REGULAR_ATTRIBUTES);
+      if (!testProxy.getChildren().isEmpty()) {
+        formatRootNodeWithChildren(testProxy, renderer);
+      } else {
+        renderer.setIcon(getIcon(testProxy, renderer.getConsoleProperties()));
+        renderer.append(SMTestsRunnerBundle.message("sm.test.runner.ui.tests.tree.presentation.labels.instantiating.tests"),
+                        SimpleTextAttributes.REGULAR_ATTRIBUTES);
+      }
     } else if (magnitude == TestStateInfo.Magnitude.NOT_RUN_INDEX) {
       renderer.setIcon(PoolOfTestIcons.NOT_RAN);
       renderer.append(SMTestsRunnerBundle.message(
@@ -173,6 +165,12 @@ public class TestsPresentationUtil {
       renderer.append(SMTestsRunnerBundle.message(
           "sm.test.runner.ui.tests.tree.presentation.labels.all.tests.passed"),
                       SimpleTextAttributes.REGULAR_ATTRIBUTES);
+    }
+    else if (magnitude == TestStateInfo.Magnitude.IGNORED_INDEX && !testProxy.hasErrors()) {
+      renderer.setIcon(PoolOfTestIcons.IGNORED_ICON);
+      renderer.append(SMTestsRunnerBundle.message(
+        "sm.test.runner.ui.tests.tree.presentation.labels.all.but.ignored.passed"),
+                      SimpleTextAttributes.REGULAR_ATTRIBUTES );
     }
     else {
       if (!testProxy.getChildren().isEmpty()) {
@@ -201,15 +199,35 @@ public class TestsPresentationUtil {
     final SMTestProxy parent = testProxy.getParent();
     final String name = testProxy.getName();
 
+    if (name == null) {
+      return NO_NAME_TEST;
+    }
+
     String presentationCandidate = name;
     if (parent != null) {
-      final String parentName = parent.getName();
-      if (name.startsWith(parentName)) {
-        presentationCandidate = name.substring(parentName.length());
+      String parentName = parent.getName();
+      if (parentName != null) {
+        boolean parentStartsWith = name.startsWith(parentName);
+        if (!parentStartsWith && parent instanceof SMTestProxy.SMRootTestProxy) {
+          final String presentation = ((SMTestProxy.SMRootTestProxy)parent).getPresentation();
+          if (presentation != null) {
+            parentName = presentation;
+            parentStartsWith = name.startsWith(parentName);
 
-        // remove "." separator
-        if (presentationCandidate.startsWith(".")) {
-          presentationCandidate = presentationCandidate.substring(1);
+            if (!parentStartsWith) {
+              String comment = ((SMTestProxy.SMRootTestProxy)parent).getComment();
+              if (comment != null) {
+                parentName = StringUtil.getQualifiedName(comment, presentation);
+                parentStartsWith = name.startsWith(parentName);
+              }
+            }
+          }
+        }
+        if (parentStartsWith) {
+          presentationCandidate = name.substring(parentName.length());
+
+          // remove "." separator
+          presentationCandidate = StringUtil.trimStart(presentationCandidate, ".");
         }
       }
     }
@@ -263,8 +281,7 @@ public class TestsPresentationUtil {
           return hasErrors ? PAUSED_E_ICON : AllIcons.RunConfigurations.TestPaused;
         }
         else {
-          final int frameIndex = TestsProgressAnimator.getCurrentFrameIndex();
-          return hasErrors ? FRAMES_E[frameIndex] : TestsProgressAnimator.FRAMES[frameIndex];
+          return hasErrors ? RUNNING_E_ICON : RUNNING_ICON;
         }
       case SKIPPED_INDEX:
         return hasErrors ? SKIPPED_E_ICON : SKIPPED_ICON;
@@ -277,175 +294,5 @@ public class TestsPresentationUtil {
   @Nullable
   public static String getTestStatusPresentation(final SMTestProxy proxy) {
     return proxy.getMagnitudeInfo().getTitle();
-  }
-
-  public static void appendSuiteStatusColorPresentation(final SMTestProxy proxy,
-                                                        final ColoredTableCellRenderer renderer) {
-    int passedCount = 0;
-    int errorsCount = 0;
-    int failedCount = 0;
-    int ignoredCount = 0;
-
-    if (proxy.isLeaf()) {
-      // If suite is empty show <no tests> label and exit from method
-      renderer.append(RESULTS_NO_TESTS, proxy.wasLaunched() ? PASSED_ATTRIBUTES : DEFFECT_ATTRIBUTES);
-      return;
-    }
-
-    final List<SMTestProxy> allTestCases = proxy.getAllTests();
-    for (SMTestProxy testOrSuite : allTestCases) {
-      // we should ignore test suites
-      if (testOrSuite.isSuite()) {
-        continue;
-      }
-      // if test check it state
-      switch (testOrSuite.getMagnitudeInfo()) {
-        case COMPLETE_INDEX:
-        case PASSED_INDEX:
-          passedCount++;
-          break;
-        case ERROR_INDEX:
-          errorsCount++;
-          break;
-        case FAILED_INDEX:
-          failedCount++;
-          break;
-        case IGNORED_INDEX:
-        case SKIPPED_INDEX:
-          ignoredCount++;
-          break;
-        case NOT_RUN_INDEX:
-        case TERMINATED_INDEX:
-        case RUNNING_INDEX:
-          //Do nothing
-          break;
-      }
-    }
-
-    final String separator = " ";
-
-    if (failedCount > 0) {
-      renderer.append(SMTestsRunnerBundle.message(
-          "sm.test.runner.ui.tabs.statistics.columns.results.count.msg.failed",
-                                      failedCount) + separator,
-                      DEFFECT_ATTRIBUTES);
-    }
-
-    if (errorsCount > 0) {
-      renderer.append(SMTestsRunnerBundle.message(
-          "sm.test.runner.ui.tabs.statistics.columns.results.count.msg.errors",
-                                      errorsCount) + separator,
-                      DEFFECT_ATTRIBUTES);
-    }
-
-    if (ignoredCount > 0) {
-      renderer.append(SMTestsRunnerBundle.message(
-          "sm.test.runner.ui.tabs.statistics.columns.results.count.msg.ignored",
-                                      ignoredCount) + separator,
-                      SimpleTextAttributes.GRAYED_BOLD_ATTRIBUTES);
-    }
-
-    if (passedCount > 0) {
-      renderer.append(SMTestsRunnerBundle.message(
-          "sm.test.runner.ui.tabs.statistics.columns.results.count.msg.passed",
-                                      passedCount),
-                      PASSED_ATTRIBUTES);
-    }
-  }
-
-  /**
-   * @param proxy Test or Suite
-   * @return Duration presentation for given proxy
-   */
-  @Nullable
-  public static String getDurationPresentation(final SMTestProxy proxy) {
-    switch (proxy.getMagnitudeInfo()) {
-      case COMPLETE_INDEX:
-      case PASSED_INDEX:
-      case FAILED_INDEX:
-      case ERROR_INDEX:
-      case IGNORED_INDEX:
-      case SKIPPED_INDEX:
-        return getDurationTimePresentation(proxy);
-
-      case NOT_RUN_INDEX:
-        return DURATION_NOT_RUN;
-
-      case RUNNING_INDEX:
-        return getDurationWithPrefixPresentation(proxy, DURATION_RUNNING_PREFIX);
-
-      case TERMINATED_INDEX:
-        return getDurationWithPrefixPresentation(proxy, DURATION_TERMINATED_PREFIX);
-
-      default:
-        return DURATION_UNKNOWN;
-    }
-  }
-
-  private static String getDurationWithPrefixPresentation(final SMTestProxy proxy,
-                                                          final String prefix) {
-    // If duration is known
-    if (proxy.getDuration() != null) {
-      return prefix + COLON + getDurationTimePresentation(proxy);
-    }
-
-    return '<' + prefix + '>';
-  }
-
-  private static String getDurationTimePresentation(final SMTestProxy proxy) {
-    final Long duration = proxy.getDuration();
-
-    if (duration == null) {
-      // if suite without children
-      return proxy.isSuite() && proxy.isLeaf()
-             ? DURATION_NO_TESTS
-             : DURATION_UNKNOWN;
-    } else {
-      return convertToSecondsOrMs(duration.longValue());
-    }
-  }
-
-  /**
-   * @param duration In milliseconds
-   * @return Value in seconds or millisecond depending on its value
-   */
-  private static String convertToSecondsOrMs(@NotNull final Long duration) {
-    if (duration == 0) {
-      return WORLD_CREATION_TIME;
-    } else if (duration < 100) {
-      return String.valueOf(duration) + MILLISECONDS_SUFFIX;
-    } else {
-      return String.valueOf(duration.floatValue() / 1000) + SECONDS_SUFFIX;
-    }
-  }
-
-  public static void appendTestStatusColorPresentation(final SMTestProxy proxy,
-                                                       final ColoredTableCellRenderer renderer) {
-    final String title = getTestStatusPresentation(proxy);
-
-    final TestStateInfo.Magnitude info = proxy.getMagnitudeInfo();
-    switch (info) {
-      case COMPLETE_INDEX:
-      case PASSED_INDEX:
-        renderer.append(title, PASSED_ATTRIBUTES);
-        break;
-      case RUNNING_INDEX:
-        renderer.append(title, SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
-        break;
-      case NOT_RUN_INDEX:
-        renderer.append(title, SimpleTextAttributes.GRAYED_BOLD_ATTRIBUTES);
-        break;
-      case IGNORED_INDEX:
-      case SKIPPED_INDEX:
-        renderer.append(title, SimpleTextAttributes.EXCLUDED_ATTRIBUTES);
-        break;
-      case ERROR_INDEX:
-      case FAILED_INDEX:
-        renderer.append(title, DEFFECT_ATTRIBUTES);
-        break;
-      case TERMINATED_INDEX:
-        renderer.append(title, TERMINATED_ATTRIBUTES);
-        break;
-    }
   }
 }

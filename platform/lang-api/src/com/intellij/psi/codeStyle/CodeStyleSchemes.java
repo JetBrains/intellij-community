@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,22 +16,14 @@
 package com.intellij.psi.codeStyle;
 
 import com.intellij.openapi.components.ServiceManager;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
-/**
- * @author MYakovlev
- * Date: Jul 19, 2002
- */
 public abstract class CodeStyleSchemes {
-
   public static CodeStyleSchemes getInstance(){
-    CodeStyleSchemes schemes = ServiceManager.getService(CodeStyleSchemes.class);
-    if (!schemes.isLoaded()) {
-      schemes.loadSettings();
-    }
-    return schemes;
+    return ServiceManager.getService(CodeStyleSchemes.class);
   }
-
-  public abstract CodeStyleScheme[] getSchemes();
 
   public abstract CodeStyleScheme getCurrentScheme();
 
@@ -39,16 +31,36 @@ public abstract class CodeStyleSchemes {
 
   public abstract CodeStyleScheme createNewScheme(String preferredName, CodeStyleScheme parentScheme);
 
-  public abstract void deleteScheme(CodeStyleScheme scheme);
+  @TestOnly
+  public abstract void deleteScheme(@NotNull CodeStyleScheme scheme);
 
-  public abstract CodeStyleScheme findSchemeByName(String name);
+  @Nullable
+  public abstract CodeStyleScheme findSchemeByName(@NotNull String name);
+
+  /**
+   * Attempts to find a scheme with a given name or an alternative suitable scheme.
+   *
+   * @param preferredSchemeName The scheme name to find or null for the currently selected scheme.
+   * @return A found scheme or a default scheme if the scheme name was not found or, if neither exists or the scheme name is null, the
+   *         currently selected scheme.
+   */
+  @NotNull
+  public CodeStyleScheme findPreferredScheme(@Nullable String preferredSchemeName) {
+    CodeStyleScheme scheme = null;
+    if (preferredSchemeName != null) {
+      scheme = findSchemeByName(preferredSchemeName);
+    }
+    if (scheme == null) {
+      scheme = getCurrentScheme();
+    }
+    if (scheme == null) {
+      scheme = getDefaultScheme();
+    }
+    return scheme;
+  }
 
   public abstract CodeStyleScheme getDefaultScheme();
 
-  public abstract void addScheme(CodeStyleScheme currentScheme);
-
-  public abstract boolean isLoaded();
-
-  public abstract void loadSettings();
+  public abstract void addScheme(@NotNull CodeStyleScheme currentScheme);
 }
 

@@ -19,6 +19,7 @@ import com.intellij.lang.ASTNode;
 import com.intellij.psi.impl.source.tree.ChildRole;
 import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.tree.ChildRoleBase;
+import org.jetbrains.annotations.NotNull;
 
 public class ImportStaticStatementElement extends ImportStatementBaseElement {
 
@@ -30,23 +31,20 @@ public class ImportStaticStatementElement extends ImportStatementBaseElement {
   public ASTNode findChildByRole(int role) {
     final ASTNode result = super.findChildByRole(role);
     if (result != null) return result;
-    switch (role) {
-      default:
-        return null;
-
-      case ChildRole.IMPORT_REFERENCE:
-        final ASTNode importStaticReference = findChildByType(JavaElementType.IMPORT_STATIC_REFERENCE);
-        if (importStaticReference != null) {
-          return importStaticReference;
-        }
-        else {
-          return findChildByType(JavaElementType.JAVA_CODE_REFERENCE);
-        }
+    if (role == ChildRole.IMPORT_REFERENCE) {
+      final ASTNode importStaticReference = findChildByType(JavaElementType.IMPORT_STATIC_REFERENCE);
+      if (importStaticReference != null) {
+        return importStaticReference;
+      }
+      else {
+        return findChildByType(JavaElementType.JAVA_CODE_REFERENCE);
+      }
     }
+    return null;
   }
 
   @Override
-  public int getChildRole(ASTNode child) {
+  public int getChildRole(@NotNull ASTNode child) {
     final int role = super.getChildRole(child);
     if (role != ChildRoleBase.NONE) return role;
     if (child.getElementType() == JavaElementType.IMPORT_STATIC_REFERENCE) {

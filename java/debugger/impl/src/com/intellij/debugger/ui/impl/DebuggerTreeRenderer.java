@@ -1,34 +1,30 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.ui.impl;
 
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.impl.DebuggerContextImpl;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.ui.impl.watch.*;
+import com.intellij.debugger.ui.tree.NodeDescriptor;
 import com.intellij.debugger.ui.tree.ValueDescriptor;
+import com.intellij.debugger.ui.tree.render.EnumerationChildrenRenderer;
 import com.intellij.icons.AllIcons;
-import com.intellij.openapi.editor.SyntaxHighlighterColors;
-import com.intellij.openapi.editor.colors.EditorColorsManager;
+import com.intellij.ide.highlighter.JavaHighlightingColors;
+import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.*;
 import com.intellij.util.PlatformIcons;
+import com.intellij.xdebugger.XDebugSession;
+import com.intellij.xdebugger.XDebuggerManager;
+import com.intellij.xdebugger.impl.XDebugSessionImpl;
+import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
+import com.intellij.xdebugger.impl.ui.XDebugSessionTab;
 import com.intellij.xdebugger.impl.ui.XDebuggerUIConstants;
 import com.intellij.xdebugger.impl.ui.tree.ValueMarkup;
+import com.sun.jdi.ObjectReference;
+import com.sun.jdi.Value;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -36,11 +32,12 @@ import java.awt.*;
 
 public class DebuggerTreeRenderer extends ColoredTreeCellRenderer {
 
-  private static final SimpleTextAttributes DEFAULT_ATTRIBUTES = new SimpleTextAttributes(Font.PLAIN, null);
-  private static final SimpleTextAttributes SPECIAL_NODE_ATTRIBUTES = new SimpleTextAttributes(Font.PLAIN, new JBColor(Color.lightGray, Gray._130));
-  private static final SimpleTextAttributes OBJECT_ID_HIGHLIGHT_ATTRIBUTES = new SimpleTextAttributes(Font.PLAIN, new JBColor(Color.lightGray, Gray._130));
+  private static final SimpleTextAttributes DEFAULT_ATTRIBUTES = new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, null);
+  private static final SimpleTextAttributes SPECIAL_NODE_ATTRIBUTES = new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, new JBColor(Color.lightGray, Gray._130));
+  private static final SimpleTextAttributes OBJECT_ID_HIGHLIGHT_ATTRIBUTES = new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, new JBColor(Color.lightGray, Gray._130));
 
-  public void customizeCellRenderer(JTree tree, Object value, boolean selected, boolean expanded, boolean leaf, int row, boolean hasFocus) {
+  @Override
+  public void customizeCellRenderer(@NotNull JTree tree, Object value, boolean selected, boolean expanded, boolean leaf, int row, boolean hasFocus) {
     final DebuggerTreeNodeImpl node = (DebuggerTreeNodeImpl) value;
 
     if (node != null) {
@@ -53,7 +50,7 @@ public class DebuggerTreeRenderer extends ColoredTreeCellRenderer {
   }
 
   @Nullable
-  public static Icon getDescriptorIcon(NodeDescriptorImpl descriptor) {
+  public static Icon getDescriptorIcon(NodeDescriptor descriptor) {
     Icon nodeIcon = null;
     if (descriptor instanceof ThreadGroupDescriptorImpl) {
       nodeIcon = (((ThreadGroupDescriptorImpl)descriptor).isCurrent() ? AllIcons.Debugger.ThreadGroupCurrent : AllIcons.Debugger.ThreadGroup);
@@ -67,31 +64,7 @@ public class DebuggerTreeRenderer extends ColoredTreeCellRenderer {
       nodeIcon = stackDescriptor.getIcon();
     }
     else if (descriptor instanceof ValueDescriptorImpl) {
-      final ValueDescriptorImpl valueDescriptor = (ValueDescriptorImpl)descriptor;
-      if (valueDescriptor instanceof FieldDescriptorImpl && ((FieldDescriptorImpl)valueDescriptor).isStatic()) {
-        nodeIcon = PlatformIcons.FIELD_ICON;
-      }
-      else if (valueDescriptor.isArray()) {
-        nodeIcon = AllIcons.Debugger.Db_array;
-      }
-      else if (valueDescriptor.isPrimitive()) {
-        nodeIcon = AllIcons.Debugger.Db_primitive;
-      }
-      else {
-        if (valueDescriptor instanceof WatchItemDescriptor) {
-          nodeIcon = AllIcons.Debugger.Watch;
-        }
-        else {
-          nodeIcon = AllIcons.Debugger.Value;
-        }
-      }
-      final Icon valueIcon = valueDescriptor.getValueIcon();
-      if (nodeIcon != null && valueIcon != null) {
-        final RowIcon composite = new RowIcon(2);
-        composite.setIcon(nodeIcon, 0);
-        composite.setIcon(valueIcon, 1);
-        nodeIcon = composite;
-      }
+      nodeIcon = getValueIcon((ValueDescriptorImpl)descriptor, null);
     }
     else if (descriptor instanceof MessageDescriptor) {
       MessageDescriptor messageDescriptor = (MessageDescriptor)descriptor;
@@ -112,15 +85,108 @@ public class DebuggerTreeRenderer extends ColoredTreeCellRenderer {
     return nodeIcon;
   }
 
+  public static Icon getValueIcon(ValueDescriptorImpl valueDescriptor, @Nullable ValueDescriptorImpl parentDescriptor) {
+    Icon nodeIcon;
+    if (valueDescriptor instanceof FieldDescriptorImpl) {
+      FieldDescriptorImpl fieldDescriptor = (FieldDescriptorImpl)valueDescriptor;
+      nodeIcon = PlatformIcons.FIELD_ICON;
+      if (parentDescriptor != null) {
+        Value value = valueDescriptor.getValue();
+        if (value instanceof ObjectReference && value.equals(parentDescriptor.getValue())) {
+          nodeIcon = AllIcons.Debugger.Selfreference;
+        }
+      }
+      if (fieldDescriptor.getField().isFinal()) {
+        nodeIcon = new LayeredIcon(nodeIcon, AllIcons.Nodes.FinalMark);
+      }
+      if (fieldDescriptor.isStatic()) {
+        nodeIcon = new LayeredIcon(nodeIcon, AllIcons.Nodes.StaticMark);
+      }
+    }
+    else if (valueDescriptor instanceof ThrownExceptionValueDescriptorImpl) {
+      nodeIcon = AllIcons.Nodes.ExceptionClass;
+    }
+    else if (valueDescriptor instanceof MethodReturnValueDescriptorImpl) {
+      nodeIcon = AllIcons.Debugger.WatchLastReturnValue;
+    }
+    else if (isParameter(valueDescriptor)) {
+      nodeIcon = PlatformIcons.PARAMETER_ICON;
+    }
+    else if (valueDescriptor.isEnumConstant()) {
+      nodeIcon = PlatformIcons.ENUM_ICON;
+    }
+    else if (valueDescriptor.isArray()) {
+      nodeIcon = AllIcons.Debugger.Db_array;
+    }
+    else if (valueDescriptor.isPrimitive()) {
+      nodeIcon = AllIcons.Debugger.Db_primitive;
+    }
+    else if (valueDescriptor instanceof WatchItemDescriptor) {
+      nodeIcon = AllIcons.Debugger.Db_watch;
+    }
+    else {
+      nodeIcon = AllIcons.Debugger.Value;
+    }
+
+    if (valueDescriptor instanceof UserExpressionDescriptorImpl) {
+      EnumerationChildrenRenderer enumerationChildrenRenderer =
+        EnumerationChildrenRenderer.getCurrent(((UserExpressionDescriptorImpl)valueDescriptor).getParentDescriptor());
+      if (enumerationChildrenRenderer != null && enumerationChildrenRenderer.isAppendDefaultChildren()) {
+        nodeIcon = AllIcons.Debugger.Db_watch;
+      }
+    }
+
+    // if watches in variables enabled, always use watch icon
+    if (valueDescriptor instanceof WatchItemDescriptor && nodeIcon != AllIcons.Debugger.Db_watch) {
+      XDebugSession session = XDebuggerManager.getInstance(valueDescriptor.getProject()).getCurrentSession();
+      if (session != null) {
+        XDebugSessionTab tab = ((XDebugSessionImpl)session).getSessionTab();
+        if (tab != null && tab.isWatchesInVariables()) {
+          nodeIcon = AllIcons.Debugger.Db_watch;
+        }
+      }
+    }
+
+    final Icon valueIcon = valueDescriptor.getValueIcon();
+    if (nodeIcon != null && valueIcon != null) {
+      nodeIcon = new RowIcon(nodeIcon, valueIcon);
+    }
+    return nodeIcon;
+  }
+
+  private static boolean isParameter(ValueDescriptorImpl valueDescriptor) {
+    if (valueDescriptor instanceof LocalVariableDescriptorImpl) {
+      try {
+        return ((LocalVariableDescriptorImpl)valueDescriptor).getLocalVariable().getVariable().isArgument();
+      }
+      catch (EvaluateException ignored) {
+      }
+    }
+    else if (valueDescriptor instanceof ArgumentValueDescriptorImpl) {
+      return ((ArgumentValueDescriptorImpl)valueDescriptor).isParameter();
+    }
+    return false;
+  }
+
+  public static SimpleColoredText getDescriptorText(DebuggerContextImpl debuggerContext,
+                                                    NodeDescriptorImpl descriptor,
+                                                    EditorColorsScheme colorsScheme,
+                                                    boolean multiline) {
+    return getDescriptorText(debuggerContext, descriptor, colorsScheme, multiline, true);
+  }
+
   public static SimpleColoredText getDescriptorText(final DebuggerContextImpl debuggerContext, NodeDescriptorImpl descriptor, boolean multiline) {
-    return getDescriptorText(debuggerContext, descriptor, multiline, true);
+    return getDescriptorText(debuggerContext, descriptor, DebuggerUIUtil.getColorScheme(null), multiline, true);
   }
 
   public static SimpleColoredText getDescriptorTitle(final DebuggerContextImpl debuggerContext, NodeDescriptorImpl descriptor) {
-    return getDescriptorText(debuggerContext, descriptor, false, false);
+    return getDescriptorText(debuggerContext, descriptor, DebuggerUIUtil.getColorScheme(null), false, false);
   }
 
-  private static SimpleColoredText getDescriptorText(final DebuggerContextImpl debuggerContext, final NodeDescriptorImpl descriptor, boolean multiline,
+  private static SimpleColoredText getDescriptorText(DebuggerContextImpl debuggerContext,
+                                                     NodeDescriptorImpl descriptor,
+                                                     EditorColorsScheme colorScheme,
+                                                     boolean multiline,
                                                      boolean appendValue) {
     SimpleColoredText descriptorText = new SimpleColoredText();
 
@@ -193,25 +259,25 @@ public class DebuggerTreeRenderer extends ColoredTreeCellRenderer {
             valueLabelAttribs = XDebuggerUIConstants.CHANGED_VALUE_ATTRIBUTES;
           }
           else {
-            TextAttributes highlightingAttribs = null;
+            TextAttributes attributes = null;
             if (valueDescriptor.isNull()){
-              highlightingAttribs = EditorColorsManager.getInstance().getGlobalScheme().getAttributes(SyntaxHighlighterColors.KEYWORD);
+              attributes = colorScheme.getAttributes(JavaHighlightingColors.KEYWORD);
             }
             else if (valueDescriptor.isString()) {
-              highlightingAttribs = EditorColorsManager.getInstance().getGlobalScheme().getAttributes(SyntaxHighlighterColors.STRING);
+              attributes = colorScheme.getAttributes(JavaHighlightingColors.STRING);
             }
-            valueLabelAttribs = highlightingAttribs != null? SimpleTextAttributes.fromTextAttributes(highlightingAttribs) : DEFAULT_ATTRIBUTES;
+            valueLabelAttribs = attributes != null? SimpleTextAttributes.fromTextAttributes(attributes) : DEFAULT_ATTRIBUTES;
           }
 
           final EvaluateException exception = descriptor.getEvaluateException();
           if(exception != null) {
             final String errorMessage = exception.getMessage();
             if(valueLabel.endsWith(errorMessage)) {
-              appendValueTextWithEscapesRendering(descriptorText, valueLabel.substring(0, valueLabel.length() - errorMessage.length()), valueLabelAttribs);
+              appendValueTextWithEscapesRendering(descriptorText, valueLabel.substring(0, valueLabel.length() - errorMessage.length()), valueLabelAttribs, colorScheme);
               descriptorText.append(errorMessage, XDebuggerUIConstants.EXCEPTION_ATTRIBUTES);
             }
             else {
-              appendValueTextWithEscapesRendering(descriptorText, valueLabel, valueLabelAttribs);
+              appendValueTextWithEscapesRendering(descriptorText, valueLabel, valueLabelAttribs, colorScheme);
               descriptorText.append(errorMessage, XDebuggerUIConstants.EXCEPTION_ATTRIBUTES);
             }
           }
@@ -220,7 +286,7 @@ public class DebuggerTreeRenderer extends ColoredTreeCellRenderer {
               descriptorText.append(XDebuggerUIConstants.COLLECTING_DATA_MESSAGE, XDebuggerUIConstants.COLLECTING_DATA_HIGHLIGHT_ATTRIBUTES);
             }
             else {
-              appendValueTextWithEscapesRendering(descriptorText, valueLabel, valueLabelAttribs);
+              appendValueTextWithEscapesRendering(descriptorText, valueLabel, valueLabelAttribs, colorScheme);
             }
           }
         }
@@ -233,7 +299,10 @@ public class DebuggerTreeRenderer extends ColoredTreeCellRenderer {
     return descriptorText;
   }
 
-  private static void appendValueTextWithEscapesRendering(SimpleColoredText descriptorText, String valueText, final SimpleTextAttributes attribs) {
+  private static void appendValueTextWithEscapesRendering(SimpleColoredText descriptorText,
+                                                          String valueText,
+                                                          SimpleTextAttributes attribs,
+                                                          EditorColorsScheme colorScheme) {
     SimpleTextAttributes escapeAttribs = null;
     final StringBuilder buf = new StringBuilder();
     boolean slashFound = false;
@@ -248,7 +317,7 @@ public class DebuggerTreeRenderer extends ColoredTreeCellRenderer {
           }
 
           if (escapeAttribs == null) { // lazy init
-            final TextAttributes fromHighlighter = EditorColorsManager.getInstance().getGlobalScheme().getAttributes(SyntaxHighlighterColors.VALID_STRING_ESCAPE);
+            TextAttributes fromHighlighter = colorScheme.getAttributes(JavaHighlightingColors.VALID_STRING_ESCAPE);
             if (fromHighlighter != null) {
               escapeAttribs = SimpleTextAttributes.fromTextAttributes(fromHighlighter);
             }

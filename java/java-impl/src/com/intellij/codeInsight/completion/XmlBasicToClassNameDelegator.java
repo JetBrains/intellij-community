@@ -21,6 +21,7 @@ import com.intellij.lang.StdLanguages;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.Consumer;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author peter
@@ -28,7 +29,7 @@ import com.intellij.util.Consumer;
 public class XmlBasicToClassNameDelegator extends CompletionContributor {
 
   @Override
-  public void fillCompletionVariants(CompletionParameters parameters, final CompletionResultSet result) {
+  public void fillCompletionVariants(@NotNull CompletionParameters parameters, @NotNull final CompletionResultSet result) {
     PsiElement position = parameters.getPosition();
     PsiFile file = position.getContainingFile();
     if (parameters.getCompletionType() != CompletionType.BASIC ||
@@ -45,17 +46,14 @@ public class XmlBasicToClassNameDelegator extends CompletionContributor {
 
     if (empty && JavaClassReferenceCompletionContributor.findJavaClassReference(file, parameters.getOffset()) != null ||
         parameters.isExtendedCompletion()) {
-      CompletionService.getCompletionService().getVariantsFromContributors(parameters.delegateToClassName(), null, new Consumer<CompletionResult>() {
-        @Override
-        public void consume(final CompletionResult completionResult) {
-          LookupElement lookupElement = completionResult.getLookupElement();
-          JavaPsiClassReferenceElement classElement = lookupElement.as(JavaPsiClassReferenceElement.CLASS_CONDITION_KEY);
-          if (classElement != null) {
-            classElement.setAutoCompletionPolicy(AutoCompletionPolicy.NEVER_AUTOCOMPLETE);
-          }
-          lookupElement.putUserData(XmlCompletionContributor.WORD_COMPLETION_COMPATIBLE, Boolean.TRUE); //todo think of a less dirty interaction
-          result.passResult(completionResult);
+      CompletionService.getCompletionService().getVariantsFromContributors(parameters.delegateToClassName(), null, completionResult -> {
+        LookupElement lookupElement = completionResult.getLookupElement();
+        JavaPsiClassReferenceElement classElement = lookupElement.as(JavaPsiClassReferenceElement.CLASS_CONDITION_KEY);
+        if (classElement != null) {
+          classElement.setAutoCompletionPolicy(AutoCompletionPolicy.NEVER_AUTOCOMPLETE);
         }
+        lookupElement.putUserData(XmlCompletionContributor.WORD_COMPLETION_COMPATIBLE, Boolean.TRUE); //todo think of a less dirty interaction
+        result.passResult(completionResult);
       });
     }
   }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,18 +26,19 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.Collection;
+import java.util.List;
 
 /**
  * @author nik
  */
-public class RelatedItemLineMarkerInfo<T extends PsiElement> extends LineMarkerInfo<T> {
-  private final NotNullLazyValue<Collection<? extends GotoRelatedItem>> myTargets;
+public class RelatedItemLineMarkerInfo<T extends PsiElement> extends MergeableLineMarkerInfo<T> {
+  private final NotNullLazyValue<? extends Collection<? extends GotoRelatedItem>> myTargets;
 
   public RelatedItemLineMarkerInfo(@NotNull T element, @NotNull TextRange range, Icon icon, int updatePass,
                                    @Nullable Function<? super T, String> tooltipProvider,
                                    @Nullable GutterIconNavigationHandler<T> navHandler,
-                                   GutterIconRenderer.Alignment alignment,
-                                   @NotNull NotNullLazyValue<Collection<? extends GotoRelatedItem>> targets) {
+                                   @NotNull GutterIconRenderer.Alignment alignment,
+                                   @NotNull NotNullLazyValue<? extends Collection<? extends GotoRelatedItem>> targets) {
     super(element, range, icon, updatePass, tooltipProvider, navHandler, alignment);
     myTargets = targets;
   }
@@ -45,7 +46,7 @@ public class RelatedItemLineMarkerInfo<T extends PsiElement> extends LineMarkerI
   public RelatedItemLineMarkerInfo(@NotNull T element, @NotNull TextRange range, Icon icon, int updatePass,
                                    @Nullable Function<? super T, String> tooltipProvider,
                                    @Nullable GutterIconNavigationHandler<T> navHandler,
-                                   GutterIconRenderer.Alignment alignment,
+                                   @NotNull GutterIconRenderer.Alignment alignment,
                                    @NotNull final Collection<? extends GotoRelatedItem> targets) {
     this(element, range, icon, updatePass, tooltipProvider, navHandler, alignment, new NotNullLazyValue<Collection<? extends GotoRelatedItem>>() {
       @NotNull
@@ -64,11 +65,21 @@ public class RelatedItemLineMarkerInfo<T extends PsiElement> extends LineMarkerI
   @Override
   public GutterIconRenderer createGutterRenderer() {
     if (myIcon == null) return null;
-    return new RelatedItemLineMarkerGutterIconRenderer<T>(this);
+    return new RelatedItemLineMarkerGutterIconRenderer<>(this);
+  }
+
+  @Override
+  public boolean canMergeWith(@NotNull MergeableLineMarkerInfo<?> info) {
+    return myIcon == info.myIcon;
+  }
+
+  @Override
+  public Icon getCommonIcon(@NotNull List<MergeableLineMarkerInfo> infos) {
+    return myIcon;
   }
 
   private static class RelatedItemLineMarkerGutterIconRenderer<T extends PsiElement> extends LineMarkerGutterIconRenderer<T> {
-    public RelatedItemLineMarkerGutterIconRenderer(final RelatedItemLineMarkerInfo<T> markerInfo) {
+    RelatedItemLineMarkerGutterIconRenderer(final RelatedItemLineMarkerInfo<T> markerInfo) {
       super(markerInfo);
     }
 

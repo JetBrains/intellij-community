@@ -25,7 +25,7 @@ import java.util.List;
  * Interface for a custom step in a list popup.
  *
  * @see ListPopup
- * @see com.intellij.openapi.ui.popup.JBPopupFactory#createListPopup(ListPopupStep)
+ * @see JBPopupFactory#createListPopup(ListPopupStep)
  * @since 6.0
  */
 public interface ListPopupStep<T> extends PopupStep<T> {
@@ -54,6 +54,10 @@ public interface ListPopupStep<T> extends PopupStep<T> {
    */
   @Nullable
   Icon getIconFor(T aValue);
+
+  default Icon getSelectedIconFor(T value) {
+    return getIconFor(value);
+  }
 
   /**
    * Returns the text to display for the specified list item.

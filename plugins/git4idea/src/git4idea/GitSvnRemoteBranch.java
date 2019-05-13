@@ -30,8 +30,8 @@ import org.jetbrains.annotations.NotNull;
  */
 public class GitSvnRemoteBranch extends GitRemoteBranch {
 
-  public GitSvnRemoteBranch(@NotNull String fullName, @NotNull Hash hash) {
-    super(fullName, hash);
+  public GitSvnRemoteBranch(@NotNull String fullName) {
+    super(fullName);
   }
 
   @NotNull
@@ -52,30 +52,9 @@ public class GitSvnRemoteBranch extends GitRemoteBranch {
     return GitRemote.DOT;
   }
 
-  @Override
-  public boolean isRemote() {
-    return true;
-  }
-
   @NotNull
   @Override
   public String getFullName() {
     return getName();
   }
-
-  @Override
-  public boolean equals(Object o) {
-    return super.equals(o);
-  }
-
-  @Override
-  public int hashCode() {
-    return super.hashCode();
-  }
-
-  @Override
-  public String toString() {
-    return super.toString();
-  }
-
 }

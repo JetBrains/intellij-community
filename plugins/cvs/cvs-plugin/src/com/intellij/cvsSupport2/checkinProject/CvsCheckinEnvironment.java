@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.cvsSupport2.checkinProject;
 
 import com.intellij.CvsBundle;
@@ -24,16 +10,18 @@ import com.intellij.cvsSupport2.cvsExecution.CvsOperationExecutor;
 import com.intellij.cvsSupport2.cvsExecution.CvsOperationExecutorCallback;
 import com.intellij.cvsSupport2.cvshandlers.CommandCvsHandler;
 import com.intellij.cvsSupport2.cvshandlers.CvsHandler;
+import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.vcs.CheckinProjectPanel;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.Change;
-import com.intellij.openapi.vcs.changes.ChangeList;
 import com.intellij.openapi.vcs.changes.ChangesUtil;
 import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.checkin.CheckinEnvironment;
 import com.intellij.openapi.vcs.ui.RefreshableOnComponent;
+import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.FunctionUtil;
@@ -55,6 +43,7 @@ public class CvsCheckinEnvironment implements CheckinEnvironment {
     myProject = project;
   }
 
+  @Override
   public RefreshableOnComponent createAdditionalOptionsPanel(final CheckinProjectPanel panel,
                                                              PairConsumer<Object, Object> additionalDataConsumer) {
     return null;
@@ -62,6 +51,7 @@ public class CvsCheckinEnvironment implements CheckinEnvironment {
     /*return new CvsProjectAdditionalPanel(panel, myProject);*/
   }
 
+  @Override
   public String getDefaultMessageFor(FilePath[] filesToCheckin) {
     if (filesToCheckin == null) {
       return null;
@@ -72,24 +62,27 @@ public class CvsCheckinEnvironment implements CheckinEnvironment {
     return CvsUtil.getTemplateFor(filesToCheckin[0]);
   }
 
+  @Override
   public String getHelpId() {
     return "cvs.commitProject";
   }
 
+  @Override
   public String getCheckinOperationName() {
     return CvsBundle.message("operation.name.checkin.project");
   }
 
+  @Override
   public List<VcsException> commit(List<Change> changes,
                                    String preparedComment,
                                    @NotNull NullableFunction<Object, Object> parametersHolder,
                                    Set<String> feedback) {
     final Collection<FilePath> filesList = ChangesUtil.getPaths(changes);
-    FilePath[] files = filesList.toArray(new FilePath[filesList.size()]);
+    FilePath[] files = filesList.toArray(new FilePath[0]);
     final CvsOperationExecutor executor = new CvsOperationExecutor(myProject);
     executor.setShowErrors(false);
 
-    final List<File> dirsToPrune = new ArrayList<File>();
+    final List<File> dirsToPrune = new ArrayList<>();
     for(Change c: changes) {
       if (c.getType() == Change.Type.DELETED) {
         final ContentRevision contentRevision = c.getBeforeRevision();
@@ -117,26 +110,36 @@ public class CvsCheckinEnvironment implements CheckinEnvironment {
     return executor.getResult().getErrorsAndWarnings();
   }
 
+  @Override
   public List<VcsException> commit(List<Change> changes, String preparedComment) {
-    return commit(changes, preparedComment, FunctionUtil.<Object, Object>nullConstant(), null);
+    return commit(changes, preparedComment, FunctionUtil.nullConstant(), null);
   }
 
+  @Override
   public List<VcsException> scheduleMissingFileForDeletion(List<FilePath> files) {
+    for (FilePath file : files) {
+      if (file.isDirectory()) {
+        VcsBalloonProblemNotifier.showOverChangesView(myProject,
+                                                      "Locally deleted directories cannot be removed from CVS. To remove a locally " +
+                                                      "deleted directory from CVS, first invoke Rollback and then use " +
+                                                      ApplicationNamesInfo.getInstance().getFullProductName() +
+                                                      "'s Delete.",
+                                                      MessageType.WARNING);
+        break;
+      }
+    }
     final CvsHandler handler = RemoveLocallyFileOrDirectoryAction.getDefaultHandler(myProject, ChangesUtil.filePathsToFiles(files));
     final CvsOperationExecutor executor = new CvsOperationExecutor(myProject);
     executor.performActionSync(handler, CvsOperationExecutorCallback.EMPTY);
     return Collections.emptyList();
   }
 
+  @Override
   public List<VcsException> scheduleUnversionedFilesForAddition(List<VirtualFile> files) {
     final CvsHandler handler = AddFileOrDirectoryAction.getDefaultHandler(myProject, VfsUtil.toVirtualFileArray(files));
     final CvsOperationExecutor executor = new CvsOperationExecutor(myProject);
     executor.performActionSync(handler, CvsOperationExecutorCallback.EMPTY);
     return Collections.emptyList();
-  }
-
-  public boolean keepChangeListAfterCommit(ChangeList changeList) {
-    return false;
   }
 
   @Override

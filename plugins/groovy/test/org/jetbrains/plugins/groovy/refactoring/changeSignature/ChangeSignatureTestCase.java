@@ -37,7 +37,7 @@ public abstract class ChangeSignatureTestCase extends LightCodeInsightFixtureTes
                           @NotNull GenExceptions genExceptions,
                           boolean generateDelegate) {
     final PsiElement targetElement = new GrChangeSignatureHandler().findTargetMember(myFixture.getFile(), myFixture.getEditor());
-      //TargetElementUtilBase.findTargetElement(myFixture.getEditor(), TargetElementUtilBase.ELEMENT_NAME_ACCEPTED);
+      //TargetElementUtil.findTargetElement(myFixture.getEditor(), TargetElementUtil.ELEMENT_NAME_ACCEPTED);
     assertTrue("<caret> is not on method name", targetElement instanceof GrMethod);
     GrMethod method = (GrMethod)targetElement;
     final PsiElementFactory factory = JavaPsiFacade.getInstance(getProject()).getElementFactory();

@@ -28,17 +28,20 @@ from mercurial.hgweb import hgweb_mod
 from mercurial import templatefilters, extensions
 from mercurial.i18n import _
 
-orig_escape = templatefilters.filters["escape"]
+testedwith = 'internal'
 
 interhg_table = []
 
-def interhg_escape(x):
-    escstr = orig_escape(x)
-    for regexp, format in interhg_table:
-        escstr = regexp.sub(format, escstr)
-    return escstr
+def uisetup(ui):
+    orig_escape = templatefilters.filters["escape"]
 
-templatefilters.filters["escape"] = interhg_escape
+    def interhg_escape(x):
+        escstr = orig_escape(x)
+        for regexp, format in interhg_table:
+            escstr = regexp.sub(format, escstr)
+        return escstr
+
+    templatefilters.filters["escape"] = interhg_escape
 
 def interhg_refresh(orig, self, *args, **kwargs):
     interhg_table[:] = []

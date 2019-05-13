@@ -1,42 +1,25 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.javaee;
 
-import com.intellij.ide.util.PropertiesComponent;
-import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorFontType;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
-import com.intellij.openapi.fileChooser.FileSystemTree;
-import com.intellij.openapi.fileChooser.ex.FileSystemTreeImpl;
+import com.intellij.openapi.fileChooser.FileChooserFactory;
+import com.intellij.openapi.fileChooser.FileTextField;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.ui.TextBrowseFolderListener;
+import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.DocumentAdapter;
-import com.intellij.ui.ScrollPaneFactory;
-import com.intellij.ui.components.JBPanel;
-import com.intellij.ui.components.JBTabbedPane;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.xml.config.ConfigFileSearcher;
@@ -49,7 +32,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.event.*;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.TreeSelectionEvent;
+import javax.swing.event.TreeSelectionListener;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreePath;
@@ -62,23 +47,47 @@ import java.util.Set;
 
 /**
  * @author Dmitry Avdeev
- *         Date: 7/17/12
  */
 public class MapExternalResourceDialog extends DialogWrapper {
 
-  private static final String MAP_EXTERNAL_RESOURCE_SELECTED_TAB = "map.external.resource.selected.tab";
+  private static final FileChooserDescriptor FILE_CHOOSER_DESCRIPTOR = new FileChooserDescriptor(true, false, false, false, true, false).withTitle("Choose Schema File");
+
   private JTextField myUri;
   private JPanel myMainPanel;
   private JTree mySchemasTree;
-  private JPanel myExplorerPanel;
-  private JBTabbedPane myTabs;
-  private final FileSystemTreeImpl myExplorer;
-  private String myLocation;
+  private JPanel mySchemasPanel;
+  private TextFieldWithBrowseButton myFileTextField;
+  private boolean mySchemaFound;
 
-  public MapExternalResourceDialog(String uri, @NotNull Project project, @Nullable PsiFile file, @Nullable String location) {
+  public MapExternalResourceDialog(String uri, @Nullable Project project, @Nullable PsiFile file, @Nullable String location) {
     super(project);
     setTitle("Map External Resource");
     myUri.setText(uri);
+    myUri.getDocument().addDocumentListener(new DocumentAdapter() {
+      @Override
+      protected void textChanged(@NotNull DocumentEvent e) {
+        validateInput();
+      }
+    });
+
+    if (project != null) {
+      String path = project.getBasePath();
+      if (path != null) {
+        myFileTextField.setText(FileUtil.toSystemDependentName(path));
+      }
+      setupSchemasTree(uri, project, file, location);
+    }
+    else {
+      mySchemasPanel.setVisible(false);
+    }
+    myFileTextField.addBrowseFolderListener(new TextBrowseFolderListener(FILE_CHOOSER_DESCRIPTOR, project));
+    init();
+  }
+
+  private void setupSchemasTree(String uri,
+                                @NotNull Project project,
+                                @Nullable PsiFile file,
+                                @Nullable String location) {
 
     DefaultMutableTreeNode root = new DefaultMutableTreeNode();
     mySchemasTree.setModel(new DefaultTreeModel(root));
@@ -87,7 +96,7 @@ public class MapExternalResourceDialog extends DialogWrapper {
       public Set<PsiFile> search(@Nullable Module module, @NotNull Project project) {
         List<IndexedRelevantResource<String, XsdNamespaceBuilder>> resources = XmlNamespaceIndex.getAllResources(module, project, null);
 
-        HashSet<PsiFile> files = new HashSet<PsiFile>();
+        HashSet<PsiFile> files = new HashSet<>();
         PsiManager psiManager = PsiManager.getInstance(project);
         for (IndexedRelevantResource<String, XsdNamespaceBuilder> resource : resources) {
           VirtualFile file = resource.getFile();
@@ -105,7 +114,7 @@ public class MapExternalResourceDialog extends DialogWrapper {
 
     ColoredTreeCellRenderer renderer = new ColoredTreeCellRenderer() {
       @Override
-      public void customizeCellRenderer(JTree tree,
+      public void customizeCellRenderer(@NotNull JTree tree,
                                         Object value,
                                         boolean selected,
                                         boolean expanded,
@@ -127,13 +136,6 @@ public class MapExternalResourceDialog extends DialogWrapper {
       }
     };
     mySchemasTree.addMouseListener(mouseAdapter);
-
-    myUri.getDocument().addDocumentListener(new DocumentAdapter() {
-      @Override
-      protected void textChanged(DocumentEvent e) {
-        validateInput();
-      }
-    });
     mySchemasTree.getSelectionModel().addTreeSelectionListener(new TreeSelectionListener() {
       @Override
       public void valueChanged(TreeSelectionEvent e) {
@@ -141,29 +143,13 @@ public class MapExternalResourceDialog extends DialogWrapper {
       }
     });
 
-    myExplorer = new FileSystemTreeImpl(project, new FileChooserDescriptor(true, false, false, false, true, false));
-
-    myExplorer.addListener(new FileSystemTree.Listener() {
-      @Override
-      public void selectionChanged(List<VirtualFile> selection) {
-        validateInput();
-      }
-    }, myExplorer);
-    myExplorer.getTree().addMouseListener(mouseAdapter);
-
-    myExplorerPanel.add(ScrollPaneFactory.createScrollPane(myExplorer.getTree()), BorderLayout.CENTER);
-
-    AnAction actionGroup = ActionManager.getInstance().getAction("FileChooserToolbar");
-    ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, (ActionGroup)actionGroup, true);
-    toolbar.setTargetComponent(myExplorerPanel);
-    myExplorerPanel.add(toolbar.getComponent(), BorderLayout.NORTH);
-
+    mySchemasTree.setSelectionRow(0);
     PsiFile schema = null;
     if (file != null) {
       schema = XmlUtil.findNamespaceByLocation(file, uri);
     }
     else if (location != null) {
-      VirtualFile virtualFile = VfsUtil.findRelativeFile(location, null);
+      VirtualFile virtualFile = VfsUtilCore.findRelativeFile(location, null);
       if (virtualFile != null) {
         schema = PsiManager.getInstance(project).findFile(virtualFile);
       }
@@ -172,27 +158,11 @@ public class MapExternalResourceDialog extends DialogWrapper {
     if (schema != null) {
       DefaultMutableTreeNode node = TreeUtil.findNodeWithObject(root, schema);
       if (node != null) {
+        mySchemaFound = true;
         TreeUtil.selectNode(mySchemasTree, node);
       }
-      myExplorer.select(schema.getVirtualFile(), null);
+      myFileTextField.setText(schema.getVirtualFile().getCanonicalPath());
     }
-
-    int index = PropertiesComponent.getInstance().getOrInitInt(MAP_EXTERNAL_RESOURCE_SELECTED_TAB, 0);
-    myTabs.setSelectedIndex(index);
-    myTabs.getModel().addChangeListener(new ChangeListener() {
-      @Override
-      public void stateChanged(ChangeEvent e) {
-        PropertiesComponent.getInstance().setValue(MAP_EXTERNAL_RESOURCE_SELECTED_TAB, Integer.toString(myTabs.getSelectedIndex()));
-      }
-    });
-    init();
-  }
-
-  @Override
-  protected void processDoNotAskOnOk(int exitCode) {
-    super.processDoNotAskOnOk(exitCode);
-    // store it since explorer will be disposed
-    myLocation = getResourceLocation();
   }
 
   private void validateInput() {
@@ -206,7 +176,18 @@ public class MapExternalResourceDialog extends DialogWrapper {
 
   @Override
   public JComponent getPreferredFocusedComponent() {
-    return StringUtil.isEmpty(myUri.getText()) ? myUri : mySchemasTree;
+    return StringUtil.isEmpty(myUri.getText()) ? myUri : mySchemaFound ? mySchemasTree : myFileTextField.getTextField();
+  }
+
+  @Override
+  public Dimension getPreferredSize() {
+    return new Dimension(400, 300);
+  }
+
+  @Nullable
+  @Override
+  protected String getDimensionServiceKey() {
+    return getClass().getName();
   }
 
   public String getUri() {
@@ -215,9 +196,7 @@ public class MapExternalResourceDialog extends DialogWrapper {
 
   @Nullable
   public String getResourceLocation() {
-    if (myLocation != null) return myLocation;
-
-    if (myTabs.getSelectedIndex() == 0) {
+    if (mySchemasTree.hasFocus()) {
       TreePath path = mySchemasTree.getSelectionPath();
       if (path == null) return null;
       Object object = ((DefaultMutableTreeNode)path.getLastPathComponent()).getUserObject();
@@ -225,22 +204,18 @@ public class MapExternalResourceDialog extends DialogWrapper {
       return FileUtil.toSystemIndependentName(((PsiFile)object).getVirtualFile().getPath());
     }
     else {
-      VirtualFile file = myExplorer.getSelectedFile();
-      return file == null ? null : FileUtil.toSystemIndependentName(file.getPath());
+      return myFileTextField.getText();
     }
   }
 
+  @Nullable
+  @Override
+  protected String getHelpId() {
+    return "Map External Resource dialog";
+  }
+
   private void createUIComponents() {
-    myExplorerPanel = new JBPanel(new BorderLayout()) {
-      @Override
-      public void calcData(DataKey key, DataSink sink) {
-        if (key == PlatformDataKeys.VIRTUAL_FILE_ARRAY) {
-          sink.put(PlatformDataKeys.VIRTUAL_FILE_ARRAY, myExplorer.getSelectedFiles());
-        }
-        else if (key == FileSystemTree.DATA_KEY) {
-          sink.put(FileSystemTree.DATA_KEY, myExplorer);
-        }
-      }
-    };
+    FileTextField field = FileChooserFactory.getInstance().createFileTextField(FILE_CHOOSER_DESCRIPTOR, getDisposable());
+    myFileTextField = new TextFieldWithBrowseButton(field.getField());
   }
 }

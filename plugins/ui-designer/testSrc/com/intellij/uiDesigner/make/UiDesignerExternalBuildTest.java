@@ -31,10 +31,6 @@ import java.io.IOException;
  * @author nik
  */
 public class UiDesignerExternalBuildTest extends ArtifactCompilerTestCase {
-  @Override
-  protected boolean useExternalCompiler() {
-    return true;
-  }
 
   //IDEA-94779
   public void testCopyFormsRuntimeToArtifact() throws IOException {

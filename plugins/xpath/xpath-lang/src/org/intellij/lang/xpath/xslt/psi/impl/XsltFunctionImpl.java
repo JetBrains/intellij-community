@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2011 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.intellij.lang.xpath.xslt.psi.impl;
 
 import com.intellij.navigation.ItemPresentation;
@@ -38,19 +24,10 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.xml.namespace.QName;
 
-/*
-* Created by IntelliJ IDEA.
-* User: sweinreuter
-* Date: 11.01.11
-*/
 public class XsltFunctionImpl extends XsltElementImpl implements XsltFunction, ItemPresentation {
-  private static final NotNullFunction<XmlTag,Parameter> PARAM_MAPPER = new NotNullFunction<XmlTag, Parameter>() {
-    @NotNull
-    @Override
-    public Parameter fun(XmlTag param) {
-      final XPathType type = XsltCodeInsightUtil.getDeclaredType(param);
-      return new Parameter(type != null ? type : XPath2Type.SEQUENCE, Parameter.Kind.REQUIRED);
-    }
+  private static final NotNullFunction<XmlTag,Parameter> PARAM_MAPPER = param -> {
+    final XPathType type = XsltCodeInsightUtil.getDeclaredType(param);
+    return new Parameter(type != null ? type : XPath2Type.SEQUENCE, Parameter.Kind.REQUIRED);
   };
 
   protected XsltFunctionImpl(XmlTag target) {
@@ -107,6 +84,7 @@ public class XsltFunctionImpl extends XsltElementImpl implements XsltFunction, I
     return super.setName(getQName().getPrefix() + ":" + name);
   }
 
+  @Override
   @Nullable
   public String getPresentableText() {
     final Function function = getFunction();
@@ -131,6 +109,7 @@ public class XsltFunctionImpl extends XsltElementImpl implements XsltFunction, I
     return getFunction().getMinArity();
   }
 
+  @Override
   public void accept(@NotNull XPathElementVisitor visitor) {
     visitor.visitXPathFunction(this);
   }

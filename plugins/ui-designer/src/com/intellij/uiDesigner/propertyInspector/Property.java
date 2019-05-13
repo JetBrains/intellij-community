@@ -1,23 +1,10 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.uiDesigner.propertyInspector;
 
-import com.intellij.uiDesigner.radComponents.RadComponent;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.uiDesigner.lw.IComponent;
 import com.intellij.uiDesigner.lw.IProperty;
-import com.intellij.uiDesigner.lw.IComponent;import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.uiDesigner.radComponents.RadComponent;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -50,11 +37,13 @@ public abstract class Property<T extends RadComponent, V> implements IProperty {
   /**
    * @return property's name.
    */
+  @Override
   @NotNull
   public final String getName() {
     return myName;
   }
 
+  @Override
   public Object getPropertyValue(final IComponent component) {
     //noinspection unchecked
     return getValue((T) component);
@@ -69,7 +58,7 @@ public abstract class Property<T extends RadComponent, V> implements IProperty {
 
   /**
    * Do not invoke this method outside Property class, bacuse
-   * <code>setValue(Component,Object)</code> does some additional work.
+   * {@code setValue(Component,Object)} does some additional work.
    * This method exists only for convenience.
    *
    * @see #setValue(RadComponent,Object)
@@ -78,14 +67,14 @@ public abstract class Property<T extends RadComponent, V> implements IProperty {
 
 
   /**
-   * Sets the <code>value</code> of the property. This method is invoked
+   * Sets the {@code value} of the property. This method is invoked
    * after editing is complete.
    *
    * @param component component which property should be set
    * @param value new propertie's value
    *
-   * @exception Exception if passed <code>value</code> cannot
-   * be applied to the <code>component</code>. Note, the exception's
+   * @exception Exception if passed {@code value} cannot
+   * be applied to the {@code component}. Note, the exception's
    * message will be shown to the user.
    */
   public final void setValue(final T component, final V value) throws Exception{
@@ -118,7 +107,7 @@ public abstract class Property<T extends RadComponent, V> implements IProperty {
 
   /**
    * @return property which is the parent for this property.
-   * The method can return <code>null</code> if the property
+   * The method can return {@code null} if the property
    * doesn't have parent.
    */
   @Nullable
@@ -141,7 +130,7 @@ public abstract class Property<T extends RadComponent, V> implements IProperty {
   public abstract PropertyRenderer<V> getRenderer();
 
   /**
-   * @return property's editor. The method allows to return <code>null</code>.
+   * @return property's editor. The method allows to return {@code null}.
    * In this case property is not editable.
    */
   @Nullable

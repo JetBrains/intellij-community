@@ -26,9 +26,9 @@ import java.io.OutputStream;
 import java.util.ArrayList;
 
 class VirtualFileDirectoryImpl extends VirtualFileImpl {
-  private final ArrayList<VirtualFileImpl> myChildren = new ArrayList<VirtualFileImpl>();
+  private final ArrayList<VirtualFileImpl> myChildren = new ArrayList<>();
 
-  public VirtualFileDirectoryImpl(DummyFileSystem fileSystem, VirtualFileDirectoryImpl parent, String name) {
+  VirtualFileDirectoryImpl(DummyFileSystem fileSystem, VirtualFileDirectoryImpl parent, String name) {
     super(fileSystem, parent, name);
   }
 
@@ -44,7 +44,7 @@ class VirtualFileDirectoryImpl extends VirtualFileImpl {
 
   @Override
   public VirtualFile[] getChildren() {
-    return myChildren.size() == 0 ? EMPTY_ARRAY : myChildren.toArray(new VirtualFile[myChildren.size()]);
+    return myChildren.size() == 0 ? EMPTY_ARRAY : myChildren.toArray(VirtualFile.EMPTY_ARRAY);
   }
 
   @Override

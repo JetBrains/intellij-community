@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,30 +15,55 @@
  */
 package com.intellij.ui;
 
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collections;
+import javax.swing.*;
 import java.util.List;
 
 /**
- * @author yole
+ * @author traff
  */
-public class CollectionComboBoxModel extends AbstractCollectionComboBoxModel {
-  private final List myItems;
+public class CollectionComboBoxModel<T> extends CollectionListModel<T> implements ComboBoxModel<T> {
+  protected T mySelection;
 
-  public CollectionComboBoxModel(final List items, @Nullable final Object selection) {
-    super(selection);
-    myItems = Collections.unmodifiableList(items);
+  public CollectionComboBoxModel() {
+    super();
+    mySelection = null;
   }
 
-  public CollectionComboBoxModel(List items) {
-    super(items.isEmpty() ? null : items.get(0));
-    myItems = items;
+  public CollectionComboBoxModel(@NotNull List<T> items) {
+    this(items, ContainerUtil.getFirstItem(items));
   }
 
-  @NotNull
-  final protected List getItems() {
-    return myItems;
+  public CollectionComboBoxModel(@NotNull List<T> items, @Nullable T selection) {
+    super(items, true);
+    mySelection = selection;
   }
+
+  @Override
+  public void setSelectedItem(@Nullable Object item) {
+    if (mySelection != item) {
+      @SuppressWarnings("unchecked") T t = (T)item;
+      mySelection = t;
+      update();
+    }
+  }
+
+  @Override
+  @Nullable
+  public Object getSelectedItem() {
+    return mySelection;
+  }
+
+  @Nullable
+  public T getSelected() {
+    return mySelection;
+  }
+
+  public void update() {
+    super.fireContentsChanged(this, -1, -1);
+  }
+
 }

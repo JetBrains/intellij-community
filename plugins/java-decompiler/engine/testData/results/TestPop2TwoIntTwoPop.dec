@@ -1,0 +1,31 @@
+package pkg;
+
+public class TestPop2TwoIntTwoPop {
+   public static void main(String... var0) {
+      char var10002 = '쫾';// 24
+      char var10003 = '몾';// 25
+      System.out.println(1234567890);// 22 23 28
+   }// 29
+}
+
+class 'pkg/TestPop2TwoIntTwoPop' {
+   method 'main ([Ljava/lang/String;)V' {
+      0      6
+      3      6
+      5      4
+      7      5
+      b      6
+      e      7
+   }
+}
+
+Lines mapping:
+22 <-> 7
+23 <-> 7
+24 <-> 5
+25 <-> 6
+28 <-> 7
+29 <-> 8
+Not mapped:
+26
+27

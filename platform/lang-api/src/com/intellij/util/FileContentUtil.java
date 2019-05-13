@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,6 @@
  */
 package com.intellij.util;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditorManager;
@@ -24,32 +23,26 @@ import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
-import com.intellij.openapi.vfs.newvfs.events.VFilePropertyChangeEvent;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
-import gnu.trove.THashSet;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Set;
+import java.util.LinkedHashSet;
 
 /**
  * @author peter
  */
-public class FileContentUtil {
-  @NonNls public static final String FORCE_RELOAD_REQUESTOR = "FileContentUtil.saveOrReload";
+public class FileContentUtil extends FileContentUtilCore {
 
-  private FileContentUtil() {
-  }
-
+  /**
+   * @deprecated to be removed after IDEA 15. Use {@link VfsUtil#saveText(VirtualFile, String)} instead.
+   */
+  @Deprecated
   public static void setFileText(@Nullable Project project, final VirtualFile virtualFile, final String text) throws IOException {
     if (project == null) {
       project = ProjectUtil.guessProjectForFile(virtualFile);
@@ -69,48 +62,17 @@ public class FileContentUtil {
     virtualFile.refresh(false, false);
   }
 
-  public static void reparseFiles(@NotNull final Project project, @NotNull final Collection<VirtualFile> files, final boolean includeOpenFiles) {
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      public void run() {
-        // files must be processed under one write action to prevent firing event for invalid files.
-
-        final Set<VFilePropertyChangeEvent> events = new THashSet<VFilePropertyChangeEvent>();
-        for (VirtualFile file : files) {
-          saveOrReload(file, events);
-        }
-        if (includeOpenFiles) {
-          for (VirtualFile open : FileEditorManager.getInstance(project).getOpenFiles()) {
-            if (!files.contains(open)) {
-              saveOrReload(open, events);
-            }
-          }
-        }
-
-        ApplicationManager.getApplication().getMessageBus().syncPublisher(VirtualFileManager.VFS_CHANGES)
-            .before(new ArrayList<VFileEvent>(events));
-        ApplicationManager.getApplication().getMessageBus().syncPublisher(VirtualFileManager.VFS_CHANGES)
-            .after(new ArrayList<VFileEvent>(events));
-      }
-    });
-  }
-
-  private static void saveOrReload(final VirtualFile virtualFile, Collection<VFilePropertyChangeEvent> events) {
-    if (virtualFile == null || virtualFile.isDirectory() || !virtualFile.isValid()) {
-      return;
+  public static void reparseFiles(@NotNull final Project project, @NotNull final Collection<? extends VirtualFile> files, final boolean includeOpenFiles) {
+    LinkedHashSet<VirtualFile> fileSet = new LinkedHashSet<>(files);
+    if (includeOpenFiles) {
+      Collections.addAll(fileSet, FileEditorManager.getInstance(project).getOpenFiles());
     }
-    final FileDocumentManager documentManager = FileDocumentManager.getInstance();
-    if (documentManager.isFileModified(virtualFile)) {
-      Document document = documentManager.getDocument(virtualFile);
-      if (document != null) {
-        documentManager.saveDocument(document);
-      }
-    }
-    events.add(new VFilePropertyChangeEvent(FORCE_RELOAD_REQUESTOR, virtualFile, VirtualFile.PROP_NAME, virtualFile.getName(), virtualFile.getName(), false));
+    FileContentUtilCore.reparseFiles(fileSet);
   }
 
   public static void reparseOpenedFiles() {
     for (Project project : ProjectManager.getInstance().getOpenProjects()) {
-      reparseFiles(project, Collections.<VirtualFile>emptyList(), true);
+      reparseFiles(project, Collections.emptyList(), true);
     }
   }
 }

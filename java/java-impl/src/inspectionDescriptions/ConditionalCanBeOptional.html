@@ -1,0 +1,16 @@
+<html>
+<body>
+Suggests to replace a null-check condition with an <b>Optional</b> chain. E.g.
+<pre>return str == null ? "" : str.trim();</pre>
+Could be rewritten as
+<pre>return Optional.ofNullable(str).map(String::trim).orElse("");</pre>
+<p>While the replacement is not always shorter, this could be a helpful step for further refactoring
+  (e.g. changing the method return value to an Optional).</p>
+<p>Note that when not-null branch of the condition returns null, the corresponding mapping step will produce an empty Optional
+possibly changing the semantics. If it cannot be statically proven that semantics will be preserved, quick-fix action name
+will contain "(may change semantics)" notice and inspection highlighting will be turned off.</p>
+<!-- tooltip end -->
+<p>This inspection only reports if the project or module is configured to use a language level of 8 or higher.</p>
+<p><small>New in 2018.1</small></p>
+</body>
+</html>

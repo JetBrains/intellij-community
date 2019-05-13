@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,8 +17,8 @@ package com.intellij.codeInsight.hint;
 
 import com.intellij.codeInsight.highlighting.TooltipLinkHandler;
 import com.intellij.codeInspection.InspectionProfile;
-import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.codeInspection.InspectionsBundle;
+import com.intellij.codeInspection.ex.InspectionToolWrapper;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -28,9 +28,9 @@ import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * Handles tooltip links in format <code>#inspection/inspection_short_name</code>.
+ * Handles tooltip links in format {@code #inspection/inspection_short_name}.
  * On a click or expend acton returns more detailed description for given inspection.
- * 
+ *
  * @author peter
  */
 public class InspectionDescriptionLinkHandler extends TooltipLinkHandler {
@@ -43,17 +43,17 @@ public class InspectionDescriptionLinkHandler extends TooltipLinkHandler {
       LOG.error(editor);
       return null;
     }
-
+    if (project.isDisposed()) return null;
     final PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
     if (file == null) {
       return null;
     }
 
-    final InspectionProfile profile = (InspectionProfile)InspectionProfileManager.getInstance().getRootProfile();
-    final InspectionProfileEntry tool = profile.getInspectionTool(refSuffix, file);
-    if (tool == null) return null;
+    final InspectionProfile profile = InspectionProfileManager.getInstance().getCurrentProfile();
+    final InspectionToolWrapper toolWrapper = profile.getInspectionTool(refSuffix, file);
+    if (toolWrapper == null) return null;
 
-    String description = tool.loadDescription();
+    String description = toolWrapper.loadDescription();
     if (description == null) {
       LOG.warn("No description for inspection '" + refSuffix + "'");
       description = InspectionsBundle.message("inspection.tool.description.under.construction.text");

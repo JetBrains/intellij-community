@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,25 +15,20 @@
  */
 package com.intellij.lang.properties;
 
-import com.intellij.codeInsight.generation.actions.CommentByLineCommentAction;
-import com.intellij.ide.DataManager;
-import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.testFramework.LightPlatformCodeInsightTestCase;
-import com.intellij.testFramework.PlatformTestCase;
+import com.intellij.testFramework.PlatformTestUtil;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @author cdr
  */
 public class PropertiesCommenterTest extends LightPlatformCodeInsightTestCase {
-  public void testProp1() throws Exception { doTest(); }
-  public void testUncomment() throws Exception { doTest(); }
-
-  public PropertiesCommenterTest() {
-    PlatformTestCase.initPlatformLangPrefix();
-  }
+  public void testProp1() { doTest(); }
+  public void testUncomment() { doTest(); }
+  public void testExclamationMark() { doTest(); }
+  public void testEmptyLineDuringUncomment() { doTest(); }
 
   @NotNull
   @Override
@@ -41,21 +36,9 @@ public class PropertiesCommenterTest extends LightPlatformCodeInsightTestCase {
     return PluginPathManager.getPluginHomePath("properties") + "/testData";
   }
 
-  private void doTest() throws Exception {
-    configureByFile("/propertiesFile/comment/before" + getTestName(false)+".properties");
-    performAction();
-    checkResultByFile("/propertiesFile/comment/after" + getTestName(false)+".properties");
-  }
-
-  private static void performAction() {
-    CommentByLineCommentAction action = new CommentByLineCommentAction();
-    action.actionPerformed(new AnActionEvent(
-      null,
-      DataManager.getInstance().getDataContext(),
-      "",
-      action.getTemplatePresentation(),
-      ActionManager.getInstance(),
-      0)
-    );
+  private void doTest() {
+    configureByFile("/propertiesFile/comment/before" + getTestName(false) + ".properties");
+    PlatformTestUtil.invokeNamedAction(IdeActions.ACTION_COMMENT_LINE);
+    checkResultByFile("/propertiesFile/comment/after" + getTestName(false) + ".properties");
   }
 }

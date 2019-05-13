@@ -1,9 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<problems>
-  <problem>
-    <file>FinalizeInspection.java</file>
-    <line>10</line>
-    <problem_class>'finalize()' declaration</problem_class>
-    <description>&lt;code&gt;finalize()&lt;/code&gt; declared #loc</description>
-  </problem>
-</problems>

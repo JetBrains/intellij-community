@@ -21,11 +21,10 @@ import org.jetbrains.idea.maven.model.MavenConstants;
 
 public class MavenProblemFileHighlighter implements Condition<VirtualFile> {
 
+  @Override
   public boolean value(final VirtualFile file) {
     String fileName = file.getName();
-
-    // MavenDomUtil.isProjectFile(PsiFile)
-    if (fileName.equals(MavenConstants.POM_XML) || fileName.endsWith(".pom") || fileName.equals(MavenConstants.SUPER_POM_XML)) {
+    if (MavenUtil.isPomFileName(fileName)) {
       return true;
     }
 

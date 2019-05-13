@@ -1,35 +1,16 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.util;
 
-import com.intellij.notification.NotificationGroup;
-import com.intellij.notification.NotificationListener;
-import com.intellij.notification.NotificationType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.AbstractVcsHelper;
 import com.intellij.openapi.vcs.VcsException;
-import com.intellij.openapi.vfs.VfsUtilCore;
+import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.ListCellRendererWrapper;
-import com.intellij.util.Function;
 import git4idea.GitBranch;
 import git4idea.GitUtil;
-import git4idea.GitVcs;
 import git4idea.i18n.GitBundle;
 import git4idea.repo.GitRepository;
 import org.jetbrains.annotations.NonNls;
@@ -37,9 +18,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.text.JTextComponent;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.io.File;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
@@ -57,58 +38,61 @@ public class GitUIUtil {
   /**
    * A private constructor for utility class
    */
-  private GitUIUtil() { }
-  
-  public static void notify(@NotNull NotificationGroup group, @NotNull  Project project, @Nullable String title, @Nullable String description, @NotNull NotificationType type, @Nullable NotificationListener listener) {
-    // title can't be null, but can be empty; description can't be neither null, nor empty
-    if (title == null) {
-      title = "";
-    }
-    if (StringUtil.isEmptyOrSpaces(description)) {
-      description = title; 
-      title = "";
-    }
-    // if both title and description were empty, then it is a problem in the calling code => let assertion notify about that.
-    assert description != null : "description is null after StringUtil.isEmptyOrSpaces(). title: " + title;
-    group.createNotification(title, description, type, listener).notify(project.isDefault() ? null : project);    
+  private GitUIUtil() {
   }
 
-  public static void notifyMessages(Project project, @Nullable String title, @Nullable String description, NotificationType type, boolean important, @Nullable Collection<String> messages) {
+  public static void notifyMessages(@NotNull Project project,
+                                    @NotNull String title,
+                                    @Nullable String description,
+                                    boolean important,
+                                    @Nullable Collection<String> messages) {
     String desc = (description != null ? description.replace("\n", "<br/>") : "");
     if (messages != null && !messages.isEmpty()) {
       desc += StringUtil.join(messages, "<hr/><br/>");
     }
-    NotificationGroup group = important ? GitVcs.IMPORTANT_ERROR_NOTIFICATION : GitVcs.NOTIFICATION_GROUP_ID;
-    notify(group, project, title, desc, type, null);
+    VcsNotifier notificator = VcsNotifier.getInstance(project);
+    if (important) {
+      notificator.notifyError(title, desc);
+    }
+    else {
+      notificator.notifyImportantWarning(title, desc);
+    }
   }
 
-  public static void notifyMessage(Project project, @Nullable String title, @Nullable String description, NotificationType type, boolean important, @Nullable Collection<? extends Exception> errors) {
+  public static void notifyMessage(Project project,
+                                   @NotNull String title,
+                                   @Nullable String description,
+                                   boolean important,
+                                   @Nullable Collection<? extends Exception> errors) {
     Collection<String> errorMessages;
     if (errors == null) {
       errorMessages = null;
-    } else {
-      errorMessages = new HashSet<String>(errors.size());
+    }
+    else {
+      errorMessages = new HashSet<>(errors.size());
       for (Exception error : errors) {
         if (error instanceof VcsException) {
           for (String message : ((VcsException)error).getMessages()) {
             errorMessages.add(message.replace("\n", "<br/>"));
           }
-        } else {
-          errorMessages.add(error.toString().replace("\n", "<br/>"));
+        }
+        else {
+          errorMessages.add(error.getMessage().replace("\n", "<br/>"));
         }
       }
     }
-    notifyMessages(project, title, description, type, important, errorMessages);
+    notifyMessages(project, title, description, important, errorMessages);
   }
 
-  public static void notifyError(Project project, String title, String description, boolean important, @Nullable Exception error) {    notifyMessage(project, title, description, NotificationType.ERROR, important, Collections.singleton(error));
+  public static void notifyError(Project project, String title, String description, boolean important, @Nullable Exception error) {
+    notifyMessage(project, title, description, important, error == null ? null : Collections.singleton(error));
   }
 
   /**
    * Splits the given VcsExceptions to one string. Exceptions are separated by &lt;br/&gt;
    * Line separator is also replaced by &lt;br/&gt;
    */
-  public static @NotNull String stringifyErrors(@Nullable Collection<VcsException> errors) {
+  public static @NotNull String stringifyErrors(@Nullable Collection<? extends VcsException> errors) {
     if (errors == null) {
       return "";
     }
@@ -121,22 +105,11 @@ public class GitUIUtil {
     return content.toString();
   }
 
-  /**
-   * Displays a "success"-notification.
-   */
-  public static void notifySuccess(Project project, String title, String description) {
-    GitVcs.NOTIFICATION_GROUP_ID.createNotification(title, description, NotificationType.INFORMATION, null).notify(project);
-  }
-
-  public static void notifyError(Project project, String title, String description) {
-    notifyMessage(project, title, description, NotificationType.ERROR, false, null);
-  }
-
   public static void notifyImportantError(Project project, String title, String description) {
-    notifyMessage(project, title, description, NotificationType.ERROR, true, null);
+    notifyMessage(project, title, description, true, null);
   }
 
-  public static void notifyGitErrors(Project project, String title, String description, Collection<VcsException> gitErrors) {
+  public static void notifyGitErrors(Project project, String title, String description, Collection<? extends VcsException> gitErrors) {
     StringBuilder content = new StringBuilder();
     if (!StringUtil.isEmptyOrSpaces(description)) {
       content.append(description);
@@ -147,7 +120,7 @@ public class GitUIUtil {
     for (VcsException e : gitErrors) {
       content.append(e.getLocalizedMessage()).append("<br/>");
     }
-    notifyError(project, title, content.toString());
+    notifyMessage(project, title, content.toString(), false, null);
   }
 
   /**
@@ -157,7 +130,7 @@ public class GitUIUtil {
     return new ListCellRendererWrapper<VirtualFile>() {
       @Override
       public void customize(final JList list, final VirtualFile file, final int index, final boolean selected, final boolean hasFocus) {
-        setText(file == null || !file.isValid() ? "(invalid)" : file.getPresentableUrl());
+        setText(file == null ? "(invalid)" : file.getPresentableUrl());
       }
     };
   }
@@ -182,7 +155,7 @@ public class GitUIUtil {
    * @param currentBranchLabel current branch label (might be null)
    */
   public static void setupRootChooser(@NotNull final Project project,
-                                      @NotNull final List<VirtualFile> roots,
+                                      @NotNull final List<? extends VirtualFile> roots,
                                       @Nullable final VirtualFile defaultRoot,
                                       @NotNull final JComboBox gitRootChooser,
                                       @Nullable final JLabel currentBranchLabel) {
@@ -193,6 +166,7 @@ public class GitUIUtil {
     gitRootChooser.setSelectedItem(defaultRoot != null ? defaultRoot : roots.get(0));
     if (currentBranchLabel != null) {
       final ActionListener listener = new ActionListener() {
+        @Override
         public void actionPerformed(final ActionEvent e) {
           VirtualFile root = (VirtualFile)gitRootChooser.getSelectedItem();
           assert root != null : "The root must not be null";
@@ -231,10 +205,9 @@ public class GitUIUtil {
    * @param operation the operation name
    */
   public static void showOperationErrors(final Project project,
-                                         final Collection<VcsException> exs,
+                                         final Collection<? extends VcsException> exs,
                                          @NonNls @NotNull final String operation) {
     if (exs.size() == 1) {
-      //noinspection ThrowableResultOfMethodCallIgnored
       showOperationError(project, operation, exs.iterator().next().getMessage());
     }
     else if (exs.size() > 1) {
@@ -283,6 +256,7 @@ public class GitUIUtil {
     ActionListener l = new ActionListener() {
       Boolean previousState;
 
+      @Override
       public void actionPerformed(ActionEvent e) {
         if (checked.isSelected() == checkedState) {
           if (previousState == null) {
@@ -336,6 +310,7 @@ public class GitUIUtil {
       /**
        * {@inheritDoc}
        */
+      @Override
       public void actionPerformed(ActionEvent e) {
         check(first, firstState, second, !secondState);
         check(second, secondState, first, !firstState);
@@ -356,10 +331,11 @@ public class GitUIUtil {
    * @param checkedState the state that triggers disabling changed state
    * @param changed      the checkbox to change
    */
-  public static void implyDisabled(final JCheckBox checked, final boolean checkedState, final JTextField changed) {
+  public static void implyDisabled(final JCheckBox checked, final boolean checkedState, final JTextComponent changed) {
     ActionListener l = new ActionListener() {
       String previousState;
 
+      @Override
       public void actionPerformed(ActionEvent e) {
         if (checked.isSelected() == checkedState) {
           if (previousState == null) {
@@ -388,48 +364,9 @@ public class GitUIUtil {
   public static String code(String s) {
     return surround(s, "code");
   }
-  
+
   private static String surround(String s, String tag) {
     return String.format("<%2$s>%1$s</%2$s>", s, tag);
   }
 
-  @NotNull
-  public static String getShortRepositoryName(@NotNull Project project, @NotNull VirtualFile root) {
-    VirtualFile projectDir = project.getBaseDir();
-
-    String repositoryPath = root.getPresentableUrl();
-    if (projectDir != null) {
-      String relativePath = VfsUtilCore.getRelativePath(root, projectDir, File.separatorChar);
-      if (relativePath != null) {
-        repositoryPath = relativePath;
-      }
-    }
-
-    return repositoryPath.isEmpty() ? "<Project>" : repositoryPath;
-  }
-
-  @NotNull
-  public static String getShortRepositoryName(@NotNull GitRepository repository) {
-    return getShortRepositoryName(repository.getProject(), repository.getRoot());
-  }
-
-  @NotNull
-  public static String getShortNames(@NotNull Collection<GitRepository> repositories) {
-    return StringUtil.join(repositories, new Function<GitRepository, String>() {
-      @Override
-      public String fun(GitRepository repository) {
-        return getShortRepositoryName(repository);
-      }
-    }, ", ");
-  }
-
-  @NotNull
-  public static String joinRootsPaths(@NotNull Collection<VirtualFile> roots) {
-    return StringUtil.join(roots, new Function<VirtualFile, String>() {
-      @Override
-      public String fun(VirtualFile virtualFile) {
-        return virtualFile.getPresentableUrl();
-      }
-    }, ", ");
-  }
 }

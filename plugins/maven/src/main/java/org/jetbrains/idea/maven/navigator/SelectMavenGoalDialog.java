@@ -16,50 +16,42 @@
 package org.jetbrains.idea.maven.navigator;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.ui.treeStructure.NullNode;
 import com.intellij.ui.treeStructure.SimpleNode;
+import org.jetbrains.annotations.NotNull;
+
+import javax.swing.*;
 
 public class SelectMavenGoalDialog extends SelectFromMavenProjectsDialog {
-  private String myProjectPath;
-  private String myGoal;
+  private MavenProjectsStructure.GoalNode myResult;
 
-  public SelectMavenGoalDialog(Project project, final String projectPath, final String goal, String title) {
-    super(project, title, MavenProjectsStructure.GoalNode.class, new NodeSelector() {
-      public boolean shouldSelect(SimpleNode node) {
-        if (node instanceof MavenProjectsStructure.GoalNode) {
-          MavenProjectsStructure.GoalNode eachGoalNode = (MavenProjectsStructure.GoalNode)node;
-          String goalNodeProjectPath = eachGoalNode.getProjectPath();
-          return goalNodeProjectPath != null && projectPath != null
-                 && FileUtil.pathsEqual(goalNodeProjectPath, projectPath)
-                 && Comparing.equal(eachGoalNode.getGoal(), goal);
-        }
-        return false;
-      }
-    });
-
-    myProjectPath = projectPath;
-    myGoal = goal;
-
+  public SelectMavenGoalDialog(Project project) {
+    super(project, "Choose Maven Goal", MavenProjectsStructure.GoalNode.class);
     init();
   }
 
+  @NotNull
+  @Override
+  protected Action[] createActions() {
+    return new Action[]{getOKAction(), getCancelAction()};
+  }
+
+  @Override
   protected void doOKAction() {
-    super.doOKAction();
-
     SimpleNode node = getSelectedNode();
-    if (node instanceof MavenProjectsStructure.GoalNode) {
-      MavenProjectsStructure.GoalNode goalNode = (MavenProjectsStructure.GoalNode)node;
-      myProjectPath = goalNode.getProjectPath();
-      myGoal = goalNode.getGoal();
-    }
+    if (node instanceof NullNode) node = null;
+
+    myResult = node instanceof MavenProjectsStructure.GoalNode ? ((MavenProjectsStructure.GoalNode)node) : null;
+    super.doOKAction();
   }
 
-  public String getSelectedProjectPath() {
-    return myProjectPath;
+  @Override
+  public void doCancelAction() {
+    super.doCancelAction();
+    myResult = null;
   }
 
-  public String getSelectedGoal() {
-    return myGoal;
+  public MavenProjectsStructure.GoalNode getResult() {
+    return myResult;
   }
 }

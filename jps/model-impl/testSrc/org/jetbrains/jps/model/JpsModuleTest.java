@@ -30,8 +30,7 @@ import java.util.List;
 public class JpsModuleTest extends JpsModelTestCase {
   public void testAddSourceRoot() {
     final JpsModule module = myProject.addModule("m", JpsJavaModuleType.INSTANCE);
-    JpsSimpleElement<JavaSourceRootProperties> properties = JpsElementFactory.getInstance().createSimpleElement(
-      new JavaSourceRootProperties("com.xxx"));
+    JavaSourceRootProperties properties = JpsJavaExtensionService.getInstance().createSourceRootProperties("com.xxx");
     final JpsModuleSourceRoot sourceRoot = module.addSourceRoot("file://url", JavaSourceRootType.SOURCE, properties);
 
     assertSameElements(myDispatcher.retrieveAdded(JpsModule.class), module);
@@ -41,9 +40,9 @@ public class JpsModuleTest extends JpsModelTestCase {
     assertEquals("file://url", root.getUrl());
     assertSameElements(ContainerUtilRt.newArrayList(module.getSourceRoots(JavaSourceRootType.SOURCE)), root);
     assertEmpty(ContainerUtil.newArrayList(module.getSourceRoots(JavaSourceRootType.TEST_SOURCE)));
-    JpsTypedModuleSourceRoot<JpsSimpleElement<JavaSourceRootProperties>> typedRoot = root.asTyped(JavaSourceRootType.SOURCE);
+    JpsTypedModuleSourceRoot<JavaSourceRootProperties> typedRoot = root.asTyped(JavaSourceRootType.SOURCE);
     assertNotNull(typedRoot);
-    assertEquals("com.xxx", typedRoot.getProperties().getData().getPackagePrefix());
+    assertEquals("com.xxx", typedRoot.getProperties().getPackagePrefix());
   }
 
   public void testGetModulesOfType() {
@@ -51,6 +50,14 @@ public class JpsModuleTest extends JpsModelTestCase {
     JpsModule module = project.addModule("m", JpsJavaModuleType.INSTANCE);
     Iterable<JpsTypedModule<JpsDummyElement>> modules = project.getModules(JpsJavaModuleType.INSTANCE);
     assertSameElements(ContainerUtil.newArrayList(modules), module);
+  }
+
+  public void testExcludedPatterns() {
+    JpsModule module = myProject.addModule("m", JpsJavaModuleType.INSTANCE);
+    module.addExcludePattern("file://url", "*.class");
+    JpsExcludePattern pattern = assertOneElement(module.getExcludePatterns());
+    assertEquals("file://url", pattern.getBaseDirUrl());
+    assertEquals("*.class", pattern.getPattern());
   }
 
   public void testModifiableModel() {

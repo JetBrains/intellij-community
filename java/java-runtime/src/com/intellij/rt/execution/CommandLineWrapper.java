@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,113 +15,212 @@
  */
 package com.intellij.rt.execution;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileReader;
-import java.io.IOException;
-import java.lang.reflect.InvocationTargetException;
+import java.io.*;
 import java.lang.reflect.Method;
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.jar.JarInputStream;
+import java.util.jar.Manifest;
 
 /**
  * @author anna
- * @since 12-Aug-2008
+ * @noinspection SSBasedInspection
  */
 public class CommandLineWrapper {
-  private static final String PREFIX = "-D";
+  private static class AppData {
+    private final List properties;
+    private final Class mainClass;
+    private final String[] args;
 
-  public static void main(String[] args) throws ClassNotFoundException, NoSuchMethodException, InvocationTargetException,
-                                                IllegalAccessException, IOException, InstantiationException {
-    final List urls = new ArrayList();
-    final File file = new File(args[0]);
-    final BufferedReader reader = new BufferedReader(new FileReader(file));
+    private AppData(List properties, Class mainClass, String[] args) {
+      this.properties = properties;
+      this.mainClass = mainClass;
+      this.args = args;
+    }
+  }
+
+  public static void main(String[] args) throws Exception {
+    File file = new File(args[0]);
+    AppData appData = args[0].endsWith(".jar") ? loadMainClassFromClasspathJar(file, args) : loadMainClassWithCustomLoader(file, args);
+
+    List properties = appData.properties;
+    for (int i = 0; i < properties.size(); i++) {
+      String property = (String)properties.get(i);
+      if (property.startsWith("-D")) {
+        int p = property.indexOf('=');
+        if (p > 0) {
+          System.setProperty(property.substring(2, p), property.substring(p + 1));
+        }
+        else {
+          System.setProperty(property.substring(2), "");
+        }
+      }
+    }
+
+    Method main = appData.mainClass.getMethod("main", new Class[]{String[].class});
+    main.setAccessible(true);  // need to launch package-private classes
+    main.invoke(null, new Object[]{appData.args});
+  }
+
+  private static AppData loadMainClassFromClasspathJar(File jarFile, String[] args) throws Exception {
+    List properties = Collections.EMPTY_LIST;
+    String[] mainArgs;
+
+    JarInputStream inputStream = new JarInputStream(new FileInputStream(jarFile));
     try {
-      while(reader.ready()) {
-        final String fileName = reader.readLine();
-        try {
-          //noinspection Since15
-          urls.add(new File(fileName).toURI().toURL());
-        }
-        catch (NoSuchMethodError e) {
-          //noinspection deprecation
-          urls.add(new File(fileName).toURL());
-        }
+      Manifest manifest = inputStream.getManifest();
+
+      String vmOptions = manifest != null ? manifest.getMainAttributes().getValue("VM-Options") : null;
+      if (vmOptions != null) {
+        properties = splitBySpaces(vmOptions);
+      }
+
+      String programParameters = manifest != null ? manifest.getMainAttributes().getValue("Program-Parameters") : null;
+      if (programParameters == null) {
+        mainArgs = new String[args.length - 2];
+        System.arraycopy(args, 2, mainArgs, 0, mainArgs.length);
+      }
+      else {
+        List list = splitBySpaces(programParameters);
+        mainArgs = (String[])list.toArray(new String[0]);
       }
     }
     finally {
-      reader.close();
+      inputStream.close();
+      jarFile.deleteOnExit();
     }
-    if (!file.delete()) file.deleteOnExit();
 
-    int startArgsIdx = 2;
-    if (args[1].equals("@vm_params")) {
-      startArgsIdx = 4;
-      final File vmParamsFile = new File(args[2]);
-      final BufferedReader vmParamsReader = new BufferedReader(new FileReader(vmParamsFile));
-      try {
-        while (vmParamsReader.ready()) {
-          final String vmParam = vmParamsReader.readLine().trim();
-          final int eqIdx = vmParam.indexOf("=");
-          String vmParamName;
-          String vmParamValue;
-          
-          if (eqIdx > -1 && eqIdx < vmParam.length() - 1) {
-            vmParamName = vmParam.substring(0, eqIdx);
-            vmParamValue = vmParam.substring(eqIdx + 1);
-          } else {
-            vmParamName = vmParam;
-            vmParamValue = "";
+    return new AppData(properties, Class.forName(args[1]), mainArgs);
+  }
+
+  /**
+   * The implementation is copied from copied from com.intellij.util.execution.ParametersListUtil.parse and adapted to old Java versions
+   */
+  private static List splitBySpaces(String parameterString) {
+    parameterString = parameterString.trim();
+
+    List params = new ArrayList();
+    StringBuffer token = new StringBuffer(128);
+    boolean inQuotes = false;
+    boolean escapedQuote = false;
+    boolean nonEmpty = false;
+
+    for (int i = 0; i < parameterString.length(); i++) {
+      final char ch = parameterString.charAt(i);
+
+      if (ch == '\"') {
+        if (!escapedQuote) {
+          inQuotes = !inQuotes;
+          nonEmpty = true;
+          continue;
+        }
+        escapedQuote = false;
+      }
+      else if (Character.isWhitespace(ch)) {
+        if (!inQuotes) {
+          if (token.length() > 0 || nonEmpty) {
+            params.add(token.toString());
+            token.setLength(0);
+            nonEmpty = false;
           }
-          vmParamName = vmParamName.trim();
-          if (vmParamName.startsWith(PREFIX)) {
-            vmParamName = vmParamName.substring(PREFIX.length());
-            System.setProperty(vmParamName, vmParamValue);
-          }
+          continue;
         }
       }
-      finally {
-        vmParamsReader.close();
+      else if (ch == '\\') {
+        if (i < parameterString.length() - 1 && parameterString.charAt(i + 1) == '"') {
+          escapedQuote = true;
+          continue;
+        }
       }
-      if (!vmParamsFile.delete()) vmParamsFile.deleteOnExit();
+
+      token.append(ch);
+    }
+
+    if (token.length() > 0 || nonEmpty) {
+      params.add(token.toString());
+    }
+
+    return params;
+  }
+
+  /**
+   * args: "classpath file" [ @vm_params "VM options file" ] [ @app_params "args file" ] "main class" [ args ... ]
+   */
+  private static AppData loadMainClassWithCustomLoader(File classpathFile, String[] args) throws Exception {
+    List classpathUrls = new ArrayList();
+    StringBuffer classpathString = new StringBuffer();
+    List pathElements = readLinesAndDeleteFile(classpathFile);
+    for (int i = 0; i < pathElements.size(); i++) {
+      String pathElement = (String)pathElements.get(i);
+      classpathUrls.add(toUrl(new File(pathElement)));
+      if (classpathString.length() > 0) classpathString.append(File.pathSeparator);
+      classpathString.append(pathElement);
+    }
+    System.setProperty("java.class.path", classpathString.toString());
+
+    int startArgsIdx = 2;
+
+    List properties = Collections.EMPTY_LIST;
+    if (args.length > startArgsIdx && "@vm_params".equals(args[startArgsIdx - 1])) {
+      properties = readLinesAndDeleteFile(new File(args[startArgsIdx]));
+      startArgsIdx += 2;
+    }
+
+    String[] mainArgs;
+    if (args.length > startArgsIdx && "@app_params".equals(args[startArgsIdx - 1])) {
+      List lines = readLinesAndDeleteFile(new File(args[startArgsIdx]));
+      mainArgs = (String[])lines.toArray(new String[0]);
+      startArgsIdx += 2;
+    }
+    else {
+      mainArgs = new String[args.length - startArgsIdx];
+      System.arraycopy(args, startArgsIdx, mainArgs, 0, mainArgs.length);
     }
 
     String mainClassName = args[startArgsIdx - 1];
-    String[] mainArgs = new String[args.length - startArgsIdx];
-    System.arraycopy(args, startArgsIdx, mainArgs, 0, mainArgs.length);
-
-    ClassLoader loader = new URLClassLoader((URL[])urls.toArray(new URL[urls.size()]), null);
-    final String classLoader = System.getProperty("java.system.class.loader");
-    if (classLoader != null) {
+    ClassLoader loader = new URLClassLoader((URL[])classpathUrls.toArray(new URL[0]), null);
+    String systemLoaderName = System.getProperty("java.system.class.loader");
+    if (systemLoaderName != null) {
       try {
-        loader = (ClassLoader)Class.forName(classLoader).getConstructor(new Class[]{ClassLoader.class}).newInstance(new Object[]{loader});
+        loader = (ClassLoader)Class.forName(systemLoaderName).getConstructor(new Class[]{ClassLoader.class}).newInstance(new Object[]{loader});
       }
-      catch (Exception e) {
-        //leave URL class loader
-      }
+      catch (Exception ignored) { }
     }
-
     Class mainClass = loader.loadClass(mainClassName);
     Thread.currentThread().setContextClassLoader(loader);
-    //noinspection SSBasedInspection
-    Class mainArgType = (new String[0]).getClass();
-    Method main = mainClass.getMethod("main", new Class[]{mainArgType});
-    ensureAccess(main);
-    main.invoke(null, new Object[]{mainArgs});
+
+    return new AppData(properties, mainClass, mainArgs);
   }
 
-   private static void ensureAccess(Object reflectionObject) {
-    // need to call setAccessible here in order to be able to launch package-local classes
-    // calling setAccessible() via reflection because the method is missing from java version 1.1.x
-    final Class aClass = reflectionObject.getClass();
+  /** @noinspection ResultOfMethodCallIgnored*/
+  private static List readLinesAndDeleteFile(File file) throws IOException {
+    BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(file), "UTF-8"));
     try {
-      final Method setAccessibleMethod = aClass.getMethod("setAccessible", new Class[] {boolean.class});
-      setAccessibleMethod.invoke(reflectionObject, new Object[] {Boolean.TRUE});
+      List lines = new ArrayList();
+      String line;
+      while ((line = reader.readLine()) != null) lines.add(line);
+      return lines;
     }
-    catch (Exception e) {
-      // the method not found
+    finally {
+      reader.close();
+      file.delete();
     }
+  }
+
+  /** @noinspection Since15, deprecation */
+  private static URL toUrl(File classpathElement) throws MalformedURLException {
+    URL url;
+    try {
+      url = classpathElement.toURI().toURL();
+    }
+    catch (NoSuchMethodError e) {
+      url = classpathElement.toURL();
+    }
+    url = new URL("file", url.getHost(), url.getPort(), url.getFile());
+    return url;
   }
 }

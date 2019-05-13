@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,10 +15,8 @@
  */
 package com.intellij.ui.tabs.impl.singleRow;
 
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.tabs.JBTabsPosition;
 import com.intellij.ui.tabs.TabInfo;
-import com.intellij.ui.tabs.TabsUtil;
 import com.intellij.ui.tabs.impl.*;
 import org.jetbrains.annotations.Nullable;
 
@@ -26,8 +24,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.util.Collections;
-import java.util.Comparator;
+import java.lang.ref.WeakReference;
 import java.util.List;
 
 public class SingleRowLayout extends TabLayout {
@@ -41,6 +38,7 @@ public class SingleRowLayout extends TabLayout {
   private final SingleRowLayoutStrategy myRight;
 
   public final MoreTabsIcon myMoreIcon = new MoreTabsIcon() {
+    @Override
     @Nullable
     protected Rectangle getIconRec() {
       return myLastSingRowLayout != null ? myLastSingRowLayout.moreRect : null;
@@ -48,10 +46,13 @@ public class SingleRowLayout extends TabLayout {
 
     @Override
     protected int getIconY(Rectangle iconRec) {
-      return super.getIconY(iconRec) +
-             (myTabs.getTabsPosition() == JBTabsPosition.bottom
-              ? TabsUtil.ACTIVE_TAB_UNDERLINE_HEIGHT
-              : -(TabsUtil.ACTIVE_TAB_UNDERLINE_HEIGHT / 2));
+      final int shift;
+      switch (myTabs.getTabsPosition()) {
+        case bottom: shift = myTabs.getActiveTabUnderlineHeight(); break;
+        case top: shift = -(myTabs.getActiveTabUnderlineHeight() / 2); break;
+        default: shift = 0;
+      }
+      return super.getIconY(iconRec) + shift;
     }
   };
   public JPopupMenu myMorePopup;
@@ -115,6 +116,7 @@ public class SingleRowLayout extends TabLayout {
       for (TabInfo each : data.myVisibleInfos) {
         final TabLabel eachLabel = myTabs.myInfo2Label.get(each);
         if (!eachLabel.isValid()) {
+          layoutLabels = true;
           break;
         }
         if (myTabs.getSelectedInfo() == each) {
@@ -143,15 +145,6 @@ public class SingleRowLayout extends TabLayout {
   }
 
   public LayoutPassInfo layoutSingleRow(List<TabInfo> visibleInfos)  {
-    if (JBEditorTabs.isAlphabeticalMode()) {
-      Collections.sort(visibleInfos, new Comparator<TabInfo>() {
-        @Override
-        public int compare(TabInfo o1, TabInfo o2) {
-          return StringUtil.naturalCompare(o1.getText(), o2.getText());
-        }
-      });
-    }
-
     SingleRowPassInfo data = new SingleRowPassInfo(this, visibleInfos);
 
     final boolean layoutLabels = checkLayoutLabels(data);
@@ -175,7 +168,7 @@ public class SingleRowLayout extends TabLayout {
     }
 
     if (selected != null) {
-      data.comp = selected.getComponent();
+      data.comp = new WeakReference<>(selected.getComponent());
       getStrategy().layoutComp(data);
     }
 
@@ -205,22 +198,24 @@ public class SingleRowLayout extends TabLayout {
 
   protected void prepareLayoutPassInfo(SingleRowPassInfo data, TabInfo selected) {
     data.insets = myTabs.getLayoutInsets();
+    if (myTabs.isHorizontalTabs()) {
+      data.insets.left += myTabs.getFirstTabOffset();
+    }
 
     final JBTabsImpl.Toolbar selectedToolbar = myTabs.myInfo2Toolbar.get(selected);
-    data.hToolbar = selectedToolbar != null && myTabs.myHorizontalSide && !selectedToolbar.isEmpty() ? selectedToolbar : null;
-    data.vToolbar = selectedToolbar != null && !myTabs.myHorizontalSide && !selectedToolbar.isEmpty() ? selectedToolbar : null;
+    data.hToolbar =
+      new WeakReference<>(selectedToolbar != null && myTabs.myHorizontalSide && !selectedToolbar.isEmpty() ? selectedToolbar : null);
+    data.vToolbar =
+      new WeakReference<>(selectedToolbar != null && !myTabs.myHorizontalSide && !selectedToolbar.isEmpty() ?  selectedToolbar : null);
     data.toFitLength = getStrategy().getToFitLength(data);
 
     if (myTabs.isGhostsAlwaysVisible()) {
-      data.toFitLength -= JBTabsImpl.getGhostTabLength() * 2 + (JBTabsImpl.getInterTabSpaceLength() * 2);
+      data.toFitLength -= myTabs.getGhostTabLength() * 2 + (myTabs.getInterTabSpaceLength() * 2);
     }
   }
 
   protected void updateMoreIconVisibility(SingleRowPassInfo data) {
-    int counter = 0;
-    for (TabInfo tabInfo : data.myVisibleInfos) {
-      if (isTabHidden(tabInfo)) counter++;
-    }
+    int counter = (int)data.myVisibleInfos.stream().filter(this::isTabHidden).count();
     myMoreIcon.updateCounter(counter);
   }
 
@@ -230,11 +225,11 @@ public class SingleRowLayout extends TabLayout {
     }
   }
 
-  private void layoutLabelsAndGhosts(final SingleRowPassInfo data) {
+  protected void layoutLabelsAndGhosts(final SingleRowPassInfo data) {
     if (data.firstGhostVisible || myTabs.isGhostsAlwaysVisible()) {
-      data.firstGhost = getStrategy().getLayoutRect(data, data.position, JBTabsImpl.getGhostTabLength());
+      data.firstGhost = getStrategy().getLayoutRect(data, data.position, myTabs.getGhostTabLength());
       myTabs.layout(myLeftGhost, data.firstGhost);
-      data.position += getStrategy().getLengthIncrement(data.firstGhost.getSize()) + JBTabsImpl.getInterTabSpaceLength();
+      data.position += getStrategy().getLengthIncrement(data.firstGhost.getSize()) + myTabs.getInterTabSpaceLength();
     }
 
     int deltaToFit = 0;
@@ -271,9 +266,9 @@ public class SingleRowLayout extends TabLayout {
       boolean continueLayout = applyTabLayout(data, label, length, deltaToFit);
 
       data.position = getStrategy().getMaxPosition(label.getBounds());
-      data.position += JBTabsImpl.getInterTabSpaceLength();
+      data.position += myTabs.getInterTabSpaceLength();
 
-      totalLength = getStrategy().getMaxPosition(label.getBounds()) - positionStart + JBTabsImpl.getInterTabSpaceLength();
+      totalLength = getStrategy().getMaxPosition(label.getBounds()) - positionStart + myTabs.getInterTabSpaceLength();
       if (!continueLayout) {
         layoutStopped = true;
       }
@@ -284,7 +279,7 @@ public class SingleRowLayout extends TabLayout {
     }
 
     if (data.lastGhostVisible || myTabs.isGhostsAlwaysVisible()) {
-      data.lastGhost = getStrategy().getLayoutRect(data, data.position, JBTabsImpl.getGhostTabLength());
+      data.lastGhost = getStrategy().getLayoutRect(data, data.position, myTabs.getGhostTabLength());
       myTabs.layout(myRightGhost, data.lastGhost);
     }
   }
@@ -352,13 +347,17 @@ public class SingleRowLayout extends TabLayout {
   protected void calculateRequiredLength(SingleRowPassInfo data) {
     for (TabInfo eachInfo : data.myVisibleInfos) {
       data.requiredLength += getRequiredLength(eachInfo);
+      if (myTabs.getTabsPosition() == JBTabsPosition.left || myTabs.getTabsPosition() == JBTabsPosition.right) {
+        data.requiredLength -= 1;
+      }
       data.toLayout.add(eachInfo);
     }
   }
 
   protected int getRequiredLength(TabInfo eachInfo) {
-    return getStrategy().getLengthIncrement(myTabs.myInfo2Label.get(eachInfo).getPreferredSize())
-                                      + (myTabs.isEditorTabs() ? JBTabsImpl.getInterTabSpaceLength() : 0);
+    TabLabel label = myTabs.myInfo2Label.get(eachInfo);
+    return getStrategy().getLengthIncrement(label != null ? label.getPreferredSize() : new Dimension())
+                                      + (myTabs.isEditorTabs() ? myTabs.getInterTabSpaceLength() : 0);
   }
 
 
@@ -371,14 +370,11 @@ public class SingleRowLayout extends TabLayout {
 
     private GhostComponent(final RowDropPolicy before, final RowDropPolicy after) {
       addMouseListener(new MouseAdapter() {
+        @Override
         public void mousePressed(final MouseEvent e) {
           if (JBTabsImpl.isSelectionClick(e, true) && myInfo != null) {
             myRowDropPolicy = before;
-            myTabs.select(myInfo, true).doWhenDone(new Runnable() {
-              public void run() {
-                myRowDropPolicy = after;
-              }
-            });
+            myTabs.select(myInfo, true).doWhenDone(() -> myRowDropPolicy = after);
           } else {
             MouseEvent event = SwingUtilities.convertMouseEvent(e.getComponent(), e, myTabs);
             myTabs.processMouseEvent(event);
@@ -409,13 +405,13 @@ public class SingleRowLayout extends TabLayout {
     if (!data.firstGhostVisible && isFirstSide) {
       data.firstGhostVisible = !myTabs.isEditorTabs();
       if (!myTabs.isGhostsAlwaysVisible() && !myTabs.isEditorTabs()) {
-        data.toFitLength -= JBTabsImpl.getGhostTabLength();
+        data.toFitLength -= myTabs.getGhostTabLength();
       }
     }
     else if (!data.lastGhostVisible && !isFirstSide) {
       data.lastGhostVisible = !myTabs.isEditorTabs();
       if (!myTabs.isGhostsAlwaysVisible() && !myTabs.isEditorTabs()) {
-        data.toFitLength -= JBTabsImpl.getGhostTabLength();
+        data.toFitLength -= myTabs.getGhostTabLength();
       }
     }
   }

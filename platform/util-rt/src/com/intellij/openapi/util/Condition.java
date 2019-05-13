@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,8 @@
 package com.intellij.openapi.util;
 
 /**
+ * Please use {@link java.util.function.Predicate} instead.
+ *
  * Returns {@code true} or {@code false} for the given input object.
  * <p/>
  * See {@link Conditions} for chained conditions.
@@ -37,7 +39,7 @@ public interface Condition<T> {
   };
 
   /**
-   * @see com.intellij.openapi.util.Conditions#alwaysTrue()
+   * @see Conditions#alwaysTrue()
    */
   Condition TRUE = new Condition() {
     public boolean value(final Object object) {
@@ -50,7 +52,7 @@ public interface Condition<T> {
     }
   };
   /**
-   * @see com.intellij.openapi.util.Conditions#alwaysFalse()
+   * @see Conditions#alwaysFalse()
    */
   Condition FALSE = new Condition() {
     public boolean value(final Object object) {

@@ -25,7 +25,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * By the nature of the process, we do not expect here situations where one thread activates/starts and another simultaneosly
+ * By the nature of the process, we do not expect here situations where one thread activates/starts and another simultaneously
  * tries to deactivate/shutdown. It that situations, it would be very hard to decide what should be done=)
  *
  * So, synchronization here should only be used as a barrier to do not allow repeated activation etc.
@@ -39,30 +39,15 @@ public abstract class StartedActivated {
   private final Object myLock;
 
   protected StartedActivated(final Disposable parent) {
-    myStart = new MySection(new ThrowableRunnable<VcsException>() {
-      public void run() throws VcsException {
-        start();
-      }
-    }, new ThrowableRunnable<VcsException>() {
-      public void run() throws VcsException {
-        shutdown();
-      }
-    });
-    myActivate = new MySection(new ThrowableRunnable<VcsException>() {
-      public void run() throws VcsException {
-        activate();
-      }
-    }, new ThrowableRunnable<VcsException>() {
-      public void run() throws VcsException {
-        deactivate();
-      }
-    });
+    myStart = new MySection(() -> start(), () -> shutdown());
+    myActivate = new MySection(() -> activate(), () -> deactivate());
     myStart.setDependent(myActivate);
     myActivate.setMaster(myStart);
 
     myLock = new Object();
 
     Disposer.register(parent, new Disposable() {
+      @Override
       public void dispose() {
         try {
           doShutdown();
@@ -74,20 +59,13 @@ public abstract class StartedActivated {
     });
   }
 
-  // for tests only
-  protected StartedActivated() {
-    myStart = null;
-    myActivate = null;
-    myLock = null;
-  }
-
   protected abstract void start() throws VcsException;
   protected abstract void shutdown() throws VcsException;
   protected abstract void activate() throws VcsException;
   protected abstract void deactivate() throws VcsException;
 
   private void callImpl(final MySection section, final boolean start) throws VcsException {
-    final List<ThrowableRunnable<VcsException>> list = new ArrayList<ThrowableRunnable<VcsException>>(2);
+    final List<ThrowableRunnable<VcsException>> list = new ArrayList<>(2);
     synchronized (myLock) {
       if (start) {
         section.start(list);
@@ -111,7 +89,7 @@ public abstract class StartedActivated {
   public final void doActivate() throws VcsException {
     callImpl(myActivate, true);
   }
-  
+
   public final void doDeactivate() throws VcsException {
     callImpl(myActivate, false);
   }
@@ -125,7 +103,7 @@ public abstract class StartedActivated {
 
     private ThreeState myState;
 
-    public MySection(final ThrowableRunnable<VcsException> start, final ThrowableRunnable<VcsException> stop) {
+    MySection(final ThrowableRunnable<VcsException> start, final ThrowableRunnable<VcsException> stop) {
       myStart = start;
       myStop = stop;
       myState = ThreeState.UNSURE;

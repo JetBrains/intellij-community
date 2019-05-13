@@ -17,6 +17,10 @@
 package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.ide.scratch.ScratchFileService;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.util.PsiUtilCore;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -31,7 +35,7 @@ public abstract class BaseIntentionAction implements IntentionAction {
     return myText;
   }
 
-  protected void setText(@NotNull String text) {
+  protected void setText(@NotNull @Nls(capitalization = Nls.Capitalization.Sentence) String text) {
     myText = text;
   }
 
@@ -43,5 +47,12 @@ public abstract class BaseIntentionAction implements IntentionAction {
   @Override
   public String toString() {
     return getText();
+  }
+
+  /**
+   * @return true, if element belongs to project content root or is located in scratch files
+   */
+  public static boolean canModify(PsiElement element) {
+    return element.getManager().isInProject(element) || ScratchFileService.isInScratchRoot(PsiUtilCore.getVirtualFile(element));
   }
 }

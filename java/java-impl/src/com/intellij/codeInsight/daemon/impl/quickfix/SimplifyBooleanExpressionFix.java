@@ -1,109 +1,250 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
-/**
- * @author cdr
- */
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
-import com.intellij.codeInsight.CodeInsightUtilBase;
+import com.intellij.codeInsight.BlockUtils;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
-import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
+import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
+import com.intellij.codeInsight.intention.impl.SplitConditionUtil;
+import com.intellij.codeInspection.CommonQuickFixBundle;
+import com.intellij.codeInspection.LocalQuickFixOnPsiElement;
+import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.controlFlow.AnalysisCanceledException;
+import com.intellij.psi.controlFlow.ControlFlowUtil;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.util.PsiExpressionTrimRenderer;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.util.Function;
+import com.intellij.refactoring.util.RefactoringUtil;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.ObjectUtils;
+import com.intellij.util.containers.ContainerUtil;
+import com.siyeh.ig.psiutils.*;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 
-public class SimplifyBooleanExpressionFix implements IntentionAction {
+public class SimplifyBooleanExpressionFix extends LocalQuickFixOnPsiElement {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.quickfix.SimplifyBooleanExpression");
+  public static final String FAMILY_NAME = QuickFixBundle.message("simplify.boolean.expression.family");
 
-  private final PsiExpression mySubExpression;
-  private final Boolean mySubExpressionValue;
+  private final boolean mySubExpressionValue;
 
   // subExpressionValue == Boolean.TRUE or Boolean.FALSE if subExpression evaluates to boolean constant and needs to be replaced
   //   otherwise subExpressionValue= null and we starting to simplify expression without any further knowledge
-  public SimplifyBooleanExpressionFix(PsiExpression subExpression, Boolean subExpressionValue) {
-    mySubExpression = subExpression;
+  public SimplifyBooleanExpressionFix(@NotNull PsiExpression subExpression, boolean subExpressionValue) {
+    super(subExpression);
     mySubExpressionValue = subExpressionValue;
   }
 
   @Override
   @NotNull
   public String getText() {
-    return QuickFixBundle.message("simplify.boolean.expression.text", mySubExpression.getText(), mySubExpressionValue);
+    PsiExpression subExpression = getSubExpression();
+    if (subExpression == null) {
+      return getFamilyName();
+    }
+    return getIntentionText(subExpression, mySubExpressionValue) + (shouldExtractSideEffect() ? " extracting side effects" : "");
+  }
+
+  private boolean shouldExtractSideEffect() {
+    PsiExpression subExpression = getSubExpression();
+    if (subExpression != null &&
+        SideEffectChecker.mayHaveSideEffects(subExpression)) {
+      if (ControlFlowUtils.canExtractStatement(subExpression)) return true;
+      if (!mySubExpressionValue) {
+        PsiElement parent = PsiUtil.skipParenthesizedExprUp(subExpression.getParent());
+        if (parent instanceof PsiWhileStatement || parent instanceof PsiForStatement) return true;
+        // code like "if (foo || alwaysFalseWithSideEffects) {}"
+        if (parent instanceof PsiPolyadicExpression) {
+          PsiPolyadicExpression polyadic = (PsiPolyadicExpression)parent;
+          if (polyadic.getOperationTokenType().equals(JavaTokenType.OROR)
+              && PsiTreeUtil.isAncestor(ArrayUtil.getLastElement(polyadic.getOperands()), subExpression, false)
+              && PsiUtil.skipParenthesizedExprUp(parent.getParent()) instanceof PsiIfStatement) {
+            return true;
+          }
+        }
+      }
+    }
+    return false;
+  }
+
+  @NotNull
+  public static String getIntentionText(@NotNull PsiExpression expression, boolean constantValue) {
+    PsiElement parent = PsiUtil.skipParenthesizedExprUp(expression.getParent());
+    if (parent instanceof PsiIfStatement) {
+      return constantValue ?
+             CommonQuickFixBundle.message("fix.unwrap.statement", PsiKeyword.IF) :
+             CommonQuickFixBundle.message("fix.remove.statement", PsiKeyword.IF);
+    }
+    if (!constantValue) {
+      if (parent instanceof PsiWhileStatement) return CommonQuickFixBundle.message("fix.remove.statement", PsiKeyword.WHILE);
+      if (parent instanceof PsiDoWhileStatement) return CommonQuickFixBundle.message("fix.unwrap.statement", "do-while");
+      if (parent instanceof PsiForStatement) return CommonQuickFixBundle.message("fix.remove.statement", PsiKeyword.FOR);
+    }
+    return QuickFixBundle.message("simplify.boolean.expression.text", PsiExpressionTrimRenderer.render(expression), constantValue);
   }
 
   @Override
   @NotNull
   public String getFamilyName() {
-    return QuickFixBundle.message("simplify.boolean.expression.family");
+    return FAMILY_NAME;
   }
 
   @Override
-  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    return mySubExpression.isValid()
-           && mySubExpression.getManager().isInProject(mySubExpression)
-           && !PsiUtil.isAccessedForWriting(mySubExpression)
-      ;
+  public boolean isAvailable() {
+    PsiExpression expression = getSubExpression();
+    if (!super.isAvailable() ||
+        expression == null ||
+        !BaseIntentionAction.canModify(expression) ||
+        PsiUtil.isAccessedForWriting(expression)) {
+      return false;
+    }
+    PsiElement element = PsiUtil.skipParenthesizedExprUp(expression);
+    PsiElement parent = element == null ? null : element.getParent();
+    if (parent instanceof PsiDoWhileStatement && containsBreakOrContinue((PsiDoWhileStatement)parent)) {
+      return false;
+    }
+
+    return true;
+  }
+
+  private static boolean containsBreakOrContinue(PsiDoWhileStatement doWhileLoop) {
+    return SyntaxTraverser.psiTraverser(doWhileLoop).filter(e -> isBreakOrContinue(e, doWhileLoop)).iterator().hasNext();
+  }
+
+  private static boolean isBreakOrContinue(PsiElement e, PsiDoWhileStatement doWhileLoop) {
+    return e instanceof PsiBreakStatement && doWhileLoop == ((PsiBreakStatement)e).findExitedStatement() || 
+           e instanceof PsiContinueStatement && doWhileLoop == ((PsiContinueStatement)e).findContinuedStatement();
   }
 
   @Override
-  public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-    if (!isAvailable(project, editor, file)) return;
-    LOG.assertTrue(mySubExpression.isValid());
-    if (!CodeInsightUtilBase.preparePsiElementForWrite(mySubExpression)) return;
-    simplifyExpression(project, mySubExpression, mySubExpressionValue);
-  }
-
-  public static void simplifyExpression(Project project, final PsiExpression subExpression, final Boolean subExpressionValue) {
-    PsiExpression expression;
-    if (subExpressionValue == null) {
-      expression = subExpression;
+  public void invoke(@NotNull final Project project, @NotNull PsiFile file, @NotNull PsiElement startElement, @NotNull PsiElement endElement) {
+    if (!isAvailable()) return;
+    PsiExpression subExpression = getSubExpression();
+    if (subExpression == null) return;
+    CommentTracker ct = new CommentTracker();
+    if (shouldExtractSideEffect()) {
+      subExpression = ensureCodeBlock(project, subExpression);
+      if (subExpression == null) {
+        LOG.error("ensureCodeBlock returned null", new Attachment("subExpression.txt", getSubExpression().getText()));
+        return;
+      }
+      PsiStatement anchor = ObjectUtils.tryCast(RefactoringUtil.getParentStatement(subExpression, false), PsiStatement.class);
+      if (anchor == null) {
+        LOG.error("anchor is null", new Attachment("subExpression.txt", subExpression.getText()));
+        return;
+      }
+      List<PsiExpression> sideEffects = SideEffectChecker.extractSideEffectExpressions(subExpression);
+      sideEffects.forEach(ct::markUnchanged);
+      PsiStatement[] statements = StatementExtractor.generateStatements(sideEffects, subExpression);
+      if (statements.length > 0) {
+        BlockUtils.addBefore(anchor, statements);
+      }
+      if (!subExpression.isValid()) {
+        LOG.error("subExpression became invalid", new Attachment("subExpression.txt", subExpression.getText()));
+        return;
+      }
     }
-    else {
-      final PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
-      final PsiExpression constExpression = factory.createExpressionFromText(Boolean.toString(subExpressionValue.booleanValue()), subExpression);
-      expression = (PsiExpression)subExpression.replace(constExpression);
-    }
+    PsiExpression expression = (PsiExpression)ct.replaceAndRestoreComments(subExpression, Boolean.toString(mySubExpressionValue));
     while (expression.getParent() instanceof PsiExpression) {
       expression = (PsiExpression)expression.getParent();
     }
     simplifyExpression(expression);
   }
 
-  public static void simplifyIfStatement(final PsiExpression expression) throws IncorrectOperationException {
-    PsiElement parent = expression.getParent();
-    if (!(parent instanceof PsiIfStatement) || ((PsiIfStatement)parent).getCondition() != expression) return;
-    if (!(expression instanceof PsiLiteralExpression) || expression.getType() != PsiType.BOOLEAN) return;
+  public PsiExpression ensureCodeBlock(@NotNull Project project, PsiExpression subExpression) {
+    if (!mySubExpressionValue) {
+      // Prevent extracting while condition to internal 'if'
+      PsiElement parent = PsiUtil.skipParenthesizedExprUp(subExpression.getParent());
+      PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
+      if (parent instanceof PsiWhileStatement) {
+        PsiWhileStatement whileStatement = (PsiWhileStatement)parent;
+        if (whileStatement.getCondition() != null) {
+          PsiStatement replacement =
+            factory.createStatementFromText("if(" + whileStatement.getCondition().getText() + ");", whileStatement);
+          PsiIfStatement ifStatement = (PsiIfStatement)whileStatement.replace(replacement);
+          subExpression = Objects.requireNonNull(ifStatement.getCondition());
+        }
+      }
+      else if (parent instanceof PsiPolyadicExpression) {
+        PsiPolyadicExpression polyadicExpression = (PsiPolyadicExpression)parent;
+        if (JavaTokenType.OROR.equals(polyadicExpression.getOperationTokenType())) {
+          PsiExpression expression = expandLastIfDisjunct(polyadicExpression, subExpression, factory);
+          if (expression != null) {
+            return expression;
+          }
+        }
+      }
+    }
+    return RefactoringUtil.ensureCodeBlock(subExpression);
+  }
+
+  @Nullable
+  private static PsiExpression expandLastIfDisjunct(PsiPolyadicExpression orChain,
+                                                    PsiExpression subExpression,
+                                                    PsiElementFactory factory) {
+    PsiIfStatement ifStatement = ObjectUtils.tryCast(PsiUtil.skipParenthesizedExprUp(orChain.getParent()), PsiIfStatement.class);
+    if (ifStatement == null) return null;
+    PsiExpression lastOperand = ArrayUtil.getLastElement(orChain.getOperands());
+    if (!PsiTreeUtil.isAncestor(lastOperand, subExpression, false)) return null;
+    orChain.replace(SplitConditionUtil.getLOperands(orChain, orChain.getTokenBeforeOperand(lastOperand)));
+    ControlFlowUtils.ensureElseBranch(ifStatement);
+    PsiBlockStatement elseBranch = (PsiBlockStatement)Objects.requireNonNull(ifStatement.getElseBranch());
+    PsiCodeBlock codeBlock = elseBranch.getCodeBlock();
+    PsiStatement replacement = factory.createStatementFromText("if(" + subExpression.getText() + ");", ifStatement);
+    PsiIfStatement alwaysFalseIf = (PsiIfStatement)codeBlock.addAfter(replacement, codeBlock.getLBrace());
+    return Objects.requireNonNull(alwaysFalseIf.getCondition());
+  }
+
+  private static boolean simplifyIfOrLoopStatement(final PsiExpression expression) throws IncorrectOperationException {
     boolean condition = Boolean.parseBoolean(expression.getText());
-    PsiIfStatement ifStatement = (PsiIfStatement)parent;
-    if (condition) {
+    if (!(expression instanceof PsiLiteralExpression) || !PsiType.BOOLEAN.equals(expression.getType())) return false;
+
+    PsiElement parent = expression.getParent();
+    if (parent instanceof PsiIfStatement && ((PsiIfStatement)parent).getCondition() == expression) {
+      simplifyIfStatement(condition, (PsiIfStatement)parent);
+      return true;
+    }
+    if (parent instanceof PsiWhileStatement && !condition) {
+      parent.delete();
+      return true;
+    }
+    if (parent instanceof PsiDoWhileStatement && !condition) {
+      replaceWithStatements((PsiDoWhileStatement)parent, ((PsiDoWhileStatement)parent).getBody());
+      return true;
+    }
+    if (parent instanceof PsiForStatement && !condition) {
+      simplifyForStatement(parent);
+      return true;
+    }
+
+    return false;
+  }
+
+  private static void simplifyForStatement(PsiElement parent) {
+    PsiStatement initialization = ((PsiForStatement)parent).getInitialization();
+    if (initialization != null && !SyntaxTraverser.psiTraverser(initialization).filter(PsiExpression.class).filter(SideEffectChecker::mayHaveSideEffects).isEmpty()) {
+      replaceWithStatements((PsiForStatement)parent, initialization);
+    } else {
+      parent.delete();
+    }
+  }
+
+  private static void simplifyIfStatement(boolean conditionAlwaysTrue, PsiIfStatement ifStatement) {
+    if (conditionAlwaysTrue) {
       replaceWithStatements(ifStatement, ifStatement.getThenBranch());
     }
     else {
@@ -117,48 +258,102 @@ public class SimplifyBooleanExpressionFix implements IntentionAction {
     }
   }
 
-  private static void replaceWithStatements(final PsiStatement orig, final PsiStatement statement) throws IncorrectOperationException {
+  private static void replaceWithStatements(@NotNull PsiStatement orig, @Nullable PsiStatement statement) throws IncorrectOperationException {
     if (statement == null) {
       orig.delete();
       return;
     }
     PsiElement parent = orig.getParent();
     if (parent == null) return;
-    if (statement instanceof PsiBlockStatement && parent instanceof PsiCodeBlock) {
-      // See IDEADEV-24277
-      // Code block can only be inlined into another (parent) code block.
-      // Code blocks, which are if or loop statement branches should not be inlined.
-      PsiCodeBlock codeBlock = ((PsiBlockStatement)statement).getCodeBlock();
-      PsiJavaToken lBrace = codeBlock.getLBrace();
-      PsiJavaToken rBrace = codeBlock.getRBrace();
-      if (lBrace == null || rBrace == null) return;
 
-
-      final PsiElement[] children = codeBlock.getChildren();
-      if (children.length > 2) {
-        final PsiElement added =
-          parent.addRangeBefore(
-            children[1],
-            children[children.length - 2],
-            orig);
-        final CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(orig.getManager());
-        codeStyleManager.reformat(added);
-      }
-      orig.delete();
+    PsiElement grandParent = parent.getParent();
+    if (parent instanceof PsiCodeBlock && blockAlwaysReturns(statement)) {
+      removeFollowingStatements(orig, (PsiCodeBlock)parent);
     }
-    else {
-      orig.replace(statement);
+    else if (grandParent instanceof PsiCodeBlock && parent instanceof PsiIfStatement) {
+      PsiIfStatement ifStmt = (PsiIfStatement)parent;
+      if (ifStmt.getElseBranch() == orig && blockAlwaysReturns(ifStmt.getThenBranch()) && blockAlwaysReturns(statement)) {
+        removeFollowingStatements(ifStmt, (PsiCodeBlock)grandParent);
+      }
+    }
+
+    if (parent instanceof PsiCodeBlock) {
+      if (statement instanceof PsiBlockStatement) {
+        // See IDEADEV-24277
+        // Code block can only be inlined into another (parent) code block.
+        // Code blocks, which are if or loop statement branches should not be inlined.
+        PsiCodeBlock codeBlock = ((PsiBlockStatement)statement).getCodeBlock();
+        if (!BlockUtils.containsConflictingDeclarations(codeBlock, (PsiCodeBlock)parent)) {
+          BlockUtils.inlineCodeBlock(orig, codeBlock);
+          return;
+        }
+      }
+      if (hasConflictingDeclarations(statement, (PsiCodeBlock)parent)) {
+        orig.replace(wrapWithCodeBlock(statement));
+        return;
+      }
+    }
+    orig.replace(statement);
+  }
+
+  private static boolean hasConflictingDeclarations(@Nullable PsiStatement statement, PsiCodeBlock parent) {
+    return statement instanceof PsiDeclarationStatement &&
+           ContainerUtil.exists(((PsiDeclarationStatement)statement).getDeclaredElements(), e -> isConflictingLocalVariable(parent, e));
+  }
+
+  private static boolean isConflictingLocalVariable(PsiCodeBlock parent, PsiElement declaration) {
+    if (!(declaration instanceof PsiLocalVariable)) return false;
+    String name = ((PsiLocalVariable)declaration).getName();
+    return name != null && PsiResolveHelper.SERVICE.getInstance(declaration.getProject()).resolveAccessibleReferencedVariable(name, parent) != null;
+  }
+
+  private static PsiBlockStatement wrapWithCodeBlock(PsiStatement replacement) {
+    PsiBlockStatement newBlock = BlockUtils.createBlockStatement(replacement.getProject());
+    newBlock.getCodeBlock().add(replacement);
+    return newBlock;
+  }
+
+  private static boolean blockAlwaysReturns(@Nullable PsiStatement statement) {
+    if (statement == null) return false;
+    try {
+      return ControlFlowUtil.returnPresent(HighlightControlFlowUtil.getControlFlowNoConstantEvaluate(statement));
+    }
+    catch (AnalysisCanceledException e) {
+      return false;
+    }
+  }
+
+  private static void removeFollowingStatements(@NotNull PsiStatement anchor, @NotNull PsiCodeBlock parentBlock) {
+    PsiStatement[] siblingStatements = parentBlock.getStatements();
+    int ifIndex = Arrays.asList(siblingStatements).indexOf(anchor);
+    if (ifIndex >= 0 && ifIndex < siblingStatements.length - 1) {
+      parentBlock.deleteChildRange(siblingStatements[ifIndex + 1], siblingStatements[siblingStatements.length - 1]);
     }
   }
 
   public static void simplifyExpression(PsiExpression expression) throws IncorrectOperationException {
+    final PsiExpression result = createSimplifiedReplacement(expression);
+    PsiExpression newExpression = (PsiExpression)new CommentTracker().replaceAndRestoreComments(expression, result);
+    if (newExpression instanceof PsiLiteralExpression) {
+      final PsiElement parent = newExpression.getParent();
+      if (parent instanceof PsiAssertStatement && ((PsiLiteralExpression)newExpression).getValue() == Boolean.TRUE) {
+        parent.delete();
+        return;
+      }
+    }
+    if (!simplifyIfOrLoopStatement(newExpression)) {
+      ParenthesesUtils.removeParentheses(newExpression, false);
+    }
+  }
+
+  private static PsiExpression createSimplifiedReplacement(PsiExpression expression) {
     final PsiExpression[] result = {(PsiExpression)expression.copy()};
     final ExpressionVisitor expressionVisitor = new ExpressionVisitor(expression.getManager(), true);
     final IncorrectOperationException[] exception = {null};
     result[0].accept(new JavaRecursiveElementVisitor() {
       @Override
       public void visitElement(PsiElement element) {
-        // read in all children in advance since due to Igorek's exercises element replace involves its siblings invalidation
+        // read in all children in advance since due to element replacement involving its siblings invalidation
         PsiElement[] children = element.getChildren();
         for (PsiElement child : children) {
           child.accept(this);
@@ -189,22 +384,19 @@ public class SimplifyBooleanExpressionFix implements IntentionAction {
     if (exception[0] != null) {
       throw exception[0];
     }
-    PsiExpression newExpression = (PsiExpression)expression.replace(result[0]);
-    if (newExpression instanceof PsiLiteralExpression) {
-      final PsiElement parent = newExpression.getParent();
-      if (parent instanceof PsiAssertStatement && ((PsiLiteralExpression)newExpression).getValue() == Boolean.TRUE) {
-        parent.delete();
-        return;
-      }
-    }
-    simplifyIfStatement(newExpression);
+    return result[0];
   }
 
   public static boolean canBeSimplified(@NotNull PsiExpression expression) {
-    if (!(expression instanceof PsiConditionalExpression) && expression.getType() != PsiType.BOOLEAN) return false;
+    if (!(expression instanceof PsiConditionalExpression) && !PsiType.BOOLEAN.equals(expression.getType())) return false;
+    PsiElement parent = expression.getParent();
+    if (parent instanceof PsiLambdaExpression &&
+        !LambdaUtil.isSafeLambdaBodyReplacement((PsiLambdaExpression)parent, () -> createSimplifiedReplacement(expression))) {
+      return false;
+    }
 
     final ExpressionVisitor expressionVisitor = new ExpressionVisitor(expression.getManager(), false);
-    final Ref<Boolean> canBeSimplified = new Ref<Boolean>(Boolean.FALSE);
+    final Ref<Boolean> canBeSimplified = new Ref<>(Boolean.FALSE);
     expression.accept(new JavaRecursiveElementWalkingVisitor() {
       @Override
       public void visitElement(PsiElement element) {
@@ -226,6 +418,11 @@ public class SimplifyBooleanExpressionFix implements IntentionAction {
     return canBeSimplified.get().booleanValue();
   }
 
+  private PsiExpression getSubExpression() {
+    PsiElement element = getStartElement();
+    return element instanceof PsiExpression ? (PsiExpression)element : null;
+  }
+
   private static class ExpressionVisitor extends JavaElementVisitor {
     private PsiExpression resultExpression;
     private final PsiExpression trueExpression;
@@ -241,7 +438,7 @@ public class SimplifyBooleanExpressionFix implements IntentionAction {
 
     private static PsiExpression createExpression(final PsiManager psiManager, @NonNls String text) {
       try {
-        return JavaPsiFacade.getInstance(psiManager.getProject()).getElementFactory().createExpressionFromText(text, null);
+        return JavaPsiFacade.getElementFactory(psiManager.getProject()).createExpressionFromText(text, null);
       }
       catch (IncorrectOperationException e) {
         LOG.error(e);
@@ -260,9 +457,9 @@ public class SimplifyBooleanExpressionFix implements IntentionAction {
       PsiExpression lExpr = operands[0];
       IElementType tokenType = expression.getOperationTokenType();
       if (JavaTokenType.XOR == tokenType) {
-       
+
         boolean negate = false;
-        List<PsiExpression> expressions = new ArrayList<PsiExpression>();
+        List<PsiExpression> expressions = new ArrayList<>();
         for (PsiExpression operand : operands) {
           final Boolean constBoolean = getConstBoolean(operand);
           if (constBoolean != null) {
@@ -277,12 +474,7 @@ public class SimplifyBooleanExpressionFix implements IntentionAction {
         if (expressions.isEmpty()) {
           resultExpression = negate ? trueExpression : falseExpression;
         } else {
-          String simplifiedText = StringUtil.join(expressions, new Function<PsiExpression, String>() {
-            @Override
-            public String fun(PsiExpression expression) {
-              return expression.getText();
-            }
-          }, " ^ ");
+          String simplifiedText = StringUtil.join(expressions, PsiElement::getText, " ^ ");
           if (negate) {
             if (expressions.size() > 1) {
               simplifiedText = "!(" + simplifiedText + ")";
@@ -306,7 +498,12 @@ public class SimplifyBooleanExpressionFix implements IntentionAction {
           else {
             final PsiJavaToken javaToken = expression.getTokenBeforeOperand(operand);
             if (javaToken != null && !PsiTreeUtil.hasErrorElements(operand) && !PsiTreeUtil.hasErrorElements(lExpr)) {
-              resultExpression = JavaPsiFacade.getElementFactory(expression.getProject()).createExpressionFromText(lExpr.getText() + javaToken.getText() + operand.getText(), expression);
+              try {
+                resultExpression = JavaPsiFacade.getElementFactory(expression.getProject()).createExpressionFromText(lExpr.getText() + javaToken.getText() + operand.getText(), expression);
+              }
+              catch (IncorrectOperationException e) {
+                resultExpression = null;
+              }
             }
             else {
               resultExpression = null;
@@ -363,8 +560,11 @@ public class SimplifyBooleanExpressionFix implements IntentionAction {
 
     private static PsiPrefixExpression createNegatedExpression(PsiExpression otherOperand) {
       PsiPrefixExpression expression = (PsiPrefixExpression)createExpression(otherOperand.getManager(), "!(xxx)");
+      assert expression != null;
+      PsiExpression operand = expression.getOperand();
+      assert operand != null;
       try {
-        expression.getOperand().replace(otherOperand);
+        operand.replace(otherOperand);
       }
       catch (IncorrectOperationException e) {
         LOG.error(e);
@@ -389,8 +589,8 @@ public class SimplifyBooleanExpressionFix implements IntentionAction {
 
     @Override
     public void visitParenthesizedExpression(PsiParenthesizedExpression expression) {
-      PsiExpression subexpr = expression.getExpression();
-      Boolean constBoolean = getConstBoolean(subexpr);
+      PsiExpression subExpr = expression.getExpression();
+      Boolean constBoolean = getConstBoolean(subExpr);
       if (constBoolean == null) return;
       if (!markAndCheckCreateResult()) {
         return;
@@ -414,10 +614,5 @@ public class SimplifyBooleanExpressionFix implements IntentionAction {
     if (operand == null) return null;
     String text = operand.getText();
     return PsiKeyword.TRUE.equals(text) ? Boolean.TRUE : PsiKeyword.FALSE.equals(text) ? Boolean.FALSE : null;
-  }
-
-  @Override
-  public boolean startInWriteAction() {
-    return true;
   }
 }

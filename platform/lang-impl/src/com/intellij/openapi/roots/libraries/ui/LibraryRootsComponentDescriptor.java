@@ -64,7 +64,6 @@ public abstract class LibraryRootsComponentDescriptor {
 
   /**
    * @return descriptor for the file chooser which will be shown when 'Attach Files' button is pressed
-   * @param libraryName
    */
   @NotNull
   public FileChooserDescriptor createAttachFilesChooserDescriptor(@Nullable String libraryName) {
@@ -76,7 +75,7 @@ public abstract class LibraryRootsComponentDescriptor {
   }
 
   /**
-   * @return descriptors for 'Attach' buttons in the library roots editor
+   * @return descriptors for additional 'Attach' buttons in the library roots editor
    */
   @NotNull
   public abstract List<? extends AttachRootButtonDescriptor> createAttachButtons();

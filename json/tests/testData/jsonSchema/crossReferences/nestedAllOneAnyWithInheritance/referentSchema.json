@@ -1,0 +1,8 @@
+{
+  "properties": {
+    "definitions": {
+      "$ref": "baseSchema.json#"
+    },
+    "other": {}
+  }
+}

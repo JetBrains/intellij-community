@@ -1,0 +1,4 @@
+so<caret>Me text
+other line
+<caret>yet another <caret>line
+HeavilyHumped<caret>Word

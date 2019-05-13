@@ -15,7 +15,8 @@
  */
 package com.intellij.util.io;
 
-import java.io.*;
+import java.io.IOException;
+import java.io.OutputStream;
 
 /* Unsync version of java.io.DataOutputStream */
 public class DataOutputStream extends java.io.DataOutputStream {
@@ -33,5 +34,15 @@ public class DataOutputStream extends java.io.DataOutputStream {
   public void write(byte[] b, int off, int len) throws IOException {
     out.write(b, off, len);
     written += len;
+  }
+
+  public int getWrittenBytesCount() {
+    return written;
+  }
+
+  int resetWrittenBytesCount() {
+    int result = written;
+    written = 0;
+    return result;
   }
 }

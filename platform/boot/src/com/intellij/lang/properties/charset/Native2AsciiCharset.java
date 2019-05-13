@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,27 +17,28 @@
 package com.intellij.lang.properties.charset;
 
 import java.nio.charset.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 
 /**
  * @author Alexey
  */
 
 public class Native2AsciiCharset extends Charset {
+  @SuppressWarnings("SSBasedInspection")
+  private static final String[] ALIASES = new String[0];
   private final Charset myBaseCharset;
-  @SuppressWarnings({"HardCodedStringLiteral"}) private static final String NAME_PREFIX = "NATIVE_TO_ASCII_";
-  @SuppressWarnings({"HardCodedStringLiteral"}) private static final String DEFAULT_ENCODING_NAME = "ISO-8859-1";
+  private static final String NAME_PREFIX = "NATIVE_TO_ASCII_";
+  private static final String DEFAULT_ENCODING_NAME = "ISO-8859-1";
 
   private Native2AsciiCharset(String canonicalName) {
-    super(canonicalName, null);
-    String baseCharsetName = canonicalName.substring(NAME_PREFIX.length());
+    super(canonicalName, ALIASES);
     Charset baseCharset = null;
     try {
+      String baseCharsetName = canonicalName.substring(NAME_PREFIX.length());
       baseCharset = Charset.forName(baseCharsetName);
     }
-    catch (IllegalCharsetNameException e) {
-      //ignore
-    }
-    catch(UnsupportedCharsetException e){
+    catch (IllegalCharsetNameException | UnsupportedCharsetException e) {
       //ignore
     }
     myBaseCharset = baseCharset == null ? Charset.forName(DEFAULT_ENCODING_NAME) : baseCharset;
@@ -63,21 +64,28 @@ public class Native2AsciiCharset extends Charset {
     return new Native2AsciiCharsetEncoder(this);
   }
 
-  public Charset getBaseCharset() {
+  Charset getBaseCharset() {
     return myBaseCharset;
   }
   public static String makeNative2AsciiEncodingName(String baseCharsetName) {
     if (baseCharsetName == null) baseCharsetName = DEFAULT_ENCODING_NAME;
     return NAME_PREFIX + baseCharsetName;
   }
+
   public static Charset forName(String charsetName) {
     if (charsetName.startsWith(NAME_PREFIX)) {
-      return new Native2AsciiCharset(charsetName);
+      Native2AsciiCharset cached = cache.get(charsetName);
+      if (cached == null) {
+        cached = new Native2AsciiCharset(charsetName);
+        Native2AsciiCharset prev = cache.putIfAbsent(charsetName, cached);
+        if (prev != null) cached = prev;
+      }
+      return cached;
     }
     return null;
   }
   public static Charset wrap(Charset baseCharset) {
-    return new Native2AsciiCharset(NAME_PREFIX + baseCharset.name());
+    return forName(NAME_PREFIX + baseCharset.name());
   }
 
   public static Charset nativeToBaseCharset(Charset charset) {
@@ -86,4 +94,6 @@ public class Native2AsciiCharset extends Charset {
     }
     return charset;
   }
+
+  private static final ConcurrentMap<String, Native2AsciiCharset> cache = new ConcurrentHashMap<>();
 }

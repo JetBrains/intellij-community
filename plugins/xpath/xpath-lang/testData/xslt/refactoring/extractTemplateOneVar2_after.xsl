@@ -6,7 +6,7 @@
     <xsl:call-template name="foo">
       <xsl:with-param name="a" select="$a" />
     </xsl:call-template>
-    
+
   </xsl:template>
   <xsl:template name="foo">
     <xsl:param name="a" />

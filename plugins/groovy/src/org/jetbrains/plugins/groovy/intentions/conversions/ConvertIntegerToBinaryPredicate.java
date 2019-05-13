@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package org.jetbrains.plugins.groovy.intentions.conversions;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiType;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.intentions.base.PsiElementPredicate;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral;
 
@@ -25,7 +26,8 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals
  * @author Max Medvedev
  */
 public class ConvertIntegerToBinaryPredicate implements PsiElementPredicate {
-  public boolean satisfiedBy(PsiElement element) {
+  @Override
+  public boolean satisfiedBy(@NotNull PsiElement element) {
     if (!(element instanceof GrLiteral)) return false;
 
     final GrLiteral expression = (GrLiteral)element;
@@ -37,7 +39,7 @@ public class ConvertIntegerToBinaryPredicate implements PsiElementPredicate {
       return false;
     }
     @NonNls final String text = expression.getText();
-    if (text == null || text.length() == 0) {
+    if (text == null || text.isEmpty()) {
       return false;
     }
     if (text.startsWith("0x") || text.startsWith("0X")) {

@@ -1,5 +1,9 @@
 class Foo {}
 class FooImpl extends Foo {
+  {
+    foo();
+  }
+  
   public static void foo(){}
   <caret>
 }

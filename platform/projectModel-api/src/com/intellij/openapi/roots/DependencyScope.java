@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@
 package com.intellij.openapi.roots;
 
 import org.jdom.Element;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * The table below specifies which order entries are used during compilation and runtime.
@@ -34,7 +35,7 @@ import org.jdom.Element;
  * </table>
  * <br>
  * 
- * In order to check whether a dependency should be included in a classpath use one of <code>isFor</code>
+ * In order to check whether a dependency should be included in a classpath use one of {@code isFor}
  * methods instead of direct comparison with the enum constants
  *
  * @author yole
@@ -44,6 +45,7 @@ public enum DependencyScope {
   TEST("Test", false, false, true, true),
   RUNTIME("Runtime", false, true, false, true),
   PROVIDED("Provided", true, false, true, true);
+  @NotNull
   private final String myDisplayName;
   private final boolean myForProductionCompile;
   private final boolean myForProductionRuntime;
@@ -52,7 +54,7 @@ public enum DependencyScope {
 
   public static final String SCOPE_ATTR = "scope";
 
-  DependencyScope(String displayName,
+  DependencyScope(@NotNull String displayName,
                   boolean forProductionCompile,
                   boolean forProductionRuntime,
                   boolean forTestCompile,
@@ -64,7 +66,8 @@ public enum DependencyScope {
     myForTestRuntime = forTestRuntime;
   }
 
-  public static DependencyScope readExternal(Element element) {
+  @NotNull
+  public static DependencyScope readExternal(@NotNull Element element) {
     String scope = element.getAttributeValue(SCOPE_ATTR);
     if (scope != null) {
       try {
@@ -85,6 +88,7 @@ public enum DependencyScope {
     }
   }
 
+  @NotNull
   public String getDisplayName() {
     return myDisplayName;
   }

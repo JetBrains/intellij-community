@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,19 +17,24 @@
 package com.intellij.codeInsight.editorActions;
 
 import com.intellij.ide.DataManager;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.IdeActions;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.EditorModificationUtil;
-import com.intellij.openapi.editor.SelectionModel;
-import com.intellij.openapi.editor.VisualPosition;
+import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.editor.actionSystem.EditorActionManager;
 import com.intellij.openapi.editor.actionSystem.EditorWriteActionHandler;
+import com.intellij.openapi.editor.actions.CopyAction;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.List;
 
 public class CutHandler extends EditorWriteActionHandler {
   private final EditorActionHandler myOriginalHandler;
@@ -39,11 +44,12 @@ public class CutHandler extends EditorWriteActionHandler {
   }
 
   @Override
-  public void executeWriteAction(Editor editor, DataContext dataContext) {
-    Project project = PlatformDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(editor.getContentComponent()));
+  public void executeWriteAction(final Editor editor, Caret caret, DataContext dataContext) {
+    assert caret == null : "Invocation of 'cut' operation for specific caret is not supported";
+    Project project = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(editor.getContentComponent()));
     if (project == null) {
       if (myOriginalHandler != null) {
-        myOriginalHandler.execute(editor, dataContext);
+        myOriginalHandler.execute(editor, null, dataContext);
       }
       return;
     }
@@ -52,29 +58,51 @@ public class CutHandler extends EditorWriteActionHandler {
 
     if (file == null) {
       if (myOriginalHandler != null) {
-        myOriginalHandler.execute(editor, dataContext);
+        myOriginalHandler.execute(editor, null, dataContext);
       }
       return;
     }
 
-    SelectionModel selectionModel = editor.getSelectionModel();
-    if (!selectionModel.hasSelection() && !selectionModel.hasBlockSelection()) {
-      selectionModel.selectLineAtCaret();
-      if (!selectionModel.hasSelection()) return;
+    final SelectionModel selectionModel = editor.getSelectionModel();
+    if (!selectionModel.hasSelection(true)) {
+      if (Registry.is(CopyAction.SKIP_COPY_AND_CUT_FOR_EMPTY_SELECTION_KEY)) {
+        return;
+      }
+      editor.getCaretModel().runForEachCaret(__ -> selectionModel.selectLineAtCaret());
+      if (!selectionModel.hasSelection(true)) return;
     }
 
     int start = selectionModel.getSelectionStart();
     int end = selectionModel.getSelectionEnd();
+    final List<TextRange> selections = new ArrayList<>();
+    if (editor.getCaretModel().supportsMultipleCarets()) {
+      editor.getCaretModel().runForEachCaret(
+        __ -> selections.add(new TextRange(selectionModel.getSelectionStart(), selectionModel.getSelectionEnd())));
+    }
 
-    EditorActionManager.getInstance().getActionHandler(IdeActions.ACTION_EDITOR_COPY).execute(editor, dataContext);
+    EditorActionManager.getInstance().getActionHandler(IdeActions.ACTION_EDITOR_COPY).execute(editor, null, dataContext);
 
-    if (start != end) {
-      // There is a possible case that 'sticky selection' is active. It's automatically removed on copying then, so, we explicitly
-      // remove the text.
-      editor.getDocument().deleteString(start, end);
+    if (editor.getCaretModel().supportsMultipleCarets()) {
+
+      Collections.reverse(selections);
+      final Iterator<TextRange> it = selections.iterator();
+      editor.getCaretModel().runForEachCaret(__ -> {
+        TextRange range = it.next();
+        editor.getCaretModel().moveToOffset(range.getStartOffset());
+        selectionModel.removeSelection();
+        editor.getDocument().deleteString(range.getStartOffset(), range.getEndOffset());
+      });
+      editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
     }
     else {
-      EditorModificationUtil.deleteSelectedText(editor);
+      if (start != end) {
+        // There is a possible case that 'sticky selection' is active. It's automatically removed on copying then, so, we explicitly
+        // remove the text.
+        editor.getDocument().deleteString(start, end);
+      }
+      else {
+        EditorModificationUtil.deleteSelectedText(editor);
+      }
     }
   }
 }

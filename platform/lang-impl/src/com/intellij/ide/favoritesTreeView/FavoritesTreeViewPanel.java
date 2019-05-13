@@ -1,52 +1,35 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.ide.favoritesTreeView;
 
-import com.intellij.history.LocalHistory;
-import com.intellij.history.LocalHistoryAction;
 import com.intellij.icons.AllIcons;
-import com.intellij.ide.*;
+import com.intellij.ide.CopyPasteDelegator;
+import com.intellij.ide.ExporterToTextFile;
+import com.intellij.ide.IdeView;
+import com.intellij.ide.bookmarks.Bookmark;
 import com.intellij.ide.dnd.aware.DnDAwareTree;
 import com.intellij.ide.favoritesTreeView.actions.*;
 import com.intellij.ide.projectView.PresentationData;
 import com.intellij.ide.projectView.ProjectView;
 import com.intellij.ide.projectView.impl.ModuleGroup;
+import com.intellij.ide.projectView.impl.ProjectViewTree;
 import com.intellij.ide.projectView.impl.nodes.LibraryGroupElement;
 import com.intellij.ide.projectView.impl.nodes.NamedLibraryElement;
 import com.intellij.ide.projectView.impl.nodes.ProjectViewDirectoryHelper;
 import com.intellij.ide.ui.customization.CustomizationUtil;
-import com.intellij.ide.util.DeleteHandler;
 import com.intellij.ide.util.DirectoryChooserUtil;
 import com.intellij.ide.util.EditorHelper;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
-import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.ide.util.treeView.NodeRenderer;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ui.configuration.actions.ModuleDeleteProvider;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.vfs.JarFileSystem;
-import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.ex.ToolWindowEx;
@@ -61,25 +44,24 @@ import com.intellij.ui.docking.DockContainer;
 import com.intellij.ui.docking.DockManager;
 import com.intellij.ui.docking.DockableContent;
 import com.intellij.ui.treeStructure.actions.CollapseAllAction;
-import com.intellij.util.ArrayUtil;
-import com.intellij.util.EditSourceOnDoubleClickHandler;
-import com.intellij.util.EditSourceOnEnterKeyHandler;
-import com.intellij.util.PlatformUtils;
+import com.intellij.util.*;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.JBIterable;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.event.ChangeListener;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.awt.event.MouseListener;
 import java.io.File;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 
 /**
  * @author anna
@@ -99,8 +81,6 @@ public class FavoritesTreeViewPanel extends JPanel implements DataProvider, Dock
   protected Project myProject;
   protected DnDAwareTree myTree;
 
-  private final MyDeletePSIElementProvider myDeletePSIElementProvider = new MyDeletePSIElementProvider();
-  private final ModuleDeleteProvider myDeleteModuleProvider = new ModuleDeleteProvider();
   private final AutoScrollToSourceHandler myAutoScrollToSourceHandler;
 
   private final IdeView myIdeView = new MyIdeView();
@@ -115,7 +95,17 @@ public class FavoritesTreeViewPanel extends JPanel implements DataProvider, Dock
     DefaultMutableTreeNode root = new DefaultMutableTreeNode();
     root.setUserObject(myFavoritesTreeStructure.getRootElement());
     final DefaultTreeModel treeModel = new DefaultTreeModel(root);
-    myTree = new DnDAwareTree(treeModel);
+    myTree = new DnDAwareTree(treeModel) {
+      @Override
+      public boolean isFileColorsEnabled() {
+        return ProjectViewTree.isFileColorsEnabledFor(this);
+      }
+
+      @Override
+      public Color getFileColorFor(Object object) {
+        return ProjectViewTree.getColorForElement(getPsiElement(object));
+      }
+    };
     myBuilder = new FavoritesViewTreeBuilder(myProject, myTree, treeModel, myFavoritesTreeStructure);
     DockManager.getInstance(project).register(this);
 
@@ -128,28 +118,25 @@ public class FavoritesTreeViewPanel extends JPanel implements DataProvider, Dock
     ToolTipManager.sharedInstance().registerComponent(myTree);
     final FavoritesComparator favoritesComparator =
       new FavoritesComparator(ProjectView.getInstance(project), FavoritesProjectViewPane.ID);
-    myBuilder.setNodeDescriptorComparator(new Comparator<NodeDescriptor>() {
-      @Override
-      public int compare(NodeDescriptor o1, NodeDescriptor o2) {
-        if (o1 instanceof FavoritesTreeNodeDescriptor && o2 instanceof FavoritesTreeNodeDescriptor) {
-          final FavoritesListNode listNode1 = FavoritesTreeUtil.extractParentList((FavoritesTreeNodeDescriptor)o1);
-          final FavoritesListNode listNode2 = FavoritesTreeUtil.extractParentList((FavoritesTreeNodeDescriptor)o2);
-          if (listNode1.equals(listNode2)) {
-            final Comparator<FavoritesTreeNodeDescriptor> comparator = myFavoritesManager.getCustomComparator(listNode1.getName());
-            if (comparator != null) {
-              return comparator.compare((FavoritesTreeNodeDescriptor)o1, (FavoritesTreeNodeDescriptor)o2);
-            }
-            else {
-              return favoritesComparator.compare(o1, o2);
-            }
+    myBuilder.setNodeDescriptorComparator((o1, o2) -> {
+      if (o1 instanceof FavoritesTreeNodeDescriptor && o2 instanceof FavoritesTreeNodeDescriptor) {
+        final FavoritesListNode listNode1 = FavoritesTreeUtil.extractParentList((FavoritesTreeNodeDescriptor)o1);
+        final FavoritesListNode listNode2 = FavoritesTreeUtil.extractParentList((FavoritesTreeNodeDescriptor)o2);
+        if (listNode1.equals(listNode2)) {
+          final Comparator<FavoritesTreeNodeDescriptor> comparator = myFavoritesManager.getCustomComparator(listNode1.getName());
+          if (comparator != null) {
+            return comparator.compare((FavoritesTreeNodeDescriptor)o1, (FavoritesTreeNodeDescriptor)o2);
+          }
+          else {
+            return favoritesComparator.compare(o1, o2);
           }
         }
-        return o1.getIndex() - o2.getIndex();
       }
+      return o1.getIndex() - o2.getIndex();
     });
     myTree.setCellRenderer(new NodeRenderer() {
       @Override
-      public void customizeCellRenderer(JTree tree,
+      public void customizeCellRenderer(@NotNull JTree tree,
                                         Object value,
                                         boolean selected,
                                         boolean expanded,
@@ -193,42 +180,37 @@ public class FavoritesTreeViewPanel extends JPanel implements DataProvider, Dock
 
     EditSourceOnDoubleClickHandler.install(myTree);
     EditSourceOnEnterKeyHandler.install(myTree);
-    myCopyPasteDelegator = new CopyPasteDelegator(myProject, this) {
-      @NotNull
-      protected PsiElement[] getSelectedElements() {
-        return getSelectedPsiElements();
-      }
-    };
+    myCopyPasteDelegator = new CopyPasteDelegator(myProject, this);
 
     AnActionButton addActionButton = AnActionButton.fromAction(ActionManager.getInstance().getAction("AddNewFavoritesList"));
     addActionButton.getTemplatePresentation().setIcon(CommonActionsPanel.Buttons.ADD.getIcon());
     addActionButton.setShortcut(CommonActionsPanel.getCommonShortcut(CommonActionsPanel.Buttons.ADD));
 
-    AnActionButton editActionButton = AnActionButton.fromAction(new EditFavoritesAction());
+    AnActionButton editActionButton = AnActionButton.fromAction(ActionManager.getInstance().getAction("EditFavorites"));
     editActionButton.setShortcut(CommonShortcuts.CTRL_ENTER);
 
     AnActionButton deleteActionButton = new DeleteFromFavoritesAction();
-    deleteActionButton.setShortcut(CommonActionsPanel.getCommonShortcut(CommonActionsPanel.Buttons.REMOVE));
+    deleteActionButton.setShortcut(CustomShortcutSet.fromString("DELETE", "BACK_SPACE"));
 
-    final AnAction exportToTextFileAction = CommonActionsManager.getInstance().createExportToTextFileAction(createTextExporter());
-    AnActionButton exportActionButton = AnActionButton.fromAction(exportToTextFileAction);
-    exportActionButton.setShortcut(exportToTextFileAction.getShortcutSet());
+    //final AnAction exportToTextFileAction = CommonActionsManager.getInstance().createExportToTextFileAction(createTextExporter());
+    //AnActionButton exportActionButton = AnActionButton.fromAction(exportToTextFileAction);
+    //exportActionButton.setShortcut(exportToTextFileAction.getShortcutSet());
 
     final ToolbarDecorator decorator = ToolbarDecorator.createDecorator(myTree)
       .initPosition()
       .disableAddAction().disableRemoveAction().disableDownAction().disableUpAction()
       .addExtraAction(addActionButton)
       .addExtraAction(editActionButton)
-      .addExtraAction(deleteActionButton)
-      .addExtraAction(exportActionButton);
+      .addExtraAction(deleteActionButton);
+      //.addExtraAction(exportActionButton);
 
     final AnAction action = ActionManager.getInstance().getAction(IdeActions.ACTION_NEW_ELEMENT);
     action.registerCustomShortcutSet(action.getShortcutSet(), myTree);
     final JPanel panel = decorator.createPanel();
 
-    panel.setBorder(IdeBorderFactory.createEmptyBorder(0));
+    panel.setBorder(JBUI.Borders.empty());
     add(panel, BorderLayout.CENTER);
-    setBorder(IdeBorderFactory.createEmptyBorder(0));
+    setBorder(JBUI.Borders.empty());
     myAutoScrollToSourceHandler = new AutoScrollToSourceHandler() {
       @Override
       protected boolean isAutoScrollMode() {
@@ -245,36 +227,27 @@ public class FavoritesTreeViewPanel extends JPanel implements DataProvider, Dock
       @Override
       public void rootsChanged() {
         myBuilder.updateFromRoot();
+        myTree.repaint();
       }
 
       @Override
-      public void listAdded(String listName) {
+      public void listAdded(@NotNull String listName) {
         myBuilder.updateFromRoot();
+        myTree.repaint();
       }
 
       @Override
-      public void listRemoved(String listName) {
+      public void listRemoved(@NotNull String listName) {
         myBuilder.updateFromRoot();
+        myTree.repaint();
       }
-    });
+    }, this);
   }
 
 
   private ExporterToTextFile createTextExporter() {
     return new ExporterToTextFile() {
-      @Override
-      public JComponent getSettingsEditor() {
-        return null;
-      }
-
-      @Override
-      public void addSettingsChangedListener(ChangeListener listener) throws TooManyListenersException {
-      }
-
-      @Override
-      public void removeSettingsChangedListener(ChangeListener listener) {
-      }
-
+      @NotNull
       @Override
       public String getReportText() {
         final StringBuilder sb = new StringBuilder();
@@ -322,13 +295,10 @@ public class FavoritesTreeViewPanel extends JPanel implements DataProvider, Dock
         return sb.toString();
       }
 
+      @NotNull
       @Override
       public String getDefaultFilePath() {
-        return myProject.getBasePath() + File.separator + "CurrentTask.txt";
-      }
-
-      @Override
-      public void exportedTo(String filePath) {
+        return myProject.getBasePath() + File.separator + "Favorites.txt";
       }
 
       @Override
@@ -349,9 +319,10 @@ public class FavoritesTreeViewPanel extends JPanel implements DataProvider, Dock
   }
 
   public void selectElement(final Object selector, final VirtualFile file, final boolean requestFocus) {
-    myBuilder.select(selector, file, requestFocus);
+    myBuilder.selectAsync(selector, file, requestFocus);
   }
 
+  @Override
   public void dispose() {
     Disposer.dispose(myBuilder);
     myBuilder = null;
@@ -363,49 +334,57 @@ public class FavoritesTreeViewPanel extends JPanel implements DataProvider, Dock
 
   @NotNull
   private PsiElement[] getSelectedPsiElements() {
-    final Object[] elements = getSelectedNodeElements();
-    if (elements == null) {
-      return PsiElement.EMPTY_ARRAY;
+    List<PsiElement> elements = JBIterable.of(getSelectedNodeElements()).filterMap(this::getPsiElement).toList();
+    return PsiUtilCore.toPsiElementArray(elements);
+  }
+
+  @Nullable
+  private PsiElement getPsiElement(@Nullable Object element) {
+    if (element instanceof FavoritesTreeNodeDescriptor) {
+      element = ((FavoritesTreeNodeDescriptor)element).getElement().getValue();
     }
-    ArrayList<PsiElement> result = new ArrayList<PsiElement>();
-    for (Object element : elements) {
-      if (element instanceof PsiElement) {
-        result.add((PsiElement)element);
-      }
-      else if (element instanceof SmartPsiElementPointer) {
-        PsiElement psiElement = ((SmartPsiElementPointer)element).getElement();
+    if (element instanceof Bookmark) {
+      element = ((Bookmark)element).getFile();
+    }
+    if (element instanceof PsiElement) {
+      return (PsiElement)element;
+    }
+    else if (element instanceof SmartPsiElementPointer) {
+      return ((SmartPsiElementPointer)element).getElement();
+    }
+    else if (element != null) {
+      for (FavoriteNodeProvider provider : FavoriteNodeProvider.EP_NAME.getExtensions(myProject)) {
+        PsiElement psiElement = provider.getPsiElement(element);
         if (psiElement != null) {
-          result.add(psiElement);
-        }
-      }
-      else {
-        for (FavoriteNodeProvider provider : Extensions.getExtensions(FavoriteNodeProvider.EP_NAME, myProject)) {
-          final PsiElement psiElement = provider.getPsiElement(element);
-          if (psiElement != null) {
-            result.add(psiElement);
-            break;
-          }
+          return psiElement;
         }
       }
     }
-    return PsiUtilCore.toPsiElementArray(result);
+    return null;
   }
 
   public FavoritesTreeStructure getFavoritesTreeStructure() {
     return myFavoritesTreeStructure;
   }
 
-  public Object getData(String dataId) {
-    if (PlatformDataKeys.PROJECT.is(dataId)) {
+  @Override
+  public Object getData(@NotNull String dataId) {
+    if (CommonDataKeys.PROJECT.is(dataId)) {
       return myProject;
     }
-    if (PlatformDataKeys.NAVIGATABLE.is(dataId)) {
+    if (CommonDataKeys.NAVIGATABLE.is(dataId)) {
       final FavoritesTreeNodeDescriptor[] selectedNodeDescriptors = FavoritesTreeUtil.getSelectedNodeDescriptors(myTree);
       return selectedNodeDescriptors.length == 1 ? selectedNodeDescriptors[0].getElement() : null;
     }
-    if (PlatformDataKeys.NAVIGATABLE_ARRAY.is(dataId)) {
-      final List<Navigatable> selectedElements = getSelectedElements(Navigatable.class);
-      return selectedElements.isEmpty() ? null : selectedElements.toArray(new Navigatable[selectedElements.size()]);
+    if (CommonDataKeys.NAVIGATABLE_ARRAY.is(dataId)) {
+      List<String> listNames = getSelectedElements(String.class);
+      final List<Navigatable> selectedElements = new SmartList<>();
+      for (String listname : listNames) {
+        selectedElements.addAll(
+          ContainerUtil.map(myFavoritesManager.getVirtualFiles(listname, false), file -> new OpenFileDescriptor(myProject, file)));
+      }
+      selectedElements.addAll(getSelectedElements(Navigatable.class));
+      return selectedElements.isEmpty() ? null : selectedElements.toArray(new Navigatable[0]);
     }
 
     if (PlatformDataKeys.CUT_PROVIDER.is(dataId)) {
@@ -423,7 +402,7 @@ public class FavoritesTreeViewPanel extends JPanel implements DataProvider, Dock
     if (LangDataKeys.NO_NEW_ACTION.is(dataId)) {
       return Boolean.TRUE;
     }
-    if (LangDataKeys.PSI_ELEMENT.is(dataId)) {
+    if (CommonDataKeys.PSI_ELEMENT.is(dataId)) {
       PsiElement[] elements = getSelectedPsiElements();
       if (elements.length != 1) {
         return null;
@@ -432,7 +411,7 @@ public class FavoritesTreeViewPanel extends JPanel implements DataProvider, Dock
     }
     if (LangDataKeys.PSI_ELEMENT_ARRAY.is(dataId)) {
       final PsiElement[] elements = getSelectedPsiElements();
-      ArrayList<PsiElement> result = new ArrayList<PsiElement>();
+      ArrayList<PsiElement> result = new ArrayList<>();
       for (PsiElement element : elements) {
         if (element.isValid()) {
           result.add(element);
@@ -456,27 +435,20 @@ public class FavoritesTreeViewPanel extends JPanel implements DataProvider, Dock
     if (LangDataKeys.MODULE_CONTEXT_ARRAY.is(dataId)) {
       return getSelectedModules();
     }
-
-    if (PlatformDataKeys.DELETE_ELEMENT_PROVIDER.is(dataId)) {
-      final Object[] elements = getSelectedNodeElements();
-      return elements != null && elements.length >= 1 && elements[0] instanceof Module
-             ? myDeleteModuleProvider
-             : myDeletePSIElementProvider;
-    }
     if (ModuleGroup.ARRAY_DATA_KEY.is(dataId)) {
       final List<ModuleGroup> selectedElements = getSelectedElements(ModuleGroup.class);
-      return selectedElements.isEmpty() ? null : selectedElements.toArray(new ModuleGroup[selectedElements.size()]);
+      return selectedElements.isEmpty() ? null : selectedElements.toArray(new ModuleGroup[0]);
     }
     if (LibraryGroupElement.ARRAY_DATA_KEY.is(dataId)) {
       final List<LibraryGroupElement> selectedElements = getSelectedElements(LibraryGroupElement.class);
-      return selectedElements.isEmpty() ? null : selectedElements.toArray(new LibraryGroupElement[selectedElements.size()]);
+      return selectedElements.isEmpty() ? null : selectedElements.toArray(new LibraryGroupElement[0]);
     }
     if (NamedLibraryElement.ARRAY_DATA_KEY.is(dataId)) {
       final List<NamedLibraryElement> selectedElements = getSelectedElements(NamedLibraryElement.class);
-      return selectedElements.isEmpty() ? null : selectedElements.toArray(new NamedLibraryElement[selectedElements.size()]);
+      return selectedElements.isEmpty() ? null : selectedElements.toArray(new NamedLibraryElement[0]);
     }
     if (CONTEXT_FAVORITES_ROOTS_DATA_KEY.is(dataId)) {
-      List<FavoritesTreeNodeDescriptor> result = new ArrayList<FavoritesTreeNodeDescriptor>();
+      List<FavoritesTreeNodeDescriptor> result = new ArrayList<>();
       FavoritesTreeNodeDescriptor[] selectedNodeDescriptors = FavoritesTreeUtil.getSelectedNodeDescriptors(myTree);
       for (FavoritesTreeNodeDescriptor selectedNodeDescriptor : selectedNodeDescriptors) {
         if (FavoritesTreeUtil.getProvider(myFavoritesManager, selectedNodeDescriptor) != null) {
@@ -487,7 +459,7 @@ public class FavoritesTreeViewPanel extends JPanel implements DataProvider, Dock
           result.add(selectedNodeDescriptor);
         }
       }
-      return result.toArray(new FavoritesTreeNodeDescriptor[result.size()]);
+      return result.toArray(FavoritesTreeNodeDescriptor.EMPTY_ARRAY);
     }
     if (FAVORITES_TREE_KEY.is(dataId)) {
       return myTree;
@@ -497,7 +469,7 @@ public class FavoritesTreeViewPanel extends JPanel implements DataProvider, Dock
     }
     if (FAVORITES_LIST_NAME_DATA_KEY.is(dataId)) {
       final FavoritesTreeNodeDescriptor[] descriptors = FavoritesTreeUtil.getSelectedNodeDescriptors(myTree);
-      Set<String> selectedNames = new HashSet<String>();
+      Set<String> selectedNames = new HashSet<>();
       for (FavoritesTreeNodeDescriptor descriptor : descriptors) {
         FavoritesListNode node = FavoritesTreeUtil.extractParentList(descriptor);
         if (node != null) {
@@ -512,7 +484,7 @@ public class FavoritesTreeViewPanel extends JPanel implements DataProvider, Dock
     }
     FavoritesTreeNodeDescriptor[] descriptors = FavoritesTreeUtil.getSelectedNodeDescriptors(myTree);
     if (descriptors.length > 0) {
-      List<AbstractTreeNode> nodes = new ArrayList<AbstractTreeNode>();
+      List<AbstractTreeNode> nodes = new ArrayList<>();
       for (FavoritesTreeNodeDescriptor descriptor : descriptors) {
         nodes.add(descriptor.getElement());
       }
@@ -522,7 +494,7 @@ public class FavoritesTreeViewPanel extends JPanel implements DataProvider, Dock
   }
 
   private Set<FavoritesListNode> getSelectedListsNodes() {
-    final Set<FavoritesListNode> result = new HashSet<FavoritesListNode>();
+    final Set<FavoritesListNode> result = new HashSet<>();
     final FavoritesTreeNodeDescriptor[] descriptors = FavoritesTreeUtil.getSelectedNodeDescriptors(myTree);
     for (FavoritesTreeNodeDescriptor descriptor : descriptors) {
       final FavoritesListNode listNode = FavoritesTreeUtil.extractParentList(descriptor);
@@ -535,7 +507,7 @@ public class FavoritesTreeViewPanel extends JPanel implements DataProvider, Dock
 
   private <T> List<T> getSelectedElements(Class<T> klass) {
     final Object[] elements = getSelectedNodeElements();
-    ArrayList<T> result = new ArrayList<T>();
+    ArrayList<T> result = new ArrayList<>();
     if (elements == null) {
       return result;
     }
@@ -553,7 +525,7 @@ public class FavoritesTreeViewPanel extends JPanel implements DataProvider, Dock
     if (elements == null) {
       return null;
     }
-    ArrayList<Module> result = new ArrayList<Module>();
+    ArrayList<Module> result = new ArrayList<>();
     for (Object element : elements) {
       if (element instanceof Module) {
         result.add((Module)element);
@@ -563,12 +535,12 @@ public class FavoritesTreeViewPanel extends JPanel implements DataProvider, Dock
       }
     }
 
-    return result.isEmpty() ? null : result.toArray(new Module[result.size()]);
+    return result.isEmpty() ? null : result.toArray(Module.EMPTY_ARRAY);
   }
 
   private Object[] getSelectedNodeElements() {
     final FavoritesTreeNodeDescriptor[] selectedNodeDescriptors = FavoritesTreeUtil.getSelectedNodeDescriptors(myTree);
-    ArrayList<Object> result = new ArrayList<Object>();
+    ArrayList<Object> result = new ArrayList<>();
     for (FavoritesTreeNodeDescriptor selectedNodeDescriptor : selectedNodeDescriptors) {
       if (selectedNodeDescriptor != null) {
         Object value = selectedNodeDescriptor.getElement().getValue();
@@ -599,7 +571,7 @@ public class FavoritesTreeViewPanel extends JPanel implements DataProvider, Dock
     if (helper.supportsFlattenPackages()) {
       group.addAction(new FavoritesAbbreviatePackageNamesAction(myProject, myBuilder));
     }
-    if (!PlatformUtils.isAppCode()) {
+    if (!PlatformUtils.isCidr()) {
       group.add(new FavoritesShowMembersAction(myProject, myBuilder));
     }
 
@@ -645,7 +617,7 @@ public class FavoritesTreeViewPanel extends JPanel implements DataProvider, Dock
 
   void dropPsiElements(FavoritesManager mgr, FavoritesListNode node, PsiElement[] elements) {
     if (elements != null && elements.length > 0) {
-      final ArrayList<AbstractTreeNode> nodes = new ArrayList<AbstractTreeNode>();
+      final ArrayList<AbstractTreeNode> nodes = new ArrayList<>();
       for (PsiElement element : elements) {
         if (element instanceof SmartPsiElementPointer) {
           element = ((SmartPsiElementPointer)element).getElement();
@@ -659,58 +631,8 @@ public class FavoritesTreeViewPanel extends JPanel implements DataProvider, Dock
     }
   }
 
-  private final class MyDeletePSIElementProvider implements DeleteProvider {
-    public boolean canDeleteElement(@NotNull DataContext dataContext) {
-      final PsiElement[] elements = getElementsToDelete();
-      return DeleteHandler.shouldEnableDeleteAction(elements);
-    }
-
-    public void deleteElement(@NotNull DataContext dataContext) {
-      List<PsiElement> allElements = Arrays.asList(getElementsToDelete());
-      List<PsiElement> validElements = new ArrayList<PsiElement>();
-      for (PsiElement psiElement : allElements) {
-        if (psiElement != null && psiElement.isValid()) validElements.add(psiElement);
-      }
-      final PsiElement[] elements = PsiUtilCore.toPsiElementArray(validElements);
-
-      LocalHistoryAction a = LocalHistory.getInstance().startAction(IdeBundle.message("progress.deleting"));
-      try {
-        DeleteHandler.deletePsiElement(elements, myProject);
-      }
-      finally {
-        a.finish();
-      }
-    }
-
-    private PsiElement[] getElementsToDelete() {
-      ArrayList<PsiElement> result = new ArrayList<PsiElement>();
-      Object[] elements = getSelectedNodeElements();
-      for (int idx = 0; elements != null && idx < elements.length; idx++) {
-        if (elements[idx] instanceof PsiElement) {
-          final PsiElement element = (PsiElement)elements[idx];
-          result.add(element);
-          if (element instanceof PsiDirectory) {
-            final VirtualFile virtualFile = ((PsiDirectory)element).getVirtualFile();
-            final String path = virtualFile.getPath();
-            if (path.endsWith(JarFileSystem.JAR_SEPARATOR)) { // if is jar-file root
-              final VirtualFile vFile =
-                LocalFileSystem.getInstance().findFileByPath(path.substring(0, path.length() - JarFileSystem.JAR_SEPARATOR.length()));
-              if (vFile != null) {
-                final PsiFile psiFile = PsiManager.getInstance(myProject).findFile(vFile);
-                if (psiFile != null) {
-                  elements[idx] = psiFile;
-                }
-              }
-            }
-          }
-        }
-      }
-
-      return PsiUtilCore.toPsiElementArray(result);
-    }
-  }
-
   private final class MyIdeView implements IdeView {
+    @Override
     public void selectElement(final PsiElement element) {
       if (element != null) {
         selectPsiElement(element, false);
@@ -739,7 +661,7 @@ public class FavoritesTreeViewPanel extends JPanel implements DataProvider, Dock
       if (myBuilder == null) return null;
       final Object[] selectedNodeElements = getSelectedNodeElements();
       if (selectedNodeElements.length != 1) return null;
-      for (FavoriteNodeProvider nodeProvider : Extensions.getExtensions(FavoriteNodeProvider.EP_NAME, myProject)) {
+      for (FavoriteNodeProvider nodeProvider : FavoriteNodeProvider.EP_NAME.getExtensions(myProject)) {
         final PsiElement psiElement = nodeProvider.getPsiElement(selectedNodeElements[0]);
         if (psiElement instanceof PsiDirectory) {
           return new PsiDirectory[]{(PsiDirectory)psiElement};
@@ -768,11 +690,14 @@ public class FavoritesTreeViewPanel extends JPanel implements DataProvider, Dock
       return selectedNodeElements[0] instanceof PsiDirectory ? new PsiDirectory[]{(PsiDirectory)selectedNodeElements[0]} : null;
     }
 
+    @NotNull
+    @Override
     public PsiDirectory[] getDirectories() {
       final PsiDirectory[] directories = getSelectedDirectories();
       return directories == null ? PsiDirectory.EMPTY_ARRAY : directories;
     }
 
+    @Override
     public PsiDirectory getOrChooseDirectory() {
       return DirectoryChooserUtil.getOrChooseDirectory(this);
     }
@@ -783,6 +708,11 @@ public class FavoritesTreeViewPanel extends JPanel implements DataProvider, Dock
   @Override
   public RelativeRectangle getAcceptArea() {
     return new RelativeRectangle(myTree);
+  }
+
+  @Override
+  public RelativeRectangle getAcceptAreaFallback() {
+    return getAcceptArea();
   }
 
   @NotNull

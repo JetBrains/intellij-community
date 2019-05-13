@@ -1,11 +1,11 @@
-// "Create Method 'f'" "true"
+// "Create method 'f'" "true"
 class A {
     {
          f(A::foo);
     }
 
     private void f(Object foo) {
-        <selection>//To change body of created methods use File | Settings | File Templates.</selection>
+        <selection></selection>
     }
 
     static int foo() {

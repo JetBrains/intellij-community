@@ -2,10 +2,10 @@ if (true) {
 
 }
 pri<caret>ntln 'b'
-pri<caret>ntln 'c'
+println 'c'
 -----
 if (true) {
 
     pri<caret>ntln 'b'
 }
-pri<caret>ntln 'c'
+println 'c'

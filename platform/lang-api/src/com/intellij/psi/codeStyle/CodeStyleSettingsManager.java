@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,8 @@
  */
 package com.intellij.psi.codeStyle;
 
+import com.intellij.application.options.CodeStyle;
+import com.intellij.lang.Language;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -23,71 +25,90 @@ import com.intellij.openapi.util.DefaultJDOMExternalizer;
 import com.intellij.openapi.util.DifferenceFilter;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.psi.PsiFile;
+import com.intellij.util.containers.ContainerUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.lang.reflect.Field;
+import java.util.List;
+
 public class CodeStyleSettingsManager implements PersistentStateComponent<Element> {
-  private static final Logger LOG = Logger.getInstance("#" + CodeStyleSettingsManager.class.getName());
+  private static final Logger LOG = Logger.getInstance(CodeStyleSettingsManager.class);
 
-  public volatile CodeStyleSettings PER_PROJECT_SETTINGS = null;
-  public volatile boolean USE_PER_PROJECT_SETTINGS = false;
+  /**
+   * Use {@link #setMainProjectCodeStyle(CodeStyleSettings)} or {@link #getMainProjectCodeStyle()} instead
+   */
+  @Deprecated
+  @Nullable
+  public volatile CodeStyleSettings PER_PROJECT_SETTINGS;
+
+  public volatile boolean USE_PER_PROJECT_SETTINGS;
+  public volatile String PREFERRED_PROJECT_CODE_STYLE;
   private volatile CodeStyleSettings myTemporarySettings;
-  private volatile boolean myIsLoaded = false;
 
-  public static CodeStyleSettingsManager getInstance(@NotNull Project project) {
+  private final List<CodeStyleSettingsListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
+
+  public static CodeStyleSettingsManager getInstance(@Nullable Project project) {
+    if (project == null || project.isDefault()) //noinspection deprecation
+      return getInstance();
     ProjectCodeStyleSettingsManager projectSettingsManager = ServiceManager.getService(project, ProjectCodeStyleSettingsManager.class);
-    if (!projectSettingsManager.isLoaded()) {
-      synchronized (projectSettingsManager) {
-        if (!projectSettingsManager.isLoaded()) {
-          LegacyCodeStyleSettingsManager legacySettingsManager = ServiceManager.getService(project, LegacyCodeStyleSettingsManager.class);
-          if (legacySettingsManager != null && legacySettingsManager.getState() != null) {
-            projectSettingsManager.loadState(legacySettingsManager.getState());
-            LOG.info("Imported old project code style settings.");
-          }
-        }
-      }
-    }
+    projectSettingsManager.initProjectSettings(project);
     return projectSettingsManager;
   }
 
+  /**
+   * @deprecated Use {@link CodeStyle#getDefaultSettings()} instead.
+   */
+  @Deprecated
   public static CodeStyleSettingsManager getInstance() {
     return ServiceManager.getService(AppCodeStyleSettingsManager.class);
   }
 
-  @SuppressWarnings({"UnusedDeclaration"})
-  public CodeStyleSettingsManager(Project project) {
-  }
   public CodeStyleSettingsManager() {}
 
+  /**
+   * @deprecated Use one of the following methods:
+   * <ul>
+   *   <li>{@link CodeStyle#getLanguageSettings(PsiFile, Language)} to get common settings for a language.</li>
+   *   <li>{@link CodeStyle#getCustomSettings(PsiFile, Class)} to get custom settings.</li>
+   * </ul>
+   * If {@code PsiFile} is not applicable, use {@link CodeStyle#getSettings(Project)} but only in cases
+   * when using main project settings is <b>logically the only choice</b> in a given context. It shouldn't be used just because the existing
+   * code doesn't allow to easily retrieve a PsiFile. Otherwise the code will not catch up with proper file code style settings since the
+   * settings may differ for different files depending on their scope.
+   */
   @NotNull
+  @Deprecated
   public static CodeStyleSettings getSettings(@Nullable final Project project) {
-    final CodeStyleSettingsManager instance = project == null || project.isDefault() ? getInstance() : getInstance(project);
-    return instance.getCurrentSettings();
+    return getInstance(project).getCurrentSettings();
   }
 
+  /**
+   * @deprecated see comments for {@link #getSettings(Project)}
+   */
+  @Deprecated
   @NotNull
   public CodeStyleSettings getCurrentSettings() {
     CodeStyleSettings temporarySettings = myTemporarySettings;
     if (temporarySettings != null) return temporarySettings;
-    CodeStyleSettings projectSettings = PER_PROJECT_SETTINGS;
+    CodeStyleSettings projectSettings = getMainProjectCodeStyle();
     if (USE_PER_PROJECT_SETTINGS && projectSettings != null) return projectSettings;
-    return CodeStyleSchemes.getInstance().getCurrentScheme().getCodeStyleSettings();
-  }
-
-  private void readExternal(Element element) throws InvalidDataException {
-    DefaultJDOMExternalizer.readExternal(this, element);
-  }
-
-  private void writeExternal(Element element) throws WriteExternalException {
-    DefaultJDOMExternalizer.writeExternal(this, element, new DifferenceFilter<CodeStyleSettingsManager>(this, new CodeStyleSettingsManager()));
+    return CodeStyleSchemes.getInstance().findPreferredScheme(PREFERRED_PROJECT_CODE_STYLE).getCodeStyleSettings();
   }
 
   @Override
   public Element getState() {
     Element result = new Element("state");
     try {
-      writeExternal(result);
+      //noinspection deprecation
+      DefaultJDOMExternalizer.writeExternal(this, result, new DifferenceFilter<CodeStyleSettingsManager>(this, new CodeStyleSettingsManager()){
+        @Override
+        public boolean isAccept(@NotNull Field field) {
+          return !isIgnoredOnSave(field.getName()) && super.isAccept(field);
+        }
+      });
     }
     catch (WriteExternalException e) {
       LOG.error(e);
@@ -95,17 +116,47 @@ public class CodeStyleSettingsManager implements PersistentStateComponent<Elemen
     return result;
   }
 
+  protected boolean isIgnoredOnSave(@NotNull String fieldName) {
+    return false;
+  }
+
   @Override
-  public void loadState(Element state) {
+  public void loadState(@NotNull Element state) {
     try {
-      readExternal(state);
-      myIsLoaded = true;
+      //noinspection deprecation
+      DefaultJDOMExternalizer.readExternal(this, state);
     }
     catch (InvalidDataException e) {
       LOG.error(e);
     }
   }
 
+  /**
+   * Sets main project settings by the name "Project". For default project it's the only named code style.
+   * @param settings The code style settings which can be assigned to project.
+   */
+  public void setMainProjectCodeStyle(@Nullable CodeStyleSettings settings) {
+    //noinspection deprecation
+    PER_PROJECT_SETTINGS = settings;
+  }
+
+  /**
+   * @return The main project code style settings. For default project, that's the only code style.
+   */
+  @Nullable
+  public CodeStyleSettings getMainProjectCodeStyle() {
+    //noinspection deprecation
+    return PER_PROJECT_SETTINGS;
+  }
+
+  @Deprecated
+  public boolean isLoaded() {
+    return true;
+  }
+
+  /**
+   * @see #dropTemporarySettings()
+   */
   public void setTemporarySettings(@NotNull CodeStyleSettings settings) {
     myTemporarySettings = settings;
   }
@@ -114,7 +165,38 @@ public class CodeStyleSettingsManager implements PersistentStateComponent<Elemen
     myTemporarySettings = null;
   }
 
-  public boolean isLoaded() {
-    return myIsLoaded;
+  @Nullable
+  public CodeStyleSettings getTemporarySettings() {
+    return myTemporarySettings;
   }
+
+  public void addListener(@NotNull CodeStyleSettingsListener listener) {
+    myListeners.add(listener);
+  }
+
+  private void removeListener(@NotNull CodeStyleSettingsListener listener) {
+    myListeners.remove(listener);
+  }
+
+  public static void removeListener(@Nullable Project project, @NotNull CodeStyleSettingsListener listener) {
+    if (project == null || project.isDefault()) {
+      //noinspection deprecation
+      getInstance().removeListener(listener);
+    }
+    else {
+      if (!project.isDisposed()) {
+        CodeStyleSettingsManager projectInstance = ServiceManager.getService(project, ProjectCodeStyleSettingsManager.class);
+        if (projectInstance != null) {
+          projectInstance.removeListener(listener);
+        }
+      }
+    }
+  }
+
+  public void fireCodeStyleSettingsChanged(@Nullable PsiFile file) {
+    for (CodeStyleSettingsListener listener : myListeners) {
+      listener.codeStyleSettingsChanged(new CodeStyleSettingsChangeEvent(file));
+    }
+  }
+
 }

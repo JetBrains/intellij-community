@@ -1,70 +1,122 @@
-/*
- * Copyright 2000-2011 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.impl.statistics;
 
 import com.intellij.execution.RunManager;
+import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.configurations.ConfigurationFactory;
 import com.intellij.execution.configurations.ConfigurationType;
 import com.intellij.execution.configurations.RunConfiguration;
-import com.intellij.internal.statistic.AbstractApplicationUsagesCollector;
+import com.intellij.execution.configurations.UnknownConfigurationType;
 import com.intellij.internal.statistic.beans.UsageDescriptor;
+import com.intellij.internal.statistic.service.fus.collectors.FUSUsageContext;
+import com.intellij.internal.statistic.service.fus.collectors.ProjectUsagesCollector;
+import com.intellij.internal.statistic.utils.PluginType;
+import com.intellij.internal.statistic.utils.StatisticsUtilKt;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.util.Function;
-import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.HashSet;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.openapi.util.text.StringUtil;
+import gnu.trove.TObjectIntHashMap;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
+import java.util.HashSet;
+import java.util.Objects;
 import java.util.Set;
 
-/**
- * @author Nikolay Matveev
- */
-public abstract class AbstractRunConfigurationTypeUsagesCollector extends AbstractApplicationUsagesCollector {
+import static java.lang.String.valueOf;
 
-  protected abstract boolean isApplicable(@NotNull RunManager runManager, @NotNull RunConfiguration runConfiguration);
+public abstract class AbstractRunConfigurationTypeUsagesCollector extends ProjectUsagesCollector {
+  protected abstract boolean isApplicable(@NotNull RunManager runManager, @NotNull RunnerAndConfigurationSettings settings);
 
   @NotNull
   @Override
-  public final Set<UsageDescriptor> getProjectUsages(@NotNull final Project project) {
-    final Set<String> runConfigurationTypes = new HashSet<String>();
-    UIUtil.invokeAndWaitIfNeeded(new Runnable() {
-      @Override
-      public void run() {
-        if (project.isDisposed()) return;
-        final RunManager runManager = RunManager.getInstance(project);
-        for (RunConfiguration runConfiguration : runManager.getAllConfigurations()) {
-          if (runConfiguration != null && isApplicable(runManager, runConfiguration)) {
-            final ConfigurationFactory configurationFactory = runConfiguration.getFactory();
-            final ConfigurationType configurationType = configurationFactory.getType();
-            final StringBuilder keyBuilder = new StringBuilder();
-            keyBuilder.append(configurationType.getId());
-            if (configurationType.getConfigurationFactories().length > 1) {
-              keyBuilder.append(".").append(configurationFactory.getName());
+  public Set<UsageDescriptor> getUsages(@NotNull Project project) {
+    final TObjectIntHashMap<Template> templates = new TObjectIntHashMap<>();
+    ApplicationManager.getApplication().invokeAndWait(() -> {
+      if (project.isDisposed()) return;
+      final RunManager runManager = RunManager.getInstance(project);
+      for (RunnerAndConfigurationSettings settings : runManager.getAllSettings()) {
+        RunConfiguration runConfiguration = settings.getConfiguration();
+        if (isApplicable(runManager, settings)) {
+          final ConfigurationFactory configurationFactory = runConfiguration.getFactory();
+          if (configurationFactory == null) {
+            // not realistic
+            continue;
+          }
+
+          final String key = toReportedId(configurationFactory);
+          if (StringUtil.isNotEmpty(key)) {
+            final Template template = new Template(key, createContext(settings, runConfiguration));
+            if (templates.containsKey(template)) {
+              templates.increment(template);
             }
-            runConfigurationTypes.add(keyBuilder.toString());
+            else {
+              templates.put(template, 1);
+            }
           }
         }
       }
     });
-    return ContainerUtil.map2Set(runConfigurationTypes, new Function<String, UsageDescriptor>() {
-      @Override
-      public UsageDescriptor fun(String runConfigurationType) {
-        return new UsageDescriptor(runConfigurationType, 1);
-      }
-    });
+
+    final Set<UsageDescriptor> result = new HashSet<>();
+    templates.forEachEntry((template, value) -> result.add(template.createUsageDescriptor(value)));
+    return result;
+  }
+
+  @Nullable
+  public static String toReportedId(@NotNull ConfigurationFactory factory) {
+    final ConfigurationType configurationType = factory.getType();
+    if (configurationType instanceof UnknownConfigurationType) {
+      return null;
+    }
+
+    final PluginType type = StatisticsUtilKt.getPluginType(configurationType.getClass());
+    if (!type.isSafeToReport()) {
+      return null;
+    }
+    final StringBuilder keyBuilder = new StringBuilder();
+    keyBuilder.append(configurationType.getId());
+    if (configurationType.getConfigurationFactories().length > 1) {
+      keyBuilder.append(".").append(factory.getId());
+    }
+    return keyBuilder.toString();
+  }
+
+  private static FUSUsageContext createContext(@NotNull RunnerAndConfigurationSettings settings,
+                                               @NotNull RunConfiguration runConfiguration) {
+    return FUSUsageContext.create(
+      valueOf(settings.isShared()),
+      valueOf(settings.isEditBeforeRun()),
+      valueOf(settings.isActivateToolWindowBeforeRun()),
+      valueOf(runConfiguration.isAllowRunningInParallel())
+    );
+  }
+
+  private static class Template {
+    private final String myKey;
+    private final FUSUsageContext myContext;
+
+    private Template(String key, FUSUsageContext context) {
+      myKey = key;
+      myContext = context;
+    }
+
+    private UsageDescriptor createUsageDescriptor(int count) {
+      return new UsageDescriptor(myKey, count, myContext);
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+      Template template = (Template)o;
+      return Objects.equals(myKey, template.myKey) &&
+             Objects.equals(myContext, template.myContext);
+    }
+
+    @Override
+    public int hashCode() {
+      return Objects.hash(myKey, myContext);
+    }
   }
 }

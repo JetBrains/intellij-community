@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogBuilder;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.ui.ScrollPaneFactory;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
@@ -58,7 +59,7 @@ public class ExecutionErrorDialog {
     final JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(textArea);
     scrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
     final JPanel panel = new JPanel(new BorderLayout(10, 0));
-    panel.setPreferredSize(new Dimension(500, 200));
+    panel.setPreferredSize(JBUI.size(500, 200));
     panel.add(scrollPane, BorderLayout.CENTER);
     panel.add(new JLabel(Messages.getErrorIcon()), BorderLayout.WEST);
     builder.setCenterPanel(panel);

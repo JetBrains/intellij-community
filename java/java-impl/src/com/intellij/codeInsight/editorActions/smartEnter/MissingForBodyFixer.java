@@ -22,13 +22,6 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * Created by IntelliJ IDEA.
- * User: max
- * Date: Sep 5, 2003
- * Time: 7:24:03 PM
- * To change this template use Options | File Templates.
- */
 public class MissingForBodyFixer implements Fixer {
   @Override
   public void apply(Editor editor, JavaSmartEnterProcessor processor, PsiElement psiElement) throws IncorrectOperationException {
@@ -42,12 +35,15 @@ public class MissingForBodyFixer implements Fixer {
     if (body != null && startLine(doc, body) == startLine(doc, forStatement)) return;
 
     PsiElement eltToInsertAfter = forStatement.getRParenth();
-    String text = "{}";
+    String braces = "{\n}";
+    String text = braces;
     if (eltToInsertAfter == null) {
       eltToInsertAfter = forStatement;
-      text = "){}";
+      text = ")" + text;
     }
-    doc.insertString(eltToInsertAfter.getTextRange().getEndOffset(), text);
+    int offset = eltToInsertAfter.getTextRange().getEndOffset();
+    doc.insertString(offset, text);
+    editor.getCaretModel().moveToOffset(offset + text.length() - braces.length());
   }
 
   @Nullable

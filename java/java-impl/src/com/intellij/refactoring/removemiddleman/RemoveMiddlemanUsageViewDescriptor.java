@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,19 +30,25 @@ class RemoveMiddlemanUsageViewDescriptor implements UsageViewDescriptor {
     this.field = field;
   }
 
+  @NotNull
+  @Override
   public String getCodeReferencesText(int usagesCount, int filesCount) {
     return RefactorJBundle
       .message("references.to.expose.usage.view", MyUsageViewUtil.getUsageCountInfo(usagesCount, filesCount, "reference"));
   }
 
+  @Override
   public String getProcessedElementsHeader() {
     return RefactorJBundle.message("remove.middleman.field.header");
   }
 
+  @Override
+  @NotNull
   public PsiElement[] getElements() {
     return new PsiElement[]{field};
   }
 
+  @Override
   public String getCommentReferencesText(int usagesCount, int filesCount) {
     return null;
   }

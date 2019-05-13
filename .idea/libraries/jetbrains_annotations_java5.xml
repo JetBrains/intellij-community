@@ -1,0 +1,12 @@
+<component name="libraryTable">
+  <library name="jetbrains-annotations-java5" type="repository">
+    <properties maven-id="org.jetbrains:annotations-java5:16.0.2" />
+    <CLASSES>
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/annotations-java5/16.0.2/annotations-java5-16.0.2.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES>
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/annotations-java5/16.0.2/annotations-java5-16.0.2-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>

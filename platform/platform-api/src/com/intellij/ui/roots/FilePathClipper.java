@@ -24,7 +24,6 @@ import java.io.File;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Jan 20, 2004
  */
 public class FilePathClipper implements ComponentListener {
   private final File myFile;
@@ -42,12 +41,16 @@ public class FilePathClipper implements ComponentListener {
     componentToWatch.addComponentListener(new FilePathClipper(labelToClip, componentToWatch));
   }
 
+  @Override
   public void componentResized(ComponentEvent e) {
     final String optimalTextForComponent = FilePathSplittingPolicy.SPLIT_BY_SEPARATOR.getOptimalTextForComponent(myFile, myLabelToClip, myComponentToWatch.getWidth());
     myLabelToClip.setText(optimalTextForComponent);
   }
 
+  @Override
   public void componentHidden(ComponentEvent e) {}
+  @Override
   public void componentMoved(ComponentEvent e)  {}
+  @Override
   public void componentShown(ComponentEvent e)  {}
 }

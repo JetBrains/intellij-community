@@ -25,7 +25,6 @@ import org.jetbrains.annotations.NotNull;
  * target region changes its 'contains line feeds' status.
  * 
  * @author Denis Zhdanov
- * @since 6/28/12 1:08 PM
  */
 public class DependentSpacingRule {
 
@@ -40,7 +39,7 @@ public class DependentSpacingRule {
   public static final DependentSpacingRule DEFAULT =
     new DependentSpacingRule(Trigger.HAS_LINE_FEEDS).registerData(Anchor.MIN_LINE_FEEDS, 1);
 
-  private final TObjectIntHashMap<Anchor> myData = new TObjectIntHashMap<Anchor>();
+  private final TObjectIntHashMap<Anchor> myData = new TObjectIntHashMap<>();
 
   @NotNull private final Trigger myTrigger;
 
@@ -58,7 +57,6 @@ public class DependentSpacingRule {
    *
    * @param anchor  target anchor
    * @param data    data to register for the given anchor
-   * @param <T>     data's type
    * @see #getData(Anchor)
    */
   public DependentSpacingRule registerData(@NotNull Anchor anchor, int data) {
@@ -68,8 +66,8 @@ public class DependentSpacingRule {
 
   /**
    * @param anchor  target data anchor
-   * @return        <code>true</code> if there is a data registered for the given anchor within the current rule;
-   *                <code>false</code> otherwise
+   * @return        {@code true} if there is a data registered for the given anchor within the current rule;
+   *                {@code false} otherwise
    */
   public boolean hasData(@NotNull Anchor anchor) {
     return myData.containsKey(anchor);
@@ -79,7 +77,6 @@ public class DependentSpacingRule {
    * Allows to retrieve data associated with the given anchor.
    *
    * @param anchor  target anchor
-   * @param <T>     data's type
    * @return data associated for the given anchor
    * @throws IllegalArgumentException   if no data is registered for the given anchor
    *                                    (use {@link #hasData(Anchor)} for the preliminary examination)

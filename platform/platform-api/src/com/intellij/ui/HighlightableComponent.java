@@ -1,40 +1,32 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.ui;
 
+import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ui.UIUtil;
-import gnu.trove.TIntObjectHashMap;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.accessibility.Accessible;
+import javax.accessibility.AccessibleContext;
+import javax.accessibility.AccessibleRole;
 import javax.swing.*;
 import java.awt.*;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * @author Eugene Belyaev
  */
-public class HighlightableComponent extends JComponent {
+public class HighlightableComponent extends JComponent implements Accessible {
   protected String myText = "";
   protected Icon myIcon;
   protected int myIconTextGap;
   protected ArrayList<HighlightedRegion> myHighlightedRegions;
-  protected TIntObjectHashMap<FontMetrics> myFontMetrics;
   protected boolean myIsSelected;
   protected boolean myHasFocus;
   protected boolean myPaintUnfocusedSelection = false;
@@ -42,39 +34,39 @@ public class HighlightableComponent extends JComponent {
 
   public HighlightableComponent() {
     myIconTextGap = 4;
-    myFontMetrics = new TIntObjectHashMap<FontMetrics>();
     setText("");
-    fillFontMetricsMap();
     setOpaque(true);
+    updateUI();
   }
 
-  protected void fillFontMetricsMap() {
-    Font font = getFont();
-    if (font != null){
-      myFontMetrics.put(Font.PLAIN, getFontMetrics(font.deriveFont(Font.PLAIN)));
-      myFontMetrics.put(Font.BOLD, getFontMetrics(font.deriveFont(Font.BOLD)));
-      myFontMetrics.put(Font.ITALIC, getFontMetrics(font.deriveFont(Font.ITALIC)));
-      myFontMetrics.put(Font.BOLD | Font.ITALIC, getFontMetrics(font.deriveFont(Font.BOLD | Font.ITALIC)));
+  @Override public void updateUI() {
+    UISettings.setupComponentAntialiasing(this);
+  }
+
+  public void setText(@Nullable String text) {
+    String oldAccessibleName = null;
+    if (accessibleContext != null) {
+      oldAccessibleName = accessibleContext.getAccessibleName();
     }
-  }
 
-  public void setText(String text) {
     if (text == null) {
       text = "";
     }
     myText = text;
-    myHighlightedRegions = new ArrayList<HighlightedRegion>(4);
+    myHighlightedRegions = new ArrayList<>(4);
+
+    if ((accessibleContext != null) && !StringUtil.equals(accessibleContext.getAccessibleName(), oldAccessibleName)) {
+      accessibleContext.firePropertyChange(
+        AccessibleContext.ACCESSIBLE_VISIBLE_DATA_PROPERTY,
+        oldAccessibleName,
+        accessibleContext.getAccessibleName());
+    }
   }
 
   public void setIcon(Icon icon) {
     myIcon = icon;
-  }
-
-  public void setFont(Font font) {
-    if (!font.equals(getFont())){
-      super.setFont(font);
-      fillFontMetricsMap();
-    }
+    invalidate();
+    repaint();
   }
 
   public void addHighlighter(int startOffset, int endOffset, TextAttributes attributes) {
@@ -205,6 +197,7 @@ public class HighlightableComponent extends JComponent {
     myDoNotHighlight = b;
   }
 
+  @Override
   protected void paintComponent(Graphics g) {
 
     // determine color of background
@@ -220,7 +213,7 @@ public class HighlightableComponent extends JComponent {
       paintHighlightsForeground = false;
     }
     else {
-      bgColor = myEnforcedBackground == null ? UIUtil.getTreeTextBackground() : myEnforcedBackground;
+      bgColor = myEnforcedBackground == null ? UIUtil.getTreeBackground() : myEnforcedBackground;
       fgColor = getForeground();
       paintHighlightsBackground = isOpaque();
       paintHighlightsForeground = true;
@@ -237,9 +230,9 @@ public class HighlightableComponent extends JComponent {
 
     if (isOpaque()) {
       g.setColor(getBackground());
-      g.fillRect(0,0,textOffset-2,getHeight());
+      g.fillRect(0, 0, Math.max(0, textOffset - 2), getHeight());
       g.setColor(bgColor);
-      g.fillRect(textOffset-2, 0, getWidth(), getHeight());
+      g.fillRect(Math.max(0, textOffset - 2), 0, getWidth(), getHeight());
     }
 
     // paint icon
@@ -280,7 +273,8 @@ public class HighlightableComponent extends JComponent {
           offset += defFontMetrics.stringWidth(text);
         }
 
-        FontMetrics fontMetrics = myFontMetrics.get(hRegion.textAttributes.getFontType());
+        Font regFont = getFont().deriveFont(hRegion.textAttributes.getFontType());
+        FontMetrics fontMetrics = getFontMetrics(regFont);
 
         text = myText.substring(hRegion.startOffset, hRegion.endOffset);
 
@@ -295,8 +289,7 @@ public class HighlightableComponent extends JComponent {
 
         if (hRegion.textAttributes.getForegroundColor() != null && paintHighlightsForeground) {
           g.setColor(hRegion.textAttributes.getForegroundColor());
-        }
-        else {
+        } else {
           g.setColor(fgColor);
         }
 
@@ -305,7 +298,7 @@ public class HighlightableComponent extends JComponent {
 
         // draw highlight underscored line
 
-        if (hRegion.textAttributes.getEffectColor() != null) {
+        if (hRegion.textAttributes.getEffectType() != null && hRegion.textAttributes.getEffectColor() != null) {
           g.setColor(hRegion.textAttributes.getEffectColor());
           int y = yOffset/*fontMetrics.getMaxAscent()*/ + 2;
           UIUtil.drawLine(g, offset, y, offset + fontMetrics.stringWidth(text) - 1, y);
@@ -321,7 +314,7 @@ public class HighlightableComponent extends JComponent {
         offset += fontMetrics.stringWidth(text);
       }
 
-      String text = myText.substring(endIndex, myText.length());
+      String text = myText.substring(endIndex);
 
       if (text.length() != 0){
         g.setColor(fgColor);
@@ -342,10 +335,10 @@ public class HighlightableComponent extends JComponent {
   }
 
   protected void applyRenderingHints(Graphics g) {
-    UIUtil.applyRenderingHints(g);
+    UISettings.setupAntialiasing(g);
   }
 
-  private int getTextOffset() {
+  protected int getTextOffset() {
     if (myIcon == null){
       return 2;
     }
@@ -367,7 +360,9 @@ public class HighlightableComponent extends JComponent {
         if (width > x) return null;
 
         String text = getRegionText(hRegion);
-        FontMetrics fontMetrics = myFontMetrics.get(hRegion.textAttributes.getFontType());
+        Font regFont = getFont().deriveFont(hRegion.textAttributes.getFontType());
+        FontMetrics fontMetrics = getFontMetrics(regFont);
+
         width += fontMetrics.stringWidth(text);
         if (width > x) return hRegion;
       }
@@ -375,6 +370,34 @@ public class HighlightableComponent extends JComponent {
     return null;
   }
 
+  @NotNull
+  public Map<String, Rectangle> getHighlightedRegionsBoundsMap() {
+
+    HashMap<String, Rectangle> map = new HashMap<>();
+    FontMetrics defFontMetrics = getFontMetrics(getFont());
+
+    int pivot = getTextOffset();
+    int start, end;
+
+    if (myText.length() != 0 && myHighlightedRegions.size() != 0) {
+      int endIndex = 0;
+      for (HighlightedRegion hRegion : myHighlightedRegions) {
+        pivot += defFontMetrics.stringWidth(myText.substring(endIndex, hRegion.startOffset));
+        start = pivot;
+        endIndex = hRegion.endOffset;
+
+        String text = getRegionText(hRegion);
+        Font regFont = getFont().deriveFont(hRegion.textAttributes.getFontType());
+        FontMetrics fontMetrics = getFontMetrics(regFont);
+        pivot += fontMetrics.stringWidth(text);
+        end = pivot;
+        map.put(text, new Rectangle(this.getBounds().x + start, this.getBounds().y, end - start, this.getBounds().height));
+      }
+    }
+    return map;
+  }
+
+  @Override
   public Dimension getPreferredSize() {
     FontMetrics defFontMetrics = getFontMetrics(getFont());
 
@@ -391,10 +414,12 @@ public class HighlightableComponent extends JComponent {
           endIndex = hRegion.endOffset;
 
           String text = getRegionText(hRegion);
-          FontMetrics fontMetrics = myFontMetrics.get(hRegion.textAttributes.getFontType());
+          Font regFont = getFont().deriveFont(hRegion.textAttributes.getFontType());
+          FontMetrics fontMetrics = getFontMetrics(regFont);
+
           width += fontMetrics.stringWidth(text);
         }
-        width += defFontMetrics.stringWidth(myText.substring(endIndex, myText.length()));
+        width += defFontMetrics.stringWidth(myText.substring(endIndex));
       }
     }
 
@@ -407,7 +432,7 @@ public class HighlightableComponent extends JComponent {
     return new Dimension(width + 2, height);
   }
 
-  private String getRegionText(HighlightedRegion hRegion) {
+  public String getRegionText(HighlightedRegion hRegion) {
     String text;
     if (hRegion.endOffset > myText.length()) {
       if (hRegion.startOffset < myText.length()) {
@@ -421,5 +446,25 @@ public class HighlightableComponent extends JComponent {
       text = myText.substring(hRegion.startOffset, hRegion.endOffset);
     }
     return text;
+  }
+
+  @Override
+  public AccessibleContext getAccessibleContext() {
+    if (accessibleContext == null) {
+      accessibleContext = new AccessibleHighlightable();
+    }
+    return accessibleContext;
+  }
+
+  protected class AccessibleHighlightable extends JComponent.AccessibleJComponent {
+    @Override
+    public String getAccessibleName() {
+      return myText;
+    }
+
+    @Override
+    public AccessibleRole getAccessibleRole() {
+      return AccessibleRole.LABEL;
+    }
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,7 +20,6 @@ import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.application.Result;
 import com.intellij.openapi.compiler.CompilerBundle;
 import com.intellij.openapi.deployment.DeploymentUtil;
 import com.intellij.openapi.diagnostic.Logger;
@@ -28,11 +27,12 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Trinity;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.elements.ArtifactRootElement;
@@ -45,8 +45,7 @@ import com.intellij.util.io.zip.JBZipEntry;
 import com.intellij.util.io.zip.JBZipFile;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.File;
-import java.io.IOException;
+import java.io.*;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -59,49 +58,61 @@ public class PackageFileWorker {
   private static final Logger LOG = Logger.getInstance("#com.intellij.packaging.impl.ui.actions.PackageFileWorker");
   private final File myFile;
   private final String myRelativeOutputPath;
+  private final boolean myPackIntoArchives;
 
-  private PackageFileWorker(File file, String relativeOutputPath) {
+  private PackageFileWorker(File file, String relativeOutputPath, boolean packIntoArchives) {
     myFile = file;
     myRelativeOutputPath = relativeOutputPath;
+    myPackIntoArchives = packIntoArchives;
   }
 
-  public static void startPackagingFiles(final Project project, final List<VirtualFile> files,
-                                         final Artifact[] artifacts, final Runnable onFinished) {
+  public static void startPackagingFiles(Project project, List<? extends VirtualFile> files, Artifact[] artifacts, final @NotNull Runnable onFinishedInAwt) {
+    startPackagingFiles(project, files, artifacts, true).doWhenProcessed(
+      () -> ApplicationManager.getApplication().invokeLater(onFinishedInAwt));
+  }
+
+  public static ActionCallback startPackagingFiles(final Project project, final List<? extends VirtualFile> files,
+                                                   final Artifact[] artifacts, final boolean packIntoArchives) {
+    final ActionCallback callback = new ActionCallback();
     ProgressManager.getInstance().run(new Task.Backgroundable(project, "Packaging Files") {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
         try {
           for (final VirtualFile file : files) {
             indicator.checkCanceled();
-            new ReadAction() {
-              protected void run(final Result result) {
-                try {
-                  packageFile(file, project, artifacts);
-                }
-                catch (IOException e) {
-                  String message = CompilerBundle.message("message.tect.package.file.io.error", e.toString());
-                  Notifications.Bus.notify(new Notification("Package File", "Cannot package file", message, NotificationType.ERROR));
-                }
+            ReadAction.run(() -> {
+              try {
+                packageFile(file, project, artifacts, packIntoArchives);
               }
-            }.execute();
+              catch (IOException e) {
+                LOG.info(e);
+                String message = CompilerBundle.message("message.tect.package.file.io.error", e.toString());
+                Notifications.Bus.notify(new Notification("Package File", "Cannot package file", message, NotificationType.ERROR));
+              }
+            });
+            callback.setDone();
           }
         }
         finally {
-          ApplicationManager.getApplication().invokeLater(onFinished);
+          if (!callback.isDone()) {
+            callback.setRejected();
+          }
         }
       }
     });
+    return callback;
   }
 
-  public static void packageFile(@NotNull VirtualFile file, @NotNull Project project, final Artifact[] artifacts) throws IOException {
+  public static void packageFile(@NotNull VirtualFile file, @NotNull Project project, final Artifact[] artifacts,
+                                 final boolean packIntoArchives) throws IOException {
     LOG.debug("Start packaging file: " + file.getPath());
     final Collection<Trinity<Artifact, PackagingElementPath, String>> items = ArtifactUtil.findContainingArtifactsWithOutputPaths(file, project, artifacts);
-    File ioFile = VfsUtil.virtualToIoFile(file);
+    File ioFile = VfsUtilCore.virtualToIoFile(file);
     for (Trinity<Artifact, PackagingElementPath, String> item : items) {
       final Artifact artifact = item.getFirst();
       final String outputPath = artifact.getOutputPath();
       if (!StringUtil.isEmpty(outputPath)) {
-        PackageFileWorker worker = new PackageFileWorker(ioFile, item.getThird());
+        PackageFileWorker worker = new PackageFileWorker(ioFile, item.getThird(), packIntoArchives);
         LOG.debug(" package to " + outputPath);
         worker.packageFile(outputPath, item.getSecond().getParents());
       }
@@ -109,7 +120,7 @@ public class PackageFileWorker {
   }
 
   private void packageFile(String outputPath, List<CompositePackagingElement<?>> parents) throws IOException {
-    List<CompositePackagingElement<?>> parentsList = new ArrayList<CompositePackagingElement<?>>(parents);
+    List<CompositePackagingElement<?>> parentsList = new ArrayList<>(parents);
     Collections.reverse(parentsList);
     if (!parentsList.isEmpty() && parentsList.get(0) instanceof ArtifactRootElement) {
       parentsList = parentsList.subList(1, parentsList.size());
@@ -120,8 +131,14 @@ public class PackageFileWorker {
   private void copyFile(String outputPath, List<CompositePackagingElement<?>> parents) throws IOException {
     if (parents.isEmpty()) {
       final String fullOutputPath = DeploymentUtil.appendToPath(outputPath, myRelativeOutputPath);
-      LOG.debug("  copying to " + fullOutputPath);
-      FileUtil.copy(myFile, new File(FileUtil.toSystemDependentName(fullOutputPath)));
+      File target = new File(fullOutputPath);
+      if (FileUtil.filesEqual(myFile, target)) {
+        LOG.debug("  skipping copying file to itself");
+      }
+      else {
+        LOG.debug("  copying to " + fullOutputPath);
+        FileUtil.copy(myFile, target);
+      }
       return;
     }
 
@@ -129,7 +146,9 @@ public class PackageFileWorker {
     final String nextOutputPath = outputPath + "/" + element.getName();
     final List<CompositePackagingElement<?>> parentsTrail = parents.subList(1, parents.size());
     if (element instanceof ArchivePackagingElement) {
-      packFile(nextOutputPath, "", parentsTrail);
+      if (myPackIntoArchives) {
+        packFile(nextOutputPath, "", parentsTrail);
+      }
     }
     else {
       copyFile(nextOutputPath, parentsTrail);
@@ -137,17 +156,14 @@ public class PackageFileWorker {
   }
 
   private void packFile(String archivePath, String pathInArchive, List<CompositePackagingElement<?>> parents) throws IOException {
-    final File archiveFile = new File(FileUtil.toSystemDependentName(archivePath));
+    final File archiveFile = new File(archivePath);
     if (parents.isEmpty()) {
       LOG.debug("  adding to archive " + archivePath);
-      JBZipFile file = getOrCreateZipFile(archiveFile);
-      try {
-        final String fullPathInArchive = DeploymentUtil.trimForwardSlashes(DeploymentUtil.appendToPath(pathInArchive, myRelativeOutputPath));
+      try (JBZipFile file = getOrCreateZipFile(archiveFile)) {
+        final String fullPathInArchive =
+          DeploymentUtil.trimForwardSlashes(DeploymentUtil.appendToPath(pathInArchive, myRelativeOutputPath));
         final JBZipEntry entry = file.getOrCreateEntry(fullPathInArchive);
-        entry.setData(FileUtil.loadFileBytes(myFile));
-      }
-      finally {
-        file.close();
+        entry.setDataFromFile(myFile);
       }
       return;
     }
@@ -156,21 +172,19 @@ public class PackageFileWorker {
     final String nextPathInArchive = DeploymentUtil.trimForwardSlashes(DeploymentUtil.appendToPath(pathInArchive, element.getName()));
     final List<CompositePackagingElement<?>> parentsTrail = parents.subList(1, parents.size());
     if (element instanceof ArchivePackagingElement) {
-      JBZipFile zipFile = getOrCreateZipFile(archiveFile);
-      try {
+      try (JBZipFile zipFile = getOrCreateZipFile(archiveFile)) {
         final JBZipEntry entry = zipFile.getOrCreateEntry(nextPathInArchive);
         LOG.debug("  extracting to temp file: " + nextPathInArchive + " from " + archivePath);
         final File tempFile = FileUtil.createTempFile("packageFile" + FileUtil.sanitizeFileName(nextPathInArchive),
                                                       FileUtilRt.getExtension(PathUtil.getFileName(nextPathInArchive)));
         if (entry.getSize() != -1) {
-          FileUtil.writeToFile(tempFile, entry.getData());
+          try (OutputStream output = new BufferedOutputStream(new FileOutputStream(tempFile))) {
+            entry.writeDataTo(output);
+          }
         }
         packFile(FileUtil.toSystemIndependentName(tempFile.getAbsolutePath()), "", parentsTrail);
-        entry.setData(FileUtil.loadFileBytes(tempFile));
+        entry.setDataFromFile(tempFile);
         FileUtil.delete(tempFile);
-      }
-      finally {
-        zipFile.close();
       }
     }
     else {
@@ -180,6 +194,11 @@ public class PackageFileWorker {
 
   private static JBZipFile getOrCreateZipFile(File archiveFile) throws IOException {
     FileUtil.createIfDoesntExist(archiveFile);
-    return new JBZipFile(archiveFile);
+    try {
+      return new JBZipFile(archiveFile);
+    }
+    catch (IllegalArgumentException e) {
+      throw new IOException(e);
+    }
   }
 }

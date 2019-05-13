@@ -21,16 +21,18 @@ import com.intellij.cvsSupport2.connections.pserver.PServerLoginProvider;
 public class CvsRootDataBuilder implements CvsRootSettingsBuilder<CvsRootData>{
 
   public static CvsRootData createSettingsOn(String cvsRoot, boolean check) {
-    return new RootFormatter<CvsRootData>(new CvsRootDataBuilder()).createConfiguration(cvsRoot, check);
+    return new RootFormatter<>(new CvsRootDataBuilder()).createConfiguration(cvsRoot, check);
   }
 
 
+  @Override
   public CvsRootData createSettings(final CvsMethod method, final String cvsRootAsString) {
     final CvsRootData result = new CvsRootData(cvsRootAsString);
     result.METHOD = method;
     return result;
   }
 
+  @Override
   public String getPServerPassword(final String cvsRoot) {
     return PServerLoginProvider.getInstance().getScrambledPasswordForCvsRoot(cvsRoot);
   }

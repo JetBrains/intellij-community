@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,6 +26,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.actions.VcsContext;
 import com.intellij.util.ui.OptionsDialog;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * author: lesya
@@ -34,7 +35,8 @@ public class EditAction extends AbstractActionFromEditGroup {
   public EditAction() {
   }
 
-  public void update(AnActionEvent e) {
+  @Override
+  public void update(@NotNull AnActionEvent e) {
     super.update(e);
     if (!e.getPresentation().isVisible()) {
       return;
@@ -47,17 +49,20 @@ public class EditAction extends AbstractActionFromEditGroup {
   }
 
 
+  @Override
   protected String getTitle(VcsContext context) {
     return com.intellij.CvsBundle.message("action.name.edit");
   }
 
+  @Override
   protected CvsHandler getCvsHandler(CvsContext context) {
     Project project = context.getProject();
     if (CvsVcs2.getInstance(project).getEditOptions().getValue()
         || OptionsDialog.shiftIsPressed(context.getModifiers())) {
       EditOptionsDialog editOptionsDialog = new EditOptionsDialog(project);
-      editOptionsDialog.show();
-      if (!editOptionsDialog.isOK()) return CvsHandler.NULL;
+      if (!editOptionsDialog.showAndGet()) {
+        return CvsHandler.NULL;
+      }
     }
 
     return CommandCvsHandler.createEditHandler(context.getSelectedFiles(),

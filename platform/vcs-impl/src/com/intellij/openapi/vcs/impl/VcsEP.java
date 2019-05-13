@@ -16,15 +16,16 @@
 
 package com.intellij.openapi.vcs.impl;
 
-import com.intellij.lifecycle.PeriodicalTasksCloser;
 import com.intellij.openapi.components.BaseComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.AbstractExtensionPointBean;
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.AbstractVcs;
-import com.intellij.openapi.vcs.VcsActiveEnvironmentsProxy;
 import com.intellij.util.xmlb.annotations.Attribute;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author yole
@@ -47,29 +48,47 @@ public class VcsEP extends AbstractExtensionPointBean {
   public boolean crawlUpToCheckUnderVcs;
 
   private AbstractVcs myVcs;
+  private final Object LOCK = new Object();
 
-  public AbstractVcs getVcs(Project project) {
-    if (myVcs == null) {
-      try {
-        final Class<? extends AbstractVcs> foundClass = findClass(vcsClass);
-        final Class<?>[] interfaces = foundClass.getInterfaces();
-        for (Class<?> anInterface : interfaces) {
-          if (BaseComponent.class.isAssignableFrom(anInterface)) {
-            myVcs = PeriodicalTasksCloser.getInstance().safeGetComponent(project, foundClass);
-            myVcs = VcsActiveEnvironmentsProxy.proxyVcs(myVcs);
-            return myVcs;
-          }
-        }
-        myVcs = VcsActiveEnvironmentsProxy.proxyVcs((AbstractVcs)instantiate(vcsClass, project.getPicoContainer()));
-      }
-      catch(Exception e) {
-        LOG.error(e);
-        return null;
+  @Nullable
+  public AbstractVcs getVcs(@NotNull Project project) {
+    synchronized (LOCK) {
+      if (myVcs != null) {
+        return myVcs;
       }
     }
-    return myVcs;
+    AbstractVcs vcs = getInstance(project, vcsClass);
+    synchronized (LOCK) {
+      if (myVcs == null && vcs != null) {
+        vcs.setupEnvironments();
+        myVcs = vcs;
+      }
+      return myVcs;
+    }
   }
 
+  @Nullable
+  private AbstractVcs getInstance(@NotNull Project project, @NotNull String vcsClass) {
+    try {
+      final Class<? extends AbstractVcs> foundClass = findClass(vcsClass);
+      final Class<?>[] interfaces = foundClass.getInterfaces();
+      for (Class<?> anInterface : interfaces) {
+        if (BaseComponent.class.isAssignableFrom(anInterface)) {
+          return project.getComponent(foundClass);
+        }
+      }
+      return instantiate(vcsClass, project.getPicoContainer());
+    }
+    catch (ProcessCanceledException pce) {
+      throw pce;
+    }
+    catch(Exception e) {
+      LOG.error(e);
+      return null;
+    }
+  }
+
+  @NotNull
   public VcsDescriptor createDescriptor() {
     return new VcsDescriptor(administrativeAreaName, displayName, name, crawlUpToCheckUnderVcs);
   }

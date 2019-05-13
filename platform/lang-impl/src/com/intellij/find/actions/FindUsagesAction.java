@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,10 +21,9 @@ import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.navigation.actions.GotoDeclarationAction;
 import com.intellij.find.FindBundle;
 import com.intellij.find.FindManager;
-import com.intellij.find.findUsages.PsiElement2UsageTargetAdapter;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -43,8 +42,13 @@ public class FindUsagesAction extends AnAction {
   }
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
-    final Project project = e.getData(PlatformDataKeys.PROJECT);
+  public boolean startInTransaction() {
+    return true;
+  }
+
+  @Override
+  public void actionPerformed(@NotNull AnActionEvent e) {
+    final Project project = e.getData(CommonDataKeys.PROJECT);
     if (project == null) {
       return;
     }
@@ -52,13 +56,10 @@ public class FindUsagesAction extends AnAction {
 
     UsageTarget[] usageTargets = e.getData(UsageView.USAGE_TARGETS_KEY);
     if (usageTargets == null) {
-      final Editor editor = e.getData(PlatformDataKeys.EDITOR);
-      chooseAmbiguousTargetAndPerform(project, editor, new PsiElementProcessor<PsiElement>() {
-        @Override
-        public boolean execute(@NotNull final PsiElement element) {
-          startFindUsages(element);
-          return false;
-        }
+      final Editor editor = e.getData(CommonDataKeys.EDITOR);
+      chooseAmbiguousTargetAndPerform(project, editor, element -> {
+        startFindUsages(element);
+        return false;
       });
     }
     else {
@@ -68,22 +69,24 @@ public class FindUsagesAction extends AnAction {
         if (element != null) {
           startFindUsages(element);
         }
+      } else {
+        target.findUsages();
       }
     }
   }
 
   protected void startFindUsages(@NotNull PsiElement element) {
-    new PsiElement2UsageTargetAdapter(element).findUsages();
+    FindManager.getInstance(element.getProject()).findUsages(element);
   }
 
   @Override
-  public void update(AnActionEvent event){
+  public void update(@NotNull AnActionEvent event){
     FindUsagesInFileAction.updateFindUsagesAction(event);
   }
 
   static void chooseAmbiguousTargetAndPerform(@NotNull final Project project,
                                               final Editor editor,
-                                              @NotNull PsiElementProcessor<PsiElement> processor) {
+                                              @NotNull PsiElementProcessor<? super PsiElement> processor) {
     if (editor == null) {
       Messages.showMessageDialog(project, FindBundle.message("find.no.usages.at.cursor.error"), CommonBundle.getErrorTitle(),
                                  Messages.getErrorIcon());
@@ -92,12 +95,9 @@ public class FindUsagesAction extends AnAction {
       int offset = editor.getCaretModel().getOffset();
       boolean chosen = GotoDeclarationAction.chooseAmbiguousTarget(editor, offset, processor, FindBundle.message("find.usages.ambiguous.title"), null);
       if (!chosen) {
-        ApplicationManager.getApplication().invokeLater(new Runnable() {
-          @Override
-          public void run() {
-            if (editor.isDisposed() || !editor.getComponent().isShowing()) return;
-            HintManager.getInstance().showErrorHint(editor, FindBundle.message("find.no.usages.at.cursor.error"));
-          }
+        ApplicationManager.getApplication().invokeLater(() -> {
+          if (editor.isDisposed() || !editor.getComponent().isShowing()) return;
+          HintManager.getInstance().showErrorHint(editor, FindBundle.message("find.no.usages.at.cursor.error"));
         }, project.getDisposed());
       }
     }

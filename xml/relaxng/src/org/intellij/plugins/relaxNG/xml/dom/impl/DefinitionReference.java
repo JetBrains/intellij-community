@@ -17,9 +17,6 @@
 package org.intellij.plugins.relaxNG.xml.dom.impl;
 
 import com.intellij.codeInsight.daemon.EmptyResolveMessageProvider;
-import com.intellij.codeInsight.daemon.QuickFixProvider;
-import com.intellij.codeInsight.daemon.impl.HighlightInfo;
-import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixAction;
 import com.intellij.codeInsight.lookup.LookupValueFactory;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.LocalQuickFixProvider;
@@ -47,13 +44,8 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Map;
 import java.util.Set;
 
-/**
- * Created by IntelliJ IDEA.
- * User: sweinreuter
- * Date: 18.08.2007
- */
 public class DefinitionReference extends PsiReferenceBase.Poly<XmlAttributeValue>
-        implements QuickFixProvider<DefinitionReference>, LocalQuickFixProvider,
+        implements LocalQuickFixProvider,
         EmptyResolveMessageProvider, Function<Define, ResolveResult> {
 
   private final boolean myIsParentRef;
@@ -70,6 +62,7 @@ public class DefinitionReference extends PsiReferenceBase.Poly<XmlAttributeValue
     return true;
   }
 
+  @Override
   @NotNull
   public ResolveResult[] multiResolve(boolean incompleteCode) {
     final RngGrammar scope = getScope();
@@ -95,12 +88,14 @@ public class DefinitionReference extends PsiReferenceBase.Poly<XmlAttributeValue
     return scope;
   }
 
+  @Override
   public ResolveResult fun(Define define) {
     final XmlElement xmlElement = (XmlElement)define.getPsiElement();
     assert xmlElement != null;
     return new PsiElementResolveResult(xmlElement);
   }
 
+  @Override
   @NotNull
   public Object[] getVariants() {
     final RngGrammar scope = getScope();
@@ -111,28 +106,27 @@ public class DefinitionReference extends PsiReferenceBase.Poly<XmlAttributeValue
     final Map<String, Set<Define>> map = DefinitionResolver.getAllVariants(scope);
     if (map == null || map.size() == 0) return ArrayUtil.EMPTY_OBJECT_ARRAY;
 
-    return ContainerUtil.mapNotNull(map.values(), new Function<Set<Define>, Object>() {
-      public Object fun(Set<Define> defines) {
-        final Define define = defines.iterator().next();
-        if (defines.size() == 0) {
-          return null;
-        } else {
-          final PsiElement element = define.getPsiElement();
-          if (element != null) {
-            final PsiPresentableMetaData data = (PsiPresentableMetaData)((PsiMetaOwner)element).getMetaData();
-            if (data != null) {
-              return LookupValueFactory.createLookupValue(data.getName(), data.getIcon());
-            } else {
-              return define.getName();
-            }
+    return ContainerUtil.mapNotNull(map.values(), defines -> {
+      final Define define = defines.iterator().next();
+      if (defines.size() == 0) {
+        return null;
+      } else {
+        final PsiElement element = define.getPsiElement();
+        if (element != null) {
+          final PsiPresentableMetaData data = (PsiPresentableMetaData)((PsiMetaOwner)element).getMetaData();
+          if (data != null) {
+            return LookupValueFactory.createLookupValue(data.getName(), data.getIcon());
           } else {
             return define.getName();
           }
+        } else {
+          return define.getName();
         }
       }
     }).toArray();
   }
 
+  @Override
   public LocalQuickFix[] getQuickFixes() {
     final XmlTag tag = PsiTreeUtil.getParentOfType(getElement(), XmlTag.class);
     assert tag != null;
@@ -143,16 +137,7 @@ public class DefinitionReference extends PsiReferenceBase.Poly<XmlAttributeValue
     return LocalQuickFix.EMPTY_ARRAY;
   }
 
-  public void registerQuickfix(HighlightInfo info, final DefinitionReference reference) {
-    assert reference == this;
-    final XmlTag tag = PsiTreeUtil.getParentOfType(getElement(), XmlTag.class);
-    assert tag != null;
-    final RngGrammar scope = myValue.getParentOfType(RngGrammar.class, true);
-    if (scope != null) {
-      QuickFixAction.registerQuickFixAction(info, new CreatePatternFix(this));
-    }
-  }
-
+  @Override
   @NotNull
   public String getUnresolvedMessagePattern() {
     return "Unresolved pattern reference ''{0}''";

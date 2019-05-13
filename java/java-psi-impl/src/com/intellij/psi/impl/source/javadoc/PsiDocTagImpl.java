@@ -57,6 +57,7 @@ public class PsiDocTagImpl extends CompositePsiElement implements PsiDocTag, Con
     return (PsiDocTagValue)findPsiChildByType(TAG_VALUE_BIT_SET);
   }
 
+  @NotNull
   @Override
   public PsiElement[] getDataElements() {
     return getChildrenAsPsiElements(VALUE_BIT_SET, PsiElement.ARRAY_FACTORY);
@@ -76,7 +77,7 @@ public class PsiDocTagImpl extends CompositePsiElement implements PsiDocTag, Con
   }
 
   @Override
-  public int getChildRole(ASTNode child) {
+  public int getChildRole(@NotNull ASTNode child) {
     assert child.getTreeParent() == this : child.getTreeParent();
     IElementType i = child.getElementType();
     if (i == DOC_TAG_NAME) {
@@ -112,6 +113,7 @@ public class PsiDocTagImpl extends CompositePsiElement implements PsiDocTag, Con
     }
   }
 
+  @Override
   public String toString() {
     return "PsiDocTag:" + getNameElement().getText();
   }

@@ -1,31 +1,20 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.psi.PsiVariable;
+import com.intellij.ui.components.JBLabel;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
+import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -39,9 +28,6 @@ public class SideEffectWarningDialog extends DialogWrapper {
   private final boolean myCanCopeWithSideEffects;
   private AbstractAction myRemoveAllAction;
   private AbstractAction myCancelAllAction;
-  public static final int MAKE_STATEMENT = 1;
-  public static final int DELETE_ALL = 2;
-  public static final int CANCEL = 0;
 
   public SideEffectWarningDialog(Project project, boolean canBeParent, PsiVariable variable, String beforeText, String afterText, boolean canCopeWithSideEffects) {
     super(project, canBeParent);
@@ -57,7 +43,7 @@ public class SideEffectWarningDialog extends DialogWrapper {
   @NotNull
   @Override
   protected Action[] createActions() {
-    List<AbstractAction> actions = new ArrayList<AbstractAction>();
+    List<AbstractAction> actions = new ArrayList<>();
     myRemoveAllAction = new AbstractAction() {
       {
         UIUtil.setActionNameAndMnemonic(QuickFixBundle.message("side.effect.action.remove"), this);
@@ -65,8 +51,8 @@ public class SideEffectWarningDialog extends DialogWrapper {
       }
 
       @Override
-      public void actionPerformed(ActionEvent e) {
-        close(DELETE_ALL);
+      public void actionPerformed(@NotNull ActionEvent e) {
+        close(RemoveUnusedVariableUtil.RemoveMode.DELETE_ALL.ordinal());
       }
 
     };
@@ -75,11 +61,14 @@ public class SideEffectWarningDialog extends DialogWrapper {
       AbstractAction makeStmtAction = new AbstractAction() {
         {
           UIUtil.setActionNameAndMnemonic(QuickFixBundle.message("side.effect.action.transform"), this);
+          if (SystemInfo.isMac) {
+            putValue(FOCUSED_ACTION, this);
+          }
         }
 
         @Override
-        public void actionPerformed(ActionEvent e) {
-          close(MAKE_STATEMENT);
+        public void actionPerformed(@NotNull ActionEvent e) {
+          close(RemoveUnusedVariableUtil.RemoveMode.MAKE_STATEMENT.ordinal());
         }
       };
       actions.add(makeStmtAction);
@@ -90,13 +79,13 @@ public class SideEffectWarningDialog extends DialogWrapper {
       }
 
       @Override
-      public void actionPerformed(ActionEvent e) {
+      public void actionPerformed(@NotNull ActionEvent e) {
         doCancelAction();
       }
 
     };
     actions.add(myCancelAllAction);
-    return actions.toArray(new Action[actions.size()]);
+    return actions.toArray(new Action[0]);
   }
 
   @NotNull
@@ -113,26 +102,51 @@ public class SideEffectWarningDialog extends DialogWrapper {
 
   @Override
   public void doCancelAction() {
-    close(CANCEL);
+    close(RemoveUnusedVariableUtil.RemoveMode.CANCEL.ordinal());
   }
 
   @Override
   protected JComponent createCenterPanel() {
     final JPanel panel = new JPanel(new BorderLayout());
     final String text = sideEffectsDescription();
-    final JLabel label = new JLabel(text);
+    final JLabel label = new JBLabel(text);
     label.setIcon(Messages.getWarningIcon());
     panel.add(label, BorderLayout.NORTH);
     return panel;
   }
 
+  protected String getFormatString() {
+    return "<html>\n" +
+           "<body>\n" +
+           "There are possible side effects found in {0}<br>\n" +
+           "You can:\n" +
+           "<br>\n" +
+           "-&nbsp;<b>Remove</b> variable usages along with all expressions involved, or<br>\n" +
+           "-&nbsp;<b>Transform</b> expressions assigned to variable into the statements on their own.<br>\n" +
+           "<div style=\"padding-left: 0.6cm;\">\n" +
+           "  That is,<br>\n" +
+           "  <table border=\"0\">\n" +
+           "    <tr>\n" +
+           "      <td><code>{1};</code></td>\n" +
+           "    </tr>\n" +
+           "  </table>\n" +
+           "  becomes: <br>\n" +
+           "  <table border=\"0\">\n" +
+           "    <tr>\n" +
+           "      <td><code>{2};</code></td>\n" +
+           "    </tr>\n" +
+           "  </table>\n" +
+           "</div>\n" +
+           "</body>\n" +
+           "</html>";
+  }
+
   protected String sideEffectsDescription() {
     if (myCanCopeWithSideEffects) {
-      return QuickFixBundle.message("side.effect.message2",
-                                    myVariable.getName(),
-                                    myVariable.getType().getPresentableText(),
-                                    myBeforeText,
-                                    myAfterText);
+      return MessageFormat.format(getFormatString(),
+                                  "expressions assigned to the variable '" + myVariable.getName() + "'",
+                                  myVariable.getType().getPresentableText() + " " + myVariable.getName() + " = " + myBeforeText,
+                                  myAfterText);
     }
     else {
       return QuickFixBundle.message("side.effect.message1", myVariable.getName());

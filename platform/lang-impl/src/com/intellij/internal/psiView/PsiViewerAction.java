@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,53 +15,58 @@
  */
 package com.intellij.internal.psiView;
 
-import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
-import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleType;
-import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Konstantin Bulenkov
  */
-public class PsiViewerAction extends AnAction implements DumbAware {
+public class PsiViewerAction extends DumbAwareAction {
+
   @Override
-  public void actionPerformed(AnActionEvent e) {
-    final Project project = PlatformDataKeys.PROJECT.getData(e.getDataContext());
-    new PsiViewerDialog(project, false, null, null).show();
+  public void actionPerformed(@NotNull AnActionEvent e) {
+    Editor editor = isForContext() ? e.getData(CommonDataKeys.EDITOR) : null;
+    new PsiViewerDialog(e.getProject(), editor).show();
   }
 
   @Override
-  public void update(AnActionEvent e) {
-    final Project project = PlatformDataKeys.PROJECT.getData(e.getDataContext());
-    final Presentation p = e.getPresentation();
-    if (project == null) {
-      p.setVisible(false);
-      p.setEnabled(false);
-      return;
+  public void update(@NotNull AnActionEvent e) {
+    boolean enabled = isEnabled(e.getProject());
+    e.getPresentation().setEnabledAndVisible(enabled);
+    if (enabled && isForContext() && e.getData(CommonDataKeys.EDITOR) == null) {
+      e.getPresentation().setEnabled(false);
     }
+  }
 
-    if (ApplicationManagerEx.getApplicationEx().isInternal()) {
-      p.setVisible(true);
-      p.setEnabled(true);
-      return;
-    }
+  protected boolean isForContext() {
+    return false;
+  }
 
-    final Module[] modules = ModuleManager.getInstance(project).getModules();
-    for (Module module : modules) {
+  private static boolean isEnabled(@Nullable Project project) {
+    if (project == null) return false;
+    if (ApplicationManagerEx.getApplicationEx().isInternal()) return true;
+    for (Module module : ModuleManager.getInstance(project).getModules()) {
       if ("PLUGIN_MODULE".equals(ModuleType.get(module).getId())) {
-        p.setVisible(true);
-        p.setEnabled(true);
-        return;
+        return true;
       }
     }
-    
-    p.setVisible(false);
-    p.setEnabled(false);
+    return false;
+  }
+
+  public static class ForContext extends PsiViewerAction {
+
+    @Override
+    protected boolean isForContext() {
+      return true;
+    }
   }
 }

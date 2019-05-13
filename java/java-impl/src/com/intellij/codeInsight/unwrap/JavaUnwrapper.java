@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.unwrap;
 
 import com.intellij.psi.*;
@@ -62,8 +48,22 @@ public abstract class JavaUnwrapper extends AbstractUnwrapper<JavaUnwrapper.Cont
     private static PsiStatement copyElement(PsiStatement e) throws IncorrectOperationException {
       // We cannot call el.copy() for 'else' since it sets context to parent 'if'.
       // This causes copy to be invalidated after parent 'if' is removed by setElseBranch method.
-      PsiElementFactory factory = JavaPsiFacade.getInstance(e.getProject()).getElementFactory();
+      PsiElementFactory factory = JavaPsiFacade.getElementFactory(e.getProject());
       return factory.createStatementFromText(e.getText(), null);
+    }
+
+    public void setInitializer(PsiVariable variable, PsiExpression returnValue) {
+      PsiExpression toExtract = returnValue;
+      if (myIsEffective) {
+        final PsiExpression initializer = copyExpression(returnValue);
+        variable.setInitializer(initializer);
+        toExtract = variable.getInitializer();
+      }
+      addElementToExtract(toExtract);
+    }
+
+    private static PsiExpression copyExpression(PsiExpression returnValue) {
+      return JavaPsiFacade.getElementFactory(returnValue.getProject()).createExpressionFromText(returnValue.getText(), null);
     }
   }
 }

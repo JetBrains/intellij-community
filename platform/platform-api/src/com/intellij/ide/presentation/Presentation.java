@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,8 @@
  */
 package com.intellij.ide.presentation;
 
+import org.jetbrains.annotations.Nls;
+
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
@@ -28,11 +30,12 @@ import java.lang.annotation.Target;
 public @interface Presentation {
 
   /**
-   * @return Path to image resource, e.g. /foo/bar/MyIcon.png
+   * @return Path to image resource ({@code /foo/bar/MyIcon.png}) or FQN (w/o "icons" package) to icon field ({@code MyIcons.CustomIcon}).
    */
   String icon() default "";
 
   Class<? extends PresentationProvider> provider() default PresentationProvider.class;
 
+  @Nls(capitalization = Nls.Capitalization.Title)
   String typeName() default "";
 }

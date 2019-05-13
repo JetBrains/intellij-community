@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,60 +15,93 @@
  */
 package com.intellij.util.graph;
 
+import com.intellij.openapi.util.Pair;
+import com.intellij.util.containers.ContainerUtil;
+import gnu.trove.THashMap;
+import gnu.trove.THashSet;
+import org.jetbrains.annotations.NotNull;
+
 import java.util.*;
 
 /**
- *  @author dsl
+ * @author dsl
  */
-public class GraphGenerator<Node> implements Graph <Node>{
-  private final SemiGraph<Node> myGraph;
-
-  public interface SemiGraph<Node> {
-    Collection<Node> getNodes();
-    Iterator<Node> getIn(Node n);
-  }
-
-  private final Map<Node, Set<Node>> myOuts;
-
-  public GraphGenerator(SemiGraph<Node> graph) {
-    myGraph = graph;
-    myOuts = new LinkedHashMap<Node, Set<Node>>();
-    buildOuts();
-  }
-
-  public static <T> GraphGenerator<T> create(SemiGraph<T> graph) {
+public class GraphGenerator<Node> implements Graph<Node> {
+  @NotNull
+  public static <T> Graph<T> generate(InboundSemiGraph<T> graph) {
     return new GraphGenerator<T>(graph);
   }
 
+  private final InboundSemiGraph<Node> myGraph;
+  private final Map<Node, List<Node>> myOuts;
+
+  private GraphGenerator(@NotNull InboundSemiGraph<Node> graph) {
+    myGraph = graph;
+    myOuts = new THashMap<Node, List<Node>>();
+    buildOuts();
+  }
+
   private void buildOuts() {
+    final Set<Pair<Node, Node>> edges = new THashSet<Pair<Node, Node>>();
+
     Collection<Node> nodes = myGraph.getNodes();
-    for (Node node : nodes) {
-      myOuts.put(node, new LinkedHashSet<Node>());
-    }
 
     for (Node node : nodes) {
       Iterator<Node> inIt = myGraph.getIn(node);
       while (inIt.hasNext()) {
         Node inNode = inIt.next();
-        final Set<Node> set = myOuts.get(inNode);
-        if (set == null) {
-          throw new AssertionError("Unexpected node " + inNode + "; nodes=" + nodes);
+
+        if (!edges.add(Pair.create(inNode, node))) {
+          // Duplicate edge
+          continue;
         }
-        set.add(node);
+
+        List<Node> edgesFromInNode = myOuts.get(inNode);
+        if (edgesFromInNode == null) {
+          edgesFromInNode = new ArrayList<Node>();
+          myOuts.put(inNode, edgesFromInNode);
+        }
+        edgesFromInNode.add(node);
       }
     }
   }
 
+  @NotNull
+  @Override
   public Collection<Node> getNodes() {
     return myGraph.getNodes();
   }
 
+  @NotNull
+  @Override
   public Iterator<Node> getIn(Node n) {
     return myGraph.getIn(n);
   }
 
+  @NotNull
+  @Override
   public Iterator<Node> getOut(Node n) {
-    return myOuts.get(n).iterator();
+    final List<Node> outNodes = myOuts.get(n);
+    return outNodes != null
+           ? outNodes.iterator()
+           : ContainerUtil.<Node>emptyIterator();
   }
 
+  //<editor-fold desc="Deprecated stuff.">
+  public interface SemiGraph<Node> extends InboundSemiGraph<Node> {
+    @Override
+    @NotNull
+    Collection<Node> getNodes();
+
+    @NotNull
+    @Override
+    Iterator<Node> getIn(Node n);
+  }
+
+  /** @deprecated use {@link #generate(InboundSemiGraph)} (to be removed in IDEA 2018) */
+  @Deprecated
+  public static <T> GraphGenerator<T> create(SemiGraph<T> graph) {
+    return new GraphGenerator<T>(graph);
+  }
+  //</editor-fold>
 }

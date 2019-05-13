@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,24 +17,16 @@ package com.intellij.execution;
 
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.ui.ExecutionConsole;
-import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.project.DumbAware;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.List;
-
-/**
- * @author dyoma
- */
 public class DefaultExecutionResult implements ExecutionResult {
   private final ExecutionConsole myConsole;
   private final ProcessHandler myProcessHandler;
+
   private AnAction[] myActions;
-  private AnAction[] myRestartActions;
-  private final List<AnAction> myStopActions = new ArrayList<AnAction>();
+  private AnAction[] myRestartActions = AnAction.EMPTY_ARRAY;
 
   public DefaultExecutionResult() {
     myConsole = null;
@@ -42,69 +34,52 @@ public class DefaultExecutionResult implements ExecutionResult {
     myActions = AnAction.EMPTY_ARRAY;
   }
 
-  public DefaultExecutionResult(final ExecutionConsole console, @NotNull final ProcessHandler processHandler) {
+  public DefaultExecutionResult(@Nullable ExecutionConsole console, @NotNull ProcessHandler processHandler) {
     this(console, processHandler, AnAction.EMPTY_ARRAY);
   }
 
-  public DefaultExecutionResult(final ExecutionConsole console, @NotNull final ProcessHandler processHandler, final AnAction... actions) {
+  public DefaultExecutionResult(@NotNull ProcessHandler processHandler) {
+    this(null, processHandler, AnAction.EMPTY_ARRAY);
+  }
+
+  public DefaultExecutionResult(ExecutionConsole console, @NotNull ProcessHandler processHandler, @NotNull AnAction... actions) {
     myConsole = console;
     myProcessHandler = processHandler;
     myActions = actions;
   }
 
+  @Override
   public ExecutionConsole getExecutionConsole() {
     return myConsole;
   }
 
+  @NotNull
+  @Override
   public AnAction[] getActions() {
     return myActions;
   }
 
-  public void setActions(@NotNull final AnAction... actions) {
+  public void setActions(@NotNull AnAction... actions) {
     myActions = actions;
   }
 
+  @NotNull
   public AnAction[] getRestartActions() {
     return myRestartActions;
   }
 
-  public void setRestartActions(AnAction... restartActions) {
+  public void setRestartActions(@NotNull AnAction... restartActions) {
     myRestartActions = restartActions;
   }
 
-  public void addStopAction(AnAction action) {
-    myStopActions.add(action);
-  }
-
-  @NotNull 
+  @NotNull
+  @Deprecated
   public AnAction[] getAdditionalStopActions() {
-    return myStopActions.toArray(new AnAction[myStopActions.size()]);
+    return AnAction.EMPTY_ARRAY;
   }
 
+  @Override
   public ProcessHandler getProcessHandler() {
     return myProcessHandler;
-  }
-
-  public static class StopAction extends AnAction implements DumbAware {
-    private final ProcessHandler myProcessHandler;
-
-    public StopAction(final ProcessHandler processHandler) {
-      super(ExecutionBundle.message("run.configuration.stop.action.name"), null, AllIcons.Actions.Suspend);
-      getTemplatePresentation().setEnabled(false);
-      myProcessHandler = processHandler;
-    }
-
-    public void actionPerformed(final AnActionEvent e) {
-      if(myProcessHandler.detachIsDefault()) {
-        myProcessHandler.detachProcess();
-      }
-      else {
-        myProcessHandler.destroyProcess();
-      }
-    }
-
-    public void update(final AnActionEvent event) {
-      event.getPresentation().setEnabled(!myProcessHandler.isProcessTerminating() && !myProcessHandler.isProcessTerminated());
-    }
   }
 }

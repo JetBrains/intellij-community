@@ -21,7 +21,7 @@ import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-class IndentInside {
+public class IndentInside {
   public int whiteSpaces = 0;
   public int tabs = 0;
 
@@ -66,7 +66,7 @@ class IndentInside {
   }
 
   @NotNull
-  static IndentInside createIndentOn(@Nullable final CharSequence lastLine) {
+  public static IndentInside createIndentOn(@Nullable final CharSequence lastLine) {
     final IndentInside result = new IndentInside();
     if (lastLine == null) {
       return result;
@@ -79,7 +79,7 @@ class IndentInside {
   }
 
   @NotNull
-  static CharSequence getLastLine(@NotNull final CharSequence text) {
+  public static CharSequence getLastLine(@NotNull final CharSequence text) {
     int i = CharArrayUtil.shiftBackwardUntil(text, text.length() - 1, "\n");
     if (i < 0) {
       return text;

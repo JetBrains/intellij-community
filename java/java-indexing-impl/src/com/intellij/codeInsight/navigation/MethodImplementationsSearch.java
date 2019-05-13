@@ -1,49 +1,40 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.navigation;
 
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
+import com.intellij.psi.search.SearchScope;
+import com.intellij.psi.search.searches.DefinitionsScopedSearch;
+import com.intellij.psi.search.searches.FunctionalExpressionSearch;
 import com.intellij.psi.search.searches.OverridingMethodsSearch;
-import com.intellij.util.QueryExecutor;
+import com.intellij.util.CommonProcessors;
 import com.intellij.util.Processor;
-import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.QueryExecutor;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
+import java.util.List;
 
-public class MethodImplementationsSearch implements QueryExecutor<PsiElement, PsiElement> {
-  public boolean execute(@NotNull final PsiElement sourceElement, @NotNull final Processor<PsiElement> consumer) {
+public class MethodImplementationsSearch implements QueryExecutor<PsiElement, DefinitionsScopedSearch.SearchParameters> {
+  @Override
+  public boolean execute(@NotNull final DefinitionsScopedSearch.SearchParameters queryParameters, @NotNull final Processor<? super PsiElement> consumer) {
+    final PsiElement sourceElement = queryParameters.getElement();
     if (sourceElement instanceof PsiMethod) {
-      PsiMethod[] implementations = getMethodImplementations((PsiMethod)sourceElement);
-      return ContainerUtil.process(implementations, consumer);
+      return processImplementations((PsiMethod)sourceElement, consumer, queryParameters.getScope());
     }
     return true;
   }
 
-  public static void getOverridingMethods(PsiMethod method, ArrayList<PsiMethod> list) {
-    for (PsiMethod psiMethod : OverridingMethodsSearch.search(method)) {
-      list.add(psiMethod);
-    }
+  public static boolean processImplementations(final PsiMethod psiMethod, final Processor<? super PsiElement> consumer,
+                                               final SearchScope searchScope) {
+    return processOverridingMethods(psiMethod, searchScope, consumer) &&
+           FunctionalExpressionSearch.search(psiMethod, searchScope).forEach(consumer);
   }
 
-  public static PsiMethod[] getMethodImplementations(final PsiMethod method) {
-    ArrayList<PsiMethod> result = new ArrayList<PsiMethod>();
+  public static void getOverridingMethods(PsiMethod method, List<? super PsiMethod> list, SearchScope scope) {
+    processOverridingMethods(method, scope, new CommonProcessors.CollectProcessor<>(list));
+  }
 
-    getOverridingMethods(method, result);
-    return result.toArray(new PsiMethod[result.size()]);
+  private static boolean processOverridingMethods(PsiMethod method, SearchScope scope, Processor<? super PsiMethod> processor) {
+    return OverridingMethodsSearch.search(method, scope, true).forEach(processor);
   }
 }

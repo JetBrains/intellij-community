@@ -29,14 +29,8 @@ import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 
-/**
- * Created by IntelliJ IDEA.
- * User: lene
- * Date: 04.04.11
- * Time: 17:40
- */
 public class ForcedBuildFileAttribute {
-  private static final Logger LOG = Logger.getInstance("#" + ForcedBuildFileAttribute.class.getName());
+  private static final Logger LOG = Logger.getInstance(ForcedBuildFileAttribute.class);
 
   private static final FileAttribute FRAMEWORK_FILE_ATTRIBUTE = new FileAttribute("forcedBuildFileFrameworkAttribute", 2, false);
   private static final Key<String> FRAMEWORK_FILE_MARKER = Key.create("forcedBuildFileFrameworkAttribute");
@@ -52,22 +46,16 @@ public class ForcedBuildFileAttribute {
   @Nullable
   public static String getFrameworkIdOfBuildFile(VirtualFile file) {
     if (file instanceof NewVirtualFile) {
-      final DataInputStream is = FRAMEWORK_FILE_ATTRIBUTE.readAttribute(file);
-      if (is != null) {
-        try {
-          try {
-            if (is.available() == 0) {
-              return null;
-            }
-            return IOUtil.readString(is);
+      try (DataInputStream is = FRAMEWORK_FILE_ATTRIBUTE.readAttribute(file)) {
+        if (is != null) {
+          if (is.available() == 0) {
+            return null;
           }
-          finally {
-            is.close();
-          }
+          return IOUtil.readString(is);
         }
-        catch (IOException e) {
-          LOG.error(file.getPath(), e);
-        }
+      }
+      catch (IOException e) {
+        LOG.error(file.getPath(), e);
       }
       return "";
     }
@@ -92,14 +80,8 @@ public class ForcedBuildFileAttribute {
 
   private static void forceBuildFile(VirtualFile file, @Nullable String value) {
     if (file instanceof NewVirtualFile) {
-      final DataOutputStream os = FRAMEWORK_FILE_ATTRIBUTE.writeAttribute(file);
-      try {
-        try {
-          IOUtil.writeString(StringUtil.notNullize(value), os);
-        }
-        finally {
-          os.close();
-        }
+      try (DataOutputStream os = FRAMEWORK_FILE_ATTRIBUTE.writeAttribute(file)) {
+        IOUtil.writeString(StringUtil.notNullize(value), os);
       }
       catch (IOException e) {
         LOG.error(e);

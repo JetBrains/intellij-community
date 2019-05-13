@@ -1,0 +1,10 @@
+<html>
+<body>
+Checks lambda's, local and anonymous classes and reports references to local variables outside the class or lambda that are not
+<b>Serializable</b>.
+When a local variable is referenced from an anonymous class, it's value is stored in an implicit field in the anonymous class.
+The same happens for local classes and lambda's.
+If that variable is of a non-Serializable type, serialization will fail.
+<p>
+</body>
+</html>

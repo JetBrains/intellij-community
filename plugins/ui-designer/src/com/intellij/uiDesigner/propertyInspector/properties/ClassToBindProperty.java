@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.uiDesigner.propertyInspector.properties;
 
 import com.intellij.ide.util.ClassFilter;
@@ -28,6 +14,7 @@ import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.ComponentWithBrowseButton;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.ui.EditorTextField;
@@ -41,6 +28,7 @@ import com.intellij.uiDesigner.propertyInspector.renderers.ClassToBindRenderer;
 import com.intellij.uiDesigner.radComponents.RadComponent;
 import com.intellij.uiDesigner.radComponents.RadRootContainer;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
@@ -60,20 +48,24 @@ public final class ClassToBindProperty extends Property<RadRootContainer, String
     myEditor = new MyEditor(project);
   }
 
+  @Override
   public PropertyEditor<String> getEditor(){
     return myEditor;
   }
 
+  @Override
   @NotNull
   public PropertyRenderer<String> getRenderer(){
     return myRenderer;
   }
 
+  @Override
   public String getValue(final RadRootContainer component) {
     return component.getClassToBind();
   }
 
-  protected void setValueImpl(final RadRootContainer component, final String value) throws Exception {
+  @Override
+  protected void setValueImpl(final RadRootContainer component, final String value) {
     String className = value;
 
     if (className != null && className.length() == 0) {
@@ -83,7 +75,7 @@ public final class ClassToBindProperty extends Property<RadRootContainer, String
     component.setClassToBind(className);
   }
 
-  private final class MyEditor extends PropertyEditor<String> {
+  private static final class MyEditor extends PropertyEditor<String> {
     private final EditorTextField myEditorTextField;
     private Document myDocument;
     private final ComponentWithBrowseButton<EditorTextField> myTfWithButton;
@@ -91,15 +83,16 @@ public final class ClassToBindProperty extends Property<RadRootContainer, String
     private final Project myProject;
     private final ClassToBindProperty.MyEditor.MyActionListener myActionListener;
 
-    public MyEditor(final Project project) {
+    MyEditor(final Project project) {
       myProject = project;
       myEditorTextField = new EditorTextField("", project, StdFileTypes.JAVA) {
+        @Override
         protected boolean shouldHaveBorder() {
           return false;
         }
       };
       myActionListener = new MyActionListener();
-      myTfWithButton = new ComponentWithBrowseButton<EditorTextField>(myEditorTextField, myActionListener);
+      myTfWithButton = new ComponentWithBrowseButton<>(myEditorTextField, myActionListener);
       myEditorTextField.setBorder(null);
       new MyCancelEditingAction().registerCustomShortcutSet(CommonShortcuts.ESCAPE, myTfWithButton);
       /*
@@ -113,7 +106,8 @@ public final class ClassToBindProperty extends Property<RadRootContainer, String
       */
     }
 
-    public String getValue() throws Exception {
+    @Override
+    public String getValue() {
       final String value = myDocument.getText();
       if (value.length() == 0 && myInitialValue == null) {
         return null;
@@ -121,6 +115,7 @@ public final class ClassToBindProperty extends Property<RadRootContainer, String
       return value.replace('$', '.'); // PSI works only with dots
     }
 
+    @Override
     public JComponent getComponent(final RadComponent component, final String value, final InplaceContext inplaceContext) {
       myInitialValue = value;
       setEditorText(value != null ? value : "");
@@ -136,6 +131,7 @@ public final class ClassToBindProperty extends Property<RadRootContainer, String
       myEditorTextField.setDocument(myDocument);
     }
 
+    @Override
     public void updateUI() {
       SwingUtilities.updateComponentTreeUI(myTfWithButton);
     }
@@ -147,6 +143,7 @@ public final class ClassToBindProperty extends Property<RadRootContainer, String
         myComponent = component;
       }
 
+      @Override
       public void actionPerformed(final ActionEvent e){
         final String className = myEditorTextField.getText();
         final PsiClass aClass = FormEditingUtil.findClassToBind(myComponent.getModule(), className);
@@ -157,9 +154,10 @@ public final class ClassToBindProperty extends Property<RadRootContainer, String
           UIDesignerBundle.message("title.choose.class.to.bind"),
           GlobalSearchScope.projectScope(project),
           new ClassFilter() { // we need show classes from the sources roots only
+            @Override
             public boolean isAccepted(final PsiClass aClass) {
               final VirtualFile vFile = aClass.getContainingFile().getVirtualFile();
-              return vFile != null && fileIndex.isInSource(vFile);
+              return vFile != null && fileIndex.isUnderSourceRootOfType(vFile, JavaModuleSourceRootTypes.SOURCES);
             }
           },
           aClass
@@ -171,12 +169,14 @@ public final class ClassToBindProperty extends Property<RadRootContainer, String
           setEditorText(result.getQualifiedName());
         }
 
-        myEditorTextField.requestFocus(); // todo[anton] make it via providing proper parent
+        // todo[anton] make it via providing proper parent
+        IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(myEditorTextField, true));
       }
     }
 
     private final class MyCancelEditingAction extends AnAction{
-      public void actionPerformed(final AnActionEvent e) {
+      @Override
+      public void actionPerformed(@NotNull final AnActionEvent e) {
         fireEditingCancelled();
       }
     }

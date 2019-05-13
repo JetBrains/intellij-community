@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,20 +18,16 @@ package org.jetbrains.plugins.groovy.doc.actions;
 import com.intellij.ide.util.PackageChooserDialog;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiPackage;
 import com.intellij.util.IconUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.doc.GroovyDocConfiguration;
 
 import javax.swing.*;
 import java.util.List;
 
-/**
- * User: Dmitry.Krasilschikov
- * Date: 14.10.2008
- */
 public class GroovyDocAddPackageAction extends AnAction implements DumbAware {
   private final DefaultListModel myDataModel;
 
@@ -40,8 +36,9 @@ public class GroovyDocAddPackageAction extends AnAction implements DumbAware {
     myDataModel = dataModel;
   }
 
-  public void actionPerformed(final AnActionEvent e) {
-    final Project project = PlatformDataKeys.PROJECT.getData(e.getDataContext());
+  @Override
+  public void actionPerformed(@NotNull final AnActionEvent e) {
+    final Project project = e.getProject();
 
     PackageChooserDialog chooser = new PackageChooserDialog("Choose packages", project);
     chooser.show();

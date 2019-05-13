@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,17 +15,22 @@
  */
 package org.jetbrains.jps.service.impl;
 
+import com.intellij.util.containers.ContainerUtilRt;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.jps.plugin.JpsPluginManager;
 import org.jetbrains.jps.service.JpsServiceManager;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 
 /**
  * @author nik
  */
 public class JpsServiceManagerImpl extends JpsServiceManager {
-  private final ConcurrentHashMap<Class, Object> myServices = new ConcurrentHashMap<Class, Object>();
-  private final ConcurrentHashMap<Class, List<?>> myExtensions = new ConcurrentHashMap<Class, List<?>>();
+  private final ConcurrentMap<Class, Object> myServices = new ConcurrentHashMap<>(16, 0.75f, 1);
+  private final ConcurrentMap<Class, List<?>> myExtensions = new ConcurrentHashMap<>(16, 0.75f, 1);
+  private volatile JpsPluginManager myPluginManager;
 
   @Override
   public <T> T getService(Class<T> serviceClass) {
@@ -36,14 +41,16 @@ public class JpsServiceManagerImpl extends JpsServiceManager {
       if (!iterator.hasNext()) {
         throw new ServiceConfigurationError("Implementation for " + serviceClass + " not found");
       }
-      service = iterator.next();
+      final T loadedService = iterator.next();
       if (iterator.hasNext()) {
         throw new ServiceConfigurationError(
-          "More than one implementation for " + serviceClass + " found: " + service.getClass() + " and " + iterator.next().getClass());
+          "More than one implementation for " + serviceClass + " found: " + loadedService.getClass() + " and " + iterator.next().getClass());
       }
-      myServices.putIfAbsent(serviceClass, service);
       //noinspection unchecked
-      service = (T)myServices.get(serviceClass);
+      service = (T)myServices.putIfAbsent(serviceClass, loadedService);
+      if (service == null) {
+        service = loadedService;
+      }
     }
     return service;
   }
@@ -52,15 +59,41 @@ public class JpsServiceManagerImpl extends JpsServiceManager {
   public <T> Iterable<T> getExtensions(Class<T> extensionClass) {
     List<?> cached = myExtensions.get(extensionClass);
     if (cached == null) {
-      final ServiceLoader<T> loader = ServiceLoader.load(extensionClass, extensionClass.getClassLoader());
-      List<T> extensions = new ArrayList<T>();
-      for (T t : loader) {
-        extensions.add(t);
+      final List<T> extensions = new ArrayList<>(loadExtensions(extensionClass));
+      cached = myExtensions.putIfAbsent(extensionClass, extensions);
+      if (cached == null) {
+        cached = extensions;
       }
-      myExtensions.putIfAbsent(extensionClass, extensions);
-      cached = myExtensions.get(extensionClass);
     }
     //noinspection unchecked
     return (List<T>)cached;
+  }
+
+  @NotNull
+  private <T> Collection<T> loadExtensions(Class<T> extensionClass) {
+    JpsPluginManager pluginManager = myPluginManager;
+    if (pluginManager == null) {
+      Iterator<JpsPluginManager> managers = ServiceLoader.load(JpsPluginManager.class, JpsPluginManager.class.getClassLoader()).iterator();
+      if (managers.hasNext()) {
+        pluginManager = managers.next();
+        if (managers.hasNext()) {
+          throw new ServiceConfigurationError("More than one implementation of " + JpsPluginManager.class + " found: " + pluginManager.getClass() + " and " + managers.next().getClass());
+        }
+      }
+      else {
+        pluginManager = new SingleClassLoaderPluginManager();
+      }
+      myPluginManager = pluginManager;
+    }
+    return pluginManager.loadExtensions(extensionClass);
+  }
+
+  private static class SingleClassLoaderPluginManager extends JpsPluginManager {
+    @NotNull
+    @Override
+    public <T> Collection<T> loadExtensions(@NotNull Class<T> extensionClass) {
+      ServiceLoader<T> loader = ServiceLoader.load(extensionClass, extensionClass.getClassLoader());
+      return ContainerUtilRt.newArrayList(loader);
+    }
   }
 }

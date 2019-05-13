@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,12 +28,14 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * @author Mike
  */
 public class CreateFieldFromUsageFix extends CreateVarFromUsageFix {
-
-  public CreateFieldFromUsageFix(PsiReferenceExpression referenceElement) {
+  public CreateFieldFromUsageFix(@NotNull PsiReferenceExpression referenceElement) {
     super(referenceElement);
   }
 
@@ -46,9 +48,22 @@ public class CreateFieldFromUsageFix extends CreateVarFromUsageFix {
     return false;
   }
 
+  @NotNull
+  @Override
+  protected List<PsiClass> getTargetClasses(PsiElement element) {
+    final List<PsiClass> targetClasses = new ArrayList<>();
+    for (PsiClass psiClass : super.getTargetClasses(element)) {
+      if (canModify(psiClass) &&
+          (!psiClass.isInterface() && !psiClass.isAnnotationType() || shouldCreateStaticMember(myReferenceExpression, psiClass))) {
+        targetClasses.add(psiClass);
+      }
+    }
+    return targetClasses;
+  }
+
   @Override
   protected boolean canBeTargetClass(PsiClass psiClass) {
-    return psiClass.getManager().isInProject(psiClass) && !psiClass.isInterface() && !psiClass.isAnnotationType();
+    return canModify(psiClass) && !psiClass.isInterface() && !psiClass.isAnnotationType();
   }
 
   @Override
@@ -65,8 +80,6 @@ public class CreateFieldFromUsageFix extends CreateVarFromUsageFix {
       parentClass = enclosingContext == null ? null : enclosingContext.getContainingClass();
     }
     while (parentClass instanceof PsiAnonymousClass);
-
-    final PsiFile targetFile = targetClass.getContainingFile();
 
     ExpectedTypeInfo[] expectedTypes = CreateFromUsageUtils.guessExpectedTypes(myReferenceExpression, false);
 
@@ -94,23 +107,30 @@ public class CreateFieldFromUsageFix extends CreateVarFromUsageFix {
 
     setupVisibility(parentClass, targetClass, field.getModifierList());
 
+    createFieldFromUsageTemplate(targetClass, project, expectedTypes, field, createConstantField(), myReferenceExpression);
+  }
+
+  public static void createFieldFromUsageTemplate(final PsiClass targetClass,
+                                                  final Project project,
+                                                  final Object expectedTypes,
+                                                  final PsiField field,
+                                                  final boolean createConstantField,
+                                                  final PsiElement context) {
+    final PsiFile targetFile = targetClass.getContainingFile();
     final Editor newEditor = positionCursor(project, targetFile, field);
     if (newEditor == null) return;
     Template template =
-      CreateFieldFromUsageHelper.setupTemplate(field, expectedTypes, targetClass, newEditor, myReferenceExpression, createConstantField());
+      CreateFieldFromUsageHelper.setupTemplate(field, expectedTypes, targetClass, newEditor, context, createConstantField);
 
     startTemplate(newEditor, template, project, new TemplateEditingAdapter() {
       @Override
-      public void templateFinished(Template template, boolean brokenOff) {
+      public void templateFinished(@NotNull Template template, boolean brokenOff) {
         PsiDocumentManager.getInstance(project).commitDocument(newEditor.getDocument());
         final int offset = newEditor.getCaretModel().getOffset();
         final PsiField psiField = PsiTreeUtil.findElementOfClassAtOffset(targetFile, offset, PsiField.class, false);
         if (psiField != null) {
-          ApplicationManager.getApplication().runWriteAction(new Runnable() {
-            @Override
-            public void run() {
-              CodeStyleManager.getInstance(project).reformat(psiField);
-            }
+          ApplicationManager.getApplication().runWriteAction(() -> {
+            CodeStyleManager.getInstance(project).reformat(psiField);
           });
           newEditor.getCaretModel().moveToOffset(psiField.getTextRange().getEndOffset() - 1);
         }
@@ -118,11 +138,11 @@ public class CreateFieldFromUsageFix extends CreateVarFromUsageFix {
     });
   }
 
-  private static boolean shouldCreateFinalMember(@NotNull PsiReferenceExpression ref, @NotNull PsiClass targetClass) {
+  public static boolean shouldCreateFinalMember(@NotNull PsiReferenceExpression ref, @NotNull PsiClass targetClass) {
     if (!PsiTreeUtil.isAncestor(targetClass, ref, true)) {
       return false;
     }
-    final PsiElement element = PsiTreeUtil.getParentOfType(ref, PsiClassInitializer.class, PsiMethod.class);
+    final PsiElement element = PsiTreeUtil.getParentOfType(ref, PsiClassInitializer.class, PsiMethod.class, PsiField.class);
     if (element instanceof PsiClassInitializer) {
       return true;
     }

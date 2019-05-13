@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,30 +16,34 @@
 package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeInsight.CodeInsightBundle;
-import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.codeInsight.highlighting.HighlightManager;
-import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction;
+import com.intellij.codeInsight.intention.BaseElementAtCaretIntentionAction;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.util.IncorrectOperationException;
-import gnu.trove.TIntArrayList;
-import gnu.trove.TIntProcedure;
+import com.siyeh.ig.psiutils.CommentTracker;
+import com.siyeh.ig.psiutils.ImportUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * @author ven
  */
-public class AddOnDemandStaticImportAction extends PsiElementBaseIntentionAction {
+public class AddOnDemandStaticImportAction extends BaseElementAtCaretIntentionAction {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.intention.impl.AddOnDemandStaticImportAction");
 
   @Override
@@ -50,9 +54,9 @@ public class AddOnDemandStaticImportAction extends PsiElementBaseIntentionAction
 
   /**
    * Allows to check if static import may be performed for the given element.
-   * 
+   *
    * @param element     element to check
-   * @return            target class that may be statically imported if any; <code>null</code> otherwise
+   * @return            target class that may be statically imported if any; {@code null} otherwise
    */
   @Nullable
   public static PsiClass getClassToPerformStaticImport(@NotNull PsiElement element) {
@@ -60,6 +64,7 @@ public class AddOnDemandStaticImportAction extends PsiElementBaseIntentionAction
     if (!(element instanceof PsiIdentifier) || !(element.getParent() instanceof PsiJavaCodeReferenceElement)) {
       return null;
     }
+    if (PsiTreeUtil.getParentOfType(element, PsiErrorElement.class, PsiImportStatementBase.class) != null) return null;
     PsiJavaCodeReferenceElement refExpr = (PsiJavaCodeReferenceElement)element.getParent();
     if (refExpr instanceof  PsiMethodReferenceExpression) return null;
     final PsiElement gParent = refExpr.getParent();
@@ -72,19 +77,38 @@ public class AddOnDemandStaticImportAction extends PsiElementBaseIntentionAction
       return null;
     }
     PsiClass psiClass = (PsiClass)resolved;
-    if (Comparing.strEqual(psiClass.getName(), psiClass.getQualifiedName()) || psiClass.hasModifierProperty(PsiModifier.PRIVATE)) return null;
+    if (PsiUtil.isFromDefaultPackage(psiClass) ||
+        psiClass.hasModifierProperty(PsiModifier.PRIVATE) ||
+        psiClass.getQualifiedName() == null) return null;
+
+    final PsiElement ggParent = gParent.getParent();
+    if (ggParent instanceof PsiMethodCallExpression) {
+      final PsiMethodCallExpression call = (PsiMethodCallExpression)ggParent.copy();
+      final PsiElement qualifier = call.getMethodExpression().getQualifier();
+      if (qualifier == null) return null;
+      qualifier.delete();
+      final PsiMethod method = call.resolveMethod();
+      if (method != null && method.getContainingClass() != psiClass)  return null;
+    }
+    else {
+      PsiElement refNameElement = ((PsiJavaCodeReferenceElement)gParent).getReferenceNameElement();
+      if (refNameElement == null) return null;
+      final PsiJavaCodeReferenceElement copy = JavaPsiFacade.getElementFactory(refNameElement.getProject())
+        .createReferenceFromText(refNameElement.getText(), refExpr);
+      final PsiElement target = copy.resolve();
+      if (target != null && PsiTreeUtil.getParentOfType(target, PsiClass.class) != psiClass) return null;
+      PsiElement resolve = ((PsiJavaCodeReferenceElement)gParent).resolve();
+      if (resolve instanceof PsiMember && !((PsiMember)resolve).hasModifierProperty(PsiModifier.STATIC)) return null;
+    }
+
     PsiFile file = refExpr.getContainingFile();
     if (!(file instanceof PsiJavaFile)) return null;
     PsiImportList importList = ((PsiJavaFile)file).getImportList();
     if (importList == null) return null;
-    for (PsiImportStaticStatement statement : importList.getImportStaticStatements()) {
-      PsiClass staticResolve = statement.resolveTargetClass();
-      if (psiClass == staticResolve) return null; //already imported
-    }
-    
+
     return psiClass;
   }
-  
+
   @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, @NotNull PsiElement element) {
     PsiClass classToImport = getClassToPerformStaticImport(element);
@@ -95,33 +119,52 @@ public class AddOnDemandStaticImportAction extends PsiElementBaseIntentionAction
     return classToImport != null;
   }
 
-  public static void invoke(final Project project, PsiFile file, final Editor editor, PsiElement element) {
-    if (!CodeInsightUtilBase.prepareFileForWrite(file)) return;
-    
+  public static boolean invoke(final Project project, PsiFile file, final Editor editor, PsiElement element) {
     final PsiJavaCodeReferenceElement refExpr = (PsiJavaCodeReferenceElement)element.getParent();
     final PsiClass aClass = (PsiClass)refExpr.resolve();
     if (aClass == null) {
-      return;
+      return false;
     }
-    PsiImportStaticStatement importStaticStatement =
-      JavaPsiFacade.getInstance(file.getProject()).getElementFactory().createImportStaticStatement(aClass, "*");
-    PsiImportList importList = ((PsiJavaFile)file).getImportList();
-    if (importList == null) {
-      return;
+    final PsiClass containingClass = PsiUtil.getTopLevelClass(refExpr);
+    if (aClass != containingClass || !ImportUtils.isInsideClassBody(element, aClass)) {
+      PsiImportList importList = ((PsiJavaFile)file).getImportList();
+      if (importList == null) {
+        return false;
+      }
+      boolean alreadyImported = false;
+      for (PsiImportStaticStatement statement : importList.getImportStaticStatements()) {
+        if (!statement.isOnDemand()) continue;
+        PsiClass staticResolve = statement.resolveTargetClass();
+        if (aClass == staticResolve) {
+          alreadyImported = true;
+          break;
+        }
+      }
+      if (!alreadyImported) {
+        PsiImportStaticStatement importStaticStatement =
+          JavaPsiFacade.getElementFactory(file.getProject()).createImportStaticStatement(aClass, "*");
+        importList.add(importStaticStatement);
+      }
     }
-    importList.add(importStaticStatement);
 
+    Ref<Boolean> conflict = new Ref<>(false);
     List<PsiFile> roots = file.getViewProvider().getAllFiles();
     for (final PsiFile root : roots) {
       PsiElement copy = root.copy();
       final PsiManager manager = root.getManager();
 
-      final TIntArrayList expressionToDequalifyOffsets = new TIntArrayList();
+      List<PsiJavaCodeReferenceElement> expressionsToDequalify = new ArrayList<>();
+
       copy.accept(new JavaRecursiveElementWalkingVisitor() {
-        int delta = 0;
+        int delta;
         @Override
         public void visitReferenceElement(PsiJavaCodeReferenceElement expression) {
-          if (isParameterizedReference(expression)) return;
+          if (isParameterizedReference(expression) ||
+              expression instanceof PsiMethodReferenceExpression ||
+              expression.getParent() instanceof PsiErrorElement) {
+            super.visitElement(expression);
+            return;
+          }
           PsiElement qualifierExpression = expression.getQualifier();
           if (qualifierExpression instanceof PsiJavaCodeReferenceElement && ((PsiJavaCodeReferenceElement)qualifierExpression).isReferenceTo(aClass)) {
             try {
@@ -131,7 +174,19 @@ public class AddOnDemandStaticImportAction extends PsiElementBaseIntentionAction
               delta += end - expression.getTextRange().getEndOffset();
               PsiElement after = expression.resolve();
               if (manager.areElementsEquivalent(after, resolved)) {
-                expressionToDequalifyOffsets.add(expression.getTextRange().getStartOffset() + delta);
+                int offset = expression.getTextRange().getStartOffset() + delta;
+                PsiJavaCodeReferenceElement originalExpression =
+                  PsiTreeUtil.findElementOfClassAtOffset(root, offset, PsiJavaCodeReferenceElement.class, false);
+                if (originalExpression != null) {
+                  PsiElement originalQualifier = originalExpression.getQualifier();
+                  if (originalQualifier instanceof PsiJavaCodeReferenceElement &&
+                      ((PsiJavaCodeReferenceElement)originalQualifier).isReferenceTo(aClass)) {
+                    expressionsToDequalify.add(originalExpression);
+                  }
+                }
+              }
+              else {
+                conflict.set(true);
               }
             }
             catch (IncorrectOperationException e) {
@@ -142,26 +197,32 @@ public class AddOnDemandStaticImportAction extends PsiElementBaseIntentionAction
         }
       });
 
-      expressionToDequalifyOffsets.forEachDescending(new TIntProcedure() {
-        @Override
-        public boolean execute(int offset) {
-          PsiJavaCodeReferenceElement expression = PsiTreeUtil.findElementOfClassAtOffset(root, offset, PsiJavaCodeReferenceElement.class, false);
-          if (expression == null) {
-            return false;
+      for (PsiJavaCodeReferenceElement expression : expressionsToDequalify) {
+        new CommentTracker().deleteAndRestoreComments(Objects.requireNonNull(expression.getQualifier()));
+      }
+      if (editor != null) {
+        ApplicationManager.getApplication().invokeLater(() -> {
+          if (collectChangedPlaces(project, editor, expressionsToDequalify)) {
+            WindowManager.getInstance().getStatusBar(project).setInfo(RefactoringBundle.message("press.escape.to.remove.the.highlighting"));
           }
-          PsiElement qualifierExpression = expression.getQualifier();
-          if (qualifierExpression instanceof PsiJavaCodeReferenceElement && ((PsiJavaCodeReferenceElement)qualifierExpression).isReferenceTo(aClass)) {
-            qualifierExpression.delete();
-            HighlightManager.getInstance(project)
-              .addRangeHighlight(editor, expression.getTextRange().getStartOffset(), expression.getTextRange().getEndOffset(),
-                                 EditorColorsManager.getInstance().getGlobalScheme().getAttributes(EditorColors.SEARCH_RESULT_ATTRIBUTES),
-                                 false, null);
-          }
-
-          return true;
-        }
-      });
+        }, project.getDisposed());
+      }
     }
+    return conflict.get();
+  }
+
+  private static boolean collectChangedPlaces(Project project, Editor editor, List<PsiJavaCodeReferenceElement> expressionsToDequalify) {
+    boolean found = false;
+    for (PsiJavaCodeReferenceElement expression : expressionsToDequalify) {
+      if (!expression.isValid()) continue;
+      found = true;
+      HighlightManager.getInstance(project)
+        .addRangeHighlight(editor, expression.getTextRange().getStartOffset(), expression.getTextRange().getEndOffset(),
+                           EditorColorsManager.getInstance().getGlobalScheme()
+                             .getAttributes(EditorColors.SEARCH_RESULT_ATTRIBUTES),
+                           true, null);
+    }
+    return found;
   }
 
   @Override
@@ -170,9 +231,6 @@ public class AddOnDemandStaticImportAction extends PsiElementBaseIntentionAction
   }
 
   private static boolean isParameterizedReference(final PsiJavaCodeReferenceElement expression) {
-    if (expression.getParameterList() == null) {
-      return false;
-    }
     PsiReferenceParameterList parameterList = expression.getParameterList();
     return parameterList != null && parameterList.getFirstChild() != null;
   }

@@ -28,7 +28,7 @@ import java.util.Collections;
 public class ArtifactRootNode extends CompositePackagingElementNode {
   public ArtifactRootNode(ArtifactEditorEx artifactEditor, ArtifactEditorContext context,
                           ComplexElementSubstitutionParameters substitutionParameters, ArtifactType artifactType) {
-    super(artifactEditor.getRootElement(), context, null, null, substitutionParameters, Collections.<PackagingNodeSource>emptyList(),
+    super(artifactEditor.getRootElement(), context, null, null, substitutionParameters, Collections.emptyList(),
           artifactType);
   }
 

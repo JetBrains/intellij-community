@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2012 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2017 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,6 @@
 package com.siyeh.ig.classlayout;
 
 import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -24,13 +23,10 @@ import com.intellij.psi.impl.source.resolve.JavaResolveUtil;
 import com.intellij.psi.search.searches.OverridingMethodsSearch;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.search.searches.SuperMethodsSearch;
-import com.intellij.psi.util.MethodSignatureBackedByPsiMethod;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.ui.ConflictsDialog;
 import com.intellij.refactoring.util.RefactoringUIUtil;
-import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.Processor;
 import com.intellij.util.Query;
 import com.intellij.util.containers.MultiMap;
 import com.siyeh.InspectionGadgetsBundle;
@@ -40,20 +36,11 @@ import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.RemoveModifierFix;
 import com.siyeh.ig.psiutils.MethodUtils;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import static com.intellij.psi.PsiModifier.PRIVATE;
 
 public class ProtectedMemberInFinalClassInspection extends BaseInspection {
-
-  @Override
-  @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("protected.member.in.final.class.display.name");
-  }
-
-  @Override
-  @NotNull
-  public String buildErrorString(Object... infos) {
-    return InspectionGadgetsBundle.message("protected.member.in.final.class.problem.descriptor");
-  }
 
   @Override
   public InspectionGadgetsFix buildFix(Object... infos) {
@@ -69,15 +56,43 @@ public class ProtectedMemberInFinalClassInspection extends BaseInspection {
     };
   }
 
-  private static class MakePrivateFix extends InspectionGadgetsFix {
+  @Override
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message("protected.member.in.final.class.display.name");
+  }
 
+  @Override
+  @NotNull
+  public String buildErrorString(Object... infos) {
+    return InspectionGadgetsBundle.message("protected.member.in.final.class.problem.descriptor");
+  }
+
+  @Override
+  public BaseInspectionVisitor buildVisitor() {
+    return new ProtectedMemberInFinalClassVisitor();
+  }
+
+  private static class MakePrivateFix extends InspectionGadgetsFix {
+    @Override
+    public boolean startInWriteAction() {
+      return false;
+    }
+
+    @Nullable
+    @Override
+    public PsiElement getElementToMakeWritable(@NotNull PsiFile currentFile) {
+      return currentFile;
+    }
+
+    @Override
     @NotNull
-    public String getName() {
+    public String getFamilyName() {
       return InspectionGadgetsBundle.message("make.private.quickfix");
     }
 
     @Override
-    public void doFix(Project project, ProblemDescriptor descriptor) throws IncorrectOperationException {
+    public void doFix(Project project, ProblemDescriptor descriptor) {
       final PsiElement element = descriptor.getPsiElement();
       final PsiElement parent = element.getParent();
       final PsiElement grandParent = parent.getParent();
@@ -89,49 +104,41 @@ public class ProtectedMemberInFinalClassInspection extends BaseInspection {
       if (modifierList == null) {
         return;
       }
-      final MultiMap<PsiElement, String> conflicts = new MultiMap();
+      final MultiMap<PsiElement, String> conflicts = new MultiMap<>();
       if (member instanceof PsiMethod) {
         final PsiMethod method = (PsiMethod)member;
         SuperMethodsSearch.search(method, method.getContainingClass(), true, false).forEach(
-        new Processor<MethodSignatureBackedByPsiMethod>() {
-          @Override
-          public boolean process(MethodSignatureBackedByPsiMethod methodSignature) {
+          methodSignature -> {
             final PsiMethod superMethod = methodSignature.getMethod();
               conflicts.putValue(superMethod, InspectionGadgetsBundle.message(
                 "0.will.have.incompatible.access.privileges.with.super.1",
                 RefactoringUIUtil.getDescription(method, false),
                 RefactoringUIUtil.getDescription(superMethod, true)));
             return true;
-          }
-        });
-      OverridingMethodsSearch.search(method).forEach(new Processor<PsiMethod>() {
-        @Override
-        public boolean process(PsiMethod overridingMethod) {
-            conflicts.putValue(overridingMethod, InspectionGadgetsBundle.message(
-              "0.will.no.longer.be.visible.from.overriding.1",
-              RefactoringUIUtil.getDescription(method, false),
-              RefactoringUIUtil.getDescription(overridingMethod, true)));
+          });
+        OverridingMethodsSearch.search(method).forEach(overridingMethod -> {
+          conflicts.putValue(overridingMethod, InspectionGadgetsBundle.message(
+            "0.will.no.longer.be.visible.from.overriding.1",
+            RefactoringUIUtil.getDescription(method, false),
+            RefactoringUIUtil.getDescription(overridingMethod, true)));
           return false;
-        }
-      });
+        });
       }
       final PsiModifierList modifierListCopy = (PsiModifierList)modifierList.copy();
-      modifierListCopy.setModifierProperty(PsiModifier.PRIVATE, true);
+      modifierListCopy.setModifierProperty(PRIVATE, true);
       final Query<PsiReference> search = ReferencesSearch.search(member, member.getResolveScope());
-      search.forEach(new Processor<PsiReference>() {
-        @Override
-        public boolean process(PsiReference reference) {
-          final PsiElement element = reference.getElement();
-          if (!JavaResolveUtil.isAccessible(member, member.getContainingClass(), modifierListCopy, element, null, null)) {
-            final PsiElement context =
-              PsiTreeUtil.getParentOfType(element, PsiMethod.class, PsiField.class, PsiClass.class, PsiFile.class);
-            conflicts.putValue(element, RefactoringBundle.message("0.with.1.visibility.is.not.accessible.from.2",
-                                                                  RefactoringUIUtil.getDescription(member, false),
-                                                                  PsiBundle.visibilityPresentation(PsiModifier.PRIVATE),
-                                                                  RefactoringUIUtil.getDescription(context, true)));
-          }
-          return true;
+      search.forEach(reference -> {
+        final PsiElement element1 = reference.getElement();
+        if (!JavaResolveUtil.isAccessible(member, member.getContainingClass(), modifierListCopy, element1, null, null)) {
+          final PsiElement context =
+            PsiTreeUtil.getParentOfType(element1, PsiMethod.class, PsiField.class, PsiClass.class, PsiFile.class);
+          assert context != null;
+          conflicts.putValue(element1, RefactoringBundle.message("0.with.1.visibility.is.not.accessible.from.2",
+                                                                 RefactoringUIUtil.getDescription(member, false),
+                                                                 PsiBundle.visibilityPresentation(PRIVATE),
+                                                                 RefactoringUIUtil.getDescription(context, true)));
         }
+        return true;
       });
       final boolean conflictsDialogOK;
       if (conflicts.isEmpty()) {
@@ -140,30 +147,14 @@ public class ProtectedMemberInFinalClassInspection extends BaseInspection {
         if (!isOnTheFly()) {
           return;
         }
-        final ConflictsDialog conflictsDialog = new ConflictsDialog(member.getProject(), conflicts, new Runnable() {
-          @Override
-          public void run() {
-            final AccessToken token = WriteAction.start();
-            try {
-              modifierList.setModifierProperty(PsiModifier.PRIVATE, true);
-            }
-            finally {
-              token.finish();
-            }
-          }
-        });
-        conflictsDialog.show();
-        conflictsDialogOK = conflictsDialog.isOK();
+        final ConflictsDialog conflictsDialog = new ConflictsDialog(member.getProject(), conflicts,
+                                                                    () -> WriteAction.run(() -> modifierList.setModifierProperty(PRIVATE, true)));
+        conflictsDialogOK = conflictsDialog.showAndGet();
       }
       if (conflictsDialogOK) {
-        modifierList.setModifierProperty(PsiModifier.PRIVATE, true);
+        WriteAction.run(() -> modifierList.setModifierProperty(PRIVATE, true));
       }
     }
-  }
-
-  @Override
-  public BaseInspectionVisitor buildVisitor() {
-    return new ProtectedMemberInFinalClassVisitor();
   }
 
   private static class ProtectedMemberInFinalClassVisitor extends BaseInspectionVisitor {

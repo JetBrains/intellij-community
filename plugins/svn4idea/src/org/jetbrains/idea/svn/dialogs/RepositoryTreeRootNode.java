@@ -1,57 +1,38 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.dialogs;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.util.Disposer;
-import org.tmatesoft.svn.core.SVNURL;
+import org.jetbrains.idea.svn.api.Url;
 
 import javax.swing.tree.TreeNode;
 import java.text.Collator;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Enumeration;
+import java.util.List;
 
 public class RepositoryTreeRootNode implements TreeNode, Disposable {
   private final List<TreeNode> myChildren;
   private final RepositoryTreeModel myModel;
 
-  public RepositoryTreeRootNode(RepositoryTreeModel model, SVNURL[] urls) {
-    myChildren = new ArrayList<TreeNode>();
+  public RepositoryTreeRootNode(RepositoryTreeModel model, Url[] urls) {
+    myChildren = new ArrayList<>();
     myModel = model;
 
-    for (SVNURL url : urls) {
+    for (Url url : urls) {
       RepositoryTreeNode rootNode = new RepositoryTreeNode(model, this, url, url);
       Disposer.register(this, rootNode);
       myChildren.add(rootNode);
     }
-    Collections.sort(myChildren, new Comparator<TreeNode>() {
-      public int compare(TreeNode o1, TreeNode o2) {
-        return Collator.getInstance().compare(o1.toString(), o2.toString());
-      }
-    });
+    Collections.sort(myChildren, (o1, o2) -> Collator.getInstance().compare(o1.toString(), o2.toString()));
   }
 
-  public void addRoot(SVNURL url) {
+  public void addRoot(Url url) {
     RepositoryTreeNode rootNode = new RepositoryTreeNode(myModel, this, url, url);
     Disposer.register(this, rootNode);
     myChildren.add(rootNode);
-    Collections.sort(myChildren, new Comparator<TreeNode>() {
-      public int compare(TreeNode o1, TreeNode o2) {
-        return Collator.getInstance().compare(o1.toString(), o2.toString());
-      }
-    });
+    Collections.sort(myChildren, (o1, o2) -> Collator.getInstance().compare(o1.toString(), o2.toString()));
     myModel.nodesWereInserted(this, new int[]{myChildren.indexOf(rootNode)});
   }
 
@@ -61,34 +42,42 @@ public class RepositoryTreeRootNode implements TreeNode, Disposable {
     myModel.nodesWereRemoved(this, new int[]{index}, new Object[]{node});
   }
 
+  @Override
   public Enumeration children() {
     return Collections.enumeration(myChildren);
   }
 
+  @Override
   public boolean getAllowsChildren() {
     return true;
   }
 
+  @Override
   public TreeNode getChildAt(int childIndex) {
     return myChildren.get(childIndex);
   }
 
+  @Override
   public int getChildCount() {
     return myChildren.size();
   }
 
+  @Override
   public int getIndex(TreeNode node) {
     return myChildren.indexOf(node);
   }
 
+  @Override
   public TreeNode getParent() {
     return null;
   }
 
+  @Override
   public boolean isLeaf() {
     return false;
   }
 
+  @Override
   public void dispose() {
   }
 }

@@ -1,0 +1,11 @@
+public class Strings {
+    public static fun foo() : java.lang.String {
+        var s1: java.lang.String = "Hello "
+        var s2: java.lang.String = s1 + "wounderful"
+        var s3: java.lang.String = " world "
+        var s4: java.lang.String = s2 + s3
+        var s5: java.lang.String = s4 + 2016
+        var empty: java.lang.String = ""
+        return s5
+    }
+}

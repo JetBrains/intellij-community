@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,12 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * Created by IntelliJ IDEA.
- * User: yole
- * Date: 15.11.2006
- * Time: 20:20:15
- */
 package com.intellij.openapi.diff.impl.patch;
 
 import java.util.ArrayList;
@@ -75,13 +69,14 @@ public class PatchHunk {
   public String getText() {
     StringBuilder builder = new StringBuilder();
     for(PatchLine line: myLines) {
-      builder.append(line.getText()).append("\n");
+      builder.append(line.getText());
+      if (!line.isSuppressNewLine()) builder.append("\n");
     }
     return builder.toString();
   }
 
   public boolean isNoNewLineAtEnd() {
-    if (myLines.size() == 0) {
+    if (myLines.isEmpty()) {
       return false;
     }
     return myLines.get(myLines.size()-1).isSuppressNewLine();

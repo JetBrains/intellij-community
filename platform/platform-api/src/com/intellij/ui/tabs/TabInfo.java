@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,11 @@ package com.intellij.ui.tabs;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.ActionGroup;
+import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.ui.Queryable;
+import com.intellij.openapi.util.Comparing;
+import com.intellij.reference.SoftReference;
+import com.intellij.ui.IconDeferrer;
 import com.intellij.ui.PlaceProvider;
 import com.intellij.ui.SimpleColoredText;
 import com.intellij.ui.SimpleTextAttributes;
@@ -29,7 +33,9 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.beans.PropertyChangeSupport;
+import java.lang.ref.Reference;
 import java.lang.ref.WeakReference;
+import java.util.List;
 import java.util.Map;
 
 public final class TabInfo implements Queryable, PlaceProvider<String> {
@@ -57,7 +63,7 @@ public final class TabInfo implements Queryable, PlaceProvider<String> {
   private String myPlace;
   private Object myObject;
   private JComponent mySideComponent;
-  private WeakReference<JComponent> myLastFocusOwner;
+  private Reference<JComponent> myLastFocusOwner;
 
 
   private ActionGroup myTabLabelActions;
@@ -81,7 +87,7 @@ public final class TabInfo implements Queryable, PlaceProvider<String> {
   private static final AlertIcon DEFAULT_ALERT_ICON = new AlertIcon(AllIcons.Nodes.TabAlert);
 
   private boolean myEnabled = true;
-  private Color myTabColor = null;
+  private Color myTabColor;
 
   private Queryable myQueryable;
   private DragOutDelegate myDragOutDelegate;
@@ -90,7 +96,7 @@ public final class TabInfo implements Queryable, PlaceProvider<String> {
    * The tab which was selected before the mouse was pressed on this tab. Focus will be transferred to that tab if this tab is dragged
    * out of its container. (IDEA-61536)
    */
-  private WeakReference<TabInfo> myPreviousSelection = new WeakReference<TabInfo>(null);
+  private WeakReference<TabInfo> myPreviousSelection = new WeakReference<>(null);
 
   public TabInfo(final JComponent component) {
     myComponent = component;
@@ -101,19 +107,27 @@ public final class TabInfo implements Queryable, PlaceProvider<String> {
     return myChangeSupport;
   }
 
-  public TabInfo setText(String text) {
-    clearText(false);
-    append(text, getDefaultAttributes());
+  @NotNull
+  public TabInfo setText(@NotNull String text) {
+    List<SimpleTextAttributes> attributes = myText.getAttributes();
+    TextAttributes textAttributes = attributes.size() == 1 ? attributes.get(0).toTextAttributes() : null;
+    TextAttributes defaultAttributes = getDefaultAttributes().toTextAttributes();
+    if (!myText.toString().equals(text) || !Comparing.equal(textAttributes, defaultAttributes)) {
+      clearText(false);
+      append(text, getDefaultAttributes());
+    }
     return this;
   }
 
+  @NotNull
   private SimpleTextAttributes getDefaultAttributes() {
-    if (myDefaultAttributes != null) return myDefaultAttributes;
+    SimpleTextAttributes attributes = myDefaultAttributes;
+    if (attributes == null) {
+      myDefaultAttributes = attributes = new SimpleTextAttributes(myDefaultStyle != -1 ? myDefaultStyle : SimpleTextAttributes.STYLE_PLAIN,
+                                                     myDefaultForeground, myDefaultWaveColor);
 
-    myDefaultAttributes = new SimpleTextAttributes(myDefaultStyle != -1 ? myDefaultStyle : SimpleTextAttributes.STYLE_PLAIN,
-                                                   myDefaultForeground, myDefaultWaveColor);
-
-    return myDefaultAttributes;
+    }
+    return attributes;
   }
 
   public TabInfo clearText(final boolean invalidate) {
@@ -125,17 +139,20 @@ public final class TabInfo implements Queryable, PlaceProvider<String> {
     return this;
   }
 
-  public TabInfo append(String fragment, SimpleTextAttributes attributes) {
+  public TabInfo append(@NotNull String fragment, @NotNull SimpleTextAttributes attributes) {
     final String old = myText.toString();
     myText.append(fragment, attributes);
     myChangeSupport.firePropertyChange(TEXT, old, myText.toString());
     return this;
   }
 
+  @NotNull
   public TabInfo setIcon(Icon icon) {
     Icon old = myIcon;
-    myIcon = icon;
-    myChangeSupport.firePropertyChange(ICON, old, icon);
+    if (!IconDeferrer.getInstance().equalIcons(old, icon)) {
+      myIcon = icon;
+      myChangeSupport.firePropertyChange(ICON, old, icon);
+    }
     return this;
   }
 
@@ -167,6 +184,7 @@ public final class TabInfo implements Queryable, PlaceProvider<String> {
     return myIcon;
   }
 
+  @Override
   public String getPlace() {
     return myPlace;
   }
@@ -216,7 +234,7 @@ public final class TabInfo implements Queryable, PlaceProvider<String> {
   }
 
   public void setLastFocusOwner(final JComponent owner) {
-    myLastFocusOwner = new WeakReference<JComponent>(owner);
+    myLastFocusOwner = owner == null ? null : new WeakReference<>(owner);
   }
 
   public ActionGroup getTabLabelActions() {
@@ -227,7 +245,7 @@ public final class TabInfo implements Queryable, PlaceProvider<String> {
     return myTabActionPlace;
   }
 
-  public TabInfo setTabLabelActions(final ActionGroup tabActions, String place) {
+  public TabInfo setTabLabelActions(final ActionGroup tabActions, @NotNull String place) {
     ActionGroup old = myTabLabelActions;
     myTabLabelActions = tabActions;
     myTabActionPlace = place;
@@ -237,7 +255,7 @@ public final class TabInfo implements Queryable, PlaceProvider<String> {
 
   @Nullable
   public JComponent getLastFocusOwner() {
-    return myLastFocusOwner != null ? myLastFocusOwner.get() : null;
+    return SoftReference.dereference(myLastFocusOwner);
   }
 
   public TabInfo setAlertIcon(final AlertIcon alertIcon) {
@@ -265,6 +283,7 @@ public final class TabInfo implements Queryable, PlaceProvider<String> {
     myBlinkCount = blinkCount;
   }
 
+  @Override
   public String toString() {
     return getText();
   }
@@ -331,10 +350,18 @@ public final class TabInfo implements Queryable, PlaceProvider<String> {
     setText(getText());
   }
 
+  public void revalidate() {
+    myDefaultAttributes = null;
+    update();
+  }
+
+  @NotNull
   public TabInfo setTooltipText(final String text) {
     String old = myTooltipText;
-    myTooltipText = text;
-    myChangeSupport.firePropertyChange(TEXT, old, myTooltipText);
+    if (!Comparing.equal(old, text)) {
+      myTooltipText = text;
+      myChangeSupport.firePropertyChange(TEXT, old, myTooltipText);
+    }
     return this;
   }
 
@@ -342,10 +369,13 @@ public final class TabInfo implements Queryable, PlaceProvider<String> {
     return myTooltipText;
   }
 
+  @NotNull
   public TabInfo setTabColor(Color color) {
     Color old = myTabColor;
-    myTabColor = color;
-    myChangeSupport.firePropertyChange(TAB_COLOR, old, color);
+    if (!Comparing.equal(color, old)) {
+      myTabColor = color;
+      myChangeSupport.firePropertyChange(TAB_COLOR, old, color);
+    }
     return this;
   }
 
@@ -353,17 +383,20 @@ public final class TabInfo implements Queryable, PlaceProvider<String> {
     return myTabColor;
   }
 
+  @NotNull
   public TabInfo setTestableUi(Queryable queryable) {
     myQueryable = queryable;
     return this;
   }
 
+  @Override
   public void putInfo(@NotNull Map<String, String> info) {
     if (myQueryable != null) {
       myQueryable.putInfo(info);
     }
   }
 
+  @NotNull
   public TabInfo setDragOutDelegate(DragOutDelegate delegate) {
     myDragOutDelegate = delegate;
     return this;
@@ -378,7 +411,7 @@ public final class TabInfo implements Queryable, PlaceProvider<String> {
   }
 
   public void setPreviousSelection(@Nullable TabInfo previousSelection) {
-    myPreviousSelection = new WeakReference<TabInfo>(previousSelection);
+    myPreviousSelection = new WeakReference<>(previousSelection);
   }
 
   @Nullable
@@ -387,10 +420,9 @@ public final class TabInfo implements Queryable, PlaceProvider<String> {
   }
 
   public interface DragOutDelegate {
-
-    void dragOutStarted(MouseEvent mouseEvent, TabInfo info);
-    void processDragOut(MouseEvent event, TabInfo source);
-    void dragOutFinished(MouseEvent event, TabInfo source);
+    void dragOutStarted(@NotNull MouseEvent mouseEvent, @NotNull TabInfo info);
+    void processDragOut(@NotNull MouseEvent event, @NotNull TabInfo source);
+    void dragOutFinished(@NotNull MouseEvent event, TabInfo source);
     void dragOutCancelled(TabInfo source);
   }
 

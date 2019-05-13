@@ -23,7 +23,6 @@ import com.intellij.util.ui.UpDownHandler;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.FocusAdapter;
@@ -37,7 +36,7 @@ import java.util.Map;
 public class ComboBoxVisibilityPanel<V> extends VisibilityPanelBase<V> {
   private final JLabel myLabel;
   protected final JComboBox myComboBox;
-  private final Map<V, String> myNamesMap = new HashMap<V, String>();
+  private final Map<V, String> myNamesMap = new HashMap<>();
 
   public ComboBoxVisibilityPanel(String name, V[] options, String[] presentableNames) {
     setLayout(new BorderLayout(0,2));
@@ -53,7 +52,7 @@ public class ComboBoxVisibilityPanel<V> extends VisibilityPanelBase<V> {
     myComboBox.addActionListener(new AbstractAction() {
       @Override
       public void actionPerformed(ActionEvent e) {
-        myEventDispatcher.getMulticaster().stateChanged(new ChangeEvent(ComboBoxVisibilityPanel.this));
+        stateChanged(new ChangeEvent(ComboBoxVisibilityPanel.this));
       }
     });
 
@@ -70,7 +69,7 @@ public class ComboBoxVisibilityPanel<V> extends VisibilityPanelBase<V> {
     return new ListCellRendererWrapper() {
       @Override
       public void customize(JList list, Object value, int index, boolean selected, boolean hasFocus) {
-        setText(myNamesMap.get((V)value));
+        setText(myNamesMap.get(value));
       }
     };
   }
@@ -119,10 +118,6 @@ public class ComboBoxVisibilityPanel<V> extends VisibilityPanelBase<V> {
     return (V)myComboBox.getSelectedItem();
   }
 
-  public void addListener(ChangeListener listener) {
-    myEventDispatcher.addListener(listener);
-  }
-  
   public final void registerUpDownActionsFor(JComponent input) {
     UpDownHandler.register(input, myComboBox);
   }
@@ -130,6 +125,6 @@ public class ComboBoxVisibilityPanel<V> extends VisibilityPanelBase<V> {
   @Override
   public void setVisibility(V visibility) {
     myComboBox.setSelectedItem(visibility);
-    myEventDispatcher.getMulticaster().stateChanged(new ChangeEvent(this));
+    stateChanged(new ChangeEvent(this));
   }
 }

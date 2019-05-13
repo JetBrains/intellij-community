@@ -15,64 +15,63 @@
  */
 package org.jetbrains.idea.maven.indices;
 
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.text.StringUtil;
-import gnu.trove.THashMap;
-import org.apache.lucene.index.Term;
-import org.apache.lucene.search.*;
+import com.intellij.openapi.project.Project;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.idea.maven.model.MavenArtifactInfo;
-import org.jetbrains.idea.maven.server.MavenServerIndexer;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.regex.Pattern;
+
+import static com.intellij.openapi.util.text.StringUtil.*;
 
 public class MavenArtifactSearcher extends MavenSearcher<MavenArtifactSearchResult> {
-  public static final String TERM = MavenServerIndexer.SEARCH_TERM_COORDINATES;
 
-  protected Pair<String, Query> preparePatternAndQuery(String pattern) {
-    pattern = pattern.toLowerCase();
-    if (pattern.trim().length() == 0) return Pair.create(pattern, (Query)new MatchAllDocsQuery());
+  private static final Pattern VERSION_PATTERN = Pattern.compile("[.\\d]+");
 
-    List<String> parts = new ArrayList<String>();
-    for (String each : StringUtil.tokenize(pattern, " :")) {
-      parts.add(each);
+  @Override
+  protected List<MavenArtifactSearchResult> searchImpl(Project project, String pattern, int maxResult) {
+    List<String> parts = new ArrayList<>();
+    for (String each : tokenize(pattern, " :")) {
+      parts.add(trimStart(trimEnd(each, "*"), "*"));
     }
 
-    BooleanQuery query = new BooleanQuery();
+    List<MavenArtifactSearchResult> searchResults = ContainerUtil.newSmartList();
+    MavenProjectIndicesManager m = MavenProjectIndicesManager.getInstance(project);
+    int count = 0;
+    List<MavenArtifactInfo> versions = new ArrayList<>();
+    for (String groupId : m.getGroupIds()) {
+      if (count >= maxResult) break;
+      if (parts.size() < 1 || contains(groupId, parts.get(0))) {
+        for (String artifactId : m.getArtifactIds(groupId)) {
+          if (parts.size() < 2 || contains(artifactId, parts.get(1))) {
+            for (String version : m.getVersions(groupId, artifactId)) {
+              if (parts.size() < 3 || contains(version, parts.get(2))) {
+                versions.add(new MavenArtifactInfo(groupId, artifactId, version, "jar", null));
+                if (++count >= maxResult) break;
+              }
+            }
+          }
+          else if (parts.size() == 2 && VERSION_PATTERN.matcher(parts.get(1)).matches()) {
+            for (String version : m.getVersions(groupId, artifactId)) {
+              if (contains(version, parts.get(1))) {
+                versions.add(new MavenArtifactInfo(groupId, artifactId, version, "jar", null));
+                if (++count >= maxResult) break;
+              }
+            }
+          }
 
-    if (parts.size() == 1) {
-      query.add(new WildcardQuery(new Term(TERM, "*" + parts.get(0) + "*|*|*|*")), BooleanClause.Occur.SHOULD);
-      query.add(new WildcardQuery(new Term(TERM, "*|*" + parts.get(0) + "*|*|*")), BooleanClause.Occur.SHOULD);
-    }
-    if (parts.size() == 2) {
-      query.add(new WildcardQuery(new Term(TERM, "*" + parts.get(0) + "*|*" + parts.get(1) + "*|*|*")), BooleanClause.Occur.SHOULD);
-      query.add(new WildcardQuery(new Term(TERM, "*" + parts.get(0) + "*|*|" + parts.get(1) + "*|*")), BooleanClause.Occur.SHOULD);
-      query.add(new WildcardQuery(new Term(TERM, "*|*" + parts.get(0) + "*|" + parts.get(1) + "*|*")), BooleanClause.Occur.SHOULD);
-    }
-    if (parts.size() >= 3) {
-      String s = "*" + parts.get(0) + "*|*" + parts.get(1) + "*|" + parts.get(2) + "*|*";
-      query.add(new WildcardQuery(new Term(TERM, s)), BooleanClause.Occur.MUST);
-    }
+          if (!versions.isEmpty()) {
+            MavenArtifactSearchResult searchResult = new MavenArtifactSearchResult();
+            searchResult.versions.addAll(versions);
+            searchResults.add(searchResult);
+            versions.clear();
+          }
 
-    return Pair.create(pattern, (Query)query);
-  }
-
-  protected Collection<MavenArtifactSearchResult> processResults(Set<MavenArtifactInfo> infos, String pattern, int maxResult) {
-    Map<String, MavenArtifactSearchResult> result = new THashMap<String, MavenArtifactSearchResult>();
-
-    for (MavenArtifactInfo each : infos) {
-      if (!StringUtil.isEmptyOrSpaces(each.getClassifier())) {
-        continue; // todo skip for now
+          if (count >= maxResult) break;
+        }
       }
-
-      String key = makeKey(each);
-      MavenArtifactSearchResult searchResult = result.get(key);
-      if (searchResult == null) {
-        searchResult = new MavenArtifactSearchResult();
-        result.put(key, searchResult);
-      }
-      searchResult.versions.add(each);
     }
-
-    return result.values();
+    return searchResults;
   }
 }

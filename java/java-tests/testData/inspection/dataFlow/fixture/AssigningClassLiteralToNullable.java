@@ -1,7 +1,7 @@
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class BrokenAlignment {
+class BrokenAlignment {
 
   public void main(String... args) {
     @Nullable Class object = Object.class;

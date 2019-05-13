@@ -15,11 +15,15 @@
  */
 package org.jetbrains.idea.maven.project;
 
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.annotations.Property;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.idea.maven.execution.MavenRunnerSettings;
 
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
 
 public class MavenImportingSettings implements Cloneable {
   private static final String PROCESS_RESOURCES_PHASE = "process-resources";
@@ -47,12 +51,21 @@ public class MavenImportingSettings implements Cloneable {
 
   private boolean downloadSourcesAutomatically = false;
   private boolean downloadDocsAutomatically = false;
+  private boolean downloadAnnotationsAutomatically = false;
 
   private GeneratedSourcesFolder generatedSourcesFolder = GeneratedSourcesFolder.AUTODETECT;
+
+  private String dependencyTypes = "jar, test-jar, maven-plugin, ejb, ejb-client, jboss-har, jboss-sar, war, ear, bundle";
+  private Set<String> myDependencyTypesAsSet;
+
+  @NotNull private String vmOptionsForImporter = "";
+
+  @NotNull private String jdkForImporter = MavenRunnerSettings.USE_INTERNAL_JAVA;
 
   private List<Listener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
 
   public enum GeneratedSourcesFolder {
+    IGNORE("Don't detect"),
     AUTODETECT("Detect automatically"),
     GENERATED_SOURCE_FOLDER("target/generated-sources"),
     SUBFOLDER("subdirectories of \"target/generated-sources\"");
@@ -88,6 +101,30 @@ public class MavenImportingSettings implements Cloneable {
   public void setImportAutomatically(boolean importAutomatically) {
     this.importAutomatically = importAutomatically;
     fireAutoImportChanged();
+  }
+
+  @NotNull
+  public String getDependencyTypes() {
+    return dependencyTypes;
+  }
+
+  public void setDependencyTypes(@NotNull String dependencyTypes) {
+    this.dependencyTypes = dependencyTypes;
+    myDependencyTypesAsSet = null;
+  }
+
+  @NotNull
+  public Set<String> getDependencyTypesAsSet() {
+    if (myDependencyTypesAsSet == null) {
+      Set<String> res = new LinkedHashSet<>();
+
+      for (String type : StringUtil.tokenize(dependencyTypes, " \n\r\t,;")) {
+        res.add(type);
+      }
+
+      myDependencyTypesAsSet = res;
+    }
+    return myDependencyTypesAsSet;
   }
 
   public boolean isCreateModuleGroups() {
@@ -156,6 +193,14 @@ public class MavenImportingSettings implements Cloneable {
     this.downloadDocsAutomatically = value;
   }
 
+  public boolean isDownloadAnnotationsAutomatically() {
+    return downloadAnnotationsAutomatically;
+  }
+
+  public void setDownloadAnnotationsAutomatically(boolean value) {
+    this.downloadAnnotationsAutomatically = value;
+  }
+
   @Property
   @NotNull
   public GeneratedSourcesFolder getGeneratedSourcesFolder() {
@@ -168,6 +213,24 @@ public class MavenImportingSettings implements Cloneable {
     this.generatedSourcesFolder = generatedSourcesFolder;
   }
 
+  @NotNull
+  public String getVmOptionsForImporter() {
+    return vmOptionsForImporter;
+  }
+
+  public void setVmOptionsForImporter(String vmOptionsForImporter) {
+    this.vmOptionsForImporter = StringUtil.notNullize(vmOptionsForImporter);
+  }
+
+  @NotNull
+  public String getJdkForImporter() {
+    return jdkForImporter;
+  }
+
+  public void setJdkForImporter(@NotNull String jdkForImporter) {
+    this.jdkForImporter = jdkForImporter;
+  }
+
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;
@@ -178,14 +241,18 @@ public class MavenImportingSettings implements Cloneable {
     if (createModuleGroups != that.createModuleGroups) return false;
     if (createModulesForAggregators != that.createModulesForAggregators) return false;
     if (importAutomatically != that.importAutomatically) return false;
+    if (!dependencyTypes.equals(that.dependencyTypes)) return false;
     if (downloadDocsAutomatically != that.downloadDocsAutomatically) return false;
     if (downloadSourcesAutomatically != that.downloadSourcesAutomatically) return false;
+    if (downloadAnnotationsAutomatically != that.downloadAnnotationsAutomatically) return false;
     if (lookForNested != that.lookForNested) return false;
     if (keepSourceFolders != that.keepSourceFolders) return false;
     if (excludeTargetFolder != that.excludeTargetFolder) return false;
     if (useMavenOutput != that.useMavenOutput) return false;
     if (generatedSourcesFolder != that.generatedSourcesFolder) return false;
     if (!dedicatedModuleDir.equals(that.dedicatedModuleDir)) return false;
+    if (!jdkForImporter.equals(that.jdkForImporter)) return false;
+    if (!vmOptionsForImporter.equals(that.vmOptionsForImporter)) return false;
     if (updateFoldersOnImportPhase != null
         ? !updateFoldersOnImportPhase.equals(that.updateFoldersOnImportPhase)
         : that.updateFoldersOnImportPhase != null) {
@@ -215,10 +282,13 @@ public class MavenImportingSettings implements Cloneable {
     result <<= 1;
     if (downloadDocsAutomatically) result++;
     result <<= 1;
+    if (downloadAnnotationsAutomatically) result++;
+    result <<= 1;
 
     result = 31 * result + (updateFoldersOnImportPhase != null ? updateFoldersOnImportPhase.hashCode() : 0);
     result = 31 * result + dedicatedModuleDir.hashCode();
     result = 31 * result + generatedSourcesFolder.hashCode();
+    result = 31 * result + dependencyTypes.hashCode();
 
     return result;
   }

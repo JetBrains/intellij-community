@@ -1,84 +1,90 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.idea;
 
+import com.intellij.diagnostic.LogMessage;
+import com.intellij.ide.plugins.IdeaPluginDescriptor;
+import com.intellij.ide.plugins.PluginManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.application.impl.ApplicationImpl;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.command.CommandProcessor;
-import com.intellij.openapi.diagnostic.ApplicationInfoProvider;
-import com.intellij.openapi.diagnostic.IdeaLoggingEvent;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.diagnostic.*;
 import com.intellij.openapi.util.text.StringUtil;
-import org.apache.log4j.Level;
-import org.jetbrains.annotations.NonNls;
+import com.intellij.util.ExceptionUtil;
+import org.apache.log4j.DefaultThrowableRenderer;
+import org.apache.log4j.spi.LoggerRepository;
+import org.apache.log4j.spi.ThrowableRenderer;
+import org.apache.log4j.spi.ThrowableRendererSupport;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.io.LineNumberReader;
+import java.net.URL;
 
 /**
  * @author Mike
  */
-@SuppressWarnings({"HardCodedStringLiteral"})
-public class IdeaLogger extends Logger {
-  private static ApplicationInfoProvider ourApplicationInfoProvider = getIdeaInfoProvider();
+public class IdeaLogger extends Log4jBasedLogger {
+  @SuppressWarnings("StaticNonFinalField") public static String ourLastActionId = "";
+  @SuppressWarnings("StaticNonFinalField") public static Exception ourErrorsOccurred;  // when not null, holds the first of errors that occurred
 
-  public static String ourLastActionId = "";
+  private static final ApplicationInfoProvider ourApplicationInfoProvider;
+  private static final String ourCompilationTimestamp;
+  private static final ThrowableRenderer ourThrowableRenderer;
 
-  private final org.apache.log4j.Logger myLogger;
-  /** If not null - it means that errors occurred and it is the first of them. */
-  public static Exception ourErrorsOccurred;
+  static {
+    ourApplicationInfoProvider = () -> {
+      ApplicationInfoEx info = ApplicationInfoImpl.getShadowInstance();
+      return info.getFullApplicationName() + "  " + "Build #" + info.getBuild().asString();
+    };
 
+    String stamp = null;
+    URL resource = Logger.class.getResource("/.compilation-timestamp");
+    if (resource != null) {
+      try (BufferedReader reader = new BufferedReader(new InputStreamReader(resource.openStream()))) {
+        String s = reader.readLine();
+        if (s != null) {
+          stamp = s.trim();
+        }
+      }
+      catch (IOException ignored) { }
+    }
+    ourCompilationTimestamp = stamp;
+
+    ourThrowableRenderer = t -> {
+      String[] lines = DefaultThrowableRenderer.render(t);
+      int maxStackSize = 1024;
+      int maxExtraSize = 256;
+      if (lines.length > maxStackSize + maxExtraSize) {
+        String[] res = new String[maxStackSize + maxExtraSize + 1];
+        System.arraycopy(lines, 0, res, 0, maxStackSize);
+        res[maxStackSize] = "\t...";
+        System.arraycopy(lines, lines.length - maxExtraSize, res, maxStackSize + 1, maxExtraSize);
+        return res;
+      }
+      return lines;
+    };
+  }
+
+  @Nullable
   public static String getOurCompilationTimestamp() {
     return ourCompilationTimestamp;
   }
 
-  private static String ourCompilationTimestamp;
-
-  @NonNls private static final String COMPILATION_TIMESTAMP_RESOURCE_NAME = "/.compilation-timestamp";
-
-  static {
-    InputStream stream = Logger.class.getResourceAsStream(COMPILATION_TIMESTAMP_RESOURCE_NAME);
-    if (stream != null) {
-      LineNumberReader reader = new LineNumberReader(new InputStreamReader(stream));
-      try {
-        String s = reader.readLine();
-        if (s != null) {
-          ourCompilationTimestamp = s.trim();
-        }
-      }
-      catch (IOException ignored) {
-      }
-      finally {
-        try {
-          stream.close();
-        }
-        catch (IOException ignored) {
-        }
-      }
-    }
+  @NotNull
+  public static ThrowableRenderer getThrowableRenderer() {
+    return ourThrowableRenderer;
   }
 
-  IdeaLogger(org.apache.log4j.Logger logger) {
-    myLogger = logger;
+  IdeaLogger(@NotNull org.apache.log4j.Logger logger) {
+    super(logger);
+    LoggerRepository repository = myLogger.getLoggerRepository();
+    if (repository instanceof ThrowableRendererSupport) {
+      ((ThrowableRendererSupport)repository).setThrowableRenderer(ourThrowableRenderer);
+    }
   }
 
   @Override
@@ -92,116 +98,69 @@ public class IdeaLogger extends Logger {
   }
 
   @Override
-  public boolean isDebugEnabled() {
-    return myLogger.isDebugEnabled();
+  public void error(String message, @Nullable Throwable t, @NotNull Attachment... attachments) {
+    myLogger.error(LogMessage.createEvent(t != null ? t : new Throwable(), message, attachments));
   }
 
   @Override
-  public void debug(String message) {
-    myLogger.debug(message);
+  public void warn(String message, @Nullable Throwable t) {
+    super.warn(message, checkException(t));
   }
 
   @Override
-  public void debug(Throwable t) {
-    myLogger.debug("", t);
-  }
-
-  @Override
-  public void debug(@NonNls String message, Throwable t) {
-    myLogger.debug(message, t);
-  }
-
-  @Override
-  public void error(String message, @Nullable Throwable t, String... details) {
-    if (t instanceof ProcessCanceledException) {
-      myLogger.error(new Throwable("Do not log ProcessCanceledException").initCause(t));
-      throw (ProcessCanceledException)t;
-    }
-
-    if (t != null && t.getClass().getName().contains("ReparsedSuccessfullyException")) {
-      myLogger.error(new Throwable("Do not log ReparsedSuccessfullyException").initCause(t));
-      throw (RuntimeException)t;
+  public void error(String message, @Nullable Throwable t, @NotNull String... details) {
+    if (t instanceof ControlFlowException) {
+      myLogger.error(message, checkException(t));
+      ExceptionUtil.rethrow(t);
     }
 
     String detailString = StringUtil.join(details, "\n");
 
-    if (ourErrorsOccurred == null) {
-      String s = message != null && !message.isEmpty() ? "Error message is '" + message + "'" : "";
-      String mess = "Logger errors occurred. See IDEA logs for details. " + s;
-      ourErrorsOccurred = new Exception(mess + (!detailString.isEmpty() ? "\nDetails: " + detailString : ""), t);
+    if (!detailString.isEmpty()) {
+      detailString = "\nDetails: " + detailString;
     }
 
-    myLogger.error(message + (!detailString.isEmpty() ? "\nDetails: " + detailString : ""), t);
-    logErrorHeader();
-    if (t != null && t.getCause() != null) {
-      myLogger.error("Original exception: ", t.getCause());
+    if (ourErrorsOccurred == null) {
+      String mess = "Logger errors occurred. See IDEA logs for details. " +
+                    (StringUtil.isEmpty(message) ? "" : "Error message is '" + message + "'");
+      //noinspection AssignmentToStaticFieldFromInstanceMethod
+      ourErrorsOccurred = new Exception(mess + detailString, t);
     }
+    myLogger.error(message + detailString, t);
+    logErrorHeader(t);
   }
 
-  private void logErrorHeader() {
-    final String info = ourApplicationInfoProvider.getInfo();
-
-    if (info != null) {
-      myLogger.error(info);
-    }
+  private void logErrorHeader(@Nullable Throwable t) {
+    myLogger.error(ourApplicationInfoProvider.getInfo());
 
     if (ourCompilationTimestamp != null) {
       myLogger.error("Internal version. Compiled " + ourCompilationTimestamp);
     }
 
-    myLogger.error("JDK: " + System.getProperties().getProperty("java.version", "unknown"));
-    myLogger.error("VM: " + System.getProperties().getProperty("java.vm.name", "unknown"));
-    myLogger.error("Vendor: " + System.getProperties().getProperty("java.vendor", "unknown"));
+    myLogger.error("JDK: " + System.getProperties().getProperty("java.version", "unknown")+
+                   "; VM: " + System.getProperties().getProperty("java.vm.name", "unknown") +
+                   "; Vendor: " + System.getProperties().getProperty("java.vendor", "unknown"));
     myLogger.error("OS: " + System.getProperties().getProperty("os.name", "unknown"));
+    
+    IdeaPluginDescriptor plugin = t == null ? null : PluginManager.findPluginIfInitialized(t);
+    if (plugin != null && (!plugin.isBundled() || plugin.allowBundledUpdate())) {
+      myLogger.error("Plugin to blame: " + plugin.getName() + " version: " + plugin.getVersion());
+    }
 
     ApplicationImpl application = (ApplicationImpl)ApplicationManager.getApplication();
-    if (application != null && application.isComponentsCreated()) {
-      final String lastPreformedActionId = ourLastActionId;
+    if (application != null && application.isComponentsCreated() && !application.isDisposed()) {
+      String lastPreformedActionId = ourLastActionId;
       if (lastPreformedActionId != null) {
         myLogger.error("Last Action: " + lastPreformedActionId);
       }
 
       CommandProcessor commandProcessor = CommandProcessor.getInstance();
       if (commandProcessor != null) {
-        final String currentCommandName = commandProcessor.getCurrentCommandName();
+        String currentCommandName = commandProcessor.getCurrentCommandName();
         if (currentCommandName != null) {
           myLogger.error("Current Command: " + currentCommandName);
         }
       }
     }
-  }
-
-  @Override
-  public void info(String message) {
-    myLogger.info(message);
-  }
-
-  @Override
-  public void info(String message, @Nullable Throwable t) {
-    myLogger.info(message, t);
-  }
-
-  @Override
-  public void warn(@NonNls String message, @Nullable Throwable t) {
-    myLogger.warn(message, t);
-  }
-
-  public static void setApplicationInfoProvider(ApplicationInfoProvider aProvider) {
-    ourApplicationInfoProvider = aProvider;
-  }
-
-  private static ApplicationInfoProvider getIdeaInfoProvider() {
-    return new ApplicationInfoProvider() {
-      @Override
-      public String getInfo() {
-        final ApplicationInfoEx info = ApplicationInfoImpl.getShadowInstance();
-        return info.getFullApplicationName() + "  " + "Build #" + info.getBuild().asString();
-      }
-    };
-  }
-
-  @Override
-  public void setLevel(Level level) {
-    myLogger.setLevel(level);
   }
 }

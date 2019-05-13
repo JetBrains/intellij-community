@@ -1,24 +1,12 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.process;
 
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
+import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
+import com.sun.jna.Platform;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -27,15 +15,20 @@ import java.io.OutputStream;
 import java.io.PrintWriter;
 
 /**
+ * Utility class to start a process with a runner mediator (runnerw.exe) injected into a command line,
+ * which adds a capability to terminate process tree gracefully by sending it a Ctrl+Break through stdin.
+ *
  * @author traff
  */
 public class RunnerMediator {
-  public static final Logger LOG = Logger.getInstance("#com.intellij.execution.process.RunnerMediator");
+  private static final Logger LOG = Logger.getInstance("#com.intellij.execution.process.RunnerMediator");
 
   private static final char IAC = (char)5;
   private static final char BRK = (char)3;
   private static final char C = (char)5;
-  private static final String STANDARD_RUNNERW = "runnerw.exe";
+  private static final String RUNNERW = "runnerw.exe";
+  private static final String RUNNERW_64 = "runnerw64.exe";
+  private static final String IDEA_RUNNERW = "IDEA_RUNNERW";
 
   /**
    * Creates default runner mediator
@@ -50,15 +43,11 @@ public class RunnerMediator {
    */
   private static void sendCtrlEventThroughStream(@NotNull final Process process, final char event) {
     OutputStream os = process.getOutputStream();
+    @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")
     PrintWriter pw = new PrintWriter(os);
-    try {
-      pw.print(IAC);
-      pw.print(event);
-      pw.flush();
-    }
-    finally {
-      pw.close();
-    }
+    pw.print(IAC);
+    pw.print(event);
+    pw.flush();
   }
 
   /**
@@ -74,47 +63,48 @@ public class RunnerMediator {
 
   public ProcessHandler createProcess(@NotNull final GeneralCommandLine commandLine, final boolean useSoftKill) throws ExecutionException {
     if (SystemInfo.isWindows) {
-      injectRunnerCommand(commandLine);
+      injectRunnerCommand(commandLine, false);
     }
 
-    Process process = commandLine.createProcess();
-
-    return new CustomDestroyProcessHandler(process, commandLine, useSoftKill);
+    return new CustomDestroyProcessHandler(commandLine, useSoftKill);
   }
 
   @Nullable
   private static String getRunnerPath() {
-    if (SystemInfo.isWindows) {
-      final String path = System.getenv("IDEA_RUNNERW");
-      if (path != null && new File(path).exists()) {
-        return path;
-      }
-      if (new File(STANDARD_RUNNERW).exists()) {
-        return STANDARD_RUNNERW;
-      }
-      return null;
-    }
-    else {
+    if (!SystemInfo.isWindows) {
       throw new IllegalStateException("There is no need of runner under unix based OS");
     }
+
+    String path = System.getenv(IDEA_RUNNERW);
+    if (path != null) {
+      if (new File(path).exists()) {
+        return path;
+      }
+      LOG.warn("Cannot locate " + RUNNERW + " by " + IDEA_RUNNERW + "=" + path);
+    }
+
+    String[] names = Platform.is64Bit() ? new String[] {RUNNERW_64, RUNNERW} : new String[] {RUNNERW};
+    for (String name : names) {
+      File runnerw = PathManager.findBinFile(name);
+      if (runnerw != null && runnerw.exists()) {
+        return runnerw.getPath();
+      }
+    }
+
+    LOG.warn("Cannot locate " + RUNNERW + " in " + PathManager.getBinPath());
+    return null;
   }
 
-  private static void injectRunnerCommand(@NotNull GeneralCommandLine commandLine) {
+  static boolean injectRunnerCommand(@NotNull GeneralCommandLine commandLine, boolean showConsole) {
     final String path = getRunnerPath();
     if (path != null) {
       commandLine.getParametersList().addAt(0, commandLine.getExePath());
+      if (showConsole)
+        commandLine.getParametersList().addAt(0, "/C");
       commandLine.setExePath(path);
+      return true;
     }
-  }
-
-  /** @deprecated use {@link SystemInfo#isUnix} (to remove in IDEA 13) */
-  public static boolean isUnix() {
-    return SystemInfo.isUnix;
-  }
-
-  /** @deprecated use {@link SystemInfo#isWindows} (to remove in IDEA 13) */
-  public static boolean isWindows() {
-    return SystemInfo.isWindows;
+    return false;
   }
 
   /**
@@ -129,7 +119,7 @@ public class RunnerMediator {
    * Destroys process tree: in case of windows via imitating ctrl+c, in case of unix via sending sig_int to every process in tree.
    * @param process to kill with all sub-processes.
    */
-  private static boolean destroyProcess(@NotNull final Process process, final boolean softKill) {
+  static boolean destroyProcess(@NotNull final Process process, final boolean softKill) {
     try {
       if (SystemInfo.isWindows) {
         sendCtrlEventThroughStream(process, softKill ? C : BRK);
@@ -156,14 +146,19 @@ public class RunnerMediator {
   public static class CustomDestroyProcessHandler extends ColoredProcessHandler {
     private final boolean mySoftKill;
 
+    /** @deprecated use CustomDestroyProcessHandler(GeneralCommandLine commandLine) (to remove in IDEA 16) */
+    @Deprecated
     public CustomDestroyProcessHandler(@NotNull Process process, @NotNull GeneralCommandLine commandLine) {
-      this(process, commandLine, false);
-    }
-    public CustomDestroyProcessHandler(@NotNull Process process, @NotNull GeneralCommandLine commandLine, final boolean softKill) {
       super(process, commandLine.getCommandLineString());
+      mySoftKill = false;
+    }
+
+    public CustomDestroyProcessHandler(@NotNull GeneralCommandLine commandLine, final boolean softKill) throws ExecutionException {
+      super(commandLine);
       mySoftKill = softKill;
     }
 
+    @Override
     protected boolean shouldDestroyProcessRecursively(){
       return true;
     }

@@ -1,0 +1,16 @@
+JSFile:Real2.json
+  JSObjectLiteralExpression
+    PsiElement(JS:LBRACE)('{')
+    PsiWhiteSpace('\n  ')
+    PsiComment(JS:C_STYLE_COMMENT)('/*xxx*/')
+    PsiWhiteSpace(' ')
+    JSProperty
+      PsiElement(JS:IDENTIFIER)('navigation')
+      PsiElement(JS:COLON)(':')
+      PsiWhiteSpace(' ')
+      JSLiteralExpression
+        PsiElement(JS:STRING_LITERAL)('"111"')
+    PsiWhiteSpace(' ')
+    PsiComment(JS:END_OF_LINE_COMMENT)('// yyy')
+    PsiWhiteSpace('\n')
+    PsiElement(JS:RBRACE)('}')

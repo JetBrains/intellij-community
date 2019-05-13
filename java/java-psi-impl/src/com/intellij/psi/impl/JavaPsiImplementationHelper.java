@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,27 +28,30 @@ import org.jetbrains.annotations.Nullable;
  * @author yole
  */
 public abstract class JavaPsiImplementationHelper {
-  public static JavaPsiImplementationHelper getInstance(Project project) {
+  public static JavaPsiImplementationHelper getInstance(@NotNull Project project) {
     return ServiceManager.getService(project, JavaPsiImplementationHelper.class);
   }
 
-  public abstract PsiClass getOriginalClass(PsiClass psiClass);
+  @NotNull
+  public abstract PsiClass getOriginalClass(@NotNull PsiClass psiClass);
 
-  public abstract PsiElement getClsFileNavigationElement(PsiJavaFile clsFile);
+  @NotNull
+  public abstract PsiJavaModule getOriginalModule(@NotNull PsiJavaModule module);
 
-  /**
-   * For files under a library source root, returns the language level configured for the corresponding classes root.
-   *
-   * @param virtualFile virtual file for which language level is requested.
-   * @return language level for classes root or null if file is not under a library source root or no matching classes root is found.
-   */
+  @NotNull
+  public abstract PsiElement getClsFileNavigationElement(@NotNull PsiJavaFile clsFile);
+
+  @NotNull
+  public abstract LanguageLevel getEffectiveLanguageLevel(@Nullable VirtualFile virtualFile);
+
   @Nullable
-  public abstract LanguageLevel getClassesLanguageLevel(VirtualFile virtualFile);
-
-  public abstract ASTNode getDefaultImportAnchor(PsiImportList list, PsiImportStatementBase statement);
+  public abstract ASTNode getDefaultImportAnchor(@NotNull PsiImportList list, @NotNull PsiImportStatementBase statement);
 
   @Nullable
   public abstract PsiElement getDefaultMemberAnchor(@NotNull PsiClass psiClass, @NotNull PsiMember firstPsi);
 
-  public abstract void setupCatchBlock(String exceptionName, PsiElement context, PsiCatchSection element);
+  public abstract void setupCatchBlock(@NotNull String exceptionName,
+                                       @NotNull PsiType exceptionType,
+                                       @Nullable PsiElement context,
+                                       @NotNull PsiCatchSection element);
 }

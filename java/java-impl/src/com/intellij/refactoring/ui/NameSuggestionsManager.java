@@ -17,11 +17,11 @@ package com.intellij.refactoring.ui;
 
 import com.intellij.psi.PsiType;
 import com.intellij.psi.codeStyle.SuggestedNameInfo;
-import com.intellij.util.containers.HashMap;
 
 import javax.swing.*;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
+import java.util.HashMap;
 
 /**
  * @author dsl
@@ -31,7 +31,7 @@ public class NameSuggestionsManager {
   private final NameSuggestionsField myNameField;
   private final NameSuggestionsGenerator myGenerator;
 
-  private final HashMap<PsiType, SuggestedNameInfo> myTypesToSuggestions = new HashMap<PsiType, SuggestedNameInfo>();
+  private final HashMap<PsiType, SuggestedNameInfo> myTypesToSuggestions = new HashMap<>();
 
   public NameSuggestionsManager(TypeSelector typeSelector, NameSuggestionsField nameField, NameSuggestionsGenerator generator) {
     myTypeSelector = typeSelector;
@@ -39,6 +39,7 @@ public class NameSuggestionsManager {
     myGenerator = generator;
 
     myTypeSelector.addItemListener(new ItemListener() {
+      @Override
       public void itemStateChanged(ItemEvent e) {
         if (e.getStateChange() == ItemEvent.SELECTED) {
           updateSuggestions(myTypeSelector.getSelectedType());

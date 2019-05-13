@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2012 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2013 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,10 +16,13 @@
 package com.siyeh.ipp.constant;
 
 import com.intellij.psi.*;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiUtil;
+import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ipp.base.PsiElementPredicate;
-import com.siyeh.ipp.psiutils.ExpressionUtils;
 import org.jetbrains.annotations.Nullable;
+
+import static com.intellij.psi.CommonClassNames.JAVA_LANG_STRING;
 
 class ConstantSubexpressionPredicate implements PsiElementPredicate {
 
@@ -45,7 +48,7 @@ class ConstantSubexpressionPredicate implements PsiElementPredicate {
     }
     final PsiPolyadicExpression polyadicExpression = (PsiPolyadicExpression)parent;
     final PsiType type = polyadicExpression.getType();
-    if (type == null || type.equalsToText("java.lang.String")) {
+    if (type == null || type.equalsToText(JAVA_LANG_STRING)) {
       // handled by JoinConcatenatedStringLiteralsIntention
       return false;
     }
@@ -70,6 +73,11 @@ class ConstantSubexpressionPredicate implements PsiElementPredicate {
     if (operands.length == 2) {
       return expression;
     }
+    IElementType type = token.getTokenType();
+    if (!type.equals(JavaTokenType.PLUS) && !type.equals(JavaTokenType.ASTERISK) && !type.equals(JavaTokenType.OR) &&
+        !type.equals(JavaTokenType.AND) && !type.equals(JavaTokenType.XOR)) {
+      return null;
+    }
     for (int i = 1; i < operands.length; i++) {
       final PsiExpression operand = operands[i];
       final PsiJavaToken currentToken = expression.getTokenBeforeOperand(operand);
@@ -86,7 +94,7 @@ class ConstantSubexpressionPredicate implements PsiElementPredicate {
     if (expression.getOperands().length > 2) {
       return true;
     }
-    final PsiElement containingElement = expression.getParent();
+    final PsiElement containingElement = PsiUtil.skipParenthesizedExprUp(expression.getParent());
     if (containingElement instanceof PsiExpression) {
       final PsiExpression containingExpression =
         (PsiExpression)containingElement;

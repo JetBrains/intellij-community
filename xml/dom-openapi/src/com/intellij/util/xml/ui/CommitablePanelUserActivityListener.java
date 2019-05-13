@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,17 +16,14 @@
 
 package com.intellij.util.xml.ui;
 
-import com.intellij.ui.UserActivityListener;
-import com.intellij.util.Alarm;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.ServiceManager;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.project.Project;
+import com.intellij.ui.UserActivityListener;
+import com.intellij.util.Alarm;
 
-/**
- * User: Sergey.Vasiliev
- */
 public class CommitablePanelUserActivityListener implements UserActivityListener, Disposable {
   private final Committable myPanel;
   private final Project myProject;
@@ -42,20 +39,19 @@ public class CommitablePanelUserActivityListener implements UserActivityListener
     myProject = project;
   }
 
+  @Override
   final public void stateChanged() {
     if (myApplying) return;
     cancel();
     cancelAllRequests();
-    myAlarm.addRequest(new Runnable() {
-      public void run() {
-        myApplying = true;
-        cancel();
-        try {
-          applyChanges();
-        }
-        finally {
-          myApplying = false;
-        }
+    myAlarm.addRequest(() -> {
+      myApplying = true;
+      cancel();
+      try {
+        applyChanges();
+      }
+      finally {
+        myApplying = false;
       }
     }, 717);
   }
@@ -82,13 +78,14 @@ public class CommitablePanelUserActivityListener implements UserActivityListener
   }
 
   public final boolean isWaiting() {
-    return myAlarm.getActiveRequestCount() > 0;
+    return !myAlarm.isEmpty();
   }
 
   public final void cancelAllRequests() {
     myAlarm.cancelAllRequests();
   }
 
+  @Override
   public void dispose() {
     cancelAllRequests();
   }

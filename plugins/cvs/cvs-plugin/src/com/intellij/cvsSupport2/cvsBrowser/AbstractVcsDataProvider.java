@@ -46,12 +46,7 @@ public abstract class AbstractVcsDataProvider implements RemoteResourceDataProvi
       executeCommand(createDirectoryContentProvider(callback.getElementPath()), callback);
     } else {
       final DirectoryContentProvider provider = createDirectoryContentProvider(callback.getElementPath());
-      provider.setStreamingListener(new Consumer<DirectoryContent>() {
-        @Override
-        public void consume(final DirectoryContent directoryContent) {
-          callback.appendDirectoryContent(directoryContent);
-        }
-      });
+      provider.setStreamingListener(directoryContent -> callback.appendDirectoryContent(directoryContent));
       executeCommand(provider, callback);
     }
   }

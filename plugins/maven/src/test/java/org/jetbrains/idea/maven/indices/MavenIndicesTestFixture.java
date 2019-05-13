@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,24 +19,30 @@ import com.intellij.openapi.project.Project;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.idea.maven.MavenCustomRepositoryHelper;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
+import org.jetbrains.idea.maven.server.MavenServerManager;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
 
 public class MavenIndicesTestFixture {
-  private File myDir;
-  private Project myProject;
-  private String myLocalRepoDir;
-  private String[] myExtraRepoDirs;
+  private final Path myDir;
+  private final Project myProject;
+  private final String myLocalRepoDir;
+  private final String[] myExtraRepoDirs;
 
   private MavenCustomRepositoryHelper myRepositoryHelper;
   private MavenProjectIndicesManager myIndicesManager;
 
-  public MavenIndicesTestFixture(File dir, Project project) {
+  public MavenIndicesTestFixture(Path dir, Project project) {
     this(dir, project, "local1", "local2");
   }
 
-  public MavenIndicesTestFixture(File dir, Project project, String localRepoDir, String... extraRepoDirs) {
+  public MavenIndicesTestFixture(File dir, Project project) {
+    this(dir.toPath(), project);
+  }
+
+  public MavenIndicesTestFixture(Path dir, Project project, String localRepoDir, String... extraRepoDirs) {
     myDir = dir;
     myProject = project;
     myLocalRepoDir = localRepoDir;
@@ -44,7 +50,7 @@ public class MavenIndicesTestFixture {
   }
 
   public void setUp() throws Exception {
-    myRepositoryHelper = new MavenCustomRepositoryHelper(myDir, ArrayUtil.append(myExtraRepoDirs, myLocalRepoDir));
+    myRepositoryHelper = new MavenCustomRepositoryHelper(myDir.toFile(), ArrayUtil.append(myExtraRepoDirs, myLocalRepoDir));
 
     for (String each : myExtraRepoDirs) {
       addToRepository(each);
@@ -53,7 +59,7 @@ public class MavenIndicesTestFixture {
     MavenProjectsManager.getInstance(myProject).getGeneralSettings().setLocalRepository(
       myRepositoryHelper.getTestDataPath(myLocalRepoDir));
 
-    getIndicesManager().setTestIndexDir(new File(myDir, "MavenIndices"));
+    getIndicesManager().setTestIndexDir(myDir.resolve("MavenIndices"));
     myIndicesManager = MavenProjectIndicesManager.getInstance(myProject);
     myIndicesManager.doInit();
   }
@@ -62,8 +68,9 @@ public class MavenIndicesTestFixture {
     myRepositoryHelper.copy(relPath, myLocalRepoDir);
   }
 
-  public void tearDown() throws Exception {
+  public void tearDown() {
     getIndicesManager().doShutdownInTests();
+    MavenServerManager.getInstance().shutdown(true);
   }
 
   public MavenIndicesManager getIndicesManager() {

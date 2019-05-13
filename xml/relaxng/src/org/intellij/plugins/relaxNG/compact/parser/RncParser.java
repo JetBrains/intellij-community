@@ -23,13 +23,9 @@ import com.intellij.psi.tree.IElementType;
 import org.intellij.plugins.relaxNG.compact.RncElementTypes;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * Created by IntelliJ IDEA.
-* User: sweinreuter
-* Date: 07.08.2007
-*/
 public class RncParser implements PsiParser {
 
+  @Override
   @NotNull
   public ASTNode parse(IElementType root, PsiBuilder builder) {
     final PsiBuilder.Marker fileMarker = builder.mark();

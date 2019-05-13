@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2011 Bas Leijdekkers
+ * Copyright 2007-2018 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,12 +18,14 @@ package com.siyeh.ig.migration;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.*;
+import com.intellij.psi.codeStyle.JavaCodeStyleManager;
+import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
+import com.intellij.psi.codeStyle.SuggestedNameInfo;
+import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Query;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
@@ -41,20 +43,21 @@ import java.util.List;
 
 public class EnumerationCanBeIterationInspection extends BaseInspection {
 
+  static final int KEEP_NOTHING = 0;
+  static final int KEEP_INITIALIZATION = 1;
+  static final int KEEP_DECLARATION = 2;
   @NonNls
   static final String ITERATOR_TEXT = "iterator()";
-
   @NonNls
   static final String KEY_SET_ITERATOR_TEXT = "keySet().iterator()";
-
   @NonNls
   static final String VALUES_ITERATOR_TEXT = "values().iterator()";
 
-  private static final int KEEP_NOTHING = 0;
-
-  private static final int KEEP_INITIALIZATION = 1;
-
-  private static final int KEEP_DECLARATION = 2;
+  @Override
+  @Nullable
+  protected InspectionGadgetsFix buildFix(Object... infos) {
+    return new EnumerationCanBeIterationFix();
+  }
 
   @Override
   @NotNull
@@ -71,23 +74,22 @@ public class EnumerationCanBeIterationInspection extends BaseInspection {
   }
 
   @Override
-  @Nullable
-  protected InspectionGadgetsFix buildFix(Object... infos) {
-    return new EnumerationCanBeIterationFix();
+  public BaseInspectionVisitor buildVisitor() {
+    return new EnumerationCanBeIterationVisitor();
   }
 
   private static class EnumerationCanBeIterationFix
     extends InspectionGadgetsFix {
 
+    @Override
     @NotNull
-    public String getName() {
+    public String getFamilyName() {
       return InspectionGadgetsBundle.message(
         "enumeration.can.be.iteration.quickfix");
     }
 
     @Override
-    protected void doFix(Project project, ProblemDescriptor descriptor)
-      throws IncorrectOperationException {
+    protected void doFix(Project project, ProblemDescriptor descriptor) {
       final PsiElement element = descriptor.getPsiElement();
       final PsiReferenceExpression methodExpression =
         (PsiReferenceExpression)element.getParent();
@@ -169,9 +171,7 @@ public class EnumerationCanBeIterationInspection extends BaseInspection {
       }
     }
 
-    private static void insertNewStatement(PsiStatement anchor,
-                                           PsiStatement newStatement)
-      throws IncorrectOperationException {
+    private static void insertNewStatement(PsiStatement anchor, PsiStatement newStatement) {
       final PsiElement statementParent = anchor.getParent();
       if (statementParent instanceof PsiForStatement) {
         final PsiElement statementGrandParent =
@@ -185,15 +185,12 @@ public class EnumerationCanBeIterationInspection extends BaseInspection {
     }
 
     @Nullable
-    private static PsiStatement createDeclaration(
-      PsiMethodCallExpression methodCallExpression,
-      String variableName, PsiType parameterType)
-      throws IncorrectOperationException {
+    private static PsiStatement createDeclaration(PsiMethodCallExpression methodCallExpression,
+                                                  String variableName,
+                                                  PsiType parameterType) {
       @NonNls final StringBuilder newStatementText = new StringBuilder();
       final Project project = methodCallExpression.getProject();
-      final CodeStyleSettings codeStyleSettings =
-        CodeStyleSettingsManager.getSettings(project);
-      if (codeStyleSettings.GENERATE_FINAL_LOCALS) {
+      if (JavaCodeStyleSettings.getInstance(methodCallExpression.getContainingFile()).GENERATE_FINAL_LOCALS) {
         newStatementText.append("final ");
       }
       newStatementText.append(CommonClassNames.JAVA_UTIL_ITERATOR);
@@ -259,20 +256,16 @@ public class EnumerationCanBeIterationInspection extends BaseInspection {
 
     /**
      * @return true if the initialization of the Enumeration variable can
-     *         be deleted.
+     * be deleted.
      */
-    private static int replaceMethodCalls(
-      PsiVariable enumerationVariable,
-      int startOffset,
-      String newVariableName)
-      throws IncorrectOperationException {
+    private static int replaceMethodCalls(PsiVariable enumerationVariable, int startOffset, String newVariableName) {
       final PsiManager manager = enumerationVariable.getManager();
       final Project project = manager.getProject();
       final JavaPsiFacade facade = JavaPsiFacade.getInstance(project);
       final PsiElementFactory factory = facade.getElementFactory();
       final Query<PsiReference> query = ReferencesSearch.search(
         enumerationVariable);
-      final List<PsiElement> referenceElements = new ArrayList();
+      final List<PsiElement> referenceElements = new ArrayList<>();
       for (PsiReference reference : query) {
         final PsiElement referenceElement = reference.getElement();
         referenceElements.add(referenceElement);
@@ -358,11 +351,6 @@ public class EnumerationCanBeIterationInspection extends BaseInspection {
       }
       return nameInfo.names[0];
     }
-  }
-
-  @Override
-  public BaseInspectionVisitor buildVisitor() {
-    return new EnumerationCanBeIterationVisitor();
   }
 
   private static class EnumerationCanBeIterationVisitor
@@ -451,19 +439,19 @@ public class EnumerationCanBeIterationInspection extends BaseInspection {
 
     private static boolean isEnumerationMethodCalled(
       @NotNull PsiVariable variable, @NotNull PsiElement context) {
-      final EnumerationMethodCalledVisitor visitor =
-        new EnumerationMethodCalledVisitor(variable);
+      final EnumerationCanBeIterationInspection.EnumerationCanBeIterationVisitor.EnumerationMethodCalledVisitor visitor =
+        new EnumerationCanBeIterationInspection.EnumerationCanBeIterationVisitor.EnumerationMethodCalledVisitor(variable);
       context.accept(visitor);
       return visitor.isEnumerationMethodCalled();
     }
 
     private static class EnumerationMethodCalledVisitor
-      extends JavaRecursiveElementVisitor {
+      extends JavaRecursiveElementWalkingVisitor {
 
       private final PsiVariable variable;
-      private boolean enumerationMethodCalled = false;
+      private boolean enumerationMethodCalled;
 
-      EnumerationMethodCalledVisitor(@NotNull PsiVariable variable) {
+      private EnumerationMethodCalledVisitor(@NotNull PsiVariable variable) {
         this.variable = variable;
       }
 
@@ -497,7 +485,7 @@ public class EnumerationCanBeIterationInspection extends BaseInspection {
         enumerationMethodCalled = this.variable.equals(variable);
       }
 
-      public boolean isEnumerationMethodCalled() {
+      private boolean isEnumerationMethodCalled() {
         return enumerationMethodCalled;
       }
     }

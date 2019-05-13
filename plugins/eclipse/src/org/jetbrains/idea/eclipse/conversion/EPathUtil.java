@@ -1,23 +1,5 @@
-/*
- * Copyright 2000-2010 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
-/*
- * User: anna
- * Date: 25-Mar-2010
- */
 package org.jetbrains.idea.eclipse.conversion;
 
 import com.intellij.openapi.application.PathMacros;
@@ -31,19 +13,23 @@ import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.impl.ProjectRootManagerImpl;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vfs.*;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.JarFileSystem;
+import com.intellij.openapi.vfs.VfsUtilCore;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.eclipse.EPathCommonUtil;
-import org.jetbrains.idea.eclipse.EclipseXml;
 import org.jetbrains.idea.eclipse.EclipseProjectFinder;
+import org.jetbrains.idea.eclipse.EclipseXml;
 
 import java.io.File;
 import java.util.List;
-import java.util.Set;
+import java.util.Map;
 
 public class EPathUtil {
-  static final Logger LOG = Logger.getInstance("#" + EPathUtil.class.getName());
+  static final Logger LOG = Logger.getInstance(EPathUtil.class);
 
   private EPathUtil() {
   }
@@ -55,7 +41,7 @@ public class EPathUtil {
     }
     else {
       final String relativeToModulePath = EPathCommonUtil.getRelativeToModulePath(path);
-      final int relativeIdx = ideaUrl.indexOf(relativeToModulePath);
+      final int relativeIdx = relativeToModulePath != null ? ideaUrl.indexOf(relativeToModulePath) : -1;
       if (relativeIdx != -1) {
         final String pathToProjectFile = VfsUtilCore.urlToPath(ideaUrl.substring(0, relativeIdx));
         if (Comparing.strEqual(EPathCommonUtil.getRelativeModuleName(path),
@@ -90,20 +76,28 @@ public class EPathUtil {
   /**
    * @return url
    */
-  static String expandEclipsePath2Url(final String path, ModifiableRootModel model, final List<String> currentRoots) {
+  static String expandEclipsePath2Url(final String path,
+                                      final ModifiableRootModel model,
+                                      final List<String> currentRoots) {
     final VirtualFile contentRoot = getContentRoot(model);
     LOG.assertTrue(contentRoot != null);
+    return expandEclipsePath2Url(path, model, currentRoots, contentRoot);
+  }
+
+  /**
+   * @return url
+   */
+  static String expandEclipsePath2Url(final String path,
+                                      final ModifiableRootModel model,
+                                      final List<String> currentRoots,
+                                      @NotNull final VirtualFile contentRoot) {
     final String rootPath = contentRoot.getPath();
     String url = null;
     if (new File(path).exists()) {  //absolute path
       url = EPathCommonUtil.pathToUrl(path);
     }
     else {
-      final String relativePath = new File(rootPath, path).getPath(); //inside current project
-      final File file = new File(relativePath);
-      if (file.exists()) {
-        url = EPathCommonUtil.pathToUrl(relativePath);
-      } else if (path.startsWith("/")) { //relative to other project
+      if (path.startsWith("/")) { //relative to other project
         final String moduleName = EPathCommonUtil.getRelativeModuleName(path);
         final String relativeToRootPath = EPathCommonUtil.getRelativeToModulePath(path);
 
@@ -113,6 +107,13 @@ public class EPathUtil {
         }
         else if (currentRoots != null) {
           url = EPathCommonUtil.expandEclipseRelative2ContentRoots(currentRoots, moduleName, relativeToRootPath);
+        }
+      }
+      else {
+        final String relativePath = new File(rootPath, path).getPath(); //inside current project
+        final File file = new File(relativePath);
+        if (file.exists()) {
+          url = EPathCommonUtil.pathToUrl(relativePath);
         }
       }
     }
@@ -137,7 +138,7 @@ public class EPathUtil {
       return collapse2eclipsePathRelative2Module(file, module);
     } else { //should check all modules then
       final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
-      if (fileIndex.isIgnored(file) || fileIndex.isInLibraryClasses(file)) {
+      if (fileIndex.isExcluded(file) || fileIndex.isInLibraryClasses(file)) {
         for (Module aModule : ModuleManager.getInstance(project).getModules()) {
           final String path = collapse2eclipsePathRelative2Module(file, aModule);
           if (path != null) {
@@ -154,16 +155,16 @@ public class EPathUtil {
     final VirtualFile[] contentRoots = ModuleRootManager.getInstance(module).getContentRoots();
     for (VirtualFile otherRoot : contentRoots) {
       if (VfsUtilCore.isAncestor(otherRoot, file, false)) {
-        return "/" + module.getName() + "/" + VfsUtilCore.getRelativePath(file, otherRoot, '/');
+        final String relativePath = VfsUtilCore.getRelativePath(file, otherRoot, '/');
+        return "/" + module.getName() + (StringUtil.isEmptyOrSpaces(relativePath) ? "" : "/" + relativePath);
       }
     }
     return null;
   }
 
   @Nullable
-  public static VirtualFile getContentRoot(final ModuleRootModel model) {
-   final VirtualFile[] contentRoots = model.getContentRoots();
-    for (VirtualFile virtualFile : contentRoots) {
+  public static VirtualFile getContentRoot(@NotNull ModuleRootModel model) {
+    for (VirtualFile virtualFile : model.getContentRoots()) {
       if (virtualFile.findChild(EclipseXml.PROJECT_FILE) != null) {
         return virtualFile;
       }
@@ -180,20 +181,20 @@ public class EPathUtil {
       if (file.getFileSystem() instanceof JarFileSystem) {
         final VirtualFile jarFile = JarFileSystem.getInstance().getVirtualFileForJar(file);
         if (jarFile == null) {
-          LOG.assertTrue(false, "Url: \'" + url + "\'; file: " + file);
+          LOG.error("Url: \'" + url + "\'; file: " + file);
           return ProjectRootManagerImpl.extractLocalPath(url);
         }
         file = jarFile;
       }
       if (contentRoot != null && VfsUtilCore.isAncestor(contentRoot, file, false)) { //inside current project
         return VfsUtilCore.getRelativePath(file, contentRoot, '/');
-      } else {
+      }
+      else {
         final String path = collapse2eclipseRelative2OtherModule(project, file); //relative to other project
         if (path != null) {
           return path;
         }
       }
-      return ProjectRootManagerImpl.extractLocalPath(url);  //absolute path
     }
     else { //try to avoid absolute path for deleted file
       if (contentRoot != null) {
@@ -209,8 +210,13 @@ public class EPathUtil {
         return url.substring(projectUrl.length()); //leading /
       }
 
-      return ProjectRootManagerImpl.extractLocalPath(url);
+      final String path = VfsUtilCore.urlToPath(url);
+      final String projectPath = projectBaseDir.getPath();
+      if (path.startsWith(projectPath)) {
+        return ProjectRootManagerImpl.extractLocalPath(path.substring(projectPath.length()));
+      }
     }
+    return ProjectRootManagerImpl.extractLocalPath(url);  //absolute path
   }
 
   @Nullable
@@ -242,10 +248,9 @@ public class EPathUtil {
       if (jarSeparatorIdx > -1) {
         filePath = filePath.substring(0, jarSeparatorIdx);
       }
-      final PathMacros pathMacros = PathMacros.getInstance();
-      final Set<String> names = pathMacros.getUserMacroNames();
-      for (String name : names) {
-        final String path = FileUtil.toSystemIndependentName(pathMacros.getValue(name));
+      final Map<String, String> pathMacros = PathMacros.getInstance().getUserMacros();
+      for (String name : pathMacros.keySet()) {
+        final String path = FileUtil.toSystemIndependentName(pathMacros.get(name));
         if (filePath.startsWith(path + "/")) {
           final String substr = filePath.substring(path.length());
           return name + (substr.startsWith("/") || substr.length() == 0 ? substr : "/" + substr);

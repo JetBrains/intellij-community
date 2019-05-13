@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,7 @@ package com.intellij.uiDesigner;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Couple;
 import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.core.GridLayoutManager;
 import com.intellij.uiDesigner.core.Util;
@@ -30,7 +30,6 @@ import com.intellij.uiDesigner.shared.XYLayoutManager;
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Comparator;
 
 /**
  * @author yole
@@ -146,7 +145,7 @@ public class GridBuildUtil {
         createNewContainer = false;
       }
       else {
-        componentsToConvert = selection.toArray(new RadComponent[selection.size()]);
+        componentsToConvert = selection.toArray(RadComponent.EMPTY_ARRAY);
         parent = selection.get(0).getParent();
         createNewContainer = true;
       }
@@ -242,17 +241,15 @@ public class GridBuildUtil {
   private static GridLayoutManager createOneDimensionGrid(final RadComponent[] selection, final boolean isVertical){
     Arrays.sort(
       selection,
-      new Comparator<RadComponent>() {
-        public int compare(final RadComponent o1, final RadComponent o2){
-          final Rectangle bounds1 = o1.getBounds();
-          final Rectangle bounds2 = o2.getBounds();
+      (o1, o2) -> {
+        final Rectangle bounds1 = o1.getBounds();
+        final Rectangle bounds2 = o2.getBounds();
 
-          if (isVertical) {
-            return (bounds1.y + bounds1.height / 2) - (bounds2.y + bounds2.height / 2);
-          }
-          else {
-            return (bounds1.x + bounds1.width / 2) - (bounds2.x + bounds2.width / 2);
-          }
+        if (isVertical) {
+          return (bounds1.y + bounds1.height / 2) - (bounds2.y + bounds2.height / 2);
+        }
+        else {
+          return (bounds1.x + bounds1.width / 2) - (bounds2.x + bounds2.width / 2);
         }
       }
     );
@@ -283,10 +280,10 @@ public class GridBuildUtil {
   }
 
   /**
-   * @param x array of <code>X</code> coordinates of components that should be layed out in a grid.
+   * @param x array of {@code X} coordinates of components that should be layed out in a grid.
    * This is input/output parameter.
    *
-   * @param y array of <code>Y</code> coordinates of components that should be layed out in a grid.
+   * @param y array of {@code Y} coordinates of components that should be layed out in a grid.
    * This is input/output parameter.
    *
    * @param rowSpans output parameter.
@@ -295,7 +292,7 @@ public class GridBuildUtil {
    *
    * @return pair that says how many (rows, columns) are in the composed grid.
    */
-  public static Pair<Integer, Integer> layoutInGrid(
+  public static Couple<Integer> layoutInGrid(
     final int[] x,
     final int[] y,
     final int[] rowSpans,
@@ -320,7 +317,7 @@ public class GridBuildUtil {
     }
 
 
-    return new Pair<Integer, Integer>(
+    return Couple.of(
       new Integer(Util.eliminate(y, rowSpans, null)),
       new Integer(Util.eliminate(x, colSpans, null))
     );
@@ -339,7 +336,7 @@ public class GridBuildUtil {
       colSpans[i] = selection[i].getWidth();
     }
 
-    final Pair<Integer, Integer> pair = layoutInGrid(x, y, rowSpans, colSpans);
+    final Couple<Integer> pair = layoutInGrid(x, y, rowSpans, colSpans);
     for (int i = 0; i < selection.length; i++) {
       final RadComponent component = selection[i];
       final GridConstraints constraints = component.getConstraints();

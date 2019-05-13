@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,20 +17,23 @@ package com.intellij.openapi.module;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.openapi.util.SimpleModificationTracker;
 import com.intellij.util.graph.Graph;
 import org.jdom.JDOMException;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
+import java.util.Collection;
 import java.util.Comparator;
 import java.util.List;
 
 /**
  * Provides services for working with the modules of a project.
  */
-public abstract class ModuleManager {
+public abstract class ModuleManager extends SimpleModificationTracker {
   /**
    * Returns the module manager instance for the current project.
    *
@@ -45,23 +48,25 @@ public abstract class ModuleManager {
    * Creates a module of the specified type at the specified path and adds it to the project
    * to which the module manager is related.
    *
-   * @param filePath the path at which the module is created.
+   * @param filePath     path to an *.iml file where module configuration will be saved; name of the module will be equal to the file name without extension.
    * @param moduleTypeId the ID of the module type to create.
    * @return the module instance.
    */
-  @NotNull public abstract Module newModule(@NotNull @NonNls String filePath, final String moduleTypeId);
+  @NotNull
+  public abstract Module newModule(@NotNull @NonNls String filePath, @NotNull String moduleTypeId);
 
   /**
    * Loads a module from an .iml file with the specified path and adds it to the project.
    *
    * @param filePath the path to load the module from.
    * @return the module instance.
-   * @throws InvalidDataException if the data in the .iml file is semantically incorrect.
-   * @throws IOException if an I/O error occurred when loading the module file.
-   * @throws JDOMException if the file contains invalid XML data.
+   * @throws InvalidDataException        if the data in the .iml file is semantically incorrect.
+   * @throws IOException                 if an I/O error occurred when loading the module file.
+   * @throws JDOMException               if the file contains invalid XML data.
    * @throws ModuleWithNameAlreadyExists if a module with such a name already exists in the project.
    */
-  @NotNull public abstract Module loadModule(@NotNull String filePath) throws InvalidDataException, IOException, JDOMException, ModuleWithNameAlreadyExists;
+  @NotNull
+  public abstract Module loadModule(@NotNull String filePath) throws IOException, JDOMException, ModuleWithNameAlreadyExists;
 
   /**
    * Disposes of the specified module and removes it from the project.
@@ -75,7 +80,8 @@ public abstract class ModuleManager {
    *
    * @return the array of modules.
    */
-  @NotNull public abstract Module[] getModules();
+  @NotNull
+  public abstract Module[] getModules();
 
   /**
    * Returns the project module with the specified name.
@@ -83,7 +89,8 @@ public abstract class ModuleManager {
    * @param name the name of the module to find.
    * @return the module instance, or null if no module with such name exists.
    */
-  @Nullable public abstract Module findModuleByName(@NonNls @NotNull String name);
+  @Nullable
+  public abstract Module findModuleByName(@NonNls @NotNull String name);
 
   /**
    * Returns the list of modules sorted by dependency (the modules which do not depend
@@ -92,7 +99,8 @@ public abstract class ModuleManager {
    *
    * @return the sorted array of modules.
    */
-  @NotNull public abstract Module[] getSortedModules();
+  @NotNull
+  public abstract Module[] getSortedModules();
 
   /**
    * Returns the module comparator which can be used for sorting modules by dependency
@@ -101,24 +109,25 @@ public abstract class ModuleManager {
    *
    * @return the module comparator instance.
    */
-  @NotNull public abstract Comparator<Module> moduleDependencyComparator();
+  @NotNull
+  public abstract Comparator<Module> moduleDependencyComparator();
 
   /**
    * Returns the list of modules which directly depend on the specified module.
    *
    * @param module the module for which the list of dependent modules is requested.
    * @return list of <i>modules that depend on</i> given module.
-   *
-   * @see ModuleUtil#getAllDependentModules(Module)
+   * @see ModuleUtilCore#getAllDependentModules(Module)
    */
-  @NotNull public abstract List<Module> getModuleDependentModules(@NotNull Module module);
+  @NotNull
+  public abstract List<Module> getModuleDependentModules(@NotNull Module module);
 
   /**
    * Checks if one of the specified modules directly depends on the other module.
    *
    * @param module   the module to check the dependency for.
-   * @param onModule the module on which <code>module</code> may depend.
-   * @return true if <code>module</code> directly depends on <code>onModule</code>, false otherwise.
+   * @param onModule the module on which {@code module} may depend.
+   * @return true if {@code module} directly depends on {@code onModule}, false otherwise.
    */
   public abstract boolean isModuleDependent(@NotNull Module module, @NotNull Module onModule);
 
@@ -127,7 +136,8 @@ public abstract class ModuleManager {
    *
    * @return the module dependency graph.
    */
-  @NotNull public abstract Graph<Module> moduleGraph();
+  @NotNull
+  public abstract Graph<Module> moduleGraph();
 
   /**
    * Returns the graph of dependencies between modules in the project.
@@ -136,7 +146,8 @@ public abstract class ModuleManager {
    * @return the module dependency graph.
    * @since 11.0
    */
-  @NotNull public abstract Graph<Module> moduleGraph(boolean includeTests);
+  @NotNull
+  public abstract Graph<Module> moduleGraph(boolean includeTests);
 
   /**
    * Returns the model for the list of modules in the project, which can be used to add,
@@ -144,15 +155,50 @@ public abstract class ModuleManager {
    *
    * @return the modifiable model instance.
    */
-  @NotNull public abstract ModifiableModuleModel getModifiableModel();
+  @NotNull
+  public abstract ModifiableModuleModel getModifiableModel();
 
 
   /**
-   * Returns the path to the group to which the specified module belongs, as an
-   * array of group names starting from the project root.
-   *
+   * Returns the path to the group to which the specified module belongs, as an array of group names starting from the project root.
+   * <p>
+   * <strong>Use {@link ModuleGrouper#getGroupPath(Module)} instead.</strong> Explicit module groups will be replaced
+   * by automatical module grouping accordingly to qualified names of modules, see https://youtrack.jetbrains.com/issue/IDEA-166061 for details.
+   * </p>
    * @param module the module for which the path is requested.
    * @return the path to the group for the module, or null if the module does not belong to any group.
    */
-  @Nullable public abstract String[] getModuleGroupPath(@NotNull Module module);
+  @Nullable
+  public abstract String[] getModuleGroupPath(@NotNull Module module);
+
+  public abstract boolean hasModuleGroups();
+
+  /**
+   * @return description of all modules in the project including unloaded
+   */
+  @ApiStatus.Experimental
+  @NotNull
+  public abstract Collection<ModuleDescription> getAllModuleDescriptions();
+
+  @ApiStatus.Experimental
+  @NotNull
+  public abstract Collection<UnloadedModuleDescription> getUnloadedModuleDescriptions();
+
+  @ApiStatus.Experimental
+  @Nullable
+  public abstract UnloadedModuleDescription getUnloadedModuleDescription(@NotNull String moduleName);
+
+  @NotNull
+  public abstract ModuleGrouper getModuleGrouper(@Nullable ModifiableModuleModel model);
+
+  /**
+   * Specify list of modules which will be unloaded from the project.
+   * @see UnloadedModuleDescription
+   */
+  @ApiStatus.Experimental
+  public abstract void setUnloadedModules(@NotNull List<String> unloadedModuleNames);
+
+  @ApiStatus.Experimental
+  public void removeUnloadedModules(@NotNull Collection<? extends UnloadedModuleDescription> unloadedModules) {
+  }
 }

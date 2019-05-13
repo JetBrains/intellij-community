@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,36 +13,52 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-/*
- * User: anna
- * Date: 04-Jun-2007
- */
 package com.theoryinpractice.testng.inspection;
 
 import com.intellij.codeInspection.LocalInspectionTool;
-import org.testng.annotations.Test;
+import com.intellij.openapi.application.PluginPathManager;
 
-public class ConvertJUnitInspectionTest extends BaseTestNGInspectionsTest{
-  protected String getSourceRoot() {
-    return "junit";
-  }
-
+/**
+ * @author Dmitry Batkovich
+ */
+public class ConvertJUnitInspectionTest extends BaseTestNGInspectionsTest {
+  @Override
   protected LocalInspectionTool getEnabledTool() {
     return new JUnitConvertTool();
   }
 
+  @Override
   protected String getActionName() {
     return JUnitConvertTool.QUICKFIX_NAME;
   }
 
-  @Test
-  public void test1() throws Throwable {
-    doTest("Class");
+  public void testClass() {
+    doTest();
   }
 
-  @Test
-  public void test2() throws Throwable {
-    doTest("Fail");
+  public void testFail() {
+    doTest();
   }
+
+  public void testUnaryAssertions() {
+    doTest();
+  }
+
+  public void testBinaryAssertions() {
+    doTest();
+  }
+
+  public void testIncompatible() {
+    doTest();
+  }
+
+  public void testDelta() {
+    doTest();
+  }
+
+  @Override
+  protected String getBasePath() {
+    return PluginPathManager.getPluginHomePathRelative("testng") + "/testData/junit";
+  }
+
 }

@@ -1,8 +1,5 @@
-<components>
+<idea-plugin>
   <application-components>
-    <component>
-      <implementation-class>com.intellij.ide.SwingCleanuper</implementation-class>
-    </component>
     <component>
       <interface-class>com.intellij.openapi.wm.IdeFocusManager</interface-class>
       <implementation-class>com.intellij.openapi.wm.impl.FocusManagerImpl</implementation-class>
@@ -21,15 +18,6 @@
       <interface-class>com.intellij.openapi.keymap.KeymapManager</interface-class>
       <implementation-class>com.intellij.openapi.keymap.impl.KeymapManagerImpl</implementation-class>
     </component>
-    <component>
-      <interface-class>com.intellij.openapi.util.DimensionService</interface-class>
-      <implementation-class>com.intellij.openapi.util.DimensionService</implementation-class>
-    </component>
-
-    <component>
-      <interface-class>com.intellij.ide.ui.UISettings</interface-class>
-      <implementation-class>com.intellij.ide.ui.UISettings</implementation-class>
-    </component>
 
     <component>
       <implementation-class>com.intellij.ide.IdeTooltipManager</implementation-class>
@@ -42,35 +30,25 @@
     <component>
       <interface-class>com.intellij.ide.SaveAndSyncHandler</interface-class>
       <implementation-class>com.intellij.ide.SaveAndSyncHandlerImpl</implementation-class>
+      <headless-implementation-class>com.intellij.ide.SaveAndSyncHandlerStub</headless-implementation-class>
     </component>
+
+    <component>
+      <implementation-class>com.intellij.ide.ScreenReaderSupportHandler</implementation-class>
+    </component>
+
     <component>
       <interface-class>com.intellij.ide.FrameStateManager</interface-class>
       <implementation-class>com.intellij.ide.FrameStateManagerImpl</implementation-class>
     </component>
-    <component>
-      <interface-class>com.intellij.ide.GeneralSettings</interface-class>
-      <implementation-class>com.intellij.ide.GeneralSettings</implementation-class>
-    </component>
+
     <component>
       <implementation-class>com.intellij.ide.MacOSApplicationProvider</implementation-class>
     </component>
-    <component>
-      <implementation-class>com.intellij.ui.switcher.QuickAccessSettings</implementation-class>
-    </component>
+
     <component>
       <implementation-class>com.intellij.openapi.updateSettings.impl.UpdateCheckerComponent</implementation-class>
+      <headless-implementation-class/>
     </component>
   </application-components>
-  <project-components>
-    <component>
-      <implementation-class>com.intellij.ui.switcher.SwitchManager</implementation-class>
-      <skipForDefaultProject/>
-    </component>
-    <component>
-      <implementation-class>com.intellij.ui.switcher.QuickActionManager</implementation-class>
-    </component>
-    <component>
-      <implementation-class>com.intellij.ide.bookmarks.BookmarkManager</implementation-class>
-    </component>
-  </project-components>
-</components>
+</idea-plugin>

@@ -20,6 +20,7 @@ import com.intellij.ide.projectView.PresentationData;
 import com.intellij.ide.projectView.ProjectViewNode;
 import com.intellij.ide.projectView.ViewSettings;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
+import com.intellij.ide.util.treeView.AbstractTreeUi;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
@@ -43,7 +44,7 @@ public class PackageViewLibrariesNode extends ProjectViewNode<LibrariesElement>{
   @Override
   public boolean contains(@NotNull final VirtualFile file) {
     ProjectFileIndex index = ProjectRootManager.getInstance(getProject()).getFileIndex();
-    if (!index.isInLibrarySource(file) && !index.isInLibraryClasses(file)) return false;
+    if (!index.isInLibrary(file)) return false;
 
     return someChildContainsFile(file, false);
   }
@@ -51,29 +52,30 @@ public class PackageViewLibrariesNode extends ProjectViewNode<LibrariesElement>{
   @Override
   @NotNull
   public Collection<AbstractTreeNode> getChildren() {
-    final ArrayList<VirtualFile> roots = new ArrayList<VirtualFile>();
-    Module myModule = getValue().getModule();
-    if (myModule == null) {
-      final Module[] modules = ModuleManager.getInstance(getProject()).getModules();
-      for (Module module : modules) {
-        addModuleLibraryRoots(ModuleRootManager.getInstance(module), roots);
+    return AbstractTreeUi.calculateYieldingToWriteAction(() -> {
+      final ArrayList<VirtualFile> roots = new ArrayList<>();
+      Module myModule = getValue().getModule();
+      if (myModule == null) {
+        final Module[] modules = ModuleManager.getInstance(getProject()).getModules();
+        for (Module module : modules) {
+          addModuleLibraryRoots(ModuleRootManager.getInstance(module), roots);
+        }
       }
-    }
-    else {
-      addModuleLibraryRoots(ModuleRootManager.getInstance(myModule), roots);
-    }
-    return PackageUtil.createPackageViewChildrenOnFiles(roots, getProject(), getSettings(), null, true);
+      else {
+        addModuleLibraryRoots(ModuleRootManager.getInstance(myModule), roots);
+      }
+      return PackageUtil.createPackageViewChildrenOnFiles(roots, getProject(), getSettings(), null, true);
+    });
   }
-
 
   @Override
   public boolean someChildContainsFile(VirtualFile file) {
     ProjectFileIndex index = ProjectRootManager.getInstance(getProject()).getFileIndex();
-    if (!index.isInLibrarySource(file) && !index.isInLibraryClasses(file)) return false;
+    if (!index.isInLibrary(file)) return false;
     return super.someChildContainsFile(file);    
   }
 
-  private static void addModuleLibraryRoots(ModuleRootManager moduleRootManager, List<VirtualFile> roots) {
+  private static void addModuleLibraryRoots(ModuleRootManager moduleRootManager, List<? super VirtualFile> roots) {
     final VirtualFile[] files = moduleRootManager.orderEntries().withoutModuleSourceEntries().withoutDepModules().classes().getRoots();
     for (final VirtualFile file : files) {
       if (file.getFileSystem() instanceof JarFileSystem && file.getParent() != null) {
@@ -85,7 +87,7 @@ public class PackageViewLibrariesNode extends ProjectViewNode<LibrariesElement>{
   }
 
   @Override
-  public void update(final PresentationData presentation) {
+  public void update(@NotNull final PresentationData presentation) {
     presentation.setPresentableText(IdeBundle.message("node.projectview.libraries"));
     presentation.setIcon(PlatformIcons.LIBRARY_ICON);
   }

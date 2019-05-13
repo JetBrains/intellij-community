@@ -25,6 +25,7 @@ import org.jetbrains.annotations.NotNull;
  * @author peter
  */
 public abstract class NotNullLazyValue<T> {
+  private static final RecursionGuard ourGuard = RecursionManager.createGuard("NotNullLazyValue");
   private T myValue;
 
   @NotNull
@@ -32,9 +33,40 @@ public abstract class NotNullLazyValue<T> {
 
   @NotNull
   public T getValue() {
-    if (myValue == null) {
-      myValue = compute();
+    T result = myValue;
+    if (result == null) {
+      RecursionGuard.StackStamp stamp = ourGuard.markStack();
+      result = compute();
+      if (stamp.mayCacheNow()) {
+        myValue = result;
+      }
     }
-    return myValue;
+    return result;
+  }
+
+  public boolean isComputed() {
+    return myValue != null;
+  }
+
+  @NotNull
+  public static <T> NotNullLazyValue<T> createConstantValue(@NotNull final T value) {
+    return new NotNullLazyValue<T>() {
+      @NotNull
+      @Override
+      protected T compute() {
+        return value;
+      }
+    };
+  }
+
+  @NotNull
+  public static <T> NotNullLazyValue<T> createValue(@NotNull final NotNullFactory<? extends T> value) {
+    return new NotNullLazyValue<T>() {
+      @NotNull
+      @Override
+      protected T compute() {
+        return value.create();
+      }
+    };
   }
 }

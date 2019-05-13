@@ -1,0 +1,12 @@
+{ "bindings": [
+        {"ircEvent": <error>undefined</error>},
+        {<error>'ircEvent'</error> :123},
+        <error descr="JSON standard does not allow comments. Use JSMin or similar tool to remove comments before parsing.">/*comment*/</error>
+        {<error>ircEvent</error>: "PRIVMSG", "method": "randomURI",
+            "regex": <error>'test'</error>
+        }<error>,</error>
+    ],
+<error>/** some comment */</error>
+"foo": 1,
+"lastComma": {"a":"b"<error>,</error>}
+}

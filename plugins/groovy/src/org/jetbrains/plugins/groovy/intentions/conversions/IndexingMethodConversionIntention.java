@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,21 +22,23 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.intentions.base.Intention;
-import org.jetbrains.plugins.groovy.intentions.base.IntentionUtils;
 import org.jetbrains.plugins.groovy.intentions.base.PsiElementPredicate;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
+import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 
 public class IndexingMethodConversionIntention extends Intention {
 
+  @Override
   @NotNull
   public PsiElementPredicate getElementPredicate() {
     return new IndexingMethodConversionPredicate();
   }
 
-  public void processIntention(@NotNull PsiElement element, Project project, Editor editor)
+  @Override
+  public void processIntention(@NotNull PsiElement element, @NotNull Project project, Editor editor)
       throws IncorrectOperationException {
     final GrMethodCallExpression callExpression =
         (GrMethodCallExpression) element;
@@ -46,16 +48,16 @@ public class IndexingMethodConversionIntention extends Intention {
       GrReferenceExpression methodExpression = (GrReferenceExpression) callExpression.getInvokedExpression();
       final IElementType referenceType = methodExpression.getDotTokenType();
 
-      final String methodName = methodExpression.getName();
+      final String methodName = methodExpression.getReferenceName();
       final GrExpression qualifier = methodExpression.getQualifierExpression();
       if("getAt".equals(methodName)|| "get".equals(methodName))
       {
-          IntentionUtils.replaceExpression(qualifier.getText() + '[' + arguments[0].getText() + ']',
-                  callExpression);
+          PsiImplUtil.replaceExpression(qualifier.getText() + '[' + arguments[0].getText() + ']',
+                                        callExpression);
       }
       else{
-          IntentionUtils.replaceExpression(qualifier.getText() + '[' + arguments[0].getText() + "]=" +arguments[1].getText(),
-                  callExpression);
+          PsiImplUtil.replaceExpression(qualifier.getText() + '[' + arguments[0].getText() + "]=" + arguments[1].getText(),
+                                        callExpression);
       }
   }
 

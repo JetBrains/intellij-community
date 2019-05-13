@@ -34,7 +34,7 @@ import java.util.Collection;
  * author: lesya
  */
 public class SelectTagDialog extends DialogWrapper {
-  private final Collection<JList> myLists =  new ArrayList<JList>();
+  private final Collection<JList> myLists = new ArrayList<>();
   private final JPanel myPanel;
   public static final String EXISTING_REVISIONS = CvsBundle.message("label.existing.revisions");
   public static final String EXISTING_TAGS = CvsBundle.message("label.existing.tags");
@@ -64,6 +64,7 @@ public class SelectTagDialog extends DialogWrapper {
     myLists.add(list);
     list.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
     list.addListSelectionListener(new ListSelectionListener() {
+      @Override
       public void valueChanged(ListSelectionEvent e) {
         if (list.getSelectedValue() != null)
           cancelOtherSelections(list);
@@ -129,6 +130,7 @@ public class SelectTagDialog extends DialogWrapper {
       list.getSelectionModel().addSelectionInterval(0, 0);
   }
 
+  @Override
   protected JComponent createCenterPanel() {
     return myPanel;
   }

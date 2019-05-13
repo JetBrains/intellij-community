@@ -29,7 +29,6 @@ import com.intellij.psi.stubs.IndexSink;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.stubs.StubInputStream;
 import com.intellij.psi.stubs.StubOutputStream;
-import com.intellij.util.io.StringRef;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
@@ -58,26 +57,27 @@ public class JavaTypeParameterElementType extends JavaStubElementType<PsiTypePar
     return new PsiTypeParameterImpl(node);
   }
 
+  @NotNull
   @Override
-  public PsiTypeParameterStub createStub(final LighterAST tree, final LighterASTNode node, final StubElement parentStub) {
+  public PsiTypeParameterStub createStub(@NotNull final LighterAST tree, @NotNull final LighterASTNode node, @NotNull final StubElement parentStub) {
     final LighterASTNode id = LightTreeUtil.requiredChildOfType(tree, node, JavaTokenType.IDENTIFIER);
     final String name = RecordUtil.intern(tree.getCharTable(), id);
-    return new PsiTypeParameterStubImpl(parentStub, StringRef.fromString(name));
-  }
-
-  @Override
-  public void serialize(final PsiTypeParameterStub stub, final StubOutputStream dataStream) throws IOException {
-    String name = stub.getName();
-    dataStream.writeName(name);
-  }
-
-  @Override
-  public PsiTypeParameterStub deserialize(final StubInputStream dataStream, final StubElement parentStub) throws IOException {
-    StringRef name = dataStream.readName();
     return new PsiTypeParameterStubImpl(parentStub, name);
   }
 
   @Override
-  public void indexStub(final PsiTypeParameterStub stub, final IndexSink sink) {
+  public void serialize(@NotNull final PsiTypeParameterStub stub, @NotNull final StubOutputStream dataStream) throws IOException {
+    String name = stub.getName();
+    dataStream.writeName(name);
+  }
+
+  @NotNull
+  @Override
+  public PsiTypeParameterStub deserialize(@NotNull final StubInputStream dataStream, final StubElement parentStub) throws IOException {
+    return new PsiTypeParameterStubImpl(parentStub, dataStream.readNameString());
+  }
+
+  @Override
+  public void indexStub(@NotNull final PsiTypeParameterStub stub, @NotNull final IndexSink sink) {
   }
 }

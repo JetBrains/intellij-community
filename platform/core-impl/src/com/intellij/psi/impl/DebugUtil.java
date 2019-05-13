@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl;
 
 import com.intellij.lang.ASTNode;
@@ -22,59 +8,36 @@ import com.intellij.lang.impl.PsiBuilderImpl;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiWhiteSpace;
-import com.intellij.psi.TokenType;
+import com.intellij.psi.*;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
-import com.intellij.psi.impl.source.tree.CompositeElement;
-import com.intellij.psi.impl.source.tree.RecursiveTreeElementWalkingVisitor;
-import com.intellij.psi.impl.source.tree.SharedImplUtil;
-import com.intellij.psi.impl.source.tree.TreeElement;
+import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.stubs.ObjectStubSerializer;
 import com.intellij.psi.stubs.Stub;
+import com.intellij.psi.templateLanguages.OuterLanguageElement;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.*;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.diff.FlyweightCapableTreeStructure;
+import com.intellij.util.graph.InboundSemiGraph;
+import com.intellij.util.graph.OutboundSemiGraph;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
+import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Set;
 
 @SuppressWarnings({"HardCodedStringLiteral", "UtilityClassWithoutPrivateConstructor", "UnusedDeclaration", "TestOnlyProblems"})
 public class DebugUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.DebugUtil");
-
-  public static class LengthBuilder implements Appendable {
-    private int myLength = 0;
-
-    public int getLength() {
-      return myLength;
-    }
-
-    @Override
-    public Appendable append(final CharSequence csq) {
-      myLength += csq.length();
-      return this;
-    }
-
-    @Override
-    public Appendable append(final CharSequence csq, final int start, final int end) {
-      myLength += csq.subSequence(start, end).length();
-      return this;
-    }
-
-    @Override
-    public Appendable append(final char c) {
-      myLength++;
-      return this;
-    }
-  }
 
   public static /*final*/ boolean CHECK = false;
   public static final boolean DO_EXPENSIVE_CHECKS;
@@ -91,42 +54,20 @@ public class DebugUtil {
   }
 
   public static String treeToString(@NotNull final ASTNode root, final boolean skipWhitespaces) {
-    final LengthBuilder ruler = new LengthBuilder();
-    treeToBuffer(ruler, root, 0, skipWhitespaces, false, false, true);
-    final StringBuilder buffer = new StringBuilder(ruler.getLength());
+    StringBuilder buffer = new StringBuilder();
     treeToBuffer(buffer, root, 0, skipWhitespaces, false, false, true);
     return buffer.toString();
   }
 
   public static String nodeTreeToString(@NotNull final ASTNode root, final boolean skipWhitespaces) {
-    final LengthBuilder ruler = new LengthBuilder();
-    treeToBuffer(ruler, root, 0, skipWhitespaces, false, false, false);
-    final StringBuilder buffer = new StringBuilder(ruler.getLength());
+    StringBuilder buffer = new StringBuilder();
     treeToBuffer(buffer, root, 0, skipWhitespaces, false, false, false);
     return buffer.toString();
   }
 
   public static String treeToString(@NotNull ASTNode root, boolean skipWhitespaces, boolean showRanges) {
-    final LengthBuilder ruler = new LengthBuilder();
-    treeToBuffer(ruler, root, 0, skipWhitespaces, showRanges, false, true);
-    final StringBuilder buffer = new StringBuilder(ruler.getLength());
+    StringBuilder buffer = new StringBuilder();
     treeToBuffer(buffer, root, 0, skipWhitespaces, showRanges, false, true);
-    return buffer.toString();
-  }
-
-  public static String treeToStringWithUserData(TreeElement root, boolean skipWhitespaces) {
-    final LengthBuilder ruler = new LengthBuilder();
-    treeToBufferWithUserData(ruler, root, 0, skipWhitespaces);
-    final StringBuilder buffer = new StringBuilder(ruler.getLength());
-    treeToBufferWithUserData(buffer, root, 0, skipWhitespaces);
-    return buffer.toString();
-  }
-
-  public static String treeToStringWithUserData(PsiElement root, boolean skipWhitespaces) {
-    final LengthBuilder ruler = new LengthBuilder();
-    treeToBufferWithUserData(ruler, root, 0, skipWhitespaces);
-    final StringBuilder buffer = new StringBuilder(ruler.getLength());
-    treeToBufferWithUserData(buffer, root, 0, skipWhitespaces);
     return buffer.toString();
   }
 
@@ -147,65 +88,96 @@ public class DebugUtil {
                                   final boolean showRanges,
                                   final boolean showChildrenRanges,
                                   final boolean usePsi,
-                                  PairConsumer<PsiElement, Consumer<PsiElement>> extra) {
-    if (skipWhiteSpaces && root.getElementType() == TokenType.WHITE_SPACE) return;
+                                  @Nullable PairConsumer<? super PsiElement, Consumer<PsiElement>> extra) {
+    ((TreeElement) root).acceptTree(
+      new TreeToBuffer(buffer, indent, skipWhiteSpaces, showRanges, showChildrenRanges, usePsi, extra));
+  }
 
-    StringUtil.repeatSymbol(buffer, ' ', indent);
-    try {
-      PsiElement psiElement = null;
-      if (root instanceof CompositeElement) {
-        if (usePsi) {
-          psiElement = root.getPsi();
-          if (psiElement != null) {
-            buffer.append(psiElement.toString());
+  private static class TreeToBuffer extends RecursiveTreeElementWalkingVisitor {
+    final Appendable buffer;
+    final boolean skipWhiteSpaces;
+    final boolean showRanges;
+    final boolean showChildrenRanges;
+    final boolean usePsi;
+    final PairConsumer<? super PsiElement, Consumer<PsiElement>> extra;
+    int indent;
+
+    TreeToBuffer(Appendable buffer, int indent, boolean skipWhiteSpaces,
+                 boolean showRanges, boolean showChildrenRanges, boolean usePsi,
+                 PairConsumer<? super PsiElement, Consumer<PsiElement>> extra) {
+      this.buffer = buffer;
+      this.skipWhiteSpaces = skipWhiteSpaces;
+      this.showRanges = showRanges;
+      this.showChildrenRanges = showChildrenRanges;
+      this.usePsi = usePsi;
+      this.extra = extra;
+      this.indent = indent;
+    }
+
+    @Override
+    protected void visitNode(TreeElement root) {
+      if (shouldSkipNode(root)) {
+        indent += 2;
+        return;
+      }
+
+      StringUtil.repeatSymbol(buffer, ' ', indent);
+      try {
+        if (root instanceof CompositeElement) {
+          if (usePsi) {
+            PsiElement psiElement = root.getPsi();
+            if (psiElement != null) {
+              buffer.append(psiElement.toString());
+            }
+            else {
+              buffer.append(root.getElementType().toString());
+            }
           }
           else {
-            buffer.append(root.getElementType().toString());
+            buffer.append(root.toString());
           }
         }
         else {
-          buffer.append(root.toString());
+          final String text = fixWhiteSpaces(root.getText());
+          buffer.append(root.toString()).append("('").append(text).append("')");
         }
-      }
-      else {
-        final String text = fixWhiteSpaces(root.getText());
-        buffer.append(root.toString()).append("('").append(text).append("')");
-      }
-      if (showRanges) buffer.append(root.getTextRange().toString());
-      buffer.append("\n");
-      if (root instanceof CompositeElement) {
-        ASTNode child = root.getFirstChildNode();
-
-        if (child == null) {
-          StringUtil.repeatSymbol(buffer, ' ', indent + 2);
+        if (showRanges) buffer.append(root.getTextRange().toString());
+        buffer.append("\n");
+        indent += 2;
+        if (root instanceof CompositeElement && root.getFirstChildNode() == null && showEmptyChildren()) {
+          StringUtil.repeatSymbol(buffer, ' ', indent);
           buffer.append("<empty list>\n");
         }
-        else {
-          while (child != null) {
-            treeToBuffer(buffer, child, indent + 2, skipWhiteSpaces, showChildrenRanges, showChildrenRanges, usePsi, extra);
-            child = child.getTreeNext();
-          }
-        }
       }
-      if (psiElement != null && extra != null ) {
-        extra.consume(psiElement, new Consumer<PsiElement>() {
-          @Override
-          public void consume(PsiElement element) {
-            treeToBuffer(buffer, element.getNode(), indent + 2, skipWhiteSpaces, showChildrenRanges, showChildrenRanges, usePsi, null);
-          }
-        });
+      catch (IOException e) {
+        LOG.error(e);
       }
+
+      super.visitNode(root);
     }
-    catch (IOException e) {
-      LOG.error(e);
+
+    protected boolean showEmptyChildren() {
+      return true;
+    }
+
+    protected boolean shouldSkipNode(TreeElement node) {
+      return skipWhiteSpaces && node.getElementType() == TokenType.WHITE_SPACE;
+    }
+
+    @Override
+    protected void elementFinished(@NotNull ASTNode e) {
+      PsiElement psiElement = extra != null && usePsi && e instanceof CompositeElement ? e.getPsi() : null;
+      if (psiElement != null) {
+        extra.consume(psiElement, element ->
+          treeToBuffer(buffer, element.getNode(), indent, skipWhiteSpaces, showRanges, showChildrenRanges, true, null));
+      }
+      indent -= 2;
     }
   }
 
   public static String lightTreeToString(@NotNull final FlyweightCapableTreeStructure<LighterASTNode> tree,
                                          final boolean skipWhitespaces) {
-    final LengthBuilder ruler = new LengthBuilder();
-    lightTreeToBuffer(tree, tree.getRoot(), ruler, 0, skipWhitespaces);
-    final StringBuilder buffer = new StringBuilder(ruler.getLength());
+    final StringBuilder buffer = new StringBuilder();
     lightTreeToBuffer(tree, tree.getRoot(), buffer, 0, skipWhitespaces);
     return buffer.toString();
   }
@@ -239,8 +211,8 @@ public class DebugUtil {
       buffer.append('\n');
 
       if (!isLeaf) {
-        final Ref<LighterASTNode[]> kids = new Ref<LighterASTNode[]>();
-        final int numKids = tree.getChildren(tree.prepareForGetChildren(node), kids);
+        final Ref<LighterASTNode[]> kids = new Ref<>();
+        final int numKids = tree.getChildren(node, kids);
         if (numKids == 0) {
           StringUtil.repeatSymbol(buffer, ' ', indent + 2);
           buffer.append("<empty list>\n");
@@ -258,9 +230,7 @@ public class DebugUtil {
   }
 
   public static String stubTreeToString(final Stub root) {
-    final LengthBuilder ruler = new LengthBuilder();
-    stubTreeToBuffer(root, ruler, 0);
-    final StringBuilder builder = new StringBuilder(ruler.getLength());
+    StringBuilder builder = new StringBuilder();
     stubTreeToBuffer(root, builder, 0);
     return builder.toString();
   }
@@ -274,7 +244,6 @@ public class DebugUtil {
       }
       buffer.append(node.toString()).append('\n');
 
-      @SuppressWarnings({"unchecked"})
       final List<? extends Stub> children = node.getChildrenStubs();
       for (final Stub child : children) {
         stubTreeToBuffer(child, buffer, indent + 2);
@@ -421,11 +390,29 @@ public class DebugUtil {
     return psiToString(root, skipWhiteSpaces, showRanges, null);
   }
 
-  public static String psiToString(@NotNull final PsiElement root, final boolean skipWhiteSpaces, final boolean showRanges, PairConsumer<PsiElement, Consumer<PsiElement>> extra) {
-    final LengthBuilder ruler = new LengthBuilder();
-    psiToBuffer(ruler, root, skipWhiteSpaces, showRanges, extra);
-    final StringBuilder buffer = new StringBuilder(ruler.getLength());
+  public static String psiToString(@NotNull final PsiElement root, final boolean skipWhiteSpaces, final boolean showRanges, PairConsumer<? super PsiElement, Consumer<PsiElement>> extra) {
+    StringBuilder buffer = new StringBuilder();
     psiToBuffer(buffer, root, skipWhiteSpaces, showRanges, extra);
+    return buffer.toString();
+  }
+
+  @NotNull
+  public static String psiToStringIgnoringNonCode(@NotNull PsiElement element) {
+    StringBuilder buffer = new StringBuilder();
+    ((TreeElement)element.getNode()).acceptTree(
+      new TreeToBuffer(buffer, 0, true, false, false, false, null) {
+        @Override
+        protected boolean shouldSkipNode(TreeElement node) {
+          return super.shouldSkipNode(node) || node instanceof PsiErrorElement || node instanceof PsiComment || 
+                 node instanceof LeafPsiElement && StringUtil.isEmptyOrSpaces(node.getText()) || 
+                 node instanceof OuterLanguageElement;
+        }
+
+        @Override
+        protected boolean showEmptyChildren() {
+          return false;
+        }
+      });
     return buffer.toString();
   }
 
@@ -433,7 +420,7 @@ public class DebugUtil {
                                   final PsiElement root,
                                   final boolean skipWhiteSpaces,
                                   final boolean showRanges,
-                                  PairConsumer<PsiElement, Consumer<PsiElement>> extra) {
+                                  PairConsumer<? super PsiElement, Consumer<PsiElement>> extra) {
     final ASTNode node = root.getNode();
     if (node == null) {
       psiToBuffer(buffer, root, 0, skipWhiteSpaces, showRanges, showRanges, extra);
@@ -458,7 +445,7 @@ public class DebugUtil {
                                  final boolean skipWhiteSpaces,
                                  boolean showRanges,
                                  final boolean showChildrenRanges,
-                                 PairConsumer<PsiElement, Consumer<PsiElement>> extra) {
+                                 PairConsumer<? super PsiElement, Consumer<PsiElement>> extra) {
     if (skipWhiteSpaces && root instanceof PsiWhiteSpace) return;
 
     StringUtil.repeatSymbol(buffer, ' ', indent);
@@ -478,12 +465,8 @@ public class DebugUtil {
         child = child.getNextSibling();
       }
       if (extra != null) {
-        extra.consume(root, new Consumer<PsiElement>() {
-          @Override
-          public void consume(PsiElement element) {
-            psiToBuffer(buffer, element, indent + 2, skipWhiteSpaces, showChildrenRanges, showChildrenRanges, null);
-          }
-        });
+        extra.consume(root,
+                      element -> psiToBuffer(buffer, element, indent + 2, skipWhiteSpaces, showChildrenRanges, showChildrenRanges, null));
       }
     }
     catch (IOException e) {
@@ -499,7 +482,7 @@ public class DebugUtil {
   }
 
   public static String currentStackTrace() {
-    return ExceptionUtil.getThrowableText(new Throwable());
+    return ExceptionUtil.currentStackTrace();
   }
 
   public static class IncorrectTreeStructureException extends RuntimeException {
@@ -515,52 +498,125 @@ public class DebugUtil {
     }
   }
 
-  private static final Key<List<Pair<Object, Processor<PsiElement>>>> TRACK_INVALIDATION_KEY = Key.create("TRACK_INVALIDATION_KEY");
-  public static void trackInvalidation(@NotNull PsiElement element, @NotNull Object requestor, @NotNull Processor<PsiElement> callback) {
-    synchronized (element) {
-      final ASTNode node = element.getNode();
-      if (node == null) return;
-      List<Pair<Object, Processor<PsiElement>>> callbacks = node.getUserData(TRACK_INVALIDATION_KEY);
-      if (callbacks == null) {
-        callbacks = new SmartList<Pair<Object, Processor<PsiElement>>>();
-        node.putUserData(TRACK_INVALIDATION_KEY, callbacks);
-      }
-      for (int i = 0; i < callbacks.size(); i++) {
-        Pair<Object, Processor<PsiElement>> pair = callbacks.get(i);
-        Object callbackRequestor = pair.first;
-        if (callbackRequestor.equals(requestor)) {
-          callbacks.set(i, Pair.create(requestor, callback));
-          return;
-        }
-      }
-      callbacks.add(Pair.create(requestor, callback));
+  private static final ThreadLocal<Object> ourPsiModificationTrace = new ThreadLocal<>();
+  private static final ThreadLocal<Integer> ourPsiModificationDepth = new ThreadLocal<>();
+  private static final Set<Integer> ourNonTransactedTraces = ContainerUtil.newConcurrentSet();
+
+  /**
+   * Marks a start of PSI modification action. Any PSI/AST elements invalidated inside such an action will contain a debug trace
+   * identifying this transaction, and so will {@link PsiInvalidElementAccessException} thrown when accessing such invalid
+   * elements. This should help finding out why a specific PSI element has become invalid.
+   *
+   * @param trace The debug trace that the invalidated elements should be identified by. May be null, then current stack trace is used.
+   * @deprecated use {@link #performPsiModification(String, ThrowableRunnable)} instead
+   */
+  @Deprecated
+  public static void startPsiModification(@Nullable String trace) {
+    if (!PsiInvalidElementAccessException.isTrackingInvalidation()) {
+      return;
+    }
+
+    if (ourPsiModificationTrace.get() == null) {
+      ourPsiModificationTrace.set(trace != null ? trace : new Throwable());
+    }
+    Integer depth = ourPsiModificationDepth.get();
+    if (depth == null) depth = 0;
+    ourPsiModificationDepth.set(depth + 1);
+  }
+
+  /**
+   * Finished PSI modification action.
+   * @see #startPsiModification(String)
+   * @deprecated use {@link #performPsiModification(String, ThrowableRunnable)} instead
+   */
+  @Deprecated
+  public static void finishPsiModification() {
+    if (!PsiInvalidElementAccessException.isTrackingInvalidation()) {
+      return;
+    }
+    Integer depth = ourPsiModificationDepth.get();
+    if (depth == null) {
+      LOG.warn("Unmatched PSI modification end", new Throwable());
+      depth = 0;
+    } else {
+      depth--;
+      ourPsiModificationDepth.set(depth);
+    }
+    if (depth == 0) {
+      ourPsiModificationTrace.set(null);
     }
   }
 
-  public static void onInvalidated(@NotNull TreeElement treeElement) {
-    treeElement.acceptTree(new RecursiveTreeElementWalkingVisitor(false) {
-      @Override
-      protected void visitNode(TreeElement element) {
-        List<Pair<Object, Processor<PsiElement>>> callbacks = element.getUserData(TRACK_INVALIDATION_KEY);
-        if (callbacks != null) {
-          for (Pair<Object, Processor<PsiElement>> pair : callbacks) {
-            Processor<PsiElement> callback = pair.second;
-            PsiElement psi = element.getPsi();
-            if (psi != null) callback.process(psi);
-          }
-        }
-        super.visitNode(element);
+  public static <T extends Throwable> void performPsiModification(String trace, @NotNull ThrowableRunnable<T> runnable) throws T {
+    startPsiModification(trace);
+    try {
+      runnable.run();
+    }
+    finally {
+      finishPsiModification();
+    }
+  }
+  public static <T, E extends Throwable> T performPsiModification(String trace, @NotNull ThrowableComputable<T, E> runnable) throws E {
+    startPsiModification(trace);
+    try {
+      return runnable.compute();
+    }
+    finally {
+      finishPsiModification();
+    }
+  }
+
+  public static void onInvalidated(@NotNull ASTNode treeElement) {
+    Object trace = calcInvalidationTrace(treeElement);
+    if (trace != null) {
+      PsiInvalidElementAccessException.setInvalidationTrace(treeElement, trace);
+    }
+  }
+
+  public static void onInvalidated(@NotNull PsiElement o) {
+    Object trace = PsiInvalidElementAccessException.getInvalidationTrace(o);
+    if (trace != null) return;
+
+    PsiInvalidElementAccessException.setInvalidationTrace(o, currentInvalidationTrace());
+  }
+
+  public static void onInvalidated(@NotNull FileViewProvider provider) {
+    Object trace = calcInvalidationTrace(null);
+    if (trace != null) {
+      PsiInvalidElementAccessException.setInvalidationTrace(provider, trace);
+    }
+  }
+
+  @Nullable
+  private static Object calcInvalidationTrace(@Nullable ASTNode treeElement) {
+    if (!PsiInvalidElementAccessException.isTrackingInvalidation()) {
+      return null;
+    }
+    if (PsiInvalidElementAccessException.findInvalidationTrace(treeElement) != null) {
+      return null;
+    }
+
+    return currentInvalidationTrace();
+  }
+
+  @NotNull
+  private static Object currentInvalidationTrace() {
+    Object trace = ourPsiModificationTrace.get();
+    if (trace == null) {
+      trace = new Throwable();
+      if (ourNonTransactedTraces.add(ExceptionUtil.getThrowableText((Throwable)trace).hashCode())) {
+        LOG.info("PSI invalidated outside transaction", (Throwable)trace);
       }
-    });
+    }
+    return trace;
+  }
+
+  public static void revalidateNode(@NotNull ASTNode element) {
+    PsiInvalidElementAccessException.setInvalidationTrace(element, null);
   }
 
   public static void sleep(long millis) {
-    try {
-      Thread.sleep(millis);
-    }
-    catch (InterruptedException e) {
-      LOG.error(e);
-    }
+    TimeoutUtil.sleep(millis);
   }
   public static void checkTreeStructure(ASTNode element) {
     if (CHECK){
@@ -568,4 +624,65 @@ public class DebugUtil {
     }
   }
 
+  @NotNull
+  public static String diagnosePsiDocumentInconsistency(@NotNull PsiElement element, @NotNull Document document) {
+    PsiUtilCore.ensureValid(element);
+
+    PsiFile file = element.getContainingFile();
+    if (file == null) return "no file for " + element + " of " + element.getClass();
+
+    PsiUtilCore.ensureValid(file);
+
+    FileViewProvider viewProvider = file.getViewProvider();
+    PsiDocumentManager manager = PsiDocumentManager.getInstance(file.getProject());
+
+    Document actualDocument = manager.getDocument(file);
+    String fileDiagnostics = "File[" + file + " " + file.getName() + ", " + file.getLanguage() + ", " + viewProvider + "]";
+    if (actualDocument != document) {
+      return "wrong document for " + fileDiagnostics + "; expected " + document + "; actual " + actualDocument;
+    }
+
+    PsiFile cachedPsiFile = manager.getCachedPsiFile(document);
+    FileViewProvider actualViewProvider = cachedPsiFile == null ? null : cachedPsiFile.getViewProvider();
+    if (actualViewProvider != viewProvider) {
+      return "wrong view provider for " + document + ", expected " + viewProvider + "; actual " + actualViewProvider;
+    }
+
+    if (!manager.isCommitted(document)) return "not committed document " + document + ", " + fileDiagnostics;
+
+    int fileLength = file.getTextLength();
+    int docLength = document.getTextLength();
+    if (fileLength != docLength) {
+      return "file/doc text length different, " + fileDiagnostics + " file.length=" + fileLength + "; doc.length=" + docLength;
+    }
+
+    return "unknown inconsistency in " + fileDiagnostics;
+  }
+
+  public static <T> String graphToString(InboundSemiGraph<T> graph) {
+    StringBuilder buffer = new StringBuilder();
+    printNodes(graph.getNodes().iterator(), node -> graph.getIn(node), 0, new HashSet<>(), buffer);
+    return buffer.toString();
+  }
+
+  public static <T> String graphToString(OutboundSemiGraph<T> graph) {
+    StringBuilder buffer = new StringBuilder();
+    printNodes(graph.getNodes().iterator(), node -> graph.getOut(node), 0, new HashSet<>(), buffer);
+    return buffer.toString();
+  }
+
+  private static <T> void printNodes(Iterator<? extends T> nodes, Function<? super T, ? extends Iterator<T>> getter, int indent, Set<? super T> visited, StringBuilder buffer) {
+    while (nodes.hasNext()) {
+      T node = nodes.next();
+      StringUtil.repeatSymbol(buffer, ' ', indent);
+      buffer.append(node);
+      if (visited.add(node)) {
+        buffer.append('\n');
+        printNodes(getter.fun(node), getter, indent + 2, visited, buffer);
+      }
+      else {
+        buffer.append(" [...]\n");
+      }
+    }
+  }
 }

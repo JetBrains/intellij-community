@@ -26,13 +26,9 @@ import org.intellij.plugins.xsltDebugger.rt.engine.OutputEventQueue;
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
 
-/**
- * Created by IntelliJ IDEA.
- * User: sweinreuter
- * Date: 09.06.2007
- */
 class GeneratedStructureRenderer extends ColoredTreeCellRenderer {
 
+  @Override
   public void customizeCellRenderer(JTree tree, Object value, boolean selected, boolean expanded, boolean leaf, int row, boolean hasFocus) {
     final DefaultMutableTreeNode node = (DefaultMutableTreeNode)value;
     final Object o = node.getUserObject();

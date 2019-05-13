@@ -1,5 +1,6 @@
 /*
- * Copyright 2000-2007 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -25,13 +26,14 @@ import junit.framework.Assert;
 import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
+import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
 import org.jetbrains.plugins.groovy.refactoring.introduce.GrIntroduceContextImpl;
+import org.jetbrains.plugins.groovy.refactoring.introduce.GrIntroduceHandlerBase;
 import org.jetbrains.plugins.groovy.refactoring.introduce.variable.GroovyVariableValidator;
 import org.jetbrains.plugins.groovy.util.TestUtils;
 
-import java.io.IOException;
 import java.util.List;
 
 /**
@@ -44,22 +46,22 @@ public class IntroduceVariableValidatorTest extends LightCodeInsightFixtureTestC
     return TestUtils.getTestDataPath() + "groovy/refactoring/introduceVariableValidator/";
   }
 
-  public void testAll1() throws Throwable { doTest(); }
-  public void testAll2() throws Throwable { doTest(); }
-  public void testClass1() throws Throwable { doTest(); }
-  public void testClass2() throws Throwable { doTest(); }
-  public void testE() throws Throwable { doTest(); }
-  public void testFile1() throws Throwable { doTest(); }
-  public void testFile2() throws Throwable { doTest(); }
-  public void testLoop1() throws Throwable { doTest(); }
-  public void testLoop2() throws Throwable { doTest(); }
-  public void testLoop3() throws Throwable { doTest(); }
-  public void testSimple() throws Throwable { doTest(); }
+  public void testAll1() { doTest(); }
+  public void testAll2() { doTest(); }
+  public void testClass1() { doTest(); }
+  public void testClass2() { doTest(); }
+  public void testE() { doTest(); }
+  public void testFile1() { doTest(); }
+  public void testFile2() { doTest(); }
+  public void testLoop1() { doTest(); }
+  public void testLoop2() { doTest(); }
+  public void testLoop3() { doTest(); }
+  public void testSimple() { doTest(); }
 
   protected static final String ALL_MARKER = "<all>";
   protected boolean replaceAllOccurences = false;
 
-  private String processFile(String fileText) throws IncorrectOperationException, InvalidDataException, IOException {
+  private String processFile(String fileText) throws IncorrectOperationException, InvalidDataException {
     String result = "";
     int startOffset = fileText.indexOf(TestUtils.BEGIN_MARKER);
     if (startOffset < 0) {
@@ -78,23 +80,23 @@ public class IntroduceVariableValidatorTest extends LightCodeInsightFixtureTestC
 
     myEditor.getSelectionModel().setSelection(startOffset, endOffset);
 
-    GrExpression selectedExpr = GroovyRefactoringUtil.findElementInRange(myFixture.getFile(), startOffset, endOffset, GrExpression.class);
+    GrExpression selectedExpr = PsiImplUtil.findElementInRange(myFixture.getFile(), startOffset, endOffset, GrExpression.class);
 
     Assert.assertNotNull("Selected expression reference points to null", selectedExpr);
 
-    final PsiElement tempContainer = GroovyRefactoringUtil.getEnclosingContainer(selectedExpr);
+    final PsiElement tempContainer = GrIntroduceHandlerBase.getEnclosingContainer(selectedExpr);
     Assert.assertTrue(tempContainer instanceof GroovyPsiElement);
 
     PsiElement[] occurences = GroovyRefactoringUtil.getExpressionOccurrences(PsiUtil.skipParentheses(selectedExpr, false), tempContainer);
     String varName = "preved";
     GroovyVariableValidator validator =
-      new GroovyVariableValidator(new GrIntroduceContextImpl(getProject(), myEditor, selectedExpr, null, occurences, tempContainer));
+      new GroovyVariableValidator(new GrIntroduceContextImpl(getProject(), myEditor, selectedExpr, null, null, occurences, tempContainer));
     result = validator.isOKTest(varName, replaceAllOccurences);
     return result;
   }
 
 
-  public void doTest() throws Exception {
+  public void doTest() {
     final List<String> data = TestUtils.readInput(getTestDataPath() + getTestName(true) + ".test");
     assertEquals(StringUtil.trimEnd(data.get(1), "\n"), processFile(data.get(0)));
   }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package com.intellij.ui;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.actionSystem.Toggleable;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
@@ -25,7 +26,6 @@ import javax.swing.*;
  * @author yole
  */
 public abstract class ToggleActionButton extends AnActionButton implements Toggleable {
-  @SuppressWarnings("NullableProblems")
   public ToggleActionButton(String text, Icon icon) {
     super(text, null, icon);
   }
@@ -45,17 +45,17 @@ public abstract class ToggleActionButton extends AnActionButton implements Toggl
   public abstract void setSelected(AnActionEvent e, boolean state);
 
   @Override
-  public final void actionPerformed(AnActionEvent e) {
+  public final void actionPerformed(@NotNull AnActionEvent e) {
     final boolean state = !isSelected(e);
     setSelected(e, state);
-    final Boolean selected = state ? Boolean.TRUE : Boolean.FALSE;
+    final Boolean selected = state;
     final Presentation presentation = e.getPresentation();
     presentation.putClientProperty(Toggleable.SELECTED_PROPERTY, selected);
   }
 
   @Override
-  public final void updateButton(AnActionEvent e) {
-    final Boolean selected = isSelected(e) ? Boolean.TRUE : Boolean.FALSE;
+  public final void updateButton(@NotNull AnActionEvent e) {
+    final Boolean selected = isSelected(e);
     final Presentation presentation = e.getPresentation();
     presentation.putClientProperty(Toggleable.SELECTED_PROPERTY, selected);
   }

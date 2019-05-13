@@ -27,46 +27,29 @@ import com.intellij.openapi.vfs.VirtualFile;
 import java.io.IOException;
 
 public interface ApplyFilePatch {
-  Result SUCCESS = new Result(ApplyPatchStatus.SUCCESS) {
-    @Override
-    public ApplyPatchForBaseRevisionTexts getMergeData() {
-      return null;
-    }
-  };
+  Result SUCCESS = new Result(ApplyPatchStatus.SUCCESS);
+  Result FAILURE = new Result(ApplyPatchStatus.FAILURE);
 
   Result apply(VirtualFile fileToPatch,
                ApplyPatchContext context,
                Project project,
                FilePath pathBeforeRename,
-               Getter<CharSequence> baseContents,
+               Getter<? extends CharSequence> baseContents,
                CommitContext commitContext) throws IOException;
 
-  abstract class Result {
+  class Result {
     private final ApplyPatchStatus myStatus;
-    private IOException myException;
 
     protected Result(ApplyPatchStatus status) {
       myStatus = status;
     }
 
-    protected Result(ApplyPatchStatus status, final IOException e) {
-      myStatus = status;
-      myException = e;
+    public ApplyPatchForBaseRevisionTexts getMergeData() {
+      return null;
     }
 
-    public abstract ApplyPatchForBaseRevisionTexts getMergeData();
-
-    public ApplyPatchStatus getStatus() throws IOException {
+    public ApplyPatchStatus getStatus() {
       return myStatus;
-    }
-
-    public static Result createThrow(final IOException e) {
-      return new Result(ApplyPatchStatus.FAILURE, e) {
-        @Override
-        public ApplyPatchForBaseRevisionTexts getMergeData() {
-          return null;
-        }
-      };
     }
   }
 }

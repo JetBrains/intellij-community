@@ -1,0 +1,69 @@
+package pkg;
+
+public class TestAccessReplace {
+   private static void fooS() {
+   }// 19
+
+   private void foo() {
+   }// 20
+
+   private static void fooSParams(long a, long b) {
+   }// 21
+
+   private void fooParams(long a, long b) {
+   }// 22
+
+   public class Inner {
+      public Inner(String b) {
+         TestAccessReplace.fooS();// 26
+         TestAccessReplace.this.foo();// 27
+         TestAccessReplace.fooSParams(1L, 2L);// 28
+         TestAccessReplace.this.fooParams(1L, 2L);// 29
+      }// 30
+   }
+}
+
+class 'pkg/TestAccessReplace' {
+   method 'fooS ()V' {
+      0      4
+   }
+
+   method 'foo ()V' {
+      0      7
+   }
+
+   method 'fooSParams (JJ)V' {
+      0      10
+   }
+
+   method 'fooParams (JJ)V' {
+      0      13
+   }
+}
+
+class 'pkg/TestAccessReplace$Inner' {
+   method '<init> (Lpkg/TestAccessReplace;Ljava/lang/String;)V' {
+      9      17
+      d      18
+      10      19
+      11      19
+      14      19
+      18      20
+      19      20
+      1c      20
+      1f      21
+   }
+}
+
+Lines mapping:
+19 <-> 5
+20 <-> 8
+21 <-> 11
+22 <-> 14
+26 <-> 18
+27 <-> 19
+28 <-> 20
+29 <-> 21
+30 <-> 22
+Not mapped:
+25

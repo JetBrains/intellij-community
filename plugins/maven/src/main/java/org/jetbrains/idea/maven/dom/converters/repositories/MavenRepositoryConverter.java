@@ -18,20 +18,19 @@ package org.jetbrains.idea.maven.dom.converters.repositories;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.paths.WebReference;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.ElementManipulators;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.util.xml.ConvertContext;
 import com.intellij.util.xml.GenericDomValue;
 import com.intellij.util.xml.ResolvingConverter;
+import icons.MavenIcons;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.dom.converters.MavenUrlConverter;
 import org.jetbrains.idea.maven.dom.model.MavenDomRepositoryBase;
-import org.jetbrains.idea.maven.dom.references.MavenUrlPsiReference;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -42,6 +41,7 @@ import java.util.Collections;
 public abstract class MavenRepositoryConverter extends ResolvingConverter<String> {
 
   public static class Id extends MavenRepositoryConverter {
+    @Override
     @NotNull
     public Collection<String> getVariants(final ConvertContext context) {
       Module module = context.getModule();
@@ -54,12 +54,13 @@ public abstract class MavenRepositoryConverter extends ResolvingConverter<String
     @Override
     public LookupElement createLookupElement(String s) {
       return LookupElementBuilder.create(s)
-        .withIcon(icons.MavenIcons.MavenPlugin)
+        .withIcon(MavenIcons.MavenPlugin)
         .withTailText(" (" + MavenRepositoriesProvider.getInstance().getRepositoryUrl(s) + ")", true);
     }
   }
 
   public static class Name extends MavenRepositoryConverter {
+    @Override
     @NotNull
     public Collection<String> getVariants(final ConvertContext context) {
       Module module = context.getModule();
@@ -77,10 +78,7 @@ public abstract class MavenRepositoryConverter extends ResolvingConverter<String
     @NotNull
     @Override
     public PsiReference[] createReferences(GenericDomValue value, final PsiElement element, final ConvertContext context) {
-      String text = value.getStringValue();
-      TextRange range = ElementManipulators.getValueTextRange(element);
-      return new PsiReference[]{new MavenUrlPsiReference(element, text, range) {
-
+      return new PsiReference[]{new WebReference(element) {
         @NotNull
         @Override
         public Object[] getVariants() {
@@ -104,6 +102,7 @@ public abstract class MavenRepositoryConverter extends ResolvingConverter<String
     return null;
   }
 
+  @Override
   public String fromString(@Nullable @NonNls final String s, final ConvertContext context) {
     return s;
   }

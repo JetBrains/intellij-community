@@ -23,6 +23,6 @@ import java.util.List;
 
 public interface VcsCommittedListsZipper {
   Pair<List<RepositoryLocationGroup>, List<RepositoryLocation>> groupLocations(final List<RepositoryLocation> in);
-  CommittedChangeList zip(final RepositoryLocationGroup group, final List<CommittedChangeList> lists);
+  CommittedChangeList zip(final RepositoryLocationGroup group, final List<? extends CommittedChangeList> lists);
   long getNumber(final CommittedChangeList list);
 }

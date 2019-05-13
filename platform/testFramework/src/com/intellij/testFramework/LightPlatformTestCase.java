@@ -1,103 +1,95 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testFramework;
 
 import com.intellij.ProjectTopics;
-import com.intellij.codeHighlighting.HighlightDisplayLevel;
+import com.intellij.ReviseWhenPortedToJDK;
+import com.intellij.application.options.CodeStyle;
 import com.intellij.codeInsight.completion.CompletionProgressIndicator;
-import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.hint.HintManagerImpl;
 import com.intellij.codeInsight.lookup.LookupManager;
-import com.intellij.codeInspection.*;
-import com.intellij.codeInspection.ex.*;
+import com.intellij.codeInspection.InspectionProfileEntry;
+import com.intellij.codeInspection.LocalInspectionTool;
+import com.intellij.codeInspection.ex.InspectionToolWrapper;
 import com.intellij.ide.highlighter.ProjectFileType;
 import com.intellij.ide.startup.StartupManagerEx;
 import com.intellij.ide.startup.impl.StartupManagerImpl;
+import com.intellij.ide.structureView.StructureViewFactory;
+import com.intellij.ide.structureView.impl.StructureViewFactoryImpl;
 import com.intellij.idea.IdeaLogger;
 import com.intellij.idea.IdeaTestApplication;
+import com.intellij.lang.Language;
+import com.intellij.mock.MockApplication;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.DataProvider;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.application.ex.ApplicationEx;
+import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.command.WriteCommandAction;
+import com.intellij.openapi.command.impl.DocumentReferenceManagerImpl;
 import com.intellij.openapi.command.impl.UndoManagerImpl;
+import com.intellij.openapi.command.undo.DocumentReferenceManager;
 import com.intellij.openapi.command.undo.UndoManager;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
-import com.intellij.openapi.editor.impl.DocumentImpl;
 import com.intellij.openapi.editor.impl.EditorFactoryImpl;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.impl.FileDocumentManagerImpl;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
+import com.intellij.openapi.fileTypes.impl.FileTypeManagerImpl;
 import com.intellij.openapi.module.EmptyModuleType;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleType;
-import com.intellij.openapi.project.ModuleAdapter;
+import com.intellij.openapi.project.ModuleListener;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.project.impl.ProjectImpl;
 import com.intellij.openapi.project.impl.ProjectManagerImpl;
 import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.roots.*;
-import com.intellij.openapi.roots.impl.DirectoryIndex;
-import com.intellij.openapi.roots.impl.DirectoryIndexImpl;
+import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.roots.OrderRootType;
+import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.openapi.startup.StartupManager;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.EmptyRunnable;
-import com.intellij.openapi.util.ShutDownTracker;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.*;
+import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
 import com.intellij.openapi.vfs.encoding.EncodingManagerImpl;
-import com.intellij.openapi.vfs.impl.VirtualFilePointerManagerImpl;
+import com.intellij.openapi.vfs.impl.VirtualFilePointerTracker;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSImpl;
-import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
-import com.intellij.profile.codeInspection.InspectionProfileManager;
-import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
-import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.CodeStyleSchemes;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiFileFactory;
+import com.intellij.psi.PsiManager;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
-import com.intellij.psi.impl.DocumentCommitThread;
+import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
+import com.intellij.psi.codeStyle.CustomCodeStyleSettings;
 import com.intellij.psi.impl.PsiDocumentManagerImpl;
 import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageManagerImpl;
 import com.intellij.psi.templateLanguages.TemplateDataLanguageMappings;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.LocalTimeCounter;
+import com.intellij.util.ReflectionUtil;
+import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.indexing.FileBasedIndex;
-import com.intellij.util.indexing.IndexableFileSet;
 import com.intellij.util.messages.MessageBusConnection;
+import com.intellij.util.ref.GCUtil;
 import com.intellij.util.ui.UIUtil;
-import gnu.trove.THashMap;
+import junit.framework.AssertionFailedError;
 import junit.framework.TestCase;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
@@ -105,26 +97,40 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintStream;
-import java.util.*;
+import java.lang.management.GarbageCollectorMXBean;
+import java.lang.management.ManagementFactory;
+import java.lang.reflect.Method;
+import java.util.Arrays;
+import java.util.concurrent.DelayQueue;
+import java.util.concurrent.Delayed;
+import java.util.concurrent.TimeUnit;
 
 /**
  * @author yole
  */
 public abstract class LightPlatformTestCase extends UsefulTestCase implements DataProvider {
-  public static final String PROFILE = "Configurable";
+  @NonNls private static final String LIGHT_PROJECT_MARK = "Light project: ";
+
   private static IdeaTestApplication ourApplication;
+  @SuppressWarnings("FieldAccessedSynchronizedAndUnsynchronized")
   protected static Project ourProject;
   private static Module ourModule;
   private static PsiManager ourPsiManager;
   private static boolean ourAssertionsInTestDetected;
   private static VirtualFile ourSourceRoot;
-  private static TestCase ourTestCase = null;
+  private static TestCase ourTestCase;
   public static Thread ourTestThread;
   private static LightProjectDescriptor ourProjectDescriptor;
-  @NonNls private static final String LIGHT_PROJECT_MARK = "Light project: ";
-  private final Map<String, InspectionTool> myAvailableInspectionTools = new THashMap<String, InspectionTool>();
-  private static boolean ourHaveShutdownHook;
+  private static SdkLeakTracker myOldSdks;
+
   private ThreadTracker myThreadTracker;
+
+  static {
+    PlatformTestUtil.registerProjectCleanup(LightPlatformTestCase::closeAndDeleteProject);
+  }
+
+  private VirtualFilePointerTracker myVirtualFilePointerTracker;
+  private CodeStyleSettingsTracker myCodeStyleSettingsTracker;
 
   /**
    * @return Project to be used in tests for example for project components retrieval.
@@ -143,6 +149,7 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
   /**
    * Shortcut to PsiManager.getInstance(getProject())
    */
+  @NotNull
   public static PsiManager getPsiManager() {
     if (ourPsiManager == null) {
       ourPsiManager = PsiManager.getInstance(ourProject);
@@ -150,15 +157,17 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
     return ourPsiManager;
   }
 
+  @NotNull
   public static IdeaTestApplication initApplication() {
-    ourApplication = IdeaTestApplication.getInstance(null);
+    ourApplication = IdeaTestApplication.getInstance();
     return ourApplication;
   }
 
   @TestOnly
   public static void disposeApplication() {
     if (ourApplication != null) {
-      Disposer.dispose(ourApplication);
+      ApplicationManager.getApplication().runWriteAction(() -> Disposer.dispose(ourApplication));
+
       ourApplication = null;
     }
   }
@@ -167,11 +176,28 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
     return ourApplication;
   }
 
+  @SuppressWarnings("UseOfSystemOutOrSystemErr")
+  public static void reportTestExecutionStatistics() {
+    System.out.println("----- TEST STATISTICS -----");
+    UsefulTestCase.logSetupTeardownCosts();
+    System.out.println(String.format("##teamcity[buildStatisticValue key='ideaTests.appInstancesCreated' value='%d']",
+                                     MockApplication.INSTANCES_CREATED));
+    System.out.println(String.format("##teamcity[buildStatisticValue key='ideaTests.projectInstancesCreated' value='%d']",
+                                     ProjectManagerImpl.TEST_PROJECTS_CREATED));
+    long totalGcTime = 0;
+    for (GarbageCollectorMXBean mxBean : ManagementFactory.getGarbageCollectorMXBeans()) {
+      totalGcTime += mxBean.getCollectionTime();
+    }
+    System.out.println(String.format("##teamcity[buildStatisticValue key='ideaTests.gcTimeMs' value='%d']", totalGcTime));
+    System.out.println(String.format("##teamcity[buildStatisticValue key='ideaTests.classesLoaded' value='%d']",
+                                     ManagementFactory.getClassLoadingMXBean().getTotalLoadedClassCount()));
+  }
+
   protected void resetAllFields() {
     resetClassFields(getClass());
   }
 
-  private void resetClassFields(final Class<?> aClass) {
+  private void resetClassFields(@NotNull Class<?> aClass) {
     try {
       UsefulTestCase.clearDeclaredFields(this, aClass);
     }
@@ -187,124 +213,48 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
     ((PersistentFSImpl)PersistentFS.getInstance()).cleanPersistedContents();
   }
 
-  public static boolean isLight(Project project) {
-    String creationPlace = project.getUserData(CREATION_PLACE);
-    return creationPlace != null && StringUtil.startsWith(creationPlace, LIGHT_PROJECT_MARK);
-  }
-
   private static void initProject(@NotNull final LightProjectDescriptor descriptor) throws Exception {
     ourProjectDescriptor = descriptor;
-    final File projectFile = FileUtil.createTempFile("light_temp_", ProjectFileType.DOT_DEFAULT_EXTENSION);
 
-    new WriteCommandAction.Simple(null) {
-      @Override
-      protected void run() throws Throwable {
-        if (ourProject != null) {
-          closeAndDeleteProject();
-        }
-        else {
-          cleanPersistedVFSContent();
-        }
+    if (ourProject != null) {
+      closeAndDeleteProject();
+    }
+    ApplicationManager.getApplication().runWriteAction(LightPlatformTestCase::cleanPersistedVFSContent);
 
-        LocalFileSystem.getInstance().refreshAndFindFileByIoFile(projectFile);
+    final File projectFile = FileUtil.createTempFile(ProjectImpl.LIGHT_PROJECT_NAME, ProjectFileType.DOT_DEFAULT_EXTENSION);
+    LocalFileSystem.getInstance().refreshAndFindFileByIoFile(projectFile);
 
-        ByteArrayOutputStream buffer = new ByteArrayOutputStream();
-        new Throwable(projectFile.getPath()).printStackTrace(new PrintStream(buffer));
+    ByteArrayOutputStream buffer = new ByteArrayOutputStream();
+    new Throwable(projectFile.getPath()).printStackTrace(new PrintStream(buffer));
 
-        ourProject = PlatformTestCase.createProject(projectFile, LIGHT_PROJECT_MARK + buffer.toString());
-        if (!ourHaveShutdownHook) {
-          ourHaveShutdownHook = true;
-          registerShutdownHook();
-        }
-        ourPsiManager = null;
-        ourModule = createMainModule(descriptor.getModuleType());
+    ourProject = PlatformTestCase.createProject(projectFile, LIGHT_PROJECT_MARK + buffer);
+    ourPathToKeep = projectFile.getPath();
+    ourPsiManager = null;
 
-
-        //ourSourceRoot = DummyFileSystem.getInstance().createRoot("src");
-
-        final VirtualFile dummyRoot = VirtualFileManager.getInstance().findFileByUrl("temp:///");
-        dummyRoot.refresh(false, false);
-
-        try {
-          ourSourceRoot = dummyRoot.createChildDirectory(this, "src");
-        }
-        catch (IOException e) {
-          throw new RuntimeException(e);
+    try {
+      ourProjectDescriptor.setUpProject(ourProject, new LightProjectDescriptor.SetupHandler() {
+        @Override
+        public void moduleCreated(@NotNull Module module) {
+          //noinspection AssignmentToStaticFieldFromInstanceMethod
+          ourModule = module;
         }
 
-        FileBasedIndex.getInstance().registerIndexableSet(new IndexableFileSet() {
-          @Override
-          public boolean isInSet(@NotNull final VirtualFile file) {
-            return ourSourceRoot != null &&
-                   file.getFileSystem() == ourSourceRoot.getFileSystem() &&
-                   ourProject != null &&
-                   ourProject.isOpen();
-          }
-
-          @Override
-          public void iterateIndexableFilesIn(@NotNull final VirtualFile file, @NotNull final ContentIterator iterator) {
-            VfsUtilCore.visitChildrenRecursively(file, new VirtualFileVisitor() {
-              @Override
-              public boolean visitFile(@NotNull VirtualFile file) {
-                if (!file.isDirectory()) {
-                  iterator.processFile(file);
-                }
-                return true;
-              }
-            });
-          }
-        }, null);
-
-        final ModuleRootManager rootManager = ModuleRootManager.getInstance(ourModule);
-
-        final ModifiableRootModel rootModel = rootManager.getModifiableModel();
-
-
-        if (descriptor.getSdk() != null) {
-          rootModel.setSdk(descriptor.getSdk());
+        @Override
+        public void sourceRootCreated(@NotNull VirtualFile sourceRoot) {
+          //noinspection AssignmentToStaticFieldFromInstanceMethod
+          ourSourceRoot = sourceRoot;
         }
-
-        final ContentEntry contentEntry = rootModel.addContentEntry(ourSourceRoot);
-        contentEntry.addSourceFolder(ourSourceRoot, false);
-
-        descriptor.configureModule(ourModule, rootModel, contentEntry);
-
-        rootModel.commit();
-
-        final MessageBusConnection connection = ourProject.getMessageBus().connect();
-        connection.subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootAdapter() {
-          @Override
-          public void beforeRootsChange(ModuleRootEvent event) {
-            if (!event.isCausedByFileTypesChange()) {
-              //TODO: uncomment fail("Root modification in LightIdeaTestCase is not allowed.");
-            }
-          }
-        });
-
-        connection.subscribe(ProjectTopics.MODULES, new ModuleAdapter() {
-          @Override
-          public void moduleAdded(Project project, Module module) {
-            fail("Adding modules is not permitted in LightIdeaTestCase.");
-          }
-        });
-
-
-        final StartupManagerImpl startupManager = (StartupManagerImpl)StartupManager.getInstance(ourProject);
-        startupManager.runStartupActivities();
-        startupManager.startCacheUpdate();
+      });
+    }
+    catch (Throwable e) {
+      try {
+        closeAndDeleteProject();
       }
-    }.execute().throwException();
-    // project creation may make a lot of pointers, do not regard them as leak
-    ((VirtualFilePointerManagerImpl)VirtualFilePointerManager.getInstance()).storePointers();
-  }
-
-  protected static Module createMainModule(final ModuleType moduleType) {
-    return ApplicationManager.getApplication().runWriteAction(new Computable<Module>() {
-      @Override
-      public Module compute() {
-        return ModuleManager.getInstance(ourProject).newModule("light_idea_test_case.iml", moduleType.getId());
+      catch (Throwable suppressed) {
+        e.addSuppressed(suppressed);
       }
-    });
+      throw new RuntimeException(e);
+    }
   }
 
   /**
@@ -316,98 +266,81 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
 
   @Override
   protected void setUp() throws Exception {
-    super.setUp();
-    initApplication();
-    ourApplication.setDataProvider(this);
-    doSetup(new SimpleLightProjectDescriptor(getModuleType(), getProjectJDK()), configureLocalInspectionTools(), myAvailableInspectionTools);
-    InjectedLanguageManagerImpl.pushInjectors(getProject());
+    EdtTestUtil.runInEdtAndWait(() -> {
+      super.setUp();
+      ApplicationInfoImpl.setInStressTest(isStressTest());
+      if (isPerformanceTest()) {
+        Timings.getStatistics();
+      }
+      initApplication();
 
-    storeSettings();
+      ourApplication.setDataProvider(this);
+      LightProjectDescriptor descriptor = getProjectDescriptor();
+      doSetup(descriptor, configureLocalInspectionTools(), getTestRootDisposable());
+      InjectedLanguageManagerImpl.pushInjectors(getProject());
 
-    myThreadTracker = new ThreadTracker();
-    DocumentImpl.CHECK_DOCUMENT_CONSISTENCY = !isPerformanceTest();
-    ModuleRootManager.getInstance(ourModule).orderEntries().getAllLibrariesAndSdkClassesRoots();
-    VirtualFilePointerManagerImpl filePointerManager = (VirtualFilePointerManagerImpl)VirtualFilePointerManager.getInstance();
-    filePointerManager.storePointers();
+      myCodeStyleSettingsTracker = new CodeStyleSettingsTracker(
+        () -> isStressTest() ||
+              ApplicationManager.getApplication() == null ||
+              ApplicationManager.getApplication() instanceof MockApplication ? null : CodeStyle.getDefaultSettings());
+
+      myThreadTracker = new ThreadTracker();
+      ModuleRootManager.getInstance(ourModule).orderEntries().getAllLibrariesAndSdkClassesRoots();
+      myVirtualFilePointerTracker = new VirtualFilePointerTracker();
+    });
+  }
+
+  @NotNull
+  protected LightProjectDescriptor getProjectDescriptor() {
+    return new SimpleLightProjectDescriptor(getModuleType(), getProjectJDK());
   }
 
   public static void doSetup(@NotNull LightProjectDescriptor descriptor,
                              @NotNull LocalInspectionTool[] localInspectionTools,
-                             @NotNull final Map<String, InspectionTool> availableInspectionTools)
-    throws Exception {
+                             @NotNull Disposable parentDisposable) throws Exception {
     assertNull("Previous test " + ourTestCase + " hasn't called tearDown(). Probably overridden without super call.", ourTestCase);
     IdeaLogger.ourErrorsOccurred = null;
+    ApplicationManager.getApplication().assertIsDispatchThread();
 
-    if (ourProject == null || !ourProjectDescriptor.equals(descriptor)) {
+    myOldSdks = new SdkLeakTracker();
+
+    boolean reusedProject = true;
+    if (ourProject == null || ourProjectDescriptor == null || !ourProjectDescriptor.equals(descriptor)) {
       initProject(descriptor);
+      reusedProject = false;
     }
-    ((ProjectImpl)ourProject).setTemporarilyDisposed(false);
 
     ProjectManagerEx projectManagerEx = ProjectManagerEx.getInstanceEx();
-    projectManagerEx.openTestProject(ourProject);
+    try {
+      projectManagerEx.openTestProject(ourProject);
+    }
+    catch (Throwable e) {
+      ourProject = null;
+      throw e;
+    }
+    if (reusedProject) {
+      // clear all caches, reindex
+      WriteAction.run(()-> ProjectRootManagerEx.getInstanceEx(getProject()).makeRootsChange(EmptyRunnable.getInstance(), false, true));
+    }
+
+    MessageBusConnection connection = ourProject.getMessageBus().connect(parentDisposable);
+    connection.subscribe(ProjectTopics.MODULES, new ModuleListener() {
+      @Override
+      public void moduleAdded(@NotNull Project project, @NotNull Module module) {
+        fail("Adding modules is not permitted in light tests.");
+      }
+    });
 
     clearUncommittedDocuments(getProject());
 
-    for (LocalInspectionTool tool : localInspectionTools) {
-      enableInspectionTool(availableInspectionTools, new LocalInspectionToolWrapper(tool));
-    }
-
-    final InspectionProfileImpl profile = new InspectionProfileImpl(PROFILE) {
-      @Override
-      @NotNull
-      public InspectionProfileEntry[] getInspectionTools(PsiElement element) {
-        final Collection<InspectionTool> tools = availableInspectionTools.values();
-        return tools.toArray(new InspectionTool[tools.size()]);
-      }
-
-      @Override
-      public List<ToolsImpl> getAllEnabledInspectionTools(Project project) {
-        List<ToolsImpl> result = new ArrayList<ToolsImpl>();
-        for (InspectionProfileEntry entry : getInspectionTools(null)) {
-          result.add(new ToolsImpl(entry, entry.getDefaultLevel(), true));
-        }
-        return result;
-      }
-
-      @Override
-      public boolean isToolEnabled(HighlightDisplayKey key, PsiElement element) {
-        return key != null && availableInspectionTools.containsKey(key.toString());
-      }
-
-      @Override
-      public HighlightDisplayLevel getErrorLevel(@NotNull HighlightDisplayKey key, PsiElement element) {
-        InspectionTool localInspectionTool = availableInspectionTools.get(key.toString());
-        return localInspectionTool != null ? localInspectionTool.getDefaultLevel() : HighlightDisplayLevel.WARNING;
-      }
-
-      @Override
-      public InspectionTool getInspectionTool(@NotNull String shortName, @NotNull PsiElement element) {
-        if (availableInspectionTools.containsKey(shortName)) {
-          return availableInspectionTools.get(shortName);
-        }
-        return null;
-      }
-
-      @Override
-      public InspectionProfileEntry getToolById(String id, @NotNull PsiElement element) {
-        if (availableInspectionTools.containsKey(id)) {
-          return availableInspectionTools.get(id);
-        }
-        return null;
-      }
-    };
-    final InspectionProfileManager inspectionProfileManager = InspectionProfileManager.getInstance();
-    inspectionProfileManager.addProfile(profile);
-    inspectionProfileManager.setRootProfile(profile.getName());
-    InspectionProjectProfileManager.getInstance(getProject()).updateProfile(profile);
-    InspectionProjectProfileManager.getInstance(getProject()).setProjectProfile(profile.getName());
+    InspectionsKt.configureInspections(localInspectionTools, getProject(), parentDisposable);
 
     assertFalse(getPsiManager().isDisposed());
     Boolean passed = null;
     try {
       passed = StartupManagerEx.getInstanceEx(getProject()).startupActivityPassed();
     }
-    catch (Exception e) {
+    catch (Exception ignored) {
 
     }
     assertTrue("open: " + getProject().isOpen() +
@@ -415,76 +348,31 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
                "; startup passed:" + passed +
                "; all open projects: " + Arrays.asList(ProjectManager.getInstance().getOpenProjects()), getProject().isInitialized());
 
-    CodeStyleSettingsManager.getInstance(getProject()).setTemporarySettings(new CodeStyleSettings());
+    CodeStyle.setTemporarySettings(getProject(), new CodeStyleSettings());
 
     final FileDocumentManager manager = FileDocumentManager.getInstance();
     if (manager instanceof FileDocumentManagerImpl) {
       Document[] unsavedDocuments = manager.getUnsavedDocuments();
       manager.saveAllDocuments();
-      ApplicationManager.getApplication().runWriteAction(new Runnable() {
-        @Override
-        public void run() {
-          ((FileDocumentManagerImpl)manager).dropAllUnsavedDocuments();
-        }
-      });
+      ApplicationManager.getApplication().runWriteAction(((FileDocumentManagerImpl)manager)::dropAllUnsavedDocuments);
 
-      assertEmpty(unsavedDocuments);
+      assertEmpty("There are unsaved documents", Arrays.asList(unsavedDocuments));
     }
-  }
+    UIUtil.dispatchAllInvocationEvents(); // startup activities
 
-  // todo: use Class<? extends InspectionProfileEntry> once on Java 7
-  protected void enableInspectionTools(@NotNull Class<?>... classes) {
-    final InspectionProfileEntry[] tools = new InspectionProfileEntry[classes.length];
-
-    final List<InspectionEP> eps = ContainerUtil.newArrayList();
-    ContainerUtil.addAll(eps, Extensions.getExtensions(LocalInspectionEP.LOCAL_INSPECTION));
-    ContainerUtil.addAll(eps, Extensions.getExtensions(InspectionEP.GLOBAL_INSPECTION));
-    ContainerUtil.addAll(eps, (InspectionEP[])Extensions.getExtensions("com.intellij.specialTool"));
-
-    next:
-    for (int i = 0; i < classes.length; i++) {
-      for (InspectionEP ep : eps) {
-        if (classes[i].getName().equals(ep.implementationClass)) {
-          tools[i] = ep.instantiateTool();
-          continue next;
-        }
-      }
-      throw new IllegalArgumentException("Unable to find extension point for " + classes[i].getName());
-    }
-
-    enableInspectionTools(tools);
+    ((FileTypeManagerImpl)FileTypeManager.getInstance()).drainReDetectQueue();
   }
 
   protected void enableInspectionTools(@NotNull InspectionProfileEntry... tools) {
-    for (InspectionProfileEntry tool : tools) {
-      enableInspectionTool(tool);
-    }
+    InspectionsKt.enableInspectionTools(getProject(), getTestRootDisposable(), tools);
+  }
+
+  protected void enableInspectionTool(@NotNull InspectionToolWrapper toolWrapper) {
+    InspectionsKt.enableInspectionTool(getProject(), toolWrapper, getTestRootDisposable());
   }
 
   protected void enableInspectionTool(@NotNull InspectionProfileEntry tool) {
-    if (tool instanceof InspectionTool) {
-      enableInspectionTool(myAvailableInspectionTools, (InspectionTool)tool);
-    }
-    else if (tool instanceof LocalInspectionTool) {
-      enableInspectionTool(myAvailableInspectionTools, new LocalInspectionToolWrapper((LocalInspectionTool)tool));
-    }
-    else if (tool instanceof GlobalInspectionTool) {
-      enableInspectionTool(myAvailableInspectionTools, new GlobalInspectionToolWrapper((GlobalInspectionTool)tool));
-    }
-    else {
-      throw new IllegalArgumentException("Unexpected inspection type: " + tool);
-    }
-  }
-
-  private static void enableInspectionTool(@NotNull Map<String, InspectionTool> availableLocalTools, @NotNull InspectionTool wrapper) {
-    final String shortName = wrapper.getShortName();
-    final HighlightDisplayKey key = HighlightDisplayKey.find(shortName);
-    if (key == null) {
-      HighlightDisplayKey.register(shortName, wrapper.getDisplayName(), wrapper instanceof LocalInspectionToolWrapper
-                                                                        ? ((LocalInspectionToolWrapper)wrapper).getTool().getID()
-                                                                        : wrapper.getShortName());
-    }
-    availableLocalTools.put(shortName, wrapper);
+    InspectionsKt.enableInspectionTool(getProject(), tool, getTestRootDisposable());
   }
 
   @NotNull
@@ -495,43 +383,38 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
   @Override
   protected void tearDown() throws Exception {
     Project project = getProject();
-    CodeStyleSettingsManager.getInstance(project).dropTemporarySettings();
-    checkForSettingsDamage();
-    VirtualFilePointerManagerImpl filePointerManager = (VirtualFilePointerManagerImpl)VirtualFilePointerManager.getInstance();
-    doTearDown(project, ourApplication, true);
 
-    try {
-      super.tearDown();
-    }
-    finally {
-      myThreadTracker.checkLeak();
-      InjectedLanguageManagerImpl.checkInjectorsAreDisposed(project);
-      filePointerManager.assertPointersAreDisposed();
-    }
+    // don't use method references here to make stack trace reading easier
+    //noinspection Convert2MethodRef
+    new RunAll(
+      () -> CodeStyle.dropTemporarySettings(project),
+      () -> myCodeStyleSettingsTracker.checkForSettingsDamage(),
+      () -> doTearDown(project, ourApplication),
+      () -> checkEditorsReleased(),
+      () -> myOldSdks.checkForJdkTableLeaks(),
+      super::tearDown,
+      () -> myThreadTracker.checkLeak(),
+      () -> InjectedLanguageManagerImpl.checkInjectorsAreDisposed(project),
+      () -> myVirtualFilePointerTracker.assertPointersAreDisposed()
+    ).run();
   }
 
-  public static void doTearDown(@NotNull final Project project, IdeaTestApplication application, boolean checkForEditors) throws Exception {
-    DocumentCommitThread.getInstance().clearQueue();
-    CodeStyleSettingsManager.getInstance(project).dropTemporarySettings();
-    checkAllTimersAreDisposed();
-    UsefulTestCase.doPostponedFormatting(project);
-
-    LookupManager lookupManager = LookupManager.getInstance(project);
-    if (lookupManager != null) {
-      lookupManager.hideActiveLookup();
-    }
-    ((StartupManagerImpl)StartupManager.getInstance(project)).prepareForNextTest();
-    InspectionProfileManager.getInstance().deleteProfile(PROFILE);
-    assertNotNull("Application components damaged", ProjectManager.getInstance());
-
-    new WriteCommandAction.Simple(project) {
-      @Override
-      protected void run() throws Throwable {
+  public static void doTearDown(@NotNull Project project, @NotNull IdeaTestApplication application) {
+    // don't use method references here to make stack trace reading easier
+    //noinspection Convert2MethodRef
+    new RunAll().
+      append(() -> ((FileTypeManagerImpl)FileTypeManager.getInstance()).drainReDetectQueue()).
+      append(() -> CodeStyle.dropTemporarySettings(project)).
+      append(() -> checkJavaSwingTimersAreDisposed()).
+      append(() -> UsefulTestCase.doPostponedFormatting(project)).
+      append(() -> LookupManager.hideActiveLookup(project)).
+      append(() -> ((StartupManagerImpl)StartupManager.getInstance(project)).prepareForNextTest()).
+      append(() -> { if (ProjectManager.getInstance() == null) throw new AssertionError("Application components damaged"); }).
+      append(() -> WriteCommandAction.runWriteCommandAction(project, () -> {
         if (ourSourceRoot != null) {
           try {
-            final VirtualFile[] children = ourSourceRoot.getChildren();
-            for (VirtualFile child : children) {
-              child.delete(this);
+            for (VirtualFile child : ourSourceRoot.getChildren()) {
+              child.delete(LightPlatformTestCase.class);
             }
           }
           catch (IOException e) {
@@ -539,134 +422,137 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
             e.printStackTrace();
           }
         }
-        EncodingManager encodingManager = EncodingManager.getInstance();
-        if (encodingManager instanceof EncodingManagerImpl) ((EncodingManagerImpl)encodingManager).clearDocumentQueue();
 
         FileDocumentManager manager = FileDocumentManager.getInstance();
-
-        ApplicationManager.getApplication().runWriteAction(EmptyRunnable.getInstance()); // Flush postponed formatting if any.
-        manager.saveAllDocuments();
         if (manager instanceof FileDocumentManagerImpl) {
           ((FileDocumentManagerImpl)manager).dropAllUnsavedDocuments();
         }
+      })).
+      append(() -> assertFalse(PsiManager.getInstance(project).isDisposed())).
+      append(() -> {
+        clearEncodingManagerDocumentQueue();
 
-        ((DirectoryIndexImpl)DirectoryIndex.getInstance(project)).assertAncestorConsistent();
-      }
-    }.execute().throwException();
+        if (!ourAssertionsInTestDetected) {
+          if (IdeaLogger.ourErrorsOccurred != null) {
+            throw IdeaLogger.ourErrorsOccurred;
+          }
+        }
+      }).
+      append(() -> clearUncommittedDocuments(project)).
+      append(() -> ((HintManagerImpl)HintManager.getInstance()).cleanup()).
+      append(() -> ((UndoManagerImpl)UndoManager.getGlobalInstance()).dropHistoryInTests()).
+      append(() -> ((UndoManagerImpl)UndoManager.getInstance(project)).dropHistoryInTests()).
+      append(() -> ((DocumentReferenceManagerImpl)DocumentReferenceManager.getInstance()).cleanupForNextTest()).
+      append(() -> TemplateDataLanguageMappings.getInstance(project).cleanupForNextTest()).
+      append(() -> ((PsiManagerImpl)PsiManager.getInstance(project)).cleanupForNextTest()).
+      append(() -> ((StructureViewFactoryImpl)StructureViewFactory.getInstance(project)).cleanupForNextTest()).
+      append(() -> PlatformTestCase.waitForProjectLeakingThreads(project, 10, TimeUnit.SECONDS)).
+      append(() -> ProjectManagerEx.getInstanceEx().closeTestProject(project)).
+      append(() -> application.setDataProvider(null)).
+      append(() -> ourTestCase = null).
+      append(() -> CompletionProgressIndicator.cleanupForNextTest()).
+      append(() -> {
+        if (ourTestCount++ % 100 == 0) {
+          // some tests are written in Groovy, and running all of them may result in some 40M of memory wasted on bean infos
+          // so let's clear the cache every now and then to ensure it doesn't grow too large
+          GCUtil.clearBeanInfoCache();
+        }
+      }).
+      run();
+  }
 
-    assertFalse(PsiManager.getInstance(project).isDisposed());
-    if (!ourAssertionsInTestDetected) {
-      if (IdeaLogger.ourErrorsOccurred != null) {
-        throw IdeaLogger.ourErrorsOccurred;
-      }
-    }
-    PsiDocumentManagerImpl documentManager = clearUncommittedDocuments(project);
-    ((HintManagerImpl)HintManager.getInstance()).cleanup();
-    DocumentCommitThread.getInstance().clearQueue();
-
-    UIUtil.invokeAndWaitIfNeeded(new Runnable() {
-      @Override
-      public void run() {
-        ((UndoManagerImpl)UndoManager.getGlobalInstance()).dropHistoryInTests();
-        ((UndoManagerImpl)UndoManager.getInstance(project)).dropHistoryInTests();
-
-        UIUtil.dispatchAllInvocationEvents();
-      }
-    });
-
-    TemplateDataLanguageMappings.getInstance(project).cleanupForNextTest();
-
-    ProjectManagerEx.getInstanceEx().closeTestProject(project);
-    application.setDataProvider(null);
-    ourTestCase = null;
-    ((PsiManagerImpl)PsiManager.getInstance(project)).cleanupForNextTest();
-
-    CompletionProgressIndicator.cleanupForNextTest();
-
-    if (checkForEditors) {
-      checkEditorsReleased();
-    }
-    if (isLight(project)) {
-      // mark temporarily as disposed so that rogue component trying to access it will fail
-      ((ProjectImpl)project).setTemporarilyDisposed(true);
-      documentManager.clearUncommitedDocuments();
+  public static void clearEncodingManagerDocumentQueue() {
+    EncodingManager encodingManager = ServiceManager.getServiceIfCreated(EncodingManager.class);
+    if (encodingManager instanceof EncodingManagerImpl) {
+      ((EncodingManagerImpl)encodingManager).clearDocumentQueue();
     }
   }
 
-  public static PsiDocumentManagerImpl clearUncommittedDocuments(@NotNull Project project) {
-    PsiDocumentManagerImpl documentManager = (PsiDocumentManagerImpl)PsiDocumentManager.getInstance(project);
-    documentManager.clearUncommitedDocuments();
+  private static int ourTestCount;
 
-    ProjectManagerImpl projectManager = (ProjectManagerImpl)ProjectManager.getInstance();
+  @ReviseWhenPortedToJDK("9")
+  private static void checkJavaSwingTimersAreDisposed() throws Exception {
+    Class<?> TimerQueueClass = Class.forName("javax.swing.TimerQueue");
+    Method sharedInstance = ReflectionUtil.getMethod(TimerQueueClass, "sharedInstance");
+
+    Object timerQueue = sharedInstance.invoke(null);
+    DelayQueue delayQueue = ReflectionUtil.getField(TimerQueueClass, timerQueue, DelayQueue.class, "queue");
+    Delayed timer = delayQueue.peek();
+    if (timer != null) {
+      long delay = timer.getDelay(TimeUnit.MILLISECONDS);
+      String text = "(delayed for " + delay + "ms)";
+      Method getTimer = ReflectionUtil.getDeclaredMethod(timer.getClass(), "getTimer");
+      Timer swingTimer = (Timer)getTimer.invoke(timer);
+      text = "Timer (listeners: "+Arrays.asList(swingTimer.getActionListeners()) + ") "+text;
+      try {
+        throw new AssertionFailedError("Not disposed java.swing.Timer: " + text + "; queue:" + timerQueue);
+      }
+      finally {
+        swingTimer.stop();
+      }
+    }
+  }
+
+  public static void clearUncommittedDocuments(@NotNull Project project) {
+    PsiDocumentManagerImpl documentManager = (PsiDocumentManagerImpl)PsiDocumentManager.getInstance(project);
+    documentManager.clearUncommittedDocuments();
+
+    ProjectManagerEx projectManager = ProjectManagerEx.getInstanceEx();
     if (projectManager.isDefaultProjectInitialized()) {
       Project defaultProject = projectManager.getDefaultProject();
-      ((PsiDocumentManagerImpl)PsiDocumentManager.getInstance(defaultProject)).clearUncommitedDocuments();
+      ((PsiDocumentManagerImpl)PsiDocumentManager.getInstance(defaultProject)).clearUncommittedDocuments();
     }
-    return documentManager;
   }
 
-  public static void checkEditorsReleased() throws Exception {
-    CompositeException result = new CompositeException();
-    final Editor[] allEditors = EditorFactory.getInstance().getAllEditors();
-    if (allEditors.length > 0) {
-      for (Editor editor : allEditors) {
-        try {
-          EditorFactoryImpl.throwNotReleasedError(editor);
+  public static void checkEditorsReleased() {
+    // don't use method references here to make stack trace reading easier
+    //noinspection Convert2MethodRef
+    new RunAll(
+      () -> UIUtil.dispatchAllInvocationEvents(),
+      () -> {
+        // getAllEditors() should be called only after dispatchAllInvocationEvents(), that's why separate RunAll is used
+        RunAll runAll = new RunAll();
+        for (Editor editor : EditorFactory.getInstance().getAllEditors()) {
+          runAll = runAll
+            .append(() -> EditorFactoryImpl.throwNotReleasedError(editor))
+            .append(() -> EditorFactory.getInstance().releaseEditor(editor));
         }
-        catch (Throwable e) {
-          result.add(e);
-        }
-        finally {
-          EditorFactory.getInstance().releaseEditor(editor);
-        }
-      }
-      try {
-        fail("Unreleased editors: " + allEditors.length);
-      }
-      catch (Throwable e) {
-        result.add(e);
-      }
-    }
-    if (!result.isEmpty()) throw result;
+        runAll.run();
+      }).run();
   }
 
   @Override
   public final void runBare() throws Throwable {
+    runBareImpl(this::startRunAndTear);
+  }
+
+  @SuppressWarnings("AssignmentToStaticFieldFromInstanceMethod")
+  protected void runBareImpl(ThrowableRunnable<?> start) throws Exception {
     if (!shouldRunTest()) {
       return;
     }
 
-    final Throwable[] throwables = new Throwable[1];
-
-    SwingUtilities.invokeAndWait(new Runnable() {
-      @Override
-      public void run() {
+    TestRunnerUtil.replaceIdeEventQueueSafely();
+    EdtTestUtil.runInEdtAndWait(() -> {
+      try {
+        ourTestThread = Thread.currentThread();
+        start.run();
+      }
+      finally {
+        ourTestThread = null;
         try {
-          ourTestThread = Thread.currentThread();
-          startRunAndTear();
-        }
-        catch (Throwable throwable) {
-          throwables[0] = throwable;
-        }
-        finally {
-          ourTestThread = null;
-          try {
-            Application application = ApplicationManager.getApplication();
-            if (application instanceof ApplicationEx) {
-              PlatformTestCase.cleanupApplicationCaches(ourProject);
-            }
-            resetAllFields();
+          Application application = ApplicationManager.getApplication();
+          if (application instanceof ApplicationEx) {
+            PlatformTestCase.cleanupApplicationCaches(ourProject);
           }
-          catch (Throwable e) {
-            e.printStackTrace();
-          }
+          resetAllFields();
+        }
+        catch (Throwable e) {
+          //noinspection CallToPrintStackTrace
+          e.printStackTrace();
         }
       }
     });
-
-    if (throwables[0] != null) {
-      throw throwables[0];
-    }
 
     // just to make sure all deferred Runnables to finish
     SwingUtilities.invokeAndWait(EmptyRunnable.getInstance());
@@ -676,6 +562,7 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
     }
   }
 
+  @SuppressWarnings("AssignmentToStaticFieldFromInstanceMethod")
   private void startRunAndTear() throws Throwable {
     setUp();
     try {
@@ -688,24 +575,21 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
       tearDown();
       //}
       //catch(Throwable th){
-      //  noinspection CallToPrintStackTrace
       //th.printStackTrace();
       //}
     }
   }
 
   @Override
-  public Object getData(String dataId) {
-    if (PlatformDataKeys.PROJECT.is(dataId)) {
-      return ourProject;
-    }
-    return null;
+  public Object getData(@NotNull String dataId) {
+    return ourProject == null || ourProject.isDisposed() ? null : new TestDataProvider(ourProject).getData(dataId);
   }
 
   protected Sdk getProjectJDK() {
     return null;
   }
 
+  @NotNull
   protected ModuleType getModuleType() {
     return EmptyModuleType.getInstance();
   }
@@ -718,16 +602,17 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
    * @param fileName - name of the file to create. Extension is used to choose what PSI should be created like java, jsp, aj, xml etc.
    * @param text     - file text.
    * @return dummy psi file.
-   * @throws com.intellij.util.IncorrectOperationException
    *
    */
-  protected static PsiFile createFile(@NonNls String fileName, @NonNls String text) throws IncorrectOperationException {
+  @NotNull
+  protected static PsiFile createFile(@NonNls @NotNull String fileName, @NonNls @NotNull String text) throws IncorrectOperationException {
     FileType fileType = FileTypeManager.getInstance().getFileTypeByFileName(fileName);
     return PsiFileFactory.getInstance(getProject())
       .createFileFromText(fileName, fileType, text, LocalTimeCounter.currentTime(), true, false);
   }
 
-  protected static PsiFile createLightFile(@NonNls String fileName, String text) throws IncorrectOperationException {
+  @NotNull
+  protected static PsiFile createLightFile(@NonNls @NotNull String fileName, @NotNull String text) throws IncorrectOperationException {
     FileType fileType = FileTypeManager.getInstance().getFileTypeByFileName(fileName);
     return PsiFileFactory.getInstance(getProject())
       .createFileFromText(fileName, fileType, text, LocalTimeCounter.currentTime(), false, false);
@@ -738,18 +623,34 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
    *
    * @param lowercaseFirstLetter - whether first letter after test should be lowercased.
    */
+  @NotNull
   @Override
   protected String getTestName(boolean lowercaseFirstLetter) {
     String name = getName();
     assertTrue("Test name should start with 'test': " + name, name.startsWith("test"));
     name = name.substring("test".length());
-    if (!name.isEmpty() && lowercaseFirstLetter && !UsefulTestCase.isAllUppercaseName(name)) {
+    if (!name.isEmpty() && lowercaseFirstLetter && !PlatformTestUtil.isAllUppercaseName(name)) {
       name = Character.toLowerCase(name.charAt(0)) + name.substring(1);
     }
     return name;
   }
 
-  protected static void commitDocument(final Document document) {
+  @NotNull
+  protected static CodeStyleSettings getCurrentCodeStyleSettings() {
+    return CodeStyle.getSettings(getProject());
+  }
+
+  @NotNull
+  protected static CommonCodeStyleSettings getLanguageSettings(@NotNull Language language) {
+    return getCurrentCodeStyleSettings().getCommonSettings(language);
+  }
+
+  @NotNull
+  protected static <T extends CustomCodeStyleSettings> T getCustomSettings(@NotNull Class<T> settingsClass) {
+    return getCurrentCodeStyleSettings().getCustomSettings(settingsClass);
+  }
+
+  protected static void commitDocument(@NotNull Document document) {
     PsiDocumentManager.getInstance(getProject()).commitDocument(document);
   }
 
@@ -757,76 +658,77 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
     PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
   }
 
-  @Override
-  protected CodeStyleSettings getCurrentCodeStyleSettings() {
-    if (CodeStyleSchemes.getInstance().getCurrentScheme() == null) return new CodeStyleSettings();
-    return CodeStyleSettingsManager.getSettings(getProject());
-  }
-
-  protected static Document getDocument(final PsiFile file) {
+  protected static Document getDocument(@NotNull PsiFile file) {
     return PsiDocumentManager.getInstance(getProject()).getDocument(file);
   }
 
+  @SuppressWarnings("NonPrivateFieldAccessedInSynchronizedContext")
   public static synchronized void closeAndDeleteProject() {
-    if (ourProject != null) {
-      ApplicationManager.getApplication().assertWriteAccessAllowed();
-      ((ProjectImpl)ourProject).setTemporarilyDisposed(false);
-      final VirtualFile projFile = ((ProjectEx)ourProject).getStateStore().getProjectFile();
-      final File projectFile = projFile == null ? null : VfsUtilCore.virtualToIoFile(projFile);
-      if (!ourProject.isDisposed()) Disposer.dispose(ourProject);
-
-      if (projectFile != null) {
-        FileUtil.delete(projectFile);
-      }
-      ourProject = null;
+    if (ourProject == null) {
+      return;
     }
-  }
+    if (ApplicationManager.getApplication().isWriteAccessAllowed()) {
+      throw new IllegalStateException("Must not call closeAndDeleteProject from under write action");
+    }
 
+    if (!ourProject.isDisposed()) {
+      assertEquals(ourProject, ourModule.getProject());
 
-  static {
-    System.setProperty("jbdt.test.fixture", "com.intellij.designer.dt.IJTestFixture");
-  }
-
-  private static void registerShutdownHook() {
-    ShutDownTracker.getInstance().registerShutdownTask(new Runnable() {
-      @Override
-      public void run() {
-        ShutDownTracker.invokeAndWait(true, true, new Runnable() {
-          @Override
-          public void run() {
-            ApplicationManager.getApplication().runWriteAction(new Runnable() {
-              @Override
-              public void run() {
-                closeAndDeleteProject();
-              }
-            });
-          }
-        });
+      @SuppressWarnings("ConstantConditions")
+      File ioFile = new File(ourProject.getProjectFilePath());
+      if (ioFile.exists()) {
+        File dir = ioFile.getParentFile();
+        if (dir.getName().startsWith(UsefulTestCase.TEMP_DIR_MARKER)) {
+          FileUtil.delete(dir);
+        }
+        else {
+          FileUtil.delete(ioFile);
+        }
       }
-    });
+    }
+
+    assertTrue(ProjectManagerEx.getInstanceEx().forceCloseProject(ourProject, true));
+    assertTrue(ourProject.isDisposed());
+
+    // project may be disposed but empty folder may still be there
+    if (ourPathToKeep != null) {
+      File parent = new File(ourPathToKeep).getParentFile();
+      if (parent.getName().startsWith(UsefulTestCase.TEMP_DIR_MARKER)) {
+        // delete only empty folders
+        //noinspection ResultOfMethodCallIgnored
+        parent.delete();
+      }
+    }
+
+    ourProject = null;
+    assertTrue(ourModule.isDisposed());
+    ourModule = null;
+    if (ourPsiManager != null) {
+      assertTrue(ourPsiManager.isDisposed());
+      ourPsiManager = null;
+    }
+    ourPathToKeep = null;
   }
 
-  private static class SimpleLightProjectDescriptor implements LightProjectDescriptor {
-    private final ModuleType myModuleType;
-    private final Sdk mySdk;
+  private static class SimpleLightProjectDescriptor extends LightProjectDescriptor {
+    @NotNull private final ModuleType myModuleType;
+    @Nullable private final Sdk mySdk;
 
-    SimpleLightProjectDescriptor(ModuleType moduleType, Sdk sdk) {
+    SimpleLightProjectDescriptor(@NotNull ModuleType moduleType, @Nullable Sdk sdk) {
       myModuleType = moduleType;
       mySdk = sdk;
     }
 
+    @NotNull
     @Override
     public ModuleType getModuleType() {
       return myModuleType;
     }
 
+    @Nullable
     @Override
     public Sdk getSdk() {
       return mySdk;
-    }
-
-    @Override
-    public void configureModule(Module module, ModifiableRootModel model, ContentEntry contentEntry) {
     }
 
     @Override
@@ -836,13 +738,13 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
 
       SimpleLightProjectDescriptor that = (SimpleLightProjectDescriptor)o;
 
-      if (myModuleType != null ? !myModuleType.equals(that.myModuleType) : that.myModuleType != null) return false;
+      if (!myModuleType.equals(that.myModuleType)) return false;
       return areJdksEqual(that.getSdk());
     }
 
     @Override
     public int hashCode() {
-      return myModuleType != null ? myModuleType.hashCode() : 0;
+      return myModuleType.hashCode();
     }
 
     private boolean areJdksEqual(final Sdk newSdk) {

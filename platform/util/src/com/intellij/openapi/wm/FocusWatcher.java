@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,11 +15,13 @@
  */
 package com.intellij.openapi.wm;
 
+import com.intellij.reference.SoftReference;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.text.JTextComponent;
 import java.awt.*;
 import java.awt.event.ContainerEvent;
 import java.awt.event.ContainerListener;
@@ -32,7 +34,7 @@ import java.lang.ref.WeakReference;
  * @author Vladimir Kondratyev
  */
 public class FocusWatcher implements ContainerListener,FocusListener{
-  private Component myTopComponent;
+  private WeakReference<Component> myTopComponent;
   /**
    * Last component that had focus.
    */
@@ -46,17 +48,19 @@ public class FocusWatcher implements ContainerListener,FocusListener{
 
   /**
    * @return top component on which focus watcher was installed.
-   * The method always return <code>null</code> if focus watcher was installed
+   * The method always return {@code null} if focus watcher was installed
    * on some component hierarchy.
    */
   public Component getTopComponent() {
-    return myTopComponent;
+    return SoftReference.dereference(myTopComponent);
   }
 
+  @Override
   public final void componentAdded(final ContainerEvent e){
     installImpl(e.getChild());
   }
 
+  @Override
   public final void componentRemoved(final ContainerEvent e){
     Component removedChild=e.getChild();
     if(getNearestFocusableComponent() !=null&&SwingUtilities.isDescendingFrom(getNearestFocusableComponent(),removedChild)){
@@ -73,6 +77,8 @@ public class FocusWatcher implements ContainerListener,FocusListener{
   }
 
   public final void deinstall(final Component component, @Nullable AWTEvent cause){
+    if (component == null) return;
+
     if(component instanceof Container){
       Container container=(Container)component;
       int componentCount=container.getComponentCount();
@@ -87,46 +93,53 @@ public class FocusWatcher implements ContainerListener,FocusListener{
     }
   }
 
+  @Override
   public final void focusGained(final FocusEvent e){
     final Component component = e.getComponent();
     if(e.isTemporary()||!component.isShowing()){
       return;
     }
+    if (component instanceof JTextComponent) {
+      UIUtil.addUndoRedoActions((JTextComponent)component);
+    }
     setFocusedComponentImpl(component, e);
     setNearestFocusableComponent(component.getParent());
   }
 
+  @Override
   public final void focusLost(final FocusEvent e){
     Component component = e.getOppositeComponent();
-    if(component != null && !SwingUtilities.isDescendingFrom(component, myTopComponent)){
+    if(component != null && !SwingUtilities.isDescendingFrom(component, SoftReference.dereference(myTopComponent))){
       focusLostImpl(e);
     }
   }
 
   /**
-   * @return last focused component or <code>null</code>.
+   * @return last focused component or {@code null}.
    */
   public final Component getFocusedComponent(){
-    return myFocusedComponent != null ? myFocusedComponent.get() : null;
+    return SoftReference.dereference(myFocusedComponent);
   }
 
   public final Component getNearestFocusableComponent() {
-    return myNearestFocusableComponent != null ? myNearestFocusableComponent.get() : null;
+    return SoftReference.dereference(myNearestFocusableComponent);
   }
 
   public final void install(@NotNull Component component){
-    myTopComponent = component;
+    myTopComponent = new WeakReference<Component>(component);
     installImpl(component);
   }
   
   private void installImpl(Component component){
     if(component instanceof Container){
       Container container=(Container)component;
-      int componentCount=container.getComponentCount();
-      for(int i=0;i<componentCount;i++){
-        installImpl(container.getComponent(i));
+      synchronized (container.getTreeLock()) {
+        int componentCount = container.getComponentCount();
+        for (int i = 0; i < componentCount; i++) {
+          installImpl(container.getComponent(i));
+        }
+        container.addContainerListener(this);
       }
-      container.addContainerListener(this);
     }
     if(component instanceof JMenuItem||component instanceof JMenuBar){
       return;
@@ -159,11 +172,11 @@ public class FocusWatcher implements ContainerListener,FocusListener{
   }
 
   /**
-   * Override this method to get notifications about focus. <code>FocusWatcher</code> invokes
+   * Override this method to get notifications about focus. {@code FocusWatcher} invokes
    * this method each time one of the populated  component gains focus. All "temporary" focus
    * event are ignored.
    *
-   * @param component currenly focused component. The component can be <code>null</code>
+   * @param component currently focused component. The component can be {@code null}
    * @param cause
    */
   protected void focusedComponentChanged(Component component, @Nullable final AWTEvent cause){}

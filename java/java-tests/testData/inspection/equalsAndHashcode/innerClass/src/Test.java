@@ -4,4 +4,8 @@ class Test {
       return this == o;
     }
   }
+
+  abstract class A {
+    public abstract boolean equals(final Object o);
+  }
 }

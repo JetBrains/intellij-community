@@ -65,6 +65,7 @@ class EDTGuard implements InvocationHandler {
     myPausedRef = ref;
   }
 
+  @Override
   @Nullable
   public Object invoke(Object proxy, @NotNull Method method, Object[] args) throws Throwable {
     if (SwingUtilities.isEventDispatchThread()) {
@@ -105,13 +106,7 @@ class EDTGuard implements InvocationHandler {
       return convert(method.invoke(myTarget, args));
     } catch (InvocationTargetException e) {
       final Throwable t = e.getTargetException();
-      if (t instanceof RuntimeException) {
-        throw (RuntimeException)t;
-      } else if (t instanceof Error) {
-        throw (Error)t;
-      } else {
-        throw t;
-      }
+      throw t;
     }
   }
 
@@ -190,14 +185,14 @@ class EDTGuard implements InvocationHandler {
     };
     process.addProcessListener(new ProcessAdapter() {
       @Override
-      public void processTerminated(ProcessEvent event) {
+      public void processTerminated(@NotNull ProcessEvent event) {
         synchronized (d) {
           Disposer.dispose(d);
         }
       }
 
       @Override
-      public void processWillTerminate(ProcessEvent event, boolean willBeDestroyed) {
+      public void processWillTerminate(@NotNull ProcessEvent event, boolean willBeDestroyed) {
         if (!willBeDestroyed) {
           synchronized (d) {
             Disposer.dispose(d);
@@ -206,15 +201,10 @@ class EDTGuard implements InvocationHandler {
       }
     });
 
-    final Alarm alarm = new Alarm(Alarm.ThreadToUse.SHARED_THREAD, d);
+    final Alarm alarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, d);
     final Alarm alarm2 = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, alarm);
 
-    final Runnable watchdog = new Runnable() {
-      @Override
-      public void run() {
-        ref.set(true);
-      }
-    };
+    final Runnable watchdog = () -> ref.set(true);
 
     final Runnable ping = new Runnable() {
       @Override
@@ -253,12 +243,12 @@ class EDTGuard implements InvocationHandler {
       private final Object myObject;
       private final Throwable myThrowable;
 
-      public Result(Object o) {
+      Result(Object o) {
         myObject = o;
         myThrowable = null;
       }
 
-      public Result(Throwable o) {
+      Result(Throwable o) {
         myObject = null;
         myThrowable = o;
       }
@@ -276,7 +266,7 @@ class EDTGuard implements InvocationHandler {
       }
     }
 
-    public Call(Method method, Object[] arguments) {
+    Call(Method method, Object[] arguments) {
       myMethod = method;
       myArguments = arguments;
     }

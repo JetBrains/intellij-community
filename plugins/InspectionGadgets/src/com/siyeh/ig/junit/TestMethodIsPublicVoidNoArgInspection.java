@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2011 Dave Griffith, Bas Leijdekkers
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,16 +16,42 @@
 package com.siyeh.ig.junit;
 
 import com.intellij.codeInsight.AnnotationUtil;
+import com.intellij.codeInspection.util.SpecialAnnotationsUtil;
 import com.intellij.psi.*;
-import com.intellij.psi.util.InheritanceUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.TestUtils;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+
+import static com.intellij.codeInsight.AnnotationUtil.CHECK_HIERARCHY;
+
+/**
+ * @author Bas Leijdekkers
+ */
 public class TestMethodIsPublicVoidNoArgInspection extends BaseInspection {
+
+  public final List<String> ignorableAnnotations = new ArrayList<>(Collections.singletonList("mockit.Mocked"));
+
+  @Nullable
+  @Override
+  public JComponent createOptionsPanel() {
+    return SpecialAnnotationsUtil.createSpecialAnnotationsListControl(
+      ignorableAnnotations, InspectionGadgetsBundle.message("ignore.parameter.if.annotated.by"));
+  }
+
+  @Override
+  protected InspectionGadgetsFix buildFix(Object... infos) {
+    final PsiMethod method = (PsiMethod)infos[1];
+    return new MakePublicStaticVoidFix(method, false);
+  }
 
   @Override
   @NotNull
@@ -43,19 +69,16 @@ public class TestMethodIsPublicVoidNoArgInspection extends BaseInspection {
   @Override
   @NotNull
   public String buildErrorString(Object... infos) {
-    final boolean isStatic = ((Boolean)infos[1]).booleanValue();
-    if (isStatic) {
-      return InspectionGadgetsBundle.message(
-        "test.method.is.public.void.no.arg.problem.descriptor3");
-    }
-    final boolean takesArguments = ((Boolean)infos[0]).booleanValue();
-    if (takesArguments) {
-      return InspectionGadgetsBundle.message(
-        "test.method.is.public.void.no.arg.problem.descriptor1");
-    }
-    else {
-      return InspectionGadgetsBundle.message(
-        "test.method.is.public.void.no.arg.problem.descriptor2");
+    final Problem problem = (Problem)infos[0];
+    switch (problem) {
+      case PARAMETER:
+        return InspectionGadgetsBundle.message("test.method.is.public.void.no.arg.problem.descriptor1");
+      case NOT_PUBLIC_VOID:
+        return InspectionGadgetsBundle.message("test.method.is.public.void.no.arg.problem.descriptor2");
+      case STATIC:
+        return InspectionGadgetsBundle.message("test.method.is.public.void.no.arg.problem.descriptor3");
+      default:
+        throw new AssertionError();
     }
   }
 
@@ -64,46 +87,47 @@ public class TestMethodIsPublicVoidNoArgInspection extends BaseInspection {
     return new TestMethodIsPublicVoidNoArgVisitor();
   }
 
-  private static class TestMethodIsPublicVoidNoArgVisitor
-    extends BaseInspectionVisitor {
+  enum Problem {
+    STATIC, NOT_PUBLIC_VOID, PARAMETER
+  }
+
+  private class TestMethodIsPublicVoidNoArgVisitor extends BaseInspectionVisitor {
 
     @Override
     public void visitMethod(@NotNull PsiMethod method) {
-      //note: no call to super;
-      @NonNls final String methodName = method.getName();
-      if (!methodName.startsWith("test") &&
-          !TestUtils.isJUnit4TestMethod(method)) {
+      if (method.isConstructor()) {
         return;
       }
-      final PsiType returnType = method.getReturnType();
-      if (returnType == null) {
+      if (!TestUtils.isJUnit3TestMethod(method) && !TestUtils.isJUnit4TestMethod(method)) {
+        return;
+      }
+      final PsiClass containingClass = method.getContainingClass();
+      if (containingClass == null || AnnotationUtil.isAnnotated(containingClass, TestUtils.RUN_WITH, CHECK_HIERARCHY)) {
         return;
       }
       final PsiParameterList parameterList = method.getParameterList();
-      final boolean takesArguments;
-      final boolean isStatic;
-      if (parameterList.getParametersCount() == 0) {
-        takesArguments = false;
-        isStatic = method.hasModifierProperty(PsiModifier.STATIC);
-        if (!isStatic && returnType.equals(PsiType.VOID) &&
-            method.hasModifierProperty(PsiModifier.PUBLIC)) {
+      if (method.hasModifierProperty(PsiModifier.STATIC)) {
+        registerMethodError(method, Problem.STATIC, method);
+        return;
+      }
+      if (!parameterList.isEmpty()) {
+        final PsiParameter[] parameters = parameterList.getParameters();
+        boolean annotated = true;
+        for (PsiParameter parameter : parameters) {
+          if (!AnnotationUtil.isAnnotated(parameter, ignorableAnnotations, 0)) {
+            annotated = false;
+            break;
+          }
+        }
+        if (!annotated) {
+          registerMethodError(method, Problem.PARAMETER, method);
           return;
         }
       }
-      else {
-        isStatic = false;
-        takesArguments = true;
+      final PsiType returnType = method.getReturnType();
+      if (!PsiType.VOID.equals(returnType) || !method.hasModifierProperty(PsiModifier.PUBLIC)) {
+        registerMethodError(method, Problem.NOT_PUBLIC_VOID, method);
       }
-      final PsiClass targetClass = method.getContainingClass();
-      if (!AnnotationUtil.isAnnotated(method, "org.junit.Test", true)) {
-        if (targetClass == null ||
-            !InheritanceUtil.isInheritor(targetClass,
-                                         "junit.framework.TestCase")) {
-          return;
-        }
-      }
-      registerMethodError(method, Boolean.valueOf(takesArguments),
-                          Boolean.valueOf(isStatic));
     }
   }
 }

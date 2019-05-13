@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.impl;
 
 import com.intellij.execution.BeforeRunTask;
@@ -21,20 +7,24 @@ import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.configurations.UnknownRunConfiguration;
+import com.intellij.execution.impl.RunConfigurationBeforeRunProvider.RunConfigurableBeforeRunTask;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonShortcuts;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
-import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBList;
-import com.intellij.util.containers.hash.HashSet;
+import com.intellij.util.SmartList;
+import com.intellij.util.ui.JBUI;
+import gnu.trove.THashSet;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -43,50 +33,47 @@ import javax.swing.event.ListDataListener;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 
 /**
  * @author Vassiliy Kudryashov
  */
-class BeforeRunStepsPanel extends JPanel {
-
+final class BeforeRunStepsPanel extends JPanel {
   private final JCheckBox myShowSettingsBeforeRunCheckBox;
-  private final JBList myList;
-  private final CollectionListModel<BeforeRunTask> myModel;
+  private final JCheckBox myActivateToolWindowBeforeRunCheckBox;
+  private final JBList<BeforeRunTask<?>> myList;
+  private final CollectionListModel<BeforeRunTask<?>> myModel;
   private RunConfiguration myRunConfiguration;
 
-  private final List<BeforeRunTask> originalTasks = new ArrayList<BeforeRunTask>();
-  private StepsBeforeRunListener myListener;
+  private final List<BeforeRunTask<?>> originalTasks = new SmartList<>();
+  private final StepsBeforeRunListener myListener;
   private final JPanel myPanel;
 
-  BeforeRunStepsPanel(StepsBeforeRunListener listener) {
+  private final Set<BeforeRunTask<?>> clonedTasks = new THashSet<>();
+
+  BeforeRunStepsPanel(@NotNull StepsBeforeRunListener listener) {
     myListener = listener;
-    myModel = new CollectionListModel<BeforeRunTask>();
-    myList = new JBList(myModel);
+    myModel = new CollectionListModel<>();
+    myList = new JBList<>(myModel);
     myList.getEmptyText().setText(ExecutionBundle.message("before.launch.panel.empty"));
     myList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
     myList.setCellRenderer(new MyListCellRenderer());
+    myList.setVisibleRowCount(4);
 
     myModel.addListDataListener(new ListDataListener() {
       @Override
       public void intervalAdded(ListDataEvent e) {
-        adjustVisibleRowCount();
         updateText();
       }
 
       @Override
       public void intervalRemoved(ListDataEvent e) {
-        adjustVisibleRowCount();
         updateText();
       }
 
       @Override
       public void contentsChanged(ListDataEvent e) {
-      }
-
-      private void adjustVisibleRowCount() {
-        myList.setVisibleRowCount(Math.max(4, Math.min(8, myModel.getSize())));
       }
     });
 
@@ -94,28 +81,36 @@ class BeforeRunStepsPanel extends JPanel {
     if (!SystemInfo.isMac) {
       myDecorator.setAsUsualTopToolbar();
     }
+
     myDecorator.setEditAction(new AnActionButtonRunnable() {
       @Override
       public void run(AnActionButton button) {
-        int index = myList.getSelectedIndex();
-        if (index == -1)
+        BeforeRunTaskAndProvider selection = getSelection();
+        if (selection == null) {
           return;
-        Pair<BeforeRunTask, BeforeRunTaskProvider<BeforeRunTask>> selection = getSelection();
-        if (selection == null)
-          return;
-        BeforeRunTask task = selection.getFirst();
-        BeforeRunTaskProvider<BeforeRunTask> provider = selection.getSecond();
-        if (provider.configureTask(myRunConfiguration, task)) {
-          myModel.setElementAt(task, index);
-          updateText();
         }
+
+        BeforeRunTask<?> task = selection.getTask();
+        if (!clonedTasks.contains(task)) {
+          task = task.clone();
+          clonedTasks.add(task);
+          myModel.setElementAt(task, selection.getIndex());
+        }
+
+        selection.getProvider().configureTask(button.getDataContext(), myRunConfiguration, task)
+          .onSuccess(changed -> {
+            if (changed) {
+              updateText();
+            }
+          });
       }
     });
+    //noinspection Convert2Lambda
     myDecorator.setEditActionUpdater(new AnActionButtonUpdater() {
       @Override
-      public boolean isEnabled(AnActionEvent e) {
-        Pair<BeforeRunTask, BeforeRunTaskProvider<BeforeRunTask>> selection = getSelection();
-        return selection != null && selection.getSecond().isConfigurable();
+      public boolean isEnabled(@NotNull AnActionEvent e) {
+        BeforeRunTaskAndProvider selection = getSelection();
+        return selection != null && selection.getProvider().isConfigurable();
       }
     });
     myDecorator.setAddAction(new AnActionButtonRunnable() {
@@ -124,9 +119,10 @@ class BeforeRunStepsPanel extends JPanel {
         doAddAction(button);
       }
     });
+    //noinspection Convert2Lambda
     myDecorator.setAddActionUpdater(new AnActionButtonUpdater() {
       @Override
-      public boolean isEnabled(AnActionEvent e) {
+      public boolean isEnabled(@NotNull AnActionEvent e) {
         return checkBeforeRunTasksAbility(true);
       }
     });
@@ -138,34 +134,52 @@ class BeforeRunStepsPanel extends JPanel {
         updateText();
       }
     });
+    myActivateToolWindowBeforeRunCheckBox = new JCheckBox(ExecutionBundle.message("configuration.activate.toolwindow.before.run"));
+    myActivateToolWindowBeforeRunCheckBox.addActionListener(new ActionListener() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        updateText();
+      }
+    });
 
     myPanel = myDecorator.createPanel();
+    myDecorator.getActionsPanel().setCustomShortcuts(CommonActionsPanel.Buttons.EDIT,
+                                                     CommonActionsPanel.getCommonShortcut(CommonActionsPanel.Buttons.EDIT),
+                                                     CommonShortcuts.DOUBLE_CLICK_1);
+
 
     setLayout(new BorderLayout());
     add(myPanel, BorderLayout.CENTER);
-    add(myShowSettingsBeforeRunCheckBox, BorderLayout.SOUTH);
+    JPanel checkboxPanel = new JPanel(new FlowLayout(FlowLayout.LEADING, JBUI.scale(5), JBUI.scale(5)));
+    checkboxPanel.add(myShowSettingsBeforeRunCheckBox);
+    checkboxPanel.add(myActivateToolWindowBeforeRunCheckBox);
+    add(checkboxPanel, BorderLayout.SOUTH);
   }
 
   @Nullable
-  private Pair<BeforeRunTask, BeforeRunTaskProvider<BeforeRunTask>> getSelection() {
+  private BeforeRunTaskAndProvider getSelection() {
     final int index = myList.getSelectedIndex();
-    if (index ==-1)
+    if (index == -1) {
       return null;
-    BeforeRunTask task = myModel.getElementAt(index);
-    Key providerId = task.getProviderId();
-    BeforeRunTaskProvider<BeforeRunTask> provider = BeforeRunTaskProvider.getProvider(myRunConfiguration.getProject(), providerId);
-    return provider != null ? Pair.create(task, provider) : null;
+    }
+    BeforeRunTask<?> task = myModel.getElementAt(index);
+    @SuppressWarnings("unchecked")
+    BeforeRunTaskProvider<BeforeRunTask<?>> provider = BeforeRunTaskProvider.getProvider(myRunConfiguration.getProject(), (Key)task.getProviderId());
+    return provider == null ? null : new BeforeRunTaskAndProvider(task, provider, index);
   }
 
-  void doReset(RunnerAndConfigurationSettings settings) {
+  void doReset(@NotNull RunnerAndConfigurationSettings settings) {
+    clonedTasks.clear();
+
     myRunConfiguration = settings.getConfiguration();
 
     originalTasks.clear();
-    RunManagerImpl runManager = RunManagerImpl.getInstanceImpl(myRunConfiguration.getProject());
-    originalTasks.addAll(runManager.getBeforeRunTasks(myRunConfiguration));
+    originalTasks.addAll(RunManagerImplKt.doGetBeforeRunTasks(myRunConfiguration));
     myModel.replaceAll(originalTasks);
     myShowSettingsBeforeRunCheckBox.setSelected(settings.isEditBeforeRun());
-    myShowSettingsBeforeRunCheckBox.setEnabled(!(isUnknown()));
+    myShowSettingsBeforeRunCheckBox.setEnabled(!isUnknown());
+    myActivateToolWindowBeforeRunCheckBox.setSelected(settings.isActivateToolWindowBeforeRun());
+    myActivateToolWindowBeforeRunCheckBox.setEnabled(!isUnknown());
     myPanel.setVisible(checkBeforeRunTasksAbility(false));
     updateText();
   }
@@ -177,29 +191,27 @@ class BeforeRunStepsPanel extends JPanel {
       sb.append(ExecutionBundle.message("configuration.edit.before.run"));
     }
 
-    List<BeforeRunTask> tasks = myModel.getItems();
+    List<BeforeRunTask<?>> tasks = myModel.getItems();
     if (!tasks.isEmpty()) {
-      LinkedHashMap<BeforeRunTaskProvider, Integer> counter = new LinkedHashMap<BeforeRunTaskProvider, Integer>();
-      for (BeforeRunTask task : tasks) {
-        BeforeRunTaskProvider<BeforeRunTask> provider =
-          BeforeRunTaskProvider.getProvider(myRunConfiguration.getProject(), task.getProviderId());
+      LinkedHashMap<BeforeRunTaskProvider<?>, Integer> counter = new LinkedHashMap<>();
+      for (BeforeRunTask<?> task : tasks) {
+        //noinspection unchecked
+        BeforeRunTaskProvider<BeforeRunTask> provider = BeforeRunTaskProvider.getProvider(myRunConfiguration.getProject(), (Key<BeforeRunTask>)task.getProviderId());
         if (provider != null) {
           Integer count = counter.get(provider);
           if (count == null) {
             count = task.getItemsCount();
-          } else {
-            count+=task.getItemsCount();
+          }
+          else {
+            count += task.getItemsCount();
           }
           counter.put(provider, count);
         }
       }
-      for (Iterator<Map.Entry<BeforeRunTaskProvider, Integer>> iterator = counter.entrySet().iterator(); iterator.hasNext(); ) {
-        Map.Entry<BeforeRunTaskProvider, Integer> entry = iterator.next();
+      for (Map.Entry<BeforeRunTaskProvider<?>, Integer> entry : counter.entrySet()) {
         BeforeRunTaskProvider provider = entry.getKey();
         String name = provider.getName();
-        if (name.startsWith("Run ")) {
-          name = name.substring(4);
-        }
+        name = StringUtil.trimStart(name, "Run ");
         if (sb.length() > 0) {
           sb.append(", ");
         }
@@ -209,6 +221,10 @@ class BeforeRunStepsPanel extends JPanel {
         }
       }
     }
+
+    if (myActivateToolWindowBeforeRunCheckBox.isSelected()) {
+      sb.append(sb.length() > 0 ? ", " : "").append(ExecutionBundle.message("configuration.activate.toolwindow.before.run"));
+    }
     if (sb.length() > 0) {
       sb.insert(0, ": ");
     }
@@ -216,26 +232,27 @@ class BeforeRunStepsPanel extends JPanel {
     myListener.titleChanged(sb.toString());
   }
 
-  public List<BeforeRunTask> getTasks(boolean applyCurrentState) {
-    if (applyCurrentState) {
-      originalTasks.clear();
-      originalTasks.addAll(myModel.getItems());
-    }
-    return Collections.unmodifiableList(originalTasks);
+  @NotNull
+  public List<BeforeRunTask<?>> getTasks() {
+    List<BeforeRunTask<?>> items = myModel.getItems();
+    return items.isEmpty() ? Collections.emptyList() : Collections.unmodifiableList(items);
   }
 
   public boolean needEditBeforeRun() {
     return myShowSettingsBeforeRunCheckBox.isSelected();
   }
 
+  public boolean needActivateToolWindowBeforeRun() {
+    return myActivateToolWindowBeforeRunCheckBox.isSelected();
+  }
+
   private boolean checkBeforeRunTasksAbility(boolean checkOnlyAddAction) {
     if (isUnknown()) {
       return false;
     }
+
     Set<Key> activeProviderKeys = getActiveProviderKeys();
-    final BeforeRunTaskProvider<BeforeRunTask>[] providers = Extensions.getExtensions(BeforeRunTaskProvider.EXTENSION_POINT_NAME,
-                                                                                      myRunConfiguration.getProject());
-    for (final BeforeRunTaskProvider<BeforeRunTask> provider : providers) {
+    for (final BeforeRunTaskProvider<BeforeRunTask> provider : getBeforeRunTaskProviders()) {
       if (provider.createTask(myRunConfiguration) != null) {
         if (!checkOnlyAddAction) {
           return true;
@@ -252,81 +269,81 @@ class BeforeRunStepsPanel extends JPanel {
     return myRunConfiguration instanceof UnknownRunConfiguration;
   }
 
-  void doAddAction(AnActionButton button) {
-      if (isUnknown()) {
-        return;
-      }
+  private void doAddAction(@NotNull AnActionButton button) {
+    if (isUnknown()) {
+      return;
+    }
 
-      final JBPopupFactory popupFactory = JBPopupFactory.getInstance();
-      final BeforeRunTaskProvider<BeforeRunTask>[] providers = Extensions.getExtensions(BeforeRunTaskProvider.EXTENSION_POINT_NAME,
-                                                                                        myRunConfiguration.getProject());
     Set<Key> activeProviderKeys = getActiveProviderKeys();
-
     DefaultActionGroup actionGroup = new DefaultActionGroup(null, false);
-      for (final BeforeRunTaskProvider<BeforeRunTask> provider : providers) {
-        if (provider.createTask(myRunConfiguration) == null)
-          continue;
-        if (activeProviderKeys.contains(provider.getId()) && provider.isSingleton())
-          continue;
-        AnAction providerAction = new AnAction(provider.getName(), null, provider.getIcon()) {
-          @Override
-          public void actionPerformed(AnActionEvent e) {
-            BeforeRunTask task = provider.createTask(myRunConfiguration);
-            if (task != null) {
-              provider.configureTask(myRunConfiguration, task);
-              if (!provider.canExecuteTask(myRunConfiguration, task))
-                return;
-            } else {
-              return;
-            }
-            task.setEnabled(true);
-
-            Set<RunConfiguration> configurationSet = new HashSet<RunConfiguration>();
-            getAllRunBeforeRuns(task, configurationSet);
-            if (configurationSet.contains(myRunConfiguration)) {
-              JOptionPane.showMessageDialog(BeforeRunStepsPanel.this,
-                                            ExecutionBundle.message("before.launch.panel.cyclic_dependency_warning",
-                                                                    myRunConfiguration.getName(),
-                                                                    provider.getDescription(task)),
-                                            ExecutionBundle.message("warning.common.title"),JOptionPane.WARNING_MESSAGE);
-              return;
-            }
-            addTask(task);
-            myListener.fireStepsBeforeRunChanged();
-          }
-        };
-        actionGroup.add(providerAction);
+    for (final BeforeRunTaskProvider<BeforeRunTask> provider : getBeforeRunTaskProviders()) {
+      if (provider.createTask(myRunConfiguration) == null || activeProviderKeys.contains(provider.getId()) && provider.isSingleton()) {
+        continue;
       }
-      final ListPopup popup =
-        popupFactory.createActionGroupPopup(ExecutionBundle.message("add.new.run.configuration.acrtion.name"), actionGroup,
-                                            SimpleDataContext.getProjectContext(myRunConfiguration.getProject()), false, false, false, null,
-                                            -1, Condition.TRUE);
-      popup.show(button.getPreferredPopupPoint());
+
+      actionGroup.add(new AnAction(provider.getName(), null, provider.getIcon()) {
+        @Override
+        public void actionPerformed(@NotNull AnActionEvent e) {
+          BeforeRunTask task = provider.createTask(myRunConfiguration);
+          if (task == null) {
+            return;
+          }
+
+          provider.configureTask(button.getDataContext(), myRunConfiguration, task)
+            .onSuccess(changed -> {
+              if (!provider.canExecuteTask(myRunConfiguration, task)) {
+                return;
+              }
+              task.setEnabled(true);
+
+              Set<RunConfiguration> configurationSet = new THashSet<>();
+              getAllRunBeforeRuns(task, configurationSet);
+              if (configurationSet.contains(myRunConfiguration)) {
+                JOptionPane.showMessageDialog(BeforeRunStepsPanel.this,
+                                              ExecutionBundle.message("before.launch.panel.cyclic_dependency_warning",
+                                                                      myRunConfiguration.getName(),
+                                                                      provider.getDescription(task)),
+                                              ExecutionBundle.message("warning.common.title"), JOptionPane.WARNING_MESSAGE);
+                return;
+              }
+              addTask(task);
+              myListener.fireStepsBeforeRunChanged();
+            });
+        }
+      });
+    }
+    ListPopup popup = JBPopupFactory.getInstance().createActionGroupPopup(ExecutionBundle.message("add.new.run.configuration.action2.name"), actionGroup,
+                                                                          SimpleDataContext.getProjectContext(myRunConfiguration.getProject()), false, false, false, null,
+                                                                          -1, Conditions.alwaysTrue());
+    popup.show(Objects.requireNonNull(button.getPreferredPopupPoint()));
   }
 
-  public void addTask(BeforeRunTask task) {
+  @NotNull
+  private List<BeforeRunTaskProvider<BeforeRunTask>> getBeforeRunTaskProviders() {
+    return BeforeRunTaskProvider.EXTENSION_POINT_NAME.getExtensionList(myRunConfiguration.getProject());
+  }
+
+  public void addTask(@NotNull BeforeRunTask task) {
     myModel.add(task);
   }
 
+  @NotNull
   private Set<Key> getActiveProviderKeys() {
-    Set<Key> result = new HashSet<Key>();
+    Set<Key> result = new THashSet<>();
     for (BeforeRunTask task : myModel.getItems()) {
       result.add(task.getProviderId());
     }
     return result;
   }
 
-  private void getAllRunBeforeRuns(BeforeRunTask task, Set<RunConfiguration> configurationSet) {
-    if (task instanceof RunConfigurationBeforeRunProvider.RunConfigurableBeforeRunTask) {
-      RunConfigurationBeforeRunProvider.RunConfigurableBeforeRunTask runTask
-        = (RunConfigurationBeforeRunProvider.RunConfigurableBeforeRunTask)task;
-      RunConfiguration configuration = runTask.getSettings().getConfiguration();
-
-      List<BeforeRunTask> tasks = RunManagerImpl.getInstanceImpl(configuration.getProject()).getBeforeRunTasks(configuration);
-      for (BeforeRunTask beforeRunTask : tasks) {
-        if (beforeRunTask instanceof RunConfigurationBeforeRunProvider.RunConfigurableBeforeRunTask) {
-          if (configurationSet.add(((RunConfigurationBeforeRunProvider.RunConfigurableBeforeRunTask)beforeRunTask).getSettings().getConfiguration()))
+  private void getAllRunBeforeRuns(@NotNull BeforeRunTask task, @NotNull Set<RunConfiguration> configurationSet) {
+    if (task instanceof RunConfigurableBeforeRunTask) {
+      RunConfiguration configuration = Objects.requireNonNull(((RunConfigurableBeforeRunTask)task).getSettings()).getConfiguration();
+      for (BeforeRunTask beforeRunTask : RunManagerImplKt.doGetBeforeRunTasks(configuration)) {
+        if (beforeRunTask instanceof RunConfigurableBeforeRunTask) {
+          if (configurationSet.add(Objects.requireNonNull(((RunConfigurableBeforeRunTask)beforeRunTask).getSettings()).getConfiguration())) {
             getAllRunBeforeRuns(beforeRunTask, configurationSet);
+          }
         }
       }
     }
@@ -334,7 +351,8 @@ class BeforeRunStepsPanel extends JPanel {
 
   interface StepsBeforeRunListener {
     void fireStepsBeforeRunChanged();
-    void titleChanged(String title);
+
+    void titleChanged(@NotNull String title);
   }
 
   private class MyListCellRenderer extends JBList.StripedListCellRenderer {
@@ -343,9 +361,11 @@ class BeforeRunStepsPanel extends JPanel {
       super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
       if (value instanceof BeforeRunTask) {
         BeforeRunTask task = (BeforeRunTask)value;
+        @SuppressWarnings("unchecked")
         BeforeRunTaskProvider<BeforeRunTask> provider = BeforeRunTaskProvider.getProvider(myRunConfiguration.getProject(), task.getProviderId());
         if (provider != null) {
-          setIcon(provider.getTaskIcon(task));
+          Icon icon = provider.getTaskIcon(task);
+          setIcon(icon != null ? icon : provider.getIcon());
           setText(provider.getDescription(task));
         }
       }

@@ -14,18 +14,10 @@
  * limitations under the License.
  */
 
-/*
- * User: anna
- * Date: 19-Dec-2006
- */
 package com.intellij.compiler.ant;
 
-import com.intellij.compiler.ant.taskdefs.Target;
-import com.intellij.openapi.compiler.make.BuildRecipe;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.Nullable;
 
 public abstract class BuildTargetsFactory {
   public static BuildTargetsFactory getInstance() {

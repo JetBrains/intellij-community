@@ -15,23 +15,35 @@
  */
 package com.intellij.ui.components.editors;
 
+import com.intellij.ide.ui.AntialiasingType;
+import com.intellij.openapi.ui.popup.JBPopup;
+import com.intellij.openapi.ui.popup.JBPopupAdapter;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
-import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.ui.popup.LightweightWindowEvent;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.TableUtil;
 import com.intellij.ui.awt.RelativePoint;
+import com.intellij.ui.components.JBComboBoxLabel;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBList;
+import com.intellij.ui.table.JBTable;
 import com.intellij.util.Function;
 import com.intellij.util.PlatformIcons;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.EmptyIcon;
+import com.intellij.util.ui.GraphicsUtil;
+import org.jetbrains.annotations.NotNull;
 
+import javax.accessibility.AccessibleContext;
+import javax.accessibility.AccessibleRole;
+import javax.accessibility.AccessibleState;
+import javax.accessibility.AccessibleStateSet;
 import javax.swing.*;
 import javax.swing.event.TableModelEvent;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Solves rendering problems in JTable components when JComboBox objects are used as cell
@@ -40,14 +52,14 @@ import java.util.ArrayList;
  *   <p>2. Truncated strings in the combobox popup if column width is less than text value width
  *   <p>
  *   <b>How to use:</b>
- *   <p>1. In get <code>getTableCellEditorComponent</code> method create or use existent
- *   <code>JBComboBoxTableCellEditorComponent</code> instance<br/>
- *   <p>2. Init component by calling <code>setCell</code>, <code>setOptions</code>,
- *   <code>setDefaultValue</code> methods
+ *   <p>1. In get {@code getTableCellEditorComponent} method create or use existent
+ *   {@code JBComboBoxTableCellEditorComponent} instance<br/>
+ *   <p>2. Init component by calling {@code setCell}, {@code setOptions},
+ *   {@code setDefaultValue} methods
  *   <p>3. Return the instance
  *
  * @author Konstantin Bulenkov
- * @see com.intellij.ui.components.JBComboBoxLabel
+ * @see JBComboBoxLabel
  */
 public class JBComboBoxTableCellEditorComponent extends JBLabel {
   private JTable myTable;
@@ -56,21 +68,24 @@ public class JBComboBoxTableCellEditorComponent extends JBLabel {
   private final JBList myList = new JBList();
   private Object[] myOptions = {};
   private Object myValue;
+  public boolean myWide = false;
   private Function<Object, String> myToString = StringUtil.createToStringFunction(Object.class);
-  private ArrayList<ActionListener> myListeners = new ArrayList<ActionListener>();
+  private final List<ActionListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
 
-  @SuppressWarnings({"GtkPreferredJComboBoxRenderer"})
   private ListCellRenderer myRenderer = new DefaultListCellRenderer() {
+    private boolean myChecked;
     public Icon myEmptyIcon;
 
     @Override
     public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
       final JLabel label = (JLabel)super.getListCellRendererComponent(list, myToString.fun(value), index, isSelected, cellHasFocus);
-      if (value == myValue) {
+      myChecked = (value == myValue);
+      if (myChecked) {
         label.setIcon(getIcon(isSelected));
       } else {
         label.setIcon(getEmptyIcon());
       }
+      GraphicsUtil.setAntialiasingType(label, AntialiasingType.getAAHintForSwingComponent());
       return label;
     }
 
@@ -86,6 +101,30 @@ public class JBComboBoxTableCellEditorComponent extends JBLabel {
       return small
              ? selected ? PlatformIcons.CHECK_ICON_SMALL_SELECTED : PlatformIcons.CHECK_ICON_SMALL
              : selected ? PlatformIcons.CHECK_ICON_SELECTED : PlatformIcons.CHECK_ICON;
+    }
+
+    @Override
+    public AccessibleContext getAccessibleContext() {
+      if (accessibleContext == null) {
+        accessibleContext = new AccessibleRenderer();
+      }
+      return accessibleContext;
+    }
+
+    class AccessibleRenderer extends AccessibleJLabel {
+      @Override
+      public AccessibleRole getAccessibleRole() {
+        return AccessibleRole.CHECK_BOX;
+      }
+
+      @Override
+      public AccessibleStateSet getAccessibleStateSet() {
+        AccessibleStateSet set = super.getAccessibleStateSet();
+        if (myChecked) {
+          set.add(AccessibleState.CHECKED);
+        }
+        return set;
+      }
     }
   };
 
@@ -130,37 +169,50 @@ public class JBComboBoxTableCellEditorComponent extends JBLabel {
 
   private void initAndShowPopup() {
     myList.removeAll();
-    final Rectangle rect = myTable.getCellRect(myRow, myColumn, true);
-    final Point point = new Point(rect.x, rect.y);
     myList.setModel(JBList.createDefaultListModel(myOptions));
     if (myRenderer != null) {
       myList.setCellRenderer(myRenderer);
     }
-    JBPopupFactory.getInstance()
+    final Rectangle rect = myTable.getCellRect(myRow, myColumn, true);
+    Point point = new Point(rect.x, rect.y);
+    final boolean surrendersFocusOnKeystrokeOldValue = myTable instanceof JBTable ? ((JBTable)myTable).surrendersFocusOnKeyStroke() : myTable.getSurrendersFocusOnKeystroke();
+    final JBPopup popup = JBPopupFactory.getInstance()
       .createListPopupBuilder(myList)
-      .setItemChoosenCallback(new Runnable() {
-        @Override
-        public void run() {
-          final ActionEvent event = new ActionEvent(myList, ActionEvent.ACTION_PERFORMED, "elementChosen");
-          for (ActionListener listener : myListeners) {
-            listener.actionPerformed(event);
-          }
-          myValue = myList.getSelectedValue();
-          TableUtil.stopEditing(myTable);
+      .setItemChoosenCallback(() -> {
+        myValue = myList.getSelectedValue();
+        final ActionEvent event = new ActionEvent(myList, ActionEvent.ACTION_PERFORMED, "elementChosen");
+        for (ActionListener listener : myListeners) {
+          listener.actionPerformed(event);
+        }
+        TableUtil.stopEditing(myTable);
 
-          myTable.setValueAt(myValue, myRow, myColumn); // on Mac getCellEditorValue() called before myValue is set.
-          myTable.tableChanged(new TableModelEvent(myTable.getModel(), myRow));  // force repaint
-        }
+        myTable.setValueAt(myValue, myRow, myColumn); // on Mac getCellEditorValue() called before myValue is set.
+        myTable.tableChanged(new TableModelEvent(myTable.getModel(), myRow));  // force repaint
       })
-      .setCancelCallback(new Computable<Boolean>() {
+      .setCancelCallback(() -> {
+        TableUtil.stopEditing(myTable);
+        return true;
+      })
+      .addListener(new JBPopupAdapter() {
         @Override
-        public Boolean compute() {
-          TableUtil.stopEditing(myTable);
-          return true;
+        public void beforeShown(@NotNull LightweightWindowEvent event) {
+          super.beforeShown(event);
+          myTable.setSurrendersFocusOnKeystroke(false);
+        }
+
+        @Override
+        public void onClosed(@NotNull LightweightWindowEvent event) {
+          myTable.setSurrendersFocusOnKeystroke(surrendersFocusOnKeystrokeOldValue);
+          super.onClosed(event);
         }
       })
-      .createPopup()
-      .show(new RelativePoint(myTable, point));
+      .setMinSize(myWide ? new Dimension(((int)rect.getSize().getWidth()), -1) : null)
+      .createPopup();
+    popup.show(new RelativePoint(myTable, point));
+  }
+
+  public void setWide(boolean wide) {
+    this.myWide = wide;
   }
 
   public Object getEditorValue() {
@@ -181,5 +233,9 @@ public class JBComboBoxTableCellEditorComponent extends JBLabel {
 
   public void addActionListener(ActionListener listener) {
     myListeners.add(listener);
+  }
+
+  public Function<Object, String> getToString() {
+    return myToString;
   }
 }

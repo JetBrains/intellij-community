@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,8 +36,5 @@ public interface AttachSourcesProvider {
   /**
    * This marker interface means what this action will be shown only if it is single action.
    */
-  interface LightAttachSourcesAction extends AttachSourcesAction {
-
-  }
-
+  interface LightAttachSourcesAction extends AttachSourcesAction { }
 }

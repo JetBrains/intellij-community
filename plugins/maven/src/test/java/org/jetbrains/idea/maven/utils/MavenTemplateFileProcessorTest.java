@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,14 +18,13 @@ package org.jetbrains.idea.maven.utils;
 import com.intellij.ide.util.projectWizard.ProjectTemplateParameterFactory;
 import com.intellij.platform.templates.SaveProjectAsTemplateAction;
 import com.intellij.psi.PsiFile;
-import com.intellij.testFramework.IdeaTestCase;
 import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase;
+import org.jetbrains.idea.maven.server.MavenServerManager;
 
 import java.util.Map;
 
 /**
  * @author Dmitry Avdeev
- *         Date: 2/15/13
  */
 public class MavenTemplateFileProcessorTest extends LightPlatformCodeInsightFixtureTestCase {
 
@@ -40,8 +39,17 @@ public class MavenTemplateFileProcessorTest extends LightPlatformCodeInsightFixt
     "    <name>SpringApp</name>\n" +
     "</project>";
 
-  public MavenTemplateFileProcessorTest() {
-    IdeaTestCase.initPlatformPrefix();
+  @Override
+  protected void tearDown() throws Exception {
+    try {
+      MavenServerManager.getInstance().shutdown(true);
+    }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
+    finally {
+      super.tearDown();
+    }
   }
 
   public void testProcessor() throws Exception {

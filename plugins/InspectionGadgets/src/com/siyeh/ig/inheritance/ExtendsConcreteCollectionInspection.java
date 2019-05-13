@@ -15,17 +15,28 @@
  */
 package com.siyeh.ig.inheritance;
 
-import com.intellij.psi.PsiAnonymousClass;
-import com.intellij.psi.PsiClass;
+import com.intellij.psi.*;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.ReplaceInheritanceWithDelegationFix;
 import com.siyeh.ig.psiutils.CollectionUtils;
+import com.siyeh.ig.psiutils.TypeUtils;
 import org.jetbrains.annotations.NotNull;
 
 public class ExtendsConcreteCollectionInspection extends BaseInspection {
+
+  @Override
+  protected InspectionGadgetsFix buildFix(Object... infos) {
+    final PsiClass aClass = (PsiClass)infos[1];
+    // skip inheritance with delegation for anonymous classes
+    // or better suggest to replace anonymous with inner and then replace with delegation
+    if (aClass instanceof PsiAnonymousClass) {
+      return null;
+    }
+    return new ReplaceInheritanceWithDelegationFix();
+  }
 
   @Override
   @NotNull
@@ -53,17 +64,6 @@ public class ExtendsConcreteCollectionInspection extends BaseInspection {
   }
 
   @Override
-  protected InspectionGadgetsFix buildFix(Object... infos) {
-    final PsiClass aClass = (PsiClass)infos[1];
-    // skip inheritance with delegation for anonymous classes
-    // or better suggest to replace anonymous with inner and then replace with delegation
-    if (aClass instanceof PsiAnonymousClass) {
-      return null;
-    }
-    return new ReplaceInheritanceWithDelegationFix();
-  }
-
-  @Override
   public BaseInspectionVisitor buildVisitor() {
     return new ExtendsConcreteCollectionVisitor();
   }
@@ -76,11 +76,26 @@ public class ExtendsConcreteCollectionInspection extends BaseInspection {
         return;
       }
       final PsiClass superClass = aClass.getSuperClass();
-      if (superClass == null) {
+      if (!CollectionUtils.isConcreteCollectionClass(superClass)) {
         return;
       }
-      if (!CollectionUtils.isCollectionClass(superClass)) {
-        return;
+      final String qualifiedName = superClass.getQualifiedName();
+      if ("java.util.LinkedHashMap".equals(qualifiedName)) {
+        final PsiMethod[] methods = aClass.findMethodsByName("removeEldestEntry", false);
+        final PsiClassType entryType = TypeUtils.getType("java.util.Map.Entry", aClass);
+        for (PsiMethod method : methods) {
+          if (!PsiType.BOOLEAN.equals(method.getReturnType())) {
+            continue;
+          }
+          final PsiParameterList parameterList = method.getParameterList();
+          if (  parameterList.getParametersCount() != 1) {
+            continue;
+          }
+          final PsiParameter parameter = parameterList.getParameters()[0];
+          if (entryType.isAssignableFrom(parameter.getType())) {
+            return;
+          }
+        }
       }
       registerClassError(aClass, superClass, aClass);
     }

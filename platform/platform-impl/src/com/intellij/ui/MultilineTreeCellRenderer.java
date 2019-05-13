@@ -1,27 +1,19 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui;
 
+import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.SystemProperties;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.WideSelectionTreeUI;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
+import javax.accessibility.Accessible;
+import javax.accessibility.AccessibleContext;
+import javax.accessibility.AccessibleRole;
 import javax.swing.*;
 import javax.swing.plaf.TreeUI;
 import javax.swing.tree.DefaultMutableTreeNode;
@@ -33,7 +25,7 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
 
-public abstract class MultilineTreeCellRenderer extends JComponent implements TreeCellRenderer {
+public abstract class MultilineTreeCellRenderer extends JComponent implements Accessible, TreeCellRenderer {
 
   private boolean myWrapsCalculated = false;
   private boolean myTooSmall = false;
@@ -62,19 +54,26 @@ public abstract class MultilineTreeCellRenderer extends JComponent implements Tr
     myTextInsets = new Insets(0,0,0,0);
 
     addComponentListener(new ComponentAdapter() {
+      @Override
       public void componentResized(ComponentEvent e) {
         onSizeChanged();
       }
     });
 
     addPropertyChangeListener(new PropertyChangeListener() {
+      @Override
       public void propertyChange(PropertyChangeEvent evt) {
         if (FONT_PROPERTY_NAME.equalsIgnoreCase(evt.getPropertyName())) {
           onFontChanged();
         }
       }
     });
+    updateUI();
+  }
 
+  @Override
+  public void updateUI() {
+    UISettings.setupComponentAntialiasing(this);
   }
 
   protected void setMinHeight(int height) {
@@ -104,6 +103,7 @@ public abstract class MultilineTreeCellRenderer extends JComponent implements Tr
     return getFontMetrics(getFont());
   }
 
+  @Override
   public void paint(Graphics g) {
     int height = getHeight();
     int width = getWidth();
@@ -114,24 +114,16 @@ public abstract class MultilineTreeCellRenderer extends JComponent implements Tr
 
     if (myIcon != null) {
       int verticalIconPosition = (height - myIcon.getIconHeight())/2;
-      myIcon.paintIcon(this, g, 0, verticalIconPosition);
+      myIcon.paintIcon(this, g, 0, isIconVerticallyCentered() ? verticalIconPosition : myTextInsets.top);
       borderX += myIcon.getIconWidth();
       borderW -= myIcon.getIconWidth();
     }
 
-    Color bgColor;
-    Color fgColor;
-    if (mySelected && myHasFocus){
-      bgColor = UIUtil.getTreeSelectionBackground();
-      fgColor = UIUtil.getTreeSelectionForeground();
-    }
-    else{
-      bgColor = UIUtil.getTreeTextBackground();
-      fgColor = getForeground();
-    }
+    Color bgColor = UIUtil.getTreeBackground(mySelected, myHasFocus);
+    Color fgColor = UIUtil.getTreeForeground(mySelected, myHasFocus);
 
     // fill background
-    if (!(myTree.getUI() instanceof WideSelectionTreeUI) || !((WideSelectionTreeUI)myTree.getUI()).isWideSelection()) {
+    if (!WideSelectionTreeUI.isWideSelection(myTree)) {
       g.setColor(bgColor);
       g.fillRect(borderX, borderY, borderW, borderH);
 
@@ -154,7 +146,7 @@ public abstract class MultilineTreeCellRenderer extends JComponent implements Tr
     currBaseLine += myTextInsets.top;
     g.setFont(getFont());
     g.setColor(fgColor);
-    UIUtil.applyRenderingHints(g);
+    UISettings.setupAntialiasing(g);
 
     if (!StringUtil.isEmpty(myPrefix)) {
       g.drawString(myPrefix, myTextInsets.left - myPrefixWidth + 1, currBaseLine);
@@ -170,8 +162,8 @@ public abstract class MultilineTreeCellRenderer extends JComponent implements Tr
   public void setText(String[] lines, String prefix) {
     myLines = lines;
     myTextLength = 0;
-    for (int i = 0; i < lines.length; i++) {
-      myTextLength += lines[i].length();
+    for (String line : lines) {
+      myTextLength += line.length();
     }
     myPrefix = prefix;
 
@@ -188,6 +180,7 @@ public abstract class MultilineTreeCellRenderer extends JComponent implements Tr
     myWrapsCalculatedForWidth = -1;
   }
 
+  @Override
   public Dimension getMinimumSize() {
     if (getFont() != null) {
       int minHeight = getCurrFontMetrics().getHeight();
@@ -202,6 +195,7 @@ public abstract class MultilineTreeCellRenderer extends JComponent implements Tr
   private static final int MIN_WIDTH = 10;
 
   // Calculates height for current width.
+  @Override
   public Dimension getPreferredSize() {
     recalculateWraps();
     return new Dimension(myWrapsCalculatedForWidth, myHeightCalculated);
@@ -247,13 +241,12 @@ public abstract class MultilineTreeCellRenderer extends JComponent implements Tr
     int result = 0;
     myWraps = new ArrayList();
 
-    for (int i = 0; i < myLines.length; i++) {
-      String aLine = myLines[i];
+    for (String aLine : myLines) {
       int lineFirstChar = 0;
       int lineLastChar = aLine.length() - 1;
       int currFirst = lineFirstChar;
       int printableWidth = width - myTextInsets.left - myTextInsets.right;
-      if (aLine.length() == 0) {
+      if (aLine.isEmpty()) {
         myWraps.add(aLine);
         result++;
       }
@@ -341,6 +334,7 @@ public abstract class MultilineTreeCellRenderer extends JComponent implements Tr
 
   protected abstract void initComponent(JTree tree, Object value, boolean selected, boolean expanded, boolean leaf, int row, boolean hasFocus);
 
+  @Override
   public Component getTreeCellRendererComponent(JTree tree, Object value, boolean selected, boolean expanded, boolean leaf, int row, boolean hasFocus) {
     setFont(UIUtil.getTreeFont());
 
@@ -381,18 +375,28 @@ public abstract class MultilineTreeCellRenderer extends JComponent implements Tr
     return this;
   }
 
+  /**
+   * Returns {@code true} if icon should be vertically centered. Otherwise, icon will be placed on top
+   * @return
+   */
+  protected boolean isIconVerticallyCentered() {
+    return false;
+  }
+
   public static JScrollPane installRenderer(final JTree tree, final MultilineTreeCellRenderer renderer) {
     final TreeCellRenderer defaultRenderer = tree.getCellRenderer();
 
     JScrollPane scrollpane = new JBScrollPane(tree){
       private int myAddRemoveCounter = 0;
       private boolean myShouldResetCaches = false;
+      @Override
       public void setSize(Dimension d) {
         boolean isChanged = getWidth() != d.width || myShouldResetCaches;
         super.setSize(d);
         if (isChanged) resetCaches();
       }
 
+      @Override
       public void reshape(int x, int y, int w, int h) {
         boolean isChanged = w != getWidth() || myShouldResetCaches;
         super.reshape(x, y, w, h);
@@ -404,14 +408,16 @@ public abstract class MultilineTreeCellRenderer extends JComponent implements Tr
         myShouldResetCaches = false;
       }
 
+      @Override
       public void addNotify() {
-        super.addNotify();    //To change body of overriden methods use Options | File Templates.
+        super.addNotify();
         if (myAddRemoveCounter == 0) myShouldResetCaches = true;
         myAddRemoveCounter++;
       }
 
+      @Override
       public void removeNotify() {
-        super.removeNotify();    //To change body of overriden methods use Options | File Templates.
+        super.removeNotify();
         myAddRemoveCounter--;
       }
     };
@@ -421,10 +427,12 @@ public abstract class MultilineTreeCellRenderer extends JComponent implements Tr
     tree.setCellRenderer(renderer);
 
     scrollpane.addComponentListener(new ComponentAdapter() {
+      @Override
       public void componentResized(ComponentEvent e) {
         resetHeightCache(tree, defaultRenderer, renderer);
       }
 
+      @Override
       public void componentShown(ComponentEvent e) {
         // componentResized not called when adding to opened tool window.
         // Seems to be BUG#4765299, however I failed to create same code to reproduce it.
@@ -434,6 +442,13 @@ public abstract class MultilineTreeCellRenderer extends JComponent implements Tr
     });
 
     return scrollpane;
+  }
+
+  @NotNull
+  public String getText() {
+    StringBuilder sb = new StringBuilder();
+    myWraps.forEach(o -> sb.append(o.toString() + "\n"));
+    return sb.toString();
   }
 
   private static void resetHeightCache(final JTree tree,
@@ -472,5 +487,42 @@ public abstract class MultilineTreeCellRenderer extends JComponent implements Tr
 //      return myDelegatee.getScrollableTracksViewportHeight();
 //    }
 //  }
+
+  @Override
+  public AccessibleContext getAccessibleContext() {
+    if (accessibleContext == null) {
+      accessibleContext = new AccessibleMultilineTreeCellRenderer();
+    }
+    return accessibleContext;
+  }
+
+  protected class AccessibleMultilineTreeCellRenderer extends AccessibleJComponent {
+    @Override
+    public String getAccessibleName() {
+      String name = accessibleName;
+      if (name == null) {
+        name = (String)getClientProperty(AccessibleContext.ACCESSIBLE_NAME_PROPERTY);
+      }
+
+      if (name == null) {
+        StringBuilder sb = new StringBuilder();
+        for (String aLine : myLines) {
+          sb.append(aLine);
+          sb.append(SystemProperties.getLineSeparator());
+        }
+        if (sb.length() > 0) name = sb.toString();
+      }
+
+      if (name == null) {
+        name = super.getAccessibleName();
+      }
+      return name;
+    }
+
+    @Override
+    public AccessibleRole getAccessibleRole() {
+      return AccessibleRole.LABEL;
+    }
+  }
 }
 

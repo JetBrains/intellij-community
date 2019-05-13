@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,30 +13,34 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-/*
- * User: anna
- * Date: 24-Dec-2008
- */
 package com.intellij.execution.actions;
 
+import com.intellij.execution.testframework.AbstractTestProxy;
 import com.intellij.execution.testframework.Filter;
-import com.intellij.execution.testframework.JavaAwareFilter;
+import com.intellij.execution.testframework.TestConsoleProperties;
 import com.intellij.execution.testframework.actions.AbstractRerunFailedTestsAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComponentContainer;
+import com.intellij.psi.search.GlobalSearchScope;
 import org.jetbrains.annotations.NotNull;
 
+/**
+ * @author anna
+ */
 public class JavaRerunFailedTestsAction extends AbstractRerunFailedTestsAction {
-
-  protected JavaRerunFailedTestsAction(@NotNull ComponentContainer componentContainer) {
+  public JavaRerunFailedTestsAction(@NotNull ComponentContainer componentContainer, @NotNull TestConsoleProperties consoleProperties) {
     super(componentContainer);
+    init(consoleProperties);
   }
 
   @NotNull
   @Override
-  protected Filter getFilter(Project project) {
-    return Filter.FAILED_OR_INTERRUPTED.and(JavaAwareFilter.METHOD(project));
+  protected Filter getFilter(@NotNull Project project, @NotNull GlobalSearchScope searchScope) {
+    return super.getFilter(project, searchScope).and(new Filter() {
+      @Override
+      public boolean shouldAccept(AbstractTestProxy test) {
+        return test.isLeaf();
+      }
+    });
   }
-
 }

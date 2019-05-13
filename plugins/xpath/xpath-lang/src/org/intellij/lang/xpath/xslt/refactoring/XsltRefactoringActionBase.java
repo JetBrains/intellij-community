@@ -29,6 +29,7 @@ import org.jetbrains.annotations.Nullable;
 
 public abstract class XsltRefactoringActionBase implements RefactoringActionHandler {
 
+    @Override
     public void invoke(@NotNull Project project, Editor editor, PsiFile file, DataContext dataContext) {
         final int offset = editor.getCaretModel().getOffset();
 
@@ -44,6 +45,7 @@ public abstract class XsltRefactoringActionBase implements RefactoringActionHand
                 (message != null ? message : getRefactoringName() + " is not available in the current context."), "XSLT - " + getRefactoringName(), null);
     }
 
+    @Override
     public void invoke(@NotNull Project project, @NotNull PsiElement[] elements, DataContext dataContext) {
         throw new UnsupportedOperationException();
     }

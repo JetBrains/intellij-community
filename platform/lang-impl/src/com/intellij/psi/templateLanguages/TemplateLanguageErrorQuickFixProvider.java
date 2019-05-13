@@ -38,7 +38,7 @@ import org.jetbrains.annotations.NotNull;
 public class TemplateLanguageErrorQuickFixProvider implements ErrorQuickFixProvider{
 
   @Override
-  public void registerErrorQuickFix(final PsiErrorElement errorElement, final HighlightInfo highlightInfo) {
+  public void registerErrorQuickFix(@NotNull final PsiErrorElement errorElement, @NotNull final HighlightInfo highlightInfo) {
     final PsiFile psiFile = errorElement.getContainingFile();
     final FileViewProvider provider = psiFile.getViewProvider();
     if (!(provider instanceof TemplateLanguageFileViewProvider)) return;
@@ -74,12 +74,9 @@ public class TemplateLanguageErrorQuickFixProvider implements ErrorQuickFixProvi
       @Override
       public void invoke(@NotNull final Project project, final Editor editor, final PsiFile file) throws IncorrectOperationException {
         final TemplateDataLanguageConfigurable configurable = new TemplateDataLanguageConfigurable(project);
-        ShowSettingsUtil.getInstance().editConfigurable(project, configurable, new Runnable() {
-          @Override
-          public void run() {
-            if (virtualFile != null) {
-              configurable.selectFile(virtualFile);
-            }
+        ShowSettingsUtil.getInstance().editConfigurable(project, configurable, () -> {
+          if (virtualFile != null) {
+            configurable.selectFile(virtualFile);
           }
         });
       }

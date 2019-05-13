@@ -15,18 +15,18 @@
  */
 package com.intellij.cvsSupport2.javacvsImpl.io;
 
+import com.intellij.application.options.CodeStyle;
 import com.intellij.cvsSupport2.CvsUtil;
 import com.intellij.cvsSupport2.cvsoperations.common.ReceivedFileProcessor;
 import com.intellij.cvsSupport2.util.CvsVfsUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
-import com.intellij.util.containers.HashMap;
 import org.netbeans.lib.cvsclient.file.IReaderFactory;
 import org.netbeans.lib.cvsclient.file.IReceiveTextFilePreprocessor;
 
 import java.io.*;
 import java.nio.charset.Charset;
+import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -34,7 +34,7 @@ import java.util.Map;
  */
 public class ReceiveTextFilePreprocessor implements IReceiveTextFilePreprocessor {
   private final ReceivedFileProcessor myReceivedFileProcessor;
-  private final Map<File, String> myFileToSeparator = new HashMap<File, String>();
+  private final Map<File, String> myFileToSeparator = new HashMap<>();
 
   public ReceiveTextFilePreprocessor(ReceivedFileProcessor receivedFileProcessor) {
     myReceivedFileProcessor = receivedFileProcessor;
@@ -84,7 +84,7 @@ public class ReceiveTextFilePreprocessor implements IReceiveTextFilePreprocessor
       return myFileToSeparator.get(file);
     }
     else {
-      return CodeStyleSettingsManager.getInstance().getCurrentSettings().getLineSeparator();
+      return CodeStyle.getDefaultSettings().getLineSeparator();
     }
   }
 

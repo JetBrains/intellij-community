@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 package org.jetbrains.plugins.groovy.dsl
+
 import com.intellij.codeInsight.documentation.DocumentationManager
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.roots.ContentEntry
@@ -24,23 +25,34 @@ import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.PsiTestUtil
 import com.intellij.testFramework.fixtures.DefaultLightProjectDescriptor
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
+import groovy.transform.CompileStatic
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.plugins.groovy.codeInspection.assignment.GroovyAssignabilityCheckInspection
 import org.jetbrains.plugins.groovy.lang.documentation.GroovyDocumentationProvider
 import org.jetbrains.plugins.groovy.util.TestUtils
+
 /**
  * @author peter
  */
-public class GroovyDslTest extends LightCodeInsightFixtureTestCase {
-  static def descriptor = new DefaultLightProjectDescriptor() {
-    @Override def void configureModule(Module module, ModifiableRootModel model, ContentEntry contentEntry) {
-      PsiTestUtil.addLibrary(module, model, "GROOVY", TestUtils.getMockGroovyLibraryHome(), TestUtils.GROOVY_JAR);
+@CompileStatic
+class GroovyDslTest extends LightCodeInsightFixtureTestCase {
+  private static LightProjectDescriptor descriptor = new DefaultLightProjectDescriptor() {
+    @Override
+    void configureModule(@NotNull Module module, @NotNull ModifiableRootModel model, @NotNull ContentEntry contentEntry) {
+      PsiTestUtil.addLibrary(module, model, "GROOVY", TestUtils.getMockGroovyLibraryHome(), TestUtils.GROOVY_JAR)
     }
   }
 
+  @NotNull
+  @Override
+  protected LightProjectDescriptor getProjectDescriptor() {
+    descriptor
+  }
+
+
   @Override
   protected String getBasePath() {
-    TestUtils.getTestDataPath() + "groovy/dsl"
+    TestUtils.testDataPath + "groovy/dsl"
   }
 
   private def doCustomTest(String s) {
@@ -49,15 +61,15 @@ public class GroovyDslTest extends LightCodeInsightFixtureTestCase {
   }
 
   private def addGdsl(String text) {
-    final PsiFile file = myFixture.addFileToProject(getTestName(false) + "Enhancer.gdsl", text);
-    GroovyDslFileIndex.activateUntilModification(file.virtualFile)
+    final PsiFile file = myFixture.addFileToProject(getTestName(false) + "Enhancer.gdsl", text)
+    GroovyDslFileIndex.activate(file.virtualFile)
   }
 
-  public void doTest() throws Throwable {
+  void doTest() throws Throwable {
     myFixture.testCompletion(getTestName(false) + ".gdsl", getTestName(false) + "_after.gdsl")
   }
 
-  public void testCompleteTopLevel() throws Throwable {
+  void testCompleteTopLevel() throws Throwable {
     myFixture.configureByText 'a.gdsl', '<caret>'
     myFixture.completeBasic()
     def expected = ['contributor', 'contribute', 'currentType', 'assertVersion']
@@ -66,7 +78,7 @@ public class GroovyDslTest extends LightCodeInsightFixtureTestCase {
     }
   }
 
-  public void testCompleteInContributor() throws Throwable {
+  void testCompleteInContributor() throws Throwable {
     myFixture.configureByText 'a.gdsl', 'contribute { <caret> }'
     myFixture.completeBasic()
     def expected = ['method', 'property', 'parameter']
@@ -75,7 +87,7 @@ public class GroovyDslTest extends LightCodeInsightFixtureTestCase {
     }
   }
 
-  public void testCompleteClassMethod() throws Throwable {
+  void testCompleteClassMethod() throws Throwable {
     doCustomTest("""
       def ctx = context(ctype: "java.lang.String")
 
@@ -85,7 +97,7 @@ public class GroovyDslTest extends LightCodeInsightFixtureTestCase {
 """)
   }
 
-  public void "test on anonymous class"() {
+  void "test on anonymous class"() {
     addGdsl '''
 import com.intellij.patterns.PsiJavaPatterns
 
@@ -100,10 +112,10 @@ class Foo<T> {
 }
 '''
     myFixture.completeBasic()
-    myFixture.assertPreferredCompletionItems 0, 'finalize', 'fooT'
+    myFixture.assertPreferredCompletionItems 0, 'fooT', 'finalize'
   }
 
-  public void testDelegateToThrowable() throws Throwable {
+  void testDelegateToThrowable() throws Throwable {
     doCustomTest("""
       def ctx = context(ctype: "java.lang.String")
 
@@ -113,7 +125,7 @@ class Foo<T> {
 """)
   }
 
-  public void testDelegateToArgument() throws Throwable {
+  void testDelegateToArgument() throws Throwable {
     doCustomTest("""
       def ctx = context(scope: closureScope(isArgument: true))
 
@@ -129,7 +141,7 @@ class Foo<T> {
 """)
   }
 
-  public void testDelegateToArgument2() throws Throwable {
+  void testDelegateToArgument2() throws Throwable {
     doCustomTest("""
       def ctx = context(scope: closureScope(isArgument: true))
 
@@ -142,7 +154,7 @@ class Foo<T> {
 """)
   }
 
-  public void testClassContext() throws Throwable {
+  void testClassContext() throws Throwable {
     addGdsl("""
      def ctx = context(scope: classScope(name: /.*WsSecurityConfig/))
      
@@ -153,17 +165,12 @@ class Foo<T> {
     myFixture.testCompletionTyping(getTestName(false) + ".groovy", '\n', getTestName(false) + "_after.groovy")
   }
 
-  @NotNull
-  @Override protected LightProjectDescriptor getProjectDescriptor() {
-    return descriptor;
-  }
-
-  public void testCategoryWhenMethodRenamed() {
+  void testCategoryWhenMethodRenamed() {
     PsiClass category = myFixture.addClass("""
 public class MyCategory {
-  public void foo(String s) {}
+  public static void foo(String s) {}
 }""")
-    def foo = category.getMethods()[0]
+    def foo = TestUtils.getMethods(category)[0]
     addGdsl("""
     contributor([:]){category 'MyCategory'}""")
     myFixture.renameElement foo, "bar", false, false
@@ -171,7 +178,7 @@ public class MyCategory {
     myFixture.testCompletion(getTestName(false) + ".groovy", getTestName(false) + "_after.groovy")
   }
 
-  public void testPathRegexp() {
+  void testPathRegexp() {
     addGdsl "contributor(pathRegexp: '.*aaa.*') { property name:'fffooo', type:'int' }"
 
     myFixture.configureFromExistingVirtualFile myFixture.addFileToProject("aaa/foo.groovy", "fff<caret>x").virtualFile
@@ -183,7 +190,7 @@ public class MyCategory {
     assertEmpty myFixture.lookupElementStrings
   }
 
-  public void testNamedParameters() {
+  void testNamedParameters() {
     addGdsl '''contribute(currentType(String.name)) {
   method name:'foo', type:void, params:[:], namedParams:[
     parameter(name:'param1', type:String),
@@ -195,7 +202,7 @@ public class MyCategory {
     myFixture.assertPreferredCompletionItems 0, 'param1', 'param2'
   }
 
-  public void testNamedParametersGroovyConvention() {
+  void testNamedParametersGroovyConvention() {
     addGdsl '''contribute(currentType(String.name)) {
   method name:'foo', type:void, params:[args:[
       parameter(name:'param1', type:String, doc:'My doc'),
@@ -213,7 +220,7 @@ public class MyCategory {
     return new GroovyDocumentationProvider().generateDoc(element, null)
   }
 
-  public void testCheckNamedArgumentTypes() {
+  void testCheckNamedArgumentTypes() {
     addGdsl '''contribute(currentType(String.name)) {
   method name:'foo', type:void, params:[args:[
       parameter(name:'param1', type:File),
@@ -227,7 +234,7 @@ public class MyCategory {
     myFixture.checkHighlighting(true, false, false)
   }
 
-  public void testMethodDoc() {
+  void testMethodDoc() {
     addGdsl '''contribute(currentType(String.name)) {
   method name:'foo', type:void, params:[:], doc:'Some doc'
 }'''
@@ -238,13 +245,97 @@ public class MyCategory {
     assert generateDoc().contains('()')
   }
 
-  public void testPropertyDoc() {
+  void testPropertyDoc() {
     addGdsl '''contribute(currentType(String.name)) {
   property name:'foo', type:int, doc:'Some doc2'
 }'''
     myFixture.configureByText 'a.groovy', '"".fo<caret>o'
     myFixture.completeBasic()
     assert generateDoc().contains('Some doc2')
-    assert generateDoc().contains('setFoo')
+    assert generateDoc().contains('getFoo')
+  }
+
+  void testVariableInAnnotationClosureContext() {
+    addGdsl '''
+      contributor(scope: closureScope(annotationName:'Ensures')) {
+        variable(name: 'result', type:'java.lang.Object')
+      }
+    '''
+
+    myFixture.configureByText('a.groovy', '''\
+      @interface Ensures {}
+
+      @Ensures({re<caret>sult == 2})
+      def foo() {}
+    ''')
+
+    assertNotNull(myFixture.getReferenceAtCaretPosition().resolve())
+  }
+
+  void testVariableInMethodCallClosureContext() {
+    addGdsl '''
+      contributor(scope: closureScope(methodName:'ensures')) {
+        variable(name: 'result', type:'java.lang.Object')
+      }
+    '''
+
+    myFixture.configureByText('a.groovy', '''\
+      ensures{re<caret>sult == 2}
+    ''')
+
+    assertNotNull(myFixture.getReferenceAtCaretPosition().resolve())
+  }
+
+  void testScriptSuperClass() {
+    myFixture.addClass('''\
+      public class Abc {
+        public void foo() {}
+      }
+    ''')
+    addGdsl('''
+      scriptSuperClass(pattern: 'a.groovy', superClass: 'Abc')
+    ''')
+
+    myFixture.configureByText('a.groovy', '''\
+      fo<caret>o()
+    ''')
+
+    assertNotNull(myFixture.getReferenceAtCaretPosition().resolve())
+  }
+
+  void testEnumConstructor() {
+    myFixture.configureByText('a.groovy', '''\
+enum Myenum {
+    a<caret>b(1, 2, 4)
+}
+''')
+
+    addGdsl('''
+contribute(currentType("Myenum")) {
+    constructor params:[foo:Integer, bar:Integer, goo:Integer]
+}''')
+    assertNotNull(myFixture.getReferenceAtCaretPosition().resolve())
+  }
+
+  void 'test complete base script members'() {
+    myFixture.with {
+      addFileToProject 'pckg/MyBaseScriptClass.groovy', '''
+package pckg
+
+abstract class MyBaseScriptClass extends Script {
+    def foo() {}
+    def prop
+}
+'''
+      addGdsl '''
+scriptSuperClass(pattern: 'a.groovy', superClass: 'pckg.MyBaseScriptClass')
+'''
+      configureByText 'a.groovy', '<caret>'
+      completeBasic()
+      lookupElementStrings.with {
+        assert 'foo' in it
+        assert 'prop' in it
+      }
+    }
   }
 }

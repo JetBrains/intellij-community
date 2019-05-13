@@ -15,10 +15,6 @@
  */
 package com.intellij.refactoring.rename;
 
-/**
- * User: anna
- * Date: 2/8/12
- */
 public abstract class PreferrableNameSuggestionProvider implements NameSuggestionProvider {
   public boolean shouldCheckOthers() {
     return true;

@@ -1,13 +1,10 @@
 class Test<X> {
-
     interface I {
-      void _();
+      void m();
     }
 
-    
-
     void test() {
-      <error descr="Incompatible types. Found: '<method reference>', required: 'Test.I'">I i1 = Test<String>::foo;</error>
+      I i1 = <error descr="Parameterized qualifier on static method reference">Test<String>::foo</error>;
       I i2 = Test::foo;
     }
 

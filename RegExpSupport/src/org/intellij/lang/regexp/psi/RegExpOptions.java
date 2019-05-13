@@ -19,8 +19,11 @@ package org.intellij.lang.regexp.psi;
  * Represents an inline options element (?x) or (?-x). Returned from {@link org.intellij.lang.regexp.psi.RegExpSetOptions}
  */
 public interface RegExpOptions extends RegExpElement {
-    /**
-     * Checks whether a certain option is set.
-     */
-    boolean isSet(char option);
+
+  /**
+   * Checks whether a certain option is set.
+   * @return true, if the option is set, false otherwise.
+   */
+  boolean isSet(char option);
+
 }

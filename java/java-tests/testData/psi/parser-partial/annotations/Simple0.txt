@@ -8,6 +8,6 @@ PsiJavaFile:Simple0.java
     PsiAnnotationParameterList
       PsiJavaToken:LPARENTH('(')
       PsiNameValuePair
-        PsiLiteralExpression:"bla-bla-bla"
-          PsiJavaToken:STRING_LITERAL('"bla-bla-bla"')
+        PsiLiteralExpression:"blah-blah-blah"
+          PsiJavaToken:STRING_LITERAL('"blah-blah-blah"')
       PsiJavaToken:RPARENTH(')')

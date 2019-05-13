@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,13 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.intellij.ide.util;
 
 import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
+import com.intellij.openapi.roots.GeneratedSourcesFilter;
 import com.intellij.openapi.util.UserDataHolder;
+import com.intellij.openapi.vfs.VFileProperty;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
@@ -27,14 +28,21 @@ import com.intellij.pom.PomTargetPsiElement;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiUtilCore;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.function.Function;
 
 public class EditSourceUtil {
   private EditSourceUtil() { }
 
   @Nullable
-  public static Navigatable getDescriptor(final PsiElement element) {
-    if (!canNavigate(element)) {
+  public static Navigatable getDescriptor(@NotNull PsiElement element) {
+    PsiElement original = getNavigatableOriginalElement(element);
+    if (original != null) {
+      element = original;
+    }
+    else if (!canNavigate(element)) {
       return null;
     }
     if (element instanceof PomTargetPsiElement) {
@@ -54,16 +62,20 @@ public class EditSourceUtil {
     return desc;
   }
 
-  public static boolean canNavigate (PsiElement element) {
+  private static PsiElement getNavigatableOriginalElement(@NotNull PsiElement element) {
+    return processAllOriginalElements(element, original -> canNavigate(original) ? original : null);
+  }
+
+  public static boolean canNavigate(PsiElement element) {
     if (element == null || !element.isValid()) {
       return false;
     }
 
     VirtualFile file = PsiUtilCore.getVirtualFile(element.getNavigationElement());
-    return file != null && file.isValid() && !file.isSpecialFile() && !VfsUtilCore.isBrokenLink(file);
+    return file != null && file.isValid() && !file.is(VFileProperty.SPECIAL) && !VfsUtilCore.isBrokenLink(file);
   }
 
-  public static void navigate(NavigationItem item, boolean requestFocus, boolean useCurrentWindow) {
+  public static void navigate(@NotNull NavigationItem item, boolean requestFocus, boolean useCurrentWindow) {
     if (item instanceof UserDataHolder) {
       ((UserDataHolder)item).putUserData(FileEditorManager.USE_CURRENT_WINDOW, useCurrentWindow);
     }
@@ -71,5 +83,18 @@ public class EditSourceUtil {
     if (item instanceof UserDataHolder) {
       ((UserDataHolder)item).putUserData(FileEditorManager.USE_CURRENT_WINDOW, null);
     }
+  }
+
+  /**
+   * Collect original elements from all filters.
+   */
+  private static PsiElement processAllOriginalElements(@NotNull PsiElement element, @NotNull Function<? super PsiElement, ? extends PsiElement> processor) {
+    for (GeneratedSourcesFilter filter : GeneratedSourcesFilter.EP_NAME.getExtensions()) {
+      for (PsiElement originalElement: filter.getOriginalElements(element)) {
+        PsiElement apply = processor.apply(originalElement);
+        if (apply != null) return apply;
+      }
+    }
+    return null;
   }
 }

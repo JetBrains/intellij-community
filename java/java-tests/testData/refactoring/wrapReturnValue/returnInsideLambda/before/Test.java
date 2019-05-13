@@ -1,7 +1,7 @@
 class Test {
-  Comparable<String> foo() {
-    return (o) -> {
-      return 0;
-    };
-  }
+    Comparable<String> foo() {
+        return (o) -> {
+            return 0;
+        };
+    }
 }

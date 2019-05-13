@@ -1,9 +1,26 @@
+/*
+ * Copyright 2000-2016 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package org.jetbrains.jps.maven.model.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.JDOMUtil;
+import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.intellij.util.xmlb.XmlSerializer;
-import org.jdom.Document;
+import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.builders.storage.BuildDataPaths;
@@ -19,13 +36,17 @@ import org.jetbrains.jps.model.module.JpsDependencyElement;
 import org.jetbrains.jps.model.module.JpsModule;
 
 import java.io.File;
+import java.util.Map;
 
 /**
  * @author nik
  */
 public class JpsMavenExtensionServiceImpl extends JpsMavenExtensionService {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.jps.maven.model.impl.JpsMavenExtensionServiceImpl");
-  private static final JpsElementChildRole<JpsSimpleElement<Boolean>> PRODUCTION_ON_TEST_ROLE = JpsElementChildRoleBase.create("production on test");
+  private static final JpsElementChildRole<JpsSimpleElement<Boolean>> PRODUCTION_ON_TEST_ROLE = JpsElementChildRoleBase.create("maven production on test");
+  private final Map<File, MavenProjectConfiguration> myLoadedConfigs =
+    new THashMap<>(FileUtil.FILE_HASHING_STRATEGY);
+  private final Map<File, Boolean> myConfigFileExists = ConcurrentFactoryMap.createMap(key -> key.exists());
 
   public JpsMavenExtensionServiceImpl() {
     ResourcesBuilder.registerEnabler(new StandardResourceBuilderEnabler() {
@@ -71,27 +92,35 @@ public class JpsMavenExtensionServiceImpl extends JpsMavenExtensionService {
     return child != null && child.getData();
   }
 
-  private volatile MavenProjectConfiguration myConfig;
+  @Override
+  public boolean hasMavenProjectConfiguration(@NotNull BuildDataPaths paths) {
+    return myConfigFileExists.get(new File(paths.getDataStorageRoot(), MavenProjectConfiguration.CONFIGURATION_FILE_RELATIVE_PATH));
+  }
 
-  @NotNull
   @Override
   public MavenProjectConfiguration getMavenProjectConfiguration(BuildDataPaths paths) {
-    MavenProjectConfiguration config = myConfig;
-    if (config == null) {
-      synchronized (this) {
-        config = myConfig;
-        if (config == null) {
-          config = new MavenProjectConfiguration();
-          try {
-            final File configFile = new File(paths.getDataStorageRoot(), MavenProjectConfiguration.CONFIGURATION_FILE_RELATIVE_PATH);
-            final Document document = JDOMUtil.loadDocument(configFile);
-            XmlSerializer.deserializeInto(config, document.getRootElement());
-          }
-          catch (Exception e) {
-            LOG.info(e);
-          }
-          myConfig = config;
+    if (!hasMavenProjectConfiguration(paths)) {
+      return null;
+    }
+    final File dataStorageRoot = paths.getDataStorageRoot();
+    return getMavenProjectConfiguration(dataStorageRoot);
+  }
+
+  @NotNull
+  public MavenProjectConfiguration getMavenProjectConfiguration(@NotNull File dataStorageRoot) {
+    final File configFile = new File(dataStorageRoot, MavenProjectConfiguration.CONFIGURATION_FILE_RELATIVE_PATH);
+    MavenProjectConfiguration config;
+    synchronized (myLoadedConfigs) {
+      config = myLoadedConfigs.get(configFile);
+      if (config == null) {
+        config = new MavenProjectConfiguration();
+        try {
+          XmlSerializer.deserializeInto(config, JDOMUtil.load(configFile));
         }
+        catch (Exception e) {
+          LOG.info(e);
+        }
+        myLoadedConfigs.put(configFile, config);
       }
     }
     return config;

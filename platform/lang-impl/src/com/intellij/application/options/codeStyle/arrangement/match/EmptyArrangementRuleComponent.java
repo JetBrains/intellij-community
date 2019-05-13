@@ -15,8 +15,7 @@
  */
 package com.intellij.application.options.codeStyle.arrangement.match;
 
-import com.intellij.application.options.codeStyle.arrangement.ArrangementConstants;
-import com.intellij.application.options.codeStyle.arrangement.component.ArrangementRepresentationAware;
+import com.intellij.application.options.codeStyle.arrangement.ui.ArrangementRepresentationAware;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.util.ui.GridBag;
 import com.intellij.util.ui.UIUtil;
@@ -27,7 +26,6 @@ import java.awt.*;
 
 /**
  * @author Denis Zhdanov
- * @since 11/13/12 1:31 PM
  */
 public class EmptyArrangementRuleComponent extends JPanel implements ArrangementRepresentationAware {
   

@@ -1,22 +1,31 @@
-<idea-plugin version="2">
+<idea-plugin>
   <name>IntelliLang</name>
   <id>org.intellij.intelliLang</id>
   <vendor>JetBrains</vendor>
-  <description><![CDATA[User configurable language injection support (originally developed by Sascha Weinreuter sascha.weinreuter@cit.de)]]></description>
-  <version>8.0</version>
+  <description>
+      <![CDATA[
+      Enables user configurable language injection support (originally developed by Sascha Weinreuter sascha.weinreuter@cit.de)
+        The following features are available:
+        <ul>
+        <li>Language injection</li>
+        <li>Pattern validation</li>
+        <li>Regular expression support</li>
+        <li>Language Injections page in the Settings/Preferences dialog.</li>
+        <li>Ability to edit injected code in the special scratch-pad editor.</l>
+        </ul>
+      ]]>
+   </description>
 
   <depends optional="true" config-file="intellilang-xpath-support.xml">XPathView</depends>
   <depends optional="true" config-file="intellilang-java-support.xml">com.intellij.modules.java</depends>
-  <depends optional="true" config-file="intellilang-javaee-support.xml">com.intellij.javaee</depends>
   <depends optional="true" config-file="intellilang-xml-support.xml">com.intellij.modules.xml</depends>
-  <depends optional="true" config-file="intellilang-js-support.xml">JavaScript</depends>
 
   <extensionPoints>
     <extensionPoint name="languageSupport" interface="org.intellij.plugins.intelliLang.inject.LanguageInjectionSupport"/>
     <extensionPoint name="injectionConfig" beanClass="org.intellij.plugins.intelliLang.inject.LanguageInjectionConfigBean"/>
   </extensionPoints>
+
   <extensions defaultExtensionNs="com.intellij">
-    <errorHandler implementation="com.intellij.diagnostic.ITNReporter" />
     <intentionAction>
       <className>org.intellij.plugins.intelliLang.inject.InjectLanguageAction</className>
       <category>Language Injection</category>
@@ -30,12 +39,13 @@
       <category>Language Injection</category>
     </intentionAction>
 
-    <highlightErrorFilter implementation="org.intellij.plugins.intelliLang.inject.CustomErrorElementFilter"/>
+    <highlightErrorFilter implementation="org.intellij.plugins.intelliLang.inject.FrankensteinErrorFilter"/>
+    <daemon.highlightInfoFilter implementation="org.intellij.plugins.intelliLang.inject.FrankensteinErrorFilter"/>
 
-    <projectConfigurable instance="org.intellij.plugins.intelliLang.InjectionsSettingsUI"/>
+    <projectConfigurable groupId="editor" displayName="Language Injections" dynamic="true" id="IntelliLang.Configuration" instance="org.intellij.plugins.intelliLang.InjectionsSettingsUI" nonDefaultProject="true"/>
 
-    <multiHostInjector implementation="org.intellij.plugins.intelliLang.inject.CommentLanguageInjector"/>
-    <multiHostInjector implementation="org.intellij.plugins.intelliLang.inject.TemporaryPlacesInjector"/>
+    <multiHostInjector id="TemporaryPlacesInjector" implementation="org.intellij.plugins.intelliLang.inject.TemporaryPlacesInjector" order="first"/>
+    <multiHostInjector id ="CommentLanguageInjector" implementation="org.intellij.plugins.intelliLang.inject.CommentLanguageInjector" order="after TemporaryPlacesInjector"/>
     <multiHostInjector implementation="org.intellij.plugins.intelliLang.inject.DefaultLanguageInjector" order="last"/>
 
     <projectService serviceInterface="org.intellij.plugins.intelliLang.inject.TemporaryPlacesRegistry"
@@ -46,5 +56,11 @@
                     serviceImplementation="org.intellij.plugins.intelliLang.Configuration$Prj"/>
     <compileServer.plugin classpath="intellilang-jps-plugin.jar"/>
 
+    <psi.referenceContributor implementation="org.intellij.plugins.intelliLang.references.InjectedReferencesContributor"/>
+    <referenceInjector implementation="org.intellij.plugins.intelliLang.references.FileReferenceInjector"/>
+    <localInspection implementationClass="org.intellij.plugins.intelliLang.references.InjectedReferencesInspection"
+                     enabledByDefault="true" level="ERROR"
+                     displayName="Injected References" groupBundle="messages.InspectionsBundle" groupKey="inspection.general.tools.group.name"/>
   </extensions>
+
 </idea-plugin>

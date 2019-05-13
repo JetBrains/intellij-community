@@ -15,19 +15,19 @@
  */
 package com.intellij.xdebugger.impl.actions.handlers;
 
-import com.intellij.xdebugger.impl.actions.DebuggerActionHandler;
-import com.intellij.xdebugger.XDebuggerManager;
-import com.intellij.xdebugger.XDebugSession;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.project.Project;
+import com.intellij.xdebugger.XDebugSession;
+import com.intellij.xdebugger.XDebuggerManager;
+import com.intellij.xdebugger.impl.actions.DebuggerActionHandler;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @author nik
  */
 public abstract class XDebuggerActionHandler extends DebuggerActionHandler {
-
+  @Override
   public void perform(@NotNull final Project project, final AnActionEvent event) {
     XDebugSession session = XDebuggerManager.getInstance(project).getCurrentSession();
     if (session != null) {
@@ -35,6 +35,7 @@ public abstract class XDebuggerActionHandler extends DebuggerActionHandler {
     }
   }
 
+  @Override
   public boolean isEnabled(@NotNull final Project project, final AnActionEvent event) {
     XDebugSession session = XDebuggerManager.getInstance(project).getCurrentSession();
     return session != null && isEnabled(session, event.getDataContext());

@@ -28,10 +28,11 @@ public enum Combine implements com.intellij.util.xml.NamedEnum {
 
   private final String value;
 
-  private Combine(String value) {
+  Combine(String value) {
     this.value = value;
   }
 
+  @Override
   public String getValue() {
     return value;
   }

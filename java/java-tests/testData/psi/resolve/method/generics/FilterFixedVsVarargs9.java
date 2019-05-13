@@ -7,7 +7,7 @@
      }
 
      void f(PsiElement e) {
-         <ref>getParentOfType(e, PsiElement.class, PsiElement.class);
+         <caret>getParentOfType(e, PsiElement.class, PsiElement.class);
      }
 
      static class PsiElement {}

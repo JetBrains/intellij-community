@@ -1,25 +1,10 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.actions;
 
+import com.intellij.codeInsight.unwrap.ScopeHighlighter;
 import com.intellij.debugger.DebuggerBundle;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.ui.popup.*;
-import com.intellij.psi.PsiMethod;
-import com.intellij.psi.PsiSubstitutor;
-import com.intellij.psi.util.PsiFormatUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -27,99 +12,109 @@ import java.util.List;
 
 /**
  * @author Eugene Zhuravlev
-*         Date: Nov 21, 2006
 */
-class PsiMethodListPopupStep implements ListPopupStep {
-  private final List<PsiMethod> myMethods;
+class PsiMethodListPopupStep implements ListPopupStep<SmartStepTarget> {
+  private final List<SmartStepTarget> myTargets;
   private final OnChooseRunnable myStepRunnable;
+  private final ScopeHighlighter myScopeHighlighter;
 
-
-  public static interface OnChooseRunnable {
-    void execute(PsiMethod chosenMethod);
+  public interface OnChooseRunnable {
+    void execute(SmartStepTarget stepTarget);
   }
 
-  public PsiMethodListPopupStep(final List<PsiMethod> methods, final OnChooseRunnable stepRunnable) {
-    myMethods = methods;
+  PsiMethodListPopupStep(Editor editor, final List<SmartStepTarget> targets, final OnChooseRunnable stepRunnable) {
+    myTargets = targets;
+    myScopeHighlighter = new ScopeHighlighter(editor);
     myStepRunnable = stepRunnable;
   }
 
   @NotNull
-  public List getValues() {
-    return myMethods;
+  public ScopeHighlighter getScopeHighlighter() {
+    return myScopeHighlighter;
   }
 
-  public boolean isSelectable(Object value) {
+  @Override
+  @NotNull
+  public List<SmartStepTarget> getValues() {
+    return myTargets;
+  }
+
+  @Override
+  public boolean isSelectable(SmartStepTarget value) {
     return true;
   }
 
-  public Icon getIconFor(Object aValue) {
-    if (aValue instanceof PsiMethod) {
-      PsiMethod method = (PsiMethod)aValue;
-      return method.getIcon(0);
-    }
-    return null;
+  @Override
+  public Icon getIconFor(SmartStepTarget avalue) {
+    return avalue.getIcon();
   }
 
+  @Override
   @NotNull
-    public String getTextFor(Object value) {
-    if (value instanceof PsiMethod) {
-      return PsiFormatUtil.formatMethod(
-        (PsiMethod)value,
-        PsiSubstitutor.EMPTY,
-        PsiFormatUtil.SHOW_NAME | PsiFormatUtil.SHOW_PARAMETERS,
-        PsiFormatUtil.SHOW_TYPE,
-        999
-      );
-    }
-    return value.toString();
+  public String getTextFor(SmartStepTarget value) {
+    return value.getPresentation();
   }
 
-  public ListSeparator getSeparatorAbove(Object value) {
+  @Override
+  public ListSeparator getSeparatorAbove(SmartStepTarget value) {
     return null;
   }
 
+  @Override
   public int getDefaultOptionIndex() {
     return 0;
   }
 
+  @Override
   public String getTitle() {
     return DebuggerBundle.message("title.smart.step.popup");
   }
 
-  public PopupStep onChosen(Object selectedValue, final boolean finalChoice) {
+  @Override
+  public PopupStep onChosen(SmartStepTarget selectedValue, final boolean finalChoice) {
     if (finalChoice) {
-      myStepRunnable.execute((PsiMethod)selectedValue);
+      myScopeHighlighter.dropHighlight();
+      myStepRunnable.execute(selectedValue);
     }
     return FINAL_CHOICE;
   }
 
+  @Override
   public Runnable getFinalRunnable() {
     return null;
   }
 
-  public boolean hasSubstep(Object selectedValue) {
+  @Override
+  public boolean hasSubstep(SmartStepTarget selectedValue) {
     return false;
   }
 
+  @Override
   public void canceled() {
+    myScopeHighlighter.dropHighlight();
   }
 
+  @Override
   public boolean isMnemonicsNavigationEnabled() {
     return false;
   }
 
-  public MnemonicNavigationFilter getMnemonicNavigationFilter() {
+  @Override
+  public MnemonicNavigationFilter<SmartStepTarget> getMnemonicNavigationFilter() {
     return null;
   }
 
+  @Override
   public boolean isSpeedSearchEnabled() {
-    return false;
+    return true;
   }
 
-  public SpeedSearchFilter getSpeedSearchFilter() {
-    return null;
+  @Override
+  public SpeedSearchFilter<SmartStepTarget> getSpeedSearchFilter() {
+    return this::getTextFor;
   }
 
+  @Override
   public boolean isAutoSelectionEnabled() {
     return false;
   }

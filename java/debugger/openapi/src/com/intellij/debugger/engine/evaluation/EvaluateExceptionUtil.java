@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package com.intellij.debugger.engine.evaluation;
 
 import com.intellij.debugger.DebuggerBundle;
+import com.intellij.openapi.util.text.StringUtil;
 import com.sun.jdi.*;
 
 /**
@@ -42,8 +43,14 @@ public class EvaluateExceptionUtil {
   }
 
   public static EvaluateException createEvaluateException(String msg, Throwable th) {
-    final String message = msg != null? msg + ": " + reason(th) : reason(th);
-    return new EvaluateException(message, th instanceof EvaluateException ? th.getCause() : th);
+    String message = msg != null ? msg + ": " + reason(th) : reason(th);
+    if (th instanceof EvaluateException) {
+      th = th.getCause();
+    }
+    if (th instanceof AbsentInformationException) {
+      return new AbsentInformationEvaluateException(message, th);
+    }
+    return new EvaluateException(message, th);
   }
 
   public static EvaluateException createEvaluateException(String reason) {
@@ -81,7 +88,12 @@ public class EvaluateExceptionUtil {
       return th.getMessage();
     }
     else {
-      return th.getClass().getName() + " : " + (th.getMessage() != null ? th.getMessage() : "");
+      StringBuilder res = new StringBuilder(th.getClass().getName());
+      String message = th.getMessage();
+      if (!StringUtil.isEmpty(message)) {
+        res.append(" : ").append(message);
+      }
+      return res.toString();
     }
   }
 }

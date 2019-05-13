@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,14 +22,13 @@ import org.jetbrains.idea.maven.indices.MavenIndex;
 import org.jetbrains.idea.maven.indices.MavenIndicesTestFixture;
 import org.jetbrains.idea.maven.indices.MavenProjectIndicesManager;
 
-import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 
 public class MavenExtensionCompletionAndResolutionTest extends MavenDomWithIndicesTestCase {
   @Override
   protected MavenIndicesTestFixture createIndicesFixture() {
-    return new MavenIndicesTestFixture(myDir, myProject, "plugins");
+    return new MavenIndicesTestFixture(myDir.toPath(), myProject, "plugins");
   }
 
   @Override
@@ -41,7 +40,7 @@ public class MavenExtensionCompletionAndResolutionTest extends MavenDomWithIndic
                   "<version>1</version>");
   }
 
-  public void testGroupIdCompletion() throws Exception {
+  public void testGroupIdCompletion() {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +
@@ -54,10 +53,10 @@ public class MavenExtensionCompletionAndResolutionTest extends MavenDomWithIndic
                      "  </extensions>" +
                      "</build>");
 
-    assertCompletionVariants(myProjectPom, "test", "org.apache.maven.plugins", "org.codehaus.mojo");
+    assertCompletionVariants(myProjectPom, "org.codehaus.plexus", "test", "org.apache.maven.plugins", "org.codehaus.mojo", "intellij.test");
   }
 
-  public void testArtifactIdCompletion() throws Exception {
+  public void testArtifactIdCompletion() {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +
@@ -74,11 +73,13 @@ public class MavenExtensionCompletionAndResolutionTest extends MavenDomWithIndic
     List<String> actual = getCompletionVariants(myProjectPom);
 
     try {
-      assertUnorderedElementsAreEqual(actual, "maven-compiler-plugin", "maven-war-plugin", "maven-eclipse-plugin", "maven-surefire-plugin");
+      assertUnorderedElementsAreEqual(actual, "maven-jar-plugin", "maven-clean-plugin", "maven-install-plugin", "maven-compiler-plugin",
+                                      "maven-resources-plugin", "maven-site-plugin", "maven-surefire-plugin", "maven-war-plugin",
+                                      "maven-eclipse-plugin", "maven-deploy-plugin");
     }
     catch (Throwable t) {
       MavenProjectIndicesManager instance = MavenProjectIndicesManager.getInstance(myProject);
-      System.out.println("GetArtifacts: " + new HashSet<String>(instance.getArtifactIds("org.apache.maven.plugins")));
+      System.out.println("GetArtifacts: " + new HashSet<>(instance.getArtifactIds("org.apache.maven.plugins")));
       System.out.println("Indexes: " + instance.getIndices());
 
       for (MavenIndex index : instance.getIndices()) {
@@ -91,7 +92,7 @@ public class MavenExtensionCompletionAndResolutionTest extends MavenDomWithIndic
     }
   }
 
-  public void testArtifactWithoutGroupCompletion() throws Exception {
+  public void testArtifactWithoutGroupCompletion() {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +
@@ -105,11 +106,17 @@ public class MavenExtensionCompletionAndResolutionTest extends MavenDomWithIndic
                      "</build>");
 
     assertCompletionVariants(myProjectPom,
-                             "maven-compiler-plugin",
+                             "maven-site-plugin",
+                             "maven-eclipse-plugin",
                              "maven-war-plugin",
+                             "maven-resources-plugin",
                              "maven-surefire-plugin",
+                             "maven-jar-plugin",
                              "build-helper-maven-plugin",
-                             "maven-eclipse-plugin");
+                             "maven-clean-plugin",
+                             "maven-install-plugin",
+                             "maven-compiler-plugin",
+                             "maven-deploy-plugin");
   }
 
   public void testResolving() throws Exception {
@@ -125,13 +132,13 @@ public class MavenExtensionCompletionAndResolutionTest extends MavenDomWithIndic
                      "  </extensions>" +
                      "</build>");
 
-    String pluginPath = "plugins/org/apache/maven/plugins/maven-compiler-plugin/2.0.2/maven-compiler-plugin-2.0.2.pom";
+    String pluginPath = "plugins/org/apache/maven/plugins/maven-compiler-plugin/3.1/maven-compiler-plugin-3.1.pom";
     String filePath = myIndicesFixture.getRepositoryHelper().getTestDataPath(pluginPath);
     VirtualFile f = LocalFileSystem.getInstance().refreshAndFindFileByPath(filePath);
     assertResolved(myProjectPom, findPsiFile(f));
   }
 
-  public void testResolvingAbsentPlugins() throws Exception {
+  public void testResolvingAbsentPlugins() {
     removeFromLocalRepository("org/apache/maven/plugins/maven-compiler-plugin");
 
     createProjectPom("<groupId>test</groupId>" +
@@ -151,7 +158,7 @@ public class MavenExtensionCompletionAndResolutionTest extends MavenDomWithIndic
     ref.resolve(); // shouldn't throw;
   }
 
-  public void testDoNotHighlightAbsentGroupIdAndVersion() throws Throwable {
+  public void testDoNotHighlightAbsentGroupIdAndVersion() {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +
@@ -166,7 +173,7 @@ public class MavenExtensionCompletionAndResolutionTest extends MavenDomWithIndic
     checkHighlighting();
   }
 
-  public void testHighlightingAbsentArtifactId() throws Throwable {
+  public void testHighlightingAbsentArtifactId() {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +

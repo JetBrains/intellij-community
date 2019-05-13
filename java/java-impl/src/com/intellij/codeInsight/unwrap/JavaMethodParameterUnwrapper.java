@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,26 +18,40 @@ package com.intellij.codeInsight.unwrap;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
 public class JavaMethodParameterUnwrapper extends JavaUnwrapper {
-  private static final Logger LOG = Logger.getInstance("#" + JavaMethodParameterUnwrapper.class.getName());
+  private static final Logger LOG = Logger.getInstance(JavaMethodParameterUnwrapper.class);
 
   public JavaMethodParameterUnwrapper() {
     super("");
   }
 
+  private static PsiElement adjustElementToTheLeft(PsiElement element) {
+    if (PsiUtil.isJavaToken(element, JavaTokenType.RPARENTH)) {
+      PsiElement prevSibling = element.getPrevSibling();
+      if (prevSibling != null) {
+        return prevSibling;
+      }
+    }
+    return element;
+  }
+
+  @NotNull
   @Override
-  public String getDescription(PsiElement e) {
-    String text = e.getText();
+  public String getDescription(@NotNull PsiElement e) {
+    String text = adjustElementToTheLeft(e).getText();
     if (text.length() > 20) text = text.substring(0, 17) + "...";
     return CodeInsightBundle.message("unwrap.with.placeholder", text);
   }
 
   @Override
-  public boolean isApplicableTo(PsiElement e) {
+  public boolean isApplicableTo(@NotNull PsiElement e) {
+    e = adjustElementToTheLeft(e);
     final PsiElement parent = e.getParent();
     if (e instanceof PsiExpression){
       if (parent instanceof PsiExpressionList) {
@@ -45,14 +59,14 @@ public class JavaMethodParameterUnwrapper extends JavaUnwrapper {
       }
       if (e instanceof PsiReferenceExpression && parent instanceof PsiCallExpression) {
         final PsiExpressionList argumentList = ((PsiCall)parent).getArgumentList();
-        if (argumentList != null && argumentList.getExpressions().length == 1) {
+        if (argumentList != null && argumentList.getExpressionCount() == 1) {
           return true;
         }
       }
     } else if (e instanceof PsiJavaCodeReferenceElement) {
       if (parent instanceof PsiCall) {
         final PsiExpressionList argumentList = ((PsiCall)parent).getArgumentList();
-        if (argumentList != null && argumentList.getExpressions().length == 1) {
+        if (argumentList != null && argumentList.getExpressionCount() == 1) {
           return true;
         }
       }
@@ -61,7 +75,8 @@ public class JavaMethodParameterUnwrapper extends JavaUnwrapper {
   }
 
   @Override
-  public PsiElement collectAffectedElements(PsiElement e, List<PsiElement> toExtract) {
+  public PsiElement collectAffectedElements(@NotNull PsiElement e, @NotNull List<PsiElement> toExtract) {
+    e = adjustElementToTheLeft(e);
     super.collectAffectedElements(e, toExtract);
     return isTopLevelCall(e) ? e.getParent() : e.getParent().getParent();
   }
@@ -73,7 +88,10 @@ public class JavaMethodParameterUnwrapper extends JavaUnwrapper {
 
   @Override
   protected void doUnwrap(PsiElement element, Context context) throws IncorrectOperationException {
-    PsiElement methodCall = isTopLevelCall(element) ? element.getParent() : element.getParent().getParent();
+    element = adjustElementToTheLeft(element);
+    PsiElement parent = element.getParent();
+    if (parent == null) return;
+    PsiElement methodCall = isTopLevelCall(element) ? parent : parent.getParent();
     final PsiElement extractedElement = isTopLevelCall(element) ? getArg(element) : element;
     context.extractElement(extractedElement, methodCall);
     if (methodCall.getParent() instanceof PsiExpressionList) {

@@ -53,7 +53,7 @@ public class ElementPresentationTemplateImpl extends TypePresentationServiceImpl
 
       @Override
       public String getDocumentation() {
-        final Ref<String> result = new Ref<String>();
+        final Ref<String> result = new Ref<>();
         element.acceptChildren(new DomElementVisitor() {
           @Override
           public void visitDomElement(DomElement element) {

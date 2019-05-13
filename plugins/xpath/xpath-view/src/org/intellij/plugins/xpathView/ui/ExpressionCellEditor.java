@@ -18,6 +18,7 @@ package org.intellij.plugins.xpathView.ui;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.ui.EditorTextField;
 
@@ -37,23 +38,26 @@ public class ExpressionCellEditor extends AbstractCellEditor implements TableCel
         this.project = project;
     }
 
+    @Override
     public Component getTableCellEditorComponent(JTable ttable, Object value, boolean isSelected, int row, int col) {
         myExpression = (Expression)value;
 
         myDocument = PsiDocumentManager.getInstance(project).getDocument(myExpression.getFile());
         return new EditorTextField(myDocument, project, myExpression.getFileType()) {
+            @Override
             protected boolean shouldHaveBorder() {
                 return false;
             }
 
+            @Override
             public void addNotify() {
                 super.addNotify();
-                Runnable runnable = new Runnable() {
-                    public void run() {
-                        final Editor editor = getEditor();
-                        if (editor != null) {
-                            editor.getContentComponent().requestFocus();
-                        }
+                Runnable runnable = () -> {
+                    final Editor editor = getEditor();
+                    if (editor != null) {
+                      IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
+                        IdeFocusManager.getGlobalInstance().requestFocus(editor.getContentComponent(), true);
+                      });
                     }
                 };
                 SwingUtilities.invokeLater(runnable);
@@ -61,6 +65,7 @@ public class ExpressionCellEditor extends AbstractCellEditor implements TableCel
         };
     }
 
+    @Override
     public boolean isCellEditable(EventObject eventObject) {
         if (eventObject instanceof MouseEvent) {
             return ((MouseEvent)eventObject).getClickCount() >= 2;
@@ -68,10 +73,12 @@ public class ExpressionCellEditor extends AbstractCellEditor implements TableCel
         return super.isCellEditable(eventObject);
     }
 
+    @Override
     public Expression getCellEditorValue() {
         return myExpression;
     }
 
+    @Override
     public boolean stopCellEditing() {
         super.stopCellEditing();
         PsiDocumentManager.getInstance(project).commitDocument(myDocument);

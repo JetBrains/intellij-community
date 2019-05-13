@@ -18,7 +18,7 @@ def vv = 6
 def gg = 7
 
 
-def (int yyy, int www) = testMethod(kkk, iii, vv, gg)
+(yyy, www) = testMethod(kkk, iii, vv, gg)
 
 private List testMethod(int kkk, int iii, int vv, int gg) {
     println(kkk + iii + (vv + gg))

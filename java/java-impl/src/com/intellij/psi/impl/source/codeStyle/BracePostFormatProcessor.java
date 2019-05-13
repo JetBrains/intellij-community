@@ -27,6 +27,7 @@ public class BracePostFormatProcessor implements PostFormatProcessor {
     return new BraceEnforcer(settings).process(source);
   }
 
+  @NotNull
   @Override
   public TextRange processText(@NotNull PsiFile source, @NotNull TextRange rangeToReformat, @NotNull CodeStyleSettings settings) {
     return new BraceEnforcer(settings).processText(source, rangeToReformat);

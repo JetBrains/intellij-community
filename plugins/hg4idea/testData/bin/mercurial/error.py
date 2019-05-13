@@ -27,19 +27,43 @@ class LookupError(RevlogError, KeyError):
     def __str__(self):
         return RevlogError.__str__(self)
 
-class ParseError(Exception):
+class ManifestLookupError(LookupError):
+    pass
+
+class CommandError(Exception):
     """Exception raised on errors in parsing the command line."""
 
-class ConfigError(Exception):
+class InterventionRequired(Exception):
+    """Exception raised when a command requires human intervention."""
+
+class Abort(Exception):
+    """Raised if a command needs to print an error and exit."""
+    def __init__(self, *args, **kw):
+        Exception.__init__(self, *args)
+        self.hint = kw.get('hint')
+
+class ConfigError(Abort):
     'Exception raised when parsing config files'
 
+class OutOfBandError(Exception):
+    'Exception raised when a remote repo reports failure'
+
+class ParseError(Exception):
+    'Exception raised when parsing config files (msg[, pos])'
+
 class RepoError(Exception):
-    pass
+    def __init__(self, *args, **kw):
+        Exception.__init__(self, *args)
+        self.hint = kw.get('hint')
 
 class RepoLookupError(RepoError):
     pass
 
 class CapabilityError(RepoError):
+    pass
+
+class RequirementError(RepoError):
+    """Exception raised if .hg/requires has an unknown entry."""
     pass
 
 class LockError(IOError):
@@ -70,6 +94,3 @@ class SignalInterrupt(KeyboardInterrupt):
 
 class SignatureError(Exception):
     pass
-
-class Abort(Exception):
-    """Raised if a command needs to print an error and exit."""

@@ -10,6 +10,9 @@ Groovy script
     PsiWhiteSpace(' ')
     Variable
       PsiElement(identifier)('i')
-  PsiErrorElement:';' or new line expected
+  PsiErrorElement:';' or new line expected, got '+'
+    <empty list>
+  Unary expression
     PsiElement(+)('+')
-    PsiElement(identifier)('i')
+    Reference expression
+      PsiElement(identifier)('i')

@@ -22,7 +22,7 @@ under the License.
 <!--
  | This is the configuration file for Maven. It can be specified at two levels:
  |
- |  1. User Level. This settings.xml file provides configuration for a single user, 
+ |  1. User Level. This settings.xml file provides configuration for a single user,
  |                 and is normally provided in ${user.home}/.m2/settings.xml.
  |
  |                 NOTE: This location can be overridden with the CLI option:
@@ -31,7 +31,7 @@ under the License.
  |
  |  2. Global Level. This settings.xml file provides configuration for all Maven
  |                 users on a machine (assuming they're all using the same Maven
- |                 installation). It's normally provided in 
+ |                 installation). It's normally provided in
  |                 ${maven.home}/conf/settings.xml.
  |
  |                 NOTE: This location can be overridden with the CLI option:
@@ -43,13 +43,13 @@ under the License.
  | values (values used when the setting is not specified) are provided.
  |
  |-->
-<settings xmlns="http://maven.apache.org/SETTINGS/1.0.0" 
-          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+<settings xmlns="http://maven.apache.org/SETTINGS/1.0.0"
+          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
           xsi:schemaLocation="http://maven.apache.org/SETTINGS/1.0.0 http://maven.apache.org/xsd/settings-1.0.0.xsd">
   <!-- localRepository
    | The path to the local repository maven will use to store artifacts.
    |
-   | Default: ~/.m2/repository
+   | Default: ${user.home}/.m2/repository
   <localRepository>/path/to/local/repo</localRepository>
   -->
 
@@ -112,8 +112,8 @@ under the License.
     <!-- server
      | Specifies the authentication information to use when connecting to a particular server, identified by
      | a unique name within the system (referred to by the 'id' attribute below).
-     | 
-     | NOTE: You should either specify username/password OR privateKey/passphrase, since these pairings are 
+     |
+     | NOTE: You should either specify username/password OR privateKey/passphrase, since these pairings are
      |       used together.
      |
     <server>
@@ -122,7 +122,7 @@ under the License.
       <password>repopwd</password>
     </server>
     -->
-    
+
     <!-- Another sample, using keys to authenticate.
     <server>
       <id>siteServer</id>
@@ -134,13 +134,13 @@ under the License.
 
   <!-- mirrors
    | This is a list of mirrors to be used in downloading artifacts from remote repositories.
-   | 
+   |
    | It works like this: a POM may declare a repository to use in resolving certain artifacts.
    | However, this repository may have problems with heavy traffic at times, so people have mirrored
    | it to several places.
    |
    | That repository definition will have a unique id, so we can create a mirror reference for that
-   | repository, to be used as an alternate download site. The mirror site will be the preferred 
+   | repository, to be used as an alternate download site. The mirror site will be the preferred
    | server for that repository.
    |-->
   <mirrors>
@@ -157,20 +157,20 @@ under the License.
     </mirror>
      -->
   </mirrors>
-  
+
   <!-- profiles
    | This is a list of profiles which can be activated in a variety of ways, and which can modify
    | the build process. Profiles provided in the settings.xml are intended to provide local machine-
    | specific paths and repository locations which allow the build to work in the local environment.
    |
    | For example, if you have an integration testing plugin - like cactus - that needs to know where
-   | your Tomcat instance is installed, you can provide a variable here such that the variable is 
+   | your Tomcat instance is installed, you can provide a variable here such that the variable is
    | dereferenced during the build process to configure the cactus plugin.
    |
    | As noted above, profiles can be activated in a variety of ways. One way - the activeProfiles
    | section of this document (settings.xml) - will be discussed later. Another way essentially
    | relies on the detection of a system property, either matching a particular value for the property,
-   | or merely testing its existence. Profiles can also be activated by JDK version prefix, where a 
+   | or merely testing its existence. Profiles can also be activated by JDK version prefix, where a
    | value of '1.4' might activate a profile when the build is executed on a JDK version of '1.4.2_07'.
    | Finally, the list of active profiles can be specified directly from the command line.
    |
@@ -219,7 +219,7 @@ under the License.
      | <plugin>
      |   <groupId>org.myco.myplugins</groupId>
      |   <artifactId>myplugin</artifactId>
-     |   
+     |
      |   <configuration>
      |     <tomcatLocation>${tomcatPath}</tomcatLocation>
      |   </configuration>

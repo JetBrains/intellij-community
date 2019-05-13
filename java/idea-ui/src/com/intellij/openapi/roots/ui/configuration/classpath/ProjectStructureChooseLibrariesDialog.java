@@ -46,13 +46,13 @@ import java.util.List;
 public class ProjectStructureChooseLibrariesDialog extends ChooseLibrariesFromTablesDialog {
   private final ClasspathPanel myClasspathPanel;
   private final StructureConfigurableContext myContext;
-  private final Predicate<Library> myAcceptedLibraries;
-  private final List<Library> myCreatedModuleLibraries = new ArrayList<Library>();
+  private final Predicate<? super Library> myAcceptedLibraries;
+  private final List<Library> myCreatedModuleLibraries = new ArrayList<>();
   private JButton myCreateLibraryButton;
 
   public ProjectStructureChooseLibrariesDialog(ClasspathPanel classpathPanel,
                                                StructureConfigurableContext context,
-                                               Predicate<Library> acceptedLibraries) {
+                                               Predicate<? super Library> acceptedLibraries) {
     super(classpathPanel.getComponent(), "Choose Libraries", classpathPanel.getProject(), true);
     myClasspathPanel = classpathPanel;
     myContext = context;
@@ -70,7 +70,7 @@ public class ProjectStructureChooseLibrariesDialog extends ChooseLibrariesFromTa
   @Override
   public void doCancelAction() {
     super.doCancelAction();
-    removeCreatedModuleLibraries(Collections.<Library>emptyList());
+    removeCreatedModuleLibraries(Collections.emptyList());
   }
 
   private void removeCreatedModuleLibraries(Collection<Library> selected) {
@@ -93,7 +93,7 @@ public class ProjectStructureChooseLibrariesDialog extends ChooseLibrariesFromTa
   @Override
   protected Library[] getLibraries(@NotNull LibraryTable table) {
     if (table.getTableLevel().equals(LibraryTableImplUtil.MODULE_LEVEL)) {
-      return myCreatedModuleLibraries.toArray(new Library[myCreatedModuleLibraries.size()]);
+      return myCreatedModuleLibraries.toArray(Library.EMPTY_ARRAY);
     }
     final LibrariesModifiableModel model = getLibrariesModifiableModel(table);
     if (model == null) return Library.EMPTY_ARRAY;

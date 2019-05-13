@@ -28,6 +28,7 @@ import com.intellij.psi.tree.IStubFileElementType;
 import com.intellij.util.indexing.FileContent;
 import com.intellij.util.indexing.FileContentImpl;
 import com.intellij.util.indexing.IndexingDataKeys;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
@@ -67,11 +68,6 @@ public class CoreStubTreeLoader extends StubTreeLoader {
   }
 
   @Override
-  public long getStubTreeTimestamp(VirtualFile vFile) {
-    return 0;
-  }
-
-  @Override
   public boolean canHaveStub(VirtualFile file) {
     final FileType fileType = file.getFileType();
     if (fileType instanceof LanguageFileType) {
@@ -85,6 +81,11 @@ public class CoreStubTreeLoader extends StubTreeLoader {
       final BinaryFileStubBuilder builder = BinaryFileStubBuilders.INSTANCE.forFileType(fileType);
       return builder != null && builder.acceptsFile(file);
     }
+    return false;
+  }
+
+  @Override
+  protected boolean isPrebuilt(@NotNull VirtualFile virtualFile) {
     return false;
   }
 }

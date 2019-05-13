@@ -30,8 +30,6 @@ import java.util.List;
 
 /**
  * @author Alexey Chmutov
- *         Date: Jun 26, 2009
- *         Time: 4:05:40 PM
  */
 public abstract class TemplateLanguageBlock extends AbstractBlock implements BlockWithParent {
   private final TemplateLanguageBlockFactory myBlockFactory;
@@ -40,12 +38,12 @@ public abstract class TemplateLanguageBlock extends AbstractBlock implements Blo
   private boolean myChildrenBuilt = false;
   private BlockWithParent myParent;
 
-  protected TemplateLanguageBlock(@NotNull TemplateLanguageBlockFactory blockFactory, @NotNull CodeStyleSettings settings, 
+  protected TemplateLanguageBlock(@NotNull TemplateLanguageBlockFactory blockFactory, @NotNull CodeStyleSettings settings,
                                   @NotNull ASTNode node, @Nullable List<DataLanguageBlockWrapper> foreignChildren) {
     this(node, null, null, blockFactory, settings, foreignChildren);
   }
-  
-  protected TemplateLanguageBlock(@NotNull ASTNode node, @Nullable Wrap wrap, @Nullable Alignment alignment, 
+
+  protected TemplateLanguageBlock(@NotNull ASTNode node, @Nullable Wrap wrap, @Nullable Alignment alignment,
                                   @NotNull TemplateLanguageBlockFactory blockFactory,
                                   @NotNull CodeStyleSettings settings,
                                   @Nullable List<DataLanguageBlockWrapper> foreignChildren) {
@@ -55,12 +53,13 @@ public abstract class TemplateLanguageBlock extends AbstractBlock implements Blo
     mySettings = settings;
   }
 
+  @Override
   protected List<Block> buildChildren() {
     myChildrenBuilt = true;
     if (isLeaf()) {
       return EMPTY;
     }
-    final ArrayList<TemplateLanguageBlock> tlChildren = new ArrayList<TemplateLanguageBlock>(5);
+    final ArrayList<TemplateLanguageBlock> tlChildren = new ArrayList<>(5);
     for (ASTNode childNode = getNode().getFirstChildNode(); childNode != null; childNode = childNode.getTreeNext()) {
       if (FormatterUtil.containsWhiteSpacesOnly(childNode)) continue;
       if (shouldBuildBlockFor(childNode)) {
@@ -96,10 +95,11 @@ public abstract class TemplateLanguageBlock extends AbstractBlock implements Blo
   private void initForeignChildren() {
     assert !myChildrenBuilt;
     if (myForeignChildren == null) {
-      myForeignChildren = new ArrayList<DataLanguageBlockWrapper>(5);
+      myForeignChildren = new ArrayList<>(5);
     }
   }
 
+  @Override
   @Nullable
   public Spacing getSpacing(@Nullable Block child1, @NotNull Block child2) {
     if (child1 instanceof DataLanguageBlockWrapper && child2 instanceof DataLanguageBlockWrapper) {
@@ -108,16 +108,43 @@ public abstract class TemplateLanguageBlock extends AbstractBlock implements Blo
     return null;
   }
 
+  /**
+   * Invoked when the current base language block is located inside a template data language block to determine the spacing after the current block.
+   * @param rightNeighbor the block to the right of the current one
+   * @param parent the parent block
+   * @param thisBlockIndex the index of the current block in the parent block sub-blocks
+   * @return the spacing between the current block and its right neighbor
+   */
+  @Nullable
+  public Spacing getRightNeighborSpacing(@NotNull Block rightNeighbor, @NotNull DataLanguageBlockWrapper parent, int thisBlockIndex) {
+    return null;
+  }
+
+  /**
+   * Invoked when the current base language block is located inside a template data language block to determine the spacing before the current block.
+   * @param leftNeighbor the block to the left of the current one, or null if the current block is first child
+   * @param parent the parent block
+   * @param thisBlockIndex the index of the current block in the parent block sub-blocks
+   * @return the spacing between the current block and its left neighbor
+   */
+  @Nullable
+  public Spacing getLeftNeighborSpacing(@Nullable Block leftNeighbor, @NotNull DataLanguageBlockWrapper parent, int thisBlockIndex) {
+    return null;
+  }
+
+  @Override
   public boolean isLeaf() {
     return noForeignChildren() && getNode().getFirstChildNode() == null;
   }
 
   protected abstract IElementType getTemplateTextElementType();
 
+  @Override
   public BlockWithParent getParent() {
     return myParent;
   }
 
+  @Override
   public void setParent(BlockWithParent newParent) {
     myParent = newParent;
   }
@@ -132,7 +159,7 @@ public abstract class TemplateLanguageBlock extends AbstractBlock implements Blo
   }
 
   protected Wrap createChildWrap(ASTNode child) {
-    return Wrap.createWrap(Wrap.NONE, false);
+    return Wrap.createWrap(WrapType.NONE, false);
   }
 
   protected Alignment createChildAlignment(ASTNode child) {
@@ -147,5 +174,9 @@ public abstract class TemplateLanguageBlock extends AbstractBlock implements Blo
     return myForeignChildren;
   }
 
+  @Nullable
+  public Wrap substituteTemplateChildWrap(@NotNull DataLanguageBlockWrapper child, @Nullable Wrap childWrap) {
+    return childWrap;
+  }
 }
 

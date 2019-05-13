@@ -1,24 +1,16 @@
-/*
- * Copyright 2000-2011 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o.
+// Use of this source code is governed by the Apache 2.0 license that can be
+// found in the LICENSE file.
 package com.intellij.refactoring.typeMigration;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ProjectFileIndex;
+import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.tree.IElementType;
@@ -27,8 +19,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.refactoring.typeMigration.usageInfo.TypeMigrationUsageInfo;
-import com.intellij.util.Function;
-import com.intellij.util.containers.HashMap;
+import java.util.HashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -38,7 +29,6 @@ import java.util.Map;
 
 /**
  * @author db
- * Date: 27.06.2003
  */
 public class TypeEvaluator {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.typeMigration.TypeEvaluator");
@@ -46,21 +36,26 @@ public class TypeEvaluator {
   private final HashMap<TypeMigrationUsageInfo, LinkedList<PsiType>> myTypeMap;
   private final TypeMigrationRules myRules;
   private final TypeMigrationLabeler myLabeler;
+  private final ProjectFileIndex myProjectFileIndex;
 
-
-  public TypeEvaluator(final LinkedList<Pair<TypeMigrationUsageInfo, PsiType>> types, final TypeMigrationLabeler labeler) {
+  public TypeEvaluator(LinkedList<Pair<TypeMigrationUsageInfo, PsiType>> types,
+                       TypeMigrationLabeler labeler,
+                       Project project) {
     myLabeler = labeler;
-    myRules = labeler.getRules();
-    myTypeMap = new HashMap<TypeMigrationUsageInfo, LinkedList<PsiType>>();
+    myRules = labeler == null ? new TypeMigrationRules(project) : labeler.getRules();
+    myTypeMap = new HashMap<>();
 
-    for (final Pair<TypeMigrationUsageInfo, PsiType> p : types) {
-      final LinkedList<PsiType> e = new LinkedList<PsiType>();
-
-      e.addFirst(p.getSecond());
-
-      myTypeMap.put(p.getFirst(), e);
+    if (types != null) {
+      for (final Pair<TypeMigrationUsageInfo, PsiType> p : types) {
+        if (!(p.getFirst().getElement() instanceof PsiExpression)) {
+          final LinkedList<PsiType> e = new LinkedList<>();
+          e.addFirst(p.getSecond());
+          myTypeMap.put(p.getFirst(), e);
+        }
+      }
     }
 
+    myProjectFileIndex =  ProjectRootManager.getInstance(project).getFileIndex();
   }
 
   public boolean setType(final TypeMigrationUsageInfo usageInfo, @NotNull PsiType type) {
@@ -84,10 +79,11 @@ public class TypeEvaluator {
       }
     }
     else {
-      final LinkedList<PsiType> e = new LinkedList<PsiType>();
+      final LinkedList<PsiType> e = new LinkedList<>();
 
       e.addFirst(type);
 
+      usageInfo.setOwnerRoot(myLabeler.getCurrentRoot());
       myTypeMap.put(usageInfo, e);
       return true;
     }
@@ -97,6 +93,13 @@ public class TypeEvaluator {
 
   @Nullable
   public PsiType getType(PsiElement element) {
+    PsiFile psiFile = element.getContainingFile();
+    if (psiFile == null) return null;
+    VirtualFile file = psiFile.getVirtualFile();
+    if (file == null || !myProjectFileIndex.isInContent(file)) {
+      return TypeMigrationLabeler.getElementType(element);
+    }
+
     for (Map.Entry<TypeMigrationUsageInfo, LinkedList<PsiType>> entry : myTypeMap.entrySet()) {
       if (Comparing.equal(element, entry.getKey().getElement())) {
         return entry.getValue().getFirst();
@@ -144,7 +147,7 @@ public class TypeEvaluator {
       if (method != null) {
         final PsiParameter[] parameters = method.getParameterList().getParameters();
         final PsiExpression[] actualParms = call.getArgumentList().getExpressions();
-        return PsiImplUtil.normalizeWildcardTypeByPosition(createMethodSubstitution(parameters, actualParms, method, call, resolveResult.getSubstitutor(), false).substitute(evaluateType(call.getMethodExpression())), expr);
+        return PsiUtil.captureToplevelWildcards(createMethodSubstitution(parameters, actualParms, method, call, resolveResult.getSubstitutor(), false).substitute(evaluateType(call.getMethodExpression())), expr);
       }
     }
     else if (expr instanceof PsiPolyadicExpression) {
@@ -156,11 +159,8 @@ public class TypeEvaluator {
       }
       return lType;
     }
-    else if (expr instanceof PsiPostfixExpression) {
-      return evaluateType(((PsiPostfixExpression)expr).getOperand());
-    }
-    else if (expr instanceof PsiPrefixExpression) {
-      return evaluateType(((PsiPrefixExpression)expr).getOperand());
+    else if (expr instanceof PsiUnaryExpression) {
+      return evaluateType(((PsiUnaryExpression)expr).getOperand());
     }
     else if (expr instanceof PsiParenthesizedExpression) {
       return evaluateType(((PsiParenthesizedExpression)expr).getExpression());
@@ -226,10 +226,16 @@ public class TypeEvaluator {
           if (result.getElement() != null) {
             final PsiClass aClass = result.getElement();
 
-            return JavaPsiFacade.getInstance(aClass.getProject()).getElementFactory()
+            return JavaPsiFacade.getElementFactory(aClass.getProject())
                 .createType(aClass, result.getSubstitutor().putAll(qualifierSubs));
           }
         }
+      }
+    }
+    else if (expr instanceof PsiFunctionalExpression) {
+      final PsiType functionalInterfaceType = ((PsiFunctionalExpression)expr).getFunctionalInterfaceType();
+      if (functionalInterfaceType != null) {
+        return functionalInterfaceType;
       }
     }
     else if (expr instanceof PsiReferenceExpression) {
@@ -237,7 +243,8 @@ public class TypeEvaluator {
       if (type != null) {
         return PsiImplUtil.normalizeWildcardTypeByPosition(type, expr);
       }
-    } else if (expr instanceof PsiSuperExpression) {
+    }
+    else if (expr instanceof PsiSuperExpression) {
       final PsiClass psiClass = PsiTreeUtil.getParentOfType(expr, PsiClass.class);
       if (psiClass != null) {
         final PsiClass superClass = psiClass.getSuperClass();
@@ -339,23 +346,19 @@ public class TypeEvaluator {
   }
 
   public String getReport() {
-    final StringBuffer buffer = new StringBuffer();
+    final StringBuilder buffer = new StringBuilder();
 
     final String[] t = new String[myTypeMap.size()];
     int k = 0;
 
     for (final TypeMigrationUsageInfo info : myTypeMap.keySet()) {
       final LinkedList<PsiType> types = myTypeMap.get(info);
-      final StringBuffer b = new StringBuffer();
+      final StringBuilder b = new StringBuilder();
 
       if (types != null) {
         b.append(info.getElement()).append(" : ");
 
-        b.append(StringUtil.join(types, new Function<PsiType, String>() {
-          public String fun(final PsiType psiType) {
-            return psiType.getCanonicalText();
-          }
-        }, " "));
+        b.append(StringUtil.join(types, psiType -> psiType.getCanonicalText(), " "));
 
         b.append("\n");
       }
@@ -373,13 +376,13 @@ public class TypeEvaluator {
   }
 
   public LinkedList<Pair<TypeMigrationUsageInfo, PsiType>> getMigratedDeclarations() {
-    final LinkedList<Pair<TypeMigrationUsageInfo, PsiType>> list = new LinkedList<Pair<TypeMigrationUsageInfo, PsiType>>();
+    final LinkedList<Pair<TypeMigrationUsageInfo, PsiType>> list = new LinkedList<>();
 
     for (final TypeMigrationUsageInfo usageInfo : myTypeMap.keySet()) {
       final LinkedList<PsiType> types = myTypeMap.get(usageInfo);
       final PsiElement element = usageInfo.getElement();
       if (element instanceof PsiVariable || element instanceof PsiMethod) {
-        list.addLast(new Pair<TypeMigrationUsageInfo, PsiType>(usageInfo, types.getFirst()));
+        list.addLast(Pair.create(usageInfo, types.getFirst()));
       }
     }
 
@@ -415,26 +418,32 @@ public class TypeEvaluator {
   public static PsiType substituteType(final PsiType migrationTtype, final PsiType originalType, final boolean isContraVariantPosition) {
     if ( originalType instanceof PsiClassType && migrationTtype instanceof PsiClassType) {
       final PsiClass originalClass = ((PsiClassType)originalType).resolve();
-      if (isContraVariantPosition && TypeConversionUtil.erasure(originalType).isAssignableFrom(TypeConversionUtil.erasure(migrationTtype))) {
-        final PsiClass psiClass = ((PsiClassType)migrationTtype).resolve();
-        final PsiSubstitutor substitutor = TypeConversionUtil.getClassSubstitutor(originalClass, psiClass, PsiSubstitutor.EMPTY);
-        if (substitutor != null) {
-          final PsiType psiType =
-              substituteType(migrationTtype, originalType, false, psiClass, JavaPsiFacade.getElementFactory(psiClass.getProject()).createType(originalClass, substitutor));
+      if (originalClass != null) {
+        if (isContraVariantPosition && TypeConversionUtil.erasure(originalType).isAssignableFrom(TypeConversionUtil.erasure(migrationTtype))) {
+          final PsiClass psiClass = ((PsiClassType)migrationTtype).resolve();
+          final PsiSubstitutor substitutor = psiClass != null ? TypeConversionUtil.getClassSubstitutor(originalClass, psiClass, PsiSubstitutor.EMPTY) : null;
+          if (substitutor != null) {
+            final PsiType psiType =
+                substituteType(migrationTtype, originalType, false, psiClass, JavaPsiFacade.getElementFactory(psiClass.getProject()).createType(originalClass, substitutor));
+            if (psiType != null) {
+              return psiType;
+            }
+          }
+        }
+        else if (!isContraVariantPosition && TypeConversionUtil.erasure(migrationTtype).isAssignableFrom(TypeConversionUtil.erasure(originalType))) {
+          final PsiType psiType = substituteType(migrationTtype, originalType, false, originalClass, JavaPsiFacade.getElementFactory(originalClass.getProject()).createType(originalClass, PsiSubstitutor.EMPTY));
           if (psiType != null) {
             return psiType;
           }
         }
       }
-      else if (!isContraVariantPosition && TypeConversionUtil.erasure(migrationTtype).isAssignableFrom(TypeConversionUtil.erasure(
-        originalType))) {
-        final PsiType psiType = substituteType(migrationTtype, originalType, false, originalClass, JavaPsiFacade.getElementFactory(originalClass.getProject()).createType(originalClass, PsiSubstitutor.EMPTY));
-        if (psiType != null) {
-          return psiType;
-        }
-      }
     }
     return migrationTtype;
+  }
+
+  @Nullable
+  public <T> T getSettings(Class<T> aClass) {
+    return myRules.getConversionSettings(aClass);
   }
 
   private class SubstitutorBuilder {
@@ -444,9 +453,9 @@ public class TypeEvaluator {
     private final PsiSubstitutor mySubst;
 
 
-    public SubstitutorBuilder(PsiMethod method, PsiExpression call, PsiSubstitutor subst) {
+    SubstitutorBuilder(PsiMethod method, PsiExpression call, PsiSubstitutor subst) {
       mySubst = subst;
-      myMapping = new HashMap<PsiTypeParameter, PsiType>();
+      myMapping = new HashMap<>();
       myMethod = method;
       myCall = call;
     }
@@ -466,7 +475,15 @@ public class TypeEvaluator {
     }
 
     void bindTypeParameters(PsiType formal, final PsiType actual) {
-      if (formal instanceof PsiWildcardType) formal = ((PsiWildcardType)formal).getBound();
+      if (formal instanceof PsiWildcardType) {
+        if (actual instanceof PsiCapturedWildcardType &&
+            ((PsiWildcardType)formal).isExtends() == ((PsiCapturedWildcardType)actual).getWildcard().isExtends()) {
+          bindTypeParameters(((PsiWildcardType)formal).getBound(), ((PsiCapturedWildcardType)actual).getWildcard().getBound());
+          return;
+        } else {
+          formal = ((PsiWildcardType)formal).getBound();
+        }
+      }
 
       if (formal instanceof PsiArrayType && actual instanceof PsiArrayType) {
         bindTypeParameters(((PsiArrayType)formal).getComponentType(), ((PsiArrayType)actual).getComponentType());
@@ -500,7 +517,7 @@ public class TypeEvaluator {
           final PsiSubstitutor superClassSubstitutor =
               TypeConversionUtil.getClassSubstitutor(classF, classA, resultA.getSubstitutor());
           if (superClassSubstitutor != null) {
-            final PsiType aligned = JavaPsiFacade.getInstance(classF.getProject()).getElementFactory().createType(classF, superClassSubstitutor);
+            final PsiType aligned = JavaPsiFacade.getElementFactory(classF.getProject()).createType(classF, superClassSubstitutor);
             bindTypeParameters(formal, aligned);
           }
         }

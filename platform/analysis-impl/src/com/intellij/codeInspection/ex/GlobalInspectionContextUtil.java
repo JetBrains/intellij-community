@@ -1,0 +1,32 @@
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+package com.intellij.codeInspection.ex;
+
+import com.intellij.codeInspection.GlobalInspectionContext;
+import com.intellij.codeInspection.lang.InspectionExtensionsFactory;
+import com.intellij.codeInspection.reference.RefElement;
+import com.intellij.lang.injection.InjectedLanguageManager;
+import com.intellij.openapi.project.Project;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import org.jetbrains.annotations.NotNull;
+
+public class GlobalInspectionContextUtil {
+  public static RefElement retrieveRefElement(@NotNull PsiElement element, @NotNull GlobalInspectionContext globalContext) {
+    PsiFile elementFile = element.getContainingFile();
+    RefElement refElement = globalContext.getRefManager().getReference(elementFile);
+    if (refElement == null) {
+      PsiElement context = InjectedLanguageManager.getInstance(elementFile.getProject()).getInjectionHost(elementFile);
+      if (context != null) refElement = globalContext.getRefManager().getReference(context.getContainingFile());
+    }
+    return refElement;
+  }
+
+  public static boolean canRunInspections(@NotNull Project project, final boolean online) {
+    for (InspectionExtensionsFactory factory : InspectionExtensionsFactory.EP_NAME.getExtensionList()) {
+      if (!factory.isProjectConfiguredToRunInspections(project, online)) {
+        return false;
+      }
+    }
+    return true;
+  }
+}

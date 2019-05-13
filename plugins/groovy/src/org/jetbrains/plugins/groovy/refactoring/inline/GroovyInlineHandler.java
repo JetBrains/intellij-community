@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 
 package org.jetbrains.plugins.groovy.refactoring.inline;
 
+import com.intellij.lang.findUsages.DescriptiveNameUtil;
 import com.intellij.lang.refactoring.InlineHandler;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.PsiElement;
@@ -25,7 +26,6 @@ import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.usageView.UsageViewUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.lang.psi.GrClassSubstitution;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
@@ -38,6 +38,7 @@ import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringBundle;
  */
 public class GroovyInlineHandler implements InlineHandler {
 
+  @Override
   @Nullable
   public Settings prepareInlineElement(@NotNull final PsiElement element, @Nullable Editor editor, boolean invokedOnReference) {
     if (element instanceof GrField) {
@@ -47,7 +48,7 @@ public class GroovyInlineHandler implements InlineHandler {
       return GroovyInlineMethodUtil.inlineMethodSettings((GrMethod)element, editor, invokedOnReference);
     }
     else {
-      if (element instanceof GrTypeDefinition || element instanceof GrClassSubstitution) {
+      if (element instanceof GrTypeDefinition) {
         return null;      //todo inline to anonymous class, push members from super class
       }
     }
@@ -61,12 +62,13 @@ public class GroovyInlineHandler implements InlineHandler {
   }
 
   private static String getFullName(PsiElement psi) {
-    final String name = UsageViewUtil.getDescriptiveName(psi);
+    final String name = DescriptiveNameUtil.getDescriptiveName(psi);
     return (UsageViewUtil.getType(psi) + " " + name).trim();
   }
 
 
-  public void removeDefinition(PsiElement element, Settings settings) {
+  @Override
+  public void removeDefinition(@NotNull PsiElement element, @NotNull Settings settings) {
     final PsiElement owner = element.getParent().getParent();
     if (element instanceof GrVariable && owner instanceof GrVariableDeclarationOwner) {
       ((GrVariableDeclarationOwner)owner).removeVariable(((GrVariable)element));
@@ -76,8 +78,9 @@ public class GroovyInlineHandler implements InlineHandler {
     }
   }
 
+  @Override
   @Nullable
-  public Inliner createInliner(PsiElement element, Settings settings) {
+  public Inliner createInliner(@NotNull PsiElement element, @NotNull Settings settings) {
     if (element instanceof GrVariable) {
       return new GrVariableInliner((GrVariable)element, settings);
     }

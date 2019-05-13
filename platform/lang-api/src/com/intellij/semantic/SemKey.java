@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,8 +16,11 @@
 package com.intellij.semantic;
 
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
+import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -31,17 +34,33 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class SemKey<T extends SemElement> {
   private static final AtomicInteger counter = new AtomicInteger(0);
   private final String myDebugName;
-  private final SemKey<? super T>[] mySupers;
+  @NotNull private final SemKey<? super T>[] mySupers;
+  private final List<SemKey> myInheritors = ContainerUtil.createEmptyCOWList();
   private final int myUniqueId;
 
-  private SemKey(String debugName, SemKey<? super T>... supers) {
+  @SafeVarargs
+  private SemKey(String debugName, @NotNull SemKey<? super T>... supers) {
     myDebugName = debugName;
     mySupers = supers;
     myUniqueId = counter.getAndIncrement();
+    myInheritors.add(this);
+    registerInheritor(this);
   }
 
+  private void registerInheritor(SemKey eachParent) {
+    for (SemKey<?> superKey : eachParent.mySupers) {
+      superKey.myInheritors.add(this);
+      registerInheritor(superKey);
+    }
+  }
+
+  @NotNull
   public SemKey<? super T>[] getSupers() {
     return mySupers;
+  }
+
+  public List<SemKey> getInheritors() {
+    return myInheritors;
   }
 
   public boolean isKindOf(SemKey<?> another) {
@@ -59,18 +78,25 @@ public class SemKey<T extends SemElement> {
     return myDebugName;
   }
 
-  public static <T extends SemElement> SemKey<T> createKey(String debugName, SemKey<? super T>... supers) {
-    return new SemKey<T>(debugName, supers);
+  @SafeVarargs
+  public static <T extends SemElement> SemKey<T> createKey(String debugName, @NotNull SemKey<? super T>... supers) {
+    return new SemKey<>(debugName, supers);
+  }
+
+  @Override
+  public int hashCode() {
+    return myUniqueId;
   }
 
   public int getUniqueId() {
     return myUniqueId;
   }
 
-  public <K extends T> SemKey<K> subKey(@NonNls String debugName, SemKey<? super T>... otherSupers) {
+  @SafeVarargs
+  public final <K extends T> SemKey<K> subKey(@NonNls String debugName, @NotNull SemKey<? super T>... otherSupers) {
     if (otherSupers.length == 0) {
-      return new SemKey<K>(debugName, this);
+      return new SemKey<>(debugName, this);
     }
-    return new SemKey<K>(debugName, ArrayUtil.append(otherSupers, this));
+    return new SemKey<>(debugName, ArrayUtil.append(otherSupers, this));
   }
 }

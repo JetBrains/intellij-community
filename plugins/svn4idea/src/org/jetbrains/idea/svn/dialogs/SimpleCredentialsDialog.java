@@ -1,26 +1,11 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.dialogs;
 
-import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.SvnBundle;
 
 import javax.swing.*;
@@ -34,6 +19,7 @@ import java.awt.*;
 public class SimpleCredentialsDialog extends DialogWrapper implements DocumentListener {
   private boolean myAllowSave;
   private String myUserName;
+  private Mode myMode;
 
   private String myRealm;
   private JTextField myUserNameText;
@@ -42,27 +28,30 @@ public class SimpleCredentialsDialog extends DialogWrapper implements DocumentLi
 
   @NonNls private static final String HELP_ID = "vcs.subversion.authentication";
 
-  protected SimpleCredentialsDialog(Project project) {
+  public SimpleCredentialsDialog(Project project) {
     super(project, true);
     setResizable(false);
   }
 
   public void setup(String realm, String userName, boolean allowSave) {
+    setup(Mode.DEFAULT, realm, userName, allowSave);
+  }
+
+  public void setup(Mode mode, String realm, String userName, boolean allowSave) {
+    myMode = mode;
     myRealm = realm;
     myUserName = userName;
     myAllowSave = allowSave;
     getHelpAction().setEnabled(true);
     init();
   }
-  protected void doHelpAction() {
-    HelpManager.getInstance().invokeHelp(HELP_ID);
+
+  @Override
+  protected String getHelpId() {
+    return HELP_ID;
   }
 
-  @NotNull
-  protected Action[] createActions() {
-    return new Action[]{getOKAction(), getCancelAction(), getHelpAction()};
-  }
-
+  @Override
   protected JComponent createCenterPanel() {
     JPanel panel = new JPanel();
     panel.setLayout(new GridBagLayout());
@@ -70,7 +59,7 @@ public class SimpleCredentialsDialog extends DialogWrapper implements DocumentLi
     GridBagConstraints gb = new GridBagConstraints();
 
     // top label.
-    gb.insets = new Insets(2, 2, 2, 2);
+    gb.insets = JBUI.insets(2);
     gb.weightx = 1;
     gb.weighty = 0;
     gb.gridwidth = 2;
@@ -89,7 +78,7 @@ public class SimpleCredentialsDialog extends DialogWrapper implements DocumentLi
     gb.weightx = 0;
     gb.fill = GridBagConstraints.NONE;
 
-    label = new JLabel(SvnBundle.message("label.auth.user.name"));
+    label = new JLabel(SvnBundle.message(myMode.equals(Mode.SSH_PASSPHRASE) ? "label.ssh.key.file" : "label.auth.user.name"));
     panel.add(label, gb);
 
     // user name field
@@ -106,6 +95,7 @@ public class SimpleCredentialsDialog extends DialogWrapper implements DocumentLi
     }
     myUserNameText.selectAll();
     myUserNameText.getDocument().addDocumentListener(this);
+    myUserNameText.setEnabled(myMode.equals(Mode.DEFAULT));
 
     gb.gridy += 1;
     gb.weightx = 0;
@@ -113,7 +103,7 @@ public class SimpleCredentialsDialog extends DialogWrapper implements DocumentLi
     gb.fill = GridBagConstraints.NONE;
     gb.gridwidth = 1;
 
-    label = new JLabel(SvnBundle.message("label.auth.password"));
+    label = new JLabel(SvnBundle.message(myMode.equals(Mode.SSH_PASSPHRASE) ? "label.ssh.passphrase" : "label.auth.password"));
     panel.add(label, gb);
 
     // passworde field
@@ -147,18 +137,22 @@ public class SimpleCredentialsDialog extends DialogWrapper implements DocumentLi
     return panel;
   }
 
+  @Override
   protected String getDimensionServiceKey() {
     return "svn.passwordDialog";
   }
 
+  @Override
   public JComponent getPreferredFocusedComponent() {
-    return myUserNameText;
+    return myUserNameText.isEnabled() ? myUserNameText : myPasswordText;
   }
 
+  @Override
   public boolean shouldCloseOnCross() {
     return true;
   }
 
+  @Override
   public boolean isOKActionEnabled() {
     return myUserNameText != null && myUserNameText.getText().trim().length() > 0
            && myPasswordText != null && myPasswordText.getPassword() != null;
@@ -182,19 +176,32 @@ public class SimpleCredentialsDialog extends DialogWrapper implements DocumentLi
     return isOK() && myAllowSave && myAllowSaveCheckBox != null && myAllowSaveCheckBox.isSelected();
   }
 
+  public void setSaveEnabled(boolean enabled) {
+    myAllowSaveCheckBox.setEnabled(enabled);
+  }
+
+  @Override
   public void insertUpdate(DocumentEvent e) {
     updateOKButton();
   }
 
+  @Override
   public void removeUpdate(DocumentEvent e) {
     updateOKButton();
   }
 
+  @Override
   public void changedUpdate(DocumentEvent e) {
     updateOKButton();
   }
 
   private void updateOKButton() {
     getOKAction().setEnabled(isOKActionEnabled());
+  }
+
+  public enum Mode {
+    SSH_PASSPHRASE,
+    SSH_PASSWORD,
+    DEFAULT
   }
 }

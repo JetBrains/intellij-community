@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,34 +21,15 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.messages.Topic;
 
-/**
- * Created with IntelliJ IDEA.
- * User: Irina.Chernushina
- * Date: 11/8/12
- * Time: 1:29 PM
- */
 public class MessageBusUtil {
-  public static <T> void runOnSyncPublisher(final Project project, final Topic<T> topic, final Consumer<T> listener) {
-    final Application application = ApplicationManager.getApplication();
-    final Runnable runnable = createPublisherRunnable(project, topic, listener);
-    if (application.isDispatchThread()) {
-      runnable.run();
-    } else {
-      application.runReadAction(runnable);
-    }
-  }
-
-  private static <T> Runnable createPublisherRunnable(final Project project, final Topic<T> topic, final Consumer<T> listener) {
-    return new Runnable() {
-      @Override
-      public void run() {
-        if (project.isDisposed()) throw new ProcessCanceledException();
-        listener.consume(project.getMessageBus().syncPublisher(topic));
-      }
+  private static <T> Runnable createPublisherRunnable(final Project project, final Topic<? extends T> topic, final Consumer<? super T> listener) {
+    return () -> {
+      if (project.isDisposed()) throw new ProcessCanceledException();
+      listener.consume(project.getMessageBus().syncPublisher(topic));
     };
   }
 
-  public static <T> void invokeLaterIfNeededOnSyncPublisher(final Project project, final Topic<T> topic, final Consumer<T> listener) {
+  public static <T> void invokeLaterIfNeededOnSyncPublisher(final Project project, final Topic<? extends T> topic, final Consumer<? super T> listener) {
     final Application application = ApplicationManager.getApplication();
     final Runnable runnable = createPublisherRunnable(project, topic, listener);
     if (application.isDispatchThread()) {
@@ -57,4 +38,5 @@ public class MessageBusUtil {
       application.invokeLater(runnable);
     }
   }
+
 }

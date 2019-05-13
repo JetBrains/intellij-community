@@ -16,20 +16,22 @@
 
 package org.intellij.plugins.relaxNG.validation;
 
+import com.intellij.javaee.UriUtil;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.util.AtomicNotNullLazyValue;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.util.NotNullLazyValue;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.xml.XmlFile;
-import com.intellij.xml.util.XmlUtil;
+import com.intellij.util.containers.ContainerUtil;
+import com.thaiopensource.datatype.xsd.DatatypeLibraryFactoryImpl;
 import com.thaiopensource.relaxng.impl.SchemaReaderImpl;
 import com.thaiopensource.util.PropertyMap;
 import com.thaiopensource.util.PropertyMapBuilder;
@@ -38,17 +40,26 @@ import com.thaiopensource.xml.sax.Sax2XMLReaderCreator;
 import com.thaiopensource.xml.sax.XMLReaderCreator;
 import org.intellij.plugins.relaxNG.compact.RncFileType;
 import org.intellij.plugins.relaxNG.model.resolve.RelaxIncludeIndex;
+import org.jetbrains.annotations.NotNull;
 import org.kohsuke.rngom.ast.builder.BuildException;
 import org.kohsuke.rngom.ast.builder.IncludedGrammar;
 import org.kohsuke.rngom.ast.builder.SchemaBuilder;
 import org.kohsuke.rngom.ast.om.ParsedPattern;
 import org.kohsuke.rngom.binary.SchemaBuilderImpl;
+import org.kohsuke.rngom.binary.SchemaPatternBuilder;
 import org.kohsuke.rngom.digested.DPattern;
 import org.kohsuke.rngom.digested.DSchemaBuilderImpl;
+import org.kohsuke.rngom.dt.CachedDatatypeLibraryFactory;
+import org.kohsuke.rngom.dt.CascadingDatatypeLibraryFactory;
+import org.kohsuke.rngom.dt.DoNothingDatatypeLibraryFactoryImpl;
+import org.kohsuke.rngom.dt.builtin.BuiltinDatatypeLibraryFactory;
 import org.kohsuke.rngom.parse.IllegalSchemaException;
 import org.kohsuke.rngom.parse.Parseable;
 import org.kohsuke.rngom.parse.compact.CompactParseable;
 import org.kohsuke.rngom.parse.xml.SAXParseable;
+import org.relaxng.datatype.DatatypeLibrary;
+import org.relaxng.datatype.DatatypeLibraryFactory;
+import org.relaxng.datatype.helpers.DatatypeLibraryLoader;
 import org.xml.sax.ErrorHandler;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
@@ -56,19 +67,40 @@ import org.xml.sax.SAXParseException;
 import org.xml.sax.helpers.DefaultHandler;
 
 import java.io.StringReader;
+import java.util.concurrent.ConcurrentMap;
 
-/*
-* Created by IntelliJ IDEA.
-* User: sweinreuter
-* Date: 19.07.2007
-*/
 public class RngParser {
   private static final Logger LOG = Logger.getInstance("#org.intellij.plugins.relaxNG.validation.RngParser");
 
+  private static final NotNullLazyValue<DatatypeLibraryFactory> DT_LIBRARY_FACTORY = new AtomicNotNullLazyValue<DatatypeLibraryFactory>() {
+    @NotNull
+    @Override
+    protected DatatypeLibraryFactory compute() {
+      return new BuiltinDatatypeLibraryFactory(new CachedDatatypeLibraryFactory(
+        new CascadingDatatypeLibraryFactory(createXsdDatatypeFactory(), new DatatypeLibraryLoader())) {
+          @Override
+          public synchronized DatatypeLibrary createDatatypeLibrary(String namespaceURI) {
+            return super.createDatatypeLibrary(namespaceURI);
+          }
+        });
+    }
+  };
+
+  private static final ConcurrentMap<String, DPattern> ourCache = ContainerUtil.createConcurrentSoftValueMap();
+
+  private static DatatypeLibraryFactory createXsdDatatypeFactory() {
+    try {
+      return new DatatypeLibraryFactoryImpl();
+    } catch (Throwable e) {
+      LOG.error("Could not create DT library implementation 'com.thaiopensource.datatype.xsd.DatatypeLibraryFactoryImpl'. Plugin's classpath seems to be broken.", e);
+      return new DoNothingDatatypeLibraryFactoryImpl();
+    }
+  }
+
   static final Key<CachedValue<Schema>> SCHEMA_KEY = Key.create("SCHEMA");
-  static final Key<CachedValue<DPattern>> PATTERN_KEY = Key.create("PATTERN");
 
   public static final DefaultHandler DEFAULT_HANDLER = new DefaultHandler() {
+    @Override
     public void error(SAXParseException e) throws SAXException {
       LOG.info("e.getMessage() = " + e.getMessage() + " [" + e.getSystemId() + "]");
       LOG.info(e);
@@ -78,79 +110,76 @@ public class RngParser {
   static final PropertyMap EMPTY_PROPS = new PropertyMapBuilder().toPropertyMap();
 
   public static DPattern getCachedPattern(final PsiFile descriptorFile, final ErrorHandler eh) {
-    final CachedValuesManager mgr = CachedValuesManager.getManager(descriptorFile.getProject());
+    final VirtualFile file = descriptorFile.getVirtualFile();
 
-    return mgr.getCachedValue(descriptorFile, PATTERN_KEY, new CachedValueProvider<DPattern>() {
-      public Result<DPattern> compute() {
-        return Result.create(parsePattern(descriptorFile, eh, false), descriptorFile);
-      }
-    }, false);
+    if (file == null) {
+      return parsePattern(descriptorFile, eh, false);
+    }
+    String url = file.getUrl();
+    DPattern pattern = ourCache.get(url);
+    if (pattern == null) {
+      pattern = parsePattern(descriptorFile, eh, false);
+    }
+    if (pattern != null) {
+      ourCache.put(url, pattern);
+    }
+    return pattern;
   }
 
   public static DPattern parsePattern(final PsiFile file, final ErrorHandler eh, boolean checking) {
     try {
       final Parseable p = createParsable(file, eh);
       if (checking) {
-        p.parse(new SchemaBuilderImpl(eh));
+        p.parse(new SchemaBuilderImpl(eh, DT_LIBRARY_FACTORY.getValue(), new SchemaPatternBuilder()));
       } else {
         return p.parse(new DSchemaBuilderImpl());
       }
     } catch (BuildException e) {
       LOG.info(e);
     } catch (IllegalSchemaException e) {
-      LOG.info("invalid schema: " + file.getVirtualFile().getPresentableUrl());
+      final VirtualFile virtualFile = file.getVirtualFile();
+      if (virtualFile != null) {
+        if (LOG.isDebugEnabled()) {
+          LOG.debug("invalid schema: " + virtualFile.getPresentableUrl(), e);
+        } else {
+          LOG.info("invalid schema: " + virtualFile.getPresentableUrl() + ". [" + e.getMessage() + "]");
+        }
+      }
     }
     return null;
   }
 
   private static Parseable createParsable(final PsiFile file, final ErrorHandler eh) {
     final InputSource source = makeInputSource(file);
+    final VirtualFile virtualFile = file.getVirtualFile();
 
     if (file.getFileType() == RncFileType.getInstance()) {
       return new CompactParseable(source, eh) {
+        @Override
         public ParsedPattern parseInclude(String uri, SchemaBuilder schemaBuilder, IncludedGrammar g, String inheritedNs)
                 throws BuildException, IllegalSchemaException
         {
-          return super.parseInclude(resolveURI(file, uri), schemaBuilder, g, inheritedNs);
+          ProgressManager.checkCanceled();
+          return super.parseInclude(resolveURI(virtualFile, uri), schemaBuilder, g, inheritedNs);
         }
       };
     } else {
       return new SAXParseable(source, eh) {
+        @Override
         public ParsedPattern parseInclude(String uri, SchemaBuilder schemaBuilder, IncludedGrammar g, String inheritedNs)
                 throws BuildException, IllegalSchemaException
         {
-          return super.parseInclude(resolveURI(file, uri), schemaBuilder, g, inheritedNs);
+          ProgressManager.checkCanceled();
+          return super.parseInclude(resolveURI(virtualFile, uri), schemaBuilder, g, inheritedNs);
         }
       };
     }
   }
 
-  public static String resolveURI(PsiFile descriptorFile, String s) {
-    final PsiFile file = XmlUtil.findXmlFile(descriptorFile, s);
-
+  private static String resolveURI(VirtualFile descriptorFile, String s) {
+    final VirtualFile file = UriUtil.findRelativeFile(s, descriptorFile);
     if (file != null) {
-      final VirtualFile virtualFile = file.getVirtualFile();
-      if (virtualFile != null) {
-        final PsiDocumentManager dm = PsiDocumentManager.getInstance(file.getProject());
-        final Document d = dm.getCachedDocument(file);
-        if (d != null) {
-          // TODO: fix. write action + saving -> deadlock
-//          dm.commitDocument(d);
-//          FileDocumentManager.getInstance().saveDocument(d);
-        }
-        s = reallyFixIDEAUrl(virtualFile.getUrl());
-      }
-    }
-    return s;
-  }
-
-  public static String reallyFixIDEAUrl(String url) {
-    String s = VfsUtil.fixIDEAUrl(url);
-    if (!SystemInfo.isWindows) {
-      // Linux:
-      //    "file://tmp/foo.bar"  (produced by com.intellij.openapi.vfs.VfsUtil.fixIDEAUrl) doesn't work: "java.net.UnknownHostException: tmp"
-      //    "file:/tmp/foo.bar"   (produced by File.toURL()) works fine
-      s = s.replaceFirst("file:/+", "file:/");
+      s = VfsUtilCore.fixIDEAUrl(file.getUrl());
     }
     return s;
   }
@@ -158,23 +187,21 @@ public class RngParser {
   public static Schema getCachedSchema(final XmlFile descriptorFile) {
     CachedValue<Schema> value = descriptorFile.getUserData(SCHEMA_KEY);
     if (value == null) {
-      final CachedValueProvider<Schema> provider = new CachedValueProvider<Schema>() {
-        public Result<Schema> compute() {
-          final InputSource inputSource = makeInputSource(descriptorFile);
+      final CachedValueProvider<Schema> provider = () -> {
+        final InputSource inputSource = makeInputSource(descriptorFile);
 
-          try {
-            final Schema schema = new MySchemaReader(descriptorFile).createSchema(inputSource, EMPTY_PROPS);
-            final PsiElementProcessor.CollectElements<XmlFile> processor = new PsiElementProcessor.CollectElements<XmlFile>();
-            RelaxIncludeIndex.processForwardDependencies(descriptorFile, processor);
-            if (processor.getCollection().size() > 0) {
-              return Result.create(schema, processor.toArray(), descriptorFile);
-            } else {
-              return Result.createSingleDependency(schema, descriptorFile);
-            }
-          } catch (Exception e) {
-            LOG.info(e);
-            return Result.createSingleDependency(null, descriptorFile);
+        try {
+          final Schema schema = new MySchemaReader(descriptorFile).createSchema(inputSource, EMPTY_PROPS);
+          final PsiElementProcessor.CollectElements<XmlFile> processor = new PsiElementProcessor.CollectElements<>();
+          RelaxIncludeIndex.processForwardDependencies(descriptorFile, processor);
+          if (processor.getCollection().size() > 0) {
+            return CachedValueProvider.Result.create(schema, processor.toArray(), descriptorFile);
+          } else {
+            return CachedValueProvider.Result.createSingleDependency(schema, descriptorFile);
           }
+        } catch (Exception e) {
+          LOG.info(e);
+          return CachedValueProvider.Result.createSingleDependency(null, descriptorFile);
         }
       };
 
@@ -189,7 +216,7 @@ public class RngParser {
     final InputSource inputSource = new InputSource(new StringReader(descriptorFile.getText()));
     final VirtualFile file = descriptorFile.getVirtualFile();
     if (file != null) {
-      inputSource.setSystemId(reallyFixIDEAUrl(file.getUrl()));
+      inputSource.setSystemId(VfsUtilCore.fixIDEAUrl(file.getUrl()));
     }
     return inputSource;
   }
@@ -197,10 +224,11 @@ public class RngParser {
   static class MySchemaReader extends SchemaReaderImpl {
     private final PsiFile myDescriptorFile;
 
-    public MySchemaReader(PsiFile descriptorFile) {
+    MySchemaReader(PsiFile descriptorFile) {
       myDescriptorFile = descriptorFile;
     }
 
+    @Override
     protected com.thaiopensource.relaxng.parse.Parseable createParseable(XMLReaderCreator xmlReaderCreator, InputSource inputSource, ErrorHandler errorHandler) {
       if (myDescriptorFile.getFileType() == RncFileType.getInstance()) {
         return new com.thaiopensource.relaxng.parse.compact.CompactParseable(inputSource, errorHandler);

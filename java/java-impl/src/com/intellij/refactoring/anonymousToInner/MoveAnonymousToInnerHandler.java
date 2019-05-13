@@ -20,6 +20,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiAnonymousClass;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiNewExpression;
 import com.intellij.psi.PsiReference;
 import com.intellij.refactoring.move.MoveHandlerDelegate;
 import org.jetbrains.annotations.Nullable;
@@ -33,12 +34,13 @@ public class MoveAnonymousToInnerHandler extends MoveHandlerDelegate {
     for (PsiElement element : elements) {
       if (!(element instanceof PsiAnonymousClass)) return false;
     }
-    return super.canMove(elements, targetContainer);
+    return targetContainer == null || super.canMove(elements, targetContainer);
   }
 
+  @Override
   public boolean tryToMove(final PsiElement element, final Project project, final DataContext dataContext, final PsiReference reference,
                            final Editor editor) {
-    if (element instanceof PsiAnonymousClass) {
+    if (element instanceof PsiAnonymousClass && element.getParent() instanceof PsiNewExpression) {
       new AnonymousToInnerHandler().invoke(project, editor, (PsiAnonymousClass)element);
       return true;
     }

@@ -14,10 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * User: anna
- * Date: 16-Jan-2008
- */
 package com.intellij.ide.util.scopeChooser;
 
 import com.intellij.icons.AllIcons;
@@ -25,21 +21,24 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.packageDependencies.DependencyUISettings;
+import org.jetbrains.annotations.NotNull;
 
 public final class ShowModulesAction extends ToggleAction {
   private final Runnable myUpdate;
 
   public ShowModulesAction(final Runnable update) {
     super(IdeBundle.message("action.show.modules"),
-          IdeBundle.message("action.description.show.modules"), AllIcons.ObjectBrowser.ShowModules);
+          IdeBundle.message("action.description.show.modules"), AllIcons.Actions.GroupByModule);
     myUpdate = update;
   }
 
-  public boolean isSelected(AnActionEvent event) {
+  @Override
+  public boolean isSelected(@NotNull AnActionEvent event) {
     return DependencyUISettings.getInstance().UI_SHOW_MODULES;
   }
 
-  public void setSelected(AnActionEvent event, boolean flag) {
+  @Override
+  public void setSelected(@NotNull AnActionEvent event, boolean flag) {
     DependencyUISettings.getInstance().UI_SHOW_MODULES = flag;
     myUpdate.run();
   }

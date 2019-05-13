@@ -16,7 +16,6 @@
 package com.intellij.cvsSupport2.connections;
 
 import com.intellij.cvsSupport2.cvsoperations.dateOrRevision.RevisionOrDate;
-import org.netbeans.lib.cvsclient.CvsRoot;
 
 import java.io.File;
 
@@ -28,14 +27,12 @@ public class CvsRootOnEnvironment extends CvsRootProvider{
     super(rootFile, env);
   }
 
+  @Override
   public String getRepository() {
     return myCvsEnvironment.getRepository();
   }
 
-  public CvsRoot getCvsRoot() {
-    return myCvsEnvironment.getCvsRoot();
-  }
-
+  @Override
   public RevisionOrDate getRevisionOrDate() {
     return myCvsEnvironment.getRevisionOrDate();
   }

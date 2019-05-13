@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package com.intellij.core;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
@@ -26,10 +27,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 /**
  * @author yole
@@ -37,8 +35,7 @@ import java.util.List;
 public class CoreJavaFileManager implements JavaFileManager {
   private static final Logger LOG = Logger.getInstance("#com.intellij.core.CoreJavaFileManager");
 
-  private final List<VirtualFile> myClasspath = new ArrayList<VirtualFile>();
-
+  private final List<VirtualFile> myClasspath = new ArrayList<>();
   private final PsiManager myPsiManager;
 
   public CoreJavaFileManager(PsiManager psiManager) {
@@ -52,14 +49,14 @@ public class CoreJavaFileManager implements JavaFileManager {
   @Override
   public PsiPackage findPackage(@NotNull String packageName) {
     final List<VirtualFile> files = findDirectoriesByPackageName(packageName);
-    if (files.size() > 0) {
+    if (!files.isEmpty()) {
       return new PsiPackageImpl(myPsiManager, packageName);
     }
     return null;
   }
 
   private List<VirtualFile> findDirectoriesByPackageName(String packageName) {
-    List<VirtualFile> result = new ArrayList<VirtualFile>();
+    List<VirtualFile> result = new ArrayList<>();
     String dirName = packageName.replace(".", "/");
     for (VirtualFile root : roots()) {
       VirtualFile classDir = root.findFileByRelativePath(dirName);
@@ -86,7 +83,7 @@ public class CoreJavaFileManager implements JavaFileManager {
   @Override
   public PsiClass findClass(@NotNull String qName, @NotNull GlobalSearchScope scope) {
     for (VirtualFile root : roots()) {
-      final PsiClass psiClass = findClassInClasspathRoot(qName, root, myPsiManager);
+      final PsiClass psiClass = findClassInClasspathRoot(qName, root, myPsiManager, scope);
       if (psiClass != null) {
         return psiClass;
       }
@@ -95,7 +92,10 @@ public class CoreJavaFileManager implements JavaFileManager {
   }
 
   @Nullable
-  public static PsiClass findClassInClasspathRoot(String qName, VirtualFile root, PsiManager psiManager) {
+  public static PsiClass findClassInClasspathRoot(@NotNull String qName,
+                                                  @NotNull VirtualFile root,
+                                                  @NotNull PsiManager psiManager,
+                                                  @NotNull GlobalSearchScope scope) {
     String pathRest = qName;
     VirtualFile cur = root;
 
@@ -111,86 +111,98 @@ public class CoreJavaFileManager implements JavaFileManager {
       cur = child;
     }
 
-    String className = pathRest.replace('.', '$');
-    int bucks = className.indexOf('$');
+    String classNameWithInnerClasses = pathRest;
+    String topLevelClassName = substringBeforeFirstDot(classNameWithInnerClasses);
 
-    String rootClassName;
-    if (bucks < 0) {
-      rootClassName = className;
+    VirtualFile vFile = cur.findChild(topLevelClassName + ".class");
+    if (vFile == null) vFile = cur.findChild(topLevelClassName + ".java");
+
+    if (vFile == null) {
+      return null;
+    }
+    if (!vFile.isValid()) {
+      LOG.error("Invalid child of valid parent: " + vFile.getPath() + "; " + root.isValid() + " path=" + root.getPath());
+      return null;
+    }
+    if (!scope.contains(vFile)) {
+      return null;
+    }
+
+    final PsiFile file = psiManager.findFile(vFile);
+    if (!(file instanceof PsiClassOwner)) {
+      return null;
+    }
+
+    return findClassInPsiFile(classNameWithInnerClasses, (PsiClassOwner)file);
+  }
+
+  @NotNull
+  private static String substringBeforeFirstDot(@NotNull String classNameWithInnerClasses) {
+    int dot = classNameWithInnerClasses.indexOf('.');
+    if (dot < 0) {
+      return classNameWithInnerClasses;
     }
     else {
-      rootClassName = className.substring(0, bucks);
-      className = className.substring(bucks + 1);
+      return classNameWithInnerClasses.substring(0, dot);
     }
+  }
 
-    VirtualFile vFile = cur.findChild(rootClassName + ".class");
-    if (vFile == null) vFile = cur.findChild(rootClassName + ".java");
-
-    if (vFile != null) {
-      if (!vFile.isValid()) {
-        LOG.error("Invalid child of valid parent: " + vFile.getPath() + "; " + root.isValid() + " path=" + root.getPath());
-        return null;
-      }
-
-      final PsiFile file = psiManager.findFile(vFile);
-      if (file instanceof PsiClassOwner) {
-        final PsiClass[] classes = ((PsiClassOwner)file).getClasses();
-        if (classes.length == 1) {
-          PsiClass curClass = classes[0];
-
-          if (bucks > 0) {
-            int newComponentStart = 0;
-            int lookupStart = 0;
-
-            while (lookupStart <= className.length()) {
-              int b = className.indexOf("$", lookupStart);
-              b =  b < 0 ? className.length(): b;
-
-              String component = className.substring(newComponentStart, b);
-              PsiClass inner = curClass.findInnerClassByName(component, false);
-
-              lookupStart = b + 1;
-              if (inner == null) {
-                continue;
-              }
-
-              newComponentStart = lookupStart;
-              curClass = inner;
-            }
-
-            if (lookupStart != newComponentStart) {
-              return null;
-            }
-          }
-
-
-          return curClass;
-        }
+  @Nullable
+  private static PsiClass findClassInPsiFile(@NotNull String classNameWithInnerClassesDotSeparated, @NotNull PsiClassOwner file) {
+    for (PsiClass topLevelClass : file.getClasses()) {
+      PsiClass candidate = findClassByTopLevelClass(classNameWithInnerClassesDotSeparated, topLevelClass);
+      if (candidate != null) {
+        return candidate;
       }
     }
-
     return null;
   }
 
+  @Nullable
+  private static PsiClass findClassByTopLevelClass(@NotNull String className, @NotNull PsiClass topLevelClass) {
+    if (className.indexOf('.') < 0) {
+      return className.equals(topLevelClass.getName()) ? topLevelClass : null;
+    }
+
+    Iterator<String> segments = StringUtil.split(className, ".").iterator();
+    if (!segments.hasNext() || !segments.next().equals(topLevelClass.getName())) {
+      return null;
+    }
+    PsiClass curClass = topLevelClass;
+    while (segments.hasNext()) {
+      String innerClassName = segments.next();
+      PsiClass innerClass = curClass.findInnerClassByName(innerClassName, false);
+      if (innerClass == null) {
+        return null;
+      }
+      curClass = innerClass;
+    }
+    return curClass;
+  }
+
+  @NotNull
   @Override
   public PsiClass[] findClasses(@NotNull String qName, @NotNull GlobalSearchScope scope) {
-    List<PsiClass> result = new ArrayList<PsiClass>();
+    List<PsiClass> result = new ArrayList<>();
     for (VirtualFile file : roots()) {
-      final PsiClass psiClass = findClassInClasspathRoot(qName, file, myPsiManager);
+      final PsiClass psiClass = findClassInClasspathRoot(qName, file, myPsiManager, scope);
       if (psiClass != null) {
         result.add(psiClass);
       }
     }
-    return result.toArray(new PsiClass[result.size()]);
+    return result.toArray(PsiClass.EMPTY_ARRAY);
   }
 
+  @NotNull
   @Override
   public Collection<String> getNonTrivialPackagePrefixes() {
     return Collections.emptyList();
   }
 
+  @NotNull
   @Override
-  public void initialize() {
+  public Collection<PsiJavaModule> findModules(@NotNull String moduleName, @NotNull GlobalSearchScope scope) {
+    return Collections.emptySet();
   }
 
   public void addToClasspath(VirtualFile root) {

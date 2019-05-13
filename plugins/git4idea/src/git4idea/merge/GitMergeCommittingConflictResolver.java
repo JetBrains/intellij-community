@@ -15,11 +15,9 @@
  */
 package git4idea.merge;
 
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
-import git4idea.GitPlatformFacade;
 import git4idea.commands.Git;
 import org.jetbrains.annotations.NotNull;
 
@@ -27,23 +25,26 @@ import java.util.Collection;
 
 /**
  * Conflict resolver that makes a merge commit after all conflicts are resolved.
- *
- * @author Kirill Likhodedov
  */
 public class GitMergeCommittingConflictResolver extends GitConflictResolver {
   private final Collection<VirtualFile> myMergingRoots;
   private final boolean myRefreshAfterCommit;
   private final GitMerger myMerger;
 
-  public GitMergeCommittingConflictResolver(Project project, @NotNull Git git, GitMerger merger, Collection<VirtualFile> mergingRoots,
-                                            Params params, boolean refreshAfterCommit) {
-    super(project, git, ServiceManager.getService(GitPlatformFacade.class), mergingRoots, params);
+  public GitMergeCommittingConflictResolver(@NotNull Project project,
+                                            @NotNull Git git,
+                                            @NotNull GitMerger merger,
+                                            @NotNull Collection<VirtualFile> mergingRoots,
+                                            @NotNull Params params,
+                                            boolean refreshAfterCommit) {
+    super(project, git, mergingRoots, params);
     myMerger = merger;
     myMergingRoots = mergingRoots;
     myRefreshAfterCommit = refreshAfterCommit;
   }
 
-  @Override protected boolean proceedAfterAllMerged() throws VcsException {
+  @Override
+  protected boolean proceedAfterAllMerged() throws VcsException {
     myMerger.mergeCommit(myMergingRoots);
     if (myRefreshAfterCommit) {
       for (VirtualFile root : myMergingRoots) {

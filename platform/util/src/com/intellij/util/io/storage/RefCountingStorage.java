@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,12 +20,14 @@
 package com.intellij.util.io.storage;
 
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
-import com.intellij.openapi.util.io.ByteSequence;
+import com.intellij.openapi.util.io.ByteArraySequence;
 import com.intellij.openapi.util.io.StreamUtil;
+import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.containers.ConcurrentHashMap;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.PagePool;
 import com.intellij.util.io.UnsyncByteArrayInputStream;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.DataInputStream;
 import java.io.EOFException;
@@ -38,30 +40,37 @@ import java.util.zip.Inflater;
 import java.util.zip.InflaterInputStream;
 
 public class RefCountingStorage extends AbstractStorage {
-  private final Map<Integer, Future<?>> myPendingWriteRequests = new ConcurrentHashMap<Integer, Future<?>>();
+  private final Map<Integer, Future<?>> myPendingWriteRequests = ContainerUtil.newConcurrentMap();
   private int myPendingWriteRequestsSize;
-  private final ThreadPoolExecutor myPendingWriteRequestsExecutor = new ThreadPoolExecutor(1, 1, Long.MAX_VALUE, TimeUnit.DAYS, new LinkedBlockingQueue<Runnable>(), new ThreadFactory() {
-    @Override
-    public Thread newThread(Runnable runnable) {
-      return new Thread(runnable, "RefCountingStorage write content helper");
-    }
-  });
+  private final ExecutorService myPendingWriteRequestsExecutor = createExecutor();
 
-  private final boolean myDoNotZipCaches = Boolean.valueOf(System.getProperty("idea.doNotZipCaches")).booleanValue();
+  @NotNull
+  protected ExecutorService createExecutor() {
+    return new ThreadPoolExecutor(1, 1, Long.MAX_VALUE, TimeUnit.DAYS, new LinkedBlockingQueue<Runnable>(), ConcurrencyUtil
+      .newNamedThreadFactory("RefCountingStorage write content helper"));
+  }
+
+  private final boolean myDoNotZipCaches;
   private static final int MAX_PENDING_WRITE_SIZE = 20 * 1024 * 1024;
 
   public RefCountingStorage(String path) throws IOException {
-    super(path);
+    this(path, CapacityAllocationPolicy.DEFAULT);
   }
 
   public RefCountingStorage(String path, CapacityAllocationPolicy capacityAllocationPolicy) throws IOException {
-    super(path, capacityAllocationPolicy);
+    this(path, capacityAllocationPolicy, Boolean.valueOf(System.getProperty("idea.doNotZipCaches")).booleanValue());
   }
 
+  public RefCountingStorage(String path, CapacityAllocationPolicy capacityAllocationPolicy, boolean doNotZipCaches) throws IOException {
+    super(path, capacityAllocationPolicy);
+    myDoNotZipCaches = doNotZipCaches;
+  }
+
+  @Override
   public DataInputStream readStream(int record) throws IOException {
     if (myDoNotZipCaches) return super.readStream(record);
     BufferExposingByteArrayOutputStream stream = internalReadStream(record);
-    return new DataInputStream(new UnsyncByteArrayInputStream(stream.getInternalBuffer(), 0, stream.size()));
+    return new DataInputStream(stream.toInputStream());
   }
 
   @Override
@@ -72,24 +81,25 @@ public class RefCountingStorage extends AbstractStorage {
 
   private BufferExposingByteArrayOutputStream internalReadStream(int record) throws IOException {
     waitForPendingWriteForRecord(record);
+    byte[] result;
 
     synchronized (myLock) {
+      result = super.readBytes(record);
+    }
 
-      byte[] result = super.readBytes(record);
-      InflaterInputStream in = new CustomInflaterInputStream(result);
-      try {
-        final BufferExposingByteArrayOutputStream outputStream = new BufferExposingByteArrayOutputStream();
-        StreamUtil.copyStreamContent(in, outputStream);
-        return outputStream;
-      }
-      finally {
-        in.close();
-      }
+    InflaterInputStream in = new CustomInflaterInputStream(result);
+    try {
+      final BufferExposingByteArrayOutputStream outputStream = new BufferExposingByteArrayOutputStream();
+      StreamUtil.copyStreamContent(in, outputStream);
+      return outputStream;
+    }
+    finally {
+      in.close();
     }
   }
 
   private static class CustomInflaterInputStream extends InflaterInputStream {
-    public CustomInflaterInputStream(byte[] compressedData) {
+    CustomInflaterInputStream(byte[] compressedData) {
       super(new UnsyncByteArrayInputStream(compressedData), new Inflater(), 1);
       // force to directly use compressed data, this ensures less round trips with native extraction code and copy streams
       this.buf = compressedData;
@@ -123,12 +133,12 @@ public class RefCountingStorage extends AbstractStorage {
   }
 
   @Override
-  protected void appendBytes(int record, ByteSequence bytes) throws IOException {
+  protected void appendBytes(int record, ByteArraySequence bytes) throws IOException {
     throw new IncorrectOperationException("Appending is not supported");
   }
 
   @Override
-  public void writeBytes(final int record, final ByteSequence bytes, final boolean fixedSize) throws IOException {
+  public void writeBytes(final int record, final ByteArraySequence bytes, final boolean fixedSize) throws IOException {
 
     if (myDoNotZipCaches) {
       super.writeBytes(record, bytes, fixedSize);
@@ -153,7 +163,7 @@ public class RefCountingStorage extends AbstractStorage {
     }
   }
 
-  private void zipAndWrite(ByteSequence bytes, int record, boolean fixedSize) throws IOException {
+  private void zipAndWrite(ByteArraySequence bytes, int record, boolean fixedSize) throws IOException {
     BufferExposingByteArrayOutputStream s = new BufferExposingByteArrayOutputStream();
     DeflaterOutputStream out = new DeflaterOutputStream(s);
     try {
@@ -171,7 +181,7 @@ public class RefCountingStorage extends AbstractStorage {
   }
 
   private void doWrite(int record, boolean fixedSize, BufferExposingByteArrayOutputStream s) throws IOException {
-    super.writeBytes(record, new ByteSequence(s.getInternalBuffer(), 0, s.size()), fixedSize);
+    super.writeBytes(record, s.toByteArraySequence(), fixedSize);
   }
 
   @Override
@@ -187,6 +197,12 @@ public class RefCountingStorage extends AbstractStorage {
     }
   }
 
+  public int createNewRecord() throws IOException {
+    synchronized (myLock) {
+      return myRecordsTable.createNewRecord();
+    }
+  }
+
   public void acquireRecord(int record) {
     waitForPendingWriteForRecord(record);
     synchronized (myLock) {
@@ -195,9 +211,13 @@ public class RefCountingStorage extends AbstractStorage {
   }
 
   public void releaseRecord(int record) throws IOException {
+    releaseRecord(record, true);
+  }
+
+  public void releaseRecord(int record, boolean completely) throws IOException {
     waitForPendingWriteForRecord(record);
     synchronized (myLock) {
-      if (((RefCountingRecordsTable)myRecordsTable).decRefCount(record)) {
+      if (((RefCountingRecordsTable)myRecordsTable).decRefCount(record) && completely) {
         doDeleteRecord(record);
       }
     }
@@ -218,7 +238,7 @@ public class RefCountingStorage extends AbstractStorage {
 
   @Override
   public boolean isDirty() {
-    return myPendingWriteRequests.size() > 0 || super.isDirty();
+    return !myPendingWriteRequests.isEmpty() || super.isDirty();
   }
 
   @Override

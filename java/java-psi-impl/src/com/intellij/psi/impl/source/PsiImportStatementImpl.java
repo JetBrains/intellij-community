@@ -24,12 +24,8 @@ import org.jetbrains.annotations.NotNull;
 
 public class PsiImportStatementImpl extends PsiImportStatementBaseImpl implements PsiImportStatement {
   public static final PsiImportStatementImpl[] EMPTY_ARRAY = new PsiImportStatementImpl[0];
-  public static final ArrayFactory<PsiImportStatementImpl> ARRAY_FACTORY = new ArrayFactory<PsiImportStatementImpl>() {
-    @Override
-    public PsiImportStatementImpl[] create(final int count) {
-      return count == 0 ? EMPTY_ARRAY : new PsiImportStatementImpl[count];
-    }
-  };
+  public static final ArrayFactory<PsiImportStatementImpl> ARRAY_FACTORY =
+    count -> count == 0 ? EMPTY_ARRAY : new PsiImportStatementImpl[count];
 
   public PsiImportStatementImpl(final PsiImportStatementStub stub) {
     super(stub, JavaStubElementTypes.IMPORT_STATEMENT);
@@ -41,6 +37,10 @@ public class PsiImportStatementImpl extends PsiImportStatementBaseImpl implement
 
   @Override
   public String getQualifiedName() {
+    PsiImportStatementStub stub = getGreenStub();
+    if (stub != null) {
+      return stub.getImportReferenceText();
+    }
     final PsiJavaCodeReferenceElement reference = getImportReference();
     return reference == null ? null : reference.getCanonicalText();
   }
@@ -55,6 +55,7 @@ public class PsiImportStatementImpl extends PsiImportStatementBaseImpl implement
     }
   }
 
+  @Override
   public String toString(){
     return "PsiImportStatement";
   }

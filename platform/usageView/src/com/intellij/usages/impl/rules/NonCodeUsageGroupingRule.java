@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,26 +15,36 @@
  */
 package com.intellij.usages.impl.rules;
 
-import com.intellij.openapi.vcs.FileStatus;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.GeneratedSourcesFilter;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewBundle;
-import com.intellij.usages.Usage;
-import com.intellij.usages.UsageGroup;
-import com.intellij.usages.UsageInfo2UsageAdapter;
-import com.intellij.usages.UsageView;
+import com.intellij.usages.*;
+import com.intellij.usages.impl.UnknownUsagesInUnloadedModules;
 import com.intellij.usages.rules.PsiElementUsage;
-import com.intellij.usages.rules.UsageGroupingRule;
+import com.intellij.usages.rules.SingleParentUsageGroupingRule;
+import com.intellij.usages.rules.UsageInFile;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-
-import javax.swing.*;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author max
  */
-public class NonCodeUsageGroupingRule implements UsageGroupingRule {
-  private static class CodeUsageGroup implements UsageGroup {
+public class NonCodeUsageGroupingRule extends SingleParentUsageGroupingRule {
+  private final Project myProject;
+
+  public NonCodeUsageGroupingRule(Project project) {
+    myProject = project;
+  }
+
+  private static class CodeUsageGroup extends UsageGroupBase {
     private static final UsageGroup INSTANCE = new CodeUsageGroup();
+
+    private CodeUsageGroup() {
+      super(1);
+    }
 
     @Override
     @NotNull
@@ -42,78 +52,56 @@ public class NonCodeUsageGroupingRule implements UsageGroupingRule {
       return view == null ? UsageViewBundle.message("node.group.code.usages") : view.getPresentation().getCodeUsagesString();
     }
 
-    @Override
-    public void update() {
-    }
-
     public String toString() {
       //noinspection HardCodedStringLiteral
       return "CodeUsages";
     }
-
-    @Override
-    public Icon getIcon(boolean isOpen) { return null; }
-    @Override
-    public FileStatus getFileStatus() { return null; }
-    @Override
-    public boolean isValid() { return true; }
-    @Override
-    public int compareTo(UsageGroup usageGroup) {
-      if (usageGroup instanceof DynamicUsageGroup) {
-        return -1;
-      }
-      return usageGroup == this ? 0 : 1;
-    }
-    @Override
-    public void navigate(boolean requestFocus) { }
-    @Override
-    public boolean canNavigate() { return false; }
-
-    @Override
-    public boolean canNavigateToSource() {
-      return canNavigate();
-    }
   }
 
-  private static class NonCodeUsageGroup implements UsageGroup {
-    public static final UsageGroup INSTANCE = new NonCodeUsageGroup();
+  private static class UsageInGeneratedCodeGroup extends UsageGroupBase {
+    public static final UsageGroup INSTANCE = new UsageInGeneratedCodeGroup();
+
+    private UsageInGeneratedCodeGroup() {
+      super(4);
+    }
 
     @Override
     @NotNull
     public String getText(UsageView view) {
-      return view == null ? UsageViewBundle.message("node.group.code.usages") : view.getPresentation().getNonCodeUsagesString();
+      return view == null ? UsageViewBundle.message("node.usages.in.generated.code") : view.getPresentation().getUsagesInGeneratedCodeString();
+    }
+
+    public String toString() {
+      return "UsagesInGeneratedCode";
+    }
+  }
+
+  private static class NonCodeUsageGroup extends UsageGroupBase {
+    public static final UsageGroup INSTANCE = new NonCodeUsageGroup();
+
+    private NonCodeUsageGroup() {
+      super(3);
     }
 
     @Override
-    public void update() {
+    @NotNull
+    public String getText(UsageView view) {
+      return view == null ? UsageViewBundle.message("node.non.code.usages") : view.getPresentation().getNonCodeUsagesString();
     }
 
     public String toString() {
       //noinspection HardCodedStringLiteral
       return "NonCodeUsages";
     }
-    @Override
-    public Icon getIcon(boolean isOpen) { return null; }
-    @Override
-    public FileStatus getFileStatus() { return null; }
-    @Override
-    public boolean isValid() { return true; }
-    @Override
-    public int compareTo(UsageGroup usageGroup) { return usageGroup == this ? 0 : -1; }
-    @Override
-    public void navigate(boolean requestFocus) { }
-    @Override
-    public boolean canNavigate() { return false; }
-
-    @Override
-    public boolean canNavigateToSource() {
-      return canNavigate();
-    }
   }
 
-  private static class DynamicUsageGroup implements UsageGroup {
+  private static class DynamicUsageGroup extends UsageGroupBase {
     public static final UsageGroup INSTANCE = new DynamicUsageGroup();
     @NonNls private static final String DYNAMIC_CAPTION = "Dynamic usages";
+
+    DynamicUsageGroup() {
+      super(2);
+    }
 
     @Override
     @NotNull
@@ -127,35 +115,43 @@ public class NonCodeUsageGroupingRule implements UsageGroupingRule {
       }
     }
 
-    @Override
-    public void update() {
-    }
-
     public String toString() {
       //noinspection HardCodedStringLiteral
       return "DynamicUsages";
     }
+  }
+
+  private static class UnloadedModulesUsageGroup extends UsageGroupBase {
+    public static final UsageGroup INSTANCE = new UnloadedModulesUsageGroup();
+
+    UnloadedModulesUsageGroup() {
+      super(0);
+    }
+
+    @NotNull
     @Override
-    public Icon getIcon(boolean isOpen) { return null; }
-    @Override
-    public FileStatus getFileStatus() { return null; }
-    @Override
-    public boolean isValid() { return true; }
-    @Override
-    public int compareTo(UsageGroup usageGroup) { return usageGroup == this ? 0 : 1; }
-    @Override
-    public void navigate(boolean requestFocus) { }
-    @Override
-    public boolean canNavigate() { return false; }
+    public String getText(@Nullable UsageView view) {
+      return "Usages in Unloaded Modules";
+    }
 
     @Override
-    public boolean canNavigateToSource() {
-      return canNavigate();
+    public String toString() {
+      return getText(null);
     }
   }
 
+  @Nullable
   @Override
-  public UsageGroup groupUsage(@NotNull Usage usage) {
+  protected UsageGroup getParentGroupFor(@NotNull Usage usage, @NotNull UsageTarget[] targets) {
+    if (usage instanceof UnknownUsagesInUnloadedModules) {
+      return UnloadedModulesUsageGroup.INSTANCE;
+    }
+    if (usage instanceof UsageInFile) {
+      VirtualFile file = ((UsageInFile)usage).getFile();
+      if (file != null && GeneratedSourcesFilter.isGeneratedSourceByAnyFilter(file, myProject)) {
+          return UsageInGeneratedCodeGroup.INSTANCE;
+      }
+    }
     if (usage instanceof PsiElementUsage) {
       if (usage instanceof UsageInfo2UsageAdapter) {
         final UsageInfo usageInfo = ((UsageInfo2UsageAdapter)usage).getUsageInfo();

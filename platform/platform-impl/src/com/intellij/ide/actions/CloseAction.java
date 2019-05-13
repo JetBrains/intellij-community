@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,24 +16,24 @@
 package com.intellij.ide.actions;
 
 import com.intellij.icons.AllIcons;
-import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.project.DumbAware;
+import org.jetbrains.annotations.NotNull;
 
 public class CloseAction extends AnAction implements DumbAware {
 
   @Override
-  public void update(AnActionEvent e) {
-    e.getPresentation().setIcon(ActionPlaces.isToolbarPlace(e.getPlace()) ? AllIcons.Actions.Cancel : null);
+  public void update(@NotNull AnActionEvent e) {
+    e.getPresentation().setIcon(e.isFromActionToolbar() ? AllIcons.Actions.Cancel : null);
 
     CloseTarget closeTarget = e.getData(CloseTarget.KEY);
     e.getPresentation().setEnabled(closeTarget != null);
   }
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     e.getData(CloseTarget.KEY).close();
   }
 

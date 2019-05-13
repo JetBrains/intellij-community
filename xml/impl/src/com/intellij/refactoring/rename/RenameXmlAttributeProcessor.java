@@ -1,20 +1,7 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.rename;
 
+import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFileFactory;
@@ -35,13 +22,15 @@ import org.jetbrains.annotations.Nullable;
 public class RenameXmlAttributeProcessor extends RenamePsiElementProcessor {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.rename.RenameXmlAttributeProcessor");
 
+  @Override
   public boolean canProcessElement(@NotNull final PsiElement element) {
     return element instanceof XmlAttribute || element instanceof XmlAttributeValue;
   }
 
-  public void renameElement(final PsiElement element,
-                            final String newName,
-                            final UsageInfo[] usages,
+  @Override
+  public void renameElement(@NotNull final PsiElement element,
+                            @NotNull final String newName,
+                            @NotNull final UsageInfo[] usages,
                             @Nullable RefactoringElementListener listener) throws IncorrectOperationException {
     if (element instanceof XmlAttribute) {
       doRenameXmlAttribute((XmlAttribute)element, newName, listener);
@@ -76,8 +65,9 @@ public class RenameXmlAttributeProcessor extends RenamePsiElementProcessor {
 
     PsiManager psiManager = value.getManager();
     LOG.assertTrue(psiManager != null);
-    XmlFile file = (XmlFile)PsiFileFactory.getInstance(psiManager.getProject()).createFileFromText("dummy.xml", "<a attr=\"" + newName + "\"/>");
-    final PsiElement element = value.replace(file.getDocument().getRootTag().getAttributes()[0].getValueElement());
+    XmlFile file = (XmlFile)PsiFileFactory.getInstance(psiManager.getProject()).createFileFromText("dummy.xml", XMLLanguage.INSTANCE, "<a attr=\"" + newName + "\"/>");
+    @SuppressWarnings("ConstantConditions")
+    PsiElement element = value.replace(file.getRootTag().getAttributes()[0].getValueElement());
     if (listener != null) {
       listener.elementRenamed(element);
     }
@@ -86,7 +76,7 @@ public class RenameXmlAttributeProcessor extends RenamePsiElementProcessor {
   private static void renameAll(PsiElement originalElement, UsageInfo[] infos, String newName,
                                 String originalName) throws IncorrectOperationException {
     if (newName.equals(originalName)) return;
-    Queue<PsiReference> queue = new Queue<PsiReference>(infos.length);
+    Queue<PsiReference> queue = new Queue<>(infos.length);
     for (UsageInfo info : infos) {
       if (info.getElement() == null) continue;
       PsiReference ref = info.getReference();

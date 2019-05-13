@@ -1,37 +1,21 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor.impl.event;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.editor.event.*;
 import com.intellij.openapi.editor.ex.*;
+import com.intellij.openapi.editor.impl.EditorDocumentPriorities;
 import com.intellij.openapi.editor.impl.EditorImpl;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.util.EventDispatcher;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 
 import java.beans.PropertyChangeListener;
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class EditorEventMulticasterImpl implements EditorEventMulticasterEx {
   private final EventDispatcher<DocumentListener> myDocumentMulticaster = EventDispatcher.create(DocumentListener.class);
+  private final EventDispatcher<PrioritizedInternalDocumentListener> myPrioritizedDocumentMulticaster = EventDispatcher.create(PrioritizedInternalDocumentListener.class, Collections.singletonMap("getPriority", EditorDocumentPriorities.RANGE_MARKER));
   private final EventDispatcher<EditReadOnlyListener> myEditReadOnlyMulticaster = EventDispatcher.create(EditReadOnlyListener.class);
 
   private final EventDispatcher<EditorMouseListener> myEditorMouseMulticaster = EventDispatcher.create(EditorMouseListener.class);
@@ -45,6 +29,7 @@ public class EditorEventMulticasterImpl implements EditorEventMulticasterEx {
 
   public void registerDocument(@NotNull DocumentEx document) {
     document.addDocumentListener(myDocumentMulticaster.getMulticaster());
+    document.addDocumentListener(myPrioritizedDocumentMulticaster.getMulticaster());
     document.addEditReadOnlyListener(myEditReadOnlyMulticaster.getMulticaster());
   }
 
@@ -65,14 +50,18 @@ public class EditorEventMulticasterImpl implements EditorEventMulticasterEx {
   }
 
   @Override
-  public void addDocumentListener(@NotNull final DocumentListener listener, @NotNull Disposable parentDisposable) {
-    addDocumentListener(listener);
-    Disposer.register(parentDisposable, new Disposable() {
-      @Override
-      public void dispose() {
-        removeDocumentListener(listener);
-      }
-    });
+  public void addDocumentListener(@NotNull DocumentListener listener, @NotNull Disposable parentDisposable) {
+    myDocumentMulticaster.addListener(listener, parentDisposable);
+  }
+
+  /**
+   * Dangerous method. When high priority listener fires the underlying subsystems (e.g. folding,caret, etc) may not be ready yet.
+   * So all requests to the e.g. caret offset might generate exceptions.
+   * Use for internal purposes only.
+   * @see EditorDocumentPriorities
+   */
+  public void addPrioritizedDocumentListener(@NotNull PrioritizedInternalDocumentListener listener, @NotNull Disposable parent) {
+    myPrioritizedDocumentMulticaster.addListener(listener, parent);
   }
 
   @Override
@@ -86,14 +75,8 @@ public class EditorEventMulticasterImpl implements EditorEventMulticasterEx {
   }
 
   @Override
-  public void addEditorMouseListener(@NotNull final EditorMouseListener listener, @NotNull final Disposable parentDisposable) {
-    addEditorMouseListener(listener);
-    Disposer.register(parentDisposable, new Disposable() {
-      @Override
-      public void dispose() {
-        removeEditorMouseListener(listener);
-      }
-    });
+  public void addEditorMouseListener(@NotNull EditorMouseListener listener, @NotNull Disposable parentDisposable) {
+    myEditorMouseMulticaster.addListener(listener, parentDisposable);
   }
 
   @Override
@@ -107,14 +90,8 @@ public class EditorEventMulticasterImpl implements EditorEventMulticasterEx {
   }
 
   @Override
-  public void addEditorMouseMotionListener(@NotNull final EditorMouseMotionListener listener, @NotNull final Disposable parentDisposable) {
-    addEditorMouseMotionListener(listener);
-    Disposer.register(parentDisposable, new Disposable() {
-      @Override
-      public void dispose() {
-        removeEditorMouseMotionListener(listener);
-      }
-    });
+  public void addEditorMouseMotionListener(@NotNull EditorMouseMotionListener listener, @NotNull Disposable parentDisposable) {
+    myEditorMouseMotionMulticaster.addListener(listener, parentDisposable);
   }
 
   @Override
@@ -128,14 +105,8 @@ public class EditorEventMulticasterImpl implements EditorEventMulticasterEx {
   }
 
   @Override
-  public void addCaretListener(@NotNull final CaretListener listener, @NotNull final Disposable parentDisposable) {
-    addCaretListener(listener);
-    Disposer.register(parentDisposable, new Disposable() {
-      @Override
-      public void dispose() {
-        removeCaretListener(listener);
-      }
-    });
+  public void addCaretListener(@NotNull CaretListener listener, @NotNull Disposable parentDisposable) {
+    myCaretMulticaster.addListener(listener, parentDisposable);
   }
 
   @Override
@@ -159,18 +130,8 @@ public class EditorEventMulticasterImpl implements EditorEventMulticasterEx {
   }
 
   @Override
-  public void addErrorStripeListener(@NotNull ErrorStripeListener listener) {
-    myErrorStripeMulticaster.addListener(listener);
-  }
-
-  @Override
   public void addErrorStripeListener(@NotNull ErrorStripeListener listener, @NotNull Disposable parentDisposable) {
     myErrorStripeMulticaster.addListener(listener, parentDisposable);
-  }
-
-  @Override
-  public void removeErrorStripeListener(@NotNull ErrorStripeListener listener) {
-    myErrorStripeMulticaster.removeListener(listener);
   }
 
   @Override
@@ -184,54 +145,34 @@ public class EditorEventMulticasterImpl implements EditorEventMulticasterEx {
   }
 
   @Override
-  public void addEditReadOnlyListener(@NotNull EditReadOnlyListener listener) {
-    myEditReadOnlyMulticaster.addListener(listener);
+  public void addEditReadOnlyListener(@NotNull EditReadOnlyListener listener, @NotNull Disposable parentDisposable) {
+    myEditReadOnlyMulticaster.addListener(listener, parentDisposable);
   }
 
   @Override
-  public void removeEditReadOnlyListener(@NotNull EditReadOnlyListener listener) {
-    myEditReadOnlyMulticaster.removeListener(listener);
+  public void addPropertyChangeListener(@NotNull PropertyChangeListener listener, @NotNull Disposable parentDisposable) {
+    myPropertyChangeMulticaster.addListener(listener, parentDisposable);
   }
 
   @Override
-  public void addPropertyChangeListener(@NotNull PropertyChangeListener listener) {
-    myPropertyChangeMulticaster.addListener(listener);
-  }
-
-  @Override
-  public void removePropertyChangeListener(@NotNull PropertyChangeListener listener) {
-    myPropertyChangeMulticaster.removeListener(listener);
-  }
-
-  @Override
-  public void addFocusChangeListner(@NotNull FocusChangeListener listener) {
-    myFocusChangeListenerMulticaster.addListener(listener);
-  }
-
-  @Override
-  public void addFocusChangeListner(@NotNull FocusChangeListener listener, @NotNull Disposable parentDisposable) {
+  public void addFocusChangeListener(@NotNull FocusChangeListener listener, @NotNull Disposable parentDisposable) {
     myFocusChangeListenerMulticaster.addListener(listener,parentDisposable);
   }
 
-  @Override
-  public void removeFocusChangeListner(@NotNull FocusChangeListener listener) {
-    myFocusChangeListenerMulticaster.removeListener(listener);
-  }
-
   @TestOnly
-  public Map<Class, List> getListeners() {
-    Map<Class, List> myCopy = new LinkedHashMap<Class, List>();
-    myCopy.put(DocumentListener.class, new ArrayList<DocumentListener>(myDocumentMulticaster.getListeners()));
-    myCopy.put(EditReadOnlyListener.class, new ArrayList<EditReadOnlyListener>(myEditReadOnlyMulticaster.getListeners()));
+  public Map<Class<? extends EventListener>, List<? extends EventListener>> getListeners() {
+    Map<Class<? extends EventListener>, List<? extends EventListener>> myCopy = new LinkedHashMap<>();
+    myCopy.put(DocumentListener.class, new ArrayList<>(myDocumentMulticaster.getListeners()));
+    myCopy.put(EditReadOnlyListener.class, new ArrayList<>(myEditReadOnlyMulticaster.getListeners()));
 
-    myCopy.put(EditorMouseListener.class, new ArrayList<EditorMouseListener>(myEditorMouseMulticaster.getListeners()));
-    myCopy.put(EditorMouseMotionListener.class, new ArrayList<EditorMouseMotionListener>(myEditorMouseMotionMulticaster.getListeners()));
-    myCopy.put(ErrorStripeListener.class, new ArrayList<ErrorStripeListener>(myErrorStripeMulticaster.getListeners()));
-    myCopy.put(CaretListener.class, new ArrayList<CaretListener>(myCaretMulticaster.getListeners()));
-    myCopy.put(SelectionListener.class, new ArrayList<SelectionListener>(mySelectionMulticaster.getListeners()));
-    myCopy.put(VisibleAreaListener.class, new ArrayList<VisibleAreaListener>(myVisibleAreaMulticaster.getListeners()));
-    myCopy.put(PropertyChangeListener.class, new ArrayList<PropertyChangeListener>(myPropertyChangeMulticaster.getListeners()));
-    myCopy.put(FocusChangeListener.class, new ArrayList<FocusChangeListener>(myFocusChangeListenerMulticaster.getListeners()));
+    myCopy.put(EditorMouseListener.class, new ArrayList<>(myEditorMouseMulticaster.getListeners()));
+    myCopy.put(EditorMouseMotionListener.class, new ArrayList<>(myEditorMouseMotionMulticaster.getListeners()));
+    myCopy.put(ErrorStripeListener.class, new ArrayList<>(myErrorStripeMulticaster.getListeners()));
+    myCopy.put(CaretListener.class, new ArrayList<>(myCaretMulticaster.getListeners()));
+    myCopy.put(SelectionListener.class, new ArrayList<>(mySelectionMulticaster.getListeners()));
+    myCopy.put(VisibleAreaListener.class, new ArrayList<>(myVisibleAreaMulticaster.getListeners()));
+    myCopy.put(PropertyChangeListener.class, new ArrayList<>(myPropertyChangeMulticaster.getListeners()));
+    myCopy.put(FocusChangeListener.class, new ArrayList<>(myFocusChangeListenerMulticaster.getListeners()));
     return myCopy;
   }
 }

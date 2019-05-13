@@ -16,10 +16,11 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.psi.PsiNamedElement;
+import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import org.jetbrains.annotations.NotNull;
 
 public class RenameToIgnoredFix extends RenameElementFix {
   public RenameToIgnoredFix(@NotNull PsiNamedElement element) {
-    super(element, "ignored");
+    super(element, JavaCodeStyleManager.getInstance(element.getProject()).suggestUniqueVariableName("ignored", element, true));
   }
 }

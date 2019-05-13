@@ -15,129 +15,135 @@
  */
 package git4idea.util;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcsUtil.VcsFileUtil;
 import git4idea.GitUtil;
+import git4idea.commands.Git;
 import git4idea.commands.GitBinaryHandler;
 import git4idea.commands.GitCommand;
-import git4idea.commands.GitSimpleHandler;
+import git4idea.commands.GitLineHandler;
 import git4idea.repo.GitRepository;
-import git4idea.repo.GitRepositoryManager;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
-/**
- * File utilities for the git
- */
+import static git4idea.config.GitVersionSpecialty.CAT_FILE_SUPPORTS_FILTERS;
+import static git4idea.config.GitVersionSpecialty.CAT_FILE_SUPPORTS_TEXTCONV;
+
 public class GitFileUtils {
 
-  /**
-   * The private constructor for static utility class
-   */
+  private static final Logger LOG = Logger.getInstance(GitFileUtils.class);
+
   private GitFileUtils() {
-    // do nothing
   }
 
   /**
-   * Delete files
-   *
-   * @param project the project
-   * @param root    a vcs root
-   * @param files   files to delete
-   * @return a result of operation
-   * @throws VcsException in case of git problem
+   * @deprecated Use {@link #deletePaths}
    */
+  @Deprecated
+  public static void delete(@NotNull Project project, @NotNull VirtualFile root, @NotNull Collection<? extends FilePath> files,
+                            String... additionalOptions) throws VcsException {
+    deletePaths(project, root, files, additionalOptions);
+  }
 
-  public static void delete(Project project, VirtualFile root, Collection<FilePath> files, String... additionalOptions)
-    throws VcsException {
+  public static void deletePaths(@NotNull Project project, @NotNull VirtualFile root, @NotNull Collection<? extends FilePath> files,
+                                 String... additionalOptions) throws VcsException {
     for (List<String> paths : VcsFileUtil.chunkPaths(root, files)) {
-      GitSimpleHandler handler = new GitSimpleHandler(project, root, GitCommand.RM);
-      handler.addParameters(additionalOptions);
-      handler.endOptions();
-      handler.addParameters(paths);
-      handler.setNoSSH(true);
-      handler.run();
+      doDelete(project, root, paths, additionalOptions);
     }
   }
 
-  /**
-   * Delete files
-   *
-   * @param project the project
-   * @param root    a vcs root
-   * @param files   files to delete
-   * @return a result of operation
-   * @throws VcsException in case of git problem
-   */
-  public static void deleteFiles(Project project, VirtualFile root, List<VirtualFile> files) throws VcsException {
+  public static void deleteFiles(@NotNull Project project, @NotNull VirtualFile root, @NotNull Collection<? extends VirtualFile> files,
+                                 String... additionalOptions) throws VcsException {
     for (List<String> paths : VcsFileUtil.chunkFiles(root, files)) {
-      GitSimpleHandler handler = new GitSimpleHandler(project, root, GitCommand.RM);
-      handler.endOptions();
-      handler.addParameters(paths);
-      handler.setNoSSH(true);
-      handler.run();
+      doDelete(project, root, paths, additionalOptions);
     }
   }
 
-  /**
-   * Delete files
-   *
-   * @param project the project
-   * @param root    a vcs root
-   * @param files   files to delete
-   * @return a result of operation
-   * @throws VcsException in case of git problem
-   */
-  public static void deleteFiles(Project project, VirtualFile root, VirtualFile... files) throws VcsException {
+  public static void deleteFiles(@NotNull Project project, @NotNull VirtualFile root, VirtualFile... files) throws VcsException {
     deleteFiles(project, root, Arrays.asList(files));
   }
 
-  /**
-   * Add files to the Git index.
-   */
-  public static void addFiles(@NotNull Project project, @NotNull VirtualFile root,
-                              @NotNull Collection<VirtualFile> files) throws VcsException {
-    addPaths(project, root, VcsFileUtil.chunkFiles(root, files));
+  private static void doDelete(@NotNull Project project, @NotNull VirtualFile root, @NotNull List<String> paths,
+                               String... additionalOptions) throws VcsException {
+    GitLineHandler handler = new GitLineHandler(project, root, GitCommand.RM);
+    handler.addParameters(additionalOptions);
+    handler.endOptions();
+    handler.addParameters(paths);
+    Git.getInstance().runCommand(handler).throwOnError();
+  }
+
+  public static void deleteFilesFromCache(@NotNull Project project, @NotNull VirtualFile root, @NotNull Collection<VirtualFile> files)
+    throws VcsException {
+    deleteFiles(project, root, files, "--cached");
+    updateUntrackedFilesHolderOnFileRemove(project, root, files);
+  }
+
+  public static void addFiles(@NotNull Project project, @NotNull VirtualFile root, @NotNull Collection<VirtualFile> files)
+    throws VcsException {
+    for (List<String> paths : VcsFileUtil.chunkFiles(root, files)) {
+      addPaths(project, root, paths, false);
+    }
+    updateUntrackedFilesHolderOnFileAdd(project, root, files);
+  }
+
+  public static void addFilesForce(@NotNull Project project, @NotNull VirtualFile root, @NotNull Collection<VirtualFile> files)
+    throws VcsException {
+    for (List<String> paths : VcsFileUtil.chunkFiles(root, files)) {
+      addPaths(project, root, paths, true);
+    }
     updateUntrackedFilesHolderOnFileAdd(project, root, files);
   }
 
   private static void updateUntrackedFilesHolderOnFileAdd(@NotNull Project project, @NotNull VirtualFile root,
                                                           @NotNull Collection<VirtualFile> addedFiles) {
-    GitRepositoryManager manager = GitUtil.getRepositoryManager(project);
-    if (manager == null) {
+    GitRepository repository = GitUtil.getRepositoryManager(project).getRepositoryForRoot(root);
+    if (repository == null) {
+      LOG.error("Repository not found for root " + root.getPresentableUrl());
       return;
     }
-    final GitRepository repository = manager.getRepositoryForRoot(root);
-    if (repository != null) {
-      repository.getUntrackedFilesHolder().remove(addedFiles);
-    }
+    repository.getUntrackedFilesHolder().remove(addedFiles);
   }
 
-  /**
-   * Add files to the Git index.
-   */
+  private static void updateUntrackedFilesHolderOnFileRemove(@NotNull Project project, @NotNull VirtualFile root,
+                                                             @NotNull Collection<VirtualFile> removedFiles) {
+    GitRepository repository = GitUtil.getRepositoryManager(project).getRepositoryForRoot(root);
+    if (repository == null) {
+      LOG.error("Repository not found for root " + root.getPresentableUrl());
+      return;
+    }
+    repository.getUntrackedFilesHolder().add(removedFiles);
+  }
+
   public static void addFiles(Project project, VirtualFile root, VirtualFile... files) throws VcsException {
     addFiles(project, root, Arrays.asList(files));
   }
 
-  /**
-   * Add files to the Git index.
-   */
   public static void addPaths(@NotNull Project project, @NotNull VirtualFile root,
                               @NotNull Collection<FilePath> files) throws VcsException {
-    addPaths(project, root, VcsFileUtil.chunkPaths(root, files));
+    for (List<String> paths : VcsFileUtil.chunkPaths(root, files)) {
+      addPaths(project, root, paths, false);
+    }
+    updateUntrackedFilesHolderOnFileAdd(project, root, getVirtualFilesFromFilePaths(files));
+  }
+
+  public static void addPathsForce(@NotNull Project project, @NotNull VirtualFile root,
+                                   @NotNull Collection<FilePath> files) throws VcsException {
+    for (List<String> paths : VcsFileUtil.chunkPaths(root, files)) {
+      addPaths(project, root, paths, true);
+    }
     updateUntrackedFilesHolderOnFileAdd(project, root, getVirtualFilesFromFilePaths(files));
   }
 
   @NotNull
   private static Collection<VirtualFile> getVirtualFilesFromFilePaths(@NotNull Collection<FilePath> paths) {
-    Collection<VirtualFile> files = new ArrayList<VirtualFile>(paths.size());
+    Collection<VirtualFile> files = new ArrayList<>(paths.size());
     for (FilePath path : paths) {
       VirtualFile file = path.getVirtualFile();
       if (file != null) {
@@ -148,35 +154,32 @@ public class GitFileUtils {
   }
 
   private static void addPaths(@NotNull Project project, @NotNull VirtualFile root,
-                               @NotNull List<List<String>> chunkedPaths) throws VcsException {
-    for (List<String> paths : chunkedPaths) {
+                               @NotNull List<String> paths, boolean force) throws VcsException {
+    if (!force) {
       paths = excludeIgnoredFiles(project, root, paths);
-
-      if (paths.isEmpty()) {
-        continue;
-      }
-      GitSimpleHandler handler = new GitSimpleHandler(project, root, GitCommand.ADD);
-      handler.addParameters("--ignore-errors");
-      handler.endOptions();
-      handler.addParameters(paths);
-      handler.setNoSSH(true);
-      handler.run();
+      if (paths.isEmpty()) return;
     }
+
+    GitLineHandler handler = new GitLineHandler(project, root, GitCommand.ADD);
+    handler.addParameters("--ignore-errors", "-A");
+    if (force) handler.addParameters("-f");
+    handler.endOptions();
+    handler.addParameters(paths);
+    Git.getInstance().runCommand(handler).throwOnError();
   }
 
   @NotNull
   private static List<String> excludeIgnoredFiles(@NotNull Project project, @NotNull VirtualFile root,
                                                   @NotNull List<String> paths) throws VcsException {
-    GitSimpleHandler handler = new GitSimpleHandler(project, root, GitCommand.LS_FILES);
-    handler.setNoSSH(true);
+    GitLineHandler handler = new GitLineHandler(project, root, GitCommand.LS_FILES);
     handler.setSilent(true);
     handler.addParameters("--ignored", "--others", "--exclude-standard");
     handler.endOptions();
     handler.addParameters(paths);
-    String output = handler.run();
+    String output = Git.getInstance().runCommand(handler).getOutputOrThrow();
 
-    List<String> nonIgnoredFiles = new ArrayList<String>(paths.size());
-    Set<String> ignoredPaths = new HashSet<String>(Arrays.asList(StringUtil.splitByLines(output)));
+    List<String> nonIgnoredFiles = new ArrayList<>(paths.size());
+    Set<String> ignoredPaths = new HashSet<>(Arrays.asList(StringUtil.splitByLines(output)));
     for (String pathToCheck : paths) {
       if (!ignoredPaths.contains(pathToCheck)) {
         nonIgnoredFiles.add(pathToCheck);
@@ -196,9 +199,19 @@ public class GitFileUtils {
    * @throws VcsException if there is a problem with running git
    */
   public static byte[] getFileContent(Project project, VirtualFile root, String revisionOrBranch, String relativePath) throws VcsException {
-    GitBinaryHandler h = new GitBinaryHandler(project, root, GitCommand.SHOW);
-    h.setNoSSH(true);
+    GitBinaryHandler h = new GitBinaryHandler(project, root, GitCommand.CAT_FILE);
     h.setSilent(true);
+    if (CAT_FILE_SUPPORTS_TEXTCONV.existsIn(project) &&
+        Registry.is("git.read.content.with.textconv")) {
+      h.addParameters("--textconv");
+    }
+    else if (CAT_FILE_SUPPORTS_FILTERS.existsIn(project) &&
+             Registry.is("git.read.content.with.filters")) {
+      h.addParameters("--filters");
+    }
+    else {
+      h.addParameters("-p");
+    }
     h.addParameters(revisionOrBranch + ":" + relativePath);
     return h.run();
   }
@@ -210,19 +223,4 @@ public class GitFileUtils {
     }
     return path;
   }
-
-  /**
-   * Checks if two file paths are different only by case in a case insensitive OS.
-   * @return true if the difference between paths should probably be ignored, i.e. the OS is case-insensitive, and case is the only
-   *         difference between paths.
-   */
-  public static boolean shouldIgnoreCaseChange(@NotNull String onePath, @NotNull String secondPath) {
-    return !SystemInfo.isFileSystemCaseSensitive && onlyCaseChanged(onePath, secondPath);
-  }
-  
-  private static boolean onlyCaseChanged(@NotNull String one, @NotNull String second) {
-    return one.compareToIgnoreCase(second) == 0;
-  }
-  
-
 }

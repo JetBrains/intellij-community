@@ -21,18 +21,20 @@ import com.intellij.pom.PomTransaction;
 import com.intellij.pom.event.PomModelEvent;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public abstract class PomTransactionBase implements PomTransaction{
   private final PsiElement myScope;
   private final PomModelAspect myAspect;
   private final PomModelEvent myAccumulatedEvent;
-  public PomTransactionBase(PsiElement scope, final PomModelAspect aspect){
+  public PomTransactionBase(@NotNull PsiElement scope, @NotNull final PomModelAspect aspect){
     myScope = scope;
     myAspect = aspect;
     myAccumulatedEvent = new PomModelEvent(PomManager.getModel(scope.getProject()));
   }
 
+  @NotNull
   @Override
   public PomModelEvent getAccumulatedEvent() {
     return myAccumulatedEvent;
@@ -53,11 +55,13 @@ public abstract class PomTransactionBase implements PomTransaction{
   @Nullable
   public abstract PomModelEvent runInner() throws IncorrectOperationException;
 
+  @NotNull
   @Override
   public PsiElement getChangeScope() {
     return myScope;
   }
 
+  @NotNull
   @Override
   public PomModelAspect getTransactionAspect() {
     return myAspect;

@@ -24,6 +24,7 @@ public class SourceItemWeights {
   public static final int MODULE_GROUP_WEIGHT = 100;
   public static final int MODULE_WEIGHT = 50;
   public static final int MODULE_OUTPUT_WEIGHT = 30;
+  public static final int MODULE_SOURCE_WEIGHT = 25;
   public static final int LIBRARY_WEIGHT = 10;
 
   private SourceItemWeights() {

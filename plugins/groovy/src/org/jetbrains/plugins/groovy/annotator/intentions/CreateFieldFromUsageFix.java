@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,71 +15,55 @@
  */
 package org.jetbrains.plugins.groovy.annotator.intentions;
 
-import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiModifier;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.expectedTypes.GroovyExpectedTypesProvider;
 import org.jetbrains.plugins.groovy.lang.psi.expectedTypes.TypeConstraint;
-import org.jetbrains.plugins.groovy.lang.psi.util.StaticChecker;
+import org.jetbrains.plugins.groovy.lang.psi.util.GrStaticChecker;
 
 /**
  * @author ven
  */
-public class CreateFieldFromUsageFix implements IntentionAction {
-  private final CreateFieldFix myFix;
-  private final GrReferenceExpression myRefExpression;
+public class CreateFieldFromUsageFix extends GrCreateFromUsageBaseFix {
 
-  public CreateFieldFromUsageFix(GrReferenceExpression refExpression, PsiClass targetClass) {
-    myFix = new CreateFieldFix(targetClass);
-    myRefExpression = refExpression;
+  private final @NotNull String myReferenceName;
+
+  public CreateFieldFromUsageFix(GrReferenceExpression refExpression, @NotNull String referenceName) {
+    super(refExpression);
+    myReferenceName = referenceName;
   }
 
-  @NotNull
-  public String getFamilyName() {
-    return GroovyBundle.message("create.from.usage.family.name");
-  }
-
-  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    return myFix.isAvailable() && myRefExpression.isValid();
-  }
-
-  @Nullable
-  private String getFieldName() {
-    return myRefExpression.getReferenceName();
-  }
-
-  private String[] generateModifiers() {
-    if (myRefExpression != null && StaticChecker.isInStaticContext(myRefExpression, myFix.getTargetClass())) {
+  private String[] generateModifiers(@NotNull PsiClass targetClass) {
+    final GrReferenceExpression myRefExpression = getRefExpr();
+    if (myRefExpression != null && GrStaticChecker.isInStaticContext(myRefExpression, targetClass)) {
       return new String[]{PsiModifier.STATIC};
     }
     return ArrayUtil.EMPTY_STRING_ARRAY;
   }
 
   private TypeConstraint[] calculateTypeConstrains() {
-    return GroovyExpectedTypesProvider.calculateTypeConstraints(myRefExpression);
+    return GroovyExpectedTypesProvider.calculateTypeConstraints(getRefExpr());
   }
 
+  @Override
   @NotNull
   public String getText() {
-    return GroovyBundle.message("create.field.from.usage", getFieldName());
+    return GroovyBundle.message("create.field.from.usage", myReferenceName);
   }
 
   @Override
-  public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-    myFix.doFix(project, generateModifiers(), getFieldName(), calculateTypeConstrains(), myRefExpression);
+  protected void invokeImpl(Project project, @NotNull PsiClass targetClass) {
+    final CreateFieldFix fix = new CreateFieldFix(targetClass);
+    fix.doFix(targetClass.getProject(), generateModifiers(targetClass), myReferenceName, calculateTypeConstrains(), getRefExpr());
   }
 
   @Override
-  public boolean startInWriteAction() {
-    return true;
+  protected boolean canBeTargetClass(PsiClass psiClass) {
+    return super.canBeTargetClass(psiClass) && !psiClass.isInterface() && !psiClass.isAnnotationType();
   }
 }

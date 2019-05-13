@@ -1,7 +1,4 @@
 
-import javax.swing.*;
-import java.awt.event.ActionEvent;
-
 public class ExtractMethods { }
 abstract class MyButton
         extends JButton
@@ -13,7 +10,7 @@ abstract class MyButton
 class Foo {
     private JButton createOKButton() {
         return new MyButton( "OK" ) {
-            public void actionPerformed( ActionEvent e ) {
+            public void actionPerformed( int e ) {
                 newMethod();
             }
 
@@ -22,4 +19,10 @@ class Foo {
             }
         };
     }
+}
+
+class JButton {
+    public JButton(String text) {
+    }
+    public void setVisible(boolean b) {}
 }

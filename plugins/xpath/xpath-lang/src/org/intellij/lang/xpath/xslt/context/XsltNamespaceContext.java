@@ -21,10 +21,7 @@ import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiReference;
-import com.intellij.psi.XmlElementFactory;
+import com.intellij.psi.*;
 import com.intellij.psi.impl.source.xml.SchemaPrefix;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlAttribute;
@@ -43,6 +40,7 @@ import java.util.*;
 public class XsltNamespaceContext implements NamespaceContext {
     public static final XsltNamespaceContext NAMESPACE_CONTEXT = new XsltNamespaceContext();
 
+    @Override
     public String getNamespaceURI(String prefix, XmlElement context) {
         return getNamespaceUriStatic(prefix, context);
     }
@@ -53,12 +51,14 @@ public class XsltNamespaceContext implements NamespaceContext {
         return tag != null ? tag.getNamespaceByPrefix(prefix) : null;
     }
 
+    @Override
     @Nullable
     public String getPrefixForURI(String uri, XmlElement context) {
         final XmlTag tag = PsiTreeUtil.getParentOfType(context, XmlTag.class);
         return tag != null ? tag.getPrefixByNamespace(uri) : null;
     }
 
+    @Override
     @NotNull
     public Collection<String> getKnownPrefixes(XmlElement context) {
         return getPrefixes(context);
@@ -67,17 +67,15 @@ public class XsltNamespaceContext implements NamespaceContext {
     public static Collection<String> getPrefixes(XmlElement context) {
         final XmlTag tag = PsiTreeUtil.getParentOfType(context, XmlTag.class);
         if (tag != null) {
-            final HashSet<String> allPrefixes = new HashSet<String>();
+            final HashSet<String> allPrefixes = new HashSet<>();
             final String[] uris = tag.knownNamespaces();
             for (String uri : uris) {
                 for (XmlTag p = tag; p != null; p = p.getParentTag()) {
                     final Set<Map.Entry<String,String>> localPrefixes = p.getLocalNamespaceDeclarations().entrySet();
                     for (Map.Entry<String,String> entry : localPrefixes) {
                         final String prefix = entry.getKey();
-                        if (prefix.length() > 0 && entry.getValue().equals(uri)) {
-                            if (!allPrefixes.contains(prefix)) {
-                                allPrefixes.add(prefix);
-                            }
+                        if (!prefix.isEmpty() && entry.getValue().equals(uri)) {
+                          allPrefixes.add(prefix);
                         }
                     }
                 }
@@ -88,6 +86,7 @@ public class XsltNamespaceContext implements NamespaceContext {
         }
     }
 
+    @Override
     @Nullable
     public PsiElement resolve(String prefix, XmlElement context) {
         return resolvePrefix(prefix, context);
@@ -118,7 +117,8 @@ public class XsltNamespaceContext implements NamespaceContext {
         return null;
     }
 
-    public IntentionAction[] getUnresolvedNamespaceFixes(PsiReference reference, String localName) {
+    @Override
+    public IntentionAction[] getUnresolvedNamespaceFixes(@NotNull PsiReference reference, String localName) {
         return getUnresolvedNamespaceFixesStatic(reference, localName);
     }
 
@@ -134,7 +134,7 @@ public class XsltNamespaceContext implements NamespaceContext {
               String uri;
               if ((uri = tag.getAttributeValue("xpath-default-namespace", null)) != null ||
                   (uri = tag.getAttributeValue("xpath-default-namespace", XsltSupport.XSLT_NS)) != null) {
-                return uri.length() > 0 ? uri : null;
+                return !uri.isEmpty() ? uri : null;
               }
               context = PsiTreeUtil.getParentOfType(context, XmlTag.class, true);
             }
@@ -147,35 +147,42 @@ public class XsltNamespaceContext implements NamespaceContext {
     }
 
     public static IntentionAction[] getUnresolvedNamespaceFixesStatic(PsiReference reference, String localName) {
-        final XmlElementFactory factory = XmlElementFactory.getInstance(reference.getElement().getProject());
-        final XmlTag tag = factory.createTagFromText("<" + reference.getCanonicalText() + ":" + localName + " />", XMLLanguage.INSTANCE);
+      PsiElement element = reference.getElement();
+      XmlElementFactory factory = XmlElementFactory.getInstance(element.getProject());
+      XmlTag tag = factory.createTagFromText("<" + reference.getCanonicalText() + ":" + localName + " />", XMLLanguage.INSTANCE);
 
-        final XmlFile xmlFile = PsiTreeUtil.getContextOfType(reference.getElement(), XmlFile.class, true);
-        return new IntentionAction[]{
-                new MyCreateNSDeclarationAction(tag, reference.getCanonicalText(), xmlFile)
-        };
+      XmlFile xmlFile = PsiTreeUtil.getContextOfType(element, XmlFile.class, true);
+      return xmlFile == null ? IntentionAction.EMPTY_ARRAY : new IntentionAction[]{
+        new MyCreateNSDeclarationAction(tag, reference.getCanonicalText(), xmlFile)
+      };
     }
 
-    static class MyCreateNSDeclarationAction extends CreateNSDeclarationIntentionFix {
-        private final XmlFile myXmlFile;
+  static class MyCreateNSDeclarationAction extends CreateNSDeclarationIntentionFix {
+    private final SmartPsiElementPointer<XmlFile> myXmlFile;
 
-        // TODO: verify API
-        public MyCreateNSDeclarationAction(XmlElement xmlElement, String prefix, XmlFile xmlFile) {
-            super(xmlElement, prefix);
-            myXmlFile = xmlFile;
-        }
-
-        public void invoke(@NotNull Project project, Editor editor, PsiFile psiFile) throws IncorrectOperationException {
-            super.invoke(project, editor, myXmlFile);
-        }
-
-        @Override
-        public boolean showHint(Editor editor) {
-            return false; // doesn't work properly yet
-        }
-
-        public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile psiFile) {
-            return super.isAvailable(project, editor, myXmlFile);
-        }
+    // TODO: verify API
+    MyCreateNSDeclarationAction(@NotNull XmlElement xmlElement, String prefix, @NotNull XmlFile xmlFile) {
+      super(xmlElement, prefix);
+      myXmlFile = SmartPointerManager.createPointer(xmlFile);
     }
+
+    @Override
+    public void invoke(@NotNull Project project, Editor editor, @NotNull PsiFile psiFile) throws IncorrectOperationException {
+      XmlFile xmlFile = myXmlFile.getElement();
+      if (xmlFile != null) {
+        super.invoke(project, editor, xmlFile);
+      }
+    }
+
+    @Override
+    public boolean showHint(@NotNull Editor editor) {
+      return false; // doesn't work properly yet
+    }
+
+    @Override
+    public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile psiFile) {
+      XmlFile xmlFile = myXmlFile.getElement();
+      return xmlFile != null && super.isAvailable(project, editor, xmlFile);
+    }
+  }
 }

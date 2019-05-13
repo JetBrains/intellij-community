@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,114 +15,77 @@
  */
 package com.intellij.util.net;
 
-import com.intellij.openapi.MnemonicHelper;
+import com.intellij.CommonBundle;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.util.Ref;
 import com.intellij.ui.GuiUtils;
+import com.intellij.util.ObjectUtils;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.awt.*;
-import java.awt.event.*;
+import java.awt.event.ActionEvent;
 import java.lang.reflect.InvocationTargetException;
 
-/**
- * Created by IntelliJ IDEA.
- * User: stathik
- * Date: Nov 19, 2003
- * Time: 10:04:14 PM
- * To change this template use Options | File Templates.
- */
-public class IOExceptionDialog extends JDialog {
-  private JPanel mainPanel;
-  private JButton cancelButton;
-  private JButton tryAgainButton;
-  private JButton setupButton;
-  private JLabel errorLabel;
-  private boolean cancelPressed = false;
+public class IOExceptionDialog extends DialogWrapper {
+  private static final Logger LOG = Logger.getInstance(IOExceptionDialog.class);
+  private final JTextArea myErrorLabel;
 
   public IOExceptionDialog(String title, String errorText)  {
-    super (JOptionPane.getRootFrame(), title, true);
+    super((Project)null, true);
+    setTitle(title);
+    setOKButtonText(CommonBundle.message("dialog.ioexception.tryagain"));
 
-    new MnemonicHelper().register(getContentPane());
-    
-    getContentPane().add(mainPanel);
+    myErrorLabel = new JTextArea();
+    myErrorLabel.setEditable(false);
+    myErrorLabel.setText(errorText);
+    myErrorLabel.setLineWrap(true);
+    myErrorLabel.setWrapStyleWord(true);
+    myErrorLabel.setFont(UIManager.getFont("Label.font"));
+    myErrorLabel.setBackground(UIManager.getColor("Label.background"));
+    myErrorLabel.setForeground(UIManager.getColor("Label.foreground"));
 
-    //noinspection HardCodedStringLiteral
-    mainPanel.getActionMap().put(
-      "close",
-      new AbstractAction() {
-        public void actionPerformed(ActionEvent e) {
-          cancelPressed = true;
-          dispose();
+    init();
+  }
+
+  @Nullable
+  @Override
+  protected JComponent createCenterPanel() {
+    return myErrorLabel;
+  }
+
+  @NotNull
+  @Override
+  protected Action[] createLeftSideActions() {
+    return new Action[] {
+      new AbstractAction(CommonBundle.message("dialog.ioexception.proxy")) {
+        @Override
+        public void actionPerformed(@NotNull ActionEvent e) {
+          HttpConfigurable.editConfigurable(ObjectUtils.tryCast(e.getSource(), JComponent.class));
         }
       }
-    );
-
-    //noinspection HardCodedStringLiteral
-    mainPanel.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(
-      KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE,0),
-      "close"
-    );
-
-    errorLabel.setText(errorText);
-
-    setupButton.addActionListener(new ActionListener () {
-      public void actionPerformed(ActionEvent e) {
-        HTTPProxySettingsDialog dlg = new HTTPProxySettingsDialog();
-        dlg.show();
-      }
-    });
-    tryAgainButton.addActionListener(new ActionListener() {
-      public void actionPerformed(ActionEvent e) {
-        cancelPressed = false;
-        dispose();
-      }
-    });
-    cancelButton.addActionListener(new ActionListener() {
-      public void actionPerformed(ActionEvent e) {
-        cancelPressed = true;
-        dispose();
-      }
-    });
-
-    setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
-
-    Dimension parentSize = Toolkit.getDefaultToolkit().getScreenSize();
-    Dimension ownSize = getPreferredSize();
-
-    setLocation((parentSize.width - ownSize.width) / 2, (parentSize.height - ownSize.height) / 2);
-
-    pack();
-    setDefaultCloseOperation(DO_NOTHING_ON_CLOSE);
-    addWindowListener(new WindowAdapter() {
-      @Override
-      public void windowClosing(WindowEvent e) {
-        cancelPressed = true;
-        dispose();
-      }
-    });
+    };
   }
 
   /**
-   * Show
-   * @return <code>true</code> if "Try Again" button pressed
-   * @return <code>false</code> if "Cancel" button pressed
+   * Show the dialog
+   * @return {@code true} if "Try Again" button pressed and {@code false} if "Cancel" button pressed
    */
-  public static boolean showErrorDialog(String title, String text) {
-    final IOExceptionDialog dlg = new IOExceptionDialog(title, text);
+  public static boolean showErrorDialog(final String title, final String text) {
+    final Ref<Boolean> ok = Ref.create(false);
     try {
-      final Runnable doRun = new Runnable() {
-        public void run() {
-          dlg.setVisible(true);
-        }
-      };
-      GuiUtils.runOrInvokeAndWait(doRun);
+      GuiUtils.runOrInvokeAndWait(() -> {
+        IOExceptionDialog dialog = new IOExceptionDialog(title, text);
+        dialog.show();
+        ok.set(dialog.isOK());
+      });
     }
-    catch (InterruptedException e1) {
-      e1.printStackTrace();
-    }
-    catch (InvocationTargetException e1) {
-      e1.printStackTrace();
+    catch (InterruptedException | InvocationTargetException e) {
+      LOG.info(e);
     }
 
-    return ! dlg.cancelPressed;
+    return ok.get();
   }
 }

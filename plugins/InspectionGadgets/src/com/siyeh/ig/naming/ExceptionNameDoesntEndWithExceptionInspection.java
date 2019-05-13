@@ -31,6 +31,11 @@ public class ExceptionNameDoesntEndWithExceptionInspection
   extends BaseInspection {
 
   @Override
+  protected InspectionGadgetsFix buildFix(Object... infos) {
+    return new RenameFix();
+  }
+
+  @Override
   @NotNull
   public String getID() {
     return "ExceptionClassNameDoesntEndWithException";
@@ -41,11 +46,6 @@ public class ExceptionNameDoesntEndWithExceptionInspection
   public String getDisplayName() {
     return InspectionGadgetsBundle.message(
       "exception.name.doesnt.end.with.exception.display.name");
-  }
-
-  @Override
-  protected InspectionGadgetsFix buildFix(Object... infos) {
-    return new RenameFix();
   }
 
   @Override

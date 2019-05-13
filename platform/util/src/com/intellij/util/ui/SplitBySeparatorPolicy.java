@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,13 +17,13 @@ package com.intellij.util.ui;
 
 import java.io.File;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 
 /**
  * author: lesya
  */
 public class SplitBySeparatorPolicy extends FilePathSplittingPolicy {
+  @Override
   public String getPresentableName(File file, int length) {
     String absolutePath = file.getPath();
     if (absolutePath.length() <= length) return absolutePath;
@@ -60,10 +60,10 @@ public class SplitBySeparatorPolicy extends FilePathSplittingPolicy {
       return name;
     }
 
-    StringBuffer result = new StringBuffer();
+    StringBuilder result = new StringBuilder();
 
-    for (Iterator<String> iterator = begin.iterator(); iterator.hasNext();) {
-      result.append(iterator.next());
+    for (String line : begin) {
+      result.append(line);
     }
 
     result.append("...");
@@ -75,7 +75,7 @@ public class SplitBySeparatorPolicy extends FilePathSplittingPolicy {
     return result.toString();
   }
 
-  private ArrayList<String> getComponents(File file) {
+  private static ArrayList<String> getComponents(File file) {
     ArrayList<String> result = new ArrayList<String>();
     File current = file;
     while (current != null) {
@@ -86,9 +86,9 @@ public class SplitBySeparatorPolicy extends FilePathSplittingPolicy {
     return result;
   }
 
-  private String getFileName(File current) {
+  private static String getFileName(File current) {
     String result = current.getName();
-    if (result.length() > 0) return result;
+    if (!result.isEmpty()) return result;
     String path = current.getPath();
     return path.substring(0, path.length() - 1);
   }

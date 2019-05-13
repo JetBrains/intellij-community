@@ -29,6 +29,7 @@ public class SelectMavenProjectDialog extends SelectFromMavenProjectsDialog {
 
   public SelectMavenProjectDialog(Project project, final MavenProject current) {
     super(project, "Select Maven Project", MavenProjectsStructure.ProjectNode.class, new NodeSelector() {
+      @Override
       public boolean shouldSelect(SimpleNode node) {
         if (node instanceof MavenProjectsStructure.ProjectNode) {
           return ((MavenProjectsStructure.ProjectNode)node).getMavenProject() == current;
@@ -44,6 +45,7 @@ public class SelectMavenProjectDialog extends SelectFromMavenProjectsDialog {
   @Override
   protected Action[] createActions() {
     Action selectNoneAction = new AbstractAction("&None") {
+      @Override
       public void actionPerformed(ActionEvent e) {
         doOKAction();
         myResult = null;
@@ -57,13 +59,7 @@ public class SelectMavenProjectDialog extends SelectFromMavenProjectsDialog {
     SimpleNode node = getSelectedNode();
     if (node instanceof NullNode) node = null;
 
-    if (node != null) {
-      if (!(node instanceof MavenProjectsStructure.ProjectNode)) {
-        ((MavenProjectsStructure.MavenSimpleNode)node).findParent(MavenProjectsStructure.ProjectNode.class);
-      }
-    }
-    myResult = node != null ? ((MavenProjectsStructure.ProjectNode)node).getMavenProject() : null;
-
+    myResult = node instanceof MavenProjectsStructure.ProjectNode ? ((MavenProjectsStructure.ProjectNode)node).getMavenProject() : null;
     super.doOKAction();
   }
 

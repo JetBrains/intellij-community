@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2011 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2018 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,18 +15,18 @@
  */
 package com.siyeh.ig.performance;
 
-import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
-import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.search.searches.OverridingMethodsSearch;
-import com.intellij.refactoring.psi.PropertyUtils;
-import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.Query;
+import com.intellij.psi.util.PropertyUtil;
+import com.intellij.psi.util.PropertyUtilBase;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.fixes.InlineGetterSetterCallFix;
 import com.siyeh.ig.psiutils.ClassUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -34,12 +34,26 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 
 public class CallToSimpleGetterInClassInspection extends BaseInspection {
-
   @SuppressWarnings("UnusedDeclaration")
   public boolean ignoreGetterCallsOnOtherObjects = false;
-
   @SuppressWarnings("UnusedDeclaration")
   public boolean onlyReportPrivateGetter = false;
+
+  @Override
+  @Nullable
+  public JComponent createOptionsPanel() {
+    final MultipleCheckboxOptionsPanel optionsPanel = new MultipleCheckboxOptionsPanel(this);
+    optionsPanel.addCheckbox(InspectionGadgetsBundle.message("call.to.simple.getter.in.class.ignore.option"),
+                             "ignoreGetterCallsOnOtherObjects");
+    optionsPanel.addCheckbox(InspectionGadgetsBundle.message("call.to.private.simple.getter.in.class.option"),
+                             "onlyReportPrivateGetter");
+    return optionsPanel;
+  }
+
+  @Override
+  public InspectionGadgetsFix buildFix(Object... infos) {
+    return new InlineGetterSetterCallFix(true);
+  }
 
   @Override
   @NotNull
@@ -60,84 +74,6 @@ public class CallToSimpleGetterInClassInspection extends BaseInspection {
   }
 
   @Override
-  @Nullable
-  public JComponent createOptionsPanel() {
-    final MultipleCheckboxOptionsPanel optionsPanel = new MultipleCheckboxOptionsPanel(this);
-    optionsPanel.addCheckbox(InspectionGadgetsBundle.message("call.to.simple.getter.in.class.ignore.option"),
-                             "ignoreGetterCallsOnOtherObjects");
-    optionsPanel.addCheckbox(InspectionGadgetsBundle.message("call.to.private.simple.getter.in.class.option"),
-                             "onlyReportPrivateGetter");
-    return optionsPanel;
-  }
-
-  @Override
-  public InspectionGadgetsFix buildFix(Object... infos) {
-    return new InlineCallFix();
-  }
-
-  private static class InlineCallFix extends InspectionGadgetsFix {
-
-    @NotNull
-    public String getName() {
-      return InspectionGadgetsBundle.message("call.to.simple.getter.in.class.inline.quickfix");
-    }
-
-    @Override
-    public void doFix(Project project, ProblemDescriptor descriptor) throws IncorrectOperationException {
-      final PsiElement methodIdentifier = descriptor.getPsiElement();
-      final PsiReferenceExpression methodExpression = (PsiReferenceExpression)methodIdentifier.getParent();
-      if (methodExpression == null) {
-        return;
-      }
-      final PsiMethodCallExpression call = (PsiMethodCallExpression)methodExpression.getParent();
-      if (call == null) {
-        return;
-      }
-      final PsiMethod method = call.resolveMethod();
-      if (method == null) {
-        return;
-      }
-      final PsiCodeBlock body = method.getBody();
-      if (body == null) {
-        return;
-      }
-      final PsiStatement[] statements = body.getStatements();
-      final PsiReturnStatement returnStatement = (PsiReturnStatement)statements[0];
-      final PsiExpression returnValue = returnStatement.getReturnValue();
-      if (!(returnValue instanceof PsiReferenceExpression)) {
-        return;
-      }
-      final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)returnValue;
-      final PsiField field = (PsiField)referenceExpression.resolve();
-      if (field == null) {
-        return;
-      }
-      final String fieldName = field.getName();
-      if (fieldName == null) {
-        return;
-      }
-      final PsiExpression qualifier = methodExpression.getQualifierExpression();
-      if (qualifier == null) {
-        final JavaPsiFacade facade = JavaPsiFacade.getInstance(call.getProject());
-        final PsiResolveHelper resolveHelper = facade.getResolveHelper();
-        final PsiVariable variable = resolveHelper.resolveReferencedVariable(fieldName, call);
-        if (variable == null) {
-          return;
-        }
-        if (variable.equals(field)) {
-          replaceExpression(call, fieldName);
-        }
-        else {
-          replaceExpression(call, "this." + fieldName);
-        }
-      }
-      else {
-        replaceExpression(call, qualifier.getText() + '.' + fieldName);
-      }
-    }
-  }
-
-  @Override
   public BaseInspectionVisitor buildVisitor() {
     return new CallToSimpleGetterInClassVisitor();
   }
@@ -147,6 +83,19 @@ public class CallToSimpleGetterInClassInspection extends BaseInspection {
     @Override
     public void visitMethodCallExpression(@NotNull PsiMethodCallExpression call) {
       super.visitMethodCallExpression(call);
+
+      final PsiReferenceExpression methodExpression = call.getMethodExpression();
+      final String referenceName = methodExpression.getReferenceName();
+      if (referenceName == null ||
+          PropertyUtilBase.getMethodNameGetterFlavour(referenceName) == PropertyUtilBase.GetterFlavour.NOT_A_GETTER) {
+        return;
+      }
+
+      final PsiElement parent = call.getParent();
+      if (parent instanceof PsiExpressionStatement) {
+        // inlining a top-level getter call would break code
+        return;
+      }
       final PsiClass containingClass = ClassUtils.getContainingClass(call);
       if (containingClass == null) {
         return;
@@ -158,30 +107,28 @@ public class CallToSimpleGetterInClassInspection extends BaseInspection {
       if (!containingClass.equals(method.getContainingClass())) {
         return;
       }
-      final PsiReferenceExpression methodExpression = call.getMethodExpression();
       final PsiExpression qualifier = methodExpression.getQualifierExpression();
       if (qualifier != null && !(qualifier instanceof PsiThisExpression)) {
         if (ignoreGetterCallsOnOtherObjects) {
           return;
         }
-        final PsiType type = qualifier.getType();
-        if (!(type instanceof PsiClassType)) {
-          return;
-        }
-        final PsiClassType classType = (PsiClassType)type;
-        final PsiClass qualifierClass = classType.resolve();
+        final PsiClass qualifierClass = PsiUtil.resolveClassInClassTypeOnly(qualifier.getType());
         if (!containingClass.equals(qualifierClass)) {
           return;
         }
       }
-      if (!PropertyUtils.isSimpleGetter(method)) {
+      final PsiField field = PropertyUtil.getFieldOfGetter(method);
+      if (field == null) {
+        return;
+      }
+      final PsiMember member = PsiTreeUtil.getParentOfType(call, PsiMember.class);
+      if (member instanceof PsiField && !(member instanceof PsiEnumConstant) && member.getTextOffset() < field.getTextOffset()) {
         return;
       }
       if (onlyReportPrivateGetter && !method.hasModifierProperty(PsiModifier.PRIVATE)) {
         return;
       }
-      final Query<PsiMethod> query = OverridingMethodsSearch.search(method, true);
-      final PsiMethod overridingMethod = query.findFirst();
+      final PsiMethod overridingMethod = OverridingMethodsSearch.search(method).findFirst();
       if (overridingMethod != null) {
         return;
       }

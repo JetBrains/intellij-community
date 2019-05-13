@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,18 +15,16 @@
  */
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
-import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
+import com.intellij.ide.util.PsiNavigationSupport;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.JavaDirectoryService;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiDirectory;
-import com.intellij.psi.PsiFile;
+import com.intellij.pom.Navigatable;
+import com.intellij.psi.*;
 import com.intellij.psi.impl.file.JavaDirectoryServiceImpl;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
@@ -37,7 +35,7 @@ public class MoveClassToSeparateFileFix implements IntentionAction {
 
   private final PsiClass myClass;
 
-  public MoveClassToSeparateFileFix(PsiClass aClass) {
+  public MoveClassToSeparateFileFix(@NotNull PsiClass aClass) {
     myClass = aClass;
   }
 
@@ -55,7 +53,7 @@ public class MoveClassToSeparateFileFix implements IntentionAction {
 
   @Override
   public boolean isAvailable(@NotNull Project project, @Nullable Editor editor, @NotNull PsiFile file) {
-    if  (!myClass.isValid() || !myClass.getManager().isInProject(myClass)) return false;
+    if  (!myClass.isValid() || !BaseIntentionAction.canModify(myClass)) return false;
     PsiDirectory dir = file.getContainingDirectory();
     if (dir == null) return false;
     try {
@@ -68,29 +66,33 @@ public class MoveClassToSeparateFileFix implements IntentionAction {
     return true;
   }
 
+  @NotNull
+  @Override
+  public PsiElement getElementToMakeWritable(@NotNull PsiFile file) {
+    return myClass;
+  }
+
   @Override
   public void invoke(@NotNull Project project, @Nullable Editor editor, @NotNull PsiFile file) {
-    if (!CodeInsightUtilBase.prepareFileForWrite(myClass.getContainingFile())) return;
-
     PsiDirectory dir = file.getContainingDirectory();
-    try{
-      String name = myClass.getName();
-      JavaDirectoryService directoryService = JavaDirectoryService.getInstance();
-      PsiClass placeHolder = myClass.isInterface() ? directoryService.createInterface(dir, name) : directoryService.createClass(dir, name);
+    String name = myClass.getName();
+    JavaDirectoryService directoryService = JavaDirectoryService.getInstance();
+    PsiClass placeHolder = myClass.isInterface() ? directoryService.createInterface(dir, name) : directoryService.createClass(dir, name);
+    WriteAction.run(() -> {
       PsiClass newClass = (PsiClass)placeHolder.replace(myClass);
       myClass.delete();
 
-      OpenFileDescriptor descriptor = new OpenFileDescriptor(project, newClass.getContainingFile().getVirtualFile(), newClass.getTextOffset());
-      FileEditorManager.getInstance(project).openTextEditor(descriptor, true);
-    }
-    catch(IncorrectOperationException e){
-      LOG.error(e);
-    }
+      Navigatable descriptor = PsiNavigationSupport.getInstance().createNavigatable(project,
+                                                                                    newClass.getContainingFile()
+                                                                                            .getVirtualFile(),
+                                                                                    newClass.getTextOffset());
+      descriptor.navigate(true);
+    });
   }
 
   @Override
   public boolean startInWriteAction() {
-    return true;
+    return false;
   }
 
 }

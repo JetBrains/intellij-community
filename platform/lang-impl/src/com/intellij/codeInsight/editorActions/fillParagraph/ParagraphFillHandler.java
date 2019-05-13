@@ -1,13 +1,15 @@
 package com.intellij.codeInsight.editorActions.fillParagraph;
 
+import com.intellij.application.options.CodeStyle;
+import com.intellij.formatting.FormatterTagHandler;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.UnfairTextRange;
 import com.intellij.openapi.util.text.CharFilter;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.impl.source.codeStyle.CodeFormatterFacade;
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
@@ -18,7 +20,7 @@ import java.util.List;
 /**
  * Defines general re-flow paragraph functionality.
  * Serves plain text files.
- * 
+ *
  * User : ktisha
  */
 public class ParagraphFillHandler {
@@ -48,16 +50,18 @@ public class ParagraphFillHandler {
 
     final String replacementText = stringBuilder.toString();
 
-    CommandProcessor.getInstance().executeCommand(element.getProject(), new Runnable() {
-      public void run() {
-        document.replaceString(textRange.getStartOffset(), textRange.getEndOffset(),
-                               replacementText);
-        final CodeFormatterFacade codeFormatter = new CodeFormatterFacade(
-                                        CodeStyleSettingsManager.getSettings(element.getProject()));
-        codeFormatter.doWrapLongLinesIfNecessary(editor, element.getProject(), document,
-                                                 textRange.getStartOffset(),
-                                                 textRange.getStartOffset() + replacementText.length() + 1);
-      }
+    CommandProcessor.getInstance().executeCommand(element.getProject(), () -> {
+      document.replaceString(textRange.getStartOffset(), textRange.getEndOffset(),
+                             replacementText);
+      final PsiFile file = element.getContainingFile();
+      final CodeFormatterFacade codeFormatter = new CodeFormatterFacade(CodeStyle.getSettings(file), element.getLanguage());
+      FormatterTagHandler formatterTagHandler = new FormatterTagHandler(CodeStyle.getSettings(file));
+      List<TextRange> enabledRanges = formatterTagHandler.getEnabledRanges(file.getNode(), TextRange.create(0, document.getTextLength()));
+
+      codeFormatter.doWrapLongLinesIfNecessary(editor, element.getProject(), document,
+                                               textRange.getStartOffset(),
+                                               textRange.getStartOffset() + replacementText.length() + 1,
+                                               enabledRanges);
     }, null, document);
 
   }
@@ -81,7 +85,7 @@ public class ParagraphFillHandler {
   private TextRange getTextRange(@NotNull final PsiElement element, @NotNull final Editor editor) {
     int startOffset = getStartOffset(element, editor);
     int endOffset = getEndOffset(element, editor);
-    return TextRange.create(startOffset, endOffset);
+    return new UnfairTextRange(startOffset, endOffset);
   }
 
   private int getStartOffset(@NotNull final PsiElement element, @NotNull final Editor editor) {
@@ -104,7 +108,7 @@ public class ParagraphFillHandler {
       }
       lineNumber -= 1;
     }
-    final int lineStartOffset = document.getLineStartOffset(lineNumber);
+    final int lineStartOffset = lineNumber == document.getLineNumber(elementTextOffset) ? elementTextOffset : document.getLineStartOffset(lineNumber);
     final String lineText = document
       .getText(TextRange.create(lineStartOffset, document.getLineEndOffset(lineNumber)));
     int shift = StringUtil.findFirst(lineText, CharFilter.NOT_WHITESPACE_FILTER);

@@ -48,11 +48,22 @@ public class QuestionableNameInspection extends BaseInspection {
                                      "ff,foo,foo1,foo2,foo3,foobar,four,fred,fred1,fred2,gg,hh,hello," +
                                      "hello1,hello2,hello3,ii,nu11,one,silly,silly2,string,two,that," +
                                      "then,three,whi1e,var";
-
-  List<String> nameList = new ArrayList<String>(32);
+  List<String> nameList = new ArrayList<>(32);
 
   public QuestionableNameInspection() {
-    parseString(nameString, nameList);
+    parseString(this.nameString, this.nameList);
+  }
+
+  @Override
+  public JComponent createOptionsPanel() {
+    final ListTable table =
+      new ListTable(new ListWrappingTableModel(nameList, InspectionGadgetsBundle.message("questionable.name.column.title")));
+    return UiUtils.createAddRemovePanel(table);
+  }
+
+  @Override
+  protected InspectionGadgetsFix buildFix(Object... infos) {
+    return new RenameFix();
   }
 
   @Override
@@ -70,27 +81,15 @@ public class QuestionableNameInspection extends BaseInspection {
   }
 
   @Override
-  public void readSettings(Element element) throws InvalidDataException {
+  public void readSettings(@NotNull Element element) throws InvalidDataException {
     super.readSettings(element);
     parseString(nameString, nameList);
   }
 
   @Override
-  public void writeSettings(Element element) throws WriteExternalException {
+  public void writeSettings(@NotNull Element element) throws WriteExternalException {
     nameString = formatString(nameList);
     super.writeSettings(element);
-  }
-
-  @Override
-  public JComponent createOptionsPanel() {
-    final ListTable table =
-      new ListTable(new ListWrappingTableModel(nameList, InspectionGadgetsBundle.message("questionable.name.column.title")));
-    return UiUtils.createAddRemovePanel(table);
-  }
-
-  @Override
-  protected InspectionGadgetsFix buildFix(Object... infos) {
-    return new RenameFix();
   }
 
   @Override
@@ -105,7 +104,7 @@ public class QuestionableNameInspection extends BaseInspection {
 
   private class QuestionableNameVisitor extends BaseInspectionVisitor {
 
-    private final Set<String> nameSet = new HashSet(nameList);
+    private final Set<String> nameSet = new HashSet<>(nameList);
 
     @Override
     public void visitVariable(@NotNull PsiVariable variable) {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import com.intellij.codeInsight.completion.*;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.codeInsight.lookup.TailTypeDecorator;
+import com.intellij.patterns.PlatformPatterns;
 import com.intellij.patterns.PsiElementPattern;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -40,9 +41,6 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.literal
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
 import java.util.*;
-import java.util.List;
-
-import static com.intellij.patterns.PlatformPatterns.psiElement;
 
 /**
  * @author Sergey Evdokimov
@@ -56,7 +54,7 @@ class GroovyConfigSlurperCompletionProvider extends CompletionProvider<Completio
   }
 
   public static void register(CompletionContributor contributor) {
-    PsiElementPattern.Capture<PsiElement> pattern = psiElement().withParent(psiElement(GrReferenceExpression.class));
+    PsiElementPattern.Capture<PsiElement> pattern = PlatformPatterns.psiElement().withParent(PlatformPatterns.psiElement(GrReferenceExpression.class));
 
     contributor.extend(CompletionType.BASIC, pattern, new GroovyConfigSlurperCompletionProvider(true));
     contributor.extend(CompletionType.SMART, pattern, new GroovyConfigSlurperCompletionProvider(false));
@@ -64,7 +62,7 @@ class GroovyConfigSlurperCompletionProvider extends CompletionProvider<Completio
 
   @Override
   protected void addCompletions(@NotNull CompletionParameters parameters,
-                                ProcessingContext context,
+                                @NotNull ProcessingContext context,
                                 @NotNull CompletionResultSet result) {
     PsiFile file = parameters.getOriginalFile();
     if (!(file instanceof GroovyFile)) return;
@@ -76,13 +74,8 @@ class GroovyConfigSlurperCompletionProvider extends CompletionProvider<Completio
     GrReferenceExpression ref = (GrReferenceExpression)parameters.getPosition().getParent();
     if (ref == null) return;
 
-    final Map<String, Boolean> variants = new HashMap<String, Boolean>();
-    collectVariants(new PairConsumer<String, Boolean>() {
-                      @Override
-                      public void consume(String s, Boolean isFinal) {
-                        variants.put(s, isFinal);
-                      }
-                    }, ref, groovyFile);
+    final Map<String, Boolean> variants = new HashMap<>();
+    collectVariants((s, isFinal) -> variants.put(s, isFinal), ref, groovyFile);
 
     if (variants.isEmpty()) return;
 
@@ -93,8 +86,8 @@ class GroovyConfigSlurperCompletionProvider extends CompletionProvider<Completio
     }
     if (parent == null) return;
 
-    Set<String> processedPrefixes = new HashSet<String>();
-    Set<String> prefixesInMethodCall = new HashSet<String>();
+    Set<String> processedPrefixes = new HashSet<>();
+    Set<String> prefixesInMethodCall = new HashSet<>();
 
     for (PsiElement e = parent.getFirstChild(); e != null; e = e.getNextSibling()) {
       if (e instanceof GrAssignmentExpression) {
@@ -188,7 +181,7 @@ class GroovyConfigSlurperCompletionProvider extends CompletionProvider<Completio
 
   @Nullable
   public static List<String> getPrefix(GrReferenceExpression ref) {
-    List<String> res = new ArrayList<String>();
+    List<String> res = new ArrayList<>();
 
     GrExpression qualifier = ref.getQualifierExpression();
 

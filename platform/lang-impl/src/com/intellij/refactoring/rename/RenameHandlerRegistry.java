@@ -1,88 +1,63 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.refactoring.rename;
 
 import com.intellij.ide.TitledHandler;
+import com.intellij.openapi.Disposable;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.rename.inplace.MemberInplaceRenameHandler;
 import com.intellij.refactoring.util.RadioUpDownListener;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.containers.HashSet;
+import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.util.Iterator;
-import java.util.Map;
-import java.util.Set;
-import java.util.TreeMap;
+import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
+import java.util.*;
+import java.util.function.Function;
 
 /**
  * @author dsl
  */
 public class RenameHandlerRegistry {
   public static final Key<Boolean> SELECT_ALL = Key.create("rename.selectAll");
-  private final Set<RenameHandler> myHandlers  = new HashSet<RenameHandler>();
-  private static final RenameHandlerRegistry INSTANCE = new RenameHandlerRegistry();
   private final PsiElementRenameHandler myDefaultElementRenameHandler;
+  private Function<Collection<RenameHandler>, RenameHandler> myRenameHandlerSelectorInTests = ContainerUtil::getFirstItem;
 
   public static RenameHandlerRegistry getInstance() {
-    return INSTANCE;
+    return ServiceManager.getService(RenameHandlerRegistry.class);
   }
 
-  private RenameHandlerRegistry() {
+  protected RenameHandlerRegistry() {
     // should be checked last
     myDefaultElementRenameHandler = new PsiElementRenameHandler();
   }
 
-  public boolean hasAvailableHandler(DataContext dataContext) {
-    for (RenameHandler renameHandler : Extensions.getExtensions(RenameHandler.EP_NAME)) {
-      if (renameHandler.isAvailableOnDataContext(dataContext)) return true;
-    }
-    for (RenameHandler renameHandler : myHandlers) {
+  public boolean hasAvailableHandler(@NotNull DataContext dataContext) {
+    for (RenameHandler renameHandler : RenameHandler.EP_NAME.getExtensionList()) {
       if (renameHandler.isAvailableOnDataContext(dataContext)) return true;
     }
     return myDefaultElementRenameHandler.isAvailableOnDataContext(dataContext);
   }
 
   @Nullable
-  public RenameHandler getRenameHandler(DataContext dataContext) {
-    final Map<String, RenameHandler> availableHandlers = new TreeMap<String, RenameHandler>();
-    for (RenameHandler renameHandler : Extensions.getExtensions(RenameHandler.EP_NAME)) {
-      if (renameHandler.isRenaming(dataContext)) {
-        if (ApplicationManager.getApplication().isUnitTestMode()) return renameHandler;
-        availableHandlers.put(getHandlerTitle(renameHandler), renameHandler);
-      }
-    }
-    for (RenameHandler renameHandler : myHandlers) {
-      if (renameHandler.isRenaming(dataContext)) {
-        if (ApplicationManager.getApplication().isUnitTestMode()) return renameHandler;
-        availableHandlers.put(getHandlerTitle(renameHandler), renameHandler);
-      }
+  public RenameHandler getRenameHandler(@NotNull DataContext dataContext) {
+    final Map<String, RenameHandler> availableHandlers = new TreeMap<>();
+    for (RenameHandler renameHandler : RenameHandler.EP_NAME.getExtensionList()) {
+      checkHandler(renameHandler, dataContext, availableHandlers);
     }
     if (availableHandlers.size() == 1) return availableHandlers.values().iterator().next();
     for (Iterator<Map.Entry<String, RenameHandler>> iterator = availableHandlers.entrySet().iterator(); iterator.hasNext(); ) {
@@ -94,10 +69,12 @@ public class RenameHandlerRegistry {
     }
     if (availableHandlers.size() == 1) return availableHandlers.values().iterator().next();
     if (availableHandlers.size() > 1) {
+      if (ApplicationManager.getApplication().isUnitTestMode()) {
+        return myRenameHandlerSelectorInTests.apply(availableHandlers.values());
+      }
       final String[] strings = ArrayUtil.toStringArray(availableHandlers.keySet());
-      final HandlersChooser chooser = new HandlersChooser(PlatformDataKeys.PROJECT.getData(dataContext), strings);
-      chooser.show();
-      if (chooser.isOK()) {
+      final HandlersChooser chooser = new HandlersChooser(CommonDataKeys.PROJECT.getData(dataContext), strings);
+      if (chooser.showAndGet()) {
         return availableHandlers.get(chooser.getSelection());
       }
       throw new ProcessCanceledException();
@@ -105,16 +82,25 @@ public class RenameHandlerRegistry {
     return myDefaultElementRenameHandler.isRenaming(dataContext) ? myDefaultElementRenameHandler : null;
   }
 
-  private static String getHandlerTitle(RenameHandler renameHandler) {
-    return renameHandler instanceof TitledHandler ? StringUtil.capitalize(((TitledHandler)renameHandler).getActionTitle().toLowerCase()) : renameHandler.toString();
+  private static void checkHandler(RenameHandler renameHandler, DataContext dataContext, Map<String, RenameHandler> availableHandlers) {
+    if (renameHandler.isRenaming(dataContext)) {
+      availableHandlers.put(getHandlerTitle(renameHandler), renameHandler);
+    }
   }
 
-  /**
-   * @deprecated
-   * @see RenameHandler#EP_NAME
-   */
-  public void registerHandler(RenameHandler handler) {
-    myHandlers.add(handler);
+  @TestOnly
+  public void setRenameHandlerSelectorInTests(Function<Collection<RenameHandler>, RenameHandler> selector, Disposable parentDisposable) {
+    myRenameHandlerSelectorInTests = selector;
+    Disposer.register(parentDisposable, new Disposable() {
+      @Override
+      public void dispose() {
+        myRenameHandlerSelectorInTests = ContainerUtil::getFirstItem;
+      }
+    });
+  }
+
+  private static String getHandlerTitle(RenameHandler renameHandler) {
+    return renameHandler instanceof TitledHandler ? StringUtil.capitalize(((TitledHandler)renameHandler).getActionTitle().toLowerCase()) : renameHandler.toString();
   }
 
   private static class HandlersChooser extends DialogWrapper {
@@ -144,14 +130,15 @@ public class RenameHandlerRegistry {
       for (final String renamer : myRenamers) {
         final JRadioButton rb = new JRadioButton(renamer, selected);
         myRButtons[rIdx++] = rb;
-        final ActionListener listener = new ActionListener() {
-          public void actionPerformed(ActionEvent e) {
+        final ItemListener listener = new ItemListener() {
+          @Override
+          public void itemStateChanged(ItemEvent e) {
             if (rb.isSelected()) {
               mySelection = renamer;
             }
           }
         };
-        rb.addActionListener(listener);
+        rb.addItemListener(listener);
         selected = false;
         bg.add(rb);
         radioPanel.add(rb);

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,29 +15,30 @@
  */
 package com.intellij.ui;
 
+import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.ui.NullableComponent;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Weighted;
 import com.intellij.openapi.wm.IdeGlassPane;
 import com.intellij.openapi.wm.IdeGlassPaneUtil;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.ui.update.Activatable;
 import com.intellij.util.ui.update.UiNotifyConnector;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.KeyEvent;
-import java.awt.event.MouseEvent;
-import java.awt.event.MouseListener;
-import java.awt.event.MouseMotionListener;
+import java.awt.event.*;
 
-public abstract class MouseDragHelper implements MouseListener, MouseMotionListener, KeyEventDispatcher {
+public abstract class MouseDragHelper implements MouseListener, MouseMotionListener, KeyEventDispatcher, Weighted {
 
   public static final int DRAG_START_DEADZONE = 7;
 
   private final JComponent myDragComponent;
 
   private Point myPressPointScreen;
+  protected Point myPressedOnScreenPoint;
   private Point myPressPointComponent;
 
   private boolean myDraggingNow;
@@ -56,24 +57,31 @@ public abstract class MouseDragHelper implements MouseListener, MouseMotionListe
 
   }
 
+  /**
+   *
+   * @return false if Settings -> Appearance -> Drag-n-Drop with ALT pressed only is selected but event doesn't have ALT modifier
+   */
+  public static boolean checkModifiers(InputEvent event) {
+    if (event == null || !UISettings.getInstance().getDndWithPressedAltOnly()) return true;
+    return (event.getModifiers() & InputEvent.ALT_MASK) != 0;
+  }
+
   public void start() {
     if (myGlassPane != null) return;
 
     new UiNotifyConnector(myDragComponent, new Activatable() {
+      @Override
       public void showNotify() {
         attach();
       }
 
+      @Override
       public void hideNotify() {
         detach(true);
       }
     });
 
-    Disposer.register(myParentDisposable, new Disposable() {
-      public void dispose() {
-        stop();
-      }
-    });
+    Disposer.register(myParentDisposable, () -> stop());
   }
 
   private void attach() {
@@ -85,12 +93,8 @@ public abstract class MouseDragHelper implements MouseListener, MouseMotionListe
     myGlassPane.addMousePreprocessor(this, myParentDisposable);
     myGlassPane.addMouseMotionPreprocessor(this, myParentDisposable);
     KeyboardFocusManager.getCurrentKeyboardFocusManager().addKeyEventDispatcher(this);
-    Disposer.register(myParentDisposable, new Disposable() {
-      @Override
-      public void dispose() {
-        KeyboardFocusManager.getCurrentKeyboardFocusManager().removeKeyEventDispatcher(MouseDragHelper.this);
-      }
-    });
+    Disposer.register(myParentDisposable,
+                      () -> KeyboardFocusManager.getCurrentKeyboardFocusManager().removeKeyEventDispatcher(this));
   }
 
   public void stop() {
@@ -110,10 +114,17 @@ public abstract class MouseDragHelper implements MouseListener, MouseMotionListe
     }
   }
 
+  @Override
+  public double getWeight() {
+    return 2;
+  }
+
+  @Override
   public void mousePressed(final MouseEvent e) {
     if (!canStartDragging(e)) return;
 
     myPressPointScreen = new RelativePoint(e).getScreenPoint();
+    myPressedOnScreenPoint = new Point(myPressPointScreen);
     myPressPointComponent = e.getPoint();
     processMousePressed(e);
 
@@ -125,6 +136,7 @@ public abstract class MouseDragHelper implements MouseListener, MouseMotionListe
     }
   }
 
+  @Override
   public void mouseReleased(final MouseEvent e) {
     if (myCancelled) {
       myCancelled = false;
@@ -144,6 +156,7 @@ public abstract class MouseDragHelper implements MouseListener, MouseMotionListe
         }
       }
       finally {
+        myPressedOnScreenPoint = null;
         resetDragState();
         e.consume();
         if (myDetachPostponed) {
@@ -162,6 +175,7 @@ public abstract class MouseDragHelper implements MouseListener, MouseMotionListe
     myDetachingMode = false;
   }
 
+  @Override
   public void mouseDragged(final MouseEvent e) {
     if (myPressPointScreen == null || myCancelled) return;
 
@@ -188,7 +202,8 @@ public abstract class MouseDragHelper implements MouseListener, MouseMotionListe
 
       if (myDetachingMode) {
         processDragOut(e, draggedTo, (Point)myPressPointScreen.clone(), dragOutStarted);
-      } else {
+      }
+      else {
         processDrag(e, draggedTo, (Point)myPressPointScreen.clone());
       }
     }
@@ -214,10 +229,10 @@ public abstract class MouseDragHelper implements MouseListener, MouseMotionListe
   protected void processDragCancel() {
   }
 
-  protected void processDragFinish(final MouseEvent event, boolean willDragOutStart) {
+  protected void processDragFinish(@NotNull MouseEvent event, boolean willDragOutStart) {
   }
 
-  protected void processDragOutFinish(final MouseEvent event) {
+  protected void processDragOutFinish(@NotNull MouseEvent event) {
   }
 
   protected void processDragOutCancel() {
@@ -227,13 +242,13 @@ public abstract class MouseDragHelper implements MouseListener, MouseMotionListe
     return myDragJustStarted;
   }
 
-  protected abstract void processDrag(MouseEvent event, Point dragToScreenPoint, Point startScreenPoint);
+  protected abstract void processDrag(@NotNull MouseEvent event, @NotNull Point dragToScreenPoint, @NotNull Point startScreenPoint);
 
-  protected boolean isDragOut(MouseEvent event, Point dragToScreenPoint, Point startScreenPoint) {
+  protected boolean isDragOut(@NotNull MouseEvent event, @NotNull Point dragToScreenPoint, @NotNull Point startScreenPoint) {
     return false;
   }
 
-  protected void processDragOut(MouseEvent event, Point dragToScreenPoint, Point startScreenPoint, boolean justStarted) {
+  protected void processDragOut(@NotNull MouseEvent event, @NotNull Point dragToScreenPoint, @NotNull Point startScreenPoint, boolean justStarted) {
     event.consume();
   }
 
@@ -243,15 +258,19 @@ public abstract class MouseDragHelper implements MouseListener, MouseMotionListe
            Math.abs(myPressPointScreen.y - screen.y - myDelta.height) < DRAG_START_DEADZONE;
   }
 
+  @Override
   public void mouseClicked(final MouseEvent e) {
   }
 
+  @Override
   public void mouseEntered(final MouseEvent e) {
   }
 
+  @Override
   public void mouseExited(final MouseEvent e) {
   }
 
+  @Override
   public void mouseMoved(final MouseEvent e) {
   }
 

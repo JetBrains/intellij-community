@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,7 +38,7 @@ import java.util.*;
  * @author peter
  */
 public class MockDomElementsEditor {
-  private final Map<EditedElementDescription<? extends DomElement>, DomElement> myDomElements = new HashMap<EditedElementDescription<? extends DomElement>, DomElement>();
+  private final Map<EditedElementDescription<? extends DomElement>, DomElement> myDomElements = new HashMap<>();
   private final Module myModule;
   private CommittablePanel myContents;
   private DomFileEditor myFileEditor;
@@ -47,16 +47,14 @@ public class MockDomElementsEditor {
     myModule = module;
   }
 
-  protected final <T extends DomElement> T addEditedElement(final Class<T> aClass, final EditedElementDescription<T> description) {
+  protected final <T extends DomElement> T addEditedElement(final Class<? extends T> aClass, final EditedElementDescription<T> description) {
     final DomManager domManager = DomManager.getDomManager(myModule.getProject());
-    final T t = domManager.createStableValue(new Factory<T>() {
-      public T create() {
-        T t = description.find();
-        if (t == null) {
-          return createMockElement(aClass);
-        }
-        return t;
+    final T t = domManager.createStableValue(() -> {
+      T t1 = description.find();
+      if (t1 == null) {
+        return createMockElement(aClass);
       }
+      return t1;
     });
     myDomElements.put(description, t);
     return t;
@@ -67,21 +65,19 @@ public class MockDomElementsEditor {
   }
 
   protected final DomFileEditor initFileEditor(final BasicDomElementComponent component, final VirtualFile virtualFile, final String name) {
-    initFileEditor(component.getProject(), virtualFile, name, new Factory<BasicDomElementComponent>() {
-      public BasicDomElementComponent create() {
-        return component;
-      }
-    });
+    initFileEditor(component.getProject(), virtualFile, name, () -> component);
     Disposer.register(myFileEditor, component);
     return myFileEditor;
   }
 
   protected final DomFileEditor initFileEditor(final Project project, final VirtualFile virtualFile, final String name, final Factory<? extends BasicDomElementComponent> component) {
     myFileEditor = new DomFileEditor<BasicDomElementComponent>(project, virtualFile, name, component) {
+      @Override
       public JComponent getPreferredFocusedComponent() {
         return null;
       }
 
+      @Override
       @NotNull
       protected JComponent createCustomComponent() {
         final JComponent customComponent = super.createCustomComponent();
@@ -89,6 +85,7 @@ public class MockDomElementsEditor {
         return customComponent;
       }
 
+      @Override
       public void reset() {
         for (final Map.Entry<EditedElementDescription<? extends DomElement>, DomElement> entry : myDomElements.entrySet()) {
           final DomElement newValue = entry.getKey().find();
@@ -100,33 +97,32 @@ public class MockDomElementsEditor {
         super.reset();
       }
 
+      @Override
       public void commit() {
         super.commit();
-        final List<EditedElementDescription> descriptions = new ArrayList<EditedElementDescription>();
-        final Set<PsiFile> changedFiles = new HashSet<PsiFile>();
+        final List<EditedElementDescription> descriptions = new ArrayList<>();
+        final Set<PsiFile> changedFiles = new HashSet<>();
         for (final Map.Entry<EditedElementDescription<? extends DomElement>, DomElement> entry : myDomElements.entrySet()) {
           final EditedElementDescription description = entry.getKey();
-            final DomElement editedElement = entry.getValue();
-            if (description.find() == null && editedElement.getXmlTag() != null) {
-              descriptions.add(description);
-              final XmlFile xmlFile = description.getEditedFile();
-              if (xmlFile != null) {
-                changedFiles.add(xmlFile);
-              }
-            }
-        }
-        new WriteCommandAction(project, PsiUtilCore.toPsiFileArray(changedFiles)) {
-          protected void run(Result result) throws Throwable {
-            for (EditedElementDescription description : descriptions) {
-              final DomElement editedElement = myDomElements.get(description);
-              DomElement element = description.addElement();
-              element.copyFrom(editedElement);
-              description.initialize(element);
-              removeWatchedElement(editedElement);
-              ((StableElement)editedElement).invalidate();
+          final DomElement editedElement = entry.getValue();
+          if (description.find() == null && editedElement.getXmlTag() != null) {
+            descriptions.add(description);
+            final XmlFile xmlFile = description.getEditedFile();
+            if (xmlFile != null) {
+              changedFiles.add(xmlFile);
             }
           }
-        }.execute();
+        }
+        WriteCommandAction.writeCommandAction(project, PsiUtilCore.toPsiFileArray(changedFiles)).run(() -> {
+          for (EditedElementDescription description : descriptions) {
+            final DomElement editedElement = myDomElements.get(description);
+            DomElement element = description.addElement();
+            element.copyFrom(editedElement);
+            description.initialize(element);
+            removeWatchedElement(editedElement);
+            ((StableElement)editedElement).invalidate();
+          }
+        });
       }
     };
     final DomManager domManager = DomManager.getDomManager(project);
@@ -144,11 +140,9 @@ public class MockDomElementsEditor {
 
   private <T extends DomElement> T createMockElement(final Class<T> aClass, final Module module) {
     final Project project = module.getProject();
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
-      public void run() {
-        if (myFileEditor.isInitialised()) {
-          myContents.reset();
-        }
+    ApplicationManager.getApplication().invokeLater(() -> {
+      if (myFileEditor.isInitialised()) {
+        myContents.reset();
       }
     });
     final DomManager domManager = DomManager.getDomManager(project);

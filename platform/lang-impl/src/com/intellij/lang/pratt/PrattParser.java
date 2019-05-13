@@ -15,9 +15,10 @@
  */
 package com.intellij.lang.pratt;
 
-import com.intellij.lang.PsiParser;
 import com.intellij.lang.ASTNode;
+import com.intellij.lang.LangBundle;
 import com.intellij.lang.PsiBuilder;
+import com.intellij.lang.PsiParser;
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
 
@@ -27,8 +28,9 @@ import org.jetbrains.annotations.NotNull;
 public abstract class PrattParser implements PsiParser {
   protected abstract PrattRegistry getRegistry();
 
+  @Override
   @NotNull
-  public final ASTNode parse(final IElementType root, final PsiBuilder builder) {
+  public final ASTNode parse(@NotNull IElementType root, @NotNull PsiBuilder builder) {
     final PrattBuilder prattBuilder = PrattBuilderImpl.createBuilder(builder, getRegistry());
     final MutableMarker marker = prattBuilder.mark();
     parse(prattBuilder);
@@ -38,6 +40,9 @@ public abstract class PrattParser implements PsiParser {
 
   protected void parse(final PrattBuilder builder) {
     builder.parse();
-    while (!builder.isEof()) builder.advance();
+    if (!builder.isEof()) {
+      builder.error(LangBundle.message("unexpected.token"));
+      while (!builder.isEof()) builder.advance();
+    }
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package com.intellij.openapi.fileTypes.impl;
 
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.model.fileTypes.FileNameMatcherFactory;
 
@@ -28,9 +29,10 @@ import java.util.StringTokenizer;
  * @author peter
  */
 public class IgnoredPatternSet {
-  private final Set<String> myMasks = new LinkedHashSet<String>();
+  private final Set<String> myMasks = new LinkedHashSet<>();
   private final FileTypeAssocTable<Boolean> myIgnorePatterns = new FileTypeAssocTable<Boolean>().copy();
 
+  @NotNull
   Set<String> getIgnoreMasks() {
     return Collections.unmodifiableSet(myMasks);
   }
@@ -41,11 +43,8 @@ public class IgnoredPatternSet {
     StringTokenizer tokenizer = new StringTokenizer(list, ";");
     while (tokenizer.hasMoreTokens()) {
       String ignoredFile = tokenizer.nextToken();
-      if (ignoredFile != null) {
-        addIgnoreMask(ignoredFile);
-      }
+      addIgnoreMask(ignoredFile);
     }
-
   }
 
   void addIgnoreMask(@NotNull String ignoredFile) {
@@ -55,14 +54,14 @@ public class IgnoredPatternSet {
     }
   }
 
-  public boolean isIgnored(@NotNull String fileName) {
+  public boolean isIgnored(@NotNull CharSequence fileName) {
     if (myIgnorePatterns.findAssociatedFileType(fileName) == Boolean.TRUE) {
       return true;
     }
 
     //Quite a hack, but still we need to have some name, which
     //won't be caught by VFS for sure.
-    return fileName.endsWith(FileUtil.ASYNC_DELETE_EXTENSION);
+    return StringUtil.endsWith(fileName, FileUtil.ASYNC_DELETE_EXTENSION);
   }
 
   void clearPatterns() {

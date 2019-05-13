@@ -15,68 +15,84 @@
  */
 package com.intellij.execution.testframework.export;
 
+import com.intellij.execution.DefaultExecutionTarget;
 import com.intellij.execution.ExecutionBundle;
-import com.intellij.execution.configurations.RuntimeConfiguration;
-import com.intellij.execution.filters.*;
-import com.intellij.execution.testframework.AbstractTestProxy;
-import com.intellij.execution.testframework.Printable;
-import com.intellij.execution.testframework.Printer;
+import com.intellij.execution.ExecutionTarget;
+import com.intellij.execution.configurations.RunConfiguration;
+import com.intellij.execution.filters.HyperlinkInfo;
+import com.intellij.execution.impl.ConsoleBuffer;
+import com.intellij.execution.testframework.*;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.openapi.application.ApplicationNamesInfo;
-import com.intellij.openapi.extensions.Extensions;
-import com.intellij.openapi.fileEditor.OpenFileDescriptor;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.text.DateFormatUtil;
+import org.jdom.Attribute;
+import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.AttributesImpl;
 
-import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.*;
 
 public class TestResultsXmlFormatter {
 
   private static final String ELEM_RUN = "testrun";
-  private static final String ELEM_TEST = "test";
-  private static final String ELEM_SUITE = "suite";
-  private static final String ATTR_NAME = "name";
-  private static final String ATTR_DURATION = "duration";
-  private static final String ELEM_COUNT = "count";
-  private static final String ATTR_VALUE = "value";
-  private static final String ELEM_OUTPUT = "output";
-  private static final String ATTR_OUTPUT_TYPE = "type";
-  private static final String ATTR_STATUS = "status";
-  private static final String TOTAL_STATUS = "total";
+  public static final String ELEM_TEST = "test";
+  public static final String ELEM_SUITE = "suite";
+  public static final String ATTR_NAME = "name";
+  public static final String ATTR_DURATION = "duration";
+  public static final String ATTR_LOCATION = "locationUrl";
+  public static final String ATTR_METAINFO = "metainfo";
+  public static final String ELEM_COUNT = "count";
+  public static final String ATTR_VALUE = "value";
+  public static final String ELEM_OUTPUT = "output";
+  public static final String ATTR_OUTPUT_TYPE = "type";
+  public static final String ATTR_STATUS = "status";
+  public static final String TOTAL_STATUS = "total";
   private static final String ATTR_FOORTER_TEXT = "footerText";
+  public static final String ATTR_CONFIG = "isConfig";
+  public static final String STATUS_PASSED = "passed";
+  public static final String STATUS_FAILED = "failed";
+  public static final String STATUS_ERROR = "error";
+  public static final String STATUS_IGNORED = "ignored";
+  public static final String STATUS_SKIPPED = "skipped";
 
-  private final RuntimeConfiguration myRuntimeConfiguration;
+  public static final String ROOT_ELEM = "root";
+  
+
+  private final RunConfiguration myRuntimeConfiguration;
   private final ContentHandler myResultHandler;
   private final AbstractTestProxy myTestRoot;
+  private final boolean myHidePassedConfig;
+  private final ExecutionTarget myExecutionTarget;
 
-  public static void execute(AbstractTestProxy root, RuntimeConfiguration runtimeConfiguration, ContentHandler resultHandler)
+  public static void execute(AbstractTestProxy root, RunConfiguration runtimeConfiguration, TestConsoleProperties properties, ContentHandler resultHandler)
     throws SAXException {
-    new TestResultsXmlFormatter(root, runtimeConfiguration, resultHandler).execute();
+    new TestResultsXmlFormatter(root, runtimeConfiguration, properties, resultHandler).execute();
   }
 
-  private TestResultsXmlFormatter(AbstractTestProxy root, RuntimeConfiguration runtimeConfiguration, ContentHandler resultHandler) {
+  private TestResultsXmlFormatter(AbstractTestProxy root,
+                                  RunConfiguration runtimeConfiguration,
+                                  TestConsoleProperties properties,
+                                  ContentHandler resultHandler) {
     myRuntimeConfiguration = runtimeConfiguration;
     myTestRoot = root;
     myResultHandler = resultHandler;
+    myHidePassedConfig = TestConsoleProperties.HIDE_SUCCESSFUL_CONFIG.value(properties);
+    myExecutionTarget = properties.getExecutionTarget();
   }
 
   private void execute() throws SAXException {
     myResultHandler.startDocument();
 
-    TreeMap<String, Integer> counts = new TreeMap<String, Integer>(new Comparator<String>() {
-      @Override
-      public int compare(String o1, String o2) {
-        if (TOTAL_STATUS.equals(o1) && !TOTAL_STATUS.equals(o2)) return -1;
-        if (TOTAL_STATUS.equals(o2) && !TOTAL_STATUS.equals(o1)) return 1;
-        return o1.compareTo(o2);
-      }
+    TreeMap<String, Integer> counts = new TreeMap<>((o1, o2) -> {
+      if (TOTAL_STATUS.equals(o1) && !TOTAL_STATUS.equals(o2)) return -1;
+      if (TOTAL_STATUS.equals(o2) && !TOTAL_STATUS.equals(o1)) return 1;
+      return o1.compareTo(o2);
     });
     for (AbstractTestProxy node : myTestRoot.getAllTests()) {
       if (!node.isLeaf()) continue;
@@ -85,7 +101,7 @@ public class TestResultsXmlFormatter {
       increment(counts, TOTAL_STATUS);
     }
 
-    Map<String, String> runAttrs = new HashMap<String, String>();
+    Map<String, String> runAttrs = new HashMap<>();
     runAttrs.put(ATTR_NAME, myRuntimeConfiguration.getName());
     String footerText = ExecutionBundle.message("export.test.results.footer", ApplicationNamesInfo.getInstance().getFullProductName(),
                                                 new SimpleDateFormat().format(new Date()));
@@ -97,32 +113,67 @@ public class TestResultsXmlFormatter {
     startElement(ELEM_RUN, runAttrs);
 
     for (Map.Entry<String, Integer> entry : counts.entrySet()) {
-      Map<String, String> a = new HashMap<String, String>();
+      Map<String, String> a = new HashMap<>();
       a.put(ATTR_NAME, entry.getKey());
       a.put(ATTR_VALUE, String.valueOf(entry.getValue()));
       startElement(ELEM_COUNT, a);
       endElement(ELEM_COUNT);
     }
 
-    CompositeFilter f = new CompositeFilter(myRuntimeConfiguration.getProject());
-    for (ConsoleFilterProvider eachProvider : Extensions.getExtensions(ConsoleFilterProvider.FILTER_PROVIDERS)) {
-      Filter[] filters = eachProvider.getDefaultFilters(myRuntimeConfiguration.getProject());
-      for (Filter filter : filters) {
-        f.addFilter(filter);
+    final Element config = new Element("config");
+    try {
+      myRuntimeConfiguration.writeExternal(config);
+      config.setAttribute("configId", myRuntimeConfiguration.getType().getId());
+      config.setAttribute("name", myRuntimeConfiguration.getName());
+      if (!DefaultExecutionTarget.INSTANCE.equals(myExecutionTarget)) {
+        config.setAttribute("target", myExecutionTarget.getId());
       }
     }
+    catch (WriteExternalException ignore) {}
+    processJDomElement(config);
 
-
+    if (myTestRoot instanceof TestProxyRoot) {
+      final String presentation = ((TestProxyRoot)myTestRoot).getPresentation();
+      if (presentation != null) {
+        final LinkedHashMap<String, String> rootAttrs = new LinkedHashMap<>();
+        rootAttrs.put("name", presentation);
+        final String comment = ((TestProxyRoot)myTestRoot).getComment();
+        if (comment != null) {
+          rootAttrs.put("comment", comment);
+        }
+        final String rootLocation = myTestRoot.getLocationUrl();
+        if (rootLocation != null) {
+          rootAttrs.put("location", rootLocation);
+        }
+        startElement(ROOT_ELEM, rootAttrs);
+        writeOutput(myTestRoot);
+        endElement(ROOT_ELEM);
+      }
+    }
+    
     if (myTestRoot.shouldSkipRootNodeForExport()) {
       for (AbstractTestProxy node : myTestRoot.getChildren()) {
-        processNode(node, f);
+        processNode(node);
       }
     }
     else {
-      processNode(myTestRoot, f);
+      processNode(myTestRoot);
     }
     endElement(ELEM_RUN);
     myResultHandler.endDocument();
+  }
+
+  private void processJDomElement(Element config) throws SAXException {
+    final String name = config.getName();
+    final LinkedHashMap<String, String> attributes = new LinkedHashMap<>();
+    for (Attribute attribute : config.getAttributes()) {
+      attributes.put(attribute.getName(), attribute.getValue());
+    }
+    startElement(name, attributes);
+    for (Element child : config.getChildren()) {
+      processJDomElement(child);
+    }
+    endElement(name);
   }
 
   private static void increment(Map<String, Integer> counts, String status) {
@@ -130,89 +181,106 @@ public class TestResultsXmlFormatter {
     counts.put(status, count != null ? count + 1 : 1);
   }
 
-  private void processNode(AbstractTestProxy node, final Filter filter) throws SAXException {
-    Map<String, String> attrs = new HashMap<String, String>();
+  private void processNode(AbstractTestProxy node) throws SAXException {
+    ProgressManager.checkCanceled();
+    Map<String, String> attrs = new HashMap<>();
     attrs.put(ATTR_NAME, node.getName());
     attrs.put(ATTR_STATUS, getStatusString(node));
     Long duration = node.getDuration();
     if (duration != null) {
       attrs.put(ATTR_DURATION, String.valueOf(duration));
     }
+    String locationUrl = node.getLocationUrl();
+    if (locationUrl != null) {
+      attrs.put(ATTR_LOCATION, locationUrl);
+    }
+    String metainfo = node.getMetainfo();
+    if (metainfo != null) {
+      attrs.put(ATTR_METAINFO, metainfo);
+    }
+    if (node.isConfig()) {
+      attrs.put(ATTR_CONFIG, "true");
+    }
+    boolean started = false;
     String elemName = node.isLeaf() ? ELEM_TEST : ELEM_SUITE;
-    startElement(elemName, attrs);
     if (node.isLeaf()) {
-      final StringBuilder buffer = new StringBuilder();
-      final Ref<ConsoleViewContentType> lastType = new Ref<ConsoleViewContentType>();
-      final Ref<SAXException> error = new Ref<SAXException>();
-
-      node.printOn(new Printer() {
-        @Override
-        public void print(String text, ConsoleViewContentType contentType) {
-          if (contentType != lastType.get()) {
-            if (buffer.length() > 0) {
-              try {
-                writeOutput(lastType.get(), buffer, filter);
-              }
-              catch (SAXException e) {
-                error.set(e);
-              }
-            }
-            lastType.set(contentType);
-          }
-          buffer.append(text);
-        }
-
-        @Override
-        public void onNewAvailable(@NotNull Printable printable) {
-        }
-
-        @Override
-        public void printHyperlink(String text, HyperlinkInfo info) {
-        }
-
-        @Override
-        public void mark() {
-        }
-      });
-      if (!error.isNull()) {
-        throw error.get();
-      }
-      if (buffer.length() > 0) {
-        writeOutput(lastType.get(), buffer, filter);
-      }
+      started = true;
+      startElement(elemName, attrs);
+      writeOutput(node);
     }
     else {
       for (AbstractTestProxy child : node.getChildren()) {
-        processNode(child, filter);
+        if (myHidePassedConfig && child.isConfig() && child.isPassed()) {
+          //ignore configurations during export
+          continue;
+        }
+        if (!started) {
+          started = true;
+          startElement(elemName, attrs);
+        }
+        processNode(child);
       }
     }
-    endElement(elemName);
+    if (started) {
+      endElement(elemName);
+    }
   }
 
-  private void writeOutput(ConsoleViewContentType type, StringBuilder text, Filter filter) throws SAXException {
+  private void writeOutput(AbstractTestProxy node) throws SAXException {
+    final StringBuilder buffer = new StringBuilder();
+    final Ref<ConsoleViewContentType> lastType = new Ref<>();
+    final Ref<SAXException> error = new Ref<>();
+
+    final int bufferSize = ConsoleBuffer.useCycleBuffer() ? ConsoleBuffer.getCycleBufferSize() : -1;
+    final Printer printer = new Printer() {
+      @Override
+      public void print(String text, ConsoleViewContentType contentType) {
+        ProgressManager.checkCanceled();
+        if (contentType != lastType.get()) {
+          if (buffer.length() > 0) {
+            try {
+              writeOutput(lastType.get(), buffer);
+            }
+            catch (SAXException e) {
+              error.set(e);
+            }
+          }
+          lastType.set(contentType);
+        }
+        if (bufferSize <= 0 || buffer.length() < bufferSize) {
+          buffer.append(text);
+        }
+      }
+
+      @Override
+      public void onNewAvailable(@NotNull Printable printable) {
+      }
+
+      @Override
+      public void printHyperlink(String text, HyperlinkInfo info) {
+      }
+
+      @Override
+      public void mark() {
+      }
+    };
+    node.printOwnPrintablesOn(printer);
+    if (!error.isNull()) {
+      throw error.get();
+    }
+    if (buffer.length() > 0) {
+      writeOutput(lastType.get(), buffer);
+    }
+  }
+
+  private void writeOutput(ConsoleViewContentType type, StringBuilder text) throws SAXException {
     StringBuilder output = new StringBuilder();
     StringTokenizer t = new StringTokenizer(text.toString(), "\n");
     while (t.hasMoreTokens()) {
-      String line = StringUtil.escapeXml(t.nextToken()) + "\n";
-      Filter.Result result = null;//filter.applyFilter(line, line.length());
-      if (result != null && result.hyperlinkInfo instanceof OpenFileHyperlinkInfo) {
-        output.append(line.substring(0, result.highlightStartOffset));
-        OpenFileDescriptor descriptor = ((OpenFileHyperlinkInfo)result.hyperlinkInfo).getDescriptor();
-        output.append("<a href=\"javascript://\" onclick=\"Activator.doOpen('file?file=");
-        output.append(descriptor.getFile().getPresentableUrl());
-        output.append("&line=");
-        output.append(descriptor.getLine());
-        output.append("')\">");
-        output.append(line.substring(result.highlightStartOffset, result.highlightEndOffset));
-        output.append("</a>");
-        output.append(line.substring(result.highlightEndOffset));
-      }
-      else {
-        output.append(line);
-      }
+      output.append(StringUtil.escapeXmlEntities(t.nextToken())).append("\n");
     }
 
-    Map<String, String> a = new HashMap<String, String>();
+    Map<String, String> a = new HashMap<>();
     a.put(ATTR_OUTPUT_TYPE, getTypeString(type));
     startElement(ELEM_OUTPUT, a);
     writeText(output.toString());
@@ -229,17 +297,20 @@ public class TestResultsXmlFormatter {
     // TODO enumeration!
     switch (magnitude) {
       case 0:
-        return "skipped";
+        return STATUS_SKIPPED;
+      case 2:
+      case 4:
+        return STATUS_SKIPPED;
       case 5:
-        return "ignored";
+        return STATUS_IGNORED;
       case 1:
-        return "passed";
+        return STATUS_PASSED;
       case 6:
-        return "failed";
+        return STATUS_FAILED;
       case 8:
-        return "error";
+        return STATUS_ERROR;
       default:
-        return node.isPassed() ? "passed" : "failed";
+        return node.isPassed() ? STATUS_PASSED : STATUS_FAILED;
     }
   }
 

@@ -1,4 +1,4 @@
-// "Implement Methods" "false"
+// "Implement methods" "false"
 class c {
  void foo() {
    new I<String>(new String(<caret>

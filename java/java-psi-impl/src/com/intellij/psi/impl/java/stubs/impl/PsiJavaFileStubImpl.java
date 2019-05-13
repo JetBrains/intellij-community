@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,38 +13,66 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.intellij.psi.impl.java.stubs.impl;
 
+import com.intellij.lang.java.JavaParserDefinition;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiJavaFile;
+import com.intellij.psi.PsiJavaModule;
 import com.intellij.psi.impl.java.stubs.*;
 import com.intellij.psi.stubs.PsiFileStubImpl;
+import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.tree.IStubFileElementType;
-import com.intellij.util.io.StringRef;
+import org.jetbrains.annotations.NotNull;
 
-/*
+/**
  * @author max
  */
 public class PsiJavaFileStubImpl extends PsiFileStubImpl<PsiJavaFile> implements PsiJavaFileStub {
-  private StringRef myPackageName;
+  private final String myPackageName;
+  private final LanguageLevel myLanguageLevel;
   private final boolean myCompiled;
   private StubPsiFactory myFactory;
 
-  public PsiJavaFileStubImpl(final PsiJavaFile file, final StringRef packageName, final boolean compiled) {
-    super(file);
-    myPackageName = packageName;
-    myCompiled = compiled;
-    myFactory = compiled ? new ClsStubPsiFactory() : new SourceStubPsiFactory();
+  public PsiJavaFileStubImpl(String packageName, boolean compiled) {
+    this(null, packageName, null, compiled);
   }
 
-  public PsiJavaFileStubImpl(final String packageName, final boolean compiled) {
-    this(null, StringRef.fromString(packageName), compiled);
+  public PsiJavaFileStubImpl(PsiJavaFile file, String packageName, LanguageLevel languageLevel, boolean compiled) {
+    super(file);
+    myPackageName = packageName;
+    myLanguageLevel = languageLevel;
+    myCompiled = compiled;
+    myFactory = compiled ? ClsStubPsiFactory.INSTANCE : SourceStubPsiFactory.INSTANCE;
+  }
+
+  @NotNull
+  @Override
+  public IStubFileElementType getType() {
+    return JavaParserDefinition.JAVA_FILE;
+  }
+
+  @NotNull
+  @Override
+  public PsiClass[] getClasses() {
+    return getChildrenByType(JavaStubElementTypes.CLASS, PsiClass.ARRAY_FACTORY);
+  }
+
+  @Override
+  public PsiJavaModule getModule() {
+    StubElement<PsiJavaModule> moduleStub = findChildStubByType(JavaStubElementTypes.MODULE);
+    return moduleStub != null ? moduleStub.getPsi() : null;
   }
 
   @Override
   public String getPackageName() {
-    return StringRef.toString(myPackageName);
+    return myPackageName;
+  }
+
+  @Override
+  public LanguageLevel getLanguageLevel() {
+    return myLanguageLevel;
   }
 
   @Override
@@ -62,22 +90,30 @@ public class PsiJavaFileStubImpl extends PsiFileStubImpl<PsiJavaFile> implements
     myFactory = factory;
   }
 
-  public void setPackageName(final String packageName) {
-    myPackageName = StringRef.fromString(packageName);
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+
+    PsiJavaFileStubImpl stub = (PsiJavaFileStubImpl)o;
+
+    if (myCompiled != stub.myCompiled) return false;
+    if (myPackageName != null ? !myPackageName.equals(stub.myPackageName) : stub.myPackageName != null) return false;
+    if (myLanguageLevel != stub.myLanguageLevel) return false;
+
+    return true;
   }
 
   @Override
-  public IStubFileElementType getType() {
-    return JavaStubElementTypes.JAVA_FILE;
+  public int hashCode() {
+    int result = myPackageName != null ? myPackageName.hashCode() : 0;
+    result = 31 * result + (myLanguageLevel != null ? myLanguageLevel.hashCode() : 0);
+    result = 31 * result + (myCompiled ? 1 : 0);
+    return result;
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
+  @Override
   public String toString() {
     return "PsiJavaFileStub [" + myPackageName + "]";
-  }
-
-  @Override
-  public PsiClass[] getClasses() {
-    return getChildrenByType(JavaStubElementTypes.CLASS, PsiClass.ARRAY_FACTORY);
   }
 }

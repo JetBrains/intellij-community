@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions;
 
 import com.intellij.openapi.ui.GraphicsConfig;
@@ -23,47 +9,50 @@ import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.SpeedSearchBase;
 import com.intellij.util.IconUtil;
 import com.intellij.util.PlatformIcons;
+import com.intellij.util.ui.JBUI;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
 import java.util.Map;
 
 /**
-* @author Konstantin Bulenkov
-*/
+ * @author Konstantin Bulenkov
+ */
 class SwitcherToolWindowsListRenderer extends ColoredListCellRenderer {
   private final SpeedSearchBase mySpeedSearch;
-  private final Map<ToolWindow, String> ids;
   private final Map<ToolWindow, String> shortcuts;
   private final boolean myPinned;
   private boolean hide = false;
 
   SwitcherToolWindowsListRenderer(SpeedSearchBase speedSearch,
-                                  Map<ToolWindow, String> ids,
                                   Map<ToolWindow, String> shortcuts, boolean pinned) {
     mySpeedSearch = speedSearch;
-    this.ids = ids;
     this.shortcuts = shortcuts;
     myPinned = pinned;
   }
 
-  protected void customizeCellRenderer(JList list, Object value, int index, boolean selected, boolean hasFocus) {
+  @Override
+  protected void customizeCellRenderer(@NotNull JList list, Object value, int index, boolean selected, boolean hasFocus) {
     hide = false;
+    setPaintFocusBorder(false);
     if (value instanceof ToolWindow) {
       final ToolWindow tw = (ToolWindow)value;
       setIcon(getIcon(tw));
       final String name;
 
-      if (myPinned) {
-        name = ids.get(tw);
+      String stripeTitle = tw.getStripeTitle();
+      String shortcut = shortcuts.get(tw);
+      if (myPinned || shortcut == null) {
+        name = stripeTitle;
       } else {
-        append(shortcuts.get(tw), new SimpleTextAttributes(SimpleTextAttributes.STYLE_UNDERLINE, null));
-        name = ": " + ids.get(tw);
+        append(shortcut, new SimpleTextAttributes(SimpleTextAttributes.STYLE_UNDERLINE, null));
+        name = ": " + stripeTitle;
       }
 
       append(name);
       if (mySpeedSearch != null && mySpeedSearch.isPopupActive()) {
-        hide = mySpeedSearch.matchingFragments(ids.get(tw)) == null && !StringUtil.isEmpty(mySpeedSearch.getEnteredPrefix());
+        hide = mySpeedSearch.matchingFragments(stripeTitle) == null && !StringUtil.isEmpty(mySpeedSearch.getEnteredPrefix());
       }
     }
   }
@@ -84,7 +73,7 @@ class SwitcherToolWindowsListRenderer extends ColoredListCellRenderer {
       return PlatformIcons.UI_FORM_ICON;
     }
 
-    icon = IconUtil.toSize(icon, 16, 16);
+    icon = IconUtil.toSize(icon, JBUI.scale(16), JBUI.scale(16));
     return icon;
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package com.intellij.xdebugger.impl.breakpoints;
 
 import com.intellij.util.xmlb.annotations.Tag;
+import com.intellij.xdebugger.breakpoints.SuspendPolicy;
 import com.intellij.xdebugger.breakpoints.XBreakpointProperties;
 import com.intellij.xdebugger.breakpoints.XLineBreakpoint;
 import com.intellij.xdebugger.breakpoints.XLineBreakpointType;
@@ -25,8 +26,7 @@ import org.jetbrains.annotations.NotNull;
 * @author nik
 */
 @Tag("line-breakpoint")
-public class LineBreakpointState<P extends XBreakpointProperties> extends
-                                                                         BreakpointState<XLineBreakpoint<P>, P, XLineBreakpointType<P>> {
+public class LineBreakpointState<P extends XBreakpointProperties> extends BreakpointState<XLineBreakpoint<P>, P, XLineBreakpointType<P>> {
   private String myFileUrl;
   private int myLine;
   private boolean myTemporary;
@@ -34,8 +34,9 @@ public class LineBreakpointState<P extends XBreakpointProperties> extends
   public LineBreakpointState() {
   }
 
-  public LineBreakpointState(final boolean enabled, final String typeId, final String fileUrl, final int line, boolean temporary, final long timeStamp) {
-    super(enabled, typeId, timeStamp);
+  public LineBreakpointState(final boolean enabled, final String typeId, final String fileUrl, final int line, boolean temporary,
+                             final long timeStamp, final SuspendPolicy suspendPolicy) {
+    super(enabled, typeId, timeStamp, suspendPolicy);
     myFileUrl = fileUrl;
     myLine = line;
     myTemporary = temporary;
@@ -67,7 +68,8 @@ public class LineBreakpointState<P extends XBreakpointProperties> extends
     myTemporary = temporary;
   }
 
+  @Override
   public XBreakpointBase<XLineBreakpoint<P>,P, ?> createBreakpoint(@NotNull final XLineBreakpointType<P> type, @NotNull XBreakpointManagerImpl breakpointManager) {
-    return new XLineBreakpointImpl<P>(type, breakpointManager, this);
+    return new XLineBreakpointImpl<>(type, breakpointManager, this);
   }
 }

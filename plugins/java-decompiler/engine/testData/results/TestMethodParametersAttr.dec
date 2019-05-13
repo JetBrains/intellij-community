@@ -1,0 +1,125 @@
+package decompiler;
+
+public class TestMethodParametersAttr {
+   TestMethodParametersAttr(int p01) {
+   }// 19
+
+   void m1(int p02) {
+   }// 20
+
+   static void m2(int p03) {
+   }// 21
+
+   void local() {
+      class Local {
+         Local(int p31) {
+         }// 36
+
+         void m(int p32) {
+         }// 37
+      }
+
+   }// 39
+
+   abstract static class C4 {
+      abstract void m1(int p51);
+
+      abstract void m2(final int p52);
+   }
+
+   abstract class C3 {
+      abstract void m1(int p51);
+
+      abstract void m2(final int p52);
+   }
+
+   interface I1 {
+      void m1(int p41);
+
+      void m2(final int p42);
+   }
+
+   static class C2 {
+      C2(int p21) {
+      }// 29
+
+      void m1(int p22) {
+      }// 30
+
+      static void m2(int p23) {
+      }// 31
+   }
+
+   class C1 {
+      C1(int p11) {
+      }// 24
+
+      void m(int p12) {
+      }// 25
+   }
+}
+
+class 'decompiler/TestMethodParametersAttr' {
+   method '<init> (I)V' {
+      4      4
+   }
+
+   method 'm1 (I)V' {
+      0      7
+   }
+
+   method 'm2 (I)V' {
+      0      10
+   }
+
+   method 'local ()V' {
+      0      21
+   }
+}
+
+class 'decompiler/TestMethodParametersAttr$1Local' {
+   method '<init> (Ldecompiler/TestMethodParametersAttr;I)V' {
+      9      15
+   }
+
+   method 'm (I)V' {
+      0      18
+   }
+}
+
+class 'decompiler/TestMethodParametersAttr$C2' {
+   method '<init> (I)V' {
+      4      43
+   }
+
+   method 'm1 (I)V' {
+      0      46
+   }
+
+   method 'm2 (I)V' {
+      0      49
+   }
+}
+
+class 'decompiler/TestMethodParametersAttr$C1' {
+   method '<init> (Ldecompiler/TestMethodParametersAttr;I)V' {
+      9      54
+   }
+
+   method 'm (I)V' {
+      0      57
+   }
+}
+
+Lines mapping:
+19 <-> 5
+20 <-> 8
+21 <-> 11
+24 <-> 55
+25 <-> 58
+29 <-> 44
+30 <-> 47
+31 <-> 50
+36 <-> 16
+37 <-> 19
+39 <-> 22

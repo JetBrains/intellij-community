@@ -1,0 +1,24 @@
+sudo: false
+language: python
+
+matrix:
+  include:
+    - python: "3.6-dev"
+      env: TEST_CMD="flake8"
+    - python: "3.6"
+      env: TEST_CMD="./tests/pytype_test.py --num-parallel=4"
+    - python: "3.5-dev"
+      env: TEST_CMD="./tests/mypy_selftest.py"
+    - python: "3.5"
+      env: TEST_CMD="./tests/mypy_test.py"
+    - python: "3.4"
+      env: TEST_CMD="./tests/check_consistent.py"
+
+install:
+  # pytype needs py-3.6, mypy needs py-3.3+. Additional logic in runtests.py
+  - if [[ $TRAVIS_PYTHON_VERSION == '3.6-dev' ]]; then pip install -r requirements-tests-py3.txt; fi
+  - if [[ $TRAVIS_PYTHON_VERSION == '3.6' ]]; then pip install -r requirements-tests-py3.txt; fi
+  - if [[ $TRAVIS_PYTHON_VERSION == '3.5' ]]; then pip install -U git+git://github.com/python/mypy git+git://github.com/python/typed_ast; fi
+
+script:
+  - $TEST_CMD

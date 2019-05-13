@@ -1,31 +1,26 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.application.options.codeStyle;
 
 import com.intellij.application.options.CodeStyleAbstractPanel;
 import com.intellij.application.options.TabbedLanguageCodeStylePanel;
+import com.intellij.ide.DataManager;
+import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.lang.Language;
+import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.ui.DetailsComponent;
+import com.intellij.openapi.options.ConfigurationException;
+import com.intellij.openapi.options.ex.Settings;
 import com.intellij.psi.codeStyle.CodeStyleScheme;
 import com.intellij.psi.codeStyle.CodeStyleSchemes;
-import com.intellij.util.Alarm;
+import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.ui.components.labels.SwingActionLink;
+import com.intellij.util.concurrency.EdtExecutorService;
+import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -34,33 +29,46 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 
-public class CodeStyleMainPanel extends JPanel implements LanguageSelectorListener {
+public class CodeStyleMainPanel extends JPanel implements TabbedLanguageCodeStylePanel.TabChangeListener {
   private final CardLayout myLayout = new CardLayout();
   private final JPanel mySettingsPanel = new JPanel(myLayout);
 
-  private final Map<String, NewCodeStyleSettingsPanel> mySettingsPanels = new HashMap<String, NewCodeStyleSettingsPanel>();
+  private final Map<String, NewCodeStyleSettingsPanel> mySettingsPanels = new HashMap<>();
 
-  private final Alarm myAlarm = new Alarm(Alarm.ThreadToUse.SHARED_THREAD);
+  private Future<?> myAlarm = CompletableFuture.completedFuture(null);
   private final CodeStyleSchemesModel myModel;
   private final CodeStyleSettingsPanelFactory myFactory;
   private final CodeStyleSchemesPanel mySchemesPanel;
-  private final LanguageSelector myLangSelector;
-  private boolean myIsDisposed = false;
-  private final DetailsComponent myDetailsComponent;
+  private boolean myIsDisposed;
+  private final Action mySetFromAction = new AbstractAction("Set from...") {
+    @Override
+    public void actionPerformed(ActionEvent event) {
+      CodeStyleAbstractPanel selectedPanel = ensureCurrentPanel().getSelectedPanel();
+      if (selectedPanel instanceof TabbedLanguageCodeStylePanel) {
+        ((TabbedLanguageCodeStylePanel)selectedPanel).showSetFrom((Component)event.getSource());
+      }
+    }
+  };
 
   @NonNls
   private static final String WAIT_CARD = "CodeStyleSchemesConfigurable.$$$.Wait.placeholder.$$$";
 
+  private final PropertiesComponent myProperties;
 
-  public CodeStyleMainPanel(CodeStyleSchemesModel model, LanguageSelector langSelector, CodeStyleSettingsPanelFactory factory) {
+  private static final String SELECTED_TAB = "settings.code.style.selected.tab";
+
+  public CodeStyleMainPanel(CodeStyleSchemesModel model, CodeStyleSettingsPanelFactory factory, boolean schemesPanelEnabled) {
     super(new BorderLayout());
     myModel = model;
     myFactory = factory;
-    mySchemesPanel = new CodeStyleSchemesPanel(model);
-    myLangSelector = langSelector;
+    mySchemesPanel = new CodeStyleSchemesPanel(model, createLinkComponent());
+    myProperties = PropertiesComponent.getInstance();
 
-    model.addListener(new CodeStyleSettingsListener(){
+    model.addListener(new CodeStyleSchemesModelListener(){
       @Override
       public void currentSchemeChanged(final Object source) {
         if (source != mySchemesPanel) {
@@ -75,39 +83,61 @@ public class CodeStyleMainPanel extends JPanel implements LanguageSelectorListen
       }
 
       @Override
-      public void currentSettingsChanged() {
-        ensureCurrentPanel().onSomethingChanged();
+      public void beforeCurrentSettingsChanged() {
+        if (!myIsDisposed) {
+          ensureCurrentPanel().onSomethingChanged();
+        }
       }
 
       @Override
-      public void usePerProjectSettingsOptionChanged() {
-        mySchemesPanel.usePerProjectSettingsOptionChanged();
+      public void afterCurrentSettingsChanged() {
+        mySchemesPanel.updateOnCurrentSettingsChange();
+        DataContext context = DataManager.getInstance().getDataContext(mySettingsPanel);
+        Settings settings = Settings.KEY.getData(context);
+        if (settings != null) {
+          settings.revalidate();
+        }
       }
 
       @Override
       public void schemeChanged(final CodeStyleScheme scheme) {
-        ensurePanel(scheme).reset();
+        ensurePanel(scheme).reset(scheme.getCodeStyleSettings());
+      }
+
+      @Override
+      public void settingsChanged(@NotNull CodeStyleSettings settings) {
+        ensureCurrentPanel().reset(settings);
       }
     });
 
-    myLangSelector.addListener(this);
-
     addWaitCard();
 
-    add(mySchemesPanel.getPanel(), BorderLayout.NORTH);
+    JPanel top = new JPanel();
+    top.setLayout(new BoxLayout(top, BoxLayout.X_AXIS));
 
-    myDetailsComponent = new DetailsComponent();
-    myDetailsComponent.setPaintBorder(false);
-    myDetailsComponent.setContent(mySettingsPanel);
-    myDetailsComponent.setText(getDisplayName());
-    myDetailsComponent.setBannerMinHeight(24);
+    if (schemesPanelEnabled) {
+      top.add(mySchemesPanel);
+    }
 
-    add(myDetailsComponent.getComponent(), BorderLayout.CENTER);
+    top.setBorder(JBUI.Borders.empty(5, 10, 0, 10));
+    add(top, BorderLayout.NORTH);
+    add(mySettingsPanel, BorderLayout.CENTER);
 
     mySchemesPanel.resetSchemesCombo();
     mySchemesPanel.onSelectedSchemeChanged();
     onCurrentSchemeChanged();
 
+  }
+
+  @NotNull
+  private JComponent createLinkComponent() {
+    JPanel linkPanel = new JPanel();
+    JLabel link = new SwingActionLink(mySetFromAction);
+    link.setVerticalAlignment(SwingConstants.BOTTOM);
+    linkPanel.setLayout(new BoxLayout(linkPanel, BoxLayout.Y_AXIS));
+    linkPanel.add(Box.createVerticalGlue());
+    linkPanel.add(link);
+    return linkPanel;
   }
 
   private void addWaitCard() {
@@ -120,55 +150,38 @@ public class CodeStyleMainPanel extends JPanel implements LanguageSelectorListen
     mySettingsPanel.add(WAIT_CARD, waitPanel);
   }
 
-  public void onCurrentSchemeChanged() {
+  private void onCurrentSchemeChanged() {
     myLayout.show(mySettingsPanel, WAIT_CARD);
-    final Runnable replaceLayout = new Runnable() {
-      @Override
-      public void run() {
-        if (!myIsDisposed) {
-          ensureCurrentPanel().onSomethingChanged();
-          String schemeName = myModel.getSelectedScheme().getName();
-          myDetailsComponent.setText(schemeName);
-          updateSetFrom();
-          myLayout.show(mySettingsPanel, schemeName);
-        }
+    final Runnable replaceLayout = () -> {
+      if (!myIsDisposed) {
+        ensureCurrentPanel().onSomethingChanged();
+        String schemeName = myModel.getSelectedScheme().getName();
+        updateSetFrom();
+        myLayout.show(mySettingsPanel, schemeName);
       }
     };
     if (ApplicationManager.getApplication().isHeadlessEnvironment()) {
       replaceLayout.run();
     } else {
-      myAlarm.cancelAllRequests();
-      final Runnable request = new Runnable() {
-        @Override
-        public void run() {
-          SwingUtilities.invokeLater(replaceLayout);
-        }
-      };
-      myAlarm.addRequest(request, 200);
+      myAlarm.cancel(false);
+      myAlarm = EdtExecutorService.getScheduledExecutorInstance().schedule(replaceLayout, 200, TimeUnit.MILLISECONDS);
     }
   }
 
   private void updateSetFrom() {
-    final CodeStyleAbstractPanel selectedPanel = ensureCurrentPanel().getSelectedPanel();
-    if (selectedPanel instanceof TabbedLanguageCodeStylePanel) {
-      myDetailsComponent.setBannerActions(new Action[]{new AbstractAction("Set from...") {
-        @Override
-        public void actionPerformed(ActionEvent e) {
-          final CodeStyleAbstractPanel selectedPanel = ensureCurrentPanel().getSelectedPanel();
-          if (selectedPanel instanceof TabbedLanguageCodeStylePanel) {
-            ((TabbedLanguageCodeStylePanel)selectedPanel).showSetFrom(e.getSource());
-          }
-        }
-      }});
-    }
+    mySetFromAction.setEnabled(ensureCurrentPanel().getSelectedPanel() instanceof TabbedLanguageCodeStylePanel);
   }
 
   public NewCodeStyleSettingsPanel[] getPanels() {
     final Collection<NewCodeStyleSettingsPanel> panels = mySettingsPanels.values();
-    return panels.toArray(new NewCodeStyleSettingsPanel[panels.size()]);
+    return panels.toArray(new NewCodeStyleSettingsPanel[0]);
   }
 
   public boolean isModified() {
+    if (myModel.isSchemeListModified()) {
+      return true;
+    }
+
     final NewCodeStyleSettingsPanel[] panels = getPanels();
     for (NewCodeStyleSettingsPanel panel : panels) {
       //if (!panel.isMultiLanguage()) mySchemesPanel.setPredefinedEnabled(false);
@@ -178,10 +191,7 @@ public class CodeStyleMainPanel extends JPanel implements LanguageSelectorListen
   }
 
   public void reset() {
-    for (NewCodeStyleSettingsPanel panel : mySettingsPanels.values()) {
-      panel.reset();
-    }
-
+    clearPanels();
     onCurrentSchemeChanged();
   }
 
@@ -192,41 +202,51 @@ public class CodeStyleMainPanel extends JPanel implements LanguageSelectorListen
     mySettingsPanels.clear();
   }
 
-  public void apply() {
-    final NewCodeStyleSettingsPanel[] panels = getPanels();
-    for (NewCodeStyleSettingsPanel panel : panels) {
+  public void apply() throws ConfigurationException {
+    for (NewCodeStyleSettingsPanel panel : getPanels()) {
       if (panel.isModified()) panel.apply();
     }
   }
 
   @NonNls
+  @Nullable
   public String getHelpTopic() {
     NewCodeStyleSettingsPanel selectedPanel = ensureCurrentPanel();
-    if (selectedPanel == null) {
-      return "reference.settingsdialog.IDE.globalcodestyle";
-    }
-    String helpTopic = selectedPanel.getHelpTopic();
-    if (helpTopic != null) {
-      return helpTopic;
-    }
-    return "";
+    return selectedPanel != null
+           ? selectedPanel.getHelpTopic()
+           : "reference.settingsdialog.IDE.globalcodestyle";
   }
 
   private NewCodeStyleSettingsPanel ensureCurrentPanel() {
     return ensurePanel(myModel.getSelectedScheme());
   }
 
+  public void showTabOnCurrentPanel(String tab) {
+    NewCodeStyleSettingsPanel selectedPanel = ensureCurrentPanel();
+    CodeStyleAbstractPanel settingsPanel = selectedPanel.getSelectedPanel();
+    if (settingsPanel instanceof TabbedLanguageCodeStylePanel) {
+      TabbedLanguageCodeStylePanel tabbedPanel = (TabbedLanguageCodeStylePanel)settingsPanel;
+      tabbedPanel.changeTab(tab);
+    }
+  }
+
   private NewCodeStyleSettingsPanel ensurePanel(final CodeStyleScheme scheme) {
     String name = scheme.getName();
     if (!mySettingsPanels.containsKey(name)) {
       NewCodeStyleSettingsPanel panel = myFactory.createPanel(scheme);
-      panel.setLanguageSelector(myLangSelector);
-      panel.reset();
+      panel.reset(myModel.getCloneSettings(scheme));
       panel.setModel(myModel);
+      CodeStyleAbstractPanel settingsPanel = panel.getSelectedPanel();
+      if (settingsPanel instanceof TabbedLanguageCodeStylePanel) {
+        TabbedLanguageCodeStylePanel tabbedPanel = (TabbedLanguageCodeStylePanel)settingsPanel;
+        tabbedPanel.setListener(this);
+        String currentTab = myProperties.getValue(getSelectedTabPropertyName(tabbedPanel));
+        if (currentTab != null) {
+          tabbedPanel.changeTab(currentTab);
+        }
+      }
       mySettingsPanels.put(name, panel);
       mySettingsPanel.add(scheme.getName(), panel);
-      mySchemesPanel.setCodeStyleSettingsPanel(panel);
-      panel.setLanguage(myLangSelector.getLanguage());
     }
 
     return mySettingsPanels.get(name);
@@ -237,9 +257,8 @@ public class CodeStyleMainPanel extends JPanel implements LanguageSelectorListen
   }
 
   public void disposeUIResources() {
-    myAlarm.cancelAllRequests();
+    myAlarm.cancel(false);
     clearPanels();
-    myLangSelector.removeListener(this);
     myIsDisposed = true;
   }
 
@@ -251,16 +270,23 @@ public class CodeStyleMainPanel extends JPanel implements LanguageSelectorListen
     return mySettingsPanels.get(scheme.getName()).isModified();
   }
 
-  @Override
-  public void languageChanged(Language lang) {
-    for (NewCodeStyleSettingsPanel panel : mySettingsPanels.values()) {
-      panel.setLanguage(lang);
-    }
-  }
-  
   public Set<String> processListOptions() {
     final CodeStyleScheme defaultScheme = CodeStyleSchemes.getInstance().getDefaultScheme();
     final NewCodeStyleSettingsPanel panel = ensurePanel(defaultScheme);
     return panel.processListOptions();
+  }
+
+  @Override
+  public void tabChanged(@NotNull TabbedLanguageCodeStylePanel source, @NotNull String tabTitle) {
+    myProperties.setValue(getSelectedTabPropertyName(source), tabTitle);
+    for (NewCodeStyleSettingsPanel panel : getPanels()) {
+      panel.tabChanged(source, tabTitle);
+    }
+  }
+
+  @NotNull
+  private static String getSelectedTabPropertyName(@NotNull TabbedLanguageCodeStylePanel panel) {
+    Language language = panel.getDefaultLanguage();
+    return language != null ? SELECTED_TAB + "." + language.getID() : SELECTED_TAB;
   }
 }

@@ -16,6 +16,7 @@
 package com.intellij.designer.designSurface;
 
 import com.intellij.designer.model.RadComponent;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Alexander Lobas
@@ -27,7 +28,9 @@ public interface FeedbackTreeLayer {
 
   void mark(RadComponent component, int feedback);
 
-  boolean isBeforeLocation(RadComponent component, int x, int y);
+  void unmark();
 
-  boolean isAfterLocation(RadComponent component, int x, int y);
+  boolean isBeforeLocation(@NotNull RadComponent component, int x, int y);
+
+  boolean isAfterLocation(@NotNull RadComponent component, int x, int y);
 }

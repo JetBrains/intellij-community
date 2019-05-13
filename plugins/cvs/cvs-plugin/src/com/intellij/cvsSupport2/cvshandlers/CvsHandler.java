@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,6 +28,7 @@ import com.intellij.openapi.progress.PerformInBackgroundOption;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.VcsException;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.netbeans.lib.cvsclient.file.ICvsFileSystem;
 import org.netbeans.lib.cvsclient.command.CommandAbortedException;
 
@@ -57,7 +58,7 @@ public abstract class CvsHandler extends CvsMessagesAdapter{
 
   public static final int UNKNOWN_COUNT = -1;
 
-  protected final List<VcsException> myErrors = new ArrayList<VcsException>();
+  protected final List<VcsException> myErrors = new ArrayList<>();
   protected final CvsCompositeListener myCompositeListener = new CvsCompositeListener();
   protected ErrorMessagesProcessor myErrorMessageProcessor = new ErrorMessagesProcessor(myErrors);
   private int myFilesToProcess = -1;
@@ -93,7 +94,7 @@ public abstract class CvsHandler extends CvsMessagesAdapter{
   }
 
   public List<VcsException> getErrorsExceptAborted() {
-    final List<VcsException> result = new ArrayList<VcsException>();
+    final List<VcsException> result = new ArrayList<>();
     for(VcsException ex: myErrorMessageProcessor.getErrors()) {
       if (!(ex.getCause() instanceof CommandAbortedException)) {
         result.add(ex);
@@ -132,7 +133,7 @@ public abstract class CvsHandler extends CvsMessagesAdapter{
 
   protected abstract int getFilesToProcessCount();
 
-  public void connectToOutputView(Editor editor, Project project) {
+  public void connectToOutputView(@NotNull Editor editor, Project project) {
     myMessagesConsole.connectToOutputView(editor, project);
   }
 

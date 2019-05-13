@@ -15,9 +15,7 @@
  */
 package com.intellij.ide.favoritesTreeView;
 
-import com.intellij.ide.SelectInContext;
-import com.intellij.ide.SelectInTarget;
-import com.intellij.ide.actions.SelectInContextImpl;
+import com.intellij.ide.FileEditorSelectInContext;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.project.Project;
@@ -25,6 +23,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.ui.AutoScrollFromSourceHandler;
+import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -34,7 +33,7 @@ public class FavoritesAutoscrollFromSourceHandler extends AutoScrollFromSourceHa
   private final FavoritesViewSelectInTarget mySelectInTarget = new FavoritesViewSelectInTarget(myProject);
 
   public FavoritesAutoscrollFromSourceHandler(@NotNull Project project, @NotNull FavoritesViewTreeBuilder builder) {
-    super(project, builder.getTree(), builder);
+    super(project, ObjectUtils.assertNotNull(builder.getTree()), builder);
   }
 
   @Override
@@ -49,19 +48,12 @@ public class FavoritesAutoscrollFromSourceHandler extends AutoScrollFromSourceHa
 
   @Override
   protected void selectElementFromEditor(@NotNull FileEditor editor) {
-    final VirtualFile file = FileEditorManagerEx.getInstanceEx(myProject).getFile(editor);
-    if (file != null) {
-      final PsiFile psiFile = PsiManager.getInstance(myProject).findFile(file);
-      if (psiFile != null) {
-        final SelectInTarget target = mySelectInTarget;
-        if (target != null) {
-          final SelectInContext selectInContext = SelectInContextImpl.createEditorContext(myProject, editor);
-
-          if (target.canSelect(selectInContext)) {
-            target.selectIn(selectInContext, false);
-          }
-        }
-      }
+    VirtualFile file = FileEditorManagerEx.getInstanceEx(myProject).getFile(editor);
+    PsiFile psiFile = file == null ? null : PsiManager.getInstance(myProject).findFile(file);
+    if (psiFile == null) return;
+    FileEditorSelectInContext context = new FileEditorSelectInContext(editor, psiFile);
+    if (mySelectInTarget.canSelect(context)) {
+      mySelectInTarget.selectIn(context, false);
     }
   }
 }

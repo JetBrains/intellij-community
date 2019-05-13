@@ -1,11 +1,21 @@
 package com.siyeh.ig.performance;
 
-import com.siyeh.ig.IGInspectionTestCase;
+import com.intellij.codeInspection.InspectionProfileEntry;
+import com.siyeh.ig.LightInspectionTestCase;
+import org.jetbrains.annotations.Nullable;
 
-public class MapReplaceableByEnumMapInspectionTest extends IGInspectionTestCase {
+/**
+ * @author Bas Leijdekkers
+ */
+public class MapReplaceableByEnumMapInspectionTest extends LightInspectionTestCase {
 
-  public void test() throws Exception {
-    doTest("com/siyeh/igtest/performance/map_replaceable_by_enum_map",
-           new MapReplaceableByEnumMapInspection());
+  public void testMapReplaceableByEnumMap() {
+    doTest();
+  }
+
+  @Nullable
+  @Override
+  protected InspectionProfileEntry getInspection() {
+    return new MapReplaceableByEnumMapInspection();
   }
 }

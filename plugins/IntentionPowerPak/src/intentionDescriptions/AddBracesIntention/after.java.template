@@ -1,8 +1,0 @@
-public class X {
-  int f(boolean b) {
-    if (b) {
-      return 1;
-    }
-    return 0;
-  }
-}

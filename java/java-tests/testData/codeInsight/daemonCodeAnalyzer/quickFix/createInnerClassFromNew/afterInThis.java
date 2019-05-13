@@ -1,4 +1,4 @@
-// "Create Inner Class 'Generic'" "true"
+// "Create inner class 'Generic'" "true"
 class Test {
   Test() {
     this (new Generic<String> ());

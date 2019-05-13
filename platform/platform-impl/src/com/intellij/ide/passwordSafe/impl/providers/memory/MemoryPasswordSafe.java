@@ -1,27 +1,20 @@
-/*
- * Copyright 2000-2010 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.passwordSafe.impl.providers.memory;
 
-import com.intellij.ide.passwordSafe.impl.providers.BasePasswordSafeProvider;
+import com.intellij.credentialStore.CredentialAttributes;
+import com.intellij.credentialStore.Credentials;
+import com.intellij.credentialStore.OneTimeString;
+import com.intellij.ide.passwordSafe.PasswordStorage;
+import com.intellij.ide.passwordSafe.impl.PasswordSafeTimed;
 import com.intellij.ide.passwordSafe.impl.providers.ByteArrayWrapper;
 import com.intellij.ide.passwordSafe.impl.providers.EncryptionUtil;
-import com.intellij.openapi.project.Project;
-import com.intellij.util.containers.HashMap;
+import com.intellij.openapi.util.registry.Registry;
+import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.security.SecureRandom;
+import java.util.Collections;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -30,22 +23,34 @@ import java.util.concurrent.atomic.AtomicReference;
  * so all passwords are forgotten after application exit. Some efforts are done to complicate retrieving passwords
  * from page file. However the passwords could be still retrieved from the memory using debugger or full memory dump.
  */
-public class MemoryPasswordSafe extends BasePasswordSafeProvider {
+@Deprecated
+// used in https://github.com/groboclown/p4ic4idea, cannot be deleted
+public class MemoryPasswordSafe implements PasswordStorage {
   /**
    * The key to use to encrypt data
    */
-  private transient final AtomicReference<byte[]> key = new AtomicReference<byte[]>();
+  private final transient AtomicReference<byte[]> key = new AtomicReference<>();
   /**
    * The password database
    */
-  private transient final Map<ByteArrayWrapper, byte[]> database = new HashMap<ByteArrayWrapper, byte[]>();
+  private final transient PasswordSafeTimed<Map<ByteArrayWrapper, byte[]>> database = new PasswordSafeTimed<Map<ByteArrayWrapper, byte[]>>() {
+    @Override
+    protected Map<ByteArrayWrapper, byte[]> compute() {
+      return Collections.synchronizedMap(ContainerUtil.newHashMap());
+    }
 
-  /**
-   * @param project the project to use
-   * @return the secret key used by provider
-   */
-  @Override
-  protected byte[] key(Project project) {
+    @Override
+    protected int getMinutesToLive() {
+      return MemoryPasswordSafe.this.getMinutesToLive();
+    }
+  };
+
+  protected int getMinutesToLive() {
+    return Registry.intValue("passwordSafe.memorySafe.ttl");
+  }
+
+  @NotNull
+  protected byte[] key() {
     if (key.get() == null) {
       byte[] rnd = new byte[EncryptionUtil.SECRET_KEY_SIZE_BYTES * 16];
       new SecureRandom().nextBytes(rnd);
@@ -54,57 +59,39 @@ public class MemoryPasswordSafe extends BasePasswordSafeProvider {
     return key.get();
   }
 
-  /**
-   * {@inheritDoc}
-   */
-  @Override
-  protected byte[] getEncryptedPassword(byte[] key) {
-    synchronized (database) {
-      return database.get(new ByteArrayWrapper(key));
-    }
+  protected byte[] getEncryptedPassword(@NotNull byte[] key) {
+    return database.get().get(new ByteArrayWrapper(key));
   }
 
-  /**
-   * {@inheritDoc}
-   */
-  @Override
   protected void removeEncryptedPassword(byte[] key) {
-    synchronized (database) {
-      database.remove(new ByteArrayWrapper(key));
-    }
+    database.get().remove(new ByteArrayWrapper(key));
   }
 
-  /**
-   * {@inheritDoc}
-   */
-  @Override
   protected void storeEncryptedPassword(byte[] key, byte[] encryptedPassword) {
-    synchronized (database) {
-      database.put(new ByteArrayWrapper(key), encryptedPassword);
-    }
+    database.get().put(new ByteArrayWrapper(key), encryptedPassword);
   }
 
-  /**
-   * {@inheritDoc}
-   */
-  @Override
-  public boolean isSupported() {
-    return true;
+  public void clear() {
+    database.get().clear();
   }
 
-  /**
-   * {@inheritDoc}
-   */
-  @Override
-  public String getDescription() {
-    return "Memory-based password safe provider. The passwords are stored only for the duration of IDEA process.";
-  }
+   @Override
+   @Nullable
+   public Credentials get(@NotNull CredentialAttributes attributes) {
+     byte[] masterKey = key();
+     byte[] encryptedPassword = getEncryptedPassword(EncryptionUtil.encryptKey(masterKey, EncryptionUtil.rawKey(attributes)));
+     OneTimeString password = encryptedPassword == null ? null : EncryptionUtil.decryptText(masterKey, encryptedPassword);
+     return password == null ? null : new Credentials(attributes.getUserName(), password);
+   }
 
-  /**
-   * {@inheritDoc}
-   */
-  @Override
-  public String getName() {
-    return "Memory PasswordSafe";
-  }
+   @Override
+   public final void set(@NotNull CredentialAttributes attributes, @Nullable Credentials value) {
+     byte[] key = EncryptionUtil.encryptKey(key(), EncryptionUtil.rawKey(attributes));
+     if (value == null || value.getPassword() == null) {
+       removeEncryptedPassword(key);
+     }
+     else {
+       storeEncryptedPassword(key, EncryptionUtil.encryptText(key(), value.getPassword()));
+     }
+   }
 }

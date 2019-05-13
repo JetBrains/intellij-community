@@ -15,35 +15,48 @@
  */
 package com.intellij.tasks;
 
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.Presentation;
-import com.intellij.tasks.actions.SwitchTaskCombo;
+import com.intellij.ide.ui.customization.CustomActionsSchema;
+import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
+import com.intellij.tasks.actions.SwitchTaskAction;
 import com.intellij.tasks.config.TaskSettings;
-import com.intellij.testFramework.PlatformTestCase;
+import com.intellij.tasks.impl.LocalTaskImpl;
 import com.intellij.testFramework.TestActionEvent;
 import com.intellij.testFramework.fixtures.CodeInsightFixtureTestCase;
 
 /**
  * @author Dmitry Avdeev
- *         Date: 3/23/12
  */
 public class TaskUiTest extends CodeInsightFixtureTestCase {
 
-  public void testTaskComboVisible() throws Exception {
+  public void testTaskComboVisible() {
+
+    SwitchTaskAction combo = null;
+    ActionGroup group = (ActionGroup)CustomActionsSchema.getInstance().getCorrectedAction(IdeActions.GROUP_MAIN_TOOLBAR);
+    ActionToolbarImpl toolbar = (ActionToolbarImpl)ActionManager.getInstance().createActionToolbar(ActionPlaces.MAIN_TOOLBAR, group, true);
+    AnAction[] children = group.getChildren(new TestActionEvent());
+    for (AnAction child : children) {
+      if (child instanceof ActionGroup) {
+        AnAction[] actions = ((ActionGroup)child).getChildren(new TestActionEvent());
+        for (AnAction action : actions) {
+          if (action instanceof SwitchTaskAction) {
+            combo = (SwitchTaskAction)action;
+          }
+        }
+      }
+    }
 
     TaskManager manager = TaskManager.getManager(getProject());
-    SwitchTaskCombo combo = new SwitchTaskCombo();
-
     LocalTask defaultTask = manager.getActiveTask();
     assertTrue(defaultTask.isDefault());
     assertEquals(defaultTask.getCreated(), defaultTask.getUpdated());
 
-    Presentation presentation = doTest(combo);
+    Presentation presentation = doTest(combo, toolbar);
     assertFalse(presentation.isVisible());
 
     try {
       TaskSettings.getInstance().ALWAYS_DISPLAY_COMBO = true;
-      presentation = doTest(combo);
+      presentation = doTest(combo, toolbar);
       assertTrue(presentation.isVisible());
     }
     finally {
@@ -51,27 +64,38 @@ public class TaskUiTest extends CodeInsightFixtureTestCase {
     }
 
     LocalTask task = manager.createLocalTask("test");
-    manager.activateTask(task, false, false);
+    manager.activateTask(task, false);
 
-    presentation = doTest(combo);
+    presentation = doTest(combo, toolbar);
     assertTrue(presentation.isVisible());
 
-    manager.activateTask(defaultTask, false, false);
+    manager.activateTask(defaultTask, false);
     task = manager.getActiveTask();
     assertTrue(task.isDefault());
 
-    presentation = doTest(combo);
-    assertTrue(presentation.isVisible());
+    presentation = doTest(combo, toolbar);
+    if (!presentation.isVisible()) {
+      LocalTask activeTask = manager.getActiveTask();
+      System.out.println(activeTask);
+      System.out.println(activeTask.getCreated());
+      System.out.println(activeTask.getUpdated());
+      fail();
+    }
   }
 
-  private static Presentation doTest(AnAction action) {
-    TestActionEvent event = new TestActionEvent(action);
+  public void testUnderscore() {
+    String summary = "foo_bar";
+    TaskManager.getManager(getProject()).activateTask(new LocalTaskImpl("", summary), false);
+    TestActionEvent event = new TestActionEvent();
+    event.IsFromActionToolbar = true;
+    new SwitchTaskAction().update(event);
+    assertEquals(summary, event.getPresentation().getText());
+  }
+
+  private static Presentation doTest(AnAction action, ActionToolbarImpl toolbar) {
+    TestActionEvent event = new TestActionEvent(toolbar.getPresentation(action));
+    event.IsFromActionToolbar = true;
     action.update(event);
     return event.getPresentation();
-  }
-
-  @SuppressWarnings("JUnitTestCaseWithNonTrivialConstructors")
-  public TaskUiTest() {
-    PlatformTestCase.initPlatformLangPrefix();
   }
 }

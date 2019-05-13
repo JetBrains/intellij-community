@@ -15,8 +15,7 @@
  */
 package com.intellij.openapi.roots.impl.libraries;
 
-import com.intellij.openapi.fileChooser.FileChooser;
-import com.intellij.openapi.fileChooser.FileChooserDescriptor;
+import com.intellij.openapi.fileChooser.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.libraries.*;
 import com.intellij.openapi.roots.libraries.ui.LibraryRootsComponentDescriptor;
@@ -58,7 +57,7 @@ public class LibraryTypeServiceImpl extends LibraryTypeService {
     return doCreate(type, name, roots);
   }
 
-  private static <P extends LibraryProperties<?>> NewLibraryConfiguration doCreate(final LibraryType<P> type, final String name, final List<OrderRoot> roots) {
+  private static <P extends LibraryProperties<?>> NewLibraryConfiguration doCreate(final LibraryType<P> type, final String name, final List<? extends OrderRoot> roots) {
     return new NewLibraryConfiguration(name, type, type != null ? type.getKind().createDefaultProperties() : null) {
       @Override
       public void addRoots(@NotNull LibraryEditor editor) {
@@ -74,7 +73,7 @@ public class LibraryTypeServiceImpl extends LibraryTypeService {
     return DEFAULT_LIBRARY_NAME;
   }
 
-  public static String suggestLibraryName(@NotNull List<OrderRoot> roots) {
+  public static String suggestLibraryName(@NotNull List<? extends OrderRoot> roots) {
     if (roots.size() >= 1) {
       return FileUtil.getNameWithoutExtension(PathUtil.getFileName(roots.get(0).getFile().getPath()));
     }

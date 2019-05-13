@@ -1,0 +1,5 @@
+<idea-plugin url="https://www.jetbrains.com/idea">
+  <extensions defaultExtensionNs="com.intellij">
+    <junitListener implementation="com.intellij.coverage.listeners.IDEAJUnitCoverageListener"/>
+  </extensions>
+</idea-plugin>

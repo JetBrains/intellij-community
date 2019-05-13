@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,19 +24,20 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
 public class LightMemberReference extends LightElement implements PsiJavaCodeReferenceElement {
-  private final PsiMember myRefMember;
+  @NotNull private final PsiMember myRefMember;
   private final PsiSubstitutor mySubstitutor;
 
   private LightReferenceParameterList myParameterList;
 
-  public LightMemberReference(PsiManager manager, PsiMember refClass, PsiSubstitutor substitutor) {
+  public LightMemberReference(@NotNull PsiManager manager, @NotNull PsiMember member, PsiSubstitutor substitutor) {
     super(manager, JavaLanguage.INSTANCE);
-    myRefMember = refClass;
+    myRefMember = member;
 
     mySubstitutor = substitutor;
   }
 
   @Override
+  @NotNull
   public PsiElement resolve() {
       return myRefMember;
   }
@@ -61,7 +62,7 @@ public class LightMemberReference extends LightElement implements PsiJavaCodeRef
   }
 
   @Override
-  public void processVariants(PsiScopeProcessor processor){
+  public void processVariants(@NotNull PsiScopeProcessor processor){
     throw new RuntimeException("Variants are not available for light references");
   }
 
@@ -113,7 +114,7 @@ public class LightMemberReference extends LightElement implements PsiJavaCodeRef
     PsiType[] types = getTypeParameters();
     if (types.length == 0) return name;
 
-    StringBuffer buf = new StringBuffer();
+    StringBuilder buf = new StringBuilder();
     buf.append(name);
     buf.append('<');
     for (int i = 0; i < types.length; i++) {
@@ -131,7 +132,7 @@ public class LightMemberReference extends LightElement implements PsiJavaCodeRef
   }
 
   @Override
-  public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {
+  public PsiElement handleElementRename(@NotNull String newElementName) throws IncorrectOperationException {
     //TODO?
     throw new IncorrectOperationException();
   }
@@ -152,12 +153,13 @@ public class LightMemberReference extends LightElement implements PsiJavaCodeRef
     }
   }
 
+  @Override
   public String toString() {
     return "LightClassReference:" + myRefMember.getName();
   }
 
   @Override
-  public boolean isReferenceTo(PsiElement element) {
+  public boolean isReferenceTo(@NotNull PsiElement element) {
     return element instanceof PsiClass && element.getManager().areElementsEquivalent(resolve(), element);
   }
 
@@ -172,11 +174,13 @@ public class LightMemberReference extends LightElement implements PsiJavaCodeRef
     return false;
   }
 
+  @NotNull
   @Override
   public TextRange getRangeInElement() {
     return new TextRange(0, getTextLength());
   }
 
+  @NotNull
   @Override
   public PsiElement getElement() {
     return this;

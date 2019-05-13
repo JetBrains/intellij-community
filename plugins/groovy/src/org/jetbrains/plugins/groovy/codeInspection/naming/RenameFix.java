@@ -16,20 +16,18 @@
 package org.jetbrains.plugins.groovy.codeInspection.naming;
 
 import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.ide.DataManager;
-import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.codeInspection.RefactoringQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.RefactoringActionHandlerFactory;
 import com.intellij.refactoring.RefactoringFactory;
-import com.intellij.refactoring.RenameRefactoring;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.codeInspection.GroovyFix;
 
-class RenameFix extends GroovyFix {
+public class RenameFix extends GroovyFix implements RefactoringQuickFix {
 
   private final String targetName;
 
@@ -43,6 +41,7 @@ class RenameFix extends GroovyFix {
     this.targetName = targetName;
   }
 
+  @Override
   @NotNull
   public String getName() {
     if (targetName == null) {
@@ -52,34 +51,28 @@ class RenameFix extends GroovyFix {
     }
   }
 
-  public void doFix(final Project project, ProblemDescriptor descriptor) {
-    final PsiElement nameIdentifier = descriptor.getPsiElement();
-    final PsiElement elementToRename = nameIdentifier.getParent();
+  @Nls
+  @NotNull
+  @Override
+  public String getFamilyName() {
+    return "Rename";
+  }
+
+  @Override
+  public void doFix(@NotNull final Project project, @NotNull ProblemDescriptor descriptor) {
+    final PsiElement element = descriptor.getPsiElement();
     if (targetName == null) {
-      final RefactoringActionHandlerFactory factory =
-          RefactoringActionHandlerFactory.getInstance();
-      final RefactoringActionHandler renameHandler =
-          factory.createRenameHandler();
-      final DataManager dataManager = DataManager.getInstance();
-      final DataContext dataContext = dataManager.getDataContext();
-      Runnable runnable = new Runnable() {
-        public void run() {
-          renameHandler.invoke(project, new PsiElement[]{elementToRename},
-                               dataContext);
-        }
-      };
-      if (ApplicationManager.getApplication().isUnitTestMode()) {
-        runnable.run();
-      }
-      else {
-        ApplicationManager.getApplication().invokeLater(runnable, project.getDisposed());
-      }
-    } else {
-      final RefactoringFactory factory =
-          RefactoringFactory.getInstance(project);
-      final RenameRefactoring renameRefactoring =
-          factory.createRename(elementToRename, targetName);
-      renameRefactoring.run();
+      doFix(element);
     }
+    else {
+      final PsiElement elementToRename = element.getParent();
+      RefactoringFactory.getInstance(project).createRename(elementToRename, targetName).run();
+    }
+  }
+
+  @NotNull
+  @Override
+  public RefactoringActionHandler getHandler() {
+    return RefactoringActionHandlerFactory.getInstance().createRenameHandler();
   }
 }

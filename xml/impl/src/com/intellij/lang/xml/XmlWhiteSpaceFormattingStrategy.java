@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,7 +31,6 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Denis Zhdanov
- * @since 12/6/11 4:51 PM
  */
 public class XmlWhiteSpaceFormattingStrategy extends WhiteSpaceFormattingStrategyAdapter {
 
@@ -78,6 +77,7 @@ public class XmlWhiteSpaceFormattingStrategy extends WhiteSpaceFormattingStrateg
     return false;
   }
 
+  @Override
   public boolean addWhitespace(@NotNull final ASTNode treePrev, @NotNull final LeafElement whiteSpaceElement) {
     if (isInsideTagBody(treePrev)) {
       addWhitespaceToTagBody(treePrev, whiteSpaceElement);
@@ -87,6 +87,7 @@ public class XmlWhiteSpaceFormattingStrategy extends WhiteSpaceFormattingStrateg
     return false;
   }
 
+  @Override
   public boolean containsWhitespacesOnly(@NotNull final ASTNode node) {
     return (node.getElementType() == XmlTokenType.XML_DATA_CHARACTERS) &&
            node.getText().trim().length() == 0;

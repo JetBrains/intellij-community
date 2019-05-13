@@ -1,82 +1,68 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.command.impl;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.undo.DocumentReference;
 import com.intellij.openapi.command.undo.DocumentReferenceManager;
-import com.intellij.openapi.components.ApplicationComponent;
+import com.intellij.openapi.components.BaseComponent;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileAdapter;
 import com.intellij.openapi.vfs.VirtualFileEvent;
+import com.intellij.openapi.vfs.VirtualFileListener;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
-import com.intellij.util.containers.WeakKeyWeakValueHashMap;
-import com.intellij.util.containers.WeakValueHashMap;
+import com.intellij.reference.SoftReference;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.NotNullList;
 import com.intellij.util.io.fs.FilePath;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.TestOnly;
 
-import java.util.ArrayList;
+import java.lang.ref.Reference;
+import java.lang.ref.WeakReference;
 import java.util.List;
 import java.util.Map;
 
-public class DocumentReferenceManagerImpl extends DocumentReferenceManager implements ApplicationComponent {
+public class DocumentReferenceManagerImpl extends DocumentReferenceManager implements BaseComponent {
   private static final Key<List<VirtualFile>> DELETED_FILES = Key.create(DocumentReferenceManagerImpl.class.getName() + ".DELETED_FILES");
 
-  private final Map<Document, DocumentReference> myDocToRef = new WeakKeyWeakValueHashMap<Document, DocumentReference>();
-  private final Map<VirtualFile, DocumentReference> myFileToRef = new WeakKeyWeakValueHashMap<VirtualFile, DocumentReference>();
-  private final Map<FilePath, DocumentReference> myDeletedFilePathToRef = new WeakValueHashMap<FilePath, DocumentReference>();
+  private final Map<Document, DocumentReference> myDocToRef = ContainerUtil.createWeakKeyWeakValueMap();
 
-  @Override
-  @NotNull
-  public String getComponentName() {
-    return getClass().getSimpleName();
-  }
+  private static final Key<Reference<DocumentReference>> FILE_TO_REF_KEY = Key.create("FILE_TO_REF_KEY");
+  private static final Key<DocumentReference> FILE_TO_STRONG_REF_KEY = Key.create("FILE_TO_STRONG_REF_KEY");
+  private final Map<FilePath, DocumentReference> myDeletedFilePathToRef = ContainerUtil.createWeakValueMap();
 
   @Override
   public void initComponent() {
-    VirtualFileManager.getInstance().addVirtualFileListener(new VirtualFileAdapter() {
+    VirtualFileManager.getInstance().addVirtualFileListener(new VirtualFileListener() {
       @Override
-      public void fileCreated(VirtualFileEvent event) {
+      public void fileCreated(@NotNull VirtualFileEvent event) {
         VirtualFile f = event.getFile();
         DocumentReference ref = myDeletedFilePathToRef.remove(new FilePath(f.getUrl()));
         if (ref != null) {
-          myFileToRef.put(f, ref);
+          f.putUserData(FILE_TO_REF_KEY, new WeakReference<>(ref));
           ((DocumentReferenceByVirtualFile)ref).update(f);
         }
       }
 
       @Override
-      public void beforeFileDeletion(VirtualFileEvent event) {
+      public void beforeFileDeletion(@NotNull VirtualFileEvent event) {
         VirtualFile f = event.getFile();
-        f.putUserData(DELETED_FILES, collectDeletedFiles(f, new ArrayList<VirtualFile>()));
+        f.putUserData(DELETED_FILES, collectDeletedFiles(f, new NotNullList<>()));
       }
 
       @Override
-      public void fileDeleted(VirtualFileEvent event) {
+      public void fileDeleted(@NotNull VirtualFileEvent event) {
         VirtualFile f = event.getFile();
         List<VirtualFile> files = f.getUserData(DELETED_FILES);
         f.putUserData(DELETED_FILES, null);
 
         assert files != null : f;
         for (VirtualFile each : files) {
-          DocumentReference ref = myFileToRef.remove(each);
+          DocumentReference ref = SoftReference.dereference(each.getUserData(FILE_TO_REF_KEY));
+          each.putUserData(FILE_TO_REF_KEY, null);
           if (ref != null) {
             myDeletedFilePathToRef.put(new FilePath(each.getUrl()), ref);
           }
@@ -85,7 +71,8 @@ public class DocumentReferenceManagerImpl extends DocumentReferenceManager imple
     });
   }
 
-  private static List<VirtualFile> collectDeletedFiles(VirtualFile f, List<VirtualFile> files) {
+  @NotNull
+  private static List<VirtualFile> collectDeletedFiles(@NotNull VirtualFile f, @NotNull List<VirtualFile> files) {
     if (!(f instanceof NewVirtualFile)) return files;
 
     if (!f.isDirectory()) {
@@ -97,10 +84,6 @@ public class DocumentReferenceManagerImpl extends DocumentReferenceManager imple
       }
     }
     return files;
-  }
-
-  @Override
-  public void disposeComponent() {
   }
 
   @NotNull
@@ -126,12 +109,21 @@ public class DocumentReferenceManagerImpl extends DocumentReferenceManager imple
   @Override
   public DocumentReference create(@NotNull VirtualFile file) {
     assertInDispatchThread();
+
+    if (!file.isInLocalFileSystem()) { // we treat local files differently from non local because we can undo their deletion
+      DocumentReference reference = file.getUserData(FILE_TO_STRONG_REF_KEY);
+      if (reference == null) {
+        file.putUserData(FILE_TO_STRONG_REF_KEY, reference = new DocumentReferenceByNonlocalVirtualFile(file));
+      }
+      return reference;
+    }
+
     assert file.isValid() : "file is invalid: " + file;
 
-    DocumentReference result = myFileToRef.get(file);
+    DocumentReference result = SoftReference.dereference(file.getUserData(FILE_TO_REF_KEY));
     if (result == null) {
       result = new DocumentReferenceByVirtualFile(file);
-      myFileToRef.put(file, result);
+      file.putUserData(FILE_TO_REF_KEY, new WeakReference<>(result));
     }
     return result;
   }
@@ -139,4 +131,11 @@ public class DocumentReferenceManagerImpl extends DocumentReferenceManager imple
   private static void assertInDispatchThread() {
     ApplicationManager.getApplication().assertIsDispatchThread();
   }
+
+  @TestOnly
+  public void cleanupForNextTest() {
+    myDeletedFilePathToRef.clear();
+    myDocToRef.clear();
+  }
+
 }

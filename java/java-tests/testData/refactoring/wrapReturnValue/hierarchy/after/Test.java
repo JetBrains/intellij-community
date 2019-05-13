@@ -1,5 +1,5 @@
 abstract class Test {
-  abstract Wrapper foo();
+    abstract Wrapper foo();
 
     public class Wrapper {
         private final String value;
@@ -8,10 +8,8 @@ abstract class Test {
             this.value = value;
         }
 
-
         public String getValue() {
             return value;
         }
-
     }
 }

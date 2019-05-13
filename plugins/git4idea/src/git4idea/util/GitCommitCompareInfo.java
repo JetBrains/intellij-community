@@ -1,82 +1,61 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.util;
 
-import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.dvcs.util.CommitCompareInfo;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.changes.Change;
-import git4idea.history.browser.GitCommit;
+import git4idea.GitCommit;
 import git4idea.repo.GitRepository;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.List;
 
-/**
- * @author Kirill Likhodedov
- */
-public class GitCommitCompareInfo {
-  
-  private static final Logger LOG = Logger.getInstance(GitCommitCompareInfo.class);
-  
-  private final Map<GitRepository, Pair<List<GitCommit>, List<GitCommit>>> myInfo = new HashMap<GitRepository, Pair<List<GitCommit>, List<GitCommit>>>();
-  private final Map<GitRepository, Collection<Change>> myTotalDiff = new HashMap<GitRepository, Collection<Change>>();
+@Deprecated
+public class GitCommitCompareInfo extends CommitCompareInfo {
+  public GitCommitCompareInfo() {
+  }
+
+  public GitCommitCompareInfo(@NotNull InfoType infoType) {
+    super(infoType.getDelegate());
+  }
 
   public void put(@NotNull GitRepository repository, @NotNull Pair<List<GitCommit>, List<GitCommit>> commits) {
-    myInfo.put(repository, commits);
+    super.put(repository, commits.first, commits.second);
   }
 
   public void put(@NotNull GitRepository repository, @NotNull Collection<Change> totalDiff) {
-    myTotalDiff.put(repository, totalDiff);
+    super.putTotalDiff(repository, totalDiff);
   }
 
+  @SuppressWarnings("MethodOverloadsMethodOfSuperclass")
   @NotNull
   public List<GitCommit> getHeadToBranchCommits(@NotNull GitRepository repo) {
-    return getCompareInfo(repo).getFirst();
+    //noinspection unchecked
+    return (List)super.getHeadToBranchCommits(repo);
   }
-  
+
+  @SuppressWarnings("MethodOverloadsMethodOfSuperclass")
   @NotNull
   public List<GitCommit> getBranchToHeadCommits(@NotNull GitRepository repo) {
-    return getCompareInfo(repo).getSecond();
+    //noinspection unchecked
+    return (List)super.getBranchToHeadCommits(repo);
   }
 
-  @NotNull
-  private Pair<List<GitCommit>, List<GitCommit>> getCompareInfo(@NotNull GitRepository repo) {
-    Pair<List<GitCommit>, List<GitCommit>> pair = myInfo.get(repo);
-    if (pair == null) {
-      LOG.error("Compare info not found for repository " + repo);
-      return Pair.create(Collections.<GitCommit>emptyList(), Collections.<GitCommit>emptyList());
+  public enum InfoType {
+    BOTH(CommitCompareInfo.InfoType.BOTH),
+    HEAD_TO_BRANCH(CommitCompareInfo.InfoType.HEAD_TO_BRANCH),
+    BRANCH_TO_HEAD(CommitCompareInfo.InfoType.BRANCH_TO_HEAD);
+
+    @NotNull private final CommitCompareInfo.InfoType myDelegate;
+
+    InfoType(@NotNull CommitCompareInfo.InfoType delegate) {
+      myDelegate = delegate;
     }
-    return pair;
-  }
 
-  @NotNull
-  public Collection<GitRepository> getRepositories() {
-    return myInfo.keySet();
-  }
-
-  public boolean isEmpty() {
-    return myInfo.isEmpty();
-  }
-
-  @NotNull
-  public List<Change> getTotalDiff() {
-    List<Change> changes = new ArrayList<Change>();
-    for (Collection<Change> changeCollection : myTotalDiff.values()) {
-      changes.addAll(changeCollection);
+    @NotNull
+    public CommitCompareInfo.InfoType getDelegate() {
+      return myDelegate;
     }
-    return changes;
   }
 }

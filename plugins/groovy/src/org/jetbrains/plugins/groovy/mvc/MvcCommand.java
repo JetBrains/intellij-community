@@ -1,6 +1,8 @@
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.mvc;
 
 import com.intellij.execution.configurations.ParametersList;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -13,16 +15,20 @@ public class MvcCommand {
 
   public static final Collection<String> ourEnvironments = Arrays.asList("prod", "test", "dev");
 
-  private String myEnv;
-  private String myCommand;
+  private final Map<String, String> myEnvVariables = ContainerUtil.newHashMap();
+  private boolean myPassParentEnvs = true;
 
-  private final ArrayList<String> myArgs = new ArrayList<String>();
-  private final ArrayList<String> myProperties = new ArrayList<String>();
+  private @Nullable String myEnv;
+  private @Nullable String myCommand;
+  private @Nullable String myVmOptions;
+
+  private final ArrayList<String> myArgs = new ArrayList<>();
+  private final ArrayList<String> myProperties = new ArrayList<>();
 
   public MvcCommand() {
   }
 
-  public MvcCommand(String command, String ... args) {
+  public MvcCommand(@Nullable String command, String... args) {
     myCommand = command;
     Collections.addAll(myArgs, args);
   }
@@ -41,18 +47,50 @@ public class MvcCommand {
     return myCommand;
   }
 
-  public void setCommand(@Nullable String command) {
-    myCommand = command;
+  @Nullable
+  public String getVmOptions() {
+    return myVmOptions;
+  }
+
+  public MvcCommand setVmOptions(@Nullable String vmOptions) {
+    myVmOptions = vmOptions;
+    return this;
   }
 
   /**
-   * Returns MODIFIABLE list of arguments
+   * @return MODIFIABLE map of environment variables
+   */
+  @NotNull
+  public Map<String, String> getEnvVariables() {
+    return myEnvVariables;
+  }
+
+  public MvcCommand setEnvVariables(@NotNull Map<String, String> envVariables) {
+    if (myEnvVariables != envVariables) {
+      myEnvVariables.clear();
+      myEnvVariables.putAll(envVariables);
+    }
+    return this;
+  }
+
+  public boolean isPassParentEnvs() {
+    return myPassParentEnvs;
+  }
+
+  public MvcCommand setPassParentEnvs(boolean passParentEnv) {
+    myPassParentEnvs = passParentEnv;
+    return this;
+  }
+
+
+  /**
+   * @return MODIFIABLE list of arguments
    */
   public ArrayList<String> getArgs() {
     return myArgs;
   }
 
-  public void setArgs(List<String> args) {
+  public void setArgs(@NotNull List<String> args) {
     if (args == myArgs) return;
 
     myArgs.clear();
@@ -60,13 +98,13 @@ public class MvcCommand {
   }
 
   /**
-   * Returns MODIFIABLE list of system properties definition written before command (e.g. -Dgrails.port=9090 run-app)
+   * @return MODIFIABLE list of system properties definition written before command (e.g. -Dgrails.port=9090 run-app)
    */
   public ArrayList<String> getProperties() {
     return myProperties;
   }
 
-  public void setProperties(List<String> properties) {
+  public void setProperties(@NotNull List<String> properties) {
     if (myProperties == properties) return;
 
     myProperties.clear();

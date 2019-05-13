@@ -1,26 +1,13 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.uiDesigner;
 
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.ClassUtil;
 import com.intellij.psi.util.InheritanceUtil;
-import com.intellij.psi.util.PropertyUtil;
+import com.intellij.psi.util.PropertyUtilBase;
 import com.intellij.uiDesigner.lw.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -39,9 +26,10 @@ public final class PsiPropertiesProvider implements PropertiesProvider {
 
   public PsiPropertiesProvider(@NotNull final Module module) {
     myModule = module;
-    myCache = new HashMap<String, HashMap>();
+    myCache = new HashMap<>();
   }
 
+  @Override
   @Nullable
   public HashMap getLwProperties(final String className) {
     if (myCache.containsKey(className)) {
@@ -61,20 +49,21 @@ public final class PsiPropertiesProvider implements PropertiesProvider {
     for (final PsiMethod method : methods) {
       // it's a setter candidate.. try to find getter
 
-      if (!PropertyUtil.isSimplePropertySetter(method)) {
+      if (!PropertyUtilBase.isSimplePropertySetter(method)) {
         continue;
       }
-      final String name = PropertyUtil.getPropertyName(method);
+      final String name = PropertyUtilBase.getPropertyName(method);
       if (name == null) {
         throw new IllegalStateException();
       }
-      final PsiMethod getter = PropertyUtil.findPropertyGetter(aClass, name, false, true);
+      final PsiMethod getter = PropertyUtilBase.findPropertyGetter(aClass, name, false, true);
       if (getter == null) {
         continue;
       }
 
       final PsiType type = getter.getReturnType();
-      final String propertyClassName = type.getCanonicalText();
+      String propertyClassName =
+        StringUtil.defaultIfEmpty(StringUtil.substringBefore(type.getCanonicalText(), "<"), type.getCanonicalText());
 
       LwIntrospectedProperty property = CompiledClassPropertiesProvider.propertyFromClassName(propertyClassName, name);
       if (property == null) {

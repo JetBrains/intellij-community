@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,7 +33,7 @@ public class CommonProcessors {
   public static class CollectProcessor<T> implements Processor<T> {
     private final Collection<T> myCollection;
 
-    public CollectProcessor(Collection<T> collection) {
+    public CollectProcessor(@NotNull Collection<T> collection) {
       myCollection = collection;
     }
 
@@ -53,18 +53,19 @@ public class CommonProcessors {
       return true;
     }
 
-    public T[] toArray(T[] a) {
+    @NotNull
+    public T[] toArray(@NotNull T[] a) {
       return myCollection.toArray(a);
     }
 
+    @NotNull
     public Collection<T> getResults() {
       return myCollection;
     }
-
   }
 
   @NotNull
-  public static <T> Processor<T> notNullProcessor(@NotNull final Processor<T> processor) {
+  public static <T> Processor<T> notNullProcessor(@NotNull final Processor<? super T> processor) {
     return new Processor<T>() {
       @Override
       public boolean process(@NotNull T t) {
@@ -87,39 +88,48 @@ public class CommonProcessors {
       return true;
     }
 
-    public T[] toArray(T[] a) {
+    @NotNull
+    public T[] toArray(@NotNull T[] a) {
       return myCollection.toArray(a);
     }
 
+    @NotNull
     public Collection<T> getResults() {
       return myCollection;
     }
   }
+
   public static class UniqueProcessor<T> implements Processor<T> {
     private final Set<T> processed;
-    private final Processor<T> myDelegate;
+    private final Processor<? super T> myDelegate;
 
-    public UniqueProcessor(Processor<T> delegate) {
+    public UniqueProcessor(@NotNull Processor<? super T> delegate) {
       this(delegate, ContainerUtil.<T>canonicalStrategy());
     }
-    public UniqueProcessor(Processor<T> delegate, TObjectHashingStrategy<T> strategy) {
+
+    public UniqueProcessor(@NotNull Processor<? super T> delegate, @NotNull TObjectHashingStrategy<T> strategy) {
       myDelegate = delegate;
       processed = new THashSet<T>(strategy);
     }
 
     @Override
     public boolean process(T t) {
+      // in case of exception do not mark the element as processed, we couldn't recover otherwise
       synchronized (processed) {
-        if (!processed.add(t)) {
+        if (processed.contains(t)) {
           return true;
         }
       }
-      return myDelegate.process(t);
+      boolean result = myDelegate.process(t);
+      synchronized (processed) {
+        processed.add(t);
+      }
+      return result;
     }
   }
 
   public abstract static class FindProcessor<T> implements Processor<T> {
-    private T myValue = null;
+    private T myValue;
 
     public boolean isFound() {
       return myValue != null;
@@ -130,26 +140,61 @@ public class CommonProcessors {
       return myValue;
     }
 
+    @Nullable
+    public T reset() {
+      T prev = myValue;
+      myValue = null;
+      return prev;
+    }
+
     @Override
     public boolean process(T t) {
       if (accept(t)) {
         myValue = t;
         return false;
       }
-      else return true;
+      return true;
     }
 
     protected abstract boolean accept(T t);
   }
 
   public static class FindFirstProcessor<T> extends FindProcessor<T> {
-
     @Override
     protected boolean accept(T t) {
       return true;
     }
   }
 
+  public static class FindFirstAndOnlyProcessor<T> extends FindFirstProcessor<T> {
+
+    @Override
+    public boolean process(T t) {
+      boolean firstFound = getFoundValue() != null;
+      boolean result = super.process(t);
+      if (!result) {
+        if (firstFound) reset();
+        return !firstFound;
+      }
+      return true;
+    }
+  }
+  
+  /**
+   * @return processor that process all elements. 
+   * Useful if you know that the processor shouldn't be stopped by client. It protects you from accidentally returning false value  
+   */
+  @NotNull
+  public static <T> Processor<T> processAll(@NotNull final Consumer<? super T> consumer) {
+    return new Processor<T>() {
+      @Override
+      public boolean process(T t) {
+        consumer.consume(t);
+        return true;
+      }
+    };
+  }
+  
   private static final Processor FALSE = new Processor<Object>() {
     @Override
     public boolean process(Object t) {
@@ -163,11 +208,14 @@ public class CommonProcessors {
     }
   };
 
-  @SuppressWarnings({"unchecked"})
+  @NotNull
+  @SuppressWarnings("unchecked")
   public static <T> Processor<T> alwaysFalse() {
     return FALSE;
   }
-  @SuppressWarnings({"unchecked"})
+
+  @NotNull
+  @SuppressWarnings("unchecked")
   public static <T> Processor<T> alwaysTrue() {
     return TRUE;
   }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,41 +21,49 @@ import com.intellij.ide.todo.ToDoSummary;
 import com.intellij.ide.todo.TodoTreeBuilder;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 
-public final class ToDoRootNode extends BaseToDoNode{
+public class ToDoRootNode extends BaseToDoNode{
   private final SummaryNode mySummaryNode;
 
-  public ToDoRootNode(Project project, Object value, TodoTreeBuilder builder, ToDoSummary summary) {
+  public ToDoRootNode(Project project, Object value, TodoTreeBuilder builder, @NotNull ToDoSummary summary) {
     super(project, value, builder);
-    mySummaryNode = new SummaryNode(getProject(), summary, myBuilder);
+    mySummaryNode = createSummaryNode(summary);
   }
 
+  protected SummaryNode createSummaryNode(@NotNull ToDoSummary summary) {
+    return new SummaryNode(getProject(), summary, myBuilder);
+  }
+
+  @Override
   @NotNull
   public Collection<AbstractTreeNode> getChildren() {
-    return new ArrayList<AbstractTreeNode>(Collections.singleton(mySummaryNode));
+    return new ArrayList<>(Collections.singleton(mySummaryNode));
   }
 
-  public void update(PresentationData presentation) {
+  @Override
+  public void update(@NotNull PresentationData presentation) {
   }
 
   public Object getSummaryNode() {
     return mySummaryNode;
   }
 
+  @Override
   public String getTestPresentation() {
     return "Root";
   }
 
+  @Override
   public int getFileCount(final Object val) {
     return mySummaryNode.getFileCount(null);
   }
 
+  @Override
   public int getTodoItemCount(final Object val) {
     return mySummaryNode.getTodoItemCount(null);
   }

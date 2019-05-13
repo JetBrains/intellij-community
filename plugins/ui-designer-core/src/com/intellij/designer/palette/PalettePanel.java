@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,11 +15,13 @@
  */
 package com.intellij.designer.palette;
 
+import com.intellij.designer.PaletteToolWindowContent;
 import com.intellij.designer.designSurface.DesignerEditorPanel;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.ui.ScrollPaneFactory;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -33,7 +35,6 @@ import java.awt.dnd.DragSourceListener;
 import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
-import java.awt.event.KeyEvent;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -41,7 +42,7 @@ import java.util.List;
 /**
  * @author Alexander Lobas
  */
-public class PalettePanel extends JPanel implements DataProvider {
+public class PalettePanel extends JPanel implements DataProvider, PaletteToolWindowContent {
   private final JPanel myPaletteContainer = new PaletteContainer();
   private List<PaletteGroupComponent> myGroupComponents = Collections.emptyList();
   private List<PaletteItemsComponent> myItemsComponents = Collections.emptyList();
@@ -85,16 +86,17 @@ public class PalettePanel extends JPanel implements DataProvider {
 
     new AnAction() {
       @Override
-      public void actionPerformed(AnActionEvent e) {
+      public void actionPerformed(@NotNull AnActionEvent e) {
         clearActiveItem();
       }
-    }.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0)), scrollPane);
+    }.registerCustomShortcutSet(CommonShortcuts.ESCAPE, scrollPane);
 
     if (!ApplicationManager.getApplication().isHeadlessEnvironment()) {
       DragSource.getDefaultDragSource().addDragSourceListener(myDragSourceListener);
     }
   }
 
+  @Override
   public void dispose() {
     if (!ApplicationManager.getApplication().isHeadlessEnvironment()) {
       DragSource.getDefaultDragSource().removeDragSourceListener(myDragSourceListener);
@@ -114,6 +116,7 @@ public class PalettePanel extends JPanel implements DataProvider {
     return null;
   }
 
+  @Override
   public void clearActiveItem() {
     if (getActiveItem() != null) {
       for (PaletteItemsComponent itemsComponent : myItemsComponents) {
@@ -123,8 +126,9 @@ public class PalettePanel extends JPanel implements DataProvider {
     }
   }
 
-  public boolean isEmpty() {
-    return myGroups.isEmpty();
+  @Override
+  public void refresh() {
+    repaint();
   }
 
   public void loadPalette(@Nullable DesignerEditorPanel designer) {
@@ -151,8 +155,8 @@ public class PalettePanel extends JPanel implements DataProvider {
     }
     else {
       myGroups = designer.getPaletteGroups();
-      myGroupComponents = new ArrayList<PaletteGroupComponent>();
-      myItemsComponents = new ArrayList<PaletteItemsComponent>();
+      myGroupComponents = new ArrayList<>();
+      myItemsComponents = new ArrayList<>();
     }
 
     for (PaletteGroup group : myGroups) {
@@ -208,7 +212,7 @@ public class PalettePanel extends JPanel implements DataProvider {
   }
 
   @Override
-  public Object getData(@NonNls String dataId) {
+  public Object getData(@NotNull @NonNls String dataId) {
     if (PlatformDataKeys.FILE_EDITOR.is(dataId) && myDesigner != null) {
       return myDesigner.getEditor();
     }

@@ -1,35 +1,20 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs;
 
-import com.intellij.lifecycle.PeriodicalTasksCloser;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.execution.ui.ConsoleViewContentType;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vcs.changes.VcsAnnotationLocalChangesListener;
 import com.intellij.openapi.vcs.history.VcsHistoryCache;
 import com.intellij.openapi.vcs.impl.ContentRevisionCache;
 import com.intellij.openapi.vcs.impl.VcsDescriptor;
-import com.intellij.openapi.vcs.impl.VcsEnvironmentsProxyCreator;
 import com.intellij.openapi.vcs.update.UpdatedFiles;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Processor;
 import com.intellij.util.messages.Topic;
+import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -44,7 +29,7 @@ public abstract class ProjectLevelVcsManager {
   public static final Topic<VcsListener> VCS_CONFIGURATION_CHANGED = Topic.create("VCS configuration changed", VcsListener.class);
   public static final Topic<VcsListener> VCS_CONFIGURATION_CHANGED_IN_PLUGIN = Topic.create("VCS configuration changed in VCS plugin", VcsListener.class);
 
-  public abstract void iterateVfUnderVcsRoot(VirtualFile file, Processor<VirtualFile> processor);
+  public abstract void iterateVfUnderVcsRoot(VirtualFile file, Processor<? super VirtualFile> processor);
 
   /**
    * Returns the <code>ProjectLevelVcsManager<code> instance for the specified project.
@@ -53,7 +38,7 @@ public abstract class ProjectLevelVcsManager {
    * @return the manager instance.
    */
   public static ProjectLevelVcsManager getInstance(Project project) {
-    return PeriodicalTasksCloser.getInstance().safeGetComponent(project, ProjectLevelVcsManager.class);
+    return project.getComponent(ProjectLevelVcsManager.class);
   }
 
   /**
@@ -65,11 +50,9 @@ public abstract class ProjectLevelVcsManager {
    * @return component instance
    */
   public static ProjectLevelVcsManager getInstanceChecked(final Project project) {
-    return ApplicationManager.getApplication().runReadAction(new Computable<ProjectLevelVcsManager>() {
-      public ProjectLevelVcsManager compute() {
-        if (project.isDisposed()) throw new ProcessCanceledException();
-        return getInstance(project);
-      }
+    return ReadAction.compute(() -> {
+      if (project.isDisposed()) throw new ProcessCanceledException();
+      return getInstance(project);
     });
   }
 
@@ -171,7 +154,10 @@ public abstract class ProjectLevelVcsManager {
 
   public abstract boolean hasAnyMappings();
 
+  @Deprecated
   public abstract void addMessageToConsoleWindow(String message, TextAttributes attributes);
+
+  public abstract void addMessageToConsoleWindow(@Nullable String message, @NotNull ConsoleViewContentType contentType);
 
   @NotNull
   public abstract VcsShowSettingOption getStandardOption(@NotNull VcsConfiguration.StandardOption option,
@@ -185,7 +171,7 @@ public abstract class ProjectLevelVcsManager {
   public abstract VcsShowSettingOption getOrCreateCustomOption(@NotNull String vcsActionName,
                                                                @NotNull AbstractVcs vcs);
 
-
+  @CalledInAwt
   public abstract void showProjectOperationInfo(final UpdatedFiles updatedFiles, String displayActionName);
 
   /**
@@ -195,6 +181,7 @@ public abstract class ProjectLevelVcsManager {
    * @deprecated use {@link #VCS_CONFIGURATION_CHANGED} instead
    * @since 6.0
    */
+  @Deprecated
   public abstract void addVcsListener(VcsListener listener);
 
   /**
@@ -204,6 +191,7 @@ public abstract class ProjectLevelVcsManager {
    * @deprecated use {@link #VCS_CONFIGURATION_CHANGED} instead
    * @since 6.0
    */
+  @Deprecated
   public abstract void removeVcsListener(VcsListener listener);
 
   /**
@@ -229,7 +217,8 @@ public abstract class ProjectLevelVcsManager {
   public abstract boolean isBackgroundVcsOperationRunning();
 
   public abstract List<VirtualFile> getRootsUnderVcsWithoutFiltering(final AbstractVcs vcs);
-  public abstract VirtualFile[] getRootsUnderVcs(AbstractVcs vcs);
+
+  public abstract VirtualFile[] getRootsUnderVcs(@NotNull AbstractVcs vcs);
 
   /**
    * Also includes into list all modules under roots
@@ -241,7 +230,11 @@ public abstract class ProjectLevelVcsManager {
   @NotNull
   public abstract VcsRoot[] getAllVcsRoots();
 
-  public abstract void updateActiveVcss();
+  /**
+   * @deprecated Use just {@link #setDirectoryMappings(List)}.
+   */
+  @Deprecated
+  public void updateActiveVcss() {}
 
   public abstract List<VcsDirectoryMapping> getDirectoryMappings();
   public abstract List<VcsDirectoryMapping> getDirectoryMappings(AbstractVcs vcs);
@@ -256,9 +249,9 @@ public abstract class ProjectLevelVcsManager {
 
   public abstract void setDirectoryMappings(final List<VcsDirectoryMapping> items);
 
-  public abstract void iterateVcsRoot(final VirtualFile root, final Processor<FilePath> iterator);
+  public abstract void iterateVcsRoot(final VirtualFile root, final Processor<? super FilePath> iterator);
   
-  public abstract void iterateVcsRoot(final VirtualFile root, final Processor<FilePath> iterator,
+  public abstract void iterateVcsRoot(final VirtualFile root, final Processor<? super FilePath> iterator,
                                       @Nullable VirtualFileFilter directoryFilter);
 
   @Nullable
@@ -266,14 +259,11 @@ public abstract class ProjectLevelVcsManager {
 
   public abstract CheckoutProvider.Listener getCompositeCheckoutListener();
 
-  public abstract VcsEventsListenerManager getVcsEventsListenerManager();
-  protected abstract VcsEnvironmentsProxyCreator getProxyCreator();
-
   public abstract VcsHistoryCache getVcsHistoryCache();
   public abstract ContentRevisionCache getContentRevisionCache();
   public abstract boolean isFileInContent(final VirtualFile vf);
+  public abstract boolean isIgnored(@NotNull VirtualFile vf);
 
-  public abstract boolean dvcsUsedInProject();
-
+  @NotNull
   public abstract VcsAnnotationLocalChangesListener getAnnotationLocalChangesListener();
 }

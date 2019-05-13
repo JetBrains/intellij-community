@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,21 +18,17 @@ package com.intellij.openapi.vcs;
 public class VcsShowOptionsSettingImpl extends VcsAbstractSetting implements VcsShowSettingOption {
   private boolean myValue = true;
 
-
   public VcsShowOptionsSettingImpl(final String displayName) {
     super(displayName);
   }
 
-  public VcsShowOptionsSettingImpl(VcsConfiguration.StandardOption option) {
-    this(option.getId());
-  }
-
+  @Override
   public boolean getValue(){
     return myValue;
   }
 
+  @Override
   public void setValue(final boolean value) {
     myValue = value;
   }
-
 }

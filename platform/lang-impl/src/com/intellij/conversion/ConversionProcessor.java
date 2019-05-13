@@ -20,13 +20,25 @@ package com.intellij.conversion;
  * @author nik
  */
 public abstract class ConversionProcessor<Settings> {
+  /**
+   * @return {@code true} if the settings are in old format and need to be converted
+   */
   public abstract boolean isConversionNeeded(Settings settings);
 
+  /**
+   * Perform the conversion. Override this method if conversion should be performed before {@link #process} for other converters is invoked
+   */
   public void preProcess(Settings settings) throws CannotConvertException {
   }
 
+  /**
+   * Perform the conversion
+   */
   public abstract void process(Settings settings) throws CannotConvertException ;
 
+  /**
+   * Perform the conversion. Override this method if conversion should be performed after {@link #process} for other converters is invoked
+   */
   public void postProcess(Settings settings) throws CannotConvertException {
   }
 }

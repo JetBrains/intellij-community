@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -50,16 +50,19 @@ public class DomCollectionWrapper<T> extends DomWrapper<T>{
     myGetter = getter;
   }
 
+  @Override
   @NotNull
   public DomElement getExistingDomElement() {
     return myDomElement;
   }
 
+  @Override
   public DomElement getWrappedElement() {
     final List<? extends DomElement> list = myChildDescription.getValues(myDomElement);
     return list.isEmpty() ? null : list.get(0);
   }
 
+  @Override
   public void setValue(final T value) throws IllegalAccessException, InvocationTargetException {
     final List<? extends DomElement> list = myChildDescription.getValues(myDomElement);
     final DomElement domElement;
@@ -71,6 +74,7 @@ public class DomCollectionWrapper<T> extends DomWrapper<T>{
     mySetter.invoke(domElement, value);
   }
 
+  @Override
   public T getValue() throws IllegalAccessException, InvocationTargetException {
     if (!myDomElement.isValid()) return null;
     final List<? extends DomElement> list = myChildDescription.getValues(myDomElement);

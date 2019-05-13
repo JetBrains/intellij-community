@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,12 +16,19 @@
 
 package com.intellij.openapi.roots.impl.libraries;
 
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.roots.LibraryOrderEntry;
+import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.roots.OrderEntry;
+import com.intellij.openapi.roots.ProjectModelExternalSource;
 import com.intellij.openapi.roots.impl.RootModelImpl;
 import com.intellij.openapi.roots.libraries.Library;
+import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.libraries.PersistentLibraryKind;
 import com.intellij.openapi.util.InvalidDataException;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
@@ -35,16 +42,36 @@ public class LibraryTableImplUtil {
   private LibraryTableImplUtil() {
   }
 
-  public static Library loadLibrary(Element rootElement, RootModelImpl rootModel) throws InvalidDataException {
+  @NotNull
+  public static Library loadLibrary(@NotNull Element rootElement, @NotNull RootModelImpl rootModel) throws InvalidDataException {
     final List children = rootElement.getChildren(LibraryImpl.ELEMENT);
     if (children.size() != 1) throw new InvalidDataException();
     Element element = (Element)children.get(0);
     return new LibraryImpl(null, element, rootModel);
   }
 
-  public static Library createModuleLevelLibrary(@Nullable String name,
-                                                 final PersistentLibraryKind kind,
-                                                 RootModelImpl rootModel) {
-    return new LibraryImpl(name, kind, null, rootModel);
+  @NotNull
+  public static Library createModuleLevelLibrary(@Nullable String name, PersistentLibraryKind kind, @NotNull RootModelImpl rootModel,
+                                                 @Nullable ProjectModelExternalSource externalSource) {
+    return new LibraryImpl(name, kind, null, rootModel, externalSource);
+  }
+
+  public static boolean isValidLibrary(@NotNull Library library) {
+    LibraryTable table = library.getTable();
+    if (table != null) {
+      String name = library.getName();
+      return name != null && table.getLibraryByName(name) == library;
+    }
+
+    if (!(library instanceof LibraryImpl)) return false;
+
+    Module module = ((LibraryImpl)library).getModule();
+    if (module == null) return false;
+    for (OrderEntry entry : ModuleRootManager.getInstance(module).getOrderEntries()) {
+      if (entry instanceof LibraryOrderEntry && ((LibraryOrderEntry)entry).getLibrary() == library) {
+        return true;
+      }
+    }
+    return false;
   }
 }

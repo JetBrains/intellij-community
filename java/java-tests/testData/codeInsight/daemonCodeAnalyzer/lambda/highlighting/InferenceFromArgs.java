@@ -15,13 +15,13 @@ class InferenceFromArgs {
     private static <E> void bazz(I<? super E, Integer> i) { }
 
     void foo(B<Integer> b) {
-         bar(null, <error descr="Cyclic inference">(k, v) -> v</error>);
+         bar(null, (k, v) -> v);
          bar(null, null);
          bar(b, (k, v) ->  {return v;});
          bar(b, (k, v) -> {<error descr="Incompatible types. Found: 'java.lang.Integer', required: 'java.lang.String'">String i = k;</error> return v;});
          bar(b, (k, v) -> {Integer  i = k; return v;});
 
-         bazz(<error descr="Cyclic inference">(k, v) -> v</error>);
+         bazz((k, v) -> v);
          bazz((k, v) -> {<error descr="Incompatible types. Found: 'java.lang.Object', required: 'int'">int i = k;</error> return v;});
     }
 

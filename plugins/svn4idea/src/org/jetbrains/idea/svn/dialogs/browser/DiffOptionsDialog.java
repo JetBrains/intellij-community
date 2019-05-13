@@ -1,25 +1,5 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
-/*
- * Created by IntelliJ IDEA.
- * User: Alexander.Kitaev
- * Date: 19.07.2006
- * Time: 16:51:09
- */
 package org.jetbrains.idea.svn.dialogs.browser;
 
 import com.intellij.openapi.fileChooser.FileChooser;
@@ -32,27 +12,28 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.DocumentAdapter;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.SvnVcs;
+import org.jetbrains.idea.svn.api.Url;
 import org.jetbrains.idea.svn.dialogs.RepositoryBrowserComponent;
 import org.jetbrains.idea.svn.dialogs.RepositoryTreeNode;
-import org.tmatesoft.svn.core.SVNURL;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
-import javax.swing.event.TreeSelectionEvent;
-import javax.swing.event.TreeSelectionListener;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
 
+import static com.intellij.openapi.vfs.VfsUtilCore.virtualToIoFile;
+
 public class DiffOptionsDialog extends DialogWrapper implements ActionListener {
 
-  private final SVNURL myURL;
+  private final Url myURL;
   private final Project myProject;
   private RepositoryBrowserComponent myBrowser;
-  private final SVNURL myRootURL;
+  private final Url myRootURL;
 
   private JRadioButton myUnifiedDiffButton;
   private JRadioButton myUIDiffButton;
@@ -63,35 +44,30 @@ public class DiffOptionsDialog extends DialogWrapper implements ActionListener {
   private JLabel myErrorLabel;
   @NonNls private static final String DEFAULT_PATCH_NAME = "diff.txt";
 
-  public DiffOptionsDialog(Project project, SVNURL rootURL, SVNURL url) {
+  public DiffOptionsDialog(Project project, Url rootURL, Url url) {
     super(project, true);
     myURL = url;
     myRootURL = rootURL;
     myProject = project;
     setTitle(SvnBundle.message("diff.options.title"));
-    mySourceUrlLabel.setText(myURL.toString());
+    mySourceUrlLabel.setText(myURL.toDecodedString());
     myBrowser.setRepositoryURL(myRootURL, false);
-    myBrowser.addChangeListener(new TreeSelectionListener() {
-      public void valueChanged(TreeSelectionEvent e) {
-        update();
-      }
-    });
+    myBrowser.addChangeListener(e -> update());
     myUIDiffButton.addActionListener(this);
     myUnifiedDiffButton.addActionListener(this);
     init();
-    myFileBrowser.addActionListener(new ActionListener() {
-      public void actionPerformed(ActionEvent e) {
-        File f = selectFile("Patch File", "Select file to store unified diff");
-        if (f != null) {
-          if (f.exists() && f.isDirectory()) {
-            f = new File(f, DEFAULT_PATCH_NAME);
-          }
-          myFileBrowser.setText(f.getAbsolutePath());
+    myFileBrowser.addActionListener(e -> {
+      File f = selectFile("Patch File", "Select file to store unified diff");
+      if (f != null) {
+        if (f.exists() && f.isDirectory()) {
+          f = new File(f, DEFAULT_PATCH_NAME);
         }
+        myFileBrowser.setText(f.getAbsolutePath());
       }
     });
     myFileBrowser.getTextField().getDocument().addDocumentListener(new DocumentAdapter() {
-      protected void textChanged(final DocumentEvent e) {
+      @Override
+      protected void textChanged(@NotNull final DocumentEvent e) {
         update();
       }
     });
@@ -103,6 +79,7 @@ public class DiffOptionsDialog extends DialogWrapper implements ActionListener {
     }
   }
 
+  @Override
   @NonNls
   protected String getDimensionServiceKey() {
     return "svn4idea.diff.options";
@@ -114,7 +91,7 @@ public class DiffOptionsDialog extends DialogWrapper implements ActionListener {
     Disposer.dispose(myBrowser);
   }
 
-  public SVNURL getSourceURL() {
+  public Url getSourceURL() {
     return myURL;
   }
 
@@ -122,7 +99,7 @@ public class DiffOptionsDialog extends DialogWrapper implements ActionListener {
     return myReverseDiffButton.isSelected();
   }
 
-  public SVNURL getTargetURL() {
+  public Url getTargetURL() {
     if (getOKAction().isEnabled() && myBrowser.getSelectedNode() != null) {
         return myBrowser.getSelectedNode().getURL();
     }
@@ -137,6 +114,7 @@ public class DiffOptionsDialog extends DialogWrapper implements ActionListener {
     return myUnifiedDiffButton.isSelected();
   }
 
+  @Override
   protected JComponent createCenterPanel() {
     update();
     return myMainPanel;
@@ -163,6 +141,7 @@ public class DiffOptionsDialog extends DialogWrapper implements ActionListener {
     getOKAction().setEnabled(true);
   }
 
+  @Override
   public JComponent getPreferredFocusedComponent() {
     return myBrowser;
   }
@@ -178,9 +157,10 @@ public class DiffOptionsDialog extends DialogWrapper implements ActionListener {
     if (file == null) {
       return null;
     }
-    return new File(file.getPath());
+    return virtualToIoFile(file);
   }
 
+  @Override
   public void actionPerformed(ActionEvent e) {
     myFileBrowser.setEnabled(myUnifiedDiffButton.isSelected());
     update();

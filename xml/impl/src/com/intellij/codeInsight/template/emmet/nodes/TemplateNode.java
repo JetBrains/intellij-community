@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,25 +15,21 @@
  */
 package com.intellij.codeInsight.template.emmet.nodes;
 
-import com.google.common.base.Joiner;
 import com.intellij.codeInsight.template.CustomTemplateCallback;
 import com.intellij.codeInsight.template.emmet.ZenCodingUtil;
 import com.intellij.codeInsight.template.emmet.generators.ZenCodingGenerator;
 import com.intellij.codeInsight.template.emmet.tokens.TemplateToken;
 import com.intellij.codeInsight.template.impl.TemplateImpl;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
-/**
- * @author Eugene.Kudelevsky
- */
 public class TemplateNode extends ZenCodingNode {
-  private static final Joiner JOINER = Joiner.on(",");
   private final TemplateToken myTemplateToken;
   @Nullable private final ZenCodingGenerator myGenerator;
 
@@ -60,28 +56,40 @@ public class TemplateNode extends ZenCodingNode {
     String templateKey = templateToken.getKey();
     if (myGenerator != null && StringUtil.containsChar(templateKey, '$') && callback.findApplicableTemplate(templateKey) == null) {
       String newTemplateKey = ZenCodingUtil.replaceMarkers(templateKey, numberInIteration, totalIterations, surroundedText);
-      TemplateToken newTemplateToken = new TemplateToken(newTemplateKey,
-                                        templateToken.getAttribute2Value());
-
-      TemplateImpl template = myGenerator.createTemplateByKey(newTemplateKey);
+      TemplateToken newTemplateToken = new TemplateToken(newTemplateKey, templateToken.getAttributes(), templateToken.isForceSingleTag());
+      TemplateImpl template = myGenerator.createTemplateByKey(newTemplateKey, newTemplateToken.isForceSingleTag());
       if (template != null) {
+        template.setDeactivated(true);
         newTemplateToken.setTemplate(template, callback);
         templateToken = newTemplateToken;
       }
-  }
+    }
 
-  GenerationNode node = new GenerationNode(templateToken, numberInIteration, totalIterations,
-                                           surroundedText, insertSurroundedTextAtTheEnd, parent);
-  return Arrays.asList(node);
-}
+    GenerationNode node = new GenerationNode(templateToken, numberInIteration, totalIterations,
+                                             surroundedText, insertSurroundedTextAtTheEnd, parent);
+    return Collections.singletonList(node);
+  }
 
   @Override
   public String toString() {
     String result = myTemplateToken.getKey();
-    List<Pair<String, String>> attributes = myTemplateToken.getAttribute2Value();
+    Map<String, String> attributes = myTemplateToken.getAttributes();
     if (!attributes.isEmpty()) {
-      result += "[" + JOINER.join(myTemplateToken.getAttribute2Value()) + "]";
+      result += ContainerUtil.toString(attributes);
     }
     return "Template(" + result + ")";
+  }
+
+  @Override
+  public int getApproximateOutputLength(@Nullable CustomTemplateCallback callback) {
+    TemplateImpl template = myTemplateToken.getTemplate();
+    if (template != null) {
+      int result = template.getTemplateText().length();
+      for (Map.Entry<String, String> attribute : myTemplateToken.getAttributes().entrySet()) {
+        result += attribute.getKey().length() + attribute.getValue().length() + 4; //plus space, eq, quotes
+      }
+      return result;
+    }
+    return 0;
   }
 }

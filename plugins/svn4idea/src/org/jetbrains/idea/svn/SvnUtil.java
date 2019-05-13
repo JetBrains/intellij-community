@@ -1,138 +1,175 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn;
 
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.notification.NotificationType;
+import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.AtomicNotNullLazyValue;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.AbstractVcsHelper;
+import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangesUtil;
+import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.wm.impl.status.StatusBarUtil;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.EnvironmentUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.containers.MultiMap;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.svn.api.*;
+import org.jetbrains.idea.svn.branchConfig.SvnBranchConfigurationManager;
 import org.jetbrains.idea.svn.branchConfig.SvnBranchConfigurationNew;
+import org.jetbrains.idea.svn.browse.DirectoryEntryConsumer;
+import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.jetbrains.idea.svn.dialogs.LockDialog;
-import org.tmatesoft.svn.core.*;
-import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
-import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
-import org.tmatesoft.svn.core.internal.wc2.SvnWcGeneration;
-import org.tmatesoft.svn.core.io.SVNCapability;
-import org.tmatesoft.svn.core.io.SVNRepository;
-import org.tmatesoft.svn.core.wc.*;
-import org.tmatesoft.svn.core.wc2.SvnOperationFactory;
+import org.jetbrains.idea.svn.info.Info;
+import org.jetbrains.idea.svn.status.Status;
 
 import java.io.File;
+import java.net.URI;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.time.Instant;
+import java.time.format.DateTimeParseException;
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+import static com.intellij.openapi.util.AtomicNotNullLazyValue.createValue;
+import static com.intellij.openapi.vfs.VfsUtilCore.virtualToIoFile;
+import static com.intellij.util.ObjectUtils.notNull;
+import static com.intellij.util.SystemProperties.getUserHome;
+import static com.intellij.util.containers.ContainerUtil.map2Array;
+import static com.intellij.util.containers.ContainerUtil.newHashSet;
+import static java.util.Collections.emptyList;
 
 public class SvnUtil {
-  @NonNls public static final String SVN_ADMIN_DIR_NAME = SVNFileUtil.getAdminDirectoryName();
+  @NonNls public static final String SVN_ADMIN_DIR_NAME =
+    SystemInfo.isWindows && EnvironmentUtil.getValue("SVN_ASP_DOT_NET_HACK") != null ? "_svn" : ".svn";
   @NonNls public static final String ENTRIES_FILE_NAME = "entries";
   @NonNls public static final String WC_DB_FILE_NAME = "wc.db";
-  @NonNls public static final String DIR_PROPS_FILE_NAME = "dir-props";
   @NonNls public static final String PATH_TO_LOCK_FILE = SVN_ADMIN_DIR_NAME + "/lock";
+
+  public static final AtomicNotNullLazyValue<Path> USER_CONFIGURATION_PATH = createValue(
+    () -> SystemInfo.isWindows
+          ? Paths.get(notNull(EnvironmentUtil.getValue("APPDATA")), "Subversion")
+          : Paths.get(getUserHome(), ".subversion"));
+  public static final AtomicNotNullLazyValue<Path> SYSTEM_CONFIGURATION_PATH = createValue(
+    () -> SystemInfo.isWindows
+          ? Paths.get(notNull(EnvironmentUtil.getValue("ALLUSERSPROFILE")), "Application Data", "Subversion")
+          : Paths.get("/etc/subversion"));
+
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.idea.svn.SvnUtil");
+
+  public static final Pattern ERROR_PATTERN = Pattern.compile("^svn: (E(\\d+)): (.*)$", Pattern.MULTILINE);
+  public static final Pattern WARNING_PATTERN = Pattern.compile("^svn: warning: (W(\\d+)): (.*)$", Pattern.MULTILINE);
+
+  private static final Pair<Url, WorkingCopyFormat> UNKNOWN_REPOSITORY_AND_FORMAT = Pair.create(null, WorkingCopyFormat.UNKNOWN);
 
   private SvnUtil() { }
 
-  public static boolean isSvnVersioned(final Project project, File parent) {
+  @Nullable
+  public static String parseWarning(@NotNull String text) {
+    Matcher matcher = WARNING_PATTERN.matcher(text);
+    // currently treating only first warning
+    return matcher.find() ? matcher.group() : null;
+  }
+
+  @Nullable
+  public static Date parseDate(@Nullable String value) {
+    return parseDate(value, true);
+  }
+
+  @Nullable
+  public static Date parseDate(@Nullable String value, boolean logError) {
+    if (value == null) return null;
+
     try {
-      final SVNInfo info = SvnVcs.getInstance(project).createWCClient().doInfo(parent, SVNRevision.UNDEFINED);
-      return info != null;
+      return Date.from(Instant.parse(value));
     }
-    catch (SVNException e) {
-      return false;
+    catch (DateTimeParseException | ArithmeticException e) {
+      if (logError) {
+        LOG.error("Could not parse date " + value, e);
+      }
+      return null;
     }
   }
 
-  public static Collection<VirtualFile> crawlWCRoots(final Project project, File path, SvnWCRootCrawler callback, ProgressIndicator progress) {
-    final LocalFileSystem lfs = LocalFileSystem.getInstance();
-    VirtualFile vf = lfs.findFileByIoFile(path);
-    if (vf == null) {
-      vf = lfs.refreshAndFindFileByIoFile(path);
-    }
-    if (vf == null) return Collections.emptyList();
-    return crawlWCRoots(project, vf, callback, progress);
+  public static boolean isSvnVersioned(@NotNull SvnVcs vcs, @NotNull File file) {
+    return vcs.getInfo(file) != null;
   }
 
-  private static Collection<VirtualFile> crawlWCRoots(final Project project, VirtualFile vf, SvnWCRootCrawler callback, ProgressIndicator progress) {
-    final Collection<VirtualFile> result = new HashSet<VirtualFile>();
-    final boolean isDirectory = vf.isDirectory();
-    VirtualFile parent = ! isDirectory || !vf.exists() ? vf.getParent() : vf;
+  @NotNull
+  public static Collection<VirtualFile> crawlWCRoots(@NotNull SvnVcs vcs,
+                                                     @NotNull File path,
+                                                     @NotNull SvnWCRootCrawler callback,
+                                                     @Nullable ProgressIndicator progress) {
+    VirtualFile file = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(path);
 
-    final File parentIo = new File(parent.getPath());
-    if (isSvnVersioned(project, parentIo)) {
+    return file != null ? crawlWCRoots(vcs, file, callback, progress) : emptyList();
+  }
+
+  @NotNull
+  private static Collection<VirtualFile> crawlWCRoots(@NotNull SvnVcs vcs,
+                                                      @NotNull VirtualFile file,
+                                                      @NotNull SvnWCRootCrawler callback,
+                                                      @Nullable ProgressIndicator progress) {
+    Set<VirtualFile> result = newHashSet();
+    // TODO: Actually it is not OK to call getParent() if file is invalid.
+    VirtualFile parent = !file.isDirectory() || !file.isValid() ? file.getParent() : file;
+
+    if (isSvnVersioned(vcs, virtualToIoFile(parent))) {
       checkCanceled(progress);
-      File ioFile = new File(vf.getPath());
-      callback.handleWorkingCopyRoot(ioFile, progress);
+      callback.handleWorkingCopyRoot(virtualToIoFile(file), progress);
       checkCanceled(progress);
       result.add(parent);
-    } else if (isDirectory) {
+    }
+    else if (file.isDirectory()) {
       checkCanceled(progress);
-      final VirtualFile[] childrenVF = parent.getChildren();
-      for (VirtualFile file : childrenVF) {
+      for (VirtualFile child : parent.getChildren()) {
         checkCanceled(progress);
-        if (file.isDirectory()) {
-          result.addAll(crawlWCRoots(project, file, callback, progress));
+        if (child.isDirectory()) {
+          result.addAll(crawlWCRoots(vcs, child, callback, progress));
         }
       }
     }
+
     return result;
   }
 
-  private static void checkCanceled(final ProgressIndicator progress) {
+  private static void checkCanceled(@Nullable ProgressIndicator progress) {
     if (progress != null && progress.isCanceled()) {
       throw new ProcessCanceledException();
     }
   }
 
-  @Nullable
-  public static String getExactLocation(final SvnVcs vcs, File path) {
-    try {
-      SVNWCClient wcClient = vcs.createWCClient();
-      SVNInfo info = wcClient.doInfo(path, SVNRevision.UNDEFINED);
-      if (info != null && info.getURL() != null) {
-        return info.getURL().toString();
-      }
-    }
-    catch (SVNException ignored) { }
-    return null;
-  }
-
-  public static Map<String, File> getLocationInfoForModule(final SvnVcs vcs, File path, ProgressIndicator progress) {
-    final LocationsCrawler crawler = new LocationsCrawler(vcs);
-    crawlWCRoots(vcs.getProject(), path, crawler, progress);
-    return crawler.getLocationInfos();
+  @NotNull
+  public static File[] toIoFiles(@NotNull VirtualFile[] files) {
+    return map2Array(files, File.class, VfsUtilCore::virtualToIoFile);
   }
 
   public static void doLockFiles(Project project, final SvnVcs activeVcs, @NotNull final File[] ioFiles) throws VcsException {
@@ -141,8 +178,7 @@ public class SvnUtil {
     // TODO[yole]: check for shift pressed
     if (activeVcs.getCheckoutOptions().getValue()) {
       LockDialog dialog = new LockDialog(project, true, ioFiles.length > 1);
-      dialog.show();
-      if (!dialog.isOK()) {
+      if (!dialog.showAndGet()) {
         return;
       }
       lockMessage = dialog.getComment();
@@ -153,54 +189,49 @@ public class SvnUtil {
       force = false;
     }
 
-    final SVNException[] exception = new SVNException[1];
-    final Collection<String> failedLocks = new ArrayList<String>();
+    final VcsException[] exception = new VcsException[1];
+    final Collection<String> failedLocks = new ArrayList<>();
     final int[] count = new int[]{ioFiles.length};
-    final ISVNEventHandler eventHandler = new ISVNEventHandler() {
-      public void handleEvent(SVNEvent event, double progress) {
-        if (event.getAction() == SVNEventAction.LOCK_FAILED) {
-          failedLocks.add(event.getErrorMessage() != null ?
-                          event.getErrorMessage().getFullMessage() :
-                          event.getFile().getAbsolutePath());
+    final ProgressTracker eventHandler = new ProgressTracker() {
+      @Override
+      public void consume(ProgressEvent event) {
+        if (event.getAction() == EventAction.LOCK_FAILED) {
+          failedLocks.add(notNull(event.getErrorMessage(), event.getFile().getAbsolutePath()));
           count[0]--;
         }
       }
 
+      @Override
       public void checkCancelled() {
       }
     };
 
-    Runnable command = new Runnable() {
-      public void run() {
-        ProgressIndicator progress = ProgressManager.getInstance().getProgressIndicator();
-        SVNWCClient wcClient;
+    Runnable command = () -> {
+      ProgressIndicator progress = ProgressManager.getInstance().getProgressIndicator();
 
-        try {
-          wcClient = activeVcs.createWCClient();
-          wcClient.setEventHandler(eventHandler);
+      try {
+        if (progress != null) {
+          progress.setText(SvnBundle.message("progress.text.locking.files"));
+        }
+        for (File ioFile : ioFiles) {
           if (progress != null) {
-            progress.setText(SvnBundle.message("progress.text.locking.files"));
+            progress.checkCanceled();
           }
-          for (File ioFile : ioFiles) {
-            if (progress != null) {
-              progress.checkCanceled();
-            }
-            if (progress != null) {
-              progress.setText2(SvnBundle.message("progress.text2.processing.file", ioFile.getName()));
-            }
-            wcClient.doLock(new File[]{ioFile}, force, lockMessage);
+          if (progress != null) {
+            progress.setText2(SvnBundle.message("progress.text2.processing.file", ioFile.getName()));
           }
+          activeVcs.getFactory(ioFile).createLockClient().lock(ioFile, force, lockMessage, eventHandler);
         }
-        catch (SVNException e) {
-          exception[0] = e;
-        }
+      }
+      catch (VcsException e) {
+        exception[0] = e;
       }
     };
 
     ProgressManager.getInstance().runProcessWithProgressSynchronously(command, SvnBundle.message("progress.title.lock.files"), false, project);
     if (!failedLocks.isEmpty()) {
       String[] failedFiles = ArrayUtil.toStringArray(failedLocks);
-      List<VcsException> exceptions = new ArrayList<VcsException>();
+      List<VcsException> exceptions = new ArrayList<>();
       for (String file : failedFiles) {
         exceptions.add(new VcsException(SvnBundle.message("exception.text.locking.file.failed", file)));
       }
@@ -215,60 +246,55 @@ public class SvnUtil {
 
     StatusBarUtil.setStatusBarInfo(project, SvnBundle.message("message.text.files.locked", count[0]));
     if (exception[0] != null) {
-      throw new VcsException(exception[0]);
+      throw exception[0];
     }
   }
 
   public static void doUnlockFiles(Project project, final SvnVcs activeVcs, final File[] ioFiles) throws VcsException {
     final boolean force = true;
-    final SVNException[] exception = new SVNException[1];
-    final Collection<String> failedUnlocks = new ArrayList<String>();
+    final VcsException[] exception = new VcsException[1];
+    final Collection<String> failedUnlocks = new ArrayList<>();
     final int[] count = new int[]{ioFiles.length};
-    final ISVNEventHandler eventHandler = new ISVNEventHandler() {
-      public void handleEvent(SVNEvent event, double progress) {
-        if (event.getAction() == SVNEventAction.UNLOCK_FAILED) {
-          failedUnlocks.add(event.getErrorMessage() != null ?
-                            event.getErrorMessage().getFullMessage() :
-                            event.getFile().getAbsolutePath());
+    final ProgressTracker eventHandler = new ProgressTracker() {
+      @Override
+      public void consume(ProgressEvent event) {
+        if (event.getAction() == EventAction.UNLOCK_FAILED) {
+          failedUnlocks.add(notNull(event.getErrorMessage(), event.getFile().getAbsolutePath()));
           count[0]--;
         }
       }
 
+      @Override
       public void checkCancelled() {
       }
     };
 
-    Runnable command = new Runnable() {
-      public void run() {
-        ProgressIndicator progress = ProgressManager.getInstance().getProgressIndicator();
-        SVNWCClient wcClient;
+    Runnable command = () -> {
+      ProgressIndicator progress = ProgressManager.getInstance().getProgressIndicator();
 
-        try {
-          wcClient = activeVcs.createWCClient();
-          wcClient.setEventHandler(eventHandler);
+      try {
+        if (progress != null) {
+          progress.setText(SvnBundle.message("progress.text.unlocking.files"));
+        }
+        for (File ioFile : ioFiles) {
           if (progress != null) {
-            progress.setText(SvnBundle.message("progress.text.unlocking.files"));
+            progress.checkCanceled();
           }
-          for (File ioFile : ioFiles) {
-            if (progress != null) {
-              progress.checkCanceled();
-            }
-            if (progress != null) {
-              progress.setText2(SvnBundle.message("progress.text2.processing.file", ioFile.getName()));
-            }
-            wcClient.doUnlock(new File[]{ioFile}, force);
+          if (progress != null) {
+            progress.setText2(SvnBundle.message("progress.text2.processing.file", ioFile.getName()));
           }
+          activeVcs.getFactory(ioFile).createLockClient().unlock(ioFile, force, eventHandler);
         }
-        catch (SVNException e) {
-          exception[0] = e;
-        }
+      }
+      catch (VcsException e) {
+        exception[0] = e;
       }
     };
 
     ProgressManager.getInstance().runProcessWithProgressSynchronously(command, SvnBundle.message("progress.title.unlock.files"), false, project);
     if (!failedUnlocks.isEmpty()) {
       String[] failedFiles = ArrayUtil.toStringArray(failedUnlocks);
-      List<VcsException> exceptions = new ArrayList<VcsException>();
+      List<VcsException> exceptions = new ArrayList<>();
 
       for (String file : failedFiles) {
         exceptions.add(new VcsException(SvnBundle.message("exception.text.failed.to.unlock.file", file)));
@@ -282,182 +308,116 @@ public class SvnUtil {
     }
   }
 
-  public static String formatRepresentation(final WorkingCopyFormat format) {
-    if (WorkingCopyFormat.ONE_DOT_SEVEN.equals(format)) {
-      return SvnBundle.message("dialog.show.svn.map.table.version17.text");
-    } else if (WorkingCopyFormat.ONE_DOT_SIX.equals(format)) {
-      return SvnBundle.message("dialog.show.svn.map.table.version16.text");
-    } else if (WorkingCopyFormat.ONE_DOT_FIVE.equals(format)) {
-      return SvnBundle.message("dialog.show.svn.map.table.version15.text");
-    } else if (WorkingCopyFormat.ONE_DOT_FOUR.equals(format)) {
-      return SvnBundle.message("dialog.show.svn.map.table.version14.text");
-    } else if (WorkingCopyFormat.ONE_DOT_THREE.equals(format)) {
-      return SvnBundle.message("dialog.show.svn.map.table.version13.text");
-    }
-    return "";
+  @NotNull
+  public static MultiMap<Pair<Url, WorkingCopyFormat>, Change> splitChangesIntoWc(@NotNull SvnVcs vcs, @NotNull List<? extends Change> changes) {
+    return splitIntoRepositoriesMap(vcs, changes, change -> ChangesUtil.getFilePath(change));
   }
 
-  public static Collection<List<Change>> splitChangesIntoWc(final SvnVcs vcs, final List<Change> changes) {
-    return splitIntoWc(vcs, changes, new Convertor<Change, File>() {
-      @Override
-      public File convert(Change o) {
-        return ChangesUtil.getFilePath(o).getIOFile();
-      }
+  @NotNull
+  public static <T> MultiMap<Pair<Url, WorkingCopyFormat>, T> splitIntoRepositoriesMap(@NotNull final SvnVcs vcs,
+                                                                                       @NotNull Collection<? extends T> items,
+                                                                                       @NotNull final Convertor<? super T, ? extends FilePath> converter) {
+    return ContainerUtil.groupBy(items, item -> {
+      RootUrlInfo path = vcs.getSvnFileUrlMapping().getWcRootForFilePath(converter.convert(item));
+
+      return path == null ? UNKNOWN_REPOSITORY_AND_FORMAT : Pair.create(path.getRepositoryUrl(), path.getFormat());
     });
   }
 
-  public static Collection<List<File>> splitFilesIntoWc(final SvnVcs vcs, final List<File> committables) {
-    return splitIntoWc(vcs, committables, Convertor.SELF);
+  /**
+   * Gets working copy internal format. Works for 1.7 and 1.8.
+   *
+   * @param path
+   * @return
+   */
+  @NotNull
+  public static WorkingCopyFormat getFormat(final File path) {
+    WorkingCopyFormat result = null;
+    File dbFile = resolveDatabase(path);
+
+    if (dbFile != null) {
+      result = FileUtilRt.doIOOperation(new SqLiteJdbcWorkingCopyFormatOperation(dbFile));
+
+      if (result == null) {
+        notifyDatabaseError();
+      }
+    }
+
+    return result != null ? result : WorkingCopyFormat.UNKNOWN;
   }
 
-  public static <T> Collection<List<T>> splitIntoWc(final SvnVcs vcs, final List<T> committables,
-                                                    Convertor<T, File> convertor) {
-    if (committables.size() == 1) {
-      return Collections.singletonList(committables);
-    }
-
-    final MultiMap<Pair<SVNURL, WorkingCopyFormat>, T> result = new MultiMap<Pair<SVNURL, WorkingCopyFormat>, T>() {
-      @Override
-      protected Collection<T> createCollection() {
-        return new ArrayList<T>();
-      }
-    };
-    for (T committable : committables) {
-      final RootUrlInfo path = vcs.getSvnFileUrlMapping().getWcRootForFilePath(convertor.convert(committable));
-      if (path == null) {
-        result.putValue(new Pair<SVNURL, WorkingCopyFormat>(null, null), committable);
-      } else {
-        result.putValue(new Pair<SVNURL, WorkingCopyFormat>(path.getRepositoryUrlUrl(), path.getFormat()), committable);
-      }
-    }
-
-    if (result.size() == 1) {
-      return Collections.singletonList(committables);
-    }
-    final Collection<List<T>> result2 = new ArrayList<List<T>>();
-    for (Map.Entry<Pair<SVNURL, WorkingCopyFormat>, Collection<T>> entry : result.entrySet()) {
-      result2.add((List<T>)entry.getValue());
-    }
-    return result2;
+  private static void notifyDatabaseError() {
+    VcsBalloonProblemNotifier.NOTIFICATION_GROUP
+      .createNotification("Some errors occurred while accessing svn working copy database.", NotificationType.ERROR).notify(null);
   }
 
-  private static class LocationsCrawler implements SvnWCRootCrawler {
-    private final SvnVcs myVcs;
-    private final Map<String, File> myLocations;
+  private static File resolveDatabase(final File path) {
+    File dbFile = getWcDb(path);
+    File result = null;
 
-    public LocationsCrawler(SvnVcs vcs) {
-      myVcs = vcs;
-      myLocations = new HashMap<String, File>();
+    try {
+      if (dbFile.exists() && dbFile.isFile()) {
+        result = dbFile;
+      }
+    } catch (SecurityException e) {
+      LOG.error("Failed to access working copy database", e);
     }
 
-    public Map<String, File> getLocationInfos() {
-      return Collections.unmodifiableMap(myLocations);
-    }
-
-    public void handleWorkingCopyRoot(File root, ProgressIndicator progress) {
-      String oldText = null;
-      if (progress != null) {
-        oldText = progress.getText();
-        progress.setText(SvnBundle.message("progress.text.discovering.location", root.getAbsolutePath()));
-      }
-      try {
-        SVNWCClient wcClient = myVcs.createWCClient();
-        SVNInfo info = wcClient.doInfo(root, SVNRevision.UNDEFINED);
-        if (info != null && info.getURL() != null) {
-          myLocations.put(info.getURL().toString(), info.getFile());
-        }
-      }
-      catch (SVNException e) {
-        //
-      }
-      if (progress != null) {
-        progress.setText(oldText);
-      }
-    }
+    return result;
   }
 
   @Nullable
   public static String getRepositoryUUID(final SvnVcs vcs, final File file) {
-    final SVNWCClient client = vcs.createWCClient();
+    final Info info = vcs.getInfo(file);
+    return info != null ? info.getRepositoryId() : null;
+  }
+
+  @Nullable
+  public static String getRepositoryUUID(final SvnVcs vcs, final Url url) {
     try {
-      final SVNInfo info = client.doInfo(file, SVNRevision.UNDEFINED);
-      return (info == null) ? null : info.getRepositoryUUID();
-    } catch (SVNException e) {
+      final Info info = vcs.getInfo(url, Revision.UNDEFINED);
+
+      return (info == null) ? null : info.getRepositoryId();
+    }
+    catch (SvnBindException e) {
       return null;
     }
   }
 
   @Nullable
-  public static String getRepositoryUUID(final SvnVcs vcs, final SVNURL url) {
-    final SVNWCClient client = vcs.createWCClient();
+  public static Url getRepositoryRoot(final SvnVcs vcs, final File file) {
+    final Info info = vcs.getInfo(file);
+    return info != null ? info.getRepositoryRootUrl() : null;
+  }
+
+  @Nullable
+  public static Url getRepositoryRoot(final SvnVcs vcs, final String url) {
     try {
-      final SVNInfo info = client.doInfo(url, SVNRevision.UNDEFINED, SVNRevision.UNDEFINED);
-      return (info == null) ? null : info.getRepositoryUUID();
-    } catch (SVNException e) {
+      return getRepositoryRoot(vcs, createUrl(url));
+    }
+    catch (SvnBindException e) {
       return null;
     }
   }
 
   @Nullable
-  public static SVNURL getRepositoryRoot(final SvnVcs vcs, final File file) {
-    final SVNWCClient client = vcs.createWCClient();
-    try {
-      final SVNInfo info = client.doInfo(file, SVNRevision.UNDEFINED);
-      return (info == null) ? null : info.getRepositoryRootURL();
-    } catch (SVNException e) {
-      return null;
-    }
+  public static Url getRepositoryRoot(final SvnVcs vcs, final Url url) throws SvnBindException {
+    Info info = vcs.getInfo(url, Revision.HEAD);
+
+    return (info == null) ? null : info.getRepositoryRootUrl();
   }
 
-  @Nullable
-  public static SVNURL getRepositoryRoot(final SvnVcs vcs, final String url) {
-    try {
-      return getRepositoryRoot(vcs, SVNURL.parseURIEncoded(url), true);
-    }
-    catch (SVNException e) {
-      return null;
-    }
+  public static boolean isWorkingCopyRoot(@NotNull File file) {
+    return FileUtil.filesEqual(file, getWorkingCopyRoot(file));
   }
 
-  @Nullable
-  public static SVNURL getRepositoryRoot(final SvnVcs vcs, final SVNURL url, boolean allowRemote) throws SVNException {
-    final SVNWCClient client = vcs.createWCClient();
-    SVNInfo info = client.doInfo(url, SVNRevision.UNDEFINED, SVNRevision.HEAD);
-    return (info == null) ? null : info.getRepositoryRootURL();
+  public static boolean isWorkingCopyRoot(@NotNull VirtualFile file) {
+    VirtualFile adminDir = file.findChild(SVN_ADMIN_DIR_NAME);
+    return adminDir != null && adminDir.findChild(WC_DB_FILE_NAME) != null;
   }
 
-  public static boolean isWorkingCopyRoot(final File file) {
-    try {
-      return SVNWCUtil.isWorkingCopyRoot(file);
-    } catch (SVNException e) {
-      return false;
-    }
-  }
-
-  @Nullable
-  public static File getWorkingCopyRoot(final File inFile) {
-    File file = inFile;
-    while ((file != null) && (file.isFile() || (! file.exists()))) {
-      file = file.getParentFile();
-    }
-
-    if (file == null) {
-      return null;
-    }
-
-    File workingCopyRoot = null;
-    try {
-      workingCopyRoot = SVNWCUtil.getWorkingCopyRoot(file, true);
-    } catch (SVNException e) {
-      //
-    }
-    if (workingCopyRoot == null) {
-     workingCopyRoot = getWcCopyRootIf17(file, null);
-    }
-    return workingCopyRoot;
-  }
-
-  public static File fileFromUrl(final File baseDir, final String baseUrl, final String fullUrl) throws SVNException {
+  @NotNull
+  public static File fileFromUrl(final File baseDir, final String baseUrl, final String fullUrl) {
     assert fullUrl.startsWith(baseUrl);
 
     final String part = fullUrl.substring(baseUrl.length()).replace('/', File.separatorChar).replace('\\', File.separatorChar);
@@ -466,93 +426,75 @@ public class SvnUtil {
 
   public static VirtualFile getVirtualFile(final String filePath) {
     @NonNls final String path = VfsUtilCore.pathToUrl(filePath.replace(File.separatorChar, '/'));
-    return ApplicationManager.getApplication().runReadAction(new Computable<VirtualFile>() {
-      @Nullable
-      public VirtualFile compute() {
-        return VirtualFileManager.getInstance().findFileByUrl(path);
-      }
-    });
+    return ReadAction.compute(() -> VirtualFileManager.getInstance().findFileByUrl(path));
   }
 
   @Nullable
-  public static SVNURL getBranchForUrl(final SvnVcs vcs, final VirtualFile vcsRoot, final String urlPath) {
-    final SvnBranchConfigurationNew configuration;
+  @Deprecated // Required for compatibility with external plugins.
+  public static Url getBranchForUrl(@NotNull SvnVcs vcs, @NotNull VirtualFile vcsRoot, @NotNull String urlValue) {
+    Url url = null;
+
     try {
-      final SVNURL url = SVNURL.parseURIEncoded(urlPath);
-      configuration = SvnBranchConfigurationManager.getInstance(vcs.getProject()).get(vcsRoot);
-      return (configuration == null) ? null : configuration.getWorkingBranch(url);
+      url = createUrl(urlValue);
     }
-    catch (SVNException e) {
-      return null;
-    } catch (VcsException e1) {
-      return null;
+    catch (SvnBindException e) {
+      LOG.debug(e);
     }
+
+    return url != null ? getBranchForUrl(vcs, vcsRoot, url) : null;
   }
 
   @Nullable
-  public static String getPathForProgress(final SVNEvent event) {
-    if (event.getFile() != null) {
-      return event.getFile().getName();
-    }
-    if (event.getURL() != null) {
-      return event.getURL().toString();
-    }
-    return null;
-  }
+  public static Url getBranchForUrl(@NotNull SvnVcs vcs, @NotNull VirtualFile vcsRoot, @NotNull Url url) {
+    Url result = null;
+    SvnBranchConfigurationNew configuration = SvnBranchConfigurationManager.getInstance(vcs.getProject()).get(vcsRoot);
 
-  @Nullable
-  public static VirtualFile correctRoot(final Project project, final VirtualFile file) {
-    if (file.getPath().length() == 0) {
-      // project root
-      return project.getBaseDir();
-    }
-    return file;
-  }
-
-  public static boolean checkRepositoryVersion15(final SvnVcs vcs, final String url) {
-    SVNRepository repository = null;
     try {
-      repository = vcs.createRepository(url);
-      return repository.hasCapability(SVNCapability.MERGE_INFO);
+      result = configuration.getWorkingBranch(url);
     }
-    catch (SVNException e) {
-      return false;
+    catch (SvnBindException e) {
+      LOG.debug(e);
     }
-    finally {
-      if (repository != null) {
-        repository.closeSession();
-      }
+
+    return result;
+  }
+
+  public static boolean checkRepositoryVersion15(@NotNull SvnVcs vcs, @NotNull Url url) {
+    // Merge info tracking is supported in repositories since svn 1.5 (June 2008) - see http://subversion.apache.org/docs/release-notes/.
+    // But still some users use 1.4 repositories and currently we need to know if repository supports merge info for some code flows.
+
+    boolean result = false;
+
+    try {
+      result = vcs.getFactory().createRepositoryFeaturesClient().supportsMergeTracking(url);
     }
+    catch (VcsException e) {
+      LOG.info(e);
+      // TODO: Exception is thrown when url just not exist (was deleted, for instance) => and false is returned which seems not to be correct.
+    }
+
+    return result;
   }
 
   @Nullable
-  public static SVNStatus getStatus(final SvnVcs vcs, final File file) {
-    final SVNStatusClient statusClient = vcs.createStatusClient();
+  public static Status getStatus(@NotNull final SvnVcs vcs, @NotNull final File file) {
     try {
-      return statusClient.doStatus(file, false);
+      return vcs.getFactory(file).createStatusClient().doStatus(file, false);
     }
-    catch (SVNException e) {
+    catch (SvnBindException e) {
       return null;
     }
   }
 
-  public static SVNDepth getDepth(final SvnVcs vcs, final File file) {
-    final SVNWCClient client = vcs.createWCClient();
-    try {
-      final SVNInfo svnInfo = client.doInfo(file, SVNRevision.UNDEFINED);
-      if (svnInfo != null) {
-        return svnInfo.getDepth();
-      }
-    }
-    catch (SVNException e) {
-      //
-    }
-    return SVNDepth.UNKNOWN;
+  @NotNull
+  public static Depth getDepth(final SvnVcs vcs, final File file) {
+    Info info = vcs.getInfo(file);
+
+    return info != null && info.getDepth() != null ? info.getDepth() : Depth.UNKNOWN;
   }
 
   public static boolean seemsLikeVersionedDir(final VirtualFile file) {
-    final String adminName = SVNFileUtil.getAdminDirectoryName();
-    final VirtualFile child = file.findChild(adminName);
+    final VirtualFile child = file.findChild(SVN_ADMIN_DIR_NAME);
     return child != null && child.isDirectory();
   }
 
@@ -579,100 +521,307 @@ public class SvnUtil {
   }
 
   @Nullable
-  public static SVNURL getUrl(final SvnVcs vcs, final File file) {
-    try {
-      final SVNInfo info = vcs.createWCClient().doInfo(file, SVNRevision.UNDEFINED);
-      return info == null ? null : info.getURL(); // todo for moved items?
-    }
-    catch (SVNException e) {
-      LOG.debug(e);
-      return null;
-    }
+  public static Url getUrl(final SvnVcs vcs, final File file) {
+    // todo for moved items?
+    final Info info = vcs.getInfo(file);
+
+    return info == null ? null : info.getUrl();
   }
 
-  public static boolean doesRepositorySupportMergeInfo(final SvnVcs vcs, final SVNURL url) {
-    SVNRepository repository = null;
-    try {
-      repository = vcs.createRepository(url);
-      return repository.hasCapability(SVNCapability.MERGE_INFO);
-    }
-    catch (SVNException e) {
-      return false;
-    } finally {
-      if (repository != null) {
-        repository.closeSession();
+  public static boolean remoteFolderIsEmpty(@NotNull SvnVcs vcs, @NotNull String url) throws VcsException {
+    Target target = Target.on(createUrl(url));
+    Ref<Boolean> result = new Ref<>(true);
+    DirectoryEntryConsumer handler = entry -> {
+      if (entry != null) {
+        result.set(false);
       }
-    }
-  }
+    };
 
-  public static boolean remoteFolderIsEmpty(final SvnVcs vcs, final String url) throws SVNException {
-    SVNRepository repository = null;
-    try {
-      repository = vcs.createRepository(url);
-      final Ref<Boolean> result = new Ref<Boolean>(true);
-      repository.getDir("", -1, null, new ISVNDirEntryHandler() {
-        public void handleDirEntry(final SVNDirEntry dirEntry) throws SVNException {
-          if (dirEntry != null) {
-            result.set(false);
-          }
-        }
-      });
-      return result.get();
-    } finally {
-      if (repository != null) {
-        repository.closeSession();
-      }
-    }
+    vcs.getFactory(target).createBrowseClient().list(target, null, Depth.IMMEDIATES, handler);
+    return result.get();
   }
 
   public static File getWcDb(final File file) {
-    return new File(file, ".svn/wc.db");
+    return new File(file, SVN_ADMIN_DIR_NAME + "/wc.db");
   }
 
   @Nullable
-  public static File getWcCopyRootIf17(final File file, @Nullable final File upperBound) {
-    File current = file;
-    while (current != null) {
-      try {
-        final SvnWcGeneration svnWcGeneration = SvnOperationFactory.detectWcGeneration(current, false);
-        if (SvnWcGeneration.V17.equals(svnWcGeneration)) return current;
-        if (SvnWcGeneration.V16.equals(svnWcGeneration)) return null;
-        if (upperBound != null && FileUtil.filesEqual(upperBound, current)) return null;
-        current = current.getParentFile();
-      }
-      catch (SVNException e) {
-        return null;
-      }
+  public static File getWorkingCopyRoot(@NotNull File file) {
+    File current = getParentWithDb(file);
+    if (current == null) return null;
+
+    WorkingCopyFormat format = getFormat(current);
+
+    return format.isOrGreater(WorkingCopyFormat.ONE_DOT_SEVEN) ? current : null;
+  }
+
+  @Nullable
+  public static VirtualFile getWorkingCopyRoot(@NotNull VirtualFile file) {
+    do {
+      if (isWorkingCopyRoot(file)) return file;
+      file = file.getParent();
     }
+    while (file != null);
+
     return null;
   }
 
-  public static boolean is17CopyPart(final File file) {
+  /**
+   * @deprecated Use {@link SvnUtil#getWorkingCopyRoot(File)} instead.
+   */
+  @Deprecated
+  @Nullable
+  public static File getWorkingCopyRootNew(@NotNull File file) {
+    return getWorkingCopyRoot(file);
+  }
+
+  @Nullable
+  public static File getParentWithDb(@NotNull File file) {
+    File current = file;
+    boolean wcDbFound = false;
+    while (current != null) {
+      File wcDb;
+      if ((wcDb = getWcDb(current)).exists() && ! wcDb.isDirectory()) {
+        wcDbFound = true;
+        break;
+      }
+      current = current.getParentFile();
+    }
+    if (! wcDbFound) return null;
+    return current;
+  }
+
+  public static boolean isAncestor(@NotNull Url parentUrl, @NotNull Url childUrl) {
+    return Url.isAncestor(parentUrl.toDecodedString(), childUrl.toDecodedString());
+  }
+
+  public static String getRelativeUrl(@NotNull Url parentUrl, @NotNull Url childUrl) {
+    return getRelativeUrl(parentUrl.toDecodedString(), childUrl.toDecodedString());
+  }
+
+  public static String getRelativeUrl(@NotNull Target parent, @NotNull Target child) {
+    return getRelativeUrl(toDecodedString(parent), toDecodedString(child));
+  }
+
+  private static String getRelativeUrl(@NotNull String parentUrl, @NotNull String childUrl) {
+    return FileUtilRt.getRelativePath(parentUrl, childUrl, '/', true);
+  }
+
+  public static String getRelativePath(@NotNull String parentPath, @NotNull String childPath) {
+    return  FileUtilRt.getRelativePath(FileUtil.toSystemIndependentName(parentPath), FileUtil.toSystemIndependentName(childPath), '/');
+  }
+
+  @NotNull
+  @Contract(pure = true)
+  public static String ensureStartSlash(@NotNull String path) {
+    return StringUtil.startsWithChar(path, '/') ? path : '/' + path;
+  }
+
+  @NotNull
+  public static String join(@NotNull final String... parts) {
+    return StringUtil.join(parts, "/");
+  }
+
+  @NotNull
+  public static Url removePathTail(@NotNull Url url) throws SvnBindException {
+    // TODO: Fix - remove tail only from path
+    return createUrl(Url.removeTail(url.toDecodedString()), false);
+  }
+
+  @NotNull
+  public static Revision getHeadRevision(@NotNull SvnVcs vcs, @NotNull Url url) throws SvnBindException {
+    Info info = vcs.getInfo(url, Revision.HEAD);
+
+    if (info == null) {
+      throw new SvnBindException("Could not get info for " + url);
+    }
+    if (!info.getRevision().isValid()) {
+      throw new SvnBindException("Could not get revision for " + url);
+    }
+
+    return info.getRevision();
+  }
+
+  public static byte[] getFileContents(@NotNull final SvnVcs vcs,
+                                       @NotNull final Target target,
+                                       @Nullable final Revision revision,
+                                       @Nullable final Revision pegRevision)
+    throws VcsException {
+    return vcs.getFactory(target).createContentClient().getContent(target, revision, pegRevision);
+  }
+
+  @NotNull
+  public static Url createUrl(@NotNull String url) throws SvnBindException {
+    return createUrl(url, true);
+  }
+
+  @NotNull
+  public static Url createUrl(@NotNull String url, boolean encoded) throws SvnBindException {
+    return Url.parse(url, encoded);
+  }
+
+  @NotNull
+  public static Url parseUrl(@NotNull String url) {
     try {
-      return SvnWcGeneration.V17.equals(SvnOperationFactory.detectWcGeneration(file, true));
+      return createUrl(url);
     }
-    catch (SVNException e) {
-      return false;
+    catch (SvnBindException e) {
+      throw createIllegalArgument(e);
     }
   }
 
-  public static String appendMultiParts(@NotNull final String base, @NotNull final String subPath) throws SVNException {
-    if (StringUtil.isEmpty(subPath)) return base;
-    final List<String> parts = StringUtil.split(subPath.replace('\\', '/'), "/", true);
-    String result = base;
-    for (String part : parts) {
-      result = SVNPathUtil.append(result, part);
+  @NotNull
+  public static Url parseUrl(@NotNull String url, boolean encoded) {
+    try {
+      return createUrl(url, encoded);
     }
+    catch (SvnBindException e) {
+      throw createIllegalArgument(e);
+    }
+  }
+
+  @NotNull
+  public static Url append(@NotNull Url parent, @NotNull String child) throws SvnBindException {
+    return append(parent, child, false);
+  }
+
+  @NotNull
+  public static Url append(@NotNull Url parent, @NotNull String child, boolean encoded) throws SvnBindException {
+    return parent.appendPath(child, encoded);
+  }
+
+  @NotNull
+  public static IllegalArgumentException createIllegalArgument(@NotNull Exception e) {
+    IllegalArgumentException runtimeException = new IllegalArgumentException();
+    runtimeException.initCause(e);
+    return runtimeException;
+  }
+
+  @Nullable
+  public static String getChangelistName(@NotNull final Status status) {
+    // no explicit check on working copy format supports change lists as they are supported from svn 1.5
+    // and anyway status.getChangeListName() should just return null if change lists are not supported.
+    return status.getNodeKind().isFile() ? status.getChangeListName() : null;
+  }
+
+  public static boolean isUnversionedOrNotFound(@NotNull SvnBindException e) {
+    return e.contains(ErrorCode.WC_PATH_NOT_FOUND) ||
+           e.contains(ErrorCode.UNVERSIONED_RESOURCE) ||
+           e.contains(ErrorCode.WC_NOT_WORKING_COPY) ||
+           // thrown when getting info from repository for non-existent item - like HEAD revision for deleted file
+           e.contains(ErrorCode.ILLEGAL_TARGET) ||
+           // for svn 1.6
+           StringUtil.containsIgnoreCase(e.getMessage(), "(not a versioned resource)");
+  }
+
+  public static boolean isAuthError(@NotNull SvnBindException e) {
+    return e.contains(ErrorCode.RA_NOT_AUTHORIZED) ||
+           e.contains(ErrorCode.RA_UNKNOWN_AUTH) ||
+           e.containsCategory(ErrorCategory.AUTHZ) ||
+           e.containsCategory(ErrorCategory.AUTHN);
+  }
+
+  // TODO: Create custom Target class and implement append there
+  @NotNull
+  public static Target append(@NotNull Target target, @NotNull String path) throws SvnBindException {
+    return append(target, path, false);
+  }
+
+  @NotNull
+  public static Target append(@NotNull Target target, @NotNull String path, boolean checkAbsolute) throws SvnBindException {
+    Target result;
+
+    if (target.isFile()) {
+      result = Target.on(resolvePath(target.getFile(), path));
+    }
+    else {
+      result = Target.on(checkAbsolute && URI.create(path).isAbsolute() ? createUrl(path) : append(target.getUrl(), path));
+    }
+
     return result;
   }
 
-  public static SVNURL appendMultiParts(@NotNull final SVNURL base, @NotNull final String subPath) throws SVNException {
-    if (StringUtil.isEmpty(subPath)) return base;
-    final List<String> parts = StringUtil.split(subPath.replace('\\', '/'), "/", true);
-    SVNURL result = base;
-    for (String part : parts) {
-      result = result.appendPath(part, false);
+  @NotNull
+  public static File resolvePath(@NotNull File base, @NotNull String path) {
+    File result = new File(path);
+
+    if (!result.isAbsolute()) {
+      result = ".".equals(path) ? base : new File(base, path);
     }
+
     return result;
+  }
+
+  /**
+   * {@code SvnTarget.getPathOrUrlDecodedString} does not correctly work for URL targets - {@code Url.toString} instead of
+   * {@code Url.toDecodedString} is used.
+   * <p/>
+   * Current utility method fixes this case.
+   */
+  @NotNull
+  public static String toDecodedString(@NotNull Target target) {
+    return target.isFile() ? target.getFile().getPath() : target.getUrl().toDecodedString();
+  }
+
+  private static class SqLiteJdbcWorkingCopyFormatOperation
+    implements FileUtilRt.RepeatableIOOperation<WorkingCopyFormat, RuntimeException> {
+    private static final String SQLITE_JDBC_TEMP_DIR_PROPERTY = "org.sqlite.tmpdir";
+
+    @NotNull private final File myDbFile;
+
+    static {
+      ensureTempFolder();
+    }
+
+    SqLiteJdbcWorkingCopyFormatOperation(@NotNull File dbFile) {
+      myDbFile = dbFile;
+    }
+
+    @Nullable
+    @Override
+    public WorkingCopyFormat execute(boolean lastAttempt) {
+      Connection connection = null;
+      int userVersion = 0;
+
+      try {
+        Class.forName("org.sqlite.JDBC");
+        connection = DriverManager.getConnection("jdbc:sqlite:" + FileUtil.toSystemIndependentName(myDbFile.getPath()));
+        ResultSet resultSet = connection.createStatement().executeQuery("pragma user_version");
+
+        if (resultSet.next()) {
+          userVersion = resultSet.getInt(1);
+        }
+        else {
+          LOG.info("No result while getting user version for " + myDbFile.getPath());
+        }
+      }
+      catch (ClassNotFoundException | SQLException e) {
+        LOG.info(e);
+      }
+      finally {
+        close(connection);
+      }
+
+      WorkingCopyFormat format = WorkingCopyFormat.getInstance(userVersion);
+
+      return !WorkingCopyFormat.UNKNOWN.equals(format) ? format : null;
+    }
+
+    private static void ensureTempFolder() {
+      if (System.getProperty(SQLITE_JDBC_TEMP_DIR_PROPERTY) == null) {
+        System.setProperty(SQLITE_JDBC_TEMP_DIR_PROPERTY, PathManager.getTempPath());
+      }
+    }
+
+    private static void close(@Nullable Connection connection) {
+      if (connection != null) {
+        try {
+          connection.close();
+        }
+        catch (SQLException e) {
+          notifyDatabaseError();
+        }
+      }
+    }
   }
 }

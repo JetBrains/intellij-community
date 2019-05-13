@@ -26,6 +26,6 @@ public class LafComboBoxRenderer extends ListCellRendererWrapper<UIManager.LookA
                         final int index,
                         final boolean selected,
                         final boolean cellHasFocus) {
-    setText(value.getName());
+    setText(value == null ? "" : value.getName());
   }
 }

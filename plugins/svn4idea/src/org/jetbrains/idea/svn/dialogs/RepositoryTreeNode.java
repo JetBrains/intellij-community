@@ -1,35 +1,20 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.dialogs;
 
+import com.intellij.CommonBundle;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.util.NotNullFunction;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.FilteringIterator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnVcs;
+import org.jetbrains.idea.svn.api.Url;
+import org.jetbrains.idea.svn.browse.DirectoryEntry;
 import org.jetbrains.idea.svn.dialogs.browserCache.Expander;
 import org.jetbrains.idea.svn.dialogs.browserCache.NodeLoadState;
-import org.tmatesoft.svn.core.SVNDirEntry;
-import org.tmatesoft.svn.core.SVNErrorMessage;
-import org.tmatesoft.svn.core.SVNNodeKind;
-import org.tmatesoft.svn.core.SVNURL;
-import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 
-import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreeNode;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -39,16 +24,16 @@ import java.util.List;
 public class RepositoryTreeNode implements TreeNode, Disposable {
 
   private TreeNode myParentNode;
-  private List<TreeNode> myChildren;
+  @NotNull private final List<TreeNode> myChildren;
   private final RepositoryTreeModel myModel;
-  private final SVNURL myURL;
+  private final Url myURL;
   private final Object myUserObject;
 
-  private final NodeLoadState myLoadState;
+  @NotNull private final NodeLoadState myLoadState;
   private NodeLoadState myChildrenLoadState;
 
   public RepositoryTreeNode(RepositoryTreeModel model, TreeNode parentNode,
-                            @NotNull SVNURL url, Object userObject, final NodeLoadState state) {
+                            @NotNull Url url, Object userObject, @NotNull NodeLoadState state) {
     myParentNode = parentNode;
 
     myURL = url;
@@ -56,10 +41,11 @@ public class RepositoryTreeNode implements TreeNode, Disposable {
     myUserObject = userObject;
 
     myLoadState = state;
+    myChildren = ContainerUtil.newArrayList();
     myChildrenLoadState = NodeLoadState.EMPTY;
   }
 
-  public RepositoryTreeNode(RepositoryTreeModel model, TreeNode parentNode, @NotNull SVNURL url, Object userObject) {
+  public RepositoryTreeNode(RepositoryTreeModel model, TreeNode parentNode, @NotNull Url url, Object userObject) {
     // created outside: only roots
     this(model, parentNode, url, userObject, NodeLoadState.REFRESHED);
   }
@@ -68,30 +54,37 @@ public class RepositoryTreeNode implements TreeNode, Disposable {
     return myUserObject;
   }
 
+  @Override
   public int getChildCount() {
     return getChildren().size();
   }
 
+  @Override
   public Enumeration children() {
     return Collections.enumeration(getChildren());
   }
 
+  @Override
   public TreeNode getChildAt(int childIndex) {
     return (TreeNode) getChildren().get(childIndex);
   }
 
+  @Override
   public int getIndex(TreeNode node) {
     return getChildren().indexOf(node);
   }
 
+  @Override
   public boolean getAllowsChildren() {
     return !isLeaf();
   }
 
+  @Override
   public boolean isLeaf() {
-    return myUserObject instanceof SVNDirEntry ? ((SVNDirEntry) myUserObject).getKind() == SVNNodeKind.FILE : false;
+    return myUserObject instanceof DirectoryEntry && ((DirectoryEntry)myUserObject).isFile();
   }
 
+  @Override
   public TreeNode getParent() {
     return myParentNode;
   }
@@ -112,47 +105,45 @@ public class RepositoryTreeNode implements TreeNode, Disposable {
     if (myParentNode instanceof RepositoryTreeRootNode) {
       return myURL.toString();
     }
-    return SVNPathUtil.tail(myURL.getPath());
+    return myURL.getTail();
   }
 
-  public void reload(final Expander expander, final boolean removeCurrentChildren) {
+  public void reload(@NotNull Expander expander, boolean removeCurrentChildren) {
     ApplicationManager.getApplication().assertIsDispatchThread();
 
-    if (removeCurrentChildren || (myChildren == null)) {
+    if (removeCurrentChildren || NodeLoadState.EMPTY.equals(myChildrenLoadState)) {
       initChildren();
     }
-    
+
     myModel.getCacheLoader().load(this, expander);
   }
 
   private void initChildren() {
-    myChildren = new ArrayList<TreeNode>();
-    myChildren.add(new DefaultMutableTreeNode("Loading"));
+    myChildren.clear();
+    myChildren.add(new SimpleTextNode(CommonBundle.getLoadingTreeNodeText()));
     myChildrenLoadState = NodeLoadState.LOADING;
   }
 
   private List getChildren() {
     ApplicationManager.getApplication().assertIsDispatchThread();
-    
-    if (myChildren == null) {
+
+    if (NodeLoadState.EMPTY.equals(myChildrenLoadState)) {
       initChildren();
       myModel.getCacheLoader().load(this, myModel.getLazyLoadingExpander());
     }
     return myChildren;
   }
 
-  public SVNURL getURL() {
+  public Url getURL() {
     return myURL;
   }
 
   @Nullable
-  public SVNDirEntry getSVNDirEntry() {
-    if (myUserObject instanceof SVNDirEntry) {
-      return (SVNDirEntry) myUserObject;
-    }
-    return null;
+  public DirectoryEntry getSVNDirEntry() {
+    return myUserObject instanceof DirectoryEntry ? (DirectoryEntry)myUserObject : null;
   }
 
+  @Override
   public void dispose() {
   }
 
@@ -161,46 +152,30 @@ public class RepositoryTreeNode implements TreeNode, Disposable {
   }
 
   public boolean isRepositoryRoot() {
-    return ! (myUserObject instanceof SVNDirEntry);
+    return ! (myUserObject instanceof DirectoryEntry);
   }
 
   @NotNull
   public List<TreeNode> getAllAlreadyLoadedChildren() {
-    if (myChildren != null) {
-      final List<TreeNode> result = new ArrayList<TreeNode>(myChildren.size());
-      for (TreeNode child : myChildren) {
-        result.add(child);
-      }
-      return result;
-    }
-    return Collections.emptyList();
+    return ContainerUtil.newArrayList(myChildren);
   }
 
   @NotNull
   public List<RepositoryTreeNode> getAlreadyLoadedChildren() {
-    if (myChildren != null) {
-      final List<RepositoryTreeNode> result = new ArrayList<RepositoryTreeNode>(myChildren.size());
-      for (TreeNode child : myChildren) {
-        if (child instanceof RepositoryTreeNode) {
-          result.add((RepositoryTreeNode) child);
-        }
-      }
-      return result;
-    }
-    return Collections.emptyList();
+    return ContainerUtil.collect(myChildren.iterator(), FilteringIterator.instanceOf(RepositoryTreeNode.class));
   }
 
   public boolean isDisposed() {
     return myModel.isDisposed();
   }
 
-  public void setChildren(final List<SVNDirEntry> children, final NodeLoadState state) {
-    final List<TreeNode> nodes = new ArrayList<TreeNode>();
-    for (final SVNDirEntry entry : children) {
-      if (!myModel.isShowFiles() && entry.getKind() != SVNNodeKind.DIR) {
+  public void setChildren(@NotNull List<DirectoryEntry> children, @NotNull NodeLoadState state) {
+    final List<TreeNode> nodes = new ArrayList<>();
+    for (final DirectoryEntry entry : children) {
+      if (!myModel.isShowFiles() && !entry.isDirectory()) {
         continue;
       }
-      nodes.add(new RepositoryTreeNode(myModel, this, entry.getURL(), entry, state));
+      nodes.add(new RepositoryTreeNode(myModel, this, entry.getUrl(), entry, state));
     }
 
     myChildrenLoadState = state;
@@ -215,19 +190,17 @@ public class RepositoryTreeNode implements TreeNode, Disposable {
   }
 
   public void setAlienChildren(final List<TreeNode> children, final NodeLoadState oldState) {
-    if (myChildren == null) {
-      myChildren = new ArrayList<TreeNode>();
-    } else {
-      myChildren.clear();
-    }
+    myChildren.clear();
 
     for (TreeNode child : children) {
       if (child instanceof RepositoryTreeNode) {
         ((RepositoryTreeNode) child).setParentNode(this);
         myChildren.add(child);
         myChildrenLoadState = oldState;
-      } else if (child instanceof DefaultMutableTreeNode) {
-        myChildren.add(new DefaultMutableTreeNode(((DefaultMutableTreeNode) child).getUserObject()));
+      }
+      else if (child instanceof SimpleTextNode) {
+        SimpleTextNode node = (SimpleTextNode)child;
+        myChildren.add(new SimpleTextNode(node.getText(), node.isError()));
         myChildrenLoadState = oldState;
       }
     }
@@ -235,13 +208,9 @@ public class RepositoryTreeNode implements TreeNode, Disposable {
     myModel.reload(this);
   }
 
-  public void setErrorNode(final SVNErrorMessage text, final NodeLoadState state) {
-    if (myChildren == null) {
-      myChildren = new ArrayList<TreeNode>();
-    }
+  public void setErrorNode(@NotNull String text) {
     myChildren.clear();
-    myChildren.add(new DefaultMutableTreeNode(text));
-
+    myChildren.add(new SimpleTextNode(text, true));
     myChildrenLoadState = NodeLoadState.ERROR;
     myModel.reload(this);
   }
@@ -259,24 +228,20 @@ public class RepositoryTreeNode implements TreeNode, Disposable {
     return myModel.findByUrl(this);
   }
 
-  public RepositoryTreeModel getModel() {
-    return myModel;
-  }
-
   public NodeLoadState getChildrenLoadState() {
     return myChildrenLoadState;
   }
 
-  public void doOnSubtree(final NotNullFunction<RepositoryTreeNode, Object> function) {
-    final SubTreeWalker walker = new SubTreeWalker(this, function);
-    walker.execute();
+  public void doOnSubtree(@NotNull NotNullFunction<RepositoryTreeNode, Object> function) {
+    new SubTreeWalker(this, function).execute();
   }
 
   private static class SubTreeWalker {
-    private final RepositoryTreeNode myNode;
-    private final NotNullFunction<RepositoryTreeNode, Object> myFunction;
 
-    private SubTreeWalker(final RepositoryTreeNode node, final NotNullFunction<RepositoryTreeNode, Object> function) {
+    @NotNull private final RepositoryTreeNode myNode;
+    @NotNull private final NotNullFunction<RepositoryTreeNode, Object> myFunction;
+
+    private SubTreeWalker(@NotNull RepositoryTreeNode node, @NotNull NotNullFunction<RepositoryTreeNode, Object> function) {
       myNode = node;
       myFunction = function;
     }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,7 @@
  */
 package com.intellij.vcsUtil;
 
-import com.intellij.codeInsight.TargetElementUtilBase;
+import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -31,10 +31,11 @@ import com.intellij.psi.xml.XmlText;
  * @author yole
  */
 public class XmlVcsSelectionProvider implements VcsSelectionProvider {
+  @Override
   public VcsSelection getSelection(VcsContext context) {
     final Editor editor = context.getEditor();
       if (editor == null) return null;
-      PsiElement psiElement = TargetElementUtilBase.findTargetElement(editor, TargetElementUtilBase.ELEMENT_NAME_ACCEPTED);
+      PsiElement psiElement = TargetElementUtil.findTargetElement(editor, TargetElementUtil.ELEMENT_NAME_ACCEPTED);
       if (psiElement == null || !psiElement.isValid()) {
         return null;
       }
@@ -65,6 +66,10 @@ public class XmlVcsSelectionProvider implements VcsSelectionProvider {
       }
 
       Document document = FileDocumentManager.getInstance().getDocument(virtualFile);
+      if (document == null) {
+        return null;
+      }
+
       return new VcsSelection(document, textRange, actionName);
   }
 }

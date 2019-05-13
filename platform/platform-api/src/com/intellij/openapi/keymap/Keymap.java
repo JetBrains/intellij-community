@@ -1,85 +1,102 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.keymap;
 
 import com.intellij.openapi.actionSystem.KeyboardShortcut;
 import com.intellij.openapi.actionSystem.MouseShortcut;
 import com.intellij.openapi.actionSystem.Shortcut;
 import com.intellij.openapi.options.Scheme;
-import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 
 public interface Keymap extends Scheme {
   //think about name
+  @NotNull
+  @Override
   String getName();
 
   //think about name
   String getPresentableName();
 
+  @Nullable
   Keymap getParent();
 
   boolean canModify();
 
   /**
-   * @return Action ids including ids of parent keymap
+   * @return Action ids including parent keymap ids
    */
+  @NotNull
+  Collection<String> getActionIdList();
+
+  @NotNull
   String[] getActionIds();
 
   /**
-   * @return all keyboard shortcuts for the action with the specified <code>actionId</code>
-   * or an ampty array if the action doesn't have any keyboard shortcut.
+   * @return all keyboard shortcuts for the action with the specified {@code actionId}
+   * or an empty array if the action doesn't have any keyboard shortcut.
    */
-  Shortcut[] getShortcuts(@NonNls String actionId);
+  // 60 external usages - actionId cannot be marked as NotNull
+  @NotNull
+  Shortcut[] getShortcuts(@Nullable String actionId);
 
   /**
-   * @return all actions that have the specified first keystroke. If there are no
+   * @return all actions including parent keymap that have the specified first keystroke. If there are no
    * such actions then the method returns an empty array.
    */
-  String[] getActionIds(KeyStroke firstKeyStroke);
+  @NotNull
+  String[] getActionIds(@NotNull KeyStroke firstKeyStroke);
 
   /**
    * @return all actions that have the specified first and second keystrokes. If there are no
    * such actions then the method returns an empty array.
    */
-  String[] getActionIds(KeyStroke firstKeyStroke, KeyStroke secondKeyStroke);
+  String[] getActionIds(@NotNull KeyStroke firstKeyStroke, @Nullable KeyStroke secondKeyStroke);
 
-  String[] getActionIds(Shortcut shortcut);
+  String[] getActionIds(@NotNull Shortcut shortcut);
 
   /**
    * @return all actions with specified mouse shortcut.  If there are no
    * such action then the method returns an empty array.
    */
-  String[] getActionIds(MouseShortcut shortcut);
+  @NotNull
+  String[] getActionIds(@NotNull MouseShortcut shortcut);
 
-  void addShortcut(String actionId, Shortcut shortcut);
+  void addShortcut(@NotNull String actionId, @NotNull Shortcut shortcut);
 
-  void removeShortcut(String actionId, Shortcut shortcut);
+  void removeShortcut(@NotNull String actionId, @NotNull Shortcut shortcut);
 
-  Map<String, ArrayList<KeyboardShortcut>> getConflicts(String actionId, KeyboardShortcut keyboardShortcut);
+  @NotNull
+  Map<String, List<KeyboardShortcut>> getConflicts(@NotNull String actionId, @NotNull KeyboardShortcut keyboardShortcut);
 
-  void addShortcutChangeListener(Listener listener);
+  /**
+   * @deprecated Use {@link KeymapManagerListener#TOPIC}
+   */
+  @Deprecated
+  void addShortcutChangeListener(@NotNull Listener listener);
 
-  void removeShortcutChangeListener(Listener listener);
+  /**
+   * @deprecated Use {@link KeymapManagerListener#TOPIC}
+   */
+  @Deprecated
+  void removeShortcutChangeListener(@NotNull Listener listener);
 
-  void removeAllActionShortcuts(String actionId);
+  void removeAllActionShortcuts(@NotNull String actionId);
 
+  @NotNull
+  Keymap deriveKeymap(@NotNull String newName);
+
+  boolean hasActionId(@NotNull String actionId, @NotNull MouseShortcut shortcut);
+
+  /**
+   * @deprecated Use {@link KeymapManagerListener#TOPIC}
+   */
+  @Deprecated
   interface Listener {
-    void onShortcutChanged(String actionId);
+    void onShortcutChanged(@NotNull String actionId);
   }
 }

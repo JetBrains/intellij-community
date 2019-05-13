@@ -28,17 +28,27 @@ import java.util.List;
  * @author nik
  */
 public class JavaModuleSourceRoot extends DetectedSourceRoot {
-  private List<String> myLanguages;
+  private final List<String> myLanguages;
+  private final boolean myWithModuleInfoFile; // module-info.java
 
   public JavaModuleSourceRoot(File directory, @Nullable String packagePrefix, @NotNull String language) {
     super(directory, packagePrefix);
-    myLanguages = new ArrayList<String>();
+    myLanguages = new ArrayList<>();
     myLanguages.add(language);
+    myWithModuleInfoFile = false;
+  }
+
+  public JavaModuleSourceRoot(File directory, @NotNull String language, boolean withModuleInfoFile) {
+    super(directory, "");
+    myLanguages = new ArrayList<>();
+    myLanguages.add(language);
+    myWithModuleInfoFile = withModuleInfoFile;
   }
 
   private JavaModuleSourceRoot(File directory, String packagePrefix, List<String> languages) {
     super(directory, packagePrefix);
     myLanguages = languages;
+    myWithModuleInfoFile = false;
   }
 
   @NotNull
@@ -57,6 +67,14 @@ public class JavaModuleSourceRoot extends DetectedSourceRoot {
 
   @NotNull
   public JavaModuleSourceRoot combineWith(@NotNull JavaModuleSourceRoot root) {
-    return new JavaModuleSourceRoot(getDirectory(), getPackagePrefix(), ContainerUtil.concat(myLanguages, root.myLanguages));
+    List<String> union = new ArrayList<>(myLanguages.size() + root.myLanguages.size());
+    union.addAll(myLanguages);
+    union.addAll(root.myLanguages);
+    ContainerUtil.removeDuplicates(union);
+    return new JavaModuleSourceRoot(getDirectory(), getPackagePrefix(), union);
+  }
+
+  public boolean isWithModuleInfoFile() {
+    return myWithModuleInfoFile;
   }
 }

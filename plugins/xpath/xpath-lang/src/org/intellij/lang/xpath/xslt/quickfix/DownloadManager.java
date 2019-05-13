@@ -22,143 +22,121 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
-import com.intellij.ui.GuiUtils;
-import com.intellij.util.net.HttpConfigurable;
-import com.intellij.util.net.NetUtils;
+import com.intellij.util.ExceptionUtil;
+import com.intellij.util.io.HttpRequests;
+import org.jetbrains.annotations.NotNull;
 
-import java.io.*;
+import java.io.File;
+import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
-import java.net.URLConnection;
 import java.util.Set;
 
-@SuppressWarnings({ "StringEquality" })
 public abstract class DownloadManager {
-    private static final ExternalResourceManager resourceManager = ExternalResourceManager.getInstance();
+  private static final ExternalResourceManager resourceManager = ExternalResourceManager.getInstance();
 
-    private final Project myProject;
-    private final ProgressIndicator myProgress;
-    private final String myResourcePath;
+  private final Project myProject;
+  private final ProgressIndicator myProgress;
+  private final String myResourcePath;
 
-    public DownloadManager(Project project, ProgressIndicator progress) {
-        myProject = project;
-        myProgress = progress;
+  public DownloadManager(Project project, ProgressIndicator progress) {
+    myProject = project;
+    myProgress = progress;
 
-        myResourcePath = PathManager.getSystemPath() + File.separatorChar + "extResources";
-        final File dir = new File(myResourcePath);
-        dir.mkdirs();
+    myResourcePath = PathManager.getSystemPath() + File.separatorChar + "extResources";
+    //noinspection ResultOfMethodCallIgnored
+    new File(myResourcePath).mkdirs();
+  }
+
+  public void fetch(@NotNull final String location) throws DownloadException {
+    if (resourceManager.getResourceLocation(location, myProject) != location) {
+      return;
     }
 
-    public void fetch(String location) throws DownloadException {
-        if (resourceManager.getResourceLocation(location) == location) {
-            myProgress.setText("Downloading " + location);
-            downloadAndRegister(location);
+    myProgress.setText("Downloading " + location);
+
+    File file = null;
+    try {
+      file = HttpRequests.request(location).connect(new HttpRequests.RequestProcessor<File>() {
+        @Override
+        public File process(@NotNull HttpRequests.Request request) throws IOException {
+          String name = Integer.toHexString(System.identityHashCode(this)) + "_" +
+                        Integer.toHexString(location.hashCode()) + "_" +
+                        location.substring(location.lastIndexOf('/') + 1);
+          return request.saveToFile(new File(myResourcePath, name.lastIndexOf('.') == -1 ? name + ".xml" : name), myProgress);
         }
-    }
+      });
 
-    private void downloadAndRegister(final String location) throws DownloadException {
-        final ExternalResourceManager resourceManager = ExternalResourceManager.getInstance();
-
-        File file = null;
-        try {
-            final URLConnection urlConnection = HttpConfigurable.getInstance().openConnection(location);
-            urlConnection.connect();
-            final InputStream in = urlConnection.getInputStream();
-
-          final OutputStream out;
-          try {
-            final int total = urlConnection.getContentLength();
-
-            final String name = Integer.toHexString(System.identityHashCode(this)) + "_" + Integer.toHexString(location.hashCode()) + "_" + location.substring(location.lastIndexOf('/') + 1);
-            file = new File(myResourcePath, name.lastIndexOf('.') == -1 ? name + ".xml" : name);
-            out = new FileOutputStream(file);
-
-            try {
-              NetUtils.copyStreamContent(myProgress, in, out, total);
-            }
-            finally {
-              out.close();
-            }
+      try {
+        //noinspection unchecked
+        final Set<String>[] resourceDependencies = new Set[1];
+        final VirtualFile vf = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file);
+        if (vf != null) {
+          PsiFile psiFile = PsiManager.getInstance(myProject).findFile(vf);
+          if (psiFile != null && isAccepted(psiFile)) {
+            resourceDependencies[0] = getResourceDependencies(psiFile);
+            resourceManager.addResource(location, file.getAbsolutePath());
           }
-          finally {
-            in.close();
+          else {
+            ApplicationManager.getApplication().invokeLater(() -> Messages.showErrorDialog(myProject, "Not a valid file: " + vf.getPresentableUrl(), "Download Problem"), myProject.getDisposed());
           }
-
-            try {
-              final File _file = file;
-
-              //noinspection unchecked
-              final Set<String>[] resourceDependencies = new Set[1];
-              Runnable runnable = new Runnable() {
-                public void run() {
-                  Runnable runnable = new Runnable() {
-                    public void run() {
-                      final VirtualFile vf = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(_file);
-                      if (vf != null) {
-                        final PsiFile psiFile = PsiManager.getInstance(myProject).findFile(vf);
-                        if (psiFile != null && isAccepted(psiFile)) {
-                          resourceDependencies[0] = getResourceDependencies(psiFile);
-                          resourceManager.addResource(location, _file.getAbsolutePath());
-                        }
-                        else {
-                          Messages.showErrorDialog(myProject, "Not a valid file: " + vf.getPresentableUrl(), "Download Problem");
-                        }
-                      }
-                    }
-                  };
-                  ApplicationManager.getApplication().runWriteAction(runnable);
-                }
-              };
-              GuiUtils.invokeAndWait(runnable);
-
-              if (resourceDependencies[0] != null) {
-                for (String s : resourceDependencies[0]) {
-                  myProgress.checkCanceled();
-                  myProgress.setFraction(0);
-                  fetch(s);
-                }
-              }
-            } catch (InterruptedException e) {
-                // OK
-            } catch (InvocationTargetException e) {
-                final Throwable targetException = e.getTargetException();
-                if (targetException instanceof RuntimeException) {
-                    throw (RuntimeException)targetException;
-                } else if (targetException instanceof IOException) {
-                    throw (IOException)targetException;
-                } else if (targetException instanceof InterruptedException) {
-                    // OK
-                } else {
-                    Logger.getInstance(getClass().getName()).error(e);
-                }
-            }
-        } catch (IOException e) {
-            throw new DownloadException(location, e);
-        } finally {
-            if (file != null && resourceManager.getResourceLocation(location) == location) {
-                // something went wrong. get rid of the file
-                file.delete();
-            }
         }
+
+        if (resourceDependencies[0] != null) {
+          for (String s : resourceDependencies[0]) {
+            myProgress.checkCanceled();
+            myProgress.setFraction(0);
+            fetch(s);
+          }
+        }
+      }
+      catch (Error err) {
+        Throwable e = err.getCause();
+        if (e instanceof InvocationTargetException) {
+          Throwable targetException = ((InvocationTargetException)e).getTargetException();
+          ExceptionUtil.rethrowUnchecked(targetException);
+          if (targetException instanceof IOException) {
+            throw (IOException)targetException;
+          }
+          if (!(targetException instanceof InterruptedException)) {
+            Logger.getInstance(getClass().getName()).error(e);
+          }
+        }
+        else if (!(e instanceof InterruptedException)) {
+          throw err;
+        }
+      }
+    }
+    catch (IOException e) {
+      throw new DownloadException(location, e);
+    }
+    finally {
+      if (file != null && resourceManager.getResourceLocation(location, myProject) == location) {
+        // something went wrong. get rid of the file
+        FileUtil.delete(file);
+      }
+    }
+  }
+
+  protected abstract boolean isAccepted(PsiFile psiFile);
+
+  protected abstract Set<String> getResourceDependencies(PsiFile psiFile);
+
+  public static class DownloadException extends IOException {
+    private final String myLocation;
+
+    public DownloadException(String location, IOException cause) {
+      super();
+      myLocation = location;
+      initCause(cause);
     }
 
-    protected abstract boolean isAccepted(PsiFile psiFile);
-    protected abstract Set<String> getResourceDependencies(PsiFile psiFile);
-
-    public static class DownloadException extends IOException {
-        private final String myLocation;
-
-        public DownloadException(String location, IOException cause) {
-            super();
-            myLocation = location;
-            initCause(cause);
-        }
-
-        public String getLocation() {
-            return myLocation;
-        }
+    public String getLocation() {
+      return myLocation;
     }
+  }
 }

@@ -1,8 +1,8 @@
 // "Add tag @throws java.lang.Exception" "true"
 class a {
-/**
+/**<caret>
 */
-public void <caret>run() throws Exception {
+public void run() throws Exception {
 
 }
 }

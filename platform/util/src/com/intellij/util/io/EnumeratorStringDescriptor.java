@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,24 +23,27 @@ import java.io.IOException;
 
 /**
  * @author Eugene Zhuravlev
-*         Date: Dec 18, 2007
-*/
+ */
 public class EnumeratorStringDescriptor implements KeyDescriptor<String> {
-  private final byte[] buffer = IOUtil.allocReadWriteUTFBuffer();
+  public static final EnumeratorStringDescriptor INSTANCE = new EnumeratorStringDescriptor();
 
+  @Override
   public int getHashCode(final String value) {
     return value.hashCode();
   }
 
+  @Override
   public boolean isEqual(final String val1, final String val2) {
     return val1.equals(val2);
   }
 
-  public void save(final DataOutput storage, @NotNull final String value) throws IOException {
-    IOUtil.writeUTFFast(buffer, storage, value);
+  @Override
+  public void save(@NotNull final DataOutput storage, @NotNull final String value) throws IOException {
+    IOUtil.writeUTF(storage, value);
   }
 
-  public String read(final DataInput storage) throws IOException {
-    return IOUtil.readUTFFast(buffer, storage);
+  @Override
+  public String read(@NotNull final DataInput storage) throws IOException {
+    return IOUtil.readUTF(storage);
   }
 }

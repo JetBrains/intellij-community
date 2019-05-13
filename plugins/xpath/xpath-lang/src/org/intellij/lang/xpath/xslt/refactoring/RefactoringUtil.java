@@ -38,7 +38,7 @@ public class RefactoringUtil {
     public static Set<XPathExpression> collectMatchingExpressions(XPathExpression expression) {
         final PsiElement usageBlock = XsltCodeInsightUtil.getUsageBlock(expression);
         if (usageBlock == null) return Collections.emptySet();
-        
+
         final ExpressionCollector visitor = new ExpressionCollector(expression);
         usageBlock.accept(visitor);
 
@@ -49,7 +49,7 @@ public class RefactoringUtil {
         final VariableReferenceCollector visitor = new VariableReferenceCollector();
         block.accept(visitor);
 
-        final List<XPathVariableReference> list = new ArrayList<XPathVariableReference>(visitor.getMatches());
+        final List<XPathVariableReference> list = new ArrayList<>(visitor.getMatches());
         Collections.sort(list, XsltCodeInsightUtil.POSITION_COMPARATOR);
         return list;
     }
@@ -94,7 +94,7 @@ public class RefactoringUtil {
         protected void superVisitElement(PsiElement element) {
             super.visitElement(element);
         }
-        
+
         @Override
         public void visitElement(PsiElement element) {
             if (element instanceof XPathElement) {
@@ -109,6 +109,7 @@ public class RefactoringUtil {
 
         protected abstract void visitXPathExpression(XPathExpression expr);
 
+        @Override
         public void visitXmlAttribute(XmlAttribute attribute) {
             if (XsltSupport.isXPathAttribute(attribute)) {
                 final PsiFile[] xpathFiles = XsltSupport.getFiles(attribute);
@@ -123,9 +124,10 @@ public class RefactoringUtil {
         private final Set<XPathVariableReference> myList;
 
         protected VariableReferenceCollector() {
-            myList = new HashSet<XPathVariableReference>();
+            myList = new HashSet<>();
         }
 
+        @Override
         protected void visitXPathExpression(XPathExpression expr) {
             if (expr instanceof XPathVariableReference) {
                 myList.add((XPathVariableReference)expr);
@@ -141,11 +143,12 @@ public class RefactoringUtil {
         private final XPathExpression myExpression;
         private final Set<XPathExpression> myList;
 
-        public ExpressionCollector(XPathExpression expression) {
+        ExpressionCollector(XPathExpression expression) {
             myExpression = expression;
-            myList = new HashSet<XPathExpression>();
+            myList = new HashSet<>();
         }
 
+        @Override
         protected void visitXPathExpression(XPathExpression expr) {
             if (expr != myExpression) {
                 if (isAccepted(expr) && isEquivalent(expr, myExpression)) {

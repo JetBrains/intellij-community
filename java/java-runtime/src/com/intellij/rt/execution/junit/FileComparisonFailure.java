@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,38 +15,41 @@
  */
 package com.intellij.rt.execution.junit;
 
-import com.intellij.rt.execution.junit.segments.OutputObjectRegistry;
-import com.intellij.rt.execution.junit.segments.Packet;
 import junit.framework.ComparisonFailure;
 
-public class FileComparisonFailure extends ComparisonFailure implements KnownException {
+public class FileComparisonFailure extends ComparisonFailure  {
   private final String myExpected;
   private final String myActual;
   private final String myFilePath;
+  private final String myActualFilePath;
 
-  public FileComparisonFailure(String message, String expected, String actual, String filePath) {
+  public FileComparisonFailure(String message, /*@NotNull */String expected, /*@NotNull */String actual, String expectedFilePath) {
+    this(message, expected, actual, expectedFilePath, null);
+  }
+
+  public FileComparisonFailure(String message, /*@NotNull */String expected, /*@NotNull */String actual, String expectedFilePath, String actualFilePath) {
     super(message, expected, actual);
+    if (expected == null) throw new NullPointerException("'expected' must not be null");
+    if (actual == null) throw new NullPointerException("'actual' must not be null");
     myExpected = expected;
     myActual = actual;
-    myFilePath = filePath;
+    myFilePath = expectedFilePath;
+    myActualFilePath = actualFilePath;
   }
 
-  public PacketFactory getPacketFactory() {
-    return new MyPacketFactory(this, myExpected, myActual, myFilePath);
+  public String getFilePath() {
+    return myFilePath;
   }
 
-  private static class MyPacketFactory extends ComparisonDetailsExtractor {
-    private final String myFilePath;
+  public String getActualFilePath() {
+    return myActualFilePath;
+  }
+  
+  public String getExpected() {
+    return myExpected;
+  }
 
-    public MyPacketFactory(ComparisonFailure assertion, String expected, String actual, String filePath) {
-      super(assertion, expected, actual);
-      myFilePath = filePath;
-    }
-
-    public Packet createPacket(OutputObjectRegistry registry, Object test) {
-      Packet packet = super.createPacket(registry, test);
-      packet.addLimitedString(myFilePath);
-      return packet;
-    }
+  public String getActual() {
+    return myActual;
   }
 }

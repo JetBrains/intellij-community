@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2012 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2017 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,47 +20,62 @@ import com.intellij.codeInspection.ui.ListWrappingTableModel;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.*;
-import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.util.ui.CheckBox;
+import com.intellij.util.ui.FormBuilder;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.psiutils.ControlFlowUtils;
+import com.siyeh.ig.psiutils.MethodMatcher;
 import com.siyeh.ig.psiutils.TestUtils;
 import com.siyeh.ig.ui.UiUtils;
+import org.intellij.lang.annotations.Pattern;
 import org.jdom.Element;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import java.awt.*;
-import java.util.*;
-import java.util.List;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-import java.util.regex.PatternSyntaxException;
+import java.util.Arrays;
 
 public class TestMethodWithoutAssertionInspection extends BaseInspection {
 
-  /**
-   * @noinspection PublicField
-   */
-  @NonNls public String assertionMethods =
-    "org.junit.Assert,assert.*|fail.*," +
-    "junit.framework.Assert,assert.*|fail.*," +
-    "org.mockito.Mockito,verify.*," +
-    "org.junit.rules.ExpectedException,expect.*";
-
-  private final List<String> methodNamePatterns = new ArrayList();
-  private final List<String> classNames = new ArrayList();
-  private Map<String, Pattern> patternCache = null;
-
-  @SuppressWarnings({"PublicField"})
-  public boolean assertKeywordIsAssertion = false;
+  protected final MethodMatcher methodMatcher;
+  @SuppressWarnings("PublicField") public boolean assertKeywordIsAssertion;
+  @SuppressWarnings("PublicField") public boolean ignoreIfExceptionThrown;
 
   public TestMethodWithoutAssertionInspection() {
-    parseString(assertionMethods, classNames, methodNamePatterns);
+    methodMatcher = new MethodMatcher(false, "assertionMethods")
+      .add(JUnitCommonClassNames.ORG_JUNIT_ASSERT, "assert.*|fail.*")
+      .add(JUnitCommonClassNames.JUNIT_FRAMEWORK_ASSERT, "assert.*|fail.*")
+      .add(JUnitCommonClassNames.ORG_JUNIT_JUPITER_API_ASSERTIONS, "assert.*|fail.*")
+      .add("org.assertj.core.api.Assertions", "assertThat")
+      .add("org.assertj.core.api.WithAssertions", "assertThat")
+      .add("com.google.common.truth.Truth", "assert.*")
+      .add("com.google.common.truth.Truth8", "assert.*")
+      .add("org.mockito.Mockito", "verify.*")
+      .add("org.mockito.InOrder", "verify")
+      .add("org.junit.rules.ExpectedException", "expect.*")
+      .add("org.hamcrest.MatcherAssert", "assertThat")
+      .add("mockit.Verifications", "Verifications")
+      .finishDefault();
   }
 
+  @Override
+  public JComponent createOptionsPanel() {
+    final ListTable table = new ListTable(
+      new ListWrappingTableModel(Arrays.asList(methodMatcher.getClassNames(), methodMatcher.getMethodNamePatterns()), "Assertion class name",
+                                 InspectionGadgetsBundle.message("method.name.regex")));
+    final CheckBox checkBox1 =
+      new CheckBox(InspectionGadgetsBundle.message("assert.keyword.is.considered.an.assertion"), this, "assertKeywordIsAssertion");
+    final CheckBox checkBox2 =
+      new CheckBox("Ignore test methods which declare exceptions", this, "ignoreIfExceptionThrown");
+    return new FormBuilder()
+      .addComponentFillVertically(UiUtils.createAddRemoveTreeClassChooserPanel(table, "Choose assertion class"), 0)
+      .addComponent(checkBox1)
+      .addComponent(checkBox2)
+      .getPanel();
+  }
+
+  @Pattern(VALID_ID_PATTERN)
   @Override
   @NotNull
   public String getID() {
@@ -76,33 +91,18 @@ public class TestMethodWithoutAssertionInspection extends BaseInspection {
   @Override
   @NotNull
   protected String buildErrorString(Object... infos) {
-    return InspectionGadgetsBundle.message(
-      "test.method.without.assertion.problem.descriptor");
+    return InspectionGadgetsBundle.message("test.method.without.assertion.problem.descriptor");
   }
 
   @Override
-  public JComponent createOptionsPanel() {
-    final JPanel panel = new JPanel(new BorderLayout());
-    final ListTable table = new ListTable(
-      new ListWrappingTableModel(Arrays.asList(classNames, methodNamePatterns), InspectionGadgetsBundle.message("class.name"),
-                                 InspectionGadgetsBundle.message("method.name.pattern")));
-    final JPanel tablePanel = UiUtils.createAddRemovePanel(table);
-    final CheckBox checkBox =
-      new CheckBox(InspectionGadgetsBundle.message("assert.keyword.is.considered.an.assertion"), this, "assertKeywordIsAssertion");
-    panel.add(tablePanel, BorderLayout.CENTER);
-    panel.add(checkBox, BorderLayout.SOUTH);
-    return panel;
-  }
-
-  @Override
-  public void readSettings(Element element) throws InvalidDataException {
+  public void readSettings(@NotNull Element element) throws InvalidDataException {
     super.readSettings(element);
-    parseString(assertionMethods, classNames, methodNamePatterns);
+    methodMatcher.readSettings(element);
   }
 
   @Override
-  public void writeSettings(Element element) throws WriteExternalException {
-    assertionMethods = formatString(classNames, methodNamePatterns);
+  public void writeSettings(@NotNull Element element) throws WriteExternalException {
+    methodMatcher.writeSettings(element);
     super.writeSettings(element);
   }
 
@@ -111,8 +111,7 @@ public class TestMethodWithoutAssertionInspection extends BaseInspection {
     return new TestMethodWithoutAssertionVisitor();
   }
 
-  private class TestMethodWithoutAssertionVisitor
-    extends BaseInspectionVisitor {
+  private class TestMethodWithoutAssertionVisitor extends BaseInspectionVisitor {
 
     @Override
     public void visitMethod(@NotNull PsiMethod method) {
@@ -120,7 +119,10 @@ public class TestMethodWithoutAssertionInspection extends BaseInspection {
       if (!TestUtils.isJUnitTestMethod(method)) {
         return;
       }
-      if (hasExpectedExceptionAnnotation(method)) {
+      if (TestUtils.hasExpectedExceptionAnnotation(method)) {
+        return;
+      }
+      if (ignoreIfExceptionThrown && method.getThrowsList().getReferenceElements().length > 0) {
         return;
       }
       if (containsAssertion(method)) {
@@ -133,15 +135,7 @@ public class TestMethodWithoutAssertionInspection extends BaseInspection {
     }
 
     private boolean lastStatementIsCallToMethodWithAssertion(PsiMethod method) {
-      final PsiCodeBlock body = method.getBody();
-      if (body == null) {
-        return false;
-      }
-      final PsiStatement[] statements = body.getStatements();
-      if (statements.length <= 0) {
-        return false;
-      }
-      final PsiStatement lastStatement = statements[0];
+      final PsiStatement lastStatement = ControlFlowUtils.getLastStatementInBlock(method.getBody());
       if (!(lastStatement instanceof PsiExpressionStatement)) {
         return false;
       }
@@ -164,67 +158,35 @@ public class TestMethodWithoutAssertionInspection extends BaseInspection {
       if (element == null) {
         return false;
       }
-      final ContainsAssertionVisitor visitor = new ContainsAssertionVisitor();
+      final ContainsAssertionVisitor
+        visitor = new ContainsAssertionVisitor();
       element.accept(visitor);
       return visitor.containsAssertion();
     }
-
-    private boolean hasExpectedExceptionAnnotation(PsiMethod method) {
-      final PsiModifierList modifierList = method.getModifierList();
-      final PsiAnnotation testAnnotation = modifierList.findAnnotation("org.junit.Test");
-      if (testAnnotation == null) {
-        return false;
-      }
-      final PsiAnnotationParameterList parameterList = testAnnotation.getParameterList();
-      final PsiNameValuePair[] nameValuePairs = parameterList.getAttributes();
-      for (PsiNameValuePair nameValuePair : nameValuePairs) {
-        @NonNls final String parameterName = nameValuePair.getName();
-        if ("expected".equals(parameterName)) {
-          return true;
-        }
-      }
-      return false;
-    }
   }
 
-  private class ContainsAssertionVisitor extends JavaRecursiveElementVisitor {
-
-    private boolean containsAssertion = false;
+  private class ContainsAssertionVisitor extends JavaRecursiveElementWalkingVisitor {
+    private boolean containsAssertion;
 
     @Override
     public void visitElement(@NotNull PsiElement element) {
+      if ((element instanceof PsiCompiledElement)) {
+        // assume no assertions in libraries (prevents assertion in recursive element walking visitor)
+        return;
+      }
       if (!containsAssertion) {
         super.visitElement(element);
       }
     }
 
     @Override
-    public void visitMethodCallExpression(@NotNull PsiMethodCallExpression call) {
+    public void visitCallExpression(@NotNull PsiCallExpression call) {
       if (containsAssertion) {
         return;
       }
-      super.visitMethodCallExpression(call);
-      final PsiReferenceExpression methodExpression = call.getMethodExpression();
-      @NonNls final String methodName = methodExpression.getReferenceName();
-      if (methodName == null) {
-        return;
-      }
-      final int methodNamesSize = methodNamePatterns.size();
-      for (int i = 0; i < methodNamesSize; i++) {
-        final String pattern = methodNamePatterns.get(i);
-        if (!methodNamesMatch(methodName, pattern)) {
-          continue;
-        }
-        final PsiMethod method = call.resolveMethod();
-        if (method == null || method.isConstructor()) {
-          continue;
-        }
-        final PsiClass aClass = method.getContainingClass();
-        if (!InheritanceUtil.isInheritor(aClass, classNames.get(i))) {
-          continue;
-        }
+      super.visitCallExpression(call);
+      if (methodMatcher.matches(call)) {
         containsAssertion = true;
-        break;
       }
     }
 
@@ -240,36 +202,8 @@ public class TestMethodWithoutAssertionInspection extends BaseInspection {
       containsAssertion = true;
     }
 
-    public boolean containsAssertion() {
+    boolean containsAssertion() {
       return containsAssertion;
     }
-  }
-
-  private boolean methodNamesMatch(String methodName, String methodNamePattern) {
-    Pattern pattern;
-    if (patternCache != null) {
-      pattern = patternCache.get(methodNamePattern);
-    }
-    else {
-      patternCache = new HashMap(methodNamePatterns.size());
-      pattern = null;
-    }
-    if (pattern == null) {
-      try {
-        pattern = Pattern.compile(methodNamePattern);
-        patternCache.put(methodNamePattern, pattern);
-      }
-      catch (PatternSyntaxException ignore) {
-        return false;
-      }
-      catch (NullPointerException ignore) {
-        return false;
-      }
-    }
-    if (pattern == null) {
-      return false;
-    }
-    final Matcher matcher = pattern.matcher(methodName);
-    return matcher.matches();
   }
 }

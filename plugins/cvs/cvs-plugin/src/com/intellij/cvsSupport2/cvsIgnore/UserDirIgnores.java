@@ -57,11 +57,7 @@ public class UserDirIgnores{
 
   private static List<SimpleStringPattern> createUserDirIgnoredFilesInfo() {
     final File file = userHomeCvsIgnoreFile();
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
-      public void run() {
-        CvsVfsUtil.refreshAndFindFileByIoFile(file);
-      }
-    }, ModalityState.NON_MODAL);
+    ApplicationManager.getApplication().invokeLater(() -> CvsVfsUtil.refreshAndFindFileByIoFile(file), ModalityState.NON_MODAL);
     return IgnoredFilesInfoImpl.getPattensFor(file);
   }
 

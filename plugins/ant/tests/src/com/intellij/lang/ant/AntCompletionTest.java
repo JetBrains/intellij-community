@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lang.ant;
 
 import com.intellij.codeInsight.completion.CodeCompletionHandlerBase;
@@ -43,7 +29,7 @@ public class AntCompletionTest extends LightCodeInsightTestCase {
     AntSupport.markFileAsAntFile(myVFile, myFile.getProject(), true);
   }
 
-  public void testSimpleProperty() throws Exception {
+  public void testSimpleProperty() {
     configureByFile("test1.xml");
     performNormalCompletion();
     assertNotNull(getItems());
@@ -51,7 +37,7 @@ public class AntCompletionTest extends LightCodeInsightTestCase {
     select();
   }
 
-  public void testSimplePropertyWithDot1() throws Exception {
+  public void testSimplePropertyWithDot1() {
     configureByFile("test2.xml");
     performNormalCompletion();
     assertNotNull(getItems());
@@ -59,7 +45,7 @@ public class AntCompletionTest extends LightCodeInsightTestCase {
     select();
   }
 
-  public void testSimplePropertyWithDot2() throws Exception {
+  public void testSimplePropertyWithDot2() {
     configureByFile("test4.xml");
     performNormalCompletion();
     assertNotNull(getItems());
@@ -67,7 +53,7 @@ public class AntCompletionTest extends LightCodeInsightTestCase {
     select();
   }
 
-  public void testSimplePropertyWithDot3() throws Exception {
+  public void testSimplePropertyWithDot3() {
     configureByFile("/test5.xml");
     performNormalCompletion();
     assertNotNull(getItems());
@@ -75,7 +61,7 @@ public class AntCompletionTest extends LightCodeInsightTestCase {
     select();
   }
 
-  public void testReplace1() throws Exception {
+  public void testReplace1() {
     configureByFile("test10.xml");
     performNormalCompletion();
     assertNotNull(getItems());
@@ -83,7 +69,7 @@ public class AntCompletionTest extends LightCodeInsightTestCase {
     checkResultByFile("test10-out.xml");
   }
 
-  public void testSimplePropertyWithDot4() throws Exception {
+  public void testSimplePropertyWithDot4() {
     configureByFile("/test6.xml");
     performNormalCompletion();
     assertNotNull(getItems());
@@ -91,7 +77,7 @@ public class AntCompletionTest extends LightCodeInsightTestCase {
     select();
   }
 
-  public void testSimplePropertyWithDotAndMulityReference() throws Exception {
+  public void testSimplePropertyWithDotAndMulityReference() {
     configureByFile("test7.xml");
     performNormalCompletion();
     final LookupElement[] items = getItems();
@@ -100,7 +86,7 @@ public class AntCompletionTest extends LightCodeInsightTestCase {
     select();
   }
 
-  public void testSimplePropertyWithNoPrefix() throws Exception {
+  public void testSimplePropertyWithNoPrefix() {
     configureByFile("test3.xml");
     performNormalCompletion();
     assertNotNull(getItems());
@@ -108,26 +94,26 @@ public class AntCompletionTest extends LightCodeInsightTestCase {
     select();
   }
 
-  public void testInsertion1() throws Exception {
+  public void testInsertion1() {
     configureByFile("test8.xml");
     performNormalCompletion();
 
     checkResultByFile("/test8-out.xml");
   }
 
-  public void testInsertion2() throws Exception {
+  public void testInsertion2() {
     configureByFile("test9.xml");
     performNormalCompletion();
     checkResultByFile("/test8-out.xml");
   }
 
-  public void testTargetCompletion() throws Exception {
+  public void testTargetCompletion() {
     configureByFile("targetCompletion.xml");
     performNormalCompletion();
     checkResultByFile("/targetCompletion-out.xml");
   }
 
-  public void testTargetCompletion2() throws Exception {
+  public void testTargetCompletion2() {
     final String filePath = "targetCompletion2.xml";
 
     configureByFile(filePath);
@@ -137,14 +123,14 @@ public class AntCompletionTest extends LightCodeInsightTestCase {
     checkResultByFile("/targetCompletion2-out.xml");
   }
 
-  public void testEntityCompletion() throws Exception {
+  public void testEntityCompletion() {
     configureByFile("EntityCompletion.xml");
     performNormalCompletion();
 
     checkResultByFile("EntityCompletion-out.xml");
   }
 
-  public void testTargetAttributesCompletion() throws Exception {
+  public void testTargetAttributesCompletion() {
     final String testName = getTestName(false);
     configureByFile(testName + ".xml");
     performNormalCompletion();
@@ -156,33 +142,33 @@ public class AntCompletionTest extends LightCodeInsightTestCase {
     checkResultByFile(testName + "-out.xml");
   }
 
-  public void testEndTagCompletion() throws Exception {
+  public void testEndTagCompletion() {
     doTest();
   }
 
-  public void testTargetIfAttrEasterEgg() throws Exception {
+  public void testTargetIfAttrEasterEgg() {
     doTest();
   }
 
-  public void testTargetUnlessAttrEasterEgg() throws Exception {
-    doTest();
-  }
-
-  // TODO implement refs to params
-  public void _testMacrodefParam() throws Exception {
+  public void testTargetUnlessAttrEasterEgg() {
     doTest();
   }
 
   // TODO implement refs to params
-  public void _testMacrodefParam1() throws Exception {
+  public void _testMacrodefParam() {
     doTest();
   }
 
-  public void testMacrodefNestedElement() throws Exception {
+  // TODO implement refs to params
+  public void _testMacrodefParam1() {
     doTest();
   }
 
-  private void doTest() throws Exception {
+  public void testMacrodefNestedElement() {
+    doTest();
+  }
+
+  private void doTest() {
     final String testName = getTestName(false);
     configureByFile(testName + ".xml");
     performNormalCompletion();
@@ -209,13 +195,8 @@ public class AntCompletionTest extends LightCodeInsightTestCase {
   @NotNull
   private static LookupElement[] getItems() {
     final List<LookupElement> list = LookupManager.getInstance(getProject()).getActiveLookup().getItems();
-    return list.toArray(new LookupElement[list.size()]);
+    return list.toArray(LookupElement.EMPTY_ARRAY);
   }
 
-  @Override
-  protected void tearDown() throws Exception {
-    LookupManager.getInstance(getProject()).hideActiveLookup();
-    super.tearDown();
-  }
 
 }

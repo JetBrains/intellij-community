@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,41 +22,36 @@ import com.intellij.openapi.util.Disposer;
 
 import javax.swing.*;
 
-/**
- * Created by IntelliJ IDEA.
- * User: max
- * Date: Jul 21, 2003
- * Time: 10:38:42 PM
- * To change this template use Options | File Templates.
- */
 public class ActionMacroConfigurable implements Configurable {
   private ActionMacroConfigurationPanel myPanel;
 
+  @Override
   public String getDisplayName() {
     return IdeBundle.message("title.edit.macros");
   }
 
-  public String getHelpTopic() {
-    return null;
-  }
-
+  @Override
   public JComponent createComponent() {
     myPanel = new ActionMacroConfigurationPanel();
     return myPanel.getPanel();
   }
 
+  @Override
   public void apply() throws ConfigurationException {
     myPanel.apply();
   }
 
+  @Override
   public void reset() {
     myPanel.reset();
   }
 
+  @Override
   public boolean isModified() {
     return myPanel.isModified();
   }
 
+  @Override
   public void disposeUIResources() {
     Disposer.dispose(myPanel);
     myPanel = null;

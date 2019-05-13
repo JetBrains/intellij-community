@@ -14,17 +14,10 @@
  * limitations under the License.
  */
 
-/*
- * Created by IntelliJ IDEA.
- * User: sweinreuter
- * Date: 11.04.2006
- * Time: 00:46:09
- */
 package org.intellij.lang.xpath.context;
 
 import com.intellij.codeInspection.SuppressIntentionAction;
 import com.intellij.psi.PsiElement;
-
 import org.intellij.lang.xpath.psi.XPathExpression;
 import org.intellij.lang.xpath.psi.XPathNodeTest;
 import org.intellij.lang.xpath.psi.XPathType;
@@ -33,6 +26,7 @@ import org.intellij.lang.xpath.validation.inspections.quickfix.MakeTypeExplicitF
 import org.intellij.lang.xpath.validation.inspections.quickfix.RemoveExplicitConversionFix;
 import org.intellij.lang.xpath.validation.inspections.quickfix.RemoveRedundantConversionFix;
 import org.intellij.lang.xpath.validation.inspections.quickfix.XPathQuickFixFactory;
+import org.jetbrains.annotations.NotNull;
 
 public class XPathQuickFixFactoryImpl implements XPathQuickFixFactory {
     public static final XPathQuickFixFactory INSTANCE = new XPathQuickFixFactoryImpl();
@@ -40,6 +34,7 @@ public class XPathQuickFixFactoryImpl implements XPathQuickFixFactory {
     private XPathQuickFixFactoryImpl() {
     }
 
+    @Override
     public Fix<XPathExpression>[] createImplicitTypeConversionFixes(XPathExpression expression, XPathType type, boolean explicit) {
         //noinspection unchecked
         return explicit ? new Fix[]{
@@ -50,6 +45,7 @@ public class XPathQuickFixFactoryImpl implements XPathQuickFixFactory {
         };
     }
 
+    @Override
     public Fix<XPathExpression>[] createRedundantTypeConversionFixes(XPathExpression expression) {
         //noinspection unchecked
         return new Fix[]{
@@ -57,15 +53,19 @@ public class XPathQuickFixFactoryImpl implements XPathQuickFixFactory {
         };
     }
 
+    @Override
     public Fix<XPathNodeTest>[] createUnknownNodeTestFixes(XPathNodeTest test) {
         //noinspection unchecked
         return new Fix[0];
     }
 
+    @Override
+    @NotNull
     public SuppressIntentionAction[] getSuppressActions(XPathInspection inspection) {
         return new SuppressIntentionAction[0];
     }
 
+    @Override
     public boolean isSuppressedFor(PsiElement element, XPathInspection inspection) {
         return false;
     }

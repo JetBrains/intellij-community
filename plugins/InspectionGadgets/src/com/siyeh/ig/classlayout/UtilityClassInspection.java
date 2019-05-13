@@ -36,6 +36,12 @@ public class UtilityClassInspection extends BaseInspection {
   public final ExternalizableStringSet ignorableAnnotations = new ExternalizableStringSet();
 
   @Override
+  public JComponent createOptionsPanel() {
+    return SpecialAnnotationsUtil.createSpecialAnnotationsListControl(
+      ignorableAnnotations, InspectionGadgetsBundle.message("ignore.if.annotated.by"));
+  }
+
+  @Override
   @NotNull
   public String getDisplayName() {
     return InspectionGadgetsBundle.message("utility.class.display.name");
@@ -51,13 +57,7 @@ public class UtilityClassInspection extends BaseInspection {
   @NotNull
   @Override
   protected InspectionGadgetsFix[] buildFixes(Object... infos) {
-    return AddToIgnoreIfAnnotatedByListQuickFix.build((PsiModifierListOwner) infos[0], ignorableAnnotations);
-  }
-
-  @Override
-  public JComponent createOptionsPanel() {
-    return SpecialAnnotationsUtil.createSpecialAnnotationsListControl(
-      ignorableAnnotations, InspectionGadgetsBundle.message("ignore.if.annotated.by"));
+    return AddToIgnoreIfAnnotatedByListQuickFix.build((PsiModifierListOwner)infos[0], ignorableAnnotations);
   }
 
   @Override
@@ -73,7 +73,7 @@ public class UtilityClassInspection extends BaseInspection {
       if (!UtilityClassUtil.isUtilityClass(aClass)) {
         return;
       }
-      if (AnnotationUtil.isAnnotated(aClass, ignorableAnnotations)) {
+      if (AnnotationUtil.isAnnotated(aClass, ignorableAnnotations, 0)) {
         return;
       }
       registerClassError(aClass, aClass);

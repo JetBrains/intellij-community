@@ -15,18 +15,55 @@
  */
 package com.intellij.codeInsight.lookup;
 
+import com.intellij.openapi.util.Pair;
 import com.intellij.util.ProcessingContext;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.LinkedHashMap;
+import java.util.List;
 
 /**
  * @author peter
  */
 public abstract class Classifier<T> {
-  public abstract void addElement(T t);
+  protected final Classifier<T> myNext;
+  private final String myName;
 
-  public abstract Iterable<T> classify(Iterable<T> source, ProcessingContext context);
+  protected Classifier(Classifier<T> next, String name) {
+    myNext = next;
+    myName = name;
+  }
 
-  public abstract void describeItems(LinkedHashMap<T, StringBuilder> map, ProcessingContext context);
+  public void addElement(@NotNull T t, @NotNull ProcessingContext context) {
+    if (myNext != null) {
+      myNext.addElement(t, context);
+    }
+  }
 
+  @NotNull
+  public abstract Iterable<T> classify(@NotNull Iterable<T> source, @NotNull ProcessingContext context);
+
+  /**
+   * @return a mapping from the given items to objects (e.g. Comparable instances) used to sort the items in {@link #classify(Iterable, ProcessingContext)}.
+   * May return an empty list if there are no suitable objects available.
+   * Used for diagnostics and statistic collection.
+   */
+  @NotNull
+  public abstract List<Pair<T, Object>> getSortingWeights(@NotNull Iterable<T> items, @NotNull ProcessingContext context);
+
+  @Nullable
+  public final Classifier<T> getNext() {
+    return myNext;
+  }
+
+  public void removeElement(@NotNull T element, @NotNull ProcessingContext context) {
+    if (myNext != null) {
+      myNext.removeElement(element, context);
+    }
+  }
+
+  @NotNull
+  public final String getPresentableName() {
+    return myName;
+  }
 }

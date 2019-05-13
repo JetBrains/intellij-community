@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,56 +18,59 @@ package com.intellij.debugger.ui.impl.watch;
 import com.intellij.debugger.DebuggerContext;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
+import com.intellij.debugger.impl.DebuggerUtilsEx;
+import com.intellij.debugger.settings.NodeRendererSettings;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiExpression;
 import com.sun.jdi.ClassNotLoadedException;
 import com.sun.jdi.Method;
 import com.sun.jdi.Type;
 import com.sun.jdi.Value;
+import org.jetbrains.annotations.NotNull;
 
-/**
- * User: lex
- * Date: Oct 8, 2003
- * Time: 5:08:07 PM
- */
-public class MethodReturnValueDescriptorImpl extends ValueDescriptorImpl{
+public class MethodReturnValueDescriptorImpl extends ValueDescriptorImpl {
   private final Method myMethod;
-  private final Value myValue;
 
-  public MethodReturnValueDescriptorImpl(Project project, final Method method, Value value) {
-    super(project);
+  public MethodReturnValueDescriptorImpl(Project project, @NotNull Method method, Value value) {
+    super(project, value);
     myMethod = method;
-    myValue = value;
   }
 
+  @Override
   public Value calcValue(EvaluationContextImpl evaluationContext) throws EvaluateException {
-    return myValue;
+    return getValue();
   }
 
+  @NotNull
+  public Method getMethod() {
+    return myMethod;
+  }
+
+  @Override
   public String getName() {
-    //noinspection HardCodedStringLiteral
-    return myMethod.toString();
+    return NodeRendererSettings.getInstance().getClassRenderer().renderTypeName(myMethod.declaringType().name()) + "." +
+           DebuggerUtilsEx.methodNameWithArguments(myMethod);
   }
 
-  public String calcValueName() {
-    return getName();
-  }
-
+  @Override
   public Type getType() {
-    if (myValue == null) {
+    Type type = super.getType();
+    if (type == null) {
       try {
-        return myMethod.returnType();
+        type = myMethod.returnType();
       }
       catch (ClassNotLoadedException ignored) {
       }
     }
-    return super.getType();
+    return type;
   }
 
+  @Override
   public PsiExpression getDescriptorEvaluation(DebuggerContext context) throws EvaluateException {
-    throw new EvaluateException("Evaluation not supported for method return value");
+    return null;
   }
 
+  @Override
   public boolean canSetValue() {
     return false;
   }

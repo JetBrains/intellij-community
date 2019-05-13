@@ -35,7 +35,7 @@ public abstract class JpsJavaDependenciesEnumerationHandler {
       JpsJavaDependenciesEnumerationHandler handler = factory.createHandler(rootModules);
       if (handler != null) {
         if (handlers == null) {
-          handlers = new SmartList<JpsJavaDependenciesEnumerationHandler>();
+          handlers = new SmartList<>();
         }
         handlers.add(handler);
       }
@@ -43,7 +43,7 @@ public abstract class JpsJavaDependenciesEnumerationHandler {
     return handlers;
   }
 
-  public static boolean shouldProcessDependenciesRecursively(final List<JpsJavaDependenciesEnumerationHandler> handlers) {
+  public static boolean shouldProcessDependenciesRecursively(final List<? extends JpsJavaDependenciesEnumerationHandler> handlers) {
     if (handlers != null) {
       for (JpsJavaDependenciesEnumerationHandler handler : handlers) {
         if (!handler.shouldProcessDependenciesRecursively()) {

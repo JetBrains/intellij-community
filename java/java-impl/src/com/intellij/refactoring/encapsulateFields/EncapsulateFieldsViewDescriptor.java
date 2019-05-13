@@ -1,6 +1,6 @@
 
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,23 +26,31 @@ import org.jetbrains.annotations.NotNull;
 class EncapsulateFieldsViewDescriptor implements UsageViewDescriptor {
   private final PsiField[] myFields;
 
-  public EncapsulateFieldsViewDescriptor(PsiField[] fields) {
-    myFields = fields;
+  EncapsulateFieldsViewDescriptor(FieldDescriptor[] descriptors) {
+    myFields = new PsiField[descriptors.length];
+    for (int i = 0; i < descriptors.length; i++) {
+      myFields[i] = descriptors[i].getField();
+    }
   }
 
+  @Override
   public String getProcessedElementsHeader() {
     return RefactoringBundle.message("encapsulate.fields.fields.to.be.encapsulated");
   }
 
+  @Override
   @NotNull
   public PsiElement[] getElements() {
     return myFields;
   }
 
+  @NotNull
+  @Override
   public String getCodeReferencesText(int usagesCount, int filesCount) {
     return RefactoringBundle.message("references.to.be.changed", UsageViewBundle.getReferencesString(usagesCount, filesCount));
   }
 
+  @Override
   public String getCommentReferencesText(int usagesCount, int filesCount) {
     return null;
   }

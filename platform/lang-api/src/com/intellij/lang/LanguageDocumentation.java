@@ -32,6 +32,7 @@ public class LanguageDocumentation extends LanguageExtension<DocumentationProvid
     super("com.intellij.lang.documentationProvider");
   }
 
+  @Override
   public DocumentationProvider forLanguage(@NotNull final Language l) {
     final List<DocumentationProvider> providers = allForLanguage(l);
     if (providers.size() < 2) {

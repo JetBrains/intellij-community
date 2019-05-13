@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,68 +14,55 @@
  * limitations under the License.
  */
 
-/*
- * Created by IntelliJ IDEA.
- * User: max
- * Date: May 14, 2002
- * Time: 6:29:03 PM
- * To change template for new class use 
- * Code Style | Class Templates options (Tools | IDE Options).
- */
 package com.intellij.openapi.editor.actions;
 
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.actionSystem.EditorAction;
+import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.actionSystem.EditorWriteActionHandler;
+import com.intellij.util.DocumentUtil;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-public class CutLineEndAction extends EditorAction {
+public class CutLineEndAction extends TextComponentEditorAction {
   public CutLineEndAction() {
-    super(new Handler(true));
+    super(new Handler());
   }
 
-  static class Handler extends EditorWriteActionHandler {
-    private final boolean myCopyToClipboard;
-
-    Handler(boolean copyToClipboard) {
-      myCopyToClipboard = copyToClipboard;
+  private static class Handler extends EditorWriteActionHandler {
+    private Handler() {
+      super(false);
     }
 
     @Override
-    public void executeWriteAction(Editor editor, DataContext dataContext) {
-      final Document doc = editor.getDocument();
-      int caretOffset = editor.getCaretModel().getOffset();
-      if (caretOffset >= doc.getTextLength()) {
-        return;
-      }
-      final int lineNumber = doc.getLineNumber(caretOffset);
-      int lineEndOffset = doc.getLineEndOffset(lineNumber);
-
-      int start;
-      int end;
-      if (caretOffset >= lineEndOffset) {
-        start = lineEndOffset;
-        end = lineEndOffset + 1;
+    public void executeWriteAction(final Editor editor, @Nullable Caret caret, DataContext dataContext) {
+      if (caret == null && editor.getCaretModel().getCaretCount() > 1) {
+        editor.getCaretModel().runForEachCaret(c -> c.setSelection(c.getOffset(), getEndOffset(c)));
+        // We don't support kill-ring operations for multiple carets currently
+        EditorCopyPasteHelper.getInstance().copySelectionToClipboard(editor);
+        EditorModificationUtil.deleteSelectedTextForAllCarets(editor);
       }
       else {
-        start = caretOffset;
-        end = lineEndOffset;
-        if (lineEndOffset < doc.getTextLength() && CharArrayUtil.isEmptyOrSpaces(doc.getCharsSequence(), caretOffset, lineEndOffset)) {
-          end++;
+        if (caret == null) {
+          caret = editor.getCaretModel().getCurrentCaret();
         }
+        int startOffset = caret.getOffset();
+        int endOffset = getEndOffset(caret);
+        KillRingUtil.cut(editor, startOffset, endOffset);
+        // in case the caret was in the virtual space, we force it to go back to the real offset
+        caret.moveToOffset(startOffset);
       }
-
-      delete(editor, start, end);
     }
 
-    private void delete(@NotNull Editor editor, int start, int end) {
-      if (myCopyToClipboard) {
-        KillRingUtil.copyToKillRing(editor, start, end, true);
+    private static int getEndOffset(@NotNull Caret caret) {
+      Document document = caret.getEditor().getDocument();
+      int startOffset = caret.getOffset();
+      int endOffset = DocumentUtil.getLineEndOffset(startOffset, document);
+      if (endOffset < document.getTextLength() &&
+          CharArrayUtil.isEmptyOrSpaces(document.getImmutableCharSequence(), startOffset, endOffset)) {
+        endOffset++;
       }
-      editor.getDocument().deleteString(start, end);
+      return endOffset;
     }
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -53,14 +53,18 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMe
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
-import org.jetbrains.plugins.groovy.refactoring.GroovyChangeContextUtil;
+import org.jetbrains.plugins.groovy.util.GroovyChangeContextUtil;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Set;
 
 /**
  * @author Maxim.Medvedev
  */
 public class MoveGroovyMemberHandler implements MoveMemberHandler {
+  @Override
   public boolean changeExternalUsage(@NotNull MoveMembersOptions options, @NotNull MoveMembersProcessor.MoveMembersUsageInfo usage) {
     final PsiElement element = usage.getElement();
     if (element == null || !element.isValid()) return true;
@@ -152,8 +156,8 @@ public class MoveGroovyMemberHandler implements MoveMemberHandler {
     }
 
     if (docComment != null) {
-      PsiElement prevSibling = moved.getPrevSibling();
-      targetClass.addBefore(docComment, moved);
+      PsiElement insertedDocComment = targetClass.addBefore(docComment, moved);
+      PsiElement prevSibling = insertedDocComment.getPrevSibling();
       addLineFeedIfNeeded(prevSibling);
       docComment.delete();
     }
@@ -165,22 +169,22 @@ public class MoveGroovyMemberHandler implements MoveMemberHandler {
     if (prevSibling == null) return;
     ASTNode node = prevSibling.getNode();
     IElementType type = node.getElementType();
-    if (type == GroovyTokenTypes.mLCURLY) return;
 
     if (type == GroovyTokenTypes.mNLS) {
       String text = prevSibling.getText();
       int lfCount = StringUtil.countChars(text, '\n');
       if (lfCount < 2) {
         ASTNode parent = node.getTreeParent();
-        parent.addLeaf(GroovyTokenTypes.mNLS, text + "\n", node);
+        parent.addLeaf(GroovyTokenTypes.mNLS, text + "\n ", node);
         parent.removeChild(node);
       }
     }
     else {
-      node.getTreeParent().addLeaf(GroovyTokenTypes.mNLS, "\n\n", node.getTreeNext());
+      node.getTreeParent().addLeaf(GroovyTokenTypes.mNLS, "\n\n ", node.getTreeNext());
     }
   }
 
+  @Override
   public void decodeContextInfo(@NotNull PsiElement scope) {
     GroovyChangeContextUtil.decodeContextInfo(scope, null, null);
   }
@@ -225,14 +229,14 @@ public class MoveGroovyMemberHandler implements MoveMemberHandler {
 
   @Override
   @Nullable
-  public PsiElement getAnchor(@NotNull final PsiMember member, @NotNull final PsiClass targetClass) {
+  public PsiElement getAnchor(@NotNull final PsiMember member, @NotNull final PsiClass targetClass, Set<PsiMember> membersToMove) {
     if (member instanceof GrField && member.hasModifierProperty(PsiModifier.STATIC)) {
-      final List<PsiField> referencedFields = new ArrayList<PsiField>();
+      final List<PsiField> referencedFields = new ArrayList<>();
       final GrExpression psiExpression = ((GrField)member).getInitializerGroovy();
       if (psiExpression != null) {
         psiExpression.accept(new GroovyRecursiveElementVisitor() {
           @Override
-          public void visitReferenceExpression(final GrReferenceExpression expression) {
+          public void visitReferenceExpression(@NotNull final GrReferenceExpression expression) {
             super.visitReferenceExpression(expression);
             final PsiElement psiElement = expression.resolve();
             if (psiElement instanceof GrField) {
@@ -245,11 +249,7 @@ public class MoveGroovyMemberHandler implements MoveMemberHandler {
         });
       }
       if (!referencedFields.isEmpty()) {
-        Collections.sort(referencedFields, new Comparator<PsiField>() {
-          public int compare(final PsiField o1, final PsiField o2) {
-            return -PsiUtilCore.compareElementsByPosition(o1, o2);
-          }
-        });
+        Collections.sort(referencedFields, (o1, o2) -> -PsiUtilCore.compareElementsByPosition(o1, o2));
         return referencedFields.get(0);
       }
     }

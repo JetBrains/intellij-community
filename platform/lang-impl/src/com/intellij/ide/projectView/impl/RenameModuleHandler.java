@@ -22,10 +22,6 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
-import com.intellij.openapi.command.undo.BasicUndoableAction;
-import com.intellij.openapi.command.undo.UndoManager;
-import com.intellij.openapi.command.undo.UndoableAction;
-import com.intellij.openapi.command.undo.UnexpectedUndoException;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.module.ModifiableModuleModel;
@@ -35,7 +31,6 @@ import com.intellij.openapi.module.ModuleWithNameAlreadyExists;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.InputValidator;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.refactoring.RefactoringBundle;
@@ -51,13 +46,13 @@ public class RenameModuleHandler implements RenameHandler, TitledHandler {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.projectView.actions.RenameModuleHandler");
 
   @Override
-  public boolean isAvailableOnDataContext(DataContext dataContext) {
+  public boolean isAvailableOnDataContext(@NotNull DataContext dataContext) {
     Module module = LangDataKeys.MODULE_CONTEXT.getData(dataContext);
     return module != null;
   }
 
   @Override
-  public boolean isRenaming(DataContext dataContext) {
+  public boolean isRenaming(@NotNull DataContext dataContext) {
     return isAvailableOnDataContext(dataContext);
   }
 
@@ -86,7 +81,7 @@ public class RenameModuleHandler implements RenameHandler, TitledHandler {
   private static class MyInputValidator implements InputValidator {
     private final Project myProject;
     private final Module myModule;
-    public MyInputValidator(Project project, Module module) {
+    MyInputValidator(Project project, Module module) {
       myProject = project;
       myModule = module;
     }
@@ -101,37 +96,8 @@ public class RenameModuleHandler implements RenameHandler, TitledHandler {
       final String oldName = myModule.getName();
       final ModifiableModuleModel modifiableModel = renameModule(inputString);
       if (modifiableModel == null) return false;
-      final Ref<Boolean> success = Ref.create(Boolean.TRUE);
-      CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
-        @Override
-        public void run() {
-          UndoableAction action = new BasicUndoableAction() {
-            @Override
-            public void undo() throws UnexpectedUndoException {
-              final ModifiableModuleModel modifiableModel = renameModule(oldName);
-              if (modifiableModel != null) {
-                modifiableModel.commit();
-              }
-            }
-
-            @Override
-            public void redo() throws UnexpectedUndoException {
-              final ModifiableModuleModel modifiableModel = renameModule(inputString);
-              if (modifiableModel != null) {
-                modifiableModel.commit();
-              }
-            }
-          };
-          UndoManager.getInstance(myProject).undoableActionPerformed(action);
-          ApplicationManager.getApplication().runWriteAction(new Runnable() {
-            @Override
-            public void run() {
-              modifiableModel.commit();
-            }
-          });
-        }
-      }, IdeBundle.message("command.renaming.module", oldName), null);
-      return success.get().booleanValue();
+      CommandProcessor.getInstance().executeCommand(myProject, () -> ApplicationManager.getApplication().runWriteAction(() -> modifiableModel.commit()), IdeBundle.message("command.renaming.module", oldName), null);
+      return true;
     }
 
     @Nullable

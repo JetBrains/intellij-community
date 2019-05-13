@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,17 +21,20 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.xdebugger.frame.XValue;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.tree.TreePath;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * @author nik
  */
 public abstract class XDebuggerTreeActionBase extends AnAction {
   @Override
-  public void actionPerformed(final AnActionEvent e) {
+  public void actionPerformed(@NotNull final AnActionEvent e) {
     XValueNodeImpl node = getSelectedNode(e.getDataContext());
     if (node != null) {
       String nodeName = node.getName();
@@ -44,13 +47,25 @@ public abstract class XDebuggerTreeActionBase extends AnAction {
   protected abstract void perform(final XValueNodeImpl node, @NotNull String nodeName, final AnActionEvent e);
 
   @Override
-  public void update(final AnActionEvent e) {
+  public void update(@NotNull final AnActionEvent e) {
     XValueNodeImpl node = getSelectedNode(e.getDataContext());
-    e.getPresentation().setEnabled(node != null && isEnabled(node));
+    e.getPresentation().setEnabled(node != null && isEnabled(node, e));
   }
 
-  protected boolean isEnabled(final XValueNodeImpl node) {
+  protected boolean isEnabled(final @NotNull XValueNodeImpl node, @NotNull AnActionEvent e) {
     return node.getName() != null;
+  }
+
+  @NotNull
+  public static List<XValueNodeImpl> getSelectedNodes(DataContext dataContext) {
+    XDebuggerTree tree = XDebuggerTree.getTree(dataContext);
+    if (tree == null) return Collections.emptyList();
+
+    TreePath[] paths = tree.getSelectionPaths();
+    if (paths == null || paths.length == 0) {
+      return Collections.emptyList();
+    }
+    return StreamEx.of(paths).map(TreePath::getLastPathComponent).select(XValueNodeImpl.class).toList();
   }
 
   @Nullable

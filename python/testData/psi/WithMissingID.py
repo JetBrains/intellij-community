@@ -1,0 +1,2 @@
+with open("") as :
+    pass

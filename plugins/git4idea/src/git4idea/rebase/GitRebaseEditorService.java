@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,20 +16,21 @@
 package git4idea.rebase;
 
 import com.intellij.ide.XmlRpcServer;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.util.containers.ContainerUtil;
 import git4idea.commands.GitCommand;
-import git4idea.commands.GitHandler;
 import git4idea.commands.GitLineHandler;
-import gnu.trove.THashMap;
 import org.apache.commons.codec.DecoderException;
 import org.apache.xmlrpc.XmlRpcClientLite;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.git4idea.util.ScriptGenerator;
-import org.jetbrains.ide.WebServerManager;
+import org.jetbrains.ide.BuiltInServerManager;
 
 import java.util.Map;
-import java.util.Random;
+import java.util.UUID;
 
 /**
  * The service that generates editor script for
@@ -46,15 +47,11 @@ public class GitRebaseEditorService {
   /**
    * The handlers to use
    */
-  private final Map<Integer, GitRebaseEditorHandler> myHandlers = new THashMap<Integer, GitRebaseEditorHandler>();
+  private final Map<UUID, GitRebaseEditorHandler> myHandlers = ContainerUtil.newHashMap();
   /**
    * The lock for the handlers
    */
   private final Object myHandlersLock = new Object();
-  /**
-   * Random number generator
-   */
-  private static final Random oursRandom = new Random();
   /**
    * The prefix for rebase editors
    */
@@ -89,7 +86,7 @@ public class GitRebaseEditorService {
     synchronized (myScriptLock) {
       if (myEditorCommand == null) {
         ScriptGenerator generator = new ScriptGenerator(GIT_REBASE_EDITOR_PREFIX, GitRebaseEditorMain.class);
-        generator.addInternal(Integer.toString(WebServerManager.getInstance().getPort()));
+        generator.addInternal(Integer.toString(BuiltInServerManager.getInstance().getPort()));
         generator.addClasses(XmlRpcClientLite.class, DecoderException.class);
         myEditorCommand = generator.commandLine();
       }
@@ -103,33 +100,28 @@ public class GitRebaseEditorService {
    * @param handler the handler to register
    * @return the handler identifier
    */
-  public int registerHandler(GitRebaseEditorHandler handler) {
+  @NotNull
+  public UUID registerHandler(@NotNull GitRebaseEditorHandler handler, @NotNull Disposable parentDisposable) {
     addInternalHandler();
-    Integer rc = null;
     synchronized (myHandlersLock) {
-      for (int i = Integer.MAX_VALUE; i > 0; i--) {
-        int code = Math.abs(oursRandom.nextInt());
-        // note that code might still be negative at this point if it is Integer.MIN_VALUE.
-        if (code > 0 && !myHandlers.containsKey(code)) {
-          rc = code;
-          break;
+      UUID key = UUID.randomUUID();
+      myHandlers.put(key, handler);
+      Disposer.register(parentDisposable, new Disposable() {
+        @Override
+        public void dispose() {
+          myHandlers.remove(key);
         }
-      }
-      if (rc == null) {
-        throw new IllegalStateException("There is a problem with random number allocation");
-      }
-      myHandlers.put(rc, handler);
+      });
+      return key;
     }
-    return rc;
   }
-
 
   /**
    * Unregister handler
    *
    * @param handlerNo the handler number.
    */
-  public void unregisterHandler(final int handlerNo) {
+  public void unregisterHandler(@NotNull UUID handlerNo) {
     synchronized (myHandlersLock) {
       if (myHandlers.remove(handlerNo) == null) {
         throw new IllegalStateException("The handler " + handlerNo + " has been already removed");
@@ -143,7 +135,7 @@ public class GitRebaseEditorService {
    * @param handlerNo the handler number.
    */
   @NotNull
-  GitRebaseEditorHandler getHandler(final int handlerNo) {
+  GitRebaseEditorHandler getHandler(@NotNull UUID handlerNo) {
     synchronized (myHandlersLock) {
       GitRebaseEditorHandler h = myHandlers.get(handlerNo);
       if (h == null) {
@@ -159,9 +151,9 @@ public class GitRebaseEditorService {
    * @param h        the handler to configure
    * @param editorNo the editor number
    */
-  public void configureHandler(GitLineHandler h, int editorNo) {
-    h.setEnvironment(GitCommand.GIT_EDITOR_ENV, getEditorCommand());
-    h.setEnvironment(GitRebaseEditorMain.IDEA_REBASE_HANDER_NO, Integer.toString(editorNo));
+  public void configureHandler(GitLineHandler h, @NotNull UUID editorNo) {
+    h.addCustomEnvironmentVariable(GitCommand.GIT_EDITOR_ENV, getEditorCommand());
+    h.addCustomEnvironmentVariable(GitRebaseEditorMain.IDEA_REBASE_HANDER_NO, editorNo.toString());
   }
 
 
@@ -177,16 +169,9 @@ public class GitRebaseEditorService {
      * @return exit code
      */
     @SuppressWarnings({"UnusedDeclaration"})
-    public int editCommits(int handlerNo, String path) {
-      GitRebaseEditorHandler editor = getHandler(handlerNo);
-      GitHandler handler = editor.getHandler();
-      handler.suspendWriteLock();
-      try {
-        return editor.editCommits(path);
-      }
-      finally {
-        handler.resumeWriteLock();
-      }
+    public int editCommits(@NotNull String handlerNo, String path) {
+      GitRebaseEditorHandler editor = getHandler(UUID.fromString(handlerNo));
+      return editor.editCommits(path);
     }
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -50,12 +50,13 @@ public abstract class ParameterTableModelBase<P extends ParameterInfo, TableItem
 
   protected abstract TableItem createRowItem(@Nullable P parameterInfo);
 
+  @Override
   public void addRow() {
     addRow(createRowItem(null));
   }
 
   public void setParameterInfos(List<P> parameterInfos) {
-    List<TableItem> items = new ArrayList<TableItem>(parameterInfos.size());
+    List<TableItem> items = new ArrayList<>(parameterInfos.size());
     for (P parameterInfo : parameterInfos) {
       items.add(createRowItem(parameterInfo));
     }
@@ -63,13 +64,7 @@ public abstract class ParameterTableModelBase<P extends ParameterInfo, TableItem
   }
 
   public void setValueAtWithoutUpdate(Object aValue, int rowIndex, int columnIndex) {
-    super.setValueAt(aValue, rowIndex, columnIndex);
-  }
-
-  @Override
-  public void setValueAt(Object aValue, int rowIndex, int columnIndex) {
-    super.setValueAt(aValue, rowIndex, columnIndex);
-    fireTableCellUpdated(rowIndex, columnIndex); // to update signature
+    setValueAt(aValue, rowIndex, columnIndex, false);
   }
 
   protected static abstract class ColumnInfoBase<P extends ParameterInfo, TableItem extends ParameterTableModelItemBase<P>, Aspect>
@@ -95,6 +90,7 @@ public abstract class ParameterTableModelBase<P extends ParameterInfo, TableItem
         final TableCellRenderer original = doCreateRenderer(item);
         myRenderer = new TableCellRenderer() {
 
+          @Override
           public Component getTableCellRendererComponent(JTable table,
                                                          Object value,
                                                          boolean isSelected,
@@ -147,10 +143,12 @@ public abstract class ParameterTableModelBase<P extends ParameterInfo, TableItem
       return true;
     }
 
+    @Override
     public TableCellRenderer doCreateRenderer(TableItem pParameterTableModelItemBase) {
       return new CodeFragmentTableCellRenderer(myProject, myFileType);
     }
 
+    @Override
     public TableCellEditor doCreateEditor(TableItem o) {
       return new CodeFragmentTableCellEditorBase(myProject, myFileType);
     }
@@ -183,16 +181,19 @@ public abstract class ParameterTableModelBase<P extends ParameterInfo, TableItem
       return true;
     }
 
+    @Override
     public TableCellRenderer doCreateRenderer(TableItem item) {
       return new ColoredTableCellRenderer() {
+        @Override
         public void customizeCellRenderer(JTable table, Object value,
                                           boolean isSelected, boolean hasFocus, int row, int column) {
           if (value == null) return;
-          append((String)value, new SimpleTextAttributes(Font.PLAIN, null));
+          append((String)value, new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, null));
         }
       };
     }
 
+    @Override
     public TableCellEditor doCreateEditor(TableItem o) {
       return new StringTableCellEditor(myProject);
     }
@@ -222,10 +223,12 @@ public abstract class ParameterTableModelBase<P extends ParameterInfo, TableItem
       return item.defaultValueCodeFragment;
     }
 
+    @Override
     public TableCellRenderer doCreateRenderer(TableItem item) {
       return new CodeFragmentTableCellRenderer(myProject, myFileType);
     }
 
+    @Override
     public TableCellEditor doCreateEditor(TableItem item) {
       return new CodeFragmentTableCellEditorBase(myProject, myFileType);
     }
@@ -252,10 +255,12 @@ public abstract class ParameterTableModelBase<P extends ParameterInfo, TableItem
       item.parameter.setUseAnySingleVariable(value);
     }
 
+    @Override
     public TableCellRenderer doCreateRenderer(TableItem item) {
       return new BooleanTableCellRenderer();
     }
 
+    @Override
     public TableCellEditor doCreateEditor(TableItem item) {
       return new BooleanTableCellEditor(false);
     }

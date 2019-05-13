@@ -1,24 +1,11 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.packaging.impl.elements;
 
 import com.intellij.compiler.ant.Generator;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.packaging.artifacts.ArtifactType;
-import com.intellij.packaging.elements.*;
+import com.intellij.packaging.elements.AntCopyInstructionCreator;
+import com.intellij.packaging.elements.ArtifactAntGenerationContext;
+import com.intellij.packaging.elements.PackagingElementResolvingContext;
 import com.intellij.packaging.impl.ui.DirectoryCopyPresentation;
 import com.intellij.packaging.ui.ArtifactEditorContext;
 import com.intellij.packaging.ui.PackagingElementPresentation;
@@ -40,11 +27,13 @@ public class DirectoryCopyPackagingElement extends FileOrDirectoryCopyPackagingE
     myFilePath = directoryPath;
   }
 
+  @NotNull
   @Override
   public PackagingElementPresentation createPresentation(@NotNull ArtifactEditorContext context) {
     return new DirectoryCopyPresentation(myFilePath);
   }
 
+  @NotNull
   @Override
   public List<? extends Generator> computeAntInstructions(@NotNull PackagingElementResolvingContext resolvingContext,
                                                           @NotNull AntCopyInstructionCreator creator,
@@ -55,21 +44,12 @@ public class DirectoryCopyPackagingElement extends FileOrDirectoryCopyPackagingE
   }
 
   @Override
-  public void computeIncrementalCompilerInstructions(@NotNull IncrementalCompilerInstructionCreator creator,
-                                                     @NotNull PackagingElementResolvingContext resolvingContext,
-                                                     @NotNull ArtifactIncrementalCompilerContext compilerContext,
-                                                     @NotNull ArtifactType artifactType) {
-    final VirtualFile file = findFile();
-    if (file != null && file.isValid() && file.isDirectory()) {
-      creator.addDirectoryCopyInstructions(file);
-    }
-  }
-
   public DirectoryCopyPackagingElement getState() {
     return this;
   }
 
-  public void loadState(DirectoryCopyPackagingElement state) {
+  @Override
+  public void loadState(@NotNull DirectoryCopyPackagingElement state) {
     myFilePath = state.getFilePath();
   }
 

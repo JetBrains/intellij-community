@@ -1,31 +1,16 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.completion;
 
-import com.intellij.codeInsight.lookup.*;
-import com.intellij.diagnostic.LogMessageEx;
-import com.intellij.diagnostic.errordialog.Attachment;
-import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.application.options.CodeStyle;
+import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.codeInsight.lookup.LookupElementDecorator;
+import com.intellij.codeInsight.lookup.LookupElementPresentation;
+import com.intellij.codeInsight.lookup.TypedLookupItem;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.util.ClassConditionKey;
-import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.Key;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
-import com.intellij.psi.impl.DebugUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.text.CharArrayUtil;
 import gnu.trove.THashSet;
@@ -38,19 +23,24 @@ import java.util.Set;
  * @author peter
  */
 public class JavaChainLookupElement extends LookupElementDecorator<LookupElement> implements TypedLookupItem {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.completion.JavaChainLookupElement");
+  public static final Key<Boolean> CHAIN_QUALIFIER = Key.create("CHAIN_QUALIFIER");
   public static final ClassConditionKey<JavaChainLookupElement> CLASS_CONDITION_KEY = ClassConditionKey.create(JavaChainLookupElement.class);
   private final LookupElement myQualifier;
+  private final String mySeparator;
 
   public JavaChainLookupElement(LookupElement qualifier, LookupElement main) {
+    this(qualifier, main, ".");
+  }
+  public JavaChainLookupElement(LookupElement qualifier, LookupElement main, String separator) {
     super(main);
     myQualifier = qualifier;
+    mySeparator = separator;
   }
 
   @NotNull
   @Override
   public String getLookupString() {
-    return maybeAddParentheses(myQualifier.getLookupString()) + "." + getDelegate().getLookupString();
+    return maybeAddParentheses(myQualifier.getLookupString()) + mySeparator + getDelegate().getLookupString();
   }
 
   public LookupElement getQualifier() {
@@ -60,7 +50,7 @@ public class JavaChainLookupElement extends LookupElementDecorator<LookupElement
   @Override
   public Set<String> getAllLookupStrings() {
     final Set<String> strings = getDelegate().getAllLookupStrings();
-    final THashSet<String> result = new THashSet<String>();
+    final THashSet<String> result = new THashSet<>();
     result.addAll(strings);
     result.add(getLookupString());
     return result;
@@ -69,7 +59,7 @@ public class JavaChainLookupElement extends LookupElementDecorator<LookupElement
   @NotNull
   @Override
   public String toString() {
-    return maybeAddParentheses(myQualifier.toString()) + "." + getDelegate();
+    return maybeAddParentheses(myQualifier.toString()) + mySeparator + getDelegate();
   }
 
   private String maybeAddParentheses(String s) {
@@ -86,46 +76,51 @@ public class JavaChainLookupElement extends LookupElementDecorator<LookupElement
   }
 
   @Override
+  public boolean isValid() {
+    return super.isValid() && myQualifier.isValid();
+  }
+
+  @Override
   public void renderElement(LookupElementPresentation presentation) {
     super.renderElement(presentation);
     final LookupElementPresentation qualifierPresentation = new LookupElementPresentation();
     myQualifier.renderElement(qualifierPresentation);
     String name = maybeAddParentheses(qualifierPresentation.getItemText());
     final String qualifierText = myQualifier.as(CastingLookupElementDecorator.CLASS_CONDITION_KEY) != null ? "(" + name + ")" : name;
-    presentation.setItemText(qualifierText + "." + presentation.getItemText());
+    presentation.setItemText(qualifierText + mySeparator + presentation.getItemText());
 
-    if (myQualifier instanceof LookupItem && getQualifierObject() instanceof PsiClass) {
-      String locationString = JavaPsiClassReferenceElement.getLocationString((LookupItem)myQualifier);
-      presentation.setTailText(StringUtil.notNullize(presentation.getTailText()) + locationString);
+    if (myQualifier instanceof JavaPsiClassReferenceElement) {
+      presentation.appendTailText(((JavaPsiClassReferenceElement)myQualifier).getLocationString(), false);
+    }
+    if (qualifierPresentation.isStrikeout()) {
+      presentation.setStrikeout(true);
     }
   }
 
   @Override
-  public void handleInsert(InsertionContext context) {
+  public void handleInsert(@NotNull InsertionContext context) {
     final Document document = context.getEditor().getDocument();
     document.replaceString(context.getStartOffset(), context.getTailOffset(), ";");
+    myQualifier.putUserData(CHAIN_QUALIFIER, true);
     final InsertionContext qualifierContext = CompletionUtil.emulateInsertion(context, context.getStartOffset(), myQualifier);
     OffsetKey oldStart = context.trackOffset(context.getStartOffset(), false);
 
+    PsiDocumentManager.getInstance(context.getProject()).doPostponedOperationsAndUnblockDocument(document);
+
     int start = CharArrayUtil.shiftForward(context.getDocument().getCharsSequence(), context.getStartOffset(), " \t\n");
     if (shouldParenthesizeQualifier(context.getFile(), start, qualifierContext.getTailOffset())) {
-      final String space = CodeStyleSettingsManager.getSettings(qualifierContext.getProject()).SPACE_WITHIN_PARENTHESES ? " " : "";
+      final String space = CodeStyle.getLanguageSettings(context.getFile()).SPACE_WITHIN_PARENTHESES ? " " : "";
       document.insertString(start, "(" + space);
       document.insertString(qualifierContext.getTailOffset(), space + ")");
     }
 
-    final char atTail = document.getCharsSequence().charAt(context.getTailOffset() - 1);
+    char atTail = document.getCharsSequence().charAt(qualifierContext.getTailOffset());
     if (atTail != ';') {
-      LOG.error(LogMessageEx.createEvent("Unexpected character",
-                                         "atTail=" + atTail + "\n" +
-                                         "offset=" + context.getTailOffset() + "\n" +
-                                         DebugUtil.currentStackTrace(),
-                                         new Attachment(context.getDocument())));
-
+      return;
     }
-    document.replaceString(context.getTailOffset() - 1, context.getTailOffset(), ".");
+    document.replaceString(qualifierContext.getTailOffset(), qualifierContext.getTailOffset() + 1, mySeparator);
 
-    CompletionUtil.emulateInsertion(getDelegate(), context.getTailOffset(), context);
+    CompletionUtil.emulateInsertion(getDelegate(), qualifierContext.getTailOffset() + mySeparator.length(), context);
     context.commitDocument();
 
     int formatStart = context.getOffset(oldStart);
@@ -158,6 +153,7 @@ public class JavaChainLookupElement extends LookupElementDecorator<LookupElement
 
     if (expr instanceof PsiJavaCodeReferenceElement ||
         expr instanceof PsiMethodCallExpression ||
+        expr instanceof PsiNewExpression ||
         expr instanceof PsiArrayAccessExpression) {
       return false;
     }

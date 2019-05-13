@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,23 +15,35 @@
  */
 package com.intellij.codeInsight.completion;
 
-import com.intellij.codeInsight.completion.scope.JavaCompletionProcessor;
+import com.intellij.codeInsight.AnnotationTargetUtil;
+import com.intellij.codeInsight.ExceptionUtil;
+import com.intellij.codeInsight.ExpectedTypeInfo;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementWeigher;
-import com.intellij.openapi.util.Condition;
+import com.intellij.codeInsight.lookup.TypedLookupItem;
+import com.intellij.openapi.util.Key;
 import com.intellij.patterns.ElementPattern;
 import com.intellij.psi.*;
 import com.intellij.psi.filters.getters.MembersGetter;
 import com.intellij.psi.impl.source.tree.JavaElementType;
-import com.intellij.psi.impl.source.tree.java.PsiAnnotationImpl;
-import com.intellij.psi.util.InheritanceUtil;
-import com.intellij.psi.util.PropertyUtil;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.javadoc.PsiDocComment;
+import com.intellij.psi.util.*;
+import com.intellij.psi.util.proximity.KnownElementWeigher;
+import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.ThreeState;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.JBIterable;
+import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 import java.util.Set;
+import java.util.function.Function;
 
+import static com.intellij.patterns.PsiJavaPatterns.elementType;
 import static com.intellij.patterns.PsiJavaPatterns.psiElement;
 import static com.intellij.patterns.StandardPatterns.or;
 
@@ -39,98 +51,145 @@ import static com.intellij.patterns.StandardPatterns.or;
  * @author peter
 */
 public class PreferByKindWeigher extends LookupElementWeigher {
-  static final ElementPattern<PsiElement> IN_CATCH_TYPE =
+  public static final Key<Boolean> INTRODUCED_VARIABLE = Key.create("INTRODUCED_VARIABLE");
+
+  private static final ElementPattern<PsiElement> IN_CATCH_TYPE =
     psiElement().withParent(psiElement(PsiJavaCodeReferenceElement.class).
       withParent(psiElement(PsiTypeElement.class).
         withParent(or(psiElement(PsiCatchSection.class),
                       psiElement(PsiVariable.class).withParent(PsiCatchSection.class)))));
-  static final ElementPattern<PsiElement> IN_MULTI_CATCH_TYPE =
-    or(psiElement().afterLeaf(psiElement().withText("|").withParent(PsiTypeElement.class).withSuperParent(2, PsiCatchSection.class)),
-       psiElement().afterLeaf(psiElement().withText("|").withParent(PsiTypeElement.class).withSuperParent(2, PsiParameter.class)
-                                .withSuperParent(3, PsiCatchSection.class)));
-  static final ElementPattern<PsiElement> INSIDE_METHOD_THROWS_CLAUSE =
+
+  private static final ElementPattern<PsiElement> IN_MULTI_CATCH_TYPE =
+    or(psiElement().afterLeaf(psiElement().withText("|").
+         withParent(PsiTypeElement.class).withSuperParent(2, PsiCatchSection.class)),
+       psiElement().afterLeaf(psiElement().withText("|").
+         withParent(PsiTypeElement.class).withSuperParent(2, PsiParameter.class).withSuperParent(3, PsiCatchSection.class)));
+
+  private static final ElementPattern<PsiElement> INSIDE_METHOD_THROWS_CLAUSE =
     psiElement().afterLeaf(PsiKeyword.THROWS, ",").inside(psiElement(JavaElementType.THROWS_LIST));
-  static final ElementPattern<PsiElement> IN_RESOURCE_TYPE =
-    psiElement().withParent(psiElement(PsiJavaCodeReferenceElement.class).
-      withParent(psiElement(PsiTypeElement.class).
-        withParent(or(psiElement(PsiResourceVariable.class), psiElement(PsiResourceList.class)))));
+
+  static final ElementPattern<PsiElement> IN_RESOURCE =
+    psiElement().withParent(or(
+      psiElement(PsiJavaCodeReferenceElement.class).withParent(PsiTypeElement.class).
+        withSuperParent(2, or(psiElement(PsiResourceVariable.class), psiElement(PsiResourceList.class))),
+      psiElement(PsiReferenceExpression.class).withParent(PsiResourceExpression.class)));
+  private static final Function<PsiClass, MyResult>
+    PREFER_THROWABLE = psiClass -> preferClassIf(InheritanceUtil.isInheritor(psiClass, CommonClassNames.JAVA_LANG_THROWABLE));
+
   private final CompletionType myCompletionType;
   private final PsiElement myPosition;
   private final Set<PsiField> myNonInitializedFields;
-  @NotNull private final Condition<PsiClass> myRequiredSuper;
+  private final Function<PsiClass, MyResult> myClassSuitability;
+  private final ExpectedTypeInfo[] myExpectedTypes;
 
-  public PreferByKindWeigher(CompletionType completionType, final PsiElement position) {
+  public PreferByKindWeigher(CompletionType completionType, final PsiElement position, ExpectedTypeInfo[] expectedTypes) {
     super("kind");
     myCompletionType = completionType;
     myPosition = position;
-    myNonInitializedFields = JavaCompletionProcessor.getNonInitializedFields(position);
-    myRequiredSuper = createSuitabilityCondition(position);
+    myNonInitializedFields = CheckInitialized.getNonInitializedFields(position);
+    myClassSuitability = createSuitabilityCondition(position);
+    myExpectedTypes = expectedTypes;
   }
 
-  private static Condition<PsiClass> createSuitabilityCondition(final PsiElement position) {
-    if (IN_CATCH_TYPE.accepts(position) ||
-        IN_MULTI_CATCH_TYPE.accepts(position) ||
-        JavaSmartCompletionContributor.AFTER_THROW_NEW.accepts(position) ||
-        INSIDE_METHOD_THROWS_CLAUSE.accepts(position)) {
-      return new Condition<PsiClass>() {
-        @Override
-        public boolean value(PsiClass psiClass) {
-          return InheritanceUtil.isInheritor(psiClass, CommonClassNames.JAVA_LANG_THROWABLE);
-        }
-      };
-    }
-
-    if (IN_RESOURCE_TYPE.accepts(position)) {
-      return new Condition<PsiClass>() {
-        @Override
-        public boolean value(PsiClass psiClass) {
-          return InheritanceUtil.isInheritor(psiClass, CommonClassNames.JAVA_LANG_AUTO_CLOSEABLE);
-        }
-      };
-    }
-
-    if (psiElement().withParents(PsiJavaCodeReferenceElement.class, PsiAnnotation.class).accepts(position)) {
-      final PsiAnnotation annotation = PsiTreeUtil.getParentOfType(position, PsiAnnotation.class);
-      assert annotation != null;
-      PsiAnnotationOwner owner = annotation.getOwner();
-      if (owner instanceof PsiModifierList || owner instanceof PsiTypeElement || owner instanceof PsiTypeParameter) {
-        PsiElement member = (PsiElement)owner;
-        if (member instanceof PsiModifierList) {
-          member = member.getParent();
-        }
-        if (member instanceof PsiTypeElement && member.getParent() instanceof PsiMethod) {
-          member = member.getParent();
-        }
-        final String[] elementTypeFields = PsiAnnotationImpl.getApplicableElementTypeFields(member);
-        return new Condition<PsiClass>() {
-          @Override
-          public boolean value(PsiClass psiClass) {
-            if (!psiClass.isAnnotationType()) {
-              return false;
-            }
-            return PsiAnnotationImpl.isAnnotationApplicable(false, psiClass, elementTypeFields, position.getResolveScope());
+  @NotNull
+  private static Function<PsiClass, MyResult> createSuitabilityCondition(final PsiElement position) {
+    if (isExceptionPosition(position)) {
+      PsiElement container = PsiTreeUtil.getParentOfType(position, PsiTryStatement.class, PsiMethod.class);
+      List<PsiClass> thrownExceptions = ContainerUtil.newArrayList();
+      if (container != null) {
+        PsiElement block = container instanceof PsiTryStatement ? ((PsiTryStatement)container).getTryBlock() : container;
+        if (block != null) {
+          for (PsiClassType type : ExceptionUtil.getThrownExceptions(block)) {
+            ContainerUtil.addIfNotNull(thrownExceptions, type.resolve());
           }
-        };
+        }
+      }
+      return psiClass -> {
+        if (ContainerUtil.exists(thrownExceptions, t -> InheritanceUtil.isInheritorOrSelf(psiClass, t, true))) {
+          return MyResult.verySuitableClass;
+        }
+        return PREFER_THROWABLE.apply(psiClass);
+      };
+    }
+    else if (JavaSmartCompletionContributor.AFTER_THROW_NEW.accepts(position)) {
+      return PREFER_THROWABLE;
+    }
+
+    if (IN_RESOURCE.accepts(position)) {
+      return psiClass -> preferClassIf(InheritanceUtil.isInheritor(psiClass, CommonClassNames.JAVA_LANG_AUTO_CLOSEABLE));
+    }
+
+    PsiElement parent = position.getParent();
+    if (parent instanceof PsiJavaCodeReferenceElement) {
+      PsiElement refParent = parent.getParent();
+      if (refParent instanceof PsiAnnotation) {
+        PsiAnnotation.TargetType[] targets = AnnotationTargetUtil.getTargetsForLocation(((PsiAnnotation)refParent).getOwner());
+        return psiClass -> preferClassIf(psiClass.isAnnotationType() && AnnotationTargetUtil.findAnnotationTarget(psiClass, targets) != null);
+      }
+      if (refParent instanceof PsiTypeElement) {
+        List<PsiClass> bounds = getTypeBounds((PsiTypeElement)refParent);
+        return psiClass -> preferClassIf(ContainerUtil.exists(bounds, bound -> InheritanceUtil.isInheritorOrSelf(psiClass, bound, true)));
       }
     }
-    //noinspection unchecked
-    return Condition.FALSE;
+
+    return aClass -> MyResult.classNameOrGlobalStatic;
+  }
+
+  private static List<PsiClass> getTypeBounds(PsiTypeElement typeElement) {
+    PsiElement typeParent = typeElement.getParent();
+    if (typeParent instanceof PsiReferenceParameterList) {
+      int index = Arrays.asList(((PsiReferenceParameterList)typeParent).getTypeParameterElements()).indexOf(typeElement);
+      PsiElement listParent = typeParent.getParent();
+      if (index >= 0 && listParent instanceof PsiJavaCodeReferenceElement) {
+        PsiElement target = ((PsiJavaCodeReferenceElement)listParent).resolve();
+        if (target instanceof PsiClass) {
+          PsiTypeParameter[] typeParameters = ((PsiClass)target).getTypeParameters();
+          if (index < typeParameters.length) {
+            return ContainerUtil.mapNotNull(typeParameters[index].getExtendsListTypes(), PsiUtil::resolveClassInType);
+          }
+        }
+      }
+    }
+    return Collections.emptyList();
+  }
+
+  static boolean isExceptionPosition(PsiElement position) {
+    return IN_CATCH_TYPE.accepts(position) || IN_MULTI_CATCH_TYPE.accepts(position) || 
+           INSIDE_METHOD_THROWS_CLAUSE.accepts(position) || 
+           JavaDocCompletionContributor.THROWS_TAG_EXCEPTION.accepts(position);
+  }
+
+  @NotNull
+  private static MyResult preferClassIf(boolean condition) {
+    return condition ? MyResult.suitableClass : MyResult.classNameOrGlobalStatic;
   }
 
   enum MyResult {
     annoMethod,
     probableKeyword,
-    localOrParameter,
+    castVariable,
+    expectedTypeVariable,
+    lambda,
+    methodRef,
+    variable,
+    getter,
     qualifiedWithField,
     qualifiedWithGetter,
     superMethodParameters,
+    expectedTypeConstant,
+    expectedTypeArgument,
+    getterQualifiedByMethod,
+    accessibleFieldGetter,
     normal,
     collectionFactory,
-    expectedTypeMember,
+    expectedTypeMethod,
+    verySuitableClass,
     suitableClass,
     nonInitialized,
-    classLiteral,
     classNameOrGlobalStatic,
+    introducedVariable,
+    unlikelyClass,
+    improbableKeyword,
   }
 
   @NotNull
@@ -139,18 +198,20 @@ public class PreferByKindWeigher extends LookupElementWeigher {
     final Object object = item.getObject();
 
     if (object instanceof PsiKeyword) {
-      String keyword = ((PsiKeyword)object).getText();
-      if (PsiKeyword.RETURN.equals(keyword) && isLastStatement(PsiTreeUtil.getParentOfType(myPosition, PsiStatement.class))) {
-        return MyResult.probableKeyword;
-      }
-      if (PsiKeyword.ELSE.equals(keyword) || PsiKeyword.FINALLY.equals(keyword)) {
-        return MyResult.probableKeyword;
-      }
+      ThreeState result = isProbableKeyword(((PsiKeyword)object).getText());
+      if (result == ThreeState.YES) return MyResult.probableKeyword;
+      if (result == ThreeState.NO) return MyResult.improbableKeyword;
     }
 
-    if (myCompletionType == CompletionType.SMART) {
-      if (object instanceof PsiLocalVariable || object instanceof PsiParameter || object instanceof PsiThisExpression) {
-        return MyResult.localOrParameter;
+    if (item.as(CastingLookupElementDecorator.CLASS_CONDITION_KEY) != null) {
+      return MyResult.castVariable;
+    }
+
+    if (object instanceof PsiLocalVariable || object instanceof PsiParameter ||
+        object instanceof PsiThisExpression ||
+        object instanceof PsiField && !((PsiField)object).hasModifierProperty(PsiModifier.STATIC)) {
+      if (PsiTreeUtil.getParentOfType(myPosition, PsiDocComment.class) == null) {
+        return isExpectedTypeItem(item) ? MyResult.expectedTypeVariable : MyResult.variable;
       }
     }
 
@@ -158,28 +219,55 @@ public class PreferByKindWeigher extends LookupElementWeigher {
       return MyResult.superMethodParameters;
     }
 
-    if (myCompletionType == CompletionType.SMART) {
-      if (item.getUserData(CollectionsUtilityMethodsProvider.COLLECTION_FACTORY) != null) {
+    if (item.getUserData(FunctionalExpressionCompletionProvider.LAMBDA_ITEM) != null) {
+      return MyResult.lambda;
+    }
+    if (item.getUserData(FunctionalExpressionCompletionProvider.METHOD_REF_ITEM) != null) {
+      return MyResult.methodRef;
+    }
+
+    if (object instanceof PsiMethod) {
+      PsiClass containingClass = ((PsiMethod)object).getContainingClass();
+      if (containingClass != null && CommonClassNames.JAVA_UTIL_COLLECTIONS.equals(containingClass.getQualifiedName())) {
         return MyResult.collectionFactory;
       }
-      if (Boolean.TRUE.equals(item.getUserData(MembersGetter.EXPECTED_TYPE_INHERITOR_MEMBER))) {
-        return MyResult.expectedTypeMember;
+    }
+    if (object instanceof PsiClass &&
+        CommonClassNames.JAVA_LANG_STRING.equals(((PsiClass)object).getQualifiedName()) &&
+        JavaSmartCompletionContributor.AFTER_NEW.accepts(myPosition)) {
+      return MyResult.unlikelyClass;
+    }
+    Boolean expectedTypeMember = item.getUserData(MembersGetter.EXPECTED_TYPE_MEMBER);
+    if (expectedTypeMember != null) {
+      return expectedTypeMember ? (object instanceof PsiField ? MyResult.expectedTypeConstant : MyResult.expectedTypeMethod) : MyResult.classNameOrGlobalStatic;
+    }
+    if (item instanceof TypeArgumentCompletionProvider.TypeArgsLookupElement) {
+      return MyResult.expectedTypeArgument;
+    }
+    final JavaChainLookupElement chain = item.as(JavaChainLookupElement.CLASS_CONDITION_KEY);
+    if (chain != null) {
+      Object qualifier = chain.getQualifier().getObject();
+      if (qualifier instanceof PsiLocalVariable || qualifier instanceof PsiParameter) {
+        return MyResult.variable;
       }
+      if (qualifier instanceof PsiField) {
+        return MyResult.qualifiedWithField;
+      }
+      if (isGetter(qualifier)) {
+        return MyResult.qualifiedWithGetter;
+      }
+      if (chain.getQualifier().getUserData(INTRODUCED_VARIABLE) == Boolean.TRUE) {
+        return MyResult.introducedVariable;
+      }
+      if (myCompletionType == CompletionType.SMART && qualifier instanceof PsiMethod && isGetter(object)) {
+        return MyResult.getterQualifiedByMethod;
+      }
+    }
 
-      final JavaChainLookupElement chain = item.as(JavaChainLookupElement.CLASS_CONDITION_KEY);
-      if (chain != null) {
-        Object qualifier = chain.getQualifier().getObject();
-        if (qualifier instanceof PsiLocalVariable || qualifier instanceof PsiParameter) {
-          return MyResult.localOrParameter;
-        }
-        if (qualifier instanceof PsiField) {
-          return MyResult.qualifiedWithField;
-        }
-        if (qualifier instanceof PsiMethod && PropertyUtil.isSimplePropertyGetter((PsiMethod)qualifier)) {
-          return MyResult.qualifiedWithGetter;
-        }
+    if (myCompletionType == CompletionType.SMART) {
+      if (isGetter(object)) {
+        return chain == null && isAccessibleFieldGetter(object) ? MyResult.accessibleFieldGetter : MyResult.getter;
       }
-      
       return MyResult.normal;
     }
 
@@ -189,19 +277,12 @@ public class PreferByKindWeigher extends LookupElementWeigher {
         return MyResult.classNameOrGlobalStatic;
       }
 
-      if (object instanceof PsiKeyword && PsiKeyword.CLASS.equals(item.getLookupString())) {
-        return MyResult.classLiteral;
-      }
-
       if (object instanceof PsiMethod && PsiUtil.isAnnotationMethod((PsiElement)object)) {
         return MyResult.annoMethod;
       }
 
       if (object instanceof PsiClass) {
-        if (myRequiredSuper.value((PsiClass)object)) {
-          return MyResult.suitableClass;
-        }
-        return MyResult.classNameOrGlobalStatic;
+        return myClassSuitability.apply((PsiClass)object);
       }
 
       if (object instanceof PsiField && myNonInitializedFields.contains(object)) {
@@ -212,11 +293,133 @@ public class PreferByKindWeigher extends LookupElementWeigher {
     return MyResult.normal;
   }
 
-  private static boolean isLastStatement(PsiStatement statement) {
-    if (statement == null || !(statement.getParent() instanceof PsiCodeBlock)) {
+  private boolean isExpectedTypeItem(@NotNull LookupElement item) {
+    TypedLookupItem typed = item.as(TypedLookupItem.CLASS_CONDITION_KEY);
+    PsiType itemType = typed == null ? null : typed.getType();
+    return itemType != null &&
+           Arrays.stream(myExpectedTypes)
+             .map(ExpectedTypeInfo::getType)
+             .anyMatch(type -> !isTooGeneric(type) && type.isAssignableFrom(itemType));
+  }
+
+  private static boolean isTooGeneric(PsiType type) {
+    PsiType erasure = TypeConversionUtil.erasure(type);
+    return erasure == null || erasure.equalsToText(CommonClassNames.JAVA_LANG_OBJECT);
+  }
+
+  @NotNull
+  private ThreeState isProbableKeyword(String keyword) {
+    PsiStatement parentStatement = PsiTreeUtil.getParentOfType(myPosition, PsiStatement.class);
+    if (PsiKeyword.RETURN.equals(keyword)) {
+      if (isLastStatement(parentStatement) && !isOnTopLevelInVoidMethod(parentStatement)) {
+        return ThreeState.YES;
+      }
+    }
+    if ((PsiKeyword.BREAK.equals(keyword) || PsiKeyword.CONTINUE.equals(keyword)) &&
+        PsiTreeUtil.getParentOfType(myPosition, PsiLoopStatement.class) != null &&
+        isLastStatement(parentStatement)) {
+      return ThreeState.YES;
+    }
+    if (PsiKeyword.ELSE.equals(keyword) || PsiKeyword.FINALLY.equals(keyword) || PsiKeyword.CATCH.equals(keyword)) {
+      return ThreeState.YES;
+    }
+    if (PsiKeyword.TRUE.equals(keyword) || PsiKeyword.FALSE.equals(keyword)) {
+      if (myCompletionType == CompletionType.SMART) {
+        boolean inReturn = psiElement().withParents(PsiReferenceExpression.class, PsiReturnStatement.class).accepts(myPosition);
+        return inReturn ? ThreeState.YES : ThreeState.UNSURE;
+      } else if (Arrays.stream(myExpectedTypes).anyMatch(info -> PsiType.BOOLEAN.isAssignableFrom(info.getDefaultType())) &&
+                 !(myPosition.getParent() instanceof PsiIfStatement)) {
+        return ThreeState.YES;
+      }
+    }
+    if (PsiKeyword.INTERFACE.equals(keyword) && psiElement().afterLeaf("@").accepts(myPosition)) {
+      return ThreeState.NO;
+    }
+    if (PsiKeyword.NULL.equals(keyword) && psiElement().afterLeaf(psiElement().withElementType(elementType().oneOf(JavaTokenType.EQEQ, JavaTokenType.NE))).accepts(myPosition)) {
+      return ThreeState.YES;
+    }
+    if (JavaKeywordCompletion.PRIMITIVE_TYPES.contains(keyword) || PsiKeyword.VOID.equals(keyword)) {
+      boolean inCallArg = psiElement().withParents(PsiReferenceExpression.class, PsiExpressionList.class).accepts(myPosition);
+      return inCallArg || isInMethodTypeArg(myPosition) ? ThreeState.NO : ThreeState.UNSURE;
+    }
+    if (PsiKeyword.FINAL.equals(keyword) && isBeforeVariableOnSameLine(parentStatement)) {
+      return ThreeState.YES;
+    }
+    return ThreeState.UNSURE;
+  }
+
+  private boolean isBeforeVariableOnSameLine(@Nullable PsiStatement parentStatement) {
+    return parentStatement != null &&
+           parentStatement.getTextRange().getStartOffset() == myPosition.getTextRange().getStartOffset() &&
+           JBIterable.generate(parentStatement, PsiElement::getNextSibling)
+                     .takeWhile(e -> !e.textContains('\n'))
+                     .skip(1)
+                     .filter(PsiStatement.class)
+                     .isNotEmpty();
+  }
+
+  private boolean isAccessibleFieldGetter(Object object) {
+    if (!(object instanceof PsiMethod)) return false;
+
+    PsiField field = PropertyUtil.getFieldOfGetter((PsiMethod)object);
+    return field != null && PsiResolveHelper.SERVICE.getInstance(myPosition.getProject()).isAccessible(field, myPosition, null);
+  }
+
+  static boolean isInMethodTypeArg(PsiElement position) {
+    return psiElement().inside(PsiReferenceParameterList.class).accepts(position);
+  }
+
+  private static boolean isOnTopLevelInVoidMethod(@NotNull PsiStatement statement) {
+    if (!(statement.getParent() instanceof PsiCodeBlock)) return false;
+
+    PsiElement parent = statement.getParent().getParent();
+    if (parent instanceof PsiMethod) {
+      return ((PsiMethod)parent).isConstructor() || PsiType.VOID.equals(((PsiMethod)parent).getReturnType());
+    }
+    if (parent instanceof PsiLambdaExpression) {
+      PsiMethod method = LambdaUtil.getFunctionalInterfaceMethod(((PsiLambdaExpression)parent).getFunctionalInterfaceType());
+      return method != null && PsiType.VOID.equals(method.getReturnType());
+    }
+    return false;
+  }
+
+  private static boolean isGetter(Object object) {
+    if (!(object instanceof PsiMethod)) return false;
+    
+    PsiMethod method = (PsiMethod)object;
+    if (!PropertyUtilBase.hasGetterName(method)) return false;
+    if (method.hasTypeParameters()) return false;
+    
+    return !KnownElementWeigher.isGetClass(method);
+  }
+
+  private boolean isLastStatement(PsiStatement statement) {
+    if (statement == null) {
+      return false;
+    }
+    if (!(statement.getParent() instanceof PsiCodeBlock)) {
       return true;
     }
-    PsiStatement[] siblings = ((PsiCodeBlock)statement.getParent()).getStatements();
-    return statement == siblings[siblings.length - 1];
+    PsiCodeBlock codeBlock = (PsiCodeBlock)statement.getParent();
+    PsiStatement[] siblings = codeBlock.getStatements();
+    PsiStatement lastOne = siblings[siblings.length - 1];
+    if (statement == lastOne) {
+      return true;
+    }
+
+    int posEnd = myPosition.getTextRange().getEndOffset();
+    int blockContentEnd = lastOne.getTextRange().getEndOffset();
+    CharSequence fileText = myPosition.getContainingFile().getViewProvider().getContents();
+    String afterPos = fileText.subSequence(posEnd, blockContentEnd).toString();
+    int nonSpace = CharArrayUtil.shiftForward(afterPos, 0, " \t");
+    if (nonSpace < afterPos.length() && afterPos.charAt(nonSpace) == '\n') return false;
+
+    try {
+      PsiStatement asStatement = JavaPsiFacade.getElementFactory(myPosition.getProject()).createStatementFromText(afterPos.trim(), null);
+      return asStatement instanceof PsiExpressionStatement;
+    }
+    catch (IncorrectOperationException e) {
+      return false;
+    }
   }
 }

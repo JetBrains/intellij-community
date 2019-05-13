@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,6 @@ package com.intellij.psi;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.KeyedExtensionCollector;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -29,7 +28,9 @@ import java.util.List;
  */
 public class WeighingService {
   private static final KeyedExtensionCollector<Weigher,Key> COLLECTOR = new KeyedExtensionCollector<Weigher, Key>("com.intellij.weigher") {
-    protected String keyToString(final Key key) {
+    @NotNull
+    @Override
+    protected String keyToString(@NotNull final Key key) {
       return key.toString();
     }
   };
@@ -39,13 +40,13 @@ public class WeighingService {
 
   @NotNull
   public static <T,Loc> WeighingComparable<T,Loc> weigh(final Key<? extends Weigher<T,Loc>> key, final T element, @Nullable final Loc location) {
-    return weigh(key, new Computable.PredefinedValueComputable<T>(element), location);
+    return weigh(key, new Computable.PredefinedValueComputable<>(element), location);
   }
 
   @NotNull
-  public static <T,Loc> WeighingComparable<T,Loc> weigh(final Key<? extends Weigher<T,Loc>> key, final Computable<T> element, @Nullable final Loc location) {
+  public static <T,Loc> WeighingComparable<T,Loc> weigh(final Key<? extends Weigher<T,Loc>> key, final Computable<? extends T> element, @Nullable final Loc location) {
     final List<Weigher> weighers = getWeighers(key);
-    return new WeighingComparable<T,Loc>(element, location, ContainerUtil.toArray(weighers, new Weigher[weighers.size()]));
+    return new WeighingComparable<>(element, location, weighers.toArray(new Weigher[0]));
   }
 
   public static <T,Loc> List<Weigher> getWeighers(Key<? extends Weigher<T, Loc>> key) {

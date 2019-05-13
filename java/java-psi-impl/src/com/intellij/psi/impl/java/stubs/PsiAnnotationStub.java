@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,8 @@ import com.intellij.psi.stubs.StubElement;
  * @author max
  */
 public interface PsiAnnotationStub extends StubElement<PsiAnnotation> {
+  PsiAnnotationStub[] EMPTY_ARRAY = new PsiAnnotationStub[0];
+
   String getText();
 
   PsiAnnotation getPsiElement();

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,79 +15,116 @@
  */
 package git4idea.actions;
 
-import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vcs.FileStatus;
-import com.intellij.openapi.vcs.FileStatusManager;
-import com.intellij.openapi.vcs.ProjectLevelVcsManager;
-import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.*;
+import com.intellij.openapi.vcs.changes.Change;
+import com.intellij.openapi.vcs.changes.ChangeListManager;
+import com.intellij.openapi.vcs.changes.ChangesUtil;
+import com.intellij.openapi.vcs.changes.actions.ScheduleForAdditionAction;
+import com.intellij.openapi.vcs.changes.ui.ChangesBrowserBase;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.Consumer;
-import git4idea.GitUtil;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.UtilKt;
+import com.intellij.vcsUtil.VcsFileUtil;
+import com.intellij.vcsUtil.VcsUtil;
 import git4idea.GitVcs;
 import git4idea.util.GitFileUtils;
-import git4idea.i18n.GitBundle;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
-/**
- * Git "add" action
- */
-public class GitAdd extends BasicAction {
+import static com.intellij.util.Functions.identity;
+import static com.intellij.util.containers.UtilKt.isEmpty;
+
+public class GitAdd extends ScheduleForAdditionAction {
+  @Override
+  protected boolean isEnabled(@NotNull AnActionEvent e) {
+    Project project = e.getData(CommonDataKeys.PROJECT);
+    if (project == null) return false;
+
+    if (!isEmpty(getUnversionedFiles(e, project))) return true;
+
+    Stream<Change> changeStream = UtilKt.stream(e.getData(VcsDataKeys.CHANGES));
+    if (!isEmpty(collectPathsFromChanges(project, changeStream))) return true;
+
+    Stream<VirtualFile> filesStream = UtilKt.notNullize(e.getData(VcsDataKeys.VIRTUAL_FILE_STREAM));
+    if (!isEmpty(collectPathsFromFiles(project, filesStream))) return true;
+
+    return false;
+  }
 
   @Override
-  public boolean perform(@NotNull final Project project,
-                         final GitVcs vcs,
-                         @NotNull final List<VcsException> exceptions,
-                         @NotNull final VirtualFile[] affectedFiles) {
-    saveAll();
-    if (!ProjectLevelVcsManager.getInstance(project).checkAllFilesAreUnder(GitVcs.getInstance(project), affectedFiles)) return false;
-    return toBackground(project, vcs, affectedFiles, exceptions, new Consumer<ProgressIndicator>() {
-      public void consume(ProgressIndicator indicator) {
-        try {
-          addFiles(project, affectedFiles, indicator);
-        }
-        catch (VcsException e) {
-          exceptions.add(e);
-        }
+  public void actionPerformed(@NotNull AnActionEvent e) {
+    Project project = e.getRequiredData(CommonDataKeys.PROJECT);
+
+    Set<FilePath> toAdd = new HashSet<>();
+
+    Stream<Change> changeStream = UtilKt.stream(e.getData(VcsDataKeys.CHANGES));
+    ContainerUtil.addAll(toAdd, collectPathsFromChanges(project, changeStream).iterator());
+
+    Stream<VirtualFile> filesStream = UtilKt.notNullize(e.getData(VcsDataKeys.VIRTUAL_FILE_STREAM));
+    ContainerUtil.addAll(toAdd, collectPathsFromFiles(project, filesStream).iterator());
+
+    List<VirtualFile> unversionedFiles = getUnversionedFiles(e, project).collect(Collectors.toList());
+
+    addUnversioned(project, unversionedFiles, e.getData(ChangesBrowserBase.DATA_KEY),
+                   !toAdd.isEmpty() ? (indicator, exceptions) -> addPathsToVcs(project, toAdd, exceptions) : null);
+  }
+
+  private static void addPathsToVcs(@NotNull Project project, @NotNull Collection<FilePath> toAdd, @NotNull List<VcsException> exceptions) {
+    VcsUtil.groupByRoots(project, toAdd, identity()).forEach((vcsRoot, paths) -> {
+      try {
+        if (!(vcsRoot.getVcs() instanceof GitVcs)) return;
+
+        VirtualFile root = vcsRoot.getPath();
+        if (root == null) return;
+
+        GitFileUtils.addPaths(project, root, paths);
+        VcsFileUtil.markFilesDirty(project, paths);
+      }
+      catch (VcsException ex) {
+        exceptions.add(ex);
       }
     });
-
   }
 
-  /**
-   * Add the specified files to the project.
-   *
-   * @param project The project to add files to
-   * @param files   The files to add  @throws VcsException If an error occurs
-   * @param pi      progress indicator
-   */
-  public static void addFiles(@NotNull final Project project, @NotNull final VirtualFile[] files, ProgressIndicator pi)
-    throws VcsException {
-    final Map<VirtualFile, List<VirtualFile>> roots = GitUtil.sortFilesByGitRoot(Arrays.asList(files));
-    for (Map.Entry<VirtualFile, List<VirtualFile>> entry : roots.entrySet()) {
-      pi.setText(entry.getKey().getPresentableUrl());
-      GitFileUtils.addFiles(project, entry.getKey(), entry.getValue());
-    }
-  }
-
-  @Override
   @NotNull
-  protected String getActionName() {
-    return GitBundle.getString("add.action.name");
+  private static Stream<FilePath> collectPathsFromChanges(@NotNull Project project, @NotNull Stream<Change> allChanges) {
+    ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(project);
+
+    return allChanges
+      .filter(change -> {
+        FilePath filePath = ChangesUtil.getFilePath(change);
+        return vcsManager.getVcsFor(filePath) instanceof GitVcs &&
+               isStatusForAddition(change.getFileStatus());
+      })
+      .map(ChangesUtil::getFilePath);
   }
 
-  @Override
-  protected boolean isEnabled(@NotNull Project project, @NotNull GitVcs vcs, @NotNull VirtualFile... vFiles) {
-    for (VirtualFile file : vFiles) {
-      FileStatus fileStatus = FileStatusManager.getInstance(project).getStatus(file);
-      if (file.isDirectory() || (fileStatus != FileStatus.NOT_CHANGED && fileStatus != FileStatus.DELETED && fileStatus != FileStatus.ADDED)) {
-        return true;
-      }
-    }
-    return false;
+  @NotNull
+  private static Stream<FilePath> collectPathsFromFiles(@NotNull Project project, @NotNull Stream<VirtualFile> allFiles) {
+    ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(project);
+    ChangeListManager changeListManager = ChangeListManager.getInstance(project);
+
+    return allFiles
+      .filter(file -> {
+        return vcsManager.getVcsFor(file) instanceof GitVcs &&
+               (file.isDirectory() || isStatusForAddition(changeListManager.getStatus(file)));
+      })
+      .map(VcsUtil::getFilePath);
+  }
+
+  private static boolean isStatusForAddition(FileStatus status) {
+    return status == FileStatus.MODIFIED ||
+           status == FileStatus.MERGED_WITH_CONFLICTS ||
+           status == FileStatus.ADDED ||
+           status == FileStatus.DELETED;
   }
 }

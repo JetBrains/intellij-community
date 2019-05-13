@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package com.intellij.util.io;
 
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -32,16 +33,15 @@ public class StringRef {
   private String name;
   private final AbstractStringEnumerator store;
 
-  private StringRef(final String name) {
+  private StringRef(@NotNull String name) {
     this.name = name;
     id = -1;
     store = null;
   }
 
-  private StringRef(final int id, final AbstractStringEnumerator store) {
+  private StringRef(final int id, @NotNull AbstractStringEnumerator store) {
     this.id = id;
     this.store = store;
-    name = null;
   }
 
   public String getString() {
@@ -58,13 +58,13 @@ public class StringRef {
     return name;
   }
 
-  public void writeTo(DataOutput out, AbstractStringEnumerator store) throws IOException {
+  public void writeTo(@NotNull DataOutput out, @NotNull AbstractStringEnumerator store) throws IOException {
     int nameId = getId(store);
     out.writeByte(nameId & 0xFF);
     DataInputOutputUtil.writeINT(out, nameId >> 8);
   }
 
-  public int getId(AbstractStringEnumerator store) {
+  public int getId(@NotNull AbstractStringEnumerator store) {
     if (id == -1) {
       try {
         id = store.enumerate(name);
@@ -76,6 +76,7 @@ public class StringRef {
     return id;
   }
 
+  @Override
   public String toString() {
     return getString();
   }
@@ -84,33 +85,45 @@ public class StringRef {
     return getString().length();
   }
 
+  @Override
   public int hashCode() {
     return toString().hashCode();
   }
 
+  @Override
   public boolean equals(final Object that) {
     return that == this || that instanceof StringRef && toString().equals(that.toString());
   }
 
+  @Contract("null -> null")
   public static String toString(@Nullable StringRef ref) {
     return ref != null ? ref.getString() : null;
   }
 
+  @Contract("null -> null; !null -> !null")
   public static StringRef fromString(@Nullable String source) {
     return source == null ? null : new StringRef(source);
   }
 
   @NotNull
   public static StringRef fromNullableString(@Nullable String source) {
-    return source == null ? new StringRef("") : new StringRef(source);
+    return new StringRef(source == null ? "" : source);
   }
 
-  public static StringRef fromStream(DataInput in, AbstractStringEnumerator store) throws IOException {
+  @Nullable
+  public static StringRef fromStream(@NotNull DataInput in, @NotNull AbstractStringEnumerator store) throws IOException {
     final int nameId = DataInputOutputUtil.readINT(in);
 
     return nameId != 0 ? new StringRef(nameId, store) : null;
   }
 
+  @Nullable
+  public static String stringFromStream(@NotNull DataInput in, @NotNull AbstractStringEnumerator store) throws IOException {
+    final int nameId = DataInputOutputUtil.readINT(in);
+    return nameId != 0 ? store.valueOf(nameId) : null;
+  }
+
+  @NotNull
   public static StringRef[] createArray(int count) {
     return count == 0 ? EMPTY_ARRAY : new StringRef[count];
   }

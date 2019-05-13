@@ -1,50 +1,46 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
-/*
- * Created by IntelliJ IDEA.
- * User: max
- * Date: Jun 19, 2002
- * Time: 3:19:05 PM
- * To change template for new class use 
- * Code Style | Class Templates options (Tools | IDE Options).
- */
 package com.intellij.openapi.editor.impl;
 
-import com.intellij.codeStyle.CodeStyleFacade;
+import com.intellij.application.options.CodeStyle;
+import com.intellij.lang.Language;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.EditorKind;
 import com.intellij.openapi.editor.EditorSettings;
+import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
+import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.impl.softwrap.SoftWrapAppliancePlaces;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.util.registry.Registry;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
+import com.intellij.util.SystemProperties;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
+
 public class SettingsImpl implements EditorSettings {
+  private static final Logger LOG = Logger.getInstance(SettingsImpl.class);
+
   @Nullable private final EditorEx myEditor;
+  @Nullable private Language myLanguage;
   private Boolean myIsCamelWords;
 
   // This group of settings does not have UI
-  private SoftWrapAppliancePlaces mySoftWrapAppliancePlace        = SoftWrapAppliancePlaces.MAIN_EDITOR;
-  private int                     myAdditionalLinesCount          = 5;
+  private final SoftWrapAppliancePlaces mySoftWrapAppliancePlace;
+  private int                     myAdditionalLinesCount          = Registry.intValue("editor.virtual.lines", 5);
   private int                     myAdditionalColumnsCount        = 3;
-  private int                     myLineCursorWidth               = 2;
+  private int                     myLineCursorWidth               = EditorUtil.getDefaultCaretWidth();
   private boolean                 myLineMarkerAreaShown           = true;
   private boolean                 myAllowSingleLogicalLineFolding = false;
+  private boolean myAutoCodeFoldingEnabled = true;
 
   // These comes from CodeStyleSettings
   private Integer myTabSize         = null;
@@ -59,10 +55,15 @@ public class SettingsImpl implements EditorSettings {
   private Boolean myIsRightMarginShown                    = null;
   private Integer myRightMargin                           = null;
   private Boolean myAreLineNumbersShown                   = null;
+  private Boolean myGutterIconsShown                      = null;
   private Boolean myIsFoldingOutlineShown                 = null;
   private Boolean myIsSmartHome                           = null;
   private Boolean myIsBlockCursor                         = null;
+  private Boolean myCaretRowShown                         = null;
   private Boolean myIsWhitespacesShown                    = null;
+  private Boolean myIsLeadingWhitespacesShown             = null;
+  private Boolean myIsInnerWhitespacesShown               = null;
+  private Boolean myIsTrailingWhitespacesShown            = null;
   private Boolean myIndentGuidesShown                     = null;
   private Boolean myIsAnimatedScrolling                   = null;
   private Boolean myIsAdditionalPageAtBottom              = null;
@@ -72,14 +73,30 @@ public class SettingsImpl implements EditorSettings {
   private Boolean myIsRenameVariablesInplace              = null;
   private Boolean myIsRefrainFromScrolling                = null;
   private Boolean myUseSoftWraps                          = null;
-  private Boolean myIsAllSoftWrapsShown                   = null;
+  private final Boolean myIsAllSoftWrapsShown                   = null;
   private Boolean myUseCustomSoftWrapIndent               = null;
   private Integer myCustomSoftWrapIndent                  = null;
   private Boolean myRenamePreselect                       = null;
   private Boolean myWrapWhenTypingReachesRightMargin      = null;
+  private Boolean myShowIntentionBulb                     = null;
 
-  public SettingsImpl(@Nullable EditorEx editor) {
+  private List<Integer> mySoftMargins = null;
+  
+  public SettingsImpl() {
+    this(null, null);
+  }
+
+  SettingsImpl(@Nullable EditorEx editor, @Nullable EditorKind kind) {
     myEditor = editor;
+    if (EditorKind.CONSOLE.equals(kind)) {
+      mySoftWrapAppliancePlace = SoftWrapAppliancePlaces.CONSOLE;
+    }
+    else if (EditorKind.PREVIEW.equals(kind)) {
+      mySoftWrapAppliancePlace = SoftWrapAppliancePlaces.PREVIEW;
+    }
+    else {
+      mySoftWrapAppliancePlace = SoftWrapAppliancePlaces.MAIN_EDITOR;
+    }
   }
   
   @Override
@@ -107,6 +124,42 @@ public class SettingsImpl implements EditorSettings {
   @Override
   public void setWhitespacesShown(boolean val) {
     myIsWhitespacesShown = Boolean.valueOf(val);
+  }
+
+  @Override
+  public boolean isLeadingWhitespaceShown() {
+    return myIsLeadingWhitespacesShown != null
+           ? myIsLeadingWhitespacesShown.booleanValue()
+           : EditorSettingsExternalizable.getInstance().isLeadingWhitespacesShown();
+  }
+
+  @Override
+  public void setLeadingWhitespaceShown(boolean val) {
+    myIsLeadingWhitespacesShown = Boolean.valueOf(val);
+  }
+
+  @Override
+  public boolean isInnerWhitespaceShown() {
+    return myIsInnerWhitespacesShown != null
+           ? myIsInnerWhitespacesShown.booleanValue()
+           : EditorSettingsExternalizable.getInstance().isInnerWhitespacesShown();
+  }
+
+  @Override
+  public void setInnerWhitespaceShown(boolean val) {
+    myIsInnerWhitespacesShown = Boolean.valueOf(val);
+  }
+
+  @Override
+  public boolean isTrailingWhitespaceShown() {
+    return myIsTrailingWhitespacesShown != null
+           ? myIsTrailingWhitespacesShown.booleanValue()
+           : EditorSettingsExternalizable.getInstance().isTrailingWhitespacesShown();
+  }
+
+  @Override
+  public void setTrailingWhitespaceShown(boolean val) {
+    myIsTrailingWhitespacesShown = Boolean.valueOf(val);
   }
 
   @Override
@@ -141,26 +194,39 @@ public class SettingsImpl implements EditorSettings {
   }
 
   @Override
+  public boolean areGutterIconsShown() {
+    return myGutterIconsShown != null
+           ? myGutterIconsShown.booleanValue()
+           : EditorSettingsExternalizable.getInstance().areGutterIconsShown();
+  }
+
+  @Override
+  public void setGutterIconsShown(boolean val) {
+    final Boolean newValue = val ? Boolean.TRUE : Boolean.FALSE;
+    if (newValue.equals(myGutterIconsShown)) return;
+    myGutterIconsShown = newValue;
+    fireEditorRefresh();
+  }
+
+  @Override
   public int getRightMargin(Project project) {
-    return myRightMargin != null ? myRightMargin.intValue() :
-           CodeStyleFacade.getInstance(project).getRightMargin();
+    if (myRightMargin != null) return myRightMargin.intValue();
+    return myEditor != null
+           ? CodeStyle.getSettings(myEditor).getRightMargin(myLanguage)
+           : CodeStyle.getProjectOrDefaultSettings(project).getRightMargin(myLanguage);
   }
 
   @Override
   public boolean isWrapWhenTypingReachesRightMargin(Project project) {
-    return myWrapWhenTypingReachesRightMargin != null ?
-           myWrapWhenTypingReachesRightMargin.booleanValue() :
-           CodeStyleFacade.getInstance(project).isWrapWhenTypingReachesRightMargin();
+    if (myWrapWhenTypingReachesRightMargin != null) return myWrapWhenTypingReachesRightMargin.booleanValue();
+    return myEditor == null ?
+           CodeStyle.getDefaultSettings().isWrapOnTyping(myLanguage) :
+           CodeStyle.getSettings(myEditor).isWrapOnTyping(myLanguage);
   }
 
   @Override
   public void setWrapWhenTypingReachesRightMargin(boolean val) {
-    Boolean newValue = Boolean.valueOf(val);
-    if (newValue.equals(myWrapWhenTypingReachesRightMargin)) {
-      return;
-    }
-    myWrapWhenTypingReachesRightMargin = newValue;
-    fireEditorRefresh();
+    myWrapWhenTypingReachesRightMargin = val;
   }
 
   @Override
@@ -168,6 +234,23 @@ public class SettingsImpl implements EditorSettings {
     final Integer newValue = Integer.valueOf(rightMargin);
     if (newValue.equals(myRightMargin)) return;
     myRightMargin = newValue;
+    fireEditorRefresh();
+  }
+
+  @NotNull
+  @Override
+  public List<Integer> getSoftMargins() {
+    if (mySoftMargins != null) return mySoftMargins;
+    return
+      myEditor == null ?
+      CodeStyle.getDefaultSettings().getSoftMargins(myLanguage) :
+      CodeStyle.getSettings(myEditor).getSoftMargins(myLanguage);
+  }
+
+  @Override
+  public void setSoftMargins(@Nullable List<Integer> softMargins) {
+    if (Objects.equals(mySoftMargins, softMargins)) return;
+    mySoftMargins = softMargins != null ? new ArrayList<>(softMargins) : null;
     fireEditorRefresh();
   }
 
@@ -189,9 +272,9 @@ public class SettingsImpl implements EditorSettings {
   }
 
   @Override
-  public void setAdditionalColumnsCount(int additinalColumnsCount) {
-    if (myAdditionalColumnsCount == additinalColumnsCount) return;
-    myAdditionalColumnsCount = additinalColumnsCount;
+  public void setAdditionalColumnsCount(int additionalColumnsCount) {
+    if (myAdditionalColumnsCount == additionalColumnsCount) return;
+    myAdditionalColumnsCount = additionalColumnsCount;
     fireEditorRefresh();
   }
 
@@ -223,9 +306,22 @@ public class SettingsImpl implements EditorSettings {
   }
 
   @Override
+  public boolean isAutoCodeFoldingEnabled() {
+    return myAutoCodeFoldingEnabled;
+  }
+
+  @Override
+  public void setAutoCodeFoldingEnabled(boolean val) {
+    myAutoCodeFoldingEnabled = val;
+  }
+
+  @Override
   public boolean isUseTabCharacter(Project project) {
-    FileType fileType = getFileType();
-    return myUseTabCharacter != null ? myUseTabCharacter.booleanValue() : CodeStyleFacade.getInstance(project).useTabCharacter(fileType);
+    if (myUseTabCharacter != null) return myUseTabCharacter.booleanValue();
+    PsiFile file = getPsiFile(project);
+    return file != null
+           ? CodeStyle.getIndentOptions(file).USE_TAB_CHARACTER
+           : CodeStyle.getProjectOrDefaultSettings(project).getIndentOptions(null).USE_TAB_CHARACTER;
   }
 
   @Override
@@ -236,34 +332,75 @@ public class SettingsImpl implements EditorSettings {
     fireEditorRefresh();
   }
 
-  public void setSoftWrapAppliancePlace(SoftWrapAppliancePlaces softWrapAppliancePlace) {
-    mySoftWrapAppliancePlace = softWrapAppliancePlace;
+  /**
+   * @deprecated use {@link com.intellij.openapi.editor.EditorKind}
+   */
+  @Deprecated
+  public SoftWrapAppliancePlaces getSoftWrapAppliancePlace() {
+    return mySoftWrapAppliancePlace;
   }
 
   public void reinitSettings() {
     myCachedTabSize = null;
+    reinitDocumentIndentOptions();
+  }
+
+  private void reinitDocumentIndentOptions() {
+    if (myEditor == null || myEditor.isViewer()) return;
+    final Project project = myEditor.getProject();
+    final DocumentEx document = myEditor.getDocument();
+
+    if (project == null || project.isDisposed()) return;
+
+    final PsiDocumentManager psiManager = PsiDocumentManager.getInstance(project);
+    final PsiFile file = psiManager.getPsiFile(document);
+    if (file == null) return;
+
+    CodeStyle.updateDocumentIndentOptions(project, document);
   }
 
   @Override
   public int getTabSize(Project project) {
     if (myTabSize != null) return myTabSize.intValue();
-    if (myCachedTabSize != null) return myCachedTabSize.intValue();
-
-    FileType fileType = getFileType();
-    int tabSize = project == null || project.isDisposed() ? 0 : CodeStyleFacade.getInstance(project).getTabSize(fileType);
-    myCachedTabSize = Integer.valueOf(tabSize);
-    return tabSize;
+    if (myCachedTabSize == null) {
+      int tabSize;
+      try {
+        if (project == null || project.isDisposed()) {
+          tabSize = CodeStyle.getDefaultSettings().getTabSize(null);
+        }
+        else {
+          PsiFile file = getPsiFile(project);
+          if (myEditor != null && myEditor.isViewer()) {
+            FileType fileType = file != null ? file.getFileType() : null;
+            tabSize = CodeStyle.getSettings(project).getIndentOptions(fileType).TAB_SIZE;
+          }
+          else {
+            tabSize = file != null ?
+                      CodeStyle.getIndentOptions(file).TAB_SIZE :
+                      CodeStyle.getSettings(project).getTabSize(null);
+          }
+        }
+      }
+      catch (Exception e) {
+        LOG.error("Error determining tab size", e);
+        tabSize = new CommonCodeStyleSettings.IndentOptions().TAB_SIZE;
+      }
+      myCachedTabSize = Integer.valueOf(Math.max(1, tabSize));
+    }
+    return myCachedTabSize;
   }
 
   @Nullable
-  private FileType getFileType() {
-    VirtualFile file = myEditor == null ? null : myEditor.getVirtualFile();
-    return file == null ? null : file.getFileType();
+  private PsiFile getPsiFile(@Nullable Project project) {
+    if (project != null && myEditor != null) {
+      return PsiDocumentManager.getInstance(project).getPsiFile(myEditor.getDocument());
+    }
+    return null;
   }
 
   @Override
   public void setTabSize(int tabSize) {
-    final Integer newValue = Integer.valueOf(tabSize);
+    final Integer newValue = Integer.valueOf(Math.max(1, tabSize));
     if (newValue.equals(myTabSize)) return;
     myTabSize = newValue;
     fireEditorRefresh();
@@ -344,6 +481,21 @@ public class SettingsImpl implements EditorSettings {
   }
 
   @Override
+  public boolean isCaretRowShown() {
+    return myCaretRowShown != null
+           ? myCaretRowShown.booleanValue()
+           : EditorSettingsExternalizable.getInstance().isCaretRowShown();
+  }
+
+  @Override
+  public void setCaretRowShown(boolean val) {
+    final Boolean newValue = val ? Boolean.TRUE : Boolean.FALSE;
+    if (newValue.equals(myCaretRowShown)) return;
+    myCaretRowShown = newValue;
+    fireEditorRefresh();
+  }
+
+  @Override
   public int getLineCursorWidth() {
     return myLineCursorWidth;
   }
@@ -355,7 +507,8 @@ public class SettingsImpl implements EditorSettings {
 
   @Override
   public boolean isAnimatedScrolling() {
-    return myIsAnimatedScrolling != null
+    return !SystemProperties.isTrueSmoothScrollingEnabled() && // uses its own interpolation
+           myIsAnimatedScrolling != null
            ? myIsAnimatedScrolling.booleanValue()
            : EditorSettingsExternalizable.getInstance().isSmoothScrolling();
   }
@@ -483,6 +636,10 @@ public class SettingsImpl implements EditorSettings {
     myUseSoftWraps = newValue;
     fireEditorRefresh();
   }
+  
+  void setUseSoftWrapsQuiet() {
+    myUseSoftWraps = Boolean.TRUE;
+  }
 
   @Override
   public boolean isAllSoftWrapsShown() {
@@ -535,5 +692,19 @@ public class SettingsImpl implements EditorSettings {
   @Override
   public void setPreselectRename(boolean val) {
     myRenamePreselect = val;
+  }
+
+  @Override
+  public boolean isShowIntentionBulb() {
+    return myShowIntentionBulb == null ? EditorSettingsExternalizable.getInstance().isShowIntentionBulb() : myShowIntentionBulb;
+  }
+
+  @Override
+  public void setShowIntentionBulb(boolean show) {
+    myShowIntentionBulb = show; 
+  }
+
+  public void setLanguage(@Nullable Language language) {
+    myLanguage = language;
   }
 }

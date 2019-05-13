@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,63 +28,66 @@ import java.util.*;
 import java.util.jar.Manifest;
 import java.util.regex.PatternSyntaxException;
 
-/**
- * User: anna
- * Date: 10/29/12
- */
 public abstract class AbstractEclipseClasspathReader<T> {
   protected final String myRootPath;
   @Nullable protected final List<String> myCurrentRoots;
   @Nullable protected final Set<String> myModuleNames;
 
-  public AbstractEclipseClasspathReader(final String rootPath,
-                                        @Nullable List<String> currentRoots, @Nullable Set<String> moduleNames) {
+  public AbstractEclipseClasspathReader(@NotNull String rootPath, @Nullable List<String> currentRoots, @Nullable Set<String> moduleNames) {
     myRootPath = FileUtil.toSystemIndependentName(rootPath);
     myCurrentRoots = currentRoots;
     myModuleNames = moduleNames;
   }
 
   protected abstract String prepareValidUrlInsideJar(String url);
+
   protected abstract void addNamedLibrary(T rootModel,
                                           Collection<String> unknownLibraries,
                                           boolean exported,
                                           String name,
                                           boolean applicationLevel);
+
   protected abstract void addInvalidModuleEntry(T rootModel, boolean exported, String moduleName);
+
   protected abstract void setUpModuleJdk(T rootModel,
                                          Collection<String> unknownJdks,
                                          EclipseModuleManager eclipseModuleManager,
                                          String jdkName);
+
   public abstract void setupOutput(T rootModel, String path);
+
   protected abstract void addSourceFolder(T rootModel, String srcUrl, boolean testFolder);
+
   protected abstract void addSourceFolderToCurrentContentRoot(T rootModel, String srcUrl, boolean testFolder);
 
   protected abstract void addJUnitDefaultLib(T rootModel, String junitName, ExpandMacroToPathMap macroMap);
+
   protected abstract void addModuleLibrary(T rootModel,
                                            Element element,
                                            boolean exported,
                                            String libName,
                                            String url,
-                                           String srcUrl, ExpandMacroToPathMap macroMap);
+                                           String srcUrl, String nativeRoot, ExpandMacroToPathMap macroMap);
+
   protected abstract String expandEclipsePath2Url(T rootModel, String path);
+
+  protected abstract Set<String> getDefinedCons();
 
   protected abstract int rearrange(T rootModel);
 
   protected void readClasspathEntry(T rootModel,
                                     final Collection<String> unknownLibraries,
                                     Collection<String> unknownJdks,
-                                    final Set<String> usedVariables,
                                     Set<String> refsToModules,
                                     final String testPattern,
-                                    Element element, int idx,
-                                    final EclipseModuleManager eclipseModuleManager,
-                                    final ExpandMacroToPathMap macroMap, 
+                                    Element element, int index,
+                                    @Nullable EclipseModuleManager eclipseModuleManager,
+                                    final ExpandMacroToPathMap macroMap,
                                     final Set<String> libs) throws ConversionException {
     String kind = element.getAttributeValue(EclipseXml.KIND_ATTR);
     if (kind == null) {
       throw new ConversionException("Missing classpathentry/@kind");
     }
-
 
     String path = element.getAttributeValue(EclipseXml.PATH_ATTR);
     if (path == null) {
@@ -101,67 +104,80 @@ public abstract class AbstractEclipseClasspathReader<T> {
       }
       else {
         String srcUrl = pathToUrl(myRootPath + "/" + path);
-        boolean isTestFolder = false;
+        boolean isTestFolder;
         try {
-          isTestFolder = testPattern != null && testPattern.length() > 0 && path.matches(testPattern);
+          isTestFolder = !StringUtil.isEmpty(testPattern) && path.matches(testPattern);
         }
         catch (PatternSyntaxException e) {
           isTestFolder = false;
         }
-        final String linked = expandLinkedResourcesPath(macroMap, usedVariables, path);
-        if (linked != null) {
-          srcUrl = prepareValidUrlInsideJar(pathToUrl(linked));
-          eclipseModuleManager.registerEclipseLinkedSrcVarPath(srcUrl, path);
-          addSourceFolder(rootModel, srcUrl, isTestFolder);
-        }
-        else {
+        String linked = expandLinkedResourcesPath(macroMap, path);
+        if (linked == null) {
           addSourceFolderToCurrentContentRoot(rootModel, srcUrl, isTestFolder);
         }
-        eclipseModuleManager.setExpectedModuleSourcePlace(rearrange(rootModel));
-        eclipseModuleManager.registerSrcPlace(srcUrl, idx);
+        else {
+          srcUrl = prepareValidUrlInsideJar(pathToUrl(linked));
+          if (eclipseModuleManager != null) {
+            eclipseModuleManager.registerEclipseLinkedSrcVarPath(srcUrl, path);
+          }
+          addSourceFolder(rootModel, srcUrl, isTestFolder);
+        }
+
+        if (eclipseModuleManager != null) {
+          eclipseModuleManager.setExpectedModuleSourcePlace(rearrange(rootModel));
+          eclipseModuleManager.registerSrcPlace(srcUrl, index);
+        }
       }
     }
-
     else if (kind.equals(EclipseXml.OUTPUT_KIND)) {
       String output = myRootPath + "/" + path;
-      final String linked = expandLinkedResourcesPath(macroMap, usedVariables, path);
+      String linked = expandLinkedResourcesPath(macroMap, path);
       if (linked != null) {
         output = linked;
-        eclipseModuleManager.registerEclipseLinkedVarPath(pathToUrl(output), path);
+        if (eclipseModuleManager != null) {
+          eclipseModuleManager.registerEclipseLinkedVarPath(pathToUrl(output), path);
+        }
       }
       setupOutput(rootModel, output);
     }
-
     else if (kind.equals(EclipseXml.LIB_KIND)) {
-      final String libName = getPresentableName(path, libs);
-
-
-      final String linked = expandLinkedResourcesPath(macroMap, usedVariables, path);
-      final String url;
+      String linked = expandLinkedResourcesPath(macroMap, path);
+      String url;
       if (linked != null) {
         url = prepareValidUrlInsideJar(pathToUrl(linked));
-        eclipseModuleManager.registerEclipseLinkedVarPath(url, path);
+        if (eclipseModuleManager != null) {
+          eclipseModuleManager.registerEclipseLinkedVarPath(url, path);
+        }
       }
       else {
         url = expandEclipsePath2Url(rootModel, path);
       }
 
-      eclipseModuleManager.registerEclipseLibUrl(url);
+      if (eclipseModuleManager != null) {
+        eclipseModuleManager.registerEclipseLibUrl(url);
+      }
 
       final String sourcePath = element.getAttributeValue(EclipseXml.SOURCEPATH_ATTR);
       String srcUrl = null;
       if (sourcePath != null) {
-        final String linkedSrc = expandLinkedResourcesPath(macroMap, usedVariables, sourcePath);
+        final String linkedSrc = expandLinkedResourcesPath(macroMap, sourcePath);
         if (linkedSrc != null) {
           srcUrl = prepareValidUrlInsideJar(pathToUrl(linkedSrc));
-          eclipseModuleManager.registerEclipseLinkedSrcVarPath(srcUrl, sourcePath);
+          if (eclipseModuleManager != null) {
+            eclipseModuleManager.registerEclipseLinkedSrcVarPath(srcUrl, sourcePath);
+          }
         }
         else {
           srcUrl = expandEclipsePath2Url(rootModel, sourcePath);
         }
       }
 
-      addModuleLibrary(rootModel, element, exported, libName, url, srcUrl, macroMap);
+      String nativeRoot = getNativeLibraryRoot(element);
+      if (nativeRoot != null) {
+        nativeRoot = expandEclipsePath2Url(rootModel, nativeRoot);
+      }
+
+      addModuleLibrary(rootModel, element, exported, getPresentableName(path, libs), url, srcUrl, nativeRoot, macroMap);
     }
     else if (kind.equals(EclipseXml.VAR_KIND)) {
       int slash = path.indexOf("/");
@@ -171,15 +187,23 @@ public abstract class AbstractEclipseClasspathReader<T> {
 
       final String libName = getPresentableName(path, libs);
 
-      final String url = eclipseVariabledPath2Url(macroMap, usedVariables, path, 0);
-      eclipseModuleManager.registerEclipseVariablePath(url, path);
+      String url = eclipseVariabledPath2Url(macroMap, path, 0);
+      if (eclipseModuleManager != null) {
+        eclipseModuleManager.registerEclipseVariablePath(url, path);
+      }
       final String srcPathAttr = element.getAttributeValue(EclipseXml.SOURCEPATH_ATTR);
       String srcUrl = null;
       if (srcPathAttr != null) {
-        srcUrl = eclipseVariabledPath2Url(macroMap, usedVariables, srcPathAttr, srcVarStart(srcPathAttr));
-        eclipseModuleManager.registerEclipseSrcVariablePath(srcUrl, srcPathAttr);
+        srcUrl = eclipseVariabledPath2Url(macroMap, srcPathAttr, srcVarStart(srcPathAttr));
+        if (eclipseModuleManager != null) {
+          eclipseModuleManager.registerEclipseSrcVariablePath(srcUrl, srcPathAttr);
+        }
       }
-      addModuleLibrary(rootModel, element, exported, libName, url, srcUrl, macroMap);
+      String nativeRoot = getNativeLibraryRoot(element);
+      if (nativeRoot != null) {
+        nativeRoot = expandEclipsePath2Url(rootModel, nativeRoot);
+      }
+      addModuleLibrary(rootModel, element, exported, libName, url, srcUrl, nativeRoot, macroMap);
     }
     else if (kind.equals(EclipseXml.CON_KIND)) {
       if (path.equals(EclipseXml.ECLIPSE_PLATFORM)) {
@@ -198,22 +222,37 @@ public abstract class AbstractEclipseClasspathReader<T> {
         final String junitName = IdeaXml.JUNIT + getPresentableName(path);
         addJUnitDefaultLib(rootModel, junitName, macroMap);
       }
-      else if (path.equals(EclipseXml.GROOVY_DSL_CONTAINER)) {
-        eclipseModuleManager.addGroovySupport(EclipseXml.GROOVY_DSL_CONTAINER);
-        eclipseModuleManager.registerSrcPlace(EclipseXml.GROOVY_DSL_CONTAINER, idx);
-      }
-      else if (path.equals(EclipseXml.GROOVY_SUPPORT)) {
-        eclipseModuleManager.addGroovySupport(EclipseXml.GROOVY_SUPPORT);
-        eclipseModuleManager.registerSrcPlace(EclipseXml.GROOVY_SUPPORT, idx);
-      }
       else {
-        eclipseModuleManager.registerUnknownCons(path);
-        addNamedLibrary(rootModel, new ArrayList<String>(), exported, path, true);
+        Set<String> registeredCons = getDefinedCons();
+        if (registeredCons.contains(path)) {
+          if (eclipseModuleManager != null) {
+            eclipseModuleManager.registerCon(path);
+            eclipseModuleManager.registerSrcPlace(path, index);
+          }
+        }
+        else {
+          if (eclipseModuleManager != null) {
+            eclipseModuleManager.registerUnknownCons(path);
+          }
+          addNamedLibrary(rootModel, new ArrayList<>(), exported, path, true);
+        }
       }
     }
     else {
       throw new ConversionException("Unknown classpathentry/@kind: " + kind);
     }
+  }
+
+  private static String getNativeLibraryRoot(Element element) {
+    final Element attributes = element.getChild(EclipseXml.ATTRIBUTES_TAG);
+    if (attributes != null) {
+      for (Element attributeElement : attributes.getChildren(EclipseXml.ATTRIBUTE_TAG)) {
+        if (EclipseXml.DLL_LINK.equals(attributeElement.getAttributeValue(EclipseXml.NAME_ATTR))) {
+          return attributeElement.getAttributeValue(EclipseXml.VALUE_ATTR);
+        }
+      }
+    }
+    return null;
   }
 
   protected static int srcVarStart(String srcPath) {
@@ -226,10 +265,14 @@ public abstract class AbstractEclipseClasspathReader<T> {
   }
 
   @NotNull
-  protected static String getPresentableName(@NotNull String path, Set<String> names) {
-    final String pathComponent = getLastPathComponent(path);
-    if (pathComponent != null && names != null && !names.add(pathComponent)) return path;
-    return pathComponent != null ? pathComponent : path;
+  protected static String getPresentableName(@NotNull String path, Set<? super String> names) {
+    String pathComponent = getLastPathComponent(path);
+    if (pathComponent != null && names != null && !names.add(pathComponent)) {
+      return path;
+    }
+    else {
+      return pathComponent == null ? path : pathComponent;
+    }
   }
 
   @Nullable
@@ -242,39 +285,32 @@ public abstract class AbstractEclipseClasspathReader<T> {
     return var == null ? null : ("$" + var + "$" + (path == null ? "" : ("/" + path)));
   }
 
-  protected static String pathToUrl(String path) {
+  @NotNull
+  protected static String pathToUrl(@NotNull String path) {
     return "file://" + path;
   }
 
-  protected static EPathVariable createEPathVariable(final Set<String> usedVariables, final String pathAttr, final int varStart) {
-    final EPathVariable var;
+  protected static EPathVariable createEPathVariable(String pathAttr, int varStart) {
     int slash = pathAttr.indexOf("/", varStart);
     if (slash > 0) {
-      var = new EPathVariable(usedVariables, pathAttr.substring(varStart, slash), pathAttr.substring(slash + 1));
+      return new EPathVariable(pathAttr.substring(varStart, slash), pathAttr.substring(slash + 1));
     }
     else {
-      var = new EPathVariable(usedVariables, pathAttr.substring(varStart), null);
+      return new EPathVariable(pathAttr.substring(varStart), null);
     }
-    return var;
   }
 
-  protected String eclipseVariabledPath2Url(ExpandMacroToPathMap pathMap, Set<String> usedVariables, String path, int varStart) {
-    final EPathVariable var = createEPathVariable(usedVariables, path, varStart);
-    final String url = pathMap.substitute(var.toIdeaVariabledUrl(), SystemInfo.isFileSystemCaseSensitive);
-
-    return prepareValidUrlInsideJar(url);
+  @SuppressWarnings("SpellCheckingInspection")
+  protected String eclipseVariabledPath2Url(ExpandMacroToPathMap pathMap, String path, int varStart) {
+    EPathVariable var = createEPathVariable(path, varStart);
+    return prepareValidUrlInsideJar(pathMap.substitute(pathToUrl(getVariableRelatedPath(var.myVariable, var.myRelatedPath)), SystemInfo.isFileSystemCaseSensitive));
   }
-
 
   @Nullable
   protected String expandLinkedResourcesPath(final ExpandMacroToPathMap macroMap,
-                                             final Set<String> usedVariables,
                                              final String path) {
     final EclipseProjectFinder.LinkedResource linkedResource = EclipseProjectFinder.findLinkedResource(myRootPath, path);
     if (linkedResource != null) {
-      if (linkedResource.containsPathVariable()) {
-        usedVariables.add(linkedResource.getVariableName());
-      }
       if (linkedResource.containsPathVariable()) {
         final String toPathVariableFormat =
           getVariableRelatedPath(linkedResource.getVariableName(), linkedResource.getRelativeToVariablePath());
@@ -333,19 +369,13 @@ public abstract class AbstractEclipseClasspathReader<T> {
     }
   }
 
-
   protected static class EPathVariable {
     private final String myVariable;
     private final String myRelatedPath;
 
-    protected EPathVariable(final Set<String> usedVariables, final String variable, final String relatedPath) {
+    protected EPathVariable(final String variable, final String relatedPath) {
       myVariable = variable;
       myRelatedPath = relatedPath;
-      usedVariables.add(myVariable);
-    }
-
-    public String toIdeaVariabledUrl() {
-      return pathToUrl(getVariableRelatedPath(myVariable, myRelatedPath));
     }
   }
 }

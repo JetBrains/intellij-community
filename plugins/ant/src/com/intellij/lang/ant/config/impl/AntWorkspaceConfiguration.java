@@ -1,25 +1,10 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lang.ant.config.impl;
 
 import com.intellij.lang.ant.config.AntBuildFile;
 import com.intellij.lang.ant.config.AntBuildFileBase;
 import com.intellij.lang.ant.config.AntConfiguration;
 import com.intellij.openapi.components.*;
-import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
@@ -28,24 +13,19 @@ import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 
-@State(
-  name="antWorkspaceConfiguration",
-  storages= {
-    @Storage(
-      file = StoragePathMacros.WORKSPACE_FILE
-    )}
-)
+@State(name = "antWorkspaceConfiguration", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
 public class AntWorkspaceConfiguration implements PersistentStateComponent<Element> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.lang.ant.config.impl.AntWorkspaceConfiguration");
+
   private final Project myProject;
   @NonNls private static final String BUILD_FILE = "buildFile";
   @NonNls private static final String URL = "url";
-  private final AtomicReference<Element> myProperties = new AtomicReference<Element>(null);
+  private final AtomicReference<Element> myProperties = new AtomicReference<>(null);
 
   public boolean IS_AUTOSCROLL_TO_SOURCE;
   public boolean FILTER_TARGETS;
@@ -54,19 +34,15 @@ public class AntWorkspaceConfiguration implements PersistentStateComponent<Eleme
     myProject = project;
   }
 
+  @Override
   public Element getState() {
-    try {
-      final Element e = new Element("state");
-      writeExternal(e);
-      return e;
-    }
-    catch (WriteExternalException e1) {
-      LOG.error(e1);
-      return null;
-    }
+    final Element e = new Element("state");
+    writeExternal(e);
+    return e;
   }
 
-  public void loadState(Element state) {
+  @Override
+  public void loadState(@NotNull Element state) {
     try {
       readExternal(state);
     }
@@ -75,17 +51,14 @@ public class AntWorkspaceConfiguration implements PersistentStateComponent<Eleme
     }
   }
 
-  public void initComponent() {
-  }
-
   public void readExternal(Element parentNode) throws InvalidDataException {
-    loadGlobalSettings(parentNode);
+    DefaultJDOMExternalizer.readExternal(this, parentNode);
     myProperties.set(parentNode);
   }
 
   public void writeExternal(Element parentNode) throws WriteExternalException {
     DefaultJDOMExternalizer.writeExternal(this, parentNode);
-    for (final AntBuildFile buildFile : AntConfiguration.getInstance(myProject).getBuildFiles()) {
+    for (final AntBuildFile buildFile : AntConfiguration.getInstance(myProject).getBuildFileList()) {
       Element element = new Element(BUILD_FILE);
       element.setAttribute(URL, buildFile.getVirtualFile().getUrl());
       ((AntBuildFileBase)buildFile).writeWorkspaceProperties(element);
@@ -102,7 +75,7 @@ public class AntWorkspaceConfiguration implements PersistentStateComponent<Eleme
     if (properties == null) {
       return;
     }
-    for (final AntBuildFile buildFile : AntConfiguration.getInstance(myProject).getBuildFiles()) {
+    for (final AntBuildFile buildFile : AntConfiguration.getInstance(myProject).getBuildFileList()) {
       final Element fileElement = findChildByUrl(properties, buildFile.getVirtualFile().getUrl());
       if (fileElement == null) {
         continue;
@@ -111,20 +84,12 @@ public class AntWorkspaceConfiguration implements PersistentStateComponent<Eleme
     }
   }
 
-  public void loadFromProjectSettings(Element parentNode) throws InvalidDataException {
-    loadGlobalSettings(parentNode);
-  }
-
-  private void loadGlobalSettings(Element parentNode) throws InvalidDataException {
-    DefaultJDOMExternalizer.readExternal(this, parentNode);
-  }
-
   @Nullable
   private static Element findChildByUrl(Element parentNode, String url) {
-    List children = parentNode.getChildren(BUILD_FILE);
-    for (final Object aChildren : children) {
-      Element element = (Element)aChildren;
-      if (Comparing.equal(element.getAttributeValue(URL), url)) return element;
+    for (Element element : parentNode.getChildren(BUILD_FILE)) {
+      if (Comparing.equal(element.getAttributeValue(URL), url)) {
+        return element;
+      }
     }
     return null;
   }

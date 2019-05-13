@@ -31,35 +31,40 @@ import javax.swing.*;
  * @author nik
  */
 public class DefaultFacetSettingsConfigurable<C extends FacetConfiguration> implements Configurable {
-  private final FacetType<?, C> myFacetType;
+  private final FacetType<?, ? super C> myFacetType;
   private final Project myProject;
   private final DefaultFacetSettingsEditor myDelegate;
   private final C myConfiguration;
 
-  public DefaultFacetSettingsConfigurable(final @NotNull FacetType<?, C> facetType, final @NotNull Project project, final @NotNull DefaultFacetSettingsEditor delegate,
-                                    @NotNull C configuration) {
+  public DefaultFacetSettingsConfigurable(final @NotNull FacetType<?, ? super C> facetType, final @NotNull Project project, final @NotNull DefaultFacetSettingsEditor delegate,
+                                          @NotNull C configuration) {
     myFacetType = facetType;
     myProject = project;
     myDelegate = delegate;
     myConfiguration = configuration;
   }
 
+  @Override
   public String getDisplayName() {
     return ProjectBundle.message("facet.defaults.display.name");
   }
 
+  @Override
   public String getHelpTopic() {
     return myDelegate.getHelpTopic();
   }
 
+  @Override
   public JComponent createComponent() {
     return myDelegate.createComponent();
   }
 
+  @Override
   public boolean isModified() {
     return myDelegate.isModified();
   }
 
+  @Override
   public void apply() throws ConfigurationException {
     if (myDelegate.isModified()) {
       myDelegate.apply();
@@ -67,10 +72,12 @@ public class DefaultFacetSettingsConfigurable<C extends FacetConfiguration> impl
     }
   }
 
+  @Override
   public void reset() {
     myDelegate.reset();
   }
 
+  @Override
   public void disposeUIResources() {
     myDelegate.disposeUIResources();
   }

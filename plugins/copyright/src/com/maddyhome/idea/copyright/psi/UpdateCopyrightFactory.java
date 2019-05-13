@@ -18,7 +18,6 @@ package com.maddyhome.idea.copyright.psi;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
@@ -55,7 +54,7 @@ public class UpdateCopyrightFactory
 
         if (type.equals(StdFileTypes.PROPERTIES))
         {
-            return new UpdatePropertiesFileCopyright(project, module, file, options);
+            return new UpdateAnyFileCopyright(project, module, file, options);
         }
         else if ("JavaScript".equals(type.getName()))
         {

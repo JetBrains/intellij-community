@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,7 @@ import com.intellij.html.RelaxedHtmlNSDescriptor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.xml.XmlDocument;
 import com.intellij.psi.xml.XmlTag;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.impl.schema.AnyXmlElementDescriptor;
 import com.intellij.xml.util.HtmlUtil;
@@ -28,19 +28,27 @@ import org.intellij.plugins.relaxNG.model.descriptors.RngNsDescriptor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.List;
+
+import static com.intellij.xml.util.HtmlUtil.MATH_ML_NAMESPACE;
+import static com.intellij.xml.util.HtmlUtil.SVG_NAMESPACE;
+
 /**
  * @author Eugene.Kudelevsky
  */
 public class RelaxedHtmlFromRngNSDescriptor extends RngNsDescriptor implements RelaxedHtmlNSDescriptor {
   private static final Logger LOG = Logger.getInstance("#org.intellij.html.RelaxedHtmlFromRngNSDescriptor");
 
+  @Override
   public XmlElementDescriptor getElementDescriptor(@NotNull XmlTag tag) {
     XmlElementDescriptor elementDescriptor = super.getElementDescriptor(tag);
 
-    LOG.debug("Descriptor from rng for tag " +
-              tag.getName() +
-              " is " +
-              (elementDescriptor != null ? elementDescriptor.getClass().getCanonicalName() : "NULL"));
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("Descriptor from rng for tag " +
+                tag.getName() +
+                " is " +
+                (elementDescriptor != null ? elementDescriptor.getClass().getCanonicalName() : "NULL"));
+    }
 
     String namespace;
     if (elementDescriptor == null &&
@@ -59,8 +67,33 @@ public class RelaxedHtmlFromRngNSDescriptor extends RngNsDescriptor implements R
     return new RelaxedHtmlFromRngElementDescriptor(descriptor);
   }
 
+  @Override
   @NotNull
   public XmlElementDescriptor[] getRootElementsDescriptors(@Nullable final XmlDocument doc) {
-    return ArrayUtil.mergeArrays(super.getRootElementsDescriptors(doc), HtmlUtil.getCustomTagDescriptors(doc));
+    final XmlElementDescriptor[] descriptors = super.getRootElementsDescriptors(doc);
+    List<XmlElementDescriptor> rootElements = ContainerUtil.filter(descriptors, descriptor -> isRootTag((RelaxedHtmlFromRngElementDescriptor)descriptor));
+    ContainerUtil.addAll(rootElements, HtmlUtil.getCustomTagDescriptors(doc));
+    return rootElements.toArray(XmlElementDescriptor.EMPTY_ARRAY);
+  }
+
+  @NotNull
+  @Override
+  public XmlElementDescriptor[] getAllElementsDescriptors(@Nullable XmlDocument document) {
+    return super.getRootElementsDescriptors(document);
+  }
+
+  protected boolean isRootTag(RelaxedHtmlFromRngElementDescriptor descriptor) {
+    return descriptor.isHtml() ||
+           "svg".equals(descriptor.getName()) ||
+           "math".equals(descriptor.getName());
+  }
+
+  @Override
+  public XmlElementDescriptor getElementDescriptor(String localName, String namespace) {
+    XmlElementDescriptor descriptor = super.getElementDescriptor(localName, namespace);
+    if (descriptor != null) return descriptor;
+    descriptor =  super.getElementDescriptor(localName, MATH_ML_NAMESPACE);
+    if (descriptor != null) return descriptor;
+    return super.getElementDescriptor(localName, SVG_NAMESPACE);
   }
 }

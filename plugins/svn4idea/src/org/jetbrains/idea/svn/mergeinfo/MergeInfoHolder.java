@@ -1,246 +1,168 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.mergeinfo;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.changes.committed.CommittedChangeListsListener;
 import com.intellij.openapi.vcs.changes.committed.DecoratorManager;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
-import com.intellij.ui.SimpleTextAttributes;
-import com.intellij.util.Consumer;
-import icons.SvnIcons;
+import com.intellij.util.ObjectUtils;
+import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.svn.SvnBundle;
+import org.jetbrains.idea.svn.api.Url;
+import org.jetbrains.idea.svn.dialogs.WCInfo;
 import org.jetbrains.idea.svn.dialogs.WCInfoWithBranches;
-import org.jetbrains.idea.svn.dialogs.WCPaths;
+import org.jetbrains.idea.svn.history.RootsAndBranches;
 import org.jetbrains.idea.svn.history.SvnChangeList;
+import org.jetbrains.idea.svn.history.SvnMergeInfoRootPanelManual;
 
-import javax.swing.*;
-import java.awt.*;
-import java.io.File;
-import java.util.HashMap;
 import java.util.Map;
 
 public class MergeInfoHolder {
-  private final DecoratorManager myManager;
-  private final Consumer<Boolean> myMixedRevisionsConsumer;
-  private final SvnMergeInfoCache myMergeInfoCache;
 
-  private final static String ourIntegratedText = SvnBundle.message("committed.changes.merge.status.integrated.text");
-  private final static String ourNotIntegratedText = SvnBundle.message("committed.changes.merge.status.not.integrated.text");
-  private final static SimpleTextAttributes ourNotIntegratedAttributes = new SimpleTextAttributes(SimpleTextAttributes.STYLE_BOLD, Color.RED);
-  private final static SimpleTextAttributes ourIntegratedAttributes = new SimpleTextAttributes(SimpleTextAttributes.STYLE_BOLD, Color.GREEN);
-  private final static SimpleTextAttributes ourRefreshAttributes = new SimpleTextAttributes(SimpleTextAttributes.STYLE_BOLD, Color.GRAY);
-  
+  @NotNull private final DecoratorManager myManager;
+  @NotNull private final SvnMergeInfoCache myMergeInfoCache;
+  @NotNull private final RootsAndBranches myMainPanel;
+  @NotNull private final SvnMergeInfoRootPanelManual myPanel;
+
   // used ONLY when refresh is triggered
-  private final Map<Pair<String, String>, MergeinfoCached> myCachedMap;
+  @NotNull private final Map<Pair<WCInfo, Url>, MergeInfoCached> myCachedMap;
 
-  private final Getter<WCInfoWithBranches> myRootGetter;
-  private final Getter<WCInfoWithBranches.Branch> myBranchGetter;
-  private final Getter<String> myWcPathGetter;
-  private final Getter<Boolean> myEnabledHolder;
-  private final MyDecorator myDecorator;
-
-  public MergeInfoHolder(final Project project, final DecoratorManager manager, final Getter<WCInfoWithBranches> rootGetter,
-                         final Getter<WCInfoWithBranches.Branch> branchGetter,
-                         final Getter<String> wcPathGetter, Getter<Boolean> enabledHolder, final Consumer<Boolean> mixedRevisionsConsumer) {
-    myRootGetter = rootGetter;
-    myBranchGetter = branchGetter;
-    myWcPathGetter = wcPathGetter;
-    myEnabledHolder = enabledHolder;
+  public MergeInfoHolder(@NotNull Project project,
+                         @NotNull DecoratorManager manager,
+                         @NotNull RootsAndBranches mainPanel,
+                         @NotNull SvnMergeInfoRootPanelManual panel) {
     myManager = manager;
-    myMixedRevisionsConsumer = mixedRevisionsConsumer;
+    myMainPanel = mainPanel;
+    myPanel = panel;
     myMergeInfoCache = SvnMergeInfoCache.getInstance(project);
-    myCachedMap = new HashMap<Pair<String, String>, MergeinfoCached>();
-
-    myDecorator = new MyDecorator();
+    myCachedMap = ContainerUtil.newHashMap();
   }
 
-  private MergeinfoCached getCurrentCache() {
-    return myCachedMap.get(createKey(myRootGetter.get(), myBranchGetter.get()));
-  }
-
-  private boolean enabledAndGettersFilled(final boolean ignoreEnabled) {
-    if ((! ignoreEnabled) && (! Boolean.TRUE.equals(myEnabledHolder.get()))) {
-      return false;
-    }
-    return (myRootGetter.get() != null) && (myBranchGetter.get() != null) && (myWcPathGetter.get() != null);
-  }
-
-  public boolean refreshEnabled(final boolean ignoreEnabled) {
-    return enabledAndGettersFilled(ignoreEnabled) && (getCurrentCache() == null);
-  }
-
-  private static Pair<String, String> createKey(final WCPaths root, final WCInfoWithBranches.Branch branch) {
-    return new Pair<String, String>(root.getPath(), branch.getUrl());
-  }
-
-  public void refresh(final boolean ignoreEnabled) {
-    final CommittedChangeListsListener refresher = createRefresher(ignoreEnabled);
-    if (refresher != null) {
-      myManager.reportLoadedLists(new MyRefresher());
-    }
-    myManager.repaintTree();
+  @NotNull
+  private Pair<WCInfo, Url> getCacheKey() {
+    return Pair.create(myPanel.getWcInfo(), myPanel.getBranch().getUrl());
   }
 
   @Nullable
-  public CommittedChangeListsListener createRefresher(final boolean ignoreEnabled) {
+  private MergeInfoCached getCurrentCache() {
+    return myCachedMap.get(getCacheKey());
+  }
+
+  private boolean isEnabledAndConfigured(boolean ignoreEnabled) {
+    return (ignoreEnabled || myMainPanel.isHighlightingOn() && myPanel.isEnabled()) &&
+           myPanel.getBranch() != null &&
+           myPanel.getLocalBranch() != null;
+  }
+
+  public boolean refreshEnabled(boolean ignoreEnabled) {
+    return isEnabledAndConfigured(ignoreEnabled) && getCurrentCache() == null;
+  }
+
+  @NotNull
+  public ListMergeStatus refresh(final boolean ignoreEnabled) {
+    final CommittedChangeListsListener refresher = createRefresher(ignoreEnabled);
+    if (refresher != null) {
+      myManager.reportLoadedLists(refresher);
+    }
+    myManager.repaintTree();
+
+    return ListMergeStatus.REFRESHING;
+  }
+
+  @Nullable
+  public CommittedChangeListsListener createRefresher(boolean ignoreEnabled) {
+    CommittedChangeListsListener result = null;
+
     if (refreshEnabled(ignoreEnabled)) {
       // on awt thread
-      final MergeinfoCached state = myMergeInfoCache.getCachedState(myRootGetter.get(), myWcPathGetter.get());
-      myCachedMap.put(createKey(myRootGetter.get(), myBranchGetter.get()), (state == null) ? new MergeinfoCached() :
-          new MergeinfoCached(new HashMap<Long, SvnMergeInfoCache.MergeCheckResult>(state.getMap()), state.getCopyRevision()));
-      myMergeInfoCache.clear(myRootGetter.get(), myWcPathGetter.get());
+      final MergeInfoCached state = myMergeInfoCache.getCachedState(myPanel.getWcInfo(), myPanel.getLocalBranch());
+      myCachedMap.put(getCacheKey(), state != null ? state.copy() : new MergeInfoCached());
+      myMergeInfoCache.clear(myPanel.getWcInfo(), myPanel.getLocalBranch());
 
-      return new MyRefresher();
+      result = new MyRefresher();
     }
-    return null;
+
+    return result;
   }
 
   private class MyRefresher implements CommittedChangeListsListener {
-    private final WCInfoWithBranches myRefreshedRoot;
+
+    @NotNull private final WCInfoWithBranches myRefreshedRoot;
     private final WCInfoWithBranches.Branch myRefreshedBranch;
     private final String myBranchPath;
 
     private MyRefresher() {
-      myRefreshedRoot = myRootGetter.get();
-      myRefreshedBranch = myBranchGetter.get();
-      myBranchPath = myWcPathGetter.get();
+      myRefreshedRoot = myPanel.getWcInfo();
+      myRefreshedBranch = myPanel.getBranch();
+      myBranchPath = myPanel.getLocalBranch();
     }
 
+    @Override
     public void onBeforeStartReport() {
     }
 
+    @Override
     public boolean report(final CommittedChangeList list) {
       if (list instanceof SvnChangeList) {
-        final SvnChangeList svnList = (SvnChangeList) list;
-        final String wcPath = svnList.getWcPath() + File.separator;
-        // todo check if this needed
-        /*if (! myRefreshedRoot.getPath().equals(wcPath)) {
-          return true;
-        } */
-
-        // prepare state. must be in non awt thread
-        final SvnMergeInfoCache.MergeCheckResult checkState = myMergeInfoCache.getState(myRefreshedRoot, (SvnChangeList)list, myRefreshedBranch,
-                                                                                   myBranchPath);
+        final SvnMergeInfoCache.MergeCheckResult checkState =
+          myMergeInfoCache.getState(myRefreshedRoot, (SvnChangeList)list, myRefreshedBranch, myBranchPath);
         // todo make batches - by 10
         final long number = list.getNumber();
-        ApplicationManager.getApplication().invokeLater(new Runnable() {
-          public void run() {
-            final MergeinfoCached cachedState = myCachedMap.get(createKey(myRefreshedRoot, myRefreshedBranch));
-            if (cachedState != null) {
-              cachedState.getMap().put(number, checkState);
-            }
-            myManager.repaintTree();
+        ApplicationManager.getApplication().invokeLater(() -> {
+          final MergeInfoCached cachedState = myCachedMap.get(getCacheKey());
+          if (cachedState != null) {
+            cachedState.getMap().put(number, checkState);
           }
+          myManager.repaintTree();
         });
       }
       return true;
     }
 
+    @Override
     public void onAfterEndReport() {
-      ApplicationManager.getApplication().invokeLater(new Runnable() {
-        public void run() {
-          myCachedMap.remove(createKey(myRefreshedRoot, myRefreshedBranch));
-          updateMixedRevisionsForPanel();
-          myManager.repaintTree();
-        }
+      ApplicationManager.getApplication().invokeLater(() -> {
+        myCachedMap.remove(getCacheKey());
+        updateMixedRevisionsForPanel();
+        myManager.repaintTree();
       });
     }
-  }
 
-  public static enum ListMergeStatus {
-    COMMON(SvnIcons.Common),
-    MERGED(SvnIcons.Integrated),
-    NOT_MERGED(SvnIcons.Notintegrated),
-    //ALIEN(IconLoader.getIcon("/icons/OnDefault.png")),
-    ALIEN(null),
-    REFRESHING(SvnIcons.IntegrationStatusUnknown);
-
-    private final Icon myIcon;
-
-    private ListMergeStatus(final Icon icon) {
-      myIcon = icon;
-    }
-
-    public Icon getIcon() {
-      return myIcon;
+    @NotNull
+    private Pair<WCInfo, Url> getCacheKey() {
+      return Pair.create(myRefreshedRoot, myRefreshedBranch.getUrl());
     }
   }
 
-  public static interface ListChecker {
-    ListMergeStatus check(final CommittedChangeList list, final boolean ignoreEnabled);
-  }
+  @NotNull
+  public ListMergeStatus check(final CommittedChangeList list, final boolean ignoreEnabled) {
+    ListMergeStatus result;
 
-  class MyDecorator implements ListChecker {
-    private ListMergeStatus convert(SvnMergeInfoCache.MergeCheckResult result, final boolean refreshing) {
-      if (result != null) {
-        if (SvnMergeInfoCache.MergeCheckResult.MERGED.equals(result)) {
-          return ListMergeStatus.MERGED;
-        } else if (SvnMergeInfoCache.MergeCheckResult.COMMON.equals(result)) {
-          return ListMergeStatus.COMMON;
-        } else {
-          return ListMergeStatus.NOT_MERGED;
-        }
-      }
-      if (refreshing) {
-        return ListMergeStatus.REFRESHING;
-      }
-      return ListMergeStatus.ALIEN;
+    if (!isEnabledAndConfigured(ignoreEnabled) || !(list instanceof SvnChangeList)) {
+      result = ListMergeStatus.ALIEN;
+    }
+    else {
+      MergeInfoCached cachedState = getCurrentCache();
+      MergeInfoCached state = myMergeInfoCache.getCachedState(myPanel.getWcInfo(), myPanel.getLocalBranch());
+
+      result = cachedState != null ? check(list, cachedState, true) : state != null ? check(list, state, false) : refresh(ignoreEnabled);
     }
 
-    public ListMergeStatus check(final CommittedChangeList list, final boolean ignoreEnabled) {
-      if (! enabledAndGettersFilled(ignoreEnabled)) {
-        return ListMergeStatus.ALIEN;
-      }
-
-      if (! (list instanceof SvnChangeList)) {
-        return ListMergeStatus.ALIEN;
-      }
-
-      final MergeinfoCached cachedState = getCurrentCache();
-      if (cachedState != null) {
-        if (cachedState.getCopyRevision() != -1 && cachedState.getCopyRevision() >= list.getNumber()) {
-          return ListMergeStatus.COMMON;
-        }
-        final SvnMergeInfoCache.MergeCheckResult result = cachedState.getMap().get(list.getNumber());
-        return convert(result, true);
-      } else {
-        final MergeinfoCached state = myMergeInfoCache.getCachedState(myRootGetter.get(), myWcPathGetter.get());
-        if (state == null) {
-          refresh(ignoreEnabled);
-          return ListMergeStatus.REFRESHING;
-        } else {
-          if (state.getCopyRevision() != -1 && state.getCopyRevision() >= list.getNumber()) {
-            return ListMergeStatus.COMMON;
-          }
-          return convert(state.getMap().get(list.getNumber()), false);
-        }
-      }
-    }
+    return result;
   }
 
-  public ListChecker getDecorator() {
-    return myDecorator;
+  @NotNull
+  public ListMergeStatus check(@NotNull CommittedChangeList list, @NotNull MergeInfoCached state, boolean isCached) {
+    SvnMergeInfoCache.MergeCheckResult mergeCheckResult = state.getMap().get(list.getNumber());
+    ListMergeStatus result = state.copiedAfter(list) ? ListMergeStatus.COMMON : ListMergeStatus.from(mergeCheckResult);
+
+    return ObjectUtils.notNull(result, isCached ? ListMergeStatus.REFRESHING : ListMergeStatus.ALIEN);
   }
 
   public void updateMixedRevisionsForPanel() {
-    myMixedRevisionsConsumer.consume(myMergeInfoCache.isMixedRevisions(myRootGetter.get(), myWcPathGetter.get()));    
+    myPanel.setMixedRevisions(myMergeInfoCache.isMixedRevisions(myPanel.getWcInfo(), myPanel.getLocalBranch()));
   }
 }

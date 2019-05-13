@@ -14,10 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * User: anna
- * Date: 13-May-2010
- */
 package org.jetbrains.idea.maven.execution;
 
 import com.intellij.execution.Location;
@@ -29,27 +25,24 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.idea.maven.project.MavenGeneralSettings;
+import org.jetbrains.idea.maven.model.MavenExplicitProfiles;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 
-import java.util.Collection;
 import java.util.List;
 
 public class MavenConfigurationProducer extends RuntimeConfigurationProducer {
-  private PsiElement myPsiElement;
-
   public MavenConfigurationProducer() {
     super(MavenRunConfigurationType.getInstance());
   }
 
   @Override
   public PsiElement getSourceElement() {
-    return myPsiElement;
+    return restoreSourceElement();
   }
 
   @Override
   protected RunnerAndConfigurationSettings createConfigurationByElement(Location location, ConfigurationContext context) {
-    myPsiElement = location.getPsiElement();
+    storeSourceElement(location.getPsiElement());
     final MavenRunnerParameters params = createBuildParameters(location);
     if (params == null) return null;
 
@@ -58,7 +51,7 @@ public class MavenConfigurationProducer extends RuntimeConfigurationProducer {
 
   @Override
   protected RunnerAndConfigurationSettings findExistingByElement(Location location,
-                                                                 @NotNull RunnerAndConfigurationSettings[] existingConfigurations,
+                                                                 @NotNull List<RunnerAndConfigurationSettings> existingConfigurations,
                                                                  ConfigurationContext context) {
 
     final MavenRunnerParameters runnerParameters = createBuildParameters(location);
@@ -77,12 +70,13 @@ public class MavenConfigurationProducer extends RuntimeConfigurationProducer {
 
     VirtualFile f = ((PsiFile)l.getPsiElement()).getVirtualFile();
     List<String> goals = ((MavenGoalLocation)l).getGoals();
-    Collection<String> profiles = MavenProjectsManager.getInstance(l.getProject()).getExplicitProfiles();
+    MavenExplicitProfiles profiles = MavenProjectsManager.getInstance(l.getProject()).getExplicitProfiles();
 
-    return new MavenRunnerParameters(true, f.getParent().getPath(), goals, profiles);
+    return new MavenRunnerParameters(true, f.getParent().getPath(), f.getName(), goals, profiles.getEnabledProfiles(), profiles.getDisabledProfiles());
   }
 
+  @Override
   public int compareTo(Object o) {
-    return PREFERED;  //To change body of implemented methods use File | Settings | File Templates.
+    return PREFERED;
   }
 }

@@ -1,0 +1,11 @@
+<html>
+<body>
+Reports synchronization on a call to <b>getClass()</b>.
+If the class containing the synchronization is subclassed, the subclass will synchronize on a different class object.
+Usually the call to <b>getClass()</b> can be replaced with a class literal expression, for example <b>String.class</b>.
+An even better solution is synchronizing on a <b>private static final</b> lock object, access to which can be completely controlled.
+<!-- tooltip end -->
+<p>
+<small>New in 2016.2</small>
+</body>
+</html>

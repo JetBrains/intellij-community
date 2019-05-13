@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,7 +27,6 @@ import com.intellij.openapi.module.ProjectLoadingErrorsNotifier;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.startup.StartupManager;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
@@ -42,7 +41,7 @@ import java.util.List;
  * @author nik
  */
 public class ProjectLoadingErrorsNotifierImpl extends ProjectLoadingErrorsNotifier {
-  private final MultiMap<ConfigurationErrorType, ConfigurationErrorDescription> myErrors = new MultiMap<ConfigurationErrorType, ConfigurationErrorDescription>();
+  private final MultiMap<ConfigurationErrorType, ConfigurationErrorDescription> myErrors = new MultiMap<>();
   private final Object myLock = new Object();
   private final Project myProject;
 
@@ -51,12 +50,12 @@ public class ProjectLoadingErrorsNotifierImpl extends ProjectLoadingErrorsNotifi
   }
 
   @Override
-  public void registerError(ConfigurationErrorDescription errorDescription) {
+  public void registerError(@NotNull ConfigurationErrorDescription errorDescription) {
     registerErrors(Collections.singletonList(errorDescription));
   }
 
   @Override
-  public void registerErrors(Collection<? extends ConfigurationErrorDescription> errorDescriptions) {
+  public void registerErrors(@NotNull Collection<? extends ConfigurationErrorDescription> errorDescriptions) {
     if (myProject.isDisposed() || myProject.isDefault() || errorDescriptions.isEmpty()) return;
 
     boolean first;
@@ -70,17 +69,12 @@ public class ProjectLoadingErrorsNotifierImpl extends ProjectLoadingErrorsNotifi
       fireNotifications();
     }
     else if (first) {
-      StartupManager.getInstance(myProject).registerPostStartupActivity(new Runnable() {
-        @Override
-        public void run() {
-          fireNotifications();
-        }
-      });
+      StartupManager.getInstance(myProject).registerPostStartupActivity(() -> fireNotifications());
     }
   }
 
   private void fireNotifications() {
-    final MultiMap<ConfigurationErrorType, ConfigurationErrorDescription> descriptionsMap = new MultiMap<ConfigurationErrorType, ConfigurationErrorDescription>();
+    final MultiMap<ConfigurationErrorType, ConfigurationErrorDescription> descriptionsMap = new MultiMap<>();
     synchronized (myLock) {
       if (myErrors.isEmpty()) return;
       descriptionsMap.putAllValues(myErrors);
@@ -100,17 +94,11 @@ public class ProjectLoadingErrorsNotifierImpl extends ProjectLoadingErrorsNotifi
                                                   public void hyperlinkUpdate(@NotNull Notification notification,
                                                                               @NotNull HyperlinkEvent event) {
                                                     final List<ConfigurationErrorDescription> validDescriptions =
-                                                      ContainerUtil.findAll(descriptions, new Condition<ConfigurationErrorDescription>() {
-                                                        @Override
-                                                        public boolean value(ConfigurationErrorDescription errorDescription) {
-                                                          return errorDescription.isValid();
-                                                        }
-                                                      });
-                                                    RemoveInvalidElementsDialog
-                                                      .showDialog(myProject, CommonBundle.getErrorTitle(), type, invalidElements,
-                                                                  validDescriptions);
-
-                                                    notification.expire();
+                                                      ContainerUtil.findAll(descriptions, errorDescription -> errorDescription.isValid());
+                                                    if (RemoveInvalidElementsDialog.showDialog(myProject, CommonBundle.getErrorTitle(), type,
+                                                                                               invalidElements, validDescriptions)) {
+                                                      notification.expire();
+                                                    }
                                                   }
                                                 }), myProject);
     }

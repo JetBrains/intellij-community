@@ -1,10 +1,11 @@
+syntax = "proto2";
+
 package org.jetbrains.jpsservice;
 
 option java_package = "org.jetbrains.jps.api";
 option optimize_for = LITE_RUNTIME;
 
 message Message {
-
   message UUID {
     required sint64 most_sig_bits = 1;
     required sint64 least_sig_bits = 2;
@@ -42,7 +43,6 @@ message Message {
     }
 
     message GlobalSettings {
-      repeated KeyValuePair path_variable = 1;
       required string global_options_path = 5;
     }
 
@@ -51,14 +51,13 @@ message Message {
         required string type_id = 1;
         optional bool all_targets = 2;
         repeated string target_id = 3;
+        required bool force_build = 4;
       }
 
       enum Type {
-        REBUILD = 1;
-        MAKE = 2;
-        CLEAN = 3;
-        FORCED_COMPILATION = 4;
-        UP_TO_DATE_CHECK = 5;
+        BUILD = 1;
+        CLEAN = 2;
+        UP_TO_DATE_CHECK = 3;
       }
 
       required Type build_type = 1;
@@ -128,6 +127,9 @@ message Message {
         WARNING = 2;
         INFO = 3;
         PROGRESS = 4;
+        JPS_INFO = 5;
+        OTHER = 6;
+        INTERNAL_BUILDER_ERROR = 7;
       }
       required Kind kind = 1;
       optional string text = 2;
@@ -160,5 +162,3 @@ message Message {
   optional BuilderMessage builder_message = 4;
   optional Failure failure = 5;
 }
-
-

@@ -1,33 +1,24 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.xdebugger;
 
-import com.intellij.execution.filters.TextConsoleBuilder;
 import com.intellij.execution.filters.TextConsoleBuilderFactory;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.ui.ExecutionConsole;
-import com.intellij.execution.ui.RunnerLayoutUi;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.xdebugger.breakpoints.XBreakpoint;
 import com.intellij.xdebugger.breakpoints.XBreakpointHandler;
 import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider;
+import com.intellij.xdebugger.evaluation.XDebuggerEvaluator;
+import com.intellij.xdebugger.frame.XStackFrame;
+import com.intellij.xdebugger.frame.XSuspendContext;
 import com.intellij.xdebugger.frame.XValueMarkerProvider;
 import com.intellij.xdebugger.stepping.XSmartStepIntoHandler;
+import com.intellij.xdebugger.ui.XDebugTabLayouter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.concurrency.Promise;
+import org.jetbrains.concurrency.Promises;
 
 import javax.swing.event.HyperlinkListener;
 
@@ -46,7 +37,7 @@ public abstract class XDebugProcess {
   private ProcessHandler myProcessHandler;
 
   /**
-   * @param session pass <code>session</code> parameter of {@link XDebugProcessStarter#start} method to this constructor
+   * @param session pass {@code session} parameter of {@link XDebugProcessStarter#start} method to this constructor
    */
   protected XDebugProcess(@NotNull XDebugSession session) {
     mySession = session;
@@ -59,6 +50,7 @@ public abstract class XDebugProcess {
   /**
    * @return breakpoint handlers which will be used to set/clear breakpoints in the underlying debugging process
    */
+  @NotNull
   public XBreakpointHandler<?>[] getBreakpointHandlers() {
     return XBreakpointHandler.EMPTY_ARRAY;
   }
@@ -71,7 +63,7 @@ public abstract class XDebugProcess {
 
   /**
    * Called when {@link XDebugSession} is initialized and breakpoints are registered in
-   * {@link com.intellij.xdebugger.breakpoints.XBreakpointHandler}
+   * {@link XBreakpointHandler}
    */
   public void sessionInitialized() {
   }
@@ -85,29 +77,81 @@ public abstract class XDebugProcess {
   }
 
   /**
+   * @deprecated Use {@link #startStepOver(XSuspendContext)} instead
+   */
+  @Deprecated
+  public void startStepOver() {
+    throw new AbstractMethodError();
+  }
+
+  /**
    * Resume execution and call {@link XDebugSession#positionReached}
    * when next line in current method/function is reached.
    * Do not call this method directly. Use {@link XDebugSession#stepOver} instead
    */
-  public abstract void startStepOver();
+  public void startStepOver(@Nullable XSuspendContext context) {
+    //noinspection deprecation
+    startStepOver();
+  }
+
+  /**
+   * @deprecated Use {@link #startForceStepInto(XSuspendContext)} instead
+   */
+  @Deprecated
+  public void startForceStepInto(){
+    startStepInto();
+  }
+
+  /**
+   * Steps into suppressed call
+   * <p>
+   * Resume execution and call {@link XDebugSession#positionReached}
+   * when next line is reached.
+   * Do not call this method directly. Use {@link XDebugSession#forceStepInto} instead
+   */
+  public void startForceStepInto(@Nullable XSuspendContext context) {
+    startStepInto(context);
+  }
+
+  /**
+   * @deprecated Use {@link #startStepInto(XSuspendContext)} instead
+   */
+  @Deprecated
+  public void startStepInto() {
+    throw new AbstractMethodError();
+  }
 
   /**
    * Resume execution and call {@link XDebugSession#positionReached}
    * when next line is reached.
    * Do not call this method directly. Use {@link XDebugSession#stepInto} instead
    */
-  public abstract void startStepInto();
+  public void startStepInto(@Nullable XSuspendContext context) {
+    //noinspection deprecation
+    startStepInto();
+  }
+
+  /**
+   * @deprecated Use {@link #startStepOut(XSuspendContext)} instead
+   */
+  @Deprecated
+  public void startStepOut() {
+    throw new AbstractMethodError();
+  }
 
   /**
    * Resume execution and call {@link XDebugSession#positionReached}
    * after returning from current method/function.
    * Do not call this method directly. Use {@link XDebugSession#stepOut} instead
    */
-  public abstract void startStepOut();
+  public void startStepOut(@Nullable XSuspendContext context) {
+    //noinspection deprecation
+    startStepOut();
+  }
 
   /**
-   * Implement {@link com.intellij.xdebugger.stepping.XSmartStepIntoHandler} and return its instance from this method to enable Smart Step Into action
-   * @return {@link com.intellij.xdebugger.stepping.XSmartStepIntoHandler} instance
+   * Implement {@link XSmartStepIntoHandler} and return its instance from this method to enable Smart Step Into action
+   * @return {@link XSmartStepIntoHandler} instance
    */
   @Nullable
   public XSmartStepIntoHandler<?> getSmartStepIntoHandler() {
@@ -118,27 +162,65 @@ public abstract class XDebugProcess {
    * Stop debugging and dispose resources.
    * Do not call this method directly. Use {@link XDebugSession#stop} instead
    */
-  public abstract void stop();
+  public void stop() {
+    throw new AbstractMethodError();
+  }
+
+  @NotNull
+  public Promise<Object> stopAsync() {
+    stop();
+    return Promises.resolvedPromise();
+  }
+
+  /**
+   * @deprecated Use {@link #resume(XSuspendContext)} instead
+   */
+  @Deprecated
+  public void resume() {
+    throw new AbstractMethodError();
+  }
 
   /**
    * Resume execution.
    * Do not call this method directly. Use {@link XDebugSession#resume} instead
    */
-  public abstract void resume();
+  public void resume(@Nullable XSuspendContext context) {
+    //noinspection deprecation
+    resume();
+  }
 
   /**
-   * Resume execution and call {@link XDebugSession#positionReached(com.intellij.xdebugger.frame.XSuspendContext)}
-   * when <code>position</code> is reached.
+   * @deprecated Use {@link #runToPosition(XSourcePosition, XSuspendContext)} instead
+   */
+  @Deprecated
+  public void runToPosition(@NotNull XSourcePosition position) {
+    throw new AbstractMethodError();
+  }
+
+  /**
+   * Resume execution and call {@link XDebugSession#positionReached(XSuspendContext)}
+   * when {@code position} is reached.
    * Do not call this method directly. Use {@link XDebugSession#runToPosition} instead
+   *
    * @param position position in source code
    */
-  public abstract void runToPosition(@NotNull XSourcePosition position);
+  public void runToPosition(@NotNull XSourcePosition position, @Nullable XSuspendContext context) {
+    //noinspection deprecation
+    runToPosition(position);
+  }
 
   /**
    * Check is it is possible to perform commands such as resume, step etc. And notify user if necessary
    * @return {@code true} if process can actually perform user requests at this moment
    */
   public boolean checkCanPerformCommands() {
+    return true;
+  }
+
+  /**
+   * Check is it is possible to init breakpoints. Otherwise you should call {@link XDebugSession#initBreakpoints()} at the appropriate time
+   */
+  public boolean checkCanInitBreakpoints() {
     return true;
   }
 
@@ -160,8 +242,7 @@ public abstract class XDebugProcess {
 
   @NotNull
   public ExecutionConsole createConsole() {
-    final TextConsoleBuilder consoleBuilder = TextConsoleBuilderFactory.getInstance().createBuilder(getSession().getProject());
-    return consoleBuilder.getConsole();
+    return TextConsoleBuilderFactory.getInstance().createBuilder(getSession().getProject()).getConsole();
   }
 
   /**
@@ -174,15 +255,9 @@ public abstract class XDebugProcess {
   }
 
   /**
-   * Override this method to provide additional tabs for 'Debug' tool window
-   */
-  public void registerAdditionalContent(@NotNull RunnerLayoutUi ui) {
-  }
-
-  /**
    * Override this method to provide additional actions in 'Debug' tool window
    */
-  public void registerAdditionalActions(@NotNull DefaultActionGroup leftToolbar, @NotNull DefaultActionGroup topToolbar) {
+  public void registerAdditionalActions(@NotNull DefaultActionGroup leftToolbar, @NotNull DefaultActionGroup topToolbar, @NotNull DefaultActionGroup settings) {
   }
 
   /**
@@ -195,5 +270,42 @@ public abstract class XDebugProcess {
   @Nullable
   public HyperlinkListener getCurrentStateHyperlinkListener() {
     return null;
+  }
+
+  /**
+   * Override this method to customize content of tab in 'Debug' tool window
+   */
+  @NotNull
+  public XDebugTabLayouter createTabLayouter() {
+    return new XDebugTabLayouter() {
+    };
+  }
+
+  /**
+   * Add or not SortValuesAction (alphabetically sort)
+   * @todo this action should be moved to "Variables" as gear action
+   */
+  public boolean isValuesCustomSorted() {
+    return false;
+  }
+
+  @Nullable
+  public XDebuggerEvaluator getEvaluator() {
+    XStackFrame frame = getSession().getCurrentStackFrame();
+    return frame == null ? null : frame.getEvaluator();
+  }
+
+  /**
+   * Is "isShowLibraryStackFrames" setting respected. If true, ShowLibraryFramesAction will be shown, for example.
+   */
+  public boolean isLibraryFrameFilterSupported() {
+    return false;
+  }
+
+  /**
+   * Called to log the stacktrace on breakpoint hit if {@link XBreakpoint#isLogStack()} is true
+   */
+  public void logStack(@NotNull XSuspendContext suspendContext, @NotNull XDebugSession session) {
+    XDebuggerUtil.getInstance().logStack(suspendContext, session);
   }
 }

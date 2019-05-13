@@ -20,12 +20,12 @@ Groovy script
         PsiWhiteSpace(' ')
         Literal
           PsiElement(Integer)('1')
-        PsiErrorElement:':' expected
+        PsiErrorElement:':' expected, got 'expr1'
           <empty list>
       PsiWhiteSpace(' ')
       Reference expression
         PsiElement(identifier)('expr1')
-    PsiElement(new line)('\n')
+      PsiElement(new line)('\n')
     Case section
       Case label
         PsiElement(default)('default')
@@ -37,6 +37,6 @@ Groovy script
         PsiWhiteSpace(' ')
         Command arguments
           Literal
-            PsiElement(string)(''abc'')
-    PsiElement(new line)('\n')
+            PsiElement(single quoted string)(''abc'')
+      PsiElement(new line)('\n')
     PsiElement(})('}')

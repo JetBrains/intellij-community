@@ -40,7 +40,7 @@ public final class OccurrenceConsumer {
 
   public void incTodoOccurrence(final IndexPattern pattern) {
     if (myTodoOccurrences == null) {
-      myTodoOccurrences = new TObjectIntHashMap<IndexPattern>();
+      myTodoOccurrences = new TObjectIntHashMap<>();
       for (IndexPattern indexPattern : IndexPatternUtil.getIndexPatterns()) {
         myTodoOccurrences.put(indexPattern, 0);
       }

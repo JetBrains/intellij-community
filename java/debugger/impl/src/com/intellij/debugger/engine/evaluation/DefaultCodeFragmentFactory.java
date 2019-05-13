@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,6 @@
  */
 package com.intellij.debugger.engine.evaluation;
 
-import com.intellij.codeInsight.completion.CompletionParameters;
 import com.intellij.codeInsight.completion.CompletionService;
 import com.intellij.codeInsight.completion.JavaCompletionUtil;
 import com.intellij.debugger.DebuggerManagerEx;
@@ -29,17 +28,18 @@ import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
-import com.intellij.util.PairFunction;
+import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.concurrency.Semaphore;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Jun 7, 2005
  */
 public class DefaultCodeFragmentFactory extends CodeFragmentFactory {
   private static final class SingletonHolder {
@@ -50,20 +50,30 @@ public class DefaultCodeFragmentFactory extends CodeFragmentFactory {
     return SingletonHolder.ourInstance;
   }
 
+  @Override
   public JavaCodeFragment createPresentationCodeFragment(final TextWithImports item, final PsiElement context, final Project project) {
     return createCodeFragment(item, context, project);
   }
 
+  @Override
   public JavaCodeFragment createCodeFragment(TextWithImports item, PsiElement context, final Project project) {
     final JavaCodeFragmentFactory factory = JavaCodeFragmentFactory.getInstance(project);
     final String text = item.getText();
 
-    final JavaCodeFragment fragment;
+    JavaCodeFragment fragment = null;
     if (CodeFragmentKind.EXPRESSION == item.getKind()) {
-      final String expressionText = StringUtil.endsWithChar(text, ';')? text.substring(0, text.length() - 1) : text;
-      fragment = factory.createExpressionCodeFragment(expressionText, context, null, true);
+      try {
+        String expressionText = StringUtil.trimTrailing(text, ';');
+        if (!expressionText.isEmpty()) {
+          JavaPsiFacade.getElementFactory(project).createExpressionFromText(expressionText, context); // to test that expression is ok
+        }
+        fragment = factory.createExpressionCodeFragment(expressionText, context, null, true);
+      }
+      catch (IncorrectOperationException ignored) {
+      }
     }
-    else /*if (CodeFragmentKind.CODE_BLOCK == item.getKind())*/ {
+
+    if (fragment == null) {
       fragment = factory.createCodeBlockCodeFragment(text, context, true);
     }
 
@@ -72,56 +82,51 @@ public class DefaultCodeFragmentFactory extends CodeFragmentFactory {
     }
     fragment.setVisibilityChecker(JavaCodeFragment.VisibilityChecker.EVERYTHING_VISIBLE);
     //noinspection HardCodedStringLiteral
-    fragment.putUserData(DebuggerExpressionComboBox.KEY, "DebuggerComboBoxEditor.IS_DEBUGGER_EDITOR");
-    fragment.putCopyableUserData(JavaCompletionUtil.DYNAMIC_TYPE_EVALUATOR, new PairFunction<PsiExpression, CompletionParameters, PsiType>() {
-      public PsiType fun(PsiExpression expression, CompletionParameters parameters) {
-        if (!RuntimeTypeEvaluator.isSubtypeable(expression)) {
-          return null;
-        }
-
-        if (parameters.getInvocationCount() <= 1 && JavaCompletionUtil.mayHaveSideEffects(expression)) {
-          final CompletionService service = CompletionService.getCompletionService();
-          if (parameters.getInvocationCount() < 2) {
-            service.setAdvertisementText("Invoke completion once more to see runtime type variants");
-          }
-          return null;
-        }
-
-        final DebuggerContextImpl debuggerContext = DebuggerManagerEx.getInstanceEx(project).getContext();
-        DebuggerSession debuggerSession = debuggerContext.getDebuggerSession();
-        if (debuggerSession != null) {
-          final Semaphore semaphore = new Semaphore();
-          semaphore.down();
-          final AtomicReference<PsiClass> nameRef = new AtomicReference<PsiClass>();
-          final RuntimeTypeEvaluator worker =
-            new RuntimeTypeEvaluator(null, expression, debuggerContext, ProgressManager.getInstance().getProgressIndicator()) {
-              @Override
-              protected void typeCalculationFinished(@Nullable PsiClass type) {
-                nameRef.set(type);
-                semaphore.up();
-              }
-            };
-          debuggerContext.getDebugProcess().getManagerThread().invoke(worker);
-          for (int i = 0; i < 50; i++) {
-            ProgressManager.checkCanceled();
-            if (semaphore.waitFor(20)) break;
-          }
-          final PsiClass psiClass = nameRef.get();
-          if (psiClass != null) {
-            return JavaPsiFacade.getElementFactory(project).createType(psiClass);
-          }
-        }
+    fragment.putUserData(KEY, "DebuggerComboBoxEditor.IS_DEBUGGER_EDITOR");
+    fragment.putCopyableUserData(JavaCompletionUtil.DYNAMIC_TYPE_EVALUATOR, (expression, parameters) -> {
+      if (!RuntimeTypeEvaluator.isSubtypeable(expression)) {
         return null;
       }
+
+      if (parameters.getInvocationCount() <= 1 && JavaCompletionUtil.mayHaveSideEffects(expression)) {
+        CompletionService.getCompletionService().setAdvertisementText("Invoke completion once more to see runtime type variants");
+        return null;
+      }
+
+      final DebuggerContextImpl debuggerContext = DebuggerManagerEx.getInstanceEx(project).getContext();
+      DebuggerSession debuggerSession = debuggerContext.getDebuggerSession();
+      if (debuggerSession != null && debuggerContext.getSuspendContext() != null) {
+        final Semaphore semaphore = new Semaphore();
+        semaphore.down();
+        final AtomicReference<PsiType> nameRef = new AtomicReference<>();
+        final RuntimeTypeEvaluator worker =
+          new RuntimeTypeEvaluator(null, expression, debuggerContext, ProgressManager.getInstance().getProgressIndicator()) {
+            @Override
+            protected void typeCalculationFinished(@Nullable PsiType type) {
+              nameRef.set(type);
+              semaphore.up();
+            }
+          };
+        debuggerSession.getProcess().getManagerThread().invoke(worker);
+        for (int i = 0; i < 50; i++) {
+          ProgressManager.checkCanceled();
+          if (semaphore.waitFor(20)) break;
+        }
+        return nameRef.get();
+      }
+      return null;
     });
 
     return fragment;
   }
 
+  @Override
   public boolean isContextAccepted(PsiElement contextElement) {
     return true; // default factory works everywhere debugger can stop
   }
 
+  @Override
+  @NotNull
   public LanguageFileType getFileType() {
     return StdFileTypes.JAVA;
   }
@@ -129,5 +134,11 @@ public class DefaultCodeFragmentFactory extends CodeFragmentFactory {
   @Override
   public EvaluatorBuilder getEvaluatorBuilder() {
     return EvaluatorBuilderImpl.getInstance();
+  }
+
+  public static final Key<String> KEY = Key.create("DefaultCodeFragmentFactory.KEY");
+
+  public static boolean isDebuggerFile(PsiFile file) {
+    return file.getUserData(KEY) != null || file.getUserData(DebuggerExpressionComboBox.KEY) != null;
   }
 }

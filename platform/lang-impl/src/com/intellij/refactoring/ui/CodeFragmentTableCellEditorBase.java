@@ -22,14 +22,14 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiCodeFragment;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.ui.EditorTextField;
+import com.intellij.util.containers.ContainerUtil;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.LineBorder;
 import javax.swing.table.TableCellEditor;
 import java.awt.*;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.List;
 
 /**
  * @author dsl
@@ -40,13 +40,14 @@ public class CodeFragmentTableCellEditorBase extends AbstractCellEditor implemen
   private final Project myProject;
   private final FileType myFileType;
   protected EditorTextField myEditorTextField;
-  private Set<DocumentListener> myListeners = new HashSet<DocumentListener>();
+  private final List<DocumentListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
 
   public CodeFragmentTableCellEditorBase(final Project project, FileType fileType) {
     myProject = project;
     myFileType = fileType;
   }
 
+  @Override
   public Component getTableCellEditorComponent(JTable table, Object value, boolean isSelected, int row, int column) {
     myCodeFragment = (PsiCodeFragment)value;
 
@@ -65,6 +66,7 @@ public class CodeFragmentTableCellEditorBase extends AbstractCellEditor implemen
 
   protected EditorTextField createEditorField(Document document) {
     EditorTextField field = new EditorTextField(document, myProject, myFileType) {
+      @Override
       protected boolean shouldHaveBorder() {
         return false;
       }
@@ -73,10 +75,12 @@ public class CodeFragmentTableCellEditorBase extends AbstractCellEditor implemen
     return field;
   }
 
+  @Override
   public PsiCodeFragment getCellEditorValue() {
     return myCodeFragment;
   }
 
+  @Override
   public boolean stopCellEditing() {
     super.stopCellEditing();
     PsiDocumentManager.getInstance(myProject).commitDocument(myDocument);

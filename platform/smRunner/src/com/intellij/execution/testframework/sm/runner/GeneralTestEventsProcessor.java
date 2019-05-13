@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,65 +15,310 @@
  */
 package com.intellij.execution.testframework.sm.runner;
 
+import com.intellij.execution.testframework.sm.SMTestRunnerConnectionUtil;
 import com.intellij.execution.testframework.sm.runner.events.*;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
-import com.intellij.testIntegration.TestLocationProvider;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
+
 /**
- * @author: Roman Chernyatchik
- *
- * Processes events of test runner in general text-based form
- *
- * NB: Test name should be unique for all suites. E.g. it can consist of suite name
- * and name of test method
+ * Processes events of test runner in general text-based form.
+ * <p/>
+ * Test name should be unique for all suites - e.g. it can consist of a suite name and a name of a test method.
+ * 
+ * <p/>
+ * Threading information:
+ * <ul>
+ *   <li>{@link #onUncapturedOutput(String, Key)} can be called from output reader created whether for normal or error output as well as command line can be printed from pooled thread which started the test process;</li>
+ *   <li>all other events should be processed in the same output reader thread</li>
+ *   <li>{@link #dispose()} is called from EDT</li>
+ * </ul>
+ * 
  */
-public interface GeneralTestEventsProcessor extends Disposable {
-  void onStartTesting();
+public abstract class GeneralTestEventsProcessor implements Disposable {
+  private static final Logger LOG = Logger.getInstance(GeneralTestEventsProcessor.class.getName());
+  protected final SMTRunnerEventsListener myEventPublisher;
+  protected final SMTestProxy.SMRootTestProxy myTestsRootProxy;
+  protected SMTestLocator myLocator = null;
+  private final String myTestFrameworkName;
+  protected List<SMTRunnerEventsListener> myListenerAdapters = new CopyOnWriteArrayList<>();
 
-  void onTestsCountInSuite(final int count);
+  protected boolean myTreeBuildBeforeStart = false;
 
-  void onTestStarted(@NotNull TestStartedEvent testStartedEvent);
+  public GeneralTestEventsProcessor(Project project, @NotNull String testFrameworkName, @NotNull SMTestProxy.SMRootTestProxy testsRootProxy) {
+    myEventPublisher = project.getMessageBus().syncPublisher(SMTRunnerEventsListener.TEST_STATUS);
+    myTestFrameworkName = testFrameworkName;
+    myTestsRootProxy = testsRootProxy;
+  }
+  // tree construction events
 
-  void onTestFinished(@NotNull TestFinishedEvent testFinishedEvent);
+  public void onRootPresentationAdded(final String rootName, final String comment, final String rootLocation) {
+    myTestsRootProxy.setPresentation(rootName);
+    myTestsRootProxy.setComment(comment);
+    myTestsRootProxy.setRootLocationUrl(rootLocation);
+    if (myLocator != null) {
+      myTestsRootProxy.setLocator(myLocator);
+    }
+  }
 
-  void onTestFailure(@NotNull TestFailedEvent testFailedEvent);
+  protected SMTestProxy createProxy(String testName, String locationHint, String metaInfo, String id, String parentNodeId) {
+    return new SMTestProxy(testName, false, locationHint, metaInfo, false);
+  }
 
-  void onTestIgnored(@NotNull TestIgnoredEvent testIgnoredEvent);
+  protected SMTestProxy createSuite(String suiteName, String locationHint, String metaInfo, String id, String parentNodeId) {
+    return new SMTestProxy(suiteName, true, locationHint, metaInfo, false);
+  }
 
-  void onTestOutput(@NotNull TestOutputEvent testOutputEvent);
+  protected final List<Runnable> myBuildTreeRunnables = new ArrayList<>();
 
-  void onSuiteStarted(@NotNull TestSuiteStartedEvent suiteStartedEvent);
+  public void onSuiteTreeNodeAdded(final String testName, final String locationHint, final String metaInfo, String id, String parentNodeId) {
+    myTreeBuildBeforeStart = true;
+    myBuildTreeRunnables.add(() -> {
+      final SMTestProxy testProxy = createProxy(testName, locationHint, metaInfo, id, parentNodeId);
+      testProxy.setTreeBuildBeforeStart();
+      if (myLocator != null) {
+        testProxy.setLocator(myLocator);
+      }
+      myEventPublisher.onSuiteTreeNodeAdded(testProxy);
+      for (SMTRunnerEventsListener adapter : myListenerAdapters) {
+        adapter.onSuiteTreeNodeAdded(testProxy);
+      }
+      //ensure root node gets the flag when merged with a single child
+      testProxy.getParent().setTreeBuildBeforeStart();
+    });
+  }
 
-  void onSuiteFinished(@NotNull TestSuiteFinishedEvent suiteFinishedEvent);
+  public void onSuiteTreeStarted(final String suiteName, final String locationHint, String metaInfo, String id, String parentNodeId) {
+    myTreeBuildBeforeStart = true;
+    myBuildTreeRunnables.add(() -> {
+      final SMTestProxy newSuite = createSuite(suiteName, locationHint, metaInfo, id, parentNodeId);
+      if (myLocator != null) {
+        newSuite.setLocator(myLocator);
+      }
+      newSuite.setTreeBuildBeforeStart();
+      myEventPublisher.onSuiteTreeStarted(newSuite);
+      for (SMTRunnerEventsListener adapter : myListenerAdapters) {
+        adapter.onSuiteTreeStarted(newSuite);
+      }
+    });
+  }
 
-  void onUncapturedOutput(@NotNull final String text,
-                          final Key outputType);
+  public void onSuiteTreeEnded(final String suiteName) {
+    if (myBuildTreeRunnables.size() > 100) {
+      final ArrayList<Runnable> runnables = new ArrayList<>(myBuildTreeRunnables);
+      myBuildTreeRunnables.clear();
+      processTreeBuildEvents(runnables);
+    }
+  }
 
-  void onError(@NotNull final String localizedMessage,
-               @Nullable final String stackTrace,
-               final boolean isCritical);
+  public void onBuildTreeEnded() {
+    final ArrayList<Runnable> runnables = new ArrayList<>(myBuildTreeRunnables);
+    myBuildTreeRunnables.clear();
+    processTreeBuildEvents(runnables);
+  }
 
-  // Custom progress statistics
+  private static void processTreeBuildEvents(final List<Runnable> runnables) {
+    for (Runnable runnable : runnables) {
+      runnable.run();
+    }
+    runnables.clear();
+  }
+
+  // progress events
+
+  public abstract void onStartTesting();
+  protected void fireOnTestingStarted(SMTestProxy.SMRootTestProxy node) {
+    myEventPublisher.onTestingStarted(node);
+    for (SMTRunnerEventsListener adapter : myListenerAdapters) {
+      adapter.onTestingStarted(node);
+    }
+  }
+
+  public abstract void onTestsCountInSuite(final int count);
+  protected void fireOnTestsCountInSuite(int count) {
+    myEventPublisher.onTestsCountInSuite(count);
+    for (SMTRunnerEventsListener adapter : myListenerAdapters) {
+      adapter.onTestsCountInSuite(count);
+    }
+  }
+
+  public abstract void onTestStarted(@NotNull TestStartedEvent testStartedEvent);
+  protected void fireOnTestStarted(SMTestProxy testProxy) {
+    myEventPublisher.onTestStarted(testProxy);
+    for (SMTRunnerEventsListener adapter : myListenerAdapters) {
+      adapter.onTestStarted(testProxy);
+    }
+  }
+
+  public abstract void onTestFinished(@NotNull TestFinishedEvent testFinishedEvent);
+  protected void fireOnTestFinished(SMTestProxy testProxy) {
+    myEventPublisher.onTestFinished(testProxy);
+    for (SMTRunnerEventsListener adapter : myListenerAdapters) {
+      adapter.onTestFinished(testProxy);
+    }
+  }
+
+  public abstract void onTestFailure(@NotNull TestFailedEvent testFailedEvent);
+  protected void fireOnTestFailed(SMTestProxy testProxy) {
+    myEventPublisher.onTestFailed(testProxy);
+    for (SMTRunnerEventsListener adapter : myListenerAdapters) {
+      adapter.onTestFailed(testProxy);
+    }
+  }
+
+  public abstract void onTestIgnored(@NotNull TestIgnoredEvent testIgnoredEvent);
+  protected void fireOnTestIgnored(SMTestProxy testProxy) {
+    myEventPublisher.onTestIgnored(testProxy);
+    for (SMTRunnerEventsListener adapter : myListenerAdapters) {
+      adapter.onTestIgnored(testProxy);
+    }
+  }
+
+  public abstract void onTestOutput(@NotNull TestOutputEvent testOutputEvent);
+
+  public abstract void onSuiteStarted(@NotNull TestSuiteStartedEvent suiteStartedEvent);
+  protected void fireOnSuiteStarted(SMTestProxy newSuite) {
+    myEventPublisher.onSuiteStarted(newSuite);
+    for (SMTRunnerEventsListener adapter : myListenerAdapters) {
+      adapter.onSuiteStarted(newSuite);
+    }
+  }
+  
+  public abstract void onSuiteFinished(@NotNull TestSuiteFinishedEvent suiteFinishedEvent);
+  protected void fireOnSuiteFinished(SMTestProxy mySuite) {
+    myEventPublisher.onSuiteFinished(mySuite);
+    for (SMTRunnerEventsListener adapter : myListenerAdapters) {
+      adapter.onSuiteFinished(mySuite);
+    }
+  }
+
+  public abstract void onUncapturedOutput(@NotNull String text, Key outputType);
+
+  public abstract void onError(@NotNull String localizedMessage, @Nullable String stackTrace, boolean isCritical);
+
+  protected static void fireOnTestsReporterAttached(SMTestProxy.SMRootTestProxy rootNode) {
+    rootNode.setTestsReporterAttached();
+  }
+
+  public void onFinishTesting() { }
+
+  protected void fireOnTestingFinished(SMTestProxy.SMRootTestProxy root) {
+    myEventPublisher.onTestingFinished(root);
+    for (SMTRunnerEventsListener adapter : myListenerAdapters) {
+      adapter.onTestingFinished(root);
+    }
+  }
+
+  protected void fireOnBeforeTestingFinished(@NotNull SMTestProxy.SMRootTestProxy root) {
+    myEventPublisher.onBeforeTestingFinished(root);
+     for (SMTRunnerEventsListener adapter : myListenerAdapters) {
+      adapter.onBeforeTestingFinished(root);
+    }
+  }
+
+  // custom progress statistics
 
   /**
    * @param categoryName If isn't empty then progress statistics will use only custom start/failed events.
-   * If name is null statistics will be switched to normal mode
-   * @param testCount - 0 will be considered as unknown tests number
+   *                     If name is null statistics will be switched to normal mode
+   * @param testCount    0 will be considered as unknown tests number
    */
-  void onCustomProgressTestsCategory(@Nullable final String categoryName,
-                                     final int testCount);
-  void onCustomProgressTestStarted();
-  void onCustomProgressTestFailed();
-  void onTestsReporterAttached();
+  public void onCustomProgressTestsCategory(@Nullable final String categoryName,
+                                            final int testCount) {
+    myEventPublisher.onCustomProgressTestsCategory(categoryName, testCount);
+    for (SMTRunnerEventsListener adapter : myListenerAdapters) {
+      adapter.onCustomProgressTestsCategory(categoryName, testCount);
+    }
+  }
 
-  void setLocator(@NotNull TestLocationProvider locator);
+  public void onCustomProgressTestStarted() {
+    myEventPublisher.onCustomProgressTestStarted();
+    for (SMTRunnerEventsListener adapter : myListenerAdapters) {
+      adapter.onCustomProgressTestStarted();
+    }
+  }
 
-  void addEventsListener(@NotNull SMTRunnerEventsListener viewer);
+  public void onCustomProgressTestFinished() {
+    myEventPublisher.onCustomProgressTestFinished();
+    for (SMTRunnerEventsListener adapter : myListenerAdapters) {
+      adapter.onCustomProgressTestFinished();
+    }
+  }
 
-  void onFinishTesting();
+  public void onCustomProgressTestFailed() {
+    myEventPublisher.onCustomProgressTestFailed();
+    for (SMTRunnerEventsListener adapter : myListenerAdapters) {
+      adapter.onCustomProgressTestFailed();
+    }
+  }
 
-  void setPrinterProvider(@NotNull TestProxyPrinterProvider printerProvider);
+  // workflow/service methods
+
+  public abstract void onTestsReporterAttached();
+
+  public void setLocator(@NotNull SMTestLocator locator) {
+    myLocator = locator;
+  }
+
+  public void addEventsListener(@NotNull SMTRunnerEventsListener listener) {
+    myListenerAdapters.add(listener);
+  }
+
+  public abstract void setPrinterProvider(@NotNull TestProxyPrinterProvider printerProvider);
+
+  @Override
+  public void dispose() {
+    disconnectListeners();
+  }
+
+  protected void disconnectListeners() {
+    myListenerAdapters.clear();
+  }
+
+  protected static <T> boolean isTreeComplete(Collection<T> runningTests, SMTestProxy.SMRootTestProxy rootNode) {
+    if (!runningTests.isEmpty()) {
+      return false;
+    }
+    List<? extends SMTestProxy> children = rootNode.getChildren();
+    for (SMTestProxy child : children) {
+      if (!child.isFinal() || child.wasTerminated()) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  protected void logProblem(final String msg) {
+    logProblem(LOG, msg, myTestFrameworkName);
+  }
+  
+  protected void logProblem(String msg, boolean throwError) {
+    logProblem(LOG, msg, throwError, myTestFrameworkName);
+  }
+
+  public static String getTFrameworkPrefix(final String testFrameworkName) {
+    return "[" + testFrameworkName + "]: ";
+  }
+
+  public static void logProblem(final Logger log, final String msg, final String testFrameworkName) {
+    logProblem(log, msg, SMTestRunnerConnectionUtil.isInDebugMode(), testFrameworkName);
+  }
+
+  public static void logProblem(final Logger log, final String msg, boolean throwError, final String testFrameworkName) {
+    final String text = getTFrameworkPrefix(testFrameworkName) + msg;
+    if (throwError) {
+      log.error(text);
+    }
+    else {
+      log.warn(text);
+    }
+  }
 }

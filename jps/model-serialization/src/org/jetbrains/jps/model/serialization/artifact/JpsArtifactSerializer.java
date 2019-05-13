@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,8 +26,8 @@ import org.jetbrains.jps.model.artifact.*;
 import org.jetbrains.jps.model.artifact.elements.*;
 import org.jetbrains.jps.model.library.JpsLibraryReference;
 import org.jetbrains.jps.model.module.JpsModuleReference;
-import org.jetbrains.jps.model.serialization.library.JpsLibraryTableSerializer;
 import org.jetbrains.jps.model.serialization.JpsModelSerializerExtension;
+import org.jetbrains.jps.model.serialization.library.JpsLibraryTableSerializer;
 
 import java.util.List;
 
@@ -35,7 +35,7 @@ import java.util.List;
  * @author nik
  */
 public class JpsArtifactSerializer {
-  private static JpsPackagingElementSerializer<?>[] STANDARD_SERIALIZERS = {
+  private static final JpsPackagingElementSerializer<?>[] STANDARD_SERIALIZERS = {
     new ArtifactRootElementSerializer(),
     new DirectoryElementSerializer(),
     new ArchiveElementSerializer(),
@@ -58,7 +58,6 @@ public class JpsArtifactSerializer {
     JpsArtifactService service = JpsArtifactService.getInstance();
     for (Element artifactElement : JDOMUtil.getChildren(componentElement, "artifact")) {
       ArtifactState state = XmlSerializer.deserialize(artifactElement, ArtifactState.class);
-      if (state == null) continue;
       JpsArtifactPropertiesSerializer<?> serializer = getTypePropertiesSerializer(state.getArtifactType());
       loadArtifact(project, service, state, serializer);
     }
@@ -244,7 +243,7 @@ public class JpsArtifactSerializer {
   }
 
   private static class ArtifactRootElementSerializer extends JpsPackagingElementSerializer<JpsArtifactRootElement> {
-    public ArtifactRootElementSerializer() {
+    ArtifactRootElementSerializer() {
       super("root", JpsArtifactRootElement.class);
     }
 
@@ -259,7 +258,7 @@ public class JpsArtifactSerializer {
   }
 
   private static class DirectoryElementSerializer extends JpsPackagingElementSerializer<JpsDirectoryPackagingElement> {
-    public DirectoryElementSerializer() {
+    DirectoryElementSerializer() {
       super("directory", JpsDirectoryPackagingElement.class);
     }
 
@@ -275,7 +274,7 @@ public class JpsArtifactSerializer {
   }
 
   private static class ArchiveElementSerializer extends JpsPackagingElementSerializer<JpsArchivePackagingElement> {
-    public ArchiveElementSerializer() {
+    ArchiveElementSerializer() {
       super("archive", JpsArchivePackagingElement.class);
     }
 
@@ -291,7 +290,7 @@ public class JpsArtifactSerializer {
   }
 
   private static class FileCopyElementSerializer extends JpsPackagingElementSerializer<JpsFileCopyPackagingElement> {
-    public FileCopyElementSerializer() {
+    FileCopyElementSerializer() {
       super("file-copy", JpsFileCopyPackagingElement.class);
     }
 
@@ -312,7 +311,7 @@ public class JpsArtifactSerializer {
   }
 
   private static class DirectoryCopyElementSerializer extends JpsPackagingElementSerializer<JpsDirectoryCopyPackagingElement> {
-    public DirectoryCopyElementSerializer() {
+    DirectoryCopyElementSerializer() {
       super("dir-copy", JpsDirectoryCopyPackagingElement.class);
     }
 
@@ -329,7 +328,7 @@ public class JpsArtifactSerializer {
 
   private static class ExtractedDirectoryElementSerializer
     extends JpsPackagingElementSerializer<JpsExtractedDirectoryPackagingElement> {
-    public ExtractedDirectoryElementSerializer() {
+    ExtractedDirectoryElementSerializer() {
       super("extracted-dir", JpsExtractedDirectoryPackagingElement.class);
     }
 
@@ -347,7 +346,7 @@ public class JpsArtifactSerializer {
   }
 
   private static class LibraryFilesElementSerializer extends JpsPackagingElementSerializer<JpsLibraryFilesPackagingElement> {
-    public LibraryFilesElementSerializer() {
+    LibraryFilesElementSerializer() {
       super("library", JpsLibraryFilesPackagingElement.class);
     }
 
@@ -380,7 +379,7 @@ public class JpsArtifactSerializer {
   }
 
   private static class ArtifactOutputElementSerializer extends JpsPackagingElementSerializer<JpsArtifactOutputPackagingElement> {
-    public ArtifactOutputElementSerializer() {
+    ArtifactOutputElementSerializer() {
       super("artifact", JpsArtifactOutputPackagingElement.class);
     }
 

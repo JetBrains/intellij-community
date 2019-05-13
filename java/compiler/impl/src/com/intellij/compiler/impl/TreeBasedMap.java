@@ -15,8 +15,8 @@
  */
 package com.intellij.compiler.impl;
 
-import com.intellij.util.containers.StringInterner;
 import com.intellij.util.containers.EmptyIterator;
+import com.intellij.util.containers.StringInterner;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -26,7 +26,6 @@ import java.util.Stack;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Jun 18, 2006
  */
 public class TreeBasedMap<T> {
   private Node<T> myRoot = new Node<T>();
@@ -159,15 +158,17 @@ public class TreeBasedMap<T> {
     private final Stack<PathElement<T>> myCurrentNodePath = new Stack<PathElement<T>>();
     private final StringBuilder myCurrentName = new StringBuilder();
 
-    public KeysIterator() {
+    KeysIterator() {
       pushNode("", myRoot);
       findNextNode();
     }
 
+    @Override
     public boolean hasNext() {
       return myCurrentNodePath.size() > 0;
     }
 
+    @Override
     public String next() {
       final String key = myCurrentName.toString();
       popNode();
@@ -175,6 +176,7 @@ public class TreeBasedMap<T> {
       return key;
     }
 
+    @Override
     public void remove() {
       throw new UnsupportedOperationException("Remove not supported");
     }
@@ -183,9 +185,9 @@ public class TreeBasedMap<T> {
       final HashMap<String, Node<T>> childrenMap = node.myChildren;
       final boolean hasChildren = childrenMap != null && childrenMap.size() > 0;
       if (hasChildren || node.mappingExists()) {
-        myCurrentNodePath.push(new PathElement<T>(node, hasChildren? childrenMap.keySet().iterator() : EmptyIterator.<String>getInstance()));
+        myCurrentNodePath.push(new PathElement<>(node, hasChildren ? childrenMap.keySet().iterator() : EmptyIterator.getInstance()));
         if (myCurrentNodePath.size() > 2) {
-          // do not add separator before the Root and its direct child nodes 
+          // do not add separator before the Root and its direct child nodes
           myCurrentName.append(mySeparator);
         }
         myCurrentName.append(name);
@@ -230,7 +232,7 @@ public class TreeBasedMap<T> {
   private class PathElement<T> {
     final @NotNull Iterator<String> iterator;
     final @NotNull Node<T> node;
-    public PathElement(@NotNull final Node<T> node, Iterator<String> iterator) {
+    PathElement(@NotNull final Node<T> node, Iterator<String> iterator) {
       this.node = node;
       this.iterator = iterator;
     }

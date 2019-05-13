@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2007 Bas Leijdekkers
+ * Copyright 2006-2018 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,76 +16,135 @@
 package com.siyeh.ipp.whileloop;
 
 import com.intellij.psi.*;
-import com.intellij.util.IncorrectOperationException;
+import com.siyeh.ig.PsiReplacementUtil;
+import com.siyeh.ig.psiutils.BoolUtils;
+import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ipp.base.Intention;
 import com.siyeh.ipp.base.PsiElementPredicate;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 public class ReplaceDoWhileLoopWithWhileLoopIntention extends Intention {
 
+  @Override
   @NotNull
   protected PsiElementPredicate getElementPredicate() {
     return new DoWhileLoopPredicate();
   }
 
-  protected void processIntention(@NotNull PsiElement element)
-    throws IncorrectOperationException {
-    final PsiDoWhileStatement doWhileStatement =
-      (PsiDoWhileStatement)element.getParent();
+  @Override
+  protected void processIntention(@NotNull PsiElement element) {
+    final PsiDoWhileStatement doWhileStatement = (PsiDoWhileStatement)element.getParent();
     if (doWhileStatement == null) {
       return;
     }
     final PsiStatement body = doWhileStatement.getBody();
     final PsiElement parent = doWhileStatement.getParent();
-    final StringBuilder whileStatementText = new StringBuilder("while(");
     final PsiExpression condition = doWhileStatement.getCondition();
-    if (condition != null) {
-      whileStatementText.append(condition.getText());
+    @NonNls final StringBuilder replacementText = new StringBuilder();
+    CommentTracker commentTracker = new CommentTracker();
+    if (BoolUtils.isTrue(condition)) {
+      // no trickery needed
+      replacementText.append("while(").append(commentTracker.text(condition)).append(')');
+      if (body != null) {
+        replacementText.append(commentTracker.text(body));
+      }
+      PsiReplacementUtil.replaceStatement(doWhileStatement, replacementText.toString(), commentTracker);
+      return;
     }
-    whileStatementText.append(')');
+    final boolean noBraces = !(parent instanceof PsiCodeBlock);
+    if (noBraces) {
+      final PsiElement[] parentChildren = parent.getChildren();
+      for (PsiElement child : parentChildren) {
+        if (child == doWhileStatement) {
+          break;
+        }
+        replacementText.append(commentTracker.text(child));
+      }
+      replacementText.append('{');
+    }
     if (body instanceof PsiBlockStatement) {
-      whileStatementText.append('{');
+      final PsiBlockStatement blockStatement = (PsiBlockStatement)body;
+      final PsiCodeBlock codeBlock = blockStatement.getCodeBlock();
+      final PsiElement[] children = codeBlock.getChildren();
+      if (children.length > 2) {
+        for (int i = 1, length = children.length - 1; i < length; i++) {
+          final PsiElement child = children[i];
+          if (child instanceof PsiDeclarationStatement) {
+            final PsiDeclarationStatement declarationStatement = (PsiDeclarationStatement)child;
+            final PsiElement[] declaredElements = declarationStatement.getDeclaredElements();
+            for (PsiElement declaredElement : declaredElements) {
+              if (declaredElement instanceof PsiVariable) {
+                final PsiVariable variable = (PsiVariable)declaredElement;
+                final PsiModifierList modifierList = variable.getModifierList();
+                if (modifierList != null) {
+                  modifierList.setModifierProperty(PsiModifier.FINAL, false);
+                }
+              }
+            }
+          }
+          if (noBraces) {
+            replacementText.append(commentTracker.text(child));
+          }
+          else {
+            parent.addBefore(child, doWhileStatement);
+          }
+        }
+      }
+    }
+    else if (body != null) {
+      if (noBraces) {
+        replacementText.append(commentTracker.text(body)).append("\n");
+      }
+      else {
+        parent.addBefore(body, doWhileStatement);
+      }
+    }
+    replacementText.append("while(");
+    if (condition != null) {
+      replacementText.append(commentTracker.text(condition));
+    }
+    replacementText.append(')');
+    if (body instanceof PsiBlockStatement) {
+      replacementText.append('{');
       final PsiBlockStatement blockStatement = (PsiBlockStatement)body;
       final PsiCodeBlock codeBlock = blockStatement.getCodeBlock();
       final PsiElement[] children = codeBlock.getChildren();
       if (children.length > 2) {
         for (int i = 1; i < children.length - 1; i++) {
           final PsiElement child = children[i];
-          parent.addBefore(child, doWhileStatement);
           if (child instanceof PsiDeclarationStatement) {
-            final PsiDeclarationStatement declarationStatement =
-              (PsiDeclarationStatement)child;
-            final PsiElement[] declaredElements =
-              declarationStatement.getDeclaredElements();
+            final PsiDeclarationStatement declarationStatement = (PsiDeclarationStatement)child;
+            final PsiElement[] declaredElements = declarationStatement.getDeclaredElements();
             for (PsiElement declaredElement : declaredElements) {
               if (declaredElement instanceof PsiVariable) {
                 // prevent duplicate variable declarations.
-                final PsiVariable variable =
-                  (PsiVariable)declaredElement;
-                final PsiExpression initializer =
-                  variable.getInitializer();
+                final PsiVariable variable = (PsiVariable)declaredElement;
+                final PsiExpression initializer = variable.getInitializer();
                 if (initializer != null) {
-                  final String name = variable.getName();
-                  whileStatementText.append(name);
-                  whileStatementText.append(" = ");
-                  whileStatementText.append(
-                    initializer.getText());
-                  whileStatementText.append(';');
+                  replacementText.append(variable.getName()).append(" = ").append(commentTracker.text(initializer)).append(';');
                 }
               }
             }
           }
           else {
-            whileStatementText.append(child.getText());
+            replacementText.append(commentTracker.text(child));
           }
         }
       }
-      whileStatementText.append('}');
+      replacementText.append('}');
     }
     else if (body != null) {
-      parent.addBefore(body, doWhileStatement);
-      whileStatementText.append(body.getText());
+      replacementText.append(commentTracker.text(body)).append("\n");
     }
-    replaceStatement(whileStatementText.toString(), doWhileStatement);
+    if (noBraces) {
+      replacementText.append('}');
+    }
+    if (noBraces) {
+      PsiReplacementUtil.replaceStatement((PsiStatement)parent, replacementText.toString(), commentTracker);
+    }
+    else {
+      PsiReplacementUtil.replaceStatement(doWhileStatement, replacementText.toString(), commentTracker);
+    }
   }
 }

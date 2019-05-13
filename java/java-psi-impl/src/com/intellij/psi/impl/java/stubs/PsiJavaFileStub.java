@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,12 +19,21 @@
  */
 package com.intellij.psi.impl.java.stubs;
 
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiJavaFile;
+import com.intellij.psi.PsiJavaModule;
 import com.intellij.psi.stubs.PsiClassHolderFileStub;
 
 public interface PsiJavaFileStub extends PsiClassHolderFileStub<PsiJavaFile> {
+  PsiJavaModule getModule();
+
   String getPackageName();
+  LanguageLevel getLanguageLevel();
   boolean isCompiled();
+
   StubPsiFactory getPsiFactory();
+
+  /** @deprecated override {@link #getPsiFactory()} instead (to be removed in IDEA 18) */
+  @Deprecated
   void setPsiFactory(StubPsiFactory factory);
 }

@@ -1,0 +1,2 @@
+print <spot>'first line\n' +
+              'second line'</spot>

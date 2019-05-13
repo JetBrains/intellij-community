@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,15 +18,31 @@ package com.intellij.codeInsight.highlighting;
 
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.util.ProperTextRange;
 import com.intellij.psi.PsiFile;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * @author yole
+ *
+ * @see HighlightUsagesHandlerFactoryBase
  */
 public interface HighlightUsagesHandlerFactory {
   ExtensionPointName<HighlightUsagesHandlerFactory> EP_NAME = ExtensionPointName.create("com.intellij.highlightUsagesHandlerFactory");
 
   @Nullable
-  HighlightUsagesHandlerBase createHighlightUsagesHandler(Editor editor, PsiFile file);
+  HighlightUsagesHandlerBase createHighlightUsagesHandler(@NotNull Editor editor, @NotNull PsiFile file);
+
+
+  /**
+   * @param visibleRange To avoid parsing in EDT, these factory methods should be called in a background thread
+   *                      (as implementation use the PSI element under cursor to choose the specific handler).
+   *                      However, some handlers require the editor visible range, which must be calculated in EDT,
+   *                      so it's passed externally
+   */
+  @Nullable
+  default HighlightUsagesHandlerBase createHighlightUsagesHandler(@NotNull Editor editor, @NotNull PsiFile file, @NotNull ProperTextRange visibleRange) {
+    return createHighlightUsagesHandler(editor, file);
+  }
 }

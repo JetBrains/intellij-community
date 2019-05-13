@@ -1,18 +1,17 @@
 package com.siyeh.igtest.migration.foreach;
 
-import com.siyeh.igtest.verbose.OuterClass;
-
 import java.util.*;
 
 public class ForCanBeForEach {
 
     public void foo(int[] is) {
-        for (int i = 0; i < is.length; i++) {
+        <warning descr="'for' loop replaceable with 'foreach'">for</warning> (int i = 0; i < is.length; i++) {
+            System.out.println(is[i]);
         }
     }
 
     public void test(Collection bars){
-        for(Iterator<List> it = bars.iterator(); it .hasNext();){
+        <warning descr="'for' loop replaceable with 'foreach'">for</warning>(Iterator<List> it = bars.iterator(); it .hasNext();){
             final List bar = it.next();
             bar.size();
         }
@@ -21,7 +20,7 @@ public class ForCanBeForEach {
     public int foo(){
         final int[] ints = new int[3];
         int total = 0;
-        for(int i = 0; i < ints.length; i++){
+        <warning descr="'for' loop replaceable with 'foreach'">for</warning>(int i = 0; i < ints.length; i++){
             final int j = ints[i];
             total += j;
         }
@@ -31,7 +30,7 @@ public class ForCanBeForEach {
     public int bar(){
         final int[] ints = new int[3];
         int total = 0;
-        for(int i = 0; i < ints.length; i++){
+        <warning descr="'for' loop replaceable with 'foreach'">for</warning>(int i = 0; i < ints.length; i++){
             total += ints[i];
         }
         return total;
@@ -40,7 +39,7 @@ public class ForCanBeForEach {
     public int baz(){
         int total = 0;
         final List ints = new ArrayList();
-        for(Iterator iterator = ints.iterator(); iterator.hasNext();){
+        <warning descr="'for' loop replaceable with 'foreach'">for</warning>(Iterator iterator = ints.iterator(); iterator.hasNext();){
             final Integer value = (Integer) iterator.next();
             total += value.intValue();
         }
@@ -50,7 +49,7 @@ public class ForCanBeForEach {
     public int bazoom(){
         int total = 0;
         final List<Integer> ints = new ArrayList<Integer>();
-        for(Iterator<Integer> iterator = ints.iterator(); iterator.hasNext();){
+        <warning descr="'for' loop replaceable with 'foreach'">for</warning>(Iterator<Integer> iterator = ints.iterator(); iterator.hasNext();){
             final Integer value = iterator.next();
             total += value.intValue();
         }
@@ -60,7 +59,7 @@ public class ForCanBeForEach {
     public int wildBazoom(){
         int total = 0;
         final List<? extends Integer> ints = new ArrayList<Integer>();
-        for(Iterator<? extends Integer> iterator = ints.iterator();
+        <warning descr="'for' loop replaceable with 'foreach'">for</warning>(Iterator<? extends Integer> iterator = ints.iterator();
             iterator.hasNext();){
             final Integer value = iterator.next();
             total += value.intValue();
@@ -80,7 +79,7 @@ public class ForCanBeForEach {
         Map<String, Integer> m = new HashMap<String, Integer>();
         m.put("123", 123);
         m.put("456", 456);
-        for(Iterator<Map.Entry<String, Integer>> iterator = m.entrySet()
+        <warning descr="'for' loop replaceable with 'foreach'">for</warning>(Iterator<Map.Entry<String, Integer>> iterator = m.entrySet()
                 .iterator(); iterator.hasNext();){
             Map.Entry<String, Integer> entry = iterator.next();
             System.out.println(entry.getKey() + "=" + entry.getValue());
@@ -103,7 +102,7 @@ public class ForCanBeForEach {
 
     public void boom2(){
         OuterClass.UnnecessaryEnumModifier2Inspection[] inners = new OuterClass.UnnecessaryEnumModifier2Inspection[3];
-        for(int i = 0; i < inners.length; i++){
+        <warning descr="'for' loop replaceable with 'foreach'">for</warning>(int i = 0; i < inners.length; i++){
             OuterClass.UnnecessaryEnumModifier2Inspection inner = inners[i];
             System.out.println(inner);
         }
@@ -125,7 +124,7 @@ public class ForCanBeForEach {
     }
 
     public void quickFixBoom(List numbers) {
-        for (int i = 0; i < (numbers.size()); i++) {
+        <warning descr="'for' loop replaceable with 'foreach'">for</warning> (int i = 0; i < (numbers.size()); i++) {
             System.out.println("numbers[i]: " + numbers.get(i));
         }
     }
@@ -181,7 +180,7 @@ public class ForCanBeForEach {
 
     void sizeInVariable(List ls) {
         int size = ls.size();
-        for (int i = (0); (i < (size)); (i)++) {
+        <warning descr="'for' loop replaceable with 'foreach'">for</warning> (int i = (0); (i < (size)); (i)++) {
             Object o = ls.get(i);
             System.out.println("o = " + o);
         }
@@ -190,7 +189,7 @@ public class ForCanBeForEach {
     class X extends ArrayList {
 
         void foo() {
-            for (int i = 0; i < size(); i++) {
+            <warning descr="'for' loop replaceable with 'foreach'">for</warning> (int i = 0; i < size(); i++) {
                 this.get(i);
             }
         }
@@ -207,7 +206,7 @@ public class ForCanBeForEach {
     int strange() {
         int total = 0;
         final List ints = new ArrayList();
-        for (ListIterator l = ints.listIterator(); l.hasNext(); ) {
+        <warning descr="'for' loop replaceable with 'foreach'">for</warning> (ListIterator l = ints.listIterator(); l.hasNext(); ) {
             System.out.println(l.next());
         }
         return total;
@@ -228,20 +227,20 @@ public class ForCanBeForEach {
     }
 
     void listIteration(List<String> l) {
-        for (Iterator<String> i = l.listIterator(); l.hasNext(); ) {
-            if ("sit".equals(l.next())) {
+        for (ListIterator<String> i = l.listIterator(); i.hasNext(); ) {
+            if ("sit".equals(i.next())) {
                 i.set("stay");
             }
         }
     }
 
   void indexedList(List<String> l) {
-    for (int i = 0, max = l.size(); i < max; i++) {
-
+    <warning descr="'for' loop replaceable with 'foreach'">for</warning> (int i = 0, max = l.size(); i < max; i++) {
+      System.out.println(l.get(i));
     }
-    for (int i = (0), max = (l.size()); ((max) > (i)); ((i)++) {
-
-    }
+    <warning descr="'for' loop replaceable with 'foreach'">for</warning> (int i = (0), max = (l.size()); ((max) > (i)); (i)++) {
+      System.out.println(l.get(i)); }
+    for (int i = 0; i < l.size(); i++) {}
   }
 
   static class Constants {
@@ -249,22 +248,57 @@ public class ForCanBeForEach {
   }
   static class User {{
     String[] strings = Constants.STRINGS;
-    for (int i = 0, length = strings.length; i < length; i++) { // should warn here
+    <warning descr="'for' loop replaceable with 'foreach'">for</warning> (int i = 0, length = strings.length; i < length; i++) { // should warn here
       String s = strings[i];
       System.out.println(s);
     }
   }}
 
   public void food(int[] is) {
-    for (int i = 0; is.length > i; i++) {
+    <warning descr="'for' loop replaceable with 'foreach'">for</warning> (int i = 0; is.length > i; i++) {
+      System.out.println(is[i]);
     }
     for (int i = 0, j = 10; i < is.length; i++) {
+    }
+    for (int i = 0; i < is.length; i++) {
+      System.out.println('-');
     }
   }
 
   void foo(List<String> l) {
     for (int i = 0, j = 10; i < l.size(); i++) {
       System.out.println(j);
+    }
+  }
+
+  class XX<T> {
+    void m(T[] ts) {
+      <warning descr="'for' loop replaceable with 'foreach'">for</warning> (int i = 0; i < ts.length; i++) {
+        System.out.println(ts[i]);
+      }
+    }
+  }
+
+  static class WithMethodRefs {
+      private static final List<String> STRINGS = new ArrayList<>(Arrays.asList("Hello", "World"));
+
+      public void test3() {
+          for (ListIterator<String> stringListIterator = STRINGS.listIterator(); stringListIterator.hasNext(); ) {
+              System.out.println(stringListIterator.next());
+
+              List<String> strings2 = new ArrayList<>(Collections.singletonList("!"));
+
+              strings2.forEach(stringListIterator::add);
+          }
+      }
+  }
+}
+class OuterClass
+{
+  public static enum UnnecessaryEnumModifier2Inspection {
+    Red, Green, Blue;
+
+    private UnnecessaryEnumModifier2Inspection() {
     }
   }
 }

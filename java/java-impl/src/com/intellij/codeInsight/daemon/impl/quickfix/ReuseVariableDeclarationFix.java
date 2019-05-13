@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,9 +15,9 @@
  */
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
-import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
@@ -31,12 +31,11 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * @author cdr
- * Date: Nov 20, 2002
  */
 public class ReuseVariableDeclarationFix implements IntentionAction {
   private final PsiLocalVariable myVariable;
 
-  public ReuseVariableDeclarationFix(final PsiLocalVariable variable) {
+  public ReuseVariableDeclarationFix(@NotNull PsiLocalVariable variable) {
     this.myVariable = variable;
   }
 
@@ -54,21 +53,25 @@ public class ReuseVariableDeclarationFix implements IntentionAction {
 
   @Override
   public boolean isAvailable(@NotNull final Project project, final Editor editor, final PsiFile file) {
-    if (myVariable == null || !myVariable.isValid()) {
+    if (!myVariable.isValid()) {
       return false;
     }
-    final PsiVariable previousVariable = findPreviousVariable();
+    final PsiVariable previousVariable = findPreviousVariable(myVariable);
     return previousVariable != null &&
            Comparing.equal(previousVariable.getType(), myVariable.getType()) &&
-           myVariable.getManager().isInProject(myVariable);
+           BaseIntentionAction.canModify(myVariable);
+  }
+
+  @NotNull
+  @Override
+  public PsiElement getElementToMakeWritable(@NotNull PsiFile file) {
+    return myVariable;
   }
 
   @Override
   public void invoke(@NotNull final Project project, final Editor editor, final PsiFile file) throws IncorrectOperationException {
-    final PsiVariable refVariable = findPreviousVariable();
+    final PsiVariable refVariable = findPreviousVariable(myVariable);
     if (refVariable == null) return;
-
-    if (!CodeInsightUtil.preparePsiElementsForWrite(myVariable, refVariable)) return;
 
     final PsiExpression initializer = myVariable.getInitializer();
     if (initializer == null) {
@@ -77,26 +80,26 @@ public class ReuseVariableDeclarationFix implements IntentionAction {
     }
 
     PsiUtil.setModifierProperty(refVariable, PsiModifier.FINAL, false);
-    final PsiElementFactory factory = JavaPsiFacade.getInstance(myVariable.getProject()).getElementFactory();
+    final PsiElementFactory factory = JavaPsiFacade.getElementFactory(myVariable.getProject());
     final PsiElement statement = factory.createStatementFromText(myVariable.getName() + " = " + initializer.getText() + ";", null);
     myVariable.getParent().replace(statement);
   }
 
   @Nullable
-  private PsiVariable findPreviousVariable() {
-    PsiElement scope = myVariable.getParent();
+  static PsiVariable findPreviousVariable(PsiLocalVariable variable) {
+    PsiElement scope = variable.getParent();
     while (scope != null) {
       if (scope instanceof PsiFile || scope instanceof PsiMethod || scope instanceof PsiClassInitializer) break;
       scope = scope.getParent();
     }
     if (scope == null) return null;
 
-    PsiIdentifier nameIdentifier = myVariable.getNameIdentifier();
+    PsiIdentifier nameIdentifier = variable.getNameIdentifier();
     if (nameIdentifier == null) {
       return null;
     }
 
-    final VariablesNotProcessor processor = new VariablesNotProcessor(myVariable, false);
+    final VariablesNotProcessor processor = new VariablesNotProcessor(variable, false);
     PsiScopesUtil.treeWalkUp(processor, nameIdentifier, scope);
     return processor.size() > 0 ? processor.getResult(0) : null;
   }

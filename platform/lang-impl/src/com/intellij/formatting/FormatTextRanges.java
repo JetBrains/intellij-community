@@ -15,169 +15,69 @@
  */
 package com.intellij.formatting;
 
+import com.intellij.openapi.util.Segment;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.text.StringUtil;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.openapi.util.UnfairTextRange;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.codeStyle.ChangedRangesInfo;
+import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
-/**
- * Collection of {@link FormatTextRange} objects with utility methods for batch processing on aggregated objects.
- *
- * @see FormatTextRange
- * @author yole
- */
-public class FormatTextRanges {
-
-  /**
-   * Wraps {@link TextRange} object with {@link #myProcessHeadingWhitespace} flag and provides convenient services for checking if wrapped range intersects
-   * with the given one.
-   */
-  public static class FormatTextRange {
-    private TextRange myRange;
-    private final boolean myProcessHeadingWhitespace;
-
-    public FormatTextRange(TextRange range, boolean processHeadingWhitespace) {
-      myRange = range;
-      myProcessHeadingWhitespace = processHeadingWhitespace;
-    }
-
-    /**
-     * Allows to answer if given range has intersections with the range wrapped by the current {@link FormatTextRange} object.
-     * <p/>
-     * I.e. this method returns <code>true</code> (no intersections) if any of the statements below is true:
-     * <ul>
-     *   <li>given range starts after wrapped range;</li>
-     *   <li>
-     *          given range ends before wrapped range start (given range ends before or at the wrapped range start if
-     *          <code>'processHeadingWhitespace'</code> flag is set to <code>false</code>);
-     *   </li>
-     * </ul>
-     *
-     * @param range     range to check
-     * @return               <code>true</code> if given range has no intersections with the wrapped range; <code>false</code> otherwise
-     */
-    public boolean isWhitespaceReadOnly(@Nullable TextRange range) {
-      if (myRange == null) {
-        return false;
-      }
-      if (range == null || range.getStartOffset() >= myRange.getEndOffset()) return true;
-      if (myProcessHeadingWhitespace) {
-        return range.getEndOffset() < myRange.getStartOffset();
-      }
-      else {
-        return range.getEndOffset() <= myRange.getStartOffset();
-      }
-    }
-
-    public int getStartOffset() {
-      return myRange.getStartOffset();
-    }
-
-    /**
-     * Allows to check if given range has intersections with the range wrapped by the current {@link FormatTextRange}  object.
-     * <p/>
-     * I.e. this method returns <code>true</code> (no intersections) if and only if any of conditions below is satisfied:
-     * <ul>
-     *   <li>given range starts after end of the wrapped range;</li>
-     *   <li>
-     *      given range ends before start of the wrapped range (there is a special case when given <code>'rootIsRightBlock'</code> flag
-     *      is <code>true</code> - <code>false</code> is returned if given range ends before or at start of the wrapped range);
-     *   </li>
-     * </ul>
-     *
-     * @param range               range to check
-     * @param rootIsRightBlock    meta-information about given range that is used during final answer calculation
-     * @return                    <code>true</code> if there are no intersections between given and wrapped ranges;
-     *                            <code>false</code> otherwise
-     */
-    public boolean isReadOnly(TextRange range, boolean rootIsRightBlock) {
-      if (myRange == null || myRange.getStartOffset() >= range.getEndOffset() && rootIsRightBlock) {
-        return false;
-      }
-
-      return range.getStartOffset() > myRange.getEndOffset() || range.getEndOffset() < myRange.getStartOffset();
-    }
-
-    public TextRange getTextRange() {
-      return myRange;
-    }
-
-    public void setTextRange(TextRange range) {
-      myRange = range;
-    }
-
-    public TextRange getNonEmptyTextRange() {
-      return new TextRange(myRange.getStartOffset(), myRange.getStartOffset() == myRange.getEndOffset()
-                                                     ? myRange.getEndOffset()+1
-                                                     : myRange.getEndOffset());
-    }
-
-    @Override
-    public String toString() {
-      return myRange.toString() + (myProcessHeadingWhitespace ? "+" : "");
-    }
-  }
-
-  private final List<FormatTextRange> myRanges = new ArrayList<FormatTextRange>();
+public class FormatTextRanges implements FormattingRangesInfo {
+  private final List<TextRange> myInsertedRanges;
+  private final FormatRangesStorage myStorage = new FormatRangesStorage();
 
   public FormatTextRanges() {
+    myInsertedRanges = null;
   }
 
   public FormatTextRanges(TextRange range, boolean processHeadingWhitespace) {
+    myInsertedRanges = null;
     add(range, processHeadingWhitespace);
   }
 
+  public FormatTextRanges(@NotNull ChangedRangesInfo changedRangesInfo) {
+    List<TextRange> optimized = optimizedChangedRanges(changedRangesInfo.allChangedRanges);
+    optimized.forEach((range) -> add(range, true));
+    myInsertedRanges = changedRangesInfo.insertedRanges;
+  }
+
   public void add(TextRange range, boolean processHeadingWhitespace) {
-    myRanges.add(new FormatTextRange(range, processHeadingWhitespace));
+    myStorage.add(range, processHeadingWhitespace);
   }
 
-  /**
-   * Batches {@link FormatTextRange#isWhitespaceReadOnly(TextRange)} operation for all aggregated ranges.
-   * <p/>
-   * I.e. this method allows to check if given range has intersections with any of aggregated ranges.
-   *
-   * @param range     range to check
-   * @return               <code>true</code> if given range doesn't have intersections with all aggregated ranges;
-   *                             <code>false</code> if given range intersects at least one of aggregated ranges
-   */
-  public boolean isWhitespaceReadOnly(TextRange range) {
-    for (FormatTextRange formatTextRange : myRanges) {
-      if (!formatTextRange.isWhitespaceReadOnly(range)) {
-        return false;
-      }
-    }
-    return true;
+  @Override
+  public boolean isWhitespaceReadOnly(final @NotNull TextRange range) {
+    return myStorage.isWhiteSpaceReadOnly(range);  
+  }
+  
+  @Override
+  public boolean isReadOnly(@NotNull TextRange range) {
+    return myStorage.isReadOnly(range);
   }
 
-  /**
-   * Batches {@link FormatTextRange#isReadOnly(TextRange, boolean)} operation for all aggregated ranges.
-   * <p/>
-   * I.e. this method allows to check if given range has intersections with any of aggregated ranges.
-   *
-   * @param range                 range to check
-   * @param rootIsRightBlock      flag to use during {@link FormatTextRange#isReadOnly(TextRange, boolean)} processing
-   * @return                      <code>true</code> if given range doesn't have intersections with all aggregated ranges;
-   *                              <code>false</code> if given range intersects at least one of aggregated ranges
-   */
-  public boolean isReadOnly(TextRange range, boolean rootIsRightBlock) {
-    for (FormatTextRange formatTextRange : myRanges) {
-      if (!formatTextRange.isReadOnly(range, rootIsRightBlock)) {
-        return false;
-      }
-    }
-    return true;
-  }
+  @Override
+  public boolean isOnInsertedLine(int offset) {
+    if (myInsertedRanges == null) return false;
 
+    Optional<TextRange> enclosingRange = myInsertedRanges.stream()
+      .filter((range) -> range.contains(offset))
+      .findAny();
+
+    return enclosingRange.isPresent();
+  }
+  
   public List<FormatTextRange> getRanges() {
-    return myRanges;
+    return myStorage.getRanges();
   }
 
   public FormatTextRanges ensureNonEmpty() {
     FormatTextRanges result = new FormatTextRanges();
-    for (FormatTextRange range : myRanges) {
-      if (range.myProcessHeadingWhitespace) {
+    for (FormatTextRange range : myStorage.getRanges()) {
+      if (range.isProcessHeadingWhitespace()) {
         result.add(range.getNonEmptyTextRange(), true);
       }
       else {
@@ -187,8 +87,48 @@ public class FormatTextRanges {
     return result;
   }
 
-  @Override
-  public String toString() {
-    return "FormatTextRanges{" + StringUtil.join(myRanges, StringUtil.createToStringFunction(FormatTextRange.class), ",");
+  public boolean isEmpty() {
+    return myStorage.isEmpty();
   }
+
+  public boolean isFullReformat(PsiFile file) {
+    List<FormatTextRange> ranges = myStorage.getRanges();
+    return ranges.size() == 1 && file.getTextRange().equals(ranges.get(0).getTextRange());
+  }
+
+  public List<TextRange> getTextRanges() {
+    return ContainerUtil.map(myStorage
+                               .getRanges(), FormatTextRange::getTextRange);
+  }
+  
+  public List<TextRange> getExtendedFormattingRanges() {
+    return ContainerUtil.map(myStorage
+                               .getRanges(), (range) -> {
+      TextRange textRange = range.getTextRange();
+      return new UnfairTextRange(textRange.getStartOffset() - 500, textRange.getEndOffset() + 500);
+    });
+  }
+
+  private static List<TextRange> optimizedChangedRanges(@NotNull List<TextRange> allChangedRanges) {
+    if (allChangedRanges.isEmpty()) return allChangedRanges;
+    List<TextRange> sorted = ContainerUtil.sorted(allChangedRanges, Segment.BY_START_OFFSET_THEN_END_OFFSET);
+
+    List<TextRange> result = ContainerUtil.newSmartList();
+
+    TextRange prev = sorted.get(0);
+    for (TextRange next : sorted) {
+      if (next.getStartOffset() <= prev.getEndOffset() + 5) {
+        int newEndOffset = Math.max(prev.getEndOffset(), next.getEndOffset());
+        prev = new TextRange(prev.getStartOffset(), newEndOffset);
+      }
+      else {
+        result.add(prev);
+        prev = next;
+      }
+    }
+    result.add(prev);
+
+    return result;
+  }
+  
 }

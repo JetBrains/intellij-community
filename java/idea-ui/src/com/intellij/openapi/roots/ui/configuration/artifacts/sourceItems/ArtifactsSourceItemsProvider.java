@@ -45,7 +45,7 @@ public class ArtifactsSourceItemsProvider extends PackagingSourceItemsProvider {
       }
     }
     else if (parent instanceof ArtifactsGroupSourceItem) {
-      List<PackagingSourceItem> items = new ArrayList<PackagingSourceItem>();
+      List<PackagingSourceItem> items = new ArrayList<>();
       for (Artifact another : ArtifactElementType.getAvailableArtifacts(editorContext, artifact, true)) {
         items.add(new ArtifactSourceItem(another));
       }
@@ -67,6 +67,7 @@ public class ArtifactsSourceItemsProvider extends PackagingSourceItemsProvider {
       return 0;
     }
 
+    @NotNull
     @Override
     public SourceItemPresentation createPresentation(@NotNull ArtifactEditorContext context) {
       return new ArtifactsGroupPresentation();

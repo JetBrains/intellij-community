@@ -15,14 +15,35 @@
  */
 package com.intellij.unscramble;
 
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public interface UnscrambleSupport {
+import javax.swing.*;
+
+public interface UnscrambleSupport<T extends JComponent> {
   ExtensionPointName<UnscrambleSupport> EP_NAME = ExtensionPointName.create("com.intellij.unscrambleSupport");
 
   @Nullable
-  String unscramble(Project project, String text, String logName);
+  default String unscramble(@NotNull Project project, @NotNull String text, @NotNull String logName, @Nullable T settings) {
+    return unscramble(project, text, logName);
+  }
+
+  @NotNull
   String getPresentableName();
+
+  @Nullable
+  default T createSettingsComponent() {
+    return null;
+  }
+
+  /**
+   * @deprecated override {@link #unscramble(Project, String, String, JComponent)} instead
+   */
+  @Deprecated
+  @Nullable
+  default String unscramble(Project project, String text, String logName) {
+    return null;
+  }
 }

@@ -1,30 +1,19 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.util.projectWizard;
 
 import com.intellij.openapi.options.ConfigurationException;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
+import java.io.File;
 import java.util.Collections;
 import java.util.Map;
 
 /**
  * @see ProjectTemplateParameterFactory
  * @author Dmitry Avdeev
- *         Date: 2/1/13
  */
 public abstract class WizardInputField<T extends JComponent> {
 
@@ -54,19 +43,33 @@ public abstract class WizardInputField<T extends JComponent> {
     return Collections.singletonMap(getId(), getValue());
   }
 
-  public boolean validate() throws ConfigurationException { return true; }
+  public boolean validate() throws ConfigurationException {
+    return true;
+  }
 
-  public static WizardInputField getFieldById(String id, String initialValue) {
-    ProjectTemplateParameterFactory[] extensions = ProjectTemplateParameterFactory.EP_NAME.getExtensions();
-    for (ProjectTemplateParameterFactory extension : extensions) {
+  @Nullable
+  public static ProjectTemplateParameterFactory getFactoryById(@NotNull String id) {
+    for (ProjectTemplateParameterFactory extension : ProjectTemplateParameterFactory.EP_NAME.getExtensionList()) {
       if (extension.getParameterId().equals(id)) {
-        return extension.createField(initialValue);
+        return extension;
       }
     }
     return null;
   }
 
   public void addToSettings(SettingsStep settingsStep) {
-    settingsStep.addSettingsField(getLabel(), getComponent());
+    T component = getComponent();
+    if (component != null) {
+      settingsStep.addSettingsField(getLabel(), component);
+    }
+  }
+
+  public boolean acceptFile(File file) {
+    return true;
+  }
+
+  @TestOnly
+  public void setValue(String value) {
+    throw new UnsupportedOperationException();
   }
 }

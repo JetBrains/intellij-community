@@ -16,11 +16,14 @@
 
 package com.intellij.tools;
 
+import com.intellij.execution.process.ProcessListener;
 import com.intellij.ide.macro.MacroManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.project.DumbAware;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
@@ -30,18 +33,19 @@ import java.util.List;
 public class ToolAction extends AnAction implements DumbAware {
   private final String myActionId;
 
-  public ToolAction(Tool tool) {
+  public ToolAction(@NotNull Tool tool) {
     myActionId = tool.getActionId();
     getTemplatePresentation().setText(tool.getName(), false);
     getTemplatePresentation().setDescription(tool.getDescription());
   }
 
-  public void actionPerformed(AnActionEvent e) {
-    runTool(myActionId, e.getDataContext(), e, 0L);
+  @Override
+  public void actionPerformed(@NotNull AnActionEvent e) {
+    runTool(myActionId, e.getDataContext(), e, 0L, null);
   }
 
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     Tool tool = findTool(myActionId, e.getDataContext());
     if (tool != null) {
       e.getPresentation().setText(ToolRunProfile.expandMacrosInName(tool, e.getDataContext()));
@@ -62,18 +66,18 @@ public class ToolAction extends AnAction implements DumbAware {
     return ToolsProvider.getAllTools();
   }
 
-  static void runTool(String actionId, DataContext context, long executionId) {
-    runTool(actionId, context, null, executionId);
-  }
-
   static void runTool(String actionId, DataContext context) {
-    runTool(actionId, context, null, 0L);
+    runTool(actionId, context, null, 0L, null);
   }
 
-  static void runTool(String actionId, DataContext context, AnActionEvent e, long executionId) {
+  static void runTool(String actionId,
+                      DataContext context,
+                      @Nullable AnActionEvent e,
+                      long executionId,
+                      @Nullable ProcessListener processListener) {
     Tool tool = findTool(actionId, context);
     if (tool != null) {
-      tool.execute(e, new HackyDataContext(context, e), executionId);
+      tool.execute(e, new HackyDataContext(context), executionId, processListener);
     }
   }
 }

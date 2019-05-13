@@ -20,6 +20,7 @@ import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.impl.RenameableFakePsiElement;
+import icons.MavenIcons;
 
 import javax.swing.*;
 
@@ -37,6 +38,7 @@ public class MavenPsiElementWrapper extends RenameableFakePsiElement {
     return myWrappee;
   }
 
+  @Override
   public PsiElement getParent() {
     return myWrappee.getParent();
   }
@@ -51,12 +53,14 @@ public class MavenPsiElementWrapper extends RenameableFakePsiElement {
     myNavigatable.navigate(requestFocus);
   }
 
+  @Override
   public String getTypeName() {
     return "Property";
   }
 
+  @Override
   public Icon getIcon() {
-    return icons.MavenIcons.MavenLogo;
+    return MavenIcons.MavenLogo;
   }
 
   @Override

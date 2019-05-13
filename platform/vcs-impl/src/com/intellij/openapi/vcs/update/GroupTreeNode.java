@@ -15,16 +15,15 @@
  */
 package com.intellij.openapi.vcs.update;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
 import com.intellij.psi.search.scope.packageSet.PackageSetBase;
 import com.intellij.ui.SimpleTextAttributes;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -39,7 +38,7 @@ import java.util.*;
 public class GroupTreeNode extends AbstractTreeNode implements Disposable {
   private final String myName;
   private final boolean mySupportsDeletion;
-  private final List<String> myFilePaths = new ArrayList<String>();
+  private final List<String> myFilePaths = new ArrayList<>();
   private final Map<String, String> myErrorsMap;
   private final SimpleTextAttributes myInvalidAttributes;
   private final Project myProject;
@@ -70,14 +69,13 @@ public class GroupTreeNode extends AbstractTreeNode implements Disposable {
 
   @Override
   public Icon getIcon(boolean expanded) {
-    @NonNls String iconName = expanded ? "folderOpen" : "folder";
-    return IconLoader.getIcon("/nodes/" + iconName + ".png");
+    return AllIcons.Nodes.Folder;
   }
 
   @NotNull
   @Override
   public Collection<VirtualFile> getVirtualFiles() {
-    ArrayList<VirtualFile> result = new ArrayList<VirtualFile>();
+    ArrayList<VirtualFile> result = new ArrayList<>();
     for (int i = 0; i < getChildCount(); i++) {
       result.addAll(((AbstractTreeNode)getChildAt(i)).getVirtualFiles());
     }
@@ -87,7 +85,7 @@ public class GroupTreeNode extends AbstractTreeNode implements Disposable {
   @NotNull
   @Override
   public Collection<File> getFiles() {
-    ArrayList<File> result = new ArrayList<File>();
+    ArrayList<File> result = new ArrayList<>();
     for (int i = 0; i < getChildCount(); i++) {
       result.addAll(((AbstractTreeNode)getChildAt(i)).getFiles());
     }
@@ -174,7 +172,7 @@ public class GroupTreeNode extends AbstractTreeNode implements Disposable {
   }
 
   private void buildPackages() {
-    Collection<File> files = new LinkedHashSet<File>();
+    Collection<File> files = new LinkedHashSet<>();
     for (final String myFilePath : myFilePaths) {
       files.add(new File(myFilePath));
     }
@@ -186,20 +184,17 @@ public class GroupTreeNode extends AbstractTreeNode implements Disposable {
   }
 
   private void addFiles(@NotNull AbstractTreeNode parentNode,
-                        @NotNull List<File> roots,
-                        @NotNull final Collection<File> files,
+                        @NotNull List<? extends File> roots,
+                        @NotNull final Collection<? extends File> files,
                         @NotNull GroupByPackages groupByPackages,
                         String parentPath) {
-    Collections.sort(roots, new Comparator<File>() {
-      @Override
-      public int compare(File file1, File file2) {
-        boolean containsFile1 = files.contains(file1);
-        boolean containsFile2 = files.contains(file2);
-        if (containsFile1 == containsFile2) {
-          return file1.getAbsolutePath().compareToIgnoreCase(file2.getAbsolutePath());
-        }
-        return containsFile1 ? 1 : -1;
+    Collections.sort(roots, (file1, file2) -> {
+      boolean containsFile1 = files.contains(file1);
+      boolean containsFile2 = files.contains(file2);
+      if (containsFile1 == containsFile2) {
+        return file1.getAbsolutePath().compareToIgnoreCase(file2.getAbsolutePath());
       }
+      return containsFile1 ? 1 : -1;
     });
 
     for (final File root : roots) {
@@ -213,12 +208,7 @@ public class GroupTreeNode extends AbstractTreeNode implements Disposable {
   }
 
   private void buildFiles(@Nullable Pair<PackageSetBase, NamedScopesHolder> filter, boolean showOnlyFilteredItems) {
-    Collections.sort(myFilePaths, new Comparator<String>() {
-      @Override
-      public int compare(String path1, String path2) {
-        return path1.compareToIgnoreCase(path2);
-      }
-    });
+    Collections.sort(myFilePaths, (path1, path2) -> path1.compareToIgnoreCase(path2));
 
     boolean apply = false;
 
@@ -229,6 +219,7 @@ public class GroupTreeNode extends AbstractTreeNode implements Disposable {
           apply = true;
         }
         else if (showOnlyFilteredItems) {
+          Disposer.dispose(child);
           continue;
         }
       }

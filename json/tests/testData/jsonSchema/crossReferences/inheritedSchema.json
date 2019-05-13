@@ -1,0 +1,7 @@
+{
+  "properties": {
+    "otherUrl": {
+      "$ref" : "https://localhost:1234/baseSchema#/definitions/baseEnum"
+    }
+  }
+}

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,24 +22,23 @@ import com.intellij.ide.favoritesTreeView.FavoritesManager;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 
-/**
- * User: anna
- * Date: Feb 28, 2005
- */
-class AddToNewFavoritesListAction extends AnAction {
-  public AddToNewFavoritesListAction() {
+class AddToNewFavoritesListAction extends AnAction implements DumbAware {
+  AddToNewFavoritesListAction() {
     super(IdeBundle.message("action.add.to.new.favorites.list"),
-          "Add To New Favorites List", AllIcons.General.AddFavoritesList);
+          "Add To New Favorites List", AllIcons.General.Add);
   }
 
-  public void actionPerformed(AnActionEvent e) {
+  @Override
+  public void actionPerformed(@NotNull AnActionEvent e) {
     Project project = e.getProject();
     Collection<AbstractTreeNode> nodesToAdd = AddToFavoritesAction.getNodesToAdd(e.getDataContext(), true);
-    if (nodesToAdd != null) {
+    if (!nodesToAdd.isEmpty()) {
       final String newName = AddNewFavoritesListAction.doAddNewFavoritesList(project);
       if (newName != null) {
         FavoritesManager.getInstance(project).addRoots(newName, nodesToAdd);
@@ -47,7 +46,8 @@ class AddToNewFavoritesListAction extends AnAction {
     }
   }
 
-  public void update(AnActionEvent e) {
+  @Override
+  public void update(@NotNull AnActionEvent e) {
     e.getPresentation().setEnabled(AddToFavoritesAction.canCreateNodes(e));
   }
 }

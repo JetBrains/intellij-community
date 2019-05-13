@@ -1,0 +1,16 @@
+<html>
+<body>
+This inspection analyzes method control and data flow to report possible conditions that are always <b>true</b> or <b>false</b>,
+expressions whose value is statically proven to be constant, and situations that can lead to nullability contract violations.<p/>
+  
+Variables, method parameters and return values marked as <code>@Nullable</code> or <code>@NotNull</code> are treated as nullable (or not-null, respectively)
+and used during the analysis to check nullability contracts, e.g. report <code>NullPointerException</code> (NPE) errors that might be produced.<p/>
+
+More complex contracts can be defined using <code>@Contract</code> annotation, for example:<p/>
+<code>@Contract("_, null -> null")</code> &mdash; method returns null if its second argument is null<br/>
+<code>@Contract("_, null -> null; _, !null -> !null")</code> &mdash; method returns null if its second argument is null and not-null otherwise<br/>
+<code>@Contract("true -> fail")</code> &mdash; a typical <code>assertFalse</code> method which throws an exception if <code>true</code> is passed to it<br/>
+<p/>
+The inspection can be configured to use custom <code>@Nullable</code>/<code>@NotNull</code> annotations (by default the ones from annotations.jar will be used)
+</body>
+</html>

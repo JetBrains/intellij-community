@@ -1,31 +1,38 @@
+/*
+ * Copyright 2000-2013 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.intellij.util.containers;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.util.LowMemoryWatcher;
-import com.intellij.util.containers.SLRUCache;
-import jsr166e.SequenceLock;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
-/**
-* User: Maxim.Mossienko
-* Date: 2/4/13
-* Time: 4:50 PM
-*/
 public class RecentStringInterner {
   private final int myStripeMask;
   private final SLRUCache<String, String>[] myInterns;
   private final Lock[] myStripeLocks;
-  private final LowMemoryWatcher myClearingCallback;
 
-  public RecentStringInterner() {
-    this(8192);
-  }
-
-  public RecentStringInterner(int capacity) {
+  public RecentStringInterner(@NotNull Disposable parentDisposable) {
     final int stripes = 16;
+    //noinspection unchecked
     myInterns = new SLRUCache[stripes];
     myStripeLocks = new Lock[myInterns.length];
+    int capacity = 8192;
     for(int i = 0; i < myInterns.length; ++i) {
       myInterns[i] = new SLRUCache<String, String>(capacity / stripes, capacity / stripes) {
         @NotNull
@@ -33,18 +40,23 @@ public class RecentStringInterner {
         public String createValue(String key) {
           return key;
         }
+
+        @Override
+        protected void putToProtectedQueue(String key, @NotNull String value) {
+          super.putToProtectedQueue(value, value);
+        }
       };
-      myStripeLocks[i] = new SequenceLock();
+      myStripeLocks[i] = new ReentrantLock();
     }
 
     assert Integer.highestOneBit(stripes) == stripes;
     myStripeMask = stripes - 1;
-    myClearingCallback = LowMemoryWatcher.register(new Runnable() {
+    LowMemoryWatcher.register(new Runnable() {
       @Override
       public void run() {
         clear();
-      };
-    });
+      }
+    }, parentDisposable);
   }
 
   public String get(String s) {
@@ -53,16 +65,21 @@ public class RecentStringInterner {
     try {
       myStripeLocks[stripe].lock();
       return myInterns[stripe].get(s);
-    } finally {
+    }
+    finally {
       myStripeLocks[stripe].unlock();
     }
   }
 
   public void clear() {
     for(int i = 0; i < myInterns.length; ++i) {
-      myStripeLocks[i].lock();
-      myInterns[i].clear();
-      myStripeLocks[i].unlock();
+      try {
+        myStripeLocks[i].lock();
+        myInterns[i].clear();
+      }
+      finally {
+        myStripeLocks[i].unlock();
+      }
     }
   }
 }

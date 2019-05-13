@@ -35,23 +35,20 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 
-/**
- * Created by IntelliJ IDEA.
- * User: sweinreuter
- * Date: 10.08.2007
- */
 public class RncFoldingBuilder implements FoldingBuilder {
+  @Override
   @NotNull
   public FoldingDescriptor[] buildFoldRegions(@NotNull ASTNode node, @NotNull Document document) {
 
-    final ArrayList<FoldingDescriptor> regions = new ArrayList<FoldingDescriptor>();
+    final ArrayList<FoldingDescriptor> regions = new ArrayList<>();
     process(node, document, regions);
 
     return regions.size() > 0
-            ? regions.toArray(new FoldingDescriptor[regions.size()])
+            ? regions.toArray(FoldingDescriptor.EMPTY)
             : FoldingDescriptor.EMPTY;
   }
 
+  @Override
   public String getPlaceholderText(@NotNull ASTNode node) {
     final IElementType type = node.getElementType();
     if (type == RncTokenTypes.LBRACE) {
@@ -79,6 +76,7 @@ public class RncFoldingBuilder implements FoldingBuilder {
     return RncTokenTypes.COMMENTS.contains(type) || RncTokenTypes.DOC_TOKENS.contains(type);
   }
 
+  @Override
   public boolean isCollapsedByDefault(@NotNull ASTNode node) {
     return isCommentLike(node.getElementType()) && CodeFoldingSettings.getInstance().COLLAPSE_DOC_COMMENTS;
   }

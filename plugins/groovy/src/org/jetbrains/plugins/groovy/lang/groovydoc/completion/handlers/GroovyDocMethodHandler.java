@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,10 +21,11 @@ import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.openapi.editor.CaretModel;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.util.PsiTypesUtil;
 import org.jetbrains.plugins.groovy.extensions.completion.ContextSpecificInsertHandler;
-import org.jetbrains.plugins.groovy.lang.GrReferenceAdjuster;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocComment;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocMethodParameter;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocMethodParams;
@@ -36,6 +37,7 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
  */
 public class GroovyDocMethodHandler implements ContextSpecificInsertHandler {
 
+  @Override
   public boolean isAcceptable(InsertionContext context, int startOffset, LookupElement item) {
     PsiFile file = context.getFile();
     if (!(file instanceof GroovyFile)) return false;
@@ -52,6 +54,7 @@ public class GroovyDocMethodHandler implements ContextSpecificInsertHandler {
 
   }
 
+  @Override
   public void handleInsert(InsertionContext context, int startOffset, LookupElement item) {
 
     Editor editor = context.getEditor();
@@ -91,13 +94,14 @@ public class GroovyDocMethodHandler implements ContextSpecificInsertHandler {
     document.insertString(offset, paramText);
     int endOffset = offset + paramText.length();
 
-    PsiDocumentManager.getInstance(context.getProject()).commitDocument(document);
+    final Project project = context.getProject();
+    PsiDocumentManager.getInstance(project).commitDocument(document);
     PsiReference ref = context.getFile().findReferenceAt(startOffset);
     if (ref instanceof GrDocMethodReference) {
       GrDocMethodReference methodReference = (GrDocMethodReference) ref;
       GrDocMethodParams list = methodReference.getParameterList();
       for (GrDocMethodParameter parameter : list.getParameters()) {
-        GrReferenceAdjuster.shortenReferences(parameter);
+        JavaCodeStyleManager.getInstance(project).shortenClassReferences(parameter);
       }
       endOffset = methodReference.getTextRange().getEndOffset() + 1;
     }

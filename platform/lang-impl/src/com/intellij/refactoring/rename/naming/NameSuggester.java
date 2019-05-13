@@ -21,6 +21,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.codeStyle.NameUtil;
 import gnu.trove.TIntIntHashMap;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
@@ -43,7 +44,7 @@ public class NameSuggester {
     myOldClassName = NameUtil.splitNameIntoWords(oldClassName);
     myNewClassName = NameUtil.splitNameIntoWords(newClassName);
 
-    myChanges = new ArrayList<OriginalToNewChange>();
+    myChanges = new ArrayList<>();
     int oldIndex = myOldClassName.length - 1;
     int oldLastMatch = myOldClassName.length;
     int newLastMatch = myNewClassName.length;
@@ -79,7 +80,7 @@ public class NameSuggester {
   }
 
   List<Pair<String,String>> getChanges() {
-    final ArrayList<Pair<String,String>> result = new ArrayList<Pair<String,String>>();
+    final ArrayList<Pair<String,String>> result = new ArrayList<>();
     for (int i = myChanges.size() - 1; i >=0; i--) {
       final OriginalToNewChange change = myChanges.get(i);
       result.add(Pair.create(change.getOldString(), change.getNewString()));
@@ -163,19 +164,15 @@ public class NameSuggester {
    * {&lt;first,last&gt; -&gt; replacement} <br>
    * where start and end are indices of property words range (inclusive), and replacement is a
    * string that this range must be replaced with.<br>
-   * It is valid situation that <code>last == first - 1</code>: in this case replace means insertion
-   * before first word. Furthermore, first may be equal to <code>propertyWords.length</code>  - in
+   * It is valid situation that {@code last == first - 1}: in this case replace means insertion
+   * before first word. Furthermore, first may be equal to {@code propertyWords.length}  - in
    * that case replacements transormates to appending.
    * @param propertyWords
    * @param matches
    * @return
    */
   private TreeMap<Pair<Integer, Integer>, String> calculateReplacements(String[] propertyWords, TIntIntHashMap matches) {
-    TreeMap<Pair<Integer,Integer>, String> replacements = new TreeMap<Pair<Integer,Integer>, String>(new Comparator<Pair<Integer, Integer>>() {
-      public int compare(Pair<Integer, Integer> pair, Pair<Integer, Integer> pair1) {
-        return pair.getFirst().compareTo(pair1.getFirst());
-      }
-    });
+    TreeMap<Pair<Integer,Integer>, String> replacements = new TreeMap<>((pair, pair1) -> pair.getFirst().compareTo(pair1.getFirst()));
     for (final OriginalToNewChange change : myChanges) {
       final int first = change.oldFirst;
       final int last = change.oldLast;
@@ -212,11 +209,12 @@ public class NameSuggester {
     return replacements;
   }
 
-  private static String suggestReplacement(String propertyWord, String newClassNameWords) {
+  private static String suggestReplacement(String propertyWord, @NotNull String newClassNameWords) {
     return decapitalizeProbably(newClassNameWords, propertyWord);
   }
 
-  private static String decapitalizeProbably(String word, String originalWord) {
+  @NotNull
+  private static String decapitalizeProbably(@NotNull String word, String originalWord) {
     if (originalWord.length() == 0) return word;
     if (Character.isLowerCase(originalWord.charAt(0))) {
       return StringUtil.decapitalize(word);
@@ -254,7 +252,7 @@ public class NameSuggester {
     final int newFirst;
     final int newLast;
 
-    public OriginalToNewChange(int firstInOld, int lastInOld, int firstInNew, int lastInNew) {
+    OriginalToNewChange(int firstInOld, int lastInOld, int firstInNew, int lastInNew) {
       oldFirst = firstInOld;
       oldLast = lastInOld;
       newFirst = firstInNew;
@@ -273,6 +271,7 @@ public class NameSuggester {
       return buffer.toString();
     }
 
+    @NotNull
     String getNewString() {
       final StringBuilder buffer = new StringBuilder();
       for (int i = newFirst; i <= newLast; i++) {
@@ -287,7 +286,7 @@ public class NameSuggester {
     final int propertyNameIndex;
     final String propertyWord;
 
-    public Match(int oldClassNameIndex, int propertyNameIndex, String propertyWord) {
+    Match(int oldClassNameIndex, int propertyNameIndex, String propertyWord) {
       this.oldClassNameIndex = oldClassNameIndex;
       this.propertyNameIndex = propertyNameIndex;
       this.propertyWord = propertyWord;

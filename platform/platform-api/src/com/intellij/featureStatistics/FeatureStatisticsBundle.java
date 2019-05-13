@@ -1,44 +1,40 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.featureStatistics;
 
 import com.intellij.CommonBundle;
+import com.intellij.openapi.diagnostic.Logger;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.PropertyKey;
 
 import java.lang.ref.Reference;
 import java.lang.ref.SoftReference;
+import java.util.HashMap;
+import java.util.Locale;
+import java.util.MissingResourceException;
 import java.util.ResourceBundle;
 
 /**
  * @author max
  */
 public class FeatureStatisticsBundle {
-  private static Reference<ResourceBundle> ourBundle;
 
+  public static String message(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, @NotNull Object... params) {
+    return CommonBundle.message(getBundle(key), key, params);
+  }
+
+  private static Reference<ResourceBundle> ourBundle;
+  private static final Logger LOG = Logger.getInstance(FeatureStatisticsBundle.class);
   @NonNls private static final String BUNDLE = "messages.FeatureStatisticsBundle";
 
   private FeatureStatisticsBundle() {
   }
 
-  public static String message(@PropertyKey(resourceBundle = BUNDLE)String key, Object... params) {
-    return CommonBundle.message(getBundle(key), key, params);
-  }
-
   private static ResourceBundle getBundle(final String key) {
+    ResourceBundle providerBundle = ProvidersBundles.INSTANCE.get(key);
+    if (providerBundle != null) {
+      return providerBundle;
+    }
     final FeatureStatisticsBundleProvider[] providers = FeatureStatisticsBundleProvider.EP_NAME.getExtensions();
     for (FeatureStatisticsBundleProvider provider : providers) {
       final ResourceBundle bundle = provider.getBundle();
@@ -47,12 +43,30 @@ public class FeatureStatisticsBundle {
       }
     }
 
-    ResourceBundle bundle = null;
-    if (ourBundle != null) bundle = ourBundle.get();
+    ResourceBundle bundle = com.intellij.reference.SoftReference.dereference(ourBundle);
     if (bundle == null) {
       bundle = ResourceBundle.getBundle(BUNDLE);
-      ourBundle = new SoftReference<ResourceBundle>(bundle);
+      ourBundle = new SoftReference<>(bundle);
     }
     return bundle;
+  }
+
+  private static final class ProvidersBundles extends HashMap<String, ResourceBundle> {
+    @SuppressWarnings("MismatchedQueryAndUpdateOfCollection")
+    private static final ProvidersBundles INSTANCE = new ProvidersBundles();
+
+    private ProvidersBundles() {
+      for (FeatureStatisticsBundleEP bundleEP : FeatureStatisticsBundleEP.EP_NAME.getExtensionList()) {
+        try {
+          ResourceBundle bundle = ResourceBundle.getBundle(bundleEP.qualifiedName, Locale.getDefault(), bundleEP.getLoaderForClass());
+          for (String key : bundle.keySet()) {
+            put(key, bundle);
+          }
+        }
+        catch (MissingResourceException e) {
+          LOG.error(e);
+        }
+      }
+    }
   }
 }

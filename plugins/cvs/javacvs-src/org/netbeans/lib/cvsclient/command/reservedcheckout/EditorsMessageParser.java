@@ -42,30 +42,33 @@ final class EditorsMessageParser extends AbstractMessageParser {
 
 	private final IEventSender eventManager;
 	private final ICvsFileSystem cvsFileSystem;
-	private final Set fileSet = new HashSet();
+	private final Set<File> fileSet = new HashSet<>();
 
 	private transient EditorsFileInfoContainer editorsFileInfo;
 
 	// Setup ==================================================================
 
-	public EditorsMessageParser(IEventSender eventManager, final ICvsFileSystem cvsFileSystem, ICvsFiles cvsFiles) {
+	EditorsMessageParser(IEventSender eventManager, final ICvsFileSystem cvsFileSystem, ICvsFiles cvsFiles) {
 		this.eventManager = eventManager;
 		this.cvsFileSystem = cvsFileSystem;
 
 		cvsFiles.visit(new ICvsFilesVisitor() {
-			public void handleFile(FileObject fileObject, Entry entry, boolean exists) {
+			@Override
+                        public void handleFile(FileObject fileObject, Entry entry, boolean exists) {
 				final File file = cvsFileSystem.getLocalFileSystem().getFile(fileObject);
 				fileSet.add(file);
 			}
 
-			public void handleDirectory(DirectoryObject directoryObject) {
+			@Override
+                        public void handleDirectory(DirectoryObject directoryObject) {
 			}
 		});
 	}
 
 	// Implemented ============================================================
 
-	public void parseLine(String line, boolean isErrorMessage) {
+	@Override
+        public void parseLine(String line, boolean isErrorMessage) {
 		if (isErrorMessage) {
 			return;
 		}
@@ -106,17 +109,17 @@ final class EditorsMessageParser extends AbstractMessageParser {
 		}
 	}
 
-	public void outputDone() {
+	@Override
+        public void outputDone() {
 		if (editorsFileInfo != null) {
 			fireFileInfoEvent(editorsFileInfo, true);
 			editorsFileInfo = null;
 		}
 
-		for (Iterator it = fileSet.iterator(); it.hasNext();) {
-			final File file = (File)it.next();
+		for (final File file : fileSet) {
 			fireFileInfoEvent(new EditorsFileInfoContainer(file), false);
-			it.remove();
 		}
+		fileSet.clear();
 	}
 
 	// Utils ==================================================================
@@ -139,7 +142,4 @@ final class EditorsMessageParser extends AbstractMessageParser {
 
 		return DATE_FORMAT.parse(dateString);
 	}
-
-        public void binaryMessageSent(final byte[] bytes) {
-        }
 }

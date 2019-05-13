@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,16 +16,18 @@
 package com.intellij.debugger.ui.tree.actions;
 
 import com.intellij.debugger.DebuggerContext;
-import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.engine.DebuggerUtils;
 import com.intellij.debugger.engine.SuspendContext;
 import com.intellij.debugger.engine.managerThread.SuspendContextCommand;
+import com.intellij.debugger.impl.DebuggerUtilsEx;
+import com.intellij.debugger.ui.impl.watch.DebuggerTreeNodeImpl;
 import com.intellij.debugger.ui.tree.DebuggerTreeNode;
 import com.intellij.debugger.ui.tree.ValueDescriptor;
 import com.intellij.debugger.ui.tree.render.NodeRenderer;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.sun.jdi.*;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Enumeration;
 
@@ -36,7 +38,7 @@ public class ShowAllAs extends AnAction {
     myRenderer = renderer;
   }
 
-  private boolean isPrimitiveArray(DebuggerTreeNode selectedNode) {
+  private static boolean isPrimitiveArray(DebuggerTreeNode selectedNode) {
     try {
       if(selectedNode.getDescriptor() instanceof ValueDescriptor) {
         ValueDescriptor valueDescriptor = ((ValueDescriptor)selectedNode.getDescriptor());
@@ -54,20 +56,22 @@ public class ShowAllAs extends AnAction {
         }
       }
     }
-    catch (ClassNotLoadedException e) {
+    catch (ClassNotLoadedException ignored) {
     }
     return false;
   }
 
-  public void update(AnActionEvent e) {
+  @Override
+  public void update(@NotNull AnActionEvent e) {
     DebuggerTreeNode selectedNode = ((DebuggerUtilsEx)DebuggerUtils.getInstance()).getSelectedNode(e.getDataContext());
     e.getPresentation().setVisible(myRenderer != null && selectedNode != null && isPrimitiveArray(selectedNode));
   }
 
-  public void actionPerformed(AnActionEvent e) {
-    DebuggerTreeNode selectedNode = ((DebuggerUtilsEx)DebuggerUtils.getInstance()).getSelectedNode(e.getDataContext());
+  @Override
+  public void actionPerformed(@NotNull AnActionEvent e) {
+    DebuggerTreeNodeImpl selectedNode = (DebuggerTreeNodeImpl)((DebuggerUtilsEx)DebuggerUtils.getInstance()).getSelectedNode(e.getDataContext());
     if(selectedNode == null) return;
-    
+
     if(!isPrimitiveArray(selectedNode)) return;
 
     final DebuggerContext debuggerContext = DebuggerUtils.getInstance().getDebuggerContext(e.getDataContext());
@@ -77,14 +81,17 @@ public class ShowAllAs extends AnAction {
       final DebuggerTreeNode child = (DebuggerTreeNode)children.nextElement();
       if(child.getDescriptor() instanceof ValueDescriptor) {
         debuggerContext.getDebugProcess().getManagerThread().invokeCommand(new SuspendContextCommand() {
+          @Override
           public SuspendContext getSuspendContext() {
             return debuggerContext.getSuspendContext();
           }
 
+          @Override
           public void action() {
             child.setRenderer(myRenderer);
           }
 
+          @Override
           public void commandCancelled() {
           }
         });

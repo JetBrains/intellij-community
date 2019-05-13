@@ -24,17 +24,39 @@ import java.rmi.Remote;
 import java.rmi.RemoteException;
 import java.util.Collection;
 import java.util.List;
+import java.util.Properties;
 
 public interface MavenServerEmbedder extends Remote {
+  String MAVEN_EMBEDDER_VERSION = "idea.maven.embedder.version";
+  String MAVEN_EMBEDDER_CLI_ADDITIONAL_ARGS = "idea.maven.embedder.ext.cli.args";
+
   void customize(@Nullable MavenWorkspaceMap workspaceMap,
                  boolean failOnUnresolvedDependency,
                  @NotNull MavenServerConsole console,
-                 @NotNull MavenServerProgressIndicator indicator) throws RemoteException;
+                 @NotNull MavenServerProgressIndicator indicator,
+                 boolean alwaysUpdateSnapshots,
+                 @Nullable Properties userProperties) throws RemoteException;
+
+  void customizeComponents() throws RemoteException;
 
   @NotNull
-  MavenServerExecutionResult resolveProject(@NotNull File file,
-                                            @NotNull Collection<String> activeProfiles) throws RemoteException,
-                                                                                               MavenServerProcessCanceledException;
+  List<String> retrieveAvailableVersions(@NotNull String groupId,
+                                         @NotNull String artifactId,
+                                         @NotNull List<MavenRemoteRepository> remoteRepositories)
+    throws RemoteException;
+
+
+  @NotNull
+  Collection<MavenServerExecutionResult> resolveProject(@NotNull Collection<File> files,
+                                                        @NotNull Collection<String> activeProfiles,
+                                                        @NotNull Collection<String> inactiveProfiles) throws RemoteException,
+                                                                                                 MavenServerProcessCanceledException;
+
+  @Nullable
+  String evaluateEffectivePom(@NotNull File file,
+                              @NotNull List<String> activeProfiles,
+                              @NotNull List<String> inactiveProfiles) throws RemoteException,
+                                                                             MavenServerProcessCanceledException;
 
   @NotNull
   MavenArtifact resolve(@NotNull MavenArtifactInfo info,
@@ -67,4 +89,7 @@ public interface MavenServerEmbedder extends Remote {
   void clearCaches() throws RemoteException;
 
   void clearCachesFor(MavenId projectId) throws RemoteException;
+
+  @Nullable
+  MavenModel readModel(File file) throws RemoteException;
 }

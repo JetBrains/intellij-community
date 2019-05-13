@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluateExceptionUtil;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.sun.jdi.*;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author lex
@@ -28,20 +29,23 @@ public class AssignmentEvaluator implements Evaluator{
   private final Evaluator myLeftEvaluator;
   private final Evaluator myRightEvaluator;
 
-  public AssignmentEvaluator(Evaluator leftEvaluator, Evaluator rightEvaluator) {
+  public AssignmentEvaluator(@NotNull Evaluator leftEvaluator, @NotNull Evaluator rightEvaluator) {
     myLeftEvaluator = leftEvaluator;
-    myRightEvaluator = new DisableGC(rightEvaluator);
+    myRightEvaluator = DisableGC.create(rightEvaluator);
   }
 
+  @Override
   public Object evaluate(EvaluationContextImpl context) throws EvaluateException {
-    Object right = myRightEvaluator.evaluate(context);
+    myLeftEvaluator.evaluate(context);
+    final Modifier modifier = myLeftEvaluator.getModifier();
+
+    final Object right = myRightEvaluator.evaluate(context);
     if(right != null && !(right instanceof Value)) {
       throw EvaluateExceptionUtil.createEvaluateException(DebuggerBundle.message("evaluation.error.not.rvalue"));
     }
 
-    myLeftEvaluator.evaluate(context);
-    Modifier modifier = myLeftEvaluator.getModifier();
     assign(modifier, right, context);
+
     return right;
   }
 
@@ -59,16 +63,7 @@ public class AssignmentEvaluator implements Evaluator{
       try {
         context.getDebugProcess().loadClass(context, e.className(), context.getClassLoader());
       }
-      catch (InvocationException e1) {
-        throw EvaluateExceptionUtil.createEvaluateException(e1);
-      }
-      catch (ClassNotLoadedException e1) {
-        throw EvaluateExceptionUtil.createEvaluateException(e1);
-      }
-      catch (IncompatibleThreadStateException e1) {
-        throw EvaluateExceptionUtil.createEvaluateException(e1);
-      }
-      catch (InvalidTypeException e1) {
+      catch (InvocationException | InvalidTypeException | IncompatibleThreadStateException | ClassNotLoadedException e1) {
         throw EvaluateExceptionUtil.createEvaluateException(e1);
       }
     }
@@ -77,7 +72,13 @@ public class AssignmentEvaluator implements Evaluator{
     }
   }
 
+  @Override
   public Modifier getModifier() {
     return myLeftEvaluator.getModifier();
+  }
+
+  @Override
+  public String toString() {
+    return myLeftEvaluator + " = " + myRightEvaluator;
   }
 }

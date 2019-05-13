@@ -20,7 +20,6 @@
 //package thinlet; //java
 //midp package thinlet.midp;
 
-import java.<error descr="Cannot resolve symbol 'applet'">applet</error>.*; //java
 import java.awt.*; //java
 import java.awt.<error descr="Cannot resolve symbol 'datatransfer'">datatransfer</error>.*; //java
 import java.awt.<error descr="Cannot resolve symbol 'image'">image</error>.*; //java
@@ -35,7 +34,7 @@ import java.util.*;
 /**
  *
  */
-public class Thinlet extends Container //java
+class Thinlet extends Container //java
 	implements Runnable, Serializable { //java
 //midp public class Thinlet extends Canvas implements CommandListener {
 
@@ -184,7 +183,7 @@ public class Thinlet extends Container //java
 				j = text.indexOf('\n', i);
 				if (i != j) { // && i != text.length()
 					String line = (j != -1) ? text.substring(i, j) : text.substring(i); //java
-					width = Math.max<error descr="Cannot resolve method 'max(int, ?)'">(width, fm.<error descr="Cannot resolve method 'stringWidth(java.lang.String)'">stringWidth</error>(line))</error>; //java
+					width = Math.max(width, fm.<error descr="Cannot resolve method 'stringWidth(java.lang.String)'">stringWidth</error>(line)); //java
 					//midp width = font.substringWidth(text, i, ((j != -1) ? j : text.length()) - i);
 				}
 				if ((end >= i) && ((j == -1) || (end <= j))) {
@@ -305,9 +304,9 @@ public class Thinlet extends Container //java
 					Dimension d = getPreferredSize(comp);
 					if (get(comp, "bounds") == null)
 					setRectangle(comp, "bounds",
-						Math.max<error descr="Cannot resolve method 'max(int, ?)'">(0, (bounds.<error descr="Cannot resolve symbol 'width'">width</error> - d.width) / 2)</error>,
-						Math.max<error descr="Cannot resolve method 'max(int, ?)'">(0, (bounds.<error descr="Cannot resolve symbol 'height'">height</error> - d.height) / 2)</error>,
-						Math.min<error descr="Cannot resolve method 'min(int, ?)'">(d.width, bounds.<error descr="Cannot resolve symbol 'width'">width</error>)</error>, Math.min<error descr="Cannot resolve method 'min(int, ?)'">(d.height, bounds.<error descr="Cannot resolve symbol 'height'">height</error>)</error>);
+						Math.max(0, (bounds.<error descr="Cannot resolve symbol 'width'">width</error> - d.width) / 2),
+						Math.max(0, (bounds.<error descr="Cannot resolve symbol 'height'">height</error> - d.height) / 2),
+						Math.min(d.width, bounds.<error descr="Cannot resolve symbol 'width'">width</error>), Math.min(d.height, bounds.<error descr="Cannot resolve symbol 'height'">height</error>));
 				} else if ((iclass == "combolist") || (iclass == "popupmenu")) {
 						iclass = iclass; //compiler bug
 				} else {
@@ -446,9 +445,9 @@ public class Thinlet extends Container //java
 					r.<error descr="Cannot resolve symbol 'height'">height</error> = db.<error descr="Cannot resolve symbol 'height'">height</error> - r.<error descr="Cannot resolve symbol 'y'">y</error>;
 				}
 				else {
-					r.<error descr="Cannot resolve symbol 'height'">height</error> = Math.min<error descr="Cannot resolve method 'min(?, ?)'">(r.<error descr="Cannot resolve symbol 'height'">height</error>, db.<error descr="Cannot resolve symbol 'height'">height</error> - r.<error descr="Cannot resolve symbol 'y'">y</error>)</error>;
+					r.<error descr="Cannot resolve symbol 'height'">height</error> = Math.min(r.<error descr="Cannot resolve symbol 'height'">height</error>, db.<error descr="Cannot resolve symbol 'height'">height</error> - r.<error descr="Cannot resolve symbol 'y'">y</error>);
 				}
-				r.<error descr="Cannot resolve symbol 'width'">width</error> = Math.min<error descr="Cannot resolve method 'min(?, ?)'">(r.<error descr="Cannot resolve symbol 'width'">width</error>, db.<error descr="Cannot resolve symbol 'width'">width</error> - r.<error descr="Cannot resolve symbol 'x'">x</error>)</error>;
+				r.<error descr="Cannot resolve symbol 'width'">width</error> = Math.min(r.<error descr="Cannot resolve symbol 'width'">width</error>, db.<error descr="Cannot resolve symbol 'width'">width</error> - r.<error descr="Cannot resolve symbol 'x'">x</error>);
 				layoutScrollPane(component, pw, ph, 0, 0);//~
 			}
 		}
@@ -635,8 +634,8 @@ public class Thinlet extends Container //java
 		else if (off < caret - width + 4) {
 			off = caret - width + 4;
 		}
-		off = Math.max<error descr="Cannot resolve method 'max(int, ?)'">(0, Math.min<error descr="Cannot resolve method 'min(int, ?)'">(off, (hidden ? (fm.<error descr="Cannot resolve method 'charWidth(char)'">charWidth</error>('*') *
-			text.length()) : fm.<error descr="Cannot resolve method 'stringWidth(java.lang.String)'">stringWidth</error>(text)) - width + 4)</error>)</error>;
+		off = Math.max(0, Math.min(off, (hidden ? (fm.<error descr="Cannot resolve method 'charWidth(char)'">charWidth</error>('*') *
+			text.length()) : fm.<error descr="Cannot resolve method 'stringWidth(java.lang.String)'">stringWidth</error>(text)) - width + 4));
 		if (off != offset) {
 			setInteger(component, "offset", off, 0);
 		}
@@ -664,10 +663,10 @@ public class Thinlet extends Container //java
 
 		<error descr="Cannot resolve symbol 'Rectangle'">Rectangle</error> view = getRectangle(component, ":view");
 		setRectangle(component, ":view",
-			(view != null) ? Math.max<error descr="Cannot resolve method 'max(int, ?)'">(0,
-				Math.min<error descr="Cannot resolve method 'min(?, int)'">(view.<error descr="Cannot resolve symbol 'x'">x</error>, contentwidth - viewportwidth + 2)</error>)</error> : 0,
-			(view != null) ? Math.max<error descr="Cannot resolve method 'max(int, ?)'">(0,
-				Math.min<error descr="Cannot resolve method 'min(?, int)'">(view.<error descr="Cannot resolve symbol 'y'">y</error>, contentheight - viewportheight + 2)</error>)</error> : 0,
+			(view != null) ? Math.max(0,
+				Math.min(view.<error descr="Cannot resolve symbol 'x'">x</error>, contentwidth - viewportwidth + 2)) : 0,
+			(view != null) ? Math.max(0,
+				Math.min(view.<error descr="Cannot resolve symbol 'y'">y</error>, contentheight - viewportheight + 2)) : 0,
 			Math.max(viewportwidth - 2, contentwidth),
 			Math.max(viewportheight - 2, contentheight));
 	}
@@ -679,8 +678,8 @@ public class Thinlet extends Container //java
 			int x, int y, int width, int height) {
 		<error descr="Cannot resolve symbol 'Rectangle'">Rectangle</error> view = getRectangle(component, ":view");
 		<error descr="Cannot resolve symbol 'Rectangle'">Rectangle</error> port = getRectangle(component, ":port");
-		int vx = Math.max<error descr="Cannot resolve method 'max(?, ?)'">(x + width - port.<error descr="Cannot resolve symbol 'width'">width</error> + 2, Math.min<error descr="Cannot resolve method 'min(?, int)'">(view.<error descr="Cannot resolve symbol 'x'">x</error>, x)</error>)</error>;
-		int vy = Math.max<error descr="Cannot resolve method 'max(?, ?)'">(y + height - port.<error descr="Cannot resolve symbol 'height'">height</error> + 2, Math.min<error descr="Cannot resolve method 'min(?, int)'">(view.<error descr="Cannot resolve symbol 'y'">y</error>, y)</error>)</error>;
+		int vx = Math.max(x + width - port.<error descr="Cannot resolve symbol 'width'">width</error> + 2, Math.min(view.<error descr="Cannot resolve symbol 'x'">x</error>, x));
+		int vy = Math.max(y + height - port.<error descr="Cannot resolve symbol 'height'">height</error> + 2, Math.min(view.<error descr="Cannot resolve symbol 'y'">y</error>, y));
 		if ((view.<error descr="Cannot resolve symbol 'x'">x</error> != vx) || (view.<error descr="Cannot resolve symbol 'y'">y</error> != vy)) {
 			repaint(component); // horizontal | vertical
 			view.<error descr="Cannot resolve symbol 'x'">x</error> = vx; view.<error descr="Cannot resolve symbol 'y'">y</error> = vy;
@@ -723,7 +722,7 @@ public class Thinlet extends Container //java
 				<error descr="Cannot resolve symbol 'Image'">Image</error> icon = getIcon(component, "icon", null);
 				if (icon != null) {
 					size.width += icon.<error descr="Cannot resolve method 'getWidth(Thinlet)'">getWidth</error>(this);
-					size.height = Math.max<error descr="Cannot resolve method 'max(int, ?)'">(size.height, icon.<error descr="Cannot resolve method 'getHeight(Thinlet)'">getHeight</error>(this) + 2)</error>;
+					size.height = Math.max(size.height, icon.<error descr="Cannot resolve method 'getHeight(Thinlet)'">getHeight</error>(this) + 2);
 				}
 				size.width += block;
 				return size;
@@ -1090,7 +1089,7 @@ public class Thinlet extends Container //java
 		<error descr="Cannot resolve symbol 'Rectangle'">Rectangle</error> bounds = getRectangle(component, "bounds");
 		if (bounds == null) { return; }
 		if (bounds.<error descr="Cannot resolve symbol 'width'">width</error> < 0) {
-			bounds.<error descr="Cannot resolve symbol 'width'">width</error> = Math.abs<error descr="Cannot resolve method 'abs(?)'">(bounds.<error descr="Cannot resolve symbol 'width'">width</error>)</error>;
+			bounds.<error descr="Cannot resolve symbol 'width'">width</error> = Math.abs(bounds.<error descr="Cannot resolve symbol 'width'">width</error>);
 			doLayout(component);
 		}
 		if ((clipx + clipwidth < bounds.<error descr="Cannot resolve symbol 'x'">x</error>) ||
@@ -1205,7 +1204,7 @@ public class Thinlet extends Container //java
 				Object selected = get(component, "inside");
 				int ly = clipy - viewport.<error descr="Cannot resolve symbol 'y'">y</error> - 1;
 				int yfrom = view.<error descr="Cannot resolve symbol 'y'">y</error> + Math.max(0, ly);
-				int yto = view.<error descr="Cannot resolve symbol 'y'">y</error> + Math.min<error descr="Cannot resolve method 'min(?, int)'">(viewport.<error descr="Cannot resolve symbol 'height'">height</error> - 2, ly + clipheight)</error>;
+				int yto = view.<error descr="Cannot resolve symbol 'y'">y</error> + Math.min(viewport.<error descr="Cannot resolve symbol 'height'">height</error> - 2, ly + clipheight);
 				for (Object choice = get(get(component, "combobox"), "choice");
 						choice != null; choice = get(choice, ":next")) {
 					<error descr="Cannot resolve symbol 'Rectangle'">Rectangle</error> r = getRectangle(choice, "bounds");
@@ -1248,7 +1247,7 @@ public class Thinlet extends Container //java
 				int ascent = 1;
 				int ly = clipy - viewport.<error descr="Cannot resolve symbol 'y'">y</error> - 1;
 				int yfrom = view.<error descr="Cannot resolve symbol 'y'">y</error> + Math.max(0, ly);
-				int yto = view.<error descr="Cannot resolve symbol 'y'">y</error> + Math.min<error descr="Cannot resolve method 'min(?, int)'">(viewport.<error descr="Cannot resolve symbol 'height'">height</error> - 2, ly + clipheight)</error>;
+				int yto = view.<error descr="Cannot resolve symbol 'y'">y</error> + Math.min(viewport.<error descr="Cannot resolve symbol 'height'">height</error> - 2, ly + clipheight);
 				//g.setColor(Color.pink); g.fillRect(0, yfrom - 1, 75, 2); g.fillRect(0, yto - 1, 75, 2);
 
 				boolean prevletter = false; int n = text.length(); char c = 0;
@@ -1467,7 +1466,7 @@ public class Thinlet extends Container //java
 			int[] columnwidths = null;
 			int lx = clipx - viewport.<error descr="Cannot resolve symbol 'x'">x</error> - 1;
 			int xfrom = view.<error descr="Cannot resolve symbol 'x'">x</error> + Math.max(0, lx);
-			int xto = view.<error descr="Cannot resolve symbol 'x'">x</error> + Math.min<error descr="Cannot resolve method 'min(?, int)'">(viewport.<error descr="Cannot resolve symbol 'width'">width</error> - 2, lx + clipwidth)</error>;
+			int xto = view.<error descr="Cannot resolve symbol 'x'">x</error> + Math.min(viewport.<error descr="Cannot resolve symbol 'width'">width</error> - 2, lx + clipwidth);
 			if ("table" == classname) {
 				columnwidths = new int[getItemCountImpl(component, "column")];
 				int i = 0; int x = 0; boolean drawheader = (clipy < viewport.<error descr="Cannot resolve symbol 'y'">y</error>);
@@ -1476,7 +1475,7 @@ public class Thinlet extends Container //java
 						column != null; column = get(column, ":next")) {
 					boolean lastcolumn = (i == columnwidths.length - 1);
 					int width = getInteger(column, "width", 80);
-					if (lastcolumn) { width = Math.max<error descr="Cannot resolve method 'max(int, ?)'">(width, viewport.<error descr="Cannot resolve symbol 'width'">width</error> - x)</error>; }
+					if (lastcolumn) { width = Math.max(width, viewport.<error descr="Cannot resolve symbol 'width'">width</error> - x); }
 					columnwidths[i] = width;
 					if (drawheader && (xfrom < x + width) && (xto > x)) {
 						paintRect(g, x - view.<error descr="Cannot resolve symbol 'x'">x</error>, 0, width, viewport.<error descr="Cannot resolve symbol 'y'">y</error>,
@@ -1497,7 +1496,7 @@ public class Thinlet extends Container //java
 				Object lead = get(component, "lead");
 				int ly = clipy - viewport.<error descr="Cannot resolve symbol 'y'">y</error> - 1;
 				int yfrom = view.<error descr="Cannot resolve symbol 'y'">y</error> + Math.max(0, ly);
-				int yto = view.<error descr="Cannot resolve symbol 'y'">y</error> + Math.min<error descr="Cannot resolve method 'min(?, int)'">(viewport.<error descr="Cannot resolve symbol 'height'">height</error> - 2, ly + clipheight)</error>;
+				int yto = view.<error descr="Cannot resolve symbol 'y'">y</error> + Math.min(viewport.<error descr="Cannot resolve symbol 'height'">height</error> - 2, ly + clipheight);
 				for (Object item = get(component, ("list" == classname) ? "item" :
 						(("table" == classname) ? "row" : "node")); item != null;) {
 					<error descr="Cannot resolve symbol 'Rectangle'">Rectangle</error> r = getRectangle(item, "bounds");
@@ -1750,9 +1749,9 @@ public class Thinlet extends Container //java
 			int x = viewport.<error descr="Cannot resolve symbol 'x'">x</error>;
 			int y = viewport.<error descr="Cannot resolve symbol 'y'">y</error> + viewport.<error descr="Cannot resolve symbol 'height'">height</error>;
 			int height = bounds.<error descr="Cannot resolve symbol 'height'">height</error> - y;
-			int button = Math.min<error descr="Cannot resolve method 'min(int, ?)'">(block, viewport.<error descr="Cannot resolve symbol 'width'">width</error> / 2)</error>;
+			int button = Math.min(block, viewport.<error descr="Cannot resolve symbol 'width'">width</error> / 2);
 			int track = viewport.<error descr="Cannot resolve symbol 'width'">width</error> - (2 * button); //max 10
-			int knob = Math.min<error descr="Cannot resolve method 'min(int, ?)'">(track, Math.max<error descr="Cannot resolve method 'max(?, int)'">(track * (viewport.<error descr="Cannot resolve symbol 'width'">width</error> - 2) / view.<error descr="Cannot resolve symbol 'width'">width</error>, 6)</error>)</error>;
+			int knob = Math.min(track, Math.max(track * (viewport.<error descr="Cannot resolve symbol 'width'">width</error> - 2) / view.<error descr="Cannot resolve symbol 'width'">width</error>, 6));
 			int decrease = view.<error descr="Cannot resolve symbol 'x'">x</error> * (track - knob) /
 				(view.<error descr="Cannot resolve symbol 'width'">width</error> - viewport.<error descr="Cannot resolve symbol 'width'">width</error> + 2);
 			int increase = track - decrease - knob;
@@ -2000,7 +1999,7 @@ public class Thinlet extends Container //java
 						}
 					}
 				}
-			} catch (<error descr="Cannot resolve symbol 'InterruptedException'">InterruptedException</error> ie) {} //ie.printStackTrace();
+			} catch (InterruptedException ie) {} //ie.printStackTrace();
 		}
 	}
 
@@ -3275,8 +3274,8 @@ public class Thinlet extends Container //java
 				int moveto = horizontal ? (mousex - referencex) :
 					(mousey - referencey);
 				<error descr="Cannot resolve symbol 'Rectangle'">Rectangle</error> bounds = getRectangle(component, "bounds");
-				moveto = Math.max<error descr="Cannot resolve method 'max(int, ?)'">(0, Math.min<error descr="Cannot resolve method 'min(int, ?)'">(moveto,
-					Math.abs<error descr="Cannot resolve method 'abs(?)'">(horizontal ? bounds.<error descr="Cannot resolve symbol 'width'">width</error> : bounds.<error descr="Cannot resolve symbol 'height'">height</error>)</error> - 5)</error>)</error>;
+				moveto = Math.max(0, Math.min(moveto,
+					Math.abs(horizontal ? bounds.<error descr="Cannot resolve symbol 'width'">width</error> : bounds.<error descr="Cannot resolve symbol 'height'">height</error>) - 5));
 				if (divider != moveto) {
 					setInteger(component, "divider", moveto, -1);
 					validate(component);
@@ -3416,9 +3415,9 @@ public class Thinlet extends Container //java
 				else if (id == <error descr="Cannot resolve symbol 'MouseEvent'">MouseEvent</error>.MOUSE_DRAGGED) {
 					<error descr="Cannot resolve symbol 'Rectangle'">Rectangle</error> bounds = getRectangle(component, "bounds");
 					int dx = mousex - referencex; int dy = mousey - referencey;
-					repaint<error descr="Cannot resolve method 'repaint(java.lang.Object, ?, ?, ?, ?)'">(component,
+					repaint(component,
 						bounds.<error descr="Cannot resolve symbol 'x'">x</error> + Math.min(0, dx), bounds.<error descr="Cannot resolve symbol 'y'">y</error> + Math.min(0, dy),
-						bounds.<error descr="Cannot resolve symbol 'width'">width</error> + Math.abs(dx), bounds.<error descr="Cannot resolve symbol 'height'">height</error> + Math.abs(dy))</error>;
+						bounds.<error descr="Cannot resolve symbol 'width'">width</error> + Math.abs(dx), bounds.<error descr="Cannot resolve symbol 'height'">height</error> + Math.abs(dy));
 					bounds.<error descr="Cannot resolve symbol 'x'">x</error> += dx; bounds.<error descr="Cannot resolve symbol 'y'">y</error> += dy;
 					referencex = mousex; referencey = mousey;
 				}
@@ -3625,7 +3624,7 @@ public class Thinlet extends Container //java
 				if (part == "hknob") {
 					int viewx = (x - referencex) *
 						view.<error descr="Cannot resolve symbol 'width'">width</error> / (port.<error descr="Cannot resolve symbol 'width'">width</error> - 2 * block);
-					viewx = Math.max<error descr="Cannot resolve method 'max(int, ?)'">(0, Math.min<error descr="Cannot resolve method 'min(int, ?)'">(viewx, view.<error descr="Cannot resolve symbol 'width'">width</error> - port.<error descr="Cannot resolve symbol 'width'">width</error> + 2)</error>)</error>;
+					viewx = Math.max(0, Math.min(viewx, view.<error descr="Cannot resolve symbol 'width'">width</error> - port.<error descr="Cannot resolve symbol 'width'">width</error> + 2));
 					if (view.<error descr="Cannot resolve symbol 'x'">x</error> != viewx) {
 						view.<error descr="Cannot resolve symbol 'x'">x</error> = viewx;
 						repaint(component, null, "horizontal");
@@ -3633,7 +3632,7 @@ public class Thinlet extends Container //java
 				} else {
 					int viewy = (y - referencey) *
 						view.<error descr="Cannot resolve symbol 'height'">height</error> / (port.<error descr="Cannot resolve symbol 'height'">height</error> - 2 * block);
-					viewy = Math.max<error descr="Cannot resolve method 'max(int, ?)'">(0, Math.min<error descr="Cannot resolve method 'min(int, ?)'">(viewy, view.<error descr="Cannot resolve symbol 'height'">height</error> - port.<error descr="Cannot resolve symbol 'height'">height</error> + 2)</error>)</error>;
+					viewy = Math.max(0, Math.min(viewy, view.<error descr="Cannot resolve symbol 'height'">height</error> - port.<error descr="Cannot resolve symbol 'height'">height</error> + 2));
 					if (view.<error descr="Cannot resolve symbol 'y'">y</error> != viewy) {
 						view.<error descr="Cannot resolve symbol 'y'">y</error> = viewy;
 						repaint(component, null, "vertical");
@@ -3671,12 +3670,12 @@ public class Thinlet extends Container //java
 		else if (part == "down") { dy = 10; }
 		else if (part == "downtrack") { dy = port.<error descr="Cannot resolve symbol 'height'">height</error>; }
 		if (dx != 0) {
-			dx = (dx < 0) ? Math.max<error descr="Cannot resolve method 'max(?, int)'">(-view.<error descr="Cannot resolve symbol 'x'">x</error>, dx)</error> :
-				Math.min<error descr="Cannot resolve method 'min(int, ?)'">(dx, view.<error descr="Cannot resolve symbol 'width'">width</error> - port.<error descr="Cannot resolve symbol 'width'">width</error> + 2 - view.<error descr="Cannot resolve symbol 'x'">x</error>)</error>;
+			dx = (dx < 0) ? Math.max(-view.<error descr="Cannot resolve symbol 'x'">x</error>, dx) :
+				Math.min(dx, view.<error descr="Cannot resolve symbol 'width'">width</error> - port.<error descr="Cannot resolve symbol 'width'">width</error> + 2 - view.<error descr="Cannot resolve symbol 'x'">x</error>);
 		}
 		else if (dy != 0) {
-			dy = (dy < 0) ? Math.max<error descr="Cannot resolve method 'max(?, int)'">(-view.<error descr="Cannot resolve symbol 'y'">y</error>, dy)</error> :
-				Math.min<error descr="Cannot resolve method 'min(int, ?)'">(dy, view.<error descr="Cannot resolve symbol 'height'">height</error> - port.<error descr="Cannot resolve symbol 'height'">height</error> + 2 - view.<error descr="Cannot resolve symbol 'y'">y</error>)</error>;
+			dy = (dy < 0) ? Math.max(-view.<error descr="Cannot resolve symbol 'y'">y</error>, dy) :
+				Math.min(dy, view.<error descr="Cannot resolve symbol 'height'">height</error> - port.<error descr="Cannot resolve symbol 'height'">height</error> + 2 - view.<error descr="Cannot resolve symbol 'y'">y</error>);
 		}
 		else return false;
 		view.<error descr="Cannot resolve symbol 'x'">x</error> += dx; view.<error descr="Cannot resolve symbol 'y'">y</error> += dy;
@@ -3904,8 +3903,8 @@ public class Thinlet extends Container //java
 		<error descr="Cannot resolve symbol 'Rectangle'">Rectangle</error> b = getRectangle(component, "bounds");
 		if ((classname == "combobox") || (classname == "spinbox")) {
 			boolean down = (part == "up") || (part == "down"); // else text
-			repaint<error descr="Cannot resolve method 'repaint(java.lang.Object, ?, ?, int, ?)'">(component, down ? (b.<error descr="Cannot resolve symbol 'x'">x</error> + b.<error descr="Cannot resolve symbol 'width'">width</error> - block) : b.<error descr="Cannot resolve symbol 'x'">x</error>, b.<error descr="Cannot resolve symbol 'y'">y</error>,
-				down ? block : (b.<error descr="Cannot resolve symbol 'width'">width</error> - block), b.<error descr="Cannot resolve symbol 'height'">height</error>)</error>;
+			repaint(component, down ? (b.<error descr="Cannot resolve symbol 'x'">x</error> + b.<error descr="Cannot resolve symbol 'width'">width</error> - block) : b.<error descr="Cannot resolve symbol 'x'">x</error>, b.<error descr="Cannot resolve symbol 'y'">y</error>,
+				down ? block : (b.<error descr="Cannot resolve symbol 'width'">width</error> - block), b.<error descr="Cannot resolve symbol 'height'">height</error>);
 		}
 		//else if (classname == "dialog") {}
 			//int titleheight = getInteger(component, "titleheight", 0);
@@ -3913,39 +3912,39 @@ public class Thinlet extends Container //java
 		else if ((classname == "tabbedpane") ||
 				(classname == "menubar") || (classname == "popupmenu")) {
 			<error descr="Cannot resolve symbol 'Rectangle'">Rectangle</error> r = getRectangle(part, "bounds");
-			repaint<error descr="Cannot resolve method 'repaint(java.lang.Object, ?, ?, ?, ?)'">(component, b.<error descr="Cannot resolve symbol 'x'">x</error> + r.<error descr="Cannot resolve symbol 'x'">x</error>, b.<error descr="Cannot resolve symbol 'y'">y</error> + r.<error descr="Cannot resolve symbol 'y'">y</error>,
-				(classname == "popupmenu") ? b.<error descr="Cannot resolve symbol 'width'">width</error> : r.<error descr="Cannot resolve symbol 'width'">width</error>, r.<error descr="Cannot resolve symbol 'height'">height</error>)</error>;
+			repaint(component, b.<error descr="Cannot resolve symbol 'x'">x</error> + r.<error descr="Cannot resolve symbol 'x'">x</error>, b.<error descr="Cannot resolve symbol 'y'">y</error> + r.<error descr="Cannot resolve symbol 'y'">y</error>,
+				(classname == "popupmenu") ? b.<error descr="Cannot resolve symbol 'width'">width</error> : r.<error descr="Cannot resolve symbol 'width'">width</error>, r.<error descr="Cannot resolve symbol 'height'">height</error>);
 		}
 		else //if ((classname == "combolist") || (classname == "textarea") ||
 				{//(classname == "list") || (classname == "table") || (classname == "tree")) {
 			<error descr="Cannot resolve symbol 'Rectangle'">Rectangle</error> port = getRectangle(component, ":port");
 			if (part == "left") {
-				repaint<error descr="Cannot resolve method 'repaint(java.lang.Object, ?, ?, int, int)'">(component, b.<error descr="Cannot resolve symbol 'x'">x</error> + port.<error descr="Cannot resolve symbol 'x'">x</error>, b.<error descr="Cannot resolve symbol 'y'">y</error> + b.<error descr="Cannot resolve symbol 'height'">height</error> - block, block, block)</error>;
+				repaint(component, b.<error descr="Cannot resolve symbol 'x'">x</error> + port.<error descr="Cannot resolve symbol 'x'">x</error>, b.<error descr="Cannot resolve symbol 'y'">y</error> + b.<error descr="Cannot resolve symbol 'height'">height</error> - block, block, block);
 			}
 			else if (part == "right") {
-				repaint<error descr="Cannot resolve method 'repaint(java.lang.Object, ?, ?, int, int)'">(component, b.<error descr="Cannot resolve symbol 'x'">x</error> + port.<error descr="Cannot resolve symbol 'x'">x</error> + port.<error descr="Cannot resolve symbol 'width'">width</error> - block, b.<error descr="Cannot resolve symbol 'y'">y</error> + b.<error descr="Cannot resolve symbol 'height'">height</error> - block, block, block)</error>;
+				repaint(component, b.<error descr="Cannot resolve symbol 'x'">x</error> + port.<error descr="Cannot resolve symbol 'x'">x</error> + port.<error descr="Cannot resolve symbol 'width'">width</error> - block, b.<error descr="Cannot resolve symbol 'y'">y</error> + b.<error descr="Cannot resolve symbol 'height'">height</error> - block, block, block);
 			}
 			else if (part == "up") {
-				repaint<error descr="Cannot resolve method 'repaint(java.lang.Object, ?, ?, int, int)'">(component, b.<error descr="Cannot resolve symbol 'x'">x</error> + b.<error descr="Cannot resolve symbol 'width'">width</error> - block, b.<error descr="Cannot resolve symbol 'y'">y</error> + port.<error descr="Cannot resolve symbol 'y'">y</error>, block, block)</error>;
+				repaint(component, b.<error descr="Cannot resolve symbol 'x'">x</error> + b.<error descr="Cannot resolve symbol 'width'">width</error> - block, b.<error descr="Cannot resolve symbol 'y'">y</error> + port.<error descr="Cannot resolve symbol 'y'">y</error>, block, block);
 			}
 			else if (part == "down") {
-				repaint<error descr="Cannot resolve method 'repaint(java.lang.Object, ?, ?, int, int)'">(component, b.<error descr="Cannot resolve symbol 'x'">x</error> + b.<error descr="Cannot resolve symbol 'width'">width</error> - block, b.<error descr="Cannot resolve symbol 'y'">y</error> + port.<error descr="Cannot resolve symbol 'y'">y</error> + port.<error descr="Cannot resolve symbol 'height'">height</error> - block, block, block)</error>;
+				repaint(component, b.<error descr="Cannot resolve symbol 'x'">x</error> + b.<error descr="Cannot resolve symbol 'width'">width</error> - block, b.<error descr="Cannot resolve symbol 'y'">y</error> + port.<error descr="Cannot resolve symbol 'y'">y</error> + port.<error descr="Cannot resolve symbol 'height'">height</error> - block, block, block);
 			}
 			else if (part == "horizontal") { // horizontaly center part
-				repaint<error descr="Cannot resolve method 'repaint(java.lang.Object, ?, ?, ?, ?)'">(component, b.<error descr="Cannot resolve symbol 'x'">x</error> + port.<error descr="Cannot resolve symbol 'x'">x</error>, b.<error descr="Cannot resolve symbol 'y'">y</error>, port.<error descr="Cannot resolve symbol 'width'">width</error>, b.<error descr="Cannot resolve symbol 'height'">height</error>)</error>;
+				repaint(component, b.<error descr="Cannot resolve symbol 'x'">x</error> + port.<error descr="Cannot resolve symbol 'x'">x</error>, b.<error descr="Cannot resolve symbol 'y'">y</error>, port.<error descr="Cannot resolve symbol 'width'">width</error>, b.<error descr="Cannot resolve symbol 'height'">height</error>);
 			}
 			else if (part == "vertical") {
-				repaint<error descr="Cannot resolve method 'repaint(java.lang.Object, ?, ?, ?, ?)'">(component, b.<error descr="Cannot resolve symbol 'x'">x</error>, b.<error descr="Cannot resolve symbol 'y'">y</error> + port.<error descr="Cannot resolve symbol 'y'">y</error>, b.<error descr="Cannot resolve symbol 'width'">width</error>, port.<error descr="Cannot resolve symbol 'height'">height</error>)</error>;
+				repaint(component, b.<error descr="Cannot resolve symbol 'x'">x</error>, b.<error descr="Cannot resolve symbol 'y'">y</error> + port.<error descr="Cannot resolve symbol 'y'">y</error>, b.<error descr="Cannot resolve symbol 'width'">width</error>, port.<error descr="Cannot resolve symbol 'height'">height</error>);
 			}
 			else if (part == "text") { //textarea
-				repaint<error descr="Cannot resolve method 'repaint(java.lang.Object, ?, ?, ?, ?)'">(component, b.<error descr="Cannot resolve symbol 'x'">x</error> + port.<error descr="Cannot resolve symbol 'x'">x</error>, b.<error descr="Cannot resolve symbol 'y'">y</error> + port.<error descr="Cannot resolve symbol 'y'">y</error>, port.<error descr="Cannot resolve symbol 'width'">width</error>, port.<error descr="Cannot resolve symbol 'height'">height</error>)</error>;
+				repaint(component, b.<error descr="Cannot resolve symbol 'x'">x</error> + port.<error descr="Cannot resolve symbol 'x'">x</error>, b.<error descr="Cannot resolve symbol 'y'">y</error> + port.<error descr="Cannot resolve symbol 'y'">y</error>, port.<error descr="Cannot resolve symbol 'width'">width</error>, port.<error descr="Cannot resolve symbol 'height'">height</error>);
 			}
 			else {
 				<error descr="Cannot resolve symbol 'Rectangle'">Rectangle</error> view = getRectangle(component, ":view");
 				<error descr="Cannot resolve symbol 'Rectangle'">Rectangle</error> r = getRectangle(part, "bounds");
 				if ((r.<error descr="Cannot resolve symbol 'y'">y</error> + r.<error descr="Cannot resolve symbol 'height'">height</error> >= view.<error descr="Cannot resolve symbol 'y'">y</error>) && (r.<error descr="Cannot resolve symbol 'y'">y</error> <= view.<error descr="Cannot resolve symbol 'y'">y</error> + port.<error descr="Cannot resolve symbol 'height'">height</error>)) {
-					repaint<error descr="Cannot resolve method 'repaint(java.lang.Object, ?, ?, ?, ?)'">(component, b.<error descr="Cannot resolve symbol 'x'">x</error> + port.<error descr="Cannot resolve symbol 'x'">x</error>, b.<error descr="Cannot resolve symbol 'y'">y</error> + port.<error descr="Cannot resolve symbol 'y'">y</error> - view.<error descr="Cannot resolve symbol 'y'">y</error> + 1 + r.<error descr="Cannot resolve symbol 'y'">y</error>,
-						port.<error descr="Cannot resolve symbol 'width'">width</error>, r.<error descr="Cannot resolve symbol 'height'">height</error>)</error>;
+					repaint(component, b.<error descr="Cannot resolve symbol 'x'">x</error> + port.<error descr="Cannot resolve symbol 'x'">x</error>, b.<error descr="Cannot resolve symbol 'y'">y</error> + port.<error descr="Cannot resolve symbol 'y'">y</error> - view.<error descr="Cannot resolve symbol 'y'">y</error> + 1 + r.<error descr="Cannot resolve symbol 'y'">y</error>,
+						port.<error descr="Cannot resolve symbol 'width'">width</error>, r.<error descr="Cannot resolve symbol 'height'">height</error>);
 					//? need cut item rectangle above/bellow viewport
 				}
 			}
@@ -3958,7 +3957,7 @@ public class Thinlet extends Container //java
 	private void validate(Object component) {
 		repaint(component);
 		<error descr="Cannot resolve symbol 'Rectangle'">Rectangle</error> bounds = getRectangle(component, "bounds");
-		bounds.<error descr="Cannot resolve symbol 'width'">width</error> = -1 * Math.abs<error descr="Cannot resolve method 'abs(?)'">(bounds.<error descr="Cannot resolve symbol 'width'">width</error>)</error>;
+		bounds.<error descr="Cannot resolve symbol 'width'">width</error> = -1 * Math.abs(bounds.<error descr="Cannot resolve symbol 'width'">width</error>);
 	}
 
 	/**
@@ -3967,7 +3966,7 @@ public class Thinlet extends Container //java
 	private void repaint(Object component) {
 		<error descr="Cannot resolve symbol 'Rectangle'">Rectangle</error> bounds = getRectangle(component, "bounds");
 		if (bounds != null) {
-			repaint<error descr="Cannot resolve method 'repaint(java.lang.Object, ?, ?, ?, ?)'">(component, bounds.<error descr="Cannot resolve symbol 'x'">x</error>, bounds.<error descr="Cannot resolve symbol 'y'">y</error>, bounds.<error descr="Cannot resolve symbol 'width'">width</error>, bounds.<error descr="Cannot resolve symbol 'height'">height</error>)</error>;
+			repaint(component, bounds.<error descr="Cannot resolve symbol 'x'">x</error>, bounds.<error descr="Cannot resolve symbol 'y'">y</error>, bounds.<error descr="Cannot resolve symbol 'width'">width</error>, bounds.<error descr="Cannot resolve symbol 'height'">height</error>);
 		}
 	}
 
@@ -4835,11 +4834,11 @@ public class Thinlet extends Container //java
 			set(component, key, Integer.valueOf(value));
 		}
 		else if ("icon" == definition[0]) {
-			set<error descr="'set(java.lang.Object, java.lang.Object, java.lang.Object)' in 'Thinlet' cannot be applied to '(java.lang.Object, java.lang.String, Image)'">(component, key, getIcon(value))</error>;
+			set(component, key, <error descr="'set(java.lang.Object, java.lang.Object, java.lang.Object)' in 'Thinlet' cannot be applied to '(java.lang.Object, java.lang.String, Image)'">getIcon(value)</error>);
 		}
 		else if ("method" == definition[0]) {
 			try { //java
-				set<error descr="'set(java.lang.Object, java.lang.Object, java.lang.Object)' in 'Thinlet' cannot be applied to '(java.lang.Object, java.lang.String, java.lang.reflect.Method)'">(component, key, getClass().getMethod(value, null))</error>; //java
+				set(component, key, <error descr="'set(java.lang.Object, java.lang.Object, java.lang.Object)' in 'Thinlet' cannot be applied to '(java.lang.Object, java.lang.String, java.lang.reflect.Method)'">getClass().getMethod(value, null)</error>); //java
 			} catch (Exception exc) { System.err.println(value); exc.printStackTrace(); } //java
 			//midp setMethod(component, key, value);
 		}
@@ -4975,7 +4974,7 @@ public class Thinlet extends Container //java
 	 */
 	public void setIcon(Object component, String key, <error descr="Cannot resolve symbol 'Image'">Image</error> icon) {
 		Object[] definition = getDefinition(component, key, "icon");
-		if (set<error descr="'set(java.lang.Object, java.lang.Object, java.lang.Object)' in 'Thinlet' cannot be applied to '(java.lang.Object, java.lang.String, Image)'">(component, (String) definition[1], icon)</error>) {
+		if (set(component, (String) definition[1], <error descr="'set(java.lang.Object, java.lang.Object, java.lang.Object)' in 'Thinlet' cannot be applied to '(java.lang.Object, java.lang.String, Image)'">icon</error>)) {
 			update(component, definition[2]);
 		}
 	}
@@ -4994,7 +4993,7 @@ public class Thinlet extends Container //java
 	public void setMethod(Object component, String key, <error descr="Cannot resolve symbol 'Method'">Method</error> method) { //java
 	//midp public void setMethod(Object component, String key, String method) {
 		Object[] definition = getDefinition(component, key, "method");
-		if (set<error descr="'set(java.lang.Object, java.lang.Object, java.lang.Object)' in 'Thinlet' cannot be applied to '(java.lang.Object, java.lang.String, Method)'">(component, (String) definition[1], method)</error>) {
+		if (set(component, (String) definition[1], <error descr="'set(java.lang.Object, java.lang.Object, java.lang.Object)' in 'Thinlet' cannot be applied to '(java.lang.Object, java.lang.String, Method)'">method</error>)) {
 			update(component, definition[2]);
 		}
 	}
@@ -5026,7 +5025,7 @@ public class Thinlet extends Container //java
 				if (bounds == null) { return; }
 				if (firstpaint) {
 					x = bounds.<error descr="Cannot resolve symbol 'x'">x</error>; y = bounds.<error descr="Cannot resolve symbol 'y'">y</error>;
-					width = Math.abs<error descr="Cannot resolve method 'abs(?)'">(bounds.<error descr="Cannot resolve symbol 'width'">width</error>)</error>; height = bounds.<error descr="Cannot resolve symbol 'height'">height</error>;
+					width = Math.abs(bounds.<error descr="Cannot resolve symbol 'width'">width</error>); height = bounds.<error descr="Cannot resolve symbol 'height'">height</error>;
 					firstpaint = false;
 				} else {
 					x += bounds.<error descr="Cannot resolve symbol 'x'">x</error>; y += bounds.<error descr="Cannot resolve symbol 'y'">y</error>;
@@ -5052,7 +5051,7 @@ public class Thinlet extends Container //java
 					("tree" == classname) || ("dialog" == classname) || (parent == content)))) {
 				<error descr="Cannot resolve symbol 'Rectangle'">Rectangle</error> bounds = getRectangle(parent, "bounds");
 				if (bounds == null) { return; }
-				bounds.<error descr="Cannot resolve symbol 'width'">width</error> = -1 * Math.abs<error descr="Cannot resolve method 'abs(?)'">(bounds.<error descr="Cannot resolve symbol 'width'">width</error>)</error>;
+				bounds.<error descr="Cannot resolve symbol 'width'">width</error> = -1 * Math.abs(bounds.<error descr="Cannot resolve symbol 'width'">width</error>);
 				mode = "paint";
 			}
 			component = parent;
@@ -5118,7 +5117,7 @@ public class Thinlet extends Container //java
 	 */
 	private boolean setIcon(Object component,
 			String key, String path, <error descr="Cannot resolve symbol 'Image'">Image</error> defaultvalue) {
-		return set<error descr="'set(java.lang.Object, java.lang.Object, java.lang.Object)' in 'Thinlet' cannot be applied to '(java.lang.Object, java.lang.String, Image)'">(component, key, (path != null) ? getIcon(path) : defaultvalue)</error>;
+		return set(component, key, <error descr="'set(java.lang.Object, java.lang.Object, java.lang.Object)' in 'Thinlet' cannot be applied to '(java.lang.Object, java.lang.String, Image)'">(path != null) ? getIcon(path) : defaultvalue</error>);
 	}
 
 	/**
@@ -5234,7 +5233,7 @@ public class Thinlet extends Container //java
 			mediatracker.<error descr="Cannot resolve method 'addImage(Image, int)'">addImage</error>(image, 1);
 			try {
 				mediatracker.<error descr="Cannot resolve method 'waitForID(int, int)'">waitForID</error>(1, 50);
-			} catch (<error descr="Cannot resolve symbol 'InterruptedException'">InterruptedException</error> ie) { }
+			} catch (InterruptedException ie) { }
 			//imagepool.put(path, image);
 		}
 		//<java

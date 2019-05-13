@@ -15,6 +15,7 @@
  */
 package org.jetbrains.maven.embedder;
 
+import com.intellij.util.ExceptionUtilRt;
 import org.apache.maven.DefaultMaven;
 import org.apache.maven.Maven;
 import org.apache.maven.artifact.Artifact;
@@ -58,6 +59,7 @@ import org.codehaus.plexus.logging.Logger;
 import org.codehaus.plexus.util.xml.Xpp3Dom;
 import org.codehaus.plexus.util.xml.pull.XmlPullParserException;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.sonatype.plexus.components.sec.dispatcher.SecDispatcher;
 import org.sonatype.plexus.components.sec.dispatcher.SecDispatcherException;
 
@@ -76,6 +78,7 @@ public class MavenEmbedder {
   private final Logger myLogger;
   private final MavenEmbedderSettings myEmbedderSettings;
   private final ArtifactRepository myLocalRepository;
+  private Properties myUserProperties = new Properties();
 
   private MavenEmbedder(@NotNull DefaultPlexusContainer container,
                         @NotNull Settings settings,
@@ -173,15 +176,18 @@ public class MavenEmbedder {
   }
 
   @NotNull
-  public MavenExecutionResult resolveProject(@NotNull final File file, @NotNull final List<String> activeProfiles) {
-    return resolveProject(file, activeProfiles, Collections.<ResolutionListener>emptyList());
+  public MavenExecutionResult resolveProject(@NotNull final File file,
+                                             @NotNull final List<String> activeProfiles,
+                                             @NotNull final List<String> inactiveProfiles) {
+    return resolveProject(file, activeProfiles, inactiveProfiles, Collections.<ResolutionListener>emptyList());
   }
 
   @NotNull
   public MavenExecutionResult resolveProject(@NotNull final File file,
                                              @NotNull final List<String> activeProfiles,
+                                             @NotNull final List<String> inactiveProfiles,
                                              List<ResolutionListener> listeners) {
-    MavenExecutionRequest request = createRequest(file, activeProfiles, Collections.<String>emptyList(), Collections.<String>emptyList());
+    MavenExecutionRequest request = createRequest(file, activeProfiles, inactiveProfiles, Collections.<String>emptyList());
     ProjectBuilderConfiguration config = request.getProjectBuilderConfiguration();
 
     request.getGlobalProfileManager().loadSettingsProfiles(mySettings);
@@ -415,7 +421,7 @@ public class MavenEmbedder {
     MavenExecutionRequest result = new DefaultMavenExecutionRequest(myLocalRepository, mySettings, dispatcher, goals, file.getParent(),
                                                                     createProfileManager(activeProfiles, inactiveProfiles,
                                                                                          executionProperties), executionProperties,
-                                                                    new Properties(), true) {
+                                                                    myUserProperties, true) {
       private boolean myIsRecursive;
 
       @Override
@@ -436,8 +442,7 @@ public class MavenEmbedder {
   }
 
   private MavenExecutionResult handleException(Throwable e) {
-    if (e instanceof RuntimeException) throw (RuntimeException)e;
-    if (e instanceof Error) throw (Error)e;
+    ExceptionUtilRt.rethrowUnchecked(e);
 
     return new MavenExecutionResult(null, Collections.singletonList((Exception)e));
   }
@@ -480,7 +485,7 @@ public class MavenEmbedder {
 
   private void releaseResolverThreadExecutor() {
     ArtifactResolver resolver = getComponent(ArtifactResolver.class);
-    @SuppressWarnings({"unchecked"}) FieldAccessor pool = new FieldAccessor(DefaultArtifactResolver.class, resolver, "resolveArtifactPool");
+    FieldAccessor pool = new FieldAccessor(DefaultArtifactResolver.class, resolver, "resolveArtifactPool");
     try {
       final Object threadPool = pool.getField(); // an instance of a hidden copy of ThreadPoolExecutor
       threadPool.getClass().getMethod("shutdown").invoke(threadPool);
@@ -591,6 +596,10 @@ public class MavenEmbedder {
   public static <T> void setImplementation(PlexusContainer container, Class<T> componentClass, Class<? extends T> implementationClass) {
     ComponentDescriptor d = container.getComponentDescriptor(componentClass.getName());
     d.setImplementation(implementationClass.getName());
+  }
+
+  public void setUserProperties(@Nullable Properties userProperties) {
+    myUserProperties = userProperties == null ? new Properties() : userProperties;
   }
 }
 

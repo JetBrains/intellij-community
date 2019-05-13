@@ -1,0 +1,10 @@
+public class X {
+    {
+        new Comparable<<spot>Object</spot>>() {
+            @Override
+            public int compareTo(Object o) {
+              return 0;
+            }
+        };
+    }
+}

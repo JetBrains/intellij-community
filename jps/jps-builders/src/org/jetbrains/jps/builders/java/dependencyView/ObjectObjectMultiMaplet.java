@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.jps.builders.java.dependencyView;
 
 import com.intellij.openapi.util.Pair;
@@ -26,9 +12,8 @@ import java.util.*;
 
 /**
  * @author: db
- * Date: 03.11.11
  */
-abstract class ObjectObjectMultiMaplet<K, V extends Streamable> implements Streamable {
+abstract class ObjectObjectMultiMaplet<K, V> implements Streamable, CloseableMaplet {
   abstract boolean containsKey(final K key);
 
   abstract Collection<V> get(final K key);
@@ -49,15 +34,14 @@ abstract class ObjectObjectMultiMaplet<K, V extends Streamable> implements Strea
 
   abstract void removeAll(final K key, final Collection<V> value);
 
-  abstract void close();
-
   abstract void forEachEntry(TObjectObjectProcedure<K, Collection<V>> procedure);
 
   abstract void flush(boolean memoryCachesOnly);
 
+  @Override
   public void toStream(final DependencyContext context, final PrintStream stream) {
 
-    final List<Pair<K, String>> keys = new ArrayList<Pair<K, String>>();
+    final List<Pair<K, String>> keys = new ArrayList<>();
     forEachEntry(new TObjectObjectProcedure<K, Collection<V>>() {
       @Override
       public boolean execute(final K a, final Collection<V> b) {
@@ -65,17 +49,12 @@ abstract class ObjectObjectMultiMaplet<K, V extends Streamable> implements Strea
         final String keyStr = a instanceof File && !SystemInfo.isFileSystemCaseSensitive?
                               ((File)a).getPath().toLowerCase(Locale.US) :
                               a.toString();
-        keys.add(new Pair<K, String>(a, keyStr));
+        keys.add(Pair.create(a, keyStr));
         return true;
       }
     });
 
-    Collections.sort(keys, new Comparator<Pair<K, String>>() {
-      @Override
-      public int compare(Pair<K, String> o1, Pair<K, String> o2) {
-        return o1.second.compareTo(o2.second);
-      }
-    });
+    keys.sort(Comparator.comparing(o -> o.second));
 
     for (final Pair<K, String> a: keys) {
       final Collection<V> b = get(a.first);
@@ -84,15 +63,15 @@ abstract class ObjectObjectMultiMaplet<K, V extends Streamable> implements Strea
       stream.println(a.second);
       stream.println("  Values:");
 
-      final List<String> list = new LinkedList<String>();
+      final List<String> list = new LinkedList<>();
 
       for (final V value : b) {
-        final ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        final PrintStream s = new PrintStream(baos);
-
-        value.toStream(context, s);
-
-        list.add(baos.toString());
+        if (value instanceof Streamable) {
+          final ByteArrayOutputStream baos = new ByteArrayOutputStream();
+          final PrintStream s = new PrintStream(baos);
+          ((Streamable) value).toStream(context, s);
+          list.add(baos.toString());
+        }
       }
 
       Collections.sort(list);

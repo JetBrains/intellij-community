@@ -52,7 +52,7 @@ public abstract class AddEditDeleteListPanel<T> extends AddDeleteListPanel<T> {
   private void editSelectedItem() {
     int index = myList.getSelectedIndex();
     if (index >= 0) {
-      T newValue = editSelectedItem((T) myListModel.get(index));
+      T newValue = editSelectedItem(myListModel.get(index));
       if (newValue != null) {
         myListModel.set(index, newValue);
       }

@@ -33,7 +33,7 @@ public interface PsiReferenceExpression extends PsiExpression, PsiJavaCodeRefere
   PsiExpression getQualifierExpression();
 
   /**
-   * Creates an <code>import static</code> statement importing the referenced member
+   * Creates an {@code import static} statement importing the referenced member
    * from the specified class, or qualifies the reference with the class name if
    * that class is already imported by a regular import statement.
    *

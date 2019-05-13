@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,26 +15,63 @@
  */
 package com.intellij.util;
 
-/**
- * @since 27.03.2012
- */
+import org.jetbrains.annotations.Contract;
+
 public class BitUtil {
-  public static boolean isSet(final byte value, final byte mask) {
+  @Contract(pure = true)
+  public static boolean isSet(byte value, byte mask) {
+    assertOneBitMask(mask);
     return (value & mask) == mask;
   }
-
-  public static boolean isSet(final int value, final int mask) {
+  @Contract(pure = true)
+  public static boolean isSet(int value, int mask) {
+    assertOneBitMask(mask);
     return (value & mask) == mask;
   }
-
-  public static boolean notSet(final int value, final int mask) {
-    return (value & mask) != mask;
+  @Contract(pure = true)
+  public static boolean isSet(long flags, long mask) {
+    assertOneBitMask(mask);
+    return (flags & mask) == mask;
   }
 
-  /**
-   * @return {@code value} with the bit corresponding to the {@code mask} set (if setBit is true) or cleared (if setBit is false)
-   */
-  public static int set(final int value, final int mask, boolean setBit) {
+  @Contract(pure = true)
+  public static byte set(byte value, byte mask, boolean setBit) {
+    assertOneBitMask(mask);
+    return (byte)(setBit ? value | mask : value & ~mask);
+  }
+
+  @Contract(pure = true)
+  public static int set(int value, int mask, boolean setBit) {
+    assertOneBitMask(mask);
     return setBit ? value | mask : value & ~mask;
+  }
+
+  @Contract(pure = true)
+  public static long set(long value, long mask, boolean setBit) {
+    assertOneBitMask(mask);
+    return setBit ? value | mask : value & ~mask;
+  }
+
+  @Contract(pure = true)
+  public static byte clear(byte value, byte mask) {
+    return set(value, mask, false);
+  }
+  @Contract(pure = true)
+  public static int clear(int value, int mask) {
+    return set(value, mask, false);
+  }
+  @Contract(pure = true)
+  public static long clear(long value, long mask) {
+    return set(value, mask, false);
+  }
+
+  private static void assertOneBitMask(byte mask) {
+    assertOneBitMask(mask & 0xFFL);
+  }
+  public static void assertOneBitMask(int mask) {
+    assertOneBitMask(mask & 0xFFFFFFFFL);
+  }
+  private static void assertOneBitMask(long mask) {
+    assert (mask & mask - 1) == 0 : "Mask must have only one bit set, but got: " + Long.toBinaryString(mask);
   }
 }

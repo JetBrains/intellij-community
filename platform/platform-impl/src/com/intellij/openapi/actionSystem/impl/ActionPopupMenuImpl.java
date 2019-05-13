@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.actionSystem.impl;
 
 import com.intellij.ide.DataManager;
@@ -23,10 +9,11 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationActivationListener;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.ui.JBPopupMenu;
 import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.wm.IdeFrame;
-import com.intellij.ui.ScreenUtil;
+import com.intellij.openapi.wm.impl.InternalDecorator;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.UIUtil;
@@ -43,45 +30,74 @@ import java.awt.*;
  * @author Vladimir Kondratyev
  */
 final class ActionPopupMenuImpl implements ActionPopupMenu, ApplicationActivationListener {
-
+  private final Application myApp;
   private final MyMenu myMenu;
   private final ActionManagerImpl myManager;
+
+  private Getter<? extends DataContext> myDataContextProvider;
   private MessageBusConnection myConnection;
 
-  private final Application myApp;
   private IdeFrame myFrame;
-  @Nullable private Getter<DataContext> myDataContextProvider;
+  private boolean myIsToolWindowContextMenu;
 
-  public ActionPopupMenuImpl(String place, @NotNull ActionGroup group, ActionManagerImpl actionManager, @Nullable PresentationFactory factory) {
+  ActionPopupMenuImpl(@NotNull String place, @NotNull ActionGroup group,
+                      @NotNull ActionManagerImpl actionManager,
+                      @Nullable PresentationFactory factory) {
     myManager = actionManager;
     myMenu = new MyMenu(place, group, factory);
     myApp = ApplicationManager.getApplication();
   }
 
+  @NotNull
+  @Override
   public JPopupMenu getComponent() {
     return myMenu;
   }
 
-  public void setDataContextProvider(@Nullable Getter<DataContext> dataContextProvider) {
+  @Override
+  @NotNull
+  public String getPlace() {
+    return myMenu.myPlace;
+  }
+
+  @NotNull
+  @Override
+  public ActionGroup getActionGroup() {
+    return myMenu.myGroup;
+  }
+
+  void setDataContextProvider(@NotNull Getter<? extends DataContext> dataContextProvider) {
     myDataContextProvider = dataContextProvider;
   }
 
+  @Override
+  public void setTargetComponent(@NotNull JComponent component) {
+    myDataContextProvider = () -> DataManager.getInstance().getDataContext(component);
+    myIsToolWindowContextMenu = UIUtil.getParentOfType(InternalDecorator.class, component) != null;
+  }
+
+  boolean isToolWindowContextMenu() {
+    return myIsToolWindowContextMenu;
+  }
+
   private class MyMenu extends JBPopupMenu {
+    @NotNull
     private final String myPlace;
+    @NotNull
     private final ActionGroup myGroup;
     private DataContext myContext;
     private final PresentationFactory myPresentationFactory;
 
-    public MyMenu(String place, @NotNull ActionGroup group, @Nullable PresentationFactory factory) {
+    MyMenu(@NotNull String place, @NotNull ActionGroup group, @Nullable PresentationFactory factory) {
       myPlace = place;
       myGroup = group;
       myPresentationFactory = factory != null ? factory : new MenuItemPresentationFactory();
       addPopupMenuListener(new MyPopupMenuListener());
     }
 
+    @Override
     public void show(final Component component, int x, int y) {
       if (!component.isShowing()) {
-        //noinspection HardCodedStringLiteral
         throw new IllegalArgumentException("component must be shown on the screen");
       }
 
@@ -93,62 +109,10 @@ final class ActionPopupMenuImpl implements ActionPopupMenu, ApplicationActivatio
       int y2 = Math.max(0, Math.min(y, component.getHeight() - 1)); // fit y into [0, height-1]
 
       myContext = myDataContextProvider != null ? myDataContextProvider.get() : DataManager.getInstance().getDataContext(component, x2, y2);
-      Utils.fillMenu(myGroup, this, true, myPresentationFactory, myContext, myPlace, false, false);
+      Utils.fillMenu(myGroup, this, true, myPresentationFactory, myContext, myPlace, false, LaterInvocator.isInModalContext(), false);
       if (getComponentCount() == 0) {
         return;
       }
-      Dimension preferredSize = getPreferredSize();
-
-      // Translate (x,y) into screen coordinate syetem
-
-      int _x, _y; // these are screen coordinates of clicked point
-      Point p = component.getLocationOnScreen();
-      _x = p.x + x;
-      _y = p.y + y;
-
-      // Determine graphics device which contains our point
-
-      GraphicsConfiguration targetGraphicsConfiguration = null;
-      GraphicsEnvironment env = GraphicsEnvironment.getLocalGraphicsEnvironment();
-      GraphicsDevice[] devices = env.getScreenDevices();
-      for (GraphicsDevice device : devices) {
-        GraphicsConfiguration graphicsConfiguration = device.getDefaultConfiguration();
-        Rectangle r = graphicsConfiguration.getBounds();
-        if (r.x <= _x && _x <= r.x + r.width && r.y <= _y && _y <= r.y + r.height) {
-          targetGraphicsConfiguration = graphicsConfiguration;
-          break;
-        }
-      }
-      if (targetGraphicsConfiguration == null && devices.length > 0) {
-        targetGraphicsConfiguration = env.getDefaultScreenDevice().getDefaultConfiguration();
-      }
-      if (targetGraphicsConfiguration == null) {
-        //noinspection HardCodedStringLiteral
-        throw new IllegalStateException("It's impossible to determine target graphics environment for point (" + _x + "," + _y + ")");
-      }
-
-      // Determine real client area of target graphics configuration
-      Insets insets = ScreenUtil.getScreenInsets(targetGraphicsConfiguration);
-      Rectangle targetRectangle = targetGraphicsConfiguration.getBounds();
-      targetRectangle.x += insets.left;
-      targetRectangle.y += insets.top;
-      targetRectangle.width -= insets.left + insets.right;
-      targetRectangle.height -= insets.top + insets.bottom;
-
-      // Fit popup into targetRectangle.
-      // The algorithm is the following:
-      // First of all try to move menu up on its height. If menu's left-top corner
-      // is inside screen bounds after that, then OK. Otherwise, if menu is too high
-      // (left-top corner is outside of screen bounds) then try to move menu up on
-      // not visible visible area height.
-      if (_x + preferredSize.width > targetRectangle.x + targetRectangle.width) {
-        x -= preferredSize.width;
-      }
-      if (_y + preferredSize.height > targetRectangle.y + targetRectangle.height) {
-        int invisibleHeight = _y + preferredSize.height - targetRectangle.y - targetRectangle.height;
-        y -= invisibleHeight;
-      }
-
       if (myApp != null) {
         if (myApp.isActive()) {
           Component frame = UIUtil.findUltimateParent(component);
@@ -170,40 +134,38 @@ final class ActionPopupMenuImpl implements ActionPopupMenu, ApplicationActivatio
     }
 
     private class MyPopupMenuListener implements PopupMenuListener {
+      @Override
       public void popupMenuCanceled(PopupMenuEvent e) {
         disposeMenu();
       }
 
+      @Override
       public void popupMenuWillBecomeInvisible(PopupMenuEvent e) {
         disposeMenu();
       }
 
       private void disposeMenu() {
         myManager.removeActionPopup(ActionPopupMenuImpl.this);
-        MyMenu.this.removeAll();
+        removeAll();
         if (myConnection != null) {
           myConnection.disconnect();
         }
       }
 
+      @Override
       public void popupMenuWillBecomeVisible(PopupMenuEvent e) {
-        MyMenu.this.removeAll();
-        Utils.fillMenu(myGroup, MyMenu.this, !UISettings.getInstance().DISABLE_MNEMONICS, myPresentationFactory, myContext, myPlace, false,
-                       false);
+        removeAll();
+        Utils.fillMenu(myGroup, MyMenu.this, !UISettings.getInstance().getDisableMnemonics(), myPresentationFactory, myContext, myPlace, false,
+                       LaterInvocator.isInModalContext(), false);
         myManager.addActionPopup(ActionPopupMenuImpl.this);
       }
     }
   }
 
   @Override
-  public void applicationActivated(IdeFrame ideFrame) {
-  }
-
-  @Override
-  public void applicationDeactivated(IdeFrame ideFrame) {
+  public void applicationDeactivated(@NotNull IdeFrame ideFrame) {
     if (myFrame == ideFrame) {
       myMenu.setVisible(false);
     }
   }
-
 }

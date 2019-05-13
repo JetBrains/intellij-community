@@ -14,14 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * Created by IntelliJ IDEA.
- * User: dsl
- * Date: 04.07.2002
- * Time: 13:14:49
- * To change template for new class use 
- * Code Style | Class Templates options (Tools | IDE Options).
- */
 package com.intellij.refactoring.makeStatic;
 
 import com.intellij.openapi.project.Project;
@@ -30,7 +22,7 @@ import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiTypeParameterListOwner;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.ui.RefactoringDialog;
-import com.intellij.refactoring.util.ParameterTablePanel;
+import com.intellij.refactoring.util.VariableData;
 import com.intellij.usageView.UsageViewUtil;
 
 import javax.swing.*;
@@ -45,6 +37,7 @@ public abstract class AbstractMakeStaticDialog extends RefactoringDialog {
     myMemberName = member.getName();
   }
 
+  @Override
   protected void doAction() {
     if (!validateData())
       return;
@@ -52,7 +45,8 @@ public abstract class AbstractMakeStaticDialog extends RefactoringDialog {
     final Settings settings = new Settings(
             isReplaceUsages(),
             isMakeClassParameter() ? getClassParameterName() : null,
-            getVariableData()
+            getVariableData(),
+            isGenerateDelegate()
     );
     if (myMember instanceof PsiMethod) {
       invokeRefactoring(new MakeMethodStaticProcessor(getProject(), (PsiMethod)myMember, settings));
@@ -62,13 +56,17 @@ public abstract class AbstractMakeStaticDialog extends RefactoringDialog {
     }
   }
 
+  protected boolean isGenerateDelegate() {
+    return false;
+  }
+
   protected abstract boolean validateData();
 
   public abstract boolean isMakeClassParameter();
 
   public abstract String getClassParameterName();
 
-  public abstract ParameterTablePanel.VariableData[] getVariableData();
+  public abstract VariableData[] getVariableData();
 
   public abstract boolean isReplaceUsages();
 

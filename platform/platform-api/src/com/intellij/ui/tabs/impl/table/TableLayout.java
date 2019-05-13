@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,11 +16,11 @@
 package com.intellij.ui.tabs.impl.table;
 
 import com.intellij.ui.tabs.TabInfo;
-import com.intellij.ui.tabs.TabsUtil;
 import com.intellij.ui.tabs.impl.JBTabsImpl;
 import com.intellij.ui.tabs.impl.LayoutPassInfo;
 import com.intellij.ui.tabs.impl.TabLabel;
 import com.intellij.ui.tabs.impl.TabLayout;
+import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
 import java.util.ArrayList;
@@ -56,8 +56,8 @@ public class TableLayout extends TabLayout {
         eachX = data.toFitRec.x;
       }
       myTabs.layout(eachLabel, eachX, 0, size.width, 1);
-      eachX += size.width + JBTabsImpl.getInterTabSpaceLength();
-      data.requiredWidth += size.width + JBTabsImpl.getInterTabSpaceLength();
+      eachX += size.width + myTabs.getInterTabSpaceLength();
+      data.requiredWidth += size.width + myTabs.getInterTabSpaceLength();
     }
 
     int selectedRow = -1;
@@ -84,7 +84,7 @@ public class TableLayout extends TabLayout {
         if (myTabs.getSelectedInfo() == eachInfo) {
           selectedRow = eachRow;
         }
-        eachX += size.width + JBTabsImpl.getInterTabSpaceLength();
+        eachX += size.width + myTabs.getInterTabSpaceLength();
       }
       else {
         eachTableRow = new TableRow(data);
@@ -98,15 +98,15 @@ public class TableLayout extends TabLayout {
       }
     }
 
-    List<TableRow> toMove = new ArrayList<TableRow>();
+    List<TableRow> toMove = new ArrayList<>();
     for (int i = selectedRow + 1; i < data.table.size(); i++) {
       toMove.add(data.table.get(i));
     }
 
-    for (TableRow eachMove : toMove) {
-      data.table.remove(eachMove);
-      data.table.add(0, eachMove);
-    }
+    //for (TableRow eachMove : toMove) {
+    //  data.table.remove(eachMove);
+    //  data.table.add(0, eachMove);
+    //}
 
 
     return data;
@@ -131,7 +131,7 @@ public class TableLayout extends TabLayout {
     int eachY = insets.top;
     int eachX;
     int row = 0;
-    final int tabUnderlineFix = myTabs.isEditorTabs() ? TabsUtil.ACTIVE_TAB_UNDERLINE_HEIGHT : 0;
+    final int tabUnderlineFix = myTabs.isEditorTabs() ? myTabs.getActiveTabUnderlineHeight() : 0;
     
     for (TableRow eachRow : data.table) {
       eachX = insets.left;
@@ -161,9 +161,9 @@ public class TableLayout extends TabLayout {
         label.setAlignmentToCenter(deltaToFit > 0);
 
         boolean lastCell = i == eachRow.myColumns.size() - 1;
-        eachX += width + (lastCell ? 0 : JBTabsImpl.getInterTabSpaceLength());
+        eachX += width + (lastCell ? 0 : myTabs.getInterTabSpaceLength());
       }
-      eachY += myTabs.myHeaderFitSize.height - 1 + JBTabsImpl.getInterTabSpaceLength() - (row < data.table.size() - 1 ? tabUnderlineFix : 0);
+      eachY += myTabs.myHeaderFitSize.height - 1 + myTabs.getInterTabSpaceLength() - (row < data.table.size() - 1 ? tabUnderlineFix : 0);
       
       row++;
     }
@@ -171,13 +171,24 @@ public class TableLayout extends TabLayout {
     if (myTabs.getSelectedInfo() != null) {
       final JBTabsImpl.Toolbar selectedToolbar = myTabs.myInfo2Toolbar.get(myTabs.getSelectedInfo());
 
-      int xAddin = 0;
+      final int componentY = eachY + (myTabs.isEditorTabs() ? 0 : 2) - myTabs.getLayoutInsets().top;
       if (!myTabs.myHorizontalSide && selectedToolbar != null && !selectedToolbar.isEmpty()) {
-        xAddin = selectedToolbar.getPreferredSize().width + 1;
-        myTabs.layout(selectedToolbar, insets.left + 1, eachY + 1, selectedToolbar.getPreferredSize().width, myTabs.getHeight() - eachY - insets.bottom - 2);
+        final int toolbarWidth = selectedToolbar.getPreferredSize().width;
+        final int vSeparatorWidth = toolbarWidth > 0 ? 1 : 0;
+        if (myTabs.isSideComponentBefore()) {
+          Rectangle compRect = myTabs.layoutComp(toolbarWidth + vSeparatorWidth, componentY, myTabs.getSelectedInfo().getComponent(), 0, 0);
+          myTabs.layout(selectedToolbar, compRect.x - toolbarWidth - vSeparatorWidth, compRect.y, toolbarWidth, compRect.height);
+        }
+        else {
+          final int width = myTabs.getWidth() - toolbarWidth - vSeparatorWidth;
+          Rectangle compRect = myTabs.layoutComp(new Rectangle(0, componentY, width, myTabs.getHeight()),
+                                                 myTabs.getSelectedInfo().getComponent(), 0, 0);
+          myTabs.layout(selectedToolbar, compRect.x + compRect.width + vSeparatorWidth, compRect.y, toolbarWidth, compRect.height);
+        }
       }
-
-      myTabs.layoutComp(xAddin, eachY + (myTabs.isEditorTabs() ? 0 : 2) - myTabs.getLayoutInsets().top, myTabs.getSelectedInfo().getComponent(), 0, 0);
+      else {
+        myTabs.layoutComp(0, componentY, myTabs.getSelectedInfo().getComponent(), 0, 0);
+      }
     }
 
     myLastTableLayout = data;
@@ -185,7 +196,61 @@ public class TableLayout extends TabLayout {
   }
 
   @Override
+  public boolean isDragOut(@NotNull TabLabel tabLabel, int deltaX, int deltaY) {
+    if (myLastTableLayout == null) {
+      return super.isDragOut(tabLabel, deltaX, deltaY);
+    }
+
+    Rectangle area = new Rectangle(myLastTableLayout.toFitRec.width, tabLabel.getBounds().height);
+    for (int i = 0; i < myLastTableLayout.myVisibleInfos.size(); i++) {
+      area = area.union(myTabs.myInfo2Label.get(myLastTableLayout.myVisibleInfos.get(i)).getBounds());
+    }
+    return Math.abs(deltaY) > area.height * getDragOutMultiplier();
+  }
+
+  @Override
   public int getDropIndexFor(Point point) {
-    return -1;
+    if (myLastTableLayout == null) return -1;
+    int result = -1;
+
+    Component c = myTabs.getComponentAt(point);
+
+    if (c instanceof JBTabsImpl) {
+      for (int i = 0; i < myLastTableLayout.myVisibleInfos.size() - 1; i++) {
+        TabLabel first = myTabs.myInfo2Label.get(myLastTableLayout.myVisibleInfos.get(i));
+        TabLabel second = myTabs.myInfo2Label.get(myLastTableLayout.myVisibleInfos.get(i + 1));
+
+        Rectangle firstBounds = first.getBounds();
+        Rectangle secondBounds = second.getBounds();
+
+        final boolean between = firstBounds.getMaxX() < point.x
+                    && secondBounds.getX() > point.x
+                    && firstBounds.y < point.y
+                    && secondBounds.getMaxY() > point.y;
+
+        if (between) {
+          c = first;
+          break;
+        }
+      }
+    }
+
+    if (c instanceof TabLabel) {
+      TabInfo info = ((TabLabel)c).getInfo();
+      int index = myLastTableLayout.myVisibleInfos.indexOf(info);
+      boolean isDropTarget = myTabs.isDropTarget(info);
+      if (!isDropTarget) {
+        for (int i = 0; i <= index; i++) {
+          if (myTabs.isDropTarget(myLastTableLayout.myVisibleInfos.get(i))) {
+            index -= 1;
+            break;
+          }
+        }
+        result = index;
+      } else if (index < myLastTableLayout.myVisibleInfos.size()) {
+        result = index;
+      }
+    }
+    return result;
   }
 }

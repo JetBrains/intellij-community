@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,13 +15,11 @@
  */
 package com.intellij.refactoring.introduceField;
 
-import com.intellij.codeInsight.ExceptionUtil;
 import com.intellij.codeInsight.highlighting.HighlightManager;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
-import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
@@ -35,14 +33,11 @@ import com.intellij.refactoring.introduce.inplace.AbstractInplaceIntroducer;
 import com.intellij.refactoring.ui.TypeSelectorManagerImpl;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
-import com.intellij.refactoring.util.classMembers.ClassMemberReferencesVisitor;
 import com.intellij.refactoring.util.occurrences.ExpressionOccurrenceManager;
 import com.intellij.refactoring.util.occurrences.OccurrenceManager;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
-import java.util.List;
 
 public class IntroduceConstantHandler extends BaseExpressionToFieldHandler {
   public static final String REFACTORING_NAME = RefactoringBundle.message("introduce.constant.title");
@@ -52,6 +47,7 @@ public class IntroduceConstantHandler extends BaseExpressionToFieldHandler {
     super(true);
   }
 
+  @Override
   protected String getHelpID() {
     return HelpID.INTRODUCE_CONSTANT;
   }
@@ -65,6 +61,7 @@ public class IntroduceConstantHandler extends BaseExpressionToFieldHandler {
     super.invoke(project, expressions, null);
   }
 
+  @Override
   public void invoke(@NotNull final Project project, final Editor editor, PsiFile file, DataContext dataContext) {
     if (!CommonRefactoringUtil.checkReadOnlyStatus(project, file)) return;
 
@@ -72,6 +69,7 @@ public class IntroduceConstantHandler extends BaseExpressionToFieldHandler {
     ElementToWorkOn.processElementToWorkOn(editor, file, REFACTORING_NAME, getHelpID(), project, getElementProcessor(project, editor));
   }
 
+  @Override
   protected boolean invokeImpl(final Project project, final PsiLocalVariable localVariable, final Editor editor) {
     final PsiElement parent = localVariable.getParent();
     if (!(parent instanceof PsiDeclarationStatement)) {
@@ -92,6 +90,7 @@ public class IntroduceConstantHandler extends BaseExpressionToFieldHandler {
   }
 
 
+  @Override
   protected Settings showRefactoringDialog(Project project,
                                            final Editor editor,
                                            PsiClass parentClass,
@@ -101,16 +100,10 @@ public class IntroduceConstantHandler extends BaseExpressionToFieldHandler {
                                            PsiElement anchorElement,
                                            PsiElement anchorElementIfAll) {
     final PsiMethod containingMethod = PsiTreeUtil.getParentOfType(expr != null ? expr : anchorElement, PsiMethod.class);
-    
-    PsiLocalVariable localVariable = null;
-    if (expr instanceof PsiReferenceExpression) {
-      PsiElement ref = ((PsiReferenceExpression)expr).resolve();
-      if (ref instanceof PsiLocalVariable) {
-        localVariable = (PsiLocalVariable)ref;
-      }
-    } else if (anchorElement instanceof PsiLocalVariable) {
-      localVariable = (PsiLocalVariable)anchorElement;
-    }
+
+    ElementToWorkOn elementToWorkOn = ElementToWorkOn.adjustElements(expr, anchorElement);
+    PsiLocalVariable localVariable = elementToWorkOn.getLocalVariable();
+    expr = elementToWorkOn.getExpression();
 
     String enteredName = null;
     boolean replaceAllOccurrences = true;
@@ -125,7 +118,7 @@ public class IntroduceConstantHandler extends BaseExpressionToFieldHandler {
       replaceAllOccurrences = activeIntroducer.isReplaceAllOccurrences();
       type = ((InplaceIntroduceConstantPopup)activeIntroducer).getType();
     }
-    
+
     for (PsiExpression occurrence : occurrences) {
       if (RefactoringUtil.isAssignmentLHS(occurrence)) {
         String message =
@@ -135,7 +128,7 @@ public class IntroduceConstantHandler extends BaseExpressionToFieldHandler {
         return null;
       }
     }
-    
+
     if (localVariable == null) {
       final PsiElement errorElement = isStaticFinalInitializer(expr);
       if (errorElement != null) {
@@ -183,28 +176,29 @@ public class IntroduceConstantHandler extends BaseExpressionToFieldHandler {
       new IntroduceConstantDialog(project, parentClass, expr, localVariable, localVariable != null, occurrences, getParentClass(),
                                   typeSelectorManager, enteredName);
     dialog.setReplaceAllOccurrences(replaceAllOccurrences);
-    dialog.show();
-    if (!dialog.isOK()) {
+    if (!dialog.showAndGet()) {
       if (occurrences.length > 1) {
         WindowManager.getInstance().getStatusBar(project).setInfo(RefactoringBundle.message("press.escape.to.remove.the.highlighting"));
       }
       return null;
     }
     return new Settings(dialog.getEnteredName(), expr, occurrences, dialog.isReplaceAllOccurrences(), true, true,
-                                           InitializationPlace.IN_FIELD_DECLARATION, dialog.getFieldVisibility(), localVariable,
-                                           dialog.getSelectedType(), dialog.isDeleteVariable(), dialog.getDestinationClass(),
-                                           dialog.isAnnotateAsNonNls(),
-                                           dialog.introduceEnumConstant());
+                        InitializationPlace.IN_FIELD_DECLARATION, dialog.getFieldVisibility(), localVariable,
+                        dialog.getSelectedType(), dialog.isDeleteVariable(), dialog.getDestinationClass(),
+                        dialog.isAnnotateAsNonNls(),
+                        dialog.introduceEnumConstant());
   }
 
   private static void highlightError(Project project, Editor editor, PsiElement errorElement) {
     if (editor != null) {
       final TextAttributes attributes = EditorColorsManager.getInstance().getGlobalScheme().getAttributes(EditorColors.SEARCH_RESULT_ATTRIBUTES);
       final TextRange textRange = errorElement.getTextRange();
-      HighlightManager.getInstance(project).addRangeHighlight(editor, textRange.getStartOffset(), textRange.getEndOffset(), attributes, true, new ArrayList<RangeHighlighter>());
+      HighlightManager.getInstance(project).addRangeHighlight(editor, textRange.getStartOffset(), textRange.getEndOffset(), attributes, true,
+                                                              new ArrayList<>());
     }
   }
 
+  @Override
   protected String getRefactoringName() {
     return REFACTORING_NAME;
   }
@@ -214,67 +208,12 @@ public class IntroduceConstantHandler extends BaseExpressionToFieldHandler {
     return myInplaceIntroduceConstantPopup;
   }
 
-  @Nullable
-  private PsiElement isStaticFinalInitializer(PsiExpression expr) {
-    PsiClass parentClass = expr != null ? getParentClass(expr) : null;
-    if (parentClass == null) return null;
-    IsStaticFinalInitializerExpression visitor = new IsStaticFinalInitializerExpression(parentClass, expr);
-    expr.accept(visitor);
-    return visitor.getElementReference();
-  }
-
+  @Override
   protected OccurrenceManager createOccurrenceManager(final PsiExpression selectedExpr, final PsiClass parentClass) {
     return new ExpressionOccurrenceManager(selectedExpr, parentClass, null);
   }
 
-  private static class IsStaticFinalInitializerExpression extends ClassMemberReferencesVisitor {
-    private PsiElement myElementReference = null;
-    private final PsiExpression myInitializer;
-
-    public IsStaticFinalInitializerExpression(PsiClass aClass, PsiExpression initializer) {
-      super(aClass);
-      myInitializer = initializer;
-    }
-
-    @Override
-    public void visitReferenceExpression(PsiReferenceExpression expression) {
-      final PsiElement psiElement = expression.resolve();
-      if ((psiElement instanceof PsiLocalVariable || psiElement instanceof PsiParameter) &&
-          !PsiTreeUtil.isAncestor(myInitializer, psiElement, false)) {
-        myElementReference = expression;
-      }
-      else {
-        super.visitReferenceExpression(expression);
-      }
-    }
-
-    @Override
-    public void visitCallExpression(PsiCallExpression callExpression) {
-      super.visitCallExpression(callExpression);
-      final List<PsiClassType> checkedExceptions = ExceptionUtil.getThrownCheckedExceptions(new PsiElement[]{callExpression});
-      if (!checkedExceptions.isEmpty()) {
-        myElementReference = callExpression;
-      }
-    }
-
-    protected void visitClassMemberReferenceElement(PsiMember classMember, PsiJavaCodeReferenceElement classMemberReference) {
-      if (!classMember.hasModifierProperty(PsiModifier.STATIC)) {
-        myElementReference = classMemberReference;
-      }
-    }
-
-    @Override
-    public void visitElement(PsiElement element) {
-      if (myElementReference != null) return;
-      super.visitElement(element);
-    }
-
-    @Nullable
-    public PsiElement getElementReference() {
-      return myElementReference;
-    }
-  }
-
+  @Override
   public PsiClass getParentClass(@NotNull PsiExpression initializerExpression) {
     final PsiType type = initializerExpression.getType();
 
@@ -307,6 +246,7 @@ public class IntroduceConstantHandler extends BaseExpressionToFieldHandler {
     return initializer != null && isStaticFinalInitializer(initializer) == null;
   }
 
+  @Override
   protected boolean validClass(PsiClass parentClass, Editor editor) {
     return true;
   }

@@ -15,13 +15,10 @@
  */
 package org.jetbrains.idea.maven.dom.refactorings;
 
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.LangDataKeys;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.refactoring.rename.PsiElementRenameHandler;
@@ -31,7 +28,7 @@ import org.jetbrains.idea.maven.dom.references.MavenTargetUtil;
 
 public class MavenPropertyRenameHandler extends PsiElementRenameHandler {
   @Override
-  public boolean isAvailableOnDataContext(DataContext context) {
+  public boolean isAvailableOnDataContext(@NotNull DataContext context) {
     return findTarget(context) != null;
   }
 
@@ -45,18 +42,10 @@ public class MavenPropertyRenameHandler extends PsiElementRenameHandler {
     PsiElement element = elements.length == 1 ? elements[0] : null;
     if (element == null) element = findTarget(dataContext);
 
-    RenameDialog dialog = new RenameDialog(project, element, null, PlatformDataKeys.EDITOR.getData(dataContext));
-    if (ApplicationManager.getApplication().isUnitTestMode()) {
-      String name = DEFAULT_NAME.getData(dataContext);
-      dialog.performRename(name);
-      dialog.close(DialogWrapper.OK_EXIT_CODE);
-    }
-    else {
-      dialog.show();
-    }
+    RenameDialog.showRenameDialog(dataContext, new RenameDialog(project, element, null, CommonDataKeys.EDITOR.getData(dataContext)));
   }
 
   private static PsiElement findTarget(DataContext context) {
-    return MavenTargetUtil.getRefactorTarget(PlatformDataKeys.EDITOR.getData(context), LangDataKeys.PSI_FILE.getData(context));
+    return MavenTargetUtil.getRefactorTarget(CommonDataKeys.EDITOR.getData(context), CommonDataKeys.PSI_FILE.getData(context));
   }
 }

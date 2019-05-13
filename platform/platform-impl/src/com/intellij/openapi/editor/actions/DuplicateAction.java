@@ -1,27 +1,7 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 
-/*
- * Created by IntelliJ IDEA.
- * User: max
- * Date: May 14, 2002
- * Time: 7:18:30 PM
- * To change template for new class use 
- * Code Style | Class Templates options (Tools | IDE Options).
- */
 package com.intellij.openapi.editor.actions;
 
 import com.intellij.openapi.actionSystem.DataContext;
@@ -30,7 +10,9 @@ import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.actionSystem.EditorAction;
 import com.intellij.openapi.editor.actionSystem.EditorWriteActionHandler;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
+import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.Pair;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class DuplicateAction extends EditorAction {
@@ -39,13 +21,17 @@ public class DuplicateAction extends EditorAction {
   }
 
   private static class Handler extends EditorWriteActionHandler {
+    Handler() {
+      super(true);
+    }
+
     @Override
-    public void executeWriteAction(Editor editor, DataContext dataContext) {
+    public void executeWriteAction(Editor editor, Caret caret, DataContext dataContext) {
       duplicateLineOrSelectedBlockAtCaret(editor);
     }
 
     @Override
-    public boolean isEnabled(Editor editor, DataContext dataContext) {
+    public boolean isEnabledForCaret(@NotNull Editor editor, @NotNull Caret caret, DataContext dataContext) {
       return !editor.isOneLineMode() || editor.getSelectionModel().hasSelection();
     }
   }
@@ -70,7 +56,7 @@ public class DuplicateAction extends EditorAction {
   }
 
   @Nullable
-  static Pair<Integer, Integer> duplicateLinesRange(Editor editor, Document document, VisualPosition rangeStart, VisualPosition rangeEnd) {
+  static Couple<Integer> duplicateLinesRange(Editor editor, Document document, VisualPosition rangeStart, VisualPosition rangeEnd) {
     Pair<LogicalPosition, LogicalPosition> lines = EditorUtil.calcSurroundingRange(editor, rangeStart, rangeEnd);
     int offset = editor.getCaretModel().getOffset();
 
@@ -82,28 +68,25 @@ public class DuplicateAction extends EditorAction {
       return null;
     }
     String s = document.getCharsSequence().subSequence(start, end).toString();
-    final int lineToCheck = nextLineStart.line - 1;
-
     int newOffset = end + offset - start;
-    if(lineToCheck == document.getLineCount () /* empty document */
-       || lineStart.line == document.getLineCount() - 1 /* last line*/
-       || document.getLineSeparatorLength(lineToCheck) == 0)
-    {
+    int selectionStart = end;
+    if (nextLineStart.line == document.getLineCount() - 1 && nextLineStart.column > 0) { // last line
       s = "\n"+s;
       newOffset++;
+      selectionStart++;
     }
     document.insertString(end, s);
 
     editor.getCaretModel().moveToOffset(newOffset);
     editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
-    return new Pair<Integer, Integer>(end, end+s.length()-1);   // don't include separator of last line in range to select
+    return Couple.of(selectionStart, end + s.length());
   }
 
   @Override
   public void update(final Editor editor, final Presentation presentation, final DataContext dataContext) {
     super.update(editor, presentation, dataContext);
     if (editor.getSelectionModel().hasSelection()) {
-      presentation.setText(EditorBundle.message("action.duplicate.block"), true);
+      presentation.setText(EditorBundle.message("action.duplicate.selection"), true);
     }
     else {
       presentation.setText(EditorBundle.message("action.duplicate.line"), true);

@@ -1,0 +1,14 @@
+PsiJavaFile:Simple0.java
+  PsiImportList
+    <empty list>
+  PsiJavaModule:M1
+    PsiModifierList:
+      <empty list>
+    PsiKeyword:module('module')
+    PsiWhiteSpace(' ')
+    PsiJavaModuleReference
+      PsiIdentifier:M1('M1')
+    PsiWhiteSpace(' ')
+    PsiJavaToken:LBRACE('{')
+    PsiWhiteSpace(' ')
+    PsiJavaToken:RBRACE('}')

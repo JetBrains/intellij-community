@@ -1,31 +1,17 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.uiDesigner.componentTree;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.daemon.impl.SeverityRegistrar;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DeleteProvider;
+import com.intellij.ide.highlighter.JavaHighlightingColors;
 import com.intellij.ide.util.EditSourceUtil;
 import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.SyntaxHighlighterColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
@@ -34,6 +20,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiField;
 import com.intellij.ui.ColoredTreeCellRenderer;
+import com.intellij.ui.JBColor;
 import com.intellij.ui.PopupHandler;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.treeStructure.Tree;
@@ -66,8 +53,8 @@ import java.awt.datatransfer.Transferable;
 import java.awt.dnd.*;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 
 /**
  * @author Anton Katilin
@@ -127,10 +114,12 @@ public final class ComponentTree extends Tree implements DataProvider {
     if (!ApplicationManager.getApplication().isHeadlessEnvironment()) {
       setDragEnabled(true);
       setTransferHandler(new TransferHandler() {
+        @Override
         public int getSourceActions(JComponent c) {
           return DnDConstants.ACTION_COPY_OR_MOVE;
         }
 
+        @Override
         protected Transferable createTransferable(JComponent c) {
           return DraggedComponentList.pickupSelection(myEditor, null);
         }
@@ -159,6 +148,7 @@ public final class ComponentTree extends Tree implements DataProvider {
     myQuickFixManager.refreshIntentionHint();
   }
 
+  @Override
   @Nullable
   public String getToolTipText(final MouseEvent e) {
     final TreePath path = getPathForLocation(e.getX(), e.getY());
@@ -194,7 +184,7 @@ public final class ComponentTree extends Tree implements DataProvider {
   /**
    * TODO[vova] should return pair <RadComponent, TreePath>
    *
-   * @return first selected component. The method returns <code>null</code>
+   * @return first selected component. The method returns {@code null}
    *         if there is no selection in the tree.
    */
   @Nullable
@@ -212,7 +202,7 @@ public final class ComponentTree extends Tree implements DataProvider {
     if (paths == null) {
       return RadComponent.EMPTY_ARRAY;
     }
-    final ArrayList<RadComponent> result = new ArrayList<RadComponent>(paths.length);
+    final ArrayList<RadComponent> result = new ArrayList<>(paths.length);
     for (TreePath path : paths) {
       final DefaultMutableTreeNode node = (DefaultMutableTreeNode)path.getLastPathComponent();
       if (node != null && node.getUserObject() instanceof ComponentPtrDescriptor) {
@@ -223,14 +213,15 @@ public final class ComponentTree extends Tree implements DataProvider {
         }
       }
     }
-    return result.toArray(new RadComponent[result.size()]);
+    return result.toArray(RadComponent.EMPTY_ARRAY);
   }
 
   /**
    * Provides {@link PlatformDataKeys#NAVIGATABLE} to navigate to
    * binding of currently selected component (if any)
    */
-  public Object getData(final String dataId) {
+  @Override
+  public Object getData(@NotNull final String dataId) {
     if (GuiEditor.DATA_KEY.is(dataId)) {
       return myEditor;
     }
@@ -247,7 +238,7 @@ public final class ComponentTree extends Tree implements DataProvider {
 
     if (LW_INSPECTION_SUPPRESSION_ARRAY_DATA_KEY.is(dataId)) {
       Collection<LwInspectionSuppression> elements = getSelectedElements(LwInspectionSuppression.class);
-      return elements.size() == 0 ? null : elements.toArray(new LwInspectionSuppression[elements.size()]);
+      return elements.size() == 0 ? null : elements.toArray(LwInspectionSuppression.EMPTY_ARRAY);
     }
 
     if (PlatformDataKeys.HELP_ID.is(dataId)) {
@@ -258,7 +249,7 @@ public final class ComponentTree extends Tree implements DataProvider {
       return myFormEditor;
     }
 
-    if (!PlatformDataKeys.NAVIGATABLE.is(dataId)) {
+    if (!CommonDataKeys.NAVIGATABLE.is(dataId)) {
       return null;
     }
 
@@ -302,7 +293,7 @@ public final class ComponentTree extends Tree implements DataProvider {
     if (paths == null) {
       return Collections.emptyList();
     }
-    final ArrayList<T> result = new ArrayList<T>(paths.length);
+    final ArrayList<T> result = new ArrayList<>(paths.length);
     for (TreePath path : paths) {
       final DefaultMutableTreeNode node = (DefaultMutableTreeNode)path.getLastPathComponent();
       Object userObject = node.getUserObject();
@@ -322,13 +313,13 @@ public final class ComponentTree extends Tree implements DataProvider {
 
     Map<SimpleTextAttributes, SimpleTextAttributes> highlightMap = myHighlightAttributes.get(level.getSeverity());
     if (highlightMap == null) {
-      highlightMap = new HashMap<SimpleTextAttributes, SimpleTextAttributes>();
+      highlightMap = new HashMap<>();
       myHighlightAttributes.put(level.getSeverity(), highlightMap);
     }
 
     SimpleTextAttributes result = highlightMap.get(attrs);
     if (result == null) {
-      final TextAttributesKey attrKey = SeverityRegistrar.getInstance(myProject).getHighlightInfoTypeBySeverity(level.getSeverity()).getAttributesKey();
+      final TextAttributesKey attrKey = SeverityRegistrar.getSeverityRegistrar(myProject).getHighlightInfoTypeBySeverity(level.getSeverity()).getAttributesKey();
       TextAttributes textAttrs = EditorColorsManager.getInstance().getGlobalScheme().getAttributes(attrKey);
       textAttrs = TextAttributes.merge(attrs.toTextAttributes(), textAttrs);
       result = SimpleTextAttributes.fromTextAttributes(textAttrs);
@@ -338,21 +329,22 @@ public final class ComponentTree extends Tree implements DataProvider {
     return result;
   }
 
+  @Override
   public void setUI(final TreeUI ui) {
     super.setUI(ui);
 
     // [vova] we cannot create this hash in constructor and just clear it here. The
     // problem is that setUI is invoked by constructor of superclass.
-    myHighlightAttributes = new HashMap<HighlightSeverity, Map<SimpleTextAttributes, SimpleTextAttributes>>();
+    myHighlightAttributes = new HashMap<>();
 
     final EditorColorsScheme globalScheme = EditorColorsManager.getInstance().getGlobalScheme();
-    final TextAttributes attributes = globalScheme.getAttributes(SyntaxHighlighterColors.STRING);
+    final TextAttributes attributes = globalScheme.getAttributes(JavaHighlightingColors.STRING);
 
     myBindingAttributes = new SimpleTextAttributes(SimpleTextAttributes.STYLE_BOLD, UIUtil.getTreeForeground());
     myClassAttributes = new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, UIUtil.getTreeForeground());
     myPackageAttributes = new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, Color.GRAY);
     myTitleAttributes =new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, attributes.getForegroundColor());
-    myUnknownAttributes = new SimpleTextAttributes(SimpleTextAttributes.STYLE_WAVED, Color.RED);
+    myUnknownAttributes = new SimpleTextAttributes(SimpleTextAttributes.STYLE_WAVED, JBColor.RED);
   }
 
   public static Icon getComponentIcon(final RadComponent component) {
@@ -364,7 +356,7 @@ public final class ComponentTree extends Tree implements DataProvider {
         icon = item.getSmallIcon();
       }
       else {
-        icon = UIDesignerIcons.Unknown_small;
+        icon = UIDesignerIcons.Unknown;
       }
       return icon;
     }
@@ -387,6 +379,7 @@ public final class ComponentTree extends Tree implements DataProvider {
   private final class MyTreeCellRenderer extends ColoredTreeCellRenderer {
     @NonNls private static final String SWING_PACKAGE = "javax.swing";
 
+    @Override
     public void customizeCellRenderer(
       final JTree tree,
       final Object value,
@@ -495,6 +488,7 @@ public final class ComponentTree extends Tree implements DataProvider {
   }
 
   private final class MyDropTargetListener extends DropTargetAdapter {
+    @Override
     public void dragOver(DropTargetDragEvent dtde) {
       try {
         RadComponent dropTargetComponent = null;
@@ -538,10 +532,12 @@ public final class ComponentTree extends Tree implements DataProvider {
       }
     }
 
+    @Override
     public void dragExit(DropTargetEvent dte) {
       setDropTargetComponent(null);
     }
 
+    @Override
     public void drop(DropTargetDropEvent dtde) {
       try {
         final DraggedComponentList dcl = DraggedComponentList.fromTransferable(dtde.getTransferable());
@@ -555,7 +551,7 @@ public final class ComponentTree extends Tree implements DataProvider {
             final ComponentDropLocation dropLocation = ((RadContainer)targetComponent).getDropLocation(null);
             if (dcl != null) {
               if (!FormEditingUtil.isDropOnChild(dcl, dropLocation)) {
-                RadComponent[] components = dcl.getComponents().toArray(new RadComponent [dcl.getComponents().size()]);
+                RadComponent[] components = dcl.getComponents().toArray(RadComponent.EMPTY_ARRAY);
                 RadContainer[] originalParents = dcl.getOriginalParents();
                 final GridConstraints[] originalConstraints = dcl.getOriginalConstraints();
                 for(int i=0; i<components.length; i++) {
@@ -590,6 +586,7 @@ public final class ComponentTree extends Tree implements DataProvider {
       myEditor = editor;
     }
 
+    @Override
     public void deleteElement(@NotNull DataContext dataContext) {
       if (myEditor != null) {
         LwInspectionSuppression[] suppressions = LW_INSPECTION_SUPPRESSION_ARRAY_DATA_KEY.getData(dataContext);
@@ -609,6 +606,7 @@ public final class ComponentTree extends Tree implements DataProvider {
       }
     }
 
+    @Override
     public boolean canDeleteElement(@NotNull DataContext dataContext) {
       if (myEditor != null) {
         LwInspectionSuppression[] suppressions = LW_INSPECTION_SUPPRESSION_ARRAY_DATA_KEY.getData(dataContext);

@@ -14,31 +14,29 @@
  * limitations under the License.
  */
 
-/*
- * User: anna
- * Date: 15-May-2008
- */
 package com.intellij.refactoring.extractMethod;
 
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.psi.PsiModifier;
-import com.intellij.refactoring.util.ParameterTablePanel;
+import com.intellij.psi.PsiType;
+import com.intellij.refactoring.util.VariableData;
+import org.jetbrains.annotations.NotNull;
 
-public abstract class AbstractExtractDialog extends DialogWrapper {
-  protected AbstractExtractDialog(Project project) {
-    super(project, true);
-  }
+public interface AbstractExtractDialog {
 
-
-  public abstract String getChosenMethodName();
-
-  public abstract ParameterTablePanel.VariableData[] getChosenParameters();
-
+  @NotNull
+  String getChosenMethodName();
+  VariableData[] getChosenParameters();
   @PsiModifier.ModifierConstant
-  public abstract String getVisibility();
+  @NotNull
+  String getVisibility();
+  boolean isMakeStatic();
+  boolean isChainedConstructor();
+  PsiType getReturnType();
 
-  public abstract boolean isMakeStatic();
+  void show();
+  boolean isOK();
 
-  public abstract boolean isChainedConstructor();
+  default boolean isPreviewUsages() {return false;}
+
+  default boolean showInTransaction() {return false;}
 }

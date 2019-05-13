@@ -21,7 +21,7 @@ PsiJavaFile:Exception0.java
         PsiDocToken:DOC_COMMENT_START('/**')
         PsiWhiteSpace('\n     ')
         PsiDocToken:DOC_COMMENT_LEADING_ASTERISKS('*')
-        PsiDocToken:DOC_COMMENT_DATA('  ')
+        PsiDocToken:DOC_COMMENT_DATA(' ')
         PsiDocTag:@throws
           PsiDocToken:DOC_TAG_NAME('@throws')
           PsiWhiteSpace(' ')
@@ -41,9 +41,11 @@ PsiJavaFile:Exception0.java
                 PsiIdentifier:Exception('Exception')
                 PsiReferenceParameterList
                   <empty list>
+          PsiWhiteSpace(' ')
+          PsiDocToken:DOC_COMMENT_DATA('an exception')
         PsiWhiteSpace('\n     ')
         PsiDocToken:DOC_COMMENT_END('*/')
-      PsiWhiteSpace('\n     ')
+      PsiWhiteSpace('\n    ')
       PsiModifierList:public
         PsiKeyword:public('public')
       PsiTypeParameterList

@@ -15,7 +15,6 @@
  */
 package org.intellij.lang.xpath.xslt.run;
 
-import com.intellij.diagnostic.logging.DebuggerLogConsoleManager;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.Executor;
 import com.intellij.execution.configurations.*;
@@ -25,7 +24,6 @@ import com.intellij.execution.filters.TextConsoleBuilderFactory;
 import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.runners.ExecutionEnvironment;
-import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.FileTypes;
@@ -34,8 +32,10 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectBundle;
-import com.intellij.openapi.projectRoots.*;
+import com.intellij.openapi.projectRoots.JavaSdkType;
+import com.intellij.openapi.projectRoots.ProjectJdkTable;
+import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.projectRoots.SimpleJavaSdkType;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
@@ -59,14 +59,13 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
-public final class XsltRunConfiguration extends RunConfigurationBase implements LocatableConfiguration, ModuleRunConfiguration, RunConfigurationWithSuppressedDefaultDebugAction {
+public final class XsltRunConfiguration extends LocatableConfigurationBase implements ModuleRunConfiguration, RunConfigurationWithSuppressedDefaultDebugAction {
     private static final String NAME = "XSLT Configuration";
 
     private static final String STRICT_FILE_PATH_EXPR = "(file\\://?(?:/?\\p{Alpha}\\:)?(?:/\\p{Alpha}\\:)?[^:]+)";
     private static final String RELAXED_FILE_PATH_EXPR = "((?:file\\://?)?(?:/?\\p{Alpha}\\:)?(?:/\\p{Alpha}\\:)?[^:]+)";
 
     private static final String LOG_TAG = "(?:\\[[\\w ]+\\]\\:? +)?";
-    private static final VirtualFilePointerManager FILE_POINTER_MANAGER = VirtualFilePointerManager.getInstance();
 
     public enum OutputType {
         CONSOLE, STDOUT, @Deprecated FILE
@@ -76,7 +75,7 @@ public final class XsltRunConfiguration extends RunConfigurationBase implements 
         FROM_MODULE, JDK
     }
 
-    private List<Pair<String, String>> myParameters = new ArrayList<Pair<String, String>>();
+    private List<Pair<String, String>> myParameters = new ArrayList<>();
     @Nullable private VirtualFilePointer myXsltFile = null;
     @Nullable private VirtualFilePointer myXmlInputFile = null;
     @NotNull private OutputType myOutputType = OutputType.CONSOLE;
@@ -88,7 +87,7 @@ public final class XsltRunConfiguration extends RunConfigurationBase implements 
     public boolean myOpenOutputFile;
     public boolean myOpenInBrowser;
     public boolean mySmartErrorHandling = true;
-    @Deprecated // this is only used if the dynamic selection of a port fails  
+    @Deprecated // this is only used if the dynamic selection of a port fails
     public int myRunnerPort = 34873;
     public String myVmArguments;
     public String myWorkingDirectory;
@@ -102,20 +101,13 @@ public final class XsltRunConfiguration extends RunConfigurationBase implements 
         mySuggestedName = null;
     }
 
+    @NotNull
+    @Override
     public SettingsEditor<XsltRunConfiguration> getConfigurationEditor() {
         return new XsltRunSettingsEditor(getProject());
     }
 
-    @SuppressWarnings({ "ConstantConditions" })
-    public JDOMExternalizable createRunnerSettings(ConfigurationInfoProvider provider) {
-        return null;  // nothing special here
-    }
-
-    @Nullable
-    public SettingsEditor<JDOMExternalizable> getRunnerSettingsEditor(ProgramRunner programRunner) {
-        return null;  // nothing special here
-    }
-
+    @Override
     public RunProfileState getState(@NotNull Executor executor, @NotNull ExecutionEnvironment executionEnvironment) throws ExecutionException {
         if (myXsltFile == null) throw new ExecutionException("No XSLT file selected");
         final VirtualFile baseFile = myXsltFile.getFile();
@@ -146,42 +138,43 @@ public final class XsltRunConfiguration extends RunConfigurationBase implements 
         return state;
     }
 
-    //invoke before run/debug tabs are shown.
-    //Should be overriden to add additional tabs for run/debug toolwindow
     @Override
     public void createAdditionalTabComponents(final AdditionalTabComponentManager manager, ProcessHandler startedProcess) {
-        if (myOutputType == OutputType.CONSOLE) {
-            final HighlightingOutputConsole console = new HighlightingOutputConsole(getProject(), myFileType);
+      if (myOutputType == OutputType.CONSOLE) {
+        final HighlightingOutputConsole console = new HighlightingOutputConsole(getProject(), myFileType);
 
-            final List<XsltRunnerExtension> extensions = XsltRunnerExtension.getExtensions(this, manager instanceof DebuggerLogConsoleManager);
-            boolean consoleTabAdded = false;
-            for (XsltRunnerExtension extension : extensions) {
-                if (extension.createTabs(getProject(), manager, console, startedProcess)) {
-                    consoleTabAdded = true;
-                }
-            }
-            if (!consoleTabAdded) {
-                manager.addAdditionalTabComponent(console, console.getTabTitle());    // TODO: verify parameter
-            }
-
-            final OutputTabAdapter listener = new OutputTabAdapter(startedProcess, console);
-
-            if (startedProcess.isStartNotified()) {
-                listener.startNotified(new ProcessEvent(startedProcess));
-            } else {
-                startedProcess.addProcessListener(listener);
-            }
+          XsltCommandLineState state = startedProcess.getUserData(XsltCommandLineState.STATE);
+          boolean debug = state != null && state.isDebugger();
+          boolean consoleTabAdded = false;
+        for (XsltRunnerExtension extension : XsltRunnerExtension.getExtensions(this, debug)) {
+          if (extension.createTabs(getProject(), manager, console, startedProcess)) {
+            consoleTabAdded = true;
+          }
         }
+        if (!consoleTabAdded) {
+          manager.addAdditionalTabComponent(console, console.getTabTitle());    // TODO: verify parameter
+        }
+
+        final OutputTabAdapter listener = new OutputTabAdapter(startedProcess, console);
+        if (startedProcess.isStartNotified()) {
+          listener.startNotified(new ProcessEvent(startedProcess));
+        }
+        else {
+          startedProcess.addProcessListener(listener);
+        }
+      }
     }
 
+    @Override
     public final RunConfiguration clone() {
         final XsltRunConfiguration configuration = (XsltRunConfiguration)super.clone();
-        configuration.myParameters = new ArrayList<Pair<String, String>>(myParameters);
-        if (myXsltFile != null) configuration.myXsltFile = FILE_POINTER_MANAGER.duplicate(myXsltFile, getProject(), null);
-        if (myXmlInputFile != null) configuration.myXmlInputFile = FILE_POINTER_MANAGER.duplicate(myXmlInputFile, getProject(), null);
+        configuration.myParameters = new ArrayList<>(myParameters);
+        if (myXsltFile != null) configuration.myXsltFile = VirtualFilePointerManager.getInstance().duplicate(myXsltFile, getProject(), null);
+        if (myXmlInputFile != null) configuration.myXmlInputFile = VirtualFilePointerManager.getInstance().duplicate(myXmlInputFile, getProject(), null);
         return configuration;
     }
 
+    @Override
     public void checkConfiguration() throws RuntimeConfigurationException {
         if (myXsltFile == null) {
             throw new RuntimeConfigurationError("No XSLT File selected");
@@ -215,14 +208,15 @@ public final class XsltRunConfiguration extends RunConfigurationBase implements 
         return file == null || file.length() == 0;
     }
 
-    // return modules to compile before run. Null or empty list to make project
+    // return modules to compile before run. Null or empty list to build project
+    @Override
     @NotNull
     public Module[] getModules() {
         return getModule() != null ? new Module[]{ getModule() } : Module.EMPTY_ARRAY;
     }
 
-    @SuppressWarnings({ "unchecked" })
-    public void readExternal(Element element) throws InvalidDataException {
+    @Override
+    public void readExternal(@NotNull Element element) throws InvalidDataException {
         super.readExternal(element);
         DefaultJDOMExternalizer.readExternal(this, element);
 
@@ -230,14 +224,14 @@ public final class XsltRunConfiguration extends RunConfigurationBase implements 
         if (e != null) {
             final String url = e.getAttributeValue("url");
             if (url != null) {
-                myXsltFile = FILE_POINTER_MANAGER.create(url, getProject(), null);
+                myXsltFile = VirtualFilePointerManager.getInstance().create(url, getProject(), null);
             }
         }
         e = element.getChild("XmlFile");
         if (e != null) {
             final String url = e.getAttributeValue("url");
             if (url != null) {
-                myXmlInputFile = FILE_POINTER_MANAGER.create(url, getProject(), null);
+                myXmlInputFile = VirtualFilePointerManager.getInstance().create(url, getProject(), null);
             }
         }
 
@@ -284,7 +278,8 @@ public final class XsltRunConfiguration extends RunConfigurationBase implements 
         return null;
     }
 
-    public void writeExternal(Element element) throws WriteExternalException {
+    @Override
+    public void writeExternal(@NotNull Element element) throws WriteExternalException {
         super.writeExternal(element);
         DefaultJDOMExternalizer.writeExternal(this, element);
 
@@ -349,12 +344,12 @@ public final class XsltRunConfiguration extends RunConfigurationBase implements 
         if (isEmpty(xsltFile)) {
             myXsltFile = null;
         } else {
-            myXsltFile = FILE_POINTER_MANAGER.create(VfsUtilCore.pathToUrl(xsltFile).replace(File.separatorChar, '/'), getProject(), null);
+            myXsltFile = VirtualFilePointerManager.getInstance().create(VfsUtilCore.pathToUrl(xsltFile).replace(File.separatorChar, '/'), getProject(), null);
         }
     }
 
     private void setXsltFile(VirtualFile virtualFile) {
-        myXsltFile = FILE_POINTER_MANAGER.create(virtualFile, getProject(), null);
+        myXsltFile = VirtualFilePointerManager.getInstance().create(virtualFile, getProject(), null);
     }
 
     @Nullable
@@ -400,12 +395,12 @@ public final class XsltRunConfiguration extends RunConfigurationBase implements 
         if (isEmpty(xmlInputFile)) {
             myXmlInputFile = null;
         } else {
-            myXmlInputFile = FILE_POINTER_MANAGER.create(VfsUtilCore.pathToUrl(xmlInputFile).replace(File.separatorChar, '/'), getProject(), null);
+            myXmlInputFile = VirtualFilePointerManager.getInstance().create(VfsUtilCore.pathToUrl(xmlInputFile).replace(File.separatorChar, '/'), getProject(), null);
         }
     }
 
     public void setXmlInputFile(VirtualFile xmlInputFile) {
-      myXmlInputFile = FILE_POINTER_MANAGER.create(xmlInputFile, getProject(), null);
+      myXmlInputFile = VirtualFilePointerManager.getInstance().create(xmlInputFile, getProject(), null);
     }
 
     public void setModule(Module module) {
@@ -443,25 +438,19 @@ public final class XsltRunConfiguration extends RunConfigurationBase implements 
     }
 
     private static Sdk ourDefaultSdk;
-  
+
     private static synchronized Sdk getDefaultSdk() {
         if (ourDefaultSdk == null) {
-            final String jdkHome = SystemProperties.getJavaHome();
-            final String versionName = ProjectBundle.message("sdk.java.name.template", SystemProperties.getJavaVersion());
-            Sdk sdk = ProjectJdkTable.getInstance().createSdk(versionName, new SimpleJavaSdkType());
-            SdkModificator modificator = sdk.getSdkModificator();
-            modificator.setHomePath(jdkHome);
-            modificator.commitChanges();
-            ourDefaultSdk = sdk;
+            ourDefaultSdk = new SimpleJavaSdkType().createJdk("tmp", SystemProperties.getJavaHome());
         }
-        
+
         return ourDefaultSdk;
     }
-  
+
     @Nullable
     public Sdk getEffectiveJDK() {
         if (!XsltRunSettingsEditor.ALLOW_CHOOSING_SDK) {
-            return getDefaultSdk(); 
+            return getDefaultSdk();
         }
         if (myJdkChoice == JdkChoice.JDK) {
             return myJdk != null ? ProjectJdkTable.getInstance().findJdk(myJdk) : null;
@@ -496,10 +485,7 @@ public final class XsltRunConfiguration extends RunConfigurationBase implements 
         return module;
     }
 
-    public boolean isGeneratedName() {
-        return mySuggestedName != null;
-    }
-
+    @Override
     public String suggestedName() {
         return mySuggestedName;
     }

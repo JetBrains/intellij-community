@@ -31,21 +31,25 @@ public final class XPathFileType extends LanguageFileType {
         super(language);
     }
 
+    @Override
     @NotNull
     public String getName() {
         return getLanguage().getID();
     }
 
+    @Override
     @NotNull
     public String getDescription() {
         return "XPath";
     }
 
+    @Override
     @NotNull
     public String getDefaultExtension() {
         return getLanguage().getID().toLowerCase();
     }
 
+    @Override
     public Icon getIcon() {
         return XpathIcons.Xpath;
     }

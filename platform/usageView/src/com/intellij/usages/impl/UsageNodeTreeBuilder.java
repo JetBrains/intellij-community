@@ -15,22 +15,25 @@
  */
 package com.intellij.usages.impl;
 
+import com.intellij.openapi.project.DumbService;
+import com.intellij.openapi.project.Project;
 import com.intellij.usages.Usage;
 import com.intellij.usages.UsageGroup;
 import com.intellij.usages.UsageTarget;
 import com.intellij.usages.rules.UsageFilteringRule;
-import com.intellij.usages.rules.UsageFilteringRuleEx;
 import com.intellij.usages.rules.UsageGroupingRule;
-import com.intellij.usages.rules.UsageGroupingRuleEx;
 import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+
+import java.util.Arrays;
+import java.util.List;
 
 /**
  * @author max
  */
 class UsageNodeTreeBuilder {
   private final GroupNode myRoot;
+  private final Project myProject;
   private final UsageTarget[] myTargets;
   private UsageGroupingRule[] myGroupingRules;
   private UsageFilteringRule[] myFilteringRules;
@@ -38,56 +41,45 @@ class UsageNodeTreeBuilder {
   UsageNodeTreeBuilder(@NotNull UsageTarget[] targets,
                        @NotNull UsageGroupingRule[] groupingRules,
                        @NotNull UsageFilteringRule[] filteringRules,
-                       @NotNull GroupNode root) {
+                       @NotNull GroupNode root, 
+                       @NotNull Project project) {
     myTargets = targets;
     myGroupingRules = groupingRules;
     myFilteringRules = filteringRules;
     myRoot = root;
+    myProject = project;
   }
 
   public void setGroupingRules(@NotNull UsageGroupingRule[] rules) {
     myGroupingRules = rules;
   }
 
-  public void setFilteringRules(@NotNull UsageFilteringRule[] rules) {
+  void setFilteringRules(@NotNull UsageFilteringRule[] rules) {
     myFilteringRules = rules;
   }
 
   public boolean isVisible(@NotNull Usage usage) {
-    for (final UsageFilteringRule rule : myFilteringRules) {
-      final boolean visible;
-      if (rule instanceof UsageFilteringRuleEx) {
-        visible = ((UsageFilteringRuleEx) rule).isVisible(usage, myTargets);
-      }
-      else {
-        visible = rule.isVisible(usage);
-      }
-      if (!visible) {
-        return false;
-      }
-    }
-    return true;
+    return Arrays.stream(myFilteringRules).allMatch(rule -> rule.isVisible(usage, myTargets));
   }
 
-  @Nullable
-  UsageNode appendUsage(@NotNull Usage usage, @NotNull Consumer<Runnable> edtQueue) {
+  UsageNode appendOrGet(@NotNull Usage usage,
+                        boolean filterDuplicateLines,
+                        @NotNull Consumer<? super Node> edtInsertedUnderQueue) {
     if (!isVisible(usage)) return null;
 
-    GroupNode lastGroupNode = myRoot;
+    final boolean dumb = DumbService.isDumb(myProject);
+
+    GroupNode groupNode = myRoot;
     for (int i = 0; i < myGroupingRules.length; i++) {
-      final UsageGroupingRule rule = myGroupingRules[i];
-      final UsageGroup group;
-      if (rule instanceof UsageGroupingRuleEx) {
-        group = ((UsageGroupingRuleEx) rule).groupUsage(usage, myTargets);
-      }
-      else {
-        group = rule.groupUsage(usage);
-      }
-      if (group != null) {
-        lastGroupNode = lastGroupNode.addGroup(group, i, edtQueue);
+      UsageGroupingRule rule = myGroupingRules[i];
+      if (dumb && !DumbService.isDumbAware(rule)) continue;
+
+      List<UsageGroup> groups = rule.getParentGroupsFor(usage, myTargets);
+      for (UsageGroup group : groups) {
+        groupNode = groupNode.addOrGetGroup(group, i, edtInsertedUnderQueue);
       }
     }
 
-    return lastGroupNode.addUsage(usage, edtQueue);
+    return groupNode.addOrGetUsage(usage, filterDuplicateLines, edtInsertedUnderQueue);
   }
 }

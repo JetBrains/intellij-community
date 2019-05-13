@@ -1,0 +1,32 @@
+public class TestMethodReferenceSameName {
+   TestMethodReferenceSameName.R1 r;
+
+   private void foo() {
+      TestMethodReferenceSameName.R1 var10000 = this.r;// 5
+      (var10000::foo).run();
+   }// 6
+
+   class R1 {
+      void foo() {
+      }// 9
+   }
+}
+
+class 'TestMethodReferenceSameName' {
+   method 'foo ()V' {
+      1      4
+      e      5
+      13      6
+   }
+}
+
+class 'TestMethodReferenceSameName$R1' {
+   method 'foo ()V' {
+      0      10
+   }
+}
+
+Lines mapping:
+5 <-> 5
+6 <-> 7
+9 <-> 11

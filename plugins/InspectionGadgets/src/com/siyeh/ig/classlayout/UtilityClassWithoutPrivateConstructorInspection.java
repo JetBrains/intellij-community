@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2012 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2018 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,7 +26,6 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.psi.search.searches.ReferencesSearch;
-import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Query;
 import com.intellij.util.ui.CheckBox;
 import com.siyeh.HardcodedMethodConstants;
@@ -48,22 +47,9 @@ import java.util.List;
 public class UtilityClassWithoutPrivateConstructorInspection extends BaseInspection {
 
   @SuppressWarnings({"PublicField"})
-  public boolean ignoreClassesWithOnlyMain = false;
-
-  @SuppressWarnings({"PublicField"})
   public final ExternalizableStringSet ignorableAnnotations = new ExternalizableStringSet();
-
-  @Override
-  @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("utility.class.without.private.constructor.display.name");
-  }
-
-  @Override
-  @NotNull
-  protected String buildErrorString(Object... infos) {
-    return InspectionGadgetsBundle.message("utility.class.without.private.constructor.problem.descriptor");
-  }
+  @SuppressWarnings({"PublicField"})
+  public boolean ignoreClassesWithOnlyMain = false;
 
   @Override
   @Nullable
@@ -81,7 +67,7 @@ public class UtilityClassWithoutPrivateConstructorInspection extends BaseInspect
   @NotNull
   @Override
   protected InspectionGadgetsFix[] buildFixes(Object... infos) {
-    final List<InspectionGadgetsFix> fixes = new ArrayList();
+    final List<InspectionGadgetsFix> fixes = new ArrayList<>();
     final PsiClass aClass = (PsiClass)infos[0];
     final PsiMethod constructor = getNullArgConstructor(aClass);
     if (constructor == null) {
@@ -95,18 +81,48 @@ public class UtilityClassWithoutPrivateConstructorInspection extends BaseInspect
       }
     }
     AddToIgnoreIfAnnotatedByListQuickFix.build(aClass, ignorableAnnotations, fixes);
-    return fixes.toArray(new InspectionGadgetsFix[fixes.size()]);
+    return fixes.toArray(InspectionGadgetsFix.EMPTY_ARRAY);
   }
 
-  private static class CreateEmptyPrivateConstructor extends InspectionGadgetsFix {
+  @Override
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message("utility.class.without.private.constructor.display.name");
+  }
 
+  @Override
+  @NotNull
+  protected String buildErrorString(Object... infos) {
+    return InspectionGadgetsBundle.message("utility.class.without.private.constructor.problem.descriptor");
+  }
+
+  @Override
+  public BaseInspectionVisitor buildVisitor() {
+    return new UtilityClassWithoutPrivateConstructorVisitor();
+  }
+
+  @Nullable
+  static PsiMethod getNullArgConstructor(PsiClass aClass) {
+    final PsiMethod[] constructors = aClass.getConstructors();
+    for (final PsiMethod constructor : constructors) {
+      final PsiParameterList params = constructor.getParameterList();
+      if (params.isEmpty()) {
+        return constructor;
+      }
+    }
+    return null;
+  }
+
+  protected static class CreateEmptyPrivateConstructor extends InspectionGadgetsFix {
+
+    @Override
     @NotNull
-    public String getName() {
+    public String getFamilyName() {
       return InspectionGadgetsBundle.message("utility.class.without.private.constructor.create.quickfix");
     }
 
     @Override
-    public void doFix(Project project, ProblemDescriptor descriptor) throws IncorrectOperationException {
+    public void doFix(Project project, ProblemDescriptor descriptor) {
       final PsiElement classNameIdentifier = descriptor.getPsiElement();
       final PsiElement parent = classNameIdentifier.getParent();
       if (!(parent instanceof PsiClass)) {
@@ -121,13 +137,9 @@ public class UtilityClassWithoutPrivateConstructorInspection extends BaseInspect
         final PsiElement element = reference.getElement();
         final PsiElement context = element.getParent();
         if (context instanceof PsiNewExpression) {
-          SwingUtilities.invokeLater(new Runnable() {
-            public void run() {
-              Messages.showInfoMessage(aClass.getProject(),
-                                       "Utility class has instantiations, private constructor will not be created",
-                                       "Can't generate constructor");
-            }
-          });
+          SwingUtilities.invokeLater(() -> Messages.showInfoMessage(aClass.getProject(),
+                                                                    "Utility class has instantiations, private constructor will not be created",
+                                                                    "Can't generate constructor"));
           return;
         }
       }
@@ -144,13 +156,14 @@ public class UtilityClassWithoutPrivateConstructorInspection extends BaseInspect
 
   private static class MakeConstructorPrivateFix extends InspectionGadgetsFix {
 
+    @Override
     @NotNull
-    public String getName() {
+    public String getFamilyName() {
       return InspectionGadgetsBundle.message("utility.class.without.private.constructor.make.quickfix");
     }
 
     @Override
-    public void doFix(Project project, ProblemDescriptor descriptor) throws IncorrectOperationException {
+    public void doFix(Project project, ProblemDescriptor descriptor) {
       final PsiElement classNameIdentifier = descriptor.getPsiElement();
       final PsiElement parent = classNameIdentifier.getParent();
       if (!(parent instanceof PsiClass)) {
@@ -160,7 +173,7 @@ public class UtilityClassWithoutPrivateConstructorInspection extends BaseInspect
       final PsiMethod[] constructors = aClass.getConstructors();
       for (final PsiMethod constructor : constructors) {
         final PsiParameterList parameterList = constructor.getParameterList();
-        if (parameterList.getParametersCount() == 0) {
+        if (parameterList.isEmpty()) {
           final PsiModifierList modifiers = constructor.getModifierList();
           modifiers.setModifierProperty(PsiModifier.PUBLIC, false);
           modifiers.setModifierProperty(PsiModifier.PROTECTED, false);
@@ -168,11 +181,6 @@ public class UtilityClassWithoutPrivateConstructorInspection extends BaseInspect
         }
       }
     }
-  }
-
-  @Override
-  public BaseInspectionVisitor buildVisitor() {
-    return new UtilityClassWithoutPrivateConstructorVisitor();
   }
 
   private class UtilityClassWithoutPrivateConstructorVisitor extends BaseInspectionVisitor {
@@ -192,14 +200,14 @@ public class UtilityClassWithoutPrivateConstructorInspection extends BaseInspect
       if (hasPrivateConstructor(aClass)) {
         return;
       }
-      if (AnnotationUtil.isAnnotated(aClass, ignorableAnnotations)) {
+      if (AnnotationUtil.isAnnotated(aClass, ignorableAnnotations, 0)) {
         return;
       }
       if (aClass.hasModifierProperty(PsiModifier.PRIVATE) && aClass.getConstructors().length == 0) {
         return;
       }
       final SearchScope scope = GlobalSearchScope.projectScope(aClass.getProject());
-      final Query<PsiClass> query = ClassInheritorsSearch.search(aClass, scope, true, true);
+      final Query<PsiClass> query = ClassInheritorsSearch.search(aClass, scope, true);
       final PsiClass subclass = query.findFirst();
       if (subclass != null) {
         return;
@@ -256,17 +264,5 @@ public class UtilityClassWithoutPrivateConstructorInspection extends BaseInspect
       }
       return false;
     }
-  }
-
-  @Nullable
-  static PsiMethod getNullArgConstructor(PsiClass aClass) {
-    final PsiMethod[] constructors = aClass.getConstructors();
-    for (final PsiMethod constructor : constructors) {
-      final PsiParameterList params = constructor.getParameterList();
-      if (params.getParametersCount() == 0) {
-        return constructor;
-      }
-    }
-    return null;
   }
 }

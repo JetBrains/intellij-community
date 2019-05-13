@@ -35,7 +35,6 @@ import com.intellij.ui.LightweightHint;
 import com.intellij.ui.RowIcon;
 import com.intellij.util.Alarm;
 import com.intellij.util.IJSwingUtilities;
-import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.ui.EmptyIcon;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -70,12 +69,7 @@ public abstract class AbstractQuickFixManager {
     myComponent = component;
     myViewPort = viewPort;
 
-    myShowHintRequest = new Runnable() {
-      @Override
-      public void run() {
-        showHint();
-      }
-    };
+    myShowHintRequest = () -> showHint();
 
     new VisibilityWatcher() {
       @Override
@@ -107,7 +101,7 @@ public abstract class AbstractQuickFixManager {
 
     AnAction showHintAction = new AnAction() {
       @Override
-      public void actionPerformed(AnActionEvent e) {
+      public void actionPerformed(@NotNull AnActionEvent e) {
         if (myDesigner != null) {
           showHint();
           showPopup();
@@ -115,8 +109,8 @@ public abstract class AbstractQuickFixManager {
       }
 
       @Override
-      public void update(AnActionEvent e) {
-        e.getPresentation().setEnabled(e.getData(PlatformDataKeys.EDITOR) == null);
+      public void update(@NotNull AnActionEvent e) {
+        e.getPresentation().setEnabled(e.getData(CommonDataKeys.EDITOR) == null);
       }
     };
     showHintAction.registerCustomShortcutSet(
@@ -245,7 +239,7 @@ public abstract class AbstractQuickFixManager {
   /**
    * @return rectangle (in {@link #myComponent} coordinates) that represents
    *         area that contains errors. This methods is invoked only if {@link #getErrorInfos()}
-   *         returned non empty list of error infos. <code>null</code> means that
+   *         returned non empty list of error infos. {@code null} means that
    *         error bounds are not defined.
    */
   @Nullable
@@ -258,7 +252,7 @@ public abstract class AbstractQuickFixManager {
   //////////////////////////////////////////////////////////////////////////////////////////
 
   private class FirstStep extends BaseListPopupStep<ErrorInfo> {
-    public FirstStep(List<ErrorInfo> errorInfos) {
+    FirstStep(List<ErrorInfo> errorInfos) {
       super(null, errorInfos);
     }
 
@@ -294,7 +288,7 @@ public abstract class AbstractQuickFixManager {
   }
 
   private class SecondStep extends BaseListPopupStep<QuickFix> {
-    public SecondStep(List<QuickFix> fixList) {
+    SecondStep(List<? extends QuickFix> fixList) {
       super(null, fixList);
     }
 
@@ -316,17 +310,7 @@ public abstract class AbstractQuickFixManager {
   }
 
   private Runnable getQuickFixRunnable(final QuickFix value) {
-    return new Runnable() {
-      @Override
-      public void run() {
-        myDesigner.getToolProvider().executeWithReparse(new ThrowableRunnable<Exception>() {
-          @Override
-          public void run() throws Exception {
-            ApplicationManager.getApplication().runWriteAction(value);
-          }
-        }, "Run '" + value.getName() + "' QuickFix");
-      }
-    };
+    return () -> myDesigner.getToolProvider().executeWithReparse(() -> ApplicationManager.getApplication().runWriteAction(value), "Run '" + value.getName() + "' QuickFix");
   }
 
   private static final Border INACTIVE_BORDER = BorderFactory.createEmptyBorder(4, 4, 4, 4);
@@ -334,8 +318,7 @@ public abstract class AbstractQuickFixManager {
     BorderFactory
       .createCompoundBorder(BorderFactory.createLineBorder(Color.orange, 2), BorderFactory.createEmptyBorder(2, 2, 2, 2));
 
-  private static final Icon INACTIVE_ARROW_ICON = new EmptyIcon(
-    AllIcons.General.ArrowDown.getIconWidth(), AllIcons.General.ArrowDown.getIconHeight());
+  private static final Icon INACTIVE_ARROW_ICON = EmptyIcon.create(AllIcons.General.ArrowDown);
 
   private class InspectionHint extends JLabel {
     private final RowIcon myInactiveIcon;
@@ -377,7 +360,7 @@ public abstract class AbstractQuickFixManager {
 
       new ClickListener() {
         @Override
-        public boolean onClick(MouseEvent event, int clickCount) {
+        public boolean onClick(@NotNull MouseEvent event, int clickCount) {
           showPopup();
           return true;
         }

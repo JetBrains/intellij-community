@@ -21,8 +21,8 @@ import java.awt.event.MouseEvent;
 
 public class RelativeRectangle {
 
-  private RelativePoint myPoint;
-  private Dimension myDimension;
+  private final RelativePoint myPoint;
+  private final Dimension myDimension;
 
   public RelativeRectangle() {
     this(new RelativePoint(new JLabel(), new Point()), new Dimension());

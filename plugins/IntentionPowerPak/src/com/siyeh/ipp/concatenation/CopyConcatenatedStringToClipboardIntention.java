@@ -1,5 +1,5 @@
 /*
- * Copyright 2008-2012 Bas Leijdekkers
+ * Copyright 2008-2018 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,13 +18,14 @@ package com.siyeh.ipp.concatenation;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.util.IncorrectOperationException;
+import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ipp.base.Intention;
 import com.siyeh.ipp.base.PsiElementPredicate;
-import com.siyeh.ipp.psiutils.ExpressionUtils;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.datatransfer.StringSelection;
+
+import static com.intellij.psi.CommonClassNames.JAVA_LANG_STRING;
 
 public class CopyConcatenatedStringToClipboardIntention extends Intention {
 
@@ -35,24 +36,30 @@ public class CopyConcatenatedStringToClipboardIntention extends Intention {
   }
 
   @Override
-  protected void processIntention(@NotNull PsiElement element) throws IncorrectOperationException {
+  public boolean startInWriteAction() {
+    return false;
+  }
+
+  @Override
+  protected void processIntention(@NotNull PsiElement element) {
     if (!(element instanceof PsiPolyadicExpression)) {
       return;
     }
-    PsiPolyadicExpression concatenationExpression = (PsiPolyadicExpression)element;
+    final PsiPolyadicExpression concatenationExpression = (PsiPolyadicExpression)element;
     final IElementType tokenType = concatenationExpression.getOperationTokenType();
     if (tokenType != JavaTokenType.PLUS) {
       return;
     }
     final PsiType type = concatenationExpression.getType();
-    if (type == null || !type.equalsToText("java.lang.String")) {
+    if (type == null || !type.equalsToText(JAVA_LANG_STRING)) {
       return;
     }
-    final StringBuilder text = buildConcatenationText(concatenationExpression, new StringBuilder());
-    CopyPasteManager.getInstance().setContents(new StringSelection(text.toString()));
+    final String text = buildConcatenationText(concatenationExpression);
+    CopyPasteManager.getInstance().setContents(new StringSelection(text));
   }
 
-  private static StringBuilder buildConcatenationText(PsiPolyadicExpression polyadicExpression, StringBuilder out) {
+  public static String buildConcatenationText(PsiPolyadicExpression polyadicExpression) {
+    StringBuilder out = new StringBuilder();
     for (PsiElement element : polyadicExpression.getChildren()) {
       if (element instanceof PsiExpression) {
         final PsiExpression expression = (PsiExpression)element;
@@ -69,6 +76,6 @@ public class CopyConcatenatedStringToClipboardIntention extends Intention {
         out.append('\n');
       }
     }
-    return out;
+    return out.toString();
   }
 }

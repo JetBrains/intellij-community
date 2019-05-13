@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,25 +26,26 @@ import java.util.*;
  * @author peter
 */
 class GetCompositeCollectionInvocation implements Invocation {
-  private final Set<CollectionChildDescriptionImpl> myQnames;
+  private final Set<? extends CollectionChildDescriptionImpl> myQnames;
 
-  public GetCompositeCollectionInvocation(final Set<CollectionChildDescriptionImpl> qnames) {
+  GetCompositeCollectionInvocation(final Set<? extends CollectionChildDescriptionImpl> qnames) {
     myQnames = qnames;
   }
 
+  @Override
   public Object invoke(final DomInvocationHandler<?, ?> handler, final Object[] args) throws Throwable {
-    Map<XmlTag,DomElement> map = new THashMap<XmlTag, DomElement>();
+    Map<XmlTag,DomElement> map = new THashMap<>();
     for (final CollectionChildDescriptionImpl qname : myQnames) {
-      for (DomElement element : handler.getCollectionChildren(qname, qname.getTagsGetter())) {
+      for (DomElement element : handler.getCollectionChildren(qname)) {
         map.put(element.getXmlTag(), element);
       }
     }
     final XmlTag tag = handler.getXmlTag();
     if (tag == null) return Collections.emptyList();
 
-    final List<DomElement> list = new ArrayList<DomElement>();
+    final List<DomElement> list = new ArrayList<>();
     for (final XmlTag subTag : tag.getSubTags()) {
-      ContainerUtil.addIfNotNull(map.get(subTag), list);
+      ContainerUtil.addIfNotNull(list, map.get(subTag));
     }
     return list;
   }

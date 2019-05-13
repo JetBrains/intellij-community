@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.designer.designSurface;
 
 import com.intellij.designer.model.RadComponent;
@@ -33,7 +19,7 @@ import java.util.List;
 public abstract class ComponentEditableArea implements EditableArea {
   private final JComponent myComponent;
   private final EventListenerList myListenerList = new EventListenerList();
-  private List<RadComponent> mySelection = new ArrayList<RadComponent>();
+  private List<RadComponent> mySelection = new ArrayList<>();
 
   public ComponentEditableArea(JComponent component) {
     myComponent = component;
@@ -74,7 +60,7 @@ public abstract class ComponentEditableArea implements EditableArea {
 
   @Override
   public void select(@NotNull RadComponent component) {
-    mySelection = new ArrayList<RadComponent>();
+    mySelection = new ArrayList<>();
     mySelection.add(component);
     fireSelectionChanged();
   }
@@ -94,7 +80,7 @@ public abstract class ComponentEditableArea implements EditableArea {
 
   @Override
   public void setSelection(@NotNull List<RadComponent> components) {
-    mySelection = new ArrayList<RadComponent>(components);
+    mySelection = new ArrayList<>(components);
     fireSelectionChanged();
   }
 
@@ -106,7 +92,7 @@ public abstract class ComponentEditableArea implements EditableArea {
 
   @Override
   public void deselectAll() {
-    mySelection = new ArrayList<RadComponent>();
+    mySelection = new ArrayList<>();
     fireSelectionChanged();
   }
 
@@ -120,6 +106,7 @@ public abstract class ComponentEditableArea implements EditableArea {
   //
   //////////////////////////////////////////////////////////////////////////////////////////
 
+  @Override
   public void setCursor(@Nullable Cursor cursor) {
     myComponent.setCursor(cursor);
   }
@@ -129,15 +116,18 @@ public abstract class ComponentEditableArea implements EditableArea {
     ActionMenu.showDescriptionInStatusBar(true, myComponent, text);
   }
 
+  @Override
   @NotNull
   public JComponent getNativeComponent() {
     return myComponent;
   }
 
+  @Override
   public boolean isTree() {
     return false;
   }
 
+  @Override
   @Nullable
   public FeedbackTreeLayer getFeedbackTreeLayer() {
     return null;

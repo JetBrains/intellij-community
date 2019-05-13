@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,19 +15,9 @@
  */
 package com.intellij.openapi.command;
 
-public abstract class CommandAdapter implements CommandListener{
-  public void commandStarted(CommandEvent event) {
-  }
-
-  public void beforeCommandFinished(CommandEvent event) {
-  }
-
-  public void commandFinished(CommandEvent event) {
-  }
-
-  public void undoTransparentActionStarted() {
-  }
-
-  public void undoTransparentActionFinished() {
-  }
+/**
+ * @deprecated Use {@link CommandListener} instead
+ */
+@Deprecated
+public abstract class CommandAdapter implements CommandListener {
 }

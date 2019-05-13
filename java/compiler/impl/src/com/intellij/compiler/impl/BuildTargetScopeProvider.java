@@ -21,18 +21,42 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Collections;
 import java.util.List;
 
 import static org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.ParametersMessage.TargetTypeBuildScope;
 
 /**
+ * Allows to control the list of build targets which are compiled when the Make action is invoked for a specific scope.
+ *
  * @author nik
  */
 public abstract class BuildTargetScopeProvider {
   public static final ExtensionPointName<BuildTargetScopeProvider> EP_NAME = ExtensionPointName.create("com.intellij.compiler.buildTargetScopeProvider");
 
+  /**
+   * @deprecated override {@link #getBuildTargetScopes(CompileScope, Project, boolean)} instead
+   */
+  @Deprecated
   @NotNull
-  public abstract List<TargetTypeBuildScope> getBuildTargetScopes(@NotNull CompileScope baseScope, @NotNull CompilerFilter filter,
-                                                                  @NotNull Project project);
+  public List<TargetTypeBuildScope> getBuildTargetScopes(@NotNull CompileScope baseScope, @NotNull CompilerFilter filter,
+                                                                  @NotNull Project project) {
+    return Collections.emptyList();
+  }
 
+  /**
+   * @deprecated override {@link #getBuildTargetScopes(CompileScope, Project, boolean)} instead
+   */
+  @Deprecated
+  @SuppressWarnings("DeprecatedIsStillUsed")
+  @NotNull
+  public List<TargetTypeBuildScope> getBuildTargetScopes(@NotNull CompileScope baseScope, @NotNull CompilerFilter filter,
+                                                                  @NotNull Project project, boolean forceBuild) {
+    return getBuildTargetScopes(baseScope, filter, project);
+  }
+
+  @NotNull
+  public List<TargetTypeBuildScope> getBuildTargetScopes(@NotNull CompileScope baseScope, @NotNull Project project, boolean forceBuild) {
+    return getBuildTargetScopes(baseScope, CompilerFilter.ALL, project, forceBuild);
+  }
 }

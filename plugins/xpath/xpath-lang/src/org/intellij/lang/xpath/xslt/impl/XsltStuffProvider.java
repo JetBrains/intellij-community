@@ -25,10 +25,8 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.refactoring.util.MoveRenameUsageInfo;
 import com.intellij.usageView.UsageInfo;
-import com.intellij.usages.Usage;
-import com.intellij.usages.UsageGroup;
-import com.intellij.usages.UsageInfo2UsageAdapter;
-import com.intellij.usages.UsageView;
+import com.intellij.usages.*;
+import com.intellij.usages.rules.SingleParentUsageGroupingRule;
 import com.intellij.usages.rules.UsageGroupingRule;
 import com.intellij.usages.rules.UsageGroupingRuleProvider;
 import org.intellij.lang.xpath.psi.XPathExpression;
@@ -61,27 +59,31 @@ public class XsltStuffProvider implements UsageGroupingRuleProvider {
       myUsageGroupingRules = new UsageGroupingRule[]{ new TemplateUsageGroupingRule() };
     }
 
+  @Override
   @NotNull
-    public UsageGroupingRule[] getActiveRules(Project project) {
+    public UsageGroupingRule[] getActiveRules(@NotNull Project project) {
         return myUsageGroupingRules;
     }
 
+    @Override
     @NotNull
-    public AnAction[] createGroupingActions(UsageView view) {
+    public AnAction[] createGroupingActions(@NotNull UsageView view) {
         return AnAction.EMPTY_ARRAY;
     }
 
     private static class TemplateUsageGroup implements UsageGroup {
         private final XsltTemplate myTemplate;
 
-        public TemplateUsageGroup(@NotNull XsltTemplate template) {
+        TemplateUsageGroup(@NotNull XsltTemplate template) {
             myTemplate = template;
         }
 
+        @Override
         public Icon getIcon(boolean isOpen) {
             return myTemplate.getIcon(0);
         }
 
+        @Override
         @NotNull
         public String getText(UsageView view) {
             final StringBuilder sb = new StringBuilder();
@@ -97,31 +99,38 @@ public class XsltStuffProvider implements UsageGroupingRuleProvider {
             return "Template (" + sb.toString() + ")";
         }
 
+        @Override
         @Nullable
         public FileStatus getFileStatus() {
             return null;
         }
 
+        @Override
         public boolean isValid() {
             return myTemplate.isValid();
         }
 
+        @Override
         public void update() {
         }
 
-        public int compareTo(UsageGroup usageGroup) {
+        @Override
+        public int compareTo(@NotNull UsageGroup usageGroup) {
             final TemplateUsageGroup myUsageGroup = ((TemplateUsageGroup)usageGroup);
             return myTemplate.getTextOffset() - myUsageGroup.myTemplate.getTextOffset();
         }
 
+        @Override
         public void navigate(boolean requestFocus) {
             ((Navigatable)myTemplate.getTag()).navigate(requestFocus);
         }
 
+        @Override
         public boolean canNavigate() {
             return ((Navigatable)myTemplate.getTag()).canNavigate();
         }
 
+        @Override
         public boolean canNavigateToSource() {
             return canNavigate();
         }
@@ -143,9 +152,10 @@ public class XsltStuffProvider implements UsageGroupingRuleProvider {
         }
     }
 
-    private static class TemplateUsageGroupingRule implements UsageGroupingRule {
+    private static class TemplateUsageGroupingRule extends SingleParentUsageGroupingRule {
         @Nullable
-        public UsageGroup groupUsage(@NotNull Usage usage) {
+        @Override
+        protected UsageGroup getParentGroupFor(@NotNull Usage usage, @NotNull UsageTarget[] targets) {
             if (usage instanceof UsageInfo2UsageAdapter) {
                 final UsageInfo2UsageAdapter u = (UsageInfo2UsageAdapter)usage;
                 final UsageInfo usageInfo = u.getUsageInfo();

@@ -15,32 +15,42 @@
  */
 package com.intellij.openapi.vcs.actions;
 
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionGroup;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.Separator;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.ex.EditorGutterComponentEx;
+import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.util.Couple;
+import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
-/**
- * @author Konstantin Bulenkov
- */
-public class AnnotateActionGroup extends ActionGroup {
-  private AnAction[] myActions;
+public class AnnotateActionGroup extends ActionGroup implements DumbAware {
+  private final AnAction[] myActions;
 
-  public AnnotateActionGroup(List<AnnotationFieldGutter> gutters, EditorGutterComponentEx gutterComponent) {
+  public AnnotateActionGroup(@NotNull List<AnnotationFieldGutter> gutters,
+                             @Nullable Couple<Map<VcsRevisionNumber, Color>> bgColorMap) {
     super("View", true);
-    final List<AnAction> actions = new ArrayList<AnAction>();
+    final List<AnAction> actions = new ArrayList<>();
     for (AnnotationFieldGutter g : gutters) {
       if (g.getID() != null) {
-        actions.add(new ShowHideAspectAction(g, gutterComponent));
+        actions.add(new ShowHideAspectAction(g));
       }
     }
     actions.add(Separator.getInstance());
-    actions.add(new ShowAnnotationColorsAction(gutters, gutterComponent));
-    actions.add(new ShowShortenNames(gutterComponent));
-    myActions = actions.toArray(new AnAction[actions.size()]);
+    if (bgColorMap != null) {
+      actions.add(new ShowAnnotationColorsAction());
+    }
+    actions.add(new ShowShortenNames());
+    myActions = actions.toArray(AnAction.EMPTY_ARRAY);
   }
 
   @NotNull
@@ -49,10 +59,10 @@ public class AnnotateActionGroup extends ActionGroup {
     return myActions;
   }
 
-  public void setAvailable(boolean available) {
-    for (AnAction action : myActions) {
-      if (action instanceof ShowHideAspectAction) {
-        ((ShowHideAspectAction)action).setAvailable(available);
+  static void revalidateMarkupInAllEditors() {
+    for (Editor editor : EditorFactory.getInstance().getAllEditors()) {
+      if (editor.getGutter() instanceof EditorGutterComponentEx) {
+        ((EditorGutterComponentEx)editor.getGutter()).revalidateMarkup();
       }
     }
   }

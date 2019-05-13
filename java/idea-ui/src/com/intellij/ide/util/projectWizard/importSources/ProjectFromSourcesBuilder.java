@@ -44,4 +44,6 @@ public interface ProjectFromSourcesBuilder {
   WizardContext getContext();
 
   boolean hasRootsFromOtherDetectors(ProjectStructureDetector thisDetector);
+
+  void setupModulesByContentRoots(ProjectDescriptor projectDescriptor, Collection<DetectedProjectRoot> roots);
 }

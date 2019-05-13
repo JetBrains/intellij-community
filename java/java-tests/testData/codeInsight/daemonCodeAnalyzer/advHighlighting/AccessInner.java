@@ -1,17 +1,16 @@
 // access problems in inner classes
 
-import java.awt.*;
-import java.beans.beancontext.BeanContextServicesSupport;
-import java.beans.beancontext.BeanContextServicesSupport.<error descr="'java.beans.beancontext.BeanContextServicesSupport.BCSSChild' has protected access in 'java.beans.beancontext.BeanContextServicesSupport'">BCSSChild</error>;
+import x.BeanContextServicesSupport;
+import x.BeanContextServicesSupport.<error descr="'x.BeanContextServicesSupport.BCSSChild' has protected access in 'x.BeanContextServicesSupport'">BCSSChild</error>;
 
-class a extends Component {
+class a extends x.Component {
     void f() {
         FlipBufferStrategy s = null;
-        int i = s.<error descr="'numBuffers' has protected access in 'java.awt.Component.FlipBufferStrategy'">numBuffers</error>;
-        s.<error descr="'createBuffers(int, java.awt.BufferCapabilities)' has protected access in 'java.awt.Component.FlipBufferStrategy'">createBuffers</error>(1,null);
+        int i = s.<error descr="'numBuffers' has protected access in 'x.Component.FlipBufferStrategy'">numBuffers</error>;
+        s.<error descr="'createBuffers(int)' has protected access in 'x.Component.FlipBufferStrategy'">createBuffers</error>(1);
 
         // TODO
-        // now cannot distinquish private from package local in class files
+        // now cannot distinquish private from package-private in class files
         //< error descr="'java.awt.Component.SingleBufferStrategy' has private access in 'java.awt.Component'">SingleBufferStrategy< /error> s2 = null;
         //Object o = s2.< error descr="'caps' has private access in 'java.awt.Component.SingleBufferStrategy'">caps< /error>;
     }
@@ -19,9 +18,9 @@ class a extends Component {
 
 
         class ddd extends BeanContextServicesSupport {
-            BCSSChild.<error descr="'java.beans.beancontext.BeanContextServicesSupport.BCSSChild.BCSSCServiceClassRef' is not public in 'java.beans.beancontext.BeanContextServicesSupport.BCSSChild'. Cannot be accessed from outside package">BCSSCServiceClassRef</error> fd = null;
+            BCSSChild.<error descr="'x.BeanContextServicesSupport.BCSSChild.BCSSCServiceClassRef' is not public in 'x.BeanContextServicesSupport.BCSSChild'. Cannot be accessed from outside package">BCSSCServiceClassRef</error> fd = null;
             void ff() {
-                fd.<error descr="'addRequestor(java.lang.Object, java.beans.beancontext.BeanContextServiceRevokedListener)' is not public in 'java.beans.beancontext.BeanContextServicesSupport.BCSSChild.BCSSCServiceClassRef'. Cannot be accessed from outside package">addRequestor</error>(null,null);
+                fd.<error descr="'addRequestor(java.lang.Object)' is not public in 'x.BeanContextServicesSupport.BCSSChild.BCSSCServiceClassRef'. Cannot be accessed from outside package">addRequestor</error>(null,null);
             }
         }
 
@@ -52,4 +51,7 @@ class Class2 {
     public Class2Inner() {
     }
   }
+}
+class Ax {
+    public interface B {}
 }

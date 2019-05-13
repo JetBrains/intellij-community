@@ -48,7 +48,7 @@ public class JpsLibraryCollectionImpl implements JpsLibraryCollection {
   @Override
   public <P extends JpsElement> JpsTypedLibrary<P> addLibrary(@NotNull String name, @NotNull JpsLibraryType<P> type,
                                                                         @NotNull P properties) {
-    return myCollection.addChild(new JpsLibraryImpl<P>(name, type, properties));
+    return myCollection.addChild(new JpsLibraryImpl<>(name, type, properties));
   }
 
   @NotNull
@@ -66,6 +66,11 @@ public class JpsLibraryCollectionImpl implements JpsLibraryCollection {
   @Override
   public void addLibrary(@NotNull JpsLibrary library) {
     myCollection.addChild(library);
+  }
+
+  @Override
+  public void removeLibrary(@NotNull JpsLibrary library) {
+    myCollection.removeChild(library);
   }
 
   @Override

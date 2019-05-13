@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,13 +19,21 @@
  */
 package com.intellij.psi.impl.source.tree;
 
-import com.intellij.lang.ASTNode;
+import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.LogUtil;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.util.Getter;
+import com.intellij.openapi.util.StaticGetter;
+import com.intellij.psi.impl.DebugUtil;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.tree.ILazyParseableElementType;
+import com.intellij.psi.tree.ILazyParseableElementTypeBase;
+import com.intellij.reference.SoftReference;
+import com.intellij.util.io.storage.HeavyProcessLatch;
 import com.intellij.util.text.CharArrayUtil;
+import com.intellij.util.text.ImmutableCharSequence;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -33,6 +41,7 @@ import org.jetbrains.annotations.TestOnly;
 
 public class LazyParseableElement extends CompositeElement {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.LazyParseableElement");
+  private static final StaticGetter<CharSequence> NO_TEXT = new StaticGetter<>(null);
 
   private static class ChameleonLock {
     private ChameleonLock() {}
@@ -47,13 +56,22 @@ public class LazyParseableElement extends CompositeElement {
   // Lock which protects expanding chameleon for this node.
   // Under no circumstances should you grab the PSI_LOCK while holding this lock.
   private final ChameleonLock lock = new ChameleonLock();
-  private CharSequence myText; /** guarded by {@link #lock} */
+  /**
+   * Cached or non-parsed text of this element. Must be non-null if {@link #myParsed} is false.
+   * Coordinated writes to (myParsed, myText) are guarded by {@link #lock}
+   * */
+  @NotNull private volatile Getter<CharSequence> myText;
+  private volatile boolean myParsed;
 
-  public LazyParseableElement(@NotNull IElementType type, CharSequence text) {
+  public LazyParseableElement(@NotNull IElementType type, @Nullable CharSequence text) {
     super(type);
     synchronized (lock) {
-      myText = text == null ? null : text.toString();
-      if (text != null) {
+      if (text == null) {
+        myParsed = true;
+        myText = NO_TEXT;
+      }
+      else {
+        myText = new StaticGetter<>(ImmutableCharSequence.asImmutable(text));
         setCachedLength(text.length());
       }
     }
@@ -63,8 +81,11 @@ public class LazyParseableElement extends CompositeElement {
   public void clearCaches() {
     super.clearCaches();
     synchronized (lock) {
-      if (myText != null) {
-        setCachedLength(myText.length());
+      if (myParsed) {
+        myText = NO_TEXT;
+      }
+      else {
+        setCachedLength(myText.get().length());
       }
     }
   }
@@ -76,17 +97,21 @@ public class LazyParseableElement extends CompositeElement {
     if (text != null) {
       return text.toString();
     }
-    return super.getText();
+    String s = super.getText();
+    myText = new SoftReference<>(s);
+    return s;
   }
 
   @Override
   @NotNull
   public CharSequence getChars() {
     CharSequence text = myText();
-    if (text != null) {
-      return text;
+    if (text == null) {
+      // use super.getText() instead of super.getChars() to avoid extra myText() call
+      text = super.getText();
+      myText = new SoftReference<>(text);
     }
-    return super.getText();
+    return text;
   }
 
   @Override
@@ -123,18 +148,16 @@ public class LazyParseableElement extends CompositeElement {
   }
 
   public boolean isParsed() {
-    return myText() == null;
+    return myParsed;
   }
 
   private CharSequence myText() {
-    synchronized (lock) {
-      return myText;
-    }
+    return myText.get();
   }
 
   @Override
   final void setFirstChildNode(TreeElement child) {
-    if (myText() != null) {
+    if (!isParsed()) {
       LOG.error("Mutating collapsed chameleon");
     }
     super.setFirstChildNode(child);
@@ -142,7 +165,7 @@ public class LazyParseableElement extends CompositeElement {
 
   @Override
   final void setLastChildNode(TreeElement child) {
-    if (myText() != null) {
+    if (!isParsed()) {
       LOG.error("Mutating collapsed chameleon");
     }
     super.setLastChildNode(child);
@@ -152,53 +175,75 @@ public class LazyParseableElement extends CompositeElement {
     if (!ourParsingAllowed) {
       LOG.error("Parsing not allowed!!!");
     }
-    CharSequence text = myText();
-    if (text == null) return;
+    if (myParsed) return;
 
-    if (TreeUtil.getFileElement(this) == null) {
-      LOG.error("Chameleons must not be parsed till they're in file tree: " + this);
+    if (ApplicationManager.getApplication().isDispatchThread()) {
+      // we don't want to wait under lock on EDT while another thread is parsing the same chameleon
+      // and sleeping in ProgressManagerImpl.sleepIfNeededToGivePriorityToAnotherThread because EDT is occupied
+      HeavyProcessLatch.INSTANCE.stopThreadPrioritizing();
     }
 
-    ApplicationManager.getApplication().assertReadAccessAllowed();
-
-    ILazyParseableElementType type = (ILazyParseableElementType)getElementType();
-    ASTNode parsedNode = type.parseContents(this);
-
-    if (parsedNode == null && text.length() > 0) {
-      CharSequence diagText = ApplicationManager.getApplication().isInternal() ? text : "";
-      LOG.error("No parse for a non-empty string: " + diagText + "; type=" + LogUtil.objectAndClass(type));
-    }
-
+    CharSequence text;
     synchronized (lock) {
-      if (myText == null) return;
+      if (myParsed) return;
+
+      text = myText.get();
+      assert text != null;
+
+      FileElement fileElement = TreeUtil.getFileElement(this);
+      if (fileElement == null) {
+        LOG.error("Chameleons must not be parsed till they're in file tree: " + this);
+      }
+      else {
+        fileElement.assertReadAccessAllowed();
+      }
+
       if (rawFirstChild() != null) {
         LOG.error("Reentrant parsing?");
       }
 
-      myText = null;
+      DebugUtil.performPsiModification("lazy-parsing", () -> {
+        TreeElement parsedNode = (TreeElement)((ILazyParseableElementTypeBase)getElementType()).parseContents(this);
+        assertTextLengthIntact(text, parsedNode);
 
-      if (parsedNode == null) return;
-      super.rawAddChildrenWithoutNotifications((TreeElement)parsedNode);
+        if (parsedNode != null) {
+          setChildren(parsedNode);
+        }
 
-      //if (getNotCachedLength() != text.length()) {
-      //  if (ApplicationManager.getApplication().isInternal()) {
-      //    LOG.error("Inconsistent reparse: type=" + getElementType() + "; text=" + text + "; treeText=" + getText());
-      //  } else {
-      //    LOG.error("Inconsistent reparse: type=" + getElementType());
-      //  }
-      //}
-
-      if (!(parsedNode instanceof CompositeElement)) return;
+        myParsed = true;
+        myText = new SoftReference<>(text);
+      });
     }
+}
 
-    // create PSI all at once, to reduce contention of PsiLock in CompositeElement.getPsi()
-    // create PSI outside the 'lock' since this method grabs PSI_LOCK and deadlock is possible when someone else locks in the other order.
-    ((CompositeElement)parsedNode).createAllChildrenPsiIfNecessary();
+  private void assertTextLengthIntact(CharSequence text, TreeElement child) {
+    int length = 0;
+    while (child != null) {
+      length += child.getTextLength();
+      child = child.getTreeNext();
+    }
+    if (length != text.length()) {
+      LOG.error("Text mismatch in " + LogUtil.objectAndClass(getElementType()), PluginManagerCore.createPluginException("Text mismatch", null, getElementType().getClass()),
+                new Attachment("code.txt", text.toString()));
+    }
+  }
+
+  private void setChildren(@NotNull TreeElement parsedNode) {
+    ProgressManager.getInstance().executeNonCancelableSection(() -> {
+      try {
+        TreeElement last = rawSetParents(parsedNode, this);
+        super.setFirstChildNode(parsedNode);
+        super.setLastChildNode(last);
+      }
+      catch (Throwable e) {
+        LOG.error("Chameleon expansion may not be interrupted by exceptions", e);
+      }
+    });
   }
 
   @Override
   public void rawAddChildrenWithoutNotifications(@NotNull TreeElement first) {
-    if (myText() != null) {
+    if (!isParsed()) {
       LOG.error("Mutating collapsed chameleon");
     }
     super.rawAddChildrenWithoutNotifications(first);
@@ -232,4 +277,5 @@ public class LazyParseableElement extends CompositeElement {
   public static void setParsingAllowed(boolean allowed) {
     ourParsingAllowed = allowed;
   }
+  
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,107 +19,102 @@
  */
 package com.intellij.util.indexing;
 
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
-import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.CacheUpdateRunner;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.ex.dummy.DummyFileSystem;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.psi.stubs.StubIndexKey;
 import com.intellij.psi.stubs.StubUpdatingIndex;
-import com.intellij.util.containers.ConcurrentHashMap;
+import com.intellij.util.SystemProperties;
+import com.intellij.util.ThrowableRunnable;
+import com.intellij.util.concurrency.AppExecutorUtil;
+import com.intellij.util.concurrency.SequentialTaskExecutor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.ide.PooledThreadExecutor;
 
-import java.io.*;
+import java.io.File;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Locale;
+import java.util.concurrent.Callable;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Future;
 
-@SuppressWarnings({"HardCodedStringLiteral"})
+@SuppressWarnings("HardCodedStringLiteral")
 public class IndexInfrastructure {
-  private static final int VERSION = 9;
-  private static final ConcurrentHashMap<ID<?, ?>, Long> ourIndexIdToCreationStamp = new ConcurrentHashMap<ID<?, ?>, Long>();
   private static final boolean ourUnitTestMode = ApplicationManager.getApplication().isUnitTestMode();
-  public static final long INVALID_STAMP = -1L;
-  public static final long INVALID_STAMP2 = -2L;
+  private static final String STUB_VERSIONS = ".versions";
+  private static final String PERSISTENT_INDEX_DIRECTORY_NAME = ".persistent";
+  private static final boolean ourDoParallelIndicesInitialization = SystemProperties
+    .getBooleanProperty("idea.parallel.indices.initialization", false);
+  public static final boolean ourDoAsyncIndicesInitialization = SystemProperties.getBooleanProperty("idea.async.indices.initialization", true);
+  private static final ExecutorService ourGenesisExecutor = SequentialTaskExecutor.createSequentialApplicationPoolExecutor(
+    "IndexInfrastructure Pool");
 
   private IndexInfrastructure() {
   }
 
+  @NotNull
   public static File getVersionFile(@NotNull ID<?, ?> indexName) {
-    return new File(getIndexRootDir(indexName), indexName + ".ver");
+    return new File(getIndexDirectory(indexName, true), indexName + ".ver");
   }
 
+  @NotNull
   public static File getStorageFile(@NotNull ID<?, ?> indexName) {
-    return new File(getIndexRootDir(indexName), indexName.toString());
+    return new File(getIndexRootDir(indexName), indexName.getName());
   }
 
+  @NotNull
   public static File getInputIndexStorageFile(@NotNull ID<?, ?> indexName) {
-    return new File(getIndexRootDir(indexName), indexName.toString()+"_inputs");
+    return new File(getIndexRootDir(indexName), indexName +"_inputs");
   }
 
+  @NotNull
   public static File getIndexRootDir(@NotNull ID<?, ?> indexName) {
-    final String dirName = indexName.toString().toLowerCase(Locale.US);
-    // store StubIndices under StubUpdating index' root to ensure they are deleted 
-    // when StubUpdatingIndex version is changed 
-    final File indexDir = indexName instanceof StubIndexKey ?
-                          new File(getIndexRootDir(StubUpdatingIndex.INDEX_ID), dirName) : 
-                          new File(PathManager.getIndexRoot(), dirName);
+    return getIndexDirectory(indexName, false);
+  }
+
+  public static File getPersistentIndexRoot() {
+    File indexDir = new File(PathManager.getIndexRoot() + File.separator + PERSISTENT_INDEX_DIRECTORY_NAME);
     indexDir.mkdirs();
     return indexDir;
   }
 
-  private static volatile long ourLastStamp; // ensure any file index stamp increases
-
-  public static void rewriteVersion(final File file, final int version) throws IOException {
-    final long prevLastModifiedValue = file.lastModified();
-    if (file.exists()) {
-      FileUtil.delete(file);
-    }
-    file.getParentFile().mkdirs();
-    final DataOutputStream os = new DataOutputStream(new FileOutputStream(file));
-    try {
-      os.writeInt(version);
-      os.writeInt(VERSION);
-    }
-    finally {
-      ourIndexIdToCreationStamp.clear();
-      os.close();
-      long max = Math.max(System.currentTimeMillis(), Math.max(prevLastModifiedValue, ourLastStamp) + 2000);
-      ourLastStamp = max;
-      file.setLastModified(max);
-    }
+  @NotNull
+  public static File getPersistentIndexRootDir(@NotNull ID<?, ?> indexName) {
+    return getIndexDirectory(indexName, false, PERSISTENT_INDEX_DIRECTORY_NAME);
   }
 
-  public static long getIndexCreationStamp(ID<?, ?> indexName) {
-    Long version = ourIndexIdToCreationStamp.get(indexName);
-    if (version != null) return version.longValue();
-
-    long stamp = getVersionFile(indexName).lastModified();
-    ourIndexIdToCreationStamp.putIfAbsent(indexName, stamp);
-
-    return stamp;
+  @NotNull
+  private static File getIndexDirectory(@NotNull ID<?, ?> indexName, boolean forVersion) {
+    return getIndexDirectory(indexName, forVersion, "");
   }
 
-  public static boolean versionDiffers(final File versionFile, final int currentIndexVersion) {
-    try {
-      ourLastStamp = Math.max(ourLastStamp, versionFile.lastModified());
-      final DataInputStream in = new DataInputStream(new BufferedInputStream(new FileInputStream(versionFile)));
-      try {
-        final int savedIndexVersion = in.readInt();
-        final int commonVersion = in.readInt();
-        return savedIndexVersion != currentIndexVersion || commonVersion != VERSION;
-      }
-      finally {
-        in.close();
-      }
+  @NotNull
+  private static File getIndexDirectory(@NotNull ID<?, ?> indexName, boolean forVersion, String relativePath) {
+    final String dirName = indexName.getName().toLowerCase(Locale.US);
+    File indexDir;
+
+    if (indexName instanceof StubIndexKey) {
+      // store StubIndices under StubUpdating index' root to ensure they are deleted
+      // when StubUpdatingIndex version is changed
+      indexDir = new File(getIndexDirectory(StubUpdatingIndex.INDEX_ID, false, relativePath), forVersion ? STUB_VERSIONS : dirName);
+    } else {
+      if (relativePath.length() > 0) relativePath = File.separator + relativePath;
+      indexDir = new File(PathManager.getIndexRoot() + relativePath, dirName);
     }
-    catch (IOException e) {
-      return true;
-    }
+    indexDir.mkdirs();
+    return indexDir;
   }
 
   @Nullable
-  public static VirtualFile findFileById(final PersistentFS fs, final int id) {
+  public static VirtualFile findFileById(@NotNull PersistentFS fs, final int id) {
     if (ourUnitTestMode) {
       final VirtualFile testFile = findTestFile(id);
       if (testFile != null) {
@@ -141,7 +136,7 @@ public class IndexInfrastructure {
   }
 
   @Nullable
-  public static VirtualFile findFileByIdIfCached(final PersistentFS fs, final int id) {
+  public static VirtualFile findFileByIdIfCached(@NotNull PersistentFS fs, final int id) {
     if (ourUnitTestMode) {
       final VirtualFile testFile = findTestFile(id);
       if (testFile != null) {
@@ -154,5 +149,83 @@ public class IndexInfrastructure {
   @Nullable
   private static VirtualFile findTestFile(final int id) {
     return DummyFileSystem.getInstance().findById(id);
+  }
+
+  public static <T> Future<T> submitGenesisTask(Callable<T> action) {
+    return ourGenesisExecutor.submit(action);
+  }
+
+  public abstract static class DataInitialization<T> implements Callable<T> {
+    private final List<ThrowableRunnable> myNestedInitializationTasks = new ArrayList<>();
+
+    @Override
+    public final T call() throws Exception {
+      long started = System.nanoTime();
+      try {
+        prepare();
+        runParallelNestedInitializationTasks();
+        return finish();
+      }
+      finally {
+        Logger.getInstance(getClass().getName()).info("Initialization done:" + (System.nanoTime() - started) / 1000000);
+      }
+    }
+
+    protected T finish() {
+      return null;
+    }
+
+    protected void prepare() {}
+    protected abstract void onThrowable(@NotNull Throwable t);
+
+    protected void addNestedInitializationTask(ThrowableRunnable nestedInitializationTask) {
+      myNestedInitializationTasks.add(nestedInitializationTask);
+    }
+
+    private void runParallelNestedInitializationTasks() throws InterruptedException {
+      int numberOfTasksToExecute = myNestedInitializationTasks.size();
+      if (numberOfTasksToExecute == 0) return;
+
+      CountDownLatch proceedLatch = new CountDownLatch(numberOfTasksToExecute);
+
+      if (ourDoParallelIndicesInitialization) {
+        ExecutorService taskExecutor = AppExecutorUtil.createBoundedApplicationPoolExecutor(
+          "IndexInfrastructure.DataInitialization.RunParallelNestedInitializationTasks", PooledThreadExecutor.INSTANCE,
+          CacheUpdateRunner.indexingThreadCount());
+
+        for (ThrowableRunnable callable : myNestedInitializationTasks) {
+          taskExecutor.execute(() -> executeNestedInitializationTask(callable, proceedLatch));
+        }
+
+        proceedLatch.await();
+        taskExecutor.shutdown();
+      }
+      else {
+        for (ThrowableRunnable callable : myNestedInitializationTasks) {
+          executeNestedInitializationTask(callable, proceedLatch);
+        }
+      }
+    }
+
+    private void executeNestedInitializationTask(ThrowableRunnable callable, CountDownLatch proceedLatch) {
+      Application app = ApplicationManager.getApplication();
+      try {
+        // To correctly apply file removals in indices's shutdown hook we should process all initialization tasks
+        // Todo: make processing removed files more robust because ignoring 'dispose in progress' delays application exit and
+        // may cause memory leaks IDEA-183718, IDEA-169374,
+        if (app.isDisposed() /*|| app.isDisposeInProgress()*/) return;
+        callable.run();
+      }
+      catch (Throwable t) {
+        onThrowable(t);
+      }
+      finally {
+        proceedLatch.countDown();
+      }
+    }
+  }
+
+  public static boolean hasIndices() {
+    return !SystemProperties.is("idea.skip.indices.initialization");
   }
 }

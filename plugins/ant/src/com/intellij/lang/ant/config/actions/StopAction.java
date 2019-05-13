@@ -21,6 +21,7 @@ import com.intellij.lang.ant.config.execution.AntBuildMessageView;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
+import org.jetbrains.annotations.NotNull;
 
 public final class StopAction extends AnAction {
   private final AntBuildMessageView myAntBuildMessageView;
@@ -30,11 +31,13 @@ public final class StopAction extends AnAction {
     myAntBuildMessageView = antBuildMessageView;
   }
 
-  public void actionPerformed(AnActionEvent e) {
+  @Override
+  public void actionPerformed(@NotNull AnActionEvent e) {
     myAntBuildMessageView.stopProcess();
   }
 
-  public void update(AnActionEvent event){
+  @Override
+  public void update(@NotNull AnActionEvent event){
     Presentation presentation = event.getPresentation();
     presentation.setEnabled(!myAntBuildMessageView.isStopped());
   }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,15 +15,16 @@
  */
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
-import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
-import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil;
+import com.intellij.codeInsight.daemon.impl.analysis.JavaHighlightUtil;
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
@@ -32,14 +33,14 @@ import java.util.List;
 public class DeleteMultiCatchFix implements IntentionAction {
   private final PsiTypeElement myTypeElement;
 
-  public DeleteMultiCatchFix(final PsiTypeElement typeElement) {
+  public DeleteMultiCatchFix(@NotNull PsiTypeElement typeElement) {
     myTypeElement = typeElement;
   }
 
   @NotNull
   @Override
   public String getText() {
-    return QuickFixBundle.message("delete.catch.text", HighlightUtil.formatType(myTypeElement.getType()));
+    return QuickFixBundle.message("delete.catch.text", JavaHighlightUtil.formatType(myTypeElement.getType()));
   }
 
   @NotNull
@@ -50,32 +51,38 @@ public class DeleteMultiCatchFix implements IntentionAction {
 
   @Override
   public boolean isAvailable(@NotNull final Project project, final Editor editor, final PsiFile file) {
-    return myTypeElement != null &&
-           myTypeElement.isValid() &&
-           PsiManager.getInstance(project).isInProject(myTypeElement.getContainingFile());
+    return myTypeElement.isValid() && BaseIntentionAction.canModify(myTypeElement);
+  }
+
+  @NotNull
+  @Override
+  public PsiElement getElementToMakeWritable(@NotNull PsiFile file) {
+    return myTypeElement;
   }
 
   @Override
   public void invoke(@NotNull final Project project, final Editor editor, final PsiFile file) throws IncorrectOperationException {
-    if (!CodeInsightUtilBase.prepareFileForWrite(myTypeElement.getContainingFile())) return;
+    deleteCaughtExceptionType(myTypeElement);
+  }
 
-    final PsiElement parentType = myTypeElement.getParent();
+  public static void deleteCaughtExceptionType(@NotNull PsiTypeElement typeElement) {
+    final PsiElement parentType = typeElement.getParent();
     if (!(parentType instanceof PsiTypeElement)) return;
 
     final PsiElement first;
     final PsiElement last;
-    final PsiElement right = PsiTreeUtil.skipSiblingsForward(myTypeElement, PsiWhiteSpace.class, PsiComment.class);
-    if (right instanceof PsiJavaToken && ((PsiJavaToken)right).getTokenType() == JavaTokenType.OR) {
-      first = myTypeElement;
+    final PsiElement right = PsiTreeUtil.skipWhitespacesAndCommentsForward(typeElement);
+    if (PsiUtil.isJavaToken(right, JavaTokenType.OR)) {
+      first = typeElement;
       last = right;
     }
     else if (right == null) {
-      final PsiElement left = PsiTreeUtil.skipSiblingsBackward(myTypeElement, PsiWhiteSpace.class, PsiComment.class);
+      final PsiElement left = PsiTreeUtil.skipWhitespacesAndCommentsBackward(typeElement);
       if (!(left instanceof PsiJavaToken)) return;
       final IElementType leftType = ((PsiJavaToken)left).getTokenType();
       if (leftType != JavaTokenType.OR) return;
       first = left;
-      last = myTypeElement;
+      last = typeElement;
     }
     else {
       return;

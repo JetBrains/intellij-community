@@ -29,23 +29,33 @@ public class MoveAction extends BaseRefactoringAction {
     setInjectedContext(true);
   }
 
+  @Override
   public boolean isAvailableInEditorOnly() {
     return false;
   }
 
+  @Override
   protected boolean isAvailableForLanguage(Language language){
     // move is supported in any language
     return true;
   }
 
+  @Override
   public boolean isEnabledOnElements(@NotNull PsiElement[] elements) {
     return MoveHandler.canMove(elements, null);
   }
 
-  protected boolean isEnabledOnDataContext(DataContext dataContext) {
+  @Override
+  protected boolean isEnabledOnDataContext(@NotNull DataContext dataContext) {
     return MoveHandler.canMove(dataContext);
   }
 
+  @Override
+  protected boolean disableOnCompiledElement() {
+    return false;
+  }
+
+  @Override
   public RefactoringActionHandler getHandler(@NotNull DataContext dataContext) {
     return new MoveHandler();
   }

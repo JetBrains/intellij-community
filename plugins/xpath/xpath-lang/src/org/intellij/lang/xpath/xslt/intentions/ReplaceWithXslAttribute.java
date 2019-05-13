@@ -37,22 +37,20 @@ import org.jetbrains.annotations.NotNull;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * Created by IntelliJ IDEA.
- * User: sweinreuter
- * Date: 20.06.2007
- */
 public class ReplaceWithXslAttribute implements IntentionAction {
+    @Override
     @NotNull
     public String getText() {
         return "Replace with 'xsl:attribute'";
     }
 
+    @Override
     @NotNull
     public String getFamilyName() {
         return "Replace with xsl:attribute";
     }
 
+    @Override
     public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
         if (!XsltSupport.isXsltFile(file)) return false;
 
@@ -65,7 +63,7 @@ public class ReplaceWithXslAttribute implements IntentionAction {
         if (XsltSupport.isXsltTag(attr.getParent())) {
             return false;
         }
-        
+
         final ASTNode node = attr.getNode();
         if (node == null) return false;
         final ASTNode nameNode = XmlChildRole.ATTRIBUTE_NAME_FINDER.findChild(node);
@@ -77,6 +75,7 @@ public class ReplaceWithXslAttribute implements IntentionAction {
         }
     }
 
+    @Override
     public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
         final int offset = editor.getCaretModel().getOffset();
         final PsiElement element = file.findElementAt(offset);
@@ -87,7 +86,7 @@ public class ReplaceWithXslAttribute implements IntentionAction {
         assert valueElement != null;
         final String s = attr.getValueTextRange().substring(valueElement.getText());
 
-        final List<Pair<String, Boolean>> chunks = new ArrayList<Pair<String, Boolean>>();
+        final List<Pair<String, Boolean>> chunks = new ArrayList<>();
         final StringBuilder builder = new StringBuilder(s.length());
 
         final PsiFile[] files = XsltSupport.getFiles(attr);
@@ -148,6 +147,7 @@ public class ReplaceWithXslAttribute implements IntentionAction {
         attr.delete();
     }
 
+    @Override
     public boolean startInWriteAction() {
         return true;
     }

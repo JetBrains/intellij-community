@@ -27,12 +27,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-/**
- * Created with IntelliJ IDEA.
- * User: Irina.Chernushina
- * Date: 6/9/12
- * Time: 5:33 PM
- */
 public class FavoritesTreeUtil {
   @NotNull
   public static FavoritesTreeNodeDescriptor[] getSelectedNodeDescriptors(final DnDAwareTree tree) {
@@ -40,7 +34,7 @@ public class FavoritesTreeUtil {
     if (path == null) {
       return FavoritesTreeNodeDescriptor.EMPTY_ARRAY;
     }
-    ArrayList<FavoritesTreeNodeDescriptor> result = new ArrayList<FavoritesTreeNodeDescriptor>();
+    ArrayList<FavoritesTreeNodeDescriptor> result = new ArrayList<>();
     for (TreePath treePath : path) {
       DefaultMutableTreeNode lastPathNode = (DefaultMutableTreeNode)treePath.getLastPathComponent();
       Object userObject = lastPathNode.getUserObject();
@@ -50,17 +44,17 @@ public class FavoritesTreeUtil {
       FavoritesTreeNodeDescriptor treeNodeDescriptor = (FavoritesTreeNodeDescriptor)userObject;
       result.add(treeNodeDescriptor);
     }
-    return result.toArray(new FavoritesTreeNodeDescriptor[result.size()]);
+    return result.toArray(FavoritesTreeNodeDescriptor.EMPTY_ARRAY);
   }
 
   public static List<AbstractTreeNode> getLogicalPathToSelected(final Tree tree) {
-    final List<AbstractTreeNode> result = new ArrayList<AbstractTreeNode>();
+    final List<AbstractTreeNode> result = new ArrayList<>();
     final TreePath selectionPath = tree.getSelectionPath();
     return getLogicalPathTo(result, selectionPath);
   }
 
   public static List<Integer> getLogicalIndexPathTo(TreePath selectionPath) {
-    final List<Integer> result = new ArrayList<Integer>();
+    final List<Integer> result = new ArrayList<>();
     final Object component = selectionPath.getLastPathComponent();
     if (component instanceof DefaultMutableTreeNode) {
       final Object uo = ((DefaultMutableTreeNode)component).getUserObject();
@@ -110,8 +104,7 @@ public class FavoritesTreeUtil {
 
   @Nullable
   public static FavoritesListNode extractParentList(FavoritesTreeNodeDescriptor descriptor) {
-    final AbstractTreeNode node = descriptor.getElement();
-    AbstractTreeNode current = node;
+    AbstractTreeNode current = descriptor.getElement();
     while (current != null) {
       if (current instanceof FavoritesListNode) {
         return (FavoritesListNode)current;

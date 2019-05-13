@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -63,7 +63,7 @@ public class FacetTypeEditor extends UnnamedConfigurableGroup {
       C configuration = ProjectFacetManager.getInstance(project).createDefaultConfiguration(facetType);
       DefaultFacetSettingsEditor defaultSettingsEditor = facetType.createDefaultConfigurationEditor(project, configuration);
       if (defaultSettingsEditor != null) {
-        myDefaultSettingsConfigurable = new DefaultFacetSettingsConfigurable<C>(facetType, project, defaultSettingsEditor, configuration);
+        myDefaultSettingsConfigurable = new DefaultFacetSettingsConfigurable<>(facetType, project, defaultSettingsEditor, configuration);
         add(myDefaultSettingsConfigurable);
       }
     }
@@ -76,7 +76,7 @@ public class FacetTypeEditor extends UnnamedConfigurableGroup {
   @Nullable
   private MultipleFacetSettingsEditor createAllFacetsEditor() {
     ProjectFacetsConfigurator facetsConfigurator = myContext.myModulesConfigurator.getFacetsConfigurator();
-    List<Facet> facets = new ArrayList<Facet>();
+    List<Facet> facets = new ArrayList<>();
     for (Module module : myContext.getModules()) {
       facets.addAll(facetsConfigurator.getFacetsByType(module, myFacetType.getId()));
     }
@@ -96,6 +96,7 @@ public class FacetTypeEditor extends UnnamedConfigurableGroup {
     super.disposeUIResources();
   }
 
+  @Override
   public JComponent createComponent() {
     MultipleFacetSettingsEditor allFacetsEditor = createAllFacetsEditor();
     if (myAllFacetsEditor != null) {
@@ -103,7 +104,7 @@ public class FacetTypeEditor extends UnnamedConfigurableGroup {
     }
     myAllFacetsEditor = allFacetsEditor;
 
-    myCurrentConfigurables = new ArrayList<Configurable>();
+    myCurrentConfigurables = new ArrayList<>();
     if (myDefaultSettingsConfigurable != null) {
       myCurrentConfigurables.add(myDefaultSettingsConfigurable);
     }
@@ -138,32 +139,35 @@ public class FacetTypeEditor extends UnnamedConfigurableGroup {
   private static class AllFacetsConfigurable implements Configurable {
     private final MultipleFacetSettingsEditor myEditor;
 
-    public AllFacetsConfigurable(final MultipleFacetSettingsEditor editor) {
+    AllFacetsConfigurable(final MultipleFacetSettingsEditor editor) {
       myEditor = editor;
     }
 
+    @Override
     public String getDisplayName() {
       return ProjectBundle.message("tab.name.all.facets");
     }
 
+    @Override
     public String getHelpTopic() {
       return myEditor.getHelpTopic();
     }
 
+    @Override
     public JComponent createComponent() {
       return myEditor.createComponent();
     }
 
+    @Override
     public boolean isModified() {
       return false;
     }
 
+    @Override
     public void apply() throws ConfigurationException {
     }
 
-    public void reset() {
-    }
-
+    @Override
     public void disposeUIResources() {
       myEditor.disposeUIResources();
     }

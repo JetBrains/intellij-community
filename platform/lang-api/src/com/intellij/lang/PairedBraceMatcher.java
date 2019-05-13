@@ -24,7 +24,7 @@ import org.jetbrains.annotations.Nullable;
  * Defines the brace matching support required for a custom language. For paired
  * brace matching to work, the language must also provide a
  * {@link com.intellij.openapi.fileTypes.SyntaxHighlighter} and return the correct
- * lexer from <code>getHighlightingLexer()</code>.
+ * lexer from {@code getHighlightingLexer()}.
  *
  * @author max
  * @see LanguageBraceMatching
@@ -37,6 +37,7 @@ public interface PairedBraceMatcher {
    *
    * @return the array of brace pair definitions.
    */
+  @NotNull
   BracePair[] getPairs();
 
   /**

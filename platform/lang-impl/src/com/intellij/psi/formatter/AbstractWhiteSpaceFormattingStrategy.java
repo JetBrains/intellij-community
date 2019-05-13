@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,7 +29,6 @@ import org.jetbrains.annotations.Nullable;
  * adjust white space and
  *
  * @author Denis Zhdanov
- * @since Sep 22, 2010 10:19:07 AM
  */
 public abstract class AbstractWhiteSpaceFormattingStrategy implements WhiteSpaceFormattingStrategy {
 
@@ -43,7 +42,7 @@ public abstract class AbstractWhiteSpaceFormattingStrategy implements WhiteSpace
   public CharSequence adjustWhiteSpaceIfNecessary(@NotNull CharSequence whiteSpaceText,
                                                   @NotNull CharSequence text,
                                                   int startOffset,
-                                                  int endOffset, CodeStyleSettings codeStyleSettings)
+                                                  int endOffset, CodeStyleSettings codeStyleSettings, ASTNode nodeAfter)
   {
     // Does nothing
     return whiteSpaceText;
@@ -81,15 +80,15 @@ public abstract class AbstractWhiteSpaceFormattingStrategy implements WhiteSpace
         buffer.append(text);
       }
       else {
-        buffer.append(text.substring(start, end));
+        buffer.append(text, start, end);
       } 
     }
     
-    return adjustWhiteSpaceIfNecessary(whiteSpaceText, buffer, 0, endOffset - startOffset, codeStyleSettings);
+    return adjustWhiteSpaceIfNecessary(whiteSpaceText, buffer, 0, endOffset - startOffset, codeStyleSettings, null);
   }
 
   @Nullable
-  private static PsiElement next(final @NotNull PsiElement element) {
+  private static PsiElement next(@NotNull final PsiElement element) {
     for (PsiElement anchor = element; anchor != null; anchor = anchor.getParent()) {
       final PsiElement result = element.getNextSibling();
       if (result != null) {

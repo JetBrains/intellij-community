@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<problems>
+  <problem>
+    <file>Test.form</file>
+    <line>1</line>
+    <description>Hard coded string literal</description>
+  </problem>
+</problems>
+

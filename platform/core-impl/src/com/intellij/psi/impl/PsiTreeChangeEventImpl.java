@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,9 +20,10 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiTreeChangeEvent;
+import org.jetbrains.annotations.NotNull;
 
 public class PsiTreeChangeEventImpl extends PsiTreeChangeEvent{
-  private boolean isGeneric;
+  private boolean isGenericChange;
 
   public enum PsiEventType {
     BEFORE_CHILD_ADDITION,
@@ -41,7 +42,7 @@ public class PsiTreeChangeEventImpl extends PsiTreeChangeEvent{
 
   private PsiEventType myCode;
 
-  public PsiTreeChangeEventImpl(PsiManager manager) {
+  public PsiTreeChangeEventImpl(@NotNull PsiManager manager) {
     super(manager);
   }
 
@@ -49,7 +50,7 @@ public class PsiTreeChangeEventImpl extends PsiTreeChangeEvent{
     return myCode;
   }
 
-  public void setCode(PsiEventType code) {
+  public void setCode(@NotNull PsiEventType code) {
     myCode = code;
   }
 
@@ -81,7 +82,7 @@ public class PsiTreeChangeEventImpl extends PsiTreeChangeEvent{
     myElement = element;
   }
 
-  public void setPropertyName(String propertyName) {
+  public void setPropertyName(@NotNull String propertyName) {
     myPropertyName = propertyName;
   }
 
@@ -115,11 +116,21 @@ public class PsiTreeChangeEventImpl extends PsiTreeChangeEvent{
 
   // this is a generic event which is send after all events for concrete PSI changes in a file (e.g. childAdded(), childReplaced() etc).
   // this event means "something changed in the file", not the "this PSI element changed in the file"
-  public boolean isGenericChildrenChange() {
-    return isGeneric;
+  public boolean isGenericChange() {
+    return isGenericChange;
   }
 
-  public void setGeneric(boolean generic) {
-    isGeneric = generic;
+  public void setGenericChange(boolean genericChange) {
+    isGenericChange = genericChange;
+  }
+
+  @NotNull
+  @Override
+  public String toString() {
+    return "PsiTreeChangeEventImpl{" + myCode
+           + (isGenericChange ? " (generic)" : "")
+           + (myPropertyName == null ? "" : " ("+myPropertyName+")")
+           + (myFile == null ? "" : " in file "+myFile.getName())
+           +'}';
   }
 }

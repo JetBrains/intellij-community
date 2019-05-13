@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,11 +19,10 @@ import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.lang.properties.references.CreatePropertyFix;
 import com.intellij.lang.properties.references.I18nizeQuickFixDialog;
 import com.intellij.lang.properties.references.I18nizeQuickFixModel;
-import com.intellij.openapi.application.AccessToken;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
@@ -45,8 +44,8 @@ public class JavaCreatePropertyFix extends CreatePropertyFix {
   }
 
   @Override
-  protected Pair<String, String> doAction(Project project, PsiElement psiElement, I18nizeQuickFixModel model) {
-    final Pair<String, String> result = super.doAction(project, psiElement, model);
+  protected Couple<String> doAction(Project project, PsiElement psiElement, I18nizeQuickFixModel model) {
+    final Couple<String> result = super.doAction(project, psiElement, model);
     if (result != null && psiElement instanceof PsiLiteralExpression) {
       final String key = result.first;
 
@@ -55,28 +54,26 @@ public class JavaCreatePropertyFix extends CreatePropertyFix {
       StringUtil.escapeStringCharacters(key.length(), key, buffer);
       buffer.append('"');
 
-      final AccessToken token = ApplicationManager.getApplication().acquireWriteActionLock(JavaCreatePropertyFix.class);
       try {
-        final PsiExpression newKeyLiteral = JavaPsiFacade.getElementFactory(project).createExpressionFromText(buffer.toString(), null);
-        psiElement.replace(newKeyLiteral);
+        WriteAction.run(() -> {
+          final PsiExpression newKeyLiteral = JavaPsiFacade.getElementFactory(project).createExpressionFromText(buffer.toString(), null);
+          psiElement.replace(newKeyLiteral);
+        });
       }
       catch (IncorrectOperationException e) {
         LOG.error(e);
-      }
-      finally {
-        token.finish();
       }
     }
     return result;
   }
 
   @Nullable
-  protected Pair<String, String> invokeAction(@NotNull final Project project,
-                                              @NotNull PsiFile file,
-                                              @NotNull PsiElement psiElement,
-                                              @Nullable final String suggestedKey,
-                                              @Nullable String suggestedValue,
-                                              @Nullable final List<PropertiesFile> propertiesFiles) {
+  protected Couple<String> invokeAction(@NotNull final Project project,
+                                        @NotNull PsiFile file,
+                                        @NotNull PsiElement psiElement,
+                                        @Nullable final String suggestedKey,
+                                        @Nullable String suggestedValue,
+                                        @Nullable final List<PropertiesFile> propertiesFiles) {
     final PsiLiteralExpression literalExpression = psiElement instanceof PsiLiteralExpression ? (PsiLiteralExpression)psiElement : null;
     final String propertyValue = suggestedValue == null ? "" : suggestedValue;
 

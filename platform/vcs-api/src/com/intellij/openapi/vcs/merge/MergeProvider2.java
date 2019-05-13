@@ -36,6 +36,6 @@ public interface MergeProvider2 extends MergeProvider {
    * @return the merge session instance.
    */
   @NotNull
-  MergeSession createMergeSession(List<VirtualFile> files);
+  MergeSession createMergeSession(@NotNull List<VirtualFile> files);
 
 }

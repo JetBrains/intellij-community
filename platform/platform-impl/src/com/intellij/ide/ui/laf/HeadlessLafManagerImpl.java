@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,58 +13,42 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.intellij.ide.ui.laf;
 
 import com.intellij.ide.ui.LafManager;
 import com.intellij.ide.ui.LafManagerListener;
-import com.intellij.openapi.components.ApplicationComponent;
-import org.jetbrains.annotations.NonNls;
+import com.intellij.openapi.Disposable;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
-/**
- * User: anna
- * Date: 17-May-2006
- */
-public class HeadlessLafManagerImpl extends LafManager implements ApplicationComponent {
+public class HeadlessLafManagerImpl extends LafManager {
+  @NotNull
+  @Override
   public UIManager.LookAndFeelInfo[] getInstalledLookAndFeels() {
     return new UIManager.LookAndFeelInfo[0];
   }
 
+  @Override
   public UIManager.LookAndFeelInfo getCurrentLookAndFeel() {
     return null;
   }
 
-  public boolean checkLookAndFeel(UIManager.LookAndFeelInfo lookAndFeelInfo) {
-    return true;
-  }
+  @Override
+  public void setCurrentLookAndFeel(@NotNull UIManager.LookAndFeelInfo lookAndFeelInfo) { }
 
-  public void setCurrentLookAndFeel(UIManager.LookAndFeelInfo lookAndFeelInfo) {
-  }
+  @Override
+  public void updateUI() { }
 
-  public void updateUI() {
-  }
+  @Override
+  public void repaintUI() { }
 
-  public void repaintUI() {
-  }
+  @Override
+  public void addLafManagerListener(@NotNull LafManagerListener listener) { }
 
-  public void addLafManagerListener(LafManagerListener l) {
-  }
+  @Override
+  public void addLafManagerListener(@NotNull LafManagerListener listener, @NotNull Disposable disposable) { }
 
-  public void removeLafManagerListener(LafManagerListener l) {
-  }
-
-  @NonNls
-  @NotNull
-  public String getComponentName() {
-    return "HeadlessLafManagerImpl";
-  }
-
-  public void initComponent() {
-  }
-
-  public void disposeComponent() {
-  }
+  @Override
+  public void removeLafManagerListener(@NotNull LafManagerListener listener) { }
 }

@@ -16,19 +16,26 @@
 
 package com.intellij.codeInsight.template.impl;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.intellij.codeInsight.template.Expression;
 import com.intellij.codeInsight.template.Macro;
 import com.intellij.codeInsight.template.macro.MacroFactory;
 import com.intellij.lexer.Lexer;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.tree.IElementType;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-class MacroParser {
-  private MacroParser() {
-  }
+import java.util.List;
 
-  //-----------------------------------------------------------------------------------
-  public static Expression parse(String expression) {
-    if (expression.length() == 0) {
+@VisibleForTesting
+public class MacroParser {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.template.impl.MacroParser");
+  
+  @NotNull
+  public static Expression parse(@Nullable String expression) {
+    if (StringUtil.isEmpty(expression)) {
       return new ConstantNode("");
     }
     Lexer lexer = new MacroLexer();
@@ -62,24 +69,22 @@ class MacroParser {
     String token = getString(lexer, expression);
     if (tokenType == MacroTokenType.STRING_LITERAL) {
       advance(lexer);
-
-      return new ConstantNode(token.substring(1, token.length() - 1).replaceAll("\\\\n", "\n").
-        replaceAll("\\\\r", "\r").replaceAll("\\\\t", "\t").replaceAll("\\\\f", "\f").replaceAll("\\\\(.)", "$1"));
+      return new ConstantNode(parseStringLiteral(token));
     }
 
     if (tokenType != MacroTokenType.IDENTIFIER) {
-      System.out.println("Bad macro syntax: Not identifier: " + token);
+      LOG.info("Bad macro syntax: Not identifier: " + token);
       advance(lexer);
       return new ConstantNode("");
     }
 
-    Macro macro = MacroFactory.createMacro(token);
-    if (macro == null) {
+    List<Macro> macros = MacroFactory.getMacros(token);
+    if (macros.isEmpty()) {
       return parseVariable(lexer, expression);
     }
 
     advance(lexer);
-    MacroCallNode macroCallNode = new MacroCallNode(macro);
+    MacroCallNode macroCallNode = new MacroCallNode(macros.get(0));
     if (lexer.getTokenType() == null) {
       return macroCallNode;
     }
@@ -91,10 +96,29 @@ class MacroParser {
     advance(lexer);
     parseParameters(macroCallNode, lexer, expression);
     if (lexer.getTokenType() != MacroTokenType.RPAREN) {
-      System.out.println("Bad macro syntax: ) expected: " + expression);
+      LOG.info("Bad macro syntax: ) expected: " + expression);
     }
     advance(lexer);
     return macroCallNode;
+  }
+
+  private static String parseStringLiteral(String token) {
+    StringBuilder sb = new StringBuilder(token.length() - 2);
+    int i = 1;
+    while (i < token.length() - 1) {
+      char c = token.charAt(i);
+      if (c == '\\') {
+        c = token.charAt(++i);
+        if (c == 'n') sb.append('\n');
+        else if (c == 't') sb.append('\t');
+        else if (c == 'f') sb.append('\f');
+        else sb.append(c);
+      } else {
+        sb.append(c);
+      }
+      i++;
+    }
+    return sb.toString();
   }
 
   private static void parseParameters(MacroCallNode macroCallNode, Lexer lexer, String expression) {

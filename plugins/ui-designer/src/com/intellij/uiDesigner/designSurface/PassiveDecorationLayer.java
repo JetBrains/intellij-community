@@ -1,27 +1,12 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.uiDesigner.designSurface;
 
 import com.intellij.uiDesigner.FormEditingUtil;
 import com.intellij.uiDesigner.componentTree.ComponentTree;
-import com.intellij.uiDesigner.propertyInspector.UIDesignerToolWindowManager;
+import com.intellij.uiDesigner.propertyInspector.DesignerToolWindowManager;
 import com.intellij.uiDesigner.radComponents.RadButtonGroup;
 import com.intellij.uiDesigner.radComponents.RadComponent;
 import com.intellij.uiDesigner.radComponents.RadRootContainer;
-import com.intellij.util.containers.HashSet;
 import icons.UIDesignerIcons;
 import org.jetbrains.annotations.NotNull;
 
@@ -29,6 +14,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.Set;
 
 /**
@@ -43,28 +29,29 @@ import java.util.Set;
 class PassiveDecorationLayer extends JComponent{
   @NotNull private final GuiEditor myEditor;
 
-  public PassiveDecorationLayer(@NotNull final GuiEditor editor) {
+  PassiveDecorationLayer(@NotNull final GuiEditor editor) {
     myEditor = editor;
   }
 
   /**
-   * Paints all necessary decoration for the specified <code>component</code>
+   * Paints all necessary decoration for the specified {@code component}
    */
   protected final void paintPassiveDecoration(final RadComponent component, final Graphics g){
     // Paint component bounds and grid markers
     Painter.paintComponentDecoration(myEditor, component, g);
 
-    final Set<RadButtonGroup> paintedGroups = new HashSet<RadButtonGroup>();
+    final Set<RadButtonGroup> paintedGroups = new HashSet<>();
     final RadRootContainer rootContainer = myEditor.getRootContainer();
-    final ComponentTree componentTree = UIDesignerToolWindowManager.getInstance(component.getProject()).getComponentTree();
+    final ComponentTree componentTree = DesignerToolWindowManager.getInstance(myEditor).getComponentTree();
     final Collection<RadButtonGroup> selectedGroups = componentTree != null
                                                       ? componentTree.getSelectedElements(RadButtonGroup.class)
-                                                      : Collections.<RadButtonGroup>emptyList();
+                                                      : Collections.emptyList();
 
     // Paint selection and dragger
     FormEditingUtil.iterate(
       component,
       new FormEditingUtil.ComponentVisitor<RadComponent>() {
+        @Override
         public boolean visit(final RadComponent component) {
           final Point point = SwingUtilities.convertPoint(
             component.getDelegee(),
@@ -101,6 +88,7 @@ class PassiveDecorationLayer extends JComponent{
     return UIDesignerIcons.Drag;
   }
 
+  @Override
   public void paint(final Graphics g){
     // Passive decoration
     final RadRootContainer root = myEditor.getRootContainer();

@@ -16,13 +16,16 @@
 
 package com.intellij.codeInsight;
 
+import com.intellij.codeInsight.intention.FileModifier;
+import com.intellij.lang.ContextAwareActionHandler;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 
-public interface CodeInsightActionHandler {
+/**
+ * @see ContextAwareActionHandler to hide an action from popups but allow access by shortcut, main menu or find.
+ */
+public interface CodeInsightActionHandler extends FileModifier {
   void invoke(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file);
-
-  boolean startInWriteAction();
 }

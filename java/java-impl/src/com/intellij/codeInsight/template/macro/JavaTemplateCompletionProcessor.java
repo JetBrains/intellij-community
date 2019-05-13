@@ -16,10 +16,13 @@
 package com.intellij.codeInsight.template.macro;
 
 import com.intellij.codeInsight.completion.JavaCompletionUtil;
+import com.intellij.codeInsight.completion.JavaMethodCallElement;
+import com.intellij.codeInsight.completion.SmartCompletionDecorator;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.template.ExpressionContext;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.util.ClassConditionKey;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiPackage;
 
 import java.util.List;
@@ -34,6 +37,12 @@ public class JavaTemplateCompletionProcessor implements TemplateCompletionProces
     if (elements != null && elements.size() == 1 && elements.get(0) instanceof PsiPackage) {
       return false;
     }
+
+    Editor editor = context.getEditor();
+    if (editor != null && editor.getUserData(JavaMethodCallElement.ARGUMENT_TEMPLATE_ACTIVE) != null) {
+      return item.as(ClassConditionKey.create(SmartCompletionDecorator.class)) != null;
+    }
+
     return true;
   }
 }

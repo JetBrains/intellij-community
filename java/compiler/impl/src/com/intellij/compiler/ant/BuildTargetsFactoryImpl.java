@@ -14,10 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * User: anna
- * Date: 19-Dec-2006
- */
 package com.intellij.compiler.ant;
 
 import com.intellij.openapi.project.Project;
@@ -27,10 +23,12 @@ import org.jetbrains.annotations.TestOnly;
 public class BuildTargetsFactoryImpl extends BuildTargetsFactory {
 
 
+  @Override
   public Generator createComment(final String comment) {
     return new Comment(comment);
   }
 
+  @Override
   @TestOnly
   public GenerationOptions getDefaultOptions(Project project) {
     return new GenerationOptionsImpl(project, true, false, false, true, ArrayUtil.EMPTY_STRING_ARRAY);

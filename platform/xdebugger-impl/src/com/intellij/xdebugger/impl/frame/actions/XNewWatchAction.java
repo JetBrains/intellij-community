@@ -16,16 +16,18 @@
 package com.intellij.xdebugger.impl.frame.actions;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.xdebugger.impl.frame.XWatchesView;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
 import com.intellij.xdebugger.impl.ui.tree.nodes.WatchesRootNode;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XDebuggerTreeNode;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author nik
  */
 public class XNewWatchAction extends XWatchesTreeActionBase {
   @Override
-  protected void perform(AnActionEvent e, XDebuggerTree tree) {
+  protected void perform(@NotNull AnActionEvent e, @NotNull XDebuggerTree tree, @NotNull XWatchesView watchesView) {
     XDebuggerTreeNode root = tree.getRoot();
     if (root instanceof WatchesRootNode) {
       final WatchesRootNode watchesRoot = (WatchesRootNode)root;

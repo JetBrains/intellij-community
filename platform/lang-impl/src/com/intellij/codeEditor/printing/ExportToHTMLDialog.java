@@ -1,26 +1,9 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeEditor.printing;
 
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.fileChooser.FileChooserFactory;
 import com.intellij.openapi.fileChooser.FileTextField;
-import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.UnnamedConfigurable;
 import com.intellij.openapi.project.Project;
@@ -28,7 +11,6 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.LabeledComponent;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.ui.OptionGroup;
-import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
@@ -59,13 +41,14 @@ public class ExportToHTMLDialog extends DialogWrapper {
     myDirectoryName = directoryName;
     this.myIsSelectedTextEnabled = isSelectedTextEnabled;
     setTitle(CodeEditorBundle.message("export.to.html.title"));
-    myExtensions = new ArrayList<UnnamedConfigurable>();
-    for (PrintOption extension : Extensions.getExtensions(PrintOption.EP_NAME)) {
+    myExtensions = new ArrayList<>();
+    for (PrintOption extension : PrintOption.EP_NAME.getExtensionList()) {
       myExtensions.add(extension.createConfigurable());
     }
     init();
   }
 
+  @Override
   protected JComponent createNorthPanel() {
     OptionGroup optionGroup = new OptionGroup();
 
@@ -94,6 +77,7 @@ public class ExportToHTMLDialog extends DialogWrapper {
     buttonGroup.add(myRbCurrentPackage);
 
     ActionListener actionListener = new ActionListener() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         myCbIncludeSubpackages.setEnabled(myRbCurrentPackage.isSelected());
       }
@@ -107,7 +91,7 @@ public class ExportToHTMLDialog extends DialogWrapper {
   }
 
   public static LabeledComponent<TextFieldWithBrowseButton> assignLabel(TextFieldWithBrowseButton targetDirectoryField, Project project) {
-    LabeledComponent<TextFieldWithBrowseButton> labeledComponent = new LabeledComponent<TextFieldWithBrowseButton>();
+    LabeledComponent<TextFieldWithBrowseButton> labeledComponent = new LabeledComponent<>();
     labeledComponent.setText(CodeEditorBundle.message("export.to.html.output.directory.label"));
     targetDirectoryField.addBrowseFolderListener(CodeEditorBundle.message("export.to.html.select.output.directory.title"),
                                                  CodeEditorBundle.message("export.to.html.select.output.directory.description"),
@@ -116,6 +100,7 @@ public class ExportToHTMLDialog extends DialogWrapper {
     return labeledComponent;
   }
 
+  @Override
   protected JComponent createCenterPanel() {
     OptionGroup optionGroup = new OptionGroup(CodeEditorBundle.message("export.to.html.options.group"));
 
@@ -184,12 +169,8 @@ public class ExportToHTMLDialog extends DialogWrapper {
     }
   }
 
-  @NotNull
-  protected Action[] createActions() {
-    return new Action[]{getOKAction(),getCancelAction(), getHelpAction()};
-  }
-
-  public void doHelpAction() {
-    HelpManager.getInstance().invokeHelp(HelpID.EXPORT_TO_HTML);
+  @Override
+  protected String getHelpId() {
+    return HelpID.EXPORT_TO_HTML;
   }
 }

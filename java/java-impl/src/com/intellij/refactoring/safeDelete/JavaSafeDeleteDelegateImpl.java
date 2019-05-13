@@ -19,8 +19,8 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.javadoc.PsiDocMethodOrFieldRef;
 import com.intellij.refactoring.safeDelete.usageInfo.SafeDeleteReferenceJavaDeleteUsageInfo;
+import com.intellij.refactoring.util.LambdaRefactoringUtil;
 import com.intellij.usageView.UsageInfo;
-import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 
@@ -43,8 +43,13 @@ public class JavaSafeDeleteDelegateImpl implements JavaSafeDeleteDelegate {
     if (element instanceof PsiCall) {
       call = (PsiCall)element;
     }
-    else if (element.getParent() instanceof PsiCall) {
-      call = (PsiCall)element.getParent();
+    else {
+      final PsiElement parent = element.getParent();
+      if (parent instanceof PsiCall) {
+        call = (PsiCall)parent;
+      } else if (parent instanceof PsiAnonymousClass) {
+        call = (PsiNewExpression)parent.getParent();
+      }
     }
     if (call != null) {
       final PsiExpressionList argList = call.getArgumentList();
@@ -52,11 +57,11 @@ public class JavaSafeDeleteDelegateImpl implements JavaSafeDeleteDelegate {
         final PsiExpression[] args = argList.getExpressions();
         if (index < args.length) {
           if (!parameter.isVarArgs()) {
-            usages.add(new SafeDeleteReferenceJavaDeleteUsageInfo(args[index], parameter, true));
+            usages.add(new SafeDeleteReferenceJavaDeleteUsageInfo(args[index], parameter));
           }
           else {
             for (int i = index; i < args.length; i++) {
-              usages.add(new SafeDeleteReferenceJavaDeleteUsageInfo(args[i], parameter, true));
+              usages.add(new SafeDeleteReferenceJavaDeleteUsageInfo(args[i], parameter));
             }
           }
         }
@@ -66,16 +71,12 @@ public class JavaSafeDeleteDelegateImpl implements JavaSafeDeleteDelegate {
       if (((PsiDocMethodOrFieldRef)element).getSignature() != null) {
         @NonNls final StringBuffer newText = new StringBuffer();
         newText.append("/** @see #").append(method.getName()).append('(');
-        final List<PsiParameter> parameters = new ArrayList<PsiParameter>(Arrays.asList(method.getParameterList().getParameters()));
+        final List<PsiParameter> parameters = new ArrayList<>(Arrays.asList(method.getParameterList().getParameters()));
         parameters.remove(parameter);
-        newText.append(StringUtil.join(parameters, new Function<PsiParameter, String>() {
-          @Override
-          public String fun(PsiParameter psiParameter) {
-            return parameter.getType().getCanonicalText();
-          }
-        }, ","));
+        newText.append(StringUtil.join(parameters, psiParameter -> psiParameter.getType().getCanonicalText(), ","));
         newText.append(")*/");
         usages.add(new SafeDeleteReferenceJavaDeleteUsageInfo(element, parameter, true) {
+          @Override
           public void deleteElement() throws IncorrectOperationException {
             final PsiDocMethodOrFieldRef.MyReference javadocMethodReference =
               (PsiDocMethodOrFieldRef.MyReference)element.getReference();
@@ -85,6 +86,23 @@ public class JavaSafeDeleteDelegateImpl implements JavaSafeDeleteDelegate {
           }
         });
       }
+    }
+    else if (element instanceof PsiMethodReferenceExpression) {
+      usages.add(new SafeDeleteReferenceJavaDeleteUsageInfo(element, parameter, true) {
+        @Override
+        public void deleteElement() throws IncorrectOperationException {
+          final PsiExpression callExpression = LambdaRefactoringUtil.convertToMethodCallInLambdaBody((PsiMethodReferenceExpression)element);
+          if (callExpression instanceof PsiCallExpression) {
+            final PsiExpressionList expressionList = ((PsiCallExpression)callExpression).getArgumentList();
+            if (expressionList != null) {
+              final PsiExpression[] args = expressionList.getExpressions();
+              if (index < args.length) {
+                args[index].delete();
+              }
+            }
+          }
+        }
+      });
     }
   }
 }

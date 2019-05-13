@@ -24,11 +24,10 @@ import java.util.Set;
 
 /**
  * @author Denis Zhdanov
- * @since Sep 21, 2010 2:49:43 PM
  */
 public class StaticTextWhiteSpaceDefinitionStrategy extends AbstractWhiteSpaceFormattingStrategy {
 
-  private final Set<CharSequence> myWhiteSpaces = new HashSet<CharSequence>();
+  private final Set<CharSequence> myWhiteSpaces = new HashSet<>();
 
   public StaticTextWhiteSpaceDefinitionStrategy(@NotNull CharSequence ... whiteSpaces) {
     myWhiteSpaces.addAll(Arrays.asList(whiteSpaces));

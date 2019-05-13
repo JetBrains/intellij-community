@@ -18,62 +18,22 @@ package com.intellij.codeInsight.lookup;
 import com.intellij.codeInsight.TailType;
 import com.intellij.codeInsight.completion.JavaClassNameCompletionContributor;
 import com.intellij.codeInsight.completion.JavaMethodCallElement;
-import com.intellij.codeInsight.completion.PrefixMatcher;
-import com.intellij.codeInsight.completion.impl.CamelHumpMatcher;
 import com.intellij.codeInsight.template.Template;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
 import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.psi.util.PsiUtilCore;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-import java.util.Collection;
-
-/**
- * Created by IntelliJ IDEA.
- * User: ik
- * Date: 06.02.2003
- * Time: 16:05:20
- * To change this template use Options | File Templates.
- */
 public class LookupItemUtil{
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.lookup.LookupItemUtil");
-
-  private LookupItemUtil() {
-  }
-
-  @Nullable
-  public static LookupElement addLookupItem(Collection<LookupElement> set, @NotNull Object object) {
-    return addLookupItem(set, object, new CamelHumpMatcher(""));
-  }
-
-  @Nullable
-  public static LookupElement addLookupItem(Collection<LookupElement> set, @NotNull Object object, PrefixMatcher matcher) {
-    if (object instanceof PsiType) {
-      PsiType psiType = (PsiType)object;
-      for (final LookupElement lookupItem : set) {
-        Object o = lookupItem.getObject();
-        if (o.equals(psiType)) {
-          return lookupItem;
-        }
-      }
-    }
-
-    for (LookupElement lookupItem : set) {
-      if(lookupItem.getObject().equals(lookupItem)) return null;
-    }
-    LookupElement item = objectToLookupItem(object);
-    if (matcher.prefixMatches(item)) {
-      return set.add(item) ? item : null;
-    }
-    return null;
-  }
 
   /**
    * @deprecated
    * @see LookupElementBuilder
   */
+  @Deprecated
+  @NotNull
   public static LookupElement objectToLookupItem(Object object) {
     if (object instanceof LookupElement) return (LookupElement)object;
     if (object instanceof PsiClass) {
@@ -84,9 +44,6 @@ public class LookupItemUtil{
     }
     if (object instanceof PsiVariable) {
       return new VariableLookupItem((PsiVariable)object);
-    }
-    if (object instanceof PsiKeyword) {
-      return new KeywordLookupItem((PsiKeyword)object, (PsiKeyword)object);
     }
     if (object instanceof PsiExpression) {
       return new ExpressionLookupItem((PsiExpression) object);
@@ -123,9 +80,6 @@ public class LookupItemUtil{
 
     if (s == null) {
       LOG.error("Null string for object: " + object + " of class " + (object != null ? object.getClass() : null));
-    }
-    if (object instanceof LookupValueWithTail) {
-      item.setAttribute(LookupItem.TAIL_TEXT_ATTR, " " + ((LookupValueWithTail)object).getTailText());
     }
     item.setLookupString(s);
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,7 +22,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiCodeFragment;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.ui.EditorTextField;
-import com.intellij.ui.IdeBorderFactory;
+import com.intellij.util.ui.JBUI;
 
 import javax.swing.*;
 import javax.swing.table.TableCellRenderer;
@@ -44,6 +44,7 @@ public class CodeFragmentTableCellRenderer implements TableCellRenderer {
     myFileType = fileType;
   }
 
+  @Override
   public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, final boolean hasFocus, int row, int column) {
     PsiCodeFragment codeFragment = (PsiCodeFragment)value;
 
@@ -52,6 +53,7 @@ public class CodeFragmentTableCellRenderer implements TableCellRenderer {
     if (codeFragment != null) {
       document = PsiDocumentManager.getInstance(myProject).getDocument(codeFragment);
       editorTextField = new EditorTextField(document, myProject, myFileType) {
+        @Override
         protected boolean shouldHaveBorder() {
           return false;
         }
@@ -59,6 +61,7 @@ public class CodeFragmentTableCellRenderer implements TableCellRenderer {
     }
     else {
       editorTextField = new EditorTextField("", myProject, myFileType) {
+        @Override
         protected boolean shouldHaveBorder() {
           return false;
         }
@@ -70,7 +73,7 @@ public class CodeFragmentTableCellRenderer implements TableCellRenderer {
     }
 
     editorTextField.putClientProperty("JComboBox.isTableCellEditor", Boolean.TRUE);
-    editorTextField.setBorder((hasFocus || isSelected) ? BorderFactory.createLineBorder(table.getSelectionBackground()) : IdeBorderFactory.createEmptyBorder(1));
+    editorTextField.setBorder((hasFocus || isSelected) ? BorderFactory.createLineBorder(table.getSelectionBackground()) : JBUI.Borders.empty(1));
     if (isSelected && document != null) {
       final Color bg = table.getSelectionBackground();
       final Color fg = table.getSelectionForeground();

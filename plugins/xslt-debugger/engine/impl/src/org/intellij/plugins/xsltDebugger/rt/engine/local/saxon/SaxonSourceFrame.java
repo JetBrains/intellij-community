@@ -20,13 +20,8 @@ import com.icl.saxon.om.Navigator;
 import com.icl.saxon.om.NodeInfo;
 import org.intellij.plugins.xsltDebugger.rt.engine.Debugger;
 
-/**
- * Created by IntelliJ IDEA.
- * User: sweinreuter
- * Date: 03.06.2007
- */
 class SaxonSourceFrame extends AbstractSaxonFrame<Debugger.SourceFrame, NodeInfo> implements Debugger.SourceFrame {
-  public SaxonSourceFrame(Debugger.SourceFrame prev, NodeInfo element) {
+  SaxonSourceFrame(Debugger.SourceFrame prev, NodeInfo element) {
     super(prev, element);
   }
 

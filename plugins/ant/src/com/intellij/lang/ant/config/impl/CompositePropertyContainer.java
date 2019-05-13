@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,8 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.config.AbstractProperty;
 import com.intellij.util.config.ExternalizablePropertyContainer;
 
+import java.util.Arrays;
+
 public class CompositePropertyContainer extends AbstractProperty.AbstractPropertyContainer {
   private static final Logger LOG = Logger.getInstance("#com.intellij.lang.ant.config.impl.CompositePropertyContainer");
   private final AbstractProperty.AbstractPropertyContainer[] myContainers;
@@ -28,19 +30,19 @@ public class CompositePropertyContainer extends AbstractProperty.AbstractPropert
     myContainers = containers;
   }
 
+  @Override
   public Object getValueOf(AbstractProperty property) {
     return property.get(containerOf(property));
   }
 
+  @Override
   public void setValueOf(AbstractProperty property, Object value) {
     property.set(containerOf(property), value);
   }
 
+  @Override
   public boolean hasProperty(AbstractProperty property) {
-    for (AbstractProperty.AbstractPropertyContainer container : myContainers) {
-      if (container.hasProperty(property)) return true;
-    }
-    return false;
+    return Arrays.stream(myContainers).anyMatch(container -> container.hasProperty(property));
   }
 
   private AbstractProperty.AbstractPropertyContainer containerOf(AbstractProperty property) {

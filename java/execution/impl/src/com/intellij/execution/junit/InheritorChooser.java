@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,27 +17,29 @@ package com.intellij.execution.junit;
 
 import com.intellij.execution.Location;
 import com.intellij.execution.actions.ConfigurationContext;
+import com.intellij.execution.junit2.PsiMemberParameterizedLocation;
 import com.intellij.execution.junit2.info.MethodLocation;
 import com.intellij.ide.util.PsiClassListCellRenderer;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.fileEditor.FileEditor;
+import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiMethod;
-import com.intellij.psi.PsiModifier;
+import com.intellij.openapi.util.Condition;
+import com.intellij.psi.*;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
+import com.intellij.psi.util.PsiClassUtil;
 import com.intellij.ui.ColoredListCellRenderer;
-import com.intellij.ui.components.JBList;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.Processor;
 
 import javax.swing.*;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
-/**
- * User: anna
- * Date: 1/17/12
- */
 public class InheritorChooser {
 
   protected void runForClasses(final List<PsiClass> classes, final PsiMethod method, final ConfigurationContext context, final Runnable performRunnable) {
@@ -52,28 +54,35 @@ public class InheritorChooser {
                                           final Runnable performRunnable,
                                           final PsiMethod psiMethod,
                                           final PsiClass containingClass) {
-    if (containingClass != null && containingClass.hasModifierProperty(PsiModifier.ABSTRACT)) {
+    return runMethodInAbstractClass(context, performRunnable, psiMethod, containingClass,
+                                    psiClass -> psiClass.hasModifierProperty(PsiModifier.ABSTRACT));
+  }
+
+  public boolean runMethodInAbstractClass(final ConfigurationContext context,
+                                          final Runnable performRunnable,
+                                          final PsiMethod psiMethod,
+                                          final PsiClass containingClass,
+                                          final Condition<PsiClass> acceptAbstractCondition) {
+    if (containingClass != null && acceptAbstractCondition.value(containingClass)) {
       final Location location = context.getLocation();
       if (location instanceof MethodLocation) {
         final PsiClass aClass = ((MethodLocation)location).getContainingClass();
         if (aClass != null && !aClass.hasModifierProperty(PsiModifier.ABSTRACT)) {
           return false;
         }
+      } else if (location instanceof PsiMemberParameterizedLocation) {
+        return false;
       }
-      final List<PsiClass> classes = new ArrayList<PsiClass>();
-      if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
-        @Override
-        public void run() {
-          ClassInheritorsSearch.search(containingClass).forEach(new Processor<PsiClass>() {
-            @Override
-            public boolean process(PsiClass aClass) {
-              if (!aClass.hasModifierProperty(PsiModifier.ABSTRACT)) {
-                classes.add(aClass);
-              }
-              return true;
-            }
-          });
-        }
+
+      final List<PsiClass> classes = new ArrayList<>();
+      if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
+        final boolean isJUnit5 = ReadAction.compute(() -> JUnitUtil.isJUnit5(containingClass));
+        ClassInheritorsSearch.search(containingClass).forEach(aClass -> {
+          if (isJUnit5 && JUnitUtil.isJUnit5TestClass(aClass, true) || PsiClassUtil.isRunnableClass(aClass, true, true)) {
+            classes.add(aClass);
+          }
+          return true;
+        });
       }, "Search for " + containingClass.getQualifiedName() + " inheritors", true, containingClass.getProject())) {
         return true;
       }
@@ -83,10 +92,21 @@ public class InheritorChooser {
         return true;
       }
       if (classes.isEmpty()) return false;
-      //suggest to run all inherited tests 
-      classes.add(0, null);
-      final JBList list = new JBList(classes);
-      list.setCellRenderer(new PsiClassListCellRenderer() {
+      final FileEditor fileEditor = PlatformDataKeys.FILE_EDITOR.getData(context.getDataContext());
+      if (fileEditor instanceof TextEditor) {
+        final Document document = ((TextEditor)fileEditor).getEditor().getDocument();
+        final PsiFile containingFile = PsiDocumentManager.getInstance(context.getProject()).getPsiFile(document);
+        if (containingFile instanceof PsiClassOwner) {
+          final List<PsiClass> psiClasses = new ArrayList<>(Arrays.asList(((PsiClassOwner)containingFile).getClasses()));
+          psiClasses.retainAll(classes);
+          if (psiClasses.size() == 1) {
+            runForClass(psiClasses.get(0), psiMethod, context, performRunnable);
+            return true;
+          }
+        }
+      }
+      final int numberOfInheritors = classes.size();
+      final PsiClassListCellRenderer renderer = new PsiClassListCellRenderer() {
         @Override
         protected boolean customizeNonPsiElementLeftRenderer(ColoredListCellRenderer renderer,
                                                              JList list,
@@ -95,24 +115,29 @@ public class InheritorChooser {
                                                              boolean selected,
                                                              boolean hasFocus) {
           if (value == null) {
-            renderer.append("All");
+            renderer.append("All (" + numberOfInheritors + ")");
             return true;
           }
           return super.customizeNonPsiElementLeftRenderer(renderer, list, value, index, selected, hasFocus);
         }
-      });
-      JBPopupFactory.getInstance().createListPopupBuilder(list)
+      };
+      Collections.sort(classes, renderer.getComparator());
+
+      //suggest to run all inherited tests 
+      classes.add(0, null);
+      JBPopupFactory.getInstance()
+        .createPopupChooserBuilder(classes)
+        .setRenderer(renderer)
         .setTitle("Choose executable classes to run " + (psiMethod != null ? psiMethod.getName() : containingClass.getName()))
         .setMovable(false)
         .setResizable(false)
         .setRequestFocus(true)
-        .setItemChoosenCallback(new Runnable() {
-          public void run() {
-            final Object[] values = list.getSelectedValues();
-            if (values == null) return;
-            chooseAndPerform(values, psiMethod, context, performRunnable, classes);
-          }
-        }).createPopup().showInBestPositionFor(context.getDataContext());
+        .setItemsChosenCallback((values) -> {
+          if (values.isEmpty()) return;
+          chooseAndPerform(values.toArray(), psiMethod, context, performRunnable, classes);
+        })
+        .createPopup()
+        .showInBestPositionFor(context.getDataContext());
       return true;
     }
     return false;
@@ -138,7 +163,7 @@ public class InheritorChooser {
       runForClasses(classes, psiMethod, context, performRunnable);
     }
     else {
-      final List<PsiClass> selectedClasses = new ArrayList<PsiClass>();
+      final List<PsiClass> selectedClasses = new ArrayList<>();
       for (Object value : values) {
         if (value instanceof PsiClass) {
           selectedClasses.add((PsiClass)value);

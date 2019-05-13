@@ -16,8 +16,8 @@
 package org.jetbrains.jps.incremental.storage;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.util.containers.ConcurrentHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.builders.BuildTarget;
 import org.jetbrains.jps.builders.BuildTargetType;
@@ -27,6 +27,8 @@ import org.jetbrains.jps.incremental.TargetTypeRegistry;
 import org.jetbrains.jps.model.JpsModel;
 
 import java.io.*;
+import java.util.List;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -36,9 +38,9 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class BuildTargetsState {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.jps.incremental.storage.BuildTargetsState");
   private final BuildDataPaths myDataPaths;
-  private AtomicInteger myMaxTargetId = new AtomicInteger(0);
-  private ConcurrentMap<BuildTargetType<?>, BuildTargetTypeState> myTypeStates = new ConcurrentHashMap<BuildTargetType<?>, BuildTargetTypeState>();
-  private JpsModel myModel;
+  private final AtomicInteger myMaxTargetId = new AtomicInteger(0);
+  private final ConcurrentMap<BuildTargetType<?>, BuildTargetTypeState> myTypeStates = new ConcurrentHashMap<>(16, 0.75f, 1);
+  private final JpsModel myModel;
   private final BuildRootIndexImpl myBuildRootIndex;
 
   public BuildTargetsState(BuildDataPaths dataPaths, JpsModel model, BuildRootIndexImpl buildRootIndex) {
@@ -46,14 +48,8 @@ public class BuildTargetsState {
     myModel = model;
     myBuildRootIndex = buildRootIndex;
     File targetTypesFile = getTargetTypesFile();
-    try {
-      DataInputStream input = new DataInputStream(new BufferedInputStream(new FileInputStream(targetTypesFile)));
-      try {
-        myMaxTargetId.set(input.readInt());
-      }
-      finally {
-        input.close();
-      }
+    try (DataInputStream input = new DataInputStream(new BufferedInputStream(new FileInputStream(targetTypesFile)))) {
+      myMaxTargetId.set(input.readInt());
     }
     catch (IOException e) {
       LOG.debug("Cannot load " + targetTypesFile + ":" + e.getMessage(), e);
@@ -72,12 +68,8 @@ public class BuildTargetsState {
     try {
       File targetTypesFile = getTargetTypesFile();
       FileUtil.createParentDirs(targetTypesFile);
-      DataOutputStream output = new DataOutputStream(new BufferedOutputStream(new FileOutputStream(targetTypesFile)));
-      try {
+      try (DataOutputStream output = new DataOutputStream(new BufferedOutputStream(new FileOutputStream(targetTypesFile)))) {
         output.writeInt(myMaxTargetId.get());
-      }
-      finally {
-        output.close();
       }
     }
     catch (IOException e) {
@@ -96,12 +88,30 @@ public class BuildTargetsState {
     return getTypeState(target.getTargetType()).getConfiguration(target);
   }
 
+  public List<Pair<String, Integer>> getStaleTargetIds(@NotNull BuildTargetType<?> type) {
+    return getTypeState(type).getStaleTargetIds();
+  }
+
+  public void cleanStaleTarget(BuildTargetType<?> type, String targetId) {
+    getTypeState(type).removeStaleTarget(targetId);
+  }
+
+  public void setAverageBuildTime(BuildTargetType<?> type, long time) {
+    getTypeState(type).setAverageTargetBuildTime(time);
+  }
+
+  public long getAverageBuildTime(BuildTargetType<?> type) {
+    return getTypeState(type).getAverageTargetBuildTime();
+  }
+
   private BuildTargetTypeState getTypeState(BuildTargetType<?> type) {
     BuildTargetTypeState state = myTypeStates.get(type);
     if (state == null) {
-      state = new BuildTargetTypeState(type, this);
-      myTypeStates.putIfAbsent(type, state);
-      state = myTypeStates.get(type);
+      final BuildTargetTypeState newState = new BuildTargetTypeState(type, this);
+      state = myTypeStates.putIfAbsent(type, newState);
+      if (state == null) {
+        state = newState;
+      }
     }
     return state;
   }

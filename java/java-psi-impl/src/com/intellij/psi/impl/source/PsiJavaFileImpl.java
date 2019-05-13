@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,47 +16,35 @@
 package com.intellij.psi.impl.source;
 
 import com.intellij.ide.highlighter.JavaFileType;
-import com.intellij.lexer.JavaLexer;
-import com.intellij.lexer.Lexer;
-import com.intellij.openapi.components.ServiceManager;
+import com.intellij.lang.java.JavaParserDefinition;
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.roots.FileIndexFacade;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.FileViewProvider;
-import com.intellij.psi.impl.java.stubs.JavaStubElementTypes;
-import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.testFramework.LightVirtualFile;
+import com.intellij.psi.PsiJavaModule;
+import com.intellij.psi.impl.java.stubs.PsiJavaFileStub;
+import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class PsiJavaFileImpl extends PsiJavaFileBaseImpl {
   public PsiJavaFileImpl(FileViewProvider file) {
-    super(JavaStubElementTypes.JAVA_FILE, JavaStubElementTypes.JAVA_FILE, file);
-  }
-
-  public String toString(){
-    return "PsiJavaFile:" + getName();
-  }
-
-  public Lexer createLexer() {
-    return new JavaLexer(getLanguageLevel());
+    super(JavaParserDefinition.JAVA_FILE, JavaParserDefinition.JAVA_FILE, file);
   }
 
   @NotNull
   @Override
-  public GlobalSearchScope getResolveScope() {
-    final VirtualFile file = getVirtualFile();
-    if (file != null && !(file instanceof LightVirtualFile)) {
-      final FileIndexFacade index = ServiceManager.getService(getProject(), FileIndexFacade.class);
-      if (!index.isInSource(file) && !index.isInLibraryClasses(file)) {
-        return GlobalSearchScope.fileScope(this);
-      }
-    }
-    return super.getResolveScope();
-  }
-
-  @Override
-  @NotNull
   public FileType getFileType() {
     return JavaFileType.INSTANCE;
+  }
+
+  @Nullable
+  @Override
+  public PsiJavaModule getModuleDeclaration() {
+    PsiJavaFileStub stub = (PsiJavaFileStub)getGreenStub();
+    return stub != null ? stub.getModule() : PsiTreeUtil.getChildOfType(this, PsiJavaModule.class);
+  }
+
+  @Override
+  public String toString() {
+    return "PsiJavaFile:" + getName();
   }
 }

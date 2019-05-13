@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,72 +15,49 @@
  */
 package com.intellij.execution.process;
 
+import com.intellij.execution.ExecutionException;
 import com.intellij.execution.KillableProcess;
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.execution.configurations.GeneralCommandLine;
 import org.jetbrains.annotations.NotNull;
 
 import java.nio.charset.Charset;
 
 /**
- * @author Roman.Chernyatchik
- *         <p/>
- *         This process handler supports ANSI coloring and soft-kill feature. Soft kill works only on Unix.
- *         At first "stop" button send SIGINT signal to process, if it still hangs user can termintate it recursively with SIGKILL signal.
- *         <p/>
- *         P.S: probably OSProcessHandler is better place for this feature but it can affect other run configurations and should be tested
+ * This process handler supports both ANSI coloring (see {@link ColoredProcessHandler})
+ * and "soft-kill" feature (see {@link KillableProcessHandler}).
  */
 public class KillableColoredProcessHandler extends ColoredProcessHandler implements KillableProcess {
-  public KillableColoredProcessHandler(final Process process, final String commandLine, @NotNull final Charset charset) {
-    super(process, commandLine, charset);
+  public KillableColoredProcessHandler(@NotNull GeneralCommandLine commandLine) throws ExecutionException {
+    this(commandLine, false);
   }
 
-  public KillableColoredProcessHandler(final Process process, final String commandLine) {
+  /**
+   * Starts a process with a {@link RunnerMediator mediator} when {@code withMediator} is set to {@code true} and the platform is Windows.
+   */
+  public KillableColoredProcessHandler(@NotNull GeneralCommandLine commandLine, boolean withMediator) throws ExecutionException {
+    super(mediate(commandLine, withMediator, false));
+    setShouldKillProcessSoftly(true);
+  }
+
+  /**
+   * {@code commandLine} must not be not empty (for correct thread attribution in the stacktrace)
+   */
+  public KillableColoredProcessHandler(@NotNull Process process, /*@NotNull*/ String commandLine) {
     super(process, commandLine);
+    setShouldKillProcessSoftly(true);
   }
 
   /**
-   * This method shouldn't be overridden, see shouldKillProcessSoftly
-   *
-   * @return
+   * {@code commandLine} must not be not empty (for correct thread attribution in the stacktrace)
    */
-  private boolean canKillProcessSoftly() {
-    // soft-kill works on Unix systems
-    return SystemInfo.isUnix && processCanBeKilledByOS(getProcess());
+  public KillableColoredProcessHandler(@NotNull Process process, /*@NotNull*/ String commandLine, @NotNull Charset charset) {
+    super(process, commandLine, charset);
+    setShouldKillProcessSoftly(true);
   }
 
-  @Override
-  protected void doDestroyProcess() {
-    if (canKillProcessSoftly() && shouldKillProcessSoftly()) {
-      // Unix: [soft-kill] at first send INT signal:
-      final Process process = getProcess();
-      if (UnixProcessManager.sendSigIntToProcessTree(process)) {
-        return;
-      }
-    }
-
-    // if soft kill isn't supported - use default implementation
-    super.doDestroyProcess();
-    // else IDE will suggest 'terminate dialog'
-
-  }
-
-  /**
-   * This method should be overridden by children if the process shouldn't be killed softly (e.g. by kill -2)
-   *
-   * @return
-   */
-  protected boolean shouldKillProcessSoftly() {
-    return true;
-  }
-
-  @Override
-  public boolean canKillProcess() {
-    return processCanBeKilledByOS(getProcess());
-  }
-
-  @Override
-  public void killProcess() {
-    // kill -9
-    killProcessTree(getProcess());
+  /** @deprecated use {@link #KillableColoredProcessHandler(GeneralCommandLine, boolean)} (to be removed in IDEA 17) */
+  @Deprecated
+  public static KillableColoredProcessHandler create(@NotNull GeneralCommandLine commandLine) throws ExecutionException {
+    return new KillableColoredProcessHandler(commandLine, true);
   }
 }

@@ -1,32 +1,29 @@
 package com.intellij.codeInsight.completion;
 
-import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.codeInsight.lookup.TypedLookupItem;
 import com.intellij.codeInsight.template.Template;
+import com.intellij.codeInsight.template.impl.LiveTemplateLookupElementImpl;
 import com.intellij.codeInsight.template.impl.TemplateImpl;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiType;
 import com.intellij.util.IncorrectOperationException;
-import org.jetbrains.annotations.NonNls;
 
 /**
  * @author peter
  */
-public class SmartCompletionTemplateItem extends LookupItem<Template> implements TypedLookupItem {
-  @NonNls private static final String PLACEHOLDER = "xxx";
+public class SmartCompletionTemplateItem extends LiveTemplateLookupElementImpl implements TypedLookupItem {
   private final PsiElement myContext;
 
-  public SmartCompletionTemplateItem(Template o, PsiElement context) {
-    super(o, o.getKey());
+  public SmartCompletionTemplateItem(TemplateImpl template, PsiElement context) {
+    super(template, false);
     myContext = context;
   }
 
-
   @Override
   public PsiType getType() {
-    final Template template = getObject();
+    final Template template = getTemplate();
     String text = template.getTemplateText();
     StringBuilder resultingText = new StringBuilder(text);
 
@@ -37,9 +34,7 @@ public class SmartCompletionTemplateItem extends LookupItem<Template> implements
         continue;
       }
 
-      int segmentOffset = template.getSegmentOffset(j);
-
-      resultingText.insert(segmentOffset, PLACEHOLDER);
+      resultingText.insert(template.getSegmentOffset(j), "xxx");
     }
 
     try {

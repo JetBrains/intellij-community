@@ -31,17 +31,20 @@ public class ListProperty<T> extends AbstractProperty<List<T>> {
   }
 
   public static <T> ListProperty<T> create(@NonNls String name) {
-    return new ListProperty<T>(name);
+    return new ListProperty<>(name);
   }
 
+  @Override
   public String getName() {
     return myName;
   }
 
+  @Override
   public List<T> getDefault(AbstractProperty.AbstractPropertyContainer container) {
     return Collections.emptyList();
   }
 
+  @Override
   public List<T> copy(List<T> value) {
     return Collections.unmodifiableList(value);
   }
@@ -53,7 +56,7 @@ public class ListProperty<T> extends AbstractProperty<List<T>> {
       modifiableList = (ArrayList<T>)list;
     }
     else {
-      modifiableList = new ArrayList<T>(list);
+      modifiableList = new ArrayList<>(list);
       set(container, modifiableList);
     }
     // remove nulls

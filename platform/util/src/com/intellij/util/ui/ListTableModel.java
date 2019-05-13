@@ -22,7 +22,7 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import java.util.*;
 
-public class ListTableModel<Item> extends TableViewModel<Item> implements ItemRemovable, EditableModel {
+public class ListTableModel<Item> extends TableViewModel<Item> implements EditableModel {
   private ColumnInfo[] myColumnInfos;
   private List<Item> myItems;
   private int mySortByColumn;
@@ -36,6 +36,10 @@ public class ListTableModel<Item> extends TableViewModel<Item> implements ItemRe
 
   public ListTableModel(@NotNull ColumnInfo[] columnNames, @NotNull List<Item> items, int selectedColumn) {
     this(columnNames, items, selectedColumn, SortOrder.ASCENDING);
+  }
+
+  public ListTableModel(@NotNull ColumnInfo[] columnNames, @NotNull List<Item> items) {
+    this(columnNames, items, 0);
   }
 
   public ListTableModel(@NotNull ColumnInfo[] columnNames, @NotNull List<Item> items, int selectedColumn, @NotNull SortOrder order) {
@@ -58,7 +62,7 @@ public class ListTableModel<Item> extends TableViewModel<Item> implements ItemRe
   }
 
   @Override
-  public Class getColumnClass(int columnIndex) {
+  public Class<?> getColumnClass(int columnIndex) {
     return myColumnInfos[columnIndex].getColumnClass();
   }
 
@@ -87,7 +91,7 @@ public class ListTableModel<Item> extends TableViewModel<Item> implements ItemRe
   }
 
   @Override
-  public Object getRowValue(int row) {
+  public Item getRowValue(int row) {
     return myItems.get(row);
   }
 
@@ -104,21 +108,32 @@ public class ListTableModel<Item> extends TableViewModel<Item> implements ItemRe
 
   @Override
   public Object getValueAt(int rowIndex, int columnIndex) {
-    return myColumnInfos[columnIndex].valueOf(myItems.get(rowIndex));
+    return myColumnInfos[columnIndex].valueOf(getItem(rowIndex));
   }
 
   @Override
   public void setValueAt(Object aValue, int rowIndex, int columnIndex) {
+    setValueAt(aValue, rowIndex, columnIndex, true);
+  }
+
+  /**
+   * Sets the value in the cell at {@code columnIndex} and {@code rowIndex} to {@code aValue}.
+   * This method allows to choose will the model listeners notified or not.
+   *
+   * @param aValue          the new value
+   * @param rowIndex        the row whose value is to be changed
+   * @param columnIndex     the column whose value is to be changed
+   * @param notifyListeners indicates whether the model listeners are notified
+   */
+  public void setValueAt(Object aValue, int rowIndex, int columnIndex, boolean notifyListeners) {
     if (rowIndex < myItems.size()) {
-      myColumnInfos[columnIndex].setValue(myItems.get(rowIndex), aValue);
+      myColumnInfos[columnIndex].setValue(getItem(rowIndex), aValue);
     }
+    if (notifyListeners) fireTableCellUpdated(rowIndex, columnIndex);
   }
 
   /**
    * true if changed
-   *
-   * @param columnInfos
-   * @return
    */
   public boolean setColumnInfos(ColumnInfo[] columnInfos) {
     if (myColumnInfos != null && Arrays.equals(columnInfos, myColumnInfos)) {
@@ -191,12 +206,14 @@ public class ListTableModel<Item> extends TableViewModel<Item> implements ItemRe
     fireTableRowsInserted(index, index);
   }
 
-  public void addRows(@NotNull Collection<Item> items) {
+  public void addRows(@NotNull Collection<? extends Item> items) {
     myItems.addAll(items);
-    fireTableRowsInserted(myItems.size() - items.size(), myItems.size() - 1);
+    if (!myItems.isEmpty()) {
+      fireTableRowsInserted(myItems.size() - items.size(), myItems.size() - 1);
+    }
   }
 
-  public Object getItem(final int rowIndex) {
-    return getItems().get(rowIndex);
+  public Item getItem(final int rowIndex) {
+    return myItems.get(rowIndex);
   }
 }

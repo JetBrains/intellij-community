@@ -16,11 +16,11 @@
 package com.intellij.openapi.keymap.impl;
 
 import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.util.containers.HashMap;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Iterator;
 
 /**
@@ -90,7 +90,7 @@ public class Converter01{
     if(name==null){
       throw new InvalidDataException("Attribute 'name' of <keymap> must be specified");
     }
-    HashMap id2elements=new HashMap();
+    HashMap<String, ArrayList<Element>> id2elements = new HashMap<>();
 
     for(Iterator i=keymapElement.getChildren().iterator();i.hasNext();){
       Element oldChild=(Element)i.next();
@@ -111,14 +111,14 @@ public class Converter01{
             newChild.setAttribute(SECOND_KEYSTROKE_ATTRIBUTE,suffix);
           }
           // Put new child into the map
-          ArrayList elements=(ArrayList)id2elements.get(id);
+          ArrayList<Element> elements = id2elements.get(id);
           if(elements==null){
-            elements=new ArrayList(2);
+            elements = new ArrayList<>(2);
             id2elements.put(id,elements);
           }
           elements.add(newChild);
         }else{
-          id2elements.put(id,new ArrayList(0));
+          id2elements.put(id, new ArrayList<>(0));
         }
         // Remove old child
         i.remove();
@@ -132,9 +132,9 @@ public class Converter01{
         // Remove old child
         i.remove();
         // Put new child into the map
-        ArrayList elements=(ArrayList)id2elements.get(id);
+        ArrayList<Element> elements = id2elements.get(id);
         if(elements==null){
-          elements=new ArrayList(2);
+          elements = new ArrayList<>(2);
           id2elements.put(id,elements);
         }
         elements.add(oldChild);
@@ -143,13 +143,11 @@ public class Converter01{
       }
     }
 
-    for(Iterator i=id2elements.keySet().iterator();i.hasNext();){
-      String id=(String)i.next();
-      Element actionElement=new Element(ACTION);
-      actionElement.setAttribute(ID_ATTRIBUTE,id);
-      ArrayList elements=(ArrayList)id2elements.get(id);
-      for(Iterator j=elements.iterator();j.hasNext();){
-        Element newChild=(Element)j.next();
+    for (String id : id2elements.keySet()) {
+      Element actionElement = new Element(ACTION);
+      actionElement.setAttribute(ID_ATTRIBUTE, id);
+      ArrayList<Element> elements = id2elements.get(id);
+      for (Element newChild : elements) {
         actionElement.addContent(newChild);
       }
       keymapElement.addContent(actionElement);

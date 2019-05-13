@@ -54,21 +54,23 @@ public class JavaParameterListElementType extends JavaStubElementType<PsiParamet
     return new PsiParameterListImpl(node);
   }
 
+  @NotNull
   @Override
-  public PsiParameterListStub createStub(final LighterAST tree, final LighterASTNode node, final StubElement parentStub) {
+  public PsiParameterListStub createStub(@NotNull final LighterAST tree, @NotNull final LighterASTNode node, @NotNull final StubElement parentStub) {
     return new PsiParameterListStubImpl(parentStub);
   }
 
   @Override
-  public void serialize(final PsiParameterListStub stub, final StubOutputStream dataStream) throws IOException {
+  public void serialize(@NotNull final PsiParameterListStub stub, @NotNull final StubOutputStream dataStream) throws IOException {
   }
 
+  @NotNull
   @Override
-  public PsiParameterListStub deserialize(final StubInputStream dataStream, final StubElement parentStub) throws IOException {
+  public PsiParameterListStub deserialize(@NotNull final StubInputStream dataStream, final StubElement parentStub) throws IOException {
     return new PsiParameterListStubImpl(parentStub);
   }
 
   @Override
-  public void indexStub(final PsiParameterListStub stub, final IndexSink sink) {
+  public void indexStub(@NotNull final PsiParameterListStub stub, @NotNull final IndexSink sink) {
   }
 }

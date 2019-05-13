@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,64 +15,88 @@
  */
 package com.intellij.testFramework;
 
+import com.intellij.openapi.application.impl.ApplicationInfoImpl;
+import com.intellij.openapi.diagnostic.Log4jBasedLogger;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class TestLogger extends com.intellij.openapi.diagnostic.Logger {
-  private final Logger myLogger;
-
-  public TestLogger(Logger logger) {
-    myLogger = logger;
+public class TestLogger extends Log4jBasedLogger {
+  TestLogger(@NotNull Logger logger) {
+    super(logger);
   }
 
   @Override
-  public boolean isDebugEnabled() {
-    return myLogger.isDebugEnabled();
+  public void warn(String message, @Nullable Throwable t) {
+    t = checkException(t);
+    LoggedErrorProcessor.getInstance().processWarn(message, t, myLogger);
   }
 
   @Override
-  public void debug(String message) {
-    myLogger.debug(message);
-  }
-
-  @Override
-  public void debug(Throwable t) {
-    myLogger.debug(t);
-  }
-
-  @Override
-  public void debug(@NonNls String message, Throwable t) {
-    myLogger.debug(message, t);
-  }
-
-  @Override
-  public void error(String message, @Nullable Throwable t, String... details) {
+  public void error(String message, @Nullable Throwable t, @NotNull String... details) {
+    t = checkException(t);
     LoggedErrorProcessor.getInstance().processError(message, t, details, myLogger);
   }
 
   @Override
-  public void info(String message) {
-    myLogger.info(message);
+  public void debug(@NonNls String message) {
+    if (isDebugEnabled()) {
+      super.debug(message);
+      TestLoggerFactory.log(myLogger, Level.DEBUG, message, null);
+    }
   }
 
   @Override
-  public void info(String message, Throwable t) {
-    myLogger.info(message, t);
+  public void debug(@Nullable Throwable t) {
+    if (isDebugEnabled()) {
+      super.debug(t);
+      TestLoggerFactory.log(myLogger, Level.DEBUG, null, t);
+    }
   }
 
   @Override
-  public void warn(@NonNls String message, Throwable t) {
-    myLogger.warn(message, t);
-  }
-
-  public Level getLevel() {
-    return myLogger.getLevel();
+  public void debug(@NonNls String message, @Nullable Throwable t) {
+    if (isDebugEnabled()) {
+      super.debug(message, t);
+      TestLoggerFactory.log(myLogger, Level.DEBUG, message, t);
+    }
   }
 
   @Override
-  public void setLevel(Level level) {
-    myLogger.setLevel(level);
+  public void info(@NonNls String message) {
+    super.info(message);
+    TestLoggerFactory.log(myLogger, Level.INFO, message, null);
+  }
+
+  @Override
+  public void info(@NonNls String message, @Nullable Throwable t) {
+    super.info(message, t);
+    TestLoggerFactory.log(myLogger, Level.INFO, message, t);
+  }
+
+  @Override
+  public void trace(String message) {
+    if (isTraceEnabled()) {
+      super.trace(message);
+      TestLoggerFactory.log(myLogger, Level.TRACE, message, null);
+    }
+  }
+
+  @Override
+  public void trace(@Nullable Throwable t) {
+    if (isTraceEnabled()) {
+      super.trace(t);
+      TestLoggerFactory.log(myLogger, Level.TRACE, null, t);
+    }
+  }
+
+  @Override
+  public boolean isDebugEnabled() {
+    if (ApplicationInfoImpl.isInStressTest()) {
+      return super.isDebugEnabled();
+    }
+    return true;
   }
 }

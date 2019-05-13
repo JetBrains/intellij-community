@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package com.intellij.refactoring.actions;
 
+import com.intellij.ide.actions.CopyElementAction;
 import com.intellij.ide.actions.QuickSwitchSchemeAction;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.editor.Editor;
@@ -25,6 +26,11 @@ import org.jetbrains.annotations.Nullable;
 
 public class RefactoringQuickListPopupAction extends QuickSwitchSchemeAction {
 
+  public RefactoringQuickListPopupAction() {
+    setInjectedContext(true);
+  }
+
+  @Override
   protected void fillActions(@Nullable final Project project,
                              @NotNull final DefaultActionGroup group,
                              @NotNull final DataContext dataContext) {
@@ -58,9 +64,11 @@ public class RefactoringQuickListPopupAction extends QuickSwitchSchemeAction {
           destinationGroup.add(child);
         }
         else {
-          if (child instanceof BaseRefactoringAction && ((BaseRefactoringAction)child).hasAvailableHandler(dataContext)) {
+          if (child instanceof BaseRefactoringAction && ((BaseRefactoringAction)child).hasAvailableHandler(dataContext) ||
+              child instanceof CopyElementAction) {
             final Presentation presentation = new Presentation();
             final AnActionEvent event = new AnActionEvent(null, dataContext, ActionPlaces.UNKNOWN, presentation, actionManager, 0);
+            event.setInjectedContext(child.isInInjectedContext());
             child.update(event);
             if (presentation.isEnabled() && presentation.isVisible()) {
               destinationGroup.add(child);
@@ -74,7 +82,7 @@ public class RefactoringQuickListPopupAction extends QuickSwitchSchemeAction {
 
   @Override
   protected void showPopup(AnActionEvent e, ListPopup popup) {
-    final Editor editor = e.getData(PlatformDataKeys.EDITOR);
+    final Editor editor = e.getData(CommonDataKeys.EDITOR);
     if (editor != null) {
       popup.showInBestPositionFor(editor);
     } else {
@@ -82,17 +90,18 @@ public class RefactoringQuickListPopupAction extends QuickSwitchSchemeAction {
     }
   }
 
-  protected boolean isEnabled() {
-    return true;
+  @Override
+  public void update(@NotNull AnActionEvent e) {
+    super.update(e);
+    e.getPresentation().setVisible(
+      ActionPlaces.isMainMenuOrActionSearch(e.getPlace())
+      || ActionPlaces.ACTION_PLACE_QUICK_LIST_POPUP_ACTION.equals(e.getPlace())
+      || ActionPlaces.TOUCHBAR_GENERAL.equals(e.getPlace())
+    );
   }
 
   @Override
-  public void update(AnActionEvent e) {
-    super.update(e);
-    e.getPresentation().setVisible(e.getPlace() == ActionPlaces.MAIN_MENU);
-  }
-
-  protected String getPopupTitle(AnActionEvent e) {
+  protected String getPopupTitle(@NotNull AnActionEvent e) {
     return "Refactor This";
   }
 }

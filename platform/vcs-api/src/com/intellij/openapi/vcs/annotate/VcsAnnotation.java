@@ -24,8 +24,6 @@ import java.util.Map;
 
 /**
  * @author irengrig
- *         Date: 3/10/11
- *         Time: 4:22 PM
  */
 public class VcsAnnotation {
   private final FilePath myFilePath;
@@ -38,8 +36,8 @@ public class VcsAnnotation {
   public VcsAnnotation(FilePath filePath, VcsLineAnnotationData basicAnnotation, VcsRevisionNumber lastRevision) {
     myBasicAnnotation = basicAnnotation;
     myLastRevision = lastRevision;
-    myAdditionalAnnotations = new HashMap<Object, VcsLineAnnotationData>();
-    myCachedOtherRevisions = new HashMap<VcsRevisionNumber, VcsFileRevision>();
+    myAdditionalAnnotations = new HashMap<>();
+    myCachedOtherRevisions = new HashMap<>();
     myFilePath = filePath;
   }
 

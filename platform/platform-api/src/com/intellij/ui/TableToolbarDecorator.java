@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,8 @@
  */
 package com.intellij.ui;
 
+import com.intellij.openapi.wm.IdeFocusManager;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.ui.EditableModel;
 import com.intellij.util.ui.ElementProducer;
 import com.intellij.util.ui.ListTableModel;
@@ -27,6 +29,7 @@ import javax.swing.event.ListSelectionListener;
 import java.awt.*;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.util.Arrays;
 
 /**
  * @author Konstantin Bulenkov
@@ -61,36 +64,40 @@ class TableToolbarDecorator extends ToolbarDecorator {
     return myTable;
   }
 
+  @Override
   protected void updateButtons() {
     final CommonActionsPanel p = getActionsPanel();
     if (p != null) {
+      boolean someElementSelected;
       if (myTable.isEnabled()) {
         final int index = myTable.getSelectedRow();
         final int size = myTable.getModel().getRowCount();
-        if (0 <= index && index < size) {
+        someElementSelected = 0 <= index && index < size;
+        if (someElementSelected) {
           final boolean downEnable = myTable.getSelectionModel().getMaxSelectionIndex() < size - 1;
           final boolean upEnable = myTable.getSelectionModel().getMinSelectionIndex() > 0;
           final boolean editEnabled = myTable.getSelectedRowCount() == 1;
           p.setEnabled(CommonActionsPanel.Buttons.EDIT, editEnabled);
-          p.setEnabled(CommonActionsPanel.Buttons.REMOVE, true);
           p.setEnabled(CommonActionsPanel.Buttons.UP, upEnable);
           p.setEnabled(CommonActionsPanel.Buttons.DOWN, downEnable);
         }
         else {
           p.setEnabled(CommonActionsPanel.Buttons.EDIT, false);
-          p.setEnabled(CommonActionsPanel.Buttons.REMOVE, false);
           p.setEnabled(CommonActionsPanel.Buttons.UP, false);
           p.setEnabled(CommonActionsPanel.Buttons.DOWN, false);
         }
         p.setEnabled(CommonActionsPanel.Buttons.ADD, myProducer == null || myProducer.canCreateElement());
       }
       else {
+        someElementSelected = false;
         p.setEnabled(CommonActionsPanel.Buttons.ADD, false);
         p.setEnabled(CommonActionsPanel.Buttons.EDIT, false);
-        p.setEnabled(CommonActionsPanel.Buttons.REMOVE, false);
         p.setEnabled(CommonActionsPanel.Buttons.UP, false);
         p.setEnabled(CommonActionsPanel.Buttons.DOWN, false);
       }
+
+      p.setEnabled(CommonActionsPanel.Buttons.REMOVE, someElementSelected);
+      updateExtraElementActions(someElementSelected);
     }
   }
 
@@ -111,82 +118,78 @@ class TableToolbarDecorator extends ToolbarDecorator {
         }
         if (rowCount == table.getRowCount()) return;
         final int index = table.getModel().getRowCount() - 1;
-        table.editCellAt(index, 0);
+
         table.setRowSelectionInterval(index, index);
         table.setColumnSelectionInterval(0, 0);
-        table.getParent().repaint();
-        final Component editorComponent = table.getEditorComponent();
-        if (editorComponent != null) {
-          final Rectangle bounds = editorComponent.getBounds();
-          table.scrollRectToVisible(bounds);
-          editorComponent.requestFocus();
-        }
+        table.editCellAt(index, 0);
+
+        TableUtil.updateScroller(table);
+        //noinspection SSBasedInspection
+        SwingUtilities.invokeLater(() -> {
+          final Component editorComponent = table.getEditorComponent();
+          if (editorComponent != null) {
+            final Rectangle bounds = editorComponent.getBounds();
+            table.scrollRectToVisible(bounds);
+            IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
+              IdeFocusManager.getGlobalInstance().requestFocus(editorComponent, true);
+            });
+          }
+        });
+
+
       }
     };
 
     myRemoveAction = new AnActionButtonRunnable() {
       @Override
       public void run(AnActionButton button) {
-        TableUtil.stopEditing(table);
-        int index = table.getSelectedRow();
-        if (0 <= index && index < table.getModel().getRowCount()) {
-          tableModel.removeRow(index);
-          if (index < table.getModel().getRowCount()) {
-            table.setRowSelectionInterval(index, index);
-          }
-          else {
-            if (index > 0) {
-              table.setRowSelectionInterval(index - 1, index - 1);
-            }
-          }
+        if (TableUtil.doRemoveSelectedItems(table, tableModel, null)) {
           updateButtons();
+          IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
+            IdeFocusManager.getGlobalInstance().requestFocus(table, true);
+          });
+          TableUtil.updateScroller(table);
         }
-
-        table.getParent().repaint();
-        table.requestFocus();
       }
     };
 
-    myUpAction = new AnActionButtonRunnable() {
+    class MoveRunnable implements AnActionButtonRunnable {
+      final int delta;
+
+      MoveRunnable(int delta) {
+        this.delta = delta;
+      }
+
       @Override
-      public void run(AnActionButton button) {        
-        final int row = table.getEditingRow();
-        final int col = table.getEditingColumn();
+      public void run(AnActionButton button) {
+        int row = table.getEditingRow();
+        int col = table.getEditingColumn();
         TableUtil.stopEditing(table);
-        final int[] indexes = table.getSelectedRows();
-        for (int index : indexes) {
-          if (0 < index && index < table.getModel().getRowCount()) {
-            tableModel.exchangeRows(index, index - 1);
-            table.setRowSelectionInterval(index - 1, index - 1);
-          }
-        }        
-        table.requestFocus();
+        int[] idx = table.getSelectedRows();
+        Arrays.sort(idx);
+        if (delta > 0) {
+          idx = ArrayUtil.reverseArray(idx);
+        }
+
+        if (idx.length == 0) return;
+        if (idx[0] + delta < 0) return;
+        if (idx[idx.length - 1] + delta > table.getModel().getRowCount()) return;
+
+        for (int i = 0; i < idx.length; i++) {
+          tableModel.exchangeRows(idx[i], idx[i] + delta);
+          idx[i] += delta;
+        }
+        TableUtil.selectRows(table, idx);
+        IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
+          IdeFocusManager.getGlobalInstance().requestFocus(table, true);
+        });
         if (row > 0 && col != -1) {
           table.editCellAt(row - 1, col);
         }
       }
-    };
-
-    myDownAction = new AnActionButtonRunnable() {
-      @Override
-      public void run(AnActionButton button) {
-        final int row = table.getEditingRow();
-        final int col = table.getEditingColumn();
-
-        TableUtil.stopEditing(table);
-        final int[] indexes = table.getSelectedRows();
-        for (int index : indexes) {
-          if (0 <= index && index < table.getModel().getRowCount() - 1) {
-            tableModel.exchangeRows(index, index + 1);
-            table.setRowSelectionInterval(index + 1, index + 1);
-          }
-        }
-        table.requestFocus();
-        if (row < table.getRowCount() - 1 && col != -1) {
-          table.editCellAt(row + 1, col);
-        }
-      }
-    };
+    }
+    myUpAction = new MoveRunnable(-1);
+    myDownAction = new MoveRunnable(1);
   }
 
   @Override
@@ -194,6 +197,7 @@ class TableToolbarDecorator extends ToolbarDecorator {
     RowsDnDSupport.install(myTable, (EditableModel)myTable.getModel());
   }
 
+  @Override
   protected boolean isModelEditable() {
     return myTable.getModel() instanceof EditableModel;
   }

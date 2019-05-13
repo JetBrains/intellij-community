@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,10 +15,10 @@
  */
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
-import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
-import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil;
+import com.intellij.codeInsight.daemon.impl.analysis.JavaHighlightUtil;
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -32,7 +32,7 @@ public class GeneralizeCatchFix implements IntentionAction {
   private PsiTryStatement myTryStatement;
   private PsiParameter myCatchParameter;
 
-  public GeneralizeCatchFix(PsiElement element, PsiClassType unhandledException) {
+  public GeneralizeCatchFix(@NotNull PsiElement element, @NotNull PsiClassType unhandledException) {
     myElement = element;
     myUnhandledException = unhandledException;
   }
@@ -41,8 +41,8 @@ public class GeneralizeCatchFix implements IntentionAction {
   @NotNull
   public String getText() {
     return QuickFixBundle.message("generalize.catch.text",
-                                  HighlightUtil.formatType(myCatchParameter == null ? null : myCatchParameter.getType()),
-                                  HighlightUtil.formatType(myUnhandledException));
+                                  JavaHighlightUtil.formatType(myCatchParameter == null ? null : myCatchParameter.getType()),
+                                  JavaHighlightUtil.formatType(myUnhandledException));
   }
 
   @Override
@@ -53,11 +53,9 @@ public class GeneralizeCatchFix implements IntentionAction {
 
   @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    if (!(myElement != null
-          && myElement.isValid()
-          && myUnhandledException != null
+    if (!(myElement.isValid()
           && myUnhandledException.isValid()
-          && myElement.getManager().isInProject(myElement))) return false;
+          && BaseIntentionAction.canModify(myElement))) return false;
     // find enclosing try
     PsiElement element = myElement;
     while (element != null) {
@@ -65,7 +63,7 @@ public class GeneralizeCatchFix implements IntentionAction {
         myTryStatement = (PsiTryStatement)element.getParent();
         break;
       }
-      if (element instanceof PsiMethod || (element instanceof PsiClass && !(element instanceof PsiAnonymousClass))) break;
+      if (element instanceof PsiMethod || element instanceof PsiFunctionalExpression || (element instanceof PsiClass && !(element instanceof PsiAnonymousClass))) break;
       element = element.getParent();
     }
     if (myTryStatement == null) return false;
@@ -81,10 +79,15 @@ public class GeneralizeCatchFix implements IntentionAction {
     return myCatchParameter != null;
   }
 
+  @NotNull
+  @Override
+  public PsiElement getElementToMakeWritable(@NotNull PsiFile file) {
+    return myElement;
+  }
+
   @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-    if (!CodeInsightUtilBase.prepareFileForWrite(myElement.getContainingFile())) return;
-    PsiElementFactory factory = JavaPsiFacade.getInstance(myElement.getProject()).getElementFactory();
+    PsiElementFactory factory = JavaPsiFacade.getElementFactory(myElement.getProject());
     PsiTypeElement type = factory.createTypeElement(myUnhandledException);
     myCatchParameter.getTypeElement().replace(type);
   }

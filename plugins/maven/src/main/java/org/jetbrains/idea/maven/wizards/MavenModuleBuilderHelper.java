@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,6 @@ package org.jetbrains.idea.maven.wizards;
 
 import com.intellij.ide.util.EditorHelper;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -31,6 +30,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.xml.XmlElement;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.dom.MavenDomUtil;
 import org.jetbrains.idea.maven.dom.model.MavenDomModule;
@@ -50,6 +50,7 @@ import org.jetbrains.idea.maven.utils.MavenUtil;
 import java.io.File;
 import java.io.IOException;
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 
 public class MavenModuleBuilderHelper {
@@ -88,36 +89,35 @@ public class MavenModuleBuilderHelper {
     PsiFile[] psiFiles = myAggregatorProject != null
                          ? new PsiFile[]{getPsiFile(project, myAggregatorProject.getFile())}
                          : PsiFile.EMPTY_ARRAY;
-    final VirtualFile pom = new WriteCommandAction<VirtualFile>(project, myCommandName, psiFiles) {
-      @Override
-      protected void run(Result<VirtualFile> result) throws Throwable {
-        VirtualFile file;
+    final VirtualFile pom = WriteCommandAction.writeCommandAction(project, psiFiles).withName(myCommandName).compute(() -> {
+        VirtualFile file = null;
         try {
           file = root.createChildData(this, MavenConstants.POM_XML);
           MavenUtil.runOrApplyMavenProjectFileTemplate(project, file, myProjectId, isInteractive);
-          result.setResult(file);
         }
         catch (IOException e) {
           showError(project, e);
-          return;
+          return file;
         }
 
         updateProjectPom(project, file);
 
         if (myAggregatorProject != null) {
           MavenDomProjectModel model = MavenDomUtil.getMavenDomProjectModel(project, myAggregatorProject.getFile());
-          model.getPackaging().setStringValue("pom");
-          MavenDomModule module = model.getModules().addModule();
-          module.setValue(getPsiFile(project, file));
+          if (model != null) {
+            model.getPackaging().setStringValue("pom");
+            MavenDomModule module = model.getModules().addModule();
+            module.setValue(getPsiFile(project, file));
+          }
         }
-      }
-    }.execute().getResultObject();
+        return file;
+      });
 
     if (pom == null) return;
 
     if (myAggregatorProject == null) {
       MavenProjectsManager manager = MavenProjectsManager.getInstance(project);
-      manager.addManagedFiles(Collections.singletonList(pom));
+      manager.addManagedFilesOrUnignore(Collections.singletonList(pom));
     }
 
     if (myArchetype == null) {
@@ -132,51 +132,61 @@ public class MavenModuleBuilderHelper {
     }
 
     // execute when current dialog is closed (e.g. Project Structure)
-    MavenUtil.invokeLater(project, ModalityState.NON_MODAL, new Runnable() {
-      public void run() {
-        if (!pom.isValid()) return;
+    MavenUtil.invokeLater(project, ModalityState.NON_MODAL, () -> {
+      if (!pom.isValid()) return;
 
-        EditorHelper.openInEditor(getPsiFile(project, pom));
-        if (myArchetype != null) generateFromArchetype(project, pom);
-      }
+      EditorHelper.openInEditor(getPsiFile(project, pom));
+      if (myArchetype != null) generateFromArchetype(project, pom);
     });
   }
 
   private void updateProjectPom(final Project project, final VirtualFile pom) {
     if (myParentProject == null) return;
 
-    new WriteCommandAction.Simple(project, myCommandName) {
-      protected void run() throws Throwable {
-        MavenDomProjectModel model = MavenDomUtil.getMavenDomProjectModel(project, pom);
-        if (model == null) return;
+    WriteCommandAction.writeCommandAction(project).withName(myCommandName).run(() -> {
+      PsiDocumentManager.getInstance(project).commitAllDocuments();
 
-        MavenDomUtil.updateMavenParent(model, myParentProject);
+      MavenDomProjectModel model = MavenDomUtil.getMavenDomProjectModel(project, pom);
+      if (model == null) return;
 
-        if (myInheritGroupId) {
-          XmlElement el = model.getGroupId().getXmlElement();
-          if (el != null) el.delete();
-        }
-        if (myInheritVersion) {
-          XmlElement el = model.getVersion().getXmlElement();
-          if (el != null) el.delete();
-        }
+      MavenDomUtil.updateMavenParent(model, myParentProject);
 
-        CodeStyleManager.getInstance(project).reformat(getPsiFile(project, pom));
+      if (myInheritGroupId) {
+        XmlElement el = model.getGroupId().getXmlElement();
+        if (el != null) el.delete();
+      }
+      if (myInheritVersion) {
+        XmlElement el = model.getVersion().getXmlElement();
+        if (el != null) el.delete();
+      }
 
-        pom.putUserData(MavenProjectsManagerWatcher.FORCE_IMPORT_AND_RESOLVE_ON_REFRESH, Boolean.TRUE);
+      CodeStyleManager.getInstance(project).reformat(getPsiFile(project, pom));
+
+      List<VirtualFile> pomFiles = ContainerUtil.newArrayListWithCapacity(2);
+      pomFiles.add(pom);
+
+      if (!FileUtil.namesEqual(MavenConstants.POM_XML, myParentProject.getFile().getName())) {
+        pomFiles.add(myParentProject.getFile());
+        MavenProjectsManager.getInstance(project).forceUpdateProjects(Collections.singleton(myParentProject));
+      }
+
+      for (VirtualFile v : pomFiles) {
+        v.putUserData(MavenProjectsManagerWatcher.FORCE_IMPORT_AND_RESOLVE_ON_REFRESH, Boolean.TRUE);
         try {
-          Document doc = FileDocumentManager.getInstance().getDocument(pom);
-          PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(doc);
-          FileDocumentManager.getInstance().saveDocument(doc);
+          Document doc = FileDocumentManager.getInstance().getDocument(v);
+          if (doc != null) {
+            PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(doc);
+            FileDocumentManager.getInstance().saveDocument(doc);
+          }
         }
         finally {
-          pom.putUserData(MavenProjectsManagerWatcher.FORCE_IMPORT_AND_RESOLVE_ON_REFRESH, null);
+          v.putUserData(MavenProjectsManagerWatcher.FORCE_IMPORT_AND_RESOLVE_ON_REFRESH, null);
         }
       }
-    }.execute();
+    });
   }
 
-  private PsiFile getPsiFile(Project project, VirtualFile pom) {
+  private static PsiFile getPsiFile(Project project, VirtualFile pom) {
     return PsiManager.getInstance(project).findFile(pom);
   }
 
@@ -192,7 +202,9 @@ public class MavenModuleBuilderHelper {
     }
 
     MavenRunnerParameters params = new MavenRunnerParameters(
-      false, workingDir.getPath(), Collections.singletonList("org.apache.maven.plugins:maven-archetype-plugin:RELEASE:generate"), null);
+      false, workingDir.getPath(), (String)null,
+      Collections.singletonList("org.apache.maven.plugins:maven-archetype-plugin:RELEASE:generate"),
+      Collections.emptyList());
 
     MavenRunner runner = MavenRunner.getInstance(project);
     MavenRunnerSettings settings = runner.getState().clone();
@@ -210,16 +222,15 @@ public class MavenModuleBuilderHelper {
 
     props.putAll(myPropertiesToCreateByArtifact);
 
-    runner.run(params, settings, new Runnable() {
-      public void run() {
-        copyGeneratedFiles(workingDir, pom, project);
-      }
-    });
+    runner.run(params, settings, () -> copyGeneratedFiles(workingDir, pom, project));
   }
 
   private void copyGeneratedFiles(File workingDir, VirtualFile pom, Project project) {
     try {
-      FileUtil.copyDir(new File(workingDir, myProjectId.getArtifactId()), new File(pom.getParent().getPath()));
+      String artifactId = myProjectId.getArtifactId();
+      if (artifactId != null) {
+        FileUtil.copyDir(new File(workingDir, artifactId), new File(pom.getParent().getPath()));
+      }
     }
     catch (IOException e) {
       showError(project, e);
@@ -234,7 +245,7 @@ public class MavenModuleBuilderHelper {
     LocalFileSystem.getInstance().refreshWithoutFileWatcher(true);
   }
 
-  private void showError(Project project, Throwable e) {
+  private static void showError(Project project, Throwable e) {
     MavenUtil.showError(project, "Failed to create a Maven project", e);
   }
 }

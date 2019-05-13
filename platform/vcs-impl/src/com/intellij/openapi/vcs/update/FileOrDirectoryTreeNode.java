@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,7 +27,7 @@ import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerListener;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
 import com.intellij.ui.SimpleTextAttributes;
-import com.intellij.util.containers.HashMap;
+import java.util.HashMap;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -40,16 +40,17 @@ import java.util.Map;
  * author: lesya
  */
 public abstract class FileOrDirectoryTreeNode extends AbstractTreeNode implements VirtualFilePointerListener, Disposable {
-  private static final Map<FileStatus, SimpleTextAttributes> myFileStatusToAttributeMap = new HashMap<FileStatus, SimpleTextAttributes>();
+  private static final Map<FileStatus, SimpleTextAttributes> myFileStatusToAttributeMap = new HashMap<>();
   private final SimpleTextAttributes myInvalidAttributes;
+  @NotNull
   private final Project myProject;
   protected final File myFile;
   private final String myName;
 
-  protected FileOrDirectoryTreeNode(@NotNull String path,
-                                    @NotNull SimpleTextAttributes invalidAttributes,
-                                    @NotNull Project project,
-                                    @Nullable String parentPath) {
+  FileOrDirectoryTreeNode(@NotNull String path,
+                          @NotNull SimpleTextAttributes invalidAttributes,
+                          @NotNull Project project,
+                          @Nullable String parentPath) {
     String preparedPath = path.replace(File.separatorChar, '/');
     String url = VirtualFileManager.constructUrl(LocalFileSystem.getInstance().getProtocol(), preparedPath);
     setUserObject(VirtualFilePointerManager.getInstance().create(url, this, this));
@@ -67,10 +68,6 @@ public abstract class FileOrDirectoryTreeNode extends AbstractTreeNode implement
 
   protected String getFilePath() {
     return getFilePointer().getPresentableUrl();
-  }
-
-  @Override
-  public void beforeValidityChanged(@NotNull VirtualFilePointer[] pointers) {
   }
 
   @Override
@@ -125,7 +122,7 @@ public abstract class FileOrDirectoryTreeNode extends AbstractTreeNode implement
     if (color == null) color = UIUtil.getListForeground();
 
     if (!myFileStatusToAttributeMap.containsKey(status)) {
-      myFileStatusToAttributeMap.put(status, new SimpleTextAttributes(Font.PLAIN, color));
+      myFileStatusToAttributeMap.put(status, new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, color));
     }
     return myFileStatusToAttributeMap.get(status);
   }
@@ -138,5 +135,10 @@ public abstract class FileOrDirectoryTreeNode extends AbstractTreeNode implement
 
   @Override
   public void dispose() {
+  }
+
+  @NotNull
+  public Project getProject() {
+    return myProject;
   }
 }

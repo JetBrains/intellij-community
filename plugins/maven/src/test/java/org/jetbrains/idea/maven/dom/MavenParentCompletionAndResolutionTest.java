@@ -22,7 +22,7 @@ import com.intellij.psi.ElementManipulators;
 import com.intellij.psi.PsiElement;
 
 public class MavenParentCompletionAndResolutionTest extends MavenDomWithIndicesTestCase {
-  public void testVariants() throws Exception {
+  public void testVariants() {
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
                   "<version>1</version>");
@@ -34,9 +34,9 @@ public class MavenParentCompletionAndResolutionTest extends MavenDomWithIndicesT
                      "<parent>" +
                      "  <groupId><caret></groupId>" +
                      "  <artifactId>junit</artifactId>" +
-                     "  <version><caret></version>" +
+                     "  <version></version>" +
                      "</parent>");
-    assertCompletionVariants(myProjectPom, "junit", "jmock", "test");
+    assertCompletionVariantsInclude(myProjectPom, "junit", "jmock", "test");
 
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
@@ -57,7 +57,7 @@ public class MavenParentCompletionAndResolutionTest extends MavenDomWithIndicesT
                      "  <artifactId>junit</artifactId>" +
                      "  <version><caret></version>" +
                      "</parent>");
-    assertCompletionVariants(myProjectPom, "3.8.1", "3.8.2", "4.0");
+    assertCompletionVariants(myProjectPom, "3.8.1", "3.8.2", "4.0", "RELEASE", "LATEST");
   }
 
   public void testResolutionInsideTheProject() throws Exception {
@@ -181,7 +181,7 @@ public class MavenParentCompletionAndResolutionTest extends MavenDomWithIndicesT
     assertResolved(myProjectPom, findPsiFile(parent));
   }
 
-  public void testDoNotHighlightResolvedParentByRelativePathWhenOutsideOfTheProject() throws Throwable {
+  public void testDoNotHighlightResolvedParentByRelativePathWhenOutsideOfTheProject() {
     createPomFile(myProjectRoot.getParent(),
                   "<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
@@ -204,7 +204,7 @@ public class MavenParentCompletionAndResolutionTest extends MavenDomWithIndicesT
     checkHighlighting(myProjectPom);
   }
 
-  public void testRelativePathCompletion() throws Throwable {
+  public void testRelativePathCompletion() {
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
                   "<version>1</version>");
@@ -233,7 +233,7 @@ public class MavenParentCompletionAndResolutionTest extends MavenDomWithIndicesT
     assertCompletionVariants(myProjectPom, "dir", "two", "pom.xml");
   }
 
-  public void testRelativePathCompletion_2() throws Throwable {
+  public void testRelativePathCompletion_2() {
     importProject("<groupId>test</groupId>" + "<artifactId>project</artifactId>" + "<version>1</version>");
 
     createProjectPom("<groupId>test</groupId>" + "<artifactId>project</artifactId>" + "<version>1</version>" +
@@ -253,7 +253,7 @@ public class MavenParentCompletionAndResolutionTest extends MavenDomWithIndicesT
     assertCompletionVariants(myProjectPom, "one", "two", "pom.xml");
   }
 
-  public void testHighlightingUnknownValues() throws Throwable {
+  public void testHighlightingUnknownValues() {
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
                   "<version>1</version>");
@@ -271,43 +271,46 @@ public class MavenParentCompletionAndResolutionTest extends MavenDomWithIndicesT
     checkHighlighting();
   }
 
-  public void testHighlightingAbsentGroupId() throws Throwable {
-    importProject("<groupId>test</groupId>" +
-                  "<artifactId>project</artifactId>" +
-                  "<version>1</version>" +
+  public void testHighlightingAbsentGroupId() {
+    createProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>project</artifactId>" +
+                     "<version>1</version>" +
 
-                  "<<error descr=\"'groupId' child tag should be defined\">parent</error>>" +
-                  "  <artifactId><error>junit</error></artifactId>" +
-                  "  <version><error>4.0</error></version>" +
-                  "</parent>");
+                     "<<error descr=\"'groupId' child tag should be defined\">parent</error>>" +
+                     "  <artifactId><error>junit</error></artifactId>" +
+                     "  <version><error>4.0</error></version>" +
+                     "</parent>");
+    importProjectWithErrors();
     checkHighlighting();
   }
 
-  public void testHighlightingAbsentArtifactId() throws Throwable {
-    importProject("<groupId>test</groupId>" +
-                  "<artifactId>project</artifactId>" +
-                  "<version>1</version>" +
+  public void testHighlightingAbsentArtifactId() {
+    createProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>project</artifactId>" +
+                     "<version>1</version>" +
 
-                  "<<error descr=\"'artifactId' child tag should be defined\">parent</error>>" +
-                  "  <groupId>junit</groupId>" +
-                  "  <version><error>4.0</error></version>" +
-                  "</parent>");
+                     "<<error descr=\"'artifactId' child tag should be defined\">parent</error>>" +
+                     "  <groupId>junit</groupId>" +
+                     "  <version><error>4.0</error></version>" +
+                     "</parent>");
+    importProjectWithErrors();
     checkHighlighting();
   }
 
-  public void testHighlightingAbsentVersion() throws Throwable {
-    importProject("<groupId>test</groupId>" +
-                  "<artifactId>project</artifactId>" +
-                  "<version>1</version>" +
+  public void testHighlightingAbsentVersion() {
+    createProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>project</artifactId>" +
+                     "<version>1</version>" +
 
-                  "<<error descr=\"'version' child tag should be defined\">parent</error>>" +
-                  "  <groupId>junit</groupId>" +
-                  "  <artifactId>junit</artifactId>" +
-                  "</parent>");
+                     "<<error descr=\"'version' child tag should be defined\">parent</error>>" +
+                     "  <groupId>junit</groupId>" +
+                     "  <artifactId>junit</artifactId>" +
+                     "</parent>");
+    importProjectWithErrors();
     checkHighlighting();
   }
 
-  public void testHighlightingInvalidRelativePath() throws Throwable {
+  public void testHighlightingInvalidRelativePath() {
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
                   "<version>1</version>");
@@ -326,7 +329,7 @@ public class MavenParentCompletionAndResolutionTest extends MavenDomWithIndicesT
     checkHighlighting();
   }
 
-  public void testPathQuickFixForInvalidValue() throws Throwable {
+  public void testPathQuickFixForInvalidValue() {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>");
@@ -358,7 +361,7 @@ public class MavenParentCompletionAndResolutionTest extends MavenDomWithIndicesT
     assertEquals("bar/pom.xml", ElementManipulators.getValueText(el));
   }
 
-  public void testDoNotShowPathQuickFixForValidPath() throws Throwable {
+  public void testDoNotShowPathQuickFixForValidPath() {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>");

@@ -1,4 +1,4 @@
-// "Add 'junit.jar' to classpath" "true"
+// "Add 'JUnit4' to classpath" "true"
 package x;
 
 public class DoTest4 {

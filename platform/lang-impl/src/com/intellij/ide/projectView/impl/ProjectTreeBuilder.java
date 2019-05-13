@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.ide.projectView.impl;
 
@@ -27,14 +13,13 @@ import com.intellij.ide.util.treeView.AbstractTreeStructure;
 import com.intellij.ide.util.treeView.AbstractTreeUpdater;
 import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ModuleRootAdapter;
 import com.intellij.openapi.roots.ModuleRootEvent;
+import com.intellij.openapi.roots.ModuleRootListener;
 import com.intellij.openapi.vcs.FileStatusListener;
 import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.problems.WolfTheProblemSolver;
+import com.intellij.problems.ProblemListener;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiManager;
 import com.intellij.util.Alarm;
@@ -62,9 +47,9 @@ public class ProjectTreeBuilder extends BaseProjectTreeBuilder {
 
     final MessageBusConnection connection = project.getMessageBus().connect(this);
 
-    connection.subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootAdapter() {
+    connection.subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootListener() {
       @Override
-      public void rootsChanged(ModuleRootEvent event) {
+      public void rootsChanged(@NotNull ModuleRootEvent event) {
         queueUpdate();
       }
     });
@@ -73,9 +58,9 @@ public class ProjectTreeBuilder extends BaseProjectTreeBuilder {
 
     PsiManager.getInstance(project).addPsiTreeChangeListener(createPsiTreeChangeListener(project), this);
     FileStatusManager.getInstance(project).addFileStatusListener(new MyFileStatusListener(), this);
-    CopyPasteManager.getInstance().addContentChangedListener(new CopyPasteUtil.DefaultCopyPasteListener(getUpdater()), this);
+    CopyPasteUtil.addDefaultListener(this, this::addSubtreeToUpdateByElement);
 
-    WolfTheProblemSolver.getInstance(project).addProblemListener(new MyProblemListener(), this);
+    connection.subscribe(ProblemListener.TOPIC, new MyProblemListener());
 
     setCanYieldUpdate(true);
 
@@ -156,9 +141,9 @@ public class ProjectTreeBuilder extends BaseProjectTreeBuilder {
     return vFile.isDirectory() ? psiManager.findDirectory(vFile) : psiManager.findFile(vFile);
   }
 
-  private class MyProblemListener extends WolfTheProblemSolver.ProblemListener {
+  private class MyProblemListener implements ProblemListener {
     private final Alarm myUpdateProblemAlarm = new Alarm();
-    private final Collection<VirtualFile> myFilesToRefresh = new THashSet<VirtualFile>();
+    private final Collection<VirtualFile> myFilesToRefresh = new THashSet<>();
 
     @Override
     public void problemsAppeared(@NotNull VirtualFile file) {
@@ -174,21 +159,18 @@ public class ProjectTreeBuilder extends BaseProjectTreeBuilder {
       synchronized (myFilesToRefresh) {
         if (myFilesToRefresh.add(fileToRefresh)) {
           myUpdateProblemAlarm.cancelAllRequests();
-          myUpdateProblemAlarm.addRequest(new Runnable() {
-            @Override
-            public void run() {
-              if (!myProject.isOpen()) return;
-              Set<VirtualFile> filesToRefresh;
-              synchronized (myFilesToRefresh) {
-                filesToRefresh = new THashSet<VirtualFile>(myFilesToRefresh);
-              }
-              final DefaultMutableTreeNode rootNode = getRootNode();
-              if (rootNode != null) {
-                updateNodesContaining(filesToRefresh, rootNode);
-              }
-              synchronized (myFilesToRefresh) {
-                myFilesToRefresh.removeAll(filesToRefresh);
-              }
+          myUpdateProblemAlarm.addRequest(() -> {
+            if (!myProject.isOpen()) return;
+            Set<VirtualFile> filesToRefresh;
+            synchronized (myFilesToRefresh) {
+              filesToRefresh = new THashSet<>(myFilesToRefresh);
+            }
+            final DefaultMutableTreeNode rootNode = getRootNode();
+            if (rootNode != null) {
+              updateNodesContaining(filesToRefresh, rootNode);
+            }
+            synchronized (myFilesToRefresh) {
+              myFilesToRefresh.removeAll(filesToRefresh);
             }
           }, 200, ModalityState.NON_MODAL);
         }
@@ -206,7 +188,7 @@ public class ProjectTreeBuilder extends BaseProjectTreeBuilder {
         return;
       }
       if (node.contains(virtualFile)) {
-        if (containingFiles == null) containingFiles = new SmartList<VirtualFile>();
+        if (containingFiles == null) containingFiles = new SmartList<>();
         containingFiles.add(virtualFile);
       }
     }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.FileStatusManager;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -32,13 +33,9 @@ import javax.swing.*;
 import java.awt.*;
 
 /**
-* Created with IntelliJ IDEA.
-* User: zajac
-* Date: 5/6/12
-* Time: 2:06 AM
-* To change this template use File | Settings | File Templates.
-*/
-public class BookmarkItem extends ItemWrapper {
+ * @author zajac
+ */
+public class BookmarkItem extends ItemWrapper implements Comparable<BookmarkItem>{
   private final Bookmark myBookmark;
 
   public BookmarkItem(Bookmark bookmark) {
@@ -49,12 +46,16 @@ public class BookmarkItem extends ItemWrapper {
     return myBookmark;
   }
 
+  @Override
   public void setupRenderer(ColoredListCellRenderer renderer, Project project, boolean selected) {
     setupRenderer(renderer, project, myBookmark, selected);
   }
 
   public static void setupRenderer(SimpleColoredComponent renderer, Project project, Bookmark bookmark, boolean selected) {
     VirtualFile file = bookmark.getFile();
+    if (!file.isValid()) {
+      return;
+    }
 
     PsiManager psiManager = PsiManager.getInstance(project);
 
@@ -75,6 +76,7 @@ public class BookmarkItem extends ItemWrapper {
       renderer.append(":", SimpleTextAttributes.GRAYED_ATTRIBUTES);
       renderer.append(String.valueOf(bookmark.getLine() + 1), SimpleTextAttributes.GRAYED_ATTRIBUTES);
     }
+    renderer.append(" (" + VfsUtilCore.getRelativeLocation(file, project.getBaseDir()) + ")", SimpleTextAttributes.GRAY_ATTRIBUTES);
 
     if (!selected) {
       FileColorManager colorManager = FileColorManager.getInstance(project);
@@ -92,6 +94,7 @@ public class BookmarkItem extends ItemWrapper {
     setupRenderer(renderer, project, myBookmark, selected);
   }
 
+  @Override
   public void updateAccessoryView(JComponent component) {
     JLabel label = (JLabel)component;
     final char mnemonic = myBookmark.getMnemonic();
@@ -103,14 +106,17 @@ public class BookmarkItem extends ItemWrapper {
     }
   }
 
+  @Override
   public String speedSearchText() {
     return myBookmark.getFile().getName() + " " + myBookmark.getDescription();
   }
 
+  @Override
   public String footerText() {
     return myBookmark.getFile().getPresentableUrl();
   }
 
+  @Override
   protected void doUpdateDetailView(DetailView panel, boolean editorOnly) {
     panel.navigateInPreviewEditor(DetailView.PreviewEditorState.create(myBookmark.getFile(), myBookmark.getLine()));
   }
@@ -123,5 +129,10 @@ public class BookmarkItem extends ItemWrapper {
   @Override
   public void removed(Project project) {
     BookmarkManager.getInstance(project).removeBookmark(getBookmark());
+  }
+
+  @Override
+  public int compareTo(BookmarkItem o) {
+    return myBookmark.compareTo(o.myBookmark);
   }
 }

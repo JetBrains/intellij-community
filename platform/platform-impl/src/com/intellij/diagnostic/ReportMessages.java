@@ -16,8 +16,6 @@
 
 /*
  * @author: Eugene Zhuravlev
- * Date: Mar 18, 2003
- * Time: 1:25:33 PM
  */
 package com.intellij.diagnostic;
 
@@ -27,5 +25,5 @@ import com.intellij.notification.NotificationGroup;
 public class ReportMessages {
 
   public static final String ERROR_REPORT = DiagnosticBundle.message("error.report.title");
-  public static final NotificationGroup GROUP = new NotificationGroup(ERROR_REPORT, NotificationDisplayType.BALLOON, true);
+  public static final NotificationGroup GROUP = new NotificationGroup(ERROR_REPORT, NotificationDisplayType.BALLOON, false);
 }

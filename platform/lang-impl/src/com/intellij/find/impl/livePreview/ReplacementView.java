@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,48 +15,28 @@
  */
 package com.intellij.find.impl.livePreview;
 
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
+import com.intellij.ui.components.JBLabel;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
 
 public class ReplacementView extends JPanel {
-
   private static final String MALFORMED_REPLACEMENT_STRING = "Malformed replacement string";
-  private String myReplacement;
-  private LiveOccurrence myOccurrence;
-  private JButton myStatusButton;
-
-  public interface Delegate {
-    void performReplacement(LiveOccurrence occurrence, String replacement);
-    void performReplaceAll();
-    boolean isExcluded(LiveOccurrence occurrence);
-    void exclude(LiveOccurrence occurrence);
-  }
-
-  private Delegate myDelegate;
-
-  public Delegate getDelegate() {
-    return myDelegate;
-  }
-
-  public void setDelegate(Delegate delegate) {
-    this.myDelegate = delegate;
-  }
 
   @Override
-  protected void paintComponent(Graphics graphics) {
-
+  protected void paintComponent(@NotNull Graphics graphics) {
   }
 
-  public ReplacementView(final String replacement, final LiveOccurrence occurrence) {
-    myReplacement = replacement;
-    String textToShow = myReplacement;
-    if (myReplacement == null) {
-      textToShow = MALFORMED_REPLACEMENT_STRING;
-    }
-    JLabel jLabel = new JLabel(textToShow);
-    jLabel.setForeground(myReplacement != null ? Color.WHITE : JBColor.RED);
+  public ReplacementView(@Nullable String replacement) {
+    String textToShow = StringUtil.notNullize(replacement, MALFORMED_REPLACEMENT_STRING);
+    textToShow = StringUtil.escapeXmlEntities(StringUtil.shortenTextWithEllipsis(textToShow, 500, 0, true)).replaceAll("\n+", "\n").replace("\n", "<br>");
+    JLabel jLabel = new JBLabel("<html>"+ textToShow).setAllowAutoWrapping(true);
+    jLabel.setForeground(replacement != null ? new JBColor(Gray._240, Gray._200) : JBColor.RED);
     add(jLabel);
   }
 }

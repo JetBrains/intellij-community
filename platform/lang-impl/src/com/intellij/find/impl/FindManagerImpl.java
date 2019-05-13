@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,18 +26,20 @@ import com.intellij.find.findUsages.FindUsagesManager;
 import com.intellij.find.impl.livePreview.SearchResults;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageParserDefinitions;
+import com.intellij.lang.LanguageUtil;
 import com.intellij.lang.ParserDefinition;
+import com.intellij.lexer.LayeredLexer;
 import com.intellij.lexer.Lexer;
 import com.intellij.navigation.NavigationItem;
+import com.intellij.notification.NotificationDisplayType;
+import com.intellij.notification.NotificationGroup;
+import com.intellij.notification.NotificationType;
+import com.intellij.notification.impl.NotificationsConfigurationImpl;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ex.ApplicationManagerEx;
-import com.intellij.openapi.components.PersistentStateComponent;
-import com.intellij.openapi.components.State;
-import com.intellij.openapi.components.Storage;
-import com.intellij.openapi.components.StoragePathMacros;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
@@ -46,64 +48,65 @@ import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.LanguageFileType;
+import com.intellij.openapi.fileTypes.PlainSyntaxHighlighter;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.openapi.fileTypes.SyntaxHighlighterFactory;
+import com.intellij.openapi.fileTypes.impl.AbstractFileType;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.patterns.StringPattern;
 import com.intellij.psi.*;
+import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.ui.LightweightHint;
 import com.intellij.ui.ReplacePromptDialog;
+import com.intellij.usages.ChunkExtractor;
 import com.intellij.usages.UsageViewManager;
-import com.intellij.util.Consumer;
+import com.intellij.usages.impl.SyntaxHighlighterOverEditorHighlighter;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.IntObjectMap;
+import com.intellij.util.containers.Predicate;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.text.CharArrayUtil;
+import com.intellij.util.text.ImmutableCharSequence;
 import com.intellij.util.text.StringSearcher;
 import gnu.trove.THashSet;
-import org.jdom.Element;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.regex.PatternSyntaxException;
 
-@State(
-  name = "FindManager",
-  storages = {
-    @Storage(
-      file = StoragePathMacros.WORKSPACE_FILE
-    )}
-)
-public class FindManagerImpl extends FindManager implements PersistentStateComponent<Element> {
+public class FindManagerImpl extends FindManager {
   private static final Logger LOG = Logger.getInstance("#com.intellij.find.impl.FindManagerImpl");
 
   private final FindUsagesManager myFindUsagesManager;
-  private boolean isFindWasPerformed = false;
+  private boolean isFindWasPerformed;
+  private boolean isSelectNextOccurrenceWasPerformed;
   private Point myReplaceInFilePromptPos = new Point(-1, -1);
   private Point myReplaceInProjectPromptPos = new Point(-1, -1);
   private final FindModel myFindInProjectModel = new FindModel();
   private final FindModel myFindInFileModel = new FindModel();
-  private FindModel myFindNextModel = null;
-  private FindModel myPreviousFindModel = null;
+  private FindModel myFindNextModel;
+  private FindModel myPreviousFindModel;
   private static final FindResultImpl NOT_FOUND_RESULT = new FindResultImpl();
   private final Project myProject;
   private final MessageBus myBus;
   private static final Key<Boolean> HIGHLIGHTER_WAS_NOT_FOUND_KEY = Key.create("com.intellij.find.impl.FindManagerImpl.HighlighterNotFoundKey");
-  @NonNls private static final String FIND_USAGES_MANAGER_ELEMENT = "FindUsagesManager";
-  public static final boolean ourHasSearchInCommentsAndLiterals = ApplicationManagerEx.getApplicationEx().isInternal(); // TODO: maxim
-  private FindDialog myFindDialog;
+
+  private FindUIHelper myHelper;
+  private static final NotificationGroup GROUP = new NotificationGroup("Find Problems", NotificationDisplayType.STICKY_BALLOON, false);
 
   public FindManagerImpl(Project project, FindSettings findSettings, UsageViewManager anotherManager, MessageBus bus) {
     myProject = project;
@@ -116,6 +119,13 @@ public class FindManagerImpl extends FindManager implements PersistentStateCompo
 
     myFindUsagesManager = new FindUsagesManager(myProject, anotherManager);
     myFindInProjectModel.setMultipleFiles(true);
+
+    NotificationsConfigurationImpl.remove("FindInPath");
+    Disposer.register(project, () -> {
+      if (myHelper != null) {
+        Disposer.dispose(myHelper);
+      }
+    });
   }
 
   @Override
@@ -128,39 +138,14 @@ public class FindManagerImpl extends FindManager implements PersistentStateCompo
   }
 
   @Override
-  public Element getState() {
-    Element element = new Element("FindManager");
-    final Element findUsages = new Element(FIND_USAGES_MANAGER_ELEMENT);
-    element.addContent(findUsages);
-    try {
-      myFindUsagesManager.writeExternal(findUsages);
-    }
-    catch (WriteExternalException e) {
-      LOG.error(e);
-    }
-    return element;
-  }
-
-  @Override
-  public void loadState(final Element state) {
-    final Element findUsages = state.getChild(FIND_USAGES_MANAGER_ELEMENT);
-    if (findUsages != null) {
-      try {
-        myFindUsagesManager.readExternal(findUsages);
-      }
-      catch (InvalidDataException e) {
-        LOG.error(e);
-      }
-    }
-  }
-
-  @Override
   public int showPromptDialog(@NotNull final FindModel model, String title) {
     return showPromptDialogImpl(model, title, null);
   }
 
   @PromptResultValue
-  public int showPromptDialogImpl(@NotNull final FindModel model, String title, @Nullable final MalformedReplacementStringException exception) {
+  private int showPromptDialogImpl(@NotNull final FindModel model,
+                                   String title,
+                                   @Nullable final MalformedReplacementStringException exception) {
     ReplacePromptDialog replacePromptDialog = new ReplacePromptDialog(model.isMultipleFiles(), title, myProject, exception) {
       @Override
       @Nullable
@@ -186,47 +171,36 @@ public class FindManagerImpl extends FindManager implements PersistentStateCompo
     return replacePromptDialog.getExitCode();
   }
 
-  @Override
-  public void showFindDialog(@NotNull final FindModel model, @NotNull final Runnable okHandler) {
-    final Consumer<FindModel> handler = new Consumer<FindModel>(){
-      @Override
-      public void consume(FindModel findModel) {
-        String stringToFind = findModel.getStringToFind();
-        if (!StringUtil.isEmpty(stringToFind)) {
-          FindSettings.getInstance().addStringToFind(stringToFind);
-        }
-        if (!findModel.isMultipleFiles()) {
-          setFindWasPerformed();
-        }
-        if (findModel.isReplaceState()) {
-          FindSettings.getInstance().addStringToReplace(findModel.getStringToReplace());
-        }
-        if (findModel.isMultipleFiles() && !findModel.isProjectScope()) {
-          FindSettings.getInstance().addDirectory(findModel.getDirectoryName());
+  void changeGlobalSettings(FindModel findModel) {
+    String stringToFind = findModel.getStringToFind();
+    FindInProjectSettings findInProjectSettings = FindInProjectSettings.getInstance(myProject);
 
-          if (findModel.getDirectoryName() != null) {
-            myFindInProjectModel.setWithSubdirectories(findModel.isWithSubdirectories());
-          }
-        }
-        okHandler.run();
-      }
-    };
-    if(myFindDialog==null || Disposer.isDisposed(myFindDialog.getDisposable())){
-      myFindDialog = new FindDialog(myProject, model, handler) {
-        @Override
-        protected void dispose() {
-          super.dispose();
-          myFindDialog = null; // avoid strong ref!
-        }
-      };
-      myFindDialog.setModal(false);
+    if (!StringUtil.isEmpty(stringToFind)) {
+      findInProjectSettings.addStringToFind(stringToFind);
     }
-    else if (myFindDialog.getModel().isReplaceState() != model.isReplaceState()) {
-      myFindDialog.setModel(model);
-      myFindDialog.setOkHandler(handler);
-      return;
+    if (!findModel.isMultipleFiles()) {
+      setFindWasPerformed();
     }
-    myFindDialog.show();
+    if (findModel.isReplaceState()) {
+      findInProjectSettings.addStringToReplace(findModel.getStringToReplace());
+    }
+    if (findModel.isMultipleFiles() && !findModel.isProjectScope() && findModel.getDirectoryName() != null) {
+      findInProjectSettings.addDirectory(findModel.getDirectoryName());
+      myFindInProjectModel.setWithSubdirectories(findModel.isWithSubdirectories());
+    }
+  }
+
+  @Override
+  public void showFindDialog(@NotNull FindModel model, @NotNull Runnable okHandler) {
+    if (myHelper == null || Disposer.isDisposed(myHelper)) {
+      myHelper = new FindUIHelper(myProject, model, okHandler);
+        Disposer.register(myHelper, () -> myHelper = null);
+    }
+    else {
+      myHelper.setModel(model);
+      myHelper.setOkHandler(okHandler);
+    }
+    myHelper.showUI();
   }
 
   @Override
@@ -241,6 +215,8 @@ public class FindManagerImpl extends FindManager implements PersistentStateCompo
     myFindInProjectModel.setFromCursor(false);
     myFindInProjectModel.setForward(true);
     myFindInProjectModel.setGlobal(true);
+    myFindInProjectModel.setMultiline(Registry.is("ide.find.as.popup") && Registry.is("ide.find.as.popup.allow.multiline"));
+    myFindInProjectModel.setSearchInProjectFiles(false);
     return myFindInProjectModel;
   }
 
@@ -252,7 +228,18 @@ public class FindManagerImpl extends FindManager implements PersistentStateCompo
   @Override
   public void setFindWasPerformed() {
     isFindWasPerformed = true;
-    //myFindUsagesManager.clearFindingNextUsageInFile();
+    isSelectNextOccurrenceWasPerformed = false;
+  }
+
+  @Override
+  public boolean selectNextOccurrenceWasPerformed() {
+    return isSelectNextOccurrenceWasPerformed;
+  }
+
+  @Override
+  public void setSelectNextOccurrenceWasPerformed() {
+    isSelectNextOccurrenceWasPerformed = true;
+    isFindWasPerformed = false;
   }
 
   @Override
@@ -264,10 +251,9 @@ public class FindManagerImpl extends FindManager implements PersistentStateCompo
   public FindModel getFindNextModel(@NotNull final Editor editor) {
     if (myFindNextModel == null) return null;
 
-    final JComponent header = editor.getHeaderComponent();
-    if (header instanceof EditorSearchComponent) {
-      final EditorSearchComponent searchComponent = (EditorSearchComponent)header;
-      final String textInField = searchComponent.getTextInField();
+    EditorSearchSession search = EditorSearchSession.get(editor);
+    if (search != null && !isSelectNextOccurrenceWasPerformed) {
+      String textInField = search.getTextInField();
       if (!Comparing.equal(textInField, myFindInFileModel.getStringToFind()) && !textInField.isEmpty()) {
         FindModel patched = new FindModel();
         patched.copyFrom(myFindNextModel);
@@ -300,23 +286,109 @@ public class FindManagerImpl extends FindManager implements PersistentStateCompo
       LOG.debug(model.toString());
     }
 
-    final char[] textArray = CharArrayUtil.fromSequenceWithoutCopying(text);
+    return findStringLoop(text, offset, model, file, getFindContextPredicate(model, file, text));
+  }
 
+  private FindResult findStringLoop(CharSequence text, int offset, FindModel model, VirtualFile file, @Nullable Predicate<? super FindResult> filter) {
+    final char[] textArray = CharArrayUtil.fromSequenceWithoutCopying(text);
     while(true) {
       FindResult result = doFindString(text, textArray, offset, model, file);
-
-      if (!model.isWholeWordsOnly()) {
-        return result;
-      }
-      if (!result.isStringFound()){
-        return result;
-      }
-      if (isWholeWord(text, result.getStartOffset(), result.getEndOffset())){
-        return result;
+      if (filter == null || filter.apply(result)) {
+        if (!model.isWholeWordsOnly()) {
+          return result;
+        }
+        if (!result.isStringFound()) {
+          return result;
+        }
+        if (isWholeWord(text, result.getStartOffset(), result.getEndOffset())) {
+          return result;
+        }
       }
 
       offset = model.isForward() ? result.getStartOffset() + 1 : result.getEndOffset() - 1;
       if (offset > text.length() || offset < 0) return NOT_FOUND_RESULT;
+    }
+  }
+
+  private class FindExceptCommentsOrLiteralsData implements Predicate<FindResult> {
+    private final VirtualFile myFile;
+    private final FindModel myFindModel;
+    private final TreeMap<Integer, Integer> mySkipRangesSet;
+    private final CharSequence myText;
+
+    private FindExceptCommentsOrLiteralsData(VirtualFile file, FindModel model, CharSequence text) {
+      myFile = file;
+      myFindModel = model.clone();
+      myText = ImmutableCharSequence.asImmutable(text);
+
+      TreeMap<Integer, Integer> result = new TreeMap<>();
+
+      if (model.isExceptComments() || model.isExceptCommentsAndStringLiterals()) {
+        addRanges(file, model, text, result, FindModel.SearchContext.IN_COMMENTS);
+      }
+
+      if (model.isExceptStringLiterals() || model.isExceptCommentsAndStringLiterals()) {
+        addRanges(file, model, text, result, FindModel.SearchContext.IN_STRING_LITERALS);
+      }
+
+      mySkipRangesSet = result;
+    }
+
+    private void addRanges(VirtualFile file,
+                           FindModel model,
+                           CharSequence text,
+                           TreeMap<Integer, Integer> result,
+                           FindModel.SearchContext searchContext) {
+      FindModel clonedModel = model.clone();
+      clonedModel.setSearchContext(searchContext);
+      clonedModel.setForward(true);
+      int offset = 0;
+
+      while(true) {
+        FindResult customResult = findStringLoop(text, offset, clonedModel, file, null);
+        if (!customResult.isStringFound()) break;
+        result.put(customResult.getStartOffset(), customResult.getEndOffset());
+        offset = Math.max(customResult.getEndOffset(), offset + 1);  // avoid loop for zero size reg exps matches
+        if (offset >= text.length()) break;
+      }
+    }
+
+    boolean isAcceptableFor(FindModel model, VirtualFile file, CharSequence text) {
+      return Comparing.equal(myFile, file) &&
+             myFindModel.equals(model) &&
+             myText.length() == text.length()
+        ;
+    }
+
+    @Override
+    public boolean apply(@Nullable FindResult input) {
+      if (input == null || !input.isStringFound()) return true;
+      NavigableMap<Integer, Integer> map = mySkipRangesSet.headMap(input.getStartOffset(), true);
+      for(Map.Entry<Integer, Integer> e:map.descendingMap().entrySet()) {
+        // [e.key, e.value] intersect with [input.start, input.end]
+        if (e.getKey() <= input.getStartOffset() && (input.getStartOffset() <= e.getValue() || e.getValue() >= input.getEndOffset())) return false;
+        if (e.getValue() <= input.getStartOffset()) break;
+      }
+      return true;
+    }
+  }
+  private static final Key<FindExceptCommentsOrLiteralsData> ourExceptCommentsOrLiteralsDataKey = Key.create("except.comments.literals.search.data");
+
+  private Predicate<FindResult> getFindContextPredicate(@NotNull FindModel model, VirtualFile file, CharSequence text) {
+    if (file == null) return null;
+    FindModel.SearchContext context = model.getSearchContext();
+    if( context == FindModel.SearchContext.ANY || context == FindModel.SearchContext.IN_COMMENTS ||
+        context == FindModel.SearchContext.IN_STRING_LITERALS) {
+      return null;
+    }
+
+    synchronized (model) {
+      FindExceptCommentsOrLiteralsData data = model.getUserData(ourExceptCommentsOrLiteralsDataKey);
+      if (data == null || !data.isAcceptableFor(model, file, text)) {
+        model.putUserData(ourExceptCommentsOrLiteralsDataKey, data = new FindExceptCommentsOrLiteralsData(file, model, text));
+      }
+
+      return data;
     }
   }
 
@@ -336,14 +408,32 @@ public class FindManagerImpl extends FindManager implements PersistentStateCompo
   }
 
   private static boolean isWholeWord(CharSequence text, int startOffset, int endOffset) {
-    boolean isWordStart = startOffset == 0 ||
-                          !Character.isJavaIdentifierPart(text.charAt(startOffset - 1)) ||
-                          !Character.isJavaIdentifierPart(text.charAt(startOffset)) ||
-                          startOffset > 1 && text.charAt(startOffset - 2) == '\\';
+    boolean isWordStart;
 
-    boolean isWordEnd = endOffset == text.length() ||
-                        !Character.isJavaIdentifierPart(text.charAt(endOffset)) ||
-                        endOffset > 0 && !Character.isJavaIdentifierPart(text.charAt(endOffset - 1));
+    if (startOffset != 0) {
+      boolean previousCharacterIsIdentifier = Character.isJavaIdentifierPart(text.charAt(startOffset - 1)) &&
+                                              (startOffset <= 1 || text.charAt(startOffset - 2) != '\\');
+      boolean previousCharacterIsSameAsNext = text.charAt(startOffset - 1) == text.charAt(startOffset);
+
+      boolean firstCharacterIsIdentifier = Character.isJavaIdentifierPart(text.charAt(startOffset));
+      isWordStart = !firstCharacterIsIdentifier && !previousCharacterIsSameAsNext ||
+                    firstCharacterIsIdentifier && !previousCharacterIsIdentifier;
+    } else {
+      isWordStart = true;
+    }
+
+    boolean isWordEnd;
+
+    if (endOffset != text.length()) {
+      boolean nextCharacterIsIdentifier = Character.isJavaIdentifierPart(text.charAt(endOffset));
+      boolean nextCharacterIsSameAsPrevious = endOffset > 0 && text.charAt(endOffset) == text.charAt(endOffset - 1);
+      boolean lastSearchedCharacterIsIdentifier = endOffset  > 0 && Character.isJavaIdentifierPart(text.charAt(endOffset - 1));
+
+      isWordEnd = lastSearchedCharacterIsIdentifier && !nextCharacterIsIdentifier ||
+                  !lastSearchedCharacterIsIdentifier && !nextCharacterIsSameAsPrevious;
+    } else {
+      isWordEnd = true;
+    }
 
     return isWordStart && isWordEnd;
   }
@@ -354,15 +444,24 @@ public class FindManagerImpl extends FindManager implements PersistentStateCompo
       final FindModel model = new FindModel();
       model.copyFrom(findmodel);
       final String s = model.getStringToFind();
-      model.setStringToFind(StringUtil.escapeToRegexp(s));
-      model.setRegularExpressions(true);
+      String newStringToFind;
+
+      if (findmodel.isRegularExpressions()) {
+        newStringToFind = StringUtil.replace(s, "\n", "\\n\\s*"); // add \\s* for convenience
+      } else {
+        newStringToFind = StringUtil.escapeToRegexp(s);
+        newStringToFind = newStringToFind.replaceAll("\\\\n\\s*", "\\\\n\\\\s*");
+        model.setRegularExpressions(true);
+      }
+      model.setStringToFind(newStringToFind);
+
       return model;
     }
     return findmodel;
   }
 
   @NotNull
-  private static FindResult doFindString(@NotNull CharSequence text,
+  private FindResult doFindString(@NotNull CharSequence text,
                                          @Nullable char[] textArray,
                                          int offset,
                                          @NotNull FindModel findmodel,
@@ -379,7 +478,7 @@ public class FindManagerImpl extends FindManager implements PersistentStateCompo
     }
 
     if (model.isRegularExpressions()){
-      return findStringByRegularExpression(text, offset, model);
+      return findStringByRegularExpression(text, offset, model, file);
     }
 
     final StringSearcher searcher = createStringSearcher(model);
@@ -403,164 +502,229 @@ public class FindManagerImpl extends FindManager implements PersistentStateCompo
     return new StringSearcher(model.getStringToFind(), model.isCaseSensitive(), model.isForward());
   }
 
+  static void clearPreviousFindData(FindModel model) {
+    synchronized (model) {
+      model.putUserData(ourCommentsLiteralsSearchDataKey, null);
+      model.putUserData(ourExceptCommentsOrLiteralsDataKey, null);
+    }
+  }
+
   private static class CommentsLiteralsSearchData {
     final VirtualFile lastFile;
-    int startOffset = 0;
-    final SyntaxHighlighter highlighter;
+    int startOffset;
+    final SyntaxHighlighterOverEditorHighlighter highlighter;
 
     TokenSet tokensOfInterest;
     final StringSearcher searcher;
     final Matcher matcher;
     final Set<Language> relevantLanguages;
+    final FindModel model;
 
-    public CommentsLiteralsSearchData(VirtualFile lastFile, Set<Language> relevantLanguages, SyntaxHighlighter highlighter, TokenSet tokensOfInterest,
-                                      StringSearcher searcher, Matcher matcher) {
+    CommentsLiteralsSearchData(VirtualFile lastFile, Set<Language> relevantLanguages,
+                               SyntaxHighlighterOverEditorHighlighter highlighter, TokenSet tokensOfInterest,
+                               StringSearcher searcher, Matcher matcher, FindModel model) {
       this.lastFile = lastFile;
       this.highlighter = highlighter;
       this.tokensOfInterest = tokensOfInterest;
       this.searcher = searcher;
       this.matcher = matcher;
       this.relevantLanguages = relevantLanguages;
+      this.model = model;
     }
   }
 
   private static final Key<CommentsLiteralsSearchData> ourCommentsLiteralsSearchDataKey = Key.create("comments.literals.search.data");
 
   @NotNull
-  private static FindResult findInCommentsAndLiterals(@NotNull CharSequence text,
+  private FindResult findInCommentsAndLiterals(@NotNull CharSequence text,
                                                       char[] textArray,
                                                       int offset,
                                                       @NotNull FindModel model,
                                                       @NotNull final VirtualFile file) {
-    FileType ftype = file.getFileType();
-    Language lang = null;
-    if (ftype instanceof LanguageFileType) {
-      lang = ((LanguageFileType)ftype).getLanguage();
-    }
+    synchronized (model) {
+      FileType ftype = file.getFileType();
+      Language lang = LanguageUtil.getLanguageForPsi(myProject, file);
 
-    if(lang == null) return NOT_FOUND_RESULT;
+      CommentsLiteralsSearchData data = model.getUserData(ourCommentsLiteralsSearchDataKey);
+      if (data == null || !Comparing.equal(data.lastFile, file) || !data.model.equals(model)) {
+        SyntaxHighlighter highlighter = getHighlighter(file, lang);
 
-    CommentsLiteralsSearchData data = model.getUserData(ourCommentsLiteralsSearchDataKey);
-    if (data == null || !Comparing.equal(data.lastFile, file)) {
-      SyntaxHighlighter lexer = getHighlighter(file, lang);
+        if (highlighter == null) {
+          // no syntax highlighter -> no search
+          return NOT_FOUND_RESULT;
+        }
 
-      TokenSet tokensOfInterest = TokenSet.EMPTY;
-      final Language finalLang = lang;
-      Set<Language> relevantLanguages = ApplicationManager.getApplication().runReadAction(new Computable<Set<Language>>() {
-        @Override
-        public Set<Language> compute() {
-          THashSet<Language> result = new THashSet<Language>();
+        TokenSet tokensOfInterest = TokenSet.EMPTY;
+        Set<Language> relevantLanguages;
+        if (lang != null) {
+          final Language finalLang = lang;
+          relevantLanguages = ReadAction.compute(() -> {
+            THashSet<Language> result = new THashSet<>();
 
-          for(Project project:ProjectManager.getInstance().getOpenProjects()) {
-            FileViewProvider viewProvider = PsiManager.getInstance(project).findViewProvider(file);
+            FileViewProvider viewProvider = PsiManager.getInstance(myProject).findViewProvider(file);
             if (viewProvider != null) {
               result.addAll(viewProvider.getLanguages());
-              break;
             }
-          }
 
-          if (result.isEmpty()) {
-            result.add(finalLang);
-          }
-          return result;
-        }
-      });
-
-      for (Language relevantLanguage:relevantLanguages) {
-        tokensOfInterest = addTokenTypesForLanguage(model, relevantLanguage, tokensOfInterest);
-      }
-
-      if(model.isInStringLiteralsOnly()) {
-        // TODO: xml does not have string literals defined so we add XmlAttributeValue element type as convenience
-        final Lexer xmlLexer = getHighlighter(null, Language.findLanguageByID("XML")).getHighlightingLexer();
-        final String marker = "xxx";
-        xmlLexer.start("<a href=\"" + marker+ "\" />");
-
-        while (!marker.equals(xmlLexer.getTokenText())) {
-          xmlLexer.advance();
-          if (xmlLexer.getTokenType() == null) break;
-        }
-
-        IElementType convenienceXmlAttrType = xmlLexer.getTokenType();
-        if (convenienceXmlAttrType != null) {
-          tokensOfInterest = TokenSet.orSet(tokensOfInterest, TokenSet.create(convenienceXmlAttrType));
-        }
-      }
-
-      Matcher matcher = model.isRegularExpressions() ? compileRegExp(model, ""):null;
-      StringSearcher searcher = matcher != null ? null: createStringSearcher(model);
-      data = new CommentsLiteralsSearchData(file, relevantLanguages, lexer, tokensOfInterest, searcher, matcher);
-      model.putUserData(ourCommentsLiteralsSearchDataKey, data);
-    }
-
-    final Lexer lexer = data.highlighter.getHighlightingLexer();
-    lexer.start(text, data.startOffset, text.length(), 0);
-
-    IElementType tokenType;
-    TokenSet tokens = data.tokensOfInterest;
-
-    int lastGoodOffset = 0;
-    boolean scanningForward = model.isForward();
-    FindResultImpl prevFindResult = NOT_FOUND_RESULT;
-
-    while((tokenType = lexer.getTokenType()) != null) {
-      if (lexer.getState() == 0) lastGoodOffset = lexer.getTokenStart();
-
-      final TextAttributesKey[] keys = data.highlighter.getTokenHighlights(tokenType);
-      if (tokens.contains(tokenType) || (model.isInStringLiteralsOnly() && isHighlightedAsString(keys))) {
-
-        int start = lexer.getTokenStart();
-
-        if (start >= offset || !scanningForward) {
-          FindResultImpl findResult = null;
-
-          if (data.searcher != null) {
-            int i = data.searcher.scan(text, textArray, start, lexer.getTokenEnd());
-            if (i != -1) findResult = new FindResultImpl(i, i + model.getStringToFind().length());
-          } else {
-            data.matcher.reset(text.subSequence(start, lexer.getTokenEnd()));
-            if (data.matcher.find()) {
-              int matchStart = data.matcher.start();
-              findResult = new FindResultImpl(start + matchStart, start + data.matcher.end());
+            if (result.isEmpty()) {
+              result.add(finalLang);
             }
+            return result;
+          });
+
+          for (Language relevantLanguage : relevantLanguages) {
+            tokensOfInterest = addTokenTypesForLanguage(model, relevantLanguage, tokensOfInterest);
           }
 
-          if (findResult != null) {
-            if (scanningForward) {
-              data.startOffset = lastGoodOffset;
-              return findResult;
-            } else {
-              if (start >= offset) return prevFindResult;
-              prevFindResult = findResult;
+          if (model.isInStringLiteralsOnly()) {
+            // TODO: xml does not have string literals defined so we add XmlAttributeValue element type as convenience
+            final Lexer xmlLexer = getHighlighter(null, Language.findLanguageByID("XML")).getHighlightingLexer();
+            final String marker = "xxx";
+            xmlLexer.start("<a href=\"" + marker + "\" />");
+
+            while (!marker.equals(xmlLexer.getTokenText())) {
+              xmlLexer.advance();
+              if (xmlLexer.getTokenType() == null) break;
+            }
+
+            IElementType convenienceXmlAttrType = xmlLexer.getTokenType();
+            if (convenienceXmlAttrType != null) {
+              tokensOfInterest = TokenSet.orSet(tokensOfInterest, TokenSet.create(convenienceXmlAttrType));
             }
           }
         }
-      } else {
-        Language tokenLang = tokenType.getLanguage();
-        if (tokenLang != lang && tokenLang != Language.ANY && !data.relevantLanguages.contains(tokenLang)) {
-          tokens = addTokenTypesForLanguage(model, tokenLang, tokens);
-          data.tokensOfInterest = tokens;
-          data.relevantLanguages.add(tokenLang);
+        else {
+          relevantLanguages = ContainerUtil.newHashSet();
+          if (ftype instanceof AbstractFileType) {
+            if (model.isInCommentsOnly()) {
+              tokensOfInterest = TokenSet.create(CustomHighlighterTokenType.LINE_COMMENT, CustomHighlighterTokenType.MULTI_LINE_COMMENT);
+            }
+            if (model.isInStringLiteralsOnly()) {
+              tokensOfInterest = TokenSet.orSet(tokensOfInterest, TokenSet
+                .create(CustomHighlighterTokenType.STRING, CustomHighlighterTokenType.SINGLE_QUOTED_STRING));
+            }
+          }
         }
+
+        Matcher matcher = model.isRegularExpressions() ? compileRegExp(model, "") : null;
+        StringSearcher searcher = matcher != null ? null : new StringSearcher(model.getStringToFind(), model.isCaseSensitive(), true);
+        LayeredLexer.ourDisableLayersFlag.set(Boolean.TRUE);
+
+        try {
+          SyntaxHighlighterOverEditorHighlighter highlighterAdapter =
+            new SyntaxHighlighterOverEditorHighlighter(highlighter, file, myProject);
+          data =
+            new CommentsLiteralsSearchData(file, relevantLanguages, highlighterAdapter, tokensOfInterest, searcher, matcher, model.clone());
+          data.highlighter.restart(text);
+        }
+        finally {
+          LayeredLexer.ourDisableLayersFlag.set(null);
+        }
+        
+        model.putUserData(ourCommentsLiteralsSearchDataKey, data);
       }
 
-      lexer.advance();
+      int initialStartOffset = model.isForward() && data.startOffset < offset ? data.startOffset : 0;
+      data.highlighter.resetPosition(initialStartOffset);
+      final Lexer lexer = data.highlighter.getHighlightingLexer();
+
+      IElementType tokenType;
+      TokenSet tokens = data.tokensOfInterest;
+
+      int lastGoodOffset = 0;
+      boolean scanningForward = model.isForward();
+      FindResultImpl prevFindResult = NOT_FOUND_RESULT;
+
+      while ((tokenType = lexer.getTokenType()) != null) {
+        if (lexer.getState() == 0) lastGoodOffset = lexer.getTokenStart();
+
+        final TextAttributesKey[] keys = data.highlighter.getTokenHighlights(tokenType);
+
+        if (tokens.contains(tokenType) ||
+            model.isInStringLiteralsOnly() && ChunkExtractor.isHighlightedAsString(keys) ||
+            model.isInCommentsOnly() && ChunkExtractor.isHighlightedAsComment(keys)
+          ) {
+          int start = lexer.getTokenStart();
+          int end = lexer.getTokenEnd();
+          if (model.isInStringLiteralsOnly()) { // skip literal quotes itself from matching
+            char c = text.charAt(start);
+            if (c == '"' || c == '\'') {
+              while (start < end && c == text.charAt(start)) {
+                ++start;
+                if (c == text.charAt(end - 1) && start < end) --end;
+              }
+            }
+          }
+          
+          final int tokenContentStart = start;
+
+          while (true) {
+            FindResultImpl findResult = null;
+
+            if (data.searcher != null) {
+              int matchStart = data.searcher.scan(text, textArray, start, end);
+
+              if (matchStart != -1 && matchStart >= start) {
+                final int matchEnd = matchStart + model.getStringToFind().length();
+                if (matchStart >= offset || !scanningForward)
+                  findResult = new FindResultImpl(matchStart, matchEnd);
+                else {
+                  start = matchEnd;
+                  continue;
+                }
+              }
+            }
+            else if (start <= end) {
+              data.matcher.reset(StringPattern.newBombedCharSequence(text.subSequence(tokenContentStart, end)));
+              data.matcher.region(start - tokenContentStart, end - tokenContentStart);
+              data.matcher.useTransparentBounds(true);
+              if (data.matcher.find()) {
+                final int matchEnd = tokenContentStart + data.matcher.end();
+                int matchStart = tokenContentStart + data.matcher.start();
+                if (matchStart >= offset || !scanningForward) {
+                  findResult = new FindResultImpl(matchStart, matchEnd);
+                }
+                else {
+                  int diff = 0;
+                  if (start == end || start == matchEnd) {
+                    diff = scanningForward ? 1 : -1;
+                  }
+                  start = matchEnd + diff;
+                  continue;
+                }
+              }
+            }
+
+            if (findResult != null) {
+              if (scanningForward) {
+                data.startOffset = lastGoodOffset;
+                return findResult;
+              }
+              else {
+
+                if (findResult.getEndOffset() >= offset) return prevFindResult;
+                prevFindResult = findResult;
+                start = findResult.getEndOffset();
+                continue;
+              }
+            }
+            break;
+          }
+        }
+        else {
+          Language tokenLang = tokenType.getLanguage();
+          if (tokenLang != lang && tokenLang != Language.ANY && !data.relevantLanguages.contains(tokenLang)) {
+            tokens = addTokenTypesForLanguage(model, tokenLang, tokens);
+            data.tokensOfInterest = tokens;
+            data.relevantLanguages.add(tokenLang);
+          }
+        }
+
+        lexer.advance();
+      }
+
+      return prevFindResult;
     }
-
-    return prevFindResult;
-  }
-
-  private static boolean isHighlightedAsString(TextAttributesKey... keys) {
-    for (TextAttributesKey key : keys) {
-      if (key == DefaultLanguageHighlighterColors.STRING || key == SyntaxHighlighterColors.STRING) {
-        return true;
-      }
-      final TextAttributesKey fallbackAttributeKey = key.getFallbackAttributeKey();
-      if (fallbackAttributeKey != null && isHighlightedAsString(fallbackAttributeKey)) {
-        return true;
-      }
-    }
-    return false;
   }
 
   private static TokenSet addTokenTypesForLanguage(FindModel model, Language lang, TokenSet tokensOfInterest) {
@@ -572,59 +736,74 @@ public class FindManagerImpl extends FindManager implements PersistentStateCompo
     return tokensOfInterest;
   }
 
-  private static SyntaxHighlighter getHighlighter(VirtualFile file, Language lang) {
-    SyntaxHighlighter syntaxHighlighter = SyntaxHighlighterFactory.getSyntaxHighlighter(lang, null, file);
-    assert syntaxHighlighter != null:"Syntax highlighter is null:"+file;
+  @Nullable
+  private static SyntaxHighlighter getHighlighter(VirtualFile file, @Nullable Language lang) {
+    SyntaxHighlighter syntaxHighlighter = lang != null ? SyntaxHighlighterFactory.getSyntaxHighlighter(lang, null, file) : null;
+    if (lang == null || syntaxHighlighter instanceof PlainSyntaxHighlighter) {
+      syntaxHighlighter = SyntaxHighlighterFactory.getSyntaxHighlighter(file.getFileType(), null, file);
+    }
+
     return syntaxHighlighter;
   }
 
-  private static FindResult findStringByRegularExpression(CharSequence text, int startOffset, FindModel model) {
+  private FindResult findStringByRegularExpression(CharSequence text,
+                                                   int startOffset,
+                                                   FindModel model,
+                                                   VirtualFile file) {
     Matcher matcher = compileRegExp(model, text);
     if (matcher == null) {
       return NOT_FOUND_RESULT;
     }
-    if (model.isForward()){
-      if (matcher.find(startOffset)) {
-        if (matcher.end() <= text.length()) {
-          return new FindResultImpl(matcher.start(), matcher.end());
+    try {
+      if (model.isForward()) {
+        if (matcher.find(startOffset)) {
+          if (matcher.end() <= text.length()) {
+            return new FindResultImpl(matcher.start(), matcher.end());
+          }
         }
+        return NOT_FOUND_RESULT;
+      }
+      else {
+        int start = -1;
+        int end = -1;
+        while (matcher.find() && matcher.end() < startOffset) {
+          start = matcher.start();
+          end = matcher.end();
+        }
+        if (start < 0) {
+          return NOT_FOUND_RESULT;
+        }
+        return new FindResultImpl(start, end);
+      }
+    } catch (StackOverflowError soe) {
+      String stringToFind = model.getStringToFind();
+      
+      if (!ApplicationManager.getApplication().isHeadlessEnvironment() &&
+          ourReportedPatterns.put(stringToFind.hashCode(), Boolean.TRUE) == null) {
+        String content = stringToFind + " produced stack overflow when matching content of the file";
+        LOG.info(content);
+        GROUP.createNotification("Regular expression failed to match",
+                                     content + " " + file.getPath(),
+                                     NotificationType.ERROR,
+                                     null
+                                   ).notify(myProject);
       }
       return NOT_FOUND_RESULT;
     }
-    else {
-      int start = -1;
-      int end = -1;
-      while(matcher.find() && matcher.end() < startOffset){
-        start = matcher.start();
-        end = matcher.end();
-      }
-      if (start < 0){
-        return NOT_FOUND_RESULT;
-      }
-      return new FindResultImpl(start, end);
-    }
   }
+  
+  private static final IntObjectMap<Boolean> ourReportedPatterns = ContainerUtil.createConcurrentIntObjectMap();
 
   private static Matcher compileRegExp(FindModel model, CharSequence text) {
     Pattern pattern = model.compileRegExp();
-    return pattern == null ? null : pattern.matcher(text);
-  }
-
-  @Override
-  public String getStringToReplace(@NotNull String foundString, @NotNull FindModel model) throws MalformedReplacementStringException {
-    String toReplace = model.getStringToReplace();
-    if (model.isRegularExpressions()) {
-      return getStringToReplaceByRegexp0(foundString, model);
-    }
-    if (model.isPreserveCase()) {
-      return replaceWithCaseRespect (toReplace, foundString);
-    }
-    return toReplace;
+    return pattern == null ?
+           null :
+           pattern.matcher( StringPattern.newBombedCharSequence(text) );
   }
 
   @Override
   public String getStringToReplace(@NotNull String foundString, @NotNull FindModel model,
-                                   int startOffset, @NotNull String documentText) throws MalformedReplacementStringException{
+                                   int startOffset, @NotNull CharSequence documentText) throws MalformedReplacementStringException{
     String toReplace = model.getStringToReplace();
     if (model.isRegularExpressions()) {
       return getStringToReplaceByRegexp(model, documentText, startOffset);
@@ -635,7 +814,24 @@ public class FindManagerImpl extends FindManager implements PersistentStateCompo
     return toReplace;
   }
 
-  private static String getStringToReplaceByRegexp(@NotNull final FindModel model, @NotNull String text, int startOffset) throws MalformedReplacementStringException{
+  private static String getStringToReplaceByRegexp(@NotNull final FindModel model, @NotNull CharSequence text, int startOffset) throws MalformedReplacementStringException {
+    Matcher matcher = compileRegexAndFindFirst(model, text, startOffset);
+    return getStringToReplaceByRegexp(model, matcher);
+  }
+
+  private static String getStringToReplaceByRegexp(@NotNull final FindModel model, Matcher matcher) throws MalformedReplacementStringException{
+    if (matcher == null) return null;
+    try {
+      String toReplace = model.getStringToReplace();
+      return new RegExReplacementBuilder(matcher).createReplacement(toReplace);
+    }
+    catch (Exception e) {
+      throw createMalformedReplacementException(model, e);
+    }
+  }
+
+  private static Matcher compileRegexAndFindFirst(FindModel model, CharSequence text, int startOffset) {
+    model = normalizeIfMultilined(model);
     Matcher matcher = compileRegExp(model, text);
 
     if (model.isForward()){
@@ -655,52 +851,11 @@ public class FindManagerImpl extends FindManager implements PersistentStateCompo
         return null;
       }
     }
-    try {
-      StringBuffer replaced = new StringBuffer();
-      String toReplace = StringUtil.unescapeStringCharacters(model.getStringToReplace());
-      matcher.appendReplacement(replaced, toReplace);
-
-      return replaced.substring(matcher.start());
-    }
-    catch (Exception e) {
-      throw createMalformedReplacementException(model, e);
-    }
+    return matcher;
   }
 
   private static MalformedReplacementStringException createMalformedReplacementException(FindModel model, Exception e) {
     return new MalformedReplacementStringException(FindBundle.message("find.replace.invalid.replacement.string", model.getStringToReplace()), e);
-  }
-
-  private static String getStringToReplaceByRegexp0(String foundString, final FindModel model) throws MalformedReplacementStringException{
-    String toFind = model.getStringToFind();
-    String toReplace = model.getStringToReplace();
-    Pattern pattern;
-    try{
-      int flags = Pattern.MULTILINE;
-      if (!model.isCaseSensitive()) {
-        flags |= Pattern.CASE_INSENSITIVE;
-      }
-      pattern = Pattern.compile(toFind, flags);
-    }
-    catch(PatternSyntaxException e){
-      return toReplace;
-    }
-
-    Matcher matcher = pattern.matcher(foundString);
-    if (matcher.matches()) {
-      try {
-        return matcher.replaceAll(StringUtil.unescapeStringCharacters(toReplace));
-      }
-      catch (Exception e) {
-        throw createMalformedReplacementException(model, e);
-      }
-    }
-    else {
-      // There are valid situations (for example, IDEADEV-2543 or positive lookbehind assertions)
-      // where an expression which matches a string in context will not match the same string
-      // separately).
-      return toReplace;
-    }
   }
 
   private static String replaceWithCaseRespect(String toReplace, String foundString) {
@@ -713,6 +868,7 @@ public class FindManagerImpl extends FindManager implements PersistentStateCompo
     else {
       buffer.append(Character.toLowerCase(toReplace.charAt(0)));
     }
+
     if (toReplace.length() == 1) return buffer.toString();
 
     if (foundString.length() == 1) {
@@ -720,18 +876,30 @@ public class FindManagerImpl extends FindManager implements PersistentStateCompo
       return buffer.toString();
     }
 
+    boolean isReplacementLowercase = true;
+    boolean isReplacementUppercase = true;
+    for (int i = 1; i < toReplace.length(); i++) {
+      char replacementChar = toReplace.charAt(i);
+      if (!Character.isLetter(replacementChar)) continue;
+      isReplacementLowercase &= Character.isLowerCase(replacementChar);
+      isReplacementUppercase &= Character.isUpperCase(replacementChar);
+      if (!isReplacementLowercase && !isReplacementUppercase) break;
+    }
+
     boolean isTailUpper = true;
     boolean isTailLower = true;
     for (int i = 1; i < foundString.length(); i++) {
-      isTailUpper &= Character.isUpperCase(foundString.charAt(i));
-      isTailLower &= Character.isLowerCase(foundString.charAt(i));
+      char foundChar = foundString.charAt(i);
+      if (!Character.isLetter(foundChar)) continue;
+      isTailUpper &= Character.isUpperCase(foundChar);
+      isTailLower &= Character.isLowerCase(foundChar);
       if (!isTailUpper && !isTailLower) break;
     }
 
-    if (isTailUpper) {
+    if (isTailUpper && (isReplacementLowercase || isReplacementUppercase)) {
       buffer.append(StringUtil.toUpperCase(toReplace.substring(1)));
     }
-    else if (isTailLower) {
+    else if (isTailLower && (isReplacementLowercase || isReplacementUppercase)) {
       buffer.append(toReplace.substring(1).toLowerCase());
     }
     else {
@@ -751,13 +919,18 @@ public class FindManagerImpl extends FindManager implements PersistentStateCompo
   }
 
   @Override
+  public void findUsagesInScope(@NotNull PsiElement element, @NotNull SearchScope searchScope) {
+    myFindUsagesManager.findUsages(element, null, null, false, searchScope);
+  }
+
+  @Override
   public void findUsages(@NotNull PsiElement element, boolean showDialog) {
-    myFindUsagesManager.findUsages(element, null, null, showDialog);
+    myFindUsagesManager.findUsages(element, null, null, showDialog, null);
   }
 
   @Override
   public void showSettingsAndFindUsages(@NotNull NavigationItem[] targets) {
-    myFindUsagesManager.showSettingsAndFindUsages(targets);
+    FindUsagesManager.showSettingsAndFindUsages(targets);
   }
 
   @Override
@@ -773,21 +946,20 @@ public class FindManagerImpl extends FindManager implements PersistentStateCompo
       Document document = editor.getDocument();
       PsiFile psiFile = PsiDocumentManager.getInstance(myProject).getPsiFile(document);
 
-      myFindUsagesManager.findUsages(element, psiFile, fileEditor, false);
+      myFindUsagesManager.findUsages(element, psiFile, fileEditor, false, null);
     }
   }
 
   private static boolean tryToFindNextUsageViaEditorSearchComponent(Editor editor, SearchResults.Direction forwardOrBackward) {
-    if (editor.getHeaderComponent() instanceof EditorSearchComponent) {
-      EditorSearchComponent searchComponent = (EditorSearchComponent)editor.getHeaderComponent();
-      if (searchComponent.hasMatches()) {
-        if (forwardOrBackward == SearchResults.Direction.UP) {
-          searchComponent.searchBackward();
-        } else {
-          searchComponent.searchForward();
-        }
-        return true;
+    EditorSearchSession search = EditorSearchSession.get(editor);
+    if (search != null && search.hasMatches()) {
+      if (forwardOrBackward == SearchResults.Direction.UP) {
+        search.searchBackward();
       }
+      else {
+        search.searchForward();
+      }
+      return true;
     }
     return false;
   }
@@ -801,6 +973,7 @@ public class FindManagerImpl extends FindManager implements PersistentStateCompo
     if (fileEditor instanceof TextEditor) {
       TextEditor textEditor = (TextEditor)fileEditor;
       Editor editor = textEditor.getEditor();
+      editor.getCaretModel().removeSecondaryCarets();
       if (tryToFindNextUsageViaEditorSearchComponent(editor, direction)) {
         return true;
       }
@@ -902,16 +1075,13 @@ public class FindManagerImpl extends FindManager implements PersistentStateCompo
     if (regions == null) {
       return;
     }
-    int i = Arrays.binarySearch(regions, null, new Comparator<FoldRegion>() {
-      @Override
-      public int compare(FoldRegion o1, FoldRegion o2) {
-        // Find the first region that ends after the given start offset
-        if (o1 == null) {
-          return startOffset - o2.getEndOffset();
-        }
-        else {
-          return o1.getEndOffset() - startOffset;
-        }
+    int i = Arrays.binarySearch(regions, null, (o1, o2) -> {
+      // Find the first region that ends after the given start offset
+      if (o1 == null) {
+        return startOffset - o2.getEndOffset();
+      }
+      else {
+        return o1.getEndOffset() - startOffset;
       }
     });
     if (i < 0) {
@@ -923,7 +1093,7 @@ public class FindManagerImpl extends FindManager implements PersistentStateCompo
     if (i >= regions.length) {
       return;
     }
-    final List<FoldRegion> toExpand = new ArrayList<FoldRegion>();
+    final List<FoldRegion> toExpand = new ArrayList<>();
     for (; i < regions.length; i++) {
       final FoldRegion region = regions[i];
       if (region.getStartOffset() >= endOffset) {
@@ -936,16 +1106,14 @@ public class FindManagerImpl extends FindManager implements PersistentStateCompo
     if (toExpand.isEmpty()) {
       return;
     }
-    foldingModel.runBatchFoldingOperation(new Runnable() {
-      @Override
-      public void run() {
-        for (FoldRegion region : toExpand) {
-          region.setExpanded(true);
-        }
+    foldingModel.runBatchFoldingOperation(() -> {
+      for (FoldRegion region : toExpand) {
+        region.setExpanded(true);
       }
     });
   }
-  
+
+  @NotNull
   public FindUsagesManager getFindUsagesManager() {
     return myFindUsagesManager;
   }

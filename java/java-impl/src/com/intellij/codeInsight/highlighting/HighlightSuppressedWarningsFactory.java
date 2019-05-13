@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,29 +15,40 @@
  */
 package com.intellij.codeInsight.highlighting;
 
-import com.intellij.codeInsight.TargetElementUtilBase;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.ProperTextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiLiteralExpression;
 import com.intellij.psi.util.PsiTreeUtil;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author yole
  */
-public class HighlightSuppressedWarningsFactory implements HighlightUsagesHandlerFactory {
+public class HighlightSuppressedWarningsFactory extends HighlightUsagesHandlerFactoryBase {
+
+  @Nullable
   @Override
-  public HighlightUsagesHandlerBase createHighlightUsagesHandler(final Editor editor, final PsiFile file) {
-    int offset = TargetElementUtilBase.adjustOffset(file, editor.getDocument(), editor.getCaretModel().getOffset());
-    final PsiElement target = file.findElementAt(offset);
+  public HighlightUsagesHandlerBase createHighlightUsagesHandler(@NotNull Editor editor,
+                                                                 @NotNull PsiFile file,
+                                                                 @NotNull PsiElement target) {
+    throw new UnsupportedOperationException("Use createHighlightUsagesHandler(editor, file, target, visibleRange)");
+  }
+
+  @Override
+  public HighlightUsagesHandlerBase createHighlightUsagesHandler(@NotNull Editor editor, @NotNull PsiFile file, @NotNull PsiElement target,
+                                                                 @NotNull ProperTextRange visibleRange) {
     final PsiAnnotation annotation = PsiTreeUtil.getParentOfType(target, PsiAnnotation.class);
     if (annotation != null && Comparing.strEqual(SuppressWarnings.class.getName(), annotation.getQualifiedName())) {
       final VirtualFile virtualFile = file.getVirtualFile();
       if (virtualFile != null && !virtualFile.getFileType().isBinary()) {
-        return new HighlightSuppressedWarningsHandler(editor, file, annotation, PsiTreeUtil.getParentOfType(target, PsiLiteralExpression.class));
+        return new HighlightSuppressedWarningsHandler(editor, file, annotation,
+                                                      PsiTreeUtil.getParentOfType(target, PsiLiteralExpression.class), visibleRange);
       }
     }
     return null;

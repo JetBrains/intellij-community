@@ -17,7 +17,7 @@ package testData.inspection.commentsWithMistakes.data.java.src;
 
 /*
 @author shkate@jetbrains.com
-<li style="color;">some context</li>
+<li style="color;">some context</li> attribute's
 */
 class SPITest1 {
   /* boolean is Java keyword

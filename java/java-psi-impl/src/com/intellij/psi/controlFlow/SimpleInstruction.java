@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,12 +14,10 @@
  * limitations under the License.
  */
 
-/**
- * @author cdr
- */
 package com.intellij.psi.controlFlow;
 
 import com.intellij.openapi.diagnostic.Logger;
+import org.jetbrains.annotations.NotNull;
 
 public abstract class SimpleInstruction extends InstructionBase {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.controlFlow.SimpleInstruction");
@@ -34,7 +32,7 @@ public abstract class SimpleInstruction extends InstructionBase {
   }
 
   @Override
-  public void accept(ControlFlowInstructionVisitor visitor, int offset, int nextOffset) {
+  public void accept(@NotNull ControlFlowInstructionVisitor visitor, int offset, int nextOffset) {
     visitor.visitSimpleInstruction(this, offset, nextOffset);
   }
 }

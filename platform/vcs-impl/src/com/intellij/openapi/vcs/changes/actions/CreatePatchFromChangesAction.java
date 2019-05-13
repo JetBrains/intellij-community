@@ -1,25 +1,15 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.openapi.vcs.changes.actions;
 
-import com.intellij.icons.AllIcons;
-import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.actionSystem.AnActionExtensionProvider;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.ExtendableAction;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.diff.impl.patch.FilePatch;
+import com.intellij.openapi.diff.impl.patch.IdeaTextPatchBuilder;
+import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
@@ -28,53 +18,98 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.changes.patch.CreatePatchCommitExecutor;
+import com.intellij.openapi.vcs.changes.patch.PatchWriter;
 import com.intellij.openapi.vcs.changes.shelf.ShelvedChangeList;
 import com.intellij.openapi.vcs.changes.shelf.ShelvedChangesViewManager;
 import com.intellij.openapi.vcs.changes.ui.SessionDialog;
+import com.intellij.util.ArrayUtil;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Collections;
+import java.io.IOException;
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 
-/**
- * @author yole
- */
-public class CreatePatchFromChangesAction extends AnAction implements DumbAware {
-  public CreatePatchFromChangesAction() {
-    super(VcsBundle.message("action.name.create.patch.for.selected.revisions"),
-          VcsBundle.message("action.description.create.patch.for.selected.revisions"), AllIcons.Actions.CreatePatch);
+import static com.intellij.openapi.vcs.changes.patch.PatchWriter.writeAsPatchToClipboard;
+
+public abstract class CreatePatchFromChangesAction extends ExtendableAction implements DumbAware {
+  private static final Logger LOG = Logger.getInstance(CreatePatchFromChangesAction.class);
+  private static final ExtensionPointName<AnActionExtensionProvider> EP_NAME_DIALOG =
+    ExtensionPointName.create("com.intellij.openapi.vcs.changes.actions.CreatePatchFromChangesAction.Dialog.ExtensionProvider");
+  private static final ExtensionPointName<AnActionExtensionProvider> EP_NAME_CLIPBOARD =
+    ExtensionPointName.create("com.intellij.openapi.vcs.changes.actions.CreatePatchFromChangesAction.Clipboard.ExtensionProvider");
+
+  private final boolean mySilentClipboard;
+
+  private CreatePatchFromChangesAction(boolean silentClipboard) {
+    super(silentClipboard ? EP_NAME_CLIPBOARD : EP_NAME_DIALOG);
+    mySilentClipboard = silentClipboard;
   }
 
-  public void actionPerformed(AnActionEvent e) {
-    Project project = e.getData(PlatformDataKeys.PROJECT);
-    final Change[] changes = e.getData(VcsDataKeys.CHANGES);
-    if ((changes == null) || (changes.length == 0)) return;
-    String commitMessage = null;
-    ShelvedChangeList[] shelvedChangeLists = e.getData(ShelvedChangesViewManager.SHELVED_CHANGELIST_KEY);
-    if (shelvedChangeLists != null && shelvedChangeLists.length > 0) {
-      commitMessage = shelvedChangeLists [0].DESCRIPTION;
+  public static class Dialog extends CreatePatchFromChangesAction {
+    public Dialog() {
+      super(false);
+    }
+  }
+
+  public static class Clipboard extends CreatePatchFromChangesAction {
+    public Clipboard() {
+      super(true);
+    }
+  }
+
+  @Override
+  public void defaultActionPerformed(@NotNull AnActionEvent e) {
+    Project project = e.getData(CommonDataKeys.PROJECT);
+    Change[] changes = e.getData(VcsDataKeys.CHANGES);
+    if (ArrayUtil.isEmpty(changes)) return;
+    String commitMessage = extractCommitMessage(e);
+
+    createPatch(project, commitMessage, Arrays.asList(changes), mySilentClipboard);
+  }
+
+  @Nullable
+  private static String extractCommitMessage(@NotNull AnActionEvent e) {
+    String message = e.getData(VcsDataKeys.PRESET_COMMIT_MESSAGE);
+    if (message != null) return message;
+
+    List<ShelvedChangeList> shelvedChangeLists = ShelvedChangesViewManager.getShelvedLists(e.getDataContext());
+    if (!shelvedChangeLists.isEmpty()) {
+      return shelvedChangeLists.get(0).DESCRIPTION;
+    }
+
+    ChangeList[] changeLists = e.getData(VcsDataKeys.CHANGE_LISTS);
+    if (changeLists != null && changeLists.length > 0) {
+      return changeLists[0].getComment();
+    }
+
+    return null;
+  }
+
+  public static void createPatch(@Nullable Project project,
+                                 @Nullable String commitMessage,
+                                 @NotNull List<? extends Change> changes) {
+    createPatch(project, commitMessage, changes, false);
+  }
+
+  public static void createPatch(@Nullable Project project,
+                                 @Nullable String commitMessage,
+                                 @NotNull List<? extends Change> changes,
+                                 boolean silentClipboard) {
+    project = project == null ? ProjectManager.getInstance().getDefaultProject() : project;
+    if (silentClipboard) {
+      createIntoClipboard(project, changes);
     }
     else {
-      ChangeList[] changeLists = e.getData(VcsDataKeys.CHANGE_LISTS);
-      if (changeLists != null && changeLists.length > 0) {
-        commitMessage = changeLists [0].getComment();
-      }
+      createWithDialog(project, commitMessage, changes);
     }
-    if (commitMessage == null) {
-      commitMessage = e.getData(VcsDataKeys.PRESET_COMMIT_MESSAGE);
-    }
-    if (commitMessage == null) {
-      commitMessage = "";
-    }
-    List<Change> changeCollection = new ArrayList<Change>();
-    Collections.addAll(changeCollection, changes);
-    createPatch(project, commitMessage, changeCollection);
   }
 
-  public static void createPatch(Project project, String commitMessage, List<Change> changeCollection) {
-    project = project == null ? ProjectManager.getInstance().getDefaultProject() : project;
+  private static void createWithDialog(@NotNull Project project, @Nullable String commitMessage, @NotNull List<? extends Change> changes) {
     final CreatePatchCommitExecutor executor = CreatePatchCommitExecutor.getInstance(project);
     CommitSession commitSession = executor.createCommitSession();
     if (commitSession instanceof CommitSessionContextAware) {
@@ -83,22 +118,36 @@ public class CreatePatchFromChangesAction extends AnAction implements DumbAware 
     DialogWrapper sessionDialog = new SessionDialog(executor.getActionText(),
                                                     project,
                                                     commitSession,
-                                                    changeCollection,
+                                                    changes,
                                                     commitMessage);
-    sessionDialog.show();
-    if (!sessionDialog.isOK()) {
-      return;
-    }
-    preloadContent(project, changeCollection);
+    if (!sessionDialog.showAndGet()) return;
 
-    commitSession.execute(changeCollection, commitMessage);
+    preloadContent(project, changes);
+
+    commitSession.execute((Collection<Change>)changes, commitMessage);
   }
 
-  private static void preloadContent(final Project project, final List<Change> changes) {
+  private static void createIntoClipboard(@NotNull Project project, @NotNull List<? extends Change> changes) {
+    ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
+      try {
+        String base = PatchWriter.calculateBaseForWritingPatch(project, changes).getPath();
+        List<FilePatch> patches = IdeaTextPatchBuilder.buildPatch(project, changes, base, false);
+        writeAsPatchToClipboard(project, patches, base, new CommitContext());
+        VcsNotifier.getInstance(project).notifySuccess("Patch copied to clipboard");
+      }
+      catch (IOException | VcsException exception) {
+        LOG.error("Can't create patch", exception);
+        VcsNotifier.getInstance(project).notifyWeakError("Patch creation failed");
+      }
+    }, VcsBundle.message("create.patch.commit.action.progress"), true, project);
+  }
+
+  private static void preloadContent(final Project project, final List<? extends Change> changes) {
     // to avoid multiple progress dialogs, preload content under one progress
     ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
+      @Override
       public void run() {
-        for(Change change: changes) {
+        for (Change change : changes) {
           checkLoadContent(change.getBeforeRevision());
           checkLoadContent(change.getAfterRevision());
         }
@@ -118,18 +167,16 @@ public class CreatePatchFromChangesAction extends AnAction implements DumbAware 
     }, VcsBundle.message("create.patch.loading.content.progress"), true, project);
   }
 
-  public void update(final AnActionEvent e) {
-    final Boolean haveSelectedChanges = e.getData(VcsDataKeys.HAVE_SELECTED_CHANGES);
-    Change[] changes;
-    ChangeList[] data1 = e.getData(VcsDataKeys.CHANGE_LISTS);
-    ShelvedChangeList[] data2 = e.getData(ShelvedChangesViewManager.SHELVED_CHANGELIST_KEY);
-    ShelvedChangeList[] data3 = e.getData(ShelvedChangesViewManager.SHELVED_RECYCLED_CHANGELIST_KEY);
+  @Override
+  public void defaultUpdate(@NotNull AnActionEvent e) {
+    Boolean haveSelectedChanges = e.getData(VcsDataKeys.HAVE_SELECTED_CHANGES);
+    ChangeList[] changeLists = e.getData(VcsDataKeys.CHANGE_LISTS);
+    List<ShelvedChangeList> shelveChangelists = ShelvedChangesViewManager.getShelvedLists(e.getDataContext());
+    int changelistNum = changeLists == null ? 0 : changeLists.length;
+    changelistNum += shelveChangelists.size();
 
-    int sum = data1 == null ? 0 : data1.length;
-    sum += data2 == null ? 0 : data2.length;
-    sum += data3 == null ? 0 : data3.length;
-
-    e.getPresentation().setEnabled(Boolean.TRUE.equals(haveSelectedChanges) && (sum == 1) &&
-                                   ((changes = e.getData(VcsDataKeys.CHANGES)) != null && changes.length > 0));
+    e.getPresentation().setEnabled(!Boolean.FALSE.equals(haveSelectedChanges) &&
+                                   changelistNum <= 1 &&
+                                   !ArrayUtil.isEmpty(e.getData(VcsDataKeys.CHANGES)));
   }
 }

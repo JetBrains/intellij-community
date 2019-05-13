@@ -3,6 +3,7 @@ package com.intellij.codeInspection;
 import com.intellij.codeInspection.ex.PlainTextFormatter;
 import com.intellij.openapi.diagnostic.Logger;
 import com.sampullara.cli.Args;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
@@ -31,8 +32,10 @@ public abstract class AbstractInspectionCmdlineOptions implements InspectionTool
   @Nullable
   protected abstract Boolean getRunWithEditorSettingsProperty();
 
+  @NotNull
   protected abstract String[] optionsBanner();
 
+  @Override
   public void initApplication(InspectionApplication app) {
     app.myHelpProvider = this;
     app.myProjectPath = determineProjectPath();

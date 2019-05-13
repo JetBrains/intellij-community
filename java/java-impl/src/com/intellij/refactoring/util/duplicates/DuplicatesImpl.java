@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,11 +35,11 @@ import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
@@ -60,20 +60,25 @@ public class DuplicatesImpl {
   private DuplicatesImpl() {}
 
   public static void invoke(@NotNull  final Project project, @NotNull Editor editor, @NotNull MatchProvider provider) {
+    invoke(project, editor, provider, true);
+  }
+
+  public static void invoke(@NotNull final Project project, @NotNull Editor editor, @NotNull MatchProvider provider, boolean skipPromptWhenOne) {
     final List<Match> duplicates = provider.getDuplicates();
     int idx = 0;
-    final Ref<Boolean> showAll = new Ref<Boolean>();
+    final Ref<Boolean> showAll = new Ref<>();
     final String confirmDuplicatePrompt = getConfirmationPrompt(provider, duplicates);
     for (final Match match : duplicates) {
       if (!match.getMatchStart().isValid() || !match.getMatchEnd().isValid()) continue;
-      if (replaceMatch(project, provider, match, editor, ++idx, duplicates.size(), showAll, confirmDuplicatePrompt, true)) return;
+      if (replaceMatch(project, provider, match, editor, ++idx, duplicates.size(), showAll, confirmDuplicatePrompt, skipPromptWhenOne)) return;
     }
   }
 
-  public static void invoke(final Project project, final MatchProvider provider) {
+  public static void invoke(final Project project, final MatchProvider provider, boolean showDialog) {
     final List<Match> duplicates = provider.getDuplicates();
     int idx = 0;
-    final Ref<Boolean> showAll = new Ref<Boolean>();
+    final Ref<Boolean> showAll = new Ref<>();
+    if (!showDialog) showAll.set(true);
     final String confirmDuplicatePrompt = getConfirmationPrompt(provider, duplicates);
     for (final Match match : duplicates) {
       final PsiFile file = match.getFile();
@@ -109,46 +114,52 @@ public class DuplicatesImpl {
                                       final String confirmDuplicatePrompt,
                                       boolean skipPromptWhenOne) {
     final ArrayList<RangeHighlighter> highlighters = previewMatch(project, match, editor);
-    if (!ApplicationManager.getApplication().isUnitTestMode()) {
-      if ((!skipPromptWhenOne || size > 1) && (showAll.get() == null || !showAll.get())) {
-        final String prompt = provider.getConfirmDuplicatePrompt(match);
-        final ReplacePromptDialog promptDialog = new ReplacePromptDialog(false, provider.getReplaceDuplicatesTitle(idx, size), project) {
-          @Override
-          protected String getMessage() {
-            final String message = super.getMessage();
-            return prompt != null ? message + prompt : message;
+    try {
+      if (!ApplicationManager.getApplication().isUnitTestMode()) {
+        if ((!skipPromptWhenOne || size > 1) && (showAll.get() == null || !showAll.get())) {
+          final String prompt = provider.getConfirmDuplicatePrompt(match);
+          final ReplacePromptDialog promptDialog = new ReplacePromptDialog(false, provider.getReplaceDuplicatesTitle(idx, size), project) {
+            @Override
+            protected String getMessage() {
+              final String message = super.getMessage();
+              return prompt != null ? message + " " + prompt : message;
+            }
+          };
+          promptDialog.show();
+          final boolean allChosen = promptDialog.getExitCode() == FindManager.PromptResult.ALL;
+          showAll.set(allChosen);
+          if (allChosen && confirmDuplicatePrompt != null && prompt == null) {
+            if (Messages.showOkCancelDialog(project, "In order to replace all occurrences method signature will be changed. Proceed?",
+                                            CommonBundle.getWarningTitle(), Messages.getWarningIcon()) !=
+                Messages.OK) return true;
           }
-        };
-        promptDialog.show();
-        final boolean allChosen = promptDialog.getExitCode() == FindManager.PromptResult.ALL;
-        showAll.set(allChosen);
-        if (allChosen && confirmDuplicatePrompt != null && prompt == null) {
-          if (Messages.showOkCancelDialog(project, "In order to replace all occurrences method signature will be changed. Proceed?", CommonBundle.getWarningTitle(), Messages.getWarningIcon()) !=
-              DialogWrapper.OK_EXIT_CODE) return true;
+          if (promptDialog.getExitCode() == FindManager.PromptResult.SKIP) return false;
+          if (promptDialog.getExitCode() == FindManager.PromptResult.CANCEL) return true;
         }
-        if (promptDialog.getExitCode() == FindManager.PromptResult.SKIP) return false;
-        if (promptDialog.getExitCode() == FindManager.PromptResult.CANCEL) return true;
       }
     }
-    HighlightManager.getInstance(project).removeSegmentHighlighter(editor, highlighters.get(0));
+    finally {
+      HighlightManager.getInstance(project).removeSegmentHighlighter(editor, highlighters.get(0));
+    }
 
-    new WriteCommandAction(project, MethodDuplicatesHandler.REFACTORING_NAME) {
-      @Override
-      protected void run(Result result) throws Throwable {
-        try {
-          provider.processMatch(match);
-        }
-        catch (IncorrectOperationException e) {
-          LOG.error(e);
-        }
+    // call change signature when needed
+    provider.prepareSignature(match);
+
+    WriteCommandAction.writeCommandAction(project).withName(MethodDuplicatesHandler.REFACTORING_NAME)
+                      .withGroupId(MethodDuplicatesHandler.REFACTORING_NAME).run(() -> {
+      try {
+        provider.processMatch(match);
       }
-    }.execute();
+      catch (IncorrectOperationException e) {
+        LOG.error(e);
+      }
+    });
 
     return false;
   }
 
   public static ArrayList<RangeHighlighter> previewMatch(Project project, Match match, Editor editor) {
-    final ArrayList<RangeHighlighter> highlighters = new ArrayList<RangeHighlighter>();
+    final ArrayList<RangeHighlighter> highlighters = new ArrayList<>();
     highlightMatch(project, editor, match, highlighters);
     final TextRange textRange = match.getTextRange();
     final LogicalPosition logicalPosition = editor.offsetToLogicalPosition(textRange.getStartOffset());
@@ -167,12 +178,10 @@ public class DuplicatesImpl {
       }
     }
     if (anyCollapsed) {
-      editor.getFoldingModel().runBatchFoldingOperation(new Runnable() {
-        public void run() {
-          for (final FoldRegion foldRegion : foldRegions) {
-            if (!foldRegion.isExpanded()) {
-              foldRegion.setExpanded(true);
-            }
+      editor.getFoldingModel().runBatchFoldingOperation(() -> {
+        for (final FoldRegion foldRegion : foldRegions) {
+          if (!foldRegion.isExpanded()) {
+            foldRegion.setExpanded(true);
           }
         }
       });
@@ -187,18 +196,26 @@ public class DuplicatesImpl {
   }
 
   public static void processDuplicates(@NotNull MatchProvider provider, @NotNull Project project, @NotNull Editor editor) {
-    boolean hasDuplicates = provider.hasDuplicates();
-    if (hasDuplicates) {
+    Boolean hasDuplicates = provider.hasDuplicates();
+    if (hasDuplicates == null || hasDuplicates.booleanValue()) {
       List<Match> duplicates = provider.getDuplicates();
+      ArrayList<RangeHighlighter> highlighters = null;
       if (duplicates.size() == 1) {
-        previewMatch(project, duplicates.get(0), editor);
+        highlighters = previewMatch(project, duplicates.get(0), editor);
       }
-      final int answer = ApplicationManager.getApplication().isUnitTestMode() ? 0 : Messages.showYesNoDialog(project,
+      final int answer = ApplicationManager.getApplication().isUnitTestMode() || hasDuplicates == null ? Messages.YES : Messages.showYesNoDialog(project,
         RefactoringBundle.message("0.has.detected.1.code.fragments.in.this.file.that.can.be.replaced.with.a.call.to.extracted.method",
         ApplicationNamesInfo.getInstance().getProductName(), duplicates.size()),
         "Process Duplicates", Messages.getQuestionIcon());
-      if (answer == 0) {
-        invoke(project, editor, provider);
+      if (answer == Messages.YES) {
+        PsiDocumentManager.getInstance(project).commitAllDocuments();
+        invoke(project, editor, provider, hasDuplicates != null);
+      }
+      else if (highlighters != null) {
+        final HighlightManager highlightManager = HighlightManager.getInstance(project);
+        for (RangeHighlighter highlighter : highlighters) {
+          highlightManager.removeSegmentHighlighter(editor, highlighter);
+        }
       }
     }
   }

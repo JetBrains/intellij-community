@@ -58,6 +58,11 @@ public abstract class ExpandableItemsHandlerFactory {
     public void setEnabled(boolean enabled) {
     }
 
+    @Override
+    public boolean isEnabled() {
+      return false;
+    }
+
     @NotNull
     @Override
     public Collection<Object> getExpandedItems() {

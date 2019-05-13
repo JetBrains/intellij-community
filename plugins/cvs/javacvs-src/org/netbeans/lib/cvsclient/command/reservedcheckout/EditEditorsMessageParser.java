@@ -26,13 +26,14 @@ final class EditEditorsMessageParser extends AbstractMessageParser {
 
 	// Setup ==================================================================
 
-	public EditEditorsMessageParser(String allowedUser) {
+	EditEditorsMessageParser(String allowedUser) {
 		this.allowedUser = allowedUser;
 	}
 
 	// Implemented ============================================================
 
-	public void parseLine(String line, boolean isErrorMessage) {
+	@Override
+        public void parseLine(String line, boolean isErrorMessage) {
 		if (isErrorMessage) {
 			return;
 		}
@@ -53,9 +54,7 @@ final class EditEditorsMessageParser extends AbstractMessageParser {
 		filesEdited = true;
 	}
 
-  public void binaryMessageSent(final byte[] bytes) {
-  }
-
+  @Override
   public void outputDone() {
 	}
 

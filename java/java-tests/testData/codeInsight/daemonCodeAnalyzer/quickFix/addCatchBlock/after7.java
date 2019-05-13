@@ -1,4 +1,4 @@
-// "Add Catch Clause(s)" "true"
+// "Add 'catch' clause(s)" "true"
 class Test {
     static class E1 extends Exception { }
     static class E2 extends Exception { }
@@ -11,9 +11,9 @@ class Test {
     void m() {
         try (MyResource r = new MyResource()) {
         } catch (E2 e2) {
-            <selection>e2.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.</selection>
+            <selection>e2.printStackTrace();</selection>
         } catch (E1 e1) {
-            e1.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+            e1.printStackTrace();
         }
     }
 }

@@ -12,7 +12,7 @@ class Ambiguity1 {
   static <T> void m(I2<T> i2) {}
 
   {
-    m<error descr="Ambiguous method call: both 'Ambiguity1.m(I1)' and 'Ambiguity1.m(I2<Object>)' match">(()->{throw new AssertionError();})</error>;
+    m(()->{throw new AssertionError();});
     m(() -> {});
     m(() -> {
         if (false) return;

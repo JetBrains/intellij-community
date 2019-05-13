@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2009 Dave Griffith, Bas Leijdekkers
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,11 +19,22 @@ import com.intellij.psi.*;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.TestUtils;
 import org.jetbrains.annotations.NotNull;
 
+/**
+ * @author Bas Leijdekkers
+ */
 public class BeforeOrAfterIsPublicVoidNoArgInspection extends BaseInspection {
 
+  @Override
+  protected InspectionGadgetsFix buildFix(Object... infos) {
+    final PsiMethod method = (PsiMethod)infos[0];
+    return new MakePublicStaticVoidFix(method, false);
+  }
+
+  @Override
   @NotNull
   public String getID() {
     return "BeforeOrAfterWithIncorrectSignature";
@@ -48,8 +59,7 @@ public class BeforeOrAfterIsPublicVoidNoArgInspection extends BaseInspection {
     return new BeforeOrAfterIsPublicVoidNoArgVisitor();
   }
 
-  private static class BeforeOrAfterIsPublicVoidNoArgVisitor
-    extends BaseInspectionVisitor {
+  private static class BeforeOrAfterIsPublicVoidNoArgVisitor extends BaseInspectionVisitor {
 
     @Override
     public void visitMethod(@NotNull PsiMethod method) {
@@ -66,17 +76,9 @@ public class BeforeOrAfterIsPublicVoidNoArgInspection extends BaseInspection {
         return;
       }
       final PsiParameterList parameterList = method.getParameterList();
-      if (parameterList.getParametersCount() != 0) {
-        registerMethodError(method);
-      }
-      else if (!returnType.equals(PsiType.VOID)) {
-        registerMethodError(method);
-      }
-      else if (!method.hasModifierProperty(PsiModifier.PUBLIC)) {
-        registerMethodError(method);
-      }
-      else if (method.hasModifierProperty(PsiModifier.STATIC)) {
-        registerMethodError(method);
+      if (!parameterList.isEmpty() || !returnType.equals(PsiType.VOID) ||
+          !method.hasModifierProperty(PsiModifier.PUBLIC) || method.hasModifierProperty(PsiModifier.STATIC)) {
+        registerMethodError(method, method);
       }
     }
   }

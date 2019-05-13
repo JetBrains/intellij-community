@@ -8,7 +8,7 @@ public class ConstantValueVariableUse {
             f(number);
         }
         if (number == 1.0) {
-            f(number);
+            f(<warning descr="Value of 'number' is known to be constant">number</warning>);
         }
     }
 
@@ -16,4 +16,54 @@ public class ConstantValueVariableUse {
         System.out.println("signedZero = " + signedZero);
     }
 
+    void m(int i) {
+        if ((i) == 2 && true && true) { // polyadic
+            f(<warning descr="Value of 'i' is known to be constant">i</warning>);
+        }
+
+        int j = 10;
+        while (i < 10 && j == 10) {
+            f(<warning descr="Value of 'j' is known to be constant">j</warning>);
+        }
+        for (; i < 10 && j == 10; ) {
+            f(<warning descr="Value of 'j' is known to be constant">j</warning>);
+        }
+
+        if (i == 3) {
+            i = 4;
+            System.out.println(i);
+        }
+    }
+
+}
+class C {
+    private int hash;
+    @Override
+    public int hashCode() {
+        int h = hash;
+        if (h == 0) {
+            hash = h = "StringUtil.stringHashCode(this, 0, length())".hashCode();
+        }
+        return h;
+    }
+}
+class D  {
+    void f() {
+        int positiveValue = 10;
+        int counter = 12;
+        if (positiveValue == 10) {
+            while (counter > 0 && positiveValue > 0) {
+                counter--;
+                positiveValue--;
+            }
+        }
+    }
+
+    private <T> T foo(Class<T> type) {
+        T result = null;
+        if (type == Boolean.class) {
+            result = type.cast( true);
+        }
+        return result;
+    }
 }

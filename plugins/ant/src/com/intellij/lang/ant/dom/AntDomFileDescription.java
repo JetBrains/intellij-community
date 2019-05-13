@@ -17,16 +17,19 @@ package com.intellij.lang.ant.dom;
 
 import com.intellij.lang.ant.ForcedAntFileAttribute;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.xml.XmlDocument;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
+import icons.AntIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
+
 /**
  * @author Eugene Zhuravlev
- *         Date: Apr 6, 2010
  */
 public class AntDomFileDescription extends AntFileDescription<AntDomProject> {
   private static final String ROOT_TAG_NAME = "project";
@@ -35,8 +38,15 @@ public class AntDomFileDescription extends AntFileDescription<AntDomProject> {
     super(AntDomProject.class, ROOT_TAG_NAME);
   }
 
+  @Override
   public boolean isMyFile(@NotNull XmlFile file, @Nullable Module module) {
     return super.isMyFile(file, module) && isAntFile(file);
+  }
+
+  @Override
+  @Nullable
+  public Icon getFileIcon(@Iconable.IconFlags int flags) {
+    return AntIcons.AntBuildXml;
   }
 
   public static boolean isAntFile(final XmlFile xmlFile) {

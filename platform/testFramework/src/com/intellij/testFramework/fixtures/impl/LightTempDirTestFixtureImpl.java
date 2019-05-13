@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,16 +16,16 @@
 package com.intellij.testFramework.fixtures.impl;
 
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.testFramework.LightPlatformTestCase;
+import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.testFramework.fixtures.TempDirTestFixture;
 import com.intellij.util.PathUtil;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.junit.Assert;
 
 import java.io.IOException;
 import java.util.List;
@@ -33,20 +33,20 @@ import java.util.List;
 /**
  * @author yole
  */
-@SuppressWarnings({"JUnitTestCaseWithNonTrivialConstructors", "JUnitTestClassNamingConvention", "JUnitTestCaseWithNoTests"})
+@SuppressWarnings({"JUnitTestClassNamingConvention", "JUnitTestCaseWithNoTests"})
 public class LightTempDirTestFixtureImpl extends BaseFixture implements TempDirTestFixture {
   private final VirtualFile mySourceRoot;
   private final boolean myUsePlatformSourceRoot;
 
   public LightTempDirTestFixtureImpl() {
     final VirtualFile fsRoot = VirtualFileManager.getInstance().findFileByUrl("temp:///");
-    assertNotNull(fsRoot);
-    mySourceRoot = new WriteAction<VirtualFile>() {
-      @Override
-      protected void run(final Result<VirtualFile> result) throws Throwable {
-        result.setResult(fsRoot.createChildDirectory(this, "root"));
-      }
-    }.execute().getResultObject();
+    Assert.assertNotNull(fsRoot);
+    try {
+      mySourceRoot = WriteAction.computeAndWait(() -> fsRoot.createChildDirectory(this, "root"));
+    }
+    catch (IOException e) {
+      throw new RuntimeException(e);
+    }
     myUsePlatformSourceRoot = false;
   }
 
@@ -60,65 +60,43 @@ public class LightTempDirTestFixtureImpl extends BaseFixture implements TempDirT
     try {
       deleteAll();
     }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
     finally {
       super.tearDown();
     }
   }
 
   @Override
-  public VirtualFile copyFile(@NotNull final VirtualFile file, final String targetPath) {
-    final String path = PathUtil.getParentPath(targetPath);
-    return ApplicationManager.getApplication().runWriteAction(new Computable<VirtualFile>() {
-      @Override
-      public VirtualFile compute() {
-        try {
-          VirtualFile targetDir = findOrCreateDir(path);
-          final String newName = PathUtil.getFileName(targetPath);
-          final VirtualFile existing = targetDir.findChild(newName);
-          if (existing != null) {
-            existing.setBinaryContent(file.contentsToByteArray());
-            return existing;
-          }
-
-          return VfsUtilCore.copyFile(this, file, targetDir, newName);
-        }
-        catch (IOException e) {
-          throw new RuntimeException(e);
-        }
-      }
-    });
-  }
-
-  @Override
   @NotNull
-  public VirtualFile findOrCreateDir(final String path) {
-    return ApplicationManager.getApplication().runWriteAction(new Computable<VirtualFile>() {
-      @Override
-      public VirtualFile compute() {
-        try {
-          return findOrCreateChildDir(getSourceRoot(), path);
-        }
-        catch (IOException e) {
-          throw new RuntimeException(e);
-        }
+  public VirtualFile findOrCreateDir(@NotNull final String path) {
+    return WriteAction.computeAndWait(() -> {
+      try {
+        return findOrCreateChildDir(getSourceRoot(), path);
+      }
+      catch (IOException e) {
+        throw new RuntimeException(e);
       }
     });
   }
 
+  @NotNull
   @Override
-  public VirtualFile copyAll(String dataDir, String targetDir) {
+  public VirtualFile copyAll(@NotNull String dataDir, @NotNull String targetDir) {
     return copyAll(dataDir, targetDir, VirtualFileFilter.ALL);
   }
 
+  @NotNull
   @Override
-  public VirtualFile copyAll(final String dataDir, final String targetDir, @NotNull final VirtualFileFilter filter) {
+  public VirtualFile copyAll(@NotNull final String dataDir, @NotNull final String targetDir, @NotNull final VirtualFileFilter filter) {
     return ApplicationManager.getApplication().runWriteAction(new Computable<VirtualFile>() {
       @Override
       public VirtualFile compute() {
         final VirtualFile from = LocalFileSystem.getInstance().refreshAndFindFileByPath(dataDir);
-        assert from != null: "Cannot find testdata directory " + dataDir;
+        Assert.assertNotNull("Cannot find testdata directory " + dataDir, from);
         try {
-          refreshRecursively(from);
+          UsefulTestCase.refreshRecursively(from);
 
           VirtualFile tempDir = getSourceRoot();
           if (targetDir.length() > 0) {
@@ -164,56 +142,44 @@ public class LightTempDirTestFixtureImpl extends BaseFixture implements TempDirT
     return root;
   }
 
+  @NotNull
   @Override
   public String getTempDirPath() {
     return "temp:///root";
   }
 
   @Override
-  public VirtualFile getFile(@NonNls String path) {
-    final VirtualFile sourceRoot = getSourceRoot();
-    final VirtualFile result = sourceRoot.findFileByRelativePath(path);
+  public VirtualFile getFile(@NotNull String path) {
+    VirtualFile sourceRoot = getSourceRoot();
+    VirtualFile result = sourceRoot.findFileByRelativePath(path);
     if (result == null) {
       sourceRoot.refresh(false, true);
-      return sourceRoot.findFileByRelativePath(path);
+      result = sourceRoot.findFileByRelativePath(path);
     }
     return result;
   }
 
   @Override
   @NotNull
-  public VirtualFile createFile(String targetPath) {
+  public VirtualFile createFile(@NotNull String targetPath) {
     final String path = PathUtil.getParentPath(targetPath);
     final String name = PathUtil.getFileName(targetPath);
-    return ApplicationManager.getApplication().runWriteAction(new Computable<VirtualFile>() {
-      @Override
-      public VirtualFile compute() {
-        try {
-          VirtualFile targetDir = findOrCreateDir(path);
-          return targetDir.createChildData(this, name);
-        }
-        catch (IOException e) {
-          throw new RuntimeException(e);
-        }
-      }
-    });
+    try {
+      return WriteAction.computeAndWait(() -> {
+        VirtualFile targetDir = findOrCreateDir(path);
+        return targetDir.createChildData(this, name);
+      });
+    }
+    catch (IOException e) {
+      throw new RuntimeException(e);
+    }
   }
 
   @Override
   @NotNull
-  public VirtualFile createFile(String targetPath, final String text) throws IOException {
-    final VirtualFile file = createFile(targetPath);
-    ApplicationManager.getApplication().runReadAction(new Runnable() {
-      @Override
-      public void run() {
-        try {
-          VfsUtil.saveText(file, text);
-        }
-        catch (IOException e) {
-          throw new RuntimeException(e);
-        }
-      }
-    });
+  public VirtualFile createFile(@NotNull String name, @NotNull final String text) throws IOException {
+    final VirtualFile file = createFile(name);
+    WriteAction.runAndWait(() -> VfsUtil.saveText(file, text));
     return file;
   }
 

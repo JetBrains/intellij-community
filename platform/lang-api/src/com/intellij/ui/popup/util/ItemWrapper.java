@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,15 +35,10 @@ public abstract class ItemWrapper {
   public abstract String footerText();
 
   public void updateDetailView(DetailView panel) {
-    if (panel == null) return;
-
-    if (equals(panel.getCurrentItem())) {
-      return;
+    if (panel != null) {
+      doUpdateDetailView(panel, panel.hasEditorOnly());
+      panel.setCurrentItem(this);
     }
-
-    doUpdateDetailView(panel, panel.hasEditorOnly());
-
-    panel.setCurrentItem(this);
   }
 
   protected abstract void doUpdateDetailView(DetailView panel, boolean editorOnly);

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,10 +22,6 @@ import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
 
-/**
- * User: Dmitry.Krasilschikov
- * Date: 22.05.2007
- */
 public class GroovySurroundDescriptor implements SurroundDescriptor {
   private static final Surrounder[] ourSurrounders = new Surrounder[]{
     //statements: like in java
@@ -34,6 +30,7 @@ public class GroovySurroundDescriptor implements SurroundDescriptor {
     new WhileSurrounder(),
     //there's no do-while in Groovy
     new SurrounderByClosure(),
+    new GrBracesSurrounder(),
     //like in Java
     new ForSurrounder(),
     new TryCatchSurrounder(),
@@ -55,6 +52,7 @@ public class GroovySurroundDescriptor implements SurroundDescriptor {
     new WithExprSurrounder(),
   };
 
+  @Override
   @NotNull
   public Surrounder[] getSurrounders() {
     return ourSurrounders;
@@ -65,6 +63,7 @@ public class GroovySurroundDescriptor implements SurroundDescriptor {
     return false;
   }
 
+  @Override
   @NotNull
   public PsiElement[] getElementsToSurround(PsiFile file, int startOffset, int endOffset) {
     return GroovyRefactoringUtil.findStatementsInRange(file, startOffset, endOffset, true);

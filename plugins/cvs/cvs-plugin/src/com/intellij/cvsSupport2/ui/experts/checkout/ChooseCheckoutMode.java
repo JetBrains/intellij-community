@@ -1,26 +1,17 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.cvsSupport2.ui.experts.checkout;
 
 import com.intellij.CvsBundle;
 import com.intellij.cvsSupport2.config.CvsApplicationLevelConfiguration;
+import com.intellij.cvsSupport2.config.CvsRootConfiguration;
+import com.intellij.cvsSupport2.connections.CvsEnvironment;
 import com.intellij.cvsSupport2.cvsBrowser.CvsElement;
 import com.intellij.cvsSupport2.cvsBrowser.CvsFile;
+import com.intellij.cvsSupport2.cvsoperations.cvsTagOrBranch.TagsProviderOnEnvironment;
+import com.intellij.cvsSupport2.cvsoperations.dateOrRevision.ui.DateOrRevisionOrTagSettings;
 import com.intellij.cvsSupport2.ui.ChangeKeywordSubstitutionPanel;
 import com.intellij.cvsSupport2.ui.experts.WizardStep;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.VerticalFlowLayout;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.io.FileUtil;
@@ -30,9 +21,11 @@ import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.PlatformIcons;
-import com.intellij.util.containers.HashSet;
+import java.util.HashSet;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.netbeans.lib.cvsclient.command.KeywordSubstitution;
 
 import javax.swing.*;
@@ -49,12 +42,13 @@ import java.util.List;
 public class ChooseCheckoutMode extends WizardStep {
 
   private File mySelectedLocation;
-  private final Collection<File> myCvsPaths = new ArrayList<File>();
+  private final Collection<File> myCvsPaths = new ArrayList<>();
   private final DefaultListModel myCheckoutModeModel = new DefaultListModel();
   private final JList myCheckoutModeList = new JBList(myCheckoutModeModel);
   private final JCheckBox myMakeNewFilesReadOnly = new JCheckBox(CvsBundle.message("checkbox.make.new.files.read.only"));
   private final JCheckBox myPruneEmptyDirectories = new JCheckBox(CvsBundle.message("checkbox.prune.empty.directories"));
   private final ChangeKeywordSubstitutionPanel myChangeKeywordSubstitutionPanel;
+  private final DateOrRevisionOrTagSettings myDateOrRevisionOrTagSettings;
 
   private final JPanel myCenterPanel = new JPanel(new CardLayout());
 
@@ -62,14 +56,16 @@ public class ChooseCheckoutMode extends WizardStep {
   @NonNls public static final String MESSAGE = "MESSSAGE";
   @NonNls private final JLabel myMessage = new JLabel("XXX");
 
-  public ChooseCheckoutMode(CheckoutWizard wizard) {
+  private CvsRootConfiguration myConfiguration = null;
+
+  public ChooseCheckoutMode(Project project, CheckoutWizard wizard) {
     super("###", wizard);
     myCheckoutModeList.setCellRenderer(new ColoredListCellRenderer() {
       @Override
-      protected void customizeCellRenderer(JList list, Object value, int index, boolean selected, boolean hasFocus) {
+      protected void customizeCellRenderer(@NotNull JList list, Object value, int index, boolean selected, boolean hasFocus) {
         final CheckoutStrategy checkoutStrategy = (CheckoutStrategy)value;
-        append(checkoutStrategy.getResult().getAbsolutePath(), new SimpleTextAttributes(Font.PLAIN, list.getForeground()));
-        setIcon(PlatformIcons.DIRECTORY_CLOSED_ICON);
+        append(checkoutStrategy.getResult().getAbsolutePath(), new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, list.getForeground()));
+        setIcon(PlatformIcons.FOLDER_ICON);
       }
     });
     myCheckoutModeList.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
@@ -93,7 +89,65 @@ public class ChooseCheckoutMode extends WizardStep {
     myMessage.setBackground(UIUtil.getTableBackground());
     myCenterPanel.add(MESSAGE, ScrollPaneFactory.createScrollPane(messagePanel));
 
+    myDateOrRevisionOrTagSettings = new DateOrRevisionOrTagSettings(new TagsProviderOnEnvironment() {
+      @Nullable
+      @Override
+      protected CvsEnvironment getCvsEnvironment() {
+        return getWizard().getSelectedConfiguration();
+      }
+
+      @Override
+      public String getModule() {
+        final CvsElement[] selectedElements = getWizard().getSelectedElements();
+        String module = null;
+        for (CvsElement element : selectedElements) {
+          final String checkoutPath = element.getCheckoutPath();
+          if (module == null) {
+            module = checkoutPath;
+            continue;
+          }
+          final String commonParentModule = findCommonParentModule(module, checkoutPath);
+          if (commonParentModule == null) {
+            return super.getModule();
+          }
+          module = commonParentModule;
+        }
+        return module;
+      }
+    }, project);
+
     init();
+  }
+
+  private static String findCommonParentModule(String module1, String module2) {
+    int diff = indexOfFirstDifference(module1, module2);
+    if (diff == 0) {
+      return null;
+    }
+    if (diff == module1.length()) {
+      return module1;
+    }
+    if (module1.charAt(diff - 1) == '/') {
+      return module1.substring(0, diff);
+    }
+    else {
+      int index = module1.lastIndexOf('/', diff);
+      if (index < 0) {
+        return null;
+      }
+      return module1.substring(0, index);
+    }
+  }
+
+  private static int indexOfFirstDifference(@NotNull String a, @NotNull String b) {
+    int max = Math.min(a.length(), b.length());
+    for (int i = 0; i < max; i++) {
+      final char c = a.charAt(i);
+      if (c != b.charAt(i)) {
+        return i;
+      }
+    }
+    return max;
   }
 
   @Override
@@ -122,6 +176,7 @@ public class ChooseCheckoutMode extends WizardStep {
     result.add(myMakeNewFilesReadOnly);
     result.add(myPruneEmptyDirectories);
     result.add(myChangeKeywordSubstitutionPanel.getComponent());
+    result.add(myDateOrRevisionOrTagSettings.getPanel());
     return result;
   }
 
@@ -155,6 +210,11 @@ public class ChooseCheckoutMode extends WizardStep {
     else if (selectedLocation == null) {
       getWizard().updateButtons();
     }
+    final CvsRootConfiguration configuration = getWizard().getSelectedConfiguration();
+    if (myConfiguration != configuration) {
+      myDateOrRevisionOrTagSettings.updateFrom(configuration.DATE_OR_REVISION_SETTINGS);
+      myConfiguration = configuration;
+    }
   }
 
   private StringBuilder composeLocationsMessage() {
@@ -167,25 +227,20 @@ public class ChooseCheckoutMode extends WizardStep {
   }
 
   private Collection<File> getSelectedFiles() {
-    final Collection<File> allFiles = new HashSet<File>();
+    final Collection<File> allFiles = new HashSet<>();
     final CvsElement[] selection = getWizard().getSelectedElements();
     if (selection == null) return allFiles;
     for (CvsElement cvsElement : selection) {
       allFiles.add(new File(cvsElement.getCheckoutPath()));
     }
 
-    final ArrayList<File> result = new ArrayList<File>();
+    final ArrayList<File> result = new ArrayList<>();
 
     for (File file : allFiles) {
       if (!hasParentIn(allFiles, file)) result.add(file);
     }
 
-    Collections.sort(result, new Comparator<File>(){
-      @Override
-      public int compare(File file, File file1) {
-        return file.getPath().compareTo(file1.getPath());
-      }
-    });
+    Collections.sort(result, (file, file1) -> file.getPath().compareTo(file1.getPath()));
     return result;
   }
 
@@ -256,5 +311,9 @@ public class ChooseCheckoutMode extends WizardStep {
 
   public KeywordSubstitution getKeywordSubstitution() {
     return myChangeKeywordSubstitutionPanel.getKeywordSubstitution();
+  }
+
+  public void saveDateOrRevisionSettings(CvsRootConfiguration configuration) {
+    myDateOrRevisionOrTagSettings.saveTo(configuration.DATE_OR_REVISION_SETTINGS);
   }
 }

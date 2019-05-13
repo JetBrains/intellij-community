@@ -1,22 +1,8 @@
-/*
- * Copyright 2000-2011 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.cvsSupport2;
 
 import com.intellij.CvsBundle;
-import com.intellij.codeStyle.CodeStyleFacade;
+import com.intellij.application.options.CodeStyle;
 import com.intellij.cvsSupport2.application.CvsEntriesManager;
 import com.intellij.cvsSupport2.application.CvsInfo;
 import com.intellij.cvsSupport2.config.CvsApplicationLevelConfiguration;
@@ -29,6 +15,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -42,7 +29,6 @@ import org.netbeans.lib.cvsclient.admin.Entry;
 
 import javax.swing.*;
 import java.io.File;
-import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.text.SimpleDateFormat;
@@ -54,11 +40,11 @@ import java.util.regex.Pattern;
  */
 public class CvsUtil {
 
-  private final static SyncDateFormat DATE_FORMATTER = new SyncDateFormat(new SimpleDateFormat(Entry.getLastModifiedDateFormatter().toPattern(), Locale.US));
-
+  private static final SyncDateFormat DATE_FORMATTER;
   static {
-    //noinspection HardCodedStringLiteral
-    DATE_FORMATTER.setTimeZone(TimeZone.getTimeZone("GMT+0000"));
+    SimpleDateFormat delegate = new SimpleDateFormat(Entry.getLastModifiedDateFormatter().toPattern(), Locale.US);
+    delegate.setTimeZone(TimeZone.getTimeZone("GMT+0000"));
+    DATE_FORMATTER = new SyncDateFormat(delegate);
   }
 
   @NonNls public static final String CVS_IGNORE_FILE = ".cvsignore";
@@ -101,6 +87,22 @@ public class CvsUtil {
     }
   }
 
+  public static boolean fileIsUnderCvsMaybeWithVfs(VirtualFile vFile) {
+    try {
+      if (Registry.is("cvs.roots.refresh.uses.vfs")) {
+        if (vFile.isDirectory()) {
+          return directoryIsUnderCVS(vFile);
+        }
+        return fileIsUnderCvs(getEntryFor(vFile));
+      } else {
+        return fileIsUnderCvs(vFile);
+      }
+    }
+    catch (Exception e1) {
+      return false;
+    }
+  }
+
   public static boolean fileIsUnderCvs(VirtualFile vFile) {
     return fileIsUnderCvs(CvsVfsUtil.getFileFor(vFile));
   }
@@ -123,6 +125,22 @@ public class CvsUtil {
     if (!getFileInTheAdminDir(directory, CVS_ROOT_FILE).isFile()) return false;
     if (!getFileInTheAdminDir(directory, REPOSITORY).isFile()) return false;
     return true;
+  }
+
+  private static boolean directoryIsUnderCVS(VirtualFile vDir) {
+    VirtualFile dir = getAdminDir(vDir);
+    if (dir == null) return false;
+
+    if (!hasPlainFileInTheAdminDir(dir, ENTRIES)) return false;
+    if (!hasPlainFileInTheAdminDir(dir, CVS_ROOT_FILE)) return false;
+    if (!hasPlainFileInTheAdminDir(dir, REPOSITORY)) return false;
+
+    return true;
+  }
+
+  private static boolean hasPlainFileInTheAdminDir(VirtualFile dir, String filename) {
+    VirtualFile child = dir.findChild(filename);
+    return child != null && !child.isDirectory();
   }
 
   public static Entry getEntryFor(@NotNull VirtualFile file) {
@@ -150,6 +168,7 @@ public class CvsUtil {
 
   private static FileCondition fileIsUnderCvsCondition() {
     return new FileCondition() {
+      @Override
       public boolean verify(File file) {
         return fileIsUnderCvs(file);
       }
@@ -169,6 +188,7 @@ public class CvsUtil {
 
   public static boolean filesHaveParentUnderCvs(File[] files) {
     return allSatisfy(files, new FileCondition() {
+      @Override
       public boolean verify(File file) {
         return fileHasParentUnderCvs(file);
       }
@@ -181,12 +201,12 @@ public class CvsUtil {
 
   public static boolean fileIsLocallyAdded(File file) {
     Entry entry = getEntryFor(file);
-    return entry == null ? false : entry.isAddedFile();
+    return entry != null && entry.isAddedFile();
   }
 
   public static boolean fileIsLocallyDeleted(File file) {
     Entry entry = getEntryFor(file);
-    return entry == null ? false : entry.isRemoved();
+    return entry != null && entry.isRemoved();
   }
 
   public static boolean fileIsLocallyAdded(VirtualFile file) {
@@ -206,13 +226,11 @@ public class CvsUtil {
     catch (Exception ex) {
       final String entries = loadFrom(dir, ENTRIES, true);
       if (entries != null) {
-        ApplicationManager.getApplication().invokeLater(new Runnable() {
-          public void run() {
-            final String entriesFileRelativePath = CVS + File.separatorChar + ENTRIES;
-            Messages
-              .showErrorDialog(CvsBundle.message("message.error.invalid.entries", entriesFileRelativePath, dir.getAbsolutePath(), entries),
-                               CvsBundle.message("message.error.invalid.entries.title"));
-          }
+        ApplicationManager.getApplication().invokeLater(() -> {
+          final String entriesFileRelativePath = CVS + File.separatorChar + ENTRIES;
+          Messages.showErrorDialog(
+            CvsBundle.message("message.error.invalid.entries", entriesFileRelativePath, dir.getAbsolutePath(), entries),
+            CvsBundle.message("message.error.invalid.entries.title"));
         });
       }
       return entriesHandler;
@@ -242,7 +260,7 @@ public class CvsUtil {
   }
 
   private static String getLineSeparator() {
-    return CodeStyleFacade.getInstance().getLineSeparator();
+    return CodeStyle.getDefaultSettings().getLineSeparator();
   }
 
   public static boolean fileIsLocallyRemoved(File file) {
@@ -299,6 +317,11 @@ public class CvsUtil {
 
   private static File getAdminDir(File file) {
     return new File(file, CVS);
+  }
+
+  private static VirtualFile getAdminDir(VirtualFile file) {
+    VirtualFile child = file.findChild(CVS);
+    return child != null && child.isDirectory() ? child:null;
   }
 
   @Nullable
@@ -399,6 +422,7 @@ public class CvsUtil {
 
   public static boolean filesExistInCvs(File[] files) {
     return allSatisfy(files, new FileCondition() {
+      @Override
       public boolean verify(File file) {
         return fileIsUnderCvs(file) && !fileIsLocallyAdded(file);
       }
@@ -407,6 +431,7 @@ public class CvsUtil {
 
   public static boolean filesAreNotDeleted(File[] files) {
     return allSatisfy(files, new FileCondition() {
+      @Override
       public boolean verify(File file) {
         return fileIsUnderCvs(file)
                && !fileIsLocallyAdded(file)
@@ -520,7 +545,7 @@ public class CvsUtil {
     if (storedRevisionFile.isFile()) return;
     try {
       FileUtil.writeToFile(storedRevisionFile, bytes);
-      storedRevisionFile.setLastModified(file.getModificationStamp());
+      storedRevisionFile.setLastModified(file.getTimeStamp());
     }
     catch (IOException e) {
       LOG.info(e);
@@ -530,13 +555,9 @@ public class CvsUtil {
 
   private static void deleteAllOtherRevisions(final VirtualFile file, final String storedFilename) {
     File ioFile = new File(file.getPath());
-    final Pattern pattern = Pattern.compile("\\\u002E#" + ioFile.getName().replace(".", "\\\u002E") + "\u002E" + REVISION_PATTERN);
+    final Pattern pattern = Pattern.compile("\\Q.#" + ioFile.getName() + ".\\E" + REVISION_PATTERN);
     final File dir = new File(getAdminDir(ioFile.getParentFile()), BASE_REVISIONS_DIR);
-    File[] files = dir.listFiles(new FilenameFilter() {
-      public boolean accept(final File dir, final String name) {
-        return (!storedFilename.equals(name)) && pattern.matcher(name).matches();
-      }
-    });
+    File[] files = dir.listFiles((dir1, name) -> (!storedFilename.equals(name)) && pattern.matcher(name).matches());
     if (files != null) {
       for (File oldFile : files) {
         oldFile.delete();
@@ -622,22 +643,17 @@ public class CvsUtil {
 
   }
 
-  public static String getRelativeRepositoryPath(String repository, String serverRoot) {    
+  public static String getRelativeRepositoryPath(String repository, String serverRoot) {
     repository = repository.replace(File.separatorChar, '/');
     serverRoot = serverRoot.replace(File.separatorChar, '/');
 
     if (repository.startsWith(serverRoot)) {
       repository = repository.substring(serverRoot.length());
 
-      if (repository.startsWith("/")) {
-        repository = repository.substring(1);
-      }
-
+      repository = StringUtil.trimStart(repository, "/");
     }
 
-    if (repository.startsWith("./")) {
-      repository = repository.substring(2);
-    }
+    repository = StringUtil.trimStart(repository, "./");
 
     return repository;
   }
@@ -677,12 +693,8 @@ public class CvsUtil {
     }
 
     catch (final IOException e) {
-      SwingUtilities.invokeLater(new Runnable() {
-        public void run() {
-          Messages.showErrorDialog(CvsBundle.message("message.error.restore.entry", file.getPresentableUrl(), e.getLocalizedMessage()),
-                                   CvsBundle.message("message.error.restore.entry.title"));
-        }
-      });
+      SwingUtilities.invokeLater(() -> Messages.showErrorDialog(CvsBundle.message("message.error.restore.entry", file.getPresentableUrl(), e.getLocalizedMessage()),
+                                                            CvsBundle.message("message.error.restore.entry.title")));
     }
   }
 
@@ -722,10 +734,11 @@ public class CvsUtil {
   private static class ReverseFileCondition implements FileCondition {
     private final FileCondition myCondition;
 
-    public ReverseFileCondition(FileCondition condition) {
+    ReverseFileCondition(FileCondition condition) {
       myCondition = condition;
     }
 
+    @Override
     public boolean verify(File file) {
       return !myCondition.verify(file);
     }
@@ -739,7 +752,7 @@ public class CvsUtil {
 
     private Conflict(String name, String originalRevision, List<String> revisions, long time) {
       myName = name;
-      myRevisions = new ArrayList<String>();
+      myRevisions = new ArrayList<>();
       myRevisions.add(originalRevision);
       myRevisions.addAll(revisions);
       myPreviousTime = time;
@@ -747,16 +760,16 @@ public class CvsUtil {
 
     private Conflict(String name, List<String> revisions, long time) {
       myName = name;
-      myRevisions = new ArrayList<String>();
+      myRevisions = new ArrayList<>();
       myRevisions.addAll(revisions);
       myPreviousTime = time;
     }
 
     public String toString() {
-      StringBuffer result = new StringBuffer();
+      StringBuilder result = new StringBuilder();
       result.append(myName);
       result.append(DELIM);
-      result.append(String.valueOf(myPreviousTime));
+      result.append(myPreviousTime);
       result.append(DELIM);
       for (int i = 0; i < myRevisions.size(); i++) {
         if (i > 0) {
@@ -796,7 +809,7 @@ public class CvsUtil {
     }
 
     public List<String> getRevisions() {
-      return new ArrayList<String>(myRevisions);
+      return new ArrayList<>(myRevisions);
     }
 
     public void setOriginalRevision(final String originalRevision) {
@@ -817,7 +830,7 @@ public class CvsUtil {
   }
 
   private static class Conflicts {
-    private final Map<String, Conflict> myNameToConflict = new com.intellij.util.containers.HashMap<String, Conflict>();
+    private final Map<String, Conflict> myNameToConflict = new HashMap<>();
 
     @NotNull
     public static Conflicts readFrom(File file) throws IOException {
@@ -839,7 +852,7 @@ public class CvsUtil {
     }
 
     private List<String> getConflictLines() {
-      ArrayList<String> result = new ArrayList<String>();
+      ArrayList<String> result = new ArrayList<>();
       for (final Conflict conflict : myNameToConflict.values()) {
         result.add((conflict).toString());
       }
@@ -863,7 +876,7 @@ public class CvsUtil {
 
     public void addConflictForFile(String name) {
       if (!myNameToConflict.containsKey(name)) {
-        myNameToConflict.put(name, new Conflict(name, "", new ArrayList<String>(), -1));
+        myNameToConflict.put(name, new Conflict(name, "", new ArrayList<>(), -1));
       }
     }
 
@@ -872,7 +885,7 @@ public class CvsUtil {
     }
 
     public List<String> getRevisionsFor(String name) {
-      if (!myNameToConflict.containsKey(name)) return new ArrayList<String>();
+      if (!myNameToConflict.containsKey(name)) return new ArrayList<>();
       return (myNameToConflict.get(name)).getRevisions();
     }
 

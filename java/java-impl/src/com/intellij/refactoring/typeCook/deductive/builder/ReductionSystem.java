@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,19 +31,19 @@ import java.util.*;
  * @author db
  */
 public class ReductionSystem {
-  final HashSet<Constraint> myConstraints = new HashSet<Constraint>();
-  final HashSet<PsiElement> myElements;
-  final HashMap<PsiTypeCastExpression, PsiType> myCastToOperandType;
-  final HashMap<PsiElement, PsiType> myTypes;
+  final Set<Constraint> myConstraints = new HashSet<>();
+  final Set<PsiElement> myElements;
+  final Map<PsiTypeCastExpression, PsiType> myCastToOperandType;
+  final Map<PsiElement, PsiType> myTypes;
   final PsiTypeVariableFactory myTypeVariableFactory;
   final Project myProject;
   final Settings mySettings;
 
-  HashSet<PsiTypeVariable> myBoundVariables;
+  Set<PsiTypeVariable> myBoundVariables;
 
   public ReductionSystem(final Project project,
-                         final HashSet<PsiElement> elements,
-                         final HashMap<PsiElement, PsiType> types,
+                         final Set<PsiElement> elements,
+                         final Map<PsiElement, PsiType> types,
                          final PsiTypeVariableFactory factory,
                          final Settings settings) {
     myProject = project;
@@ -52,14 +52,14 @@ public class ReductionSystem {
     myTypeVariableFactory = factory;
     myBoundVariables = null;
     mySettings = settings;
-    myCastToOperandType = new HashMap<PsiTypeCastExpression, PsiType>();
+    myCastToOperandType = new HashMap<>();
   }
 
   public Project getProject() {
     return myProject;
   }
 
-  public HashSet<Constraint> getConstraints() {
+  public Set<Constraint> getConstraints() {
     return myConstraints;
   }
 
@@ -77,9 +77,7 @@ public class ReductionSystem {
     if ((Util.bindsTypeVariables(left) || Util.bindsTypeVariables(right))
     ) {
       final Subtype c = new Subtype(left, right);
-      if (!myConstraints.contains(c)) {
-        myConstraints.add(c);
-      }
+      myConstraints.add(c);
     }
   }
 
@@ -95,7 +93,7 @@ public class ReductionSystem {
 
   @SuppressWarnings({"StringConcatenationInsideStringBufferAppend"})
   public String toString() {
-    @NonNls StringBuffer buffer = new StringBuffer();
+    @NonNls StringBuilder buffer = new StringBuilder();
 
     buffer.append("Victims:\n");
 
@@ -165,13 +163,13 @@ public class ReductionSystem {
     class Node {
       int myComponent = -1;
       Constraint myConstraint;
-      HashSet<Node> myNeighbours = new HashSet<Node>();
+      Set<Node> myNeighbours = new HashSet<>();
 
-      public Node() {
+      Node() {
         myConstraint = null;
       }
 
-      public Node(final Constraint c) {
+      Node(final Constraint c) {
         myConstraint = c;
       }
 
@@ -189,7 +187,7 @@ public class ReductionSystem {
 
     final Node[] typeVariableNodes = new Node[myTypeVariableFactory.getNumber()];
     final Node[] constraintNodes = new Node[myConstraints.size()];
-    final HashMap<Constraint, HashSet<PsiTypeVariable>> boundVariables = new HashMap<Constraint, HashSet<PsiTypeVariable>>();
+    final Map<Constraint, Set<PsiTypeVariable>> boundVariables = new HashMap<>();
 
     for (int i = 0; i < typeVariableNodes.length; i++) {
       typeVariableNodes[i] = new Node();
@@ -207,7 +205,7 @@ public class ReductionSystem {
       int l = 0;
 
       for (final Constraint constraint : myConstraints) {
-        final HashSet<PsiTypeVariable> boundVars = new HashSet<PsiTypeVariable>();
+        final Set<PsiTypeVariable> boundVars = new LinkedHashSet<>();
         final Node constraintNode = constraintNodes[l++];
 
         new Object() {
@@ -266,9 +264,9 @@ public class ReductionSystem {
       }
     }
 
-    final LinkedList<HashSet<PsiTypeVariable>> clusters = myTypeVariableFactory.getClusters();
+    List<Set<PsiTypeVariable>> clusters = myTypeVariableFactory.getClusters();
 
-    for (final HashSet<PsiTypeVariable> cluster : clusters) {
+    for (final Set<PsiTypeVariable> cluster : clusters) {
       Node prev = null;
 
       for (final PsiTypeVariable variable : cluster) {
@@ -289,7 +287,7 @@ public class ReductionSystem {
         final int component = currComponent;
         new Object() {
           void selectComponent(final Node n) {
-            final LinkedList<Node> frontier = new LinkedList<Node>();
+            final LinkedList<Node> frontier = new LinkedList<>();
 
             frontier.addFirst(n);
 
@@ -327,7 +325,7 @@ public class ReductionSystem {
     return systems;
   }
 
-  private void addConstraint(final Constraint constraint, final HashSet<PsiTypeVariable> vars) {
+  private void addConstraint(final Constraint constraint, final Set<PsiTypeVariable> vars) {
     if (myBoundVariables == null) {
       myBoundVariables = vars;
     }
@@ -342,7 +340,7 @@ public class ReductionSystem {
     return myTypeVariableFactory;
   }
 
-  public HashSet<PsiTypeVariable> getBoundVariables() {
+  public Set<PsiTypeVariable> getBoundVariables() {
     return myBoundVariables;
   }
 
@@ -356,14 +354,10 @@ public class ReductionSystem {
     }
 
     Arrays.sort(data,
-                new Comparator<String>() {
-                  public int compare(String x, String y) {
-                    return x.compareTo(y);
-                  }
-                });
+                (x, y) -> x.compareTo(y));
 
 
-    final StringBuffer repr = new StringBuffer();
+    final StringBuilder repr = new StringBuilder();
 
     for (String aData : data) {
       repr.append(aData);
@@ -451,7 +445,7 @@ public class ReductionSystem {
             theSubst = theSubst.put(parm, substitute(type));
           }
 
-          return JavaPsiFacade.getInstance(aClass.getProject()).getElementFactory().createType(aClass, theSubst);
+          return JavaPsiFacade.getElementFactory(aClass.getProject()).createType(aClass, theSubst);
         }
         else {
           return t;
@@ -473,14 +467,10 @@ public class ReductionSystem {
     }
 
     Arrays.sort(data,
-                new Comparator<String>() {
-                  public int compare(String x, String y) {
-                    return x.compareTo(y);
-                  }
-                });
+                (x, y) -> x.compareTo(y));
 
 
-    final StringBuffer repr = new StringBuffer();
+    final StringBuilder repr = new StringBuilder();
 
     for (String aData : data) {
       repr.append(aData);

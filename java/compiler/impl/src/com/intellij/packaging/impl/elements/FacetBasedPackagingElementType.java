@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,9 +18,9 @@ package com.intellij.packaging.impl.elements;
 import com.intellij.facet.Facet;
 import com.intellij.facet.FacetTypeId;
 import com.intellij.facet.FacetTypeRegistry;
+import com.intellij.ide.util.ChooseElementsDialog;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
-import com.intellij.ide.util.ChooseElementsDialog;
 import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.elements.CompositePackagingElement;
 import com.intellij.packaging.elements.PackagingElement;
@@ -28,7 +28,6 @@ import com.intellij.packaging.elements.PackagingElementType;
 import com.intellij.packaging.ui.ArtifactEditorContext;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.ArrayList;
@@ -61,9 +60,8 @@ public abstract class FacetBasedPackagingElementType<E extends PackagingElement<
   public List<? extends E> chooseAndCreate(@NotNull ArtifactEditorContext context, @NotNull Artifact artifact, @NotNull CompositePackagingElement<?> parent) {
     final List<F> facets = getFacets(context);
     ChooseFacetsDialog dialog = new ChooseFacetsDialog(context.getProject(), facets, getDialogTitle(), getDialogDescription());
-    dialog.show();
-    if (dialog.isOK()) {
-      final List<E> elements = new ArrayList<E>();
+    if (dialog.showAndGet()) {
+      final List<E> elements = new ArrayList<>();
       for (F facet : dialog.getChosenElements()) {
         elements.add(createElement(context.getProject(), facet));
       }
@@ -74,7 +72,7 @@ public abstract class FacetBasedPackagingElementType<E extends PackagingElement<
 
   private List<F> getFacets(ArtifactEditorContext context) {
     final Module[] modules = context.getModulesProvider().getModules();
-    final List<F> facets = new ArrayList<F>();
+    final List<F> facets = new ArrayList<>();
     for (Module module : modules) {
       facets.addAll(context.getFacetsProvider().getFacetsByType(module, myFacetType));
     }
@@ -89,11 +87,6 @@ public abstract class FacetBasedPackagingElementType<E extends PackagingElement<
 
   protected abstract String getItemText(F item);
 
-  @Nullable
-  protected Icon getIcon(F item) {
-    return FacetTypeRegistry.getInstance().findFacetType(myFacetType).getIcon();
-  }
-
   private class ChooseFacetsDialog extends ChooseElementsDialog<F> {
     private ChooseFacetsDialog(Project project, List<? extends F> items, String title, String description) {
       super(project, items, title, description, true);
@@ -106,7 +99,7 @@ public abstract class FacetBasedPackagingElementType<E extends PackagingElement<
 
     @Override
     protected Icon getItemIcon(F item) {
-      return FacetBasedPackagingElementType.this.getIcon(item);
+      return FacetTypeRegistry.getInstance().findFacetType(myFacetType).getIcon();
     }
   }
 }

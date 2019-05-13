@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,6 @@
  */
 package com.intellij.openapi.roots.ui.configuration.artifacts;
 
-import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
@@ -39,7 +38,10 @@ import com.intellij.packaging.ui.ManifestFileConfiguration;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
 * @author nik
@@ -50,10 +52,10 @@ public class ArtifactsStructureConfigurableContextImpl implements ArtifactsStruc
   private final ArtifactAdapter myModifiableModelListener;
   private final StructureConfigurableContext myContext;
   private final Project myProject;
-  private final Map<Artifact, CompositePackagingElement<?>> myModifiableRoots = new HashMap<Artifact, CompositePackagingElement<?>>();
-  private final Map<Artifact, ArtifactEditorImpl> myArtifactEditors = new HashMap<Artifact, ArtifactEditorImpl>();
-  private final Map<ArtifactPointer, ArtifactEditorSettings> myEditorSettings = new HashMap<ArtifactPointer, ArtifactEditorSettings>();
-  private final Map<Artifact, ArtifactProjectStructureElement> myArtifactElements = new HashMap<Artifact, ArtifactProjectStructureElement>();
+  private final Map<Artifact, CompositePackagingElement<?>> myModifiableRoots = new HashMap<>();
+  private final Map<Artifact, ArtifactEditorImpl> myArtifactEditors = new HashMap<>();
+  private final Map<ArtifactPointer, ArtifactEditorSettings> myEditorSettings = new HashMap<>();
+  private final Map<Artifact, ArtifactProjectStructureElement> myArtifactElements = new HashMap<>();
   private final ArtifactEditorSettings myDefaultSettings;
   private final ManifestFileProvider myManifestFileProvider = new ArtifactEditorManifestFileProvider(this);
 
@@ -140,16 +142,13 @@ public class ArtifactsStructureConfigurableContextImpl implements ArtifactsStruc
   @Override
   public void editLayout(@NotNull final Artifact artifact, final Runnable action) {
     final Artifact originalArtifact = getOriginalArtifact(artifact);
-    new WriteAction() {
-      @Override
-      protected void run(final Result result) {
-        final ModifiableArtifact modifiableArtifact = getOrCreateModifiableArtifactModel().getOrCreateModifiableArtifact(originalArtifact);
-        if (modifiableArtifact.getRootElement() == originalArtifact.getRootElement()) {
-          modifiableArtifact.setRootElement(getOrCreateModifiableRootElement(originalArtifact));
-        }
-        action.run();
+    WriteAction.run(() -> {
+      final ModifiableArtifact modifiableArtifact = getOrCreateModifiableArtifactModel().getOrCreateModifiableArtifact(originalArtifact);
+      if (modifiableArtifact.getRootElement() == originalArtifact.getRootElement()) {
+        modifiableArtifact.setRootElement(getOrCreateModifiableRootElement(originalArtifact));
       }
-    }.execute();
+      action.run();
+    });
     myContext.getDaemonAnalyzer().queueUpdate(getOrCreateArtifactElement(originalArtifact));
   }
 

@@ -1,24 +1,11 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm;
 
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.BusyObject;
 import com.intellij.openapi.util.Key;
 import com.intellij.ui.content.ContentManager;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -28,8 +15,7 @@ import java.awt.*;
 import java.awt.event.InputEvent;
 
 public interface ToolWindow extends BusyObject {
-
-  Key<Boolean> SHOW_CONTENT_ICON = new Key<Boolean>("ContentIcon");
+  Key<Boolean> SHOW_CONTENT_ICON = new Key<>("ContentIcon");
 
   /**
    * @exception IllegalStateException if tool window isn't installed.
@@ -74,7 +60,7 @@ public interface ToolWindow extends BusyObject {
   /**
    * @exception IllegalStateException if tool window isn't installed.
    */
-  void setAnchor(ToolWindowAnchor anchor, @Nullable Runnable runnable);
+  void setAnchor(@NotNull ToolWindowAnchor anchor, @Nullable Runnable runnable);
 
   /**
    * @exception IllegalStateException if tool window isn't installed.
@@ -104,10 +90,10 @@ public interface ToolWindow extends BusyObject {
   /**
    * @exception IllegalStateException if tool window isn't installed.
    */
-  void setType(ToolWindowType type, @Nullable Runnable runnable);
+  void setType(@NotNull ToolWindowType type, @Nullable Runnable runnable);
 
   /**
-   * @return window icon. Returns <code>null</code> if window has no icon.
+   * @return window icon. Returns {@code null} if window has no icon.
    */
   Icon getIcon();
 
@@ -117,15 +103,25 @@ public interface ToolWindow extends BusyObject {
   void setIcon(Icon icon);
 
   /**
-   * @return window title. Returns <code>null</code> if window has no title.
+   * @return window title. Returns {@code null} if window has no title.
    */
   String getTitle();
 
   /**
    * Sets new window title.
-   * @exception IllegalStateException if tool window isn't installed.
    */
   void setTitle(String title);
+
+  /**
+   * @return window stripe button text.
+   */
+  @NotNull
+  String getStripeTitle();
+
+  /**
+   * Sets new window stripe button text.
+   */
+  void setStripeTitle(@NotNull String title);
 
   /**
    * @return whether the window is available or not.
@@ -139,9 +135,10 @@ public interface ToolWindow extends BusyObject {
    */
   void setAvailable(boolean available, @Nullable Runnable runnable);
 
-  void setContentUiType(ToolWindowContentUiType type, @Nullable Runnable runnable);
+  void setContentUiType(@NotNull ToolWindowContentUiType type, @Nullable Runnable runnable);
   void setDefaultContentUiType(@NotNull ToolWindowContentUiType type);
 
+  @NotNull
   ToolWindowContentUiType getContentUiType();
 
   void installWatcher(ContentManager contentManager);
@@ -151,9 +148,7 @@ public interface ToolWindow extends BusyObject {
    */
   JComponent getComponent();
 
-
   ContentManager getContentManager();
-
 
   void setDefaultState(@Nullable ToolWindowAnchor anchor, @Nullable ToolWindowType type, @Nullable Rectangle floatingBounds);
 
@@ -161,12 +156,26 @@ public interface ToolWindow extends BusyObject {
   void setToHideOnEmptyContent(boolean hideOnEmpty);
 
   boolean isToHideOnEmptyContent();
-  
+
+  /**
+   *
+   * @param show if {@code false} stripe button would be hidden
+   */
+  void setShowStripeButton(boolean show);
+
+  boolean isShowStripeButton();
+
   boolean isDisposed();
 
   void showContentPopup(InputEvent inputEvent);
 
-  ActionCallback getActivation();
+  default void setHelpId(@NonNls String helpId) {
+  }
+
+  @Nullable
+  default String getHelpId() {
+    return null;
+  }
 
   class Border extends EmptyBorder {
     public Border() {
@@ -178,4 +187,11 @@ public interface ToolWindow extends BusyObject {
     }
   }
 
+  /**
+   * @deprecated Not used anymore.
+   */
+  @Deprecated
+  default ActionCallback getActivation() {
+    return ActionCallback.DONE;
+  }
 }

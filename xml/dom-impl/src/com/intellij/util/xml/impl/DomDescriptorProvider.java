@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,14 +16,12 @@
 package com.intellij.util.xml.impl;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.impl.source.xml.XmlElementDescriptorProvider;
 import com.intellij.psi.xml.XmlTag;
-import com.intellij.psi.PsiElement;
+import com.intellij.util.xml.DefinesXml;
 import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.impl.dom.DomElementXmlDescriptor;
-import com.intellij.util.xml.DomElement;
-import com.intellij.util.xml.DomManager;
-import com.intellij.util.xml.DefinesXml;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -31,21 +29,23 @@ import org.jetbrains.annotations.Nullable;
  */
 public class DomDescriptorProvider implements XmlElementDescriptorProvider {
 
+  @Override
   @Nullable
   public XmlElementDescriptor getDescriptor(final XmlTag tag) {
     Project project = tag.getProject();
     if (project.isDefault()) return null;
-    final DomElement domElement = DomManager.getDomManager(project).getDomElement(tag);
-    if (domElement != null) {
-      final DefinesXml definesXml = domElement.getAnnotation(DefinesXml.class);
+    
+    final DomInvocationHandler<?,?> handler = DomManagerImpl.getDomManager(project).getDomHandler(tag);
+    if (handler != null) {
+      final DefinesXml definesXml = handler.getAnnotation(DefinesXml.class);
       if (definesXml != null) {
-        return new DomElementXmlDescriptor(domElement);
+        return new DomElementXmlDescriptor(handler);
       }
       final PsiElement parent = tag.getParent();
       if (parent instanceof XmlTag) {
         final XmlElementDescriptor descriptor = ((XmlTag)parent).getDescriptor();
 
-        if (descriptor != null && descriptor instanceof DomElementXmlDescriptor) {
+        if (descriptor instanceof DomElementXmlDescriptor) {
           return descriptor.getElementDescriptor(tag, (XmlTag)parent);
         }
       }

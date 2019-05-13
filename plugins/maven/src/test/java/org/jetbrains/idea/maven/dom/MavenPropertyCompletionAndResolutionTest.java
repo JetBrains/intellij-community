@@ -15,6 +15,7 @@
  */
 package org.jetbrains.idea.maven.dom;
 
+import com.intellij.codeInsight.completion.CompletionType;
 import com.intellij.lang.properties.IProperty;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -22,9 +23,11 @@ import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiReference;
+import com.intellij.psi.xml.XmlTag;
 import org.jetbrains.idea.maven.dom.model.MavenDomProfiles;
 import org.jetbrains.idea.maven.dom.model.MavenDomProfilesModel;
 import org.jetbrains.idea.maven.dom.model.MavenDomSettingsModel;
+import org.jetbrains.idea.maven.model.MavenExplicitProfiles;
 import org.jetbrains.idea.maven.vfs.MavenPropertiesVirtualFileSystem;
 
 import java.util.Arrays;
@@ -233,6 +236,7 @@ public class MavenPropertyCompletionAndResolutionTest extends MavenDomTestCase {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>parent</artifactId>" +
                      "<version>1</version>" +
+                     "<packaging>pom</packaging>" +
 
                      "<build>" +
                      " <directory>dir</directory>" +
@@ -327,7 +331,9 @@ public class MavenPropertyCompletionAndResolutionTest extends MavenDomTestCase {
 
                      "<name>${<caret>project.build.finalName}</name>");
 
-    assertResolved(myProjectPom, findTag(getMavenGeneralSettings().getEffectiveSuperPom(), "project.build.finalName"));
+    VirtualFile effectiveSuperPom = getMavenGeneralSettings().getEffectiveSuperPom();
+    assertNotNull(effectiveSuperPom);
+    assertResolved(myProjectPom, findTag(effectiveSuperPom, "project.build.finalName"));
   }
 
   public void testHandleResolutionRecursion() throws Exception {
@@ -577,6 +583,44 @@ public class MavenPropertyCompletionAndResolutionTest extends MavenDomTestCase {
     assertResolved(myProjectPom, findTag(profiles, "settings.localRepository", MavenDomSettingsModel.class));
   }
 
+  public void testCompletionPropertyInsideSettingsXml() throws Exception {
+    VirtualFile profiles = updateSettingsXml("<profiles>" +
+                                                 "  <profile>" +
+                                                 "    <id>one</id>" +
+                                                 "    <properties>" +
+                                                 "      <foo>value</foo>" +
+                                                 "      <bar>value</bar>" +
+                                                 "      <xxx>${<caret>}</xxx>" +
+                                                 "    </properties>" +
+                                                 "  </profile>" +
+                                                 "</profiles>");
+
+    myFixture.configureFromExistingVirtualFile(profiles);
+    myFixture.complete(CompletionType.BASIC);
+    List<String> strings = myFixture.getLookupElementStrings();
+
+    assert strings != null;
+    assert strings.containsAll(Arrays.asList("foo", "bar"));
+    assert !strings.contains("xxx");
+  }
+
+  public void testResolvePropertyInsideSettingsXml() throws Exception {
+    VirtualFile profiles = updateSettingsXml("<profiles>" +
+                                                 "  <profile>" +
+                                                 "    <id>one</id>" +
+                                                 "    <properties>" +
+                                                 "      <foo>value</foo>" +
+                                                 "      <bar>${<caret>foo}</bar>" +
+                                                 "    </properties>" +
+                                                 "  </profile>" +
+                                                 "</profiles>");
+
+    myFixture.configureFromExistingVirtualFile(profiles);
+    PsiElement elementAtCaret = myFixture.getElementAtCaret();
+    assert elementAtCaret instanceof XmlTag;
+    assertEquals("foo", ((XmlTag)elementAtCaret).getName());
+  }
+
   public void testResolvingAbsentSettingsModelProperties() throws Exception {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
@@ -693,7 +737,7 @@ public class MavenPropertyCompletionAndResolutionTest extends MavenDomTestCase {
     assertResolved(myProjectPom, MavenPropertiesVirtualFileSystem.getInstance().findEnvProperty(myProject, getEnvVar()).getPsiElement());
   }
 
-  public void testUpperCaseEnvPropertiesOnWindows() throws Exception {
+  public void testUpperCaseEnvPropertiesOnWindows() {
     if (!SystemInfo.isWindows) return;
 
     createProjectPom("<groupId>test</groupId>" +
@@ -733,7 +777,7 @@ public class MavenPropertyCompletionAndResolutionTest extends MavenDomTestCase {
     assertUnresolved(myProjectPom);
   }
 
-  public void testHighlightUnresolvedProperties() throws Exception {
+  public void testHighlightUnresolvedProperties() {
     createProjectPom("<groupId>test</groupId>\n" +
                      "<artifactId>child</artifactId>\n" +
                      "<version>1</version>\n" +
@@ -855,7 +899,7 @@ public class MavenPropertyCompletionAndResolutionTest extends MavenDomTestCase {
     assertContain(variants, "user.home", "env." + getEnvVar());
   }
 
-  public void testDoNotIncludeCollectionPropertiesInCompletion() throws Exception {
+  public void testDoNotIncludeCollectionPropertiesInCompletion() {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +
@@ -863,7 +907,7 @@ public class MavenPropertyCompletionAndResolutionTest extends MavenDomTestCase {
     assertCompletionVariantsDoNotInclude(myProjectPom, "project.dependencies", "env.\\=C\\:", "idea.config.path");
   }
 
-  public void testCompletingAfterOpenBrace() throws Exception {
+  public void testCompletingAfterOpenBrace() {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +
@@ -872,7 +916,7 @@ public class MavenPropertyCompletionAndResolutionTest extends MavenDomTestCase {
     assertCompletionVariantsInclude(myProjectPom, "project.groupId", "groupId");
   }
 
-  public void testCompletingAfterOpenBraceInOpenTag() throws Exception {
+  public void testCompletingAfterOpenBraceInOpenTag() {
     if (ignore()) return;
 
     createProjectPom("<groupId>test</groupId>" +
@@ -883,7 +927,7 @@ public class MavenPropertyCompletionAndResolutionTest extends MavenDomTestCase {
     assertCompletionVariantsInclude(myProjectPom, "project.groupId", "groupId");
   }
 
-  public void testCompletingAfterOpenBraceAndSomeText() throws Exception {
+  public void testCompletingAfterOpenBraceAndSomeText() {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +
@@ -893,8 +937,8 @@ public class MavenPropertyCompletionAndResolutionTest extends MavenDomTestCase {
     assertContain(variants, "project.groupId");
     assertDoNotContain(variants, "groupId");
   }
-  
-  public void testCompletingAfterOpenBraceAndSomeTextWithDot() throws Exception {
+
+  public void testCompletingAfterOpenBraceAndSomeTextWithDot() {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +
@@ -905,7 +949,7 @@ public class MavenPropertyCompletionAndResolutionTest extends MavenDomTestCase {
     assertDoNotContain(variants, "project.name");
   }
 
-  public void testDoNotCompleteAfterNonWordCharacter() throws Exception {
+  public void testDoNotCompleteAfterNonWordCharacter() {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +
@@ -915,7 +959,7 @@ public class MavenPropertyCompletionAndResolutionTest extends MavenDomTestCase {
   }
 
   private void readWithProfiles(String... profiles) {
-    myProjectsManager.setExplicitProfiles(Arrays.asList(profiles));
+    myProjectsManager.setExplicitProfiles(new MavenExplicitProfiles(Arrays.asList(profiles)));
     waitForReadingCompletion();
   }
 }

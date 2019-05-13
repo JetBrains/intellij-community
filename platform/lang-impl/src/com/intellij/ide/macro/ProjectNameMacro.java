@@ -17,21 +17,25 @@
 package com.intellij.ide.macro;
 
 import com.intellij.ide.IdeBundle;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.project.Project;
 
 public final class ProjectNameMacro extends Macro {
+  @Override
   public String getName() {
     return "ProjectName";
   }
 
+  @Override
   public String getDescription() {
     return IdeBundle.message("macro.project.file.name");
   }
 
+  @Override
   public String expand(DataContext dataContext) {
-    final Project project = PlatformDataKeys.PROJECT.getData(dataContext);
+    final Project project = CommonDataKeys.PROJECT.getData(dataContext);
     if (project == null) {
       return null;
     }

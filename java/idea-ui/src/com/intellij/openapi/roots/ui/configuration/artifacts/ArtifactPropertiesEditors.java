@@ -24,6 +24,7 @@ import com.intellij.packaging.impl.artifacts.ArtifactUtil;
 import com.intellij.packaging.ui.ArtifactEditorContext;
 import com.intellij.packaging.ui.ArtifactPropertiesEditor;
 import com.intellij.ui.TabbedPaneWrapper;
+import com.intellij.ui.components.JBScrollPane;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -44,8 +45,8 @@ public class ArtifactPropertiesEditors {
   public ArtifactPropertiesEditors(ArtifactEditorContext context, Artifact originalArtifact, Artifact artifact) {
     myContext = context;
     myOriginalArtifact = originalArtifact;
-    myMainPanels = new HashMap<String, JPanel>();
-    myEditors = new ArrayList<PropertiesEditorInfo>();
+    myMainPanels = new HashMap<>();
+    myEditors = new ArrayList<>();
     for (ArtifactPropertiesProvider provider : artifact.getPropertiesProviders()) {
       final PropertiesEditorInfo editorInfo = new PropertiesEditorInfo(provider);
       myEditors.add(editorInfo);
@@ -68,22 +69,19 @@ public class ArtifactPropertiesEditors {
   }
 
   public void addTabs(TabbedPaneWrapper tabbedPane) {
-    List<String> sortedTabs = new ArrayList<String>(myMainPanels.keySet());
-    Collections.sort(sortedTabs, new Comparator<String>() {
-      @Override
-      public int compare(String o1, String o2) {
-        int i1 = STANDARD_TABS_ORDER.indexOf(o1);
-        if (i1 == -1) i1 = STANDARD_TABS_ORDER.size();
-        int i2 = STANDARD_TABS_ORDER.indexOf(o2);
-        if (i2 == -1) i2 = STANDARD_TABS_ORDER.size();
-        if (i1 != i2) {
-          return i1 - i2;
-        }
-        return o1.compareTo(o2);
+    List<String> sortedTabs = new ArrayList<>(myMainPanels.keySet());
+    Collections.sort(sortedTabs, (o1, o2) -> {
+      int i1 = STANDARD_TABS_ORDER.indexOf(o1);
+      if (i1 == -1) i1 = STANDARD_TABS_ORDER.size();
+      int i2 = STANDARD_TABS_ORDER.indexOf(o2);
+      if (i2 == -1) i2 = STANDARD_TABS_ORDER.size();
+      if (i1 != i2) {
+        return i1 - i2;
       }
+      return o1.compareTo(o2);
     });
     for (String tab : sortedTabs) {
-      tabbedPane.addTab(tab, myMainPanels.get(tab));
+      tabbedPane.addTab(tab, new JBScrollPane(myMainPanels.get(tab)));
     }
   }
 
@@ -108,7 +106,7 @@ public class ArtifactPropertiesEditors {
   }
 
   @Nullable
-  public static String getHelpId(String title) {
+  public String getHelpId(String title) {
     if (ArtifactPropertiesEditor.VALIDATION_TAB.equals(title)) {
       return "reference.project.structure.artifacts.validation";
     }
@@ -117,6 +115,12 @@ public class ArtifactPropertiesEditors {
     }
     else if (ArtifactPropertiesEditor.POST_PROCESSING_TAB.equals(title)) {
       return "reference.project.structure.artifacts.postprocessing";
+    }
+    for (PropertiesEditorInfo editorInfo : myEditors) {
+      final ArtifactPropertiesEditor editor = editorInfo.myEditor;
+      if (editor.getTabName().equals(title)) {
+        return editor.getHelpId();
+      }
     }
     return null;
   }

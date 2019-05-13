@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,7 +26,6 @@ import javax.swing.*;
 
 /**
  * @author Denis Zhdanov
- * @since 2/2/11 12:32 PM
  */
 public class JavadocOptionsProvider implements EditorOptionsProvider {
   
@@ -37,11 +36,6 @@ public class JavadocOptionsProvider implements EditorOptionsProvider {
   @Override
   public String getId() {
     return "editor.preferences.javadocOptions";
-  }
-
-  @Override
-  public Runnable enableSearch(String option) {
-    return null;
   }
 
   @Nls
@@ -76,10 +70,6 @@ public class JavadocOptionsProvider implements EditorOptionsProvider {
     myAutoGenerateClosingTagCheckBox.setSelected(getSettings().JAVADOC_GENERATE_CLOSING_TAG);
   }
 
-  @Override
-  public void disposeUIResources() {
-  }
-  
   private static CodeInsightSettings getSettings() {
     return CodeInsightSettings.getInstance();
   }

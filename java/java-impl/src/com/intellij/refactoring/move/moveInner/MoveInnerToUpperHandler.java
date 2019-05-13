@@ -17,6 +17,7 @@ package com.intellij.refactoring.move.moveInner;
 
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiClass;
@@ -32,12 +33,11 @@ import com.intellij.refactoring.util.CommonRefactoringUtil;
 import org.jetbrains.annotations.Nullable;
 
 public class MoveInnerToUpperHandler extends MoveHandlerDelegate {
+  @Override
   public boolean canMove(final PsiElement[] elements, @Nullable final PsiElement targetContainer) {
     if (elements.length != 1) return false;
     PsiElement element = elements [0];
-    return isNonStaticInnerClass(element) &&
-           (targetContainer == null || targetContainer.equals(MoveInnerImpl.getTargetContainer((PsiClass)elements[0], false)));
-                                                                        
+    return isNonStaticInnerClass(element);
   }
 
   private static boolean isNonStaticInnerClass(final PsiElement element) {
@@ -45,10 +45,12 @@ public class MoveInnerToUpperHandler extends MoveHandlerDelegate {
            !((PsiClass) element).hasModifierProperty(PsiModifier.STATIC);
   }
 
+  @Override
   public void doMove(final Project project, final PsiElement[] elements, final PsiElement targetContainer, final MoveCallback callback) {
-    MoveInnerImpl.doMove(project, elements, callback);
+    MoveInnerImpl.doMove(project, elements, callback, targetContainer);
   }
 
+  @Override
   public boolean tryToMove(final PsiElement element, final Project project, final DataContext dataContext, final PsiReference reference,
                            final Editor editor) {
     if (isNonStaticInnerClass(element) && !JavaMoveClassesOrPackagesHandler.isReferenceInAnonymousClass(reference)) {
@@ -60,7 +62,7 @@ public class MoveInnerToUpperHandler extends MoveHandlerDelegate {
                                             RefactoringBundle.message("move.title"), null);
         return true;
       }
-      MoveInnerImpl.doMove(project, new PsiElement[]{aClass}, null);
+      MoveInnerImpl.doMove(project, new PsiElement[]{aClass}, null, LangDataKeys.TARGET_PSI_ELEMENT.getData(dataContext));
       return true;
     }
     return false;

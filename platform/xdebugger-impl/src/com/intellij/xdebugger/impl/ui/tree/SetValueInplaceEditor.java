@@ -1,32 +1,24 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xdebugger.impl.ui.tree;
 
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.ui.AppUIUtil;
 import com.intellij.ui.SimpleColoredComponent;
-import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.util.ui.JBUI;
 import com.intellij.xdebugger.frame.XValueModifier;
+import com.intellij.xdebugger.frame.presentation.XValuePresentation;
+import com.intellij.xdebugger.impl.breakpoints.XExpressionImpl;
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
 import com.intellij.xdebugger.impl.ui.XDebuggerUIConstants;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
+import com.intellij.xdebugger.impl.ui.tree.nodes.XValuePresentationUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.border.Border;
 import java.awt.*;
 
 /**
@@ -36,64 +28,80 @@ public class SetValueInplaceEditor extends XDebuggerTreeInplaceEditor {
   private final JPanel myEditorPanel;
   private final XValueModifier myModifier;
   private final XValueNodeImpl myValueNode;
+  private final int myNameOffset;
 
-  public SetValueInplaceEditor(final XValueNodeImpl node, @NotNull final String nodeName) {
+  private SetValueInplaceEditor(final XValueNodeImpl node, @NotNull final String nodeName) {
     super(node, "setValue");
     myValueNode = node;
     myModifier = myValueNode.getValueContainer().getModifier();
 
-    myEditorPanel = new JPanel();
-    myEditorPanel.setLayout(new BorderLayout(0, 0));
     SimpleColoredComponent nameLabel = new SimpleColoredComponent();
-    nameLabel.setIcon(getNode().getIcon());
+    nameLabel.getIpad().right = 0;
+    nameLabel.getIpad().left = 0;
+    nameLabel.setIcon(myNode.getIcon());
     nameLabel.append(nodeName, XDebuggerUIConstants.VALUE_NAME_ATTRIBUTES);
-    final String separator = node.getSeparator();
-    if (separator != null) {
-      nameLabel.append(separator, SimpleTextAttributes.REGULAR_ATTRIBUTES);
+    XValuePresentation presentation = node.getValuePresentation();
+    if (presentation != null) {
+      XValuePresentationUtil.appendSeparator(nameLabel, presentation.getSeparator());
     }
-
-    myEditorPanel.add(nameLabel, BorderLayout.WEST);
-
-    myEditorPanel.add(myExpressionEditor.getComponent(), BorderLayout.CENTER);
-    final String value = myModifier != null ? myModifier.getInitialValueEditorText() : null;
-    myExpressionEditor.setText(value != null ? value : "");
-    myExpressionEditor.selectAll();
+    Border border = nameLabel.getMyBorder();
+    myNameOffset = nameLabel.getPreferredSize().width  - (border != null ? border.getBorderInsets(nameLabel).right : 0);
+    myEditorPanel = JBUI.Panels.simplePanel(myExpressionEditor.getComponent());
   }
 
+  @Nullable
+  @Override
+  protected Rectangle getEditorBounds() {
+    Rectangle bounds = super.getEditorBounds();
+    if (bounds == null) {
+      return null;
+    }
+    bounds.x += myNameOffset;
+    bounds.width -= myNameOffset;
+    return bounds;
+  }
+
+  public static void show(final XValueNodeImpl node, @NotNull final String nodeName) {
+    final SetValueInplaceEditor editor = new SetValueInplaceEditor(node, nodeName);
+
+    if (editor.myModifier != null) {
+      editor.myModifier.calculateInitialValueEditorText(initialValue -> AppUIUtil.invokeOnEdt(() -> {
+        if (editor.getTree().isShowing()) {
+          editor.show(initialValue);
+        }
+      }));
+    }
+    else {
+      editor.show(null);
+    }
+  }
+
+  private void show(String initialValue) {
+    myExpressionEditor.setExpression(XExpressionImpl.fromText(initialValue));
+    myExpressionEditor.selectAll();
+
+    show();
+  }
+
+  @Override
   protected JComponent createInplaceEditorComponent() {
     return myEditorPanel;
   }
 
+  @Override
   public void doOKAction() {
     if (myModifier == null) return;
 
-    myExpressionEditor.saveTextInHistory();
-    final XDebuggerTreeState treeState = XDebuggerTreeState.saveState(myTree);
-    myValueNode.setValueModificationStarted();
-    myModifier.setValue(myExpressionEditor.getText(), new XValueModifier.XModificationCallback() {
-      public void valueModified() {
-        DebuggerUIUtil.invokeOnEventDispatch(new Runnable() {
-          public void run() {
-            myTree.rebuildAndRestore(treeState);
-          }
-        });
+    DebuggerUIUtil.setTreeNodeValue(myValueNode, getExpression(), errorMessage -> {
+      Editor editor = getEditor();
+      if (editor != null) {
+        HintManager.getInstance().showErrorHint(editor, errorMessage);
       }
-
-      public void errorOccurred(@NotNull final String errorMessage) {
-        DebuggerUIUtil.invokeOnEventDispatch(new Runnable() {
-          public void run() {
-            myTree.rebuildAndRestore(treeState);
-
-            Editor editor = myExpressionEditor.getEditor();
-            if (editor != null) {
-              HintManager.getInstance().showErrorHint(editor, errorMessage);
-            } else {
-              Messages.showErrorDialog(myTree, errorMessage);
-            }
-          }
-        });
+      else {
+        Messages.showErrorDialog(myTree, errorMessage);
       }
     });
+
     super.doOKAction();
   }
 }

@@ -14,12 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * Created by IntelliJ IDEA.
- * User: Vladislav.Kaznacheev
- * Date: Jul 4, 2007
- * Time: 3:59:52 PM
- */
 package com.intellij.openapi.keymap;
 
 import com.intellij.openapi.actionSystem.AnAction;
@@ -30,8 +24,8 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
 public interface KeymapExtension {
-  @NonNls ExtensionPointName<KeymapExtension> EXTENSION_POINT_NAME = new ExtensionPointName<KeymapExtension>("com.intellij.keymapExtension");
+  @NonNls ExtensionPointName<KeymapExtension> EXTENSION_POINT_NAME = new ExtensionPointName<>("com.intellij.keymapExtension");
 
   @Nullable
-  KeymapGroup createGroup(Condition<AnAction> filtered, Project project);
+  KeymapGroup createGroup(Condition<AnAction> filtered, @Nullable Project project);
 }

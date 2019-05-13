@@ -15,6 +15,7 @@
  */
 package com.intellij.cvsSupport2.javacvsImpl.io;
 
+import com.intellij.application.options.CodeStyle;
 import com.intellij.cvsSupport2.CvsUtil;
 import com.intellij.cvsSupport2.cvsoperations.common.UpdatedFilesManager;
 import com.intellij.cvsSupport2.cvsoperations.cvsErrors.ErrorProcessor;
@@ -26,7 +27,6 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import org.jetbrains.annotations.NonNls;
 import org.netbeans.lib.cvsclient.file.*;
 
@@ -60,14 +60,17 @@ public class StoringLineSeparatorsLocalFileWriter implements ILocalFileWriter {
     myProjectContentInfoProvider = projectContentInfoProvider;
   }
 
+  @Override
   public void setNextFileMode(String nextFileMode) {
     myLocalFileWriter.setNextFileMode(nextFileMode);
   }
 
+  @Override
   public void setNextFileDate(Date modifiedDate) {
     myLocalFileWriter.setNextFileDate(modifiedDate);
   }
 
+  @Override
   public void renameLocalFile(FileObject fileObject, ICvsFileSystem cvsFileSystem, String newFileName)
     throws IOException {
     final File originalFile = cvsFileSystem.getLocalFileSystem().getFile(fileObject);
@@ -81,6 +84,7 @@ public class StoringLineSeparatorsLocalFileWriter implements ILocalFileWriter {
     }
   }
 
+  @Override
   public void removeLocalFile(FileObject fileObject,
                               ICvsFileSystem cvsFileSystem,
                               IFileReadOnlyHandler fileReadOnlyHandler) throws IOException {
@@ -94,6 +98,7 @@ public class StoringLineSeparatorsLocalFileWriter implements ILocalFileWriter {
 
   }
 
+  @Override
   public void writeBinaryFile(FileObject fileObject,
                               int length,
                               InputStream inputStream,
@@ -122,6 +127,7 @@ public class StoringLineSeparatorsLocalFileWriter implements ILocalFileWriter {
     return !myProjectContentInfoProvider.fileIsUnderProject(localFile);
   }
 
+  @Override
   public void writeTextFile(FileObject fileObject,
                             int length,
                             InputStream inputStream,
@@ -167,11 +173,9 @@ public class StoringLineSeparatorsLocalFileWriter implements ILocalFileWriter {
   private void storeLineSeparatorInTheVirtualFile(IFileSystem fileSystem, FileObject fileObject) {
     final VirtualFile virtualFile = CvsVfsUtil.findFileByIoFile(fileSystem.getFile(fileObject));
     if (virtualFile != null) {
-      ApplicationManager.getApplication().runReadAction(new Runnable() {
-        public void run() {
-          FileDocumentManager.getInstance().getDocument(virtualFile);
-          myReceiveTextFilePreprocessor.saveLineSeparatorForFile(virtualFile, getLineSeparatorFor(virtualFile));
-        }
+      ApplicationManager.getApplication().runReadAction(() -> {
+        FileDocumentManager.getInstance().getDocument(virtualFile);
+        myReceiveTextFilePreprocessor.saveLineSeparatorForFile(virtualFile, getLineSeparatorFor(virtualFile));
       });
     }
   }
@@ -181,7 +185,7 @@ public class StoringLineSeparatorsLocalFileWriter implements ILocalFileWriter {
       return FileDocumentManager.getInstance().getLineSeparator(virtualFile, null);
     }
     catch (Exception ex) {
-      return CodeStyleSettingsManager.getInstance().getCurrentSettings().getLineSeparator();
+      return CodeStyle.getDefaultSettings().getLineSeparator();
     }
 
   }

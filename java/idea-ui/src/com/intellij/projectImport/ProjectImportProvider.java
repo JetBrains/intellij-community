@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,10 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * User: anna
- * Date: 10-Jul-2007
- */
 package com.intellij.projectImport;
 
 import com.intellij.ide.util.newProjectWizard.StepSequence;
@@ -61,7 +57,7 @@ public abstract class ProjectImportProvider {
     return getBuilder().getIcon();
   }
 
-  public boolean canImport(VirtualFile fileOrDirectory, @Nullable Project project) {
+  public boolean canImport(@NotNull VirtualFile fileOrDirectory, @Nullable Project project) {
     if (fileOrDirectory.isDirectory()) {
       return true;
     }
@@ -83,6 +79,10 @@ public abstract class ProjectImportProvider {
   }
 
   public boolean canCreateNewProject() {
+    return true;
+  }
+
+  public boolean canImportModule() {
     return true;
   }
 

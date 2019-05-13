@@ -17,6 +17,8 @@ package com.intellij.psi.controlFlow;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiExpression;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Author: msk
@@ -25,7 +27,7 @@ public abstract class ConditionalBranchingInstruction extends BranchingInstructi
   protected static final Logger LOG = Logger.getInstance("#com.intellij.psi.controlFlow.ConditionalGoToInstruction");
   public final PsiExpression expression;
 
-  public ConditionalBranchingInstruction(int offset, final PsiExpression expression, Role role) {
+  ConditionalBranchingInstruction(int offset, @Nullable PsiExpression expression, @NotNull Role role) {
     super(offset, role);
     this.expression = expression;
   }
@@ -39,13 +41,13 @@ public abstract class ConditionalBranchingInstruction extends BranchingInstructi
       case 0: return offset;
       case 1: return index + 1;
       default:
-        LOG.assertTrue (false);
+        LOG.assertTrue(false);
         return -1;
     }
   }
 
   @Override
-  public void accept(ControlFlowInstructionVisitor visitor, int offset, int nextOffset) {
+  public void accept(@NotNull ControlFlowInstructionVisitor visitor, int offset, int nextOffset) {
     visitor.visitConditionalBranchingInstruction(this, offset, nextOffset);
   }
 }

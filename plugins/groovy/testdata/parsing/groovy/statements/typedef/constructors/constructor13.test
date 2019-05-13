@@ -10,6 +10,10 @@ Groovy script
     PsiElement(class)('class')
     PsiWhiteSpace(' ')
     PsiElement(identifier)('a')
+    Extends clause
+      <empty list>
+    Implements clause
+      <empty list>
     PsiWhiteSpace(' ')
     Type definition body
       PsiElement({)('{')
@@ -32,8 +36,8 @@ Groovy script
         PsiWhiteSpace(' ')
         PsiElement(identifier)('a')
         PsiWhiteSpace(' ')
-        PsiElement(()('(')
         Parameter list
+          PsiElement(()('(')
           Parameter
             Modifiers
               <empty list>
@@ -44,10 +48,10 @@ Groovy script
             Modifiers
               <empty list>
             PsiElement(identifier)('p')
-        PsiElement())(')')
-        PsiWhiteSpace(' ')
+          PsiElement())(')')
         Throw clause
           <empty list>
+        PsiWhiteSpace(' ')
         Open block
           PsiElement({)('{')
           PsiWhiteSpace(' ')

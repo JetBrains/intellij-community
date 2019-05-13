@@ -33,42 +33,30 @@ import javax.swing.*;
  * @author Konstantin Bulenkov
  */
 public class NameFilteringListModel<T> extends FilteringListModel<T> {
-  private final Function<T, String> myNamer;
+  private final Function<? super T, String> myNamer;
   private int myFullMatchIndex = -1;
   private int myStartsWithIndex = -1;
   private final Computable<String> myPattern;
 
-  public NameFilteringListModel(JList list,
-                                final Function<T, String> namer,
-                                final Condition<String> filter,
+  public NameFilteringListModel(JList<T> list,
+                                final Function<? super T, String> namer,
+                                final Condition<? super String> filter,
                                 final SpeedSearch speedSearch) {
-    this(list, namer, filter, new Computable<String>() {
-      @Override
-      public String compute() {
-        return speedSearch.getFilter();
-      }
+    this(list, namer, filter, () -> speedSearch.getFilter());
+  }
+
+  public NameFilteringListModel(JList list, final Function<? super T, String> namer, final Condition<? super String> filter, final SpeedSearchSupply speedSearch) {
+    this(list, namer, filter, () -> {
+      final String prefix = speedSearch.getEnteredPrefix();
+      return prefix == null ? "" : prefix;
     });
   }
 
-  public NameFilteringListModel(JList list, final Function<T, String> namer, final Condition<String> filter, final SpeedSearchSupply speedSearch) {
-    this(list, namer, filter, new Computable<String>() {
-          @Override
-          public String compute() {
-            final String prefix = speedSearch.getEnteredPrefix();
-            return prefix == null ? "" : prefix;
-          }
-        });
-  }
-
-  public NameFilteringListModel(JList list, final Function<T, String> namer, final Condition<String> filter, Computable<String> pattern) {
+  public NameFilteringListModel(JList list, final Function<? super T, String> namer, final Condition<? super String> filter, Computable<String> pattern) {
     super(list);
     myPattern = pattern;
     myNamer = namer;
-    setFilter(namer != null ? new Condition<T>() {
-      public boolean value(T t) {
-        return filter.value(namer.fun(t));
-      }
-    } : null);
+    setFilter(namer != null ? (Condition<T>)t -> filter.value(namer.fun(t)) : null);
   }
 
   @Override
@@ -76,16 +64,19 @@ public class NameFilteringListModel<T> extends FilteringListModel<T> {
     super.addToFiltered(elt);
 
     if (myNamer != null) {
-      String filterString = StringUtil.toUpperCase(myPattern.compute());
-      String candidateString = StringUtil.toUpperCase(myNamer.fun(elt));
-      int index = getSize() - 1;
+      String name = myNamer.fun(elt);
+      if (name != null) {
+        String filterString = StringUtil.toUpperCase(myPattern.compute());
+        String candidateString = StringUtil.toUpperCase(name);
+        int index = getSize() - 1;
 
-      if (myFullMatchIndex == -1 && filterString.equals(candidateString)) {
-        myFullMatchIndex = index;
-      }
+        if (myFullMatchIndex == -1 && filterString.equals(candidateString)) {
+          myFullMatchIndex = index;
+        }
 
-      if (myStartsWithIndex == -1 && candidateString.startsWith(filterString)) {
-        myStartsWithIndex = index;
+        if (myStartsWithIndex == -1 && candidateString.startsWith(filterString)) {
+          myStartsWithIndex = index;
+        }
       }
     }
   }

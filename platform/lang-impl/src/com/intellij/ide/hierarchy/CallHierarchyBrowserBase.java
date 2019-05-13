@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.intellij.ide.hierarchy;
 
 import com.intellij.icons.AllIcons;
@@ -28,9 +27,9 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 
 public abstract class CallHierarchyBrowserBase extends HierarchyBrowserBaseEx {
-  @SuppressWarnings({"UnresolvedPropertyKey"})
+  @SuppressWarnings("UnresolvedPropertyKey")
   public static final String CALLEE_TYPE = IdeBundle.message("title.hierarchy.callees.of");
-  @SuppressWarnings({"UnresolvedPropertyKey"})
+  @SuppressWarnings("UnresolvedPropertyKey")
   public static final String CALLER_TYPE = IdeBundle.message("title.hierarchy.callers.of");
 
   private static final String CALL_HIERARCHY_BROWSER_DATA_KEY = "com.intellij.ide.hierarchy.CallHierarchyBrowserBase";
@@ -55,10 +54,10 @@ public abstract class CallHierarchyBrowserBase extends HierarchyBrowserBaseEx {
   protected void prependActions(@NotNull DefaultActionGroup actionGroup) {
     actionGroup.add(new ChangeViewTypeActionBase(IdeBundle.message("action.caller.methods.hierarchy"),
                                                  IdeBundle.message("action.caller.methods.hierarchy"),
-                                                 AllIcons.Hierarchy.Caller, CALLER_TYPE));
+                                                 AllIcons.Hierarchy.Supertypes, CALLER_TYPE));
     actionGroup.add(new ChangeViewTypeActionBase(IdeBundle.message("action.callee.methods.hierarchy"),
                                                  IdeBundle.message("action.callee.methods.hierarchy"),
-                                                 AllIcons.Hierarchy.Callee, CALLEE_TYPE));
+                                                 AllIcons.Hierarchy.Subtypes, CALLEE_TYPE));
     actionGroup.add(new AlphaSortAction());
     actionGroup.add(new ChangeScopeAction());
   }
@@ -84,32 +83,26 @@ public abstract class CallHierarchyBrowserBase extends HierarchyBrowserBaseEx {
   private class ChangeViewTypeActionBase extends ToggleAction {
     private final String myTypeName;
 
-    public ChangeViewTypeActionBase(final String shortDescription, final String longDescription, final Icon icon, String typeName) {
+    private ChangeViewTypeActionBase(final String shortDescription, final String longDescription, final Icon icon, String typeName) {
       super(shortDescription, longDescription, icon);
       myTypeName = typeName;
     }
 
     @Override
-    public final boolean isSelected(final AnActionEvent event) {
-      return myTypeName.equals(myCurrentViewType);
+    public final boolean isSelected(@NotNull final AnActionEvent event) {
+      return myTypeName.equals(getCurrentViewType());
     }
 
     @Override
-    public final void setSelected(final AnActionEvent event, final boolean flag) {
+    public final void setSelected(@NotNull final AnActionEvent event, final boolean flag) {
       if (flag) {
-//        setWaitCursor();
         // invokeLater is called to update state of button before long tree building operation
-        ApplicationManager.getApplication().invokeLater(new Runnable() {
-          @Override
-          public void run() {
-            changeView(myTypeName);
-          }
-        });
+        ApplicationManager.getApplication().invokeLater(() -> changeView(myTypeName));
       }
     }
 
     @Override
-    public final void update(final AnActionEvent event) {
+    public final void update(@NotNull final AnActionEvent event) {
       super.update(event);
       setEnabled(isValidBase());
     }
@@ -117,8 +110,7 @@ public abstract class CallHierarchyBrowserBase extends HierarchyBrowserBaseEx {
 
   protected static class BaseOnThisMethodAction extends BaseOnThisElementAction {
     public BaseOnThisMethodAction() {
-      super(IdeBundle.message("action.base.on.this.method"), IdeActions.ACTION_CALL_HIERARCHY, CALL_HIERARCHY_BROWSER_DATA_KEY);
+      super(IdeBundle.message("action.base.on.this.method"), CALL_HIERARCHY_BROWSER_DATA_KEY, LanguageCallHierarchy.INSTANCE);
     }
   }
-
 }

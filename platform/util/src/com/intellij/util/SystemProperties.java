@@ -1,21 +1,7 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util;
 
-import org.jetbrains.annotations.NonNls;
+import com.intellij.openapi.util.SystemInfo;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -23,19 +9,15 @@ import org.jetbrains.annotations.TestOnly;
 /**
  * Utility wrappers for accessing system properties.
  *
+ * @see SystemInfo
  * @author yole
  */
-@SuppressWarnings({"HardCodedStringLiteral"})
 public class SystemProperties {
   private static String ourTestUserName;
 
   private SystemProperties() { }
 
-  /**
-   * Returns the value of the user.home system property.
-   *
-   * @return the property value
-   */
+  @NotNull
   public static String getUserHome() {
     return System.getProperty("user.home");
   }
@@ -49,60 +31,36 @@ public class SystemProperties {
     ourTestUserName = name;
   }
 
-  /**
-   * Returns the value of the line.separator system property.
-   *
-   * @return the property value
-   */
   public static String getLineSeparator() {
     return System.getProperty("line.separator");
   }
 
-  /**
-   * Returns the value of the os.name system property.
-   *
-   * @return the property value
-   */
+  /** @deprecated use {@link SystemInfo#OS_NAME} (to be removed in IDEA 2020) */
+  @Deprecated
   public static String getOsName() {
-    return System.getProperty("os.name");
+    return SystemInfo.OS_NAME;
   }
 
-  /**
-   * Returns the value of the java.version system property.
-   *
-   * @return the property value
-   */
+  /** @deprecated use {@link SystemInfo#JAVA_VERSION} (to be removed in IDEA 2020) */
+  @Deprecated
   public static String getJavaVersion() {
-    return System.getProperty("java.version");
+    return SystemInfo.JAVA_VERSION;
   }
 
-  /**
-   * Returns the value of the java.vm.vendor system property.
-   *
-   * @return the property value
-   */
+  /** @deprecated use {@link SystemInfo#JAVA_VENDOR} (to be removed in IDEA 2020) */
+  @Deprecated
   public static String getJavaVmVendor() {
-    return System.getProperty("java.vm.vendor");
+    return SystemInfo.JAVA_VENDOR;
   }
 
-  /**
-   * Returns the value of the java.home system property.
-   *
-   * @return the property value
-   */
   public static String getJavaHome() {
     return System.getProperty("java.home");
   }
 
   /**
-   * Returns the value of given property as integer.
-   * Returns {@code defaultValue} if property is not specified or malformed.
-   *
-   * @param key          the property name
-   * @param defaultValue default value
-   * @return the property value as integer, or default value.
+   * Returns the value of given property as integer, or {@code defaultValue} if the property is not specified or malformed.
    */
-  public static int getIntProperty(@NonNls @NotNull final String key, final int defaultValue) {
+  public static int getIntProperty(@NotNull final String key, final int defaultValue) {
     final String value = System.getProperty(key);
     if (value != null) {
       try {
@@ -115,12 +73,7 @@ public class SystemProperties {
   }
 
   /**
-   * Returns the value of given property as a boolean.
-   * Returns {@code defaultValue} if property is not specified or malformed.
-   *
-   * @param key          the property name
-   * @param defaultValue default value
-   * @return the property value as boolean, or default value.
+   * Returns the value of given property as a boolean, or {@code defaultValue} if the property is not specified or malformed.
    */
   public static boolean getBooleanProperty(@NotNull final String key, final boolean defaultValue) {
     final String value = System.getProperty(key);
@@ -129,5 +82,23 @@ public class SystemProperties {
     }
 
     return defaultValue;
+  }
+
+  /** @deprecated use {@link SystemInfo#JAVA_VENDOR} (to be removed in IDEA 2020) */
+  @Deprecated
+  public static String getJavaVendor() {
+    return SystemInfo.JAVA_VENDOR;
+  }
+
+  public static boolean is(String key) {
+    return getBooleanProperty(key, false);
+  }
+
+  public static boolean has(String key) {
+    return System.getProperty(key) != null;
+  }
+
+  public static boolean isTrueSmoothScrollingEnabled() {
+    return getBooleanProperty("idea.true.smooth.scrolling", false);
   }
 }

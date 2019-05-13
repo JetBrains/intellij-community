@@ -1,4 +1,4 @@
-// "Create Inner Class 'MyCollection'" "true"
+// "Create inner class 'MyCollection'" "true"
 public class Test {
     public static void main() {
         Collection[] cc = new MyCollection[10];

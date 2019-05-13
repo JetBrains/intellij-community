@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,9 +19,9 @@ package com.intellij.openapi.paths;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.util.io.URLUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.NonNls;
 
 import java.util.List;
 
@@ -31,10 +31,10 @@ import java.util.List;
 public class GlobalPathReferenceProvider implements PathReferenceProvider {
 
   @NonNls private static final String[] PREFIXES = {
-    "mailto:", "tel:", "sms:", "skype:", "data:"
+    "tel:", "sms:", "skype:", "data:", "xmpp:"
   };
 
-  private static boolean startsWithAllowedPrefix(String s) {
+  public static boolean startsWithAllowedPrefix(String s) {
     for (String prefix : PREFIXES) {
       if (s.startsWith(prefix)) {
         return true;
@@ -49,17 +49,30 @@ public class GlobalPathReferenceProvider implements PathReferenceProvider {
     if (manipulator == null) {
       return false;
     }
-    final TextRange range = manipulator.getRangeInElement(psiElement);
-    final String s = range.substring(psiElement.getText());
-    if (s.startsWith("http://") || s.startsWith("https://")) {
-      references.add(new WebReference(psiElement, range));
+    return createUrlReference(
+      psiElement,
+      manipulator.getRangeInElement(psiElement).substring(psiElement.getText()),
+      manipulator.getRangeInElement(psiElement),
+      references
+    );
+  }
+
+  public boolean createUrlReference(@NotNull PsiElement psiElement,
+                                    String url,
+                                    TextRange rangeInElement, @NotNull List<? super PsiReference> references) {
+    if (isWebReferenceUrl(url)) {
+      references.add(new WebReference(psiElement, rangeInElement, url));
+      return true;
     }
-    else if (s.contains("://") || s.startsWith("//") || startsWithAllowedPrefix(s)) {
-      final PsiReference reference = PsiReferenceBase.createSelfReference(psiElement, psiElement);
-      references.add(reference);
+    else if (url.contains("://") || url.startsWith("//") || startsWithAllowedPrefix(url)) {
+      references.add(PsiReferenceBase.createSelfReference(psiElement, rangeInElement, psiElement));
       return true;
     }
     return false;
+  }
+
+  public static boolean isWebReferenceUrl(String url) {
+    return url.startsWith("http://") || url.startsWith("https://") || url.startsWith("about:") || url.startsWith("mailto:");
   }
 
   @Override

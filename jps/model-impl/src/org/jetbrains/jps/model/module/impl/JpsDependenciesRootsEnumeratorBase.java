@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,11 +17,10 @@ package org.jetbrains.jps.model.module.impl;
 
 import com.intellij.util.CollectConsumer;
 import com.intellij.util.Consumer;
-import com.intellij.util.Processor;
-import org.jetbrains.jps.util.JpsPathUtil;
 import org.jetbrains.jps.model.library.JpsLibrary;
 import org.jetbrains.jps.model.library.JpsOrderRootType;
 import org.jetbrains.jps.model.module.*;
+import org.jetbrains.jps.util.JpsPathUtil;
 
 import java.io.File;
 import java.util.Collection;
@@ -42,59 +41,55 @@ public abstract class JpsDependenciesRootsEnumeratorBase<E extends JpsDependenci
 
   @Override
   public Collection<String> getUrls() {
-    Set<String> urls = new LinkedHashSet<String>();
-    processUrls(new CollectConsumer<String>(urls));
+    Set<String> urls = new LinkedHashSet<>();
+    processUrls(new CollectConsumer<>(urls));
     return urls;
   }
 
   @Override
   public Collection<File> getRoots() {
-    final Set<File> files = new LinkedHashSet<File>();
-    processUrls(new Consumer<String>() {
-      @Override
-      public void consume(String url) {
+    Set<File> files = new LinkedHashSet<>();
+    processUrls(url -> {
+      if (!JpsPathUtil.isJrtUrl(url)) {
         files.add(JpsPathUtil.urlToFile(url));
       }
     });
     return files;
   }
 
-  private void processUrls(final Consumer<String> urlConsumer) {
-    myDependenciesEnumerator.processDependencies(new Processor<JpsDependencyElement>() {
-      @Override
-      public boolean process(JpsDependencyElement dependencyElement) {
-        if (dependencyElement instanceof JpsModuleSourceDependency) {
-          processModuleRootUrls(dependencyElement.getContainingModule(), dependencyElement, urlConsumer);
-        }
-        else if (dependencyElement instanceof JpsModuleDependency) {
-          JpsModule dep = ((JpsModuleDependency)dependencyElement).getModule();
-          if (dep != null) {
-            processModuleRootUrls(dep, dependencyElement, urlConsumer);
-          }
-        }
-        else if (dependencyElement instanceof JpsLibraryDependency) {
-          JpsLibrary lib = ((JpsLibraryDependency)dependencyElement).getLibrary();
-          if (lib != null) {
-            processLibraryRootUrls(lib, urlConsumer);
-          }
-        }
-        else if (dependencyElement instanceof JpsSdkDependency) {
-          JpsLibrary lib = ((JpsSdkDependency)dependencyElement).resolveSdk();
-          if (lib != null) {
-            processLibraryRootUrls(lib, urlConsumer);
-          }
-        }
-        return true;
+  private void processUrls(final Consumer<? super String> urlConsumer) {
+    myDependenciesEnumerator.processDependencies(dependencyElement -> {
+      if (dependencyElement instanceof JpsModuleSourceDependency) {
+        processModuleRootUrls(dependencyElement.getContainingModule(), dependencyElement, urlConsumer);
       }
+      else if (dependencyElement instanceof JpsModuleDependency) {
+        JpsModule dep = ((JpsModuleDependency)dependencyElement).getModule();
+        if (dep != null) {
+          processModuleRootUrls(dep, dependencyElement, urlConsumer);
+        }
+      }
+      else if (dependencyElement instanceof JpsLibraryDependency) {
+        JpsLibrary lib = ((JpsLibraryDependency)dependencyElement).getLibrary();
+        if (lib != null) {
+          processLibraryRootUrls(lib, urlConsumer);
+        }
+      }
+      else if (dependencyElement instanceof JpsSdkDependency) {
+        JpsLibrary lib = ((JpsSdkDependency)dependencyElement).resolveSdk();
+        if (lib != null) {
+          processLibraryRootUrls(lib, urlConsumer);
+        }
+      }
+      return true;
     });
   }
 
-  private boolean processLibraryRootUrls(JpsLibrary library, Consumer<String> urlConsumer) {
+  private boolean processLibraryRootUrls(JpsLibrary library, Consumer<? super String> urlConsumer) {
     for (String url : library.getRootUrls(myRootType)) {
       urlConsumer.consume(url);
     }
     return true;
   }
 
-  protected abstract boolean processModuleRootUrls(JpsModule module, JpsDependencyElement dependencyElement, Consumer<String> urlConsumer);
+  protected abstract boolean processModuleRootUrls(JpsModule module, JpsDependencyElement dependencyElement, Consumer<? super String> urlConsumer);
 }

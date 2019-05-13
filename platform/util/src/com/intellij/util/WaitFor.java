@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package com.intellij.util;
 
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.TestOnly;
 
 
 /**
@@ -23,12 +24,13 @@ import org.jetbrains.annotations.NonNls;
  */
 public abstract class WaitFor {
   private static final int DEFAULT_STEP = 10;
-  private static final int MAX_TIMEOUT = 600 * 1000;
+  private static final int MAX_TIMEOUT = 60 * 1000;
 
   private long myWaitTime;
   private boolean myInterrupted;
   private volatile boolean myConditionRealized;
-  @NonNls public static final String WAIT_FOR_THREAD_NAME = "WaitFor thread";
+  @NonNls private static final String WAIT_FOR_THREAD_NAME = "WaitFor thread";
+  private Thread myThread;
 
   /** Blocking call */
   public WaitFor() {
@@ -57,9 +59,11 @@ public abstract class WaitFor {
 
   /** Non-blocking call */
   public WaitFor(final int timeoutMsecs, final Runnable toRunOnTrue) {
-    new Thread(WAIT_FOR_THREAD_NAME) {
+    myThread = new Thread(WAIT_FOR_THREAD_NAME) {
+      @Override
       public void run() {
         myConditionRealized = new WaitFor(timeoutMsecs) {
+          @Override
           protected boolean condition() {
             return WaitFor.this.condition();
           }
@@ -67,8 +71,10 @@ public abstract class WaitFor {
 
         if (myConditionRealized) {
           toRunOnTrue.run();
-        }      }
-    }.start();
+        }
+      }
+    };
+    myThread.start();
   }
 
   public long getWaitedTime() {
@@ -90,5 +96,13 @@ public abstract class WaitFor {
   }
   public void assertCompleted(String message) {
     assert condition(): message;
+  }
+
+  @TestOnly
+  public void join() throws InterruptedException {
+    Thread thread = myThread;
+    if (thread != null) {
+      thread.join();
+    }
   }
 }

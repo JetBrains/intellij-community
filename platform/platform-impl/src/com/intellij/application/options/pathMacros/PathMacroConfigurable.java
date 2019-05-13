@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,16 +15,15 @@
  */
 package com.intellij.application.options.pathMacros;
 
+import com.intellij.configurationStore.StorageUtilKt;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.project.ex.ProjectEx;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
@@ -36,47 +35,50 @@ public class PathMacroConfigurable implements SearchableConfigurable, Configurab
   public static final String HELP_ID = "preferences.pathVariables";
   private PathMacroListEditor myEditor;
 
+  @Override
   public JComponent createComponent() {
     myEditor = new PathMacroListEditor();
     return myEditor.getPanel();
   }
 
+  @Override
   public void apply() throws ConfigurationException {
     myEditor.commit();
 
-    final Project[] projects = ProjectManager.getInstance().getOpenProjects();
-    for (Project project : projects) {
-      ((ProjectEx)project).checkUnknownMacros(false);
+    for (Project project : ProjectManager.getInstance().getOpenProjects()) {
+      StorageUtilKt.checkUnknownMacros(project, false);
     }
   }
 
+  @Override
   public void reset() {
     myEditor.reset();
   }
 
+  @Override
   public void disposeUIResources() {
     myEditor = null;
   }
 
+  @Override
   public String getDisplayName() {
     return ApplicationBundle.message("title.path.variables");
   }
 
+  @Override
+  @NotNull
   public String getHelpTopic() {
     return HELP_ID;
   }
 
+  @Override
   public boolean isModified() {
     return myEditor != null && myEditor.isModified();
   }
 
+  @Override
   @NotNull
   public String getId() {
     return getHelpTopic();
-  }
-
-  @Nullable
-  public Runnable enableSearch(String option) {
-    return null;
   }
 }

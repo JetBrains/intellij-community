@@ -17,8 +17,9 @@ package org.jetbrains.idea.svn.history;
 
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
-import org.tmatesoft.svn.core.SVNException;
+import com.intellij.util.containers.ContainerUtil;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -37,7 +38,7 @@ public class BunchFactory {
   public BunchFactory(final CachedProvider internallyCached, final CachedProvider visuallyCached, final LiveProvider liveProvider) {
     myLiveProvider = liveProvider;
 
-    final List<BunchProvider> providers = new ArrayList<BunchProvider>();
+    final List<BunchProvider> providers = new ArrayList<>();
     if (internallyCached != null) {
       providers.add(internallyCached);
     }
@@ -46,7 +47,7 @@ public class BunchFactory {
     }
     providers.add(myLiveProvider);
 
-    myResult = new ArrayList<Fragment>();
+    myResult = new ArrayList<>();
     myProviderIterator = providers.iterator();
     while (myProviderIterator.hasNext()) {
       myCurrentProvider = myProviderIterator.next();
@@ -57,10 +58,10 @@ public class BunchFactory {
     myYoungest = -1;
   }
 
-  public List<Fragment> goBack(final int bunchSize, final Ref<Boolean> myYoungestRead) throws SVNException {
+  public List<Fragment> goBack(final int bunchSize, final Ref<Boolean> myYoungestRead) throws VcsException {
     execute(bunchSize);
     myYoungestRead.set(myLiveProvider.isEarliestRevisionWasAccessed());
-    return new ArrayList<Fragment>(myResult);
+    return new ArrayList<>(myResult);
   }
 
   private void addToResult(final Fragment fragment) {
@@ -70,7 +71,7 @@ public class BunchFactory {
 
     final List<CommittedChangeList> list = fragment.getList();
 
-    final List<CommittedChangeList> subList = (myBunchSize >= list.size()) ? list : list.subList(0, myBunchSize);
+    final List<CommittedChangeList> subList = ContainerUtil.getFirstItems(list, myBunchSize);
     myResult.add(new Fragment(fragment.getOrigin(), subList, fragment.isConsistentWithOlder(), fragment.isConsistentWithYounger(),
                      fragment.getOriginBunch()));
     myBunchSize -= subList.size();
@@ -78,7 +79,7 @@ public class BunchFactory {
     myYoungest = subList.get(subList.size() - 1).getNumber();
   }
 
-  private void execute(final int bunchSize) throws SVNException {
+  private void execute(final int bunchSize) throws VcsException {
     myBunchSize = bunchSize;
     myResult.clear();
 

@@ -18,7 +18,7 @@ def vv = 6
 def gg = 7
 
 
-int yyy = testMethod(kkk, iii, vv, gg)
+yyy = testMethod(kkk, iii, vv, gg)
 
 private int testMethod(int kkk, int iii, int vv, int gg) {
     println(kkk + iii + (vv + gg))

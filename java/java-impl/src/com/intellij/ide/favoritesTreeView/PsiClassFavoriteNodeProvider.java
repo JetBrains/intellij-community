@@ -14,22 +14,19 @@
  * limitations under the License.
  */
 
-/*
- * User: anna
- * Date: 21-Jan-2008
- */
 package com.intellij.ide.favoritesTreeView;
 
 import com.intellij.ide.favoritesTreeView.smartPointerPsiNodes.ClassSmartPointerNode;
 import com.intellij.ide.projectView.ViewSettings;
 import com.intellij.ide.projectView.impl.nodes.ClassTreeNode;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.LangDataKeys;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleUtilCore;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.FileIndexFacade;
 import com.intellij.openapi.util.Comparing;
@@ -47,21 +44,21 @@ import java.util.Collection;
 
 public class PsiClassFavoriteNodeProvider extends FavoriteNodeProvider {
   @Override
-  public Collection<AbstractTreeNode> getFavoriteNodes(final DataContext context, final ViewSettings viewSettings) {
-    final Project project = PlatformDataKeys.PROJECT.getData(context);
+  public Collection<AbstractTreeNode> getFavoriteNodes(final DataContext context, @NotNull final ViewSettings viewSettings) {
+    final Project project = CommonDataKeys.PROJECT.getData(context);
     if (project == null) return null;
     PsiElement[] elements = LangDataKeys.PSI_ELEMENT_ARRAY.getData(context);
     if (elements == null) {
-      final PsiElement element = LangDataKeys.PSI_ELEMENT.getData(context);
+      final PsiElement element = CommonDataKeys.PSI_ELEMENT.getData(context);
       if (element != null) {
         elements = new PsiElement[]{element};
       }
     }
     if (elements != null) {
-      final Collection<AbstractTreeNode> result = new ArrayList<AbstractTreeNode>();
+      final Collection<AbstractTreeNode> result = new ArrayList<>();
       for (PsiElement element : elements) {
         if (element instanceof PsiClass && checkClassUnderSources(element, project)) {
-          result.add(new ClassSmartPointerNode(project, element, viewSettings));
+          result.add(new ClassSmartPointerNode(project, (PsiClass)element, viewSettings));
         }
       }
       return result.isEmpty() ? null : result;
@@ -69,7 +66,7 @@ public class PsiClassFavoriteNodeProvider extends FavoriteNodeProvider {
     return null;
   }
 
-  private boolean checkClassUnderSources(final PsiElement element, final Project project) {
+  private static boolean checkClassUnderSources(final PsiElement element, final Project project) {
     final PsiFile file = element.getContainingFile();
     if (file != null && file.getVirtualFile() != null) {
       final FileIndexFacade indexFacade = FileIndexFacade.getInstance(project);
@@ -80,9 +77,9 @@ public class PsiClassFavoriteNodeProvider extends FavoriteNodeProvider {
   }
 
   @Override
-  public AbstractTreeNode createNode(final Project project, final Object element, final ViewSettings viewSettings) {
+  public AbstractTreeNode createNode(final Project project, final Object element, @NotNull final ViewSettings viewSettings) {
     if (element instanceof PsiClass && checkClassUnderSources((PsiElement)element, project)) {
-      return new ClassSmartPointerNode(project, element, viewSettings);
+      return new ClassSmartPointerNode(project, (PsiClass)element, viewSettings);
     }
     return super.createNode(project, element, viewSettings);
   }
@@ -145,6 +142,10 @@ public class PsiClassFavoriteNodeProvider extends FavoriteNodeProvider {
 
   @Override
   public Object[] createPathFromUrl(final Project project, final String url, final String moduleName) {
+    if (DumbService.isDumb(project)) {
+      return null;
+    }
+
     GlobalSearchScope scope = null;
     if (moduleName != null) {
       final Module module = ModuleManager.getInstance(project).findModuleByName(moduleName);

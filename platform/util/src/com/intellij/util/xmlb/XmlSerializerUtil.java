@@ -1,22 +1,9 @@
-/*
- * Copyright 2000-2011 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.xmlb;
 
+import com.intellij.util.ReflectionUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
@@ -27,23 +14,43 @@ public class XmlSerializerUtil {
   public static <T> void copyBean(@NotNull T from, @NotNull T to) {
     assert from.getClass().isAssignableFrom(to.getClass()) : "Beans of different classes specified: Cannot assign " +
                                                              from.getClass() + " to " + to.getClass();
-    for (Accessor accessor : BeanBinding.getAccessors(to.getClass())) {
-      accessor.write(to, accessor.read(from));
+    for (MutableAccessor accessor : BeanBinding.getAccessors(from.getClass())) {
+      accessor.set(to, accessor.read(from));
     }
   }
 
   public static <T> T createCopy(@NotNull T from) {
     try {
-      final T to = (T)from.getClass().newInstance();
+      @SuppressWarnings("unchecked")
+      T to = (T)ReflectionUtil.newInstance(from.getClass());
       copyBean(from, to);
       return to;
     }
     catch (Exception ignored) {
+      return null;
     }
-    return null;
   }
 
-  public static List<Accessor> getAccessors(Class aClass) {
+  @NotNull
+  public static List<MutableAccessor> getAccessors(@NotNull Class<?> aClass) {
     return BeanBinding.getAccessors(aClass);
+  }
+
+  @Nullable
+  public static Object stringToEnum(@NotNull String value, @NotNull Class<? extends Enum<?>> valueClass, boolean isAlwaysIgnoreCase) {
+    Enum<?>[] enumConstants = valueClass.getEnumConstants();
+    if (!isAlwaysIgnoreCase) {
+      for (Object enumConstant : enumConstants) {
+        if (enumConstant.toString().equals(value)) {
+          return enumConstant;
+        }
+      }
+    }
+    for (Object enumConstant : enumConstants) {
+      if (enumConstant.toString().equalsIgnoreCase(value)) {
+        return enumConstant;
+      }
+    }
+    return null;
   }
 }

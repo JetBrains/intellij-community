@@ -1,71 +1,45 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.codeInsight.template.impl;
 
-import com.intellij.codeInsight.template.Expression;
 import com.intellij.psi.tree.IElementType;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.util.containers.hash.LinkedHashMap;
 
-import java.util.ArrayList;
-import java.util.Set;
+import java.util.LinkedHashSet;
 
 /**
  * @author Maxim.Mossienko
  */
 public class TemplateImplUtil {
-  private TemplateImplUtil() {
-  }
 
-  public static void parseVariables(CharSequence text, ArrayList<Variable> variables, @Nullable Set<String> predefinedVars) {
+  public static LinkedHashSet<String> parseVariableNames(CharSequence text) {
+    LinkedHashSet<String> variableNames = new LinkedHashSet<>();
     TemplateTextLexer lexer = new TemplateTextLexer();
     lexer.start(text);
 
-    while(true){
+    while (true) {
       IElementType tokenType = lexer.getTokenType();
       if (tokenType == null) break;
-      int start = lexer.getTokenStart();
-      int end = lexer.getTokenEnd();
-      String token = text.subSequence(start, end).toString();
-      if (tokenType == TemplateTokenType.VARIABLE){
-        String name = token.substring(1, token.length() - 1);
-        boolean isFound = false;
-
-        if (predefinedVars!=null && predefinedVars.contains(name) && !name.equals(TemplateImpl.SELECTION)){
-          isFound = true;
-        }
-        else{
-          for (Variable variable : variables) {
-            if (variable.getName().equals(name)) {
-              isFound = true;
-              break;
-            }
-          }
-        }
-
-        if (!isFound){
-          variables.add(new Variable(name, "", "", true));
-        }
+      if (tokenType == TemplateTokenType.VARIABLE) {
+        int start = lexer.getTokenStart();
+        int end = lexer.getTokenEnd();
+        String name = text.subSequence(start + 1, end - 1).toString();
+        variableNames.add(name);
       }
       lexer.advance();
     }
+    return variableNames;
   }
 
-  public static Expression parseTemplate(@NonNls String text) {
-    return MacroParser.parse(text);
+  public static LinkedHashMap<String, Variable> parseVariables(CharSequence text) {
+    LinkedHashMap<String, Variable> variables = new LinkedHashMap<>();
+    for (String name : parseVariableNames(text)) {
+      variables.put(name, new Variable(name, "", "", true));
+    }
+    return variables;
+  }
+
+  public static boolean isValidVariableName(String varName) {
+    return parseVariables("$" + varName + "$").containsKey(varName);
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,17 +19,23 @@
  */
 package com.intellij.util.io;
 
+import org.jetbrains.annotations.NotNull;
+
 import java.io.IOException;
 import java.io.InputStream;
 
 public class MappedFileInputStream extends InputStream {
-  private ResizeableMappedFile raf;
+  private final ResizeableMappedFile raf;
   private int cur;
   private long limit;
 
-  public MappedFileInputStream(final ResizeableMappedFile raf, final long pos, final long limit) {
+  public MappedFileInputStream(@NotNull ResizeableMappedFile raf, final long pos, final long limit) {
     this.raf = raf;
     setup(pos, limit);
+  }
+
+  public MappedFileInputStream(@NotNull ResizeableMappedFile raf, final long pos) throws IOException {
+    this(raf, pos, raf.length());
   }
 
   public void setup(final long pos, final long limit) {
@@ -37,20 +43,19 @@ public class MappedFileInputStream extends InputStream {
     this.limit = limit;
   }
 
-  public MappedFileInputStream(final ResizeableMappedFile raf, final long pos) throws IOException {
-    this(raf, pos, raf.length());
-  }
-
+  @Override
   public int available()
   {
       return (int)(limit - cur);
   }
 
+  @Override
   public void close()
   {
       //do nothing because we want to leave the random access file open.
   }
 
+  @Override
   public int read() throws IOException
   {
     int retval = -1;
@@ -61,7 +66,8 @@ public class MappedFileInputStream extends InputStream {
     return retval;
   }
 
-  public int read( byte[] b, int offset, int length ) throws IOException
+  @Override
+  public int read(@NotNull byte[] b, int offset, int length ) throws IOException
   {
       //only allow a read of the amount available.
       if( length > available() )
@@ -78,6 +84,7 @@ public class MappedFileInputStream extends InputStream {
       return length;
   }
 
+  @Override
   public long skip( long amountToSkip )
   {
       long amountSkipped = Math.min( amountToSkip, available() );

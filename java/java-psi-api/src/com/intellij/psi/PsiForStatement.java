@@ -18,7 +18,7 @@ package com.intellij.psi;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * Represents a Java basic <code>for</code> statement.
+ * Represents a Java basic {@code for} statement.
  */
 public interface PsiForStatement extends PsiLoopStatement{
   /**

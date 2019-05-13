@@ -1,4 +1,4 @@
-java.util.regex.Pattern pattern = org.codehaus.groovy.runtime.DefaultGroovyMethods.bitwiseNegate("fdhsjk");
+java.util.regex.Pattern pattern = org.codehaus.groovy.runtime.StringGroovyMethods.bitwiseNegate("fdhsjk");
 java.util.regex.Matcher matcher = pattern.matcher("fdg");
 matcher.matches();
 print(java.util.regex.Pattern.matches("sdf", 2));

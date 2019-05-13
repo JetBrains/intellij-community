@@ -17,12 +17,12 @@ package com.intellij.ui.table;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.config.Storage;
-import com.intellij.util.ui.ListTableModel;
 import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import javax.swing.table.TableColumn;
 import javax.swing.table.TableColumnModel;
+import javax.swing.table.TableModel;
 import java.util.ArrayList;
 import java.util.Arrays;
 
@@ -33,8 +33,12 @@ import java.util.Arrays;
 public class BaseTableView extends JBTable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ui.table.BaseTableView");
 
-  public BaseTableView(final ListTableModel model) {
+  public BaseTableView(final TableModel model) {
     super(model);
+  }
+
+  public BaseTableView(TableModel model, TableColumnModel columnModel) {
+    super(model, columnModel);
   }
 
   @NonNls
@@ -73,7 +77,7 @@ public class BaseTableView extends JBTable {
   public static void restore(final Storage storage, final JTable table) {
     final TableColumnModel columnModel = table.getTableHeader().getColumnModel();
     int index = 0;
-    final ArrayList<String> columnIndices = new ArrayList<String>();
+    final ArrayList<String> columnIndices = new ArrayList<>();
     while (true) {
       final String order = storage.get(orderPropertyName(index));
       if (order == null) break;

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import com.intellij.lang.html.HTMLLanguage;
 import com.intellij.lang.xhtml.XHTMLLanguage;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.util.PsiUtilCore;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -33,7 +34,7 @@ public class HtmlContextType extends FileTypeBasedContextType {
 
   @Override
   public boolean isInContext(@NotNull PsiFile file, int offset) {
-    return isMyLanguage(file.getLanguage()) && !XmlContextType.isEmbeddedContent(file, offset);
+    return isMyLanguage(PsiUtilCore.getLanguageAtOffset(file, offset)) && !XmlContextType.isEmbeddedContent(file, offset);
   }
 
   static boolean isMyLanguage(Language language) {

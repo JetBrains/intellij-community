@@ -21,11 +21,12 @@ class ArrayIterable<T> implements Iterable<T>
 {
     private final T[] contents;
 
-    public ArrayIterable(T[] contents){
+    ArrayIterable(T[] contents){
         this.contents = contents;
     }
 
+    @Override
     public Iterator<T> iterator(){
-        return new ArrayIterator<T>(contents);
+        return new ArrayIterator<>(contents);
     }
 }

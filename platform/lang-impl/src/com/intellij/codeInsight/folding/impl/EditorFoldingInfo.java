@@ -1,31 +1,17 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.codeInsight.folding.impl;
 
+import com.intellij.injected.editor.EditorWindow;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.FoldRegion;
-import com.intellij.openapi.editor.FoldingModel;
-import com.intellij.openapi.editor.ex.FoldingModelEx;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.SmartPsiElementPointer;
+import com.intellij.psi.impl.source.tree.injected.FoldingRegionWindow;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -40,11 +26,12 @@ import java.util.Map;
 public class EditorFoldingInfo {
   private static final Key<EditorFoldingInfo> KEY = Key.create("EditorFoldingInfo.KEY");
 
-  private final Map<FoldRegion, SmartPsiElementPointer<?>> myFoldRegionToSmartPointerMap
-    = new THashMap<FoldRegion, SmartPsiElementPointer<?>>();
+  private final Map<FoldRegion, SmartPsiElementPointer<?>> myFoldRegionToSmartPointerMap = new THashMap<>();
 
   @NotNull
   public static EditorFoldingInfo get(@NotNull Editor editor) {
+    if (editor instanceof EditorWindow) return new EditorFoldingInfoWindow(get(((EditorWindow)editor).getDelegate()));
+
     EditorFoldingInfo info = editor.getUserData(KEY);
     if (info == null){
       info = new EditorFoldingInfo();
@@ -64,7 +51,7 @@ public class EditorFoldingInfo {
   }
 
   @Nullable
-  public TextRange getPsiElementRange(@NotNull FoldRegion region) {
+  TextRange getPsiElementRange(@NotNull FoldRegion region) {
     PsiElement element = getPsiElement(region);
     if (element == null) return null;
     PsiFile containingFile = element.getContainingFile();
@@ -77,11 +64,7 @@ public class EditorFoldingInfo {
     return range;
   }
 
-  public boolean isLightRegion(@NotNull FoldRegion region) {
-    return myFoldRegionToSmartPointerMap.get(region) == null;
-  }
-
-  public void addRegion(@NotNull FoldRegion region, @NotNull SmartPsiElementPointer<?> pointer){
+  void addRegion(@NotNull FoldRegion region, @NotNull SmartPsiElementPointer<?> pointer){
     myFoldRegionToSmartPointerMap.put(region, pointer);
   }
 
@@ -90,21 +73,39 @@ public class EditorFoldingInfo {
   }
 
   public void dispose() {
-    for (FoldRegion region : myFoldRegionToSmartPointerMap.keySet()) {
-      region.dispose();
-    }
     myFoldRegionToSmartPointerMap.clear();
   }
 
-  public static void resetInfo(@NotNull Editor editor) {
-    EditorFoldingInfo info = editor.getUserData(KEY);
-    if (info != null) {
-      info.dispose();
+  private static class EditorFoldingInfoWindow extends EditorFoldingInfo {
+    private final EditorFoldingInfo myDelegate;
+
+    private EditorFoldingInfoWindow(EditorFoldingInfo delegate) {
+      myDelegate = delegate;
     }
-    FoldingModel foldingModel = editor.getFoldingModel();
-    if (foldingModel instanceof FoldingModelEx) {
-      ((FoldingModelEx)foldingModel).rebuild();
+
+    @Nullable
+    @Override
+    public PsiElement getPsiElement(@NotNull FoldRegion region) {
+      return myDelegate.getPsiElement(getHostRegion(region));
     }
-    editor.putUserData(KEY, null);
+
+    @Override
+    void addRegion(@NotNull FoldRegion region, @NotNull SmartPsiElementPointer<?> pointer) {
+      myDelegate.addRegion(getHostRegion(region), pointer);
+    }
+
+    @Override
+    public void removeRegion(@NotNull FoldRegion region) {
+      myDelegate.removeRegion(getHostRegion(region));
+    }
+
+    @Override
+    public void dispose() {
+      myDelegate.dispose();
+    }
+
+    private static FoldRegion getHostRegion(@NotNull FoldRegion injectedRegion) {
+      return injectedRegion instanceof FoldingRegionWindow ? ((FoldingRegionWindow) injectedRegion).getDelegate() : injectedRegion;
+    }
   }
 }

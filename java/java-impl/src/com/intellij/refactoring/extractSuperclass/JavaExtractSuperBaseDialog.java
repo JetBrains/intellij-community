@@ -15,16 +15,18 @@
  */
 package com.intellij.refactoring.extractSuperclass;
 
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.JavaProjectRootsUtil;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.ComponentWithBrowseButton;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Pass;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
+import com.intellij.psi.presentation.java.SymbolPresentationUtil;
 import com.intellij.refactoring.MoveDestination;
 import com.intellij.refactoring.PackageWrapper;
 import com.intellij.refactoring.RefactoringBundle;
@@ -34,6 +36,7 @@ import com.intellij.refactoring.util.RefactoringMessageUtil;
 import com.intellij.refactoring.util.classMembers.MemberInfo;
 import com.intellij.ui.EditorComboBox;
 import com.intellij.ui.components.JBLabel;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -58,6 +61,7 @@ public abstract class JavaExtractSuperBaseDialog extends ExtractSuperBaseDialog<
     };
   }
 
+  @Override
   protected ComponentWithBrowseButton<EditorComboBox> createPackageNameField() {
     String name = "";
     PsiFile file = mySourceClass.getContainingFile();
@@ -70,8 +74,8 @@ public abstract class JavaExtractSuperBaseDialog extends ExtractSuperBaseDialog<
 
   @Override
   protected JPanel createDestinationRootPanel() {
-    final VirtualFile[] sourceRoots = ProjectRootManager.getInstance(myProject).getContentSourceRoots();
-    if (sourceRoots.length <= 1) return super.createDestinationRootPanel();
+    final List<VirtualFile> sourceRoots = JavaProjectRootsUtil.getSuitableDestinationSourceRoots(myProject);
+    if (sourceRoots.size() <= 1) return super.createDestinationRootPanel();
     final JPanel panel = new JPanel(new BorderLayout());
     panel.setBorder(BorderFactory.createEmptyBorder(10, 0, 0, 0));
     final JBLabel label = new JBLabel(RefactoringBundle.message("target.destination.folder"));
@@ -91,10 +95,12 @@ public abstract class JavaExtractSuperBaseDialog extends ExtractSuperBaseDialog<
     return ((PackageNameReferenceEditorCombo)myPackageNameField).getText().trim();
   }
 
+  @Override
   protected JTextField createSourceClassField() {
     JTextField result = new JTextField();
     result.setEditable(false);
-    result.setText(mySourceClass.getQualifiedName());
+    final String qualifiedName = mySourceClass.getQualifiedName();
+    result.setText(qualifiedName != null ? qualifiedName : SymbolPresentationUtil.getSymbolPresentableText(mySourceClass));
     return result;
   }
 
@@ -122,32 +128,34 @@ public abstract class JavaExtractSuperBaseDialog extends ExtractSuperBaseDialog<
     return directories[0];
   }
 
+  @Override
+  protected boolean isPossibleToRenameOriginal() {
+    //disable for anonymous classes
+    return mySourceClass.getNameIdentifier() != null;
+  }
 
   @Override
   protected void preparePackage() throws OperationFailedException {
     final String targetPackageName = getTargetPackageName();
-    final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(myProject);
-    if (!psiFacade.getNameHelper().isQualifiedName(targetPackageName)) {
+    final PsiFile containingFile = mySourceClass.getContainingFile();
+    final boolean fromDefaultPackage = containingFile instanceof PsiClassOwner && ((PsiClassOwner)containingFile).getPackageName().isEmpty();
+    if (!(fromDefaultPackage && StringUtil.isEmpty(targetPackageName)) && !PsiNameHelper.getInstance(myProject).isQualifiedName(targetPackageName)) {
       throw new OperationFailedException("Invalid package name: " + targetPackageName);
     }
-    final PsiPackage aPackage = psiFacade.findPackage(targetPackageName);
+    final PsiPackage aPackage = JavaPsiFacade.getInstance(myProject).findPackage(targetPackageName);
     if (aPackage != null) {
       final PsiDirectory[] directories = aPackage.getDirectories(mySourceClass.getResolveScope());
       if (directories.length >= 1) {
         myTargetDirectory = getDirUnderSameSourceRoot(directories);
       }
     }
-    
+
     final MoveDestination moveDestination =
       myDestinationFolderComboBox.selectDirectory(new PackageWrapper(PsiManager.getInstance(myProject), targetPackageName), false);
     if (moveDestination == null) return;
 
-    myTargetDirectory = myTargetDirectory != null ? ApplicationManager.getApplication().runWriteAction(new Computable<PsiDirectory>() {
-      @Override
-      public PsiDirectory compute() {
-        return moveDestination.getTargetDirectory(myTargetDirectory);
-      }
-    }) : null;
+    myTargetDirectory = myTargetDirectory != null ? WriteAction
+      .compute(() -> moveDestination.getTargetDirectory(myTargetDirectory)) : null;
 
     if (myTargetDirectory == null) {
       throw new OperationFailedException(""); // message already reported by PackageUtil
@@ -166,8 +174,15 @@ public abstract class JavaExtractSuperBaseDialog extends ExtractSuperBaseDialog<
   @Nullable
   @Override
   protected String validateName(String name) {
-    return JavaPsiFacade.getInstance(myProject).getNameHelper().isIdentifier(name)
+    return PsiNameHelper.getInstance(myProject).isIdentifier(name)
            ? null
            : RefactoringMessageUtil.getIncorrectIdentifierMessage(name);
+  }
+
+  @Nullable
+  @Override
+  protected String validateQualifiedName(String packageName, @NotNull String extractedSuperName) {
+    return StringUtil.getQualifiedName(packageName, extractedSuperName).equals(mySourceClass.getQualifiedName()) ? "Different name expected"
+                                                                                                                 : null;
   }
 }

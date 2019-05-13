@@ -16,9 +16,11 @@
 package com.intellij.codeInsight.lookup.impl;
 
 import com.intellij.ui.ListExpandableItemsHandler;
+import com.intellij.ui.components.JBScrollPane;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import java.awt.Rectangle;
 import java.awt.event.*;
 
 /**
@@ -31,9 +33,10 @@ public class CompletionExtender extends ListExpandableItemsHandler {
     list.addComponentListener(new ComponentAdapter() {
       @Override
       public void componentShown(ComponentEvent e) {
-        if (myComponent.getParent() != null && myComponent.getParent().getParent() instanceof JScrollPane) {
-          final JScrollBar verticalScrollBar = ((JScrollPane)myComponent.getParent().getParent()).getVerticalScrollBar();
-          final JScrollBar horizontalScrollBar = ((JScrollPane)myComponent.getParent().getParent()).getVerticalScrollBar();
+        JScrollPane scrollPane = JBScrollPane.findScrollPane(myComponent);
+        if (scrollPane != null) {
+          final JScrollBar verticalScrollBar = scrollPane.getVerticalScrollBar();
+          final JScrollBar horizontalScrollBar = scrollPane.getVerticalScrollBar();
           final AdjustmentListener listener = new AdjustmentListener() {
             @Override
             public void adjustmentValueChanged(AdjustmentEvent e) {
@@ -71,5 +74,16 @@ public class CompletionExtender extends ListExpandableItemsHandler {
   @Override
   protected boolean isPopup() {
     return false;
+  }
+
+  @Override
+  protected Rectangle getVisibleRect(Integer key) {
+    try {
+      Rectangle bounds = myComponent.getCellBounds(key, key);
+      if (bounds != null) return bounds;
+    }
+    catch (IndexOutOfBoundsException ignored) {
+    }
+    return super.getVisibleRect(key);
   }
 }

@@ -27,7 +27,7 @@ import java.util.List;
  * author: lesya
  */
 public class CvsResultEx implements CvsResult {
-  private final List<VcsException> myErrors = new ArrayList<VcsException>();
+  private final List<VcsException> myErrors = new ArrayList<>();
   private boolean myIsCanceled = false;
 
   @Override
@@ -37,7 +37,7 @@ public class CvsResultEx implements CvsResult {
 
   @Override
   public List<VcsException> getErrors() {
-    final ArrayList<VcsException> errors = new ArrayList<VcsException>();
+    final ArrayList<VcsException> errors = new ArrayList<>();
     for (VcsException error : myErrors) {
       if (!error.isWarning()) {
         errors.add(error);
@@ -46,8 +46,9 @@ public class CvsResultEx implements CvsResult {
     return errors;
   }
 
+  @Override
   public List<VcsException> getWarnings() {
-    final ArrayList<VcsException> warnings = new ArrayList<VcsException>();
+    final ArrayList<VcsException> warnings = new ArrayList<>();
     for (VcsException error : myErrors) {
       if (error.isWarning()) {
         warnings.add(error);

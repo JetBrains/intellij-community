@@ -1,413 +1,437 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
-/**
- * @author Yura Cangea
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor.colors.impl;
 
-import com.intellij.openapi.Disposable;
+import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
+import com.intellij.configurationStore.BundledSchemeEP;
+import com.intellij.configurationStore.LazySchemeProcessor;
+import com.intellij.configurationStore.SchemeDataHolder;
+import com.intellij.configurationStore.SchemeExtensionProvider;
+import com.intellij.ide.WelcomeWizardUtil;
+import com.intellij.ide.ui.LafManager;
+import com.intellij.ide.ui.UITheme;
+import com.intellij.ide.ui.laf.UIThemeBasedLookAndFeelInfo;
+import com.intellij.notification.Notification;
+import com.intellij.notification.NotificationType;
+import com.intellij.notification.Notifications;
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.PathManager;
-import com.intellij.openapi.application.ex.DecodeDefaultsUtil;
-import com.intellij.openapi.components.ExportableComponent;
-import com.intellij.openapi.components.NamedComponent;
-import com.intellij.openapi.components.RoamingType;
+import com.intellij.openapi.application.impl.ApplicationImpl;
+import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.State;
+import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.colors.*;
+import com.intellij.openapi.editor.colors.EditorColorsListener;
+import com.intellij.openapi.editor.colors.EditorColorsManager;
+import com.intellij.openapi.editor.colors.EditorColorsScheme;
+import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.colors.ex.DefaultColorSchemesManager;
 import com.intellij.openapi.editor.markup.TextAttributes;
-import com.intellij.openapi.options.*;
-import com.intellij.openapi.util.*;
-import com.intellij.util.EventDispatcher;
+import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.options.SchemeManager;
+import com.intellij.openapi.options.SchemeManagerFactory;
+import com.intellij.openapi.options.SchemeState;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.impl.PsiModificationTrackerImpl;
+import com.intellij.util.ComponentTreeEventDispatcher;
+import com.intellij.util.JdomKt;
+import com.intellij.util.io.URLUtil;
 import com.intellij.util.ui.UIUtil;
-import org.jdom.Document;
-import org.jdom.Element;
-import org.jdom.JDOMException;
+import com.intellij.util.xmlb.annotations.OptionTag;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
+import javax.swing.*;
+import javax.swing.UIManager.LookAndFeelInfo;
+import java.net.URL;
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.Map;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.List;
+import java.util.function.Function;
 
-public class EditorColorsManagerImpl extends EditorColorsManager implements NamedJDOMExternalizable, ExportableComponent, NamedComponent {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.editor.colors.impl.EditorColorsManagerImpl");
+@State(
+  name = "EditorColorsManagerImpl",
+  storages = @Storage("colors.scheme.xml"),
+  additionalExportFile = EditorColorsManagerImpl.FILE_SPEC
+)
+public class EditorColorsManagerImpl extends EditorColorsManager implements PersistentStateComponent<EditorColorsManagerImpl.State> {
+  private static final Logger LOG = Logger.getInstance(EditorColorsManagerImpl.class);
+  private static final ExtensionPointName<BundledSchemeEP> BUNDLED_EP_NAME = ExtensionPointName.create("com.intellij.bundledColorScheme");
 
-  private final EventDispatcher<EditorColorsListener> myListeners = EventDispatcher.create(EditorColorsListener.class);
+  private final ComponentTreeEventDispatcher<EditorColorsListener> myTreeDispatcher = ComponentTreeEventDispatcher.create(EditorColorsListener.class);
 
-  @NonNls private static final String NODE_NAME = "global_color_scheme";
-  @NonNls private static final String SCHEME_NODE_NAME = "scheme";
+  private final DefaultColorSchemesManager myDefaultColorSchemeManager;
+  private final SchemeManager<EditorColorsScheme> mySchemeManager;
+  static final String FILE_SPEC = "colors";
 
-  private String myGlobalSchemeName;
-  public boolean USE_ONLY_MONOSPACED_FONTS = true;
-  private final DefaultColorSchemesManager myDefaultColorSchemesManager;
-  private final SchemesManager<EditorColorsScheme, EditorColorsSchemeImpl> mySchemesManager;
-  @NonNls private static final String NAME_ATTR = "name";
-  private static final String FILE_SPEC = "$ROOT_CONFIG$/colors";  
-  private static final String FILE_EXT = ".icls";
+  private State myState = new State();
 
-  public EditorColorsManagerImpl(DefaultColorSchemesManager defaultColorSchemesManager, SchemesManagerFactory schemesManagerFactory) {
-    myDefaultColorSchemesManager = defaultColorSchemesManager;
+  public EditorColorsManagerImpl(@NotNull DefaultColorSchemesManager defaultColorSchemeManager, @NotNull SchemeManagerFactory schemeManagerFactory) {
+    myDefaultColorSchemeManager = defaultColorSchemeManager;
 
-    mySchemesManager = schemesManagerFactory.createSchemesManager(
-      FILE_SPEC,
-      new MySchemeProcessor(), RoamingType.PER_USER);
+    class EditorColorSchemeProcessor extends LazySchemeProcessor<EditorColorsScheme, EditorColorsSchemeImpl> implements SchemeExtensionProvider {
+      @NotNull
+      @Override
+      public EditorColorsSchemeImpl createScheme(@NotNull SchemeDataHolder<? super EditorColorsSchemeImpl> dataHolder,
+                                                 @NotNull String name,
+                                                 @NotNull Function<? super String, String> attributeProvider,
+                                                 boolean isBundled) {
+        EditorColorsSchemeImpl scheme = isBundled ? new BundledScheme() : new EditorColorsSchemeImpl(null);
+        // todo be lazy
+        scheme.readExternal(dataHolder.read());
+        // we don't need to update digest for bundled scheme because
+        // 1) it can be computed on demand later (because bundled scheme is not mutable)
+        // 2) in the future user copy of bundled scheme will use bundled scheme as parent (not as full copy)
+        if (isBundled) {
+          scheme.optimizeAttributeMap();
+        }
+        return scheme;
+      }
 
-    addDefaultSchemes();
+      @NotNull
+      @Override
+      public SchemeState getState(@NotNull EditorColorsScheme scheme) {
+        return scheme instanceof ReadOnlyColorsScheme ? SchemeState.NON_PERSISTENT : SchemeState.POSSIBLY_CHANGED;
+      }
 
-    // Change some attributes of default schema using special extension
-    extendDefaultScheme();
+      @Override
+      public void onCurrentSchemeSwitched(@Nullable EditorColorsScheme oldScheme, @Nullable EditorColorsScheme newScheme) {
+        ApplicationManager.getApplication().invokeLater(() -> { // don't do heavy operations right away
+          LafManager.getInstance().updateUI();
+          schemeChangedOrSwitched(newScheme);
+        });
+      }
 
-    // Load default schemes from providers
-    loadAdditionalDefaultSchemes();
+      @NotNull
+      @NonNls
+      @Override
+      public String getSchemeExtension() {
+        return COLOR_SCHEME_FILE_EXTENSION;
+      }
 
-    loadAllSchemes();
+      @Override
+      public boolean isSchemeEqualToBundled(@NotNull EditorColorsSchemeImpl scheme) {
+        if (!scheme.getName().startsWith(SchemeManager.EDITABLE_COPY_PREFIX)) {
+          return false;
+        }
 
-    loadAdditionalTextAttributes();
+        AbstractColorsScheme bundledScheme =
+          (AbstractColorsScheme)mySchemeManager.findSchemeByName(scheme.getName().substring(SchemeManager.EDITABLE_COPY_PREFIX.length()));
+        if (bundledScheme == null) {
+          return false;
+        }
 
-    setGlobalScheme(myDefaultColorSchemesManager.getAllSchemes()[0]);
+        return scheme.settingsEqual(bundledScheme);
+      }
+
+      @Override
+      public void reloaded(@NotNull SchemeManager<EditorColorsScheme> schemeManager,
+                           @NotNull Collection<? extends EditorColorsScheme> schemes) {
+        loadBundledSchemes();
+        loadSchemesFromThemes();
+        initEditableDefaultSchemesCopies();
+        initEditableBundledSchemesCopies();
+      }
+    }
+    mySchemeManager = schemeManagerFactory.create(FILE_SPEC, new EditorColorSchemeProcessor());
+
+    initDefaultSchemes();
+    loadBundledSchemes();
+    loadSchemesFromThemes();
+    mySchemeManager.loadSchemes();
+
+    initEditableDefaultSchemesCopies();
+    initEditableBundledSchemesCopies();
+    resolveLinksToBundledSchemes();
+    initScheme();
   }
 
-  public TextAttributes getDefaultAttributes(TextAttributesKey key) {
+  private void initDefaultSchemes() {
+    for (DefaultColorsScheme defaultScheme : myDefaultColorSchemeManager.getAllSchemes()) {
+      mySchemeManager.addScheme(defaultScheme);
+    }
+    loadAdditionalTextAttributes();
+  }
+
+  private void initEditableDefaultSchemesCopies() {
+    for (DefaultColorsScheme defaultScheme : myDefaultColorSchemeManager.getAllSchemes()) {
+      if (defaultScheme.hasEditableCopy()) {
+        createEditableCopy(defaultScheme, defaultScheme.getEditableCopyName());
+      }
+    }
+  }
+
+  private void initScheme() {
+    String wizardEditorScheme = WelcomeWizardUtil.getWizardEditorScheme();
+    EditorColorsScheme scheme = null;
+
+    if (wizardEditorScheme != null) {
+      scheme = getScheme(wizardEditorScheme);
+      LOG.assertTrue(scheme != null, "Wizard scheme " + wizardEditorScheme + " not found");
+    }
+
+    if (scheme == null) {
+      LafManager lm = LafManager.getInstance();
+      UIManager.LookAndFeelInfo laf = lm.getCurrentLookAndFeel();
+
+      if (laf instanceof UIThemeBasedLookAndFeelInfo) {
+        String schemeName = ((UIThemeBasedLookAndFeelInfo)laf).getTheme().getEditorSchemeName();
+        if (schemeName != null) {
+          scheme = getScheme(schemeName);
+        }
+      }
+    }
+
+    if (scheme == null) {
+      scheme = UIUtil.isUnderDarcula() ? getScheme("Darcula") : getDefaultScheme();
+    }
+    setGlobalSchemeInner(scheme);
+  }
+
+  private void loadBundledSchemes() {
+    if (!isUnitTestOrHeadlessMode()) {
+      for (BundledSchemeEP ep : BUNDLED_EP_NAME.getExtensionList()) {
+        mySchemeManager.loadBundledScheme(ep.getPath() + ".xml", ep);
+      }
+    }
+  }
+
+  private void loadSchemesFromThemes() {
+    if (!isUnitTestOrHeadlessMode()) {
+      for (UIManager.LookAndFeelInfo laf : LafManager.getInstance().getInstalledLookAndFeels()) {
+        if (laf instanceof UIThemeBasedLookAndFeelInfo) {
+          UITheme theme = ((UIThemeBasedLookAndFeelInfo)laf).getTheme();
+          String path = theme.getEditorScheme();
+          if (path != null) {
+            mySchemeManager.loadBundledScheme(path, theme);
+          }
+        }
+      }
+    }
+  }
+
+  private void initEditableBundledSchemesCopies() {
+    for (EditorColorsScheme scheme : mySchemeManager.getAllSchemes()) {
+      if (scheme instanceof BundledScheme) {
+        createEditableCopy((BundledScheme)scheme, SchemeManager.EDITABLE_COPY_PREFIX + scheme.getName());
+      }
+    }
+  }
+
+  private void resolveLinksToBundledSchemes() {
+    for (EditorColorsScheme scheme : mySchemeManager.getAllSchemes()) {
+      if (scheme instanceof AbstractColorsScheme && !(scheme instanceof ReadOnlyColorsScheme)) {
+        try {
+          ((AbstractColorsScheme)scheme).resolveParent(name -> mySchemeManager.findSchemeByName(name));
+        }
+        catch (InvalidDataException e) {
+          String message = "Color scheme '" + scheme.getName() + "'" +
+                           " points to incorrect or non-existent default (base) scheme " +
+                           e.getMessage();
+          Notifications.Bus.notify(
+            new Notification(Notifications.SYSTEM_MESSAGES_GROUP_ID, "Incompatible color scheme", message, NotificationType.ERROR));
+        }
+      }
+    }
+  }
+
+  private void createEditableCopy(@NotNull AbstractColorsScheme initialScheme, @NotNull String editableCopyName) {
+    AbstractColorsScheme editableCopy = (AbstractColorsScheme)getScheme(editableCopyName);
+    if (editableCopy == null) {
+      editableCopy = (AbstractColorsScheme)initialScheme.clone();
+      editableCopy.setName(editableCopyName);
+      mySchemeManager.addScheme(editableCopy);
+    }
+    editableCopy.setCanBeDeleted(false);
+  }
+
+  @Deprecated
+  public static void schemeChangedOrSwitched() {
+    EditorColorsManagerImpl manager = (EditorColorsManagerImpl)getInstance();
+    manager.schemeChangedOrSwitched(manager.getGlobalScheme());
+  }
+
+  public void schemeChangedOrSwitched(@Nullable EditorColorsScheme newScheme) {
+    // refreshAllEditors is not enough - for example, change "Errors and warnings -> Typo" from green (default) to red
+    for (Project project : ProjectManager.getInstance().getOpenProjects()) {
+      DaemonCodeAnalyzer.getInstance(project).restart();
+      // force highlighting caches to rebuild
+      ((PsiModificationTrackerImpl)PsiManager.getInstance(project).getModificationTracker()).incCounter();
+    }
+
+    // we need to push events to components that use editor font, e.g. HTML editor panes
+    ApplicationManager.getApplication().getMessageBus().syncPublisher(TOPIC).globalSchemeChange(newScheme);
+    myTreeDispatcher.getMulticaster().globalSchemeChange(newScheme);
+  }
+
+  static class BundledScheme extends EditorColorsSchemeImpl implements ReadOnlyColorsScheme {
+    BundledScheme() {
+      super(null);
+    }
+
+    @Override
+    public boolean isVisible() {
+      return false;
+    }
+  }
+
+  static class State {
+    public boolean USE_ONLY_MONOSPACED_FONTS = true;
+
+    @OptionTag(tag = "global_color_scheme", nameAttribute = "", valueAttribute = "name")
+    public String colorScheme;
+  }
+
+  private static boolean isUnitTestOrHeadlessMode() {
+    return ApplicationManager.getApplication().isUnitTestMode() || ApplicationManager.getApplication().isHeadlessEnvironment();
+  }
+
+  public TextAttributes getDefaultAttributes(@NotNull TextAttributesKey key) {
     final boolean dark = UIUtil.isUnderDarcula() && getScheme("Darcula") != null;
     // It is reasonable to fetch attributes from Default color scheme. Otherwise if we launch IDE and then
     // try switch from custom colors scheme (e.g. with dark background) to default one. Editor will show
     // incorrect highlighting with "traces" of color scheme which was active during IDE startup.
-    final EditorColorsScheme defaultColorScheme = getScheme(dark ? "Darcula" : EditorColorsScheme.DEFAULT_SCHEME_NAME);
-    return defaultColorScheme.getAttributes(key);
-  }
-
-  private void extendDefaultScheme() {
-    final EditorColorsScheme defaultColorsScheme = mySchemesManager.findSchemeByName("Default");
-
-    //Get color scheme from EPs
-    for (BundledColorSchemesProvider provider : BundledColorSchemesProvider.EP_NAME.getExtensions()) {
-      final String extensionPath;
-      try {
-        extensionPath = provider.getDefaultSchemaExtensionPath();
-      }
-      catch (AbstractMethodError e) {
-        continue;
-      }
-      if (extensionPath == null) {
-        continue;
-      }
-      try {
-        final EditorColorsSchemeImpl extScheme = loadScheme(extensionPath, provider);
-        if (extScheme != null) {
-          // copy text attrs from extension to default scheme
-          for (Map.Entry<TextAttributesKey, TextAttributes> keyTextAttributesEntry : extScheme.myAttributesMap.entrySet()) {
-            final TextAttributesKey key = keyTextAttributesEntry.getKey();
-            final TextAttributes attrs = keyTextAttributesEntry.getValue();
-            ((AbstractColorsScheme)defaultColorsScheme).myAttributesMap.put(key, attrs);
-          }
-
-          // copy colors
-          for (Map.Entry<ColorKey, Color> keyColorEntry : extScheme.myColorsMap.entrySet()) {
-            final ColorKey key = keyColorEntry.getKey();
-            final Color color = keyColorEntry.getValue();
-            ((AbstractColorsScheme)defaultColorsScheme).myColorsMap.put(key, color);
-          }
-        }
-      }
-      catch (final Exception e) {
-        ApplicationManager.getApplication().invokeLater(
-          new Runnable(){
-            @Override
-            public void run() {
-              // Error shouldn't occur during this operation
-              // thus we report error instead of info
-              LOG.error("Cannot read scheme from " + extensionPath + ": " + e.getLocalizedMessage(), e);
-            }
-          }
-        );
-      }
-    }
-  }
-
-  private void loadAdditionalDefaultSchemes() {
-    //Get color schemes from EPs
-    for (BundledColorSchemesProvider provider : BundledColorSchemesProvider.EP_NAME.getExtensions()) {
-      final String[] schemesPaths = provider.getBundledSchemesRelativePaths();
-      if (schemesPaths == null) {
-        continue;
-      }
-
-      for (final String schemePath : schemesPaths) {
-        try {
-          final EditorColorsSchemeImpl scheme = loadScheme(schemePath, provider);
-          if (scheme != null) {
-            mySchemesManager.addNewScheme(scheme, false);
-          }
-        }
-        catch (final Exception e) {
-          ApplicationManager.getApplication().invokeLater(
-            new Runnable(){
-              @Override
-              public void run() {
-                // Error shouldn't occur during this operation
-                // thus we report error instead of info
-                LOG.error("Cannot read scheme from " + schemePath + ": " + e.getLocalizedMessage(), e);
-              }
-            }
-          );
-        }
-      }
-    }
+    return getScheme(dark ? "Darcula" : EditorColorsScheme.DEFAULT_SCHEME_NAME).getAttributes(key);
   }
 
   private void loadAdditionalTextAttributes() {
-    for(AdditionalTextAttributesEP attributesEP : AdditionalTextAttributesEP.EP_NAME.getExtensions()){
-      final EditorColorsScheme editorColorsScheme = mySchemesManager.findSchemeByName(attributesEP.scheme);
-      if(editorColorsScheme == null){
-        LOG.warn("Cannot find scheme: " + attributesEP.scheme);
+    for (AdditionalTextAttributesEP attributesEP : AdditionalTextAttributesEP.EP_NAME.getExtensions()) {
+      EditorColorsScheme editorColorsScheme = mySchemeManager.findSchemeByName(attributesEP.scheme);
+      if (editorColorsScheme == null) {
+        if (!isUnitTestOrHeadlessMode()) {
+          LOG.warn("Cannot find scheme: " + attributesEP.scheme + " from plugin: " + attributesEP.getPluginDescriptor().getPluginId());
+        }
+        continue;
+      }
+      URL resource = attributesEP.getLoaderForClass().getResource(attributesEP.file);
+      if (resource == null) {
+        LOG.warn("resource not found: " + attributesEP.file);
         continue;
       }
       try {
-        InputStream inputStream = attributesEP.getLoaderForClass().getResourceAsStream(attributesEP.file);
-        Document document = JDOMUtil.loadDocument(inputStream);
-
-        ((AbstractColorsScheme)editorColorsScheme).readAttributes(document.getRootElement());
+        ((AbstractColorsScheme)editorColorsScheme).readAttributes(JdomKt.loadElement(URLUtil.openStream(resource)));
       }
-      catch (Exception e1) {
-        LOG.error(e1);
+      catch (Exception e) {
+        LOG.error(e);
       }
     }
   }
-
-  private static EditorColorsSchemeImpl loadScheme(@NotNull final String schemePath,
-                                                   final BundledColorSchemesProvider provider)
-    throws IOException, JDOMException, InvalidDataException {
-    final InputStream inputStream = DecodeDefaultsUtil.getDefaultsInputStream(provider, schemePath);
-    if (inputStream == null) {
-      // Error shouldn't occur during this operation
-      // thus we report error instead of info
-      LOG.error("Cannot read scheme from " +  schemePath);
-      return null;
-    }
-
-    final Document document;
-    try {
-      document = JDOMUtil.loadDocument(inputStream);
-    }
-    catch (JDOMException e) {
-      LOG.info("Error reading scheme from  " + schemePath + ": " + e.getLocalizedMessage());
-      throw e;
-    }
-    return loadSchemeFromDocument(document, false);
-  }
-
-  private static EditorColorsSchemeImpl loadSchemeFromDocument(final Document document,
-                                                               final boolean isEditable)
-    throws InvalidDataException {
-
-    final Element root = document.getRootElement();
-
-    if (root == null || !SCHEME_NODE_NAME.equals(root.getName())) {
-      throw new InvalidDataException();
-    }
-
-    final EditorColorsSchemeImpl scheme = isEditable
-       // editable scheme
-       ? new EditorColorsSchemeImpl(null, DefaultColorSchemesManager.getInstance())
-       //not editable scheme
-       : new ReadOnlyColorsSchemeImpl(null, DefaultColorSchemesManager.getInstance());
-    scheme.readExternal(root);
-    return scheme;
-  }
-
-  // -------------------------------------------------------------------------
-  // Schemes manipulation routines
-  // -------------------------------------------------------------------------
 
   @Override
-  public void addColorsScheme(EditorColorsScheme scheme) {
-    if (!isDefaultScheme(scheme) && scheme.getName().trim().length() > 0) {
-      mySchemesManager.addNewScheme(scheme, true);
+  public void addColorsScheme(@NotNull EditorColorsScheme scheme) {
+    if (!isDefaultScheme(scheme) && !StringUtil.isEmpty(scheme.getName())) {
+      mySchemeManager.addScheme(scheme);
     }
   }
 
   @Override
   public void removeAllSchemes() {
-    mySchemesManager.clearAllSchemes();
-    addDefaultSchemes();
-  }
-
-  private void addDefaultSchemes() {
-    DefaultColorsScheme[] allDefaultSchemes = myDefaultColorSchemesManager.getAllSchemes();
-    for (DefaultColorsScheme defaultScheme : allDefaultSchemes) {
-      mySchemesManager.addNewScheme(defaultScheme, true);
-    }
-  }
-
-  // -------------------------------------------------------------------------
-  // Getters & Setters
-  // -------------------------------------------------------------------------
-
-  @Override
-  public EditorColorsScheme[] getAllSchemes() {
-    ArrayList<EditorColorsScheme> schemes = new ArrayList<EditorColorsScheme>(mySchemesManager.getAllSchemes());
-    Collections.sort(schemes, new Comparator<EditorColorsScheme>() {
-      @Override
-      public int compare(EditorColorsScheme s1, EditorColorsScheme s2) {
-        if (isDefaultScheme(s1) && !isDefaultScheme(s2)) return -1;
-        if (!isDefaultScheme(s1) && isDefaultScheme(s2)) return 1;
-
-        return s1.getName().compareToIgnoreCase(s2.getName());
-      }
-    });
-
-    return schemes.toArray(new EditorColorsScheme[schemes.size()]);
-  }
-
-  @Override
-  public void setGlobalScheme(EditorColorsScheme scheme) {
-    mySchemesManager.setCurrentSchemeName(scheme == null ? getDefaultScheme().getName() : scheme.getName());
-    fireChanges(scheme);
   }
 
   @NotNull
-  private static DefaultColorsScheme getDefaultScheme() {
-    return DefaultColorSchemesManager.getInstance().getAllSchemes()[0];
+  @Override
+  public EditorColorsScheme[] getAllSchemes() {
+    EditorColorsScheme[] result = getAllVisibleSchemes(mySchemeManager.getAllSchemes());
+    Arrays.sort(result, EditorColorSchemesComparator.INSTANCE);
+    return result;
+  }
+
+  private static EditorColorsScheme[] getAllVisibleSchemes(@NotNull Collection<? extends EditorColorsScheme> schemes) {
+    List<EditorColorsScheme> visibleSchemes = new ArrayList<>(schemes.size() - 1);
+    for (EditorColorsScheme scheme : schemes) {
+      if (AbstractColorsScheme.isVisible(scheme)) {
+        visibleSchemes.add(scheme);
+      }
+    }
+    return visibleSchemes.toArray(new EditorColorsScheme[0]);
+  }
+
+  @Override
+  public void setGlobalScheme(@Nullable EditorColorsScheme scheme) {
+    Application application = ApplicationManager.getApplication();
+    boolean notify = (application instanceof ApplicationImpl && ((ApplicationImpl)application).isLoaded());
+    mySchemeManager.setCurrent(scheme == null ? getDefaultScheme() : scheme, notify);
+  }
+
+  private void setGlobalSchemeInner(@Nullable EditorColorsScheme scheme) {
+    mySchemeManager.setCurrent(scheme == null ? getDefaultScheme() : scheme, false);
+  }
+
+  @NotNull
+  private EditorColorsScheme getDefaultScheme() {
+    DefaultColorsScheme defaultScheme = myDefaultColorSchemeManager.getFirstScheme();
+    String editableCopyName = defaultScheme.getEditableCopyName();
+    EditorColorsScheme editableCopy = getScheme(editableCopyName);
+    assert editableCopy != null : "An editable copy of " + defaultScheme.getName() + " has not been initialized.";
+    return editableCopy;
   }
 
   @NotNull
   @Override
   public EditorColorsScheme getGlobalScheme() {
-    final EditorColorsScheme scheme = mySchemesManager.getCurrentScheme();
-    if (scheme == null) {
-      return getDefaultScheme();
+    EditorColorsScheme scheme = mySchemeManager.getActiveScheme();
+    EditorColorsScheme editableCopy = getEditableCopy(scheme);
+    if (editableCopy != null) return editableCopy;
+    return scheme == null ? getDefaultScheme() : scheme;
+  }
+
+  @Nullable
+  private EditorColorsScheme getEditableCopy(EditorColorsScheme scheme) {
+    String editableCopyName = getEditableCopyName(scheme);
+    if (editableCopyName != null) {
+      EditorColorsScheme editableCopy = getScheme(editableCopyName);
+      if (editableCopy != null) return editableCopy;
     }
-    return scheme;
+    return null;
   }
 
-  @Override
-  public EditorColorsScheme getScheme(String schemeName) {
-    return mySchemesManager.findSchemeByName(schemeName);
-  }
-
-  private void fireChanges(EditorColorsScheme scheme) {
-    myListeners.getMulticaster().globalSchemeChange(scheme);
-  }
-
-  // -------------------------------------------------------------------------
-  // Routines responsible for loading & saving colors schemes.
-  // -------------------------------------------------------------------------
-
-  private void loadAllSchemes() {
-    mySchemesManager.loadSchemes();
-  }
-
-  private static File getColorsDir(boolean create) {
-    @NonNls String directoryPath = PathManager.getConfigPath() + File.separator + "colors";
-    File directory = new File(directoryPath);
-    if (!directory.exists()) {
-      if (!create) return null;
-      if (!directory.mkdir()) {
-        LOG.error("Cannot create directory: " + directory.getAbsolutePath());
-        return null;
-      }
+  @Nullable
+  private static String getEditableCopyName(EditorColorsScheme scheme) {
+    String editableCopyName = null;
+    if (scheme instanceof DefaultColorsScheme && ((DefaultColorsScheme)scheme).hasEditableCopy()) {
+      editableCopyName = ((DefaultColorsScheme)scheme).getEditableCopyName();
     }
-    return directory;
-  }
-
-
-  @Override
-  public void addEditorColorsListener(EditorColorsListener listener) {
-    myListeners.addListener(listener);
+    else if (scheme instanceof BundledScheme) {
+      editableCopyName = SchemeManager.EDITABLE_COPY_PREFIX + scheme.getName();
+    }
+    return editableCopyName;
   }
 
   @Override
-  public void addEditorColorsListener(EditorColorsListener listener, Disposable disposable) {
-    myListeners.addListener(listener, disposable);
+  public EditorColorsScheme getScheme(@NotNull String schemeName) {
+    return mySchemeManager.findSchemeByName(schemeName);
   }
 
   @Override
-  public void removeEditorColorsListener(EditorColorsListener listener) {
-    myListeners.removeListener(listener);
-  }
-
-  @Override
-  public void setUseOnlyMonospacedFonts(boolean b) {
-    USE_ONLY_MONOSPACED_FONTS = b;
+  public void setUseOnlyMonospacedFonts(boolean value) {
+    myState.USE_ONLY_MONOSPACED_FONTS = value;
   }
 
   @Override
   public boolean isUseOnlyMonospacedFonts() {
-    return USE_ONLY_MONOSPACED_FONTS;
+    return myState.USE_ONLY_MONOSPACED_FONTS;
   }
 
+  @Nullable
   @Override
-  public String getExternalFileName() {
-    return "colors.scheme";
-  }
-
-  @Override
-  @NotNull
-  public File[] getExportFiles() {
-    return new File[]{getColorsDir(true), PathManager.getOptionsFile(this)};
-  }
-
-  @Override
-  @NotNull
-  public String getPresentableName() {
-    return OptionsBundle.message("options.color.schemes.presentable.name");
-  }
-
-  @Override
-  public void readExternal(Element parentNode) throws InvalidDataException {
-    DefaultJDOMExternalizer.readExternal(this, parentNode);
-    Element element = parentNode.getChild(NODE_NAME);
-    if (element != null) {
-      String name = element.getAttributeValue(NAME_ATTR);
-      if (name != null && !"".equals(name.trim())) {
-        myGlobalSchemeName = name;
-      }
+  public State getState() {
+    String currentSchemeName = mySchemeManager.getCurrentSchemeName();
+    if (currentSchemeName != null) {
+      myState.colorScheme = ("Default".equals(currentSchemeName) || (SchemeManager.EDITABLE_COPY_PREFIX + "Default").equals(
+        currentSchemeName)) ? null : currentSchemeName;
     }
-
-    initGlobalScheme();
-  }
-
-  private void initGlobalScheme() {
-    if (myGlobalSchemeName != null) {
-      setGlobalSchemeByName(myGlobalSchemeName);
-    }
-    else {
-      setGlobalScheme(myDefaultColorSchemesManager.getAllSchemes()[0]);
-    }
-  }
-
-  private void setGlobalSchemeByName(String schemeName) {
-    setGlobalScheme(mySchemesManager.findSchemeByName(schemeName));
+    return myState;
   }
 
   @Override
-  public void writeExternal(Element parentNode) throws WriteExternalException {
-    DefaultJDOMExternalizer.writeExternal(this, parentNode);
-    if (mySchemesManager.getCurrentScheme() != null) {
-      Element element = new Element(NODE_NAME);
-      element.setAttribute(NAME_ATTR, mySchemesManager.getCurrentScheme().getName());
-      parentNode.addContent(element);
-    }
+  public void loadState(@NotNull State state) {
+    myState = state;
+    setGlobalSchemeInner(myState.colorScheme == null ? getDefaultScheme() : mySchemeManager.findSchemeByName(myState.colorScheme));
   }
 
   @Override
@@ -415,61 +439,32 @@ public class EditorColorsManagerImpl extends EditorColorsManager implements Name
     return scheme instanceof DefaultColorsScheme;
   }
 
-  public SchemesManager<EditorColorsScheme, EditorColorsSchemeImpl> getSchemesManager() {
-    return mySchemesManager;
-  }
-
-  @Override
   @NotNull
-  public String getComponentName() {
-    return "EditorColorsManagerImpl";
+  @Override
+  public EditorColorsScheme getSchemeForCurrentUITheme() {
+    LookAndFeelInfo lookAndFeelInfo = LafManager.getInstance().getCurrentLookAndFeel();
+    EditorColorsScheme scheme = null;
+    if (lookAndFeelInfo instanceof UIThemeBasedLookAndFeelInfo) {
+      UITheme theme = ((UIThemeBasedLookAndFeelInfo)lookAndFeelInfo).getTheme();
+      String schemeName = theme.getEditorSchemeName();
+      if (schemeName != null) {
+        scheme = getScheme(schemeName);
+        assert scheme != null : "Theme " + theme.getName() + " refers to unknown color scheme " + schemeName;
+      }
+    }
+    if (scheme == null) {
+      String schemeName = UIUtil.isUnderDarcula() ? "Darcula" : DEFAULT_SCHEME_NAME;
+      scheme = myDefaultColorSchemeManager.getScheme(schemeName);
+      assert scheme != null :
+        "The default scheme '" + schemeName + "' not found, " +
+        "available schemes: " + Arrays.toString(myDefaultColorSchemeManager.listNames());
+    }
+    EditorColorsScheme editableCopy = getEditableCopy(scheme);
+    return editableCopy != null ? editableCopy : scheme;
   }
 
-  private final class MySchemeProcessor extends BaseSchemeProcessor<EditorColorsSchemeImpl> implements SchemeExtensionProvider {
-    @Override
-    public EditorColorsSchemeImpl readScheme(final Document document)
-      throws InvalidDataException {
-
-      return loadSchemeFromDocument(document, true);
-    }
-
-    @Override
-    public Document writeScheme(final EditorColorsSchemeImpl scheme) {
-      Element root = new Element(SCHEME_NODE_NAME);
-      try {
-        scheme.writeExternal(root);
-      }
-      catch (WriteExternalException e) {
-        LOG.error(e);
-        return null;
-      }
-
-      return new Document(root);
-    }
-
-    public void renameScheme(final String name, final EditorColorsScheme scheme) {
-      scheme.setName(name);
-    }
-
-    @Override
-    public boolean shouldBeSaved(final EditorColorsSchemeImpl scheme) {
-      return !(scheme instanceof ReadOnlyColorsScheme);
-    }
-
-    @Override
-    public void onCurrentSchemeChanged(final Scheme newCurrentScheme) {
-      fireChanges(mySchemesManager.getCurrentScheme());
-    }
-
-    @NotNull
-    @Override
-    public String getSchemeExtension() {
-      return FILE_EXT;
-    }
-
-    @Override
-    public boolean isUpgradeNeeded() {
-      return true;
-    }
+  @NotNull
+  public SchemeManager<EditorColorsScheme> getSchemeManager() {
+    return mySchemeManager;
   }
 }

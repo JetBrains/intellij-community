@@ -15,28 +15,48 @@
  */
 package com.intellij.openapi.vcs;
 
+import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.vcs.roots.VcsRootDetector;
+import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Collection;
-
 /**
- * Checks VCS roots, revealing invalid roots (registered in the settings, but not related to real VCS roots on disk)
+ * Provides methods to check if the given directory is a root of the given VCS. This is used e.g. by the {@link VcsRootDetector}
+ * to detect invalid roots (registered in the settings, but not related to real VCS roots on disk)
  * and unregistered roots (real roots on disk not registered in the settings).
- *
- * @author Kirill Likhodedov
  */
-public interface VcsRootChecker {
+public abstract class VcsRootChecker {
+
+  public static final ExtensionPointName<VcsRootChecker> EXTENSION_POINT_NAME = new ExtensionPointName<>("com.intellij.vcsRootChecker");
 
   /**
-   * @return Paths to VCS roots which are not registered in the Settings | Version Control.
+   * Checks if the given path represents a root of the supported VCS.
+   */
+  public boolean isRoot(@NotNull String path) {
+    return false;
+  }
+
+  /**
+   * Returns the VCS supported by this checker.
    */
   @NotNull
-  Collection<String> getUnregisteredRoots();
+  public abstract VcsKey getSupportedVcs();
 
   /**
-   *
-   * @param directory root to be checked.
-   * @return true if the given directory is not a VCS root.
+   * Checks if the given directory looks like a VCS special directory, e.g. "{@code .git}".
+   * <br/><br/>
+   * This is a quick rough check. A more precise is done in {@link #isRoot(String)}.
    */
-  boolean isInvalidMapping(@NotNull VcsDirectoryMapping mapping);
+  public boolean isVcsDir(@NotNull String dirName) {
+    return false;
+  }
+
+  /**
+   * Check if the given directory is ignored in the given VCS root.
+   * Such situation can happen, when we detect a VCS root above the directory: in that case we should detect the root only if the directory
+   * is not ignored from that root (e.g. the root is the home directory, and the VCS is used for storing configs, ignoring everything else).
+   */
+  public boolean isIgnored(@NotNull VirtualFile root, @NotNull VirtualFile checkForIgnore) {
+    return false;
+  }
 }

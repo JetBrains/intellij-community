@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,9 +20,10 @@ import com.intellij.framework.addSupport.FrameworkSupportInModuleConfigurable;
 import com.intellij.framework.addSupport.FrameworkSupportInModuleProvider;
 import com.intellij.ide.util.frameworkSupport.FrameworkSupportModel;
 import com.intellij.ide.util.projectWizard.ModuleBuilder;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleType;
+import com.intellij.openapi.roots.ui.configuration.FacetsProvider;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.groovy.util.GroovyUtils;
 
 /**
  * @author peter
@@ -39,12 +40,20 @@ public class GroovyFrameworkSupportProvider extends FrameworkSupportInModuleProv
     return super.isEnabledForModuleBuilder(builder) && !(builder instanceof GroovyAwareModuleBuilder);
   }
 
+  @Override
+  public boolean isSupportAlreadyAdded(@NotNull Module module, @NotNull FacetsProvider facetsProvider) {
+    final String version = GroovyConfigUtils.getInstance().getSDKVersion(module);
+    return version != null;
+  }
+
+  @Override
   @NotNull
-  public FrameworkSupportInModuleConfigurable createConfigurable(final @NotNull FrameworkSupportModel model) {
+  public FrameworkSupportInModuleConfigurable createConfigurable(@NotNull final FrameworkSupportModel model) {
     return new GroovySupportConfigurable();
   }
 
+  @Override
   public boolean isEnabledForModuleType(@NotNull ModuleType moduleType) {
-    return GroovyUtils.isAcceptableModuleType(moduleType);
+    return GroovyFacetUtil.isAcceptableModuleType(moduleType);
   }
 }

@@ -14,26 +14,67 @@
  * limitations under the License.
  */
 
-/*
- * User: anna
- * Date: 05-Jun-2009
- */
 package com.intellij.rt.execution.junit;
-
-import com.intellij.rt.execution.junit.segments.OutputObjectRegistry;
-import com.intellij.rt.execution.junit.segments.SegmentedOutputStream;
 
 import java.util.ArrayList;
 import java.util.List;
 
 public interface IdeaTestRunner {
+  void createListeners(ArrayList listeners, int count);
 
-  int startRunnerWithArgs(String[] args, ArrayList listeners, boolean sendTree);
-  void setStreams(SegmentedOutputStream segmentedOut, SegmentedOutputStream segmentedErr, int lastIdx);
+  /**
+   * @return -2 internal failure
+   *         -1 there were failed tests
+   *          0 all tests were successful
+   */
+  int startRunnerWithArgs(String[] args, String name, int count, boolean sendTree);
 
-  Object getTestToStart(String[] args);
+  Object getTestToStart(String[] args, String name);
   List getChildTests(Object description);
   String getStartDescription(Object child);
 
-  OutputObjectRegistry getRegistry();
+  String getTestClassName(Object child);
+
+  class Repeater {
+    public static int startRunnerWithArgs(IdeaTestRunner testRunner,
+                                          String[] args,
+                                          ArrayList listeners,
+                                          String name,
+                                          int count,
+                                          boolean sendTree) {
+      testRunner.createListeners(listeners, count);
+      if (count == 1) {
+        return testRunner.startRunnerWithArgs(args, name, count, sendTree);
+      }
+      else {
+        if (count > 0) {
+          boolean success = true;
+          int i = 0;
+          while (i++ < count) {
+            final int result = testRunner.startRunnerWithArgs(args, name, count, sendTree);
+            if (result == -2) {
+              return result;
+            }
+            success &= result == 0;
+            sendTree = false;
+          }
+
+          return success ? 0 : -1;
+        }
+        else {
+          boolean success = true;
+          while (true) {
+            int result = testRunner.startRunnerWithArgs(args, name, count, sendTree);
+            if (result == -2) {
+              return -1;
+            }
+            success &= result == 0;
+            if (count == -2 && !success) {
+              return -1;
+            }
+          }
+        }
+      }
+    }
+  }
 }

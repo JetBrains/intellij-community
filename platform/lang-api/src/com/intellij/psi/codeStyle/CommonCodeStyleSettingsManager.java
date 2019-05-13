@@ -1,73 +1,66 @@
-/*
- * Copyright 2000-2010 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.codeStyle;
 
 import com.intellij.lang.Language;
-import com.intellij.openapi.extensions.Extensions;
-import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.JDOMExternalizable;
-import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.extensions.ExtensionException;
+import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.containers.HashMap;
+import com.intellij.util.ObjectUtils;
+import com.intellij.util.containers.ContainerUtil;
+import gnu.trove.THashMap;
 import org.jdom.Content;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 /**
  * Manages common code style settings for every language using them.
  *
  * @author Rustam Vishnyakov
  */
-public class CommonCodeStyleSettingsManager implements JDOMExternalizable {
+class CommonCodeStyleSettingsManager {
   private volatile Map<Language, CommonCodeStyleSettings> myCommonSettingsMap;
   private volatile Map<String, Content> myUnknownSettingsMap;
 
   @NotNull private final CodeStyleSettings myParentSettings;
 
-  @NonNls private static final String COMMON_SETTINGS_TAG = "codeStyleSettings";
+  @NonNls static final String COMMON_SETTINGS_TAG = "codeStyleSettings";
   private static final String LANGUAGE_ATTR = "language";
 
+  private static final Logger LOG = Logger.getInstance(CommonCodeStyleSettingsManager.class);
+
+  private static class DefaultsHolder {
+    private final static CommonCodeStyleSettings SETTINGS = new CommonCodeStyleSettings(Language.ANY);
+    static {
+      SETTINGS.setRootSettings(CodeStyleSettings.getDefaults());
+    }
+  }
 
   CommonCodeStyleSettingsManager(@NotNull CodeStyleSettings parentSettings) {
     myParentSettings = parentSettings;
   }
 
-  /**
-   * Attempts to get language-specific common settings from <code>LanguageCodeStyleSettingsProvider</code>.
-   *
-   * @param lang The language to get settings for.
-   * @return If the provider for the language exists and is able to create language-specific default settings
-   *         (<code>LanguageCodeStyleSettingsProvider.getDefaultCommonSettings()</code> doesn't return null)
-   *         returns the instance of settings for this language. Otherwise returns the instance of parent settings
-   *         shared between several languages.
-   */
-  public CommonCodeStyleSettings getCommonSettings(@Nullable Language lang) {
+  @Nullable
+  CommonCodeStyleSettings getCommonSettings(@Nullable Language lang) {
     Map<Language, CommonCodeStyleSettings> commonSettingsMap = getCommonSettingsMap();
-    CommonCodeStyleSettings settings = commonSettingsMap.get(lang);
-    if (settings == null && lang != null) {
-      settings = commonSettingsMap.get(lang.getBaseLanguage());
+    Language baseLang = ObjectUtils.notNull(lang, Language.ANY);
+    while (baseLang != null) {
+      CommonCodeStyleSettings settings = commonSettingsMap.get(baseLang);
+      if (settings != null) return settings;
+      baseLang = baseLang.getBaseLanguage();
     }
-    if (settings != null) {
-      return settings;
-    }
-    return myParentSettings;
+    return null;
+  }
+
+  CommonCodeStyleSettings getDefaults() {
+    return DefaultsHolder.SETTINGS;
   }
 
   @NotNull
@@ -86,12 +79,12 @@ public class CommonCodeStyleSettingsManager implements JDOMExternalizable {
   }
 
   /**
-   * Get common code style settings by language name. <code>getCommonSettings(Language)</code> is a preferred method but
+   * Get common code style settings by language name. {@code getCommonSettings(Language)} is a preferred method but
    * sometimes (for example, in plug-ins which do not depend on a specific language support) language settings can be
    * obtained by name.
-   * 
+   *
    * @param langName The display name of the language whose settings must be returned.
-   * @return Common code style settings for the given language or parent (shared) settings if not found.
+   * @return Common code style settings for the given language or a new instance with default values if not found.
    */
   @NotNull
   public CommonCodeStyleSettings getCommonSettings(@NotNull String langName) {
@@ -101,18 +94,16 @@ public class CommonCodeStyleSettingsManager implements JDOMExternalizable {
         return entry.getValue();
       }
     }
-    return myParentSettings;
-  }  
+    return new CommonCodeStyleSettings(Language.ANY);
+  }
 
 
   private void initNonReadSettings() {
-    final LanguageCodeStyleSettingsProvider[] providers = Extensions.getExtensions(LanguageCodeStyleSettingsProvider.EP_NAME);
-    for (final LanguageCodeStyleSettingsProvider provider : providers) {
+    for (final LanguageCodeStyleSettingsProvider provider : LanguageCodeStyleSettingsProvider.EP_NAME.getExtensionList()) {
       Language target = provider.getLanguage();
       if (!myCommonSettingsMap.containsKey(target)) {
-        CommonCodeStyleSettings initialSettings = provider.getDefaultCommonSettings();
+        CommonCodeStyleSettings initialSettings = safelyGetDefaults(provider);
         if (initialSettings != null) {
-          initialSettings.copyNonDefaultValuesFrom(myParentSettings);
           init(initialSettings, target);
         }
       }
@@ -121,14 +112,13 @@ public class CommonCodeStyleSettingsManager implements JDOMExternalizable {
 
   private void init(@NotNull CommonCodeStyleSettings initialSettings, @NotNull Language target) {
     initialSettings.setRootSettings(myParentSettings);
-    initialSettings.importOldIndentOptions(myParentSettings);
     registerCommonSettings(target, initialSettings);
   }
 
   private Map<Language, CommonCodeStyleSettings> initCommonSettingsMap() {
-    Map<Language, CommonCodeStyleSettings> map = new LinkedHashMap<Language, CommonCodeStyleSettings>();
+    Map<Language, CommonCodeStyleSettings> map = new LinkedHashMap<>();
     myCommonSettingsMap = map;
-    myUnknownSettingsMap = new LinkedHashMap<String, Content>();
+    myUnknownSettingsMap = new LinkedHashMap<>();
     return map;
   }
 
@@ -151,26 +141,25 @@ public class CommonCodeStyleSettingsManager implements JDOMExternalizable {
           CommonCodeStyleSettings clonedSettings = entry.getValue().clone(parentSettings);
           settingsManager.registerCommonSettings(entry.getKey(), clonedSettings);
         }
+        // no need to clone, myUnknownSettingsMap contains immutable elements
+        settingsManager.myUnknownSettingsMap.putAll(myUnknownSettingsMap);
       }
       return settingsManager;
     }
   }
 
-  @Override
   public void readExternal(@NotNull Element element) throws InvalidDataException {
     synchronized (this) {
       initCommonSettingsMap();
-      final List list = element.getChildren(COMMON_SETTINGS_TAG);
-      for (Object o : list) {
-        final Element commonSettingsElement = (Element)o;
+      for (Element commonSettingsElement : element.getChildren(COMMON_SETTINGS_TAG)) {
         final String languageId = commonSettingsElement.getAttributeValue(LANGUAGE_ATTR);
-        if (languageId != null && !languageId.isEmpty()) {
+        if (!StringUtil.isEmpty(languageId)) {
           Language target = Language.findLanguageByID(languageId);
           boolean isKnownLanguage = target != null;
           if (isKnownLanguage) {
             final LanguageCodeStyleSettingsProvider provider = LanguageCodeStyleSettingsProvider.forLanguage(target);
             if (provider != null) {
-              CommonCodeStyleSettings settings = provider.getDefaultCommonSettings();
+              CommonCodeStyleSettings settings = safelyGetDefaults(provider);
               if (settings != null) {
                 settings.readExternal(commonSettingsElement);
                 init(settings, target);
@@ -181,7 +170,7 @@ public class CommonCodeStyleSettingsManager implements JDOMExternalizable {
             }
           }
           if (!isKnownLanguage) {
-            myUnknownSettingsMap.put(languageId, (Content)commonSettingsElement.clone());
+            myUnknownSettingsMap.put(languageId, JDOMUtil.internElement(commonSettingsElement));
           }
         }
       }
@@ -189,30 +178,38 @@ public class CommonCodeStyleSettingsManager implements JDOMExternalizable {
     }
   }
 
-  @Override
+  private static CommonCodeStyleSettings safelyGetDefaults(LanguageCodeStyleSettingsProvider provider) {
+    @SuppressWarnings("deprecation")
+    Ref<CommonCodeStyleSettings> defaultSettingsRef =
+      RecursionManager.doPreventingRecursion(provider, true, () -> Ref.create(provider.getDefaultCommonSettings()));
+    if (defaultSettingsRef == null) {
+      LOG.error(new ExtensionException(provider.getClass(), new Throwable(provider.getClass().getCanonicalName() + ".getDefaultCommonSettings() recursively creates root settings.")));
+      return null;
+    }
+    else {
+      CommonCodeStyleSettings defaultSettings = defaultSettingsRef.get();
+      if (defaultSettings instanceof CodeStyleSettings) {
+        LOG.error(new ExtensionException(provider.getClass(), new Throwable(provider.getClass().getName() + ".getDefaultCommonSettings() creates root CodeStyleSettings instead of CommonCodeStyleSettings")));
+      }
+      return defaultSettings;
+    }
+  }
+
   public void writeExternal(@NotNull Element element) throws WriteExternalException {
     synchronized (this) {
-      if (myCommonSettingsMap == null) return;
-
-      final Map<String, Language> id2lang = new HashMap<String, Language>();
-      for (final Language language : myCommonSettingsMap.keySet()) {
-        id2lang.put(language.getID(), language);
+      if (myCommonSettingsMap == null) {
+        return;
       }
 
-      final Set<String> langIdList = new HashSet<String>();
-      langIdList.addAll(myUnknownSettingsMap.keySet());
-      langIdList.addAll(id2lang.keySet());
+      final Map<String, Language> idToLang = new THashMap<>();
+      for (Language language : myCommonSettingsMap.keySet()) {
+        idToLang.put(language.getID(), language);
+      }
 
-      final String[] languages = ArrayUtil.toStringArray(langIdList);
-      Arrays.sort(languages, new Comparator<String>() {
-        @Override
-        public int compare(@NotNull final String o1, final String o2) {
-          return o1.compareTo(o2);
-        }
-      });
-
-      for (final String id : languages) {
-        final Language language = id2lang.get(id);
+      String[] languages = ArrayUtil.toStringArray(ContainerUtil.union(myUnknownSettingsMap.keySet(), idToLang.keySet()));
+      Arrays.sort(languages);
+      for (String id : languages) {
+        final Language language = idToLang.get(id);
         if (language != null) {
           final CommonCodeStyleSettings commonSettings = myCommonSettingsMap.get(language);
           Element commonSettingsElement = new Element(COMMON_SETTINGS_TAG);
@@ -221,22 +218,32 @@ public class CommonCodeStyleSettingsManager implements JDOMExternalizable {
           if (!commonSettingsElement.getChildren().isEmpty()) {
             element.addContent(commonSettingsElement);
           }
-        } else {
+        }
+        else {
           final Content unknown = myUnknownSettingsMap.get(id);
-          if (unknown != null) element.addContent(unknown.detach());
+          if (unknown != null) {
+            element.addContent(unknown.clone());
+          }
         }
       }
     }
   }
 
-  public static void copy(@NotNull CommonCodeStyleSettings source, @NotNull CommonCodeStyleSettings target) {
-    CommonCodeStyleSettings.copyPublicFields(source, target);
-    CommonCodeStyleSettings.IndentOptions targetIndentOptions = target.getIndentOptions();
-    if (targetIndentOptions != null) {
-      CommonCodeStyleSettings.IndentOptions sourceIndentOptions = source.getIndentOptions();
-      if (sourceIndentOptions != null) {
-        CommonCodeStyleSettings.copyPublicFields(sourceIndentOptions, targetIndentOptions);
+  @Override
+  public boolean equals(Object obj) {
+    if (obj instanceof CommonCodeStyleSettingsManager) {
+      CommonCodeStyleSettingsManager other = (CommonCodeStyleSettingsManager)obj;
+      if (getCommonSettingsMap().size() != other.getCommonSettingsMap().size() ||
+          myUnknownSettingsMap.size() != other.myUnknownSettingsMap.size()) {
+        return false;
       }
+      for (Language language : myCommonSettingsMap.keySet()) {
+        CommonCodeStyleSettings theseSettings = myCommonSettingsMap.get(language);
+        CommonCodeStyleSettings otherSettings = other.getCommonSettings(language);
+        if (!theseSettings.equals(otherSettings)) return false;
+      }
+      return true;
     }
+    return false;
   }
 }

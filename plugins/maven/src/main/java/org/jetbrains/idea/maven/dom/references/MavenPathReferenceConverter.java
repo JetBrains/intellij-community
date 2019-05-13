@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,9 +16,11 @@
 package org.jetbrains.idea.maven.dom.references;
 
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReference;
@@ -33,6 +35,7 @@ import org.jetbrains.idea.maven.dom.MavenPropertyResolver;
 import org.jetbrains.idea.maven.dom.model.MavenDomProjectModel;
 
 import java.util.Collection;
+import java.util.Collections;
 
 /**
  * @author Sergey Evdokimov
@@ -42,7 +45,7 @@ public class MavenPathReferenceConverter extends PathReferenceConverter {
   private final Condition<PsiFileSystemItem> myCondition;
 
   public MavenPathReferenceConverter() {
-    this(Condition.TRUE);
+    this(Conditions.alwaysTrue());
   }
 
   public MavenPathReferenceConverter(@NotNull Condition<PsiFileSystemItem> condition) {
@@ -52,6 +55,12 @@ public class MavenPathReferenceConverter extends PathReferenceConverter {
   public static PsiReference[] createReferences(final DomElement genericDomValue,
                                                 PsiElement element,
                                                 @NotNull final Condition<PsiFileSystemItem> fileFilter) {
+    return createReferences(genericDomValue, element, fileFilter, false);
+  }
+
+  public static PsiReference[] createReferences(final DomElement genericDomValue,
+                                                PsiElement element,
+                                                @NotNull final Condition<PsiFileSystemItem> fileFilter, boolean isAbsolutePath) {
     ElementManipulator<PsiElement> manipulator = ElementManipulators.getManipulator(element);
     TextRange range = manipulator.getRangeInElement(element);
     String text = range.substring(element.getText());
@@ -88,7 +97,19 @@ public class MavenPathReferenceConverter extends PathReferenceConverter {
             String resolvedText = model == null ? text : MavenPropertyResolver.resolve(text, model);
 
             if (resolvedText.equals(text)) {
-              super.innerResolveInContext(resolvedText, context, result, caseSensitive);
+              if (getIndex() == 0 && resolvedText.length() == 2 && resolvedText.charAt(1) == ':') {
+                // it's root on windows, e.g. "C:"
+                VirtualFile file = LocalFileSystem.getInstance().findFileByPath(resolvedText + '/');
+                if (file != null) {
+                  PsiDirectory psiDirectory = context.getManager().findDirectory(file);
+                  if (psiDirectory != null) {
+                    result.add(new PsiElementResolveResult(psiDirectory));
+                  }
+                }
+              }
+              else {
+                super.innerResolveInContext(resolvedText, context, result, caseSensitive);
+              }
             }
             else {
               VirtualFile contextFile = context.getVirtualFile();
@@ -116,6 +137,25 @@ public class MavenPathReferenceConverter extends PathReferenceConverter {
         };
       }
     };
+
+    if (isAbsolutePath) {
+      set.addCustomization(FileReferenceSet.DEFAULT_PATH_EVALUATOR_OPTION, file -> {
+        VirtualFile virtualFile = file.getVirtualFile();
+
+        if (virtualFile == null) {
+          return FileReferenceSet.ABSOLUTE_TOP_LEVEL.fun(file);
+        }
+
+        virtualFile = VfsUtil.getRootFile(virtualFile);
+        PsiDirectory root = file.getManager().findDirectory(virtualFile);
+
+        if (root == null) {
+          return FileReferenceSet.ABSOLUTE_TOP_LEVEL.fun(file);
+        }
+
+        return Collections.singletonList(root);
+      });
+    }
 
     return set.getAllReferences();
   }

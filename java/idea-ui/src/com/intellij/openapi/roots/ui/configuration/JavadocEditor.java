@@ -30,6 +30,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.IconUtil;
 import com.intellij.util.ui.ItemRemovable;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.border.Border;
@@ -39,8 +40,6 @@ import java.util.List;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Oct 4, 2003
- *         Time: 6:54:57 PM
  */
 public class JavadocEditor extends ModuleElementsEditor {
   private JTable myTable;
@@ -71,6 +70,7 @@ public class JavadocEditor extends ModuleElementsEditor {
       urls[row] = item.getUrl();
     }
     getModel().getModuleExtension(JavaModuleExternalPaths.class).setJavadocUrls(urls);
+    fireConfigurationChanged();
   }
 
   @Override
@@ -106,9 +106,9 @@ public class JavadocEditor extends ModuleElementsEditor {
             TableUtil.selectRows(myTable, new int[]{tableModel.getRowCount() - 1});
           }
         }
-      }).addExtraAction(new AnActionButton(ProjectBundle.message("module.javadoc.add.url.button"), IconUtil.getAddLinkIcon()) {
+      }).addExtraAction(new DumbAwareActionButton(ProjectBundle.message("module.javadoc.add.url.button"), IconUtil.getAddLinkIcon()) {
         @Override
-        public void actionPerformed(AnActionEvent e) {
+        public void actionPerformed(@NotNull AnActionEvent e) {
           VirtualFile[] files = new VirtualFile[]{Util.showSpecifyJavadocUrlDialog(myTable)};
           final MyTableModel tableModel = (MyTableModel)myTable.getModel();
           boolean changes = false;

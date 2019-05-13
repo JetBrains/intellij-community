@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,13 +27,12 @@ import java.util.List;
  * A composite generator
  *
  * @author Eugene Zhuravlev
- *         Date: Mar 25, 2004
  */
 public class CompositeGenerator extends Generator {
   /**
    * child generators
    */
-  private final List<Pair<Generator, Integer>> myGenerators = new ArrayList<Pair<Generator, Integer>>();
+  private final List<Pair<Generator, Integer>> myGenerators = new ArrayList<>();
   /**
    * New line property
    */
@@ -83,7 +82,7 @@ public class CompositeGenerator extends Generator {
    * @param emptyLinesCount amount of empty lines
    */
   public final void add(Generator generator, int emptyLinesCount) {
-    myGenerators.add(new Pair<Generator, Integer>(generator, new Integer(emptyLinesCount)));
+    myGenerators.add(Pair.create(generator, new Integer(emptyLinesCount)));
   }
 
   /**
@@ -93,6 +92,7 @@ public class CompositeGenerator extends Generator {
    * @throws IOException in case of IO propblem
    * @see #setHasLeadingNewline(boolean)
    */
+  @Override
   public void generate(PrintWriter out) throws IOException {
     boolean first = true;
     for (final Pair<Generator, Integer> pair : myGenerators) {

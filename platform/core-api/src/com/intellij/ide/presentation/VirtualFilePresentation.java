@@ -1,8 +1,9 @@
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.presentation;
 
-import com.intellij.ide.TypePresentationService;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.PlatformIcons;
+import com.intellij.util.IconUtil;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
@@ -10,14 +11,7 @@ import javax.swing.*;
  * @author yole
  */
 public class VirtualFilePresentation {
-  public static Icon getIcon(VirtualFile vFile) {
-    Icon icon = TypePresentationService.getService().getIcon(vFile);
-    if (icon != null) {
-      return icon;
-    }
-    if (vFile.isDirectory() && vFile.isInLocalFileSystem()) {
-      return PlatformIcons.FOLDER_ICON;
-    }
-    return vFile.getFileType().getIcon();
+  public static Icon getIcon(@NotNull VirtualFile vFile) {
+    return IconUtil.getIcon(vFile, 0, null);
   }
 }

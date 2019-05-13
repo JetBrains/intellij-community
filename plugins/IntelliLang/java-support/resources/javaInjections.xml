@@ -66,18 +66,26 @@
     <place><![CDATA[psiParameter().ofMethod(0, psiMethod().withName("matches").withParameters("java.lang.String", "java.lang.CharSequence").definedInClass("java.util.regex.Pattern"))]]></place>
   </injection>
   <injection language="RegExp" injector-id="java">
+    <display-name>Scanner (java.util)</display-name>
+    <place><![CDATA[psiParameter().ofMethod(0, psiMethod().withName("useDelimiter").withParameters("java.lang.String").definedInClass("java.util.Scanner"))]]></place>
+    <place><![CDATA[psiParameter().ofMethod(0, psiMethod().withName("hasNext").withParameters("java.lang.String").definedInClass("java.util.Scanner"))]]></place>
+    <place><![CDATA[psiParameter().ofMethod(0, psiMethod().withName("next").withParameters("java.lang.String").definedInClass("java.util.Scanner"))]]></place>
+    <place><![CDATA[psiParameter().ofMethod(0, psiMethod().withName("findInLine").withParameters("java.lang.String").definedInClass("java.util.Scanner"))]]></place>
+    <place><![CDATA[psiParameter().ofMethod(0, psiMethod().withName("findWithinHorizon").withParameters("java.lang.String", "int").definedInClass("java.util.Scanner"))]]></place>
+    <place><![CDATA[psiParameter().ofMethod(0, psiMethod().withName("skip").withParameters("java.lang.String").definedInClass("java.util.Scanner"))]]></place>
+  </injection>
+  <injection language="RegExp" injector-id="java">
     <display-name>Pattern.regexp (javax.validation.constraints)</display-name>
-    <place><![CDATA[psiParameter().ofMethod(0, psiMethod().withName("regexp").withParameters().definedInClass("javax.validation.constraints.Pattern"))]]></place>
+      <place><![CDATA[psiMethod().withName("regexp").withParameters().definedInClass("javax.validation.constraints.Pattern")]]></place>
   </injection>
   <injection language="HQL" injector-id="java">
     <display-name>Session.createQuery (org.hibernate)</display-name>
-    <place><![CDATA[psiParameter().ofMethod(0, psiMethod().withName("createQuery").withParameters("java.lang.String").definedInClass("org.hibernate.Session"))]]></place>
-    <place><![CDATA[psiParameter().ofMethod(0, psiMethod().withName("createQuery").withParameters("java.lang.String").definedInClass("org.hibernate.SharedSessionContract"))]]></place>
+    <place><![CDATA[psiParameter().ofMethod(0, psiMethod().withName("createQuery").definedInClass("org.hibernate.query.QueryProducer"))]]></place>
+    <place><![CDATA[psiParameter().ofMethod(0, psiMethod().withName("createQuery").definedInClass("org.hibernate.Session"))]]></place>
   </injection>
   <injection language="SQL" injector-id="java">
-    <display-name>Session.createSQLQuery (org.hibernate)</display-name>
-    <place><![CDATA[psiParameter().ofMethod(0, psiMethod().withName("createSQLQuery").withParameters("java.lang.String").definedInClass("org.hibernate.Session"))]]></place>
-    <place><![CDATA[psiParameter().ofMethod(0, psiMethod().withName("createSQLQuery").withParameters("java.lang.String").definedInClass("org.hibernate.SharedSessionContract"))]]></place>
+    <place><![CDATA[psiParameter().ofMethod(0, psiMethod().withName("createSQLQuery").definedInClass("org.hibernate.query.QueryProducer"))]]></place>
+    <place><![CDATA[psiParameter().ofMethod(0, psiMethod().withName("createNativeQuery").definedInClass("org.hibernate.query.QueryProducer"))]]></place>
   </injection>
 
   <injection language="SQL" injector-id="java">
@@ -114,6 +122,29 @@
     <place><![CDATA[psiParameter().ofMethod(0, psiMethod().withName("newInstance").withParameters("java.lang.String").definedInClass("org.jdom.xpath.XPath"))]]></place>
     <place><![CDATA[psiParameter().ofMethod(1, psiMethod().withName("selectNodes").withParameters("java.lang.Object", "java.lang.String").definedInClass("org.jdom.xpath.XPath"))]]></place>
     <place><![CDATA[psiParameter().ofMethod(1, psiMethod().withName("selectSingleNode").withParameters("java.lang.Object", "java.lang.String").definedInClass("org.jdom.xpath.XPath"))]]></place>
+  </injection>
+  <injection language="encoding-reference" injector-id="java">
+    <display-name>Charset Name</display-name>
+    <place><![CDATA[psiParameter().ofMethod(0, psiMethod().withName("forName").withParameters("java.lang.String").definedInClass("java.nio.charset.Charset"))]]></place>
+    <place><![CDATA[psiParameter().ofMethod(0, psiMethod().withName("isSupported").withParameters("java.lang.String").definedInClass("java.nio.charset.Charset"))]]></place>
+    <place><![CDATA[psiParameter().ofMethod(0, psiMethod().withName("getBytes").withParameters("java.lang.String").definedInClass("java.lang.String"))]]></place>
+    <place><![CDATA[psiParameter().ofMethod(3, psiMethod().withName("String").withParameters("byte[]", "int", "int", "java.lang.String").definedInClass("java.lang.String"))]]></place>
+    <place><![CDATA[psiParameter().ofMethod(1, psiMethod().withName("String").withParameters("byte[]", "java.lang.String").definedInClass("java.lang.String"))]]></place>
+    <place><![CDATA[psiParameter().ofMethod(1, psiMethod().withName("InputStreamReader").withParameters("java.io.InputStream", "java.lang.String").definedInClass("java.io.InputStreamReader"))]]></place>
+    <place><![CDATA[psiParameter().ofMethod(1, psiMethod().withName("OutputStreamWriter").withParameters("java.io.OutputStream", "java.lang.String").definedInClass("java.io.OutputStreamWriter"))]]></place>
+    <place><![CDATA[psiParameter().ofMethod(0, psiMethod().withName("toString").withParameters("java.lang.String").definedInClass("java.io.ByteArrayOutputStream"))]]></place>
+    <place><![CDATA[psiParameter().ofMethod(1, psiMethod().withName("PrintStream").withParameters("java.io.File", "java.lang.String").definedInClass("java.io.PrintStream"))]]></place>
+    <place><![CDATA[psiParameter().ofMethod(2, psiMethod().withName("PrintStream").withParameters("java.io.OutputStream", "boolean", "java.lang.String").definedInClass("java.io.PrintStream"))]]></place>
+    <place><![CDATA[psiParameter().ofMethod(1, psiMethod().withName("PrintStream").withParameters("java.lang.String", "java.lang.String").definedInClass("java.io.PrintStream"))]]></place>
+    <place><![CDATA[psiParameter().ofMethod(1, psiMethod().withName("encode").withParameters("java.lang.String", "java.lang.String").definedInClass("java.net.URLEncoder"))]]></place>
+    <place><![CDATA[psiParameter().ofMethod(1, psiMethod().withName("decode").withParameters("java.lang.String", "java.lang.String").definedInClass("java.net.URLDecoder"))]]></place>
+    <place><![CDATA[psiParameter().ofMethod(0, psiMethod().withName("setCharacterEncoding").withParameters("java.lang.String").definedInClass("javax.servlet.ServletResponse"))]]></place>
+    <place><![CDATA[psiParameter().ofMethod(1, psiMethod().withName("newReader").withParameters("java.nio.channels.ReadableByteChannel", "java.lang.String").definedInClass("java.nio.channels.Channels"))]]></place>
+    <place><![CDATA[psiParameter().ofMethod(1, psiMethod().withName("newWriter").withParameters("java.nio.channels.WritableByteChannel", "java.lang.String").definedInClass("java.nio.channels.Channels"))]]></place>
+    <place><![CDATA[psiParameter().ofMethod(1, psiMethod().withName("createXMLEventReader").withParameters("java.io.InputStream", "java.lang.String").definedInClass("javax.xml.stream.XMLInputFactory"))]]></place>
+    <place><![CDATA[psiParameter().ofMethod(1, psiMethod().withName("createXMLStreamReader").withParameters("java.io.InputStream", "java.lang.String").definedInClass("javax.xml.stream.XMLInputFactory"))]]></place>
+    <place><![CDATA[psiParameter().ofMethod(1, psiMethod().withName("createXMLEventWriter").withParameters("java.io.OutputStream", "java.lang.String").definedInClass("javax.xml.stream.XMLInputFactory"))]]></place>
+    <place><![CDATA[psiParameter().ofMethod(1, psiMethod().withName("createXMLStreamWriter").withParameters("java.io.OutputStream", "java.lang.String").definedInClass("javax.xml.stream.XMLInputFactory"))]]></place>
   </injection>
 
 </component>

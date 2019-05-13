@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package com.intellij.ide.actions;
 
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
@@ -33,15 +34,13 @@ import org.jetbrains.annotations.NotNull;
  */
 public class FixLineSeparatorsAction extends AnAction {
   @Override
-  public void actionPerformed(AnActionEvent e) {
-    Project project = e.getData(PlatformDataKeys.PROJECT);
-    final VirtualFile[] vFiles = e.getData(PlatformDataKeys.VIRTUAL_FILE_ARRAY);
+  public void actionPerformed(@NotNull AnActionEvent e) {
+    Project project = e.getData(CommonDataKeys.PROJECT);
+    final VirtualFile[] vFiles = e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY);
     if (project == null || vFiles == null) return;
-    CommandProcessor.getInstance().executeCommand(project, new Runnable() {
-      public void run() {
-        for (VirtualFile vFile : vFiles) {
-          fixSeparators(vFile);
-        }
+    CommandProcessor.getInstance().executeCommand(project, () -> {
+      for (VirtualFile vFile : vFiles) {
+        fixSeparators(vFile);
       }
     }, "fixing line separators", null);
   }
@@ -72,15 +71,13 @@ public class FixLineSeparatorsAction extends AnAction {
   }
 
   private static void fixSeparators(final Document document) {
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      public void run() {
-        int i = 1;
-        while(i < document.getLineCount()) {
-          final int start = document.getLineEndOffset(i);
-          final int end = document.getLineEndOffset(i) + document.getLineSeparatorLength(i);
-          document.deleteString(start, end);
-          i++;
-        }
+    ApplicationManager.getApplication().runWriteAction(() -> {
+      int i = 1;
+      while(i < document.getLineCount()) {
+        final int start = document.getLineEndOffset(i);
+        final int end = document.getLineEndOffset(i) + document.getLineSeparatorLength(i);
+        document.deleteString(start, end);
+        i++;
       }
     });
   }

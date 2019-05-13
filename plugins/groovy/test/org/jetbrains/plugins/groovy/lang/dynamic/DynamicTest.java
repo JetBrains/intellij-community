@@ -1,28 +1,26 @@
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.dynamic;
 
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInsight.intention.IntentionActionDelegate;
 import com.intellij.psi.PsiType;
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.annotator.intentions.QuickfixUtil;
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.DynamicManager;
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.DynamicMethodFix;
-import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.DynamicPropertyFix;
+import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.DynamicPropertyFromRefFix;
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.ParamInfo;
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.elements.DClassElement;
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.elements.DRootElement;
 import org.jetbrains.plugins.groovy.codeInspection.untypedUnresolvedAccess.GrUnresolvedAccessInspection;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
+import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyNamesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.util.TestUtils;
 
 import java.util.List;
 
-/**
- * User: Dmitry.Krasilschikov
- * Date: 01.04.2008
- */                                  
 public class DynamicTest extends JavaCodeInsightFixtureTestCase {
 
   @Override
@@ -30,14 +28,14 @@ public class DynamicTest extends JavaCodeInsightFixtureTestCase {
     return TestUtils.getTestDataPath() + "dynamic/";
   }
 
-  public void testMethod() throws Throwable {
+  public void testMethod() {
     final GrReferenceExpression referenceExpression = doDynamicFix();
 
     final PsiType[] psiTypes = PsiUtil.getArgumentTypes(referenceExpression, false);
-    final String[] methodArgumentsNames = QuickfixUtil.getMethodArgumentsNames(getProject(), psiTypes);
+    final String[] methodArgumentsNames = GroovyNamesUtil.getMethodArgumentsNames(getProject(), psiTypes);
     final List<ParamInfo> pairs = QuickfixUtil.swapArgumentsAndTypes(methodArgumentsNames, psiTypes);
 
-    assertNotNull(getDClassElement().getMethod(referenceExpression.getName(), QuickfixUtil.getArgumentsTypes(pairs)));
+    assertNotNull(getDClassElement().getMethod(referenceExpression.getReferenceName(), QuickfixUtil.getArgumentsTypes(pairs)));
   }
 
   @NotNull
@@ -48,23 +46,27 @@ public class DynamicTest extends JavaCodeInsightFixtureTestCase {
     return classElement;
   }
 
-  public void testProperty() throws Throwable {
-    final String name = doDynamicFix().getName();
+  public void testProperty() {
+    final String name = doDynamicFix().getReferenceName();
     assert getDClassElement().getPropertyByName(name) != null;
   }
 
-  private GrReferenceExpression doDynamicFix() throws Throwable {
+  private GrReferenceExpression doDynamicFix() {
     myFixture.enableInspections(new GrUnresolvedAccessInspection());
 
     final List<IntentionAction> actions = myFixture.getAvailableIntentions(getTestName(false) + ".groovy");
 
-    DynamicPropertyFix dynamicFix = ContainerUtil.findInstance(actions, DynamicPropertyFix.class);
+    DynamicPropertyFromRefFix dynamicFix = (DynamicPropertyFromRefFix)actions.stream().map(a -> ((IntentionActionDelegate)a).getDelegate())
+                                                                             .filter(DynamicPropertyFromRefFix.class::isInstance)
+                                                                             .findFirst().orElse(null);
     if (dynamicFix != null) {
       dynamicFix.invoke(getProject());
       return dynamicFix.getReferenceExpression();
     }
     else {
-      final DynamicMethodFix fix = ContainerUtil.findInstance(actions, DynamicMethodFix.class);
+      DynamicMethodFix fix = (DynamicMethodFix)actions.stream()
+        .map(a->((IntentionActionDelegate)a).getDelegate())
+        .filter(DynamicMethodFix.class::isInstance).findFirst().orElse(null);
       assertNotNull(fix);
       fix.invoke(getProject());
       return fix.getReferenceExpression();

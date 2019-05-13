@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,7 +36,7 @@ import java.io.IOException;
 public class GenericCompilerCache<Key, SourceState, OutputState> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.compiler.impl.generic.GenericCompilerCache");
   private PersistentHashMap<KeyAndTargetData<Key>, PersistentStateData<SourceState, OutputState>> myPersistentMap;
-  private File myCacheFile;
+  private final File myCacheFile;
   private final GenericCompiler<Key, SourceState, OutputState> myCompiler;
 
   public GenericCompilerCache(GenericCompiler<Key, SourceState, OutputState> compiler, final File compilerCacheDir) throws IOException {
@@ -47,8 +47,8 @@ public class GenericCompilerCache<Key, SourceState, OutputState> {
 
   private void createMap() throws IOException {
     try {
-      myPersistentMap = new PersistentHashMap<KeyAndTargetData<Key>, PersistentStateData<SourceState,OutputState>>(myCacheFile, new SourceItemDataDescriptor(myCompiler.getItemKeyDescriptor()),
-                                                                    new PersistentStateDataExternalizer(myCompiler));
+      myPersistentMap = new PersistentHashMap<>(myCacheFile, new SourceItemDataDescriptor(myCompiler.getItemKeyDescriptor()),
+                                                new PersistentStateDataExternalizer(myCompiler));
     }
     catch (PersistentEnumerator.CorruptedException e) {
       FileUtil.delete(myCacheFile);
@@ -57,7 +57,7 @@ public class GenericCompilerCache<Key, SourceState, OutputState> {
   }
 
   private KeyAndTargetData<Key> getKeyAndTargetData(Key key, int target) {
-    return new KeyAndTargetData<Key>(target, key);
+    return new KeyAndTargetData<>(target, key);
   }
 
   public void wipe() throws IOException {
@@ -87,17 +87,12 @@ public class GenericCompilerCache<Key, SourceState, OutputState> {
     return myPersistentMap.get(getKeyAndTargetData(key, targetId));
   }
 
-  public void processSources(final int targetId, final Processor<Key> processor) throws IOException {
-    myPersistentMap.processKeysWithExistingMapping(new Processor<KeyAndTargetData<Key>>() {
-      @Override
-      public boolean process(KeyAndTargetData<Key> data) {
-        return targetId == data.myTarget ? processor.process(data.myKey) : true;
-      }
-    });
+  public void processSources(final int targetId, final Processor<? super Key> processor) throws IOException {
+    myPersistentMap.processKeysWithExistingMapping(data -> targetId == data.myTarget ? processor.process(data.myKey) : true);
   }
 
   public void putState(int targetId, @NotNull Key key, @NotNull SourceState sourceState, @NotNull OutputState outputState) throws IOException {
-    myPersistentMap.put(getKeyAndTargetData(key, targetId), new PersistentStateData<SourceState,OutputState>(sourceState, outputState));
+    myPersistentMap.put(getKeyAndTargetData(key, targetId), new PersistentStateData<>(sourceState, outputState));
   }
 
 
@@ -112,8 +107,8 @@ public class GenericCompilerCache<Key, SourceState, OutputState> {
   }
 
   public static class PersistentStateData<SourceState, OutputState> {
-    public final SourceState mySourceState;
-    public final OutputState myOutputState;
+    @NotNull public final SourceState mySourceState;
+    @NotNull public final OutputState myOutputState;
 
     private PersistentStateData(@NotNull SourceState sourceState, @NotNull OutputState outputState) {
       mySourceState = sourceState;
@@ -124,7 +119,7 @@ public class GenericCompilerCache<Key, SourceState, OutputState> {
   private class SourceItemDataDescriptor implements KeyDescriptor<KeyAndTargetData<Key>> {
     private final KeyDescriptor<Key> myKeyDescriptor;
 
-    public SourceItemDataDescriptor(KeyDescriptor<Key> keyDescriptor) {
+    SourceItemDataDescriptor(KeyDescriptor<Key> keyDescriptor) {
       myKeyDescriptor = keyDescriptor;
     }
 
@@ -139,14 +134,14 @@ public class GenericCompilerCache<Key, SourceState, OutputState> {
     }
 
     @Override
-    public void save(DataOutput out, KeyAndTargetData<Key> value) throws IOException {
+    public void save(@NotNull DataOutput out, KeyAndTargetData<Key> value) throws IOException {
       out.writeInt(value.myTarget);
       myKeyDescriptor.save(out, value.myKey);
     }
 
 
     @Override
-    public KeyAndTargetData<Key> read(DataInput in) throws IOException {
+    public KeyAndTargetData<Key> read(@NotNull DataInput in) throws IOException {
       int target = in.readInt();
       final Key item = myKeyDescriptor.read(in);
       return getKeyAndTargetData(item, target);
@@ -154,25 +149,25 @@ public class GenericCompilerCache<Key, SourceState, OutputState> {
   }
 
   private class PersistentStateDataExternalizer implements DataExternalizer<PersistentStateData<SourceState, OutputState>> {
-    private DataExternalizer<SourceState> mySourceStateExternalizer;
-    private DataExternalizer<OutputState> myOutputStateExternalizer;
+    private final DataExternalizer<SourceState> mySourceStateExternalizer;
+    private final DataExternalizer<OutputState> myOutputStateExternalizer;
 
-    public PersistentStateDataExternalizer(GenericCompiler<Key,SourceState,OutputState> compiler) {
+    PersistentStateDataExternalizer(GenericCompiler<Key,SourceState,OutputState> compiler) {
       mySourceStateExternalizer = compiler.getSourceStateExternalizer();
       myOutputStateExternalizer = compiler.getOutputStateExternalizer();
     }
 
     @Override
-    public void save(DataOutput out, PersistentStateData<SourceState, OutputState> value) throws IOException {
+    public void save(@NotNull DataOutput out, PersistentStateData<SourceState, OutputState> value) throws IOException {
       mySourceStateExternalizer.save(out, value.mySourceState);
       myOutputStateExternalizer.save(out, value.myOutputState);
     }
 
     @Override
-    public PersistentStateData<SourceState, OutputState> read(DataInput in) throws IOException {
+    public PersistentStateData<SourceState, OutputState> read(@NotNull DataInput in) throws IOException {
       SourceState sourceState = mySourceStateExternalizer.read(in);
       OutputState outputState = myOutputStateExternalizer.read(in);
-      return new PersistentStateData<SourceState,OutputState>(sourceState, outputState);
+      return new PersistentStateData<>(sourceState, outputState);
     }
   }
 }

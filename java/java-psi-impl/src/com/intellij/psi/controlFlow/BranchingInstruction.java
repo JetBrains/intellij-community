@@ -14,28 +14,26 @@
  * limitations under the License.
  */
 
-/*
- * Created by IntelliJ IDEA.
- * User: cdr
- * Date: Sep 20, 2002
- */
 package com.intellij.psi.controlFlow;
+
+import org.jetbrains.annotations.NotNull;
 
 public abstract class BranchingInstruction extends InstructionBase {
   public int offset;
+  @NotNull
   public final Role role;
 
   public enum Role {
     THEN, ELSE, END
   }
 
-  public BranchingInstruction(int offset, Role role) {
+  public BranchingInstruction(int offset, @NotNull Role role) {
     this.offset = offset;
     this.role = role;
   }
 
   @Override
-  public void accept(ControlFlowInstructionVisitor visitor, int offset, int nextOffset) {
+  public void accept(@NotNull ControlFlowInstructionVisitor visitor, int offset, int nextOffset) {
     visitor.visitBranchingInstruction(this, offset, nextOffset);
   }
 }

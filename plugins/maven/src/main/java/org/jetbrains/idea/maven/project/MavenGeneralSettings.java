@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,9 @@
  */
 package org.jetbrains.idea.maven.project;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
@@ -26,6 +28,7 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.execution.MavenExecutionOptions;
+import org.jetbrains.idea.maven.server.MavenServerManager;
 import org.jetbrains.idea.maven.utils.MavenJDOMUtil;
 import org.jetbrains.idea.maven.utils.MavenUtil;
 
@@ -36,7 +39,7 @@ import java.util.Set;
 
 public class MavenGeneralSettings implements Cloneable {
   private boolean workOffline = false;
-  private String mavenHome = "";
+  private String mavenHome = MavenServerManager.BUNDLED_MAVEN_3;
   private String mavenSettingsFile = "";
   private String overriddenLocalRepository = "";
   private boolean printErrorStackTraces = false;
@@ -45,9 +48,11 @@ public class MavenGeneralSettings implements Cloneable {
 
   private boolean alwaysUpdateSnapshots = false;
 
+  private String threads;
+
   private MavenExecutionOptions.LoggingLevel outputLevel = MavenExecutionOptions.LoggingLevel.INFO;
-  private MavenExecutionOptions.ChecksumPolicy checksumPolicy = MavenExecutionOptions.ChecksumPolicy.FAIL;
-  private MavenExecutionOptions.FailureMode failureBehavior = MavenExecutionOptions.FailureMode.FAST;
+  private MavenExecutionOptions.ChecksumPolicy checksumPolicy = MavenExecutionOptions.ChecksumPolicy.NOT_SET;
+  private MavenExecutionOptions.FailureMode failureBehavior = MavenExecutionOptions.FailureMode.NOT_SET;
   private MavenExecutionOptions.PluginUpdatePolicy pluginUpdatePolicy = MavenExecutionOptions.PluginUpdatePolicy.DEFAULT;
 
   private File myEffectiveLocalRepositoryCache;
@@ -125,8 +130,11 @@ public class MavenGeneralSettings implements Cloneable {
 
   public void setOutputLevel(MavenExecutionOptions.LoggingLevel value) {
     if (value == null) return; // null may come from deserializator
-    this.outputLevel = value;
-    changed();
+    if (!Comparing.equal(this.outputLevel, value)) {
+      MavenServerManager.getInstance().setLoggingLevel(value);
+      this.outputLevel = value;
+      changed();
+    }
   }
 
   public boolean isWorkOffline() {
@@ -146,7 +154,7 @@ public class MavenGeneralSettings implements Cloneable {
   public void setMavenHome(@NotNull final String mavenHome) {
     if (!Comparing.equal(this.mavenHome, mavenHome)) {
       this.mavenHome = mavenHome;
-
+      MavenServerManager.getInstance().setMavenHome(mavenHome);
       myDefaultPluginsCache = null;
       changed();
     }
@@ -188,7 +196,7 @@ public class MavenGeneralSettings implements Cloneable {
   }
 
   public List<VirtualFile> getEffectiveSettingsFiles() {
-    List<VirtualFile> result = new ArrayList<VirtualFile>(2);
+    List<VirtualFile> result = new ArrayList<>(2);
     VirtualFile file = getEffectiveUserSettingsFile();
     if (file != null) result.add(file);
     file = getEffectiveGlobalSettingsFile();
@@ -212,6 +220,7 @@ public class MavenGeneralSettings implements Cloneable {
 
     if (!Comparing.equal(this.overriddenLocalRepository, overridenLocalRepository)) {
       this.overriddenLocalRepository = overridenLocalRepository;
+      MavenServerManager.getInstance().shutdown(true);
       changed();
     }
   }
@@ -225,11 +234,12 @@ public class MavenGeneralSettings implements Cloneable {
     return result;
   }
 
-  @NotNull
+  @Nullable
   public VirtualFile getEffectiveSuperPom() {
     return MavenUtil.resolveSuperPomFile(getEffectiveMavenHome());
   }
 
+  @SuppressWarnings("unused")
   public boolean isDefaultPlugin(String groupId, String artifactId) {
     return getDefaultPlugins().contains(groupId + ":" + artifactId);
   }
@@ -238,13 +248,16 @@ public class MavenGeneralSettings implements Cloneable {
     Set<String> result = myDefaultPluginsCache;
     if (result != null) return result;
 
-    result = new THashSet<String>();
+    result = new THashSet<>();
 
-    Element superProject = MavenJDOMUtil.read(getEffectiveSuperPom(), null);
-    for (Element each : MavenJDOMUtil.findChildrenByPath(superProject, "build.pluginManagement.plugins", "plugin")) {
-      String groupId = MavenJDOMUtil.findChildValueByPath(each, "groupId", "org.apache.maven.plugins");
-      String artifactId = MavenJDOMUtil.findChildValueByPath(each, "artifactId", null);
-      result.add(groupId + ":" + artifactId);
+    VirtualFile effectiveSuperPom = getEffectiveSuperPom();
+    if (effectiveSuperPom != null) {
+      Element superProject = MavenJDOMUtil.read(effectiveSuperPom, null);
+      for (Element each : MavenJDOMUtil.findChildrenByPath(superProject, "build.pluginManagement.plugins", "plugin")) {
+        String groupId = MavenJDOMUtil.findChildValueByPath(each, "groupId", "org.apache.maven.plugins");
+        String artifactId = MavenJDOMUtil.findChildValueByPath(each, "artifactId", null);
+        result.add(groupId + ":" + artifactId);
+      }
     }
 
     myDefaultPluginsCache = result;
@@ -287,6 +300,16 @@ public class MavenGeneralSettings implements Cloneable {
     changed();
   }
 
+  @Nullable
+  public String getThreads() {
+    return threads;
+  }
+
+  public void setThreads(@Nullable String threads) {
+    this.threads = StringUtil.nullize(threads);
+    changed();
+  }
+
   public boolean equals(final Object o) {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
@@ -305,6 +328,7 @@ public class MavenGeneralSettings implements Cloneable {
     if (!overriddenLocalRepository.equals(that.overriddenLocalRepository)) return false;
     if (!mavenHome.equals(that.mavenHome)) return false;
     if (!mavenSettingsFile.equals(that.mavenSettingsFile)) return false;
+    if (!Comparing.equal(threads, that.threads)) return false;
 
     return true;
   }

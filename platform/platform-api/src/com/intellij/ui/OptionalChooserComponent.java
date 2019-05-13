@@ -37,7 +37,7 @@ public abstract class OptionalChooserComponent<T> implements CheckBoxListListene
 
   public OptionalChooserComponent(@NotNull final List<Pair<T, Boolean>> list) {
     setInitialList(list);
-    myWorkingList = new ArrayList<Pair<T, Boolean>>(myInitialList);
+    myWorkingList = new ArrayList<>(myInitialList);
 
     // fill list
     reset();
@@ -53,6 +53,7 @@ public abstract class OptionalChooserComponent<T> implements CheckBoxListListene
     return myContentPane;
   }
 
+  @Override
   public void checkBoxSelectionChanged(int index, boolean value) {
     final Pair<T, Boolean> pair = myWorkingList.remove(index);
     myWorkingList.add(index, Pair.create(pair.first, value));
@@ -65,7 +66,7 @@ public abstract class OptionalChooserComponent<T> implements CheckBoxListListene
   }
 
   public void reset() {
-    myWorkingList = new ArrayList<Pair<T, Boolean>>(myInitialList);
+    myWorkingList = new ArrayList<>(myInitialList);
     refresh();
   }
 

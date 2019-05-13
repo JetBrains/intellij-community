@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lang;
 
 import com.intellij.openapi.project.Project;
@@ -22,6 +8,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.util.diff.FlyweightCapableTreeStructure;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -31,6 +18,7 @@ import org.jetbrains.annotations.Nullable;
  * @see PsiParser
  * @see ASTNode
  */
+@SuppressWarnings("deprecation")
 public interface PsiBuilder extends UserDataHolder, UserDataHolderUnprotected {
   /**
    * Returns a project for which PSI builder was created (see {@link PsiBuilderFactory}).
@@ -43,6 +31,7 @@ public interface PsiBuilder extends UserDataHolder, UserDataHolderUnprotected {
    *
    * @return the text being parsed
    */
+  @NotNull
   CharSequence getOriginalText();
 
   /**
@@ -77,18 +66,18 @@ public interface PsiBuilder extends UserDataHolder, UserDataHolderUnprotected {
    * Subscribe for notification on default whitespace and comments skipped events.
    * @param callback an implementation for the callback
    */
-  void setWhitespaceSkippedCallback(WhitespaceSkippedCallback callback);
+  void setWhitespaceSkippedCallback(@Nullable WhitespaceSkippedCallback callback);
 
   /**
-   * See what token type is in <code>steps</code> ahead
+   * See what token type is in {@code steps} ahead
    * @param steps 0 is current token (i.e. the same {@link PsiBuilder#getTokenType()} returns)
-   * @return type element which getTokenType() will return if we call advance <code>steps</code> times in a row
+   * @return type element which getTokenType() will return if we call advance {@code steps} times in a row
    */
   @Nullable
   IElementType lookAhead(int steps);
 
   /**
-   * See what token type is in <code>steps</code> ahead / behind
+   * See what token type is in {@code steps} ahead / behind
    * @param steps 0 is current token (i.e. the same {@link PsiBuilder#getTokenType()} returns)
    * @return type element ahead or behind, including whitespace / comment tokens
    */
@@ -96,12 +85,19 @@ public interface PsiBuilder extends UserDataHolder, UserDataHolderUnprotected {
   IElementType rawLookup(int steps);
 
   /**
-   * See what token type is in <code>steps</code> ahead / behind current position
+   * See what token type is in {@code steps} ahead / behind current position
    * @param steps 0 is current token (i.e. the same {@link PsiBuilder#getTokenType()} returns)
    * @return offset type element ahead or behind, including whitespace / comment tokens, -1 if first token,
    * getOriginalText().getLength() at end
    */
   int rawTokenTypeStart(int steps);
+
+  /**
+   * Returns the index of the current token in the original sequence.
+   *
+   * @return token index
+   */
+  int rawTokenIndex();
 
   /**
    * Returns the text of the current token from the lexer.
@@ -132,6 +128,7 @@ public interface PsiBuilder extends UserDataHolder, UserDataHolderUnprotected {
      *
      * @return the new marker instance.
      */
+    @NotNull
     Marker precede();
 
     /**
@@ -152,7 +149,7 @@ public interface PsiBuilder extends UserDataHolder, UserDataHolderUnprotected {
      *
      * @param type the type of the node in the AST tree.
      */
-    void done(IElementType type);
+    void done(@NotNull IElementType type);
 
     /**
      * Like {@linkplain #done(IElementType)}, but collapses all tokens between start and end markers
@@ -160,7 +157,7 @@ public interface PsiBuilder extends UserDataHolder, UserDataHolderUnprotected {
      *
      * @param type the type of the node in the AST tree.
      */
-    void collapse(IElementType type);
+    void collapse(@NotNull IElementType type);
 
     /**
      * Like {@linkplain #done(IElementType)}, but the marker is completed (end marker inserted)
@@ -170,7 +167,7 @@ public interface PsiBuilder extends UserDataHolder, UserDataHolderUnprotected {
      * @param type   the type of the node in the AST tree.
      * @param before marker to complete this one before.
      */
-    void doneBefore(IElementType type, Marker before);
+    void doneBefore(@NotNull IElementType type, @NotNull Marker before);
 
     /**
      * Like {@linkplain #doneBefore(IElementType, Marker)}, but in addition an error element with given text
@@ -180,7 +177,7 @@ public interface PsiBuilder extends UserDataHolder, UserDataHolderUnprotected {
      * @param before       marker to complete this one before.
      * @param errorMessage for error element.
      */
-    void doneBefore(IElementType type, Marker before, String errorMessage);
+    void doneBefore(@NotNull IElementType type, @NotNull Marker before, @NotNull String errorMessage);
 
     /**
      * Completes this marker and labels it as error element with specified message. Before calling this method,
@@ -188,7 +185,7 @@ public interface PsiBuilder extends UserDataHolder, UserDataHolderUnprotected {
      *
      * @param message for error element.
      */
-    void error(String message);
+    void error(@NotNull String message);
 
     /**
      * Like {@linkplain #error(String)}, but the marker is completed before specified one.
@@ -196,7 +193,7 @@ public interface PsiBuilder extends UserDataHolder, UserDataHolderUnprotected {
      * @param message for error element.
      * @param before  marker to complete this one before.
      */
-    void errorBefore(String message, Marker before);
+    void errorBefore(@NotNull String message, @NotNull Marker before);
 
     /**
      * Allows to define custom edge token binders instead of default ones. If any of parameters is null
@@ -214,6 +211,7 @@ public interface PsiBuilder extends UserDataHolder, UserDataHolderUnprotected {
    *
    * @return the new marker instance.
    */
+  @NotNull
   Marker mark();
 
   /**
@@ -222,7 +220,7 @@ public interface PsiBuilder extends UserDataHolder, UserDataHolderUnprotected {
    *
    * @param messageText the text of the error message displayed to the user.
    */
-  void error(String messageText);
+  void error(@NotNull String messageText);
 
   /**
    * Checks if the lexer has reached the end of file.
@@ -236,6 +234,7 @@ public interface PsiBuilder extends UserDataHolder, UserDataHolderUnprotected {
    *
    * @return the built tree.
    */
+  @NotNull
   ASTNode getTreeBuilt();
 
   /**
@@ -245,6 +244,7 @@ public interface PsiBuilder extends UserDataHolder, UserDataHolderUnprotected {
    *
    * @return the light tree built.
    */
+  @NotNull
   FlyweightCapableTreeStructure<LighterASTNode> getLightTree();
 
   /**
@@ -255,7 +255,7 @@ public interface PsiBuilder extends UserDataHolder, UserDataHolderUnprotected {
    */
   void setDebugMode(boolean dbgMode);
 
-  void enforceCommentTokens(TokenSet tokens);
+  void enforceCommentTokens(@NotNull TokenSet tokens);
 
   /**
    * @return latest left done node for context dependent parsing.

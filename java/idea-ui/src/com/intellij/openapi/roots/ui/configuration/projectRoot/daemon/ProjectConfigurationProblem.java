@@ -26,12 +26,12 @@ import javax.swing.*;
 /**
 * @author nik
 */
-class ProjectConfigurationProblem extends ConfigurationError {
+public class ProjectConfigurationProblem extends ConfigurationError {
   private final ProjectStructureProblemDescription myDescription;
   private final Project myProject;
 
   public ProjectConfigurationProblem(ProjectStructureProblemDescription description, Project project) {
-    super(StringUtil.unescapeXml(description.getMessage(true)), computeDescription(description),
+    super(StringUtil.unescapeXmlEntities(description.getMessage(true)), computeDescription(description),
           getSettings(project, description.getProblemLevel()).isIgnored(description));
     myDescription = description;
     myProject = project;
@@ -49,6 +49,11 @@ class ProjectConfigurationProblem extends ConfigurationError {
   private static String computeDescription(ProjectStructureProblemDescription description) {
     final String descriptionString = description.getDescription();
     return descriptionString != null ? descriptionString : description.getMessage(true);
+  }
+
+  @NotNull
+  public ProjectStructureProblemDescription getProblemDescription() {
+    return myDescription;
   }
 
   @Override
@@ -78,12 +83,7 @@ class ProjectConfigurationProblem extends ConfigurationError {
 
       @Override
       public PopupStep onChosen(final ConfigurationErrorQuickFix selectedValue, boolean finalChoice) {
-        return doFinalStep(new Runnable() {
-          @Override
-          public void run() {
-            selectedValue.performFix();
-          }
-        });
+        return doFinalStep(() -> selectedValue.performFix());
       }
     }).show(relativePoint);
   }

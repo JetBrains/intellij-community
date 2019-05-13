@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,17 +15,18 @@
  */
 package org.jetbrains.plugins.groovy.inspections
 
+import com.intellij.testFramework.InspectionTestUtil
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
-import org.jetbrains.plugins.groovy.codeInspection.unusedDef.UnusedDefInspection
 import com.siyeh.ig.dataflow.UnnecessaryLocalVariableInspection
+import org.jetbrains.plugins.groovy.codeInspection.unusedDef.UnusedDefInspection
 
 /**
  * @author Sergey Evdokimov
  */
 class GroovyValidGroupNameTest extends LightCodeInsightFixtureTestCase {
 
-  public void testGroupNamesIsSame() {
-    assert new UnusedDefInspection().getGroupDisplayName() == new UnnecessaryLocalVariableInspection().getGroupDisplayName()
+  void testGroupNamesIsSame() {
+    def tools = InspectionTestUtil.instantiateTools([UnusedDefInspection, UnnecessaryLocalVariableInspection])
+    assert tools.collect { it.groupDisplayName }.toSet().size() == 1 // all tools have same groupDisplayName
   }
-
 }

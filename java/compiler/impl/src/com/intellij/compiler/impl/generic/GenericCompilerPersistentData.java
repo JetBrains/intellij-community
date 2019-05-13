@@ -16,6 +16,7 @@
 package com.intellij.compiler.impl.generic;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.io.IOUtil;
 import gnu.trove.TIntHashSet;
 import org.jetbrains.annotations.NotNull;
@@ -31,9 +32,9 @@ import java.util.Set;
 public class GenericCompilerPersistentData {
   private static final Logger LOG = Logger.getInstance("#com.intellij.compiler.impl.generic.GenericCompilerPersistentData");
   private static final int VERSION = 1;
-  private File myFile;
-  private Map<String, Integer> myTarget2Id = new HashMap<String, Integer>();
-  private TIntHashSet myUsedIds = new TIntHashSet();
+  private final File myFile;
+  private final Map<String, Integer> myTarget2Id = new HashMap<>();
+  private final TIntHashSet myUsedIds = new TIntHashSet();
   private boolean myVersionChanged;
   private final int myCompilerVersion;
 
@@ -46,8 +47,7 @@ public class GenericCompilerPersistentData {
       return;
     }
 
-    DataInputStream input = new DataInputStream(new BufferedInputStream(new FileInputStream(myFile)));
-    try {
+    try (DataInputStream input = new DataInputStream(new BufferedInputStream(new FileInputStream(myFile)))) {
       final int dataVersion = input.readInt();
       if (dataVersion != VERSION) {
         LOG.info("Version of compiler info file (" + myFile.getAbsolutePath() + ") changed: " + dataVersion + " -> " + VERSION);
@@ -57,7 +57,8 @@ public class GenericCompilerPersistentData {
 
       final int savedCompilerVersion = input.readInt();
       if (savedCompilerVersion != compilerVersion) {
-        LOG.info("Compiler caches version changed (" + myFile.getAbsolutePath() + "): " + savedCompilerVersion + " -> " + compilerVersion);
+        LOG
+          .info("Compiler caches version changed (" + myFile.getAbsolutePath() + "): " + savedCompilerVersion + " -> " + compilerVersion);
         myVersionChanged = true;
         return;
       }
@@ -70,8 +71,9 @@ public class GenericCompilerPersistentData {
         myUsedIds.add(id);
       }
     }
-    finally {
-      input.close();
+    catch (IOException e) {
+      FileUtil.delete(myFile);
+      throw e;
     }
   }
 
@@ -80,8 +82,7 @@ public class GenericCompilerPersistentData {
   }
 
   public void save() throws IOException {
-    final DataOutputStream output = new DataOutputStream(new BufferedOutputStream(new FileOutputStream(myFile)));
-    try {
+    try (DataOutputStream output = new DataOutputStream(new BufferedOutputStream(new FileOutputStream(myFile)))) {
       output.writeInt(VERSION);
       output.writeInt(myCompilerVersion);
       output.writeInt(myTarget2Id.size());
@@ -90,9 +91,6 @@ public class GenericCompilerPersistentData {
         IOUtil.writeString(entry.getKey(), output);
         output.writeInt(entry.getValue());
       }
-    }
-    finally {
-      output.close();
     }
   }
 

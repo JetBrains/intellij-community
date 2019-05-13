@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,6 +42,7 @@ import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.netbeans.lib.cvsclient.admin.Entry;
 
 import java.io.File;
 import java.io.IOException;
@@ -51,7 +52,7 @@ public class CvsAnnotationProvider implements AnnotationProvider{
 
   @NonNls private static final String INVALID_OPTION_F = "invalid option -- F";
   @NonNls private static final String USAGE_CVSNTSRV_SERVER = "Usage: cvs";
-  private static final Collection<String> ourDoNotAnnotateBinaryRoots = new HashSet<String>();
+  private static final Collection<String> ourDoNotAnnotateBinaryRoots = new HashSet<>();
 
   private final Project myProject;
   private final CvsHistoryProvider myCvsHistoryProvider;
@@ -61,6 +62,7 @@ public class CvsAnnotationProvider implements AnnotationProvider{
     myCvsHistoryProvider = cvsHistoryProvider;
   }
 
+  @Override
   public FileAnnotation annotate(VirtualFile virtualFile) throws VcsException {
     final File file = new File(virtualFile.getPath());
     final File cvsLightweightFile = CvsUtil.getCvsLightweightFileForFile(file);
@@ -77,13 +79,10 @@ public class CvsAnnotationProvider implements AnnotationProvider{
     return new CvsFileAnnotation(operation.getContent(), lineAnnotations, revisions, virtualFile, revision, myProject);
   }
 
+  @Override
   public FileAnnotation annotate(VirtualFile file, VcsFileRevision revision) throws VcsException {
     final CvsConnectionSettings settings = CvsEntriesManager.getInstance().getCvsConnectionSettingsFor(file.getParent());
     return annotate(file, revision.getRevisionNumber().asString(), settings);
-  }
-
-  public boolean isAnnotationValid(VcsFileRevision rev){
-    return true;
   }
 
   public FileAnnotation annotate(VirtualFile cvsVirtualFile, String revision, CvsEnvironment environment) throws VcsException {
@@ -109,8 +108,8 @@ public class CvsAnnotationProvider implements AnnotationProvider{
     }
     else {
       // imitation
-      revisions = new ArrayList<VcsFileRevision>();
-      final Set<String> usedRevisions = new HashSet<String>();
+      revisions = new ArrayList<>();
+      final Set<String> usedRevisions = new HashSet<>();
       for (Annotation annotation : lineAnnotations) {
         if (! usedRevisions.contains(annotation.getRevision())) {
           revisions.add(new RevisionPresentation(annotation.getRevision(), annotation.getUserName(), annotation.getDate()));
@@ -125,7 +124,11 @@ public class CvsAnnotationProvider implements AnnotationProvider{
     if (ourDoNotAnnotateBinaryRoots.contains(environment.getCvsRootAsString())) {
       return false;
     }
-    return CvsEntriesManager.getInstance().getEntryFor(cvsVirtualFile).isBinary();
+    final Entry entry = CvsEntriesManager.getInstance().getEntryFor(cvsVirtualFile);
+    if (entry != null) {
+      return entry.isBinary();
+    }
+    return cvsVirtualFile.getFileType().isBinary();
   }
 
   private AnnotateOperation executeOperation(File file, String revision, CvsEnvironment root, boolean binary, boolean retryOnFailure)
@@ -153,7 +156,7 @@ public class CvsAnnotationProvider implements AnnotationProvider{
 
   private static void adjustAnnotation(@Nullable List<VcsFileRevision> revisions, @NotNull Annotation[] lineAnnotations) {
     if (revisions != null) {
-      final Map<String, VcsFileRevision> revisionMap = new HashMap<String, VcsFileRevision>();
+      final Map<String, VcsFileRevision> revisionMap = new HashMap<>();
       for (VcsFileRevision vcsFileRevision : revisions) {
         revisionMap.put(vcsFileRevision.getRevisionNumber().asString(), vcsFileRevision);
       }
@@ -179,22 +182,28 @@ public class CvsAnnotationProvider implements AnnotationProvider{
       myDate = date;
     }
 
+    @Override
+    @NotNull
     public VcsRevisionNumber getRevisionNumber() {
       return myNumber;
     }
 
+    @Override
     public String getBranchName() {
       return null;
     }
 
+    @Override
     public Date getRevisionDate() {
       return myDate;
     }
 
+    @Override
     public String getAuthor() {
       return myAuthor;
     }
 
+    @Override
     public String getCommitMessage() {
       return null;
     }
@@ -205,11 +214,13 @@ public class CvsAnnotationProvider implements AnnotationProvider{
       return null;
     }
 
+    @Override
     public byte[] loadContent() throws IOException, VcsException {
       return getContent();
     }
 
-    public byte[] getContent() throws IOException, VcsException {
+    @Override
+    public byte[] getContent() {
       return ArrayUtil.EMPTY_BYTE_ARRAY;
     }
   }

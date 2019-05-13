@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,7 @@ import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectCoreUtil;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.CheckUtil;
@@ -34,20 +35,15 @@ import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.util.CharTable;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
 public class LeafPsiElement extends LeafElement implements PsiElement, NavigationItem {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.LeafPsiElement");
 
-  public LeafPsiElement(IElementType type, CharSequence text) {
+  public LeafPsiElement(@NotNull IElementType type, CharSequence text) {
     super(type, text);
-  }
-
-  @Deprecated
-  public LeafPsiElement(IElementType type, CharSequence buffer, int startOffset, int endOffset, CharTable table) {
-    super(type, table.intern(buffer, startOffset, endOffset));
   }
 
   @Override
@@ -89,10 +85,10 @@ public class LeafPsiElement extends LeafElement implements PsiElement, Navigatio
   public PsiFile getContainingFile() {
     final PsiFile file = SharedImplUtil.getContainingFile(this);
     if (file == null || !file.isValid()) invalid();
-    //noinspection ConstantConditions
     return file;
   }
 
+  @Contract("-> fail")
   private void invalid() {
     ProgressIndicatorProvider.checkCanceled();
 
@@ -204,6 +200,7 @@ public class LeafPsiElement extends LeafElement implements PsiElement, Navigatio
     return SharedImplUtil.doReplace(this, this, newElement);
   }
 
+  @Override
   public String toString() {
     return "PsiElement" + "(" + getElementType().toString() + ")";
   }
@@ -257,9 +254,12 @@ public class LeafPsiElement extends LeafElement implements PsiElement, Navigatio
   @Override
   @NotNull
   public Project getProject() {
+    Project project = ProjectCoreUtil.theOnlyOpenProject();
+    if (project != null) {
+      return project;
+    }
     final PsiManager manager = getManager();
     if (manager == null) invalid();
-    //noinspection ConstantConditions
     return manager.getProject();
   }
 

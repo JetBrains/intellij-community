@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.find.findUsages;
 
 import com.intellij.find.FindBundle;
@@ -26,15 +12,13 @@ import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.SeparatorFactory;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.StateRestoringCheckBox;
-import com.intellij.usageView.UsageViewManager;
+import com.intellij.usageView.UsageViewContentManager;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 
 /**
  * @author peter
@@ -56,8 +40,6 @@ public abstract class AbstractFindUsagesDialog extends DialogWrapper {
   protected StateRestoringCheckBox myCbToSearchForTextOccurrences;
   protected JCheckBox myCbToSkipResultsWhenOneUsage;
 
-  private final ActionListener myUpdateAction;
-
   private ScopeChooserCombo myScopeCombo;
 
   protected AbstractFindUsagesDialog(@NotNull Project project,
@@ -71,22 +53,13 @@ public abstract class AbstractFindUsagesDialog extends DialogWrapper {
     myProject = project;
     myFindUsagesOptions = findUsagesOptions;
     myToShowInNewTab = toShowInNewTab;
-    myIsShowInNewTabEnabled = !mustOpenInNewTab && UsageViewManager.getInstance(myProject).getReusableContentsCount() > 0;
+    myIsShowInNewTabEnabled = !mustOpenInNewTab && UsageViewContentManager.getInstance(myProject).getReusableContentsCount() > 0;
     myIsShowInNewTabVisible = !isSingleFile;
     mySearchForTextOccurrencesAvailable = searchForTextOccurrencesAvailable;
     mySearchInLibrariesAvailable = searchInLibrariesAvailable;
 
-    myUpdateAction = new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent event) {
-        update();
-      }
-    };
-
-    setButtonsMargin(null);
-
     setOKButtonText(FindBundle.message("find.dialog.find.button"));
-    setTitle(isSingleFile ? FindBundle.message("find.usages.in.file.dialog.title") : FindBundle.message("find.usages.dialog.title"));
+    setTitle(FindBundle.message(isSingleFile ? "find.usages.in.file.dialog.title" : "find.usages.dialog.title"));
   }
 
   @NotNull
@@ -143,6 +116,7 @@ public abstract class AbstractFindUsagesDialog extends DialogWrapper {
     return panel;
   }
 
+  @NotNull
   public final FindUsagesOptions calcFindUsagesOptions() {
     calcFindUsagesOptions(myFindUsagesOptions);
     return myFindUsagesOptions;
@@ -208,7 +182,7 @@ public abstract class AbstractFindUsagesDialog extends DialogWrapper {
     cb.setSelected(toSelect);
     panel.add(cb);
     if (toUpdate) {
-      cb.addActionListener(myUpdateAction);
+      cb.addActionListener(___ -> update());
     }
     return cb;
   }

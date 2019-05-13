@@ -19,44 +19,22 @@
  */
 package com.intellij.util.io.storage;
 
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.io.ByteSequence;
-import com.intellij.openapi.util.io.FileUtil;
-import junit.framework.TestCase;
+import com.intellij.openapi.util.io.ByteArraySequence;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
-import java.io.File;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 
-public class StorageTest extends TestCase {
-  private Storage myStorage;
-
-  @Override
-  protected void setUp() throws Exception {
-    super.setUp();
-    myStorage = new Storage(getFileName());
-  }
-
-  private String getFileName() {
-    return FileUtil.getTempDirectory() + File.separatorChar + getName();
-  }
-
-  @Override
-  protected void tearDown() throws Exception {
-    Disposer.dispose(myStorage);
-    Storage.deleteFiles(getFileName());
-    super.tearDown();
-  }
-
+public class StorageTest extends StorageTestBase {
   public void testSmoke() throws Exception {
     final int record = myStorage.createNewRecord();
-    myStorage.writeBytes(record, new ByteSequence("Hello".getBytes()), false);
-    assertEquals("Hello", new String(myStorage.readBytes(record)));
+    myStorage.writeBytes(record, new ByteArraySequence("Hello".getBytes(StandardCharsets.UTF_8)), false);
+    assertEquals("Hello", new String(myStorage.readBytes(record), StandardCharsets.UTF_8));
   }
 
   public void testStress() throws Exception {
-    StringBuffer data = new StringBuffer();
+    StringBuilder data = new StringBuilder();
     for (int i = 0; i < 100; i++) {
       data.append("Hello ");
     }
@@ -68,12 +46,12 @@ public class StorageTest extends TestCase {
 
     for (int i = 0; i < count; i++) {
       final int record = myStorage.createNewRecord();
-      myStorage.writeBytes(record, new ByteSequence(hello.getBytes()), true);  // fixed size optimization is mor than 50 percents here!
+      myStorage.writeBytes(record, new ByteArraySequence(hello.getBytes(StandardCharsets.UTF_8)), true);  // fixed size optimization is mor than 50 percents here!
       records[i] = record;
     }
 
     for (int record : records) {
-      assertEquals(hello, new String(myStorage.readBytes(record)));
+      assertEquals(hello, new String(myStorage.readBytes(record), StandardCharsets.UTF_8));
     }
 
     long timedelta = System.currentTimeMillis() - start;
@@ -92,18 +70,17 @@ public class StorageTest extends TestCase {
         out = new DataOutputStream(myStorage.appendStream(r));
       }
     }
-    
+
     out.close();
 
 
-    DataInputStream in = new DataInputStream(myStorage.readStream(r));
-    for (int i = 0; i < 10000; i++) {
-      assertEquals(i, in.readInt());
+    try (DataInputStream in = new DataInputStream(myStorage.readStream(r))) {
+      for (int i = 0; i < 10000; i++) {
+        assertEquals(i, in.readInt());
+      }
     }
-
-    in.close();
   }
-  
+
   public void testAppender2() throws Exception {
     int r = myStorage.createNewRecord();
     appendNBytes(r, 64);
@@ -111,7 +88,8 @@ public class StorageTest extends TestCase {
     appendNBytes(r, 512);
   }
 
-  private void appendNBytes(final int r, final int len) throws IOException {
+  @Override
+  protected void appendNBytes(final int r, final int len) throws IOException {
     DataOutputStream out = new DataOutputStream(myStorage.appendStream(r));
     for (int i = 0; i < len; i++) {
       out.write(0);

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,133 +20,118 @@ import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.ide.structureView.StructureView;
 import com.intellij.ide.structureView.StructureViewBuilder;
 import com.intellij.ide.structureView.StructureViewModel;
-import com.intellij.ide.util.FileStructureDialog;
+import com.intellij.ide.structureView.TreeBasedStructureViewBuilder;
+import com.intellij.ide.structureView.impl.StructureViewComposite;
 import com.intellij.ide.util.FileStructurePopup;
-import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.ide.util.StructureViewCompositeModel;
+import com.intellij.ide.util.treeView.smartTree.TreeStructureUtil;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.fileEditor.FileEditor;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiManager;
 import com.intellij.ui.PlaceHolder;
+import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class ViewStructureAction extends AnAction {
-  private static final String PLACE = "StructureViewPopup";
-  
+import java.util.Arrays;
+
+public class ViewStructureAction extends DumbAwareAction {
+
   public ViewStructureAction() {
     setEnabledInModalContext(true);
   }
 
-  public void actionPerformed(AnActionEvent e) {
-    Project project = e.getData(PlatformDataKeys.PROJECT);
+  @Override
+  public void actionPerformed(@NotNull AnActionEvent e) {
+    Project project = e.getData(CommonDataKeys.PROJECT);
     if (project == null) return;
-    final Editor editor = e.getData(PlatformDataKeys.EDITOR);
     final FileEditor fileEditor = e.getData(PlatformDataKeys.FILE_EDITOR);
-    if (editor == null) return;
     if (fileEditor == null) return;
+    final VirtualFile virtualFile;
 
-    PsiFile psiFile = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
-    if (psiFile == null) return;
+    final Editor editor = e.getData(CommonDataKeys.EDITOR);
+    if (editor == null) {
+      virtualFile = e.getData(CommonDataKeys.VIRTUAL_FILE);
+    }
+    else {
+      PsiDocumentManager.getInstance(project).commitDocument(editor.getDocument());
+      PsiFile psiFile = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
+      if (psiFile == null) return;
 
-    PsiDocumentManager.getInstance(project).commitDocument(editor.getDocument());
+      virtualFile = psiFile.getVirtualFile();
+    }
+    String title = virtualFile == null? fileEditor.getName() : virtualFile.getName();
 
     FeatureUsageTracker.getInstance().triggerFeatureUsed("navigation.popup.file.structure");
 
-    Navigatable navigatable = e.getData(PlatformDataKeys.NAVIGATABLE);
-    if (Registry.is("file.structure.tree.mode")) {
-      FileStructurePopup popup = createPopup(editor, project, navigatable, fileEditor);
-      if (popup != null) {
-        final VirtualFile virtualFile = psiFile.getVirtualFile();
-        if (virtualFile != null) {
-          popup.setTitle(virtualFile.getName());
-        }
-        popup.show();
-      }
-    } else {
-      DialogWrapper dialog = createDialog(editor, project, navigatable, fileEditor);
-      if (dialog != null) {
-        final VirtualFile virtualFile = psiFile.getVirtualFile();
-        if (virtualFile != null) {
-          dialog.setTitle(virtualFile.getName());
-        }
-        dialog.show();
-      }
-    }
+    FileStructurePopup popup = createPopup(project, fileEditor);
+    if (popup == null) return;
+
+    popup.setTitle(title);
+    popup.show();
   }
 
   @Nullable
-  private static DialogWrapper createDialog(final Editor editor, Project project, Navigatable navigatable, final FileEditor fileEditor) {
-    final StructureViewBuilder structureViewBuilder = fileEditor.getStructureViewBuilder();
-    if (structureViewBuilder == null) return null;
-    StructureView structureView = structureViewBuilder.createStructureView(fileEditor, project);
-    return createStructureViewBasedDialog(structureView.getTreeModel(), editor, project, navigatable, structureView);
-  }
-  
-  @Nullable
-  public static FileStructurePopup createPopup(final Editor editor, Project project, @Nullable Navigatable navigatable, final FileEditor fileEditor) {
-    final StructureViewBuilder structureViewBuilder = fileEditor.getStructureViewBuilder();
-    if (structureViewBuilder == null) return null;
-    StructureView structureView = structureViewBuilder.createStructureView(fileEditor, project);
-    final StructureViewModel model = structureView.getTreeModel();
-    if (model instanceof PlaceHolder) {
+  public static FileStructurePopup createPopup(@NotNull Project project, @NotNull FileEditor fileEditor) {
+    PsiDocumentManager.getInstance(project).commitAllDocuments();
+    StructureViewBuilder builder = fileEditor.getStructureViewBuilder();
+    if (builder == null) return null;
+    StructureView structureView;
+    StructureViewModel treeModel;
+    if (builder instanceof TreeBasedStructureViewBuilder) {
+      structureView = null;
+      treeModel = ((TreeBasedStructureViewBuilder)builder).createStructureViewModel(EditorUtil.getEditorEx(fileEditor));
+    }
+    else {
+      structureView = builder.createStructureView(fileEditor, project);
+      treeModel = createStructureViewModel(project, fileEditor, structureView);
+    }
+    if (treeModel instanceof PlaceHolder) {
       //noinspection unchecked
-      ((PlaceHolder)model).setPlace(PLACE);
+      ((PlaceHolder)treeModel).setPlace(TreeStructureUtil.PLACE);
     }
-    return createStructureViewPopup(model, editor, project, navigatable, structureView);
-  }
-  
-  public static boolean isInStructureViewPopup(@NotNull PlaceHolder<String> model) {
-    return PLACE.equals(model.getPlace());
+    FileStructurePopup popup = new FileStructurePopup(project, fileEditor, treeModel);
+    if (structureView != null) Disposer.register(popup, structureView);
+    return popup;
   }
 
-  public static FileStructureDialog createStructureViewBasedDialog(final StructureViewModel structureViewModel,
-                                                                   final Editor editor,
-                                                                   final Project project,
-                                                                   final Navigatable navigatable,
-                                                                   final @NotNull Disposable alternativeDisposable) {
-    return new FileStructureDialog(structureViewModel, editor, project, navigatable, alternativeDisposable, true);
-  }
-  public static FileStructurePopup createStructureViewPopup(final StructureViewModel structureViewModel,
-                                                                   final Editor editor,
-                                                                   final Project project,
-                                                                   final Navigatable navigatable,
-                                                                   final @NotNull Disposable alternativeDisposable) {
-    return new FileStructurePopup(structureViewModel, editor, project, alternativeDisposable, true);
-  }
-  
-  public void update(AnActionEvent event) {
-    Presentation presentation = event.getPresentation();
-    DataContext dataContext = event.getDataContext();
-    Project project = PlatformDataKeys.PROJECT.getData(dataContext);
+  @Override
+  public void update(@NotNull AnActionEvent e) {
+    Project project = e.getData(CommonDataKeys.PROJECT);
     if (project == null) {
-      presentation.setEnabled(false);
-      return;
-    }
-    Editor editor = PlatformDataKeys.EDITOR.getData(dataContext);
-    if (editor == null) {
-      presentation.setEnabled(false);
+      e.getPresentation().setEnabled(false);
       return;
     }
 
-    PsiFile psiFile = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
-    if (psiFile == null) {
-      presentation.setEnabled(false);
-      return;
-    }
-    final VirtualFile virtualFile = psiFile.getVirtualFile();
+    FileEditor fileEditor = e.getData(PlatformDataKeys.FILE_EDITOR);
+    e.getPresentation().setEnabled(fileEditor != null && fileEditor.getStructureViewBuilder() != null);
+  }
 
-    if (virtualFile == null) {
-      presentation.setEnabled(false);
-      return;
+  @NotNull
+  public static StructureViewModel createStructureViewModel(@NotNull Project project,
+                                                            @NotNull FileEditor fileEditor,
+                                                            @NotNull StructureView structureView) {
+    StructureViewModel treeModel;
+    VirtualFile virtualFile = fileEditor.getFile();
+    if (structureView instanceof StructureViewComposite && virtualFile != null) {
+      StructureViewComposite.StructureViewDescriptor[] views = ((StructureViewComposite)structureView).getStructureViews();
+      PsiFile psiFile = ObjectUtils.notNull(PsiManager.getInstance(project).findFile(virtualFile));
+      treeModel = new StructureViewCompositeModel(psiFile, EditorUtil.getEditorEx(fileEditor), Arrays.asList(views));
+      Disposer.register(structureView, treeModel);
     }
-    presentation.setEnabled(
-      StructureViewBuilder.PROVIDER.getStructureViewBuilder(virtualFile.getFileType(), virtualFile, project) != null );
+    else {
+      treeModel = structureView.getTreeModel();
+    }
+    return treeModel;
   }
 }

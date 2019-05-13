@@ -23,7 +23,6 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Aug 3, 2010
  */
 public class AntBooleanConverter extends Converter<Boolean> {
   public final Boolean DEFAULT_VALUE;
@@ -36,13 +35,15 @@ public class AntBooleanConverter extends Converter<Boolean> {
     DEFAULT_VALUE = Boolean.valueOf(defaultValue);
   }
 
+  @Override
   public Boolean fromString(@Nullable @NonNls String s, ConvertContext context) {
     if (s == null || s.length() == 0) {
       return DEFAULT_VALUE;
     }
-    return "true".equalsIgnoreCase(s) || "true".equalsIgnoreCase(s) || "yes".equalsIgnoreCase(s);
+    return "true".equalsIgnoreCase(s) || "yes".equalsIgnoreCase(s);
   }
 
+  @Override
   public String toString(@Nullable Boolean aBoolean, ConvertContext context) {
     final GenericAttributeValue attribValue = context.getInvocationElement().getParentOfType(GenericAttributeValue.class, false);
     if (attribValue == null) {

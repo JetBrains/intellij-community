@@ -30,7 +30,7 @@ import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.treeStructure.SimpleNode;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.SmartList;
-import com.intellij.util.StringBuilderSpinAllocator;
+import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -41,8 +41,8 @@ import java.util.*;
  */
 public class PackagingElementNode<E extends PackagingElement<?>> extends ArtifactsTreeNode {
   private final List<E> myPackagingElements;
-  private final Map<PackagingElement<?>, CompositePackagingElement<?>> myParentElements = new HashMap<PackagingElement<?>, CompositePackagingElement<?>>(1);
-  private final MultiValuesMap<PackagingElement<?>, PackagingNodeSource> myNodeSources = new MultiValuesMap<PackagingElement<?>, PackagingNodeSource>();
+  private final Map<PackagingElement<?>, CompositePackagingElement<?>> myParentElements = new HashMap<>(1);
+  private final MultiValuesMap<PackagingElement<?>, PackagingNodeSource> myNodeSources = new MultiValuesMap<>();
   private final CompositePackagingElementNode myParentNode;
 
   public PackagingElementNode(@NotNull E packagingElement, ArtifactEditorContext context, @Nullable CompositePackagingElementNode parentNode,
@@ -52,7 +52,7 @@ public class PackagingElementNode<E extends PackagingElement<?>> extends Artifac
     myParentNode = parentNode;
     myParentElements.put(packagingElement, parentElement);
     myNodeSources.putAll(packagingElement, nodeSources);
-    myPackagingElements = new SmartList<E>();
+    myPackagingElements = new SmartList<>();
     doAddElement(packagingElement);
   }
 
@@ -60,7 +60,7 @@ public class PackagingElementNode<E extends PackagingElement<?>> extends Artifac
     myPackagingElements.add(packagingElement);
   }
 
-  @Nullable 
+  @Nullable
   public CompositePackagingElement<?> getParentElement(PackagingElement<?> element) {
     return myParentElements.get(element);
   }
@@ -95,27 +95,19 @@ public class PackagingElementNode<E extends PackagingElement<?>> extends Artifac
   }
 
   @Override
-  protected void update(PresentationData presentation) {
+  protected void update(@NotNull PresentationData presentation) {
     final Collection<ArtifactProblemDescription> problems = ((ArtifactEditorImpl)myContext.getThisArtifactEditor()).getValidationManager().getProblems(this);
     if (problems == null || problems.isEmpty()) {
       super.update(presentation);
       return;
     }
-    StringBuilder buffer = StringBuilderSpinAllocator.alloc();
-    final String tooltip;
+    StringBuilder buffer = new StringBuilder();
     boolean isError = false;
-    try {
-      buffer.append("<html>");
-      for (ArtifactProblemDescription problem : problems) {
-        isError |= problem.getSeverity() == ProjectStructureProblemType.Severity.ERROR;
-        buffer.append(problem.getMessage(false)).append("<br>");
-      }
-      buffer.append("</html>");
-      tooltip = buffer.toString();
+    for (ArtifactProblemDescription problem : problems) {
+      isError |= problem.getSeverity() == ProjectStructureProblemType.Severity.ERROR;
+      buffer.append(problem.getMessage(false)).append("<br>");
     }
-    finally {
-      StringBuilderSpinAllocator.dispose(buffer);
-    }
+    final String tooltip = XmlStringUtil.wrapInHtml(buffer);
 
     getElementPresentation().render(presentation, addErrorHighlighting(isError, SimpleTextAttributes.REGULAR_ATTRIBUTES),
                                     addErrorHighlighting(isError, SimpleTextAttributes.GRAY_ATTRIBUTES));
@@ -143,7 +135,7 @@ public class PackagingElementNode<E extends PackagingElement<?>> extends Artifac
   @NotNull
   public Collection<PackagingNodeSource> getNodeSource(@NotNull PackagingElement<?> element) {
     final Collection<PackagingNodeSource> nodeSources = myNodeSources.get(element);
-    return nodeSources != null ? nodeSources : Collections.<PackagingNodeSource>emptyList();
+    return nodeSources != null ? nodeSources : Collections.emptyList();
   }
 
   public ArtifactEditorContext getContext() {
@@ -166,7 +158,7 @@ public class PackagingElementNode<E extends PackagingElement<?>> extends Artifac
 
 
   public List<PackagingElementNode<?>> getNodesByPath(List<PackagingElement<?>> pathToPlace) {
-    List<PackagingElementNode<?>> result = new ArrayList<PackagingElementNode<?>>();
+    List<PackagingElementNode<?>> result = new ArrayList<>();
     PackagingElementNode<?> current = this;
     int i = 0;
     result.add(current);

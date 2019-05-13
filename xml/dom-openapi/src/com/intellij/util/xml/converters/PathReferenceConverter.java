@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,16 +16,15 @@
 
 package com.intellij.util.xml.converters;
 
-import com.intellij.util.xml.Converter;
+import com.intellij.openapi.paths.PathReference;
+import com.intellij.openapi.paths.PathReferenceManager;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiReference;
+import com.intellij.psi.xml.XmlElement;
 import com.intellij.util.xml.ConvertContext;
+import com.intellij.util.xml.Converter;
 import com.intellij.util.xml.CustomReferenceConverter;
 import com.intellij.util.xml.GenericDomValue;
-import com.intellij.openapi.module.Module;
-import com.intellij.openapi.paths.PathReferenceManager;
-import com.intellij.openapi.paths.PathReference;
-import com.intellij.psi.PsiReference;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.xml.XmlElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -35,15 +34,18 @@ import org.jetbrains.annotations.Nullable;
 public class PathReferenceConverter extends Converter<PathReference> implements CustomReferenceConverter {
   public final static Converter<PathReference> INSTANCE = new PathReferenceConverter();
 
+  @Override
   public PathReference fromString(@Nullable final String s, final ConvertContext context) {
     final XmlElement element = context.getXmlElement();
     return s == null || element == null ? null : PathReferenceManager.getInstance().getPathReference(s, element);
   }
 
+  @Override
   public String toString(final PathReference t, final ConvertContext context) {
     return t == null ? null : t.getPath();
   }
 
+  @Override
   @NotNull
   public PsiReference[] createReferences(final GenericDomValue genericDomValue, final PsiElement element, final ConvertContext context) {
     return createReferences(element, true);

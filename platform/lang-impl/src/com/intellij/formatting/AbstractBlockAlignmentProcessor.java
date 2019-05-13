@@ -15,24 +15,13 @@
  */
 package com.intellij.formatting;
 
-import com.intellij.diagnostic.LogMessageEx;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.TextRange;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Set;
 
-/**
- * Gof Template Method for {@link BlockAlignmentProcessor}.
- * 
- * @author Denis Zhdanov
- * @since 4/29/11 11:52 AM
- */
 public abstract class AbstractBlockAlignmentProcessor implements BlockAlignmentProcessor {
 
-  private static final Logger LOG = Logger.getInstance("#" + AbstractBlockAlignmentProcessor.class.getName());
-  
   @Override
   public Result applyAlignment(@NotNull Context context) {
     IndentData indent = calculateAlignmentAnchorIndent(context);
@@ -50,10 +39,11 @@ public abstract class AbstractBlockAlignmentProcessor implements BlockAlignmentP
     }
 
     if (diff > 0) {
-      whiteSpace.setSpaces(whiteSpace.getSpaces() + diff, whiteSpace.getIndentSpaces());
+      int alignmentSpaces = whiteSpace.getSpaces() + diff;
+      whiteSpace.setSpaces(alignmentSpaces, whiteSpace.getIndentSpaces());
 
-      // Avoid tabulations usage for aligning blocks that are not the first blocks on a line.
       if (!whiteSpace.containsLineFeeds()) {
+        // Avoid tabulations usage for aligning blocks that are not the first blocks on a line.
         whiteSpace.setForceSkipTabulationsUsage(true);
       }
       return Result.TARGET_BLOCK_ALIGNED;
@@ -114,8 +104,8 @@ public abstract class AbstractBlockAlignmentProcessor implements BlockAlignmentP
    * 
    * @param alignmentAnchorIndent   alignment anchor indent
    * @param context                 current processing context
-   * @return                        <code>true</code> if desired alignment indent is applied to the current block;
-   *                                <code>false</code> otherwise
+   * @return                        {@code true} if desired alignment indent is applied to the current block;
+   *                                {@code false} otherwise
    */
   protected abstract boolean applyIndentToTheFirstBlockOnLine(@NotNull IndentData alignmentAnchorIndent, @NotNull Context context);
 

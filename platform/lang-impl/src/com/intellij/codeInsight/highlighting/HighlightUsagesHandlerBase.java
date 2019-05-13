@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,15 +38,15 @@ import java.util.List;
  * @author yole
  */
 public abstract class HighlightUsagesHandlerBase<T extends PsiElement> {
-  protected final Editor myEditor;
-  protected final PsiFile myFile;
+  @NotNull protected final Editor myEditor;
+  @NotNull protected final PsiFile myFile;
 
-  protected List<TextRange> myReadUsages = new ArrayList<TextRange>();
-  protected List<TextRange> myWriteUsages = new ArrayList<TextRange>();
+  protected List<TextRange> myReadUsages = new ArrayList<>();
+  protected List<TextRange> myWriteUsages = new ArrayList<>();
   protected String myStatusText;
   protected String myHintText;
 
-  protected HighlightUsagesHandlerBase(final Editor editor, final PsiFile file) {
+  protected HighlightUsagesHandlerBase(@NotNull Editor editor, @NotNull PsiFile file) {
     myEditor = editor;
     myFile = file;
   }
@@ -56,12 +56,9 @@ public abstract class HighlightUsagesHandlerBase<T extends PsiElement> {
     if (targets == null) {
       return;
     }
-    selectTargets(targets, new Consumer<List<T>>() {
-      @Override
-      public void consume(final List<T> targets) {
-        computeUsages(targets);
-        performHighlighting();
-      }
+    selectTargets(targets, targets1 -> {
+      computeUsages(targets1);
+      performHighlighting();
     });
   }
 
@@ -92,7 +89,7 @@ public abstract class HighlightUsagesHandlerBase<T extends PsiElement> {
                                                HighlightUsagesHandler.getShortcutText());
     }
     else {
-      myStatusText = CodeInsightBundle.message(elementName != null ?
+      myHintText = CodeInsightBundle.message(elementName != null ?
                                           "status.bar.highlighted.usages.not.found.message" :
                                           "status.bar.highlighted.usages.not.found.no.target.message", elementName);
     }
@@ -100,14 +97,21 @@ public abstract class HighlightUsagesHandlerBase<T extends PsiElement> {
 
   public abstract List<T> getTargets();
 
+  @Nullable
+  public String getFeatureId() {
+    return null;
+  }
+
   protected abstract void selectTargets(List<T> targets, Consumer<List<T>> selectionConsumer);
 
   public abstract void computeUsages(List<T> targets);
 
   protected void addOccurrence(@NotNull PsiElement element) {
     TextRange range = element.getTextRange();
-    range = InjectedLanguageManager.getInstance(element.getProject()).injectedToHost(element, range);
-    myReadUsages.add(range);
+    if (range != null) {
+      range = InjectedLanguageManager.getInstance(element.getProject()).injectedToHost(element, range);
+      myReadUsages.add(range);
+    }
   }
 
   public List<TextRange> getReadUsages() {
@@ -116,5 +120,13 @@ public abstract class HighlightUsagesHandlerBase<T extends PsiElement> {
 
   public List<TextRange> getWriteUsages() {
     return myWriteUsages;
+  }
+
+  /**
+   * In case of egoistic handler (highlightReferences = false) IdentifierHighlighterPass applies information only from this particular handler.
+   * Otherwise additional information would be collected from reference search as well. 
+   */
+  public boolean highlightReferences() {
+    return false;
   }
 }

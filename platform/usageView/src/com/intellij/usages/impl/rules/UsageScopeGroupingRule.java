@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,28 +16,34 @@
 package com.intellij.usages.impl.rules;
 
 import com.intellij.icons.AllIcons;
+import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.roots.TestSourcesFilter;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.usages.Usage;
 import com.intellij.usages.UsageGroup;
+import com.intellij.usages.UsageTarget;
 import com.intellij.usages.UsageView;
 import com.intellij.usages.rules.PsiElementUsage;
-import com.intellij.usages.rules.UsageGroupingRule;
+import com.intellij.usages.rules.SingleParentUsageGroupingRule;
 import com.intellij.util.PlatformIcons;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
 /**
  * @author max
  */
-public class UsageScopeGroupingRule implements UsageGroupingRule {
+public class UsageScopeGroupingRule extends SingleParentUsageGroupingRule implements DumbAware {
+  @Nullable
   @Override
-  public UsageGroup groupUsage(@NotNull Usage usage) {
+  protected UsageGroup getParentGroupFor(@NotNull Usage usage, @NotNull UsageTarget[] targets) {
     if (!(usage instanceof PsiElementUsage)) {
       return null;
     }
@@ -49,11 +55,11 @@ public class UsageScopeGroupingRule implements UsageGroupingRule {
     if (virtualFile == null) {
       return null;
     }
-    ProjectFileIndex fileIndex = ProjectRootManager.getInstance(element.getProject()).getFileIndex();
-    boolean isInLib = fileIndex.isInLibraryClasses(virtualFile) || fileIndex.isInLibrarySource(virtualFile);
+    Project project = element.getProject();
+    ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
+    boolean isInLib = fileIndex.isInLibrary(virtualFile);
     if (isInLib) return LIBRARY;
-    boolean isInTest = fileIndex.isInTestSourceContent(virtualFile);
-    return isInTest ? TEST : PRODUCTION;
+    return TestSourcesFilter.isTestSources(virtualFile, project) ? TEST : PRODUCTION;
   }
 
   private static final UsageScopeGroup TEST = new UsageScopeGroup(0) {
@@ -121,7 +127,7 @@ public class UsageScopeGroupingRule implements UsageGroupingRule {
     }
 
     @Override
-    public int compareTo(UsageGroup usageGroup) {
+    public int compareTo(@NotNull UsageGroup usageGroup) {
       return getText(null).compareTo(usageGroup.getText(null));
     }
 

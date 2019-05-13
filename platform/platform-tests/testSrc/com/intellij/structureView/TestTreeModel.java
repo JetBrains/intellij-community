@@ -1,3 +1,18 @@
+/*
+ * Copyright 2000-2014 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.intellij.structureView;
 
 import com.intellij.ide.projectView.PresentationData;
@@ -18,8 +33,8 @@ import java.util.List;
 
 public class TestTreeModel implements StructureViewModel{
   private final StringTreeElement myRoot;
-  private final List<Filter> myFilters = new ArrayList<Filter>();
-  private final List<Sorter> mySorters = new ArrayList<Sorter>();
+  private final List<Filter> myFilters = new ArrayList<>();
+  private final List<Sorter> mySorters = new ArrayList<>();
 
   public TestTreeModel(StringTreeElement root) {
     myRoot = root;
@@ -35,7 +50,7 @@ public class TestTreeModel implements StructureViewModel{
   @Override
   @NotNull
   public Filter[] getFilters() {
-    return myFilters.toArray(new Filter[myFilters.size()]);
+    return myFilters.toArray(Filter.EMPTY_ARRAY);
   }
 
   @Override
@@ -48,7 +63,7 @@ public class TestTreeModel implements StructureViewModel{
   @Override
   @NotNull
   public Sorter[] getSorters() {
-    return mySorters.toArray(new Sorter[mySorters.size()]);
+    return mySorters.toArray(Sorter.EMPTY_ARRAY);
   }
 
   public void addFlter(Filter filter) {
@@ -60,19 +75,21 @@ public class TestTreeModel implements StructureViewModel{
   }
 
   public static class StringTreeElement implements StructureViewTreeElement {
-    private final Collection<StructureViewTreeElement> myChildren = new ArrayList<StructureViewTreeElement>();
+    private final Collection<StructureViewTreeElement> myChildren = new ArrayList<>();
     private final String myValue;
 
     public StringTreeElement(@NonNls String value) {
       myValue = value;
     }
 
+    @NotNull
     @Override
     public StructureViewTreeElement[] getChildren() {
-      return myChildren.toArray(new StructureViewTreeElement[myChildren.size()]);
+      return myChildren.toArray(StructureViewTreeElement.EMPTY_ARRAY);
 
     }
 
+    @NotNull
     @Override
     public ItemPresentation getPresentation() {
       return new PresentationData(myValue, null, null, null);
@@ -114,11 +131,11 @@ public class TestTreeModel implements StructureViewModel{
   }
 
   @Override
-  public void addEditorPositionListener(FileEditorPositionListener listener) {
+  public void addEditorPositionListener(@NotNull FileEditorPositionListener listener) {
   }
 
   @Override
-  public void removeEditorPositionListener(FileEditorPositionListener listener) {
+  public void removeEditorPositionListener(@NotNull FileEditorPositionListener listener) {
   }
 
   @Override
@@ -131,12 +148,12 @@ public class TestTreeModel implements StructureViewModel{
   }
 
   @Override
-  public void addModelListener(ModelListener modelListener) {
+  public void addModelListener(@NotNull ModelListener modelListener) {
 
   }
 
   @Override
-  public void removeModelListener(ModelListener modelListener) {
+  public void removeModelListener(@NotNull ModelListener modelListener) {
     
   }
 }

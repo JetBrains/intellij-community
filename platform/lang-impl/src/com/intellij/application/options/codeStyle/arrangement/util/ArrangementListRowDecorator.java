@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,6 @@
 package com.intellij.application.options.codeStyle.arrangement.util;
 
 import com.intellij.application.options.codeStyle.arrangement.ArrangementConstants;
-import com.intellij.application.options.codeStyle.arrangement.match.ArrangementMatchConditionComponent;
 import com.intellij.application.options.codeStyle.arrangement.match.ArrangementMatchingRulesControl;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.ActionManager;
@@ -24,10 +23,13 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.actionSystem.Toggleable;
 import com.intellij.openapi.actionSystem.impl.ActionButton;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.codeStyle.arrangement.model.ArrangementMatchCondition;
-import com.intellij.ui.IdeBorderFactory;
+import com.intellij.psi.codeStyle.arrangement.std.ArrangementSettingsToken;
+import com.intellij.psi.codeStyle.arrangement.std.ArrangementUiComponent;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.util.ui.GridBag;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -35,33 +37,33 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseEvent;
+import java.util.Set;
 
 /**
  * @author Denis Zhdanov
- * @since 10/31/12 5:00 PM
  */
-public class ArrangementListRowDecorator extends JPanel implements ArrangementMatchConditionComponent {
+public class ArrangementListRowDecorator extends JPanel implements ArrangementUiComponent {
 
-  @NotNull private final JLabel mySortLabel = new JLabel(AllIcons.Icons.Inspector.SortByName);
+  @NotNull private final JLabel mySortLabel = new JLabel(AllIcons.ObjectBrowser.Sorted);
 
-  @NotNull private final ArrangementRuleIndexControl        myRowIndexControl;
-  @NotNull private final ArrangementMatchConditionComponent myDelegate;
-  @NotNull private final ArrangementMatchingRulesControl    myControl;
-  @NotNull private final MyActionButton                     myEditButton;
+  @NotNull private final ArrangementRuleIndexControl     myRowIndexControl;
+  @NotNull private final ArrangementUiComponent          myDelegate;
+  @NotNull private final ArrangementMatchingRulesControl myControl;
+  @NotNull private final MyActionButton                  myEditButton;
 
   @Nullable private Rectangle myScreenBounds;
 
   private boolean myBeingEdited;
   private boolean myUnderMouse;
 
-  public ArrangementListRowDecorator(@NotNull ArrangementMatchConditionComponent delegate,
+  public ArrangementListRowDecorator(@NotNull ArrangementUiComponent delegate,
                                      @NotNull ArrangementMatchingRulesControl control)
   {
     myDelegate = delegate;
     myControl = control;
-    
+
     mySortLabel.setVisible(false);
-    
+
     AnAction action = ActionManager.getInstance().getAction("Arrangement.Rule.Edit");
     Presentation presentation = action.getTemplatePresentation().clone();
     Icon editIcon = presentation.getIcon();
@@ -82,6 +84,11 @@ public class ArrangementListRowDecorator extends JPanel implements ArrangementMa
     init();
   }
 
+  public void setError(@Nullable String message) {
+    myRowIndexControl.setError(StringUtil.isNotEmpty(message));
+    setToolTipText(message);
+  }
+
   private void init() {
     setLayout(new GridBagLayout());
     GridBag constraints = new GridBag().anchor(GridBagConstraints.CENTER)
@@ -90,12 +97,12 @@ public class ArrangementListRowDecorator extends JPanel implements ArrangementMa
     add(new InsetsPanel(mySortLabel), new GridBag().anchor(GridBagConstraints.CENTER).insets(0, 0, 0, ArrangementConstants.HORIZONTAL_GAP));
     add(myDelegate.getUiComponent(), new GridBag().weightx(1).anchor(GridBagConstraints.WEST));
     add(myEditButton, new GridBag().anchor(GridBagConstraints.EAST));
-    setBorder(IdeBorderFactory.createEmptyBorder(ArrangementConstants.VERTICAL_GAP));
+    setBorder(JBUI.Borders.empty(ArrangementConstants.VERTICAL_GAP));
   }
 
   @Override
   protected void paintComponent(Graphics g) {
-    Point point = ArrangementConfigUtil.getLocationOnScreen(this);
+    Point point = UIUtil.getLocationOnScreen(this);
     if (point != null) {
       Rectangle bounds = getBounds();
       myScreenBounds = new Rectangle(point.x, point.y, bounds.width, bounds.height);
@@ -160,6 +167,11 @@ public class ArrangementListRowDecorator extends JPanel implements ArrangementMa
     myDelegate.setSelected(selected); 
   }
 
+  @Override
+  public void setData(@NotNull Object data) {
+    myDelegate.setData(data);
+  }
+
   public void setShowSortIcon(boolean show) {
     mySortLabel.setVisible(show);
   }
@@ -201,6 +213,7 @@ public class ArrangementListRowDecorator extends JPanel implements ArrangementMa
         int row = myControl.getRowByRenderer(this);
         if (row >= 0) {
           myControl.showEditor(row);
+          myControl.scrollRowToVisible(row);
           myBeingEdited = true;
         }
       }
@@ -228,7 +241,54 @@ public class ArrangementListRowDecorator extends JPanel implements ArrangementMa
     Rectangle bounds = myEditButton.getBounds();
     return new Rectangle(bounds.x + myScreenBounds.x, bounds.y + myScreenBounds.y, bounds.width, bounds.height); 
   }
-  
+
+  @Nullable
+  @Override
+  public ArrangementSettingsToken getToken() {
+    return myDelegate.getToken();
+  }
+
+  @NotNull
+  @Override
+  public Set<ArrangementSettingsToken> getAvailableTokens() {
+    return myDelegate.getAvailableTokens();
+  }
+
+  @Override
+  public void chooseToken(@NotNull ArrangementSettingsToken data) throws IllegalArgumentException, UnsupportedOperationException {
+    myDelegate.chooseToken(data); 
+  }
+
+  @Override
+  public boolean isSelected() {
+    return myDelegate.isSelected();
+  }
+
+  @Override
+  public void reset() {
+    myDelegate.reset(); 
+  }
+
+  @Override
+  public int getBaselineToUse(int width, int height) {
+    return myDelegate.getBaselineToUse(width, height);
+  }
+
+  @Override
+  public void setListener(@NotNull Listener listener) {
+    myDelegate.setListener(listener); 
+  }
+
+  @Override
+  public void handleMouseClickOnSelected() {
+    myDelegate.handleMouseClickOnSelected();
+  }
+
+  @Override
+  public boolean alwaysCanBeActive() {
+    return false;
+  }
+
   @Override
   public String toString() {
     return "list row decorator for " + myDelegate.toString();

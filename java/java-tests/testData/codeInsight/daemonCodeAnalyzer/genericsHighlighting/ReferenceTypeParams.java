@@ -38,10 +38,10 @@ class Primitives<T> {
 
 
 /////// calling super on generic bound class
-public class Generic<T> {
+class Generic<T> {
     Generic(T t){}
 }
-public class Bound extends Generic<String>{
+class Bound extends Generic<String>{
     public Bound(String s) {
         super(s);
     }
@@ -149,4 +149,10 @@ class Outer1<E> {
     final Inner[] i = new Inner[10];
     static class Inner {
     }
+}
+
+class TypeArgOnNewArray {
+  {
+    final int[] ints = <error descr="Cannot create array with type arguments">new <String>int[10]</error>; 
+  }
 }

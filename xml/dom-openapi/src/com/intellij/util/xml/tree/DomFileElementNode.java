@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package com.intellij.util.xml.tree;
 
 import com.intellij.ui.treeStructure.SimpleNode;
 import com.intellij.util.xml.DomFileElement;
+import org.jetbrains.annotations.NotNull;
 
 public class DomFileElementNode extends BaseDomElementNode {
   private final DomFileElement myFileElement;
@@ -28,16 +29,20 @@ public class DomFileElementNode extends BaseDomElementNode {
     myFileElement = fileElement;
   }
 
+  @NotNull
+  @Override
   public SimpleNode[] getChildren() {
     return doGetChildren(myFileElement.getRootElement());
   }
 
 
+  @Override
   public DomFileElement getDomElement() {
     return (DomFileElement)super.getDomElement();
   }
 
 
+  @Override
   public boolean isShowContainingFileInfo() {
     return false;
   }

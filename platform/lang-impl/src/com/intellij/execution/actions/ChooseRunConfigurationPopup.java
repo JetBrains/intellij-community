@@ -1,59 +1,53 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.execution.actions;
 
 import com.intellij.execution.*;
 import com.intellij.execution.configurations.ConfigurationType;
-import com.intellij.execution.configurations.UnknownConfigurationType;
 import com.intellij.execution.impl.EditConfigurationsDialog;
 import com.intellij.execution.impl.RunDialog;
+import com.intellij.execution.impl.RunManagerImpl;
 import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl;
-import com.intellij.execution.junit.RuntimeConfigurationProducer;
+import com.intellij.execution.runners.ExecutionUtil;
 import com.intellij.execution.runners.ProgramRunner;
-import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
+import com.intellij.ide.macro.MacroManager;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.idea.ActionsBundle;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.keymap.KeymapUtil;
+import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.popup.ListPopupStep;
 import com.intellij.openapi.ui.popup.ListSeparator;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.popup.WizardPopup;
 import com.intellij.ui.popup.list.ListPopupImpl;
 import com.intellij.ui.popup.list.PopupListElementRenderer;
 import com.intellij.ui.speedSearch.SpeedSearch;
+import com.intellij.util.SmartList;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.InputEvent;
 import java.awt.event.MouseEvent;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 
-class ChooseRunConfigurationPopup implements ExecutorProvider {
+public class ChooseRunConfigurationPopup implements ExecutorProvider {
 
   private final Project myProject;
   @NotNull private final String myAddKey;
@@ -111,6 +105,7 @@ class ChooseRunConfigurationPopup implements ExecutorProvider {
 
   private void registerActions(final RunListPopup popup) {
     popup.registerAction("alternateExecutor", KeyStroke.getKeyStroke("shift pressed SHIFT"), new AbstractAction() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         myCurrentExecutor = myAlternativeExecutor;
         updatePresentation();
@@ -118,6 +113,7 @@ class ChooseRunConfigurationPopup implements ExecutorProvider {
     });
 
     popup.registerAction("restoreDefaultExecutor", KeyStroke.getKeyStroke("released SHIFT"), new AbstractAction() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         myCurrentExecutor = myDefaultExecutor;
         updatePresentation();
@@ -126,72 +122,55 @@ class ChooseRunConfigurationPopup implements ExecutorProvider {
 
 
     popup.registerAction("invokeAction", KeyStroke.getKeyStroke("shift ENTER"), new AbstractAction() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         popup.handleSelect(true);
       }
     });
 
     popup.registerAction("editConfiguration", KeyStroke.getKeyStroke("F4"), new AbstractAction() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         myEditConfiguration = true;
         popup.handleSelect(true);
       }
     });
 
+    popup.registerAction("deleteConfiguration", KeyStroke.getKeyStroke("DELETE"),
+                         new AbstractAction() {
+                           @Override
+                           public void actionPerformed(ActionEvent e) {
+                             popup.removeSelected();
+                           }
+                         });
 
-    popup.registerAction("deleteConfiguration", KeyStroke.getKeyStroke("DELETE"), new AbstractAction() {
-      public void actionPerformed(ActionEvent e) {
-        popup.removeSelected();
-      }
-    });
-
-    popup.registerAction("deleteConfiguration_bksp", KeyStroke.getKeyStroke("BACK_SPACE"), new AbstractAction() {
+    popup.registerAction("speedsearch_bksp", KeyStroke.getKeyStroke("BACK_SPACE"), new AbstractAction() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         SpeedSearch speedSearch = popup.getSpeedSearch();
         if (speedSearch.isHoldingFilter()) {
           speedSearch.backspace();
           speedSearch.update();
         }
-        else {
-          popup.removeSelected();
-        }
       }
     });
 
-    final Action action0 = createNumberAction(0, popup, myDefaultExecutor);
-    final Action action0_ = createNumberAction(0, popup, myAlternativeExecutor);
-    popup.registerAction("0Action", KeyStroke.getKeyStroke("0"), action0);
-    popup.registerAction("0Action_", KeyStroke.getKeyStroke("shift pressed 0"), action0_);
-    popup.registerAction("0Action1", KeyStroke.getKeyStroke("NUMPAD0"), action0);
-    popup.registerAction("0Action_1", KeyStroke.getKeyStroke("shift pressed NUMPAD0"), action0_);
+    for (int i = 0; i < 10; i++) {
+      addNumberAction(popup, i);
+    }
+  }
 
-    final Action action1 = createNumberAction(1, popup, myDefaultExecutor);
-    final Action action1_ = createNumberAction(1, popup, myAlternativeExecutor);
-    popup.registerAction("1Action", KeyStroke.getKeyStroke("1"), action1);
-    popup.registerAction("1Action_", KeyStroke.getKeyStroke("shift pressed 1"), action1_);
-    popup.registerAction("1Action1", KeyStroke.getKeyStroke("NUMPAD1"), action1);
-    popup.registerAction("1Action_1", KeyStroke.getKeyStroke("shift pressed NUMPAD1"), action1_);
-
-    final Action action2 = createNumberAction(2, popup, myDefaultExecutor);
-    final Action action2_ = createNumberAction(2, popup, myAlternativeExecutor);
-    popup.registerAction("2Action", KeyStroke.getKeyStroke("2"), action2);
-    popup.registerAction("2Action_", KeyStroke.getKeyStroke("shift pressed 2"), action2_);
-    popup.registerAction("2Action1", KeyStroke.getKeyStroke("NUMPAD2"), action2);
-    popup.registerAction("2Action_1", KeyStroke.getKeyStroke("shift pressed NUMPAD2"), action2_);
-
-    final Action action3 = createNumberAction(3, popup, myDefaultExecutor);
-    final Action action3_ = createNumberAction(3, popup, myAlternativeExecutor);
-    popup.registerAction("3Action", KeyStroke.getKeyStroke("3"), action3);
-    popup.registerAction("3Action_", KeyStroke.getKeyStroke("shift pressed 3"), action3_);
-    popup.registerAction("3Action1", KeyStroke.getKeyStroke("NUMPAD3"), action3);
-    popup.registerAction("3Action_1", KeyStroke.getKeyStroke("shift pressed NUMPAD3"), action3_);
+  private void addNumberAction(RunListPopup popup, int number) {
+    Action action = createNumberAction(number, popup, myDefaultExecutor);
+    Action action_ = createNumberAction(number, popup, myAlternativeExecutor);
+    popup.registerAction(number + "Action", KeyStroke.getKeyStroke(String.valueOf(number)), action);
+    popup.registerAction(number + "Action_", KeyStroke.getKeyStroke("shift pressed " + number), action_);
+    popup.registerAction(number + "Action1", KeyStroke.getKeyStroke("NUMPAD" + number), action);
+    popup.registerAction(number + "Action_1", KeyStroke.getKeyStroke("shift pressed NUMPAD" + number), action_);
   }
 
   private void updatePresentation() {
-    final Executor executor = getExecutor();
-    if (executor != null) {
-      myPopup.setCaption(executor.getActionName());
-    }
+    myPopup.setCaption(getExecutor().getActionName());
   }
 
   static void execute(final ItemWrapper itemWrapper, final Executor executor) {
@@ -200,54 +179,38 @@ class ChooseRunConfigurationPopup implements ExecutorProvider {
     }
 
     final DataContext dataContext = DataManager.getInstance().getDataContext();
-    final Project project = PlatformDataKeys.PROJECT.getData(dataContext);
+    final Project project = CommonDataKeys.PROJECT.getData(dataContext);
     if (project != null) {
-      SwingUtilities.invokeLater(new Runnable() {
-        public void run() {
-          itemWrapper.perform(project, executor, dataContext);
-        }
-      });
+      itemWrapper.perform(project, executor, dataContext);
     }
   }
 
-  void editConfiguration(@NotNull final Project project, @NotNull final RunnerAndConfigurationSettings configuration) {
+  void editConfiguration(@NotNull Project project, @NotNull RunnerAndConfigurationSettings configuration) {
     final Executor executor = getExecutor();
-    assert executor != null;
-
     PropertiesComponent.getInstance().setValue("run.configuration.edit.ad", Boolean.toString(true));
     if (RunDialog.editConfiguration(project, configuration, "Edit configuration settings", executor)) {
-      RunManagerEx.getInstanceEx(project).setSelectedConfiguration(configuration);
-      doRunConfiguration(configuration, executor, project);
+      RunManager.getInstance(project).setSelectedConfiguration(configuration);
+      ExecutionUtil.runConfiguration(configuration, executor);
     }
   }
 
   private static void deleteConfiguration(final Project project, @NotNull final RunnerAndConfigurationSettings configurationSettings) {
-    final RunManagerEx manager = RunManagerEx.getInstanceEx(project);
-    manager.removeConfiguration(configurationSettings);
+    if (Messages.YES == Messages.showYesNoDialog(project,
+                                                    "Are you sure you want to delete " + configurationSettings.getName() + "?",
+                                                    "Confirmation",
+                                                    Messages.getQuestionIcon())) {
+      RunManager.getInstance(project).removeConfiguration(configurationSettings);
+    }
   }
 
+  @Override
   @NotNull
   public Executor getExecutor() {
     return myCurrentExecutor == null ? myDefaultExecutor : myCurrentExecutor;
   }
 
   private static Action createNumberAction(final int number, final ListPopupImpl listPopup, final Executor executor) {
-    return new AbstractAction() {
-      public void actionPerformed(ActionEvent e) {
-        if (listPopup.getSpeedSearch().isHoldingFilter())
-          return;
-        for (final Object item : listPopup.getListStep().getValues()) {
-          if (item instanceof ItemWrapper && ((ItemWrapper)item).getMnemonic() == number) {
-            listPopup.setFinalRunnable(new Runnable() {
-              public void run() {
-                execute((ItemWrapper)item, executor);
-              }
-            });
-            listPopup.closeOk(null);
-          }
-        }
-      }
-    };
+    return new MyAbstractAction(listPopup, number, executor);
   }
 
   private abstract static class Wrapper {
@@ -294,7 +257,7 @@ class ChooseRunConfigurationPopup implements ExecutorProvider {
     }
   }
 
-  private abstract static class ItemWrapper<T> extends Wrapper {
+  public abstract static class ItemWrapper<T> extends Wrapper {
     private final T myValue;
     private boolean myDynamic;
 
@@ -325,10 +288,7 @@ class ChooseRunConfigurationPopup implements ExecutorProvider {
       if (this == o) return true;
       if (!(o instanceof ItemWrapper)) return false;
 
-      ItemWrapper that = (ItemWrapper)o;
-
-      if (myValue != null ? !myValue.equals(that.myValue) : that.myValue != null) return false;
-
+      if (!Objects.equals(myValue, ((ItemWrapper)o).myValue)) return false;
       return true;
     }
 
@@ -369,8 +329,9 @@ class ChooseRunConfigurationPopup implements ExecutorProvider {
         @Override
         public void perform(@NotNull Project project, @NotNull Executor executor, @NotNull DataContext context) {
           RunnerAndConfigurationSettings config = getValue();
-          RunManagerEx.getInstanceEx(project).setSelectedConfiguration(config);
-          doRunConfiguration(config, executor, project);
+          RunManager.getInstance(project).setSelectedConfiguration(config);
+          MacroManager.getInstance().cacheMacrosPreview(context);
+          ExecutionUtil.runConfiguration(config, executor);
         }
 
         @Override
@@ -380,12 +341,12 @@ class ChooseRunConfigurationPopup implements ExecutorProvider {
 
         @Override
         public Icon getIcon() {
-          return RunManagerEx.getInstanceEx(project).getConfigurationIcon(getValue());
+          return RunManagerEx.getInstanceEx(project).getConfigurationIcon(getValue(), true);
         }
 
         @Override
         public String getText() {
-          return getValue().getName();
+          return Executor.shortenNameIfNeed(getValue().getName()) + getValue().getConfiguration().getPresentableType();
         }
 
         @Override
@@ -395,7 +356,7 @@ class ChooseRunConfigurationPopup implements ExecutorProvider {
 
         @Override
         public boolean available(Executor executor) {
-          return null != ProgramRunnerUtil.getRunner(executor.getId(), getValue());
+          return ProgramRunnerUtil.getRunner(executor.getId(), getValue()) != null;
         }
 
         @Override
@@ -405,6 +366,7 @@ class ChooseRunConfigurationPopup implements ExecutorProvider {
       };
     }
 
+    @Override
     public boolean canBeDeleted() {
       return !isDynamic() && getValue() instanceof RunnerAndConfigurationSettings;
     }
@@ -419,7 +381,7 @@ class ChooseRunConfigurationPopup implements ExecutorProvider {
                                        @NotNull final Project project,
                                        @NotNull final ExecutorProvider executorProvider,
                                        @NotNull final String title) {
-      super(title, createSettingsList(project, executorProvider));
+      super(title, createSettingsList(project, executorProvider, true));
       myProject = project;
       myAction = action;
 
@@ -445,214 +407,6 @@ class ChooseRunConfigurationPopup implements ExecutorProvider {
       return false;
     }
 
-    private static ItemWrapper[] createSettingsList(@NotNull final Project project, @NotNull ExecutorProvider executorProvider) {
-      final RunManagerEx manager = RunManagerEx.getInstanceEx(project);
-
-      final List<ItemWrapper> result = new ArrayList<ItemWrapper>();
-
-      final RunnerAndConfigurationSettings selectedConfiguration = manager.getSelectedConfiguration();
-
-      if (selectedConfiguration != null) {
-        boolean isFirst = true;
-        final ExecutionTarget activeTarget = ExecutionTargetManager.getActiveTarget(project);
-        for (final ExecutionTarget eachTarget : ExecutionTargetManager.getTargetsToChooseFor(project, selectedConfiguration)) {
-          result.add(new ItemWrapper<ExecutionTarget>(eachTarget, isFirst) {
-            {
-              setChecked(eachTarget.equals(activeTarget));
-            }
-
-            @Override
-            public Icon getIcon() {
-              return eachTarget.getIcon();
-            }
-
-            @Override
-            public String getText() {
-              return eachTarget.getDisplayName();
-            }
-
-            @Override
-            public void perform(@NotNull final Project project, @NotNull final Executor executor, @NotNull DataContext context) {
-              ExecutionTargetManager.setActiveTarget(project, eachTarget);
-              doRunConfiguration(selectedConfiguration, executor, project);
-            }
-
-            @Override
-            public boolean available(Executor executor) {
-              return true;
-            }
-          });
-          isFirst = false;
-        }
-      }
-
-
-      final Map<RunnerAndConfigurationSettings, ItemWrapper> wrappedExisting =  new LinkedHashMap<RunnerAndConfigurationSettings, ItemWrapper>();
-      final ConfigurationType[] types = manager.getConfigurationFactories();
-      for (final ConfigurationType type : types) {
-        if (!(type instanceof UnknownConfigurationType)) {
-          Map<String, List<RunnerAndConfigurationSettings>> structure = manager.getStructure(type);
-          for (final Map.Entry<String, List<RunnerAndConfigurationSettings>> entry : structure.entrySet()) {
-            if (entry.getValue().isEmpty())
-              continue;
-            final String key = entry.getKey();
-            if (key != null){
-              boolean isSelected = entry.getValue().contains(selectedConfiguration);
-              FolderWrapper folderWrapper = new FolderWrapper(project, executorProvider, key + (isSelected ? "  (mnemonic is to \"" + selectedConfiguration.getName()+"\")" : ""), entry.getValue());
-              if (isSelected) {
-                folderWrapper.setMnemonic(1);
-              }
-              result.add(folderWrapper);
-            }
-            else {
-              for (RunnerAndConfigurationSettings configuration : entry.getValue()) {
-                final ItemWrapper wrapped = ItemWrapper.wrap(project, configuration);
-                if (configuration == selectedConfiguration) {
-                  wrapped.setMnemonic(1);
-                }
-                wrappedExisting.put(configuration, wrapped);
-              }
-            }
-          }
-        }
-      }
-
-      populateWithDynamicRunners(result, wrappedExisting, project, manager, selectedConfiguration);
-      result.addAll(wrappedExisting.values());
-
-      //noinspection unchecked
-      final ItemWrapper edit = new ItemWrapper(null) {
-        @Override
-        public Icon getIcon() {
-          return AllIcons.Actions.EditSource;
-        }
-
-        @Override
-        public String getText() {
-          return UIUtil.removeMnemonic(ActionsBundle.message("action.editRunConfigurations.text"));
-        }
-
-        @Override
-        public void perform(@NotNull final Project project, @NotNull final Executor executor, @NotNull DataContext context) {
-          final EditConfigurationsDialog dialog = new EditConfigurationsDialog(project) {
-            @Override
-            protected void init() {
-              setOKButtonText(executor.getStartActionText());
-              setOKButtonIcon(executor.getIcon());
-              myExecutor = executor;
-              super.init();
-            }
-          };
-
-          dialog.show();
-          if (dialog.isOK()) {
-            SwingUtilities.invokeLater(new Runnable() {
-              public void run() {
-                doRunConfiguration(RunManager.getInstance(project).getSelectedConfiguration(), executor, project);
-              }
-            });
-          }
-        }
-
-        @Override
-        public boolean available(Executor executor) {
-          return true;
-        }
-      };
-
-      edit.setMnemonic(0);
-      result.add(0, edit);
-
-      return result.toArray(new ItemWrapper[result.size()]);
-    }
-
-    @NotNull
-    private static List<RunnerAndConfigurationSettings> populateWithDynamicRunners(final List<ItemWrapper> result,
-                                                                                   Map<RunnerAndConfigurationSettings, ItemWrapper> existing,
-                                                                                   final Project project, final RunManagerEx manager,
-                                                                                   final RunnerAndConfigurationSettings selectedConfiguration) {
-
-      final ArrayList<RunnerAndConfigurationSettings> contextConfigurations = new ArrayList<RunnerAndConfigurationSettings>();
-      final DataContext dataContext = DataManager.getInstance().getDataContext();
-      final ConfigurationContext context = ConfigurationContext.getFromContext(dataContext);
-
-      final List<RuntimeConfigurationProducer> producers = PreferredProducerFind
-        .findPreferredProducers(context.getLocation(), context, false);
-      if (producers == null) return Collections.emptyList();
-
-      Collections.sort(producers, new Comparator<RuntimeConfigurationProducer>() {
-        public int compare(final RuntimeConfigurationProducer p1, final RuntimeConfigurationProducer p2) {
-          return p1.getConfigurationType().getDisplayName().compareTo(p2.getConfigurationType().getDisplayName());
-        }
-      });
-
-      final RunnerAndConfigurationSettings[] preferred = {null};
-
-      int i = 2; // selectedConfiguration == null ? 1 : 2;
-      for (final RuntimeConfigurationProducer producer : producers) {
-        final RunnerAndConfigurationSettings configuration = producer.getConfiguration();
-        if (configuration != null) {
-          if (existing.keySet().contains(configuration)) {
-            final ItemWrapper wrapper = existing.get(configuration);
-            if (wrapper.getMnemonic() != 1) {
-              wrapper.setMnemonic(i);
-              i++;
-            }
-          }
-          else {
-            if (selectedConfiguration != null && configuration.equals(selectedConfiguration)) continue;
-            contextConfigurations.add(configuration);
-
-            if (preferred[0] == null) {
-              preferred[0] = configuration;
-            }
-
-            //noinspection unchecked
-            final ItemWrapper wrapper = new ItemWrapper(configuration) {
-              @Override
-              public Icon getIcon() {
-                return RunManagerEx.getInstanceEx(project).getConfigurationIcon(configuration);
-              }
-
-              @Override
-              public String getText() {
-                return configuration.getName();
-              }
-
-              @Override
-              public boolean available(Executor executor) {
-                return canRun(executor, configuration);
-              }
-
-              @Override
-              public void perform(@NotNull Project project, @NotNull Executor executor, @NotNull DataContext context) {
-                manager.setTemporaryConfiguration(configuration);
-                RunManagerEx.getInstanceEx(project).setSelectedConfiguration(configuration);
-                doRunConfiguration(configuration, executor, project);
-              }
-
-              @Override
-              public PopupStep getNextStep(@NotNull final Project project, @NotNull final ChooseRunConfigurationPopup action) {
-                return new ConfigurationActionsStep(project, action, configuration, isDynamic());
-              }
-
-              @Override
-              public boolean hasActions() {
-                return true;
-              }
-            };
-
-            wrapper.setDynamic(true);
-            wrapper.setMnemonic(i);
-            result.add(wrapper);
-            i++;
-          }
-        }
-      }
-
-      return contextConfigurations;
-    }
-
     @Override
     public ListSeparator getSeparatorAbove(ItemWrapper value) {
       if (value.addSeparatorAbove()) return new ListSeparator();
@@ -660,7 +414,7 @@ class ChooseRunConfigurationPopup implements ExecutorProvider {
       final List<ItemWrapper> configurations = getValues();
       final int index = configurations.indexOf(value);
       if (index > 0 && index <= configurations.size() - 1) {
-        final ItemWrapper aboveConfiguration = index == 0 ? null : configurations.get(index - 1);
+        final ItemWrapper aboveConfiguration = configurations.get(index - 1);
 
         if (aboveConfiguration != null && aboveConfiguration.isDynamic() != value.isDynamic()) {
           return new ListSeparator();
@@ -697,26 +451,17 @@ class ChooseRunConfigurationPopup implements ExecutorProvider {
       if (myAction.myEditConfiguration) {
         final Object o = wrapper.getValue();
         if (o instanceof RunnerAndConfigurationSettingsImpl) {
-          return doFinalStep(new Runnable() {
-            public void run() {
-              myAction.editConfiguration(myProject, (RunnerAndConfigurationSettings)o);
-            }
-          });
+          return doFinalStep(() -> myAction.editConfiguration(myProject, (RunnerAndConfigurationSettings)o));
         }
       }
 
-      final Executor executor = myAction.getExecutor();
-      assert executor != null;
-
-      if (finalChoice && wrapper.available(executor)) {
-        return doFinalStep(new Runnable() {
-          public void run() {
-            if (executor == myAction.myAlternativeExecutor) {
-              PropertiesComponent.getInstance().setValue(myAction.myAddKey, Boolean.toString(true));
-            }
-
-            wrapper.perform(myProject, executor, DataManager.getInstance().getDataContext());
+      if (finalChoice && wrapper.available(myAction.getExecutor())) {
+        return doFinalStep(() -> {
+          if (myAction.getExecutor() == myAction.myAlternativeExecutor) {
+            PropertiesComponent.getInstance().setValue(myAction.myAddKey, Boolean.toString(true));
           }
+
+          wrapper.perform(myProject, myAction.getExecutor(), DataManager.getInstance().getDataContext());
         });
       }
       else {
@@ -741,14 +486,6 @@ class ChooseRunConfigurationPopup implements ExecutorProvider {
     }
   }
 
-  private static void doRunConfiguration(RunnerAndConfigurationSettings configuration, Executor executor, Project project) {
-    ExecutionManager.getInstance(project).restartRunProfile(project,
-                                                            executor,
-                                                            ExecutionTargetManager.getActiveTarget(project),
-                                                            configuration,
-                                                            (RunContentDescriptor)null);
-  }
-
   private static final class ConfigurationActionsStep extends BaseListPopupStep<ActionWrapper> {
 
     @NotNull private final RunnerAndConfigurationSettings mySettings;
@@ -768,7 +505,7 @@ class ChooseRunConfigurationPopup implements ExecutorProvider {
     }
 
     public String getName() {
-      return mySettings.getName();
+      return Executor.shortenNameIfNeed(mySettings.getName());
     }
 
     public Icon getIcon() {
@@ -784,10 +521,10 @@ class ChooseRunConfigurationPopup implements ExecutorProvider {
                                                 final ChooseRunConfigurationPopup action,
                                                 @NotNull final RunnerAndConfigurationSettings settings,
                                                 final boolean dynamic) {
-      final List<ActionWrapper> result = new ArrayList<ActionWrapper>();
+      final List<ActionWrapper> result = new ArrayList<>();
 
       final ExecutionTarget active = ExecutionTargetManager.getActiveTarget(project);
-      for (final ExecutionTarget eachTarget : ExecutionTargetManager.getTargetsToChooseFor(project, settings)) {
+      for (final ExecutionTarget eachTarget : ExecutionTargetManager.getTargetsToChooseFor(project, settings.getConfiguration())) {
         result.add(new ActionWrapper(eachTarget.getDisplayName(), eachTarget.getIcon()) {
           {
             setChecked(eachTarget.equals(active));
@@ -795,27 +532,31 @@ class ChooseRunConfigurationPopup implements ExecutorProvider {
 
           @Override
           public void perform() {
-            final RunManagerEx manager = RunManagerEx.getInstanceEx(project);
-            if (dynamic) manager.setTemporaryConfiguration(settings);
+            final RunManager manager = RunManager.getInstance(project);
+            if (dynamic) {
+              manager.setTemporaryConfiguration(settings);
+            }
             manager.setSelectedConfiguration(settings);
 
             ExecutionTargetManager.setActiveTarget(project, eachTarget);
-            doRunConfiguration(settings, action.getExecutor(), project);
+            ExecutionUtil.runConfiguration(settings, action.getExecutor());
           }
         });
       }
 
       boolean isFirst = true;
       for (final Executor executor : ExecutorRegistry.getInstance().getRegisteredExecutors()) {
-        final ProgramRunner runner = RunnerRegistry.getInstance().getRunner(executor.getId(), settings.getConfiguration());
+        final ProgramRunner runner = ProgramRunner.getRunner(executor.getId(), settings.getConfiguration());
         if (runner != null) {
           result.add(new ActionWrapper(executor.getActionName(), executor.getIcon(), isFirst) {
             @Override
             public void perform() {
-              final RunManagerEx manager = RunManagerEx.getInstanceEx(project);
-              if (dynamic) manager.setTemporaryConfiguration(settings);
+              final RunManager manager = RunManager.getInstance(project);
+              if (dynamic) {
+                manager.setTemporaryConfiguration(settings);
+              }
               manager.setSelectedConfiguration(settings);
-              doRunConfiguration(settings, executor, project);
+              ExecutionUtil.runConfiguration(settings, executor);
             }
           });
           isFirst = false;
@@ -825,33 +566,38 @@ class ChooseRunConfigurationPopup implements ExecutorProvider {
       result.add(new ActionWrapper("Edit...", AllIcons.Actions.EditSource, true) {
         @Override
         public void perform() {
-          final RunManagerEx manager = RunManagerEx.getInstanceEx(project);
-          if (dynamic) manager.setTemporaryConfiguration(settings);
+          if (dynamic) {
+            RunManager.getInstance(project).setTemporaryConfiguration(settings);
+          }
           action.editConfiguration(project, settings);
         }
       });
 
-      if (RunManager.getInstance(project).isTemporary(settings.getConfiguration()) || dynamic) {
+      if (settings.isTemporary() || dynamic) {
         result.add(new ActionWrapper("Save configuration", AllIcons.Actions.Menu_saveall) {
           @Override
           public void perform() {
-            final RunManagerEx manager = RunManagerEx.getInstanceEx(project);
-            if (dynamic) manager.setTemporaryConfiguration(settings);
-            manager.makeStable(settings.getConfiguration());
+            final RunManager manager = RunManager.getInstance(project);
+            if (dynamic) {
+              manager.setTemporaryConfiguration(settings);
+            }
+            manager.makeStable(settings);
           }
         });
       }
+      result.add(new ActionWrapper("Delete", AllIcons.Actions.Cancel) {
+        @Override
+        public void perform() {
+          deleteConfiguration(project, settings);
+        }
+      });
 
-      return result.toArray(new ActionWrapper[result.size()]);
+      return result.toArray(new ActionWrapper[0]);
     }
 
     @Override
     public PopupStep onChosen(final ActionWrapper selectedValue, boolean finalChoice) {
-      return doFinalStep(new Runnable() {
-        public void run() {
-          selectedValue.perform();
-        }
-      });
+      return doFinalStep(() -> selectedValue.perform());
     }
 
     @Override
@@ -882,10 +628,12 @@ class ChooseRunConfigurationPopup implements ExecutorProvider {
 
     public abstract void perform();
 
+    @Override
     public String getText() {
       return myName;
     }
 
+    @Override
     public Icon getIcon() {
       return myIcon;
     }
@@ -942,7 +690,13 @@ class ChooseRunConfigurationPopup implements ExecutorProvider {
         }
         else {
           if (wrapper.isChecked()) {
-            myLabel.setIcon(isSelected ? AllIcons.Actions.Checked_selected : AllIcons.Actions.Checked);
+            myTextLabel.setIcon(isSelected ? RunConfigurationsComboBoxAction.CHECKED_SELECTED_ICON
+                                           : RunConfigurationsComboBoxAction.CHECKED_ICON);
+          }
+          else {
+            if (myTextLabel.getIcon() == null) {
+              myTextLabel.setIcon(RunConfigurationsComboBoxAction.EMPTY_ICON);
+            }
           }
           myLabel.setText("");
         }
@@ -950,10 +704,50 @@ class ChooseRunConfigurationPopup implements ExecutorProvider {
     }
   }
 
+  private static class MyAbstractAction extends AbstractAction implements DumbAware {
+    private final ListPopupImpl myListPopup;
+    private final int myNumber;
+    private final Executor myExecutor;
+
+    MyAbstractAction(ListPopupImpl listPopup, int number, Executor executor) {
+      myListPopup = listPopup;
+      myNumber = number;
+      myExecutor = executor;
+    }
+
+    @Override
+    public void actionPerformed(ActionEvent e) {
+      if (myListPopup.getSpeedSearch().isHoldingFilter())
+        return;
+      for (final Object item : myListPopup.getListStep().getValues()) {
+        if (item instanceof ItemWrapper && ((ItemWrapper)item).getMnemonic() == myNumber) {
+          myListPopup.setFinalRunnable(() -> execute((ItemWrapper)item, myExecutor));
+          myListPopup.closeOk(null);
+        }
+      }
+    }
+  }
+
   private class RunListPopup extends ListPopupImpl {
-    public RunListPopup(ListPopupStep step) {
+    RunListPopup(ListPopupStep step) {
       super(step);
       registerActions(this);
+    }
+
+    @Override
+    public boolean shouldBeShowing(Object value) {
+      if (super.shouldBeShowing(value)) {
+        return true;
+      }
+      if (value instanceof FolderWrapper && mySpeedSearch.isHoldingFilter()) {
+        FolderWrapper folderWrapper = (FolderWrapper)value;
+        for (RunnerAndConfigurationSettings configuration : folderWrapper.myConfigurations) {
+          if (mySpeedSearch.shouldBeShowing(configuration.getName() + configuration.getConfiguration().getPresentableType()) ) {
+            return true;
+          }
+        }
+      }
+      return false;
     }
 
     protected RunListPopup(WizardPopup aParent, ListPopupStep aStep, Object parentValue) {
@@ -990,7 +784,7 @@ class ChooseRunConfigurationPopup implements ExecutorProvider {
       boolean hasSideBar = false;
       for (Object each : getListStep().getValues()) {
         if (each instanceof Wrapper) {
-          if (((Wrapper)each).getMnemonic() != -1 || ((Wrapper)each).isChecked()) {
+          if (((Wrapper)each).getMnemonic() != -1) {
             hasSideBar = true;
             break;
           }
@@ -1011,7 +805,7 @@ class ChooseRunConfigurationPopup implements ExecutorProvider {
       }
 
       final Object o = getListModel().get(index);
-      if (o != null && o instanceof ItemWrapper && ((ItemWrapper)o).canBeDeleted()) {
+      if (o instanceof ItemWrapper && ((ItemWrapper)o).canBeDeleted()) {
         deleteConfiguration(myProject, (RunnerAndConfigurationSettings)((ItemWrapper)o).getValue());
         getListModel().deleteItem(o);
         final List<Object> values = getListStep().getValues();
@@ -1024,6 +818,11 @@ class ChooseRunConfigurationPopup implements ExecutorProvider {
           onChildSelectedFor(values.get(index - 1));
         }
       }
+    }
+
+    @Override
+    protected boolean isResizable() {
+      return true;
     }
   }
 
@@ -1041,10 +840,11 @@ class ChooseRunConfigurationPopup implements ExecutorProvider {
 
     @Override
     public void perform(@NotNull Project project, @NotNull Executor executor, @NotNull DataContext context) {
-      RunnerAndConfigurationSettings selectedConfiguration = RunManagerEx.getInstanceEx(project).getSelectedConfiguration();
+      RunManager runManager = RunManager.getInstance(project);
+      RunnerAndConfigurationSettings selectedConfiguration = runManager.getSelectedConfiguration();
       if (myConfigurations.contains(selectedConfiguration)) {
-        RunManagerEx.getInstanceEx(project).setSelectedConfiguration(selectedConfiguration);
-        doRunConfiguration(selectedConfiguration, myExecutorProvider.getExecutor(), project);
+        runManager.setSelectedConfiguration(selectedConfiguration);
+        ExecutionUtil.runConfiguration(selectedConfiguration, myExecutorProvider.getExecutor());
       }
     }
 
@@ -1059,6 +859,14 @@ class ChooseRunConfigurationPopup implements ExecutorProvider {
       return getValue();
     }
 
+    @Nullable
+    @Override
+    public ConfigurationType getType() {
+      return Registry.is("run.popup.move.folders.to.top") || myConfigurations.isEmpty()
+             ? null
+             : myConfigurations.get(0).getType();
+    }
+
     @Override
     public boolean hasActions() {
       return true;
@@ -1066,36 +874,39 @@ class ChooseRunConfigurationPopup implements ExecutorProvider {
 
     @Override
     public PopupStep getNextStep(Project project, ChooseRunConfigurationPopup action) {
-      List<ConfigurationActionsStep> steps = new ArrayList<ConfigurationActionsStep>();
+      List<ConfigurationActionsStep> steps = new ArrayList<>();
       for (RunnerAndConfigurationSettings settings : myConfigurations) {
         steps.add(new ConfigurationActionsStep(project, action, settings, false));
       }
-      return new FolderStep(myProject, myExecutorProvider, null, steps);
+      return new FolderStep(myProject, myExecutorProvider, null, steps, action);
     }
   }
 
   private static final class FolderStep extends BaseListPopupStep<ConfigurationActionsStep> {
     private final Project myProject;
+    private final ChooseRunConfigurationPopup myPopup;
     private final ExecutorProvider myExecutorProvider;
 
-    private FolderStep(Project project, ExecutorProvider executorProvider, String folderName, List<ConfigurationActionsStep> children
-    ) {
-      super(folderName, children, new ArrayList<Icon>());
+    private FolderStep(Project project, ExecutorProvider executorProvider, String folderName, List<ConfigurationActionsStep> children,
+                       ChooseRunConfigurationPopup popup) {
+      super(folderName, children, new ArrayList<>());
       myProject = project;
       myExecutorProvider = executorProvider;
+      myPopup = popup;
     }
 
     @Override
     public PopupStep onChosen(final ConfigurationActionsStep selectedValue, boolean finalChoice) {
       if (finalChoice) {
-        return doFinalStep(new Runnable() {
-          @Override
-          public void run() {
-            RunnerAndConfigurationSettings settings = selectedValue.getSettings();
-            RunManagerEx.getInstanceEx(myProject).setSelectedConfiguration(settings);
-            doRunConfiguration(settings, myExecutorProvider.getExecutor(), myProject);
+        if (myPopup.myEditConfiguration) {
+          final RunnerAndConfigurationSettings settings = selectedValue.getSettings();
+          return doFinalStep(() -> myPopup.editConfiguration(myProject, settings));
+        }
 
-          }
+        return doFinalStep(() -> {
+          RunnerAndConfigurationSettings settings = selectedValue.getSettings();
+          RunManager.getInstance(myProject).setSelectedConfiguration(settings);
+          ExecutionUtil.runConfiguration(settings, myExecutorProvider.getExecutor());
         });
       } else {
         return selectedValue;
@@ -1116,6 +927,264 @@ class ChooseRunConfigurationPopup implements ExecutorProvider {
     @Override
     public boolean hasSubstep(ConfigurationActionsStep selectedValue) {
       return !selectedValue.getValues().isEmpty();
+    }
+  }
+
+  @NotNull
+  public static List<ItemWrapper> createSettingsList(@NotNull Project project,
+                                                     @NotNull ExecutorProvider executorProvider,
+                                                     boolean isCreateEditAction) {
+    //noinspection TestOnlyProblems
+    return createSettingsList(RunManagerImpl.getInstanceImpl(project), executorProvider, isCreateEditAction, Registry.is("run.popup.move.folders.to.top", false));
+  }
+
+  @TestOnly
+  @NotNull
+  public static List<ItemWrapper> createSettingsList(@NotNull RunManagerImpl runManager,
+                                                     @NotNull ExecutorProvider executorProvider,
+                                                     boolean isCreateEditAction,
+                                                     boolean isMoveFoldersToTop) {
+    List<ItemWrapper> result = new ArrayList<>();
+
+    if (isCreateEditAction) {
+      result.add(createEditAction());
+    }
+
+    Project project = runManager.getProject();
+    final RunnerAndConfigurationSettings selectedConfiguration = runManager.getSelectedConfiguration();
+    if (selectedConfiguration != null) {
+      addActionsForSelected(selectedConfiguration, project, result);
+    }
+
+    Map<RunnerAndConfigurationSettings, ItemWrapper> wrappedExisting = new LinkedHashMap<>();
+    List<FolderWrapper> folderWrappers = new SmartList<>();
+    for (Map<String, List<RunnerAndConfigurationSettings>> folderToConfigurations : runManager.getConfigurationsGroupedByTypeAndFolder(false).values()) {
+      if (isMoveFoldersToTop) {
+        for (Map.Entry<String, List<RunnerAndConfigurationSettings>> entry : folderToConfigurations.entrySet()) {
+          final String folderName = entry.getKey();
+          List<RunnerAndConfigurationSettings> configurations = entry.getValue();
+          if (folderName != null) {
+            folderWrappers.add(createFolderItem(project, executorProvider, selectedConfiguration, folderName, configurations));
+          }
+          else {
+            for (RunnerAndConfigurationSettings configuration : configurations) {
+              wrapAndAdd(project, configuration, selectedConfiguration, wrappedExisting);
+            }
+          }
+        }
+      }
+      else {
+        // add only folders
+        for (Map.Entry<String, List<RunnerAndConfigurationSettings>> entry : folderToConfigurations.entrySet()) {
+          final String folderName = entry.getKey();
+          if (folderName != null) {
+            result.add(createFolderItem(project, executorProvider, selectedConfiguration, folderName, entry.getValue()));
+          }
+        }
+
+        // add configurations
+        List<RunnerAndConfigurationSettings> configurations = folderToConfigurations.get(null);
+        if (!ContainerUtil.isEmpty(configurations)) {
+          for (RunnerAndConfigurationSettings configuration : configurations) {
+            result.add(wrapAndAdd(project, configuration, selectedConfiguration, wrappedExisting));
+          }
+        }
+      }
+    }
+
+    if (isMoveFoldersToTop) {
+      result.addAll(folderWrappers);
+    }
+    if (!DumbService.isDumb(project)) {
+      populateWithDynamicRunners(result, wrappedExisting, project, RunManagerEx.getInstanceEx(project), selectedConfiguration);
+    }
+    if (isMoveFoldersToTop) {
+      result.addAll(wrappedExisting.values());
+    }
+    return result;
+  }
+
+  @NotNull
+  private static ItemWrapper wrapAndAdd(@NotNull Project project,
+                                        @NotNull RunnerAndConfigurationSettings configuration,
+                                        @Nullable RunnerAndConfigurationSettings selectedConfiguration,
+                                        @NotNull Map<RunnerAndConfigurationSettings, ItemWrapper> wrappedExisting) {
+    ItemWrapper wrapped = ItemWrapper.wrap(project, configuration);
+    if (configuration == selectedConfiguration) {
+      wrapped.setMnemonic(1);
+    }
+    wrappedExisting.put(configuration, wrapped);
+    return wrapped;
+  }
+
+  @NotNull
+  private static FolderWrapper createFolderItem(@NotNull Project project,
+                                                @NotNull ExecutorProvider executorProvider,
+                                                @Nullable RunnerAndConfigurationSettings selectedConfiguration,
+                                                @NotNull String folderName,
+                                                @NotNull List<RunnerAndConfigurationSettings> configurations) {
+    boolean isSelected = selectedConfiguration != null && configurations.contains(selectedConfiguration);
+    String value = folderName;
+    if (isSelected) {
+      value += "  (mnemonic is to \"" + selectedConfiguration.getName() + "\")";
+    }
+    FolderWrapper result = new FolderWrapper(project, executorProvider, value, configurations);
+    if (isSelected) {
+      result.setMnemonic(1);
+    }
+    return result;
+  }
+
+  private static void addActionsForSelected(@NotNull RunnerAndConfigurationSettings selectedConfiguration, @NotNull Project project, @NotNull List<ItemWrapper> result) {
+    boolean isFirst = true;
+    final ExecutionTarget activeTarget = ExecutionTargetManager.getActiveTarget(project);
+    for (ExecutionTarget eachTarget : ExecutionTargetManager.getTargetsToChooseFor(project, selectedConfiguration.getConfiguration())) {
+      ItemWrapper<ExecutionTarget> itemWrapper = new ItemWrapper<ExecutionTarget>(eachTarget, isFirst) {
+        @Override
+        public Icon getIcon() {
+          return getValue().getIcon();
+        }
+
+        @Override
+        public String getText() {
+          return getValue().getDisplayName();
+        }
+
+        @Override
+        public void perform(@NotNull final Project project, @NotNull final Executor executor, @NotNull DataContext context) {
+          ExecutionTargetManager.setActiveTarget(project, getValue());
+          ExecutionUtil.runConfiguration(selectedConfiguration, executor);
+        }
+
+        @Override
+        public boolean available(Executor executor) {
+          return true;
+        }
+      };
+      itemWrapper.setChecked(eachTarget.equals(activeTarget));
+      result.add(itemWrapper);
+      isFirst = false;
+    }
+  }
+
+  @NotNull
+  private static ItemWrapper<Void> createEditAction() {
+    ItemWrapper<Void> result = new ItemWrapper<Void>(null) {
+      @Override
+      public Icon getIcon() {
+        return AllIcons.Actions.EditSource;
+      }
+
+      @Override
+      public String getText() {
+        return UIUtil.removeMnemonic(ActionsBundle.message("action.editRunConfigurations.text"));
+      }
+
+      @Override
+      public void perform(@NotNull final Project project, @NotNull final Executor executor, @NotNull DataContext context) {
+        if (new EditConfigurationsDialog(project) {
+          @Override
+          protected void init() {
+            setOKButtonText(executor.getStartActionText());
+            setOKButtonIcon(executor.getIcon());
+            myExecutor = executor;
+            super.init();
+          }
+        }.showAndGet()) {
+          ApplicationManager.getApplication().invokeLater(() -> {
+            RunnerAndConfigurationSettings configuration = RunManager.getInstance(project).getSelectedConfiguration();
+            if (configuration != null) {
+              ExecutionUtil.runConfiguration(configuration, executor);
+            }
+          }, project.getDisposed());
+        }
+      }
+
+      @Override
+      public boolean available(Executor executor) {
+        return true;
+      }
+    };
+    result.setMnemonic(0);
+    return result;
+  }
+
+  private static void populateWithDynamicRunners(final List<? super ItemWrapper> result,
+                                                 Map<RunnerAndConfigurationSettings, ItemWrapper> existing,
+                                                 final Project project, final RunManager manager,
+                                                 final RunnerAndConfigurationSettings selectedConfiguration) {
+    if (!EventQueue.isDispatchThread()) {
+      return;
+    }
+
+    final DataContext dataContext = DataManager.getInstance().getDataContext();
+    final ConfigurationContext context = ConfigurationContext.getFromContext(dataContext);
+
+    final List<ConfigurationFromContext> producers = PreferredProducerFind.getConfigurationsFromContext(context.getLocation(),
+                                                                                                         context, false);
+    if (producers == null) return;
+
+    Collections.sort(producers, ConfigurationFromContext.NAME_COMPARATOR);
+
+    final RunnerAndConfigurationSettings[] preferred = {null};
+
+    int i = 2; // selectedConfiguration == null ? 1 : 2;
+    for (final ConfigurationFromContext fromContext : producers) {
+      final RunnerAndConfigurationSettings configuration = fromContext.getConfigurationSettings();
+      if (existing.keySet().contains(configuration)) {
+        final ItemWrapper wrapper = existing.get(configuration);
+        if (wrapper.getMnemonic() != 1) {
+          wrapper.setMnemonic(i);
+          i++;
+        }
+      }
+      else {
+        if (selectedConfiguration != null && configuration.equals(selectedConfiguration)) continue;
+
+        if (preferred[0] == null) {
+          preferred[0] = configuration;
+        }
+
+        //noinspection unchecked
+        final ItemWrapper wrapper = new ItemWrapper(configuration) {
+          @Override
+          public Icon getIcon() {
+            return RunManagerEx.getInstanceEx(project).getConfigurationIcon(configuration);
+          }
+
+          @Override
+          public String getText() {
+            return Executor.shortenNameIfNeed(configuration.getName()) + configuration.getConfiguration().getPresentableType();
+          }
+
+          @Override
+          public boolean available(Executor executor) {
+            return canRun(executor, configuration);
+          }
+
+          @Override
+          public void perform(@NotNull Project project, @NotNull Executor executor, @NotNull DataContext context) {
+            manager.setTemporaryConfiguration(configuration);
+            RunManager.getInstance(project).setSelectedConfiguration(configuration);
+            ExecutionUtil.runConfiguration(configuration, executor);
+          }
+
+          @Override
+          public PopupStep getNextStep(@NotNull final Project project, @NotNull final ChooseRunConfigurationPopup action) {
+            return new ConfigurationActionsStep(project, action, configuration, isDynamic());
+          }
+
+          @Override
+          public boolean hasActions() {
+            return true;
+          }
+        };
+
+        wrapper.setDynamic(true);
+        wrapper.setMnemonic(i);
+        result.add(wrapper);
+        i++;
+      }
     }
   }
 }

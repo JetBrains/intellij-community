@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,21 +15,31 @@
  */
 package com.intellij.util.enumeration;
 
+import org.jetbrains.annotations.NotNull;
+
 import java.util.Enumeration;
 import java.util.NoSuchElementException;
 
-public final class EmptyEnumeration implements Enumeration {
+public final class EmptyEnumeration<E> implements Enumeration<E> {
   public static Enumeration INSTANCE = new EmptyEnumeration();
 
   private EmptyEnumeration(){
   }
 
+  @Override
   public boolean hasMoreElements(){
     return false;
   }
 
-  public Object nextElement(){
+  @Override
+  public E nextElement(){
     throw new NoSuchElementException();
+  }
+
+  @NotNull
+  public static <E> Enumeration<E> getInstance() {
+    //noinspection unchecked
+    return INSTANCE;
   }
 }
 

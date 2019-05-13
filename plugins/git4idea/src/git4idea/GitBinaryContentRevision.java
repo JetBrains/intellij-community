@@ -19,15 +19,10 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.BinaryContentRevision;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.vcsUtil.VcsFileUtil;
-import git4idea.util.GitFileUtils;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @author irengrig
- *         Date: 12/20/10
- *         Time: 2:57 PM
  */
 public class GitBinaryContentRevision extends GitContentRevision implements BinaryContentRevision {
   public GitBinaryContentRevision(@NotNull FilePath file, @NotNull GitRevisionNumber revision, @NotNull Project project) {
@@ -36,10 +31,6 @@ public class GitBinaryContentRevision extends GitContentRevision implements Bina
 
   @Override
   public byte[] getBinaryContent() throws VcsException {
-    if (myFile.isDirectory()) {
-      return null;
-    }
-    final VirtualFile root = GitUtil.getGitRoot(myFile);
-    return GitFileUtils.getFileContent(myProject, root, myRevision.getRev(), VcsFileUtil.relativePath(root, myFile));
+    return getContentAsBytes();
   }
 }

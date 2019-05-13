@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,43 +16,36 @@
 package git4idea.ui.branch;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
-import git4idea.GitUtil;
 import git4idea.branch.GitBranchUtil;
 import git4idea.repo.GitRepository;
-import git4idea.repo.GitRepositoryManager;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * <p>
- *   Invokes a {@link git4idea.ui.branch.GitBranchPopup} to checkout and control Git branches.
+ * Invokes a {@link GitBranchPopup} to checkout and control Git branches.
  * </p>
- *
- * @author Kirill Likhodedov
  */
 public class GitBranchesAction extends DumbAwareAction {
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
-    final Project project = e.getData(PlatformDataKeys.PROJECT);
-    assert project != null;
-    GitRepositoryManager repositoryManager = GitUtil.getRepositoryManager(project);
-    VirtualFile file = e.getData(PlatformDataKeys.VIRTUAL_FILE);
-    GitRepository repository = (file == null ?
-                                GitBranchUtil.getCurrentRepository(project):
-                                repositoryManager.getRepositoryForRoot(GitBranchUtil.getVcsRootOrGuess(project, file)));
-    if (repository == null) {
-      return;
+  public void actionPerformed(@NotNull AnActionEvent e) {
+    Project project = e.getRequiredData(CommonDataKeys.PROJECT);
+    VirtualFile file = e.getData(CommonDataKeys.VIRTUAL_FILE);
+    GitRepository repository = file == null ?
+                               GitBranchUtil.getCurrentRepository(project) :
+                               GitBranchUtil.getRepositoryOrGuess(project, file);
+    if (repository != null) {
+      GitBranchPopup.getInstance(project, repository).asListPopup().showCenteredInCurrentWindow(project);
     }
-
-    GitBranchPopup.getInstance(project, repository).asListPopup().showInBestPositionFor(e.getDataContext());
   }
 
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     Project project = e.getProject();
-    e.getPresentation().setEnabled(project != null && !project.isDisposed());
+    e.getPresentation().setEnabledAndVisible(project != null && !project.isDisposed());
   }
 }

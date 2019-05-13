@@ -18,26 +18,24 @@ package org.intellij.plugins.relaxNG;
 
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture;
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory;
+import org.jetbrains.annotations.NotNull;
 
-/**
- * Created by IntelliJ IDEA.
- * User: sweinreuter
- * Date: 22.08.2007
- */
 public class RngRenameTest extends HighlightingTestBase {
-  protected CodeInsightTestFixture createFixture(IdeaTestFixtureFactory factory) {
+  @Override
+  protected CodeInsightTestFixture createFixture(@NotNull IdeaTestFixtureFactory factory) {
     return createContentFixture(factory);
   }
 
+  @Override
   public String getTestDataPath() {
     return "rename/rng";
   }
 
-  public void testRenameRef1() throws Throwable {
+  public void testRenameRef1() {
     doTestRename("rename-ref-1", "start");
   }
 
-  private void doTestRename(String name, String newName) throws Throwable {
+  private void doTestRename(String name, String newName) {
     doTestRename(name, "rng", newName);
   }
 }

@@ -37,6 +37,7 @@ public class PsiClassObjectAccessExpressionImpl extends ExpressionPsiElement imp
     super(CLASS_OBJECT_ACCESS_EXPRESSION);
   }
 
+  @NotNull
   @Override
   public PsiType getType() {
     return PsiImplUtil.getType(this);
@@ -67,7 +68,7 @@ public class PsiClassObjectAccessExpressionImpl extends ExpressionPsiElement imp
   }
 
   @Override
-  public int getChildRole(ASTNode child) {
+  public int getChildRole(@NotNull ASTNode child) {
     LOG.assertTrue(child.getTreeParent() == this);
     IElementType i = child.getElementType();
     if (i == TYPE) {
@@ -94,6 +95,7 @@ public class PsiClassObjectAccessExpressionImpl extends ExpressionPsiElement imp
     }
   }
 
+  @Override
   public String toString() {
     return "PsiClassObjectAccessExpression:" + getText();
   }

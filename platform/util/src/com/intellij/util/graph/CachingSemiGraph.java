@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,39 +15,49 @@
  */
 package com.intellij.util.graph;
 
+import com.intellij.util.containers.ContainerUtil;
+import gnu.trove.THashMap;
+import org.jetbrains.annotations.NotNull;
+
 import java.util.*;
 
 /**
- *  @author dsl
+ * @author dsl
  */
 public class CachingSemiGraph<Node> implements GraphGenerator.SemiGraph<Node> {
-  private final Set<Node> myNodes;
-  private final Map<Node, Set<Node>> myIn;
-
-  public CachingSemiGraph(GraphGenerator.SemiGraph<Node> original) {
-    myIn = new LinkedHashMap<Node, Set<Node>>();
-    myNodes = new LinkedHashSet<Node>();
-    for (final Node node1 : original.getNodes()) {
-      myNodes.add(node1);
-    }
-    for (final Node node : myNodes) {
-      final Set<Node> value = new LinkedHashSet<Node>();
-      for (Iterator<Node> itin = original.getIn(node); itin.hasNext();) {
-        value.add(itin.next());
-      }
-      myIn.put(node, value);
-    }
-  }
-
-  public static <T> CachingSemiGraph<T> create(GraphGenerator.SemiGraph<T> original) {
+  public static <T> InboundSemiGraph<T> cache(InboundSemiGraph<T> original) {
     return new CachingSemiGraph<T>(original);
   }
 
+  private final Set<Node> myNodes;
+  private final Map<Node, List<Node>> myIn;
+
+  private CachingSemiGraph(InboundSemiGraph<Node> original) {
+    myNodes = ContainerUtil.newLinkedHashSet(original.getNodes());
+    myIn = new THashMap<Node, List<Node>>();
+    for (Node node : myNodes) {
+      final Iterator<Node> inIterator = original.getIn(node);
+      if (inIterator.hasNext()) {
+        ArrayList<Node> value = new ArrayList<Node>();
+        ContainerUtil.addAll(value, inIterator);
+        myIn.put(node, value);
+      }
+    }
+  }
+
+  @NotNull
+  @Override
   public Collection<Node> getNodes() {
     return myNodes;
   }
 
+  @NotNull
+  @Override
   public Iterator<Node> getIn(Node n) {
-    return myIn.get(n).iterator();
+    final List<Node> inNodes = myIn.get(n);
+    return inNodes != null
+           ? inNodes.iterator()
+           : ContainerUtil.<Node>emptyIterator();
   }
+
 }

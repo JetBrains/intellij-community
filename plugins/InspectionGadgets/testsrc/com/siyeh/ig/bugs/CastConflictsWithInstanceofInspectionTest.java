@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,35 +15,28 @@
  */
 package com.siyeh.ig.bugs;
 
-import com.siyeh.ig.IGInspectionTestCase;
+import com.intellij.codeInspection.InspectionProfileEntry;
+import com.siyeh.ig.LightInspectionTestCase;
+import org.jetbrains.annotations.Nullable;
 
-public class CastConflictsWithInstanceofInspectionTest extends IGInspectionTestCase {
+public class CastConflictsWithInstanceofInspectionTest extends LightInspectionTestCase {
 
-  public void testElseElse() throws Exception {
-    doTest();
-  }
+  public void testElseElse() { doTest(); }
+  public void testSimple() { doTest(); }
+  public void testElseElseOrOr() { doTest(); }
+  public void testAndAnd() { doTest(); }
+  public void testPolyadic() { doTest(); }
+  public void testNotOr() { doTest(); }
+  public void testOrInstanceofOrInstanceof() { doTest(); }
+  public void testIfCheckBefore() { doTest(); }
+  public void testIfElseCheckBefore() { doTest(); }
+  public void testAssertCheckBefore() { doTest(); }
+  public void testAssertionMethodCheckBefore() { doTest(); }
+  public void testCastMethod() { doTest(); }
 
-  public void testSimple() throws Exception {
-    doTest();
-  }
-
-  public void testElseElseOrOr() throws Exception {
-    doTest();
-  }
-
-  public void testAndAnd() throws Exception {
-    doTest();
-  }
-
-  public void testPolyadic() throws Exception {
-    doTest();
-  }
-  
-  public void testNotOr() throws Exception {
-    doTest();
-  }
-
-  private void doTest() throws Exception {
-    doTest("com/siyeh/igtest/bugs/castConflictingInstanceof/" + getTestName(true), new CastConflictsWithInstanceofInspection());
+  @Nullable
+  @Override
+  protected InspectionProfileEntry getInspection() {
+    return new CastConflictsWithInstanceofInspection();
   }
 }

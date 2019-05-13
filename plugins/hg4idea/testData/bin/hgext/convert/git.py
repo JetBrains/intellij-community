@@ -6,29 +6,65 @@
 # GNU General Public License version 2 or any later version.
 
 import os
-from mercurial import util
+import subprocess
+from mercurial import util, config
+from mercurial.node import hex, nullid
 from mercurial.i18n import _
 
 from common import NoRepo, commit, converter_source, checktool
+
+class submodule(object):
+    def __init__(self, path, node, url):
+        self.path = path
+        self.node = node
+        self.url = url
+
+    def hgsub(self):
+        return "%s = [git]%s" % (self.path, self.url)
+
+    def hgsubstate(self):
+        return "%s %s" % (self.node, self.path)
 
 class convert_git(converter_source):
     # Windows does not support GIT_DIR= construct while other systems
     # cannot remove environment variable. Just assume none have
     # both issues.
-    if hasattr(os, 'unsetenv'):
-        def gitopen(self, s):
+    if util.safehasattr(os, 'unsetenv'):
+        def gitopen(self, s, err=None):
             prevgitdir = os.environ.get('GIT_DIR')
             os.environ['GIT_DIR'] = self.path
             try:
-                return util.popen(s, 'rb')
+                if err == subprocess.PIPE:
+                    (stdin, stdout, stderr) = util.popen3(s)
+                    return stdout
+                elif err == subprocess.STDOUT:
+                    return self.popen_with_stderr(s)
+                else:
+                    return util.popen(s, 'rb')
             finally:
                 if prevgitdir is None:
                     del os.environ['GIT_DIR']
                 else:
                     os.environ['GIT_DIR'] = prevgitdir
     else:
-        def gitopen(self, s):
-            return util.popen('GIT_DIR=%s %s' % (self.path, s), 'rb')
+        def gitopen(self, s, err=None):
+            if err == subprocess.PIPE:
+                (sin, so, se) = util.popen3('GIT_DIR=%s %s' % (self.path, s))
+                return so
+            elif err == subprocess.STDOUT:
+                    return self.popen_with_stderr(s)
+            else:
+                return util.popen('GIT_DIR=%s %s' % (self.path, s), 'rb')
+
+    def popen_with_stderr(self, s):
+        p = subprocess.Popen(s, shell=True, bufsize=-1,
+                             close_fds=util.closefds,
+                             stdin=subprocess.PIPE,
+                             stdout=subprocess.PIPE,
+                             stderr=subprocess.STDOUT,
+                             universal_newlines=False,
+                             env=None)
+        return p.stdout
 
     def gitread(self, s):
         fh = self.gitopen(s)
@@ -46,6 +82,7 @@ class convert_git(converter_source):
         checktool('git', 'git')
 
         self.path = path
+        self.submodules = []
 
     def getheads(self):
         if not self.rev:
@@ -59,18 +96,57 @@ class convert_git(converter_source):
         return heads
 
     def catfile(self, rev, type):
-        if rev == "0" * 40:
-            raise IOError()
+        if rev == hex(nullid):
+            raise IOError
         data, ret = self.gitread("git cat-file %s %s" % (type, rev))
         if ret:
             raise util.Abort(_('cannot read %r object at %s') % (type, rev))
         return data
 
     def getfile(self, name, rev):
-        return self.catfile(rev, "blob")
+        if name == '.hgsub':
+            data = '\n'.join([m.hgsub() for m in self.submoditer()])
+            mode = ''
+        elif name == '.hgsubstate':
+            data = '\n'.join([m.hgsubstate() for m in self.submoditer()])
+            mode = ''
+        else:
+            data = self.catfile(rev, "blob")
+            mode = self.modecache[(name, rev)]
+        return data, mode
 
-    def getmode(self, name, rev):
-        return self.modecache[(name, rev)]
+    def submoditer(self):
+        null = hex(nullid)
+        for m in sorted(self.submodules, key=lambda p: p.path):
+            if m.node != null:
+                yield m
+
+    def parsegitmodules(self, content):
+        """Parse the formatted .gitmodules file, example file format:
+        [submodule "sub"]\n
+        \tpath = sub\n
+        \turl = git://giturl\n
+        """
+        self.submodules = []
+        c = config.config()
+        # Each item in .gitmodules starts with \t that cant be parsed
+        c.parse('.gitmodules', content.replace('\t',''))
+        for sec in c.sections():
+            s = c[sec]
+            if 'url' in s and 'path' in s:
+                self.submodules.append(submodule(s['path'], '', s['url']))
+
+    def retrievegitmodules(self, version):
+        modules, ret = self.gitread("git show %s:%s" % (version, '.gitmodules'))
+        if ret:
+            raise util.Abort(_('cannot read submodules config file in %s') %
+                             version)
+        self.parsegitmodules(modules)
+        for m in self.submodules:
+            node, ret = self.gitread("git rev-parse %s:%s" % (version, m.path))
+            if ret:
+                continue
+            m.node = node.strip()
 
     def getchanges(self, version):
         self.modecache = {}
@@ -78,6 +154,7 @@ class convert_git(converter_source):
         changes = []
         seen = set()
         entry = None
+        subexists = False
         for l in fh.read().split('\x00'):
             if not entry:
                 if not l.startswith(':'):
@@ -91,11 +168,22 @@ class convert_git(converter_source):
                 h = entry[3]
                 p = (entry[1] == "100755")
                 s = (entry[1] == "120000")
-                self.modecache[(f, h)] = (p and "x") or (s and "l") or ""
-                changes.append((f, h))
+
+                if f == '.gitmodules':
+                    subexists = True
+                    changes.append(('.hgsub', ''))
+                elif entry[1] == '160000' or entry[0] == ':160000':
+                    subexists = True
+                else:
+                    self.modecache[(f, h)] = (p and "x") or (s and "l") or ""
+                    changes.append((f, h))
             entry = None
         if fh.close():
             raise util.Abort(_('cannot read changes in %s') % version)
+
+        if subexists:
+            self.retrievegitmodules(version)
+            changes.append(('.hgsubstate', ''))
         return (changes, {})
 
     def getcommit(self, version):
@@ -135,19 +223,32 @@ class convert_git(converter_source):
 
     def gettags(self):
         tags = {}
-        fh = self.gitopen('git ls-remote --tags "%s"' % self.path)
+        alltags = {}
+        fh = self.gitopen('git ls-remote --tags "%s"' % self.path,
+                          err=subprocess.STDOUT)
         prefix = 'refs/tags/'
+
+        # Build complete list of tags, both annotated and bare ones
         for line in fh:
             line = line.strip()
-            if not line.endswith("^{}"):
-                continue
+            if line.startswith("error:") or line.startswith("fatal:"):
+                raise util.Abort(_('cannot read tags from %s') % self.path)
             node, tag = line.split(None, 1)
             if not tag.startswith(prefix):
                 continue
-            tag = tag[len(prefix):-3]
-            tags[tag] = node
+            alltags[tag[len(prefix):]] = node
         if fh.close():
             raise util.Abort(_('cannot read tags from %s') % self.path)
+
+        # Filter out tag objects for annotated tag refs
+        for tag in alltags:
+            if tag.endswith('^{}'):
+                tags[tag[:-3]] = alltags[tag]
+            else:
+                if tag + '^{}' in alltags:
+                    continue
+                else:
+                    tags[tag] = alltags[tag]
 
         return tags
 
@@ -161,10 +262,37 @@ class convert_git(converter_source):
                 m, f = l[:-1].split("\t")
                 changes.append(f)
         else:
-            fh = self.gitopen('git diff-tree --name-only --root -r %s "%s^%s" --'
-                             % (version, version, i + 1))
+            fh = self.gitopen('git diff-tree --name-only --root -r %s '
+                              '"%s^%s" --' % (version, version, i + 1))
             changes = [f.rstrip('\n') for f in fh]
         if fh.close():
             raise util.Abort(_('cannot read changes in %s') % version)
 
         return changes
+
+    def getbookmarks(self):
+        bookmarks = {}
+
+        # Interesting references in git are prefixed
+        prefix = 'refs/heads/'
+        prefixlen = len(prefix)
+
+        # factor two commands
+        gitcmd = { 'remote/': 'git ls-remote --heads origin',
+                          '': 'git show-ref'}
+
+        # Origin heads
+        for reftype in gitcmd:
+            try:
+                fh = self.gitopen(gitcmd[reftype], err=subprocess.PIPE)
+                for line in fh:
+                    line = line.strip()
+                    rev, name = line.split(None, 1)
+                    if not name.startswith(prefix):
+                        continue
+                    name = '%s%s' % (reftype, name[prefixlen:])
+                    bookmarks[name] = rev
+            except Exception:
+                pass
+
+        return bookmarks

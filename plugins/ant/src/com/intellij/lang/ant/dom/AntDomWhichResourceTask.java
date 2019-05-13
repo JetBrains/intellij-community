@@ -22,7 +22,6 @@ import java.net.URL;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Aug 10, 2010
  */
 public abstract class AntDomWhichResourceTask extends AntDomPropertyDefiningTask implements AntDomClasspathElement{
 
@@ -34,6 +33,7 @@ public abstract class AntDomWhichResourceTask extends AntDomPropertyDefiningTask
   @Attribute("resource")
   public abstract GenericAttributeValue<String> getResourceName();
 
+  @Override
   protected String calcPropertyValue(String propertyName) {
     String resName = getClassName().getStringValue();
     if (resName == null) {

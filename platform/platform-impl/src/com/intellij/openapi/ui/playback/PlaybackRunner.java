@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.ui.playback;
 
 import com.intellij.ide.IdeEventQueue;
@@ -20,17 +6,17 @@ import com.intellij.ide.UiActivityMonitor;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationActivationListener;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.ui.playback.commands.AssertFocused;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.playback.commands.*;
-import com.intellij.openapi.ui.playback.commands.ActionCommand;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.util.text.StringTokenizer;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.concurrency.Promise;
 
 import javax.swing.*;
 import java.awt.*;
@@ -38,7 +24,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.*;
 
-public class PlaybackRunner {
+public class PlaybackRunner implements Disposable {
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.ui.debugger.extensions.PlaybackRunner");
 
@@ -47,26 +33,26 @@ public class PlaybackRunner {
   private final String myScript;
   private final StatusCallback myCallback;
 
-  private final ArrayList<PlaybackCommand> myCommands = new ArrayList<PlaybackCommand>();
+  private final ArrayList<PlaybackCommand> myCommands = new ArrayList<>();
   private ActionCallback myActionCallback;
   private boolean myStopRequested;
 
   private final boolean myUseDirectActionCall;
-  private boolean myUseTypingTargets;
+  private final boolean myUseTypingTargets;
 
   private File myScriptDir;
-  private boolean myStopOnAppDeactivation;
+  private final boolean myStopOnAppDeactivation;
   private final ApplicationActivationListener myAppListener;
 
-  private HashSet<Class> myFacadeClasses = new HashSet<Class>();
-  private ArrayList<StageInfo> myCurrentStageDepth = new ArrayList<StageInfo>();
-  private ArrayList<StageInfo> myPassedStages = new ArrayList<StageInfo>();
+  private final HashSet<Class> myFacadeClasses = new HashSet<>();
+  private final ArrayList<StageInfo> myCurrentStageDepth = new ArrayList<>();
+  private final ArrayList<StageInfo> myPassedStages = new ArrayList<>();
 
   private long myContextTimestamp;
 
-  private Map<String, String> myRegistryValues = new HashMap<String, String>();
+  private final Map<String, String> myRegistryValues = new HashMap<>();
 
-  private Disposable myOnStop = Disposer.newDisposable();
+  private final Disposable myOnStop = Disposer.newDisposable();
 
   public PlaybackRunner(String script, StatusCallback callback, final boolean useDirectActionCall, boolean stopOnAppDeactivation, boolean useTypingTargets) {
     myScript = script;
@@ -76,11 +62,7 @@ public class PlaybackRunner {
     myStopOnAppDeactivation = stopOnAppDeactivation;
     myAppListener = new ApplicationActivationListener() {
       @Override
-      public void applicationActivated(IdeFrame ideFrame) {
-      }
-
-      @Override
-      public void applicationDeactivated(IdeFrame ideFrame) {
+      public void applicationDeactivated(@NotNull IdeFrame ideFrame) {
         if (myStopOnAppDeactivation) {
           myCallback.message(null, "App lost focus, stopping...", StatusCallback.Type.message);
           stop();
@@ -100,41 +82,31 @@ public class PlaybackRunner {
     myPassedStages.clear();
     myContextTimestamp++;
 
-    ApplicationManager.getApplication().getMessageBus().connect(myOnStop).subscribe(ApplicationActivationListener.TOPIC, myAppListener);
+    ApplicationManager.getApplication().getMessageBus().connect(ApplicationManager.getApplication()).subscribe(ApplicationActivationListener.TOPIC, myAppListener);
 
     try {
       myActionCallback = new ActionCallback();
-      myActionCallback.doWhenProcessed(new Runnable() {
-        @Override
-        public void run() {
-          stop();
+      myActionCallback.doWhenProcessed(() -> {
+        stop();
 
-          SwingUtilities.invokeLater(new Runnable() {
-            @Override
-            public void run() {
-              activityMonitor.setActive(false);
-              restoreRegistryValues();
-            }
-          });
-        }
+        SwingUtilities.invokeLater(() -> {
+          activityMonitor.setActive(false);
+          restoreRegistryValues();
+        });
       });
 
       myRobot = new Robot();
 
       parse();
 
-      new Thread() {
+      new Thread("playback runner") {
         @Override
         public void run() {
           if (myUseDirectActionCall) {
             executeFrom(0, getScriptDir());
           }
           else {
-            IdeEventQueue.getInstance().doWhenReady(new Runnable() {
-              public void run() {
-                executeFrom(0, getScriptDir());
-              }
-            });
+            IdeEventQueue.getInstance().doWhenReady(() -> executeFrom(0, getScriptDir()));
           }
         }
       }.start();
@@ -164,12 +136,14 @@ public class PlaybackRunner {
       final PlaybackContext context =
         new PlaybackContext(this, myCallback, cmdIndex, myRobot, myUseDirectActionCall, myUseTypingTargets, cmd, baseDir, (Set<Class>)myFacadeClasses.clone()) {
 
-          private long myTimeStamp = myContextTimestamp;
+          private final long myTimeStamp = myContextTimestamp;
 
+          @Override
           public void pushStage(StageInfo info) {
             myCurrentStageDepth.add(info);
           }
 
+          @Override
           public StageInfo popStage() {
             if (myCurrentStageDepth.size() > 0) {
               return myCurrentStageDepth.remove(myCurrentStageDepth.size() - 1);
@@ -178,6 +152,7 @@ public class PlaybackRunner {
             return null;
           }
 
+          @Override
           public int getCurrentStageDepth() {
             return myCurrentStageDepth.size();
           }
@@ -199,9 +174,9 @@ public class PlaybackRunner {
             }
           }
         };
-      final ActionCallback cmdCallback = cmd.execute(context);
-      cmdCallback.doWhenDone(new Runnable() {
-        public void run() {
+      final Promise<Object> cmdCallback = cmd.execute(context);
+      cmdCallback
+        .onSuccess(it -> {
           if (cmd.canGoFurther()) {
             executeFrom(cmdIndex + 1, context.getBaseDir());
           }
@@ -209,13 +184,11 @@ public class PlaybackRunner {
             myCallback.message(null, "Stopped", StatusCallback.Type.message);
             myActionCallback.setDone();
           }
-        }
-      }).doWhenRejected(new Runnable() {
-        public void run() {
+        })
+        .onError(error -> {
           myCallback.message(null, "Stopped", StatusCallback.Type.message);
           myActionCallback.setRejected();
-        }
-      });
+        });
     }
     else {
       myCallback.message(null, "Finished OK " + myPassedStages.size() + " tests", StatusCallback.Type.message);
@@ -320,10 +293,6 @@ public class PlaybackRunner {
     return cmd;
   }
 
-  private void setDone() {
-    myActionCallback.setDone();
-  }
-
   public void stop() {
     myStopRequested = true;
     Disposer.dispose(myOnStop);
@@ -337,6 +306,11 @@ public class PlaybackRunner {
     myScriptDir = baseDir;
   }
 
+  @Override
+  public void dispose() {
+    myCommands.clear();
+  }
+
   public interface StatusCallback {
 
     enum Type {message, error, code, test}
@@ -346,6 +320,7 @@ public class PlaybackRunner {
     abstract class Edt implements StatusCallback {
 
 
+      @Override
       public final void message(final PlaybackContext context,
                                 final String text,
                                 final Type type) {
@@ -353,11 +328,7 @@ public class PlaybackRunner {
           messageEdt(context, text, type);
         }
         else {
-          SwingUtilities.invokeLater(new Runnable() {
-            public void run() {
-              messageEdt(context, text, type);
-            }
-          });
+          SwingUtilities.invokeLater(() -> messageEdt(context, text, type));
         }
       }
 

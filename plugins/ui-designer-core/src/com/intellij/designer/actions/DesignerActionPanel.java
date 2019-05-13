@@ -15,16 +15,21 @@
  */
 package com.intellij.designer.actions;
 
+import com.intellij.designer.DesignerToolWindowManager;
 import com.intellij.designer.designSurface.ComponentSelectionListener;
 import com.intellij.designer.designSurface.DesignerEditorPanel;
 import com.intellij.designer.designSurface.EditableArea;
 import com.intellij.designer.model.RadComponent;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.SideBorder;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import java.awt.*;
 import java.awt.event.KeyEvent;
 import java.util.List;
 
@@ -34,14 +39,14 @@ import java.util.List;
 public class DesignerActionPanel implements DataProvider {
   public static final String TOOLBAR = "DesignerToolbar";
 
-  private final DefaultActionGroup myActionGroup = new DefaultActionGroup();
+  private final DefaultActionGroup myActionGroup;
   private final DefaultActionGroup myStaticGroup = new DefaultActionGroup();
   private final DefaultActionGroup myDynamicGroup = new DefaultActionGroup();
   private final DefaultActionGroup myPopupGroup = new DefaultActionGroup();
   private final DefaultActionGroup myDynamicPopupGroup = new DefaultActionGroup();
 
-  private JComponent myToolbar;
-  private final DesignerEditorPanel myDesigner;
+  protected final JComponent myToolbar;
+  protected final DesignerEditorPanel myDesigner;
   private final CommonEditActionsProvider myCommonEditActionsProvider;
   private final JComponent myShortcuts;
 
@@ -52,40 +57,17 @@ public class DesignerActionPanel implements DataProvider {
 
     createInplaceEditingAction(myShortcuts).setDesignerPanel(designer);
 
-    myActionGroup.add(myStaticGroup);
-    myActionGroup.add(myDynamicGroup);
+    myActionGroup = createActionGroup();
+    myToolbar = createToolbar();
 
     ActionManager actionManager = ActionManager.getInstance();
-    ActionToolbar actionToolbar = actionManager.createActionToolbar(TOOLBAR, myActionGroup, true);
-    actionToolbar.setLayoutPolicy(ActionToolbar.WRAP_LAYOUT_POLICY);
-
-    myToolbar = actionToolbar.getComponent();
-    myToolbar.setBorder(IdeBorderFactory.createBorder(SideBorder.BOTTOM));
-    myToolbar.setVisible(false);
-
-    AnAction selectParent = new AnAction("Select Parent", "Select Parent", null) {
-      @Override
-      public void actionPerformed(AnActionEvent e) {
-        myDesigner.getToolProvider().processKeyEvent(new KeyEvent(myDesigner.getSurfaceArea().getNativeComponent(),
-                                                                  KeyEvent.KEY_PRESSED, 0, 0,
-                                                                  KeyEvent.VK_ESCAPE,
-                                                                  (char)KeyEvent.VK_ESCAPE),
-                                                     myDesigner.getSurfaceArea());
-      }
-    };
-    selectParent.registerCustomShortcutSet(KeyEvent.VK_ESCAPE, 0, null);
-
-    SelectAllAction selectAllAction = new SelectAllAction(designer.getSurfaceArea());
-    registerAction(selectAllAction, "$SelectAll");
-
     myPopupGroup.add(actionManager.getAction(IdeActions.ACTION_CUT));
     myPopupGroup.add(actionManager.getAction(IdeActions.ACTION_COPY));
     myPopupGroup.add(actionManager.getAction(IdeActions.ACTION_PASTE));
     myPopupGroup.addSeparator();
     myPopupGroup.add(actionManager.getAction(IdeActions.ACTION_DELETE));
     myPopupGroup.addSeparator();
-    myPopupGroup.add(selectParent);
-    myPopupGroup.add(selectAllAction);
+    myPopupGroup.add(createSelectActionGroup(designer));
     myPopupGroup.addSeparator();
     myPopupGroup.add(myDynamicPopupGroup);
 
@@ -95,6 +77,65 @@ public class DesignerActionPanel implements DataProvider {
         updateSelectionActions(area.getSelection());
       }
     });
+  }
+
+  protected DefaultActionGroup createActionGroup() {
+    DefaultActionGroup group = new DefaultActionGroup();
+    group.add(myStaticGroup);
+    group.add(myDynamicGroup);
+    return group;
+  }
+
+  protected JComponent createToolbar() {
+    ActionManager actionManager = ActionManager.getInstance();
+    ActionToolbar actionToolbar = actionManager.createActionToolbar(TOOLBAR, myActionGroup, true);
+    actionToolbar.setLayoutPolicy(ActionToolbar.WRAP_LAYOUT_POLICY);
+
+    JComponent toolbar = actionToolbar.getComponent();
+    toolbar.setBorder(IdeBorderFactory.createBorder(SideBorder.BOTTOM));
+    toolbar.setVisible(false);
+
+    return toolbar;
+  }
+
+  @NotNull
+  private ActionGroup createSelectActionGroup(DesignerEditorPanel designer) {
+    final DefaultActionGroup group = new DefaultActionGroup("_Select", true);
+
+    AnAction selectParent = new AnAction("Select Parent", "Select Parent", null) {
+      @Override
+      public void actionPerformed(@NotNull AnActionEvent e) {
+        myDesigner.getToolProvider().processKeyEvent(new KeyEvent(myDesigner.getSurfaceArea().getNativeComponent(),
+                                                                  KeyEvent.KEY_PRESSED, 0, 0,
+                                                                  KeyEvent.VK_ESCAPE,
+                                                                  (char)KeyEvent.VK_ESCAPE),
+                                                     myDesigner.getSurfaceArea()
+        );
+      }
+    };
+    selectParent.registerCustomShortcutSet(KeyEvent.VK_ESCAPE, 0, null);
+
+    EditableArea area = designer.getSurfaceArea();
+
+    AnAction selectSiblings = new SelectSiblingsAction(area);
+    AnAction selectSameType = new SelectSameTypeAction(area);
+    AnAction deselectAllAction = new DeselectAllAction(area);
+
+    AnAction selectAllAction = createSelectAllAction(area);
+    registerAction(selectAllAction, "$SelectAll");
+
+    group.add(selectParent);
+    group.add(selectSiblings);
+    group.add(selectSameType);
+    group.addSeparator();
+    group.add(selectAllAction);
+    group.add(deselectAllAction);
+
+    return group;
+  }
+
+  public AnAction createSelectAllAction(EditableArea area) {
+    return new SelectAllAction(area);
   }
 
   public static StartInplaceEditing createInplaceEditingAction(JComponent shortcuts) {
@@ -122,12 +163,20 @@ public class DesignerActionPanel implements DataProvider {
     return myPopupGroup;
   }
 
+  protected DefaultActionGroup getDynamicActionGroup() {
+    return myDynamicGroup;
+  }
+
+  protected JComponent getShortcuts() {
+    return myShortcuts;
+  }
+
   public void update() {
     boolean oldVisible = myToolbar.isVisible();
     boolean newVisible = isVisible(myActionGroup);
     myToolbar.setVisible(newVisible);
     if (oldVisible && newVisible) {
-      ((JComponent)myToolbar.getParent()).revalidate();
+      myToolbar.getParent().revalidate();
     }
   }
 
@@ -150,7 +199,7 @@ public class DesignerActionPanel implements DataProvider {
   }
 
   private void updateSelectionActions(List<RadComponent> selection) {
-    boolean update = isVisible(myDynamicGroup);
+    boolean oldVisible = isVisible(myDynamicGroup);
 
     if (myDynamicGroup.getChildrenCount() > 0) {
       for (AnAction action : myDynamicGroup.getChildActionsOrStubs()) {
@@ -159,16 +208,19 @@ public class DesignerActionPanel implements DataProvider {
       myDynamicGroup.removeAll();
     }
 
+    addSelectionActions(selection, myDynamicGroup);
+
+    if (oldVisible || isVisible(myDynamicGroup)) {
+      update();
+    }
+  }
+
+  protected void addSelectionActions(List<RadComponent> selection, DefaultActionGroup group) {
     for (RadComponent parent : RadComponent.getParents(selection)) {
-      parent.getLayout().addSelectionActions(myDesigner, myDynamicGroup, myShortcuts, selection);
+      parent.getLayout().addSelectionActions(myDesigner, group, myShortcuts, selection);
     }
     for (RadComponent component : selection) {
-      component.addSelectionActions(myDesigner, myDynamicGroup, myShortcuts, selection);
-    }
-    update |= isVisible(myDynamicGroup);
-
-    if (update) {
-      update();
+      component.addSelectionActions(myDesigner, group, myShortcuts, selection);
     }
   }
 
@@ -184,12 +236,16 @@ public class DesignerActionPanel implements DataProvider {
   }
 
   @Override
-  public Object getData(@NonNls String dataId) {
+  public Object getData(@NotNull @NonNls String dataId) {
     if (PlatformDataKeys.DELETE_ELEMENT_PROVIDER.is(dataId) ||
         PlatformDataKeys.CUT_PROVIDER.is(dataId) ||
         PlatformDataKeys.COPY_PROVIDER.is(dataId) ||
         PlatformDataKeys.PASTE_PROVIDER.is(dataId)) {
-      return myCommonEditActionsProvider;
+      JTable table = DesignerToolWindowManager.getInstance(myDesigner).getPropertyTable();
+      Component focusOwner = IdeFocusManager.getInstance(myDesigner.getProject()).getFocusOwner();
+      if (!UIUtil.isAncestor(table, focusOwner)) {
+        return myCommonEditActionsProvider;
+      }
     }
     return null;
   }

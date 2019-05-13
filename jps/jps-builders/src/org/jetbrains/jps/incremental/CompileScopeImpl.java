@@ -18,12 +18,14 @@ package org.jetbrains.jps.incremental;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.builders.BuildTarget;
 import org.jetbrains.jps.builders.BuildTargetType;
+import org.jetbrains.jps.builders.ModuleBasedBuildTargetType;
 import org.jetbrains.jps.builders.ModuleBasedTarget;
 import org.jetbrains.jps.builders.java.JavaModuleBuildTargetType;
 import org.jetbrains.jps.model.module.JpsModule;
 
 import java.io.File;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
@@ -31,49 +33,79 @@ import java.util.Set;
  * @author nik
  */
 public class CompileScopeImpl extends CompileScope {
-  protected final boolean myForcedCompilation;
   private final Collection<? extends BuildTargetType<?>> myTypes;
+  private final Collection<BuildTargetType<?>> myTypesToForceBuild;
   private final Collection<BuildTarget<?>> myTargets;
   private final Map<BuildTarget<?>, Set<File>> myFiles;
 
-  public CompileScopeImpl(boolean forcedCompilation, Collection<? extends BuildTargetType<?>> types, Collection<BuildTarget<?>> targets,
-                          Map<BuildTarget<?>, Set<File>> files) {
-    myForcedCompilation = forcedCompilation;
+  public CompileScopeImpl(Collection<? extends BuildTargetType<?>> types,
+                          Collection<? extends BuildTargetType<?>> typesToForceBuild,
+                          Collection<BuildTarget<?>> targets,
+                          @NotNull Map<BuildTarget<?>, Set<File>> files) {
     myTypes = types;
+    myTypesToForceBuild = new HashSet<>();
+    boolean forceBuildAllModuleBasedTargets = false;
+    for (BuildTargetType<?> type : typesToForceBuild) {
+      myTypesToForceBuild.add(type);
+      forceBuildAllModuleBasedTargets |= type instanceof JavaModuleBuildTargetType;
+    }
+    if (forceBuildAllModuleBasedTargets) {
+      for (BuildTargetType<?> targetType : TargetTypeRegistry.getInstance().getTargetTypes()) {
+        if (targetType instanceof ModuleBasedBuildTargetType<?>) {
+          myTypesToForceBuild.add(targetType);
+        }
+      }
+    }
     myTargets = targets;
     myFiles = files;
   }
 
   @Override
   public boolean isAffected(@NotNull BuildTarget<?> target) {
-    return myTypes.contains(target.getTargetType()) || myTargets.contains(target) || myFiles.containsKey(target) || isAffectedByAssociatedModule(target);
+    return isWholeTargetAffected(target) || myFiles.containsKey(target);
   }
 
   @Override
-  public boolean isRecompilationForced(@NotNull BuildTarget<?> target) {
-    return myForcedCompilation && (myTypes.contains(target.getTargetType()) || myTargets.contains(target) || isAffectedByAssociatedModule(target));
+  public boolean isWholeTargetAffected(@NotNull BuildTarget<?> target) {
+    return (myTypes.contains(target.getTargetType()) || myTargets.contains(target) || isAffectedByAssociatedModule(target)) && !myFiles.containsKey(target);
+  }
+
+  @Override
+  public boolean isAllTargetsOfTypeAffected(@NotNull BuildTargetType<?> type) {
+    return myTypes.contains(type) && myFiles.isEmpty();
+  }
+
+  @Override
+  public boolean isBuildForced(@NotNull BuildTarget<?> target) {
+    return myFiles.isEmpty() && myTypesToForceBuild.contains(target.getTargetType()) && isWholeTargetAffected(target);
+  }
+
+  @Override
+  public boolean isBuildForcedForAllTargets(@NotNull BuildTargetType<?> targetType) {
+    return myTypesToForceBuild.contains(targetType) && isAllTargetsOfTypeAffected(targetType);
+  }
+
+  @Override
+  public boolean isBuildIncrementally(@NotNull BuildTargetType<?> targetType) {
+    return !myTypesToForceBuild.contains(targetType);
   }
 
   @Override
   public boolean isAffected(BuildTarget<?> target, @NotNull File file) {
     if (myFiles.isEmpty()) {//optimization
-      return true;
-    }
-    if (myTypes.contains(target.getTargetType()) || myTargets.contains(target) || isAffectedByAssociatedModule(target)) {
-      return true;
+      return isAffected(target);
     }
     final Set<File> files = myFiles.get(target);
     return files != null && files.contains(file);
   }
 
   private boolean isAffectedByAssociatedModule(BuildTarget<?> target) {
-    final JpsModule module = target instanceof ModuleBasedTarget ? ((ModuleBasedTarget)target).getModule() : null;
-    if (module != null) {
+    if (target instanceof ModuleBasedTarget) {
+      final JpsModule module = ((ModuleBasedTarget)target).getModule();
       // this target is associated with module
-      for (JavaModuleBuildTargetType moduleType : JavaModuleBuildTargetType.ALL_TYPES) {
-        if (myTypes.contains(moduleType) || myTargets.contains(new ModuleBuildTarget(module, moduleType))) {
-          return true;
-        }
+      JavaModuleBuildTargetType targetType = JavaModuleBuildTargetType.getInstance(((ModuleBasedTarget)target).isTests());
+      if (myTypes.contains(targetType) || myTargets.contains(new ModuleBuildTarget(module, targetType))) {
+        return true;
       }
     }
     return false;

@@ -1,0 +1,292 @@
+package org.jetbrains.idea.eclipse;
+
+import com.intellij.openapi.application.PluginPathManager;
+import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
+import com.intellij.openapi.options.SchemeImportException;
+import com.intellij.psi.codeStyle.*;
+import com.intellij.testFramework.PlatformTestCase;
+import org.jetbrains.idea.eclipse.importer.EclipseCodeStyleImportWorker;
+import org.jetbrains.idea.eclipse.importer.EclipseCodeStylePropertiesImporter;
+
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.Properties;
+
+import static org.jetbrains.idea.eclipse.importer.EclipseProjectCodeStyleData.CORE_PREFS_FILE_NAME;
+
+/**
+ * @author Rustam Vishnyakov
+ */
+public class EclipseSettingsImportTest extends PlatformTestCase {
+  
+  private static String getTestDataPath() {
+    return PluginPathManager.getPluginHomePath("eclipse") + "/testData/import/settings/";
+  }
+  
+  public void testImportCodeStyleSettingsFromXmlProfile() throws Exception {
+    File input = new File(getTestDataPath() + "eclipse_exported.xml");
+    CodeStyleSchemes schemes = CodeStyleSchemes.getInstance();
+    CodeStyleScheme scheme = schemes.createNewScheme(getTestName(false), null);
+    CodeStyleSettings settings = scheme.getCodeStyleSettings();
+    
+    CommonCodeStyleSettings javaSettings = settings.getCommonSettings("Java");
+    CommonCodeStyleSettings.IndentOptions indentOptions = javaSettings.getIndentOptions();
+    JavaCodeStyleSettings javaCustomSettings = settings.getCustomSettings(JavaCodeStyleSettings.class);
+    assertNotNull(indentOptions);
+    javaSettings.SPACE_AFTER_COMMA_IN_TYPE_ARGUMENTS = false;
+    javaSettings.SPACE_WITHIN_ARRAY_INITIALIZER_BRACES = false;
+    javaSettings.ARRAY_INITIALIZER_RBRACE_ON_NEXT_LINE = true;
+    javaSettings.SPACE_WITHIN_ANNOTATION_PARENTHESES = true;
+    javaSettings.BLANK_LINES_AROUND_FIELD = -1;
+    javaSettings.SPACE_WITHIN_WHILE_PARENTHESES = true;
+    javaSettings.ELSE_ON_NEW_LINE = true;
+    javaSettings.ALIGN_GROUP_FIELD_DECLARATIONS = true;
+    javaSettings.SPACE_BEFORE_FOR_PARENTHESES = false;
+    javaSettings.SPACE_AROUND_ADDITIVE_OPERATORS = false;
+    javaSettings.SPACE_AROUND_BITWISE_OPERATORS = false;
+    javaSettings.SPACE_AROUND_EQUALITY_OPERATORS = false;
+    javaSettings.SPACE_AROUND_LOGICAL_OPERATORS = false;
+    javaSettings.FINALLY_ON_NEW_LINE = true;
+    javaSettings.CATCH_ON_NEW_LINE = true;
+    javaSettings.SPACE_BEFORE_WHILE_PARENTHESES = false;
+    javaSettings.BLANK_LINES_AFTER_PACKAGE = -1;
+    javaSettings.getIndentOptions().CONTINUATION_INDENT_SIZE = 0;
+    javaSettings.ALIGN_MULTILINE_PARAMETERS_IN_CALLS = true;
+    javaSettings.BLANK_LINES_BEFORE_PACKAGE = -1;
+    javaSettings.SPACE_WITHIN_FOR_PARENTHESES = true;
+    javaSettings.ALIGN_MULTILINE_ASSIGNMENT = true;
+    javaSettings.SPACE_BEFORE_METHOD_PARENTHESES = true;
+    javaSettings.SPACE_WITHIN_CATCH_PARENTHESES = true;
+    javaSettings.SPACE_BEFORE_METHOD_CALL_PARENTHESES = true;
+    javaSettings.SPACE_WITHIN_CAST_PARENTHESES = true;
+    javaSettings.SPACE_AROUND_UNARY_OPERATOR = true;
+    javaSettings.KEEP_SIMPLE_BLOCKS_IN_ONE_LINE = false;
+    EditorSettingsExternalizable editorSettings = EditorSettingsExternalizable.getInstance();
+    boolean currAddLineFeed = editorSettings.isEnsureNewLineAtEOF();
+    editorSettings.setEnsureNewLineAtEOF(true);
+    javaSettings.SPACE_WITHIN_TRY_PARENTHESES = true;
+    javaSettings.SPACE_WITHIN_EMPTY_METHOD_CALL_PARENTHESES = true;
+    javaSettings.WHILE_ON_NEW_LINE = true;
+    javaCustomSettings.ENABLE_JAVADOC_FORMATTING = false;
+    javaSettings.SPACE_BEFORE_SEMICOLON = true;
+    javaSettings.BLANK_LINES_BEFORE_METHOD_BODY = -1;
+    javaSettings.SPACE_BEFORE_COLON = false;
+    javaSettings.DO_NOT_INDENT_TOP_LEVEL_CLASS_MEMBERS = true;
+    javaSettings.BINARY_OPERATION_SIGN_ON_NEXT_LINE = false;
+    javaSettings.SPACE_WITHIN_SYNCHRONIZED_PARENTHESES = true;
+    javaSettings.SPACE_BEFORE_QUEST = false;
+    javaSettings.BLANK_LINES_BEFORE_IMPORTS = 0;
+    javaSettings.SPACE_AFTER_COLON = false;
+    javaSettings.SPACE_WITHIN_FOR_PARENTHESES = true;
+    javaSettings.SPACE_BEFORE_SYNCHRONIZED_PARENTHESES = false;
+    javaSettings.SPACE_BEFORE_SWITCH_PARENTHESES = false;
+    javaSettings.SPACE_WITHIN_METHOD_CALL_PARENTHESES = true;
+    javaSettings.CLASS_BRACE_STYLE = CommonCodeStyleSettings.NEXT_LINE;
+    javaSettings.SPACE_BEFORE_ARRAY_INITIALIZER_LBRACE = false;
+    javaSettings.SPACE_WITHIN_METHOD_PARENTHESES = true;
+    javaSettings.SPACE_BEFORE_CATCH_PARENTHESES = false;
+    javaSettings.SPACE_WITHIN_ANNOTATION_PARENTHESES = true;
+    javaSettings.BLANK_LINES_AFTER_IMPORTS = -1;
+    javaSettings.KEEP_FIRST_COLUMN_COMMENT = true;
+    javaSettings.KEEP_CONTROL_STATEMENT_IN_ONE_LINE = true;
+    javaSettings.FIELD_ANNOTATION_WRAP = CommonCodeStyleSettings.DO_NOT_WRAP;
+    javaSettings.METHOD_ANNOTATION_WRAP = CommonCodeStyleSettings.DO_NOT_WRAP;
+    javaSettings.PARAMETER_ANNOTATION_WRAP = CommonCodeStyleSettings.DO_NOT_WRAP;
+    javaSettings.VARIABLE_ANNOTATION_WRAP = CommonCodeStyleSettings.DO_NOT_WRAP;
+    javaSettings.CLASS_ANNOTATION_WRAP = CommonCodeStyleSettings.DO_NOT_WRAP;
+    javaSettings.ALIGN_MULTILINE_ARRAY_INITIALIZER_EXPRESSION = false;
+    javaSettings.ARRAY_INITIALIZER_WRAP = CommonCodeStyleSettings.WRAP_ALWAYS;
+    javaSettings.ARRAY_INITIALIZER_LBRACE_ON_NEXT_LINE = false;
+    javaSettings.ALIGN_MULTILINE_PARAMETERS_IN_CALLS = true;
+    javaSettings.CALL_PARAMETERS_WRAP = CommonCodeStyleSettings.DO_NOT_WRAP;
+    javaSettings.CALL_PARAMETERS_LPAREN_ON_NEXT_LINE = true;
+    javaSettings.ALIGN_MULTILINE_EXTENDS_LIST = false;
+    javaSettings.EXTENDS_KEYWORD_WRAP = CommonCodeStyleSettings.DO_NOT_WRAP;
+    javaSettings.EXTENDS_LIST_WRAP = CommonCodeStyleSettings.DO_NOT_WRAP;
+    javaSettings.ALIGN_MULTILINE_ASSIGNMENT = false;
+    javaSettings.ASSIGNMENT_WRAP = CommonCodeStyleSettings.DO_NOT_WRAP;
+    javaSettings.ALIGN_MULTILINE_PARAMETERS = true;
+    javaSettings.METHOD_PARAMETERS_WRAP = CommonCodeStyleSettings.DO_NOT_WRAP;
+    javaSettings.METHOD_PARAMETERS_LPAREN_ON_NEXT_LINE = false;
+    javaSettings.ALIGN_MULTILINE_BINARY_OPERATION = false;
+    javaSettings.BINARY_OPERATION_WRAP = CommonCodeStyleSettings.DO_NOT_WRAP;
+    javaSettings.ALIGN_MULTILINE_THROWS_LIST = false;
+    javaSettings.THROWS_KEYWORD_WRAP = CommonCodeStyleSettings.WRAP_ALWAYS;
+    javaSettings.THROWS_LIST_WRAP = CommonCodeStyleSettings.DO_NOT_WRAP;
+    javaSettings.ALIGN_MULTILINE_RESOURCES = true;
+    javaSettings.RESOURCE_LIST_WRAP = CommonCodeStyleSettings.DO_NOT_WRAP;
+    javaSettings.RESOURCE_LIST_LPAREN_ON_NEXT_LINE = true;
+    javaSettings.METHOD_CALL_CHAIN_WRAP = CommonCodeStyleSettings.DO_NOT_WRAP;
+    javaSettings.ALIGN_MULTILINE_CHAINED_METHODS = false;
+    javaSettings.TERNARY_OPERATION_WRAP = CommonCodeStyleSettings.DO_NOT_WRAP;
+    javaSettings.ALIGN_MULTILINE_TERNARY_OPERATION = false;
+    javaSettings.BLANK_LINES_AFTER_CLASS_HEADER = -1;
+    javaSettings.BLANK_LINES_AFTER_ANONYMOUS_CLASS_HEADER = -1;
+    javaSettings.BLANK_LINES_AROUND_CLASS = -1;
+    javaSettings.KEEP_BLANK_LINES_IN_CODE = -1;
+    javaSettings.KEEP_BLANK_LINES_BEFORE_RBRACE = -1;
+    javaSettings.KEEP_BLANK_LINES_IN_DECLARATIONS = -1;
+    indentOptions.USE_TAB_CHARACTER = false;
+    indentOptions.SMART_TABS = false;
+    indentOptions.TAB_SIZE = 3;
+    settings.FORMATTER_TAGS_ENABLED = false;
+    javaSettings.SPACE_BEFORE_ELSE_KEYWORD = false;
+    javaSettings.SPACE_BEFORE_FINALLY_KEYWORD = false;
+    javaSettings.SPACE_BEFORE_CATCH_KEYWORD = false;
+    javaSettings.SPACE_BEFORE_IF_LBRACE = false;
+    javaSettings.SPACE_BEFORE_FOR_LBRACE = false;
+    javaSettings.SPACE_BEFORE_WHILE_LBRACE = false;
+    javaSettings.SPACE_BEFORE_DO_LBRACE = false;
+    javaSettings.SPACE_BEFORE_TRY_LBRACE = false;
+    javaSettings.SPACE_BEFORE_CATCH_LBRACE = false;
+    javaSettings.SPACE_BEFORE_FINALLY_LBRACE = false;
+    javaSettings.SPACE_BEFORE_SYNCHRONIZED_LBRACE = false;
+    javaSettings.SPACE_BEFORE_METHOD_LBRACE = false;
+    javaSettings.SPACE_BEFORE_CLASS_LBRACE = false;
+    javaSettings.SPACE_BEFORE_ANOTATION_PARAMETER_LIST = true;
+    javaSettings.KEEP_LINE_BREAKS = true;
+
+    InputStream inputStream = new FileInputStream(input);
+    try {
+      new EclipseCodeStyleImportWorker().importScheme(inputStream, null, scheme);
+
+      assertTrue(javaSettings.SPACE_AFTER_COMMA_IN_TYPE_ARGUMENTS);
+      assertTrue(javaSettings.SPACE_WITHIN_ARRAY_INITIALIZER_BRACES);
+      assertFalse(javaSettings.ARRAY_INITIALIZER_RBRACE_ON_NEXT_LINE);
+      assertFalse(javaSettings.SPACE_WITHIN_ANNOTATION_PARENTHESES);
+      assertEquals(0, javaSettings.BLANK_LINES_AROUND_FIELD);
+      assertFalse(javaSettings.SPACE_WITHIN_WHILE_PARENTHESES);
+      assertFalse(javaSettings.ELSE_ON_NEW_LINE);
+      assertFalse(javaSettings.ALIGN_GROUP_FIELD_DECLARATIONS);
+      assertTrue(javaSettings.SPACE_BEFORE_FOR_PARENTHESES);
+      assertTrue(javaSettings.SPACE_AROUND_ADDITIVE_OPERATORS);
+      assertTrue(javaSettings.SPACE_AROUND_BITWISE_OPERATORS);
+      assertTrue(javaSettings.SPACE_AROUND_EQUALITY_OPERATORS);
+      assertTrue(javaSettings.SPACE_AROUND_LOGICAL_OPERATORS);
+      assertFalse(javaSettings.FINALLY_ON_NEW_LINE);
+      assertFalse(javaSettings.CATCH_ON_NEW_LINE);
+      assertTrue(javaSettings.SPACE_BEFORE_WHILE_PARENTHESES);
+      assertEquals(1, javaSettings.BLANK_LINES_AFTER_PACKAGE);
+      assertEquals(8, javaSettings.getIndentOptions().CONTINUATION_INDENT_SIZE);
+      assertFalse(javaSettings.ALIGN_MULTILINE_PARAMETERS_IN_CALLS);
+      assertEquals(0, javaSettings.BLANK_LINES_BEFORE_PACKAGE);
+      assertFalse(javaSettings.SPACE_WITHIN_FOR_PARENTHESES);
+      assertFalse(javaSettings.SPACE_BEFORE_METHOD_PARENTHESES);
+      assertFalse(javaSettings.SPACE_WITHIN_CATCH_PARENTHESES);
+      assertFalse(javaSettings.SPACE_BEFORE_METHOD_CALL_PARENTHESES);
+      assertFalse(javaSettings.SPACE_WITHIN_CATCH_PARENTHESES);
+      assertFalse(javaSettings.SPACE_AROUND_UNARY_OPERATOR);
+      assertTrue(javaSettings.KEEP_SIMPLE_BLOCKS_IN_ONE_LINE);
+      assertFalse(editorSettings.isEnsureNewLineAtEOF());
+      assertFalse(javaSettings.SPACE_WITHIN_TRY_PARENTHESES);
+      assertFalse(javaSettings.SPACE_WITHIN_EMPTY_METHOD_CALL_PARENTHESES);
+      assertFalse(javaSettings.WHILE_ON_NEW_LINE);
+      assertTrue(javaCustomSettings.ENABLE_JAVADOC_FORMATTING);
+      assertFalse(javaSettings.SPACE_BEFORE_SEMICOLON);
+      assertEquals(0, javaSettings.BLANK_LINES_BEFORE_METHOD_BODY);
+      assertTrue(javaSettings.SPACE_BEFORE_COLON);
+      assertFalse(javaSettings.DO_NOT_INDENT_TOP_LEVEL_CLASS_MEMBERS);
+      assertTrue(javaSettings.BINARY_OPERATION_SIGN_ON_NEXT_LINE);
+      assertFalse(javaSettings.SPACE_WITHIN_SYNCHRONIZED_PARENTHESES);
+      assertTrue(javaSettings.SPACE_BEFORE_QUEST);
+      assertEquals(1, javaSettings.BLANK_LINES_BEFORE_IMPORTS);
+      assertTrue(javaSettings.SPACE_AFTER_COLON);
+      assertFalse(javaSettings.SPACE_WITHIN_FOR_PARENTHESES);
+      assertTrue(javaSettings.SPACE_BEFORE_SYNCHRONIZED_PARENTHESES);
+      assertTrue(javaSettings.SPACE_BEFORE_SWITCH_PARENTHESES);
+      assertFalse(javaSettings.SPACE_WITHIN_METHOD_CALL_PARENTHESES);
+      assertEquals(CommonCodeStyleSettings.END_OF_LINE, javaSettings.CLASS_BRACE_STYLE);
+      assertTrue(javaSettings.SPACE_BEFORE_ARRAY_INITIALIZER_LBRACE);
+      assertFalse(javaSettings.SPACE_WITHIN_METHOD_PARENTHESES);
+      assertTrue(javaSettings.SPACE_BEFORE_CATCH_PARENTHESES);
+      assertFalse(javaSettings.SPACE_WITHIN_ANNOTATION_PARENTHESES);
+      assertEquals(1, javaSettings.BLANK_LINES_AFTER_IMPORTS);
+      assertFalse(javaSettings.KEEP_FIRST_COLUMN_COMMENT);
+      assertFalse(javaSettings.KEEP_CONTROL_STATEMENT_IN_ONE_LINE);
+      assertTrue(indentOptions.USE_TAB_CHARACTER);
+      assertTrue(indentOptions.SMART_TABS);
+      assertTrue(settings.FORMATTER_TAGS_ENABLED);
+      assertEquals("@off_tag", settings.FORMATTER_OFF_TAG);
+      assertEquals("@on_tag", settings.FORMATTER_ON_TAG);
+      assertEquals(CommonCodeStyleSettings.WRAP_ON_EVERY_ITEM | CommonCodeStyleSettings.WRAP_AS_NEEDED, javaSettings.FIELD_ANNOTATION_WRAP);
+      assertEquals(CommonCodeStyleSettings.WRAP_ON_EVERY_ITEM | CommonCodeStyleSettings.WRAP_AS_NEEDED, javaSettings.METHOD_ANNOTATION_WRAP);
+      assertEquals(CommonCodeStyleSettings.WRAP_ON_EVERY_ITEM | CommonCodeStyleSettings.WRAP_AS_NEEDED, javaSettings.VARIABLE_ANNOTATION_WRAP);
+      assertEquals(CommonCodeStyleSettings.WRAP_ON_EVERY_ITEM | CommonCodeStyleSettings.WRAP_AS_NEEDED, javaSettings.PARAMETER_ANNOTATION_WRAP);
+      assertEquals(CommonCodeStyleSettings.WRAP_ON_EVERY_ITEM | CommonCodeStyleSettings.WRAP_AS_NEEDED, javaSettings.CLASS_ANNOTATION_WRAP);
+      assertTrue(javaSettings.ALIGN_MULTILINE_ARRAY_INITIALIZER_EXPRESSION);
+      assertEquals(CommonCodeStyleSettings.WRAP_AS_NEEDED, javaSettings.ARRAY_INITIALIZER_WRAP);
+      assertTrue(javaSettings.ARRAY_INITIALIZER_LBRACE_ON_NEXT_LINE);
+      assertFalse(javaSettings.ALIGN_MULTILINE_PARAMETERS_IN_CALLS);
+      assertEquals(CommonCodeStyleSettings.WRAP_ON_EVERY_ITEM | CommonCodeStyleSettings.WRAP_AS_NEEDED, javaSettings.CALL_PARAMETERS_WRAP);
+      assertFalse(javaSettings.CALL_PARAMETERS_LPAREN_ON_NEXT_LINE);
+      assertTrue(javaSettings.ALIGN_MULTILINE_EXTENDS_LIST);
+      assertEquals(CommonCodeStyleSettings.WRAP_AS_NEEDED, javaSettings.EXTENDS_KEYWORD_WRAP);
+      assertEquals(CommonCodeStyleSettings.WRAP_ON_EVERY_ITEM | CommonCodeStyleSettings.WRAP_AS_NEEDED, javaSettings.EXTENDS_LIST_WRAP);
+      assertTrue(javaSettings.ALIGN_MULTILINE_ASSIGNMENT);
+      assertEquals(CommonCodeStyleSettings.WRAP_AS_NEEDED, javaSettings.ASSIGNMENT_WRAP);
+      assertFalse(javaSettings.ALIGN_MULTILINE_PARAMETERS);
+      assertEquals(CommonCodeStyleSettings.WRAP_AS_NEEDED, javaSettings.METHOD_PARAMETERS_WRAP);
+      assertTrue(javaSettings.METHOD_PARAMETERS_LPAREN_ON_NEXT_LINE);
+      assertTrue(javaSettings.ALIGN_MULTILINE_BINARY_OPERATION);
+      assertEquals(CommonCodeStyleSettings.WRAP_ON_EVERY_ITEM | CommonCodeStyleSettings.WRAP_AS_NEEDED, javaSettings.BINARY_OPERATION_WRAP);
+      assertTrue(javaSettings.ALIGN_MULTILINE_THROWS_LIST);
+      assertEquals(CommonCodeStyleSettings.WRAP_AS_NEEDED, javaSettings.THROWS_KEYWORD_WRAP);
+      assertEquals(CommonCodeStyleSettings.WRAP_AS_NEEDED, javaSettings.THROWS_LIST_WRAP);
+      assertFalse(javaSettings.ALIGN_MULTILINE_RESOURCES);
+      assertEquals(CommonCodeStyleSettings.WRAP_AS_NEEDED, javaSettings.RESOURCE_LIST_WRAP);
+      assertFalse(javaSettings.RESOURCE_LIST_LPAREN_ON_NEXT_LINE);
+      assertEquals(CommonCodeStyleSettings.WRAP_ON_EVERY_ITEM | CommonCodeStyleSettings.WRAP_AS_NEEDED, javaSettings.METHOD_CALL_CHAIN_WRAP);
+      assertTrue(javaSettings.ALIGN_MULTILINE_CHAINED_METHODS);
+      assertEquals(CommonCodeStyleSettings.WRAP_AS_NEEDED, javaSettings.TERNARY_OPERATION_WRAP);
+      assertTrue(javaSettings.ALIGN_MULTILINE_TERNARY_OPERATION);
+      assertEquals(2, javaSettings.BLANK_LINES_AFTER_CLASS_HEADER);
+      assertEquals(2, javaSettings.BLANK_LINES_AFTER_ANONYMOUS_CLASS_HEADER);
+      assertEquals(3, javaSettings.BLANK_LINES_AROUND_CLASS);
+      assertEquals(5, javaSettings.KEEP_BLANK_LINES_IN_CODE);
+      assertEquals(5, javaSettings.KEEP_BLANK_LINES_IN_DECLARATIONS);
+      assertEquals(5, javaSettings.KEEP_BLANK_LINES_BEFORE_RBRACE);
+      assertTrue(javaSettings.SPACE_BEFORE_ELSE_KEYWORD);
+      assertTrue(javaSettings.SPACE_BEFORE_FINALLY_KEYWORD);
+      assertTrue(javaSettings.SPACE_BEFORE_CATCH_KEYWORD);
+      assertTrue(javaSettings.SPACE_BEFORE_IF_LBRACE);
+      assertTrue(javaSettings.SPACE_BEFORE_FOR_LBRACE);
+      assertTrue(javaSettings.SPACE_BEFORE_WHILE_LBRACE);
+      assertTrue(javaSettings.SPACE_BEFORE_DO_LBRACE);
+      assertTrue(javaSettings.SPACE_BEFORE_TRY_LBRACE);
+      assertTrue(javaSettings.SPACE_BEFORE_CATCH_LBRACE);
+      assertTrue(javaSettings.SPACE_BEFORE_FINALLY_LBRACE);
+      assertTrue(javaSettings.SPACE_BEFORE_SYNCHRONIZED_LBRACE);
+      assertTrue(javaSettings.SPACE_BEFORE_METHOD_LBRACE);
+      assertTrue(javaSettings.SPACE_BEFORE_CLASS_LBRACE);
+      assertFalse(javaSettings.SPACE_BEFORE_ANOTATION_PARAMETER_LIST);
+      assertFalse(javaSettings.KEEP_LINE_BREAKS);
+    }
+    finally {
+      inputStream.close();
+      schemes.deleteScheme(scheme);
+      editorSettings.setEnsureNewLineAtEOF(currAddLineFeed);
+    }
+  }
+
+  public void testImportCodeStyleProperties() throws IOException, SchemeImportException {
+    File input = new File(getTestDataPath() + CORE_PREFS_FILE_NAME);
+    CodeStyleSettings settings = new CodeStyleSettings();
+    CommonCodeStyleSettings javaSettings = settings.getCommonSettings("Java");
+    CommonCodeStyleSettings.IndentOptions indentOptions = javaSettings.getIndentOptions();
+    JavaCodeStyleSettings javaCustomSettings = settings.getCustomSettings(JavaCodeStyleSettings.class);
+    javaSettings.BLANK_LINES_AFTER_IMPORTS = 0;
+    indentOptions.CONTINUATION_INDENT_SIZE = 2;
+    javaCustomSettings.ENABLE_JAVADOC_FORMATTING = false;
+
+    try (InputStream stream = new FileInputStream(input)) {
+      Properties eclipseProperties = new Properties();
+      eclipseProperties.load(stream);
+      new EclipseCodeStylePropertiesImporter().importProperties(eclipseProperties, settings);
+      assertEquals(1, javaSettings.BLANK_LINES_AFTER_IMPORTS);
+      assertEquals(8, indentOptions.CONTINUATION_INDENT_SIZE);
+      assertTrue(javaCustomSettings.ENABLE_JAVADOC_FORMATTING);
+    }
+  }
+}

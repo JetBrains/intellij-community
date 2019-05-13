@@ -1,28 +1,13 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.encapsulateFields;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.psi.*;
-import com.intellij.psi.util.PropertyUtil;
 import com.intellij.psi.util.PsiFormatUtil;
+import com.intellij.psi.util.PsiFormatUtilBase;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.JavaRefactoringSettings;
 import com.intellij.refactoring.RefactoringBundle;
@@ -31,10 +16,9 @@ import com.intellij.refactoring.ui.RefactoringDialog;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.RefactoringMessageUtil;
 import com.intellij.ui.*;
+import com.intellij.ui.table.JBTable;
 import com.intellij.util.IconUtil;
-import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ui.EmptyIcon;
-import com.intellij.util.ui.Table;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 
@@ -49,14 +33,16 @@ import java.awt.event.*;
 import java.util.Set;
 
 public class EncapsulateFieldsDialog extends RefactoringDialog implements EncapsulateFieldsDescriptor {
-  private static final Logger LOG = Logger.getInstance(
-          "#com.intellij.refactoring.encapsulateFields.EncapsulateFieldsDialog"
-  );
+  private static final Logger LOG = Logger.getInstance(EncapsulateFieldsDialog.class);
+
+  private static final String REFACTORING_NAME = RefactoringBundle.message("encapsulate.fields.title");
 
   private static final int CHECKED_COLUMN = 0;
   private static final int FIELD_COLUMN = 1;
   private static final int GETTER_COLUMN = 2;
   private static final int SETTER_COLUMN = 3;
+
+  private final EncapsulateFieldHelper myHelper;
 
   private final Project myProject;
   private final PsiClass myClass;
@@ -84,8 +70,9 @@ public class EncapsulateFieldsDialog extends RefactoringDialog implements Encaps
   private final JRadioButton myRbAccessorProtected = new JRadioButton();
   private final JRadioButton myRbAccessorPrivate = new JRadioButton();
   private final JRadioButton myRbAccessorPackageLocal = new JRadioButton();
-  private static final String REFACTORING_NAME = RefactoringBundle.message("encapsulate.fields.title");
   private DocCommentPanel myJavadocPolicy;
+
+  private boolean myCbUseAccessorWhenAccessibleValue;
 
   {
     myRbAccessorPackageLocal.setFocusable(false);
@@ -99,10 +86,11 @@ public class EncapsulateFieldsDialog extends RefactoringDialog implements Encaps
     myRbFieldProtected.setFocusable(false);
   }
 
-  public EncapsulateFieldsDialog(Project project, PsiClass aClass, final Set preselectedFields) {
+  public EncapsulateFieldsDialog(Project project, PsiClass aClass, final Set preselectedFields, EncapsulateFieldHelper helper) {
     super(project, true);
     myProject = project;
     myClass = aClass;
+    myHelper = helper;
 
     String title = REFACTORING_NAME;
     String qName = myClass.getQualifiedName();
@@ -111,7 +99,7 @@ public class EncapsulateFieldsDialog extends RefactoringDialog implements Encaps
     }
     setTitle(title);
 
-    myFields = myClass.getFields();
+    myFields = myHelper.getApplicableFields(myClass);
     myFieldNames = new String[myFields.length];
     myCheckedMarks = new boolean[myFields.length];
     myFinalMarks = new boolean[myFields.length];
@@ -125,79 +113,50 @@ public class EncapsulateFieldsDialog extends RefactoringDialog implements Encaps
       myFinalMarks[idx] = field.hasModifierProperty(PsiModifier.FINAL);
       myFieldNames[idx] =
               PsiFormatUtil.formatVariable(field,
-                                           PsiFormatUtil.SHOW_NAME | PsiFormatUtil.SHOW_TYPE | PsiFormatUtil.TYPE_AFTER,
+                                           PsiFormatUtilBase.SHOW_NAME | PsiFormatUtilBase.SHOW_TYPE | PsiFormatUtilBase.TYPE_AFTER,
                                            PsiSubstitutor.EMPTY
               );
-      myGetterNames[idx] = PropertyUtil.suggestGetterName(myProject, field);
-      mySetterNames[idx] = PropertyUtil.suggestSetterName(myProject, field);
-      myGetterPrototypes[idx] = generateMethodPrototype(field, myGetterNames[idx], true);
-      mySetterPrototypes[idx] = generateMethodPrototype(field, mySetterNames[idx], false);
+      myGetterNames[idx] = myHelper.suggestGetterName(field);
+      mySetterNames[idx] = myHelper.suggestSetterName(field);
+      myGetterPrototypes[idx] = myHelper.generateMethodPrototype(field, myGetterNames[idx], true);
+      mySetterPrototypes[idx] = myHelper.generateMethodPrototype(field, mySetterNames[idx], false);
     }
 
     init();
   }
 
-  public PsiField[] getSelectedFields() {
+  @Override
+  public FieldDescriptor[] getSelectedFields() {
     int[] rows = getCheckedRows();
-    PsiField[] selectedFields = new PsiField[rows.length];
+    FieldDescriptor[] descriptors = new FieldDescriptor[rows.length];
+
     for (int idx = 0; idx < rows.length; idx++) {
-      selectedFields[idx] = myFields[rows[idx]];
+      descriptors[idx] = new FieldDescriptorImpl(
+        myFields[rows[idx]],
+        myGetterNames[rows[idx]],
+        mySetterNames[rows[idx]],
+        isToEncapsulateGet()
+          ? myGetterPrototypes[rows[idx]]
+          : null,
+        isToEncapsulateSet()
+          ? mySetterPrototypes[rows[idx]]
+          : null
+      );
     }
-    return selectedFields;
+    return descriptors;
   }
 
-  public String[] getGetterNames() {
-    int[] rows = getCheckedRows();
-    String[] selectedGetters = new String[rows.length];
-    for (int idx = 0; idx < rows.length; idx++) {
-      selectedGetters[idx] = myGetterNames[rows[idx]];
-    }
-    return selectedGetters;
-  }
-
-  public String[] getSetterNames() {
-    int[] rows = getCheckedRows();
-    String[] selectedSetters = new String[rows.length];
-    for (int idx = 0; idx < rows.length; idx++) {
-      selectedSetters[idx] = mySetterNames[rows[idx]];
-    }
-    return selectedSetters;
-  }
-
-  public PsiMethod[] getGetterPrototypes() {
-    if (isToEncapsulateGet()) {
-      int[] rows = getCheckedRows();
-      PsiMethod[] selectedGetters = new PsiMethod[rows.length];
-      for (int idx = 0; idx < rows.length; idx++) {
-        selectedGetters[idx] = myGetterPrototypes[rows[idx]];
-      }
-      return selectedGetters;
-    } else {
-      return null;
-    }
-  }
-
-  public PsiMethod[] getSetterPrototypes() {
-    if (isToEncapsulateSet()) {
-      int[] rows = getCheckedRows();
-      PsiMethod[] selectedSetters = new PsiMethod[rows.length];
-      for (int idx = 0; idx < rows.length; idx++) {
-        selectedSetters[idx] = mySetterPrototypes[rows[idx]];
-      }
-      return selectedSetters;
-    } else {
-      return null;
-    }
-  }
-
+  @Override
   public boolean isToEncapsulateGet() {
     return myCbEncapsulateGet.isSelected();
   }
 
+  @Override
   public boolean isToEncapsulateSet() {
     return myCbEncapsulateSet.isSelected();
   }
 
+  @Override
   public boolean isToUseAccessorsWhenAccessible() {
     if (getFieldsVisibility() == null) {
       // "as is"
@@ -206,6 +165,7 @@ public class EncapsulateFieldsDialog extends RefactoringDialog implements Encaps
     return myCbUseAccessorsWhenAccessible.isSelected();
   }
 
+  @Override
   @PsiModifier.ModifierConstant
   public String getFieldsVisibility() {
     if (myRbFieldPrivate.isSelected()) {
@@ -222,16 +182,24 @@ public class EncapsulateFieldsDialog extends RefactoringDialog implements Encaps
     }
   }
 
+  @Override
   public int getJavadocPolicy() {
     return myJavadocPolicy.getPolicy();
   }
 
+  @Override
+  public PsiClass getTargetClass() {
+    return myClass;
+  }
+
+  @Override
   protected String getDimensionServiceKey() {
     return "#com.intellij.refactoring.encapsulateFields.EncalpsulateFieldsDialog";
   }
 
+  @Override
   @PsiModifier.ModifierConstant
-public String getAccessorsVisibility() {
+  public String getAccessorsVisibility() {
     if (myRbAccessorPublic.isSelected()) {
       return PsiModifier.PUBLIC;
     } else if (myRbAccessorProtected.isSelected()) {
@@ -246,6 +214,7 @@ public String getAccessorsVisibility() {
     }
   }
 
+  @Override
   protected JComponent createCenterPanel() {
     JPanel panel = new JPanel(new BorderLayout());
     panel.add(createTable(), BorderLayout.CENTER);
@@ -277,6 +246,7 @@ public String getAccessorsVisibility() {
     myCbEncapsulateGet.setSelected(true);
     myCbEncapsulateSet.setSelected(true);
     ActionListener checkboxListener = new ActionListener() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         if (myCbEncapsulateGet.equals(e.getSource())) {
           if (!myCbEncapsulateGet.isSelected()) {
@@ -296,14 +266,25 @@ public String getAccessorsVisibility() {
     myCbEncapsulateGet.addActionListener(checkboxListener);
     myCbEncapsulateSet.addActionListener(checkboxListener);
     myRbFieldAsIs.addItemListener(new ItemListener() {
+      @Override
       public void itemStateChanged(ItemEvent e) {
-        myCbUseAccessorsWhenAccessible.setEnabled(!myRbFieldAsIs.isSelected());
+        if (myRbFieldAsIs.isSelected()) {
+          myCbUseAccessorWhenAccessibleValue = myCbUseAccessorsWhenAccessible.isSelected();
+
+          myCbUseAccessorsWhenAccessible.setSelected(true);
+          myCbUseAccessorsWhenAccessible.setEnabled(false);
+        }
+        else {
+          myCbUseAccessorsWhenAccessible.setEnabled(true);
+          myCbUseAccessorsWhenAccessible.setSelected(myCbUseAccessorWhenAccessibleValue);
+        }
       }
     }
     );
     myCbUseAccessorsWhenAccessible.setSelected(
             JavaRefactoringSettings.getInstance().ENCAPSULATE_FIELDS_USE_ACCESSORS_WHEN_ACCESSIBLE
     );
+    myCbUseAccessorWhenAccessibleValue = myCbUseAccessorsWhenAccessible.isSelected();
 
     myRbFieldPrivate.setSelected(true);
     myRbAccessorPublic.setSelected(true);
@@ -375,7 +356,7 @@ public String getAccessorsVisibility() {
 
   private JComponent createTable() {
     myTableModel = new MyTableModel();
-    myTable = new Table(myTableModel);
+    myTable = new JBTable(myTableModel);
     myTable.setSurrendersFocusOnKeystroke(true);
     MyTableRenderer renderer = new MyTableRenderer();
     TableColumnModel columnModel = myTable.getColumnModel();
@@ -383,7 +364,7 @@ public String getAccessorsVisibility() {
     columnModel.getColumn(FIELD_COLUMN).setCellRenderer(renderer);
     columnModel.getColumn(GETTER_COLUMN).setCellRenderer(renderer);
     columnModel.getColumn(SETTER_COLUMN).setCellRenderer(renderer);
-    columnModel.getColumn(CHECKED_COLUMN).setMaxWidth(new JCheckBox().getPreferredSize().width);
+    TableUtil.setupCheckboxColumn(columnModel.getColumn(CHECKED_COLUMN));
 
     myTable.setPreferredScrollableViewportSize(new Dimension(550, myTable.getRowHeight() * 12));
     myTable.getSelectionModel().setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
@@ -399,6 +380,7 @@ public String getAccessorsVisibility() {
 
     // make ESC and ENTER work when focus is in the table
     myTable.registerKeyboardAction(new ActionListener() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         TableCellEditor editor = myTable.getCellEditor();
         if (editor != null) {
@@ -414,6 +396,7 @@ public String getAccessorsVisibility() {
     inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_SPACE, 0), "enable_disable");
     @NonNls ActionMap actionMap = myTable.getActionMap();
     actionMap.put("enable_disable", new AbstractAction() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         if (myTable.isEditing()) return;
         int[] rows = myTable.getSelectedRows();
@@ -437,6 +420,7 @@ public String getAccessorsVisibility() {
     // make ENTER work when the table has focus
     inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), "invokeImpl");
     actionMap.put("invokeImpl", new AbstractAction() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         TableCellEditor editor = myTable.getCellEditor();
         if (editor != null) {
@@ -450,10 +434,12 @@ public String getAccessorsVisibility() {
     return panel;
   }
 
+  @Override
   public JComponent getPreferredFocusedComponent() {
     return myTable;
   }
 
+  @Override
   protected void doAction() {
     if (myTable.isEditing()) {
       TableCellEditor editor = myTable.getCellEditor();
@@ -487,13 +473,13 @@ public String getAccessorsVisibility() {
         String name;
         if (isToEncapsulateGet()) {
           name = myGetterNames[idx];
-          if (!JavaPsiFacade.getInstance(manager.getProject()).getNameHelper().isIdentifier(name)) {
+          if (!PsiNameHelper.getInstance(manager.getProject()).isIdentifier(name)) {
             return RefactoringMessageUtil.getIncorrectIdentifierMessage(name);
           }
         }
         if (!myFinalMarks[idx] && isToEncapsulateSet()) {
           name = mySetterNames[idx];
-          if (!JavaPsiFacade.getInstance(manager.getProject()).getNameHelper().isIdentifier(name)) {
+          if (!PsiNameHelper.getInstance(manager.getProject()).isIdentifier(name)) {
             return RefactoringMessageUtil.getIncorrectIdentifierMessage(name);
           }
         }
@@ -505,21 +491,6 @@ public String getAccessorsVisibility() {
   @Override
   protected boolean areButtonsValid() {
     return getCheckedRows().length > 0;
-  }
-
-  private PsiMethod generateMethodPrototype(PsiField field, String methodName, boolean isGetter) {
-    PsiMethod prototype = isGetter
-                          ? PropertyUtil.generateGetterPrototype(field)
-                          : PropertyUtil.generateSetterPrototype(field);
-    try {
-      PsiElementFactory factory = JavaPsiFacade.getInstance(field.getProject()).getElementFactory();
-      PsiIdentifier identifier = factory.createIdentifier(methodName);
-      prototype.getNameIdentifier().replace(identifier);
-      //prototype.getModifierList().setModifierProperty(getAccessorsVisibility(), true);
-      return prototype;
-    } catch (IncorrectOperationException e) {
-      return null;
-    }
   }
 
   private int[] getCheckedRows() {
@@ -539,19 +510,23 @@ public String getAccessorsVisibility() {
     return rows;
   }
 
-  protected void doHelpAction() {
-    HelpManager.getInstance().invokeHelp(HelpID.ENCAPSULATE_FIELDS);
+  @Override
+  protected String getHelpId() {
+    return HelpID.ENCAPSULATE_FIELDS;
   }
 
   private class MyTableModel extends AbstractTableModel {
+    @Override
     public int getColumnCount() {
       return 4;
     }
 
+    @Override
     public int getRowCount() {
       return myFields.length;
     }
 
+    @Override
     public Class getColumnClass(int columnIndex) {
       if (columnIndex == CHECKED_COLUMN) {
         return Boolean.class;
@@ -559,10 +534,11 @@ public String getAccessorsVisibility() {
       return super.getColumnClass(columnIndex);
     }
 
+    @Override
     public Object getValueAt(int rowIndex, int columnIndex) {
       switch (columnIndex) {
         case CHECKED_COLUMN:
-          return myCheckedMarks[rowIndex] ? Boolean.TRUE : Boolean.FALSE;
+          return myCheckedMarks[rowIndex];
         case FIELD_COLUMN:
           return myFieldNames[rowIndex];
         case GETTER_COLUMN:
@@ -574,6 +550,7 @@ public String getAccessorsVisibility() {
       }
     }
 
+    @Override
     public String getColumnName(int column) {
       switch (column) {
         case CHECKED_COLUMN:
@@ -589,6 +566,7 @@ public String getAccessorsVisibility() {
       }
     }
 
+    @Override
     public boolean isCellEditable(int rowIndex, int columnIndex) {
       if (columnIndex == CHECKED_COLUMN) return true;
       if (myCheckedMarks[rowIndex]) {
@@ -600,6 +578,7 @@ public String getAccessorsVisibility() {
       return false;
     }
 
+    @Override
     public void setValueAt(final Object aValue, final int rowIndex, final int columnIndex) {
       if (columnIndex == CHECKED_COLUMN) {
         myCheckedMarks[rowIndex] = ((Boolean) aValue).booleanValue();
@@ -610,12 +589,12 @@ public String getAccessorsVisibility() {
         switch (columnIndex) {
           case GETTER_COLUMN:
             myGetterNames[rowIndex] = name;
-            myGetterPrototypes[rowIndex] = generateMethodPrototype(field, name, true);
+            myGetterPrototypes[rowIndex] = myHelper.generateMethodPrototype(field, name, true);
             break;
 
           case SETTER_COLUMN:
             mySetterNames[rowIndex] = name;
-            mySetterPrototypes[rowIndex] = generateMethodPrototype(field, name, false);
+            mySetterPrototypes[rowIndex] = myHelper.generateMethodPrototype(field, name, false);
             break;
 
           default:
@@ -626,6 +605,7 @@ public String getAccessorsVisibility() {
   }
 
   private class MyTableRenderer extends DefaultTableCellRenderer {
+    @Override
     public Component getTableCellRendererComponent(JTable table, final Object value,
                                                    boolean isSelected, boolean hasFocus, final int row,
                                                    final int column) {
@@ -638,8 +618,8 @@ public String getAccessorsVisibility() {
         case FIELD_COLUMN:
           {
             Icon icon = field.getIcon(Iconable.ICON_FLAG_VISIBILITY);
-            MyTableRenderer.this.setIcon(icon);
-            MyTableRenderer.this.setDisabledIcon(icon);
+            setIcon(icon);
+            setDisabledIcon(icon);
             configureColors(isSelected, table, hasFocus, row, column);
             break;
           }
@@ -669,21 +649,19 @@ public String getAccessorsVisibility() {
                 }
               }
             } else {
-              MyTableRenderer.this.setForeground(JBColor.RED);
+              setForeground(JBColor.RED);
             }
 
-            RowIcon icon = new RowIcon(2);
-            icon.setIcon(methodIcon, 0);
-            icon.setIcon(overrideIcon, 1);
-            MyTableRenderer.this.setIcon(icon);
-            MyTableRenderer.this.setDisabledIcon(icon);
+            RowIcon icon = new RowIcon(methodIcon, overrideIcon);
+            setIcon(icon);
+            setDisabledIcon(icon);
             break;
           }
 
         default:
           {
-            MyTableRenderer.this.setIcon(null);
-            MyTableRenderer.this.setDisabledIcon(null);
+            setIcon(null);
+            setDisabledIcon(null);
           }
       }
       boolean enabled = myCheckedMarks[row];

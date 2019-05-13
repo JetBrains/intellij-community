@@ -16,21 +16,22 @@
 package com.intellij.mock;
 
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.UnloadedModuleDescription;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.FileIndexFacade;
+import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 /**
  * @author yole
  */
 public class MockFileIndexFacade extends FileIndexFacade {
   private final Module myModule;
-  private final List<VirtualFile> myLibraryRoots = new ArrayList<VirtualFile>();
+  private final List<VirtualFile> myLibraryRoots = new ArrayList<>();
 
   public MockFileIndexFacade(final Project project) {
     super(project);
@@ -63,7 +64,7 @@ public class MockFileIndexFacade extends FileIndexFacade {
   }
 
   @Override
-  public boolean isInLibrarySource(VirtualFile file) {
+  public boolean isInLibrarySource(@NotNull VirtualFile file) {
     return false;
   }
 
@@ -73,13 +74,30 @@ public class MockFileIndexFacade extends FileIndexFacade {
   }
 
   @Override
-  public Module getModuleForFile(VirtualFile file) {
+  public boolean isUnderIgnored(@NotNull VirtualFile file) {
+    return false;
+  }
+
+  @Override
+  public Module getModuleForFile(@NotNull VirtualFile file) {
     return myModule;
   }
 
   @Override
-  public boolean isValidAncestor(VirtualFile baseDir, VirtualFile child) {
+  public boolean isValidAncestor(@NotNull VirtualFile baseDir, @NotNull VirtualFile child) {
     return VfsUtilCore.isAncestor(baseDir, child, false);
+  }
+
+  @NotNull
+  @Override
+  public ModificationTracker getRootModificationTracker() {
+    return ModificationTracker.NEVER_CHANGED;
+  }
+
+  @NotNull
+  @Override
+  public Collection<UnloadedModuleDescription> getUnloadedModuleDescriptions() {
+    return Collections.emptySet();
   }
 
   public void addLibraryRoot(VirtualFile file) {

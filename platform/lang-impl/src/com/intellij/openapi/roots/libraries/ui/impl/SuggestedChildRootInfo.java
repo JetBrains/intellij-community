@@ -19,6 +19,7 @@ import com.intellij.openapi.roots.libraries.LibraryRootType;
 import com.intellij.openapi.roots.libraries.ui.DetectedLibraryRoot;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
 import java.util.Map;
@@ -32,17 +33,19 @@ class SuggestedChildRootInfo {
   private final Map<LibraryRootType, String> myRootTypeNames;
   private LibraryRootType mySelectedRootType;
 
-  SuggestedChildRootInfo(VirtualFile rootCandidate, DetectedLibraryRoot detectedRoot, Map<LibraryRootType, String> rootTypeNames) {
+  SuggestedChildRootInfo(@NotNull VirtualFile rootCandidate, @NotNull DetectedLibraryRoot detectedRoot, @NotNull Map<LibraryRootType, String> rootTypeNames) {
     myRootCandidate = rootCandidate;
     myDetectedRoot = detectedRoot;
     myRootTypeNames = rootTypeNames;
     mySelectedRootType = detectedRoot.getTypes().get(0);
   }
 
+  @NotNull
   public VirtualFile getRootCandidate() {
     return myRootCandidate;
   }
 
+  @NotNull
   public DetectedLibraryRoot getDetectedRoot() {
     return myDetectedRoot;
   }
@@ -51,6 +54,7 @@ class SuggestedChildRootInfo {
     return myRootTypeNames.get(type);
   }
 
+  @NotNull
   public LibraryRootType getSelectedRootType() {
     return mySelectedRootType;
   }
@@ -64,6 +68,7 @@ class SuggestedChildRootInfo {
     }
   }
 
+  @NotNull
   public String[] getRootTypeNames() {
     final String[] types = ArrayUtil.toStringArray(myRootTypeNames.values());
     Arrays.sort(types, String.CASE_INSENSITIVE_ORDER);

@@ -22,7 +22,6 @@ import org.jetbrains.annotations.NotNull;
  * {@link Alignment.Anchor#LEFT anchors to the left block edge}.
  * 
  * @author Denis Zhdanov
- * @since 4/28/11 4:03 PM
  */
 public class LeftEdgeAlignmentProcessor extends AbstractBlockAlignmentProcessor {
 
@@ -38,7 +37,7 @@ public class LeftEdgeAlignmentProcessor extends AbstractBlockAlignmentProcessor 
       return new IndentData(whiteSpace.getIndentSpaces(), whiteSpace.getSpaces());
     }
     else {
-      final int offsetBeforeBlock = CoreFormatterUtil.getOffsetBefore(offsetResponsibleBlock);
+      final int offsetBeforeBlock = CoreFormatterUtil.getStartColumn(offsetResponsibleBlock);
       final AbstractBlockWrapper prevIndentedBlock = CoreFormatterUtil.getIndentedParentBlock(context.targetBlock);
       if (prevIndentedBlock == null) {
         return new IndentData(0, offsetBeforeBlock);

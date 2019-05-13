@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,37 +15,38 @@
  */
 package com.intellij.core;
 
+import com.intellij.configurationStore.DefaultStateSerializerKt;
 import com.intellij.mock.MockProject;
 import com.intellij.openapi.components.ComponentManager;
 import com.intellij.openapi.components.PathMacroManager;
-import com.intellij.openapi.components.impl.stores.DirectoryStorageData;
-import com.intellij.openapi.components.impl.stores.StorageData;
+import com.intellij.openapi.components.impl.stores.DirectoryStorageUtil;
+import com.intellij.openapi.components.impl.stores.FileStorageCoreUtil;
 import com.intellij.openapi.module.ModuleManager;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.roots.impl.ProjectRootManagerImpl;
+import com.intellij.openapi.roots.impl.libraries.LibraryStateSplitter;
 import com.intellij.openapi.roots.impl.libraries.LibraryTableBase;
 import com.intellij.openapi.roots.impl.libraries.ProjectLibraryTable;
-import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import org.jdom.Document;
+import com.intellij.project.ProjectKt;
+import com.intellij.util.JdomKt;
 import org.jdom.Element;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.ByteArrayInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.util.Map;
 
 /**
  * @author yole
  */
 public class CoreProjectLoader {
-  public static boolean loadProject(MockProject project, @NotNull VirtualFile virtualFile)
-    throws IOException, JDOMException, InvalidDataException {
-    if (virtualFile.isDirectory() && virtualFile.findChild(Project.DIRECTORY_STORE_FOLDER) != null) {
+  public static boolean loadProject(MockProject project, @NotNull VirtualFile virtualFile) throws IOException, JDOMException {
+    VirtualFile ideaDir = ProjectKt.getProjectStoreDirectory(virtualFile);
+    if (ideaDir != null) {
       project.setBaseDir(virtualFile);
-      loadDirectoryProject(project, virtualFile);
+      loadDirectoryProject(project, ideaDir);
       return true;
     }
 
@@ -53,12 +54,13 @@ public class CoreProjectLoader {
     return false;
   }
 
-  private static void loadDirectoryProject(MockProject project, VirtualFile projectDir) throws IOException, JDOMException,
-                                                                                           InvalidDataException {
-    VirtualFile dotIdea = projectDir.findChild(Project.DIRECTORY_STORE_FOLDER);
+  private static void loadDirectoryProject(MockProject project, @NotNull VirtualFile dotIdea) throws IOException, JDOMException {
     VirtualFile modulesXml = dotIdea.findChild("modules.xml");
-    StorageData storageData = loadStorageFile(project, modulesXml);
-    final Element moduleManagerState = storageData.getState("ProjectModuleManager");
+    if (modulesXml == null)
+      throw new FileNotFoundException("Missing 'modules.xml' in " + dotIdea.getPath());
+
+    Map<String, Element> storageData = loadStorageFile(project, modulesXml);
+    final Element moduleManagerState = storageData.get("ProjectModuleManager");
     if (moduleManagerState == null) {
       throw new JDOMException("cannot find ProjectModuleManager state in modules.xml");
     }
@@ -66,18 +68,19 @@ public class CoreProjectLoader {
     moduleManager.loadState(moduleManagerState);
 
     VirtualFile miscXml = dotIdea.findChild("misc.xml");
-    storageData = loadStorageFile(project, miscXml);
-    final Element projectRootManagerState = storageData.getState("ProjectRootManager");
-    if (projectRootManagerState == null) {
-      throw new JDOMException("cannot find ProjectRootManager state in misc.xml");
+    if (miscXml != null) {
+      storageData = loadStorageFile(project, miscXml);
+      final Element projectRootManagerState = storageData.get("ProjectRootManager");
+      if (projectRootManagerState == null) {
+        throw new JDOMException("cannot find ProjectRootManager state in misc.xml");
+      }
+      ((ProjectRootManagerImpl)ProjectRootManager.getInstance(project)).loadState(projectRootManagerState);
     }
-    ((ProjectRootManagerImpl) ProjectRootManager.getInstance(project)).readExternal(projectRootManagerState);
 
     VirtualFile libraries = dotIdea.findChild("libraries");
     if (libraries != null) {
-      DirectoryStorageData data = new DirectoryStorageData();
-      data.loadFrom(libraries, PathMacroManager.getInstance(project).createTrackingSubstitutor());
-      final Element libraryTable = data.getMergedState("libraryTable", Element.class, new ProjectLibraryTable.LibraryStateSplitter(), null);
+      Map<String, Element> data = DirectoryStorageUtil.loadFrom(libraries, PathMacroManager.getInstance(project));
+      Element libraryTable = DefaultStateSerializerKt.deserializeState(DirectoryStorageUtil.getCompositeState(data, new LibraryStateSplitter()), Element.class, null);
       ((LibraryTableBase) ProjectLibraryTable.getInstance(project)).loadState(libraryTable);
     }
 
@@ -85,12 +88,8 @@ public class CoreProjectLoader {
     project.projectOpened();
   }
 
-  public static StorageData loadStorageFile(ComponentManager componentManager, VirtualFile modulesXml) throws JDOMException, IOException {
-    final Document document = JDOMUtil.loadDocument(new ByteArrayInputStream(modulesXml.contentsToByteArray()));
-    StorageData storageData = new StorageData("project");
-    final Element element = document.getRootElement();
-    PathMacroManager.getInstance(componentManager).expandPaths(element);
-    storageData.load(element);
-    return storageData;
+  @NotNull
+  static Map<String, Element> loadStorageFile(@NotNull ComponentManager componentManager, @NotNull VirtualFile modulesXml) throws JDOMException, IOException {
+    return FileStorageCoreUtil.load(JdomKt.loadElement(modulesXml.getInputStream()), PathMacroManager.getInstance(componentManager));
   }
 }

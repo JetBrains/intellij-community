@@ -8,7 +8,7 @@ public class NotAFIT {
     }
 
     void bar() {
-        foo(<error descr="Multiple non-overriding abstract methods found">() ->{}</error>);
+        foo(<error descr="Multiple non-overriding abstract methods found in interface NotAFIT.First.A">() ->{}</error>);
     }
   }
 
@@ -25,7 +25,7 @@ public class NotAFIT {
     }
 
     void bar() {
-      foo(<error descr="Multiple non-overriding abstract methods found">()->{}</error>);
+      foo(<error descr="Multiple non-overriding abstract methods found in interface NotAFIT.WithInheritance.B">()->{}</error>);
     }
   }
 

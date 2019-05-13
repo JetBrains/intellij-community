@@ -33,6 +33,7 @@ public abstract class JpsCompositeElementBase<Self extends JpsCompositeElementBa
     myContainer = JpsExElementFactory.getInstance().createContainerCopy(original.myContainer, this);
   }
 
+  @Override
   public void applyChanges(@NotNull Self modified) {
     myContainer.applyChanges(modified.myContainer);
   }

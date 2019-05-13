@@ -23,14 +23,14 @@ import java.util.List;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Aug 6, 2010
  */
 public abstract class AntDomChecksumTask extends AntDomPropertyDefiningTask {
 
   @Attribute("verifyproperty")
   public abstract GenericAttributeValue<String> getVerifyProperty();
-  
 
+
+  @Override
   protected List<GenericAttributeValue<String>> getPropertyDefiningAttributes() {
     final GenericAttributeValue<String> verifyProperty = getVerifyProperty();
     if (verifyProperty.getRawText() != null) {
@@ -38,5 +38,5 @@ public abstract class AntDomChecksumTask extends AntDomPropertyDefiningTask {
     }
     return Collections.singletonList(getPropertyName());
   }
-  
+
 }

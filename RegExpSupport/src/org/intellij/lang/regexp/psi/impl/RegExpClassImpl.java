@@ -16,14 +16,12 @@
 package org.intellij.lang.regexp.psi.impl;
 
 import com.intellij.lang.ASTNode;
-
-import org.jetbrains.annotations.NotNull;
-
-import org.intellij.lang.regexp.psi.RegExpClass;
-import org.intellij.lang.regexp.psi.RegExpElementVisitor;
-import org.intellij.lang.regexp.psi.RegExpClassElement;
-import org.intellij.lang.regexp.RegExpTT;
 import org.intellij.lang.regexp.RegExpElementTypes;
+import org.intellij.lang.regexp.RegExpTT;
+import org.intellij.lang.regexp.psi.RegExpClass;
+import org.intellij.lang.regexp.psi.RegExpClassElement;
+import org.intellij.lang.regexp.psi.RegExpElementVisitor;
+import org.jetbrains.annotations.NotNull;
 
 public class RegExpClassImpl extends RegExpElementImpl implements RegExpClass {
 
@@ -31,21 +29,24 @@ public class RegExpClassImpl extends RegExpElementImpl implements RegExpClass {
         super(astNode);
     }
 
+    @Override
     public boolean isNegated() {
-        final ASTNode node = getNode().getFirstChildNode();
+        final ASTNode node = getNode().getFirstChildNode().getTreeNext();
         return node != null && node.getElementType() == RegExpTT.CARET;
     }
 
+    @Override
     @NotNull
     public RegExpClassElement[] getElements() {
         final ASTNode[] nodes = getNode().getChildren(RegExpElementTypes.CLASS_ELEMENTS);
-        RegExpClassElement[] e = new RegExpClassElement[nodes.length];
+        final RegExpClassElement[] e = new RegExpClassElement[nodes.length];
         for (int i = 0; i < e.length; i++) {
             e[i] = (RegExpClassElement)nodes[i].getPsi();
         }
         return e;
     }
 
+    @Override
     public void accept(RegExpElementVisitor visitor) {
         visitor.visitRegExpClass(this);
     }

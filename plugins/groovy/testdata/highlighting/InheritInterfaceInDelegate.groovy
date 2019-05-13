@@ -17,4 +17,4 @@ class Foo implements I {
 
 
 X foo = new Foo()
-A foo2 = <warning descr="Cannot assign 'Foo' to 'A'">new Foo()</warning>
+A <warning descr="Cannot assign 'Foo' to 'A'">foo2</warning> = new Foo()

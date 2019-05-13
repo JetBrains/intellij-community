@@ -24,14 +24,15 @@ import java.util.List;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: 6/24/12
  */
 public abstract class AntDomClasspathComponent extends AntDomNamedElement implements AntDomClasspathElement {
 
+  @Override
   @Attribute("classpath")
   @Convert(value = AntMultiPathStringConverter.class)
   public abstract GenericAttributeValue<List<File>> getClasspath();
 
+  @Override
   @Attribute("classpathref")
   @Convert(value = AntDomRefIdConverter.class)
   public abstract GenericAttributeValue<AntDomElement> getClasspathRef();

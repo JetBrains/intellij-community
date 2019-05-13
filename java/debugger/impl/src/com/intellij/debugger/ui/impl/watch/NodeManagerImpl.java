@@ -1,38 +1,26 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.ui.impl.watch;
 
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluationContext;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.impl.DebuggerContextImpl;
+import com.intellij.debugger.impl.DebuggerUtilsEx;
+import com.intellij.debugger.jdi.JvmtiError;
 import com.intellij.debugger.jdi.StackFrameProxyImpl;
 import com.intellij.debugger.ui.impl.nodes.NodeComparator;
 import com.intellij.debugger.ui.tree.DebuggerTreeNode;
 import com.intellij.debugger.ui.tree.NodeDescriptor;
 import com.intellij.debugger.ui.tree.NodeManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.util.StringBuilderSpinAllocator;
-import com.intellij.util.containers.HashMap;
+import com.sun.jdi.InternalException;
 import com.sun.jdi.Location;
 import com.sun.jdi.Method;
-import com.sun.jdi.ReferenceType;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -46,7 +34,7 @@ public class NodeManagerImpl extends NodeDescriptorFactoryImpl implements NodeMa
 
   private final DebuggerTree myDebuggerTree;
   private String myHistoryKey = null;
-  private final Map<String, DescriptorTree> myHistories = new HashMap<String, DescriptorTree>();
+  private final Map<String, DescriptorTree> myHistories = new HashMap<>();
 
   public NodeManagerImpl(Project project, DebuggerTree tree) {
     super(project);
@@ -57,6 +45,8 @@ public class NodeManagerImpl extends NodeDescriptorFactoryImpl implements NodeMa
     return ourNodeComparator;
   }
 
+  @Override
+  @NotNull
   public DebuggerTreeNodeImpl createNode(NodeDescriptor descriptor, EvaluationContext evaluationContext) {
     ((NodeDescriptorImpl)descriptor).setContext((EvaluationContextImpl)evaluationContext);
     return DebuggerTreeNodeImpl.createNode(getTree(), (NodeDescriptorImpl)descriptor, (EvaluationContextImpl)evaluationContext);
@@ -70,16 +60,22 @@ public class NodeManagerImpl extends NodeDescriptorFactoryImpl implements NodeMa
     return DebuggerTreeNodeImpl.createNodeNoUpdate(getTree(), descriptor);
   }
 
+  @Override
+  @NotNull
   public DebuggerTreeNodeImpl createMessageNode(String message) {
     return DebuggerTreeNodeImpl.createNodeNoUpdate(getTree(), new MessageDescriptor(message));
   }
 
   public void setHistoryByContext(final DebuggerContextImpl context) {
+    setHistoryByContext(context.getFrameProxy());
+  }
+
+  public void setHistoryByContext(StackFrameProxyImpl frameProxy) {
     if (myHistoryKey != null) {
       myHistories.put(myHistoryKey, getCurrentHistoryTree());
     }
 
-    final String historyKey = getContextKey(context.getFrameProxy());
+    final String historyKey = getContextKey(frameProxy);
     final DescriptorTree descriptorTree;
     if (historyKey != null) {
       final DescriptorTree historyTree = myHistories.get(historyKey);
@@ -89,7 +85,7 @@ public class NodeManagerImpl extends NodeDescriptorFactoryImpl implements NodeMa
       descriptorTree = new DescriptorTree(true);
     }
 
-    deriveHistoryTree(descriptorTree, context);
+    deriveHistoryTree(descriptorTree, frameProxy);
     myHistoryKey = historyKey;
   }
 
@@ -106,21 +102,23 @@ public class NodeManagerImpl extends NodeDescriptorFactoryImpl implements NodeMa
     }
     try {
       final Location location = frame.location();
-      final Method method = location.method();
-      final ReferenceType referenceType = location.declaringType();
-      final StringBuilder builder = StringBuilderSpinAllocator.alloc();
-      try {
-        return builder.append(referenceType.signature()).append("#").append(method.name()).append(method.signature()).toString();
+      final Method method = DebuggerUtilsEx.getMethod(location);
+      if (method == null) {
+        return null;
       }
-      finally {
-        StringBuilderSpinAllocator.dispose(builder);
+      return location.declaringType().signature() + "#" + method.name() + method.signature();
+    }
+    catch (EvaluateException ignored) {
+    }
+    catch (InternalException ie) {
+      if (ie.errorCode() != JvmtiError.INVALID_METHODID) {
+        throw ie;
       }
     }
-    catch (EvaluateException e) {
-      return null;
-    }
+    return null;
   }
 
+  @Override
   public void dispose() {
     myHistories.clear();
     super.dispose();

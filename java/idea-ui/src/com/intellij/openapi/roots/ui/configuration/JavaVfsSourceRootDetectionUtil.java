@@ -55,7 +55,7 @@ public class JavaVfsSourceRootDetectionUtil {
     }
 
     final FileTypeManager typeManager = FileTypeManager.getInstance();
-    final ArrayList<VirtualFile> foundDirectories = new ArrayList<VirtualFile>();
+    final ArrayList<VirtualFile> foundDirectories = new ArrayList<>();
     try {
       VfsUtilCore.visitChildrenRecursively(dir, new VirtualFileVisitor() {
         @NotNull
@@ -69,7 +69,7 @@ public class JavaVfsSourceRootDetectionUtil {
             }
           }
           else {
-            FileType type = typeManager.getFileTypeByFileName(file.getName());
+            FileType type = typeManager.getFileTypeByFileName(file.getNameSequence());
             if (StdFileTypes.JAVA == type) {
               VirtualFile root = suggestRootForJavaFile(file);
               if (root != null) {

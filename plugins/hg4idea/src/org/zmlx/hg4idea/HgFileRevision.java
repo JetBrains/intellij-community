@@ -12,21 +12,18 @@
 // limitations under the License.
 package org.zmlx.hg4idea;
 
-import com.google.common.base.Objects;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.RepositoryLocation;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.history.VcsFileRevision;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.zmlx.hg4idea.command.HgCatCommand;
 import org.zmlx.hg4idea.util.HgUtil;
 
 import java.io.IOException;
-import java.io.UnsupportedEncodingException;
-import java.nio.charset.Charset;
 import java.util.Date;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 
 public class HgFileRevision implements VcsFileRevision {
@@ -41,11 +38,11 @@ public class HgFileRevision implements VcsFileRevision {
   private final Set<String> myFilesModified;
   private final Set<String> myFilesAdded;
   private final Set<String> myFilesDeleted;
-  private Map<String,String> myFilesCopied;
+  private final Map<String, String> myFilesMoved; // actually we collect moved and track copied as added
 
   public HgFileRevision(Project project, @NotNull HgFile hgFile, @NotNull HgRevisionNumber vcsRevisionNumber,
                         String branchName, Date revisionDate, String author, String commitMessage,
-                        Set<String> filesModified, Set<String> filesAdded, Set<String> filesDeleted, Map<String, String> filesCopied) {
+                        Set<String> filesModified, Set<String> filesAdded, Set<String> filesDeleted, Map<String, String> filesMoved) {
     myProject = project;
     myFile = hgFile;
     myRevisionNumber = vcsRevisionNumber;
@@ -56,13 +53,16 @@ public class HgFileRevision implements VcsFileRevision {
     myFilesModified = filesModified;
     myFilesAdded = filesAdded;
     myFilesDeleted = filesDeleted;
-    myFilesCopied = filesCopied;
+    myFilesMoved = filesMoved;
   }
 
+  @Override
+  @NotNull
   public HgRevisionNumber getRevisionNumber() {
     return myRevisionNumber;
   }
 
+  @Override
   public String getBranchName() {
     return myBranchName;
   }
@@ -73,50 +73,51 @@ public class HgFileRevision implements VcsFileRevision {
     return null;
   }
 
+  @Override
   public Date getRevisionDate() {
     return myRevisionDate;
   }
 
+  @Override
+  @Nullable
   public String getAuthor() {
     return myAuthor;
   }
 
+  @Override
+  @Nullable
   public String getCommitMessage() {
     return myCommitMessage;
   }
 
+  @NotNull
   public Set<String> getModifiedFiles() {
     return myFilesModified;
   }
 
+  @NotNull
   public Set<String> getAddedFiles() {
     return myFilesAdded;
   }
 
+  @NotNull
   public Set<String> getDeletedFiles() {
     return myFilesDeleted;
   }
 
-  public Map<String, String> getCopiedFiles() {
-    return myFilesCopied;
+  @NotNull
+  public Map<String, String> getMovedFiles() {
+    return myFilesMoved;
   }
 
-  public byte[] loadContent() throws IOException, VcsException {
-    try {
-      Charset charset = myFile.toFilePath().getCharset();
-
-      HgFile fileToCat = HgUtil.getFileNameInTargetRevision(myProject, myRevisionNumber, myFile);
-      String result = new HgCatCommand(myProject).execute(fileToCat, myRevisionNumber, charset);
-      if (result == null) {
-        return new byte[0];
-      } else {
-        return result.getBytes(charset.name());
-      }
-    } catch (UnsupportedEncodingException e) {
-      throw new VcsException(e);
-    }
+  @Override
+  @NotNull
+  public byte[] loadContent() {
+    final HgFile fileToCat = HgUtil.getFileNameInTargetRevision(myProject, myRevisionNumber, myFile);
+    return HgUtil.loadContent(myProject, myRevisionNumber, fileToCat);
   }
 
+  @Override
   public byte[] getContent() throws IOException, VcsException {
     return loadContent();
   }
@@ -144,6 +145,6 @@ public class HgFileRevision implements VcsFileRevision {
 
   @Override
   public int hashCode() {
-    return Objects.hashCode(myFile, myRevisionNumber);
+    return Objects.hash(myFile, myRevisionNumber);
   }
 }

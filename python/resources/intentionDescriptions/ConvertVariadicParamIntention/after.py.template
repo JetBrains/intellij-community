@@ -1,0 +1,2 @@
+def foo(foo, **kwargs):
+    doSomething(foo)

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,18 +15,31 @@
  */
 package com.intellij.application.options.emmet;
 
+import com.intellij.codeInsight.template.emmet.generators.ZenCodingGenerator;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurableProvider;
+import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * User: zolotov
- * Date: 2/20/13
- */
+import java.util.List;
+
 public class EmmetConfigurableProvider extends ConfigurableProvider {
   @Nullable
   @Override
   public Configurable createConfigurable() {
-    return new EmmetConfigurable();
+    final List<Configurable> availableConfigurables = getAvailableConfigurables();
+    return availableConfigurables.size() == 1 
+           ? new EmmetCompositeConfigurable(ContainerUtil.getFirstItem(availableConfigurables))
+           : new EmmetCompositeConfigurable(availableConfigurables);
+  }
+
+  @NotNull
+  public static List<Configurable> getAvailableConfigurables() {
+    List<Configurable> configurables = ContainerUtil.newSmartList(new XmlEmmetConfigurable());
+    for (ZenCodingGenerator zenCodingGenerator : ZenCodingGenerator.getInstances()) {
+      ContainerUtil.addIfNotNull(configurables, zenCodingGenerator.createConfigurable());
+    }
+    return configurables;
   }
 }

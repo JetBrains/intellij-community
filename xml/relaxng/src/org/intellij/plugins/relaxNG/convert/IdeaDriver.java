@@ -61,7 +61,6 @@ public class IdeaDriver {
     myProject = project;
   }
 
-  @SuppressWarnings({ "ThrowableInstanceNeverThrown" })
   public void convert(SchemaType inputType, IdeaErrorHandler errorHandler, VirtualFile... inputFiles) {
     if (inputFiles.length == 0) {
       throw new IllegalArgumentException();
@@ -79,16 +78,14 @@ public class IdeaDriver {
       final SchemaType type = settings.getOutputType();
       final String outputType = type.toString().toLowerCase();
 
-      final ArrayList<String> inputParams = new ArrayList<String>();
+      final ArrayList<String> inputParams = new ArrayList<>();
 
       if (inputType != SchemaType.DTD) {
         final Charset charset = inputFile.getCharset();
-        if (charset != null) {
-          inputParams.add("encoding=" + charset.name());
-        }
+        inputParams.add("encoding=" + charset.name());
       }
 
-      final ArrayList<String> outputParams = new ArrayList<String>();
+      final ArrayList<String> outputParams = new ArrayList<>();
       settings.addAdvancedSettings(inputParams, outputParams);
 
 //      System.out.println("INPUT: " + inputParams);
@@ -133,13 +130,14 @@ public class IdeaDriver {
                 length > 0 ? length : DEFAULT_LINE_LENGTH, 
                 indent > 0 ? indent : DEFAULT_INDENT)
         {
+          @Override
           public Stream open(String sourceUri, String encoding) throws IOException {
-            final String s = super.reference(null, sourceUri);
+            final String s = reference(null, sourceUri);
             final File file = new File(outputFile.getParentFile(), s);
             if (file.exists()) {
               final String msg = "The file '" + file.getAbsolutePath() + "' already exists. Overwrite it?";
               final int choice = Messages.showYesNoDialog(myProject, msg, "Output File Exists", Messages.getWarningIcon());
-              if (choice == 0) {
+              if (choice == Messages.YES) {
                 return super.open(sourceUri, encoding);
               } else if (choice == 1) {
                 throw new CanceledException();

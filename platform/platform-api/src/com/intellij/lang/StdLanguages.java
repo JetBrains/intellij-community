@@ -29,7 +29,7 @@ public class StdLanguages {
    *
    * @deprecated use {@linkplain com.intellij.lang.java.JavaLanguage#INSTANCE} instead.
    */
-  public static Language JAVA = StdFileTypes.JAVA.getLanguage();
+  @Deprecated public static Language JAVA = StdFileTypes.JAVA.getLanguage();
 
   /**
    * The definition for the DTD language.
@@ -77,7 +77,7 @@ public class StdLanguages {
   public static Language PROPERTIES = StdFileTypes.PROPERTIES.getLanguage();
 
   /**
-   * @deprecated use CssSupportLoader
+   * @deprecated use {@link com.intellij.psi.css.CssSupportLoader} instead
    */
   @Deprecated
   public static Language CSS;

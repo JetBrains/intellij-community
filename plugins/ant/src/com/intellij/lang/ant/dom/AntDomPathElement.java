@@ -31,7 +31,6 @@ import java.util.Set;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Jun 22, 2010
  */
 public abstract class AntDomPathElement extends AntDomFilesProviderImpl{
 
@@ -43,15 +42,17 @@ public abstract class AntDomPathElement extends AntDomFilesProviderImpl{
   @Convert(value = AntMultiPathStringConverter.class)
   public abstract GenericAttributeValue<List<File>> getPath();
 
-  
+
+  @Override
   @Nullable
   protected AntDomPattern getAntPattern() {
     return null; // not available
   }
-  
-  @NotNull 
+
+  @Override
+  @NotNull
   protected List<File> getFiles(AntDomPattern pattern, Set<AntFilesProvider> processed) {
-    final List<File> files = new ArrayList<File>();
+    final List<File> files = new ArrayList<>();
     final File baseDir = getCanonicalFile(".");
 
     addLocation(baseDir, files, getLocation().getStringValue());

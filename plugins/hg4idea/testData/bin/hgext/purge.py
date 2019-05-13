@@ -20,15 +20,26 @@
 # GNU General Public License for more details.
 #
 # You should have received a copy of the GNU General Public License
-# along with this program; if not, write to the Free Software
-# Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+# along with this program; if not, see <http://www.gnu.org/licenses/>.
 
 '''command to delete untracked files from the working directory'''
 
-from mercurial import util, commands, cmdutil
+from mercurial import util, commands, cmdutil, scmutil
 from mercurial.i18n import _
 import os, stat
 
+cmdtable = {}
+command = cmdutil.command(cmdtable)
+testedwith = 'internal'
+
+@command('purge|clean',
+    [('a', 'abort-on-err', None, _('abort if an error occurs')),
+    ('',  'all', None, _('purge ignored files too')),
+    ('p', 'print', None, _('print filenames instead of deleting them')),
+    ('0', 'print0', None, _('end filenames with NUL, for use with xargs'
+                            ' (implies -p/--print)')),
+    ] + commands.walkopts,
+    _('hg purge [OPTION]... [DIR]...'))
 def purge(ui, repo, *dirs, **opts):
     '''removes files not tracked by Mercurial
 
@@ -37,7 +48,7 @@ def purge(ui, repo, *dirs, **opts):
 
     This means that purge will delete:
 
-    - Unknown files: files marked with "?" by "hg status"
+    - Unknown files: files marked with "?" by :hg:`status`
     - Empty directories: in fact Mercurial ignores directories unless
       they contain files under source control management
 
@@ -45,7 +56,7 @@ def purge(ui, repo, *dirs, **opts):
 
     - Modified and unmodified tracked files
     - Ignored files (unless --all is specified)
-    - New files added to the repository (with "hg add")
+    - New files added to the repository (with :hg:`add`)
 
     If directories are given on the command line, only files in these
     directories are considered.
@@ -85,27 +96,15 @@ def purge(ui, repo, *dirs, **opts):
             os.remove(path)
 
     directories = []
-    match = cmdutil.match(repo, dirs, opts)
+    match = scmutil.match(repo[None], dirs, opts)
     match.dir = directories.append
     status = repo.status(match=match, ignored=opts['all'], unknown=True)
 
     for f in sorted(status[4] + status[5]):
-        ui.note(_('Removing file %s\n') % f)
+        ui.note(_('removing file %s\n') % f)
         remove(removefile, f)
 
     for f in sorted(directories, reverse=True):
         if match(f) and not os.listdir(repo.wjoin(f)):
-            ui.note(_('Removing directory %s\n') % f)
+            ui.note(_('removing directory %s\n') % f)
             remove(os.rmdir, f)
-
-cmdtable = {
-    'purge|clean':
-        (purge,
-         [('a', 'abort-on-err', None, _('abort if an error occurs')),
-          ('',  'all', None, _('purge ignored files too')),
-          ('p', 'print', None, _('print filenames instead of deleting them')),
-          ('0', 'print0', None, _('end filenames with NUL, for use with xargs'
-                                  ' (implies -p/--print)')),
-         ] + commands.walkopts,
-         _('hg purge [OPTION]... [DIR]...'))
-}

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,6 +26,10 @@ public enum DisplayPriority {
    */
   GENERAL_SETTINGS,
   /**
+   * Font settings
+   */
+  FONT_SETTINGS,
+  /**
    * Any generic settings normally used by multiple languages.
    */
   COMMON_SETTINGS,
@@ -34,7 +38,7 @@ public enum DisplayPriority {
    */
   CODE_SETTINGS,
   /**
-   * Key IDE language priority (depends on product), for exmaple, Java for IDEA, PHP for PhpStorm etc.
+   * Key IDE language priority (depends on product), for example, Java for IntelliJ IDEA, PHP for PhpStorm etc.
    */
   KEY_LANGUAGE_SETTINGS,
   /**

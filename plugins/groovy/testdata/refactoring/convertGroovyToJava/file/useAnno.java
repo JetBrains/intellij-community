@@ -1,7 +1,7 @@
 @p.I package p;
 
 public @interface I {
-public int x() ;
+public abstract int x() ;
 }
 @p.I public class A {
 @p.I public A() {}

@@ -1,36 +1,26 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.plugins.groovy.util;
 
 import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VirtualFileFilter;
 import com.intellij.pom.PomDeclarationSearcher;
 import com.intellij.pom.PomTarget;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture;
 import com.intellij.util.CollectConsumer;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.LocalTimeCounter;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.extensions.NamedArgumentDescriptor;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
@@ -57,7 +47,10 @@ public abstract class TestUtils {
   public static final String GROOVY_JAR = "groovy-all.jar";
   public static final String GROOVY_JAR_17 = "groovy-all-1.7.jar";
   public static final String GROOVY_JAR_18 = "groovy-1.8.0-beta-2.jar";
-  public static final String GROOVY_JAR_21 = "groovy-all-2.1.0-beta-1.jar";
+  public static final String GROOVY_JAR_21 = "groovy-all-2.1.3.jar";
+  public static final String GROOVY_JAR_22 = "groovy-all-2.2.0-beta-1.jar";
+  public static final String GROOVY_JAR_23 = "groovy-all-2.3.0.jar";
+  public static final String GROOVY_JAR_30 = "groovy-3.0.0-alpha-2.jar";
 
   public static String getMockJdkHome() {
     return getAbsoluteTestDataPath() + "/mockJDK";
@@ -87,12 +80,36 @@ public abstract class TestUtils {
     return getAbsoluteTestDataPath() + "/mockGroovyLib2.1";
   }
 
+  private static String getMockGroovy2_2LibraryHome() {
+    return getAbsoluteTestDataPath() + "/mockGroovyLib2.2";
+  }
+
+  private static String getMockGroovy2_3LibraryHome() {
+    return getAbsoluteTestDataPath() + "/mockGroovyLib2.3";
+  }
+
+  private static String getMockGroovy3_0LibraryHome() {
+    return getAbsoluteTestDataPath() + "/mockGroovyLib3.0";
+  }
+
   public static String getMockGroovy1_8LibraryName() {
-    return getMockGroovy1_8LibraryHome()+"/"+GROOVY_JAR_18;
+    return getMockGroovy1_8LibraryHome() + "/" + GROOVY_JAR_18;
   }
 
   public static String getMockGroovy2_1LibraryName() {
     return getMockGroovy2_1LibraryHome() + "/" + GROOVY_JAR_21;
+  }
+
+  public static String getMockGroovy2_2LibraryName() {
+    return getMockGroovy2_2LibraryHome() + "/" + GROOVY_JAR_22;
+  }
+
+  public static String getMockGroovy2_3LibraryName() {
+    return getMockGroovy2_3LibraryHome() + "/" + GROOVY_JAR_23;
+  }
+
+  public static String getMockGroovy3_0LibraryName() {
+    return getMockGroovy3_0LibraryHome() + "/" + GROOVY_JAR_30;
   }
 
   public static PsiFile createPseudoPhysicalGroovyFile(final Project project, final String text) throws IncorrectOperationException {
@@ -127,6 +144,12 @@ public abstract class TestUtils {
     return text.substring(0, index) + text.substring(index + END_MARKER.length());
   }
 
+  /**
+   * Reads input file which consists at least of two sections separated with "-----" line
+   * @param filePath file to read
+   * @return a list of sections read from the file
+   * @throws RuntimeException if any IO problem occurs
+   */
   public static List<String> readInput(String filePath) {
     String content;
     try {
@@ -137,7 +160,7 @@ public abstract class TestUtils {
     }
     Assert.assertNotNull(content);
 
-    List<String> input = new ArrayList<String>();
+    List<String> input = new ArrayList<>();
 
     int separatorIndex;
     content = StringUtil.replace(content, "\r", ""); // for MACs
@@ -156,7 +179,7 @@ public abstract class TestUtils {
     input.add(content);
 
     Assert.assertTrue("No data found in source file", input.size() > 0);
-    Assert.assertNotNull("Test output points to null", input.size() > 1);
+    Assert.assertTrue("Test output points to null", input.size() > 1);
 
     return input;
   }
@@ -194,12 +217,37 @@ public abstract class TestUtils {
     }
 
     if (missedVariants.size() > 0) {
-      Assert.assertTrue("Some completion variants are missed " + missedVariants, false);
+      Assert.fail("Some completion variants are missed " + missedVariants);
     }
   }
 
+  public static void checkCompletionType(JavaCodeInsightTestFixture fixture, String lookupString, String expectedTypeCanonicalText) {
+    LookupElement[] lookupElements = fixture.completeBasic();
+    PsiType type = null;
+
+    for (LookupElement lookupElement : lookupElements) {
+      if (lookupElement.getLookupString().equals(lookupString)) {
+        PsiElement element = lookupElement.getPsiElement();
+        if (element instanceof PsiField) {
+          type = ((PsiField)element).getType();
+          break;
+        }
+        if (element instanceof PsiMethod) {
+          type = ((PsiMethod)element).getReturnType();
+          break;
+        }
+      }
+    }
+
+    if (type == null) {
+      Assert.fail("No field or method called '" + lookupString + "' found in completion lookup elements");
+    }
+
+    Assert.assertEquals(expectedTypeCanonicalText, type.getCanonicalText());
+  }
+
   public static void checkResolve(PsiFile file, final String ... expectedUnresolved) {
-    final List<String> actualUnresolved = new ArrayList<String>();
+    final List<String> actualUnresolved = new ArrayList<>();
 
     final StringBuilder sb = new StringBuilder();
     final String text = file.getText();
@@ -220,7 +268,7 @@ public abstract class TestUtils {
           }
 
           if (psiReference.resolve() == null) {
-            CollectConsumer<PomTarget> consumer = new CollectConsumer<PomTarget>();
+            CollectConsumer<PomTarget> consumer = new CollectConsumer<>();
 
             for (PomDeclarationSearcher searcher : PomDeclarationSearcher.EP_NAME.getExtensions()) {
               searcher.findDeclarationsAt(psiReference, 0, consumer);
@@ -233,7 +281,7 @@ public abstract class TestUtils {
 
               String name = nameElement.getText();
 
-              assert name.equals(psiReference.getName());
+              assert name.equals(psiReference.getReferenceName());
 
               int last = lastUnresolvedRef.get();
               sb.append(text, last, nameElement.getTextOffset());
@@ -259,4 +307,12 @@ public abstract class TestUtils {
     Assert.assertEquals(sb.toString(), Arrays.asList(expectedUnresolved), actualUnresolved);
   }
 
+  public static PsiMethod[] getMethods(PsiClass aClass) {
+    //workaround for IDEA-148973: Groovy static compilation fails to compile calls of overriding methods with covariant type in interfaces
+    return aClass.getMethods();
+  }
+
+  public static void disableAstLoading(@NotNull Project project, @NotNull Disposable parent) {
+    PsiManagerEx.getInstanceEx(project).setAssertOnFileLoadingFilter(VirtualFileFilter.ALL, parent);
+  }
 }

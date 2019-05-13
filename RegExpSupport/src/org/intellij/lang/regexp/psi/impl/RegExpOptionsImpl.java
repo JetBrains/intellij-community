@@ -16,7 +16,6 @@
 package org.intellij.lang.regexp.psi.impl;
 
 import com.intellij.lang.ASTNode;
-
 import org.intellij.lang.regexp.psi.RegExpElementVisitor;
 import org.intellij.lang.regexp.psi.RegExpOptions;
 
@@ -25,11 +24,13 @@ public class RegExpOptionsImpl extends RegExpElementImpl implements RegExpOption
         super(astNode);
     }
 
+    @Override
     public void accept(RegExpElementVisitor visitor) {
         visitor.visitRegExpOptions(this);
     }
 
+    @Override
     public boolean isSet(char option) {
-        return getUnescapedText().indexOf(option) != -1;
+        return getUnescapedText().indexOf(option) >= 0;
     }
 }

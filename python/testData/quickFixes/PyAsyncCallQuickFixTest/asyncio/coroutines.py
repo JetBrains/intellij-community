@@ -1,0 +1,2 @@
+def coroutine(fn):
+    pass

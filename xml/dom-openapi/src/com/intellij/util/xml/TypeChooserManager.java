@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,18 +25,21 @@ import java.util.concurrent.ConcurrentHashMap;
  * @author peter
  */
 public class TypeChooserManager {
-  private final Map<Type, TypeChooser> myClassChoosers = new ConcurrentHashMap<Type, TypeChooser>();
+  private final Map<Type, TypeChooser> myClassChoosers = new ConcurrentHashMap<>();
 
   public TypeChooser getTypeChooser(final Type type) {
     final TypeChooser typeChooser = myClassChoosers.get(type);
     return typeChooser != null ? typeChooser : new TypeChooser() {
+      @Override
       public Type chooseType(final XmlTag tag) {
         return type;
       }
 
+      @Override
       public void distinguishTag(final XmlTag tag, final Type aClass) {
       }
 
+      @Override
       public Type[] getChooserTypes() {
         return new Type[]{type};
       }

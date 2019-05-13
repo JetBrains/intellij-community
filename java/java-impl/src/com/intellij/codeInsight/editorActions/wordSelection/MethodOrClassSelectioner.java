@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,7 +20,8 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.javadoc.PsiDocComment;
-import com.intellij.util.containers.CollectionFactory;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
@@ -33,22 +34,20 @@ import java.util.List;
 
 public class MethodOrClassSelectioner extends BasicSelectioner {
   @Override
-  public boolean canSelect(PsiElement e) {
+  public boolean canSelect(@NotNull PsiElement e) {
     return (e instanceof PsiClass && !(e instanceof PsiTypeParameter) || e instanceof PsiMethod) &&
            e.getLanguage() == JavaLanguage.INSTANCE;
   }
 
   @Override
-  public List<TextRange> select(PsiElement e, CharSequence editorText, int cursorOffset, Editor editor) {
-    List<TextRange> result = CollectionFactory.arrayList(e.getTextRange());
-    result.addAll(expandToWholeLinesWithBlanks(editorText, e.getTextRange()));
+  public List<TextRange> select(@NotNull PsiElement e, @NotNull CharSequence editorText, int cursorOffset, @NotNull Editor editor) {
+    List<TextRange> result = ContainerUtil.newArrayList();
 
     PsiElement firstChild = e.getFirstChild();
     PsiElement[] children = e.getChildren();
+    int i = 1;
 
     if (firstChild instanceof PsiDocComment) {
-      int i = 1;
-
       while (children[i] instanceof PsiWhiteSpace) {
         i++;
       }
@@ -59,10 +58,10 @@ public class MethodOrClassSelectioner extends BasicSelectioner {
 
       range = TextRange.create(firstChild.getTextRange());
       result.addAll(expandToWholeLinesWithBlanks(editorText, range));
-    }
-    else if (firstChild instanceof PsiComment) {
-      int i = 1;
 
+      firstChild = children[i++];
+    }
+    if (firstChild instanceof PsiComment) {
       while (children[i] instanceof PsiComment || children[i] instanceof PsiWhiteSpace) {
         i++;
       }
@@ -77,11 +76,16 @@ public class MethodOrClassSelectioner extends BasicSelectioner {
       result.addAll(expandToWholeLinesWithBlanks(editorText, range));
     }
 
+    result.add(e.getTextRange());
+    result.addAll(expandToWholeLinesWithBlanks(editorText, e.getTextRange()));
+
     if (e instanceof PsiClass) {
       result.addAll(selectWithTypeParameters((PsiClass)e));
       result.addAll(selectBetweenBracesLines(children, editorText));
     }
-
+    if (e instanceof PsiAnonymousClass) {
+      result.addAll(selectWholeBlock((PsiAnonymousClass)e));
+    }
 
     return result;
   }
@@ -103,6 +107,16 @@ public class MethodOrClassSelectioner extends BasicSelectioner {
       int end = CodeBlockOrInitializerSelectioner.findClosingBrace(children, start);
 
       return expandToWholeLinesWithBlanks(editorText, new TextRange(start, end));
+    }
+    return Collections.emptyList();
+  }
+
+  private static Collection<TextRange> selectWholeBlock(PsiClass c) {
+    PsiJavaToken[] tokens = PsiTreeUtil.getChildrenOfType(c, PsiJavaToken.class);
+    if (tokens != null && tokens.length == 2 &&
+        tokens[0].getTokenType() == JavaTokenType.LBRACE &&
+        tokens[1].getTokenType() == JavaTokenType.RBRACE) {
+      return Collections.singleton(new TextRange(tokens[0].getTextRange().getStartOffset(), tokens[1].getTextRange().getEndOffset()));
     }
     return Collections.emptyList();
   }

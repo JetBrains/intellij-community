@@ -6,8 +6,8 @@ public class Test {
   static <T> void foo(T... t){
   }
 
-  void fo<caret>o() {
-    //noinspection unchecked
+  void foo() {
+    //noinspection unc<caret>hecked
     foo(new ArrayList<String>());
   }
 }

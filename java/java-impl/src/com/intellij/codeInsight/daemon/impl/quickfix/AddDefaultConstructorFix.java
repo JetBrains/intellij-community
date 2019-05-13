@@ -24,7 +24,7 @@ import org.jetbrains.annotations.NotNull;
 
 public class AddDefaultConstructorFix extends AddMethodFix {
   public AddDefaultConstructorFix(PsiClass aClass) {
-    this(aClass, PsiUtil.getMaximumModifierForMember(aClass));
+    this(aClass, PsiUtil.getMaximumModifierForMember(aClass, false));
   }
 
   public AddDefaultConstructorFix(PsiClass aClass, @NotNull @PsiModifier.ModifierConstant final String modifier) {

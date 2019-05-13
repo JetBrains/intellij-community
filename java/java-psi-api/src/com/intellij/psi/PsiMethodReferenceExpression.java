@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,7 +20,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * Represents a method or constructor reference.
  */
-public interface PsiMethodReferenceExpression extends PsiReferenceExpression {
+public interface PsiMethodReferenceExpression extends PsiReferenceExpression, PsiFunctionalExpression {
   /**
    * Returns the type element used as the qualifier of the reference.
    *
@@ -28,11 +28,40 @@ public interface PsiMethodReferenceExpression extends PsiReferenceExpression {
    */
   @Nullable
   PsiTypeElement getQualifierType();
-  
+
   /**
-   * @return SAM type the method reference expression corresponds to
-   *         null when no SAM type could be found
-  */
+   * @return if there is only one possible compile-time declaration with only one possible invocation type,
+   *         regardless of the targeted function type return true, false otherwise
+   */
+  boolean isExact();
+
+  /**
+   * 15.12.2.1 Identify Potentially Applicable Methods
+   * .................................................
+   * A method reference (15.13) is potentially compatible with a functional interface type if, where the type's function type arity is n,
+   * there exists at least one potentially-applicable method for the method reference at arity n (15.13.1), and one of the following is true:
+   *   The method reference has the form ReferenceType::NonWildTypeArgumentsOpt Identifier and at least one potentially-applicable method either
+   *      i) is declared static and supports arity n, or
+   *      ii) is not declared static and supports arity n-1.
+   *   The method reference has some other form and at least one potentially-applicable method is not declared static.
+   */
+  @Override
+  boolean isPotentiallyCompatible(PsiType functionalInterfaceType);
+
+  /**
+   * @return potential applicable member for exact reference, otherwise null
+   */
   @Nullable
-  PsiType getFunctionalInterfaceType();
+  PsiMember getPotentiallyApplicableMember();
+
+  /**
+   * @return true if reference is of form ClassType::new
+   */
+  boolean isConstructor();
+
+  /**
+   * Potentially compatible, and if exact - congruent
+   */
+  @Override
+  boolean isAcceptable(PsiType left);
 }

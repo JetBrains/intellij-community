@@ -1,7 +1,8 @@
 package org.groovy.debug.hotswap;
 
-import org.objectweb.asm.*;
+import com.tonicsystems.jarjar.asm.*;
 
+import java.lang.String;
 import java.lang.instrument.ClassFileTransformer;
 import java.lang.instrument.IllegalClassFormatException;
 import java.lang.instrument.Instrumentation;
@@ -18,7 +19,15 @@ import java.security.ProtectionDomain;
  */
 @SuppressWarnings({"UtilityClassWithoutPrivateConstructor", "UnusedDeclaration"})
 public class ResetAgent {
-  private static final String timStampFieldStart = "__timeStamp__239_neverHappen";
+  private static final String timeStampFieldStart = "__timeStamp__239_neverHappen";
+  private static final byte[] timeStampFieldStartBytes;
+  
+  static {
+    timeStampFieldStartBytes = new byte[timeStampFieldStart.length()];
+    for (int i = 0; i < timeStampFieldStart.length(); i++) {
+      timeStampFieldStartBytes[i] = (byte)timeStampFieldStart.charAt(i);
+    }
+  }
 
   private static boolean initialized;
 
@@ -30,6 +39,12 @@ public class ResetAgent {
     initialized = true;
     inst.addTransformer(new ClassFileTransformer() {
       public byte[] transform(ClassLoader loader, String className, Class<?> classBeingRedefined, ProtectionDomain protectionDomain, byte[] classfileBuffer) throws IllegalClassFormatException {
+        if (className.indexOf('$') >= 0) {
+          // non-toplevel Groovy classes don't have timestamp fields, so don't Java classes and lambdas
+          // let's not care about presumably rare dollar-named Groovy classes
+          return null;
+        }
+
         if (classBeingRedefined != null) {
           try {
             Field callSiteArrayField = classBeingRedefined.getDeclaredField("$callSiteArray");
@@ -44,18 +59,30 @@ public class ResetAgent {
     });
   }
 
-  private static boolean hasTimestampField(byte[] buffer) {
-    try {
-      return new String(buffer, "ISO-8859-1").contains(timStampFieldStart);
-    } catch (Throwable e) {
-      return true;
+  private static boolean matches(byte[] array, byte[] subArray, int start) {
+    for (int i = 1; i < subArray.length; i++) {
+      if (array[start + i] != subArray[i]) {
+        return false;
+      }
     }
+    return true;
+  }
+
+  private static boolean containsSubArray(byte[] array, byte[] subArray) {
+    int maxLength = array.length - subArray.length;
+    for (int i = 0; i < maxLength; i++) {
+      if (array[i] == subArray[0] && matches(array, subArray, i)) {
+        return true;
+      }
+    }
+    return false;
   }
 
   private static byte[] removeTimestampField(byte[] newBytes) {
-    if (!hasTimestampField(newBytes)) {
+    if (!containsSubArray(newBytes, timeStampFieldStartBytes)) {
       return null;
     }
+    
 
     final boolean[] changed = new boolean[]{false};
     final ClassWriter writer = new ClassWriter(0);
@@ -76,7 +103,7 @@ public class ResetAgent {
 
     @Override
     public FieldVisitor visitField(int i, String name, String s1, String s2, Object o) {
-      if (name.startsWith(timStampFieldStart)) {
+      if (name.startsWith(timeStampFieldStart)) {
         //remove the field
         changed[0] = true;
         return null;
@@ -92,7 +119,7 @@ public class ResetAgent {
         return new MethodAdapter(mw) {
           @Override
           public void visitFieldInsn(int opCode, String s, String name, String desc) {
-            if (name.startsWith(timStampFieldStart) && opCode == Opcodes.PUTSTATIC) {
+            if (name.startsWith(timeStampFieldStart) && opCode == Opcodes.PUTSTATIC) {
               visitInsn(Type.LONG_TYPE.getDescriptor().equals(desc) ? Opcodes.POP2 : Opcodes.POP);
             } else {
               super.visitFieldInsn(opCode, s, name, desc);

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,6 +28,7 @@ import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.actions.VcsContext;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.io.File;
@@ -43,57 +44,58 @@ public abstract class ActionOnSelectedElement extends AbstractAction {
     VirtualFile[] selectedFiles = context.getSelectedFiles();
     File[] selectedIOFiles = context.getSelectedIOFiles();
     ArrayList result = new ArrayList();
-    if (selectedFiles != null) {
-      for (int i = 0; i < selectedFiles.length; i++) {
-        result.add(CvsVfsUtil.getFileFor(selectedFiles[i]));
-      }
+    for (VirtualFile selectedFile : selectedFiles) {
+      result.add(CvsVfsUtil.getFileFor(selectedFile));
     }
-    ;
     if (selectedIOFiles != null) ContainerUtil.addAll(result, selectedIOFiles);
-    return (File[])result.toArray(new File[result.size()]);
+    return (File[])result.toArray(new File[0]);
   }
 
   protected static CvsActionVisibility.Condition FILES_HAVE_PARENT_UNDER_CVS =
     new CvsActionVisibility.Condition() {
+      @Override
       public boolean isPerformedOn(CvsContext context) {
         return CvsUtil.filesHaveParentUnderCvs(getAllSelectedFiles(context));
       }
     };
 
-  protected static CvsActionVisibility.Condition FILES_ARENT_UNDER_CVS =
+  protected final static CvsActionVisibility.Condition FILES_ARENT_UNDER_CVS =
     new CvsActionVisibility.Condition() {
+      @Override
       public boolean isPerformedOn(CvsContext context) {
         return CvsUtil.filesArentUnderCvs(getAllSelectedFiles(context));
       }
     };
 
-  public static CvsActionVisibility.Condition FILES_ARE_UNDER_CVS =
+  public static final CvsActionVisibility.Condition FILES_ARE_UNDER_CVS =
     new CvsActionVisibility.Condition() {
+      @Override
       public boolean isPerformedOn(CvsContext context) {
         return CvsUtil.filesAreUnderCvs(getAllSelectedFiles(context));
       }
     };
 
-  public static CvsActionVisibility.Condition FILES_EXIST_IN_CVS =
+  public static final CvsActionVisibility.Condition FILES_EXIST_IN_CVS =
     new CvsActionVisibility.Condition() {
+      @Override
       public boolean isPerformedOn(CvsContext context) {
         return CvsUtil.filesExistInCvs(getAllSelectedFiles(context));
       }
     };
 
-  public static CvsActionVisibility.Condition FILES_ARE_NOT_DELETED =
+  public static final CvsActionVisibility.Condition FILES_ARE_NOT_DELETED =
     new CvsActionVisibility.Condition() {
+      @Override
       public boolean isPerformedOn(CvsContext context) {
         return CvsUtil.filesAreNotDeleted(getAllSelectedFiles(context));
       }
     };
 
   public static final CvsActionVisibility.Condition FILES_ARE_CHANGED = new CvsActionVisibility.Condition() {
+    @Override
     public boolean isPerformedOn(CvsContext context) {
       VirtualFile[] selectedFiles = context.getSelectedFiles();
-      if (selectedFiles == null) return false;
-      for (int i = 0; i < selectedFiles.length; i++) {
-        VirtualFile selectedFile = selectedFiles[i];
+      for (VirtualFile selectedFile : selectedFiles) {
         if (CvsStatusProvider.getStatus(selectedFile) == FileStatus.NOT_CHANGED) {
           return documentIsModified(selectedFile);
         }
@@ -103,9 +105,9 @@ public abstract class ActionOnSelectedElement extends AbstractAction {
   };
 
   public static final CvsActionVisibility.Condition FILES_ARE_NOT_IGNORED = new CvsActionVisibility.Condition() {
+    @Override
     public boolean isPerformedOn(CvsContext context) {
       VirtualFile[] selectedFiles = context.getSelectedFiles();
-      if (selectedFiles == null) return false;
       final CvsEntriesManager entriesManager = CvsEntriesManager.getInstance();
       for (VirtualFile selectedFile : selectedFiles) {
         if (entriesManager.fileIsIgnored(selectedFile)) return false;
@@ -115,9 +117,9 @@ public abstract class ActionOnSelectedElement extends AbstractAction {
   };
 
   public static final CvsActionVisibility.Condition FILES_ARE_LOCALLY_ADDED = new CvsActionVisibility.Condition() {
+    @Override
     public boolean isPerformedOn(CvsContext context) {
       VirtualFile[] selectedFiles = context.getSelectedFiles();
-      if (selectedFiles == null) return false;
       for (VirtualFile selectedFile : selectedFiles) {
         if (!CvsUtil.fileIsLocallyAdded(selectedFile)) return false;
       }
@@ -127,11 +129,9 @@ public abstract class ActionOnSelectedElement extends AbstractAction {
 
 
   private static boolean documentIsModified(final VirtualFile file) {
-    final boolean[] result = new boolean[]{false};
-    ApplicationManager.getApplication().runReadAction(new Runnable() {
-      public void run() {
-        result[0] = FileDocumentManager.getInstance().isFileModified(file);
-      }
+    final boolean[] result = {false};
+    ApplicationManager.getApplication().runReadAction(() -> {
+      result[0] = FileDocumentManager.getInstance().isFileModified(file);
     });
     return result[0];
   }
@@ -148,7 +148,8 @@ public abstract class ActionOnSelectedElement extends AbstractAction {
   }
 
 
-  public void update(AnActionEvent e) {
+  @Override
+  public void update(@NotNull AnActionEvent e) {
     getVisibility().applyToEvent(e);
   }
 

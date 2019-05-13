@@ -15,11 +15,11 @@
  */
 package com.intellij.util;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -29,10 +29,9 @@ import java.lang.reflect.InvocationTargetException;
  * Allows to execute {@link SequentialTask} under modal progress.
  * 
  * @author Denis Zhdanov
- * @since 9/27/11 2:52 PM
  */
 public class SequentialModalProgressTask extends Task.Modal {
-  private static final Logger LOG = Logger.getInstance("#" + SequentialModalProgressTask.class.getName());
+  private static final Logger LOG = Logger.getInstance(SequentialModalProgressTask.class);
   
   private static final long DEFAULT_MIN_ITERATION_MIN_TIME = 500;
 
@@ -86,27 +85,18 @@ public class SequentialModalProgressTask extends Task.Modal {
         task.stop();
         break;
       }
-      UIUtil.invokeAndWaitIfNeeded(new Runnable() {
-        @Override
-        public void run() {
-          long start = System.currentTimeMillis();
-          try {
-            while (!task.isDone() && System.currentTimeMillis() - start < myMinIterationTime) {
-              task.iteration();
-            }
-          }
-          catch (RuntimeException e) {
-            task.stop();
-            throw e;
+      ApplicationManager.getApplication().invokeAndWait(() -> {
+        long start = System.currentTimeMillis();
+        try {
+          while (!task.isDone() && System.currentTimeMillis() - start < myMinIterationTime) {
+            task.iteration(indicator);
           }
         }
+        catch (RuntimeException e) {
+          task.stop();
+          throw e;
+        }
       });
-      //if (ApplicationManager.getApplication().isDispatchThread()) {
-      //  runnable.run();
-      //}
-      //else {
-      //  ApplicationManagerEx.getApplicationEx().suspendReadAccessAndRunWriteAction(runnable);
-      //}
     }
   }
 
@@ -118,7 +108,6 @@ public class SequentialModalProgressTask extends Task.Modal {
     myTask = task;
   }
   
-  @Nullable
   public ProgressIndicator getIndicator() {
     return myIndicator;
   }
@@ -130,5 +119,24 @@ public class SequentialModalProgressTask extends Task.Modal {
    */
   protected void prepare(@NotNull SequentialTask task) {
     task.prepare();
+  }
+
+  public abstract static class Adapter extends SequentialModalProgressTask implements SequentialTask {
+    public Adapter(@Nullable Project project, @NotNull String title) {
+      super(project, title);
+      setTask(this);
+    }
+
+    public Adapter(@Nullable Project project, @NotNull String title, boolean canBeCancelled) {
+      super(project, title, canBeCancelled);
+    }
+
+    @Override
+    public void prepare() {
+    }
+
+    @Override
+    public void stop() {
+    }
   }
 }

@@ -20,9 +20,10 @@ import org.jetbrains.annotations.NotNull;
 /**
  * Represents a class indicated by [...]
  */
-public interface RegExpClass extends RegExpAtom {
+public interface RegExpClass extends RegExpAtom, RegExpClassElement {
+
     /**
-     * True, is the class is negated: [^...]
+     * @return true, if the class is negated: [^...]
      */
     boolean isNegated();
 

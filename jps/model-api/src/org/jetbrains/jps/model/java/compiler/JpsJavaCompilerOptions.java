@@ -15,27 +15,21 @@
  */
 package org.jetbrains.jps.model.java.compiler;
 
-import org.jetbrains.annotations.TestOnly;
+import com.intellij.util.xmlb.annotations.MapAnnotation;
+
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * @author nik
  */
-public class JpsJavaCompilerOptions {
+public class JpsJavaCompilerOptions implements CompilerOptions {
+  public boolean PREFER_TARGET_JDK_COMPILER = true;
   public boolean DEBUGGING_INFO = true;
   public boolean GENERATE_NO_WARNINGS = false;
   public boolean DEPRECATION = true;
   public String ADDITIONAL_OPTIONS_STRING = "";
+  @MapAnnotation(surroundWithTag = false, entryTagName = "module", keyAttributeName = "name", valueAttributeName = "options")
+  public Map<String, String> ADDITIONAL_OPTIONS_OVERRIDE = new HashMap<>();
   public int MAXIMUM_HEAP_SIZE = 128;
-
-  private boolean myTestsUseExternalCompiler = false;
-
-  @TestOnly
-  public boolean isTestsUseExternalCompiler() {
-    return myTestsUseExternalCompiler;
-  }
-
-  @TestOnly
-  public void setTestsUseExternalCompiler(boolean testsUseExternalCompiler) {
-    myTestsUseExternalCompiler = testsUseExternalCompiler;
-  }
 }

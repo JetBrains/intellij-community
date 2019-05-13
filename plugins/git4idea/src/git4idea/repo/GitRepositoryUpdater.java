@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,96 +16,58 @@
 package git4idea.repo;
 
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.project.Project;
+import com.intellij.openapi.progress.util.BackgroundTaskUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.openapi.vfs.newvfs.BulkFileListener;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
-import com.intellij.util.Consumer;
-import com.intellij.util.Processor;
-import com.intellij.util.concurrency.QueueProcessor;
-import com.intellij.util.messages.MessageBusConnection;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcsUtil.VcsUtil;
+import com.intellij.vfs.AsyncVfsEventsListener;
+import com.intellij.vfs.AsyncVfsEventsPostProcessor;
 import git4idea.util.GitFileUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collection;
 import java.util.List;
+import java.util.Set;
+
+import static com.intellij.dvcs.DvcsUtil.ensureAllChildrenInVfs;
+import static git4idea.repo.GitRepository.GIT_REPO_CHANGE;
 
 /**
  * Listens to .git service files changes and updates {@link GitRepository} when needed.
- * @author Kirill Likhodedov
  */
-final class GitRepositoryUpdater implements Disposable, BulkFileListener {
-  private final GitRepositoryFiles myRepositoryFiles;
-  private final MessageBusConnection myMessageBusConnection;
-  private final QueueProcessor<Object> myUpdateQueue;
-  private final Object DUMMY_UPDATE_OBJECT = new Object();
-  private final VirtualFile myRemotesDir;
-  private final VirtualFile myHeadsDir;
-  private final LocalFileSystem.WatchRequest myWatchRequest;
+final class GitRepositoryUpdater implements Disposable, AsyncVfsEventsListener {
 
+  @NotNull private final GitRepository myRepository;
+  @NotNull private final GitRepositoryFiles myRepositoryFiles;
+  @Nullable private final VirtualFile myRemotesDir;
+  @Nullable private final VirtualFile myHeadsDir;
+  @Nullable private final VirtualFile myTagsDir;
+  @NotNull private final Set<LocalFileSystem.WatchRequest> myWatchRequests;
 
-  GitRepositoryUpdater(GitRepository repository) {
-    VirtualFile gitDir = repository.getGitDir();
-    myWatchRequest = LocalFileSystem.getInstance().addRootToWatch(gitDir.getPath(), true);
+  GitRepositoryUpdater(@NotNull GitRepository repository, @NotNull GitRepositoryFiles gitFiles) {
+    myRepository = repository;
+    Collection<String> rootPaths = ContainerUtil.map(gitFiles.getRootDirs(), file -> file.getPath());
+    myWatchRequests = LocalFileSystem.getInstance().addRootsToWatch(rootPaths, true);
 
-    myRepositoryFiles = GitRepositoryFiles.getInstance(gitDir);
-    visitGitDirVfs(gitDir);
-    myHeadsDir = VcsUtil.getVirtualFile(myRepositoryFiles.getRefsHeadsPath());
-    myRemotesDir = VcsUtil.getVirtualFile(myRepositoryFiles.getRefsRemotesPath());
+    myRepositoryFiles = gitFiles;
+    visitSubDirsInVfs();
+    myHeadsDir = VcsUtil.getVirtualFile(myRepositoryFiles.getRefsHeadsFile());
+    myRemotesDir = VcsUtil.getVirtualFile(myRepositoryFiles.getRefsRemotesFile());
+    myTagsDir = VcsUtil.getVirtualFile(myRepositoryFiles.getRefsTagsFile());
 
-    Project project = repository.getProject();
-    myUpdateQueue = new QueueProcessor<Object>(new Updater(repository), project.getDisposed());
-    if (!project.isDisposed()) {
-      myMessageBusConnection = project.getMessageBus().connect();
-      myMessageBusConnection.subscribe(VirtualFileManager.VFS_CHANGES, this);
-    }
-    else {
-      myMessageBusConnection = null;
-    }
-  }
-
-  private static void visitGitDirVfs(@NotNull VirtualFile gitDir) {
-    gitDir.getChildren();
-    for (String subdir : GitRepositoryFiles.getSubDirRelativePaths()) {
-      VirtualFile dir = gitDir.findFileByRelativePath(subdir);
-      // process recursively, because we need to visit all branches under refs/heads and refs/remotes
-      visitAllChildrenRecursively(dir);
-    }
-  }
-
-  private static void visitAllChildrenRecursively(@Nullable VirtualFile dir) {
-    if (dir == null) {
-      return;
-    }
-    VfsUtil.processFilesRecursively(dir, new Processor<VirtualFile>() {
-      @Override
-      public boolean process(VirtualFile virtualFile) {
-        return true;
-      }
-    });
+    AsyncVfsEventsPostProcessor.getInstance().addListener(this, this);
   }
 
   @Override
   public void dispose() {
-    if (myWatchRequest != null) {
-      LocalFileSystem.getInstance().removeWatchedRoot(myWatchRequest);
-    }
-    if (myMessageBusConnection != null) {
-      myMessageBusConnection.disconnect();
-    }
+    LocalFileSystem.getInstance().removeWatchedRoots(myWatchRequests);
   }
 
   @Override
-  public void before(@NotNull List<? extends VFileEvent> events) {
-    // everything is handled in #after()
-  }
-
-  @Override
-  public void after(@NotNull List<? extends VFileEvent> events) {
+  public void filesChanged(@NotNull List<? extends VFileEvent> events) {
     // which files in .git were changed
     boolean configChanged = false;
     boolean headChanged = false;
@@ -113,48 +75,47 @@ final class GitRepositoryUpdater implements Disposable, BulkFileListener {
     boolean packedRefsChanged = false;
     boolean rebaseFileChanged = false;
     boolean mergeFileChanged = false;
+    boolean tagChanged = false;
     for (VFileEvent event : events) {
-      String filePath = event.getPath();
-      if (filePath == null) {
-        continue;
-      }
-      filePath = GitFileUtils.stripFileProtocolPrefix(filePath);
+      String filePath = GitFileUtils.stripFileProtocolPrefix(event.getPath());
       if (myRepositoryFiles.isConfigFile(filePath)) {
         configChanged = true;
       } else if (myRepositoryFiles.isHeadFile(filePath)) {
         headChanged = true;
       } else if (myRepositoryFiles.isBranchFile(filePath)) {
         // it is also possible, that a local branch with complex name ("folder/branch") was created => the folder also to be watched.
-        branchFileChanged = true;   
-        visitAllChildrenRecursively(myHeadsDir);
+          branchFileChanged = true;
+        ensureAllChildrenInVfs(myHeadsDir);
       } else if (myRepositoryFiles.isRemoteBranchFile(filePath)) {
         // it is possible, that a branch from a new remote was fetch => we need to add new remote folder to the VFS
         branchFileChanged = true;
-        visitAllChildrenRecursively(myRemotesDir);
+        ensureAllChildrenInVfs(myRemotesDir);
       } else if (myRepositoryFiles.isPackedRefs(filePath)) {
         packedRefsChanged = true;
       } else if (myRepositoryFiles.isRebaseFile(filePath)) {
         rebaseFileChanged = true;
       } else if (myRepositoryFiles.isMergeFile(filePath)) {
         mergeFileChanged = true;
+      } else if (myRepositoryFiles.isTagFile(filePath)) {
+        ensureAllChildrenInVfs(myTagsDir);
+        tagChanged = true;
       }
     }
 
     if (headChanged || configChanged || branchFileChanged || packedRefsChanged || rebaseFileChanged || mergeFileChanged) {
-      myUpdateQueue.add(DUMMY_UPDATE_OBJECT);
+      myRepository.update();
+    }
+    if (tagChanged || packedRefsChanged) {
+      BackgroundTaskUtil.syncPublisher(myRepository.getProject(), GIT_REPO_CHANGE).repositoryChanged(myRepository);
     }
   }
 
-  private static class Updater implements Consumer<Object> {
-    private final GitRepository myRepository;
-
-    public Updater(GitRepository repository) {
-      myRepository = repository;
+  private void visitSubDirsInVfs() {
+    for (VirtualFile rootDir : myRepositoryFiles.getRootDirs()) {
+      rootDir.getChildren();
     }
-
-    @Override
-    public void consume(Object dummy) {
-      myRepository.update();
+    for (String path : myRepositoryFiles.getDirsToWatch()) {
+      ensureAllChildrenInVfs(LocalFileSystem.getInstance().refreshAndFindFileByPath(path));
     }
   }
 }

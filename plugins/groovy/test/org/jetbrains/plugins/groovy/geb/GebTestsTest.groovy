@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.geb
 
 import org.jetbrains.plugins.groovy.codeInspection.assignment.GroovyAssignabilityCheckInspection
@@ -39,6 +25,18 @@ class FooTest extends geb.spock.GebReportingSpec {
   void testJUnitTestMemberCompletion() {
     myFixture.configureByText("FooTest.groovy", """
 class FooTest extends geb.junit4.GebReportingTest {
+    def testFoo() {
+      <caret>
+    }
+}
+""")
+
+    TestUtils.checkCompletionContains(myFixture, "\$()", "to()", "go()", "currentWindow", "verifyAt()", "title")
+  }
+  
+  void testTestNGTestMemberCompletion() {
+    myFixture.configureByText("FooTest.groovy", """
+class FooTest extends geb.testng.GebReportingTest {
     def testFoo() {
       <caret>
     }
@@ -80,6 +78,57 @@ class ParentClass extends geb.Page {
     TestUtils.checkCompletionContains(myFixture, "allElements()", "add()", "firstElement()")
   }
 
+  void testResolveContentFieldsAndMethods() {
+    myFixture.configureByText("PageWithContent.groovy", """
+class PageWithContent extends geb.Page {
+  static content = {
+    button { \$('button') }
+    formField { String name -> \$('input', name: name) }
+  }
+  
+  def someMethod() {
+    <caret>
+  }
+}
+""")
+
+    TestUtils.checkCompletionContains(myFixture, "button", "formField()")
+  }
+
+  void testContentElementsCompletionType() {
+    myFixture.configureByText("PageWithContent.groovy", """
+class PageWithContent extends geb.Page {
+  static content = {
+    button { \$('button') }
+    formField { String name -> \$('input', name: name) }
+  }
+  
+  def someMethod() {
+    <caret>
+  }
+}
+""")
+
+    TestUtils.checkCompletionType(myFixture, "button", "geb.navigator.Navigator")
+    TestUtils.checkCompletionType(myFixture, "formField", "geb.navigator.Navigator")
+  }
+
+  void testContentMethodReturnType() {
+    myFixture.configureByText("PageWithContent.groovy", """
+class PageWithContent extends geb.Page {
+  static content = {
+    formField { String name -> \$('input', name: name) }
+  }
+  
+  def someMethod() {
+    formField('username').<caret>
+  }
+}
+""")
+
+    TestUtils.checkCompletionContains(myFixture, "allElements()", "add()", "firstElement()")
+  }
+
   void testCheckHighlighting() {
     myFixture.enableInspections(GroovyAssignabilityCheckInspection)
 
@@ -90,11 +139,11 @@ class A extends geb.Page {
 
   static at = {
     int x = bbb
-    Boolean s = <warning>bbb</warning>
+    Boolean s = bbb
   }
 
   static content = {
-    someField<warning>()</warning>
+    someField<warning descr="'someField' cannot be applied to '()'">()</warning>
     aaa { "Aaa" }
     bbb { aaa.length() }
     ccc(required: false) { aaa.length() }

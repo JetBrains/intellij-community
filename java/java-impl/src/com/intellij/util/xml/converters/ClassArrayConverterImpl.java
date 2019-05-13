@@ -27,9 +27,6 @@ import org.jetbrains.annotations.NotNull;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * User: Sergey.Vasiliev
- */
 public class ClassArrayConverterImpl extends ClassArrayConverter {
   private static final JavaClassReferenceProvider REFERENCE_PROVIDER = new JavaClassReferenceProvider();
 
@@ -38,12 +35,13 @@ public class ClassArrayConverterImpl extends ClassArrayConverter {
     REFERENCE_PROVIDER.setAllowEmpty(true);
   }
 
+  @Override
   @NotNull
   public PsiReference[] createReferences(final GenericDomValue genericDomValue, final PsiElement element, final ConvertContext context) {
     final String s = genericDomValue.getStringValue();
     if (s != null) {
       final int offset = ElementManipulators.getOffsetInElement(element);
-      final ArrayList<PsiReference> list = new ArrayList<PsiReference>();
+      final ArrayList<PsiReference> list = new ArrayList<>();
       int pos = -1;
       while (true) {
         while (pos + 1 < s.length()) {
@@ -62,12 +60,12 @@ public class ClassArrayConverterImpl extends ClassArrayConverter {
           pos = nextPos;
         }
       }
-      return list.toArray(new PsiReference[list.size()]);
+      return list.toArray(PsiReference.EMPTY_ARRAY);
     }
     return PsiReference.EMPTY_ARRAY;
   }
 
-  private static void createReference(final PsiElement element, final String s, final int offset, List<PsiReference> list) {
+  private static void createReference(final PsiElement element, final String s, final int offset, List<? super PsiReference> list) {
     final PsiReference[] references = REFERENCE_PROVIDER.getReferencesByString(s, element, offset);
     //noinspection ManualArrayToCollectionCopy
     for (PsiReference ref: references) {

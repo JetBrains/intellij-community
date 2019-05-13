@@ -1,4 +1,4 @@
-// "Create Method 'f'" "true"
+// "Create method 'f'" "true"
 class A {
     {
         new Runnable() {
@@ -10,6 +10,6 @@ class A {
 }
 class B {
     public static void f(Runnable runnable) {
-        <caret><selection>//To change body of created methods use File | Settings | File Templates.</selection>
+        <caret><selection></selection>
     }
 }

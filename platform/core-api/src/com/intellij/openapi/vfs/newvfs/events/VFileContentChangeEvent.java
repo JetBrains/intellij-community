@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,10 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-/*
- * @author max
- */
 package com.intellij.openapi.vfs.newvfs.events;
 
 import com.intellij.openapi.vfs.VirtualFile;
@@ -25,20 +21,46 @@ import com.intellij.util.LocalTimeCounter;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
+/**
+ * @author max
+ */
 public class VFileContentChangeEvent extends VFileEvent {
   private final VirtualFile myFile;
   private final long myOldModificationStamp;
   private final long myNewModificationStamp;
+  private final long myOldTimestamp;
+  private final long myNewTimestamp;
+  private final long myOldLength;
+  private final long myNewLength;
+  
+  private static final int UNDEFINED_TIMESTAMP_OR_LENGTH = -1;
 
-  public VFileContentChangeEvent(final Object requestor,
-                                 @NotNull final VirtualFile file,
-                                 final long oldModificationStamp,
-                                 final long newModificationStamp,
-                                 final boolean isFromRefresh) {
+  public VFileContentChangeEvent(Object requestor,
+                                 @NotNull VirtualFile file,
+                                 long oldModificationStamp,
+                                 long newModificationStamp,
+                                 boolean isFromRefresh) {
+    this(requestor, file, oldModificationStamp, newModificationStamp, UNDEFINED_TIMESTAMP_OR_LENGTH, UNDEFINED_TIMESTAMP_OR_LENGTH, 
+         UNDEFINED_TIMESTAMP_OR_LENGTH, UNDEFINED_TIMESTAMP_OR_LENGTH, isFromRefresh);
+  }
+
+  public VFileContentChangeEvent(Object requestor,
+                                 @NotNull VirtualFile file,
+                                 long oldModificationStamp,
+                                 long newModificationStamp,
+                                 long oldTimestamp,
+                                 long newTimestamp,
+                                 long oldLength,
+                                 long newLength,
+                                 boolean isFromRefresh) {
     super(requestor, isFromRefresh);
     myFile = file;
     myOldModificationStamp = oldModificationStamp;
     myNewModificationStamp = newModificationStamp == -1 ? LocalTimeCounter.currentTime() : newModificationStamp;
+    myOldTimestamp = oldTimestamp;
+    myNewTimestamp = newTimestamp;
+    myOldLength = oldLength;
+    myNewLength = newLength;
   }
 
   @NotNull
@@ -55,13 +77,38 @@ public class VFileContentChangeEvent extends VFileEvent {
     return myOldModificationStamp;
   }
 
-  @NonNls
-  public String toString() {
-    return "VfsEvent[update: " + myFile.getUrl() + "]";
+  public long getOldTimestamp() {
+    return myOldTimestamp;
   }
 
+  public long getNewTimestamp() {
+    return myNewTimestamp;
+  }
+
+  public long getOldLength() {
+    return myOldLength;
+  }
+
+  public long getNewLength() {
+    return myNewLength;
+  }
+  
+  public boolean isLengthAndTimestampDiffProvided() {
+    return myOldTimestamp != UNDEFINED_TIMESTAMP_OR_LENGTH || myNewTimestamp != UNDEFINED_TIMESTAMP_OR_LENGTH ||
+           myOldLength != UNDEFINED_TIMESTAMP_OR_LENGTH || myNewLength != UNDEFINED_TIMESTAMP_OR_LENGTH;
+  }
+
+  @NonNls
+  public String toString() {
+    return "VfsEvent[update: " + myFile.getUrl() +
+           (myOldTimestamp != myNewTimestamp ? ", oldTimestamp:" + myOldTimestamp + ", newTimestamp:" + myNewTimestamp : "") +
+           (myOldLength != myNewLength ? ", oldLength:" + myOldLength + ", newLength:" + myNewLength : "") +
+           "]";
+  }
+
+  @NotNull
   @Override
-  public String getPath() {
+  protected String computePath() {
     return myFile.getPath();
   }
 
@@ -90,8 +137,7 @@ public class VFileContentChangeEvent extends VFileEvent {
   }
 
   public int hashCode() {
-    int result;
-    result = myFile.hashCode();
+    int result = myFile.hashCode();
     result = 31 * result + (int)(myOldModificationStamp ^ (myOldModificationStamp >>> 32));
     result = 31 * result + (int)(myNewModificationStamp ^ (myNewModificationStamp >>> 32));
     return result;

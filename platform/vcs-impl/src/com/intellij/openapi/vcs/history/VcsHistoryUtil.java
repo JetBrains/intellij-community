@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,26 +15,24 @@
  */
 package com.intellij.openapi.vcs.history;
 
-import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.diff.DiffContentFactoryEx;
+import com.intellij.diff.DiffManager;
+import com.intellij.diff.DiffRequestFactoryImpl;
+import com.intellij.diff.contents.DiffContent;
+import com.intellij.diff.requests.DiffRequest;
+import com.intellij.diff.requests.SimpleDiffRequest;
+import com.intellij.diff.util.DiffUserDataKeysEx;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.diff.*;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.CharsetToolkit;
-import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
 import com.intellij.openapi.vfs.encoding.EncodingProjectManager;
@@ -42,12 +40,13 @@ import com.intellij.util.WaitForProgressToShow;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.nio.charset.Charset;
+
+import static com.intellij.diff.DiffRequestFactoryImpl.DIFF_TITLE_RENAME_SEPARATOR;
 
 public class VcsHistoryUtil {
+  @Deprecated
+  public static final Key<Pair<FilePath, VcsRevisionNumber>> REVISION_INFO_KEY = DiffUserDataKeysEx.REVISION_INFO;
 
   private static final Logger LOG = Logger.getInstance(VcsHistoryUtil.class);
 
@@ -81,82 +80,61 @@ public class VcsHistoryUtil {
   /**
    * Invokes {@link com.intellij.openapi.diff.DiffManager#getDiffTool()} to show difference between the given revisions of the given file.
    * @param project   project under vcs control.
-   * @param filePath  file which revisions are compared.
+   * @param path  file which revisions are compared.
    * @param revision1 first revision - 'before', to the left.
    * @param revision2 second revision - 'after', to the right.
-   * @throws com.intellij.openapi.vcs.VcsException
-   * @throws java.io.IOException
+   * @throws VcsException
+   * @throws IOException
    */
-  public static void showDiff(@NotNull final Project project, @NotNull FilePath filePath,
+  public static void showDiff(@NotNull final Project project, @NotNull FilePath path,
                               @NotNull VcsFileRevision revision1, @NotNull VcsFileRevision revision2,
                               @NotNull String title1, @NotNull String title2) throws VcsException, IOException {
-    final byte[] content1 = loadRevisionContent(revision1);
-    final byte[] content2 = loadRevisionContent(revision2);
+    FilePath path1 = getRevisionPath(revision1);
+    FilePath path2 = getRevisionPath(revision2);
 
-    final SimpleDiffRequest diffData = new SimpleDiffRequest(project, filePath.getPresentableUrl());
-    diffData.addHint(DiffTool.HINT_SHOW_FRAME);
-    final Document doc = filePath.getDocument();
-    final Charset charset = filePath.getCharset();
-    final FileType fileType = filePath.getFileType();
-    diffData.setContentTitles(title1, title2);
-    final Ref<VirtualFile> f1 = new Ref<VirtualFile>(null);
-    final Ref<VirtualFile> f2 = new Ref<VirtualFile>(null);
+    String title;
+    if (path1 != null && path2 != null) {
+      title = DiffRequestFactoryImpl.getTitle(path1, path2, DIFF_TITLE_RENAME_SEPARATOR);
+    }
+    else {
+      title = DiffRequestFactoryImpl.getContentTitle(path);
+    }
 
-    if (fileType.isBinary()) {
-      final File file1 = FileUtil.createTempFile(revision1.getRevisionNumber().asString(), filePath.getName());
-      final File file2 = FileUtil.createTempFile(revision2.getRevisionNumber().asString(), filePath.getName());
-      try {
-        final FileOutputStream fos1 = new FileOutputStream(file1);
-        fos1.write(content1);
-        final FileOutputStream fos2 = new FileOutputStream(file2);
-        fos2.write(content2);
-        fos1.close();
-        fos2.close();
-        f1.set(LocalFileSystem.getInstance().findFileByIoFile(file1));
-        f2.set(LocalFileSystem.getInstance().findFileByIoFile(file2));
-      } catch(Exception e) {//
-      }
-    }
-    if (f1.isNull() || f2.isNull()) {
-      diffData.setContents(createContent(project, content1, revision1, doc, charset, fileType, filePath.getPath()),
-                           createContent(project, content2, revision2, doc, charset, fileType, filePath.getPath()));
-    } else {
-      diffData.setContents(new FileContent(project, f1.get()), new FileContent(project, f2.get()));
-    }
-    WaitForProgressToShow.runOrInvokeLaterAboveProgress(new Runnable() {
-      public void run() {
-        DiffManager.getInstance().getDiffTool().show(diffData);
-        if (!f1.isNull() || !f2.isNull()) {
-          Disposer.register(project, new Disposable() {
-            @Override
-            public void dispose() {
-              ApplicationManager.getApplication().runWriteAction(new Runnable() {
-                public void run() {
-                  try {
-                    if (!f1.isNull()) {
-                      f1.get().delete(this);
-                    }
-                    if (!f2.isNull()) {
-                      f2.get().delete(this);
-                    }
-                  }
-                  catch (IOException e) {//
-                  }
-                }
-              });
-            }
-          });
-        }
-      }
-    }, null, project);
+    DiffContent diffContent1 = loadContentForDiff(project, path, revision1);
+    DiffContent diffContent2 = loadContentForDiff(project, path, revision2);
+
+    final DiffRequest request = new SimpleDiffRequest(title, diffContent1, diffContent2, title1, title2);
+
+    diffContent1.putUserData(DiffUserDataKeysEx.REVISION_INFO, getRevisionInfo(revision1));
+    diffContent2.putUserData(DiffUserDataKeysEx.REVISION_INFO, getRevisionInfo(revision2));
+
+    WaitForProgressToShow.runOrInvokeLaterAboveProgress(() -> DiffManager.getInstance().showDiff(project, request), null, project);
   }
 
-    public static byte[] loadRevisionContent(@NotNull VcsFileRevision revision) throws VcsException, IOException {
-    byte[] content = revision.getContent();
-    if (content == null) {
-      revision.loadContent();
-      content = revision.getContent();
+  @NotNull
+  public static DiffContent loadContentForDiff(@NotNull Project project, @NotNull FilePath path, @NotNull VcsFileRevision revision) throws IOException, VcsException {
+    return createContent(project, loadRevisionContent(revision), revision, path);
+  }
+
+  @Nullable
+  private static Pair<FilePath, VcsRevisionNumber> getRevisionInfo(@NotNull VcsFileRevision revision) {
+    if (revision instanceof VcsFileRevisionEx) {
+      return Pair.create(((VcsFileRevisionEx)revision).getPath(), revision.getRevisionNumber());
     }
+    return null;
+  }
+
+  @Nullable
+  private static FilePath getRevisionPath(@NotNull VcsFileRevision revision) {
+    if (revision instanceof VcsFileRevisionEx) {
+      return ((VcsFileRevisionEx)revision).getPath();
+    }
+    return null;
+  }
+
+  @NotNull
+  public static byte[] loadRevisionContent(@NotNull VcsFileRevision revision) throws VcsException, IOException {
+    byte[] content = revision.loadContent();
     if (content == null) throw new VcsException("Failed to load content for revision " + revision.getRevisionNumber().asString());
     return content;
   }
@@ -175,90 +153,60 @@ public class VcsHistoryUtil {
     return CharsetToolkit.bytesToString(bytes, e.getDefaultCharset());
   }
 
-  public static String loadRevisionContentGuessEncoding(final VcsFileRevision revision, @Nullable final Project project) throws VcsException, IOException {
-    final byte[] bytes = loadRevisionContent(revision);
-
-    EncodingManager e = project != null ? EncodingProjectManager.getInstance(project) : null;
-    if (e == null) {
-      e = EncodingManager.getInstance();
+  @NotNull
+  private static DiffContent createContent(@NotNull Project project, @NotNull byte[] content, @NotNull VcsFileRevision revision,
+                                           @NotNull FilePath filePath) throws IOException {
+    DiffContentFactoryEx contentFactory = DiffContentFactoryEx.getInstanceEx();
+    if (isCurrent(revision)) {
+      VirtualFile file = filePath.getVirtualFile();
+      if (file != null) return contentFactory.create(project, file);
     }
-
-    return CharsetToolkit.bytesToString(bytes, e.getDefaultCharset());
-  }
-
-  private static DiffContent createContent(Project project, byte[] content1, VcsFileRevision revision, Document doc, Charset charset, FileType fileType, String filePath) {
-    if (isCurrent(revision) && (doc != null)) { return new DocumentContent(project, doc); }
-    return new BinaryContent(content1, charset, fileType, filePath);
+    if (isEmpty(revision)) {
+      return contentFactory.createEmpty();
+    }
+    return contentFactory.createFromBytes(project, content, filePath, revision.getDefaultCharset());
   }
 
   private static boolean isCurrent(VcsFileRevision revision) {
     return revision instanceof CurrentRevision;
   }
 
+  public static boolean isEmpty(VcsFileRevision revision) {
+    return revision == null || VcsFileRevision.NULL.equals(revision);
+  }
 
   /**
    * Shows difference between two revisions of a file in a diff tool.
    * The content of revisions is queried in a background thread.
-   * If {@code findOlderNewer} is set to {@code true}, revisions may be specified in any order:
-   * this method will sort them so that the older revision is at the left, and the newer one is at the right.
-   * @param findOlderNewer specify {@code true} to let method compare revisions, and put the older revision at the left, and newer revision
-   *                       at the right.<br/>
-   *                       Specify {@code false} to put {@code revision1} at the left, and {@code revision2} at the right.
+   *
    * @see #showDiff(Project, FilePath, VcsFileRevision, VcsFileRevision, String, String)
    */
-  public static void showDifferencesInBackground(@NotNull final Project project, @NotNull final FilePath filePath,
-                                                 @NotNull final VcsFileRevision revision1, @NotNull final VcsFileRevision revision2,
-                                                 final boolean findOlderNewer) {
-    new Task.Backgroundable(project, "Loading revisions to compare") {
+  public static void showDifferencesInBackground(@NotNull final Project project,
+                                                 @NotNull final FilePath filePath,
+                                                 @NotNull final VcsFileRevision older,
+                                                 @NotNull final VcsFileRevision newer) {
+    new Task.Backgroundable(project, "Comparing Revisions...") {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
-        VcsFileRevision left = revision1;
-        VcsFileRevision right = revision2;
-        if (findOlderNewer) {
-          Pair<VcsFileRevision, VcsFileRevision> pair = sortRevisions(revision1, revision2);
-          left = pair.first;
-          right = pair.second;
-        }
-
         try {
-          final String leftTitle = left.getRevisionNumber().asString() +
-                                   (left instanceof CurrentRevision ? " (" + VcsBundle.message("diff.title.local") + ")" : "");
-          final String rightTitle = right.getRevisionNumber().asString() +
-                                    (right instanceof CurrentRevision ? " (" + VcsBundle.message("diff.title.local") + ")" : "");
-          showDiff(project, filePath, left, right, leftTitle, rightTitle);
+          showDiff(project, filePath, older, newer, makeTitle(older), makeTitle(newer));
         }
         catch (final VcsException e) {
           LOG.info(e);
-          WaitForProgressToShow.runOrInvokeLaterAboveProgress(new Runnable() {
-            public void run() {
-              Messages.showErrorDialog(VcsBundle.message("message.text.cannot.show.differences", e.getLocalizedMessage()),
-                                       VcsBundle.message("message.title.show.differences"));
-            }
-          }, null, project);
+          WaitForProgressToShow.runOrInvokeLaterAboveProgress(
+            () -> Messages.showErrorDialog(VcsBundle.message("message.text.cannot.show.differences", e.getLocalizedMessage()),
+                                         VcsBundle.message("message.title.show.differences")), null, project);
         }
         catch (IOException e) {
           LOG.info(e);
         }
-        catch (ProcessCanceledException ex) {
-          LOG.info(ex);
-        }
+      }
+
+      @NotNull
+      private String makeTitle(@NotNull VcsFileRevision revision) {
+        return revision.getRevisionNumber().asString() +
+               (revision instanceof CurrentRevision ? " (" + VcsBundle.message("diff.title.local") + ")" : "");
       }
     }.queue();
   }
-
-  /**
-   * Compares the given revisions and returns a pair of them, where the first one is older, and second is newer.
-   */
-  @NotNull
-  public static Pair<VcsFileRevision, VcsFileRevision> sortRevisions(@NotNull VcsFileRevision revision1,
-                                                                     @NotNull VcsFileRevision revision2) {
-    VcsFileRevision left = revision1;
-    VcsFileRevision right = revision2;
-    if (compare(revision1, revision2) > 0) {
-      left = revision2;
-      right = revision1;
-    }
-    return Pair.create(left, right);
-  }
-
 }

@@ -16,15 +16,16 @@
 package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeInsight.CodeInsightBundle;
-import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
+import com.intellij.codeInsight.daemon.impl.analysis.JavaHighlightUtil;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.QuickFixFactory;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiMethod;
-import com.intellij.psi.PsiModifier;
+import com.intellij.psi.*;
+import com.intellij.psi.search.LocalSearchScope;
+import com.intellij.psi.search.searches.ReferencesSearch;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -43,6 +44,27 @@ public class MoveInitializerToConstructorAction extends BaseMoveInitializerToMet
   @NotNull
   public String getText() {
     return CodeInsightBundle.message("intention.move.initializer.to.constructor");
+  }
+
+  @Override
+  public boolean isAvailable(@NotNull Project project, Editor editor, @NotNull PsiElement element) {
+    if (super.isAvailable(project, editor, element)) {
+      final PsiField field = PsiTreeUtil.getParentOfType(element, PsiField.class);
+      assert field != null;
+      if (field.hasModifierProperty(PsiModifier.FINAL)) {
+        PsiClass containingClass = field.getContainingClass();
+        assert containingClass != null;
+        PsiClassInitializer[] initializers = containingClass.getInitializers();
+        PsiElement[] elements = 
+          Arrays.stream(containingClass.getFields())
+          .map(f -> f.getInitializer())
+          .filter(Objects::nonNull)
+          .toArray(PsiElement[]::new);
+        return ReferencesSearch.search(field, new LocalSearchScope(ArrayUtil.mergeArrays(elements, initializers))).findFirst() == null;
+      }
+      return true;
+    }
+    return false;
   }
 
   @NotNull
@@ -64,17 +86,8 @@ public class MoveInitializerToConstructorAction extends BaseMoveInitializerToMet
 
   @NotNull
   private static Collection<PsiMethod> removeChainedConstructors(@NotNull Collection<PsiMethod> constructors) {
-    final List<PsiMethod> result = new ArrayList<PsiMethod>(constructors);
-
-    final Iterator<PsiMethod> iterator = result.iterator();
-    //noinspection ForLoopThatDoesntUseLoopVariable
-    for (PsiMethod constructor = iterator.next(); iterator.hasNext(); constructor = iterator.next()) {
-      final List<PsiMethod> chained = HighlightControlFlowUtil.getChainedConstructors(constructor);
-      if (chained != null) {
-        iterator.remove();
-      }
-    }
-
+    final List<PsiMethod> result = new ArrayList<>(constructors);
+    result.removeIf(constructor -> !JavaHighlightUtil.getChainedConstructors(constructor).isEmpty());
     return result;
   }
 

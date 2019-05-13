@@ -1,0 +1,28 @@
+body {
+  background-color: #313335 !important;
+  color: #bababa !important;
+}
+
+.MathJax_Display {
+  color: #bababa !important;
+  background-color: #313335 !important;
+}
+
+#mydiv {
+  color: #bababa !important;
+  background-color: #313335 !important;
+}
+
+.MathJax {
+  background-color: #313335 !important;
+  color: #bababa !important;
+}
+
+a {
+  color: #589df6 !important;
+}
+
+.MathJax_Preview {
+  color: #bababa !important;
+}
+

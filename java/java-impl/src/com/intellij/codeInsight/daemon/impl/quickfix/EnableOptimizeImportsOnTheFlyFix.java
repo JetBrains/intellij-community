@@ -15,11 +15,12 @@
  */
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
-import com.intellij.codeInsight.CodeInsightSettings;
+import com.intellij.codeInsight.CodeInsightWorkspaceSettings;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.LowPriorityAction;
+import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
@@ -41,20 +42,19 @@ public class EnableOptimizeImportsOnTheFlyFix implements IntentionAction, LowPri
 
   @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    return file.getManager().isInProject(file)
+    return BaseIntentionAction.canModify(file)
            && file instanceof PsiJavaFile
-           && !com.intellij.codeInsight.CodeInsightSettings.getInstance().OPTIMIZE_IMPORTS_ON_THE_FLY
-      ;
+           && !CodeInsightWorkspaceSettings.getInstance(project).optimizeImportsOnTheFly;
   }
 
   @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) {
-    CodeInsightSettings.getInstance().OPTIMIZE_IMPORTS_ON_THE_FLY = true;
+    CodeInsightWorkspaceSettings.getInstance(project).optimizeImportsOnTheFly = true;
     DaemonCodeAnalyzer.getInstance(project).restart();
   }
 
   @Override
   public boolean startInWriteAction() {
-    return true;
+    return false;
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,12 +14,9 @@
  * limitations under the License.
  */
 
-/*
- * User: anna
- * Date: 18-Jan-2008
- */
 package com.intellij.ide.todo.nodes;
 
+import com.intellij.ide.projectView.ProjectViewNode;
 import com.intellij.ide.projectView.impl.nodes.PackageElement;
 import com.intellij.ide.projectView.impl.nodes.PackageUtil;
 import com.intellij.ide.todo.TodoTreeBuilder;
@@ -57,10 +54,20 @@ public class TodoJavaTreeHelper extends TodoTreeHelper {
   }
 
   @Override
-  public void addPackagesToChildren(final ArrayList<AbstractTreeNode> children, final Module module, final TodoTreeBuilder builder) {
+  public boolean contains(ProjectViewNode node, Object element) {
+    if (element instanceof PackageElement) {
+      for (VirtualFile virtualFile : ((PackageElement)element).getRoots()) {
+        if (node.contains(virtualFile)) return true;
+      }
+    }
+    return super.contains(node, element);
+  }
+
+  @Override
+  public void addPackagesToChildren(final ArrayList<? super AbstractTreeNode> children, final Module module, final TodoTreeBuilder builder) {
     Project project = getProject();
     final PsiManager psiManager = PsiManager.getInstance(project);
-    final List<VirtualFile> sourceRoots = new ArrayList<VirtualFile>();
+    final List<VirtualFile> sourceRoots = new ArrayList<>();
     if (module == null) {
       final ProjectRootManager projectRootManager = ProjectRootManager.getInstance(project);
       ContainerUtil.addAll(sourceRoots, projectRootManager.getContentSourceRoots());
@@ -68,7 +75,7 @@ public class TodoJavaTreeHelper extends TodoTreeHelper {
       ModuleRootManager moduleRootManager = ModuleRootManager.getInstance(module);
       ContainerUtil.addAll(sourceRoots, moduleRootManager.getSourceRoots());
     }
-    final Set<PsiPackage> topLevelPackages = new HashSet<PsiPackage>();
+    final Set<PsiPackage> topLevelPackages = new HashSet<>();
     for (final VirtualFile root : sourceRoots) {
       final PsiDirectory directory = psiManager.findDirectory(root);
       if (directory == null) {
@@ -93,7 +100,7 @@ public class TodoJavaTreeHelper extends TodoTreeHelper {
         }
         // add non-dir items
         final Iterator<PsiFile> filesUnderDirectory = builder.getFilesUnderDirectory(directory);
-        for (;filesUnderDirectory.hasNext();) {
+        while (filesUnderDirectory.hasNext()) {
           final PsiFile file = filesUnderDirectory.next();
           TodoFileNode todoFileNode = new TodoFileNode(project, file, builder, false);
           if (!children.contains(todoFileNode)){
@@ -108,7 +115,7 @@ public class TodoJavaTreeHelper extends TodoTreeHelper {
     }
 
     GlobalSearchScope scope = module != null ? GlobalSearchScope.moduleScope(module) : GlobalSearchScope.projectScope(project);
-    ArrayList<PsiPackage> packages = new ArrayList<PsiPackage>();
+    ArrayList<PsiPackage> packages = new ArrayList<>();
     for (PsiPackage psiPackage : topLevelPackages) {
       final PsiPackage aPackage = findNonEmptyPackage(psiPackage, module, project, builder, scope);
       if (aPackage != null){
@@ -123,7 +130,7 @@ public class TodoJavaTreeHelper extends TodoTreeHelper {
           children.add(packageNode);
         }
       } else {
-        Set<PsiPackage> allPackages = new HashSet<PsiPackage>();
+        Set<PsiPackage> allPackages = new HashSet<>();
         traverseSubPackages(psiPackage, module, builder, project, allPackages);
         for (PsiPackage aPackage : allPackages) {
           TodoPackageNode packageNode = new TodoPackageNode(project, new PackageElement(module, aPackage, false), builder);
@@ -133,7 +140,9 @@ public class TodoJavaTreeHelper extends TodoTreeHelper {
         }
       }
     }
-    super.addPackagesToChildren(children, module, builder);
+    final List<VirtualFile> roots = collectContentRoots(module);
+    roots.removeAll(sourceRoots);
+    addDirsToChildren(roots, children, builder);
   }
 
    @Nullable
@@ -166,7 +175,7 @@ public class TodoJavaTreeHelper extends TodoTreeHelper {
     return suggestedNonEmptyPackage;
   }
 
-  private static void traverseSubPackages(PsiPackage psiPackage, Module module, TodoTreeBuilder builder, Project project, Set<PsiPackage> packages){
+  private static void traverseSubPackages(PsiPackage psiPackage, Module module, TodoTreeBuilder builder, Project project, Set<? super PsiPackage> packages){
     if (!isPackageEmpty(new PackageElement(module, psiPackage,  false), builder, project)){
       packages.add(psiPackage);
     }

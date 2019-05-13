@@ -1,0 +1,3 @@
+void m(int var) {
+  <spot>var<spot>
+}

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,19 +15,15 @@
  */
 package org.jetbrains.idea.maven.server;
 
-import com.intellij.openapi.progress.ProcessCanceledException;
-import com.intellij.openapi.util.text.StringUtil;
-import org.sonatype.aether.transfer.TransferCancelledException;
-import org.sonatype.aether.transfer.TransferEvent;
-import org.sonatype.aether.transfer.TransferListener;
-import org.sonatype.aether.transfer.TransferResource;
+import com.intellij.openapi.util.text.StringUtilRt;
+import org.eclipse.aether.transfer.TransferCancelledException;
+import org.eclipse.aether.transfer.TransferEvent;
+import org.eclipse.aether.transfer.TransferListener;
+import org.eclipse.aether.transfer.TransferResource;
 
 import java.io.File;
 import java.rmi.RemoteException;
 
-/**
- * @author Sergey Evdokimov
- */
 public class TransferListenerAdapter implements TransferListener {
 
   protected final MavenServerProgressIndicator myIndicator;
@@ -38,7 +34,7 @@ public class TransferListenerAdapter implements TransferListener {
 
   private void checkCanceled() {
     try {
-      if (myIndicator.isCanceled()) throw new ProcessCanceledException();
+      if (myIndicator.isCanceled()) throw new MavenProcessCanceledRuntimeException();
     }
     catch (RemoteException e) {
       throw new RuntimeRemoteException(e);
@@ -79,9 +75,9 @@ public class TransferListenerAdapter implements TransferListener {
 
     String sizeInfo;
     if (totalLength <= 0) {
-      sizeInfo = StringUtil.formatFileSize(event.getTransferredBytes()) + " / ?";
+      sizeInfo = StringUtilRt.formatFileSize(event.getTransferredBytes()) + " / ?";
     } else {
-      sizeInfo = StringUtil.formatFileSize(event.getTransferredBytes()) + " / " + StringUtil.formatFileSize(totalLength);
+      sizeInfo = StringUtilRt.formatFileSize(event.getTransferredBytes()) + " / " + StringUtilRt.formatFileSize(totalLength);
     }
 
     try {
@@ -113,8 +109,10 @@ public class TransferListenerAdapter implements TransferListener {
   @Override
   public void transferSucceeded(TransferEvent event) {
     try {
-      myIndicator.setText2("Finished (" + StringUtil.formatFileSize(event.getTransferredBytes()) + ") " + formatResourceName(event));
+      myIndicator.setText2("Finished (" + StringUtilRt.formatFileSize(event.getTransferredBytes()) + ") " + formatResourceName(event));
       myIndicator.setIndeterminate(true);
+
+      Maven3ServerGlobals.getDownloadListener().artifactDownloaded(event.getResource().getFile(), event.getResource().getResourceName());
     }
     catch (RemoteException e) {
       throw new RuntimeRemoteException(e);

@@ -31,7 +31,7 @@ public interface Refactoring {
   void setPreviewUsages(boolean value);
 
   /**
-   * Returns value of <code>previewUsages</code> property.
+   * Returns value of {@code previewUsages} property.
    * If there are modifications that should be performed in non-java files or not in code,
    * preview will be shown regardless of this setting.
    */
@@ -40,10 +40,10 @@ public interface Refactoring {
   /**
    * Controls whether this refactoring is interactive: whether it should show conflicts dialog
    * and other dialogs. <br>
-   * If <code>prepareSuccessfulCallback</code> is not <code>null</code>, refactoring is interactive, and
+   * If {@code prepareSuccessfulCallback} is not {@code null}, refactoring is interactive, and
    * the callback is executed if user did not cancel the refactoring operation, right after
-   * <code>preprocessUsages</code> has finished.<br>
-   * If <code>prepareSuccessfulCallback</code> is <code>null</code>, user is not presented with
+   * {@code preprocessUsages} has finished.<br>
+   * If {@code prepareSuccessfulCallback} is {@code null}, user is not presented with
    * conflicts etc., but the preview may still be shown.<br>
    *
    * <b>Note:</b> the callback is executed in dispatch thread. <br>
@@ -71,8 +71,6 @@ public interface Refactoring {
    * Analyses usages (presumably obtained from {@link #findUsages()} for possible conflicts
    * and (if refactoring is interactive) presents user with appropriate conflicts dialog.
    * @see #setInteractive(java.lang.Runnable)
-   * @param usages
-   * @return
    */
   boolean preprocessUsages(Ref<UsageInfo[]> usages);
 
@@ -94,7 +92,7 @@ public interface Refactoring {
    * <p/>
    * <ol>
    * <li> execute {@link #findUsages()} (with progress dialog and all)
-   * <li> execute {@link #preprocessUsages(com.intellij.openapi.util.Ref)} 
+   * <li> execute {@link #preprocessUsages(com.intellij.openapi.util.Ref)}
    * <li> if refactoring was not cancelled, check whether we {@link #shouldPreviewUsages(com.intellij.usageView.UsageInfo[])} , and show the preview
    * <li> execute {@link #doRefactoring(com.intellij.usageView.UsageInfo[])} if appropiate (if either the preview
    * was not shown, or 'Do Refactor' button have been pressed)

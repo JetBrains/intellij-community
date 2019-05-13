@@ -22,20 +22,10 @@ import javax.swing.*;
 /**
  * @author dyoma
  */
+@Deprecated
 public interface DiffViewer {
-  /**
-   * Needed here, and not only in factory, since dif viewers are reused in composite viewer
-   */
-  boolean canShowRequest(DiffRequest request);
-
-  void setDiffRequest(DiffRequest request);
-
   JComponent getComponent();
 
   @Nullable
   JComponent getPreferredFocusedComponent();
-
-  int getContentsNumber();
-
-  boolean acceptsType(DiffViewerType type);
 }

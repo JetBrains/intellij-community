@@ -1,17 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 package com.intellij.refactoring.openapi.impl;
 
@@ -36,21 +24,24 @@ public class JavaRefactoringFactoryImpl extends JavaRefactoringFactory {
     myProject = project;
   }
 
-  public JavaRenameRefactoring createRename(PsiElement element, String newName) {
+  @Override
+  public JavaRenameRefactoring createRename(@NotNull PsiElement element, String newName) {
     return new JavaRenameRefactoringImpl(myProject, element, newName, true, true);
   }
 
   @Override
-  public RenameRefactoring createRename(PsiElement element, String newName, boolean searchInComments, boolean searchInNonJavaFiles) {
+  public RenameRefactoring createRename(@NotNull PsiElement element, String newName, boolean searchInComments, boolean searchInNonJavaFiles) {
     return new JavaRenameRefactoringImpl(myProject, element, newName, searchInComments, searchInNonJavaFiles);
   }
 
+  @Override
   public MoveInnerRefactoring createMoveInner(PsiClass innerClass, String newName, boolean passOuterClass, String parameterName) {
     final PsiElement targetContainer = MoveInnerImpl.getTargetContainer(innerClass, false);
     if (targetContainer == null) return null;
     return new MoveInnerRefactoringImpl(myProject, innerClass, newName, passOuterClass, parameterName, targetContainer);
   }
 
+  @Override
   public MoveDestination createSourceFolderPreservingMoveDestination(@NotNull String targetPackage) {
     return new MultipleRootsMoveDestination(createPackageWrapper(targetPackage));
   }
@@ -59,6 +50,7 @@ public class JavaRefactoringFactoryImpl extends JavaRefactoringFactory {
     return new PackageWrapper(PsiManager.getInstance(myProject), targetPackage);
   }
 
+  @Override
   public MoveDestination createSourceRootMoveDestination(@NotNull String targetPackageQualifiedName, @NotNull VirtualFile sourceRoot) {
     final PsiDirectory directory = PsiManager.getInstance(myProject).findDirectory(sourceRoot);
     LOG.assertTrue(directory != null && JavaDirectoryService.getInstance().isSourceRoot(directory), "Should pass source root");
@@ -67,16 +59,19 @@ public class JavaRefactoringFactoryImpl extends JavaRefactoringFactory {
   }
 
 
+  @Override
   public MoveClassesOrPackagesRefactoring createMoveClassesOrPackages(PsiElement[] elements, MoveDestination moveDestination) {
     return new MoveClassesOrPackagesRefactoringImpl(myProject, elements, moveDestination);
   }
 
+  @Override
   public MoveMembersRefactoring createMoveMembers(final PsiMember[] elements,
                                                   final String targetClassQualifiedName,
                                                   final String newVisibility) {
     return createMoveMembers(elements, targetClassQualifiedName, newVisibility, false);
   }
 
+  @Override
   public MoveMembersRefactoring createMoveMembers(final PsiMember[] elements,
                                                   final String targetClassQualifiedName,
                                                   final String newVisibility,
@@ -84,6 +79,7 @@ public class JavaRefactoringFactoryImpl extends JavaRefactoringFactory {
     return new MoveMembersRefactoringImpl(myProject, elements, targetClassQualifiedName, newVisibility, makeEnumConstants);
   }
 
+  @Override
   public MakeStaticRefactoring<PsiMethod> createMakeMethodStatic(PsiMethod method,
                                                                  boolean replaceUsages,
                                                                  String classParameterName,
@@ -92,6 +88,7 @@ public class JavaRefactoringFactoryImpl extends JavaRefactoringFactory {
     return new MakeMethodStaticRefactoringImpl(myProject, method, replaceUsages, classParameterName, fields, names);
   }
 
+  @Override
   public MakeStaticRefactoring<PsiClass> createMakeClassStatic(PsiClass aClass,
                                                                boolean replaceUsages,
                                                                String classParameterName,
@@ -100,33 +97,39 @@ public class JavaRefactoringFactoryImpl extends JavaRefactoringFactory {
     return new MakeClassStaticRefactoringImpl(myProject, aClass, replaceUsages, classParameterName, fields, names);
   }
 
+  @Override
   public ConvertToInstanceMethodRefactoring createConvertToInstanceMethod(PsiMethod method,
                                                                           PsiParameter targetParameter) {
     return new ConvertToInstanceMethodRefactoringImpl(myProject, method, targetParameter);
   }
 
+  @Override
   public SafeDeleteRefactoring createSafeDelete(PsiElement[] elements) {
     return new SafeDeleteRefactoringImpl(myProject, elements);
   }
 
+  @Override
   public TurnRefsToSuperRefactoring createTurnRefsToSuper(PsiClass aClass,
                                                           PsiClass aSuper,
                                                           boolean replaceInstanceOf) {
     return new TurnRefsToSuperRefactoringImpl(myProject, aClass, aSuper, replaceInstanceOf);
   }
 
+  @Override
   public ReplaceConstructorWithFactoryRefactoring createReplaceConstructorWithFactory(PsiMethod method,
                                                                                       PsiClass targetClass,
                                                                                       String factoryName) {
     return new ReplaceConstructorWithFactoryRefactoringImpl(myProject, method, targetClass, factoryName);
   }
 
+  @Override
   public ReplaceConstructorWithFactoryRefactoring createReplaceConstructorWithFactory(PsiClass originalClass,
                                                                                       PsiClass targetClass,
                                                                                       String factoryName) {
     return new ReplaceConstructorWithFactoryRefactoringImpl(myProject, originalClass, targetClass, factoryName);
   }
 
+  @Override
   public TypeCookRefactoring createTypeCook(PsiElement[] elements,
                                             boolean dropObsoleteCasts,
                                             boolean leaveObjectsRaw,
@@ -135,23 +138,5 @@ public class JavaRefactoringFactoryImpl extends JavaRefactoringFactory {
                                             boolean cookObjects,
                                             boolean cookToWildcards) {
     return new TypeCookRefactoringImpl(myProject, elements, dropObsoleteCasts, leaveObjectsRaw, preserveRawArrays, exhaustive, cookObjects, cookToWildcards);
-  }
-
-  public IntroduceParameterRefactoring createIntroduceParameterRefactoring(PsiMethod methodToReplaceIn,
-                                                                           PsiMethod methodToSearchFor,
-                                                                           String parameterName, PsiExpression parameterInitializer,
-                                                                           PsiLocalVariable localVariable,
-                                                                           boolean removeLocalVariable, boolean declareFinal) {
-    return new IntroduceParameterRefactoringImpl(myProject, methodToReplaceIn, methodToSearchFor, parameterName, parameterInitializer,
-                                                 localVariable, removeLocalVariable, declareFinal);
-  }
-
-  public IntroduceParameterRefactoring createIntroduceParameterRefactoring(PsiMethod methodToReplaceIn,
-                                                                           PsiMethod methodToSearchFor,
-                                                                           String parameterName, PsiExpression parameterInitializer,
-                                                                           PsiExpression expressionToSearchFor,
-                                                                           boolean declareFinal, final boolean replaceAllOccurences) {
-    return new IntroduceParameterRefactoringImpl(myProject, methodToReplaceIn, methodToSearchFor, parameterName, parameterInitializer,
-                                                 expressionToSearchFor, declareFinal, replaceAllOccurences);
   }
 }

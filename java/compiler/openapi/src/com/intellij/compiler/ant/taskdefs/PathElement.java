@@ -21,13 +21,11 @@ import org.jetbrains.annotations.NonNls;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Mar 19, 2004
  */
 public class PathElement extends Tag {
 
     public PathElement(@NonNls String dir) {
-        //noinspection HardCodedStringLiteral
-        super("pathelement", pair("location", dir));
+      super("pathelement", pair("location", dir));
     }
 
 }

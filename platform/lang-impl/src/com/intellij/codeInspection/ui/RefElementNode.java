@@ -1,124 +1,142 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.codeInspection.ui;
 
+import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInspection.CommonProblemDescriptor;
 import com.intellij.codeInspection.InspectionsBundle;
-import com.intellij.codeInspection.ex.InspectionTool;
+import com.intellij.codeInspection.reference.RefDirectory;
 import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.codeInspection.reference.RefEntity;
-import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.vcs.FileStatus;
-import com.intellij.ui.ComputableIcon;
+import com.intellij.lang.annotation.HighlightSeverity;
+import com.intellij.openapi.util.Pair;
+import com.intellij.psi.PsiElement;
+import gnu.trove.TObjectIntHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.tree.MutableTreeNode;
 
 /**
  * @author max
  */
-public class RefElementNode extends InspectionTreeNode {
-  private boolean myHasDescriptorsUnder = false;
-  private CommonProblemDescriptor mySingleDescriptor = null;
-  protected InspectionTool myTool;
-  private ComputableIcon myIcon = new ComputableIcon(new Computable<Icon>() {
-    @Override
-    public Icon compute() {
-      final RefEntity refEntity = getElement();
-      if (refEntity == null) {
-        return null;
-      }
-      return refEntity.getIcon(false);
-    }
-  });
+public class RefElementNode extends SuppressableInspectionTreeNode {
+  private final Icon myIcon;
+  @Nullable private final RefEntity myRefEntity;
 
-  public RefElementNode(final Object userObject, final InspectionTool tool) {
-    super(userObject);
-    myTool = tool;
+  public RefElementNode(@Nullable RefEntity refEntity,
+                        @NotNull InspectionToolPresentation presentation,
+                        @NotNull InspectionTreeNode parent) {
+    super(presentation, parent);
+    myRefEntity = refEntity;
+    myIcon = refEntity == null ? null : refEntity.getIcon(false);
   }
 
-  public RefElementNode(@NotNull RefElement element, final InspectionTool inspectionTool) {
-    super(element);
-    myTool = inspectionTool;
+  @Override
+  public final boolean isAlreadySuppressedFromView() {
+    return getElement() != null && getPresentation().isSuppressed(getElement());
   }
 
-  public boolean hasDescriptorsUnder() { return myHasDescriptorsUnder; }
-
+  @Override
   @Nullable
   public RefEntity getElement() {
-    return (RefEntity)getUserObject();
+    return myRefEntity;
   }
 
+  @Override
   @Nullable
   public Icon getIcon(boolean expanded) {
-    return myIcon.getIcon();
+    return myIcon;
   }
 
-  public int getProblemCount() {
-    return Math.max(1, super.getProblemCount());
-  }
-
-  public String toString() {
+  @Override
+  protected String calculatePresentableName() {
     final RefEntity element = getElement();
-    if (element == null || !element.isValid()) {
+    if (element == null) {
       return InspectionsBundle.message("inspection.reference.invalid");
     }
-    return element.getRefManager().getRefinedElement(element).getQualifiedName();
+    return element.getRefManager().getRefinedElement(element).getName();
   }
 
-  public boolean isValid() {
+  @Override
+  protected boolean calculateIsValid() {
     final RefEntity refEntity = getElement();
     return refEntity != null && refEntity.isValid();
   }
 
-  public boolean isResolved() {
-    return myTool.isElementIgnored(getElement());
-  }
-
-
-  public void ignoreElement() {
-    myTool.ignoreCurrentElement(getElement());
-    super.ignoreElement();
-  }
-
-  public void amnesty() {
-    myTool.amnesty(getElement());
-    super.amnesty();
-  }
-
-  public FileStatus getNodeStatus() {
-    return  myTool.getElementStatus(getElement());    
-  }
-
-  public void add(MutableTreeNode newChild) {
-    super.add(newChild);
-    if (newChild instanceof ProblemDescriptionNode) {
-      myHasDescriptorsUnder = true;
+  @Override
+  public boolean isExcluded() {
+    RefEntity element = getElement();
+    if (isLeaf() && element != null) {
+      return getPresentation().isExcluded(element);
     }
+    return super.isExcluded();
   }
 
-  public void setProblem(CommonProblemDescriptor descriptor) {
-    mySingleDescriptor = descriptor;
+  @Override
+  public void excludeElement() {
+    RefEntity element = getElement();
+    if (isLeaf() && element != null) {
+      getPresentation().exclude(element);
+      return;
+    }
+    super.excludeElement();
   }
 
-  public CommonProblemDescriptor getProblem() {
-    return mySingleDescriptor;
+  @Override
+  public void amnestyElement() {
+    RefEntity element = getElement();
+    if (isLeaf() && element != null) {
+      getPresentation().amnesty(element);
+      return;
+    }
+    super.amnestyElement();
   }
 
+  @Override
+  public RefEntity getContainingFileLocalEntity() {
+    final RefEntity element = getElement();
+    return element instanceof RefElement && !(element instanceof RefDirectory)
+           ? element
+           : super.getContainingFileLocalEntity();
+  }
+
+  @Override
+  protected void visitProblemSeverities(@NotNull TObjectIntHashMap<HighlightDisplayLevel> counter) {
+    if (!isExcluded() && isLeaf() && !getPresentation().isProblemResolved(getElement()) && !getPresentation().isSuppressed(getElement())) {
+      HighlightSeverity severity = InspectionToolPresentation.getSeverity(getElement(), null, getPresentation());
+      HighlightDisplayLevel level = HighlightDisplayLevel.find(severity);
+      if (!counter.adjustValue(level, 1)) {
+        counter.put(level, 1);
+      }
+      return;
+    }
+    super.visitProblemSeverities(counter);
+  }
+
+  @Override
+  public boolean isQuickFixAppliedFromView() {
+    return isLeaf() && getPresentation().isProblemResolved(getElement());
+  }
+
+  @Nullable
+  @Override
+  public String getTailText() {
+    if (getPresentation().isDummy()) {
+      return "";
+    }
+    final String customizedText = super.getTailText();
+    if (customizedText != null) {
+      return customizedText;
+    }
+    return isLeaf() ? "" : null;
+  }
+
+  @NotNull
+  @Override
+  public Pair<PsiElement, CommonProblemDescriptor> getSuppressContent() {
+    RefEntity refElement = getElement();
+    PsiElement element = refElement instanceof RefElement ? ((RefElement)refElement).getPsiElement() : null;
+    return Pair.create(element, null);
+  }
 }

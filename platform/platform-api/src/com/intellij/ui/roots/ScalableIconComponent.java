@@ -21,7 +21,6 @@ import java.awt.geom.AffineTransform;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Oct 29
  * @author 2003
  */
 public class ScalableIconComponent extends JComponent {
@@ -43,6 +42,7 @@ public class ScalableIconComponent extends JComponent {
     }
   }
 
+  @Override
   protected void paintComponent(Graphics g) {
     final Icon icon = myIsSelected? mySelectedIcon : myIcon;
     if (icon != null) {

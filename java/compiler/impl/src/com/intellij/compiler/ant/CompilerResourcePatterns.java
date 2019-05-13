@@ -27,7 +27,6 @@ import java.io.PrintWriter;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Mar 19, 2004
  */
 public class CompilerResourcePatterns extends Generator {
   private final PatternSet myPatternSet;
@@ -47,6 +46,7 @@ public class CompilerResourcePatterns extends Generator {
   }
 
 
+  @Override
   public void generate(PrintWriter out) throws IOException {
     myPatternSet.generate(out);
   }

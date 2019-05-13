@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,14 +43,17 @@ public abstract class Axis {
   };
 
   public static Axis Y = new Axis() {
+    @Override
     public int getMinValue(Rectangle r) {
       return r.y;
     }
 
+    @Override
     public int getMaxValue(Rectangle r) {
       return (int)r.getMaxY();
     }
 
+    @Override
     public int getSize(Rectangle r) {
       return r.height;
     }

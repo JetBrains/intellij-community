@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2011 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2013 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,10 +32,7 @@ import javax.swing.*;
 import java.util.List;
 
 public class BadExceptionThrownInspection extends BaseInspection {
-
-  /**
-   * @noinspection PublicField
-   */
+  @SuppressWarnings("PublicField")
   public String exceptionsString = "";
 
   @SuppressWarnings("PublicField")
@@ -51,15 +48,19 @@ public class BadExceptionThrownInspection extends BaseInspection {
     );
 
   public BadExceptionThrownInspection() {
-    if (exceptionsString.length() != 0) {
+    if (!exceptionsString.isEmpty()) {
       exceptions.clear();
       final List<String> strings =
         StringUtil.split(exceptionsString, ",");
-      for (String string : strings) {
-        exceptions.add(string);
-      }
+      exceptions.addAll(strings);
       exceptionsString = "";
     }
+  }
+
+  @Override
+  public JComponent createOptionsPanel() {
+    final ListTable table = new ListTable(new ListWrappingTableModel(exceptions, InspectionGadgetsBundle.message( "exception.class.column.name")));
+    return UiUtils.createAddRemoveTreeClassChooserPanel(table, InspectionGadgetsBundle.message("choose.exception.class"), "java.lang.Throwable");
   }
 
   @Override
@@ -73,12 +74,6 @@ public class BadExceptionThrownInspection extends BaseInspection {
   public String getDisplayName() {
     return InspectionGadgetsBundle.message(
       "bad.exception.thrown.display.name");
-  }
-
-  @Override
-  public JComponent createOptionsPanel() {
-    final ListTable table = new ListTable(new ListWrappingTableModel(exceptions, InspectionGadgetsBundle.message( "exception.class.column.name")));
-    return UiUtils.createAddRemoveTreeClassChooserPanel(table, InspectionGadgetsBundle.message("choose.exception.class"), "java.lang.Throwable");
   }
 
   @Override

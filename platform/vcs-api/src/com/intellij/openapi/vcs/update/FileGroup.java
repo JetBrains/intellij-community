@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.update;
 
 import com.intellij.openapi.util.*;
@@ -25,17 +11,15 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
 import java.util.*;
-import java.util.List;
 
 public class FileGroup implements JDOMExternalizable {
 
   public String myUpdateName;
   public String myStatusName;
-  private final Map<String, String> myErrorsMap = new HashMap<String, String>();
+  private final Map<String, String> myErrorsMap = new HashMap<>();
 
-  private final Collection<UpdatedFile> myFiles = new ArrayList<UpdatedFile>();
+  private final Collection<UpdatedFile> myFiles = new ArrayList<>();
   public boolean mySupportsDeletion;
   public boolean myCanBeAbsent;
   public String myId;
@@ -43,7 +27,7 @@ public class FileGroup implements JDOMExternalizable {
   @NonNls private static final String VCS_ATTRIBUTE = "vcs";
   @NonNls private static final String REVISION_ATTRIBUTE = "revision";
 
-  private final List<FileGroup> myChildren = new ArrayList<FileGroup>();
+  private final List<FileGroup> myChildren = new ArrayList<>();
   @NonNls private static final String FILE_GROUP_ELEMENT_NAME = "FILE-GROUP";
 
   @NonNls public static final String MODIFIED_ID = "MODIFIED";
@@ -119,7 +103,7 @@ public class FileGroup implements JDOMExternalizable {
   }
 
   public Collection<String> getFiles() {
-    ArrayList<String> files = new ArrayList<String>();
+    ArrayList<String> files = new ArrayList<>();
     for (UpdatedFile file : myFiles) {
       files.add(file.getPath());
     }
@@ -127,14 +111,14 @@ public class FileGroup implements JDOMExternalizable {
   }
 
   public Collection<UpdatedFile> getUpdatedFiles() {
-    return new ArrayList<UpdatedFile>(myFiles);
+    return new ArrayList<>(myFiles);
   }
 
   public List<Pair<String, VcsRevisionNumber>> getFilesAndRevisions(ProjectLevelVcsManager vcsManager) {
-    ArrayList<Pair<String, VcsRevisionNumber>> files = new ArrayList<Pair<String, VcsRevisionNumber>>();
+    ArrayList<Pair<String, VcsRevisionNumber>> files = new ArrayList<>();
     for (UpdatedFile file : myFiles) {
       VcsRevisionNumber number = getRevision(vcsManager, file);
-      files.add(new Pair<String, VcsRevisionNumber>(file.getPath(), number));
+      files.add(Pair.create(file.getPath(), number));
     }
     return files;
   }
@@ -149,7 +133,7 @@ public class FileGroup implements JDOMExternalizable {
 
   public SimpleTextAttributes getInvalidAttributes() {
     if (myCanBeAbsent) {
-      return new SimpleTextAttributes(Font.PLAIN, FileStatus.DELETED.getColor());
+      return new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, FileStatus.DELETED.getColor());
     }
     else {
       return SimpleTextAttributes.ERROR_ATTRIBUTES;
@@ -160,6 +144,7 @@ public class FileGroup implements JDOMExternalizable {
     return myId;
   }
 
+  @Override
   public void writeExternal(Element element) throws WriteExternalException {
     DefaultJDOMExternalizer.writeExternal(this, element);
     for (final UpdatedFile file : myFiles) {
@@ -175,6 +160,7 @@ public class FileGroup implements JDOMExternalizable {
     }
   }
 
+  @Override
   public void readExternal(Element element) throws InvalidDataException {
     DefaultJDOMExternalizer.readExternal(this, element);
     List pathElements = element.getChildren(PATH);
@@ -193,7 +179,7 @@ public class FileGroup implements JDOMExternalizable {
     return myChildren;
   }
 
-  public static void writeGroupsToElement(List<FileGroup> groups, Element element) throws WriteExternalException {
+  public static void writeGroupsToElement(List<? extends FileGroup> groups, Element element) throws WriteExternalException {
     for (FileGroup fileGroup : groups) {
       Element groupElement = new Element(FILE_GROUP_ELEMENT_NAME);
       element.addContent(groupElement);
@@ -202,7 +188,7 @@ public class FileGroup implements JDOMExternalizable {
     }
   }
 
-  public static void readGroupsFromElement(List<FileGroup> groups, Element element) throws InvalidDataException {
+  public static void readGroupsFromElement(List<? super FileGroup> groups, Element element) throws InvalidDataException {
     List groupElements = element.getChildren();
     for (final Object groupElement1 : groupElements) {
       Element groupElement = (Element)groupElement1;
@@ -223,7 +209,7 @@ public class FileGroup implements JDOMExternalizable {
 
   @SuppressWarnings({"HardCodedStringLiteral"})
   public String toString() {
-    return myId + " " + myFiles.size() + " items";
+    return myId + " " + myFiles.size() + " items: " + myFiles;
   }
 
   @Nullable
@@ -254,28 +240,12 @@ public class FileGroup implements JDOMExternalizable {
     return null;
   }
 
-  public void setRevisions(final String path, final AbstractVcs vcs, final VcsRevisionNumber revision) {
-    for (UpdatedFile file : myFiles) {
-      if (file.getPath().startsWith(path)) {
-        file.setVcsKey(vcs.getKeyInstanceMethod());
-        file.setRevision(revision.asString());
-      }
-    }
-    for (FileGroup group : myChildren) {
-      group.setRevisions(path, vcs, revision);
-    }
-  }
-
   static class UpdatedFile {
     private final String myPath;
-    private String myVcsName;
-    private String myRevision;
+    private final String myVcsName;
+    private final String myRevision;
 
-    public UpdatedFile(final String path) {
-      myPath = path;
-    }
-
-    public UpdatedFile(final String path, @NotNull final VcsKey vcsKey, final String revision) {
+    UpdatedFile(final String path, @NotNull final VcsKey vcsKey, final String revision) {
       myPath = path;
       myVcsName = vcsKey.getName();
       myRevision = revision;
@@ -295,16 +265,8 @@ public class FileGroup implements JDOMExternalizable {
       return myVcsName;
     }
 
-    public void setVcsKey(final VcsKey vcsKey) {
-      myVcsName = vcsKey.getName();
-    }
-
     public String getRevision() {
       return myRevision;
-    }
-
-    public void setRevision(final String revision) {
-      myRevision = revision;
     }
   }
 }

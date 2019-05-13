@@ -1,23 +1,14 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.jps.model.java.impl;
 
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.io.FileFilters;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.FileUtilRt;
+import com.intellij.openapi.util.registry.Registry;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
@@ -26,23 +17,18 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Set;
 
+import static com.intellij.util.ObjectUtils.notNull;
+
 /**
  * @author nik
  */
 public class JavaSdkUtil {
-  public static List<File> getJdkClassesRoots(File home, boolean isJre) {
-    FileFilter jarFileFilter = new FileFilter() {
-      @Override
-      @SuppressWarnings({"HardCodedStringLiteral"})
-      public boolean accept(File f) {
-        return !f.isDirectory() && f.getName().endsWith(".jar");
-      }
-    };
-
+  @NotNull
+  public static List<File> getJdkClassesRoots(@NotNull File home, boolean isJre) {
     File[] jarDirs;
     if (SystemInfo.isMac && !home.getName().startsWith("mockJDK")) {
       File openJdkRtJar = new File(home, "jre/lib/rt.jar");
-      if (openJdkRtJar.exists() && !openJdkRtJar.isDirectory()) {
+      if (openJdkRtJar.isFile()) {
         File libDir = new File(home, "lib");
         File classesDir = openJdkRtJar.getParentFile();
         File libExtDir = new File(openJdkRtJar.getParentFile(), "ext");
@@ -57,18 +43,28 @@ public class JavaSdkUtil {
         jarDirs = new File[]{libEndorsedDir, libDir, classesDir, libExtDir};
       }
     }
+    else if (new File(home, "lib/jrt-fs.jar").exists()) {
+      jarDirs = ArrayUtil.EMPTY_FILE_ARRAY;
+    }
     else {
-      File libDir = isJre ? new File(home, "lib") : new File(home, "jre/lib");
+      File libDir = new File(home, isJre ? "lib" : "jre/lib");
       File libExtDir = new File(libDir, "ext");
       File libEndorsedDir = new File(libDir, "endorsed");
       jarDirs = new File[]{libEndorsedDir, libDir, libExtDir};
     }
 
+    FileFilter jarFileFilter = FileFilters.filesWithExtension("jar");
     Set<String> pathFilter = ContainerUtil.newTroveSet(FileUtil.PATH_HASHING_STRATEGY);
     List<File> rootFiles = ContainerUtil.newArrayList();
+    if (Registry.is("project.structure.add.tools.jar.to.new.jdk")) {
+      File toolsJar = new File(home, "lib/tools.jar");
+      if (toolsJar.isFile()) {
+        rootFiles.add(toolsJar);
+      }
+    }
     for (File jarDir : jarDirs) {
       if (jarDir != null && jarDir.isDirectory()) {
-        File[] jarFiles = jarDir.listFiles(jarFileFilter);
+        File[] jarFiles = listFiles(jarDir, jarFileFilter);
         for (File jarFile : jarFiles) {
           String jarFileName = jarFile.getName();
           if (jarFileName.equals("alt-rt.jar") || jarFileName.equals("alt-string.jar")) {
@@ -83,17 +79,35 @@ public class JavaSdkUtil {
       }
     }
 
+    List<File> ibmJdkLookupDirs = ContainerUtil.newArrayList(new File(home, isJre ? "bin" : "jre/bin"));
+    ContainerUtil.addAll(ibmJdkLookupDirs, listFiles(new File(home, isJre ? "lib" : "jre/lib"), FileUtilRt.ALL_DIRECTORIES));
+    for (File candidate : ibmJdkLookupDirs) {
+      File[] vmJarDirs = listFiles(new File(candidate, "default"), f -> f.getName().startsWith("jclSC") && f.isDirectory());
+      for (File dir : vmJarDirs) {
+        File vmJar = new File(dir, "vm.jar");
+        if (vmJar.isFile()) {
+          rootFiles.add(vmJar);
+        }
+      }
+    }
+
     File classesZip = new File(home, "lib/classes.zip");
     if (classesZip.isFile()) {
       rootFiles.add(classesZip);
     }
 
-    File classesDir = new File(home, "classes");
-    if (rootFiles.isEmpty() && classesDir.isDirectory()) {
-      rootFiles.add(classesDir);
+    if (rootFiles.isEmpty()) {
+      File classesDir = new File(home, "classes");
+      if (classesDir.isDirectory()) {
+        rootFiles.add(classesDir);
+      }
     }
 
     return rootFiles;
+  }
+
+  private static File[] listFiles(File dir, FileFilter filter) {
+    return notNull(dir.listFiles(filter), ArrayUtil.EMPTY_FILE_ARRAY);
   }
 
   @Nullable

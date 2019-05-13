@@ -1,95 +1,102 @@
-/*
- * Copyright 2000-2011 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.stash;
 
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationListener;
-import com.intellij.notification.NotificationType;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsException;
-import com.intellij.openapi.vcs.changes.Change;
+import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
-import com.intellij.openapi.vcs.impl.LocalChangesUnderRoots;
 import com.intellij.openapi.vcs.merge.MergeDialogCustomizer;
-import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.continuation.ContinuationContext;
-import git4idea.GitPlatformFacade;
-import git4idea.GitVcs;
+import com.intellij.util.containers.ContainerUtil;
+import git4idea.GitUtil;
 import git4idea.commands.Git;
+import git4idea.commands.GitCommand;
 import git4idea.commands.GitCommandResult;
-import git4idea.commands.GitHandlerUtil;
-import git4idea.commands.GitSimpleEventDetector;
+import git4idea.commands.GitLineHandler;
 import git4idea.merge.GitConflictResolver;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
 import git4idea.ui.GitUnstashDialog;
-import git4idea.util.GitUIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.event.HyperlinkEvent;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Set;
 
-/**
- * @author Kirill Likhodedov
- */
 public class GitStashChangesSaver extends GitChangesSaver {
 
   private static final Logger LOG = Logger.getInstance(GitStashChangesSaver.class);
-  private final Set<VirtualFile> myStashedRoots = new HashSet<VirtualFile>(); // save stashed roots to unstash only them
+  private static final String NO_LOCAL_CHANGES_TO_SAVE = "No local changes to save";
+
   @NotNull private final GitRepositoryManager myRepositoryManager;
+  @NotNull private final Set<VirtualFile> myStashedRoots = ContainerUtil.newHashSet(); // save stashed roots to unstash only them
 
-  public GitStashChangesSaver(@NotNull Project project, @NotNull GitPlatformFacade platformFacade, @NotNull Git git,
-                              @NotNull ProgressIndicator progressIndicator, @NotNull String stashMessage) {
-    super(project, platformFacade, git, progressIndicator, stashMessage);
-    myRepositoryManager = platformFacade.getRepositoryManager(project);
+  public GitStashChangesSaver(@NotNull Project project,
+                              @NotNull Git git,
+                              @NotNull ProgressIndicator progressIndicator,
+                              @NotNull String stashMessage) {
+    super(project, git, progressIndicator, stashMessage);
+    myRepositoryManager = GitUtil.getRepositoryManager(project);
   }
 
   @Override
-  protected void save(Collection<VirtualFile> rootsToSave) throws VcsException {
-    LOG.info("save " + rootsToSave);
-    final Map<VirtualFile, Collection<Change>> changes =
-      new LocalChangesUnderRoots(myChangeManager, myPlatformFacade.getVcsManager(myProject)).getChangesUnderRoots(rootsToSave);
-    stash(changes.keySet());
+  protected void save(@NotNull Collection<VirtualFile> rootsToSave) throws VcsException {
+    LOG.info("saving " + rootsToSave);
+
+    for (VirtualFile root : rootsToSave) {
+      final String message = "Stashing changes from '" + root.getName() + "'...";
+      LOG.info(message);
+      final String oldProgressTitle = myProgressIndicator.getText();
+      myProgressIndicator.setText(message);
+      GitRepository repository = myRepositoryManager.getRepositoryForRoot(root);
+      if (repository == null) {
+        LOG.error("Repository is null for root " + root);
+      }
+      else {
+        GitCommandResult result = myGit.stashSave(repository, myStashMessage);
+        if (result.success() && somethingWasStashed(result)) {
+          myStashedRoots.add(root);
+        }
+        else {
+          if (!result.success()) {
+            throw new VcsException("Couldn't stash " + repository.getRoot() + ": " + result.getErrorOutputAsJoinedString());
+          }
+          else {
+            LOG.warn("There was nothing to stash in " + repository.getRoot());
+          }
+        }
+      }
+      myProgressIndicator.setText(oldProgressTitle);
+    }
+  }
+
+  private static boolean somethingWasStashed(@NotNull GitCommandResult result) {
+    return !StringUtil.containsIgnoreCase(result.getErrorOutputAsJoinedString(), NO_LOCAL_CHANGES_TO_SAVE) &&
+           !StringUtil.containsIgnoreCase(result.getOutputAsJoinedString(), NO_LOCAL_CHANGES_TO_SAVE);
   }
 
   @Override
-  protected void load(@NotNull ContinuationContext context) {
-    try {
-      load();
-    }
-    catch (VcsException e) {
-      context.handleException(e, false);
-    }
-  }
-
-  public void load() throws VcsException {
-    for (VirtualFile root : myStashedRoots) {
-      loadRoot(root);
-    }
-
-    boolean conflictsResolved = new UnstashConflictResolver(myProject, myPlatformFacade, myGit, myStashedRoots, myParams).merge();
-    LOG.info("load: conflicts resolved status is " + conflictsResolved + " in roots " + myStashedRoots);
+  public void load() {
+    final String oldProgressTitle = myProgressIndicator.getText();
+    GitStashUtils.unstash(myProject, myStashedRoots, (root) -> {
+      final String message = "Popping changes to '" + root.getName() + "'...";
+      myProgressIndicator.setText(message);
+      GitLineHandler handler = new GitLineHandler(myProject, root, GitCommand.STASH);
+      handler.addParameters("pop");
+      return handler;
+    }, new UnstashConflictResolver(myProject, myGit, myStashedRoots, myParams));
+    myProgressIndicator.setText(oldProgressTitle);
   }
 
   @Override
-  protected boolean wereChangesSaved() {
+  public boolean wereChangesSaved() {
     return !myStashedRoots.isEmpty();
   }
 
@@ -98,78 +105,37 @@ public class GitStashChangesSaver extends GitChangesSaver {
     return "stash";
   }
 
+  @NotNull
   @Override
-  protected void showSavedChanges() {
-    GitUnstashDialog.showUnstashDialog(myProject, new ArrayList<VirtualFile>(myStashedRoots), myStashedRoots.iterator().next());
+  public String getOperationName() {
+    return "stash";
   }
 
   @Override
-  public void refresh() {
-    // we'll refresh more but this way we needn't compute what files under roots etc
-    LocalFileSystem.getInstance().refreshIoFiles(myChangeManager.getAffectedPaths());
+  public void showSavedChanges() {
+    GitUnstashDialog.showUnstashDialog(myProject, new ArrayList<>(myStashedRoots), myStashedRoots.iterator().next());
   }
 
-  private void stash(Collection<VirtualFile> roots) throws VcsException {
-    for (VirtualFile root : roots) {
-      final String message = GitHandlerUtil.formatOperationName("Stashing changes from", root);
-      LOG.info(message);
-      final String oldProgressTitle = myProgressIndicator.getText();
-      myProgressIndicator.setText(message);
-      GitRepository repository = myRepositoryManager.getRepositoryForRoot(root);
-      if (repository == null) {
-        LOG.error("Repository is null for root " + root);
-      }
-      else if (GitStashUtils.saveStash(myGit, repository, myStashMessage)) {
-          myStashedRoots.add(root);
-      }
-      myProgressIndicator.setText(oldProgressTitle);
-    }
-  }
-
-  /**
-   * Returns true if the root was loaded with conflict.
-   * False is returned in all other cases: in the case of success and in case of some other error.
-   */
-  private boolean loadRoot(final VirtualFile root) throws VcsException {
-    LOG.info("loadRoot " + root);
-    myProgressIndicator.setText(GitHandlerUtil.formatOperationName("Unstashing changes to", root));
-
-    GitRepository repository = myRepositoryManager.getRepositoryForRoot(root);
-    if (repository == null) {
-      LOG.error("Repository is null for root " + root);
-      return false;
-    }
-
-    GitSimpleEventDetector conflictDetector = new GitSimpleEventDetector(GitSimpleEventDetector.Event.MERGE_CONFLICT_ON_UNSTASH);
-    GitCommandResult result = myGit.stashPop(repository, conflictDetector);
-    if (result.success()) {
-      return false;
-    }
-    else if (conflictDetector.hasHappened()) {
-      return true;
-    }
-    else {
-      LOG.info("unstash failed " + result.getErrorOutputAsJoinedString());
-      GitUIUtil.notifyImportantError(myProject, "Couldn't unstash", "<br/>" + result.getErrorOutputAsHtmlString());
-      return false;
-    }
+  @Override
+  public String toString() {
+    return "StashChangesSaver. Roots: " + myStashedRoots;
   }
 
   private static class UnstashConflictResolver extends GitConflictResolver {
 
     private final Set<VirtualFile> myStashedRoots;
 
-    public UnstashConflictResolver(@NotNull Project project, GitPlatformFacade platformFacade, @NotNull Git git,
+    UnstashConflictResolver(@NotNull Project project, @NotNull Git git,
                                    @NotNull Set<VirtualFile> stashedRoots, @Nullable Params params) {
-      super(project, git, platformFacade, stashedRoots, makeParamsOrUse(params));
+      super(project, git, stashedRoots, makeParamsOrUse(params, project));
       myStashedRoots = stashedRoots;
     }
 
-    private static Params makeParamsOrUse(@Nullable Params givenParams) {
+    private static Params makeParamsOrUse(@Nullable Params givenParams, Project project) {
       if (givenParams != null) {
         return givenParams;
       }
-      Params params = new Params();
+      Params params = new Params(project);
       params.setErrorNotificationTitle("Local changes were not restored");
       params.setMergeDialogCustomizer(new UnstashMergeDialogCustomizer());
       params.setReverse(true);
@@ -179,42 +145,51 @@ public class GitStashChangesSaver extends GitChangesSaver {
 
     @Override
     protected void notifyUnresolvedRemain() {
-      GitVcs.IMPORTANT_ERROR_NOTIFICATION.createNotification("Local changes were restored with conflicts",
-                                                "Your uncommitted changes were saved to <a href='saver'>stash</a>.<br/>" +
-                                                "Unstash is not complete, you have unresolved merges in your working tree<br/>" +
-                                                "<a href='resolve'>Resolve</a> conflicts and drop the stash.",
-                                                NotificationType.WARNING, new NotificationListener() {
-          @Override
-          public void hyperlinkUpdate(@NotNull Notification notification, @NotNull HyperlinkEvent event) {
-            if (event.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
-              if (event.getDescription().equals("saver")) {
-                // we don't use #showSavedChanges to specify unmerged root first
-                GitUnstashDialog.showUnstashDialog(myProject, new ArrayList<VirtualFile>(myStashedRoots), myStashedRoots.iterator().next()
-                );
-              } else if (event.getDescription().equals("resolve")) {
-                mergeNoProceed();
-              }
-            }
-          }
-      }).notify(myProject);
+      VcsNotifier.getInstance(myProject).notifyImportantWarning("Local changes were restored with conflicts",
+                                                                "Your uncommitted changes were saved to <a href='saver'>stash</a>.<br/>" +
+                                                                "Unstash is not complete, you have unresolved merges in your working tree<br/>" +
+                                                                "<a href='resolve'>Resolve</a> conflicts and drop the stash.",
+                                                                new NotificationListener() {
+                                                                  @Override
+                                                                  public void hyperlinkUpdate(@NotNull Notification notification,
+                                                                                              @NotNull HyperlinkEvent event) {
+                                                                    if (event.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
+                                                                      if (event.getDescription().equals("saver")) {
+                                                                        // we don't use #showSavedChanges to specify unmerged root first
+                                                                        GitUnstashDialog.showUnstashDialog(myProject,
+                                                                                                           new ArrayList<>(
+                                                                                                             myStashedRoots),
+                                                                                                           myStashedRoots.iterator().next()
+                                                                        );
+                                                                      }
+                                                                      else if (event.getDescription().equals("resolve")) {
+                                                                        mergeNoProceed();
+                                                                      }
+                                                                    }
+                                                                  }
+                                                                }
+      );
     }
 
   }
 
   private static class UnstashMergeDialogCustomizer extends MergeDialogCustomizer {
 
+    @NotNull
     @Override
-    public String getMultipleFileMergeDescription(Collection<VirtualFile> files) {
+    public String getMultipleFileMergeDescription(@NotNull Collection<VirtualFile> files) {
       return "Uncommitted changes that were stashed before update have conflicts with updated files.";
     }
 
+    @NotNull
     @Override
-    public String getLeftPanelTitle(VirtualFile file) {
+    public String getLeftPanelTitle(@NotNull VirtualFile file) {
       return getConflictLeftPanelTitle();
     }
 
+    @NotNull
     @Override
-    public String getRightPanelTitle(VirtualFile file, VcsRevisionNumber lastRevisionNumber) {
+    public String getRightPanelTitle(@NotNull VirtualFile file, VcsRevisionNumber revisionNumber) {
       return getConflictRightPanelTitle();
     }
   }

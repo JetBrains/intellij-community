@@ -1,22 +1,7 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.options.ex;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.extensions.ExtensionPoint;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.options.*;
@@ -28,74 +13,132 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.List;
+import java.util.*;
 
 /**
  * @author Dmitry Avdeev
- *         Date: 9/17/12
  */
-public class ConfigurableWrapper implements SearchableConfigurable {
-
-  private static final ConfigurableWrapper[] EMPTY_ARRAY = new ConfigurableWrapper[0];
-  private static final NullableFunction<ConfigurableEP<Configurable>,Configurable> CONFIGURABLE_FUNCTION = new NullableFunction<ConfigurableEP<Configurable>, Configurable>() {
-    @Override
-    public Configurable fun(ConfigurableEP<Configurable> ep) {
-      return wrapConfigurable(ep);
-    }
-  };
+public class ConfigurableWrapper implements SearchableConfigurable, Weighted {
   private static final Logger LOG = Logger.getInstance(ConfigurableWrapper.class);
 
   @Nullable
-  public static <T extends UnnamedConfigurable> T wrapConfigurable(ConfigurableEP<T> ep) {
-    if (ep.displayName != null || ep.key != null) {
-      return (T)(ep.children != null || ep.childrenEPName != null || ep.dynamic ? new CompositeWrapper(ep) : new ConfigurableWrapper(ep));
+  public static <T extends UnnamedConfigurable> T wrapConfigurable(@NotNull ConfigurableEP<T> ep) {
+    return wrapConfigurable(ep, false);
+  }
+
+  @Nullable
+  public static <T extends UnnamedConfigurable> T wrapConfigurable(@NotNull ConfigurableEP<T> ep, boolean settings) {
+    if (!ep.canCreateConfigurable()) {
+      return null;
     }
-    else {
-      return ep.createConfigurable();
+    if (settings || ep.displayName != null || ep.key != null || ep.parentId != null || ep.groupId != null) {
+      //noinspection unchecked
+      return (T)(!ep.dynamic && ep.children == null && ep.childrenEPName == null ? new ConfigurableWrapper(ep) : new CompositeWrapper(ep));
     }
+    return createConfigurable(ep, LOG.isDebugEnabled());
+  }
+
+  private static <T extends UnnamedConfigurable> T createConfigurable(@NotNull ConfigurableEP<T> ep, boolean log) {
+    long time = System.currentTimeMillis();
+    T configurable = ep.createConfigurable();
+    if (configurable instanceof Configurable) {
+      ConfigurableCardPanel.warn((Configurable)configurable, "init", time);
+      if (log) {
+        LOG.debug("cannot create configurable wrapper for " + configurable.getClass());
+      }
+    }
+    return configurable;
   }
 
   public static <T extends UnnamedConfigurable> List<T> createConfigurables(ExtensionPointName<? extends ConfigurableEP<T>> name) {
-    return ContainerUtil.mapNotNull(Extensions.getExtensions(name), new NullableFunction<ConfigurableEP<T>, T>() {
-      @Override
-      public T fun(ConfigurableEP<T> ep) {
-        return wrapConfigurable(ep);
-      }
-    });
+    return ContainerUtil.mapNotNull(name.getExtensions(), (NullableFunction<ConfigurableEP<T>, T>)ep -> wrapConfigurable(ep));
   }
 
-  public static boolean isNoScroll(Configurable configurable) {
-    return configurable instanceof NoScroll ||
-           (configurable instanceof ConfigurableWrapper && ((ConfigurableWrapper)configurable).getConfigurable() instanceof NoScroll);
+  public static boolean hasOwnContent(UnnamedConfigurable configurable) {
+    SearchableConfigurable.Parent parent = cast(SearchableConfigurable.Parent.class, configurable);
+    return parent != null && parent.hasOwnContent();
   }
 
   public static boolean isNonDefaultProject(Configurable configurable) {
+    //noinspection deprecation
     return configurable instanceof NonDefaultProjectConfigurable ||
            (configurable instanceof ConfigurableWrapper && ((ConfigurableWrapper)configurable).myEp.nonDefaultProject);
   }
 
-  private final ConfigurableEP myEp;
+  @Nullable
+  public static <T> T cast(@NotNull Class<T> type, UnnamedConfigurable configurable) {
+    if (configurable instanceof ConfigurableWrapper) {
+      ConfigurableWrapper wrapper = (ConfigurableWrapper)configurable;
+      if (wrapper.myConfigurable == null) {
+        Class<?> configurableType = wrapper.getExtensionPoint().getConfigurableType();
+        if (configurableType != null) {
+          if (!type.isAssignableFrom(configurableType)) {
+            return null; // do not create configurable that cannot be cast to the specified type
+          }
+        }
+        else if (type == OptionalConfigurable.class) {
+          return null; // do not create configurable from ConfigurableProvider which replaces OptionalConfigurable
+        }
+      }
+      configurable = wrapper.getConfigurable();
+    }
+    return type.isInstance(configurable)
+           ? type.cast(configurable)
+           : null;
+  }
 
-  public ConfigurableWrapper(ConfigurableEP ep) {
+  private final ConfigurableEP myEp;
+  int myWeight; // see ConfigurableExtensionPointUtil.getConfigurableToReplace
+
+  private ConfigurableWrapper(@NotNull ConfigurableEP ep) {
     myEp = ep;
+    myWeight = ep.groupWeight;
   }
 
   private UnnamedConfigurable myConfigurable;
 
+  @Nullable
+  public UnnamedConfigurable getRawConfigurable() {
+    return myConfigurable;
+  }
+
   public UnnamedConfigurable getConfigurable() {
     if (myConfigurable == null) {
-      myConfigurable = myEp.createConfigurable();
+      myConfigurable = createConfigurable(myEp, false);
       if (myConfigurable == null) {
         LOG.error("Can't instantiate configurable for " + myEp);
+      }
+      else if (LOG.isDebugEnabled()) {
+        LOG.debug("created configurable for " + myConfigurable.getClass());
       }
     }
     return myConfigurable;
   }
 
+  @Override
+  public int getWeight() {
+    return myWeight;
+  }
+
   @Nls
   @Override
   public String getDisplayName() {
+    if (myEp.displayName == null && myEp.key == null) {
+      boolean loaded = myConfigurable != null;
+      Configurable configurable = cast(Configurable.class, this);
+      if (configurable != null) {
+        String name = configurable.getDisplayName();
+        if (!loaded && LOG.isDebugEnabled()) {
+          LOG.debug("XML does not provide displayName for " + configurable.getClass());
+        }
+        return name;
+      }
+    }
     return myEp.getDisplayName();
+  }
+
+  public String getProviderClass() {
+    return myEp.providerClass;
   }
 
   @Nullable
@@ -134,9 +177,30 @@ public class ConfigurableWrapper implements SearchableConfigurable {
   @NotNull
   @Override
   public String getId() {
-    return myEp.id == null ? myEp.instanceClass : myEp.id;
+    if (myEp.id != null) {
+      return myEp.id;
+    }
+    boolean loaded = myConfigurable != null;
+    SearchableConfigurable configurable = cast(SearchableConfigurable.class, this);
+    if (configurable != null) {
+      String id = configurable.getId();
+      if (!loaded) {
+        LOG.debug("XML does not provide id for " + configurable.getClass());
+      }
+      return id;
+    }
+    // order from #ConfigurableEP(PicoContainer, Project)
+    return myEp.providerClass != null
+           ? myEp.providerClass
+           : myEp.instanceClass != null
+             ? myEp.instanceClass
+             : myEp.implementationClass;
   }
 
+  @NotNull
+  public ConfigurableEP getExtensionPoint() {
+    return myEp;
+  }
 
   public String getParentId() {
     return myEp.parentId;
@@ -158,49 +222,89 @@ public class ConfigurableWrapper implements SearchableConfigurable {
     return configurable instanceof SearchableConfigurable ? ((SearchableConfigurable)configurable).enableSearch(option) : null;
   }
 
+  @NotNull
+  @Override
+  public Class<?> getOriginalClass() {
+    final UnnamedConfigurable configurable = getConfigurable();
+    return configurable instanceof SearchableConfigurable
+           ? ((SearchableConfigurable)configurable).getOriginalClass()
+           : configurable.getClass();
+  }
+
   private static class CompositeWrapper extends ConfigurableWrapper implements Configurable.Composite {
 
     private Configurable[] myKids;
+    private Comparator<Configurable> myComparator;
+    private boolean isInitialized;
 
-    public CompositeWrapper(ConfigurableEP ep, Configurable... kids) {
+    private CompositeWrapper(@NotNull ConfigurableEP ep, Configurable... kids) {
       super(ep);
-      if (ep.dynamic) {
-        kids = ((Composite)getConfigurable()).getConfigurables();
-      }
-      else if (ep.children != null) {
-        kids = ContainerUtil.mapNotNull(ep.getChildren(),
-                                        new NullableFunction<ConfigurableEP, ConfigurableWrapper>() {
-                                          @Override
-                                          public ConfigurableWrapper fun(ConfigurableEP ep) {
-                                            return ep.isAvailable() ? (ConfigurableWrapper)wrapConfigurable(ep) : null;
-                                          }
-                                        }, EMPTY_ARRAY);
-      }
-      if (ep.childrenEPName != null) {
-        ExtensionPoint<Object> childrenEP = Extensions.getArea(ep.getProject()).getExtensionPoint(ep.childrenEPName);
-        Object[] extensions = childrenEP.getExtensions();
-        if (extensions.length > 0) {
-          if (extensions[0] instanceof ConfigurableEP) {
-            Configurable[] children = ContainerUtil.mapNotNull(((ConfigurableEP<Configurable>[])extensions),
-                                                         CONFIGURABLE_FUNCTION, new Configurable[0]);
-            kids = ArrayUtil.mergeArrays(kids, children);
-          }
-          else {
-            kids = ArrayUtil.mergeArrays(kids, ((Composite)getConfigurable()).getConfigurables());
-          }
-        }
-      }
       myKids = kids;
     }
 
+    @NotNull
     @Override
     public Configurable[] getConfigurables() {
+      if (!isInitialized) {
+        long time = System.currentTimeMillis();
+        ArrayList<Configurable> list = new ArrayList<>();
+        if (super.myEp.dynamic) {
+          Composite composite = cast(Composite.class, this);
+          if (composite != null) {
+            Collections.addAll(list, composite.getConfigurables());
+          }
+        }
+        if (super.myEp.children != null) {
+          for (ConfigurableEP ep : super.myEp.getChildren()) {
+            if (ep.isAvailable()) {
+              list.add((Configurable)wrapConfigurable(ep));
+            }
+          }
+        }
+        if (super.myEp.childrenEPName != null) {
+          Object[] extensions = Extensions.getArea(super.myEp.getProject()).getExtensionPoint(super.myEp.childrenEPName).getExtensions();
+          if (extensions.length > 0) {
+            if (extensions[0] instanceof ConfigurableEP) {
+              for (Object object : extensions) {
+                list.add((Configurable)wrapConfigurable((ConfigurableEP)object));
+              }
+            }
+            else if (!super.myEp.dynamic) {
+              Composite composite = cast(Composite.class, this);
+              if (composite != null) {
+                Collections.addAll(list, composite.getConfigurables());
+              }
+            }
+          }
+        }
+        Collections.addAll(list, myKids);
+        // sort configurables is needed
+        for (Configurable configurable : list) {
+          if (configurable instanceof Weighted) {
+            if (((Weighted)configurable).getWeight() != 0) {
+              myComparator = COMPARATOR;
+              Collections.sort(list, myComparator);
+              break;
+            }
+          }
+        }
+        myKids = ArrayUtil.toObjectArray(list, Configurable.class);
+        isInitialized = true;
+        ConfigurableCardPanel.warn(this, "children", time);
+      }
       return myKids;
     }
 
     @Override
     public ConfigurableWrapper addChild(Configurable configurable) {
-      myKids = ArrayUtil.append(myKids, configurable);
+      if (myComparator != null) {
+        int index = Arrays.binarySearch(myKids, configurable, myComparator);
+        LOG.assertTrue(index < 0, "similar configurable is already exist");
+        myKids = ArrayUtil.insert(myKids, -1 - index, configurable);
+      }
+      else {
+        myKids = ArrayUtil.append(myKids, configurable);
+      }
       return this;
     }
   }

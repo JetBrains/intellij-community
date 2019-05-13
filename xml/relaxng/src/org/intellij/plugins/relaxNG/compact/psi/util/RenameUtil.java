@@ -20,26 +20,21 @@ import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiFileFactory;
 import com.intellij.psi.PsiManager;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.containers.HashSet;
-import com.sun.org.apache.xerces.internal.util.XML11Char;
 import org.intellij.plugins.relaxNG.compact.RncElementTypes;
 import org.intellij.plugins.relaxNG.compact.RncFileType;
 import org.intellij.plugins.relaxNG.compact.RncTokenTypes;
 import org.intellij.plugins.relaxNG.compact.psi.RncFile;
 import org.intellij.plugins.relaxNG.compact.psi.RncGrammar;
+import org.jdom.Verifier;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.Set;
 
-/**
- * Created by IntelliJ IDEA.
- * User: sweinreuter
- * Date: 14.08.2007
- */
 public class RenameUtil {
 
-  private static Set<String> ourRncKeywords = new HashSet<String>();
+  private static final Set<String> ourRncKeywords = new HashSet<>();
 
   static {
     Collections.addAll(ourRncKeywords, "attribute", "default", "datatypes", "div", "element", "empty", "external",
@@ -71,10 +66,8 @@ public class RenameUtil {
     if (name == null) {
       return false;
     }
-    if (XML11Char.isXML11ValidNCName(name)) {
-      return true;
-    }
-    return name.length() >= 2 && name.startsWith("\\") && XML11Char.isXML11ValidNCName(name.substring(1));
+    return Verifier.checkXMLName(name) == null ||
+           name.length() >= 2 && name.charAt(0) == '\\' && Verifier.checkXMLName(name.substring(1)) == null;
   }
 
   public static boolean isKeyword(String name) {

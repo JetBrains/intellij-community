@@ -1,22 +1,7 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.search;
 
 import com.intellij.concurrency.AsyncFuture;
-import com.intellij.concurrency.AsyncFutureResult;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
@@ -24,6 +9,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
 import com.intellij.util.Processor;
+import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -31,18 +17,27 @@ import org.jetbrains.annotations.Nullable;
  * Provides low-level search and find usages services for a project, like finding references
  * to an element, finding overriding / inheriting elements, finding to do items and so on.
  *
- * Use {@link com.intellij.psi.search.PsiSearchHelper.SERVICE#getInstance}() to get a search helper instance.
+ * Use {@link PsiSearchHelper#getInstance(Project)} to get a search helper instance.
  */
 public interface PsiSearchHelper {
   class SERVICE {
     private SERVICE() {
     }
 
-    public static PsiSearchHelper getInstance(Project project) {
-      return ServiceManager.getService(project, PsiSearchHelper.class);
+    /**
+     * @deprecated please use {@link PsiSearchHelper#getInstance(Project)}
+     */
+    @Deprecated
+    public static PsiSearchHelper getInstance(@NotNull Project project) {
+      return PsiSearchHelper.getInstance(project);
     }
   }
-  
+
+  @NotNull
+  static PsiSearchHelper getInstance(@NotNull Project project) {
+    return ServiceManager.getService(project, PsiSearchHelper.class);
+  }
+
   /**
    * Searches the specified scope for comments containing the specified identifier.
    *
@@ -50,17 +45,17 @@ public interface PsiSearchHelper {
    * @param searchScope the scope in which occurrences are searched.
    * @return the array of found comments.
    */
-  @NotNull PsiElement[] findCommentsContainingIdentifier(@NotNull String identifier, @NotNull SearchScope searchScope);
+  @NotNull
+  PsiElement[] findCommentsContainingIdentifier(@NotNull String identifier, @NotNull SearchScope searchScope);
 
   /**
    * Processes the specified scope and hands comments containing the specified identifier over to the processor.
    *
    * @param identifier  the identifier to search.
    * @param searchScope the scope in which occurrences are searched.
-   * @param processor
    * @return false if processor returned false, true otherwise
    */
-  boolean processCommentsContainingIdentifier(@NotNull String identifier, @NotNull SearchScope searchScope, @NotNull Processor<PsiElement> processor);
+  boolean processCommentsContainingIdentifier(@NotNull String identifier, @NotNull SearchScope searchScope, @NotNull Processor<? super PsiElement> processor);
 
   /**
    * Returns the list of files which contain the specified word in "plain text"
@@ -69,7 +64,8 @@ public interface PsiSearchHelper {
    * @param word the word to search.
    * @return the list of files containing the word.
    */
-  @NotNull PsiFile[] findFilesWithPlainTextWords(@NotNull String word);
+  @NotNull
+  PsiFile[] findFilesWithPlainTextWords(@NotNull String word);
 
   /**
    * Passes all occurrences of the specified full-qualified class name in plain text context
@@ -84,7 +80,7 @@ public interface PsiSearchHelper {
                                       @NotNull GlobalSearchScope searchScope);
 
   /**
-   * Passes all occurrences of the specified full-qualified class name in plain text context in the
+   * Passes all occurrences of the specified fully qualified class name in plain text context in the
    * use scope of the specified element to the specified processor.
    *
    * @param originalElement the element whose use scope is used to restrict the search scope,
@@ -100,7 +96,7 @@ public interface PsiSearchHelper {
 
   /**
    * Returns the scope in which references to the specified element are searched. This scope includes the result of
-   * {@link com.intellij.psi.PsiElement#getUseScope()} and also the results returned from the registered
+   * {@link PsiElement#getUseScope()} and also the results returned from the registered
    * com.intellij.psi.search.UseScopeEnlarger instances.
    *
    * @param element the element to return the use scope form.
@@ -124,7 +120,7 @@ public interface PsiSearchHelper {
                                   final boolean caseSensitively);
 
   /**
-   * Passes all files containing the specified word in {@link UsageSearchContext#IN_PLAIN_TEXT code}
+   * Passes all files containing the specified word in {@link UsageSearchContext#IN_PLAIN_TEXT plain text}
    * context to the specified processor.
    *
    * @param word      the word to search.
@@ -157,16 +153,25 @@ public interface PsiSearchHelper {
    */
   boolean processAllFilesWithWordInLiterals(@NotNull String word, @NotNull GlobalSearchScope scope, @NotNull Processor<PsiFile> processor);
 
-  boolean processRequests(@NotNull SearchRequestCollector request, @NotNull Processor<PsiReference> processor);
+  boolean processRequests(@NotNull SearchRequestCollector request, @NotNull Processor<? super PsiReference> processor);
 
-  AsyncFuture<Boolean> processRequestsAsync(@NotNull SearchRequestCollector request, @NotNull Processor<PsiReference> processor);
+  @NotNull
+  AsyncFuture<Boolean> processRequestsAsync(@NotNull SearchRequestCollector request, @NotNull Processor<? super PsiReference> processor);
 
   boolean processElementsWithWord(@NotNull TextOccurenceProcessor processor,
                                   @NotNull SearchScope searchScope,
                                   @NotNull String text,
-                                  short searchContext,
+                                  @MagicConstant(flagsFromClass = UsageSearchContext.class) short searchContext,
                                   boolean caseSensitive);
 
+  boolean processElementsWithWord(@NotNull TextOccurenceProcessor processor,
+                                  @NotNull SearchScope searchScope,
+                                  @NotNull String text,
+                                  @MagicConstant(flagsFromClass = UsageSearchContext.class) short searchContext,
+                                  boolean caseSensitive,
+                                  boolean processInjectedPsi);
+
+  @NotNull
   AsyncFuture<Boolean> processElementsWithWordAsync(
                                        @NotNull TextOccurenceProcessor processor,
                                        @NotNull SearchScope searchScope,
@@ -175,9 +180,10 @@ public interface PsiSearchHelper {
                                        boolean caseSensitive);
 
 
+  @NotNull
   SearchCostResult isCheapEnoughToSearch(@NotNull String name,
                                          @NotNull GlobalSearchScope scope,
-                                         @Nullable PsiFile fileToIgnoreOccurencesIn,
+                                         @Nullable PsiFile fileToIgnoreOccurrencesIn,
                                          @Nullable ProgressIndicator progress);
 
   enum SearchCostResult {

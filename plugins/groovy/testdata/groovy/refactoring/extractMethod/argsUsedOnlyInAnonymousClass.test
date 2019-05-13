@@ -1,6 +1,6 @@
 def foo(b, c) {
   <begin>[].each (new Closure(this, this) {
-    void call() {
+    Void call() {
      b.plus(c)
     }
   })<end>
@@ -10,9 +10,9 @@ def foo(b, c) {
     testMethod(b, c)
 }
 
-private testMethod(b, c) {
-    [].each(new Closure(this, this) {
-        void call() {
+private List<Object> testMethod(b, c) {
+    return [].each(new Closure(this, this) {
+        Void call() {
             b.plus(c)
         }
     })

@@ -41,20 +41,7 @@ public class PublicFieldInspection extends BaseInspection {
   public boolean ignoreEnums = false;
 
   @SuppressWarnings({"PublicField"})
-  public final ExternalizableStringSet ignorableAnnotations = new ExternalizableStringSet();
-
-  @Override
-  @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("public.field.display.name");
-  }
-
-  @Override
-  @NotNull
-  public String buildErrorString(Object... infos) {
-    return InspectionGadgetsBundle.message(
-      "public.field.problem.descriptor");
-  }
+  public final ExternalizableStringSet ignorableAnnotations = new ExternalizableStringSet("org.junit.runners.Parameterized.Parameter");
 
   @Override
   @Nullable
@@ -72,11 +59,24 @@ public class PublicFieldInspection extends BaseInspection {
   @NotNull
   @Override
   protected InspectionGadgetsFix[] buildFixes(Object... infos) {
-    final List<InspectionGadgetsFix> fixes = new ArrayList();
+    final List<InspectionGadgetsFix> fixes = new ArrayList<>();
     final PsiField field = (PsiField)infos[0];
     fixes.add(new EncapsulateVariableFix(field.getName()));
     AddToIgnoreIfAnnotatedByListQuickFix.build(field, ignorableAnnotations, fixes);
-    return fixes.toArray(new InspectionGadgetsFix[fixes.size()]);
+    return fixes.toArray(InspectionGadgetsFix.EMPTY_ARRAY);
+  }
+
+  @Override
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message("public.field.display.name");
+  }
+
+  @Override
+  @NotNull
+  public String buildErrorString(Object... infos) {
+    return InspectionGadgetsBundle.message(
+      "public.field.problem.descriptor");
   }
 
   @Override
@@ -96,7 +96,7 @@ public class PublicFieldInspection extends BaseInspection {
       if (!field.hasModifierProperty(PsiModifier.PUBLIC)) {
         return;
       }
-      if (AnnotationUtil.isAnnotated(field, ignorableAnnotations)) {
+      if (AnnotationUtil.isAnnotated(field, ignorableAnnotations, 0)) {
         return;
       }
       if (field.hasModifierProperty(PsiModifier.FINAL)) {

@@ -38,6 +38,7 @@ import org.jetbrains.idea.maven.model.MavenConstants;
 import org.jetbrains.idea.maven.model.MavenId;
 import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
+import org.jetbrains.idea.maven.utils.MavenUtil;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -72,7 +73,7 @@ public class MavenParentRelativePathConverter extends ResolvingConverter<PsiFile
   @NotNull
   @Override
   public Collection<PsiFile> getVariants(ConvertContext context) {
-    List<PsiFile> result = new ArrayList<PsiFile>();
+    List<PsiFile> result = new ArrayList<>();
     PsiFile currentFile = context.getFile().getOriginalFile();
     for (DomFileElement<MavenDomProjectModel> each : MavenDomUtil.collectProjectModels(context.getFile().getProject())) {
       PsiFile file = each.getOriginalFile();
@@ -90,20 +91,23 @@ public class MavenParentRelativePathConverter extends ResolvingConverter<PsiFile
   private static class RelativePathFix implements LocalQuickFix {
     private final ConvertContext myContext;
 
-    public RelativePathFix(ConvertContext context) {
+    RelativePathFix(ConvertContext context) {
       myContext = context;
     }
 
+    @Override
     @NotNull
     public String getName() {
       return MavenDomBundle.message("fix.parent.path");
     }
 
+    @Override
     @NotNull
     public String getFamilyName() {
       return MavenDomBundle.message("inspection.group");
     }
 
+    @Override
     public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       GenericDomValue el = (GenericDomValue)myContext.getInvocationElement();
       MavenId id = MavenArtifactCoordinatesHelper.getId(myContext);
@@ -117,13 +121,12 @@ public class MavenParentRelativePathConverter extends ResolvingConverter<PsiFile
     }
   }
 
+  @Override
   @NotNull
   public PsiReference[] createReferences(final GenericDomValue genericDomValue, final PsiElement element, final ConvertContext context) {
-    return new MavenPathReferenceConverter(new Condition<PsiFileSystemItem>() {
-      @Override
-      public boolean value(PsiFileSystemItem item) {
-        return item.isDirectory() || item.getName().equals("pom.xml");
-      }
-    }).createReferences(genericDomValue, element, context);
+    Project project = element.getProject();
+    Condition<PsiFileSystemItem> condition = item ->
+      item.isDirectory() || MavenUtil.isPomFile(project, item.getVirtualFile());
+    return new MavenPathReferenceConverter(condition).createReferences(genericDomValue, element, context);
   }
 }

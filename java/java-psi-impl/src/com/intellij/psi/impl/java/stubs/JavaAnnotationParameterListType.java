@@ -32,7 +32,6 @@ import java.io.IOException;
 
 /**
  * @author Dmitry Avdeev
- *         Date: 7/27/12
  */
 public class JavaAnnotationParameterListType extends JavaStubElementType<PsiAnnotationParameterListStub, PsiAnnotationParameterList> {
 
@@ -51,8 +50,9 @@ public class JavaAnnotationParameterListType extends JavaStubElementType<PsiAnno
     return new AnnotationParamListElement();
   }
 
+  @NotNull
   @Override
-  public PsiAnnotationParameterListStub createStub(LighterAST tree, LighterASTNode node, StubElement parentStub) {
+  public PsiAnnotationParameterListStub createStub(@NotNull LighterAST tree, @NotNull LighterASTNode node, @NotNull StubElement parentStub) {
     return new PsiAnnotationParameterListStubImpl(parentStub);
   }
 
@@ -62,15 +62,16 @@ public class JavaAnnotationParameterListType extends JavaStubElementType<PsiAnno
   }
 
   @Override
-  public void serialize(PsiAnnotationParameterListStub stub, StubOutputStream dataStream) throws IOException {
+  public void serialize(@NotNull PsiAnnotationParameterListStub stub, @NotNull StubOutputStream dataStream) throws IOException {
   }
 
+  @NotNull
   @Override
-  public PsiAnnotationParameterListStub deserialize(StubInputStream dataStream, StubElement parentStub) throws IOException {
+  public PsiAnnotationParameterListStub deserialize(@NotNull StubInputStream dataStream, StubElement parentStub) throws IOException {
     return new PsiAnnotationParameterListStubImpl(parentStub);
   }
 
   @Override
-  public void indexStub(PsiAnnotationParameterListStub stub, IndexSink sink) {
+  public void indexStub(@NotNull PsiAnnotationParameterListStub stub, @NotNull IndexSink sink) {
   }
 }

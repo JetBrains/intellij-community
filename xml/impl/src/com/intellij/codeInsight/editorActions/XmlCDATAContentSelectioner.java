@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,16 +22,19 @@ import com.intellij.psi.xml.XmlTokenType;
 import com.intellij.psi.impl.source.tree.CompositePsiElement;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.editor.Editor;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
 public class XmlCDATAContentSelectioner extends ExtendWordSelectionHandlerBase {
-  public boolean canSelect(PsiElement e) {
+  @Override
+  public boolean canSelect(@NotNull PsiElement e) {
     return e instanceof CompositePsiElement &&
            ((CompositePsiElement)e).getElementType() == XmlElementType.XML_CDATA;
   }
 
-  public List<TextRange> select(PsiElement e, CharSequence editorText, int cursorOffset, Editor editor) {
+  @Override
+  public List<TextRange> select(@NotNull PsiElement e, @NotNull CharSequence editorText, int cursorOffset, @NotNull Editor editor) {
     List<TextRange> result = super.select(e, editorText, cursorOffset, editor);
     PsiElement[] children = e.getChildren();
 

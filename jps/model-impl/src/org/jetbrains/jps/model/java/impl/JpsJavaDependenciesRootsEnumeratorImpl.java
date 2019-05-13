@@ -16,9 +16,7 @@
 package org.jetbrains.jps.model.java.impl;
 
 import com.intellij.util.Consumer;
-import org.jetbrains.jps.model.java.JavaSourceRootType;
-import org.jetbrains.jps.model.java.JpsJavaDependenciesRootsEnumerator;
-import org.jetbrains.jps.model.java.JpsJavaExtensionService;
+import org.jetbrains.jps.model.java.*;
 import org.jetbrains.jps.model.library.JpsOrderRootType;
 import org.jetbrains.jps.model.module.*;
 import org.jetbrains.jps.model.module.impl.JpsDependenciesRootsEnumeratorBase;
@@ -39,7 +37,8 @@ public class JpsJavaDependenciesRootsEnumeratorImpl extends JpsDependenciesRoots
     return this;
   }
 
-  protected boolean processModuleRootUrls(JpsModule module, JpsDependencyElement dependencyElement, Consumer<String> urlConsumer) {
+  @Override
+  protected boolean processModuleRootUrls(JpsModule module, JpsDependencyElement dependencyElement, Consumer<? super String> urlConsumer) {
     boolean includeProduction, includeTests;
     if (dependencyElement instanceof JpsModuleDependency) {
       boolean productionOnTests = myDependenciesEnumerator.isProductionOnTests(dependencyElement);
@@ -80,6 +79,14 @@ public class JpsJavaDependenciesRootsEnumeratorImpl extends JpsDependenciesRoots
         }
         if (includeProduction && outputUrl != null) {
           urlConsumer.consume(outputUrl);
+        }
+      }
+    }
+    else if (myRootType == JpsAnnotationRootType.INSTANCE) {
+      JpsJavaModuleExtension extension = JpsJavaExtensionService.getInstance().getModuleExtension(module);
+      if (extension != null) {
+        for (String url : extension.getAnnotationRoots().getUrls()) {
+          urlConsumer.consume(url);
         }
       }
     }

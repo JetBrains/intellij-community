@@ -29,6 +29,7 @@ import com.intellij.ui.AnActionButton;
 import com.intellij.ui.CommonActionsPanel;
 import com.intellij.util.IconUtil;
 import com.intellij.util.containers.hash.HashMap;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -40,13 +41,14 @@ import java.util.Set;
  * @author Konstantin Bulenkov
  */
 public class DeleteFromFavoritesAction extends AnActionButton implements DumbAware {
-  private static final Logger LOG = Logger.getInstance("#" + DeleteFromFavoritesAction.class.getName());
+  private static final Logger LOG = Logger.getInstance(DeleteFromFavoritesAction.class);
 
   public DeleteFromFavoritesAction() {
     super(IdeBundle.message("action.remove.from.current.favorites"), IconUtil.getRemoveIcon());
   }
 
-  public void actionPerformed(AnActionEvent e) {
+  @Override
+  public void actionPerformed(@NotNull AnActionEvent e) {
     final DataContext dataContext = e.getDataContext();
     Project project = e.getProject();
     FavoritesViewTreeBuilder builder = FavoritesTreeViewPanel.FAVORITES_TREE_BUILDER_KEY.getData(dataContext);
@@ -61,14 +63,14 @@ public class DeleteFromFavoritesAction extends AnActionButton implements DumbAwa
     String listName = FavoritesTreeViewPanel.FAVORITES_LIST_NAME_DATA_KEY.getData(dataContext);
     FavoritesListProvider provider = favoritesManager.getListProvider(listName);
     if (provider != null && provider.willHandle(CommonActionsPanel.Buttons.REMOVE, project, selection)) {
-      provider.handle(CommonActionsPanel.Buttons.REMOVE, project, selection);
+      provider.handle(CommonActionsPanel.Buttons.REMOVE, project, selection, builder.getTree());
       return;
     }
     FavoritesTreeNodeDescriptor[] roots = FavoritesTreeViewPanel.CONTEXT_FAVORITES_ROOTS_DATA_KEY.getData(dataContext);
     final DnDAwareTree tree = FavoritesTreeViewPanel.FAVORITES_TREE_KEY.getData(dataContext);
 
     assert roots != null && tree != null;
-    Map<String, List<AbstractTreeNode>> toRemove = new HashMap<String, List<AbstractTreeNode>>();
+    Map<String, List<AbstractTreeNode>> toRemove = new HashMap<>();
     for (FavoritesTreeNodeDescriptor root : roots) {
       final AbstractTreeNode node = root.getElement();
       if (node instanceof FavoritesListNode) {
@@ -79,7 +81,7 @@ public class DeleteFromFavoritesAction extends AnActionButton implements DumbAwa
         LOG.assertTrue(listNode != null);
         final String name = listNode.getName();
         if (!toRemove.containsKey(name)) {
-          toRemove.put(name, new ArrayList<AbstractTreeNode>());
+          toRemove.put(name, new ArrayList<>());
         }
         toRemove.get(name).add(node);
       }
@@ -90,7 +92,8 @@ public class DeleteFromFavoritesAction extends AnActionButton implements DumbAwa
     }
   }
 
-  public void updateButton(AnActionEvent e) {
+  @Override
+  public void updateButton(@NotNull AnActionEvent e) {
     e.getPresentation().setText(getTemplatePresentation().getText());
     final DataContext dataContext = e.getDataContext();
     Project project = e.getProject();
@@ -101,6 +104,11 @@ public class DeleteFromFavoritesAction extends AnActionButton implements DumbAwa
     }
     Set<Object> selection = builder.getSelectedElements();
     String listName = FavoritesTreeViewPanel.FAVORITES_LIST_NAME_DATA_KEY.getData(dataContext);
+    if (listName == null) {//Selection is empty or contains several items under favorites/bookmarks/breakpoints at the same time
+      e.getPresentation().setText(CommonActionsPanel.Buttons.REMOVE.getText());
+      e.getPresentation().setEnabled(false);
+      return;
+    }
 
     FavoritesManager favoritesManager = FavoritesManager.getInstance(project);
     FavoritesListProvider provider = favoritesManager.getListProvider(listName);
@@ -109,6 +117,8 @@ public class DeleteFromFavoritesAction extends AnActionButton implements DumbAwa
       e.getPresentation().setEnabled(willHandle);
       if (willHandle) {
         e.getPresentation().setText(provider.getCustomName(CommonActionsPanel.Buttons.REMOVE));
+      } else {
+        e.getPresentation().setText(CommonActionsPanel.Buttons.REMOVE.getText());
       }
       return;
     }

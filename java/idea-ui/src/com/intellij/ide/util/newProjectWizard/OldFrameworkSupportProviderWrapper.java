@@ -81,6 +81,11 @@ public class OldFrameworkSupportProviderWrapper extends FrameworkSupportInModule
     return myProvider.isSupportAlreadyAdded(module, facetsProvider);
   }
 
+  @Override
+  public FrameworkRole[] getRoles() {
+    return myProvider.getRoles();
+  }
+
   public static class FrameworkSupportProviderBasedType extends FrameworkTypeEx {
     private final FrameworkSupportProvider myOldProvider;
     private final OldFrameworkSupportProviderWrapper myNewProvider;

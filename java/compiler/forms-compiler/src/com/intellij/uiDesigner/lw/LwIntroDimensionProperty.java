@@ -27,6 +27,7 @@ public final class LwIntroDimensionProperty extends LwIntrospectedProperty {
     super(name, "java.awt.Dimension");
   }
 
+  @Override
   public Object read(final Element element) throws Exception{
     final int width = LwXmlReader.getRequiredInt(element, "width");
     final int height = LwXmlReader.getRequiredInt(element, "height");

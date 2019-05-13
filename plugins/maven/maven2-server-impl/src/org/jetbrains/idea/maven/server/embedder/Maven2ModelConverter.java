@@ -15,7 +15,7 @@
  */
 package org.jetbrains.idea.maven.server.embedder;
 
-import com.intellij.util.ReflectionUtil;
+import com.intellij.util.ReflectionUtilRt;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import org.apache.maven.archetype.catalog.Archetype;
@@ -26,6 +26,7 @@ import org.apache.maven.shared.dependency.tree.DependencyNode;
 import org.codehaus.plexus.util.xml.Xpp3Dom;
 import org.jdom.Element;
 import org.jdom.IllegalNameException;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.model.*;
 import org.jetbrains.idea.maven.server.Maven2ServerGlobals;
 import org.sonatype.nexus.index.ArtifactInfo;
@@ -36,6 +37,7 @@ import java.rmi.RemoteException;
 import java.util.*;
 
 public class Maven2ModelConverter {
+  @NotNull
   public static MavenModel convertModel(Model model, File localRepository) throws RemoteException {
     Build build = model.getBuild();
     return convertModel(model,
@@ -51,12 +53,13 @@ public class Maven2ModelConverter {
     return directory == null ? Collections.<String>emptyList() : Collections.singletonList(directory);
   }
 
+  @NotNull
   public static MavenModel convertModel(Model model,
                                         List<String> sources,
                                         List<String> testSources,
-                                        Collection<Artifact> dependencies,
-                                        Collection<DependencyNode> dependencyTree,
-                                        Collection<Artifact> extensions,
+                                        Collection<? extends Artifact> dependencies,
+                                        Collection<? extends DependencyNode> dependencyTree,
+                                        Collection<? extends Artifact> extensions,
                                         File localRepository) throws RemoteException {
     MavenModel result = new MavenModel();
     result.setMavenId(new MavenId(model.getGroupId(), model.getArtifactId(), model.getVersion()));
@@ -144,9 +147,9 @@ public class Maven2ModelConverter {
            : null;
   }
 
-  public static List<MavenArtifact> convertArtifacts(Collection<Artifact> artifacts,
-                                                      Map<Artifact, MavenArtifact> nativeToConvertedMap,
-                                                      File localRepository) {
+  public static List<MavenArtifact> convertArtifacts(Collection<? extends Artifact> artifacts,
+                                                     Map<Artifact, MavenArtifact> nativeToConvertedMap,
+                                                     File localRepository) {
     if (artifacts == null) return new ArrayList<MavenArtifact>();
 
     List<MavenArtifact> result = new ArrayList<MavenArtifact>(artifacts.size());
@@ -157,7 +160,7 @@ public class Maven2ModelConverter {
   }
 
   public static List<MavenArtifactNode> convertDependencyNodes(MavenArtifactNode parent,
-                                                               Collection<DependencyNode> nodes,
+                                                               Collection<? extends DependencyNode> nodes,
                                                                Map<Artifact, MavenArtifact> nativeToConvertedMap,
                                                                File localRepository) {
     List<MavenArtifactNode> result = new ArrayList<MavenArtifactNode>(nodes.size());
@@ -268,12 +271,13 @@ public class Maven2ModelConverter {
                            plugin.getArtifactId(),
                            plugin.getVersion(),
                            isDefault,
+                           plugin.isExtensions(),
                            convertConfiguration(plugin.getConfiguration()),
                            executions, deps);
   }
 
   public static MavenPlugin.Execution convertExecution(PluginExecution execution) throws RemoteException {
-    return new MavenPlugin.Execution(execution.getId(), execution.getGoals(), convertConfiguration(execution.getConfiguration()));
+    return new MavenPlugin.Execution(execution.getId(), execution.getPhase(), execution.getGoals(), convertConfiguration(execution.getConfiguration()));
   }
 
   private static Element convertConfiguration(Object config) throws RemoteException {
@@ -303,7 +307,7 @@ public class Maven2ModelConverter {
     return result;
   }
 
-  public static List<MavenProfile> convertProfiles(Collection<Profile> profiles) {
+  public static List<MavenProfile> convertProfiles(Collection<? extends Profile> profiles) {
     if (profiles == null) return Collections.emptyList();
     List<MavenProfile> result = new ArrayList<MavenProfile>();
     for (Profile each : profiles) {
@@ -360,7 +364,7 @@ public class Maven2ModelConverter {
   }
 
   private static void doConvert(Object object, String prefix, Map<String, String> result) throws IllegalAccessException {
-    for (Field each : ReflectionUtil.collectFields(object.getClass())) {
+    for (Field each : ReflectionUtilRt.collectFields(object.getClass())) {
       Class<?> type = each.getType();
       if (shouldSkip(type)) continue;
 

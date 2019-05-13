@@ -1,12 +1,20 @@
 package com.siyeh.ig.controlflow;
 
-import com.siyeh.ig.IGInspectionTestCase;
+import com.intellij.codeInsight.daemon.quickFix.LightQuickFixParameterizedTestCase;
+import com.intellij.codeInspection.LocalInspectionTool;
+import org.jetbrains.annotations.NotNull;
 
-public class IfStatementWithIdenticalBranchesInspectionTest
-  extends IGInspectionTestCase {
+public class IfStatementWithIdenticalBranchesInspectionTest extends LightQuickFixParameterizedTestCase {
 
-  public void test() throws Exception {
-    doTest("com/siyeh/igtest/controlflow/if_statement_with_identical_branches",
-           new IfStatementWithIdenticalBranchesInspection());
+  @NotNull
+  @Override
+  protected LocalInspectionTool[] configureLocalInspectionTools() {
+    IfStatementWithIdenticalBranchesInspection inspection = new IfStatementWithIdenticalBranchesInspection();
+    return new LocalInspectionTool[]{inspection};
+  }
+
+  @Override
+  protected String getBasePath() {
+    return "/inspection/commonIfParts";
   }
 }

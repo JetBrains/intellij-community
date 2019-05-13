@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,6 @@ package org.jetbrains.plugins.groovy.mvc;
 import com.intellij.ide.util.importProject.ProjectDescriptor;
 import com.intellij.ide.util.projectWizard.ModuleWizardStep;
 import com.intellij.ide.util.projectWizard.ProjectWizardStepFactory;
-import com.intellij.ide.util.projectWizard.WizardContext;
 import com.intellij.ide.util.projectWizard.importSources.DetectedProjectRoot;
 import com.intellij.ide.util.projectWizard.importSources.ProjectFromSourcesBuilder;
 import com.intellij.ide.util.projectWizard.importSources.ProjectStructureDetector;
@@ -46,6 +45,9 @@ public abstract class MvcProjectStructureDetector extends ProjectStructureDetect
   public DirectoryProcessingResult detectRoots(@NotNull File dir, @NotNull File[] children, @NotNull File base,
                                                @NotNull List<DetectedProjectRoot> result) {
     for (File child : children) {
+      if (child.getName().equals("build.gradle")) return DirectoryProcessingResult.PROCESS_CHILDREN;
+    }
+    for (File child : children) {
       if (child.getName().equals(myDirectoryName) && child.isDirectory()) {
         result.add(new GroovyMvcProjectRoot(dir));
         return DirectoryProcessingResult.SKIP_CHILDREN;
@@ -64,7 +66,7 @@ public abstract class MvcProjectStructureDetector extends ProjectStructureDetect
   }
 
   private class GroovyMvcProjectRoot extends DetectedProjectRoot {
-    public GroovyMvcProjectRoot(File dir) {
+    GroovyMvcProjectRoot(File dir) {
       super(dir);
     }
 

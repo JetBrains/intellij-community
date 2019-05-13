@@ -15,10 +15,12 @@
  */
 package git4idea.repo;
 
-import com.intellij.openapi.project.Project;
+import com.intellij.dvcs.ignore.VcsRepositoryIgnoredFilesHolder;
+import com.intellij.dvcs.repo.Repository;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.messages.Topic;
 import git4idea.GitLocalBranch;
+import git4idea.GitVcs;
 import git4idea.branch.GitBranchesCollection;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -58,64 +60,26 @@ import java.util.Collection;
  *
  * @author Kirill Likhodedov
  */
-public interface GitRepository {
+public interface GitRepository extends Repository {
 
   Topic<GitRepositoryChangeListener> GIT_REPO_CHANGE = Topic.create("GitRepository change", GitRepositoryChangeListener.class);
 
   /**
-   * Current state of the repository.
+   * @deprecated Use #getRepositoryFiles(), since there will be two administrative directories if user uses git worktrees.
    */
-  enum State {
-    /**
-     * HEAD is on branch, no merge process is in progress (and no rebase as well).
-     */
-    NORMAL,
-    /**
-     * During merge (for instance, merge failed with conflicts that weren't immediately resolved).
-     */
-    MERGING {
-      @Override public String toString() {
-        return "Merging";
-      }
-    },
-    /**
-     * During rebase.
-     */
-    REBASING {
-      @Override public String toString() {
-        return "Rebasing";
-      }
-    },
-    /**
-     * Detached HEAD state, but not during rebase (for example, manual checkout of a commit hash).
-     */
-    DETACHED
-  }
-
-  @NotNull
-  VirtualFile getRoot();
-
+  @Deprecated
   @NotNull
   VirtualFile getGitDir();
 
   @NotNull
-  String getPresentableUrl();
-
-  @NotNull
-  Project getProject();
+  GitRepositoryFiles getRepositoryFiles();
 
   @NotNull
   GitUntrackedFilesHolder getUntrackedFilesHolder();
 
-  @NotNull
-  State getState();
 
-  /**
-   * Returns the hash of the revision, which HEAD currently points to.
-   * Returns null only in the case of a fresh repository, when no commit have been made.
-   */
-  @Nullable
-  String getCurrentRevision();
+  @NotNull
+  GitRepoInfo getInfo();
 
   /**
    * Returns the current branch of this Git repository.
@@ -144,22 +108,23 @@ public interface GitRepository {
   @NotNull
   Collection<GitBranchTrackInfo> getBranchTrackInfos();
 
-  boolean isMergeInProgress();
+  @Nullable
+  GitBranchTrackInfo getBranchTrackInfo(@NotNull String localBranchName);
 
   boolean isRebaseInProgress();
 
   boolean isOnBranch();
 
-  /**
-   * @return true if current repository is "fresh", i.e. if no commits have been made yet.
-   */
-  boolean isFresh();
+  @NotNull
+  @Override
+  GitVcs getVcs();
 
   /**
-   * Synchronously updates the GitRepository by reading information from .git/config and .git/refs/...
+   * Returns direct submodules of this repository.
    */
-  void update();
+  @NotNull
+  Collection<GitSubmoduleInfo> getSubmodules();
 
-  String toLogString();
-
+  @NotNull
+  VcsRepositoryIgnoredFilesHolder getIgnoredFilesHolder();
 }

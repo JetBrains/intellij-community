@@ -18,6 +18,7 @@ package com.intellij.ui.tabs.impl;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
+import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.ui.popup.IconButton;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pass;
@@ -43,7 +44,7 @@ class ActionButton extends IconButton implements ActionListener {
   private boolean myAutoHide;
   private boolean myToShow;
 
-  public ActionButton(JBTabsImpl tabs, TabInfo tabInfo, AnAction action, String place, Pass<MouseEvent> pass, TimedDeadzone.Length deadzone) {
+  ActionButton(JBTabsImpl tabs, TabInfo tabInfo, AnAction action, String place, Pass<MouseEvent> pass, TimedDeadzone.Length deadzone) {
     super(null, action.getTemplatePresentation().getIcon());
     myTabs = tabs;
     myTabInfo = tabInfo;
@@ -62,13 +63,13 @@ class ActionButton extends IconButton implements ActionListener {
   public InplaceButton getComponent() {
     return myButton;
   }
-  
+
   protected void repaintComponent(Component c) {
     c.repaint();
   }
 
   public void setMouseDeadZone(TimedDeadzone.Length deadZone) {
-    myButton.setMouseDeadzone(deadZone);    
+    myButton.setMouseDeadzone(deadZone);
   }
 
   public boolean update() {
@@ -84,7 +85,7 @@ class ActionButton extends IconButton implements ActionListener {
 
     if (changed) {
       myButton.setIcons(this);
-      String tooltipText = AnAction.createTooltipText(p.getText(), myAction);
+      String tooltipText = KeymapUtil.createTooltipText(p.getText(), myAction);
       myButton.setToolTipText(tooltipText.length() > 0 ? tooltipText : null);
       myButton.setVisible(p.isEnabled() && p.isVisible());
     }
@@ -106,10 +107,11 @@ class ActionButton extends IconButton implements ActionListener {
 
   }
 
+  @Override
   public void actionPerformed(final ActionEvent e) {
     AnActionEvent event = createAnEvent(null, e.getModifiers());
     if (event != null && ActionUtil.lastUpdateAndCheckDumb(myAction, event, true)) {
-      myAction.actionPerformed(event);
+      ActionUtil.performActionDumbAware(myAction, event);
     }
   }
 

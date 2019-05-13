@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 /*
  * @author max
@@ -20,8 +6,7 @@
 package com.intellij.ide.impl;
 
 import com.intellij.ide.GeneralSettings;
-import com.intellij.ide.util.newProjectWizard.AddModuleWizard;
-import com.intellij.ide.util.newProjectWizard.AddModuleWizardPro;
+import com.intellij.ide.util.newProjectWizard.AbstractProjectWizard;
 import com.intellij.ide.util.projectWizard.ProjectBuilder;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -44,75 +29,71 @@ import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.wm.*;
-import com.intellij.openapi.wm.ex.WindowManagerEx;
+import com.intellij.openapi.wm.ex.IdeFrameEx;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
 import java.io.File;
 import java.io.IOException;
 
 public class NewProjectUtil {
-  private NewProjectUtil() {
-  }
+  private final static Logger LOG = Logger.getInstance(NewProjectUtil.class);
 
-  public static void createNewProject(Project projectToClose, @Nullable final String defaultPath) {
-    final boolean proceed = ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
-      public void run() {
-        ProjectManager.getInstance().getDefaultProject(); //warm up components
-      }
-    }, ProjectBundle.message("project.new.wizard.progress.title"), true, null);
-    if (!proceed) return;
-    final AddModuleWizard dialog = Registry.is("new.project.wizard")
-                                   ? new AddModuleWizardPro(null, ModulesProvider.EMPTY_MODULES_PROVIDER, defaultPath)
-                                   : new AddModuleWizard(null, ModulesProvider.EMPTY_MODULES_PROVIDER, defaultPath);
-    dialog.show();
-    if (!dialog.isOK()) {
-      return;
+  private NewProjectUtil() { }
+
+  public static void createNewProject(@Nullable Project projectToClose, @NotNull AbstractProjectWizard wizard) {
+    String title = ProjectBundle.message("project.new.wizard.progress.title");
+    Runnable warmUp = () -> ProjectManager.getInstance().getDefaultProject();  // warm-up components
+    boolean proceed = ProgressManager.getInstance().runProcessWithProgressSynchronously(warmUp, title, true, null);
+    if (proceed && wizard.showAndGet()) {
+      createFromWizard(wizard, projectToClose);
     }
-
-    createFromWizard(dialog, projectToClose);
   }
 
-  public static Project createFromWizard(AddModuleWizard dialog, Project projectToClose) {
+  public static Project createFromWizard(@NotNull AbstractProjectWizard wizard, @Nullable Project projectToClose) {
     try {
-      return doCreate(dialog, projectToClose);
+      return doCreate(wizard, projectToClose);
     }
-    catch (final IOException e) {
-      UIUtil.invokeLaterIfNeeded(new Runnable() {
-        @Override
-        public void run() {
-          Messages.showErrorDialog(e.getMessage(), "Project Initialization Failed");
-        }
-      });
+    catch (IOException e) {
+      UIUtil.invokeLaterIfNeeded(() -> Messages.showErrorDialog(e.getMessage(), "Project Initialization Failed"));
       return null;
     }
   }
 
-  private static Project doCreate(final AddModuleWizard dialog, @Nullable Project projectToClose) throws IOException {
-    final ProjectManagerEx projectManager = ProjectManagerEx.getInstanceEx();
-    final String projectFilePath = dialog.getNewProjectFilePath();
-    final ProjectBuilder projectBuilder = dialog.getProjectBuilder();
+  private static Project doCreate(AbstractProjectWizard wizard, @Nullable Project projectToClose) throws IOException {
+    ProjectManagerEx projectManager = ProjectManagerEx.getInstanceEx();
+    String projectFilePath = wizard.getNewProjectFilePath();
+    for (Project p : ProjectManager.getInstance().getOpenProjects()) {
+      if (ProjectUtil.isSameProject(projectFilePath, p)) {
+        ProjectUtil.focusProjectWindow(p, false);
+        return null;
+      }
+    }
+
+    ProjectBuilder projectBuilder = wizard.getProjectBuilder();
+    LOG.debug("builder " + projectBuilder);
 
     try {
-      File projectDir = new File(projectFilePath).getParentFile();
-      LOG.assertTrue(projectDir != null, "Cannot create project in '" + projectFilePath + "': no parent file exists");
-      FileUtil.ensureExists(projectDir);
-      if (StorageScheme.DIRECTORY_BASED == dialog.getStorageScheme()) {
-        final File ideaDir = new File(projectFilePath, Project.DIRECTORY_STORE_FOLDER);
-        FileUtil.ensureExists(ideaDir);
+      File directoryToCreate = new File(projectFilePath);
+      if (wizard.getStorageScheme() == StorageScheme.DEFAULT) {
+        directoryToCreate = directoryToCreate.getParentFile();
+        if (directoryToCreate == null) {
+          throw new IOException("Cannot create project in '" + projectFilePath + "': no parent file exists");
+        }
       }
+      else if (wizard.getStorageScheme() == StorageScheme.DIRECTORY_BASED) {
+        directoryToCreate = new File(projectFilePath, Project.DIRECTORY_STORE_FOLDER);
+      }
+      FileUtil.ensureExists(directoryToCreate);
 
-      final Project newProject;
+      Project newProject;
       if (projectBuilder == null || !projectBuilder.isUpdate()) {
-        String name = dialog.getProjectName();
+        String name = wizard.getProjectName();
         newProject = projectBuilder == null
                    ? projectManager.newProject(name, projectFilePath, true, false)
                    : projectBuilder.createProject(name, projectFilePath);
@@ -123,37 +104,23 @@ public class NewProjectUtil {
 
       if (newProject == null) return projectToClose;
 
-      final Sdk jdk = dialog.getNewProjectJdk();
+      Sdk jdk = wizard.getNewProjectJdk();
       if (jdk != null) {
-        CommandProcessor.getInstance().executeCommand(newProject, new Runnable() {
-          public void run() {
-            ApplicationManager.getApplication().runWriteAction(new Runnable() {
-              public void run() {
-                applyJdkToProject(newProject, jdk);
-              }
-            });
-          }
-        }, null, null);
+        CommandProcessor.getInstance().executeCommand(newProject, () -> ApplicationManager.getApplication().runWriteAction(() -> applyJdkToProject(newProject, jdk)), null, null);
       }
 
-      final String compileOutput = dialog.getNewCompileOutput();
-      CommandProcessor.getInstance().executeCommand(newProject, new Runnable() {
-        public void run() {
-          ApplicationManager.getApplication().runWriteAction(new Runnable() {
-            public void run() {
-              String canonicalPath = compileOutput;
-              try {
-                canonicalPath = FileUtil.resolveShortWindowsName(compileOutput);
-              }
-              catch (IOException e) {
-                //file doesn't exist
-              }
-              canonicalPath = FileUtil.toSystemIndependentName(canonicalPath);
-              CompilerProjectExtension.getInstance(newProject).setCompilerOutputUrl(VfsUtilCore.pathToUrl(canonicalPath));
-            }
-          });
+      String compileOutput = wizard.getNewCompileOutput();
+      CommandProcessor.getInstance().executeCommand(newProject, () -> ApplicationManager.getApplication().runWriteAction(() -> {
+        CompilerProjectExtension extension = CompilerProjectExtension.getInstance(newProject);
+        if (extension != null) {
+          String canonicalPath = compileOutput;
+          try {
+            canonicalPath = FileUtil.resolveShortWindowsName(compileOutput);
+          }
+          catch (IOException ignored) { }
+          extension.setCompilerOutputUrl(VfsUtilCore.pathToUrl(FileUtil.toSystemIndependentName(canonicalPath)));
         }
-      }, null, null);
+      }), null, null);
 
       if (!ApplicationManager.getApplication().isUnitTestMode()) {
         newProject.save();
@@ -171,28 +138,22 @@ public class NewProjectUtil {
         projectBuilder.commit(newProject, null, ModulesProvider.EMPTY_MODULES_PROVIDER);
       }
 
-      final boolean need2OpenProjectStructure = projectBuilder == null || projectBuilder.isOpenProjectSettingsAfter();
-      StartupManager.getInstance(newProject).registerPostStartupActivity(new Runnable() {
-        public void run() {
-          // ensure the dialog is shown after all startup activities are done
-          SwingUtilities.invokeLater(new Runnable() {
-            public void run() {
-              if (newProject.isDisposed() || ApplicationManager.getApplication().isUnitTestMode()) return;
-              if (need2OpenProjectStructure) {
-                ModulesConfigurator.showDialog(newProject, null, null);
-              }
-              ApplicationManager.getApplication().invokeLater(new Runnable() {
-                public void run() {
-                  if (newProject.isDisposed()) return;
-                  final ToolWindow toolWindow = ToolWindowManager.getInstance(newProject).getToolWindow(ToolWindowId.PROJECT_VIEW);
-                  if (toolWindow != null) {
-                    toolWindow.activate(null);
-                  }
-                }
-              }, ModalityState.NON_MODAL);
+      boolean need2OpenProjectStructure = projectBuilder == null || projectBuilder.isOpenProjectSettingsAfter();
+      StartupManager.getInstance(newProject).registerPostStartupActivity(() -> {
+        // ensure the dialog is shown after all startup activities are done
+        ApplicationManager.getApplication().invokeLater(() -> {
+          if (newProject.isDisposed() || ApplicationManager.getApplication().isUnitTestMode()) return;
+          if (need2OpenProjectStructure) {
+            ModulesConfigurator.showDialog(newProject, null, null);
+          }
+          ApplicationManager.getApplication().invokeLater(() -> {
+            if (newProject.isDisposed()) return;
+            ToolWindow toolWindow = ToolWindowManager.getInstance(newProject).getToolWindow(ToolWindowId.PROJECT_VIEW);
+            if (toolWindow != null) {
+              toolWindow.activate(null);
             }
-          });
-        }
+          }, ModalityState.NON_MODAL);
+        }, ModalityState.NON_MODAL);
       });
 
       if (newProject != projectToClose) {
@@ -201,8 +162,8 @@ public class NewProjectUtil {
         if (WindowManager.getInstance().isFullScreenSupportedInCurrentOS()) {
           IdeFocusManager instance = IdeFocusManager.findInstance();
           IdeFrame lastFocusedFrame = instance.getLastFocusedFrame();
-          if (lastFocusedFrame != null) {
-            boolean fullScreen = WindowManagerEx.getInstanceEx().isFullScreen((Frame)lastFocusedFrame);
+          if (lastFocusedFrame instanceof IdeFrameEx) {
+            boolean fullScreen = ((IdeFrameEx)lastFocusedFrame).isInFullScreen();
             if (fullScreen) {
               newProject.putUserData(IdeFrameImpl.SHOULD_OPEN_IN_FULL_SCREEN, Boolean.TRUE);
             }
@@ -229,15 +190,16 @@ public class NewProjectUtil {
 
     JavaSdkVersion version = JavaSdk.getInstance().getVersion(jdk);
     if (version != null) {
-      LanguageLevel level = version.getMaxLanguageLevel();
+      LanguageLevel maxLevel = version.getMaxLanguageLevel();
+      LanguageLevelProjectExtension extension = LanguageLevelProjectExtension.getInstance(ProjectManager.getInstance().getDefaultProject());
       LanguageLevelProjectExtension ext = LanguageLevelProjectExtension.getInstance(project);
-      if (level.compareTo(ext.getLanguageLevel()) < 0) {
-        ext.setLanguageLevel(level);
+      if (extension.isDefault() || maxLevel.compareTo(ext.getLanguageLevel()) < 0) {
+        ext.setLanguageLevel(maxLevel);
       }
     }
   }
 
-  public static void closePreviousProject(final Project projectToClose) {
+  public static void closePreviousProject(Project projectToClose) {
     Project[] openProjects = ProjectManager.getInstance().getOpenProjects();
     if (openProjects.length > 0) {
       int exitCode = ProjectUtil.confirmOpenNewProject(true);
@@ -246,6 +208,4 @@ public class NewProjectUtil {
       }
     }
   }
-
-  private final static Logger LOG = Logger.getInstance(NewProjectUtil.class);
 }

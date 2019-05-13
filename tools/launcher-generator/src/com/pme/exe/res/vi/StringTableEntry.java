@@ -1,6 +1,6 @@
 /*
  * Copyright 2006 ProductiveMe Inc.
- * Copyright 2013 JetBrains s.r.o.
+ * Copyright 2013-2018 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,20 +17,17 @@
 
 package com.pme.exe.res.vi;
 
-import com.pme.exe.Bin;
-import com.pme.util.OffsetTrackingInputStream;
+import java.io.DataInput;
+import java.io.IOException;
 
-import java.io.*;
-import java.util.ArrayList;
-
-public class StringTableEntry extends Bin.Structure {
+/**
+ * @author Sergey Zhulin
+ * Date: May 10, 2006
+ * Time: 8:26:03 PM
+ */
+public class StringTableEntry extends VersionInfoBin {
   public StringTableEntry() {
     super("<unnamed>");
-    addMember(new Word("wLength"));
-    addMember(new Word("wValueLength"));
-    addMember(new Word("wType"));
-    addMember(new WChar("szKey"));
-    addMember(new Padding(4));
     addMember(new WChar("Value"));
     addMember(new Padding(4));
   }

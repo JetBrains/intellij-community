@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,8 +15,10 @@
  */
 package com.intellij.openapi.ui.impl;
 
+import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.wm.IdeFocusManager;
-import com.intellij.ui.FocusTrackback;
+import com.intellij.openapi.wm.impl.IdeFocusManagerHeadless;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -27,121 +29,169 @@ import java.awt.event.MouseMotionListener;
 /**
 * @author Konstantin Bulenkov
 */
-@SuppressWarnings("ConstantConditions")
 class HeadlessDialog implements AbstractDialog {
+  @NotNull private final DialogWrapper myWrapper;
+  private String myTitle;
+
+  HeadlessDialog(@NotNull DialogWrapper wrapper) {
+    myWrapper = wrapper;
+  }
+
+  @Override
   public void setUndecorated(boolean undecorated) {
   }
 
+  @Override
   public void addMouseListener(MouseListener listener) {
   }
 
+  @Override
   public void addMouseMotionListener(MouseMotionListener listener) {
   }
 
+  @Override
   public void addKeyListener(KeyListener listener) {
   }
 
+  @Override
   public void setModal(boolean b) {
   }
 
+  @Override
   public void toFront() {
   }
 
+  @Override
   public void setContentPane(Container content) {
   }
 
+  @Override
   public void centerInParent() {
   }
 
+  @Override
   public void toBack() {
   }
 
+  @Override
   public JRootPane getRootPane() {
     return null;
   }
 
+  @Override
   public void remove(Component root) {
   }
 
+  @Override
   public Container getContentPane() {
     return null;
   }
 
+  @Override
   public void validate() {
   }
 
+  @Override
   public void repaint() {
   }
 
+  @Override
   public Window getOwner() {
     return null;
   }
 
+  @Override
   public JDialog getWindow() {
     return null;
   }
 
+  @Override
   public Dimension getSize() {
     return null;
   }
 
+  @Override
   public String getTitle() {
-    return null;
+    return myTitle;
   }
 
+  @Override
   public void pack() {
   }
 
+  @Override
   public Dimension getPreferredSize() {
     return null;
   }
 
+  @Override
   public boolean isVisible() {
     return false;
   }
 
+  @Override
   public boolean isShowing() {
     return false;
   }
 
+  @Override
   public void setSize(int width, int height) {
   }
 
+  @Override
   public void setTitle(String title) {
+    myTitle = title;
   }
 
+  @Override
   public boolean isResizable() {
     return false;
   }
 
+  @Override
   public void setResizable(boolean resizable) {
   }
 
+  @NotNull
+  @Override
   public Point getLocation() {
-    return null;
+    return new Point(0,0);
   }
 
-  public void setLocation(Point p) {
+  @Override
+  public void setLocation(@NotNull Point p) {
   }
 
+  @Override
   public void setLocation(int x, int y) {
   }
 
+  @Override
   public boolean isModal() {
     return false;
   }
 
+  @Override
+  public void setModalityType(Dialog.ModalityType modalityType) {
+  }
+
+  @Override
+  public Dialog.ModalityType getModalityType() {
+    return null;
+  }
+
+  @Override
   public void show() {
+    myWrapper.close(DialogWrapper.OK_EXIT_CODE);
   }
 
+  @NotNull
+  @Override
   public IdeFocusManager getFocusManager() {
-    return null;
+    return new IdeFocusManagerHeadless();
   }
 
-  public FocusTrackback getFocusTrackback() {
-    return null;
-  }
-
+  @Override
   public void dispose() {
   }
 }

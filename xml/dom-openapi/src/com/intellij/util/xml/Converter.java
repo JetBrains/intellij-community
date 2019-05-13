@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -53,6 +53,7 @@ public abstract class Converter<T> {
    */
   @Deprecated
   public static final Converter<Integer> INTEGER_CONVERTER = new Converter<Integer>() {
+    @Override
     public Integer fromString(final String s, final ConvertContext context) {
       if (s == null) return null;
       try {
@@ -63,10 +64,12 @@ public abstract class Converter<T> {
       }
     }
 
+    @Override
     public String toString(final Integer t, final ConvertContext context) {
       return t == null? null: t.toString();
     }
 
+    @Override
     public String getErrorMessage(final String s, final ConvertContext context) {
       return IdeBundle.message("value.should.be.integer");
     }
@@ -74,10 +77,12 @@ public abstract class Converter<T> {
 
   @Deprecated
   public static final Converter<String> EMPTY_CONVERTER = new Converter<String>() {
+    @Override
     public String fromString(final String s, final ConvertContext context) {
       return s;
     }
 
+    @Override
     public String toString(final String t, final ConvertContext context) {
       return t;
     }

@@ -1,0 +1,37 @@
+public java.lang.String toString() {
+#set($d = "$")
+#if ( $members.size() > 0 )
+#set ( $i = 0 )
+    return """\
+$classname{
+#foreach( $member in $members )
+#if( $i > 0 ),
+#end
+#if ( $member.objectArray )
+    $member.name=${d}{java.util.Arrays.toString($member.accessor)}##
+#elseif ( $member.primitiveArray)
+    $member.name=${d}{java.util.Arrays.toString($member.accessor)}##
+#elseif ( $member.string )
+    $member.name='$d$member.accessor'##
+#else
+    $member.name=$d${member.accessor}##
+#end
+#set( $i = $i + 1 )
+#end
+#if( $class.hasSuper )
+#if( $i > 0 ),
+#end
+    super=${d}{super.toString()}##
+#end
+
+}"""
+#else
+#if( $class.hasSuper )
+    return "$classname{##
+super=${d}{super.toString()}##
+}"
+#else
+    return "$classname{}"
+#end
+#end
+}

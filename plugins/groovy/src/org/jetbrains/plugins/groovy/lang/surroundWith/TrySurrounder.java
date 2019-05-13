@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,11 +23,8 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 
-/**
- * User: Dmitry.Krasilschikov
- * Date: 22.05.2007
- */
 public abstract class TrySurrounder extends GroovyManyStatementsSurrounder {
+  @Override
   protected TextRange getSurroundSelectionRange(GroovyPsiElement element) {
     assert element instanceof GrTryCatchStatement;
     int endOffset = element.getTextRange().getEndOffset();
@@ -57,6 +54,7 @@ public abstract class TrySurrounder extends GroovyManyStatementsSurrounder {
     return new TextRange(endOffset, endOffset);
   }
 
+  @Override
   public String getTemplateDescription() {
     return "try";
   }

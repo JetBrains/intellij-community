@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,34 +15,43 @@
  */
 package com.intellij.openapi.application;
 
-public abstract class BaseActionRunnable<T> {
+import com.intellij.openapi.project.Project;
+import com.intellij.util.ThrowableRunnable;
+import org.jetbrains.annotations.NotNull;
 
+public abstract class BaseActionRunnable<T> {
   private boolean mySilentExecution;
 
   public boolean isSilentExecution() {
     return mySilentExecution;
   }
 
-  protected abstract void run(Result<T> result) throws Throwable;
+  protected abstract void run(@NotNull Result<T> result) throws Throwable;
 
+  /**
+   * @deprecated use {@link ReadAction#run(ThrowableRunnable)}
+   * or {@link WriteAction#run(ThrowableRunnable)}
+   * or {@link com.intellij.openapi.command.WriteCommandAction#runWriteCommandAction(Project, Runnable)}
+   * or similar
+   */
+  @Deprecated
+  @NotNull
   public abstract RunResult<T> execute();
 
-  protected boolean canWriteNow() {
-    return getApplication().isWriteAccessAllowed();
-  }
-
-  protected boolean canReadNow() {
-    return getApplication().isReadAccessAllowed();
-  }
-
-  protected Application getApplication() {
-    return ApplicationManager.getApplication();
-  }
-
-  /** Same as execute() but do not log error if exception occurred. */
+  /**
+   * Same as {@link #execute()}, but does not log an error if an exception occurs.
+   * @deprecated use {@link ReadAction#run(ThrowableRunnable)} or  {@link WriteAction#run(ThrowableRunnable)} instead
+   */
+  @Deprecated
+  @NotNull
   public final RunResult<T> executeSilently() {
     mySilentExecution = true;
     return execute();
   }
 
+  /** @deprecated use {@link ApplicationManager#getApplication()} (to be removed in IDEA 2018) */
+  @Deprecated
+  protected Application getApplication() {
+    return ApplicationManager.getApplication();
+  }
 }

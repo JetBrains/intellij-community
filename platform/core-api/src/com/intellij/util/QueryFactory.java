@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,7 +40,7 @@ public class QueryFactory<Result, Parameters> {
    */
   @NotNull
   public final Query<Result> createQuery(@NotNull Parameters parameters) {
-    return new ExecutorsQuery<Result, Parameters>(parameters, getExecutors());
+    return new ExecutorsQuery<>(parameters, getExecutors());
   }
 
 
@@ -57,6 +57,7 @@ public class QueryFactory<Result, Parameters> {
    * @param parameters of the search
    * @return query to perform the search. Obtained results are automatically filtered wrt. equals() relation.
    */
+  @NotNull
   public final Query<Result> createUniqueResultsQuery(@NotNull Parameters parameters) {
     return new UniqueResultsQuery<Result, Result>(createQuery(parameters));
   }
@@ -66,9 +67,10 @@ public class QueryFactory<Result, Parameters> {
    * @param hashingStrategy strategy to factor results
    * @return query to perform the search. Obtained results are automatically filtered wrt. equals() relation.
    */
+  @NotNull
   public final Query<Result> createUniqueResultsQuery(@NotNull Parameters parameters,
                                                       @NotNull TObjectHashingStrategy<Result> hashingStrategy) {
-    return new UniqueResultsQuery<Result, Result>(createQuery(parameters), hashingStrategy);
+    return new UniqueResultsQuery<>(createQuery(parameters), hashingStrategy);
   }
 
   /**
@@ -78,9 +80,10 @@ public class QueryFactory<Result, Parameters> {
    * @return query to perform the search. Obtained results are mapped to whatever objects that are automatically filtered wrt. equals()
    *         relation. Storing mapped objects instead of original elements may be wise wrt to memory consumption.
    */
+  @NotNull
   public final <T> Query<Result> createUniqueResultsQuery(@NotNull Parameters parameters,
-                                                          @NotNull TObjectHashingStrategy<T> hashingStrategy,
-                                                          @NotNull Function<Result, T> mapper) {
-    return new UniqueResultsQuery<Result, T>(createQuery(parameters), hashingStrategy, mapper);
+                                                          @NotNull TObjectHashingStrategy<? super T> hashingStrategy,
+                                                          @NotNull Function<? super Result, ? extends T> mapper) {
+    return new UniqueResultsQuery<>(createQuery(parameters), hashingStrategy, mapper);
   }
 }

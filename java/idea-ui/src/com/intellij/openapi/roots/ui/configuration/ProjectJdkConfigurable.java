@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@
 package com.intellij.openapi.roots.ui.configuration;
 
 import com.intellij.openapi.application.ApplicationBundle;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.UnnamedConfigurable;
 import com.intellij.openapi.project.Project;
@@ -29,7 +30,8 @@ import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.StructureConfigurableContext;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.ModuleProjectStructureElement;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Computable;
+import com.intellij.util.ui.JBUI;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -37,33 +39,32 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
-/**
- * User: anna
- * Date: 05-Jun-2006
- */
+import static java.awt.GridBagConstraints.*;
+
 public class ProjectJdkConfigurable implements UnnamedConfigurable {
+  private static final Logger LOG = Logger.getInstance(ProjectJdkConfigurable.class);
   private JdkComboBox myCbProjectJdk;
   private JPanel myJdkPanel;
   private final Project myProject;
   private final ProjectSdksModel myJdksModel;
   private final SdkModel.Listener myListener = new SdkModel.Listener() {
     @Override
-    public void sdkAdded(Sdk sdk) {
+    public void sdkAdded(@NotNull Sdk sdk) {
       reloadModel();
     }
 
     @Override
-    public void beforeSdkRemove(Sdk sdk) {
+    public void beforeSdkRemove(@NotNull Sdk sdk) {
       reloadModel();
     }
 
     @Override
-    public void sdkChanged(Sdk sdk, String previousName) {
+    public void sdkChanged(@NotNull Sdk sdk, String previousName) {
       reloadModel();
     }
 
     @Override
-    public void sdkHomeSelected(Sdk sdk, String newSdkHome) {
+    public void sdkHomeSelected(@NotNull Sdk sdk, @NotNull String newSdkHome) {
       reloadModel();
     }
   };
@@ -81,6 +82,7 @@ public class ProjectJdkConfigurable implements UnnamedConfigurable {
     return myJdksModel.findSdk(myCbProjectJdk.getSelectedJdk());
   }
 
+  @NotNull
   @Override
   public JComponent createComponent() {
     if (myJdkPanel == null) {
@@ -95,22 +97,15 @@ public class ProjectJdkConfigurable implements UnnamedConfigurable {
           clearCaches();
         }
       });
-      myJdkPanel.add(new JLabel(ProjectBundle.message("module.libraries.target.jdk.project.radio")), new GridBagConstraints(0, 0, 3, 1, 0, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, new Insets(0, 0, 4, 0), 0, 0));
-      myJdkPanel.add(myCbProjectJdk, new GridBagConstraints(0, 1, 1, 1, 0, 1.0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, new Insets(0, 4, 0, 0), 0, 0));
+      myJdkPanel.add(new JLabel(ProjectBundle.message("module.libraries.target.jdk.project.radio")), new GridBagConstraints(0, 0, 3, 1, 0, 0, NORTHWEST, NONE, JBUI.insetsBottom(4), 0, 0));
+      myJdkPanel.add(myCbProjectJdk, new GridBagConstraints(0, 1, 1, 1, 0, 1.0, NORTHWEST, NONE, JBUI.insetsLeft(4), 0, 0));
       final JButton setUpButton = new JButton(ApplicationBundle.message("button.new"));
       myCbProjectJdk.setSetupButton(setUpButton, myProject, myJdksModel, new JdkComboBox.NoneJdkComboBoxItem(), null, false);
-      myJdkPanel.add(setUpButton, new GridBagConstraints(1, 1, 1, 1, 0, 0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(0, 4, 0, 0), 0, 0));
+      myJdkPanel.add(setUpButton, new GridBagConstraints(1, 1, 1, 1, 0, 0, WEST, NONE, JBUI.insetsLeft(4), 0, 0));
       final JButton editButton = new JButton(ApplicationBundle.message("button.edit"));
-      myCbProjectJdk.setEditButton(editButton, myProject, new Computable<Sdk>() {
-        @Override
-        @Nullable
-        public Sdk compute() {
-          return myJdksModel.getProjectSdk();
-        }
-      });
+      myCbProjectJdk.setEditButton(editButton, myProject, () -> myJdksModel.getProjectSdk());
 
-      myJdkPanel.add(editButton, new GridBagConstraints(GridBagConstraints.RELATIVE, 1, 1, 1, 1.0, 0, GridBagConstraints.NORTHWEST,
-                                                            GridBagConstraints.NONE, new Insets(0, 4, 0, 0), 0, 0));
+      myJdkPanel.add(editButton, new GridBagConstraints(RELATIVE, 1, 1, 1, 1.0, 0, NORTHWEST, NONE, JBUI.insetsLeft(4), 0, 0));
     }
     return myJdkPanel;
   }
@@ -118,18 +113,24 @@ public class ProjectJdkConfigurable implements UnnamedConfigurable {
   private void reloadModel() {
     myFreeze = true;
     final Sdk projectJdk = myJdksModel.getProjectSdk();
-    myCbProjectJdk.reloadModel(new JdkComboBox.NoneJdkComboBoxItem(), myProject);
-    final String sdkName = projectJdk == null ? ProjectRootManager.getInstance(myProject).getProjectSdkName() : projectJdk.getName();
-    if (sdkName != null) {
-      final Sdk jdk = myJdksModel.findSdk(sdkName);
-      if (jdk != null) {
-        myCbProjectJdk.setSelectedJdk(jdk);
+    if (myCbProjectJdk != null) {
+      myCbProjectJdk.reloadModel(new JdkComboBox.NoneJdkComboBoxItem(), myProject);
+      
+      final String sdkName = projectJdk == null ? ProjectRootManager.getInstance(myProject).getProjectSdkName() : projectJdk.getName();
+      if (sdkName != null) {
+        final Sdk jdk = myJdksModel.findSdk(sdkName);
+        if (jdk != null) {
+          myCbProjectJdk.setSelectedJdk(jdk);
+        } else {
+          myCbProjectJdk.setInvalidJdk(sdkName);
+          clearCaches();
+        }
       } else {
-        myCbProjectJdk.setInvalidJdk(sdkName);
-        clearCaches();
+        myCbProjectJdk.setSelectedJdk(null);
       }
-    } else {
-      myCbProjectJdk.setSelectedJdk(null);
+    }
+    else {
+      LOG.error("'createComponent' wasn't called before 'reset' for " + toString());
     }
     myFreeze = false;
   }
@@ -158,16 +159,18 @@ public class ProjectJdkConfigurable implements UnnamedConfigurable {
   public void reset() {
     reloadModel();
 
-    final String sdkName = ProjectRootManager.getInstance(myProject).getProjectSdkName();
-    if (sdkName != null) {
-      final Sdk jdk = myJdksModel.findSdk(sdkName);
-      if (jdk != null) {
-        myCbProjectJdk.setSelectedJdk(jdk);
+    if (myCbProjectJdk != null) {
+      final String sdkName = ProjectRootManager.getInstance(myProject).getProjectSdkName();
+      if (sdkName != null) {
+        final Sdk jdk = myJdksModel.findSdk(sdkName);
+        if (jdk != null) {
+          myCbProjectJdk.setSelectedJdk(jdk);
+        } else {
+          myCbProjectJdk.setInvalidJdk(sdkName);
+        }
       } else {
-        myCbProjectJdk.setInvalidJdk(sdkName);
+        myCbProjectJdk.setSelectedJdk(null);
       }
-    } else {
-      myCbProjectJdk.setSelectedJdk(null);
     }
   }
 
@@ -178,4 +181,7 @@ public class ProjectJdkConfigurable implements UnnamedConfigurable {
     myCbProjectJdk = null;
   }
 
+  void addChangeListener(ActionListener listener) {
+    myCbProjectJdk.addActionListener(listener);
+  }
 }

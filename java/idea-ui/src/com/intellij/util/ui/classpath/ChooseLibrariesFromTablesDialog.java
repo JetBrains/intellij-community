@@ -88,16 +88,14 @@ public class ChooseLibrariesFromTablesDialog extends ChooseLibrariesDialogBase {
   }
 
   public static List<LibraryTable> getLibraryTables(final Project project, final boolean showCustomLibraryTables) {
-    final List<LibraryTable> tables = new ArrayList<LibraryTable>();
+    final List<LibraryTable> tables = new ArrayList<>();
     final LibraryTablesRegistrar registrar = LibraryTablesRegistrar.getInstance();
     if (project != null) {
       tables.add(registrar.getLibraryTable(project));
     }
     tables.add(registrar.getLibraryTable());
     if (showCustomLibraryTables) {
-      for (LibraryTable table : registrar.getCustomLibraryTables()) {
-        tables.add(table);
-      }
+      tables.addAll(registrar.getCustomLibraryTables());
     }
     return tables;
   }

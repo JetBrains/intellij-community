@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,6 @@
  */
 package org.jetbrains.plugins.groovy.editor.selection;
 
-import com.intellij.codeInsight.editorActions.ExtendWordSelectionHandler;
 import com.intellij.codeInsight.editorActions.ExtendWordSelectionHandlerBase;
 import com.intellij.codeInsight.editorActions.SelectWordUtil;
 import com.intellij.openapi.diagnostic.Logger;
@@ -23,7 +22,8 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.impl.source.tree.LeafPsiElement;
-import org.jetbrains.plugins.groovy.GroovyFileType;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.GroovyLanguage;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrClassInitializer;
@@ -43,17 +43,17 @@ import java.util.List;
 /**
  * @author Max Medvedev
  */
-public class GroovyWordSelectionHandler implements ExtendWordSelectionHandler {
+public class GroovyWordSelectionHandler extends ExtendWordSelectionHandlerBase {
   private static final Logger LOG = Logger.getInstance(GroovyWordSelectionHandler.class);
 
   @Override
-  public boolean canSelect(PsiElement e) {
-    return (e instanceof GroovyPsiElement || e.getLanguage() == GroovyFileType.GROOVY_LANGUAGE) &&
+  public boolean canSelect(@NotNull PsiElement e) {
+    return (e instanceof GroovyPsiElement || e.getLanguage() == GroovyLanguage.INSTANCE) &&
            !(e.getNode().getElementType() == GroovyTokenTypes.mDOLLAR);
   }
 
   @Override
-  public List<TextRange> select(PsiElement e, CharSequence editorText, int cursorOffset, Editor editor) {
+  public List<TextRange> select(@NotNull PsiElement e, @NotNull CharSequence editorText, int cursorOffset, @NotNull Editor editor) {
     final TextRange originalRange = e.getTextRange();
     LOG.assertTrue(originalRange.getEndOffset() <= editorText.length(), getClass() + "; " + e);
 
@@ -65,11 +65,11 @@ public class GroovyWordSelectionHandler implements ExtendWordSelectionHandler {
       }
     }
     else {
-      ranges = new ArrayList<TextRange>();
+      ranges = new ArrayList<>();
       ranges.add(e.getTextRange());
     }
 
-    SelectWordUtil.addWordSelection(editor.getSettings().isCamelWords(), editorText, cursorOffset, ranges);
+    SelectWordUtil.addWordOrLexemeSelection(editor.getSettings().isCamelWords(), editor, cursorOffset, ranges);
 
     return ranges;
   }

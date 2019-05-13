@@ -23,65 +23,52 @@ import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
-/**
- * User: anna
- * Date: Sep 3, 2010
- */
 @Test
 public class TestNGSuiteTest extends LightCodeInsightFixtureTestCase {
   @BeforeMethod
   @Override
-  protected void setUp() throws Exception {
-    UIUtil.invokeAndWaitIfNeeded(new Runnable() {
-      @Override
-      public void run() {
-        try {
-          TestNGSuiteTest.super.setUp();
-        }
-        catch (Exception e) {
-          throw new RuntimeException(e);
-        }
+  protected void setUp() {
+    UIUtil.invokeAndWaitIfNeeded((Runnable)() -> {
+      try {
+        TestNGSuiteTest.super.setUp();
+      }
+      catch (Exception e) {
+        throw new RuntimeException(e);
       }
     });
   }
 
   @AfterMethod
   @Override
-  protected void tearDown() throws Exception {
-    UIUtil.invokeAndWaitIfNeeded(new Runnable() {
-      @Override
-      public void run() {
-        try {
-          TestNGSuiteTest.super.tearDown();
-        }
-        catch (Exception e) {
-          throw new RuntimeException(e);
-        }
+  protected void tearDown() {
+    UIUtil.invokeAndWaitIfNeeded((Runnable)() -> {
+      try {
+        TestNGSuiteTest.super.tearDown();
+      }
+      catch (Exception e) {
+        throw new RuntimeException(e);
       }
     });
   }
 
   public void testNothing(){}
 
-  public void testTestNGSuiteFile() throws Throwable {
-    UIUtil.invokeAndWaitIfNeeded(new Runnable() {
-      @Override
-      public void run() {
-        try {
-          myFixture.addClass("package org.testng.annotations; public @interface DataProvider {}");
-          myFixture.addClass("package org.testng.annotations; public @interface Test {}");
-          myFixture.addClass("package o; @Test public class MyTest { public void testMe(){} }");
-          myFixture.addFileToProject("subPack/test-unit.xml", "<suite>" +
-                                                              "<test>" +
-                                                              "<classes></classes>" +
-                                                              "</test>" +
-                                                              "</suite>");
-          myFixture.enableInspections(new XmlPathReferenceInspection());
-          myFixture.testHighlighting("testng.xml");
-        }
-        catch (Exception e) {
-          throw new RuntimeException(e);
-        }
+  public void testTestNGSuiteFile() {
+    UIUtil.invokeAndWaitIfNeeded((Runnable)() -> {
+      try {
+        myFixture.addClass("package org.testng.annotations; public @interface DataProvider {}");
+        myFixture.addClass("package org.testng.annotations; public @interface Test {}");
+        myFixture.addClass("package o; @Test public class MyTest { public void testMe(){} }");
+        myFixture.addFileToProject("subPack/test-unit.xml", "<suite>" +
+                                                            "<test>" +
+                                                            "<classes></classes>" +
+                                                            "</test>" +
+                                                            "</suite>");
+        myFixture.enableInspections(new XmlPathReferenceInspection());
+        myFixture.testHighlighting("testng.xml");
+      }
+      catch (Exception e) {
+        throw new RuntimeException(e);
       }
     });
   }

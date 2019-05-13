@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.hint;
 
 import com.intellij.codeInsight.CodeInsightActionHandler;
@@ -24,11 +10,12 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.reference.SoftReference;
 import com.intellij.ui.LightweightHint;
 import org.jetbrains.annotations.NotNull;
 
@@ -41,24 +28,21 @@ public class ShowContainerInfoHandler implements CodeInsightActionHandler {
 
   @Override
   public void invoke(@NotNull final Project project, @NotNull final Editor editor, @NotNull PsiFile file) {
-    PsiDocumentManager.getInstance(project).commitAllDocuments();
 
     PsiElement container = null;
     WeakReference<LightweightHint> ref = editor.getUserData(MY_LAST_HINT_KEY);
-    if (ref != null){
-      LightweightHint hint = ref.get();
-      if (hint != null && hint.isVisible()){
-        hint.hide();
-        container = hint.getUserData(CONTAINER_KEY);
-        if (container != null && !container.isValid()){
-          container = null;
-        }
+    LightweightHint hint = SoftReference.dereference(ref);
+    if (hint != null && hint.isVisible()){
+      hint.hide();
+      container = hint.getUserData(CONTAINER_KEY);
+      if (container != null && !container.isValid()){
+        container = null;
       }
     }
 
     StructureViewBuilder builder = LanguageStructureViewBuilder.INSTANCE.getStructureViewBuilder(file);
     if (builder instanceof TreeBasedStructureViewBuilder) {
-      StructureViewModel model = ((TreeBasedStructureViewBuilder) builder).createStructureViewModel();
+      StructureViewModel model = ((TreeBasedStructureViewBuilder) builder).createStructureViewModel(editor);
       boolean goOneLevelUp = true;
       try {
         if (container == null) {
@@ -70,9 +54,13 @@ public class ShowContainerInfoHandler implements CodeInsightActionHandler {
         }
       }
       finally {
-        model.dispose();
+        Disposer.dispose(model);
       }
       while(true) {
+        while(container != null && DeclarationRangeUtil.getPossibleDeclarationAtRange(container) == null) {
+          container = container.getParent();
+          if (container instanceof PsiFile) return;
+        }
         if (container == null || container instanceof PsiFile) {
           return;
         }
@@ -86,10 +74,6 @@ public class ShowContainerInfoHandler implements CodeInsightActionHandler {
         }
 
         container = container.getParent();
-        while(container != null && DeclarationRangeUtil.getPossibleDeclarationAtRange(container) == null) {
-          container = container.getParent();
-          if (container instanceof PsiFile) return;
-        }
       }
     }
     if (container == null) {
@@ -101,14 +85,11 @@ public class ShowContainerInfoHandler implements CodeInsightActionHandler {
       return;
     }
     final PsiElement _container = container;
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
-      @Override
-      public void run() {
-        LightweightHint hint = EditorFragmentComponent.showEditorFragmentHint(editor, range, true, true);
-        if (hint != null) {
-          hint.putUserData(CONTAINER_KEY, _container);
-          editor.putUserData(MY_LAST_HINT_KEY, new WeakReference<LightweightHint>(hint));
-        }
+    ApplicationManager.getApplication().invokeLater(() -> {
+      LightweightHint hint1 = EditorFragmentComponent.showEditorFragmentHint(editor, range, true, true);
+      if (hint1 != null) {
+        hint1.putUserData(CONTAINER_KEY, _container);
+        editor.putUserData(MY_LAST_HINT_KEY, new WeakReference<>(hint1));
       }
     });
   }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,24 +14,21 @@
  * limitations under the License.
  */
 
-package org.jetbrains.plugins.groovy.intentions;
-
+package org.jetbrains.plugins.groovy.intentions
 
 import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.codeInspection.LocalInspectionTool
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.impl.source.PostprocessReformattingAspect
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
-import com.intellij.util.Function
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.annotations.Nullable
 
 /**
  * @author Maxim.Medvedev
  */
-public abstract class GrIntentionTestCase extends LightCodeInsightFixtureTestCase {
-
-  protected final String myHint;
+abstract class GrIntentionTestCase extends LightCodeInsightFixtureTestCase {
+  protected final String myHint
   private final Class<? extends LocalInspectionTool>[] myInspections
 
   GrIntentionTestCase(@Nullable String hint = null, @NotNull Class<? extends LocalInspectionTool>... inspections = []) {
@@ -39,35 +36,40 @@ public abstract class GrIntentionTestCase extends LightCodeInsightFixtureTestCas
     myHint = hint
   }
 
-  protected void doTest(@NotNull String hint = myHint, boolean intentionExists) {
+  GrIntentionTestCase(@NotNull Class<? extends IntentionAction> intention) {
+    myInspections = []
+    myHint = intention.newInstance().text
+  }
+
+  protected void doTest(@NotNull String hint = myHint, boolean intentionShouldBeAvailable) {
     assertNotNull(hint)
-    myFixture.configureByFile(getTestName(false) + ".groovy");
-    final List<IntentionAction> list = myFixture.filterAvailableIntentions(hint);
-    if (intentionExists) {
-      myFixture.launchAction(assertOneElement(list));
-      PostprocessReformattingAspect.getInstance(project).doPostponedFormatting();
-      myFixture.checkResultByFile(getTestName(false) + "_after.groovy");
+    myFixture.configureByFile(getTestName(false) + ".groovy")
+    final List<IntentionAction> list = myFixture.filterAvailableIntentions(hint)
+    if (intentionShouldBeAvailable) {
+      myFixture.launchAction(assertOneElement(list))
+      PostprocessReformattingAspect.getInstance(project).doPostponedFormatting()
+      myFixture.checkResultByFile(getTestName(false) + "_after.groovy")
     }
-    else if (list.size() > 0) {
-      fail StringUtil.join(list, {it.familyName} as Function<IntentionAction, String>, ',')
+    else if (!list.empty) {
+      fail StringUtil.join(list, {IntentionAction it -> it.familyName}, ',')
     }
   }
 
   protected void doTextTest(String before, String hint = myHint, String after, Class<? extends LocalInspectionTool>... inspections) {
     assertNotNull(hint)
-    myFixture.configureByText("a.groovy", before);
+    myFixture.configureByText("a.groovy", before)
     myFixture.enableInspections(inspections)
     myFixture.enableInspections(myInspections)
-    final List<IntentionAction> list = myFixture.filterAvailableIntentions(hint);
-    myFixture.launchAction(assertOneElement(list));
-    PostprocessReformattingAspect.getInstance(project).doPostponedFormatting();
-    myFixture.checkResult(after);
+    final List<IntentionAction> list = myFixture.filterAvailableIntentions(hint)
+    myFixture.launchAction(assertOneElement(list))
+    PostprocessReformattingAspect.getInstance(project).doPostponedFormatting()
+    myFixture.checkResult(after)
   }
 
   protected void doAntiTest(String before, String hint = myHint, Class<? extends LocalInspectionTool>... inspections) {
     assertNotNull(hint)
-    myFixture.configureByText("a.groovy", before);
+    myFixture.configureByText("a.groovy", before)
     myFixture.enableInspections(inspections)
-    assertEmpty(myFixture.filterAvailableIntentions(hint));
+    assertEmpty(myFixture.filterAvailableIntentions(hint))
   }
 }

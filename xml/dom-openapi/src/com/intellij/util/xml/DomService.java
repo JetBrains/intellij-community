@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,18 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.intellij.util.xml;
 
 import com.intellij.ide.structureView.StructureViewBuilder;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.Function;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -46,21 +43,14 @@ public abstract class DomService {
 
   /**
    * @param rootElementClass class of root (file-level) element in DOM model
-   * @param project current project
-   * @param scope search scope
+   * @param project          current project
+   * @param scope            search scope
    * @return files containing given root element
-   *
-   * @see #getFileElements(Class, com.intellij.openapi.project.Project, com.intellij.psi.search.GlobalSearchScope)
+   * @see #getFileElements(Class, Project, GlobalSearchScope)
    */
-  public Collection<VirtualFile> getDomFileCandidates(Class<? extends DomElement> rootElementClass, Project project, final GlobalSearchScope scope) {
-    return ContainerUtil.findAll(getDomFileCandidates(rootElementClass, project), new Condition<VirtualFile>() {
-      public boolean value(final VirtualFile file) {
-        return scope.contains(file);
-      }
-    });
-  }
-
-  public abstract Collection<VirtualFile> getDomFileCandidates(Class<? extends DomElement> description, Project project);
+  public abstract Collection<VirtualFile> getDomFileCandidates(Class<? extends DomElement> rootElementClass,
+                                                               Project project,
+                                                               GlobalSearchScope scope);
 
   /**
    * @param rootElementClass class of root (file-level) element in DOM model
@@ -69,7 +59,7 @@ public abstract class DomService {
    * @return DOM file elements containing given root element
    */
   public abstract <T extends DomElement> List<DomFileElement<T>> getFileElements(Class<T> rootElementClass,
-                                                                                 final Project project,
+                                                                                 Project project,
                                                                                  @Nullable GlobalSearchScope scope);
 
   public abstract ModelMerger createModelMerger();
@@ -88,5 +78,6 @@ public abstract class DomService {
   public enum StructureViewMode {
     SHOW, SHOW_CHILDREN, SKIP
   }
-  public abstract StructureViewBuilder createSimpleStructureViewBuilder(final XmlFile file, final Function<DomElement, StructureViewMode> modeProvider);
+
+  public abstract StructureViewBuilder createSimpleStructureViewBuilder(XmlFile file, Function<DomElement, StructureViewMode> modeProvider);
 }

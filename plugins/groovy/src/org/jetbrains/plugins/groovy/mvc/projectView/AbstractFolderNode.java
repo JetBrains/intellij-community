@@ -1,10 +1,10 @@
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.mvc.projectView;
 
 import com.intellij.ide.IconProvider;
 import com.intellij.ide.projectView.PresentationData;
 import com.intellij.ide.projectView.ViewSettings;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
@@ -15,13 +15,13 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 
 import javax.swing.*;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -30,22 +30,18 @@ import java.util.List;
  * @author Dmitry Krasilschikov
  */
 public class AbstractFolderNode extends AbstractMvcPsiNodeDescriptor {
-  @Nullable private final String myLocationMark;
-
   private final String myPresentableText;
 
   protected AbstractFolderNode(@NotNull final Module module,
                                @NotNull final PsiDirectory directory,
                                @NotNull String presentableText,
-                               @Nullable final String locationMark,
                                final ViewSettings viewSettings, int weight) {
-    super(module, viewSettings, new NodeId(directory, locationMark), weight);
-    myLocationMark = locationMark;
+    super(module, viewSettings, directory, weight);
     myPresentableText = presentableText;
   }
 
   @Override
-  protected String getTestPresentationImpl(@NotNull final NodeId nodeId, @NotNull final PsiElement psiElement) {
+  protected String getTestPresentationImpl(@NotNull final PsiElement psiElement) {
     final VirtualFile virtualFile = getVirtualFile();
     assert virtualFile != null;
 
@@ -57,6 +53,7 @@ public class AbstractFolderNode extends AbstractMvcPsiNodeDescriptor {
     return (PsiDirectory)extractPsiFromValue();
   }
 
+  @Override
   @Nullable
   protected Collection<AbstractTreeNode> getChildrenImpl() {
     final PsiDirectory directory = getPsiDirectory();
@@ -64,12 +61,9 @@ public class AbstractFolderNode extends AbstractMvcPsiNodeDescriptor {
       return Collections.emptyList();
     }
 
-    final List<AbstractTreeNode> children = new ArrayList<AbstractTreeNode>();
-
     // scan folder's children
-    for (PsiDirectory subDir : directory.getSubdirectories()) {
-      children.add(createFolderNode(subDir));
-    }
+    final List<AbstractTreeNode> children =
+      ContainerUtil.map(directory.getSubdirectories(), this::createFolderNode);
 
     for (PsiFile file : directory.getFiles()) {
       processNotDirectoryFile(children, file);
@@ -103,7 +97,7 @@ public class AbstractFolderNode extends AbstractMvcPsiNodeDescriptor {
 
     String presentableText = textBuilder == null ? directory.getName() : textBuilder.toString();
 
-    return new AbstractFolderNode(getModule(), realDirectory, presentableText, myLocationMark, getSettings(), FOLDER) {
+    return new AbstractFolderNode(getModule(), realDirectory, presentableText, getSettings(), FOLDER) {
       @Override
       protected void processNotDirectoryFile(List<AbstractTreeNode> nodes, PsiFile file) {
         AbstractFolderNode.this.processNotDirectoryFile(nodes, file);
@@ -117,12 +111,12 @@ public class AbstractFolderNode extends AbstractMvcPsiNodeDescriptor {
   }
 
   @Override
-  protected void updateImpl(final PresentationData data) {
+  protected void updateImpl(@NotNull final PresentationData data) {
     final PsiDirectory psiDirectory = getPsiDirectory();
 
     data.setPresentableText(myPresentableText);
 
-    for (final IconProvider provider : Extensions.getExtensions(IconProvider.EXTENSION_POINT_NAME)) {
+    for (final IconProvider provider : IconProvider.EXTENSION_POINT_NAME.getExtensionList()) {
       final Icon icon = provider.getIcon(psiDirectory, 0);
       if (icon != null) {
         data.setIcon(icon);
@@ -163,14 +157,13 @@ public class AbstractFolderNode extends AbstractMvcPsiNodeDescriptor {
         return;
       }
     }
-    nodes.add(new FileNode(getModule(), file, myLocationMark, getSettings()));
+    nodes.add(new FileNode(getModule(), file, getSettings()));
   }
 
   protected AbstractTreeNode createClassNode(final GrTypeDefinition typeDefinition) {
-    final NodeId nodeId = getValue();
-    assert nodeId != null;
+    assert getValue() != null;
 
-    return new ClassNode(getModule(), typeDefinition, nodeId.getLocationRootMark(), getSettings());
+    return new ClassNode(getModule(), typeDefinition, getSettings());
   }
 
 }

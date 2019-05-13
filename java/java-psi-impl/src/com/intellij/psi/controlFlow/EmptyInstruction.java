@@ -15,6 +15,8 @@
  */
 package com.intellij.psi.controlFlow;
 
+import org.jetbrains.annotations.NotNull;
+
 public class EmptyInstruction extends SimpleInstruction {
   public static final EmptyInstruction INSTANCE = new EmptyInstruction();
 
@@ -26,7 +28,7 @@ public class EmptyInstruction extends SimpleInstruction {
   }
 
   @Override
-  public void accept(ControlFlowInstructionVisitor visitor, int offset, int nextOffset) {
+  public void accept(@NotNull ControlFlowInstructionVisitor visitor, int offset, int nextOffset) {
     visitor.visitEmptyInstruction(this, offset, nextOffset);
   }
 }

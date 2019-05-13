@@ -1,109 +1,124 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.configurations;
 
+import com.intellij.configurationStore.ComponentSerializationUtil;
+import com.intellij.configurationStore.XmlSerializer;
 import com.intellij.diagnostic.logging.LogConsole;
+import com.intellij.execution.BeforeRunTask;
 import com.intellij.execution.ExecutionTarget;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.runners.ProgramRunner;
+import com.intellij.openapi.components.BaseState;
+import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.UserDataHolderBase;
-import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.util.text.StringUtilRt;
+import com.intellij.util.ReflectionUtil;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.xmlb.annotations.Attribute;
+import com.intellij.util.xmlb.annotations.Transient;
 import org.jdom.Element;
-import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
- * @author dyoma
+ * Standard base class for run configuration implementations.
  */
-public abstract class RunConfigurationBase extends UserDataHolderBase implements RunConfiguration, TargetAwareRunProfile {
+public abstract class RunConfigurationBase<T> extends UserDataHolderBase implements RunConfiguration, TargetAwareRunProfile, ConfigurationCreationListener {
+  private static final String SHOW_CONSOLE_ON_STD_OUT = "show_console_on_std_out";
+  private static final String SHOW_CONSOLE_ON_STD_ERR = "show_console_on_std_err";
+
+  @Nullable
   private final ConfigurationFactory myFactory;
   private final Project myProject;
-  private String myName = "";
+  private String myName;
 
-  private ArrayList<LogFileOptions> myLogFiles = new ArrayList<LogFileOptions>();
-  private ArrayList<PredefinedLogFile> myPredefinedLogFiles = new ArrayList<PredefinedLogFile>();
+  private RunConfigurationOptions myOptions;
 
-  @NonNls private static final String LOG_FILE = "log_file";
-  @NonNls private static final String PREDEFINED_LOG_FILE_ELEMENT = "predefined_log_file";
-  @NonNls private static final String FILE_OUTPUT = "output_file";
-  @NonNls private static final String SAVE = "is_save";
-  @NonNls private static final String OUTPUT_FILE = "path";
-  @NonNls private static final String SHOW_CONSOLE_ON_STD_OUT = "show_console_on_std_out";
-  @NonNls private static final String SHOW_CONSOLE_ON_STD_ERR = "show_console_on_std_err";
+  private List<BeforeRunTask<?>> myBeforeRunTasks = Collections.emptyList();
 
-  private final Icon myIcon;
-  private boolean mySaveOutput = false;
-  private boolean myShowConsoleOnStdOut = false;
-  private boolean myShowConsoleOnStdErr = false;
-  private String myFileOutputPath = null;
-
-  protected RunConfigurationBase(final Project project, final ConfigurationFactory factory, final String name) {
+  protected RunConfigurationBase(@NotNull Project project, @Nullable ConfigurationFactory factory, @Nullable String name) {
     myProject = project;
     myFactory = factory;
     myName = name;
-    myIcon = factory.getIcon();
+    // must be after factory because factory is used to get options class
+    myOptions = createOptions();
   }
 
-  public int getUniqueID() {
-    return System.identityHashCode(this);
+  @NotNull
+  private RunConfigurationOptions createOptions() {
+    return ReflectionUtil.newInstance(getOptionsClass());
   }
 
+  @NotNull
+  protected RunConfigurationOptions getOptions() {
+    return myOptions;
+  }
+
+  @Override
+  @NotNull
+  @Transient
+  public List<BeforeRunTask<?>> getBeforeRunTasks() {
+    return myBeforeRunTasks;
+  }
+
+  @Override
+  public void setBeforeRunTasks(@NotNull List<BeforeRunTask<?>> value) {
+    myBeforeRunTasks = value;
+  }
+
+  @Nullable
+  @Override
   public final ConfigurationFactory getFactory() {
     return myFactory;
   }
 
-  public final void setName(final String name) {
+  @Override
+  public final void setName(String name) {
     myName = name;
   }
 
+  @NotNull
+  @Override
   public final Project getProject() {
     return myProject;
   }
 
-  @NotNull
-  public ConfigurationType getType() {
-    return myFactory.getType();
-  }
-
+  @Override
+  @Nullable
   public Icon getIcon() {
-    return myIcon;
+    return myFactory == null ? null : myFactory.getIcon();
   }
 
+  @NotNull
+  @Override
+  @Transient
   public final String getName() {
-    return myName;
+    // a lot of clients not ready that name can be null and in most cases it is not convenient - just add more work to handle null value
+    // in any case for run configuration empty name it is the same as null, we don't need to bother clients and use null
+    return StringUtilRt.notNullize(myName);
   }
 
   public final int hashCode() {
     return super.hashCode();
   }
 
-  public void checkRunnerSettings(@NotNull ProgramRunner runner, @Nullable RunnerSettings runnerSettings,
+  public void checkRunnerSettings(@NotNull ProgramRunner runner,
+                                  @Nullable RunnerSettings runnerSettings,
                                   @Nullable ConfigurationPerRunnerSettings configurationPerRunnerSettings) throws RuntimeConfigurationException {
   }
 
   public void checkSettingsBeforeRun() throws RuntimeConfigurationException {
   }
 
+  @Override
   public boolean canRunOn(@NotNull ExecutionTarget target) {
     return true;
   }
@@ -112,16 +127,20 @@ public abstract class RunConfigurationBase extends UserDataHolderBase implements
     return super.equals(obj);
   }
 
+  @Override
   public RunConfiguration clone() {
-    final RunConfigurationBase runConfiguration = (RunConfigurationBase)super.clone();
-    runConfiguration.myLogFiles = new ArrayList<LogFileOptions>(myLogFiles);
-    runConfiguration.myPredefinedLogFiles = new ArrayList<PredefinedLogFile>(myPredefinedLogFiles);
-    runConfiguration.myFileOutputPath = myFileOutputPath;
-    runConfiguration.mySaveOutput = mySaveOutput;
-    runConfiguration.myShowConsoleOnStdOut = myShowConsoleOnStdOut;
-    runConfiguration.myShowConsoleOnStdErr = myShowConsoleOnStdErr;
-    copyCopyableDataTo(runConfiguration);
-    return runConfiguration;
+    //noinspection unchecked
+    RunConfigurationBase<T> result = (RunConfigurationBase<T>)super.clone();
+    result.myOptions = createOptions();
+    result.doCopyOptionsFrom(this);
+    return result;
+  }
+
+  void doCopyOptionsFrom(@NotNull RunConfigurationBase<T> template) {
+    myOptions.copyFrom(template.myOptions);
+    myOptions.resetModificationCount();
+    myOptions.setAllowRunningInParallel(template.isAllowRunningInParallel());
+    myBeforeRunTasks = ContainerUtil.copyList(template.myBeforeRunTasks);
   }
 
   @Nullable
@@ -130,20 +149,22 @@ public abstract class RunConfigurationBase extends UserDataHolderBase implements
   }
 
   public void removeAllPredefinedLogFiles() {
-    myPredefinedLogFiles.clear();
+    getOptions().getPredefinedLogFiles().clear();
   }
 
-  public void addPredefinedLogFile(PredefinedLogFile predefinedLogFile) {
-    myPredefinedLogFiles.add(predefinedLogFile);
+  public void addPredefinedLogFile(@NotNull PredefinedLogFile predefinedLogFile) {
+    getOptions().getPredefinedLogFiles().add(predefinedLogFile);
   }
 
-  public ArrayList<PredefinedLogFile> getPredefinedLogFiles() {
-    return myPredefinedLogFiles;
+  @NotNull
+  public List<PredefinedLogFile> getPredefinedLogFiles() {
+    return getOptions().getPredefinedLogFiles();
   }
 
+  @NotNull
   public ArrayList<LogFileOptions> getAllLogFiles() {
-    final ArrayList<LogFileOptions> list = new ArrayList<LogFileOptions>(myLogFiles);
-    for (PredefinedLogFile predefinedLogFile : myPredefinedLogFiles) {
+    ArrayList<LogFileOptions> list = new ArrayList<>(getLogFiles());
+    for (PredefinedLogFile predefinedLogFile : getOptions().getPredefinedLogFiles()) {
       final LogFileOptions options = getOptionsForPredefinedLogFile(predefinedLogFile);
       if (options != null) {
         list.add(options);
@@ -152,117 +173,138 @@ public abstract class RunConfigurationBase extends UserDataHolderBase implements
     return list;
   }
 
-  public ArrayList<LogFileOptions> getLogFiles() {
-    return myLogFiles;
+  @NotNull
+  public List<LogFileOptions> getLogFiles() {
+    return getOptions().getLogFiles();
   }
 
-  public void addLogFile(String file, String alias, boolean checked){
-    myLogFiles.add(new LogFileOptions(alias, file, checked, true, false));
+  @SuppressWarnings("unused")
+  public void addLogFile(String file, String alias, boolean checked) {
+    getOptions().getLogFiles().add(new LogFileOptions(alias, file, checked));
   }
 
-  public void addLogFile(String file, String alias, boolean checked, boolean skipContent, final boolean showAll){
-    myLogFiles.add(new LogFileOptions(alias, file, checked, skipContent, showAll));
+  public void addLogFile(String file, String alias, boolean checked, boolean skipContent, final boolean showAll) {
+    getOptions().getLogFiles().add(new LogFileOptions(alias, file, checked, skipContent, showAll));
   }
 
   public void removeAllLogFiles() {
-    myLogFiles.clear();
+    getOptions().getLogFiles().clear();
   }
 
   //invoke before run/debug tabs are shown.
-  //Should be overriden to add additional tabs for run/debug toolwindow
+  //Should be overridden to add additional tabs for run/debug toolwindow
   public void createAdditionalTabComponents(AdditionalTabComponentManager manager, ProcessHandler startedProcess) {
   }
 
   public void customizeLogConsole(LogConsole console) {
   }
 
-  public void readExternal(Element element) throws InvalidDataException {
-    myLogFiles.clear();
-    for (final Object o : element.getChildren(LOG_FILE)) {
-      LogFileOptions logFileOptions = new LogFileOptions();
-      logFileOptions.readExternal((Element)o);
-      myLogFiles.add(logFileOptions);
-    }
-    myPredefinedLogFiles.clear();
-    final List list = element.getChildren(PREDEFINED_LOG_FILE_ELEMENT);
-    for (Object fileElement : list) {
-      final PredefinedLogFile logFile = new PredefinedLogFile();
-      logFile.readExternal((Element)fileElement);
-      myPredefinedLogFiles.add(logFile);
-    }
-    final Element fileOutputElement = element.getChild(FILE_OUTPUT);
-    if (fileOutputElement != null) {
-      myFileOutputPath = fileOutputElement.getAttributeValue(OUTPUT_FILE);
-      final String isSave = fileOutputElement.getAttributeValue(SAVE);
-      mySaveOutput = isSave != null && Boolean.parseBoolean(isSave);
-    }
-    myShowConsoleOnStdOut = Boolean.parseBoolean(element.getAttributeValue(SHOW_CONSOLE_ON_STD_OUT));
-    myShowConsoleOnStdErr = Boolean.parseBoolean(element.getAttributeValue(SHOW_CONSOLE_ON_STD_ERR));
+  @Nullable
+  public T getState() {
+    //noinspection unchecked
+    return (T)getOptions();
   }
 
-  public void writeExternal(Element element) throws WriteExternalException {
-    for (final LogFileOptions options : myLogFiles) {
-      Element logFile = new Element(LOG_FILE);
-      options.writeExternal(logFile);
-      element.addContent(logFile);
+  public void loadState(@NotNull T state) {
+    if (state instanceof Element) {
+      myOptions = XmlSerializer.deserialize((Element)state, getOptionsClass());
     }
-    for (PredefinedLogFile predefinedLogFile : myPredefinedLogFiles) {
-      Element fileElement = new Element(PREDEFINED_LOG_FILE_ELEMENT);
-      predefinedLogFile.writeExternal(fileElement);
-      element.addContent(fileElement);
-    }
-    final Element fileOutputPathElement = new Element(FILE_OUTPUT);
-    if (myFileOutputPath != null) {
-      fileOutputPathElement.setAttribute(OUTPUT_FILE, myFileOutputPath);
-    }
-    fileOutputPathElement.setAttribute(SAVE, String.valueOf(mySaveOutput));
-    if (myFileOutputPath != null || mySaveOutput) {
-      element.addContent(fileOutputPathElement);
-    }
-    if (myShowConsoleOnStdOut) {//default value shouldn't be written
-      element.setAttribute(SHOW_CONSOLE_ON_STD_OUT, String.valueOf(myShowConsoleOnStdOut));
-    }
-    if (myShowConsoleOnStdErr) {//default value shouldn't be written
-      element.setAttribute(SHOW_CONSOLE_ON_STD_ERR, String.valueOf(myShowConsoleOnStdErr));
+    else {
+      myOptions = (RunConfigurationOptions)state;
     }
   }
 
+  @Override
+  public void readExternal(@NotNull Element element) throws InvalidDataException {
+    boolean isAllowRunningInParallel = myOptions.isAllowRunningInParallel();
+    //noinspection unchecked
+    loadState((T)element);
+    // load state sets myOptions but we need to preserve transient isAllowRunningInParallel
+    myOptions.setAllowRunningInParallel(isAllowRunningInParallel);
+  }
+
+  @Override
+  public void writeExternal(@NotNull Element element) {
+    XmlSerializer.serializeObjectInto(myOptions, element);
+  }
+
+  @ApiStatus.Experimental
+  public void setOptionsFromConfigurationFile(@NotNull BaseState state) {
+    myOptions.copyFrom(state, /* isMustBeTheSameType= */false);
+  }
+
+  // we can break compatibility and make this method final (API is new and used only by our plugins), but let's avoid any inconvenience and mark as "final" after/prior to 2018.3 release.
+  /**
+   * Do not override this method, use {@link ConfigurationFactory#getOptionsClass()}.
+   */
+  protected Class<? extends RunConfigurationOptions> getOptionsClass() {
+    Class<? extends BaseState> result = myFactory == null ? null : myFactory.getOptionsClass();
+    if (result != null) {
+      //noinspection unchecked
+      return (Class<? extends RunConfigurationOptions>)result;
+    }
+    else if (this instanceof PersistentStateComponent) {
+      PersistentStateComponent instance = (PersistentStateComponent)this;
+      return ComponentSerializationUtil.getStateClass(instance.getClass());
+    }
+    else {
+      return getDefaultOptionsClass();
+    }
+  }
+
+  /**
+   * Do not override this method, it is intended to support old (not migrated to options class) run configurations.
+   */
+  @NotNull
+  protected Class<? extends RunConfigurationOptions> getDefaultOptionsClass() {
+    return RunConfigurationOptions.class;
+  }
+
+  @Transient
   public boolean isSaveOutputToFile() {
-    return mySaveOutput;
+    return myOptions.getFileOutput().isSaveOutput();
   }
 
   public void setSaveOutputToFile(boolean redirectOutput) {
-    mySaveOutput = redirectOutput;
+    myOptions.getFileOutput().setSaveOutput(redirectOutput);
   }
 
+  @Attribute(SHOW_CONSOLE_ON_STD_OUT)
   public boolean isShowConsoleOnStdOut() {
-    return myShowConsoleOnStdOut;
+    return myOptions.isShowConsoleOnStdOut();
   }
 
   public void setShowConsoleOnStdOut(boolean showConsoleOnStdOut) {
-    myShowConsoleOnStdOut = showConsoleOnStdOut;
+    myOptions.setShowConsoleOnStdOut(showConsoleOnStdOut);
   }
 
+  @Attribute(SHOW_CONSOLE_ON_STD_ERR)
   public boolean isShowConsoleOnStdErr() {
-    return myShowConsoleOnStdErr;
+    return myOptions.isShowConsoleOnStdErr();
   }
 
   public void setShowConsoleOnStdErr(boolean showConsoleOnStdErr) {
-    myShowConsoleOnStdErr = showConsoleOnStdErr;
+    myOptions.setShowConsoleOnStdErr(showConsoleOnStdErr);
   }
 
+  @Transient
   public String getOutputFilePath() {
-    return myFileOutputPath;
+    return myOptions.getFileOutput().getFileOutputPath();
   }
 
   public void setFileOutputPath(String fileOutputPath) {
-    myFileOutputPath = fileOutputPath;
+    myOptions.getFileOutput().setFileOutputPath(fileOutputPath);
   }
 
   public boolean collectOutputFromProcessHandler() {
     return true;
   }
 
+  /**
+   * @deprecated Use {@link RunProfileWithCompileBeforeLaunchOption#isExcludeCompileBeforeLaunchOption()}
+   * @return
+   */
+  @Deprecated
   public boolean excludeCompileBeforeLaunchOption() {
     return false;
   }
@@ -270,5 +312,35 @@ public abstract class RunConfigurationBase extends UserDataHolderBase implements
   @Override
   public String toString() {
     return getType().getDisplayName() + ": " + getName();
+  }
+
+  /**
+   * @deprecated Not used anymore.
+   */
+  @Deprecated
+  protected boolean isNewSerializationUsed() {
+    return false;
+  }
+
+  @Override
+  public final boolean isAllowRunningInParallel() {
+    return getOptions().isAllowRunningInParallel();
+  }
+
+  @Override
+  public final void setAllowRunningInParallel(boolean value) {
+    getOptions().setAllowRunningInParallel(value);
+  }
+
+  /**
+   * Called when configuration created via UI (Add Configuration).
+   * Suitable to perform some initialization tasks (in most cases it is indicator that you do something wrong, so, please override this method with care and only if really need).
+   */
+  @Override
+  public void onNewConfigurationCreated() {
+  }
+
+  @Override
+  public void onConfigurationCopied() {
   }
 }

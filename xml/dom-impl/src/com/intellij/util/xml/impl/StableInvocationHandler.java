@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,23 +36,24 @@ class StableInvocationHandler<T> implements InvocationHandler, StableElement {
   private T myOldValue;
   private T myCachedValue;
   private final Set<Class> myClasses;
-  private final Factory<T> myProvider;
-  private final Condition<T> myValidator;
+  private final Factory<? extends T> myProvider;
+  private final Condition<? super T> myValidator;
 
-  public StableInvocationHandler(final T initial, final Factory<T> provider, Condition<T> validator) {
+  StableInvocationHandler(final T initial, final Factory<? extends T> provider, Condition<? super T> validator) {
     myProvider = provider;
     myCachedValue = initial;
     myOldValue = initial;
     myValidator = validator;
     final Class superClass = initial.getClass().getSuperclass();
-    final Set<Class> classes = new HashSet<Class>();
+    final Set<Class> classes = new HashSet<>();
     ContainerUtil.addAll(classes, initial.getClass().getInterfaces());
-    ContainerUtil.addIfNotNull(superClass, classes);
+    ContainerUtil.addIfNotNull(classes, superClass);
     classes.remove(MergedObject.class);
     myClasses = classes;
   }
 
 
+  @Override
   public final Object invoke(Object proxy, final Method method, final Object[] args) throws Throwable {
     if (StableElement.class.equals(method.getDeclaringClass())) {
       try {
@@ -113,6 +114,7 @@ class StableInvocationHandler<T> implements InvocationHandler, StableElement {
     }
   }
 
+  @Override
   public final void revalidate() {
     final T t = myProvider.create();
     if (!isNotValid(t) && !t.equals(myCachedValue)) {
@@ -120,12 +122,14 @@ class StableInvocationHandler<T> implements InvocationHandler, StableElement {
     }
   }
 
+  @Override
   public final void invalidate() {
     if (!isNotValid(myCachedValue)) {
       myCachedValue = null;
     }
   }
 
+  @Override
   public final T getWrappedElement() {
     if (isNotValid(myCachedValue)) {
       myCachedValue = myProvider.create();

@@ -17,11 +17,11 @@ package org.jetbrains.jps.incremental.artifacts;
 
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.Processor;
 import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.builders.*;
 import org.jetbrains.jps.builders.storage.BuildDataPaths;
+import org.jetbrains.jps.cmdline.ProjectDescriptor;
 import org.jetbrains.jps.incremental.CompileContext;
 import org.jetbrains.jps.incremental.artifacts.builders.LayoutElementBuildersRegistry;
 import org.jetbrains.jps.incremental.artifacts.impl.JpsArtifactUtil;
@@ -31,7 +31,6 @@ import org.jetbrains.jps.indices.ModuleExcludeIndex;
 import org.jetbrains.jps.model.JpsModel;
 import org.jetbrains.jps.model.artifact.JpsArtifact;
 import org.jetbrains.jps.model.artifact.elements.JpsArtifactOutputPackagingElement;
-import org.jetbrains.jps.model.artifact.elements.JpsPackagingElement;
 
 import java.io.File;
 import java.io.PrintWriter;
@@ -43,44 +42,31 @@ import java.util.List;
 /**
  * @author nik
  */
-public class ArtifactBuildTarget extends BuildTarget<ArtifactRootDescriptor> {
-  private final JpsArtifact myArtifact;
+public class ArtifactBuildTarget extends ArtifactBasedBuildTarget {
 
   public ArtifactBuildTarget(@NotNull JpsArtifact artifact) {
-    super(ArtifactBuildTargetType.INSTANCE);
-    myArtifact = artifact;
-  }
-
-  @Override
-  public String getId() {
-    return myArtifact.getName();
-  }
-
-  public JpsArtifact getArtifact() {
-    return myArtifact;
+    super(ArtifactBuildTargetType.INSTANCE, artifact);
   }
 
   @Override
   public Collection<BuildTarget<?>> computeDependencies(BuildTargetRegistry targetRegistry, final TargetOutputIndex outputIndex) {
-    final LinkedHashSet<BuildTarget<?>> dependencies = new LinkedHashSet<BuildTarget<?>>();
-    JpsArtifactUtil.processPackagingElements(myArtifact.getRootElement(), new Processor<JpsPackagingElement>() {
-      @Override
-      public boolean process(JpsPackagingElement element) {
-        if (element instanceof JpsArtifactOutputPackagingElement) {
-          JpsArtifact included = ((JpsArtifactOutputPackagingElement)element).getArtifactReference().resolve();
-          if (included != null && !included.equals(myArtifact)) {
-            if (!StringUtil.isEmpty(included.getOutputPath())) {
-              dependencies.add(new ArtifactBuildTarget(included));
-              return false;
-            }
+    final LinkedHashSet<BuildTarget<?>> dependencies = new LinkedHashSet<>();
+    final JpsArtifact artifact = getArtifact();
+    JpsArtifactUtil.processPackagingElements(artifact.getRootElement(), element -> {
+      if (element instanceof JpsArtifactOutputPackagingElement) {
+        JpsArtifact included = ((JpsArtifactOutputPackagingElement)element).getArtifactReference().resolve();
+        if (included != null && !included.equals(artifact)) {
+          if (!StringUtil.isEmpty(included.getOutputPath())) {
+            dependencies.add(new ArtifactBuildTarget(included));
+            return false;
           }
         }
-        dependencies.addAll(LayoutElementBuildersRegistry.getInstance().getDependencies(element, outputIndex));
-        return true;
       }
+      dependencies.addAll(LayoutElementBuildersRegistry.getInstance().getDependencies(element, outputIndex));
+      return true;
     });
     if (!dependencies.isEmpty()) {
-      final List<BuildTarget<?>> additional = new SmartList<BuildTarget<?>>();
+      final List<BuildTarget<?>> additional = new SmartList<>();
       for (BuildTarget<?> dependency : dependencies) {
         if (dependency instanceof ModuleBasedTarget<?>) {
           final ModuleBasedTarget target = (ModuleBasedTarget)dependency;
@@ -93,22 +79,10 @@ public class ArtifactBuildTarget extends BuildTarget<ArtifactRootDescriptor> {
   }
 
   @Override
-  public boolean equals(Object o) {
-    if (this == o) return true;
-    if (o == null || getClass() != o.getClass()) return false;
-
-    return myArtifact.equals(((ArtifactBuildTarget)o).myArtifact);
-  }
-
-  @Override
-  public int hashCode() {
-    return myArtifact.hashCode();
-  }
-
-  @Override
-  public void writeConfiguration(PrintWriter out, BuildDataPaths dataPaths, BuildRootIndex buildRootIndex) {
-    out.println(StringUtil.notNullize(myArtifact.getOutputPath()));
-    for (ArtifactRootDescriptor descriptor : buildRootIndex.getTargetRoots(this, null)) {
+  public void writeConfiguration(ProjectDescriptor pd, PrintWriter out) {
+    out.println(StringUtil.notNullize(getArtifact().getOutputPath()));
+    final BuildRootIndex rootIndex = pd.getBuildRootIndex();
+    for (ArtifactRootDescriptor descriptor : rootIndex.getTargetRoots(this, null)) {
       descriptor.writeConfiguration(out);
     }
   }
@@ -119,11 +93,12 @@ public class ArtifactBuildTarget extends BuildTarget<ArtifactRootDescriptor> {
                                                              ModuleExcludeIndex index,
                                                              IgnoredFileIndex ignoredFileIndex,
                                                              BuildDataPaths dataPaths) {
-    ArtifactInstructionsBuilderImpl builder = new ArtifactInstructionsBuilderImpl(index, ignoredFileIndex, this);
+    ArtifactInstructionsBuilderImpl builder = new ArtifactInstructionsBuilderImpl(index, ignoredFileIndex, this, model, dataPaths);
     ArtifactInstructionsBuilderContext context = new ArtifactInstructionsBuilderContextImpl(model, dataPaths);
-    String outputPath = StringUtil.notNullize(myArtifact.getOutputPath());
+    final JpsArtifact artifact = getArtifact();
+    String outputPath = StringUtil.notNullize(artifact.getOutputPath());
     final CopyToDirectoryInstructionCreator instructionCreator = new CopyToDirectoryInstructionCreator(builder, outputPath);
-    LayoutElementBuildersRegistry.getInstance().generateInstructions(myArtifact, instructionCreator, context);
+    LayoutElementBuildersRegistry.getInstance().generateInstructions(artifact, instructionCreator, context);
     return builder.getDescriptors();
   }
 
@@ -136,13 +111,13 @@ public class ArtifactBuildTarget extends BuildTarget<ArtifactRootDescriptor> {
   @NotNull
   @Override
   public String getPresentableName() {
-    return "Artifact '" + myArtifact.getName() + "'";
+    return "Artifact '" + getArtifact().getName() + "'";
   }
 
   @NotNull
   @Override
   public Collection<File> getOutputRoots(CompileContext context) {
-    String outputFilePath = myArtifact.getOutputFilePath();
-    return outputFilePath != null && !StringUtil.isEmpty(outputFilePath) ? Collections.singleton(new File(FileUtil.toSystemDependentName(outputFilePath))) : Collections.<File>emptyList();
+    String outputFilePath = getArtifact().getOutputFilePath();
+    return outputFilePath != null && !StringUtil.isEmpty(outputFilePath) ? Collections.singleton(new File(FileUtil.toSystemDependentName(outputFilePath))) : Collections.emptyList();
   }
 }

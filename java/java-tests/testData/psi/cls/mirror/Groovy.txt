@@ -1,0 +1,46 @@
+
+  // IntelliJ API Decompiler stub source generated from a class file
+  // Implementation of methods is not available
+
+package pkg;
+
+public class Groovy implements groovy.lang.GroovyObject {
+    private final pkg.Groovy.Nested n;
+    private final pkg.Groovy.Inner i;
+    private final java.lang.Runnable r;
+    private final java.util.concurrent.Callable<java.lang.String> c;
+
+    public Groovy() { /* compiled code */ }
+
+    public final pkg.Groovy.Nested getN() { /* compiled code */ }
+
+    public final pkg.Groovy.Inner getI() { /* compiled code */ }
+
+    public final java.lang.Runnable getR() { /* compiled code */ }
+
+    public final java.util.concurrent.Callable<java.lang.String> getC() { /* compiled code */ }
+
+    public static class Nested implements groovy.lang.GroovyObject {
+        public Nested() { /* compiled code */ }
+    }
+
+    public class Inner implements groovy.lang.GroovyObject {
+        public Inner() { /* compiled code */ }
+    }
+
+    public class _closure1 extends groovy.lang.Closure implements org.codehaus.groovy.runtime.GeneratedClosure {
+        public _closure1(java.lang.Object _outerInstance, java.lang.Object _thisObject) { /* compiled code */ }
+
+        public java.lang.Object doCall(java.lang.Object it) { /* compiled code */ }
+
+        public java.lang.Object doCall() { /* compiled code */ }
+    }
+
+    public class _closure2 extends groovy.lang.Closure implements org.codehaus.groovy.runtime.GeneratedClosure {
+        public _closure2(java.lang.Object _outerInstance, java.lang.Object _thisObject) { /* compiled code */ }
+
+        public java.lang.Object doCall(java.lang.Object it) { /* compiled code */ }
+
+        public java.lang.Object doCall() { /* compiled code */ }
+    }
+}

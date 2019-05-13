@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,9 +15,10 @@
  */
 package com.intellij.codeInspection.inferNullity;
 
+import com.intellij.codeInsight.Nullability;
+import com.intellij.codeInsight.NullabilityAnnotationInfo;
 import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInsight.intention.AddAnnotationFix;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.psi.*;
@@ -26,10 +27,12 @@ import com.intellij.psi.search.searches.OverridingMethodsSearch;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.usageView.UsageInfo;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Query;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
 import java.util.ArrayList;
@@ -39,9 +42,9 @@ import java.util.List;
 public class NullityInferrer {
   private static final int MAX_PASSES = 10;
   public static final String NOTHING_FOUND_TO_INFER = "Nothing found to infer";
-  private int numAnnotationsAdded = 0;
-  private final List<SmartPsiElementPointer<? extends PsiModifierListOwner>> myNotNullSet = new ArrayList<SmartPsiElementPointer<? extends PsiModifierListOwner>>();
-  private final List<SmartPsiElementPointer<? extends PsiModifierListOwner>> myNullableSet = new ArrayList<SmartPsiElementPointer<? extends PsiModifierListOwner>>();
+  private int numAnnotationsAdded;
+  private final List<SmartPsiElementPointer<? extends PsiModifierListOwner>> myNotNullSet = new ArrayList<>();
+  private final List<SmartPsiElementPointer<? extends PsiModifierListOwner>> myNullableSet = new ArrayList<>();
   private final boolean myAnnotateLocalVariables;
   private final SmartPointerManager myPointerManager;
 
@@ -60,7 +63,7 @@ public class NullityInferrer {
     return visitor.isNeverNull();
   }
 
-  protected boolean expressionIsSometimesNull(@Nullable PsiExpression expression) {
+  private boolean expressionIsSometimesNull(@Nullable PsiExpression expression) {
     if (expression == null) {
       return false;
     }
@@ -139,66 +142,59 @@ public class NullityInferrer {
     while (prevNumAnnotationsAdded < numAnnotationsAdded && pass < MAX_PASSES);
   }
 
+  @TestOnly
   public void apply(final Project project) {
     final NullableNotNullManager manager = NullableNotNullManager.getInstance(project);
     for (SmartPsiElementPointer<? extends PsiModifierListOwner> pointer : myNullableSet) {
-      annotateNullable(project, manager, pointer);
+      annotateNullable(project, manager, pointer.getElement());
     }
 
     for (SmartPsiElementPointer<? extends PsiModifierListOwner> pointer : myNotNullSet) {
-      annotateNotNull(project, manager, pointer);
+      annotateNotNull(project, manager, pointer.getElement());
     }
 
-    nothingFoundMessage(project);
-  }
-
-  public boolean nothingFoundMessage(final Project project) {
     if (myNullableSet.isEmpty() && myNotNullSet.isEmpty()) {
-      if (ApplicationManager.getApplication().isUnitTestMode()) {
-        throw new RuntimeException(NOTHING_FOUND_TO_INFER);
-      }
-      SwingUtilities.invokeLater(new Runnable() {
-        public void run() {
-          Messages.showInfoMessage(project, "No places found to infer @Nullable/@NotNull", "Infer Nullity Results");
-        }
-      });
-      return true;
+      throw new RuntimeException(NOTHING_FOUND_TO_INFER);
     }
-    return false;
   }
 
-  private void annotateNotNull(Project project,
-                               NullableNotNullManager manager,
-                               SmartPsiElementPointer<? extends PsiModifierListOwner> pointer) {
-    final PsiModifierListOwner element = pointer.getElement();
+  public static void nothingFoundMessage(final Project project) {
+    SwingUtilities.invokeLater(
+      () -> Messages.showInfoMessage(project, "No places found to infer @Nullable/@NotNull", "Infer Nullity Results"));
+  }
+
+  private static void annotateNotNull(Project project,
+                                      NullableNotNullManager manager,
+                                      final PsiModifierListOwner element) {
     if (element != null) {
-      if (shouldIgnore(element)) return;
       if (element instanceof PsiField && ((PsiField)element).hasInitializer() && element.hasModifierProperty(PsiModifier.FINAL)) return;
-      new AddAnnotationFix(manager.getDefaultNotNull(), element, manager.getDefaultNullable()).invoke(project, null,
-                                                                                                      element.getContainingFile());
+      invoke(project, element, manager.getDefaultNotNull(), manager.getDefaultNullable());
     }
   }
 
-  private void annotateNullable(Project project,
-                                NullableNotNullManager manager,
-                                SmartPsiElementPointer<? extends PsiModifierListOwner> pointer) {
-    final PsiModifierListOwner element = pointer.getElement();
+  private static void annotateNullable(Project project,
+                                       NullableNotNullManager manager,
+                                       final PsiModifierListOwner element) {
     if (element != null) {
-      if (shouldIgnore(element)) return;
-      new AddAnnotationFix(manager.getDefaultNullable(), element, manager.getDefaultNotNull()).invoke(project, null, element.getContainingFile());
+      invoke(project, element, manager.getDefaultNullable(), manager.getDefaultNotNull());
     }
+  }
+
+  private static void invoke(final Project project,
+                             final PsiModifierListOwner element,
+                             final String fqn, final String toRemove) {
+    new AddAnnotationFix(fqn, element, toRemove).invoke(project, null, element.getContainingFile());
   }
 
   public int getCount() {
     return myNotNullSet.size() + myNullableSet.size();
   }
 
-  public void apply(int i, Project project, NullableNotNullManager manager) {
-    if (i < myNullableSet.size()) {
-      annotateNullable(project, manager, myNullableSet.get(i));
-    } else {
-      i -= myNullableSet.size();
-      annotateNotNull(project, manager, myNotNullSet.get(i));
+  public static void apply(Project project, NullableNotNullManager manager, UsageInfo info) {
+    if (info instanceof NullableUsageInfo) {
+      annotateNullable(project, manager, (PsiModifierListOwner)info.getElement());
+    } else if (info instanceof NotNullUsageInfo) {
+      annotateNotNull(project, manager, (PsiModifierListOwner)info.getElement());
     }
   }
 
@@ -219,7 +215,7 @@ public class NullityInferrer {
   }
 
   private void registerAnnotation(@NotNull PsiModifierListOwner method, boolean isNullable) {
-    final SmartPsiElementPointer<PsiModifierListOwner> methodPointer = myPointerManager.createLazyPointer(method);
+    final SmartPsiElementPointer<PsiModifierListOwner> methodPointer = myPointerManager.createSmartPsiElementPointer(method);
     if (isNullable) {
       myNullableSet.add(methodPointer);
     }
@@ -227,6 +223,33 @@ public class NullityInferrer {
       myNotNullSet.add(methodPointer);
     }
     numAnnotationsAdded++;
+  }
+
+  private static class NullableUsageInfo extends UsageInfo {
+    private NullableUsageInfo(@NotNull PsiElement element) {
+      super(element);
+    }
+  }
+
+  private static class NotNullUsageInfo extends UsageInfo {
+    private NotNullUsageInfo(@NotNull PsiElement element) {
+      super(element);
+    }
+  }
+
+  public void collect(List<UsageInfo> usages) {
+    collect(usages, true);
+    collect(usages, false);
+  }
+
+  private void collect(List<UsageInfo> usages, boolean nullable) {
+    final List<SmartPsiElementPointer<? extends PsiModifierListOwner>> set = nullable ? myNullableSet : myNotNullSet;
+    for (SmartPsiElementPointer<? extends PsiModifierListOwner> elementPointer : set) {
+      final PsiModifierListOwner element = elementPointer.getElement();
+      if (element != null && !shouldIgnore(element)) {
+        usages.add(nullable ? new NullableUsageInfo(element) : new NotNullUsageInfo(element));
+      }
+    }
   }
 
   private class ExpressionIsNeverNullVisitor extends JavaElementVisitor {
@@ -292,6 +315,12 @@ public class NullityInferrer {
     private boolean isNeverNull() {
       return neverNull;
     }
+
+    @Override
+    public void visitClass(PsiClass aClass) { }
+
+    @Override
+    public void visitLambdaExpression(PsiLambdaExpression expression) { }
   }
 
   private static boolean trunkImpossibleBrunch(PsiExpression condition,
@@ -323,13 +352,19 @@ public class NullityInferrer {
   }
 
   private class ExpressionIsSometimesNullVisitor extends JavaRecursiveElementWalkingVisitor{
-    private boolean sometimesNull = false;
+    private boolean sometimesNull;
 
     @Override
     public void visitElement(PsiElement element) {
       if (sometimesNull) return;
       super.visitElement(element);
     }
+
+    @Override
+    public void visitClass(PsiClass aClass) { }
+
+    @Override
+    public void visitLambdaExpression(PsiLambdaExpression expression) { }
 
     @Override
     public void visitLiteralExpression(@NotNull PsiLiteralExpression expression) {
@@ -392,6 +427,9 @@ public class NullityInferrer {
     }
 
     @Override
+    public void visitLambdaExpression(PsiLambdaExpression expression) {}
+
+    @Override
     public void visitReturnStatement(@NotNull PsiReturnStatement statement) {
       super.visitReturnStatement(statement);
       final PsiExpression value = statement.getReturnValue();
@@ -420,7 +458,7 @@ public class NullityInferrer {
     if (NullableNotNullManager.isNotNull(owner)) {
       return true;
     }
-    final SmartPsiElementPointer<PsiModifierListOwner> pointer = myPointerManager.createLazyPointer(owner);
+    final SmartPsiElementPointer<PsiModifierListOwner> pointer = myPointerManager.createSmartPsiElementPointer(owner);
     return myNotNullSet.contains(pointer);
   }
 
@@ -428,8 +466,16 @@ public class NullityInferrer {
     if (NullableNotNullManager.isNullable(owner)) {
       return true;
     }
-    final SmartPsiElementPointer<PsiModifierListOwner> pointer = myPointerManager.createLazyPointer(owner);
+    final SmartPsiElementPointer<PsiModifierListOwner> pointer = myPointerManager.createSmartPsiElementPointer(owner);
     return myNullableSet.contains(pointer);
+  }
+
+  private boolean hasNullability(@NotNull PsiModifierListOwner owner) {
+    NullableNotNullManager manager = NullableNotNullManager.getInstance(owner.getProject());
+    NullabilityAnnotationInfo info = manager.findEffectiveNullabilityInfo(owner);
+    if (info != null && !info.isInferred() && info.getNullability() != Nullability.UNKNOWN) return true;
+    final SmartPsiElementPointer<PsiModifierListOwner> pointer = myPointerManager.createSmartPsiElementPointer(owner);
+    return myNotNullSet.contains(pointer) || myNullableSet.contains(pointer);
   }
 
   private class NullityInferrerVisitor extends JavaRecursiveElementWalkingVisitor{
@@ -452,7 +498,7 @@ public class NullityInferrer {
         registerNotNullAnnotation(method);
         return;
       }
-      if (isNotNull(method) || isNullable(method)) {
+      if (hasNullability(method)) {
         return;
       }
       final PsiCodeBlock body = method.getBody();
@@ -460,8 +506,10 @@ public class NullityInferrer {
         final boolean[] sometimesReturnsNull = new boolean[1];
         body.accept(new JavaRecursiveElementWalkingVisitor() {
           @Override
-          public void visitClass(PsiClass aClass) {
-          }
+          public void visitClass(PsiClass aClass) {}
+
+          @Override
+          public void visitLambdaExpression(PsiLambdaExpression expression) {}
 
           @Override
           public void visitElement(PsiElement element) {
@@ -517,8 +565,7 @@ public class NullityInferrer {
     @Override
     public void visitParameter(@NotNull PsiParameter parameter) {
       super.visitParameter(parameter);
-      if (parameter.getType() instanceof PsiPrimitiveType ||
-          isNotNull(parameter) || isNullable(parameter)) {
+      if (parameter.getType() instanceof PsiPrimitiveType || hasNullability(parameter)) {
         return;
       }
       final PsiElement grandParent = parameter.getDeclarationScope();

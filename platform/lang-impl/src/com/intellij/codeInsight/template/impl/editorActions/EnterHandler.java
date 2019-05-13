@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,44 +13,40 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.intellij.codeInsight.template.impl.editorActions;
 
 import com.intellij.codeInsight.editorActions.BaseEnterHandler;
 import com.intellij.codeInsight.template.TemplateManager;
-import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
 import com.intellij.codeInsight.template.impl.TemplateSettings;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.NotNull;
 
 public class EnterHandler extends BaseEnterHandler {
   private final EditorActionHandler myOriginalHandler;
 
   public EnterHandler(EditorActionHandler originalHandler) {
+    super(true);
     myOriginalHandler = originalHandler;
   }
 
   @Override
-  public boolean isEnabled(Editor editor, DataContext dataContext) {
-    return myOriginalHandler.isEnabled(editor, dataContext);
+  public boolean isEnabledForCaret(@NotNull Editor editor, @NotNull Caret caret, DataContext dataContext) {
+    return myOriginalHandler.isEnabled(editor, caret, dataContext);
   }
 
   @Override
-  public void executeWriteAction(Editor editor, DataContext dataContext) {
-    Project project = PlatformDataKeys.PROJECT.getData(dataContext);
-
-    if (project == null) {
-      myOriginalHandler.execute(editor, dataContext);
+  public void executeWriteAction(Editor editor, Caret caret, DataContext dataContext) {
+    final Project project = editor.getProject();
+    if (project != null && TemplateManager.getInstance(project).startTemplate(editor, TemplateSettings.ENTER_CHAR)) {
       return;
     }
 
-    TemplateManagerImpl templateManager = (TemplateManagerImpl)TemplateManager.getInstance(project);
-
-    if (!templateManager.startTemplate(editor, TemplateSettings.ENTER_CHAR)) {
-      myOriginalHandler.execute(editor, dataContext);
+    if (myOriginalHandler != null) {
+      myOriginalHandler.execute(editor, caret, dataContext);
     }
   }
 }

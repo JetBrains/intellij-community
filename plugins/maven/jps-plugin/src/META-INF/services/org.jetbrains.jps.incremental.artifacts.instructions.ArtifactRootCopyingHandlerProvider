@@ -1,0 +1,2 @@
+org.jetbrains.jps.maven.compiler.MavenWebArtifactRootCopyingHandlerProvider
+org.jetbrains.jps.maven.compiler.MavenEjbArtifactRootCopyingHandlerProvider

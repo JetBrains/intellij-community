@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,31 +13,54 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.intellij.ide.bookmarks.actions;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.bookmarks.BookmarkManager;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.ToolWindowManager;
+import org.jetbrains.annotations.NotNull;
 
-public class ToggleBookmarkAction extends BookmarksAction implements DumbAware {
+public class ToggleBookmarkAction extends BookmarksAction implements DumbAware, Toggleable {
   public ToggleBookmarkAction() {
     getTemplatePresentation().setText(IdeBundle.message("action.bookmark.toggle"));
   }
 
-  public void actionPerformed(AnActionEvent e) {
-    DataContext dataContext = e.getDataContext();
-    Project project = PlatformDataKeys.PROJECT.getData(dataContext);
-    if (project == null) return;
-    BookmarkInContextInfo info = new BookmarkInContextInfo(dataContext, project).invoke();
-    if (info.getFile() == null) return;
+  @Override
+  public void update(@NotNull AnActionEvent event) {
+    Project project = event.getProject();
+    DataContext dataContext = event.getDataContext();
+    event.getPresentation().setEnabled(project != null &&
+                                       (ToolWindowManager.getInstance(project).isEditorComponentActive() &&
+                                        CommonDataKeys.EDITOR.getData(dataContext) != null ||
+                                        CommonDataKeys.VIRTUAL_FILE.getData(dataContext) != null));
 
-    if (info.getBookmarkAtPlace() != null) {
+    event.getPresentation().setText(IdeBundle.message("action.bookmark.toggle"));
+
+    if (ActionPlaces.TOUCHBAR_GENERAL.equals(event.getPlace())) {
+      event.getPresentation().setIcon(AllIcons.Actions.Checked);
+    }
+
+    final BookmarkInContextInfo info = getBookmarkInfo(event);
+    final boolean selected = info != null && info.getBookmarkAtPlace() != null;
+    event.getPresentation().putClientProperty(SELECTED_PROPERTY, selected);
+  }
+
+  @Override
+  public void actionPerformed(@NotNull AnActionEvent e) {
+    Project project = e.getProject();
+    if (project == null) return;
+
+    final BookmarkInContextInfo info = getBookmarkInfo(e);
+    if (info == null) return;
+
+    final boolean selected = info.getBookmarkAtPlace() != null;
+    e.getPresentation().putClientProperty(SELECTED_PROPERTY, selected);
+
+    if (selected) {
       BookmarkManager.getInstance(project).removeBookmark(info.getBookmarkAtPlace());
     }
     else {
@@ -45,14 +68,11 @@ public class ToggleBookmarkAction extends BookmarksAction implements DumbAware {
     }
   }
 
-  public void update(AnActionEvent event) {
-    DataContext dataContext = event.getDataContext();
-    final Project project = PlatformDataKeys.PROJECT.getData(dataContext);
-    event.getPresentation().setEnabled(project != null &&
-                                       (ToolWindowManager.getInstance(project).isEditorComponentActive() &&
-                                        PlatformDataKeys.EDITOR.getData(dataContext) != null ||
-                                        PlatformDataKeys.VIRTUAL_FILE.getData(dataContext) != null));
+  private BookmarkInContextInfo getBookmarkInfo(@NotNull AnActionEvent e) {
+    Project project = e.getProject();
+    if (project == null) return null;
 
-    event.getPresentation().setText(IdeBundle.message("action.bookmark.toggle"));
+    final BookmarkInContextInfo info = new BookmarkInContextInfo(e.getDataContext(), project).invoke();
+    return info.getFile() == null ? null : info;
   }
 }

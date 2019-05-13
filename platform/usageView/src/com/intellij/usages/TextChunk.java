@@ -18,17 +18,25 @@ package com.intellij.usages;
 import com.intellij.openapi.editor.markup.AttributesFlyweight;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.usages.impl.rules.UsageType;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class TextChunk {
   public static final TextChunk[] EMPTY_ARRAY = new TextChunk[0];
 
   private final AttributesFlyweight myAttributes;
   private final String myText;
+  private final UsageType myType;
 
   public TextChunk(@NotNull TextAttributes attributes, @NotNull String text) {
+    this(attributes, text, null);
+  }
+
+  public TextChunk(@NotNull TextAttributes attributes, @NotNull String text, @Nullable UsageType type) {
     myAttributes = attributes.getFlyweight();
     myText = text;
+    myType = type;
   }
 
   @NotNull
@@ -41,8 +49,14 @@ public class TextChunk {
     return myText;
   }
 
+  @Override
   public String toString() {
     return getText();
+  }
+
+  @Nullable
+  public UsageType getType() {
+    return myType;
   }
 
   @NotNull

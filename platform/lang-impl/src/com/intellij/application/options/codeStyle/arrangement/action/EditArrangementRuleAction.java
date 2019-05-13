@@ -15,35 +15,36 @@
  */
 package com.intellij.application.options.codeStyle.arrangement.action;
 
-import com.intellij.application.options.codeStyle.arrangement.ArrangementConstants;
 import com.intellij.application.options.codeStyle.arrangement.match.ArrangementMatchingRulesControl;
-import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Toggleable;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.project.DumbAware;
+import com.intellij.util.IconUtil;
 import gnu.trove.TIntArrayList;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Denis Zhdanov
- * @since 10/29/12 11:01 AM
  */
-public class EditArrangementRuleAction extends AnAction implements DumbAware, Toggleable {
+public class EditArrangementRuleAction extends AbstractArrangementRuleAction implements DumbAware, Toggleable {
 
   public EditArrangementRuleAction() {
     getTemplatePresentation().setText(ApplicationBundle.message("arrangement.action.rule.edit.text"));
     getTemplatePresentation().setDescription(ApplicationBundle.message("arrangement.action.rule.edit.description"));
+    getTemplatePresentation().setIcon(IconUtil.getEditIcon());
+    setEnabledInModalContext(true);
   }
 
   @Override
-  public void update(AnActionEvent e) {
-    ArrangementMatchingRulesControl control = ArrangementConstants.MATCHING_RULES_CONTROL_KEY.getData(e.getDataContext());
+  public void update(@NotNull AnActionEvent e) {
+    ArrangementMatchingRulesControl control = getRulesControl(e);
     e.getPresentation().setEnabled(control != null && control.getSelectedModelRows().size() == 1);
   }
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
-    ArrangementMatchingRulesControl control = ArrangementConstants.MATCHING_RULES_CONTROL_KEY.getData(e.getDataContext());
+  public void actionPerformed(@NotNull AnActionEvent e) {
+    ArrangementMatchingRulesControl control = getRulesControl(e);
     if (control == null) {
       return;
     }
@@ -51,6 +52,8 @@ public class EditArrangementRuleAction extends AnAction implements DumbAware, To
     if (rows.size() != 1) {
       return;
     }
-    control.showEditor(rows.get(0));
+    final int row = rows.get(0);
+    control.showEditor(row);
+    scrollRowToVisible(control, row);
   }
 }

@@ -29,6 +29,7 @@ public class DependencyNodeComparator implements Comparator<PackageDependenciesN
     mySortByType = false;
   }
 
+  @Override
   public int compare(PackageDependenciesNode p1, PackageDependenciesNode p2) {
     if (p1.getWeight() != p2.getWeight()) return p1.getWeight() - p2.getWeight();
     if (mySortByType) {

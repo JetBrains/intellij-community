@@ -23,17 +23,11 @@ import org.jetbrains.annotations.Nls;
 
 import javax.swing.*;
 
-/**
- * Created with IntelliJ IDEA.
- * User: Irina.Chernushina
- * Date: 11/28/12
- * Time: 2:45 PM
- */
 public class VcsLimitHistoryConfigurable extends VcsCheckBoxWithSpinnerConfigurable {
   private final VcsConfiguration myConfiguration;
 
   public VcsLimitHistoryConfigurable(Project project) {
-    super(project, "Limit history by: ", "rows");
+    super(project, "Limit history to: ", "rows");
     myConfiguration = VcsConfiguration.getInstance(myProject);
   }
 
@@ -57,7 +51,7 @@ public class VcsLimitHistoryConfigurable extends VcsCheckBoxWithSpinnerConfigura
   }
 
   @Override
-  public void apply() throws ConfigurationException {
+  public void apply() {
     myConfiguration.LIMIT_HISTORY = myHighlightRecentlyChanged.isSelected();
     myConfiguration.MAXIMUM_HISTORY_ROWS = ((Number) myHighlightInterval.getValue()).intValue();
   }

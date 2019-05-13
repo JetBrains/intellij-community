@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,7 +21,6 @@ import com.intellij.execution.ui.layout.LayoutAttractionPolicy;
 import com.intellij.execution.ui.layout.LayoutStateDefaults;
 import com.intellij.execution.ui.layout.LayoutViewOptions;
 import com.intellij.execution.ui.layout.PlaceInGrid;
-import com.intellij.ide.DataManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.ActionManager;
@@ -38,17 +37,16 @@ import com.intellij.ui.content.ContentFactory;
 import com.intellij.ui.content.ContentManager;
 import com.intellij.ui.content.ContentManagerListener;
 import com.intellij.ui.switcher.QuickActionProvider;
-import com.intellij.ui.switcher.SwitchProvider;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.List;
 
-public class RunnerLayoutUiImpl implements Disposable.Parent, RunnerLayoutUi, LayoutStateDefaults, LayoutViewOptions {
+public class RunnerLayoutUiImpl implements Disposable.Parent, RunnerLayoutUi, LayoutStateDefaults, LayoutViewOptions, DataProvider {
   private final RunnerLayout myLayout;
-  private final JPanel myContentPanel;
   private final RunnerContentUi myContentUI;
 
   private final ContentManager myViewsContentManager;
@@ -63,14 +61,12 @@ public class RunnerLayoutUiImpl implements Disposable.Parent, RunnerLayoutUi, La
     Disposer.register(parent, this);
 
     myContentUI = new RunnerContentUi(project, this, ActionManager.getInstance(), IdeFocusManager.getInstance(project), myLayout,
-                                           runnerTitle + " - " + sessionName);
+                                      runnerTitle + " - " + sessionName);
     Disposer.register(this, myContentUI);
-    myContentPanel = new MyContent();
 
-    myViewsContentManager = getContentFactory().createContentManager(myContentUI.getContentUI(), false, project);
+    myViewsContentManager = getContentFactory().createContentManager(myContentUI.getContentUI(), true, project);
+    myViewsContentManager.addDataProvider(this);
     Disposer.register(this, myViewsContentManager);
-
-    myContentPanel.add(myViewsContentManager.getComponent(), BorderLayout.CENTER);
   }
 
   @Override
@@ -79,7 +75,6 @@ public class RunnerLayoutUiImpl implements Disposable.Parent, RunnerLayoutUi, La
     myContentUI.setTopActions(actions, place);
     return this;
   }
-
 
   @NotNull
   @Override
@@ -90,14 +85,15 @@ public class RunnerLayoutUiImpl implements Disposable.Parent, RunnerLayoutUi, La
 
   @NotNull
   @Override
-  public LayoutStateDefaults initFocusContent(@NotNull final String id, @NotNull final String condition) {
-    return initFocusContent(id, condition, new LayoutAttractionPolicy.FocusOnce());
+  public LayoutStateDefaults initContentAttraction(@NotNull String contentId, @NotNull String condition, @NotNull LayoutAttractionPolicy policy) {
+    getLayout().setDefaultToFocus(contentId, condition, policy);
+    return this;
   }
 
   @NotNull
   @Override
-  public LayoutStateDefaults initFocusContent(@NotNull final String id, @NotNull final String condition, @NotNull final LayoutAttractionPolicy policy) {
-    getLayout().setDefaultToFocus(id, condition, policy);
+  public LayoutStateDefaults cancelContentAttraction(@NotNull String condition) {
+    getLayout().cancelDefaultFocusBy(condition);
     return this;
   }
 
@@ -156,7 +152,7 @@ public class RunnerLayoutUiImpl implements Disposable.Parent, RunnerLayoutUi, La
   @Override
   @NotNull
   public JComponent getComponent() {
-    return myContentPanel;
+    return myViewsContentManager.getComponent();
   }
 
   private static ContentFactory getContentFactory() {
@@ -196,7 +192,7 @@ public class RunnerLayoutUiImpl implements Disposable.Parent, RunnerLayoutUi, La
   @NotNull
   @Override
   public ActionCallback selectAndFocus(@Nullable final Content content, boolean requestFocus, final boolean forced, boolean implicit) {
-    if (content == null) return new ActionCallback.Rejected();
+    if (content == null) return ActionCallback.REJECTED;
     return getContentManager(content).setSelectedContent(content, requestFocus || shouldRequestFocus(), forced, implicit);
   }
 
@@ -254,6 +250,13 @@ public class RunnerLayoutUiImpl implements Disposable.Parent, RunnerLayoutUi, La
   public AnAction[] getLayoutActionsList() {
     final ActionGroup group = (ActionGroup)getLayoutActions();
     return group.getChildren(null);
+  }
+
+  @NotNull
+  @Override
+  public LayoutViewOptions setTabPopupActions(@NotNull ActionGroup group) {
+    myContentUI.setTabPopupActions(group);
+    return this;
   }
 
   @NotNull
@@ -373,28 +376,24 @@ public class RunnerLayoutUiImpl implements Disposable.Parent, RunnerLayoutUi, La
     return contents;
   }
 
-  private class MyContent extends JPanel implements DataProvider {
-    public MyContent() {
-      super(new BorderLayout());
+  @Nullable
+  @Override
+  public Object getData(@NotNull @NonNls String dataId) {
+    if (QuickActionProvider.KEY.is(dataId) || RunnerContentUi.KEY.is(dataId)) {
+      return myContentUI;
     }
-
-    @Override
-    public Object getData(@NonNls String dataId) {
-      if (SwitchProvider.KEY.getName().equals(dataId)) {
-        return myContentUI;
-      }
-
-      if (QuickActionProvider.KEY.getName().equals(dataId)) {
-        return myContentUI;
-      }
-
-      if (RunnerContentUi.KEY.getName().equals(dataId)) {
-        return myContentUI;
-      }
-
-      final DataProvider provider = DataManager.getDataProvider(this);
-      return provider != null ? provider.getData(dataId) : null;
-    }
+    return null;
   }
 
+  public void setLeftToolbarVisible(boolean value) {
+    myContentUI.setLeftToolbarVisible(value);
+  }
+
+  public void setContentToolbarBefore(boolean value) {
+    myContentUI.setContentToolbarBefore(value);
+  }
+
+  public List<AnAction> getActions() {
+    return myContentUI.getActions(true);
+  }
 }

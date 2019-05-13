@@ -1,27 +1,15 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.uiDesigner;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.daemon.impl.SeverityRegistrar;
+import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.uiDesigner.designSurface.GuiEditor;
@@ -34,16 +22,12 @@ import com.intellij.uiDesigner.quickFixes.*;
 import com.intellij.uiDesigner.radComponents.RadComponent;
 import com.intellij.uiDesigner.radComponents.RadRootContainer;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @author Anton Katilin
@@ -68,7 +52,7 @@ public final class ErrorAnalyzer {
   private ErrorAnalyzer() {
   }
 
-  public static void analyzeErrors(final GuiEditor editor, final IRootContainer rootContainer, @Nullable final ProgressIndicator progress) {
+  static void analyzeErrors(@NotNull GuiEditor editor, final IRootContainer rootContainer, @Nullable final ProgressIndicator progress) {
     analyzeErrors(editor.getModule(), editor.getFile(), editor, rootContainer, progress);
   }
 
@@ -106,11 +90,12 @@ public final class ErrorAnalyzer {
 
     // 2. Validate bindings to fields
     // field name -> error message
-    final ArrayList<String> usedBindings = new ArrayList<String>(); // for performance reasons
-    final Set<IButtonGroup> processedGroups = new HashSet<IButtonGroup>();
+    final ArrayList<String> usedBindings = new ArrayList<>(); // for performance reasons
+    final Set<IButtonGroup> processedGroups = new HashSet<>();
     FormEditingUtil.iterate(
       rootContainer,
       new FormEditingUtil.ComponentVisitor<IComponent>() {
+        @Override
         public boolean visit(final IComponent component) {
           if (progress != null && progress.isCanceled()) return false;
 
@@ -160,6 +145,7 @@ public final class ErrorAnalyzer {
     FormEditingUtil.iterate(
       rootContainer,
       new FormEditingUtil.ComponentVisitor<IComponent>() {
+        @Override
         public boolean visit(final IComponent component) {
           if (progress != null && progress.isCanceled()) return false;
 
@@ -201,38 +187,35 @@ public final class ErrorAnalyzer {
       // Run inspections for form elements
       final PsiFile formPsiFile = PsiManager.getInstance(module.getProject()).findFile(formFile);
       if (formPsiFile != null && rootContainer instanceof RadRootContainer) {
-        final List<FormInspectionTool> formInspectionTools = new ArrayList<FormInspectionTool>();
-        final FormInspectionTool[] registeredFormInspections = Extensions.getExtensions(FormInspectionTool.EP_NAME);
-        for (FormInspectionTool formInspectionTool : registeredFormInspections) {
-          if (formInspectionTool.isActive(formPsiFile) && !rootContainer.isInspectionSuppressed(formInspectionTool.getShortName(), null)) {
+        final List<FormInspectionTool> formInspectionTools = new ArrayList<>();
+        for (FormInspectionTool formInspectionTool : FormInspectionTool.EP_NAME.getExtensionList()) {
+          if (formInspectionTool.isActive(formPsiFile) && !isSuppressed(rootContainer, formInspectionTool, null)) {
             formInspectionTools.add(formInspectionTool);
           }
         }
 
-        if (formInspectionTools.size() > 0 && editor != null) {
+        if (!formInspectionTools.isEmpty() && editor != null) {
           for (FormInspectionTool tool : formInspectionTools) {
             tool.startCheckForm(rootContainer);
           }
           FormEditingUtil.iterate(
             rootContainer,
-            new FormEditingUtil.ComponentVisitor<RadComponent>() {
-              public boolean visit(final RadComponent component) {
-                if (progress != null && progress.isCanceled()) return false;
+            (FormEditingUtil.ComponentVisitor<RadComponent>)(RadComponent component) -> {
+              if (progress != null && progress.isCanceled()) return false;
 
-                for (FormInspectionTool tool : formInspectionTools) {
-                  if (rootContainer.isInspectionSuppressed(tool.getShortName(), component.getId())) continue;
-                  ErrorInfo[] errorInfos = tool.checkComponent(editor, component);
-                  if (errorInfos != null) {
-                    ArrayList<ErrorInfo> errorList = getErrorInfos(component);
-                    if (errorList == null) {
-                      errorList = new ArrayList<ErrorInfo>();
-                      component.putClientProperty(CLIENT_PROP_ERROR_ARRAY, errorList);
-                    }
-                    Collections.addAll(errorList, errorInfos);
+              for (FormInspectionTool tool : formInspectionTools) {
+                if (isSuppressed(rootContainer, tool, component.getId())) continue;
+                ErrorInfo[] errorInfos = tool.checkComponent(editor, component);
+                if (errorInfos != null) {
+                  ArrayList<ErrorInfo> errorList = getErrorInfos(component);
+                  if (errorList == null) {
+                    errorList = new ArrayList<>();
+                    component.putClientProperty(CLIENT_PROP_ERROR_ARRAY, errorList);
                   }
+                  Collections.addAll(errorList, errorInfos);
                 }
-                return true;
               }
+              return true;
             }
           );
           for (FormInspectionTool tool : formInspectionTools) {
@@ -241,9 +224,25 @@ public final class ErrorAnalyzer {
         }
       }
     }
+    catch (ProcessCanceledException e) {
+      throw e;
+    }
     catch (Exception e) {
       LOG.error(e);
     }
+  }
+
+  public static boolean isSuppressed(@NotNull IRootContainer rootContainer,
+                                     @NotNull FormInspectionTool formInspectionTool, String componentId) {
+    String shortName = formInspectionTool.getShortName();
+    if (rootContainer.isInspectionSuppressed(shortName, componentId)) return true;
+    if (formInspectionTool instanceof LocalInspectionTool) {
+      String alternativeID = ((LocalInspectionTool)formInspectionTool).getAlternativeID();
+      if (!Comparing.equal(alternativeID, shortName)) {
+        return rootContainer.isInspectionSuppressed(alternativeID, componentId);
+      }
+    }
+    return false;
   }
 
   private static boolean validateFieldInClass(final IComponent component, final String fieldName, final String fieldClassName,
@@ -305,7 +304,7 @@ public final class ErrorAnalyzer {
         return true;
       }
     }
-    catch (IncorrectOperationException e) {
+    catch (IncorrectOperationException ignored) {
     }
 
     if (component.isCustomCreate() && FormEditingUtil.findCreateComponentsMethod(psiClass) == null) {
@@ -326,7 +325,7 @@ public final class ErrorAnalyzer {
   private static void putError(final IComponent component, final ErrorInfo errorInfo) {
     ArrayList<ErrorInfo> errorList = getErrorInfos(component);
     if (errorList == null) {
-      errorList = new ArrayList<ErrorInfo>();
+      errorList = new ArrayList<>();
       component.putClientProperty(CLIENT_PROP_ERROR_ARRAY, errorList);
     }
 
@@ -335,7 +334,7 @@ public final class ErrorAnalyzer {
 
   /**
    * @return first ErrorInfo for the specified component. If component doesn't contain
-   * any error then the method returns <code>null</code>.
+   * any error then the method returns {@code null}.
    */
   @Nullable
   public static ErrorInfo getErrorForComponent(@NotNull final IComponent component){
@@ -367,7 +366,7 @@ public final class ErrorAnalyzer {
   }
 
   @NotNull public static ErrorInfo[] getAllErrorsForComponent(@NotNull IComponent component) {
-    List<ErrorInfo> result = new ArrayList<ErrorInfo>();
+    List<ErrorInfo> result = new ArrayList<>();
     ErrorInfo errorInfo = (ErrorInfo)component.getClientProperty(CLIENT_PROP_CLASS_TO_BIND_ERROR);
     if (errorInfo != null) {
       result.add(errorInfo);
@@ -380,7 +379,7 @@ public final class ErrorAnalyzer {
     if (errorInfos != null) {
       result.addAll(errorInfos);
     }
-    return result.toArray(new ErrorInfo[result.size()]);
+    return result.toArray(ErrorInfo.EMPTY_ARRAY);
   }
 
   private static ArrayList<ErrorInfo> getErrorInfos(final IComponent component) {
@@ -392,7 +391,7 @@ public final class ErrorAnalyzer {
   public static HighlightDisplayLevel getHighlightDisplayLevel(final Project project, @NotNull final RadComponent component) {
     HighlightDisplayLevel displayLevel = null;
     for(ErrorInfo errInfo: getAllErrorsForComponent(component)) {
-      if (displayLevel == null || SeverityRegistrar.getInstance(project).compare(errInfo.getHighlightDisplayLevel().getSeverity(), displayLevel.getSeverity()) > 0) {
+      if (displayLevel == null || SeverityRegistrar.getSeverityRegistrar(project).compare(errInfo.getHighlightDisplayLevel().getSeverity(), displayLevel.getSeverity()) > 0) {
         displayLevel = errInfo.getHighlightDisplayLevel();
       }
     }

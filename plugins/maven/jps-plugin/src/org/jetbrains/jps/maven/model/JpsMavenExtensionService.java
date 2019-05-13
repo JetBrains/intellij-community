@@ -26,6 +26,8 @@ public abstract class JpsMavenExtensionService {
 
   public abstract boolean isProductionOnTestDependency(@NotNull JpsDependencyElement dependency);
 
-  @NotNull
+  public abstract boolean hasMavenProjectConfiguration(@NotNull BuildDataPaths paths);
+
+  @Nullable
   public abstract MavenProjectConfiguration getMavenProjectConfiguration(BuildDataPaths paths);
 }

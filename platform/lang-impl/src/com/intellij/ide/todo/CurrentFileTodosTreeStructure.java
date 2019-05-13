@@ -31,7 +31,7 @@ public final class CurrentFileTodosTreeStructure extends TodoTreeStructure{
   private static final Object[] ourEmptyArray=new Object[]{};
 
   /**
-   * Current <code>VirtualFile</code> for which the structure is built. If <code>myFile</code> is <code>null</code>
+   * Current {@code VirtualFile} for which the structure is built. If {@code myFile} is {@code null}
    * then the structure is empty (contains only root node).
    */
   private PsiFile myFile;
@@ -40,6 +40,7 @@ public final class CurrentFileTodosTreeStructure extends TodoTreeStructure{
     super(project);
   }
 
+  @Override
   protected void validateCache(){
     super.validateCache();
     if(myFile!=null && !myFile.isValid()){
@@ -57,7 +58,7 @@ public final class CurrentFileTodosTreeStructure extends TodoTreeStructure{
   }
 
   /**
-   * Sets <code>file</code> for which the structure is built. Alter this method is invoked caches should
+   * Sets {@code file} for which the structure is built. Alter this method is invoked caches should
    * be validated.
    */
   public void setFile(PsiFile file){
@@ -65,6 +66,7 @@ public final class CurrentFileTodosTreeStructure extends TodoTreeStructure{
     myRootElement = createRootElement();
   }
 
+  @Override
   public boolean accept(PsiFile psiFile){
     if(myFile==null||!myFile.equals(psiFile)||!myFile.isValid()){
       return false;
@@ -73,15 +75,20 @@ public final class CurrentFileTodosTreeStructure extends TodoTreeStructure{
       (myTodoFilter==null&&mySearchHelper.getTodoItemsCount(psiFile)>0);
   }
 
+  @Override
   boolean isAutoExpandNode(NodeDescriptor descriptor){
     Object element=descriptor.getElement();
+    if (element instanceof AbstractTreeNode) {
+      element = ((AbstractTreeNode)element).getValue();
+    }
     if(element==myFile){
       return true;
     }else{
-      return super.isAutoExpandNode(descriptor);
+      return element == getRootElement() || element == mySummaryElement;
     }
   }
 
+  @Override
   Object getFirstSelectableElement(){
     if (myRootElement instanceof SingleFileToDoNode){
       return ((SingleFileToDoNode)myRootElement).getFileNode();
@@ -90,10 +97,12 @@ public final class CurrentFileTodosTreeStructure extends TodoTreeStructure{
     }
   }
 
+  @Override
   public boolean getIsPackagesShown() {
     return myArePackagesShown;
   }
 
+  @Override
   protected AbstractTreeNode createRootElement() {
     if  (!accept(myFile)) {
       return new ToDoRootNode(myProject, new Object(), myBuilder, mySummaryElement);

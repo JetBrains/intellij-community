@@ -18,7 +18,18 @@ class Test {
     } else if ("Queues".equals(parentName)) {
       System.out.println(parentNode.toString());
     }
-    System.out.println(<warning descr="Method invocation 'parentNode.toString()' may produce 'java.lang.NullPointerException'">parentNode.toString()</warning>);
+    System.out.println(parentNode.<warning descr="Method invocation 'toString' may produce 'NullPointerException'">toString</warning>());
+  }
+
+  public static int foo(String a, String b) {
+    if (a.equals(b.startsWith("a") ? b : "")) {
+      return 0;
+    }
+    return a.length();
+  }
+
+  static boolean isEmpty(String s) {
+    return s.length() == 0;
   }
 
 }

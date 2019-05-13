@@ -1,30 +1,14 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
-/*
- * User: anna
- * Date: 08-Jul-2007
- */
 package com.intellij.ide.util.newProjectWizard;
 
-import com.intellij.ide.util.projectWizard.ModuleBuilder;
+import com.intellij.ide.util.projectWizard.AbstractModuleBuilder;
 import com.intellij.ide.util.projectWizard.ModuleWizardStep;
 import com.intellij.ide.util.projectWizard.WizardContext;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
+import com.intellij.openapi.util.Pair;
+import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NonNls;
@@ -34,28 +18,34 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 
 public class StepSequence {
-  private final List<ModuleWizardStep> myCommonSteps = new ArrayList<ModuleWizardStep>();
-  private final List<ModuleWizardStep> myCommonFinishingSteps = new ArrayList<ModuleWizardStep>();
-  private final MultiMap<String, ModuleWizardStep> mySpecificSteps = new MultiMap<String, ModuleWizardStep>();
-  @NonNls private List<String> myTypes = new ArrayList<String>();
+  private final List<ModuleWizardStep> myCommonSteps;
+  private final List<Pair<ModuleWizardStep, Set<String>>> myCommonFinishingSteps = new ArrayList<>();
+  private final MultiMap<String, ModuleWizardStep> mySpecificSteps = new MultiMap<>();
+  private final MultiMap<String, ModuleWizardStep> mySpecificFinishingSteps = new MultiMap<>();
+  @NonNls private final List<String> myTypes = new ArrayList<>();
   private List<ModuleWizardStep> mySelectedSteps;
 
   public StepSequence(ModuleWizardStep... commonSteps) {
-    myCommonSteps.addAll(Arrays.asList(commonSteps));
+    myCommonSteps = new SmartList<>(commonSteps);
   }
 
   public void addCommonStep(@NotNull ModuleWizardStep step){
     myCommonSteps.add(step);
   }
 
-  public void addCommonFinishingStep(@NotNull ModuleWizardStep step) {
-    myCommonFinishingSteps.add(step);
+  public void addCommonFinishingStep(@NotNull ModuleWizardStep step, @Nullable Set<String> suitableTypes) {
+    myCommonFinishingSteps.add(Pair.create(step, suitableTypes));
   }
 
-  public void addStepsForBuilder(ModuleBuilder builder, WizardContext wizardContext, ModulesProvider modulesProvider) {
+  public void addStepsForBuilder(@NotNull AbstractModuleBuilder builder,
+                                 @NotNull WizardContext wizardContext,
+                                 @NotNull ModulesProvider modulesProvider) {
     String id = builder.getBuilderId();
     if (!mySpecificSteps.containsKey(id)) {
       mySpecificSteps.put(id, Arrays.asList(builder.createWizardSteps(wizardContext, modulesProvider)));
+    }
+    if (!mySpecificFinishingSteps.containsKey(id)) {
+      mySpecificFinishingSteps.put(id, Arrays.asList(builder.createFinishingSteps(wizardContext, modulesProvider)));
     }
   }
 
@@ -65,13 +55,22 @@ public class StepSequence {
 
   public List<ModuleWizardStep> getSelectedSteps() {
     if (mySelectedSteps == null) {
-      mySelectedSteps = new ArrayList<ModuleWizardStep>();
+      mySelectedSteps = new ArrayList<>();
       mySelectedSteps.addAll(myCommonSteps);
       for (String type : myTypes) {
         Collection<ModuleWizardStep> steps = mySpecificSteps.get(type);
         mySelectedSteps.addAll(steps);
       }
-      mySelectedSteps.addAll(myCommonFinishingSteps);
+      for (Pair<ModuleWizardStep, Set<String>> pair : myCommonFinishingSteps) {
+        Set<String> types = pair.getSecond();
+        if (types == null || ContainerUtil.intersects(myTypes, types)) {
+          mySelectedSteps.add(pair.getFirst());
+        }
+      }
+      for (String type : myTypes) {
+        Collection<ModuleWizardStep> steps = mySpecificFinishingSteps.get(type);
+        mySelectedSteps.addAll(steps);
+      }
       ContainerUtil.removeDuplicates(mySelectedSteps);
     }
 
@@ -107,15 +106,14 @@ public class StepSequence {
   }
 
   public List<ModuleWizardStep> getAllSteps() {
-    final List<ModuleWizardStep> result = new ArrayList<ModuleWizardStep>();
+    final List<ModuleWizardStep> result = new ArrayList<>();
     result.addAll(myCommonSteps);
     result.addAll(mySpecificSteps.values());
-    result.addAll(myCommonFinishingSteps);
+    for (Pair<ModuleWizardStep, Set<String>> pair : myCommonFinishingSteps) {
+      result.add(pair.getFirst());
+    }
+    result.addAll(mySpecificFinishingSteps.values());
     ContainerUtil.removeDuplicates(result);
     return result;
-  }
-
-  public ModuleWizardStep getFirstStep() {
-    return myCommonSteps.get(0);
   }
 }

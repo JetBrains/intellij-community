@@ -15,7 +15,7 @@
  */
 package com.siyeh.ig.psiutils;
 
-import com.intellij.codeInsight.CodeInsightUtilBase;
+import com.intellij.codeInsight.CodeInsightUtilCore;
 import com.intellij.codeInsight.highlighting.HighlightManager;
 import com.intellij.codeInsight.template.Expression;
 import com.intellij.codeInsight.template.Template;
@@ -40,7 +40,8 @@ import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNameIdentifierOwner;
 import com.intellij.psi.PsiReference;
-import com.intellij.psi.util.PsiUtilBase;
+import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 
@@ -52,7 +53,7 @@ public class HighlightUtils {
   private HighlightUtils() {
   }
 
-  public static void highlightElement(PsiElement element) {
+  public static void highlightElement(@NotNull PsiElement element) {
     highlightElements(Collections.singleton(element));
   }
 
@@ -61,56 +62,58 @@ public class HighlightUtils {
     if (elementCollection.isEmpty()) {
       return;
     }
+    if (elementCollection.contains(null)) {
+      throw new IllegalArgumentException("Nulls passed in collection: " + elementCollection);
+    }
     final Application application = ApplicationManager.getApplication();
-    application.invokeLater(new Runnable() {
-      public void run() {
-        final PsiElement[] elements =
-          PsiUtilBase.toPsiElementArray(elementCollection);
-        final PsiElement firstElement = elements[0];
-        if (!firstElement.isValid()) {
-          return;
-        }
-        final Project project = firstElement.getProject();
-        final FileEditorManager editorManager =
-          FileEditorManager.getInstance(project);
-        final EditorColorsManager editorColorsManager =
-          EditorColorsManager.getInstance();
-        final Editor editor = editorManager.getSelectedTextEditor();
-        if (editor == null) {
-          return;
-        }
-        final EditorColorsScheme globalScheme =
-          editorColorsManager.getGlobalScheme();
-        final TextAttributes textattributes =
-          globalScheme.getAttributes(
-            EditorColors.SEARCH_RESULT_ATTRIBUTES);
-        final HighlightManager highlightManager =
-          HighlightManager.getInstance(project);
-        highlightManager.addOccurrenceHighlights(
-          editor, elements, textattributes, true, null);
-        final WindowManager windowManager =
-          WindowManager.getInstance();
-        final StatusBar statusBar =
-          windowManager.getStatusBar(project);
-        statusBar.setInfo(InspectionGadgetsBundle.message(
-          "press.escape.to.remove.highlighting.message"));
-        final FindManager findmanager =
-          FindManager.getInstance(project);
-        FindModel findmodel = findmanager.getFindNextModel();
-        if (findmodel == null) {
-          findmodel = findmanager.getFindInFileModel();
-        }
-        findmodel.setSearchHighlighters(true);
-        findmanager.setFindWasPerformed();
-        findmanager.setFindNextModel(findmodel);
+    application.invokeLater(() -> {
+      final PsiElement[] elements =
+        PsiUtilCore.toPsiElementArray(elementCollection);
+      final PsiElement firstElement = elements[0];
+      if (ContainerUtil.exists(elements, element -> !element.isValid())) {
+        return;
       }
+      final Project project = firstElement.getProject();
+      if (project.isDisposed()) return;
+      final FileEditorManager editorManager =
+        FileEditorManager.getInstance(project);
+      final EditorColorsManager editorColorsManager =
+        EditorColorsManager.getInstance();
+      final Editor editor = editorManager.getSelectedTextEditor();
+      if (editor == null) {
+        return;
+      }
+      final EditorColorsScheme globalScheme =
+        editorColorsManager.getGlobalScheme();
+      final TextAttributes textattributes =
+        globalScheme.getAttributes(
+          EditorColors.SEARCH_RESULT_ATTRIBUTES);
+      final HighlightManager highlightManager =
+        HighlightManager.getInstance(project);
+      highlightManager.addOccurrenceHighlights(
+        editor, elements, textattributes, true, null);
+      final WindowManager windowManager =
+        WindowManager.getInstance();
+      final StatusBar statusBar =
+        windowManager.getStatusBar(project);
+      statusBar.setInfo(InspectionGadgetsBundle.message(
+        "press.escape.to.remove.highlighting.message"));
+      final FindManager findmanager =
+        FindManager.getInstance(project);
+      FindModel findmodel = findmanager.getFindNextModel();
+      if (findmodel == null) {
+        findmodel = findmanager.getFindInFileModel();
+      }
+      findmodel.setSearchHighlighters(true);
+      findmanager.setFindWasPerformed();
+      findmanager.setFindNextModel(findmodel);
     });
   }
 
   public static void showRenameTemplate(PsiElement context,
                                         PsiNameIdentifierOwner element,
                                         PsiReference... references) {
-    context = CodeInsightUtilBase.forcePsiPostprocessAndRestoreElement(
+    context = CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(
       context);
     final Project project = context.getProject();
     final FileEditorManager fileEditorManager =

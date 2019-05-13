@@ -1,4 +1,4 @@
-// "Create Constructor" "true"
+// "Create constructor" "true"
 public class Seq<T> {
     public Seq() {}
 

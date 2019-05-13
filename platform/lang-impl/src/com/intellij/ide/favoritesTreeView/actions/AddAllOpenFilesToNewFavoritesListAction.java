@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,26 +20,26 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.NotNull;
 
-/**
- * User: anna
- * Date: Feb 28, 2005
- */
-class AddAllOpenFilesToNewFavoritesListAction extends AnAction {
-  public AddAllOpenFilesToNewFavoritesListAction() {
+class AddAllOpenFilesToNewFavoritesListAction extends AnAction implements DumbAware {
+  AddAllOpenFilesToNewFavoritesListAction() {
     super(IdeBundle.message("action.add.all.open.tabs.to.new.favorites.list"),
-          IdeBundle.message("action.add.to.new.favorites.list"), AllIcons.General.AddFavoritesList);
+          IdeBundle.message("action.add.to.new.favorites.list"), AllIcons.General.Add);
   }
 
-  public void actionPerformed(AnActionEvent e) {
+  @Override
+  public void actionPerformed(@NotNull AnActionEvent e) {
     final String newName = AddNewFavoritesListAction.doAddNewFavoritesList(e.getProject());
     if (newName != null) {
       new AddAllOpenFilesToFavorites(newName).actionPerformed(e);
     }
   }
 
-  public void update(AnActionEvent e) {
+  @Override
+  public void update(@NotNull AnActionEvent e) {
     Project project = e.getProject();
     if (project == null) {
       e.getPresentation().setEnabled(false);

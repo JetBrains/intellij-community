@@ -24,9 +24,9 @@ import org.jetbrains.annotations.Nullable;
  * @author nik
  */
 public class DownloadableLibraryFileDescriptionImpl extends DownloadableFileDescriptionImpl implements DownloadableLibraryFileDescription {
-  private DownloadableFileDescriptionImpl mySourceDownloadUrl;
-  private DownloadableFileDescriptionImpl myDocumentationDownloadUrl;
-  private boolean myOptional;
+  private final DownloadableFileDescriptionImpl mySourceDownloadUrl;
+  private final DownloadableFileDescriptionImpl myDocumentationDownloadUrl;
+  private final boolean myOptional;
 
   public DownloadableLibraryFileDescriptionImpl(@NotNull String downloadUrl,
                                                 @NotNull String fileName,

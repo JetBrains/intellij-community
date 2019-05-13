@@ -1,17 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 package com.intellij.openapi.roots.impl;
 
@@ -22,12 +10,10 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.SmartList;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
+import java.util.*;
 
 /**
  * @author nik
@@ -36,7 +22,7 @@ public abstract class RootModelBase implements ModuleRootModel {
   @Override
   @NotNull
   public VirtualFile[] getContentRoots() {
-    final ArrayList<VirtualFile> result = new ArrayList<VirtualFile>();
+    final ArrayList<VirtualFile> result = new ArrayList<>();
 
     for (ContentEntry contentEntry : getContent()) {
       final VirtualFile file = contentEntry.getFile();
@@ -51,7 +37,7 @@ public abstract class RootModelBase implements ModuleRootModel {
   @NotNull
   public String[] getContentRootUrls() {
     if (getContent().isEmpty()) return ArrayUtil.EMPTY_STRING_ARRAY;
-    final ArrayList<String> result = new ArrayList<String>(getContent().size());
+    final ArrayList<String> result = new ArrayList<>(getContent().size());
 
     for (ContentEntry contentEntry : getContent()) {
       result.add(contentEntry.getUrl());
@@ -63,12 +49,9 @@ public abstract class RootModelBase implements ModuleRootModel {
   @Override
   @NotNull
   public String[] getExcludeRootUrls() {
-    final List<String> result = new SmartList<String>();
+    final List<String> result = new SmartList<>();
     for (ContentEntry contentEntry : getContent()) {
-      final ExcludeFolder[] excludeFolders = contentEntry.getExcludeFolders();
-      for (ExcludeFolder excludeFolder : excludeFolders) {
-        result.add(excludeFolder.getUrl());
-      }
+      result.addAll(contentEntry.getExcludeFolderUrls());
     }
     return ArrayUtil.toStringArray(result);
   }
@@ -76,15 +59,9 @@ public abstract class RootModelBase implements ModuleRootModel {
   @Override
   @NotNull
   public VirtualFile[] getExcludeRoots() {
-    final List<VirtualFile> result = new SmartList<VirtualFile>();
+    final List<VirtualFile> result = new SmartList<>();
     for (ContentEntry contentEntry : getContent()) {
-      final ExcludeFolder[] excludeFolders = contentEntry.getExcludeFolders();
-      for (ExcludeFolder excludeFolder : excludeFolders) {
-        final VirtualFile file = excludeFolder.getFile();
-        if (file != null) {
-          result.add(file);
-        }
-      }
+      Collections.addAll(result, contentEntry.getExcludeFolderFiles());
     }
     return VfsUtilCore.toVirtualFileArray(result);
   }
@@ -98,7 +75,7 @@ public abstract class RootModelBase implements ModuleRootModel {
   @Override
   @NotNull
   public String[] getSourceRootUrls(boolean includingTests) {
-    List<String> result = new SmartList<String>();
+    List<String> result = new SmartList<>();
     for (ContentEntry contentEntry : getContent()) {
       final SourceFolder[] sourceFolders = contentEntry.getSourceFolders();
       for (SourceFolder sourceFolder : sourceFolders) {
@@ -119,7 +96,7 @@ public abstract class RootModelBase implements ModuleRootModel {
   @Override
   @NotNull
   public VirtualFile[] getSourceRoots(final boolean includingTests) {
-    List<VirtualFile> result = new SmartList<VirtualFile>();
+    List<VirtualFile> result = new SmartList<>();
     for (ContentEntry contentEntry : getContent()) {
       final SourceFolder[] sourceFolders = contentEntry.getSourceFolders();
       for (SourceFolder sourceFolder : sourceFolders) {
@@ -132,10 +109,33 @@ public abstract class RootModelBase implements ModuleRootModel {
     return VfsUtilCore.toVirtualFileArray(result);
   }
 
+  @NotNull
+  @Override
+  public List<VirtualFile> getSourceRoots(@NotNull JpsModuleSourceRootType<?> rootType) {
+    return getSourceRoots(Collections.singleton(rootType));
+  }
+
+  @NotNull
+  @Override
+  public List<VirtualFile> getSourceRoots(@NotNull Set<? extends JpsModuleSourceRootType<?>> rootTypes) {
+    List<VirtualFile> result = new SmartList<>();
+    for (ContentEntry contentEntry : getContent()) {
+      final List<SourceFolder> sourceFolders = contentEntry.getSourceFolders(rootTypes);
+      for (SourceFolder sourceFolder : sourceFolders) {
+        final VirtualFile file = sourceFolder.getFile();
+        if (file != null) {
+          result.add(file);
+        }
+      }
+    }
+    return result;
+  }
+
+  @NotNull
   @Override
   public ContentEntry[] getContentEntries() {
     final Collection<ContentEntry> content = getContent();
-    return content.toArray(new ContentEntry[content.size()]);
+    return content.toArray(new ContentEntry[0]);
   }
 
   protected abstract Collection<ContentEntry> getContent();
@@ -179,7 +179,7 @@ public abstract class RootModelBase implements ModuleRootModel {
   @NotNull
   public String[] getDependencyModuleNames() {
     List<String> result = orderEntries().withoutSdk().withoutLibraries().withoutModuleSourceEntries()
-      .process(new CollectDependentModules(), new ArrayList<String>());
+      .process(new CollectDependentModules(), new ArrayList<>());
     return ArrayUtil.toStringArray(result);
   }
 
@@ -192,23 +192,25 @@ public abstract class RootModelBase implements ModuleRootModel {
   @Override
   @NotNull
   public Module[] getModuleDependencies(boolean includeTests) {
-    final List<Module> result = new ArrayList<Module>();
+    OrderEntry[] entries = getOrderEntries();
+    List<Module> result = null;
 
-    for (OrderEntry entry : getOrderEntries()) {
+    for (OrderEntry entry : entries) {
       if (entry instanceof ModuleOrderEntry) {
-        ModuleOrderEntry moduleOrderEntry = (ModuleOrderEntry)entry;
-        final DependencyScope scope = moduleOrderEntry.getScope();
-        if (!includeTests && !scope.isForProductionCompile() && !scope.isForProductionRuntime()) {
-          continue;
-        }
-        final Module module1 = moduleOrderEntry.getModule();
-        if (module1 != null) {
-          result.add(module1);
+        DependencyScope scope = ((ModuleOrderEntry)entry).getScope();
+        if (includeTests || scope.isForProductionCompile() || scope.isForProductionRuntime()) {
+          Module module = ((ModuleOrderEntry)entry).getModule();
+          if (module != null) {
+            if (result == null) {
+              result = new SmartList<>();
+            }
+            result.add(module);
+          }
         }
       }
     }
 
-    return result.isEmpty() ? Module.EMPTY_ARRAY : ContainerUtil.toArray(result, new Module[result.size()]);
+    return result == null ? Module.EMPTY_ARRAY : result.toArray(Module.EMPTY_ARRAY);
   }
 
   private static class CollectDependentModules extends RootPolicy<List<String>> {

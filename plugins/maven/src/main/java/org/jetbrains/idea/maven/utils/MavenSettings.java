@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,72 +38,78 @@ public class MavenSettings implements SearchableConfigurable.Parent {
   private final Configurable myConfigurable;
   private final List<Configurable> myChildren;
 
-  public MavenSettings(Project project) {
+  public MavenSettings(@NotNull Project project) {
     myProject = project;
 
     myConfigurable = new MavenGeneralConfigurable() {
+      @Override
       protected MavenGeneralSettings getState() {
         return MavenProjectsManager.getInstance(myProject).getGeneralSettings();
       }
     };
 
-    myChildren = new ArrayList<Configurable>();
+    myChildren = new ArrayList<>();
     myChildren.add(new MavenImportingConfigurable(myProject));
     myChildren.add(new MavenIgnoredFilesConfigurable(myProject));
 
     myChildren.add(new MyMavenRunnerConfigurable(project));
+
+    myChildren.add(new MavenTestRunningConfigurable(project));
 
     if (!myProject.isDefault()) {
       myChildren.add(new MavenRepositoriesConfigurable(myProject));
     }
   }
 
+  @Override
   public boolean hasOwnContent() {
     return true;
   }
 
-  public boolean isVisible() {
-    return true;
-  }
-
-  public Runnable enableSearch(String option) {
-    return null;
-  }
-
+  @Override
   public JComponent createComponent() {
     return myConfigurable.createComponent();
   }
 
+  @Override
   public boolean isModified() {
     return myConfigurable.isModified();
   }
 
+  @Override
   public void apply() throws ConfigurationException {
     myConfigurable.apply();
   }
 
+  @Override
   public void reset() {
     myConfigurable.reset();
   }
 
+  @Override
   public void disposeUIResources() {
     myConfigurable.disposeUIResources();
   }
 
+  @NotNull
+  @Override
   public Configurable[] getConfigurables() {
-    return myChildren.toArray(new Configurable[myChildren.size()]);
+    return myChildren.toArray(new Configurable[0]);
   }
 
+  @Override
   @NotNull
   public String getId() {
     return MavenSettings.class.getSimpleName();
   }
 
+  @Override
   @Nls
   public String getDisplayName() {
     return DISPLAY_NAME;
   }
 
+  @Override
   public String getHelpTopic() {
     return myConfigurable.getHelpTopic();
   }
@@ -113,6 +119,7 @@ public class MavenSettings implements SearchableConfigurable.Parent {
       super(project, false);
     }
 
+    @Override
     protected MavenRunnerSettings getState() {
       return MavenRunner.getInstance(myProject).getState();
     }

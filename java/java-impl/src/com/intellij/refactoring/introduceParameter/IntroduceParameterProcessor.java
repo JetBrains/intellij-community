@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,19 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-/*
- * Created by IntelliJ IDEA.
- * User: dsl
- * Date: 07.05.2002
- * Time: 11:17:31
- * To change template for new class use
- * Code Style | Class Templates options (Tools | IDE Options).
- */
 package com.intellij.refactoring.introduceParameter;
 
+import com.intellij.analysis.AnalysisScope;
+import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.ChangeContextUtil;
+import com.intellij.codeInsight.generation.GenerateMembersUtil;
+import com.intellij.lang.findUsages.DescriptiveNameUtil;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
@@ -33,14 +30,15 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.MethodReferencesSearch;
 import com.intellij.psi.search.searches.OverridingMethodsSearch;
-import com.intellij.psi.util.PropertyUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.IntroduceParameterRefactoring;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.changeSignature.ChangeSignatureProcessor;
 import com.intellij.refactoring.introduceVariable.IntroduceVariableBase;
+import com.intellij.refactoring.listeners.RefactoringEventData;
 import com.intellij.refactoring.util.*;
+import com.intellij.refactoring.util.duplicates.MethodDuplicatesHandler;
 import com.intellij.refactoring.util.occurrences.ExpressionOccurrenceManager;
 import com.intellij.refactoring.util.occurrences.LocalVariableOccurrenceManager;
 import com.intellij.refactoring.util.occurrences.OccurrenceManager;
@@ -50,16 +48,19 @@ import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.usageView.UsageViewUtil;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.containers.HashSet;
 import com.intellij.util.containers.MultiMap;
 import gnu.trove.TIntArrayList;
-import gnu.trove.TIntProcedure;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.Set;
 
+/**
+ * @author dsl
+ */
 public class IntroduceParameterProcessor extends BaseRefactoringProcessor implements IntroduceParameterData {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.introduceParameter.IntroduceParameterProcessor");
 
@@ -70,7 +71,7 @@ public class IntroduceParameterProcessor extends BaseRefactoringProcessor implem
   private final PsiLocalVariable myLocalVariable;
   private final boolean myRemoveLocalVariable;
   private final String myParameterName;
-  private final boolean myReplaceAllOccurences;
+  private final boolean myReplaceAllOccurrences;
 
   private int myReplaceFieldsWithGetters;
   private final boolean myDeclareFinal;
@@ -92,7 +93,7 @@ public class IntroduceParameterProcessor extends BaseRefactoringProcessor implem
                                      PsiLocalVariable localVariable,
                                      boolean removeLocalVariable,
                                      String parameterName,
-                                     boolean replaceAllOccurences,
+                                     boolean replaceAllOccurrences,
                                      int replaceFieldsWithGetters,
                                      boolean declareFinal,
                                      boolean generateDelegate,
@@ -108,7 +109,7 @@ public class IntroduceParameterProcessor extends BaseRefactoringProcessor implem
     myLocalVariable = localVariable;
     myRemoveLocalVariable = removeLocalVariable;
     myParameterName = parameterName;
-    myReplaceAllOccurences = replaceAllOccurences;
+    myReplaceAllOccurrences = replaceAllOccurrences;
     myReplaceFieldsWithGetters = replaceFieldsWithGetters;
     myDeclareFinal = declareFinal;
     myGenerateDelegate = generateDelegate;
@@ -120,20 +121,27 @@ public class IntroduceParameterProcessor extends BaseRefactoringProcessor implem
     myInitializerWrapper = expressionToSearch == null ? null : new JavaExpressionWrapper(expressionToSearch);
   }
 
+  public void setParameterInitializer(PsiExpression parameterInitializer) {
+    myParameterInitializer = parameterInitializer;
+  }
+
+  @Override
   @NotNull
-  protected UsageViewDescriptor createUsageViewDescriptor(UsageInfo[] usages) {
+  protected UsageViewDescriptor createUsageViewDescriptor(@NotNull UsageInfo[] usages) {
     return new IntroduceParameterViewDescriptor(myMethodToSearchFor);
   }
 
+  @Override
   @NotNull
   public PsiType getForcedType() {
     return myForcedType;
   }
 
-  public void setForcedType(PsiType forcedType) {
+  private void setForcedType(PsiType forcedType) {
     myForcedType = forcedType;
   }
 
+  @Override
   public int getReplaceFieldsWithGetters() {
     return myReplaceFieldsWithGetters;
   }
@@ -142,12 +150,13 @@ public class IntroduceParameterProcessor extends BaseRefactoringProcessor implem
     myReplaceFieldsWithGetters = replaceFieldsWithGetters;
   }
 
+  @Override
   @NotNull
   protected UsageInfo[] findUsages() {
-    ArrayList<UsageInfo> result = new ArrayList<UsageInfo>();
+    ArrayList<UsageInfo> result = new ArrayList<>();
 
     PsiMethod[] overridingMethods =
-      OverridingMethodsSearch.search(myMethodToSearchFor, true).toArray(PsiMethod.EMPTY_ARRAY);
+      OverridingMethodsSearch.search(myMethodToSearchFor).toArray(PsiMethod.EMPTY_ARRAY);
     for (PsiMethod overridingMethod : overridingMethods) {
       result.add(new UsageInfo(overridingMethod));
     }
@@ -175,7 +184,7 @@ public class IntroduceParameterProcessor extends BaseRefactoringProcessor implem
       }
     }
 
-    if (myReplaceAllOccurences) {
+    if (myReplaceAllOccurrences) {
       for (PsiElement expr : getOccurrences()) {
         result.add(new InternalUsageInfo(expr));
       }
@@ -186,7 +195,7 @@ public class IntroduceParameterProcessor extends BaseRefactoringProcessor implem
       }
     }
 
-    final UsageInfo[] usageInfos = result.toArray(new UsageInfo[result.size()]);
+    final UsageInfo[] usageInfos = result.toArray(UsageInfo.EMPTY_ARRAY);
     return UsageViewUtil.removeDuplicatedUsages(usageInfos);
   }
 
@@ -206,7 +215,7 @@ public class IntroduceParameterProcessor extends BaseRefactoringProcessor implem
   }
 
   private static class ReferencedElementsCollector extends JavaRecursiveElementWalkingVisitor {
-    private final Set<PsiElement> myResult = new HashSet<PsiElement>();
+    private final Set<PsiElement> myResult = new HashSet<>();
 
     @Override public void visitReferenceExpression(PsiReferenceExpression expression) {
       visitReferenceElement(expression);
@@ -221,9 +230,10 @@ public class IntroduceParameterProcessor extends BaseRefactoringProcessor implem
     }
   }
 
-  protected boolean preprocessUsages(Ref<UsageInfo[]> refUsages) {
+  @Override
+  protected boolean preprocessUsages(@NotNull Ref<UsageInfo[]> refUsages) {
     UsageInfo[] usagesIn = refUsages.get();
-    MultiMap<PsiElement, String> conflicts = new MultiMap<PsiElement, String>();
+    MultiMap<PsiElement, String> conflicts = new MultiMap<>();
 
     AnySameNameVariables anySameNameVariables = new AnySameNameVariables();
     myMethodToReplaceIn.accept(anySameNameVariables);
@@ -241,10 +251,12 @@ public class IntroduceParameterProcessor extends BaseRefactoringProcessor implem
       myParameterInitializer.accept(anySupers);
       if (anySupers.isResult()) {
         for (UsageInfo usageInfo : usagesIn) {
-          if (!(usageInfo.getElement() instanceof PsiMethod) && !(usageInfo instanceof InternalUsageInfo)) {
-            if (!PsiTreeUtil.isAncestor(myMethodToReplaceIn.getContainingClass(), usageInfo.getElement(), false)) {
-              conflicts.putValue(myParameterInitializer, RefactoringBundle.message("parameter.initializer.contains.0.but.not.all.calls.to.method.are.in.its.class",
-                                                      CommonRefactoringUtil.htmlEmphasize(PsiKeyword.SUPER)));
+          PsiElement element = usageInfo.getElement();
+          if (!(element instanceof PsiMethod) && !(usageInfo instanceof InternalUsageInfo)) {
+            if (!PsiTreeUtil.isAncestor(myMethodToReplaceIn.getContainingClass(), element, false)) {
+              String message = RefactoringBundle.message("parameter.initializer.contains.0.but.not.all.calls.to.method.are.in.its.class",
+                                                         CommonRefactoringUtil.htmlEmphasize(PsiKeyword.SUPER));
+              conflicts.putValue(myParameterInitializer, message);
               break;
             }
           }
@@ -270,10 +282,11 @@ public class IntroduceParameterProcessor extends BaseRefactoringProcessor implem
           if (usageInfo instanceof ExternalUsageInfo && IntroduceParameterUtil.isMethodUsage(usageInfo)) {
             final PsiElement place = usageInfo.getElement();
             for (PsiElement element : result) {
-              if (element instanceof PsiField && myReplaceFieldsWithGetters != IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_NONE) { //check getter access instead
+              if (element instanceof PsiField && myReplaceFieldsWithGetters != IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_NONE) {
+                //check getter access instead
                 final PsiClass psiClass = ((PsiField)element).getContainingClass();
                 LOG.assertTrue(psiClass != null);
-                final PsiMethod method = psiClass.findMethodBySignature(PropertyUtil.generateGetterPrototype((PsiField)element), true);
+                final PsiMethod method = psiClass.findMethodBySignature(GenerateMembersUtil.generateGetterPrototype((PsiField)element), true);
                 if (method != null){
                   element = method;
                 }
@@ -295,7 +308,7 @@ public class IntroduceParameterProcessor extends BaseRefactoringProcessor implem
   }
 
   public static class AnySupers extends JavaRecursiveElementWalkingVisitor {
-    private boolean myResult = false;
+    private boolean myResult;
     @Override public void visitSuperExpression(PsiSuperExpression expression) {
       myResult = true;
     }
@@ -310,7 +323,7 @@ public class IntroduceParameterProcessor extends BaseRefactoringProcessor implem
   }
 
   public class AnySameNameVariables extends JavaRecursiveElementWalkingVisitor {
-    private Pair<PsiElement, String> conflict = null;
+    private Pair<PsiElement, String> conflict;
 
     public Pair<PsiElement, String> getConflict() {
       return conflict;
@@ -318,11 +331,16 @@ public class IntroduceParameterProcessor extends BaseRefactoringProcessor implem
 
     @Override public void visitVariable(PsiVariable variable) {
       if (variable == myLocalVariable) return;
+      if (variable instanceof PsiParameter && ((PsiParameter)variable).getDeclarationScope() == myMethodToReplaceIn) {
+        if (getParametersToRemove().contains(myMethodToReplaceIn.getParameterList().getParameterIndex((PsiParameter)variable))){
+          return;
+        }
+      }
       if (myParameterName.equals(variable.getName())) {
         String descr = RefactoringBundle.message("there.is.already.a.0.it.will.conflict.with.an.introduced.parameter",
                                                  RefactoringUIUtil.getDescription(variable, true));
 
-        conflict = Pair.<PsiElement, String>create(variable, CommonRefactoringUtil.capitalize(descr));
+        conflict = Pair.create(variable, CommonRefactoringUtil.capitalize(descr));
       }
     }
 
@@ -335,9 +353,33 @@ public class IntroduceParameterProcessor extends BaseRefactoringProcessor implem
     }
   }
 
-  protected void performRefactoring(UsageInfo[] usages) {
+  @Nullable
+  @Override
+  protected String getRefactoringId() {
+    return "refactoring.introduceParameter";
+  }
+
+  @Nullable
+  @Override
+  protected RefactoringEventData getBeforeData() {
+    RefactoringEventData data = new RefactoringEventData();
+    data.addElements(new PsiElement[] {myLocalVariable, myExpressionToSearch});
+    return data;
+  }
+
+  @Nullable
+  @Override
+  protected RefactoringEventData getAfterData(@NotNull UsageInfo[] usages) {
+    final PsiParameter parameter = JavaIntroduceParameterMethodUsagesProcessor.getAnchorParameter(myMethodToReplaceIn);
+    final RefactoringEventData afterData = new RefactoringEventData();
+    afterData.addElement(parameter);
+    return afterData;
+  }
+
+  @Override
+  protected void performRefactoring(@NotNull UsageInfo[] usages) {
     try {
-      PsiElementFactory factory = JavaPsiFacade.getInstance(myManager.getProject()).getElementFactory();
+      PsiElementFactory factory = JavaPsiFacade.getElementFactory(myManager.getProject());
       PsiType initializerType = getInitializerType(myForcedType, myParameterInitializer, myLocalVariable);
       setForcedType(initializerType);
 
@@ -354,7 +396,7 @@ public class IntroduceParameterProcessor extends BaseRefactoringProcessor implem
 
       myInitializerWrapper = new JavaExpressionWrapper(myParameterInitializer);
 
-      // Changing external occurences (the tricky part)
+      // Changing external occurrences (the tricky part)
 
       IntroduceParameterUtil.processUsages(usages, this);
 
@@ -379,9 +421,15 @@ public class IntroduceParameterProcessor extends BaseRefactoringProcessor implem
       if (myMethodToSearchFor != myMethodToReplaceIn) {
         IntroduceParameterUtil.changeMethodSignatureAndResolveFieldConflicts(new UsageInfo(myMethodToSearchFor), usages, this);
       }
+      else if (myGenerateDelegate && myMethodToReplaceIn.findSuperMethods().length == 0) {
+        final PsiAnnotation annotation = AnnotationUtil.findAnnotation(myMethodToReplaceIn, true, Override.class.getName());
+        if (annotation != null) {
+          annotation.delete();
+        }
+      }
       ChangeContextUtil.clearContextInfo(myParameterInitializer);
 
-      // Replacing expression occurences
+      // Replacing expression occurrences
       for (UsageInfo usage : usages) {
         if (usage instanceof ChangedMethodCallInfo) {
           PsiElement element = usage.getElement();
@@ -414,11 +462,29 @@ public class IntroduceParameterProcessor extends BaseRefactoringProcessor implem
     catch (IncorrectOperationException ex) {
       LOG.error(ex);
     }
+
+    if (isReplaceDuplicates()) {
+      ApplicationManager.getApplication().invokeLater(() -> processMethodsDuplicates(), myProject.getDisposed());
+    }
+  }
+
+  protected boolean isReplaceDuplicates() {
+    return true;
+  }
+
+  private void processMethodsDuplicates() {
+    final Runnable runnable = () -> {
+      if (!myMethodToReplaceIn.isValid()) return;
+      MethodDuplicatesHandler.invokeOnScope(myProject, Collections.singleton(myMethodToReplaceIn),
+                                            new AnalysisScope(myMethodToReplaceIn.getContainingFile()), true);
+    };
+    ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> ApplicationManager.getApplication().runReadAction(runnable),
+                                                                      "Search Method Duplicates...", true, myProject);
   }
 
   private PsiMethod generateDelegate(final PsiMethod methodToReplaceIn) throws IncorrectOperationException {
     final PsiMethod delegate = (PsiMethod)methodToReplaceIn.copy();
-    final PsiElementFactory elementFactory = JavaPsiFacade.getInstance(myManager.getProject()).getElementFactory();
+    final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(myManager.getProject());
     ChangeSignatureProcessor.makeEmptyBody(elementFactory, delegate);
     final PsiCallExpression callExpression = ChangeSignatureProcessor.addDelegatingCallTemplate(delegate, delegate.getName());
     final PsiExpressionList argumentList = callExpression.getArgumentList();
@@ -452,20 +518,24 @@ public class IntroduceParameterProcessor extends BaseRefactoringProcessor implem
     final PsiType initializerType;
     if (forcedType == null) {
       if (parameterInitializer == null) {
-        if (localVariable != null) {
-          initializerType = localVariable.getType();
-        } else {
-          LOG.assertTrue(false);
+        if (localVariable == null) {
+          LOG.error("all null");
           initializerType = null;
         }
-      } else {
-        if (localVariable == null) {
-          initializerType = RefactoringUtil.getTypeByExpressionWithExpectedType(parameterInitializer);
-        } else {
+        else {
           initializerType = localVariable.getType();
         }
       }
-    } else {
+      else {
+        if (localVariable == null) {
+          initializerType = RefactoringUtil.getTypeByExpressionWithExpectedType(parameterInitializer);
+        }
+        else {
+          initializerType = localVariable.getType();
+        }
+      }
+    }
+    else {
       initializerType = forcedType;
     }
     return initializerType;
@@ -477,7 +547,7 @@ public class IntroduceParameterProcessor extends BaseRefactoringProcessor implem
 
       if (myMethodToReplaceIn == myMethodToSearchFor && PsiTreeUtil.isAncestor(methodCall, myParameterInitializer, false)) return;
 
-      PsiElementFactory factory = JavaPsiFacade.getInstance(methodCall.getProject()).getElementFactory();
+      PsiElementFactory factory = JavaPsiFacade.getElementFactory(methodCall.getProject());
       PsiExpression expression = factory.createExpressionFromText(myParameterName, null);
       final PsiExpressionList argList = methodCall.getArgumentList();
       final PsiExpression[] exprs = argList.getExpressions();
@@ -521,21 +591,23 @@ public class IntroduceParameterProcessor extends BaseRefactoringProcessor implem
 
   private void removeParametersFromCall(final PsiExpressionList argList) {
     final PsiExpression[] exprs = argList.getExpressions();
-    myParametersToRemove.forEachDescending(new TIntProcedure() {
-      public boolean execute(final int paramNum) {
+    myParametersToRemove.forEachDescending(paramNum -> {
+      if (paramNum < exprs.length) {
         try {
           exprs[paramNum].delete();
         }
         catch (IncorrectOperationException e) {
           LOG.error(e);
         }
-        return true;
       }
+      return true;
     });
   }
 
+  @Override
+  @NotNull
   protected String getCommandName() {
-    return RefactoringBundle.message("introduce.parameter.command", UsageViewUtil.getDescriptiveName(myMethodToReplaceIn));
+    return RefactoringBundle.message("introduce.parameter.command", DescriptiveNameUtil.getDescriptiveName(myMethodToReplaceIn));
   }
 
   @Nullable
@@ -555,37 +627,45 @@ public class IntroduceParameterProcessor extends BaseRefactoringProcessor implem
     return anchorParameter;
   }
 
+  @Override
   public PsiMethod getMethodToReplaceIn() {
     return myMethodToReplaceIn;
   }
 
+  @Override
   @NotNull
   public PsiMethod getMethodToSearchFor() {
     return myMethodToSearchFor;
   }
 
+  @Override
   public JavaExpressionWrapper getParameterInitializer() {
     return myInitializerWrapper;
   }
 
+  @Override
   @NotNull
   public String getParameterName() {
     return myParameterName;
   }
 
+  @Override
   public boolean isDeclareFinal() {
     return myDeclareFinal;
   }
 
+  @Override
   public boolean isGenerateDelegate() {
     return myGenerateDelegate;
   }
 
+  @Override
   @NotNull
   public TIntArrayList getParametersToRemove() {
     return myParametersToRemove;
   }
 
+  @Override
   @NotNull
   public Project getProject() {
     return myProject;

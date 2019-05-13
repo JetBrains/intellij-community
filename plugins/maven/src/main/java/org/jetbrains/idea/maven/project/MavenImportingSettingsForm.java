@@ -1,28 +1,22 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.project;
 
-import com.intellij.ui.ListCellRendererWrapper;
 import com.intellij.ide.util.projectWizard.WizardContext;
+import com.intellij.openapi.externalSystem.service.ui.ExternalSystemJdkComboBox;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
+import com.intellij.openapi.project.ExternalStorageConfigurationManager;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
+import com.intellij.openapi.updateSettings.impl.LabelTextReplacingUtil;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.projectImport.ProjectFormatPanel;
 import com.intellij.ui.EnumComboBoxModel;
+import com.intellij.ui.ListCellRendererWrapper;
+import com.intellij.ui.components.JBTextField;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
@@ -47,19 +41,23 @@ public class MavenImportingSettingsForm {
   private JCheckBox myUseMavenOutputCheckBox;
   private JCheckBox myDownloadSourcesCheckBox;
   private JCheckBox myDownloadDocsCheckBox;
+  private JCheckBox myDownloadAnnotationsCheckBox;
 
   private JPanel myAdditionalSettingsPanel;
-  private JPanel mySeparateModulesDirPanel;
   private JComboBox myGeneratedSourcesComboBox;
   private JCheckBox myExcludeTargetFolderCheckBox;
+  private JTextField myDependencyTypes;
+  private JCheckBox myStoreProjectFilesExternally;
+  private JBTextField myVMOptionsForImporter;
+  private ExternalSystemJdkComboBox myJdkForImporterComboBox;
 
   public MavenImportingSettingsForm(boolean isImportStep, boolean isCreatingNewProject) {
     mySearchRecursivelyCheckBox.setVisible(isImportStep);
     myProjectFormatLabel.setVisible(isImportStep && isCreatingNewProject);
     myProjectFormatComboBox.setVisible(isImportStep && isCreatingNewProject);
-    mySeparateModulesDirPanel.setVisible(isImportStep);
 
     ActionListener listener = new ActionListener() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         updateControls();
       }
@@ -71,7 +69,7 @@ public class MavenImportingSettingsForm {
 
     myUpdateFoldersOnImportPhaseComboBox.setModel(new DefaultComboBoxModel(MavenImportingSettings.UPDATE_FOLDERS_PHASES));
 
-    myGeneratedSourcesComboBox.setModel(new EnumComboBoxModel<MavenImportingSettings.GeneratedSourcesFolder>(MavenImportingSettings.GeneratedSourcesFolder.class));
+    myGeneratedSourcesComboBox.setModel(new EnumComboBoxModel<>(MavenImportingSettings.GeneratedSourcesFolder.class));
     myGeneratedSourcesComboBox.setRenderer(new ListCellRendererWrapper() {
       @Override
       public void customize(JList list, Object value, int index, boolean selected, boolean hasFocus) {
@@ -80,6 +78,9 @@ public class MavenImportingSettingsForm {
         }
       }
     });
+
+    LabelTextReplacingUtil.replaceText(myPanel);
+    myDownloadAnnotationsCheckBox.setVisible(Registry.is("external.system.import.resolve.annotations"));
   }
 
   private void createUIComponents() {
@@ -103,7 +104,7 @@ public class MavenImportingSettingsForm {
     return myPanel;
   }
 
-  public void getData(MavenImportingSettings data) {
+  public void getData(@NotNull MavenImportingSettings data) {
     data.setLookForNested(mySearchRecursivelyCheckBox.isSelected());
     data.setDedicatedModuleDir(mySeparateModulesDirCheckBox.isSelected() ? mySeparateModulesDirChooser.getText() : "");
 
@@ -120,9 +121,15 @@ public class MavenImportingSettingsForm {
 
     data.setDownloadSourcesAutomatically(myDownloadSourcesCheckBox.isSelected());
     data.setDownloadDocsAutomatically(myDownloadDocsCheckBox.isSelected());
+    data.setDownloadAnnotationsAutomatically(myDownloadAnnotationsCheckBox.isSelected());
+
+    data.setVmOptionsForImporter(myVMOptionsForImporter.getText());
+    data.setJdkForImporter(myJdkForImporterComboBox.getSelectedValue());
+
+    data.setDependencyTypes(myDependencyTypes.getText());
   }
 
-  public void setData(MavenImportingSettings data) {
+  public void setData(MavenImportingSettings data, @Nullable Project project) {
     mySearchRecursivelyCheckBox.setSelected(data.isLookForNested());
 
     mySeparateModulesDirCheckBox.setSelected(!StringUtil.isEmptyOrSpaces(data.getDedicatedModuleDir()));
@@ -133,6 +140,14 @@ public class MavenImportingSettingsForm {
     myCreateGroupsCheckBox.setSelected(data.isCreateModuleGroups());
 
     myKeepSourceFoldersCheckBox.setSelected(data.isKeepSourceFolders());
+    if (project == null) {
+      // yes, during new project creation there is no ability to set "do not store externally"
+      myStoreProjectFilesExternally.setVisible(false);
+    }
+    else {
+      myStoreProjectFilesExternally.setVisible(true);
+      myStoreProjectFilesExternally.setSelected(isCurrentlyStoredExternally(project));
+    }
     myExcludeTargetFolderCheckBox.setSelected(data.isExcludeTargetFolder());
     myUseMavenOutputCheckBox.setSelected(data.isUseMavenOutput());
 
@@ -141,14 +156,32 @@ public class MavenImportingSettingsForm {
 
     myDownloadSourcesCheckBox.setSelected(data.isDownloadSourcesAutomatically());
     myDownloadDocsCheckBox.setSelected(data.isDownloadDocsAutomatically());
+    myDownloadAnnotationsCheckBox.setSelected(data.isDownloadAnnotationsAutomatically());
+
+    myDependencyTypes.setText(data.getDependencyTypes());
+
+    myVMOptionsForImporter.setText(data.getVmOptionsForImporter());
+    myJdkForImporterComboBox.refreshData(data.getJdkForImporter());
 
     updateControls();
   }
 
-  public boolean isModified(MavenImportingSettings settings) {
+  private static boolean isCurrentlyStoredExternally(@Nullable Project project) {
+    return project == null || ExternalStorageConfigurationManager.getInstance(project).isEnabled();
+  }
+
+  public boolean isModified(@NotNull MavenImportingSettings settings, @Nullable Project project) {
+    if (project != null && isCurrentlyStoredExternally(project) != isStoreExternally()) {
+      return true;
+    }
+
     MavenImportingSettings formData = new MavenImportingSettings();
     getData(formData);
     return !formData.equals(settings);
+  }
+
+  boolean isStoreExternally() {
+    return !myStoreProjectFilesExternally.isVisible() || myStoreProjectFilesExternally.isSelected();
   }
 
   public void updateData(WizardContext wizardContext) {

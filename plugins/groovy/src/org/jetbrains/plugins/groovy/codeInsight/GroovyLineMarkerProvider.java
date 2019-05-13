@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,7 +21,6 @@ import com.intellij.codeInsight.daemon.LineMarkerInfo;
 import com.intellij.codeInsight.daemon.impl.JavaLineMarkerProvider;
 import com.intellij.codeInsight.daemon.impl.MarkerType;
 import com.intellij.icons.AllIcons;
-import com.intellij.lang.ASTNode;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.colors.CodeInsightColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
@@ -29,36 +28,35 @@ import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.editor.markup.SeparatorPlacement;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.project.IndexNotReadyException;
-import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.search.searches.AllOverridingMethodsSearch;
 import com.intellij.psi.search.searches.SuperMethodsSearch;
 import com.intellij.psi.util.MethodSignatureBackedByPsiMethod;
 import com.intellij.util.FunctionUtil;
-import com.intellij.util.Processor;
-import com.intellij.util.containers.HashSet;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocComment;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocCommentOwner;
-import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.psi.GrNamedElement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrClassInitializer;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAccessorMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrReflectedMethod;
+import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeParameter;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.GrVariableDeclarationImpl;
+import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrTraitMethod;
+import org.jetbrains.plugins.groovy.lang.psi.util.GrTraitUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils;
 
 import javax.swing.*;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @author ilyas
@@ -76,35 +74,26 @@ public class GroovyLineMarkerProvider extends JavaLineMarkerProvider {
     if (parent instanceof PsiNameIdentifierOwner) {
       if (parent instanceof GrField && element == ((GrField)parent).getNameIdentifierGroovy()) {
         for (GrAccessorMethod method : GroovyPropertyUtils.getFieldAccessors((GrField)parent)) {
-          MethodSignatureBackedByPsiMethod superSignature = null;
-          try {
-            superSignature = SuperMethodsSearch.search(method, null, true, false).findFirst();
-          }
-          catch (IndexNotReadyException e) {
-            //some searchers (EJB) require indices. What shall we do?
-          }
+          MethodSignatureBackedByPsiMethod superSignature = SuperMethodsSearch.search(method, null, true, false).findFirst();
           if (superSignature != null) {
-            boolean overrides = method.hasModifierProperty(PsiModifier.ABSTRACT) == superSignature.getMethod().hasModifierProperty(PsiModifier.ABSTRACT);
+            PsiMethod superMethod = superSignature.getMethod();
+            boolean overrides = method.hasModifierProperty(PsiModifier.ABSTRACT) == superMethod.hasModifierProperty(PsiModifier.ABSTRACT) ||
+                                superMethod.getBody() != null && GrTraitUtil.isTrait(superMethod.getContainingClass());
             final Icon icon = overrides ? AllIcons.Gutter.OverridingMethod : AllIcons.Gutter.ImplementingMethod;
             final MarkerType type = GroovyMarkerTypes.OVERRIDING_PROPERTY_TYPE;
-            return new LineMarkerInfo<PsiElement>(element, element.getTextRange(), icon, Pass.UPDATE_ALL, type.getTooltip(), type.getNavigationHandler(),
-                                                  GutterIconRenderer.Alignment.LEFT);
+            return new LineMarkerInfo<>(element, element.getTextRange(), icon, Pass.LINE_MARKERS, type.getTooltip(),
+                                        type.getNavigationHandler(),
+                                        GutterIconRenderer.Alignment.LEFT);
           }
         }
       }
-      else if (parent instanceof GrMethod &&  element == ((GrMethod)parent).getNameIdentifierGroovy() &&
-               ((GrMethod)parent).getReflectedMethods().length > 0 &&
+      else if (parent instanceof GrMethod &&
+               element == ((GrMethod)parent).getNameIdentifierGroovy() &&
                hasSuperMethods((GrMethod)element.getParent())) {
         final Icon icon = AllIcons.Gutter.OverridingMethod;
-        final MarkerType type = GroovyMarkerTypes.OVERRIDING_METHOD;
-        return new LineMarkerInfo<PsiElement>(element, element.getTextRange(), icon, Pass.UPDATE_ALL, type.getTooltip(),
-                                              type.getNavigationHandler(), GutterIconRenderer.Alignment.LEFT);
-      }
-      
-
-      final ASTNode node = element.getNode();
-      if (node != null && TokenSets.PROPERTY_NAMES.contains(node.getElementType())) {
-        return super.getLineMarkerInfo(((PsiNameIdentifierOwner)parent).getNameIdentifier());
+        final MarkerType type = GroovyMarkerTypes.GR_OVERRIDING_METHOD;
+        return new LineMarkerInfo<>(element, element.getTextRange(), icon, Pass.LINE_MARKERS, type.getTooltip(),
+                                    type.getNavigationHandler(), GutterIconRenderer.Alignment.LEFT);
       }
     }
     //need to draw method separator above docComment
@@ -120,7 +109,7 @@ public class GroovyLineMarkerProvider extends JavaLineMarkerProvider {
       }
       if (isMember && !(element1 instanceof PsiAnonymousClass || element1.getParent() instanceof PsiAnonymousClass)) {
         PsiFile file = element1.getContainingFile();
-        Document document = file == null ? null : PsiDocumentManager.getInstance(file.getProject()).getDocument(file);
+        Document document = file == null ? null : PsiDocumentManager.getInstance(file.getProject()).getLastCommittedDocument(file);
         boolean drawSeparator = false;
         if (document != null) {
           CharSequence documentChars = document.getCharsSequence();
@@ -140,9 +129,9 @@ public class GroovyLineMarkerProvider extends JavaLineMarkerProvider {
             comment = ((GrDocCommentOwner)element1).getDocComment();
           }
           LineMarkerInfo info =
-            new LineMarkerInfo<PsiElement>(element, comment != null ? comment.getTextRange() : element.getTextRange(), null,
-                                           Pass.UPDATE_ALL, FunctionUtil.<Object, String>nullConstant(), null,
-                                           GutterIconRenderer.Alignment.RIGHT);
+            new LineMarkerInfo<>(element, comment != null ? comment.getTextRange() : element.getTextRange(), null,
+                                 Pass.LINE_MARKERS, FunctionUtil.<Object, String>nullConstant(), null,
+                                 GutterIconRenderer.Alignment.RIGHT);
           EditorColorsScheme scheme = myColorsManager.getGlobalScheme();
           info.separatorColor = scheme.getColor(CodeInsightColors.METHOD_SEPARATORS_COLOR);
           info.separatorPlacement = SeparatorPlacement.TOP;
@@ -151,19 +140,24 @@ public class GroovyLineMarkerProvider extends JavaLineMarkerProvider {
       }
     }
 
-    return super.getLineMarkerInfo(element);
+    return null;
   }
 
-  private static boolean hasSuperMethods(GrMethod method) {
+  private static boolean hasSuperMethods(@NotNull GrMethod method) {
     final GrReflectedMethod[] reflectedMethods = method.getReflectedMethods();
-    for (GrReflectedMethod reflectedMethod : reflectedMethods) {
-      final MethodSignatureBackedByPsiMethod first = SuperMethodsSearch.search(reflectedMethod, null, true, false).findFirst();
-      if (first != null) return true;
+    if (reflectedMethods.length > 0) {
+      for (GrReflectedMethod reflectedMethod : reflectedMethods) {
+        final MethodSignatureBackedByPsiMethod first = SuperMethodsSearch.search(reflectedMethod, null, true, false).findFirst();
+        if (first != null) return true;
+      }
+      return false;
     }
-    return false;
+    else {
+      return SuperMethodsSearch.search(method, null, true, false).findFirst() != null;
+    }
   }
 
-  private static int getGroovyCategory(PsiElement element, CharSequence documentChars) {
+  private static int getGroovyCategory(@NotNull PsiElement element, @NotNull CharSequence documentChars) {
     if (element instanceof GrVariableDeclarationImpl) {
       GrVariable[] variables = ((GrVariableDeclarationImpl)element).getVariables();
       if (variables.length == 1 && variables[0] instanceof GrField && variables[0].getInitializerGroovy() instanceof GrClosableBlock) {
@@ -171,30 +165,50 @@ public class GroovyLineMarkerProvider extends JavaLineMarkerProvider {
       }
     }
 
-    return JavaLineMarkerProvider.getCategory(element, documentChars);
+    if (element instanceof GrField || element instanceof GrTypeParameter) return 1;
+    if (element instanceof GrTypeDefinition || element instanceof GrClassInitializer) return 2;
+    if (element instanceof GrMethod) {
+      if (((GrMethod)element).hasModifierProperty(PsiModifier.ABSTRACT) && !(((GrMethod)element).getBlock() != null &&
+                                                                             GrTraitUtil.isTrait(((GrMethod)element).getContainingClass()))) {
+        return 1;
+      }
+      TextRange textRange = element.getTextRange();
+      int start = textRange.getStartOffset();
+      int end = Math.min(documentChars.length(), textRange.getEndOffset());
+      int crlf = StringUtil.getLineBreakCount(documentChars.subSequence(start, end));
+      return crlf == 0 ? 1 : 2;
+    }
+    return 0;
   }
 
   @Override
   public void collectSlowLineMarkers(@NotNull final List<PsiElement> elements, @NotNull final Collection<LineMarkerInfo> result) {
-    Set<PsiMethod> methods = new HashSet<PsiMethod>();
+    Set<PsiMethod> methods = new HashSet<>();
     for (PsiElement element : elements) {
       ProgressManager.checkCanceled();
       if (element instanceof GrField) {
         methods.addAll(GroovyPropertyUtils.getFieldAccessors((GrField)element));
       }
       else if (element instanceof GrMethod) {
-        Collections.addAll(methods, ((GrMethod)element).getReflectedMethods());
+        GrReflectedMethod[] reflected = ((GrMethod)element).getReflectedMethods();
+        if (reflected.length != 0) {
+          Collections.addAll(methods, reflected);
+        }
+        else {
+          methods.add((PsiMethod)element);
+        }
+      }
+      else if (element instanceof PsiClass && !(element instanceof PsiTypeParameter)) {
+        result.addAll(collectInheritingClasses((PsiClass)element));
       }
     }
     collectOverridingMethods(methods, result);
-
-    super.collectSlowLineMarkers(elements, result);
   }
 
-  private static void collectOverridingMethods(final Set<PsiMethod> methods, Collection<LineMarkerInfo> result) {
-    final Set<PsiElement> overridden = new HashSet<PsiElement>();
+  private static void collectOverridingMethods(@NotNull final Set<PsiMethod> methods, @NotNull Collection<LineMarkerInfo> result) {
+    final Set<PsiElement> overridden = new HashSet<>();
 
-    Set<PsiClass> classes = new THashSet<PsiClass>();
+    Set<PsiClass> classes = new THashSet<>();
     for (PsiMethod method : methods) {
       ProgressManager.checkCanceled();
       final PsiClass parentClass = method.getContainingClass();
@@ -204,27 +218,17 @@ public class GroovyLineMarkerProvider extends JavaLineMarkerProvider {
     }
 
     for (final PsiClass aClass : classes) {
-      try {
-        AllOverridingMethodsSearch.search(aClass).forEach(new Processor<Pair<PsiMethod, PsiMethod>>() {
-          @Override
-          public boolean process(final Pair<PsiMethod, PsiMethod> pair) {
-            ProgressManager.checkCanceled();
+      AllOverridingMethodsSearch.search(aClass).forEach(pair -> {
+        ProgressManager.checkCanceled();
 
-            final PsiMethod superMethod = pair.getFirst();
-            if (isCorrectTarget(superMethod) && isCorrectTarget(pair.getSecond())) {
-              if (methods.remove(superMethod)) {
-                if (superMethod instanceof PsiMirrorElement) {
-                  
-                }
-                overridden.add(PsiImplUtil.handleMirror(superMethod));
-              }
-            }
-            return !methods.isEmpty();
+        final PsiMethod superMethod = pair.getFirst();
+        if (isCorrectTarget(superMethod) && isCorrectTarget(pair.getSecond())) {
+          if (methods.remove(superMethod)) {
+            overridden.add(PsiImplUtil.handleMirror(superMethod));
           }
-        });
-      }
-      catch (IndexNotReadyException ignored) {
-      }
+        }
+        return !methods.isEmpty();
+      });
     }
 
     for (PsiElement element : overridden) {
@@ -232,29 +236,20 @@ public class GroovyLineMarkerProvider extends JavaLineMarkerProvider {
 
       element = PsiImplUtil.handleMirror(element);
 
-      PsiElement range;
-      if (element instanceof GrNamedElement) {
-        range = ((GrNamedElement)element).getNameIdentifierGroovy();
-      }
-      else {
-        range = element;
-      }
+      PsiElement range = element instanceof GrNamedElement ? ((GrNamedElement)element).getNameIdentifierGroovy() : element;
 
-      final MarkerType type;
-      if (element instanceof GrField) {
-        type = GroovyMarkerTypes.OVERRIDEN_PROPERTY_TYPE;
-      }
-      else {
-        type = GroovyMarkerTypes.OVERRIDEN_METHOD;
-      }
-      LineMarkerInfo info = new LineMarkerInfo<PsiElement>(range, range.getTextRange(), icon, Pass.UPDATE_OVERRIDEN_MARKERS, type.getTooltip(), type.getNavigationHandler(),
-                                                           GutterIconRenderer.Alignment.RIGHT);
+      final MarkerType type = element instanceof GrField ? GroovyMarkerTypes.OVERRIDEN_PROPERTY_TYPE
+                                                         : GroovyMarkerTypes.GR_OVERRIDDEN_METHOD;
+      LineMarkerInfo info = new LineMarkerInfo<>(range, range.getTextRange(), icon, Pass.LINE_MARKERS, type.getTooltip(),
+                                                 type.getNavigationHandler(), GutterIconRenderer.Alignment.RIGHT);
       result.add(info);
     }
   }
 
-  private static boolean isCorrectTarget(PsiMethod superMethod) {
-    final PsiElement navigationElement = superMethod.getNavigationElement();
-    return superMethod.isPhysical() || navigationElement.isPhysical() && !(navigationElement instanceof PsiClass);
+  private static boolean isCorrectTarget(@NotNull PsiMethod method) {
+    if (method instanceof GrTraitMethod) return false;
+
+    final PsiElement navigationElement = method.getNavigationElement();
+    return method.isPhysical() || navigationElement.isPhysical() && !(navigationElement instanceof PsiClass);
   }
 }

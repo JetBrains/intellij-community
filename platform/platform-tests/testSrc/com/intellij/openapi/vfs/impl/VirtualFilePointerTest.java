@@ -1,41 +1,31 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vfs.impl;
 
+import com.intellij.concurrency.Job;
 import com.intellij.concurrency.JobLauncher;
+import com.intellij.mock.MockVirtualFile;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.command.WriteCommandAction;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.*;
-import com.intellij.openapi.vfs.ex.temp.TempFileSystem;
-import com.intellij.openapi.vfs.newvfs.events.VFileCreateEvent;
-import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
+import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerListener;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
-import com.intellij.testFramework.PlatformLangTestCase;
+import com.intellij.testFramework.LightPlatformTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.Timings;
+import com.intellij.testFramework.VfsTestUtil;
+import com.intellij.util.ConcurrencyUtil;
+import com.intellij.util.ExceptionUtil;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.Processor;
-import com.intellij.util.ThrowableRunnable;
+import com.intellij.util.TimeoutUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -43,321 +33,668 @@ import org.jetbrains.annotations.NotNull;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Collections;
+import java.util.Collection;
 import java.util.List;
+import java.util.Locale;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Future;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 /**
- *  @author dsl
+ * @author dsl
  */
-public class VirtualFilePointerTest extends PlatformLangTestCase {
-  private VirtualFilePointerManagerImpl myVirtualFilePointerManager;
-  private int numberOfPointersBefore;
+public class VirtualFilePointerTest extends LightPlatformTestCase {
   private final Disposable disposable = Disposer.newDisposable();
+  private VirtualFilePointerManagerImpl myVirtualFilePointerManager;
+  private Collection<VirtualFilePointer> pointersBefore;
   private int numberOfListenersBefore;
+  private String myTempDir;
 
   @Override
-  protected void setUp() throws Exception {
+  public void setUp() throws Exception {
     super.setUp();
     myVirtualFilePointerManager = (VirtualFilePointerManagerImpl)VirtualFilePointerManager.getInstance();
-    numberOfPointersBefore = myVirtualFilePointerManager.numberOfPointers();
+    pointersBefore = myVirtualFilePointerManager.dumpPointers();
     numberOfListenersBefore = myVirtualFilePointerManager.numberOfListeners();
+    myTempDir = FileUtil.toSystemIndependentName(FileUtil.getTempDirectory());
+    new File(myTempDir).mkdirs();
   }
 
   @Override
-  protected void tearDown() throws Exception {
-    Disposer.dispose(disposable);
+  public void tearDown() throws Exception {
     try {
-      assertEquals(numberOfPointersBefore, myVirtualFilePointerManager.numberOfPointers()); // check there is no leak
-      assertEquals(numberOfListenersBefore, myVirtualFilePointerManager.numberOfListeners()); // check there is no leak
+      Disposer.dispose(disposable);
+      Collection<VirtualFilePointer> pointersAfter = myVirtualFilePointerManager.dumpPointers();
+      int nListeners = myVirtualFilePointerManager.numberOfListeners();
+      myVirtualFilePointerManager = null;
+      assertEquals(numberOfListenersBefore, nListeners);
+      assertEquals(pointersBefore, pointersAfter);
+    }
+    catch (Throwable e) {
+      addSuppressedException(e);
     }
     finally {
       super.tearDown();
     }
   }
 
-  @Override
-  protected boolean isRunInWriteAction() {
-    return false;
-  }
-
   private static class LoggingListener implements VirtualFilePointerListener {
-    private final ArrayList<String> myLog = new ArrayList<String>();
+    private final List<String> log = new ArrayList<>();
 
     @Override
     public void beforeValidityChanged(@NotNull VirtualFilePointer[] pointers) {
       verifyPointersInCorrectState(pointers);
-      myLog.add(buildMessage("before", pointers));
-    }
-
-    private static String buildMessage(@NonNls final String startMsg, VirtualFilePointer[] pointers) {
-      StringBuilder buffer = new StringBuilder(startMsg);
-      buffer.append(":");
-      for (int i = 0; i < pointers.length; i++) {
-        VirtualFilePointer pointer = pointers[i];
-        final String s = Boolean.toString(pointer.isValid());
-        if (i > 0) buffer.append(":");
-        buffer.append(s);
-      }
-      return buffer.toString();
+      log.add(buildMessage("before", pointers));
     }
 
     @Override
     public void validityChanged(@NotNull VirtualFilePointer[] pointers) {
       verifyPointersInCorrectState(pointers);
-      myLog.add(buildMessage("after", pointers));
+      log.add(buildMessage("after", pointers));
     }
 
-    public ArrayList<String> getLog() {
-      return myLog;
+    private static String buildMessage(String startMsg, VirtualFilePointer[] pointers) {
+      StringBuilder buffer = new StringBuilder();
+      buffer.append(startMsg).append(':');
+      for (int i = 0; i < pointers.length; i++) {
+        if (i > 0) buffer.append(':');
+        buffer.append(pointers[i].isValid());
+      }
+      return buffer.toString();
     }
   }
 
-  public void testDelete() throws Exception {
-    File tempDirectory = createTempDirectory();
-    final File fileToDelete = new File(tempDirectory, "toDelete.txt");
-    fileToDelete.createNewFile();
-    final LoggingListener fileToDeleteListener = new LoggingListener();
-    final VirtualFilePointer fileToDeletePointer = createPointerByFile(fileToDelete, fileToDeleteListener);
+  private File newFile(String name) throws IOException {
+    File file = new File(myTempDir, name);
+    file.getParentFile().mkdirs();
+    file.createNewFile();
+    return file;
+  }
+  private File newFolder(String name) {
+    File file = new File(myTempDir, name);
+    file.mkdirs();
+    return file;
+  }
+
+  private VirtualFile getVirtualTempRoot() {
+    File file = new File(myTempDir);
+    file.mkdirs();
+    return getVirtualFile(file);
+  }
+
+  public void testDelete() throws IOException {
+    File fileToDelete = newFile("toDelete.txt");
+    LoggingListener fileToDeleteListener = new LoggingListener();
+    VirtualFilePointer fileToDeletePointer = createPointerByFile(fileToDelete, fileToDeleteListener);
     assertTrue(fileToDeletePointer.isValid());
-    delete(getVirtualFile(fileToDelete));
+    VfsTestUtil.deleteFile(getVirtualFile(fileToDelete));
     assertFalse(fileToDeletePointer.isValid());
-    assertEquals("[before:true, after:false]", fileToDeleteListener.getLog().toString());
+    assertEquals("[before:true, after:false]", fileToDeleteListener.log.toString());
   }
-
-  public void testCreate() throws Exception {
-    final File tempDirectory = createTempDirectory();
-    final File fileToCreate = new File(tempDirectory, "toCreate.txt");
-    final LoggingListener fileToCreateListener = new LoggingListener();
-    final VirtualFilePointer fileToCreatePointer = createPointerByFile(fileToCreate, fileToCreateListener);
+  
+  public void testCreate() throws IOException {
+    File fileToCreate = new File(myTempDir, "toCreate.txt");
+    LoggingListener fileToCreateListener = new LoggingListener();
+    VirtualFilePointer fileToCreatePointer = createPointerByFile(fileToCreate, fileToCreateListener);
     assertFalse(fileToCreatePointer.isValid());
-    fileToCreate.createNewFile();
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
-      public void run() {
-        VirtualFileManager.getInstance().syncRefresh();
-        final VirtualFile virtualFile = getVirtualFile(tempDirectory);
-        virtualFile.refresh(false, true);
-      }
-    });
+    assertTrue(fileToCreate.createNewFile());
+    getVirtualTempRoot().refresh(false, true);
     assertTrue(fileToCreatePointer.isValid());
-    assertEquals("[before:false, after:true]", fileToCreateListener.getLog().toString());
-    try {
-      String expectedUrl = VirtualFileManager
-        .constructUrl(LocalFileSystem.PROTOCOL, fileToCreate.getCanonicalPath().replace(File.separatorChar, '/'));
-      assertEquals(expectedUrl.toUpperCase(), fileToCreatePointer.getUrl().toUpperCase());
-    }
-    catch (IOException e) {
-      fail();
-    }
+    assertEquals("[before:false, after:true]", fileToCreateListener.log.toString());
+    String expectedUrl = VirtualFileManager.constructUrl(LocalFileSystem.PROTOCOL, FileUtil.toSystemIndependentName(fileToCreate.getPath()));
+    assertEquals(expectedUrl.toUpperCase(Locale.US), fileToCreatePointer.getUrl().toUpperCase(Locale.US));
+  }
+  
+  public void testPathNormalization() throws IOException {
+    checkFileName("///", "");
+  }
+  
+  public void testPathNormalization2() throws IOException {
+    checkFileName("\\\\", "/");
+  }
+  
+  public void testPathNormalization3() throws IOException {
+    checkFileName("//", "/////");
   }
 
-  public void testMove() throws Exception {
-    File tempDirectory = createTempDirectory();
-    final File moveTarget = new File(tempDirectory, "moveTarget");
-    moveTarget.mkdir();
-    final File fileToMove = new File(tempDirectory, "toMove.txt");
-    fileToMove.createNewFile();
-
-    final LoggingListener fileToMoveListener = new LoggingListener();
-    final VirtualFilePointer fileToMovePointer = createPointerByFile(fileToMove, fileToMoveListener);
-    assertTrue(fileToMovePointer.isValid());
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
-      public void run() {
-        final VirtualFile virtualFile = getVirtualFile(fileToMove);
-        assertTrue(virtualFile.isValid());
-        final VirtualFile target = getVirtualFile(moveTarget);
-        assertTrue(target.isValid());
-        try {
-          virtualFile.move(null, target);
-        }
-        catch (IOException e) {
-          fail();
-        }
-      }
-    });
-    assertTrue(fileToMovePointer.isValid());
-    assertEquals("[]", fileToMoveListener.getLog().toString());
-  }
-
-  public void testCreate1() throws Exception {
-    final File tempDirectory = createTempDirectory();
-    final File fileToCreate = new File(tempDirectory, "toCreate1.txt");
-    final LoggingListener fileToCreateListener = new LoggingListener();
-    final VirtualFilePointer fileToCreatePointer = createPointerByFile(fileToCreate, fileToCreateListener);
+  private void checkFileName(String prefix, String suffix) throws IOException {
+    VirtualFile temp = getVirtualTempRoot();
+    String name = "toCreate.txt";
+    VirtualFilePointer fileToCreatePointer = createPointerByFile(new File(myTempDir + prefix + name + suffix), null);
     assertFalse(fileToCreatePointer.isValid());
-    fileToCreate.createNewFile();
-    final Runnable postRunnable = new Runnable() {
+    assertNull(fileToCreatePointer.getFile());
+
+    VirtualFile child = WriteAction.computeAndWait(() -> temp.createChildData(null, name));
+    assertTrue(fileToCreatePointer.isValid());
+    assertEquals(child, fileToCreatePointer.getFile());
+
+    VfsTestUtil.deleteFile(child);
+    assertFalse(fileToCreatePointer.isValid());
+    assertNull(fileToCreatePointer.getFile());
+  }
+  
+  public void testMovePointedFile() throws IOException {
+    File moveTarget = newFolder( "moveTarget");
+    File fileToMove = newFile("toMove.txt");
+
+    LoggingListener fileToMoveListener = new LoggingListener();
+    VirtualFilePointer fileToMovePointer = createPointerByFile(fileToMove, fileToMoveListener);
+    assertTrue(fileToMovePointer.isValid());
+    doMove(fileToMove, moveTarget);
+    assertTrue(fileToMovePointer.isValid());
+    assertEquals("[before:true, after:true]", fileToMoveListener.log.toString());
+  }
+  
+  public void testMoveFileUnderExistingPointer() throws IOException {
+    File moveTarget = newFolder("moveTarget");
+    File fileToMove = newFile("toMove.txt");
+
+    LoggingListener listener = new LoggingListener();
+    VirtualFilePointer fileToMoveTargetPointer = createPointerByFile(new File(moveTarget, fileToMove.getName()), listener);
+    assertFalse(fileToMoveTargetPointer.isValid());
+    doMove(fileToMove, moveTarget);
+    assertTrue(fileToMoveTargetPointer.isValid());
+    assertEquals("[before:false, after:true]", listener.log.toString());
+  }
+  
+  public void testMoveSrcDirUnderNewRootShouldGenerateRootsChanged() throws IOException {
+    File moveTarget = newFolder("moveTarget");
+    File dirToMove = newFile("dirToMove");
+
+    LoggingListener listener = new LoggingListener();
+    VirtualFilePointer dirToMovePointer = createPointerByFile(dirToMove, listener);
+    assertTrue(dirToMovePointer.isValid());
+    doMove(dirToMove, moveTarget);
+    assertTrue(dirToMovePointer.isValid());
+    assertEquals("[before:true, after:true]", listener.log.toString());
+  }
+  
+  public void testMovePointedFileUnderAnotherPointer() throws IOException {
+    File moveTarget = newFolder("moveTarget");
+    File fileToMove = newFile("toMove.txt");
+
+    LoggingListener listener = new LoggingListener();
+    LoggingListener targetListener = new LoggingListener();
+
+    VirtualFilePointer fileToMovePointer = createPointerByFile(fileToMove, listener);
+    VirtualFilePointer fileToMoveTargetPointer = createPointerByFile(new File(moveTarget, fileToMove.getName()), targetListener);
+
+    assertFalse(fileToMoveTargetPointer.isValid());
+    doMove(fileToMove, moveTarget);
+    assertTrue(fileToMovePointer.isValid());
+    assertTrue(fileToMoveTargetPointer.isValid());
+    assertEquals("[before:true, after:true]", listener.log.toString());
+    assertEquals("[before:false, after:true]", targetListener.log.toString());
+  }
+
+  private void doMove(File fileToMove, File moveTarget) throws IOException {
+    VirtualFile virtualFile = getVirtualFile(fileToMove);
+    assertTrue(virtualFile.isValid());
+    VirtualFile target = getVirtualFile(moveTarget);
+    assertTrue(target.isValid());
+    WriteAction.runAndWait(() -> virtualFile.move(this, target));
+  }
+  
+  public void testRenamingPointedFile() throws IOException {
+    File file = newFile("f1");
+    LoggingListener listener = new LoggingListener();
+    VirtualFilePointer pointer = createPointerByFile(file, listener);
+    assertTrue(pointer.isValid());
+    WriteAction.runAndWait(() -> getVirtualFile(file).rename(this, "f2"));
+    assertTrue(pointer.isValid());
+    assertEquals("[]", listener.log.toString());
+  }
+  
+  public void testRenamingFileUnderTheExistingPointer() throws IOException {
+    File file = newFile("f1");
+    LoggingListener listener = new LoggingListener();
+    VirtualFilePointer pointer = createPointerByFile(new File(file.getParent(), "f2"), listener);
+    assertFalse(pointer.isValid());
+    WriteAction.runAndWait(() -> getVirtualFile(file).rename(this, "f2"));
+    assertTrue(pointer.isValid());
+    assertEquals("[before:false, after:true]", listener.log.toString());
+  }
+  
+  public void testTwoPointersBecomeOneAfterFileRenamedUnderTheOtherName() throws IOException {
+    File f1 = newFile("f1");
+    VirtualFile vFile1 = getVirtualFile(f1);
+    String url1 = VirtualFileManager.constructUrl(LocalFileSystem.PROTOCOL, FileUtil.toSystemIndependentName(f1.getPath()));
+    LoggingListener listener1 = new LoggingListener();
+    VirtualFilePointer pointer1 = myVirtualFilePointerManager.create(url1, disposable, listener1);
+    assertTrue(pointer1.isValid());
+
+    String url2 = VirtualFileManager.constructUrl(LocalFileSystem.PROTOCOL, FileUtil.toSystemIndependentName(f1.getParent()) + "/f2");
+    LoggingListener listener2 = new LoggingListener();
+    VirtualFilePointer pointer2 = myVirtualFilePointerManager.create(url2, disposable, listener2);
+    assertFalse(pointer2.isValid());
+
+    WriteAction.runAndWait(() -> vFile1.rename(this, "f2"));
+
+    assertTrue(pointer1.isValid());
+    assertTrue(pointer2.isValid());
+    assertEquals("[]", listener1.log.toString());
+    assertEquals("[before:false, after:true]", listener2.log.toString());
+  }
+  
+  public void testCreate1() throws IOException {
+    File fileToCreate = new File(myTempDir, "toCreate1.txt");
+    LoggingListener fileToCreateListener = new LoggingListener();
+    VirtualFilePointer fileToCreatePointer = createPointerByFile(fileToCreate, fileToCreateListener);
+    assertFalse(fileToCreatePointer.isValid());
+    assertTrue(fileToCreate.createNewFile());
+    getVirtualTempRoot().refresh(false, true);
+    assertTrue(fileToCreatePointer.isValid());
+    assertEquals("[before:false, after:true]", fileToCreateListener.log.toString());
+    String expectedUrl = VirtualFileManager.constructUrl(LocalFileSystem.PROTOCOL, FileUtil.toSystemIndependentName(fileToCreate.getPath()));
+    assertEquals(expectedUrl.toUpperCase(), fileToCreatePointer.getUrl().toUpperCase());
+  }
+  
+  public void testMultipleNotifications() throws IOException {
+    File file1 = new File(myTempDir, "f1");
+    File file2 = new File(myTempDir, "f2");
+    LoggingListener listener = new LoggingListener();
+    VirtualFilePointer pointer1 = createPointerByFile(file1, listener);
+    VirtualFilePointer pointer2 = createPointerByFile(file2, listener);
+    assertFalse(pointer1.isValid());
+    assertFalse(pointer2.isValid());
+    assertTrue(file1.createNewFile());
+    assertTrue(file2.createNewFile());
+    getVirtualTempRoot().refresh(false, true);
+    assertEquals("[before:false:false, after:true:true]", listener.log.toString());
+  }
+  
+  public void testJars() throws IOException {
+    VirtualFile vTemp = getVirtualTempRoot();
+    File jarParent = new File(myTempDir,"jarParent");
+    File jar = new File(jarParent, "x.jar");
+    File originalJar = new File(PathManagerEx.getTestDataPath() + "/psi/generics22/collect-2.2.jar");
+    FileUtil.copy(originalJar, jar);
+    getVirtualFile(jar); // Make sure we receive events when jar changes
+
+    VirtualFilePointerListener listener = new LoggingListener();
+    VirtualFilePointer jarParentPointer = createPointerByFile(jarParent, listener);
+    String jarUrl = VirtualFileManager.constructUrl(JarFileSystem.PROTOCOL, FileUtil.toSystemIndependentName(jar.getPath()) + JarFileSystem.JAR_SEPARATOR);
+    VirtualFilePointer jarPointer = myVirtualFilePointerManager.create(jarUrl, disposable, listener);
+    VirtualFilePointer[] pointersToWatch = {jarParentPointer, jarPointer};
+    assertTrue(jarParentPointer.isValid());
+    assertTrue(jarPointer.isValid());
+
+    assertTrue(jar.delete());
+    assertTrue(jarParent.delete());
+    vTemp.refresh(false, true);
+    verifyPointersInCorrectState(pointersToWatch);
+    assertFalse(jarParentPointer.isValid());
+    assertFalse(jarPointer.isValid());
+    assertEmpty(vTemp.getChildren());
+
+    assertTrue(jarParent.mkdir());
+    FileUtil.copy(originalJar, jar);
+    assertTrue(jar.setLastModified(System.currentTimeMillis()));
+    assertTrue(jar.exists());
+    assertTrue(jarParent.exists());
+    assertTrue(jarParent.getParentFile().exists());
+    File child = assertOneElement(PlatformTestUtil.notNull(jarParent.listFiles()));
+    assertEquals(jar.getName(), child.getName());
+    vTemp.refresh(false, true);
+    verifyPointersInCorrectState(pointersToWatch);
+    assertTrue(jarParentPointer.isValid());
+    assertTrue(jarPointer.isValid());
+
+    assertTrue(jar.delete());
+    assertTrue(jarParent.delete());
+    vTemp.refresh(false, true);
+    verifyPointersInCorrectState(pointersToWatch);
+    assertFalse(jarParentPointer.isValid());
+    assertFalse(jarPointer.isValid());
+  }
+
+  public void testJars2() throws IOException {
+    VirtualFile vTemp = getVirtualTempRoot();
+    File jarParent = new File(myTempDir,"jarParent");
+    File jar = new File(jarParent, "x.jar");
+    File originalJar = new File(PathManagerEx.getTestDataPath() + "/psi/generics22/collect-2.2.jar");
+    FileUtil.copy(originalJar, jar);
+    getVirtualFile(jar); // Make sure we receive events when jar changes
+
+    VirtualFilePointerListener listener = new LoggingListener();
+    String jarUrl = VirtualFileManager.constructUrl(JarFileSystem.PROTOCOL, FileUtil.toSystemIndependentName(jar.getPath()) + JarFileSystem.JAR_SEPARATOR);
+    VirtualFilePointer jarPointer = myVirtualFilePointerManager.create(jarUrl, disposable, listener);
+    VirtualFilePointer[] pointersToWatch = {jarPointer};
+    assertTrue(jar.delete());
+
+    long stop = System.currentTimeMillis() + 10_000;
+    int i;
+    for (i = 0; System.currentTimeMillis() < stop && i < 30; i++) {
+      vTemp.refresh(false, true);
+      verifyPointersInCorrectState(pointersToWatch);
+      assertFalse(jarPointer.isValid());
+      assertTrue(jarParent.exists());
+      LOG.debug("before structureModificationCount=" + ManagingFS.getInstance().getStructureModificationCount());
+      VirtualFile vJar = getVirtualFile(jar);
+      assertNull(vJar);
+
+      LOG.debug("copying");
+      FileUtil.copy(originalJar, jar);
+      vTemp.refresh(false, true);
+      verifyPointersInCorrectState(pointersToWatch);
+      vJar = getVirtualFile(jar);
+      assertNotNull(vJar);
+      LOG.debug("after structureModificationCount=" + ManagingFS.getInstance().getStructureModificationCount());
+      assertTrue(jarPointer.isValid());
+
+      assertTrue(jar.delete());
+      vTemp.refresh(false, true);
+      verifyPointersInCorrectState(pointersToWatch);
+      assertFalse(jarPointer.isValid());
+    }
+    LOG.debug("i = " + i);
+  }
+  
+  public void testFilePointerUpdate() throws IOException {
+    VirtualFile vTemp = getVirtualTempRoot();
+    File file = new File(myTempDir, "f1");
+    VirtualFilePointer pointer = createPointerByFile(file, null);
+    assertFalse(pointer.isValid());
+
+    assertTrue(file.createNewFile());
+    vTemp.refresh(false, true);
+    assertTrue(pointer.isValid());
+
+    assertTrue(file.delete());
+    vTemp.refresh(false, true);
+    assertFalse(pointer.isValid());
+  }
+  
+  public void testDoubleDispose() throws IOException {
+    File file = newFile("f1");
+    VirtualFile vFile = getVirtualFile(file);
+    Disposable disposable = Disposer.newDisposable();
+    VirtualFilePointer pointer = myVirtualFilePointerManager.create(vFile, disposable, null);
+    assertTrue(pointer.isValid());
+    Disposer.dispose(disposable);
+    assertFalse(pointer.isValid());
+  }
+  
+  public void testThreadsPerformance() throws Exception {
+    VirtualFile vTemp = getVirtualTempRoot();
+    File ioSandPtr = newFile("parent2/f2");
+    File ioPtr = newFile("parent1/f1");
+
+    vTemp.refresh(false, true);
+    VirtualFilePointer pointer = createPointerByFile(ioPtr, null);
+    assertTrue(pointer.isValid());
+    assertNotNull(pointer.getFile());
+    assertTrue(pointer.getFile().isValid());
+    Collection<Job<?>> reads = ContainerUtil.newConcurrentSet();
+    VirtualFileListener listener = new VirtualFileListener() {
       @Override
-      public void run() {
-        assertTrue(fileToCreatePointer.isValid());
-        assertEquals("[before:false, after:true]", fileToCreateListener.getLog().toString());
-        try {
-          String expectedUrl = VirtualFileManager.constructUrl(LocalFileSystem.PROTOCOL, fileToCreate.getCanonicalPath().replace(File.separatorChar, '/'));
-          assertEquals(expectedUrl.toUpperCase(), fileToCreatePointer.getUrl().toUpperCase());
-        } catch (IOException e) {
-          fail();
+      public void fileCreated(@NotNull VirtualFileEvent event) {
+        stressRead(pointer, reads);
+      }
+
+      @Override
+      public void fileDeleted(@NotNull VirtualFileEvent event) {
+        stressRead(pointer, reads);
+      }
+    };
+    Disposable disposable = Disposer.newDisposable();
+    VirtualFileManager.getInstance().addVirtualFileListener(listener, disposable);
+    try {
+      int N = Timings.adjustAccordingToMySpeed(1000, false);
+      LOG.debug("N = " + N);
+      for (int i = 0; i < N; i++) {
+        assertNotNull(pointer.getFile());
+        FileUtil.delete(ioPtr.getParentFile());
+        vTemp.refresh(false, true);
+
+        // ptr is now null, cached as map
+        VirtualFile v = PlatformTestUtil.notNull(LocalFileSystem.getInstance().findFileByIoFile(ioSandPtr));
+        WriteAction.runAndWait(() -> {
+          v.delete(this); //inc FS modCount
+          VirtualFile file = PlatformTestUtil.notNull(LocalFileSystem.getInstance().findFileByIoFile(ioSandPtr.getParentFile()));
+          file.createChildData(this, ioSandPtr.getName());
+        });
+
+        // ptr is still null
+        assertTrue(ioPtr.getParentFile().mkdirs());
+        assertTrue(ioPtr.createNewFile());
+        stressRead(pointer, reads);
+        vTemp.refresh(false, true);
+      }
+    }
+    finally {
+      Disposer.dispose(disposable); // unregister listener early
+      for (Job<?> read : reads) {
+        while (!read.isDone()) {
+          read.waitForCompletion(1000);
         }
       }
-    };
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
-      public void run() {
-        VirtualFileManager.getInstance().syncRefresh();
-        final VirtualFile virtualFile = getVirtualFile(tempDirectory);
-        virtualFile.refresh(false, true);
-      }
-    });
-    postRunnable.run();
+    }
   }
 
-  public void testMultipleNotifications() throws Exception {
-    final File tempDir = createTempDirectory();
-    final File file_f1 = new File(tempDir, "f1");
-    final File file_f2 = new File(tempDir, "f2");
-    final LoggingListener listener = new LoggingListener();
-    final VirtualFilePointer pointer_f1 = createPointerByFile(file_f1, listener);
-    final VirtualFilePointer pointer_f2 = createPointerByFile(file_f2, listener);
-    assertFalse(pointer_f1.isValid());
-    assertFalse(pointer_f2.isValid());
-    file_f1.createNewFile();
-    file_f2.createNewFile();
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
-      public void run() {
-        LocalFileSystem.getInstance().refresh(false);
+  private static void stressRead(VirtualFilePointer pointer, Collection<? super Job<?>> reads) {
+    for (int i = 0; i < 10; i++) {
+      AtomicReference<Job<?>> reference = new AtomicReference<>();
+      reference.set(JobLauncher.getInstance().submitToJobThread(() -> ApplicationManager.getApplication().runReadAction(() -> {
+        VirtualFile file = pointer.getFile();
+        if (file != null && !file.isValid()) {
+          throw new IncorrectOperationException("I've caught it. I am that good");
+        }
+      }), future -> {
+        try {
+          future.get();
+        }
+        catch (Exception e) {
+          throw new RuntimeException(e);
+        }
+        finally {
+          reads.remove(reference.get());
+        }
+      }));
+      reads.add(reference.get());
+    }
+  }
+  
+  public void testTwoPointersMergingIntoOne() throws IOException {
+    VirtualFile root = getVirtualTempRoot();
+    VirtualFile dir1 = WriteAction.computeAndWait(() -> root.createChildDirectory(this, "dir1"));
+    VirtualFile dir2 = WriteAction.computeAndWait(() -> root.createChildDirectory(this, "dir2"));
+
+    VirtualFilePointer p1 = myVirtualFilePointerManager.create(dir1, disposable, null);
+    VirtualFilePointer p2 = myVirtualFilePointerManager.create(dir2, disposable, null);
+    assertTrue(p1.isValid());
+    assertEquals(dir1, p1.getFile());
+    assertTrue(p2.isValid());
+    assertEquals(dir2, p2.getFile());
+
+    WriteAction.runAndWait(() -> dir1.delete(this));
+    assertNull(p1.getFile());
+    assertEquals(dir2, p2.getFile());
+
+    WriteAction.runAndWait(() -> dir2.rename(this, "dir1"));
+    assertEquals(dir2, p1.getFile());
+    assertEquals(dir2, p2.getFile());
+
+    WriteAction.runAndWait(() -> dir2.rename(this, "dir2"));
+    assertEquals(dir2, p1.getFile());
+    assertEquals(dir2, p2.getFile());
+
+    WriteAction.runAndWait(() -> root.createChildDirectory(this, "dir1"));
+    assertEquals(dir2, p1.getFile());
+    assertEquals(dir2, p2.getFile());
+  }
+  
+  public void testDotDot() throws IOException {
+    VirtualFile root = getVirtualTempRoot();
+    VirtualFile dir1 = WriteAction.computeAndWait(() -> root.createChildDirectory(this, "dir1"));
+    VirtualFile file = WriteAction.computeAndWait(() -> dir1.createChildData(this, "x.txt"));
+    VirtualFile dir2 = WriteAction.computeAndWait(() -> root.createChildDirectory(this, "dir2"));
+    VirtualFilePointer pointer = myVirtualFilePointerManager.create(dir2.getUrl() + "/../" + dir1.getName() + "/" + file.getName(), disposable, null);
+    assertEquals(file, pointer.getFile());
+  }
+  
+  public void testAlienVirtualFileSystemPointerRemovedFromUrlToIdentityCacheOnDispose() {
+    VirtualFile mockVirtualFile = new MockVirtualFile("test_name", "test_text");
+    Disposable disposable = Disposer.newDisposable();
+    VirtualFilePointer pointer = myVirtualFilePointerManager.create(mockVirtualFile, disposable, null);
+    assertInstanceOf(pointer, IdentityVirtualFilePointer.class);
+    assertTrue(pointer.isValid());
+
+    VirtualFile virtualFileWithSameUrl = new MockVirtualFile("test_name", "test_text");
+    VirtualFilePointer updatedPointer = myVirtualFilePointerManager.create(virtualFileWithSameUrl, disposable, null);
+    assertInstanceOf(updatedPointer, IdentityVirtualFilePointer.class);
+    assertTrue(pointer.isValid());
+    assertEquals(1, myVirtualFilePointerManager.numberOfCachedUrlToIdentity());
+
+    Disposer.dispose(disposable);
+    assertEquals(0, myVirtualFilePointerManager.numberOfCachedUrlToIdentity());
+  }
+  
+  public void testStressConcurrentAccess() throws Exception {
+    VirtualFilePointer fileToCreatePointer = createPointerByFile(new File(myTempDir), null);
+    VirtualFilePointerListener listener = new VirtualFilePointerListener() { };
+    long stop = System.currentTimeMillis() + 15_000;
+    AtomicBoolean run = new AtomicBoolean(false);
+    AtomicReference<Throwable> exception = new AtomicReference<>(null);
+    int i;
+    for (i = 0; System.currentTimeMillis() < stop; i++) {
+      Disposable disposable = Disposer.newDisposable();
+      // supply listener to separate pointers under one root so that it will be removed on dispose
+      VirtualFilePointerImpl bb =
+        (VirtualFilePointerImpl)myVirtualFilePointerManager.create(fileToCreatePointer.getUrl() + "/bb", disposable, listener);
+
+      if (i % 1000 == 0) LOG.info("i = " + i);
+
+      int nThreads = Runtime.getRuntime().availableProcessors();
+      CountDownLatch ready = new CountDownLatch(nThreads);
+      Runnable read = () -> {
+        try {
+          ready.countDown();
+          while (run.get()) {
+            bb.myNode.myLastUpdated = -15;
+            bb.getUrl();
+          }
+        }
+        catch (Throwable t) {
+          exception.set(t);
+        }
+      };
+
+      run.set(true);
+      List<Thread> threads = IntStream.range(0, nThreads).mapToObj(n -> new Thread(read, "reader " + n)).collect(Collectors.toList());
+      threads.forEach(Thread::start);
+      ready.await();
+
+      myVirtualFilePointerManager.create(fileToCreatePointer.getUrl() + "/b/c", disposable, listener);
+
+      run.set(false);
+      ConcurrencyUtil.joinAll(threads);
+      ExceptionUtil.rethrowAll(exception.get());
+      Disposer.dispose(disposable);
+    }
+    LOG.debug("i = " + i);
+  }
+  
+  public void testGetChildrenMustIncreaseModificationCountIfFoundNewFile() throws IOException {
+    VirtualFile vTemp = getVirtualTempRoot();
+    File file = new File(myTempDir, "x.txt");
+    VirtualFilePointer pointer = createPointerByFile(file, null);
+
+    long stop = System.currentTimeMillis() + 10_000;
+    int i;
+    for (i = 0; System.currentTimeMillis() < stop && i < 30; i++) {
+      LOG.info("i = " + i);
+      assertTrue(file.createNewFile());
+      vTemp.refresh(false, true);
+      Future<?> future = ApplicationManager.getApplication().executeOnPooledThread(() -> ReadAction.run(() -> {
+        for (int k = 0; k < 100; k++) {
+          vTemp.getChildren();
+        }
+      }));
+      TimeoutUtil.sleep(100);
+      VirtualFile vFile = PlatformTestUtil.notNull(getVirtualFile(file));
+      assertTrue(vFile.isValid());
+      assertTrue(pointer.isValid());
+      assertTrue(file.delete());
+      vTemp.refresh(false, true);
+      assertFalse(pointer.isValid());
+      while (!future.isDone()) {
+        UIUtil.dispatchAllInvocationEvents();
       }
-    });
-    assertEquals("[before:false:false, after:true:true]", listener.getLog().toString());
+    }
+    LOG.debug("i = " + i);
+  }
+  
+  public void testSeveralDirectoriesWithCommonPrefix() {
+    VirtualFile vDir = getVirtualTempRoot();
+    assertNotNull(vDir);
+    vDir.getChildren();
+    vDir.refresh(false, true);
+
+    LoggingListener listener = new LoggingListener();
+    myVirtualFilePointerManager.create(vDir.getUrl() + "/d1/subdir", disposable, listener);
+    myVirtualFilePointerManager.create(vDir.getUrl() + "/d2/subdir", disposable, listener);
+
+    File dir = new File(vDir.getPath()+"/d1");
+    FileUtil.createDirectory(dir);
+    getVirtualFile(dir).getChildren();
+    assertEquals("[]", listener.log.toString());
+    listener.log.clear();
+
+    File subDir = new File(dir, "subdir");
+    FileUtil.createDirectory(subDir);
+    getVirtualFile(subDir);
+    assertEquals("[before:false, after:true]", listener.log.toString());
+  }
+  
+  public void testDirectoryPointersWork() throws IOException {
+    VirtualFile vDir = getVirtualTempRoot();
+    VirtualFile deep = WriteAction.computeAndWait(() -> vDir.createChildDirectory(this, "deep"));
+
+    LoggingListener listener = new LoggingListener();
+    Disposable disposable = Disposer.newDisposable();
+    myVirtualFilePointerManager.createDirectoryPointer(vDir.getUrl(), false, disposable, listener);
+
+    WriteAction.runAndWait(() -> vDir.createChildData(this, "1"));
+    assertEquals("[before:true, after:true]", listener.log.toString());
+    Disposer.dispose(disposable);
+    listener = new LoggingListener();
+    myVirtualFilePointerManager.createDirectoryPointer(vDir.getUrl(), true, this.disposable, listener);
+
+    WriteAction.runAndWait(() -> deep.createChildData(this, "1"));
+    assertEquals("[before:true, after:true]", listener.log.toString());
+  }
+  
+  public void testNotQuiteCanonicalPath() throws IOException {
+    VirtualFile vDir = getVirtualTempRoot();
+    VirtualFile deep = WriteAction.computeAndWait(() -> vDir.createChildDirectory(this, "deep"));
+    VirtualFile file = WriteAction.computeAndWait(() -> deep.createChildData(this, "x..txt"));
+    VirtualFilePointer ptr = myVirtualFilePointerManager.create(file, disposable, null);
+    assertTrue(ptr.isValid());
+    assertTrue(ptr.getUrl(), ptr.getUrl().contains(".."));
+
+    WriteAction.runAndWait(() -> vDir.createChildData(this, "existing.txt"));
+    VirtualFilePointer ptr2 = myVirtualFilePointerManager.create(deep.getUrl() + "/../existing.txt", disposable, null);
+    assertTrue(ptr2.isValid());
+    assertFalse(ptr2.getUrl(), ptr2.getUrl().contains(".."));
+
+    VirtualFilePointer ptr3 = myVirtualFilePointerManager.create(deep.getUrl() + "/../madeUp.txt", disposable, null);
+    assertFalse(ptr3.isValid());
+    assertTrue(ptr3.getUrl(), ptr3.getUrl().contains(".."));
   }
 
-  public void testJars() throws Exception {
-    final File tempDir = createTempDirectory();
-    final File jarParent = new File(tempDir, "jarParent");
-    jarParent.mkdir();
-    final File jar = new File(jarParent, "x.jar");
-    final File originalJar = new File(PathManagerEx.getTestDataPath() + "/psi/generics22/collect-2.2.jar");
-    FileUtil.copy(originalJar, jar);
-
-    LocalFileSystem.getInstance().refreshAndFindFileByIoFile(jar); // Make sure we receive events when jar changes
-
-    final VirtualFilePointer[] pointersToWatch = new VirtualFilePointer[2];
-    final VirtualFilePointerListener listener = new VirtualFilePointerListener() {
-      @Override
-      public void beforeValidityChanged(@NotNull VirtualFilePointer[] pointers) {
-        verifyPointersInCorrectState(pointersToWatch);
-      }
-
-      @Override
-      public void validityChanged(@NotNull VirtualFilePointer[] pointers) {
-        verifyPointersInCorrectState(pointersToWatch);
-      }
-    };
-    final VirtualFilePointer jarParentPointer = createPointerByFile(jarParent, listener);
-    final String pathInJar = jar.getPath().replace(File.separatorChar, '/') + JarFileSystem.JAR_SEPARATOR;
-    final String jarUrl = VirtualFileManager.constructUrl(JarFileSystem.PROTOCOL, pathInJar);
-    final VirtualFilePointer jarPointer = myVirtualFilePointerManager.create(jarUrl, disposable, listener);
-    pointersToWatch[0] = jarParentPointer;
-    pointersToWatch[1] = jarPointer;
-    assertTrue(jarParentPointer.isValid());
-    assertTrue(jarPointer.isValid());
-
-    jar.delete();
-    jarParent.delete();
-    refreshVFS();
-
-    verifyPointersInCorrectState(pointersToWatch);
-    assertFalse(jarParentPointer.isValid());
-    assertFalse(jarPointer.isValid());
-    UIUtil.dispatchAllInvocationEvents();
-
-    jarParent.mkdir();
-    FileUtil.copy(originalJar, jar);
-    assert jar.exists();
-    assert jarParent.exists();
-    assert jarParent.getParentFile().exists();
-
-    refreshVFS();
-
-    verifyPointersInCorrectState(pointersToWatch);
-    assertTrue(jarParentPointer.isValid());
-    assertTrue(jarPointer.isValid());
-    UIUtil.dispatchAllInvocationEvents();
-
-    jar.delete();
-    jarParent.delete();
-    refreshVFS();
-    UIUtil.dispatchAllInvocationEvents();
-
-    verifyPointersInCorrectState(pointersToWatch);
-    assertFalse(jarParentPointer.isValid());
-    assertFalse(jarPointer.isValid());
-    UIUtil.dispatchAllInvocationEvents();
+  private static VirtualFile getVirtualFile(File file) {
+    return LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file);
   }
 
-  public void testJars2() throws Exception {
-    final File tempDir = createTempDirectory();
-    final File jarParent = new File(tempDir, "jarParent");
-    jarParent.mkdir();
-    final File jar = new File(jarParent, "x.jar");
-    final File originalJar = new File(PathManagerEx.getTestDataPath() + "/psi/generics22/collect-2.2.jar");
-    FileUtil.copy(originalJar, jar);
-
-    LocalFileSystem.getInstance().refreshAndFindFileByIoFile(jar); // Make sure we receive events when jar changes
-
-    final VirtualFilePointer[] pointersToWatch = new VirtualFilePointer[1];
-    final VirtualFilePointerListener listener = new VirtualFilePointerListener() {
-      @Override
-      public void beforeValidityChanged(@NotNull VirtualFilePointer[] pointers) {
-        verifyPointersInCorrectState(pointersToWatch);
-      }
-
-      @Override
-      public void validityChanged(@NotNull VirtualFilePointer[] pointers) {
-        verifyPointersInCorrectState(pointersToWatch);
-      }
-    };
-    final String pathInJar = jar.getPath().replace(File.separatorChar, '/') + JarFileSystem.JAR_SEPARATOR;
-    final String jarUrl = VirtualFileManager.constructUrl(JarFileSystem.PROTOCOL, pathInJar);
-    final VirtualFilePointer jarPointer = myVirtualFilePointerManager.create(jarUrl, disposable, listener);
-    pointersToWatch[0] = jarPointer;
-    assertTrue(jarPointer.isValid());
-
-    jar.delete();
-    refreshVFS();
-    refreshVFS();
-
-    verifyPointersInCorrectState(pointersToWatch);
-    assertFalse(jarPointer.isValid());
-    UIUtil.dispatchAllInvocationEvents();
-
-    jarParent.mkdir();
-    FileUtil.copy(originalJar, jar);
-    assert jar.exists();
-
-    refreshVFS();
-
-    verifyPointersInCorrectState(pointersToWatch);
-    assertTrue(jarPointer.isValid());
-    UIUtil.dispatchAllInvocationEvents();
-
-    jar.delete();
-    refreshVFS();
-    UIUtil.dispatchAllInvocationEvents();
-
-    verifyPointersInCorrectState(pointersToWatch);
-    assertFalse(jarPointer.isValid());
-    UIUtil.dispatchAllInvocationEvents();
-  }
-
-  private static void refreshVFS() {
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
-      public void run() {
-        VirtualFileManager.getInstance().syncRefresh();
-      }
-    });
-    UIUtil.dispatchAllInvocationEvents();
+  private VirtualFilePointer createPointerByFile(File file, VirtualFilePointerListener fileListener) {
+    String url = VirtualFileManager.constructUrl(LocalFileSystem.PROTOCOL, FileUtil.toSystemIndependentName(file.getPath()));
+    VirtualFile vFile = getVirtualFile(file);
+    return vFile != null ? myVirtualFilePointerManager.create(vFile, disposable, fileListener)
+                         : myVirtualFilePointerManager.create(url, disposable, fileListener);
   }
 
   private static void verifyPointersInCorrectState(VirtualFilePointer[] pointers) {
@@ -367,232 +704,48 @@ public class VirtualFilePointerTest extends PlatformLangTestCase {
     }
   }
 
-  private VirtualFilePointer createPointerByFile(final File file, final VirtualFilePointerListener fileListener) throws IOException {
-    final String url = VirtualFileManager.constructUrl(LocalFileSystem.PROTOCOL, file.getCanonicalPath().replace(File.separatorChar, '/'));
-    final VirtualFile vFile = refreshAndFind(url);
-    return vFile == null
-           ? myVirtualFilePointerManager.create(url, disposable, fileListener)
-           : myVirtualFilePointerManager.create(vFile, disposable, fileListener);
-  }
-
-  public void testFilePointerUpdate() throws Exception {
-    final File tempDir = createTempDirectory();
-    final File file = new File(tempDir, "f1");
-
-    final VirtualFilePointer pointer = createPointerByFile(file, null);
-
-    assertFalse(pointer.isValid());
-
-    boolean created = file.createNewFile();
-    assertTrue(created);
-
-
-    doVfsRefresh();
-
-    assertTrue(pointer.isValid());
-
-    boolean deleted = file.delete();
-    assertTrue(deleted);
-
-    doVfsRefresh();
-    assertFalse(pointer.isValid());
-  }
-
-  public void testContainerCreateDeletePerformance() throws Exception {
-    PlatformTestUtil.startPerformanceTest("VF container create/delete",200, new ThrowableRunnable() {
-      @Override
-      public void run() throws Exception {
-        Disposable parent = Disposer.newDisposable();
-        for (int i = 0; i < 10000; i++) {
-          myVirtualFilePointerManager.createContainer(parent);
-        }
-        Disposer.dispose(parent);
-      }
-    }).cpuBound().assertTiming();
-  }
-
-  private static void doVfsRefresh() {
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
-      public void run() {
-        LocalFileSystem.getInstance().refresh(false);
-      }
-    });
-  }
-
-  public void testDoubleDispose() throws IOException {
-    final File tempDir = createTempDirectory();
-    final File file = new File(tempDir, "f1");
-    boolean created = file.createNewFile();
-    assertTrue(created);
-
-
-    final String url = VirtualFileManager.constructUrl(LocalFileSystem.PROTOCOL, file.getCanonicalPath().replace(File.separatorChar, '/'));
-    final VirtualFile vFile = refreshAndFind(url);
-
-    Disposable disposable = Disposer.newDisposable();
-    final VirtualFilePointer pointer = myVirtualFilePointerManager.create(vFile, disposable, new VirtualFilePointerListener() {
-      @Override
-      public void beforeValidityChanged(@NotNull VirtualFilePointer[] pointers) {
-      }
-
-      @Override
-      public void validityChanged(@NotNull VirtualFilePointer[] pointers) {
-      }
-    });
-
-
-    assertTrue(pointer.isValid());
-
-    Disposer.dispose(disposable);
-    assertFalse(pointer.isValid());
-  }
-
-  private static VirtualFile refreshAndFind(@NotNull final String url) {
-    return ApplicationManager.getApplication().runWriteAction(new Computable<VirtualFile>() {
-      @Override
-      public VirtualFile compute() {
-        return VirtualFileManager.getInstance().refreshAndFindFileByUrl(url);
-      }
-    });
-  }
-
-  public void testThreadsPerformance() throws IOException, InterruptedException {
-    final File ioTempDir = createTempDirectory();
-    final File ioPtrBase = new File(ioTempDir, "parent");
-    final File ioPtr = new File(ioPtrBase, "f1");
-    final File ioSand = new File(ioTempDir, "sand");
-    final File ioSandPtr = new File(ioSand, "f2");
-    ioSandPtr.getParentFile().mkdirs();
-    ioSandPtr.createNewFile();
-    ioPtr.getParentFile().mkdirs();
-    ioPtr.createNewFile();
-
-    doVfsRefresh();
-    final VirtualFilePointer pointer = createPointerByFile(ioPtr, null);
-    assertTrue(pointer.isValid());
-    final VirtualFile virtualFile = pointer.getFile();
-    assertNotNull(virtualFile);
-    assertTrue(virtualFile.isValid());
-
-    VirtualFileAdapter listener = new VirtualFileAdapter() {
-      @Override
-      public void fileCreated(VirtualFileEvent event) {
-        stressRead(pointer);
-      }
-
-      @Override
-      public void fileDeleted(VirtualFileEvent event) {
-        stressRead(pointer);
-      }
-    };
-    Disposable disposable = Disposer.newDisposable();
-    VirtualFileManager.getInstance().addVirtualFileListener(listener, disposable);
-    int N = Timings.adjustAccordingToMySpeed(1000, false);
-    System.out.println("N = " + N);
-    for (int i=0;i< N;i++) {
-      assertNotNull(pointer.getFile());
-      FileUtil.delete(ioPtrBase);
-      doVfsRefresh();
-
-      // ptr is now null, cached as map
-
-      final VirtualFile v = LocalFileSystem.getInstance().findFileByIoFile(ioSandPtr);
-      new WriteCommandAction.Simple(getProject()) {
-        @Override
-        protected void run() throws Throwable {
-          v.delete(this); //inc FS modCount
-          LocalFileSystem.getInstance().findFileByIoFile(ioSand).createChildData(this, ioSandPtr.getName());
-        }
-      }.execute().throwException();
-
-      // ptr is still null
-
-      assertTrue(ioPtrBase.mkdirs());
-      assertTrue(ioPtr.createNewFile());
-
-      stressRead(pointer);
-      doVfsRefresh();
+  @NotNull
+  protected static VirtualFile createChildDirectory(@NotNull final VirtualFile dir, @NotNull @NonNls final String name) {
+    try {
+      return WriteAction.computeAndWait(() ->
+                                          // requestor must be notnull
+                                          dir.createChildDirectory(dir, name));
     }
-
-    Disposer.dispose(disposable); // unregister listener early
+    catch (IOException e) {
+      throw new RuntimeException(e);
+    }
+  }
+  protected static void rename(@NotNull final VirtualFile vFile1, @NotNull final String newName) {
+    try {
+      WriteCommandAction.writeCommandAction(null).run(() -> vFile1.rename(vFile1, newName));
+    }
+    catch (IOException e) {
+      throw new RuntimeException(e);
+    }
   }
 
-  private static void stressRead(@NotNull final VirtualFilePointer pointer) {
-    boolean b = JobLauncher.getInstance().invokeConcurrentlyUnderProgress(Collections.nCopies(10, null), null, false, new Processor<Object>() {
-      @Override
-      public boolean process(Object o) {
-        ApplicationManager.getApplication().runReadAction(new Runnable() {
-          @Override
-          public void run() {
-            VirtualFile file = pointer.getFile();
-            if (file != null && !file.isValid()) {
-              throw new IncorrectOperationException("I've caught it. I am that good");
-            }
-          }
-        });
 
-        return true;
-      }
-    });
-    assertTrue(b);
-  }
+  public void testVirtualPointerForSubdirMustNotFireWhenSuperDirectoryCreated() throws IOException {
+    VirtualFile vDir = getVirtualTempRoot();
+    assertNotNull(vDir);
+    vDir.getChildren();
+    vDir.refresh(false, true);
 
-  public void testManyPointersUpdatePerformance() throws IOException {
-    FilePointerPartNode.pushDebug(false, disposable);
     LoggingListener listener = new LoggingListener();
-    final List<VFileEvent> events = new ArrayList<VFileEvent>();
-    final File ioTempDir = createTempDirectory();
-    final VirtualFile temp = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(ioTempDir);
-    for (int i=0; i<100000; i++) {
-      myVirtualFilePointerManager.create(VfsUtilCore.pathToUrl("/a/b/c/d/" + i), disposable, listener);
-      events.add(new VFileCreateEvent(this, temp, "xxx" + i, false, true));
-    }
-    PlatformTestUtil.startPerformanceTest("vfp update", 10000, new ThrowableRunnable() {
-      @Override
-      public void run() throws Throwable {
-        for (int i=0; i<100; i++) {
-          // simulate VFS refresh events since launching the actual refresh is too slow
-          myVirtualFilePointerManager.before(events);
-          myVirtualFilePointerManager.after(events);
-        }
-      }
-    }).assertTiming();
-  }
-  public void testMultipleCreationOfTheSamePointerPerformance() throws IOException {
-    FilePointerPartNode.pushDebug(false, disposable);
-    final LoggingListener listener = new LoggingListener();
-    final VirtualFilePointer thePointer = myVirtualFilePointerManager.create(VfsUtilCore.pathToUrl("/a/b/c/d/e"), disposable, listener);
-    TempFileSystem.getInstance();
-    PlatformTestUtil.startPerformanceTest("same url vfp create", 500, new ThrowableRunnable() {
-      @Override
-      public void run() throws Throwable {
-        for (int i=0; i<1000000; i++) {
-          VirtualFilePointer pointer = myVirtualFilePointerManager.create(VfsUtilCore.pathToUrl("/a/b/c/d/e"), disposable, listener);
-          assertSame(pointer, thePointer);
-        }
-      }
-    }).assertTiming();
-  }
+    VirtualFilePointer subPtr = myVirtualFilePointerManager.create(vDir.getUrl() + "/cmake/subdir", disposable, listener);
 
-  public void testTwoPointersBecomeOneAfterFileRenamedUnderTheOtherName() throws IOException {
-    final File tempDir = createTempDirectory();
-    final File f1 = new File(tempDir, "f1");
-    boolean created = f1.createNewFile();
-    assertTrue(created);
+    VirtualFile cmake = createChildDirectory(vDir, "cmake");
+    assertEquals("[]", listener.log.toString());
+    listener.log.clear();
 
-    final String url1 = VirtualFileManager.constructUrl(LocalFileSystem.PROTOCOL, f1.getCanonicalPath().replace(File.separatorChar, '/'));
-    final VirtualFile vFile1 = refreshAndFind(url1);
+    createChildDirectory(cmake, "subdir");
+    assertEquals("[before:false, after:true]", listener.log.toString());
+    assertTrue(subPtr.isValid());
 
-    VirtualFilePointer pointer1 = myVirtualFilePointerManager.create(url1, disposable, null);
-    assertTrue(pointer1.isValid());
-    String url2 = VirtualFileManager.constructUrl(LocalFileSystem.PROTOCOL, tempDir.getCanonicalPath().replace(File.separatorChar, '/')+"/f2");
-    VirtualFilePointer pointer2 = myVirtualFilePointerManager.create(url2, disposable, null);
-    assertFalse(pointer2.isValid());
-
-    rename(vFile1, "f2");
-
-    assertTrue(pointer1.isValid());
-    assertTrue(pointer2.isValid());
+    listener.log.clear();
+    FileUtil.rename(new File(cmake.getPath()), "newCmake");
+    vDir.refresh(false, true);
+    assertEquals("[before:true, after:false]", listener.log.toString());
+    assertFalse(subPtr.isValid());
   }
 }

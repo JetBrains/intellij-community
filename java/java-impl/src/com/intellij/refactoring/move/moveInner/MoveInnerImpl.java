@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,10 +14,6 @@
  * limitations under the License.
  */
 
-/**
- * created at Nov 12, 2001
- * @author Jeka
- */
 package com.intellij.refactoring.move.moveInner;
 
 import com.intellij.ide.util.PackageChooserDialog;
@@ -34,14 +30,16 @@ public class MoveInnerImpl {
 
   public static final String REFACTORING_NAME = RefactoringBundle.message("move.inner.to.upper.level.title");
 
-  public static void doMove(final Project project, PsiElement[] elements, final MoveCallback moveCallback) {
+  public static void doMove(final Project project, PsiElement[] elements, final MoveCallback moveCallback, @Nullable PsiElement targetContainer) {
     if (elements.length != 1) return;
     final PsiClass aClass = (PsiClass) elements[0];
     boolean condition = aClass.getContainingClass() != null;
     LOG.assertTrue(condition);
 
     if (!CommonRefactoringUtil.checkReadOnlyStatus(project, aClass)) return;
-    final PsiElement targetContainer = getTargetContainer(aClass, true);
+    if (targetContainer == null) {
+      targetContainer = getTargetContainer(aClass, true);
+    }
     if (targetContainer == null) return;
 
     final MoveInnerDialog dialog = new MoveInnerDialog(
@@ -72,8 +70,9 @@ public class MoveInnerImpl {
         if (aPackage == null) {
           if (chooseIfNotUnderSource) {
             PackageChooserDialog chooser = new PackageChooserDialog("Select Target Package", innerClass.getProject());
-            chooser.show();
-            if (!chooser.isOK()) return null;
+            if (!chooser.showAndGet()) {
+              return null;
+            }
             final PsiPackage chosenPackage = chooser.getSelectedPackage();
             if (chosenPackage == null) return null;
             return chosenPackage.getDirectories()[0];

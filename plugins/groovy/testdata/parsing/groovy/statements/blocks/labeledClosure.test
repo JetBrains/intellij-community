@@ -2,8 +2,7 @@ L:{ x + y }.getClass()
 -----
 Groovy script
   Labeled statement
-    Label
-      PsiElement(identifier)('L')
+    PsiElement(identifier)('L')
     PsiElement(:)(':')
     Block statement
       Open block
@@ -19,8 +18,11 @@ Groovy script
             PsiElement(identifier)('y')
         PsiWhiteSpace(' ')
         PsiElement(})('}')
-  PsiErrorElement:';' or new line expected
+  PsiErrorElement:'.' unexpected
     PsiElement(.)('.')
-    PsiElement(identifier)('getClass')
-    PsiElement(()('(')
-    PsiElement())(')')
+  Method call
+    Reference expression
+      PsiElement(identifier)('getClass')
+    Arguments
+      PsiElement(()('(')
+      PsiElement())(')')

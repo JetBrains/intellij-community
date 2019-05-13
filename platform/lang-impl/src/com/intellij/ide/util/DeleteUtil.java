@@ -17,11 +17,12 @@
 package com.intellij.ide.util;
 
 import com.intellij.ide.IdeBundle;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.ElementDescriptionUtil;
 import com.intellij.psi.PsiDirectoryContainer;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.containers.FactoryMap;
-import com.intellij.util.containers.HashMap;
+import java.util.HashMap;
 
 import java.text.MessageFormat;
 import java.util.Map;
@@ -36,15 +37,11 @@ public class DeleteUtil {
     if (elements.length == 1) {
       String name = ElementDescriptionUtil.getElementDescription(elements[0], DeleteNameDescriptionLocation.INSTANCE);
       String type = ElementDescriptionUtil.getElementDescription(elements[0], DeleteTypeDescriptionLocation.SINGULAR);
-      return MessageFormat.format(messageTemplate, type + " \"" + name + "\"");
+      return MessageFormat.format(messageTemplate, type + (StringUtil.isEmptyOrSpaces(name) ? "" : " \"" + name + "\""));
     }
 
-    FactoryMap<String, Integer> countMap = new FactoryMap<String, Integer>() {
-      protected Integer create(final String key) {
-        return 0;
-      }
-    };
-    Map<String, String> pluralToSingular = new HashMap<String, String>();
+    Map<String, Integer> countMap = FactoryMap.create(key -> 0);
+    Map<String, String> pluralToSingular = new HashMap<>();
     int directoryCount = 0;
     String containerType = null;
 
@@ -80,6 +77,6 @@ public class DeleteUtil {
         buffer.append(" ").append(IdeBundle.message("prompt.delete.directory.paren", directoryCount));
       }
     }
-    return MessageFormat.format(messageTemplate, buffer.toString()); 
+    return MessageFormat.format(messageTemplate, buffer.toString());
   }
 }

@@ -16,8 +16,6 @@
 
 /*
  * @author: Eugene Zhuravlev
- * Date: Apr 1, 2003
- * Time: 1:17:50 PM
  */
 package com.intellij.compiler.impl;
 
@@ -36,10 +34,12 @@ public class FileProcessingCompilerStateCache {
 
   public FileProcessingCompilerStateCache(File storeDirectory, final ValidityStateFactory stateFactory) throws IOException {
     myCache = new StateCache<MyState>(new File(storeDirectory, "timestamps")) {
+      @Override
       public MyState read(DataInput stream) throws IOException {
         return new MyState(stream.readLong(), stateFactory.createValidityState(stream));
       }
 
+      @Override
       public void write(MyState state, DataOutput out) throws IOException {
         out.writeLong(state.getTimestamp());
         final ValidityState extState = state.getExtState();
@@ -62,11 +62,7 @@ public class FileProcessingCompilerStateCache {
   }
 
   public long getTimestamp(String url) throws IOException {
-    final Serializable savedState = myCache.getState(url);
-    if (savedState != null) {
-      LOG.assertTrue(savedState instanceof MyState);
-    }
-    MyState state = (MyState)savedState;
+    MyState state = myCache.getState(url);
     return (state != null)? state.getTimestamp() : -1L;
   }
 
@@ -100,7 +96,7 @@ public class FileProcessingCompilerStateCache {
     private final long myTimestamp;
     private final ValidityState myExtState;
 
-    public MyState(long timestamp, @Nullable ValidityState extState) {
+    MyState(long timestamp, @Nullable ValidityState extState) {
       myTimestamp = timestamp;
       myExtState = extState;
     }

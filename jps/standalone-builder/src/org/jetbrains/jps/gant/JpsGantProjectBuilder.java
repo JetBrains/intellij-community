@@ -15,18 +15,26 @@
  */
 package org.jetbrains.jps.gant;
 
+import com.intellij.openapi.diagnostic.CompositeLogger;
 import com.intellij.openapi.diagnostic.DefaultLogger;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.NotNullFunction;
 import org.apache.tools.ant.BuildException;
 import org.apache.tools.ant.Project;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.jps.api.BuildType;
+import org.jetbrains.jps.api.GlobalOptions;
 import org.jetbrains.jps.build.Standalone;
+import org.jetbrains.jps.builders.BuildTarget;
+import org.jetbrains.jps.builders.java.JavaModuleBuildTargetType;
 import org.jetbrains.jps.cmdline.JpsModelLoader;
 import org.jetbrains.jps.incremental.MessageHandler;
 import org.jetbrains.jps.incremental.messages.BuildMessage;
+import org.jetbrains.jps.incremental.messages.BuilderStatisticsMessage;
+import org.jetbrains.jps.incremental.messages.BuildingTargetProgressMessage;
 import org.jetbrains.jps.incremental.messages.CompilerMessage;
 import org.jetbrains.jps.model.JpsModel;
 import org.jetbrains.jps.model.java.JpsJavaClasspathKind;
@@ -37,17 +45,25 @@ import org.jetbrains.jps.model.module.JpsModule;
 import java.io.File;
 import java.util.*;
 
+import static org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.ParametersMessage.TargetTypeBuildScope;
+
 /**
- * @author nik
+ * @deprecated use {@link org.jetbrains.intellij.build.CompilationTasks} from intellij.platform.buildScripts module for building IDEs based
+ * on IntelliJ Platform. If you need to build another project use {@link Standalone} directly.
  */
+@Deprecated
 public class JpsGantProjectBuilder {
   private final Project myProject;
   private final JpsModel myModel;
   private boolean myCompressJars;
+  private boolean myBuildIncrementally;
   private File myDataStorageRoot;
-  private JpsModelLoader myModelLoader;
-  private boolean myDryRun;
+  private final JpsModelLoader myModelLoader;
   private BuildInfoPrinter myBuildInfoPrinter = new DefaultBuildInfoPrinter();
+  private final Set<String> myCompiledModules = new HashSet<>();
+  private final Set<String> myCompiledModuleTests = new HashSet<>();
+  private boolean myStatisticsReported;
+  private Logger.Factory myFileLoggerFactory;
 
   public JpsGantProjectBuilder(Project project, JpsModel model) {
     myProject = project;
@@ -60,13 +76,10 @@ public class JpsGantProjectBuilder {
     };
   }
 
-  public void setDryRun(boolean dryRun) {
-    myDryRun = dryRun;
-  }
-
   public void setTargetFolder(String targetFolder) {
     String url = "file://" + FileUtil.toSystemIndependentName(targetFolder);
     JpsJavaExtensionService.getInstance().getOrCreateProjectExtension(myModel.getProject()).setOutputUrl(url);
+    exportModuleOutputProperties();
   }
 
   public boolean isCompressJars() {
@@ -77,16 +90,16 @@ public class JpsGantProjectBuilder {
     myCompressJars = compressJars;
   }
 
+  public boolean isBuildIncrementally() {
+    return myBuildIncrementally;
+  }
+
+  public void setBuildIncrementally(boolean buildIncrementally) {
+    myBuildIncrementally = buildIncrementally;
+  }
+
   public void setBuildInfoPrinter(BuildInfoPrinter printer) {
     myBuildInfoPrinter = printer;
-  }
-
-  public void setUseInProcessJavac(boolean value) {
-    //doesn't make sense for new builders
-  }
-
-  public void setArrangeModuleCyclesOutputs(boolean value) {
-    //doesn't make sense for new builders
   }
 
   public void error(String message) {
@@ -117,72 +130,127 @@ public class JpsGantProjectBuilder {
     myDataStorageRoot = dataStorageRoot;
   }
 
-  public void cleanOutput() {
-    if (myDryRun) {
-      info("Cleaning skipped as we're running dry");
-      return;
+  public void setupAdditionalLogging(File buildLogFile, String categoriesWithDebugLevel) {
+    categoriesWithDebugLevel = StringUtil.notNullize(categoriesWithDebugLevel);
+    try {
+      myFileLoggerFactory = new Log4jFileLoggerFactory(buildLogFile, categoriesWithDebugLevel);
+      info("Build log (" + (!categoriesWithDebugLevel.isEmpty() ? "debug level for " + categoriesWithDebugLevel : "info") + ") will be written to " + buildLogFile.getAbsolutePath());
     }
+    catch (Throwable t) {
+      myProject.log("Cannot setup additional logging to " + buildLogFile.getAbsolutePath() + ": " + t.getMessage(), t, Project.MSG_WARN);
+    }
+  }
 
-    for (JpsModule module : myModel.getProject().getModules()) {
-      for (boolean test : new boolean[]{false, true}) {
-        File output = JpsJavaExtensionService.getInstance().getOutputDirectory(module, test);
-        if (output != null) {
-          FileUtil.delete(output);
+  public void buildModules(List<JpsModule> modules) {
+    Set<String> names = new LinkedHashSet<>();
+    info("Collecting dependencies for " + modules.size() + " modules");
+    for (JpsModule module : modules) {
+      Set<String> dependencies = getModuleDependencies(module, false);
+      for (String dependency : dependencies) {
+        if (names.add(dependency)) {
+          info(" adding " + dependency + " required for " + module.getName());
         }
       }
     }
-  }
-
-  public void makeModule(JpsModule module) {
-    runBuild(getModuleDependencies(module, false), false);
+    runBuild(names, false, false);
   }
 
   public void makeModuleTests(JpsModule module) {
-    runBuild(getModuleDependencies(module, true), true);
+    runBuild(getModuleDependencies(module, true), false, true);
   }
 
   public void buildAll() {
-    runBuild(Collections.<String>emptySet(), true);
+    runBuild(Collections.emptySet(), true, true);
   }
 
   public void buildProduction() {
-    runBuild(Collections.<String>emptySet(), false);
+    runBuild(Collections.emptySet(), true, false);
   }
 
   public void exportModuleOutputProperties() {
     for (JpsModule module : myModel.getProject().getModules()) {
       for (boolean test : new boolean[]{true, false}) {
-        myProject.setProperty("module." + module.getName() + ".output." + (test ? "test" : "main"), getModuleOutput(module, test));
+        String propertyName = "module." + module.getName() + ".output." + (test ? "test" : "main");
+        String outputPath = getModuleOutput(module, test);
+        myProject.setProperty(propertyName, outputPath);
       }
     }
 
   }
 
   private static Set<String> getModuleDependencies(JpsModule module, boolean includeTests) {
-    Set<JpsModule> modules = JpsJavaExtensionService.dependencies(module).recursively().includedIn(JpsJavaClasspathKind.compile(includeTests)).getModules();
-    Set<String> names = new HashSet<String>();
-    for (JpsModule depModule : modules) {
+    JpsJavaDependenciesEnumerator enumerator = JpsJavaExtensionService.dependencies(module).recursively();
+    if (!includeTests) {
+      enumerator = enumerator.productionOnly();
+    }
+    Set<String> names = new HashSet<>();
+    for (JpsModule depModule : enumerator.getModules()) {
       names.add(depModule.getName());
     }
     return names;
   }
 
-  private void runBuild(final Set<String> modulesSet, boolean includeTests) {
-    if (!myDryRun) {
-      final AntMessageHandler messageHandler = new AntMessageHandler();
-      Logger.setFactory(new AntLoggerFactory(messageHandler));
-      info("Starting build: modules = " + modulesSet + ", caches are saved to " + myDataStorageRoot.getAbsolutePath());
-      try {
-        Standalone.runBuild(myModelLoader, myDataStorageRoot, BuildType.PROJECT_REBUILD, modulesSet, Collections.<String>emptyList(),
-                            includeTests, messageHandler);
-      }
-      catch (Throwable e) {
-        error(e);
+  private void runBuild(final Set<String> modulesSet, final boolean allModules, boolean includeTests) {
+    System.setProperty(GlobalOptions.USE_DEFAULT_FILE_LOGGING_OPTION, "false");
+    final AntMessageHandler messageHandler = new AntMessageHandler();
+    //noinspection AssignmentToStaticFieldFromInstanceMethod
+    AntLoggerFactory.ourMessageHandler = new AntMessageHandler();
+    AntLoggerFactory.ourFileLoggerFactory = myFileLoggerFactory;
+    Logger.setFactory(AntLoggerFactory.class);
+    boolean forceBuild = !myBuildIncrementally;
+
+    List<TargetTypeBuildScope> scopes = new ArrayList<>();
+    for (JavaModuleBuildTargetType type : JavaModuleBuildTargetType.ALL_TYPES) {
+      if (includeTests || !type.isTests()) {
+        List<String> namesToCompile = new ArrayList<>(allModules ? getAllModules() : modulesSet);
+        if (type.isTests()) {
+          namesToCompile.removeAll(myCompiledModuleTests);
+          myCompiledModuleTests.addAll(namesToCompile);
+        }
+        else {
+          namesToCompile.removeAll(myCompiledModules);
+          myCompiledModules.addAll(namesToCompile);
+        }
+        if (namesToCompile.isEmpty()) continue;
+
+        TargetTypeBuildScope.Builder builder = TargetTypeBuildScope.newBuilder().setTypeId(type.getTypeId()).setForceBuild(forceBuild);
+        if (allModules) {
+          scopes.add(builder.setAllTargets(true).build());
+        }
+        else if (!modulesSet.isEmpty()) {
+          scopes.add(builder.addAllTargetId(modulesSet).build());
+        }
       }
     }
-    else {
-      info("Building skipped as we're running dry");
+
+    info("Starting build; incremental: " + myBuildIncrementally + ", cache directory: " + myDataStorageRoot.getAbsolutePath());
+    info("Build scope: " + (allModules ? "all" : modulesSet.size()) + " modules, " + (includeTests ? "including tests" : "production only"));
+    long compilationStart = System.currentTimeMillis();
+    try {
+      myBuildInfoPrinter.printBlockOpenedMessage(this, "Compilation");
+      Standalone.runBuild(myModelLoader, myDataStorageRoot, messageHandler, scopes, false);
     }
+    catch (Throwable e) {
+      error(e);
+    }
+    finally {
+      myBuildInfoPrinter.printBlockClosedMessage(this, "Compilation");
+    }
+    if (messageHandler.myFailed) {
+      error("Compilation failed");
+    }
+    else if (!myStatisticsReported) {
+      myBuildInfoPrinter.printStatisticsMessage(this, "Compilation time, ms", String.valueOf(System.currentTimeMillis() - compilationStart));
+      myStatisticsReported = true;
+    }
+  }
+
+  private Set<String> getAllModules() {
+    HashSet<String> modules = new HashSet<>();
+    for (JpsModule module : myModel.getProject().getModules()) {
+      modules.add(module.getName());
+    }
+    return modules;
   }
 
   public String moduleOutput(JpsModule module) {
@@ -201,7 +269,7 @@ public class JpsGantProjectBuilder {
   public List<String> moduleRuntimeClasspath(JpsModule module, boolean forTests) {
     JpsJavaDependenciesEnumerator enumerator = JpsJavaExtensionService.dependencies(module).recursively().includedIn(JpsJavaClasspathKind.runtime(forTests));
     Collection<File> roots = enumerator.classes().getRoots();
-    List<String> result = new ArrayList<String>();
+    List<String> result = new ArrayList<>();
     for (File root : roots) {
       result.add(root.getAbsolutePath());
     }
@@ -209,57 +277,101 @@ public class JpsGantProjectBuilder {
   }
 
   private class AntMessageHandler implements MessageHandler {
+    private boolean myFailed;
+
     @Override
     public void processMessage(BuildMessage msg) {
       BuildMessage.Kind kind = msg.getKind();
       String text = msg.getMessageText();
       switch (kind) {
         case ERROR:
-          String compilerName = msg instanceof CompilerMessage ? ((CompilerMessage)msg).getCompilerName() : "";
-          myBuildInfoPrinter.printCompilationErrors(JpsGantProjectBuilder.this, compilerName, text);
+          String compilerName;
+          String messageText;
+          if (msg instanceof CompilerMessage) {
+            CompilerMessage compilerMessage = (CompilerMessage)msg;
+            compilerName = compilerMessage.getCompilerName();
+            String sourcePath = compilerMessage.getSourcePath();
+            if (sourcePath != null) {
+              messageText = sourcePath + (compilerMessage.getLine() != -1 ? ":" + compilerMessage.getLine() : "") + ":\n" + text;
+            }
+            else {
+              messageText = text;
+            }
+          }
+          else {
+            compilerName = "";
+            messageText = text;
+          }
+          myFailed = true;
+          myBuildInfoPrinter.printCompilationErrors(JpsGantProjectBuilder.this, compilerName, messageText);
           break;
         case WARNING:
           warning(text);
           break;
         case INFO:
-          if (!text.isEmpty()) {
+          if (msg instanceof BuilderStatisticsMessage) {
+            BuilderStatisticsMessage message = (BuilderStatisticsMessage)msg;
+            String buildKind = myBuildIncrementally ? " (incremental)" : "";
+            myBuildInfoPrinter.printStatisticsMessage(JpsGantProjectBuilder.this, "Compilation time '" + message.getBuilderName() + "'" + buildKind + ", ms",
+                                                      String.valueOf(message.getElapsedTimeMs()));
+            int sources = message.getNumberOfProcessedSources();
+            myBuildInfoPrinter.printStatisticsMessage(JpsGantProjectBuilder.this, "Processed files by '" + message.getBuilderName() + "'" + buildKind,
+                                                      String.valueOf(sources));
+            if (!myBuildIncrementally && sources > 0) {
+              myBuildInfoPrinter.printStatisticsMessage(JpsGantProjectBuilder.this, "Compilation time per file for '" + message.getBuilderName() + "', ms",
+                                                        String.format(Locale.US, "%.2f", (double)message.getElapsedTimeMs() / sources));
+            }
+          }
+          else if (!text.isEmpty()) {
             info(text);
           }
           break;
         case PROGRESS:
-          myBuildInfoPrinter.printProgressMessage(JpsGantProjectBuilder.this, text);
+          if (msg instanceof BuildingTargetProgressMessage) {
+            String targetsString = StringUtil.join(((BuildingTargetProgressMessage)msg).getTargets(),
+                                                   (NotNullFunction<BuildTarget<?>, String>)dom -> dom.getPresentableName(), ",");
+            switch (((BuildingTargetProgressMessage)msg).getEventType()) {
+              case STARTED:
+                myBuildInfoPrinter.printBlockOpenedMessage(JpsGantProjectBuilder.this, targetsString);
+                break;
+              case FINISHED:
+                myBuildInfoPrinter.printBlockClosedMessage(JpsGantProjectBuilder.this, targetsString);
+                break;
+            }
+          }
           break;
       }
     }
   }
 
-  private class AntLoggerFactory implements Logger.Factory {
+  private static class AntLoggerFactory implements Logger.Factory {
     private static final String COMPILER_NAME = "build runner";
+    private static AntMessageHandler ourMessageHandler;
+    private static Logger.Factory ourFileLoggerFactory;
 
-    private final AntMessageHandler myMessageHandler;
-
-    public AntLoggerFactory(AntMessageHandler messageHandler) {
-      myMessageHandler = messageHandler;
-    }
-
+    @NotNull
     @Override
-    public Logger getLoggerInstance(String category) {
-      return new DefaultLogger(category) {
+    public Logger getLoggerInstance(@NotNull String category) {
+      DefaultLogger antLogger = new DefaultLogger(category) {
         @Override
-        public void error(@NonNls String message, @Nullable Throwable t, @NonNls String... details) {
+        public void error(@NonNls String message, @Nullable Throwable t, @NotNull @NonNls String... details) {
           if (t != null) {
-            myMessageHandler.processMessage(new CompilerMessage(COMPILER_NAME, t));
+            ourMessageHandler.processMessage(new CompilerMessage(COMPILER_NAME, t));
           }
           else {
-            myMessageHandler.processMessage(new CompilerMessage(COMPILER_NAME, BuildMessage.Kind.ERROR, message));
+            ourMessageHandler.processMessage(new CompilerMessage(COMPILER_NAME, BuildMessage.Kind.ERROR, message));
           }
         }
 
         @Override
         public void warn(@NonNls String message, @Nullable Throwable t) {
-          myMessageHandler.processMessage(new CompilerMessage(COMPILER_NAME, BuildMessage.Kind.WARNING, message));
+          ourMessageHandler.processMessage(new CompilerMessage(COMPILER_NAME, BuildMessage.Kind.WARNING, message));
         }
       };
+      if (ourFileLoggerFactory != null) {
+        return new CompositeLogger(antLogger, ourFileLoggerFactory.getLoggerInstance(category));
+      }
+      return antLogger;
     }
   }
 }

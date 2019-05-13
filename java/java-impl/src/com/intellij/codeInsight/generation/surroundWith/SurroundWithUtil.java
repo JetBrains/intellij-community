@@ -26,8 +26,8 @@ import com.intellij.psi.impl.source.tree.JavaJspElementType;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTypesUtil;
-import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -41,11 +41,11 @@ public class SurroundWithUtil {
   private SurroundWithUtil() {
   }
 
-  static PsiElement[] moveDeclarationsOut(PsiElement block, PsiElement[] statements, boolean generateInitializers) {
+  public static PsiElement[] moveDeclarationsOut(PsiElement block, PsiElement[] statements, boolean generateInitializers) {
     try{
       PsiManager psiManager = block.getManager();
-      PsiElementFactory factory = JavaPsiFacade.getInstance(psiManager.getProject()).getElementFactory();
-      ArrayList<PsiElement> array = new ArrayList<PsiElement>();
+      PsiElementFactory factory = JavaPsiFacade.getElementFactory(psiManager.getProject());
+      ArrayList<PsiElement> array = new ArrayList<>();
       for (PsiElement statement : statements) {
         if (statement instanceof PsiDeclarationStatement) {
           PsiDeclarationStatement declaration = (PsiDeclarationStatement)statement;
@@ -59,7 +59,7 @@ public class SurroundWithUtil {
                 PsiExpressionStatement assignment = (PsiExpressionStatement)factory.createStatementFromText(name + "=x;", null);
                 assignment = (PsiExpressionStatement)CodeStyleManager.getInstance(psiManager.getProject()).reformat(assignment);
                 PsiAssignmentExpression expr = (PsiAssignmentExpression)assignment.getExpression();
-                expr.getRExpression().replace(initializer);
+                expr.getRExpression().replace(RefactoringUtil.convertInitializerToNormalExpression(initializer, var.getType()));
                 assignment = (PsiExpressionStatement)block.addAfter(assignment, declaration);
                 array.add(assignment);
               }
@@ -78,6 +78,12 @@ public class SurroundWithUtil {
               PsiVariable var = (PsiVariable)element1;
               PsiExpression initializer = var.getInitializer();
               if (initializer != null) {
+                PsiTypeElement typeElement = var.getTypeElement();
+                if (typeElement != null && 
+                    typeElement.isInferredType() && 
+                    PsiTypesUtil.replaceWithExplicitType(typeElement) == null) {
+                  continue;
+                }
                 if (!generateInitializers || var.hasModifierProperty(PsiModifier.FINAL)) {
                   initializer.delete();
                 }
@@ -134,7 +140,10 @@ public class SurroundWithUtil {
     if (last instanceof PsiWhiteSpace) {
       last = last.getPrevSibling();
     }
-    return new TextRange(first.getTextRange().getStartOffset(), last.getTextRange().getEndOffset());
+    final int startOffset = first.getTextRange().getStartOffset();
+    final int endOffset = last.getTextRange().getEndOffset();
+    return startOffset <= endOffset ? new TextRange(startOffset, endOffset) 
+                                    : new TextRange(startOffset, startOffset);
   }
 
   /**
@@ -148,7 +157,7 @@ public class SurroundWithUtil {
    *   }
    * </pre>
    * The problem is that surround block doesn't contain any indent spaces, hence, the first statement is inserted to the
-   * zero column. But we have a dedicated code style setting <code>'keep comment at first column'</code>, i.e. the comment
+   * zero column. But we have a dedicated code style setting {@code 'keep comment at first column'}, i.e. the comment
    * will not be moved if that setting is checked.
    * <p/>
    * Current method handles that situation.

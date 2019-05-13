@@ -1,44 +1,32 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.cvsSupport2.javacvsImpl.io;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.util.concurrency.Semaphore;
-import org.jetbrains.annotations.NonNls;
 import org.netbeans.lib.cvsclient.ICvsCommandStopper;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 
 /**
  * author: lesya
  */
-
 public class ReadThread implements Runnable {
 
-  public final static Collection<ReadThread> READ_THREADS = new ArrayList<ReadThread>();
+  public final static Collection<ReadThread> READ_THREADS = Collections.synchronizedCollection(new ArrayList<ReadThread>());
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.cvsSupport2.javacvsImpl.io.ReadThread");
 
+  private static final int INITIAL_BUFFER_SIZE = 128 * 1024;
+  private static final int TIMEOUT = 3000;
+  private static final int END_OF_STREAM = -1;
+
   private boolean myAtEndOfStream = false;
   private final ICvsCommandStopper myCvsCommandStopper;
-  private static final int INITIAL_BUFFER_SIZE = 128 * 1024;
   private final byte[] myBuffer = new byte[INITIAL_BUFFER_SIZE];
   private final byte[] myReadBuffer = new byte[INITIAL_BUFFER_SIZE];
   private int myFirstIndex = 0;
@@ -46,10 +34,7 @@ public class ReadThread implements Runnable {
   private IOException myException;
   private final InputStream myInputStream;
   private final Semaphore myStarted = new Semaphore();
-  public static final int TIMEOUT = 3000;
-  public static final int END_OF_STREAM = -1;
   private boolean myIsClosed = false;
-  @NonNls private static final String NAME = "CvsReadThread";
 
   public ReadThread(InputStream inputStream, ICvsCommandStopper cvsCommandStopper) {
     myInputStream = inputStream;
@@ -66,21 +51,12 @@ public class ReadThread implements Runnable {
   }
 
   public String toString() {
-    @NonNls StringBuffer buffer = new StringBuffer();
-    buffer.append(super.toString());
-    buffer.append(", atEnd: ");
-    buffer.append(myAtEndOfStream);
-    buffer.append(", firstIndex: ");
-    buffer.append(myFirstIndex);
-    buffer.append(", lastIndex: ");
-    buffer.append(myLastIndex);
-    buffer.append(", exception: ");
-    buffer.append(myException);
-    buffer.append(", closed: ");
-    buffer.append(myIsClosed);
-    return buffer.toString();
+    return super.toString() +
+           ", atEnd: " + myAtEndOfStream + ", firstIndex: " + myFirstIndex + ", lastIndex: " + myLastIndex +
+           ", exception: " + myException + ", closed: " + myIsClosed;
   }
 
+  @Override
   public void run() {
     Thread.currentThread().setPriority(Thread.MAX_PRIORITY);
     try {
@@ -122,7 +98,7 @@ public class ReadThread implements Runnable {
     return internalRead();
   }
 
-  public synchronized int read(byte b[], int off, int len) throws IOException {
+  public synchronized int read(byte[] b, int off, int len) throws IOException {
     int result = waitForAvailableBytes();
     if (result == END_OF_STREAM) return END_OF_STREAM;
     return internalRead(b, off, len);
@@ -172,7 +148,7 @@ public class ReadThread implements Runnable {
   private synchronized void detectEndAndNotify() {
     if (!myAtEndOfStream) {
       myAtEndOfStream = true;
-      notify();      
+      notify();
     }
     executionCompleted();
   }
@@ -193,7 +169,7 @@ public class ReadThread implements Runnable {
     myStarted.up();
     if (myAtEndOfStream || (myException != null)) {
       return;
-    }    
+    }
     wait();
   }
 
@@ -206,7 +182,7 @@ public class ReadThread implements Runnable {
     return myLastIndex - myFirstIndex;
   }
 
-  public synchronized void close() throws IOException {
+  public synchronized void close() {
     myIsClosed = true;
     if (myAtEndOfStream) return;
     myAtEndOfStream = true;
@@ -224,7 +200,7 @@ public class ReadThread implements Runnable {
     }
   }
 
-  private synchronized int internalRead(byte b[], int off, int len) {
+  private synchronized int internalRead(byte[] b, int off, int len) {
     int result = Math.min(len, size());
     System.arraycopy(myBuffer, myFirstIndex, b, off, result);
     myFirstIndex += result;
@@ -236,7 +212,4 @@ public class ReadThread implements Runnable {
     myFirstIndex += result;
     return result;
   }
-
-
 }
-

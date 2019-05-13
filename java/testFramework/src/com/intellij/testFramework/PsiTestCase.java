@@ -1,23 +1,9 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testFramework;
 
-import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.application.ex.PathManagerEx;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
@@ -26,22 +12,23 @@ import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.util.DefaultJDOMExternalizer;
-import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.util.IncorrectOperationException;
-import org.jdom.Document;
+import com.intellij.util.JdomKt;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.List;
+import java.nio.file.Paths;
 import java.util.StringTokenizer;
 
 /**
@@ -62,44 +49,61 @@ public abstract class PsiTestCase extends ModuleTestCase {
 
   @Override
   protected void tearDown() throws Exception {
-    myPsiManager = null;
-    myFile = null;
-    myTestDataBefore = null;
-    myTestDataAfter = null;
-    super.tearDown();
+    try {
+      myPsiManager = null;
+      myFile = null;
+      myTestDataBefore = null;
+      myTestDataAfter = null;
+    }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
+    finally {
+      super.tearDown();
+    }
   }
 
-  protected PsiFile createDummyFile(String fileName, String text) throws IncorrectOperationException {
+  @NotNull
+  protected PsiFile createDummyFile(@NotNull String fileName, @NotNull String text) throws IncorrectOperationException {
     FileType type = FileTypeRegistry.getInstance().getFileTypeByFileName(fileName);
     return PsiFileFactory.getInstance(myProject).createFileFromText(fileName, type, text);
   }
 
-  protected PsiFile createFile(@NonNls String fileName, String text) throws Exception {
+  @NotNull
+  protected PsiFile createFile(@NonNls @NotNull String fileName, @NotNull String text) throws Exception {
     return createFile(myModule, fileName, text);
   }
-  protected PsiFile createFile(Module module, String fileName, String text) throws Exception {
-    File dir = createTempDirectory();
-    VirtualFile vDir = LocalFileSystem.getInstance().refreshAndFindFileByPath(dir.getCanonicalPath().replace(File.separatorChar, '/'));
 
+  @NotNull
+  protected PsiFile createFile(@NotNull Module module, @NotNull String fileName, @NotNull String text) throws Exception {
+    VirtualFile vDir = createTempVfsDirectory();
     return createFile(module, vDir, fileName, text);
   }
 
-  protected PsiFile createFile(final Module module, final VirtualFile vDir, final String fileName, final String text) throws IOException {
-    return new WriteAction<PsiFile>() {
-      @Override
-      protected void run(Result<PsiFile> result) throws Throwable {
-        if (!ModuleRootManager.getInstance(module).getFileIndex().isInSourceContent(vDir)) {
-          addSourceContentToRoots(module, vDir);
-        }
+  @NotNull
+  protected VirtualFile createTempVfsDirectory() throws IOException {
+    File dir = createTempDirectory();
+    VirtualFile vDir = LocalFileSystem.getInstance().refreshAndFindFileByPath(dir.getCanonicalPath().replace(File.separatorChar, '/'));
 
-        final VirtualFile vFile = vDir.createChildData(vDir, fileName);
-        VfsUtil.saveText(vFile, text);
-        assertNotNull(vFile);
-        final PsiFile file = myPsiManager.findFile(vFile);
-        assertNotNull(file);
-        result.setResult(file);
+    assert vDir != null : dir;
+    return vDir;
+  }
+
+  @NotNull
+  protected PsiFile createFile(@NotNull final Module module, @NotNull final VirtualFile vDir, @NotNull final String fileName, @NotNull final String text)
+    throws IOException {
+    return WriteAction.computeAndWait(() -> {
+      if (!ModuleRootManager.getInstance(module).getFileIndex().isInSourceContent(vDir)) {
+        addSourceContentToRoots(module, vDir);
       }
-    }.execute().getResultObject();
+
+      final VirtualFile vFile = vDir.createChildData(vDir, fileName);
+      VfsUtil.saveText(vFile, text);
+      assertNotNull(vFile);
+      final PsiFile file = myPsiManager.findFile(vFile);
+      assertNotNull(file);
+      return file;
+    });
   }
 
   protected void addSourceContentToRoots(final Module module, final VirtualFile vDir) {
@@ -107,10 +111,9 @@ public abstract class PsiTestCase extends ModuleTestCase {
   }
 
   protected PsiElement configureByFileWithMarker(String filePath, String marker) throws Exception{
-    final VirtualFile vFile = LocalFileSystem.getInstance().findFileByPath(filePath.replace(File.separatorChar, '/'));
-    assertNotNull("file " + filePath + " not found", vFile);
+    final VirtualFile vFile = VfsTestUtil.findFileByCaseSensitivePath(filePath);
 
-    String fileText = VfsUtil.loadText(vFile);
+    String fileText = VfsUtilCore.loadText(vFile);
     fileText = StringUtil.convertLineSeparators(fileText);
 
     int offset = fileText.indexOf(marker);
@@ -122,7 +125,7 @@ public abstract class PsiTestCase extends ModuleTestCase {
     return myFile.findElementAt(offset);
   }
 
-  protected void configure(String path, String dataName) throws Exception {
+  protected void configure(@NotNull String path, String dataName) throws Exception {
     myDataRoot = getTestDataPath() + path;
 
     myTestDataBefore = loadData(dataName);
@@ -144,17 +147,10 @@ public abstract class PsiTestCase extends ModuleTestCase {
   }
 
   private PsiTestData loadData(String dataName) throws Exception {
-    Document document = JDOMUtil.loadDocument(new File(myDataRoot + "/" + "data.xml"));
-
     PsiTestData data = createData();
-    Element documentElement = document.getRootElement();
-
-    final List nodes = documentElement.getChildren("data");
-
-    for (Object node1 : nodes) {
-      Element node = (Element)node1;
+    Element documentElement = JdomKt.loadElement(Paths.get(myDataRoot, "data.xml"));
+    for (Element node : documentElement.getChildren("data")) {
       String value = node.getAttributeValue("name");
-
       if (value.equals(dataName)) {
         DefaultJDOMExternalizer.readExternal(data, node);
         data.loadText(myDataRoot);
@@ -227,15 +223,15 @@ public abstract class PsiTestCase extends ModuleTestCase {
     return myFile;
   }
 
-  public com.intellij.openapi.editor.Document getDocument(PsiFile file) {
+  public Document getDocument(PsiFile file) {
     return PsiDocumentManager.getInstance(getProject()).getDocument(file);
   }
 
-  public com.intellij.openapi.editor.Document getDocument(VirtualFile file) {
+  public Document getDocument(VirtualFile file) {
     return FileDocumentManager.getInstance().getDocument(file);
   }
 
-  public void commitDocument(com.intellij.openapi.editor.Document document) {
+  public void commitDocument(Document document) {
     PsiDocumentManager.getInstance(getProject()).commitDocument(document);
   }
 }

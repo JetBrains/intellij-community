@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2009 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2013 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,17 +19,14 @@ import com.intellij.psi.*;
 import com.intellij.util.ui.CheckBox;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.InspectionGadgetsFix;
-import com.siyeh.ig.fixes.RenameFix;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.JComponent;
-import java.util.Arrays;
-import java.util.Collection;
+import javax.swing.*;
 
-public class LocalVariableNamingConventionInspection
-  extends ConventionInspection {
+public class LocalVariableNamingConventionInspection extends ConventionInspection {
 
+  private static final int DEFAULT_MIN_LENGTH = 1;
+  private static final int DEFAULT_MAX_LENGTH = 20;
   /**
    * @noinspection PublicField
    */
@@ -39,43 +36,24 @@ public class LocalVariableNamingConventionInspection
    */
   public boolean m_ignoreCatchParameters = false;
 
-  private static final int DEFAULT_MIN_LENGTH = 1;
-  private static final int DEFAULT_MAX_LENGTH = 20;
+  @NotNull
+  @Override
+  public JComponent[] createExtraOptions() {
+    return new JComponent[] {
+      new CheckBox(InspectionGadgetsBundle.message("local.variable.naming.convention.ignore.option"), this, "m_ignoreForLoopParameters"),
+      new CheckBox(InspectionGadgetsBundle.message("local.variable.naming.convention.ignore.catch.option"), this, "m_ignoreCatchParameters")
+    };
+  }
 
   @Override
   @NotNull
   public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "local.variable.naming.convention.display.name");
+    return InspectionGadgetsBundle.message("local.variable.naming.convention.display.name");
   }
 
   @Override
-  @NotNull
-  public String buildErrorString(Object... infos) {
-    final String varName = (String)infos[0];
-    if (varName.length() < getMinLength()) {
-      return InspectionGadgetsBundle.message(
-        "local.variable.naming.convention.problem.descriptor.short");
-    }
-    else if (varName.length() > getMaxLength()) {
-      return InspectionGadgetsBundle.message(
-        "local.variable.naming.convention.problem.descriptor.long");
-    }
-    else {
-      return InspectionGadgetsBundle.message(
-        "local.variable.naming.convention.problem.descriptor.regex.mismatch",
-        getRegex());
-    }
-  }
-
-  @Override
-  protected InspectionGadgetsFix buildFix(Object... infos) {
-    return new RenameFix();
-  }
-
-  @Override
-  protected boolean buildQuickFixesOnlyForOnTheFlyErrors() {
-    return true;
+  protected String getElementDescription() {
+    return InspectionGadgetsBundle.message("local.variable.naming.convention.element.description");
   }
 
   @Override
@@ -101,18 +79,15 @@ public class LocalVariableNamingConventionInspection
   private class NamingConventionsVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitLocalVariable(
-      @NotNull PsiLocalVariable variable) {
+    public void visitLocalVariable(@NotNull PsiLocalVariable variable) {
       super.visitLocalVariable(variable);
       if (m_ignoreForLoopParameters) {
         final PsiElement parent = variable.getParent();
         if (parent != null) {
           final PsiElement grandparent = parent.getParent();
           if (grandparent instanceof PsiForStatement) {
-            final PsiForStatement forLoop =
-              (PsiForStatement)grandparent;
-            final PsiStatement initialization =
-              forLoop.getInitialization();
+            final PsiForStatement forLoop = (PsiForStatement)grandparent;
+            final PsiStatement initialization = forLoop.getInitialization();
             if (parent.equals(initialization)) {
               return;
             }
@@ -132,10 +107,8 @@ public class LocalVariableNamingConventionInspection
     @Override
     public void visitParameter(@NotNull PsiParameter variable) {
       final PsiElement scope = variable.getDeclarationScope();
-      final boolean isCatchParameter =
-        scope instanceof PsiCatchSection;
-      final boolean isForeachParameter =
-        scope instanceof PsiForeachStatement;
+      final boolean isCatchParameter = scope instanceof PsiCatchSection;
+      final boolean isForeachParameter = scope instanceof PsiForeachStatement;
       if (!isCatchParameter && !isForeachParameter) {
         return;
       }
@@ -154,16 +127,5 @@ public class LocalVariableNamingConventionInspection
       }
       registerVariableError(variable, name);
     }
-  }
-
-  @Override
-  public Collection<? extends JComponent> createExtraOptions() {
-    return Arrays.asList(
-      new CheckBox(InspectionGadgetsBundle.message(
-        "local.variable.naming.convention.ignore.option"),
-                   this, "m_ignoreForLoopParameters"),
-      new CheckBox(InspectionGadgetsBundle.message(
-        "local.variable.naming.convention.ignore.catch.option"),
-                   this, "m_ignoreCatchParameters"));
   }
 }

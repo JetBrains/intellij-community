@@ -1,5 +1,17 @@
 /*
- * Copyright (c) 2000-2006 JetBrains s.r.o. All Rights Reserved.
+ * Copyright 2000-2014 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 package com.intellij.util.xml;
 
@@ -9,8 +21,8 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
-import com.intellij.util.xml.reflect.DomGenericInfo;
 import com.intellij.util.xml.reflect.AbstractDomChildrenDescription;
+import com.intellij.util.xml.reflect.DomGenericInfo;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -21,11 +33,11 @@ import java.lang.reflect.Type;
 /**
  * @author peter
  */
-public class MockDomFileElement extends UserDataHolderBase implements DomFileElement<DomElement>{
+public class MockDomFileElement extends UserDataHolderBase implements DomFileElement<DomElement> {
   private long myModCount = 0;
-  private DomFileDescription myFileDescription;
+  private DomFileDescription<DomElement> myFileDescription;
 
-  public void setFileDescription(final DomFileDescription fileDescription) {
+  public void setFileDescription(final DomFileDescription<DomElement> fileDescription) {
     myFileDescription = fileDescription;
   }
 
@@ -52,14 +64,15 @@ public class MockDomFileElement extends UserDataHolderBase implements DomFileEle
     throw new UnsupportedOperationException("Method getRootElement is not yet implemented in " + getClass().getName());
   }
 
+  @NotNull
   @Override
-  public Class getRootElementClass() {
+  public Class<DomElement> getRootElementClass() {
     throw new UnsupportedOperationException("Method getRootElementType is not yet implemented in " + getClass().getName());
   }
 
   @Override
   @NotNull
-  public DomFileDescription getFileDescription() {
+  public DomFileDescription<DomElement> getFileDescription() {
     return myFileDescription;
   }
 
@@ -153,6 +166,7 @@ public class MockDomFileElement extends UserDataHolderBase implements DomFileEle
     throw new UnsupportedOperationException("Method getManager is not yet implemented in " + getClass().getName());
   }
 
+  @NotNull
   @Override
   public Type getDomElementType() {
     throw new UnsupportedOperationException("Method getDomElementType is not yet implemented in " + getClass().getName());
@@ -164,6 +178,7 @@ public class MockDomFileElement extends UserDataHolderBase implements DomFileEle
     throw new UnsupportedOperationException("Method getChildDescription is not yet implemented in " + getClass().getName());
   }
 
+  @NotNull
   @Override
   public DomNameStrategy getNameStrategy() {
     throw new UnsupportedOperationException("Method getNameStrategy is not yet implemented in " + getClass().getName());

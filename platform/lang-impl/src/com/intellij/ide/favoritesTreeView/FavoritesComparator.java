@@ -1,8 +1,4 @@
 
-/*
- * User: anna
- * Date: 05-Apr-2007
- */
 package com.intellij.ide.favoritesTreeView;
 
 import com.intellij.ide.projectView.ProjectView;
@@ -17,6 +13,7 @@ public class FavoritesComparator extends GroupByTypeComparator {
     super(view, id);
   }
 
+  @Override
   public int compare(NodeDescriptor d1, NodeDescriptor d2) {
     if (d1 instanceof FavoritesTreeNodeDescriptor && d2 instanceof FavoritesTreeNodeDescriptor) {
       d1 = ((FavoritesTreeNodeDescriptor)d1).getElement();

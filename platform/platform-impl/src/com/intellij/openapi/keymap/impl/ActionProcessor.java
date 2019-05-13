@@ -22,7 +22,7 @@ import java.awt.event.InputEvent;
 
 public interface ActionProcessor {
   @NotNull
-  AnActionEvent createEvent(InputEvent inputEvent, @NotNull DataContext context, @NotNull String place, @NotNull Presentation presentation, ActionManager manager);
+  AnActionEvent createEvent(InputEvent inputEvent, @NotNull DataContext context, @NotNull String place, @NotNull Presentation presentation, @NotNull ActionManager manager);
 
   void onUpdatePassed(final InputEvent inputEvent, @NotNull AnAction action, @NotNull AnActionEvent actionEvent);
 

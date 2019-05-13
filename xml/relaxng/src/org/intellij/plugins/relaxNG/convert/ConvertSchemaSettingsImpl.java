@@ -16,6 +16,7 @@
 
 package org.intellij.plugins.relaxNG.convert;
 
+import com.intellij.application.options.CodeStyle;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
@@ -28,9 +29,8 @@ import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.encoding.EncodingManager;
+import com.intellij.openapi.vfs.encoding.EncodingProjectManager;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.ui.DocumentAdapter;
 import org.intellij.plugins.relaxNG.compact.RncFileType;
 import org.jetbrains.annotations.NotNull;
@@ -45,11 +45,6 @@ import java.io.File;
 import java.nio.charset.Charset;
 import java.util.*;
 
-/*
-* Created by IntelliJ IDEA.
-* User: sweinreuter
-* Date: 16.11.2007
-*/
 public class ConvertSchemaSettingsImpl implements ConvertSchemaSettings {
   static final String OUTPUT_TYPE = "output-type";
   static final String OUTPUT_PATH = "output-path";
@@ -78,7 +73,7 @@ public class ConvertSchemaSettingsImpl implements ConvertSchemaSettings {
   public ConvertSchemaSettingsImpl(Project project, @NotNull SchemaType inputType, VirtualFile firstFile) {
     myProject = project;
     myInputType = inputType;
-    
+
     final FileType type;
     switch (inputType) {
       case RNG:
@@ -111,7 +106,7 @@ public class ConvertSchemaSettingsImpl implements ConvertSchemaSettings {
     }
 
     final Charset[] charsets = CharsetToolkit.getAvailableCharsets();
-    final List<String> suggestions = new ArrayList<String>(charsets.length);
+    final List<String> suggestions = new ArrayList<>(charsets.length);
     for (Charset charset : charsets) {
       if (charset.canEncode()) {
         String name = charset.name();
@@ -120,18 +115,14 @@ public class ConvertSchemaSettingsImpl implements ConvertSchemaSettings {
     }
 
     myEncoding.setModel(new DefaultComboBoxModel(suggestions.toArray()));
-    final Charset charset = EncodingManager.getInstance().getDefaultCharset();
-    if (charset == null) {
-      myEncoding.setSelectedItem(System.getProperty("file.encoding", "UTF-8"));
-    } else {
-      myEncoding.setSelectedItem(charset.name());
-    }
+    final Charset charset = EncodingProjectManager.getInstance(project).getDefaultCharset();
+    myEncoding.setSelectedItem(charset.name());
 
-    final CodeStyleSettings styleSettings = CodeStyleSettingsManager.getSettings(project);
+    final CodeStyleSettings styleSettings = CodeStyle.getSettings(project);
     final int indent = styleSettings.getIndentSize(type);
     myIndent.setText(String.valueOf(indent));
 
-    myLineLength.setText(String.valueOf(styleSettings.RIGHT_MARGIN));
+    myLineLength.setText(String.valueOf(styleSettings.getDefaultRightMargin()));
     final SchemaType outputType = getOutputType();
     myLineLength.setEnabled(outputType == SchemaType.DTD || outputType == SchemaType.RNC);
 
@@ -144,13 +135,15 @@ public class ConvertSchemaSettingsImpl implements ConvertSchemaSettings {
 
     final JTextField tf = myOutputDestination.getTextField();
     tf.getDocument().addDocumentListener(new DocumentAdapter() {
-      protected void textChanged(DocumentEvent e) {
+      @Override
+      protected void textChanged(@NotNull DocumentEvent e) {
         myPropertyChangeSupport.firePropertyChange(OUTPUT_PATH, null, getOutputDestination());
       }
     });
     tf.setText(firstFile.getParent().getPath().replace('/', File.separatorChar));
 
     final ItemListener listener = new ItemListener() {
+      @Override
       public void itemStateChanged(ItemEvent e) {
         if (e.getStateChange() == ItemEvent.SELECTED) {
           final SchemaType type = getOutputType();
@@ -169,6 +162,7 @@ public class ConvertSchemaSettingsImpl implements ConvertSchemaSettings {
     }
   }
 
+  @Override
   @NotNull
   public SchemaType getOutputType() {
     if (myOutputRng.isSelected()) {
@@ -183,10 +177,12 @@ public class ConvertSchemaSettingsImpl implements ConvertSchemaSettings {
     }
   }
 
+  @Override
   public String getOutputEncoding() {
     return (String)myEncoding.getSelectedItem();
   }
 
+  @Override
   public int getIndent() {
     return parseInt(myIndent.getText().trim());
   }
@@ -199,14 +195,17 @@ public class ConvertSchemaSettingsImpl implements ConvertSchemaSettings {
     }
   }
 
+  @Override
   public int getLineLength() {
     return parseInt(myLineLength.getText());
   }
-  
+
+  @Override
   public String getOutputDestination() {
     return myOutputDestination.getText();
   }
 
+  @Override
   public void addAdvancedSettings(List<String> inputParams, List<String> outputParams) {
     setParams(myInputOptions, inputParams);
 
@@ -245,8 +244,7 @@ public class ConvertSchemaSettingsImpl implements ConvertSchemaSettings {
     final AdvancedOptionsDialog dialog = new AdvancedOptionsDialog(myProject, myInputType, getOutputType());
     dialog.setOptions(myInputOptions, myOutputOptions);
 
-    dialog.show();
-    if (dialog.isOK()) {
+    if (dialog.showAndGet()) {
       myInputOptions = dialog.getInputOptions();
       myOutputOptions = dialog.getOutputOptions();
     }

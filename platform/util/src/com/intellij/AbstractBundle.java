@@ -1,33 +1,22 @@
-/*
- * Copyright 2000-2011 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij;
 
-import com.intellij.util.containers.ConcurrentHashMap;
-import com.intellij.util.containers.ConcurrentWeakFactoryMap;
-import com.intellij.util.containers.FactoryMap;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.util.Function;
+import com.intellij.util.containers.ConcurrentFactoryMap;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.lang.ref.Reference;
 import java.lang.ref.SoftReference;
 import java.util.Locale;
+import java.util.Map;
+import java.util.MissingResourceException;
 import java.util.ResourceBundle;
 
 /**
- * Base class for particular scoped bundles (e.g. <code>'vcs'</code> bundles, <code>'aop'</code> bundles etc).
+ * Base class for particular scoped bundles (e.g. {@code 'vcs'} bundles, {@code 'aop'} bundles etc).
  * <p/>
  * Usage pattern:
  * <pre>
@@ -41,9 +30,9 @@ import java.util.ResourceBundle;
  * </pre>
  *
  * @author Denis Zhdanov
- * @since 8/1/11 2:37 PM
  */
 public abstract class AbstractBundle {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.AbstractBundle");
   private Reference<ResourceBundle> myBundle;
   @NonNls private final String myPathToBundle;
 
@@ -51,13 +40,13 @@ public abstract class AbstractBundle {
     myPathToBundle = pathToBundle;
   }
 
-  public String getMessage(@NotNull String key, Object... params) {
+  @NotNull
+  public String getMessage(@NotNull String key, @NotNull Object... params) {
     return CommonBundle.message(getBundle(), key, params);
   }
 
   private ResourceBundle getBundle() {
-    ResourceBundle bundle = null;
-    if (myBundle != null) bundle = myBundle.get();
+    ResourceBundle bundle = com.intellij.reference.SoftReference.dereference(myBundle);
     if (bundle == null) {
       bundle = getResourceBundle(myPathToBundle, getClass().getClassLoader());
       myBundle = new SoftReference<ResourceBundle>(bundle);
@@ -65,21 +54,26 @@ public abstract class AbstractBundle {
     return bundle;
   }
 
-  @SuppressWarnings("MismatchedQueryAndUpdateOfCollection")
-  private static final FactoryMap<ClassLoader, ConcurrentHashMap<String, SoftReference<ResourceBundle>>> ourCache =
-    new ConcurrentWeakFactoryMap<ClassLoader, ConcurrentHashMap<String, SoftReference<ResourceBundle>>>() {
+  private static final Map<ClassLoader, Map<String, ResourceBundle>> ourCache =
+    ConcurrentFactoryMap.createWeakMap(new Function<ClassLoader, Map<String, ResourceBundle>>() {
       @Override
-      protected ConcurrentHashMap<String, SoftReference<ResourceBundle>> create(ClassLoader key) {
-        return new ConcurrentHashMap<String, SoftReference<ResourceBundle>>();
-      }
-    };
+      public Map<String, ResourceBundle> fun(ClassLoader k) {return ContainerUtil.createConcurrentSoftValueMap();}
+    });
 
   public static ResourceBundle getResourceBundle(@NotNull String pathToBundle, @NotNull ClassLoader loader) {
-    ConcurrentHashMap<String, SoftReference<ResourceBundle>> map = ourCache.get(loader);
-    SoftReference<ResourceBundle> reference = map.get(pathToBundle);
-    ResourceBundle result = reference == null ? null : reference.get();
+    Map<String, ResourceBundle> map = ourCache.get(loader);
+    ResourceBundle result = map.get(pathToBundle);
     if (result == null) {
-      map.put(pathToBundle, new SoftReference<ResourceBundle>(result = ResourceBundle.getBundle(pathToBundle, Locale.getDefault(), loader)));
+      try {
+        ResourceBundle.Control control = ResourceBundle.Control.getControl(ResourceBundle.Control.FORMAT_PROPERTIES);
+        result = ResourceBundle.getBundle(pathToBundle, Locale.getDefault(), loader, control);
+      }
+      catch (MissingResourceException e) {
+        LOG.info("Cannot load resource bundle from *.properties file, falling back to slow class loading: " + pathToBundle);
+        ResourceBundle.clearCache(loader);
+        result = ResourceBundle.getBundle(pathToBundle, Locale.getDefault(), loader);
+      }
+      map.put(pathToBundle, result);
     }
     return result;
   }

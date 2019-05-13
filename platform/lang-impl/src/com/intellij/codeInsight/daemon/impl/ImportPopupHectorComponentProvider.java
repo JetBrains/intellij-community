@@ -14,10 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * User: anna
- * Date: 31-Jan-2008
- */
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
@@ -45,7 +41,7 @@ public class ImportPopupHectorComponentProvider implements HectorComponentPanels
     final VirtualFile virtualFile = file.getVirtualFile();
     assert virtualFile != null;
     final boolean notInLibrary =
-      !fileIndex.isInLibrarySource(virtualFile) && !fileIndex.isInLibraryClasses(virtualFile) || fileIndex.isInContent(virtualFile);
+      !fileIndex.isInLibrary(virtualFile) || fileIndex.isInContent(virtualFile);
 
     return new HectorComponentPanel() {
       private JCheckBox myImportPopupCheckBox = new JCheckBox(EditorBundle.message("hector.import.popup.checkbox"));

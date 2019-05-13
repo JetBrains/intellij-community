@@ -1,0 +1,35 @@
+package pkg;
+
+public class TestClassSwitch {
+   public void testCaseOrder(int var1) {
+      switch(var1) {// 22
+      case 5:
+         System.out.println(5);// 27
+      default:
+         return;// 29
+      case 13:
+         System.out.println(13);// 24
+      }
+   }// 25
+}
+
+class 'pkg/TestClassSwitch' {
+   method 'testCaseOrder (I)V' {
+      1      4
+      1c      10
+      1f      10
+      21      10
+      24      12
+      25      6
+      28      6
+      29      6
+      2c      8
+   }
+}
+
+Lines mapping:
+22 <-> 5
+24 <-> 11
+25 <-> 13
+27 <-> 7
+29 <-> 9

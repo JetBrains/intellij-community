@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.designer.designSurface;
 
 import com.intellij.designer.DesignerBundle;
@@ -24,7 +10,7 @@ import com.intellij.designer.propertyTable.PropertyEditor;
 import com.intellij.designer.propertyTable.PropertyEditorListener;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.CustomShortcutSet;
+import com.intellij.openapi.actionSystem.CommonShortcuts;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
@@ -34,13 +20,12 @@ import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
 import com.intellij.openapi.wm.ex.LayoutFocusTraversalPolicyExt;
 import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.core.GridLayoutManager;
-import com.intellij.util.ThrowableRunnable;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.FocusEvent;
-import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.List;
@@ -54,6 +39,7 @@ public class InplaceEditingLayer extends JComponent {
   private static final Logger LOG = Logger.getInstance("#com.intellij.designer.designSurface.InplaceEditingLayer");
 
   private final FocusWatcher myFocusWatcher = new FocusWatcher() {
+    @Override
     protected void focusLostImpl(FocusEvent e) {
       Component opposite = e.getOppositeComponent();
       if (e.isTemporary() || opposite != null && SwingUtilities.isDescendingFrom(opposite, getTopComponent())) {
@@ -61,11 +47,7 @@ public class InplaceEditingLayer extends JComponent {
         return;
       }
       // [vova] we need LaterInvocator here to prevent write-access assertions
-      ApplicationManager.getApplication().invokeLater(new Runnable() {
-        public void run() {
-          finishEditing(true);
-        }
-      }, ModalityState.NON_MODAL);
+      ApplicationManager.getApplication().invokeLater(() -> finishEditing(true), ModalityState.NON_MODAL);
     }
   };
   private final ComponentSelectionListener mySelectionListener = new ComponentSelectionListener() {
@@ -74,19 +56,19 @@ public class InplaceEditingLayer extends JComponent {
       finishEditing(true);
     }
   };
-  private PropertyEditorListener myEditorListener = new PropertyEditorListener() {
+  private final PropertyEditorListener myEditorListener = new PropertyEditorListener() {
     @Override
-    public void valueCommitted(PropertyEditor source, boolean continueEditing, boolean closeEditorOnError) {
+    public void valueCommitted(@NotNull PropertyEditor source, boolean continueEditing, boolean closeEditorOnError) {
       finishEditing(true);
     }
 
     @Override
-    public void editingCanceled(PropertyEditor source) {
+    public void editingCanceled(@NotNull PropertyEditor source) {
       finishEditing(false);
     }
 
     @Override
-    public void preferredSizeChanged(PropertyEditor source) {
+    public void preferredSizeChanged(@NotNull PropertyEditor source) {
       adjustInplaceComponentSize();
     }
   };
@@ -122,12 +104,12 @@ public class InplaceEditingLayer extends JComponent {
       myInplaceComponent.setBorder(new LineMarginBorder(5, 5, 5, 5));
       new AnAction() {
         @Override
-        public void actionPerformed(AnActionEvent e) {
+        public void actionPerformed(@NotNull AnActionEvent e) {
           finishEditing(false);
         }
-      }.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0)), myInplaceComponent);
+      }.registerCustomShortcutSet(CommonShortcuts.ESCAPE, myInplaceComponent);
 
-      myEditors = new ArrayList<PropertyEditor>();
+      myEditors = new ArrayList<>();
 
       JComponent componentToFocus = null;
       Font font = null;
@@ -186,11 +168,9 @@ public class InplaceEditingLayer extends JComponent {
       else {
         grabFocus();
         final JComponent finalComponentToFocus = componentToFocus;
-        ApplicationManager.getApplication().invokeLater(new Runnable() {
-          public void run() {
-            finalComponentToFocus.requestFocusInWindow();
-            myFocusWatcher.install(myInplaceComponent);
-          }
+        ApplicationManager.getApplication().invokeLater(() -> {
+          finalComponentToFocus.requestFocusInWindow();
+          myFocusWatcher.install(myInplaceComponent);
         });
       }
 
@@ -207,19 +187,16 @@ public class InplaceEditingLayer extends JComponent {
 
     if (myInplaceComponent != null) {
       if (commit) {
-        myDesigner.getToolProvider().execute(new ThrowableRunnable<Exception>() {
-          @Override
-          public void run() throws Exception {
-            int size = myProperties.size();
+        myDesigner.getToolProvider().execute(() -> {
+          int size = myProperties.size();
 
-            for (int i = 0; i < size; i++) {
-              Property property = myProperties.get(i);
-              Object oldValue = property.getValue(myRadComponent);
-              Object newValue = myEditors.get(i).getValue();
+          for (int i = 0; i < size; i++) {
+            Property property = myProperties.get(i);
+            Object oldValue = property.getValue(myRadComponent);
+            Object newValue = myEditors.get(i).getValue();
 
-              if (!Comparing.equal(oldValue, newValue)) {
-                property.setValue(myRadComponent, newValue);
-              }
+            if (!Comparing.equal(oldValue, newValue)) {
+              property.setValue(myRadComponent, newValue);
             }
           }
         }, DesignerBundle.message("command.set.property.value"), true);
@@ -271,6 +248,7 @@ public class InplaceEditingLayer extends JComponent {
    * and finish editing by any MOUSE_PRESSED or MOUSE_RELEASED event.
    * We are acting like yet another glass pane over the standard glass layer.
    */
+  @Override
   protected void processMouseEvent(MouseEvent e) {
     if (myInplaceComponent != null && (MouseEvent.MOUSE_PRESSED == e.getID() || MouseEvent.MOUSE_RELEASED == e.getID())) {
       finishEditing(true);

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,26 +15,22 @@
  */
 package com.intellij.application.options.codeStyle.arrangement.match;
 
-import com.intellij.application.options.codeStyle.arrangement.ArrangementConstants;
-import com.intellij.application.options.codeStyle.arrangement.ArrangementNodeDisplayManager;
 import com.intellij.application.options.codeStyle.arrangement.color.ArrangementColorsProvider;
-import com.intellij.application.options.codeStyle.arrangement.component.*;
+import com.intellij.application.options.codeStyle.arrangement.ui.ArrangementEditorAware;
+import com.intellij.application.options.codeStyle.arrangement.ui.ArrangementRepresentationAware;
 import com.intellij.application.options.codeStyle.arrangement.util.ArrangementListRowDecorator;
 import com.intellij.application.options.codeStyle.arrangement.util.IntObjectMap;
 import com.intellij.openapi.application.ApplicationBundle;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.psi.codeStyle.arrangement.match.ArrangementEntryType;
 import com.intellij.psi.codeStyle.arrangement.match.StdArrangementEntryMatcher;
 import com.intellij.psi.codeStyle.arrangement.match.StdArrangementMatchRule;
 import com.intellij.psi.codeStyle.arrangement.model.ArrangementAtomMatchCondition;
-import com.intellij.psi.codeStyle.arrangement.model.ArrangementSettingType;
-import com.intellij.psi.codeStyle.arrangement.order.ArrangementEntryOrderType;
-import com.intellij.psi.codeStyle.arrangement.settings.ArrangementStandardSettingsAware;
+import com.intellij.psi.codeStyle.arrangement.std.ArrangementStandardSettingsManager;
+import com.intellij.psi.codeStyle.arrangement.std.ArrangementUiComponent;
+import com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.ui.AbstractTableCellEditor;
 import gnu.trove.TIntArrayList;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
@@ -46,41 +42,36 @@ import javax.swing.table.TableCellRenderer;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
 
 /**
  * @author Denis Zhdanov
- * @since 10/31/12 1:23 PM
  */
 public class ArrangementMatchingRulesControl extends JBTable {
-
-  @NotNull private static final Logger LOG            = Logger.getInstance("#" + ArrangementMatchingRulesControl.class.getName());
   @NotNull private static final JLabel EMPTY_RENDERER = new JLabel(ApplicationBundle.message("arrangement.text.empty.rule"));
 
-  @NotNull private final IntObjectMap<ArrangementListRowDecorator> myComponents   = new IntObjectMap<ArrangementListRowDecorator>();
-  @NotNull private final TIntArrayList                             mySelectedRows = new TIntArrayList();
+  @NotNull protected final IntObjectMap<ArrangementListRowDecorator> myComponents   = new IntObjectMap<>();
+  @NotNull private final TIntArrayList mySelectedRows = new TIntArrayList();
 
   @NotNull private final ArrangementMatchNodeComponentFactory myFactory;
-  @NotNull private final ArrangementMatchingRuleEditor        myEditor;
-  @NotNull private final RepresentationCallback               myRepresentationCallback;
-  @NotNull private final MyRenderer                           myRenderer;
+  @NotNull protected ArrangementMatchingRuleEditor        myEditor;
+  @NotNull private final RepresentationCallback           myRepresentationCallback;
+  @NotNull private final MatchingRulesRendererBase        myRenderer;
+
+  private ArrangementMatchingRulesValidator myValidator;
 
   private final int myMinRowHeight;
   private int myRowUnderMouse = -1;
   private int myEditorRow     = -1;
   private boolean mySkipSelectionChange;
 
-  public ArrangementMatchingRulesControl(@NotNull ArrangementNodeDisplayManager displayManager,
+  public ArrangementMatchingRulesControl(@NotNull ArrangementStandardSettingsManager settingsManager,
                                          @NotNull ArrangementColorsProvider colorsProvider,
-                                         @NotNull ArrangementStandardSettingsAware settingsFilter,
                                          @NotNull RepresentationCallback callback)
   {
     super(new ArrangementMatchingRulesModel());
     myRepresentationCallback = callback;
-    myFactory = new ArrangementMatchNodeComponentFactory(displayManager, colorsProvider, this);
-    myRenderer = new MyRenderer();
+    myFactory = new ArrangementMatchNodeComponentFactory(settingsManager, colorsProvider, this);
+    myRenderer = createRender();
     setDefaultRenderer(Object.class, myRenderer);
     getColumnModel().getColumn(0).setCellEditor(new MyEditor());
     setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
@@ -89,12 +80,12 @@ public class ArrangementMatchingRulesControl extends JBTable {
     setSurrendersFocusOnKeystroke(true);
     putClientProperty("terminateEditOnFocusLost", Boolean.TRUE);
 
-    ArrangementAtomMatchCondition condition = new ArrangementAtomMatchCondition(ArrangementSettingType.TYPE, ArrangementEntryType.CLASS);
+    ArrangementAtomMatchCondition condition = new ArrangementAtomMatchCondition(StdArrangementTokens.EntryType.CLASS);
     StdArrangementMatchRule rule = new StdArrangementMatchRule(new StdArrangementEntryMatcher(condition));
-    ArrangementMatchConditionComponent component = myFactory.getComponent(condition, rule, true);
+    ArrangementUiComponent component = myFactory.getComponent(condition, rule, true);
     myMinRowHeight = new ArrangementListRowDecorator(component, this).getPreferredSize().height;
 
-    myEditor = new ArrangementMatchingRuleEditor(settingsFilter, colorsProvider, displayManager, this);
+    myEditor = new ArrangementMatchingRuleEditor(settingsManager, colorsProvider, this);
     addMouseMotionListener(new MouseAdapter() {
       @Override
       public void mouseMoved(MouseEvent e) {
@@ -108,34 +99,31 @@ public class ArrangementMatchingRulesControl extends JBTable {
       }
     });
     getModel().addTableModelListener(new TableModelListener() {
-      @Override public void tableChanged(TableModelEvent e) { onTableChange(e); }
+      @Override
+      public void tableChanged(TableModelEvent e) { onTableChange(e); }
     });
+  }
+
+  protected MatchingRulesRendererBase createRender() {
+    return new MatchingRulesRendererBase();
+  }
+
+  @NotNull
+  protected ArrangementMatchingRulesValidator createValidator() {
+    return new ArrangementMatchingRulesValidator(getModel());
+  }
+
+  private ArrangementMatchingRulesValidator getValidator() {
+    if (myValidator == null) {
+      myValidator = createValidator();
+    }
+    return myValidator;
   }
 
   @NotNull
   @Override
   public ArrangementMatchingRulesModel getModel() {
     return (ArrangementMatchingRulesModel)super.getModel();
-  }
-
-  public void setRules(@Nullable List<StdArrangementMatchRule> rules) {
-    myComponents.clear();
-    getModel().clear();
-
-    if (rules == null) {
-      return;
-    }
-
-    for (StdArrangementMatchRule rule : rules) {
-      getModel().add(rule);
-    }
-
-    if (ArrangementConstants.LOG_RULE_MODIFICATION) {
-      LOG.info("Arrangement matching rules list is refreshed. Given rules:");
-      for (StdArrangementMatchRule rule : rules) {
-        LOG.info("  " + rule.toString());
-      }
-    }
   }
 
   @Override
@@ -145,10 +133,27 @@ public class ArrangementMatchingRulesControl extends JBTable {
       case MouseEvent.MOUSE_ENTERED: onMouseEntered(e); break;
       case MouseEvent.MOUSE_EXITED: onMouseExited(); break;
       case MouseEvent.MOUSE_RELEASED: onMouseReleased(e); break;
+      case MouseEvent.MOUSE_CLICKED: onMouseClicked(e); break;
     }
     if (!e.isConsumed()) {
       super.processMouseEvent(e);
     }
+  }
+
+  private void onMouseClicked(@NotNull MouseEvent e) {
+    final int count = e.getClickCount();
+    if (count != 2) {
+      return;
+    }
+
+    final TIntArrayList rows = getSelectedModelRows();
+    if (rows.size() != 1) {
+      return;
+    }
+
+    final int row = rows.get(0);
+    showEditor(row);
+    scrollRowToVisible(row);
   }
 
   private void onMouseMoved(@NotNull MouseEvent e) {
@@ -156,7 +161,7 @@ public class ArrangementMatchingRulesControl extends JBTable {
     if (i != myRowUnderMouse) {
       onMouseExited();
     }
-    
+
     if (i < 0) {
       return;
     }
@@ -183,8 +188,8 @@ public class ArrangementMatchingRulesControl extends JBTable {
     int width = bounds.width;
     repaint(x, location.y, width, bounds.height);
   }
-  
-  
+
+
   private void onMouseReleased(@NotNull MouseEvent e) {
     int i = rowAtPoint(e.getPoint());
     if (i < 0) {
@@ -195,12 +200,12 @@ public class ArrangementMatchingRulesControl extends JBTable {
     if (decorator != null) {
       decorator.onMouseRelease(e);
     }
-    
+
     if (!e.isConsumed() && myEditorRow > 0 && myEditorRow == i + 1) {
       hideEditor();
-    }    
+    }
   }
-  
+
   private void onMouseExited() {
     if (myRowUnderMouse < 0) {
       return;
@@ -222,7 +227,7 @@ public class ArrangementMatchingRulesControl extends JBTable {
       repaintRows(myRowUnderMouse, myRowUnderMouse, false);
     }
   }
-  
+
   public void runOperationIgnoreSelectionChange(@NotNull Runnable task) {
     mySkipSelectionChange = true;
     try {
@@ -236,12 +241,19 @@ public class ArrangementMatchingRulesControl extends JBTable {
       refreshEditor();
     }
   }
-  
+
   private void onSelectionChange(@NotNull ListSelectionEvent e) {
     if (mySkipSelectionChange || e.getValueIsAdjusting()) {
       return;
     }
     refreshEditor();
+  }
+
+  public void removeRow(int rowIndex) {
+    if (rowIndex < myEditorRow) {
+      hideEditor();
+    }
+    getModel().removeRow(rowIndex);
   }
 
   public void refreshEditor() {
@@ -288,7 +300,7 @@ public class ArrangementMatchingRulesControl extends JBTable {
         editor.stopCellEditing();
       }
     }
-    
+
     mySkipSelectionChange = true;
     try {
       ArrangementMatchingRulesModel model = getModel();
@@ -329,6 +341,25 @@ public class ArrangementMatchingRulesControl extends JBTable {
   }
 
   public void showEditor(int rowToEdit) {
+    showEditor(myEditor, rowToEdit);
+  }
+
+  public void scrollRowToVisible(int row) {
+    final Rectangle rect = getCellRect(row, 0, false);
+    if (row != getEditingRow() - 1) {
+      scrollRectToVisible(rect);
+    }
+    else {
+      final Rectangle editorRect = getCellRect(row + 1, 0, false);
+      if(!rect.isEmpty() && !editorRect.isEmpty()) {
+        final int height = (int)(rect.getHeight() + editorRect.getHeight());
+        final Rectangle visibleRect = new Rectangle((int)rect.getX(), (int)rect.getY(), (int)rect.getWidth(), height);
+        scrollRectToVisible(visibleRect);
+      }
+    }
+  }
+
+  public void showEditor(@NotNull ArrangementMatchingRuleEditor editor, int rowToEdit) {
     if (myEditorRow == rowToEdit + 1) {
       return;
     }
@@ -339,17 +370,12 @@ public class ArrangementMatchingRulesControl extends JBTable {
       hideEditor();
     }
     myEditorRow = rowToEdit + 1;
-    ArrangementEditorComponent editor = new ArrangementEditorComponent(this, myEditorRow, myEditor);
-    Container parent = getParent();
-    int width = getBounds().width;
-    if (parent instanceof JViewport) {
-      width -= ((JScrollPane)parent.getParent()).getVerticalScrollBar().getWidth();
-    }
-    editor.applyAvailableWidth(width);
-    myEditor.reset(rowToEdit);
+    ArrangementEditorComponent editorComponent = new ArrangementEditorComponent(this, myEditorRow, editor);
+    editorComponent.applyAvailableWidth(getWidth());
+    editor.reset(rowToEdit);
     mySkipSelectionChange = true;
     try {
-      getModel().insertRow(myEditorRow, new Object[]{editor});
+      getModel().insertRow(myEditorRow, new Object[]{editorComponent});
     }
     finally {
       mySkipSelectionChange = false;
@@ -363,26 +389,11 @@ public class ArrangementMatchingRulesControl extends JBTable {
     // We can't just subscribe to the model modification events and update cached renderers automatically because we need to use
     // the cached renderer on atom condition removal (via click on 'close' button). The model is modified immediately then but
     // corresponding cached renderer is used for animation.
-    editor.expand();
+    editorComponent.expand();
     repaintRows(rowToEdit, getModel().getRowCount() - 1, false);
     editCellAt(myEditorRow, 0);
   }
 
-  @NotNull
-  public List<StdArrangementMatchRule> getRules() {
-    if (getModel().getSize() <= 0) {
-      return Collections.emptyList();
-    }
-    List<StdArrangementMatchRule> result = new ArrayList<StdArrangementMatchRule>();
-    for (int i = 0; i < getModel().getSize(); i++) {
-      Object element = getModel().getElementAt(i);
-      if (element instanceof StdArrangementMatchRule) {
-        result.add((StdArrangementMatchRule)element);
-      }
-    }
-    return result;
-  }
-  
   public void repaintRows(int first, int last, boolean rowStructureChanged) {
     for (int i = first; i <= last; i++) {
       if (rowStructureChanged) {
@@ -445,13 +456,17 @@ public class ArrangementMatchingRulesControl extends JBTable {
     setRowHeight(row, height);
     return component;
   }
-  
-  private class MyRenderer implements TableCellRenderer {
+
+  protected class MatchingRulesRendererBase implements TableCellRenderer {
 
     public Component getRendererComponent(int row) {
       return getTableCellRendererComponent(ArrangementMatchingRulesControl.this, getModel().getElementAt(row), false, false, row, 0);
     }
-    
+
+    public boolean allowModifications(StdArrangementMatchRule rule) {
+      return true;
+    }
+
     @Override
     public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
       if (isEditing() && getEditingRow() == row) {
@@ -467,26 +482,28 @@ public class ArrangementMatchingRulesControl extends JBTable {
           return EMPTY_RENDERER;
         }
         StdArrangementMatchRule rule = (StdArrangementMatchRule)value;
-        ArrangementMatchConditionComponent ruleComponent = myFactory.getComponent(rule.getMatcher().getCondition(), rule, true);
+        final boolean allowModifications = allowModifications(rule);
+        ArrangementUiComponent ruleComponent = myFactory.getComponent(rule.getMatcher().getCondition(), rule, allowModifications);
         component = new ArrangementListRowDecorator(ruleComponent, ArrangementMatchingRulesControl.this);
+        component.setError(getValidator().validate(row));
         myComponents.set(row, component);
       }
-      
+
       component.setUnderMouse(myRowUnderMouse == row);
       component.setRowIndex((myEditorRow >= 0 && row > myEditorRow) ? row : row + 1);
       component.setSelected(getSelectionModel().isSelectedIndex(row) || (myEditorRow >= 0 && row == myEditorRow - 1));
       component.setBeingEdited(myEditorRow >= 0 && myEditorRow == row + 1);
       boolean showSortIcon = value instanceof StdArrangementMatchRule
-                             && ((StdArrangementMatchRule)value).getOrderType() == ArrangementEntryOrderType.BY_NAME;
+                             && StdArrangementTokens.Order.BY_NAME.equals(((StdArrangementMatchRule)value).getOrderType());
       component.setShowSortIcon(showSortIcon);
       return component.getUiComponent();
     }
   }
-  
+
   private class MyEditor extends AbstractTableCellEditor {
-    
+
     private int myRow;
-    
+
     @Override
     public Component getTableCellEditorComponent(JTable table, Object value, boolean isSelected, int row, int column) {
       if (value instanceof ArrangementEditorAware) {
@@ -501,7 +518,7 @@ public class ArrangementMatchingRulesControl extends JBTable {
       return myRow < getModel().getSize() ? getModel().getElementAt(myRow) : null;
     }
   }
-  
+
   public interface RepresentationCallback {
     void ensureVisible(@NotNull Rectangle r);
   }

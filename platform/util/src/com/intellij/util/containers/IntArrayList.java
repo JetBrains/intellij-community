@@ -1,25 +1,12 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.containers;
 
+import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
 
-public class IntArrayList implements Cloneable {
+public final class IntArrayList implements Cloneable {
   private int[] myData;
   private int mySize;
 
@@ -32,11 +19,8 @@ public class IntArrayList implements Cloneable {
   }
 
   public void trimToSize() {
-    int oldCapacity = myData.length;
-    if (mySize < oldCapacity){
-      int[] oldData = myData;
-      myData = new int[mySize];
-      System.arraycopy(oldData, 0, myData, 0, mySize);
+    if (mySize < myData.length){
+      myData = ArrayUtil.realloc(myData, mySize);
     }
   }
 
@@ -80,7 +64,14 @@ public class IntArrayList implements Cloneable {
   }
 
   public int indexOf(int elem) {
-    for(int i = 0; i < mySize; i++){
+    return indexOf(elem, 0, mySize);
+  }
+
+  public int indexOf(int elem, int startIndex, int endIndex) {
+    if (startIndex < 0 || endIndex < startIndex || endIndex > mySize) {
+      throw new IndexOutOfBoundsException("startIndex: "+startIndex+"; endIndex: "+endIndex+"; mySize: "+mySize);
+    }
+    for(int i = startIndex; i < endIndex; i++){
       if (elem == myData[i]) return i;
     }
     return -1;
@@ -97,8 +88,7 @@ public class IntArrayList implements Cloneable {
   public Object clone() {
     try{
       IntArrayList v = (IntArrayList)super.clone();
-      v.myData = new int[mySize];
-      System.arraycopy(myData, 0, v.myData, 0, mySize);
+      v.myData = toArray();
       return v;
     }
     catch(CloneNotSupportedException e){
@@ -109,9 +99,7 @@ public class IntArrayList implements Cloneable {
 
   @NotNull
   public int[] toArray() {
-    int[] result = new int[mySize];
-    System.arraycopy(myData, 0, result, 0, mySize);
-    return result;
+    return toArray(0,mySize);
   }
 
   @NotNull
@@ -185,15 +173,21 @@ public class IntArrayList implements Cloneable {
     mySize = 0;
   }
 
-  protected void removeRange(int fromIndex, int toIndex) {
+  public void removeRange(int fromIndex, int toIndex) {
     int numMoved = mySize - toIndex;
     System.arraycopy(myData, toIndex, myData, fromIndex, numMoved);
     mySize -= toIndex - fromIndex;
   }
 
+  public void copyRange(int fromIndex, int length, int toIndex) {
+    if (length < 0 || fromIndex < 0 || fromIndex + length > mySize || toIndex < 0 || toIndex + length > mySize) {
+      throw new IndexOutOfBoundsException("fromIndex: "+fromIndex+"; length: "+length+"; toIndex: "+toIndex+"; mySize: "+mySize);
+    }
+    System.arraycopy(myData, fromIndex, myData, toIndex, length);
+  }
+
   private void checkRange(int index) {
     if (index >= mySize || index < 0){
-      //noinspection HardCodedStringLiteral
       throw new IndexOutOfBoundsException("Index: " + index + ", Size: " + mySize);
     }
   }
@@ -201,5 +195,9 @@ public class IntArrayList implements Cloneable {
   @Override
   public String toString() {
     return Arrays.toString(toArray());
+  }
+
+  public void sort() {
+    Arrays.sort(myData, 0, mySize);
   }
 }

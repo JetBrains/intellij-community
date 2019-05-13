@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,25 +15,32 @@
  */
 package com.intellij.util.text;
 
+import org.jetbrains.annotations.NotNull;
+
 /**
  * @author cdr
  */
 public class ReverseCharSequence implements CharSequence{
   private final CharSequence mySequence;
 
-  public ReverseCharSequence(CharSequence sequence) {
+  public ReverseCharSequence(@NotNull CharSequence sequence) {
     mySequence = sequence;
   }
 
+  @Override
   public int length() {
     return mySequence.length();
   }
 
+  @Override
   public char charAt(int index) {
     return mySequence.charAt(mySequence.length()-index-1);
   }
 
+  @NotNull
+  @Override
   public CharSequence subSequence(int start, int end) {
-    return new ReverseCharSequence(mySequence.subSequence(start, end));
+    int length = mySequence.length();
+    return new ReverseCharSequence(mySequence.subSequence(length - end, length - start));
   }
 }

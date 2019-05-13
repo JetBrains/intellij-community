@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiElementFilter;
 import com.intellij.psi.util.PsiUtilCore;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -26,10 +27,9 @@ import java.util.Collections;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
- * @see com.intellij.psi.util.PsiTreeUtil#processElements(com.intellij.psi.PsiElement, PsiElementProcessor)
+ * @see com.intellij.psi.util.PsiTreeUtil#processElements(PsiElement, PsiElementProcessor)
  */
 public interface PsiElementProcessor<T extends PsiElement> {
-
   /**
    * Processes a PsiElement
    *
@@ -41,22 +41,25 @@ public interface PsiElementProcessor<T extends PsiElement> {
   class CollectElements<T extends PsiElement> implements PsiElementProcessor<T> {
     private final Collection<T> myCollection;
 
+    public CollectElements() {
+      this(new ArrayList<>());
+    }
+
     public CollectElements(@NotNull Collection<T> collection) {
       myCollection = Collections.synchronizedCollection(collection);
     }
 
-    public CollectElements() {
-      this(new ArrayList<T>());
-    }
-
+    @NotNull
     public PsiElement[] toArray() {
       return PsiUtilCore.toPsiElementArray(myCollection);
     }
 
+    @NotNull
     public Collection<T> getCollection() {
       return myCollection;
     }
 
+    @NotNull
     public T[] toArray(T[] array) {
       return myCollection.toArray(array);
     }
@@ -88,7 +91,7 @@ public interface PsiElementProcessor<T extends PsiElement> {
 
   class CollectElementsWithLimit<T extends PsiElement> extends CollectElements<T>{
     private final AtomicInteger myCount = new AtomicInteger(0);
-    private volatile boolean myOverflow = false;
+    private volatile boolean myOverflow;
     private final int myLimit;
 
     public CollectElementsWithLimit(int limit) {
@@ -116,12 +119,13 @@ public interface PsiElementProcessor<T extends PsiElement> {
   }
 
   class FindElement<T extends PsiElement> implements PsiElementProcessor<T> {
-    private volatile T myFoundElement = null;
+    private volatile T myFoundElement;
 
     public boolean isFound() {
       return myFoundElement != null;
     }
 
+    @Nullable
     public T getFoundElement() {
       return myFoundElement;
     }

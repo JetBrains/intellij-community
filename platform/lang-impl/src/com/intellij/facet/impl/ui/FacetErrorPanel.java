@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,18 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.intellij.facet.impl.ui;
 
 import com.intellij.facet.ui.FacetConfigurationQuickFix;
 import com.intellij.facet.ui.FacetEditorValidator;
 import com.intellij.facet.ui.FacetValidatorsManager;
 import com.intellij.facet.ui.ValidationResult;
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
-import com.intellij.openapi.ui.Messages;
 import com.intellij.ui.UserActivityListener;
 import com.intellij.ui.UserActivityWatcher;
-import org.jetbrains.annotations.NonNls;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -38,8 +38,6 @@ import java.util.List;
  * @author nik
  */
 public class FacetErrorPanel {
-  @NonNls private static final String HTML_PREFIX = "<html><body>";
-  @NonNls private static final String HTML_SUFFIX = "</body></html>";
   private final JPanel myMainPanel;
   private JPanel myButtonPanel;
   private JButton myQuickFixButton;
@@ -47,14 +45,16 @@ public class FacetErrorPanel {
   private final JLabel myWarningLabel;
   private final FacetValidatorsManagerImpl myValidatorsManager;
   private boolean myNoErrors = true;
-  private final List<Runnable> myListeners = new ArrayList<Runnable>();
+  private final List<Runnable> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
 
   public FacetErrorPanel() {
     myValidatorsManager = new FacetValidatorsManagerImpl();
     myWarningLabel = new JLabel();
-    myWarningLabel.setIcon(Messages.getWarningIcon());
+    myWarningLabel.setIcon(AllIcons.General.WarningDialog);
+    myWarningLabel.setIconTextGap(5);
     myQuickFixButton.addActionListener(new ActionListener() {
-      public void actionPerformed(final ActionEvent e) {
+      @Override
+      public void actionPerformed(@NotNull ActionEvent e) {
         if (myCurrentQuickFix != null) {
           myCurrentQuickFix.run(myQuickFixButton);
           myValidatorsManager.validate();
@@ -103,8 +103,9 @@ public class FacetErrorPanel {
   }
 
   private class FacetValidatorsManagerImpl implements FacetValidatorsManager {
-    private final List<FacetEditorValidator> myValidators = new ArrayList<FacetEditorValidator>();
+    private final List<FacetEditorValidator> myValidators = new ArrayList<>();
 
+    @Override
     public void registerValidator(final FacetEditorValidator validator, JComponent... componentsToWatch) {
       myValidators.add(validator);
       final UserActivityWatcher watcher = new UserActivityWatcher();
@@ -112,18 +113,20 @@ public class FacetErrorPanel {
         watcher.register(component);
       }
       watcher.addUserActivityListener(new UserActivityListener() {
+        @Override
         public void stateChanged() {
           validate();
         }
       });
     }
 
+    @Override
     public void validate() {
       for (FacetEditorValidator validator : myValidators) {
         ValidationResult validationResult = validator.check();
         if (!validationResult.isOk()) {
           myMainPanel.setVisible(true);
-          myWarningLabel.setText(HTML_PREFIX + validationResult.getErrorMessage() + HTML_SUFFIX);
+          myWarningLabel.setText(XmlStringUtil.wrapInHtml(validationResult.getErrorMessage()));
           myWarningLabel.setVisible(true);
           myCurrentQuickFix = validationResult.getQuickFix();
           myQuickFixButton.setVisible(myCurrentQuickFix != null);

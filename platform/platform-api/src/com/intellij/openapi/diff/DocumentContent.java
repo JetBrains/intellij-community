@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,12 +15,13 @@
  */
 package com.intellij.openapi.diff;
 
+import com.intellij.ide.util.PsiNavigationSupport;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.pom.Navigatable;
 import com.intellij.util.LineSeparator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -28,9 +29,9 @@ import org.jetbrains.annotations.Nullable;
 public class DocumentContent extends DiffContent {
   private final Document myDocument;
   private final VirtualFile myFile;
-  private final FileType myOverridenType;
-  private Project myProject;
-  private FileDocumentManager myDocumentManager;
+  private final FileType myOverriddenType;
+  private final Project myProject;
+  private final FileDocumentManager myDocumentManager;
 
   public DocumentContent(Project project, Document document) {
     this(project, document, null);
@@ -41,37 +42,43 @@ public class DocumentContent extends DiffContent {
     myDocument = document;
     myDocumentManager = FileDocumentManager.getInstance();
     myFile = myDocumentManager.getFile(document);
-    myOverridenType = type;
+    myOverriddenType = type;
   }
 
-  public DocumentContent(Document document) {
+  public DocumentContent(@NotNull Document document) {
     this(null, document, null);
   }
 
-  public DocumentContent(Document document, FileType type) {
+  public DocumentContent(@NotNull Document document, @NotNull FileType type) {
     this(null, document, type);
   }
 
+  @Override
+  @NotNull
   public Document getDocument() {
     return myDocument;
   }
 
-  public OpenFileDescriptor getOpenFileDescriptor(int offset) {
+  @Override
+  public Navigatable getOpenFileDescriptor(int offset) {
     VirtualFile file = getFile();
     if (file == null) return null;
     if (myProject == null) return null;
-    return new OpenFileDescriptor(myProject, file, offset);
+    return PsiNavigationSupport.getInstance().createNavigatable(myProject, file, offset);
   }
 
+  @Override
   public VirtualFile getFile() {
     return myFile;
   }
 
+  @Override
   @Nullable
   public FileType getContentType() {
-    return myOverridenType == null ? DiffContentUtil.getContentType(getFile()) : myOverridenType;
+    return myOverriddenType == null ? DiffContentUtil.getContentType(getFile()) : myOverriddenType;
   }
 
+  @Override
   public byte[] getBytes() {
     return myDocument.getText().getBytes();
   }

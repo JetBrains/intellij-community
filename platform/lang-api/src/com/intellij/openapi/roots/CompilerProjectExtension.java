@@ -14,10 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * User: anna
- * Date: 27-Dec-2007
- */
 package com.intellij.openapi.roots;
 
 import com.intellij.openapi.components.ServiceManager;
@@ -26,6 +22,9 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
 import org.jetbrains.annotations.Nullable;
 
+/**
+ * Provides access to the base compiler output setting for a project ('Project compiler output' field in File | Project Structure | Project).
+ */
 public abstract class CompilerProjectExtension {
 
   public static @Nullable CompilerProjectExtension getInstance(Project project) {

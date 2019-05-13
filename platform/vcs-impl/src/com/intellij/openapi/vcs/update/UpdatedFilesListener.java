@@ -22,9 +22,7 @@ import java.util.Set;
 
 /**
  * @author irengrig
- *         Date: 6/9/11
- *         Time: 7:38 PM
  */
 public interface UpdatedFilesListener extends Consumer<Set<String>> {
-  Topic<UpdatedFilesListener> UPDATED_FILES = new Topic<UpdatedFilesListener>("AbstractCommonUpdateAction.UpdatedFiles", UpdatedFilesListener.class);
+  Topic<UpdatedFilesListener> UPDATED_FILES = new Topic<>("AbstractCommonUpdateAction.UpdatedFiles", UpdatedFilesListener.class);
 }

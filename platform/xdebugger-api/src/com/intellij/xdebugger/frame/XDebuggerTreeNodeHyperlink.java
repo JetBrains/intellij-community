@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,18 +15,19 @@
  */
 package com.intellij.xdebugger.frame;
 
+import com.intellij.ui.JBColor;
 import com.intellij.ui.SimpleTextAttributes;
-import com.intellij.util.IJSwingUtilities;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-import javax.swing.event.HyperlinkListener;
 import java.awt.event.MouseEvent;
 
 /**
  * Describes a hyperlink inside a debugger node
  */
 public abstract class XDebuggerTreeNodeHyperlink {
+  public static final SimpleTextAttributes TEXT_ATTRIBUTES =
+    new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, new JBColor(0x779dbd, 0x5676a0));
+
   private final String linkText;
 
   protected XDebuggerTreeNodeHyperlink(@NotNull String linkText) {
@@ -40,25 +41,12 @@ public abstract class XDebuggerTreeNodeHyperlink {
 
   @NotNull
   public SimpleTextAttributes getTextAttributes() {
-    return SimpleTextAttributes.GRAY_ATTRIBUTES;
+    return TEXT_ATTRIBUTES;
   }
 
   public abstract void onClick(MouseEvent event);
 
-  public static final class HyperlinkListenerDelegator extends XDebuggerTreeNodeHyperlink {
-    private final HyperlinkListener hyperlinkListener;
-    private final String href;
-
-    public HyperlinkListenerDelegator(@NotNull String linkText, @Nullable String href, @NotNull HyperlinkListener hyperlinkListener) {
-      super(linkText);
-
-      this.hyperlinkListener = hyperlinkListener;
-      this.href = href;
-    }
-
-    @Override
-    public void onClick(MouseEvent event) {
-      hyperlinkListener.hyperlinkUpdate(IJSwingUtilities.createHyperlinkEvent(href, getLinkText()));
-    }
+  public boolean alwaysOnScreen() {
+    return false;
   }
 }

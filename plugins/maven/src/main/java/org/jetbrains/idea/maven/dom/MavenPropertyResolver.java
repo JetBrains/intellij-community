@@ -16,8 +16,6 @@
 package org.jetbrains.idea.maven.dom;
 
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlTag;
@@ -36,7 +34,10 @@ import org.jetbrains.idea.maven.utils.MavenUtil;
 import org.jetbrains.jps.maven.compiler.MavenEscapeWindowsCharacterUtils;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Properties;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -46,7 +47,7 @@ public class MavenPropertyResolver {
   public static void doFilterText(Module module,
                                   String text,
                                   Properties additionalProperties,
-                                  String propertyEscapeString,
+                                  @Nullable String propertyEscapeString,
                                   Appendable out) throws IOException {
     MavenProjectsManager manager = MavenProjectsManager.getInstance(module.getProject());
     MavenProject mavenProject = manager.findProject(module);
@@ -80,10 +81,10 @@ public class MavenPropertyResolver {
                                    @Nullable Map<String, String> resolvedPropertiesParam,
                                    Appendable out) throws IOException {
     Map<String, String> resolvedProperties = resolvedPropertiesParam;
-    
+
     Matcher matcher = pattern.matcher(text);
     int groupCount = matcher.groupCount();
-    
+
     int last = 0;
     while (matcher.find()) {
       if (escapeString != null) {
@@ -113,9 +114,9 @@ public class MavenPropertyResolver {
       assert propertyName != null;
 
       if (resolvedProperties == null) {
-        resolvedProperties = new HashMap<String, String>();
+        resolvedProperties = new HashMap<>();
       }
-      
+
       String propertyValue = resolvedProperties.get(propertyName);
       if (propertyValue == null) {
         if (resolvedProperties.containsKey(propertyName)) { // if cyclic property dependencies
@@ -145,7 +146,7 @@ public class MavenPropertyResolver {
         out.append(propertyValue);
       }
     }
-    
+
     out.append(text, last, text.length());
   }
 
@@ -176,10 +177,10 @@ public class MavenPropertyResolver {
 
     collectPropertiesFromDOM(projectDom.getProperties(), result);
 
-    Collection<String> activePropfiles = project.getActivatedProfilesIds();
+    Collection<String> activeProfiles = project.getActivatedProfilesIds().getEnabledProfiles();
     for (MavenDomProfile each : projectDom.getProfiles().getProfiles()) {
       XmlTag idTag = each.getId().getXmlTag();
-      if (idTag == null || !activePropfiles.contains(idTag.getValue().getTrimmedText())) continue;
+      if (idTag == null || !activeProfiles.contains(idTag.getValue().getTrimmedText())) continue;
       collectPropertiesFromDOM(each.getProperties(), result);
     }
 
@@ -226,6 +227,9 @@ public class MavenPropertyResolver {
       if (unprefixed.equals("artifactId")) {
         return parentId.getArtifactId();
       }
+      if (unprefixed.equals("version")) {
+        return parentId.getVersion();
+      }
 
       selectedProject = projectsManager.findProject(parentId);
       if (selectedProject == null) return null;
@@ -236,24 +240,28 @@ public class MavenPropertyResolver {
     }
 
     if ("java.home".equals(propName)) {
-      Module module = projectsManager.findModule(mavenProject);
-      if (module != null) {
-        Sdk sdk = ModuleRootManager.getInstance(module).getSdk();
-        if (sdk != null) {
-          VirtualFile homeDirectory = sdk.getHomeDirectory();
-          if (homeDirectory != null) {
-            VirtualFile jreDir = homeDirectory.findChild("jre");
-            if (jreDir != null) {
-              return jreDir.getPath();
-            }
-          }
-        }
+      String jreDir = MavenUtil.getModuleJreHome(projectsManager, mavenProject);
+      if (jreDir != null) {
+        return jreDir;
+      }
+    }
+
+    if ("java.version".equals(propName)) {
+      String javaVersion = MavenUtil.getModuleJavaVersion(projectsManager, mavenProject);
+      if (javaVersion != null) {
+        return javaVersion;
       }
     }
 
     String result;
 
     result = MavenUtil.getPropertiesFromMavenOpts().get(propName);
+    if (result != null) return result;
+
+    result = mavenProject.getMavenConfig().get(propName);
+    if (result != null) return result;
+
+    result = mavenProject.getJvmConfig().get(propName);
     if (result != null) return result;
 
     result = MavenServerUtil.collectSystemProperties().getProperty(propName);
@@ -267,6 +275,10 @@ public class MavenPropertyResolver {
 
     result = mavenProject.getProperties().getProperty(propName);
     if (result != null) return result;
+
+    if ("settings.localRepository".equals(propName)) {
+      return mavenProject.getLocalRepository().getAbsolutePath();
+    }
 
     return null;
   }

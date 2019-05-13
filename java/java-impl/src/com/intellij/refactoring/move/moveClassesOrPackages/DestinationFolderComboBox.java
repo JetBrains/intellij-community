@@ -1,26 +1,13 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.move.moveClassesOrPackages;
 
 import com.intellij.ide.util.DirectoryChooser;
-import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
+import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.JavaProjectRootsUtil;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.ComboBoxWithWidePopup;
@@ -33,23 +20,21 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.refactoring.MoveDestination;
 import com.intellij.refactoring.PackageWrapper;
 import com.intellij.ui.*;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.List;
 import java.util.*;
 
-/**
- * User: anna
- * Date: 9/13/11
- */
 public abstract class DestinationFolderComboBox extends ComboboxWithBrowseButton {
   private static final String LEAVE_IN_SAME_SOURCE_ROOT = "Leave in same source root";
   private static final DirectoryChooser.ItemWrapper NULL_WRAPPER = new DirectoryChooser.ItemWrapper(null, null);
   private PsiDirectory myInitialTargetDirectory;
-  private VirtualFile[] mySourceRoots;
+  private List<VirtualFile> mySourceRoots;
 
   public DestinationFolderComboBox() {
     super(new ComboBoxWithWidePopup());
@@ -79,7 +64,7 @@ public abstract class DestinationFolderComboBox extends ComboboxWithBrowseButton
                       final PsiDirectory initialTargetDirectory,
                       final Pass<String> errorMessageUpdater, final EditorComboBox editorComboBox) {
     myInitialTargetDirectory = initialTargetDirectory;
-    mySourceRoots = ProjectRootManager.getInstance(project).getContentSourceRoots();
+    mySourceRoots = JavaProjectRootsUtil.getSuitableDestinationSourceRoots(project);
     new ComboboxSpeedSearch(getComboBox()) {
       @Override
       protected String getElementText(Object element) {
@@ -134,9 +119,9 @@ public abstract class DestinationFolderComboBox extends ComboboxWithBrowseButton
       }
     });
 
-    editorComboBox.addDocumentListener(new DocumentAdapter() {
+    editorComboBox.addDocumentListener(new DocumentListener() {
       @Override
-      public void documentChanged(DocumentEvent e) {
+      public void documentChanged(@NotNull DocumentEvent e) {
         JComboBox comboBox = getComboBox();
         DirectoryChooser.ItemWrapper selectedItem = (DirectoryChooser.ItemWrapper)comboBox.getSelectedItem();
         setComboboxModel(comboBox, selectedItem != null && selectedItem != NULL_WRAPPER ? fileIndex.getSourceRootForFile(selectedItem.getDirectory().getVirtualFile()) : initialSourceRoot, selection[0], fileIndex, mySourceRoots, project, false, errorMessageUpdater);
@@ -167,8 +152,8 @@ public abstract class DestinationFolderComboBox extends ComboboxWithBrowseButton
     final PsiDirectory selectedPsiDirectory = selectedItem.getDirectory();
     VirtualFile selectedDestination = selectedPsiDirectory.getVirtualFile();
     if (showChooserWhenDefault &&
-        Comparing.equal(selectedDestination, myInitialTargetDirectory.getVirtualFile()) &&
-        mySourceRoots.length > 1) {
+        myInitialTargetDirectory != null && Comparing.equal(selectedDestination, myInitialTargetDirectory.getVirtualFile()) &&
+        mySourceRoots.size() > 1) {
       selectedDestination = MoveClassesOrPackagesUtil.chooseSourceRoot(targetPackage, mySourceRoots, myInitialTargetDirectory);
     }
     if (selectedDestination == null) return null;
@@ -197,18 +182,18 @@ public abstract class DestinationFolderComboBox extends ComboboxWithBrowseButton
                                 final VirtualFile initialTargetDirectorySourceRoot,
                                 final VirtualFile oldSelection,
                                 final ProjectFileIndex fileIndex,
-                                final VirtualFile[] sourceRoots,
+                                final List<VirtualFile> sourceRoots,
                                 final Project project,
                                 final boolean forceIncludeAll,
                                 final Pass<String> updateErrorMessage) {
-    final LinkedHashSet<PsiDirectory> targetDirectories = new LinkedHashSet<PsiDirectory>();
-    final HashMap<PsiDirectory, String> pathsToCreate = new HashMap<PsiDirectory, String>();
+    final LinkedHashSet<PsiDirectory> targetDirectories = new LinkedHashSet<>();
+    final HashMap<PsiDirectory, String> pathsToCreate = new HashMap<>();
     MoveClassesOrPackagesUtil
       .buildDirectoryList(new PackageWrapper(PsiManager.getInstance(project), getTargetPackage()), sourceRoots, targetDirectories, pathsToCreate);
     if (!forceIncludeAll && targetDirectories.size() > pathsToCreate.size()) {
       targetDirectories.removeAll(pathsToCreate.keySet());
     }
-    final ArrayList<DirectoryChooser.ItemWrapper> items = new ArrayList<DirectoryChooser.ItemWrapper>();
+    final ArrayList<DirectoryChooser.ItemWrapper> items = new ArrayList<>();
     DirectoryChooser.ItemWrapper initial = null;
     DirectoryChooser.ItemWrapper oldOne = null;
     for (PsiDirectory targetDirectory : targetDirectories) {
@@ -222,7 +207,9 @@ public abstract class DestinationFolderComboBox extends ComboboxWithBrowseButton
         oldOne = itemWrapper;
       }
     }
-    items.add(NULL_WRAPPER);
+    if (oldSelection == null || !fileIndex.isInLibrarySource(oldSelection)) {
+      items.add(NULL_WRAPPER);
+    }
     final DirectoryChooser.ItemWrapper selection = chooseSelection(initialTargetDirectorySourceRoot, fileIndex, items, initial, oldOne);
     final ComboBoxModel model = comboBox.getModel();
     if (model instanceof CollectionComboBoxModel) {
@@ -244,13 +231,10 @@ public abstract class DestinationFolderComboBox extends ComboboxWithBrowseButton
       }
     }
     updateErrorMessage(updateErrorMessage, fileIndex, selection);
-    Collections.sort(items, new Comparator<DirectoryChooser.ItemWrapper>() {
-      @Override
-      public int compare(DirectoryChooser.ItemWrapper o1, DirectoryChooser.ItemWrapper o2) {
-        if (o1 == NULL_WRAPPER) return -1;
-        if (o2 == NULL_WRAPPER) return 1;
-        return o1.getRelativeToProjectPath().compareToIgnoreCase(o2.getRelativeToProjectPath());
-      }
+    Collections.sort(items, (o1, o2) -> {
+      if (o1 == NULL_WRAPPER) return -1;
+      if (o2 == NULL_WRAPPER) return 1;
+      return o1.getRelativeToProjectPath().compareToIgnoreCase(o2.getRelativeToProjectPath());
     });
     comboBox.setModel(new CollectionComboBoxModel(items, selection));
 

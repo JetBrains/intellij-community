@@ -1,39 +1,24 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.util.config;
 
 import com.intellij.openapi.util.Factory;
-import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizable;
-import com.intellij.openapi.util.WriteExternalException;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 
 import java.util.Iterator;
-import java.util.List;
 
 public interface Externalizer<T> {
   @NonNls String VALUE_ATTRIBUTE = "value";
   Externalizer<String> STRING = new BaseExternalizer<String>(){
+    @Override
     public String readValue(Element dataElement) {
       return dataElement.getAttributeValue(VALUE_ATTRIBUTE);
     }
   };
   Externalizer<Integer> INTEGER = new BaseExternalizer<Integer>() {
+    @Override
     public Integer readValue(Element dataElement) {
       try {
         return new Integer(dataElement.getAttributeValue(VALUE_ATTRIBUTE));
@@ -46,39 +31,43 @@ public interface Externalizer<T> {
 
   abstract class BaseExternalizer<T> implements Externalizer<T> {
 
+    @Override
     public void writeValue(Element dataElement, T value) {
       dataElement.setAttribute(VALUE_ATTRIBUTE, value.toString());
     }
   }
   Externalizer<Boolean> BOOLEAN = new BaseExternalizer<Boolean>() {
+    @Override
     public Boolean readValue(Element dataElement) {
       return Boolean.valueOf(dataElement.getAttributeValue(VALUE_ATTRIBUTE));
     }
   };
 
-  T readValue(Element dataElement) throws InvalidDataException;
+  T readValue(Element dataElement);
 
-  void writeValue(Element dataElement, T value) throws WriteExternalException;
+  void writeValue(Element dataElement, T value);
 
   class FactoryBased<T extends JDOMExternalizable> implements Externalizer<T> {
-    private final Factory<T> myFactory;
+    private final Factory<? extends T> myFactory;
 
-    public FactoryBased(Factory<T> factory) {
+    public FactoryBased(Factory<? extends T> factory) {
       myFactory = factory;
     }
 
-    public T readValue(Element dataElement) throws InvalidDataException {
+    @Override
+    public T readValue(Element dataElement) {
       T data = myFactory.create();
       data.readExternal(dataElement);
       return data;
     }
 
-    public void writeValue(Element dataElement, T value) throws WriteExternalException {
+    @Override
+    public void writeValue(Element dataElement, T value) {
       value.writeExternal(dataElement);
     }
 
-    public static <T extends JDOMExternalizable> FactoryBased<T> create(Factory<T> factory) {
-      return new FactoryBased<T>(factory);
+    static <T extends JDOMExternalizable> FactoryBased<T> create(Factory<? extends T> factory) {
+      return new FactoryBased<>(factory);
     }
   }
 
@@ -87,24 +76,26 @@ public interface Externalizer<T> {
     @NonNls private static final String KEY_ATTR = "key";
     @NonNls private static final String VALUE_ATTR = "value";
 
-    public Storage readValue(Element dataElement) throws InvalidDataException {
+    @Override
+    public Storage readValue(Element dataElement) {
       Storage.MapStorage storage = new Storage.MapStorage();
-      List<Element> children = dataElement.getChildren(ITEM_TAG);
-      for (Iterator<Element> iterator = children.iterator(); iterator.hasNext();) {
-        Element element = iterator.next();
+      for (Element element : dataElement.getChildren(ITEM_TAG)) {
         storage.put(element.getAttributeValue(KEY_ATTR), element.getAttributeValue(VALUE_ATTR));
       }
       return storage;
     }
 
-    public void writeValue(Element dataElement, Storage storage) throws WriteExternalException {
+    @Override
+    public void writeValue(Element dataElement, Storage storage) {
       Iterator<String> keys = ((Storage.MapStorage)storage).getKeys();
       while (keys.hasNext()) {
         String key = keys.next();
         String value = storage.get(key);
         Element element = new Element(ITEM_TAG);
         element.setAttribute(KEY_ATTR, key);
-        if (value != null) element.setAttribute(VALUE_ATTR, value);
+        if (value != null) {
+          element.setAttribute(VALUE_ATTR, value);
+        }
         dataElement.addContent(element);
       }
     }

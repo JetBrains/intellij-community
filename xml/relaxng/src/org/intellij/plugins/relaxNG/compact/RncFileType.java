@@ -27,11 +27,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
-/*
-* Created by IntelliJ IDEA.
-* User: sweinreuter
-* Date: 01.08.2007
-*/
 public class RncFileType extends LanguageFileType  {
   public static final String RNC_EXT = "rnc";
 
@@ -41,23 +36,27 @@ public class RncFileType extends LanguageFileType  {
     super(RngCompactLanguage.INSTANCE);
   }
 
+  @Override
   @NotNull
   @NonNls
   public String getName() {
     return "RNG Compact";
   }
 
+  @Override
   @NotNull
   public String getDescription() {
     return "RELAX NG Compact Syntax";
   }
 
+  @Override
   @NotNull
   @NonNls
   public String getDefaultExtension() {
     return "rnc";
   }
 
+  @Override
   @Nullable
   public Icon getIcon() {
     return AllIcons.FileTypes.Text;
@@ -68,6 +67,7 @@ public class RncFileType extends LanguageFileType  {
   }
 
   public static class Factory extends FileTypeFactory {
+    @Override
     public void createFileTypes(@NotNull FileTypeConsumer fileTypeConsumer) {
       fileTypeConsumer.consume(INSTANCE, RNC_EXT);
     }

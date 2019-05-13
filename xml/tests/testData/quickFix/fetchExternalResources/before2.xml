@@ -1,4 +1,4 @@
-<!-- "Fetch External Resource" "true" -->
+<!-- "Fetch external resource" "true" -->
 
 <!DOCTYPE tag PUBLIC "x3" "http://my<caret>file">
 

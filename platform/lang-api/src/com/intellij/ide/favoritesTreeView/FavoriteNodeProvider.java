@@ -32,18 +32,18 @@ import java.util.Collection;
 /**
  * Returns the nodes which should be added to the Favorites for the given data context.
  * Implementations of this class must be registered as extensions for
- * <code>com.intellij.favoriteNodeProvider</code> extension point.
+ * {@code com.intellij.favoriteNodeProvider} extension point.
  *
  * @author yole
  */
 public abstract class FavoriteNodeProvider {
-  public static final ExtensionPointName<FavoriteNodeProvider> EP_NAME = new ExtensionPointName<FavoriteNodeProvider>("com.intellij.favoriteNodeProvider");
+  public static final ExtensionPointName<FavoriteNodeProvider> EP_NAME = new ExtensionPointName<>("com.intellij.favoriteNodeProvider");
 
   @Nullable
-  public abstract Collection<AbstractTreeNode> getFavoriteNodes(DataContext context, final ViewSettings viewSettings);
+  public abstract Collection<AbstractTreeNode> getFavoriteNodes(DataContext context, @NotNull ViewSettings viewSettings);
 
   @Nullable
-  public AbstractTreeNode createNode(final Project project, final Object element, final ViewSettings viewSettings) {
+  public AbstractTreeNode createNode(final Project project, final Object element, @NotNull ViewSettings viewSettings) {
     return null;
   }
 
@@ -53,7 +53,7 @@ public abstract class FavoriteNodeProvider {
    *
    * @param element the value element of a project view node.
    * @param vFile   the file to check.
-   * @return true if the file is contained, false if not or if <code>element</code> is not an element supported by this provider.
+   * @return true if the file is contained, false if not or if {@code element} is not an element supported by this provider.
    */
   public abstract boolean elementContainsFile(final Object element, final VirtualFile vFile);
 
@@ -61,8 +61,7 @@ public abstract class FavoriteNodeProvider {
    * Returns the weight of the specified project view node element to use when sorting the favorites list.
    *
    * @param element the element for which the weight is requested.
-   * @param isSortByType
-   * @return the weight, or -1 if <code>element</code> is not an element supported by this provider.
+   * @return the weight, or -1 if {@code element} is not an element supported by this provider.
    */
   public abstract int getElementWeight(final Object element, final boolean isSortByType);
 
@@ -70,7 +69,7 @@ public abstract class FavoriteNodeProvider {
    * Returns the location text (grey text in parentheses) to display in the Favorites view for the specified element.
    *
    * @param element the element for which the location is requested.
-   * @return the location text, or -1 if <code>element</code> is not an element supported by this provider.
+   * @return the location text, or -1 if {@code element} is not an element supported by this provider.
    */
   @Nullable
   public abstract String getElementLocation(final Object element);
@@ -94,7 +93,6 @@ public abstract class FavoriteNodeProvider {
   /**
    * Returns the persistable URL for the specified element.
    *
-   * @param element
    * @return the URL, or null if the element is not supported by this provider.
    */
   @Nullable @NonNls
@@ -103,7 +101,6 @@ public abstract class FavoriteNodeProvider {
   /**
    * Returns the name of the module containing the specified element.
    *
-   * @param element
    * @return the name of the module, or null if the element is not supported by this provider or the module name is unknown.
    */
   @Nullable

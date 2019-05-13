@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,11 +17,15 @@ package org.jetbrains.jps.incremental.messages;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: 9/29/11
  */
 public abstract class BuildMessage {
-  public static enum Kind {
-    ERROR, WARNING, INFO, PROGRESS
+  public enum Kind {
+    ERROR, WARNING, INFO, PROGRESS, JPS_INFO,
+    /**
+     * Represents an internal error in a builder's own code
+     */
+    INTERNAL_BUILDER_ERROR,
+    OTHER
   }
 
   private final String myMessageText;

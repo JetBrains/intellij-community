@@ -22,8 +22,6 @@ import java.util.Map;
 
 /**
  * @author irengrig
- *         Date: 3/10/11
- *         Time: 4:17 PM
  */
 public class VcsRareLineAnnotationData implements VcsLineAnnotationData {
   private final Map<Integer, VcsRevisionNumber> myMap;
@@ -31,7 +29,7 @@ public class VcsRareLineAnnotationData implements VcsLineAnnotationData {
 
   public VcsRareLineAnnotationData(final int size) {
     mySize = size;
-    myMap = new HashMap<Integer, VcsRevisionNumber>();
+    myMap = new HashMap<>();
   }
 
   @Override

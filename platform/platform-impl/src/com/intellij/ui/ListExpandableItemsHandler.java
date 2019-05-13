@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui;
 
 import com.intellij.openapi.util.Pair;
@@ -31,6 +17,7 @@ public class ListExpandableItemsHandler extends AbstractExpandableItemsHandler<I
     super(list);
 
     final ListSelectionListener selectionListener = new ListSelectionListener() {
+      @Override
       public void valueChanged(ListSelectionEvent e) {
         if (e.getValueIsAdjusting()) return;
 
@@ -55,14 +42,17 @@ public class ListExpandableItemsHandler extends AbstractExpandableItemsHandler<I
 
 
     final ListDataListener modelListener = new ListDataListener() {
+      @Override
       public void intervalAdded(ListDataEvent e) {
         updateSelection(list);
       }
 
+      @Override
       public void intervalRemoved(ListDataEvent e) {
         updateSelection(list);
       }
 
+      @Override
       public void contentsChanged(ListDataEvent e) {
         updateSelection(list);
       }
@@ -89,11 +79,13 @@ public class ListExpandableItemsHandler extends AbstractExpandableItemsHandler<I
     handleSelectionChange(selection == -1 ? null : new Integer(selection));
   }
 
+  @Override
   protected Integer getCellKeyForPoint(Point point) {
     int rowIndex = myComponent.locationToIndex(point);
     return rowIndex != -1 ? new Integer(rowIndex) : null;
   }
 
+  @Override
   protected Pair<Component, Rectangle> getCellRendererAndBounds(Integer key) {
     int rowIndex = key.intValue();
 
@@ -113,6 +105,8 @@ public class ListExpandableItemsHandler extends AbstractExpandableItemsHandler<I
       myComponent.isSelectedIndex(rowIndex),
       myComponent.hasFocus()
     );
+
+    AppUIUtil.targetToDevice(rendererComponent, myComponent);
 
     bounds.width = rendererComponent.getPreferredSize().width;
 

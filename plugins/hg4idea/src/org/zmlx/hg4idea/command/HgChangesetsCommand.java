@@ -42,20 +42,20 @@ public abstract class HgChangesetsCommand {
     this.command = command;
   }
 
-  public List<HgRevisionNumber> execute(VirtualFile repo) {
+  public List<HgRevisionNumber> executeInCurrentThread(VirtualFile repo) {
     return getRevisions(repo);
   }
 
   protected List<HgRevisionNumber> getRevisions(VirtualFile repo) {
-    List<String> args = new ArrayList<String>(Arrays.asList(
+    List<String> args = new ArrayList<>(Arrays.asList(
       "--template",
-      HgChangesetUtil.makeTemplate("{rev}", "{node|short}", "{author}", "{desc|firstline}"),
+      HgChangesetUtil.makeTemplate("{rev}", "{node}", "{author}", "{desc|firstline}"),
       "--quiet"
     ));
 
     addArguments(args);
 
-    HgCommandResult result = executeCommand(repo, args);
+    HgCommandResult result = executeCommandInCurrentThread(repo, args);
 
     if (result == null) {
       return Collections.emptyList();
@@ -67,12 +67,13 @@ public abstract class HgChangesetsCommand {
     }
     
     String[] changesets = output.split(HgChangesetUtil.CHANGESET_SEPARATOR);
-    List<HgRevisionNumber> revisions = new ArrayList<HgRevisionNumber>(changesets.length);
+    List<HgRevisionNumber> revisions = new ArrayList<>(changesets.length);
     
     for(String changeset: changesets) {
       List<String> parts = StringUtil.split(changeset, HgChangesetUtil.ITEM_SEPARATOR);
-      if (parts.size() == 4) {
-        revisions.add(HgRevisionNumber.getInstance(parts.get(0), parts.get(1), parts.get(2), parts.get(3)));
+      if (parts.size() >= 3) {
+        //support zero commit message
+        revisions.add(HgRevisionNumber.getInstance(parts.get(0), parts.get(1), parts.get(2), parts.size() > 3 ? parts.get(3) : ""));
       } else {
         LOG.warn("Could not parse changeset [" + changeset + "]");
       }
@@ -82,7 +83,7 @@ public abstract class HgChangesetsCommand {
   }
 
   @Nullable
-  protected HgCommandResult executeCommand(VirtualFile repo, List<String> args) {
+  protected HgCommandResult executeCommandInCurrentThread(VirtualFile repo, List<String> args) {
     final HgCommandExecutor executor = new HgCommandExecutor(project);
     executor.setSilent(isSilentCommand());
     return executor.executeInCurrentThread(repo, command, args);

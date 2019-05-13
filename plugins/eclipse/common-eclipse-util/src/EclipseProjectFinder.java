@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,10 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * User: anna
- * Date: 11-Nov-2008
- */
 package org.jetbrains.idea.eclipse;
 
 import com.intellij.openapi.util.Comparing;
@@ -33,10 +29,9 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.io.IOException;
 import java.util.List;
-import java.util.Set;
 
 public class EclipseProjectFinder implements EclipseXml {
-  public static void findModuleRoots(final List<String> paths, final String rootPath, @Nullable Processor<String> progressUpdater) {
+  public static void findModuleRoots(final List<? super String> paths, final String rootPath, @Nullable Processor<? super String> progressUpdater) {
     if (progressUpdater != null) {
       progressUpdater.process(rootPath);
     }
@@ -63,16 +58,13 @@ public class EclipseProjectFinder implements EclipseXml {
     final File file = new File(rootPath, DOT_PROJECT_EXT);
     if (file.isFile()) {
       try {
-        name = JDOMUtil.loadDocument(file).getRootElement().getChildText(NAME_TAG);
+        name = JDOMUtil.load(file).getChildText(NAME_TAG);
         if (StringUtil.isEmptyOrSpaces(name)) {
           return null;
         }
         name = name.replace("\n", " ").trim();
       }
-      catch (JDOMException e) {
-        return null;
-      }
-      catch (IOException e) {
+      catch (JDOMException | IOException e) {
         return null;
       }
     }
@@ -90,19 +82,19 @@ public class EclipseProjectFinder implements EclipseXml {
     final File file = new File(projectPath, DOT_PROJECT_EXT);
     if (file.isFile()) {
       try {
-        for (Object o : JDOMUtil.loadDocument(file).getRootElement().getChildren(LINKED_RESOURCES)) {
-          for (Object l : ((Element)o).getChildren(LINK)) {
-            if (Comparing.strEqual(((Element)l).getChildText(NAME_TAG), resourceName)) {
+        for (Element o : JDOMUtil.load(file).getChildren(LINKED_RESOURCES)) {
+          for (Element l : o.getChildren(LINK)) {
+            if (Comparing.strEqual(l.getChildText(NAME_TAG), resourceName)) {
               LinkedResource linkedResource = new LinkedResource();
               final String relativeToLinkedResourcePath =
                 independentPath.length() > resourceName.length() ? independentPath.substring(resourceName.length()) : "";
 
-              final Element locationURI = ((Element)l).getChild("locationURI");
+              final Element locationURI = l.getChild("locationURI");
               if (locationURI != null) {
                 linkedResource.setURI(FileUtil.toSystemIndependentName(locationURI.getText()) + relativeToLinkedResourcePath);
               }
 
-              final Element location = ((Element)l).getChild("location");
+              final Element location = l.getChild("location");
               if (location != null) {
                 linkedResource.setLocation(FileUtil.toSystemIndependentName(location.getText()) + relativeToLinkedResourcePath);
               }
@@ -115,25 +107,6 @@ public class EclipseProjectFinder implements EclipseXml {
       }
     }
     return null;
-  }
-
-  public static void collectUnknownNatures(String path, Set<String> naturesNames) {
-    final File projectfile = new File(path, DOT_PROJECT_EXT);
-    try {
-      final Element natures = JDOMUtil.loadDocument(projectfile).getRootElement().getChild("natures");
-      if (natures != null) {
-        final List naturesList = natures.getChildren("nature");
-        for (Object nature : naturesList) {
-          final String natureName = ((Element)nature).getText();
-          if (!StringUtil.isEmptyOrSpaces(natureName)) {
-            naturesNames.add(natureName);
-          }
-        }
-      }
-    }
-    catch (Exception ignore) {
-    }
-    naturesNames.remove("org.eclipse.jdt.core.javanature");
   }
 
   public static class LinkedResource {

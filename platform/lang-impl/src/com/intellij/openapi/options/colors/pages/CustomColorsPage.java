@@ -54,7 +54,6 @@ public class CustomColorsPage implements ColorSettingsPage, DisplayPrioritySorta
     SYNTAX_TABLE.setEndComment("*/");
     SYNTAX_TABLE.setHexPrefix("0x");
     SYNTAX_TABLE.setNumPostfixChars("dDlL");
-    SYNTAX_TABLE.setNumPostfixChars("dDlL");
     SYNTAX_TABLE.setHasStringEscapes(true);
     SYNTAX_TABLE.addKeyword1("aKeyword1");
     SYNTAX_TABLE.addKeyword1("anotherKeyword1");
@@ -106,7 +105,7 @@ public class CustomColorsPage implements ColorSettingsPage, DisplayPrioritySorta
            + "aKeyword3 variable = 123;\n"
            + "anotherKeyword3 someString = \"SomeString\";\n"
            + "aKeyword4 variable = 123;\n"
-           + "anotherKeyword4 someString = \"SomeString\\n\\x\";\n"
+           + "anotherKeyword4 someString = \"SomeString \\n\\x  \\& \\g \";\n"
            + "/* \n"
            + " * Block comment\n"
            + " */\n"

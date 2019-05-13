@@ -15,7 +15,7 @@
  */
 package org.zmlx.hg4idea.test;
 
-import com.intellij.openapi.vcs.changes.ChangeListManager;
+import com.intellij.openapi.vcs.changes.ChangeListManagerImpl;
 import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.testng.annotations.Test;
@@ -41,7 +41,7 @@ public class HgDiffProviderTest extends HgSingleUserTest {
     //don't commit 
     
     refreshVfs();
-    ChangeListManager.getInstance(myProject).ensureUpToDate(false);
+    ChangeListManagerImpl.getInstanceImpl(myProject).ensureUpToDate();
     
     HgDiffProvider diffProvider = new HgDiffProvider(myProject);
 
@@ -67,8 +67,6 @@ public class HgDiffProviderTest extends HgSingleUserTest {
     
     
     refreshVfs();
-    //ChangeListManager.getInstance(myProject).ensureUpToDate(false);
-    
     HgDiffProvider diffProvider = new HgDiffProvider(myProject);
 
     HgRevisionNumber currentRevision = (HgRevisionNumber)diffProvider.getCurrentRevision(myWorkingCopyDir.findChild(AFILE));

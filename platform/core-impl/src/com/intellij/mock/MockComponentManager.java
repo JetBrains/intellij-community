@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,12 +20,13 @@ import com.intellij.openapi.components.BaseComponent;
 import com.intellij.openapi.components.ComponentManager;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.UserDataHolderBase;
-import com.intellij.util.containers.ConcurrentHashSet;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.MessageBusFactory;
-import com.intellij.util.pico.IdeaPicoContainer;
+import com.intellij.util.pico.DefaultPicoContainer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.picocontainer.MutablePicoContainer;
@@ -41,57 +42,69 @@ public class MockComponentManager extends UserDataHolderBase implements Componen
   private final MessageBus myMessageBus = MessageBusFactory.newMessageBus(this);
   private final MutablePicoContainer myPicoContainer;
 
-  private final Map<Class, Object> myComponents = new HashMap<Class, Object>();
+  private final Map<Class, Object> myComponents = new HashMap<>();
+  private final Set<Object> myDisposableComponents = ContainerUtil.newConcurrentSet();
+  private boolean myDisposed;
 
   public MockComponentManager(@Nullable PicoContainer parent, @NotNull Disposable parentDisposable) {
-    myPicoContainer = new IdeaPicoContainer(parent) {
-      private Set<Object> myDisposableComponents = new ConcurrentHashSet<Object>();
-
+    myPicoContainer = new DefaultPicoContainer(parent) {
       @Override
       @Nullable
       public Object getComponentInstance(final Object componentKey) {
-        final Object o = super.getComponentInstance(componentKey);
-        if (o instanceof Disposable && o != MockComponentManager.this) {
-          if (myDisposableComponents.add(o))
-            Disposer.register(MockComponentManager.this, (Disposable)o);
+        if (myDisposed) {
+          throw new IllegalStateException("Cannot get " + componentKey + " from already disposed " + this);
         }
+        final Object o = super.getComponentInstance(componentKey);
+        registerComponentInDisposer(o);
         return o;
       }
     };
+
     myPicoContainer.registerComponentInstance(this);
     Disposer.register(parentDisposable, this);
   }
 
+  private void registerComponentInDisposer(@Nullable Object o) {
+    if (o instanceof Disposable && o != this && !(o instanceof MessageBus)) {
+      if (myDisposableComponents.add(o))
+        Disposer.register(this, (Disposable)o);
+    }
+  }
+
   @Override
-  public BaseComponent getComponent(String name) {
+  public BaseComponent getComponent(@NotNull String name) {
     return null;
   }
 
-  public <T> void registerService(Class<T> serviceInterface, Class<? extends T> serviceImplementation) {
+  public <T> void registerService(@NotNull Class<T> serviceInterface, @NotNull Class<? extends T> serviceImplementation) {
     myPicoContainer.unregisterComponent(serviceInterface.getName());
     myPicoContainer.registerComponentImplementation(serviceInterface.getName(), serviceImplementation);
   }
 
-  public <T> void registerService(Class<T> serviceImplementation) {
+  public <T> void registerService(@NotNull Class<T> serviceImplementation) {
     registerService(serviceImplementation, serviceImplementation);
   }
 
-  public <T> void registerService(Class<T> serviceInterface, T serviceImplementation) {
+  public <T> void registerService(@NotNull Class<T> serviceInterface, @NotNull T serviceImplementation) {
     myPicoContainer.registerComponentInstance(serviceInterface.getName(), serviceImplementation);
+    registerComponentInDisposer(serviceImplementation);
   }
 
-  public <T> void addComponent(Class<T> interfaceClass, T instance) {
+  public <T> void addComponent(@NotNull Class<T> interfaceClass, @NotNull T instance) {
     myComponents.put(interfaceClass, instance);
+    registerComponentInDisposer(instance);
   }
 
+  @Nullable
   @Override
-  public <T> T getComponent(Class<T> interfaceClass) {
+  public <T> T getComponent(@NotNull Class<T> interfaceClass) {
     final Object o = myPicoContainer.getComponentInstance(interfaceClass);
+    //noinspection unchecked
     return (T)(o != null ? o : myComponents.get(interfaceClass));
   }
 
   @Override
-  public <T> T getComponent(Class<T> interfaceClass, T defaultImplementation) {
+  public <T> T getComponent(@NotNull Class<T> interfaceClass, T defaultImplementation) {
     return getComponent(interfaceClass);
   }
 
@@ -100,10 +113,11 @@ public class MockComponentManager extends UserDataHolderBase implements Componen
     return false;
   }
 
+  @SuppressWarnings("unchecked")
   @Override
   @NotNull
-  public <T> T[] getComponents(Class<T> baseClass) {
-    final List<?> list = myPicoContainer.getComponentInstancesOfType(baseClass);
+  public <T> T[] getComponents(@NotNull Class<T> baseClass) {
+    final List<T> list = myPicoContainer.getComponentInstancesOfType(baseClass);
     return list.toArray((T[])Array.newInstance(baseClass, 0));
   }
 
@@ -113,6 +127,7 @@ public class MockComponentManager extends UserDataHolderBase implements Componen
     return myPicoContainer;
   }
 
+  @NotNull
   @Override
   public MessageBus getMessageBus() {
     return myMessageBus;
@@ -120,21 +135,24 @@ public class MockComponentManager extends UserDataHolderBase implements Componen
 
   @Override
   public boolean isDisposed() {
-    return false;
+    return myDisposed;
   }
 
   @Override
   public void dispose() {
+    Disposer.dispose(myMessageBus);
+    myDisposed = true;
   }
 
+  @NotNull
   @Override
-  public <T> T[] getExtensions(final ExtensionPointName<T> extensionPointName) {
+  public <T> T[] getExtensions(@NotNull final ExtensionPointName<T> extensionPointName) {
     throw new UnsupportedOperationException("getExtensions()");
   }
 
   @NotNull
   @Override
-  public Condition getDisposed() {
-    return Condition.FALSE;
+  public Condition<?> getDisposed() {
+    return Conditions.alwaysFalse();
   }
 }

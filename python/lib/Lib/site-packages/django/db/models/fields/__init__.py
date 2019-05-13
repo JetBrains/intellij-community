@@ -1,0 +1,1141 @@
+import datetime
+import decimal
+import re
+import time
+import math
+from itertools import tee
+
+import django.utils.copycompat as copy
+
+from django.db import connection
+from django.db.models.fields.subclassing import LegacyConnection
+from django.db.models.query_utils import QueryWrapper
+from django.conf import settings
+from django import forms
+from django.core import exceptions, validators
+from django.utils.datastructures import DictWrapper
+from django.utils.functional import curry
+from django.utils.text import capfirst
+from django.utils.translation import ugettext_lazy as _
+from django.utils.encoding import smart_unicode, force_unicode, smart_str
+from django.utils import datetime_safe
+
+class NOT_PROVIDED:
+    pass
+
+# The values to use for "blank" in SelectFields. Will be appended to the start of most "choices" lists.
+BLANK_CHOICE_DASH = [("", "---------")]
+BLANK_CHOICE_NONE = [("", "None")]
+
+class FieldDoesNotExist(Exception):
+    pass
+
+# A guide to Field parameters:
+#
+#   * name:      The name of the field specifed in the model.
+#   * attname:   The attribute to use on the model object. This is the same as
+#                "name", except in the case of ForeignKeys, where "_id" is
+#                appended.
+#   * db_column: The db_column specified in the model (or None).
+#   * column:    The database column for this field. This is the same as
+#                "attname", except if db_column is specified.
+#
+# Code that introspects values, or does other dynamic things, should use
+# attname. For example, this gets the primary key value of object "obj":
+#
+#     getattr(obj, opts.pk.attname)
+
+class Field(object):
+    """Base class for all field types"""
+    __metaclass__ = LegacyConnection
+
+    # Designates whether empty strings fundamentally are allowed at the
+    # database level.
+    empty_strings_allowed = True
+
+    # These track each time a Field instance is created. Used to retain order.
+    # The auto_creation_counter is used for fields that Django implicitly
+    # creates, creation_counter is used for all user-specified fields.
+    creation_counter = 0
+    auto_creation_counter = -1
+    default_validators = [] # Default set of validators
+    default_error_messages = {
+        'invalid_choice': _(u'Value %r is not a valid choice.'),
+        'null': _(u'This field cannot be null.'),
+        'blank': _(u'This field cannot be blank.'),
+    }
+
+    # Generic field type description, usually overriden by subclasses
+    def _description(self):
+        return _(u'Field of type: %(field_type)s') % {
+            'field_type': self.__class__.__name__
+        }
+    description = property(_description)
+
+    def __init__(self, verbose_name=None, name=None, primary_key=False,
+            max_length=None, unique=False, blank=False, null=False,
+            db_index=False, rel=None, default=NOT_PROVIDED, editable=True,
+            serialize=True, unique_for_date=None, unique_for_month=None,
+            unique_for_year=None, choices=None, help_text='', db_column=None,
+            db_tablespace=None, auto_created=False, validators=[],
+            error_messages=None):
+        self.name = name
+        self.verbose_name = verbose_name
+        self.primary_key = primary_key
+        self.max_length, self._unique = max_length, unique
+        self.blank, self.null = blank, null
+        # Oracle treats the empty string ('') as null, so coerce the null
+        # option whenever '' is a possible value.
+        if self.empty_strings_allowed and connection.features.interprets_empty_strings_as_nulls:
+            self.null = True
+        self.rel = rel
+        self.default = default
+        self.editable = editable
+        self.serialize = serialize
+        self.unique_for_date, self.unique_for_month = unique_for_date, unique_for_month
+        self.unique_for_year = unique_for_year
+        self._choices = choices or []
+        self.help_text = help_text
+        self.db_column = db_column
+        self.db_tablespace = db_tablespace or settings.DEFAULT_INDEX_TABLESPACE
+        self.auto_created = auto_created
+
+        # Set db_index to True if the field has a relationship and doesn't explicitly set db_index.
+        self.db_index = db_index
+
+        # Adjust the appropriate creation counter, and save our local copy.
+        if auto_created:
+            self.creation_counter = Field.auto_creation_counter
+            Field.auto_creation_counter -= 1
+        else:
+            self.creation_counter = Field.creation_counter
+            Field.creation_counter += 1
+
+        self.validators = self.default_validators + validators
+
+        messages = {}
+        for c in reversed(self.__class__.__mro__):
+            messages.update(getattr(c, 'default_error_messages', {}))
+        messages.update(error_messages or {})
+        self.error_messages = messages
+
+    def __cmp__(self, other):
+        # This is needed because bisect does not take a comparison function.
+        return cmp(self.creation_counter, other.creation_counter)
+
+    def __deepcopy__(self, memodict):
+        # We don't have to deepcopy very much here, since most things are not
+        # intended to be altered after initial creation.
+        obj = copy.copy(self)
+        if self.rel:
+            obj.rel = copy.copy(self.rel)
+        memodict[id(self)] = obj
+        return obj
+
+    def to_python(self, value):
+        """
+        Converts the input value into the expected Python data type, raising
+        django.core.exceptions.ValidationError if the data can't be converted.
+        Returns the converted value. Subclasses should override this.
+        """
+        return value
+
+    def run_validators(self, value):
+        if value in validators.EMPTY_VALUES:
+            return
+
+        errors = []
+        for v in self.validators:
+            try:
+                v(value)
+            except exceptions.ValidationError, e:
+                if hasattr(e, 'code') and e.code in self.error_messages:
+                    message = self.error_messages[e.code]
+                    if e.params:
+                        message = message % e.params
+                    errors.append(message)
+                else:
+                    errors.extend(e.messages)
+        if errors:
+            raise exceptions.ValidationError(errors)
+
+    def validate(self, value, model_instance):
+        """
+        Validates value and throws ValidationError. Subclasses should override
+        this to provide validation logic.
+        """
+        if not self.editable:
+            # Skip validation for non-editable fields.
+            return
+        if self._choices and value:
+            for option_key, option_value in self.choices:
+                if isinstance(option_value, (list, tuple)):
+                    # This is an optgroup, so look inside the group for options.
+                    for optgroup_key, optgroup_value in option_value:
+                        if value == optgroup_key:
+                            return
+                elif value == option_key:
+                    return
+            raise exceptions.ValidationError(self.error_messages['invalid_choice'] % value)
+
+        if value is None and not self.null:
+            raise exceptions.ValidationError(self.error_messages['null'])
+
+        if not self.blank and value in validators.EMPTY_VALUES:
+            raise exceptions.ValidationError(self.error_messages['blank'])
+
+    def clean(self, value, model_instance):
+        """
+        Convert the value's type and run validation. Validation errors from to_python
+        and validate are propagated. The correct value is returned if no error is
+        raised.
+        """
+        value = self.to_python(value)
+        self.validate(value, model_instance)
+        self.run_validators(value)
+        return value
+
+    def db_type(self, connection):
+        """
+        Returns the database column data type for this field, for the provided
+        connection.
+        """
+        # The default implementation of this method looks at the
+        # backend-specific DATA_TYPES dictionary, looking up the field by its
+        # "internal type".
+        #
+        # A Field class can implement the get_internal_type() method to specify
+        # which *preexisting* Django Field class it's most similar to -- i.e.,
+        # an XMLField is represented by a TEXT column type, which is the same
+        # as the TextField Django field type, which means XMLField's
+        # get_internal_type() returns 'TextField'.
+        #
+        # But the limitation of the get_internal_type() / data_types approach
+        # is that it cannot handle database column types that aren't already
+        # mapped to one of the built-in Django field types. In this case, you
+        # can implement db_type() instead of get_internal_type() to specify
+        # exactly which wacky database column type you want to use.
+        data = DictWrapper(self.__dict__, connection.ops.quote_name, "qn_")
+        try:
+            return connection.creation.data_types[self.get_internal_type()] % data
+        except KeyError:
+            return None
+
+    def unique(self):
+        return self._unique or self.primary_key
+    unique = property(unique)
+
+    def set_attributes_from_name(self, name):
+        self.name = name
+        self.attname, self.column = self.get_attname_column()
+        if self.verbose_name is None and name:
+            self.verbose_name = name.replace('_', ' ')
+
+    def contribute_to_class(self, cls, name):
+        self.set_attributes_from_name(name)
+        self.model = cls
+        cls._meta.add_field(self)
+        if self.choices:
+            setattr(cls, 'get_%s_display' % self.name, curry(cls._get_FIELD_display, field=self))
+
+    def get_attname(self):
+        return self.name
+
+    def get_attname_column(self):
+        attname = self.get_attname()
+        column = self.db_column or attname
+        return attname, column
+
+    def get_cache_name(self):
+        return '_%s_cache' % self.name
+
+    def get_internal_type(self):
+        return self.__class__.__name__
+
+    def pre_save(self, model_instance, add):
+        "Returns field's value just before saving."
+        return getattr(model_instance, self.attname)
+
+    def get_prep_value(self, value):
+        "Perform preliminary non-db specific value checks and conversions."
+        return value
+
+    def get_db_prep_value(self, value, connection, prepared=False):
+        """Returns field's value prepared for interacting with the database
+        backend.
+
+        Used by the default implementations of ``get_db_prep_save``and
+        `get_db_prep_lookup```
+        """
+        if not prepared:
+            value = self.get_prep_value(value)
+        return value
+
+    def get_db_prep_save(self, value, connection):
+        "Returns field's value prepared for saving into a database."
+        return self.get_db_prep_value(value, connection=connection, prepared=False)
+
+    def get_prep_lookup(self, lookup_type, value):
+        "Perform preliminary non-db specific lookup checks and conversions"
+        if hasattr(value, 'prepare'):
+            return value.prepare()
+        if hasattr(value, '_prepare'):
+            return value._prepare()
+
+        if lookup_type in (
+                'regex', 'iregex', 'month', 'day', 'week_day', 'search',
+                'contains', 'icontains', 'iexact', 'startswith', 'istartswith',
+                'endswith', 'iendswith', 'isnull'
+            ):
+            return value
+        elif lookup_type in ('exact', 'gt', 'gte', 'lt', 'lte'):
+            return self.get_prep_value(value)
+        elif lookup_type in ('range', 'in'):
+            return [self.get_prep_value(v) for v in value]
+        elif lookup_type == 'year':
+            try:
+                return int(value)
+            except ValueError:
+                raise ValueError("The __year lookup type requires an integer argument")
+
+        raise TypeError("Field has invalid lookup: %s" % lookup_type)
+
+    def get_db_prep_lookup(self, lookup_type, value, connection, prepared=False):
+        "Returns field's value prepared for database lookup."
+        if not prepared:
+            value = self.get_prep_lookup(lookup_type, value)
+        if hasattr(value, 'get_compiler'):
+            value = value.get_compiler(connection=connection)
+        if hasattr(value, 'as_sql') or hasattr(value, '_as_sql'):
+            # If the value has a relabel_aliases method, it will need to
+            # be invoked before the final SQL is evaluated
+            if hasattr(value, 'relabel_aliases'):
+                return value
+            if hasattr(value, 'as_sql'):
+                sql, params = value.as_sql()
+            else:
+                sql, params = value._as_sql(connection=connection)
+            return QueryWrapper(('(%s)' % sql), params)
+
+        if lookup_type in ('regex', 'iregex', 'month', 'day', 'week_day', 'search'):
+            return [value]
+        elif lookup_type in ('exact', 'gt', 'gte', 'lt', 'lte'):
+            return [self.get_db_prep_value(value, connection=connection, prepared=prepared)]
+        elif lookup_type in ('range', 'in'):
+            return [self.get_db_prep_value(v, connection=connection, prepared=prepared) for v in value]
+        elif lookup_type in ('contains', 'icontains'):
+            return ["%%%s%%" % connection.ops.prep_for_like_query(value)]
+        elif lookup_type == 'iexact':
+            return [connection.ops.prep_for_iexact_query(value)]
+        elif lookup_type in ('startswith', 'istartswith'):
+            return ["%s%%" % connection.ops.prep_for_like_query(value)]
+        elif lookup_type in ('endswith', 'iendswith'):
+            return ["%%%s" % connection.ops.prep_for_like_query(value)]
+        elif lookup_type == 'isnull':
+            return []
+        elif lookup_type == 'year':
+            if self.get_internal_type() == 'DateField':
+                return connection.ops.year_lookup_bounds_for_date_field(value)
+            else:
+                return connection.ops.year_lookup_bounds(value)
+
+    def has_default(self):
+        "Returns a boolean of whether this field has a default value."
+        return self.default is not NOT_PROVIDED
+
+    def get_default(self):
+        "Returns the default value for this field."
+        if self.has_default():
+            if callable(self.default):
+                return self.default()
+            return force_unicode(self.default, strings_only=True)
+        if not self.empty_strings_allowed or (self.null and not connection.features.interprets_empty_strings_as_nulls):
+            return None
+        return ""
+
+    def get_validator_unique_lookup_type(self):
+        return '%s__exact' % self.name
+
+    def get_choices(self, include_blank=True, blank_choice=BLANK_CHOICE_DASH):
+        """Returns choices with a default blank choices included, for use
+        as SelectField choices for this field."""
+        first_choice = include_blank and blank_choice or []
+        if self.choices:
+            return first_choice + list(self.choices)
+        rel_model = self.rel.to
+        if hasattr(self.rel, 'get_related_field'):
+            lst = [(getattr(x, self.rel.get_related_field().attname), smart_unicode(x)) for x in rel_model._default_manager.complex_filter(self.rel.limit_choices_to)]
+        else:
+            lst = [(x._get_pk_val(), smart_unicode(x)) for x in rel_model._default_manager.complex_filter(self.rel.limit_choices_to)]
+        return first_choice + lst
+
+    def get_choices_default(self):
+        return self.get_choices()
+
+    def get_flatchoices(self, include_blank=True, blank_choice=BLANK_CHOICE_DASH):
+        "Returns flattened choices with a default blank choice included."
+        first_choice = include_blank and blank_choice or []
+        return first_choice + list(self.flatchoices)
+
+    def _get_val_from_obj(self, obj):
+        if obj is not None:
+            return getattr(obj, self.attname)
+        else:
+            return self.get_default()
+
+    def value_to_string(self, obj):
+        """
+        Returns a string value of this field from the passed obj.
+        This is used by the serialization framework.
+        """
+        return smart_unicode(self._get_val_from_obj(obj))
+
+    def bind(self, fieldmapping, original, bound_field_class):
+        return bound_field_class(self, fieldmapping, original)
+
+    def _get_choices(self):
+        if hasattr(self._choices, 'next'):
+            choices, self._choices = tee(self._choices)
+            return choices
+        else:
+            return self._choices
+    choices = property(_get_choices)
+
+    def _get_flatchoices(self):
+        """Flattened version of choices tuple."""
+        flat = []
+        for choice, value in self.choices:
+            if isinstance(value, (list, tuple)):
+                flat.extend(value)
+            else:
+                flat.append((choice,value))
+        return flat
+    flatchoices = property(_get_flatchoices)
+
+    def save_form_data(self, instance, data):
+        setattr(instance, self.name, data)
+
+    def formfield(self, form_class=forms.CharField, **kwargs):
+        "Returns a django.forms.Field instance for this database Field."
+        defaults = {'required': not self.blank, 'label': capfirst(self.verbose_name), 'help_text': self.help_text}
+        if self.has_default():
+            if callable(self.default):
+                defaults['initial'] = self.default
+                defaults['show_hidden_initial'] = True
+            else:
+                defaults['initial'] = self.get_default()
+        if self.choices:
+            # Fields with choices get special treatment.
+            include_blank = self.blank or not (self.has_default() or 'initial' in kwargs)
+            defaults['choices'] = self.get_choices(include_blank=include_blank)
+            defaults['coerce'] = self.to_python
+            if self.null:
+                defaults['empty_value'] = None
+            form_class = forms.TypedChoiceField
+            # Many of the subclass-specific formfield arguments (min_value,
+            # max_value) don't apply for choice fields, so be sure to only pass
+            # the values that TypedChoiceField will understand.
+            for k in kwargs.keys():
+                if k not in ('coerce', 'empty_value', 'choices', 'required',
+                             'widget', 'label', 'initial', 'help_text',
+                             'error_messages', 'show_hidden_initial'):
+                    del kwargs[k]
+        defaults.update(kwargs)
+        return form_class(**defaults)
+
+    def value_from_object(self, obj):
+        "Returns the value of this field in the given model instance."
+        return getattr(obj, self.attname)
+
+class AutoField(Field):
+    description = _("Integer")
+
+    empty_strings_allowed = False
+    default_error_messages = {
+        'invalid': _(u'This value must be an integer.'),
+    }
+    def __init__(self, *args, **kwargs):
+        assert kwargs.get('primary_key', False) is True, "%ss must have primary_key=True." % self.__class__.__name__
+        kwargs['blank'] = True
+        Field.__init__(self, *args, **kwargs)
+
+    def get_internal_type(self):
+        return "AutoField"
+
+    def to_python(self, value):
+        if value is None:
+            return value
+        try:
+            return int(value)
+        except (TypeError, ValueError):
+            raise exceptions.ValidationError(self.error_messages['invalid'])
+
+    def validate(self, value, model_instance):
+        pass
+
+    def get_prep_value(self, value):
+        if value is None:
+            return None
+        return int(value)
+
+    def contribute_to_class(self, cls, name):
+        assert not cls._meta.has_auto_field, "A model can't have more than one AutoField."
+        super(AutoField, self).contribute_to_class(cls, name)
+        cls._meta.has_auto_field = True
+        cls._meta.auto_field = self
+
+    def formfield(self, **kwargs):
+        return None
+
+class BooleanField(Field):
+    empty_strings_allowed = False
+    default_error_messages = {
+        'invalid': _(u'This value must be either True or False.'),
+    }
+    description = _("Boolean (Either True or False)")
+    def __init__(self, *args, **kwargs):
+        kwargs['blank'] = True
+        if 'default' not in kwargs and not kwargs.get('null'):
+            kwargs['default'] = False
+        Field.__init__(self, *args, **kwargs)
+
+    def get_internal_type(self):
+        return "BooleanField"
+
+    def to_python(self, value):
+        if value in (True, False):
+            # if value is 1 or 0 than it's equal to True or False, but we want
+            # to return a true bool for semantic reasons.
+            return bool(value)
+        if value in ('t', 'True', '1'):
+            return True
+        if value in ('f', 'False', '0'):
+            return False
+        raise exceptions.ValidationError(self.error_messages['invalid'])
+
+    def get_prep_lookup(self, lookup_type, value):
+        # Special-case handling for filters coming from a Web request (e.g. the
+        # admin interface). Only works for scalar values (not lists). If you're
+        # passing in a list, you might as well make things the right type when
+        # constructing the list.
+        if value in ('1', '0'):
+            value = bool(int(value))
+        return super(BooleanField, self).get_prep_lookup(lookup_type, value)
+
+    def get_prep_value(self, value):
+        if value is None:
+            return None
+        return bool(value)
+
+    def formfield(self, **kwargs):
+        # Unlike most fields, BooleanField figures out include_blank from
+        # self.null instead of self.blank.
+        if self.choices:
+            include_blank = self.null or not (self.has_default() or 'initial' in kwargs)
+            defaults = {'choices': self.get_choices(include_blank=include_blank)}
+        else:
+            defaults = {'form_class': forms.BooleanField}
+        defaults.update(kwargs)
+        return super(BooleanField, self).formfield(**defaults)
+
+class CharField(Field):
+    description = _("String (up to %(max_length)s)")
+
+    def __init__(self, *args, **kwargs):
+        super(CharField, self).__init__(*args, **kwargs)
+        self.validators.append(validators.MaxLengthValidator(self.max_length))
+
+    def get_internal_type(self):
+        return "CharField"
+
+    def to_python(self, value):
+        if isinstance(value, basestring) or value is None:
+            return value
+        return smart_unicode(value)
+
+    def get_prep_value(self, value):
+        return self.to_python(value)
+
+    def formfield(self, **kwargs):
+        # Passing max_length to forms.CharField means that the value's length
+        # will be validated twice. This is considered acceptable since we want
+        # the value in the form field (to pass into widget for example).
+        defaults = {'max_length': self.max_length}
+        defaults.update(kwargs)
+        return super(CharField, self).formfield(**defaults)
+
+# TODO: Maybe move this into contrib, because it's specialized.
+class CommaSeparatedIntegerField(CharField):
+    default_validators = [validators.validate_comma_separated_integer_list]
+    description = _("Comma-separated integers")
+
+    def formfield(self, **kwargs):
+        defaults = {
+            'error_messages': {
+                'invalid': _(u'Enter only digits separated by commas.'),
+            }
+        }
+        defaults.update(kwargs)
+        return super(CommaSeparatedIntegerField, self).formfield(**defaults)
+
+ansi_date_re = re.compile(r'^\d{4}-\d{1,2}-\d{1,2}$')
+
+class DateField(Field):
+    description = _("Date (without time)")
+
+    empty_strings_allowed = False
+    default_error_messages = {
+        'invalid': _('Enter a valid date in YYYY-MM-DD format.'),
+        'invalid_date': _('Invalid date: %s'),
+    }
+    def __init__(self, verbose_name=None, name=None, auto_now=False, auto_now_add=False, **kwargs):
+        self.auto_now, self.auto_now_add = auto_now, auto_now_add
+        #HACKs : auto_now_add/auto_now should be done as a default or a pre_save.
+        if auto_now or auto_now_add:
+            kwargs['editable'] = False
+            kwargs['blank'] = True
+        Field.__init__(self, verbose_name, name, **kwargs)
+
+    def get_internal_type(self):
+        return "DateField"
+
+    def to_python(self, value):
+        if value is None:
+            return value
+        if isinstance(value, datetime.datetime):
+            return value.date()
+        if isinstance(value, datetime.date):
+            return value
+
+        if not ansi_date_re.search(value):
+            raise exceptions.ValidationError(self.error_messages['invalid'])
+        # Now that we have the date string in YYYY-MM-DD format, check to make
+        # sure it's a valid date.
+        # We could use time.strptime here and catch errors, but datetime.date
+        # produces much friendlier error messages.
+        year, month, day = map(int, value.split('-'))
+        try:
+            return datetime.date(year, month, day)
+        except ValueError, e:
+            msg = self.error_messages['invalid_date'] % _(str(e))
+            raise exceptions.ValidationError(msg)
+
+    def pre_save(self, model_instance, add):
+        if self.auto_now or (self.auto_now_add and add):
+            value = datetime.date.today()
+            setattr(model_instance, self.attname, value)
+            return value
+        else:
+            return super(DateField, self).pre_save(model_instance, add)
+
+    def contribute_to_class(self, cls, name):
+        super(DateField,self).contribute_to_class(cls, name)
+        if not self.null:
+            setattr(cls, 'get_next_by_%s' % self.name,
+                curry(cls._get_next_or_previous_by_FIELD, field=self, is_next=True))
+            setattr(cls, 'get_previous_by_%s' % self.name,
+                curry(cls._get_next_or_previous_by_FIELD, field=self, is_next=False))
+
+    def get_prep_lookup(self, lookup_type, value):
+        # For "__month", "__day", and "__week_day" lookups, convert the value
+        # to an int so the database backend always sees a consistent type.
+        if lookup_type in ('month', 'day', 'week_day'):
+            return int(value)
+        return super(DateField, self).get_prep_lookup(lookup_type, value)
+
+    def get_prep_value(self, value):
+        return self.to_python(value)
+
+    def get_db_prep_value(self, value, connection, prepared=False):
+        # Casts dates into the format expected by the backend
+        if not prepared:
+            value = self.get_prep_value(value)
+        return connection.ops.value_to_db_date(value)
+
+    def value_to_string(self, obj):
+        val = self._get_val_from_obj(obj)
+        if val is None:
+            data = ''
+        else:
+            data = datetime_safe.new_date(val).strftime("%Y-%m-%d")
+        return data
+
+    def formfield(self, **kwargs):
+        defaults = {'form_class': forms.DateField}
+        defaults.update(kwargs)
+        return super(DateField, self).formfield(**defaults)
+
+class DateTimeField(DateField):
+    default_error_messages = {
+        'invalid': _(u'Enter a valid date/time in YYYY-MM-DD HH:MM[:ss[.uuuuuu]] format.'),
+    }
+    description = _("Date (with time)")
+
+    def get_internal_type(self):
+        return "DateTimeField"
+
+    def to_python(self, value):
+        if value is None:
+            return value
+        if isinstance(value, datetime.datetime):
+            return value
+        if isinstance(value, datetime.date):
+            return datetime.datetime(value.year, value.month, value.day)
+
+        # Attempt to parse a datetime:
+        value = smart_str(value)
+        # split usecs, because they are not recognized by strptime.
+        if '.' in value:
+            try:
+                value, usecs = value.split('.')
+                usecs = int(usecs)
+            except ValueError:
+                raise exceptions.ValidationError(self.error_messages['invalid'])
+        else:
+            usecs = 0
+        kwargs = {'microsecond': usecs}
+        try: # Seconds are optional, so try converting seconds first.
+            return datetime.datetime(*time.strptime(value, '%Y-%m-%d %H:%M:%S')[:6],
+                                     **kwargs)
+
+        except ValueError:
+            try: # Try without seconds.
+                return datetime.datetime(*time.strptime(value, '%Y-%m-%d %H:%M')[:5],
+                                         **kwargs)
+            except ValueError: # Try without hour/minutes/seconds.
+                try:
+                    return datetime.datetime(*time.strptime(value, '%Y-%m-%d')[:3],
+                                             **kwargs)
+                except ValueError:
+                    raise exceptions.ValidationError(self.error_messages['invalid'])
+
+    def pre_save(self, model_instance, add):
+        if self.auto_now or (self.auto_now_add and add):
+            value = datetime.datetime.now()
+            setattr(model_instance, self.attname, value)
+            return value
+        else:
+            return super(DateTimeField, self).pre_save(model_instance, add)
+
+    def get_prep_value(self, value):
+        return self.to_python(value)
+
+    def get_db_prep_value(self, value, connection, prepared=False):
+        # Casts dates into the format expected by the backend
+        if not prepared:
+            value = self.get_prep_value(value)
+        return connection.ops.value_to_db_datetime(value)
+
+    def value_to_string(self, obj):
+        val = self._get_val_from_obj(obj)
+        if val is None:
+            data = ''
+        else:
+            d = datetime_safe.new_datetime(val)
+            data = d.strftime('%Y-%m-%d %H:%M:%S')
+        return data
+
+    def formfield(self, **kwargs):
+        defaults = {'form_class': forms.DateTimeField}
+        defaults.update(kwargs)
+        return super(DateTimeField, self).formfield(**defaults)
+
+class DecimalField(Field):
+    empty_strings_allowed = False
+    default_error_messages = {
+        'invalid': _(u'This value must be a decimal number.'),
+    }
+    description = _("Decimal number")
+
+    def __init__(self, verbose_name=None, name=None, max_digits=None, decimal_places=None, **kwargs):
+        self.max_digits, self.decimal_places = max_digits, decimal_places
+        Field.__init__(self, verbose_name, name, **kwargs)
+
+    def get_internal_type(self):
+        return "DecimalField"
+
+    def to_python(self, value):
+        if value is None:
+            return value
+        try:
+            return decimal.Decimal(value)
+        except decimal.InvalidOperation:
+            raise exceptions.ValidationError(self.error_messages['invalid'])
+
+    def _format(self, value):
+        if isinstance(value, basestring) or value is None:
+            return value
+        else:
+            return self.format_number(value)
+
+    def format_number(self, value):
+        """
+        Formats a number into a string with the requisite number of digits and
+        decimal places.
+        """
+        # Method moved to django.db.backends.util.
+        #
+        # It is preserved because it is used by the oracle backend
+        # (django.db.backends.oracle.query), and also for
+        # backwards-compatibility with any external code which may have used
+        # this method.
+        from django.db.backends import util
+        return util.format_number(value, self.max_digits, self.decimal_places)
+
+    def get_db_prep_save(self, value, connection):
+        return connection.ops.value_to_db_decimal(self.to_python(value),
+                self.max_digits, self.decimal_places)
+
+    def get_prep_value(self, value):
+        return self.to_python(value)
+
+    def formfield(self, **kwargs):
+        defaults = {
+            'max_digits': self.max_digits,
+            'decimal_places': self.decimal_places,
+            'form_class': forms.DecimalField,
+        }
+        defaults.update(kwargs)
+        return super(DecimalField, self).formfield(**defaults)
+
+class EmailField(CharField):
+    default_validators = [validators.validate_email]
+    description = _("E-mail address")
+
+    def __init__(self, *args, **kwargs):
+        kwargs['max_length'] = kwargs.get('max_length', 75)
+        CharField.__init__(self, *args, **kwargs)
+
+    def formfield(self, **kwargs):
+        # As with CharField, this will cause email validation to be performed twice
+        defaults = {
+            'form_class': forms.EmailField,
+        }
+        defaults.update(kwargs)
+        return super(EmailField, self).formfield(**defaults)
+
+class FilePathField(Field):
+    description = _("File path")
+
+    def __init__(self, verbose_name=None, name=None, path='', match=None, recursive=False, **kwargs):
+        self.path, self.match, self.recursive = path, match, recursive
+        kwargs['max_length'] = kwargs.get('max_length', 100)
+        Field.__init__(self, verbose_name, name, **kwargs)
+
+    def formfield(self, **kwargs):
+        defaults = {
+            'path': self.path,
+            'match': self.match,
+            'recursive': self.recursive,
+            'form_class': forms.FilePathField,
+        }
+        defaults.update(kwargs)
+        return super(FilePathField, self).formfield(**defaults)
+
+    def get_internal_type(self):
+        return "FilePathField"
+
+class FloatField(Field):
+    empty_strings_allowed = False
+    default_error_messages = {
+        'invalid': _("This value must be a float."),
+    }
+    description = _("Floating point number")
+
+    def get_prep_value(self, value):
+        if value is None:
+            return None
+        return float(value)
+
+    def get_internal_type(self):
+        return "FloatField"
+
+    def to_python(self, value):
+        if value is None:
+            return value
+        try:
+            return float(value)
+        except (TypeError, ValueError):
+            raise exceptions.ValidationError(self.error_messages['invalid'])
+
+    def formfield(self, **kwargs):
+        defaults = {'form_class': forms.FloatField}
+        defaults.update(kwargs)
+        return super(FloatField, self).formfield(**defaults)
+
+class IntegerField(Field):
+    empty_strings_allowed = False
+    default_error_messages = {
+        'invalid': _("This value must be an integer."),
+    }
+    description = _("Integer")
+
+    def get_prep_value(self, value):
+        if value is None:
+            return None
+        return int(value)
+
+    def get_prep_lookup(self, lookup_type, value):
+        if (lookup_type == 'gte' or lookup_type == 'lt') \
+           and isinstance(value, float):
+                value = math.ceil(value)
+        return super(IntegerField, self).get_prep_lookup(lookup_type, value)
+
+    def get_internal_type(self):
+        return "IntegerField"
+
+    def to_python(self, value):
+        if value is None:
+            return value
+        try:
+            return int(value)
+        except (TypeError, ValueError):
+            raise exceptions.ValidationError(self.error_messages['invalid'])
+
+    def formfield(self, **kwargs):
+        defaults = {'form_class': forms.IntegerField}
+        defaults.update(kwargs)
+        return super(IntegerField, self).formfield(**defaults)
+
+class BigIntegerField(IntegerField):
+    empty_strings_allowed = False
+    description = _("Big (8 byte) integer")
+    MAX_BIGINT = 9223372036854775807
+    def get_internal_type(self):
+        return "BigIntegerField"
+
+    def formfield(self, **kwargs):
+        defaults = {'min_value': -BigIntegerField.MAX_BIGINT - 1,
+                    'max_value': BigIntegerField.MAX_BIGINT}
+        defaults.update(kwargs)
+        return super(BigIntegerField, self).formfield(**defaults)
+
+class IPAddressField(Field):
+    empty_strings_allowed = False
+    description = _("IP address")
+    def __init__(self, *args, **kwargs):
+        kwargs['max_length'] = 15
+        Field.__init__(self, *args, **kwargs)
+
+    def get_internal_type(self):
+        return "IPAddressField"
+
+    def formfield(self, **kwargs):
+        defaults = {'form_class': forms.IPAddressField}
+        defaults.update(kwargs)
+        return super(IPAddressField, self).formfield(**defaults)
+
+class NullBooleanField(Field):
+    empty_strings_allowed = False
+    default_error_messages = {
+        'invalid': _("This value must be either None, True or False."),
+    }
+    description = _("Boolean (Either True, False or None)")
+
+    def __init__(self, *args, **kwargs):
+        kwargs['null'] = True
+        kwargs['blank'] = True
+        Field.__init__(self, *args, **kwargs)
+
+    def get_internal_type(self):
+        return "NullBooleanField"
+
+    def to_python(self, value):
+        if value is None:
+            return None
+        if value in (True, False):
+            return bool(value)
+        if value in ('None',):
+            return None
+        if value in ('t', 'True', '1'):
+            return True
+        if value in ('f', 'False', '0'):
+            return False
+        raise exceptions.ValidationError(self.error_messages['invalid'])
+
+    def get_prep_lookup(self, lookup_type, value):
+        # Special-case handling for filters coming from a Web request (e.g. the
+        # admin interface). Only works for scalar values (not lists). If you're
+        # passing in a list, you might as well make things the right type when
+        # constructing the list.
+        if value in ('1', '0'):
+            value = bool(int(value))
+        return super(NullBooleanField, self).get_prep_lookup(lookup_type, value)
+
+    def get_prep_value(self, value):
+        if value is None:
+            return None
+        return bool(value)
+
+    def formfield(self, **kwargs):
+        defaults = {
+            'form_class': forms.NullBooleanField,
+            'required': not self.blank,
+            'label': capfirst(self.verbose_name),
+            'help_text': self.help_text}
+        defaults.update(kwargs)
+        return super(NullBooleanField, self).formfield(**defaults)
+
+class PositiveIntegerField(IntegerField):
+    description = _("Integer")
+
+    def get_internal_type(self):
+        return "PositiveIntegerField"
+
+    def formfield(self, **kwargs):
+        defaults = {'min_value': 0}
+        defaults.update(kwargs)
+        return super(PositiveIntegerField, self).formfield(**defaults)
+
+class PositiveSmallIntegerField(IntegerField):
+    description = _("Integer")
+    def get_internal_type(self):
+        return "PositiveSmallIntegerField"
+
+    def formfield(self, **kwargs):
+        defaults = {'min_value': 0}
+        defaults.update(kwargs)
+        return super(PositiveSmallIntegerField, self).formfield(**defaults)
+
+class SlugField(CharField):
+    description = _("String (up to %(max_length)s)")
+    def __init__(self, *args, **kwargs):
+        kwargs['max_length'] = kwargs.get('max_length', 50)
+        # Set db_index=True unless it's been set manually.
+        if 'db_index' not in kwargs:
+            kwargs['db_index'] = True
+        super(SlugField, self).__init__(*args, **kwargs)
+
+    def get_internal_type(self):
+        return "SlugField"
+
+    def formfield(self, **kwargs):
+        defaults = {'form_class': forms.SlugField}
+        defaults.update(kwargs)
+        return super(SlugField, self).formfield(**defaults)
+
+class SmallIntegerField(IntegerField):
+    description = _("Integer")
+
+    def get_internal_type(self):
+        return "SmallIntegerField"
+
+class TextField(Field):
+    description = _("Text")
+
+    def get_internal_type(self):
+        return "TextField"
+
+    def get_prep_value(self, value):
+        if isinstance(value, basestring) or value is None:
+            return value
+        return smart_unicode(value)
+
+    def formfield(self, **kwargs):
+        defaults = {'widget': forms.Textarea}
+        defaults.update(kwargs)
+        return super(TextField, self).formfield(**defaults)
+
+class TimeField(Field):
+    description = _("Time")
+
+    empty_strings_allowed = False
+    default_error_messages = {
+        'invalid': _('Enter a valid time in HH:MM[:ss[.uuuuuu]] format.'),
+    }
+    def __init__(self, verbose_name=None, name=None, auto_now=False, auto_now_add=False, **kwargs):
+        self.auto_now, self.auto_now_add = auto_now, auto_now_add
+        if auto_now or auto_now_add:
+            kwargs['editable'] = False
+        Field.__init__(self, verbose_name, name, **kwargs)
+
+    def get_internal_type(self):
+        return "TimeField"
+
+    def to_python(self, value):
+        if value is None:
+            return None
+        if isinstance(value, datetime.time):
+            return value
+        if isinstance(value, datetime.datetime):
+            # Not usually a good idea to pass in a datetime here (it loses
+            # information), but this can be a side-effect of interacting with a
+            # database backend (e.g. Oracle), so we'll be accommodating.
+            return value.time()
+
+        # Attempt to parse a datetime:
+        value = smart_str(value)
+        # split usecs, because they are not recognized by strptime.
+        if '.' in value:
+            try:
+                value, usecs = value.split('.')
+                usecs = int(usecs)
+            except ValueError:
+                raise exceptions.ValidationError(self.error_messages['invalid'])
+        else:
+            usecs = 0
+        kwargs = {'microsecond': usecs}
+
+        try: # Seconds are optional, so try converting seconds first.
+            return datetime.time(*time.strptime(value, '%H:%M:%S')[3:6],
+                                 **kwargs)
+        except ValueError:
+            try: # Try without seconds.
+                return datetime.time(*time.strptime(value, '%H:%M')[3:5],
+                                         **kwargs)
+            except ValueError:
+                raise exceptions.ValidationError(self.error_messages['invalid'])
+
+    def pre_save(self, model_instance, add):
+        if self.auto_now or (self.auto_now_add and add):
+            value = datetime.datetime.now().time()
+            setattr(model_instance, self.attname, value)
+            return value
+        else:
+            return super(TimeField, self).pre_save(model_instance, add)
+
+    def get_prep_value(self, value):
+        return self.to_python(value)
+
+    def get_db_prep_value(self, value, connection, prepared=False):
+        # Casts times into the format expected by the backend
+        if not prepared:
+            value = self.get_prep_value(value)
+        return connection.ops.value_to_db_time(value)
+
+    def value_to_string(self, obj):
+        val = self._get_val_from_obj(obj)
+        if val is None:
+            data = ''
+        else:
+            data = val.strftime("%H:%M:%S")
+        return data
+
+    def formfield(self, **kwargs):
+        defaults = {'form_class': forms.TimeField}
+        defaults.update(kwargs)
+        return super(TimeField, self).formfield(**defaults)
+
+class URLField(CharField):
+    description = _("URL")
+
+    def __init__(self, verbose_name=None, name=None, verify_exists=True, **kwargs):
+        kwargs['max_length'] = kwargs.get('max_length', 200)
+        CharField.__init__(self, verbose_name, name, **kwargs)
+        self.validators.append(validators.URLValidator(verify_exists=verify_exists))
+
+    def formfield(self, **kwargs):
+        # As with CharField, this will cause URL validation to be performed twice
+        defaults = {
+            'form_class': forms.URLField,
+        }
+        defaults.update(kwargs)
+        return super(URLField, self).formfield(**defaults)
+
+class XMLField(TextField):
+    description = _("XML text")
+
+    def __init__(self, verbose_name=None, name=None, schema_path=None, **kwargs):
+        self.schema_path = schema_path
+        Field.__init__(self, verbose_name, name, **kwargs)
+

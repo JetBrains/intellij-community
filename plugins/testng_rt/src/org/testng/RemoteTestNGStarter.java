@@ -14,33 +14,49 @@
  * limitations under the License.
  */
 
-/*
- * User: anna
- * Date: 01-Jul-2009
- */
 package org.testng;
 
-import org.testng.remote.RemoteTestNG;
+import com.beust.jcommander.JCommander;
+import com.intellij.rt.execution.testFrameworks.ForkedDebuggerHelper;
 
 import java.io.*;
-import java.lang.reflect.Method;
 import java.net.InetAddress;
 import java.net.Socket;
 import java.util.ArrayList;
-import java.util.Map;
+import java.util.Collections;
+import java.util.List;
 import java.util.Vector;
 
 public class RemoteTestNGStarter {
   private static final String SOCKET = "-socket";
+
   public static void main(String[] args) throws Exception {
     int i = 0;
+    String param = null;
+    String commandFileName = null;
+    String workingDirs = null;
     Vector resultArgs = new Vector();
     for (; i < args.length; i++) {
       String arg = args[i];
-      if (arg.startsWith(SOCKET)) {
+      if (arg.startsWith("@name")) {
+        param = arg.substring(5);
+        continue;
+      }
+      else if (arg.startsWith("@w@")) {
+        workingDirs = arg.substring(3);
+        continue;
+      }
+      else if (arg.startsWith("@@@")) {
+        commandFileName = arg.substring(3);
+        continue;
+      }
+      else if (arg.startsWith(ForkedDebuggerHelper.DEBUG_SOCKET)) {
+        continue;
+      }
+      else if (arg.startsWith(SOCKET)) {
         final int port = Integer.parseInt(arg.substring(SOCKET.length()));
         try {
-          final Socket socket = new Socket(InetAddress.getByName(null), port);  //start collecting tests
+          final Socket socket = new Socket(InetAddress.getByName("127.0.0.1"), port);  //start collecting tests
           final DataInputStream os = new DataInputStream(socket.getInputStream());
           try {
             os.readBoolean();//wait for ready flag
@@ -64,6 +80,7 @@ public class RemoteTestNGStarter {
 
     final BufferedReader reader = new BufferedReader(new FileReader(temp));
 
+    final List newArgs = new ArrayList();
     try {
       final String cantRunMessage = "CantRunException";
       while (true) {
@@ -72,7 +89,7 @@ public class RemoteTestNGStarter {
           line = reader.readLine();
         }
 
-        if (line.startsWith(cantRunMessage) && !new File(line).exists()){
+        if (line.startsWith(cantRunMessage) && !new File(line).exists()) {
           System.err.println(line.substring(cantRunMessage.length()));
           while (true) {
             line = reader.readLine();
@@ -83,31 +100,26 @@ public class RemoteTestNGStarter {
           return;
         }
         if (line.equals("end")) break;
-        resultArgs.add(line);
+        newArgs.add(line);
       }
     }
     finally {
       reader.close();
     }
 
-    try {
-      //testng 5.10 do not initialize xml suites before run in normal main call => No test suite found.
-      //revert "cleanup" to set suites manually again, this time for old versions only
-      final Class aClass = Class.forName("org.testng.TestNGCommandLineArgs");
-      final Method parseCommandLineMethod = aClass.getDeclaredMethod("parseCommandLine", new Class[] {new String[0].getClass()});
-      final Map commandLineArgs = (Map)parseCommandLineMethod.invoke(null, new Object[] {(String[])resultArgs.toArray(new String[resultArgs.size()])});
-      final RemoteTestNG testNG = new RemoteTestNG();
-      testNG.configure(commandLineArgs);
-      //set suites manually
-      testNG.initializeSuitesAndJarFile();
-      //in order to prevent suites to be initialized twice (second time in run)
-      //clear string suites here
-      testNG.setTestSuites(new ArrayList());
-      testNG.run();
-      return;
-    }
-    catch (Throwable ignore) {}
+    resultArgs.addAll(newArgs);
 
-    RemoteTestNG.main((String[])resultArgs.toArray(new String[resultArgs.size()]));
+    if (commandFileName != null) {
+      if (workingDirs != null && new File(workingDirs).length() > 0) {
+        System.exit(new TestNGForkedSplitter(workingDirs, newArgs)
+                      .startSplitting(args, param, commandFileName, null));
+        return;
+      }
+    }
+    final IDEARemoteTestNG testNG = new IDEARemoteTestNG(param);
+    CommandLineArgs cla = new CommandLineArgs();
+    new JCommander(Collections.singletonList(cla), (String[])resultArgs.toArray(new String[0]));
+    testNG.configure(cla);
+    testNG.run();
   }
 }

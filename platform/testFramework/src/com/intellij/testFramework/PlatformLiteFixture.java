@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,16 +18,14 @@ package com.intellij.testFramework;
 import com.intellij.mock.MockApplicationEx;
 import com.intellij.mock.MockProjectEx;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.components.ComponentManager;
 import com.intellij.openapi.extensions.ExtensionPoint;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.extensions.ExtensionsArea;
 import com.intellij.openapi.fileTypes.FileTypeManager;
-import com.intellij.openapi.fileTypes.FileTypeRegistry;
-import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
 import com.intellij.openapi.vfs.encoding.EncodingManagerImpl;
-import com.intellij.openapi.vfs.encoding.EncodingRegistry;
 import org.jetbrains.annotations.NotNull;
 import org.picocontainer.MutablePicoContainer;
 
@@ -53,27 +51,20 @@ public abstract class PlatformLiteFixture extends UsefulTestCase {
     //if (ApplicationManager.getApplication() instanceof MockApplicationEx) return;
     final MockApplicationEx instance = new MockApplicationEx(getTestRootDisposable());
     ApplicationManager.setApplication(instance,
-                                      new Getter<FileTypeRegistry>() {
-                                        @Override
-                                        public FileTypeRegistry get() {
-                                          return FileTypeManager.getInstance();
-                                        }
-                                      },
-                                      new Getter<EncodingRegistry>() {
-                                        @Override
-                                        public EncodingRegistry get() {
-                                          return EncodingManager.getInstance();
-                                        }
-                                      },
+                                      () -> FileTypeManager.getInstance(),
                                       getTestRootDisposable());
     getApplication().registerService(EncodingManager.class, EncodingManagerImpl.class);
   }
 
   @Override
   protected void tearDown() throws Exception {
-    super.tearDown();
-    clearFields(this);
     myProject = null;
+    try {
+      super.tearDown();
+    }
+    finally {
+      clearFields(this);
+    }
   }
 
   protected <T> void registerExtension(final ExtensionPointName<T> extensionPointName, @NotNull final T t) {
@@ -84,7 +75,7 @@ public abstract class PlatformLiteFixture extends UsefulTestCase {
     registerExtensionPoint(area, name, (Class<T>)t.getClass());
 
 
-    PlatformTestUtil.registerExtension(area, name, t, myTestRootDisposable);
+    PlatformTestUtil.registerExtension(area, name, t, getTestRootDisposable());
   }
 
   protected <T> void registerExtensionPoint(final ExtensionPointName<T> extensionPointName, final Class<T> aClass) {
@@ -105,8 +96,15 @@ public abstract class PlatformLiteFixture extends UsefulTestCase {
     container.registerComponentImplementation(key, implementation);
   }
 
-  protected <T> void registerComponentInstance(final MutablePicoContainer container, final Class<T> key, final T implementation) {
+  public static <T> T registerComponentInstance(final MutablePicoContainer container, final Class<T> key, final T implementation) {
+    Object old = container.getComponentInstance(key);
     container.unregisterComponent(key);
     container.registerComponentInstance(key, implementation);
+    return (T)old;
   }
+
+  public static <T> T registerComponentInstance(final ComponentManager container, final Class<T> key, final T implementation) {
+    return registerComponentInstance((MutablePicoContainer)container.getPicoContainer(), key, implementation);
+  }
+
 }

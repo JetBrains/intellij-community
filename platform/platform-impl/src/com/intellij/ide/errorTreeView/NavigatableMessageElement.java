@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.errorTreeView;
 
 import com.intellij.pom.Navigatable;
@@ -21,11 +7,11 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Nov 12, 2004
  */
-public class NavigatableMessageElement extends ErrorTreeElement {
+public class NavigatableMessageElement extends ErrorTreeElement implements NavigatableErrorTreeElement {
   private final GroupingElement myParent;
   private final String[] myMessage;
+  @NotNull
   private final Navigatable myNavigatable;
   private final String myExportText;
   private final String myRendererTextPrefix;
@@ -33,7 +19,7 @@ public class NavigatableMessageElement extends ErrorTreeElement {
   public NavigatableMessageElement(@NotNull ErrorTreeElementKind kind,
                                    @Nullable GroupingElement parent,
                                    String[] message,
-                                   Navigatable navigatable,
+                                   @NotNull Navigatable navigatable,
                                    String exportText,
                                    String rendererTextPrefix) {
     super(kind);
@@ -44,14 +30,18 @@ public class NavigatableMessageElement extends ErrorTreeElement {
     myRendererTextPrefix = rendererTextPrefix;
   }
 
+  @Override
+  @NotNull
   public Navigatable getNavigatable() {
     return myNavigatable;
   }
 
+  @Override
   public String[] getText() {
     return myMessage;
   }
 
+  @Override
   public Object getData() {
     return myParent.getData();
   }
@@ -61,6 +51,7 @@ public class NavigatableMessageElement extends ErrorTreeElement {
     return myParent;
   }
 
+  @Override
   public String getExportTextPrefix() {
     return getKind().getPresentableText() + myExportText;
   }

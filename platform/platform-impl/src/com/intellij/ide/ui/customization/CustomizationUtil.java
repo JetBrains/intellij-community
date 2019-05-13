@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,8 +15,10 @@
  */
 package com.intellij.ide.ui.customization;
 
-import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.actionSystem.ActionGroup;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.keymap.impl.ui.Group;
 import com.intellij.openapi.util.Pair;
@@ -34,26 +36,25 @@ import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
-import java.awt.*;
-import java.awt.event.MouseAdapter;
 import java.awt.event.MouseListener;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * User: anna
- * Date: Mar 30, 2005
- */
 public class CustomizationUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.ui.customization.CustomizationUtil");
 
   private CustomizationUtil() {
   }
 
-  public static ActionGroup correctActionGroup(final ActionGroup group, final CustomActionsSchema schema, final String defaultGroupName) {
-    if (!schema.isCorrectActionGroup(group, defaultGroupName)){
-       return group;
-     }
+  public static ActionGroup correctActionGroup(final ActionGroup group,
+                                               final CustomActionsSchema schema,
+                                               final String defaultGroupName,
+                                               final String rootGroupName,
+                                               boolean force) {
+    if (!force && !schema.isCorrectActionGroup(group, defaultGroupName)) {
+      return group;
+    }
+
     String text = group.getTemplatePresentation().getText();
     final int mnemonic = group.getTemplatePresentation().getMnemonic();
     if (text != null) {
@@ -65,20 +66,24 @@ public class CustomizationUtil {
       }
     }
 
-    return new CustomisedActionGroup(text, group.isPopup(), group, schema, defaultGroupName);
+    return new CustomisedActionGroup(text, group, schema, defaultGroupName, rootGroupName);
   }
 
 
-  static AnAction [] getReordableChildren(ActionGroup group, CustomActionsSchema schema, String defaultGroupName, AnActionEvent e) {
+  static AnAction [] getReordableChildren(ActionGroup group,
+                                          CustomActionsSchema schema,
+                                          String defaultGroupName,
+                                          String rootGroupName,
+                                          AnActionEvent e) {
     String text = group.getTemplatePresentation().getText();
     ActionManager actionManager = ActionManager.getInstance();
-    final ArrayList<AnAction> reorderedChildren = new ArrayList<AnAction>();
+    final ArrayList<AnAction> reorderedChildren = new ArrayList<>();
     ContainerUtil.addAll(reorderedChildren, group.getChildren(e));
     final List<ActionUrl> actions = schema.getActions();
     for (ActionUrl actionUrl : actions) {
       if ((actionUrl.getParentGroup().equals(text) ||
            actionUrl.getParentGroup().equals(defaultGroupName) ||
-           actionUrl.getParentGroup().equals(actionManager.getId(group)))) {
+           actionUrl.getParentGroup().equals(actionManager.getId(group)) && actionUrl.getRootGroup().equals(rootGroupName))) {
         AnAction componentAction = actionUrl.getComponentAction();
         if (componentAction != null) {
           if (actionUrl.getActionType() == ActionUrl.ADDED) {
@@ -109,12 +114,12 @@ public class CustomizationUtil {
     for (int i = 0; i < reorderedChildren.size(); i++) {
       if (reorderedChildren.get(i) instanceof ActionGroup) {
         final ActionGroup groupToCorrect = (ActionGroup)reorderedChildren.get(i);
-        final AnAction correctedAction = correctActionGroup(groupToCorrect, schema, "");
+        final AnAction correctedAction = correctActionGroup(groupToCorrect, schema, "", rootGroupName, false);
         reorderedChildren.set(i, correctedAction);
       }
     }
 
-    return reorderedChildren.toArray(new AnAction[reorderedChildren.size()]);
+    return reorderedChildren.toArray(AnAction.EMPTY_ARRAY);
   }
 
   public static void optimizeSchema(final JTree tree, final CustomActionsSchema schema) {
@@ -125,39 +130,38 @@ public class CustomizationUtil {
     schema.fillActionGroups(root);
     final JTree defaultTree = new Tree(new DefaultTreeModel(root));
 
-    final ArrayList<ActionUrl> actions = new ArrayList<ActionUrl>();
-
-    TreeUtil.traverseDepth((TreeNode)tree.getModel().getRoot(), new TreeUtil.Traverse() {
-      public boolean accept(Object node) {
-        DefaultMutableTreeNode treeNode = (DefaultMutableTreeNode)node;
-        if (treeNode.isLeaf()) {
-          return true;
-        }
-        final ActionUrl url = getActionUrl(new TreePath(treeNode.getPath()), 0);
-        url.getGroupPath().add(((Group)treeNode.getUserObject()).getName());
-        final TreePath treePath = getTreePath(defaultTree, url);
-        if (treePath != null) {
-          final DefaultMutableTreeNode visited = (DefaultMutableTreeNode)treePath.getLastPathComponent();
-          final ActionUrl[] defaultUserObjects = getChildUserObjects(visited, url);
-          final ActionUrl[] currentUserObjects = getChildUserObjects(treeNode, url);
-          computeDiff(defaultUserObjects, currentUserObjects, actions);
-        } else {
-          //customizations at the new place
-          url.getGroupPath().remove(url.getParentGroup());
-          if (actions.contains(url)){
-            url.getGroupPath().add(((Group)treeNode.getUserObject()).getName());
-            actions.addAll(schema.getChildActions(url));
-          }
-        }
+    final List<ActionUrl> actions = new ArrayList<>();
+    TreeUtil.traverseDepth((TreeNode)tree.getModel().getRoot(), node -> {
+      DefaultMutableTreeNode treeNode = (DefaultMutableTreeNode)node;
+      Object userObject = treeNode.getUserObject();
+      if (treeNode.isLeaf() && !(userObject instanceof Group)) {
         return true;
       }
+      ActionUrl url = getActionUrl(new TreePath(treeNode.getPath()), 0);
+      String groupName = ((Group)userObject).getName();
+      url.getGroupPath().add(groupName);
+      final TreePath treePath = getTreePath(defaultTree, url);
+      if (treePath != null) {
+        final DefaultMutableTreeNode visited = (DefaultMutableTreeNode)treePath.getLastPathComponent();
+        final ActionUrl[] defaultUserObjects = getChildUserObjects(visited, url);
+        final ActionUrl[] currentUserObjects = getChildUserObjects(treeNode, url);
+        computeDiff(defaultUserObjects, currentUserObjects, actions);
+      } else {
+        //customizations at the new place
+        url.getGroupPath().remove(url.getParentGroup());
+        if (actions.contains(url)){
+          url.getGroupPath().add(groupName);
+          actions.addAll(schema.getChildActions(url));
+        }
+      }
+      return true;
     });
     schema.setActions(actions);
   }
 
   private static void computeDiff(final ActionUrl[] defaultUserObjects,
                                   final ActionUrl[] currentUserObjects,
-                                  final ArrayList<ActionUrl> actions) {
+                                  @NotNull List<? super ActionUrl> actions) {
     Diff.Change change = null;
     try {
       change = Diff.buildChanges(defaultUserObjects, currentUserObjects);
@@ -185,14 +189,14 @@ public class CustomizationUtil {
   }
 
   public static TreePath getPathByUserObjects(JTree tree, TreePath treePath){
-    List<String>  path = new ArrayList<String>();
+    List<String>  path = new ArrayList<>();
     for (int i = 0; i < treePath.getPath().length; i++) {
       Object o = ((DefaultMutableTreeNode)treePath.getPath()[i]).getUserObject();
       if (o instanceof Group) {
         path.add(((Group)o).getName());
       }
     }
-    return getTreePath(0, path, tree.getModel().getRoot(), tree);
+    return getTreePath(0, path, tree.getModel().getRoot());
   }
 
   public static ActionUrl getActionUrl(final TreePath treePath, int actionType) {
@@ -207,20 +211,19 @@ public class CustomizationUtil {
 
     final DefaultMutableTreeNode component = ((DefaultMutableTreeNode)treePath.getLastPathComponent());
     url.setComponent(component.getUserObject());
-    DefaultMutableTreeNode node = component;
-    final TreeNode parent = node.getParent();
-    url.setAbsolutePosition(parent != null ? parent.getIndex(node) : 0);
+    final TreeNode parent = component.getParent();
+    url.setAbsolutePosition(parent != null ? parent.getIndex(component) : 0);
     url.setActionType(actionType);
     return url;
   }
 
 
   public static TreePath getTreePath(JTree tree, ActionUrl url) {
-    return getTreePath(0, url.getGroupPath(), tree.getModel().getRoot(), tree);
+    return getTreePath(0, url.getGroupPath(), tree.getModel().getRoot());
   }
 
   @Nullable
-  private static TreePath getTreePath(final int positionInPath, final List<String> path, final Object root, JTree tree) {
+  private static TreePath getTreePath(final int positionInPath, final List<String> path, final Object root) {
     if (!(root instanceof DefaultMutableTreeNode)) return null;
 
     final DefaultMutableTreeNode treeNode = ((DefaultMutableTreeNode)root);
@@ -250,7 +253,7 @@ public class CustomizationUtil {
 
     for (int j = 0; j < treeNode.getChildCount(); j++) {
       final TreeNode child = treeNode.getChildAt(j);
-      currentPath = getTreePath(positionInPath + 1, path, child, tree);
+      currentPath = getTreePath(positionInPath + 1, path, child);
       if (currentPath != null) {
         break;
       }
@@ -261,9 +264,8 @@ public class CustomizationUtil {
 
 
   private static ActionUrl[] getChildUserObjects(DefaultMutableTreeNode node, ActionUrl parent) {
-    ArrayList<ActionUrl> result = new ArrayList<ActionUrl>();
-    ArrayList<String> groupPath = new ArrayList<String>();
-    groupPath.addAll(parent.getGroupPath());
+    ArrayList<ActionUrl> result = new ArrayList<>();
+    ArrayList<String> groupPath = new ArrayList<>(parent.getGroupPath());
     for (int i = 0; i < node.getChildCount(); i++) {
       DefaultMutableTreeNode child = (DefaultMutableTreeNode)node.getChildAt(i);
       ActionUrl url = new ActionUrl();
@@ -272,19 +274,19 @@ public class CustomizationUtil {
       url.setComponent(userObject instanceof Pair ? ((Pair)userObject).first : userObject);
       result.add(url);
     }
-    return result.toArray(new ActionUrl[result.size()]);
+    return result.toArray(new ActionUrl[0]);
   }
 
-  public static MouseListener installPopupHandler(JComponent component, @NotNull final String groupId, final String place) {
-    if (ApplicationManager.getApplication() == null) return new MouseAdapter(){};
-    PopupHandler popupHandler = new PopupHandler() {
-      public void invokePopup(Component comp, int x, int y) {
-        ActionGroup group = (ActionGroup)CustomActionsSchema.getInstance().getCorrectedAction(groupId);
-        final ActionPopupMenu popupMenu = ActionManager.getInstance().createActionPopupMenu(place, group);
-        popupMenu.getComponent().show(comp, x, y);
-      }
-    };
-    component.addMouseListener(popupHandler);
-    return popupHandler;
+  @NotNull
+  public static MouseListener installPopupHandler(JComponent component, @NotNull String groupId, String place) {
+    return PopupHandler.installPopupHandler(
+      component, new ActionGroup() {
+        @NotNull
+        @Override
+        public AnAction[] getChildren(@Nullable AnActionEvent e) {
+          ActionGroup group = (ActionGroup)CustomActionsSchema.getInstance().getCorrectedAction(groupId);
+          return group == null ? EMPTY_ARRAY : group.getChildren(e);
+        }
+      }, place, ActionManager.getInstance(), null);
   }
 }

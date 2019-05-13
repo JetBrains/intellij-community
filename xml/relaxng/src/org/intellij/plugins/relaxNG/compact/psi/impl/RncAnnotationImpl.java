@@ -24,24 +24,22 @@ import org.intellij.plugins.relaxNG.compact.psi.RncName;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/*
-* Created by IntelliJ IDEA.
-* User: sweinreuter
-* Date: 24.08.2007
-*/
 public class RncAnnotationImpl extends RncElementImpl implements RncAnnotation {
   public RncAnnotationImpl(ASTNode node) {
     super(node);
   }
 
+  @Override
   public void accept(@NotNull RncElementVisitor visitor) {
     visitor.visitAnnotation(this);
   }
 
+  @Override
   public IElementType getTokenType() {
     return getNode().getElementType();
   }
 
+  @Override
   @Nullable
   public RncName getNameElement() {
     return findChildByClass(RncName.class);

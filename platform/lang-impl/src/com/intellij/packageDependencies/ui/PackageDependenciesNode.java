@@ -17,9 +17,7 @@
 package com.intellij.packageDependencies.ui;
 
 import com.intellij.analysis.AnalysisScopeBundle;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.fileEditor.OpenFileDescriptor;
+import com.intellij.codeInsight.navigation.NavigationUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
@@ -37,11 +35,12 @@ import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.MutableTreeNode;
 import java.awt.*;
-import java.util.*;
-import java.util.List;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 
 public class PackageDependenciesNode extends DefaultMutableTreeNode implements Navigatable{
-  private static final EmptyIcon EMPTY_ICON = new EmptyIcon(0, IconUtil.getEmptyIcon(false).getIconHeight());
+  private static final EmptyIcon EMPTY_ICON = EmptyIcon.create(0, IconUtil.getEmptyIcon(false).getIconHeight());
 
   private Set<VirtualFile> myRegisteredFiles = null;
   private boolean myHasUnmarked = false;
@@ -64,7 +63,7 @@ public class PackageDependenciesNode extends DefaultMutableTreeNode implements N
     return myEquals;
   }
 
-  public void fillFiles(Set<PsiFile> set, boolean recursively) {
+  public void fillFiles(Set<? super PsiFile> set, boolean recursively) {
     final PsiManager psiManager = PsiManager.getInstance(myProject);
     for (VirtualFile vFile : getRegisteredFiles()) {
       final PsiFile psiFile = psiManager.findFile(vFile);
@@ -122,6 +121,7 @@ public class PackageDependenciesNode extends DefaultMutableTreeNode implements N
     return filesCount > 0 ? " (" + AnalysisScopeBundle.message("package.dependencies.node.items.count", filesCount) + ")" : "";
   }
 
+  @Override
   public void add(MutableTreeNode newChild) {
     super.add(newChild);
     boolean hasUnmarked = ((PackageDependenciesNode)newChild).hasUnmarked();
@@ -140,52 +140,32 @@ public class PackageDependenciesNode extends DefaultMutableTreeNode implements N
     }
   }
 
+  @Override
   public void navigate(boolean focus) {
     if (canNavigate()) {
-      openTextEditor(focus);
+      PsiElement psiElement = getPsiElement();
+      if (psiElement != null) {
+        NavigationUtil.openFileWithPsiElement(psiElement, focus, focus);
+      }
     }
   }
 
-  @Nullable
-  private Editor openTextEditor(boolean focus) {
-    final OpenFileDescriptor descriptor = getDescriptor();
-    if (descriptor != null) {
-      return FileEditorManager.getInstance(getProject()).openTextEditor(descriptor, focus);
-    }
-    return null;
-  }
-
+  @Override
   public boolean canNavigate() {
-    if (getProject() == null) return false;
     final PsiElement psiElement = getPsiElement();
     if (psiElement == null) return false;
-    final VirtualFile virtualFile = psiElement.getContainingFile().getVirtualFile();
+    PsiFile containingFile = psiElement.getContainingFile();
+    if (containingFile == null) return false;
+    final VirtualFile virtualFile = containingFile.getVirtualFile();
     return virtualFile != null && virtualFile.isValid();
   }
 
+  @Override
   public boolean canNavigateToSource() {
     return canNavigate();
   }
 
-  @Nullable
-  private Project getProject(){
-    final PsiElement psiElement = getPsiElement();
-    if (psiElement == null || psiElement.getContainingFile() == null){
-      return null;
-    }
-    return psiElement.getContainingFile().getProject();
-  }
-
-  @Nullable
-  private OpenFileDescriptor getDescriptor() {
-    if (getProject() == null) return null;
-    final PsiElement psiElement = getPsiElement();
-    if (psiElement == null) return null;
-    final VirtualFile virtualFile = psiElement.getContainingFile().getVirtualFile();
-    if (virtualFile == null || !virtualFile.isValid()) return null;
-    return new OpenFileDescriptor(getProject(), virtualFile, psiElement.getTextOffset());
-  }
-
+  @Override
   public Object getUserObject() {
     return toString();
   }
@@ -196,7 +176,7 @@ public class PackageDependenciesNode extends DefaultMutableTreeNode implements N
 
   public Set<VirtualFile> getRegisteredFiles() {
     if (myRegisteredFiles == null) {
-      myRegisteredFiles = new HashSet<VirtualFile>();
+      myRegisteredFiles = new HashSet<>();
     }
     return myRegisteredFiles;
   }
@@ -220,10 +200,7 @@ public class PackageDependenciesNode extends DefaultMutableTreeNode implements N
 
   public void sortChildren() {
     if (isSorted()) return;
-    final List children = TreeUtil.childrenToArray(this);
-    Collections.sort(children, new DependencyNodeComparator());
-    removeAllChildren();
-    TreeUtil.addChildrenTo(this, children);
+    TreeUtil.sortChildren(this, new DependencyNodeComparator());
     setSorted(true);
   }
 }

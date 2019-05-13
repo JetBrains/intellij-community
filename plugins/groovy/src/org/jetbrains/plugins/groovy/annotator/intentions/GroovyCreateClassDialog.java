@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.annotator.intentions;
 
 import com.intellij.CommonBundle;
@@ -22,15 +8,14 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CustomShortcutSet;
 import com.intellij.openapi.command.CommandProcessor;
-import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
+import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.FixedSizeButton;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Ref;
-import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiNameHelper;
 import com.intellij.psi.PsiPackage;
@@ -75,6 +60,7 @@ public class GroovyCreateClassDialog extends DialogWrapper {
     init();
 
     myPackageChooseButton.addActionListener(new ActionListener() {
+      @Override
       public void actionPerformed(ActionEvent event) {
         PackageChooserDialog chooser = new PackageChooserDialog(GroovyInspectionBundle.message("dialog.create.class.package.chooser.title"), myProject);
         chooser.selectPackage(myPackageTextField.getText());
@@ -92,19 +78,21 @@ public class GroovyCreateClassDialog extends DialogWrapper {
     myPackageChooseButton = new FixedSizeButton(myPackageTextField);
   }
 
+  @Override
   @Nullable
   protected JComponent createCenterPanel() {
-    myPackageTextField.getDocument().addDocumentListener(new DocumentAdapter() {
+    myPackageTextField.getDocument().addDocumentListener(new DocumentListener() {
       @Override
-      public void documentChanged(DocumentEvent e) {
-        PsiNameHelper nameHelper = JavaPsiFacade.getInstance(myProject).getNameHelper();
+      public void documentChanged(@NotNull DocumentEvent e) {
+        PsiNameHelper nameHelper = PsiNameHelper.getInstance(myProject);
         String packageName = getPackageName();
         getOKAction().setEnabled(nameHelper.isQualifiedName(packageName) || packageName != null && packageName.isEmpty());
       }
     });
 
     new AnAction() {
-      public void actionPerformed(AnActionEvent e) {
+      @Override
+      public void actionPerformed(@NotNull AnActionEvent e) {
         myPackageChooseButton.doClick();
       }
     }.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, InputEvent.SHIFT_DOWN_MASK)), myPackageTextField);
@@ -112,6 +100,7 @@ public class GroovyCreateClassDialog extends DialogWrapper {
     return myContentPane;
   }
 
+  @Override
   public JComponent getContentPane() {
     return myContentPane;
   }
@@ -120,11 +109,13 @@ public class GroovyCreateClassDialog extends DialogWrapper {
     return myTargetDirectory;
   }
 
+  @Override
   @NotNull
   protected Action[] createActions() {
     return new Action[]{getOKAction(), getCancelAction(), getHelpAction()};
   }
 
+  @Override
   public JComponent getPreferredFocusedComponent() {
     return myPackageTextField;
   }
@@ -134,30 +125,29 @@ public class GroovyCreateClassDialog extends DialogWrapper {
     return name != null ? name.trim() : "";
   }
 
+  @Override
   protected void doOKAction() {
     final String packageName = getPackageName();
 
-    final Ref<String> errorStringRef = new Ref<String>();
-    CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
-      public void run() {
-        try {
-          final PsiDirectory baseDir = myModule == null ? null : PackageUtil.findPossiblePackageDirectoryInModule(myModule, packageName);
-          myTargetDirectory = myModule == null ? null
-              : PackageUtil.findOrCreateDirectoryForPackage(myModule, packageName, baseDir, true);
-          if (myTargetDirectory == null) {
-            errorStringRef.set("");
-            return;
-          }
-          errorStringRef.set(RefactoringMessageUtil.checkCanCreateClass(myTargetDirectory, getClassName()));
+    final Ref<String> errorStringRef = new Ref<>();
+    CommandProcessor.getInstance().executeCommand(myProject, () -> {
+      try {
+        final PsiDirectory baseDir = myModule == null ? null : PackageUtil.findPossiblePackageDirectoryInModule(myModule, packageName);
+        myTargetDirectory = myModule == null ? null
+            : PackageUtil.findOrCreateDirectoryForPackage(myModule, packageName, baseDir, true);
+        if (myTargetDirectory == null) {
+          errorStringRef.set("");
+          return;
         }
-        catch (IncorrectOperationException e) {
-          errorStringRef.set(e.getMessage());
-        }
+        errorStringRef.set(RefactoringMessageUtil.checkCanCreateClass(myTargetDirectory, getClassName()));
+      }
+      catch (IncorrectOperationException e) {
+        errorStringRef.set(e.getMessage());
       }
     }, GroovyInspectionBundle.message("create.directory.command"), null);
 
     if (errorStringRef.get() != null) {
-      if (errorStringRef.get().length() > 0) {
+      if (!errorStringRef.get().isEmpty()) {
         Messages.showMessageDialog(myProject, errorStringRef.get(), CommonBundle.getErrorTitle(), Messages.getErrorIcon());
       }
       return;

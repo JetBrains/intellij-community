@@ -101,12 +101,8 @@ public class ScrollUtil {
     visible.x = r.x - (visible.width - r.width) / 2;
     visible.y = r.y - (visible.height - r.height) / 2;
 
-    final Rectangle bounds = c.getBounds();
-    final Insets i = withInsets ? new Insets(0, 0, 0, 0) : c.getInsets();
-    bounds.x = i.left;
-    bounds.y = i.top;
-    bounds.width -= i.left + i.right;
-    bounds.height -= i.top + i.bottom;
+    Rectangle bounds = new Rectangle(c.getWidth(), c.getHeight());
+    if (!withInsets) JBInsets.removeFrom(bounds, c.getInsets());
 
     if (visible.x < bounds.x) {
       visible.x = bounds.x;

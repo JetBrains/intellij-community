@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -48,6 +48,7 @@ public class ErrorableTableCellRenderer<T extends DomElement> extends DefaultTab
     myRoot = DomUtil.getRoot(myRowDomElement);
   }
 
+  @Override
   public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
     final Component component = myRenderer.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
     if (!myRoot.isValid()) {
@@ -57,7 +58,8 @@ public class ErrorableTableCellRenderer<T extends DomElement> extends DefaultTab
     final DomElementAnnotationsManager annotationsManager = DomElementAnnotationsManager.getInstance(myRowDomElement.getManager().getProject());
     final DomElementsProblemsHolder holder = annotationsManager.getCachedProblemHolder(myRoot);
     final List<DomElementProblemDescriptor> errorProblems = holder.getProblems(myCellValueDomElement);
-    final List<DomElementProblemDescriptor> warningProblems = new ArrayList<DomElementProblemDescriptor>(holder.getProblems(myCellValueDomElement, true, HighlightSeverity.WARNING));
+    final List<DomElementProblemDescriptor> warningProblems =
+      new ArrayList<>(holder.getProblems(myCellValueDomElement, true, HighlightSeverity.WARNING));
     warningProblems.removeAll(errorProblems);
 
     final boolean hasErrors = errorProblems.size() > 0;
@@ -80,7 +82,7 @@ public class ErrorableTableCellRenderer<T extends DomElement> extends DefaultTab
     }
     else if (warningProblems.size() > 0) {
       component.setBackground(BaseControl.WARNING_BACKGROUND);
-      if(isSelected) component.setForeground(JBColor.foreground);
+      if(isSelected) component.setForeground(JBColor.foreground());
     }
 
     final List<DomElementProblemDescriptor> errorDescriptors =

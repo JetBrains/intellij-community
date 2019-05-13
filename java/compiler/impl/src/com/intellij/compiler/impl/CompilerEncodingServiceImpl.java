@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,6 +33,7 @@ import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
 
 import java.nio.charset.Charset;
 import java.util.Collection;
@@ -49,33 +50,31 @@ public class CompilerEncodingServiceImpl extends CompilerEncodingService {
 
   public CompilerEncodingServiceImpl(@NotNull Project project) {
     myProject = project;
-    myModuleFileEncodings = CachedValuesManager.getManager(project).createCachedValue(new CachedValueProvider<Map<Module, Set<Charset>>>() {
-      @Override
-      public Result<Map<Module, Set<Charset>>> compute() {
-        Map<Module, Set<Charset>> result = computeModuleCharsetMap();
-        return Result.create(result, ProjectRootManager.getInstance(myProject),
-                             ((EncodingProjectManagerImpl)EncodingProjectManager.getInstance(myProject)).getModificationTracker());
-      }
+    myModuleFileEncodings = CachedValuesManager.getManager(project).createCachedValue(() -> {
+      Map<Module, Set<Charset>> result = computeModuleCharsetMap();
+      return CachedValueProvider.Result.create(result, ProjectRootManager.getInstance(myProject),
+                                               ((EncodingProjectManagerImpl)EncodingProjectManager.getInstance(myProject)).getModificationTracker());
     }, false);
   }
 
+  @NotNull
   private Map<Module, Set<Charset>> computeModuleCharsetMap() {
-    final Map<Module, Set<Charset>> map = new THashMap<Module, Set<Charset>>();
-    final Map<VirtualFile, Charset> mappings = EncodingProjectManager.getInstance(myProject).getAllMappings();
+    final Map<Module, Set<Charset>> map = new THashMap<>();
+    final Map<VirtualFile, Charset> mappings = ((EncodingProjectManagerImpl)EncodingProjectManager.getInstance(myProject)).getAllMappings();
     ProjectFileIndex index = ProjectRootManager.getInstance(myProject).getFileIndex();
     final CompilerManager compilerManager = CompilerManager.getInstance(myProject);
     for (Map.Entry<VirtualFile, Charset> entry : mappings.entrySet()) {
       final VirtualFile file = entry.getKey();
       final Charset charset = entry.getValue();
       if (file == null || charset == null || (!file.isDirectory() && !compilerManager.isCompilableFileType(file.getFileType()))
-          || !index.isInSourceContent(file)) continue;
+          || !index.isUnderSourceRootOfType(file, JavaModuleSourceRootTypes.SOURCES)) continue;
 
       final Module module = index.getModuleForFile(file);
       if (module == null) continue;
 
       Set<Charset> set = map.get(module);
       if (set == null) {
-        set = new LinkedHashSet<Charset>();
+        set = new LinkedHashSet<>();
         map.put(module, set);
 
         final VirtualFile sourceRoot = index.getSourceRootForFile(file);
@@ -104,7 +103,7 @@ public class CompilerEncodingServiceImpl extends CompilerEncodingService {
         if (encoding != null) {
           Set<Charset> charsets = map.get(module);
           if (charsets == null) {
-            charsets = new LinkedHashSet<Charset>();
+            charsets = new LinkedHashSet<>();
             map.put(module, charsets);
           }
           charsets.add(encoding);

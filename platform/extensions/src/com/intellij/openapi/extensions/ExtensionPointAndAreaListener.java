@@ -19,6 +19,8 @@
  */
 package com.intellij.openapi.extensions;
 
+import org.jetbrains.annotations.NotNull;
+
 public interface ExtensionPointAndAreaListener<T> extends ExtensionPointListener<T> {
-  void areaReplaced(ExtensionsArea area);
+  void areaReplaced(@NotNull ExtensionsArea oldArea);
 }

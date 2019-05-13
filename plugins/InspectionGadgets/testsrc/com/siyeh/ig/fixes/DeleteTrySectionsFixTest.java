@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package com.siyeh.ig.fixes;
 
+import com.intellij.codeInspection.CommonQuickFixBundle;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.IGQuickFixesTestCase;
 import com.siyeh.ig.errorhandling.CaughtExceptionImmediatelyRethrownInspection;
@@ -33,11 +34,15 @@ public class DeleteTrySectionsFixTest extends IGQuickFixesTestCase {
   }
 
   public void testDeleteTryStatement() {
-    doTest(InspectionGadgetsBundle.message("remove.try.catch.quickfix"));
+    doTest(CommonQuickFixBundle.message("fix.remove.statement", "try-catch"));
   }
 
   public void testDeleteEmptyTryStatement() {
-    doTest(InspectionGadgetsBundle.message("remove.try.catch.quickfix"));
+    doTest(CommonQuickFixBundle.message("fix.remove.statement", "try-catch"));
+  }
+
+  public void testKeepComments() {
+    doTest(CommonQuickFixBundle.message("fix.remove.statement", "try-catch"));
   }
 
   public void testDeleteEmptyFinally() {
@@ -45,10 +50,14 @@ public class DeleteTrySectionsFixTest extends IGQuickFixesTestCase {
   }
 
   public void testDeleteTryWithEmptyFinally() {
-    doTest(InspectionGadgetsBundle.message("remove.try.finally.block.quickfix"));
+    doTest(InspectionGadgetsBundle.message("remove.finally.block.quickfix"));
   }
 
   public void testDeleteTryWithResources() {
     doTest(InspectionGadgetsBundle.message("delete.catch.section.quickfix"));
+  }
+
+  public void testDeleteTryWithEmptyFinallyNoOuterBlock() {
+    doTest(InspectionGadgetsBundle.message("remove.try.finally.block.quickfix"));
   }
 }

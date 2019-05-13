@@ -31,8 +31,7 @@ public class XmlTagInjection extends AbstractTagInjection {
     return matches(context) && matchXPath(context);
   }
 
-  @NotNull
-  public String getDisplayName() {
+  public String getGeneratedName() {
     final String name = getTagName();
     return name.length() > 0 ? name : "*";
   }
@@ -42,6 +41,7 @@ public class XmlTagInjection extends AbstractTagInjection {
     return new XmlTagInjection().copyFrom(this);
   }
 
+  @Override
   public XmlTagInjection copyFrom(@NotNull BaseInjection o) {
     super.copyFrom(o);
     return this;
@@ -49,6 +49,7 @@ public class XmlTagInjection extends AbstractTagInjection {
 
   @Override
   public void generatePlaces() {
+    if (StringUtil.isEmpty(getDisplayName())) setDisplayName(getGeneratedName());
     setInjectionPlaces(new InjectionPlace(getCompiler().createElementPattern(getPatternString(this), getDisplayName()), true));
   }
 

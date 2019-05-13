@@ -15,5 +15,9 @@
  */
 package com.intellij.execution.configurations;
 
+/**
+ * @deprecated this interface doesn't have any purpose, please don't use it
+ */
+@Deprecated
 public interface RunnableState extends RunProfileState {
 }

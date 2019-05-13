@@ -1,9 +1,7 @@
 // final Fields initialization
 import java.io.*;
-import java.net.*;
-import java.awt.event.*;
 
-public class a  {
+class a  {
   /**
    * javadoc should not be highlighted
    */ 
@@ -87,8 +85,8 @@ class Test {
     }
     private final String text;
     public Test() {
-      new ActionListener() {
-        public void actionPerformed(ActionEvent e) {
+      new Runnable() {
+        public void run() {
           doSomething(text);////
         }
       };
@@ -133,8 +131,8 @@ class c2 {
     public c2() {
         c = "";
     }
-    // its ok
-    int k3 = c.length();
+
+    int k3 = <error descr="Variable 'c' might not have been initialized">c</error>.length();
 
     c2(int i) {
       this();
@@ -177,7 +175,7 @@ class a20Exotic {
     int n2 = k==0 ? (k2=9) : (k2=0);
 }
 
-public class cX {
+class cX {
     final int i;
     cX() {
         this(1);
@@ -208,7 +206,7 @@ class correct {
     }
 }
 
-public class X {
+class X {
     final int i;
     X() {
         try {
@@ -219,5 +217,169 @@ public class X {
         }
     }
 }
+class Y {
+  private final int mayBeFinal;
 
+  Y() {
+    (mayBeFinal) = 1;
+  }
+}
 
+class IDEA100237 {
+    static class Foo {
+        final int bar;
+    
+        Foo() {
+            bar = 1;
+        }
+    
+        final Object baz = new Object() {
+            final int qux = <error descr="Variable 'bar' might not have been initialized">bar</error>.hashCode() + 1;
+        };
+    }
+
+    static class Outer {
+        final String a;
+        class Inner {
+            String b = a;
+        }
+        Outer() {
+            a = "";
+        }
+    }
+}
+
+class StaticInitializerUsedInAnotherStaticField {
+  private static final int ENUMERATION_CACHE_SIZE;
+
+  static {
+    ENUMERATION_CACHE_SIZE = 0;
+  }
+
+  private static final int ourEnumerationCacheConstant = ENUMERATION_CACHE_SIZE;
+}
+
+class InitializedInClassInitializerUsedInTheFollowingFieldInitializer {
+  private final int i;
+  {
+    i = 0;
+  }
+
+  private int j = i;
+
+  private final int k;
+
+  private int l = <error descr="Variable 'k' might not have been initialized">k</error>;
+
+  {
+    k = 1;
+  }
+}
+
+class AssignInAssert {
+  <error descr="Variable 'b' might not have been initialized">private final boolean b</error>;
+
+  AssignInAssert() {
+    assert b = true;
+  }
+}
+
+class DefiniteAssignmentInFinally {
+  private final String S;
+  {
+    try {
+      try {
+      } finally {
+        try {
+        } catch (Exception e) {
+        }
+      }
+    } finally {
+      S = null;
+    }
+  }
+}
+class StaticInitializerUsedInAnotherInstanceField {
+  private final int myEnumerationCacheConstant = ENUMERATION_CACHE_SIZE;
+  private static final int ourEnumerationCacheConstant = <error descr="Variable 'ENUMERATION_CACHE_SIZE' might not have been initialized">ENUMERATION_CACHE_SIZE</error>;
+
+  private static final int ENUMERATION_CACHE_SIZE;
+
+  static {
+    ENUMERATION_CACHE_SIZE = 0;
+  }
+}
+
+class StaticInitializedUsedInAnotherStaticField {
+  private static final String STRINGS1;
+  private static final String STRINGS2 = <error descr="Variable 'STRINGS1' might not have been initialized">STRINGS1</error>;
+
+  static {
+    STRINGS1 = "";
+  }
+}
+
+class InsideAnAnonymousClass {
+  static class Foo1 {
+    private final String _s;
+
+    public Foo1(String s) {
+      _s = s;
+    }
+
+    private final Bar _ss = new Bar(<error descr="Variable '_s' might not have been initialized">_s</error>) {
+    };
+  }
+
+  static class Foo2 {
+    private final String _s;
+
+    public Foo2(String s) {
+      _s = s;
+    }
+
+    private final Bar _ss = new Bar("") {
+      {
+        String inInitializer = <error descr="Variable '_s' might not have been initialized">_s</error>;
+      }
+    };
+  }
+
+  static class Foo3 {
+    private final String _s;
+
+    public Foo3(String s) {
+      _s = s;
+    }
+
+    private final Bar _ss = new Bar("") {
+      String inField = <error descr="Variable '_s' might not have been initialized">_s</error>;
+
+      void inMethod() {
+        String inMethodFoo = _s;
+      }
+    };
+  }
+
+  static class Foo4 {
+    private final String _s;
+
+    public Foo4(String s) {
+      _s = s;
+    }
+
+    private final Bar _ss = new Bar("") {
+      void inMethod() {
+        String inMethodFoo = _s;
+      }
+    };
+  }
+
+  static class Bar {
+    private final String _s;
+
+    public Bar(String s) {
+      _s = s;
+    }
+  }
+}

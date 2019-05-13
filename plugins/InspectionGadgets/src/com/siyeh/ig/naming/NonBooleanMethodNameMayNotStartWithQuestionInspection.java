@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2012 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2015 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import com.intellij.codeInspection.ui.ListWrappingTableModel;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.CommonClassNames;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiType;
 import com.intellij.util.ui.CheckBox;
@@ -29,6 +30,7 @@ import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.RenameFix;
+import com.siyeh.ig.fixes.SuppressForTestsScopeFix;
 import com.siyeh.ig.psiutils.LibraryUtil;
 import com.siyeh.ig.psiutils.MethodUtils;
 import com.siyeh.ig.ui.UiUtils;
@@ -41,47 +43,19 @@ import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
 
-public class NonBooleanMethodNameMayNotStartWithQuestionInspection extends BaseInspection {
+public class NonBooleanMethodNameMayNotStartWithQuestionInspection extends
+                                                                   BaseInspection {
 
-  /**
-   * @noinspection PublicField
-   */
-  @NonNls public String questionString = "is,can,has,should,could,will,shall,check,contains,equals,startsWith,endsWith";
-
-  @SuppressWarnings({"PublicField"})
+  @SuppressWarnings("PublicField")
+  @NonNls public String questionString = BooleanMethodNameMustStartWithQuestionInspection.DEFAULT_QUESTION_WORDS;
+  @SuppressWarnings("PublicField")
   public boolean ignoreBooleanMethods = false;
-
-  @SuppressWarnings({"PublicField"})
+  @SuppressWarnings("PublicField")
   public boolean onlyWarnOnBaseMethods = true;
-
-  List<String> questionList = new ArrayList(32);
+  List<String> questionList = new ArrayList<>(32);
 
   public NonBooleanMethodNameMayNotStartWithQuestionInspection() {
     parseString(questionString, questionList);
-  }
-
-  @Override
-  @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("non.boolean.method.name.must.not.start.with.question.display.name");
-  }
-
-  @Override
-  @NotNull
-  public String buildErrorString(Object... infos) {
-    return InspectionGadgetsBundle.message("non.boolean.method.name.must.not.start.with.question.problem.descriptor");
-  }
-
-  @Override
-  public void readSettings(Element element) throws InvalidDataException {
-    super.readSettings(element);
-    parseString(questionString, questionList);
-  }
-
-  @Override
-  public void writeSettings(Element element) throws WriteExternalException {
-    questionString = formatString(questionList);
-    super.writeSettings(element);
   }
 
   @Override
@@ -101,9 +75,39 @@ public class NonBooleanMethodNameMayNotStartWithQuestionInspection extends BaseI
     return panel;
   }
 
+  @NotNull
   @Override
-  protected InspectionGadgetsFix buildFix(Object... infos) {
-    return new RenameFix();
+  protected InspectionGadgetsFix[] buildFixes(Object... infos) {
+    final PsiElement context = (PsiElement)infos[0];
+    final InspectionGadgetsFix suppressFix = SuppressForTestsScopeFix.build(this, context);
+    if (suppressFix == null) {
+      return new InspectionGadgetsFix[] {new RenameFix()};
+    }
+    return new InspectionGadgetsFix[] {new RenameFix(), suppressFix};
+  }
+
+  @Override
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message("non.boolean.method.name.must.not.start.with.question.display.name");
+  }
+
+  @Override
+  @NotNull
+  public String buildErrorString(Object... infos) {
+    return InspectionGadgetsBundle.message("non.boolean.method.name.must.not.start.with.question.problem.descriptor");
+  }
+
+  @Override
+  public void readSettings(@NotNull Element element) throws InvalidDataException {
+    super.readSettings(element);
+    parseString(questionString, questionList);
+  }
+
+  @Override
+  public void writeSettings(@NotNull Element element) throws WriteExternalException {
+    questionString = formatString(questionList);
+    super.writeSettings(element);
   }
 
   @Override
@@ -155,7 +159,7 @@ public class NonBooleanMethodNameMayNotStartWithQuestionInspection extends BaseI
       else if (LibraryUtil.isOverrideOfLibraryMethod(method)) {
         return;
       }
-      registerMethodError(method);
+      registerMethodError(method, method);
     }
   }
 }

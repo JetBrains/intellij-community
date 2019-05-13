@@ -1,4 +1,5 @@
-#!/usr/bin/python
+#!/usr/bin/env $PYTHON$
+# -*- coding: utf-8 -*-
 
 import socket
 import struct
@@ -8,92 +9,102 @@ import time
 
 # see com.intellij.idea.SocketLock for the server side of this interface
 
-RUN_PATH = '$RUN_PATH$'
-CONFIG_PATH = '$CONFIG_PATH$'
+RUN_PATH = u'$RUN_PATH$'
+CONFIG_PATH = u'$CONFIG_PATH$'
+SYSTEM_PATH = u'$SYSTEM_PATH$'
 
-args = []
-skip_next = False
-for i, arg in enumerate(sys.argv[1:]):
-    if arg == '-h' or arg == '-?' or arg == '--help':
-        print(('Usage:\n' + \
-               '  {0} -h |-? | --help\n' + \
-               '  {0} [-l|--line line] file[:line]\n' + \
-               '  {0} diff file1 file2').format(sys.argv[0]))
-        exit(0)
-    elif arg == 'diff' and i == 0:
-        args.append(arg)
-    elif arg == '-l' or arg == '--line':
-        args.append(arg)
-        skip_next = True
-    elif skip_next:
-        args.append(arg)
-        skip_next = False
-    else:
-        if ':' in arg:
-            filepath, line_number = arg.rsplit(':', 1)
-            if line_number.isdigit():
-              args.append('-l')
-              args.append(line_number)
-              args.append(os.path.abspath(filepath))
-            else:
-              args.append(os.path.abspath(arg))
+
+def print_usage(cmd):
+    print(('Usage:\n' +
+           '  {0} -h | -? | --help\n' +
+           '  {0} [project_dir]\n' +
+           '  {0} [-l|--line line] [project_dir|--temp-project] file[:line]\n' +
+           '  {0} diff <left> <right>\n' +
+           '  {0} merge <local> <remote> [base] <merged>').format(cmd))
+
+
+def process_args(argv):
+    args = []
+
+    skip_next = False
+    for i, arg in enumerate(argv[1:]):
+        if arg == '-h' or arg == '-?' or arg == '--help':
+            print_usage(argv[0])
+            exit(0)
+        elif i == 0 and (arg == 'diff' or arg == 'merge' or arg == '--temp-project'):
+            args.append(arg)
+        elif arg == '-l' or arg == '--line':
+            args.append(arg)
+            skip_next = True
+        elif skip_next:
+            args.append(arg)
+            skip_next = False
         else:
-            args.append(os.path.abspath(arg))
+            path = arg
+            if ':' in arg:
+                file_path, line_number = arg.rsplit(':', 1)
+                if line_number.isdigit():
+                    args.append('-l')
+                    args.append(line_number)
+                    path = file_path
+            args.append(os.path.abspath(path))
 
-def launch_with_port(port):
-    found = False
+    return args
+
+
+def try_activate_instance(args):
+    port_path = os.path.join(CONFIG_PATH, 'port')
+    token_path = os.path.join(SYSTEM_PATH, 'token')
+    if not (os.path.exists(port_path) and os.path.exists(token_path)):
+        return False
+
+    try:
+        with open(port_path) as pf:
+            port = int(pf.read())
+        with open(token_path) as tf:
+            token = tf.read()
+    except (ValueError):
+        return False
 
     s = socket.socket()
     s.settimeout(0.3)
     try:
         s.connect(('127.0.0.1', port))
-    except:
+    except (socket.error, IOError):
         return False
-   
+
+    found = False
     while True:
         try:
-            path_len = struct.unpack(">h", s.recv(2))[0]
-            path = s.recv(path_len)
-            path = os.path.abspath(path)
+            path_len = struct.unpack('>h', s.recv(2))[0]
+            path = s.recv(path_len).decode('utf-8')
             if os.path.abspath(path) == os.path.abspath(CONFIG_PATH):
                 found = True
                 break
-        except:
-            break
-    
+        except (socket.error, IOError):
+            return False
+
     if found:
-        if args:
-            cmd = "activate " + "\0".join(args)
-            encoded = struct.pack(">h", len(cmd)) + cmd
-            s.send(encoded)
-            time.sleep(0.5)   # don't close socket immediately
+        cmd = 'activate ' + token + '\0' + os.getcwd() + '\0' + '\0'.join(args)
+        if sys.version_info[0] >= 3: cmd = cmd.encode('utf-8')
+        encoded = struct.pack('>h', len(cmd)) + cmd
+        s.send(encoded)
+        time.sleep(0.5)  # don't close the socket immediately
         return True
 
     return False
 
-port = -1
-try:
-    f = open(os.path.join(CONFIG_PATH, 'port'))
-    port = int(f.read())
-except Exception:
-    type, value, traceback = sys.exc_info()
-    print(value)
-    port = -1
 
-if port == -1:
-    # SocketLock actually allows up to 50 ports, but the checking takes too long
-    for port in range(6942, 6942+10):
-        if launch_with_port(port): exit()
-else:
-    if launch_with_port(port): exit()
+def start_new_instance(args):
+    if sys.platform == 'darwin':
+        if len(args) > 0:
+            args.insert(0, '--args')
+        os.execvp('/usr/bin/open', ['-a', RUN_PATH] + args)
+    else:
+        bin_file = os.path.split(RUN_PATH)[1]
+        os.execv(RUN_PATH, [bin_file] + args)
 
-if sys.platform == "darwin":
-    # Mac OS: RUN_PATH is *.app path
-    if len(args):
-        args.insert(0, "--args")
-    os.execvp("open", ["-a", RUN_PATH] + args)
-else:
-    # unix common
-    bin_dir, bin_file = os.path.split(RUN_PATH)
-    os.chdir(bin_dir)
-    os.execv(bin_file, [bin_file] + args)
+
+ide_args = process_args(sys.argv)
+if not try_activate_instance(ide_args):
+    start_new_instance(ide_args)

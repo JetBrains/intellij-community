@@ -1,36 +1,24 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.mvc;
 
+import com.intellij.application.options.ModulesComboBox;
 import com.intellij.codeInsight.completion.CompletionResultSet;
 import com.intellij.codeInsight.lookup.LookupElement;
-import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
+import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.fileTypes.PlainTextFileType;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.ui.*;
-import com.intellij.util.ArrayUtil;
+import com.intellij.ui.EditorComboBoxEditor;
+import com.intellij.ui.EditorComboBoxRenderer;
+import com.intellij.ui.EditorTextField;
+import com.intellij.ui.StringComboboxEditor;
 import com.intellij.util.TextFieldCompletionProvider;
 import com.intellij.util.TextFieldCompletionProviderDumbAware;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.groovy.mvc.util.ModuleCellRenderer;
 import org.jetbrains.plugins.groovy.mvc.util.MvcTargetDialogCompletionUtils;
 
 import javax.swing.*;
@@ -48,7 +36,7 @@ public class MvcRunTargetDialog extends DialogWrapper {
   private JLabel myTargetLabel;
   private JPanel myFakePanel;
   private EditorTextField myVmOptionsField;
-  private JComboBox myModuleBox;
+  private ModulesComboBox myModuleBox;
   private JLabel myModuleLabel;
   private JLabel myVmOptionLabel;
   private ComboBox myTargetField;
@@ -82,7 +70,7 @@ public class MvcRunTargetDialog extends DialogWrapper {
     }
 
     if (hasOneSupportedModule) {
-      myInteractiveRunAction = new DialogWrapperAction("&Run Interactive Console") {
+      myInteractiveRunAction = new DialogWrapperAction("&Start Grails Console in Interactive Mode") {
         @Override
         protected void doAction(ActionEvent e) {
           myFramework.runInteractiveConsole(getSelectedModule());
@@ -105,7 +93,7 @@ public class MvcRunTargetDialog extends DialogWrapper {
     myVmOptionLabel.setLabelFor(myVmOptionsField);
     myVmOptionsField.setText(MvcRunTargetHistoryService.getInstance().getVmOptions());
 
-    List<Module> mvcModules = new ArrayList<Module>();
+    List<Module> mvcModules = new ArrayList<>();
     for (Module module : ModuleManager.getInstance(myModule.getProject()).getModules()) {
       if (module == myModule || myFramework.hasSupport(module)) {
         mvcModules.add(module);
@@ -115,23 +103,27 @@ public class MvcRunTargetDialog extends DialogWrapper {
     assert mvcModules.contains(myModule);
 
     myModuleLabel.setLabelFor(myModuleBox);
-    myModuleBox.setModel(new CollectionComboBoxModel(mvcModules, myModule));
+    myModuleBox.setModules(mvcModules);
+    myModuleBox.setSelectedModule(myModule);
     myModuleBox.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
-        myModule = (Module)myModuleBox.getSelectedItem();
+        myModule = myModuleBox.getSelectedModule();
         if (myInteractiveRunAction != null) {
           myInteractiveRunAction.setEnabled(myFramework.isInteractiveConsoleSupported(myModule));
         }
       }
     });
-
-    myModuleBox.setRenderer(new ModuleCellRenderer(myModuleBox.getRenderer()));
   }
 
   @NotNull
   public Module getSelectedModule() {
     return myModule;
+  }
+
+  @NotNull
+  public MvcCommand createCommand() {
+    return MvcCommand.parse(getTargetArguments()).setVmOptions(getVmOptions());
   }
 
   @Override
@@ -140,36 +132,36 @@ public class MvcRunTargetDialog extends DialogWrapper {
     MvcRunTargetHistoryService.getInstance().addCommand(getSelectedText(), getVmOptions());
   }
 
-  public String getVmOptions() {
+  private String getVmOptions() {
     return myVmOptionsField.getText();
   }
 
-  public String getSelectedText() {
+  private String getSelectedText() {
     return (String)myTargetField.getEditor().getItem();
   }
 
   @NotNull
-  public String getTargetArguments() {
+  private String getTargetArguments() {
     String text = getSelectedText();
 
     text = text.trim();
-    if (text.startsWith(GRAILS_PREFIX)) {
-      text = text.substring(GRAILS_PREFIX.length());
-    }
+    text = StringUtil.trimStart(text, GRAILS_PREFIX);
 
     return text;
   }
 
+  @Override
   protected JComponent createCenterPanel() {
     return contentPane;
   }
 
+  @Override
   public JComponent getPreferredFocusedComponent() {
     return myTargetField;
   }
 
   private void createUIComponents() {
-    myTargetField = new ComboBox(MvcRunTargetHistoryService.getInstance().getHistory(), -1);
+    myTargetField = new ComboBox(MvcRunTargetHistoryService.getInstance().getHistory());
     myTargetField.setLightWeightPopupEnabled(false);
 
     EditorComboBoxEditor editor = new StringComboboxEditor(myModule.getProject(), PlainTextFileType.INSTANCE, myTargetField);
@@ -178,7 +170,7 @@ public class MvcRunTargetDialog extends DialogWrapper {
     myTargetField.setEditable(true);
     myTargetField.setEditor(editor);
 
-    EditorTextField editorTextField = (EditorTextField)editor.getEditorComponent();
+    EditorTextField editorTextField = editor.getEditorComponent();
 
     myFakePanel = new JPanel(new BorderLayout());
     myFakePanel.add(myTargetField, BorderLayout.CENTER);
@@ -215,9 +207,9 @@ public class MvcRunTargetDialog extends DialogWrapper {
       }
     }.apply(editorTextField);
 
-    editorTextField.getDocument().addDocumentListener(new DocumentAdapter() {
+    editorTextField.getDocument().addDocumentListener(new DocumentListener() {
       @Override
-      public void documentChanged(DocumentEvent e) {
+      public void documentChanged(@NotNull DocumentEvent e) {
         setOKActionEnabled(!StringUtil.isEmptyOrSpaces(e.getDocument().getText()));
       }
     });

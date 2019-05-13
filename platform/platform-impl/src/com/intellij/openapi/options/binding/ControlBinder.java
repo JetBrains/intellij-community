@@ -18,6 +18,7 @@ package com.intellij.openapi.options.binding;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
+import com.intellij.ui.EditorTextField;
 
 import javax.swing.*;
 import java.lang.reflect.Field;
@@ -32,7 +33,7 @@ public class ControlBinder {
   private final static Logger LOG = Logger.getInstance("#com.intellij.openapi.options.binding.ControlBinder");
 
   private final Object myBean;
-  private final List<Pair<ControlValueAccessor, BeanValueAccessor>> myBindings = new ArrayList<Pair<ControlValueAccessor, BeanValueAccessor>>();
+  private final List<Pair<ControlValueAccessor, BeanValueAccessor>> myBindings = new ArrayList<>();
 
   public ControlBinder(Object bean) {
     myBean = bean;
@@ -45,7 +46,11 @@ public class ControlBinder {
     }
     else if (control instanceof JTextField){
       controlAccessor = ValueAccessor.textFieldAccessor((JTextField)control);
-    } else {
+    }
+    else if (control instanceof EditorTextField) {
+      controlAccessor = ValueAccessor.editorTextFieldAccessor((EditorTextField)control);
+    }
+    else {
       throw new IllegalArgumentException("Cannot bind control of type " + control.getClass() + ".\n" +
                                          "Use bindControl(ControlValueAccessor, String) instead.");
     }
@@ -57,11 +62,7 @@ public class ControlBinder {
     final Pair<ControlValueAccessor, BeanValueAccessor> binding = Pair.create(controlAccessor, beanAccessor);
     myBindings.add(binding);
     if (instant) {
-      controlAccessor.addChangeListener(new Runnable() {
-        public void run() {
-          apply(binding);
-        }
-      });
+      controlAccessor.addChangeListener(() -> apply(binding));
     }
   }
 

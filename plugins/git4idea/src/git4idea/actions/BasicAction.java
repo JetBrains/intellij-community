@@ -1,23 +1,9 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.actions;
 
 import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -27,10 +13,10 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileVisitor;
-import com.intellij.util.Consumer;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcsUtil.VcsFileUtil;
 import git4idea.GitVcs;
@@ -41,28 +27,20 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import static com.intellij.openapi.vfs.VirtualFileVisitor.ONE_LEVEL_DEEP;
 import static com.intellij.openapi.vfs.VirtualFileVisitor.SKIP_ROOT;
 
 /**
  * Basic abstract action handler for all Git actions to extend.
  */
 public abstract class BasicAction extends DumbAwareAction {
-  /**
-   * {@inheritDoc}
-   */
+
   @Override
   public void actionPerformed(@NotNull AnActionEvent event) {
-    final Project project = event.getData(PlatformDataKeys.PROJECT);
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      public void run() {
-        FileDocumentManager.getInstance().saveAllDocuments();
-      }
-    });
-    final VirtualFile[] vFiles = event.getData(PlatformDataKeys.VIRTUAL_FILE_ARRAY);
+    Project project = event.getRequiredData(CommonDataKeys.PROJECT);
+    ApplicationManager.getApplication().runWriteAction(() -> FileDocumentManager.getInstance().saveAllDocuments());
+    final VirtualFile[] vFiles = event.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY);
     assert vFiles != null : "The action is only available when files are selected";
 
-    assert project != null;
     final GitVcs vcs = GitVcs.getInstance(project);
     if (!ProjectLevelVcsManager.getInstance(project).checkAllFilesAreUnder(vcs, vFiles)) {
       return;
@@ -70,22 +48,19 @@ public abstract class BasicAction extends DumbAwareAction {
     final String actionName = getActionName();
 
     final VirtualFile[] affectedFiles = collectAffectedFiles(project, vFiles);
-    final List<VcsException> exceptions = new ArrayList<VcsException>();
+    final List<VcsException> exceptions = new ArrayList<>();
     final boolean background = perform(project, vcs, exceptions, affectedFiles);
     if (!background) {
       GitVcs.runInBackground(new Task.Backgroundable(project, getActionName()) {
+        @Override
         public void run(@NotNull ProgressIndicator indicator) {
-          VcsFileUtil.refreshFiles(project, Arrays.asList(affectedFiles));
-          UIUtil.invokeLaterIfNeeded(new Runnable() {
-            public void run() {
-              GitUIUtil.showOperationErrors(project, exceptions, actionName);
-            }
-          });
+          VfsUtil.markDirtyAndRefresh(false, true, false, affectedFiles);
+          VcsFileUtil.markFilesDirty(project, Arrays.asList(affectedFiles));
+          UIUtil.invokeLaterIfNeeded(() -> GitUIUtil.showOperationErrors(project, exceptions, actionName));
         }
       });
     }
   }
-
 
   /**
    * Perform the action over set of files
@@ -102,34 +77,6 @@ public abstract class BasicAction extends DumbAwareAction {
                                      @NotNull VirtualFile[] affectedFiles);
 
   /**
-   * Perform the action over set of files in background
-   *
-   * @param project       the context project
-   * @param exceptions    the list of exceptions to be collected.
-   * @param affectedFiles the files to be affected by the operation
-   * @param action        the action to be run in background
-   * @return true value
-   */
-  protected boolean toBackground(final Project project,
-                                 GitVcs vcs,
-                                 final VirtualFile[] affectedFiles,
-                                 final List<VcsException> exceptions,
-                                 final Consumer<ProgressIndicator> action) {
-    GitVcs.runInBackground(new Task.Backgroundable(project, getActionName()) {
-      public void run(@NotNull ProgressIndicator indicator) {
-        action.consume(indicator);
-        VcsFileUtil.refreshFiles(project, Arrays.asList(affectedFiles));
-        UIUtil.invokeLaterIfNeeded(new Runnable() {
-          public void run() {
-            GitUIUtil.showOperationErrors(project, exceptions, getActionName());
-          }
-        });
-      }
-    });
-    return true;
-  }
-
-  /**
    * given a list of action-target files, returns ALL the files that should be
    * subject to the action Does not keep directories, but recursively adds
    * directory contents
@@ -140,13 +87,13 @@ public abstract class BasicAction extends DumbAwareAction {
    */
   @NotNull
   protected VirtualFile[] collectAffectedFiles(@NotNull Project project, @NotNull VirtualFile[] files) {
-    List<VirtualFile> affectedFiles = new ArrayList<VirtualFile>(files.length);
+    List<VirtualFile> affectedFiles = new ArrayList<>(files.length);
     ProjectLevelVcsManager projectLevelVcsManager = ProjectLevelVcsManager.getInstance(project);
     for (VirtualFile file : files) {
       if (!file.isDirectory() && projectLevelVcsManager.getVcsFor(file) instanceof GitVcs) {
         affectedFiles.add(file);
       }
-      else if (file.isDirectory() && isRecursive()) {
+      else if (file.isDirectory()) {
         addChildren(project, affectedFiles, file);
       }
 
@@ -165,7 +112,7 @@ public abstract class BasicAction extends DumbAwareAction {
    *                (recursively)
    */
   private void addChildren(@NotNull final Project project, @NotNull final List<VirtualFile> files, @NotNull VirtualFile file) {
-    VfsUtilCore.visitChildrenRecursively(file, new VirtualFileVisitor(SKIP_ROOT, (isRecursive() ? null : ONE_LEVEL_DEEP)) {
+    VfsUtilCore.visitChildrenRecursively(file, new VirtualFileVisitor(SKIP_ROOT, null) {
       @Override
       public boolean visitFile(@NotNull VirtualFile file) {
         if (!file.isDirectory() && appliesTo(project, file)) {
@@ -182,15 +129,6 @@ public abstract class BasicAction extends DumbAwareAction {
   @NotNull
   protected abstract String getActionName();
 
-
-  /**
-   * @return true if the action could be applied recursively
-   */
-  @SuppressWarnings({"MethodMayBeStatic"})
-  protected boolean isRecursive() {
-    return true;
-  }
-
   /**
    * Check if the action is applicable to the file. The default checks if the file is a directory
    *
@@ -198,7 +136,7 @@ public abstract class BasicAction extends DumbAwareAction {
    * @param file    the file to check
    * @return true if the action is applicable to the virtual file
    */
-  @SuppressWarnings({"MethodMayBeStatic", "UnusedDeclaration"})
+  @SuppressWarnings({"UnusedDeclaration"})
   protected boolean appliesTo(@NotNull Project project, @NotNull VirtualFile file) {
     return !file.isDirectory();
   }
@@ -212,14 +150,14 @@ public abstract class BasicAction extends DumbAwareAction {
   public void update(@NotNull AnActionEvent e) {
     super.update(e);
     Presentation presentation = e.getPresentation();
-    Project project = e.getData(PlatformDataKeys.PROJECT);
+    Project project = e.getData(CommonDataKeys.PROJECT);
     if (project == null) {
       presentation.setEnabled(false);
       presentation.setVisible(false);
       return;
     }
 
-    VirtualFile[] vFiles = e.getData(PlatformDataKeys.VIRTUAL_FILE_ARRAY);
+    VirtualFile[] vFiles = e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY);
     if (vFiles == null || vFiles.length == 0) {
       presentation.setEnabled(false);
       presentation.setVisible(true);
@@ -252,10 +190,6 @@ public abstract class BasicAction extends DumbAwareAction {
    * Save all files in the application (the operation creates write action)
    */
   public static void saveAll() {
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      public void run() {
-        FileDocumentManager.getInstance().saveAllDocuments();
-      }
-    });
+    ApplicationManager.getApplication().runWriteAction(() -> FileDocumentManager.getInstance().saveAllDocuments());
   }
 }

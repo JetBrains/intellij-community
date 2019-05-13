@@ -8,4 +8,4 @@ Groovy script
     PsiElement(?:)('?:')
     PsiWhiteSpace(' ')
     Literal
-      PsiElement(Gstring)('"default value"')
+      PsiElement(double quoted string)('"default value"')

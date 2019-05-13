@@ -15,17 +15,15 @@
  */
 package com.intellij.debugger.impl;
 
+import org.jetbrains.annotations.NotNull;
+
 import java.io.File;
 
-/**
- * User: lex
- * Date: Nov 18, 2003
- * Time: 2:23:38 PM
- */
 public class HotSwapFile {
+  @NotNull
   final File file;
 
-  public HotSwapFile(File file) {
+  public HotSwapFile(@NotNull File file) {
     this.file = file;
   }
 }

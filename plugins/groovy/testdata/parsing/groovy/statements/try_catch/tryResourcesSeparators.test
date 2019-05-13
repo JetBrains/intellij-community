@@ -1,0 +1,122 @@
+try (def a = 1;def b = 2;;;; def c = 3
+def d = 4
+
+  def e = 5
+
+;
+;
+def f = 6
+;;;
+  def g = 7
+;
+) {}
+-----
+Groovy script
+  Try statement
+    PsiElement(try)('try')
+    PsiWhiteSpace(' ')
+    Try resource list
+      PsiElement(()('(')
+      Variable definitions
+        Modifiers
+          PsiElement(def)('def')
+        PsiWhiteSpace(' ')
+        Variable
+          PsiElement(identifier)('a')
+          PsiWhiteSpace(' ')
+          PsiElement(=)('=')
+          PsiWhiteSpace(' ')
+          Literal
+            PsiElement(Integer)('1')
+      PsiElement(;)(';')
+      Variable definitions
+        Modifiers
+          PsiElement(def)('def')
+        PsiWhiteSpace(' ')
+        Variable
+          PsiElement(identifier)('b')
+          PsiWhiteSpace(' ')
+          PsiElement(=)('=')
+          PsiWhiteSpace(' ')
+          Literal
+            PsiElement(Integer)('2')
+      PsiElement(;)(';')
+      PsiElement(;)(';')
+      PsiElement(;)(';')
+      PsiElement(;)(';')
+      PsiWhiteSpace(' ')
+      Variable definitions
+        Modifiers
+          PsiElement(def)('def')
+        PsiWhiteSpace(' ')
+        Variable
+          PsiElement(identifier)('c')
+          PsiWhiteSpace(' ')
+          PsiElement(=)('=')
+          PsiWhiteSpace(' ')
+          Literal
+            PsiElement(Integer)('3')
+      PsiWhiteSpace('\n')
+      Variable definitions
+        Modifiers
+          PsiElement(def)('def')
+        PsiWhiteSpace(' ')
+        Variable
+          PsiElement(identifier)('d')
+          PsiWhiteSpace(' ')
+          PsiElement(=)('=')
+          PsiWhiteSpace(' ')
+          Literal
+            PsiElement(Integer)('4')
+      PsiWhiteSpace('\n\n  ')
+      Variable definitions
+        Modifiers
+          PsiElement(def)('def')
+        PsiWhiteSpace(' ')
+        Variable
+          PsiElement(identifier)('e')
+          PsiWhiteSpace(' ')
+          PsiElement(=)('=')
+          PsiWhiteSpace(' ')
+          Literal
+            PsiElement(Integer)('5')
+      PsiWhiteSpace('\n\n')
+      PsiElement(;)(';')
+      PsiWhiteSpace('\n')
+      PsiElement(;)(';')
+      PsiWhiteSpace('\n')
+      Variable definitions
+        Modifiers
+          PsiElement(def)('def')
+        PsiWhiteSpace(' ')
+        Variable
+          PsiElement(identifier)('f')
+          PsiWhiteSpace(' ')
+          PsiElement(=)('=')
+          PsiWhiteSpace(' ')
+          Literal
+            PsiElement(Integer)('6')
+      PsiWhiteSpace('\n')
+      PsiElement(;)(';')
+      PsiElement(;)(';')
+      PsiElement(;)(';')
+      PsiWhiteSpace('\n  ')
+      Variable definitions
+        Modifiers
+          PsiElement(def)('def')
+        PsiWhiteSpace(' ')
+        Variable
+          PsiElement(identifier)('g')
+          PsiWhiteSpace(' ')
+          PsiElement(=)('=')
+          PsiWhiteSpace(' ')
+          Literal
+            PsiElement(Integer)('7')
+      PsiWhiteSpace('\n')
+      PsiElement(;)(';')
+      PsiWhiteSpace('\n')
+      PsiElement())(')')
+    PsiWhiteSpace(' ')
+    Open block
+      PsiElement({)('{')
+      PsiElement(})('}')

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,120 +15,101 @@
  */
 package com.intellij.psi.impl;
 
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.PsiTreeChangeEventImpl.PsiEventType;
 import com.intellij.psi.impl.source.jsp.jspXml.JspDirective;
-import com.intellij.psi.util.PsiModificationTracker;
-import com.intellij.psi.xml.XmlFile;
+import com.intellij.psi.impl.source.tree.TreeUtil;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.containers.ContainerUtil;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 
-public class JavaCodeBlockModificationListener implements PsiTreeChangePreprocessor {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.JavaCodeBlockModificationListener");
+import java.util.Collections;
+import java.util.Set;
 
-  private final PsiModificationTrackerImpl myModificationTracker;
+public class JavaCodeBlockModificationListener extends PsiTreeChangePreprocessorBase {
 
-  public JavaCodeBlockModificationListener(final PsiModificationTracker modificationTracker) {
-    myModificationTracker = (PsiModificationTrackerImpl) modificationTracker;
+  public JavaCodeBlockModificationListener(@NotNull PsiManager psiManager) {
+    super(psiManager);
   }
 
   @Override
-  public void treeChanged(@NotNull final PsiTreeChangeEventImpl event) {
-    switch (event.getCode()) {
-      case BEFORE_CHILDREN_CHANGE:
-      case BEFORE_PROPERTY_CHANGE:
-      case BEFORE_CHILD_MOVEMENT:
-      case BEFORE_CHILD_REPLACEMENT:
-      case BEFORE_CHILD_ADDITION:
-      case BEFORE_CHILD_REMOVAL:
-        break;
-
-      case CHILD_ADDED:
-      case CHILD_REMOVED:
-      case CHILD_REPLACED:
-        processChange(event.getParent(), event.getOldChild(), event.getChild());
-        break;
-
-      case CHILDREN_CHANGED:
-        // general childrenChanged() event after each change
-        if (!event.isGenericChildrenChange()) {
-          processChange(event.getParent(), event.getParent(), null);
-        }
-        break;
-
-      case CHILD_MOVED:
-      case PROPERTY_CHANGED:
-        myModificationTracker.incCounter();
-        break;
-
-      default:
-        LOG.error("Unknown code:" + event.getCode());
-        break;
-    }
+  protected boolean acceptsEvent(@NotNull PsiTreeChangeEventImpl event) {
+    return event.getFile() instanceof PsiClassOwner;
   }
 
-  private void processChange(final PsiElement parent, final PsiElement child1, final PsiElement child2) {
-    try {
-      if (!isInsideCodeBlock(parent)) {
-        if (parent != null && isClassOwner(parent.getContainingFile()) ||
-            isClassOwner(child1) || isClassOwner(child2) || isSourceDir(parent) ||
-            (parent != null && isClassOwner(parent.getParent()))) {
-          myModificationTracker.incCounter();
-        }
-        else {
-          myModificationTracker.incOutOfCodeBlockModificationCounter();
-        }
-        return;
+  @Override
+  protected boolean isOutOfCodeBlock(@NotNull PsiElement element) {
+    for (PsiElement e : SyntaxTraverser.psiApi().parents(element)) {
+      if (e instanceof PsiModifiableCodeBlock) {
+        // trigger OOCBM for final variables initialized in constructors & class initializers
+        if (!((PsiModifiableCodeBlock)e).shouldChangeModificationCount(element)) return false;
       }
+      if (e instanceof PsiClass) break;
+      if (e instanceof PsiClassOwner || e instanceof JspDirective) break;
+    }
+    return true;
+  }
 
-      if (containsClassesInside(child1) || child2 != child1 && containsClassesInside(child2)) {
-        myModificationTracker.incCounter();
+  @Override
+  protected boolean isOutOfCodeBlock(@NotNull PsiFileSystemItem file) {
+    if (file instanceof PsiModifiableCodeBlock) {
+      return ((PsiModifiableCodeBlock)file).shouldChangeModificationCount(file);
+    }
+    return super.isOutOfCodeBlock(file);
+  }
+
+  @Override
+  protected boolean containsStructuralElements(@NotNull PsiElement element) {
+    return mayHaveModifiedJavaStructureInside(element);
+  }
+
+  @Override
+  protected void onTreeChanged(@NotNull PsiTreeChangeEventImpl event) {
+    Set<PsiElement> changedChildren = getChangedChildren(event);
+
+    PsiModificationTrackerImpl tracker = (PsiModificationTrackerImpl)myPsiManager.getModificationTracker();
+    if (!changedChildren.isEmpty() && changedChildren.stream().anyMatch(JavaCodeBlockModificationListener::mayHaveModifiedJavaStructureInside)) {
+      tracker.incCounter();
+    }
+
+    if (isOutOfCodeBlockChangeEvent(event)) {
+      if (changedChildren.isEmpty() || changedChildren.stream().anyMatch(e -> !isWhiteSpaceOrComment(e))) {
+        tracker.incCounter(); // java structure change
+      }
+      else {
+        tracker.incOutOfCodeBlockModificationCounter();
       }
     }
-    catch (PsiInvalidElementAccessException e) {
-      myModificationTracker.incCounter(); // Shall not happen actually, just a pre-release paranoia
+  }
+
+  private static boolean isWhiteSpaceOrComment(@NotNull PsiElement e) {
+    return e instanceof PsiWhiteSpace || PsiTreeUtil.getParentOfType(e, PsiComment.class, false) != null;
+  }
+
+  private static Set<PsiElement> getChangedChildren(@NotNull PsiTreeChangeEventImpl event) {
+    PsiEventType code = event.getCode();
+    if (code == PsiEventType.CHILD_ADDED || code == PsiEventType.CHILD_REMOVED || code == PsiEventType.CHILD_REPLACED) {
+      return StreamEx.of(event.getOldChild(), event.getChild(), event.getNewChild()).nonNull().toSet();
     }
-  }
-
-  private static boolean isSourceDir(PsiElement element) {
-    return element instanceof PsiDirectory && JavaDirectoryService.getInstance().getPackage((PsiDirectory)element) != null;
-  }
-
-  private static boolean isClassOwner(final PsiElement element) {
-    return element instanceof PsiClassOwner && !(element instanceof XmlFile) || element instanceof JspDirective;
-  }
-
-  private static boolean containsClassesInside(final PsiElement element) {
-    if (element == null) return false;
-    if (element instanceof PsiClass) return true;
-
-    PsiElement child = element.getFirstChild();
-    while (child != null) {
-      if (containsClassesInside(child)) return true;
-      child = child.getNextSibling();
+    if (code == PsiEventType.BEFORE_CHILD_REMOVAL || code == PsiEventType.BEFORE_CHILD_REPLACEMENT) {
+      return StreamEx.of(event.getOldChild(), event.getChild()).nonNull().toSet();
     }
-
-    return false;
-  }
-
-  private static boolean isInsideCodeBlock(PsiElement element) {
-    if (element instanceof PsiFileSystemItem) {
-      return false;
-    }
-
-    if (element == null || element.getParent() == null) return true;
-
-    PsiElement parent = element;
-    while (true) {
-      if (parent instanceof PsiFile || parent instanceof PsiDirectory || parent == null) {
-        return false;
+    if (code == PsiEventType.BEFORE_CHILDREN_CHANGE && !event.isGenericChange()) {
+      PsiElement parent = event.getParent();
+      if (!(parent instanceof PsiFileSystemItem) && !TreeUtil.isCollapsedChameleon(parent.getNode())) {
+        return ContainerUtil.newHashSet(parent.getChildren());
       }
-      if (parent instanceof PsiClass) return false; // anonymous or local class
-      if (parent instanceof PsiModifiableCodeBlock) {
-        if (!((PsiModifiableCodeBlock)parent).shouldChangeModificationCount(element)) {
-          return true;
-        }
-      }
-      parent = parent.getParent();
     }
+    return Collections.emptySet();
+  }
+
+  private static boolean mayHaveModifiedJavaStructureInside(@NotNull PsiElement root) {
+    return SyntaxTraverser.psiTraverser(root)
+      .expand(e -> !TreeUtil.isCollapsedChameleon(e.getNode()))
+      .traverse()
+      .filter(e -> !(e instanceof PsiModifiableCodeBlock) || ((PsiModifiableCodeBlock)e).shouldChangeModificationCount(e))
+      .filter(e -> e instanceof PsiClass || e instanceof PsiLambdaExpression || TreeUtil.isCollapsedChameleon(e.getNode()))
+      .isNotEmpty();
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,38 +16,38 @@
 package com.intellij.openapi.wm.impl;
 
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.util.ActionCallback;
-import com.intellij.openapi.util.Expirable;
 import com.intellij.openapi.util.ExpirableRunnable;
-import com.intellij.openapi.wm.FocusCommand;
-import com.intellij.openapi.wm.FocusRequestor;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.IdeFrame;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.KeyEvent;
 
 public class IdeFocusManagerHeadless extends IdeFocusManager {
 
   public static final IdeFocusManagerHeadless INSTANCE = new IdeFocusManagerHeadless();
 
+  @Override
   @NotNull
   public ActionCallback requestFocus(@NotNull final Component c, final boolean forced) {
-    return new ActionCallback.Done();
+    return ActionCallback.DONE;
   }
 
-  @NotNull
-  public ActionCallback requestFocus(@NotNull final FocusCommand command, final boolean forced) {
-    return new ActionCallback.Done();
-  }
-
+  @Override
   public JComponent getFocusTargetFor(@NotNull final JComponent comp) {
     return null;
   }
 
+  @Override
   public void doWhenFocusSettlesDown(@NotNull final Runnable runnable) {
+    runnable.run();
+  }
+
+  @Override
+  public void doWhenFocusSettlesDown(@NotNull Runnable runnable, @NotNull ModalityState modality) {
     runnable.run();
   }
 
@@ -58,48 +58,20 @@ public class IdeFocusManagerHeadless extends IdeFocusManager {
     }
   }
 
+  @Override
   public Component getFocusedDescendantFor(final Component c) {
     return null;
   }
 
-  public boolean dispatch(KeyEvent e) {
-    return false;
-  }
-
   @Override
-  public void typeAheadUntil(ActionCallback done) {
-  }
-
-  @Override
-  public boolean isFocusBeingTransferred() {
-    return false;
-  }
-
+  @NotNull
   public ActionCallback requestDefaultFocus(boolean forced) {
-    return new ActionCallback.Done();
+    return ActionCallback.DONE;
   }
 
   @Override
   public boolean isFocusTransferEnabled() {
     return true;
-  }
-
-  @Override
-  public Expirable getTimestamp(boolean trackOnlyForcedCommands) {
-    return new Expirable() {
-      public boolean isExpired() {
-        return false;
-      }
-    };
-  }
-
-  @Override
-  public FocusRequestor getFurtherRequestor() {
-    return this;
-  }
-
-  @Override
-  public void revalidateFocus(@NotNull ExpirableRunnable runnable) {
   }
 
   @Override
@@ -112,7 +84,7 @@ public class IdeFocusManagerHeadless extends IdeFocusManager {
   }
 
   @Override
-  public void runOnOwnContext(DataContext context, Runnable runnable) {
+  public void runOnOwnContext(@NotNull DataContext context, @NotNull Runnable runnable) {
     runnable.run();
   }
 

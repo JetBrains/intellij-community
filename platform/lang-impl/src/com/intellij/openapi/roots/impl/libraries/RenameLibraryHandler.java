@@ -45,13 +45,13 @@ public class RenameLibraryHandler implements RenameHandler, TitledHandler {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.projectView.actions.RenameModuleHandler");
 
   @Override
-  public boolean isAvailableOnDataContext(DataContext dataContext) {
+  public boolean isAvailableOnDataContext(@NotNull DataContext dataContext) {
     Library library = LangDataKeys.LIBRARY.getData(dataContext);
     return library != null;
   }
 
   @Override
-  public boolean isRenaming(DataContext dataContext) {
+  public boolean isRenaming(@NotNull DataContext dataContext) {
     return isAvailableOnDataContext(dataContext);
   }
 
@@ -80,7 +80,7 @@ public class RenameLibraryHandler implements RenameHandler, TitledHandler {
   private static class MyInputValidator implements InputValidator {
     private final Project myProject;
     private final Library myLibrary;
-    public MyInputValidator(Project project, Library library) {
+    MyInputValidator(Project project, Library library) {
       myProject = project;
       myLibrary = library;
     }
@@ -96,34 +96,26 @@ public class RenameLibraryHandler implements RenameHandler, TitledHandler {
       final Library.ModifiableModel modifiableModel = renameLibrary(inputString);
       if (modifiableModel == null) return false;
       final Ref<Boolean> success = Ref.create(Boolean.TRUE);
-      CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
-        @Override
-        public void run() {
-          UndoableAction action = new BasicUndoableAction() {
-            @Override
-            public void undo() throws UnexpectedUndoException {
-              final Library.ModifiableModel modifiableModel = renameLibrary(oldName);
-              if (modifiableModel != null) {
-                modifiableModel.commit();
-              }
+      CommandProcessor.getInstance().executeCommand(myProject, () -> {
+        UndoableAction action = new BasicUndoableAction() {
+          @Override
+          public void undo() throws UnexpectedUndoException {
+            final Library.ModifiableModel modifiableModel1 = renameLibrary(oldName);
+            if (modifiableModel1 != null) {
+              modifiableModel1.commit();
             }
+          }
 
-            @Override
-            public void redo() throws UnexpectedUndoException {
-              final Library.ModifiableModel modifiableModel = renameLibrary(inputString);
-              if (modifiableModel != null) {
-                modifiableModel.commit();
-              }
+          @Override
+          public void redo() throws UnexpectedUndoException {
+            final Library.ModifiableModel modifiableModel1 = renameLibrary(inputString);
+            if (modifiableModel1 != null) {
+              modifiableModel1.commit();
             }
-          };
-          UndoManager.getInstance(myProject).undoableActionPerformed(action);
-          ApplicationManager.getApplication().runWriteAction(new Runnable() {
-            @Override
-            public void run() {
-              modifiableModel.commit();
-            }
-          });
-        }
+          }
+        };
+        UndoManager.getInstance(myProject).undoableActionPerformed(action);
+        ApplicationManager.getApplication().runWriteAction(() -> modifiableModel.commit());
       }, IdeBundle.message("command.renaming.module", oldName), null);
       return success.get().booleanValue();
     }

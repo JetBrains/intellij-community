@@ -125,23 +125,26 @@ public class DragTracker extends SelectionTracker {
     myContext.setLocation(getLocation());
 
     if (myContext.getComponents() == null) {
-      List<RadComponent> components = RadComponent.getPureSelection(myArea.getSelection());
-
-      RadComponent parent = null;
-      for (RadComponent component : components) {
-        if (parent == null) {
-          parent = component.getParent();
-        }
-        else if (parent != component.getParent()) {
-          components = Collections.emptyList();
-          break;
-        }
-      }
-
+      List<RadComponent> components = calculateContextComponents(RadComponent.getPureSelection(myArea.getSelection()));
       myContext.setComponents(components);
+
       for (RadComponent component : components) {
         component.processDropOperation(myContext);
       }
     }
+  }
+
+  protected List<RadComponent> calculateContextComponents(List<RadComponent> components) {
+    RadComponent parent = null;
+    for (RadComponent component : components) {
+      if (parent == null) {
+        parent = component.getParent();
+      }
+      else if (parent != component.getParent()) {
+        components = Collections.emptyList();
+        break;
+      }
+    }
+    return components;
   }
 }

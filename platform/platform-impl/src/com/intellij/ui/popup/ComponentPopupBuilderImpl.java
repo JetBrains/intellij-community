@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.intellij.ui.popup;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -38,8 +37,7 @@ import java.util.*;
 import java.util.List;
 
 /**
- * User: anna
- * Date: 15-Mar-2006
+ * @author anna
  */
 public class ComponentPopupBuilderImpl implements ComponentPopupBuilder {
   private String myTitle = "";
@@ -48,13 +46,12 @@ public class ComponentPopupBuilderImpl implements ComponentPopupBuilder {
   private final JComponent myComponent;
   private final JComponent myPreferredFocusedComponent;
   private boolean myRequestFocus;
-  private boolean myForceHeavyweight;
   private String myDimensionServiceKey = null;
   private Computable<Boolean> myCallback = null;
   private Project myProject;
   private boolean myCancelOnClickOutside = true;
   private boolean myCancelOnWindowDeactivation = true;
-  private final Set<JBPopupListener> myListeners = new LinkedHashSet<JBPopupListener>();
+  private final Set<JBPopupListener> myListeners = new LinkedHashSet<>();
   private boolean myUseDimServiceForXYLocation;
 
   private IconButton myCancelButton;
@@ -63,12 +60,12 @@ public class ComponentPopupBuilderImpl implements ComponentPopupBuilder {
   private ActiveIcon myTitleIcon = new ActiveIcon(EmptyIcon.ICON_0);
   private boolean myCancelKeyEnabled = true;
   private boolean myLocateByContent = false;
-  private boolean myPlacewithinScreen = true;
+  private boolean myPlaceWithinScreen = true;
   private Processor<JBPopup> myPinCallback = null;
   private Dimension myMinSize;
   private MaskProvider myMaskProvider;
   private float myAlpha;
-  private ArrayList<Object> myUserData;
+  private List<Object> myUserData;
 
   private boolean myInStack = true;
   private boolean myModalContext = true;
@@ -76,17 +73,17 @@ public class ComponentPopupBuilderImpl implements ComponentPopupBuilder {
 
   private String myAd;
   private boolean myShowShadow = true;
+  private boolean myShowBorder = true;
   private boolean myFocusable = true;
-  private boolean myHeaderAlwaysFocusable;
   private ActiveComponent myCommandButton;
-  private List<Pair<ActionListener, KeyStroke>> myKeyboardActions = Collections.emptyList();
+  private List<? extends Pair<ActionListener, KeyStroke>> myKeyboardActions = Collections.emptyList();
   private Component mySettingsButtons;
   private boolean myMayBeParent;
   private int myAdAlignment = SwingConstants.LEFT;
   private BooleanFunction<KeyEvent> myKeyEventHandler;
+  private Color myBorderColor;
 
-  public ComponentPopupBuilderImpl(@NotNull JComponent component,
-                                   final JComponent preferredFocusedComponent) {
+  public ComponentPopupBuilderImpl(@NotNull JComponent component, JComponent preferredFocusedComponent) {
     myComponent = component;
     myPreferredFocusedComponent = preferredFocusedComponent;
   }
@@ -156,15 +153,8 @@ public class ComponentPopupBuilderImpl implements ComponentPopupBuilder {
 
   @Override
   @NotNull
-  public ComponentPopupBuilder setForceHeavyweight(final boolean forceHeavyweight) {
-    myForceHeavyweight = forceHeavyweight;
-    return this;
-  }
-
-  @Override
-  @NotNull
-  public ComponentPopupBuilder setDimensionServiceKey(final Project project, final String dimensionServiceKey, final boolean useForXYLocation) {
-    myDimensionServiceKey = dimensionServiceKey;
+  public ComponentPopupBuilder setDimensionServiceKey(final Project project, final String key, final boolean useForXYLocation) {
+    myDimensionServiceKey = key;
     myUseDimServiceForXYLocation = useForXYLocation;
     myProject = project;
     return this;
@@ -199,7 +189,7 @@ public class ComponentPopupBuilderImpl implements ComponentPopupBuilder {
 
   @Override
   @NotNull
-  public ComponentPopupBuilder setKeyboardActions(@NotNull List<Pair<ActionListener, KeyStroke>> keyboardActions) {
+  public ComponentPopupBuilder setKeyboardActions(@NotNull List<? extends Pair<ActionListener, KeyStroke>> keyboardActions) {
     myKeyboardActions = keyboardActions;
     return this;
   }
@@ -227,7 +217,7 @@ public class ComponentPopupBuilderImpl implements ComponentPopupBuilder {
   @NotNull
   @Override
   public ComponentPopupBuilder setKeyEventHandler(@NotNull BooleanFunction<KeyEvent> handler) {
-    myKeyEventHandler = handler; 
+    myKeyEventHandler = handler;
     return this;
   }
 
@@ -241,18 +231,17 @@ public class ComponentPopupBuilderImpl implements ComponentPopupBuilder {
   @Override
   @NotNull
   public JBPopup createPopup() {
-    final AbstractPopup popup = new AbstractPopup().init(myProject, myComponent, myPreferredFocusedComponent, myRequestFocus, myFocusable, myForceHeavyweight,
-                                              myMovable, myDimensionServiceKey, myResizable, myTitle,
-                                              myCallback, myCancelOnClickOutside, myListeners, myUseDimServiceForXYLocation, myCommandButton,
-                                              myCancelButton,
-                                              myCancelOnMouseOutCallback, myCancelOnWindow, myTitleIcon, myCancelKeyEnabled, myLocateByContent,
-                                              myPlacewithinScreen, myMinSize, myAlpha, myMaskProvider, myInStack, myModalContext, myFocusOwners, myAd, myAdAlignment,
-                                              myHeaderAlwaysFocusable, myKeyboardActions, mySettingsButtons, myPinCallback, myMayBeParent,
-                                              myShowShadow, myCancelOnWindowDeactivation, myKeyEventHandler);
+    AbstractPopup popup = new AbstractPopup().init(
+      myProject, myComponent, myPreferredFocusedComponent, myRequestFocus, myFocusable, myMovable, myDimensionServiceKey,
+      myResizable, myTitle, myCallback, myCancelOnClickOutside, myListeners, myUseDimServiceForXYLocation, myCommandButton,
+      myCancelButton, myCancelOnMouseOutCallback, myCancelOnWindow, myTitleIcon, myCancelKeyEnabled, myLocateByContent,
+      myPlaceWithinScreen, myMinSize, myAlpha, myMaskProvider, myInStack, myModalContext, myFocusOwners, myAd, myAdAlignment,
+      false, myKeyboardActions, mySettingsButtons, myPinCallback, myMayBeParent,
+      myShowShadow, myShowBorder, myBorderColor, myCancelOnWindowDeactivation, myKeyEventHandler
+    );
     if (myUserData != null) {
       popup.setUserData(myUserData);
     }
-    //default disposable parent
     Disposer.register(ApplicationManager.getApplication(), popup);
     return popup;
   }
@@ -288,7 +277,7 @@ public class ComponentPopupBuilderImpl implements ComponentPopupBuilder {
   @Override
   @NotNull
   public ComponentPopupBuilder setLocateWithinScreenBounds(final boolean within) {
-    myPlacewithinScreen = within;
+    myPlaceWithinScreen = within;
     return this;
   }
 
@@ -299,6 +288,7 @@ public class ComponentPopupBuilderImpl implements ComponentPopupBuilder {
     return this;
   }
 
+  @Override
   @NotNull
   public ComponentPopupBuilder setMaskProvider(MaskProvider maskProvider) {
     myMaskProvider = maskProvider;
@@ -323,7 +313,7 @@ public class ComponentPopupBuilderImpl implements ComponentPopupBuilder {
   @NotNull
   public ComponentPopupBuilder addUserData(final Object object) {
     if (myUserData == null) {
-      myUserData = new ArrayList<Object>();
+      myUserData = new ArrayList<>();
     }
     myUserData.add(object);
     return this;
@@ -361,6 +351,20 @@ public class ComponentPopupBuilderImpl implements ComponentPopupBuilder {
   @Override
   public ComponentPopupBuilder setShowShadow(boolean show) {
     myShowShadow = show;
+    return this;
+  }
+
+  @NotNull
+  @Override
+  public ComponentPopupBuilder setShowBorder(boolean show) {
+    myShowBorder = show;
+    return this;
+  }
+
+  @NotNull
+  @Override
+  public ComponentPopupBuilder setBorderColor(Color color) {
+    myBorderColor = color;
     return this;
   }
 }

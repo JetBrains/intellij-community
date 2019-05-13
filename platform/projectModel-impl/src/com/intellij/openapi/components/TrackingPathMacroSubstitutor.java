@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,15 +15,23 @@
  */
 package com.intellij.openapi.components;
 
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.Set;
 
 public interface TrackingPathMacroSubstitutor extends PathMacroSubstitutor {
-  Collection<String> getUnknownMacros(@Nullable String componentName);
-  Collection<String> getComponents(final Collection<String> macros);
-  void addUnknownMacros(String componentName, Collection<String> unknownMacros);
-  void invalidateUnknownMacros(Set<String> macros);
+  @NotNull
+  Set<String> getUnknownMacros(@Nullable String componentName);
+
+  // Mutable set
+  @NotNull
+  Set<String> getComponents(@NotNull Collection<String> macros);
+
+  void addUnknownMacros(@NotNull String componentName, @NotNull Collection<String> unknownMacros);
+
+  void invalidateUnknownMacros(@NotNull Set<String> macros);
+
   void reset();
 }

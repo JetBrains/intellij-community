@@ -1,41 +1,25 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.uiDesigner.snapShooter;
 
 import com.intellij.execution.ExecutionException;
-import com.intellij.execution.RunManagerEx;
+import com.intellij.execution.RunManager;
 import com.intellij.execution.RunnerAndConfigurationSettings;
-import com.intellij.execution.RunnerRegistry;
 import com.intellij.execution.application.ApplicationConfiguration;
 import com.intellij.execution.application.ApplicationConfigurationType;
 import com.intellij.execution.executors.DefaultRunExecutor;
-import com.intellij.execution.runners.ExecutionEnvironment;
-import com.intellij.execution.runners.ProgramRunner;
+import com.intellij.execution.runners.ExecutionEnvironmentBuilder;
 import com.intellij.execution.util.JreVersionDetector;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeView;
+import com.intellij.ide.highlighter.JavaHighlightingColors;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.LangDataKeys;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.SyntaxHighlighterColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.markup.TextAttributes;
@@ -85,8 +69,8 @@ public class CreateSnapShotAction extends AnAction {
   private static final Logger LOG = Logger.getInstance("com.intellij.uiDesigner.snapShooter.CreateSnapShotAction");
 
   @Override
-  public void update(AnActionEvent e) {
-    final Project project = e.getData(PlatformDataKeys.PROJECT);
+  public void update(@NotNull AnActionEvent e) {
+    final Project project = e.getData(CommonDataKeys.PROJECT);
     final IdeView view = e.getData(LangDataKeys.IDE_VIEW);
     e.getPresentation().setVisible(project != null && view != null && hasDirectoryInPackage(project, view));
   }
@@ -102,8 +86,9 @@ public class CreateSnapShotAction extends AnAction {
     return false;
   }
 
-  public void actionPerformed(AnActionEvent e) {
-    final Project project = e.getData(PlatformDataKeys.PROJECT);
+  @Override
+  public void actionPerformed(@NotNull AnActionEvent e) {
+    final Project project = e.getData(CommonDataKeys.PROJECT);
     final IdeView view = e.getData(LangDataKeys.IDE_VIEW);
     if (project == null || view == null) {
       return;
@@ -113,18 +98,18 @@ public class CreateSnapShotAction extends AnAction {
     if (dir == null) return;
 
     final SnapShotClient client = new SnapShotClient();
-    List<RunnerAndConfigurationSettings> appConfigurations = new ArrayList<RunnerAndConfigurationSettings>();
+    List<RunnerAndConfigurationSettings> appConfigurations = new ArrayList<>();
     RunnerAndConfigurationSettings snapshotConfiguration = null;
     boolean connected = false;
 
     ApplicationConfigurationType cfgType = ApplicationConfigurationType.getInstance();
-    RunnerAndConfigurationSettings[] racsi = RunManagerEx.getInstanceEx(project).getConfigurationSettings(cfgType);
+    List<RunnerAndConfigurationSettings> racsi = RunManager.getInstance(project).getConfigurationSettingsList(cfgType);
 
     for(RunnerAndConfigurationSettings config: racsi) {
       if (config.getConfiguration() instanceof ApplicationConfiguration) {
         ApplicationConfiguration appConfig = (ApplicationConfiguration) config.getConfiguration();
         appConfigurations.add(config);
-        if (appConfig.ENABLE_SWING_INSPECTOR) {
+        if (appConfig.isSwingInspectorEnabled()) {
           SnapShooterConfigurationSettings settings = SnapShooterConfigurationSettings.get(appConfig);
           snapshotConfiguration = config;
           if (settings.getLastPort() > 0) {
@@ -149,34 +134,25 @@ public class CreateSnapShotAction extends AnAction {
     if (!connected) {
       int rc = Messages.showYesNoDialog(project, UIDesignerBundle.message("snapshot.run.prompt"),
                                         UIDesignerBundle.message("snapshot.title"), Messages.getQuestionIcon());
-      if (rc == 1) return;
+      if (rc == Messages.NO) return;
       final ApplicationConfiguration appConfig = (ApplicationConfiguration) snapshotConfiguration.getConfiguration();
       final SnapShooterConfigurationSettings settings = SnapShooterConfigurationSettings.get(appConfig);
-      settings.setNotifyRunnable(new Runnable() {
-        public void run() {
-          SwingUtilities.invokeLater(new Runnable() {
-            public void run() {
-              Messages.showMessageDialog(project, UIDesignerBundle.message("snapshot.prepare.notice"),
-                                         UIDesignerBundle.message("snapshot.title"), Messages.getInformationIcon());
-              try {
-                client.connect(settings.getLastPort());
-              }
-              catch(IOException ex) {
-                Messages.showMessageDialog(project, UIDesignerBundle.message("snapshot.connection.error"),
-                                           UIDesignerBundle.message("snapshot.title"), Messages.getErrorIcon());
-                return;
-              }
-              runSnapShooterSession(client, project, dir, view);
-            }
-          });
+      settings.setNotifyRunnable(() -> ApplicationManager.getApplication().invokeLater(() -> {
+        Messages.showMessageDialog(project, UIDesignerBundle.message("snapshot.prepare.notice"),
+                                   UIDesignerBundle.message("snapshot.title"), Messages.getInformationIcon());
+        try {
+          client.connect(settings.getLastPort());
         }
-      });
-               
+        catch(IOException ex) {
+          Messages.showMessageDialog(project, UIDesignerBundle.message("snapshot.connection.error"),
+                                     UIDesignerBundle.message("snapshot.title"), Messages.getErrorIcon());
+          return;
+        }
+        runSnapShooterSession(client, project, dir, view);
+      }));
+
       try {
-        final ProgramRunner runner = RunnerRegistry.getInstance().getRunner(DefaultRunExecutor.EXECUTOR_ID, appConfig);
-        LOG.assertTrue(runner != null, "Runner MUST not be null!");
-        runner.execute(DefaultRunExecutor.getRunExecutorInstance(),
-                       new ExecutionEnvironment(runner, snapshotConfiguration, project));
+        ExecutionEnvironmentBuilder.create(DefaultRunExecutor.getRunExecutorInstance(), snapshotConfiguration).buildAndExecute();
       }
       catch (ExecutionException ex) {
         Messages.showMessageDialog(project, UIDesignerBundle.message("snapshot.run.error", ex.getMessage()),
@@ -202,15 +178,13 @@ public class CreateSnapShotAction extends AnAction {
     dlg.show();
     if (dlg.getExitCode() == DialogWrapper.OK_EXIT_CODE) {
       final int id = dlg.getSelectedComponentId();
-      final Ref<Object> result = new Ref<Object>();
-      ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
-        public void run() {
-          try {
-            result.set(client.createSnapshot(id));
-          }
-          catch (Exception ex) {
-            result.set(ex);
-          }
+      final Ref<Object> result = new Ref<>();
+      ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
+        try {
+          result.set(client.createSnapshot(id));
+        }
+        catch (Exception ex) {
+          result.set(ex);
         }
       }, UIDesignerBundle.message("progress.creating.snapshot"), false, project);
 
@@ -226,26 +200,20 @@ public class CreateSnapShotAction extends AnAction {
 
       if (snapshot != null) {
         final String snapshot1 = snapshot;
-        ApplicationManager.getApplication().runWriteAction(new Runnable() {
-          public void run() {
-            CommandProcessor.getInstance().executeCommand(project, new Runnable() {
-              public void run() {
-                try {
-                  PsiFile formFile = PsiFileFactory.getInstance(dir.getProject())
-                    .createFileFromText(dlg.getFormName() + GuiFormFileType.DOT_DEFAULT_EXTENSION, snapshot1);
-                  formFile = (PsiFile)dir.add(formFile);
-                  formFile.getVirtualFile().setCharset(CharsetToolkit.UTF8_CHARSET);
-                  formFile.getViewProvider().getDocument().setText(snapshot1);
-                  view.selectElement(formFile);
-                }
-                catch (IncorrectOperationException ex) {
-                  Messages.showMessageDialog(project, UIDesignerBundle.message("snapshot.save.error", ex.getMessage()),
-                                             UIDesignerBundle.message("snapshot.title"), Messages.getErrorIcon());
-                }
-              }
-            }, "", null);
+        ApplicationManager.getApplication().runWriteAction(() -> CommandProcessor.getInstance().executeCommand(project, () -> {
+          try {
+            PsiFile formFile = PsiFileFactory.getInstance(dir.getProject())
+              .createFileFromText(dlg.getFormName() + GuiFormFileType.DOT_DEFAULT_EXTENSION, snapshot1);
+            formFile = (PsiFile)dir.add(formFile);
+            formFile.getVirtualFile().setCharset(CharsetToolkit.UTF8_CHARSET);
+            formFile.getViewProvider().getDocument().setText(snapshot1);
+            view.selectElement(formFile);
           }
-        });
+          catch (IncorrectOperationException ex) {
+            Messages.showMessageDialog(project, UIDesignerBundle.message("snapshot.save.error", ex.getMessage()),
+                                       UIDesignerBundle.message("snapshot.title"), Messages.getErrorIcon());
+          }
+        }, "", null));
       }
     }
 
@@ -290,7 +258,7 @@ public class CreateSnapShotAction extends AnAction {
         UIDesignerBundle.message("snapshot.confirm.configuration.prompt", configurations.get(0).getConfiguration().getName()),
         UIDesignerBundle.message("snapshot.title"),
         Messages.getQuestionIcon());
-      if (rc == 1) {
+      if (rc == Messages.NO) {
         return null;
       }
       snapshotConfiguration = configurations.get(0);
@@ -311,7 +279,7 @@ public class CreateSnapShotAction extends AnAction {
       if (rc < 0) return null;
       snapshotConfiguration = configurations.get(rc);
     }
-    ((ApplicationConfiguration) snapshotConfiguration.getConfiguration()).ENABLE_SWING_INSPECTOR = true;
+    ((ApplicationConfiguration)snapshotConfiguration.getConfiguration()).setSwingInspectorEnabled(true);
     return snapshotConfiguration;
   }
 
@@ -336,6 +304,7 @@ public class CreateSnapShotAction extends AnAction {
       myComponentTree.setModel(model);
       myComponentTree.getSelectionModel().setSelectionMode(TreeSelectionModel.SINGLE_TREE_SELECTION);
       myComponentTree.getSelectionModel().addTreeSelectionListener(new TreeSelectionListener() {
+        @Override
         public void valueChanged(TreeSelectionEvent e) {
           updateOKAction();
         }
@@ -349,11 +318,12 @@ public class CreateSnapShotAction extends AnAction {
       myFormNameTextField.setText(suggestFormName());
 
       final EditorColorsScheme globalScheme = EditorColorsManager.getInstance().getGlobalScheme();
-      final TextAttributes attributes = globalScheme.getAttributes(SyntaxHighlighterColors.STRING);
+      final TextAttributes attributes = globalScheme.getAttributes(JavaHighlightingColors.STRING);
       final SimpleTextAttributes titleAttributes =
         new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, attributes.getForegroundColor());
 
       myComponentTree.setCellRenderer(new ColoredTreeCellRenderer() {
+        @Override
         public void customizeCellRenderer(JTree tree, Object value, boolean selected, boolean expanded, boolean leaf, int row, boolean hasFocus) {
           SnapShotRemoteComponent rc = (SnapShotRemoteComponent) value;
 
@@ -388,7 +358,8 @@ public class CreateSnapShotAction extends AnAction {
         }
       });
       myFormNameTextField.getDocument().addDocumentListener(new DocumentAdapter() {
-        protected void textChanged(DocumentEvent e) {
+        @Override
+        protected void textChanged(@NotNull DocumentEvent e) {
           updateOKAction();
         }
       });
@@ -483,18 +454,16 @@ public class CreateSnapShotAction extends AnAction {
     }
 
     private boolean checkUnknownLayoutManagers(final Project project) {
-      final Set<String> layoutManagerClasses = new TreeSet<String>();
+      final Set<String> layoutManagerClasses = new TreeSet<>();
       final SnapShotRemoteComponent rc = (SnapShotRemoteComponent) myComponentTree.getSelectionPath().getLastPathComponent();
       assert rc != null;
-      final Ref<Exception> err = new Ref<Exception>();
-      Runnable runnable = new Runnable() {
-        public void run() {
-          try {
-            collectUnknownLayoutManagerClasses(project, rc, layoutManagerClasses);
-          }
-          catch (IOException e) {
-            err.set(e);
-          }
+      final Ref<Exception> err = new Ref<>();
+      Runnable runnable = () -> {
+        try {
+          collectUnknownLayoutManagerClasses(project, rc, layoutManagerClasses);
+        }
+        catch (IOException e) {
+          err.set(e);
         }
       };
       if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(runnable,
@@ -513,7 +482,7 @@ public class CreateSnapShotAction extends AnAction {
         }
         builder.append(UIDesignerBundle.message("snapshot.unknown.layout.prompt"));
         return Messages.showYesNoDialog(myProject, builder.toString(),
-                                        UIDesignerBundle.message("snapshot.title"), Messages.getQuestionIcon()) == 0;
+                                        UIDesignerBundle.message("snapshot.title"), Messages.getQuestionIcon()) == Messages.YES;
       }
       return true;
     }
@@ -536,6 +505,7 @@ public class CreateSnapShotAction extends AnAction {
       }
     }
 
+    @Override
     @Nullable
     protected JComponent createCenterPanel() {
       return myRootPanel;

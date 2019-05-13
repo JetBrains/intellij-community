@@ -1,22 +1,9 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes;
 
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.FilePath;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -27,22 +14,21 @@ import java.util.Map;
  * @author max
  */
 public class DeletedFilesHolder implements FileHolder {
-  private final Map<String, LocallyDeletedChange> myFiles = new HashMap<String, LocallyDeletedChange>();
+  private final Map<String, LocallyDeletedChange> myFiles = new HashMap<>();
 
+  @Override
   public void cleanAll() {
     myFiles.clear();
   }
-  
+
   public void takeFrom(final DeletedFilesHolder holder) {
     myFiles.clear();
     myFiles.putAll(holder.myFiles);
   }
 
-  public void cleanAndAdjustScope(final VcsModifiableDirtyScope scope) {
-    if (scope == null) {
-      myFiles.clear();
-    }
-    final List<LocallyDeletedChange> currentFiles = new ArrayList<LocallyDeletedChange>(myFiles.values());
+  @Override
+  public void cleanAndAdjustScope(@NotNull final VcsModifiableDirtyScope scope) {
+    final List<LocallyDeletedChange> currentFiles = new ArrayList<>(myFiles.values());
     for (LocallyDeletedChange change : currentFiles) {
       if (scope.belongsTo(change.getPath())) {
         myFiles.remove(change.getPresentableUrl());
@@ -50,6 +36,7 @@ public class DeletedFilesHolder implements FileHolder {
     }
   }
 
+  @Override
   public HolderType getType() {
     return HolderType.DELETED;
   }
@@ -63,7 +50,7 @@ public class DeletedFilesHolder implements FileHolder {
   }
 
   public List<LocallyDeletedChange> getFiles() {
-    return new ArrayList<LocallyDeletedChange>(myFiles.values());
+    return new ArrayList<>(myFiles.values());
   }
 
   public boolean isContainedInLocallyDeleted(final FilePath filePath) {
@@ -71,6 +58,7 @@ public class DeletedFilesHolder implements FileHolder {
     return myFiles.containsKey(url);
   }
 
+  @Override
   public DeletedFilesHolder copy() {
     final DeletedFilesHolder copyHolder = new DeletedFilesHolder();
     copyHolder.myFiles.putAll(myFiles);

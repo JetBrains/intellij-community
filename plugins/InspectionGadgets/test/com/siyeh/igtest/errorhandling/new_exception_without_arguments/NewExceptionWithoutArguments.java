@@ -3,7 +3,7 @@ package com.siyeh.igtest.errorhandling.new_exception_without_arguments;
 class NewExceptionWithoutArguments {
 
   void foo() {
-    throw new RuntimeException();
+    throw new <warning descr="'new RuntimeException()' without arguments">RuntimeException</warning>();
   }
 
   void bar() {

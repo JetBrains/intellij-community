@@ -39,7 +39,6 @@ import java.util.Set;
 
 /**
 * @author Eugene Zhuravlev
-*         Date: 1/8/12
 */
 public final class ProjectDescriptor {
   private final JpsProject myProject;
@@ -51,8 +50,8 @@ public final class ProjectDescriptor {
   private final BuildTargetsState myTargetsState;
   private final ModuleExcludeIndex myModuleExcludeIndex;
   private int myUseCounter = 1;
-  private Set<JpsSdk<?>> myProjectJavaSdks;
-  private CompilerEncodingConfiguration myEncodingConfiguration;
+  private final Set<JpsSdk<?>> myProjectJavaSdks;
+  private final CompilerEncodingConfiguration myEncodingConfiguration;
   private final BuildRootIndex myBuildRootIndex;
   private final BuildTargetIndex myBuildTargetIndex;
   private final IgnoredFileIndex myIgnoredFileIndex;
@@ -76,7 +75,7 @@ public final class ProjectDescriptor {
     myBuildRootIndex = buildRootIndex;
     myLoggingManager = loggingManager;
     myModuleExcludeIndex = moduleExcludeIndex;
-    myProjectJavaSdks = new HashSet<JpsSdk<?>>();
+    myProjectJavaSdks = new HashSet<>();
     myEncodingConfiguration = new CompilerEncodingConfiguration(model, buildRootIndex);
     for (JpsModule module : myProject.getModules()) {
       final JpsSdk<?> sdk = module.getSdk(JpsJavaSdkType.INSTANCE);
@@ -87,11 +86,17 @@ public final class ProjectDescriptor {
     myTargetsState = targetsState;
   }
 
+  /**
+   * @deprecated not used after file traversal rewrite to NIO
+   */
   @NotNull
   public FSCache getFSCache() {
-    return myFSCache;
+    return FSCache.NO_CACHE;
   }
 
+  /**
+   * @deprecated not used after file traversal rewrite to NIO
+   */
   public void setFSCache(FSCache cache) {
     myFSCache = cache == null? FSCache.NO_CACHE : cache;
   }

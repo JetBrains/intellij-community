@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.dialogs.browser;
 
 import com.intellij.openapi.fileChooser.FileChooser;
@@ -22,12 +8,13 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.DepthCombo;
 import org.jetbrains.idea.svn.SvnBundle;
-import org.tmatesoft.svn.core.SVNDepth;
-import org.tmatesoft.svn.core.SVNURL;
+import org.jetbrains.idea.svn.api.Depth;
+import org.jetbrains.idea.svn.api.Url;
 
 import javax.swing.*;
 import java.awt.*;
@@ -37,7 +24,7 @@ import java.io.File;
 
 public class ExportOptionsDialog extends DialogWrapper implements ActionListener {
 
-  private final SVNURL myURL;
+  private final Url myURL;
   private final Project myProject;
   private final File myFile;
   private TextFieldWithBrowseButton myPathField;
@@ -46,7 +33,7 @@ public class ExportOptionsDialog extends DialogWrapper implements ActionListener
   private JCheckBox myForceCheckbox;
   private JComboBox myEOLStyleBox;
 
-  public ExportOptionsDialog(Project project, SVNURL url, File target) {
+  public ExportOptionsDialog(Project project, Url url, File target) {
     super(project, true);
     myURL = url;
     myProject = project;
@@ -55,6 +42,7 @@ public class ExportOptionsDialog extends DialogWrapper implements ActionListener
     init();
   }
 
+  @Override
   @NonNls
   protected String getDimensionServiceKey() {
     return "svn4idea.export.options";
@@ -64,7 +52,7 @@ public class ExportOptionsDialog extends DialogWrapper implements ActionListener
     return new File(myPathField.getText());
   }
 
-  public SVNDepth getDepth() {
+  public Depth getDepth() {
     return myDepth.getDepth();
   }
 
@@ -83,12 +71,13 @@ public class ExportOptionsDialog extends DialogWrapper implements ActionListener
     return (String) myEOLStyleBox.getSelectedItem();
   }
 
+  @Override
   @Nullable
   protected JComponent createCenterPanel() {
     JPanel panel = new JPanel(new GridBagLayout());
 
     GridBagConstraints gc = new GridBagConstraints();
-    gc.insets = new Insets(2, 2, 2, 2);
+    gc.insets = JBUI.insets(2);
     gc.gridwidth = 1;
     gc.gridheight = 1;
     gc.gridx = 0;
@@ -103,7 +92,7 @@ public class ExportOptionsDialog extends DialogWrapper implements ActionListener
     gc.gridwidth = 2;
     gc.weightx = 1;
     gc.fill = GridBagConstraints.HORIZONTAL;
-    JLabel urlLabel = new JLabel(myURL.toString());
+    JLabel urlLabel = new JLabel(myURL.toDecodedString());
     urlLabel.setFont(urlLabel.getFont().deriveFont(Font.BOLD));
     panel.add(urlLabel, gc);
 
@@ -165,6 +154,7 @@ public class ExportOptionsDialog extends DialogWrapper implements ActionListener
     return panel;
   }
 
+  @Override
   public void actionPerformed(ActionEvent e) {
     // choose directory here/
     FileChooserDescriptor fcd = FileChooserDescriptorFactory.createSingleFolderDescriptor();

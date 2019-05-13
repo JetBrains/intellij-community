@@ -15,11 +15,12 @@
  */
 package com.intellij.application.options;
 
-import com.intellij.application.options.codeStyle.*;
+import com.intellij.application.options.codeStyle.CodeStyleBlankLinesPanel;
+import com.intellij.application.options.codeStyle.CodeStyleSchemesModel;
+import com.intellij.application.options.codeStyle.CodeStyleSpacesPanel;
+import com.intellij.application.options.codeStyle.WrappingAndBracesPanel;
 import com.intellij.lang.Language;
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationBundle;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.highlighter.EditorHighlighterFactory;
@@ -34,31 +35,31 @@ import com.intellij.openapi.ui.JBPopupMenu;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.psi.codeStyle.*;
 import com.intellij.ui.ScrollPaneFactory;
-import com.intellij.ui.components.JBTabbedPane;
+import com.intellij.ui.TabbedPaneWrapper;
+import com.intellij.util.containers.hash.HashSet;
 import com.intellij.util.ui.GraphicsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 
 /**
  * @author Rustam Vishnyakov
  */
 
 public abstract class TabbedLanguageCodeStylePanel extends CodeStyleAbstractPanel {
-  private static final Logger LOG = Logger.getInstance("#" + TabbedLanguageCodeStylePanel.class.getName());
-
   private CodeStyleAbstractPanel myActiveTab;
   private List<CodeStyleAbstractPanel> myTabs;
   private JPanel myPanel;
-  private JTabbedPane myTabbedPane;
-  private PredefinedCodeStyle[] myPredefinedCodeStyles;
+  private TabbedPaneWrapper myTabbedPane;
+  private final PredefinedCodeStyle[] myPredefinedCodeStyles;
   private JPopupMenu myCopyFromMenu;
+  @Nullable private TabChangeListener myListener;
 
   protected TabbedLanguageCodeStylePanel(@Nullable Language language, CodeStyleSettings currentSettings, CodeStyleSettings settings) {
     super(language, currentSettings, settings);
@@ -72,15 +73,15 @@ public abstract class TabbedLanguageCodeStylePanel extends CodeStyleAbstractPane
    * then addTab() methods or selectively add needed tabs with your own implementation.
    * @param settings  Code style settings to be used with initialized panels.
    * @see LanguageCodeStyleSettingsProvider
-   * @see #addIndentOptionsTab(com.intellij.psi.codeStyle.CodeStyleSettings)
-   * @see #addSpacesTab(com.intellij.psi.codeStyle.CodeStyleSettings)
-   * @see #addBlankLinesTab(com.intellij.psi.codeStyle.CodeStyleSettings)
-   * @see #addWrappingAndBracesTab(com.intellij.psi.codeStyle.CodeStyleSettings)
+   * @see #addIndentOptionsTab(CodeStyleSettings)
+   * @see #addSpacesTab(CodeStyleSettings)
+   * @see #addBlankLinesTab(CodeStyleSettings)
+   * @see #addWrappingAndBracesTab(CodeStyleSettings)
    */
   protected void initTabs(CodeStyleSettings settings) {
     LanguageCodeStyleSettingsProvider provider = LanguageCodeStyleSettingsProvider.forLanguage(getDefaultLanguage());
     addIndentOptionsTab(settings);
-    if (provider != null && !provider.usesSharedPreview()) {
+    if (provider != null) {
       addSpacesTab(settings);
       addWrappingAndBracesTab(settings);
       addBlankLinesTab(settings);
@@ -88,7 +89,7 @@ public abstract class TabbedLanguageCodeStylePanel extends CodeStyleAbstractPane
   }
 
   /**
-   * Adds "Tabs and Indents" tab if the language has its own LanguageCodeStyleSettings provider and instantiates indent options in 
+   * Adds "Tabs and Indents" tab if the language has its own LanguageCodeStyleSettings provider and instantiates indent options in
    * getDefaultSettings() method.
    * @param settings CodeStyleSettings to be used with "Tabs and Indents" panel.
    */
@@ -115,24 +116,29 @@ public abstract class TabbedLanguageCodeStylePanel extends CodeStyleAbstractPane
     addTab(new MyWrappingAndBracesPanel(settings));
   }
 
-  private void ensureTabs() {
+  protected void ensureTabs() {
     if (myTabs == null) {
       myPanel = new JPanel();
       myPanel.setLayout(new BorderLayout());
-      myTabbedPane = new JBTabbedPane();
-      myTabs = new ArrayList<CodeStyleAbstractPanel>();
-      myPanel.add(myTabbedPane);
+      myTabbedPane = new TabbedPaneWrapper(this);
+      myTabbedPane.addChangeListener(__ -> {
+        if (myListener != null) {
+          String title = myTabbedPane.getSelectedTitle();
+          if (title != null) {
+            myListener.tabChanged(this, title);
+          }
+        }
+      });
+      myTabs = new ArrayList<>();
+      myPanel.add(myTabbedPane.getComponent());
       initTabs(getSettings());
     }
     assert !myTabs.isEmpty();
   }
 
-  public void showSetFrom(Object e) {
-    final Container component = (Container)e;
-    final Component[] components = component.getComponents();
-    final Component last = components[components.length - 1];
+  public void showSetFrom(Component component) {
     initCopyFromMenu();
-    myCopyFromMenu.show(last, 0, last.getHeight() + 3);
+    myCopyFromMenu.show(component, 0, component.getHeight());
   }
 
   private void initCopyFromMenu() {
@@ -168,12 +174,12 @@ public abstract class TabbedLanguageCodeStylePanel extends CodeStyleAbstractPane
    */
   protected final void createTab(CodeStyleSettingsProvider provider) {
     if (provider.hasSettingsPage()) return;
-    Configurable configurable = provider.createSettingsPage(getCurrentSettings(), getSettings());
+    Configurable configurable = provider.createConfigurable(getCurrentSettings(), getSettings());
     addTab(configurable);
   }
 
   @Override
-  public final void setModel(CodeStyleSchemesModel model) {
+  public final void setModel(@NotNull CodeStyleSchemesModel model) {
     super.setModel(model);
     ensureTabs();
     for (CodeStyleAbstractPanel tab : myTabs) {
@@ -224,12 +230,7 @@ public abstract class TabbedLanguageCodeStylePanel extends CodeStyleAbstractPane
   }
 
   @Override
-  protected void somethingChanged() {
-    super.somethingChanged();
-  }
-
-  @Override
-  public void apply(CodeStyleSettings settings) {
+  public void apply(CodeStyleSettings settings) throws ConfigurationException {
     ensureTabs();
     for (CodeStyleAbstractPanel tab : myTabs) {
       tab.apply(settings);
@@ -238,10 +239,10 @@ public abstract class TabbedLanguageCodeStylePanel extends CodeStyleAbstractPane
 
   @Override
   public void dispose() {
-    super.dispose();
     for (CodeStyleAbstractPanel tab : myTabs) {
       Disposer.dispose(tab);
     }
+    super.dispose();
   }
 
   @Override
@@ -300,27 +301,16 @@ public abstract class TabbedLanguageCodeStylePanel extends CodeStyleAbstractPane
 
   private void fillLanguages(JComponent parentMenu) {
       Language[] languages = LanguageCodeStyleSettingsProvider.getLanguagesWithCodeStyleSettings();
-      @SuppressWarnings("UnnecessaryFullyQualifiedName")
-      java.util.List<JMenuItem> langItems = new ArrayList<JMenuItem>();
+      java.util.List<JMenuItem> langItems = new ArrayList<>();
       for (final Language lang : languages) {
         if (!lang.equals(getDefaultLanguage())) {
           final String langName = LanguageCodeStyleSettingsProvider.getLanguageName(lang);
           JMenuItem langItem = new JBMenuItem(langName);
-          langItem.addActionListener(new ActionListener(){
-            @Override
-            public void actionPerformed(ActionEvent e) {
-              applyLanguageSettings(lang);
-            }
-          });
+          langItem.addActionListener(__ -> applyLanguageSettings(lang));
           langItems.add(langItem);
         }
       }
-      Collections.sort(langItems, new Comparator<JMenuItem>() {
-        @Override
-        public int compare(JMenuItem item1, JMenuItem item2) {
-          return item1.getText().compareToIgnoreCase(item2.getText());
-        }
-      });
+      Collections.sort(langItems, (item1, item2) -> item1.getText().compareToIgnoreCase(item2.getText()));
       for (JMenuItem langItem : langItems) {
         parentMenu.add(langItem);
       }
@@ -330,51 +320,37 @@ public abstract class TabbedLanguageCodeStylePanel extends CodeStyleAbstractPane
     for (final PredefinedCodeStyle predefinedCodeStyle : myPredefinedCodeStyles) {
       JMenuItem predefinedItem = new JBMenuItem(predefinedCodeStyle.getName());
       parentMenu.add(predefinedItem);
-      predefinedItem.addActionListener(new ActionListener() {
-        @Override
-        public void actionPerformed(ActionEvent e) {
-          applyPredefinedStyle(predefinedCodeStyle.getName());
-        }
-      });
+      predefinedItem.addActionListener(__ -> applyPredefinedStyle(predefinedCodeStyle.getName()));
     }
   }
 
   private PredefinedCodeStyle[] getPredefinedStyles() {
     final Language language = getDefaultLanguage();
-    final List<PredefinedCodeStyle> result = new ArrayList<PredefinedCodeStyle>();
+    final List<PredefinedCodeStyle> result = new ArrayList<>();
 
     for (PredefinedCodeStyle codeStyle : PredefinedCodeStyle.EP_NAME.getExtensions()) {
       if (codeStyle.getLanguage().equals(language)) {
         result.add(codeStyle);
       }
     }
-    final LanguageCodeStyleSettingsProvider provider = LanguageCodeStyleSettingsProvider.forLanguage(getDefaultLanguage());
-
-    if (provider != null) {
-      result.addAll(Arrays.asList(provider.getPredefinedCodeStyles()));
-    }
-    return result.toArray(new PredefinedCodeStyle[result.size()]);
+    return result.toArray(PredefinedCodeStyle.EMPTY_ARRAY);
   }
 
 
   private void applyLanguageSettings(Language lang) {
     final Project currProject = ProjectUtil.guessCurrentProject(getPanel());
-    CodeStyleSettings rootSettings = CodeStyleSettingsManager.getSettings(currProject);
-    CommonCodeStyleSettings sourceSettings = rootSettings.getCommonSettings(lang);
-    CommonCodeStyleSettings targetSettings = getSettings().getCommonSettings(getDefaultLanguage());
-    if (sourceSettings == null || targetSettings == null) return;
-    if (!(targetSettings instanceof CodeStyleSettings)) {
-      CommonCodeStyleSettingsManager.copy(sourceSettings, targetSettings);
-    }
-    else {
-      Language targetLang = getDefaultLanguage();
-      LOG.error((targetLang != null ? targetLang.getDisplayName() : "Unknown") +
-                " language plug-in either uses an outdated API or does not initialize" +
-                " its own code style settings in LanguageCodeStyleSettingsProvider.getDefaultSettings()." +
-                " The operation can not be applied in this case.");
-    }
-    reset(getSettings());
+    CodeStyleSettings rootSettings = CodeStyle.getSettings(currProject);
+    CodeStyleSettings targetSettings = getSettings();
+
+    applyLanguageSettings(lang, rootSettings, targetSettings);
+    reset(targetSettings);
     onSomethingChanged();
+  }
+
+  protected void applyLanguageSettings(Language lang, CodeStyleSettings rootSettings, CodeStyleSettings targetSettings) {
+    CommonCodeStyleSettings sourceCommonSettings = rootSettings.getCommonSettings(lang);
+    CommonCodeStyleSettings targetCommonSettings = targetSettings.getCommonSettings(getDefaultLanguage());
+    targetCommonSettings.copyFrom(sourceCommonSettings);
   }
 
   private void applyPredefinedStyle(String styleName) {
@@ -391,23 +367,16 @@ public abstract class TabbedLanguageCodeStylePanel extends CodeStyleAbstractPane
 
     public MySpacesPanel(CodeStyleSettings settings) {
       super(settings);
-      setPanelLanguage(TabbedLanguageCodeStylePanel.this.getDefaultLanguage());
-    }
-
-    @Override
-    protected void installPreviewPanel(JPanel previewPanel) {
-      previewPanel.setLayout(new BorderLayout());
-      previewPanel.add(getEditor().getComponent(), BorderLayout.CENTER);
-    }
-
-    @Override
-    protected void customizeSettings() {
-      customizePanel(this);
     }
 
     @Override
     protected boolean shouldHideOptions() {
       return true;
+    }
+
+    @Override
+    public Language getDefaultLanguage() {
+      return TabbedLanguageCodeStylePanel.this.getDefaultLanguage();
     }
   }
 
@@ -415,45 +384,23 @@ public abstract class TabbedLanguageCodeStylePanel extends CodeStyleAbstractPane
 
     public MyBlankLinesPanel(CodeStyleSettings settings) {
       super(settings);
-      setPanelLanguage(TabbedLanguageCodeStylePanel.this.getDefaultLanguage());
     }
 
     @Override
-    protected void customizeSettings() {
-      customizePanel(this);
+    public Language getDefaultLanguage() {
+      return TabbedLanguageCodeStylePanel.this.getDefaultLanguage();
     }
-
-    @Override
-    protected void installPreviewPanel(JPanel previewPanel) {
-      previewPanel.setLayout(new BorderLayout());
-      previewPanel.add(getEditor().getComponent(), BorderLayout.CENTER);
-    }
-
   }
 
   protected class MyWrappingAndBracesPanel extends WrappingAndBracesPanel {
 
     public MyWrappingAndBracesPanel(CodeStyleSettings settings) {
       super(settings);
-      setPanelLanguage(TabbedLanguageCodeStylePanel.this.getDefaultLanguage());
     }
 
     @Override
-    protected void customizeSettings() {
-      customizePanel(this);
-    }
-
-    @Override
-    protected void installPreviewPanel(JPanel previewPanel) {
-      previewPanel.setLayout(new BorderLayout());
-      previewPanel.add(getEditor().getComponent(), BorderLayout.CENTER);
-    }
-  }
-
-  private void customizePanel(MultilanguageCodeStyleAbstractPanel panel) {
-    LanguageCodeStyleSettingsProvider provider = LanguageCodeStyleSettingsProvider.forLanguage(getDefaultLanguage());
-    if (provider != null) {
-      provider.customizeSettings(panel, panel.getSettingsType());
+    public Language getDefaultLanguage() {
+      return TabbedLanguageCodeStylePanel.this.getDefaultLanguage();
     }
   }
 
@@ -462,19 +409,14 @@ public abstract class TabbedLanguageCodeStylePanel extends CodeStyleAbstractPane
 
   private class ConfigurableWrapper extends CodeStyleAbstractPanel {
 
-    private Configurable myConfigurable;
+    private final Configurable myConfigurable;
     private JComponent myComponent;
 
-    public ConfigurableWrapper(@NotNull Configurable configurable, CodeStyleSettings settings) {
+    ConfigurableWrapper(@NotNull Configurable configurable, CodeStyleSettings settings) {
       super(settings);
       myConfigurable = configurable;
 
-      Disposer.register(this, new Disposable() {
-        @Override
-        public void dispose() {
-          myConfigurable.disposeUIResources();
-        }
-      });
+      Disposer.register(this, () -> myConfigurable.disposeUIResources());
     }
 
     @Override
@@ -512,12 +454,12 @@ public abstract class TabbedLanguageCodeStylePanel extends CodeStyleAbstractPane
     }
 
     @Override
-    public void apply(CodeStyleSettings settings) {
-      try {
-        myConfigurable.apply();
+    public void apply(CodeStyleSettings settings) throws ConfigurationException {
+      if (myConfigurable instanceof CodeStyleConfigurable) {
+        ((CodeStyleConfigurable)myConfigurable).apply(settings);
       }
-      catch (ConfigurationException e) {
-        // Ignore
+      else {
+        myConfigurable.apply();
       }
     }
 
@@ -537,46 +479,44 @@ public abstract class TabbedLanguageCodeStylePanel extends CodeStyleAbstractPane
 
     @Override
     protected void resetImpl(CodeStyleSettings settings) {
-      if (myConfigurable instanceof CodeStyleAbstractConfigurable) {
-        // when a predefined style is chosen and the configurable is wrapped in a tab,
-        // we apply it to CLONED code style settings and then pass them to this method to reset,
-        // usual reset() won't work in such case
-        ((CodeStyleAbstractConfigurable)myConfigurable).reset(settings);
+      if (myConfigurable instanceof CodeStyleConfigurable) {
+        ((CodeStyleConfigurable)myConfigurable).reset(settings);
       }
       else {
-        // todo: support   for other configurables
         myConfigurable.reset();
       }
     }
   }
 
   @Override
-  public boolean isCopyFromMenuAvailable() {
-    return true;
+  public Set<String> processListOptions() {
+    final Set<String> result = new HashSet<>();
+    for (CodeStyleAbstractPanel tab : myTabs) {
+      result.addAll(tab.processListOptions());
+    }
+    return result;
   }
 
   //========================================================================================================================================
-  
+
   protected class MyIndentOptionsWrapper extends CodeStyleAbstractPanel {
 
     private final IndentOptionsEditor myEditor;
     private final LanguageCodeStyleSettingsProvider myProvider;
-    private JPanel myTopPanel;
-    private JPanel myLeftPanel;
-    private JPanel myRightPanel;
+    private final JPanel myTopPanel = new JPanel(new BorderLayout());
+    private final JPanel myLeftPanel = new JPanel(new BorderLayout());
+    private final JPanel myRightPanel;
 
     protected MyIndentOptionsWrapper(CodeStyleSettings settings, LanguageCodeStyleSettingsProvider provider, IndentOptionsEditor editor) {
       super(settings);
       myProvider = provider;
-      myTopPanel = new JPanel();
-      myTopPanel.setLayout(new BorderLayout(8, 0));
-      myLeftPanel = new JPanel(new BorderLayout());
       myTopPanel.add(myLeftPanel, BorderLayout.WEST);
       myRightPanel = new JPanel();
       installPreviewPanel(myRightPanel);
       myEditor = editor;
       if (myEditor != null) {
         JPanel panel = myEditor.createPanel();
+        panel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
         JScrollPane scroll = ScrollPaneFactory.createScrollPane(panel, true);
         scroll.setPreferredSize(new Dimension(panel.getPreferredSize().width + scroll.getVerticalScrollBar().getPreferredSize().width + 5, -1));
         myLeftPanel.add(scroll, BorderLayout.CENTER);
@@ -586,12 +526,11 @@ public abstract class TabbedLanguageCodeStylePanel extends CodeStyleAbstractPane
 
     @Override
     protected int getRightMargin() {
-      return getSettings().RIGHT_MARGIN;
+      return myProvider.getRightMargin(LanguageCodeStyleSettingsProvider.SettingsType.INDENT_SETTINGS);
     }
 
     @Override
     protected EditorHighlighter createHighlighter(EditorColorsScheme scheme) {
-      //noinspection NullableProblems
       return EditorHighlighterFactory.getInstance().createEditorHighlighter(getFileType(), scheme, null);
     }
 
@@ -667,5 +606,18 @@ public abstract class TabbedLanguageCodeStylePanel extends CodeStyleAbstractPane
       myEditor.setEnabled(true);
     }
 
+  }
+
+  @FunctionalInterface
+  public interface TabChangeListener {
+    void tabChanged(@NotNull TabbedLanguageCodeStylePanel source, @NotNull String tabTitle);
+  }
+
+  public void setListener(@Nullable TabChangeListener listener) {
+    myListener = listener;
+  }
+
+  public void changeTab(@NotNull String tabTitle) {
+    myTabbedPane.setSelectedTitle(tabTitle);
   }
 }

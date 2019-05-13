@@ -18,10 +18,19 @@ class Test {
 }
 
 interface II {
-  boolean _(String s);
+  boolean m(String s);
 }
 class Test1 {
   void bar(boolean b){
     II ik = b ? (s)-> true : (s)->false;
+    II ik1 = (II)((b ? <error descr="Lambda expression not expected here">(s)-> true</error> : <error descr="Lambda expression not expected here">(s)->false</error>));
+    II ik2 = (II)(ik1 = (b ? (s)-> true : (s)->false));
+    (b ? <error descr="Lambda expression not expected here">(s) -> true</error> : ik).m("");
+  }
+}
+
+class Test2 {
+  void f() {
+    final Runnable one=true ? null : true ? () -> {} : () -> {};
   }
 }

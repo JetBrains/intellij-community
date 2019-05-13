@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2011 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2018 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,8 @@ package com.siyeh.ipp.chartostring;
 
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiLiteralExpression;
-import com.intellij.util.IncorrectOperationException;
+import com.intellij.psi.util.PsiLiteralUtil;
+import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ipp.base.Intention;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import org.jetbrains.annotations.NotNull;
@@ -31,25 +32,10 @@ public class CharToStringIntention extends Intention {
   }
 
   @Override
-  public void processIntention(@NotNull PsiElement element)
-    throws IncorrectOperationException {
-    final PsiLiteralExpression charLiteral =
-      (PsiLiteralExpression)element;
+  public void processIntention(@NotNull PsiElement element) {
+    final PsiLiteralExpression charLiteral = (PsiLiteralExpression)element;
     final String charLiteralText = charLiteral.getText();
-    final String stringLiteral = stringForCharLiteral(charLiteralText);
-    replaceExpression(stringLiteral, charLiteral);
-  }
-
-  private static String stringForCharLiteral(String charLiteral) {
-    if ("'\"'".equals(charLiteral)) {
-      return "\"\\\"\"";
-    }
-    else if ("'\\''".equals(charLiteral)) {
-      return "\"'\"";
-    }
-    else {
-      return '\"' + charLiteral.substring(1, charLiteral.length() - 1) +
-             '\"';
-    }
+    final String stringLiteral = PsiLiteralUtil.stringForCharLiteral(charLiteralText);
+    PsiReplacementUtil.replaceExpression(charLiteral, stringLiteral);
   }
 }

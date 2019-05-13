@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,42 +15,46 @@
  */
 package git4idea.commands;
 
-import com.intellij.ide.passwordSafe.ui.PasswordSafePromptDialog;
+import com.intellij.credentialStore.CredentialAttributes;
+import com.intellij.credentialStore.CredentialPromptDialog;
+import com.intellij.credentialStore.Credentials;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.util.PathUtil;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import git4idea.config.SSHConnectionSettings;
 import git4idea.i18n.GitBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.git4idea.ssh.GitSSHService;
 
 import javax.swing.*;
 import javax.swing.text.JTextComponent;
 import java.awt.*;
-import java.lang.reflect.InvocationTargetException;
 import java.util.Vector;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
+import static com.intellij.credentialStore.CredentialAttributesKt.*;
+import static git4idea.commands.GitAuthenticationMode.FULL;
+
 /**
  * Swing GUI handler for the SSH events
  */
-class GitSSHGUIHandler implements GitSSHService.Handler {
+public class GitSSHGUIHandler {
   @Nullable private final Project myProject;
-  @Nullable private final ModalityState myState;
+  @NotNull private final GitAuthenticationMode myAuthenticationMode;
+  @NotNull private final GitAuthenticationGate myAuthenticationGate;
 
-  /**
-   * A constructor
-   *
-   * @param project a project to use
-   * @param state   modality state using which any prompts initiated by the git process should be shown in the UI.
-   */
-  GitSSHGUIHandler(@Nullable Project project, @Nullable ModalityState state) {
+  GitSSHGUIHandler(@Nullable Project project,
+                   @NotNull GitAuthenticationGate authenticationGate,
+                   @NotNull GitAuthenticationMode authenticationMode) {
     myProject = project;
-    myState = state;
+    myAuthenticationMode = authenticationMode;
+    myAuthenticationGate = authenticationGate;
   }
 
   public boolean verifyServerHostKey(final String hostname,
@@ -58,28 +62,63 @@ class GitSSHGUIHandler implements GitSSHService.Handler {
                                      final String serverHostKeyAlgorithm,
                                      final String fingerprint,
                                      final boolean isNew) {
-    final String message;
-    if (isNew) {
-      message = GitBundle.message("ssh.new.host.key", hostname, port, fingerprint, serverHostKeyAlgorithm);
-    }
-    else {
-      message = GitBundle.message("ssh.changed.host.key", hostname, port, fingerprint, serverHostKeyAlgorithm);
-    }
-    final AtomicBoolean rc = new AtomicBoolean();
-    UIUtil.invokeAndWaitIfNeeded(new Runnable() {
-      public void run() {
-        rc.set(0 == Messages.showYesNoDialog(myProject, message, GitBundle.getString("ssh.confirm.key.titile"), null));
+    return myAuthenticationGate.waitAndCompute(() -> {
+      final String message;
+      if (isNew) {
+        message = GitBundle.message("ssh.new.host.key", hostname, port, fingerprint, serverHostKeyAlgorithm);
       }
+      else {
+        message = GitBundle.message("ssh.changed.host.key", hostname, port, fingerprint, serverHostKeyAlgorithm);
+      }
+      final AtomicBoolean rc = new AtomicBoolean();
+      ApplicationManager.getApplication().invokeAndWait(
+        () -> rc.set(Messages.YES == Messages.showYesNoDialog(myProject, message, GitBundle.getString("ssh.confirm.key.titile"), null)),
+        ModalityState.any());
+      return rc.get();
     });
-    return rc.get();
   }
 
+  @Nullable
   public String askPassphrase(final String username, final String keyPath, boolean resetPassword, final String lastError) {
-    String error = processLastError(resetPassword, lastError);
-    return PasswordSafePromptDialog.askPassphrase(myProject, myState, GitBundle.getString("ssh.ask.passphrase.title"),
-                                                  GitBundle.message("ssh.askPassphrase.message", keyPath, username),
-                                                  GitSSHGUIHandler.class, "PASSPHRASE:" + keyPath, resetPassword, error
-    );
+    return myAuthenticationGate.waitAndCompute(() -> {
+      String error = processLastError(resetPassword, lastError);
+      return askPassphrase(myProject, keyPath, resetPassword, myAuthenticationMode, error);
+    });
+  }
+
+  @Nullable
+  static String askPassphrase(@Nullable Project project,
+                              @NotNull String keyPath,
+                              boolean resetPassword,
+                              @NotNull GitAuthenticationMode authenticationMode,
+                              @Nullable String lastError) {
+    if (authenticationMode == GitAuthenticationMode.NONE) return null;
+    CredentialAttributes oldAttributes = oldCredentialAttributes("PASSPHRASE:" + keyPath);
+    CredentialAttributes newAttributes = passphraseCredentialAttributes(keyPath);
+    Credentials credentials = getAndMigrateCredentials(oldAttributes, newAttributes);
+    if (credentials != null && !resetPassword) {
+      String password = credentials.getPasswordAsString();
+      if (password != null && !password.isEmpty()) return password;
+    }
+    if (authenticationMode == GitAuthenticationMode.SILENT) return null;
+    return CredentialPromptDialog.askPassword(project, GitBundle.getString("ssh.ask.passphrase.title"),
+                                              GitBundle.message("ssh.ask.passphrase.message", PathUtil.getFileName(keyPath)),
+                                              newAttributes, true, lastError);
+  }
+
+  @NotNull
+  private static CredentialAttributes oldCredentialAttributes(@NotNull String key) {
+    return CredentialAttributes(GitSSHGUIHandler.class, key);
+  }
+
+  @NotNull
+  private static CredentialAttributes passphraseCredentialAttributes(@NotNull String key) {
+    return new CredentialAttributes(generateServiceName("Git SSH Passphrase", key), key, GitSSHGUIHandler.class);
+  }
+
+  @NotNull
+  private static CredentialAttributes passwordCredentialAttributes(@NotNull String key) {
+    return new CredentialAttributes(generateServiceName("Git SSH Password", key), key, GitSSHGUIHandler.class);
   }
 
   /**
@@ -93,11 +132,7 @@ class GitSSHGUIHandler implements GitSSHService.Handler {
   private String processLastError(boolean resetPassword, final String lastError) {
     String error;
     if (lastError != null && lastError.length() != 0 && !resetPassword) {
-      UIUtil.invokeAndWaitIfNeeded(new Runnable() {
-        public void run() {
-          showError(lastError);
-        }
-      });
+      ApplicationManager.getApplication().invokeAndWait(() -> showError(lastError), ModalityState.any());
       error = null;
     }
     else {
@@ -112,7 +147,19 @@ class GitSSHGUIHandler implements GitSSHService.Handler {
     }
   }
 
-  @SuppressWarnings({"UseOfObsoleteCollectionType", "unchecked"})
+  /**
+   * Reply to challenge in keyboard-interactive scenario
+   *
+   * @param username    a user name
+   * @param name        a name of challenge
+   * @param instruction a instructions
+   * @param numPrompts  number of prompts
+   * @param prompt      prompts
+   * @param echo        true if the reply for corresponding prompt should be echoed
+   * @param lastError   the last error
+   * @return replies to the challenges
+   */
+  @SuppressWarnings({"UseOfObsoleteCollectionType"})
   public Vector<String> replyToChallenge(final String username,
                                          final String name,
                                          final String instruction,
@@ -120,53 +167,84 @@ class GitSSHGUIHandler implements GitSSHService.Handler {
                                          final Vector<String> prompt,
                                          final Vector<Boolean> echo,
                                          final String lastError) {
-    final AtomicReference<Vector<String>> rc = new AtomicReference<Vector<String>>();
-    try {
-      EventQueue.invokeAndWait(new Runnable() {
-        public void run() {
-          showError(lastError);
-          GitSSHKeyboardInteractiveDialog dialog =
-            new GitSSHKeyboardInteractiveDialog(name, numPrompts, instruction, prompt, echo, username);
-          dialog.show();
-          if (dialog.isOK()) {
-            rc.set(dialog.getResults());
-          }
+    if (myAuthenticationMode != FULL) return null;
+    return myAuthenticationGate.waitAndCompute(() -> {
+      final AtomicReference<Vector<String>> rc = new AtomicReference<>();
+      ApplicationManager.getApplication().invokeAndWait(() -> {
+        showError(lastError);
+        GitSSHKeyboardInteractiveDialog dialog =
+          new GitSSHKeyboardInteractiveDialog(name, numPrompts, instruction, prompt, echo, username);
+        if (dialog.showAndGet()) {
+          rc.set(dialog.getResults());
         }
-      });
-    }
-    catch (InterruptedException e) {
-      throw new RuntimeException("dialog failed", e);
-    }
-    catch (InvocationTargetException e) {
-      throw new RuntimeException("dialog failed", e);
-    }
-    return rc.get();
+      }, ModalityState.any());
+      return rc.get();
+    });
   }
 
+  /**
+   * Ask password
+   *
+   * @param username      a user name (ex: "user@host:port" string)
+   * @param resetPassword true if the previous password supplied to the service was incorrect
+   * @param lastError     the previous error  @return a password or null if dialog was cancelled.
+   */
+  @Nullable
   public String askPassword(final String username, boolean resetPassword, final String lastError) {
-    String error = processLastError(resetPassword, lastError);
-    return PasswordSafePromptDialog.askPassword(myProject, myState, GitBundle.getString("ssh.password.title"),
-                                                GitBundle.message("ssh.password.message", username),
-                                                GitSSHGUIHandler.class, "PASSWORD:" + username, resetPassword, error);
+    return myAuthenticationGate.waitAndCompute(() -> {
+      String error = processLastError(resetPassword, lastError);
+      return askPassword(myProject, username, resetPassword, myAuthenticationMode, error);
+    });
   }
 
-  @Override
+  @Nullable
+  static String askPassword(@Nullable Project project,
+                            @NotNull String username,
+                            boolean resetPassword,
+                            @NotNull GitAuthenticationMode authenticationMode,
+                            @Nullable String error) {
+    if(authenticationMode == GitAuthenticationMode.NONE) return null;
+    CredentialAttributes oldAttributes = oldCredentialAttributes("PASSWORD:" + username);
+    CredentialAttributes newAttributes = passwordCredentialAttributes(username);
+    Credentials credentials = getAndMigrateCredentials(oldAttributes, newAttributes);
+    if (credentials != null && !resetPassword) {
+      String password = credentials.getPasswordAsString();
+      if (password != null) return password;
+    }
+    if (authenticationMode == GitAuthenticationMode.SILENT) return null;
+    return CredentialPromptDialog.askPassword(project,
+                                              GitBundle.getString("ssh.password.title"),
+                                              GitBundle.message("ssh.password.message", username),
+                                              newAttributes,
+                                              true,
+                                              error);
+  }
+
+  /**
+   * Get last successful authentication method. The default implementation returns empty string
+   * meaning that last authentication is unknown or failed.
+   *
+   * @param userName the user name
+   * @return the successful authentication method
+   */
   public String getLastSuccessful(String userName) {
     SSHConnectionSettings s = SSHConnectionSettings.getInstance();
     String rc = s.getLastSuccessful(userName);
     return rc == null ? "" : rc;
   }
 
-  @Override
+  /**
+   * Set last successful authentication method
+   *
+   * @param userName the user name
+   * @param method   the authentication method, the empty string if authentication process failed.
+   * @param error    the error to show to user in case when authentication process failed.
+   */
   public void setLastSuccessful(String userName, String method, final String error) {
     SSHConnectionSettings s = SSHConnectionSettings.getInstance();
     s.setLastSuccessful(userName, method);
     if (error != null && error.length() != 0) {
-      UIUtil.invokeLaterIfNeeded(new Runnable() {
-        public void run() {
-          showError(error);
-        }
-      });
+      UIUtil.invokeLaterIfNeeded(() -> showError(error));
     }
   }
 
@@ -201,7 +279,7 @@ class GitSSHGUIHandler implements GitSSHService.Handler {
      */
     private final String myUserName;
 
-    public GitSSHKeyboardInteractiveDialog(String name,
+    GitSSHKeyboardInteractiveDialog(String name,
                                            final int numPrompts,
                                            final String instruction,
                                            final Vector<String> prompt,
@@ -213,7 +291,7 @@ class GitSSHGUIHandler implements GitSSHService.Handler {
       myPrompt = prompt;
       myEcho = echo;
       myUserName = userName;
-      setTitle(GitBundle.message("ssh.keyboard.interactive.title", name));
+      setTitle(GitBundle.message("ssh.keyboard.interactive.title") + ": " + name);
       init();
       setResizable(true);
       setModal(true);
@@ -229,7 +307,7 @@ class GitSSHGUIHandler implements GitSSHService.Handler {
         contents = new JPanel(new GridBagLayout());
         inputs = new JTextComponent[myNumPrompts];
         GridBagConstraints c;
-        Insets insets = new Insets(1, 1, 1, 1);
+        Insets insets = JBUI.insets(1);
         if (myInstruction.length() != 0) {
           JLabel instructionLabel = new JLabel(myInstruction);
           c = new GridBagConstraints();
@@ -310,7 +388,7 @@ class GitSSHGUIHandler implements GitSSHService.Handler {
      */
     @SuppressWarnings({"UseOfObsoleteCollectionType"})
     public Vector<String> getResults() {
-      Vector<String> rc = new Vector<String>(myNumPrompts);
+      Vector<String> rc = new Vector<>(myNumPrompts);
       for (int i = 0; i < myNumPrompts; i++) {
         rc.add(inputs[i].getText());
       }

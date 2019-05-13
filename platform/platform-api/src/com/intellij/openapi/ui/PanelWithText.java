@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,15 +14,9 @@
  * limitations under the License.
  */
 
-/*
- * Created by IntelliJ IDEA.
- * User: Anna.Kozlova
- * Date: 16-Jul-2006
- * Time: 17:27:18
- */
 package com.intellij.openapi.ui;
 
-import org.jetbrains.annotations.NonNls;
+import com.intellij.xml.util.XmlStringUtil;
 
 import javax.swing.*;
 import java.awt.*;
@@ -36,18 +30,12 @@ public class PanelWithText extends JPanel {
 
   public PanelWithText(String text) {
     super(new GridBagLayout());
-    setBorder(BorderFactory.createEtchedBorder());
-    myLabel.setText(wrapText(text));
+    //setBorder(BorderFactory.createEtchedBorder());
+    myLabel.setText(XmlStringUtil.wrapInHtml(text));
     add(myLabel, new GridBagConstraints(0, 0, 1, 1, 1, 1, GridBagConstraints.NORTH, GridBagConstraints.HORIZONTAL, new Insets(8,8,8,8), 0, 0));
   }
 
-  private static String wrapText(final String text) {
-    @NonNls String opentTag = "<html>";
-    @NonNls String closeTag = "</html>";
-    return opentTag + text + closeTag;
-  }
-
   public void setText(String text){
-    myLabel.setText(wrapText(text));
+    myLabel.setText(XmlStringUtil.wrapInHtml(text));
   }
 }

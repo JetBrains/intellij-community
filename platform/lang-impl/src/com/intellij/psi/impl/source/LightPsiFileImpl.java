@@ -1,22 +1,7 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.psi.impl.source;
 
-import com.intellij.ide.caches.FileContent;
 import com.intellij.ide.util.PsiNavigationSupport;
 import com.intellij.lang.FileASTNode;
 import com.intellij.lang.Language;
@@ -30,7 +15,6 @@ import com.intellij.psi.impl.*;
 import com.intellij.psi.impl.file.PsiFileImplUtil;
 import com.intellij.psi.impl.source.resolve.FileContextUtil;
 import com.intellij.psi.search.PsiElementProcessor;
-import com.intellij.psi.search.SearchScope;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
@@ -41,6 +25,7 @@ public abstract class LightPsiFileImpl extends PsiElementBase implements PsiFile
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.LightPsiFileImpl");
   private PsiFile myOriginalFile = null;
   private boolean myExplicitlySetAsValid = false;
+  private boolean myInvalidated = false;
   private final FileViewProvider myViewProvider;
   private final PsiManagerImpl myManager;
   private final Language myLanguage;
@@ -63,6 +48,7 @@ public abstract class LightPsiFileImpl extends PsiElementBase implements PsiFile
 
   @Override
   public boolean isValid() {
+    if (myInvalidated) return false;
     if (!getViewProvider().isPhysical() || myExplicitlySetAsValid) return true; // "dummy" file
     return getViewProvider().getVirtualFile().isValid();
   }
@@ -88,10 +74,10 @@ public abstract class LightPsiFileImpl extends PsiElementBase implements PsiFile
     getViewProvider().rootChanged(this);
   }
 
+  @Override
   public abstract void clearCaches();
 
   @Override
-  @SuppressWarnings({"CloneDoesntDeclareCloneNotSupportedException"})
   protected LightPsiFileImpl clone() {
     final FileViewProvider provider = getViewProvider().clone();
     final LightPsiFileImpl clone = (LightPsiFileImpl)provider.getPsi(getLanguage());
@@ -235,12 +221,6 @@ public abstract class LightPsiFileImpl extends PsiElementBase implements PsiFile
   }
 
   @Override
-  @NotNull
-  public SearchScope getUseScope() {
-    return ResolveScopeManager.getElementUseScope(this);
-  }
-
-  @Override
   public void navigate(boolean requestFocus) {
     PsiNavigationSupport.getInstance().getDescriptor(this).navigate(requestFocus);
   }
@@ -258,7 +238,7 @@ public abstract class LightPsiFileImpl extends PsiElementBase implements PsiFile
   @Override
   @NotNull
   public char[] textToCharArray() {
-    return CharArrayUtil.fromSequenceStrict(getViewProvider().getContents());
+    return CharArrayUtil.fromSequence(getViewProvider().getContents());
   }
 
   @Override
@@ -268,11 +248,6 @@ public abstract class LightPsiFileImpl extends PsiElementBase implements PsiFile
 
   @Override
   public void onContentReload() {
-  }
-
-  @Override
-  public PsiFile cacheCopy(final FileContent content) {
-    return this;
   }
 
   @Override
@@ -383,5 +358,10 @@ public abstract class LightPsiFileImpl extends PsiElementBase implements PsiFile
   @Override
   public PsiElement getContext() {
     return FileContextUtil.getFileContext(this);
+  }
+
+  @Override
+  public void markInvalidated() {
+    myInvalidated = true;
   }
 }

@@ -1,3 +1,4 @@
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.mock;
 
 import com.intellij.codeHighlighting.BackgroundEditorHighlighter;
@@ -7,13 +8,16 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.*;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
+import com.intellij.openapi.fileEditor.ex.FileEditorWithProvider;
 import com.intellij.openapi.fileEditor.impl.EditorComposite;
 import com.intellij.openapi.fileEditor.impl.EditorWindow;
 import com.intellij.openapi.fileEditor.impl.EditorsSplitters;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.popup.Balloon;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.ActionCallback;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileSystem;
 import com.intellij.openapi.wm.IdeFocusManager;
@@ -25,6 +29,7 @@ import com.intellij.util.ArrayUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.concurrency.Promise;
 
 import javax.swing.*;
 import javax.swing.event.HyperlinkListener;
@@ -76,17 +81,6 @@ public class Mock {
     }
 
     @Override
-    @NotNull
-    public FileEditorState getState(@NotNull FileEditorStateLevel level) {
-      return new FileEditorState() {
-            @Override
-            public boolean canBeMergedWith(FileEditorState fileEditorState, FileEditorStateLevel fileEditorStateLevel) {
-                return false;
-            }
-        };
-    }
-
-    @Override
     public void setState(@NotNull FileEditorState state) {
     }
 
@@ -97,7 +91,7 @@ public class Mock {
 
     @Override
     public boolean isValid() {
-      return false;
+      return true;
     }
 
     @Override
@@ -133,15 +127,17 @@ public class Mock {
       return null;
     }
 
+    @NotNull
     @Override
-    public ActionCallback notifyPublisher(Runnable runnable) {
+    public ActionCallback notifyPublisher(@NotNull Runnable runnable) {
       runnable.run();
-      return new ActionCallback.Done();
+      return ActionCallback.DONE;
     }
 
+    @NotNull
     @Override
     public ActionCallback getReady(@NotNull Object requestor) {
-      return new ActionCallback.Done();
+      return ActionCallback.DONE;
     }
 
     @NotNull
@@ -149,7 +145,7 @@ public class Mock {
     public Pair<FileEditor[], FileEditorProvider[]> openFileWithProviders(@NotNull VirtualFile file,
                                                                           boolean focusEditor,
                                                                           @NotNull EditorWindow window) {
-      return null;  //To change body of implemented methods use File | Settings | File Templates.
+      throw new UnsupportedOperationException();
     }
 
     @Override
@@ -167,14 +163,16 @@ public class Mock {
       return null;
     }
 
+    @NotNull
     @Override
     public EditorsSplitters getSplitters() {
-      return null;
+      throw new UnsupportedOperationException();
     }
 
+    @NotNull
     @Override
-    public AsyncResult<EditorWindow> getActiveWindow() {
-      return null;
+    public Promise<EditorWindow> getActiveWindow() {
+      throw new UnsupportedOperationException();
     }
 
     @Override
@@ -210,7 +208,7 @@ public class Mock {
 
     @Override
     public EditorWindow getCurrentWindow() {
-      return null;  //To change body of implemented methods use File | Settings | File Templates.
+      return null;
     }
 
     @Override
@@ -223,74 +221,74 @@ public class Mock {
     }
 
     @Override
-    public void updateFilePresentation(VirtualFile file) {
+    public void updateFilePresentation(@NotNull VirtualFile file) {
     }
 
     @Override
     public void unsplitWindow() {
-      //To change body of implemented methods use File | Settings | File Templates.
+
     }
 
     @Override
     public void unsplitAllWindow() {
-      //To change body of implemented methods use File | Settings | File Templates.
+
     }
 
     @Override
     @NotNull
     public EditorWindow[] getWindows() {
-      return new EditorWindow[0];  //To change body of implemented methods use File | Settings | File Templates.
+      return new EditorWindow[0];
     }
 
     @Override
     @NotNull
-    public VirtualFile[] getSiblings(VirtualFile file) {
-      return new VirtualFile[0];
+    public VirtualFile[] getSiblings(@NotNull VirtualFile file) {
+      return VirtualFile.EMPTY_ARRAY;
     }
 
     @Override
     public void createSplitter(int orientation, @Nullable EditorWindow window) {
-      //To change body of implemented methods use File | Settings | File Templates.
+
     }
 
     @Override
     public void changeSplitterOrientation() {
-      //To change body of implemented methods use File | Settings | File Templates.
+
     }
 
     @Override
     public void flipTabs() {
-      //To change body of implemented methods use File | Settings | File Templates.
+
     }
 
     @Override
     public boolean tabsMode() {
-      return false;  //To change body of implemented methods use File | Settings | File Templates.
+      return false;
     }
 
     @Override
     public boolean isInSplitter() {
-      return false;  //To change body of implemented methods use File | Settings | File Templates.
+      return false;
     }
 
     @Override
     public boolean hasOpenedFile() {
-      return false;  //To change body of implemented methods use File | Settings | File Templates.
+      return false;
     }
 
     @Override
     public VirtualFile getCurrentFile() {
-      return null;  //To change body of implemented methods use File | Settings | File Templates.
+      return null;
     }
 
     @Override
-    public Pair<FileEditor, FileEditorProvider> getSelectedEditorWithProvider(@NotNull VirtualFile file) {
-      return null;  //To change body of implemented methods use File | Settings | File Templates.
+    public FileEditorWithProvider getSelectedEditorWithProvider(@NotNull VirtualFile file) {
+      return null;
     }
 
     @Override
     public boolean isChanged(@NotNull EditorComposite editor) {
-      return false;  //To change body of implemented methods use File | Settings | File Templates.
+      return false;
     }
 
     @Override
@@ -307,16 +305,12 @@ public class Mock {
     public void closeAllFiles() {
     }
 
-    public Editor openTextEditorEnsureNoFocus(@NotNull OpenFileDescriptor descriptor) {
-      return null;
-    }
-
     @Override
     @NotNull
-    public Pair<FileEditor[],FileEditorProvider[]> openFileWithProviders(@NotNull VirtualFile file,
-                                                                         boolean focusEditor,
-                                                                         boolean searchForSplitter) {
-      return Pair.create (new FileEditor[0], new FileEditorProvider [0]);
+    public Pair<FileEditor[], FileEditorProvider[]> openFileWithProviders(@NotNull VirtualFile file,
+                                                                          boolean focusEditor,
+                                                                          boolean searchForSplitter) {
+      return Pair.create(new FileEditor[0], new FileEditorProvider[0]);
     }
 
     @Override
@@ -328,7 +322,7 @@ public class Mock {
     }
 
     @Override
-    public Editor openTextEditor(OpenFileDescriptor descriptor, boolean focusEditor) {
+    public Editor openTextEditor(@NotNull OpenFileDescriptor descriptor, boolean focusEditor) {
       return null;
     }
 
@@ -345,13 +339,13 @@ public class Mock {
     @Override
     @NotNull
     public VirtualFile[] getOpenFiles() {
-      return new VirtualFile[0];
+      return VirtualFile.EMPTY_ARRAY;
     }
 
     @Override
     @NotNull
     public VirtualFile[] getSelectedFiles() {
-      return new VirtualFile[0];
+      return VirtualFile.EMPTY_ARRAY;
     }
 
     @Override
@@ -374,7 +368,7 @@ public class Mock {
     @NotNull
     @Override
     public FileEditor[] getAllEditors(@NotNull VirtualFile file) {
-      return new FileEditor[0]; 
+      return new FileEditor[0];
     }
 
     @Override
@@ -383,13 +377,7 @@ public class Mock {
       return new FileEditor[0];
     }
 
-    @Override
-    public void removeEditorAnnotation(@NotNull FileEditor editor, @NotNull JComponent annotationComoponent) {
-    }
 
-    @Override
-    public void showEditorAnnotation(@NotNull FileEditor editor, @NotNull JComponent annotationComoponent) {
-    }
 
     @Override
     public void addFileEditorManagerListener(@NotNull FileEditorManagerListener listener) {
@@ -423,6 +411,10 @@ public class Mock {
     public int getWindowSplitCount() {
       return 0;
     }
+
+    @Override
+    public void setSelectedEditor(@NotNull VirtualFile file, @NotNull String fileEditorProviderId) {
+    }
   }
 
   public static class MyVirtualFile extends VirtualFile {
@@ -435,9 +427,10 @@ public class Mock {
       throw new UnsupportedOperationException();
     }
 
+    @NotNull
     @Override
     public String getPath() {
-      return null;
+      throw new UnsupportedOperationException();
     }
 
     @Override
@@ -447,7 +440,7 @@ public class Mock {
     }
 
     @Override
-    public void rename(Object requestor, @NotNull String newName) throws IOException {
+    public void rename(Object requestor, @NotNull String newName) {
     }
 
     @Override
@@ -472,41 +465,43 @@ public class Mock {
 
     @Override
     public VirtualFile[] getChildren() {
-      return new VirtualFile[0];
+      return VirtualFile.EMPTY_ARRAY;
     }
 
+    @NotNull
     @Override
-    public VirtualFile createChildDirectory(Object requestor, String name) throws IOException {
-      return null;
+    public VirtualFile createChildDirectory(Object requestor, @NotNull String name) throws IOException {
+      throw new IOException(name);
     }
 
+    @NotNull
     @Override
     public VirtualFile createChildData(Object requestor, @NotNull String name) throws IOException {
-      return null;
+      throw new IOException(name);
     }
 
     @Override
-    public void delete(Object requestor) throws IOException {
+    public void delete(Object requestor) {
     }
 
     @Override
-    public void move(Object requestor, @NotNull VirtualFile newParent) throws IOException {
+    public void move(Object requestor, @NotNull VirtualFile newParent) {
     }
 
     @Override
-    public InputStream getInputStream() throws IOException {
+    public InputStream getInputStream() {
       return null;
     }
 
     @Override
     @NotNull
-    public OutputStream getOutputStream(Object requestor, long newModificationStamp, long newTimeStamp) throws IOException {
+    public OutputStream getOutputStream(Object requestor, long newModificationStamp, long newTimeStamp) {
       throw new UnsupportedOperationException();
     }
 
     @Override
     @NotNull
-    public byte[] contentsToByteArray() throws IOException {
+    public byte[] contentsToByteArray() {
       return ArrayUtil.EMPTY_BYTE_ARRAY;
     }
 
@@ -537,52 +532,66 @@ public class Mock {
       return false;
     }
 
+    @NotNull
     @Override
     public ToolWindow registerToolWindow(@NotNull String id, @NotNull JComponent component, @NotNull ToolWindowAnchor anchor) {
-      return null;
+      throw new RuntimeException();
     }
 
+    @NotNull
     @Override
     public ToolWindow registerToolWindow(@NotNull String id,
                                          @NotNull JComponent component,
                                          @NotNull ToolWindowAnchor anchor,
-                                         Disposable parentDisposable,
+                                         @NotNull Disposable parentDisposable,
                                          boolean canWorkInDumbMode, boolean canCloseContents) {
-      return null;
+      throw new RuntimeException();
     }
 
+    @NotNull
     @Override
     public ToolWindow registerToolWindow(@NotNull String id,
                                          @NotNull JComponent component,
                                          @NotNull ToolWindowAnchor anchor,
-                                         Disposable parentDisposable,
+                                         @NotNull Disposable parentDisposable,
                                          boolean canWorkInDumbMode) {
-      return null;
+      throw new RuntimeException();
     }
 
+    @NotNull
     @Override
-    public ToolWindow registerToolWindow(@NotNull String id, @NotNull JComponent component, @NotNull ToolWindowAnchor anchor, Disposable parentDisposable) {
-      return null;
+    public ToolWindow registerToolWindow(@NotNull String id, @NotNull JComponent component, @NotNull ToolWindowAnchor anchor, @NotNull Disposable parentDisposable) {
+      throw new RuntimeException();
     }
 
+    @NotNull
     @Override
     public ToolWindow registerToolWindow(@NotNull final String id, final boolean canCloseContent, @NotNull final ToolWindowAnchor anchor) {
-      return null;
+      throw new RuntimeException();
     }
 
+    @NotNull
     @Override
     public ToolWindow registerToolWindow(@NotNull final String id, final boolean canCloseContent, @NotNull final ToolWindowAnchor anchor,
-                                         final Disposable parentDisposable, final boolean dumbAware) {
-      return null;
+                                         @NotNull final Disposable parentDisposable, final boolean dumbAware) {
+      throw new RuntimeException();
     }
 
+    @NotNull
+    @Override
+    public ToolWindow registerToolWindow(@NotNull String id,
+                                         boolean canCloseContent,
+                                         @NotNull ToolWindowAnchor anchor,
+                                         @NotNull Disposable parentDisposable,
+                                         boolean canWorkInDumbMode,
+                                         boolean secondary) {
+      throw new RuntimeException();
+    }
+
+    @NotNull
     @Override
     public ToolWindow registerToolWindow(@NotNull final String id, final boolean canCloseContent, @NotNull final ToolWindowAnchor anchor, final boolean secondary) {
-      return null;
-    }
-
-    public JComponent getFocusTargetFor(final JComponent comp) {
-      return null;
+      throw new RuntimeException();
     }
 
     @Override
@@ -593,19 +602,12 @@ public class Mock {
     public void activateEditorComponent() {
     }
 
-    public ActionCallback requestFocus(final Component c, final boolean forced) {
-      return new ActionCallback.Done();
-    }
-
-    public ActionCallback requestFocus(final ActiveRunnable command, final boolean forced) {
-      return new ActionCallback.Done();
-    }
-
     @Override
     public boolean isEditorComponentActive() {
       return false;
     }
 
+    @NotNull
     @Override
     public String[] getToolWindowIds() {
       return ArrayUtil.EMPTY_STRING_ARRAY;
@@ -617,14 +619,15 @@ public class Mock {
     }
 
     @Override
-    public ToolWindow getToolWindow(String id) {
+    public ToolWindow getToolWindow(@Nullable String id) {
       return null;
     }
 
     @Override
-    public void invokeLater(Runnable runnable) {
+    public void invokeLater(@NotNull Runnable runnable) {
     }
 
+    @NotNull
     @Override
     public IdeFocusManager getFocusManager() {
       return IdeFocusManagerHeadless.INSTANCE;
@@ -638,6 +641,15 @@ public class Mock {
     @Override
     public Balloon getToolWindowBalloon(String id) {
       return null;
+    }
+
+    @Override
+    public boolean isMaximized(@NotNull ToolWindow wnd) {
+      return false;
+    }
+
+    @Override
+    public void setMaximized(@NotNull ToolWindow wnd, boolean maximized) {
     }
 
     @Override
@@ -666,10 +678,6 @@ public class Mock {
     @NotNull
     public FileEditorState readState(@NotNull Element sourceElement, @NotNull Project project, @NotNull VirtualFile file) {
       throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public void writeState(@NotNull FileEditorState state, @NotNull Project project, @NotNull Element targetElement) {
     }
 
     @Override

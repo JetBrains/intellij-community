@@ -1,22 +1,10 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui;
 
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -24,51 +12,46 @@ import java.awt.*;
 /**
  * @author Vladimir Kondratyev
  */
-public abstract class ColoredListCellRenderer extends SimpleColoredComponent implements ListCellRenderer {
-  private final ListCellRenderer myDefaultGtkRenderer = UIUtil.isUnderGTKLookAndFeel() ? new JComboBox().getRenderer() : null;
+public abstract class ColoredListCellRenderer<T> extends SimpleColoredComponent implements ListCellRenderer<T> {
+  private final @Nullable JComboBox myComboBox;
 
   protected boolean mySelected;
   protected Color myForeground;
   protected Color mySelectionForeground;
 
   public ColoredListCellRenderer() {
-    setFocusBorderAroundIcon(true);
-    getIpad().left = UIUtil.getListCellHPadding();
-    getIpad().right = UIUtil.getListCellHPadding();
+    this(null);
   }
 
-  public Component getListCellRendererComponent(JList list, Object value, int index, boolean selected, boolean hasFocus) {
+  public ColoredListCellRenderer(@Nullable JComboBox comboBox) {
+    myComboBox = comboBox;
+    setFocusBorderAroundIcon(true);
+    getIpad().left = getIpad().right = UIUtil.isUnderWin10LookAndFeel() ? 0 : JBUI.scale(UIUtil.getListCellHPadding());
+  }
+
+  @Override
+  public Component getListCellRendererComponent(JList<? extends T> list, T value, int index, boolean selected, boolean hasFocus) {
     clear();
+
+    if (myComboBox != null) {
+      setEnabled(myComboBox.isEnabled());
+    }
 
     setFont(list.getFont());
     mySelected = selected;
-    myForeground = list.getForeground();
+    myForeground = isEnabled() ? list.getForeground() : UIManager.getColor("Label.disabledForeground");
     mySelectionForeground = list.getSelectionForeground();
-    if (UIUtil.isWinLafOnVista()) {
-      // the system draws a gradient background on the combobox selected item - don't overdraw it with our solid background
-      if (index == -1) {
-        setOpaque(false);
-        mySelected = false;
-      }
-      else {
-        setOpaque(true);
-        setBackground(selected ? list.getSelectionBackground() : null);
-      }
+
+    if (UIUtil.isUnderWin10LookAndFeel()) {
+      setBackground(selected ? list.getSelectionBackground() : list.getBackground());
     }
     else {
       setBackground(selected ? list.getSelectionBackground() : null);
     }
 
     setPaintFocusBorder(hasFocus);
-
     customizeCellRenderer(list, value, index, selected, hasFocus);
 
-    if (myDefaultGtkRenderer != null && list.getModel() instanceof ComboBoxModel) {
-      final Component component = myDefaultGtkRenderer.getListCellRendererComponent(list, value, index, selected, hasFocus);
-      if (component instanceof JLabel) {
-        return formatToLabel((JLabel)component);
-      }
-    }
     return this;
   }
 
@@ -76,18 +59,26 @@ public abstract class ColoredListCellRenderer extends SimpleColoredComponent imp
    * When the item is selected then we use default tree's selection foreground.
    * It guaranties readability of selected text in any LAF.
    */
+  @Override
   public final void append(@NotNull String fragment, @NotNull SimpleTextAttributes attributes, boolean isMainText) {
     if (mySelected) {
       super.append(fragment, new SimpleTextAttributes(attributes.getStyle(), mySelectionForeground), isMainText);
     }
     else if (attributes.getFgColor() == null) {
-      super.append(fragment, new SimpleTextAttributes(attributes.getStyle(), myForeground), isMainText);
+      super.append(fragment, attributes.derive(-1, myForeground, null, null), isMainText);
     }
     else {
       super.append(fragment, attributes, isMainText);
     }
   }
 
+  @Override
+  void revalidateAndRepaint() {
+    // no need for this in a renderer
+  }
+
+  @Override
+  @NotNull
   public Dimension getPreferredSize() {
     // There is a bug in BasicComboPopup. It does not add renderer into CellRendererPane,
     // so font can be null here.
@@ -104,5 +95,24 @@ public abstract class ColoredListCellRenderer extends SimpleColoredComponent imp
     return result;
   }
 
-  protected abstract void customizeCellRenderer(JList list, Object value, int index, boolean selected, boolean hasFocus);
+  protected abstract void customizeCellRenderer(@NotNull JList<? extends T> list, T value, int index, boolean selected, boolean hasFocus);
+
+  /**
+   * Copied AS IS
+   *
+   * @see DefaultListCellRenderer#isOpaque()
+   */
+  @Override
+  public boolean isOpaque() {
+    Color back = getBackground();
+    Component p = getParent();
+    if (p != null) {
+      p = p.getParent();
+    }
+    // p should now be the JList.
+    boolean colorMatch = (back != null) && (p != null) &&
+                         back.equals(p.getBackground()) &&
+                         p.isOpaque();
+    return !colorMatch && super.isOpaque();
+  }
 }

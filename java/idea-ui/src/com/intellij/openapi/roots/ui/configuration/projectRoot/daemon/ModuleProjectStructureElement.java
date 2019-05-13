@@ -10,7 +10,6 @@ import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.ui.configuration.ModuleEditor;
 import com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurable;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.StructureConfigurableContext;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -59,11 +58,13 @@ public class ModuleProjectStructureElement extends ProjectStructureElement {
     for (OrderEntry entry : entries) {
       if (!entry.isValid()){
         if (entry instanceof JdkOrderEntry && ((JdkOrderEntry)entry).getJdkName() == null) {
-          problemsHolder.registerProblem(ProjectBundle.message("project.roots.module.jdk.problem.message"), null, ProjectStructureProblemType.error("module-sdk-not-defined"), createPlace(entry),
-                                         null);
+          if (!(entry instanceof InheritedJdkOrderEntry)) {
+            problemsHolder.registerProblem(ProjectBundle.message("project.roots.module.jdk.problem.message"), null, ProjectStructureProblemType.error("module-sdk-not-defined"), createPlace(entry),
+                                           null);
+          }
         }
         else {
-          problemsHolder.registerProblem(ProjectBundle.message("project.roots.library.problem.message", StringUtil.escapeXml(entry.getPresentableName())), null,
+          problemsHolder.registerProblem(ProjectBundle.message("project.roots.library.problem.message", entry.getPresentableName()), null,
                                          ProjectStructureProblemType.error("invalid-module-dependency"), createPlace(entry),
                                          null);
         }
@@ -94,7 +95,7 @@ public class ModuleProjectStructureElement extends ProjectStructureElement {
 
   @Override
   public List<ProjectStructureElementUsage> getUsagesInElement() {
-    final List<ProjectStructureElementUsage> usages = new ArrayList<ProjectStructureElementUsage>();
+    final List<ProjectStructureElementUsage> usages = new ArrayList<>();
     final ModuleEditor moduleEditor = myContext.getModulesConfigurator().getModuleEditor(myModule);
     if (moduleEditor != null) {
       for (OrderEntry entry : moduleEditor.getOrderEntries()) {
@@ -140,7 +141,7 @@ public class ModuleProjectStructureElement extends ProjectStructureElement {
 
   @Override
   public String getPresentableName() {
-    return "Module '" + myModule.getName() + "'";
+    return myModule.getName();
   }
 
   @Override

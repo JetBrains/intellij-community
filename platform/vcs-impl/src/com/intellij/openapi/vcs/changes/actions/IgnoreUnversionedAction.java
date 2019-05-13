@@ -1,72 +1,36 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
-/*
- * Created by IntelliJ IDEA.
- * User: yole
- * Date: 20.12.2006
- * Time: 17:17:50
- */
 package com.intellij.openapi.vcs.changes.actions;
 
-import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
-import com.intellij.openapi.vcs.changes.ui.ChangesListView;
 import com.intellij.openapi.vcs.changes.ui.IgnoreUnversionedDialog;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NotNull;
 
-import java.util.Iterator;
 import java.util.List;
+import java.util.stream.Collectors;
 
-public class IgnoreUnversionedAction extends AnAction {
-  public IgnoreUnversionedAction() {
-    super("Ignore...");
-  }
+import static com.intellij.openapi.vcs.changes.ui.ChangesListView.UNVERSIONED_FILES_DATA_KEY;
+import static com.intellij.util.containers.UtilKt.isEmpty;
 
-  public void actionPerformed(AnActionEvent e) {
-    Project project = e.getData(PlatformDataKeys.PROJECT);
-    if (project == null) return;
-    if (ChangeListManager.getInstance(project).isFreezedWithNotification(null)) return;
-    final List<VirtualFile> files = e.getData(ChangesListView.UNVERSIONED_FILES_DATA_KEY);
-    if (files == null) return;
-    removeNullFiles(files);
-    if (files.isEmpty()) return;
+public class IgnoreUnversionedAction extends DumbAwareAction {
 
-    IgnoreUnversionedDialog.ignoreSelectedFiles(project, files);
-  }
+  @Override
+  public void actionPerformed(@NotNull AnActionEvent e) {
+    Project project = e.getRequiredData(CommonDataKeys.PROJECT);
 
-  private static void removeNullFiles(List<VirtualFile> files) {
-    for (Iterator<VirtualFile> iterator = files.iterator(); iterator.hasNext();) {
-      final VirtualFile next = iterator.next();
-      if (next == null) {
-        iterator.remove();
-      }
+    if (!ChangeListManager.getInstance(project).isFreezedWithNotification(null)) {
+      List<VirtualFile> files = e.getRequiredData(UNVERSIONED_FILES_DATA_KEY).collect(Collectors.toList());
+      IgnoreUnversionedDialog.ignoreSelectedFiles(project, files);
     }
   }
 
-  public void update(AnActionEvent e) {
-    List<VirtualFile> files = e.getData(ChangesListView.UNVERSIONED_FILES_DATA_KEY);
-    if (files != null) {
-      removeNullFiles(files);
-    }
-    boolean enabled = files != null && !files.isEmpty();
-    e.getPresentation().setEnabled(enabled);
-    e.getPresentation().setVisible(enabled);
+  @Override
+  public void update(@NotNull AnActionEvent e) {
+    e.getPresentation().setEnabled(e.getProject() != null && !isEmpty(e.getData(UNVERSIONED_FILES_DATA_KEY)));
   }
 }

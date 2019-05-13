@@ -15,13 +15,12 @@
  */
 package com.intellij.util;
 
-import org.jetbrains.annotations.Nullable;
-
 /**
+ * Please use {@link java.util.function.BiFunction}
  * @author max
  */
 public interface PairFunction<Arg1, Arg2, ResultType> {
-  @Nullable
+
   ResultType fun(Arg1 t, Arg2 v);
 
 }

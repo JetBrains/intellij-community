@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,8 +16,9 @@
 package com.intellij.psi.impl.java.stubs;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.psi.impl.source.JavaFileElementType;
-import com.intellij.psi.impl.source.tree.JavaElementType;
+import com.intellij.lang.java.JavaParserDefinition;
+import com.intellij.psi.JavaTokenType;
+import com.intellij.psi.PsiKeyword;
 import com.intellij.psi.impl.source.tree.java.*;
 import com.intellij.psi.tree.IStubFileElementType;
 import org.jetbrains.annotations.NotNull;
@@ -30,26 +31,22 @@ public interface JavaStubElementTypes {
   JavaAnnotationElementType ANNOTATION = new JavaAnnotationElementType();
   JavaAnnotationParameterListType ANNOTATION_PARAMETER_LIST = new JavaAnnotationParameterListType();
   JavaNameValuePairType NAME_VALUE_PAIR = new JavaNameValuePairType();
+  JavaLiteralExpressionElementType LITERAL_EXPRESSION = new JavaLiteralExpressionElementType();
+  LambdaExpressionElementType LAMBDA_EXPRESSION = new LambdaExpressionElementType();
+  MethodReferenceElementType METHOD_REF_EXPRESSION = new MethodReferenceElementType();
   JavaParameterListElementType PARAMETER_LIST = new JavaParameterListElementType();
+  JavaParameterElementType PARAMETER = new JavaParameterElementType();
   JavaTypeParameterElementType TYPE_PARAMETER = new JavaTypeParameterElementType();
   JavaTypeParameterListElementType TYPE_PARAMETER_LIST = new JavaTypeParameterListElementType();
   JavaClassInitializerElementType CLASS_INITIALIZER = new JavaClassInitializerElementType();
   JavaImportListElementType IMPORT_LIST = new JavaImportListElementType();
+  JavaModuleElementType MODULE = new JavaModuleElementType();
+  JavaRequiresStatementElementType REQUIRES_STATEMENT = new JavaRequiresStatementElementType();
+  JavaUsesStatementElementType USES_STATEMENT = new JavaUsesStatementElementType();
+  JavaProvidesStatementElementType PROVIDES_STATEMENT = new JavaProvidesStatementElementType();
 
-  JavaParameterElementType PARAMETER = new JavaParameterElementType("PARAMETER") {
-    @NotNull
-    @Override
-    public ASTNode createCompositeNode() {
-      return new ParameterElement(JavaElementType.PARAMETER);
-    }
-  };
-  JavaParameterElementType RECEIVER_PARAMETER = new JavaParameterElementType("RECEIVER") {
-    @NotNull
-    @Override
-    public ASTNode createCompositeNode() {
-      return new ParameterElement(JavaElementType.RECEIVER_PARAMETER);
-    }
-  };
+  JavaPackageAccessibilityStatementElementType EXPORTS_STATEMENT = new JavaPackageAccessibilityStatementElementType("EXPORTS_STATEMENT");
+  JavaPackageAccessibilityStatementElementType OPENS_STATEMENT = new JavaPackageAccessibilityStatementElementType("OPENS_STATEMENT");
 
   JavaClassElementType CLASS = new JavaClassElementType("CLASS") {
     @NotNull
@@ -107,21 +104,21 @@ public interface JavaStubElementTypes {
     @NotNull
     @Override
     public ASTNode createCompositeNode() {
-      return new ExtendsListElement();
+      return new ReferenceListElement(this, JavaTokenType.EXTENDS_KEYWORD, PsiKeyword.EXTENDS);
     }
   };
   JavaClassReferenceListElementType IMPLEMENTS_LIST = new JavaClassReferenceListElementType("IMPLEMENTS_LIST") {
     @NotNull
     @Override
     public ASTNode createCompositeNode() {
-      return new ImplementsListElement();
+      return new ReferenceListElement(this, JavaTokenType.IMPLEMENTS_KEYWORD, PsiKeyword.IMPLEMENTS);
     }
   };
   JavaClassReferenceListElementType THROWS_LIST = new JavaClassReferenceListElementType("THROWS_LIST") {
     @NotNull
     @Override
     public ASTNode createCompositeNode() {
-      return new PsiThrowsListImpl();
+      return new ReferenceListElement(this, JavaTokenType.THROWS_KEYWORD, PsiKeyword.THROWS);
     }
   };
   JavaClassReferenceListElementType EXTENDS_BOUND_LIST = new JavaClassReferenceListElementType("EXTENDS_BOUND_LIST") {
@@ -129,6 +126,13 @@ public interface JavaStubElementTypes {
     @Override
     public ASTNode createCompositeNode() {
       return new TypeParameterExtendsBoundsListElement();
+    }
+  };
+  JavaClassReferenceListElementType PROVIDES_WITH_LIST = new JavaClassReferenceListElementType("PROVIDES_WITH_LIST") {
+    @NotNull
+    @Override
+    public ASTNode createCompositeNode() {
+      return new ReferenceListElement(this, JavaTokenType.WITH_KEYWORD, PsiKeyword.WITH);
     }
   };
 
@@ -147,5 +151,6 @@ public interface JavaStubElementTypes {
     }
   };
 
-  IStubFileElementType JAVA_FILE = new JavaFileElementType();
+  @Deprecated
+  IStubFileElementType JAVA_FILE = JavaParserDefinition.JAVA_FILE;
 }

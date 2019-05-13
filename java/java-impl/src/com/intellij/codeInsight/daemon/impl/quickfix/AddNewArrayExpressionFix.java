@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,13 +15,15 @@
  */
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
-import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.util.PsiTypesUtil;
+import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -32,7 +34,7 @@ import org.jetbrains.annotations.NotNull;
 public class AddNewArrayExpressionFix implements IntentionAction {
   private final PsiArrayInitializerExpression myInitializer;
 
-  public AddNewArrayExpressionFix(PsiArrayInitializerExpression initializer) {
+  public AddNewArrayExpressionFix(@NotNull PsiArrayInitializerExpression initializer) {
     myInitializer = initializer;
   }
 
@@ -51,17 +53,22 @@ public class AddNewArrayExpressionFix implements IntentionAction {
 
   @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    if (!myInitializer.isValid() || !myInitializer.getManager().isInProject(myInitializer)) return false;
+    if (!myInitializer.isValid() || !BaseIntentionAction.canModify(myInitializer)) return false;
     return getType() != null;
+  }
+
+  @NotNull
+  @Override
+  public PsiElement getElementToMakeWritable(@NotNull PsiFile file) {
+    return myInitializer;
   }
 
   @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-    if (!CodeInsightUtilBase.preparePsiElementsForWrite(myInitializer, file)) return;
     PsiManager manager = file.getManager();
     PsiType type = getType();
-    PsiElementFactory factory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();
-    @NonNls String text = "new " + type.getPresentableText() + "[]{}";
+    PsiElementFactory factory = JavaPsiFacade.getElementFactory(manager.getProject());
+    @NonNls String text = "new " + type.getCanonicalText() + "[]{}";
     PsiNewExpression newExpr = (PsiNewExpression) factory.createExpressionFromText(text, null);
     newExpr.getArrayInitializer().replace(myInitializer);
     newExpr = (PsiNewExpression) CodeStyleManager.getInstance(manager.getProject()).reformat(newExpr);
@@ -73,15 +80,21 @@ public class AddNewArrayExpressionFix implements IntentionAction {
     final PsiElement parent = myInitializer.getParent();
     if (!(parent instanceof PsiAssignmentExpression)) {
       if (initializers.length <= 0) return null;
-      return initializers[0].getType();
+      return validateType(initializers[0].getType(), parent);
     }
     final PsiAssignmentExpression assignmentExpression = (PsiAssignmentExpression)parent;
     final PsiType type = assignmentExpression.getType();
     if (!(type instanceof PsiArrayType)) {
       if (initializers.length <= 0) return null;
-      return initializers[0].getType();
+      return validateType(initializers[0].getType(), parent);
     }
-    return ((PsiArrayType)type).getComponentType();
+    return validateType(((PsiArrayType)type).getComponentType(), parent);
+  }
+
+  private static PsiType validateType(PsiType type, @NotNull PsiElement context) {
+    if (PsiType.NULL.equals(type)) return null;
+    return LambdaUtil.notInferredType(type) || !PsiTypesUtil.isDenotableType(type, context) ? null
+                                                                                   : TypeConversionUtil.erasure(type);
   }
 
   @Override

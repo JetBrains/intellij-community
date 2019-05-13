@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,6 +27,7 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.references.PomService;
 import com.intellij.psi.PsiElement;
@@ -34,7 +35,6 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlTag;
-import com.intellij.util.containers.HashMap;
 import com.intellij.util.xml.*;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -46,9 +46,7 @@ import java.util.*;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Apr 6, 2010
  */
-@SuppressWarnings({"AbstractClassNeverImplemented"})
 @DefinesXml
 public abstract class AntDomProject extends AntDomNamedElement implements PropertiesProvider {
   private static final Logger LOG = Logger.getInstance("#com.intellij.lang.ant.dom.AntDomProject");
@@ -145,23 +143,25 @@ public abstract class AntDomProject extends AntDomNamedElement implements Proper
 
   @NotNull
   public final ClassLoader getClassLoader() {
-    if (myClassLoader == null) {
+    ClassLoader loader = myClassLoader;
+    if (loader == null) {
       final XmlTag tag = getXmlTag();
       final PsiFile containingFile = tag.getContainingFile();
       final AntBuildFileImpl buildFile = (AntBuildFileImpl)AntConfigurationBase.getInstance(containingFile.getProject()).getAntBuildFile(containingFile);
       if (buildFile != null) {
-        myClassLoader = buildFile.getClassLoader();
+        loader = buildFile.getClassLoader();
       }
       else {
         AntInstallation antInstallation = getAntInstallation();
-        myClassLoader = antInstallation.getClassLoader();
+        loader = antInstallation.getClassLoader();
       }
+      myClassLoader = loader;
     }
-    return myClassLoader;
+    return loader;
   }
 
   public AntInstallation getAntInstallation() {
-    final AntConfigurationBase configuration = AntConfigurationBase.getInstance(getXmlTag().getProject());
+    final AntConfigurationBase configuration = AntConfigurationBase.getInstance(getManager().getProject());
     AntInstallation antInstallation = null;
     if (configuration != null) {
       antInstallation = configuration.getProjectDefaultAnt();
@@ -180,26 +180,29 @@ public abstract class AntDomProject extends AntDomNamedElement implements Proper
     final AntBuildFileImpl buildFile = (AntBuildFileImpl)AntConfigurationBase.getInstance(containingFile.getProject()).getAntBuildFile(containingFile);
     if (buildFile != null) {
       String jdkName = AntBuildFileImpl.CUSTOM_JDK_NAME.get(buildFile.getAllOptions());
-      if (jdkName == null || jdkName.length() == 0) {
+      if (StringUtil.isEmptyOrSpaces(jdkName)) {
         jdkName = AntConfigurationImpl.DEFAULT_JDK_NAME.get(buildFile.getAllOptions());
       }
-      if (jdkName != null && jdkName.length() > 0) {
+      if (!StringUtil.isEmptyOrSpaces(jdkName)) {
         return ProjectJdkTable.getInstance().findJdk(jdkName);
       }
     }
     return ProjectRootManager.getInstance(tag.getProject()).getProjectSdk();
   }
 
+  @Override
   @NotNull
   public Iterator<String> getNamesIterator() {
     return getProperties().keySet().iterator();
   }
 
+  @Override
   @Nullable
   public String getPropertyValue(String propertyName) {
     return getProperties().get(propertyName);
   }
 
+  @Override
   @Nullable
   public PsiElement getNavigationElement(String propertyName) {
     final DomTarget target = DomTarget.getTarget(this);
@@ -230,7 +233,7 @@ public abstract class AntDomProject extends AntDomNamedElement implements Proper
 
   @SuppressWarnings({"UseOfObsoleteCollectionType"})
   private Map<String, String> loadPredefinedProperties(final Hashtable properties, final Map<String, String> externalProps) {
-    final Map<String, String> destination = new HashMap<String, String>();
+    final Map<String, String> destination = new HashMap<>();
     if (properties != null) {
       final Enumeration props = properties.keys();
       while (props.hasMoreElements()) {
@@ -263,14 +266,11 @@ public abstract class AntDomProject extends AntDomNamedElement implements Proper
         try {
           basedir = new File(containigFileDir, basedir).getCanonicalPath();
         }
-        catch (IOException e) {
-          // ignore
+        catch (IOException ignored) {
         }
       }
     }
-    if (basedir != null) {
-      appendProperty(destination, "basedir", FileUtil.toSystemIndependentName(basedir));
-    }
+    appendProperty(destination, "basedir", FileUtil.toSystemIndependentName(basedir));
 
     final AntInstallation installation = getAntInstallation();
     final String homeDir = installation.getHomeDir();
@@ -285,7 +285,7 @@ public abstract class AntDomProject extends AntDomNamedElement implements Proper
     final Sdk jdkToRunWith = getTargetJdk();
     final String version = jdkToRunWith != null? jdkToRunWith.getVersionString() : null;
     appendProperty(destination, "ant.java.version", version != null? version : SystemInfo.JAVA_VERSION);
-    
+
     final VirtualFile containingFile = getXmlTag().getContainingFile().getOriginalFile().getVirtualFile();
     if (containingFile != null) {
       final String antFilePath = containingFile.getPath();

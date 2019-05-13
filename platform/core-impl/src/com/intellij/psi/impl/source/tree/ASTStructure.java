@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,12 +43,6 @@ public class ASTStructure implements FlyweightCapableTreeStructure<ASTNode> {
   }
 
   @Override
-  @NotNull
-  public ASTNode prepareForGetChildren(@NotNull final ASTNode astNode) {
-    return astNode;
-  }
-
-  @Override
   public int getChildren(@NotNull final ASTNode astNode, @NotNull final Ref<ASTNode[]> into) {
     ASTNode child = astNode.getFirstChildNode();
     if (child == null) return 0;
@@ -76,5 +70,21 @@ public class ASTStructure implements FlyweightCapableTreeStructure<ASTNode> {
 
   @Override
   public void disposeChildren(final ASTNode[] nodes, final int count) {
+  }
+
+  @NotNull
+  @Override
+  public CharSequence toString(@NotNull ASTNode node) {
+    return node.getChars();
+  }
+
+  @Override
+  public int getStartOffset(@NotNull ASTNode node) {
+    return node.getStartOffset();
+  }
+
+  @Override
+  public int getEndOffset(@NotNull ASTNode node) {
+    return node.getStartOffset() + node.getTextLength();
   }
 }

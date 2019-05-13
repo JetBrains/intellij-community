@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,56 +27,44 @@ import java.util.TreeSet;
 /**
  * @author mike
  */
-class GrowlNotifications implements MacNotifications {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.ui.GrowlNotifications");
+class GrowlNotifications implements SystemNotificationsImpl.Notifier {
+  private static final Logger LOG = Logger.getInstance(GrowlNotifications.class);
 
   private static GrowlNotifications ourNotifications;
-  private final Set<String> myNotifications = new TreeSet<String>();
-  private Growl myGrowl;
 
-  public GrowlNotifications() {
-    this(ApplicationNamesInfo.getInstance().getFullProductName());
-  }
-
-  GrowlNotifications(String fullProductName) {
-    myGrowl = new Growl(fullProductName);
-    register();
-  }
-
-  private String[] getAllNotifications() {
-    return ArrayUtil.toStringArray(myNotifications);
-  }
-
-  public static synchronized GrowlNotifications getNotifications() {
+  public static synchronized GrowlNotifications getInstance() {
     if (ourNotifications == null) {
       ourNotifications = new GrowlNotifications();
     }
-
     return ourNotifications;
   }
 
-  public void notify(Set<String> allNotifications, @NotNull String notificationName, String title, String description) {
-    if (!myNotifications.equals(allNotifications)) {
-      myNotifications.addAll(allNotifications);
-      register();
-    }
+  private final Growl myGrowl;
+  private final Set<String> myNotifications;
 
-    try {
-      myGrowl.notifyGrowlOf(notificationName, title, description);
-    }
-    catch (Exception e) {
-      LOG.error(e);
-    }
+  private GrowlNotifications() {
+    myGrowl = new Growl(ApplicationNamesInfo.getInstance().getFullProductName());
+    myNotifications = new TreeSet<>();
+    register();
   }
 
   private void register() {
-    myGrowl.setAllowedNotifications(getAllNotifications());
+    myGrowl.setAllowedNotifications(ArrayUtil.toStringArray(myNotifications));
+    myGrowl.setDefaultNotifications(ArrayUtil.toStringArray(myNotifications));
+    myGrowl.register();
+  }
+
+  @Override
+  public void notify(@NotNull String name, @NotNull String title, @NotNull String description) {
     try {
-      myGrowl.setDefaultNotifications(getAllNotifications());
+      if (myNotifications.add(name)) {
+        register();
+      }
+
+      myGrowl.notifyGrowlOf(name, title, description);
     }
     catch (Exception e) {
-      LOG.error(e);
+      LOG.warn(e);
     }
-    myGrowl.register();
   }
 }

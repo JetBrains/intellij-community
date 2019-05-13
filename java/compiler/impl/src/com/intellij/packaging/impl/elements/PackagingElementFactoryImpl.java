@@ -1,22 +1,7 @@
-/*
- * Copyright 2000-2011 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.packaging.impl.elements;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModulePointer;
 import com.intellij.openapi.module.ModulePointerManager;
@@ -58,44 +43,47 @@ public class PackagingElementFactoryImpl extends PackagingElementFactory {
   public static final PackagingElementType<ArtifactRootElement<?>> ARTIFACT_ROOT_ELEMENT_TYPE = new ArtifactRootElementType();
   private static final PackagingElementType[] STANDARD_TYPES = {
       DIRECTORY_ELEMENT_TYPE, ARCHIVE_ELEMENT_TYPE,
-      LibraryElementType.LIBRARY_ELEMENT_TYPE, ProductionModuleOutputElementType.ELEMENT_TYPE, TestModuleOutputElementType.ELEMENT_TYPE,
+      LibraryElementType.LIBRARY_ELEMENT_TYPE,
+      ProductionModuleOutputElementType.ELEMENT_TYPE,
+      TestModuleOutputElementType.ELEMENT_TYPE,
+      ProductionModuleSourceElementType.ELEMENT_TYPE,
       ArtifactElementType.ARTIFACT_ELEMENT_TYPE, FILE_COPY_ELEMENT_TYPE, DIRECTORY_COPY_ELEMENT_TYPE, EXTRACTED_DIRECTORY_ELEMENT_TYPE
   };
 
   @NotNull
   @Override
   public PackagingElementType<?>[] getNonCompositeElementTypes() {
-    final List<PackagingElementType> elementTypes = new ArrayList<PackagingElementType>();
+    final List<PackagingElementType> elementTypes = new ArrayList<>();
     for (PackagingElementType elementType : getAllElementTypes()) {
       if (!(elementType instanceof CompositePackagingElementType)) {
         elementTypes.add(elementType);
       }
     }
-    return elementTypes.toArray(new PackagingElementType[elementTypes.size()]);
+    return elementTypes.toArray(new PackagingElementType[0]);
   }
 
   @Override
   @NotNull
   public ComplexPackagingElementType<?>[] getComplexElementTypes() {
-    List<ComplexPackagingElementType<?>> types = new ArrayList<ComplexPackagingElementType<?>>();
+    List<ComplexPackagingElementType<?>> types = new ArrayList<>();
     for (PackagingElementType type : getAllElementTypes()) {
       if (type instanceof ComplexPackagingElementType) {
         types.add((ComplexPackagingElementType)type);
       }
     }
-    return types.toArray(new ComplexPackagingElementType[types.size()]);
+    return types.toArray(new ComplexPackagingElementType[0]);
   }
 
   @NotNull
   @Override
   public CompositePackagingElementType<?>[] getCompositeElementTypes() {
-    final List<CompositePackagingElementType> elementTypes = new ArrayList<CompositePackagingElementType>();
+    final List<CompositePackagingElementType> elementTypes = new ArrayList<>();
     for (PackagingElementType elementType : getAllElementTypes()) {
       if (elementType instanceof CompositePackagingElementType) {
         elementTypes.add((CompositePackagingElementType)elementType);
       }
     }
-    return elementTypes.toArray(new CompositePackagingElementType[elementTypes.size()]);
+    return elementTypes.toArray(new CompositePackagingElementType[0]);
   }
 
   @Override
@@ -114,7 +102,7 @@ public class PackagingElementFactoryImpl extends PackagingElementFactory {
   @NotNull
   @Override
   public PackagingElementType[] getAllElementTypes() {
-    final PackagingElementType[] types = Extensions.getExtensions(PackagingElementType.EP_NAME);
+    final PackagingElementType[] types = PackagingElementType.EP_NAME.getExtensions();
     return ArrayUtil.mergeArrays(STANDARD_TYPES, types);
   }
 
@@ -124,6 +112,7 @@ public class PackagingElementFactoryImpl extends PackagingElementFactory {
     return new ArtifactPackagingElement(project, ArtifactPointerManager.getInstance(project).createPointer(artifact));
   }
 
+  @Override
   @NotNull
   public DirectoryPackagingElement createDirectory(@NotNull @NonNls String directoryName) {
     return new DirectoryPackagingElement(directoryName);
@@ -178,6 +167,7 @@ public class PackagingElementFactoryImpl extends PackagingElementFactory {
     return parent.addOrFindChild(last);
   }
 
+  @Override
   @NotNull
   public PackagingElement<?> createModuleOutput(@NotNull String moduleName, @NotNull Project project) {
     final ModulePointer pointer = ModulePointerManager.getInstance(project).create(moduleName);
@@ -189,6 +179,13 @@ public class PackagingElementFactoryImpl extends PackagingElementFactory {
   public PackagingElement<?> createModuleOutput(@NotNull Module module) {
     final ModulePointer modulePointer = ModulePointerManager.getInstance(module.getProject()).create(module);
     return new ProductionModuleOutputPackagingElement(module.getProject(), modulePointer);
+  }
+
+  @NotNull
+  @Override
+  public PackagingElement<?> createModuleSource(@NotNull Module module) {
+    final ModulePointer modulePointer = ModulePointerManager.getInstance(module.getProject()).create(module);
+    return new ProductionModuleSourcePackagingElement(module.getProject(), modulePointer);
   }
 
   @NotNull
@@ -212,7 +209,7 @@ public class PackagingElementFactoryImpl extends PackagingElementFactory {
         return Collections.singletonList(createLibraryFiles(libraryName, LibraryTableImplUtil.MODULE_LEVEL, module.getName()));
       }
     }
-    final List<PackagingElement<?>> elements = new ArrayList<PackagingElement<?>>();
+    final List<PackagingElement<?>> elements = new ArrayList<>();
     for (VirtualFile file : library.getFiles(OrderRootType.CLASSES)) {
       final String path = FileUtil.toSystemIndependentName(PathUtil.getLocalPath(file));
       elements.add(file.isDirectory() && file.isInLocalFileSystem() ? new DirectoryCopyPackagingElement(path) : new FileCopyPackagingElement(path));
@@ -232,6 +229,7 @@ public class PackagingElementFactoryImpl extends PackagingElementFactory {
     return new LibraryPackagingElement(level, libraryName, moduleName);
   }
 
+  @Override
   @NotNull
   public CompositePackagingElement<?> createArchive(@NotNull @NonNls String archiveFileName) {
     return new ArchivePackagingElement(archiveFileName);
@@ -274,7 +272,7 @@ public class PackagingElementFactoryImpl extends PackagingElementFactory {
   @NotNull
   @Override
   public PackagingElement<?> createExtractedDirectory(@NotNull VirtualFile jarEntry) {
-    LOG.assertTrue(jarEntry.getFileSystem() instanceof JarFileSystem, "Expected file from jar but file from " + jarEntry.getFileSystem() + " found");
+    LOG.assertTrue(jarEntry.getFileSystem() instanceof JarFileSystem, "Expected file from JAR but file from " + jarEntry.getFileSystem() + " found");
     final String fullPath = jarEntry.getPath();
     final int jarEnd = fullPath.indexOf(JarFileSystem.JAR_SEPARATOR);
     return new ExtractedDirectoryPackagingElement(fullPath.substring(0, jarEnd), fullPath.substring(jarEnd + 1));
@@ -340,12 +338,14 @@ public class PackagingElementFactoryImpl extends PackagingElementFactory {
       return false;
     }
 
+    @Override
     @NotNull
     public List<? extends ArtifactRootElement<?>> chooseAndCreate(@NotNull ArtifactEditorContext context, @NotNull Artifact artifact,
                                                                    @NotNull CompositePackagingElement<?> parent) {
       throw new UnsupportedOperationException("'create' not implemented in " + getClass().getName());
     }
 
+    @Override
     @NotNull
     public ArtifactRootElement<?> createEmpty(@NotNull Project project) {
       return new ArtifactRootElementImpl();

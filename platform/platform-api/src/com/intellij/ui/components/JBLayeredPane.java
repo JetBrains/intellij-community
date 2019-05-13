@@ -18,17 +18,12 @@ package com.intellij.ui.components;
 import javax.swing.*;
 import java.awt.*;
 
-/**
- * User: Vassiliy.Kudryashov
- */
 public class JBLayeredPane extends JLayeredPane {
-
-  private static final Dimension EMPTY = new Dimension(0, 0);
 
   @Override
   public Dimension getMinimumSize() {
     if (!isMinimumSizeSet())
-      return EMPTY;
+      return new Dimension(0, 0);
     return super.getMinimumSize();
   }
 }

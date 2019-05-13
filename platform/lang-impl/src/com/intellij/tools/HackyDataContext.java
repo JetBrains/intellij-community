@@ -15,11 +15,15 @@
  */
 package com.intellij.tools;
 
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.DataKey;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.HashMap;
 import java.util.Map;
+
+import static com.intellij.openapi.actionSystem.LangDataKeys.*;
 
 /**
  * Stores main keys from DataContext.
@@ -29,38 +33,23 @@ import java.util.Map;
  *
  * @author Konstantin Bulenkov
  */
-class HackyDataContext implements DataContext {
-  private static DataKey[] keys = {
-    PlatformDataKeys.PROJECT,
-    PlatformDataKeys.PROJECT_FILE_DIRECTORY,
-    PlatformDataKeys.EDITOR,
-    PlatformDataKeys.VIRTUAL_FILE,
-    LangDataKeys.MODULE,
-    LangDataKeys.PSI_FILE
-  };
+public class HackyDataContext implements DataContext {
+  private static final DataKey[] keys = {PROJECT, PROJECT_FILE_DIRECTORY, EDITOR, VIRTUAL_FILE, MODULE, PSI_FILE};
+  private final Map<String, Object> values = new HashMap<>();
 
-
-  private final Map<String, Object> values = new HashMap<String, Object>();
-  private AnActionEvent myActionEvent;
-
-  public HackyDataContext(DataContext context, AnActionEvent e) {
-    myActionEvent = e;
+  public HackyDataContext(DataContext context) {
     for (DataKey key : keys) {
       values.put(key.getName(), key.getData(context));
     }
   }
 
   @Override
-  public Object getData(@NonNls String dataId) {
+  public Object getData(@NotNull @NonNls String dataId) {
     if (values.keySet().contains(dataId)) {
       return values.get(dataId);
     }
     //noinspection UseOfSystemOutOrSystemErr
     System.out.println("Please add " + dataId + " key in " + getClass().getName());
     return null;
-  }
-
-  AnActionEvent getActionEvent() {
-    return myActionEvent;
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,14 +20,14 @@ import com.intellij.codeInsight.template.Expression;
 import com.intellij.codeInsight.template.ExpressionContext;
 import com.intellij.codeInsight.template.Result;
 import com.intellij.codeInsight.template.TextResult;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.codeStyle.NameUtil;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * @author Konstantin Bulenkov
+ * @author peter
  */
 public class CapitalizeAndUnderscoreMacro extends MacroBase {
+
   public CapitalizeAndUnderscoreMacro() {
     super("capitalizeAndUnderscore", CodeInsightBundle.message("macro.capitalizeAndUnderscore.string"));
   }
@@ -35,20 +35,6 @@ public class CapitalizeAndUnderscoreMacro extends MacroBase {
   @Override
   protected Result calculateResult(@NotNull Expression[] params, ExpressionContext context, boolean quick) {
     String text = getTextResult(params, context, true);
-    if (text != null && text.length() > 0) {
-      final String[] words = NameUtil.nameToWords(text);
-      boolean insertUnderscore = false;
-      final StringBuffer buf = new StringBuffer();
-      for (String word : words) {
-        if (insertUnderscore) {
-          buf.append("_");
-        } else {
-          insertUnderscore = true;
-        }
-        buf.append(StringUtil.toUpperCase(word));
-      }
-      return new TextResult(buf.toString());
-    }
-    return null;
+    return text != null ? new TextResult(!text.isEmpty() ? NameUtil.capitalizeAndUnderscore(text) : "") : null;
   }
 }

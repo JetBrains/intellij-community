@@ -28,6 +28,11 @@ import org.jetbrains.annotations.NotNull;
 public class MagicCharacterInspection extends BaseInspection {
 
   @Override
+  protected InspectionGadgetsFix buildFix(Object... infos) {
+    return new IntroduceConstantFix();
+  }
+
+  @Override
   @NotNull
   public String getDisplayName() {
     return InspectionGadgetsBundle.message("magic.character.display.name");
@@ -38,11 +43,6 @@ public class MagicCharacterInspection extends BaseInspection {
   public String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "magic.character.problem.descriptor");
-  }
-
-  @Override
-  protected InspectionGadgetsFix buildFix(Object... infos) {
-    return new IntroduceConstantFix();
   }
 
   @Override

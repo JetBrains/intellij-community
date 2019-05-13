@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,8 +16,7 @@
 package com.intellij.execution.testframework.sm.runner;
 
 import com.intellij.execution.testframework.AbstractTestProxy;
-import com.intellij.execution.testframework.Filter;
-import com.intellij.ide.util.treeView.AbstractTreeStructure;
+import com.intellij.execution.testframework.TestTreeViewStructure;
 import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
@@ -27,25 +26,28 @@ import java.util.List;
 /**
  * @author: Roman Chernyatchik
  */
-public class SMTRunnerTreeStructure extends AbstractTreeStructure
+public class SMTRunnerTreeStructure extends TestTreeViewStructure<SMTestProxy>
 {
-  private final Object myRootNode;
-  private Filter myTestNodesFilter;
+  private final SMTestProxy.SMRootTestProxy myRootNode;
   private final Project myProject;
 
-  public SMTRunnerTreeStructure(final Project project, final Object rootNode) {
+  public SMTRunnerTreeStructure(final Project project, final SMTestProxy.SMRootTestProxy rootNode) {
     myProject = project;
     myRootNode = rootNode;
-    myTestNodesFilter = Filter.NO_FILTER;
   }
 
   @Override
   public void commit() {
   }
 
+  @Override
+  public boolean hasSomethingToCommit() {
+    return false;
+  }
+
   @NotNull
   @Override
-  public SMTRunnerNodeDescriptor createDescriptor(final Object element,
+  public SMTRunnerNodeDescriptor createDescriptor(@NotNull final Object element,
                                                   final NodeDescriptor parentDesc) {
     //noinspection unchecked
     return new SMTRunnerNodeDescriptor(myProject,
@@ -53,35 +55,24 @@ public class SMTRunnerTreeStructure extends AbstractTreeStructure
                                        (NodeDescriptor<SMTestProxy>)parentDesc);
   }
 
-  public Filter getFilter() {
-    return myTestNodesFilter;
-  }
-
+  @NotNull
   @Override
-  public Object[] getChildElements(final Object element) {
+  public Object[] getChildElements(@NotNull final Object element) {
     final List<? extends SMTestProxy> results =
-        ((SMTestProxy)element).getChildren(myTestNodesFilter);
+        ((SMTestProxy)element).getChildren(getFilter());
 
-    return results.toArray(new AbstractTestProxy[results.size()]);
+    return results.toArray(new AbstractTestProxy[0]);
   }
 
   @Override
-  public Object getParentElement(final Object element) {
+  public Object getParentElement(@NotNull final Object element) {
     return ((AbstractTestProxy)element).getParent();
   }
 
+
+  @NotNull
   @Override
-  public Object getRootElement() {
+  public SMTestProxy.SMRootTestProxy getRootElement() {
     return myRootNode;
-  }
-
-
-  @Override
-  public boolean hasSomethingToCommit() {
-    return false;
-  }
-
-  public void setFilter(final Filter nodesFilter) {
-    myTestNodesFilter = nodesFilter;
   }
 }

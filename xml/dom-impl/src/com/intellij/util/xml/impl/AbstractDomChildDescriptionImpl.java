@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,12 +19,10 @@ import com.intellij.ide.presentation.Presentation;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Factory;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.NotNullLazyValue;
-import com.intellij.openapi.util.NullableLazyValue;
+import com.intellij.openapi.util.Ref;
 import com.intellij.pom.references.PomService;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.SmartPsiElementPointer;
-import com.intellij.util.xml.Stubbed;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.xml.*;
 import com.intellij.util.xml.reflect.AbstractDomChildrenDescription;
@@ -46,32 +44,30 @@ public abstract class AbstractDomChildDescriptionImpl implements AbstractDomChil
   private final Type myType;
   private Map<Class, Annotation> myCustomAnnotations;
   @Nullable private Map myUserMap;
-  private final NullableLazyValue<ElementPresentationTemplate> myPresentationTemplate = new NullableLazyValue<ElementPresentationTemplate>() {
-    @Override
-    protected ElementPresentationTemplate compute() {
-      Class clazz = ReflectionUtil.getRawType(getType());
-      Presentation presentation = DomApplicationComponent.getInstance().getInvocationCache(clazz).getClassAnnotation(Presentation.class);
-      return presentation == null ? null : new ElementPresentationTemplateImpl(presentation, clazz);
-    }
-  };
+  private volatile Ref<ElementPresentationTemplate> myPresentationTemplate = null;
+
+  @Nullable
+  private ElementPresentationTemplate calcPresentationTemplate() {
+    Class clazz = ReflectionUtil.getRawType(getType());
+    Presentation presentation = DomApplicationComponent.getInstance().getInvocationCache(clazz).getClassAnnotation(Presentation.class);
+    return presentation == null ? null : new ElementPresentationTemplateImpl(presentation, clazz);
+  }
 
   protected AbstractDomChildDescriptionImpl(final Type type) {
     myType = type;
   }
 
   public final void addCustomAnnotation(@NotNull Annotation annotation) {
-    if (myCustomAnnotations == null) myCustomAnnotations = new THashMap<Class, Annotation>();
+    if (myCustomAnnotations == null) myCustomAnnotations = new THashMap<>();
     myCustomAnnotations.put(annotation.annotationType(), annotation);
   }
 
-  private NotNullLazyValue<Boolean> myStubbed = new NotNullLazyValue<Boolean>() {
-    @NotNull
-    @Override
-    protected Boolean compute() {
-      return myType instanceof Class && DomReflectionUtil.findAnnotationDFS((Class)myType, Stubbed.class) != null ||
-             getAnnotation(Stubbed.class) != null;
-    }
-  };
+  private volatile Boolean myStubbed;
+
+  private boolean calcStubbed() {
+    return myType instanceof Class && DomReflectionUtil.findAnnotationDFS((Class)myType, Stubbed.class) != null ||
+           getAnnotation(Stubbed.class) != null;
+  }
 
   @Override
   public boolean equals(Object o) {
@@ -100,41 +96,43 @@ public abstract class AbstractDomChildDescriptionImpl implements AbstractDomChil
     myUserMap = userMap;
   }
 
+  @Override
   @Nullable
   public <T extends Annotation> T getAnnotation(final Class<T> annotationClass) {
     return myCustomAnnotations == null ? null : (T)myCustomAnnotations.get(annotationClass);
   }
 
+  @Override
   public <T> T getUserData(final Key<T> key) {
     return myUserMap == null ? null : (T)myUserMap.get(key);
   }
 
+  @Override
   @NotNull
   public final List<? extends DomElement> getStableValues(@NotNull final DomElement parent) {
     final List<? extends DomElement> list = getValues(parent);
-    final ArrayList<DomElement> result = new ArrayList<DomElement>(list.size());
+    final ArrayList<DomElement> result = new ArrayList<>(list.size());
     final DomManager domManager = parent.getManager();
     for (int i = 0; i < list.size(); i++) {
       final int i1 = i;
-      result.add(domManager.createStableValue(new Factory<DomElement>() {
-        @Nullable
-        public DomElement create() {
-          if (!parent.isValid()) return null;
+      result.add(domManager.createStableValue((Factory<DomElement>)() -> {
+        if (!parent.isValid()) return null;
 
-          final List<? extends DomElement> domElements = getValues(parent);
-          return domElements.size() > i1 ? domElements.get(i1) : null;
-        }
+        final List<? extends DomElement> domElements = getValues(parent);
+        return domElements.size() > i1 ? domElements.get(i1) : null;
       }));
     }
     return result;
   }
 
 
+  @Override
   @NotNull
   public final Type getType() {
     return myType;
   }
 
+  @Override
   @NotNull
   public DomNameStrategy getDomNameStrategy(@NotNull DomElement parent) {
     final DomNameStrategy strategy = DomImplUtil.getDomNameStrategy(ReflectionUtil.getRawType(getType()), false);
@@ -163,9 +161,14 @@ public abstract class AbstractDomChildDescriptionImpl implements AbstractDomChil
   @Override
   @Nullable
   public ElementPresentationTemplate getPresentationTemplate() {
-    return myPresentationTemplate.getValue();
+    Ref<ElementPresentationTemplate> ref = myPresentationTemplate;
+    if (ref == null) {
+      myPresentationTemplate = ref = Ref.create(calcPresentationTemplate());
+    }
+    return ref.get();
   }
 
+  @Override
   @Nullable
   public PsiElement getDeclaration(final Project project) {
     DomElement domDeclaration = getDomDeclaration();
@@ -202,6 +205,10 @@ public abstract class AbstractDomChildDescriptionImpl implements AbstractDomChil
 
   @Override
   public boolean isStubbed() {
-    return myStubbed.getValue();
+    Boolean stubbed = myStubbed;
+    if (stubbed == null) {
+      myStubbed = stubbed = calcStubbed();
+    }
+    return stubbed;
   }
 }

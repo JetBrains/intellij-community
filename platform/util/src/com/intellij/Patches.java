@@ -1,88 +1,17 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij;
 
 import com.intellij.openapi.util.SystemInfo;
 
+import java.awt.*;
+
 @SuppressWarnings({"HardCodedStringLiteral", "UtilityClassWithoutPrivateConstructor"})
 public class Patches {
   /**
-   * See http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=4503845.
-   * When JTable loses focus it cancel cell editing. It should stop cell editing instead.
-   * Actually SUN-boys told they have fixed the bug, but they cancel editing instead of stopping it.
-   */
-  public static final boolean SUN_BUG_ID_4503845 = !SystemInfo.isJavaVersionAtLeast("1.4.1");
-
-  /**
-   * Debugger hangs on any attempt to attach/listen Connector when attach hanged once.
-   */
-  public static final boolean SUN_JDI_CONNECTOR_HANGUP_BUG = !SystemInfo.isJavaVersionAtLeast("1.5");
-
-  /**
-   * See http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=6322854.
+   * See https://bugs.openjdk.java.net/browse/JDK-6322854.
    * java.lang.NullPointerException: Failed to retrieve atom name.
    */
   public static final boolean SUN_BUG_ID_6322854 = SystemInfo.isXWindow;
-
-  /**
-   * See http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=4218084.
-   * If you invoke popup menu, then click on a different window (JFrame, JDialog. It doesn't matter),
-   * the JPopupMenu in the previous window still has focus, as does the new window.
-   * Seems like focus in two locations at the same time.
-   */
-  public static final boolean SUN_BUG_ID_4218084 = !SystemInfo.isJavaVersionAtLeast("1.5");
-
-  /**
-   * JDK 1.3.x and 1.4.x has the following error: when we close a dialog and its content pane is being inserted
-   * into another dialog and mouse WAS INSIDE of dialog's content pane then the AWT doesn't change
-   * some internal references on focused component. It cause crash of dispatching of MOUSE_EXIT event.
-   */
-  public static final boolean SPECIAL_INPUT_METHOD_PROCESSING = !SystemInfo.isJavaVersionAtLeast("1.5");
-
-  /**
-   * See http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=4738042.
-   * BasicMenuUI$MenuKeyHandler.menuKeyPressed() incorrect for dynamic menus.
-   */
-  public static final boolean SUN_BUG_ID_4738042 = !SystemInfo.isJavaVersionAtLeast("1.4.2");
-
-  /**
-   * See http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=4893787.
-   * BasicTreeUI.FocusHandler doesn't properly repaint JTree on focus changes.
-   */
-  public static final boolean SUN_BUG_ID_4893787 = true;
-
-  /**
-   * Every typing produces InputMethodEvent instead of KeyEvent with keyTyped event code. Fixed in JRE higher than 1.4.2_03-117.1
-   */
-  public static final boolean APPLE_BUG_ID_3337563 = SystemInfo.isMac && !SystemInfo.isJavaVersionAtLeast("1.4.2.3.117.1");
-
-  /**
-   * Incorrect repaint of the components wrapped with JScrollPane.
-   */
-  public static final boolean APPLE_BUG_ID_3716835 = SystemInfo.isMac && !SystemInfo.isJavaVersionAtLeast("1.4.2.5");
-
-  /**
-   * Lion eAWT FullScreen mode leads to visual artifacts.
-   */
-  public static final boolean APPLE_BUG_ID_10207064 = SystemInfo.isMac && (!SystemInfo.isMacOSLeopard || !SystemInfo.isJavaVersionAtLeast("1.6.0_30"));
-
-  /**
-   * Minimizing and restoring application via View | Minimize leads to visual artifacts.
-   */
-  public static final boolean APPLE_BUG_ID_10514018 = SystemInfo.isMac && !SystemInfo.isJavaVersionAtLeast("1.6.0_31");
 
   /**
    * IBM java machine 1.4.2 crashes if debugger uses ObjectReference.disableCollection() and ObjectReference.enableCollection().
@@ -90,35 +19,123 @@ public class Patches {
   public static final boolean IBM_JDK_DISABLE_COLLECTION_BUG = "false".equalsIgnoreCase(System.getProperty("idea.debugger.keep.temp.objects"));
 
   /**
-   * See http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=4818143.
+   * See https://bugs.openjdk.java.net/browse/JDK-4818143.
    * The bug is marked as fixed but it actually isn't - {@link java.awt.datatransfer.Clipboard#getContents(Object)} call may hang
    * for up to 10 seconds if clipboard owner is not responding.
    */
   public static final boolean SLOW_GETTING_CLIPBOARD_CONTENTS = SystemInfo.isUnix;
 
   /**
-   * See http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=6209673.
    * Huge int[] leak through VolatileImages cached in RepaintManager whenever screen configuration changes.
    * For instance screen saver activates or computer goes hibernate. The problem still exists in 1.6 when two (or more)
    * monitors exists
+   *
+   * <p> http://bugs.openjdk.java.net/browse/JDK-6209673
+   * <p> http://bugs.openjdk.java.net/browse/JDK-8041654
    */
-  public static final boolean SUN_BUG_ID_6209673 = true;
+  public static final boolean REPAINT_MANAGER_LEAK = !SystemInfo.isJavaVersionAtLeast(8, 0, 60);
 
   /**
    * Desktop API support on X Window is limited to GNOME (and even there it may work incorrectly).
-   * See http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=6486393.
+   * See https://bugs.openjdk.java.net/browse/JDK-6486393.
    */
   public static final boolean SUN_BUG_ID_6486393 = SystemInfo.isXWindow;
 
   /**
-   * Desktop API calls may crash on Windows.
-   * See http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=6457572.
+   * Java 7 incorrectly calculates screen insets on multi-monitor X Window configurations.
+   * See https://bugs.openjdk.java.net/browse/JDK-8020443.
    */
-  public static final boolean SUN_BUG_ID_6457572 = SystemInfo.isWindows && !SystemInfo.isJavaVersionAtLeast("1.7");
+  public static final boolean SUN_BUG_ID_8020443 = SystemInfo.isXWindow && !SystemInfo.isJavaVersionAtLeast(8, 0, 60);
 
   /**
-   * Java 7 incorrectly calculates screen insets on multi-monitor X Window configurations.
-   * See http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=9000030.
+   * Marker field to find all usages of the reflective access to JDK 7-specific methods
+   * which need to be changed when migrated to JDK 7
    */
-  public static final boolean SUN_BUG_ID_9000030 = SystemInfo.isXWindow && SystemInfo.isJavaVersionAtLeast("1.7");
+  public static final boolean USE_REFLECTION_TO_ACCESS_JDK7 = Boolean.TRUE; // non-compile-const to trick "Constant expression is always true" inspection
+
+  /**
+   * Marker field to find all usages of the reflective access to JDK 7-specific methods
+   * which need to be changed when migrated to JDK 8
+   */
+  public static final boolean USE_REFLECTION_TO_ACCESS_JDK8 = Boolean.TRUE; // non-compile-const to trick "Constant expression is always true" inspection
+
+  /**
+   * Support default methods in JDI.
+   * See <a href="https://bugs.openjdk.java.net/browse/JDK-8042123">JDK-8042123</a>
+   */
+  public static final boolean JDK_BUG_ID_8042123 = !SystemInfo.isJavaVersionAtLeast(8, 0, 45);
+
+  /**
+   * Enable workaround for jdk bug with leaking TargetVM.EventController, see IDEA-163334
+   */
+  public static final boolean JDK_BUG_EVENT_CONTROLLER_LEAK = !SystemInfo.isJetBrainsJvm;
+
+  /**
+   * NPE from com.sun.jdi.ReferenceType#constantPool()
+   * See <a href="https://bugs.openjdk.java.net/browse/JDK-6822627">JDK-6822627</a>
+   */
+  public static final boolean JDK_BUG_ID_6822627 = !SystemInfo.isJetBrainsJvm;
+
+  /**
+   * Debugger hangs in trace mode with TRACE_SEND when method argument is a {@link com.sun.jdi.StringReference}
+   */
+  public static final boolean JDK_BUG_ID_21275177 = true;
+
+  /**
+   * Debugger hangs in trace mode with TRACE_SEND when method argument is a {@link com.sun.jdi.ThreadReference}
+   */
+  public static final boolean JDK_BUG_WITH_TRACE_SEND = true;
+
+  /**
+   * JDK on Mac detects font style for system fonts based only on their name (PostScript name).
+   * This doesn't work for some fonts which don't use recognizable style suffixes in their names.
+   * Corresponding JDK request for enhancement - <a href="https://bugs.openjdk.java.net/browse/JDK-8139151">JDK-8139151</a>.
+   */
+  public static final boolean JDK_MAC_FONT_STYLE_DETECTION_WORKAROUND = SystemInfo.isMac;
+
+  /**
+   * Older JDK versions could mistakenly use derived italics font, when genuine italics font was available in the system.
+   * The issue was fixed in JDK 1.8.0_60 as part of <a href="https://bugs.openjdk.java.net/browse/JDK-8064833">JDK-8064833</a>.
+   */
+  public static final boolean JDK_MAC_FONT_STYLE_BUG = SystemInfo.isMac && !SystemInfo.isJavaVersionAtLeast(8, 0, 60);
+
+  /**
+   * On macOS, font ligatures are not supported for natively loaded fonts, a font needs to be loaded explicitly by JDK.
+   */
+  public static final boolean JDK_BUG_ID_7162125;
+  static {
+    boolean value;
+    if (!SystemInfo.isMac || SystemInfo.IS_AT_LEAST_JAVA9) value = false;
+    else if (!SystemInfo.isJetBrainsJvm) value = true;
+    else {
+      try {
+        Class.forName("sun.font.CCompositeFont");
+        value = Boolean.getBoolean("disable.font.substitution");
+      }
+      catch (Throwable e) {
+        value = true;
+      }
+    }
+    JDK_BUG_ID_7162125 = value;
+  }
+
+  /**
+   * XToolkit.getScreenInsets() may be very slow.
+   * See https://bugs.openjdk.java.net/browse/JDK-8004103.
+   */
+  public static boolean isJdkBugId8004103() {
+    return SystemInfo.isXWindow && !GraphicsEnvironment.isHeadless();
+  }
+
+  /**
+   * Some HTTP connections lock class loaders: https://bugs.openjdk.java.net/browse/JDK-8032832
+   * The issue claims to be fixed in 8u20, but the fix just replaces one lock with another (on a context class loader).
+   */
+  public static final boolean JDK_BUG_ID_8032832 = true;
+
+  /**
+   * Since 8u102, AWT supports Shift-scroll on all platforms (before, it only worked on macOS).
+   * Ultimately fixed by <a href="https://bugs.openjdk.java.net/browse/JDK-8147994">JDK-8147994</a>.
+   */
+  public static final boolean JDK_BUG_ID_8147994 = !(SystemInfo.isMac || SystemInfo.isJavaVersionAtLeast(8, 0, 102));
 }

@@ -1,16 +1,30 @@
+/*
+ * Copyright 2000-2016 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package org.jetbrains.plugins.groovy.mvc.projectView;
 
 import com.intellij.ide.projectView.PresentationData;
 import com.intellij.ide.projectView.ViewSettings;
-import com.intellij.ide.projectView.impl.nodes.AbstractPsiBasedNode;
+import com.intellij.ide.projectView.impl.nodes.BasePsiNode;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.ui.Queryable;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.problems.WolfTheProblemSolver;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFileSystemItem;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -18,7 +32,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author Dmitry Krasilschikov
  */
-public abstract class AbstractMvcPsiNodeDescriptor extends AbstractPsiBasedNode<NodeId> {
+public abstract class AbstractMvcPsiNodeDescriptor extends BasePsiNode<PsiElement> {
   public static final int FOLDER = 100;
   public static final int FILE = 110;
   public static final int CLASS = 5;
@@ -39,16 +53,15 @@ public abstract class AbstractMvcPsiNodeDescriptor extends AbstractPsiBasedNode<
   private final int myWeight;
 
   protected AbstractMvcPsiNodeDescriptor(@NotNull final Module module,
-                                         @Nullable final ViewSettings viewSettings,
-                                         @NotNull final NodeId nodeId, int weight) {
+                                         final ViewSettings viewSettings,
+                                         @NotNull final PsiElement nodeId, int weight) {
     super(module.getProject(), nodeId, viewSettings);
     myModule = module;
     myWeight = weight;
   }
 
   @NonNls
-  protected abstract String getTestPresentationImpl(@NotNull final NodeId nodeId,
-                                                    @NotNull final PsiElement psiElement);
+  protected abstract String getTestPresentationImpl(@NotNull final PsiElement psiElement);
 
   @Override
   public final boolean contains(@NotNull final VirtualFile file) {
@@ -60,19 +73,14 @@ public abstract class AbstractMvcPsiNodeDescriptor extends AbstractPsiBasedNode<
   }
 
   @Nullable
-  protected PsiElement extractPsiFromValue() {
-    final NodeId nodeId = getValue();
-    return nodeId != null ? nodeId.getPsiElement() : null;
-  }
-
   @Override
-  public final String getTestPresentation() {
+  public String toTestString(@Nullable Queryable.PrintInfo printInfo) {
     final PsiElement psi = extractPsiFromValue();
     if (psi == null || !psi.isValid() || !isValid()) {
       return "null";
     }
 
-    return getTestPresentationImpl(getValue(), psi);
+    return getTestPresentationImpl(psi);
   }
 
   @NotNull
@@ -80,22 +88,8 @@ public abstract class AbstractMvcPsiNodeDescriptor extends AbstractPsiBasedNode<
     return myModule;
   }
 
-  @Nullable
   @Override
-  public VirtualFile getVirtualFile() {
-    if (!isValid()) {
-      return null;
-    }
-    final PsiElement psiElement = extractPsiFromValue();
-    assert psiElement != null;
-
-    if (psiElement instanceof PsiFileSystemItem) {
-      return ((PsiFileSystemItem)psiElement).getVirtualFile();
-    }
-    return psiElement.getContainingFile().getVirtualFile();
-  }
-
-  protected void updateImpl(final PresentationData data) {
+  protected void updateImpl(@NotNull final PresentationData data) {
     final PsiElement psiElement = extractPsiFromValue();
     if (psiElement instanceof NavigationItem) {
       final ItemPresentation presentation = ((NavigationItem)psiElement).getPresentation();
@@ -110,14 +104,12 @@ public abstract class AbstractMvcPsiNodeDescriptor extends AbstractPsiBasedNode<
     return myWeight;
   }
 
+  @Override
   protected boolean hasProblemFileBeneath() {
-    return WolfTheProblemSolver.getInstance(getProject()).hasProblemFilesBeneath(new Condition<VirtualFile>() {
-      public boolean value(final VirtualFile virtualFile) {
-        return contains(virtualFile);
-      }
-    });
+    return WolfTheProblemSolver.getInstance(getProject()).hasProblemFilesBeneath(virtualFile -> contains(virtualFile));
   }
 
+  @Override
   public boolean isValid() {
     final PsiElement psiElement = extractPsiFromValue();
     return psiElement != null && psiElement.isValid();

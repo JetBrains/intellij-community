@@ -22,13 +22,12 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiManager;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * To solve "caret after last symbol" problem consider using {@link com.intellij.codeInsight.intention.BaseElementAtCaretIntentionAction}
+ * To solve "caret after last symbol" problem consider using {@link BaseElementAtCaretIntentionAction}
  *
  * @author Anna Kozlova
  * @author Konstantin Bulenkov
@@ -36,11 +35,19 @@ import org.jetbrains.annotations.Nullable;
 public abstract class PsiElementBaseIntentionAction extends BaseIntentionAction {
   @Override
   public final void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-    if (!file.getManager().isInProject(file)) return;
+    if (editor == null || !checkFile(file)) return;
     final PsiElement element = getElement(editor, file);
     if (element != null) {
       invoke(project, editor, element);
     }
+  }
+
+  /**
+   * Check whether this intention available in file.
+   */
+  public boolean checkFile(@Nullable PsiFile file) {
+    if (file == null) return false;
+    return canModify(file);
   }
 
   /**
@@ -49,18 +56,13 @@ public abstract class PsiElementBaseIntentionAction extends BaseIntentionAction 
    * @param project the project in which the file is opened.
    * @param editor  the editor for the file.
    * @param element the element under cursor.
-   * @throws com.intellij.util.IncorrectOperationException
-   *
    */
   public abstract void invoke(@NotNull Project project, Editor editor, @NotNull PsiElement element) throws IncorrectOperationException;
 
   @Override
   public final boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    if (file == null) return false;
-    final PsiManager manager = file.getManager();
-    if (manager == null) return false;
-    if (!manager.isInProject(file)) return false;
-    final PsiElement element = getElement(editor, file);
+    if (!checkFile(file)) return false;
+    final PsiElement element = editor == null ? null : getElement(editor, file);
     return element != null && isAvailable(project, editor, element);
   }
 
@@ -76,7 +78,7 @@ public abstract class PsiElementBaseIntentionAction extends BaseIntentionAction 
   public abstract boolean isAvailable(@NotNull Project project, Editor editor, @NotNull PsiElement element);
 
   @Nullable
-  protected static PsiElement getElement(@NotNull Editor editor, @NotNull PsiFile file) {
+  private static PsiElement getElement(@NotNull Editor editor, @NotNull PsiFile file) {
     CaretModel caretModel = editor.getCaretModel();
     int position = caretModel.getOffset();
     return file.findElementAt(position);

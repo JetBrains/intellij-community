@@ -16,10 +16,15 @@
 package git4idea.commands;
 
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vcs.VcsException;
+import com.intellij.util.containers.ContainerUtil;
+import git4idea.GitUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -29,31 +34,76 @@ import java.util.List;
  */
 public class GitCommandResult {
 
-  private final boolean mySuccess;
+  private final boolean myStartFailed;
   private final int myExitCode;               // non-zero exit code doesn't necessarily mean an error
+  private final boolean myAuthenticationFailed;
   private final List<String> myErrorOutput;
   private final List<String> myOutput;
-  @Nullable private final Throwable myException;
 
-  public GitCommandResult(boolean success, int exitCode, @NotNull List<String> errorOutput, @NotNull List<String> output,
-                          @Nullable Throwable exception) {
+  public GitCommandResult(boolean startFailed,
+                          int exitCode,
+                          @NotNull List<String> errorOutput,
+                          @NotNull List<String> output) {
+    this(startFailed, exitCode, false, errorOutput, output);
+  }
+
+  private GitCommandResult(boolean startFailed,
+                           int exitCode,
+                           boolean authenticationFailed,
+                           @NotNull List<String> errorOutput,
+                           @NotNull List<String> output) {
     myExitCode = exitCode;
-    mySuccess = success;
+    myStartFailed = startFailed;
+    myAuthenticationFailed = authenticationFailed;
     myErrorOutput = errorOutput;
     myOutput = output;
-    myException = exception;
   }
 
   /**
+   * @return result with specified value for authentication failure
+   */
+  @NotNull
+  static GitCommandResult withAuthentication(@NotNull GitCommandResult result, boolean authenticationFailed) {
+    return new GitCommandResult(result.myStartFailed,
+                                result.myExitCode,
+                                authenticationFailed,
+                                result.myErrorOutput,
+                                result.myOutput);
+  }
+
+  /**
+   * To retain binary compatibility
+   *
    * @return we think that the operation succeeded
    */
   public boolean success() {
-    return mySuccess;
+    return success(new int[]{});
+  }
+
+  /**
+   * @param ignoredErrorCodes list of non-zero exit codes the are considered success exit codes
+   * @return we think that the operation succeeded
+   */
+  public boolean success(int... ignoredErrorCodes) {
+    return !myStartFailed && (Arrays.stream(ignoredErrorCodes).anyMatch(i -> i == myExitCode) || myExitCode == 0);
   }
 
   @NotNull
   public List<String> getOutput() {
-    return new ArrayList<String>(myOutput);
+    return Collections.unmodifiableList(myOutput);
+  }
+
+  public int getExitCode() {
+    return myExitCode;
+  }
+
+  public boolean isAuthenticationFailed() {
+    return myAuthenticationFailed;
+  }
+
+  @NotNull
+  public List<String> getErrorOutput() {
+    return Collections.unmodifiableList(myErrorOutput);
   }
 
   @Override
@@ -63,11 +113,18 @@ public class GitCommandResult {
 
   @NotNull
   public String getErrorOutputAsHtmlString() {
-    return StringUtil.join(myErrorOutput, "<br/>");
+    return StringUtil.join(cleanup(getErrorOrStdOutput()), "<br/>");
   }
-  
+
+  @NotNull
   public String getErrorOutputAsJoinedString() {
-    return StringUtil.join(myErrorOutput, "\n");
+    return StringUtil.join(cleanup(getErrorOrStdOutput()), "\n");
+  }
+
+  // in some cases operation fails but no explicit error messages are given, in this case return the output to display something to user
+  @NotNull
+  private List<String> getErrorOrStdOutput() {
+    return myErrorOutput.isEmpty() && !success() ? myOutput : myErrorOutput;
   }
 
   @NotNull
@@ -75,9 +132,59 @@ public class GitCommandResult {
     return StringUtil.join(myOutput, "\n");
   }
 
-  @Nullable
-  public Throwable getException() {
-    return myException;
+  /**
+   * Check if execution was successful and return textual result or throw exception
+   *
+   * @param ignoredErrorCodes list of non-zero exit codes the are considered success exit codes
+   * @return result of {@link #getOutputAsJoinedString()}
+   * @throws VcsException with message from {@link #getErrorOutputAsJoinedString()}
+   */
+  @NotNull
+  public String getOutputOrThrow(int... ignoredErrorCodes) throws VcsException {
+    throwOnError(ignoredErrorCodes);
+    return getOutputAsJoinedString();
   }
 
+  /**
+   * Check if execution was successful and do nothing or throw exception
+   *
+   * @param ignoredErrorCodes list of non-zero exit codes the are considered success exit codes
+   * @throws VcsException with message from {@link #getErrorOutputAsJoinedString()}
+   */
+  public void throwOnError(int... ignoredErrorCodes) throws VcsException {
+    if (!success(ignoredErrorCodes)) throw new VcsException(getErrorOutputAsJoinedString());
+  }
+
+  /**
+   * @return null
+   * @deprecated use {@link #getErrorOutput()}
+   */
+  @Deprecated
+  @Nullable
+  public Throwable getException() {
+    return null;
+  }
+
+  @NotNull
+  static GitCommandResult startError(@NotNull String error) {
+    return new GitCommandResult(true, -1, Collections.singletonList(error), Collections.emptyList());
+  }
+
+  @NotNull
+  public static GitCommandResult error(@NotNull String error) {
+    return new GitCommandResult(false, 1, Collections.singletonList(error), Collections.emptyList());
+  }
+
+  public boolean cancelled() {
+    return false; // will be implemented later
+  }
+
+  @NotNull
+  private static Collection<String> cleanup(@NotNull Collection<String> errorOutput) {
+    return ContainerUtil.map(errorOutput, errorMessage -> GitUtil.cleanupErrorPrefixes(errorMessage));
+  }
+
+  protected boolean hasStartFailed() {
+    return myStartFailed;
+  }
 }

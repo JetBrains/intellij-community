@@ -26,26 +26,23 @@ import java.util.Collections;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Jun 23, 2005
  */
 public class TopLevelNode extends AbstractTreeNode {
 
-  public TopLevelNode(Project project, Object value) {
+  public TopLevelNode(Project project, @NotNull Object value) {
     super(project, value);
     myName = "[ .. ]";
     setIcon(AllIcons.Nodes.UpLevel);
   }
 
+  @Override
   @NotNull
   public Collection<AbstractTreeNode> getChildren() {
     return Collections.emptyList();
   }
 
-  public String getName() {
-    return super.getName();
-  }
-
-  protected void update(PresentationData presentation) {
+  @Override
+  protected void update(@NotNull PresentationData presentation) {
   }
 
 }

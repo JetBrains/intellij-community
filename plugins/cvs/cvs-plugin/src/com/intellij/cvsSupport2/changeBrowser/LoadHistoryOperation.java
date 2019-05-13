@@ -45,7 +45,7 @@ public class LoadHistoryOperation extends LocalPathIndifferentOperation {
 
   @NonNls private static final String INVALID_OPTION_S = "invalid option -- S";
   @NonNls private static final SyncDateFormat DATE_FORMAT = new SyncDateFormat(new SimpleDateFormat("yyyy-MM-dd HH:mm:ssZ", Locale.US));
-  private static final Collection<String> ourDoNotSupportingSOptionServers = new HashSet<String>();
+  private static final Collection<String> ourDoNotSupportingSOptionServers = new HashSet<>();
 
   private final String myModule;
   private final Date myDateFrom;
@@ -82,6 +82,7 @@ public class LoadHistoryOperation extends LocalPathIndifferentOperation {
     myRevisions = revisions;
   }
 
+  @Override
   protected Command createCommand(CvsRootProvider root, CvsExecutionEnvironment cvsExecutionEnvironment) {
     final RlogCommand command = new RlogCommand();
     command.setModuleName(myModule);
@@ -106,11 +107,13 @@ public class LoadHistoryOperation extends LocalPathIndifferentOperation {
     ourDoNotSupportingSOptionServers.add(myEnvironment.getCvsRootAsString());
   }
 
+  @Override
   @NonNls
   protected String getOperationName() {
     return "rlog";
   }
 
+  @Override
   public void fileInfoGenerated(Object info) {
     super.fileInfoGenerated(info);
     if (!(info instanceof LogInformation)) {
@@ -124,10 +127,12 @@ public class LoadHistoryOperation extends LocalPathIndifferentOperation {
     myConsumer.consume(wrapper);
   }
 
+  @Override
   public boolean runInReadThread() {
     return false;
   }
 
+  @Override
   protected boolean runInExclusiveLock() {
     return false;
   }

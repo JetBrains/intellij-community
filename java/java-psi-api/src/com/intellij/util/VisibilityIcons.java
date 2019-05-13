@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,7 @@ import com.intellij.psi.PsiModifierList;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.ui.RowIcon;
 import com.intellij.util.ui.EmptyIcon;
+import org.intellij.lang.annotations.MagicConstant;
 
 import javax.swing.*;
 
@@ -45,17 +46,17 @@ public class VisibilityIcons {
         setVisibilityIcon(PsiUtil.ACCESS_LEVEL_PACKAGE_LOCAL, baseIcon);
       }
       else {
-        Icon emptyIcon = new EmptyIcon(PlatformIcons.PUBLIC_ICON.getIconWidth(), PlatformIcons.PUBLIC_ICON.getIconHeight());
+        Icon emptyIcon = EmptyIcon.create(PlatformIcons.PUBLIC_ICON);
         baseIcon.setIcon(emptyIcon, 1);
       }
     }
     else if (PlatformIcons.PUBLIC_ICON != null) {
-        Icon emptyIcon = new EmptyIcon(PlatformIcons.PUBLIC_ICON.getIconWidth(), PlatformIcons.PUBLIC_ICON.getIconHeight());
+        Icon emptyIcon = EmptyIcon.create(PlatformIcons.PUBLIC_ICON);
         baseIcon.setIcon(emptyIcon, 1);
       }
   }
 
-  public static void setVisibilityIcon(int accessLevel, RowIcon baseIcon) {
+  public static void setVisibilityIcon(@MagicConstant(intValues = {PsiUtil.ACCESS_LEVEL_PUBLIC, PsiUtil.ACCESS_LEVEL_PROTECTED, PsiUtil.ACCESS_LEVEL_PACKAGE_LOCAL, PsiUtil.ACCESS_LEVEL_PRIVATE}) int accessLevel, RowIcon baseIcon) {
     Icon icon;
     switch (accessLevel) {
       case PsiUtil.ACCESS_LEVEL_PUBLIC:
@@ -72,7 +73,7 @@ public class VisibilityIcons {
         break;
       default:
         if (PlatformIcons.PUBLIC_ICON != null) {
-          icon = new EmptyIcon(PlatformIcons.PUBLIC_ICON.getIconWidth(), PlatformIcons.PUBLIC_ICON.getIconHeight());
+          icon = EmptyIcon.create(PlatformIcons.PUBLIC_ICON);
         }
         else {
           return;

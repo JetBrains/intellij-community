@@ -27,12 +27,14 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.util.Collection;
+import java.util.List;
 
 public class CachedVcsContext implements VcsContext {
   private final Project myProject;
   private final VirtualFile mySelectedFile;
   private final VirtualFile[] mySelectedFiles;
   private final Collection<VirtualFile> mySelectedFilesCollection;
+  private final List<VirtualFile> mySelectedUnversionedFiles;
   private final Editor myEditor;
   private final File[] mySelectedIOFiles;
   private final int myModifiers;
@@ -50,6 +52,7 @@ public class CachedVcsContext implements VcsContext {
     mySelectedFile = baseContext.getSelectedFile();
     mySelectedFiles = baseContext.getSelectedFiles();
     mySelectedFilesCollection = baseContext.getSelectedFilesCollection();
+    mySelectedUnversionedFiles = baseContext.getSelectedUnversionedFiles();
     myEditor = baseContext.getEditor();
     mySelectedIOFiles = baseContext.getSelectedIOFiles();
     myModifiers = baseContext.getModifiers();
@@ -63,60 +66,81 @@ public class CachedVcsContext implements VcsContext {
     myActionName = baseContext.getActionName();
   }
 
+  @Override
   public String getPlace() {
     return myPlace;
   }
 
+  @Override
   public Project getProject() {
     return myProject;
   }
 
+  @Override
   public VirtualFile getSelectedFile() {
     return mySelectedFile;
   }
 
+  @Override
   @NotNull
   public VirtualFile[] getSelectedFiles() {
     return mySelectedFiles;
   }
 
+  @NotNull
+  @Override
+  public List<VirtualFile> getSelectedUnversionedFiles() {
+    return mySelectedUnversionedFiles;
+  }
+
+  @Override
   public Editor getEditor() {
     return myEditor;
   }
 
+  @Override
   public Collection<VirtualFile> getSelectedFilesCollection() {
     return mySelectedFilesCollection;
   }
 
+  @Override
   public File[] getSelectedIOFiles() {
     return mySelectedIOFiles;
   }
 
+  @Override
   public int getModifiers() {
     return myModifiers;
   }
 
+  @Override
   public Refreshable getRefreshableDialog() {
     return myRefreshablePanel;
   }
 
+  @Override
   public File getSelectedIOFile() {
     return mySelectedIOFile;
   }
 
+  @Override
+  @NotNull
   public FilePath[] getSelectedFilePaths() {
     return mySelectedFilePaths;
   }
 
+  @Override
   public FilePath getSelectedFilePath() {
     return mySelectedFilePath;
   }
 
+  @Override
   @Nullable
   public ChangeList[] getSelectedChangeLists() {
     return mySelectedChangeLists;
   }
 
+  @Override
   @Nullable
   public Change[] getSelectedChanges() {
     return mySelectedChanges;

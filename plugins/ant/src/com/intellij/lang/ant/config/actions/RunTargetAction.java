@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,10 +20,12 @@ import com.intellij.lang.ant.config.AntBuildFileBase;
 import com.intellij.lang.ant.config.AntBuildListener;
 import com.intellij.lang.ant.config.AntConfigurationBase;
 import com.intellij.lang.ant.config.execution.ExecutionHandler;
-import com.intellij.lang.ant.config.impl.BuildFileProperty;
 import com.intellij.lang.ant.dom.AntDomTarget;
 import com.intellij.lang.ant.resources.AntActionsBundle;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
@@ -42,7 +44,6 @@ import java.util.Collections;
 
 /**
  * Created by Eugene Petrenko (eugene.petrenko@gmail.com)
- * Date: 28.05.12 16:07
  */
 public class RunTargetAction extends AnAction {
   public RunTargetAction() {
@@ -50,21 +51,21 @@ public class RunTargetAction extends AnAction {
   }
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     Pair<AntBuildFileBase, AntDomTarget> antTarget = findAntTarget(e);
     if (antTarget == null) return;
 
     ExecutionHandler.runBuild(
-      antTarget.first, new String[] {antTarget.second.getName().getValue() },
+      antTarget.first, Collections.singletonList(antTarget.second.getName().getValue()),
       null,
       e.getDataContext(),
-      Collections.<BuildFileProperty>emptyList(),
+      Collections.emptyList(),
       AntBuildListener.NULL);
   }
 
 
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     super.update(e);
 
     final Presentation presentation = e.getPresentation();
@@ -72,24 +73,22 @@ public class RunTargetAction extends AnAction {
     Pair<AntBuildFileBase, AntDomTarget> antTarget = findAntTarget(e);
     if (antTarget == null) {
       presentation.setEnabled(false);
-      presentation.setText(AntActionsBundle.message("action.RunTargetAction.text", ""));
+      presentation.setText(AntActionsBundle.message("action.RunTargetAction.text.template", ""));
     } else {
       presentation.setEnabled(true);
-      presentation.setText(AntActionsBundle.message("action.RunTargetAction.text", "'" + antTarget.second.getName().getValue() + "'"));
+      presentation.setText(AntActionsBundle.message("action.RunTargetAction.text.template", "'" + antTarget.second.getName().getValue() + "'"));
     }
   }
 
   @Nullable
   private static Pair<AntBuildFileBase, AntDomTarget> findAntTarget(@NotNull AnActionEvent e) {
-    final DataContext dataContext = e.getDataContext();
-
-    final Editor editor = PlatformDataKeys.EDITOR.getData(dataContext);
-    final Project project = PlatformDataKeys.PROJECT.getData(dataContext);
+    final Editor editor = e.getData(CommonDataKeys.EDITOR);
+    final Project project = e.getProject();
 
     if (project == null || editor == null) {
       return null;
     }
-    final VirtualFile file = PlatformDataKeys.VIRTUAL_FILE.getData(dataContext);
+    final VirtualFile file = e.getData(CommonDataKeys.VIRTUAL_FILE);
     if (file == null) {
       return null;
     }

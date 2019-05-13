@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,48 +16,49 @@
 
 package org.jetbrains.plugins.groovy.annotator.intentions;
 
-  import com.intellij.codeInsight.daemon.impl.quickfix.CreateClassKind;
-import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.impl.CreateClassDialog;
-import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.actions.GroovyTemplatesFactory;
+import org.jetbrains.plugins.groovy.intentions.base.Intention;
+import org.jetbrains.plugins.groovy.intentions.base.PsiElementPredicate;
+import org.jetbrains.plugins.groovy.lang.GrCreateClassKind;
 import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 
 /**
  * @author ilyas
  */
-public abstract class CreateClassActionBase implements IntentionAction {
-  private CreateClassKind myType;
+public abstract class CreateClassActionBase extends Intention {
+  private final GrCreateClassKind myType;
 
   protected final GrReferenceElement myRefElement;
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.plugins.groovy.annotator.intentions.CreateClassActionBase");
 
-  public CreateClassActionBase(CreateClassKind type, GrReferenceElement refElement) {
+  public CreateClassActionBase(GrCreateClassKind type, GrReferenceElement refElement) {
     myType = type;
     myRefElement = refElement;
   }
 
+  @Override
   @NotNull
   public String getText() {
     String referenceName = myRefElement.getReferenceName();
     switch (getType()) {
+      case TRAIT:
+        return GroovyBundle.message("create.trait", referenceName);
       case ENUM:
         return GroovyBundle.message("create.enum", referenceName);
       case CLASS:
@@ -71,21 +72,24 @@ public abstract class CreateClassActionBase implements IntentionAction {
     }
   }
 
+  @Override
   @NotNull
   public String getFamilyName() {
     return GroovyBundle.message("create.class.family.name");
   }
 
+  @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    return myRefElement.isValid();
+    return myRefElement.isValid() && ModuleUtilCore.findModuleForPsiElement(myRefElement) != null;
   }
 
+  @Override
   public boolean startInWriteAction() {
     return false;
   }
 
 
-  protected CreateClassKind getType() {
+  protected GrCreateClassKind getType() {
     return myType;
   }
 
@@ -94,61 +98,42 @@ public abstract class CreateClassActionBase implements IntentionAction {
                                                    @NotNull final String name,
                                                    @NotNull final PsiManager manager,
                                                    @Nullable final PsiElement contextElement,
-                                                   @NotNull final String templateName) {
-    AccessToken accessToken = WriteAction.start();
-
-    try {
-      GrTypeDefinition targetClass = null;
+                                                   @NotNull final String templateName,
+                                                   boolean allowReformatting) {
+    return WriteAction.compute(() -> {
       try {
-        PsiFile file = GroovyTemplatesFactory.createFromTemplate(directory, name, name + ".groovy", templateName);
-        for (PsiElement element : file.getChildren()) {
-          if (element instanceof GrTypeDefinition) {
-            targetClass = ((GrTypeDefinition)element);
-            break;
+        GrTypeDefinition targetClass = null;
+        try {
+          PsiFile file = GroovyTemplatesFactory.createFromTemplate(directory, name, name + ".groovy", templateName, allowReformatting);
+          for (PsiElement element : file.getChildren()) {
+            if (element instanceof GrTypeDefinition) {
+              targetClass = ((GrTypeDefinition)element);
+              break;
+            }
+          }
+          if (targetClass == null) {
+            throw new IncorrectOperationException(GroovyBundle.message("no.class.in.file.template"));
           }
         }
-        if (targetClass == null) {
-          throw new IncorrectOperationException(GroovyBundle.message("no.class.in.file.template"));
+        catch (final IncorrectOperationException e) {
+          ApplicationManager.getApplication().invokeLater(() -> Messages.showErrorDialog(
+            GroovyBundle.message("cannot.create.class.error.text", name, e.getLocalizedMessage()),
+            GroovyBundle.message("cannot.create.class.error.title")));
+          return null;
         }
+        PsiModifierList modifiers = targetClass.getModifierList();
+        if (contextElement != null &&
+            !JavaPsiFacade.getInstance(manager.getProject()).getResolveHelper().isAccessible(targetClass, contextElement, null) &&
+            modifiers != null) {
+          modifiers.setModifierProperty(PsiModifier.PUBLIC, true);
+        }
+        return targetClass;
       }
-      catch (final IncorrectOperationException e) {
-        ApplicationManager.getApplication().invokeLater(new Runnable() {
-          public void run() {
-            Messages.showErrorDialog(
-              GroovyBundle.message("cannot.create.class.error.text", name, e.getLocalizedMessage()),
-              GroovyBundle.message("cannot.create.class.error.title"));
-          }
-        });
+      catch (IncorrectOperationException e) {
+        LOG.error(e);
         return null;
       }
-      PsiModifierList modifiers = targetClass.getModifierList();
-      if (contextElement != null &&
-          !JavaPsiFacade.getInstance(manager.getProject()).getResolveHelper().isAccessible(targetClass, contextElement, null) &&
-          modifiers != null) {
-        modifiers.setModifierProperty(PsiModifier.PUBLIC, true);
-      }
-      return targetClass;
-    }
-    catch (IncorrectOperationException e) {
-      LOG.error(e);
-      return null;
-    }
-    finally {
-      accessToken.finish();
-    }
-  }
-
-  @Nullable
-  public static Editor putCursor(Project project, @NotNull PsiFile targetFile, PsiElement element) {
-    int textOffset = element.getTextOffset();
-    VirtualFile virtualFile = targetFile.getVirtualFile();
-    if (virtualFile != null) {
-      OpenFileDescriptor descriptor = new OpenFileDescriptor(project, virtualFile, textOffset);
-      return FileEditorManager.getInstance(project).openTextEditor(descriptor, true);
-    }
-    else {
-      return null;
-    }
+    });
   }
 
   @Nullable
@@ -167,5 +152,16 @@ public abstract class CreateClassActionBase implements IntentionAction {
     if (dialog.getExitCode() != DialogWrapper.OK_EXIT_CODE) return null;
 
     return dialog.getTargetDirectory();
+  }
+
+  @NotNull
+  @Override
+  protected PsiElementPredicate getElementPredicate() {
+    return new PsiElementPredicate() {
+      @Override
+      public boolean satisfiedBy(@NotNull PsiElement element) {
+        return myRefElement.isValid();
+      }
+    };
   }
 }

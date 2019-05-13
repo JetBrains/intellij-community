@@ -45,16 +45,19 @@ public class MavenDomElementDescriptorHolder {
 
   private enum FileKind {
     PROJECT_FILE {
+      @Override
       public String getSchemaUrl() {
         return MavenSchemaProvider.MAVEN_PROJECT_SCHEMA_URL;
       }
     },
     PROFILES_FILE {
+      @Override
       public String getSchemaUrl() {
         return MavenSchemaProvider.MAVEN_PROFILES_SCHEMA_URL;
       }
     },
     SETTINGS_FILE {
+      @Override
       public String getSchemaUrl() {
         return MavenSchemaProvider.MAVEN_SETTINGS_SCHEMA_URL;
       }
@@ -65,7 +68,7 @@ public class MavenDomElementDescriptorHolder {
 
   private final Project myProject;
   private final Map<FileKind, CachedValue<XmlNSDescriptorImpl>> myDescriptorsMap =
-    new THashMap<FileKind, CachedValue<XmlNSDescriptorImpl>>();
+    new THashMap<>();
 
   public MavenDomElementDescriptorHolder(Project project) {
     myProject = project;
@@ -94,12 +97,8 @@ public class MavenDomElementDescriptorHolder {
   private XmlNSDescriptorImpl tryGetOrCreateDescriptor(final FileKind kind) {
     CachedValue<XmlNSDescriptorImpl> result = myDescriptorsMap.get(kind);
     if (result == null) {
-      result = CachedValuesManager.getManager(myProject).createCachedValue(new CachedValueProvider<XmlNSDescriptorImpl>() {
-        @Override
-        public Result<XmlNSDescriptorImpl> compute() {
-          return Result.create(doCreateDescriptor(kind), PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT);
-        }
-      }, false);
+      result = CachedValuesManager.getManager(myProject).createCachedValue(
+        () -> CachedValueProvider.Result.create(doCreateDescriptor(kind), PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT), false);
       myDescriptorsMap.put(kind, result);
     }
     return result.getValue();
@@ -130,7 +129,7 @@ public class MavenDomElementDescriptorHolder {
   }
 
   @Nullable
-  private FileKind getFileKind(PsiFile file) {
+  private static FileKind getFileKind(PsiFile file) {
     if (MavenDomUtil.isProjectFile(file)) return FileKind.PROJECT_FILE;
     if (MavenDomUtil.isProfilesFile(file)) return FileKind.PROFILES_FILE;
     if (MavenDomUtil.isSettingsFile(file)) return FileKind.SETTINGS_FILE;

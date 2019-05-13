@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,27 +23,44 @@ import com.siyeh.HardcodedMethodConstants;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.fixes.SuppressForTestsScopeFix;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
+/**
+ * @author Bas Leijdekkers
+ */
 public class SystemOutErrInspection extends BaseInspection {
 
+  @Nullable
+  @Override
+  protected InspectionGadgetsFix buildFix(Object... infos) {
+    final PsiElement context = (PsiElement)infos[0];
+    return SuppressForTestsScopeFix.build(this, context);
+  }
+
+  @Override
   @NotNull
   public String getID() {
     return "UseOfSystemOutOrSystemErr";
   }
 
+  @Override
   @NotNull
   public String getDisplayName() {
     return InspectionGadgetsBundle.message(
       "use.system.out.err.display.name");
   }
 
+  @Override
   @NotNull
   public String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "use.system.out.err.problem.descriptor");
   }
 
+  @Override
   public BaseInspectionVisitor buildVisitor() {
     return new SystemOutErrVisitor();
   }
@@ -51,8 +68,7 @@ public class SystemOutErrInspection extends BaseInspection {
   private static class SystemOutErrVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitReferenceExpression(
-      @NotNull PsiReferenceExpression expression) {
+    public void visitReferenceExpression(@NotNull PsiReferenceExpression expression) {
       super.visitReferenceExpression(expression);
       final String name = expression.getReferenceName();
       if (!HardcodedMethodConstants.OUT.equals(name) &&
@@ -72,7 +88,7 @@ public class SystemOutErrInspection extends BaseInspection {
       if (!"java.lang.System".equals(className)) {
         return;
       }
-      registerError(expression);
+      registerError(expression, expression);
     }
   }
 }

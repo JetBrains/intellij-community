@@ -1,24 +1,9 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.psi.formatter;
 
-import com.intellij.formatting.Block;
-import com.intellij.formatting.FormattingDocumentModel;
-import com.intellij.formatting.FormattingModel;
+import com.intellij.formatting.*;
+import com.intellij.lang.ASTNode;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
@@ -36,21 +21,23 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author lesya
  */
-public class DocumentBasedFormattingModel implements FormattingModel {
+public class DocumentBasedFormattingModel implements FormattingModelEx {
   private final Block                   myRootBlock;
   private final FormattingDocumentModel myDocumentModel;
-  private final Document                myDocument;
+  @Nullable private final FormattingModel myOriginalFormattingModel;
+  @NotNull private final Document       myDocument;
   private final Project                 myProject;
   private final CodeStyleSettings       mySettings;
   private final FileType                myFileType;
   private final PsiFile                 myFile;
 
+  @Deprecated
   public DocumentBasedFormattingModel(final Block rootBlock,
-                                      final Document document,
+                                      @NotNull final Document document,
                                       final Project project,
                                       final CodeStyleSettings settings,
                                       final FileType fileType,
-                                      final PsiFile file) {
+                                      @NotNull final PsiFile file) {
     myRootBlock = rootBlock;
     myDocument = document;
     myProject = project;
@@ -58,13 +45,18 @@ public class DocumentBasedFormattingModel implements FormattingModel {
     myFileType = fileType;
     myFile = file;
     myDocumentModel = new FormattingDocumentModelImpl(document,file);
+    myOriginalFormattingModel = null;
+  }
+
+  public DocumentBasedFormattingModel(@NotNull Block rootBlock, @NotNull CodeStyleSettings settings, @NotNull PsiFile file) {
+    this(rootBlock, file.getProject(), settings, file.getFileType(), file);
   }
 
   public DocumentBasedFormattingModel(final Block rootBlock,
                                       final Project project,
                                       final CodeStyleSettings settings,
                                       final FileType fileType,
-                                      final PsiFile file) {
+                                      @NotNull final PsiFile file) {
     myRootBlock = rootBlock;
     myProject = project;
     mySettings = settings;
@@ -72,6 +64,23 @@ public class DocumentBasedFormattingModel implements FormattingModel {
     myFile = file;
     myDocumentModel = FormattingDocumentModelImpl.createOn(file);
     myDocument = myDocumentModel.getDocument();
+    myOriginalFormattingModel = null;
+  }
+
+  public DocumentBasedFormattingModel(@NotNull final FormattingModel originalModel,
+                                      @NotNull final Document document,
+                                      final Project project,
+                                      final CodeStyleSettings settings,
+                                      final FileType fileType,
+                                      @NotNull final PsiFile file) {
+    myOriginalFormattingModel = originalModel;
+    myRootBlock = originalModel.getRootBlock();
+    myDocument = document;
+    myProject = project;
+    mySettings = settings;
+    myFileType = fileType;
+    myFile = file;
+    myDocumentModel = new FormattingDocumentModelImpl(document,file);
   }
 
   @Override
@@ -86,8 +95,20 @@ public class DocumentBasedFormattingModel implements FormattingModel {
     return myDocumentModel;
   }
 
+
   @Override
   public TextRange replaceWhiteSpace(TextRange textRange, String whiteSpace) {
+    return replaceWhiteSpace(textRange, null, whiteSpace);
+  }
+
+  @Override
+  public TextRange replaceWhiteSpace(TextRange textRange, ASTNode nodeAfter, String whiteSpace) {
+    if (myOriginalFormattingModel instanceof FormattingModelWithShiftIndentInsideDocumentRange) {
+      whiteSpace = ((FormattingModelWithShiftIndentInsideDocumentRange)myOriginalFormattingModel).adjustWhiteSpaceInsideDocument(
+        nodeAfter,
+        whiteSpace);
+    }
+
     boolean removesStartMarker;
     String marker;
 
@@ -121,7 +142,7 @@ public class DocumentBasedFormattingModel implements FormattingModel {
     }
 
     CharSequence whiteSpaceToUse = getDocumentModel().adjustWhiteSpaceIfNecessary(
-      whiteSpace, textRange.getStartOffset(), textRange.getEndOffset(), false
+      whiteSpace, textRange.getStartOffset(), textRange.getEndOffset(), nodeAfter, false
     );
 
     myDocument.replaceString(textRange.getStartOffset(),
@@ -137,7 +158,14 @@ public class DocumentBasedFormattingModel implements FormattingModel {
   }
 
   @Override
-  public TextRange shiftIndentInsideRange(TextRange range, int indent) {
+  public TextRange shiftIndentInsideRange(ASTNode node, TextRange range, int indent) {
+    if (myOriginalFormattingModel instanceof FormattingModelWithShiftIndentInsideDocumentRange) {
+      final TextRange newRange =
+        ((FormattingModelWithShiftIndentInsideDocumentRange)myOriginalFormattingModel).shiftIndentInsideDocumentRange(myDocument, node, range, indent);
+      if (newRange != null)
+        return newRange;
+    }
+
     final int newLength = shiftIndentInside(range, indent);
     return new TextRange(range.getStartOffset(), range.getStartOffset() + newLength);
   }
@@ -154,8 +182,8 @@ public class DocumentBasedFormattingModel implements FormattingModel {
   }
 
   private int shiftIndentInside(final TextRange elementRange, final int shift) {
-    final StringBuffer buffer = new StringBuffer();
-    StringBuffer afterWhiteSpace = new StringBuffer();
+    final StringBuilder buffer = new StringBuilder();
+    StringBuilder afterWhiteSpace = new StringBuilder();
     int whiteSpaceLength = 0;
     boolean insideWhiteSpace = true;
     int line = 0;
@@ -166,10 +194,13 @@ public class DocumentBasedFormattingModel implements FormattingModel {
           if (line > 0) {
             createWhiteSpace(whiteSpaceLength + shift, buffer);
           }
+          else {
+            createWhiteSpace(whiteSpaceLength, buffer);
+          }
           buffer.append(afterWhiteSpace.toString());
           insideWhiteSpace = true;
           whiteSpaceLength = 0;
-          afterWhiteSpace = new StringBuffer();
+          afterWhiteSpace = new StringBuilder();
           buffer.append(c);
           line++;
           break;
@@ -195,15 +226,15 @@ public class DocumentBasedFormattingModel implements FormattingModel {
           afterWhiteSpace.append(c);
       }
     }
-    if (line > 0) {
+    if (line > 0 && afterWhiteSpace.length() > 0 ) {
       createWhiteSpace(whiteSpaceLength + shift, buffer);
+      buffer.append(afterWhiteSpace.toString());
     }
-    buffer.append(afterWhiteSpace.toString());
     myDocument.replaceString(elementRange.getStartOffset(), elementRange.getEndOffset(), buffer.toString());
     return buffer.length();
   }
 
-  private void createWhiteSpace(final int whiteSpaceLength, StringBuffer buffer) {
+  private void createWhiteSpace(final int whiteSpaceLength, StringBuilder buffer) {
     if (whiteSpaceLength < 0) return;
     final CommonCodeStyleSettings.IndentOptions indentOptions = getIndentOptions();
     if (indentOptions.USE_TAB_CHARACTER) {
@@ -221,6 +252,7 @@ public class DocumentBasedFormattingModel implements FormattingModel {
     return mySettings.getIndentOptions(myFileType);
   }
 
+  @NotNull
   public Document getDocument() {
     return myDocument;
   }

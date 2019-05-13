@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2018 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,10 +19,12 @@ import com.intellij.lang.annotation.Annotation;
 import com.intellij.lang.annotation.AnnotationHolder;
 import com.intellij.lang.annotation.Annotator;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.xml.*;
 import com.intellij.util.xml.highlighting.*;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
@@ -43,12 +45,12 @@ public class DefaultDomAnnotator implements Annotator {
     return null;
   }
 
-  public <T extends DomElement> void runInspection(@Nullable final DomElementsInspection<T> inspection, final DomFileElement<T> fileElement, List<Annotation> toFill) {
+  public <T extends DomElement> void runInspection(@Nullable final DomElementsInspection<T> inspection, final DomFileElement<T> fileElement, List<? super Annotation> toFill) {
     if (inspection == null) return;
     DomElementAnnotationsManagerImpl annotationsManager = getAnnotationsManager(fileElement);
     if (DomElementAnnotationsManagerImpl.isHolderUpToDate(fileElement) && annotationsManager.getProblemHolder(fileElement).isInspectionCompleted(inspection)) return;
 
-    final DomElementAnnotationHolderImpl annotationHolder = new DomElementAnnotationHolderImpl(true);
+    DomElementAnnotationHolderImpl annotationHolder = new DomElementAnnotationHolderImpl(true, fileElement);
     inspection.checkFileElement(fileElement, annotationHolder);
     annotationsManager.appendProblems(fileElement, annotationHolder, inspection.getClass());
     for (final DomElementProblemDescriptor descriptor : annotationHolder) {
@@ -62,22 +64,22 @@ public class DefaultDomAnnotator implements Annotator {
   }
 
 
-  public void annotate(final PsiElement psiElement, AnnotationHolder holder) {
-    final List<Annotation> list = (List<Annotation>)holder;
+  @Override
+  public void annotate(@NotNull final PsiElement psiElement, @NotNull AnnotationHolder holder) {
+    if (!(psiElement instanceof XmlTag) &&
+        !(psiElement instanceof XmlAttribute)) {
+      return;
+    }
 
-    final DomManagerImpl domManager = DomManagerImpl.getDomManager(psiElement.getProject());
-    final DomFileDescription description = domManager.getDomFileDescription(psiElement);
+    PsiFile file = holder.getCurrentAnnotationSession().getFile();
+    final DomManagerImpl domManager = DomManagerImpl.getDomManager(file.getProject());
+    final DomFileDescription description = domManager.getDomFileDescription(file);
     if (description != null) {
       final DomElement domElement = getDomElement(psiElement, domManager);
       if (domElement != null) {
-        runInspection(domElement, list);
+        final DomFileElement root = DomUtil.getFileElement(domElement);
+        runInspection(getAnnotationsManager(domElement).getMockInspection(root), root, (List<Annotation>)holder);
       }
     }
   }
-
-  public final void runInspection(final DomElement domElement, final List<Annotation> list) {
-    final DomFileElement root = DomUtil.getFileElement(domElement);
-    runInspection(getAnnotationsManager(domElement).getMockInspection(root), root, list);
-  }
-
 }

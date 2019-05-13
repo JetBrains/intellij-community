@@ -1,10 +1,26 @@
+/*
+ * Copyright 2000-2014 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.intellij.codeInsight;
 
+import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileFactory;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
-import com.intellij.testFramework.PsiTestCase;
+import com.intellij.testFramework.LightPlatformTestCase;
 import com.intellij.xml.XmlAttributeDescriptor;
 import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.XmlNSDescriptor;
@@ -14,8 +30,8 @@ import com.intellij.xml.impl.dtd.XmlNSDescriptorImpl;
 /**
  * @author Mike
  */
-public class XmlDtdTest extends PsiTestCase {
-  public void testDocumentDescriptor1() throws Exception {
+public class XmlDtdTest extends LightPlatformTestCase {
+  public void testDocumentDescriptor1() {
     XmlNSDescriptor NSDescriptor = createDescriptor("<!ELEMENT principals (#PCDATA)><!ELEMENT data-sources (#PCDATA)>");
 
     XmlElementDescriptor elementDescriptor = NSDescriptor.getElementDescriptor(tag("principals"));
@@ -28,7 +44,7 @@ public class XmlDtdTest extends PsiTestCase {
     assertNull(elementDescriptor);
   }
 
-  public void testElementDescriptor1() throws Exception {
+  public void testElementDescriptor1() {
     XmlNSDescriptor NSDescriptor = createDescriptor("<!ELEMENT principals (#PCDATA)><!ELEMENT data-sources (#PCDATA)>");
 
     XmlElementDescriptor elementDescriptor = NSDescriptor.getElementDescriptor(tag("principals"));
@@ -38,7 +54,7 @@ public class XmlDtdTest extends PsiTestCase {
     assertEquals("data-sources", elementDescriptor.getName());
   }
 
-  public void testElementDescriptor2() throws Exception {
+  public void testElementDescriptor2() {
     XmlNSDescriptor NSDescriptor = createDescriptor(
         "<!ELEMENT principals (#PCDATA)><!ELEMENT data-sources ANY>" +
         "<!ELEMENT read-access (namespace-resource)><!ELEMENT group EMPTY>");
@@ -56,7 +72,7 @@ public class XmlDtdTest extends PsiTestCase {
     assertEquals(elementDescriptor.getContentType(), XmlElementDescriptor.CONTENT_TYPE_EMPTY);
   }
 
-  public void testElementDescriptor3() throws Exception {
+  public void testElementDescriptor3() {
     XmlNSDescriptor NSDescriptor = createDescriptor(
         "<!ELEMENT principals ANY><!ATTLIST principals path CDATA #IMPLIED smtp-host CDATA #REQUIRED>" +
         "<!ATTLIST principals address CDATA #IMPLIED>");
@@ -83,7 +99,7 @@ public class XmlDtdTest extends PsiTestCase {
     assertEquals(3, descriptors.length);
   }
 
-  public void testElementDescriptor4() throws Exception {
+  public void testElementDescriptor4() {
     XmlNSDescriptor NSDescriptor = createDescriptor(
         "<!ELEMENT orion-application (ejb-module*, persistence?, namespace-access)>" +
         "<!ELEMENT ejb-module ANY>" +
@@ -108,7 +124,7 @@ public class XmlDtdTest extends PsiTestCase {
     assertEquals("namespace-access", elements[3].getName());
   }
 
-  public void testAttributeDescriptor1() throws Exception {
+  public void testAttributeDescriptor1() {
     XmlNSDescriptor NSDescriptor = createDescriptor(
         "<!ELEMENT principals ANY><!ATTLIST principals path CDATA #IMPLIED>");
 
@@ -123,7 +139,7 @@ public class XmlDtdTest extends PsiTestCase {
     assertNull(attributeDescriptor.getDefaultValue());
   }
 
-  public void testAttributeDescriptor2() throws Exception {
+  public void testAttributeDescriptor2() {
     XmlNSDescriptor NSDescriptor = createDescriptor(
         "<!ELEMENT principals ANY><!ATTLIST principals path CDATA #IMPLIED>");
 
@@ -137,7 +153,7 @@ public class XmlDtdTest extends PsiTestCase {
     assertNull(attributeDescriptor.getDefaultValue());
   }
 
-  public void testAttributeDescriptor3() throws Exception {
+  public void testAttributeDescriptor3() {
     XmlNSDescriptor NSDescriptor = createDescriptor(
         "<!ELEMENT toc ANY> <!ATTLIST toc version CDATA #FIXED \"1.0\">");
 
@@ -151,7 +167,7 @@ public class XmlDtdTest extends PsiTestCase {
     assertEquals("1.0", attributeDescriptor.getDefaultValue());
   }
 
-  public void testAttributeDescriptor4() throws Exception {
+  public void testAttributeDescriptor4() {
     XmlNSDescriptor NSDescriptor = createDescriptor(
         "<!ELEMENT toc ANY> <!ATTLIST toc remote (true|false) \"false\">");
 
@@ -170,7 +186,7 @@ public class XmlDtdTest extends PsiTestCase {
     assertEquals("false", values[1]);
   }
 
-  public void testAttributeDescriptor5() throws Exception {
+  public void testAttributeDescriptor5() {
     XmlNSDescriptor NSDescriptor = createDescriptor(
         "<!ELEMENT toc ANY> <!ATTLIST toc remote (0|1|2) #REQUIRED>");
 
@@ -190,7 +206,7 @@ public class XmlDtdTest extends PsiTestCase {
     assertEquals("2", values[2]);
   }
 
-  public void testEntityDeclElement1() throws Exception {
+  public void testEntityDeclElement1() {
     final XmlNSDescriptor NSDescriptor = createDescriptor(
       "<!ENTITY % types \"fileset | patternset \"> <!ELEMENT project (target | taskdef | %types; | property )*> " +
       "<!ELEMENT target><!ELEMENT taskdef><!ELEMENT fileset><!ELEMENT patternset><!ELEMENT property>");
@@ -203,7 +219,7 @@ public class XmlDtdTest extends PsiTestCase {
     assertEquals(5, elements.length);
   }
 
-  public void testEntityDecl1() throws Exception {
+  public void testEntityDecl1() {
     XmlNSDescriptor NSDescriptor = createDescriptor(
         "<!ENTITY % boolean \"(true|false|on|off|yes|no)\"> <!ELEMENT toc ANY> <!ATTLIST toc remote %boolean; \"false\"");
 
@@ -226,7 +242,7 @@ public class XmlDtdTest extends PsiTestCase {
     assertEquals("no", values[5]);
   }
 
-  public void testEntityDecl2() throws Exception {
+  public void testEntityDecl2() {
     XmlNSDescriptor NSDescriptor = createDescriptor(
         "<!ENTITY % coreattrs \"id D #IMPLIED\"> <!ELEMENT a ANY> <!ATTLIST a %coreattrs; version CDATA #FIXED \"1.0\"");
 
@@ -239,7 +255,7 @@ public class XmlDtdTest extends PsiTestCase {
     assertEquals("version", attributes[1].getName());
   }
 
-  public void testEntityDecl3() throws Exception {
+  public void testEntityDecl3() {
     XmlNSDescriptor NSDescriptor = createDescriptor(
         "<!ENTITY % att1 \"id1 D #IMPLIED\"> <!ENTITY % att2 \"id2 D #IMPLIED\"> <!ELEMENT a ANY> <!ATTLIST a %att1; %att2; ");
 
@@ -252,7 +268,7 @@ public class XmlDtdTest extends PsiTestCase {
     assertEquals("id2", attributes[1].getName());
   }
 
-  public void testEntityDecl4() throws Exception {
+  public void testEntityDecl4() {
     XmlNSDescriptor NSDescriptor = createDescriptor(
         "<!ENTITY % boolean \'(true|false|on|off|yes|no)\'> <!ENTITY % bool \"%boolean;\">  <!ELEMENT toc ANY> <!ATTLIST toc remote %bool; \"false\"");
 
@@ -275,7 +291,7 @@ public class XmlDtdTest extends PsiTestCase {
     assertEquals("no", values[5]);
   }
 
-  public void testEntityDecl5() throws Exception {
+  public void testEntityDecl5() {
     XmlNSDescriptor NSDescriptor = createDescriptor(
         "<!ENTITY % boolean \"true | false\" > <!ELEMENT foo EMPTY> <!ATTLIST foo someBoolean (%boolean;) \"true\" someString CDATA #IMPLIED >");
 
@@ -293,8 +309,8 @@ public class XmlDtdTest extends PsiTestCase {
     assertEquals("false", attributes[0].getEnumeratedValues()[1]);
   }
 
-  public void testEmbeddedDtd1() throws Exception {
-    XmlFile xmlFile = (XmlFile)createDummyFile("test.xml",
+  public void testEmbeddedDtd1() {
+    XmlFile xmlFile = (XmlFile)createFile("test.xml",
       "<!DOCTYPE tv [ <!ELEMENT tv (date)*> <!ELEMENT date (#PCDATA)> ]> <tv></tv>");
 
     final XmlTag tag = xmlFile.getDocument().getRootTag();
@@ -307,16 +323,16 @@ public class XmlDtdTest extends PsiTestCase {
     assertEquals("date", elements[0].getName());
   }
 
-  private XmlNSDescriptor createDescriptor(String dtdText) throws Exception {
-    PsiFile dtdFile = createDummyFile("test.dtd", dtdText);
+  private static XmlNSDescriptor createDescriptor(String dtdText) {
+    PsiFile dtdFile = createLightFile("test.dtd", dtdText);
 
     XmlNSDescriptorImpl descriptor = new XmlNSDescriptorImpl();
     descriptor.init(dtdFile);
     return descriptor;
   }
 
-  private XmlTag tag(String tagName) throws Exception {
-    XmlFile file = (XmlFile)PsiFileFactory.getInstance(myPsiManager.getProject()).createFileFromText("tag.xml", "<" + tagName + "/>");
+  private static XmlTag tag(String tagName) {
+    XmlFile file = (XmlFile)PsiFileFactory.getInstance(getProject()).createFileFromText("tag.xml", StdFileTypes.XML, "<" + tagName + "/>");
     return file.getDocument().getRootTag();
   }
 }

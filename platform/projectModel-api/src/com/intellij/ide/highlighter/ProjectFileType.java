@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,43 +20,53 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.fileTypes.InternalFileType;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
 public class ProjectFileType implements InternalFileType {
-  @NonNls public static final String DEFAULT_EXTENSION = "ipr";
-  @NonNls public static final String DOT_DEFAULT_EXTENSION = ".ipr";
+  public static final ProjectFileType INSTANCE = new ProjectFileType();
 
+  public static final String DEFAULT_EXTENSION = "ipr";
+  public static final String DOT_DEFAULT_EXTENSION = ".ipr";
+
+  private ProjectFileType() { }
+
+  @Override
   @NotNull
   public String getName() {
     return "IDEA_PROJECT";
   }
 
+  @Override
   @NotNull
   public String getDescription() {
     return IdeBundle.message("filetype.description.idea.project");
   }
 
+  @Override
   @NotNull
   public String getDefaultExtension() {
     return DEFAULT_EXTENSION;
   }
 
+  @Override
   public Icon getIcon() {
     return AllIcons.Nodes.IdeaModule;
   }
 
+  @Override
   public boolean isBinary() {
     return false;
   }
 
+  @Override
   public boolean isReadOnly() {
     return true;
   }
 
-  public String getCharset(@NotNull VirtualFile file, final byte[] content) {
+  @Override
+  public String getCharset(@NotNull VirtualFile file, @NotNull final byte[] content) {
     return CharsetToolkit.UTF8;
   }
 }

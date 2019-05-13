@@ -24,14 +24,8 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-/**
- * Created with IntelliJ IDEA.
- * User: Irina.Chernushina
- * Date: 6/7/12
- * Time: 1:28 PM
- */
 public class InvalidUsageNoteProjectNode extends ProjectViewNodeWithChildrenList<InvalidUsageNoteNode> {
-  public InvalidUsageNoteProjectNode(Project project, InvalidUsageNoteNode node, ViewSettings viewSettings) {
+  public InvalidUsageNoteProjectNode(Project project, @NotNull InvalidUsageNoteNode node, ViewSettings viewSettings) {
     super(project, node, viewSettings);
   }
 
@@ -41,10 +35,10 @@ public class InvalidUsageNoteProjectNode extends ProjectViewNodeWithChildrenList
   }
 
   @Override
-  protected void update(PresentationData presentation) {
+  protected void update(@NotNull PresentationData presentation) {
     final List<TextChunk> text = getValue().getText();
     if (!text.isEmpty()) {
-      UsageProjectTreeNode.updatePresentationWithTextChunks(presentation, text.toArray(new TextChunk[text.size()]));
+      UsageProjectTreeNode.updatePresentationWithTextChunks(presentation, text.toArray(TextChunk.EMPTY_ARRAY));
     }
   }
 }

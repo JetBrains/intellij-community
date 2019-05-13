@@ -1,0 +1,1 @@
+<warning descr="Unused import statement">from nspkg1 import <error descr="Cannot find reference 'not_found' in 'imported module nspkg1'">not_found</error></warning>

@@ -21,12 +21,6 @@ import org.jetbrains.annotations.NotNull;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * Created by IntelliJ IDEA.
- * User: Irina.Chernushina
- * Date: 8/5/11
- * Time: 7:54 PM
- */
 public class ExceptionFilters {
   private ExceptionFilters() {
   }
@@ -34,7 +28,7 @@ public class ExceptionFilters {
   @NotNull
   public static List<Filter> getFilters(@NotNull GlobalSearchScope searchScope) {
     ExceptionFilterFactory[] extensions = ExceptionFilterFactory.EP_NAME.getExtensions();
-    List<Filter> filters = new ArrayList<Filter>(extensions.length);
+    List<Filter> filters = new ArrayList<>(extensions.length);
     for (ExceptionFilterFactory extension : extensions) {
       filters.add(extension.create(searchScope));
     }

@@ -1,56 +1,45 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util;
 
 import com.intellij.concurrency.AsyncFuture;
-import com.intellij.concurrency.AsyncFutureFactory;
-import com.intellij.concurrency.AsyncFutureResult;
-import com.intellij.concurrency.FinallyFuture;
+import com.intellij.concurrency.AsyncUtil;
+import com.intellij.openapi.application.ReadActionProcessor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
+import java.util.List;
 
 /**
  * @author peter
  */
 public abstract class AbstractQuery<Result> implements Query<Result> {
-  private boolean myIsProcessing = false;
+  private boolean myIsProcessing;
 
   @Override
   @NotNull
   public Collection<Result> findAll() {
     assertNotProcessing();
-    final CommonProcessors.CollectProcessor<Result> processor = new CommonProcessors.CollectProcessor<Result>();
+    List<Result> result = new ArrayList<>();
+    Processor<Result> processor = Processors.cancelableCollectProcessor(result);
     forEach(processor);
-    return processor.getResults();
+    return result;
   }
 
+  @NotNull
   @Override
   public Iterator<Result> iterator() {
     assertNotProcessing();
-    return new UnmodifiableIterator<Result>(findAll().iterator());
+    return new UnmodifiableIterator<>(findAll().iterator());
   }
 
   @Override
   @Nullable
   public Result findFirst() {
     assertNotProcessing();
-    final CommonProcessors.FindFirstProcessor<Result> processor = new CommonProcessors.FindFirstProcessor<Result>();
+    final CommonProcessors.FindFirstProcessor<Result> processor = new CommonProcessors.FindFirstProcessor<>();
     forEach(processor);
     return processor.getFoundValue();
   }
@@ -69,7 +58,7 @@ public abstract class AbstractQuery<Result> implements Query<Result> {
   }
 
   @Override
-  public boolean forEach(@NotNull Processor<Result> consumer) {
+  public boolean forEach(@NotNull Processor<? super Result> consumer) {
     assertNotProcessing();
 
     myIsProcessing = true;
@@ -83,26 +72,24 @@ public abstract class AbstractQuery<Result> implements Query<Result> {
 
   @NotNull
   @Override
-  public AsyncFuture<Boolean> forEachAsync(@NotNull Processor<Result> consumer) {
-    assertNotProcessing();
-    myIsProcessing = true;
-    return new FinallyFuture<Boolean>(processResultsAsync(consumer), new Runnable() {
-      @Override
-      public void run() {
-        myIsProcessing = false;
-      }
-    });
+  public AsyncFuture<Boolean> forEachAsync(@NotNull Processor<? super Result> consumer) {
+    return AsyncUtil.wrapBoolean(forEach(consumer));
   }
 
-  protected abstract boolean processResults(@NotNull Processor<Result> consumer);
+  protected abstract boolean processResults(@NotNull Processor<? super Result> consumer);
 
-  protected AsyncFuture<Boolean> processResultsAsync(@NotNull Processor<Result> consumer) {
-    final AsyncFutureResult<Boolean> result = AsyncFutureFactory.getInstance().createAsyncFutureResult();
-    try {
-      result.set(processResults(consumer));
-    } catch (Throwable t) {
-      result.setException(t);
-    }
-    return result;
+  @NotNull
+  protected AsyncFuture<Boolean> processResultsAsync(@NotNull Processor<? super Result> consumer) {
+    return AsyncUtil.wrapBoolean(processResults(consumer));
+  }
+
+  @NotNull
+  public static <T> Query<T> wrapInReadAction(@NotNull final Query<? extends T> query) {
+    return new AbstractQuery<T>() {
+      @Override
+      protected boolean processResults(@NotNull Processor<? super T> consumer) {
+        return query.forEach(ReadActionProcessor.wrapInReadAction(consumer));
+      }
+    };
   }
 }

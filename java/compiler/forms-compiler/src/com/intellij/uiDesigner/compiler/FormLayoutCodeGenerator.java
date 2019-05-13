@@ -21,10 +21,10 @@ import com.intellij.uiDesigner.lw.LwComponent;
 import com.intellij.uiDesigner.lw.LwContainer;
 import com.jgoodies.forms.layout.CellConstraints;
 import com.jgoodies.forms.layout.FormLayout;
-import org.jetbrains.asm4.Opcodes;
-import org.jetbrains.asm4.Type;
-import org.jetbrains.asm4.commons.GeneratorAdapter;
-import org.jetbrains.asm4.commons.Method;
+import org.jetbrains.org.objectweb.asm.Opcodes;
+import org.jetbrains.org.objectweb.asm.Type;
+import org.jetbrains.org.objectweb.asm.commons.GeneratorAdapter;
+import org.jetbrains.org.objectweb.asm.commons.Method;
 
 import java.awt.*;
 
@@ -43,6 +43,7 @@ public class FormLayoutCodeGenerator extends LayoutCodeGenerator {
   public static String[] HORZ_ALIGN_FIELDS = new String[] { "LEFT", "CENTER", "RIGHT", "FILL" };
   public static String[] VERT_ALIGN_FIELDS = new String[] { "TOP", "CENTER", "BOTTOM", "FILL" };
 
+  @Override
   public void generateContainerLayout(final LwContainer lwContainer, final GeneratorAdapter generator, final int componentLocal) {
     FormLayout formLayout = (FormLayout) lwContainer.getLayout();
 
@@ -85,6 +86,7 @@ public class FormLayoutCodeGenerator extends LayoutCodeGenerator {
     generator.invokeVirtual(ourFormLayoutType, setGroupsMethod);
   }
 
+  @Override
   public void generateComponentLayout(final LwComponent lwComponent, final GeneratorAdapter generator, final int componentLocal, final int parentLocal) {
     generator.loadLocal(parentLocal);
     generator.loadLocal(componentLocal);

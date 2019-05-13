@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,18 +23,13 @@ import com.intellij.cvsSupport2.ui.CvsTabbedWindow;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.cvsIntegration.CvsResult;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.EditorFactory;
-import com.intellij.openapi.editor.EditorSettings;
 import com.intellij.openapi.progress.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.wm.StatusBar;
-import com.intellij.pom.Navigatable;
+import com.intellij.pom.NonNavigatable;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.ErrorTreeView;
 import com.intellij.util.ui.MessageCategory;
@@ -48,9 +43,6 @@ import java.util.List;
  * author: lesya
  */
 public class CvsOperationExecutor {
-
-  private static final Logger LOG = Logger.getInstance("#com.intellij.cvsSupport2.cvsExecution.CvsOperationExecutor");
-
   private final CvsResultEx myResult = new CvsResultEx();
 
   private final boolean myShowProgress;
@@ -85,63 +77,51 @@ public class CvsOperationExecutor {
   public void performActionSync(final CvsHandler handler, final CvsOperationExecutorCallback callback) {
     final CvsTabbedWindow tabbedWindow = myIsQuietOperation ? null : openTabbedWindow(handler);
 
-    final Runnable finish = new Runnable() {
-      @Override
-      public void run() {
+    final Runnable finish = () -> {
+      try {
+        myResult.addAllErrors(handler.getErrorsExceptAborted());
+        handler.finish();
+        if (myProject == null || !myProject.isDisposed()) {
+          showErrors(handler, tabbedWindow);
+        }
+      }
+      finally {
         try {
-          myResult.addAllErrors(handler.getErrorsExceptAborted());
-          handler.finish();
-          if (myProject == null || myProject != null && !myProject.isDisposed()) {
-            showErrors(handler, tabbedWindow);
+          if (myResult.finishedUnsuccessfully(handler)) {
+            callback.executionFinished(false);
+          }
+          else {
+            if (handler.getErrors().isEmpty()) callback.executionFinishedSuccessfully();
+            callback.executionFinished(true);
           }
         }
         finally {
-          try {
-            if (myResult.finishedUnsuccessfully(handler)) {
-              callback.executionFinished(false);
-            }
-            else {
-              if (handler.getErrors().isEmpty()) callback.executionFinishedSuccessfully();
-              callback.executionFinished(true);
-            }
-          }
-          finally {
-            if (myProject != null && handler != CvsHandler.NULL) {
-              ApplicationManager.getApplication().invokeLater(new Runnable() {
-                @Override
-                public void run() {
-                  StatusBar.Info.set(getStatusMessage(handler), myProject);
-                }
-              });
-            }
+          if (myProject != null && handler != CvsHandler.NULL) {
+            ApplicationManager.getApplication().invokeLater(() -> StatusBar.Info.set(getStatusMessage(handler), myProject));
           }
         }
       }
     };
 
-    final Runnable cvsAction = new Runnable() {
-      @Override
-      public void run() {
-        try {
-          if (handler == CvsHandler.NULL) return;
-          setText(CvsBundle.message("progress.text.preparing.for.login"));
+    final Runnable cvsAction = () -> {
+      try {
+        if (handler == CvsHandler.NULL) return;
+        setText(CvsBundle.message("progress.text.preparing.for.login"));
 
-          handler.beforeLogin();
+        handler.beforeLogin();
 
-          if (myResult.finishedUnsuccessfully(handler)) return;
+        if (myResult.finishedUnsuccessfully(handler)) return;
 
-          setText(CvsBundle.message("progress.text.preparing.for.action", handler.getTitle()));
+        setText(CvsBundle.message("progress.text.preparing.for.action", handler.getTitle()));
 
-          handler.run(myProject, myExecutor);
-          if (myResult.finishedUnsuccessfully(handler)) return;
-
-        }
-        catch (ProcessCanceledException ex) {
-          myResult.setIsCanceled();
-        }
-        finally {
-          callback.executeInProgressAfterAction(myExecutor);
-        }
+        handler.run(myProject, myExecutor);
+        myResult.finishedUnsuccessfully(handler);
+      }
+      catch (ProcessCanceledException ex) {
+        myResult.setIsCanceled();
+      }
+      finally {
+        callback.executeInProgressAfterAction(myExecutor);
       }
     };
 
@@ -201,7 +181,7 @@ public class CvsOperationExecutor {
     if (!myShowErrors || myIsQuietOperation) return;
     if (tabbedWindow == null) {
       if (errors.isEmpty()) return;
-      final List<String> messages = new ArrayList<String>();
+      final List<String> messages = new ArrayList<>();
       for (VcsException error : errors) {
         if (! StringUtil.isEmptyOrSpaces(error.getMessage())) {
           messages.add(error.getMessage());
@@ -211,36 +191,19 @@ public class CvsOperationExecutor {
       Messages.showErrorDialog(errorMessage, "CVS Error");
       return;
     }
-    if (errors.isEmpty()) {
-      tabbedWindow.hideErrors();
-    }
-    else {
+    if (!errors.isEmpty()) {
       ErrorTreeView errorTreeView = tabbedWindow.getErrorsTreeView();
       for (final VcsException exception : errors) {
         final String groupName = DateFormatUtil.formatDateTime(System.currentTimeMillis()) + ' ' + handler.getTitle();
         if (exception.isWarning()) {
-          errorTreeView.addMessage(MessageCategory.WARNING, exception.getMessages(), groupName, DummyNavigatable.INSTANCE,
+          errorTreeView.addMessage(MessageCategory.WARNING, exception.getMessages(), groupName, NonNavigatable.INSTANCE,
                                    null, null, exception);
         } else {
-          errorTreeView.addMessage(MessageCategory.ERROR, exception.getMessages(), groupName, DummyNavigatable.INSTANCE,
+          errorTreeView.addMessage(MessageCategory.ERROR, exception.getMessages(), groupName, NonNavigatable.INSTANCE,
                                    null, null, exception);
         }
       }
-      tabbedWindow.ensureVisible(myProject);
     }
-  }
-
-  @NotNull private static Editor createView(Project project) {
-    EditorFactory editorFactory = EditorFactory.getInstance();
-    Document document = editorFactory.createDocument("");
-    Editor result = editorFactory.createViewer(document, project);
-
-    EditorSettings editorSettings = result.getSettings();
-    editorSettings.setLineMarkerAreaShown(false);
-    editorSettings.setLineNumbersShown(false);
-    editorSettings.setIndentGuidesShown(false);
-    editorSettings.setFoldingOutlineShown(false);
-    return result;
   }
 
   private static String getStatusMessage(final CvsHandler handler) {
@@ -258,15 +221,7 @@ public class CvsOperationExecutor {
     if (myProject != null && myProject.isDefault()) return null;
     if (myProject != null) {
       if (myConfiguration != null && myConfiguration.SHOW_OUTPUT && !myIsQuietOperation) {
-        if (ApplicationManager.getApplication().isDispatchThread()) {
-          connectToOutput(output);
-        } else {
-          ApplicationManager.getApplication().invokeAndWait(new Runnable() {
-            public void run() {
-              connectToOutput(output);
-            }
-          }, ModalityState.defaultModalityState());
-        }
+        ApplicationManager.getApplication().invokeAndWait(() -> connectToOutput(output));
       }
       if (!myProject.isDisposed()) {
         return CvsTabbedWindow.getInstance(myProject);
@@ -276,13 +231,7 @@ public class CvsOperationExecutor {
   }
 
   private void connectToOutput(CvsHandler output) {
-    CvsTabbedWindow tabbedWindow = CvsTabbedWindow.getInstance(myProject);
-    Editor editor = tabbedWindow.getOutput();
-    if (editor == null) {
-      output.connectToOutputView(tabbedWindow.addOutput(createView(myProject)), myProject);
-    } else {
-      output.connectToOutputView(editor, myProject);
-    }
+    output.connectToOutputView(CvsTabbedWindow.getInstance(myProject).getOutput(), myProject);
   }
 
   public VcsException getFirstError() {
@@ -295,25 +244,6 @@ public class CvsOperationExecutor {
 
   public CvsResult getResult() {
     return myResult;
-  }
-
-  private static class DummyNavigatable implements Navigatable {
-    public static final Navigatable INSTANCE = new DummyNavigatable();
-
-    private DummyNavigatable() {}
-
-    @Override
-    public void navigate(boolean requestFocus) {}
-
-    @Override
-    public boolean canNavigate() {
-      return false;
-    }
-
-    @Override
-    public boolean canNavigateToSource() {
-      return false;
-    }
   }
 
   public void setShowErrors(boolean showErrors) {

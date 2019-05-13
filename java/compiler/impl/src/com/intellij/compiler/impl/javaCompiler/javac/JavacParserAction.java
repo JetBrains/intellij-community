@@ -24,7 +24,6 @@ import java.util.regex.Matcher;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Sep 14, 2005
  */
 public abstract class JavacParserAction extends ParserAction {
   private final Matcher myMatcher;
@@ -33,6 +32,7 @@ public abstract class JavacParserAction extends ParserAction {
     myMatcher = matcher;
   }
 
+  @Override
   public final boolean execute(String line, final OutputParser.Callback callback) {
     myMatcher.reset(line);
     if (!myMatcher.matches()) {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,69 +19,46 @@ import com.intellij.concurrency.JobSchedulerImpl;
 import com.intellij.openapi.util.io.FileUtil;
 
 import java.io.*;
-import java.math.BigInteger;
 
 /**
  * @author peter
  */
-@SuppressWarnings({"UtilityClassWithoutPrivateConstructor"})
+@SuppressWarnings("UtilityClassWithoutPrivateConstructor")
 public class Timings {
   private static final int IO_PROBES = 42;
 
   public static final long CPU_TIMING;
   public static final long IO_TIMING;
-  public static final long MACHINE_TIMING;
 
   /**
    * Measured on dual core p4 3HZ 1gig ram
    */
-  public static final long ETALON_TIMING = 438;
-  public static final long ETALON_CPU_TIMING = 200;
-  public static final long ETALON_IO_TIMING = 100;
-
+  public static final long REFERENCE_CPU_TIMING = 200;
+  public static final long REFERENCE_IO_TIMING = 100;
 
   static {
-    int N = 20;
-    for (int i=0; i<N; i++) {
-      measureCPU(); //warmup
-    }
-    long[] elapsed=new long[N];
-    for (int i=0; i< N; i++) {
-      elapsed[i] = measureCPU();
-    }
-    CPU_TIMING = PlatformTestUtil.averageAmongMedians(elapsed, 2);
+    CPU_TIMING = CpuTimings.calcStableCpuTiming();
 
     long start = System.currentTimeMillis();
     for (int i = 0; i < IO_PROBES; i++) {
       try {
         final File tempFile = FileUtil.createTempFile("test", "test" + i);
 
-        final FileWriter writer = new FileWriter(tempFile);
-        try {
+        try (FileWriter writer = new FileWriter(tempFile)) {
           for (int j = 0; j < 15; j++) {
             writer.write("test" + j);
             writer.flush();
           }
         }
-        finally {
-          writer.close();
-        }
 
-        final FileReader reader = new FileReader(tempFile);
-        try {
-          while (reader.read() >= 0) {}
-        }
-        finally {
-          reader.close();
+        try (FileReader reader = new FileReader(tempFile)) {
+          while (reader.read() >= 0) {
+          }
         }
 
         if (i == IO_PROBES - 1) {
-          final FileOutputStream stream = new FileOutputStream(tempFile);
-          try {
+          try (FileOutputStream stream = new FileOutputStream(tempFile)) {
             stream.getFD().sync();
-          }
-          finally {
-            stream.close();
           }
         }
 
@@ -94,19 +71,6 @@ public class Timings {
       }
     }
     IO_TIMING = System.currentTimeMillis() - start;
-
-    MACHINE_TIMING = CPU_TIMING + IO_TIMING;
-  }
-
-  private static long measureCPU() {
-    long start = System.currentTimeMillis();
-
-    BigInteger k = new BigInteger("1");
-    for (int i = 0; i < 1000000; i++) {
-      k = k.add(new BigInteger("1"));
-    }
-
-    return System.currentTimeMillis() - start;
   }
 
   /**
@@ -115,14 +79,12 @@ public class Timings {
    * @return value calibrated according to this machine speed. For slower machine, lesser value will be returned
    */
   public static int adjustAccordingToMySpeed(int value, boolean isParallelizable) {
-    return Math.max(1, (int)(1.0 * value * ETALON_TIMING / MACHINE_TIMING) / 8 * (isParallelizable ? JobSchedulerImpl.CORES_COUNT : 1));
+    return Math.max(1, (int)(1.0 * value * REFERENCE_CPU_TIMING / CPU_TIMING) / 8 * (isParallelizable ? JobSchedulerImpl.getJobPoolParallelism() : 1));
   }
 
   public static String getStatistics() {
-    return
-      " Timings: CPU=" + CPU_TIMING + " (" + (int)(CPU_TIMING*1.0/ ETALON_CPU_TIMING*100) + "% of the etalon)" +
-      ", I/O=" + IO_TIMING + " (" + (int)(IO_TIMING*1.0/ ETALON_IO_TIMING*100) + "% of the etalon)" +
-      ", total=" + MACHINE_TIMING + " ("+(int)(MACHINE_TIMING*1.0/ ETALON_TIMING*100) + "% of the etalon)" +
-      ".";
+    return String.format("CPU=%d (%d%% reference CPU), I/O=%d (%d%% reference IO), %d cores",
+                         CPU_TIMING, CPU_TIMING * 100 / REFERENCE_CPU_TIMING,
+                         IO_TIMING, IO_TIMING * 100 / REFERENCE_IO_TIMING, Runtime.getRuntime().availableProcessors());
   }
 }

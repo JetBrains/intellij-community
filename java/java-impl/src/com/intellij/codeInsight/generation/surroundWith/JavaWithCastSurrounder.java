@@ -33,12 +33,12 @@ import org.jetbrains.annotations.NonNls;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
-class JavaWithCastSurrounder extends JavaExpressionSurrounder {
+public class JavaWithCastSurrounder extends JavaExpressionSurrounder {
   @NonNls private static final String TYPE_TEMPLATE_VARIABLE = "type";
 
   @Override
   public boolean isApplicable(PsiExpression expr) {
-    return true;
+    return !PsiType.VOID.equals(expr.getType());
   }
 
   @Override
@@ -70,11 +70,11 @@ class JavaWithCastSurrounder extends JavaExpressionSurrounder {
     final Template template = templateManager.createTemplate("", "");
     template.setToReformat(true);
 
-    Set<LookupElement> itemSet = new LinkedHashSet<LookupElement>();
+    Set<LookupElement> itemSet = new LinkedHashSet<>();
     for (PsiType type : suggestedTypes) {
       itemSet.add(PsiTypeLookupItem.createLookupItem(type, null));
     }
-    final LookupElement[] lookupItems = itemSet.toArray(new LookupElement[itemSet.size()]);
+    final LookupElement[] lookupItems = itemSet.toArray(LookupElement.EMPTY_ARRAY);
 
     final Result result = suggestedTypes.length > 0 ? new PsiTypeResult(suggestedTypes[0], project) : null;
 

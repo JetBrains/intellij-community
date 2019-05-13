@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,8 +20,8 @@ import com.intellij.codeInsight.daemon.DaemonBundle;
 import com.intellij.codeInsight.problems.WolfTheProblemSolverImpl;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.problems.WolfTheProblemSolver;
 import com.intellij.psi.PsiFile;
@@ -30,14 +30,14 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author cdr
 */
-class WolfHighlightingPass extends ProgressableTextEditorHighlightingPass implements DumbAware {
+class WolfHighlightingPass extends ProgressableTextEditorHighlightingPass {
   WolfHighlightingPass(@NotNull Project project, @NotNull Document document, @NotNull PsiFile file) {
-    super(project, document, DaemonBundle.message("pass.wolf"), file, false);
+    super(project, document, DaemonBundle.message("pass.wolf"), file, null, TextRange.EMPTY_RANGE, false, new DefaultHighlightInfoProcessor());
   }
 
   @Override
-  protected void collectInformationWithProgress(final ProgressIndicator progress) {
-    if (!Registry.is("wolf.the.problem.solver", true)) return;
+  protected void collectInformationWithProgress(@NotNull final ProgressIndicator progress) {
+    if (!Registry.is("wolf.the.problem.solver")) return;
     final WolfTheProblemSolver solver = WolfTheProblemSolver.getInstance(myProject);
     if (solver instanceof WolfTheProblemSolverImpl) {
       ((WolfTheProblemSolverImpl)solver).startCheckingIfVincentSolvedProblemsYet(progress, this);

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,7 +20,6 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.UserDataHolderBase;
-import com.intellij.openapi.vfs.impl.local.FileWatcher;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -28,37 +27,25 @@ import java.awt.*;
 
 public class CommandLineApplication {
   private static final Logger LOG = Logger.getInstance("#com.intellij.idea.CommandLineApplication");
-  protected static CommandLineApplication ourInstance = null;
+
+  protected static CommandLineApplication ourInstance;
 
   static {
-    System.setProperty(FileWatcher.PROPERTY_WATCHER_DISABLED, Boolean.TRUE.toString());
-
-    /*
-    final Category category = Category.getRoot();
-    final Enumeration enumeration = category.getAllAppenders();
-    while (enumeration.hasMoreElements()) {
-      Object o = enumeration.nextElement();
-      if (o instanceof DialogAppender) {
-        category.removeAppender((Appender)o);
-        break;
-      }
-    }
-    */
+    System.setProperty("idea.filewatcher.disabled", "true");
   }
 
-  protected CommandLineApplication() {}
-
   protected CommandLineApplication(boolean isInternal, boolean isUnitTestMode, boolean isHeadless) {
-    this(isInternal, isUnitTestMode, isHeadless, "idea");
+    this(isInternal, isUnitTestMode, isHeadless, ApplicationManagerEx.IDEA_APPLICATION);
   }
 
   protected CommandLineApplication(boolean isInternal, boolean isUnitTestMode, boolean isHeadless, @NotNull @NonNls String appName) {
     LOG.assertTrue(ourInstance == null, "Only one instance allowed.");
+    //noinspection AssignmentToStaticFieldFromInstanceMethod
     ourInstance = this;
     ApplicationManagerEx.createApplication(isInternal, isUnitTestMode, isHeadless, true, appName, null);
   }
 
-  public Object getData(String dataId) {
+  public Object getData(@NotNull String dataId) {
     return null;
   }
 
@@ -69,11 +56,13 @@ public class CommandLineApplication {
       return new CommandLineDataContext();
     }
 
+    @NotNull
     @Override
     public DataContext getDataContext(Component component) {
       return getDataContext();
     }
 
+    @NotNull
     @Override
     public DataContext getDataContext(@NotNull Component component, int x, int y) {
       return getDataContext();
@@ -81,7 +70,7 @@ public class CommandLineApplication {
 
     private static class CommandLineDataContext extends UserDataHolderBase implements DataContext {
       @Override
-      public Object getData(String dataId) {
+      public Object getData(@NotNull String dataId) {
         return ourInstance.getData(dataId);
       }
     }

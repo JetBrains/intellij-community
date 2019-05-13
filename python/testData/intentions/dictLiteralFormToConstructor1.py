@@ -1,0 +1,1 @@
+a = {'as':<caret> 3, 'class': 5}

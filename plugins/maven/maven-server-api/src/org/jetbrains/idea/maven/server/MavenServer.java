@@ -15,6 +15,8 @@
  */
 package org.jetbrains.idea.maven.server;
 
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.idea.maven.model.MavenExplicitProfiles;
 import org.jetbrains.idea.maven.model.MavenModel;
 
 import java.io.File;
@@ -25,16 +27,17 @@ import java.util.Collection;
 public interface MavenServer extends Remote {
   void set(MavenServerLogger logger, MavenServerDownloadListener downloadListener) throws RemoteException;
 
-  MavenServerEmbedder createEmbedder(MavenServerSettings settings) throws RemoteException;
+  MavenServerEmbedder createEmbedder(MavenEmbedderSettings settings) throws RemoteException;
 
   MavenServerIndexer createIndexer() throws RemoteException;
 
+  @NotNull
   MavenModel interpolateAndAlignModel(MavenModel model, File basedir) throws RemoteException;
 
   MavenModel assembleInheritance(MavenModel model, MavenModel parentModel) throws RemoteException;
 
   ProfileApplicationResult applyProfiles(MavenModel model,
                                          File basedir,
-                                         Collection<String> explicitProfiles,
+                                         MavenExplicitProfiles explicitProfiles,
                                          Collection<String> alwaysOnProfiles) throws RemoteException;
 }

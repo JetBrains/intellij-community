@@ -22,15 +22,17 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.io.FileNotFoundException;
 
 public class ExportToHTMLAction extends AnAction {
 
-  public void actionPerformed(AnActionEvent e) {
+  @Override
+  public void actionPerformed(@NotNull AnActionEvent e) {
     DataContext dataContext = e.getDataContext();
-    Project project = PlatformDataKeys.PROJECT.getData(dataContext);
+    Project project = CommonDataKeys.PROJECT.getData(dataContext);
     if (project == null) {
       return;
     }
@@ -43,16 +45,18 @@ public class ExportToHTMLAction extends AnAction {
     }
   }
 
-  public void update(AnActionEvent event){
+  @Override
+  public void update(@NotNull AnActionEvent event){
     Presentation presentation = event.getPresentation();
     DataContext dataContext = event.getDataContext();
-    PsiElement psiElement = LangDataKeys.PSI_ELEMENT.getData(dataContext);
+    PsiElement psiElement = CommonDataKeys.PSI_ELEMENT.getData(dataContext);
     if(psiElement instanceof PsiDirectory) {
       presentation.setEnabled(true);
       return;
     }
-    PsiFile psiFile = LangDataKeys.PSI_FILE.getData(dataContext);
+    PsiFile psiFile = CommonDataKeys.PSI_FILE.getData(dataContext);
     presentation.setEnabled(psiFile != null && psiFile.getContainingDirectory() != null);
+    presentation.setVisible(psiFile != null);
   }
 
 }

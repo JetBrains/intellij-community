@@ -62,10 +62,12 @@ public class EnvironmentVariable implements JDOMExternalizable, Cloneable {
     return IS_PREDEFINED;
   }
 
+  @Override
   public void readExternal(Element element) throws InvalidDataException {
     DefaultJDOMExternalizer.readExternal(this, element);
   }
 
+  @Override
   public void writeExternal(Element element) throws WriteExternalException {
     DefaultJDOMExternalizer.writeExternal(this, element);
   }
@@ -74,6 +76,7 @@ public class EnvironmentVariable implements JDOMExternalizable, Cloneable {
     return true;
   }
 
+  @Override
   public EnvironmentVariable clone() {
     try {
       return (EnvironmentVariable)super.clone();

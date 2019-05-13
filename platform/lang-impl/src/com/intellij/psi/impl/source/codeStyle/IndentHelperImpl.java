@@ -16,13 +16,16 @@
 
 package com.intellij.psi.impl.source.codeStyle;
 
+import com.intellij.application.options.CodeStyle;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
+import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.impl.source.tree.CompositeElement;
 import com.intellij.psi.impl.source.tree.TreeUtil;
+import org.jetbrains.annotations.NotNull;
 
 public class IndentHelperImpl extends IndentHelper {
   //----------------------------------------------------------------------------------------------------
@@ -30,18 +33,18 @@ public class IndentHelperImpl extends IndentHelper {
   public static final int INDENT_FACTOR = 10000; // "indent" is indent_level * INDENT_FACTOR + spaces
 
   @Override
-  public int getIndent(Project project, FileType fileType, ASTNode element) {
-    return getIndent(project, fileType, element, false);
+  public int getIndent(@NotNull PsiFile file, @NotNull ASTNode element) {
+    return getIndent(file, element, false);
   }
 
   @Override
-  public int getIndent(Project project, FileType fileType, final ASTNode element, boolean includeNonSpace) {
-    return getIndentInner(project, fileType, element, includeNonSpace, 0);
+  public int getIndent(@NotNull PsiFile file, @NotNull final ASTNode element, boolean includeNonSpace) {
+    return getIndentInner(file, element, includeNonSpace, 0);
   }
   
   public static final int TOO_BIG_WALK_THRESHOLD = 450;
 
-  protected int getIndentInner(Project project, FileType fileType, final ASTNode element, boolean includeNonSpace, int recursionLevel) {
+  protected int getIndentInner(@NotNull PsiFile file, @NotNull final ASTNode element, boolean includeNonSpace, int recursionLevel) {
     if (recursionLevel > TOO_BIG_WALK_THRESHOLD) return 0;
 
     if (element.getTreePrev() != null) {
@@ -51,7 +54,7 @@ public class IndentHelperImpl extends IndentHelper {
         lastCompositePrev = prev;
         prev = prev.getLastChildNode();
         if (prev == null) { // element.prev is "empty composite"
-          return getIndentInner(project, fileType, lastCompositePrev, includeNonSpace, recursionLevel + 1);
+          return getIndentInner(file, lastCompositePrev, includeNonSpace, recursionLevel + 1);
         }
       }
 
@@ -59,11 +62,11 @@ public class IndentHelperImpl extends IndentHelper {
       int index = Math.max(text.lastIndexOf('\n'), text.lastIndexOf('\r'));
 
       if (index >= 0) {
-        return getIndent(project, fileType, text.substring(index + 1), includeNonSpace);
+        return getIndent(file, text.substring(index + 1), includeNonSpace);
       }
 
       if (includeNonSpace) {
-        return getIndentInner(project, fileType, prev, includeNonSpace, recursionLevel + 1) + getIndent(project, fileType, text, includeNonSpace);
+        return getIndentInner(file, prev, includeNonSpace, recursionLevel + 1) + getIndent(file, text, includeNonSpace);
       }
 
 
@@ -76,32 +79,39 @@ public class IndentHelperImpl extends IndentHelper {
       }
 
       if (parent == null) {
-        return getIndent(project, fileType, text, includeNonSpace);
+        return getIndent(file, text, includeNonSpace);
       }
       else {
-        return getIndentInner(project, fileType, prev, includeNonSpace, recursionLevel + 1);
+        return getIndentInner(file, prev, includeNonSpace, recursionLevel + 1);
       }
     }
     else {
       if (element.getTreeParent() == null) {
         return 0;
       }
-      return getIndentInner(project, fileType, element.getTreeParent(), includeNonSpace, recursionLevel + 1);
+      return getIndentInner(file, element.getTreeParent(), includeNonSpace, recursionLevel + 1);
     }
   }
 
-  public static String fillIndent(Project project, FileType fileType, int indent) {
-    final CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(project);
+  /**
+   * @deprecated Use {@link #fillIndent(CommonCodeStyleSettings.IndentOptions, int)} instead.
+   */
+  @Deprecated
+  public static String fillIndent(Project project,  FileType fileType, int indent) {
+    return fillIndent(CodeStyle.getProjectOrDefaultSettings(project).getIndentOptions(fileType), indent);
+  }
+
+  public static String fillIndent(@NotNull CommonCodeStyleSettings.IndentOptions indentOptions, int indent) {
     int indentLevel = (indent + INDENT_FACTOR / 2) / INDENT_FACTOR;
     int spaceCount = indent - indentLevel * INDENT_FACTOR;
-    int indentLevelSize = indentLevel * settings.getIndentSize(fileType);
+    int indentLevelSize = indentLevel * indentOptions.INDENT_SIZE;
     int totalSize = indentLevelSize + spaceCount;
 
     StringBuilder buffer = new StringBuilder();
-    if (settings.useTabCharacter(fileType)) {
-      if (settings.isSmartTabs(fileType)) {
-        int tabCount = indentLevelSize / settings.getTabSize(fileType);
-        int leftSpaces = indentLevelSize - tabCount * settings.getTabSize(fileType);
+    if (indentOptions.USE_TAB_CHARACTER) {
+      if (indentOptions.SMART_TABS) {
+        int tabCount = indentLevelSize / indentOptions.TAB_SIZE;
+        int leftSpaces = indentLevelSize - tabCount * indentOptions.TAB_SIZE;
         for (int i = 0; i < tabCount; i++) {
           buffer.append('\t');
         }
@@ -112,9 +122,9 @@ public class IndentHelperImpl extends IndentHelper {
       else {
         int size = totalSize;
         while (size > 0) {
-          if (size >= settings.getTabSize(fileType)) {
+          if (size >= indentOptions.TAB_SIZE) {
             buffer.append('\t');
-            size -= settings.getTabSize(fileType);
+            size -= indentOptions.TAB_SIZE;
           }
           else {
             buffer.append(' ');
@@ -132,8 +142,19 @@ public class IndentHelperImpl extends IndentHelper {
     return buffer.toString();
   }
 
+  /**
+   * @Depreacted Do not use the implementation, see {@link IndentHelper}
+   */
+  @Deprecated
   public static int getIndent(Project project, FileType fileType, String text, boolean includeNonSpace) {
-    final CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(project);
+    return getIndent(CodeStyle.getSettings(project).getIndentOptions(fileType), text, includeNonSpace);
+  }
+
+  public static int getIndent(@NotNull PsiFile file, String text, boolean includeNonSpace) {
+    return getIndent(CodeStyle.getIndentOptions(file), text, includeNonSpace);
+  }
+
+  public static int getIndent(@NotNull CommonCodeStyleSettings.IndentOptions indentOptions, String text, boolean includeNonSpace) {
     int i;
     for (i = text.length() - 1; i >= 0; i--) {
       char c = text.charAt(i);
@@ -156,8 +177,8 @@ public class IndentHelperImpl extends IndentHelper {
 
     if (tabCount == 0) return spaceCount;
 
-    int tabSize = settings.getTabSize(fileType);
-    int indentSize = settings.getIndentSize(fileType);
+    int tabSize = indentOptions.TAB_SIZE;
+    int indentSize = indentOptions.INDENT_SIZE;
     if (indentSize <= 0) {
       indentSize = 1;
     }

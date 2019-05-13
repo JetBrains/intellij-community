@@ -1,0 +1,3 @@
+<caret>some <caret>t
+o<caret>er t<caret>t
+<caret> line<caret>yet another line

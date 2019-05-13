@@ -18,10 +18,9 @@ package org.zmlx.hg4idea;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.AbstractVcs;
-import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.vcsUtil.VcsUtil;
 import gnu.trove.THashSet;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.util.HgUtil;
 
@@ -34,42 +33,30 @@ import java.util.Set;
  */
 public class HgRootsHandler implements AbstractVcs.RootsConvertor {
 
-  private final Project myProject;
-
-  public HgRootsHandler(Project project) {
-    myProject = project;
+  public HgRootsHandler() {
   }
 
   public static HgRootsHandler getInstance(Project project) {
     return ServiceManager.getService(project, HgRootsHandler.class);
   }
 
+  @NotNull
   @Override
-  public List<VirtualFile> convertRoots(List<VirtualFile> original) {
-    final Set<VirtualFile> result = new THashSet<VirtualFile>(original.size());
+  public List<VirtualFile> convertRoots(@NotNull List<VirtualFile> original) {
+    final Set<VirtualFile> result = new THashSet<>(original.size());
     for (VirtualFile vf : original) {
       final VirtualFile root = convertRoot(vf);
       if (root != null) {
         result.add(root);
       }
     }
-    return new ArrayList<VirtualFile>(result);
+    return new ArrayList<>(result);
   }
 
   @Nullable
-  public VirtualFile getRootFor(VirtualFile file) {
-    return convertRoot(VcsUtil.getVcsRootFor(myProject, file));
+  private static VirtualFile convertRoot(@Nullable VirtualFile root) {
+    //check only selected root, do not scan all dirs above
+    return HgUtil.isHgRoot(root) ? root : null;
   }
-
-  @Nullable
-  public VirtualFile getRootFor(FilePath filepath) {
-    return convertRoot(VcsUtil.getVcsRootFor(myProject, filepath));
-  }
-
-  @Nullable
-  private VirtualFile convertRoot(@Nullable VirtualFile root) {
-    return HgUtil.getHgRootOrNull(myProject, root);
-  }
-
 }
 

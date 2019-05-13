@@ -17,15 +17,9 @@ package com.intellij.execution.testframework.sm.runner.ui;
 
 import com.intellij.execution.testframework.AbstractTestProxy;
 import com.intellij.execution.testframework.TestConsoleProperties;
-import com.intellij.execution.testframework.TestFrameworkRunningModel;
 import com.intellij.execution.testframework.sm.runner.ProxyFilters;
-import com.intellij.execution.testframework.actions.ScrollToTestSourceAction;
 import com.intellij.execution.testframework.sm.runner.SMTestProxy;
-import com.intellij.execution.testframework.sm.SMRunnerUtil;
-import com.intellij.util.OpenSourceUtil;
-import com.intellij.openapi.application.ModalityState;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
@@ -39,13 +33,8 @@ public class SMTRunnerUIActionsHandler extends TestResultsViewer.SMEventsAdapter
     myConsoleProperties = consoleProperties;
   }
 
-  public void onTestNodeAdded(final TestResultsViewer sender, final SMTestProxy test) {
-    if (TestConsoleProperties.TRACK_RUNNING_TEST.value(myConsoleProperties)) {
-      sender.selectAndNotify(test);
-    }
-  }
-
-  public void onTestingFinished(final TestResultsViewer sender) {
+  @Override
+  public void onTestingFinished(@NotNull final TestResultsViewer sender) {
     // select first defect at the end (my be TRACK_RUNNING_TEST was enabled and affects on the fly selection)
     final SMTestProxy testsRootNode = sender.getTestsRootNode();
     if (TestConsoleProperties.SELECT_FIRST_DEFECT.value(myConsoleProperties)) {
@@ -73,18 +62,5 @@ public class SMTRunnerUIActionsHandler extends TestResultsViewer.SMEventsAdapter
         sender.selectAndNotify(firstDefect);
       }
     }
-  }
-
-  public void onSelected(@Nullable final SMTestProxy selectedTestProxy,
-                         @NotNull final TestResultsViewer viewer,
-                         @NotNull final TestFrameworkRunningModel model) {
-    //TODO: tests o "onSelected"
-    SMRunnerUtil.runInEventDispatchThread(new Runnable() {
-      public void run() {
-        if (ScrollToTestSourceAction.isScrollEnabled(model)) {
-          OpenSourceUtil.openSourcesFrom(model.getTreeView(), false);
-        }
-      }
-    }, ModalityState.NON_MODAL);
   }
 }

@@ -15,6 +15,7 @@
  */
 package com.intellij.spellchecker.inspections;
 
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Consumer;
@@ -41,13 +42,17 @@ public class PropertiesSplitter extends BaseSplitter {
       return;
     }
     final IdentifierSplitter splitter = IdentifierSplitter.getInstance();
-    Matcher matcher = WORD.matcher(range.substring(text));
-    while (matcher.find()) {
-      if (matcher.end() - matcher.start() < MIN_RANGE_LENGTH) {
-        continue;
+    try {
+      Matcher matcher = WORD.matcher(newBombedCharSequence(text, range));
+      while (matcher.find()) {
+        if (matcher.end() - matcher.start() < MIN_RANGE_LENGTH) {
+          continue;
+        }
+        TextRange found = matcherRange(range, matcher);
+        splitter.split(text, found, consumer);
       }
-      TextRange found = matcherRange(range, matcher);
-      splitter.split(text, found, consumer);
+    }
+    catch (ProcessCanceledException ignored) {
     }
   }
 }

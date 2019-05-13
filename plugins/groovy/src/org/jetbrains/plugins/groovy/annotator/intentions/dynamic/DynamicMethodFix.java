@@ -1,17 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 package org.jetbrains.plugins.groovy.annotator.intentions.dynamic;
 
@@ -42,13 +30,14 @@ public class DynamicMethodFix implements IntentionAction, LowPriorityAction {
     mySignature = calcSignature(argumentTypes);
   }
 
+  @Override
   @NotNull
   public String getText() {
     return GroovyBundle.message("add.dynamic.method") + mySignature;
   }
 
   private String calcSignature(final PsiType[] argTypes) {
-    StringBuilder builder = new StringBuilder(" '").append(myReferenceExpression.getName());
+    StringBuilder builder = new StringBuilder(" '").append(myReferenceExpression.getReferenceName());
     builder.append("(");
 
     for (int i = 0; i < argTypes.length; i++) {
@@ -57,22 +46,30 @@ public class DynamicMethodFix implements IntentionAction, LowPriorityAction {
       if (i > 0) {
         builder.append(", ");
       }
-      builder.append(type.getPresentableText());
+      if (type == null) {
+        builder.append("Object");
+      }
+      else {
+        builder.append(type.getPresentableText());
+      }
     }
     builder.append(")");
     builder.append("' ");
     return builder.toString();
   }
 
+  @Override
   @NotNull
   public String getFamilyName() {
     return GroovyBundle.message("add.dynamic.element");
   }
 
+  @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile psiFile) {
     return myReferenceExpression.isValid();
   }
 
+  @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile psiFile) throws IncorrectOperationException {
     DynamicDialog dialog = new DynamicMethodDialog(myReferenceExpression);
     dialog.show();
@@ -83,6 +80,7 @@ public class DynamicMethodFix implements IntentionAction, LowPriorityAction {
     DynamicManager.getInstance(project).addMethod(settings);
   }
 
+  @Override
   public boolean startInWriteAction() {
     return false;
   }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,7 @@ package com.intellij.openapi.editor.ex.util;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * Expands {@link SegmentArray} contract in providing ability to attach additional <code>'short'</code> variable to target segment,
+ * Expands {@link SegmentArray} contract in providing ability to attach additional {@code 'short'} variable to target segment,
  * i.e. holds mappings like {@code 'index <-> (data, (start; end))'}.
  * <p/>
  * Not thread-safe.
@@ -31,10 +31,16 @@ public class SegmentArrayWithData extends SegmentArray {
   }
 
   public void setElementAt(int i, int startOffset, int endOffset, int data) {
-    if (data < 0 && data > Short.MAX_VALUE) throw new IndexOutOfBoundsException("data out of short range" + data);
-    super.setElementAt(i, startOffset, endOffset);
+    dataRangeCheck(data);
+    setElementAt(i, startOffset, endOffset);
     myData = reallocateArray(myData, i+1);
     myData[i] = (short)data;
+  }
+
+  private static void dataRangeCheck(int data) {
+    if (data < Short.MIN_VALUE || data > Short.MAX_VALUE) {
+      throw new IndexOutOfBoundsException("data out of short range: " + data);
+    }
   }
 
   @Override
@@ -101,7 +107,7 @@ public class SegmentArrayWithData extends SegmentArray {
 
   public void setSegmentData(int index, int data) {
     if(index < 0 || index >= mySegmentCount) throw new IndexOutOfBoundsException("Wrong index: " + index);
-    if (data < 0 && data > Short.MAX_VALUE) throw new IndexOutOfBoundsException("data out of short range" + data);
+    dataRangeCheck(data);
     myData[index] = (short)data;
   }
 
@@ -114,5 +120,13 @@ public class SegmentArrayWithData extends SegmentArray {
     return newArray;
   }
 
+  public SegmentArrayWithData copy() {
+    final SegmentArrayWithData sa = new SegmentArrayWithData();
+    sa.mySegmentCount = this.mySegmentCount;
+    sa.myStarts = this.myStarts.clone();
+    sa.myEnds = this.myEnds.clone();
+    sa.myData = this.myData.clone();
+    return sa;
+  }
 }
 

@@ -22,17 +22,18 @@ import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.highlighting.DomElementAnnotationHolder;
+import org.jetbrains.annotations.NotNull;
 
 abstract class CommonAnnotationHolder<C> {
   public static <T extends DomElement> CommonAnnotationHolder<T> create(DomElementAnnotationHolder holder) {
-    return new DomHolderAdapter<T>(holder);
+    return new DomHolderAdapter<>(holder);
   }
 
   public static <T extends PsiElement> CommonAnnotationHolder<T> create(AnnotationHolder holder) {
-    return new HolderAdapter<T>(holder);
+    return new HolderAdapter<>(holder);
   }
 
-  public abstract Annotation createAnnotation(C element, HighlightSeverity severity, String message);
+  public abstract Annotation createAnnotation(C element, @NotNull HighlightSeverity severity, String message);
 
   private static class DomHolderAdapter<T extends DomElement> extends CommonAnnotationHolder<T> {
     private final DomElementAnnotationHolder myHolder;
@@ -41,7 +42,8 @@ abstract class CommonAnnotationHolder<C> {
       myHolder = holder;
     }
 
-    public Annotation createAnnotation(DomElement element, HighlightSeverity severity, String message) {
+    @Override
+    public Annotation createAnnotation(DomElement element, @NotNull HighlightSeverity severity, String message) {
       final Annotation annotation = myHolder.createAnnotation(element, severity, message);
       annotation.setTooltip(message);  // no tooltip by default??
       return annotation;
@@ -55,12 +57,13 @@ abstract class CommonAnnotationHolder<C> {
       myHolder = holder;
     }
 
-    public Annotation createAnnotation(T element, HighlightSeverity severity, String message) {
+    @Override
+    public Annotation createAnnotation(T element, @NotNull HighlightSeverity severity, String message) {
       if (severity == HighlightSeverity.ERROR) {
         return myHolder.createErrorAnnotation(element, message);
       } else if (severity == HighlightSeverity.WARNING) {
         return myHolder.createWarningAnnotation(element, message);
-      } else if (severity == HighlightSeverity.WEAK_WARNING || severity == HighlightSeverity.INFO) {
+      } else if (severity == HighlightSeverity.WEAK_WARNING) {
         return myHolder.createWeakWarningAnnotation(element, message);
       } else {
         return myHolder.createInfoAnnotation(element, message);

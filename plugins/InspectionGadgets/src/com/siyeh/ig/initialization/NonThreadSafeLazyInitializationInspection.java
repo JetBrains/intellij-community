@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,41 +15,215 @@
  */
 package com.siyeh.ig.initialization;
 
+import com.intellij.codeInsight.CodeInsightUtilCore;
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Pass;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.search.searches.ReferencesSearch;
-import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.Processor;
+import com.intellij.refactoring.rename.RenamePsiElementProcessor;
+import com.intellij.refactoring.rename.inplace.MemberInplaceRenamer;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
-import org.jetbrains.annotations.NotNull;
+import com.siyeh.ig.psiutils.ComparisonUtils;
+import com.siyeh.ig.psiutils.ControlFlowUtils;
+import com.siyeh.ig.psiutils.ParenthesesUtils;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
+import java.util.Arrays;
 import java.util.Collection;
+import java.util.LinkedHashSet;
 
-public class NonThreadSafeLazyInitializationInspection
-  extends BaseInspection {
+/**
+ * @author Bas Leijdekkers
+ */
+public class NonThreadSafeLazyInitializationInspection extends BaseInspection {
 
+  @Override
+  protected InspectionGadgetsFix buildFix(Object... infos) {
+    final PsiIfStatement ifStatement = (PsiIfStatement)infos[0];
+    final PsiField field = (PsiField)infos[1];
+    if (!isStaticAndAssignedOnce(field) || !isSafeToDeleteIfStatement(ifStatement, field)) {
+      return null;
+    }
+    return new IntroduceHolderFix();
+  }
+
+  @Override
   @NotNull
   public String getDisplayName() {
     return InspectionGadgetsBundle.message(
       "non.thread.safe.lazy.initialization.display.name");
   }
 
+  @Override
   @NotNull
   public String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "non.thread.safe.lazy.initialization.problem.descriptor");
   }
 
+  @Override
   public BaseInspectionVisitor buildVisitor() {
     return new UnsafeSafeLazyInitializationVisitor();
+  }
+
+  private static boolean isStaticAndAssignedOnce(PsiField field) {
+    if (!field.hasModifierProperty(PsiModifier.STATIC)) {
+      return false;
+    }
+    final int[] writeCount = new int[1];
+    return ReferencesSearch.search(field).forEach(reference -> {
+      final PsiElement element = reference.getElement();
+      if (!(element instanceof PsiExpression) || !PsiUtil.isAccessedForWriting((PsiExpression)element)) {
+        return true;
+      }
+      return ++writeCount[0] != 2;
+    });
+  }
+
+  private static boolean isSafeToDeleteIfStatement(PsiIfStatement ifStatement, PsiField field) {
+    if (ifStatement.getElseBranch() != null) {
+      return false;
+    }
+    final PsiStatement thenBranch = ifStatement.getThenBranch();
+    if (thenBranch == null) {
+      return false;
+    }
+    final PsiStatement statement = ControlFlowUtils.stripBraces(thenBranch);
+    if (!(statement instanceof PsiExpressionStatement)) {
+      return false;
+    }
+    final PsiExpressionStatement expressionStatement = (PsiExpressionStatement)statement;
+    return isSimpleAssignment(expressionStatement, field);
+  }
+
+  private static boolean isSimpleAssignment(PsiExpressionStatement expressionStatement, PsiField field) {
+    final PsiExpression expression = expressionStatement.getExpression();
+    if (!(expression instanceof PsiAssignmentExpression)) {
+      return false;
+    }
+    final PsiAssignmentExpression assignmentExpression = (PsiAssignmentExpression)expression;
+    final PsiExpression lhs = ParenthesesUtils.stripParentheses(assignmentExpression.getLExpression());
+    if (!(lhs instanceof PsiReferenceExpression)) {
+      return false;
+    }
+    final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)lhs;
+    final PsiElement target = referenceExpression.resolve();
+    if (!field.equals(target)) {
+      return false;
+    }
+    final Collection<PsiReferenceExpression> referenceChildren =
+      PsiTreeUtil.findChildrenOfType(assignmentExpression.getRExpression(), PsiReferenceExpression.class);
+    for (PsiReferenceExpression child : referenceChildren) {
+      final PsiElement target2 = child.resolve();
+      if (!(target2 instanceof PsiMember)) {
+        return false;
+      }
+      final PsiMember member = (PsiMember)target2;
+      if (!member.hasModifierProperty(PsiModifier.STATIC)) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  private static class IntroduceHolderFix extends InspectionGadgetsFix {
+
+    @Override
+    protected void doFix(Project project, ProblemDescriptor descriptor) {
+      final PsiReferenceExpression expression = (PsiReferenceExpression)descriptor.getPsiElement();
+      final PsiElement resolved = expression.resolve();
+      if (!(resolved instanceof PsiField)) {
+        return;
+      }
+      final PsiField field = (PsiField)resolved;
+      @NonNls final String holderName = StringUtil.capitalize(field.getName()) + "Holder";
+      final PsiElement expressionParent = expression.getParent();
+      if (!(expressionParent instanceof PsiAssignmentExpression)) {
+        return;
+      }
+      final PsiAssignmentExpression assignmentExpression = (PsiAssignmentExpression)expressionParent;
+      final PsiExpression rhs = assignmentExpression.getRExpression();
+      if (rhs == null) {
+        return;
+      }
+      @NonNls final String text = "private static class " + holderName + " {" +
+                                  "private static final " + field.getType().getCanonicalText() + " " +
+                                  field.getName() + " = " + rhs.getText() + ";}";
+      final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(field.getProject());
+      final PsiClass holder = elementFactory.createClassFromText(text, field).getInnerClasses()[0];
+      final PsiMethod method = PsiTreeUtil.getParentOfType(expression, PsiMethod.class);
+      if (method == null) {
+        return;
+      }
+      final PsiClass holderClass = (PsiClass)method.getParent().addBefore(holder, method);
+
+      final PsiIfStatement ifStatement = PsiTreeUtil.getParentOfType(expression, PsiIfStatement.class);
+      if (ifStatement != null) {
+        ifStatement.delete();
+      }
+
+      final PsiExpression holderReference = elementFactory.createExpressionFromText(holderName + "." + field.getName(), field);
+      for (PsiReference reference : ReferencesSearch.search(field).findAll()) {
+        reference.getElement().replace(holderReference);
+      }
+      field.delete();
+
+      if (!isOnTheFly()) {
+        return;
+      }
+      invokeInplaceRename(holderClass, holderName, suggestHolderName(field));
+    }
+
+    private static void invokeInplaceRename(PsiNameIdentifierOwner nameIdentifierOwner, final String... suggestedNames) {
+      final PsiNameIdentifierOwner elementToRename = CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(nameIdentifierOwner);
+      final Editor editor = FileEditorManager.getInstance(nameIdentifierOwner.getProject()).getSelectedTextEditor();
+      if (editor == null) {
+        return;
+      }
+      final PsiElement identifier = elementToRename.getNameIdentifier();
+      if (identifier == null) {
+        return;
+      }
+      editor.getCaretModel().moveToOffset(identifier.getTextOffset());
+      final RenamePsiElementProcessor processor = RenamePsiElementProcessor.forElement(elementToRename);
+      if (!processor.isInplaceRenameSupported()) {
+        return;
+      }
+      processor.substituteElementToRename(elementToRename, editor, new Pass<PsiElement>() {
+        @Override
+        public void pass(PsiElement substitutedElement) {
+          final MemberInplaceRenamer renamer = new MemberInplaceRenamer(elementToRename, substitutedElement, editor);
+          final LinkedHashSet<String> nameSuggestions = new LinkedHashSet<>(Arrays.asList(suggestedNames));
+          renamer.performInplaceRefactoring(nameSuggestions);
+        }
+      });
+    }
+
+    @NonNls
+    private static String suggestHolderName(PsiField field) {
+      String string = field.getType().getDeepComponentType().getPresentableText();
+      final int index = string.indexOf('<');
+      if (index != -1) {
+        string = string.substring(0, index);
+      }
+      return string + "Holder";
+    }
+
+    @Override
+    @NotNull
+    public String getFamilyName() {
+      return InspectionGadgetsBundle.message("introduce.holder.class.quickfix");
+    }
   }
 
   private static class UnsafeSafeLazyInitializationVisitor
@@ -59,11 +233,11 @@ public class NonThreadSafeLazyInitializationInspection
     public void visitAssignmentExpression(
       @NotNull PsiAssignmentExpression expression) {
       super.visitAssignmentExpression(expression);
-      final PsiExpression lhs = expression.getLExpression();
+      final PsiExpression lhs = PsiUtil.skipParenthesizedExprDown(expression.getLExpression());
       if (!(lhs instanceof PsiReferenceExpression)) {
         return;
       }
-      final PsiReference reference = (PsiReference)lhs;
+      final PsiReferenceExpression reference = (PsiReferenceExpression)lhs;
       final PsiElement referent = reference.resolve();
       if (!(referent instanceof PsiField)) {
         return;
@@ -78,83 +252,18 @@ public class NonThreadSafeLazyInitializationInspection
       if (isInSynchronizedContext(expression)) {
         return;
       }
-      if (!isLazy(expression, (PsiReferenceExpression)lhs)) {
+      final PsiStatement statement = PsiTreeUtil.getParentOfType(expression, PsiStatement.class);
+      final PsiElement parent =
+        PsiTreeUtil.skipParentsOfType(statement, PsiCodeBlock.class, PsiBlockStatement.class);
+      if (!(parent instanceof PsiIfStatement)) {
         return;
       }
-      boolean assignedOnce = isAssignedOnce(referent);
-      boolean safeToDelete = isSafeToDeleteIfStatement(expression);
-      registerError(lhs, assignedOnce && safeToDelete);
-    }
-
-    private static boolean isAssignedOnce(PsiElement referent) {
-      final int[] writeCount = new int[1];
-      return ReferencesSearch.search(referent).forEach(new Processor<PsiReference>() {
-        public boolean process(PsiReference reference) {
-          PsiElement element = reference.getElement();
-          if (!(element instanceof PsiExpression)) {
-            return true;
-          }
-          if (!PsiUtil.isAccessedForWriting((PsiExpression)element)) {
-            return true;
-          }
-          return ++writeCount[0] != 2;
-        }
-      });
-    }
-
-    private static boolean isSafeToDeleteIfStatement(PsiElement expression) {
-      PsiIfStatement ifStatement = PsiTreeUtil.getParentOfType(expression, PsiIfStatement.class);
-      if (ifStatement.getElseBranch() != null) {
-        return false;
-      }
-      PsiStatement thenBranch = ifStatement.getThenBranch();
-      if (thenBranch == null) return false;
-      if (!(thenBranch instanceof PsiBlockStatement)) {
-        return true;
-      }
-      return ((PsiBlockStatement)thenBranch).getCodeBlock().getStatements().length == 1;
-    }
-
-    private static boolean isLazy(PsiAssignmentExpression expression,
-                                  PsiReferenceExpression lhs) {
-      final PsiIfStatement ifStatement =
-        PsiTreeUtil.getParentOfType(expression,
-                                    PsiIfStatement.class);
-      if (ifStatement == null) {
-        return false;
-      }
+      final PsiIfStatement ifStatement = (PsiIfStatement)parent;
       final PsiExpression condition = ifStatement.getCondition();
-      if (condition == null) {
-        return false;
+      if (!ComparisonUtils.isNullComparison(condition, field, true)) {
+        return;
       }
-      return isNullComparison(condition, lhs);
-    }
-
-    private static boolean isNullComparison(
-      PsiExpression condition, PsiReferenceExpression reference) {
-      if (!(condition instanceof PsiBinaryExpression)) {
-        return false;
-      }
-      final PsiBinaryExpression comparison =
-        (PsiBinaryExpression)condition;
-      final IElementType tokenType = comparison.getOperationTokenType();
-      if (!tokenType.equals(JavaTokenType.EQEQ)) {
-        return false;
-      }
-      final PsiExpression lhs = comparison.getLOperand();
-      final PsiExpression rhs = comparison.getROperand();
-      if (rhs == null) {
-        return false;
-      }
-      final String lhsText = lhs.getText();
-      final String rhsText = rhs.getText();
-      if (!PsiKeyword.NULL.equals(lhsText) &&
-          !PsiKeyword.NULL.equals(rhsText)) {
-        return false;
-      }
-      final String referenceText = reference.getText();
-      return referenceText.equals(lhsText) ||
-             referenceText.equals(rhsText);
+      registerError(lhs, ifStatement, field);
     }
 
     private static boolean isInSynchronizedContext(PsiElement element) {
@@ -178,57 +287,6 @@ public class NonThreadSafeLazyInitializationInspection
                                     PsiClassInitializer.class);
       return initializer != null &&
              initializer.hasModifierProperty(PsiModifier.STATIC);
-    }
-  }
-
-  @Override
-  protected InspectionGadgetsFix buildFix(Object... infos) {
-    boolean isApplicable = ((Boolean)infos[0]).booleanValue();
-    return isApplicable ? new IntroduceHolderFix() : null;
-  }
-
-  private static class IntroduceHolderFix extends InspectionGadgetsFix {
-    protected void doFix(Project project, ProblemDescriptor descriptor) throws IncorrectOperationException {
-      PsiReferenceExpression expression = (PsiReferenceExpression)descriptor.getPsiElement();
-      PsiElement resolved = expression.resolve();
-      if (!(resolved instanceof PsiField)) return;
-      PsiField field = (PsiField)resolved;
-      String holderName = suggestHolderName(field);
-      @NonNls String text = "private static class " + holderName
-                            + " {" +
-                            "private static final " + field.getType().getCanonicalText() + " " +
-                            field.getName() + " = " + ((PsiAssignmentExpression)expression.getParent()).getRExpression().getText() + ";"
-                            + "}";
-      PsiElementFactory elementFactory = JavaPsiFacade.getInstance(field.getProject()).getElementFactory();
-      PsiClass holder = elementFactory.createClassFromText(text, field).getInnerClasses()[0];
-      PsiMethod method = PsiTreeUtil.getParentOfType(expression, PsiMethod.class);
-      method.getParent().addBefore(holder, method);
-
-      PsiIfStatement ifStatement = PsiTreeUtil.getParentOfType(expression, PsiIfStatement.class);
-      ifStatement.delete();
-
-      final PsiExpression holderReference = elementFactory.createExpressionFromText(holderName + "." + field.getName(), field);
-      Collection<PsiReference> references = ReferencesSearch.search(field).findAll();
-      for (PsiReference reference : references) {
-        PsiElement element = reference.getElement();
-        element.replace(holderReference);
-      }
-      field.delete();
-    }
-
-    @NonNls
-    private static String suggestHolderName(PsiField field) {
-      String string = field.getType().getDeepComponentType().getPresentableText();
-      final int index = string.indexOf('<');
-      if (index != -1) {
-        string = string.substring(0, index);
-      }
-      return string + "Holder";
-    }
-
-    @NotNull
-    public String getName() {
-      return "Introduce holder class";
     }
   }
 }

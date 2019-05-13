@@ -1,26 +1,17 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 package com.intellij.codeInsight.hint;
 
-import com.intellij.openapi.editor.*;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.DocumentFragment;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.VisualPosition;
 import com.intellij.openapi.editor.ex.EditorEx;
-import com.intellij.openapi.editor.ex.FoldingModelEx;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.ui.HintHint;
 import com.intellij.ui.LightweightHint;
+import com.intellij.ui.ScreenUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -38,8 +29,6 @@ public class DocumentFragmentTooltipRenderer implements TooltipRenderer {
 
   @Override
   public LightweightHint show(@NotNull final Editor editor, @NotNull Point p, boolean alignToRight, @NotNull TooltipGroup group, @NotNull HintHint intInfo) {
-    LightweightHint hint;
-
     final JComponent editorComponent = editor.getComponent();
 
     TextRange range = myDocumentFragment.getTextRange();
@@ -64,19 +53,16 @@ public class DocumentFragmentTooltipRenderer implements TooltipRenderer {
     p.x -= 3;
     p.y += editor.getLineHeight();
 
-    Point screen = new Point(p);
-    SwingUtilities.convertPointToScreen(screen, layeredPane);
-    int maxLineCount = (Toolkit.getDefaultToolkit().getScreenSize().height - screen.y) / editor.getLineHeight();
+    Point screenPoint = new Point(p);
+    SwingUtilities.convertPointToScreen(screenPoint, layeredPane);
+    int maxLineCount = (ScreenUtil.getScreenRectangle(screenPoint).height - screenPoint.y) / editor.getLineHeight();
 
     if (endLine - startLine > maxLineCount) {
       endOffset = doc.getLineEndOffset(Math.max(0, Math.min(startLine + maxLineCount, doc.getLineCount() - 1)));
     }
+    if (endOffset < startOffset) return null;
 
-    FoldingModelEx foldingModel = (FoldingModelEx)editor.getFoldingModel();
-    foldingModel.setFoldingEnabled(false);
     TextRange textRange = new TextRange(startOffset, endOffset);
-    hint = EditorFragmentComponent.showEditorFragmentHintAt(editor, textRange, p.x, p.y, false, false, true);
-    foldingModel.setFoldingEnabled(true);
-    return hint;
+    return EditorFragmentComponent.showEditorFragmentHintAt(editor, textRange, p.y, false, false, true, true, true);
   }
 }

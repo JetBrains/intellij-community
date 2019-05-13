@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,14 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * Created by IntelliJ IDEA.
- * User: mike
- * Date: Aug 29, 2002
- * Time: 4:34:37 PM
- * To change template for new class use
- * Code Style | Class Templates options (Tools | IDE Options).
- */
 package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeInsight.CodeInsightBundle;
@@ -49,10 +41,10 @@ public class ImplementAbstractMethodAction extends BaseIntentionAction {
     int offset = editor.getCaretModel().getOffset();
     final PsiMethod method = findMethod(file, offset);
 
-    if (method == null || !method.isValid()) return false;
+    if (method == null || !method.isValid() || method.isConstructor()) return false;
     setText(getIntentionName(method));
 
-    if (!method.getManager().isInProject(method)) return false;
+    if (!canModify(method)) return false;
 
     PsiClass containingClass = method.getContainingClass();
     if (containingClass == null) return false;
@@ -74,8 +66,7 @@ public class ImplementAbstractMethodAction extends BaseIntentionAction {
           }
         }
       }
-      ClassInheritorsSearch.search(containingClass, false).forEach(new PsiElementProcessorAdapter<PsiClass>(
-        processor));
+      ClassInheritorsSearch.search(containingClass, false).forEach(new PsiElementProcessorAdapter<>(processor));
       return isAvailable(processor);
     }
 
@@ -99,7 +90,7 @@ public class ImplementAbstractMethodAction extends BaseIntentionAction {
       ;
   }
 
-  static class MyElementProcessor implements PsiElementProcessor {
+  static class MyElementProcessor implements PsiElementProcessor<PsiClass> {
     private boolean myHasMissingImplementations;
     private boolean myHasExistingImplementations;
     private final PsiMethod myMethod;
@@ -117,19 +108,15 @@ public class ImplementAbstractMethodAction extends BaseIntentionAction {
     }
 
     @Override
-    public boolean execute(@NotNull PsiElement element) {
-      if (element instanceof PsiClass) {
-        PsiClass aClass = (PsiClass) element;
-        if (aClass.isInterface()) return true;
-        final PsiMethod existingImplementation = findExistingImplementation(aClass, myMethod);
-        if (existingImplementation != null && !existingImplementation.hasModifierProperty(PsiModifier.ABSTRACT)) {
-          myHasExistingImplementations = true;
-        }
-        else if (existingImplementation == null) {
-          myHasMissingImplementations = true;
-        }
-        if (myHasMissingImplementations && myHasExistingImplementations) return false;
+    public boolean execute(@NotNull PsiClass element) {
+      final PsiMethod existingImplementation = findExistingImplementation(element, myMethod);
+      if (existingImplementation != null && !existingImplementation.hasModifierProperty(PsiModifier.ABSTRACT)) {
+        myHasExistingImplementations = true;
       }
+      else if (existingImplementation == null) {
+        myHasMissingImplementations = true;
+      }
+      if (myHasMissingImplementations && myHasExistingImplementations) return false;
       return true;
     }
   }
@@ -168,8 +155,9 @@ public class ImplementAbstractMethodAction extends BaseIntentionAction {
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
     PsiMethod method = findMethod(file, editor.getCaretModel().getOffset());
     if (method == null) return;
-    if (!ApplicationManager.getApplication().isUnitTestMode() && !editor.getContentComponent().isShowing()) return;
-    invokeHandler(project, editor, method);
+    if (ApplicationManager.getApplication().isHeadlessEnvironment() || editor.getContentComponent().isShowing()) {
+      invokeHandler(project, editor, method);
+    }
   }
 
   protected void invokeHandler(final Project project, final Editor editor, final PsiMethod method) {

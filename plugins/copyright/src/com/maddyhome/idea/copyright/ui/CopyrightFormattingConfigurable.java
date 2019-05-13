@@ -1,23 +1,5 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
-/*
- * User: anna
- * Date: 04-Dec-2008
- */
 package com.maddyhome.idea.copyright.ui;
 
 import com.intellij.openapi.fileTypes.FileType;
@@ -40,56 +22,69 @@ public class CopyrightFormattingConfigurable extends SearchableConfigurable.Pare
     myProject = project;
   }
 
+  @Override
   @NotNull
   public String getId() {
     return "template.copyright.formatting";
   }
 
-  public Runnable enableSearch(String option) {
-    return null;
-  }
-
+  @Override
   @Nls
     public String getDisplayName() {
     return "Formatting";
   }
 
+  @Override
   public String getHelpTopic() {
     return getId();
   }
 
+  @Override
   public JComponent createComponent() {
-    myPanel = new TemplateCommentPanel(null, null, null, myProject);
+    getOrCreateMainPanel();
     return myPanel.createComponent();
   }
 
+  private TemplateCommentPanel getOrCreateMainPanel() {
+    if (myPanel == null) {
+      myPanel = new TemplateCommentPanel(null, null, null, myProject);
+    }
+    return myPanel;
+  }
+
+  @Override
   public boolean isModified() {
     return myPanel.isModified();
   }
 
+  @Override
   public void apply() throws ConfigurationException {
     myPanel.apply();
   }
 
+  @Override
   public void reset() {
     myPanel.reset();
   }
 
+  @Override
   public void disposeUIResources() {
     myPanel.disposeUIResources();
     myPanel = null;
   }
 
+  @Override
   public boolean hasOwnContent() {
     return true;
   }
 
+  @Override
   protected Configurable[] buildConfigurables() {
     final FileType[] types = FileTypeUtil.getInstance().getSupportedTypes();
     final Configurable[] children = new Configurable[types.length];
     Arrays.sort(types, new FileTypeUtil.SortByName());
     for (int i = 0; i < types.length; i++) {
-      children[i] = FileTypeCopyrightConfigurableFactory.createFileTypeConfigurable(myProject, types[i], myPanel);
+      children[i] = FileTypeCopyrightConfigurableFactory.createFileTypeConfigurable(myProject, types[i], getOrCreateMainPanel());
     }
     return children;
   }

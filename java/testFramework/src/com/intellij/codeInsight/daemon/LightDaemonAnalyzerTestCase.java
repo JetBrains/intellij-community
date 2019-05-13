@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,12 +20,13 @@ import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.injected.editor.EditorWindow;
 import com.intellij.lang.annotation.HighlightSeverity;
+import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.vfs.VirtualFileFilter;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
+import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.testFramework.ExpectedHighlightingData;
 import com.intellij.testFramework.FileTreeAccessFilter;
 import com.intellij.testFramework.HighlightTestInfo;
@@ -52,22 +53,28 @@ public abstract class LightDaemonAnalyzerTestCase extends LightCodeInsightTestCa
 
   @Override
   protected void tearDown() throws Exception {
-    ((DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(getProject())).cleanupAfterTest(!isLight(getProject()));
-    super.tearDown();
+    try {
+      // return default value to avoid unnecessary save
+      DaemonCodeAnalyzerSettings.getInstance().setImportHintEnabled(true);
+      ((DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(getProject())).cleanupAfterTest();
+    }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
+    finally {
+      super.tearDown();
+    }
   }
 
   @Override
   protected void runTest() throws Throwable {
     final Throwable[] throwable = {null};
-    CommandProcessor.getInstance().executeCommand(getProject(), new Runnable() {
-      @Override
-      public void run() {
-        try {
-          doRunTest();
-        }
-        catch (Throwable t) {
-          throwable[0] = t;
-        }
+    CommandProcessor.getInstance().executeCommand(getProject(), () -> {
+      try {
+        doRunTest();
+      }
+      catch (Throwable t) {
+        throwable[0] = t;
       }
     }, "", null);
     if (throwable[0] != null) {
@@ -90,10 +97,14 @@ public abstract class LightDaemonAnalyzerTestCase extends LightCodeInsightTestCa
   }
 
   protected void doTestConfiguredFile(boolean checkWarnings, boolean checkWeakWarnings, boolean checkInfos, @Nullable String filePath) {
-    getJavaFacade().setAssertOnFileLoadingFilter(VirtualFileFilter.NONE);
+    PsiManagerEx.getInstanceEx(getProject()).setAssertOnFileLoadingFilter(VirtualFileFilter.NONE, getTestRootDisposable());
 
-    ExpectedHighlightingData data = new ExpectedHighlightingData(getEditor().getDocument(), checkWarnings, checkWeakWarnings, checkInfos);
+    ExpectedHighlightingData data = getExpectedHighlightingData(checkWarnings, checkWeakWarnings, checkInfos);
     checkHighlighting(data, composeLocalPath(filePath));
+  }
+  
+  protected ExpectedHighlightingData getExpectedHighlightingData(boolean checkWarnings, boolean checkWeakWarnings, boolean checkInfos) {
+    return new ExpectedHighlightingData(getEditor().getDocument(), checkWarnings, checkWeakWarnings, checkInfos);
   }
 
   @Nullable
@@ -105,24 +116,28 @@ public abstract class LightDaemonAnalyzerTestCase extends LightCodeInsightTestCa
     data.init();
 
     PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
+    //noinspection ResultOfMethodCallIgnored
     getFile().getText(); //to load text
     myJavaFilesFilter.allowTreeAccessForFile(getVFile());
-    getJavaFacade().setAssertOnFileLoadingFilter(myJavaFilesFilter); // check repository work
+    PsiManagerEx.getInstanceEx(getProject()).setAssertOnFileLoadingFilter(myJavaFilesFilter, getTestRootDisposable());
 
-    Collection<HighlightInfo> infos = doHighlighting();
+    try {
+      Collection<HighlightInfo> infos = doHighlighting();
 
-    getJavaFacade().setAssertOnFileLoadingFilter(VirtualFileFilter.NONE);
-
-    data.checkResult(infos, getEditor().getDocument().getText(), filePath);
+      data.checkResult(infos, getEditor().getDocument().getText(), filePath);
+    }
+    finally {
+      PsiManagerEx.getInstanceEx(getProject()).setAssertOnFileLoadingFilter(VirtualFileFilter.NONE, getTestRootDisposable());
+    }
   }
 
   protected HighlightTestInfo doTestFile(@NonNls @NotNull String filePath) {
-    return new HighlightTestInfo(getTestRootDisposable(), filePath){
+    return new HighlightTestInfo(getTestRootDisposable(), filePath) {
       @Override
-      public HighlightTestInfo doTest() throws Exception {
+      public HighlightTestInfo doTest() {
         String path = assertOneElement(filePaths);
         configureByFile(path);
-        ExpectedHighlightingData data = new ExpectedHighlightingData(myEditor.getDocument(), checkWarnings, checkWeakWarnings, checkInfos, myFile);
+        ExpectedHighlightingData data = new JavaExpectedHighlightingData(myEditor.getDocument(), checkWarnings, checkWeakWarnings, checkInfos, myFile);
         if (checkSymbolNames) data.checkSymbolNames();
 
         checkHighlighting(data, composeLocalPath(path));
@@ -146,16 +161,21 @@ public abstract class LightDaemonAnalyzerTestCase extends LightCodeInsightTestCa
     }
     if (!doInspections()) {
       toIgnoreList.add(Pass.LOCAL_INSPECTIONS);
+      toIgnoreList.add(Pass.WHOLE_FILE_LOCAL_INSPECTIONS);
     }
     int[] toIgnore = toIgnoreList.isEmpty() ? ArrayUtil.EMPTY_INT_ARRAY : toIgnoreList.toNativeArray();
     Editor editor = getEditor();
     PsiFile file = getFile();
     if (editor instanceof EditorWindow) {
       editor = ((EditorWindow)editor).getDelegate();
-      file = InjectedLanguageUtil.getTopLevelFile(file);
+      file = InjectedLanguageManager.getInstance(file.getProject()).getTopLevelFile(file);
     }
-    
-    return CodeInsightTestFixtureImpl.instantiateAndRun(file, editor, toIgnore, false);
+
+    return CodeInsightTestFixtureImpl.instantiateAndRun(file, editor, toIgnore, canChangeDocumentDuringHighlighting());
+  }
+
+  private boolean canChangeDocumentDuringHighlighting() {
+    return annotatedWith(DaemonAnalyzerTestCase.CanChangeDocumentDuringHighlighting.class);
   }
 
   protected List<HighlightInfo> doHighlighting(HighlightSeverity minSeverity) {

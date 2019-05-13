@@ -23,7 +23,6 @@ import com.intellij.history.integration.IdeaGateway;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -45,10 +44,5 @@ public class RecentChangeDialogModel extends DirectoryHistoryDialogModel {
   @Override
   public String getTitle() {
     return myChange.getChangeName();
-  }
-
-  @Override
-  public void resetSelection() {
-    selectRevisions(0, 0);
   }
 }

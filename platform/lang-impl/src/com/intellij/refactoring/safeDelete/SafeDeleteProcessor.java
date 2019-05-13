@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.refactoring.safeDelete;
 
@@ -22,18 +8,19 @@ import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.lang.refactoring.RefactoringSupportProvider;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtilBase;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.RefactoringBundle;
+import com.intellij.refactoring.listeners.RefactoringEventData;
+import com.intellij.refactoring.listeners.RefactoringEventListener;
 import com.intellij.refactoring.safeDelete.usageInfo.SafeDeleteCustomUsageInfo;
 import com.intellij.refactoring.safeDelete.usageInfo.SafeDeleteReferenceSimpleDeleteUsageInfo;
 import com.intellij.refactoring.safeDelete.usageInfo.SafeDeleteReferenceUsageInfo;
@@ -42,13 +29,14 @@ import com.intellij.refactoring.util.NonCodeSearchDescriptionLocation;
 import com.intellij.refactoring.util.RefactoringUIUtil;
 import com.intellij.refactoring.util.TextOccurrencesUtil;
 import com.intellij.usageView.UsageInfo;
+import com.intellij.usageView.UsageInfoFactory;
 import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.usageView.UsageViewUtil;
 import com.intellij.usages.*;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.Processor;
-import com.intellij.util.containers.HashMap;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.ContainerUtilRt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -63,6 +51,7 @@ public class SafeDeleteProcessor extends BaseRefactoringProcessor {
   private boolean mySearchInCommentsAndStrings;
   private boolean mySearchNonJava;
   private boolean myPreviewNonCodeUsages = true;
+  private Runnable myAfterRefactoringCallback;
 
   private SafeDeleteProcessor(Project project, @Nullable Runnable prepareSuccessfulCallback,
                               PsiElement[] elementsToDelete, boolean isSearchInComments, boolean isSearchNonJava) {
@@ -72,8 +61,9 @@ public class SafeDeleteProcessor extends BaseRefactoringProcessor {
     mySearchNonJava = isSearchNonJava;
   }
 
+  @Override
   @NotNull
-  protected UsageViewDescriptor createUsageViewDescriptor(UsageInfo[] usages) {
+  protected UsageViewDescriptor createUsageViewDescriptor(@NotNull UsageInfo[] usages) {
     return new SafeDeleteUsageViewDescriptor(myElements);
   }
 
@@ -124,17 +114,19 @@ public class SafeDeleteProcessor extends BaseRefactoringProcessor {
     return isAncestor;
   }
 
+  @Override
   @NotNull
   protected UsageInfo[] findUsages() {
     List<UsageInfo> usages = Collections.synchronizedList(new ArrayList<UsageInfo>());
     for (PsiElement element : myElements) {
       boolean handled = false;
-      for(SafeDeleteProcessorDelegate delegate: Extensions.getExtensions(SafeDeleteProcessorDelegate.EP_NAME)) {
+      for(SafeDeleteProcessorDelegate delegate: SafeDeleteProcessorDelegate.EP_NAME.getExtensionList()) {
         if (delegate.handlesElement(element)) {
           final NonCodeUsageSearchInfo filter = delegate.findUsages(element, myElements, usages);
           if (filter != null) {
             for(PsiElement nonCodeUsageElement: filter.getElementsToSearch()) {
-              addNonCodeUsages(nonCodeUsageElement, usages, filter.getInsideDeletedCondition());
+              addNonCodeUsages(nonCodeUsageElement, usages, filter.getInsideDeletedCondition(), mySearchNonJava,
+                               mySearchInCommentsAndStrings);
             }
           }
           handled = true;
@@ -143,41 +135,44 @@ public class SafeDeleteProcessor extends BaseRefactoringProcessor {
       }
       if (!handled && element instanceof PsiNamedElement) {
         findGenericElementUsages(element, usages, myElements);
-        addNonCodeUsages(element, usages, getDefaultInsideDeletedCondition(myElements));
+        addNonCodeUsages(element, usages, getDefaultInsideDeletedCondition(myElements), mySearchNonJava, mySearchInCommentsAndStrings);
       }
     }
-    final UsageInfo[] result = usages.toArray(new UsageInfo[usages.size()]);
-    return UsageViewUtil.removeDuplicatedUsages(result);
+    UsageInfo[] result = usages.toArray(UsageInfo.EMPTY_ARRAY);
+    result = UsageViewUtil.removeDuplicatedUsages(result);
+    Arrays.sort(result, (o1, o2) -> PsiUtilCore.compareElementsByPosition(o2.getElement(), o1.getElement()));
+    return result;
   }
 
   public static Condition<PsiElement> getDefaultInsideDeletedCondition(final PsiElement[] elements) {
-    return new Condition<PsiElement>() {
-      public boolean value(final PsiElement usage) {
-        return !(usage instanceof PsiFile) && isInside(usage, elements);
-      }
-    };
+    return usage -> !(usage instanceof PsiFile) && isInside(usage, elements);
   }
 
-  public static void findGenericElementUsages(final PsiElement element, final List<UsageInfo> usages, final PsiElement[] allElementsToDelete) {
-    ReferencesSearch.search(element).forEach(new Processor<PsiReference>() {
-      public boolean process(final PsiReference reference) {
-        final PsiElement refElement = reference.getElement();
-        if (!isInside(refElement, allElementsToDelete)) {
-          usages.add(new SafeDeleteReferenceSimpleDeleteUsageInfo(refElement, element, false));
-        }
-        return true;
+  public static void findGenericElementUsages(@NotNull PsiElement element, List<? super UsageInfo> usages, PsiElement[] allElementsToDelete, SearchScope scope) {
+    ReferencesSearch.search(element, scope).forEach(reference -> {
+      final PsiElement refElement = reference.getElement();
+      if (!isInside(refElement, allElementsToDelete)) {
+        usages.add(new SafeDeleteReferenceSimpleDeleteUsageInfo(refElement, element, false));
       }
+      return true;
     });
   }
 
-  protected boolean preprocessUsages(Ref<UsageInfo[]> refUsages) {
+  public static void findGenericElementUsages(final PsiElement element, final List<? super UsageInfo> usages, final PsiElement[] allElementsToDelete) {
+    findGenericElementUsages(element, usages, allElementsToDelete, element.getUseScope());
+  }
+
+  @Override
+  protected boolean preprocessUsages(@NotNull Ref<UsageInfo[]> refUsages) {
     UsageInfo[] usages = refUsages.get();
-    ArrayList<String> conflicts = new ArrayList<String>();
+    ArrayList<String> conflicts = new ArrayList<>();
 
     for (PsiElement element : myElements) {
-      for(SafeDeleteProcessorDelegate delegate: Extensions.getExtensions(SafeDeleteProcessorDelegate.EP_NAME)) {
+      for(SafeDeleteProcessorDelegate delegate: SafeDeleteProcessorDelegate.EP_NAME.getExtensionList()) {
         if (delegate.handlesElement(element)) {
-          Collection<String> foundConflicts = delegate.findConflicts(element, myElements);
+          Collection<String> foundConflicts = delegate instanceof SafeDeleteProcessorDelegateBase
+                                              ? ((SafeDeleteProcessorDelegateBase)delegate).findConflicts(element, myElements, usages)
+                                              : delegate.findConflicts(element, myElements);
           if (foundConflicts != null) {
             conflicts.addAll(foundConflicts);
           }
@@ -186,43 +181,19 @@ public class SafeDeleteProcessor extends BaseRefactoringProcessor {
       }
     }
 
-    final HashMap<PsiElement,UsageHolder> elementsToUsageHolders = sortUsages(usages);
-    final Collection<UsageHolder> usageHolders = elementsToUsageHolders.values();
-    for (UsageHolder usageHolder : usageHolders) {
-      if (usageHolder.getNonCodeUsagesNumber() != usageHolder.getUnsafeUsagesNumber()) {
-        final String description = usageHolder.getDescription();
-        if (description != null) {
-          conflicts.add(description);
-        }
-      }
-    }
-
-    if (!conflicts.isEmpty()) {
-      if (ApplicationManager.getApplication().isUnitTestMode()) {
-        if (!ConflictsInTestsException.isTestIgnore()) throw new ConflictsInTestsException(conflicts);
-      }
-      else {
-        UnsafeUsagesDialog dialog = new UnsafeUsagesDialog(ArrayUtil.toStringArray(conflicts), myProject);
-        dialog.show();
-        if (!dialog.isOK()) {
-          final int exitCode = dialog.getExitCode();
-          prepareSuccessful(); // dialog is always dismissed
-          if (exitCode == UnsafeUsagesDialog.VIEW_USAGES_EXIT_CODE) {
-            showUsages(usages);
-          }
-          return false;
-        }
-        else {
-          myPreviewNonCodeUsages = false;
-        }
-      }
-    }
+    if (checkConflicts(usages, conflicts)) return false;
 
     UsageInfo[] preprocessedUsages = usages;
-    for(SafeDeleteProcessorDelegate delegate: Extensions.getExtensions(SafeDeleteProcessorDelegate.EP_NAME)) {
+    for(SafeDeleteProcessorDelegate delegate: SafeDeleteProcessorDelegate.EP_NAME.getExtensionList()) {
       preprocessedUsages = delegate.preprocessUsages(myProject, preprocessedUsages);
       if (preprocessedUsages == null) return false;
     }
+
+    HashSet<UsageInfo> diff = ContainerUtilRt.newHashSet(preprocessedUsages);
+    diff.removeAll(Arrays.asList(usages));
+
+    if (checkConflicts(diff.toArray(UsageInfo.EMPTY_ARRAY), new ArrayList<>())) return false;
+
     final UsageInfo[] filteredUsages = UsageViewUtil.removeDuplicatedUsages(preprocessedUsages);
     prepareSuccessful(); // dialog is always dismissed
     if(filteredUsages == null) {
@@ -232,35 +203,71 @@ public class SafeDeleteProcessor extends BaseRefactoringProcessor {
     return true;
   }
 
-  private void showUsages(final UsageInfo[] usages) {
+  private boolean checkConflicts(UsageInfo[] usages, ArrayList<String> conflicts) {
+    final HashMap<PsiElement,UsageHolder> elementsToUsageHolders = sortUsages(usages);
+    final Collection<UsageHolder> usageHolders = elementsToUsageHolders.values();
+    for (UsageHolder usageHolder : usageHolders) {
+      if (usageHolder.hasUnsafeUsagesInCode()) {
+        conflicts.add(usageHolder.getDescription());
+      }
+    }
+
+    if (!conflicts.isEmpty()) {
+      final RefactoringEventData conflictData = new RefactoringEventData();
+      conflictData.putUserData(RefactoringEventData.CONFLICTS_KEY, conflicts);
+      myProject.getMessageBus().syncPublisher(RefactoringEventListener.REFACTORING_EVENT_TOPIC).conflictsDetected("refactoring.safeDelete", conflictData);
+      if (ApplicationManager.getApplication().isUnitTestMode()) {
+        if (!ConflictsInTestsException.isTestIgnore()) throw new ConflictsInTestsException(conflicts);
+      }
+      else {
+        UnsafeUsagesDialog dialog = new UnsafeUsagesDialog(ArrayUtil.toStringArray(conflicts), myProject);
+        if (!dialog.showAndGet()) {
+          final int exitCode = dialog.getExitCode();
+          prepareSuccessful(); // dialog is always dismissed;
+          if (exitCode == UnsafeUsagesDialog.VIEW_USAGES_EXIT_CODE) {
+            showUsages(Arrays.stream(usages)
+                         .filter(usage -> usage instanceof SafeDeleteReferenceUsageInfo &&
+                                          !((SafeDeleteReferenceUsageInfo)usage).isSafeDelete()).toArray(UsageInfo[]::new),
+                       usages);
+          }
+          return true;
+        }
+        else {
+          myPreviewNonCodeUsages = false;
+        }
+      }
+    }
+    return false;
+  }
+
+  private void showUsages(final UsageInfo[] conflictUsages, final UsageInfo[] usages) {
     UsageViewPresentation presentation = new UsageViewPresentation();
-    presentation.setTabText(RefactoringBundle.message("safe.delete.title"));
+    presentation.setTabText("Safe Delete Conflicts");
     presentation.setTargetsNodeText(RefactoringBundle.message("attempting.to.delete.targets.node.text"));
     presentation.setShowReadOnlyStatusAsRed(true);
     presentation.setShowCancelButton(true);
-    presentation.setCodeUsagesString(RefactoringBundle.message("references.found.in.code"));
+    presentation.setCodeUsagesString(RefactoringBundle.message("safe.delete.conflict.title"));
+    presentation.setUsagesInGeneratedCodeString(RefactoringBundle.message("references.found.in.generated.code"));
     presentation.setNonCodeUsagesString(RefactoringBundle.message("occurrences.found.in.comments.strings.and.non.java.files"));
     presentation.setUsagesString(RefactoringBundle.message("usageView.usagesText"));
 
     UsageViewManager manager = UsageViewManager.getInstance(myProject);
-    final UsageView usageView = showUsages(usages, presentation, manager);
+    final UsageView usageView = showUsages(conflictUsages, presentation, manager);
     usageView.addPerformOperationAction(new RerunSafeDelete(myProject, myElements, usageView),
                                         RefactoringBundle.message("retry.command"), null, RefactoringBundle.message("rerun.safe.delete"));
-    usageView.addPerformOperationAction(new Runnable() {
-      public void run() {
-        UsageInfo[] preprocessedUsages = usages;
-        for (SafeDeleteProcessorDelegate delegate : Extensions.getExtensions(SafeDeleteProcessorDelegate.EP_NAME)) {
-          preprocessedUsages = delegate.preprocessUsages(myProject, preprocessedUsages);
-          if (preprocessedUsages == null) return;
-        }
-        final UsageInfo[] filteredUsages = UsageViewUtil.removeDuplicatedUsages(preprocessedUsages);
-        execute(filteredUsages);
+    usageView.addPerformOperationAction(() -> {
+      UsageInfo[] preprocessedUsages = usages;
+      for (SafeDeleteProcessorDelegate delegate : SafeDeleteProcessorDelegate.EP_NAME.getExtensionList()) {
+        preprocessedUsages = delegate.preprocessUsages(myProject, preprocessedUsages);
+        if (preprocessedUsages == null) return;
       }
+      final UsageInfo[] filteredUsages = UsageViewUtil.removeDuplicatedUsages(preprocessedUsages);
+      execute(filteredUsages);
     }, "Delete Anyway", RefactoringBundle.message("usageView.need.reRun"), RefactoringBundle.message("usageView.doAction"));
   }
 
   private UsageView showUsages(UsageInfo[] usages, UsageViewPresentation presentation, UsageViewManager manager) {
-    for (SafeDeleteProcessorDelegate delegate : Extensions.getExtensions(SafeDeleteProcessorDelegate.EP_NAME)) {
+    for (SafeDeleteProcessorDelegate delegate : SafeDeleteProcessorDelegate.EP_NAME.getExtensionList()) {
        if (delegate instanceof SafeDeleteProcessorDelegateBase) {
          final UsageView view = ((SafeDeleteProcessorDelegateBase)delegate).showUsages(usages, presentation, manager, myElements);
          if (view != null) return view;
@@ -272,7 +279,7 @@ public class SafeDeleteProcessor extends BaseRefactoringProcessor {
     }
 
     return manager.showUsages(targets,
-                              UsageInfoToUsageConverter.convert(new UsageInfoToUsageConverter.TargetElementsDescriptor(myElements), usages),
+                              UsageInfoToUsageConverter.convert(myElements, usages),
                               presentation
     );
   }
@@ -296,23 +303,20 @@ public class SafeDeleteProcessor extends BaseRefactoringProcessor {
       }
     }
 
+    @Override
     public void run() {
-      ApplicationManager.getApplication().invokeLater(new Runnable() {
-          public void run() {
-            PsiDocumentManager.getInstance(myProject).commitAllDocuments();
-            myUsageView.close();
-            ArrayList<PsiElement> elements = new ArrayList<PsiElement>();
-            for (SmartPsiElementPointer pointer : myPointers) {
-              final PsiElement element = pointer.getElement();
-              if (element != null) {
-                elements.add(element);
-              }
-            }
-            if(!elements.isEmpty()) {
-              SafeDeleteHandler.invoke(myProject, PsiUtilBase.toPsiElementArray(elements), true);
-            }
-          }
-        });
+      PsiDocumentManager.getInstance(myProject).commitAllDocuments();
+      myUsageView.close();
+      ArrayList<PsiElement> elements = new ArrayList<>();
+      for (SmartPsiElementPointer pointer : myPointers) {
+        final PsiElement element = pointer.getElement();
+        if (element != null) {
+          elements.add(element);
+        }
+      }
+      if(!elements.isEmpty()) {
+        SafeDeleteHandler.invoke(myProject, PsiUtilCore.toPsiElementArray(elements), true);
+      }
     }
   }
 
@@ -320,8 +324,8 @@ public class SafeDeleteProcessor extends BaseRefactoringProcessor {
    * @param usages
    * @return Map from elements to UsageHolders
    */
-  private static HashMap<PsiElement,UsageHolder> sortUsages(UsageInfo[] usages) {
-    HashMap<PsiElement,UsageHolder> result = new HashMap<PsiElement, UsageHolder>();
+  private static HashMap<PsiElement,UsageHolder> sortUsages(@NotNull UsageInfo[] usages) {
+    HashMap<PsiElement,UsageHolder> result = new HashMap<>();
 
     for (final UsageInfo usage : usages) {
       if (usage instanceof SafeDeleteUsageInfo) {
@@ -335,15 +339,15 @@ public class SafeDeleteProcessor extends BaseRefactoringProcessor {
   }
 
 
-  protected void refreshElements(PsiElement[] elements) {
+  @Override
+  protected void refreshElements(@NotNull PsiElement[] elements) {
     LOG.assertTrue(elements.length == myElements.length);
     System.arraycopy(elements, 0, myElements, 0, elements.length);
   }
 
-  protected boolean isPreviewUsages(UsageInfo[] usages) {
-    if(myPreviewNonCodeUsages && UsageViewUtil.hasNonCodeUsages(usages)) {
-      WindowManager.getInstance().getStatusBar(myProject).setInfo(
-        RefactoringBundle.message("occurrences.found.in.comments.strings.and.non.java.files"));
+  @Override
+  protected boolean isPreviewUsages(@NotNull UsageInfo[] usages) {
+    if(myPreviewNonCodeUsages && UsageViewUtil.reportNonRegularUsages(usages, myProject)) {
       return true;
     }
 
@@ -351,17 +355,35 @@ public class SafeDeleteProcessor extends BaseRefactoringProcessor {
   }
 
   private static UsageInfo[] filterToBeDeleted(UsageInfo[] infos) {
-    ArrayList<UsageInfo> list = new ArrayList<UsageInfo>();
+    ArrayList<UsageInfo> list = new ArrayList<>();
     for (UsageInfo info : infos) {
       if (!(info instanceof SafeDeleteReferenceUsageInfo) || ((SafeDeleteReferenceUsageInfo) info).isSafeDelete()) {
         list.add(info);
       }
     }
-    return list.toArray(new UsageInfo[list.size()]);
+    return list.toArray(UsageInfo.EMPTY_ARRAY);
   }
 
-  protected void performRefactoring(UsageInfo[] usages) {
+  @Nullable
+  @Override
+  protected RefactoringEventData getBeforeData() {
+    final RefactoringEventData beforeData = new RefactoringEventData();
+    beforeData.addElements(myElements);
+    return beforeData;
+  }
+
+  @Nullable
+  @Override
+  protected String getRefactoringId() {
+    return "refactoring.safeDelete";
+  }
+
+  @Override
+  protected void performRefactoring(@NotNull UsageInfo[] usages) {
     try {
+      SmartPointerManager pointerManager = SmartPointerManager.getInstance(myProject);
+      List<SmartPsiElementPointer<PsiElement>> pointers = ContainerUtil.map(myElements, pointerManager::createSmartPsiElementPointer);
+
       for (UsageInfo usage : usages) {
         if (usage instanceof SafeDeleteCustomUsageInfo) {
           ((SafeDeleteCustomUsageInfo) usage).performRefactoring();
@@ -369,14 +391,20 @@ public class SafeDeleteProcessor extends BaseRefactoringProcessor {
       }
 
       for (PsiElement element : myElements) {
-        for(SafeDeleteProcessorDelegate delegate: Extensions.getExtensions(SafeDeleteProcessorDelegate.EP_NAME)) {
+        for (SafeDeleteProcessorDelegate delegate : SafeDeleteProcessorDelegate.EP_NAME.getExtensionList()) {
           if (delegate.handlesElement(element)) {
             delegate.prepareForDeletion(element);
           }
         }
-
-        element.delete();
       }
+
+      for (SmartPsiElementPointer<PsiElement> pointer : pointers) {
+        PsiElement element = pointer.getElement();
+        if (element != null) {
+          element.delete();
+        }
+      }
+      if (myAfterRefactoringCallback != null) myAfterRefactoringCallback.run();
     } catch (IncorrectOperationException e) {
       RefactoringUIUtil.processIncorrectOperation(myProject, e);
     }
@@ -387,6 +415,8 @@ public class SafeDeleteProcessor extends BaseRefactoringProcessor {
   }
 
   private String myCachedCommandName = null;
+  @NotNull
+  @Override
   protected String getCommandName() {
     if (myCachedCommandName == null) {
       myCachedCommandName = calcCommandName();
@@ -395,8 +425,13 @@ public class SafeDeleteProcessor extends BaseRefactoringProcessor {
   }
 
 
-  private void addNonCodeUsages(final PsiElement element, List<UsageInfo> usages, @Nullable final Condition<PsiElement> insideElements) {
-    TextOccurrencesUtil.UsageInfoFactory nonCodeUsageFactory = new TextOccurrencesUtil.UsageInfoFactory() {
+  public static void addNonCodeUsages(final PsiElement element,
+                                      List<? super UsageInfo> usages,
+                                      @Nullable final Condition<? super PsiElement> insideElements,
+                                      boolean searchNonJava,
+                                      boolean searchInCommentsAndStrings) {
+    UsageInfoFactory nonCodeUsageFactory = new UsageInfoFactory() {
+      @Override
       public UsageInfo createUsageInfo(@NotNull PsiElement usage, int startOffset, int endOffset) {
         if (insideElements != null && insideElements.value(usage)) {
           return null;
@@ -404,25 +439,25 @@ public class SafeDeleteProcessor extends BaseRefactoringProcessor {
         return new SafeDeleteReferenceSimpleDeleteUsageInfo(usage, element, startOffset, endOffset, true, false);
       }
     };
-    if (mySearchInCommentsAndStrings) {
+    if (searchInCommentsAndStrings) {
       String stringToSearch = ElementDescriptionUtil.getElementDescription(element, NonCodeSearchDescriptionLocation.STRINGS_AND_COMMENTS);
       TextOccurrencesUtil.addUsagesInStringsAndComments(element, stringToSearch, usages, nonCodeUsageFactory);
     }
-    if (mySearchNonJava) {
+    if (searchNonJava) {
       String stringToSearch = ElementDescriptionUtil.getElementDescription(element, NonCodeSearchDescriptionLocation.NON_JAVA);
-      TextOccurrencesUtil.addTextOccurences(element, stringToSearch, GlobalSearchScope.projectScope(myProject), usages, nonCodeUsageFactory);
+      TextOccurrencesUtil.addTextOccurences(element, stringToSearch, GlobalSearchScope.projectScope(element.getProject()), usages, nonCodeUsageFactory);
     }
   }
 
   @Override
-  protected boolean isToBeChanged(UsageInfo usageInfo) {
+  protected boolean isToBeChanged(@NotNull UsageInfo usageInfo) {
     if (usageInfo instanceof SafeDeleteReferenceUsageInfo) {
       return ((SafeDeleteReferenceUsageInfo)usageInfo).isSafeDelete() && super.isToBeChanged(usageInfo);
     }
     return super.isToBeChanged(usageInfo);
   }
 
-  public static boolean validElement(PsiElement element) {
+  public static boolean validElement(@NotNull PsiElement element) {
     if (element instanceof PsiFile) return true;
     if (!element.isPhysical()) return false;
     final RefactoringSupportProvider provider = LanguageRefactoringSupport.INSTANCE.forLanguage(element.getLanguage());
@@ -437,11 +472,11 @@ public class SafeDeleteProcessor extends BaseRefactoringProcessor {
   public static SafeDeleteProcessor createInstance(Project project, @Nullable Runnable prepareSuccessfulCallBack,
                                                    PsiElement[] elementsToDelete, boolean isSearchInComments, boolean isSearchNonJava,
                                                    boolean askForAccessors) {
-    ArrayList<PsiElement> elements = new ArrayList<PsiElement>(Arrays.asList(elementsToDelete));
-    HashSet<PsiElement> elementsToDeleteSet = new HashSet<PsiElement>(Arrays.asList(elementsToDelete));
+    ArrayList<PsiElement> elements = new ArrayList<>(Arrays.asList(elementsToDelete));
+    HashSet<PsiElement> elementsToDeleteSet = new HashSet<>(Arrays.asList(elementsToDelete));
 
     for (PsiElement psiElement : elementsToDelete) {
-      for(SafeDeleteProcessorDelegate delegate: Extensions.getExtensions(SafeDeleteProcessorDelegate.EP_NAME)) {
+      for(SafeDeleteProcessorDelegate delegate: SafeDeleteProcessorDelegate.EP_NAME.getExtensionList()) {
         if (delegate.handlesElement(psiElement)) {
           Collection<PsiElement> addedElements = delegate.getAdditionalElementsToDelete(psiElement, elementsToDeleteSet, askForAccessors);
           if (addedElements != null) {
@@ -453,7 +488,7 @@ public class SafeDeleteProcessor extends BaseRefactoringProcessor {
     }
 
     return new SafeDeleteProcessor(project, prepareSuccessfulCallBack,
-                                   PsiUtilBase.toPsiElementArray(elements),
+                                   PsiUtilCore.toPsiElementArray(elements),
                                    isSearchInComments, isSearchNonJava);
   }
 
@@ -476,5 +511,9 @@ public class SafeDeleteProcessor extends BaseRefactoringProcessor {
   @Override
   protected boolean skipNonCodeUsages() {
     return true;
+  }
+
+  public void setAfterRefactoringCallback(Runnable afterRefactoringCallback) {
+    myAfterRefactoringCallback = afterRefactoringCallback;
   }
 }

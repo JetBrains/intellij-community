@@ -39,7 +39,7 @@ import java.util.Iterator;
  * author: lesya
  */
 public abstract class AbstractTreeNode extends DefaultMutableTreeNode {
-  protected static final ArrayList<File> EMPTY_FILE_ARRAY = new ArrayList<File>();
+  protected static final ArrayList<File> EMPTY_FILE_ARRAY = new ArrayList<>();
   DefaultTreeModel myTreeModel;
   private JTree myTree;
   private String myErrorText;

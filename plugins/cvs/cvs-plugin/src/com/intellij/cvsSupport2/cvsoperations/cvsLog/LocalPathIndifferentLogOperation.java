@@ -24,14 +24,12 @@ import com.intellij.cvsSupport2.cvsoperations.common.LocalPathIndifferentOperati
 import com.intellij.cvsSupport2.cvsoperations.common.LocalPathIndifferentOperationHelper;
 import com.intellij.cvsSupport2.cvsoperations.cvsTagOrBranch.BranchesProvider;
 import com.intellij.cvsSupport2.cvsoperations.cvsTagOrBranch.TagsHelper;
-import com.intellij.cvsSupport2.cvsoperations.javacvsSpecificImpls.ConstantLocalFileReader;
 import com.intellij.cvsSupport2.cvsoperations.javacvsSpecificImpls.DeafAdminWriter;
 import com.intellij.cvsSupport2.history.CvsRevisionNumber;
 import org.jetbrains.annotations.Nullable;
 import org.netbeans.lib.cvsclient.command.Command;
 import org.netbeans.lib.cvsclient.command.log.LogCommand;
 import org.netbeans.lib.cvsclient.command.log.LogInformation;
-import org.netbeans.lib.cvsclient.file.ILocalFileReader;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -41,7 +39,7 @@ import java.util.List;
 
 public class LocalPathIndifferentLogOperation extends LocalPathIndifferentOperation implements BranchesProvider {
 
-  private final List<LogInformation> myLogInformationList = new ArrayList<LogInformation>();
+  private final List<LogInformation> myLogInformationList = new ArrayList<>();
 
 
   private final LocalPathIndifferentOperationHelper myHelper;
@@ -73,12 +71,14 @@ public class LocalPathIndifferentLogOperation extends LocalPathIndifferentOperat
     addFile(new File(repository, file.getName()));
   }
 
+  @Override
   protected Command createCommand(CvsRootProvider root, CvsExecutionEnvironment cvsExecutionEnvironment) {
     LogCommand command = new LogCommand();
     myHelper.addFilesTo(command);
     return command;
   }
 
+  @Override
   public void fileInfoGenerated(Object info) {
     super.fileInfoGenerated(info);
     if (info instanceof LogInformation) {
@@ -98,26 +98,26 @@ public class LocalPathIndifferentLogOperation extends LocalPathIndifferentOperat
     return myLogInformationList;
   }
 
-  protected ILocalFileReader createLocalFileReader() {
-    return ConstantLocalFileReader.FOR_EXISTING_FILE;
-  }
-
   public void addFile(File file) {
     myHelper.addFile(file);
   }
 
+  @Override
   public Collection<String> getAllBranches() {
     return TagsHelper.getAllBranches(myLogInformationList);
   }
 
+  @Override
   public Collection<CvsRevisionNumber> getAllRevisions() {
     return TagsHelper.getAllRevisions(myLogInformationList);
   }
 
+  @Override
   protected String getOperationName() {
     return "log";
   }
 
+  @Override
   public boolean runInReadThread() {
     return false;
   }

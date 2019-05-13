@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2012 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2018 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,8 +18,12 @@ package com.siyeh.ipp.forloop;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.*;
-import com.intellij.util.IncorrectOperationException;
+import com.intellij.psi.codeStyle.JavaCodeStyleManager;
+import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
+import com.intellij.psi.codeStyle.VariableKind;
+import com.siyeh.ig.PsiReplacementUtil;
+import com.siyeh.ig.psiutils.CommentTracker;
+import com.siyeh.ig.psiutils.VariableNameGenerator;
 import com.siyeh.ipp.base.Intention;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import org.jetbrains.annotations.NonNls;
@@ -35,7 +39,7 @@ public class ReplaceForEachLoopWithIndexedForLoopIntention extends Intention {
   }
 
   @Override
-  public void processIntention(@NotNull PsiElement element) throws IncorrectOperationException {
+  public void processIntention(@NotNull PsiElement element) {
     final PsiForeachStatement statement = (PsiForeachStatement)element.getParent();
     if (statement == null) {
       return;
@@ -51,6 +55,7 @@ public class ReplaceForEachLoopWithIndexedForLoopIntention extends Intention {
     if (iteratedValueType == null) {
       return;
     }
+    CommentTracker tracker = new CommentTracker();
     final boolean isArray = iteratedValueType instanceof PsiArrayType;
     final PsiElement grandParent = statement.getParent();
     final PsiStatement context;
@@ -59,14 +64,11 @@ public class ReplaceForEachLoopWithIndexedForLoopIntention extends Intention {
     } else {
       context = statement;
     }
-    final String iteratedValueText = getReferenceToIterate(iteratedValue, context);
+    final String iteratedValueText = getReferenceToIterate(iteratedValue, context, tracker);
     @NonNls final StringBuilder newStatement = new StringBuilder();
     final String indexText = createVariableName("i", PsiType.INT, statement);
     createForLoopDeclaration(statement, iteratedValue, isArray, iteratedValueText, newStatement, indexText);
-    final Project project = statement.getProject();
-    final CodeStyleSettings codeStyleSettings =
-      CodeStyleSettingsManager.getSettings(project);
-    if (codeStyleSettings.GENERATE_FINAL_LOCALS) {
+    if (JavaCodeStyleSettings.getInstance(statement.getContainingFile()).GENERATE_FINAL_LOCALS) {
       newStatement.append("final ");
     }
     newStatement.append(type.getCanonicalText());
@@ -93,14 +95,14 @@ public class ReplaceForEachLoopWithIndexedForLoopIntention extends Intention {
       final PsiElement[] children = block.getChildren();
       for (int i = 1; i < children.length - 1; i++) {
         //skip the braces
-        newStatement.append(children[i].getText());
+        newStatement.append(tracker.text(children[i]));
       }
     }
     else {
-      newStatement.append(body.getText());
+      newStatement.append(tracker.text(body));
     }
     newStatement.append('}');
-    replaceStatementAndShorten(newStatement.toString(), statement);
+    PsiReplacementUtil.replaceStatementAndShortenClassNames(statement, newStatement.toString(), tracker);
   }
 
   protected void createForLoopDeclaration(PsiForeachStatement statement,
@@ -133,6 +135,7 @@ public class ReplaceForEachLoopWithIndexedForLoopIntention extends Intention {
     newStatement.append("{ ");
   }
 
+  @Nullable
   private static String getVariableName(PsiExpression expression) {
     if (expression instanceof PsiMethodCallExpression) {
       final PsiMethodCallExpression methodCallExpression =
@@ -164,7 +167,8 @@ public class ReplaceForEachLoopWithIndexedForLoopIntention extends Intention {
         (PsiArrayAccessExpression)expression;
       final PsiExpression arrayExpression =
         arrayAccessExpression.getArrayExpression();
-      return StringUtil.unpluralize(getVariableName(arrayExpression));
+      final String name = getVariableName(arrayExpression);
+      return (name == null) ? null : StringUtil.unpluralize(name);
     }
     else if (expression instanceof PsiParenthesizedExpression) {
       final PsiParenthesizedExpression parenthesizedExpression =
@@ -185,8 +189,7 @@ public class ReplaceForEachLoopWithIndexedForLoopIntention extends Intention {
     return null;
   }
 
-  private static String getReferenceToIterate(
-    PsiExpression expression, PsiElement context) {
+  private static String getReferenceToIterate(PsiExpression expression, PsiElement context, CommentTracker tracker) {
     if (expression instanceof PsiMethodCallExpression ||
         expression instanceof PsiTypeCastExpression ||
         expression instanceof PsiArrayAccessExpression ||
@@ -199,7 +202,7 @@ public class ReplaceForEachLoopWithIndexedForLoopIntention extends Intention {
         (PsiParenthesizedExpression)expression;
       final PsiExpression innerExpression =
         parenthesizedExpression.getExpression();
-      return getReferenceToIterate(innerExpression, context);
+      return getReferenceToIterate(innerExpression, context, tracker);
     }
     else if (expression instanceof PsiJavaCodeReferenceElement) {
       final PsiJavaCodeReferenceElement referenceElement =
@@ -216,7 +219,7 @@ public class ReplaceForEachLoopWithIndexedForLoopIntention extends Intention {
       }
       return createVariable(variableName, expression, context);
     }
-    return null;
+    return tracker.text(expression);
   }
 
   private static String createVariable(String variableNameRoot,
@@ -232,41 +235,19 @@ public class ReplaceForEachLoopWithIndexedForLoopIntention extends Intention {
     final PsiDeclarationStatement declarationStatement =
       elementFactory.createVariableDeclarationStatement(variableName,
                                                         iteratedValueType, iteratedValue);
-    context.getParent().addBefore(declarationStatement, context);
+    final PsiElement newElement = context.getParent().addBefore(declarationStatement, context);
+    JavaCodeStyleManager.getInstance(project).shortenClassReferences(newElement);
     return variableName;
   }
 
-  public static String createVariableName(
-    @Nullable String baseName,
-    @NotNull PsiExpression assignedExpression) {
-    final Project project = assignedExpression.getProject();
-    final JavaCodeStyleManager codeStyleManager =
-      JavaCodeStyleManager.getInstance(project);
-    final SuggestedNameInfo names =
-      codeStyleManager.suggestVariableName(VariableKind.LOCAL_VARIABLE,
-                                           baseName, assignedExpression, null);
-    if (names.names.length == 0) {
-      return codeStyleManager.suggestUniqueVariableName(baseName,
-                                                        assignedExpression, true);
-    }
-    return codeStyleManager.suggestUniqueVariableName(names.names[0],
-                                                      assignedExpression, true);
+  public static String createVariableName(@Nullable String baseName, @NotNull PsiExpression assignedExpression) {
+    return new VariableNameGenerator(assignedExpression, VariableKind.LOCAL_VARIABLE).byName(baseName).byExpression(assignedExpression)
+      .byType(assignedExpression.getType()).generate(true);
   }
 
   public static String createVariableName(@Nullable String baseName,
                                           @NotNull PsiType type,
                                           @NotNull PsiElement context) {
-    final Project project = context.getProject();
-    final JavaCodeStyleManager codeStyleManager =
-      JavaCodeStyleManager.getInstance(project);
-    final SuggestedNameInfo names =
-      codeStyleManager.suggestVariableName(
-        VariableKind.LOCAL_VARIABLE, baseName, null, type);
-    if (names.names.length == 0) {
-      return codeStyleManager.suggestUniqueVariableName(baseName,
-                                                        context, true);
-    }
-    return codeStyleManager.suggestUniqueVariableName(names.names[0],
-                                                      context, true);
+    return new VariableNameGenerator(context, VariableKind.LOCAL_VARIABLE).byName(baseName).byType(type).generate(true);
   }
 }

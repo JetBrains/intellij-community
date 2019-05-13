@@ -60,7 +60,7 @@ public class PsiThrowStatementImpl extends CompositePsiElement implements PsiThr
   }
 
   @Override
-  public int getChildRole(ASTNode child) {
+  public int getChildRole(@NotNull ASTNode child) {
     LOG.assertTrue(child.getTreeParent() == this);
     IElementType i = child.getElementType();
     if (i == THROW_KEYWORD) {
@@ -89,6 +89,7 @@ public class PsiThrowStatementImpl extends CompositePsiElement implements PsiThr
     }
   }
 
+  @Override
   public String toString() {
     return "PsiThrowStatement";
   }

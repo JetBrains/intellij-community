@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2012 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2013 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,12 +19,17 @@ import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.IntroduceConstantFix;
-import com.siyeh.ig.psiutils.*;
+import com.siyeh.ig.fixes.SuppressForTestsScopeFix;
+import com.siyeh.ig.psiutils.ClassUtils;
+import com.siyeh.ig.psiutils.ExpressionUtils;
+import com.siyeh.ig.psiutils.MethodUtils;
+import com.siyeh.ig.psiutils.TypeUtils;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -33,15 +38,28 @@ public class MagicNumberInspection extends BaseInspection {
 
   @SuppressWarnings("PublicField")
   public boolean ignoreInHashCode = true;
-
-  @SuppressWarnings("PublicField")
-  public boolean ignoreInTestCode = false;
-
+  @SuppressWarnings({"PublicField", "UnusedDeclaration"})
+  public boolean ignoreInTestCode = false; // keep for compatibility
   @SuppressWarnings("PublicField")
   public boolean ignoreInAnnotations = true;
-
   @SuppressWarnings("PublicField")
   public boolean ignoreInitialCapacity = false;
+
+  @NotNull
+  @Override
+  protected InspectionGadgetsFix[] buildFixes(Object... infos) {
+    final PsiElement context = (PsiElement)infos[0];
+    final InspectionGadgetsFix fix = SuppressForTestsScopeFix.build(this, context);
+    if (fix == null) {
+      return new InspectionGadgetsFix[] {new IntroduceConstantFix()};
+    }
+    return new InspectionGadgetsFix[] {new IntroduceConstantFix(), fix};
+  }
+
+  @Override
+  protected boolean buildQuickFixesOnlyForOnTheFlyErrors() {
+    return true;
+  }
 
   @Override
   @NotNull
@@ -58,21 +76,10 @@ public class MagicNumberInspection extends BaseInspection {
   @Override
   public JComponent createOptionsPanel() {
     final MultipleCheckboxOptionsPanel panel = new MultipleCheckboxOptionsPanel(this);
-    panel.addCheckbox(InspectionGadgetsBundle.message("magic.number.ignore.option"), "ignoreInHashCode");
-    panel.addCheckbox(InspectionGadgetsBundle.message("ignore.in.test.code"), "ignoreInTestCode");
-    panel.addCheckbox(InspectionGadgetsBundle.message("ignore.in.annotations"),"ignoreInAnnotations");
-    panel.addCheckbox(InspectionGadgetsBundle.message("ignore.as.initial.capacity"), "ignoreInitialCapacity");
+    panel.addCheckbox(InspectionGadgetsBundle.message("inspection.option.ignore.in.hashcode"), "ignoreInHashCode");
+    panel.addCheckbox(InspectionGadgetsBundle.message("inspection.option.ignore.in.annotations"), "ignoreInAnnotations");
+    panel.addCheckbox(InspectionGadgetsBundle.message("inspection.option.ignore.as.initial.capacity"), "ignoreInitialCapacity");
     return panel;
-  }
-
-  @Override
-  protected boolean buildQuickFixesOnlyForOnTheFlyErrors() {
-    return true;
-  }
-
-  @Override
-  protected InspectionGadgetsFix buildFix(Object... infos) {
-    return new IntroduceConstantFix();
   }
 
   @Override
@@ -89,17 +96,15 @@ public class MagicNumberInspection extends BaseInspection {
       if (!ClassUtils.isPrimitiveNumericType(type) || PsiType.CHAR.equals(type)) {
         return;
       }
-      if (isSpecialCaseLiteral(expression) || ExpressionUtils.isDeclaredConstant(expression)) {
+      if (isSpecialCaseLiteral(expression) || isFinalVariableInitialization(expression)) {
         return;
       }
       if (ignoreInHashCode) {
-        final PsiMethod containingMethod = PsiTreeUtil.getParentOfType(expression, PsiMethod.class);
+        final PsiMethod containingMethod = PsiTreeUtil.getParentOfType(expression, PsiMethod.class, true,
+                                                                       PsiClass.class, PsiLambdaExpression.class);
         if (MethodUtils.isHashCode(containingMethod)) {
           return;
         }
-      }
-      if (ignoreInTestCode && TestUtils.isInTestCode(expression)) {
-        return;
       }
       if (ignoreInAnnotations) {
         final boolean insideAnnotation = AnnotationUtil.isInsideAnnotation(expression);
@@ -107,26 +112,39 @@ public class MagicNumberInspection extends BaseInspection {
           return;
         }
       }
-      if (ignoreInitialCapacity) {
-        final PsiExpressionList expressionList = PsiTreeUtil.getParentOfType(expression, PsiExpressionList.class, true, PsiMember.class);
-        if (expressionList != null) {
-          final PsiElement parent = expressionList.getParent();
-          if (parent instanceof PsiNewExpression) {
-            final PsiNewExpression newExpression = (PsiNewExpression)parent;
-            if (TypeUtils.expressionHasTypeOrSubtype(newExpression, CommonClassNames.JAVA_LANG_ABSTRACT_STRING_BUILDER,
-                                                 CommonClassNames.JAVA_UTIL_MAP, CommonClassNames.JAVA_UTIL_COLLECTION) != null) {
-              return;
-            }
-          }
-        }
+      if (ignoreInitialCapacity && isInitialCapacity(expression)) {
+        return;
+      }
+      final PsiField field = PsiTreeUtil.getParentOfType(expression, PsiField.class, true, PsiCallExpression.class);
+      if (field != null && PsiUtil.isCompileTimeConstant((PsiVariable)field)) {
+        return;
       }
       final PsiElement parent = expression.getParent();
       if (parent instanceof PsiPrefixExpression) {
-        registerError(parent);
+        registerError(parent, parent);
       }
       else {
-        registerError(expression);
+        registerError(expression, expression);
       }
+    }
+
+    private boolean isInitialCapacity(PsiLiteralExpression expression) {
+      final PsiElement element =
+        PsiTreeUtil.skipParentsOfType(expression, PsiTypeCastExpression.class, PsiParenthesizedExpression.class);
+      if (!(element instanceof PsiExpressionList)) {
+        return false;
+      }
+      final PsiElement parent = element.getParent();
+      if (!(parent instanceof PsiNewExpression)) {
+        return false;
+      }
+      final PsiNewExpression newExpression = (PsiNewExpression)parent;
+      return TypeUtils.expressionHasTypeOrSubtype(newExpression,
+                                                  CommonClassNames.JAVA_LANG_ABSTRACT_STRING_BUILDER,
+                                                  CommonClassNames.JAVA_UTIL_MAP,
+                                                  CommonClassNames.JAVA_UTIL_COLLECTION,
+                                                  "java.io.ByteArrayOutputStream",
+                                                  "java.awt.Dimension") != null;
     }
 
     private boolean isSpecialCaseLiteral(PsiLiteralExpression expression) {
@@ -148,6 +166,32 @@ public class MagicNumberInspection extends BaseInspection {
         return f == 1.0f || f == 0.0f;
       }
       return false;
+    }
+
+    public boolean isFinalVariableInitialization(PsiExpression expression) {
+      final PsiElement parent =
+        PsiTreeUtil.getParentOfType(expression, PsiVariable.class, PsiAssignmentExpression.class);
+      final PsiVariable variable;
+      if (!(parent instanceof PsiVariable)) {
+        if (!(parent instanceof PsiAssignmentExpression)) {
+          return false;
+        }
+        final PsiAssignmentExpression assignmentExpression = (PsiAssignmentExpression)parent;
+        final PsiExpression lhs = assignmentExpression.getLExpression();
+        if (!(lhs instanceof PsiReferenceExpression)) {
+          return false;
+        }
+        final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)lhs;
+        final PsiElement target = referenceExpression.resolve();
+        if (!(target instanceof PsiVariable)) {
+          return false;
+        }
+        variable = (PsiVariable)target;
+      }
+      else {
+        variable = (PsiVariable)parent;
+      }
+      return variable.hasModifierProperty(PsiModifier.FINAL);
     }
   }
 }

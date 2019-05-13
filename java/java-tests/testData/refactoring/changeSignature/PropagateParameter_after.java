@@ -6,4 +6,8 @@ public class C {
         int s;
         subject(null, b);
     }
+
+    void caller1() {
+        caller();
+    }
 }

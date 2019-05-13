@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,11 +27,13 @@ import com.intellij.psi.scope.util.PsiScopesUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 public class MacroUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.template.macro.MacroUtil");
@@ -51,7 +53,7 @@ public class MacroUtil {
     if (decl != null) {
       place = file.findElementAt(decl.getTextOffset() -1);
     }
-    PsiElementFactory factory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();
+    PsiElementFactory factory = JavaPsiFacade.getElementFactory(manager.getProject());
     try{
       return factory.createTypeFromText(text, place);
     }
@@ -83,7 +85,7 @@ public class MacroUtil {
         }
       }
     }
-    PsiElementFactory factory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();
+    PsiElementFactory factory = JavaPsiFacade.getElementFactory(manager.getProject());
     try{
       return factory.createExpressionFromText(text, place);
     }
@@ -93,40 +95,26 @@ public class MacroUtil {
   }
 
   @NotNull private static PsiExpression[] getStandardExpressions(PsiElement place) {
-    ArrayList<PsiExpression> array = new ArrayList<PsiExpression>();
-    PsiElementFactory factory = JavaPsiFacade.getInstance(place.getProject()).getElementFactory();
+    ArrayList<PsiExpression> array = new ArrayList<>();
+    PsiElementFactory factory = JavaPsiFacade.getElementFactory(place.getProject());
     try {
       array.add(factory.createExpressionFromText("true", null));
       array.add(factory.createExpressionFromText("false", null));
 
       PsiElement scope = place;
-      boolean firstClass = true;
-      boolean static_flag = false;
+      boolean innermostClass = true;
       while (scope != null) {
-        if (scope instanceof PsiModifierListOwner && ((PsiModifierListOwner)scope).getModifierList() != null){
-          if(((PsiModifierListOwner)scope).hasModifierProperty(PsiModifier.STATIC)){
-            static_flag = true;
-          }
-        }
         if (scope instanceof PsiClass) {
           PsiClass aClass = (PsiClass)scope;
-
           String name = aClass.getName();
-          PsiExpression expr = null;
-          if(!static_flag){
-            if (firstClass) {
-              expr = factory.createExpressionFromText("this", place);
-            }
-            else {
-              if (name != null) {
-                expr = factory.createExpressionFromText(name + ".this", place);
-              }
-            }
-            if (expr != null) {
-              array.add(expr);
-            }
+          if (innermostClass) {
+            array.add(factory.createExpressionFromText("this", place));
           }
-          firstClass = false;
+          else if (name != null) {
+            array.add(factory.createExpressionFromText(name + ".this", place));
+          }
+
+          innermostClass = false;
           if (aClass.hasModifierProperty(PsiModifier.STATIC)) break;
         }
         else if (scope instanceof PsiMember) {
@@ -138,11 +126,11 @@ public class MacroUtil {
     catch (IncorrectOperationException e) {
       LOG.error(e);
     }
-    return array.toArray(new PsiExpression[array.size()]);
+    return array.toArray(PsiExpression.EMPTY_ARRAY);
   }
 
   @NotNull public static PsiExpression[] getStandardExpressionsOfType(PsiElement place, PsiType type) {
-    List<PsiExpression> array = new ArrayList<PsiExpression>();
+    List<PsiExpression> array = new ArrayList<>();
     PsiExpression[] expressions = getStandardExpressions(place);
     for (PsiExpression expr : expressions) {
       PsiType type1 = expr.getType();
@@ -150,7 +138,7 @@ public class MacroUtil {
         array.add(expr);
       }
     }
-    return array.toArray(new PsiExpression[array.size()]);
+    return array.toArray(PsiExpression.EMPTY_ARRAY);
   }
 
   @NotNull public static PsiVariable[] getVariablesVisibleAt(@Nullable final PsiElement place, String prefix) {
@@ -158,11 +146,15 @@ public class MacroUtil {
       return new PsiVariable[0];
     }
 
-    final List<PsiVariable> list = new ArrayList<PsiVariable>();
+    final Set<String> usedNames = ContainerUtil.newHashSet();
+    final List<PsiVariable> list = new ArrayList<>();
     VariablesProcessor varproc = new VariablesProcessor(prefix, true, list) {
       @Override
-      public boolean execute(@NotNull PsiElement pe, ResolveState state) {
+      public boolean execute(@NotNull PsiElement pe, @NotNull ResolveState state) {
         if (pe instanceof PsiVariable) {
+          if (!usedNames.add(((PsiVariable)pe).getName())) {
+            return false;
+          }
           //exclude variables that are initialized in 'place'
           final PsiExpression initializer = ((PsiVariable)pe).getInitializer();
           if (initializer != null && PsiTreeUtil.isAncestor(initializer, place, false)) return true;

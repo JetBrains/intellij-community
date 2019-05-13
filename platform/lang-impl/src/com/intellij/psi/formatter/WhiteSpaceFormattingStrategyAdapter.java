@@ -23,7 +23,6 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Denis Zhdanov
- * @since 12/6/11 3:58 PM
  */
 public class WhiteSpaceFormattingStrategyAdapter implements WhiteSpaceFormattingStrategy {
   
@@ -49,7 +48,7 @@ public class WhiteSpaceFormattingStrategyAdapter implements WhiteSpaceFormatting
   public CharSequence adjustWhiteSpaceIfNecessary(@NotNull CharSequence whiteSpaceText,
                                                   @NotNull CharSequence text,
                                                   int startOffset,
-                                                  int endOffset, CodeStyleSettings codeStyleSettings) {
+                                                  int endOffset, CodeStyleSettings codeStyleSettings, ASTNode nodeAfter) {
     return whiteSpaceText;
   }
 

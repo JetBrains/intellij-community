@@ -42,7 +42,7 @@ public class MavenDependencySpecialVersionsCompletionAndResolutionTest extends M
   //  assertResolved(myProjectPom, findPsiFile(f));
   //}
 
-  public void testDoNotHighlightVersionRanges() throws Throwable {
+  public void testDoNotHighlightVersionRanges() {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +
@@ -58,7 +58,7 @@ public class MavenDependencySpecialVersionsCompletionAndResolutionTest extends M
     checkHighlighting();
   }
 
-  public void testDoNotHighlightLatestAndReleaseDependencies() throws Throwable {
+  public void testDoNotHighlightLatestAndReleaseDependencies() {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +

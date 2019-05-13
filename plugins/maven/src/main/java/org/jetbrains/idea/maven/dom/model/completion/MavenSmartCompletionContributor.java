@@ -20,8 +20,7 @@ import com.intellij.codeInsight.completion.CompletionContributor;
 import com.intellij.codeInsight.completion.CompletionParameters;
 import com.intellij.codeInsight.completion.CompletionResultSet;
 import com.intellij.codeInsight.completion.CompletionType;
-import com.intellij.openapi.application.AccessToken;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.impl.source.xml.TagNameReference;
@@ -40,7 +39,7 @@ import java.util.Collections;
 
 public class MavenSmartCompletionContributor extends CompletionContributor {
   @Override
-  public void fillCompletionVariants(final CompletionParameters parameters, CompletionResultSet result) {
+  public void fillCompletionVariants(@NotNull final CompletionParameters parameters, @NotNull CompletionResultSet result) {
     if (parameters.getCompletionType() != CompletionType.SMART) return;
 
     Collection<?> variants = getVariants(parameters);
@@ -52,7 +51,7 @@ public class MavenSmartCompletionContributor extends CompletionContributor {
   private static Collection<?> getVariants(CompletionParameters parameters) {
     if (!MavenDomUtil.isMavenFile(parameters.getOriginalFile())) return Collections.emptyList();
 
-    SmartList<?> result = new SmartList<Object>();
+    SmartList<?> result = new SmartList<>();
 
     for (PsiReference each : getReferences(parameters)) {
       if (each instanceof TagNameReference) continue;
@@ -63,19 +62,37 @@ public class MavenSmartCompletionContributor extends CompletionContributor {
         Converter converter = reference.getConverter();
 
         if (converter instanceof MavenSmartConverter) {
-          result.addAll(((MavenSmartConverter)converter).getSmartVariants(reference.getConvertContext()));
+          Collection variants = ((MavenSmartConverter)converter).getSmartVariants(reference.getConvertContext());
+          if (converter instanceof ResolvingConverter) {
+            addVariants((ResolvingConverter)converter, variants, result);
+          }
+          else {
+            result.addAll(variants);
+          }
         }
         else if (converter instanceof ResolvingConverter) {
-          //noinspection unchecked
-          result.addAll(((ResolvingConverter)converter).getVariants(reference.getConvertContext()));
+          ResolvingConverter resolvingConverter = (ResolvingConverter)converter;
+          Collection variants = resolvingConverter.getVariants(reference.getConvertContext());
+          addVariants(resolvingConverter, variants, result);
         }
       }
       else {
-        //noinspection unchecked
         Collections.addAll((Collection)result, each.getVariants());
       }
     }
     return result;
+  }
+
+  private static <T> void addVariants(ResolvingConverter<T> converter, Collection<T> variants, Collection result) {
+    for (T variant : variants) {
+      LookupElement lookupElement = converter.createLookupElement(variant);
+      if (lookupElement != null) {
+        result.add(lookupElement);
+      }
+      else {
+        result.add(variant);
+      }
+    }
   }
 
   @NotNull

@@ -1,46 +1,38 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions;
 
-import com.intellij.codeInsight.TargetElementUtilBase;
+import com.intellij.codeInsight.TargetElementUtil;
+import com.intellij.codeInsight.daemon.impl.IdentifierUtil;
 import com.intellij.codeInsight.highlighting.HighlightManager;
-import com.intellij.codeInsight.highlighting.HighlightUsagesHandler;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.dnd.FileCopyPasteUtil;
+import com.intellij.ide.scratch.RootType;
+import com.intellij.ide.scratch.ScratchFileService;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.markup.TextAttributes;
-import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.ide.CopyPasteManager;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.DumbAwareAction;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.StatusBarEx;
 import com.intellij.psi.*;
-import com.intellij.util.ArrayUtil;
-import com.intellij.util.LogicalRoot;
-import com.intellij.util.LogicalRootsManager;
+import com.intellij.util.ArrayUtilRt;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -48,7 +40,11 @@ import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.StringSelection;
 import java.awt.datatransfer.Transferable;
 import java.awt.datatransfer.UnsupportedFlavorException;
+import java.io.File;
 import java.io.IOException;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * @author Alexey
@@ -62,11 +58,24 @@ public class CopyReferenceAction extends DumbAwareAction {
     setInjectedContext(true);
   }
 
-  public void update(AnActionEvent e) {
+  @Override
+  public void update(@NotNull AnActionEvent e) {
+    boolean plural = false;
+    boolean enabled;
+    boolean paths = false;
+
     DataContext dataContext = e.getDataContext();
-    Editor editor = PlatformDataKeys.EDITOR.getData(dataContext);
-    boolean enabled = (editor != null && FileDocumentManager.getInstance().getFile(editor.getDocument()) != null) ||
-                      getElementToCopy(editor, dataContext) != null;
+    Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
+    if (editor != null && FileDocumentManager.getInstance().getFile(editor.getDocument()) != null) {
+      enabled = true;
+    }
+    else {
+      List<PsiElement> elements = getElementsToCopy(editor, dataContext);
+      enabled = !elements.isEmpty();
+      plural = elements.size() > 1;
+      paths = elements.stream().allMatch(el -> el instanceof PsiFileSystemItem && getQualifiedNameFromProviders(el) == null);
+    }
+
     e.getPresentation().setEnabled(enabled);
     if (ActionPlaces.isPopupPlace(e.getPlace())) {
       e.getPresentation().setVisible(enabled);
@@ -74,15 +83,19 @@ public class CopyReferenceAction extends DumbAwareAction {
     else {
       e.getPresentation().setVisible(true);
     }
+    e.getPresentation().setText(
+      paths ? plural ? "Cop&y Relative Paths" : "Cop&y Relative Path"
+            : plural ? "Cop&y References" : "Cop&y Reference");
   }
 
-  public void actionPerformed(AnActionEvent e) {
+  @Override
+  public void actionPerformed(@NotNull AnActionEvent e) {
     DataContext dataContext = e.getDataContext();
-    Editor editor = PlatformDataKeys.EDITOR.getData(dataContext);
-    Project project = PlatformDataKeys.PROJECT.getData(dataContext);
-    PsiElement element = getElementToCopy(editor, dataContext);
+    Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
+    Project project = CommonDataKeys.PROJECT.getData(dataContext);
+    List<PsiElement> elements = getElementsToCopy(editor, dataContext);
 
-    if (!doCopy(element, project, editor) && editor != null) {
+    if (!doCopy(elements, project, editor) && editor != null && project != null) {
       Document document = editor.getDocument();
       PsiFile file = PsiDocumentManager.getInstance(project).getCachedPsiFile(document);
       if (file != null) {
@@ -96,12 +109,13 @@ public class CopyReferenceAction extends DumbAwareAction {
     HighlightManager highlightManager = HighlightManager.getInstance(project);
     EditorColorsManager manager = EditorColorsManager.getInstance();
     TextAttributes attributes = manager.getGlobalScheme().getAttributes(EditorColors.SEARCH_RESULT_ATTRIBUTES);
-    if (element != null && editor != null) {
-      PsiElement nameIdentifier = HighlightUsagesHandler.getNameIdentifier(element);
+    if (elements.size() == 1 && editor != null && project != null) {
+      PsiElement element = elements.get(0);
+      PsiElement nameIdentifier = IdentifierUtil.getNameIdentifier(element);
       if (nameIdentifier != null) {
         highlightManager.addOccurrenceHighlights(editor, new PsiElement[]{nameIdentifier}, attributes, true, null);
       } else {
-        PsiReference reference = TargetElementUtilBase.findReference(editor, editor.getCaretModel().getOffset());
+        PsiReference reference = TargetElementUtil.findReference(editor, editor.getCaretModel().getOffset());
         if (reference != null) {
           highlightManager.addOccurrenceHighlights(editor, new PsiReference[]{reference}, attributes, true, null);
         } else if (element != PsiDocumentManager.getInstance(project).getCachedPsiFile(editor.getDocument())) {
@@ -111,48 +125,65 @@ public class CopyReferenceAction extends DumbAwareAction {
     }
   }
 
-  @Nullable
-  private static PsiElement getElementToCopy(@Nullable final Editor editor, final DataContext dataContext) {
-    PsiElement element = null;
+  @NotNull
+  private static List<PsiElement> getElementsToCopy(@Nullable final Editor editor, final DataContext dataContext) {
+    List<PsiElement> elements = ContainerUtil.newArrayList();
     if (editor != null) {
-      PsiReference reference = TargetElementUtilBase.findReference(editor);
+      PsiReference reference = TargetElementUtil.findReference(editor);
       if (reference != null) {
-        element = reference.getElement();
+        ContainerUtil.addIfNotNull(elements, reference.getElement());
       }
     }
 
-    if (element == null) {
-      element = LangDataKeys.PSI_ELEMENT.getData(dataContext);
-    }
-    if (element == null && editor == null) {
-      VirtualFile virtualFile = PlatformDataKeys.VIRTUAL_FILE.getData(dataContext);
-      Project project = PlatformDataKeys.PROJECT.getData(dataContext);
-      if (virtualFile != null && project != null) {
-        element = PsiManager.getInstance(project).findFile(virtualFile);
+    if (elements.isEmpty()) {
+      PsiElement[] psiElements = LangDataKeys.PSI_ELEMENT_ARRAY.getData(dataContext);
+      if (psiElements != null) {
+        Collections.addAll(elements, psiElements);
       }
     }
-    if (element instanceof PsiFile && !((PsiFile)element).getViewProvider().isPhysical()) {
-      return null;
+
+    if (elements.isEmpty()) {
+      ContainerUtil.addIfNotNull(elements, CommonDataKeys.PSI_ELEMENT.getData(dataContext));
     }
 
-    for (QualifiedNameProvider provider : Extensions.getExtensions(QualifiedNameProvider.EP_NAME)) {
-      PsiElement adjustedElement = provider.adjustElementToCopy(element);
-      if (adjustedElement != null) return adjustedElement;
+    if (elements.isEmpty() && editor == null) {
+      final Project project = CommonDataKeys.PROJECT.getData(dataContext);
+      VirtualFile[] files = CommonDataKeys.VIRTUAL_FILE_ARRAY.getData(dataContext);
+      if (project != null && files != null) {
+        for (VirtualFile file : files) {
+          ContainerUtil.addIfNotNull(elements, PsiManager.getInstance(project).findFile(file));
+        }
+      }
     }
-    return element;
+
+    return ContainerUtil.mapNotNull(elements, element -> element instanceof PsiFile && !((PsiFile)element).getViewProvider().isPhysical() ? null : adjustElement(element));
+  }
+
+  private static PsiElement adjustElement(PsiElement element) {
+    PsiElement adjustedElement = QualifiedNameProviderUtil.adjustElementToCopy(element);
+    return adjustedElement != null ? adjustedElement : element;
   }
 
   public static boolean doCopy(final PsiElement element, final Project project) {
-    return doCopy(element, project, null);
+    return doCopy(Arrays.asList(element), project, null);
   }
 
-  private static boolean doCopy(final PsiElement element, @Nullable final Project project, @Nullable Editor editor) {
-    String fqn = elementToFqn(element, editor);
-    if (fqn == null) return false;
+  private static boolean doCopy(List<? extends PsiElement> elements, @Nullable final Project project, @Nullable Editor editor) {
+    if (elements.isEmpty()) return false;
 
-    CopyPasteManager.getInstance().setContents(new MyTransferable(fqn));
+    List<String> fqns = ContainerUtil.newArrayList();
+    for (PsiElement element : elements) {
+      String fqn = elementToFqn(element, editor);
+      if (fqn == null) return false;
 
-    setStatusBarText(project, IdeBundle.message("message.reference.to.fqn.has.been.copied", fqn));
+      fqns.add(fqn);
+    }
+
+    String toCopy = StringUtil.join(fqns, "\n");
+
+    CopyPasteManager.getInstance().setContents(new MyTransferable(toCopy));
+
+    setStatusBarText(project, IdeBundle.message("message.reference.to.fqn.has.been.copied", toCopy));
     return true;
   }
 
@@ -168,18 +199,21 @@ public class CopyReferenceAction extends DumbAwareAction {
   private static class MyTransferable implements Transferable {
     private final String fqn;
 
-    public MyTransferable(String fqn) {
+    MyTransferable(String fqn) {
       this.fqn = fqn;
     }
 
+    @Override
     public DataFlavor[] getTransferDataFlavors() {
       return new DataFlavor[]{ourFlavor, DataFlavor.stringFlavor};
     }
 
+    @Override
     public boolean isDataFlavorSupported(DataFlavor flavor) {
-      return ArrayUtil.find(getTransferDataFlavors(), flavor) != -1;
+      return ArrayUtilRt.find(getTransferDataFlavors(), flavor) != -1;
     }
 
+    @Override
     @Nullable
     public Object getTransferData(DataFlavor flavor) throws UnsupportedFlavorException, IOException {
       if (isDataFlavorSupported(flavor)) {
@@ -190,59 +224,98 @@ public class CopyReferenceAction extends DumbAwareAction {
   }
 
   @Nullable
-  public static String elementToFqn(final PsiElement element) {
+  public static String elementToFqn(@Nullable final PsiElement element) {
     return elementToFqn(element, null);
   }
 
   @Nullable
-  public static String elementToFqn(final PsiElement element, @Nullable Editor editor) {
+  private static String elementToFqn(@Nullable final PsiElement element, @Nullable Editor editor) {
     String result = getQualifiedNameFromProviders(element);
     if (result != null) return result;
 
     if (editor != null) { //IDEA-70346
-      PsiReference reference = TargetElementUtilBase.findReference(editor, editor.getCaretModel().getOffset());
+      PsiReference reference = TargetElementUtil.findReference(editor, editor.getCaretModel().getOffset());
       if (reference != null) {
         result = getQualifiedNameFromProviders(reference.resolve());
         if (result != null) return result;
       }
     }
 
-    String fqn = null;
     if (element instanceof PsiFile) {
-      final PsiFile file = (PsiFile)element;
-      fqn = FileUtil.toSystemIndependentName(getFileFqn(file));
+      return FileUtil.toSystemIndependentName(getFileFqn((PsiFile)element));
     }
-    return fqn;
+    if (element instanceof PsiDirectory) {
+      return FileUtil.toSystemIndependentName(getVirtualFileFqn(((PsiDirectory)element).getVirtualFile(), element.getProject()));
+    }
+
+    return null;
   }
 
   @Nullable
   private static String getQualifiedNameFromProviders(@Nullable PsiElement element) {
     if (element == null) return null;
-    for (QualifiedNameProvider provider : Extensions.getExtensions(QualifiedNameProvider.EP_NAME)) {
-      String result = provider.getQualifiedName(element);
-      if (result != null) return result;
+    DumbService.getInstance(element.getProject()).setAlternativeResolveEnabled(true);
+    try {
+      return QualifiedNameProviderUtil.getQualifiedName(element);
     }
-    return null;
+    finally {
+      DumbService.getInstance(element.getProject()).setAlternativeResolveEnabled(false);
+    }
   }
 
   @NotNull
   private static String getFileFqn(final PsiFile file) {
     final VirtualFile virtualFile = file.getVirtualFile();
-    if (virtualFile == null) {
-      return file.getName();
-    }
-    final Project project = file.getProject();
-    final LogicalRoot logicalRoot = LogicalRootsManager.getLogicalRootsManager(project).findLogicalRoot(virtualFile);
-    if (logicalRoot != null) {
-      String logical = FileUtil.toSystemIndependentName(VfsUtil.virtualToIoFile(logicalRoot.getVirtualFile()).getPath());
-      String path = FileUtil.toSystemIndependentName(VfsUtil.virtualToIoFile(virtualFile).getPath());
-      return "/" + FileUtil.getRelativePath(logical, path, '/');
+    return virtualFile == null ? file.getName() : getVirtualFileFqn(virtualFile, file.getProject());
+  }
+
+  @NotNull
+  private static String getVirtualFileFqn(@NotNull VirtualFile virtualFile, @NotNull Project project) {
+    for (VirtualFileQualifiedNameProvider provider : VirtualFileQualifiedNameProvider.EP_NAME.getExtensionList()) {
+      String qualifiedName = provider.getQualifiedName(project, virtualFile);
+      if (qualifiedName != null) {
+        return qualifiedName;
+      }
     }
 
-    final VirtualFile contentRoot = ProjectRootManager.getInstance(project).getFileIndex().getContentRootForFile(virtualFile);
-    if (contentRoot != null) {
-      return "/" + FileUtil.getRelativePath(VfsUtil.virtualToIoFile(contentRoot), VfsUtil.virtualToIoFile(virtualFile));
+    Module module = ProjectFileIndex.getInstance(project).getModuleForFile(virtualFile, false);
+    if (module != null) {
+      for (VirtualFile root : ModuleRootManager.getInstance(module).getContentRoots()) {
+        String relativePath = VfsUtilCore.getRelativePath(virtualFile, root);
+        if (relativePath != null) {
+          return relativePath;
+        }
+      }
     }
+
+    String relativePath = VfsUtilCore.getRelativePath(virtualFile, project.getBaseDir());
+    if (relativePath != null) {
+      return relativePath;
+    }
+
+    RootType rootType = RootType.forFile(virtualFile);
+    if (rootType != null) {
+      VirtualFile scratchRootVirtualFile =
+        VfsUtil.findFileByIoFile(new File(ScratchFileService.getInstance().getRootPath(rootType)), false);
+      if (scratchRootVirtualFile != null) {
+        String scratchRelativePath = VfsUtilCore.getRelativePath(virtualFile, scratchRootVirtualFile);
+        if (scratchRelativePath != null) {
+          return scratchRelativePath;
+        }
+      }
+    }
+
     return virtualFile.getPath();
+  }
+
+  public interface VirtualFileQualifiedNameProvider {
+    ExtensionPointName<VirtualFileQualifiedNameProvider> EP_NAME =
+      ExtensionPointName.create("com.intellij.virtualFileQualifiedNameProvider");
+
+    /**
+     * @return {@code virtualFile} fqn (relative path for example) or null if not handled by this provider
+     */
+    @Nullable
+    String getQualifiedName(@NotNull Project project, @NotNull VirtualFile virtualFile);
   }
 }

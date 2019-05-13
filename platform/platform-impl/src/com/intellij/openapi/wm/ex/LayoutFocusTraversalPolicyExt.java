@@ -1,22 +1,9 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm.ex;
 
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -56,12 +43,7 @@ public class LayoutFocusTraversalPolicyExt extends LayoutFocusTraversalPolicy{
 
   @Nullable
   public static LayoutFocusTraversalPolicyExt findWindowPolicy(Component c) {
-    Window wnd;
-    if (c instanceof Window) {
-      wnd = (Window)c;
-    } else {
-      wnd = SwingUtilities.getWindowAncestor(c);
-    }
+    Window wnd = UIUtil.getWindow(c);
 
     final FocusTraversalPolicy policy = wnd.getFocusTraversalPolicy();
     if (policy instanceof LayoutFocusTraversalPolicyExt) {
@@ -92,8 +74,8 @@ public class LayoutFocusTraversalPolicyExt extends LayoutFocusTraversalPolicy{
     myOverridenDefaultComponent = overridenDefaultComponent;
   }
 
-// Made non-final for Fabrique
-  public Component getDefaultComponent(final Container focusCycleRoot) {
+  @Override
+  public final Component getDefaultComponent(final Container focusCycleRoot) {
     if (isNoDefaultComponent()) return null;
 
     if (myOverridenDefaultComponent != null) {
@@ -106,6 +88,7 @@ public class LayoutFocusTraversalPolicyExt extends LayoutFocusTraversalPolicy{
     return super.getDefaultComponent(focusCycleRoot);
   }
 
+  @Override
   public Component getFirstComponent(final Container focusCycleRoot) {
     if (myOverridenDefaultComponent != null) {
       return myOverridenDefaultComponent;
@@ -117,6 +100,7 @@ public class LayoutFocusTraversalPolicyExt extends LayoutFocusTraversalPolicy{
     return super.getFirstComponent(focusCycleRoot);
   }
 
+  @Override
   public Component getLastComponent(final Container focusCycleRoot) {
     if (myOverridenDefaultComponent != null) {
       return myOverridenDefaultComponent;
@@ -128,6 +112,7 @@ public class LayoutFocusTraversalPolicyExt extends LayoutFocusTraversalPolicy{
     return super.getLastComponent(focusCycleRoot);
   }
 
+  @Override
   public Component getComponentAfter(final Container focusCycleRoot, final Component aComponent) {
     if (myOverridenDefaultComponent != null) {
       return myOverridenDefaultComponent;
@@ -139,6 +124,7 @@ public class LayoutFocusTraversalPolicyExt extends LayoutFocusTraversalPolicy{
     return super.getComponentAfter(focusCycleRoot, aComponent);
   }
 
+  @Override
   public Component getComponentBefore(final Container focusCycleRoot, final Component aComponent) {
     if (myOverridenDefaultComponent != null) {
       return myOverridenDefaultComponent;
@@ -163,8 +149,8 @@ public class LayoutFocusTraversalPolicyExt extends LayoutFocusTraversalPolicy{
   protected Component getComponentBeforeImpl(final Container focusCycleRoot, final Component aComponent) {
     return super.getComponentBefore(focusCycleRoot, aComponent);
   }
-  
-  public Component queryImpl(Computable<Component> runnable) {
+
+  public Component queryImpl(Computable<? extends Component> runnable) {
     try {
       myQueryImpl = true;
       return runnable.compute();

@@ -17,6 +17,7 @@ package com.intellij.application.options.editor;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.options.ConfigurableEP;
+import com.intellij.openapi.project.Project;
 
 /**
  * Register implementation of {@link AutoImportOptionsProvider} in the plugin.xml to provide additional options in Editor | Auto Import section:
@@ -31,4 +32,8 @@ import com.intellij.openapi.options.ConfigurableEP;
  */
 public class AutoImportOptionsProviderEP extends ConfigurableEP<AutoImportOptionsProvider> {
   public static final ExtensionPointName<AutoImportOptionsProviderEP> EP_NAME = ExtensionPointName.create("com.intellij.autoImportOptionsProvider");
+
+  public AutoImportOptionsProviderEP(Project project) {
+    super(project);
+  }
 }

@@ -28,26 +28,31 @@ import java.util.Set;
 
 public class ClassNameSameAsAncestorNameInspection extends BaseInspection {
 
+  @Override
+  protected InspectionGadgetsFix buildFix(Object... infos) {
+    return new RenameFix();
+  }
+
+  @Override
   @NotNull
   public String getDisplayName() {
     return InspectionGadgetsBundle.message(
       "class.name.same.as.ancestor.name.display.name");
   }
 
-  protected InspectionGadgetsFix buildFix(Object... infos) {
-    return new RenameFix();
-  }
-
+  @Override
   @NotNull
   protected String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "class.name.same.as.ancestor.name.problem.descriptor");
   }
 
+  @Override
   protected boolean buildQuickFixesOnlyForOnTheFlyErrors() {
     return true;
   }
 
+  @Override
   public BaseInspectionVisitor buildVisitor() {
     return new ClassNameSameAsAncestorNameVisitor();
   }
@@ -62,7 +67,7 @@ public class ClassNameSameAsAncestorNameInspection extends BaseInspection {
       if (className == null) {
         return;
       }
-      final Set<PsiClass> alreadyVisited = new HashSet<PsiClass>(8);
+      final Set<PsiClass> alreadyVisited = new HashSet<>(8);
       final PsiClass[] supers = aClass.getSupers();
       for (final PsiClass aSuper : supers) {
         if (hasMatchingName(aSuper, className, alreadyVisited)) {
@@ -73,7 +78,7 @@ public class ClassNameSameAsAncestorNameInspection extends BaseInspection {
 
     private static boolean hasMatchingName(PsiClass aSuper,
                                            String className,
-                                           Set<PsiClass> alreadyVisited) {
+                                           Set<? super PsiClass> alreadyVisited) {
       if (aSuper == null) {
         return false;
       }

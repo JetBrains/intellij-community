@@ -16,6 +16,10 @@
 package git4idea.rebase;
 
 import com.intellij.openapi.diagnostic.Logger;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+
+import java.util.Locale;
 
 /**
  * The entry for rebase editor
@@ -36,17 +40,23 @@ class GitRebaseEntry {
   /**
    * The action associated with the entry
    */
-  private Action myAction = Action.pick;
+  private Action myAction;
 
   /**
    * The constructor
    *
+   * @param action
    * @param commit  the commit hash
    * @param subject the commit subject
    */
-  public GitRebaseEntry(final String commit, final String subject) {
+  GitRebaseEntry(String action, final String commit, final String subject) {
+    this(Action.fromString(action), commit, subject);
+  }
+
+  GitRebaseEntry(Action action, String commit, String subject) {
     myCommit = commit;
     mySubject = subject;
+    myAction = action;
   }
 
   /**
@@ -86,22 +96,55 @@ class GitRebaseEntry {
   /**
    * The action associated with the commit
    */
-  static public enum Action {
+  public enum Action {
     /**
      * the pick action
      */
-    pick,
+    PICK("pick", 'p'),
     /**
      * the edit action, the user will be offered to alter commit
      */
-    edit,
+    EDIT("edit", 'e'),
     /**
      * the skip action
      */
-    skip,
+    SKIP("skip", 's'),
     /**
      * the squash action (for two or more commits)
      */
-    squash,
+    SQUASH("squash", 'q'),
+
+    REWORD("reword", 'r'),
+
+    FIXUP("fixup", 'f');
+
+
+    @NotNull private final String myText;
+    private final char myMnemonic;
+
+    Action(@NotNull String text, char mnemonic) {
+      myText = text;
+      myMnemonic = mnemonic;
+    }
+
+    public char getMnemonic() {
+      return myMnemonic;
+    }
+
+    @Override
+    public String toString() {
+      return myText;
+    }
+
+    @NotNull
+    static Action fromString(@NonNls @NotNull String actionName) {
+      try {
+        return valueOf(actionName.toUpperCase(Locale.ENGLISH));
+      }
+      catch (IllegalArgumentException e) {
+        log.error(e);
+        return PICK;
+      }
+    }
   }
 }

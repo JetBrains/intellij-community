@@ -15,7 +15,6 @@
  */
 package com.intellij.xml.refactoring;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -35,12 +34,6 @@ import java.util.Collection;
  */
 public class SchemaPrefixRenameHandler extends VariableInplaceRenameHandler {
   
-  @Override
-  protected boolean isAvailable(PsiElement element, Editor editor, PsiFile file) {
-    PossiblePrefixReference ref = getReference(file, editor);
-    return ref != null && ref.resolve() instanceof SchemaPrefix;
-  }
-
   @Nullable
   private static PossiblePrefixReference getReference(PsiFile file, Editor editor) {
     if (file != null && editor != null) {
@@ -55,7 +48,13 @@ public class SchemaPrefixRenameHandler extends VariableInplaceRenameHandler {
   }
 
   @Override
-  protected VariableInplaceRenamer createRenamer(@NotNull PsiElement elementToRename, Editor editor) {
+  protected boolean isAvailable(@Nullable PsiElement element, @NotNull Editor editor, @NotNull PsiFile file) {
+    PossiblePrefixReference ref = getReference(file, editor);
+    return ref != null && ref.resolve() instanceof SchemaPrefix;
+  }
+
+  @Override
+  protected VariableInplaceRenamer createRenamer(@NotNull PsiElement elementToRename, @NotNull Editor editor) {
     PossiblePrefixReference reference = getReference(elementToRename.getContainingFile(), editor);
     if (reference != null) {
       PsiElement prefix = reference.resolve();
@@ -64,13 +63,11 @@ public class SchemaPrefixRenameHandler extends VariableInplaceRenameHandler {
           @Override
           protected void addReferenceAtCaret(Collection<PsiReference> refs) {}
 
+          @Override
+          protected boolean isReferenceAtCaret(PsiElement selectedElement, PsiReference ref) {
+            return false;
+          }
         };
-      }
-    }
-    if (ApplicationManager.getApplication().isUnitTestMode()) {
-      System.out.println("Reference: " + reference);
-      if (reference != null) {
-        System.out.println("Resolved: " + reference.resolve());
       }
     }
     return null;

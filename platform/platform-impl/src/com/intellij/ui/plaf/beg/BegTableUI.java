@@ -1,20 +1,7 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.plaf.beg;
 
+import com.intellij.openapi.wm.IdeFocusManager;
 import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
@@ -31,6 +18,7 @@ import java.awt.event.KeyListener;
  */
 public class BegTableUI extends BasicTableUI {
   private final KeyAdapter myAdapter= new KeyAdapter() {
+      @Override
       public void keyPressed(KeyEvent e) {
         if (e.getKeyCode() == KeyEvent.VK_ESCAPE) {
           if (table.isEditing()) {
@@ -50,6 +38,7 @@ public class BegTableUI extends BasicTableUI {
     return new BegTableUI();
   }
 
+  @Override
   public void installUI(JComponent c) {
     super.installUI(c);
     c.getActionMap().put(START_EDITING_ACTION_KEY, new StartEditingAction());
@@ -57,11 +46,13 @@ public class BegTableUI extends BasicTableUI {
     c.getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT).put(KeyStroke.getKeyStroke("pressed ESCAPE"), "cancel");
   }
 
+  @Override
   protected KeyListener createKeyListener() {
     return myAdapter;
   }
 
   private class StartEditingAction extends AbstractAction {
+    @Override
     public void actionPerformed(ActionEvent e) {
       JTable table = (JTable)e.getSource();
       if (!table.hasFocus()) {
@@ -69,18 +60,22 @@ public class BegTableUI extends BasicTableUI {
         if (cellEditor != null && !cellEditor.stopCellEditing()) {
           return;
         }
-        table.requestFocus();
+        IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
+          IdeFocusManager.getGlobalInstance().requestFocus(table, true);
+        });
         return;
       }
       ListSelectionModel rsm = table.getSelectionModel();
       int anchorRow = rsm.getAnchorSelectionIndex();
       ListSelectionModel csm = table.getColumnModel().getSelectionModel();
       int anchorColumn = csm.getAnchorSelectionIndex();
-      table.editCellAt(anchorRow, anchorColumn);
+      table.editCellAt(anchorRow, anchorColumn, e);
       Component editorComp = table.getEditorComponent();
       if (editorComp != null) {
         editorComp.addKeyListener(myAdapter);
-        editorComp.requestFocus();
+        IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
+          IdeFocusManager.getGlobalInstance().requestFocus(editorComp, true);
+        });
       }
     }
   }

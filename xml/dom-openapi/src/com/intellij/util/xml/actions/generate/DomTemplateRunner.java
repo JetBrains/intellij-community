@@ -23,9 +23,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Map;
 
-/**
- * User: Sergey.Vasiliev
- */
 public abstract class DomTemplateRunner {
 
   public static DomTemplateRunner getInstance(Project project) {

@@ -14,23 +14,21 @@
  * limitations under the License.
  */
 
-/*
- * Created by IntelliJ IDEA.
- * User: mike
- * Date: Aug 20, 2002
- * Time: 8:49:24 PM
- * To change template for new class use
- * Code Style | Class Templates options (Tools | IDE Options).
- */
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
+import com.intellij.psi.filters.FilterPositionUtil;
 import com.intellij.psi.util.ClassUtil;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 
 public class ImportClassFix extends ImportClassFixBase<PsiJavaCodeReferenceElement, PsiJavaCodeReferenceElement> {
   public ImportClassFix(@NotNull PsiJavaCodeReferenceElement element) {
@@ -91,7 +89,7 @@ public class ImportClassFix extends ImportClassFixBase<PsiJavaCodeReferenceEleme
       if (importStaticStatement.resolve() != null) continue;
       if (importStaticStatement.isOnDemand()) return true;
       String qualifiedName = importStaticStatement.getReferenceName();
-      // rough heuristic, since there is no API to get class name refrence from static import
+      // rough heuristic, since there is no API to get class name reference from static import
       if (qualifiedName != null && StringUtil.split(qualifiedName, ".").contains(name)) return true;
     }
     return false;
@@ -108,7 +106,32 @@ public class ImportClassFix extends ImportClassFixBase<PsiJavaCodeReferenceEleme
   }
 
   @Override
-  protected List<PsiClass> filterByContext(List<PsiClass> candidates, PsiJavaCodeReferenceElement ref) {
+  protected boolean canReferenceClass(PsiJavaCodeReferenceElement ref) {
+    if (PsiTreeUtil.getParentOfType(ref, PsiImportStatementBase.class) != null) return false;
+    if (ref instanceof PsiReferenceExpression) {
+      PsiElement parent = ref.getParent();
+      return parent instanceof PsiReferenceExpression || parent instanceof PsiExpressionStatement;
+    }
+    return !inReturnTypeOfIncompleteGenericMethod(ref);
+  }
+
+  private static boolean inReturnTypeOfIncompleteGenericMethod(PsiJavaCodeReferenceElement element) {
+    PsiTypeElement type = SyntaxTraverser.psiApi().parents(element).filter(PsiTypeElement.class).last();
+    PsiElement prev = FilterPositionUtil.searchNonSpaceNonCommentBack(type);
+    PsiTypeParameterList typeParameterList = PsiTreeUtil.getParentOfType(prev, PsiTypeParameterList.class);
+    if (typeParameterList != null && typeParameterList.getParent() instanceof PsiErrorElement) {
+      return Arrays.stream(typeParameterList.getTypeParameters()).anyMatch(p -> Objects.equals(element.getReferenceName(), p.getName()));
+    }
+    return false;
+  }
+
+  @NotNull
+  @Override
+  protected List<PsiClass> filterByContext(@NotNull List<PsiClass> candidates, @NotNull PsiJavaCodeReferenceElement ref) {
+    if (ref instanceof PsiReferenceExpression) {
+      return Collections.emptyList();
+    }
+
     PsiElement typeElement = ref.getParent();
     if (typeElement instanceof PsiTypeElement) {
       PsiElement var = typeElement.getParent();
@@ -118,6 +141,9 @@ public class ImportClassFix extends ImportClassFixBase<PsiJavaCodeReferenceEleme
           return filterAssignableFrom(initializer.getType(), candidates);
         }
       }
+      if (var instanceof PsiParameter) {
+        return filterBySuperMethods((PsiParameter)var, candidates);
+      }
     }
 
     return super.filterByContext(candidates, ref);
@@ -125,6 +151,6 @@ public class ImportClassFix extends ImportClassFixBase<PsiJavaCodeReferenceEleme
 
   @Override
   protected boolean isAccessible(PsiMember member, PsiJavaCodeReferenceElement reference) {
-    return member.hasModifierProperty(PsiModifier.PUBLIC) || member.hasModifierProperty(PsiModifier.PROTECTED);
+    return PsiUtil.isAccessible(member, reference, null);
   }
 }

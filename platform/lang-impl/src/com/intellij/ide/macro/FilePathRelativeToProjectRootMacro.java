@@ -17,6 +17,7 @@
 package com.intellij.ide.macro;
 
 import com.intellij.ide.IdeBundle;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.project.Project;
@@ -25,20 +26,23 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 
 public class FilePathRelativeToProjectRootMacro extends Macro {
+  @Override
   public String getName() {
     return "FilePathRelativeToProjectRoot";
   }
 
+  @Override
   public String getDescription() {
     return IdeBundle.message("macro.file.path.relative.to.root");
   }
 
+  @Override
   public String expand(final DataContext dataContext) {
-    final Project project = PlatformDataKeys.PROJECT.getData(dataContext);
+    final Project project = CommonDataKeys.PROJECT.getData(dataContext);
     if (project == null) {
       return null;
     }
-    VirtualFile file = PlatformDataKeys.VIRTUAL_FILE.getData(dataContext);
+    VirtualFile file = CommonDataKeys.VIRTUAL_FILE.getData(dataContext);
     if (file == null) {
       return null;
     }

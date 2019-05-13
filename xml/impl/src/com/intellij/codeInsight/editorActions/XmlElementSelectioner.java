@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,9 +18,11 @@ package com.intellij.codeInsight.editorActions;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlAttributeValue;
+import org.jetbrains.annotations.NotNull;
 
 class XmlElementSelectioner extends ExtendWordSelectionHandlerBase {
-  public boolean canSelect(PsiElement e) {
+  @Override
+  public boolean canSelect(@NotNull PsiElement e) {
     return e instanceof XmlAttribute || e instanceof XmlAttributeValue;
   }
 }

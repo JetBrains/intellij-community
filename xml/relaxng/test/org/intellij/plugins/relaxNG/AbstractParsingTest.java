@@ -20,16 +20,12 @@ import com.intellij.testFramework.ParsingTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
 import org.intellij.plugins.relaxNG.compact.RncParserDefinition;
 
-/*
- * Created by IntelliJ IDEA.
- * User: sweinreuter
- * Date: 24.08.2007
- */
 public abstract class AbstractParsingTest extends ParsingTestCase {
   public AbstractParsingTest(String s) {
     super("psi/" + s, "rnc", new RncParserDefinition());
   }
 
+  @Override
   protected String getTestDataPath() {
     return PlatformTestUtil.getCommunityPath() + "/xml/relaxng/testData/parsing";
   }

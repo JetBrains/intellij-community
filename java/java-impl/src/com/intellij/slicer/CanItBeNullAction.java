@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,35 +15,18 @@
  */
 package com.intellij.slicer;
 
-import com.intellij.icons.AllIcons;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.psi.*;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.tree.DefaultMutableTreeNode;
 
-/**
- * User: cdr
- */
-public class CanItBeNullAction  extends AnAction {
-  private final SliceTreeBuilder myTreeBuilder;
-  private static final String TEXT = "Group by leaf expression nullness";
-
-  public CanItBeNullAction(SliceTreeBuilder treeBuilder) {
-    super(TEXT, "Determine whether null can flow into this expression", AllIcons.Debugger.Db_disabled_breakpoint_process);
-    myTreeBuilder = treeBuilder;
+class CanItBeNullAction extends GroupByNullnessActionBase {
+  CanItBeNullAction(@NotNull SliceTreeBuilder treeBuilder) {
+    super(treeBuilder);
   }
 
   @Override
-  public void update(AnActionEvent e) {
-    e.getPresentation().setText(TEXT + (myTreeBuilder.analysisInProgress ? " (Analysis in progress)" : ""));
-    e.getPresentation().setEnabled(isAvailable());
-  }
-
-  private boolean isAvailable() {
-    if (myTreeBuilder.analysisInProgress) return false;
-    if (!myTreeBuilder.dataFlowToThis) return false;
-    if (myTreeBuilder.splitByLeafExpressions) return false;
+  protected boolean isAvailable() {
     DefaultMutableTreeNode root = myTreeBuilder.getRootNode();
     if (root == null) return false;
     SliceRootNode rootNode = (SliceRootNode)root.getUserObject();
@@ -59,10 +42,5 @@ public class CanItBeNullAction  extends AnAction {
       type = null;
     }
     return type instanceof PsiClassType || type instanceof PsiArrayType;
-  }
-
-  @Override
-  public void actionPerformed(AnActionEvent e) {
-    myTreeBuilder.switchToLeafNulls();
   }
 }

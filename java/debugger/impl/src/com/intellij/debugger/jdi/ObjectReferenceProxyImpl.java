@@ -1,17 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 
 /*
@@ -19,11 +7,12 @@
  */
 package com.intellij.debugger.jdi;
 
+import com.intellij.util.ThreeState;
 import com.sun.jdi.*;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -33,7 +22,7 @@ public class ObjectReferenceProxyImpl extends JdiProxy {
   //caches
   private ReferenceType myReferenceType;
   private Type myType;
-  private Boolean myIsCollected = null;
+  private ThreeState myIsCollected = ThreeState.UNSURE;
 
   public ObjectReferenceProxyImpl(VirtualMachineProxyImpl virtualMachineProxy, @NotNull ObjectReference objectReference) {
     super(virtualMachineProxy);
@@ -83,15 +72,15 @@ public class ObjectReferenceProxyImpl extends JdiProxy {
 
   public boolean isCollected() {
     checkValid();
-    if (myIsCollected == null || Boolean.FALSE.equals(myIsCollected)) {
+    if (myIsCollected != ThreeState.YES) {
       try {
-        myIsCollected = Boolean.valueOf(VirtualMachineProxyImpl.isCollected(myObjectReference));
+        myIsCollected = ThreeState.fromBoolean(VirtualMachineProxyImpl.isCollected(myObjectReference));
       }
-      catch (VMDisconnectedException e) {
-        myIsCollected = Boolean.TRUE;
+      catch (VMDisconnectedException ignored) {
+        myIsCollected = ThreeState.YES;
       }
     }
-    return myIsCollected.booleanValue();
+    return myIsCollected.toBoolean();
   }
 
   public long uniqueID() {
@@ -103,18 +92,11 @@ public class ObjectReferenceProxyImpl extends JdiProxy {
    * @throws IncompatibleThreadStateException
    */
   public List<ThreadReferenceProxyImpl> waitingThreads() throws IncompatibleThreadStateException {
-    List<ThreadReference> list = getObjectReference().waitingThreads();
-    List<ThreadReferenceProxyImpl> proxiesList = new ArrayList<ThreadReferenceProxyImpl>(list.size());
-
-    for (ThreadReference threadReference : list) {
-      proxiesList.add(getVirtualMachineProxy().getThreadReferenceProxy(threadReference));
-    }
-    return proxiesList;
+    return StreamEx.of(getObjectReference().waitingThreads()).map(getVirtualMachineProxy()::getThreadReferenceProxy).toList();
   }
 
   public ThreadReferenceProxyImpl owningThread() throws IncompatibleThreadStateException {
-    ThreadReference threadReference = getObjectReference().owningThread();
-    return getVirtualMachineProxy().getThreadReferenceProxy(threadReference);
+    return getVirtualMachineProxy().getThreadReferenceProxy(getObjectReference().owningThread());
   }
 
   public int entryCount() throws IncompatibleThreadStateException {
@@ -127,8 +109,7 @@ public class ObjectReferenceProxyImpl extends JdiProxy {
     }
     if(this == o) return true;
 
-    ObjectReference ref = myObjectReference;
-    return ref != null && ref.equals(((ObjectReferenceProxyImpl)o).myObjectReference);
+    return myObjectReference.equals(((ObjectReferenceProxyImpl)o).myObjectReference);
   }
 
 
@@ -139,10 +120,11 @@ public class ObjectReferenceProxyImpl extends JdiProxy {
   /**
    * The advice to the proxy to clear cached data.
    */
+  @Override
   protected void clearCaches() {
-    if (Boolean.FALSE.equals(myIsCollected)) {
-      // clearing cache makes sence only if the object has not been collected yet
-      myIsCollected = null;
+    if (myIsCollected == ThreeState.NO) {
+      // clearing cache makes sense only if the object has not been collected yet
+      myIsCollected = ThreeState.UNSURE;
     }
   }
 }

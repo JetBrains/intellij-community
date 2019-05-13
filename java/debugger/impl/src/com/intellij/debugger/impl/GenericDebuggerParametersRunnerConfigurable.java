@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.impl;
 
 import com.intellij.debugger.DebuggerBundle;
@@ -25,6 +11,7 @@ import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.xdebugger.impl.settings.DebuggerConfigurable;
 import org.jetbrains.annotations.NotNull;
 
@@ -47,8 +34,9 @@ public class GenericDebuggerParametersRunnerConfigurable extends SettingsEditor<
 
   public GenericDebuggerParametersRunnerConfigurable(final Project project) {
     myDebuggerSettings.addActionListener(new ActionListener() {
+      @Override
       public void actionPerformed(ActionEvent e) {
-        ShowSettingsUtil.getInstance().showSettingsDialog(project, DebuggerConfigurable.DISPLAY_NAME);
+        ShowSettingsUtil.getInstance().showSettingsDialog(project, DebuggerConfigurable.class);
         if (myIsLocal) {
           setTransport(DebuggerSettings.getInstance().DEBUGGER_TRANSPORT);
         }
@@ -58,6 +46,7 @@ public class GenericDebuggerParametersRunnerConfigurable extends SettingsEditor<
     });
 
     final ActionListener listener = new ActionListener() {
+      @Override
       public void actionPerformed(final ActionEvent e) {
         suggestAvailablePortIfNotSpecified();
         updateUI();
@@ -80,6 +69,7 @@ public class GenericDebuggerParametersRunnerConfigurable extends SettingsEditor<
     return getTransport() == DebuggerSettings.SOCKET_TRANSPORT;
   }
 
+  @Override
   @NotNull
   public JComponent createEditor() {
     return myPanel;
@@ -89,15 +79,12 @@ public class GenericDebuggerParametersRunnerConfigurable extends SettingsEditor<
     myPortPanel.setVisible(isSocket());
     myShMemPanel.setVisible(!isSocket());
     myAddressField.setEditable(!myIsLocal);
-    myPortField.setEditable(!myIsLocal);
     mySocketTransport.setEnabled(!myIsLocal);
     myShmemTransport.setEnabled(!myIsLocal);
   }
 
-  public void disposeEditor() {
-  }
-
-  public void resetEditorFrom(GenericDebuggerRunnerSettings runnerSettings) {
+  @Override
+  public void resetEditorFrom(@NotNull GenericDebuggerRunnerSettings runnerSettings) {
     setIsLocal(runnerSettings.LOCAL);
     setTransport(runnerSettings.getTransport());
     setPort(StringUtil.notNullize(runnerSettings.getDebugPort()));
@@ -113,7 +100,7 @@ public class GenericDebuggerParametersRunnerConfigurable extends SettingsEditor<
       try {
         Integer.parseInt(port);
       }
-      catch (NumberFormatException e) {
+      catch (NumberFormatException ignored) {
         portSpecified = false;
       }
     }
@@ -129,7 +116,7 @@ public class GenericDebuggerParametersRunnerConfigurable extends SettingsEditor<
   }
 
   private int getTransport() {
-    if(myIsLocal) {
+    if (myIsLocal) {
       return DebuggerSettings.getInstance().DEBUGGER_TRANSPORT;
     }
     else {
@@ -139,7 +126,7 @@ public class GenericDebuggerParametersRunnerConfigurable extends SettingsEditor<
 
   private String getPort() {
     if (isSocket()) {
-      return myPortField.getText();
+      return String.valueOf(myPortField.getText());
     }
     else {
       return myAddressField.getText();
@@ -147,17 +134,12 @@ public class GenericDebuggerParametersRunnerConfigurable extends SettingsEditor<
   }
 
   private void checkPort() throws ConfigurationException {
-    if (isSocket() && myPortField.getText().length() > 0) {
-      try {
-        final int port = Integer.parseInt(myPortField.getText());
-        if (port < 0 || port > 0xffff) {
-          throw new NumberFormatException();
-        }
-      }
-      catch (NumberFormatException e) {
-        throw new ConfigurationException(DebuggerBundle.message("error.text.invalid.port.0", myPortField.getText()));
-      }
+    if (isSocket() && parsePort() == 0) {
+      throw new ConfigurationException(DebuggerBundle.message("error.text.invalid.port"));
     }
+  }
+  private int parsePort() {
+    return Math.max(0, StringUtil.parseInt(myPortField.getText(), 0));
   }
 
   private void setTransport(int transport) {
@@ -173,14 +155,15 @@ public class GenericDebuggerParametersRunnerConfigurable extends SettingsEditor<
 
   private void setPort(String port) {
     if (isSocket()) {
-      myPortField.setText(port);
+      myPortField.setText(String.valueOf(StringUtilRt.parseInt(port, 0)));
     }
     else {
       myAddressField.setText(port);
     }
   }
 
-  public void applyEditorTo(GenericDebuggerRunnerSettings runnerSettings) throws ConfigurationException {
+  @Override
+  public void applyEditorTo(@NotNull GenericDebuggerRunnerSettings runnerSettings) throws ConfigurationException {
     runnerSettings.LOCAL = myIsLocal;
     checkPort();
     runnerSettings.setDebugPort(getPort());
@@ -188,5 +171,4 @@ public class GenericDebuggerParametersRunnerConfigurable extends SettingsEditor<
       runnerSettings.setTransport(getTransport());
     }
   }
-
 }

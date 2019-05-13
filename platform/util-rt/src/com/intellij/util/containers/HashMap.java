@@ -17,19 +17,17 @@ package com.intellij.util.containers;
 
 import java.util.Map;
 
+/** Use {@link java.util.HashMap} */
 @SuppressWarnings("ClassNameSameAsAncestorName")
+@Deprecated
 public class HashMap<K, V> extends java.util.HashMap<K, V> {
   public HashMap() { }
 
-  public HashMap(int i, float v) {
-    super(i, v);
+  public HashMap(int initialCapacity) {
+    super(initialCapacity);
   }
 
-  public HashMap(int i) {
-    super(i);
-  }
-
-  public <K1 extends K, V1 extends V> HashMap(Map<K1, V1> map) {
+  public <K1 extends K, V1 extends V> HashMap(Map<? extends K1, ? extends V1> map) {
     super(map);
   }
 

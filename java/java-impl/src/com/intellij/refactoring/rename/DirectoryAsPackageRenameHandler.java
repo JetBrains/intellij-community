@@ -18,13 +18,11 @@ package com.intellij.refactoring.rename;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.JavaDirectoryService;
-import com.intellij.psi.JavaPsiFacade;
-import com.intellij.psi.PsiDirectory;
-import com.intellij.psi.PsiPackage;
+import com.intellij.psi.*;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.move.moveClassesOrPackages.MoveDirectoryWithClassesProcessor;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author yole
@@ -38,7 +36,7 @@ public class DirectoryAsPackageRenameHandler extends DirectoryAsPackageRenameHan
 
   @Override
   protected boolean isIdentifier(String name, Project project) {
-    return JavaPsiFacade.getInstance(project).getNameHelper().isIdentifier(name);
+    return PsiNameHelper.getInstance(project).isIdentifier(name);
   }
 
   @Override
@@ -48,7 +46,7 @@ public class DirectoryAsPackageRenameHandler extends DirectoryAsPackageRenameHan
 
   @Override
   protected PsiPackage getPackage(PsiDirectory psiDirectory) {
-    return JavaDirectoryService.getInstance().getPackage(psiDirectory);
+    return JavaDirectoryService.getInstance().getPackageInSources(psiDirectory);
   }
 
   @Override
@@ -67,6 +65,7 @@ public class DirectoryAsPackageRenameHandler extends DirectoryAsPackageRenameHan
         return newQName;
       }
 
+      @NotNull
       @Override
       protected String getCommandName() {
         return RefactoringBundle.message(dirsToRename.length == 1 ? "rename.directory.command.name" : "rename.directories.command.name");

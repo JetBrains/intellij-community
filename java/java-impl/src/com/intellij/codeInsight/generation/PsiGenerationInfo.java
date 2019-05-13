@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,48 +22,55 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Objects;
+
 /**
  * @author peter
  */
 public class PsiGenerationInfo<T extends PsiMember> extends GenerationInfoBase implements GenerationInfo {
-  private T myMember;
+  private SmartPsiElementPointer<T> myMember;
   private final boolean myMergeIfExists;
-  private static final Logger LOG = Logger.getInstance("#" + PsiGenerationInfo.class.getName());
+  private static final Logger LOG = Logger.getInstance(PsiGenerationInfo.class);
 
   public PsiGenerationInfo(@NotNull final T member) {
-    myMember = member;
-    myMergeIfExists = true;
+    this(member, true);
   }
 
   public PsiGenerationInfo(@NotNull T member, boolean mergeIfExists) {
-    myMember = member;
+    setMember(member);
     myMergeIfExists = mergeIfExists;
+  }
+
+  private void setMember(@NotNull T member) {
+    myMember = SmartPointerManager.getInstance(member.getProject()).createSmartPsiElementPointer(member);
   }
 
   @Override
   public final T getPsiMember() {
-    return myMember;
+    return myMember.getElement();
   }
 
   @Override
   public void insert(@NotNull final PsiClass aClass, @Nullable PsiElement anchor, boolean before) throws IncorrectOperationException {
+    T member = Objects.requireNonNull(getPsiMember());
     final PsiMember existingMember;
-    if (myMember instanceof PsiField) {
-      existingMember = aClass.findFieldByName(myMember.getName(), false);
+    if (member instanceof PsiField) {
+      existingMember = aClass.findFieldByName(member.getName(), false);
     }
-    else if (myMember instanceof PsiMethod) {
-      existingMember = aClass.findMethodBySignature((PsiMethod)myMember, false);
+    else if (member instanceof PsiMethod) {
+      existingMember = aClass.findMethodBySignature((PsiMethod)member, false);
     }
     else {
       existingMember = null;
     }
-    if (existingMember == null || !myMergeIfExists) {
-      PsiElement newMember = GenerateMembersUtil.insert(aClass, myMember, anchor, before);
-      myMember = (T)JavaCodeStyleManager.getInstance(aClass.getProject()).shortenClassReferences(newMember);
-      LOG.assertTrue(myMember.isValid(), myMember);
+    if (existingMember == null || !existingMember.isPhysical() || !myMergeIfExists) {
+      PsiElement newMember = GenerateMembersUtil.insert(aClass, member, anchor, before);
+      member = (T)JavaCodeStyleManager.getInstance(aClass.getProject()).shortenClassReferences(newMember);
+      LOG.assertTrue(member.isValid(), member);
+      setMember(member);
     }
     else {
-      final PsiModifierList modifierList = myMember.getModifierList();
+      final PsiModifierList modifierList = member.getModifierList();
       final PsiModifierList existingModifierList = existingMember.getModifierList();
       if (modifierList != null && existingModifierList != null) {
         final PsiAnnotation[] psiAnnotations = modifierList.getAnnotations();
@@ -80,13 +87,14 @@ public class PsiGenerationInfo<T extends PsiMember> extends GenerationInfoBase i
           }
         }
       }
-      myMember = (T)existingMember;
-      if (!myMember.isValid()) {
-        LOG.error("invalid member: " + myMember +
+      member = (T)existingMember;
+      if (!member.isValid()) {
+        LOG.error("invalid member: " + member +
                   " existing member: " + existingMember.isValid() +
                   " self modified list: " + modifierList +
                   " existing modified list: " + existingModifierList);
       }
+      setMember(member);
     }
   }
 }

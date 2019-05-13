@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -54,7 +54,7 @@ public class ZoomingDelegate {
       translated.translate(xoffset, yoffset);
       translated.scale(scale, scale);
 
-      translated.drawImage(myCachedImage, 0, 0, null);
+      UIUtil.drawImage(translated, myCachedImage, 0, 0, null);
     }
   }
 
@@ -86,8 +86,7 @@ public class ZoomingDelegate {
   }
 
   protected void scrollTo(int voffset, int hoffset) {
-    JViewport viewport = (JViewport)myViewportComponent;
-    JScrollPane pane = (JScrollPane)viewport.getParent();
+    JScrollPane pane = JBScrollPane.findScrollPane(myViewportComponent);
     JScrollBar vsb = pane.getVerticalScrollBar();
     vsb.setValue(voffset);
     JScrollBar hsb = pane.getHorizontalScrollBar();
@@ -112,7 +111,9 @@ public class ZoomingDelegate {
 
       if (myCachedImage == null) {
         Rectangle bounds = myViewportComponent.getBounds();
-        BufferedImage image = UIUtil.createImage(bounds.width, bounds.height, BufferedImage.TYPE_INT_RGB);
+        if (bounds.width <= 0 || bounds.height <= 0) return;
+
+        BufferedImage image = UIUtil.createImage(myViewportComponent.getGraphics(), bounds.width, bounds.height, BufferedImage.TYPE_INT_RGB);
 
         Graphics graphics = image.getGraphics();
         graphics.setClip(0, 0, bounds.width, bounds.height);

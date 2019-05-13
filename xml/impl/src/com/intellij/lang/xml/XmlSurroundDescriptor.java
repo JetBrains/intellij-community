@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,7 +24,7 @@ import com.intellij.lang.surroundWith.Surrounder;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.util.PsiUtilBase;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.psi.xml.XmlTagChild;
 import com.intellij.psi.xml.XmlToken;
 import com.intellij.psi.xml.XmlTokenType;
@@ -38,6 +38,7 @@ import java.util.List;
  * @author ven
  */
 public class XmlSurroundDescriptor implements SurroundDescriptor {
+  @Override
   @NotNull public PsiElement[] getElementsToSurround(PsiFile file, int startOffset, int endOffset) {
     final Pair<XmlTagChild, XmlTagChild> childrenInRange = XmlUtil.findTagChildrenInRange(file, startOffset, endOffset);
     if (childrenInRange == null) {
@@ -48,7 +49,7 @@ public class XmlSurroundDescriptor implements SurroundDescriptor {
       }
       return PsiElement.EMPTY_ARRAY;
     }
-    List<PsiElement> result = new ArrayList<PsiElement>();
+    List<PsiElement> result = new ArrayList<>();
     PsiElement first = childrenInRange.getFirst();
     PsiElement last = childrenInRange.getSecond();
     while(true) {
@@ -57,11 +58,12 @@ public class XmlSurroundDescriptor implements SurroundDescriptor {
       first = first.getNextSibling();
     }
 
-    return PsiUtilBase.toPsiElementArray(result);
+    return PsiUtilCore.toPsiElementArray(result);
   }
 
+  @Override
   @NotNull public Surrounder[] getSurrounders() {
-    return new Surrounder[0]; //everything is in live templates now
+    return Surrounder.EMPTY_ARRAY; //everything is in live templates now
   }
 
   @Override

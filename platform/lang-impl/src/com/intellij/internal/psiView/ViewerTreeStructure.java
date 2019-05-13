@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,11 +14,6 @@
  * limitations under the License.
  */
 
-/**
- * class ViewerTreeStructure
- * created Aug 25, 2001
- * @author Jeka
- */
 package com.intellij.internal.psiView;
 
 import com.intellij.ide.util.treeView.AbstractTreeStructure;
@@ -29,7 +24,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
-import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
@@ -57,13 +51,15 @@ public class ViewerTreeStructure extends AbstractTreeStructure {
     return myRootPsiElement;
   }
 
+  @NotNull
   @Override
   public Object getRootElement() {
     return myRootElement;
   }
 
+  @NotNull
   @Override
-  public Object[] getChildElements(final Object element) {
+  public Object[] getChildElements(@NotNull final Object element) {
     if (myRootElement == element) {
       if (myRootPsiElement == null) {
         return ArrayUtil.EMPTY_OBJECT_ARRAY;
@@ -76,63 +72,55 @@ public class ViewerTreeStructure extends AbstractTreeStructure {
     }
     final Object[][] children = new Object[1][];
     children[0] = ArrayUtil.EMPTY_OBJECT_ARRAY;
-    ApplicationManager.getApplication().runReadAction(new Runnable() {
-      @Override
-      public void run() {
-        final Object[] result;
-        if (myShowTreeNodes) {
-          final ArrayList<Object> list = new ArrayList<Object>();
-          ASTNode root = element instanceof PsiElement? SourceTreeToPsiMap.psiElementToTree((PsiElement)element) :
-                               element instanceof ASTNode? (ASTNode)element : null;
-          if (element instanceof Inject) {
-            root = SourceTreeToPsiMap.psiElementToTree(((Inject)element).getPsi());
-          }
+    ApplicationManager.getApplication().runReadAction(() -> {
+      final Object[] result;
+      if (myShowTreeNodes) {
+        final ArrayList<Object> list = new ArrayList<>();
+        ASTNode root = element instanceof PsiElement? SourceTreeToPsiMap.psiElementToTree((PsiElement)element) :
+                             element instanceof ASTNode? (ASTNode)element : null;
+        if (element instanceof Inject) {
+          root = SourceTreeToPsiMap.psiElementToTree(((Inject)element).getPsi());
+        }
 
-          if (root != null) {
-            ASTNode child = root.getFirstChildNode();
-            while (child != null) {
-              if (myShowWhiteSpaces || child.getElementType() != TokenType.WHITE_SPACE) {
-                final PsiElement childElement = child.getPsi();
-                list.add(childElement == null ? child : childElement);
-              }
-              child = child.getTreeNext();
+        if (root != null) {
+          ASTNode child = root.getFirstChildNode();
+          while (child != null) {
+            if (myShowWhiteSpaces || child.getElementType() != TokenType.WHITE_SPACE) {
+              final PsiElement childElement = child.getPsi();
+              list.add(childElement == null ? child : childElement);
             }
-            final PsiElement psi = root.getPsi();
-            if (psi instanceof PsiLanguageInjectionHost) {
-              InjectedLanguageUtil.enumerate(psi, new PsiLanguageInjectionHost.InjectedPsiVisitor() {
-                @Override
-                public void visit(@NotNull PsiFile injectedPsi, @NotNull List<PsiLanguageInjectionHost.Shred> places) {
-                  list.add(new Inject(psi, injectedPsi));
-                }
-              });
-            }
+            child = child.getTreeNext();
           }
-          result = ArrayUtil.toObjectArray(list);
+          final PsiElement psi = root.getPsi();
+          if (psi instanceof PsiLanguageInjectionHost) {
+            InjectedLanguageManager.getInstance(myProject).enumerate(psi, (injectedPsi, places) -> list.add(new Inject(psi, injectedPsi)));
+          }
+        }
+        result = ArrayUtil.toObjectArray(list);
+      }
+      else {
+        final PsiElement[] elementChildren = ((PsiElement)element).getChildren();
+        if (!myShowWhiteSpaces) {
+          final List<PsiElement> childrenList = new ArrayList<>(elementChildren.length);
+          for (PsiElement psiElement : elementChildren) {
+            if (!myShowWhiteSpaces && psiElement instanceof PsiWhiteSpace) {
+              continue;
+            }
+            childrenList.add(psiElement);
+          }
+          result = PsiUtilCore.toPsiElementArray(childrenList);
         }
         else {
-          final PsiElement[] elementChildren = ((PsiElement)element).getChildren();
-          if (!myShowWhiteSpaces) {
-            final List<PsiElement> childrenList = new ArrayList<PsiElement>(elementChildren.length);
-            for (PsiElement psiElement : elementChildren) {
-              if (!myShowWhiteSpaces && psiElement instanceof PsiWhiteSpace) {
-                continue;
-              }
-              childrenList.add(psiElement);
-            }
-            result = PsiUtilCore.toPsiElementArray(childrenList);
-          }
-          else {
-            result = elementChildren;
-          }
+          result = elementChildren;
         }
-        children[0] = result;
       }
+      children[0] = result;
     });
     return children[0];
   }
 
   @Override
-  public Object getParentElement(Object element) {
+  public Object getParentElement(@NotNull Object element) {
     if (element == myRootElement) {
       return null;
     }
@@ -158,7 +146,7 @@ public class ViewerTreeStructure extends AbstractTreeStructure {
 
   @Override
   @NotNull
-  public NodeDescriptor createDescriptor(Object element, NodeDescriptor parentDescriptor) {
+  public NodeDescriptor createDescriptor(@NotNull Object element, NodeDescriptor parentDescriptor) {
     if (element == myRootElement) {
       return new NodeDescriptor(myProject, null) {
         @Override

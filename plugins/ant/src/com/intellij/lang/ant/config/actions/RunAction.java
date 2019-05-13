@@ -20,12 +20,10 @@ import com.intellij.lang.ant.AntBundle;
 import com.intellij.lang.ant.config.AntBuildListener;
 import com.intellij.lang.ant.config.execution.AntBuildMessageView;
 import com.intellij.lang.ant.config.execution.ExecutionHandler;
-import com.intellij.lang.ant.config.impl.BuildFileProperty;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
-
-import java.util.Collections;
+import org.jetbrains.annotations.NotNull;
 
 public final class RunAction extends AnAction {
   private final AntBuildMessageView myAntBuildMessageView;
@@ -35,15 +33,17 @@ public final class RunAction extends AnAction {
     myAntBuildMessageView = antBuildMessageView;
   }
 
-  public void actionPerformed(AnActionEvent e) {
+  @Override
+  public void actionPerformed(@NotNull AnActionEvent e) {
     ExecutionHandler.runBuild(
       myAntBuildMessageView.getBuildFile(),
       myAntBuildMessageView.getTargets(),
       myAntBuildMessageView,
-      e.getDataContext(), Collections.<BuildFileProperty>emptyList(), AntBuildListener.NULL);
+      e.getDataContext(), myAntBuildMessageView.getAdditionalProperties(), AntBuildListener.NULL);
   }
 
-  public void update(AnActionEvent event){
+  @Override
+  public void update(@NotNull AnActionEvent event){
     Presentation presentation = event.getPresentation();
     presentation.setEnabled(myAntBuildMessageView.isStopped());
   }

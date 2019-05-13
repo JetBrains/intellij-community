@@ -73,8 +73,8 @@ public class SnapShotClient {
     if (myDisconnected) {
       return new SnapShotRemoteComponent[0];
     }
-    List<SnapShotRemoteComponent> result = new ArrayList<SnapShotRemoteComponent>();
-    myWriter.write("L" + Integer.toString(id) + "\n");
+    List<SnapShotRemoteComponent> result = new ArrayList<>();
+    myWriter.write("L" + id + "\n");
     myWriter.flush();
     while(true) {
       String line = myReader.readLine();
@@ -86,7 +86,7 @@ public class SnapShotClient {
       }
       result.add(new SnapShotRemoteComponent(line, id == 0));
     }
-    return result.toArray(new SnapShotRemoteComponent[result.size()]);
+    return result.toArray(new SnapShotRemoteComponent[0]);
   }
 
   public String createSnapshot(final int id) throws Exception {

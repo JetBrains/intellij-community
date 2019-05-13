@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,16 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-/*
- * Created by IntelliJ IDEA.
- * User: max
- * Date: Sep 5, 2006
- * Time: 9:31:06 PM
- */
 package com.intellij.openapi.editor;
 
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.datatransfer.DataFlavor;
@@ -31,54 +23,52 @@ import java.awt.datatransfer.UnsupportedFlavorException;
 import java.io.IOException;
 import java.io.Serializable;
 
+/**
+ * @author max
+ */
 public class RawText implements Cloneable, Serializable {
-  public static @NonNls DataFlavor ourFlavor;
+  private static DataFlavor ourFlavor;
+
   public String rawText;
 
   public RawText(final String rawText) {
     this.rawText = rawText;
   }
 
+  @Override
   public Object clone() {
-    try{
+    try {
       return super.clone();
     }
-    catch(CloneNotSupportedException e){
+    catch (CloneNotSupportedException e) {
       throw new RuntimeException();
     }
   }
 
   public static DataFlavor getDataFlavor() {
-    if (ourFlavor != null) {
-      return ourFlavor;
-    }
+    if (ourFlavor != null) return ourFlavor;
+
     try {
-      ourFlavor = new DataFlavor(DataFlavor.javaJVMLocalObjectMimeType + ";class=" + RawText.class.getName(), "Raw Text");
+      DataFlavor flavor = new DataFlavor(DataFlavor.javaJVMLocalObjectMimeType + ";class=" + RawText.class.getName(), "Raw Text");
+      ourFlavor = flavor;
+      return flavor;
     }
-    catch (NoClassDefFoundError e) {
-      return null;
-    }
-    catch (IllegalArgumentException e) {
-      return null;
-    }
-    return ourFlavor;
+    catch (NoClassDefFoundError | IllegalArgumentException ignore) { }
+
+    return null;
   }
 
   @Nullable
   public static RawText fromTransferable(Transferable content) {
-    RawText raw = null;
-    final DataFlavor flavor = getDataFlavor();
+    DataFlavor flavor = getDataFlavor();
+
     if (flavor != null) {
       try {
-        raw = (RawText)content.getTransferData(flavor);
+        return (RawText)content.getTransferData(flavor);
       }
-      catch (UnsupportedFlavorException e) {
-        // OK. raw will be null and we'll get plain string
-      }
-      catch (IOException e) {
-        // OK. raw will be null and we'll get plain string
-      }
+      catch (UnsupportedFlavorException | IOException ignore) { }
     }
-    return raw;
+
+    return null;
   }
 }

@@ -5,6 +5,7 @@ import com.intellij.openapi.ui.LabeledComponent;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.ui.UserActivityProviderComponent;
 import com.intellij.util.PathMappingSettings;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -14,14 +15,14 @@ import javax.swing.event.ChangeListener;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.*;
+import java.util.List;
 
 /**
  * @author traff
  */
 public final class PathMappingsComponent extends LabeledComponent<TextFieldWithBrowseButton> implements UserActivityProviderComponent {
 
-  private final ArrayList<ChangeListener> myListeners = new ArrayList<ChangeListener>(2);
+  private final List<ChangeListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
 
   @NotNull
   private PathMappingSettings myMappingSettings = new PathMappingSettings();
@@ -33,6 +34,7 @@ public final class PathMappingsComponent extends LabeledComponent<TextFieldWithB
     setComponent(pathTextField);
     setText("Path mappings:");
     getComponent().addActionListener(new ActionListener() {
+      @Override
       public void actionPerformed(final ActionEvent e) {
         showConfigureMappingsDialog();
       }
@@ -72,11 +74,13 @@ public final class PathMappingsComponent extends LabeledComponent<TextFieldWithB
     getComponent().setText(sb.toString());
   }
 
-  public void addChangeListener(final ChangeListener changeListener) {
+  @Override
+  public void addChangeListener(@NotNull final ChangeListener changeListener) {
     myListeners.add(changeListener);
   }
 
-  public void removeChangeListener(final ChangeListener changeListener) {
+  @Override
+  public void removeChangeListener(@NotNull final ChangeListener changeListener) {
     myListeners.remove(changeListener);
   }
 
@@ -90,7 +94,7 @@ public final class PathMappingsComponent extends LabeledComponent<TextFieldWithB
     private final PathMappingTable myPathMappingTable;
 
     private final JPanel myWholePanel = new JPanel(new BorderLayout());
-    private PathMappingsComponent myMappingsComponent;
+    private final PathMappingsComponent myMappingsComponent;
 
     protected MyPathMappingsDialog(PathMappingsComponent mappingsComponent) {
       super(mappingsComponent, true);
@@ -103,11 +107,13 @@ public final class PathMappingsComponent extends LabeledComponent<TextFieldWithB
       init();
     }
 
+    @Override
     @Nullable
     protected JComponent createCenterPanel() {
       return myWholePanel;
     }
 
+    @Override
     protected void doOKAction() {
       myPathMappingTable.stopEditing();
 

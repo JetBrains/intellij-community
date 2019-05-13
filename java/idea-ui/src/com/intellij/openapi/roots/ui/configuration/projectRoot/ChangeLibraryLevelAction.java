@@ -23,7 +23,9 @@ import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.ui.configuration.LibraryTableModifiableModelProvider;
 import com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurable;
 import com.intellij.openapi.roots.ui.configuration.classpath.ChangeLibraryLevelActionBase;
-import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.*;
+import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.LibraryProjectStructureElement;
+import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.ProjectStructureElement;
+import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.ProjectStructureElementUsage;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -49,13 +51,14 @@ public class ChangeLibraryLevelAction extends ChangeLibraryLevelActionBase {
   }
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     final ProjectStructureElement selectedElement = mySourceConfigurable.getSelectedElement();
     if (!(selectedElement instanceof LibraryProjectStructureElement)) return;
     final StructureConfigurableContext context = mySourceConfigurable.myContext;
     final LibraryProjectStructureElement libraryElement = (LibraryProjectStructureElement)selectedElement;
     final LibraryEx oldLibrary = (LibraryEx)context.getLibrary(libraryElement.getLibrary().getName(), mySourceConfigurable.getLevel());
     LOG.assertTrue(oldLibrary != null);
+
     final Library newLibrary = doCopy(oldLibrary);
     if (newLibrary == null) return;
 

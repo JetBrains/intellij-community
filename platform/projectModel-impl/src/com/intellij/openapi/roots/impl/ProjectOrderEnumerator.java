@@ -20,9 +20,13 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootModel;
 import com.intellij.openapi.roots.OrderEntry;
+import com.intellij.openapi.roots.OrderEnumerationHandler;
+import com.intellij.util.PairProcessor;
 import com.intellij.util.Processor;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.List;
 
 /**
  * @author nik
@@ -31,12 +35,12 @@ public class ProjectOrderEnumerator extends OrderEnumeratorBase {
   private final Project myProject;
 
   public ProjectOrderEnumerator(Project project, OrderRootsCache rootsCache) {
-    super(null, project, rootsCache);
+    super(rootsCache);
     myProject = project;
   }
 
   @Override
-  public void processRootModules(@NotNull Processor<Module> processor) {
+  public void processRootModules(@NotNull Processor<? super Module> processor) {
     Module[] modules = myModulesProvider != null ? myModulesProvider.getModules() : ModuleManager.getInstance(myProject).getSortedModules();
     for (Module each : modules) {
       processor.process(each);
@@ -44,17 +48,19 @@ public class ProjectOrderEnumerator extends OrderEnumeratorBase {
   }
 
   @Override
-  public void forEach(@NotNull final Processor<OrderEntry> processor) {
+  protected void forEach(@NotNull final PairProcessor<? super OrderEntry, ? super List<OrderEnumerationHandler>> processor) {
     myRecursively = false;
     myWithoutDepModules = true;
-    final THashSet<Module> processed = new THashSet<Module>();
-    processRootModules(new Processor<Module>() {
-      @Override
-      public boolean process(Module module) {
-        processEntries(getRootModel(module), processor, processed, true);
-        return true;
-      }
+    final THashSet<Module> processed = new THashSet<>();
+    processRootModules(module -> {
+      processEntries(getRootModel(module), processor, processed, true, getCustomHandlers(module));
+      return true;
     });
+  }
+
+  @Override
+  public void forEachModule(@NotNull Processor<Module> processor) {
+    processRootModules(processor);
   }
 
   @Override

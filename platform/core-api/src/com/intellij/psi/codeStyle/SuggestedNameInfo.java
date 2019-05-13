@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package com.intellij.psi.codeStyle;
 
 import com.intellij.openapi.util.Key;
 import com.intellij.util.ArrayUtil;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * Represents an array of suggested variable names and allows to keep statistics on
@@ -29,16 +30,15 @@ public abstract class SuggestedNameInfo {
   public static final Key<SuggestedNameInfo> SUGGESTED_NAME_INFO_KEY = Key.create("SUGGESTED_NAME_INFO_KEY");
 
   public static final SuggestedNameInfo NULL_INFO = new SuggestedNameInfo(ArrayUtil.EMPTY_STRING_ARRAY) {
-    @Override
-    public void nameChosen(String name) {}
   };
 
   /**
    * The suggested names.
    */
+  @NotNull
   public final String[] names;
 
-  public SuggestedNameInfo(String[] names) {
+  public SuggestedNameInfo(@NotNull String[] names) {
     this.names = names;
   }
 
@@ -51,14 +51,10 @@ public abstract class SuggestedNameInfo {
    */
   public void nameChosen(String name) { }
 
-  /** @deprecated override {@linkplain #nameChosen(String)} instead (to remove in IDEA 13) */
-  @SuppressWarnings("UnusedDeclaration")
-  public void nameChoosen(String name) { nameChosen(name); }
-
   public static class Delegate extends SuggestedNameInfo {
     SuggestedNameInfo myDelegate;
 
-    public Delegate(final String[] names, final SuggestedNameInfo delegate) {
+    public Delegate(@NotNull String[] names, @NotNull SuggestedNameInfo delegate) {
       super(names);
       myDelegate = delegate;
     }

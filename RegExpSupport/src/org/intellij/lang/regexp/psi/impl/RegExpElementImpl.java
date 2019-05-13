@@ -23,8 +23,9 @@ import com.intellij.lang.ParserDefinition;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.impl.source.tree.CompositeElement;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
-import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.tree.TokenSet;
 import com.intellij.util.IncorrectOperationException;
 import org.intellij.lang.regexp.RegExpLanguage;
 import org.intellij.lang.regexp.psi.RegExpElement;
@@ -37,21 +38,18 @@ public abstract class RegExpElementImpl extends ASTWrapperPsiElement implements 
         super(node);
     }
 
+    @Override
     @NotNull
     public Language getLanguage() {
         return RegExpLanguage.INSTANCE;
     }
 
-    @NotNull
-    @SuppressWarnings({ "ConstantConditions", "EmptyMethod" })
-    public ASTNode getNode() {
-        return super.getNode();
-    }
-
-    public String toString() {
+  @Override
+  public String toString() {
         return getClass().getSimpleName() + ": <" + getText() + ">";
     }
 
+    @Override
     public void accept(@NotNull PsiElementVisitor visitor) {
         if (visitor instanceof RegExpElementVisitor) {
             accept((RegExpElementVisitor)visitor);
@@ -64,6 +62,7 @@ public abstract class RegExpElementImpl extends ASTWrapperPsiElement implements 
         visitor.visitRegExpElement(this);
     }
 
+    @Override
     public PsiElement replace(@NotNull PsiElement psiElement) throws IncorrectOperationException {
         final ASTNode node = psiElement.getNode();
         assert node != null;
@@ -71,10 +70,13 @@ public abstract class RegExpElementImpl extends ASTWrapperPsiElement implements 
         return psiElement;
     }
 
+    @Override
     public void delete() throws IncorrectOperationException {
         getNode().getTreeParent().removeChild(getNode());
     }
 
+    @NotNull
+    @Override
     public final String getUnescapedText() {
         if (InjectedLanguageUtil.isInInjectedLanguagePrefixSuffix(this)) {
             // do not attempt to decode text if PsiElement is part of prefix/suffix
@@ -85,12 +87,19 @@ public abstract class RegExpElementImpl extends ASTWrapperPsiElement implements 
 
   public static boolean isLiteralExpression(@Nullable PsiElement context) {
     if (context == null) return false;
-    final ASTNode astNode = context.getNode();
+    ASTNode astNode = context.getNode();
     if (astNode == null) {
       return false;
     }
-    final IElementType elementType = astNode.getElementType();
+    ASTNode child = null;
+    if (astNode instanceof CompositeElement) { // in some languages token nodes are wrapped within a single-child composite
+      ASTNode[] children = astNode.getChildren(null);
+      if (children.length == 1) {
+        child = children[0];
+      }
+    }
     final ParserDefinition parserDefinition = LanguageParserDefinitions.INSTANCE.forLanguage(context.getLanguage());
-    return parserDefinition.getStringLiteralElements().contains(elementType);
+    final TokenSet literalElements = parserDefinition.getStringLiteralElements();
+    return literalElements.contains(astNode.getElementType()) || child != null && literalElements.contains(child.getElementType());
   }
 }

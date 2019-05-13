@@ -9,7 +9,7 @@ public class Foo {
         Collections.sort(myList, new Comparator<String>() {
             @Override
             public int compare(String o1, String o2) {
-                <selection>return 0;  //To change body of implemented methods use File | Settings | File Templates.</selection>
+                <selection>return 0;</selection>
             }
         });
     }

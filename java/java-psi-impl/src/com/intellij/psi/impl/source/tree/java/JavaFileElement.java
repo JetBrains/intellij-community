@@ -16,10 +16,10 @@
 package com.intellij.psi.impl.source.tree.java;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.lang.java.JavaParserDefinition;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiJavaFile;
 import com.intellij.psi.TokenType;
-import com.intellij.psi.impl.java.stubs.JavaStubElementTypes;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.tree.ChildRole;
 import com.intellij.psi.impl.source.tree.FileElement;
@@ -34,7 +34,7 @@ public class JavaFileElement extends FileElement {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.java.JavaFileElement");
 
   public JavaFileElement(CharSequence text) {
-    super(JavaStubElementTypes.JAVA_FILE, text);
+    super(JavaParserDefinition.JAVA_FILE, text);
   }
 
   @Override
@@ -66,7 +66,7 @@ public class JavaFileElement extends FileElement {
   }
 
   @Override
-  public int getChildRole(ASTNode child) {
+  public int getChildRole(@NotNull ASTNode child) {
     LOG.assertTrue(child.getTreeParent() == this);
     IElementType i = child.getElementType();
     if (i == JavaElementType.PACKAGE_STATEMENT) {

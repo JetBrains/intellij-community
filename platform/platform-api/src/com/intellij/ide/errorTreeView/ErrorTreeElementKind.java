@@ -15,14 +15,13 @@
  */
 package com.intellij.ide.errorTreeView;
 
-import com.intellij.util.ui.MessageCategory;
 import com.intellij.ide.IdeBundle;
+import com.intellij.util.ui.MessageCategory;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Nov 12, 2004
  */
 public enum ErrorTreeElementKind {
   INFO ("INFO", IdeBundle.message("errortree.information")),
@@ -34,7 +33,7 @@ public enum ErrorTreeElementKind {
   private final String myText;
   private final String myPresentableText;
 
-  private ErrorTreeElementKind(@NonNls String text, String presentableText) {
+  ErrorTreeElementKind(@NonNls String text, String presentableText) {
     myText = text;
     myPresentableText = presentableText;
   }

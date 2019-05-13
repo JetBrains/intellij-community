@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,35 +15,29 @@
  */
 package com.intellij.xml;
 
-import com.intellij.testFramework.IdeaTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase;
 
 import java.io.File;
 
-/**
- * User: zolotov
- * Date: 8/3/12
- */
 public class XmlFoldingTest extends LightPlatformCodeInsightFixtureTestCase {
 
-  public void testTagFolding() throws Throwable { doTest(); }
+  public void testTagFolding() { doTest(); }
 
-  public void testStyleAttributeFolding() throws Throwable { doTest(); }
-  public void testStyleAttributeFolding2() throws Throwable { doTest(".xml"); }
+  public void testStyleAttributeFolding() { doTest(); }
+  public void testStyleAttributeFolding2() { doTest(".xml"); }
 
+  public void testEntities() { doTest(); }
 
+  public void testDataUri() { doTest(); }
 
-  @SuppressWarnings("JUnitTestCaseWithNonTrivialConstructors")
-  public XmlFoldingTest() {
-    IdeaTestCase.initPlatformPrefix();
-  }
+  public void testCustomRegions() { doTest(); }
 
-  private void doTest() throws Throwable {
+  private void doTest() {
     doTest(".html");
   }
 
-  private void doTest(String extension) throws Throwable {
+  private void doTest(String extension) {
     myFixture.testFolding(getTestDataPath() + getTestName(true) + extension);
   }
 

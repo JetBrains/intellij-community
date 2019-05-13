@@ -1,0 +1,2 @@
+class Carnivore(object):
+    pass

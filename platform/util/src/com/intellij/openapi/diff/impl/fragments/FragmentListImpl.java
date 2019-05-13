@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,20 +44,24 @@ public class FragmentListImpl implements FragmentList {
     return fragmentList;
   }
 
+  @Override
   public FragmentList shift(TextRange rangeShift1, TextRange rangeShift2,
                             int startLine1, int startLine2) {
     return new FragmentListImpl(shift(myFragments, rangeShift1, rangeShift2, startLine1, startLine2));
   }
 
+  @Override
   public boolean isEmpty() {
     return myFragments.isEmpty();
   }
 
+  @Override
   public Iterator<Fragment> iterator() {
     return myFragments.iterator();
   }
 
-  public Fragment getFragmentAt(int offset, FragmentSide side, Condition<Fragment> condition) {
+  @Override
+  public Fragment getFragmentAt(int offset, FragmentSide side, Condition<? super Fragment> condition) {
     for (Iterator<Fragment> iterator = iterator(); iterator.hasNext();) {
       Fragment fragment = iterator.next();
       TextRange range = fragment.getRange(side);
@@ -68,17 +72,17 @@ public class FragmentListImpl implements FragmentList {
     return null;
   }
 
-  public static ArrayList<Fragment> shift(ArrayList<Fragment> fragments, TextRange rangeShift1, TextRange rangeShift2,
-                                     int startLine1, int startLine2) {
+  public static ArrayList<Fragment> shift(ArrayList<? extends Fragment> fragments, TextRange rangeShift1, TextRange rangeShift2,
+                                          int startLine1, int startLine2) {
     ArrayList<Fragment> newFragments = new ArrayList<Fragment>(fragments.size());
-    for (Iterator<Fragment> iterator = fragments.iterator(); iterator.hasNext();) {
-      Fragment fragment = iterator.next();
+    for (Fragment fragment : fragments) {
       newFragments.add(fragment.shift(rangeShift1, rangeShift2, startLine1, startLine2));
     }
     return newFragments;
   }
 
   private static final Comparator<Fragment> FRAGMENT_COMPARATOR = new Comparator<Fragment>() {
+    @Override
     public int compare(Fragment fragment1, Fragment fragment2) {
       int result = compareBySide(fragment1, fragment2, FragmentSide.SIDE1);
       int check = compareBySide(fragment1, fragment2, FragmentSide.SIDE2);

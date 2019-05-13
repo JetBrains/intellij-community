@@ -23,6 +23,8 @@ import com.intellij.ide.macro.MacroManager;
 import com.intellij.lang.ant.AntBundle;
 import com.intellij.lang.ant.config.impl.*;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.components.PathMacroManager;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JavaSdkType;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkTypeId;
@@ -39,33 +41,36 @@ import org.jetbrains.annotations.NonNls;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
 public class AntCommandLineBuilder {
-  private final List<String> myTargets = new ArrayList<String>();
+  private final List<String> myTargets = new ArrayList<>();
   private final JavaParameters myCommandLine = new JavaParameters();
   private String myBuildFilePath;
   private List<BuildFileProperty> myProperties;
   private boolean myDone = false;
-  @NonNls private final List<String> myExpandedProperties = new ArrayList<String>();
+  @NonNls private final List<String> myExpandedProperties = new ArrayList<>();
   @NonNls private static final String INPUT_HANDLER_PARAMETER = "-inputhandler";
   @NonNls private static final String LOGFILE_PARAMETER = "-logfile";
   @NonNls private static final String LOGFILE_SHORT_PARAMETER = "-l";
+  @NonNls private static final String LOGGER_PARAMETER = "-logger";
 
-  public void calculateProperties(final DataContext dataContext, List<BuildFileProperty> additionalProperties) throws Macro.ExecutionCancelledException {
+  public void calculateProperties(final DataContext dataContext, Project project, List<BuildFileProperty> additionalProperties) throws Macro.ExecutionCancelledException {
     for (BuildFileProperty property : myProperties) {
-      expandProperty(dataContext, property);
+      expandProperty(dataContext, project, property);
     }
     for (BuildFileProperty property : additionalProperties) {
-      expandProperty(dataContext, property);
+      expandProperty(dataContext, project, property);
     }
   }
 
-  private void expandProperty(DataContext dataContext, BuildFileProperty property) throws Macro.ExecutionCancelledException {
+  private void expandProperty(DataContext dataContext, Project project, BuildFileProperty property) throws Macro.ExecutionCancelledException {
     String value = property.getPropertyValue();
     final MacroManager macroManager = GlobalAntConfiguration.getMacroManager();
     value = macroManager.expandMacrosInString(value, true, dataContext);
     value = macroManager.expandMacrosInString(value, false, dataContext);
+    value = PathMacroManager.getInstance(project).expandPath(value);
     myExpandedProperties.add("-D" + property.getPropertyName() + "=" + value);
   }
 
@@ -76,16 +81,13 @@ public class AntCommandLineBuilder {
   public void setBuildFile(AbstractProperty.AbstractPropertyContainer container, File buildFile) throws CantRunException {
     String jdkName = AntBuildFileImpl.CUSTOM_JDK_NAME.get(container);
     Sdk jdk;
-    if (jdkName != null && jdkName.length() > 0) {
-      jdk = GlobalAntConfiguration.findJdk(jdkName);
-    }
-    else {
+    if (jdkName == null || jdkName.length() <= 0) {
       jdkName = AntConfigurationImpl.DEFAULT_JDK_NAME.get(container);
       if (jdkName == null || jdkName.length() == 0) {
         throw new CantRunException(AntBundle.message("project.jdk.not.specified.error.message"));
       }
-      jdk = GlobalAntConfiguration.findJdk(jdkName);
     }
+    jdk = GlobalAntConfiguration.findJdk(jdkName);
     if (jdk == null) {
       throw new CantRunException(AntBundle.message("jdk.with.name.not.configured.error.message", jdkName));
     }
@@ -106,6 +108,8 @@ public class AntCommandLineBuilder {
 
     final String antHome = AntInstallation.HOME_DIR.get(antInstallation.getProperties());
     vmParametersList.add("-Dant.home=" + antHome);
+    final String libraryDir = antHome + (antHome.endsWith("/") || antHome.endsWith(File.separator) ? "" : File.separator) + "lib";
+    vmParametersList.add("-Dant.library.dir=" + libraryDir);
 
     String[] urls = jdk.getRootProvider().getUrls(OrderRootType.CLASSES);
     final String jdkHome = homeDirectory.getPath().replace('/', File.separatorChar);
@@ -148,8 +152,8 @@ public class AntCommandLineBuilder {
       }
     }
 
-    if (!(programParameters.getList().contains(LOGFILE_SHORT_PARAMETER) || programParameters.getList().contains(LOGFILE_PARAMETER)) ) {
-      programParameters.add("-logger", IdeaAntLogger2.class.getName());
+    if (!(programParameters.getList().contains(LOGGER_PARAMETER))) {
+      programParameters.add(LOGGER_PARAMETER, IdeaAntLogger2.class.getName());
     }
     if (!programParameters.getList().contains(INPUT_HANDLER_PARAMETER)) {
       programParameters.add(INPUT_HANDLER_PARAMETER, IdeaInputHandler.class.getName());
@@ -180,6 +184,10 @@ public class AntCommandLineBuilder {
   }
 
   public void addTargets(String[] targets) {
+    ContainerUtil.addAll(myTargets, targets);
+  }
+  
+  public void addTargets(Collection<String> targets) {
     ContainerUtil.addAll(myTargets, targets);
   }
 

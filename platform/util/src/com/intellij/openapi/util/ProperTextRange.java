@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,24 +23,10 @@ import org.jetbrains.annotations.NotNull;
 public class ProperTextRange extends TextRange {
   public ProperTextRange(int startOffset, int endOffset) {
     super(startOffset, endOffset);
-    assertProperRange(this);
   }
 
   public ProperTextRange(@NotNull TextRange range) {
     this(range.getStartOffset(), range.getEndOffset());
-  }
-
-  public static void assertProperRange(@NotNull Segment range) throws AssertionError {
-    assertProperRange(range, "");
-  }
-
-  public static void assertProperRange(@NotNull Segment range, Object message) throws AssertionError {
-    assertProperRange(range.getStartOffset(), range.getEndOffset(), message);
-  }
-
-  public static void assertProperRange(int startOffset, int endOffset, Object message) {
-    assert startOffset <= endOffset : "Invalid range specified: (" + startOffset + "," + endOffset + "); " + message;
-    assert startOffset >= 0 : "Negative start offset: (" + startOffset + "," + endOffset + "); " + message;
   }
 
   @NotNull

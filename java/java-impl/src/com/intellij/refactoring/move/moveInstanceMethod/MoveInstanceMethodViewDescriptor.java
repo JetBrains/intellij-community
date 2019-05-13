@@ -31,21 +31,22 @@ public class MoveInstanceMethodViewDescriptor extends UsageViewDescriptorAdapter
   private final PsiVariable myTargetVariable;
   private final PsiClass myTargetClass;
 
-  public MoveInstanceMethodViewDescriptor(
-    PsiMethod method,
-    PsiVariable targetVariable,
-    PsiClass targetClass) {
+  public MoveInstanceMethodViewDescriptor(PsiMethod method,
+                                          PsiVariable targetVariable,
+                                          PsiClass targetClass) {
     super();
     myMethod = method;
     myTargetVariable = targetVariable;
     myTargetClass = targetClass;
   }
 
+  @Override
   @NotNull
   public PsiElement[] getElements() {
-    return new PsiElement[] {myMethod, myTargetVariable, myTargetClass};
+    return myTargetVariable == null ? new PsiElement[] {myTargetClass} : new PsiElement[] {myMethod, myTargetVariable, myTargetClass};
   }
 
+  @Override
   public String getProcessedElementsHeader() {
     return RefactoringBundle.message("move.instance.method.elements.header");
   }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,25 +18,23 @@ package com.intellij.psi.infos;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiSubstitutor;
+import org.jetbrains.annotations.NotNull;
 
-/**
- * Created by IntelliJ IDEA.
- * User: ik
- * Date: 06.10.2003
- * Time: 19:28:22
- * To change this template use Options | File Templates.
- */
-public class ClassCandidateInfo extends CandidateInfo{
-  public ClassCandidateInfo(PsiElement candidate, PsiSubstitutor substitutor, boolean accessProblem, PsiElement currFileContext){
+public class ClassCandidateInfo extends CandidateInfo {
+  public ClassCandidateInfo(@NotNull PsiElement candidate,
+                            @NotNull PsiSubstitutor substitutor,
+                            boolean accessProblem,
+                            PsiElement currFileContext) {
     super(candidate, substitutor, accessProblem, false, currFileContext);
   }
 
-  public ClassCandidateInfo(PsiElement candidate, PsiSubstitutor substitutor){
+  public ClassCandidateInfo(@NotNull PsiElement candidate, @NotNull PsiSubstitutor substitutor) {
     super(candidate, substitutor, false, false);
   }
 
+  @NotNull
   @Override
-  public PsiClass getElement(){
+  public PsiClass getElement() {
     return (PsiClass)super.getElement();
   }
 }

@@ -1,19 +1,25 @@
 package com.intellij.compiler.instrumentation;
 
-import org.jetbrains.asm4.ClassWriter;
+import org.jetbrains.org.objectweb.asm.ClassReader;
+import org.jetbrains.org.objectweb.asm.ClassWriter;
 
 /**
 * @author Eugene Zhuravlev
-*         Date: 3/27/12
 */
 public class InstrumenterClassWriter extends ClassWriter {
   private final InstrumentationClassFinder myFinder;
+
+  public InstrumenterClassWriter(ClassReader reader, int flags, final InstrumentationClassFinder finder) {
+    super(reader, flags);
+    myFinder = finder;
+  }
 
   public InstrumenterClassWriter(int flags, final InstrumentationClassFinder finder) {
     super(flags);
     myFinder = finder;
   }
 
+  @Override
   protected String getCommonSuperClass(final String type1, final String type2) {
     try {
       final InstrumentationClassFinder.PseudoClass cls1 = myFinder.loadClass(type1);

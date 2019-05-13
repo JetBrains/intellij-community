@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,7 +35,7 @@ public class DGMReferenceContributor extends PsiReferenceContributor {
   private final JavaClassReferenceProvider myProvider = new JavaClassReferenceProvider();
 
   @Override
-  public void registerReferenceProviders(PsiReferenceRegistrar registrar) {
+  public void registerReferenceProviders(@NotNull PsiReferenceRegistrar registrar) {
     registrar.registerReferenceProvider(PlatformPatterns.psiElement(PropertiesTokenTypes.VALUE_CHARACTERS), new PsiReferenceProvider() {
       @NotNull
       @Override
@@ -47,7 +47,7 @@ public class DGMReferenceContributor extends PsiReferenceContributor {
           return PsiReference.EMPTY_ARRAY;
         }
 
-        ArrayList<PsiReference> result = new ArrayList<PsiReference>();
+        ArrayList<PsiReference> result = new ArrayList<>();
 
         String text = element.getText();
 
@@ -65,7 +65,7 @@ public class DGMReferenceContributor extends PsiReferenceContributor {
           i = skipWhiteSpace(i, text);
         }
 
-        return result.toArray(new PsiReference[result.size()]);
+        return result.toArray(PsiReference.EMPTY_ARRAY);
       }
     });
   }

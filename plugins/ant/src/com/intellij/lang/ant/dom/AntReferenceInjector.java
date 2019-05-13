@@ -15,7 +15,6 @@
  */
 package com.intellij.lang.ant.dom;
 
-import com.intellij.lang.ant.misc.PsiReferenceListSpinAllocator;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.ElementManipulators;
 import com.intellij.psi.PsiElement;
@@ -23,7 +22,6 @@ import com.intellij.psi.PsiReference;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlAttributeValue;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xml.ConvertContext;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomReferenceInjector;
@@ -31,14 +29,15 @@ import com.intellij.util.xml.DomUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
 /**
 * @author Eugene Zhuravlev
-*         Date: Apr 9, 2010
 */
 class AntReferenceInjector implements DomReferenceInjector {
+  @Override
   public String resolveString(@Nullable String unresolvedText, @NotNull ConvertContext context) {
     // todo: speed optimization: disable string resolution in places where it is not applicable
     if (unresolvedText == null) {
@@ -48,19 +47,15 @@ class AntReferenceInjector implements DomReferenceInjector {
     return AntStringResolver.computeString(element, unresolvedText);
   }
 
+  @Override
   @NotNull
   public PsiReference[] inject(@Nullable String unresolvedText, @NotNull PsiElement element, @NotNull ConvertContext context) {
     if (element instanceof XmlAttributeValue) {
       final XmlAttributeValue xmlAttributeValue = (XmlAttributeValue)element;
-      final List<PsiReference> refs = PsiReferenceListSpinAllocator.alloc();
-      try {
-        addPropertyReferences(context, xmlAttributeValue, refs);
-        addMacrodefParameterRefs(xmlAttributeValue, refs);
-        return refs.size() == 0? PsiReference.EMPTY_ARRAY : ContainerUtil.toArray(refs, new PsiReference[refs.size()]);
-      }
-      finally {
-        PsiReferenceListSpinAllocator.dispose(refs);
-      }
+      final List<PsiReference> refs = new ArrayList<>();
+      addPropertyReferences(context, xmlAttributeValue, refs);
+      addMacrodefParameterRefs(xmlAttributeValue, refs);
+      return refs.toArray(PsiReference.EMPTY_ARRAY);
     }
     return PsiReference.EMPTY_ARRAY;
   }
@@ -128,7 +123,7 @@ class AntReferenceInjector implements DomReferenceInjector {
     }
   }
   
-  public static void addMacrodefParameterRefs(@NotNull XmlAttributeValue element, final Collection<PsiReference> refs) {
+  public static void addMacrodefParameterRefs(@NotNull XmlAttributeValue element, final Collection<? super PsiReference> refs) {
     final DomElement domElement = DomUtil.getDomElement(element);
     if (domElement == null) {
       return;

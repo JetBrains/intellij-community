@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.server;
 
 import com.intellij.execution.DefaultExecutionResult;
@@ -24,52 +10,78 @@ import com.intellij.execution.process.OSProcessHandler;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.rmi.RemoteProcessSupport;
 import com.intellij.execution.runners.ProgramRunner;
-import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.notification.Notification;
+import com.intellij.notification.NotificationListener;
+import com.intellij.notification.NotificationType;
+import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
-import com.intellij.openapi.components.*;
+import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.components.State;
+import com.intellij.openapi.components.Storage;
+import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.projectRoots.JavaSdkType;
+import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.projectRoots.JavaSdk;
 import com.intellij.openapi.projectRoots.JdkUtil;
+import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.projectRoots.SimpleJavaSdkType;
-import com.intellij.openapi.util.ShutDownTracker;
-import com.intellij.openapi.util.SystemInfo;
-import com.intellij.util.Alarm;
+import com.intellij.openapi.projectRoots.impl.JavaAwareProjectJdkTableImpl;
+import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.text.StringUtilRt;
+import com.intellij.util.EnvironmentUtil;
 import com.intellij.util.PathUtil;
-import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.io.BaseOutputReader;
+import com.intellij.util.xmlb.Converter;
+import com.intellij.util.xmlb.annotations.Attribute;
 import gnu.trove.THashMap;
+import gnu.trove.TIntHashSet;
 import org.apache.lucene.search.Query;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.maven.model.MavenId;
+import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.idea.maven.execution.MavenExecutionOptions;
+import org.jetbrains.idea.maven.execution.MavenRunnerSettings;
+import org.jetbrains.idea.maven.execution.RunnerBundle;
+import org.jetbrains.idea.maven.model.MavenExplicitProfiles;
 import org.jetbrains.idea.maven.model.MavenModel;
 import org.jetbrains.idea.maven.project.MavenConsole;
 import org.jetbrains.idea.maven.project.MavenGeneralSettings;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.utils.MavenLog;
 import org.jetbrains.idea.maven.utils.MavenProgressIndicator;
+import org.jetbrains.idea.maven.utils.MavenSettings;
 import org.jetbrains.idea.maven.utils.MavenUtil;
+import org.slf4j.Logger;
+import org.slf4j.impl.Log4jLoggerFactory;
 
+import javax.swing.event.HyperlinkEvent;
 import java.io.File;
-import java.nio.charset.Charset;
 import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+import java.util.jar.Attributes;
 
 @State(
   name = "MavenVersion",
-  storages = {@Storage(
-    file = StoragePathMacros.APP_CONFIG + "/mavenVersion.xml")})
-public class MavenServerManager extends RemoteObjectWrapper<MavenServer> implements PersistentStateComponent<Element> {
+  storages = @Storage("mavenVersion.xml")
+)
+public class MavenServerManager extends RemoteObjectWrapper<MavenServer> implements PersistentStateComponent<MavenServerManager.State>,
+                                                                                    Disposable {
+
+  public static final String BUNDLED_MAVEN_2 = "Bundled (Maven 2)";
+  public static final String BUNDLED_MAVEN_3 = "Bundled (Maven 3)";
+
   @NonNls private static final String MAIN_CLASS = "org.jetbrains.idea.maven.server.RemoteMavenServer";
 
-  private static final String DEFAULT_VM_OPTIONS = "-Xmx512m";
+  private static final String DEFAULT_VM_OPTIONS = "-Xmx768m";
+
+  private static final String FORCE_MAVEN2_OPTION = "-Didea.force.maven2";
 
   private final RemoteProcessSupport<Object, MavenServer, Object> mySupport;
 
@@ -77,11 +89,41 @@ public class MavenServerManager extends RemoteObjectWrapper<MavenServer> impleme
   private final RemoteMavenServerDownloadListener myDownloadListener = new RemoteMavenServerDownloadListener();
   private boolean myLoggerExported;
   private boolean myDownloadListenerExported;
+  private State myState = new State();
 
-  private final Alarm myShutdownAlarm = new Alarm(Alarm.ThreadToUse.SHARED_THREAD);
+  private static class BundledMavenPathHolder {
+    private static final File myBundledMaven2Home;
+    private static final File myBundledMaven3Home;
 
-  private boolean useMaven2 = true;
-  private String mavenEmbedderVMOptions = DEFAULT_VM_OPTIONS;
+    static {
+      final File pluginFileOrDir = new File(PathUtil.getJarPathForClass(MavenServerManager.class));
+      final String root = pluginFileOrDir.getParent();
+
+      if (pluginFileOrDir.isDirectory()) {
+        File parentFile = getMavenPluginParentFile();
+        myBundledMaven2Home = new File(parentFile, "maven2-server-impl/lib/maven2");
+        myBundledMaven3Home = new File(parentFile, "maven3-server-impl/lib/maven3");
+      }
+      else {
+        myBundledMaven2Home = new File(root, "maven2");
+        myBundledMaven3Home = new File(root, "maven3");
+      }
+    }
+  }
+
+  static class State {
+    @Deprecated
+    @Attribute(value = "version", converter = UseMavenConverter.class)
+    public boolean useMaven2;
+    @Attribute
+    public String vmOptions = DEFAULT_VM_OPTIONS;
+    @Attribute
+    public String embedderJdk = MavenRunnerSettings.USE_INTERNAL_JAVA;
+    @Attribute
+    public String mavenHome = BUNDLED_MAVEN_3;
+    @Attribute
+    public MavenExecutionOptions.LoggingLevel loggingLevel = MavenExecutionOptions.LoggingLevel.INFO;
+  }
 
   public static MavenServerManager getInstance() {
     return ServiceManager.getService(MavenServerManager.class);
@@ -96,23 +138,23 @@ public class MavenServerManager extends RemoteObjectWrapper<MavenServer> impleme
       }
 
       @Override
-      protected String getName(Object file) {
+      protected String getName(@NotNull Object file) {
         return MavenServerManager.class.getSimpleName();
       }
 
       @Override
-      protected RunProfileState getRunProfileState(Object target, Object configuration, Executor executor) throws ExecutionException {
-        return createRunProfileState();
+      protected RunProfileState getRunProfileState(@NotNull Object target, @NotNull Object configuration, @NotNull Executor executor) {
+        return new MavenServerCMDState();
       }
     };
-
-    ShutDownTracker.getInstance().registerShutdownTask(new Runnable() {
-      public void run() {
-        shutdown(false);
-      }
-    });
   }
 
+  @Override
+  public void dispose() {
+    shutdown(false);
+  }
+
+  @Override
   @NotNull
   protected synchronized MavenServer create() throws RemoteException {
     MavenServer result;
@@ -139,6 +181,7 @@ public class MavenServerManager extends RemoteObjectWrapper<MavenServer> impleme
     cleanup();
   }
 
+  @Override
   protected synchronized void cleanup() {
     super.cleanup();
 
@@ -160,173 +203,139 @@ public class MavenServerManager extends RemoteObjectWrapper<MavenServer> impleme
       }
       myDownloadListenerExported = false;
     }
-
-    myShutdownAlarm.cancelAllRequests();
   }
 
-  private RunProfileState createRunProfileState() {
-    return new CommandLineState(null) {
-      private SimpleJavaParameters createJavaParameters() throws ExecutionException {
-        final SimpleJavaParameters params = new SimpleJavaParameters();
-
-        params.setJdk(new SimpleJavaSdkType().createJdk("tmp", SystemProperties.getJavaHome()));
-
-        params.setWorkingDirectory(PathManager.getBinPath());
-        final List<String> classPath = new ArrayList<String>();
-        classPath.addAll(PathManager.getUtilClassPath());
-        ContainerUtil.addIfNotNull(PathUtil.getJarPathForClass(Query.class), classPath);
-        params.getClassPath().add(PathManager.getResourceRoot(getClass(), "/messages/CommonBundle.properties"));
-        params.getClassPath().addAll(classPath);
-        params.getClassPath().addAllFiles(collectClassPathAndLibsFolder());
-
-        params.setMainClass(MAIN_CLASS);
-
-        Map<String, String> defs = new THashMap<String, String>();
-        defs.putAll(MavenUtil.getPropertiesFromMavenOpts());
-
-        // pass ssl-related options
-        for (Map.Entry<Object, Object> each : System.getProperties().entrySet()) {
-          Object key = each.getKey();
-          Object value = each.getValue();
-          if (key instanceof String && value instanceof String && ((String)key).startsWith("javax.net.ssl")) {
-            defs.put((String)key, (String)value);
-          }
-        }
-
-        if (SystemInfo.isMac) {
-          String arch = System.getProperty("sun.arch.data.model");
-          if (arch != null) {
-            params.getVMParametersList().addParametersString("-d" + arch);
-          }
-        }
-
-        defs.put("java.awt.headless", "true");
-        for (Map.Entry<String, String> each : defs.entrySet()) {
-          params.getVMParametersList().defineProperty(each.getKey(), each.getValue());
-        }
-
-        boolean xmxSet = false;
-
-        if (mavenEmbedderVMOptions != null) {
-          ParametersList mavenOptsList = new ParametersList();
-          mavenOptsList.addParametersString(mavenEmbedderVMOptions);
-
-          for (String param : mavenOptsList.getParameters()) {
-            if (param.startsWith("-Xmx")) {
-              xmxSet = true;
-            }
-
-            params.getVMParametersList().add(param);
-          }
-        }
-
-        String embedderXmx = System.getProperty("idea.maven.embedder.xmx");
-        if (embedderXmx != null) {
-          params.getVMParametersList().add("-Xmx" + embedderXmx);
-        }
-        else {
-          if (!xmxSet) {
-            params.getVMParametersList().add("-Xmx512m");
-          }
-        }
-
-        String mavenEmbedderDebugPort = System.getProperty("idea.maven.embedder.debug.port");
-        if (mavenEmbedderDebugPort != null) {
-          params.getVMParametersList().addParametersString("-Xdebug -Xrunjdwp:transport=dt_socket,server=y,suspend=n,address=" + mavenEmbedderDebugPort);
-        }
-
-        return params;
+  @NotNull
+  private Sdk getJdk() {
+    if (myState.embedderJdk.equals(MavenRunnerSettings.USE_JAVA_HOME)) {
+      final String javaHome = EnvironmentUtil.getEnvironmentMap().get("JAVA_HOME");
+      if (!StringUtil.isEmptyOrSpaces(javaHome)) {
+        return JavaSdk.getInstance().createJdk("", javaHome);
       }
+    }
 
-      @Override
-      public ExecutionResult execute(@NotNull Executor executor, @NotNull ProgramRunner runner) throws ExecutionException {
-        ProcessHandler processHandler = startProcess();
-        return new DefaultExecutionResult(null, processHandler, AnAction.EMPTY_ARRAY);
+    for (Sdk projectJdk : ProjectJdkTable.getInstance().getAllJdks()) {
+      if (projectJdk.getName().equals(myState.embedderJdk)) {
+        return projectJdk;
       }
+    }
 
-      @NotNull
-      protected OSProcessHandler startProcess() throws ExecutionException {
-        SimpleJavaParameters params = createJavaParameters();
-        Sdk sdk = params.getJdk();
+    // By default use internal jdk
+    return JavaAwareProjectJdkTableImpl.getInstanceEx().getInternalJdk();
+  }
 
-        GeneralCommandLine commandLine =
-          JdkUtil.setupJVMCommandLine(((JavaSdkType)sdk.getSdkType()).getVMExecutablePath(sdk), params, false);
-
-        OSProcessHandler processHandler =
-          new OSProcessHandler(commandLine.createProcess(), commandLine.getCommandLineString(), commandLine.getCharset());
-
-        processHandler.setShouldDestroyProcessRecursively(false);
-
-        return processHandler;
-      }
-    };
+  public static void verifyMavenSdkRequirements(@NotNull Sdk jdk, String mavenVersion, @NotNull String sdkConfigLocation) {
+    String version = JdkUtil.getJdkMainAttribute(jdk, Attributes.Name.IMPLEMENTATION_VERSION);
+    if (StringUtil.compareVersionNumbers(mavenVersion, "3.3.1") >= 0
+        && StringUtil.compareVersionNumbers(version, "1.7") < 0) {
+      new Notification(MavenUtil.MAVEN_NOTIFICATION_GROUP, "",
+                       "Maven 3.3.1+ requires JDK 1.7+. Please set appropriate JDK at <br>" +
+                       sdkConfigLocation,
+                       NotificationType.WARNING).notify(null);
+    }
   }
 
   public static File getMavenLibDirectory() {
-    File pluginFileOrDir = new File(PathUtil.getJarPathForClass(MavenServerManager.class));
-    if (pluginFileOrDir.isDirectory()) {
-      File luceneLib = new File(PathUtil.getJarPathForClass(Query.class));
-      return new File(luceneLib.getParentFile().getParentFile().getParentFile(), "maven3-server-impl/lib/maven3/lib");
-    }
-
-    return new File(pluginFileOrDir.getParentFile(), "maven3");
+    return new File(getInstance().getCurrentMavenHomeFile(), "lib");
   }
 
-  public static List<File> collectClassPathAndLibsFolder() {
-    File pluginFileOrDir = new File(PathUtil.getJarPathForClass(MavenServerManager.class));
+  @Nullable
+  public String getMavenVersion(@Nullable String mavenHome) {
+    return MavenUtil.getMavenVersion(getMavenHomeFile(mavenHome));
+  }
 
-    List<File> classpath = new ArrayList<File>();
+  @SuppressWarnings("unused")
+  @Nullable
+  public String getMavenVersion(@Nullable File mavenHome) {
+    return MavenUtil.getMavenVersion(mavenHome);
+  }
 
-    String root = pluginFileOrDir.getParent();
+  @Nullable
+  public String getCurrentMavenVersion() {
+    return getMavenVersion(myState.mavenHome);
+  }
+
+  private static List<File> collectClassPathAndLibsFolder(@NotNull String mavenVersion, @NotNull File mavenHome) {
+    final File pluginFileOrDir = new File(PathUtil.getJarPathForClass(MavenServerManager.class));
+    final List<File> classpath = new ArrayList<>();
+    final String root = pluginFileOrDir.getParent();
 
     if (pluginFileOrDir.isDirectory()) {
-      classpath.add(new File(root, "maven-server-api"));
-
-      File luceneLib = new File(PathUtil.getJarPathForClass(Query.class));
-
-      if (getInstance().isUseMaven2()) {
-        classpath.add(new File(root, "maven2-server-impl"));
-        addDir(classpath, new File(luceneLib.getParentFile().getParentFile().getParentFile(), "maven2-server-impl/lib"));
+      classpath.add(new File(root, "intellij.maven.server"));
+      File parentFile = getMavenPluginParentFile();
+      if (StringUtil.compareVersionNumbers(mavenVersion, "3") < 0) {
+        classpath.add(new File(root, "intellij.maven.server.m2.impl"));
+        addDir(classpath, new File(parentFile, "maven2-server-impl/lib"));
+        // use bundled maven 2.2.1 for all 2.0.x version (since we use org.apache.maven.project.interpolation.StringSearchModelInterpolator introduced in 2.1.0)
+        if (StringUtil.compareVersionNumbers(mavenVersion, "2.1.0") < 0) {
+          mavenHome = BundledMavenPathHolder.myBundledMaven2Home;
+        }
       }
       else {
-        classpath.add(new File(root, "maven3-server-impl"));
+        classpath.add(new File(root, "intellij.maven.server.m3.common"));
+        addDir(classpath, new File(parentFile, "maven3-server-common/lib"));
 
-        File maven3Module_Lib = new File(luceneLib.getParentFile().getParentFile().getParentFile(), "maven3-server-impl/lib");
-        addDir(classpath, maven3Module_Lib);
-
-        File maven3Home = new File(maven3Module_Lib, "maven3");
-
-        addDir(classpath, new File(maven3Home, "lib"));
-
-        classpath.add(new File(maven3Home, "boot/plexus-classworlds-2.4.jar"));
+        if (StringUtil.compareVersionNumbers(mavenVersion, "3.1") < 0) {
+          classpath.add(new File(root, "intellij.maven.server.m30.impl"));
+        }
+        else {
+          classpath.add(new File(root, "intellij.maven.server.m3.impl"));
+        }
       }
     }
     else {
       classpath.add(new File(root, "maven-server-api.jar"));
 
-      if (getInstance().isUseMaven2()) {
+      if (StringUtil.compareVersionNumbers(mavenVersion, "3") < 0) {
         classpath.add(new File(root, "maven2-server-impl.jar"));
-
-        addDir(classpath, new File(root, "maven2"));
+        addDir(classpath, new File(root, "maven2-server-lib"));
       }
       else {
-        classpath.add(new File(root, "maven3-server-impl.jar"));
-        addDir(classpath, new File(root, "maven3"));
+        classpath.add(new File(root, "maven3-server-common.jar"));
+        addDir(classpath, new File(root, "maven3-server-lib"));
+
+        if (StringUtil.compareVersionNumbers(mavenVersion, "3.1") < 0) {
+          classpath.add(new File(root, "maven30-server-impl.jar"));
+        }
+        else {
+          classpath.add(new File(root, "maven3-server-impl.jar"));
+        }
       }
     }
 
+    addMavenLibs(classpath, mavenHome);
     return classpath;
   }
 
+  private static File getMavenPluginParentFile() {
+    File luceneLib = new File(PathUtil.getJarPathForClass(Query.class));
+    return luceneLib.getParentFile().getParentFile().getParentFile();
+  }
+
+  private static void addMavenLibs(List<File> classpath, File mavenHome) {
+    addDir(classpath, new File(mavenHome, "lib"));
+    File bootFolder = new File(mavenHome, "boot");
+    File[] classworldsJars = bootFolder.listFiles((dir, name) -> StringUtil.contains(name, "classworlds"));
+    if (classworldsJars != null) {
+      Collections.addAll(classpath, classworldsJars);
+    }
+  }
+
   private static void addDir(List<File> classpath, File dir) {
-    for (File jar : dir.listFiles()) {
+    File[] files = dir.listFiles();
+    if (files == null) return;
+
+    for (File jar : files) {
       if (jar.isFile() && jar.getName().endsWith(".jar")) {
         classpath.add(jar);
       }
     }
   }
 
-  public MavenEmbedderWrapper createEmbedder(final Project project, final boolean alwaysOnline) {
+  public MavenEmbedderWrapper createEmbedder(final Project project,
+                                             final boolean alwaysOnline,
+                                             @Nullable String workingDirectory,
+                                             @Nullable String multiModuleProjectDirectory) {
     return new MavenEmbedderWrapper(this) {
       @NotNull
       @Override
@@ -336,7 +345,10 @@ public class MavenServerManager extends RemoteObjectWrapper<MavenServer> impleme
           settings = settings.clone();
           settings.setOffline(false);
         }
-        return MavenServerManager.this.getOrCreateWrappee().createEmbedder(settings);
+
+        settings.setProjectJdk(MavenUtil.getSdkPath(ProjectRootManager.getInstance(project).getProjectSdk()));
+        return MavenServerManager.this.getOrCreateWrappee()
+          .createEmbedder(new MavenEmbedderSettings(settings, workingDirectory, multiModuleProjectDirectory));
       }
     };
   }
@@ -351,34 +363,20 @@ public class MavenServerManager extends RemoteObjectWrapper<MavenServer> impleme
     };
   }
 
+  @NotNull
   public MavenModel interpolateAndAlignModel(final MavenModel model, final File basedir) {
-    return perform(new Retriable<MavenModel>() {
-      @Override
-      public MavenModel execute() throws RemoteException {
-        return getOrCreateWrappee().interpolateAndAlignModel(model, basedir);
-      }
-    });
+    return perform(() -> getOrCreateWrappee().interpolateAndAlignModel(model, basedir));
   }
 
   public MavenModel assembleInheritance(final MavenModel model, final MavenModel parentModel) {
-    return perform(new Retriable<MavenModel>() {
-      @Override
-      public MavenModel execute() throws RemoteException {
-        return getOrCreateWrappee().assembleInheritance(model, parentModel);
-      }
-    });
+    return perform(() -> getOrCreateWrappee().assembleInheritance(model, parentModel));
   }
 
   public ProfileApplicationResult applyProfiles(final MavenModel model,
                                                 final File basedir,
-                                                final Collection<String> explicitProfiles,
+                                                final MavenExplicitProfiles explicitProfiles,
                                                 final Collection<String> alwaysOnProfiles) {
-    return perform(new Retriable<ProfileApplicationResult>() {
-      @Override
-      public ProfileApplicationResult execute() throws RemoteException {
-        return getOrCreateWrappee().applyProfiles(model, basedir, explicitProfiles, alwaysOnProfiles);
-      }
-    });
+    return perform(() -> getOrCreateWrappee().applyProfiles(model, basedir, explicitProfiles, alwaysOnProfiles));
   }
 
   public void addDownloadListener(MavenServerDownloadListener listener) {
@@ -398,7 +396,8 @@ public class MavenServerManager extends RemoteObjectWrapper<MavenServer> impleme
     result.setGlobalSettingsFile(settings.getEffectiveGlobalSettingsIoFile());
     result.setLocalRepository(settings.getEffectiveLocalRepository());
     result.setPluginUpdatePolicy(settings.getPluginUpdatePolicy().getServerPolicy());
-    result.setSnapshotUpdatePolicy(settings.isAlwaysUpdateSnapshots() ? MavenServerSettings.UpdatePolicy.ALWAYS_UPDATE : MavenServerSettings.UpdatePolicy.DO_NOT_UPDATE);
+    result.setSnapshotUpdatePolicy(
+      settings.isAlwaysUpdateSnapshots() ? MavenServerSettings.UpdatePolicy.ALWAYS_UPDATE : MavenServerSettings.UpdatePolicy.DO_NOT_UPDATE);
     return result;
   }
 
@@ -435,57 +434,132 @@ public class MavenServerManager extends RemoteObjectWrapper<MavenServer> impleme
     }
   }
 
-  public boolean isUseMaven2() {
-    return useMaven2;
+  private static class UseMavenConverter extends Converter<Boolean> {
+    @Nullable
+    @Override
+    public Boolean fromString(@NotNull String value) {
+      return "2.x".equals(value);
+    }
+
+    @NotNull
+    @Override
+    public String toString(@NotNull Boolean value) {
+      return value ? "2.x" : "3.x";
+    }
   }
 
-  public void setUseMaven2(boolean useMaven2) {
-    if (this.useMaven2 != useMaven2) {
-      this.useMaven2 = useMaven2;
+  public boolean isUseMaven2() {
+    final String version = getCurrentMavenVersion();
+    return version != null && StringUtil.compareVersionNumbers(version, "3") < 0 && StringUtil.compareVersionNumbers(version, "2") >= 0;
+  }
+
+  @TestOnly
+  @Deprecated
+  public void setUseMaven2() {
+    String newMavenHome = BUNDLED_MAVEN_2;
+    if (!StringUtil.equals(myState.mavenHome, newMavenHome)) {
+      myState.mavenHome = newMavenHome;
+      shutdown(false);
+    }
+  }
+
+  @Nullable
+  public static File getMavenHomeFile(@Nullable String mavenHome) {
+    if (mavenHome == null) return null;
+    //will be removed after IDEA-205421
+    if (StringUtil.equals(BUNDLED_MAVEN_2, mavenHome) && ApplicationManager.getApplication().isUnitTestMode()) {
+      return BundledMavenPathHolder.myBundledMaven2Home;
+    }
+    if (StringUtil.equals(BUNDLED_MAVEN_3, mavenHome)) {
+      return BundledMavenPathHolder.myBundledMaven3Home;
+    }
+    final File home = new File(mavenHome);
+    return MavenUtil.isValidMavenHome(home) ? home : null;
+  }
+
+  @Nullable
+  public File getCurrentMavenHomeFile() {
+    return getMavenHomeFile(myState.mavenHome);
+  }
+
+  public void setMavenHome(@NotNull String mavenHome) {
+    if (!StringUtil.equals(myState.mavenHome, mavenHome)) {
+      myState.mavenHome = mavenHome;
       shutdown(false);
     }
   }
 
   @NotNull
   public String getMavenEmbedderVMOptions() {
-    return mavenEmbedderVMOptions;
+    return myState.vmOptions;
   }
 
   public void setMavenEmbedderVMOptions(@NotNull String mavenEmbedderVMOptions) {
-    this.mavenEmbedderVMOptions = mavenEmbedderVMOptions;
+    if (!mavenEmbedderVMOptions.trim().equals(myState.vmOptions.trim())) {
+      myState.vmOptions = mavenEmbedderVMOptions;
+      shutdown(false);
+    }
+  }
+
+  @NotNull
+  public String getEmbedderJdk() {
+    return myState.embedderJdk;
+  }
+
+  public void setEmbedderJdk(@NotNull String embedderJdk) {
+    if (!myState.embedderJdk.equals(embedderJdk)) {
+      myState.embedderJdk = embedderJdk;
+      shutdown(false);
+    }
+  }
+
+
+  @NotNull
+  public MavenExecutionOptions.LoggingLevel getLoggingLevel() {
+    return myState.loggingLevel;
+  }
+
+  public void setLoggingLevel(MavenExecutionOptions.LoggingLevel loggingLevel) {
+    if (myState.loggingLevel != loggingLevel) {
+      myState.loggingLevel = loggingLevel;
+      shutdown(false);
+    }
   }
 
   @Nullable
   @Override
-  public Element getState() {
-    final Element element = new Element("maven-version");
-    element.setAttribute("version", useMaven2 ? "2" : "3");
-    element.setAttribute("vmOptions", mavenEmbedderVMOptions);
-    return element;
+  public State getState() {
+    return myState;
   }
 
   @Override
-  public void loadState(Element state) {
-    String version = state.getAttributeValue("version");
-    useMaven2 = !"3".equals(version);
-
-    String vmOptions = state.getAttributeValue("vmOptions");
-    mavenEmbedderVMOptions = vmOptions == null ? DEFAULT_VM_OPTIONS : vmOptions;
+  public void loadState(@NotNull State state) {
+    if (state.vmOptions == null) {
+      state.vmOptions = DEFAULT_VM_OPTIONS;
+    }
+    if (state.embedderJdk == null) {
+      state.embedderJdk = MavenRunnerSettings.USE_INTERNAL_JAVA;
+    }
+    myState = state;
   }
 
   private static class RemoteMavenServerLogger extends MavenRemoteObject implements MavenServerLogger {
+    @Override
     public void info(Throwable e) {
       MavenLog.LOG.info(e);
     }
 
+    @Override
     public void warn(Throwable e) {
       MavenLog.LOG.warn(e);
     }
 
+    @Override
     public void error(Throwable e) {
       MavenLog.LOG.error(e);
     }
 
+    @Override
     public void print(String s) {
       //noinspection UseOfSystemOutOrSystemErr
       System.out.println(s);
@@ -495,6 +569,7 @@ public class MavenServerManager extends RemoteObjectWrapper<MavenServer> impleme
   private static class RemoteMavenServerDownloadListener extends MavenRemoteObject implements MavenServerDownloadListener {
     private final List<MavenServerDownloadListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
 
+    @Override
     public void artifactDownloaded(File file, String relativePath) throws RemoteException {
       for (MavenServerDownloadListener each : myListeners) {
         each.artifactDownloaded(file, relativePath);
@@ -505,26 +580,31 @@ public class MavenServerManager extends RemoteObjectWrapper<MavenServer> impleme
   private static class RemoteMavenServerProgressIndicator extends MavenRemoteObject implements MavenServerProgressIndicator {
     private final MavenProgressIndicator myProcess;
 
-    public RemoteMavenServerProgressIndicator(MavenProgressIndicator process) {
+    RemoteMavenServerProgressIndicator(MavenProgressIndicator process) {
       myProcess = process;
     }
 
+    @Override
     public void setText(String text) {
       myProcess.setText(text);
     }
 
+    @Override
     public void setText2(String text) {
       myProcess.setText2(text);
     }
 
+    @Override
     public boolean isCanceled() {
       return myProcess.isCanceled();
     }
 
+    @Override
     public void setIndeterminate(boolean value) {
       myProcess.getIndicator().setIndeterminate(value);
     }
 
+    @Override
     public void setFraction(double fraction) {
       myProcess.setFraction(fraction);
     }
@@ -533,10 +613,11 @@ public class MavenServerManager extends RemoteObjectWrapper<MavenServer> impleme
   private static class RemoteMavenServerConsole extends MavenRemoteObject implements MavenServerConsole {
     private final MavenConsole myConsole;
 
-    public RemoteMavenServerConsole(MavenConsole console) {
+    RemoteMavenServerConsole(MavenConsole console) {
       myConsole = console;
     }
 
+    @Override
     public void printMessage(int level, String message, Throwable throwable) {
       myConsole.printMessage(level, message, throwable);
     }
@@ -550,8 +631,186 @@ public class MavenServerManager extends RemoteObjectWrapper<MavenServer> impleme
     }
 
     @Override
-    public void processArtifacts(Collection<MavenId> artifacts) {
+    public void processArtifacts(Collection<IndexedMavenId> artifacts) {
       myProcessor.processArtifacts(artifacts);
+    }
+  }
+
+  class MavenServerCMDState extends CommandLineState {
+    MavenServerCMDState() {super(null);}
+
+    SimpleJavaParameters createJavaParameters() {
+      final SimpleJavaParameters params = new SimpleJavaParameters();
+
+      final Sdk jdk = getJdk();
+      params.setJdk(jdk);
+
+      params.setWorkingDirectory(PathManager.getBinPath());
+
+      params.setMainClass(MAIN_CLASS);
+
+      Map<String, String> defs = new THashMap<>();
+      defs.putAll(MavenUtil.getPropertiesFromMavenOpts());
+
+      // pass ssl-related options
+      for (Map.Entry<Object, Object> each : System.getProperties().entrySet()) {
+        Object key = each.getKey();
+        Object value = each.getValue();
+        if (key instanceof String && value instanceof String && ((String)key).startsWith("javax.net.ssl")) {
+          defs.put((String)key, (String)value);
+        }
+      }
+
+      defs.put("java.awt.headless", "true");
+      for (Map.Entry<String, String> each : defs.entrySet()) {
+        params.getVMParametersList().defineProperty(each.getKey(), each.getValue());
+      }
+
+      params.getVMParametersList().addProperty("idea.version=", MavenUtil.getIdeaVersionToPassToMavenProcess());
+
+      boolean xmxSet = false;
+      boolean maven2Forced = false;
+
+      if (myState.vmOptions != null) {
+        ParametersList mavenOptsList = new ParametersList();
+        mavenOptsList.addParametersString(myState.vmOptions);
+
+        for (String param : mavenOptsList.getParameters()) {
+          if (param.startsWith("-Xmx")) {
+            xmxSet = true;
+          }
+          if (param.equals(FORCE_MAVEN2_OPTION)) {
+            MavenLog.LOG.warn("Forced maven 2 option");
+            maven2Forced = true;
+          }
+
+          params.getVMParametersList().add(param);
+        }
+      }
+
+      final File mavenHome;
+      final String mavenVersion;
+      final File currentMavenHomeFile = maven2Forced ? BundledMavenPathHolder.myBundledMaven2Home : getCurrentMavenHomeFile();
+
+      if (currentMavenHomeFile == null) {
+        MavenLog.LOG.warn("Not found maven at " + myState.mavenHome);
+        mavenHome = BundledMavenPathHolder.myBundledMaven3Home;
+        mavenVersion = getMavenVersion(mavenHome);
+        showInvalidMavenNotification(mavenVersion);
+      }
+      else {
+        mavenHome = currentMavenHomeFile;
+        mavenVersion = getMavenVersion(mavenHome);
+      }
+      MavenLog.LOG.debug("", currentMavenHomeFile, "with version ", mavenVersion, " chosen as maven home");
+      assert mavenVersion != null;
+
+      params.getVMParametersList().addProperty(MavenServerEmbedder.MAVEN_EMBEDDER_VERSION, mavenVersion);
+      String sdkConfigLocation = "Settings | Build, Execution, Deployment | Build Tools | Maven | Importing | JDK for Importer";
+      verifyMavenSdkRequirements(jdk, mavenVersion, sdkConfigLocation);
+
+      final List<String> classPath = new ArrayList<>();
+      classPath.add(PathUtil.getJarPathForClass(org.apache.log4j.Logger.class));
+      if (StringUtil.compareVersionNumbers(mavenVersion, "3.1") < 0) {
+        classPath.add(PathUtil.getJarPathForClass(Logger.class));
+        classPath.add(PathUtil.getJarPathForClass(Log4jLoggerFactory.class));
+      }
+
+      classPath.add(PathUtil.getJarPathForClass(StringUtilRt.class));//util-rt
+      classPath.add(PathUtil.getJarPathForClass(NotNull.class));//annotations-java5
+      classPath.add(PathUtil.getJarPathForClass(Element.class));//JDOM
+      classPath.add(PathUtil.getJarPathForClass(TIntHashSet.class));//Trove
+
+      ContainerUtil.addIfNotNull(classPath, PathUtil.getJarPathForClass(Query.class));
+      params.getClassPath().add(PathManager.getResourceRoot(getClass(), "/messages/CommonBundle.properties"));
+      params.getClassPath().addAll(classPath);
+      params.getClassPath().addAllFiles(collectClassPathAndLibsFolder(mavenVersion, mavenHome));
+
+      String embedderXmx = System.getProperty("idea.maven.embedder.xmx");
+      if (embedderXmx != null) {
+        params.getVMParametersList().add("-Xmx" + embedderXmx);
+      }
+      else {
+        if (!xmxSet) {
+          params.getVMParametersList().add("-Xmx768m");
+        }
+      }
+
+      String mavenEmbedderDebugPort = System.getProperty("idea.maven.embedder.debug.port");
+      if (mavenEmbedderDebugPort != null) {
+        params.getVMParametersList()
+          .addParametersString("-Xdebug -Xrunjdwp:transport=dt_socket,server=y,suspend=n,address=" + mavenEmbedderDebugPort);
+      }
+
+      String mavenEmbedderParameters = System.getProperty("idea.maven.embedder.parameters");
+      if (mavenEmbedderParameters != null) {
+        params.getProgramParametersList().addParametersString(mavenEmbedderParameters);
+      }
+
+      String mavenEmbedderCliOptions = System.getProperty(MavenServerEmbedder.MAVEN_EMBEDDER_CLI_ADDITIONAL_ARGS);
+      if (mavenEmbedderCliOptions != null) {
+        params.getVMParametersList().addProperty(MavenServerEmbedder.MAVEN_EMBEDDER_CLI_ADDITIONAL_ARGS, mavenEmbedderCliOptions);
+      }
+
+      return params;
+    }
+
+    @NotNull
+    @Override
+    public ExecutionResult execute(@NotNull Executor executor, @NotNull ProgramRunner runner) throws ExecutionException {
+      ProcessHandler processHandler = startProcess();
+      return new DefaultExecutionResult(processHandler);
+    }
+
+    @Override
+    @NotNull
+    protected OSProcessHandler startProcess() throws ExecutionException {
+      SimpleJavaParameters params = createJavaParameters();
+      GeneralCommandLine commandLine = params.toCommandLine();
+      OSProcessHandler processHandler = new OSProcessHandler(commandLine) {
+        @NotNull
+        @Override
+        protected BaseOutputReader.Options readerOptions() {
+          return BaseOutputReader.Options.forMostlySilentProcess();
+        }
+      };
+      processHandler.setShouldDestroyProcessRecursively(false);
+      return processHandler;
+    }
+
+    private void showInvalidMavenNotification(@Nullable String mavenVersion) {
+      Project[] openProjects = ProjectManager.getInstance().getOpenProjects();
+      final Project project = openProjects.length == 1 ? openProjects[0] : null;
+
+      String message = messageToShow(myState.mavenHome, mavenVersion, project);
+
+      NotificationListener listener = project == null ? null : new NotificationListener() {
+        @Override
+        public void hyperlinkUpdate(@NotNull Notification notification, @NotNull HyperlinkEvent event) {
+          ShowSettingsUtil.getInstance().showSettingsDialog(project, MavenSettings.DISPLAY_NAME);
+        }
+      };
+
+      new Notification(MavenUtil.MAVEN_NOTIFICATION_GROUP, "", message, NotificationType.WARNING, listener).notify(null);
+    }
+
+    private String messageToShow(String mavenHome, String mavenVersion, Project project) {
+      if (StringUtil.equals(BUNDLED_MAVEN_2, mavenHome)) {
+        if (project == null) {
+          return RunnerBundle.message("bundled.maven.maven2.not.supported");
+        }
+        else {
+          return RunnerBundle.message("bundled.maven.maven2.not.supported.with.fix");
+        }
+      }
+      else {
+        if (project == null) {
+          return RunnerBundle.message("external.maven.home.invalid.substitution.warning", myState.mavenHome, mavenVersion);
+        }
+        else {
+          return RunnerBundle.message("external.maven.home.invalid.substitution.warning.with.fix", myState.mavenHome, mavenVersion);
+        }
+      }
     }
   }
 }

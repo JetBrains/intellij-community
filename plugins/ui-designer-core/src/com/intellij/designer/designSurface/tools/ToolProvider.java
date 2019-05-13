@@ -17,6 +17,7 @@ package com.intellij.designer.designSurface.tools;
 
 import com.intellij.designer.designSurface.EditOperation;
 import com.intellij.designer.designSurface.EditableArea;
+import com.intellij.designer.designSurface.ZoomProvider;
 import com.intellij.designer.propertyTable.InplaceContext;
 import com.intellij.util.ThrowableRunnable;
 import org.jetbrains.annotations.NonNls;
@@ -29,13 +30,13 @@ import java.util.List;
 /**
  * @author Alexander Lobas
  */
-public abstract class ToolProvider {
+public abstract class ToolProvider implements ZoomProvider {
   private InputTool myTool;
   private EditableArea myArea;
   private MouseEvent myEvent;
 
   public void processKeyEvent(KeyEvent event, EditableArea area) {
-    if (myTool != null) {
+      if (myTool != null) {
       try {
         switch (event.getID()) {
           case KeyEvent.KEY_PRESSED:

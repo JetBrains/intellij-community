@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,10 +14,6 @@
  * limitations under the License.
  */
 
-/**
- * created at Sep 17, 2001
- * @author Jeka
- */
 package com.intellij.refactoring.move;
 
 import com.intellij.openapi.util.text.StringUtil;
@@ -52,19 +48,24 @@ public class MoveMultipleElementsViewDescriptor implements UsageViewDescriptor {
     }
   }
 
+  @Override
   @NotNull
   public PsiElement[] getElements() {
     return myPsiElements;
   }
 
+  @Override
   public String getProcessedElementsHeader() {
     return myProcessedElementsHeader;
   }
 
+  @NotNull
+  @Override
   public String getCodeReferencesText(int usagesCount, int filesCount) {
     return myCodeReferencesText + UsageViewBundle.getReferencesString(usagesCount, filesCount);
   }
 
+  @Override
   public String getCommentReferencesText(int usagesCount, int filesCount) {
     return RefactoringBundle.message("comments.elements.header",
                                 UsageViewBundle.getOccurencesString(usagesCount, filesCount));

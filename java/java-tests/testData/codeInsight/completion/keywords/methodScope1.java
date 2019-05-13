@@ -14,5 +14,5 @@
  * limitations under the License.
  */
 public class A{
- public void method() <caret> {}
+ public void method() <caret>x {}
 }

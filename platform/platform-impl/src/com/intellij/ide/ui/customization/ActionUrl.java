@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.ui.customization;
 
 import com.intellij.openapi.actionSystem.ActionGroup;
@@ -31,10 +17,6 @@ import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreePath;
 import java.util.ArrayList;
 
-/**
- * User: anna
- * Date: Mar 18, 2005
- */
 public class ActionUrl implements JDOMExternalizable {
   public static final int ADDED = 1;
   public static final int DELETED = -1;
@@ -60,7 +42,7 @@ public class ActionUrl implements JDOMExternalizable {
 
 
   public ActionUrl() {
-    myGroupPath = new ArrayList<String>();
+    myGroupPath = new ArrayList<>();
   }
 
   public ActionUrl(final ArrayList<String> groupPath,
@@ -79,6 +61,10 @@ public class ActionUrl implements JDOMExternalizable {
 
   public String getParentGroup(){
     return myGroupPath.get(myGroupPath.size() - 1);
+  }
+
+  public String getRootGroup() {
+    return myGroupPath.size() >= 1 ? myGroupPath.get(1) : "";
   }
 
   public Object getComponent() {
@@ -127,8 +113,9 @@ public class ActionUrl implements JDOMExternalizable {
     myInitialPosition = initialPosition;
   }
 
+  @Override
   public void readExternal(Element element) throws InvalidDataException {
-    myGroupPath = new ArrayList<String>();
+    myGroupPath = new ArrayList<>();
     for (Object o : element.getChildren(PATH)) {
       myGroupPath.add(((Element)o).getAttributeValue(VALUE));
     }
@@ -150,6 +137,7 @@ public class ActionUrl implements JDOMExternalizable {
     DefaultJDOMExternalizer.readExternal(this, element);
   }
 
+  @Override
   public void writeExternal(Element element) throws WriteExternalException {
     for (String s : myGroupPath) {
       Element path = new Element(PATH);
@@ -243,7 +231,7 @@ public class ActionUrl implements JDOMExternalizable {
   }
 
   public static ArrayList<String> getGroupPath(final TreePath treePath){
-    final ArrayList<String> result = new ArrayList<String>();
+    final ArrayList<String> result = new ArrayList<>();
     for (int i = 0; i < treePath.getPath().length - 1; i++) {
       Object o = ((DefaultMutableTreeNode)treePath.getPath()[i]).getUserObject();
       if (o instanceof Group){
@@ -253,6 +241,7 @@ public class ActionUrl implements JDOMExternalizable {
     return result;
   }
 
+  @Override
   public boolean equals(Object object){
     if (!(object instanceof ActionUrl)){
       return false;
@@ -263,6 +252,7 @@ public class ActionUrl implements JDOMExternalizable {
     return Comparing.equal(comp, thatComp) && myGroupPath.equals(url.myGroupPath) && myAbsolutePosition == url.getAbsolutePosition();
   }
 
+  @Override
   public int hashCode() {
     int result = myComponent != null ? myComponent.hashCode() : 0;
     result += 29 * myGroupPath.hashCode();
@@ -275,5 +265,16 @@ public class ActionUrl implements JDOMExternalizable {
 
   public void setGroupPath(final ArrayList<String> groupPath) {
     myGroupPath = groupPath;
+  }
+
+  @Override
+  public String toString() {
+    return "ActionUrl{" +
+           "myGroupPath=" + myGroupPath +
+           ", myComponent=" + myComponent +
+           ", myActionType=" + myActionType +
+           ", myAbsolutePosition=" + myAbsolutePosition +
+           ", myInitialPosition=" + myInitialPosition +
+           '}';
   }
 }

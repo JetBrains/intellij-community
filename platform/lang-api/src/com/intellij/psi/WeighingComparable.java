@@ -24,16 +24,22 @@ import org.jetbrains.annotations.Nullable;
 */
 public class WeighingComparable<T,Loc> implements Comparable<WeighingComparable<T,Loc>>, ForceableComparable {
   private static final Comparable NULL = new Comparable() {
+    @Override
     public int compareTo(final Object o) {
       throw new UnsupportedOperationException("Method compareTo is not yet implemented in " + getClass().getName());
     }
+
+    @Override
+    public String toString() {
+      return "null";
+    }
   };
   @NotNull private Comparable[] myComputedWeighs;
-  private final Computable<T> myElement;
+  private final Computable<? extends T> myElement;
   private final Loc myLocation;
   private final Weigher<T,Loc>[] myWeighers;
 
-  public WeighingComparable(final Computable<T> element,
+  public WeighingComparable(final Computable<? extends T> element,
                             @Nullable final Loc location,
                             final Weigher<T,Loc>[] weighers) {
     myElement = element;
@@ -42,6 +48,7 @@ public class WeighingComparable<T,Loc> implements Comparable<WeighingComparable<
     myComputedWeighs = new Comparable[weighers.length];
   }
 
+  @Override
   public void force() {
     for (int i = 0; i < myComputedWeighs.length; i++) {
       Comparable weight = getWeight(i);
@@ -51,6 +58,7 @@ public class WeighingComparable<T,Loc> implements Comparable<WeighingComparable<
     }
   }
 
+  @Override
   public int compareTo(@NotNull final WeighingComparable<T,Loc> comparable) {
     if (myComputedWeighs == comparable.myComputedWeighs) return 0;
 
@@ -90,7 +98,7 @@ public class WeighingComparable<T,Loc> implements Comparable<WeighingComparable<
       if (i != 0) builder.append(", ");
       builder.append(myWeighers[i]);
       builder.append("=");
-      builder.append(getWeight(i));
+      builder.append(myComputedWeighs[i]);
     }
     return builder.append("]").toString();
   }

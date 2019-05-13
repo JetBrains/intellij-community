@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,26 +14,18 @@
  * limitations under the License.
  */
 
-/*
- * Created by IntelliJ IDEA.
- * User: dsl
- * Date: 07.06.2002
- * Time: 18:16:19
- * To change template for new class use 
- * Code Style | Class Templates options (Tools | IDE Options).
- */
 package com.intellij.refactoring.ui;
 
 import com.intellij.psi.PsiModifier;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.util.VisibilityUtil;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
-import java.awt.*;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 
@@ -46,18 +38,24 @@ public class JavaVisibilityPanel extends VisibilityPanelBase<String> {
   private final JRadioButton myRbPublic;
 
   public JavaVisibilityPanel(boolean hasAsIs, final boolean hasEscalate) {
-    setBorder(IdeBorderFactory.createTitledBorder(RefactoringBundle.message("visibility.border.title"), true,
-                                                  new Insets(IdeBorderFactory.TITLED_BORDER_TOP_INSET,
-                                                             UIUtil.DEFAULT_HGAP,
-                                                             IdeBorderFactory.TITLED_BORDER_BOTTOM_INSET,
-                                                             IdeBorderFactory.TITLED_BORDER_RIGHT_INSET)));
+    this(hasAsIs, hasEscalate, RefactoringBundle.message("visibility.border.title"));
+  }
+
+  public JavaVisibilityPanel(boolean hasAsIs,
+                             final boolean hasEscalate,
+                             String visibilityTitle) {
+    setBorder(IdeBorderFactory.createTitledBorder(visibilityTitle, true,
+                                                  JBUI.insets(IdeBorderFactory.TITLED_BORDER_TOP_INSET, UIUtil.DEFAULT_HGAP,
+                                                              IdeBorderFactory.TITLED_BORDER_BOTTOM_INSET,
+                                                              IdeBorderFactory.TITLED_BORDER_RIGHT_INSET)));
     setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
     ButtonGroup bg = new ButtonGroup();
 
     ItemListener listener = new ItemListener() {
+      @Override
       public void itemStateChanged(ItemEvent e) {
         if (e.getStateChange() == ItemEvent.SELECTED) {
-          myEventDispatcher.getMulticaster().stateChanged(new ChangeEvent(this));
+          stateChanged(new ChangeEvent(this));
         }
       }
     };
@@ -109,6 +107,7 @@ public class JavaVisibilityPanel extends VisibilityPanelBase<String> {
   }
 
 
+  @Override
   @Nullable
   public String getVisibility() {
     if (myRbPublic.isSelected()) {
@@ -130,6 +129,7 @@ public class JavaVisibilityPanel extends VisibilityPanelBase<String> {
     return null;
   }
 
+  @Override
   public void setVisibility(@Nullable String visibility) {
     if (PsiModifier.PUBLIC.equals(visibility)) {
       myRbPublic.setSelected(true);

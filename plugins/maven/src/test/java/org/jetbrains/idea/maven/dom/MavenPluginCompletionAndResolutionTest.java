@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,23 +15,19 @@
  */
 package org.jetbrains.idea.maven.dom;
 
-import com.intellij.idea.Bombed;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.xml.XmlTag;
 import org.jetbrains.idea.maven.indices.MavenIndicesTestFixture;
 
-import java.io.IOException;
-import java.util.Calendar;
 import java.util.List;
 
 public class MavenPluginCompletionAndResolutionTest extends MavenDomWithIndicesTestCase {
   @Override
   protected MavenIndicesTestFixture createIndicesFixture() {
-    return new MavenIndicesTestFixture(myDir, myProject, "plugins");
+    return new MavenIndicesTestFixture(myDir.toPath(), myProject, "plugins");
   }
 
   @Override
@@ -43,8 +39,7 @@ public class MavenPluginCompletionAndResolutionTest extends MavenDomWithIndicesT
                   "<version>1</version>");
   }
 
-  @Bombed(year = 2013, month = Calendar.APRIL, day = 25, user = "sergey.evdokimov")
-  public void testGroupIdCompletion() throws Exception {
+  public void testGroupIdCompletion() {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +
@@ -57,11 +52,10 @@ public class MavenPluginCompletionAndResolutionTest extends MavenDomWithIndicesT
                      "  </plugins>" +
                      "</build>");
 
-    assertCompletionVariants(myProjectPom, "test", "org.apache.maven.plugins", "org.codehaus.mojo");
+    assertCompletionVariants(myProjectPom, "org.codehaus.plexus", "intellij.test", "test", "org.apache.maven.plugins", "org.codehaus.mojo");
   }
 
-  @Bombed(year = 2013, month = Calendar.APRIL, day = 25, user = "sergey.evdokimov")
-  public void testArtifactIdCompletion() throws Exception {
+  public void testArtifactIdCompletion() {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +
@@ -75,11 +69,30 @@ public class MavenPluginCompletionAndResolutionTest extends MavenDomWithIndicesT
                      "  </plugins>" +
                      "</build>");
 
-    assertCompletionVariants(myProjectPom, "maven-compiler-plugin", "maven-war-plugin", "maven-surefire-plugin", "maven-eclipse-plugin");
+    assertCompletionVariants(myProjectPom, "maven-site-plugin", "maven-eclipse-plugin", "maven-war-plugin", "maven-resources-plugin",
+                             "maven-surefire-plugin", "maven-jar-plugin", "maven-clean-plugin", "maven-install-plugin",
+                             "maven-compiler-plugin", "maven-deploy-plugin");
   }
 
-  @Bombed(year = 2013, month = Calendar.APRIL, day = 25, user = "sergey.evdokimov")
-  public void testArtifactWithoutGroupCompletion() throws Exception {
+  public void testVersionCompletion() {
+    createProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>project</artifactId>" +
+                     "<version>1</version>" +
+
+                     "<build>" +
+                     "  <plugins>" +
+                     "    <plugin>" +
+                     "      <groupId>org.apache.maven.plugins</groupId>" +
+                     "      <artifactId>maven-compiler-plugin</artifactId>" +
+                     "      <version><caret></version>" +
+                     "    </plugin>" +
+                     "  </plugins>" +
+                     "</build>");
+
+    assertCompletionVariants(myProjectPom, "RELEASE", "LATEST", "2.0.2", "3.1");
+  }
+
+  public void testArtifactWithoutGroupCompletion() {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +
@@ -93,11 +106,26 @@ public class MavenPluginCompletionAndResolutionTest extends MavenDomWithIndicesT
                      "</build>");
 
     assertCompletionVariants(myProjectPom,
-                             "maven-compiler-plugin", 
-                             "maven-war-plugin",
-                             "build-helper-maven-plugin",
-                             "maven-surefire-plugin",
-                             "maven-eclipse-plugin");
+                             "maven-site-plugin", "maven-eclipse-plugin", "maven-war-plugin", "maven-resources-plugin",
+                             "maven-surefire-plugin", "maven-jar-plugin", "build-helper-maven-plugin", "maven-clean-plugin",
+                             "maven-install-plugin", "maven-compiler-plugin", "maven-deploy-plugin");
+  }
+
+  public void testVersionWithoutGroupCompletion() {
+    createProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>project</artifactId>" +
+                     "<version>1</version>" +
+
+                     "<build>" +
+                     "  <plugins>" +
+                     "    <plugin>" +
+                     "      <artifactId>maven-compiler-plugin</artifactId>" +
+                     "      <version><caret></version>" +
+                     "    </plugin>" +
+                     "  </plugins>" +
+                     "</build>");
+
+    assertCompletionVariants(myProjectPom, "RELEASE", "LATEST", "2.0.2", "3.1");
   }
 
   public void testResolvingPlugins() throws Exception {
@@ -113,13 +141,13 @@ public class MavenPluginCompletionAndResolutionTest extends MavenDomWithIndicesT
                      "  </plugins>" +
                      "</build>");
 
-    String pluginPath = "plugins/org/apache/maven/plugins/maven-compiler-plugin/2.0.2/maven-compiler-plugin-2.0.2.pom";
+    String pluginPath = "plugins/org/apache/maven/plugins/maven-compiler-plugin/3.1/maven-compiler-plugin-3.1.pom";
     String filePath = myIndicesFixture.getRepositoryHelper().getTestDataPath(pluginPath);
     VirtualFile f = LocalFileSystem.getInstance().refreshAndFindFileByPath(filePath);
     assertResolved(myProjectPom, findPsiFile(f));
   }
 
-  public void testResolvingAbsentPlugins() throws Exception {
+  public void testResolvingAbsentPlugins() {
     removeFromLocalRepository("org/apache/maven/plugins/maven-compiler-plugin");
 
     createProjectPom("<groupId>test</groupId>" +
@@ -139,7 +167,7 @@ public class MavenPluginCompletionAndResolutionTest extends MavenDomWithIndicesT
     ref.resolve(); // shouldn't throw;
   }
 
-  public void testDoNotHighlightAbsentGroupIdAndVersion() throws Throwable {
+  public void testDoNotHighlightAbsentGroupIdAndVersion() {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +
@@ -154,7 +182,7 @@ public class MavenPluginCompletionAndResolutionTest extends MavenDomWithIndicesT
     checkHighlighting();
   }
 
-  public void testHighlightingAbsentArtifactId() throws Throwable {
+  public void testHighlightingAbsentArtifactId() {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +
@@ -169,22 +197,17 @@ public class MavenPluginCompletionAndResolutionTest extends MavenDomWithIndicesT
     checkHighlighting();
   }
 
-  public void testBasicConfigurationCompletion() throws Exception {
+  public void testBasicConfigurationCompletion() {
     putCaretInConfigurationSection();
     assertCompletionVariantsInclude(myProjectPom, "source", "target");
   }
 
-  public void testIncludingConfigurationParametersFromAllTheMojos() throws Exception {
+  public void testIncludingConfigurationParametersFromAllTheMojos() {
     putCaretInConfigurationSection();
     assertCompletionVariantsInclude(myProjectPom, "excludes", "testExcludes");
   }
 
-  public void testDoesNotIncludeNonEditableConfigurationParameters() throws Exception {
-    putCaretInConfigurationSection();
-    assertCompletionVariantsDoNotInclude(myProjectPom, "basedir", "buildDirectory");
-  }
-
-  private void putCaretInConfigurationSection() throws IOException {
+  private void putCaretInConfigurationSection() {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +
@@ -201,7 +224,7 @@ public class MavenPluginCompletionAndResolutionTest extends MavenDomWithIndicesT
                      "</build>");
   }
 
-  public void testNoParametersForUnknownPlugin() throws Exception {
+  public void testNoParametersForUnknownPlugin() {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +
@@ -220,7 +243,7 @@ public class MavenPluginCompletionAndResolutionTest extends MavenDomWithIndicesT
     assertCompletionVariants(myProjectPom);
   }
 
-  public void testNoParametersIfNothingIsSpecified() throws Exception {
+  public void testNoParametersIfNothingIsSpecified() {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +
@@ -238,7 +261,7 @@ public class MavenPluginCompletionAndResolutionTest extends MavenDomWithIndicesT
     assertCompletionVariants(myProjectPom);
   }
 
-  public void testResolvingParamaters() throws Exception {
+  public void testResolvingParamaters() {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +
@@ -256,22 +279,14 @@ public class MavenPluginCompletionAndResolutionTest extends MavenDomWithIndicesT
 
     PsiReference ref = getReferenceAtCaret(myProjectPom);
     assertNotNull(ref);
-
-    String pluginPath =
-      "plugins/org/apache/maven/plugins/maven-compiler-plugin/2.0.2/maven-compiler-plugin-2.0.2.jar!/META-INF/maven/plugin.xml";
-    String filePath = myIndicesFixture.getRepositoryHelper().getTestDataPath(pluginPath);
-    VirtualFile f = VirtualFileManager.getInstance().findFileByUrl("jar://" + filePath);
-
-
     PsiElement resolved = ref.resolve();
     assertNotNull(resolved);
-    assertEquals(findPsiFile(f), resolved.getContainingFile());
     assertTrue(resolved instanceof XmlTag);
     assertEquals("parameter", ((XmlTag)resolved).getName());
     assertEquals("includes", ((XmlTag)resolved).findFirstSubTag("name").getValue().getText());
   }
 
-  public void testResolvingInnerParamatersIntoOuter() throws Exception {
+  public void testResolvingInnerParamatersIntoOuter() {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +
@@ -291,21 +306,14 @@ public class MavenPluginCompletionAndResolutionTest extends MavenDomWithIndicesT
 
     PsiReference ref = getReferenceAtCaret(myProjectPom);
     assertNotNull(ref);
-
-    String pluginPath =
-      "plugins/org/apache/maven/plugins/maven-compiler-plugin/2.0.2/maven-compiler-plugin-2.0.2.jar!/META-INF/maven/plugin.xml";
-    String filePath = myIndicesFixture.getRepositoryHelper().getTestDataPath(pluginPath);
-    VirtualFile f = VirtualFileManager.getInstance().findFileByUrl("jar://" + filePath);
-
     PsiElement resolved = ref.resolve();
     assertNotNull(resolved);
-    assertEquals(findPsiFile(f), resolved.getContainingFile());
     assertTrue(resolved instanceof XmlTag);
     assertEquals("parameter", ((XmlTag)resolved).getName());
     assertEquals("includes", ((XmlTag)resolved).findFirstSubTag("name").getValue().getText());
   }
 
-  public void testGoalsCompletionAndHighlighting() throws Throwable {
+  public void testGoalsCompletionAndHighlighting() {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +
@@ -325,7 +333,7 @@ public class MavenPluginCompletionAndResolutionTest extends MavenDomWithIndicesT
                      "  </plugins>" +
                      "</build>");
 
-    assertCompletionVariants(myProjectPom, "compile", "testCompile");
+    assertCompletionVariants(myProjectPom, "help", "compile", "testCompile");
 
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
@@ -349,8 +357,7 @@ public class MavenPluginCompletionAndResolutionTest extends MavenDomWithIndicesT
     checkHighlighting();
   }
 
-  @Bombed(day = 25, month = Calendar.JANUARY, year = 2013)
-  public void testDontHighlightGoalsForUnresolvedPlugin() throws Throwable {
+  public void testDontHighlightGoalsForUnresolvedPlugin() {
     createProjectPom("<groupId>test</groupId>\n" +
                      "<artifactId>project</artifactId>\n" +
                      "<version>1</version>\n" +
@@ -385,7 +392,7 @@ public class MavenPluginCompletionAndResolutionTest extends MavenDomWithIndicesT
     checkHighlighting();
   }
 
-  public void testGoalsCompletionAndHighlightingInPluginManagement() throws Throwable {
+  public void testGoalsCompletionAndHighlightingInPluginManagement() {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +
@@ -407,7 +414,7 @@ public class MavenPluginCompletionAndResolutionTest extends MavenDomWithIndicesT
                      "  </pluginManagement>" +
                      "</build>");
 
-    assertCompletionVariants(myProjectPom, "compile", "testCompile");
+    assertCompletionVariants(myProjectPom, "help", "compile", "testCompile");
 
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
@@ -433,7 +440,7 @@ public class MavenPluginCompletionAndResolutionTest extends MavenDomWithIndicesT
     checkHighlighting();
   }
 
-  public void testGoalsResolution() throws Throwable {
+  public void testGoalsResolution() {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +
@@ -456,14 +463,8 @@ public class MavenPluginCompletionAndResolutionTest extends MavenDomWithIndicesT
     PsiReference ref = getReferenceAtCaret(myProjectPom);
     assertNotNull(ref);
 
-    String pluginPath =
-      "plugins/org/apache/maven/plugins/maven-compiler-plugin/2.0.2/maven-compiler-plugin-2.0.2.jar!/META-INF/maven/plugin.xml";
-    String filePath = myIndicesFixture.getRepositoryHelper().getTestDataPath(pluginPath);
-    VirtualFile f = VirtualFileManager.getInstance().findFileByUrl("jar://" + filePath);
-
     PsiElement resolved = ref.resolve();
     assertNotNull(resolved);
-    assertEquals(findPsiFile(f), resolved.getContainingFile());
     assertTrue(resolved instanceof XmlTag);
     assertEquals("mojo", ((XmlTag)resolved).getName());
     assertEquals("compile", ((XmlTag)resolved).findFirstSubTag("goal").getValue().getText());
@@ -513,7 +514,7 @@ public class MavenPluginCompletionAndResolutionTest extends MavenDomWithIndicesT
     assertUnresolved(myProjectPom);
   }
 
-  public void testPhaseCompletionAndHighlighting() throws Throwable {
+  public void testPhaseCompletionAndHighlighting() {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +
@@ -553,7 +554,7 @@ public class MavenPluginCompletionAndResolutionTest extends MavenDomWithIndicesT
     checkHighlighting();
   }
 
-  public void testNoExecutionParametersIfNoGoalNorIdAreSpecified() throws Exception {
+  public void testNoExecutionParametersIfNoGoalNorIdAreSpecified() {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +
@@ -576,7 +577,7 @@ public class MavenPluginCompletionAndResolutionTest extends MavenDomWithIndicesT
     assertCompletionVariants(myProjectPom);
   }
 
-  public void testExecutionParametersForSpecificGoal() throws Exception {
+  public void testExecutionParametersForSpecificGoal() {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +
@@ -604,7 +605,7 @@ public class MavenPluginCompletionAndResolutionTest extends MavenDomWithIndicesT
     assertFalse(variants.toString(), variants.contains("testExcludes"));
   }
 
-  public void testExecutionParametersForDefaultGoalExecution() throws Exception {
+  public void testExecutionParametersForDefaultGoalExecution() {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +
@@ -630,7 +631,7 @@ public class MavenPluginCompletionAndResolutionTest extends MavenDomWithIndicesT
     assertFalse(variants.toString(), variants.contains("testExcludes"));
   }
 
-  public void testExecutionParametersForSeveralSpecificGoals() throws Exception {
+  public void testExecutionParametersForSeveralSpecificGoals() {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +
@@ -657,7 +658,7 @@ public class MavenPluginCompletionAndResolutionTest extends MavenDomWithIndicesT
     assertCompletionVariantsInclude(myProjectPom, "excludes", "testExcludes");
   }
 
-  public void testAliasCompletion() throws Exception {
+  public void testAliasCompletion() {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +
@@ -676,7 +677,7 @@ public class MavenPluginCompletionAndResolutionTest extends MavenDomWithIndicesT
     assertCompletionVariantsInclude(myProjectPom, "warSourceExcludes", "excludes");
   }
 
-  public void testListElementsCompletion() throws Exception {
+  public void testListElementsCompletion() {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +
@@ -698,7 +699,7 @@ public class MavenPluginCompletionAndResolutionTest extends MavenDomWithIndicesT
     assertCompletionVariants(myProjectPom, "exclude");
   }
 
-  public void testListElementWhatHasUnpluralizedNameCompletion() throws Exception {
+  public void testListElementWhatHasUnpluralizedNameCompletion() {
     // NPE test - StringUtil.unpluralize returns null.
 
     createProjectPom("<groupId>test</groupId>" +
@@ -721,7 +722,7 @@ public class MavenPluginCompletionAndResolutionTest extends MavenDomWithIndicesT
     assertCompletionVariants(myProjectPom, "additionalConfig", "config");
   }
 
-  public void testDoNotHighlightUnknownElementsUnderLists() throws Throwable {
+  public void testDoNotHighlightUnknownElementsUnderLists() {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +
@@ -742,7 +743,7 @@ public class MavenPluginCompletionAndResolutionTest extends MavenDomWithIndicesT
     checkHighlighting();
   }
 
-  public void testArrayElementsCompletion() throws Exception {
+  public void testArrayElementsCompletion() {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +
@@ -764,7 +765,7 @@ public class MavenPluginCompletionAndResolutionTest extends MavenDomWithIndicesT
     assertCompletionVariants(myProjectPom, "resource", "webResource");
   }
 
-  public void testCompletionInCustomObjects() throws Exception {
+  public void testCompletionInCustomObjects() {
     if (ignore()) return;
 
     createProjectPom("<groupId>test</groupId>" +
@@ -789,7 +790,6 @@ public class MavenPluginCompletionAndResolutionTest extends MavenDomWithIndicesT
     assertCompletionVariants(myProjectPom);
   }
 
-  @Bombed(year = 2013, month = Calendar.MARCH, day = 25, user = "sergey.evdokimov")
   public void testDocumentationForParameter() throws Exception {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
@@ -806,10 +806,10 @@ public class MavenPluginCompletionAndResolutionTest extends MavenDomWithIndicesT
                      "  </plugins>" +
                      "</build>");
 
-    assertDocumentation("Type: <b>java.lang.String</b><br>Expression: <b>${maven.compiler.source}</b><br><br><i>The -source argument for the Java compiler.</i>");
+    assertDocumentation("Type: <b>java.lang.String</b><br>Default Value: <b>1.5</b><br>Expression: <b>${maven.compiler.source}</b><br><br><i>The -source argument for the Java compiler.</i>");
   }
 
-  public void testDoNotCompleteNorHighlightNonPluginConfiguration() throws Throwable {
+  public void testDoNotCompleteNorHighlightNonPluginConfiguration() {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +
@@ -829,7 +829,7 @@ public class MavenPluginCompletionAndResolutionTest extends MavenDomWithIndicesT
     checkHighlighting();
   }
 
-  public void testDoNotHighlightInnerParameters() throws Throwable {
+  public void testDoNotHighlightInnerParameters() {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +
@@ -850,7 +850,7 @@ public class MavenPluginCompletionAndResolutionTest extends MavenDomWithIndicesT
     checkHighlighting();
   }
 
-  public void testDoNotHighlightRequiredParametersWithDefaultValues() throws Throwable {
+  public void testDoNotHighlightRequiredParametersWithDefaultValues() {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +
@@ -870,7 +870,7 @@ public class MavenPluginCompletionAndResolutionTest extends MavenDomWithIndicesT
     checkHighlighting(); // surefire plugin has several required parameters with default values.
   }
 
-  public void testDoNotHighlightInnerParameterAttributes() throws Throwable {
+  public void testDoNotHighlightInnerParameterAttributes() {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +
@@ -894,7 +894,7 @@ public class MavenPluginCompletionAndResolutionTest extends MavenDomWithIndicesT
     checkHighlighting();
   }
 
-  public void testDoNotCompleteParameterAttributes() throws Throwable {
+  public void testDoNotCompleteParameterAttributes() {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +
@@ -913,7 +913,7 @@ public class MavenPluginCompletionAndResolutionTest extends MavenDomWithIndicesT
     assertCompletionVariants(myProjectPom, "combine.children", "combine.self");
   }
 
-  public void testWorksWithPropertiesInPluginId() throws Throwable {
+  public void testWorksWithPropertiesInPluginId() {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +
@@ -951,7 +951,7 @@ public class MavenPluginCompletionAndResolutionTest extends MavenDomWithIndicesT
     checkHighlighting();
   }
 
-  public void testDoNotHighlightPropertiesForUnknownPlugins() throws Throwable {
+  public void testDoNotHighlightPropertiesForUnknownPlugins() {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +
@@ -972,7 +972,7 @@ public class MavenPluginCompletionAndResolutionTest extends MavenDomWithIndicesT
     checkHighlighting();
   }
 
-  public void testTellNobodyThatIdeaIsRulezzz() throws Exception {
+  public void testTellNobodyThatIdeaIsRulezzz() {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +

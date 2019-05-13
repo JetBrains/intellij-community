@@ -1,16 +1,35 @@
+/*
+ * Copyright 2000-2015 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.intellij.execution.process;
 
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
+import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
-import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -21,12 +40,27 @@ public class ColoredOutputTypeRegistry {
     return ServiceManager.getService(ColoredOutputTypeRegistry.class);
   }
 
-  private final Map<String, Key> myRegisteredKeys = new HashMap<String, Key>();
+  private final Map<String, ProcessOutputType> myStdoutAttrsToKeyMap = ContainerUtil.newConcurrentMap();
+  private final Map<String, ProcessOutputType> myStderrAttrsToKeyMap = ContainerUtil.newConcurrentMap();
 
-  private final TextAttributesKey[] myAnsiColorKeys = new TextAttributesKey[] {
-    ConsoleViewContentType.NORMAL_OUTPUT_KEY,
-    ConsoleHighlighter.RED, ConsoleHighlighter.GREEN, ConsoleHighlighter.YELLOW, ConsoleHighlighter.BLUE,
-    ConsoleHighlighter.MAGENTA, ConsoleHighlighter.CYAN
+  private static final TextAttributesKey[] myAnsiColorKeys = new TextAttributesKey[]{
+    ConsoleHighlighter.BLACK,
+    ConsoleHighlighter.RED,
+    ConsoleHighlighter.GREEN,
+    ConsoleHighlighter.YELLOW,
+    ConsoleHighlighter.BLUE,
+    ConsoleHighlighter.MAGENTA,
+    ConsoleHighlighter.CYAN,
+    ConsoleHighlighter.GRAY,
+
+    ConsoleHighlighter.DARKGRAY,
+    ConsoleHighlighter.RED_BRIGHT,
+    ConsoleHighlighter.GREEN_BRIGHT,
+    ConsoleHighlighter.YELLOW_BRIGHT,
+    ConsoleHighlighter.BLUE_BRIGHT,
+    ConsoleHighlighter.MAGENTA_BRIGHT,
+    ConsoleHighlighter.CYAN_BRIGHT,
+    ConsoleHighlighter.WHITE,
   };
 
   /*
@@ -58,9 +92,12 @@ public class ColoredOutputTypeRegistry {
 
      see full doc at http://en.wikipedia.org/wiki/ANSI_escape_code
   */
-
-  public Key getOutputKey(@NonNls String attribute) {
-    final Key key = myRegisteredKeys.get(attribute);
+  @NotNull
+  public ProcessOutputType getOutputType(@NonNls String attribute, @NotNull Key streamType) {
+    ProcessOutputType streamOutputType = streamType instanceof ProcessOutputType ? (ProcessOutputType)streamType
+                                                                                 : (ProcessOutputType)ProcessOutputTypes.STDOUT;
+    Map<String, ProcessOutputType> attrsToKeyMap = ProcessOutputType.isStdout(streamType) ? myStdoutAttrsToKeyMap : myStderrAttrsToKeyMap;
+    ProcessOutputType key = attrsToKeyMap.get(attribute);
     if (key != null) {
       return key;
     }
@@ -68,16 +105,72 @@ public class ColoredOutputTypeRegistry {
     if (attribute.startsWith("\u001B[")) {
       attribute = attribute.substring(2);
     }
-    else if (attribute.startsWith("[")) {
-      attribute = attribute.substring(1);
+    else {
+      attribute = StringUtil.trimStart(attribute, "[");
     }
-    if (attribute.endsWith("m")) {
-      attribute = attribute.substring(0, attribute.length()-1);
-    }
+    attribute = StringUtil.trimEnd(attribute, "m");
     if (attribute.equals("0")) {
-      return ProcessOutputTypes.STDOUT;
+      return streamOutputType;
     }
-    TextAttributes attrs = new TextAttributes();
+    ProcessOutputType newKey = new ProcessOutputType(completeAttribute, streamOutputType);
+    AnsiConsoleViewContentType contentType = createAnsiConsoleViewContentType(attribute);
+    ConsoleViewContentType.registerNewConsoleViewType(newKey, contentType);
+    attrsToKeyMap.put(completeAttribute, newKey);
+    return newKey;
+  }
+
+  /**
+   * @deprecated use {@link #getOutputType(String, Key)} instead
+   */
+  @Deprecated
+  @NotNull
+  public Key getOutputKey(@NonNls String attribute) {
+    return getOutputType(attribute, ProcessOutputTypes.STDOUT);
+  }
+
+  private static Color getAnsiColor(final int value) {
+    return getColorByKey(getAnsiColorKey(value));
+  }
+
+  private static Color getColorByKey(TextAttributesKey colorKey) {
+    return EditorColorsManager.getInstance().getGlobalScheme().getAttributes(colorKey).getForegroundColor();
+  }
+
+  @NotNull
+  private static Color getDefaultForegroundColor() {
+    EditorColorsScheme scheme = EditorColorsManager.getInstance().getGlobalScheme();
+    TextAttributes attr = scheme.getAttributes(ConsoleViewContentType.NORMAL_OUTPUT_KEY);
+    Color color = attr != null ? attr.getForegroundColor() : null;
+    if (color == null) {
+      color = scheme.getDefaultForeground();
+    }
+    return color;
+  }
+
+  @NotNull
+  private static Color getDefaultBackgroundColor() {
+    EditorColorsScheme scheme = EditorColorsManager.getInstance().getGlobalScheme();
+    Color color = scheme.getColor(ConsoleViewContentType.CONSOLE_BACKGROUND_KEY);
+    if (color == null) {
+      color = scheme.getDefaultBackground();
+    }
+    return color;
+  }
+
+  public static TextAttributesKey getAnsiColorKey(int value) {
+    if (value >= 16) {
+      return ConsoleViewContentType.NORMAL_OUTPUT_KEY;
+    }
+    return myAnsiColorKeys[value];
+  }
+
+  @NotNull
+  private static AnsiConsoleViewContentType createAnsiConsoleViewContentType(@NotNull String attribute) {
+    int foregroundColor = -1;
+    int backgroundColor = -1;
+    boolean inverse = false;
+    EffectType effectType = null;
+    int fontType = -1;
     final String[] strings = attribute.split(";");
     for (String string : strings) {
       int value;
@@ -87,41 +180,98 @@ public class ColoredOutputTypeRegistry {
       catch (NumberFormatException e) {
         continue;
       }
-      if (value == 4) {
-        attrs.setEffectType(EffectType.LINE_UNDERSCORE);
+      if (value == 1) {
+        fontType = Font.BOLD;
       }
-      else if (value == 1) {
-        attrs.setFontType(Font.BOLD);
+      else if (value == 4) {
+        effectType = EffectType.LINE_UNDERSCORE;
+      }
+      else if (value == 7) {
+        inverse = true;
+      }
+      else if (value == 22) {
+        fontType = Font.PLAIN;
+      }
+      else if (value == 24) {  //not underlined
+        effectType = null;
       }
       else if (value >= 30 && value <= 37) {
-        attrs.setForegroundColor(getAnsiColor(value - 30));
+        foregroundColor = value - 30;
+      }
+      else if (value == 38) {
+        //TODO: 256 colors foreground
+      }
+      else if (value == 39) {
+        foregroundColor = -1;
       }
       else if (value >= 40 && value <= 47) {
-        attrs.setBackgroundColor(getAnsiColor(value - 40));
+        backgroundColor = value - 40;
       }
-      else if (value == 90) {
-        // black, high intensity
-        attrs.setForegroundColor(EditorColorsManager.getInstance().getGlobalScheme().getAttributes(ConsoleHighlighter.GRAY).getForegroundColor());
+      else if (value == 48) {
+        //TODO: 256 colors background
       }
-      else if (value >= 91 && value < 96) {
-        // TODO separate colors for high intensity?
-        attrs.setForegroundColor(EditorColorsManager.getInstance().getGlobalScheme().getAttributes(myAnsiColorKeys [value-90]).getForegroundColor());
+      else if (value == 49) {
+        backgroundColor = -1;
+      }
+      else if (value >= 90 && value <= 97) {
+        foregroundColor = value - 82;
+      }
+      else if (value >= 100 && value <= 107) {
+        backgroundColor = value - 92;
       }
     }
-    if (attrs.getEffectType() == EffectType.LINE_UNDERSCORE) {
-      attrs.setEffectColor(attrs.getForegroundColor());
-    }
-    Key newKey = new Key(completeAttribute);
-    ConsoleViewContentType contentType = new ConsoleViewContentType(completeAttribute, attrs);
-    ConsoleViewContentType.registerNewConsoleViewType(newKey, contentType);
-    myRegisteredKeys.put(completeAttribute, newKey);
-    return newKey;
+    return new AnsiConsoleViewContentType(attribute, backgroundColor, foregroundColor, inverse, effectType, fontType);
   }
 
-  private Color getAnsiColor(final int value) {
-    if (value == 7) {
-      return Color.WHITE;
+  private static class AnsiConsoleViewContentType extends ConsoleViewContentType {
+    private final int myBackgroundColor;
+    private final int myForegroundColor;
+    private final boolean myInverse;
+    private final EffectType myEffectType;
+    private final int myFontType;
+
+    private AnsiConsoleViewContentType(@NotNull String attribute,
+                                       int backgroundColor,
+                                       int foregroundColor,
+                                       boolean inverse,
+                                       @Nullable EffectType effectType,
+                                       int fontType) {
+      super(attribute, ConsoleViewContentType.NORMAL_OUTPUT_KEY);
+      myBackgroundColor = backgroundColor;
+      myForegroundColor = foregroundColor;
+      myInverse = inverse;
+      myEffectType = effectType;
+      myFontType = fontType;
     }
-    return EditorColorsManager.getInstance().getGlobalScheme().getAttributes(myAnsiColorKeys[value]).getForegroundColor();
+
+    @Override
+    public TextAttributes getAttributes() {
+      TextAttributes attrs = new TextAttributes();
+      attrs.setEffectType(myEffectType);
+      if (myFontType != -1) {
+        attrs.setFontType(myFontType);
+      }
+      Color foregroundColor = getForegroundColor();
+      Color backgroundColor = getBackgroundColor();
+      if (myInverse) {
+        attrs.setForegroundColor(backgroundColor);
+        attrs.setEffectColor(backgroundColor);
+        attrs.setBackgroundColor(foregroundColor);
+      }
+      else {
+        attrs.setForegroundColor(foregroundColor);
+        attrs.setEffectColor(foregroundColor);
+        attrs.setBackgroundColor(backgroundColor);
+      }
+      return attrs;
+    }
+
+    private Color getForegroundColor() {
+      return myForegroundColor != -1 ? getAnsiColor(myForegroundColor) : getDefaultForegroundColor();
+    }
+
+    private Color getBackgroundColor() {
+      return myBackgroundColor != -1 ? getAnsiColor(myBackgroundColor) : getDefaultBackgroundColor();
+    }
   }
 }

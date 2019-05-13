@@ -1,19 +1,4 @@
-
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions;
 
 import com.intellij.ide.DeleteProvider;
@@ -22,9 +7,10 @@ import com.intellij.ide.TitledHandler;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbAware;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.speedSearch.SpeedSearchSupply;
+import com.intellij.util.IconUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -34,7 +20,14 @@ import java.awt.event.KeyEvent;
 public class DeleteAction extends AnAction implements DumbAware {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.actions.DeleteAction");
 
-  public void actionPerformed(AnActionEvent e) {
+  public DeleteAction() { }
+
+  public DeleteAction(String text, String description, Icon icon) {
+    super(text, description, icon);
+  }
+
+  @Override
+  public void actionPerformed(@NotNull AnActionEvent e) {
     DataContext dataContext = e.getDataContext();
     DeleteProvider provider = getDeleteProvider(dataContext);
     if (provider == null) return;
@@ -42,9 +35,6 @@ public class DeleteAction extends AnAction implements DumbAware {
       provider.deleteElement(dataContext);
     }
     catch (Throwable t) {
-      if (t instanceof StackOverflowError){
-        t.printStackTrace();
-      }
       LOG.error(t);
     }
   }
@@ -54,22 +44,29 @@ public class DeleteAction extends AnAction implements DumbAware {
     return PlatformDataKeys.DELETE_ELEMENT_PROVIDER.getData(dataContext);
   }
 
-  public void update(AnActionEvent event){
-    String place = event.getPlace();
-    Presentation presentation = event.getPresentation();
-    if (ActionPlaces.PROJECT_VIEW_POPUP.equals(place) || ActionPlaces.COMMANDER_POPUP.equals(place))
+  @Override
+  public void update(@NotNull AnActionEvent e) {
+    Presentation presentation = e.getPresentation();
+
+    if (ActionPlaces.isPopupPlace(e.getPlace())) {
       presentation.setText(IdeBundle.message("action.delete.ellipsis"));
-    else
+    }
+    else {
       presentation.setText(IdeBundle.message("action.delete"));
-    DataContext dataContext = event.getDataContext();
-    Project project = PlatformDataKeys.PROJECT.getData(dataContext);
-    if (project == null) {
+    }
+    if (e.isFromActionToolbar() && e.getPresentation().getIcon() == null) {
+      e.getPresentation().setIcon(IconUtil.getRemoveIcon());
+    }
+
+    if (e.getProject() == null) {
       presentation.setEnabled(false);
       return;
     }
+
+    DataContext dataContext = e.getDataContext();
     DeleteProvider provider = getDeleteProvider(dataContext);
-    if (event.getInputEvent() instanceof KeyEvent) {
-      KeyEvent keyEvent = (KeyEvent)event.getInputEvent();
+    if (e.getInputEvent() instanceof KeyEvent) {
+      KeyEvent keyEvent = (KeyEvent)e.getInputEvent();
       Object component = PlatformDataKeys.CONTEXT_COMPONENT.getData(dataContext);
       if (component instanceof JTextComponent) provider = null; // Do not override text deletion
       if (keyEvent.getKeyCode() == KeyEvent.VK_BACK_SPACE) {
@@ -88,19 +85,12 @@ public class DeleteAction extends AnAction implements DumbAware {
     if (provider instanceof TitledHandler) {
       presentation.setText(((TitledHandler)provider).getActionTitle());
     }
-    final boolean canDelete = provider != null && provider.canDeleteElement(dataContext);
-    if (ActionPlaces.isPopupPlace(event.getPlace())) {
+    boolean canDelete = provider != null && provider.canDeleteElement(dataContext);
+    if (ActionPlaces.isPopupPlace(e.getPlace())) {
       presentation.setVisible(canDelete);
     }
     else {
       presentation.setEnabled(canDelete);
     }
-  }
-
-  public DeleteAction(String text, String description, Icon icon) {
-    super(text, description, icon);
-  }
-
-  public DeleteAction() {
   }
 }

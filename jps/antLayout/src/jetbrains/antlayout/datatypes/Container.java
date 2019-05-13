@@ -30,7 +30,7 @@ import java.util.Set;
  * @author max
  */
 public abstract class Container extends Content {
-    private List<Content> children = new ArrayList<Content>();
+    private final List<Content> children = new ArrayList<Content>();
 
     private String excludes = null;
     private String includes = null;
@@ -92,6 +92,7 @@ public abstract class Container extends Content {
         this.includes = includes;
     }
 
+    @Override
     public List<LayoutFileSet> build(TempFileFactory temp) {
         Set<LayoutFileSet> result = new LinkedHashSet<LayoutFileSet>();
 
@@ -129,6 +130,7 @@ public abstract class Container extends Content {
         }
     }
 
+    @Override
     public void validateArguments() throws BuildException {
         for (Content child : children) {
             child.validateArguments();

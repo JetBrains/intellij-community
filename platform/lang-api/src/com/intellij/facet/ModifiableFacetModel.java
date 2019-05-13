@@ -16,6 +16,7 @@
 
 package com.intellij.facet;
 
+import com.intellij.openapi.roots.ProjectModelExternalSource;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
 import com.intellij.openapi.Disposable;
@@ -26,6 +27,7 @@ import com.intellij.openapi.Disposable;
 public interface ModifiableFacetModel extends FacetModel {
 
   void addFacet(Facet facet);
+  void addFacet(Facet facet, @Nullable ProjectModelExternalSource externalSource);
   void removeFacet(Facet facet);
 
   void rename(Facet facet, String newName);
@@ -39,8 +41,9 @@ public interface ModifiableFacetModel extends FacetModel {
 
   boolean isNewFacet(Facet facet);
 
-  void addListener(@NotNull Listener listener, @Nullable Disposable parentDisposable);
+  void addListener(@NotNull Listener listener, @NotNull Disposable parentDisposable);
 
+  @FunctionalInterface
   interface Listener {
     void onChanged();
   }

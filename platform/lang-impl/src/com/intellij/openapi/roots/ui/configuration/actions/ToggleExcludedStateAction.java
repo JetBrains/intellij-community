@@ -20,16 +20,15 @@ import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.project.ProjectBundle;
-import com.intellij.openapi.roots.ExcludeFolder;
 import com.intellij.openapi.roots.ui.configuration.ContentEntryEditor;
 import com.intellij.openapi.roots.ui.configuration.ContentEntryTreeEditor;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
 /**
  * @author Eugene Zhuravlev
- * @since Oct 14, 2003
  */
 public class ToggleExcludedStateAction extends ContentEntryEditingAction {
   private final ContentEntryTreeEditor myEntryTreeEditor;
@@ -44,36 +43,33 @@ public class ToggleExcludedStateAction extends ContentEntryEditingAction {
   }
 
   @Override
-  public boolean isSelected(final AnActionEvent e) {
+  public boolean isSelected(@NotNull final AnActionEvent e) {
     final VirtualFile[] selectedFiles = getSelectedFiles();
     if (selectedFiles.length == 0) return false;
 
-    final ContentEntryEditor editor = myEntryTreeEditor.getContentEntryEditor();
-    return editor.isExcluded(selectedFiles[0]) || editor.isUnderExcludedDirectory(selectedFiles[0]);
+    return myEntryTreeEditor.getContentEntryEditor().isExcludedOrUnderExcludedDirectory(selectedFiles[0]);
   }
 
   @Override
-  public void setSelected(final AnActionEvent e, final boolean isSelected) {
+  public void setSelected(@NotNull final AnActionEvent e, final boolean isSelected) {
     final VirtualFile[] selectedFiles = getSelectedFiles();
     assert selectedFiles.length != 0;
 
+    ContentEntryEditor contentEntryEditor = myEntryTreeEditor.getContentEntryEditor();
     for (VirtualFile selectedFile : selectedFiles) {
-      final ExcludeFolder excludeFolder = myEntryTreeEditor.getContentEntryEditor().getExcludeFolder(selectedFile);
       if (isSelected) {
-        if (excludeFolder == null) { // not excluded yet
-          myEntryTreeEditor.getContentEntryEditor().addExcludeFolder(selectedFile);
+        if (!contentEntryEditor.isExcludedOrUnderExcludedDirectory(selectedFile)) { // not excluded yet
+          contentEntryEditor.addExcludeFolder(selectedFile);
         }
       }
       else {
-        if (excludeFolder != null) {
-          myEntryTreeEditor.getContentEntryEditor().removeExcludeFolder(excludeFolder);
-        }
+        contentEntryEditor.removeExcludeFolder(selectedFile.getUrl());
       }
     }
   }
 
   @Override
-  public void update(final AnActionEvent e) {
+  public void update(@NotNull final AnActionEvent e) {
     super.update(e);
     final Presentation presentation = e.getPresentation();
     presentation.setText(ProjectBundle.message("module.toggle.excluded.action"));

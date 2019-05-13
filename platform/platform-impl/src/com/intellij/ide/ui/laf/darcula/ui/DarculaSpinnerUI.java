@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,28 +15,37 @@
  */
 package com.intellij.ide.ui.laf.darcula.ui;
 
-import com.intellij.openapi.ui.GraphicsConfig;
-import com.intellij.util.ui.GraphicsUtil;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.*;
 import org.intellij.lang.annotations.MagicConstant;
 
 import javax.swing.*;
-import javax.swing.border.Border;
-import javax.swing.border.CompoundBorder;
-import javax.swing.border.EmptyBorder;
 import javax.swing.plaf.ComponentUI;
-import javax.swing.plaf.UIResource;
 import javax.swing.plaf.basic.BasicArrowButton;
 import javax.swing.plaf.basic.BasicSpinnerUI;
 import java.awt.*;
 import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
+import java.awt.geom.Path2D;
+import java.awt.geom.Rectangle2D;
+import java.awt.geom.RoundRectangle2D;
+
+import static com.intellij.ide.ui.laf.darcula.DarculaUIUtil.*;
 
 /**
  * @author Konstantin Bulenkov
  */
 public class DarculaSpinnerUI extends BasicSpinnerUI {
-  private FocusAdapter myFocusListener = new FocusAdapter() {
+  protected static final JBValue MINIMUM_WIDTH = new JBValue.Float(72);
+  private static final JBValue ARROW_WIDTH = new JBValue.Float(9);
+  private static final JBValue ARROW_HEIGHT = new JBValue.Float(5);
+
+  protected Insets editorMargins() {
+    return isCompact(spinner) ? JBUI.insets(0, 5) : JBUI.insets(1, 5);
+  }
+
+  protected JButton prevButton;
+  protected JButton nextButton;
+  private final FocusAdapter myFocusListener = new FocusAdapter() {
     @Override
     public void focusGained(FocusEvent e) {
       spinner.repaint();
@@ -53,49 +62,110 @@ public class DarculaSpinnerUI extends BasicSpinnerUI {
     return new DarculaSpinnerUI();
   }
 
-  @Override
-  protected void replaceEditor(JComponent oldEditor, JComponent newEditor) {
-    super.replaceEditor(oldEditor, newEditor);
-    if (oldEditor != null) {
-      oldEditor.getComponents()[0].removeFocusListener(myFocusListener);
+  private void addEditorFocusListener(JComponent editor) {
+    if (editor != null) {
+      editor.getComponents()[0].addFocusListener(myFocusListener);
     }
-    if (newEditor != null) {
-      newEditor.getComponents()[0].addFocusListener(myFocusListener);
+  }
+
+  private void removeEditorFocusListener(JComponent editor) {
+    if (editor != null) {
+      editor.getComponents()[0].removeFocusListener(myFocusListener);
+    }
+  }
+
+  private static void resetEditorOpaque(JComponent editor) {
+    if (editor != null) {
+      editor.setOpaque(false);
+      ((JComponent)editor.getComponents()[0]).setOpaque(false);
     }
   }
 
   @Override
+  protected void uninstallListeners() {
+    super.uninstallListeners();
+    removeEditorFocusListener(spinner.getEditor());
+  }
+
+  @Override
+  protected void replaceEditor(JComponent oldEditor, JComponent newEditor) {
+    super.replaceEditor(oldEditor, newEditor);
+    removeEditorFocusListener(oldEditor);
+    addEditorFocusListener(newEditor);
+    resetEditorOpaque(newEditor);
+  }
+
+  @Override
   protected JComponent createEditor() {
-    final JComponent editor = super.createEditor();
-    editor.getComponents()[0].addFocusListener(myFocusListener);
+    JComponent editor = super.createEditor();
+    addEditorFocusListener(editor);
+    resetEditorOpaque(editor);
     return editor;
   }
 
   @Override
   public void paint(Graphics g, JComponent c) {
-    super.paint(g, c);
-    final Border border = spinner.getBorder();
-    if (border != null) {
-      border.paintBorder(c, g, 0, 0, spinner.getWidth(), spinner.getHeight());
+    Graphics2D g2 = (Graphics2D)g.create();
+    Rectangle r = new Rectangle(c.getSize());
+    JBInsets.removeFrom(r, JBUI.insets(1));
+
+    try {
+      g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+      g2.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL,
+                          MacUIUtil.USE_QUARTZ ? RenderingHints.VALUE_STROKE_PURE : RenderingHints.VALUE_STROKE_NORMALIZE);
+      g2.translate(r.x, r.y);
+
+      float bw = BW.getFloat();
+      float arc = COMPONENT_ARC.getFloat();
+
+      g2.setColor(getBackground());
+      g2.fill(new RoundRectangle2D.Float(bw, bw, r.width - bw * 2, r.height - bw * 2, arc, arc));
+    } finally {
+      g2.dispose();
     }
+  }
+
+  protected Color getBackground() {
+    return spinner.isEnabled() && spinner.getEditor() != null ? spinner.getEditor().getComponent(0).getBackground() : UIUtil.getPanelBackground();
+  }
+
+  @Override
+  public Dimension getPreferredSize(JComponent c) {
+    Dimension size = super.getPreferredSize(c);
+    return getSizeWithButtons(c.getInsets(), size);
+  }
+
+  protected Dimension getSizeWithButtons(Insets i, Dimension size) {
+    Dimension arrowSize = nextButton.getPreferredSize();
+    Dimension minSize = new Dimension(i.left + MINIMUM_WIDTH.get() + i.right, arrowSize.height * 2);
+    size = maximize(size, minSize);
+
+    Dimension editorSize = spinner.getEditor() != null ? spinner.getEditor().getPreferredSize() : JBUI.emptySize();
+    Insets m = editorMargins();
+    return new Dimension(Math.max(size.width, i.left + m.left + editorSize.width + m.right + arrowSize.width),
+                         Math.max(size.height, i.top + m.top + editorSize.height + m.bottom + i.bottom));
+  }
+
+  protected JButton createButton(@MagicConstant(intValues = {SwingConstants.NORTH, SwingConstants.SOUTH}) int direction, String name) {
+    JButton button = createArrow(direction);
+    button.setName(name);
+    button.setBorder(JBUI.Borders.empty());
+    if (direction == SwingConstants.NORTH) {
+      installNextButtonListeners(button);
+    } else {
+      installPreviousButtonListeners(button);
+    }
+    return button;
   }
 
   @Override
   protected Component createPreviousButton() {
-    JButton button = createArrow(SwingConstants.SOUTH);
-    button.setName("Spinner.previousButton");
-    button.setBorder(new EmptyBorder(1, 1, 1, 1));
-    installPreviousButtonListeners(button);
-    return button;
+    return prevButton = createButton(SwingConstants.SOUTH, "Spinner.previousButton");
   }
 
   @Override
   protected Component createNextButton() {
-    JButton button = createArrow(SwingConstants.NORTH);
-    button.setName("Spinner.nextButton");
-    button.setBorder(new EmptyBorder(1, 1, 1, 1));
-    installNextButtonListeners(button);
-    return button;
+    return nextButton = createButton(SwingConstants.NORTH, "Spinner.nextButton");
   }
 
 
@@ -105,23 +175,53 @@ public class DarculaSpinnerUI extends BasicSpinnerUI {
       @Override
       public void layoutContainer(Container parent) {
         super.layoutContainer(parent);
-        final JComponent editor = spinner.getEditor();
-        if (editor != null) {
-          final Rectangle bounds = editor.getBounds();
-          editor.setBounds(bounds.x, bounds.y, bounds.width - 6, bounds.height);
-        }
+        layout();
       }
     };
   }
 
+  protected void layout() {
+    int w = spinner.getWidth();
+    int h = spinner.getHeight();
+
+    Dimension abSize = nextButton.getPreferredSize();
+    nextButton.setBounds(w - abSize.width, JBUI.scale(1), abSize.width, h / 2);
+    prevButton.setBounds(w - abSize.width, h/2, abSize.width, h - h/2);
+
+    JComponent editor = spinner.getEditor();
+    if (editor != null) {
+      Insets i = spinner.getInsets();
+      Insets m = editorMargins();
+      int editorHeight = editor.getPreferredSize().height;
+      int editorOffset = (int)Math.round((h - i.top - i.bottom - m.top - m.bottom - editorHeight) / 2.0);
+
+      editor.setBounds(i.left + m.left,
+                       i.top + m.top + editorOffset,
+                       w - (i.left + abSize.width + m.left + m.right), editorHeight);
+    }
+  }
+
+  protected void layoutEditor() {
+
+  }
+
+  protected void paintArrowButton(Graphics g,
+                                  BasicArrowButton button,
+                                  @MagicConstant(intValues = {SwingConstants.NORTH, SwingConstants.SOUTH}) int direction) {
+    Insets i = spinner.getInsets();
+    int x = (button.getWidth() - i.right - ARROW_WIDTH.get()) / 2;
+    int y = direction == SwingConstants.NORTH ?
+            button.getHeight() - JBUI.scale(2) :
+            JBUI.scale(2);
+
+    button.paintTriangle(g, x, y, 0, direction, spinner.isEnabled());
+  }
+
   private JButton createArrow(@MagicConstant(intValues = {SwingConstants.NORTH, SwingConstants.SOUTH}) int direction) {
-    final Color shadow = UIUtil.getPanelBackground();
-    final Color darkShadow = UIUtil.getLabelForeground();
-    JButton b = new BasicArrowButton(direction, shadow, shadow, darkShadow, shadow) {
+    BasicArrowButton b = new BasicArrowButton(direction) {
       @Override
       public void paint(Graphics g) {
-        int y = direction == NORTH ? getHeight() - 6 : 2;
-        paintTriangle(g, 0, y, 0, direction, DarculaSpinnerUI.this.spinner.isEnabled());
+        paintArrowButton(g, this, direction);
       }
 
       @Override
@@ -131,46 +231,110 @@ public class DarculaSpinnerUI extends BasicSpinnerUI {
 
       @Override
       public void paintTriangle(Graphics g, int x, int y, int size, int direction, boolean isEnabled) {
-        final GraphicsConfig config = GraphicsUtil.setupAAPainting(g);
-        int mid;
-        final int w = 8;
-        final int h = 6;
-        mid = w  / 2;
+        Graphics2D g2 = (Graphics2D)g.create();
+        try {
+          g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+          g2.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL,
+                              MacUIUtil.USE_QUARTZ ? RenderingHints.VALUE_STROKE_PURE : RenderingHints.VALUE_STROKE_NORMALIZE);
 
-        g.setColor(isEnabled ? darkShadow : darkShadow.darker());
+          float lw = LW.getFloat();
+          float bw = BW.getFloat();
 
-        g.translate(x, y);
+          g2.setColor(getArrowButtonBackgroundColor(isEnabled, true));
+          g2.fill(getInnerShape(lw, bw));
+
+          // Paint side line
+          int h = getHeight() - JBUI.scale(1);
+          Rectangle2D sideLine = direction == NORTH ?
+                                 new Rectangle2D.Float(0, bw + lw, lw, h - (bw + lw)) :
+                                 new Rectangle2D.Float(0, 0, lw, h - (bw + lw));
+
+          g2.setColor(getOutlineColor(spinner.isEnabled(), false));
+          g2.fill(sideLine);
+
+          // Paint arrow
+          g2.translate(x, y);
+          g2.setColor(getArrowButtonForegroundColor(isEnabled));
+          g2.fill(getArrowShape());
+
+        } finally {
+          g2.dispose();
+        }
+      }
+
+      private Shape getInnerShape(float lw, float bw) {
+        Path2D shape = new Path2D.Float();
+        int w = getWidth() - JBUI.scale(1);
+        int h = getHeight() - JBUI.scale(1);
+        float arc = COMPONENT_ARC.getFloat() - bw - lw;
+
         switch (direction) {
           case SOUTH:
-            g.fillPolygon(new int[]{0, w, mid}, new int[]{1, 1, h}, 3);
+            shape.moveTo(lw, 0);
+            shape.lineTo(w - bw - lw, 0);
+            shape.lineTo(w - bw - lw, h - bw - lw - arc);
+            shape.quadTo(w - bw - lw, h - bw - lw, w - bw - lw - arc, h - bw - lw);
+            shape.lineTo(lw, h - bw - lw);
+            shape.closePath();
             break;
+
           case NORTH:
-            g.fillPolygon(new int[]{0, w, mid}, new int[]{h - 1, h - 1, 0}, 3);
+            shape.moveTo(lw, bw + lw);
+            shape.lineTo(w - bw - lw - arc, bw + lw);
+            shape.quadTo(w - bw - lw, bw + lw , w - bw - lw, bw + lw + arc);
+            shape.lineTo(w - bw - lw, h);
+            shape.lineTo(lw, h);
+            shape.closePath();
             break;
-          case WEST:
-          case EAST:
+          default: break;
         }
-        g.translate(-x, -y);
-        config.restore();
+        return shape;
+      }
+
+      private Shape getArrowShape() {
+        Path2D arrow = new Path2D.Float();
+        int aw = ARROW_WIDTH.get();
+        int ah = ARROW_HEIGHT.get();
+
+        switch (direction) {
+          case SOUTH:
+            arrow.moveTo(0, 0);
+            arrow.lineTo(aw, 0);
+            arrow.lineTo(aw / 2.0, ah);
+            arrow.closePath();
+            break;
+
+          case NORTH:
+            arrow.moveTo(0, 0);
+            arrow.lineTo(aw, 0);
+            arrow.lineTo(aw / 2.0, -ah);
+            arrow.closePath();
+            break;
+          default: break;
+        }
+
+        return arrow;
+      }
+
+      @Override
+      public Dimension getPreferredSize() {
+        Insets i = spinner.getInsets();
+        int minHeight = isCompact(spinner) ? JBUI.scale(10) : JBUI.scale(12);
+        return new Dimension(ARROW_BUTTON_WIDTH.get() + i.left,
+                             minHeight + (direction == SwingConstants.NORTH ? i.top : i.bottom));
       }
     };
-    Border buttonBorder = UIManager.getBorder("Spinner.arrowButtonBorder");
-    if (buttonBorder instanceof UIResource) {
-      // Wrap the border to avoid having the UIResource be replaced by
-      // the ButtonUI. This is the opposite of using BorderUIResource.
-      b.setBorder(new CompoundBorder(buttonBorder, null));
-    }
-    else {
-      b.setBorder(buttonBorder);
-    }
+
     b.setInheritsPopupMenu(true);
+    b.setBorder(JBUI.Borders.empty());
+
     return b;
   }
 
-  static class LayoutManagerDelegate implements LayoutManager {
+  protected static class LayoutManagerDelegate implements LayoutManager {
     protected final LayoutManager myDelegate;
 
-    LayoutManagerDelegate(LayoutManager delegate) {
+    public LayoutManagerDelegate(LayoutManager delegate) {
       myDelegate = delegate;
     }
 

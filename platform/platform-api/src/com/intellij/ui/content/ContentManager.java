@@ -27,40 +27,55 @@ import javax.swing.*;
 import java.util.List;
 
 public interface ContentManager extends Disposable, BusyObject {
-
-
   boolean canCloseContents();
 
+  @NotNull
   JComponent getComponent();
 
   void addContent(@NotNull Content content);
   void addContent(@NotNull Content content, final int order);
-  void addContent(@NotNull Content content, Object constraints);
 
   boolean removeContent(@NotNull Content content, final boolean dispose);
-  ActionCallback removeContent(@NotNull Content content, final boolean dispose, boolean trackFocus, boolean forcedFocus);
+  @NotNull
+  ActionCallback removeContent(@NotNull Content content, final boolean dispose, boolean requestFocus, boolean forcedFocus);
 
   void setSelectedContent(@NotNull Content content);
+  @NotNull
   ActionCallback setSelectedContentCB(@NotNull Content content);
   void setSelectedContent(@NotNull Content content, boolean requestFocus);
+  @NotNull
   ActionCallback setSelectedContentCB(@NotNull Content content, boolean requestFocus);
   void setSelectedContent(@NotNull Content content, boolean requestFocus, boolean forcedFocus);
+
+  @NotNull
   ActionCallback setSelectedContentCB(@NotNull Content content, boolean requestFocus, boolean forcedFocus);
 
+  /**
+   *
+   * @param content to be selected
+   * @param requestFocus defines if content would request focus after selection
+   * @param forcedFocus isn't used anymore
+   * @param implicit if it's true and content cannot be focused (e.g. it's minimized at the moment) ActionCallback.REJECTED would be returned
+   * @return resulting ActionCallback for both selection and focus transfer (if need)
+   */
+  @NotNull
   ActionCallback setSelectedContent(@NotNull Content content, boolean requestFocus, boolean forcedFocus, boolean implicit);
 
   void addSelectedContent(@NotNull Content content);
 
   @Nullable
   Content getSelectedContent();
-  @NotNull Content[] getSelectedContents();
+
+  @NotNull
+  Content[] getSelectedContents();
 
 
   void removeAllContents(final boolean dispose);
 
   int getContentCount();
 
-  @NotNull Content[] getContents();
+  @NotNull
+  Content[] getContents();
 
   //TODO[anton,vova] is this method needed?
   Content findContent(String displayName);
@@ -68,10 +83,11 @@ public interface ContentManager extends Disposable, BusyObject {
   @Nullable
   Content getContent(int index);
 
-  Content getContent(JComponent component);
+  Content getContent(@NotNull JComponent component);
 
-  int getIndexOfContent(Content content);
+  int getIndexOfContent(@NotNull Content content);
 
+  @NotNull
   String getCloseActionName();
 
   boolean canCloseAllContents();
@@ -90,23 +106,29 @@ public interface ContentManager extends Disposable, BusyObject {
    * @return the action name.
    * @since 5.1
    */
+  @NotNull
   String getCloseAllButThisActionName();
-  
+
+  @NotNull
   String getPreviousContentActionName();
 
+  @NotNull
   String getNextContentActionName();
 
+  @NotNull
   List<AnAction> getAdditionalPopupActions(@NotNull  Content content);
 
   void removeFromSelection(@NotNull Content content);
 
   boolean isSelected(@NotNull Content content);
 
+  @NotNull
   ActionCallback requestFocus(@Nullable Content content, boolean forced);
 
   void addDataProvider(@NotNull DataProvider provider);
-  
-  @NotNull ContentFactory getFactory();
+
+  @NotNull
+  ContentFactory getFactory();
 
   boolean isDisposed();
 

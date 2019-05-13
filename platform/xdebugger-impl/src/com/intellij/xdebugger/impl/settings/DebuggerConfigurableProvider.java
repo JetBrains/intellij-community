@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,58 +17,18 @@ package com.intellij.xdebugger.impl.settings;
 
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurableProvider;
-import com.intellij.util.PlatformUtils;
-import com.intellij.xdebugger.impl.DebuggerSupport;
+import com.intellij.xdebugger.breakpoints.XBreakpointType;
+import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.List;
-
-/**
- * @author nik
- */
-public class DebuggerConfigurableProvider extends ConfigurableProvider {
+public final class DebuggerConfigurableProvider extends ConfigurableProvider {
+  @NotNull
   @Override
   public Configurable createConfigurable() {
-    final List<DebuggerSettingsPanelProvider> providers = new ArrayList<DebuggerSettingsPanelProvider>();
-    final DebuggerSupport[] supports = DebuggerSupport.getDebuggerSupports();
-    for (DebuggerSupport support : supports) {
-      providers.add(support.getSettingsPanelProvider());
-    }
+    return new DebuggerConfigurable();
+  }
 
-    List<Configurable> configurables = new ArrayList<Configurable>();
-    Collections.sort(providers, new Comparator<DebuggerSettingsPanelProvider>() {
-      public int compare(final DebuggerSettingsPanelProvider o1, final DebuggerSettingsPanelProvider o2) {
-        return o2.getPriority() - o1.getPriority();
-      }
-    });
-
-    Configurable rootConfigurable = null;
-    for (DebuggerSettingsPanelProvider provider : providers) {
-      configurables.addAll(provider.getConfigurables());
-      final Configurable aRootConfigurable = provider.getRootConfigurable();
-      if (aRootConfigurable != null) {
-        if (rootConfigurable != null) {
-          configurables.add(aRootConfigurable);
-        }
-        else {
-          rootConfigurable = aRootConfigurable;
-        }
-      }
-    }
-    if (configurables.isEmpty() && rootConfigurable == null) {
-      return null;
-    }
-
-    //Perhaps we always should have a root node 'Debugger' with separate nodes for language-specific settings under it.
-    //However for AppCode there is only one language which is clearly associated with the product
-    //This code should removed when we extract the common debugger settings to the root node.
-    if (PlatformUtils.isAppCode() && rootConfigurable == null && configurables.size() == 1) {
-      rootConfigurable = configurables.get(0);
-      configurables = Collections.emptyList();
-    }
-
-    return new DebuggerConfigurable(rootConfigurable, configurables);
+  @Override
+  public boolean canCreateConfigurable() {
+    return XBreakpointType.EXTENSION_POINT_NAME.hasAnyExtensions();
   }
 }

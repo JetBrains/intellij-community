@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,7 +29,9 @@ import org.jetbrains.annotations.Nullable;
 public abstract class FileTypeRegistry {
   public static Getter<FileTypeRegistry> ourInstanceGetter;
 
-  public abstract boolean isFileIgnored(@NonNls @NotNull VirtualFile file);
+  public abstract boolean isFileIgnored(@NotNull VirtualFile file);
+
+  public abstract boolean isFileOfType(@NotNull VirtualFile file, @NotNull FileType type);
 
   public static FileTypeRegistry getInstance() {
     return ourInstanceGetter.get();
@@ -40,6 +42,7 @@ public abstract class FileTypeRegistry {
    *
    * @return The list of file types.
    */
+  @NotNull
   public abstract FileType[] getRegisteredFileTypes();
 
   /**
@@ -54,21 +57,37 @@ public abstract class FileTypeRegistry {
   /**
    * Returns the file type for the specified file name.
    *
-   * @param fileName The file name for which the type is requested.
+   * @param fileNameSeq The file name for which the type is requested.
    * @return The file type instance, or {@link FileTypes#UNKNOWN} if not found.
+   */
+  @NotNull
+  public FileType getFileTypeByFileName(@NotNull @NonNls CharSequence fileNameSeq) {
+    return getFileTypeByFileName(fileNameSeq.toString());
+  }
+
+  /**
+   * Same as {@linkplain FileTypeRegistry#getFileTypeByFileName(CharSequence)} but receives String parameter.
+   *
+   * Consider to use the method above in case when you want to get VirtualFile's file type by file name.
    */
   @NotNull
   public abstract FileType getFileTypeByFileName(@NotNull @NonNls String fileName);
 
   /**
-   * Tries to detect whether the file is text or not by analyzing its content.
-   * @param file to analyze
-   * @return {@link com.intellij.openapi.fileTypes.PlainTextFileType} if file looks like text,
-   *          or another file type if some file type detector identified the file
-   *          or the {@link UnknownFileType} if file looks like binary or was unable to analyze.
+   * Returns the file type for the specified extension.
+   * Note that a more general way of obtaining file type is with {@link #getFileTypeByFile(VirtualFile)}
+   *
+   * @param extension The extension for which the file type is requested, not including the leading '.'.
+   * @return The file type instance, or {@link UnknownFileType#INSTANCE} if corresponding file type not found
    */
   @NotNull
-  public abstract FileType detectFileTypeFromContent(@NotNull VirtualFile file);
+  public abstract FileType getFileTypeByExtension(@NonNls @NotNull String extension);
+
+  /**
+   * Finds a file type with the specified name.
+   */
+  @Nullable
+  public abstract FileType findFileTypeByName(@NotNull String fileTypeName);
 
   /**
    * Pluggable file type detector by content
@@ -84,5 +103,7 @@ public abstract class FileTypeRegistry {
      */
     @Nullable
     FileType detect(@NotNull VirtualFile file, @NotNull ByteSequence firstBytes, @Nullable CharSequence firstCharsIfText);
+
+    int getVersion();
   }
 }

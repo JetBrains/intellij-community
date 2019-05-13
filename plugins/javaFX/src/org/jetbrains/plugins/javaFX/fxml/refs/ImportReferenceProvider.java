@@ -26,9 +26,6 @@ import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.javaFX.fxml.JavaFxPsiUtil;
 
-/**
-* User: anna
-*/
 class ImportReferenceProvider extends PsiReferenceProvider {
 
   @NotNull

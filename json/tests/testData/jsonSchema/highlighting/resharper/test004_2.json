@@ -1,0 +1,7 @@
+{
+  <warning descr="Property 'b' is not allowed">"b": 5</warning>,
+  "x25": "q",
+  "x255": <warning descr="Type is not allowed. Expected: string.">7</warning>,
+  "0x256": <warning descr="Type is not allowed. Expected: string.">true</warning>,
+  <warning descr="Property 'x025' is not allowed">"x025": "fail"</warning>
+}

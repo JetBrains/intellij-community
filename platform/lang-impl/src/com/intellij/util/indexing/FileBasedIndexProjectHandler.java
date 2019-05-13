@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,78 +19,79 @@
  */
 package com.intellij.util.indexing;
 
-import com.intellij.ide.caches.CacheUpdater;
-import com.intellij.ide.caches.FileContent;
-import com.intellij.ide.startup.StartupManagerEx;
-import com.intellij.openapi.components.AbstractProjectComponent;
-import com.intellij.openapi.file.exclude.ProjectFileExclusionManagerImpl;
-import com.intellij.openapi.fileTypes.FileTypeManager;
+import com.intellij.diagnostic.PerformanceWatcher;
+import com.intellij.ide.IdeBundle;
+import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.TransactionGuard;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.project.ProjectManagerAdapter;
+import com.intellij.openapi.project.*;
 import com.intellij.openapi.roots.ContentIterator;
-import com.intellij.openapi.roots.ProjectFileIndex;
-import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
-import com.intellij.openapi.roots.impl.ProjectRootManagerComponent;
+import com.intellij.openapi.roots.impl.PushedFilePropertiesUpdater;
 import com.intellij.openapi.startup.StartupManager;
+import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileVisitor;
+import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 
-public class FileBasedIndexProjectHandler extends AbstractProjectComponent implements IndexableFileSet {
-  private final FileBasedIndexImpl myIndex;
-  private final ProjectRootManagerEx myRootManager;
-  private final FileTypeManager myFileTypeManager;
-  private final ProjectFileExclusionManagerImpl myExclusionManager;
+public class FileBasedIndexProjectHandler implements IndexableFileSet, Disposable {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.util.indexing.FileBasedIndexProjectHandler");
 
-  public FileBasedIndexProjectHandler(final FileBasedIndexImpl index, final Project project, final ProjectRootManagerComponent rootManager, FileTypeManager ftManager, final ProjectManager projectManager) {
-    super(project);
+  private final FileBasedIndex myIndex;
+  private final FileBasedIndexScanRunnableCollector myCollector;
+
+  public FileBasedIndexProjectHandler(@NotNull Project project, FileBasedIndex index, FileBasedIndexScanRunnableCollector collector) {
     myIndex = index;
-    myRootManager = rootManager;
-    myFileTypeManager = ftManager;
-    myExclusionManager = ProjectFileExclusionManagerImpl.getInstance(project);
+    myCollector = collector;
 
-    final StartupManagerEx startupManager = (StartupManagerEx)StartupManager.getInstance(project);
-    if (startupManager != null) {
-      startupManager.registerPreStartupActivity(new Runnable() {
+    if (ApplicationManager.getApplication().isInternal()) {
+      project.getMessageBus().connect(this).subscribe(DumbService.DUMB_MODE, new DumbService.DumbModeListener() {
+
         @Override
-        public void run() {
-          final RefreshCacheUpdater changedFilesUpdater = new RefreshCacheUpdater();
-          final UnindexedFilesUpdater unindexedFilesUpdater = new UnindexedFilesUpdater(project, index);
-
-          startupManager.registerCacheUpdater(unindexedFilesUpdater);
-          rootManager.registerRootsChangeUpdater(unindexedFilesUpdater);
-          rootManager.registerRefreshUpdater(changedFilesUpdater);
-          myIndex.registerIndexableSet(FileBasedIndexProjectHandler.this, project);
-          projectManager.addProjectManagerListener(project, new ProjectManagerAdapter() {
-            private boolean removed = false;
-            @Override
-            public void projectClosing(Project project) {
-              if (!removed) {
-                removed = true;
-                rootManager.unregisterRefreshUpdater(changedFilesUpdater);
-                rootManager.unregisterRootsChangeUpdater(unindexedFilesUpdater);
-                myIndex.removeIndexableSet(FileBasedIndexProjectHandler.this);
-              }
-            }
-          });
+        public void exitDumbMode() {
+          LOG.info("Has changed files: " + (createChangedFilesIndexingTask(project) != null) + "; project=" + project);
         }
+      });
+    }
+
+    StartupManager startupManager = StartupManager.getInstance(project);
+    if (startupManager != null) {
+      startupManager.registerPreStartupActivity(() -> {
+        PushedFilePropertiesUpdater.getInstance(project).initializeProperties();
+
+        // schedule dumb mode start after the read action we're currently in
+        TransactionGuard.submitTransaction(project, () -> {
+          if (FileBasedIndex.getInstance() instanceof FileBasedIndexImpl) {
+            DumbService.getInstance(project).queueTask(new UnindexedFilesUpdater(project));
+          }
+        });
+
+        myIndex.registerIndexableSet(this, project);
+        project.getMessageBus().connect(this).subscribe(ProjectManager.TOPIC, new ProjectManagerListener() {
+          private boolean removed;
+
+          @Override
+          public void projectClosing(@NotNull Project eventProject) {
+            if (eventProject == project && !removed) {
+              removed = true;
+              myIndex.removeIndexableSet(FileBasedIndexProjectHandler.this);
+            }
+          }
+        });
       });
     }
   }
 
   @Override
   public boolean isInSet(@NotNull final VirtualFile file) {
-    final ProjectFileIndex index = myRootManager.getFileIndex();
-    if (index.isInContent(file) || index.isInLibraryClasses(file) || index.isInLibrarySource(file)) {
-      if (myExclusionManager != null && myExclusionManager.isExcluded(file)) return false;
-      return !myFileTypeManager.isFileIgnored(file);
-    }
-    return false;
+    return myCollector.shouldCollect(file);
   }
 
   @Override
@@ -100,43 +101,100 @@ public class FileBasedIndexProjectHandler extends AbstractProjectComponent imple
       public boolean visitFile(@NotNull VirtualFile file) {
 
         if (!isInSet(file)) return false;
-        if (!file.isDirectory()) {
-          iterator.processFile(file);
-        }
+        iterator.processFile(file);
+
         return true;
       }
     });
   }
 
   @Override
-  public void disposeComponent() {
-    // done mostly for tests. In real life this is noop, because the set was removed on project closing
+  public void dispose() {
+    // done mostly for tests. In real life this is no-op, because the set was removed on project closing
     myIndex.removeIndexableSet(this);
   }
 
-  private class RefreshCacheUpdater implements CacheUpdater {
-    @Override
-    public int getNumberOfPendingUpdateJobs() {
-      return myIndex.getNumberOfPendingInvalidations();
+  private static final int ourMinFilesToStartDumMode = Registry.intValue("ide.dumb.mode.minFilesToStart", 20);
+  private static final int ourMinFilesSizeToStartDumMode = Registry.intValue("ide.dumb.mode.minFilesSizeToStart", 1048576);
+  
+  @Nullable
+  public static DumbModeTask createChangedFilesIndexingTask(final Project project) {
+    final FileBasedIndex i = FileBasedIndex.getInstance();
+    if (!(i instanceof FileBasedIndexImpl) || !IndexInfrastructure.hasIndices()) {
+      return null;
     }
 
-    @Override
-    public VirtualFile[] queryNeededFiles(ProgressIndicator indicator) {
-      Collection<VirtualFile> files = myIndex.getFilesToUpdate(myProject);
-      return VfsUtilCore.toVirtualFileArray(files);
+    FileBasedIndexImpl index = (FileBasedIndexImpl)i;
+
+    if (!mightHaveManyChangedFilesInProject(project, index)) {
+      return null;
     }
 
-    @Override
-    public void processFile(FileContent fileContent) {
-      myIndex.processRefreshedFile(myProject, fileContent);
-    }
+    return new DumbModeTask(project.getComponent(FileBasedIndexProjectHandler.class)) {
+      @Override
+      public void performInDumbMode(@NotNull ProgressIndicator indicator) {
+        long start = System.currentTimeMillis();
+        Collection<VirtualFile> files = index.getFilesToUpdate(project);
+        long calcDuration = System.currentTimeMillis() - start;
 
-    @Override
-    public void updatingDone() {
-    }
+        indicator.setIndeterminate(false);
+        indicator.setText(IdeBundle.message("progress.indexing.updating"));
+        
+        LOG.info("Reindexing refreshed files: " + files.size() + " to update, calculated in " + calcDuration + "ms");
+        if (!files.isEmpty()) {
+          PerformanceWatcher.Snapshot snapshot = PerformanceWatcher.takeSnapshot();
+          reindexRefreshedFiles(indicator, files, project, index);
+          snapshot.logResponsivenessSinceCreation("Reindexing refreshed files");
+        }
+      }
 
-    @Override
-    public void canceled() {
-    }
+      @Override
+      public String toString() {
+        StringBuilder sampleOfChangedFilePathsToBeIndexed = new StringBuilder();
+        
+        index.processChangedFiles(project, new Processor<VirtualFile>() {
+          int filesInProjectToBeIndexed;
+          String projectBasePath = project.getBasePath();
+          
+          @Override
+          public boolean process(VirtualFile file) {
+            if (filesInProjectToBeIndexed != 0) sampleOfChangedFilePathsToBeIndexed.append(", ");
+            
+            String filePath = file.getPath();
+            String loggedPath = projectBasePath != null ? FileUtil.getRelativePath(projectBasePath, filePath, '/') : null;
+            if (loggedPath == null) loggedPath = filePath;
+            else loggedPath = "%project_path%/" + loggedPath;
+            sampleOfChangedFilePathsToBeIndexed.append(loggedPath);
+            
+            return ++filesInProjectToBeIndexed < ourMinFilesToStartDumMode;
+          }
+        });
+        return super.toString() + " [" + project + ", " + sampleOfChangedFilePathsToBeIndexed + "]";
+      }
+    };
+  }
+
+  private static boolean mightHaveManyChangedFilesInProject(Project project, FileBasedIndexImpl index) {
+    long start = System.currentTimeMillis();
+    return !index.processChangedFiles(project, new Processor<VirtualFile>() {
+      int filesInProjectToBeIndexed;
+      int sizeOfFilesToBeIndexed;
+
+      @Override
+      public boolean process(VirtualFile file) {
+        ++filesInProjectToBeIndexed;
+        if (file.isValid() && !file.isDirectory()) sizeOfFilesToBeIndexed += file.getLength();
+        return filesInProjectToBeIndexed < ourMinFilesToStartDumMode &&
+               sizeOfFilesToBeIndexed < ourMinFilesSizeToStartDumMode &&
+               System.currentTimeMillis() < start + 100;
+      }
+    });
+  }
+
+  private static void reindexRefreshedFiles(ProgressIndicator indicator,
+                                            Collection<VirtualFile> files,
+                                            final Project project,
+                                            final FileBasedIndexImpl index) {
+    CacheUpdateRunner.processFiles(indicator, files, project, content -> index.processRefreshedFile(project, content));
   }
 }

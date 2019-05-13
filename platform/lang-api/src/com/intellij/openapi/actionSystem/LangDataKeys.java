@@ -16,7 +16,10 @@
 
 package com.intellij.openapi.actionSystem;
 
+import com.intellij.execution.configurations.RunProfile;
+import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.ui.ConsoleView;
+import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.ide.IdeView;
 import com.intellij.lang.Language;
 import com.intellij.openapi.module.ModifiableModuleModel;
@@ -25,7 +28,6 @@ import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.util.Condition;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
 
 /**
  * @author yole
@@ -39,8 +41,6 @@ public class LangDataKeys extends PlatformDataKeys {
   public static final DataKey<Module[]> MODULE_CONTEXT_ARRAY = DataKey.create("context.Module.Array");
   public static final DataKey<ModifiableModuleModel> MODIFIABLE_MODULE_MODEL = DataKey.create("modifiable.module.model");
 
-  public static final DataKey<PsiElement> PSI_ELEMENT = DataKey.create("psi.Element");
-  public static final DataKey<PsiFile> PSI_FILE = DataKey.create("psi.File");
   public static final DataKey<Language> LANGUAGE = DataKey.create("Language");
   public static final DataKey<Language[]> CONTEXT_LANGUAGES = DataKey.create("context.Languages");
   public static final DataKey<PsiElement[]> PSI_ELEMENT_ARRAY = DataKey.create("psi.Element.array");
@@ -57,10 +57,14 @@ public class LangDataKeys extends PlatformDataKeys {
   public static final DataKey<PsiElement> PASTE_TARGET_PSI_ELEMENT = DataKey.create("psi.pasteTargetElement");
 
   public static final DataKey<ConsoleView> CONSOLE_VIEW = DataKey.create("consoleView");
-  
+
   public static final DataKey<JBPopup> POSITION_ADJUSTER_POPUP = DataKey.create("chooseByNameDropDown");
   public static final DataKey<JBPopup> PARENT_POPUP = DataKey.create("chooseByNamePopup");
 
 
   public static final DataKey<Library> LIBRARY = DataKey.create("project.model.library");
+
+  public static final DataKey<RunProfile> RUN_PROFILE = DataKey.create("runProfile");
+  public static final DataKey<ExecutionEnvironment> EXECUTION_ENVIRONMENT = DataKey.create("executionEnvironment");
+  public static final DataKey<RunContentDescriptor> RUN_CONTENT_DESCRIPTOR = DataKey.create("RUN_CONTENT_DESCRIPTOR");
 }

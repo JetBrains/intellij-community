@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,24 +22,24 @@ import com.intellij.execution.util.ExecUtil;
 import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.EnvironmentUtil;
 import org.intellij.images.ImagesBundle;
 import org.intellij.images.fileTypes.ImageFileTypeManager;
 import org.intellij.images.options.Options;
 import org.intellij.images.options.OptionsManager;
-import org.intellij.images.options.impl.OptionsConfigurabe;
+import org.intellij.images.options.impl.ImagesConfigurable;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.util.Map;
-import java.util.Set;
 
 /**
  * Open image file externally.
@@ -47,22 +47,22 @@ import java.util.Set;
  * @author <a href="mailto:aefimov.box@gmail.com">Alexey Efimov</a>
  */
 public final class EditExternallyAction extends AnAction {
-  public void actionPerformed(AnActionEvent e) {
-    Project project = e.getData(PlatformDataKeys.PROJECT);
-    VirtualFile[] files = e.getData(PlatformDataKeys.VIRTUAL_FILE_ARRAY);
+  @Override
+  public void actionPerformed(@NotNull AnActionEvent e) {
+    Project project = e.getData(CommonDataKeys.PROJECT);
+    VirtualFile[] files = e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY);
     Options options = OptionsManager.getInstance().getOptions();
     String executablePath = options.getExternalEditorOptions().getExecutablePath();
     if (StringUtil.isEmpty(executablePath)) {
       Messages.showErrorDialog(project,
                                ImagesBundle.message("error.empty.external.editor.path"),
                                ImagesBundle.message("error.title.empty.external.editor.path"));
-      OptionsConfigurabe.show(project);
+      ImagesConfigurable.show(project);
     }
     else {
       if (files != null) {
-        Map<String, String> env = EnvironmentUtil.getEnvironmentProperties();
-        Set<String> varNames = env.keySet();
-        for (String varName : varNames) {
+        Map<String, String> env = EnvironmentUtil.getEnvironmentMap();
+        for (String varName : env.keySet()) {
           if (SystemInfo.isWindows) {
             executablePath = StringUtil.replace(executablePath, "%" + varName + "%", env.get(varName), true);
           }
@@ -85,7 +85,7 @@ public final class EditExternallyAction extends AnAction {
         ImageFileTypeManager typeManager = ImageFileTypeManager.getInstance();
         for (VirtualFile file : files) {
           if (file.isInLocalFileSystem() && typeManager.isImage(file)) {
-            commandLine.addParameter(VfsUtil.virtualToIoFile(file).getAbsolutePath());
+            commandLine.addParameter(VfsUtilCore.virtualToIoFile(file).getAbsolutePath());
           }
         }
         commandLine.setWorkDirectory(new File(executablePath).getParentFile());
@@ -94,23 +94,22 @@ public final class EditExternallyAction extends AnAction {
           commandLine.createProcess();
         }
         catch (ExecutionException ex) {
-          Messages.showErrorDialog(project,
-                                   ex.getLocalizedMessage(),
-                                   ImagesBundle.message("error.title.launching.external.editor"));
-          OptionsConfigurabe.show(project);
+          Messages.showErrorDialog(project, ex.getLocalizedMessage(), ImagesBundle.message("error.title.launching.external.editor"));
+          ImagesConfigurable.show(project);
         }
       }
     }
   }
 
-  public void update(AnActionEvent e) {
+  @Override
+  public void update(@NotNull AnActionEvent e) {
     super.update(e);
 
     doUpdate(e);
   }
 
-  static void doUpdate(AnActionEvent e) {
-    VirtualFile[] files = e.getData(PlatformDataKeys.VIRTUAL_FILE_ARRAY);
+  static void doUpdate(@NotNull AnActionEvent e) {
+    VirtualFile[] files = e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY);
     final boolean isEnabled = isImages(files);
     if (e.getPlace().equals(ActionPlaces.PROJECT_VIEW_POPUP)) {
       e.getPresentation().setVisible(isEnabled);

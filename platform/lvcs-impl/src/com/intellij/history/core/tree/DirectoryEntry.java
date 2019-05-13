@@ -1,24 +1,15 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.history.core.tree;
 
+import com.intellij.history.core.Paths;
 import com.intellij.history.core.StreamUtil;
 import com.intellij.history.core.revisions.Difference;
 import com.intellij.history.utils.LocalHistoryLog;
+import com.intellij.util.io.DataInputOutputUtil;
+import com.intellij.util.text.CaseInsensitiveStringHashingStrategy;
+import gnu.trove.THashMap;
+import gnu.trove.TIntObjectHashMap;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.DataInput;
@@ -32,14 +23,18 @@ public class DirectoryEntry extends Entry {
   private final ArrayList<Entry> myChildren;
 
   public DirectoryEntry(String name) {
-    super(name);
-    myChildren = new ArrayList<Entry>(3);
+    this(toNameId(name));
   }
 
-  public DirectoryEntry(DataInput in, boolean dummy /* to distinguish from general constructor*/) throws IOException {
+  public DirectoryEntry(int nameId) {
+    super(nameId);
+    myChildren = new ArrayList<>(3);
+  }
+
+  public DirectoryEntry(DataInput in, @SuppressWarnings("unused") boolean dummy /* to distinguish from general constructor*/) throws IOException {
     super(in);
-    int count = in.readInt();
-    myChildren = new ArrayList<Entry>(count);
+    int count = DataInputOutputUtil.readINT(in);
+    myChildren = new ArrayList<>(count);
     while (count-- > 0) {
       unsafeAddChild(StreamUtil.readEntry(in));
     }
@@ -48,7 +43,7 @@ public class DirectoryEntry extends Entry {
   @Override
   public void write(DataOutput out) throws IOException {
     super.write(out);
-    out.writeInt(myChildren.size());
+    DataInputOutputUtil.writeINT(out, myChildren.size());
     for (Entry child : myChildren) {
       StreamUtil.writeEntry(out, child);
     }
@@ -70,6 +65,7 @@ public class DirectoryEntry extends Entry {
     unsafeAddChild(child);
   }
 
+  @Override
   public void addChildren(Collection<Entry> children) {
     myChildren.ensureCapacity(myChildren.size() + children.size());
     for (Entry each : children) {
@@ -123,69 +119,120 @@ public class DirectoryEntry extends Entry {
   }
 
   protected DirectoryEntry copyEntry() {
-    return new DirectoryEntry(myName);
+    return new DirectoryEntry(getNameId());
   }
 
   @Override
-  public void collectDifferencesWith(Entry right, List<Difference> result) {
+  public void collectDifferencesWith(@NotNull Entry right, @NotNull List<Difference> result, boolean isRightContentCurrent) {
     DirectoryEntry e = (DirectoryEntry)right;
 
     if (!getPath().equals(e.getPath())) {
-      result.add(new Difference(false, this, e));
+      result.add(new Difference(false, this, e, isRightContentCurrent));
     }
 
-    addCreatedChildrenDifferences(e, result);
-    addDeletedChildrenDifferences(e, result);
-    addModifiedChildrenDifferences(e, result);
-  }
+    // most often we have the same children, so try processing it directly
+    int commonIndex = 0;
+    final int myChildrenSize = myChildren.size();
+    final int rightChildrenSize = e.myChildren.size();
+    final int minChildrenSize = Math.min(myChildrenSize, rightChildrenSize);
 
-  private void addCreatedChildrenDifferences(DirectoryEntry e, List<Difference> result) {
+    while(commonIndex < minChildrenSize) {
+      Entry childEntry = myChildren.get(commonIndex);
+      Entry rightChildEntry = e.myChildren.get(commonIndex);
+
+      if (childEntry.getNameId() == rightChildEntry.getNameId() && childEntry.isDirectory() == rightChildEntry.isDirectory()) {
+        childEntry.collectDifferencesWith(rightChildEntry, result, isRightContentCurrent);
+      } else {
+        break;
+      }
+      ++commonIndex;
+    }
+
+    if (commonIndex == myChildrenSize && commonIndex == rightChildrenSize) return;
+
+    TIntObjectHashMap<Entry> uniqueNameIdToMyChildEntries = new TIntObjectHashMap<>(myChildrenSize - commonIndex);
+    for (int i = commonIndex; i < myChildrenSize; ++i) {
+      Entry childEntry = myChildren.get(i);
+      uniqueNameIdToMyChildEntries.put(childEntry.getNameId(), childEntry);
+    }
+
+    TIntObjectHashMap<Entry> uniqueNameIdToRightChildEntries = new TIntObjectHashMap<>(rightChildrenSize - commonIndex);
+    TIntObjectHashMap<Entry> myNameIdToRightChildEntries = new TIntObjectHashMap<>(rightChildrenSize - commonIndex);
+
+    for(int i = commonIndex; i < rightChildrenSize; ++i) {
+      Entry rightChildEntry = e.myChildren.get(i);
+      int rightChildEntryNameId = rightChildEntry.getNameId();
+      Entry myChildEntry = uniqueNameIdToMyChildEntries.get(rightChildEntryNameId);
+
+      if (myChildEntry != null && myChildEntry.isDirectory() == rightChildEntry.isDirectory()) {
+        uniqueNameIdToMyChildEntries.remove(rightChildEntryNameId);
+        myNameIdToRightChildEntries.put(rightChildEntryNameId, rightChildEntry);
+      } else {
+        uniqueNameIdToRightChildEntries.put(rightChildEntryNameId, rightChildEntry);
+      }
+    }
+
+    if (!Paths.isCaseSensitive()  && uniqueNameIdToMyChildEntries.size() > 0 && uniqueNameIdToRightChildEntries.size() > 0) {
+      THashMap<String, Entry> nameToEntryMap = new THashMap<>(uniqueNameIdToMyChildEntries.size(), CaseInsensitiveStringHashingStrategy.INSTANCE);
+
+      uniqueNameIdToMyChildEntries.forEachValue(myChildEntry -> {
+        nameToEntryMap.put(myChildEntry.getName(), myChildEntry);
+        return true;
+      });
+
+      uniqueNameIdToRightChildEntries.forEachValue(rightChildEntry -> {
+        Entry myChildEntry = nameToEntryMap.get(rightChildEntry.getName());
+        if (myChildEntry != null && rightChildEntry.isDirectory() == myChildEntry.isDirectory()) {
+          myNameIdToRightChildEntries.put(myChildEntry.getNameId(), rightChildEntry);
+          uniqueNameIdToMyChildEntries.remove(myChildEntry.getNameId());
+          uniqueNameIdToRightChildEntries.remove(rightChildEntry.getNameId());
+        }
+        return true;
+      });
+    }
+
     for (Entry child : e.myChildren) {
-      if (findDirectChild(child.getName(), child.isDirectory()) == null) {
-        child.collectCreatedDifferences(result);
+      if (uniqueNameIdToRightChildEntries.containsKey(child.getNameId())) {
+        child.collectCreatedDifferences(result, isRightContentCurrent);
       }
     }
-  }
 
-  private void addDeletedChildrenDifferences(DirectoryEntry e, List<Difference> result) {
     for (Entry child : myChildren) {
-      if (e.findDirectChild(child.getName(), child.isDirectory()) == null) {
-        child.collectDeletedDifferences(result);
-      }
-    }
-  }
-
-  private void addModifiedChildrenDifferences(DirectoryEntry e, List<Difference> result) {
-    for (Entry myChild : myChildren) {
-      Entry itsChild = e.findDirectChild(myChild.getName(), myChild.isDirectory());
-      if (itsChild != null) {
-        myChild.collectDifferencesWith(itsChild, result);
+      if (uniqueNameIdToMyChildEntries.containsKey(child.getNameId())) {
+        child.collectDeletedDifferences(result, isRightContentCurrent);
+      } else {
+        Entry itsChild = myNameIdToRightChildEntries.get(child.getNameId());
+        if (itsChild != null) child.collectDifferencesWith(itsChild, result, isRightContentCurrent);
       }
     }
   }
 
   Entry findDirectChild(String name, boolean isDirectory) {
+    int nameHash = calcNameHash(name);
+    
     for (Entry child : getChildren()) {
-      if (child.isDirectory() == isDirectory && child.nameEquals(name)) return child;
+      if (child.isDirectory() == isDirectory && nameHash == child.getNameHash() && child.nameEquals(name)) {
+        return child;
+      }
     }
     return null;
   }
 
   @Override
-  protected void collectCreatedDifferences(List<Difference> result) {
-    result.add(new Difference(false, null, this));
+  protected void collectCreatedDifferences(@NotNull List<Difference> result, boolean isRightContentCurrent) {
+    result.add(new Difference(false, null, this, isRightContentCurrent));
 
     for (Entry child : myChildren) {
-      child.collectCreatedDifferences(result);
+      child.collectCreatedDifferences(result, isRightContentCurrent);
     }
   }
 
   @Override
-  protected void collectDeletedDifferences(List<Difference> result) {
-    result.add(new Difference(false, this, null));
+  protected void collectDeletedDifferences(@NotNull List<Difference> result, boolean isRightContentCurrent) {
+    result.add(new Difference(false, this, null, isRightContentCurrent));
 
     for (Entry child : myChildren) {
-      child.collectDeletedDifferences(result);
+      child.collectDeletedDifferences(result, isRightContentCurrent);
     }
   }
 }

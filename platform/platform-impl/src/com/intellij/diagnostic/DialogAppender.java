@@ -1,80 +1,71 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.diagnostic;
 
+import com.intellij.idea.IdeaApplication;
+import com.intellij.idea.Main;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.ErrorLogger;
+import com.intellij.openapi.diagnostic.ExceptionWithAttachments;
 import com.intellij.openapi.diagnostic.IdeaLoggingEvent;
-import com.intellij.util.containers.ContainerUtil;
+import com.intellij.openapi.diagnostic.RuntimeExceptionWithAttachments;
+import com.intellij.util.ExceptionUtil;
 import org.apache.log4j.AppenderSkeleton;
-import org.apache.log4j.Priority;
+import org.apache.log4j.Level;
 import org.apache.log4j.spi.LoggingEvent;
 import org.apache.log4j.spi.ThrowableInformation;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.ArrayDeque;
+import java.util.Queue;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * @author Mike
  */
 public class DialogAppender extends AppenderSkeleton {
-  private static final DefaultIdeaErrorLogger DEFAULT_LOGGER = new DefaultIdeaErrorLogger();
+  private static final ErrorLogger[] LOGGERS = {new DefaultIdeaErrorLogger()};
+  private static final int MAX_EARLY_LOGGING_EVENTS = 5;
   private static final int MAX_ASYNC_LOGGING_EVENTS = 5;
 
-  private volatile Runnable myDialogRunnable = null;
+  private final Queue<LoggingEvent> myEarlyEvents = new ArrayDeque<>();
   private final AtomicInteger myPendingAppendCounts = new AtomicInteger();
+  private volatile Runnable myDialogRunnable;
 
   @Override
-  protected synchronized void append(@NotNull final LoggingEvent event) {
-    if (!event.level.isGreaterOrEqual(Priority.ERROR)) return;
+  protected synchronized void append(@NotNull LoggingEvent event) {
+    if (!event.getLevel().isGreaterOrEqual(Level.ERROR) || Main.isCommandLine()) {
+      return;  // the dialog appender doesn't deal with non-critical errors and is meaningless when there is no frame to show an error icon
+    }
 
-    Runnable action = new Runnable() {
-      @Override
-      public void run() {
+    if (IdeaApplication.isLoaded()) {
+      LoggingEvent queued;
+      while ((queued = myEarlyEvents.poll()) != null) queueAppend(queued);
+      queueAppend(event);
+    }
+    else if (myEarlyEvents.size() < MAX_EARLY_LOGGING_EVENTS) {
+      myEarlyEvents.add(event);
+    }
+  }
+
+  private void queueAppend(@NotNull LoggingEvent event) {
+    if (myPendingAppendCounts.addAndGet(1) > MAX_ASYNC_LOGGING_EVENTS) {
+      // Stop adding requests to the queue or we can get OOME on pending logging requests (IDEA-95327)
+      myPendingAppendCounts.decrementAndGet(); // number of pending logging events should not increase
+    }
+    else {
+      // Note, we MUST avoid SYNCHRONOUS invokeAndWait to prevent deadlocks
+      //noinspection SSBasedInspection
+      SwingUtilities.invokeLater(() -> {
         try {
-          List<ErrorLogger> loggers = new ArrayList<ErrorLogger>();
-          loggers.add(DEFAULT_LOGGER);
-
-          Application application = ApplicationManager.getApplication();
-          if (application != null) {
-            if (application.isHeadlessEnvironment() || application.isDisposed()) return;
-            ContainerUtil.addAll(loggers, application.getComponents(ErrorLogger.class));
-          }
-
-          appendToLoggers(event, loggers.toArray(new ErrorLogger[loggers.size()]));
+          appendToLoggers(event, LOGGERS);
         }
         finally {
           myPendingAppendCounts.decrementAndGet();
         }
-      }
-    };
-
-    if (myPendingAppendCounts.addAndGet(1) > MAX_ASYNC_LOGGING_EVENTS) {
-      // Stop adding requests to the queue or we can get OOME on pending logging requests (IDEA-95327)
-      // Note, we MUST avoid SYNCHRONOUS invokeAndWait to prevent deadlocks
-      // UIUtil.invokeAndWaitIfNeeded(action);
-
-      myPendingAppendCounts.decrementAndGet(); // number of pending logging events should not increase
-    } else {
-      SwingUtilities.invokeLater(action);
+      });
     }
   }
 
@@ -83,43 +74,62 @@ public class DialogAppender extends AppenderSkeleton {
       return;
     }
 
-    final IdeaLoggingEvent ideaEvent;
-    final Object message = event.getMessage();
-    if (message instanceof IdeaLoggingEvent) {
-      ideaEvent = (IdeaLoggingEvent)message;
+    IdeaLoggingEvent ideaEvent;
+    Object messageObject = event.getMessage();
+    if (messageObject instanceof IdeaLoggingEvent) {
+      ideaEvent = (IdeaLoggingEvent)messageObject;
     }
     else {
-      ThrowableInformation throwable = event.getThrowableInformation();
-      if (throwable == null) {
-        return;
-      }
-      ideaEvent = new IdeaLoggingEvent(message == null ? "<null> " : message.toString(), throwable.getThrowable());
+      ThrowableInformation info = event.getThrowableInformation();
+      if (info == null || info.getThrowable() == null) return;
+      ideaEvent = extractLoggingEvent(messageObject, info.getThrowable());
     }
+
     for (int i = errorLoggers.length - 1; i >= 0; i--) {
-      final ErrorLogger logger = errorLoggers[i];
+      ErrorLogger logger = errorLoggers[i];
       if (!logger.canHandle(ideaEvent)) {
         continue;
       }
-      myDialogRunnable = new Runnable() {
-        @Override
-        public void run() {
-          try {
-            logger.handle(ideaEvent);
-          }
-          finally {
-            myDialogRunnable = null;
-          }
+      //noinspection NonAtomicOperationOnVolatileField
+      myDialogRunnable = () -> {
+        try {
+          logger.handle(ideaEvent);
+        }
+        finally {
+          myDialogRunnable = null;
         }
       };
-
-      final Application app = ApplicationManager.getApplication();
+      Application app = ApplicationManager.getApplication();
       if (app == null) {
-        new Thread(myDialogRunnable).start();
+        new Thread(myDialogRunnable, "dialog appender logger").start();
       }
       else {
         app.executeOnPooledThread(myDialogRunnable);
       }
       break;
+    }
+  }
+
+  @SuppressWarnings("deprecation")
+  private static IdeaLoggingEvent extractLoggingEvent(Object messageObject, Throwable throwable) {
+    Throwable rootCause = ExceptionUtil.getRootCause(throwable);
+    if (rootCause instanceof LogEventException) {
+      return ((LogEventException)rootCause).getLogMessage();
+    }
+
+    String message = null;
+    ExceptionWithAttachments withAttachments = ExceptionUtil.findCause(throwable, ExceptionWithAttachments.class);
+    if (withAttachments instanceof RuntimeExceptionWithAttachments) {
+      message = ((RuntimeExceptionWithAttachments)withAttachments).getUserMessage();
+    }
+    if (message == null && messageObject != null) {
+      message = messageObject.toString();
+    }
+    if (withAttachments != null) {
+      return LogMessage.createEvent(throwable, message, withAttachments.getAttachments());
+    }
+    else {
+      return new IdeaLoggingEvent(message, throwable);
     }
   }
 
@@ -134,7 +144,5 @@ public class DialogAppender extends AppenderSkeleton {
   }
 
   @Override
-  public void close() {
-  }
+  public void close() { }
 }
-

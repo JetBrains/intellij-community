@@ -1,0 +1,9 @@
+Index: before/1.txt
+===================================================================
+--- before/1.txt	(revision before)
++++ after/1.txt	(revision after)
+@@ -1,2 +1,2 @@
+ unchanged
+-new
++new
+\ No newline at end of file

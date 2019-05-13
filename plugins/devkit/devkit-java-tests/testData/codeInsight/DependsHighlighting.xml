@@ -1,0 +1,14 @@
+<idea-plugin>
+  <id>com.intellij.myPlugin</id>
+  <vendor>JetBrains</vendor>
+  <version>1.0</version>
+
+  <depends>com.intellij</depends>
+  <depends>com.intellij.modules.vcs</depends>
+  <depends>com.intellij.custom</depends>
+  <depends><error descr="Cannot resolve plugin com.intellij.xxx">com.intellij.xxx</error></depends>
+
+
+  <depends config-file="optional.xml">com.intellij</depends>
+  <depends config-file="<error descr="Cannot resolve file 'INVALID_VALUE'">INVALID_VALUE</error>">com.intellij</depends>
+</idea-plugin>

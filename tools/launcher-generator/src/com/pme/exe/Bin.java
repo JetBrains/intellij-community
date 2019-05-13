@@ -1,6 +1,6 @@
 /*
  * Copyright 2006 ProductiveMe Inc.
- * Copyright 2013 JetBrains s.r.o.
+ * Copyright 2013-2018 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,6 +26,7 @@ import java.util.HashMap;
 import java.lang.reflect.Array;
 
 /**
+ * @author Sergey Zhulin
  * Date: Mar 31, 2006
  * Time: 6:17:24 PM
  */
@@ -61,8 +62,12 @@ public abstract class Bin {
 
   public void resetOffsets(long offset) {
     myOffset = offset;
+    updateSizeOffsetHolders();
+  }
+
+  protected void updateSizeOffsetHolders() {
     for (Value holder : myOffsetHolders) {
-      holder.setValue(offset);
+      holder.setValue(myOffset);
     }
     for (Value holder : mySizeHolders) {
       holder.setValue(sizeInBytes());
@@ -127,6 +132,7 @@ public abstract class Bin {
         bin.resetOffsets(offset);
         offset = offset + bin.sizeInBytes();
       }
+      updateSizeOffsetHolders();
     }
 
     public void copyFrom(Bin binStructure) {
@@ -187,7 +193,7 @@ public abstract class Bin {
     }
 
     public Bin getMember(String name) {
-      return (Bin) myMembersMap.get(name);
+      return myMembersMap.get(name);
     }
 
     public Bin.Value getValueMember(String name) {
@@ -244,11 +250,6 @@ public abstract class Bin {
 
     public Value setRawValue(long value) {
       myValue = value;
-      return this;
-    }
-
-    public Value setValue(short value) {
-      myValue = BitsUtil.revertBytesOfShort(value);
       return this;
     }
   }
@@ -357,6 +358,43 @@ public abstract class Bin {
     }
   }
 
+  public static class LongLong extends Value {
+    public LongLong(String name) {
+      super(name);
+    }
+
+    @Override
+    public long getValue() {
+      return BitsUtil.revertBytesOfLong(getRawValue());
+    }
+
+    @Override
+    public Value setValue(long value) {
+      setRawValue(BitsUtil.revertBytesOfLong(value));
+      return this;
+    }
+
+    @Override
+    public long sizeInBytes() {
+      return 8;
+    }
+
+    @Override
+    public void read(DataInput stream) throws IOException {
+      setRawValue(stream.readLong());
+    }
+
+    @Override
+    public void write(DataOutput stream) throws IOException {
+      stream.writeLong(getRawValue());
+    }
+
+    @Override
+    public void report(OutputStreamWriter writer) throws IOException {
+      _report(writer, getDescription() + " : " + Long.toHexString(getValue()));
+    }
+  }
+
   public static class Padding extends Bin {
     private int myBytes;
 
@@ -367,23 +405,32 @@ public abstract class Bin {
 
     @Override
     public long sizeInBytes() {
-      throw new UnsupportedOperationException();
+      return bytesToSkip(getOffset());
     }
 
     @Override
     public void read(DataInput stream) throws IOException {
       if (stream instanceof OffsetTrackingInputStream) {
         long offset = ((OffsetTrackingInputStream) stream).getOffset();
-        int offsetMask = myBytes-1;
-        long offsetBits = offset & offsetMask;
-        if (offsetBits > 0) {
-          stream.skipBytes((int) (myBytes - offsetBits));
+        int skip = bytesToSkip(offset);
+        if (skip > 0) {
+          stream.skipBytes(skip);
         }
       }
     }
 
+    private int bytesToSkip(long offset) {
+      int offsetMask = myBytes-1;
+      long offsetBits = offset & offsetMask;
+      return offsetBits == 0 ? 0 : (int) (myBytes - offsetBits);
+    }
+
     @Override
     public void write(DataOutput stream) throws IOException {
+      int skip = bytesToSkip(getOffset());
+      for (int i = 0; i < skip; i++) {
+        stream.writeByte(0);
+      }
     }
 
     @Override
@@ -468,7 +515,7 @@ public abstract class Bin {
 
     @Override
     public long sizeInBytes() {
-      throw new UnsupportedOperationException();
+      return myValue.length() * 2 + 2;
     }
 
     @Override
@@ -484,7 +531,10 @@ public abstract class Bin {
 
     @Override
     public void write(DataOutput stream) throws IOException {
-      throw new UnsupportedOperationException();
+      for (int i = 0; i < myValue.length(); i++) {
+        stream.writeShort(BitsUtil.revertBytesOfShort((short) myValue.charAt(i)));
+      }
+      stream.writeShort(0);
     }
 
     @Override
@@ -494,6 +544,10 @@ public abstract class Bin {
 
     public String getValue() {
       return myValue;
+    }
+
+    public void setValue(String value) {
+      myValue = value;
     }
   }
 

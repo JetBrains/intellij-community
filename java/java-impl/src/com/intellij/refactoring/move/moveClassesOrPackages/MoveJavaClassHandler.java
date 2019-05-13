@@ -49,6 +49,7 @@ public class MoveJavaClassHandler implements MoveClassHandler {
     }
   }
 
+  @Override
   public PsiClass doMoveClass(@NotNull final PsiClass aClass, @NotNull PsiDirectory moveDestination) throws IncorrectOperationException {
     PsiFile file = aClass.getContainingFile();
     final PsiPackage newPackage = JavaDirectoryService.getInstance().getPackage(moveDestination);
@@ -83,7 +84,7 @@ public class MoveJavaClassHandler implements MoveClassHandler {
   }
 
   private static void correctOldClassReferences(final PsiClass newClass, final PsiClass oldClass) {
-    final Set<PsiImportStatementBase> importsToDelete = new HashSet<PsiImportStatementBase>();
+    final Set<PsiImportStatementBase> importsToDelete = new HashSet<>();
     newClass.getContainingFile().accept(new JavaRecursiveElementVisitor() {
       @Override
       public void visitReferenceElement(PsiJavaCodeReferenceElement reference) {
@@ -131,6 +132,7 @@ public class MoveJavaClassHandler implements MoveClassHandler {
     }
   }
 
+  @Override
   public String getName(PsiClass clazz) {
     final PsiFile file = clazz.getContainingFile();
     if (!(file instanceof PsiJavaFile)) return null;

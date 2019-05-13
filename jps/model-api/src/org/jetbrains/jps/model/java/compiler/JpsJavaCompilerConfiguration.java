@@ -31,11 +31,17 @@ public interface JpsJavaCompilerConfiguration extends JpsElement {
   boolean isAddNotNullAssertions();
   void setAddNotNullAssertions(boolean addNotNullAssertions);
 
+  List<String> getNotNullAnnotations();
+  void setNotNullAnnotations(List<String> notNullAnnotations);
+
   boolean isClearOutputDirectoryOnRebuild();
   void setClearOutputDirectoryOnRebuild(boolean clearOutputDirectoryOnRebuild);
 
   @NotNull
   JpsCompilerExcludes getCompilerExcludes();
+
+  @NotNull
+  JpsCompilerExcludes getValidationExcludes();
 
   @NotNull
   ProcessorConfigProfile getDefaultAnnotationProcessingProfile();
@@ -63,6 +69,9 @@ public interface JpsJavaCompilerConfiguration extends JpsElement {
 
   void setProjectByteCodeTargetLevel(String level);
   void setModuleByteCodeTargetLevel(String moduleName, String level);
+
+  boolean useReleaseOption();
+  void setUseReleaseOption(boolean useReleaseOption);
 
   @NotNull
   String getJavaCompilerId();

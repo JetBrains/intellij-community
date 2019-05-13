@@ -39,6 +39,7 @@ import com.intellij.ui.treeStructure.SimpleTreeBuilder;
 import com.intellij.ui.treeStructure.SimpleTreeStructure;
 import com.intellij.ui.treeStructure.WeightBasedComparator;
 import com.intellij.util.ui.tree.TreeUtil;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.tree.DefaultMutableTreeNode;
 import java.awt.*;
@@ -54,7 +55,9 @@ public class SourceItemsTree extends SimpleDnDAwareTree implements AdvancedDnDSo
 
   public SourceItemsTree(ArtifactEditorContext editorContext, ArtifactEditorImpl artifactsEditor) {
     myArtifactsEditor = artifactsEditor;
-    myBuilder = new SimpleTreeBuilder(this, this.getBuilderModel(), new SourceItemsTreeStructure(editorContext, artifactsEditor), new WeightBasedComparator(true));
+    myBuilder = new SimpleTreeBuilder(this, this.getBuilderModel(), new SourceItemsTreeStructure(editorContext, artifactsEditor), new WeightBasedComparator(true)) {
+      // unique class to simplify search through the logs
+    };
     setRootVisible(false);
     setShowsRootHandles(true);
     Disposer.register(this, myBuilder);
@@ -114,11 +117,11 @@ public class SourceItemsTree extends SimpleDnDAwareTree implements AdvancedDnDSo
   @Override
   public DnDDragStartBean startDragging(DnDAction action, Point dragOrigin) {
     List<PackagingSourceItem> items = getSelectedItems();
-    return new DnDDragStartBean(new SourceItemsDraggingObject(items.toArray(new PackagingSourceItem[items.size()])));
+    return new DnDDragStartBean(new SourceItemsDraggingObject(items.toArray(new PackagingSourceItem[0])));
   }
 
   public List<SourceItemNode> getSelectedSourceItemNodes() {
-    final List<SourceItemNode> nodes = new ArrayList<SourceItemNode>();
+    final List<SourceItemNode> nodes = new ArrayList<>();
     for (DefaultMutableTreeNode treeNode : getSelectedTreeNodes()) {
       final Object userObject = treeNode.getUserObject();
       if (userObject instanceof SourceItemNode) {
@@ -129,7 +132,7 @@ public class SourceItemsTree extends SimpleDnDAwareTree implements AdvancedDnDSo
   }
 
   public List<PackagingSourceItem> getSelectedItems() {
-    List<PackagingSourceItem> items = new ArrayList<PackagingSourceItem>();
+    List<PackagingSourceItem> items = new ArrayList<>();
     for (SourceItemNode node : getSelectedSourceItemNodes()) {
       final PackagingSourceItem sourceItem = node.getSourceItem();
       if (sourceItem != null && sourceItem.isProvideElements()) {
@@ -161,11 +164,12 @@ public class SourceItemsTree extends SimpleDnDAwareTree implements AdvancedDnDSo
     private final ArtifactEditorImpl myArtifactsEditor;
     private SourceItemsTreeRoot myRoot;
 
-    public SourceItemsTreeStructure(ArtifactEditorContext editorContext, ArtifactEditorImpl artifactsEditor) {
+    SourceItemsTreeStructure(ArtifactEditorContext editorContext, ArtifactEditorImpl artifactsEditor) {
       myEditorContext = editorContext;
       myArtifactsEditor = artifactsEditor;
     }
 
+    @NotNull
     @Override
     public Object getRootElement() {
       if (myRoot == null) {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,11 +15,14 @@
  */
 package org.jetbrains.plugins.groovy.refactoring.introduce.parameter;
 
+import com.intellij.refactoring.IntroduceParameterRefactoring;
 import gnu.trove.TIntArrayList;
+import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.refactoring.introduce.GrIntroduceSettings;
+import org.jetbrains.plugins.groovy.refactoring.introduce.StringPartInfo;
 
 /**
  * @author Maxim.Medvedev
@@ -32,15 +35,21 @@ public interface GrIntroduceParameterSettings extends GrIntroduceSettings, Intro
   /**
    * @see com.intellij.refactoring.IntroduceParameterRefactoring
    */
+  @MagicConstant(valuesFromClass = IntroduceParameterRefactoring.class)
   int replaceFieldsWithGetters();
 
   boolean declareFinal();
 
   boolean removeLocalVariable();
 
+  @Override
   @Nullable
   GrVariable getVar();
 
   @Nullable
   GrExpression getExpression();
+
+  @Override
+  @Nullable
+  StringPartInfo getStringPartInfo();
 }

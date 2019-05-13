@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,8 +25,8 @@ import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.ui.TypeSelectorManager;
 import com.intellij.ui.NonFocusableCheckBox;
 import com.intellij.ui.StateRestoringCheckBox;
+import com.intellij.util.ui.JBUI;
 import gnu.trove.TIntArrayList;
-import gnu.trove.TIntProcedure;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
@@ -35,26 +35,22 @@ import java.awt.*;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 
-/**
- * User: anna
- * Date: 2/27/11
- */
 public abstract class IntroduceParameterSettingsUI {
   protected final boolean myIsInvokedOnDeclaration;
   protected final boolean myHasInitializer;
 
-  protected StateRestoringCheckBox myCbDeleteLocalVariable = null;
-  protected StateRestoringCheckBox myCbUseInitializer = null;
-  protected JRadioButton myReplaceFieldsWithGettersNoneRadio = null;
-  protected JRadioButton myReplaceFieldsWithGettersInaccessibleRadio = null;
-  protected JRadioButton myReplaceFieldsWithGettersAllRadio = null;
+  protected StateRestoringCheckBox myCbDeleteLocalVariable;
+  protected StateRestoringCheckBox myCbUseInitializer;
+  protected JRadioButton myReplaceFieldsWithGettersNoneRadio;
+  protected JRadioButton myReplaceFieldsWithGettersInaccessibleRadio;
+  protected JRadioButton myReplaceFieldsWithGettersAllRadio;
   protected final ButtonGroup myReplaceFieldsWithGettersButtonGroup = new ButtonGroup();
   protected final PsiParameter[] myParametersToRemove;
   protected final boolean[] myParametersToRemoveChecked;
   protected final boolean myIsLocalVariable;
 
-  protected JCheckBox myCbReplaceAllOccurences = null;
-  protected JCheckBox myCbGenerateDelegate = null;
+  protected JCheckBox myCbReplaceAllOccurences;
+  protected JCheckBox myCbGenerateDelegate;
 
   public IntroduceParameterSettingsUI(PsiLocalVariable onLocalVariable,
                                       PsiExpression onExpression,
@@ -65,11 +61,9 @@ public abstract class IntroduceParameterSettingsUI {
     final PsiParameter[] parameters = methodToReplaceIn.getParameterList().getParameters();
     myParametersToRemove = new PsiParameter[parameters.length];
     myParametersToRemoveChecked = new boolean[parameters.length];
-    parametersToRemove.forEach(new TIntProcedure() {
-      public boolean execute(final int paramNum) {
-        myParametersToRemove[paramNum] = parameters[paramNum];
-        return true;
-      }
+    parametersToRemove.forEach(paramNum -> {
+      myParametersToRemove[paramNum] = parameters[paramNum];
+      return true;
     });
     myIsLocalVariable = onLocalVariable != null;
   }
@@ -111,7 +105,7 @@ public abstract class IntroduceParameterSettingsUI {
     JPanel radioButtonPanel = new JPanel(new GridBagLayout());
 
     GridBagConstraints gbConstraints = new GridBagConstraints();
-    gbConstraints.insets = new Insets(4, 8, 4, 8);
+    gbConstraints.insets = JBUI.insets(4, 8);
     gbConstraints.weighty = 1;
     gbConstraints.weightx = 1;
     gbConstraints.gridy = 0;
@@ -185,7 +179,6 @@ public abstract class IntroduceParameterSettingsUI {
           box.setSelected(myCbReplaceAllOccurences.isSelected());
         }
       }
-      getTypeSelectionManager().setAllOccurrences(myCbReplaceAllOccurences.isSelected());
       if (myCbReplaceAllOccurences.isSelected()) {
         if (myCbDeleteLocalVariable != null) {
           myCbDeleteLocalVariable.makeSelectable();
@@ -196,6 +189,12 @@ public abstract class IntroduceParameterSettingsUI {
           myCbDeleteLocalVariable.makeUnselectable(false);
         }
       }
+    }
+  }
+
+  protected void updateTypeSelector() {
+    if (myCbReplaceAllOccurences != null) {
+      getTypeSelectionManager().setAllOccurrences(myCbReplaceAllOccurences.isSelected());
     }
     else {
       getTypeSelectionManager().setAllOccurrences(myIsInvokedOnDeclaration);
@@ -229,6 +228,7 @@ public abstract class IntroduceParameterSettingsUI {
     if (myCbReplaceAllOccurences != null) {
       myCbReplaceAllOccurences.addItemListener(
         new ItemListener() {
+          @Override
           public void itemStateChanged(ItemEvent e) {
             updateControls(removeParamsCb);
           }
@@ -238,6 +238,9 @@ public abstract class IntroduceParameterSettingsUI {
   }
 
   public boolean isParamToRemove(PsiParameter param) {
+    if (myCbReplaceAllOccurences != null && !myCbReplaceAllOccurences.isSelected()) {
+      return false;
+    }
     if (param.isVarArgs()) {
       return myParametersToRemove[myParametersToRemove.length - 1] != null;
     }
@@ -255,7 +258,7 @@ public abstract class IntroduceParameterSettingsUI {
       panel.add(myCbDeleteLocalVariable, gbConstraints);
       myCbDeleteLocalVariable.setSelected(settings.INTRODUCE_PARAMETER_DELETE_LOCAL_VARIABLE);
 
-      gbConstraints.insets = new Insets(0, 0, 4, 8);
+      gbConstraints.insets = JBUI.insets(0, 0, 4, 8);
       if(myHasInitializer) {
         myCbUseInitializer = new StateRestoringCheckBox();
         myCbUseInitializer.setText(RefactoringBundle.message("use.variable.initializer.to.initialize.parameter"));

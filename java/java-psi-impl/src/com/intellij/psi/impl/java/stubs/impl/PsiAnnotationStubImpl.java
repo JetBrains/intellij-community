@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,21 +15,24 @@
  */
 package com.intellij.psi.impl.java.stubs.impl;
 
+import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiAnnotation;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiJavaParserFacade;
+import com.intellij.psi.impl.PsiElementFactoryImpl;
 import com.intellij.psi.impl.java.stubs.JavaStubElementTypes;
 import com.intellij.psi.impl.java.stubs.PsiAnnotationStub;
+import com.intellij.psi.impl.source.CharTableImpl;
+import com.intellij.psi.stubs.PsiFileStub;
 import com.intellij.psi.stubs.StubBase;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.reference.SoftReference;
+import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.io.StringRef;
-import org.jetbrains.annotations.Nullable;
-
-import java.util.List;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author max
@@ -37,22 +40,20 @@ import java.util.List;
 public class PsiAnnotationStubImpl extends StubBase<PsiAnnotation> implements PsiAnnotationStub {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.java.stubs.impl.PsiAnnotationStubImpl");
 
+  static {
+    CharTableImpl.addStringsFromClassToStatics(AnnotationUtil.class);
+    CharTableImpl.staticIntern("@NotNull");
+    CharTableImpl.staticIntern("@Nullable");
+    CharTableImpl.staticIntern("@Override");
+  }
+
   private final String myText;
   private SoftReference<PsiAnnotation> myParsedFromRepository;
 
-  public PsiAnnotationStubImpl(final StubElement parent, final String text) {
-    this(parent, text, null);
-  }
-
-  public PsiAnnotationStubImpl(final StubElement parent, final String text, @Nullable List<Pair<String, String>> attributes) {
+  public PsiAnnotationStubImpl(StubElement parent, @NotNull String text) {
     super(parent, JavaStubElementTypes.ANNOTATION);
-    myText = text;
-    if (attributes != null) {
-      PsiAnnotationParameterListStubImpl list = new PsiAnnotationParameterListStubImpl(this);
-      for (Pair<String, String> attribute : attributes) {
-        new PsiNameValuePairStubImpl(list, StringRef.fromString(attribute.first), StringRef.fromString(attribute.second));
-      }
-    }
+    CharSequence interned = CharTableImpl.getStaticInterned(text);
+    myText = interned == null ? text : interned.toString();
   }
 
   @Override
@@ -62,29 +63,42 @@ public class PsiAnnotationStubImpl extends StubBase<PsiAnnotation> implements Ps
 
   @Override
   public PsiAnnotation getPsiElement() {
-    if (myParsedFromRepository != null) {
-      PsiAnnotation annotation = myParsedFromRepository.get();
-      if (annotation != null) {
-        return annotation;
-      }
-    }
+    PsiAnnotation annotation = SoftReference.dereference(myParsedFromRepository);
+    if (annotation != null) return annotation;
 
-    final String text = getText();
+    String text = getText();
     try {
       PsiJavaParserFacade facade = JavaPsiFacade.getInstance(getProject()).getParserFacade();
-      PsiAnnotation annotation = facade.createAnnotationFromText(text, getPsi());
-      myParsedFromRepository = new SoftReference<PsiAnnotation>(annotation);
+      annotation = facade instanceof PsiElementFactoryImpl
+          ? ((PsiElementFactoryImpl) facade).createAnnotationFromText(text, getPsi(), false)
+          : facade.createAnnotationFromText(text, getPsi());
+      ((LightVirtualFile)annotation.getContainingFile().getViewProvider().getVirtualFile()).setWritable(false);
+      myParsedFromRepository = new SoftReference<>(annotation);
       return annotation;
     }
     catch (IncorrectOperationException e) {
-      LOG.error("Bad annotation in repository!", e);
+      LOG.error("Bad annotation in " + fileName(), e);
       return null;
     }
   }
 
+  private String fileName() {
+    StubElement<?> stub = this;
+    while ((stub = stub.getParentStub()) != null) {
+      if (stub instanceof PsiFileStub) {
+        Object psi = stub.getPsi();
+        if (psi instanceof PsiFile) {
+          VirtualFile file = ((PsiFile)psi).getVirtualFile();
+          return file != null ? file.getUrl() : ((PsiFile)psi).getName();
+        }
+      }
+    }
+
+    return "<unknown file>";
+  }
+
   @Override
-  @SuppressWarnings({"HardCodedStringLiteral"})
   public String toString() {
-    return "PsiAnnotationStub[" + myText + "]";
+    return "PsiAnnotationStub[" + myText + ']';
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2011 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2018 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,20 +15,18 @@
  */
 package com.siyeh.ig.performance;
 
-import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
-import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.search.searches.OverridingMethodsSearch;
-import com.intellij.refactoring.psi.PropertyUtils;
-import com.intellij.util.IncorrectOperationException;
+import com.intellij.psi.util.PropertyUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.Query;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.fixes.InlineGetterSetterCallFix;
 import com.siyeh.ig.psiutils.ClassUtils;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -38,25 +36,10 @@ public class CallToSimpleSetterInClassInspection extends BaseInspection {
 
   @SuppressWarnings("UnusedDeclaration")
   public boolean ignoreSetterCallsOnOtherObjects = false;
-
   @SuppressWarnings("UnusedDeclaration")
   public boolean onlyReportPrivateSetter = false;
 
-  @NotNull
-  public String getID() {
-    return "CallToSimpleSetterFromWithinClass";
-  }
-
-  @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("call.to.simple.setter.in.class.display.name");
-  }
-
-  @NotNull
-  public String buildErrorString(Object... infos) {
-    return InspectionGadgetsBundle.message("call.to.simple.setter.in.class.problem.descriptor");
-  }
-
+  @Override
   @Nullable
   public JComponent createOptionsPanel() {
     final MultipleCheckboxOptionsPanel optionsPanel = new MultipleCheckboxOptionsPanel(this);
@@ -67,72 +50,30 @@ public class CallToSimpleSetterInClassInspection extends BaseInspection {
     return optionsPanel;
   }
 
+  @Override
   public InspectionGadgetsFix buildFix(Object... infos) {
-    return new InlineCallFix();
+    return new InlineGetterSetterCallFix(false);
   }
 
-  private static class InlineCallFix extends InspectionGadgetsFix {
-
-    @NotNull
-    public String getName() {
-      return InspectionGadgetsBundle.message("call.to.simple.setter.in.class.inline.quickfix");
-    }
-
-    public void doFix(Project project, ProblemDescriptor descriptor)
-      throws IncorrectOperationException {
-      final PsiElement methodIdentifier = descriptor.getPsiElement();
-      final PsiReferenceExpression methodExpression = (PsiReferenceExpression)methodIdentifier.getParent();
-      if (methodExpression == null) {
-        return;
-      }
-      final PsiMethodCallExpression call = (PsiMethodCallExpression)methodExpression.getParent();
-      if (call == null) {
-        return;
-      }
-      final PsiExpressionList argumentList = call.getArgumentList();
-      final PsiExpression[] arguments = argumentList.getExpressions();
-      final PsiExpression argument = arguments[0];
-      final PsiMethod method = call.resolveMethod();
-      if (method == null) {
-        return;
-      }
-      final PsiCodeBlock body = method.getBody();
-      if (body == null) {
-        return;
-      }
-      final PsiStatement[] statements = body.getStatements();
-      final PsiExpressionStatement assignmentStatement = (PsiExpressionStatement)statements[0];
-      final PsiAssignmentExpression assignment = (PsiAssignmentExpression)assignmentStatement.getExpression();
-      final PsiExpression qualifier = methodExpression.getQualifierExpression();
-      final PsiReferenceExpression lhs = (PsiReferenceExpression)assignment.getLExpression();
-      final PsiField field = (PsiField)lhs.resolve();
-      if (field == null) {
-        return;
-      }
-      final String fieldName = field.getName();
-      if (qualifier == null) {
-        final JavaPsiFacade manager = JavaPsiFacade.getInstance(call.getProject());
-        final PsiResolveHelper resolveHelper = manager.getResolveHelper();
-        final PsiVariable variable = resolveHelper.resolveReferencedVariable(fieldName, call);
-        if (variable == null) {
-          return;
-        }
-        @NonNls final String newExpression;
-        if (variable.equals(field)) {
-          newExpression = fieldName + " = " + argument.getText();
-        }
-        else {
-          newExpression = "this." + fieldName + " = " + argument.getText();
-        }
-        replaceExpression(call, newExpression);
-      }
-      else {
-        final String newExpression = qualifier.getText() + '.' + fieldName + " = " + argument.getText();
-        replaceExpression(call, newExpression);
-      }
-    }
+  @Override
+  @NotNull
+  public String getID() {
+    return "CallToSimpleSetterFromWithinClass";
   }
 
+  @Override
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message("call.to.simple.setter.in.class.display.name");
+  }
+
+  @Override
+  @NotNull
+  public String buildErrorString(Object... infos) {
+    return InspectionGadgetsBundle.message("call.to.simple.setter.in.class.problem.descriptor");
+  }
+
+  @Override
   public BaseInspectionVisitor buildVisitor() {
     return new CallToSimpleSetterInClassVisitor();
   }
@@ -159,23 +100,18 @@ public class CallToSimpleSetterInClassInspection extends BaseInspection {
         if (ignoreSetterCallsOnOtherObjects) {
           return;
         }
-        final PsiType type = qualifier.getType();
-        if (!(type instanceof PsiClassType)) {
-          return;
-        }
-        final PsiClassType classType = (PsiClassType)type;
-        final PsiClass qualifierClass = classType.resolve();
+        final PsiClass qualifierClass = PsiUtil.resolveClassInClassTypeOnly(qualifier.getType());
         if (!containingClass.equals(qualifierClass)) {
           return;
         }
       }
-      if (!PropertyUtils.isSimpleSetter(method)) {
+      if (!PropertyUtil.isSimpleSetter(method)) {
         return;
       }
       if (onlyReportPrivateSetter && !method.hasModifierProperty(PsiModifier.PRIVATE)) {
         return;
       }
-      final Query<PsiMethod> query = OverridingMethodsSearch.search(method, true);
+      final Query<PsiMethod> query = OverridingMethodsSearch.search(method);
       final PsiMethod overridingMethod = query.findFirst();
       if (overridingMethod != null) {
         return;

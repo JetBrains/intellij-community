@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,88 +18,124 @@ package com.intellij.openapi.progress;
 
 import com.intellij.openapi.application.ModalityState;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-public class EmptyProgressIndicator implements ProgressIndicator {
-  private boolean myIsRunning = false;
-  private volatile boolean myIsCanceled = false;
+public class EmptyProgressIndicator implements StandardProgressIndicator {
+  @NotNull private final ModalityState myModalityState;
 
+  private volatile boolean myIsRunning;
+  private volatile boolean myIsCanceled;
+  private volatile int myNonCancelableSectionCount;
+
+  public EmptyProgressIndicator() {
+    this(ModalityState.defaultModalityState());
+  }
+
+  public EmptyProgressIndicator(@NotNull ModalityState modalityState) {
+    myModalityState = modalityState;
+  }
+
+  @Override
   public void start() {
     myIsRunning = true;
     myIsCanceled = false;
   }
 
+  @Override
   public void stop() {
     myIsRunning = false;
   }
 
+  @Override
   public boolean isRunning() {
     return myIsRunning;
   }
 
-  public void cancel() {
+  @Override
+  public final void cancel() {
     myIsCanceled = true;
+    ProgressManager.canceled(this);
   }
 
-  public boolean isCanceled() {
+  @Override
+  public final boolean isCanceled() {
     return myIsCanceled;
   }
 
+  @Override
+  public final void checkCanceled() {
+    if (myIsCanceled && myNonCancelableSectionCount == 0) {
+      throw new ProcessCanceledException();
+    }
+  }
+
+  @Override
   public void setText(String text) {
   }
 
+  @Override
   public String getText() {
     return "";
   }
 
+  @Override
   public void setText2(String text) {
   }
 
+  @Override
   public String getText2() {
     return "";
   }
 
+  @Override
   public double getFraction() {
     return 1;
   }
 
+  @Override
   public void setFraction(double fraction) {
   }
 
+  @Override
   public void pushState() {
   }
 
+  @Override
   public void popState() {
   }
 
+  @Override
   public void startNonCancelableSection() {
+    myNonCancelableSectionCount++;
   }
 
+  @Override
   public void finishNonCancelableSection() {
+    myNonCancelableSectionCount--;
   }
 
+  @Override
   public boolean isModal() {
     return false;
   }
 
+  @Override
   @NotNull
   public ModalityState getModalityState() {
-    return ModalityState.NON_MODAL;
+    return myModalityState;
   }
 
+  @Override
   public void setModalityProgress(ProgressIndicator modalityProgress) {
   }
 
+  @Override
   public boolean isIndeterminate() {
     return false;
   }
 
+  @Override
   public void setIndeterminate(boolean indeterminate) {
-  }
-
-  public void checkCanceled() {
-    if (myIsCanceled) {
-      throw new ProcessCanceledException();
-    }
   }
 
   @Override
@@ -110,5 +146,13 @@ public class EmptyProgressIndicator implements ProgressIndicator {
   @Override
   public boolean isShowing() {
     return false;
+  }
+
+  @NotNull
+  public static ProgressIndicator notNullize(@Nullable ProgressIndicator indicator) {
+    if (indicator != null) {
+      return indicator;
+    }
+    return new EmptyProgressIndicator();
   }
 }

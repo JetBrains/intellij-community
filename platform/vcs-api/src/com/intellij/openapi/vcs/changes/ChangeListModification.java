@@ -18,19 +18,26 @@ package com.intellij.openapi.vcs.changes;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+/**
+ * @see ChangeListManager
+ */
 public interface ChangeListModification {
   LocalChangeList addChangeList(@NotNull String name, @Nullable final String comment);
+
+  void setDefaultChangeList(@NotNull String name);
   void setDefaultChangeList(@NotNull LocalChangeList list);
 
-  void removeChangeList(final String name);
-  void removeChangeList(final LocalChangeList list);
+  void removeChangeList(@NotNull String name);
+  void removeChangeList(@NotNull LocalChangeList list);
 
-  void moveChangesTo(final LocalChangeList list, final Change... changes);
+  void moveChangesTo(@NotNull LocalChangeList list, @NotNull Change... changes);
 
-  // added - since ChangeListManager wouldn't pass internal lists, only copies
-  boolean setReadOnly(final String name, final boolean value);
+  /**
+   * Prohibit changelist deletion or rename until Project is closed
+   */
+  boolean setReadOnly(@NotNull String name, final boolean value);
 
   boolean editName(@NotNull String fromName, @NotNull String toName);
   @Nullable
-  String editComment(@NotNull String fromName, final String newComment);
+  String editComment(@NotNull String name, final String newComment);
 }

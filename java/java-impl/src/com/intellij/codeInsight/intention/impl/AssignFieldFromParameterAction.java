@@ -16,7 +16,7 @@
 package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeInsight.CodeInsightBundle;
-import com.intellij.codeInsight.CodeInsightUtilBase;
+import com.intellij.codeInsight.daemon.impl.analysis.JavaHighlightUtil;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -29,6 +29,7 @@ import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.SuggestedNameInfo;
 import com.intellij.psi.codeStyle.VariableKind;
+import com.intellij.psi.controlFlow.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
@@ -47,8 +48,22 @@ public class AssignFieldFromParameterAction extends BaseIntentionAction {
       return false;
     }
     final PsiField field = findFieldToAssign(project, myParameter);
-    if (field == null) return false;
+    if (field == null || type == null || !field.getType().isAssignableFrom(type)) return false;
     if (!field.getLanguage().isKindOf(JavaLanguage.INSTANCE)) return false;
+    PsiElement scope = myParameter.getDeclarationScope();
+    if (scope instanceof PsiMethod && field.hasModifierProperty(PsiModifier.FINAL)) {
+      PsiMethod method = (PsiMethod)scope;
+      if (!method.isConstructor()) return false;
+      if (!JavaHighlightUtil.getChainedConstructors(method).isEmpty()) return false;
+      PsiCodeBlock body = method.getBody();
+      LOG.assertTrue(body != null);
+      try {
+        ControlFlow flow =
+          ControlFlowFactory.getInstance(project).getControlFlow(body, LocalsOrMyInstanceFieldsControlFlowPolicy.getInstance());
+        if (!ControlFlowUtil.isVariableDefinitelyNotAssigned(field, flow)) return false;
+      }
+      catch (AnalysisCanceledException ignored) { }
+    }
     setText(CodeInsightBundle.message("intention.assign.field.from.parameter.text", field.getName()));
 
     return true;
@@ -63,16 +78,9 @@ public class AssignFieldFromParameterAction extends BaseIntentionAction {
   @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) {
     final PsiParameter myParameter = FieldFromParameterUtils.findParameterAtCursor(file, editor);
-    if (!CodeInsightUtilBase.prepareFileForWrite(myParameter.getContainingFile())) return;
-
     IdeDocumentHistory.getInstance(project).includeCurrentPlaceAsChangePlace();
-    try {
-      PsiField field = findFieldToAssign(project, myParameter);
-      if (field != null) addFieldAssignmentStatement(project, field, myParameter, editor);
-    }
-    catch (IncorrectOperationException e) {
-      LOG.error(e);
-    }
+    PsiField field = findFieldToAssign(project, myParameter);
+    if (field != null) addFieldAssignmentStatement(project, field, myParameter, editor);
   }
 
   @Nullable
@@ -99,19 +107,19 @@ public class AssignFieldFromParameterAction extends BaseIntentionAction {
     return field;
   }
 
-  public static void addFieldAssignmentStatement(@NotNull Project project,
-                                                 @NotNull PsiField field,
-                                                 @NotNull PsiParameter parameter,
-                                                 @NotNull Editor editor) throws IncorrectOperationException {
+  public static PsiElement addFieldAssignmentStatement(@NotNull Project project,
+                                                       @NotNull PsiField field,
+                                                       @NotNull PsiParameter parameter,
+                                                       @NotNull Editor editor) throws IncorrectOperationException {
     final PsiMethod method = (PsiMethod)parameter.getDeclarationScope();
     final PsiCodeBlock methodBody = method.getBody();
-    if (methodBody == null) return;
-    final PsiElementFactory factory = JavaPsiFacade.getInstance(project).getElementFactory();
+    if (methodBody == null) return null;
+    final PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
     final String fieldName = field.getName();
     final String parameterName = parameter.getName();
     final boolean isMethodStatic = method.hasModifierProperty(PsiModifier.STATIC);
     final PsiClass targetClass = method.getContainingClass();
-    if (targetClass == null) return;
+    if (targetClass == null) return null;
 
     String stmtText = fieldName + " = " + parameterName + ";";
     if (Comparing.strEqual(fieldName, parameterName) || JavaPsiFacade.getInstance(project).getResolveHelper().resolveReferencedVariable(fieldName, methodBody) != field) {
@@ -131,5 +139,6 @@ public class AssignFieldFromParameterAction extends BaseIntentionAction {
     }
     editor.getCaretModel().moveToOffset(inserted.getTextRange().getEndOffset());
     editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
+    return inserted;
   }
 }

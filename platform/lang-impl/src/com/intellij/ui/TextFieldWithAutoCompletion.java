@@ -16,19 +16,16 @@
 
 package com.intellij.ui;
 
-import com.intellij.codeInsight.hint.HintManager;
-import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.event.DocumentAdapter;
-import com.intellij.openapi.editor.event.DocumentEvent;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.ex.EditorEx;
-import com.intellij.openapi.editor.ex.FocusChangeListener;
 import com.intellij.openapi.fileTypes.PlainTextLanguage;
-import com.intellij.openapi.keymap.KeymapUtil;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiFile;
+import com.intellij.util.textCompletion.TextCompletionUtil;
+import com.intellij.util.textCompletion.TextFieldWithCompletion;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -36,135 +33,85 @@ import javax.swing.*;
 import java.util.Collection;
 
 /**
+ * Text field with completion from a list of values.
+ *
+ * Differs from {@link TextFieldWithCompletion} in 2 aspects:
+ * 1. only accepts instances of {@link TextFieldWithAutoCompletionListProvider} (and not other implementations of {@link com.intellij.util.textCompletion.TextCompletionProvider});
+ * 2. allows to change completion variants {@link #setVariants(Collection)}.
+ *
+ * Completion is implemented via {@link com.intellij.util.textCompletion.TextCompletionContributor}.
+ *
  * @author Roman Chernyatchik
- *         <p/>
- *         It is text field with autocompletion from list of values.
- *         <p/>
- *         Autocompletion is implemented via LookupManager.
- *         Use setVariants(..) set list of values for autocompletion.
- *         For variants you can use not only instances of PresentableLookupValue, but
- *         also instances of LookupValueWithPriority and LookupValueWithUIHint
  */
-public class TextFieldWithAutoCompletion<T> extends LanguageTextField {
-
+public class TextFieldWithAutoCompletion<T> extends TextFieldWithCompletion {
   public static final TextFieldWithAutoCompletionListProvider EMPTY_COMPLETION = new StringsCompletionProvider(null, null);
-  private final boolean myShowAutocompletionIsAvailableHint;
+  @NotNull private final TextFieldWithAutoCompletionListProvider<T> myProvider;
 
-  public TextFieldWithAutoCompletion() {
-    // For UI designer
-    this(null, null, false, null);
+  public TextFieldWithAutoCompletion(@Nullable Project project,
+                                     @NotNull TextFieldWithAutoCompletionListProvider<T> provider,
+                                     boolean showCompletionHint,
+                                     @Nullable String text) {
+    super(project, provider, text == null ? "" : text, true, true, false, showCompletionHint);
+    myProvider = provider;
   }
 
-  public TextFieldWithAutoCompletion(final Project project,
-                                     @Nullable final TextFieldWithAutoCompletionListProvider<T> provider,
-                                     final boolean showAutocompletionIsAvailableHint, @Nullable final String text) {
-    super(PlainTextLanguage.INSTANCE, project, text == null ? "" : text);
+  @NotNull
+  public static TextFieldWithAutoCompletion<String> create(@Nullable Project project,
+                                                           @NotNull Collection<String> items,
+                                                           boolean showCompletionHint,
+                                                           @Nullable String text) {
+    return create(project, items, null, showCompletionHint, text);
+  }
 
-    myShowAutocompletionIsAvailableHint = showAutocompletionIsAvailableHint;
+  @NotNull
+  public static TextFieldWithAutoCompletion<String> create(@Nullable Project project,
+                                                           @NotNull Collection<String> items,
+                                                           @Nullable Icon icon,
+                                                           boolean showCompletionHint,
+                                                           @Nullable String text) {
+    return new TextFieldWithAutoCompletion<>(project, new StringsCompletionProvider(items, icon), showCompletionHint, text);
+  }
 
-    if (provider != null) {
-      TextFieldWithAutoCompletionContributor.installCompletion(getDocument(), project, provider, true);
+  public void setVariants(@NotNull Collection<T> variants) {
+    myProvider.setItems(variants);
+  }
+
+  public <T> void installProvider(@NotNull TextFieldWithAutoCompletionListProvider<T> provider) {
+    installCompletion(getDocument(), getProject(), provider, true);
+  }
+
+  public static void installCompletion(@NotNull Document document,
+                                       @NotNull Project project,
+                                       @NotNull TextFieldWithAutoCompletionListProvider provider,
+                                       boolean autoPopup) {
+    PsiFile psiFile = PsiDocumentManager.getInstance(project).getPsiFile(document);
+    if (psiFile != null) {
+      TextCompletionUtil.installProvider(psiFile, provider, autoPopup);
     }
   }
 
-  public static TextFieldWithAutoCompletion<String> create(final Project project,
-                                                           @NotNull final Collection<String> items,
-                                                           @Nullable final Icon icon,
-                                                           final boolean showAutocompletionIsAvailableHint, @Nullable final String text) {
-    return new TextFieldWithAutoCompletion<String>(project, new StringsCompletionProvider(items, icon), showAutocompletionIsAvailableHint,
-                                                   text);
-  }
-
-  @Override
-  protected EditorEx createEditor() {
-    final EditorEx editor = super.createEditor();
-
-    if (!myShowAutocompletionIsAvailableHint) {
-      return editor;
-    }
-
-    final String completionShortcutText = getCompletionShortcutText();
-    if (completionShortcutText == null) {
-      return editor;
-    }
-
-    final Ref<Boolean> toShowHintRef = new Ref<Boolean>(true);
-    editor.getDocument().addDocumentListener(new DocumentAdapter() {
-      @Override
-      public void documentChanged(DocumentEvent e) {
-        toShowHintRef.set(false);
-      }
-    });
-
-    editor.addFocusListener(new FocusChangeListener() {
-      @Override
-      public void focusGained(final Editor editor) {
-        if (toShowHintRef.get() && getText().length() == 0) {
-          ApplicationManager.getApplication().invokeLater(new Runnable() {
-            @Override
-            public void run() {
-              HintManager.getInstance().showInformationHint(editor, "Code completion available ( " + completionShortcutText + " )");
-            }
-          });
-        }
-      }
-
-      @Override
-      public void focusLost(Editor editor) {
-        // Do nothing
-      }
-    });
-    return editor;
-  }
-
-  @Nullable
-  private static String getCompletionShortcutText() {
-    final AnAction action = ActionManager.getInstance().getAction(IdeActions.ACTION_CODE_COMPLETION);
-    if (action != null) {
-      final ShortcutSet shortcutSet = action.getShortcutSet();
-      if (shortcutSet != null) {
-        final Shortcut[] shortcuts = shortcutSet.getShortcuts();
-        if (shortcuts != null && shortcuts.length > 0) {
-          return KeymapUtil.getShortcutText(shortcuts[0]);
-        }
-      }
-    }
-    return null;
-  }
-
-  public static class StringsCompletionProvider extends TextFieldWithAutoCompletionListProvider<String> {
+  public static class StringsCompletionProvider extends TextFieldWithAutoCompletionListProvider<String> implements DumbAware {
     @Nullable private final Icon myIcon;
 
-    public StringsCompletionProvider(@Nullable final Collection<String> variants,
-                                     @Nullable final Icon icon) {
+    public StringsCompletionProvider(@Nullable Collection<String> variants, @Nullable Icon icon) {
       super(variants);
       myIcon = icon;
     }
 
     @Override
-    public int compare(final String item1, final String item2) {
+    public int compare(String item1, String item2) {
       return StringUtil.compare(item1, item2, false);
     }
 
     @Override
-    protected Icon getIcon(@NotNull final String item) {
+    protected Icon getIcon(@NotNull String item) {
       return myIcon;
     }
 
     @NotNull
     @Override
-    protected String getLookupString(@NotNull final String item) {
+    protected String getLookupString(@NotNull String item) {
       return item;
-    }
-
-    @Override
-    protected String getTailText(@NotNull final String item) {
-      return null;
-    }
-
-    @Override
-    protected String getTypeText(@NotNull final String item) {
-      return null;
     }
   }
 }

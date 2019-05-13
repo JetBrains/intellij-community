@@ -1,8 +1,8 @@
 class Test {
     interface I<T extends Number> {
-        void _(T t);
+        void m(T t);
     }
-    
+
     void foo(Object o) { }
 
     void test() {

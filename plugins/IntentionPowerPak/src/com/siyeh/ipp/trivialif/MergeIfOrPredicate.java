@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2012 Dave Griffith
+ * Copyright 2003-2014 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,15 +15,19 @@
  */
 package com.siyeh.ipp.trivialif;
 
-import com.intellij.psi.*;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiIfStatement;
+import com.intellij.psi.PsiJavaToken;
+import com.intellij.psi.PsiStatement;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.siyeh.ig.psiutils.ControlFlowUtils;
+import com.siyeh.ig.psiutils.EquivalenceChecker;
 import com.siyeh.ipp.base.PsiElementPredicate;
-import com.siyeh.ipp.psiutils.ControlFlowUtils;
-import com.siyeh.ipp.psiutils.EquivalenceChecker;
 import com.siyeh.ipp.psiutils.ErrorUtil;
 
 class MergeIfOrPredicate implements PsiElementPredicate {
 
+  @Override
   public boolean satisfiedBy(PsiElement element) {
     return isMergableExplicitIf(element) || isMergableImplicitIf(element);
   }
@@ -54,7 +58,7 @@ class MergeIfOrPredicate implements PsiElementPredicate {
     }
     final PsiIfStatement childIfStatement = (PsiIfStatement)elseBranch;
     final PsiStatement childThenBranch = childIfStatement.getThenBranch();
-    return EquivalenceChecker.statementsAreEquivalent(thenBranch, childThenBranch);
+    return EquivalenceChecker.getCanonicalPsiEquivalence().statementsAreEquivalent(thenBranch, childThenBranch);
   }
 
   private static boolean isMergableImplicitIf(PsiElement element) {
@@ -79,12 +83,12 @@ class MergeIfOrPredicate implements PsiElementPredicate {
     if (ControlFlowUtils.statementMayCompleteNormally(thenBranch)) {
       return false;
     }
-    final PsiElement nextStatement = PsiTreeUtil.skipSiblingsForward(ifStatement, PsiWhiteSpace.class);
+    final PsiElement nextStatement = PsiTreeUtil.skipWhitespacesForward(ifStatement);
     if (!(nextStatement instanceof PsiIfStatement)) {
       return false;
     }
     final PsiIfStatement nextIfStatement = (PsiIfStatement)nextStatement;
     final PsiStatement nextThenBranch = nextIfStatement.getThenBranch();
-    return EquivalenceChecker.statementsAreEquivalent(thenBranch, nextThenBranch);
+    return EquivalenceChecker.getCanonicalPsiEquivalence().statementsAreEquivalent(thenBranch, nextThenBranch);
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,7 +20,7 @@ package org.jetbrains.plugins.groovy.intentions
  * @author Hamlet D'Arcy
  */
 class SplitIfTest extends GrIntentionTestCase {
-  public void test_that_two_binary_operand_are_split_into_2_if_statements() throws Exception {
+  void test_that_two_binary_operand_are_split_into_2_if_statements() throws Exception {
     doTextTest '''if(a <caret>&& b) {
   c();
 }
@@ -35,7 +35,7 @@ class SplitIfTest extends GrIntentionTestCase {
   }
 
 
-public void test_that_two_binary_operand_are_not_split_when_if_statements_has_else_branch() throws Exception {
+  void test_that_two_binary_operand_are_not_split_when_if_statements_has_else_branch() throws Exception {
     doAntiTest '''if(a <caret>&& b) {
   c();
 } else {

@@ -1,0 +1,18 @@
+<html>
+<body>
+Inspection detects usages of pseudo-functional code if Java Stream API is available.
+<br/>
+Consider cases when monad behaviour is emulated by static method call:
+<br/>
+<code>
+List&lt;String&gt; transformedIterable = Iterables.transform(someList, someTransformFunction);
+</code>
+<br>
+Note, that code semantic could be changed, for example: guava's <b>Iterable.transform</b> produce lazy-evaluated iterable
+but replacement produced by quick fix will be eager-evaluated.
+<br>
+This inspection only reports if the project
+or module is configured to use a language level
+of 8 or higher.
+</body>
+</html>

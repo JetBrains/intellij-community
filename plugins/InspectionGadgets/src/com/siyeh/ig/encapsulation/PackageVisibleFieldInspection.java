@@ -25,6 +25,11 @@ import com.siyeh.ig.fixes.EncapsulateVariableFix;
 import org.jetbrains.annotations.NotNull;
 
 public class PackageVisibleFieldInspection extends BaseInspection {
+  @Override
+  protected InspectionGadgetsFix buildFix(Object... infos) {
+    final PsiField field = (PsiField)infos[0];
+    return new EncapsulateVariableFix(field.getName());
+  }
 
   @Override
   @NotNull
@@ -38,12 +43,6 @@ public class PackageVisibleFieldInspection extends BaseInspection {
   public String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "package.visible.field.problem.descriptor");
-  }
-
-  @Override
-  protected InspectionGadgetsFix buildFix(Object... infos) {
-    final PsiField field = (PsiField)infos[0];
-    return new EncapsulateVariableFix(field.getName());
   }
 
   @Override

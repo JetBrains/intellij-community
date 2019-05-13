@@ -23,6 +23,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.util.containers.CharTrie;
 import gnu.trove.THashSet;
 import gnu.trove.TIntHashSet;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -34,7 +35,7 @@ import java.util.Set;
  */
 public class KeywordParser {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.highlighter.custom.tokens.KeywordParser");
-  private final List<Set<String>> myKeywordSets = new ArrayList<Set<String>>();
+  private final List<Set<String>> myKeywordSets = new ArrayList<>();
   private final CharTrie myTrie = new CharTrie();
   private final TIntHashSet myHashCodes = new TIntHashSet();
   private final boolean myIgnoreCase;
@@ -53,20 +54,21 @@ public class KeywordParser {
 
   private Set<String> normalizeKeywordSet(Set<String> keywordSet) {
     if (!myIgnoreCase) {
-      return new THashSet<String>(keywordSet);
+      return new THashSet<>(keywordSet);
     }
 
-    final Set<String> result = new THashSet<String>();
+    final Set<String> result = new THashSet<>();
     for (String s : keywordSet) {
       result.add(StringUtil.toUpperCase(s));
     }
     return result;
   }
 
-  public boolean hasToken(int position, CharSequence myBuffer, TokenInfo myTokenInfo) {
+  public boolean hasToken(int position, CharSequence myBuffer, @Nullable TokenInfo tokenInfo) {
     int index = 0;
     int offset = position;
-    boolean found = false;
+    String longestKeyword = null;
+    IElementType longestKeywordType = null;
     while (offset < myBuffer.length()) {
       char c = myBuffer.charAt(offset++);
       int nextIndex = myTrie.findSubNode(index, myIgnoreCase ? Character.toUpperCase(c) : c);
@@ -79,24 +81,27 @@ public class KeywordParser {
         String testKeyword = myIgnoreCase ? StringUtil.toUpperCase(keyword) : keyword;
         for (int i = 0; i < CustomHighlighterTokenType.KEYWORD_TYPE_COUNT; i++) {
           if (myKeywordSets.get(i).contains(testKeyword)) {
-            myTokenInfo.updateData(position, position + keyword.length(), getToken(i));
-            found = true;
+            longestKeyword = testKeyword;
+            longestKeywordType = getToken(i);
             break;
           }
         }
       }
     }
 
-    return found;
-  }
-
-  private static boolean isWordEnd(int offset, CharSequence myBuffer) {
-    if (offset == myBuffer.length()) {
-      return true;
+    if (longestKeyword != null && tokenInfo != null) {
+      tokenInfo.updateData(position, position + longestKeyword.length(), longestKeywordType);
     }
 
-    char ch = myBuffer.charAt(offset);
-    return ch != '-' && !Character.isLetterOrDigit(ch);
+    return longestKeyword != null;
+  }
+
+  private static boolean isWordEnd(int offset, CharSequence sequence) {
+    if (offset == sequence.length()) {
+      return true;
+    }
+    
+    return !Character.isJavaIdentifierPart(sequence.charAt(offset - 1)) || !Character.isJavaIdentifierPart(sequence.charAt(offset));
   }
 
   private static IElementType getToken(int keywordSetIndex) {

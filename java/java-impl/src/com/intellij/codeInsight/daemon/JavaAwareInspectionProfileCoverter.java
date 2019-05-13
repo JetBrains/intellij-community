@@ -1,34 +1,16 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
-/*
- * User: anna
- * Date: 21-Feb-2008
- */
 package com.intellij.codeInsight.daemon;
 
-import com.intellij.codeInspection.InspectionProfileEntry;
-import com.intellij.codeInspection.ModifiableModel;
-import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
+import com.intellij.codeInspection.ex.InspectionProfileImpl;
+import com.intellij.codeInspection.ex.InspectionToolWrapper;
 import com.intellij.codeInspection.javaDoc.JavaDocLocalInspection;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
+import com.intellij.psi.PsiElement;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 
-public class JavaAwareInspectionProfileCoverter extends InspectionProfileConvertor{
+public class JavaAwareInspectionProfileCoverter extends InspectionProfileConvertor {
   private String myAdditionalJavadocTags;
   @NonNls private static final String ADDITONAL_JAVADOC_TAGS_OPTION = "ADDITIONAL_JAVADOC_TAGS";
 
@@ -49,12 +31,12 @@ public class JavaAwareInspectionProfileCoverter extends InspectionProfileConvert
   }
 
   @Override
-  protected void fillErrorLevels(final ModifiableModel profile) {
+  protected void fillErrorLevels(InspectionProfileImpl profile) {
     super.fillErrorLevels(profile);
 
     //javadoc attributes
-    final InspectionProfileEntry inspectionTool = profile.getInspectionTool(JavaDocLocalInspection.SHORT_NAME, null);
-    JavaDocLocalInspection inspection = (JavaDocLocalInspection)((LocalInspectionToolWrapper)inspectionTool).getTool();
+    InspectionToolWrapper toolWrapper = profile.getInspectionTool(JavaDocLocalInspection.SHORT_NAME, (PsiElement)null);
+    JavaDocLocalInspection inspection = (JavaDocLocalInspection)toolWrapper.getTool();
     inspection.myAdditionalJavadocTags = myAdditionalJavadocTags;
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,12 +15,14 @@
  */
 package com.intellij.openapi.util;
 
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * @author peter
  */
 public abstract class NullableLazyValue<T> {
+  private static final RecursionGuard ourGuard = RecursionManager.createGuard("NullableLazyValue");
   private boolean myComputed;
   @Nullable private T myValue;
 
@@ -29,10 +31,27 @@ public abstract class NullableLazyValue<T> {
 
   @Nullable
   public T getValue() {
+    T value = myValue;
     if (!myComputed) {
-      myValue = compute();
-      myComputed = true;
+      RecursionGuard.StackStamp stamp = ourGuard.markStack();
+      value = compute();
+      if (stamp.mayCacheNow()) {
+        myValue = value;
+        myComputed = true;
+      }
     }
-    return myValue;
+    return value;
+  }
+
+  @NotNull
+  public static <T> NullableLazyValue<T> createValue(@NotNull final Factory<? extends T> value) {
+    return new NullableLazyValue<T>() {
+
+      @Nullable
+      @Override
+      protected T compute() {
+        return value.create();
+      }
+    };
   }
 }

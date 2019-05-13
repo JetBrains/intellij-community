@@ -21,6 +21,8 @@ import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.vfs.CharsetToolkit;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
@@ -38,12 +40,13 @@ class OutputTabAdapter extends ProcessAdapter {
     private final ProcessHandler myStartedProcess;
     private final HighlightingOutputConsole myConsole;
 
-  public OutputTabAdapter(ProcessHandler startedProcess, HighlightingOutputConsole console) {
+  OutputTabAdapter(ProcessHandler startedProcess, HighlightingOutputConsole console) {
         myStartedProcess = startedProcess;
         myConsole = console;
     }
 
-    public void startNotified(ProcessEvent event) {
+    @Override
+    public void startNotified(@NotNull ProcessEvent event) {
         final XsltCommandLineState state = event.getProcessHandler().getUserData(XsltCommandLineState.STATE);
         if (state != null) {
           attachOutputConsole(state.getPort());
@@ -52,6 +55,7 @@ class OutputTabAdapter extends ProcessAdapter {
 
     public void attachOutputConsole(final int port) {
         ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
+            @Override
             public void run() {
                 try {
                     final InputStream stream;
@@ -60,12 +64,12 @@ class OutputTabAdapter extends ProcessAdapter {
                         return;
                     }
 
-                    final InputStreamReader reader = new InputStreamReader(stream, "UTF-8");
+                    final InputStreamReader reader = new InputStreamReader(stream, CharsetToolkit.UTF8_CHARSET);
                     final HighlightingProcessHandler process = new HighlightingProcessHandler(reader) {
                         private boolean mySelectionChanged;
 
                         @Override
-                        public void notifyTextAvailable(String text, Key outputType) {
+                        public void notifyTextAvailable(@NotNull String text, @NotNull Key outputType) {
                             super.notifyTextAvailable(text, outputType);
 
                             if (mySelectionChanged) {
@@ -92,7 +96,7 @@ class OutputTabAdapter extends ProcessAdapter {
     @Nullable
     private InputStream connect(int port) throws IOException {
         final long s = System.currentTimeMillis();
-        final InetSocketAddress endpoint = new InetSocketAddress(InetAddress.getByName("127.0.0.1"), port);
+        final InetSocketAddress endpoint = new InetSocketAddress(InetAddress.getLoopbackAddress(), port);
 
         myStartedProcess.notifyTextAvailable("Connecting to XSLT runner on " + endpoint + "\n", ProcessOutputTypes.SYSTEM);
 
@@ -109,7 +113,7 @@ class OutputTabAdapter extends ProcessAdapter {
                 return socket.getInputStream();
             } catch (ConnectException e) {
                 ex = e;
-                try { Thread.sleep(500); } catch (InterruptedException e1) { break; }
+                try { Thread.sleep(500); } catch (InterruptedException ignored) { break; }
             }
             if (myStartedProcess.isProcessTerminated() || myStartedProcess.isProcessTerminating()) {
                 return null;

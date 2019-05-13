@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,46 +16,46 @@
 package com.intellij.diagnostic;
 
 import com.intellij.openapi.extensions.PluginId;
-import org.jetbrains.annotations.NonNls;
+import com.intellij.openapi.util.text.StringUtil;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
- * Created by IntelliJ IDEA.
- * User: stathik
- * Date: Jan 8, 2004
- * Time: 3:06:43 PM
- * To change this template use Options | File Templates.
+ * Represents an internal error caused by a plugin. It may happen if the plugin's code fails with an exception, or if the plugin violates
+ * some contract of IntelliJ Platform. If such exceptions are thrown or logged via {@link com.intellij.openapi.diagnostic.Logger#error(Throwable)}
+ * method and reported to JetBrains by user, they may be automatically attributed to corresponding plugins.
+ *
+ * <p> If the problem is caused by a class, use {@link com.intellij.ide.plugins.PluginManagerCore#createPluginException} to create
+ * an instance. If the problem is caused by an extension, implement {@link com.intellij.openapi.extensions.PluginAware} in its extension class
+ * to get the plugin ID.
  */
 public class PluginException extends RuntimeException {
   private final PluginId myPluginId;
 
-  public PluginException(String message, Throwable cause, PluginId pluginId) {
+  public PluginException(@NotNull String message, Throwable cause, @Nullable PluginId pluginId) {
     super(message, cause);
     myPluginId = pluginId;
   }
 
-  public PluginException(Throwable e, PluginId pluginId) {
+  public PluginException(@NotNull Throwable e, @Nullable PluginId pluginId) {
     super (e.getMessage(), e);
     myPluginId = pluginId;
   }
 
-  public PluginException(final String message, final PluginId pluginId) {
+  public PluginException(@NotNull String message, @Nullable PluginId pluginId) {
     super(message);
     myPluginId = pluginId;
   }
 
+  @Nullable
   public PluginId getPluginId() {
     return myPluginId;
   }
 
   @Override
+  @NotNull 
   public String getMessage() {
-    @NonNls String message = super.getMessage();
-
-    if (message == null) {
-      message = "";
-    }
-
-    message += " [Plugin: " + myPluginId.toString() + "]";
-    return message;
+    String message = super.getMessage();
+    return myPluginId != null ? StringUtil.notNullize(message) + " [Plugin: " + myPluginId + "]" : message;
   }
 }

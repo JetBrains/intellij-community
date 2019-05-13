@@ -28,7 +28,6 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Aug 13, 2010
  */
 public abstract class AntDomReferenceBase extends PsiReferenceBase<PsiElement> implements AntDomReference{
   private boolean myShouldBeSkippedByAnnotator;
@@ -48,15 +47,17 @@ public abstract class AntDomReferenceBase extends PsiReferenceBase<PsiElement> i
     super(element);
   }
 
+  @Override
   public boolean shouldBeSkippedByAnnotator() {
     return myShouldBeSkippedByAnnotator;
   }
 
+  @Override
   public void setShouldBeSkippedByAnnotator(boolean value) {
     myShouldBeSkippedByAnnotator = true;
   }
-  
-  @Nullable 
+
+  @Nullable
   public static DomElement toDomElement(PsiElement resolve) {
     if (resolve instanceof PomTargetPsiElement) {
       final PomTarget target = ((PomTargetPsiElement)resolve).getTarget();
@@ -67,5 +68,5 @@ public abstract class AntDomReferenceBase extends PsiReferenceBase<PsiElement> i
     }
     return DomUtil.getDomElement(resolve);
   }
-  
+
 }

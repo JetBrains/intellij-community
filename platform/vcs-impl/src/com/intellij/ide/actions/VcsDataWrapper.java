@@ -16,6 +16,7 @@
 package com.intellij.ide.actions;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.project.Project;
@@ -35,7 +36,7 @@ class VcsDataWrapper {
 
   VcsDataWrapper(final AnActionEvent e) {
     final DataContext dataContext = e.getDataContext();
-    myProject = PlatformDataKeys.PROJECT.getData(dataContext);
+    myProject = CommonDataKeys.PROJECT.getData(dataContext);
     if (myProject == null || myProject.isDefault()) {
       myManager = null;
       myVcses = null;
@@ -79,7 +80,7 @@ class VcsDataWrapper {
   public Map<String, String> getVcses() {
     if (myVcses == null && myProject != null && !myProject.isDefault()) {
       final VcsDescriptor[] allVcss = myManager.getAllVcss();
-      myVcses = new HashMap<String, String>(allVcss.length, 1);
+      myVcses = new HashMap<>(allVcss.length, 1);
       for (VcsDescriptor vcs : allVcss) {
         myVcses.put(vcs.getDisplayName(), vcs.getName());
       }

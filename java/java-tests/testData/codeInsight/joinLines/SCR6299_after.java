@@ -1,0 +1,2 @@
+<caret>class Test {
+}

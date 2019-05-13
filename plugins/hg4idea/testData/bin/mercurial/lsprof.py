@@ -1,5 +1,3 @@
-#! /usr/bin/env python
-
 import sys
 from _lsprof import Profiler, profiler_entry
 
@@ -40,8 +38,8 @@ class Stats(object):
             d = d[:top]
         cols = "% 12s %12s %11.4f %11.4f   %s\n"
         hcols = "% 12s %12s %12s %12s %s\n"
-        file.write(hcols % ("CallCount", "Recursive", "Total(ms)",
-                            "Inline(ms)", "module:lineno(function)"))
+        file.write(hcols % ("CallCount", "Recursive", "Total(s)",
+                            "Inline(s)", "module:lineno(function)"))
         count = 0
         for e in d:
             file.write(cols % (e.callcount, e.reccallcount, e.totaltime,
@@ -50,11 +48,11 @@ class Stats(object):
             if limit is not None and count == limit:
                 return
             ccount = 0
-            if e.calls:
+            if climit and e.calls:
                 for se in e.calls:
-                    file.write(cols % ("+%s" % se.callcount, se.reccallcount,
+                    file.write(cols % (se.callcount, se.reccallcount,
                                        se.totaltime, se.inlinetime,
-                                       "+%s" % label(se.code)))
+                                       "    %s" % label(se.code)))
                     count += 1
                     ccount += 1
                     if limit is not None and count == limit:
@@ -88,9 +86,7 @@ def label(code):
         for k, v in list(sys.modules.iteritems()):
             if v is None:
                 continue
-            if not hasattr(v, '__file__'):
-                continue
-            if not isinstance(v.__file__, str):
+            if not isinstance(getattr(v, '__file__', None), str):
                 continue
             if v.__file__.startswith(code.co_filename):
                 mname = _fn2mod[code.co_filename] = k

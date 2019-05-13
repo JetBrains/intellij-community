@@ -22,24 +22,31 @@ import org.jetbrains.annotations.NotNull;
  * @author nik
  */
 public abstract class FacetManagerAdapter implements FacetManagerListener {
+  @Override
   public void beforeFacetAdded(@NotNull Facet facet) {
   }
 
+  @Override
   public void beforeFacetRemoved(@NotNull Facet facet) {
   }
 
+  @Override
   public void beforeFacetRenamed(@NotNull final Facet facet) {
   }
 
+  @Override
   public void facetRenamed(@NotNull final Facet facet, @NotNull final String oldName) {
   }
 
+  @Override
   public void facetAdded(@NotNull Facet facet) {
   }
 
+  @Override
   public void facetRemoved(@NotNull Facet facet) {
   }
 
+  @Override
   public void facetConfigurationChanged(@NotNull Facet facet) {
   }
 }

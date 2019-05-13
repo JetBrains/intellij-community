@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,36 +16,37 @@
 package com.intellij.xml.actions.xmlbeans;
 
 import com.intellij.javaee.ExternalResourceManager;
+import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.ActionPlaces;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
 import com.intellij.xml.XmlBundle;
 import org.apache.xmlbeans.impl.inst2xsd.Inst2Xsd;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.HashMap;
 
 /**
  * @author Konstantin Bulenkov
  */
 public class GenerateSchemaFromInstanceDocumentAction extends AnAction {
-  private static final Map<String, String> DESIGN_TYPES = new HashMap<String, String>();
-  private static final Map<String, String> CONTENT_TYPES = new HashMap<String, String>();
+  private static final Map<String, String> DESIGN_TYPES = new HashMap<>();
+  private static final Map<String, String> CONTENT_TYPES = new HashMap<>();
   static {
     DESIGN_TYPES.put(GenerateSchemaFromInstanceDocumentDialog.LOCAL_ELEMENTS_GLOBAL_COMPLEX_TYPES, "vb");
     DESIGN_TYPES.put(GenerateSchemaFromInstanceDocumentDialog.LOCAL_ELEMENTS_TYPES, "ss");
@@ -57,8 +58,8 @@ public class GenerateSchemaFromInstanceDocumentAction extends AnAction {
   //private static final
   
   @Override
-  public void update(AnActionEvent e) {
-    final VirtualFile file = PlatformDataKeys.VIRTUAL_FILE.getData(e.getDataContext());
+  public void update(@NotNull AnActionEvent e) {
+    final VirtualFile file = CommonDataKeys.VIRTUAL_FILE.getData(e.getDataContext());
     final boolean enabled = isAcceptableFile(file);
     e.getPresentation().setEnabled(enabled);
     if (ActionPlaces.isPopupPlace(e.getPlace())) {
@@ -66,16 +67,13 @@ public class GenerateSchemaFromInstanceDocumentAction extends AnAction {
     }
   }
 
-  public void actionPerformed(AnActionEvent e) {
-    final Project project = PlatformDataKeys.PROJECT.getData(e.getDataContext());
-    final VirtualFile file = PlatformDataKeys.VIRTUAL_FILE.getData(e.getDataContext());
+  @Override
+  public void actionPerformed(@NotNull AnActionEvent e) {
+    final Project project = e.getProject();
+    final VirtualFile file = CommonDataKeys.VIRTUAL_FILE.getData(e.getDataContext());
 
     final GenerateSchemaFromInstanceDocumentDialog dialog = new GenerateSchemaFromInstanceDocumentDialog(project, file);
-    dialog.setOkAction(new Runnable() {
-      public void run() {
-        doAction(project, dialog);
-      }
-    });    
+    dialog.setOkAction(() -> doAction(project, dialog));
 
     dialog.show();
   }
@@ -84,7 +82,7 @@ public class GenerateSchemaFromInstanceDocumentAction extends AnAction {
     FileDocumentManager.getInstance().saveAllDocuments();
 
     final String url = dialog.getUrl().getText();
-    final VirtualFile relativeFile = VfsUtil.findRelativeFile(ExternalResourceManager.getInstance().getResourceLocation(url), null);
+    final VirtualFile relativeFile = VfsUtilCore.findRelativeFile(ExternalResourceManager.getInstance().getResourceLocation(url), null);
     VirtualFile relativeFileDir;
     if (relativeFile == null) {
       Messages.showErrorDialog(project, XmlBundle.message("file.doesnt.exist", url), XmlBundle.message("error"));
@@ -97,7 +95,7 @@ public class GenerateSchemaFromInstanceDocumentAction extends AnAction {
       return;
     }
 
-    @NonNls List<String> parameters = new LinkedList<String>();
+    @NonNls List<String> parameters = new LinkedList<>();
     parameters.add("-design");
     parameters.add(DESIGN_TYPES.get(dialog.getDesignType()));
 
@@ -127,12 +125,10 @@ public class GenerateSchemaFromInstanceDocumentAction extends AnAction {
     File xsd = new File(dirPath + File.separator + dialog.getTargetSchemaName());
     final VirtualFile xsdFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(xsd);
     if (xsdFile != null) {
-        ApplicationManager.getApplication().runWriteAction(new Runnable() {
-          public void run() {
-            try {
-              xsdFile.delete(null);
-            } catch (IOException e) {//
-            }
+        ApplicationManager.getApplication().runWriteAction(() -> {
+          try {
+            xsdFile.delete(null);
+          } catch (IOException e) {//
           }
         });
     }

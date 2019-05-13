@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ package com.intellij.util.xml.structure;
 import com.intellij.ide.structureView.StructureViewTreeElement;
 import com.intellij.ide.util.treeView.smartTree.TreeElement;
 import com.intellij.navigation.ItemPresentation;
+import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.util.Function;
 import com.intellij.util.xml.*;
 import org.jetbrains.annotations.NotNull;
@@ -47,19 +48,25 @@ public class DomStructureTreeElement implements StructureViewTreeElement, ItemPr
     return myElement;
   }
 
+  @Override
   @Nullable
   public Object getValue() {
     return myElement.isValid() ? myElement.getXmlElement() : null;
   }
 
+  @Override
+  @NotNull
   public ItemPresentation getPresentation() {
     return this;
   }
 
+  @Override
+  @NotNull
   public TreeElement[] getChildren() {
     if (!myElement.isValid()) return EMPTY_ARRAY;
-    final ArrayList<TreeElement> result = new ArrayList<TreeElement>();
+    final ArrayList<TreeElement> result = new ArrayList<>();
     final DomElementVisitor elementVisitor = new DomElementVisitor() {
+      @Override
       public void visitDomElement(final DomElement element) {
         if (element instanceof GenericDomValue) return;
         final DomService.StructureViewMode viewMode = myDescriptor.fun(element);
@@ -76,37 +83,48 @@ public class DomStructureTreeElement implements StructureViewTreeElement, ItemPr
       }
     };
     DomUtil.acceptAvailableChildren(myElement, elementVisitor);
-    return result.toArray(new TreeElement[result.size()]);
+    return result.toArray(TreeElement.EMPTY_ARRAY);
   }
 
   protected StructureViewTreeElement createChildElement(final DomElement element) {
     return new DomStructureTreeElement(element, myDescriptor, myNavigationProvider);
   }
 
+  @Override
   public void navigate(boolean requestFocus) {
-    if (myNavigationProvider != null) myNavigationProvider.navigate(myElement, true);
+    if (myNavigationProvider != null) myNavigationProvider.navigate(myElement, requestFocus);
   }
 
+  @Override
   public boolean canNavigate() {
     return myNavigationProvider != null && myNavigationProvider.canNavigate(myElement);
   }
 
+  @Override
   public boolean canNavigateToSource() {
     return myNavigationProvider != null && myNavigationProvider.canNavigate(myElement);
   }
 
+  @Override
   public String getPresentableText() {
     if (!myElement.isValid()) return "<unknown>";
-    final ElementPresentation presentation = myElement.getPresentation();
-    final String name = presentation.getElementName();
-    return name != null? name : presentation.getTypeName();
+    try {
+      ElementPresentation presentation = myElement.getPresentation();
+      String name = presentation.getElementName();
+      return name != null? name : presentation.getTypeName();
+    }
+    catch (IndexNotReadyException e) {
+      return "Name not available during indexing";
+    }
   }
 
+  @Override
   @Nullable
   public String getLocationString() {
     return null;
   }
 
+  @Override
   @Nullable
   public Icon getIcon(boolean open) {
     if (!myElement.isValid()) return null;

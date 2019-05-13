@@ -14,12 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * Created by IntelliJ IDEA.
- * User: Maxim.Mossienko
- * Date: Nov 28, 2006
- * Time: 4:33:11 PM
- */
 package com.intellij.psi.codeStyle;
 
 import com.intellij.application.options.IndentOptionsEditor;
@@ -30,7 +24,7 @@ import org.jetbrains.annotations.NonNls;
 
 /**
  * Allows to specify indent options for specific file types as opposed to languages. For a language it is highly recommended to use
- * <code>LanguageCodeStyleSettingsProvider</code>.
+ * {@code LanguageCodeStyleSettingsProvider}.
  * @see LanguageCodeStyleSettingsProvider
  * @see com.intellij.psi.codeStyle.CodeStyleSettings#getIndentOptions(FileType)
  */

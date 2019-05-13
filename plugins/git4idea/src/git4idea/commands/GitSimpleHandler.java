@@ -1,23 +1,10 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.commands;
 
 import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -25,6 +12,8 @@ import git4idea.i18n.GitBundle;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
+import java.io.IOException;
+import java.util.HashSet;
 
 /**
  * Simple Git handler that accumulates stdout and stderr and has nothing on stdin.
@@ -32,8 +21,14 @@ import java.io.File;
  * <p/>
  * The class also includes a number of static utility methods that represent some
  * simple commands.
+ *
+ * @deprecated use {@link Git} and {@link GitLineHandler}
  */
+@Deprecated
 public class GitSimpleHandler extends GitTextHandler {
+
+  public static final String DURING_EXECUTING_ERROR_MESSAGE = "during executing";
+
   /**
    * Stderr output
    */
@@ -50,6 +45,10 @@ public class GitSimpleHandler extends GitTextHandler {
    * Reminder of the last stdout line
    */
   private final StringBuilder myStdoutLine = new StringBuilder();
+  /**
+   * Error codes that are ignored for the handler
+   */
+  private final HashSet<Integer> myIgnoredErrorCodes = new HashSet<>();
 
   /**
    * A constructor
@@ -78,39 +77,35 @@ public class GitSimpleHandler extends GitTextHandler {
   /**
    * {@inheritDoc}
    */
+  @Override
   protected void processTerminated(final int exitCode) {
-    if (myVcs == null) { return; }
     String stdout = myStdoutLine.toString();
     String stderr = myStderrLine.toString();
     if (!isStdoutSuppressed() && !StringUtil.isEmptyOrSpaces(stdout)) {
-      myVcs.showMessages(stdout);
       LOG.info(stdout.trim());
       myStdoutLine.setLength(0);
     }
     else if (!isStderrSuppressed() && !StringUtil.isEmptyOrSpaces(stderr)) {
-      myVcs.showErrorMessages(stderr);
       LOG.info(stderr.trim());
       myStderrLine.setLength(0);
+    }
+    else {
+      LOG.debug(stderr.trim());
+      OUTPUT_LOG.debug(stdout.trim());
     }
   }
 
   /**
    * For silent handlers, print out everything
    */
+  @Deprecated
   public void unsilence() {
-    if (myVcs == null) { return; }
-    myVcs.showCommandLine(printableCommandLine());
-    if (myStderr.length() != 0) {
-      myVcs.showErrorMessages(myStderr.toString());
-    }
-    if (myStdout.length() != 0) {
-      myVcs.showMessages(myStdout.toString());
-    }
   }
 
   /**
    * {@inheritDoc}
    */
+  @Override
   protected void onTextAvailable(final String text, final Key outputType) {
     final StringBuilder entire;
     final StringBuilder lineRest;
@@ -129,7 +124,7 @@ public class GitSimpleHandler extends GitTextHandler {
       return;
     }
     entire.append(text);
-    if (suppressed || myVcs == null) {
+    if (suppressed && !LOG.isDebugEnabled()) {
       return;
     }
     int last = lineRest.length() > 0 ? lineRest.charAt(lineRest.length() - 1) : -1;
@@ -147,19 +142,19 @@ public class GitSimpleHandler extends GitTextHandler {
         if (last != '\r' || savedPos != i) {
           String line;
           if (lineRest.length() == 0) {
-            line = lineRest.append(text.substring(start, savedPos)).toString();
+            line = lineRest.append(text, start, savedPos).toString();
             lineRest.setLength(0);
           }
           else {
             line = text.substring(start, savedPos);
           }
-          if (ProcessOutputTypes.STDOUT == outputType && !StringUtil.isEmptyOrSpaces(line)) {
-            myVcs.showMessages(line);
-            LOG.info(line.trim());
-          }
-          else if (ProcessOutputTypes.STDERR == outputType && !StringUtil.isEmptyOrSpaces(line)) {
-            myVcs.showErrorMessages(line);
-            LOG.info(line.trim());
+          if (!StringUtil.isEmptyOrSpaces(line)) {
+            if (!suppressed) {
+              LOG.info(line.trim());
+            }
+            else {
+              LOG.debug(line.trim());
+            }
           }
         }
         start = savedPos;
@@ -186,22 +181,20 @@ public class GitSimpleHandler extends GitTextHandler {
   }
 
   /**
-   * Execute without UI. If UI interactions are required (for example SSH popups or progress dialog), use {@link GitHandlerUtil} methods.
+   * Execute without UI. If UI interactions are required (for example SSH popups or progress dialog), use {@link Git} methods.
    *
    * @return a value if process was successful
    * @throws VcsException exception if process failed to start.
    */
   public String run() throws VcsException {
-    if (!isNoSSH()) {
-      throw new IllegalStateException("Commands that require SSH could not be run using this method");
-    }
-    final VcsException[] ex = new VcsException[1];
-    final String[] result = new String[1];
+    Ref<VcsException> exRef = Ref.create();
+    Ref<String> resultRef = Ref.create();
     addListener(new GitHandlerListener() {
+      @Override
       public void processTerminated(final int exitCode) {
         try {
           if (exitCode == 0 || isIgnoredErrorCode(exitCode)) {
-            result[0] = getStdout();
+            resultRef.set(getStdout());
           }
           else {
             String msg = getStderr();
@@ -211,25 +204,51 @@ public class GitSimpleHandler extends GitTextHandler {
             if (msg.length() == 0) {
               msg = GitBundle.message("git.error.exit", exitCode);
             }
-            ex[0] = new VcsException(msg);
+            exRef.set(new VcsException(msg));
           }
         }
         catch (Throwable t) {
-          ex[0] = new VcsException(t.toString(), t);
+          exRef.set(new VcsException(t.toString(), t));
         }
       }
 
-      public void startFailed(final Throwable exception) {
-        ex[0] = new VcsException("Process failed to start (" + myCommandLine.getCommandLineString() + "): " + exception.toString(), exception);
+      @Override
+      public void startFailed(@NotNull final Throwable exception) {
+        exRef.set(
+          new VcsException("Process failed to start (" + myCommandLine.getCommandLineString() + "): " + exception.toString(), exception));
       }
     });
-    runInCurrentThread(null);
-    if (ex[0] != null) {
-      throw ex[0];
+    try {
+      runInCurrentThread();
     }
-    if (result[0] == null) {
-      throw new VcsException("The git command returned null: " + myCommandLine.getCommandLineString());
+    catch (IOException e) {
+      exRef.set(new VcsException(e.getMessage(), e));
     }
-    return result[0];
+    if (!exRef.isNull()) {
+      throw new VcsException(exRef.get().getMessage() + " " + DURING_EXECUTING_ERROR_MESSAGE + " " + printableCommandLine(), exRef.get());
+    }
+    if (resultRef.isNull()) {
+      throw new VcsException("The git command returned null: " + printableCommandLine());
+    }
+    return resultRef.get();
+  }
+
+  /**
+   * Add error code to ignored list
+   *
+   * @param code the code to ignore
+   */
+  public void ignoreErrorCode(int code) {
+    myIgnoredErrorCodes.add(code);
+  }
+
+  /**
+   * Check if error code should be ignored
+   *
+   * @param code a code to check
+   * @return true if error code is ignorable
+   */
+  public boolean isIgnoredErrorCode(int code) {
+    return myIgnoredErrorCodes.contains(code);
   }
 }

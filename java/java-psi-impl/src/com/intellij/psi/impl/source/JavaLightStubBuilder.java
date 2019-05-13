@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,7 +28,6 @@ import com.intellij.psi.stubs.LightStubBuilder;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
-import com.intellij.util.io.StringRef;
 import org.jetbrains.annotations.NotNull;
 
 public class JavaLightStubBuilder extends LightStubBuilder {
@@ -44,10 +43,10 @@ public class JavaLightStubBuilder extends LightStubBuilder {
     if (pkg != null) {
       LighterASTNode ref = LightTreeUtil.firstChildOfType(tree, pkg, JavaElementType.JAVA_CODE_REFERENCE);
       if (ref != null) {
-        refText = SourceUtil.getReferenceText(tree, ref);
+        refText = JavaSourceUtil.getReferenceText(tree, ref);
       }
     }
-    return new PsiJavaFileStubImpl((PsiJavaFile)file, StringRef.fromString(refText), false);
+    return new PsiJavaFileStubImpl((PsiJavaFile)file, refText, null, false);
   }
 
   @Override
@@ -57,7 +56,7 @@ public class JavaLightStubBuilder extends LightStubBuilder {
 
     if (checkByTypes(parentType, nodeType)) return true;
 
-    if (nodeType == JavaElementType.CODE_BLOCK && node instanceof TreeElement) {
+    if (nodeType == JavaElementType.CODE_BLOCK) {
       CodeBlockVisitor visitor = new CodeBlockVisitor();
       ((TreeElement)node).acceptTree(visitor);
       return visitor.result;
@@ -68,12 +67,11 @@ public class JavaLightStubBuilder extends LightStubBuilder {
 
   @Override
   protected boolean skipChildProcessingWhenBuildingStubs(@NotNull LighterAST tree, @NotNull LighterASTNode parent, @NotNull LighterASTNode node) {
-    IElementType parentType = parent.getTokenType();
-    IElementType nodeType = node.getTokenType();
+    return checkByTypes(parent.getTokenType(), node.getTokenType()) || isCodeBlockWithoutStubs(node);
+  }
 
-    if (checkByTypes(parentType, nodeType)) return true;
-
-    if (nodeType == JavaElementType.CODE_BLOCK && node instanceof LighterLazyParseableNode) {
+  public static boolean isCodeBlockWithoutStubs(@NotNull LighterASTNode node) {
+    if (node.getTokenType() == JavaElementType.CODE_BLOCK && node instanceof LighterLazyParseableNode) {
       CodeBlockVisitor visitor = new CodeBlockVisitor();
       ((LighterLazyParseableNode)node).accept(visitor);
       return visitor.result;
@@ -86,10 +84,16 @@ public class JavaLightStubBuilder extends LightStubBuilder {
     if (ElementType.IMPORT_STATEMENT_BASE_BIT_SET.contains(parentType)) {
       return true;
     }
+    if (nodeType == JavaElementType.RECEIVER_PARAMETER) {
+      return true;
+    }
     if (nodeType == JavaElementType.PARAMETER && parentType != JavaElementType.PARAMETER_LIST) {
       return true;
     }
     if (nodeType == JavaElementType.PARAMETER_LIST && parentType == JavaElementType.LAMBDA_EXPRESSION) {
+      return true;
+    }
+    if (nodeType == JavaDocElementType.DOC_COMMENT) {
       return true;
     }
 
@@ -98,7 +102,8 @@ public class JavaLightStubBuilder extends LightStubBuilder {
 
   private static class CodeBlockVisitor extends RecursiveTreeElementWalkingVisitor implements LighterLazyParseableNode.Visitor {
     private static final TokenSet BLOCK_ELEMENTS = TokenSet.create(
-      JavaElementType.ANNOTATION, JavaElementType.CLASS, JavaElementType.ANONYMOUS_CLASS);
+      JavaElementType.CLASS, JavaElementType.ANONYMOUS_CLASS,
+      JavaTokenType.ARROW, JavaTokenType.DOUBLE_COLON, JavaTokenType.AT);
 
     private boolean result = true;
 
@@ -112,8 +117,11 @@ public class JavaLightStubBuilder extends LightStubBuilder {
       super.visitNode(element);
     }
 
-    private IElementType last = null;
-    private boolean seenNew = false;
+    private IElementType preLast;
+    private IElementType last;
+    private boolean seenNew;
+    private boolean seenLParen;
+    private boolean seenModifier;
 
     @Override
     public boolean visit(IElementType type) {
@@ -121,8 +129,8 @@ public class JavaLightStubBuilder extends LightStubBuilder {
         return true;
       }
 
-      // annotations
-      if (type == JavaTokenType.AT) {
+      // annotations, method refs & lambdas
+      if (type == JavaTokenType.AT || type == JavaTokenType.ARROW || type == JavaTokenType.DOUBLE_COLON) {
         return (result = false);
       }
       // anonymous classes
@@ -131,15 +139,25 @@ public class JavaLightStubBuilder extends LightStubBuilder {
       }
       else if (seenNew && type == JavaTokenType.SEMICOLON) {
         seenNew = false;
+        seenLParen = false;
       }
-      else if (seenNew && type == JavaTokenType.LBRACE && last != JavaTokenType.RBRACKET) {
+      else if (seenNew && type == JavaTokenType.LBRACE && seenLParen) {
         return (result = false);
       }
+      else if (seenNew && type == JavaTokenType.LPARENTH) {
+        seenLParen = true;
+      }
+      else if (ElementType.MODIFIER_BIT_SET.contains(type)) {
+        seenModifier = true;
+      }
       // local classes
-      else if (type == JavaTokenType.CLASS_KEYWORD && last != JavaTokenType.DOT) {
+      else if (type == JavaTokenType.CLASS_KEYWORD && (last != JavaTokenType.DOT || preLast != JavaTokenType.IDENTIFIER || seenModifier)
+               || type == JavaTokenType.ENUM_KEYWORD 
+               || type == JavaTokenType.INTERFACE_KEYWORD) {
         return (result = false);
       }
 
+      preLast = last;
       last = type;
       return true;
     }

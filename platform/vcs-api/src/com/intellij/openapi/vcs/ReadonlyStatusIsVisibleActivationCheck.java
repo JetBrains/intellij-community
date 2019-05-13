@@ -9,8 +9,6 @@ import com.intellij.openapi.util.SystemInfo;
 
 /**
  * @author irengrig
- *         Date: 5/20/11
- *         Time: 12:33 PM
  */
 public class ReadonlyStatusIsVisibleActivationCheck {
   public static void check(final Project project, final String vcsName) {

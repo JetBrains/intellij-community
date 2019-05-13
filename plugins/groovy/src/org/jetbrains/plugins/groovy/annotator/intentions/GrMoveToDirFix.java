@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,6 @@
 package org.jetbrains.plugins.groovy.annotator.intentions;
 
 import com.intellij.CommonBundle;
-import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.ide.util.PackageUtil;
 import com.intellij.openapi.module.Module;
@@ -30,15 +29,17 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.refactoring.move.moveFilesOrDirectories.MoveFilesOrDirectoriesProcessor;
 import com.intellij.refactoring.util.RefactoringMessageUtil;
+import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.codeInspection.GroovyFix;
 import org.jetbrains.plugins.groovy.intentions.GroovyIntentionsBundle;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 
 /**
  * @author Max Medvedev
  */
-public class GrMoveToDirFix implements LocalQuickFix {
-  private String myPackageName;
+public class GrMoveToDirFix extends GroovyFix {
+  private final String myPackageName;
 
   public GrMoveToDirFix(String packageName) {
     myPackageName = packageName;
@@ -58,7 +59,7 @@ public class GrMoveToDirFix implements LocalQuickFix {
   }
 
   @Override
-  public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
+  protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) throws IncorrectOperationException {
     PsiFile file = descriptor.getPsiElement().getContainingFile();
 
     if (!(file instanceof GroovyFile)) return;
@@ -79,5 +80,10 @@ public class GrMoveToDirFix implements LocalQuickFix {
       return;
     }
     new MoveFilesOrDirectoriesProcessor(project, new PsiElement[]{file}, directory, false, false, false, null, null).run();
+  }
+
+  @Override
+  public boolean startInWriteAction() {
+    return false;
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -52,7 +52,8 @@ public class LightPackageReference extends LightElement implements PsiJavaCodeRe
   @Override
   @NotNull
   public JavaResolveResult advancedResolve(boolean incompleteCode){
-    return new CandidateInfo(resolve(), PsiSubstitutor.EMPTY);
+    PsiElement resolve = resolve();
+    return resolve == null ? JavaResolveResult.EMPTY : new CandidateInfo(resolve, PsiSubstitutor.EMPTY);
   }
 
   @Override
@@ -95,7 +96,7 @@ public class LightPackageReference extends LightElement implements PsiJavaCodeRe
   }
 
   @Override
-  public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {
+  public PsiElement handleElementRename(@NotNull String newElementName) throws IncorrectOperationException {
     //TODO?
     throw new UnsupportedOperationException();
   }
@@ -116,12 +117,13 @@ public class LightPackageReference extends LightElement implements PsiJavaCodeRe
     }
   }
 
+  @Override
   public String toString(){
     return "PsiJavaCodeReferenceElement:" + getText();
   }
 
   @Override
-  public boolean isReferenceTo(PsiElement element) {
+  public boolean isReferenceTo(@NotNull PsiElement element) {
     if (!(element instanceof PsiPackage)) return false;
     return getManager().areElementsEquivalent(resolve(), element);
   }
@@ -138,7 +140,7 @@ public class LightPackageReference extends LightElement implements PsiJavaCodeRe
   }
 
   @Override
-  public void processVariants(PsiScopeProcessor processor){
+  public void processVariants(@NotNull PsiScopeProcessor processor){
     throw new RuntimeException("Variants are not available for light references");
   }
 
@@ -167,11 +169,13 @@ public class LightPackageReference extends LightElement implements PsiJavaCodeRe
     }
   }
 
+  @NotNull
   @Override
   public TextRange getRangeInElement() {
     return new TextRange(0, getTextLength());
   }
 
+  @NotNull
   @Override
   public PsiElement getElement() {
     return this;

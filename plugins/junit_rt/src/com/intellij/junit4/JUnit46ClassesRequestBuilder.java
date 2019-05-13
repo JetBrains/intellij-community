@@ -14,10 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * User: anna
- * Date: 11-Jun-2009
- */
 package com.intellij.junit4;
 
 import org.junit.internal.builders.AllDefaultPossibilitiesBuilder;
@@ -32,15 +28,36 @@ import java.util.*;
 public class JUnit46ClassesRequestBuilder {
   private JUnit46ClassesRequestBuilder() {}
 
-  public static Request getClassesRequest(final String suiteName, Class[] classes, Map classMethods) {
+  public static Request getClassesRequest(final String suiteName, Class[] classes, Map classMethods, Class category) {
     boolean canUseSuiteMethod = canUseSuiteMethod(classMethods);
     try {
-      final Runner suite;
+      if (category != null) {
+        try {
+          Class.forName("org.junit.experimental.categories.Categories");
+        }
+        catch (ClassNotFoundException e) {
+          throw new RuntimeException("Categories are not available");
+        }
+      }
+
+      Runner suite;
       if (canUseSuiteMethod) {
-        suite = new IdeaSuite(collectWrappedRunners(classes), suiteName);
+        try {
+          Class.forName("org.junit.experimental.categories.Categories");
+          suite = new IdeaSuite48(collectWrappedRunners(classes), suiteName, category);
+        }
+        catch (ClassNotFoundException e) {
+          suite = new IdeaSuite(collectWrappedRunners(classes), suiteName);
+        }
       } else {
         final AllDefaultPossibilitiesBuilder builder = new AllDefaultPossibilitiesBuilder(canUseSuiteMethod);
-        suite = new IdeaSuite(builder, classes, suiteName);
+        try {
+          Class.forName("org.junit.experimental.categories.Categories");
+          suite = new IdeaSuite48(builder, classes, suiteName, category);
+        }
+        catch (ClassNotFoundException e) {
+          suite = new IdeaSuite(builder, classes, suiteName);
+        }
       }
       return Request.runner(suite);
     }
@@ -66,7 +83,7 @@ public class JUnit46ClassesRequestBuilder {
         nonSuiteClasses.add(aClass);
       }
     }
-    runners.addAll(new AllDefaultPossibilitiesBuilder(false).runners(null, (Class[])nonSuiteClasses.toArray(new Class[nonSuiteClasses.size()])));
+    runners.addAll(new AllDefaultPossibilitiesBuilder(false).runners(null, (Class[])nonSuiteClasses.toArray(new Class[0])));
     return runners;
   }
 

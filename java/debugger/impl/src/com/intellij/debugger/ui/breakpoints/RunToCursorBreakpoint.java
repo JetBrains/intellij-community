@@ -1,40 +1,47 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.ui.breakpoints;
 
-import com.intellij.debugger.engine.DebugProcessImpl;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.markup.RangeHighlighter;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.debugger.DebuggerBundle;
+import com.intellij.debugger.SourcePosition;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiManager;
+import com.intellij.xdebugger.XDebuggerUtil;
+import com.intellij.xdebugger.XSourcePosition;
+import com.intellij.xdebugger.breakpoints.XLineBreakpointType;
+import com.sun.jdi.event.LocatableEvent;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Sep 13, 2006
  */
-public class RunToCursorBreakpoint extends LineBreakpoint {
+public class RunToCursorBreakpoint extends SyntheticLineBreakpoint {
   private final boolean myRestoreBreakpoints;
+  @NotNull
+  protected final SourcePosition myCustomPosition;
 
-  private RunToCursorBreakpoint(Project project, RangeHighlighter highlighter, boolean restoreBreakpoints) {
-    super(project, highlighter);
-    setVisible(false);
+  protected RunToCursorBreakpoint(@NotNull Project project, @NotNull SourcePosition pos, boolean restoreBreakpoints) {
+    super(project);
+    myCustomPosition = pos;
     myRestoreBreakpoints = restoreBreakpoints;
+  }
+
+  @NotNull
+  @Override
+  public SourcePosition getSourcePosition() {
+    return myCustomPosition;
+  }
+
+  @Override
+  public int getLineIndex() {
+    return myCustomPosition.getLine();
+  }
+
+  @Override
+  protected String getFileName() {
+    return myCustomPosition.getFile().getName();
   }
 
   public boolean isRestoreBreakpoints() {
@@ -42,30 +49,30 @@ public class RunToCursorBreakpoint extends LineBreakpoint {
   }
 
   @Override
-  public boolean isVisible() {
-    return false;
-  }
-
-  @Override
-  protected boolean isMuted(@NotNull final DebugProcessImpl debugProcess) {
-    return false;  // always enabled
+  public String getEventMessage(LocatableEvent event) {
+    return DebuggerBundle.message("status.stopped.at.cursor");
   }
 
   @Nullable
-  protected static RunToCursorBreakpoint create(@NotNull Project project, @NotNull Document document, int lineIndex, boolean restoreBreakpoints) {
-    VirtualFile virtualFile = FileDocumentManager.getInstance().getFile(document);
-    if (virtualFile == null) {
+  @Override
+  protected JavaLineBreakpointType getXBreakpointType() {
+    SourcePosition position = getSourcePosition();
+    VirtualFile file = position.getFile().getVirtualFile();
+    int line = position.getLine();
+    for (XLineBreakpointType<?> type : XDebuggerUtil.getInstance().getLineBreakpointTypes()) {
+      if (type instanceof JavaLineBreakpointType && type.canPutAt(file, line, myProject)) {
+        return ((JavaLineBreakpointType)type);
+      }
+    }
+    return null;
+  }
+
+  @Nullable
+  protected static RunToCursorBreakpoint create(@NotNull Project project, @NotNull XSourcePosition position, boolean restoreBreakpoints) {
+    PsiFile psiFile = PsiManager.getInstance(project).findFile(position.getFile());
+    if (psiFile == null) {
       return null;
     }
-
-    final RangeHighlighter highlighter = createHighlighter(project, document, lineIndex);
-    if (highlighter == null) {
-      return null;
-    }
-
-    final RunToCursorBreakpoint breakpoint = new RunToCursorBreakpoint(project, highlighter, restoreBreakpoints);
-    breakpoint.getHighlighter().dispose();
-
-    return (RunToCursorBreakpoint)breakpoint.init();
+    return new RunToCursorBreakpoint(project, SourcePosition.createFromOffset(psiFile, position.getOffset()), restoreBreakpoints);
   }
 }

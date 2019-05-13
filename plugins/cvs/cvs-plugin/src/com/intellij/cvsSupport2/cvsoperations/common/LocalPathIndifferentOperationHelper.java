@@ -15,10 +15,10 @@
  */
 package com.intellij.cvsSupport2.cvsoperations.common;
 
+import com.intellij.cvsSupport2.cvsoperations.javacvsSpecificImpls.AdminReaderForLightFiles;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.cvsSupport2.cvsoperations.javacvsSpecificImpls.AdminReaderForLightFiles;
-import com.intellij.util.containers.HashMap;
+import java.util.HashMap;
 import org.netbeans.lib.cvsclient.admin.Entry;
 import org.netbeans.lib.cvsclient.admin.IAdminReader;
 import org.netbeans.lib.cvsclient.command.AbstractCommand;
@@ -34,7 +34,7 @@ import java.util.*;
  */
 public class LocalPathIndifferentOperationHelper {
   private static final Logger LOG = Logger.getInstance("#com.intellij.cvsSupport2.cvsoperations.common.LocalPathIndifferentOperationHelper");
-  private final Map<File, Entry> myFileToEntryMap = new HashMap<File, Entry>();
+  private final Map<File, Entry> myFileToEntryMap = new HashMap<>();
   private final IAdminReader myAdminReader = new AdminReaderForLightFiles(myFileToEntryMap);
   private final String myRevision;
 
@@ -64,9 +64,9 @@ public class LocalPathIndifferentOperationHelper {
   }
 
   private AbstractFileObject[] createFileObjects() {
-    ArrayList<AbstractFileObject> result = new ArrayList<AbstractFileObject>();
+    ArrayList<AbstractFileObject> result = new ArrayList<>();
     Collection<File> parents = collectAllParents();
-    Map<File, DirectoryObject> parentsMap = new HashMap<File, DirectoryObject>();
+    Map<File, DirectoryObject> parentsMap = new HashMap<>();
 
     for (final File file : parents) {
       String relativeFileName = file.getPath().replace(File.separatorChar, '/');
@@ -78,11 +78,11 @@ public class LocalPathIndifferentOperationHelper {
       result.add(FileObject.createInstance(parentsMap.get(file.getParentFile()), "/" + file.getName()));
     }
 
-    return result.toArray(new AbstractFileObject[result.size()]);
+    return result.toArray(new AbstractFileObject[0]);
   }
 
   private Collection<File> collectAllParents() {
-    HashSet<File> result = new HashSet<File>();
+    HashSet<File> result = new HashSet<>();
     for (final File file : myFileToEntryMap.keySet()) {
       File parentFile = file.getParentFile();
       LOG.assertTrue(parentFile != null, file.getPath());

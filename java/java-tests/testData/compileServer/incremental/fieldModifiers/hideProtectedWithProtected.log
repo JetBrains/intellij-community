@@ -1,0 +1,14 @@
+Cleaning output files:
+out/production/HideProtectedWithProtected/ppp/Derived.class
+End of files
+Compiling files:
+src/ppp/Derived.java
+End of files
+Cleaning output files:
+out/production/HideProtectedWithProtected/ppp/ClientInside.class
+out/production/HideProtectedWithProtected/qqq/DerivedOutside.class
+End of files
+Compiling files:
+src/ppp/ClientInside.java
+src/qqq/DerivedOutside.java
+End of files

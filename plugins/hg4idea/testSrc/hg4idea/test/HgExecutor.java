@@ -15,43 +15,86 @@
  */
 package hg4idea.test;
 
-import com.intellij.dvcs.test.Executor;
-import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.application.PluginPathManager;
+import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.testFramework.vcs.ExecutableHelper;
+import org.jetbrains.annotations.NotNull;
+import org.zmlx.hg4idea.execution.HgCommandResult;
+import org.zmlx.hg4idea.execution.ShellCommand;
 
-import java.util.Arrays;
+import java.io.File;
+import java.util.Collections;
 import java.util.List;
 
-/**
- * @author Nadya Zabrodina
- */
-public class HgExecutor extends Executor {
+import static com.intellij.openapi.vcs.Executor.*;
+
+public class HgExecutor {
 
   private static final String HG_EXECUTABLE_ENV = "IDEA_TEST_HG_EXECUTABLE";
-  //private static final String TEAMCITY_HG_EXECUTABLE_ENV = "TEAMCITY_HG_PATH";   //todo var for server testing
 
-  private static boolean myVersionPrinted;
-  private static final String HG_EXECUTABLE = findHgExecutable();
+  @NotNull private static final String HG_EXECUTABLE = doFindExecutable();
 
-  private static String findHgExecutable() {
-    return findExecutable("hg", "hg", "hg.exe", Arrays.asList(HG_EXECUTABLE_ENV));
+  private static String doFindExecutable() {
+    final String programName = "hg";
+    final String unixExec = "hg";
+    final String winExec = "hg.exe";
+    String exec = ExecutableHelper.findEnvValue(programName, Collections.singletonList(HG_EXECUTABLE_ENV));
+    if (exec != null) {
+      return exec;
+    }
+    exec = findInSources(programName, unixExec, winExec);
+    if (exec != null) {
+      return exec;
+    }
+    throw new IllegalStateException(programName + " executable not found.");
   }
 
-  public static String hg(String command) {
-    printVersionTheFirstTime();
-    List<String> split = StringUtil.split(command, " ");
+  private static String findInSources(String programName, String unixExec, String winExec) {
+    File pluginRoot = new File(PluginPathManager.getPluginHomePath("hg4idea"));
+    File bin = new File(pluginRoot, FileUtil.toSystemDependentName("testData/bin"));
+    File exec = new File(bin, SystemInfo.isWindows ? winExec : unixExec);
+    if (exec.exists() && exec.canExecute()) {
+      debug("Using " + programName + " from test data");
+      return exec.getPath();
+    }
+    return null;
+  }
+
+  public static String hg(@NotNull String command) {
+    return hg(command, false);
+  }
+
+  public static String hg(@NotNull String command, boolean ignoreNonZeroExitCode) {
+    List<String> split = splitCommandInParameters(command);
     split.add(0, HG_EXECUTABLE);
-    log("hg " + command);
-    for(int attempt = 0; attempt < 3; attempt++) {
-      return run(split);
+    debug("hg " + command);
+    HgCommandResult result;
+    try {
+      result = new ShellCommand(split, pwd(), null).execute(false, false);
     }
-    throw new RuntimeException("fatal error during execution of Hg command: " + command);
+    catch (Exception e) {
+      throw new RuntimeException(e);
+    }
+    int exitValue = result.getExitValue();
+    if (!ignoreNonZeroExitCode && exitValue != 0) {
+      throw new RuntimeException(result.getRawError());
+    }
+    return result.getRawOutput();
   }
 
-  private static void printVersionTheFirstTime() {
-    if (!myVersionPrinted) {
-      myVersionPrinted = true;
-      hg("version");
-    }
+  public static void updateProject() {
+    hg("pull");
+    hg("update", true);
+    hgMergeWith("");
+  }
+
+  public static void hgMergeWith(@NotNull String mergeWith) {
+    hg("merge " + mergeWith, true);
+  }
+
+  @NotNull
+  public static String getHgExecutable() {
+    return HG_EXECUTABLE;
   }
 }
-

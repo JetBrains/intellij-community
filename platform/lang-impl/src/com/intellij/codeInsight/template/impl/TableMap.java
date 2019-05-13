@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,16 +16,16 @@
 
 package com.intellij.codeInsight.template.impl;
 
-/**
- * In a chain of data manipulators some behaviour is common. TableMap
- * provides most of this behavour and can be subclassed by filters
- * that only need to override a handful of specific methods. TableMap 
- * implements TableModel by routing all requests to its model, and
- * TableModelListener by routing all events to its listeners. Inserting 
- * a TableMap which has not been subclassed into a chain of table filters 
- * should have no effect.
- *
- * @version 1.4 12/17/97
+/*
+  In a chain of data manipulators some behaviour is common. TableMap
+  provides most of this behavour and can be subclassed by filters
+  that only need to override a handful of specific methods. TableMap
+  implements TableModel by routing all requests to its model, and
+  TableModelListener by routing all events to its listeners. Inserting
+  a TableMap which has not been subclassed into a chain of table filters
+  should have no effect.
+
+  @version 1.4 12/17/97
  * @author Philip Milne */
 
 import javax.swing.event.TableModelEvent;

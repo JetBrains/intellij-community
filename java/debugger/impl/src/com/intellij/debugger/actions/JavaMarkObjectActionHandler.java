@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,10 +15,11 @@
  */
 package com.intellij.debugger.actions;
 
-import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
+import com.intellij.codeInsight.daemon.impl.JavaHighlightInfoTypes;
 import com.intellij.debugger.engine.DebugProcess;
 import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.debugger.engine.DebuggerUtils;
+import com.intellij.debugger.engine.SuspendContextImpl;
 import com.intellij.debugger.engine.events.DebuggerContextCommandImpl;
 import com.intellij.debugger.impl.DebuggerContextImpl;
 import com.intellij.debugger.impl.DebuggerSession;
@@ -36,7 +37,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
-import com.intellij.util.containers.HashMap;
 import com.intellij.xdebugger.impl.actions.MarkObjectActionHandler;
 import com.intellij.xdebugger.impl.ui.tree.ValueMarkup;
 import com.sun.jdi.*;
@@ -46,9 +46,10 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.lang.reflect.InvocationTargetException;
-import java.util.Collections;
 import java.util.List;
-import java.util.Map;
+import java.util.*;
+
+import static com.intellij.openapi.actionSystem.PlatformDataKeys.CONTEXT_COMPONENT;
 
 /*
  * Class SetValueAction
@@ -68,19 +69,23 @@ public class JavaMarkObjectActionHandler extends MarkObjectActionHandler {
     if (!(descriptor instanceof ValueDescriptorImpl)) {
       return;
     }
-    
+
     final DebuggerTree tree = node.getTree();
     tree.saveState(node);
-    
+
+    final Component parent = event.getData(CONTEXT_COMPONENT);
     final ValueDescriptorImpl valueDescriptor = ((ValueDescriptorImpl)descriptor);
     final DebuggerContextImpl debuggerContext = tree.getDebuggerContext();
     final DebugProcessImpl debugProcess = debuggerContext.getDebugProcess();
     final ValueMarkup markup = valueDescriptor.getMarkup(debugProcess);
     debugProcess.getManagerThread().invoke(new DebuggerContextCommandImpl(debuggerContext) {
+      @Override
       public Priority getPriority() {
         return Priority.HIGH;
       }
-      public void threadAction() {
+
+      @Override
+      public void threadAction(@NotNull SuspendContextImpl suspendContext) {
         boolean sessionRefreshNeeded = true;
         try {
           if (markup != null) {
@@ -88,16 +93,15 @@ public class JavaMarkObjectActionHandler extends MarkObjectActionHandler {
           }
           else {
             final String defaultText = valueDescriptor.getName();
-            final Ref<Pair<ValueMarkup,Boolean>> result = new Ref<Pair<ValueMarkup, Boolean>>(null);
+            final Ref<Pair<ValueMarkup,Boolean>> result = new Ref<>(null);
             try {
               final boolean suggestAdditionalMarkup = canSuggestAdditionalMarkup(debugProcess, valueDescriptor.getValue());
-              SwingUtilities.invokeAndWait(new Runnable() {
-                public void run() {
-                  ObjectMarkupPropertiesDialog dialog = new ObjectMarkupPropertiesDialog(defaultText, suggestAdditionalMarkup);
-                  dialog.show();
-                  if (dialog.isOK()) {
-                    result.set(Pair.create(dialog.getConfiguredMarkup(), dialog.isMarkAdditionalFields()));
-                  }
+              SwingUtilities.invokeAndWait(() -> {
+                Map<ObjectReference, ValueMarkup> markupMap = NodeDescriptorImpl.getMarkupMap(debugProcess);
+                Collection<ValueMarkup> existingNames = markupMap != null ? markupMap.values() : Collections.emptySet();
+                ObjectMarkupPropertiesDialog dialog = new ObjectMarkupPropertiesDialog(parent, defaultText, suggestAdditionalMarkup, existingNames);
+                if (dialog.showAndGet()) {
+                  result.set(Pair.create(dialog.getConfiguredMarkup(), dialog.isMarkAdditionalFields()));
                 }
               });
             }
@@ -133,6 +137,7 @@ public class JavaMarkObjectActionHandler extends MarkObjectActionHandler {
         finally {
           final boolean _sessionRefreshNeeded = sessionRefreshNeeded;
           SwingUtilities.invokeLater(new Runnable() {
+            @Override
             public void run() {
               tree.restoreState(node);
               final TreeBuilder model = tree.getMutableModel();
@@ -180,7 +185,7 @@ public class JavaMarkObjectActionHandler extends MarkObjectActionHandler {
   }
 
   private static Map<ObjectReference, ValueMarkup> suggestMarkup(ObjectReference objRef) {
-    final Map<ObjectReference, ValueMarkup> result = new HashMap<ObjectReference, ValueMarkup>();
+    final Map<ObjectReference, ValueMarkup> result = new HashMap<>();
     for (ObjectReference ref : getReferringObjects(objRef)) {
       if (!(ref instanceof ClassObjectReference)) {
         // consider references from statisc fields only
@@ -267,7 +272,7 @@ public class JavaMarkObjectActionHandler extends MarkObjectActionHandler {
 
   public static Color getAutoMarkupColor() {
     final EditorColorsManager manager = EditorColorsManager.getInstance();
-    final TextAttributes textAttributes = manager.getGlobalScheme().getAttributes(HighlightInfoType.STATIC_FIELD.getAttributesKey());
+    final TextAttributes textAttributes = manager.getGlobalScheme().getAttributes(JavaHighlightInfoTypes.STATIC_FIELD.getAttributesKey());
     return textAttributes.getForegroundColor();
   }
 }

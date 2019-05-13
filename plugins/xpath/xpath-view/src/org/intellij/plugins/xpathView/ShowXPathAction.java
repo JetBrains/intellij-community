@@ -15,11 +15,12 @@
  */
 package org.intellij.plugins.xpathView;
 
+import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.hint.HintManagerImpl;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.LangDataKeys;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -39,6 +40,7 @@ import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.util.PlatformIcons;
 import org.intellij.plugins.xpathView.support.XPathSupport;
 import org.intellij.plugins.xpathView.util.HighlighterUtil;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -47,16 +49,19 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
 public class ShowXPathAction extends XPathAction {
-    public void update(AnActionEvent event) {
+    @Override
+    public void update(@NotNull AnActionEvent event) {
         super.update(event);
 
         final Presentation presentation = event.getPresentation();
-        if (ActionPlaces.MAIN_MENU.equals(event.getPlace()) && presentation.getText().startsWith("Show ")) {
+        String presentationText = presentation.getText();
+        if (presentationText != null && ActionPlaces.isMainMenuOrActionSearch(event.getPlace()) && presentationText.startsWith("Show ")) {
             final String text = presentation.getText().substring("Show ".length());
             presentation.setText(Character.toUpperCase(text.charAt(0)) + text.substring(1));
         }
     }
 
+    @Override
     protected boolean isEnabledAt(XmlFile xmlFile, int offset) {
         final PsiElement element = xmlFile.findElementAt(offset);
         if (!(element instanceof XmlElement || element instanceof PsiWhiteSpace)) {
@@ -67,8 +72,9 @@ public class ShowXPathAction extends XPathAction {
         return node != null;
     }
 
-    public void actionPerformed(AnActionEvent e) {
-        final Editor editor = LangDataKeys.EDITOR.getData(e.getDataContext());
+    @Override
+    public void actionPerformed(@NotNull AnActionEvent e) {
+        final Editor editor = CommonDataKeys.EDITOR.getData(e.getDataContext());
         if (editor == null) {
             return;
         }
@@ -97,7 +103,7 @@ public class ShowXPathAction extends XPathAction {
             return;
         }
 
-        final Config cfg = myComponent.getConfig();
+        final Config cfg = XPathAppComponent.getInstance().getConfig();
         final RangeHighlighter h = HighlighterUtil.highlightNode(editor, node, cfg.getContextAttributes(), cfg);
 
         final String path = XPathSupport.getInstance().getUniquePath((XmlElement)node, null);
@@ -107,7 +113,7 @@ public class ShowXPathAction extends XPathAction {
         label.setOpaque(false);
         label.setEditable(false);
         label.setBorder(null);
-        label.setHorizontalAlignment(JTextField.CENTER);
+        label.setHorizontalAlignment(SwingConstants.CENTER);
         label.setCursor(Cursor.getPredefinedCursor(Cursor.TEXT_CURSOR));
 
         final JPanel p = new NonOpaquePanel(new BorderLayout());
@@ -126,6 +132,7 @@ public class ShowXPathAction extends XPathAction {
         p.add(copy, BorderLayout.EAST);
 
       final LightweightHint hint = new LightweightHint(p) {
+            @Override
             public void hide() {
                 super.hide();
                 HighlighterUtil.removeHighlighter(editor, h);
@@ -135,6 +142,6 @@ public class ShowXPathAction extends XPathAction {
         final Point point = editor.visualPositionToXY(editor.getCaretModel().getVisualPosition());
         point.y += editor.getLineHeight() / 2;
       HintHint hintHint = new HintHint(editor, point).setAwtTooltip(true).setContentActive(true).setExplicitClose(true).setShowImmediately(true);
-      HintManagerImpl.getInstanceImpl().showEditorHint(hint, editor, point, HintManagerImpl.HIDE_BY_ANY_KEY, 0, false, hintHint);
+      HintManagerImpl.getInstanceImpl().showEditorHint(hint, editor, point, HintManager.HIDE_BY_ANY_KEY, 0, false, hintHint);
     }
 }

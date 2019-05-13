@@ -20,12 +20,12 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
+import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.refactoring.ui.NameSuggestionsField;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.Function;
 import com.intellij.util.StringLenComparator;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomFileElement;
@@ -38,7 +38,6 @@ import org.jetbrains.idea.maven.dom.MavenDomUtil;
 import org.jetbrains.idea.maven.dom.model.MavenDomProjectModel;
 import org.jetbrains.idea.maven.dom.model.MavenDomProperties;
 import org.jetbrains.idea.maven.dom.model.MavenDomShortArtifactCoordinates;
-import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.utils.ComboBoxUtil;
 
 import javax.swing.*;
@@ -77,17 +76,20 @@ public class IntroducePropertyDialog extends DialogWrapper {
     init();
   }
 
+  @Override
   protected void dispose() {
     myNameField.removeDataChangedListener(myNameChangedListener);
 
     super.dispose();
   }
 
+  @Override
   @NotNull
   protected Action[] createActions() {
     return new Action[]{getOKAction(), getCancelAction()};
   }
 
+  @Override
   protected void init() {
     super.init();
     updateOkStatus();
@@ -110,7 +112,7 @@ public class IntroducePropertyDialog extends DialogWrapper {
   }
 
   private String[] getSuggestions(int level) {
-    Collection<String> result = new THashSet<String>();
+    Collection<String> result = new THashSet<>();
 
     String value = mySelectedString.trim();
     boolean addUnqualifiedForm = true;
@@ -163,9 +165,10 @@ public class IntroducePropertyDialog extends DialogWrapper {
       level--;
     }
 
-    result = new ArrayList<String>(result);
-    Collections.sort((List)result, CodeStyleSettingsManager.getSettings(myProject).PREFER_LONGER_NAMES ?
-                                   StringLenComparator.getDescendingInstance() : StringLenComparator.getInstance());
+    result = new ArrayList<>(result);
+    Collections.sort((List)result,
+                     CodeStyleSettingsManager.getSettings(myProject).getCustomSettings(JavaCodeStyleSettings.class).PREFER_LONGER_NAMES ?
+                     StringLenComparator.getDescendingInstance() : StringLenComparator.getInstance());
     return ArrayUtil.toStringArray(result);
   }
 
@@ -174,7 +177,7 @@ public class IntroducePropertyDialog extends DialogWrapper {
   }
 
   private static String joinWords(@NotNull List<String> stringList) {
-    StringBuffer sb = new StringBuffer();
+    StringBuilder sb = new StringBuilder();
     for (int i = 0; i < stringList.size(); i++) {
       String word = stringList.get(i);
       if (!StringUtil.isEmptyOrSpaces(word)) {
@@ -184,15 +187,12 @@ public class IntroducePropertyDialog extends DialogWrapper {
     return sb.toString();
   }
 
+  @Override
   protected JComponent createCenterPanel() {
     myFieldNamePanel.setLayout(new BorderLayout());
 
     myNameField = new NameSuggestionsField(myProject);
-    myNameChangedListener = new NameSuggestionsField.DataChanged() {
-      public void dataChanged() {
-        updateOkStatus();
-      }
-    };
+    myNameChangedListener = () -> updateOkStatus();
     myNameField.addDataChangedListener(myNameChangedListener);
     myNameField.setSuggestions(getSuggestions());
 
@@ -200,20 +200,8 @@ public class IntroducePropertyDialog extends DialogWrapper {
 
     List<MavenDomProjectModel> projects = getProjects();
 
-    ComboBoxUtil
-      .setModel(myMavenProjectsComboBox, new DefaultComboBoxModel(), projects, new Function<MavenDomProjectModel, Pair<String, ?>>() {
-        public Pair<String, ?> fun(MavenDomProjectModel model) {
-          String projectName = model.getName().getStringValue();
-          MavenProject mavenProject = MavenDomUtil.findProject(model);
-          if (mavenProject != null) {
-            projectName = mavenProject.getDisplayName();
-          }
-          if (StringUtil.isEmptyOrSpaces(projectName)) {
-            projectName = "pom.xml";
-          }
-          return Pair.create(projectName, model);
-        }
-      });
+    ComboBoxUtil.setModel(myMavenProjectsComboBox, new DefaultComboBoxModel(), projects,
+                          model -> Pair.create(MavenDomUtil.getProjectName(model), model));
 
     myMavenProjectsComboBox.setSelectedItem(myMavenDomProjectModel);
 
@@ -222,7 +210,7 @@ public class IntroducePropertyDialog extends DialogWrapper {
 
 
   private List<MavenDomProjectModel> getProjects() {
-    List<MavenDomProjectModel> projects = new ArrayList<MavenDomProjectModel>();
+    List<MavenDomProjectModel> projects = new ArrayList<>();
 
     projects.add(myMavenDomProjectModel);
     projects.addAll(MavenDomProjectProcessorUtils.collectParentProjects(myMavenDomProjectModel));
@@ -267,6 +255,7 @@ public class IntroducePropertyDialog extends DialogWrapper {
     return false;
   }
 
+  @Override
   public JComponent getPreferredFocusedComponent() {
     return myNameField.getFocusableComponent();
   }

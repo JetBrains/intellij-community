@@ -1,36 +1,22 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.source.resolve.reference.impl;
 
 import com.intellij.codeInsight.completion.InsertHandler;
 import com.intellij.codeInsight.completion.InsertionContext;
-import com.intellij.codeInsight.completion.JavaLookupElementBuilder;
 import com.intellij.codeInsight.lookup.LookupElement;
-import com.intellij.codeInsight.lookup.LookupElementBuilder;
-import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.JavaCodeStyleManager;
-import com.intellij.psi.impl.source.PsiClassReferenceType;
-import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.util.*;
+import com.intellij.psi.util.MethodSignatureBackedByPsiMethod;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.ContainerUtil;
+import gnu.trove.THashSet;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
+
+import static com.intellij.psi.impl.source.resolve.reference.impl.JavaReflectionReferenceUtil.*;
 
 /**
  * @author Konstantin Bulenkov
@@ -38,47 +24,65 @@ import java.util.List;
 public class JavaLangClassMemberReference extends PsiReferenceBase<PsiLiteralExpression> implements InsertHandler<LookupElement> {
   private final PsiExpression myContext;
 
-  public JavaLangClassMemberReference(PsiLiteralExpression literal, PsiExpression context) {
+  public JavaLangClassMemberReference(@NotNull PsiLiteralExpression literal, @NotNull PsiExpression context) {
     super(literal);
     myContext = context;
   }
 
   @Override
-  public PsiElement resolve() {
-    final String name =  (String)getElement().getValue();
-    final Type type = getType();
-
-    if (type != null) {
-      final PsiClass psiClass = getPsiClass();
-      if (psiClass != null) {
-        PsiMember member;
-        if (type == Type.FIELD || type == Type.DECLARED_FIELD) {
-          member = psiClass.findFieldByName(name, false);
-        } else {
-          final PsiMethod[] methods = psiClass.findMethodsByName(name, false);
-          member = methods.length == 0 ? null : methods[0];
-        }
-
-        return member;
-      }
-    }
-
-    return null;
+  public PsiElement bindToElement(@NotNull PsiElement element) throws IncorrectOperationException {
+    return element;
   }
 
-  @Nullable
-  private PsiClass getPsiClass() {
-    if (myContext instanceof PsiClassObjectAccessExpression) {
-      return PsiTypesUtil.getPsiClass(((PsiClassObjectAccessExpression)myContext).getOperand().getType());
-    } else if (myContext instanceof PsiMethodCallExpression) {
-      final PsiMethod method = ((PsiMethodCallExpression)myContext).resolveMethod();
-      if (method != null && "forName".equals(method.getName()) && isClass(method.getContainingClass())) {
-        final PsiExpression[] expressions = ((PsiMethodCallExpression)myContext).getArgumentList().getExpressions();
-        if (expressions.length == 1 && expressions[0] instanceof PsiLiteralExpression) {
-          final Object value = ((PsiLiteralExpression)expressions[0]).getValue();
-          if (value instanceof String) {
-            final Project project = myContext.getProject();
-            return JavaPsiFacade.getInstance(project).findClass(String.valueOf(value), GlobalSearchScope.allScope(project));
+  @Override
+  public PsiElement resolve() {
+    final Object value = myElement.getValue();
+    if (value instanceof String) {
+      final String name = (String)value;
+      final String type = getMemberType(myElement);
+
+      if (type != null) {
+        final ReflectiveClass ownerClass = getOwnerClass();
+        if (ownerClass != null) {
+          switch (type) {
+
+            case GET_FIELD: {
+              return ownerClass.getPsiClass().findFieldByName(name, true);
+            }
+
+            case GET_DECLARED_FIELD: {
+              final PsiField field = ownerClass.getPsiClass().findFieldByName(name, false);
+              return isPotentiallyAccessible(field, ownerClass) ? field : null;
+            }
+
+            case GET_METHOD: {
+              PsiMethod[] methods = ownerClass.getPsiClass().findMethodsByName(name, true);
+              if (methods.length > 1) {
+                methods =
+                  ContainerUtil.filter(methods, method -> isRegularMethod(method) && isPublic(method))
+                    .toArray(PsiMethod.EMPTY_ARRAY);
+                if (methods.length > 1) {
+                  return findOverloadedMethod(methods);
+                }
+              }
+              return methods.length != 0 ? methods[0] : null;
+            }
+
+            case GET_DECLARED_METHOD: {
+              PsiMethod[] methods = ownerClass.getPsiClass().findMethodsByName(name, false);
+              if (methods.length > 1) {
+                methods =
+                  ContainerUtil.filter(methods, method -> isRegularMethod(method) && isPotentiallyAccessible(method, ownerClass))
+                    .toArray(PsiMethod.EMPTY_ARRAY);
+                if (methods.length > 1) {
+                  return findOverloadedMethod(methods);
+                }
+              }
+              return methods.length != 0 ? methods[0] : null;
+            }
+
+            case NEW_UPDATER:
+              return ownerClass.getPsiClass().findFieldByName(name, false);
           }
         }
       }
@@ -86,99 +90,153 @@ public class JavaLangClassMemberReference extends PsiReferenceBase<PsiLiteralExp
     return null;
   }
 
-  private static boolean isClass(PsiClass aClass) {
-    return aClass != null && CommonClassNames.JAVA_LANG_CLASS.equals(aClass.getQualifiedName());
-  }
-
   @Nullable
-  private Type getType() {
-    boolean selfFound = false;
-    for (PsiElement child : myContext.getParent().getChildren()) {
-      if (!selfFound) {
-        if (child == myContext) {
-          selfFound = true;
-        }
-        continue;
-      }
-
-      if (child instanceof PsiIdentifier) {
-        return Type.fromString(child.getText());
-      }
-    }
-    return null;
+  private ReflectiveClass getOwnerClass() {
+    return getReflectiveClass(myContext);
   }
 
   @NotNull
   @Override
   public Object[] getVariants() {
-    final Type type = getType();
-    final PsiClass psiClass = getPsiClass();
-    if (psiClass != null && type != null) {
-      if (type == Type.DECLARED_FIELD) {
-        return psiClass.getFields();
-      } else if (type == Type.FIELD) {
-        final List<PsiField> fields = new ArrayList<PsiField>();
-        for (PsiField field : psiClass.getFields()) {
-          if (isPublic(field)) {
-            fields.add(field);
+    final String type = getMemberType(myElement);
+    if (type != null) {
+      final ReflectiveClass ownerClass = getOwnerClass();
+      if (ownerClass != null) {
+        switch (type) {
+
+          case GET_DECLARED_FIELD:
+            return Arrays.stream(ownerClass.getPsiClass().getFields())
+              .filter(field -> field.getName() != null)
+              .sorted(Comparator.comparing(PsiField::getName))
+              .map(field -> lookupField(field))
+              .toArray();
+
+          case GET_FIELD: {
+            final Set<String> uniqueNames = new THashSet<>();
+            return Arrays.stream(ownerClass.getPsiClass().getAllFields())
+              .filter(field -> isPotentiallyAccessible(field, ownerClass) && field.getName() != null && uniqueNames.add(field.getName()))
+              .sorted(Comparator.comparingInt((PsiField field) -> isPublic(field) ? 0 : 1).thenComparing(PsiField::getName))
+              .map(field -> withPriority(lookupField(field), isPublic(field)))
+              .toArray();
+          }
+
+          case GET_DECLARED_METHOD:
+            return Arrays.stream(ownerClass.getPsiClass().getMethods())
+              .filter(method -> isRegularMethod(method))
+              .sorted(Comparator.comparing(PsiMethod::getName))
+              .map(method -> lookupMethod(method, this))
+              .filter(Objects::nonNull)
+              .toArray();
+
+          case GET_METHOD: {
+            return ownerClass.getPsiClass().getVisibleSignatures()
+              .stream()
+              .map(MethodSignatureBackedByPsiMethod::getMethod)
+              .filter(method -> isRegularMethod(method) && isPotentiallyAccessible(method, ownerClass))
+              .sorted(Comparator.comparingInt((PsiMethod method) -> getMethodSortOrder(method)).thenComparing(PsiMethod::getName))
+              .map(method -> withPriority(lookupMethod(method, this), -getMethodSortOrder(method)))
+              .filter(Objects::nonNull)
+              .toArray();
+          }
+
+          case NEW_UPDATER: {
+            return Arrays.stream(ownerClass.getPsiClass().getFields())
+              .filter(field -> field.getName() != null)
+              .sorted(Comparator.comparingInt((PsiField field) -> isAtomicallyUpdateable(field) ? 0 : 1).thenComparing(PsiField::getName))
+              .map(field -> withPriority(lookupField(field), isAtomicallyUpdateable(field)))
+              .toArray();
           }
         }
-        return fields.toArray();
-      } else if (type == Type.DECLARED_METHOD || type == Type.METHOD) {
-        final List<LookupElementBuilder> elements = new ArrayList<LookupElementBuilder>();
-        for (PsiMethod method : psiClass.getMethods()) {
-          if (type == Type.DECLARED_METHOD || isPublic(method)) {
-            elements.add(JavaLookupElementBuilder.forMethod(method, PsiSubstitutor.EMPTY).withInsertHandler(this));
-          }
-        }
-        return elements.toArray();
       }
     }
     return EMPTY_ARRAY;
   }
 
-  @Override
-  public void handleInsert(InsertionContext context, LookupElement item) {
-    final Object object = item.getObject();
-    if (object instanceof PsiMethod) {
-      final PsiElement newElement = PsiUtilCore.getElementAtOffset(context.getFile(), context.getStartOffset());
-      final int start = newElement.getTextRange().getEndOffset();
-      final PsiElement params = newElement.getParent().getParent();
-      final int end = params.getTextRange().getEndOffset() - 1;
-      final String types = getMethodTypes((PsiMethod)object);
-      context.getDocument().replaceString(start, end, types);
-      context.commitDocument();
-      final PsiElement firstParam = PsiUtilCore.getElementAtOffset(context.getFile(), context.getStartOffset());
-      final PsiMethodCallExpression methodCall = PsiTreeUtil.getParentOfType(firstParam, PsiMethodCallExpression.class);
-      if (methodCall != null) {
-        JavaCodeStyleManager.getInstance(context.getProject()).shortenClassReferences(methodCall);
+
+  /**
+   * Non-public members of superclass/superinterface can't be obtained via reflection, they need to be filtered out.
+   */
+  @Contract("null, _ -> false")
+  private static boolean isPotentiallyAccessible(PsiMember member, ReflectiveClass psiClass) {
+    return member != null && (member.getContainingClass() == psiClass.getPsiClass() || isPublic(member));
+  }
+
+  @Nullable
+  private PsiElement findOverloadedMethod(PsiMethod[] methods) {
+    final PsiMethodCallExpression definitionCall = PsiTreeUtil.getParentOfType(myElement, PsiMethodCallExpression.class);
+    if (definitionCall != null) {
+      final List<PsiExpression> arguments = getReflectionMethodArguments(definitionCall, 1);
+      if (arguments != null) {
+        final List<ReflectiveType> parameterTypes = ContainerUtil.map(arguments, type -> getReflectiveType(type));
+        return matchMethod(methods, parameterTypes);
       }
     }
+    return null;
   }
 
-  private static boolean isPublic(final PsiMember psiField) {
-    return psiField.hasModifierProperty(PsiModifier.PUBLIC);
-  }
-
-  private static String getMethodTypes(PsiMethod method) {
-    final StringBuilder buf = new StringBuilder();
-    for (PsiParameter parameter : method.getParameterList().getParameters()) {
-      buf.append(", ").append(((PsiClassReferenceType)parameter.getType()).getReference().getReferenceName()).append(".class");
+  @Override
+  public void handleInsert(@NotNull InsertionContext context, @NotNull LookupElement item) {
+    final Object object = item.getObject();
+    if (object instanceof ReflectiveSignature) {
+      final ReflectiveSignature signature = (ReflectiveSignature)object;
+      final String text = signature.getText(false, false, type -> type + ".class");
+      replaceText(context, text.isEmpty() ? "" : ", " + text);
     }
-    return buf.toString();
   }
 
 
-  enum Type {
-    FIELD, DECLARED_FIELD, METHOD, DECLARED_METHOD;
-
-    @Nullable
-    static Type fromString(String s) {
-      if ("getField".equals(s)) return FIELD;
-      if ("getDeclaredField".equals(s)) return DECLARED_FIELD;
-      if ("getMethod".equals(s)) return METHOD;
-      if ("getDeclaredMethod".equals(s)) return DECLARED_METHOD;
-      return null;
+  @Nullable
+  public static PsiMethod matchMethod(@NotNull PsiMethod[] methods, @NotNull List<? extends ReflectiveType> argumentTypes) {
+    int mismatchCount = Integer.MAX_VALUE;
+    PsiMethod bestGuess = null;
+    for (PsiMethod method : methods) {
+      final int match = matchMethodArguments(method, argumentTypes);
+      if (match == 0) {
+        return method;
+      }
+      if (match < 0) {
+        continue;
+      }
+      if (mismatchCount > match) {
+        mismatchCount = match;
+        bestGuess = method;
+      }
     }
+    return bestGuess;
+  }
+
+  private static int matchMethodArguments(PsiMethod method, List<? extends ReflectiveType> argumentTypes) {
+    final PsiParameter[] parameters = method.getParameterList().getParameters();
+    if (parameters.length != argumentTypes.size()) {
+      return -1;
+    }
+    int mismatchCount = 0;
+    for (int i = 0; i < parameters.length; i++) {
+      final ReflectiveType argumentType = argumentTypes.get(i);
+      if (argumentType == null) {
+        mismatchCount++;
+        continue;
+      }
+      if (!argumentType.isEqualTo(parameters[i].getType())) {
+        return -1;
+      }
+    }
+    return mismatchCount;
+  }
+
+  @Nullable
+  public static List<PsiExpression> getReflectionMethodArguments(@NotNull PsiMethodCallExpression definitionCall, int argumentOffset) {
+    final PsiExpression[] arguments = definitionCall.getArgumentList().getExpressions();
+
+    if (arguments.length == argumentOffset + 1) {
+      final PsiExpression[] arrayElements = getVarargAsArray(arguments[argumentOffset]);
+      if (arrayElements != null) {
+        return Arrays.asList(arrayElements);
+      }
+    }
+    if (arguments.length >= argumentOffset) {
+      return Arrays.asList(arguments).subList(argumentOffset, arguments.length);
+    }
+    return null;
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,14 +22,20 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.beans.PropertyChangeListener;
 
 /**
  * @author spLeaner
  * @author Konstantin Bulenkov
  */
 public abstract class SpeedSearchSupply {
+  /**
+   * Client property key to use in jcomponents for passing the actual search query to renderers
+   */
+  public static final String SEARCH_QUERY_KEY = "SEARCH_QUERY";
   private static final Key SPEED_SEARCH_COMPONENT_MARKER = new Key("SPEED_SEARCH_COMPONENT_MARKER");
   public static final DataKey<String> SPEED_SEARCH_CURRENT_QUERY = DataKey.create("SPEED_SEARCH_CURRENT_QUERY");
+  public static final String ENTERED_PREFIX_PROPERTY_NAME = "enteredPrefix";
 
   @Nullable
   public static SpeedSearchSupply getSupply(@NotNull final JComponent component) {
@@ -62,7 +68,17 @@ public abstract class SpeedSearchSupply {
     return null;
   }
 
-  protected void installSupplyTo(JComponent component) {
+  protected void installSupplyTo(final JComponent component) {
     component.putClientProperty(SPEED_SEARCH_COMPONENT_MARKER, this);
+    addChangeListener(evt -> component.repaint());
   }
+
+  public abstract void addChangeListener(@NotNull PropertyChangeListener listener);
+  public abstract void removeChangeListener(@NotNull PropertyChangeListener listener);
+
+  /**
+   * Find an element matching the searching query in the underlying component and select it there. Speed-search popup is not affected.
+   * @param searchQuery text that the selected element should match
+   */
+  public abstract void findAndSelectElement(@NotNull String searchQuery);
 }

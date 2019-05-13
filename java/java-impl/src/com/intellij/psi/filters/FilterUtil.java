@@ -19,13 +19,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * Created by IntelliJ IDEA.
- * User: ik
- * Date: 30.01.2003
- * Time: 17:45:45
- * To change this template use Options | File Templates.
- */
 public class FilterUtil{
   private FilterUtil() {
   }
@@ -37,9 +30,15 @@ public class FilterUtil{
       return (PsiType)element;
     }
     if(element instanceof PsiClass){
-      return JavaPsiFacade.getInstance(element.getProject()).getElementFactory().createType((PsiClass)element);
+      return JavaPsiFacade.getElementFactory(element.getProject()).createType((PsiClass)element);
     }
     if(element instanceof PsiMethod){
+      if (((PsiMethod)element).isConstructor()) {
+        final PsiClass containingClass = ((PsiMethod)element).getContainingClass();
+        if (containingClass != null) {
+          return JavaPsiFacade.getElementFactory(element.getProject()).createType(containingClass);
+        }
+      }
       return ((PsiMethod)element).getReturnType();
     }
     if(element instanceof PsiVariable){

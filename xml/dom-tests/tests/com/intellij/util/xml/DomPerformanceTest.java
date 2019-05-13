@@ -1,12 +1,27 @@
 /*
- * Copyright (c) 2000-2006 JetBrains s.r.o. All Rights Reserved.
-                                                    */
+ * Copyright 2000-2015 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.intellij.util.xml;
 
-import com.intellij.openapi.application.Result;
+import com.intellij.idea.HardwareAgentRequired;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.meta.MetaRegistry;
@@ -16,16 +31,15 @@ import com.intellij.util.ThrowableRunnable;
 import com.intellij.xml.impl.dtd.XmlNSDescriptorImpl;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.BufferedWriter;
-import java.io.OutputStreamWriter;
+import java.io.IOException;
 import java.util.List;
 
 /**
  * @author peter
  */
-public class DomPerformanceTest extends DomHardCoreTestCase{
-
-  public void testVisitorPerformance() throws Throwable {
+@HardwareAgentRequired
+public class DomPerformanceTest extends DomHardCoreTestCase {
+  public void testVisitorPerformance() {
     final MyElement element = createElement("<root xmlns=\"adsf\" targetNamespace=\"adsf\"/>", MyElement.class);
 
     MetaRegistry.bindDataToElement(DomUtil.getFile(element).getDocument(), new XmlNSDescriptorImpl());
@@ -41,34 +55,30 @@ public class DomPerformanceTest extends DomHardCoreTestCase{
     child.addChildElement().addBarComposite().setValue("ssss");
     child.addBarChild().getChild2().getAttr().setValue("234178956023");
 
-    PlatformTestUtil.startPerformanceTest(getTestName(false), 80000, new ThrowableRunnable() {
-      @Override
-      public void run() throws Exception {
-        for (int i = 0; i < 239; i++) {
-          element.addChildElement().copyFrom(child);
-        }
+    PlatformTestUtil.startPerformanceTest("creating", 80_000, () -> ApplicationManager.getApplication().runWriteAction(() -> {
+      for (int i = 0; i < 239; i++) {
+        element.addChildElement().copyFrom(child);
       }
-    }).cpuBound().attempts(1).assertTiming();
+    })).attempts(1).assertTiming();
 
     final MyElement newElement = createElement(DomUtil.getFile(element).getText(), MyElement.class);
 
-    PlatformTestUtil.startPerformanceTest(getTestName(false), 300, new ThrowableRunnable() {
+    PlatformTestUtil.startPerformanceTest("visiting", 450, new ThrowableRunnable() {
       @Override
-      public void run() throws Exception {
+      public void run() {
         newElement.acceptChildren(new DomElementVisitor() {
           @Override
           public void visitDomElement(DomElement element) {
             element.acceptChildren(this);
           }
         });
-
       }
-    }).cpuBound().assertTiming();
+    }).assertTiming();
   }
 
   public void testShouldntParseNonDomFiles() throws Throwable {
     for (int i = 0; i < 420; i++) {
-      getDomManager().registerFileDescription(new DomFileDescription(MyChildElement.class, "foo") {
+      getDomManager().registerFileDescription(new DomFileDescription<MyChildElement>(MyChildElement.class, "foo") {
 
         @Override
         public boolean isMyFile(@NotNull final XmlFile file, final Module module) {
@@ -76,7 +86,7 @@ public class DomPerformanceTest extends DomHardCoreTestCase{
           return super.isMyFile(file, module);
         }
       }, getTestRootDisposable());
-      getDomManager().registerFileDescription(new DomFileDescription(MyChildElement.class, "bar") {
+      getDomManager().registerFileDescription(new DomFileDescription<MyChildElement>(MyChildElement.class, "bar") {
 
         @Override
         public boolean isMyFile(@NotNull final XmlFile file, final Module module) {
@@ -88,32 +98,17 @@ public class DomPerformanceTest extends DomHardCoreTestCase{
 
     getDomManager().createMockElement(MyChildElement.class, null, true);
 
-    @NotNull final VirtualFile virtualFile = createFile("a.xml", "").getVirtualFile();
-    new WriteCommandAction(getProject()) {
-      @Override
-      protected void run(Result result) throws Throwable {
+    VirtualFile virtualFile = createFile("a.xml", "").getVirtualFile();
+    WriteCommandAction.runWriteCommandAction(getProject(), (ThrowableComputable<Void, IOException>)() -> {
+      VfsUtil.saveText(virtualFile, "<root>\n" + StringUtil.repeat("<bar/>\n", 23942) + "</root>");
+      return null;
+    });
 
-        final BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(virtualFile.getOutputStream(this)));
-        writer.write("<root>\n");
-        for (int i = 0; i < 23942; i++) {
-          writer.write("<bar/>\n");
-        }
-        writer.write("</root>");
-        writer.close();
-        virtualFile.refresh(false, false);
-      }
-    }.execute();
-
-    ((PsiManagerImpl)getPsiManager()).getFileManager().cleanupForNextTest();
+    ((PsiManagerImpl)getPsiManager()).cleanupForNextTest();
     final XmlFile file = (XmlFile)getPsiManager().findFile(virtualFile);
     assertFalse(file.getNode().isParsed());
     assertTrue(StringUtil.isNotEmpty(file.getText()));
-    PlatformTestUtil.startPerformanceTest("", 100, new ThrowableRunnable() {
-      @Override
-      public void run() throws Exception {
-        assertNull(getDomManager().getFileElement(file));
-      }
-    }).cpuBound().assertTiming();
+    PlatformTestUtil.startPerformanceTest("DOM parsing", 10, () -> assertNull(getDomManager().getFileElement(file))).assertTiming();
   }
 
   public void testDontParseNamespacedDomFiles() throws Exception {
@@ -137,6 +132,7 @@ public class DomPerformanceTest extends DomHardCoreTestCase{
   public interface MyNamespacedElement extends DomElement {
 
   }
+
   public interface MyChildElement extends DomElement {
     @Attribute
     @Required
@@ -180,7 +176,6 @@ public class DomPerformanceTest extends DomHardCoreTestCase{
 
     @SubTagsList(value = {"child-element", "abstract-element"}, tagName = "abstract-element")
     MyBarConcreteElement addBarComposite();
-
   }
 
   public interface MyAbstractElement extends MyElement {
@@ -191,6 +186,4 @@ public class DomPerformanceTest extends DomHardCoreTestCase{
 
   public interface MyBarConcreteElement extends MyAbstractElement {
   }
-
-
 }

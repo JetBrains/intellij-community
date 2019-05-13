@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,9 +20,10 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.jsp.BaseJspFile;
 import com.intellij.psi.jsp.JspFile;
-import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.HashSet;
 
 /**
  * @author nik
@@ -37,15 +38,18 @@ public abstract class JspContextManager {
 
   public abstract void setContextFile(@NotNull PsiFile file, @Nullable BaseJspFile contextFile);
 
-  public abstract @Nullable
+  @Nullable
+  public abstract
   BaseJspFile getContextFile(@NotNull PsiFile file);
 
-  public abstract @Nullable JspFile getConfiguredContextFile(@NotNull PsiFile file);
+  @Nullable
+  public abstract JspFile getConfiguredContextFile(@NotNull PsiFile file);
 
-  public @NotNull
+  @NotNull
+  public
   BaseJspFile getRootContextFile(@NotNull BaseJspFile file) {
     BaseJspFile rootContext = file;
-    HashSet<BaseJspFile> recursionPreventer = new HashSet<BaseJspFile>();
+    HashSet<BaseJspFile> recursionPreventer = new HashSet<>();
     do {
       recursionPreventer.add(rootContext);
       BaseJspFile context = getContextFile(rootContext);

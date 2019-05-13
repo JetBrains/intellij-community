@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,12 +22,6 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
-/**
- * Created by IntelliJ IDEA.
- * User: alexander.chernikov
- * Date: Mar 23, 2010
- * Time: 7:01:01 PM
- */
 public class UiScriptFileType implements FileType {
   private static UiScriptFileType myInstance;
 
@@ -41,36 +35,43 @@ public class UiScriptFileType implements FileType {
     return myInstance;
   }
 
+  @Override
   @NotNull
   public String getName() {
     return "UI Script";
   }
 
+  @Override
   @NotNull
   public String getDescription() {
-    return "UI test scripts.";
+    return "UI test script";
   }
 
   public static final String myExtension = "ijs";
 
+  @Override
   @NotNull
   public String getDefaultExtension() {
     return myExtension;
   }
 
+  @Override
   public Icon getIcon() {
     return null;
   }
 
+  @Override
   public boolean isBinary() {
     return false;
   }
 
+  @Override
   public boolean isReadOnly() {
     return false;
   }
 
-  public String getCharset(@NotNull VirtualFile file, byte[] content) {
+  @Override
+  public String getCharset(@NotNull VirtualFile file, @NotNull byte[] content) {
     return CharsetToolkit.UTF8;
   }
 }

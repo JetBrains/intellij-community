@@ -1,61 +1,66 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor.ex;
 
+import com.intellij.codeInsight.daemon.GutterMark;
+import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.editor.EditorGutter;
 import com.intellij.openapi.editor.FoldRegion;
+import com.intellij.openapi.editor.TextAnnotationGutterProvider;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
-import com.intellij.util.containers.Convertor;
+import gnu.trove.TIntFunction;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.List;
 
 public abstract class EditorGutterComponentEx extends JComponent implements EditorGutter {
-
-  public abstract boolean isFoldingOutlineShown();
-
-  public abstract boolean isLineMarkersShown();
-
-  public abstract boolean isAnnotationsShown();
-
   @Nullable
   public abstract FoldRegion findFoldingAnchorAt(int x, int y);
 
   public abstract int getWhitespaceSeparatorOffset();
 
-  public abstract Color getOutlineColor(boolean isActive);
-
-  /**
-   * @deprecated use getOutlineColor
-   */
-  public Color getFoldingColor(boolean isActive) {
-    return getOutlineColor(isActive);
-  }
-
   public abstract void revalidateMarkup();
 
   public abstract int getLineMarkerAreaOffset();
+  
+  public abstract int getIconAreaOffset();
+  
+  public abstract int getLineMarkerFreePaintersAreaOffset();
 
   public abstract int getIconsAreaWidth();
 
-  @Nullable
-  public abstract Point getPoint(GutterIconRenderer renderer);
+  public abstract int getAnnotationsAreaOffset();
 
-  public abstract void setLineNumberConvertor(final Convertor<Integer, Integer> lineNumberConvertor);
+  public abstract int getAnnotationsAreaWidth();
+
+  @Nullable
+  public abstract Point getCenterPoint(GutterIconRenderer renderer);
+
+  public abstract void setLineNumberConvertor(@Nullable TIntFunction lineNumberConvertor);
+
+  public abstract void setLineNumberConvertor(@Nullable TIntFunction lineNumberConvertor1, @Nullable TIntFunction lineNumberConvertor2);
 
   public abstract void setShowDefaultGutterPopup(boolean show);
+
+  public abstract void setCanCloseAnnotations(boolean canCloseAnnotations);
+
+  public abstract void setGutterPopupGroup(@Nullable ActionGroup group);
+  
+  public abstract void setPaintBackground(boolean value);
+
+  public abstract void setForceShowLeftFreePaintersArea(boolean value);
+
+  public abstract void setForceShowRightFreePaintersArea(boolean value);
+
+  public abstract void setInitialIconAreaWidth(int width);
+
+  @Nullable
+  public GutterMark getGutterRenderer(final Point p) {
+    return null;
+  }
+
+  @NotNull
+  public abstract List<TextAnnotationGutterProvider> getTextAnnotations();
 }

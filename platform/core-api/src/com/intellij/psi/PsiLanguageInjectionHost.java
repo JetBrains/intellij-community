@@ -20,6 +20,7 @@ import com.intellij.openapi.util.Segment;
 import com.intellij.openapi.util.TextRange;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import com.intellij.lang.injection.*;
 
 import java.util.List;
 
@@ -29,7 +30,7 @@ import java.util.List;
  * but is used by IDEA for highlighting, completion and other code insight actions.
  * In order to do the injection, you have to
  * <ul>
- * <li>Implement {@link com.intellij.psi.LanguageInjector} to describe exact place where injection should occur.</li>  
+ * <li>Implement {@link com.intellij.psi.LanguageInjector} to describe exact place where injection should occur.</li>
  * <li>Register injection in {@link com.intellij.psi.LanguageInjector#EXTENSION_POINT_NAME} extension point.</li>
  * </ul>
  * Currently, language can be injected into string literals, XML tag contents and XML attributes.
@@ -37,14 +38,28 @@ import java.util.List;
  * For all returned injected PSI elements, {@link InjectedLanguageManager#getInjectionHost(PsiElement)} returns PsiLanguageInjectionHost they were injected into.
  */
 public interface PsiLanguageInjectionHost extends PsiElement {
+  /**
+   * @return {@code true} if this instance can accept injections, {@code false} otherwise
+   */
   boolean isValidHost();
 
+  /**
+   * Update the host element using the provided text of the injected file. It may be required to escape characters from {@code text}
+   * in accordance with the host language syntax. The implementation may delegate to {@link ElementManipulators#handleContentChange(PsiElement, String)}
+   * if {@link ElementManipulator} implementation is registered for this element class
+   * @param text text of the injected file
+   * @return the updated instance
+   */
   PsiLanguageInjectionHost updateText(@NotNull String text);
-  
+
+  /**
+   * @return {@link LiteralTextEscaper} instance which will be used to convert the content of this host element to the content of injected file
+   */
   @NotNull
   LiteralTextEscaper<? extends PsiLanguageInjectionHost> createLiteralTextEscaper();
 
 
+  @FunctionalInterface
   interface InjectedPsiVisitor {
     void visit(@NotNull PsiFile injectedPsi, @NotNull List<Shred> places);
   }
@@ -63,6 +78,9 @@ public interface PsiLanguageInjectionHost extends PsiElement {
     @Nullable
     PsiLanguageInjectionHost getHost();
 
+    /**
+     * @return range in decoded PSI
+     */
     @NotNull
     TextRange getRange();
 

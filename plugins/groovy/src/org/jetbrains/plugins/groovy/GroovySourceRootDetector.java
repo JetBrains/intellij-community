@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,7 +20,6 @@ import com.intellij.lexer.Lexer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.NullableFunction;
-import com.intellij.util.StringBuilderSpinAllocator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyLexer;
@@ -43,14 +42,10 @@ public class GroovySourceRootDetector extends JavaSourceRootDetector {
     return GroovyFileType.DEFAULT_EXTENSION;
   }
 
+  @Override
   @NotNull
   protected NullableFunction<CharSequence, String> getPackageNameFetcher() {
-    return new NullableFunction<CharSequence, String>() {
-      @Override
-      public String fun(CharSequence charSequence) {
-        return getPackageName(charSequence);
-      }
-    };
+    return charSequence -> getPackageName(charSequence);
   }
 
   @Nullable
@@ -65,25 +60,20 @@ public class GroovySourceRootDetector extends JavaSourceRootDetector {
     lexer.advance();
     skipWhitespacesAndComments(lexer);
 
-    final StringBuilder buffer = StringBuilderSpinAllocator.alloc();
-    try {
-      while(true){
-        if (lexer.getTokenType() != GroovyTokenTypes.mIDENT) break;
-        buffer.append(text, lexer.getTokenStart(), lexer.getTokenEnd());
-        lexer.advance();
-        skipWhitespacesAndComments(lexer);
-        if (lexer.getTokenType() != GroovyTokenTypes.mDOT) break;
-        buffer.append('.');
-        lexer.advance();
-        skipWhitespacesAndComments(lexer);
-      }
-      String packageName = buffer.toString();
-      if (packageName.length() == 0 || StringUtil.endsWithChar(packageName, '.')) return null;
-      return packageName;
+    final StringBuilder buffer = new StringBuilder();
+    while(true){
+      if (lexer.getTokenType() != GroovyTokenTypes.mIDENT) break;
+      buffer.append(text, lexer.getTokenStart(), lexer.getTokenEnd());
+      lexer.advance();
+      skipWhitespacesAndComments(lexer);
+      if (lexer.getTokenType() != GroovyTokenTypes.mDOT) break;
+      buffer.append('.');
+      lexer.advance();
+      skipWhitespacesAndComments(lexer);
     }
-    finally {
-      StringBuilderSpinAllocator.dispose(buffer);
-    }
+    String packageName = buffer.toString();
+    if (packageName.isEmpty() || StringUtil.endsWithChar(packageName, '.')) return null;
+    return packageName;
   }
 
   private static void skipWhitespacesAndComments(Lexer lexer) {

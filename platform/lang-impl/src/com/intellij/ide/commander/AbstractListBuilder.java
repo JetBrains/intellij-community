@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,15 +24,16 @@ import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
-import com.intellij.ui.ListScrollingUtil;
-import com.intellij.util.Alarm;
-import com.intellij.util.containers.HashMap;
+import com.intellij.ui.ScrollingUtil;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import gnu.trove.THashSet;
 
 import javax.swing.*;
 import java.awt.*;
 import java.util.*;
 import java.util.List;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 
 /**
  * @author Eugene Belyaev
@@ -53,15 +54,15 @@ public abstract class AbstractListBuilder {
     void removeAllElements();
 
     void addElement(final Object node);
-    
+
     void replaceElements(final List newElements);
 
     Object[] toArray();
 
     int indexOf(final Object o);
-    
+
     int getSize();
-    
+
     Object getElementAt(int idx);
   }
 
@@ -144,13 +145,13 @@ public abstract class AbstractListBuilder {
   protected Object getSelectedValue() {
     return myList.getSelectedValue();
   }
-  
+
   protected void selectItem(int i) {
-    ListScrollingUtil.selectItem(myList, i);
+    ScrollingUtil.selectItem(myList, i);
   }
 
   protected void ensureSelectionExist() {
-    ListScrollingUtil.ensureSelectionExists(myList);
+    ScrollingUtil.ensureSelectionExists(myList);
   }
 
   public final void selectElement(final Object element, VirtualFile virtualFile) {
@@ -242,7 +243,7 @@ public abstract class AbstractListBuilder {
       return nodes.get(0);
     }
     else {
-      return performDeepSearch(nodes.toArray(), element, new THashSet<AbstractTreeNode>());
+      return performDeepSearch(nodes.toArray(), element, new THashSet<>());
     }
   }
 
@@ -271,20 +272,18 @@ public abstract class AbstractListBuilder {
 
   private void buildList(final AbstractTreeNode parentElement) {
     myCurrentParent = parentElement;
-    final Alarm alarm = new Alarm(Alarm.ThreadToUse.SHARED_THREAD);
-    alarm.addRequest(
-        new Runnable() {
-        public void run() {
-          myList.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
-        }
-      },
-      200
+    Future<?> future = AppExecutorUtil.getAppScheduledExecutorService().schedule(
+      () -> myList.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR)),
+      200, TimeUnit.MILLISECONDS
     );
 
     final Object[] children = getChildren(parentElement);
     myModel.removeAllElements();
     if (shouldAddTopElement()) {
-      myModel.addElement(new TopLevelNode(myProject, parentElement.getValue()));
+      Object value = parentElement.getValue();
+      if (value != null) {
+        myModel.addElement(new TopLevelNode(myProject, value));
+      }
     }
 
     for (Object aChildren : children) {
@@ -298,16 +297,9 @@ public abstract class AbstractListBuilder {
       myModel.addElement(aChildren);
     }
 
-    final int n = alarm.cancelAllRequests();
-    if (n == 0) {
-      alarm.addRequest(
-          new Runnable() {
-          public void run() {
-            myList.setCursor(Cursor.getDefaultCursor());
-          }
-        },
-        0
-      );
+    boolean canceled = future.cancel(false);
+    if (!canceled) {
+      AppExecutorUtil.getAppExecutorService().execute(() -> myList.setCursor(Cursor.getDefaultCursor()));
     }
   }
 
@@ -341,12 +333,12 @@ public abstract class AbstractListBuilder {
     }
 
     final Object[] children = getChildren(parentDescriptor);
-    final HashMap<Object,Integer> elementToIndexMap = new HashMap<Object, Integer>();
+    final HashMap<Object,Integer> elementToIndexMap = new HashMap<>();
     for (int i = 0; i < children.length; i++) {
       elementToIndexMap.put(children[i], Integer.valueOf(i));
     }
 
-    final List<NodeDescriptor> resultDescriptors = new ArrayList<NodeDescriptor>();
+    final List<NodeDescriptor> resultDescriptors = new ArrayList<>();
     final Object[] listChildren = myModel.toArray();
     for (final Object child : listChildren) {
       if (!(child instanceof NodeDescriptor)) {
@@ -380,17 +372,20 @@ public abstract class AbstractListBuilder {
     else {
       Collections.sort(resultDescriptors, IndexComparator.INSTANCE);
     }
-    
+
     if (shouldAddTopElement()) {
       final List elems = new ArrayList();
-      elems.add(new TopLevelNode(myProject, parentDescriptor.getValue()));
+      Object value = parentDescriptor.getValue();
+      if (value != null) {
+        elems.add(new TopLevelNode(myProject, value));
+      }
       elems.addAll(resultDescriptors);
       myModel.replaceElements(elems);
     }
     else {
       myModel.replaceElements(resultDescriptors);
     }
-    
+
     restoreSelection(selection);
     updateParentTitle();
   }
@@ -400,7 +395,7 @@ public abstract class AbstractListBuilder {
     public final Object myLeadSelection;
     public final int myLeadSelectionIndex;
 
-    public SelectionInfo(final ArrayList<Object> selectedObjects, final int leadSelectionIndex, final Object leadSelection) {
+    SelectionInfo(final ArrayList<Object> selectedObjects, final int leadSelectionIndex, final Object leadSelection) {
       myLeadSelection = leadSelection;
       myLeadSelectionIndex = leadSelectionIndex;
       mySelectedObjects = selectedObjects;
@@ -409,7 +404,7 @@ public abstract class AbstractListBuilder {
 
   private SelectionInfo storeSelection() {
     final ListSelectionModel selectionModel = myList.getSelectionModel();
-    final ArrayList<Object> selectedObjects = new ArrayList<Object>();
+    final ArrayList<Object> selectedObjects = new ArrayList<>();
     final int[] selectedIndices = myList.getSelectedIndices();
     final int leadSelectionIndex = selectionModel.getLeadSelectionIndex();
     Object leadSelection = null;

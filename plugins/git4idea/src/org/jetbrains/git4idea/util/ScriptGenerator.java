@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,12 +21,10 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.PathUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
-import java.io.FileWriter;
 import java.io.IOException;
-import java.io.PrintWriter;
 import java.util.ArrayList;
 
 /**
@@ -34,20 +32,6 @@ import java.util.ArrayList;
  * are removed after application ends.
  */
 public class ScriptGenerator {
-  /**
-   * The extension of the ssh script name
-   */
-  @NonNls public static final String SCRIPT_EXT;
-
-  static {
-    if (SystemInfo.isWindows) {
-      SCRIPT_EXT = ".bat";
-    }
-    else {
-      SCRIPT_EXT = ".sh";
-    }
-  }
-
   /**
    * The script prefix
    */
@@ -57,31 +41,13 @@ public class ScriptGenerator {
    */
   private final Class myMainClass;
   /**
-   * The temporary directory to use or null, if system directory should be used
-   */
-  @Nullable private final File myTempDir;
-  /**
    * The class paths for the script
    */
-  private final ArrayList<String> myPaths = new ArrayList<String>();
+  private final ArrayList<String> myPaths = new ArrayList<>();
   /**
    * The internal parameters for the script
    */
-  private final ArrayList<String> myInternalParameters = new ArrayList<String>();
-
-  /**
-   * A constructor
-   *
-   * @param prefix    the script prefix
-   * @param mainClass the script main class
-   * @param tempDir   the temporary directory to use. if null, system default is used.
-   */
-  public ScriptGenerator(final String prefix, final Class mainClass, File tempDir) {
-    myPrefix = prefix;
-    myMainClass = mainClass;
-    myTempDir = tempDir;
-    addClasses(myMainClass);
-  }
+  private final ArrayList<String> myInternalParameters = new ArrayList<>();
 
   /**
    * A constructor
@@ -90,7 +56,9 @@ public class ScriptGenerator {
    * @param mainClass the script main class
    */
   public ScriptGenerator(final String prefix, final Class mainClass) {
-    this(prefix, mainClass, null);
+    myPrefix = prefix;
+    myMainClass = mainClass;
+    addClasses(myMainClass);
   }
 
   /**
@@ -141,39 +109,38 @@ public class ScriptGenerator {
     return this;
   }
 
-  /**
-   * Generate script according to specified parameters
-   *
-   * @return the path to generated script
-   * @throws IOException if there is a problem with creating script
-   */
-  @SuppressWarnings({"HardCodedStringLiteral"})
-  public File generate() throws IOException {
-    File scriptPath = myTempDir != null ? FileUtil.createTempFile(myTempDir, myPrefix, SCRIPT_EXT, true)
-                                        : FileUtil.createTempFile(myPrefix, SCRIPT_EXT);
-    scriptPath.deleteOnExit();
-    PrintWriter out = new PrintWriter(new FileWriter(scriptPath));
-    try {
-      if (SystemInfo.isWindows) {
-        out.println("@echo off");
-      }
-      else {
-        out.println("#!/bin/sh");
-      }
-      String line = commandLine();
-      if (SystemInfo.isWindows) {
-        line += " %*";
-      }
-      else {
-        line += " \"$@\"";
-      }
-      out.println(line);
+  @NotNull
+  private static File generateBatch(@NotNull String fileName, @NotNull String commandLine) throws IOException {
+    StringBuilder sb = new StringBuilder();
+    sb.append("@echo off").append("\n");
+    sb.append(commandLine).append(" %*").append("\n");
+    return createTempExecutable(fileName + ".bat", sb.toString());
+  }
+
+  @NotNull
+  private static File generateShell(@NotNull String fileName, @NotNull String commandLine) throws IOException {
+    StringBuilder sb = new StringBuilder();
+    sb.append("#!/bin/sh").append("\n");
+    sb.append(commandLine).append(" \"$@\"").append("\n");
+    return createTempExecutable(fileName + ".sh", sb.toString());
+  }
+
+  @NotNull
+  private static File createTempExecutable(@NotNull String fileName, @NotNull String content) throws IOException {
+    File file = new File(PathManager.getTempPath(), fileName);
+    if (SystemInfo.isWindows && file.getPath().contains(" ")) {
+      file = new File(FileUtil.getTempDirectory(), fileName);
     }
-    finally {
-      out.close();
-    }
-    FileUtil.setExecutableAttribute(scriptPath.getPath(), true);
-    return scriptPath;
+    FileUtil.writeToFile(file, content);
+    FileUtil.setExecutableAttribute(file.getPath(), true);
+    return file;
+  }
+
+  @NotNull
+  public File generate(boolean useBatchFile) throws IOException {
+    String commandLine = commandLine();
+    return useBatchFile ? generateBatch(myPrefix, commandLine)
+                        : generateShell(myPrefix, commandLine);
   }
 
   /**

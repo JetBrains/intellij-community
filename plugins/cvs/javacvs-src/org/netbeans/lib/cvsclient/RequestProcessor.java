@@ -12,6 +12,7 @@
  */
 package org.netbeans.lib.cvsclient;
 
+import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.concurrency.Semaphore;
 import org.jetbrains.annotations.NonNls;
 import org.netbeans.lib.cvsclient.command.CommandAbortedException;
@@ -33,9 +34,7 @@ import org.netbeans.lib.cvsclient.util.BugLog;
 
 import java.io.IOException;
 import java.io.Reader;
-import java.util.Iterator;
 import java.util.Map;
-import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
 /**
@@ -87,6 +86,7 @@ public final class RequestProcessor implements IRequestProcessor {
 
   // Implemented ============================================================
 
+  @Override
   public boolean processRequests(Requests requests, IRequestsProgressHandler communicationProgressHandler) throws CommandException,
                                                                                                                   AuthenticationException {
     IConnectionStreams connectionStreams = openConnection();
@@ -145,13 +145,12 @@ public final class RequestProcessor implements IRequestProcessor {
 
   private void sendSetRequests(IGlobalOptions globalOptions, ConnectionStreams connectionStreams)
     throws CommandAbortedException, IOException {
-    Map envVariables = globalOptions.getEnvVariables();
+    Map<String, String> envVariables = globalOptions.getEnvVariables();
     if (envVariables == null) {
       return;
     }
-    for (Iterator iterator = envVariables.keySet().iterator(); iterator.hasNext();) {
-      String varName = (String)iterator.next();
-      String varValue = (String)envVariables.get(varName);
+    for (String varName : envVariables.keySet()) {
+      String varValue = envVariables.get(varName);
       sendRequest(new SetRequest(varName, varValue), connectionStreams);
     }
   }
@@ -159,7 +158,7 @@ public final class RequestProcessor implements IRequestProcessor {
   private boolean processRequests(final Requests requests,
                                   final IConnectionStreams connectionStreams,
                                   final IRequestsProgressHandler communicationProgressHandler)
-    throws CommandException, IOCommandException {
+    throws CommandException {
 
     BugLog.getInstance().assertNotNull(requests);
 
@@ -182,28 +181,26 @@ public final class RequestProcessor implements IRequestProcessor {
     public boolean processRequests(final Requests requests,
                                    final IConnectionStreams connectionStreams,
                                    final IRequestsProgressHandler communicationProgressHandler)
-      throws CommandException, IOCommandException {
-      final Runnable runnable = new Runnable() {
-        public void run() {
-          try {
-            checkCanceled();
-            sendRequests(requests, connectionStreams, communicationProgressHandler);
-            checkCanceled();
+      throws CommandException {
+      final Runnable runnable = () -> {
+        try {
+          checkCanceled();
+          sendRequests(requests, connectionStreams, communicationProgressHandler);
+          checkCanceled();
 
-            sendRequest(requests.getResponseExpectingRequest(), connectionStreams);
-            connectionStreams.flushForReading();
+          sendRequest(requests.getResponseExpectingRequest(), connectionStreams);
+          connectionStreams.flushForReading();
 
-            myResult = handleResponses(connectionStreams, new DefaultResponseHandler());
-          }
-          catch (IOException e) {
-            myIOException = e;
-          }
-          catch (CommandException e) {
-            myCommandException = e;
-          }
-          finally {
-            afterInRunnable();
-          }
+          myResult = handleResponses(connectionStreams, new DefaultResponseHandler());
+        }
+        catch (IOException e) {
+          myIOException = e;
+        }
+        catch (CommandException e) {
+          myCommandException = e;
+        }
+        finally {
+          afterInRunnable();
         }
       };
 
@@ -232,7 +229,7 @@ public final class RequestProcessor implements IRequestProcessor {
 
     @Override
     protected void callRunnable(Runnable runnable) {
-      myFuture = Executors.newSingleThreadExecutor().submit(runnable);
+      myFuture = ConcurrencyUtil.newSingleThreadExecutor("CVS request").submit(runnable);
 
       final long tOut = (myTimeout < 20000) ? 20000 : myTimeout;
       while (true) {
@@ -272,15 +269,13 @@ public final class RequestProcessor implements IRequestProcessor {
     }
 
     @Override
-    protected void after() throws CommandException {
+    protected void after() {
     }
   }
 
   private void sendRequests(Requests requests, IConnectionStreams connectionStreams, IRequestsProgressHandler communicationProgressHandler)
     throws CommandAbortedException, IOException {
-    for (Iterator it = requests.getRequests().iterator(); it.hasNext();) {
-      final IRequest request = (IRequest)it.next();
-
+    for (IRequest request : requests.getRequests()) {
       sendRequest(request, connectionStreams);
 
       final FileDetails fileDetails = request.getFileForTransmission();

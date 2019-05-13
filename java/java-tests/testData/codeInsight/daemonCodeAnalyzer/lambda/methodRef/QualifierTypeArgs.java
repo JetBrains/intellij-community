@@ -12,7 +12,7 @@ class MyTest {
 
     {
       I i = Foo<String> :: foo;
-      <error descr="Incompatible types. Found: '<method reference>', required: 'MyTest.I'">I i1 = Foo<Integer> :: foo;</error>
+      I i1 = <error descr="Non-static method cannot be referenced from a static context">Foo<Integer> :: foo</error>;
     }
   }
 }

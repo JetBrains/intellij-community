@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,13 +15,15 @@
  */
 package com.intellij.application.options;
 
+import com.intellij.application.options.codeStyle.RightMarginForm;
 import com.intellij.ide.highlighter.XmlHighlighterFactory;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
-import com.intellij.psi.PsiFile;
+import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.formatter.xml.XmlCodeStyleSettings;
 import com.intellij.ui.components.JBScrollPane;
 import org.jetbrains.annotations.NotNull;
@@ -47,6 +49,8 @@ public class CodeStyleXmlPanel extends CodeStyleAbstractPanel{
   private JComboBox myWhiteSpaceAroundCDATA;
   private JCheckBox myKeepWhitespaceInsideCDATACheckBox;
   private JBScrollPane myJBScrollPane;
+  private JPanel myRightMarginPanel;
+  private RightMarginForm myRightMarginForm;
 
   public CodeStyleXmlPanel(CodeStyleSettings settings) {
     super(settings);
@@ -57,21 +61,24 @@ public class CodeStyleXmlPanel extends CodeStyleAbstractPanel{
     addPanelToWatch(myPanel);
   }
 
+  @Override
   protected EditorHighlighter createHighlighter(final EditorColorsScheme scheme) {
     return XmlHighlighterFactory.createXMLHighlighter(scheme);
   }
 
+  @Override
   protected int getRightMargin() {
     return 60;
   }
 
-  public void apply(CodeStyleSettings settings) {
+  @Override
+  public void apply(CodeStyleSettings settings) throws ConfigurationException {
     XmlCodeStyleSettings xmlSettings = settings.getCustomSettings(XmlCodeStyleSettings.class);
     xmlSettings.XML_KEEP_BLANK_LINES = getIntValue(myKeepBlankLines);
     xmlSettings.XML_KEEP_LINE_BREAKS = myKeepLineBreaks.isSelected();
     xmlSettings.XML_KEEP_LINE_BREAKS_IN_TEXT = myKeepLineBreaksInText.isSelected();
     xmlSettings.XML_ATTRIBUTE_WRAP = ourWrappings[myWrapAttributes.getSelectedIndex()];
-    xmlSettings.XML_TEXT_WRAP = myWrapText.isSelected() ? CodeStyleSettings.WRAP_AS_NEEDED : CodeStyleSettings.DO_NOT_WRAP;
+    xmlSettings.XML_TEXT_WRAP = myWrapText.isSelected() ? CommonCodeStyleSettings.WRAP_AS_NEEDED : CommonCodeStyleSettings.DO_NOT_WRAP;
     xmlSettings.XML_ALIGN_ATTRIBUTES = myAlignAttributes.isSelected();
     xmlSettings.XML_KEEP_WHITESPACES = myKeepWhiteSpaces.isSelected();
     xmlSettings.XML_SPACE_AROUND_EQUALITY_IN_ATTRIBUTE = mySpacesAroundEquality.isSelected();
@@ -79,6 +86,7 @@ public class CodeStyleXmlPanel extends CodeStyleAbstractPanel{
     xmlSettings.XML_SPACE_INSIDE_EMPTY_TAG = myInEmptyTag.isSelected();
     xmlSettings.XML_WHITE_SPACE_AROUND_CDATA = myWhiteSpaceAroundCDATA.getSelectedIndex();
     xmlSettings.XML_KEEP_WHITE_SPACES_INSIDE_CDATA = myKeepWhitespaceInsideCDATACheckBox.isSelected();
+    myRightMarginForm.apply(settings);
   }
 
   private int getIntValue(JTextField keepBlankLines) {
@@ -90,6 +98,7 @@ public class CodeStyleXmlPanel extends CodeStyleAbstractPanel{
     }
   }
 
+  @Override
   protected void resetImpl(final CodeStyleSettings settings) {
     XmlCodeStyleSettings xmlSettings = settings.getCustomSettings(XmlCodeStyleSettings.class);
     myKeepBlankLines.setText(String.valueOf(xmlSettings.XML_KEEP_BLANK_LINES));
@@ -104,8 +113,10 @@ public class CodeStyleXmlPanel extends CodeStyleAbstractPanel{
     myWrapText.setSelected(wrapText(settings));
     myWhiteSpaceAroundCDATA.setSelectedIndex(xmlSettings.XML_WHITE_SPACE_AROUND_CDATA);
     myKeepWhitespaceInsideCDATACheckBox.setSelected(xmlSettings.XML_KEEP_WHITE_SPACES_INSIDE_CDATA);
+    myRightMarginForm.reset(settings);
   }
 
+  @Override
   public boolean isModified(CodeStyleSettings settings) {
     XmlCodeStyleSettings xmlSettings = settings.getCustomSettings(XmlCodeStyleSettings.class);
     if (myWrapText.isSelected() != wrapText(settings)) {
@@ -150,29 +161,28 @@ public class CodeStyleXmlPanel extends CodeStyleAbstractPanel{
       return true;
     }
 
-    return false;
+    return myRightMarginForm.isModified(settings);
   }
 
   private boolean wrapText(final CodeStyleSettings settings) {
     XmlCodeStyleSettings xmlSettings = settings.getCustomSettings(XmlCodeStyleSettings.class);
-    return xmlSettings.XML_TEXT_WRAP == CodeStyleSettings.WRAP_AS_NEEDED;
+    return xmlSettings.XML_TEXT_WRAP == CommonCodeStyleSettings.WRAP_AS_NEEDED;
   }
 
+  @Override
   public JComponent getPanel() {
     return myPanel;
   }
 
+  @Override
   protected String getPreviewText() {
     return readFromFile(getClass(), "preview.xml.template");
   }
 
+  @Override
   @NotNull
   protected FileType getFileType() {
     return StdFileTypes.XML;
-  }
-
-  protected void prepareForReformat(final PsiFile psiFile) {
-    //psiFile.putUserData(PsiUtil.FILE_LANGUAGE_LEVEL_KEY, LanguageLevel.HIGHEST);
   }
 
   private void createUIComponents() {
@@ -183,5 +193,7 @@ public class CodeStyleXmlPanel extends CodeStyleAbstractPanel{
         return new Dimension(prefSize.width + 15, prefSize.height);
       }
     };
+    myRightMarginForm = new RightMarginForm(StdFileTypes.XML.getLanguage(), getSettings());
+    myRightMarginPanel = myRightMarginForm.getTopPanel();
   }
 }

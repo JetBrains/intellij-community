@@ -6,7 +6,7 @@ public class Demo {
         Inner inner = new Inner().invoke();
         Pojo1 p1 = inner.getP1();
         Pojo2 p2 = inner.getP2();
-        
+
 
         System.out.println(p1.getContent() + p2.getContent());
 

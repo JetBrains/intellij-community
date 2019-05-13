@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import com.intellij.codeInsight.editorActions.ExtendWordSelectionHandlerBase;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrCodeBlock;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 
@@ -30,11 +31,13 @@ import java.util.List;
  */
 public class GroovyBlockStatementsSelectioner extends ExtendWordSelectionHandlerBase {
 
-  public boolean canSelect(PsiElement e) {
+  @Override
+  public boolean canSelect(@NotNull PsiElement e) {
     return e instanceof GrCodeBlock;
   }
 
-  public List<TextRange> select(PsiElement e, CharSequence editorText, int cursorOffset, Editor editor) {
+  @Override
+  public List<TextRange> select(@NotNull PsiElement e, @NotNull CharSequence editorText, int cursorOffset, @NotNull Editor editor) {
     List<TextRange> result = super.select(e, editorText, cursorOffset, editor);
 
     if (e instanceof GrCodeBlock) {
@@ -51,7 +54,7 @@ public class GroovyBlockStatementsSelectioner extends ExtendWordSelectionHandler
     PsiElement lbrace = block.getLBrace();
     if (lbrace == null) return block.getTextRange().getStartOffset();
 
-    while (PsiImplUtil.isWhiteSpace(lbrace.getNextSibling())) {
+    while (PsiImplUtil.isWhiteSpaceOrNls(lbrace.getNextSibling())) {
       lbrace = lbrace.getNextSibling();
     }
     return lbrace.getTextRange().getEndOffset();
@@ -61,7 +64,7 @@ public class GroovyBlockStatementsSelectioner extends ExtendWordSelectionHandler
     PsiElement rbrace = block.getRBrace();
     if (rbrace == null) return block.getTextRange().getEndOffset();
 
-    while (PsiImplUtil.isWhiteSpace(rbrace.getPrevSibling()) && rbrace.getPrevSibling().getTextRange().getStartOffset() > startOffset) {
+    while (PsiImplUtil.isWhiteSpaceOrNls(rbrace.getPrevSibling()) && rbrace.getPrevSibling().getTextRange().getStartOffset() > startOffset) {
       rbrace = rbrace.getPrevSibling();
     }
 

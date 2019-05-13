@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,19 +34,25 @@ class WrapReturnValueUsageViewDescriptor implements UsageViewDescriptor {
         this.method = method;
     }
 
+    @Override
+    @NotNull
     public PsiElement[] getElements(){
         return new PsiElement[]{method};
     }
 
+    @Override
     public String getProcessedElementsHeader(){
         return RefactorJBundle.message("method.whose.return.are.to.wrapped");
     }
 
+    @NotNull
+    @Override
     public String getCodeReferencesText(int usagesCount, int filesCount){
         return RefactorJBundle.message("references.to.be.modified.usage.view",
                 MyUsageViewUtil.getUsageCountInfo(usagesCount, filesCount, RefactorJBundle.message("reference")));
     }
 
+  @Override
   public String getCommentReferencesText(int usagesCount, int filesCount) {
         return null;
     }

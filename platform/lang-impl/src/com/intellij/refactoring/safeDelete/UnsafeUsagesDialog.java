@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,16 +14,13 @@
  * limitations under the License.
  */
 
-/**
- * created at Sep 12, 2001
- * @author Jeka
- */
 package com.intellij.refactoring.safeDelete;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.ui.ScrollPaneFactory;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -45,6 +42,7 @@ public class UnsafeUsagesDialog extends DialogWrapper {
     init();
   }
 
+  @Override
   @NotNull
   protected Action[] createActions() {
     final ViewUsagesAction viewUsagesAction = new ViewUsagesAction();
@@ -55,16 +53,18 @@ public class UnsafeUsagesDialog extends DialogWrapper {
     return new Action[]{viewUsagesAction, ignoreAction, new CancelAction()};
   }
 
+  @Override
   protected JComponent createCenterPanel() {
     JPanel panel = new JPanel(new BorderLayout());
     myMessagePane = new JEditorPane(UIUtil.HTML_MIME, "");
     myMessagePane.setEditable(false);
+    myMessagePane.setEditorKit(UIUtil.getHTMLEditorKit());
     JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(myMessagePane);
-    scrollPane.setPreferredSize(new Dimension(500, 400));
+    scrollPane.setPreferredSize(JBUI.size(500, 400));
     panel.add(new JLabel(RefactoringBundle.message("the.following.problems.were.found")), BorderLayout.NORTH);
     panel.add(scrollPane, BorderLayout.CENTER);
 
-    @NonNls StringBuffer buf = new StringBuffer();
+    @NonNls StringBuilder buf = new StringBuilder();
     for (String description : myConflictDescriptions) {
       buf.append(description);
       buf.append("<br><br>");
@@ -73,6 +73,7 @@ public class UnsafeUsagesDialog extends DialogWrapper {
     return panel;
   }
 
+  @Override
   protected String getDimensionServiceKey() {
     return "#com.intellij.refactoring.safeDelete.UnsafeUsagesDialog";
   }
@@ -87,21 +88,23 @@ public class UnsafeUsagesDialog extends DialogWrapper {
 */
 
   private class CancelAction extends AbstractAction {
-    public CancelAction() {
+    CancelAction() {
       super(RefactoringBundle.message("cancel.button"));
     }
 
+    @Override
     public void actionPerformed(ActionEvent e) {
       doCancelAction();
     }
   }
 
   private class ViewUsagesAction extends AbstractAction {
-    public ViewUsagesAction() {
+    ViewUsagesAction() {
       super(RefactoringBundle.message("view.usages"));
       putValue(DialogWrapper.DEFAULT_ACTION, Boolean.TRUE);
     }
 
+    @Override
     public void actionPerformed(ActionEvent e) {
       close(VIEW_USAGES_EXIT_CODE);
     }

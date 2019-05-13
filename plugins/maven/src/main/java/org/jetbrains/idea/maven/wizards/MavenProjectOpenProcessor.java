@@ -14,10 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * User: anna
- * Date: 13-Jul-2007
- */
 package org.jetbrains.idea.maven.wizards;
 
 import com.intellij.ide.util.projectWizard.WizardContext;
@@ -26,10 +22,11 @@ import com.intellij.projectImport.ProjectOpenProcessorBase;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.model.MavenConstants;
+import org.jetbrains.idea.maven.model.MavenExplicitProfiles;
 import org.jetbrains.idea.maven.project.MavenProject;
+import org.jetbrains.idea.maven.utils.MavenUtil;
 
-import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 public class MavenProjectOpenProcessor extends ProjectOpenProcessorBase<MavenProjectBuilder> {
@@ -37,15 +34,22 @@ public class MavenProjectOpenProcessor extends ProjectOpenProcessorBase<MavenPro
     super(builder);
   }
 
+  @Override
   @Nullable
   public String[] getSupportedExtensions() {
-    return new String[]{MavenConstants.POM_XML};
+    return MavenConstants.POM_NAMES;
   }
 
-  public boolean doQuickImport(VirtualFile file, WizardContext wizardContext) {
-    getBuilder().setFiles(Arrays.asList(file));
+  @Override
+  public boolean canOpenProject(VirtualFile file) {
+    return super.canOpenProject(file) || MavenUtil.isPomFile(file);
+  }
 
-    if (!getBuilder().setSelectedProfiles(new ArrayList<String>())) return false;
+  @Override
+  public boolean doQuickImport(VirtualFile file, WizardContext wizardContext) {
+    getBuilder().setFiles(Collections.singletonList(file));
+
+    if (!getBuilder().setSelectedProfiles(MavenExplicitProfiles.NONE)) return false;
 
     List<MavenProject> projects = getBuilder().getList();
     if (projects.size() != 1) return false;

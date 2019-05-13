@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -74,12 +74,12 @@ public class RenamePropertyUtil {
     if (containingClass == null) return member(m);
     final boolean isStatic = m.hasModifierProperty(PsiModifier.STATIC);
 
-    List<PsiElement> property = new ArrayList<PsiElement>();
+    List<PsiElement> property = new ArrayList<>();
     assert name != null;
     ContainerUtil.addAll(property, GroovyPropertyUtils.getAllGetters(containingClass, name, isStatic, false));
     ContainerUtil.addAll(property, GroovyPropertyUtils.getAllSetters(containingClass, name, isStatic, false));
 
-    for (Iterator<PsiElement> iterator = property.iterator(); iterator.hasNext();) {
+    for (Iterator<PsiElement> iterator = property.iterator(); iterator.hasNext(); ) {
       if (iterator.next() instanceof GrAccessorMethod) iterator.remove();
     }
 
@@ -101,21 +101,21 @@ public class RenamePropertyUtil {
   }
 
   private static Pair<List<? extends PsiElement>, String> property(List<PsiElement> list, String name) {
-    return Pair.<List<? extends PsiElement>, String>create(list, name);
+    return Pair.create(list, name);
   }
 
   private static Pair<List<? extends PsiElement>, String> cancel() {
-    return Pair.<List<? extends PsiElement>, String>create(Collections.<PsiElement>emptyList(), null);
+    return Pair.create(Collections.emptyList(), null);
   }
 
   private static Pair<List<? extends PsiElement>, String> member(PsiMember m) {
-    return Pair.<List<? extends PsiElement>, String>create(Collections.singletonList(m), null);
+    return Pair.create(Collections.singletonList(m), null);
   }
 
   private static class AskDialog extends DialogWrapper {
     private JRadioButton myRbRenameMember;
     private JRadioButton myRbRenameProperty;
-    private PsiMember myMember;
+    private final PsiMember myMember;
 
 
     protected AskDialog(PsiMember member) {
@@ -169,7 +169,7 @@ public class RenamePropertyUtil {
     }
 
     private String getDescription() {
-      return (UsageViewUtil.getType(myMember) + " " + myMember.getName()).trim();
+      return String.format("%s '%s'", UsageViewUtil.getType(myMember), myMember.getName());
     }
 
     public boolean renameProperty() {

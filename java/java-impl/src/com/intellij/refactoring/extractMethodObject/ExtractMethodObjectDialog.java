@@ -1,23 +1,11 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.extractMethodObject;
 
+import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.openapi.editor.event.DocumentEvent;
-import com.intellij.openapi.help.HelpManager;
+import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.psi.*;
@@ -26,23 +14,24 @@ import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.extractMethod.AbstractExtractDialog;
 import com.intellij.refactoring.extractMethod.InputVariables;
 import com.intellij.refactoring.ui.ConflictsDialog;
+import com.intellij.refactoring.ui.MethodSignatureComponent;
 import com.intellij.refactoring.util.ParameterTablePanel;
+import com.intellij.refactoring.util.VariableData;
 import com.intellij.ui.EditorTextField;
-import com.intellij.util.Function;
 import com.intellij.util.VisibilityUtil;
 import com.intellij.util.containers.MultiMap;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.Enumeration;
 
+public class ExtractMethodObjectDialog extends DialogWrapper implements AbstractExtractDialog {
+  private static final String INDENT = "    ";
 
-public class ExtractMethodObjectDialog extends AbstractExtractDialog {
   private final Project myProject;
   private final PsiType myReturnType;
   private final PsiTypeParameterList myTypeParameterList;
@@ -51,15 +40,13 @@ public class ExtractMethodObjectDialog extends AbstractExtractDialog {
   private final boolean myCanBeStatic;
   private final PsiElement[] myElementsToExtract;
   private final boolean myMultipleExitPoints;
-
   private final InputVariables myVariableData;
   private final PsiClass myTargetClass;
   private final boolean myWasStatic;
 
-
   private JRadioButton myCreateInnerClassRb;
   private JRadioButton myCreateAnonymousClassWrapperRb;
-  private JTextArea mySignatureArea;
+  private MethodSignatureComponent mySignatureArea;
   private JCheckBox myCbMakeStatic;
   private JCheckBox myCbMakeVarargs;
   private JCheckBox myCbMakeVarargsAnonymous;
@@ -78,13 +65,12 @@ public class ExtractMethodObjectDialog extends AbstractExtractDialog {
   private JPanel myAnonymousClassPanel;
   private JCheckBox myFoldCb;
   private ButtonGroup myVisibilityGroup;
-  private ParameterTablePanel.VariableData[] myInputVariables;
-
+  private VariableData[] myInputVariables;
 
   public ExtractMethodObjectDialog(Project project, PsiClass targetClass, final InputVariables inputVariables, PsiType returnType,
                                    PsiTypeParameterList typeParameterList, PsiType[] exceptions, boolean isStatic, boolean canBeStatic,
                                    final PsiElement[] elementsToExtract, final boolean multipleExitPoints) {
-    super(project);
+    super(project, true);
     myProject = project;
     myTargetClass = targetClass;
     myReturnType = returnType;
@@ -96,7 +82,7 @@ public class ExtractMethodObjectDialog extends AbstractExtractDialog {
     myMultipleExitPoints = multipleExitPoints;
 
     boolean canBeVarargs = false;
-    for (ParameterTablePanel.VariableData data : inputVariables.getInputVariables()) {
+    for (VariableData data : inputVariables.getInputVariables()) {
       canBeVarargs |= data.type instanceof PsiArrayType;
     }
     canBeVarargs |= inputVariables.isFoldable()  && inputVariables.isFoldingSelectedByDefault();
@@ -107,49 +93,54 @@ public class ExtractMethodObjectDialog extends AbstractExtractDialog {
     setTitle(ExtractMethodObjectProcessor.REFACTORING_NAME);
 
     // Create UI components
-
-
     myCbMakeVarargs.setVisible(canBeVarargs);
     myCbMakeVarargsAnonymous.setVisible(canBeVarargs);
 
     // Initialize UI
-     init();
-
+    init();
   }
 
+  @Override
   public boolean isMakeStatic() {
     if (myStaticFlag) return true;
     if (!myCanBeStatic) return false;
     return myCbMakeStatic.isSelected();
   }
 
+  @Override
   public boolean isChainedConstructor() {
     return false;
   }
 
-  @NotNull
-  protected Action[] createActions() {
-    return new Action[]{getOKAction(), getCancelAction(), getHelpAction()};
+  @Override
+  public PsiType getReturnType() {
+    return null;
   }
 
+  @NotNull
+  @Override
   public String getChosenMethodName() {
     return myCreateInnerClassRb.isSelected() ? myInnerClassName.getText() : myMethodName.getText();
   }
 
-  public ParameterTablePanel.VariableData[] getChosenParameters() {
+  @Override
+  public VariableData[] getChosenParameters() {
     return myInputVariables;
   }
 
+  @Override
   public JComponent getPreferredFocusedComponent() {
     return myInnerClassName;
   }
 
-  protected void doHelpAction() {
-    HelpManager.getInstance().invokeHelp(HelpID.EXTRACT_METHOD_OBJECT);
+  @Override
+  protected String getHelpId() {
+    return HelpID.EXTRACT_METHOD_OBJECT;
   }
 
+  @Override
   protected void doOKAction() {
-    MultiMap<PsiElement, String> conflicts = new MultiMap<PsiElement, String>();
+    MultiMap<PsiElement, String> conflicts = new MultiMap<>();
     if (myCreateInnerClassRb.isSelected()) {
       final PsiClass innerClass = myTargetClass.findInnerClassByName(myInnerClassName.getText(), false);
       if (innerClass != null) {
@@ -158,8 +149,7 @@ public class ExtractMethodObjectDialog extends AbstractExtractDialog {
     }
     if (conflicts.size() > 0) {
       final ConflictsDialog conflictsDialog = new ConflictsDialog(myProject, conflicts);
-      conflictsDialog.show();
-      if (!conflictsDialog.isOK()){
+      if (!conflictsDialog.showAndGet()) {
         if (conflictsDialog.isShowConflicts()) close(CANCEL_EXIT_CODE);
         return;
       }
@@ -167,7 +157,7 @@ public class ExtractMethodObjectDialog extends AbstractExtractDialog {
 
     final JCheckBox makeVarargsCb = myCreateInnerClassRb.isSelected() ? myCbMakeVarargs : myCbMakeVarargsAnonymous;
     if (makeVarargsCb != null && makeVarargsCb.isSelected()) {
-      final ParameterTablePanel.VariableData data = myInputVariables[myInputVariables.length - 1];
+      final VariableData data = myInputVariables[myInputVariables.length - 1];
       if (data.type instanceof PsiArrayType) {
         data.type = new PsiEllipsisType(((PsiArrayType)data.type).getComponentType());
       }
@@ -176,10 +166,11 @@ public class ExtractMethodObjectDialog extends AbstractExtractDialog {
   }
 
   private void updateVarargsEnabled() {
-    final boolean enabled = myInputVariables.length > 0 && myInputVariables[myInputVariables.length - 1].type instanceof PsiArrayType;
+    boolean enabled = myInputVariables.length > 0 && myInputVariables[myInputVariables.length - 1].type instanceof PsiArrayType;
     if (myCreateInnerClassRb.isSelected()) {
       myCbMakeVarargs.setEnabled(enabled);
-    } else {
+    }
+    else {
       myCbMakeVarargsAnonymous.setEnabled(enabled);
     }
   }
@@ -187,11 +178,13 @@ public class ExtractMethodObjectDialog extends AbstractExtractDialog {
   private void update() {
     myCbMakeStatic.setEnabled(myCreateInnerClassRb.isSelected() && myCanBeStatic && !myStaticFlag);
     updateSignature();
-    final PsiNameHelper helper = JavaPsiFacade.getInstance(myProject).getNameHelper();
+    final PsiNameHelper helper = PsiNameHelper.getInstance(myProject);
     setOKActionEnabled((myCreateInnerClassRb.isSelected() && helper.isIdentifier(myInnerClassName.getText())) ||
                         (!myCreateInnerClassRb.isSelected() && helper.isIdentifier(myMethodName.getText())));
   }
 
+  @NotNull
+  @Override
   public String getVisibility() {
     if (myPublicRadioButton.isSelected()) {
       return PsiModifier.PUBLIC;
@@ -202,22 +195,14 @@ public class ExtractMethodObjectDialog extends AbstractExtractDialog {
     if (myProtectedRadioButton.isSelected()) {
       return PsiModifier.PROTECTED;
     }
-    if (myPrivateRadioButton.isSelected()) {
-      return PsiModifier.PRIVATE;
-    }
-    return null;
+    return PsiModifier.PRIVATE;
   }
 
-
+  @Override
   protected JComponent createCenterPanel() {
-    mySignatureArea.setEditable(false);
     myCreateInnerClassRb.setSelected(true);
-   
-    final ActionListener enableDisableListener = new ActionListener() {
-      public void actionPerformed(final ActionEvent e) {
-        enable(myCreateInnerClassRb.isSelected());
-      }
-    };
+
+    ActionListener enableDisableListener = e -> enable(myCreateInnerClassRb.isSelected());
     myCreateInnerClassRb.addActionListener(enableDisableListener);
     myCreateAnonymousClassWrapperRb.addActionListener(enableDisableListener);
     myCreateAnonymousClassWrapperRb.setEnabled(!myMultipleExitPoints);
@@ -225,32 +210,29 @@ public class ExtractMethodObjectDialog extends AbstractExtractDialog {
     myFoldCb.setSelected(myVariableData.isFoldingSelectedByDefault());
     myFoldCb.setVisible(myVariableData.isFoldable());
     myVariableData.setFoldingAvailable(myFoldCb.isSelected());
-    myInputVariables = myVariableData.getInputVariables().toArray(new ParameterTablePanel.VariableData[myVariableData.getInputVariables().size()]);
-    myFoldCb.addActionListener(new ActionListener() {
-      public void actionPerformed(ActionEvent e) {
-        myVariableData.setFoldingAvailable(myFoldCb.isSelected());
-        myInputVariables = myVariableData.getInputVariables().toArray(new ParameterTablePanel.VariableData[myVariableData.getInputVariables().size()]);
-        myParametersTableContainer.removeAll();
-        myParametersTableContainer.add(createParametersPanel(), BorderLayout.CENTER);
-        updateSignature();
-        updateVarargsEnabled();
-      }
+    myInputVariables = myVariableData.getInputVariables().toArray(new VariableData[0]);
+    myFoldCb.addActionListener(e -> {
+      myVariableData.setFoldingAvailable(myFoldCb.isSelected());
+      myInputVariables = myVariableData.getInputVariables().toArray(new VariableData[0]);
+      myParametersTableContainer.removeAll();
+      myParametersTableContainer.add(createParametersPanel(), BorderLayout.CENTER);
+      myParametersTableContainer.revalidate();
+      updateSignature();
+      updateVarargsEnabled();
     });
     myParametersTableContainer.add(createParametersPanel(), BorderLayout.CENTER);
 
-    final ActionListener updateSugnatureListener = new ActionListener() {
-      public void actionPerformed(final ActionEvent e) {
-        updateSignature();
-        IdeFocusManager.getInstance(myProject).requestFocus(myCreateInnerClassRb.isSelected() ? myInnerClassName :  myMethodName, false);
-      }
+    ActionListener updateSignatureListener = e -> {
+      updateSignature();
+      IdeFocusManager.getInstance(myProject).requestFocus(myCreateInnerClassRb.isSelected() ? myInnerClassName :  myMethodName, false);
     };
 
     if (myStaticFlag || myCanBeStatic) {
       myCbMakeStatic.setEnabled(!myStaticFlag);
       myCbMakeStatic.setSelected(myStaticFlag);
-
-      myCbMakeStatic.addActionListener(updateSugnatureListener);
-    } else {
+      myCbMakeStatic.addActionListener(updateSignatureListener);
+    }
+    else {
       myCbMakeStatic.setSelected(false);
       myCbMakeStatic.setEnabled(false);
     }
@@ -258,14 +240,14 @@ public class ExtractMethodObjectDialog extends AbstractExtractDialog {
     updateVarargsEnabled();
 
     myCbMakeVarargs.setSelected(myWasStatic);
-    myCbMakeVarargs.addActionListener(updateSugnatureListener);
+    myCbMakeVarargs.addActionListener(updateSignatureListener);
 
     myCbMakeVarargsAnonymous.setSelected(myWasStatic);
-    myCbMakeVarargsAnonymous.addActionListener(updateSugnatureListener);
+    myCbMakeVarargsAnonymous.addActionListener(updateSignatureListener);
 
-    final com.intellij.openapi.editor.event.DocumentAdapter nameListener = new com.intellij.openapi.editor.event.DocumentAdapter() {
+    DocumentListener nameListener = new DocumentListener() {
       @Override
-      public void documentChanged(final DocumentEvent e) {
+      public void documentChanged(@NotNull DocumentEvent e) {
         update();
       }
     };
@@ -274,12 +256,12 @@ public class ExtractMethodObjectDialog extends AbstractExtractDialog {
 
     myPrivateRadioButton.setSelected(true);
 
-    myCreateInnerClassRb.addActionListener(updateSugnatureListener);
-    myCreateAnonymousClassWrapperRb.addActionListener(updateSugnatureListener);
+    myCreateInnerClassRb.addActionListener(updateSignatureListener);
+    myCreateAnonymousClassWrapperRb.addActionListener(updateSignatureListener);
 
-    final Enumeration<AbstractButton> visibilities = myVisibilityGroup.getElements();
-    while(visibilities.hasMoreElements()) {
-      visibilities.nextElement().addActionListener(updateSugnatureListener);
+    Enumeration<AbstractButton> visibilities = myVisibilityGroup.getElements();
+    while (visibilities.hasMoreElements()) {
+      visibilities.nextElement().addActionListener(updateSignatureListener);
     }
 
     enable(true);
@@ -294,15 +276,18 @@ public class ExtractMethodObjectDialog extends AbstractExtractDialog {
 
   private JComponent createParametersPanel() {
     return new ParameterTablePanel(myProject, myInputVariables, myElementsToExtract) {
+      @Override
       protected void updateSignature() {
         updateVarargsEnabled();
         ExtractMethodObjectDialog.this.updateSignature();
       }
 
+      @Override
       protected void doEnterAction() {
         clickDefaultButton();
       }
 
+      @Override
       protected void doCancelAction() {
         ExtractMethodObjectDialog.this.doCancelAction();
       }
@@ -319,14 +304,13 @@ public class ExtractMethodObjectDialog extends AbstractExtractDialog {
   }
 
   protected void updateSignature() {
-    if (mySignatureArea == null) return;
-    @NonNls StringBuffer buffer = getSignature();
-    mySignatureArea.setText(buffer.toString());
+    if (mySignatureArea != null) {
+      mySignatureArea.setText(getSignature().toString());
+    }
   }
 
-  protected StringBuffer getSignature() {
-    final String INDENT = "    ";
-    @NonNls StringBuffer buffer = new StringBuffer();
+  private StringBuilder getSignature() {
+    StringBuilder buffer = new StringBuilder();
     final String visibilityString = VisibilityUtil.getVisibilityString(getVisibility());
     if (myCreateInnerClassRb.isSelected()) {
       buffer.append(visibilityString);
@@ -346,39 +330,34 @@ public class ExtractMethodObjectDialog extends AbstractExtractDialog {
       buffer.append(INDENT);
       buffer.append("public ");
       buffer.append(myInnerClassName.getText());
-      methodSignature(INDENT, buffer);
+      methodSignature(buffer);
       buffer.append("\n}");
-    } else {
+    }
+    else {
       buffer.append("new Object(){\n");
       buffer.append(INDENT);
       buffer.append("private ");
       buffer.append(PsiFormatUtil.formatType(myReturnType, 0, PsiSubstitutor.EMPTY));
       buffer.append(" ");
       buffer.append(myMethodName.getText());
-      methodSignature(INDENT, buffer);
+      methodSignature(buffer);
       buffer.append("\n}.");
       buffer.append(myMethodName.getText());
       buffer.append("(");
-      buffer.append(StringUtil.join(myInputVariables, new Function<ParameterTablePanel.VariableData, String>() {
-        public String fun(final ParameterTablePanel.VariableData variableData) {
-          return variableData.name;
-        }
-      }, ", "));
+      buffer.append(StringUtil.join(myInputVariables, variableData -> variableData.name, ", "));
       buffer.append(")");
     }
 
     return buffer;
   }
 
-  private void methodSignature(final String INDENT, final StringBuffer buffer) {
+  private void methodSignature(StringBuilder buffer) {
     buffer.append("(");
     int count = 0;
     final String indent = "    ";
     for (int i = 0; i < myInputVariables.length; i++) {
-      ParameterTablePanel.VariableData data = myInputVariables[i];
+      VariableData data = myInputVariables[i];
       if (data.passAsParameter) {
-        //String typeAndModifiers = PsiFormatUtil.formatVariable(data.variable,
-        //  PsiFormatUtil.SHOW_MODIFIERS | PsiFormatUtil.SHOW_TYPE);
         PsiType type = data.type;
         if (i == myInputVariables.length - 1 && type instanceof PsiArrayType && ((myCreateInnerClassRb.isSelected() && myCbMakeVarargs.isSelected()) || (myCreateAnonymousClassWrapperRb.isSelected() && myCbMakeVarargsAnonymous.isSelected()))) {
           type = new PsiEllipsisType(((PsiArrayType)type).getComponentType());
@@ -411,5 +390,11 @@ public class ExtractMethodObjectDialog extends AbstractExtractDialog {
 
   public boolean createInnerClass() {
     return myCreateInnerClassRb.isSelected();
+  }
+
+  private void createUIComponents() {
+    mySignatureArea = new MethodSignatureComponent("", myProject, JavaFileType.INSTANCE);
+    mySignatureArea.setPreferredSize(JBUI.size(500, 100));
+    mySignatureArea.setMinimumSize(JBUI.size(500, 100));
   }
 }

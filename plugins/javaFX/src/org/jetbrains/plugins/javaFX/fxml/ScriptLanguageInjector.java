@@ -1,10 +1,11 @@
-
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.javaFX.fxml;
 
 import com.intellij.lang.Language;
 import com.intellij.lang.injection.MultiHostInjector;
 import com.intellij.lang.injection.MultiHostRegistrar;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.patterns.XmlElementPattern;
 import com.intellij.patterns.XmlPatterns;
 import com.intellij.psi.PsiElement;
@@ -21,18 +22,25 @@ public class ScriptLanguageInjector implements MultiHostInjector {
   private static final XmlElementPattern.XmlTextPattern SCRIPT_PATTERN = XmlPatterns.xmlText().withParent(
     XmlPatterns.xmlTag().withName(FxmlConstants.FX_SCRIPT));
 
+  @Override
   public void getLanguagesToInject(@NotNull final MultiHostRegistrar registrar, @NotNull final PsiElement host) {
     if (SCRIPT_PATTERN.accepts(host)) {
-      final Language language = Language.findLanguageByID("JavaScript");
-      if (language != null && JavaFxPsiUtil.parseInjectedLanguages((XmlFile)host.getContainingFile()).contains("javascript")) {
-        registrar.startInjecting(language)
-          .addPlace(null, null, (PsiLanguageInjectionHost) host,
-                    TextRange.from(0, host.getTextLength() - 1))
-          .doneInjecting();
+      final List<String> registeredLanguages = JavaFxPsiUtil.parseInjectedLanguages((XmlFile)host.getContainingFile());
+      for (Language language : Language.getRegisteredLanguages()) {
+        for (String registeredLanguage : registeredLanguages) {
+          if (StringUtil.equalsIgnoreCase(language.getID(), registeredLanguage)) {
+            registrar.startInjecting(language)
+              .addPlace(null, null, (PsiLanguageInjectionHost) host,
+                        TextRange.from(0, host.getTextLength() - 1))
+              .doneInjecting();
+            break;
+          }
+        }
       }
     }
   }
 
+  @Override
   @NotNull
   public List<? extends Class<? extends PsiElement>> elementsToInjectIn() {
     return Collections.singletonList(XmlText.class);

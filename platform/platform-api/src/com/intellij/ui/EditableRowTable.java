@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 package com.intellij.ui;
+
+import com.intellij.openapi.wm.IdeFocusManager;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
@@ -72,6 +74,7 @@ public class EditableRowTable{
 
     addButton.addActionListener(
       new ActionListener() {
+        @Override
         public void actionPerformed(ActionEvent e) {
           TableUtil.stopEditing(table);
           tableModel.addRow();
@@ -84,7 +87,9 @@ public class EditableRowTable{
           if (editorComponent != null) {
             final Rectangle bounds = editorComponent.getBounds();
             table.scrollRectToVisible(bounds);
-            editorComponent.requestFocus();
+            IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
+              IdeFocusManager.getGlobalInstance().requestFocus(editorComponent, true);
+            });
           }
         }
       }
@@ -92,6 +97,7 @@ public class EditableRowTable{
 
     removeButton.addActionListener(
       new ActionListener() {
+        @Override
         public void actionPerformed(ActionEvent e) {
           TableUtil.stopEditing(table);
           int index = table.getSelectedRow();
@@ -109,13 +115,16 @@ public class EditableRowTable{
           }
 
           table.getParent().repaint();
-          table.requestFocus();
+          IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
+            IdeFocusManager.getGlobalInstance().requestFocus(table, true);
+          });
         }
       }
     );
 
     upButton.addActionListener(
       new ActionListener() {
+        @Override
         public void actionPerformed(ActionEvent e) {
           TableUtil.stopEditing(table);
           int index = table.getSelectedRow();
@@ -123,13 +132,16 @@ public class EditableRowTable{
             tableModel.exchangeRows(index, index - 1);
             table.setRowSelectionInterval(index - 1, index - 1);
           }
-          table.requestFocus();
+          IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
+            IdeFocusManager.getGlobalInstance().requestFocus(table, true);
+          });
         }
       }
     );
 
     downButton.addActionListener(
       new ActionListener() {
+        @Override
         public void actionPerformed(ActionEvent e) {
           TableUtil.stopEditing(table);
           int index = table.getSelectedRow();
@@ -137,13 +149,16 @@ public class EditableRowTable{
             tableModel.exchangeRows(index, index + 1);
             table.setRowSelectionInterval(index + 1, index + 1);
           }
-          table.requestFocus();
+          IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
+            IdeFocusManager.getGlobalInstance().requestFocus(table, true);
+          });
         }
       }
     );
 
     table.getSelectionModel().addListSelectionListener(
       new ListSelectionListener() {
+        @Override
         public void valueChanged(ListSelectionEvent e) {
           updateButtons(table, tableModel, addButton, removeButton, upButton, downButton);
         }
@@ -171,7 +186,7 @@ public class EditableRowTable{
         upButton.setEnabled(false);
         downButton.setEnabled(false);
       }
-      
+
       addButton.setEnabled(true);
     }
   }

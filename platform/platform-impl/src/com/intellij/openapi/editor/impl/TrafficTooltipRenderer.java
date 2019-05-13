@@ -17,9 +17,6 @@ package com.intellij.openapi.editor.impl;
 
 import com.intellij.codeInsight.hint.TooltipRenderer;
 
-/**
- * User: cdr
- */
 public interface TrafficTooltipRenderer extends TooltipRenderer {
   void repaintTooltipWindow();
 }

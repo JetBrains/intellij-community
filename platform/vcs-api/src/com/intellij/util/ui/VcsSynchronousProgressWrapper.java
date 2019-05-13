@@ -24,24 +24,19 @@ import com.intellij.util.ThrowableRunnable;
 
 /**
  * @author irengrig
- *         Date: 3/16/11
- *         Time: 3:22 PM
  */
 public class VcsSynchronousProgressWrapper {
   private VcsSynchronousProgressWrapper() {
   }
 
-  public static boolean wrap(final ThrowableRunnable<VcsException> runnable, final Project project, final String title) {
+  public static boolean wrap(final ThrowableRunnable<? extends VcsException> runnable, final Project project, final String title) {
     final VcsException[] exc = new VcsException[1];
-    final Runnable process = new Runnable() {
-      @Override
-      public void run() {
-        try {
-          runnable.run();
-        }
-        catch (VcsException e) {
-          exc[0] = e;
-        }
+    final Runnable process = () -> {
+      try {
+        runnable.run();
+      }
+      catch (VcsException e) {
+        exc[0] = e;
       }
     };
     final boolean notCanceled;

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,9 +25,10 @@ import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
 
 import java.lang.reflect.Field;
+import java.util.Locale;
 
 public class PsiKeywordImpl extends LeafPsiElement implements PsiKeyword, PsiJavaToken {
-  public PsiKeywordImpl(IElementType type, CharSequence text) {
+  public PsiKeywordImpl(@NotNull IElementType type, CharSequence text) {
     super(type, text);
   }
 
@@ -46,13 +47,14 @@ public class PsiKeywordImpl extends LeafPsiElement implements PsiKeyword, PsiJav
     }
   }
 
+  @Override
   public String toString(){
     return "PsiKeyword:" + getText();
   }
 
   static {
     for(Field field: PsiKeyword.class.getFields()) {
-      CharTableImpl.staticIntern(field.getName().toLowerCase());
+      CharTableImpl.staticIntern(field.getName().toLowerCase(Locale.ENGLISH));
     }
   }
 }

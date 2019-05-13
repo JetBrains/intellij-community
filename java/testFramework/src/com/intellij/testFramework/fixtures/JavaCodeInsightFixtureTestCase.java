@@ -1,27 +1,14 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testFramework.fixtures;
 
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.LanguageLevelProjectExtension;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiElementFactory;
-import com.intellij.psi.PsiManager;
-import com.intellij.testFramework.IdeaTestCase;
+import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
 import org.jetbrains.annotations.NonNls;
@@ -31,14 +18,9 @@ import java.io.File;
 /**
  * @author peter
  */
-public abstract class JavaCodeInsightFixtureTestCase extends UsefulTestCase{
+public abstract class JavaCodeInsightFixtureTestCase extends UsefulTestCase {
   protected JavaCodeInsightTestFixture myFixture;
   protected Module myModule;
-
-  @SuppressWarnings({"JUnitTestCaseWithNonTrivialConstructors"})
-  protected JavaCodeInsightFixtureTestCase() {
-    IdeaTestCase.initPlatformPrefix();
-  }
 
   @Override
   protected void setUp() throws Exception {
@@ -47,25 +29,42 @@ public abstract class JavaCodeInsightFixtureTestCase extends UsefulTestCase{
     final TestFixtureBuilder<IdeaProjectTestFixture> projectBuilder = IdeaTestFixtureFactory.getFixtureFactory().createFixtureBuilder(getName());
     myFixture = JavaTestFixtureFactory.getFixtureFactory().createCodeInsightFixture(projectBuilder.getFixture());
     final JavaModuleFixtureBuilder moduleFixtureBuilder = projectBuilder.addModule(JavaModuleFixtureBuilder.class);
-    moduleFixtureBuilder.addSourceContentRoot(myFixture.getTempDirPath());
-    tuneFixture(moduleFixtureBuilder);    
+    if (toAddSourceRoot()) {
+      moduleFixtureBuilder.addSourceContentRoot(myFixture.getTempDirPath());
+    } else {
+      moduleFixtureBuilder.addContentRoot(myFixture.getTempDirPath());
+    }
+    tuneFixture(moduleFixtureBuilder);
 
-    myFixture.setUp();
     myFixture.setTestDataPath(getTestDataPath());
+    myFixture.setUp();
     myModule = moduleFixtureBuilder.getFixture().getModule();
+    LanguageLevelProjectExtension.getInstance(getProject()).setLanguageLevel(LanguageLevel.JDK_1_6);
+  }
+
+  protected boolean toAddSourceRoot() {
+    return true;
   }
 
   @Override
   protected void tearDown() throws Exception {
     myModule = null;
-    myFixture.tearDown();
-    myFixture = null;
-    super.tearDown();
+
+    try {
+      myFixture.tearDown();
+    }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
+    finally {
+      myFixture = null;
+      super.tearDown();
+    }
   }
 
   /**
    * Return relative path to the test data. Path is relative to the
-   * {@link com.intellij.openapi.application.PathManager#getHomePath()}
+   * {@link PathManager#getHomePath()}
    *
    * @return relative path to the test data.
    */
@@ -91,11 +90,11 @@ public abstract class JavaCodeInsightFixtureTestCase extends UsefulTestCase{
     return myFixture.getProject();
   }
 
-  protected PsiManager getPsiManager() {
-    return PsiManager.getInstance(getProject());
+  protected PsiManagerEx getPsiManager() {
+    return PsiManagerEx.getInstanceEx(getProject());
   }
 
   public PsiElementFactory getElementFactory() {
-    return JavaPsiFacade.getInstance(getProject()).getElementFactory();
+    return JavaPsiFacade.getElementFactory(getProject());
   }
 }

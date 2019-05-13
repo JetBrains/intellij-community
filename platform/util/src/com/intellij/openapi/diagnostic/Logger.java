@@ -1,75 +1,137 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.diagnostic;
 
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.ExceptionUtil;
+import com.intellij.util.Function;
+import com.intellij.util.containers.ContainerUtil;
 import org.apache.log4j.Level;
-import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.lang.reflect.Constructor;
+
+/**
+ * A standard interface to write to %system%/log/idea.log (or %system%/testlog/idea.log in tests).<p/>
+ *
+ * In addition to writing to log file, "error" methods result in showing "IDE fatal errors" dialog in the IDE,
+ * in EAP versions or if "idea.fatal.error.notification" system property is "true" (). See
+ * {@link com.intellij.diagnostic.DefaultIdeaErrorLogger#canHandle} for more details.<p/>
+ *
+ * Note that in production, a call to "error" doesn't throw exceptions so the execution continues. In tests, however, an {@link AssertionError} is thrown.<p/>
+ *
+ * In most non-performance tests, debug level is enabled by default, so that when a test fails the full contents of its log are printed to stdout.
+ */
 public abstract class Logger {
   public interface Factory {
-    Logger getLoggerInstance(String category);
+    @NotNull
+    Logger getLoggerInstance(@NotNull String category);
   }
 
-  public static Factory ourFactory = new Factory() {
-    public Logger getLoggerInstance(String category) {
+  private static class DefaultFactory implements Factory {
+    @NotNull
+    @Override
+    public Logger getLoggerInstance(@NotNull String category) {
       return new DefaultLogger(category);
     }
-  };
+  }
+
+  private static Factory ourFactory = new DefaultFactory();
+
+  public static void setFactory(@NotNull Class<? extends Factory> factory) {
+    if (isInitialized()) {
+      if (factory.isInstance(ourFactory)) {
+        return;
+      }
+
+      //noinspection UseOfSystemOutOrSystemErr
+      System.out.println("Changing log factory\n" + ExceptionUtil.getThrowableText(new Throwable()));
+    }
+
+    try {
+      Constructor<? extends Factory> constructor = factory.getDeclaredConstructor();
+      constructor.setAccessible(true);
+      ourFactory = constructor.newInstance();
+    }
+    catch (Exception e) {
+      //noinspection CallToPrintStackTrace
+      e.printStackTrace();
+      throw new RuntimeException(e);
+    }
+  }
 
   public static void setFactory(Factory factory) {
+    if (isInitialized()) {
+      //noinspection UseOfSystemOutOrSystemErr
+      System.out.println("Changing log factory\n" + ExceptionUtil.getThrowableText(new Throwable()));
+    }
+
     ourFactory = factory;
   }
 
-  public static Logger getInstance(@NonNls String category) {
+  public static Factory getFactory() {
+    return ourFactory;
+  }
+
+  public static boolean isInitialized() {
+    return !(ourFactory instanceof DefaultFactory);
+  }
+
+  @NotNull
+  public static Logger getInstance(@NotNull String category) {
     return ourFactory.getLoggerInstance(category);
   }
 
-  public static Logger getInstance(Class cl) {
+  @NotNull
+  public static Logger getInstance(@NotNull Class cl) {
     return getInstance("#" + cl.getName());
   }
 
   public abstract boolean isDebugEnabled();
 
-  public abstract void debug(@NonNls String message);
+  public abstract void debug(String message);
+
   public abstract void debug(@Nullable Throwable t);
-  public abstract void debug(@NonNls String message, @Nullable Throwable t);
 
-  public void error(@NonNls String message) {
-    error(message, new Throwable(), ArrayUtil.EMPTY_STRING_ARRAY);
-  }
-  public void error(Object message) {
-    error(String.valueOf(message));
-  }
+  public abstract void debug(String message, @Nullable Throwable t);
 
-  public void error(@NonNls String message, @NonNls String... details) {
-    error(message, new Throwable(), details);
-  }
-
-  public void error(@NonNls String message, @Nullable Throwable e) {
-    error(message, e, ArrayUtil.EMPTY_STRING_ARRAY);
+  public void debug(@NotNull String message, @NotNull Object... details) {
+    if (isDebugEnabled()) {
+      StringBuilder sb = new StringBuilder();
+      sb.append(message);
+      for (Object detail : details) {
+        sb.append(detail);
+      }
+      debug(sb.toString());
+    }
   }
 
-  public void error(@NotNull Throwable t) {
-    error(t.getMessage(), t, ArrayUtil.EMPTY_STRING_ARRAY);
+  public boolean isTraceEnabled() {
+    return isDebugEnabled();
   }
 
-  public void warn(@NonNls String message) {
+  /**
+   * Log a message with 'trace' level which finer-grained than 'debug' level. Use this method instead of {@link #debug(String)} for internal
+   * events of a subsystem to avoid overwhelming the log if 'debug' level is enabled.
+   */
+  public void trace(String message) {
+    debug(message);
+  }
+
+  public void trace(@Nullable Throwable t) {
+    debug(t);
+  }
+
+  public void info(@NotNull Throwable t) {
+    info(t.getMessage(), t);
+  }
+
+  public abstract void info(String message);
+
+  public abstract void info(String message, @Nullable Throwable t);
+
+  public void warn(String message) {
     warn(message, null);
   }
 
@@ -77,34 +139,65 @@ public abstract class Logger {
     warn(t.getMessage(), t);
   }
 
+  public abstract void warn(String message, @Nullable Throwable t);
 
-  public abstract void error(@NonNls String message, @Nullable Throwable t, @NonNls String... details);
-
-  public abstract void info(@NonNls String message);
-
-  public abstract void info(@NonNls String message, @Nullable Throwable t);
-
-  public abstract void warn(@NonNls String message, @Nullable Throwable t);
-
-  public void info(@NotNull Throwable t) {
-    info(t.getMessage(), t);
+  public void error(String message) {
+    error(message, new Throwable(message), ArrayUtil.EMPTY_STRING_ARRAY);
+  }
+  public void error(Object message) {
+    error(String.valueOf(message));
   }
 
-  public boolean assertTrue(boolean value, @NonNls Object message) {
-    if (!value) {
-      @NonNls StringBuilder resultMessage = new StringBuilder("Assertion failed");
-      if (message != null) resultMessage.append(": ").append(message);
+  static final Function<Attachment, String> ATTACHMENT_TO_STRING = new Function<Attachment, String>() {
+    @Override
+    public String fun(Attachment attachment) {
+      return attachment.getPath() + "\n" + attachment.getDisplayText();
+    }
+  };
 
-      error(resultMessage.toString(), new Throwable());
+  public void error(String message, @NotNull Attachment... attachments) {
+    error(message, null, attachments);
+  }
+
+  public void error(String message, @Nullable Throwable t, @NotNull Attachment... attachments) {
+    error(message, t, ContainerUtil.map2Array(attachments, String.class, ATTACHMENT_TO_STRING));
+  }
+
+  public void error(String message, @NotNull String... details) {
+    error(message, new Throwable(message), details);
+  }
+
+  public void error(String message, @Nullable Throwable t) {
+    error(message, t, ArrayUtil.EMPTY_STRING_ARRAY);
+  }
+
+  public void error(@NotNull Throwable t) {
+    error(t.getMessage(), t, ArrayUtil.EMPTY_STRING_ARRAY);
+  }
+
+  public abstract void error(String message, @Nullable Throwable t, @NotNull String... details);
+
+  @Contract("false,_->fail") // wrong, but avoid quite a few warnings in the code
+  public boolean assertTrue(boolean value, @Nullable Object message) {
+    if (!value) {
+      String resultMessage = "Assertion failed";
+      if (message != null) resultMessage += ": " + message;
+      error(resultMessage, new Throwable(resultMessage));
     }
 
     return value;
   }
 
+  @Contract("false->fail") // wrong, but avoid quite a few warnings in the code
   public boolean assertTrue(boolean value) {
-    return value || assertTrue(value, "");
+    //noinspection ConstantConditions
+    return value || assertTrue(false, null);
   }
 
   public abstract void setLevel(Level level);
 
+  protected static Throwable checkException(@Nullable Throwable t) {
+    return t instanceof ControlFlowException ? new Throwable(
+      "Control-flow exceptions (like " + t.getClass().getSimpleName() + ") should never be logged", t) : t;
+  }
 }

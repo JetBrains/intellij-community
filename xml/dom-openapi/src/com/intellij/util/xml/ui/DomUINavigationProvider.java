@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,9 +22,6 @@ import com.intellij.util.xml.DomElementNavigationProvider;
 import java.awt.*;
 import java.util.List;
 
-/**
- * User: Sergey.Vasiliev
- */
 public class DomUINavigationProvider extends DomElementNavigationProvider {
   public static String DOM_UI_NAVIGATION_PROVIDER_NAME = "DOM_UI_NAVIGATION_PROVIDER_NAME";
 
@@ -35,10 +32,12 @@ public class DomUINavigationProvider extends DomElementNavigationProvider {
   }
 
 
+  @Override
   public String getProviderName() {
     return DOM_UI_NAVIGATION_PROVIDER_NAME;
   }
 
+  @Override
   public void navigate(DomElement domElement, boolean requestFocus) {
     final DomUIControl domUIControl = findDomControl(myComponent, domElement);
     if(domUIControl != null) {
@@ -46,6 +45,7 @@ public class DomUINavigationProvider extends DomElementNavigationProvider {
     }
   }
 
+  @Override
   public boolean canNavigate(DomElement domElement) {
     return findDomControl(myComponent, domElement) != null;
   }

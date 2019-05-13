@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2013 Bas Leijdekkers
+ * Copyright 2011-2018 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,7 +26,6 @@ import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.javadoc.PsiDocTagValue;
 import com.intellij.psi.util.InheritanceUtil;
-import com.intellij.util.IncorrectOperationException;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -35,18 +34,6 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 public class ThrowsRuntimeExceptionInspection extends BaseInspection {
-  @Nls
-  @NotNull
-  @Override
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("throws.runtime.exception.display.name");
-  }
-
-  @NotNull
-  @Override
-  protected String buildErrorString(Object... infos) {
-    return InspectionGadgetsBundle.message("throws.runtime.exception.problem.descriptor");
-  }
 
   @NotNull
   @Override
@@ -61,11 +48,29 @@ public class ThrowsRuntimeExceptionInspection extends BaseInspection {
     return new InspectionGadgetsFix[] {new ThrowsRuntimeExceptionFix(exceptionName)};
   }
 
+  @Nls
+  @NotNull
+  @Override
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message("throws.runtime.exception.display.name");
+  }
+
+  @NotNull
+  @Override
+  protected String buildErrorString(Object... infos) {
+    return InspectionGadgetsBundle.message("throws.runtime.exception.problem.descriptor");
+  }
+
+  @Override
+  public BaseInspectionVisitor buildVisitor() {
+    return new ThrowsRuntimeExceptionVisitor();
+  }
+
   private static class MoveExceptionToJavadocFix extends InspectionGadgetsFix {
 
     private final String myExceptionName;
 
-    private MoveExceptionToJavadocFix(String exceptionName) {
+    MoveExceptionToJavadocFix(String exceptionName) {
       myExceptionName = exceptionName;
     }
 
@@ -75,8 +80,14 @@ public class ThrowsRuntimeExceptionInspection extends BaseInspection {
       return InspectionGadgetsBundle.message("throws.runtime.exception.move.quickfix", myExceptionName);
     }
 
+    @NotNull
     @Override
-    protected void doFix(Project project, ProblemDescriptor descriptor) throws IncorrectOperationException {
+    public String getFamilyName() {
+      return "Move to Javadoc '@throws'";
+    }
+
+    @Override
+    protected void doFix(Project project, ProblemDescriptor descriptor) {
       final PsiElement element = descriptor.getPsiElement();
       final PsiElement parent = element.getParent();
       final PsiElement grandParent = parent.getParent();
@@ -97,13 +108,15 @@ public class ThrowsRuntimeExceptionInspection extends BaseInspection {
         final CodeDocumentationProvider codeDocumentationProvider;
         if (documentationProvider instanceof CodeDocumentationProvider) {
           codeDocumentationProvider = (CodeDocumentationProvider)documentationProvider;
-        } else if (documentationProvider instanceof CompositeDocumentationProvider) {
+        }
+        else if (documentationProvider instanceof CompositeDocumentationProvider) {
           final CompositeDocumentationProvider compositeDocumentationProvider = (CompositeDocumentationProvider)documentationProvider;
           codeDocumentationProvider = compositeDocumentationProvider.getFirstCodeDocumentationProvider();
           if (codeDocumentationProvider == null) {
             return;
           }
-        } else {
+        }
+        else {
           return;
         }
         final String commentStub = codeDocumentationProvider.generateDocumentationContentStub(resultComment);
@@ -156,7 +169,7 @@ public class ThrowsRuntimeExceptionInspection extends BaseInspection {
 
     private final String myClassName;
 
-    public ThrowsRuntimeExceptionFix(String className) {
+    ThrowsRuntimeExceptionFix(String className) {
       myClassName = className;
     }
 
@@ -166,15 +179,16 @@ public class ThrowsRuntimeExceptionInspection extends BaseInspection {
       return InspectionGadgetsBundle.message("throws.runtime.exception.quickfix", myClassName);
     }
 
+    @NotNull
     @Override
-    protected void doFix(Project project, ProblemDescriptor descriptor) throws IncorrectOperationException {
+    public String getFamilyName() {
+      return "Remove from \"throws\" clause";
+    }
+
+    @Override
+    protected void doFix(Project project, ProblemDescriptor descriptor) {
       descriptor.getPsiElement().delete();
     }
-  }
-
-  @Override
-  public BaseInspectionVisitor buildVisitor() {
-    return new ThrowsRuntimeExceptionVisitor();
   }
 
   private static class ThrowsRuntimeExceptionVisitor extends BaseInspectionVisitor {

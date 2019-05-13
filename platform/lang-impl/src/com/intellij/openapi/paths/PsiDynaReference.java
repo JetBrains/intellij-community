@@ -17,15 +17,14 @@
 package com.intellij.openapi.paths;
 
 import com.intellij.codeInsight.daemon.EmptyResolveMessageProvider;
-import com.intellij.codeInsight.daemon.QuickFixProvider;
-import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.LocalQuickFixProvider;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.source.resolve.reference.impl.PsiMultiReference;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReference;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReferenceOwner;
-import com.intellij.util.ArrayUtil;
+import com.intellij.psi.impl.source.resolve.reference.impl.providers.PsiFileReference;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -39,9 +38,9 @@ import java.util.List;
  * @author Dmitry Avdeev
  */
 public class PsiDynaReference<T extends PsiElement> extends PsiReferenceBase<T>
-  implements FileReferenceOwner, PsiPolyVariantReference, QuickFixProvider<PsiDynaReference>, LocalQuickFixProvider, EmptyResolveMessageProvider {
+  implements FileReferenceOwner, PsiPolyVariantReference, LocalQuickFixProvider, EmptyResolveMessageProvider {
 
-  private final List<PsiReference> myReferences = new ArrayList<PsiReference>();
+  private final List<PsiReference> myReferences = new ArrayList<>();
   private int myChosenOne = -1;
   private ResolveResult[] myCachedResult;
 
@@ -49,7 +48,7 @@ public class PsiDynaReference<T extends PsiElement> extends PsiReferenceBase<T>
     super(psiElement, true);
   }
 
-  public void addReferences(Collection<PsiReference> references) {
+  public void addReferences(Collection<? extends PsiReference> references) {
     myReferences.addAll(references);
     for (PsiReference reference : references) {
       if (!reference.isSoft()) mySoft = false;
@@ -65,6 +64,7 @@ public class PsiDynaReference<T extends PsiElement> extends PsiReferenceBase<T>
     if (!reference.isSoft()) mySoft = false;
   }
 
+  @NotNull
   @Override
   public TextRange getRangeInElement() {
 
@@ -80,24 +80,13 @@ public class PsiDynaReference<T extends PsiElement> extends PsiReferenceBase<T>
     int end = range.getEndOffset();
     for (int i = 1; i < myReferences.size(); i++) {
       reference = myReferences.get(i);
-      final TextRange textRange = getRange(reference);
+      TextRange textRange = PsiMultiReference.getReferenceRange(reference, myElement);
       start = Math.min(start, textRange.getStartOffset());
       if (resolved == null) {
         end = Math.max(end, textRange.getEndOffset());
       }
     }
     return new TextRange(start, end);
-  }
-
-  private TextRange getRange(PsiReference reference) {
-    TextRange rangeInElement = reference.getRangeInElement();
-    PsiElement element = reference.getElement();
-    while(element != myElement) {
-      rangeInElement = rangeInElement.shiftRight(element.getStartOffsetInParent());
-      element = element.getParent();
-      if (element instanceof PsiFile) break;
-    }
-    return rangeInElement;
   }
 
   @Override
@@ -114,7 +103,7 @@ public class PsiDynaReference<T extends PsiElement> extends PsiReferenceBase<T>
   }
 
   @Override
-  public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException{
+  public PsiElement handleElementRename(@NotNull String newElementName) throws IncorrectOperationException{
     final PsiReference reference = chooseReference();
     if (reference != null) {
       return reference.handleElementRename(newElementName);
@@ -133,19 +122,13 @@ public class PsiDynaReference<T extends PsiElement> extends PsiReferenceBase<T>
   }
 
   @Override
-  public boolean isReferenceTo(PsiElement element){
+  public boolean isReferenceTo(@NotNull PsiElement element){
     for (PsiReference reference : myReferences) {
       if (reference.isReferenceTo(element)) return true;
     }
     return false;
   }
 
-
-  @Override
-  @NotNull
-  public Object[] getVariants() {
-    return ArrayUtil.EMPTY_OBJECT_ARRAY;
-  }
 
   @Override
   @NotNull
@@ -157,7 +140,7 @@ public class PsiDynaReference<T extends PsiElement> extends PsiReferenceBase<T>
   }
 
   protected ResolveResult[] innerResolve(final boolean incompleteCode) {
-    List<ResolveResult> result = new ArrayList<ResolveResult>();
+    List<ResolveResult> result = new ArrayList<>();
     for (PsiReference reference : myReferences) {
       if (reference instanceof PsiPolyVariantReference) {
         for (ResolveResult rr: ((PsiPolyVariantReference)reference).multiResolve(incompleteCode)) {
@@ -174,7 +157,7 @@ public class PsiDynaReference<T extends PsiElement> extends PsiReferenceBase<T>
       }
     }
 
-    return result.toArray(new ResolveResult[result.size()]);
+    return result.toArray(ResolveResult.EMPTY_ARRAY);
   }
 
   @Nullable
@@ -198,15 +181,6 @@ public class PsiDynaReference<T extends PsiElement> extends PsiReferenceBase<T>
     return myChosenOne >= 0 ? myReferences.get(myChosenOne) : null;
   }
 
-  @Override
-  public void registerQuickfix(final HighlightInfo info, final PsiDynaReference reference) {
-    for (Object ref: reference.myReferences) {
-      if (ref instanceof QuickFixProvider) {
-        ((QuickFixProvider)ref).registerQuickfix(info, (PsiReference)ref);
-      }
-    }
-  }
-
   @NotNull
   @Override
   @SuppressWarnings({"UnresolvedPropertyKey"})
@@ -220,13 +194,13 @@ public class PsiDynaReference<T extends PsiElement> extends PsiReferenceBase<T>
 
   @Override
   public LocalQuickFix[] getQuickFixes() {
-    final ArrayList<LocalQuickFix> list = new ArrayList<LocalQuickFix>();
+    final ArrayList<LocalQuickFix> list = new ArrayList<>();
     for (Object ref: myReferences) {
       if (ref instanceof LocalQuickFixProvider) {
         ContainerUtil.addAll(list, ((LocalQuickFixProvider)ref).getQuickFixes());
       }
     }
-    return list.toArray(new LocalQuickFix[list.size()]);
+    return list.toArray(LocalQuickFix.EMPTY_ARRAY);
   }
 
   public String toString() {
@@ -235,7 +209,7 @@ public class PsiDynaReference<T extends PsiElement> extends PsiReferenceBase<T>
   }
 
   @Override
-  public FileReference getLastFileReference() {
+  public PsiFileReference getLastFileReference() {
     for (PsiReference reference : myReferences) {
       if (reference instanceof FileReferenceOwner) {
         return ((FileReferenceOwner)reference).getLastFileReference();

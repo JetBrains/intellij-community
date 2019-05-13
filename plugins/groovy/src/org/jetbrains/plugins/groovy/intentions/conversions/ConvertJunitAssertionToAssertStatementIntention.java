@@ -1,3 +1,18 @@
+/*
+ * Copyright 2000-2017 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package org.jetbrains.plugins.groovy.intentions.conversions;
 
 import com.intellij.openapi.editor.Editor;
@@ -30,7 +45,7 @@ public class ConvertJunitAssertionToAssertStatementIntention extends Intention i
 
   private static final Pattern PATTERN = Pattern.compile("arg(\\d+)");
   
-  private static Map<String, String[]> ourStatementMap = new HashMap<String, String[]>();
+  private static final Map<String, String[]> ourStatementMap = new HashMap<>();
   static {
     ourStatementMap.put("assertNotNull", new String[]{null, "assert arg0 != null", "assert arg1 != null : arg0"});
     ourStatementMap.put("assertNull", new String[]{null, "assert arg0 == null", "assert arg1 == null : arg0"});
@@ -56,7 +71,6 @@ public class ConvertJunitAssertionToAssertStatementIntention extends Intention i
     if (replacementStatements == null) return null;
     
     GrArgumentList argumentList = methodCall.getArgumentList();
-    if (argumentList == null) return null;
 
     if (argumentList.getNamedArguments().length > 0) return null;
 
@@ -72,18 +86,17 @@ public class ConvertJunitAssertionToAssertStatementIntention extends Intention i
     String replacementStatement = getReplacementStatement(method, methodCall);
     if (replacementStatement == null) return null;
     
-    @SuppressWarnings("ConstantConditions") final
     GrExpression[] arguments = methodCall.getArgumentList().getExpressionArguments();
     
     GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(method.getProject());
     
     GrAssertStatement statement = (GrAssertStatement)factory.createStatementFromText(replacementStatement);
     
-    final Map<GrExpression, GrExpression> replaceMap = new HashMap<GrExpression, GrExpression>();
+    final Map<GrExpression, GrExpression> replaceMap = new HashMap<>();
     
     statement.acceptChildren(new GroovyRecursiveElementVisitor() {
       @Override
-      public void visitExpression(GrExpression expression) {
+      public void visitExpression(@NotNull GrExpression expression) {
         Matcher matcher = PATTERN.matcher(expression.getText());
         if (matcher.matches()) {
           int index = Integer.parseInt(matcher.group(1));
@@ -103,7 +116,7 @@ public class ConvertJunitAssertionToAssertStatementIntention extends Intention i
   }
 
   @Override
-  protected void processIntention(@NotNull PsiElement element, Project project, Editor editor) throws IncorrectOperationException {
+  protected void processIntention(@NotNull PsiElement element, @NotNull Project project, Editor editor) throws IncorrectOperationException {
     GrMethodCall methodCall = (GrMethodCall)element;
 
     PsiMethod method = methodCall.resolveMethod();
@@ -122,7 +135,7 @@ public class ConvertJunitAssertionToAssertStatementIntention extends Intention i
   }
 
   @Override
-  public boolean satisfiedBy(PsiElement element) {
+  public boolean satisfiedBy(@NotNull PsiElement element) {
     if (!(element instanceof GrMethodCall)) return false;
     
     GrMethodCall methodCall = (GrMethodCall)element;

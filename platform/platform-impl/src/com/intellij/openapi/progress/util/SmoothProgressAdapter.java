@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,27 +18,36 @@ package com.intellij.openapi.progress.util;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.StandardProgressIndicator;
+import com.intellij.openapi.progress.WrappedProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.util.Alarm;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.Semaphore;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 
-public class SmoothProgressAdapter extends BlockingProgressIndicator {
+public class SmoothProgressAdapter extends AbstractProgressIndicatorExBase implements BlockingProgressIndicator, WrappedProgressIndicator,
+                                                                            StandardProgressIndicator {
   private static final int SHOW_DELAY = 500;
 
-  private final Alarm myStartupAlarm = new Alarm(Alarm.ThreadToUse.SHARED_THREAD);
+  private Future<?> myStartupAlarm = CompletableFuture.completedFuture(null);
 
-  protected ProgressIndicator myOriginal;
+  private final ProgressIndicator myOriginal;
   private final Project myProject;
 
-  private boolean myOriginalStarted;
+  private volatile boolean myOriginalStarted;
 
   private DialogWrapper myDialog;
 
   private final Runnable myShowRequest = new Runnable() {
+    @Override
     public void run() {
       synchronized(SmoothProgressAdapter.this){
         if (!isRunning()) {
@@ -55,32 +64,43 @@ public class SmoothProgressAdapter extends BlockingProgressIndicator {
     }
   };
 
-  public SmoothProgressAdapter(ProgressIndicator original, Project project){
+  public SmoothProgressAdapter(@NotNull ProgressIndicator original, @NotNull Project project){
     myOriginal = original;
     myProject = project;
     if (myOriginal.isModal()) {
       myOriginal.setModalityProgress(this);
-      this.setModalityProgress(this);
+      setModalityProgress(this);
     }
+    ProgressManager.assertNotCircular(original);
   }
 
+  @NotNull
+  @Override
+  public ProgressIndicator getOriginalProgressIndicator() {
+    return myOriginal;
+  }
+
+  @Override
   public void setIndeterminate(boolean indeterminate) {
     super.setIndeterminate(indeterminate);
     myOriginal.setIndeterminate(indeterminate);
   }
 
+  @Override
   public boolean isIndeterminate() {
     return myOriginal.isIndeterminate();
   }
 
+  @Override
   public synchronized void start() {
     if (isRunning()) return;
 
     super.start();
     myOriginalStarted = false;
-    myStartupAlarm.addRequest(myShowRequest, SHOW_DELAY);
+    myStartupAlarm = AppExecutorUtil.getAppScheduledExecutorService().schedule(myShowRequest, SHOW_DELAY, TimeUnit.MILLISECONDS);
   }
 
+  @Override
   public void startBlocking() {
     ApplicationManager.getApplication().assertIsDispatchThread();
     start();
@@ -98,10 +118,12 @@ public class SmoothProgressAdapter extends BlockingProgressIndicator {
           setResizable(false);
         }
 
+        @Override
         protected boolean isProgressDialog() {
           return true;
         }
 
+        @Override
         protected JComponent createCenterPanel() {
           return null;
         }
@@ -112,12 +134,13 @@ public class SmoothProgressAdapter extends BlockingProgressIndicator {
     }
   }
 
+  @Override
   public synchronized void stop() {
     if (myOriginal.isRunning()) {
       myOriginal.stop();
     }
     else {
-      myStartupAlarm.cancelAllRequests();
+      myStartupAlarm.cancel(false);
 
       if (!myOriginalStarted && myOriginal instanceof Disposable) {
         // dispose original because start & stop were not called so original progress might not have released its resources 
@@ -130,14 +153,12 @@ public class SmoothProgressAdapter extends BlockingProgressIndicator {
     semaphore.down();
 
     SwingUtilities.invokeLater(
-      new Runnable() {
-        public void run() {
-          semaphore.waitFor();
-          if (myDialog != null){
-            //System.out.println("myDialog.destroyProcess()");
-            myDialog.close(DialogWrapper.OK_EXIT_CODE);
-            myDialog = null;
-          }
+      () -> {
+        semaphore.waitFor();
+        if (myDialog != null){
+          //System.out.println("myDialog.destroyProcess()");
+          myDialog.close(DialogWrapper.OK_EXIT_CODE);
+          myDialog = null;
         }
       }
     );
@@ -150,6 +171,7 @@ public class SmoothProgressAdapter extends BlockingProgressIndicator {
     }
   }
 
+  @Override
   public synchronized void setText(String text) {
     super.setText(text);
     if (myOriginal.isRunning()) {
@@ -157,6 +179,7 @@ public class SmoothProgressAdapter extends BlockingProgressIndicator {
     }
   }
 
+  @Override
   public synchronized void setFraction(double fraction) {
     super.setFraction(fraction);
     if (myOriginal.isRunning()) {
@@ -164,6 +187,7 @@ public class SmoothProgressAdapter extends BlockingProgressIndicator {
     }
   }
   
+  @Override
   public synchronized void setText2(String text) {
     super.setText2(text);
     if (myOriginal.isRunning()) {
@@ -171,21 +195,14 @@ public class SmoothProgressAdapter extends BlockingProgressIndicator {
     }
   }
 
-  public void cancel() {
+  @Override
+  public final void cancel() {
     super.cancel();
     myOriginal.cancel();
   }
 
-
-
-  public boolean isCanceled() {
-    if (super.isCanceled()) return true;
-    if (!myOriginalStarted) return false;
-    return myOriginal.isCanceled();
+  @Override
+  public final boolean isCanceled() {
+    return super.isCanceled() || myOriginalStarted && myOriginal.isCanceled();
   }
-
-  public ProgressIndicator getOriginal() {
-    return myOriginal;
-  }
-
 }

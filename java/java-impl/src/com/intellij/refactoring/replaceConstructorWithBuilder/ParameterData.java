@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,10 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * User: anna
- * Date: 04-Feb-2009
- */
 package com.intellij.refactoring.replaceConstructorWithBuilder;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -26,6 +22,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.util.PropertyUtil;
+import com.intellij.psi.util.PropertyUtilBase;
 import com.intellij.refactoring.util.RefactoringUtil;
 
 import java.util.Map;
@@ -37,17 +34,17 @@ public class ParameterData {
   private String mySetterName;
   private String myDefaultValue;
   private boolean myInsertSetter = true;
-  private static final Logger LOG = Logger.getInstance("#" + ParameterData.class.getName());
+  private static final Logger LOG = Logger.getInstance(ParameterData.class);
 
   public ParameterData(String parameterName, PsiType type) {
     myParameterName = parameterName;
     myType = type;
   }
 
-  public static void createFromConstructor(final PsiMethod constructor, final Map<String, ParameterData> result) {
+  public static void createFromConstructor(final PsiMethod constructor, String setterPrefix, final Map<String, ParameterData> result) {
 
     for (PsiParameter parameter : constructor.getParameterList().getParameters()) {
-      initParameterData(parameter, result);
+      initParameterData(parameter, setterPrefix, result);
     }
 
     final PsiMethod chainedConstructor = RefactoringUtil.getChainedConstructor(constructor);
@@ -61,7 +58,7 @@ public class ParameterData {
       for (final PsiParameter parameter : chainedConstructor.getParameterList().getParameters()) {
         if (!parameter.isVarArgs()) {
           final PsiExpression arg = args[i];
-          final ParameterData parameterData = initParameterData(parameter, result);
+          final ParameterData parameterData = initParameterData(parameter, setterPrefix, result);
           if (!(arg instanceof PsiReferenceExpression && ((PsiReferenceExpression)arg).resolve() instanceof PsiParameter)) {
             parameterData.setDefaultValue(arg.getText());
           }
@@ -71,7 +68,7 @@ public class ParameterData {
     }
   }
 
-  private static ParameterData initParameterData(PsiParameter parameter, Map<String, ParameterData> result) {
+  private static ParameterData initParameterData(PsiParameter parameter, String setterPrefix, Map<String, ParameterData> result) {
     JavaCodeStyleManager styleManager = JavaCodeStyleManager.getInstance(parameter.getProject());
     final String paramName = parameter.getName();
     final String pureParamName = styleManager.variableNameToPropertyName(paramName, VariableKind.PARAMETER);
@@ -91,7 +88,7 @@ public class ParameterData {
       parameterData = new ParameterData(paramName, parameter.getType());
 
       parameterData.setFieldName(styleManager.suggestVariableName(VariableKind.FIELD, uniqueParamName, null, parameter.getType()).names[0]);
-      parameterData.setSetterName(PropertyUtil.suggestSetterName(uniqueParamName));
+      parameterData.setSetterName(PropertyUtilBase.suggestSetterName(uniqueParamName, setterPrefix));
 
       result.put(uniqueParamName, parameterData);
     }

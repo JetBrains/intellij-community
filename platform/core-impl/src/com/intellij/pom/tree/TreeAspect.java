@@ -24,7 +24,7 @@ import java.util.Collections;
 
 public class TreeAspect implements PomModelAspect {
   public TreeAspect(@NotNull PomModel model) {
-    model.registerAspect(TreeAspect.class, this, Collections.<PomModelAspect>emptySet());
+    model.registerAspect(TreeAspect.class, this, Collections.emptySet());
   }
 
   @Override

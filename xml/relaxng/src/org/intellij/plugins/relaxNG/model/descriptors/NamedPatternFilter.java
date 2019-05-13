@@ -22,6 +22,7 @@ import org.kohsuke.rngom.digested.DXmlTokenPattern;
 final class NamedPatternFilter implements Condition<DXmlTokenPattern> {
   public static final NamedPatternFilter INSTANCE = new NamedPatternFilter();
 
+  @Override
   public boolean value(DXmlTokenPattern pattern) {
     return pattern.getName().listNames().size() > 0;
   }

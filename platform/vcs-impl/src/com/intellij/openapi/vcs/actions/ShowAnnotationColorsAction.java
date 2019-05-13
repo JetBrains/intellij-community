@@ -12,42 +12,67 @@
  */
 package com.intellij.openapi.vcs.actions;
 
-import com.intellij.ide.util.PropertiesComponent;
+import com.intellij.openapi.actionSystem.ActionGroup;
+import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.ToggleAction;
-import com.intellij.openapi.editor.ex.EditorGutterComponentEx;
+import com.intellij.openapi.project.DumbAware;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.List;
+import java.util.ArrayList;
 
 /**
  * @author Konstantin Bulenkov
  */
-public class ShowAnnotationColorsAction extends ToggleAction {
-  public static final String KEY = "vcs.show.colored.annotations";
-  private final List<AnnotationFieldGutter> myGutters;
-  private final EditorGutterComponentEx myGutter;
+public class ShowAnnotationColorsAction extends ActionGroup implements DumbAware {
+  private final AnAction[] myChildren;
 
-  public ShowAnnotationColorsAction(List<AnnotationFieldGutter> gutters, EditorGutterComponentEx gutter) {
-    super("Colors");
-    myGutters = gutters;
-    myGutter = gutter;
-  }
+  public ShowAnnotationColorsAction() {
+    super("Colors", true);
 
-  @Override
-  public boolean isSelected(AnActionEvent e) {
-    return isColorsEnabled();
-  }
-
-  @Override
-  public void setSelected(AnActionEvent e, boolean state) {
-    PropertiesComponent.getInstance().setValue(KEY, String.valueOf(state));
-    for (AnnotationFieldGutter gutter : myGutters) {
-      gutter.setShowBg(state);
+    final ArrayList<AnAction> kids = new ArrayList<>(ShortNameType.values().length);
+    for (ColorMode type : ColorMode.values()) {
+      kids.add(new SetColorModeAction(type));
     }
-    myGutter.revalidateMarkup();
+    myChildren = kids.toArray(AnAction.EMPTY_ARRAY);
   }
 
-  public static boolean isColorsEnabled() {
-    return PropertiesComponent.getInstance().getBoolean(KEY, true);
+  @NotNull
+  @Override
+  public AnAction[] getChildren(@Nullable AnActionEvent e) {
+    return myChildren;
+  }
+
+  public static ColorMode getType() {
+    for (ColorMode type : ColorMode.values()) {
+      if (type.isSet()) {
+        return type;
+      }
+    }
+    return ColorMode.ORDER;
+  }
+
+  private static class SetColorModeAction extends ToggleAction implements DumbAware {
+    private final ColorMode myType;
+
+    SetColorModeAction(ColorMode type) {
+      super(type.getDescription());
+      myType = type;
+    }
+
+    @Override
+    public boolean isSelected(@NotNull AnActionEvent e) {
+      return myType == getType();
+    }
+
+    @Override
+    public void setSelected(@NotNull AnActionEvent e, boolean enabled) {
+      if (enabled) {
+        myType.set();
+      }
+
+      AnnotateActionGroup.revalidateMarkupInAllEditors();
+    }
   }
 }

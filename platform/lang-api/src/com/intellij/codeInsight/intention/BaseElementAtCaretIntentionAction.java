@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,19 +29,15 @@ import org.jetbrains.annotations.Nullable;
  * @author Danila Ponomarenko
  */
 public abstract class BaseElementAtCaretIntentionAction extends BaseIntentionAction {
-  private volatile boolean useElementToTheLeft = false;
+  private volatile boolean useElementToTheLeft;
 
   @Override
   public final boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    if (!file.getManager().isInProject(file)) return false;
+    if (!checkFile(file)) return false;
 
     useElementToTheLeft = false;
     final PsiElement elementToTheRight = getElementToTheRight(editor, file);
-    if (elementToTheRight == null) {
-      return false;
-    }
-
-    if (isAvailable(project, editor, elementToTheRight)) {
+    if (elementToTheRight != null && isAvailable(project, editor, elementToTheRight)) {
       return true;
     }
 
@@ -52,6 +48,10 @@ public abstract class BaseElementAtCaretIntentionAction extends BaseIntentionAct
     }
 
     return false;
+  }
+
+  protected boolean checkFile(@NotNull PsiFile file) {
+    return canModify(file);
   }
 
   /**
@@ -81,8 +81,7 @@ public abstract class BaseElementAtCaretIntentionAction extends BaseIntentionAct
    * @param project the project in which the file is opened.
    * @param editor  the editor for the file.
    * @param element the element under cursor.
-   * @throws com.intellij.util.IncorrectOperationException
-   *
+   * @throws IncorrectOperationException
    */
   public abstract void invoke(@NotNull Project project, Editor editor, @NotNull PsiElement element) throws IncorrectOperationException;
 

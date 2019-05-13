@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,9 +15,12 @@
  */
 package com.intellij.refactoring.changeClassSignature;
 
+import com.intellij.codeInsight.daemon.impl.quickfix.ChangeClassSignatureFromUsageFix;
+import com.intellij.lang.findUsages.DescriptiveNameUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.ui.CodeFragmentTableCellRenderer;
@@ -27,7 +30,6 @@ import com.intellij.refactoring.ui.StringTableCellEditor;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.ui.*;
 import com.intellij.ui.table.JBTable;
-import com.intellij.usageView.UsageViewUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.EditableModel;
 import org.jetbrains.annotations.NotNull;
@@ -39,8 +41,10 @@ import javax.swing.event.TableModelListener;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.TableColumn;
 import java.awt.*;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author dsl
@@ -49,54 +53,40 @@ import java.util.List;
 public class ChangeClassSignatureDialog extends RefactoringDialog {
   private static final Logger LOG = Logger.getInstance(ChangeClassSignatureDialog.class);
   private static final int NAME_COLUMN = 0;
-  private static final int VALUE_COLUMN = 1;
+  private static final int BOUND_VALUE_COLUMN = 1;
+  private static final int DEFAULT_VALUE_COLUMN = 2;
 
   private final List<TypeParameterInfo> myTypeParameterInfos;
-  private final List<PsiTypeCodeFragment> myTypeCodeFragments;
+  private final List<PsiTypeCodeFragment> myBoundValueTypeCodeFragments;
+  private final List<PsiTypeCodeFragment> myDefaultValueTypeCodeFragments;
   private final PsiClass myClass;
   private final PsiTypeParameter[] myOriginalParameters;
   private final Project myProject;
   private final MyTableModel myTableModel;
   private JBTable myTable;
   static final String REFACTORING_NAME = RefactoringBundle.message("changeClassSignature.refactoring.name");
-  private boolean myHideDefaultValueColumn;
+  private final boolean myHideDefaultValueColumn;
 
   public ChangeClassSignatureDialog(@NotNull PsiClass aClass, boolean hideDefaultValueColumn) {
     this(
       aClass,
       initTypeParameterInfos(aClass.getTypeParameters().length),
-      initTypeCodeFragment(aClass.getTypeParameters().length),
       hideDefaultValueColumn
     );
   }
 
   @NotNull
-  private static List<TypeParameterInfo> initTypeParameterInfos(int length) {
-    final List<TypeParameterInfo> result = new ArrayList<TypeParameterInfo>();
+  private static List<ChangeClassSignatureFromUsageFix.TypeParameterInfoView> initTypeParameterInfos(int length) {
+    final List<ChangeClassSignatureFromUsageFix.TypeParameterInfoView> result =
+      new ArrayList<>();
     for (int i = 0; i < length; i++) {
-      result.add(new TypeParameterInfo(i));
-    }
-    return result;
-  }
-
-  @NotNull
-  private static List<PsiTypeCodeFragment> initTypeCodeFragment(int length) {
-    final List<PsiTypeCodeFragment> result = new ArrayList<PsiTypeCodeFragment>();
-    for (int i = 0; i < length; i++) {
-      result.add(null);
+      result.add(new ChangeClassSignatureFromUsageFix.TypeParameterInfoView(new TypeParameterInfo.Existing(i), null, null));
     }
     return result;
   }
 
   public ChangeClassSignatureDialog(@NotNull PsiClass aClass,
-                                    @NotNull Map<TypeParameterInfo, PsiTypeCodeFragment> parameters,
-                                    boolean hideDefaultValueColumn) {
-    this(aClass, parameters.keySet(), parameters.values(), hideDefaultValueColumn);
-  }
-
-  public ChangeClassSignatureDialog(@NotNull PsiClass aClass,
-                                    @NotNull Collection<TypeParameterInfo> typeParameterInfos,
-                                    @NotNull Collection<PsiTypeCodeFragment> typeCodeFragments,
+                                    @NotNull List<? extends ChangeClassSignatureFromUsageFix.TypeParameterInfoView> parameters,
                                     boolean hideDefaultValueColumn) {
     super(aClass.getProject(), true);
     myHideDefaultValueColumn = hideDefaultValueColumn;
@@ -104,19 +94,24 @@ public class ChangeClassSignatureDialog extends RefactoringDialog {
     myClass = aClass;
     myProject = myClass.getProject();
     myOriginalParameters = myClass.getTypeParameters();
-    myTypeParameterInfos = new ArrayList<TypeParameterInfo>(typeParameterInfos);
-    myTypeCodeFragments = new ArrayList<PsiTypeCodeFragment>(typeCodeFragments);
+
+
+    myTypeParameterInfos = new ArrayList<>(parameters.size());
+    myBoundValueTypeCodeFragments = new ArrayList<>(parameters.size());
+    myDefaultValueTypeCodeFragments = new ArrayList<>(parameters.size());
+    for (ChangeClassSignatureFromUsageFix.TypeParameterInfoView p : parameters) {
+      myTypeParameterInfos.add(p.getInfo());
+      myBoundValueTypeCodeFragments.add(p.getBoundValueFragment());
+      myDefaultValueTypeCodeFragments.add(p.getDefaultValueFragment());
+    }
+
     myTableModel = new MyTableModel();
     init();
   }
 
-  private PsiTypeCodeFragment createValueCodeFragment() {
-    final JavaCodeFragmentFactory factory = JavaCodeFragmentFactory.getInstance(myProject);
-    return factory.createTypeCodeFragment("", myClass.getLBrace(), true);
-  }
-
+  @Override
   protected JComponent createNorthPanel() {
-    return new JLabel(RefactoringBundle.message("changeClassSignature.class.label.text", UsageViewUtil.getDescriptiveName(myClass)));
+    return new JLabel(RefactoringBundle.message("changeClassSignature.class.label.text", DescriptiveNameUtil.getDescriptiveName(myClass)));
   }
 
   @Override
@@ -129,15 +124,19 @@ public class ChangeClassSignatureDialog extends RefactoringDialog {
     return myTable;
   }
 
+  @Override
   protected JComponent createCenterPanel() {
     myTable = new JBTable(myTableModel);
     myTable.setStriped(true);
     TableColumn nameColumn = myTable.getColumnModel().getColumn(NAME_COLUMN);
-    TableColumn valueColumn = myTable.getColumnModel().getColumn(VALUE_COLUMN);
+    TableColumn boundColumn = myTable.getColumnModel().getColumn(BOUND_VALUE_COLUMN);
+    TableColumn valueColumn = myTable.getColumnModel().getColumn(DEFAULT_VALUE_COLUMN);
     Project project = myClass.getProject();
     nameColumn.setCellRenderer(new MyCellRenderer());
     nameColumn.setCellEditor(new StringTableCellEditor(project));
-    valueColumn.setCellRenderer(new MyCodeFragmentTableCellRenderer());
+    boundColumn.setCellRenderer(new CodeFragmentTableCellRenderer(project));
+    boundColumn.setCellEditor(new JavaCodeFragmentTableCellEditor(project));
+    valueColumn.setCellRenderer(new CodeFragmentTableCellRenderer(project));
     valueColumn.setCellEditor(new JavaCodeFragmentTableCellEditor(project));
 
     myTable.setPreferredScrollableViewportSize(new Dimension(210, myTable.getRowHeight() * 4));
@@ -148,7 +147,7 @@ public class ChangeClassSignatureDialog extends RefactoringDialog {
     myTable.setFocusCycleRoot(true);
 
     if (myHideDefaultValueColumn) {
-      final TableColumn defaultValue = myTable.getColumnModel().getColumn(VALUE_COLUMN);
+      final TableColumn defaultValue = myTable.getColumnModel().getColumn(DEFAULT_VALUE_COLUMN);
       myTable.removeColumn(defaultValue);
       myTable.getModel().addTableModelListener(new TableModelListener() {
         @Override
@@ -158,12 +157,7 @@ public class ChangeClassSignatureDialog extends RefactoringDialog {
             final TableColumnAnimator animator = new TableColumnAnimator(myTable);
             animator.setStep(20);
             animator.addColumn(defaultValue, myTable.getWidth() / 2);
-            animator.startAndDoWhenDone(new Runnable() {
-              @Override
-              public void run() {
-                myTable.editCellAt(myTable.getRowCount() - 1, 0);
-              }
-            });
+            animator.startAndDoWhenDone(() -> myTable.editCellAt(myTable.getRowCount() - 1, 0));
             animator.start();
           }
         }
@@ -176,97 +170,123 @@ public class ChangeClassSignatureDialog extends RefactoringDialog {
     return panel;
   }
 
+  @Override
   protected void doAction() {
     TableUtil.stopEditing(myTable);
     String message = validateAndCommitData();
     if (message != null) {
-      CommonRefactoringUtil.showErrorMessage(RefactoringBundle.message("error.incorrect.data"), message, HelpID.CHANGE_SIGNATURE, myClass.getProject());
+      CommonRefactoringUtil.showErrorMessage(RefactoringBundle.message("error.incorrect.data"), message, HelpID.CHANGE_CLASS_SIGNATURE, myClass.getProject());
       return;
     }
     ChangeClassSignatureProcessor processor =
       new ChangeClassSignatureProcessor(myClass.getProject(), myClass,
-                                        myTypeParameterInfos.toArray(new TypeParameterInfo[myTypeParameterInfos.size()]));
+                                        myTypeParameterInfos.toArray(new TypeParameterInfo[0]));
     invokeRefactoring(processor);
   }
 
   private String validateAndCommitData() {
     final PsiTypeParameter[] parameters = myClass.getTypeParameters();
-    final Map<String, TypeParameterInfo> infos = new HashMap<String, TypeParameterInfo>();
+    final Map<String, TypeParameterInfo> infos = new HashMap<>();
     for (final TypeParameterInfo info : myTypeParameterInfos) {
-      if (!info.isForExistingParameter() &&
-          !JavaPsiFacade.getInstance(myClass.getProject()).getNameHelper().isIdentifier(info.getNewName())) {
-        return RefactoringBundle.message("error.wrong.name.input", info.getNewName());
+      if (info instanceof TypeParameterInfo.New &&
+          !PsiNameHelper.getInstance(myClass.getProject()).isIdentifier(info.getName(parameters))) {
+        return RefactoringBundle.message("error.wrong.name.input", info.getName(parameters));
       }
-      final String newName = info.isForExistingParameter() ? parameters[info.getOldParameterIndex()].getName() : info.getNewName();
+      final String newName = info.getName(parameters);
       TypeParameterInfo existing = infos.get(newName);
       if (existing != null) {
         return myClass.getName() + " already contains type parameter " + newName;
       }
       infos.put(newName, info);
     }
-    LOG.assertTrue(myTypeCodeFragments.size() == myTypeParameterInfos.size());
-    for (int i = 0; i < myTypeCodeFragments.size(); i++) {
-      final PsiTypeCodeFragment codeFragment = myTypeCodeFragments.get(i);
+    LOG.assertTrue(myDefaultValueTypeCodeFragments.size() == myTypeParameterInfos.size());
+    LOG.assertTrue(myBoundValueTypeCodeFragments.size() == myTypeParameterInfos.size());
+    for (int i = 0; i < myDefaultValueTypeCodeFragments.size(); i++) {
       TypeParameterInfo info = myTypeParameterInfos.get(i);
-      if (info.getOldParameterIndex() >= 0) continue;
-      PsiType type;
-      try {
-        type = codeFragment.getType();
-        if (type instanceof PsiPrimitiveType) {
-          return "Type parameter can't be primitive";
-        }
-      }
-      catch (PsiTypeCodeFragment.TypeSyntaxException e) {
-        return RefactoringBundle.message("changeClassSignature.bad.default.value", codeFragment.getText(), info.getNewName());
-      }
-      catch (PsiTypeCodeFragment.NoTypeException e) {
-        return RefactoringBundle.message("changeSignature.no.type.for.parameter", info.getNewName());
-      }
-      info.setDefaultValue(type);
+      if (info instanceof TypeParameterInfo.Existing) continue;
+      String message = updateInfo(myDefaultValueTypeCodeFragments.get(i), (TypeParameterInfo.New)info, InfoUpdater.DEFAULT_VALUE);
+      if (message != null) return message;
+      message = updateInfo(myBoundValueTypeCodeFragments.get(i), (TypeParameterInfo.New)info, InfoUpdater.BOUND_VALUE);
+      if (message != null) return message;
     }
     return null;
   }
 
+  private static String updateInfo(PsiTypeCodeFragment source, TypeParameterInfo.New info, InfoUpdater updater) {
+    PsiType valueType;
+    try {
+      valueType = source.getType();
+      if (valueType instanceof PsiPrimitiveType) {
+        return "Type parameter can't be primitive";
+      }
+    }
+    catch (PsiTypeCodeFragment.TypeSyntaxException e) {
+      return RefactoringBundle
+        .message("changeClassSignature.bad.value", updater.getValueName(), source.getText(), info.getName(null));
+    }
+    catch (PsiTypeCodeFragment.NoTypeException e) {
+      return updater == InfoUpdater.DEFAULT_VALUE
+             ? RefactoringBundle.message("changeSignature.no.type.for.parameter", "default value", info.getName(null))
+             : null;
+    }
+    updater.updateInfo(info, valueType);
+    return null;
+  }
+
+  public static PsiTypeCodeFragment createTableCodeFragment(@Nullable PsiClassType type,
+                                                            @NotNull PsiElement context,
+                                                            @NotNull JavaCodeFragmentFactory factory,
+                                                            boolean allowConjunctions) {
+    return factory.createTypeCodeFragment(type == null ? "" : type.getCanonicalText(),
+                                          context,
+                                          true,
+                                          (allowConjunctions && PsiUtil.isLanguageLevel8OrHigher(context)) ? JavaCodeFragmentFactory.ALLOW_INTERSECTION : 0);
+  }
+
   private class MyTableModel extends AbstractTableModel implements EditableModel {
+    @Override
     public int getColumnCount() {
-      return 2;
+      return 3;
     }
 
+    @Override
     public int getRowCount() {
       return myTypeParameterInfos.size();
     }
 
+    @Override
     @Nullable
     public Class getColumnClass(int columnIndex) {
       return columnIndex == NAME_COLUMN ? String.class : null;
     }
 
+    @Override
     public Object getValueAt(int rowIndex, int columnIndex) {
       switch (columnIndex) {
         case NAME_COLUMN:
-          TypeParameterInfo info = myTypeParameterInfos.get(rowIndex);
-          if (info.isForExistingParameter()) {
-            return myOriginalParameters[info.getOldParameterIndex()].getName();
-          }
-          else {
-            return info.getNewName();
-          }
-        case VALUE_COLUMN:
-          return myTypeCodeFragments.get(rowIndex);
+          return myTypeParameterInfos.get(rowIndex).getName(myOriginalParameters);
+        case BOUND_VALUE_COLUMN:
+          return myBoundValueTypeCodeFragments.get(rowIndex);
+        case DEFAULT_VALUE_COLUMN:
+          return myDefaultValueTypeCodeFragments.get(rowIndex);
       }
       LOG.assertTrue(false);
       return null;
     }
 
+    @Override
     public boolean isCellEditable(int rowIndex, int columnIndex) {
-      return !myTypeParameterInfos.get(rowIndex).isForExistingParameter();
+      return myTypeParameterInfos.get(rowIndex) instanceof TypeParameterInfo.New;
     }
 
+    @Override
     public String getColumnName(int column) {
       switch (column) {
         case NAME_COLUMN:
           return RefactoringBundle.message("column.name.name");
-        case VALUE_COLUMN:
+        case BOUND_VALUE_COLUMN:
+          return RefactoringBundle.message("changeSignature.bound.value.column");
+        case DEFAULT_VALUE_COLUMN:
           return RefactoringBundle.message("changeSignature.default.value.column");
         default:
           LOG.assertTrue(false);
@@ -274,35 +294,45 @@ public class ChangeClassSignatureDialog extends RefactoringDialog {
       return null;
     }
 
+    @Override
     public void setValueAt(Object aValue, int rowIndex, int columnIndex) {
       switch (columnIndex) {
         case NAME_COLUMN:
-          myTypeParameterInfos.get(rowIndex).setNewName((String)aValue);
+          ((TypeParameterInfo.New)myTypeParameterInfos.get(rowIndex)).setNewName((String)aValue);
           break;
-        case VALUE_COLUMN:
+        case BOUND_VALUE_COLUMN:
+        case DEFAULT_VALUE_COLUMN:
           break;
         default:
           LOG.assertTrue(false);
       }
     }
 
+    @Override
     public void addRow() {
       TableUtil.stopEditing(myTable);
-      myTypeParameterInfos.add(new TypeParameterInfo("", null));
-      myTypeCodeFragments.add(createValueCodeFragment());
-      final int row = myTypeCodeFragments.size() - 1;
+      myTypeParameterInfos.add(new TypeParameterInfo.New("", null, null));
+      JavaCodeFragmentFactory codeFragmentFactory = JavaCodeFragmentFactory.getInstance(myProject);
+      PsiElement context = myClass.getLBrace() != null ? myClass.getLBrace() : myClass;
+      myBoundValueTypeCodeFragments.add(createTableCodeFragment(null, context, codeFragmentFactory, true));
+      myDefaultValueTypeCodeFragments.add(createTableCodeFragment(null, context, codeFragmentFactory, false));
+      final int row = myDefaultValueTypeCodeFragments.size() - 1;
       fireTableRowsInserted(row, row);
     }
 
+    @Override
     public void removeRow(int index) {
       myTypeParameterInfos.remove(index);
-      myTypeCodeFragments.remove(index);
+      myBoundValueTypeCodeFragments.remove(index);
+      myDefaultValueTypeCodeFragments.remove(index);
       fireTableDataChanged();
     }
 
+    @Override
     public void exchangeRows(int index1, int index2) {
       ContainerUtil.swapElements(myTypeParameterInfos, index1, index2);
-      ContainerUtil.swapElements(myTypeCodeFragments, index1, index2);
+      ContainerUtil.swapElements(myBoundValueTypeCodeFragments, index1, index2);
+      ContainerUtil.swapElements(myDefaultValueTypeCodeFragments, index1, index2);
       fireTableDataChanged();
       //fireTableRowsUpdated(Math.min(index1, index2), Math.max(index1, index2));
     }
@@ -313,8 +343,9 @@ public class ChangeClassSignatureDialog extends RefactoringDialog {
     }
   }
 
-  private class MyCellRenderer extends ColoredTableCellRenderer {
+  private static class MyCellRenderer extends ColoredTableCellRenderer {
 
+    @Override
     public void customizeCellRenderer(JTable table, Object value,
                                       boolean isSelected, boolean hasFocus, int row, int col) {
       if (value == null) return;
@@ -325,21 +356,33 @@ public class ChangeClassSignatureDialog extends RefactoringDialog {
     }
   }
 
-  private class MyCodeFragmentTableCellRenderer extends CodeFragmentTableCellRenderer {
+  private interface InfoUpdater {
+    void updateInfo(TypeParameterInfo.New info, PsiType type);
 
-    public MyCodeFragmentTableCellRenderer() {
-      super(getProject());
-    }
+    String getValueName();
 
-    public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
-      final Component component = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
-      //if (!myTableModel.isCellEditable(row, column)) {
-      //  component.setBackground(component.getBackground().darker());
-      //}
+    InfoUpdater DEFAULT_VALUE = new InfoUpdater() {
+      @Override
+      public void updateInfo(TypeParameterInfo.New info, PsiType type) {
+        info.setDefaultValue(type);
+      }
 
-      //TODO: better solution
+      @Override
+      public String getValueName() {
+        return "default";
+      }
+    };
 
-      return component;
-    }
+    InfoUpdater BOUND_VALUE = new InfoUpdater() {
+      @Override
+      public void updateInfo(TypeParameterInfo.New info, PsiType type) {
+        info.setBoundValue(type);
+      }
+
+      @Override
+      public String getValueName() {
+        return "bound";
+      }
+    };
   }
 }

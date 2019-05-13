@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,27 +15,33 @@
  */
 package com.intellij.refactoring.wrapreturnvalue.usageInfo;
 
-import com.intellij.psi.PsiCallExpression;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiMethodReferenceExpression;
 import com.intellij.refactoring.psi.MutationUtils;
 import com.intellij.refactoring.util.FixableUsageInfo;
+import com.intellij.refactoring.util.LambdaRefactoringUtil;
 import com.intellij.util.IncorrectOperationException;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 public class UnwrapCall extends FixableUsageInfo {
-    @NotNull
-    private final PsiCallExpression call;
-    @NotNull
-    private final String unwrapMethod;
+  private final String myUnwrapMethod;
 
-    public UnwrapCall(@NotNull PsiCallExpression call, @NotNull String unwrapMethod) {
-        super(call);
-        this.call =call;
-        this.unwrapMethod = unwrapMethod;
-    }
+  public UnwrapCall(@NotNull PsiExpression call, @NotNull String unwrapMethod) {
+    super(call);
+    myUnwrapMethod = unwrapMethod;
+  }
 
-    public void fixUsage() throws IncorrectOperationException {
-        @NonNls final String newExpression = call.getText() + '.' + unwrapMethod +"()";
-        MutationUtils.replaceExpression(newExpression, call);
+  @Override
+  public void fixUsage() throws IncorrectOperationException {
+    PsiElement element = getElement();
+    if (!(element instanceof PsiExpression)) return;
+    if (element instanceof PsiMethodReferenceExpression) {
+      PsiExpression expression = LambdaRefactoringUtil.convertToMethodCallInLambdaBody((PsiMethodReferenceExpression)element);
+      if (expression == null) return;
+      element = expression;
     }
+    String newExpression = element.getText() + '.' + myUnwrapMethod + "()";
+    MutationUtils.replaceExpression(newExpression, (PsiExpression)element);
+  }
 }

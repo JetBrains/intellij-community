@@ -15,13 +15,13 @@
  */
 package org.jetbrains.jps.api;
 
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.UUID;
 
 /**
 * @author Eugene Zhuravlev
-*         Date: 9/13/11
 */
 public class RequestFuture<T> extends BasicFuture<T> {
   private final T myHandler;
@@ -32,14 +32,14 @@ public class RequestFuture<T> extends BasicFuture<T> {
     void cancel(RequestFuture<T> future) throws Exception;
   }
 
-  public RequestFuture(T handler, UUID requestID, @Nullable CancelAction<T> cancelAction) {
+  public RequestFuture(T handler, @NotNull UUID requestID, @Nullable CancelAction<T> cancelAction) {
     super();
     myCancelAction = cancelAction;
     myHandler = handler;
     myRequestID = requestID;
-    mySemaphore.acquireUninterruptibly();
   }
 
+  @NotNull
   public UUID getRequestID() {
     return myRequestID;
   }

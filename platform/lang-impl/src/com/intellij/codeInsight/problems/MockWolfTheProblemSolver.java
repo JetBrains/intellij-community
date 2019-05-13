@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.codeInsight.problems;
 
@@ -22,7 +8,6 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.problems.Problem;
 import com.intellij.problems.WolfTheProblemSolver;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
@@ -45,6 +30,11 @@ public class MockWolfTheProblemSolver extends WolfTheProblemSolver {
   }
 
   @Override
+  public void weHaveGotNonIgnorableProblems(@NotNull VirtualFile virtualFile, @NotNull List<Problem> problems) {
+    if (myDelegate != null) myDelegate.weHaveGotNonIgnorableProblems(virtualFile, problems);
+  }
+
+  @Override
   public boolean hasProblemFilesBeneath(@NotNull final Condition<VirtualFile> condition) {
     return false;
   }
@@ -60,54 +50,13 @@ public class MockWolfTheProblemSolver extends WolfTheProblemSolver {
   }
 
   @Override
-  public void addProblemListener(@NotNull ProblemListener listener) {
-    if (myDelegate != null) myDelegate.addProblemListener(listener);
-  }
-
-  @Override
-  public void addProblemListener(@NotNull ProblemListener listener, @NotNull Disposable parentDisposable) {
+  public void addProblemListener(@NotNull WolfTheProblemSolver.ProblemListener listener, @NotNull Disposable parentDisposable) {
     if (myDelegate != null) myDelegate.addProblemListener(listener, parentDisposable);
-  }
-
-  @Override
-  public void removeProblemListener(@NotNull ProblemListener listener) {
-    if (myDelegate != null) myDelegate.removeProblemListener(listener);
-  }
-
-  @Override
-  public void registerFileHighlightFilter(@NotNull Condition<VirtualFile> filter, @NotNull Disposable parentDisposable) {
   }
 
   @Override
   public void queue(VirtualFile suspiciousFile) {
     if (myDelegate != null) myDelegate.queue(suspiciousFile);
-  }
-
-  @Override
-  public void projectOpened() {
-    if (myDelegate != null) myDelegate.projectOpened();
-  }
-
-  @Override
-  public void projectClosed() {
-    if (myDelegate != null) myDelegate.projectClosed();
-  }
-
-  @Override
-  @NonNls
-  @NotNull
-  public String getComponentName() {
-    return "mockwolf";
-  }
-
-  @Override
-  public void initComponent() {
-
-  }
-
-  @Override
-  public void disposeComponent() {
-
   }
 
   @Override

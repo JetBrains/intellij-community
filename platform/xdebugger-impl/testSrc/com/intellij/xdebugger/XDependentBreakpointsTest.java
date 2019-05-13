@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,7 +35,13 @@ public class XDependentBreakpointsTest extends XBreakpointsTestCase {
     myDependentBreakpointManager = myBreakpointManager.getDependentBreakpointManager();
   }
 
-  public void testDelete() throws Exception {
+  @Override
+  protected void tearDown() throws Exception {
+    myDependentBreakpointManager = null;
+    super.tearDown();
+  }
+
+  public void testDelete() {
     XLineBreakpoint<?> master = createMaster();
     XLineBreakpoint<?> slave = createSlave();
     myDependentBreakpointManager.setMasterBreakpoint(slave, master, true);
@@ -44,12 +50,12 @@ public class XDependentBreakpointsTest extends XBreakpointsTestCase {
     assertSame(slave, assertOneElement(myDependentBreakpointManager.getSlaveBreakpoints(master)));
     assertSame(slave, assertOneElement(myDependentBreakpointManager.getAllSlaveBreakpoints()));
     
-    myBreakpointManager.removeBreakpoint(master);
+    removeBreakPoint(myBreakpointManager, master);
     assertNull(myDependentBreakpointManager.getMasterBreakpoint(slave));
     assertEmpty(myDependentBreakpointManager.getAllSlaveBreakpoints());
   }
 
-  public void testSerialize() throws Exception {
+  public void testSerialize() {
     XLineBreakpoint<?> master = createMaster();
     XLineBreakpoint<?> slave = createSlave();
     myDependentBreakpointManager.setMasterBreakpoint(slave, master, true);
@@ -71,10 +77,10 @@ public class XDependentBreakpointsTest extends XBreakpointsTestCase {
   }
 
   private XLineBreakpoint<MyBreakpointProperties> createSlave() {
-    return myBreakpointManager.addLineBreakpoint(MY_LINE_BREAKPOINT_TYPE, "file://slave", 2, new MyBreakpointProperties("z-slave"));
+    return addLineBreakpoint(myBreakpointManager, "file://slave", 2, new MyBreakpointProperties("z-slave"));
   }
 
   private XLineBreakpoint<MyBreakpointProperties> createMaster() {
-    return myBreakpointManager.addLineBreakpoint(MY_LINE_BREAKPOINT_TYPE, "file://master", 1, new MyBreakpointProperties("z-master"));
+    return addLineBreakpoint(myBreakpointManager, "file://master", 1, new MyBreakpointProperties("z-master"));
   }
 }

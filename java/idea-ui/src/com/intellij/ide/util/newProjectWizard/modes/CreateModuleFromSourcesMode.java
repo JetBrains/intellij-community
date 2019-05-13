@@ -21,7 +21,6 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
@@ -33,6 +32,7 @@ import java.io.File;
 public class CreateModuleFromSourcesMode extends CreateFromSourcesMode {
   private TextFieldWithBrowseButton myPathPanel;
 
+  @Override
   public boolean isAvailable(WizardContext context) {
     return !context.isCreatingNewProject();
   }
@@ -65,6 +65,7 @@ public class CreateModuleFromSourcesMode extends CreateFromSourcesMode {
     return super.validate();
   }
 
+  @Override
   public void onChosen(final boolean enabled) {
     UIUtil.setEnabled(myPathPanel, enabled, true);
     if (enabled) {
@@ -72,6 +73,7 @@ public class CreateModuleFromSourcesMode extends CreateFromSourcesMode {
     }
   }
 
+  @Override
   public void dispose() {
     myPathPanel = null;
     super.dispose();

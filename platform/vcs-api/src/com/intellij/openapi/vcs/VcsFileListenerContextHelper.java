@@ -19,22 +19,17 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 
+import java.util.HashSet;
 import java.util.Set;
 
-/**
- * Created by IntelliJ IDEA.
- * User: Irina.Chernushina
- * Date: 10/7/11
- * Time: 6:40 PM
- */
 public class VcsFileListenerContextHelper {
   // to ignore by listeners
   private final Set<FilePath> myDeletedContext;
   private final Set<VirtualFile> myAddContext;
 
   VcsFileListenerContextHelper(final Project project) {
-    myDeletedContext = new java.util.HashSet<FilePath>();
-    myAddContext = new java.util.HashSet<VirtualFile>();
+    myDeletedContext = new HashSet<>();
+    myAddContext = new HashSet<>();
   }
 
   public static VcsFileListenerContextHelper getInstance(final Project project) {
@@ -55,18 +50,6 @@ public class VcsFileListenerContextHelper {
 
   public boolean isAdditionIgnored(final VirtualFile virtualFile) {
     return myAddContext.contains(virtualFile);
-  }
-
-  public void possiblySwitchActivation(final boolean isActive) {
-    /*if (myActive != isActive) {
-      final CommandProcessor cp = CommandProcessor.getInstance();
-      if (isActive) {
-        cp.addCommandListener(this);
-      } else {
-        cp.removeCommandListener(this);
-      }
-    }
-    myActive = isActive;*/
   }
 
   public void clearContext() {

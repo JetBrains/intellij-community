@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,83 +15,42 @@
  */
 package git4idea.actions;
 
-import com.intellij.history.Label;
-import com.intellij.history.LocalHistory;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.VcsException;
-import com.intellij.openapi.vcs.update.ActionInfo;
 import com.intellij.openapi.vfs.VirtualFile;
-import git4idea.GitRevisionNumber;
-import git4idea.GitUtil;
 import git4idea.GitVcs;
-import git4idea.commands.GitHandlerUtil;
-import git4idea.commands.GitLineHandler;
 import git4idea.i18n.GitBundle;
 import git4idea.merge.GitMergeDialog;
-import git4idea.merge.GitMergeUtil;
-import git4idea.repo.GitRepositoryManager;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
 import java.util.List;
-import java.util.Set;
 
-/**
- * Git "merge" action
- */
-public class GitMerge extends GitRepositoryAction {
+public class GitMerge extends GitMergeAction {
 
-  /**
-   * {@inheritDoc}
-   */
   @Override
   @NotNull
   protected String getActionName() {
     return GitBundle.getString("merge.action.name");
   }
 
-  /**
-   * {@inheritDoc}
-   */
-  protected void perform(@NotNull final Project project,
-                         @NotNull final List<VirtualFile> gitRoots,
-                         @NotNull final VirtualFile defaultRoot,
-                         final Set<VirtualFile> affectedRoots,
-                         final List<VcsException> exceptions) throws VcsException {
-    GitVcs vcs = GitVcs.getInstance(project);
-    if (vcs == null) {
-      return;
-    }
-    GitMergeDialog dialog = new GitMergeDialog(project, gitRoots, defaultRoot);
+  @Nullable
+  @Override
+  protected DialogState displayDialog(@NotNull Project project, @NotNull List<VirtualFile> gitRoots, @NotNull VirtualFile defaultRoot) {
+    final GitMergeDialog dialog = new GitMergeDialog(project, gitRoots, defaultRoot);
     try {
       dialog.updateBranches();
     }
     catch (VcsException e) {
-      if (vcs.getExecutableValidator().checkExecutableAndShowMessageIfNeeded(null)) {
-        vcs.showErrors(Collections.singletonList(e), GitBundle.getString("merge.retrieving.branches"));
-      }
-      return;
+      GitVcs vcs = GitVcs.getInstance(project);
+      vcs.showErrors(Collections.singletonList(e), GitBundle.getString("merge.retrieving.branches"));
+      return null;
     }
-    dialog.show();
-    if (!dialog.isOK()) {
-      return;
+    if (!dialog.showAndGet()) {
+      return null;
     }
-    Label beforeLabel = LocalHistory.getInstance().putSystemLabel(project, "Before update");
-    GitLineHandler h = dialog.handler();
-    final VirtualFile root = dialog.getSelectedRoot();
-    affectedRoots.add(root);
-    GitRevisionNumber currentRev = GitRevisionNumber.resolve(project, root, "HEAD");
-    try {
-      GitHandlerUtil.doSynchronously(h, GitBundle.message("merging.title", dialog.getSelectedRoot().getPath()), h.printableCommandLine());
-    }
-    finally {
-      exceptions.addAll(h.errors());
-      GitRepositoryManager manager = GitUtil.getRepositoryManager(project);
-      manager.updateRepository(root);
-    }
-    if (exceptions.size() != 0) {
-      return;
-    }
-    GitMergeUtil.showUpdates(this, project, exceptions, root, currentRev, beforeLabel, getActionName(), ActionInfo.INTEGRATE);
+    return new DialogState(dialog.getSelectedRoot(), GitBundle.message("merging.title", dialog.getSelectedRoot().getPath()),
+                           () -> dialog.handler());
   }
 }

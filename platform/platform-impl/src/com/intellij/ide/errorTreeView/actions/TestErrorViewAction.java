@@ -1,26 +1,12 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.errorTreeView.actions;
 
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
@@ -29,12 +15,12 @@ import com.intellij.ui.content.ContentFactory;
 import com.intellij.ui.content.MessageView;
 import com.intellij.util.ui.ErrorTreeView;
 import com.intellij.util.ui.MessageCategory;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Nov 13, 2004
  */
 @SuppressWarnings({"HardCodedStringLiteral"})
 public abstract class TestErrorViewAction extends AnAction{
@@ -42,8 +28,9 @@ public abstract class TestErrorViewAction extends AnAction{
   private long myMillis = 0L;
   private int myMessageCount = 0;
 
-  public void actionPerformed(AnActionEvent e) {
-    Project project = PlatformDataKeys.PROJECT.getData(e.getDataContext());
+  @Override
+  public void actionPerformed(@NotNull AnActionEvent e) {
+    Project project = e.getProject();
     if (project == null) {
       return;
     }
@@ -51,7 +38,8 @@ public abstract class TestErrorViewAction extends AnAction{
     openView(project, view.getComponent());
     myMillis = 0L;
     myMessageCount = 0;
-    new Thread() {
+    new Thread("test error view") {
+      @Override
       public void run() {
         for (int idx = 0; idx < MESSAGE_COUNT; idx++) {
           addMessage(view, new String[] {"This is a warning test message" + idx + " line1", "This is a warning test message" + idx + " line2"}, MessageCategory.WARNING);
@@ -76,7 +64,7 @@ public abstract class TestErrorViewAction extends AnAction{
           }
         }
         System.out.println("Expected " + (MESSAGE_COUNT + 1) + " messages;");
-        view.dispose();
+        Disposer.dispose(view);
       }
     }.start();
   }
@@ -90,14 +78,12 @@ public abstract class TestErrorViewAction extends AnAction{
   }
 
   private void addMessage(final ErrorTreeView view, final String[] message, final int type) {
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
-      public void run() {
-        final long start = System.currentTimeMillis();
-        view.addMessage(type, message, null, -1, -1, null);
-        final long duration = System.currentTimeMillis() - start;
-        myMillis += duration;
-        incMessageCount();
-      }
+    ApplicationManager.getApplication().invokeLater(() -> {
+      final long start = System.currentTimeMillis();
+      view.addMessage(type, message, null, -1, -1, null);
+      final long duration = System.currentTimeMillis() - start;
+      myMillis += duration;
+      incMessageCount();
     }, ModalityState.NON_MODAL);
   }
 

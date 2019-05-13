@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,13 +21,13 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.NameUtil;
 import com.intellij.psi.xml.XmlTag;
-import com.intellij.util.containers.HashMap;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomElementNavigationProvider;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.Map;
 
 
@@ -45,6 +45,7 @@ public abstract class AbstractDomGenerateProvider<T extends DomElement> extends 
     myMappingId = mappingId;
   }
 
+  @Override
   public T generate(final Project project, final Editor editor, final PsiFile file) {
     DomElement parentDomElement = getParentDomElement(project, editor, file);
 
@@ -64,7 +65,7 @@ public abstract class AbstractDomGenerateProvider<T extends DomElement> extends 
 
   @NotNull
   public static Map<String, String> createNamespacePrefixMap(@Nullable DomElement domElement) {
-    Map<String, String> vars = new HashMap<String, String>();
+    Map<String, String> vars = new HashMap<>();
 
     addNamespacePrefix(domElement, vars);
 
@@ -87,8 +88,10 @@ public abstract class AbstractDomGenerateProvider<T extends DomElement> extends 
     DomTemplateRunner.getInstance(file.getProject()).runTemplate(t, myMappingId, editor, predefinedVars);
   }
 
+  @Override
   protected abstract DomElement getParentDomElement(final Project project, final Editor editor, final PsiFile file);
 
+  @Override
   @SuppressWarnings({"unchecked"})
   protected void doNavigate(final DomElementNavigationProvider navigateProvider, final DomElement copy) {
     final DomElement element = getElementToNavigate((T)copy);

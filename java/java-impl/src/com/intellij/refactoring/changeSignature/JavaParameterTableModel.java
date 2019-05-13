@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@ import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.VariableKind;
+import com.intellij.psi.impl.source.PsiExpressionCodeFragmentImpl;
 import com.intellij.refactoring.ui.JavaCodeFragmentTableCellEditor;
 import com.intellij.refactoring.ui.RefactoringDialog;
 import com.intellij.refactoring.ui.StringTableCellEditor;
@@ -30,6 +31,8 @@ import com.intellij.refactoring.util.CanonicalTypes;
 import com.intellij.ui.ColoredTableCellRenderer;
 import com.intellij.ui.EditorTextField;
 import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.ColumnInfo;
 import org.jetbrains.annotations.Nullable;
 
@@ -86,8 +89,9 @@ public class JavaParameterTableModel extends ParameterTableModelBase<ParameterIn
     if (paramType != null) {
       paramType.addImportsTo(paramTypeCodeFragment);
     }
+    String value = parameterInfo.getDefaultValue();
     PsiExpressionCodeFragment defaultValueCodeFragment =
-      f.createExpressionCodeFragment(parameterInfo.getDefaultValue(), myDefaultValueContext, null, true);
+      f.createExpressionCodeFragment(ObjectUtils.notNull(value, ""), myDefaultValueContext, null, true);
     defaultValueCodeFragment.setVisibilityChecker(JavaCodeFragment.VisibilityChecker.EVERYTHING_VISIBLE);
 
     return new ParameterTableModelItemBase<ParameterInfoImpl>(parameterInfo, paramTypeCodeFragment, defaultValueCodeFragment) {
@@ -96,14 +100,31 @@ public class JavaParameterTableModel extends ParameterTableModelBase<ParameterIn
         try {
           return paramTypeCodeFragment.getType() instanceof PsiEllipsisType;
         }
-        catch (PsiTypeCodeFragment.TypeSyntaxException e) {
-          return false;
-        }
-        catch (PsiTypeCodeFragment.NoTypeException e) {
+        catch (PsiTypeCodeFragment.TypeSyntaxException | PsiTypeCodeFragment.NoTypeException e) {
           return false;
         }
       }
     };
+  }
+
+  @Override
+  public void setValueAtWithoutUpdate(Object aValue, int rowIndex, int columnIndex) {
+    super.setValueAtWithoutUpdate(aValue, rowIndex, columnIndex);
+    //if type was changed - update default value's expected type
+    PsiType type = null;
+    if (columnIndex == 0 && aValue instanceof String) {
+      try {
+        type = JavaPsiFacade.getElementFactory(myProject).createTypeFromText((String)aValue, myTypeContext);
+      }
+      catch (IncorrectOperationException e) {
+        type = null;
+      }
+    }
+
+    if (type != null) {
+      final ParameterTableModelItemBase<ParameterInfoImpl> item = getItem(rowIndex);
+      ((PsiExpressionCodeFragmentImpl)item.defaultValueCodeFragment).setExpectedType(type);
+    }
   }
 
   @Nullable
@@ -111,19 +132,17 @@ public class JavaParameterTableModel extends ParameterTableModelBase<ParameterIn
     try {
       return ((PsiTypeCodeFragment)((JavaParameterTableModel)table.getModel()).getItems().get(row).typeCodeFragment).getType();
     }
-    catch (PsiTypeCodeFragment.TypeSyntaxException e) {
-      return null;
-    }
-    catch (PsiTypeCodeFragment.NoTypeException e) {
+    catch (PsiTypeCodeFragment.TypeSyntaxException | PsiTypeCodeFragment.NoTypeException e) {
       return null;
     }
   }
 
   private static class VariableCompletionTableCellEditor extends StringTableCellEditor {
-    public VariableCompletionTableCellEditor(Project project) {
+    VariableCompletionTableCellEditor(Project project) {
       super(project);
     }
 
+    @Override
     public Component getTableCellEditorComponent(final JTable table,
                                                  Object value,
                                                  boolean isSelected,
@@ -131,6 +150,7 @@ public class JavaParameterTableModel extends ParameterTableModelBase<ParameterIn
                                                  int column) {
       final EditorTextField textField = (EditorTextField)super.getTableCellEditorComponent(table, value, isSelected, row, column);
       textField.registerKeyboardAction(new ActionListener() {
+        @Override
         public void actionPerformed(ActionEvent e) {
           PsiType type = getRowType(table, row);
           if (type != null) {
@@ -146,10 +166,10 @@ public class JavaParameterTableModel extends ParameterTableModelBase<ParameterIn
       Editor editor = editorTextField.getEditor();
       String prefix = editorTextField.getText();
       if (prefix == null) prefix = "";
-      Set<LookupElement> set = new LinkedHashSet<LookupElement>();
+      Set<LookupElement> set = new LinkedHashSet<>();
       JavaCompletionUtil.completeVariableNameForRefactoring(editorTextField.getProject(), set, prefix, type, VariableKind.PARAMETER);
 
-      LookupElement[] lookupItems = set.toArray(new LookupElement[set.size()]);
+      LookupElement[] lookupItems = set.toArray(LookupElement.EMPTY_ARRAY);
       editor.getCaretModel().moveToOffset(prefix.length());
       editor.getSelectionModel().removeSelection();
       LookupManager.getInstance(editorTextField.getProject()).showLookup(editor, lookupItems, prefix);
@@ -157,10 +177,11 @@ public class JavaParameterTableModel extends ParameterTableModelBase<ParameterIn
   }
 
   private static class EditorWithExpectedType extends JavaCodeFragmentTableCellEditor {
-    public EditorWithExpectedType(PsiElement typeContext) {
+    EditorWithExpectedType(PsiElement typeContext) {
       super(typeContext.getProject());
     }
 
+    @Override
     public Component getTableCellEditorComponent(JTable table, Object value, boolean isSelected, int row, int column) {
       final Component editor = super.getTableCellEditorComponent(table, value, isSelected, row, column);
       final PsiType type = getRowType(table, row);
@@ -198,6 +219,7 @@ public class JavaParameterTableModel extends ParameterTableModelBase<ParameterIn
     @Override
     public TableCellRenderer doCreateRenderer(ParameterTableModelItemBase<ParameterInfoImpl> item) {
       return new ColoredTableCellRenderer() {
+        @Override
         public void customizeCellRenderer(JTable table, Object value,
                                           boolean isSelected, boolean hasFocus, int row, int column) {
           if (value == null) return;
@@ -206,7 +228,7 @@ public class JavaParameterTableModel extends ParameterTableModelBase<ParameterIn
             getCellState().updateRenderer(this);
             setPaintFocusBorder(false);
           }
-          append((String)value, new SimpleTextAttributes(Font.PLAIN, null));
+          append((String)value, new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, null));
         }
       };
 

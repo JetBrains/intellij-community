@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,24 +14,18 @@
  * limitations under the License.
  */
 
-/*
- * Created by IntelliJ IDEA.
- * User: dsl
- * Date: 06.08.2002
- * Time: 17:17:27
- * To change template for new class use
- * Code Style | Class Templates options (Tools | IDE Options).
- */
 package com.intellij.refactoring.inheritanceToDelegation;
 
+import com.intellij.lang.ContextAwareActionHandler;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.jsp.jspJava.JspClass;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.RefactoringBundle;
@@ -40,19 +34,18 @@ import com.intellij.refactoring.util.RefactoringHierarchyUtil;
 import com.intellij.refactoring.util.RefactoringMessageUtil;
 import com.intellij.refactoring.util.classMembers.MemberInfo;
 import com.intellij.refactoring.util.classMembers.MemberInfoStorage;
-import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
+import java.util.*;
 
-public class InheritanceToDelegationHandler implements RefactoringActionHandler {
+public class InheritanceToDelegationHandler implements RefactoringActionHandler, ContextAwareActionHandler {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.inheritanceToDelegation.InheritanceToDelegationHandler");
+
   public static final String REFACTORING_NAME = RefactoringBundle.message("replace.inheritance.with.delegation.title");
 
   private static final MemberInfo.Filter<PsiMember> MEMBER_INFO_FILTER = new MemberInfo.Filter<PsiMember>() {
+    @Override
     public boolean includeMember(PsiMember element) {
       if (element instanceof PsiMethod) {
         final PsiMethod method = (PsiMethod)element;
@@ -66,7 +59,12 @@ public class InheritanceToDelegationHandler implements RefactoringActionHandler 
     }
   };
 
+  @Override
+  public boolean isAvailableForQuickList(@NotNull Editor editor, @NotNull PsiFile file, @NotNull DataContext dataContext) {
+    return !PsiUtil.isModuleFile(file);
+  }
 
+  @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file, DataContext dataContext) {
     editor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
     int offset = editor.getCaretModel().getOffset();
@@ -86,12 +84,13 @@ public class InheritanceToDelegationHandler implements RefactoringActionHandler 
     }
   }
 
+  @Override
   public void invoke(@NotNull Project project, @NotNull PsiElement[] elements, DataContext dataContext) {
     if (elements.length != 1) return;
 
     final PsiClass aClass = (PsiClass)elements[0];
 
-    Editor editor = PlatformDataKeys.EDITOR.getData(dataContext);
+    Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
     if (aClass.isInterface()) {
       String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("class.is.interface", aClass.getQualifiedName()));
       CommonRefactoringUtil.showErrorHint(project, editor, message, REFACTORING_NAME, HelpID.INHERITANCE_TO_DELEGATION);
@@ -105,23 +104,26 @@ public class InheritanceToDelegationHandler implements RefactoringActionHandler 
 
     if (!CommonRefactoringUtil.checkReadOnlyStatus(project, aClass)) return;
 
-    final PsiClass[] bases = aClass.getSupers();
+    PsiClass[] bases = aClass.getSupers();
     @NonNls final String javaLangObject = CommonClassNames.JAVA_LANG_OBJECT;
+
     if (bases.length == 0 || bases.length == 1 && javaLangObject.equals(bases[0].getQualifiedName())) {
       String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("class.does.not.have.base.classes.or.interfaces", aClass.getQualifiedName()));
       CommonRefactoringUtil.showErrorHint(project, editor, message, REFACTORING_NAME, HelpID.INHERITANCE_TO_DELEGATION);
       return;
     }
 
-    final HashMap<PsiClass, Collection<MemberInfo>> basesToMemberInfos = new HashMap<PsiClass, Collection<MemberInfo>>();
+    final HashMap<PsiClass, Collection<MemberInfo>> basesToMemberInfos = new LinkedHashMap<>();
 
     for (PsiClass base : bases) {
+      if (javaLangObject.equals(base.getQualifiedName())) continue;
       basesToMemberInfos.put(base, createBaseClassMemberInfos(base));
     }
 
 
+    final Set<PsiClass> baseClasses = basesToMemberInfos.keySet();
     new InheritanceToDelegationDialog(project, aClass,
-                                      bases, basesToMemberInfos).show();
+                                      baseClasses.toArray(PsiClass.EMPTY_ARRAY), basesToMemberInfos).show();
   }
 
   private static List<MemberInfo> createBaseClassMemberInfos(PsiClass baseClass) {
@@ -130,12 +132,9 @@ public class InheritanceToDelegationHandler implements RefactoringActionHandler 
 
     final MemberInfoStorage memberInfoStorage = new MemberInfoStorage(baseClass, MEMBER_INFO_FILTER);
 
-    ArrayList<MemberInfo> memberInfoList = new ArrayList<MemberInfo>(memberInfoStorage.getClassMemberInfos(deepestBase));
-    List<MemberInfo> memberInfos = memberInfoStorage.getIntermediateMemberInfosList(deepestBase);
-    for (final MemberInfo memberInfo : memberInfos) {
-      memberInfoList.add(memberInfo);
-    }
-
+    List<MemberInfo> memberInfoList = new ArrayList<>();
+    memberInfoList.addAll(memberInfoStorage.getClassMemberInfos(deepestBase));
+    memberInfoList.addAll(memberInfoStorage.getIntermediateMemberInfosList(deepestBase));
     return memberInfoList;
   }
 }

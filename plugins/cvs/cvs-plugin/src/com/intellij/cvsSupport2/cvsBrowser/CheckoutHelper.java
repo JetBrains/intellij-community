@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -62,7 +62,7 @@ public class CheckoutHelper {
     File checkoutDirectory = new File(myCheckoutLocation, myElement.getCheckoutPath());
     if (checkoutDirectory.isDirectory()) return true;
     return Messages.showYesNoDialog(CvsBundle.message("confirmation.text.directory.will.be.created", checkoutDirectory),
-                                    CvsBundle.message("operation.name.check.out.project"), Messages.getQuestionIcon()) == 0;
+                                    CvsBundle.message("operation.name.check.out.project"), Messages.getQuestionIcon()) == Messages.YES;
   }
 
   private boolean shouldCreateDirectoryOfTheSameName() {

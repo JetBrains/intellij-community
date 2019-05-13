@@ -1,13 +1,33 @@
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.classmetrics;
 
-import com.siyeh.ig.IGInspectionTestCase;
+import com.intellij.testFramework.LightProjectDescriptor;
+import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
+import com.siyeh.ig.LightInspectionTestCase;
+import org.jetbrains.annotations.NotNull;
 
-public class ConstructorCountInspectionTest extends IGInspectionTestCase {
+public class ConstructorCountInspectionTest extends LightCodeInsightFixtureTestCase {
+  @Override
+  protected String getBasePath() {
+    return LightInspectionTestCase.INSPECTION_GADGETS_TEST_DATA_PATH + "com/siyeh/igtest/classmetrics/constructor_count";
+  }
 
-  public void test() throws Exception {
-    final ConstructorCountInspection tool = new ConstructorCountInspection();
+  @NotNull
+  @Override
+  protected LightProjectDescriptor getProjectDescriptor() {
+    return JAVA_8;
+  }
+
+  private void doTest() {
+    ConstructorCountInspection tool = new ConstructorCountInspection();
     tool.m_limit = 2;
     tool.ignoreDeprecatedConstructors = true;
-    doTest("com/siyeh/igtest/classmetrics/constructor_count", tool);
+    myFixture.enableInspections(tool);
+    myFixture.testHighlighting(getTestName(false) + ".java");
   }
+
+  public void testConstructorCount() {
+    doTest();
+  }
+
 }

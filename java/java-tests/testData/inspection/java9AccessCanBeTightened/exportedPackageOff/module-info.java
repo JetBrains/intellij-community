@@ -1,0 +1,1 @@
+module foo.bar { exports foo.bar; }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,10 +25,12 @@ import gnu.trove.TObjectHashingStrategy;
 public class CaseInsensitiveStringHashingStrategy implements TObjectHashingStrategy<String> {
   public static final CaseInsensitiveStringHashingStrategy INSTANCE = new CaseInsensitiveStringHashingStrategy();
   
+  @Override
   public int computeHashCode(final String s) {
     return StringUtil.stringHashCodeInsensitive(s);
   }
 
+  @Override
   public boolean equals(final String s1, final String s2) {
     return s1.equalsIgnoreCase(s2);
   }

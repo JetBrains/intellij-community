@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,13 +21,12 @@ import com.intellij.history.core.revisions.Revision;
 import com.intellij.history.integration.IntegrationTestCase;
 import com.intellij.openapi.vfs.VirtualFile;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
 public class DifferenceReverterTest extends IntegrationTestCase {
   public void testFileCreation() throws Exception {
-    myRoot.createChildData(this, "foo.txt");
+    createChildData(myRoot, "foo.txt");
 
     revertLastChange();
 
@@ -35,25 +34,25 @@ public class DifferenceReverterTest extends IntegrationTestCase {
   }
 
   public void testFileDeletion() throws Exception {
-    VirtualFile f = myRoot.createChildData(this, "foo.txt");
-    f.setBinaryContent(new byte[]{123}, -1, 4000);
-    f.delete(this);
+    VirtualFile f = createChildData(myRoot, "foo.txt");
+    setBinaryContent(f, new byte[]{123}, -1, 4000, this);
+    delete(f);
 
     revertLastChange();
 
     f = myRoot.findChild("foo.txt");
     assertNotNull(f);
     assertEquals(123, f.contentsToByteArray()[0]);
-    assertEquals(4000, f.getTimeStamp());
   }
 
   public void testDirDeletion() throws Exception {
-    VirtualFile dir = myRoot.createChildDirectory(this, "dir");
-    VirtualFile subdir = dir.createChildDirectory(this, "subdir");
-    VirtualFile f = subdir.createChildData(this, "foo.txt");
-    f.setBinaryContent(new byte[]{123}, -1, 4000);
+    VirtualFile dir = createChildDirectory(myRoot, "dir");
+    VirtualFile subdir = createChildDirectory(dir, "subdir");
+    VirtualFile f = createChildData(subdir, "foo.txt");
+    int modificationStamp = -1;
+    setBinaryContent(f, new byte[]{123}, modificationStamp, 4000, this);
 
-    dir.delete(this);
+    delete(dir);
 
     revertLastChange();
 
@@ -62,15 +61,14 @@ public class DifferenceReverterTest extends IntegrationTestCase {
     f = subdir.findChild("foo.txt");
     assertNotNull(f);
     assertEquals(123, f.contentsToByteArray()[0]);
-    assertEquals(4000, f.getTimeStamp());
   }
 
   public void testDeletionOfFileAndCreationOfDirAtTheSameTime() throws Exception {
-    VirtualFile f = myRoot.createChildData(this, "foo.txt");
+    VirtualFile f = createChildData(myRoot, "foo.txt");
 
     getVcs().beginChangeSet();
-    f.delete(this);
-    myRoot.createChildDirectory(this, "foo.txt");
+    delete(f);
+    createChildDirectory(myRoot, "foo.txt");
     getVcs().endChangeSet(null);
 
     revertLastChange();
@@ -81,11 +79,11 @@ public class DifferenceReverterTest extends IntegrationTestCase {
   }
 
   public void testDeletionOfDirAndCreationOfFileAtTheSameTime() throws Exception {
-    VirtualFile f = myRoot.createChildDirectory(this, "foo.txt");
+    VirtualFile f = createChildDirectory(myRoot, "foo.txt");
 
     getVcs().beginChangeSet();
-    f.delete(this);
-    myRoot.createChildData(this, "foo.txt");
+    delete(f);
+    createChildData(myRoot, "foo.txt");
     getVcs().endChangeSet(null);
 
     revertLastChange();
@@ -96,9 +94,10 @@ public class DifferenceReverterTest extends IntegrationTestCase {
   }
 
   public void testRename() throws Exception {
-    VirtualFile f = myRoot.createChildData(this, "foo.txt");
-    f.setBinaryContent(new byte[]{123}, -1, 4000);
-    f.rename(this, "bar.txt");
+    VirtualFile f = createChildData(myRoot, "foo.txt");
+    int modificationStamp = -1;
+    setBinaryContent(f, new byte[]{123}, modificationStamp, 4000, this);
+    rename(f, "bar.txt");
 
     revertLastChange();
 
@@ -106,17 +105,17 @@ public class DifferenceReverterTest extends IntegrationTestCase {
     f = myRoot.findChild("foo.txt");
     assertNotNull(f);
     assertEquals(123, f.contentsToByteArray()[0]);
-    assertEquals(4000, f.getTimeStamp());
   }
 
   public void testMovement() throws Exception {
-    VirtualFile dir1 = myRoot.createChildDirectory(this, "dir1");
-    VirtualFile dir2 = myRoot.createChildDirectory(this, "dir2");
+    VirtualFile dir1 = createChildDirectory(myRoot, "dir1");
+    VirtualFile dir2 = createChildDirectory(myRoot, "dir2");
 
-    VirtualFile f = dir1.createChildData(this, "foo.txt");
-    f.setBinaryContent(new byte[]{123}, -1, 4000);
+    VirtualFile f = createChildData(dir1, "foo.txt");
+    int modificationStamp = -1;
+    setBinaryContent(f, new byte[]{123}, modificationStamp, 4000, this);
 
-    f.move(this, dir2);
+    move(f, dir2);
 
     revertLastChange();
 
@@ -124,15 +123,15 @@ public class DifferenceReverterTest extends IntegrationTestCase {
     f = dir1.findChild("foo.txt");
     assertNotNull(f);
     assertEquals(123, f.contentsToByteArray()[0]);
-    assertEquals(4000, f.getTimeStamp());
   }
 
   public void testParentRename() throws Exception {
-    VirtualFile dir = myRoot.createChildDirectory(this, "dir");
-    VirtualFile f = dir.createChildData(this, "foo.txt");
-    f.setBinaryContent(new byte[]{123}, -1, 4000);
+    VirtualFile dir = createChildDirectory(myRoot, "dir");
+    VirtualFile f = createChildData(dir, "foo.txt");
+    int modificationStamp = -1;
+    setBinaryContent(f, new byte[]{123}, modificationStamp, 4000, this);
 
-    dir.rename(this, "dir2");
+    rename(dir, "dir2");
 
     revertLastChange();
 
@@ -141,17 +140,17 @@ public class DifferenceReverterTest extends IntegrationTestCase {
     f = dir.findChild("foo.txt");
     assertNotNull(f);
     assertEquals(123, f.contentsToByteArray()[0]);
-    assertEquals(4000, f.getTimeStamp());
   }
 
   public void testParentAndChildRename() throws Exception {
-    VirtualFile dir = myRoot.createChildDirectory(this, "dir");
-    VirtualFile f = dir.createChildData(this, "foo.txt");
-    f.setBinaryContent(new byte[]{123}, -1, 4000);
+    VirtualFile dir = createChildDirectory(myRoot, "dir");
+    VirtualFile f = createChildData(dir, "foo.txt");
+    int modificationStamp = -1;
+    setBinaryContent(f, new byte[]{123}, modificationStamp, 4000, this);
 
     getVcs().beginChangeSet();
-    dir.rename(this, "dir2");
-    f.rename(this, "bar.txt");
+    rename(dir, "dir2");
+    rename(f, "bar.txt");
     getVcs().endChangeSet(null);
 
     revertLastChange();
@@ -163,32 +162,34 @@ public class DifferenceReverterTest extends IntegrationTestCase {
     f = dir.findChild("foo.txt");
     assertNotNull(f);
     assertEquals(123, f.contentsToByteArray()[0]);
-    assertEquals(4000, f.getTimeStamp());
   }
 
   public void testRevertContentChange() throws Exception {
-    VirtualFile f = myRoot.createChildData(this, "foo.txt");
-    f.setBinaryContent(new byte[]{1}, -1, 1000);
-    f.setBinaryContent(new byte[]{2}, -1, 2000);
+    VirtualFile f = createChildData(myRoot, "foo.txt");
+    int modificationStamp1 = -1;
+    setBinaryContent(f, new byte[]{1}, modificationStamp1, 1000, this);
+    int modificationStamp = -1;
+    setBinaryContent(f, new byte[]{2}, modificationStamp, 2000, this);
 
     revertLastChange();
 
     f = myRoot.findChild("foo.txt");
     assertNotNull(f);
     assertEquals(1, f.contentsToByteArray()[0]);
-    assertEquals(1000, f.getTimeStamp());
   }
 
   public void testContentChangeWhenDirectoryExists() throws Exception {
-    VirtualFile f = myRoot.createChildData(this, "foo.txt");
-    f.setBinaryContent(new byte[]{1}, -1, 1000);
+    VirtualFile f = createChildData(myRoot, "foo.txt");
+    int modificationStamp1 = -1;
+    setBinaryContent(f, new byte[]{1}, modificationStamp1, 1000, this);
 
     getVcs().beginChangeSet();
-    f.rename(this, "bar.txt");
-    f.setBinaryContent(new byte[]{2}, -1, 2000);
+    rename(f, "bar.txt");
+    int modificationStamp = -1;
+    setBinaryContent(f, new byte[]{2}, modificationStamp, 2000, this);
     getVcs().endChangeSet(null);
 
-    myRoot.createChildDirectory(this, "foo.txt");
+    createChildDirectory(myRoot, "foo.txt");
 
     revertChange(1, 0, 1);
 
@@ -197,12 +198,11 @@ public class DifferenceReverterTest extends IntegrationTestCase {
     assertNotNull(f);
     assertFalse(f.isDirectory());
     assertEquals(1, f.contentsToByteArray()[0]);
-    assertEquals(1000, f.getTimeStamp());
   }
 
   public void testRevertingFromOldRevisionsWhenFileAlreadyDeleted() throws Exception {
-    VirtualFile f = myRoot.createChildData(this, "foo.txt");
-    f.delete(this);
+    VirtualFile f = createChildData(myRoot, "foo.txt");
+    delete(f);
 
     revertChange(1);
 
@@ -210,9 +210,9 @@ public class DifferenceReverterTest extends IntegrationTestCase {
   }
 
   public void testRevertingFromOldRevisionsWhenFileAlreadyExists() throws Exception {
-    VirtualFile f = myRoot.createChildData(this, "foo.txt");
-    f.delete(this);
-    f = myRoot.createChildData(this, "foo.txt");
+    VirtualFile f = createChildData(myRoot, "foo.txt");
+    delete(f);
+    f = createChildData(myRoot, "foo.txt");
 
     revertChange(1);
 
@@ -220,12 +220,12 @@ public class DifferenceReverterTest extends IntegrationTestCase {
   }
 
   public void testRevertingRenameFromOldRevisionsWhenDirDoesNotExists() throws Exception {
-    VirtualFile dir = myRoot.createChildDirectory(this, "dir");
-    VirtualFile f = dir.createChildData(this, "foo.txt");
+    VirtualFile dir = createChildDirectory(myRoot, "dir");
+    VirtualFile f = createChildData(dir, "foo.txt");
 
-    f.rename(this, "bar.txt");
+    rename(f, "bar.txt");
 
-    dir.delete(this);
+    delete(dir);
 
     revertChange(1);
 
@@ -236,14 +236,14 @@ public class DifferenceReverterTest extends IntegrationTestCase {
   }
 
   public void testRevertingMoveFromOldRevisionsWhenDirDoesNotExists() throws Exception {
-    VirtualFile dir1 = myRoot.createChildDirectory(this, "dir1");
-    VirtualFile dir2 = myRoot.createChildDirectory(this, "dir2");
-    VirtualFile f = dir1.createChildData(this, "foo.txt");
+    VirtualFile dir1 = createChildDirectory(myRoot, "dir1");
+    VirtualFile dir2 = createChildDirectory(myRoot, "dir2");
+    VirtualFile f = createChildData(dir1, "foo.txt");
 
-    f.move(this, dir2);
+    move(f, dir2);
 
-    dir1.delete(this);
-    dir2.delete(this);
+    delete(dir1);
+    delete(dir2);
 
     revertChange(2);
 
@@ -254,13 +254,15 @@ public class DifferenceReverterTest extends IntegrationTestCase {
   }
 
   public void testRevertingContentChangeFromOldRevisionsWhenDirDoesNotExists() throws Exception {
-    VirtualFile dir = myRoot.createChildDirectory(this, "dir");
-    VirtualFile f = dir.createChildData(this, "foo.txt");
+    VirtualFile dir = createChildDirectory(myRoot, "dir");
+    VirtualFile f = createChildData(dir, "foo.txt");
 
-    f.setBinaryContent(new byte[]{1}, -1, 1000);
-    f.setBinaryContent(new byte[]{2}, -1, 2000);
+    int modificationStamp1 = -1;
+    setBinaryContent(f, new byte[]{1}, modificationStamp1, 1000, this);
+    int modificationStamp = -1;
+    setBinaryContent(f, new byte[]{2}, modificationStamp, 2000, this);
 
-    dir.delete(this);
+    delete(dir);
 
     revertChange(1);
 
@@ -269,19 +271,18 @@ public class DifferenceReverterTest extends IntegrationTestCase {
     f = dir.findChild("foo.txt");
     assertNotNull(f);
     assertEquals(1, f.contentsToByteArray()[0]);
-    assertEquals(1000, f.getTimeStamp());
   }
 
-  private void revertLastChange(int... diffsIndices) throws IOException {
+  private void revertLastChange(int... diffsIndices) throws Exception {
     revertChange(0, diffsIndices);
   }
 
-  private void revertChange(int change, int... diffsIndices) throws IOException {
+  private void revertChange(int change, int... diffsIndices) throws Exception {
     List<Revision> revs = getRevisionsFor(myRoot);
     Revision leftRev = revs.get(change + 1);
     Revision rightRev = revs.get(change);
     List<Difference> diffs = leftRev.getDifferencesWith(rightRev);
-    List<Difference> toRevert = new ArrayList<Difference>();
+    List<Difference> toRevert = new ArrayList<>();
     for (int i : diffsIndices) {
       toRevert.add(diffs.get(i));
     }

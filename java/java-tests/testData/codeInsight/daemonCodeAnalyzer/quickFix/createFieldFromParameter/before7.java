@@ -1,4 +1,4 @@
-// "Create Field for Parameter 'p1'" "false"
+// "Create field for parameter 'p1'" "false"
 
 class Test{
     int myP1;

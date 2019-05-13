@@ -25,7 +25,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.file.FileLookupInfoProvider;
-import com.intellij.util.containers.HashMap;
+import java.util.HashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -36,7 +36,7 @@ import java.util.Map;
  * @author spleaner
  */
 public class FileInfoManager implements Disposable {
-  private final Map<FileType, FileLookupInfoProvider> myFileType2InfoProvider = new HashMap<FileType, FileLookupInfoProvider>();
+  private final Map<FileType, FileLookupInfoProvider> myFileType2InfoProvider = new HashMap<>();
 
   public FileInfoManager() {
     final FileLookupInfoProvider[] providers = FileLookupInfoProvider.EP_NAME.getExtensions();
@@ -78,7 +78,7 @@ public class FileInfoManager implements Disposable {
       final VirtualFile virtualFile = psiFile.getVirtualFile();
       if (virtualFile != null) {
         final Pair<String, String> info = provider.getLookupInfo(virtualFile, psiElement.getProject());
-        return info == null ? null : info.second;
+        return Pair.getSecond(info);
       }
     }
 

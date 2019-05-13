@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,20 +19,13 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.filters.ElementFilter;
 import com.intellij.reference.SoftReference;
-import com.intellij.util.ReflectionCache;
+import com.intellij.util.ReflectionUtil;
 
-/**
- * Created by IntelliJ IDEA.
- * User: ik
- * Date: 04.02.2003
- * Time: 12:40:51
- * To change this template use Options | File Templates.
- */
 public class AssignableFromContextFilter implements ElementFilter{
 
   @Override
   public boolean isClassAcceptable(Class hintClass){
-    return ReflectionCache.isAssignable(PsiClass.class, hintClass);
+    return ReflectionUtil.isAssignable(PsiClass.class, hintClass);
   }
 
   private SoftReference myCurrentContext = new SoftReference(null);

@@ -1,4 +1,4 @@
-// "Invert If Condition" "true"
+// "Invert 'if' condition" "true"
 class K {
     private void bar(int i) {
         switch(i) {

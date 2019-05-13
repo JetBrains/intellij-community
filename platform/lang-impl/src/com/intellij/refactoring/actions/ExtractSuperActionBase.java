@@ -24,6 +24,7 @@ import com.intellij.refactoring.lang.ElementsHandler;
 
 public abstract class ExtractSuperActionBase extends BasePlatformRefactoringAction {
 
+  @Override
   public boolean isAvailableInEditorOnly() {
     return false;
   }

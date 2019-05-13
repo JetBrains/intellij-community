@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,10 +21,10 @@ import com.intellij.compiler.ant.taskdefs.PathRef;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.openapi.roots.*;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.OrderedSet;
 
@@ -47,7 +47,6 @@ public class ModuleChunkClasspath extends Path {
    * @param generateRuntimeClasspath if true, runtime classpath is being generated. Otherwise a compile time classpath is constructed
    * @param generateTestClasspath    if true, a test classpath is generated.
    */
-  @SuppressWarnings({"unchecked"})
   public ModuleChunkClasspath(final ModuleChunk chunk,
                               final GenerationOptions genOptions,
                               final boolean generateRuntimeClasspath,
@@ -55,13 +54,13 @@ public class ModuleChunkClasspath extends Path {
     super(generateClasspathName(chunk, generateRuntimeClasspath, generateTestClasspath));
 
     final OrderedSet<ClasspathItem> pathItems =
-      new OrderedSet<ClasspathItem>();
+      new OrderedSet<>();
     final String moduleChunkBasedirProperty = BuildProperties.getModuleChunkBasedirProperty(chunk);
     final Module[] modules = chunk.getModules();
     // processed chunks (used only in runtime classpath), every chunk is referenced exactly once
-    final Set<ModuleChunk> processedChunks = new HashSet<ModuleChunk>();
+    final Set<ModuleChunk> processedChunks = new HashSet<>();
     // pocessed modules
-    final Set<Module> processedModules = new HashSet<Module>();
+    final Set<Module> processedModules = new HashSet<>();
     for (final Module module : modules) {
       new Object() {
         /**
@@ -100,90 +99,85 @@ public class ModuleChunkClasspath extends Path {
           if (!generateTestClasspath) {
             enumerator = enumerator.productionOnly();
           }
-          enumerator.forEach(new Processor<OrderEntry>() {
-            @Override
-            public boolean process(OrderEntry orderEntry) {
-              if (!orderEntry.isValid()) {
-                return true;
-              }
-
-              if (!generateRuntimeClasspath &&
-                  !(orderEntry instanceof ModuleOrderEntry) &&
-                  !(orderEntry instanceof ModuleSourceOrderEntry)) {
-                // needed for compilation classpath only
-                final boolean isExported = (orderEntry instanceof ExportableOrderEntry) && ((ExportableOrderEntry)orderEntry).isExported();
-                if (dependencyLevel > 0 && !isExported) {
-                  // non-exported dependencies are excluded and not processed
-                  return true;
-                }
-              }
-
-              if (orderEntry instanceof JdkOrderEntry) {
-                if (genOptions.forceTargetJdk && !generateRuntimeClasspath) {
-                  pathItems
-                    .add(new PathRefItem(BuildProperties.propertyRef(BuildProperties.getModuleChunkJdkClasspathProperty(chunk.getName()))));
-                }
-              }
-              else if (orderEntry instanceof ModuleOrderEntry) {
-                final ModuleOrderEntry moduleOrderEntry = (ModuleOrderEntry)orderEntry;
-                final Module dependentModule = moduleOrderEntry.getModule();
-                if (!chunk.contains(dependentModule)) {
-                  if (generateRuntimeClasspath && !genOptions.inlineRuntimeClasspath) {
-                    // in case of runtime classpath, just an referenced to corresponding classpath is created
-                    final ModuleChunk depChunk = genOptions.getChunkByModule(dependentModule);
-                    if (!processedChunks.contains(depChunk)) {
-                      // chunk references are included in the runtime classpath only once
-                      processedChunks.add(depChunk);
-                      String property = generateTestClasspath ? BuildProperties.getTestRuntimeClasspathProperty(depChunk.getName())
-                                                              : BuildProperties.getRuntimeClasspathProperty(depChunk.getName());
-                      pathItems.add(new PathRefItem(property));
-                    }
-                  }
-                  else {
-                    // in case of compile classpath or inlined runtime classpath,
-                    // the referenced module is processed recursively
-                    processModule(dependentModule, dependencyLevel + 1, moduleOrderEntry.isExported());
-                  }
-                }
-              }
-              else if (orderEntry instanceof LibraryOrderEntry) {
-                final LibraryOrderEntry libraryOrderEntry = (LibraryOrderEntry)orderEntry;
-                final String libraryName = libraryOrderEntry.getLibraryName();
-                if (((LibraryOrderEntry)orderEntry).isModuleLevel()) {
-                  CompositeGenerator gen = new CompositeGenerator();
-                  gen.setHasLeadingNewline(false);
-                  LibraryDefinitionsGeneratorFactory.genLibraryContent(project, genOptions, libraryOrderEntry.getLibrary(), baseDir, gen);
-                  pathItems.add(new GeneratorItem(libraryName, gen));
-                }
-                else {
-                  pathItems.add(new PathRefItem(BuildProperties.getLibraryPathId(libraryName)));
-                }
-              }
-              else if (orderEntry instanceof ModuleSourceOrderEntry) {
-                // Module source entry?
-                for (String url : getCompilationClasses(module, ((GenerationOptionsImpl)genOptions), generateRuntimeClasspath,
-                                                        generateTestClasspath, dependencyLevel == 0)) {
-                  if (url.endsWith(JarFileSystem.JAR_SEPARATOR)) {
-                    url = url.substring(0, url.length() - JarFileSystem.JAR_SEPARATOR.length());
-                  }
-                  final String propertyRef = genOptions.getPropertyRefForUrl(url);
-                  if (propertyRef != null) {
-                    pathItems.add(new PathElementItem(propertyRef));
-                  }
-                  else {
-                    final String path = VirtualFileManager.extractPath(url);
-                    pathItems.add(new PathElementItem(
-                      GenerationUtils.toRelativePath(path, chunk.getBaseDir(), moduleChunkBasedirProperty, genOptions)));
-                  }
-                }
-              }
-              else {
-                // Unknown order entry type. If it is actually encountered, extension point should be implemented
-                pathItems.add(new GeneratorItem(orderEntry.getClass().getName(),
-                                                new Comment("Unknown OrderEntryType: " + orderEntry.getClass().getName())));
-              }
+          enumerator.forEach(orderEntry -> {
+            if (!orderEntry.isValid()) {
               return true;
             }
+
+            if (!generateRuntimeClasspath &&
+                !(orderEntry instanceof ModuleOrderEntry) &&
+                !(orderEntry instanceof ModuleSourceOrderEntry)) {
+              // needed for compilation classpath only
+              final boolean isExported = (orderEntry instanceof ExportableOrderEntry) && ((ExportableOrderEntry)orderEntry).isExported();
+              if (dependencyLevel > 0 && !isExported) {
+                // non-exported dependencies are excluded and not processed
+                return true;
+              }
+            }
+
+            if (orderEntry instanceof JdkOrderEntry) {
+              if (genOptions.forceTargetJdk && !generateRuntimeClasspath) {
+                pathItems
+                  .add(new PathRefItem(BuildProperties.propertyRef(BuildProperties.getModuleChunkJdkClasspathProperty(chunk.getName()))));
+              }
+            }
+            else if (orderEntry instanceof ModuleOrderEntry) {
+              final ModuleOrderEntry moduleOrderEntry = (ModuleOrderEntry)orderEntry;
+              final Module dependentModule = moduleOrderEntry.getModule();
+              if (!chunk.contains(dependentModule)) {
+                if (generateRuntimeClasspath && !genOptions.inlineRuntimeClasspath) {
+                  // in case of runtime classpath, just an referenced to corresponding classpath is created
+                  final ModuleChunk depChunk = genOptions.getChunkByModule(dependentModule);
+                  if (!processedChunks.contains(depChunk)) {
+                    // chunk references are included in the runtime classpath only once
+                    processedChunks.add(depChunk);
+                    String property = generateTestClasspath ? BuildProperties.getTestRuntimeClasspathProperty(depChunk.getName())
+                                                            : BuildProperties.getRuntimeClasspathProperty(depChunk.getName());
+                    pathItems.add(new PathRefItem(property));
+                  }
+                }
+                else {
+                  // in case of compile classpath or inlined runtime classpath,
+                  // the referenced module is processed recursively
+                  processModule(dependentModule, dependencyLevel + 1, moduleOrderEntry.isExported());
+                }
+              }
+            }
+            else if (orderEntry instanceof LibraryOrderEntry) {
+              final LibraryOrderEntry libraryOrderEntry = (LibraryOrderEntry)orderEntry;
+              final String libraryName = libraryOrderEntry.getLibraryName();
+              if (((LibraryOrderEntry)orderEntry).isModuleLevel()) {
+                CompositeGenerator gen = new CompositeGenerator();
+                gen.setHasLeadingNewline(false);
+                LibraryDefinitionsGeneratorFactory.genLibraryContent(project, genOptions, libraryOrderEntry.getLibrary(), baseDir, gen);
+                pathItems.add(new GeneratorItem(libraryName, gen));
+              }
+              else {
+                pathItems.add(new PathRefItem(BuildProperties.getLibraryPathId(libraryName)));
+              }
+            }
+            else if (orderEntry instanceof ModuleSourceOrderEntry) {
+              // Module source entry?
+              for (String url : getCompilationClasses(module, ((GenerationOptionsImpl)genOptions), generateRuntimeClasspath,
+                                                      generateTestClasspath, dependencyLevel == 0)) {
+                url = StringUtil.trimEnd(url, JarFileSystem.JAR_SEPARATOR);
+                final String propertyRef = genOptions.getPropertyRefForUrl(url);
+                if (propertyRef != null) {
+                  pathItems.add(new PathElementItem(propertyRef));
+                }
+                else {
+                  final String path = VirtualFileManager.extractPath(url);
+                  pathItems.add(new PathElementItem(
+                    GenerationUtils.toRelativePath(path, chunk.getBaseDir(), moduleChunkBasedirProperty, genOptions)));
+                }
+              }
+            }
+            else {
+              // Unknown order entry type. If it is actually encountered, extension point should be implemented
+              pathItems.add(new GeneratorItem(orderEntry.getClass().getName(),
+                                              new Comment("Unknown OrderEntryType: " + orderEntry.getClass().getName())));
+            }
+            return true;
           });
         }
       }.processModule(module, 0, false);
@@ -233,7 +227,7 @@ public class ModuleChunkClasspath extends Path {
     }
     final Set<String> jdkUrls = options.getAllJdkUrls();
 
-    final OrderedSet<String> urls = new OrderedSet<String>();
+    final OrderedSet<String> urls = new OrderedSet<>();
     ContainerUtil.addAll(urls, extension.getOutputRootUrls(forTest));
     urls.removeAll(jdkUrls);
     return ArrayUtil.toStringArray(urls);
@@ -255,7 +249,7 @@ public class ModuleChunkClasspath extends Path {
      *
      * @param value primary value of the element
      */
-    public ClasspathItem(String value) {
+    ClasspathItem(String value) {
       myValue = value;
     }
 
@@ -280,11 +274,12 @@ public class ModuleChunkClasspath extends Path {
      * @param value     primary value of the element
      * @param generator a generator to use
      */
-    public GeneratorItem(String value, final Generator generator) {
+    GeneratorItem(String value, final Generator generator) {
       super(value);
       myGenerator = generator;
     }
 
+    @Override
     public Generator toGenerator() {
       return myGenerator;
     }
@@ -299,7 +294,7 @@ public class ModuleChunkClasspath extends Path {
      *
      * @param value a referenced location
      */
-    public PathElementItem(String value) {
+    PathElementItem(String value) {
       super(value);
     }
 
@@ -335,7 +330,7 @@ public class ModuleChunkClasspath extends Path {
      *
      * @param value an indentifier of referenced classpath
      */
-    public PathRefItem(String value) {
+    PathRefItem(String value) {
       super(value);
     }
 

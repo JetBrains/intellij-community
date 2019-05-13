@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,14 +16,20 @@
 package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeInsight.CodeInsightBundle;
+import com.intellij.codeInsight.completion.CompletionMemory;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.BaseRefactoringIntentionAction;
+import com.intellij.refactoring.introduceVariable.IntroduceEmptyVariableHandler;
 import com.intellij.refactoring.introduceVariable.IntroduceVariableHandler;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import java.util.List;
 
 /**
  * @author Danila Ponomarenko
@@ -47,23 +53,91 @@ public class IntroduceVariableIntentionAction extends BaseRefactoringIntentionAc
       return false;
     }
 
-    final PsiExpressionStatement statement = PsiTreeUtil.getParentOfType(element,PsiExpressionStatement.class);
-    if (statement == null){
+    if (getTypeOfUnfilledParameter(editor, element) != null) return true;
+
+    final PsiExpression expression = detectExpressionStatement(element);
+    if (expression == null) {
       return false;
     }
 
-    final PsiExpression expression = statement.getExpression();
-
-    return expression.getType() != PsiType.VOID && !(expression instanceof PsiAssignmentExpression);
+    final PsiType expressionType = expression.getType();
+    return expressionType != null && !PsiType.VOID.equals(expressionType) && !(expression instanceof PsiAssignmentExpression);
   }
 
   @Override
   public void invoke(@NotNull Project project, Editor editor, @NotNull PsiElement element) throws IncorrectOperationException {
-    final PsiExpressionStatement statement = PsiTreeUtil.getParentOfType(element,PsiExpressionStatement.class);
-    if (statement == null){
+    PsiType type = getTypeOfUnfilledParameter(editor, element);
+    if (type != null) {
+      new IntroduceEmptyVariableHandler().invoke(editor, element.getContainingFile(), type);
       return;
     }
 
-    new IntroduceVariableHandler().invoke(project, editor, statement.getExpression());
+    final PsiExpression expression = detectExpressionStatement(element);
+    if (expression == null){
+      return;
+    }
+
+    new IntroduceVariableHandler().invoke(project, editor, expression);
+  }
+
+  @Override
+  public boolean startInWriteAction() {
+    return false;
+  }
+
+  @Nullable
+  @Override
+  public PsiElement getElementToMakeWritable(@NotNull PsiFile currentFile) {
+    return currentFile;
+  }
+
+  private static PsiExpression detectExpressionStatement(@NotNull PsiElement element) {
+    final PsiElement prevSibling = PsiTreeUtil.skipWhitespacesBackward(element);
+    if (prevSibling instanceof PsiStatement) {
+      return getExpression((PsiStatement)prevSibling);
+    }
+    else {
+      while(!(element instanceof PsiExpressionStatement) && !(element instanceof PsiReturnStatement)) {
+        element = element.getParent();
+        if (element == null || element instanceof PsiCodeBlock) return null;
+      }
+      return getExpression(((PsiStatement)element));
+    }
+  }
+
+  private static PsiExpression getExpression(PsiStatement statement) {
+    if (statement instanceof PsiExpressionStatement) {
+      return ((PsiExpressionStatement)statement).getExpression();
+    }
+
+    if (statement instanceof PsiReturnStatement) {
+      return ((PsiReturnStatement)statement).getReturnValue();
+    }
+    return null;
+  }
+
+  @Nullable
+  private static PsiType getTypeOfUnfilledParameter(@NotNull Editor editor, @NotNull PsiElement element) {
+    if (element.getParent() instanceof PsiExpressionList && element.getParent().getParent() instanceof PsiMethodCallExpression) {
+      PsiJavaToken leftBoundary = PsiTreeUtil.getPrevSiblingOfType(element, PsiJavaToken.class);
+      PsiJavaToken rightBoundary = element instanceof PsiJavaToken ? (PsiJavaToken)element
+                                                                   : PsiTreeUtil.getNextSiblingOfType(element, PsiJavaToken.class);
+      if (leftBoundary != null && rightBoundary != null &&
+          CharArrayUtil.isEmptyOrSpaces(editor.getDocument().getImmutableCharSequence(),
+                                        leftBoundary.getTextRange().getEndOffset(),
+                                        rightBoundary.getTextRange().getStartOffset())) {
+        PsiMethod method = CompletionMemory.getChosenMethod((PsiCall)element.getParent().getParent());
+        if (method != null) {
+          List<PsiJavaToken> allTokens = PsiTreeUtil.getChildrenOfTypeAsList(element.getParent(), PsiJavaToken.class);
+          PsiParameterList parameterList = method.getParameterList();
+          int parameterIndex = allTokens.indexOf(leftBoundary);
+          if (parameterIndex >= 0 && parameterIndex < parameterList.getParametersCount()) {
+            PsiParameter parameter = parameterList.getParameters()[parameterIndex];
+            return parameter.getType();
+          }
+        }
+      }
+    }
+    return null;
   }
 }

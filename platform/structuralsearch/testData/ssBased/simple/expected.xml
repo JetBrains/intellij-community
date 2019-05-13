@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<problems>
+
+  <problem>
+    <file>X.java</file>
+    <line>5</line>
+    <problem_class>Structural Search Inspection</problem_class>
+    <description />
+  </problem>
+
+  <problem>
+    <file>X.java</file>
+    <line>7</line>
+    <problem_class>Structural Search Inspection</problem_class>
+    <description />
+  </problem>
+
+</problems>

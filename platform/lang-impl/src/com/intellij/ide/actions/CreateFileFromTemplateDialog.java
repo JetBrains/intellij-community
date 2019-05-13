@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,19 +16,21 @@
 
 package com.intellij.ide.actions;
 
+import com.intellij.lang.LangBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.InputValidator;
 import com.intellij.openapi.ui.InputValidatorEx;
+import com.intellij.openapi.ui.ValidationInfo;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiElement;
-import com.intellij.ui.DocumentAdapter;
+import com.intellij.psi.SmartPointerManager;
+import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.util.PlatformIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.event.DocumentEvent;
 import java.util.Map;
 
 /**
@@ -40,6 +42,7 @@ public class CreateFileFromTemplateDialog extends DialogWrapper {
   private JPanel myPanel;
   private JLabel myUpDownHint;
   private JLabel myKindLabel;
+  private JLabel myNameLabel;
 
   private ElementCreator myCreator;
   private InputValidator myInputValidator;
@@ -50,31 +53,44 @@ public class CreateFileFromTemplateDialog extends DialogWrapper {
     myKindLabel.setLabelFor(myKindCombo);
     myKindCombo.registerUpDownHint(myNameField);
     myUpDownHint.setIcon(PlatformIcons.UP_DOWN_ARROWS);
-    myNameField.getDocument().addDocumentListener(new DocumentAdapter() {
-      @Override
-      protected void textChanged(DocumentEvent e) {
-        validateName();
-      }
-    });
+    setTemplateKindComponentsVisible(false);
     init();
   }
 
-  private void validateName() {
+  @Nullable
+  @Override
+  protected ValidationInfo doValidate() {
     if (myInputValidator != null) {
-      final String text = myNameField.getText();
-      setOKActionEnabled(myInputValidator.canClose(text));
-      if (myInputValidator instanceof InputValidatorEx) {
-        setErrorText(((InputValidatorEx)myInputValidator).getErrorText(text));
+      final String text = myNameField.getText().trim();
+      final boolean canClose = myInputValidator.canClose(text);
+      if (!canClose) {
+        String errorText = LangBundle.message("incorrect.name");
+        if (myInputValidator instanceof InputValidatorEx) {
+          String message = ((InputValidatorEx)myInputValidator).getErrorText(text);
+          if (message != null) {
+            errorText = message;
+          }
+        }
+        return new ValidationInfo(errorText, myNameField);
       }
     }
+    return super.doValidate();
   }
-  
+
   protected JTextField getNameField() {
     return myNameField;
   }
 
   protected TemplateKindCombo getKindCombo() {
     return myKindCombo;
+  }
+
+  protected JLabel getKindLabel() {
+    return myKindLabel;
+  }
+
+  protected JLabel getNameLabel() {
+    return myNameLabel;
   }
 
   private String getEnteredName() {
@@ -91,7 +107,7 @@ public class CreateFileFromTemplateDialog extends DialogWrapper {
 
   @Override
   protected void doOKAction() {
-    if (myCreator.tryCreate(getEnteredName()).length == 0) {
+    if (myCreator != null && myCreator.tryCreate(getEnteredName()).length == 0) {
       return;
     }
     super.doOKAction();
@@ -100,6 +116,12 @@ public class CreateFileFromTemplateDialog extends DialogWrapper {
   @Override
   public JComponent getPreferredFocusedComponent() {
     return getNameField();
+  }
+
+  public void setTemplateKindComponentsVisible(boolean flag) {
+    myKindCombo.setVisible(flag);
+    myKindLabel.setVisible(flag);
+    myUpDownHint.setVisible(flag);
   }
 
   public static Builder createDialog(@NotNull final Project project) {
@@ -111,7 +133,7 @@ public class CreateFileFromTemplateDialog extends DialogWrapper {
     private final CreateFileFromTemplateDialog myDialog;
     private final Project myProject;
 
-    public BuilderImpl(CreateFileFromTemplateDialog dialog, Project project) {
+    BuilderImpl(CreateFileFromTemplateDialog dialog, Project project) {
       myDialog = dialog;
       myProject = project;
     }
@@ -122,8 +144,12 @@ public class CreateFileFromTemplateDialog extends DialogWrapper {
       return this;
     }
 
+    @Override
     public Builder addKind(@NotNull String name, @Nullable Icon icon, @NotNull String templateName) {
       myDialog.getKindCombo().addItem(name, icon, templateName);
+      if (myDialog.getKindCombo().getComboBox().getItemCount() > 1) {
+        myDialog.setTemplateKindComponentsVisible(true);
+      }
       return this;
     }
 
@@ -133,20 +159,26 @@ public class CreateFileFromTemplateDialog extends DialogWrapper {
       return this;
     }
 
+    @Override
     public <T extends PsiElement> T show(@NotNull String errorTitle, @Nullable String selectedTemplateName,
                                          @NotNull final FileCreator<T> creator) {
-      final Ref<T> created = Ref.create(null);
+      final Ref<SmartPsiElementPointer<T>>created = Ref.create(null);
       myDialog.getKindCombo().setSelectedName(selectedTemplateName);
       myDialog.myCreator = new ElementCreator(myProject, errorTitle) {
 
         @Override
-        protected PsiElement[] create(String newName) throws Exception {
-          final T element = creator.createFile(myDialog.getEnteredName(), myDialog.getKindCombo().getSelectedName());
-          created.set(element);
+        protected PsiElement[] create(@NotNull String newName) {
+          T element = creator.createFile(myDialog.getEnteredName(), myDialog.getKindCombo().getSelectedName());
           if (element != null) {
+            created.set(SmartPointerManager.getInstance(myProject).createSmartPsiElementPointer(element));
             return new PsiElement[]{element};
           }
           return PsiElement.EMPTY_ARRAY;
+        }
+
+        @Override
+        public boolean startInWriteAction() {
+          return creator.startInWriteAction();
         }
 
         @Override
@@ -154,10 +186,11 @@ public class CreateFileFromTemplateDialog extends DialogWrapper {
           return creator.getActionName(newName, myDialog.getKindCombo().getSelectedName());
         }
       };
-      myDialog.validateName();
+
       myDialog.show();
       if (myDialog.getExitCode() == OK_EXIT_CODE) {
-        return created.get();
+        SmartPsiElementPointer<T> pointer = created.get();
+        return pointer == null ? null : pointer.getElement();
       }
       return null;
     }
@@ -186,5 +219,7 @@ public class CreateFileFromTemplateDialog extends DialogWrapper {
 
     @NotNull
     String getActionName(@NotNull String name, @NotNull String templateName);
+
+    boolean startInWriteAction();
   }
 }

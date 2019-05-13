@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,12 +14,10 @@
  * limitations under the License.
  */
 
-/**
- * @author Yura Cangea
- */
 package com.intellij.xdebugger.ui;
 
 import com.intellij.openapi.editor.colors.ColorKey;
+import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.markup.HighlighterLayer;
 import com.intellij.openapi.util.Key;
@@ -29,10 +27,17 @@ import java.awt.*;
 public interface DebuggerColors {
   TextAttributesKey BREAKPOINT_ATTRIBUTES = TextAttributesKey.createTextAttributesKey("BREAKPOINT_ATTRIBUTES");
   TextAttributesKey EXECUTIONPOINT_ATTRIBUTES = TextAttributesKey.createTextAttributesKey("EXECUTIONPOINT_ATTRIBUTES");
+  TextAttributesKey NOT_TOP_FRAME_ATTRIBUTES = TextAttributesKey.createTextAttributesKey("NOT_TOP_FRAME_ATTRIBUTES");
+  TextAttributesKey EVALUATED_EXPRESSION_ATTRIBUTES = TextAttributesKey.createTextAttributesKey("EVALUATED_EXPRESSION_ATTRIBUTES");
+  TextAttributesKey EVALUATED_EXPRESSION_EXECUTION_LINE_ATTRIBUTES = TextAttributesKey.createTextAttributesKey("EVALUATED_EXPRESSION_EXECUTION_LINE_ATTRIBUTES");
   ColorKey RECURSIVE_CALL_ATTRIBUTES = ColorKey.createColorKey("RECURSIVE_CALL_ATTRIBUTES", new Color(255, 255, 215));
 
-  int BREAKPOINT_HIGHLIGHTER_LAYER = HighlighterLayer.SYNTAX + 1;
+  int BREAKPOINT_HIGHLIGHTER_LAYER = HighlighterLayer.ADDITIONAL_SYNTAX + 1;
 
   Key<Boolean> BREAKPOINT_HIGHLIGHTER_KEY = Key.create("BREAKPOINT_HIGHLIGHTER_KEY");
   int EXECUTION_LINE_HIGHLIGHTERLAYER = HighlighterLayer.SELECTION - 1;
+  TextAttributesKey INLINED_VALUES = TextAttributesKey.createTextAttributesKey("DEBUGGER_INLINED_VALUES");
+  TextAttributesKey INLINED_VALUES_MODIFIED = TextAttributesKey.createTextAttributesKey("DEBUGGER_INLINED_VALUES_MODIFIED");
+  TextAttributesKey INLINED_VALUES_EXECUTION_LINE = TextAttributesKey.createTextAttributesKey("DEBUGGER_INLINED_VALUES_EXECUTION_LINE");
+  TextAttributesKey SMART_STEP_INTO_TARGET = TextAttributesKey.createTextAttributesKey("DEBUGGER_SMART_STEP_INTO_TARGET", EditorColors.SEARCH_RESULT_ATTRIBUTES);
 }

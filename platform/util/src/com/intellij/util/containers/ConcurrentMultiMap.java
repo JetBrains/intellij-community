@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,20 +16,36 @@
 
 package com.intellij.util.containers;
 
+import com.intellij.util.ConcurrencyUtil;
+import org.jetbrains.annotations.NotNull;
+
 import java.util.Collection;
-import java.util.Map;
+import java.util.concurrent.ConcurrentMap;
 
 /**
+ * @see MultiMap#createConcurrentSet()
  * @author peter
  */
 public class ConcurrentMultiMap<K,V> extends MultiMap<K,V> {
+  @NotNull
   @Override
-  protected Map<K, Collection<V>> createMap() {
-    return new ConcurrentHashMap<K, Collection<V>>();
+  protected ConcurrentMap<K, Collection<V>> createMap() {
+    return ContainerUtil.newConcurrentMap();
   }
 
+  @NotNull
   @Override
   protected Collection<V> createCollection() {
     return ContainerUtil.createLockFreeCopyOnWriteList();
+  }
+
+  @Override
+  public void putValue(@NotNull K key, V value) {
+    Collection<V> collection = myMap.get(key);
+    if (collection == null) {
+      Collection<V> newCollection = createCollection();
+      collection = ConcurrencyUtil.cacheOrGet((ConcurrentMap<K, Collection<V>>)myMap, key, newCollection);
+    }
+    collection.add(value);
   }
 }

@@ -28,6 +28,7 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurable;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ModuleStructureConfigurable;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 import java.util.SortedMap;
@@ -49,7 +50,8 @@ public class AddFacetToModuleAction extends AnAction implements DumbAware {
     myType = type;
   }
 
-  public void actionPerformed(AnActionEvent e) {
+  @Override
+  public void actionPerformed(@NotNull AnActionEvent e) {
     FacetInfo parent = myEditor.getSelectedFacetInfo();
     final FacetTypeId<?> underlyingFacetType = myType.getUnderlyingFacetType();
     Facet facet;
@@ -66,7 +68,8 @@ public class AddFacetToModuleAction extends AnAction implements DumbAware {
     ProjectStructureConfigurable.getInstance(myProject).select(facet, true);
   }
 
-  public void update(AnActionEvent e) {
+  @Override
+  public void update(@NotNull AnActionEvent e) {
     e.getPresentation().setVisible(isVisible(myEditor, myType));
   }
 
@@ -99,14 +102,14 @@ public class AddFacetToModuleAction extends AnAction implements DumbAware {
   }
 
   public static Collection<AnAction> createAddFrameworkActions(FacetEditorFacade editor, Project project) {
-    SortedMap<String, AnAction> actions = new TreeMap<String, AnAction>();
-    for (FacetType type : FacetTypeRegistry.getInstance().getFacetTypes()) {
-      actions.put(type.getPresentableName(), new AddFacetToModuleAction(editor, project, type));
-    }
+    SortedMap<String, AnAction> actions = new TreeMap<>();
     for (FrameworkTypeEx frameworkType : FrameworkTypeEx.EP_NAME.getExtensions()) {
-      final AnAction action = new AddFrameworkSupportInProjectStructureAction(frameworkType, frameworkType.createProvider(), 
+      final AnAction action = new AddFrameworkSupportInProjectStructureAction(frameworkType, frameworkType.createProvider(),
                                                                               ModuleStructureConfigurable.getInstance(project));
       actions.put(frameworkType.getPresentableName(), action);
+    }
+    for (FacetType type : FacetTypeRegistry.getInstance().getFacetTypes()) {
+      actions.put(type.getPresentableName(), new AddFacetToModuleAction(editor, project, type));
     }
     return actions.values();
   }

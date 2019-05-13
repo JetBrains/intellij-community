@@ -15,10 +15,5 @@
  */
 package org.intellij.lang.xpath.psi;
 
-/*
-* Created by IntelliJ IDEA.
-* User: sweinreuter
-* Date: 18.01.11
-*/
 public interface XPath2Cast extends XPathExpression, XPath2TypeReference {
 }

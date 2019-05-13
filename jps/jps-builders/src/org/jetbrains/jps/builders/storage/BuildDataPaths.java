@@ -15,6 +15,7 @@
  */
 package org.jetbrains.jps.builders.storage;
 
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.builders.BuildTarget;
 import org.jetbrains.jps.builders.BuildTargetType;
 
@@ -31,4 +32,7 @@ public interface BuildDataPaths {
   File getTargetTypeDataRoot(BuildTargetType<?> targetType);
 
   File getTargetDataRoot(BuildTarget<?> target);
+
+  @NotNull
+  File getTargetDataRoot(@NotNull BuildTargetType<?> targetType, @NotNull String targetId);
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,23 +14,15 @@
  * limitations under the License.
  */
 
-/*
- * Created by IntelliJ IDEA.
- * User: dsl
- * Date: 14.06.2002
- * Time: 20:31:59
- * To change template for new class use
- * Code Style | Class Templates options (Tools | IDE Options).
- */
 package com.intellij.refactoring.util.classMembers;
 
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.classMembers.MemberInfoBase;
-import com.intellij.util.containers.HashSet;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -52,7 +44,7 @@ public class MemberInfo extends MemberInfoBase<PsiMember> {
       );
       PsiMethod[] superMethods = method.findSuperMethods();
       if (superMethods.length > 0) {
-        overrides = !superMethods[0].hasModifierProperty(PsiModifier.ABSTRACT) ? Boolean.TRUE : Boolean.FALSE;
+        overrides = !superMethods[0].hasModifierProperty(PsiModifier.ABSTRACT);
       }
       else {
         overrides = null;
@@ -87,6 +79,11 @@ public class MemberInfo extends MemberInfoBase<PsiMember> {
       }
       isStatic = aClass.hasModifierProperty(PsiModifier.STATIC);
     }
+    else if (member instanceof PsiClassInitializer) {
+      isStatic = member.hasModifierProperty(PsiModifier.STATIC);
+      overrides = null;
+      displayName = isStatic ? "static {...}" : "{...}";
+    }
     else {
       LOG.assertTrue(false);
       isStatic = false;
@@ -100,14 +97,14 @@ public class MemberInfo extends MemberInfoBase<PsiMember> {
   }
 
   public static List<MemberInfo> extractClassMembers(PsiClass subclass, Filter<PsiMember> filter, boolean extractInterfacesDeep) {
-    List<MemberInfo> members = new ArrayList<MemberInfo>();
+    List<MemberInfo> members = new ArrayList<>();
     extractClassMembers(subclass, members, filter, extractInterfacesDeep);
     return members;
   }
 
   public static void extractClassMembers(PsiClass subclass, List<MemberInfo> result, Filter<PsiMember> filter, final boolean extractInterfacesDeep) {
     if (extractInterfacesDeep) {
-      extractSuperInterfaces(subclass, filter, result, new HashSet<PsiClass>());
+      extractSuperInterfaces(subclass, filter, result, new HashSet<>());
     }
     else {
       PsiClass[] interfaces = subclass.getInterfaces();
@@ -135,6 +132,12 @@ public class MemberInfo extends MemberInfoBase<PsiMember> {
     for (final PsiField field : fields) {
       if (filter.includeMember(field)) {
         result.add(new MemberInfo(field));
+      }
+    }
+
+    for (PsiClassInitializer initializer : subclass.getInitializers()) {
+      if (filter.includeMember(initializer)) {
+        result.add(new MemberInfo(initializer));
       }
     }
   }

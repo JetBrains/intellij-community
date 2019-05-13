@@ -1,6 +1,6 @@
 
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,40 +19,43 @@ package com.intellij.ide.actions;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.fileEditor.impl.EditorWindow;
-import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NotNull;
 
 public class CloseEditorAction extends AnAction implements DumbAware {
-  public void actionPerformed(AnActionEvent e) {
-    final Project project = e.getData(PlatformDataKeys.PROJECT);
+  @Override
+  public void actionPerformed(@NotNull AnActionEvent e) {
+    final Project project = e.getData(CommonDataKeys.PROJECT);
 
-    final FileEditorManagerImpl editorManager = getEditorManager(project);
+    FileEditorManagerEx editorManager = getEditorManager(project);
     EditorWindow window = e.getData(EditorWindow.DATA_KEY);
     VirtualFile file = null;
     if (window == null) {
-      window = editorManager.getActiveWindow().getResult();
+      window = editorManager.getCurrentWindow();
       if (window != null) {
         file = window.getSelectedFile();
       }
     }
     else {
-      file = e.getData(PlatformDataKeys.VIRTUAL_FILE);
+      file = e.getData(CommonDataKeys.VIRTUAL_FILE);
     }
     if (file != null) {
       editorManager.closeFile(file, window);
     }
   }
 
-  private FileEditorManagerImpl getEditorManager(Project project) {
-    return ((FileEditorManagerImpl)FileEditorManager.getInstance(project));
+  private static FileEditorManagerEx getEditorManager(Project project) {
+    return (FileEditorManagerEx)FileEditorManager.getInstance(project);
   }
 
-  public void update(final AnActionEvent event){
+  @Override
+  public void update(@NotNull final AnActionEvent event){
     final Presentation presentation = event.getPresentation();
-    final Project project = event.getData(PlatformDataKeys.PROJECT);
+    final Project project = event.getData(CommonDataKeys.PROJECT);
     if (project == null) {
       presentation.setEnabled(false);
       return;
@@ -62,7 +65,7 @@ public class CloseEditorAction extends AnAction implements DumbAware {
     }
     EditorWindow window = event.getData(EditorWindow.DATA_KEY);
     if (window == null) {
-      window = getEditorManager(project).getActiveWindow().getResult();
+      window = getEditorManager(project).getCurrentWindow();
     }
     presentation.setEnabled(window != null && window.getTabCount() > 0);
   }

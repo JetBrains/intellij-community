@@ -137,7 +137,7 @@ public class LocalVcsLabelsTest extends LocalHistoryTestCase {
   }
 
   @Test
-  public void testGettingByteContent() throws Exception {
+  public void testGettingByteContent() {
     LabelImpl l1 = myVcs.putSystemLabel("label", "project", -1);
     add(myVcs, createFile(myRoot, "f", "one"));
 
@@ -158,7 +158,7 @@ public class LocalVcsLabelsTest extends LocalHistoryTestCase {
   }
   
   @Test
-  public void testGettingByteContentInsideChangeSet() throws Exception {
+  public void testGettingByteContentInsideChangeSet() {
     myVcs.beginChangeSet();
     add(myVcs, createFile(myRoot, "f", "one"));
     LabelImpl l1 = myVcs.putSystemLabel("label", "project", -1);
@@ -168,5 +168,21 @@ public class LocalVcsLabelsTest extends LocalHistoryTestCase {
 
     assertEquals("one", new String(l1.getByteContent(myRoot, "f").getBytes()));
     assertEquals("two", new String(l2.getByteContent(myRoot, "f").getBytes()));
+  }
+
+  @Test
+  public void testGettingByteContentAfterRename() {
+    add(myVcs, createFile(myRoot, "f", "one"));
+    LabelImpl l1 = myVcs.putSystemLabel("label", "project", -1);
+
+    add(myVcs, changeContent(myRoot, "f", "two"));
+    LabelImpl l2 = myVcs.putSystemLabel("label", "project", -1);
+    add(myVcs, rename(myRoot, "f", "f_r"));
+
+    LabelImpl l3 = myVcs.putSystemLabel("label", "project", -1);
+
+    assertEquals("one", new String(l1.getByteContent(myRoot, "f_r").getBytes()));
+    assertEquals("two", new String(l2.getByteContent(myRoot, "f_r").getBytes()));
+    assertEquals("two", new String(l3.getByteContent(myRoot, "f_r").getBytes()));
   }
 }

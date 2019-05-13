@@ -17,23 +17,73 @@ package org.jetbrains.jps.model.module;
 
 import com.intellij.openapi.util.Condition;
 import com.intellij.util.Consumer;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.model.library.JpsLibrary;
 
 import java.util.Set;
 
 /**
+ * Interface for convenient processing dependencies of a module or a project
+ * <p/>
+ * Use {@link org.jetbrains.jps.model.java.JpsJavaDependenciesEnumerator JpsJavaDependenciesEnumerator} for java-specific dependencies processing
+ * <p/>
+ * Note that all configuration methods modify {@link org.jetbrains.jps.model.module.JpsDependenciesEnumerator} instance instead of creating a new one.
+ *
  * @author nik
  */
 public interface JpsDependenciesEnumerator {
+  @NotNull
   JpsDependenciesEnumerator withoutLibraries();
+  @NotNull
   JpsDependenciesEnumerator withoutDepModules();
+  @NotNull
   JpsDependenciesEnumerator withoutSdk();
+  @NotNull
   JpsDependenciesEnumerator withoutModuleSourceEntries();
-  JpsDependenciesEnumerator recursively();
-  JpsDependenciesEnumerator satisfying(Condition<JpsDependencyElement> condition);
 
+  /**
+   * Recursively process modules on which the module depends. This flag is ignored for modules imported from Maven because for such modules
+   * transitive dependencies are propagated to the root module during importing.
+   *
+   * @return this instance
+   */
+  @NotNull
+  JpsDependenciesEnumerator recursively();
+
+  /**
+   * Process only dependencies which satisfies the specified condition
+   *
+   * @param condition filtering condition
+   * @return this instance
+   */
+  @NotNull
+  JpsDependenciesEnumerator satisfying(@NotNull Condition<? super JpsDependencyElement> condition);
+
+  /**
+   * @return all modules processed by enumerator
+   */
+  @NotNull
   Set<JpsModule> getModules();
+
+  /**
+   * @return all libraries processed by enumerator
+   */
+  @NotNull
   Set<JpsLibrary> getLibraries();
 
-  void processModules(Consumer<JpsModule> consumer);
+  /**
+   * Runs {@code consumer.consume()} for each module processed by this enumerator
+   */
+  void processModules(@NotNull Consumer<JpsModule> consumer);
+
+  /**
+   * Runs {@code consumer.consume()} for each library processed by this enumerator
+   * @param consumer
+   */
+  void processLibraries(@NotNull Consumer<? super JpsLibrary> consumer);
+
+  /**
+   * Runs {@code moduleConsumer.consume()} for each module and {@code libraryConsumer.consume()} for each library processed by this enumerator
+   */
+  void processModuleAndLibraries(@NotNull Consumer<? super JpsModule> moduleConsumer, @NotNull Consumer<? super JpsLibrary> libraryConsumer);
 }

@@ -1,6 +1,6 @@
 /*
  * Copyright 2006 ProductiveMe Inc.
- * Copyright 2013 JetBrains s.r.o.
+ * Copyright 2013-2018 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import java.io.DataInput;
 import java.io.IOException;
 
 /**
+ * @author Sergey Zhulin
  * Date: Mar 30, 2006
  * Time: 7:10:10 PM
  */
@@ -28,12 +29,20 @@ public class BitsUtil {
   public static int revertBytesOfShort( short shortValue ){
     return ((shortValue << 8) & 0xff00) + ((shortValue >> 8) & 0xff);
   }
+
   public static long revertBytesOfInt( int intValue ){
     long result = (intValue & 0x000000ff);
     result <<= 24;
     result += ((intValue & 0x0000ff00) << 8) + ((intValue & 0x00ff0000) >> 8) + ((intValue >> 24) & 0xff);
     return result;
   }
+
+  public static long revertBytesOfLong(long longValue) {
+    long ms = revertBytesOfInt((int) (longValue >> 32));
+    long ls = revertBytesOfInt((int) longValue);
+    return ms | ls << 32;
+  }
+
   public static int unsignedByte( byte byteValue ){
     int result = byteValue;
     return (result & 0xff);

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,22 +17,22 @@ package com.intellij.testFramework;
 
 import com.intellij.ide.highlighter.ModuleFileType;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.module.StdModuleTypes;
-import com.intellij.openapi.module.impl.ModuleImpl;
-import com.intellij.openapi.project.impl.ProjectImpl;
-import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.roots.impl.ModuleRootManagerImpl;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileVisitor;
+import com.intellij.util.Consumer;
+import com.intellij.util.SmartList;
+import com.intellij.util.lang.CompoundRuntimeException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -40,9 +40,10 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 
 public abstract class ModuleTestCase extends IdeaTestCase {
-  protected final Collection<Module> myModulesToDispose = new ArrayList<Module>();
+  protected final Collection<Module> myModulesToDispose = new ArrayList<>();
 
   @Override
   protected void setUp() throws Exception {
@@ -53,18 +54,27 @@ public abstract class ModuleTestCase extends IdeaTestCase {
   @Override
   protected void tearDown() throws Exception {
     try {
-      final ModuleManager moduleManager = ModuleManager.getInstance(myProject);
-      ApplicationManager.getApplication().runWriteAction(new Runnable() {
-        @Override
-        public void run() {
+      if (!myModulesToDispose.isEmpty()) {
+        List<Throwable> errors = new SmartList<>();
+        WriteAction.run(() -> {
+          ModuleManager moduleManager = ModuleManager.getInstance(myProject);
           for (Module module : myModulesToDispose) {
-            String moduleName = module.getName();
-            if (moduleManager.findModuleByName(moduleName) != null) {
-              moduleManager.disposeModule(module);
+            try {
+              String moduleName = module.getName();
+              if (moduleManager.findModuleByName(moduleName) != null) {
+                moduleManager.disposeModule(module);
+              }
+            }
+            catch (Throwable e) {
+              errors.add(e);
             }
           }
-        }
-      });
+        });
+        CompoundRuntimeException.throwIfNotEmpty(errors);
+      }
+    }
+    catch (Throwable e) {
+      addSuppressedException(e);
     }
     finally {
       myModulesToDispose.clear();
@@ -72,7 +82,7 @@ public abstract class ModuleTestCase extends IdeaTestCase {
     }
   }
 
-  protected Module createModule(final File moduleFile) {
+  protected Module createModule(@NotNull File moduleFile) {
     return createModule(moduleFile, StdModuleTypes.JAVA);
   }
 
@@ -82,53 +92,49 @@ public abstract class ModuleTestCase extends IdeaTestCase {
   }
 
   protected Module createModule(final String path, final ModuleType moduleType) {
-    Module module = ApplicationManager.getApplication().runWriteAction(
-      new Computable<Module>() {
-        @Override
-        public Module compute() {
-          return ModuleManager.getInstance(myProject).newModule(path, moduleType.getId());
-        }
-      }
-    );
+    Module module = WriteAction.compute(() -> ModuleManager.getInstance(myProject).newModule(path, moduleType.getId()));
 
     myModulesToDispose.add(module);
     return module;
   }
 
-  protected Module loadModule(final File moduleFile) {
-    Module module = ApplicationManager.getApplication().runWriteAction(
-      new Computable<Module>() {
-        @Override
-        public Module compute() {
-          try {
-            return ModuleManager.getInstance(myProject).loadModule(moduleFile.getAbsolutePath());
-          }
-          catch (Exception e) {
-            LOG.error(e);
-            return null;
-          }
-        }
-      }
-    );
+  protected Module loadModule(@NotNull VirtualFile file) {
+    return loadModule(file.getPath());
+  }
+
+  protected Module loadModule(@NotNull String modulePath) {
+    final ModuleManager moduleManager = ModuleManager.getInstance(myProject);
+    Module module;
+    try {
+      module = ApplicationManager.getApplication().runWriteAction((ThrowableComputable<Module, Exception>)() -> moduleManager.loadModule(
+        FileUtil.toSystemIndependentName(modulePath)));
+    }
+    catch (Exception e) {
+      LOG.error(e);
+      return null;
+    }
 
     myModulesToDispose.add(module);
     return module;
-  }
-
-  protected Module loadModule(final String modulePath) {
-    return loadModule(new File(modulePath));
   }
 
   @Nullable
-  protected Module loadAllModulesUnder(@NotNull VirtualFile rootDir) throws Exception {
+  protected Module loadAllModulesUnder(@NotNull VirtualFile rootDir) {
+    return loadAllModulesUnder(rootDir, null);
+  }
+
+  @Nullable
+  protected Module loadAllModulesUnder(@NotNull VirtualFile rootDir, @Nullable final Consumer<? super Module> moduleConsumer) {
     final Ref<Module> result = Ref.create();
 
     VfsUtilCore.visitChildrenRecursively(rootDir, new VirtualFileVisitor() {
       @Override
       public boolean visitFile(@NotNull VirtualFile file) {
         if (!file.isDirectory() && file.getName().endsWith(ModuleFileType.DOT_DEFAULT_EXTENSION)) {
-          ModuleImpl module = (ModuleImpl)loadModule(new File(file.getPath()));
-          readJdomExternalizables(module);
+          Module module = loadModule(file);
+          if (moduleConsumer != null) {
+            moduleConsumer.consume(module);
+          }
           result.setIfNull(module);
         }
         return true;
@@ -136,19 +142,6 @@ public abstract class ModuleTestCase extends IdeaTestCase {
     });
 
     return result.get();
-  }
-
-  protected void readJdomExternalizables(final ModuleImpl module) {
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
-      public void run() {
-        final ProjectImpl project = (ProjectImpl)myProject;
-        project.setOptimiseTestLoadSpeed(false);
-        final ModuleRootManagerImpl moduleRootManager = (ModuleRootManagerImpl)ModuleRootManager.getInstance(module);
-        module.getStateStore().initComponent(moduleRootManager, false);
-        project.setOptimiseTestLoadSpeed(true);
-      }
-    });
   }
 
   protected Module createModuleFromTestData(final String dirInTestData, final String newModuleFileName, final ModuleType moduleType,
@@ -160,12 +153,8 @@ public abstract class ModuleTestCase extends IdeaTestCase {
     FileUtil.copyDir(dirInTestDataFile, moduleDir);
     final Module module = createModule(moduleDir + "/" + newModuleFileName, moduleType);
     final VirtualFile root = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(moduleDir);
-    new WriteCommandAction.Simple(module.getProject()) {
-      @Override
-      protected void run() throws Throwable {
-        root.refresh(false, true);
-      }
-    }.execute().throwException();
+    assertNotNull(root);
+    WriteCommandAction.writeCommandAction(module.getProject()).run(() -> root.refresh(false, true));
     if (addSourceRoot) {
       PsiTestUtil.addSourceContentToRoots(module, root);
     }

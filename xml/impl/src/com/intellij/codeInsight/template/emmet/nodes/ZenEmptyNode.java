@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,14 +17,11 @@ package com.intellij.codeInsight.template.emmet.nodes;
 
 import com.intellij.codeInsight.template.CustomTemplateCallback;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
 import java.util.List;
 
-/**
- * User: zolotov
- * Date: 1/31/13
- */
 public class ZenEmptyNode extends ZenCodingNode {
   public static final ZenCodingNode INSTANCE = new ZenEmptyNode();
 
@@ -36,6 +33,11 @@ public class ZenEmptyNode extends ZenCodingNode {
                                      boolean insertSurroundedTextAtTheEnd,
                                      GenerationNode parent) {
     return Collections.emptyList();
+  }
+
+  @Override
+  public int getApproximateOutputLength(@Nullable CustomTemplateCallback callback) {
+    return 0;
   }
 
   @Override

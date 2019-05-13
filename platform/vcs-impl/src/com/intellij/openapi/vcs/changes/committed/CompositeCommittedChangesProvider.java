@@ -1,19 +1,4 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.committed;
 
 import com.intellij.openapi.actionSystem.AnAction;
@@ -38,25 +23,26 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 
 /**
  * @author yole
  */
 public class CompositeCommittedChangesProvider implements CommittedChangesProvider<CommittedChangeList, CompositeCommittedChangesProvider.CompositeChangeBrowserSettings> {
   private final Project myProject;
-  private List<AbstractVcs> myBaseVcss = new ArrayList<AbstractVcs>();
+  private final List<AbstractVcs> myBaseVcss;
 
   public CompositeCommittedChangesProvider(final Project project, final AbstractVcs... baseVcss) {
     myProject = project;
-    myBaseVcss = new ArrayList<AbstractVcs>();
+    myBaseVcss = new ArrayList<>();
     Collections.addAll(myBaseVcss, baseVcss);
   }
 
+  @Override
   @NotNull
   public CompositeCommittedChangesProvider.CompositeChangeBrowserSettings createDefaultSettings() {
-    Map<AbstractVcs, ChangeBrowserSettings> map = new HashMap<AbstractVcs, ChangeBrowserSettings>();
+    Map<AbstractVcs, ChangeBrowserSettings> map = new HashMap<>();
     for(AbstractVcs vcs: myBaseVcss) {
       final CommittedChangesProvider provider = vcs.getCommittedChangesProvider();
       assert provider != null;
@@ -65,10 +51,12 @@ public class CompositeCommittedChangesProvider implements CommittedChangesProvid
     return new CompositeChangeBrowserSettings(map);
   }
 
+  @Override
   public ChangesBrowserSettingsEditor<CompositeCommittedChangesProvider.CompositeChangeBrowserSettings> createFilterUI(final boolean showDateFilter) {
     return new CompositeChangesBrowserSettingsEditor();
   }
 
+  @Override
   public CompositeRepositoryLocation getLocationFor(final FilePath root) {
     final AbstractVcs vcs = ProjectLevelVcsManager.getInstance(myProject).getVcsFor(root);
     if (vcs != null) {
@@ -81,29 +69,29 @@ public class CompositeCommittedChangesProvider implements CommittedChangesProvid
     return null;
   }
 
-  public RepositoryLocation getLocationFor(final FilePath root, final String repositoryPath) {
-    return getLocationFor(root);
-  }
-
+  @Override
   @Nullable
   public VcsCommittedListsZipper getZipper() {
     throw new UnsupportedOperationException();
   }
 
+  @Override
   public List<CommittedChangeList> getCommittedChanges(CompositeCommittedChangesProvider.CompositeChangeBrowserSettings settings,
-                                                       RepositoryLocation location, final int maxCount) throws VcsException {
+                                                       RepositoryLocation location, final int maxCount) {
     throw new UnsupportedOperationException();
   }
 
+  @Override
   public void loadCommittedChanges(CompositeChangeBrowserSettings settings,
                                    RepositoryLocation location,
                                    int maxCount,
-                                   AsynchConsumer<CommittedChangeList> consumer) throws VcsException {
+                                   AsynchConsumer<CommittedChangeList> consumer) {
     throw new UnsupportedOperationException();
   }
 
+  @Override
   public ChangeListColumn[] getColumns() {
-    Set<ChangeListColumn> columns = new LinkedHashSet<ChangeListColumn>();
+    Set<ChangeListColumn> columns = new LinkedHashSet<>();
     for(AbstractVcs vcs: myBaseVcss) {
       final CommittedChangesProvider provider = vcs.getCommittedChangesProvider();
       assert provider != null;
@@ -115,16 +103,17 @@ public class CompositeCommittedChangesProvider implements CommittedChangesProvid
         }
       }
     }
-    return columns.toArray(new ChangeListColumn[columns.size()]);
+    return columns.toArray(new ChangeListColumn[0]);
   }
 
+  @Override
   @Nullable
   public VcsCommittedViewAuxiliary createActions(final DecoratorManager manager, final RepositoryLocation location) {
     JTabbedPane tabbedPane = null;
     List<AnAction> actions = null;
     List<AnAction> toolbarActions = null;
 
-    final List<Runnable> calledOnDispose = new ArrayList<Runnable>();
+    final List<Runnable> calledOnDispose = new ArrayList<>();
     for (AbstractVcs baseVcs : myBaseVcss) {
       final CommittedChangesProvider provider = baseVcs.getCommittedChangesProvider();
       if (provider != null) {
@@ -132,8 +121,8 @@ public class CompositeCommittedChangesProvider implements CommittedChangesProvid
         if (auxiliary != null) {
           if (tabbedPane == null) {
             tabbedPane = new JBTabbedPane();
-            actions = new ArrayList<AnAction>();
-            toolbarActions = new ArrayList<AnAction>();
+            actions = new ArrayList<>();
+            toolbarActions = new ArrayList<>();
           }
           actions.addAll(auxiliary.getPopupActions());
           toolbarActions.addAll(auxiliary.getToolbarActions());
@@ -144,17 +133,16 @@ public class CompositeCommittedChangesProvider implements CommittedChangesProvid
     if (tabbedPane != null) {
       final JPanel panel = new JPanel();
       panel.add(tabbedPane);
-      return new VcsCommittedViewAuxiliary(actions, new Runnable() {
-        public void run() {
-          for (Runnable runnable : calledOnDispose) {
-            runnable.run();
-          }
+      return new VcsCommittedViewAuxiliary(actions, () -> {
+        for (Runnable runnable : calledOnDispose) {
+          runnable.run();
         }
       }, toolbarActions);
     }
     return null;
   }
 
+  @Override
   public int getUnlimitedCountValue() {
     throw new UnsupportedOperationException();
   }
@@ -176,7 +164,7 @@ public class CompositeCommittedChangesProvider implements CommittedChangesProvid
 
   public static class CompositeChangeBrowserSettings extends ChangeBrowserSettings {
     private final Map<AbstractVcs, ChangeBrowserSettings> myMap;
-    private final Set<AbstractVcs> myEnabledVcs = new HashSet<AbstractVcs>();
+    private final Set<AbstractVcs> myEnabledVcs = new HashSet<>();
 
     public CompositeChangeBrowserSettings(final Map<AbstractVcs, ChangeBrowserSettings> map) {
       myMap = map;
@@ -191,7 +179,7 @@ public class CompositeCommittedChangesProvider implements CommittedChangesProvid
       return myMap.get(vcs);
     }
 
-    public void setEnabledVcss(Collection<AbstractVcs> vcss) {
+    public void setEnabledVcss(Collection<? extends AbstractVcs> vcss) {
       myEnabledVcs.clear();
       myEnabledVcs.addAll(vcss);
     }
@@ -205,10 +193,10 @@ public class CompositeCommittedChangesProvider implements CommittedChangesProvid
     private final JPanel myCompositePanel;
     private final DateFilterComponent myDateFilter;
     private CompositeChangeBrowserSettings mySettings;
-    private final Map<AbstractVcs, ChangesBrowserSettingsEditor> myEditors = new HashMap<AbstractVcs, ChangesBrowserSettingsEditor>();
-    private final Map<AbstractVcs, JCheckBox> myEnabledCheckboxes = new HashMap<AbstractVcs, JCheckBox>();
+    private final Map<AbstractVcs, ChangesBrowserSettingsEditor> myEditors = new HashMap<>();
+    private final Map<AbstractVcs, JCheckBox> myEnabledCheckboxes = new HashMap<>();
 
-    public CompositeChangesBrowserSettingsEditor() {
+    CompositeChangesBrowserSettingsEditor() {
       myCompositePanel = new JPanel();
       myCompositePanel.setLayout(new BoxLayout(myCompositePanel, BoxLayout.Y_AXIS));
       myDateFilter = new DateFilterComponent();
@@ -223,6 +211,7 @@ public class CompositeCommittedChangesProvider implements CommittedChangesProvid
         wrapperPane.setBorder(IdeBorderFactory.createTitledBorder(vcs.getDisplayName(), true));
         final JCheckBox checkBox = new JCheckBox(VcsBundle.message("composite.change.provider.include.vcs.checkbox", vcs.getDisplayName()), true);
         checkBox.addActionListener(new ActionListener() {
+          @Override
           public void actionPerformed(final ActionEvent e) {
             updateVcsEnabled(checkBox, editor);
           }
@@ -241,12 +230,14 @@ public class CompositeCommittedChangesProvider implements CommittedChangesProvid
       }
     }
 
+    @Override
     public JComponent getComponent() {
       return myCompositePanel;
     }
 
+    @Override
     public CompositeChangeBrowserSettings getSettings() {
-      Set<AbstractVcs> enabledVcss = new HashSet<AbstractVcs>();
+      Set<AbstractVcs> enabledVcss = new HashSet<>();
       for(AbstractVcs vcs: myEditors.keySet()) {
         ChangeBrowserSettings settings = myEditors.get(vcs).getSettings();
         myDateFilter.saveValues(settings);
@@ -259,6 +250,7 @@ public class CompositeCommittedChangesProvider implements CommittedChangesProvid
       return mySettings;
     }
 
+    @Override
     public void setSettings(CompositeChangeBrowserSettings settings) {
       mySettings = settings;
       boolean dateFilterInitialized = false;
@@ -277,6 +269,7 @@ public class CompositeCommittedChangesProvider implements CommittedChangesProvid
       }
     }
 
+    @Override
     @Nullable
     public String validateInput() {
       for(ChangesBrowserSettingsEditor editor: myEditors.values()) {
@@ -286,12 +279,14 @@ public class CompositeCommittedChangesProvider implements CommittedChangesProvid
       return null;
     }
 
+    @Override
     public void updateEnabledControls() {
       for(ChangesBrowserSettingsEditor editor: myEditors.values()) {
         editor.updateEnabledControls();
       }
     }
 
+    @Override
     public String getDimensionServiceKey() {
       @NonNls StringBuilder result = new StringBuilder();
       result.append("Composite");

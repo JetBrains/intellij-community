@@ -29,7 +29,7 @@ import java.util.Map;
  * @author nik
  */
 public class GroovyModelInitializer implements ParameterizedRunnable<JpsModel> {
-  private File myScriptFile;
+  private final File myScriptFile;
 
   public GroovyModelInitializer(File scriptFile) {
     myScriptFile = scriptFile;
@@ -37,7 +37,7 @@ public class GroovyModelInitializer implements ParameterizedRunnable<JpsModel> {
 
   @Override
   public void run(JpsModel model) {
-    Map<String, Object> variables = new HashMap<String, Object>();
+    Map<String, Object> variables = new HashMap<>();
     variables.put("project", model.getProject());
     variables.put("global", model.getGlobal());
     try {

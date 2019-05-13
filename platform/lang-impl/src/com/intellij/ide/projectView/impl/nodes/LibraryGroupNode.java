@@ -45,12 +45,8 @@ import java.util.List;
 
 public class LibraryGroupNode extends ProjectViewNode<LibraryGroupElement> {
 
-  public LibraryGroupNode(Project project, LibraryGroupElement value, ViewSettings viewSettings) {
+  public LibraryGroupNode(Project project, @NotNull LibraryGroupElement value, ViewSettings viewSettings) {
     super(project, value, viewSettings);
-  }
-
-  public LibraryGroupNode(final Project project, final Object value, final ViewSettings viewSettings) {
-    this(project, (LibraryGroupElement)value, viewSettings);
   }
 
   @Override
@@ -58,7 +54,7 @@ public class LibraryGroupNode extends ProjectViewNode<LibraryGroupElement> {
   public Collection<AbstractTreeNode> getChildren() {
     Module module = getValue().getModule();
     final ModuleRootManager moduleRootManager = ModuleRootManager.getInstance(module);
-    final List<AbstractTreeNode> children = new ArrayList<AbstractTreeNode>();
+    final List<AbstractTreeNode> children = new ArrayList<>();
     final OrderEntry[] orderEntries = moduleRootManager.getOrderEntries();
     for (final OrderEntry orderEntry : orderEntries) {
       if (orderEntry instanceof LibraryOrderEntry) {
@@ -86,7 +82,7 @@ public class LibraryGroupNode extends ProjectViewNode<LibraryGroupElement> {
     return children;
   }
 
-  public static void addLibraryChildren(final LibraryOrSdkOrderEntry entry, final List<AbstractTreeNode> children, Project project, ProjectViewNode node) {
+  public static void addLibraryChildren(final LibraryOrSdkOrderEntry entry, final List<? super AbstractTreeNode> children, Project project, ProjectViewNode node) {
     final PsiManager psiManager = PsiManager.getInstance(project);
     VirtualFile[] files =
       entry instanceof LibraryOrderEntry ? getLibraryRoots((LibraryOrderEntry)entry) : entry.getRootFiles(OrderRootType.CLASSES);
@@ -116,7 +112,7 @@ public class LibraryGroupNode extends ProjectViewNode<LibraryGroupElement> {
   @Override
   public boolean contains(@NotNull VirtualFile file) {
     final ProjectFileIndex index = ProjectRootManager.getInstance(getProject()).getFileIndex();
-    if (!index.isInLibrarySource(file) && !index.isInLibraryClasses(file)) {
+    if (!index.isInLibrary(file)) {
       return false;
     }
 
@@ -124,7 +120,7 @@ public class LibraryGroupNode extends ProjectViewNode<LibraryGroupElement> {
   }
 
   @Override
-  public void update(PresentationData presentation) {
+  public void update(@NotNull PresentationData presentation) {
     presentation.setPresentableText(IdeBundle.message("node.projectview.libraries"));
     presentation.setIcon(PlatformIcons.LIBRARY_ICON);
   }
@@ -141,7 +137,7 @@ public class LibraryGroupNode extends ProjectViewNode<LibraryGroupElement> {
   }
 
   @NotNull
-  static VirtualFile[] getLibraryRoots(@NotNull LibraryOrderEntry orderEntry) {
+  public static VirtualFile[] getLibraryRoots(@NotNull LibraryOrderEntry orderEntry) {
     Library library = orderEntry.getLibrary();
     if (library == null) return VirtualFile.EMPTY_ARRAY;
     OrderRootType[] rootTypes = LibraryType.DEFAULT_EXTERNAL_ROOT_TYPES;
@@ -152,7 +148,7 @@ public class LibraryGroupNode extends ProjectViewNode<LibraryGroupElement> {
         rootTypes = LibraryType.findByKind(libKind).getExternalRootTypes();
       }
     }
-    final ArrayList<VirtualFile> files = new ArrayList<VirtualFile>();
+    final ArrayList<VirtualFile> files = new ArrayList<>();
     for (OrderRootType rootType : rootTypes) {
       files.addAll(Arrays.asList(library.getFiles(rootType)));
     }

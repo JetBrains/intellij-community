@@ -15,32 +15,30 @@
  */
 package org.intellij.lang.xpath;
 
-import com.intellij.codeInsight.editorActions.ExtendWordSelectionHandler;
+import com.intellij.codeInsight.editorActions.ExtendWordSelectionHandlerBase;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.SmartList;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
 import java.util.List;
 
-/**
- * User: Maxim.Mossienko
- * Date: 08.10.2009
- * Time: 21:06:04
- */
-public class XPathStringLiteralSelectioner implements ExtendWordSelectionHandler {
-  public boolean canSelect(PsiElement e) {
+public class XPathStringLiteralSelectioner extends ExtendWordSelectionHandlerBase {
+  @Override
+  public boolean canSelect(@NotNull PsiElement e) {
     ASTNode astNode = e.getNode();
     return astNode != null &&
            (astNode.getElementType() == XPathTokenTypes.STRING_LITERAL);
   }
 
-  public List<TextRange> select(PsiElement e, CharSequence editorText, int cursorOffset, Editor editor) {
+  @Override
+  public List<TextRange> select(@NotNull PsiElement e, @NotNull CharSequence editorText, int cursorOffset, @NotNull Editor editor) {
     TextRange elem = e.getTextRange();
     if (elem.getLength() > 2) {
-      return new SmartList<TextRange>(
+      return new SmartList<>(
         new TextRange(elem.getStartOffset() + 1, elem.getEndOffset() - 1)
       );
     }

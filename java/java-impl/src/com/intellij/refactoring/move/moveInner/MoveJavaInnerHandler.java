@@ -16,6 +16,7 @@
 package com.intellij.refactoring.move.moveInner;
 
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NotNull;
@@ -28,10 +29,11 @@ public class MoveJavaInnerHandler implements MoveInnerHandler {
 
     PsiClass newClass;
     if (options.getTargetContainer() instanceof PsiDirectory) {
-      newClass = JavaDirectoryService.getInstance().createClass((PsiDirectory)options.getTargetContainer(), options.getNewClassName());
+      newClass = createNewClass(options);
       PsiDocComment defaultDocComment = newClass.getDocComment();
       if (defaultDocComment != null && innerClass.getDocComment() == null) {
-        innerClass = (PsiClass)innerClass.addAfter(defaultDocComment, null).getParent();
+        final CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(defaultDocComment.getProject());
+        innerClass = (PsiClass)codeStyleManager.reformat(innerClass.addAfter(defaultDocComment, null).getParent());
       }
 
       newClass = (PsiClass)newClass.replace(innerClass);
@@ -42,16 +44,6 @@ public class MoveJavaInnerHandler implements MoveInnerHandler {
       if (makePublic) {
         PsiUtil.setModifierProperty(newClass, PsiModifier.PUBLIC, true);
       }
-
-      final PsiMethod[] constructors = newClass.getConstructors();
-      for (PsiMethod constructor : constructors) {
-        final PsiModifierList modifierList = constructor.getModifierList();
-        modifierList.setModifierProperty(PsiModifier.PRIVATE, false);
-        modifierList.setModifierProperty(PsiModifier.PROTECTED, false);
-        if (makePublic && !newClass.isEnum()) {
-          modifierList.setModifierProperty(PsiModifier.PUBLIC, true);
-        }
-      }
     }
     else {
       newClass = (PsiClass)options.getTargetContainer().add(innerClass);
@@ -60,6 +52,10 @@ public class MoveJavaInnerHandler implements MoveInnerHandler {
     newClass.setName(options.getNewClassName());
 
     return newClass;
+  }
+
+  protected PsiClass createNewClass(MoveInnerOptions options) {
+    return JavaDirectoryService.getInstance().createClass((PsiDirectory)options.getTargetContainer(), options.getNewClassName());
   }
 
   protected static boolean needPublicAccess(final PsiClass outerClass, final PsiElement targetContainer) {

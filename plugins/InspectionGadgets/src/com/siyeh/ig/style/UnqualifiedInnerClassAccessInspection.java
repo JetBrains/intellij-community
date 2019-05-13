@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2011 Bas Leijdekkers
+ * Copyright 2010-2018 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,17 +15,18 @@
  */
 package com.siyeh.ig.style;
 
+import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.IncorrectOperationException;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.psiutils.HighlightUtils;
 import com.siyeh.ig.psiutils.ImportUtils;
 import org.jetbrains.annotations.Nls;
@@ -34,10 +35,21 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import java.util.*;
 
-public class UnqualifiedInnerClassAccessInspection extends BaseInspection {
+public class UnqualifiedInnerClassAccessInspection extends BaseInspection implements CleanupLocalInspectionTool{
 
   @SuppressWarnings({"PublicField"})
   public boolean ignoreReferencesToLocalInnerClasses = false;
+
+  @Override
+  public JComponent createOptionsPanel() {
+    return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message("unqualified.inner.class.access.option"),
+                                          this, "ignoreReferencesToLocalInnerClasses");
+  }
+
+  @Override
+  protected InspectionGadgetsFix buildFix(Object... infos) {
+    return new UnqualifiedInnerClassAccessFix();
+  }
 
   @Nls
   @NotNull
@@ -53,26 +65,21 @@ public class UnqualifiedInnerClassAccessInspection extends BaseInspection {
   }
 
   @Override
-  public JComponent createOptionsPanel() {
-    return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message("unqualified.inner.class.access.option"),
-                                          this, "ignoreReferencesToLocalInnerClasses");
-  }
-
-  @Override
-  protected InspectionGadgetsFix buildFix(Object... infos) {
-    return new UnqualifiedInnerClassAccessFix();
+  public BaseInspectionVisitor buildVisitor() {
+    return new UnqualifiedInnerClassAccessVisitor();
   }
 
   private static class UnqualifiedInnerClassAccessFix extends InspectionGadgetsFix {
 
+    @Override
     @NotNull
-    public String getName() {
+    public String getFamilyName() {
       return InspectionGadgetsBundle.message(
         "unqualified.inner.class.access.quickfix");
     }
 
     @Override
-    protected void doFix(Project project, ProblemDescriptor descriptor) throws IncorrectOperationException {
+    protected void doFix(Project project, ProblemDescriptor descriptor) {
       final PsiElement element = descriptor.getPsiElement();
       if (!(element instanceof PsiJavaCodeReferenceElement)) {
         return;
@@ -82,8 +89,8 @@ public class UnqualifiedInnerClassAccessInspection extends BaseInspection {
       if (!(target instanceof PsiClass)) {
         return;
       }
-      final PsiClass aClass = (PsiClass)target;
-      final PsiClass containingClass = aClass.getContainingClass();
+      final PsiClass innerClass = (PsiClass)target;
+      final PsiClass containingClass = innerClass.getContainingClass();
       if (containingClass == null) {
         return;
       }
@@ -96,7 +103,7 @@ public class UnqualifiedInnerClassAccessInspection extends BaseInspection {
         return;
       }
       final PsiJavaFile javaFile = (PsiJavaFile)containingFile;
-      final String innerClassName = aClass.getQualifiedName();
+      final String innerClassName = innerClass.getQualifiedName();
       if (innerClassName == null) {
         return;
       }
@@ -125,20 +132,12 @@ public class UnqualifiedInnerClassAccessInspection extends BaseInspection {
           }
         }
       }
-      final ReferenceCollector referenceCollector;
-      if (onDemand) {
-        referenceCollector = new ReferenceCollector(qualifiedName, onDemand);
-      }
-      else {
-        referenceCollector = new ReferenceCollector(innerClassName, onDemand);
-      }
-      final PsiClass[] classes = javaFile.getClasses();
-      for (PsiClass psiClass : classes) {
-        psiClass.accept(referenceCollector);
-      }
+      final ReferenceCollector referenceCollector = new ReferenceCollector(onDemand ? qualifiedName : innerClassName, onDemand);
+      javaFile.accept(referenceCollector);
+
       final Collection<PsiJavaCodeReferenceElement> references = referenceCollector.getReferences();
       final SmartPointerManager pointerManager = SmartPointerManager.getInstance(project);
-      final List<SmartPsiElementPointer> pointers = new ArrayList();
+      final List<SmartPsiElementPointer> pointers = new ArrayList<>();
       for (PsiJavaCodeReferenceElement reference : references) {
         final SmartPsiElementPointer<PsiJavaCodeReferenceElement> pointer = pointerManager.createSmartPsiElementPointer(reference);
         pointers.add(pointer);
@@ -146,7 +145,8 @@ public class UnqualifiedInnerClassAccessInspection extends BaseInspection {
       if (referenceImportStatement != null) {
         referenceImportStatement.delete();
       }
-      ImportUtils.addImportIfNeeded(containingClass, referenceElement);
+      final PsiClass outerClass = ClassUtils.getOutermostContainingClass(containingClass);
+      ImportUtils.addImportIfNeeded(outerClass, referenceElement);
       final PsiDocumentManager documentManager = PsiDocumentManager.getInstance(project);
       final Document document = documentManager.getDocument(containingFile);
       if (document == null) {
@@ -157,11 +157,16 @@ public class UnqualifiedInnerClassAccessInspection extends BaseInspection {
       document.replaceString(0, document.getTextLength(), text);
       documentManager.commitDocument(document);
       if (pointers.size() > 1) {
-        final List<PsiElement> elements = new ArrayList();
+        final List<PsiElement> elements = new ArrayList<>();
         for (SmartPsiElementPointer pointer : pointers) {
-          elements.add(pointer.getElement());
+          PsiElement psiElement = pointer.getElement();
+          if (psiElement != null) {
+            elements.add(psiElement);
+          }
         }
-        HighlightUtils.highlightElements(elements);
+        if (isOnTheFly()) {
+          HighlightUtils.highlightElements(elements);
+        }
       }
     }
 
@@ -172,7 +177,7 @@ public class UnqualifiedInnerClassAccessInspection extends BaseInspection {
       }
       //noinspection SuspiciousMethodCalls
       if (references.contains(element)) {
-        final String shortClassName = aClass.getName();
+        final String shortClassName = getShortClassName(aClass, new StringBuilder()).toString();
         if (isReferenceToTargetClass(shortClassName, aClass, element)) {
           out.append(shortClassName);
         }
@@ -192,6 +197,16 @@ public class UnqualifiedInnerClassAccessInspection extends BaseInspection {
       return out;
     }
 
+    private static StringBuilder getShortClassName(@NotNull PsiClass aClass, @NotNull StringBuilder builder) {
+      final PsiClass containingClass = aClass.getContainingClass();
+      if (containingClass != null) {
+        getShortClassName(containingClass, builder);
+        builder.append('.');
+      }
+      builder.append(aClass.getName());
+      return builder;
+    }
+
     private static boolean isReferenceToTargetClass(String referenceText, PsiClass targetClass, PsiElement context) {
       final PsiManager manager = targetClass.getManager();
       final JavaPsiFacade facade = JavaPsiFacade.getInstance(manager.getProject());
@@ -204,16 +219,19 @@ public class UnqualifiedInnerClassAccessInspection extends BaseInspection {
     }
   }
 
-  private static class ReferenceCollector extends JavaRecursiveElementVisitor {
+  private static class ReferenceCollector extends JavaRecursiveElementWalkingVisitor {
 
     private final String name;
     private final boolean onDemand;
-    private final Set<PsiJavaCodeReferenceElement> references = new HashSet();
+    private final Set<PsiJavaCodeReferenceElement> references = new HashSet<>();
 
     ReferenceCollector(String name, boolean onDemand) {
       this.name = name;
       this.onDemand = onDemand;
     }
+
+    @Override
+    public void visitImportList(PsiImportList list) { }
 
     @Override
     public void visitReferenceElement(PsiJavaCodeReferenceElement reference) {
@@ -253,11 +271,6 @@ public class UnqualifiedInnerClassAccessInspection extends BaseInspection {
     }
   }
 
-  @Override
-  public BaseInspectionVisitor buildVisitor() {
-    return new UnqualifiedInnerClassAccessVisitor();
-  }
-
   private class UnqualifiedInnerClassAccessVisitor extends BaseInspectionVisitor {
 
     @Override
@@ -271,6 +284,9 @@ public class UnqualifiedInnerClassAccessInspection extends BaseInspection {
         return;
       }
       final PsiClass aClass = (PsiClass)target;
+      if (!aClass.hasModifierProperty(PsiModifier.STATIC) && reference.getParent() instanceof PsiNewExpression) {
+          return;
+      }
       final PsiClass containingClass = aClass.getContainingClass();
       if (containingClass == null) {
         return;

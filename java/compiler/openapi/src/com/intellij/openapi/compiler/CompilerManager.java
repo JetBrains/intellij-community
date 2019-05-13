@@ -1,20 +1,7 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.compiler;
 
+import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.notification.NotificationGroup;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.ServiceManager;
@@ -27,6 +14,10 @@ import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.File;
+import java.io.IOException;
+import java.util.Collection;
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -34,7 +25,9 @@ import java.util.Set;
  * and invoke various types of compilations (make, compile, rebuild)
  */
 public abstract class CompilerManager {
-  public static final Key<Key> CONTENT_ID_KEY = Key.create("COMPILATION_CONTENT_ID_CUSTOM_KEY");
+  public static final Key<RunConfiguration> RUN_CONFIGURATION_KEY = Key.create("RUN_CONFIGURATION");
+  public static final Key<String> RUN_CONFIGURATION_TYPE_ID_KEY = Key.create("RUN_CONFIGURATION_TYPE_ID");
+
   public static final NotificationGroup NOTIFICATION_GROUP = NotificationGroup.logOnlyGroup("Compiler");
 
   /**
@@ -46,9 +39,9 @@ public abstract class CompilerManager {
   public static CompilerManager getInstance(Project project) {
     return ServiceManager.getService(project, CompilerManager.class);
   }
-  
+
   public abstract boolean isCompilationActive();
-  
+
   /**
    * Registers a custom compiler.
    *
@@ -59,19 +52,18 @@ public abstract class CompilerManager {
   /**
    * Registers a custom translating compiler. Input and output filetype sets allow compiler manager
    * to sort translating compilers so that output of one compiler will be used as input for another one
-   * 
-   * @param compiler compiler implementation 
+   *
+   * @param compiler compiler implementation
    * @param inputTypes a set of filetypes that compiler accepts as input
    * @param outputTypes a set of filetypes that compiler can generate
+   *
+   * @deprecated this method is part of the obsolete build system which runs as part of the IDE process. Since IDEA 12 plugins need to
+   * integrate into 'external build system' instead (https://confluence.jetbrains.com/display/IDEADEV/External+Builder+API+and+Plugins).
+   * Since IDEA 13 users cannot switch to the old build system via UI and it will be completely removed in IDEA 14.
    */
+  @Deprecated
   public abstract void addTranslatingCompiler(@NotNull TranslatingCompiler compiler, Set<FileType> inputTypes, Set<FileType> outputTypes);
 
-  @NotNull
-  public abstract Set<FileType> getRegisteredInputTypes(@NotNull TranslatingCompiler compiler);
-  
-  @NotNull
-  public abstract Set<FileType> getRegisteredOutputTypes(@NotNull TranslatingCompiler compiler);
-  
   /**
    * Unregisters a custom compiler.
    *
@@ -87,16 +79,6 @@ public abstract class CompilerManager {
    */
   @NotNull
   public abstract <T  extends Compiler> T[] getCompilers(@NotNull Class<T> compilerClass);
-
-  /**
-   * Returns all registered compilers of the specified class that the filter accepts
-   *
-   * @param compilerClass the class for which the compilers should be returned.
-   * @param filter additional filter to restrict compiler instances
-   * @return all registered compilers of the specified class.
-   */
-  @NotNull
-  public abstract <T  extends Compiler> T[] getCompilers(@NotNull Class<T> compilerClass, CompilerFilter filter);
 
   /**
    * Registers the type as a compilable type so that Compile action will be enabled on files of this type.
@@ -215,19 +197,14 @@ public abstract class CompilerManager {
   public abstract void make(@NotNull CompileScope scope, @Nullable CompileStatusNotification callback);
 
   /**
-   * Compile all modified files and all files that depend on them from the scope given.
-   * Files are compiled according to dependencies between the modules they belong to. Compiler excludes are honored. All modules must belong to the same project
-   *
-   * @param scope    a scope to be compiled
-   * @param filter filter allowing choose what compilers should be executed
-   * @param callback a notification callback, or null if no notifications needed
+   * Same as {@link #make(CompileScope, CompileStatusNotification)} but with modal progress window instead of background progress
    */
-  public abstract void make(@NotNull CompileScope scope, CompilerFilter filter, @Nullable CompileStatusNotification callback);
+  public abstract void makeWithModalProgress(@NotNull CompileScope scope, @Nullable CompileStatusNotification callback);
 
   /**
    * Checks if compile scope given is up-to-date
    * @param scope
-   * @return true if make on the scope specified wouldn't do anything or false if something is to be compiled or deleted 
+   * @return true if make on the scope specified wouldn't do anything or false if something is to be compiled or deleted
    */
   public abstract boolean isUpToDate(@NotNull CompileScope scope);
   /**
@@ -249,18 +226,21 @@ public abstract class CompilerManager {
                                    @Nullable Runnable onTaskFinished);
 
   /**
-   * Register a listener to track compilation events.
-   *
-   * @param listener the listener to be registered.
+   * @deprecated Use {@link CompilerTopics#COMPILATION_STATUS} instead
    */
+  @Deprecated
   public abstract void addCompilationStatusListener(@NotNull CompilationStatusListener listener);
+
+  /**
+   * @deprecated Use {@link CompilerTopics#COMPILATION_STATUS} instead
+   */
+  @Deprecated
   public abstract void addCompilationStatusListener(@NotNull CompilationStatusListener listener, @NotNull Disposable parentDisposable);
 
   /**
-   * Unregister a compilation listener.
-   *
-   * @param listener the listener to be unregistered.
+   * @deprecated Use {@link CompilerTopics#COMPILATION_STATUS} instead
    */
+  @Deprecated
   public abstract void removeCompilationStatusListener(@NotNull CompilationStatusListener listener);
 
   /**
@@ -271,24 +251,35 @@ public abstract class CompilerManager {
    */
   public abstract boolean isExcludedFromCompilation(@NotNull VirtualFile file);
 
-  @NotNull
-  public abstract OutputToSourceMapping getJavaCompilerOutputMapping();
-
   /*
-   * Convetience methods for creating frequently-used compile scopes
+   * Convenience methods for creating frequently-used compile scopes
    */
   @NotNull
   public abstract CompileScope createFilesCompileScope(@NotNull VirtualFile[] files);
   @NotNull
-  public abstract CompileScope createModuleCompileScope(@NotNull Module module, final boolean includeDependentModules);
+  public abstract CompileScope createModuleCompileScope(@NotNull Module module, boolean includeDependentModules);
   @NotNull
-  public abstract CompileScope createModulesCompileScope(@NotNull Module[] modules, final boolean includeDependentModules);
+  public abstract CompileScope createModulesCompileScope(@NotNull Module[] modules, boolean includeDependentModules);
   @NotNull
-  public abstract CompileScope createModuleGroupCompileScope(@NotNull Project project, @NotNull Module[] modules, final boolean includeDependentModules);
+  public abstract CompileScope createModulesCompileScope(@NotNull Module[] modules, boolean includeDependentModules, boolean includeRuntimeDependencies);
+  @NotNull
+  public abstract CompileScope createModuleGroupCompileScope(@NotNull Project project, @NotNull Module[] modules, boolean includeDependentModules);
   @NotNull
   public abstract CompileScope createProjectCompileScope(@NotNull Project project);
 
   public abstract void setValidationEnabled(ModuleType moduleType, boolean enabled);
 
   public abstract boolean isValidationEnabled(Module moduleType);
+
+  public abstract Collection<ClassObject> compileJavaCode(List<String> options,
+                                                          Collection<File> platformCp,
+                                                          Collection<File> classpath,
+                                                          Collection<File> upgradeModulePath,
+                                                          Collection<File> modulePath,
+                                                          Collection<File> sourcePath,
+                                                          Collection<File> files,
+                                                          File outputDir) throws IOException, CompilationException;
+
+  @Nullable
+  public abstract File getJavacCompilerWorkingDir();
 }

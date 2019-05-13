@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,7 @@ import com.intellij.cvsSupport2.cvsExecution.ModalityContext;
 import com.intellij.cvsSupport2.cvshandlers.CommandCvsHandler;
 import com.intellij.cvsSupport2.cvshandlers.CvsHandler;
 import com.intellij.cvsSupport2.ui.experts.checkout.CheckoutWizard;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vcs.CheckoutProvider;
@@ -35,24 +36,28 @@ import org.jetbrains.annotations.NotNull;
 import java.io.File;
 
 public class CvsCheckoutProvider implements CheckoutProvider {
+  @Override
   public void doCheckout(@NotNull final Project project, final CheckoutProvider.Listener listener) {
 
     final CheckoutWizard checkoutWizard = new CheckoutWizard(project);
-    checkoutWizard.show();
-    if (!checkoutWizard.isOK()) return;
+    if (!checkoutWizard.showAndGet()) {
+      return;
+    }
     final boolean useAlternateCheckoutPath = checkoutWizard.useAlternativeCheckoutLocation();
     final File checkoutDirectory = checkoutWizard.getCheckoutDirectory();
 
     final CvsElement[] selectedElements = checkoutWizard.getSelectedElements();
     final CvsHandler checkoutHandler = CommandCvsHandler.createCheckoutHandler(
-      checkoutWizard.getSelectedConfiguration(),
+      checkoutWizard.getConfigurationWithDateOrRevisionSettings(),
       collectCheckoutPaths(selectedElements),
       checkoutDirectory,
       useAlternateCheckoutPath,
-      CvsApplicationLevelConfiguration.getInstance().MAKE_CHECKED_OUT_FILES_READONLY, VcsConfiguration.getInstance(project).getCheckoutOption());
+      CvsApplicationLevelConfiguration.getInstance().MAKE_CHECKED_OUT_FILES_READONLY,
+      VcsConfiguration.getInstance(project).getCheckoutOption());
 
     final CvsOperationExecutor executor = new CvsOperationExecutor(null);
     executor.performActionSync(checkoutHandler, new CvsOperationExecutorCallback() {
+      @Override
       public void executionFinished(boolean successfully) {
         if (!executor.hasNoErrors()) {
           Messages.showErrorDialog(CvsBundle.message("message.error.checkout", executor.getResult().composeError().getLocalizedMessage()),
@@ -61,8 +66,12 @@ public class CvsCheckoutProvider implements CheckoutProvider {
 
         refreshAfterCheckout(listener, selectedElements, checkoutDirectory, useAlternateCheckoutPath);
       }
+
+      @Override
       public void executionFinishedSuccessfully() {
       }
+
+      @Override
       public void executeInProgressAfterAction(ModalityContext modaityContext) {
       }
     });
@@ -70,16 +79,14 @@ public class CvsCheckoutProvider implements CheckoutProvider {
 
   public void refreshAfterCheckout(final Listener listener, final CvsElement[] selectedElements, final File checkoutDirectory,
                                    final boolean useAlternateCheckoutPath) {
-    VirtualFileManager.getInstance().asyncRefresh(new Runnable() {
-      public void run() {
-        // shouldn't hold write action when calling this (IDEADEV-20086)
-        for (CvsElement element : selectedElements) {
-          final File path = useAlternateCheckoutPath ? checkoutDirectory : new File(checkoutDirectory, element.getCheckoutPath());
-          listener.directoryCheckedOut(path, CvsVcs2.getKey());
-        }
-        listener.checkoutCompleted();
+
+    VirtualFileManager.getInstance().asyncRefresh(() -> ApplicationManager.getApplication().invokeLater(() -> {
+      for (CvsElement element : selectedElements) {
+        final File path = useAlternateCheckoutPath ? checkoutDirectory : new File(checkoutDirectory, element.getCheckoutPath());
+        listener.directoryCheckedOut(path, CvsVcs2.getKey());
       }
-    });
+      listener.checkoutCompleted();
+    }));
   }
 
   private static String[] collectCheckoutPaths(final CvsElement[] mySelectedElements) {
@@ -91,6 +98,7 @@ public class CvsCheckoutProvider implements CheckoutProvider {
     return checkoutPaths;
   }
 
+  @Override
   public String getVcsName() {
     return "_CVS";
   }

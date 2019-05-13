@@ -1,0 +1,4 @@
+line1<caret> line2
+<selection>line3<caret></selection>
+li<selection>ne4 li<caret></selection>ne5<caret> line6
+line7

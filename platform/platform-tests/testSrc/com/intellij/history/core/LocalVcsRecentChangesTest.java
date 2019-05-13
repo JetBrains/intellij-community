@@ -166,10 +166,10 @@ public class LocalVcsRecentChangesTest extends LocalHistoryTestCase {
   }
 
   private Entry findEntryAfter(RecentChange c, String path) {
-    return ((RootEntry)c.getRevisionAfter().findEntry()).findEntry(path);
+    return c.getRevisionAfter().findEntry().findEntry(path);
   }
 
   private Entry findEntryBefore(RecentChange c, String path) {
-    return ((RootEntry)c.getRevisionBefore().findEntry()).findEntry(path);
+    return c.getRevisionBefore().findEntry().findEntry(path);
   }
 }

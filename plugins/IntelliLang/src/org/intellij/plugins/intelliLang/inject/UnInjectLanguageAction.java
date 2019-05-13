@@ -24,15 +24,13 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiLanguageInjectionHost;
+import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.util.FileContentUtil;
 import com.intellij.util.IncorrectOperationException;
 import gnu.trove.THashSet;
 import org.intellij.plugins.intelliLang.Configuration;
+import org.intellij.plugins.intelliLang.references.InjectedReferencesContributor;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
@@ -43,58 +41,73 @@ import java.util.List;
  */
 public class UnInjectLanguageAction implements IntentionAction, LowPriorityAction {
 
+  @Override
   @NotNull
   public String getText() {
-    return "Un-inject Language";
+    return "Un-inject Language/Reference";
   }
 
+  @Override
   @NotNull
   public String getFamilyName() {
     return getText();
   }
 
+  @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
     final int offset = editor.getCaretModel().getOffset();
-    final PsiFile psiFile = InjectedLanguageUtil.findInjectedPsiNoCommit(file, offset);
-    if (psiFile == null) return false;
-    final LanguageInjectionSupport support = psiFile.getUserData(LanguageInjectionSupport.INJECTOR_SUPPORT);
-    return support != null;
+    PsiElement element = InjectedLanguageUtil.findInjectedPsiNoCommit(file, offset);
+    if (element == null) {
+      return InjectedReferencesContributor.isInjected(file.findReferenceAt(offset));
+    }
+    return element.getUserData(LanguageInjectionSupport.INJECTOR_SUPPORT) != null;
   }
 
+  @Override
   public void invoke(@NotNull final Project project, final Editor editor, final PsiFile file) throws IncorrectOperationException {
-    ApplicationManager.getApplication().runReadAction(new Runnable() {
-      public void run() {
-        invokeImpl(project, editor, file);
-      }
-    });
+    ApplicationManager.getApplication().runReadAction(() -> invokeImpl(project, editor, file));
   }
 
-  private static void invokeImpl(Project project, Editor editor, PsiFile file) {
-    final PsiFile psiFile = InjectedLanguageUtil.findInjectedPsiNoCommit(file, editor.getCaretModel().getOffset());
-    if (psiFile == null) return;
+  public static void invokeImpl(Project project, Editor editor, PsiFile file) {
+    int offset = editor.getCaretModel().getOffset();
+    final PsiFile psiFile = InjectedLanguageUtil.findInjectedPsiNoCommit(file, offset);
+    if (psiFile == null) {
+      PsiReference reference = file.findReferenceAt(offset);
+      if (reference == null) return;
+      if (reference.getElement() instanceof PsiLanguageInjectionHost) {
+        PsiLanguageInjectionHost host = (PsiLanguageInjectionHost)reference.getElement();
+        for (LanguageInjectionSupport support : InjectorUtils.getActiveInjectionSupports()) {
+          if (support.isApplicableTo(host) && support.removeInjectionInPlace(host)) {
+            PsiManager.getInstance(project).dropPsiCaches();
+            return;
+          }
+        }
+      }
+      PsiElement element = reference.getElement();
+      LanguageInjectionSupport support = element.getUserData(LanguageInjectionSupport.INJECTOR_SUPPORT);
+      if (support != null) {
+        if (support.removeInjection(element)) {
+          PsiManager.getInstance(project).dropPsiCaches();
+        }
+      }
+      return;
+    }
     final PsiLanguageInjectionHost host = InjectedLanguageManager.getInstance(project).getInjectionHost(psiFile);
     if (host == null) return;
     final LanguageInjectionSupport support = psiFile.getUserData(LanguageInjectionSupport.INJECTOR_SUPPORT);
     if (support == null) return;
     try {
-      if (psiFile.getUserData(LanguageInjectionSupport.TEMPORARY_INJECTED_LANGUAGE) != null) {
-        // temporary injection
-        TemporaryPlacesRegistry temporaryPlacesRegistry = TemporaryPlacesRegistry.getInstance(project);
-        for (PsiLanguageInjectionHost.Shred shred : InjectedLanguageUtil.getShreds(psiFile)) {
-          if (temporaryPlacesRegistry.removeHostWithUndo(project, shred.getHost())) break;
-        }
-      }
-      else if (!support.removeInjectionInPlace(host)) {
+      if (!support.removeInjectionInPlace(host)) {
         defaultFunctionalityWorked(host);
       }
     }
     finally {
-      FileContentUtil.reparseFiles(project, Collections.<VirtualFile>emptyList(), true);
+      FileContentUtil.reparseFiles(project, Collections.emptyList(), true);
     }
   }
 
   private static boolean defaultFunctionalityWorked(final PsiLanguageInjectionHost host) {
-    final THashSet<String> languages = new THashSet<String>();
+    final THashSet<String> languages = new THashSet<>();
     final List<Pair<PsiElement, TextRange>> files = InjectedLanguageManager.getInstance(host.getProject()).getInjectedPsiFiles(host);
     if (files == null) return false;
     for (Pair<PsiElement, TextRange> pair : files) {
@@ -107,6 +120,7 @@ public class UnInjectLanguageAction implements IntentionAction, LowPriorityActio
     return Configuration.getProjectInstance(host.getProject()).setHostInjectionEnabled(host, languages, false);
   }
 
+  @Override
   public boolean startInWriteAction() {
     return false;
   }

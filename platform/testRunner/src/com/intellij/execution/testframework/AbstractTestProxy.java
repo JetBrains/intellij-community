@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,32 +13,34 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-/*
- * User: anna
- * Date: 23-May-2007
- */
 package com.intellij.execution.testframework;
 
 import com.intellij.execution.Location;
+import com.intellij.execution.testframework.stacktrace.DiffHyperlink;
 import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.pom.Navigatable;
+import com.intellij.psi.search.GlobalSearchScope;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collections;
 import java.util.List;
 
+/**
+ * @author anna
+ */
 public abstract class AbstractTestProxy extends CompositePrintable {
   public static final DataKey<AbstractTestProxy> DATA_KEY = DataKey.create("testProxy");
+  public static final DataKey<AbstractTestProxy[]> DATA_KEYS = DataKey.create("testProxies");
+
   protected Printer myPrinter = null;
 
   public abstract boolean isInProgress();
 
   public abstract boolean isDefect();
 
-  //todo?
   public abstract boolean shouldRun();
 
   public abstract int getMagnitude();
@@ -47,15 +49,19 @@ public abstract class AbstractTestProxy extends CompositePrintable {
 
   public abstract boolean isInterrupted();
 
+  public abstract boolean hasPassedTests();
+
   public abstract boolean isIgnored();
 
   public abstract boolean isPassed();
 
   public abstract String getName();
 
-  public abstract Location getLocation(final Project project);
+  public abstract boolean isConfig();
 
-  public abstract Navigatable getDescriptor(final Location location, final TestConsoleProperties testConsoleProperties);
+  public abstract Location getLocation(@NotNull Project project, @NotNull GlobalSearchScope searchScope);
+
+  public abstract Navigatable getDescriptor(@Nullable Location location, @NotNull TestConsoleProperties properties);
 
   public abstract AbstractTestProxy getParent();
 
@@ -65,6 +71,11 @@ public abstract class AbstractTestProxy extends CompositePrintable {
 
   @Nullable
   public Long getDuration() {
+    return null;
+  }
+
+  @Nullable
+  public String getDurationString(TestConsoleProperties consoleProperties) {
     return null;
   }
 
@@ -108,6 +119,10 @@ public abstract class AbstractTestProxy extends CompositePrintable {
     }
   }
 
+  /**
+   * to be deleted in 2017.1
+   */
+  @Deprecated
   public static void flushOutput(AbstractTestProxy testProxy) {
     testProxy.flush();
 
@@ -132,14 +147,37 @@ public abstract class AbstractTestProxy extends CompositePrintable {
     return myExceptionMark;
   }
 
+  @NotNull
+  public List<DiffHyperlink> getDiffViewerProviders() {
+    final DiffHyperlink provider = getDiffViewerProvider();
+    return provider == null ? Collections.emptyList() : Collections.singletonList(provider);
+  }
+
   @Nullable
-  public AssertEqualsDiffViewerProvider getDiffViewerProvider() {
+  public DiffHyperlink getLeafDiffViewerProvider() {
+    DiffHyperlink provider = getDiffViewerProvider();
+    if (provider != null) return provider;
+    if (isDefect()) {
+      for (AbstractTestProxy child : getChildren()) {
+        provider = child.getLeafDiffViewerProvider();
+        if (provider != null) return provider;
+      }
+    }
     return null;
   }
 
-  public interface AssertEqualsDiffViewerProvider {
-    void openDiff(final Project project);
-    String getExpected();
-    String getActual();
+  @Nullable
+  public DiffHyperlink getDiffViewerProvider() {
+    return null;
+  }
+
+  @Nullable
+  public String getLocationUrl() {
+    return null;
+  }
+
+  @Nullable
+  public String getMetainfo() {
+    return null;
   }
 }

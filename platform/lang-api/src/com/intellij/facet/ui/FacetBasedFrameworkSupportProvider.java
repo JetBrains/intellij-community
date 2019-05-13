@@ -66,33 +66,35 @@ public abstract class FacetBasedFrameworkSupportProvider<F extends Facet> extend
    * @see #getPrecedingFrameworkProviderIds()
    */
   public static String getProviderId(final FacetTypeId<?> typeId) {
-    FacetType<?,?> type = FacetTypeRegistry.getInstance().findFacetType(typeId);
-    LOG.assertTrue(type != null, typeId);
-    return getProviderId(type);
+    return getProviderId(FacetTypeRegistry.getInstance().findFacetType(typeId));
   }
 
+  @Override
   @Nullable
   public String getUnderlyingFrameworkId() {
     FacetTypeId<?> typeId = myFacetType.getUnderlyingFacetType();
     if (typeId == null) return null;
 
-    FacetType<?,?> type = FacetTypeRegistry.getInstance().findFacetType(typeId);
-    return type != null ? getProviderId(type) : null;
+    return getProviderId(FacetTypeRegistry.getInstance().findFacetType(typeId));
 
   }
 
+  @Override
   public boolean isEnabledForModuleType(@NotNull final ModuleType moduleType) {
     return myFacetType.isSuitableModuleType(moduleType);
   }
 
+  @Override
   public boolean isSupportAlreadyAdded(@NotNull final Module module, @NotNull FacetsProvider facetsProvider) {
     return !facetsProvider.getFacetsByType(module, myFacetType.getId()).isEmpty();
   }
 
+  @Override
   public Icon getIcon() {
     return myFacetType.getIcon();
   }
 
+  @Override
   protected void addSupport(@NotNull final Module module, @NotNull final ModifiableRootModel rootModel, final FrameworkVersion version, final @Nullable Library library) {
     FacetManager facetManager = FacetManager.getInstance(module);
     ModifiableFacetModel model = facetManager.createModifiableModel();

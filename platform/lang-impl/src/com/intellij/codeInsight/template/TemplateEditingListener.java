@@ -17,14 +17,20 @@
 package com.intellij.codeInsight.template;
 
 import com.intellij.codeInsight.template.impl.TemplateState;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Mike
  */
 public interface TemplateEditingListener {
-  void beforeTemplateFinished(TemplateState state, Template template);
-  void templateFinished(Template template, boolean brokenOff);
+  void beforeTemplateFinished(@NotNull TemplateState state, Template template);
+
+  default void beforeTemplateFinished(@NotNull TemplateState state, Template template, boolean brokenOff) {
+    beforeTemplateFinished(state, template);
+  }
+
+  void templateFinished(@NotNull Template template, boolean brokenOff);
   void templateCancelled(Template template);
-  void currentVariableChanged(TemplateState templateState, Template template, int oldIndex, int newIndex);
+  void currentVariableChanged(@NotNull TemplateState templateState, Template template, int oldIndex, int newIndex);
   void waitingForInput(Template template);
 }

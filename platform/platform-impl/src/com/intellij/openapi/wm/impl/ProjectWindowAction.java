@@ -1,39 +1,28 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm.impl;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.WindowManager;
+import com.intellij.util.BitUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.KeyEvent;
 
 /**
- * @ author Bas Leijdekkers
+ * @author Bas Leijdekkers
  * This class is programmatically instantiated and registered when opening and closing projects
- * and thus not registered in plugin.xml
+ * and therefore not registered in plugin.xml
  */
-@SuppressWarnings({"ComponentNotRegistered"})
 public class ProjectWindowAction extends ToggleAction implements DumbAware {
 
   private ProjectWindowAction myPrevious;
@@ -42,7 +31,6 @@ public class ProjectWindowAction extends ToggleAction implements DumbAware {
   @NotNull private final String myProjectLocation;
 
   public ProjectWindowAction(@NotNull String projectName, @NotNull String projectLocation, ProjectWindowAction previous) {
-    super();
     myProjectName = projectName;
     myProjectLocation = projectLocation;
     if (previous != null) {
@@ -100,9 +88,9 @@ public class ProjectWindowAction extends ToggleAction implements DumbAware {
   }
 
   @Override
-  public boolean isSelected(AnActionEvent e) {
+  public boolean isSelected(@NotNull AnActionEvent e) {
     // show check mark for active and visible project frame
-    final Project project = e.getData(PlatformDataKeys.PROJECT);
+    final Project project = e.getData(CommonDataKeys.PROJECT);
     if (project == null) {
       return false;
     }
@@ -110,7 +98,7 @@ public class ProjectWindowAction extends ToggleAction implements DumbAware {
   }
 
   @Override
-  public void setSelected(@Nullable AnActionEvent e, boolean selected) {
+  public void setSelected(@NotNull AnActionEvent e, boolean selected) {
     if (!selected) {
       return;
     }
@@ -119,18 +107,33 @@ public class ProjectWindowAction extends ToggleAction implements DumbAware {
       return;
     }
     final JFrame projectFrame = WindowManager.getInstance().getFrame(project);
+    if (projectFrame == null) {
+      return;
+    }
+
     final int frameState = projectFrame.getExtendedState();
-    if ((frameState & Frame.ICONIFIED) == Frame.ICONIFIED) {
+    if (SystemInfo.isMac && BitUtil.isSet(projectFrame.getExtendedState(), Frame.ICONIFIED) && e.getInputEvent() instanceof KeyEvent) {
+      // On Mac minimized window should not be restored this way
+      return;
+    }
+
+    if (BitUtil.isSet(frameState, Frame.ICONIFIED)) {
       // restore the frame if it is minimized
-      projectFrame.setExtendedState(frameState ^ Frame.ICONIFIED);
+      projectFrame.setExtendedState(BitUtil.set(frameState, Frame.ICONIFIED, false));
     }
     projectFrame.toFront();
-    projectFrame.requestFocus();
-    //ProjectUtil.focusProjectWindow(project, true);
+    IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
+      Component mostRecentFocusOwner = projectFrame.getMostRecentFocusOwner();
+      if (mostRecentFocusOwner != null) {
+        IdeFocusManager.getGlobalInstance().requestFocus(mostRecentFocusOwner, true);
+      }
+    });
   }
 
   @Override
   public String toString() {
-    return getTemplatePresentation().getText() + " previous: " + myPrevious.getTemplatePresentation().getText() + " next: " + myNext.getTemplatePresentation().getText();
+    return getTemplatePresentation().getText()
+           + " previous: " + myPrevious.getTemplatePresentation().getText()
+           + " next: " + myNext.getTemplatePresentation().getText();
   }
 }

@@ -1,34 +1,38 @@
-
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.ui;
+
+import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.IconLoader.DarkIconProvider;
+import com.intellij.util.ArrayUtil;
+import com.intellij.util.IconUtil;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.JBUI.CachingScalableJBIcon;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
 import java.util.Arrays;
+import java.util.List;
 
-public class RowIcon implements Icon {
+import static com.intellij.util.ui.JBUI.ScaleType.OBJ_SCALE;
+import static java.lang.Math.ceil;
+
+public class RowIcon extends CachingScalableJBIcon<RowIcon> implements DarkIconProvider, CompositeIcon {
   private final Alignment myAlignment;
+
+  private int myWidth;
+  private int myHeight;
 
   public enum Alignment {TOP, CENTER, BOTTOM}
 
   private final Icon[] myIcons;
-  private int myWidth;
-  private int myHeight;
+  private Icon[] myScaledIcons;
+
+  {
+    getScaleContext().addUpdateListener(() -> updateSize());
+    setAutoUpdateScaleContext(false);
+  }
 
   public RowIcon(int iconCount/*, int orientation*/) {
     this(iconCount, Alignment.TOP);
@@ -40,6 +44,52 @@ public class RowIcon implements Icon {
     //myOrientation = orientation;
   }
 
+  public RowIcon(Icon... icons) {
+    this(icons.length);
+    System.arraycopy(icons, 0, myIcons, 0, icons.length);
+    updateSize();
+  }
+
+  protected RowIcon(RowIcon icon) {
+    super(icon);
+    myAlignment = icon.myAlignment;
+    myWidth = icon.myWidth;
+    myHeight = icon.myHeight;
+    myIcons = ArrayUtil.copyOf(icon.myIcons);
+    myScaledIcons = null;
+  }
+
+  @NotNull
+  @Override
+  public RowIcon copy() {
+    return new RowIcon(this);
+  }
+
+  @NotNull
+  private Icon[] myScaledIcons() {
+    if (myScaledIcons != null) {
+      return myScaledIcons;
+    }
+    return myScaledIcons = scaleIcons(myIcons, getScale());
+  }
+
+  static Icon[] scaleIcons(Icon[] icons, float scale) {
+    if (scale == 1f) return icons;
+    Icon[] scaledIcons = new Icon[icons.length];
+    for (int i = 0; i < icons.length; i++) {
+      if (icons[i] != null) {
+        scaledIcons[i] = IconUtil.scale(icons[i], null, scale);
+      }
+    }
+    return scaledIcons;
+  }
+
+  @NotNull
+  public Icon[] getAllIcons() {
+    List<Icon> icons = ContainerUtil.packNullables(myIcons);
+    return icons.toArray(new Icon[0]);
+  }
+
   public int hashCode() {
     return myIcons.length > 0 ? myIcons[0].hashCode() : 0;
   }
@@ -48,24 +98,28 @@ public class RowIcon implements Icon {
     return obj instanceof RowIcon && Arrays.equals(((RowIcon)obj).myIcons, myIcons);
   }
 
+  @Override
   public int getIconCount() {
     return myIcons.length;
   }
 
   public void setIcon(Icon icon, int layer) {
     myIcons[layer] = icon;
-    recalculateSize();
+    myScaledIcons = null;
+    updateSize();
   }
 
+  @Override
   public Icon getIcon(int index) {
     return myIcons[index];
   }
 
   @Override
   public void paintIcon(Component c, Graphics g, int x, int y) {
+    getScaleContext().update();
     int _x = x;
     int _y = y;
-    for (Icon icon : myIcons) {
+    for (Icon icon : myScaledIcons()) {
       if (icon == null) continue;
       switch (myAlignment) {
         case TOP: _y = y;
@@ -83,15 +137,17 @@ public class RowIcon implements Icon {
 
   @Override
   public int getIconWidth() {
-    return myWidth;
+    getScaleContext().update();
+    return (int)ceil(scaleVal(myWidth, OBJ_SCALE));
   }
 
   @Override
   public int getIconHeight() {
-    return myHeight;
+    getScaleContext().update();
+    return (int)ceil(scaleVal(myHeight, OBJ_SCALE));
   }
 
-  private void recalculateSize() {
+  private void updateSize() {
     int width = 0;
     int height = 0;
     for (Icon icon : myIcons) {
@@ -102,5 +158,19 @@ public class RowIcon implements Icon {
     }
     myWidth = width;
     myHeight = height;
+  }
+
+  @Override
+  public Icon getDarkIcon(boolean isDark) {
+    RowIcon newIcon = copy();
+    for (int i=0; i<newIcon.myIcons.length; i++) {
+      newIcon.myIcons[i] = IconLoader.getDarkIcon(newIcon.myIcons[i], isDark);
+    }
+    return newIcon;
+  }
+
+  @Override
+  public String toString() {
+    return "Row icon. myIcons=" + Arrays.asList(myIcons);
   }
 }

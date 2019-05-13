@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,7 +20,7 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
-import com.intellij.psi.PsiReferenceFactory;
+import com.intellij.psi.PsiManager;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
@@ -35,13 +35,17 @@ import java.lang.reflect.Type;
 /**
  * @author peter
  */
-public abstract class DomManager implements ModificationTracker {
+public abstract class DomManager extends CompositeModificationTracker implements ModificationTracker {
   public static final Key<Module> MOCK_ELEMENT_MODULE = Key.create("MockElementModule");
 
-  private final static NotNullLazyKey<DomManager, Project> INSTANCE_CACHE = ServiceManager.createLazyKey(DomManager.class);
+  private static final NotNullLazyKey<DomManager, Project> INSTANCE_CACHE = ServiceManager.createLazyKey(DomManager.class);
 
   public static DomManager getDomManager(Project project) {
     return INSTANCE_CACHE.getValue(project);
+  }
+
+  public DomManager(@NotNull Project project) {
+    super(PsiManager.getInstance(project).getModificationTracker().getOutOfCodeBlockModificationTracker());
   }
 
   public abstract Project getProject();
@@ -116,9 +120,9 @@ public abstract class DomManager implements ModificationTracker {
    * @param provider provides values to be wrapped
    * @return stable DOM element
    */
-  public abstract <T extends DomElement> T createStableValue(Factory<T> provider);
+  public abstract <T extends DomElement> T createStableValue(Factory<? extends T> provider);
 
-  public abstract <T> T createStableValue(final Factory<T> provider, final Condition<T> validator);
+  public abstract <T> T createStableValue(final Factory<? extends T> provider, final Condition<? super T> validator);
 
   /**
    * Registers a new {@link com.intellij.util.xml.DomFileDescription} within the manager. The description parameter describes some DOM
@@ -127,16 +131,15 @@ public abstract class DomManager implements ModificationTracker {
    * @param description The description in question
    * @deprecated Make your file description an extension (see {@link com.intellij.util.xml.DomFileDescription#EP_NAME})
    */
+  @Deprecated
   public abstract void registerFileDescription(DomFileDescription description);
 
   /**
    * @return {@link com.intellij.util.xml.ConverterManager} instance
    * @deprecated This will be moved at the application level
    */
-  public abstract ConverterManager getConverterManager();
-
   @Deprecated
-  public abstract void addPsiReferenceFactoryForClass(Class clazz, PsiReferenceFactory psiReferenceFactory);
+  public abstract ConverterManager getConverterManager();
 
   public abstract ModelMerger createModelMerger();
 

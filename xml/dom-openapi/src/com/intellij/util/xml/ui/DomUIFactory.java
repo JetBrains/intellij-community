@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,8 +44,8 @@ public abstract class DomUIFactory {
 
   public final static ExtensionPointName<Consumer<DomUIFactory>> EXTENSION_POINT_NAME = ExtensionPointName.create("com.intellij.dom.uiControlsProvider");
 
-  public static Method GET_VALUE_METHOD = ReflectionUtil.getMethod(GenericDomValue.class, "getValue");
-  public static Method SET_VALUE_METHOD = findMethod(GenericDomValue.class, "setValue");
+  public static final Method GET_VALUE_METHOD = ReflectionUtil.getMethod(GenericDomValue.class, "getValue");
+  public static final Method SET_VALUE_METHOD = findMethod(GenericDomValue.class, "setValue");
   public static Method GET_STRING_METHOD = ReflectionUtil.getMethod(GenericDomValue.class, "getStringValue");
   public static Method SET_STRING_METHOD = findMethod(GenericDomValue.class, "setStringValue");
 
@@ -64,7 +64,8 @@ public abstract class DomUIFactory {
   }
 
   public static DomUIControl createLargeDescriptionControl(DomElement parent, final boolean commitOnEveryChange) {
-    return getDomUIFactory().createTextControl(new DomCollectionWrapper<String>(parent, parent.getGenericInfo().getCollectionChildDescription("description")), commitOnEveryChange);
+    return getDomUIFactory().createTextControl(
+      new DomCollectionWrapper<>(parent, parent.getGenericInfo().getCollectionChildDescription("description")), commitOnEveryChange);
   }
 
   @NotNull
@@ -99,7 +100,7 @@ public abstract class DomUIFactory {
 
   @Nullable
   public static Method findMethod(Class clazz, @NonNls String methodName) {
-    for (Method method : clazz.getMethods()) {
+    for (Method method : ReflectionUtil.getClassPublicMethods(clazz)) {
       if (methodName.equals(method.getName())) {
         return method;
       }
@@ -119,9 +120,9 @@ public abstract class DomUIFactory {
 
   public abstract BaseControl createTextControl(DomWrapper<String> wrapper, final boolean commitOnEveryChange);
 
-  public abstract void registerCustomControl(Class aClass, Function<DomWrapper<String>, BaseControl> creator);
+  public abstract void registerCustomControl(@NotNull Class aClass, Function<DomWrapper<String>, BaseControl> creator);
 
-  public abstract void registerCustomCellEditor(Class aClass, Function<DomElement, TableCellEditor> creator);
+  public abstract void registerCustomCellEditor(@NotNull Class aClass, Function<DomElement, TableCellEditor> creator);
 
   @Nullable
   public abstract BaseControl createCustomControl(final Type type, DomWrapper<String> wrapper, final boolean commitOnEveryChange);
@@ -141,7 +142,7 @@ public abstract class DomUIFactory {
   public DomUIControl createCollectionControl(DomElement element, DomCollectionChildDescription description) {
     final ColumnInfo columnInfo = createColumnInfo(description, element);
     final Class aClass = DomUtil.extractParameterClassFromGenericType(description.getType());
-    return new DomCollectionControl<GenericDomValue<?>>(element, description, aClass == null, columnInfo);
+    return new DomCollectionControl<>(element, description, aClass == null, columnInfo);
   }
 
   public ColumnInfo createColumnInfo(final DomCollectionChildDescription description,

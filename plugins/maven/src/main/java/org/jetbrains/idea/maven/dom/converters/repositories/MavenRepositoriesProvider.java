@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,13 +34,12 @@ public class MavenRepositoriesProvider {
     return ServiceManager.getService(MavenRepositoriesProvider.class);
   }
 
-  final Map<String, RepositoryBeanInfo> myRepositoriesMap = new THashMap<String, RepositoryBeanInfo>();
+  final Map<String, RepositoryBeanInfo> myRepositoriesMap = new THashMap<>();
 
   public MavenRepositoriesProvider() {
     final RepositoriesBean repositoriesBean =
       XmlSerializer.deserialize(MavenRepositoriesProvider.class.getResource("repositories.xml"), RepositoriesBean.class);
 
-    assert repositoriesBean != null;
     RepositoryBeanInfo[] repositories = repositoriesBean.getRepositories();
     assert repositories != null;
 

@@ -31,14 +31,17 @@ public interface JavaChangeInfo extends ChangeInfo {
 
   boolean isExceptionSetOrOrderChanged();
 
+  @Override
   PsiMethod getMethod();
 
   CanonicalTypes.Type getNewReturnType();
 
+  @Override
   @NotNull
   JavaParameterInfo[] getNewParameters();
 
   @PsiModifier.ModifierConstant
+  @NotNull
   String getNewVisibility();
 
   @NotNull
@@ -68,4 +71,9 @@ public interface JavaChangeInfo extends ChangeInfo {
   void updateMethod(PsiMethod psiMethod);
 
   Collection<PsiMethod> getMethodsToPropagateParameters();
+
+  default boolean checkUnusedParameter() {
+    return false;
+  }
+
 }

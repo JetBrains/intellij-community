@@ -26,31 +26,22 @@ import com.intellij.util.Function;
 import com.intellij.util.PathUtil;
 import com.intellij.util.PathsList;
 import com.intellij.util.containers.ComparatorUtil;
-import static com.intellij.util.containers.ContainerUtil.map;
-import static com.intellij.util.containers.ContainerUtil.skipNulls;
 import com.intellij.util.containers.Convertor;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
+import static com.intellij.util.containers.ContainerUtil.map;
+import static com.intellij.util.containers.ContainerUtil.skipNulls;
+
 public class PathUtilEx {
   @NonNls private static final String IDEA_PREPEND_RTJAR = "idea.prepend.rtjar";
 
-  private static final Function<Module, Sdk> MODULE_JDK = new Function<Module, Sdk>() {
-    @Nullable
-    public Sdk fun(Module module) {
-      return ModuleRootManager.getInstance(module).getSdk();
-    }
-  };
-  private static final Convertor<Sdk, String> SDK_VERSION = new Convertor<Sdk, String>() {
-    public String convert(Sdk sdk) {
-      return sdk.getVersionString();
-    }
-  };
+  private static final Function<Module, Sdk> MODULE_JDK = module -> ModuleRootManager.getInstance(module).getSdk();
+  private static final Convertor<Sdk, String> SDK_VERSION = sdk -> sdk.getVersionString();
 
   private PathUtilEx() {
   }
@@ -74,7 +65,7 @@ public class PathUtilEx {
     return chooseJdk(project, Arrays.asList(ModuleManager.getInstance(project).getModules()));
   }
 
-  public static Sdk chooseJdk(Project project, Collection<Module> modules) {
+  public static Sdk chooseJdk(Project project, Collection<? extends Module> modules) {
     Sdk projectSdk = ProjectRootManager.getInstance(project).getProjectSdk();
     if (projectSdk != null) {
       return projectSdk;
@@ -82,7 +73,7 @@ public class PathUtilEx {
     return chooseJdk(modules);
   }
 
-  public static Sdk chooseJdk(Collection<Module> modules) {
+  public static Sdk chooseJdk(Collection<? extends Module> modules) {
     List<Sdk> sdks = skipNulls(map(skipNulls(modules), MODULE_JDK));
     if (sdks.isEmpty()) {
       return null;

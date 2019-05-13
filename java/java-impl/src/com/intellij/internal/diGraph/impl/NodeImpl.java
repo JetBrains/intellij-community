@@ -21,25 +21,18 @@ import com.intellij.internal.diGraph.analyzer.MarkedNode;
 import java.util.Iterator;
 import java.util.LinkedList;
 
-/**
- * Created by IntelliJ IDEA.
- * User: db
- * Date: 21.06.2003
- * Time: 23:35:24
- * To change this template use Options | File Templates.
- */
 public class NodeImpl implements MarkedNode {
   LinkedList<EdgeImpl> myIn;
   LinkedList<EdgeImpl> myOut;
 
   public NodeImpl() {
-    myIn = new LinkedList<EdgeImpl>();
-    myOut = new LinkedList<EdgeImpl>();
+    myIn = new LinkedList<>();
+    myOut = new LinkedList<>();
   }
 
   public NodeImpl(EdgeImpl[] in, EdgeImpl[] out) {
-    myIn = new LinkedList<EdgeImpl>();
-    myOut = new LinkedList<EdgeImpl>();
+    myIn = new LinkedList<>();
+    myOut = new LinkedList<>();
 
     for (int i = 0; i < (in == null ? 0 : in.length); i++) {
       myIn.add(in[i]);
@@ -53,33 +46,39 @@ public class NodeImpl implements MarkedNode {
   }
 
   public NodeImpl(LinkedList<EdgeImpl> in, LinkedList<EdgeImpl> out) {
-    myIn = in == null ? new LinkedList<EdgeImpl>() : in;
-    myOut = out == null ? new LinkedList<EdgeImpl>() : out;
+    myIn = in == null ? new LinkedList<>() : in;
+    myOut = out == null ? new LinkedList<>() : out;
 
     for (EdgeImpl aMyIn : myIn) aMyIn.myEnd = this;
     for (EdgeImpl aMyOut : myOut) aMyOut.myBeg = this;
   }
 
+  @Override
   public Iterator<EdgeImpl> inIterator() {
     return myIn.iterator();
   }
 
+  @Override
   public Iterator<EdgeImpl> outIterator() {
     return myOut.iterator();
   }
 
+  @Override
   public int inDeg() {
     return myIn.size();
   }
 
+  @Override
   public int outDeg() {
     return myOut.size();
   }
 
+  @Override
   public Mark getMark() {
     return null;
   }
 
+  @Override
   public void setMark(Mark x) {
 
   }

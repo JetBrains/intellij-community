@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,16 +17,19 @@
 package com.intellij.codeInsight.editorActions.wordSelection;
 
 import com.intellij.codeInsight.editorActions.ExtendWordSelectionHandlerBase;
+import com.intellij.codeInsight.editorActions.SelectWordUtil;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.fileTypes.impl.CustomSyntaxTableFileType;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiPlainText;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
@@ -37,13 +40,17 @@ public class NaturalLanguageTextSelectioner extends ExtendWordSelectionHandlerBa
   private static final Set<Character> SENTENCE_END = ContainerUtil.newTroveSet('.', '!', '?');
 
   @Override
-  public boolean canSelect(PsiElement e) {
-    return e instanceof PsiPlainText || e instanceof PsiComment;
+  public boolean canSelect(@NotNull PsiElement e) {
+    return (e instanceof PsiPlainText || e instanceof PsiComment) &&
+           !(e.getContainingFile().getFileType() instanceof CustomSyntaxTableFileType);
   }
 
   private static TextRange findParagraphRange(String text, int start, int end) {
     int paragraphStart = text.lastIndexOf("\n\n", start);
     int paragraphEnd = text.indexOf("\n\n", end);
+    if (paragraphStart >= paragraphEnd) {
+      return new TextRange(0, text.length());
+    }
     return new TextRange(paragraphStart >= 0 ? paragraphStart + 2 : 0, paragraphEnd < 0 ? text.length() : paragraphEnd);
   }
 
@@ -54,6 +61,7 @@ public class NaturalLanguageTextSelectioner extends ExtendWordSelectionHandlerBa
     if (prev < 0 || next < 0) {
       return null;
     }
+    if (StringUtil.contains(text, prev + 1, start, endChar) || StringUtil.contains(text, end, next, startChar)) return null;
     if (prev + 1 < start || next > end) {
       return new TextRange(prev + 1, next);
     }
@@ -61,16 +69,18 @@ public class NaturalLanguageTextSelectioner extends ExtendWordSelectionHandlerBa
     return new TextRange(prev, next + 1);
   }
 
+  @Nullable
   private static TextRange findSentenceRange(String editorText, int start, int end) {
     int sentenceStart = start;
 
     while (sentenceStart > 0) {
+      if (start - sentenceStart > 1000) return null;
       if (isSentenceEnd(editorText, sentenceStart - 1) || !isNatural(editorText.charAt(sentenceStart - 1))) {
         break;
       }
       sentenceStart--;
     }
-    while (Character.isWhitespace(editorText.charAt(sentenceStart))) {
+    while (sentenceStart < end && Character.isWhitespace(editorText.charAt(sentenceStart))) {
       sentenceStart++;
     }
 
@@ -78,6 +88,7 @@ public class NaturalLanguageTextSelectioner extends ExtendWordSelectionHandlerBa
 
     while (sentenceEnd < editorText.length()) {
       sentenceEnd++;
+      if (sentenceEnd - end > 1000) return null;
       if (isSentenceEnd(editorText, sentenceEnd - 1)) {
         break;
       }
@@ -108,24 +119,33 @@ public class NaturalLanguageTextSelectioner extends ExtendWordSelectionHandlerBa
   }
 
   @Override
-  public List<TextRange> select(PsiElement e, CharSequence editorText, int cursorOffset, Editor editor) {
+  public List<TextRange> select(@NotNull PsiElement e, @NotNull CharSequence editorText, int cursorOffset, @NotNull Editor editor) {
+    ArrayList<TextRange> result = new ArrayList<>();
+
+    addWordRange(editorText, cursorOffset, result);
+
     TextRange range = expandSelection(e, editorText, cursorOffset, cursorOffset);
-    if (range == null) {
-      return Collections.emptyList();
+    if (range != null) {
+      result.add(range);
+      while (true) {
+        TextRange next = expandSelection(e, editorText, range.getStartOffset(), range.getEndOffset());
+        if (next == null || range.contains(next)) {
+          break;
+        }
+        result.add(next);
+        range = next;
+      }
     }
 
-    ArrayList<TextRange> result = new ArrayList<TextRange>();
-    result.add(range);
-    while (true) {
-      TextRange next = expandSelection(e, editorText, range.getStartOffset(), range.getEndOffset());
-      if (next == null || range.contains(next)) {
-        break;
-      }
-      result.add(next);
-      range = next;
-    }
     return result;
  }
+
+  private static void addWordRange(CharSequence editorText, int cursorOffset, ArrayList<TextRange> result) {
+    SelectWordUtil.addWordSelection(false, editorText, cursorOffset, result,
+                                    ch -> Character.isJavaIdentifierPart(ch) || ch == '\'');
+    SelectWordUtil.addWordSelection(false, editorText, cursorOffset, result,
+                                    ch -> Character.isJavaIdentifierPart(ch) || ch == '\'' || ch == '-');
+  }
 
   @Nullable
   private static TextRange expandSelection(PsiElement e, CharSequence editorText, int selStart, int selEnd) {
@@ -140,6 +160,8 @@ public class NaturalLanguageTextSelectioner extends ExtendWordSelectionHandlerBa
     int end = selEnd - shift;
 
     TextRange best = findSentenceRange(elementText, start, end);
+    if (best == null) return null;
+
     best = narrowRange(best, findCustomRange(elementText, start, end, '\"', '\"'));
     best = narrowRange(best, findCustomRange(elementText, start, end, '(', ')'));
     best = narrowRange(best, findCustomRange(elementText, start, end, '<', '>'));

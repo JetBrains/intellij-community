@@ -16,10 +16,12 @@
 
 package com.intellij.execution.testframework.ui;
 
+import com.intellij.ui.components.panels.NonOpaquePanel;
+
 import javax.swing.*;
 import java.awt.*;
 
-public class SameHeightPanel extends JPanel {
+public class SameHeightPanel extends NonOpaquePanel {
   private final JComponent myOriginalHeightComponent;
 
   public SameHeightPanel(final LayoutManager layout, final JComponent originalHeightComponent) {
@@ -27,6 +29,7 @@ public class SameHeightPanel extends JPanel {
     myOriginalHeightComponent = originalHeightComponent;
   }
 
+  @Override
   public Dimension getPreferredSize() {
     final Dimension preferredSize = super.getPreferredSize();
     final int originalHeight = myOriginalHeightComponent.getPreferredSize().height;

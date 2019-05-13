@@ -1,0 +1,12 @@
+<html>
+<body>
+Reports fields of type <b>java.util.concurrent.atomic.AtomicLongFieldUpdater</b>,
+<b>java.util.concurrent.atomic.AtomicIntegerFieldUpdater</b> or <b>java.util.concurrent.atomic.AtomicReferenceFieldUpdater</b>
+that are not <b>static final</b>. Because only one atomic field updater is needed for updating a <b>volatile</b> field in all instances
+of a class, it can almost always be <b>static</b>.
+Making the updater <b>final</b>, allows the JVM to optimize access for improved performance.
+<!-- tooltip end -->
+<p>
+<small>New in 16</small>
+</body>
+</html>

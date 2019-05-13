@@ -1,8 +1,8 @@
-// "Create Constructor" "true"
+// "Create constructor" "true"
 class Test extends A{
 
     public Test(String a) {
-        <selection>super(a);    //To change body of overridden methods use File | Settings | File Templates.</selection>
+        <selection>super(a);</selection>
     }
 
     public void t() {

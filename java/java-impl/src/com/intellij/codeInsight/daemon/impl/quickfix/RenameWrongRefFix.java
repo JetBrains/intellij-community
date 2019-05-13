@@ -1,48 +1,30 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
-/*
- * Created by IntelliJ IDEA.
- * User: mike
- * Date: Aug 20, 2002
- * Time: 8:49:24 PM
- * To change template for new class use
- * Code Style | Class Templates options (Tools | IDE Options).
- */
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
-import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
-import com.intellij.codeInsight.template.*;
+import com.intellij.codeInsight.template.Template;
+import com.intellij.codeInsight.template.TemplateBuilderImpl;
+import com.intellij.codeInsight.template.TemplateManager;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
-import com.intellij.psi.scope.BaseScopeProcessor;
+import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.psi.util.PsiUtilCore;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.LinkedHashSet;
+import java.util.Set;
 
 public class RenameWrongRefFix implements IntentionAction {
   private final PsiReferenceExpression myRefExpr;
@@ -50,11 +32,11 @@ public class RenameWrongRefFix implements IntentionAction {
   @NonNls private static final String OTHER_VARIABLE_NAME = "OTHERVAR";
   private final boolean myUnresolvedOnly;
 
-  public RenameWrongRefFix(PsiReferenceExpression refExpr) {
+  public RenameWrongRefFix(@NotNull PsiReferenceExpression refExpr) {
     this(refExpr, false);
   }
 
-  public RenameWrongRefFix(PsiReferenceExpression refExpr, final boolean unresolvedOnly) {
+  public RenameWrongRefFix(@NotNull PsiReferenceExpression refExpr, final boolean unresolvedOnly) {
     myRefExpr = refExpr;
     myUnresolvedOnly = unresolvedOnly;
   }
@@ -73,7 +55,7 @@ public class RenameWrongRefFix implements IntentionAction {
 
   @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    if (!myRefExpr.isValid() || !myRefExpr.getManager().isInProject(myRefExpr)) return false;
+    if (!myRefExpr.isValid() || !BaseIntentionAction.canModify(myRefExpr)) return false;
     int offset = editor.getCaretModel().getOffset();
     PsiElement refName = myRefExpr.getReferenceNameElement();
     if (refName == null) return false;
@@ -86,55 +68,9 @@ public class RenameWrongRefFix implements IntentionAction {
     return !CreateFromUsageUtils.isValidReference(myRefExpr, myUnresolvedOnly);
   }
 
-  private class ReferenceNameExpression extends Expression {
-    class HammingComparator implements Comparator<LookupElement> {
-      @Override
-      public int compare(LookupElement lookupItem1, LookupElement lookupItem2) {
-        String s1 = lookupItem1.getLookupString();
-        String s2 = lookupItem2.getLookupString();
-        int diff1 = 0;
-        for (int i = 0; i < Math.min(s1.length(), myOldReferenceName.length()); i++) {
-          if (s1.charAt(i) != myOldReferenceName.charAt(i)) diff1++;
-        }
-        int diff2 = 0;
-        for (int i = 0; i < Math.min(s2.length(), myOldReferenceName.length()); i++) {
-          if (s2.charAt(i) != myOldReferenceName.charAt(i)) diff2++;
-        }
-        return diff1 - diff2;
-      }
-    }
-
-    ReferenceNameExpression(LookupElement[] items, String oldReferenceName) {
-      myItems = items;
-      myOldReferenceName = oldReferenceName;
-      Arrays.sort(myItems, new HammingComparator ());
-    }
-
-    LookupElement[] myItems;
-    private final String myOldReferenceName;
-
-    @Override
-    public Result calculateResult(ExpressionContext context) {
-      if (myItems == null || myItems.length == 0) {
-        return new TextResult(myOldReferenceName);
-      }
-      return new TextResult(myItems[0].getLookupString());
-    }
-
-    @Override
-    public Result calculateQuickResult(ExpressionContext context) {
-      return null;
-    }
-
-    @Override
-    public LookupElement[] calculateLookupItems(ExpressionContext context) {
-      if (myItems == null || myItems.length == 1) return null;
-      return myItems;
-    }
-  }
-
+  @NotNull
   private LookupElement[] collectItems() {
-    Set<LookupElement> items = new LinkedHashSet<LookupElement>();
+    Set<LookupElement> items = new LinkedHashSet<>();
     boolean qualified = myRefExpr.getQualifierExpression() != null;
 
     if (!qualified && !(myRefExpr.getParent() instanceof PsiMethodCallExpression)) {
@@ -143,10 +79,10 @@ public class RenameWrongRefFix implements IntentionAction {
         items.add(LookupElementBuilder.create(var.getName()));
       }
     } else {
-      class MyScopeProcessor extends BaseScopeProcessor {
-        ArrayList<PsiElement> myResult = new ArrayList<PsiElement>();
+      class MyScopeProcessor implements PsiScopeProcessor {
+        ArrayList<PsiElement> myResult = new ArrayList<>();
         boolean myFilterMethods;
-        boolean myFilterStatics = false;
+        boolean myFilterStatics;
 
         MyScopeProcessor(PsiReferenceExpression refExpression) {
           myFilterMethods = refExpression.getParent() instanceof PsiMethodCallExpression;
@@ -161,7 +97,7 @@ public class RenameWrongRefFix implements IntentionAction {
         }
 
         @Override
-        public boolean execute(@NotNull PsiElement element, ResolveState state) {
+        public boolean execute(@NotNull PsiElement element, @NotNull ResolveState state) {
           if (element instanceof PsiNamedElement
               && element instanceof PsiModifierListOwner
               && myFilterMethods == element instanceof PsiMethod) {
@@ -177,7 +113,7 @@ public class RenameWrongRefFix implements IntentionAction {
         }
       }
 
-      items.add(LookupElementBuilder.create(myRefExpr.getReferenceName()));
+      if (!ApplicationManager.getApplication().isUnitTestMode()) items.add(LookupElementBuilder.create(myRefExpr.getReferenceName()));
       MyScopeProcessor processor = new MyScopeProcessor(myRefExpr);
       myRefExpr.processVariants(processor);
       PsiElement[] variants = processor.getVariants();
@@ -186,12 +122,11 @@ public class RenameWrongRefFix implements IntentionAction {
       }
     }
 
-    return items.toArray(new LookupElement[items.size()]);
+    return items.toArray(LookupElement.EMPTY_ARRAY);
   }
 
   @Override
   public void invoke(@NotNull Project project, final Editor editor, PsiFile file) {
-    if (!CodeInsightUtilBase.prepareFileForWrite(file)) return;
     PsiReferenceExpression[] refs = CreateFromUsageUtils.collectExpressions(myRefExpr, PsiMember.class, PsiFile.class);
     PsiElement element = PsiTreeUtil.getParentOfType(myRefExpr, PsiMember.class, PsiFile.class);
     LookupElement[] items = collectItems();

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,13 +14,17 @@
  * limitations under the License.
  */
 package org.jetbrains.plugins.groovy.lang.actions
+
+import com.intellij.application.options.CodeStyle
 import com.intellij.openapi.actionSystem.IdeActions
+import com.intellij.psi.codeStyle.CommonCodeStyleSettings
 import org.jetbrains.plugins.groovy.GroovyFileType
+import org.jetbrains.plugins.groovy.GroovyLanguage
+
 /**
  * @author Max Medvedev
  */
 class JoinLineTest extends GroovyEditorActionTestBase {
-  final String basePath = null
 
   void testVariable() {
     doTest('''\
@@ -31,7 +35,7 @@ def a = 4;
 ''')
   }
 
-  void testVar2()  {
+  void testVar2() {
     doTest('''\
 d<caret>ef a, b;
 a = 4
@@ -49,7 +53,7 @@ def a = 4
 ''')
   }
 
-  void testVar4()  {
+  void testVar4() {
     doTest('''\
 d<caret>ef a, b
 a = 4
@@ -102,11 +106,31 @@ print 2; <caret>print 2
 ''')
   }
 
+  void testFor() {
+    doTest('''\
+for (;a<caret>;) {
+  print 2
+} ''', '''\
+for (;a;) <caret>print 2''')
+  }
+
+  void testIfWithForceBraces() {
+    def settings = CodeStyle.getSettings(getProject()).getCommonSettings(GroovyLanguage.INSTANCE)
+      settings.IF_BRACE_FORCE = CommonCodeStyleSettings.FORCE_BRACES_ALWAYS
+      doTest('''\
+if (a)
+  print 2
+''', '''\
+if (a) <caret>print 2
+''')
+
+  }
+
 
   private void doTest(String before, String after) {
-    myFixture.configureByText(GroovyFileType.GROOVY_FILE_TYPE, before);
-    performAction(IdeActions.ACTION_EDITOR_JOIN_LINES);
-    myFixture.checkResult(after);
+    myFixture.configureByText(GroovyFileType.GROOVY_FILE_TYPE, before)
+    performAction(IdeActions.ACTION_EDITOR_JOIN_LINES)
+    myFixture.checkResult(after)
 
   }
 }

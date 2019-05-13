@@ -37,16 +37,18 @@ public class MavenPluginGoalConverter extends ResolvingConverter<String> impleme
     return getVariants(context).contains(s) ? s : null;
   }
 
+  @Override
   public String toString(@Nullable String s, ConvertContext context) {
     return s;
   }
 
+  @Override
   @NotNull
   public Collection<String> getVariants(ConvertContext context) {
     MavenDomPluginModel model = MavenPluginDomUtil.getMavenPluginModel(context.getInvocationElement());
     if (model == null) return Collections.emptyList();
 
-    List<String> result = new ArrayList<String>();
+    List<String> result = new ArrayList<>();
     for (MavenDomMojo each : model.getMojos().getMojos()) {
       String goal = each.getGoal().getStringValue();
       if (goal != null) result.add(goal);

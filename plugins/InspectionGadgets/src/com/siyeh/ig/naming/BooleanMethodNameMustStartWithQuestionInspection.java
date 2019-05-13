@@ -43,48 +43,20 @@ import java.util.List;
 
 public class BooleanMethodNameMustStartWithQuestionInspection extends BaseInspection {
 
-  @SuppressWarnings({"PublicField"})
+  public static final String DEFAULT_QUESTION_WORDS =
+    "add,are,can,check,contains,could,endsWith,equals,has,is,matches,must,put,remove,shall,should,startsWith,was,were,will,would";
+  @SuppressWarnings("PublicField")
   public boolean ignoreBooleanMethods = false;
-
-  @SuppressWarnings({"PublicField"})
+  @SuppressWarnings("PublicField")
   public boolean ignoreInAnnotationInterface = true;
-
-  @SuppressWarnings({"PublicField"})
+  @SuppressWarnings("PublicField")
   public boolean onlyWarnOnBaseMethods = true;
-
-  /**
-   * @noinspection PublicField
-   */
-  @NonNls public String questionString = "is,can,has,should,could,will,shall,check,contains,equals,add,put,remove,startsWith,endsWith";
-
+  @SuppressWarnings("PublicField")
+  @NonNls public String questionString = DEFAULT_QUESTION_WORDS;
   List<String> questionList = new ArrayList(32);
 
   public BooleanMethodNameMustStartWithQuestionInspection() {
-    parseString(questionString, questionList);
-  }
-
-  @Override
-  @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("boolean.method.name.must.start.with.question.display.name");
-  }
-
-  @Override
-  @NotNull
-  public String buildErrorString(Object... infos) {
-    return InspectionGadgetsBundle.message("boolean.method.name.must.start.with.question.problem.descriptor");
-  }
-
-  @Override
-  public void readSettings(Element element) throws InvalidDataException {
-    super.readSettings(element);
-    parseString(questionString, questionList);
-  }
-
-  @Override
-  public void writeSettings(Element element) throws WriteExternalException {
-    questionString = formatString(questionList);
-    super.writeSettings(element);
+    parseString(this.questionString, this.questionList);
   }
 
   @Override
@@ -123,6 +95,30 @@ public class BooleanMethodNameMustStartWithQuestionInspection extends BaseInspec
   @Override
   protected InspectionGadgetsFix buildFix(Object... infos) {
     return new RenameFix();
+  }
+
+  @Override
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message("boolean.method.name.must.start.with.question.display.name");
+  }
+
+  @Override
+  @NotNull
+  public String buildErrorString(Object... infos) {
+    return InspectionGadgetsBundle.message("boolean.method.name.must.start.with.question.problem.descriptor");
+  }
+
+  @Override
+  public void readSettings(@NotNull Element element) throws InvalidDataException {
+    super.readSettings(element);
+    parseString(questionString, questionList);
+  }
+
+  @Override
+  public void writeSettings(@NotNull Element element) throws WriteExternalException {
+    questionString = formatString(questionList);
+    super.writeSettings(element);
   }
 
   @Override

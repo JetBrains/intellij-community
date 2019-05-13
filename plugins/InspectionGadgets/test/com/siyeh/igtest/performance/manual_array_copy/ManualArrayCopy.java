@@ -7,19 +7,19 @@ public class ManualArrayCopy
     {
         final int[] q = new int[3];
         final int[] a = new int[3];
-        for(int i = 0; i < a.length; i++)
+        <warning descr="Manual array copy">for</warning>(int i = 0; i < a.length; i++)
             q[i] = a[i];
-        for(int i = 0; i < a.length; i++)
+        <warning descr="Manual array copy">for</warning>(int i = 0; i < a.length; i++)
             q[i+3] = a[i+4];
-        for(int i = 0; i < a.length; i++)
+        <warning descr="Manual array copy">for</warning>(int i = 0; i < a.length; i++)
         {
             q[i] = a[i];
         }
-        for(int i = 0; i < a.length; i++)
+        <warning descr="Manual array copy">for</warning>(int i = 0; i < a.length; i++)
         {
             q[i+3] = a[i];
         }
-        for(int i = 1; i < a.length; i++)
+        <warning descr="Manual array copy">for</warning>(int i = 1; i < a.length; i++)
         {
             q[2+i] = a[i-1];
         }
@@ -33,7 +33,7 @@ public class ManualArrayCopy
         int[] array = new int[10];
         int[] new_array = new int[14];
         for (int i=0;i<array.length;i++) array[i] = i;
-        for (int i = 0; i < array.length; i++)
+        <warning descr="Manual array copy">for</warning> (int i = 0; i < array.length; i++)
         {
             new_array[added_index + i] = array[i];
         }
@@ -47,7 +47,7 @@ public class ManualArrayCopy
 
     static void foobarred(int[] a, int[] b) {
         int x = 3;
-        for(int i = x ; i < a.length; i++) {
+        <warning descr="Manual array copy">for</warning>(int i = x ; i < a.length; i++) {
             b[i - x] = a[i];
         }
     }
@@ -63,7 +63,7 @@ public class ManualArrayCopy
     void boomboom() {
         Object target[] = new Object[10];
         String source[] = new String[10];
-        for (int k = 0; k < 5; k++) { // can be converted to System.arraycopy()
+        <warning descr="Manual array copy">for</warning> (int k = 0; k < 5; k++) { // can be converted to System.arraycopy()
             target[k] = source[k];
         }
     }
@@ -84,10 +84,17 @@ public class ManualArrayCopy
     void isntThatCute() {
         String[] data = new String[100];
         int index = 10;
-        for (int i = data.length - 1; i >= 0; i--)
+        <warning descr="Manual array copy">for</warning> (int i = data.length - 1; i >= 0; i--)
         {
             data[i] = data[i - 1];
         }
 
+    }
+
+    void stepOfLowestCommonAncestor(int[][] array) {
+        int n = array.length;
+        int v = 1;
+        for (int i = 1; i <= n; i++)
+            array[v][i] = array[array[v][i - 1]][i - 1];
     }
 }

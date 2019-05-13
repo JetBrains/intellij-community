@@ -1,0 +1,18 @@
+{
+  "type": "object",
+
+  "properties": {
+    "a": {
+      "type": "object"
+    }
+  },
+  "patternProperties": {
+    "aa": {
+      "type": "object" 
+    },
+    "bb": {
+      "$ref": "test027.json#/aa"
+    }
+  }
+}
+ 

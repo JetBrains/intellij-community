@@ -3,7 +3,7 @@ class Test {
         Inner inner = new Inner().invoke();
         int i = inner.getI();
         int j = inner.getJ();
-        
+
         System.out.println(MessageFormat.format("i: {0}", i));
         System.out.println(MessageFormat.format("k: {0}", j));
     }

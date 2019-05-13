@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -132,14 +132,17 @@ public class GenerateSchemaFromInstanceDocumentDialog extends DialogWrapper {
 
     if (component instanceof JTextField) {
       ((JTextField)component).getDocument().addDocumentListener(new DocumentListener() {
+        @Override
         public void insertUpdate(DocumentEvent e) {
           validateData();
         }
 
+        @Override
         public void removeUpdate(DocumentEvent e) {
           validateData();
         }
 
+        @Override
         public void changedUpdate(DocumentEvent e) {
           validateData();
         }
@@ -148,6 +151,7 @@ public class GenerateSchemaFromInstanceDocumentDialog extends DialogWrapper {
       JComboBox jComboBox = ((JComboBox) component);
 
       jComboBox.addActionListener(new ActionListener() {
+        @Override
         public void actionPerformed(ActionEvent e) {
           validateData();
         }
@@ -155,6 +159,7 @@ public class GenerateSchemaFromInstanceDocumentDialog extends DialogWrapper {
 
       if (jComboBox.isEditable()) {
         jComboBox.getEditor().getEditorComponent().addKeyListener(new KeyAdapter() {
+          @Override
           public void keyTyped(KeyEvent e) {
             validateData();
           }
@@ -179,6 +184,7 @@ public class GenerateSchemaFromInstanceDocumentDialog extends DialogWrapper {
     return status;
   }
 
+  @Override
   protected JComponent createCenterPanel() {
     return panel;
   }
@@ -217,6 +223,7 @@ public class GenerateSchemaFromInstanceDocumentDialog extends DialogWrapper {
     return null;
   }
 
+  @Override
   @NotNull
   protected String getHelpId() {
     return "webservices.GenerateSchemaFromInstanceDocument";

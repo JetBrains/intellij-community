@@ -1,0 +1,58 @@
+<component name="libraryTable">
+  <library name="KotlinPlugin">
+    <CLASSES>
+      <root url="jar://$PROJECT_DIR$/build/dependencies/build/kotlin/Kotlin/lib/allopen-ide-plugin.jar!/" />
+      <root url="jar://$PROJECT_DIR$/build/dependencies/build/kotlin/Kotlin/lib/android-extensions-compiler.jar!/" />
+      <root url="jar://$PROJECT_DIR$/build/dependencies/build/kotlin/Kotlin/lib/android-extensions-ide.jar!/" />
+      <root url="jar://$PROJECT_DIR$/build/dependencies/build/kotlin/Kotlin/lib/android-lint.jar!/" />
+      <root url="jar://$PROJECT_DIR$/build/dependencies/build/kotlin/Kotlin/lib/javaslang-2.0.6.jar!/" />
+      <root url="jar://$PROJECT_DIR$/build/dependencies/build/kotlin/Kotlin/lib/kotlin-gradle-tooling.jar!/" />
+      <root url="jar://$PROJECT_DIR$/build/dependencies/build/kotlin/Kotlin/lib/kotlin-plugin.jar!/" />
+      <root url="jar://$PROJECT_DIR$/build/dependencies/build/kotlin/Kotlin/lib/kotlin-reflect.jar!/" />
+      <root url="jar://$PROJECT_DIR$/build/dependencies/build/kotlin/Kotlin/lib/kotlin-script-runtime.jar!/" />
+      <root url="jar://$PROJECT_DIR$/build/dependencies/build/kotlin/Kotlin/lib/noarg-ide-plugin.jar!/" />
+      <root url="jar://$PROJECT_DIR$/build/dependencies/build/kotlin/Kotlin/lib/sam-with-receiver-ide-plugin.jar!/" />
+      <root url="jar://$PROJECT_DIR$/build/dependencies/build/kotlin/Kotlin/lib/javax.inject-1.jar!/" />
+      <root url="jar://$PROJECT_DIR$/build/dependencies/build/kotlin/Kotlin/lib/kapt3-idea.jar!/" />
+      <root url="jar://$PROJECT_DIR$/build/dependencies/build/kotlin/Kotlin/lib/kotlin-allopen-compiler-plugin.jar!/" />
+      <root url="jar://$PROJECT_DIR$/build/dependencies/build/kotlin/Kotlin/lib/kotlin-noarg-compiler-plugin.jar!/" />
+      <root url="jar://$PROJECT_DIR$/build/dependencies/build/kotlin/Kotlin/lib/kotlin-sam-with-receiver-compiler-plugin.jar!/" />
+      <root url="jar://$PROJECT_DIR$/build/dependencies/build/kotlin/Kotlin/lib/jvm-ide.jar!/" />
+      <root url="jar://$PROJECT_DIR$/build/dependencies/build/kotlin/Kotlin/lib/maven-ide.jar!/" />
+      <root url="jar://$PROJECT_DIR$/build/dependencies/build/kotlin/Kotlin/lib/android-ide.jar!/" />
+      <root url="jar://$PROJECT_DIR$/build/dependencies/build/kotlin/Kotlin/lib/jps-common-ide.jar!/" />
+      <root url="jar://$PROJECT_DIR$/build/dependencies/build/kotlin/Kotlin/lib/kotlinx-serialization-compiler-plugin.jar!/" />
+      <root url="jar://$PROJECT_DIR$/build/dependencies/build/kotlin/Kotlin/lib/kotlinx-serialization-ide-plugin.jar!/" />
+      <root url="jar://$PROJECT_DIR$/build/dependencies/build/kotlin/Kotlin/lib/kotlinx-coroutines-core-0.26.1-eap13.jar!/" />
+      <root url="jar://$PROJECT_DIR$/build/dependencies/build/kotlin/Kotlin/lib/kotlinx-coroutines-jdk8-0.26.1-eap13.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+    <excluded>
+      <root url="jar://$PROJECT_DIR$/build/dependencies/build/kotlin/Kotlin/lib/allopen-ide-plugin.jar!/" />
+      <root url="jar://$PROJECT_DIR$/build/dependencies/build/kotlin/Kotlin/lib/android-extensions-compiler.jar!/" />
+      <root url="jar://$PROJECT_DIR$/build/dependencies/build/kotlin/Kotlin/lib/android-extensions-ide.jar!/" />
+      <root url="jar://$PROJECT_DIR$/build/dependencies/build/kotlin/Kotlin/lib/android-lint.jar!/" />
+      <root url="jar://$PROJECT_DIR$/build/dependencies/build/kotlin/Kotlin/lib/javaslang-2.0.6.jar!/" />
+      <root url="jar://$PROJECT_DIR$/build/dependencies/build/kotlin/Kotlin/lib/kotlin-gradle-tooling.jar!/" />
+      <root url="jar://$PROJECT_DIR$/build/dependencies/build/kotlin/Kotlin/lib/kotlin-plugin.jar!/" />
+      <root url="jar://$PROJECT_DIR$/build/dependencies/build/kotlin/Kotlin/lib/kotlin-reflect.jar!/" />
+      <root url="jar://$PROJECT_DIR$/build/dependencies/build/kotlin/Kotlin/lib/kotlin-script-runtime.jar!/" />
+      <root url="jar://$PROJECT_DIR$/build/dependencies/build/kotlin/Kotlin/lib/noarg-ide-plugin.jar!/" />
+      <root url="jar://$PROJECT_DIR$/build/dependencies/build/kotlin/Kotlin/lib/sam-with-receiver-ide-plugin.jar!/" />
+      <root url="jar://$PROJECT_DIR$/build/dependencies/build/kotlin/Kotlin/lib/javax.inject-1.jar!/" />
+      <root url="jar://$PROJECT_DIR$/build/dependencies/build/kotlin/Kotlin/lib/kapt3-idea.jar!/" />
+      <root url="jar://$PROJECT_DIR$/build/dependencies/build/kotlin/Kotlin/lib/kotlin-allopen-compiler-plugin.jar!/" />
+      <root url="jar://$PROJECT_DIR$/build/dependencies/build/kotlin/Kotlin/lib/kotlin-noarg-compiler-plugin.jar!/" />
+      <root url="jar://$PROJECT_DIR$/build/dependencies/build/kotlin/Kotlin/lib/kotlin-sam-with-receiver-compiler-plugin.jar!/" />
+      <root url="jar://$PROJECT_DIR$/build/dependencies/build/kotlin/Kotlin/lib/jvm-ide.jar!/" />
+      <root url="jar://$PROJECT_DIR$/build/dependencies/build/kotlin/Kotlin/lib/maven-ide.jar!/" />
+      <root url="jar://$PROJECT_DIR$/build/dependencies/build/kotlin/Kotlin/lib/android-ide.jar!/" />
+      <root url="jar://$PROJECT_DIR$/build/dependencies/build/kotlin/Kotlin/lib/jps-common-ide.jar!/" />
+      <root url="jar://$PROJECT_DIR$/build/dependencies/build/kotlin/Kotlin/lib/kotlinx-serialization-compiler-plugin.jar!/" />
+      <root url="jar://$PROJECT_DIR$/build/dependencies/build/kotlin/Kotlin/lib/kotlinx-serialization-ide-plugin.jar!/" />
+      <root url="jar://$PROJECT_DIR$/build/dependencies/build/kotlin/Kotlin/lib/kotlinx-coroutines-core-0.26.1-eap13.jar!/" />
+      <root url="jar://$PROJECT_DIR$/build/dependencies/build/kotlin/Kotlin/lib/kotlinx-coroutines-jdk8-0.26.1-eap13.jar!/" />
+    </excluded>
+  </library>
+</component>

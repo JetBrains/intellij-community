@@ -1,23 +1,9 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.ClassExtension;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.diagnostic.Logger;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -36,28 +22,34 @@ public class ElementManipulators extends ClassExtension<ElementManipulator> {
     super(EP_NAME);
   }
 
+  /**
+   * @see #getNotNullManipulator(PsiElement)
+   */
   public static <T extends PsiElement> ElementManipulator<T> getManipulator(@NotNull T element) {
     //noinspection unchecked
     return INSTANCE.forClass(element.getClass());
   }
 
-  public static int getOffsetInElement(final PsiElement element) {
+  public static int getOffsetInElement(@NotNull PsiElement element) {
     final ElementManipulator<PsiElement> manipulator = getNotNullManipulator(element);
-    return manipulator.getRangeInElement(element).getStartOffset();
+    return getManipulatorRange(manipulator, element).getStartOffset();
   }
 
-  private static <T extends PsiElement> ElementManipulator<T> getNotNullManipulator(T element) {
+  @NotNull
+  public static <T extends PsiElement> ElementManipulator<T> getNotNullManipulator(@NotNull T element) {
     final ElementManipulator<T> manipulator = getManipulator(element);
     LOG.assertTrue(manipulator != null, element.getClass().getName());
     return manipulator;
   }
 
-  public static TextRange getValueTextRange(final PsiElement element) {
+  @NotNull
+  public static TextRange getValueTextRange(@NotNull PsiElement element) {
     final ElementManipulator<PsiElement> manipulator = getManipulator(element);
-    return manipulator == null ? TextRange.from(0, element.getTextLength()) : manipulator.getRangeInElement(element);
+    return manipulator == null ? TextRange.from(0, element.getTextLength()) : getManipulatorRange(manipulator, element);
   }
 
-  public static String getValueText(final PsiElement element) {
+  @NotNull
+  public static String getValueText(@NotNull PsiElement element) {
     final TextRange valueTextRange = getValueTextRange(element);
     if (valueTextRange.isEmpty()) return "";
 
@@ -69,8 +61,21 @@ public class ElementManipulators extends ClassExtension<ElementManipulator> {
     return valueTextRange.substring(text);
   }
 
-  public static <T extends PsiElement> T handleContentChange(T element, String text) {
+  public static <T extends PsiElement> T handleContentChange(@NotNull T element, String text) {
     final ElementManipulator<T> manipulator = getNotNullManipulator(element);
     return manipulator.handleContentChange(element, text);
+  }
+
+  @NotNull
+  private static TextRange getManipulatorRange(@NotNull ElementManipulator<? super PsiElement> manipulator, @NotNull PsiElement element) {
+    TextRange rangeInElement = manipulator.getRangeInElement(element);
+    TextRange elementRange = TextRange.from(0, element.getTextLength());
+    if (!elementRange.contains(rangeInElement)) {
+      LOG.error("Element range: " + elementRange + ";\n" +
+                "manipulator range: " + rangeInElement + ";\n" +
+                "element: " + element.getClass() + ";\n" +
+                "manipulator: " + manipulator.getClass() + ".");
+    }
+    return rangeInElement;
   }
 }

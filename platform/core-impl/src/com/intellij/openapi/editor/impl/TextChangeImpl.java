@@ -25,7 +25,6 @@ import org.jetbrains.annotations.NotNull;
  * Default {@link TextChange} implementation with mutable state.
  *
  * @author Denis Zhdanov
- * @since Jul 7, 2010 5:24:06 PM
  */
 public class TextChangeImpl implements TextChange {
 
@@ -36,8 +35,8 @@ public class TextChangeImpl implements TextChange {
   private int    myEnd;
 
   /**
-   * Shorthand for creating change object with the given arguments where <code>'end index'</code> has the same value as
-   * <code>'start index'</code>.
+   * Shorthand for creating change object with the given arguments where {@code 'end index'} has the same value as
+   * {@code 'start index'}.
    *
    * @param text      text affected by the current change
    * @param start     start index (inclusive) of text range affected by the change encapsulated by the current object
@@ -48,13 +47,13 @@ public class TextChangeImpl implements TextChange {
   }
 
   /**
-   * Creates new <code>TextChange</code> object with the given arguments. It encapsulates information about the change that
+   * Creates new {@code TextChange} object with the given arguments. It encapsulates information about the change that
    * may be applied to the target document.
    *
    * @param text      text that is introduced by the current change
    * @param start     start index of the target document location where current change is to be applied
    * @param end       end index of the target document where current change is to be applied, i.e. it's assumed that current text
-   *                  change appliance to particular document causes replacement of its original text at <code>[start; end)</code>
+   *                  change appliance to particular document causes replacement of its original text at {@code [start; end)}
    *                  interval by the text encapsulated by the current change. I.e. original text is replaced by the new one
    * @throws IllegalArgumentException     if given start or end index in invalid or they are inconsistent to each other
    */
@@ -130,8 +129,8 @@ public class TextChangeImpl implements TextChange {
   /**
    * Difference in document symbols number after current change appliance.
    * <p/>
-   * <b>Note:</b> returned number may be either positive or not. For example it may be negative for <code>'remove'</code>
-   * or <code>'replace'</code> changes (number of text symbols is less than number of symbols at target change interval)
+   * <b>Note:</b> returned number may be either positive or not. For example it may be negative for {@code 'remove'}
+   * or {@code 'replace'} changes (number of text symbols is less than number of symbols at target change interval)
    *
    * @return    difference in document symbols number after current change appliance
    */
@@ -165,7 +164,7 @@ public class TextChangeImpl implements TextChange {
    * Shorthand for calling {@link #isWithinBounds(int, int)} with zero start offset and given length as and end offset
    * 
    * @param length  target length
-   * @return        <code>true</code> if current change is within the target bounds; <code>false</code> otherwise
+   * @return        {@code true} if current change is within the target bounds; {@code false} otherwise
    */
   public boolean isWithinBounds(int length) {
     return isWithinBounds(0, length);
@@ -176,7 +175,7 @@ public class TextChangeImpl implements TextChange {
    * 
    * @param start  target bounds start offset (inclusive)
    * @param end    target bounds end offset (exclusive)
-   * @return       <code>true</code> if current change is within the target bounds; <code>false</code> otherwise 
+   * @return       {@code true} if current change is within the target bounds; {@code false} otherwise
    */
   public boolean isWithinBounds(int start, int end) {
     return myStart >= start && myEnd <= end && myStart <= myEnd;

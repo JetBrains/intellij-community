@@ -24,7 +24,6 @@ import org.jetbrains.annotations.NotNull;
  * This interface is assumed to define general contract for Emacs-like functionality.
  * 
  * @author Denis Zhdanov
- * @since 4/11/11 1:56 PM
  */
 public interface EmacsProcessingHandler {
 
@@ -44,7 +43,7 @@ public interface EmacsProcessingHandler {
   }
 
   /**
-   * Emacs handles <code>Tab</code> pressing as
+   * Emacs handles {@code Tab} pressing as
    * <a href="http://www.gnu.org/software/emacs/manual/html_node/emacs/Basic-Indent.html#Basic-Indent">'auto indent line'</a>
    * most of the time. However, there are extensions to this like <a href="https://launchpad.net/python-mode">python-mode</a>
    * that changes indentation level of the current line (makes it belong to the other code block).

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,122 +16,189 @@
 
 package com.intellij.openapi.roots.impl;
 
-import com.intellij.openapi.file.exclude.ProjectFileExclusionManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.roots.ContentIterator;
-import com.intellij.openapi.roots.ModuleFileIndex;
-import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.roots.OrderEntry;
-import com.intellij.openapi.vfs.VfsUtilCore;
+import com.intellij.openapi.roots.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileFilter;
+import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 
 import java.util.Collections;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
 
-public class ModuleFileIndexImpl implements ModuleFileIndex {
+public class ModuleFileIndexImpl extends FileIndexBase implements ModuleFileIndex {
   private final Module myModule;
-  private final FileTypeRegistry myFileTypeRegistry;
-  private final DirectoryIndex myDirectoryIndex;
-  private final ContentFilter myContentFilter;
-  private final ProjectFileExclusionManager myExclusionManager;
 
   public ModuleFileIndexImpl(Module module, DirectoryIndex directoryIndex) {
+    super(directoryIndex, FileTypeRegistry.getInstance());
     myModule = module;
-    myDirectoryIndex = directoryIndex;
-    myFileTypeRegistry = FileTypeRegistry.getInstance();
-
-    myContentFilter = new ContentFilter();
-    myExclusionManager = ProjectFileExclusionManager.SERVICE.getInstance(module.getProject());
   }
 
   @Override
-  public boolean iterateContent(@NotNull ContentIterator iterator) {
-    VirtualFile[] contentRoots = ModuleRootManager.getInstance(myModule).getContentRoots();
-    for (VirtualFile contentRoot : contentRoots) {
-      VirtualFile parent = contentRoot.getParent();
-      if (parent != null) {
-        DirectoryInfo parentInfo = myDirectoryIndex.getInfoForDirectory(parent);
-        if (parentInfo != null && myModule.equals(parentInfo.getModule())) continue; // inner content - skip it
+  public boolean iterateContent(@NotNull ContentIterator processor, @Nullable VirtualFileFilter filter) {
+    final Set<VirtualFile> contentRoots = ReadAction.compute(() -> {
+      if (myModule.isDisposed()) return Collections.emptySet();
+
+      Set<VirtualFile> result = new LinkedHashSet<>();
+      VirtualFile[][] allRoots = getModuleContentAndSourceRoots(myModule);
+      for (VirtualFile[] roots : allRoots) {
+        for (VirtualFile root : roots) {
+          DirectoryInfo info = getInfoForFileOrDirectory(root);
+          if (!info.isInProject(root)) continue;
+
+          VirtualFile parent = root.getParent();
+          if (parent != null) {
+            DirectoryInfo parentInfo = myDirectoryIndex.getInfoForFile(parent);
+            if (parentInfo.isInProject(parent) && myModule.equals(parentInfo.getModule())) continue; // inner content - skip it
+          }
+          result.add(root);
+        }
       }
 
-      boolean finished = VfsUtilCore.iterateChildrenRecursively(contentRoot, myContentFilter, iterator);
-      if (!finished) return false;
+      return result;
+    });
+    for (VirtualFile contentRoot : contentRoots) {
+      if (!iterateContentUnderDirectory(contentRoot, processor, filter)) {
+        return false;
+      }
     }
-
     return true;
   }
 
   @Override
-  public boolean iterateContentUnderDirectory(@NotNull VirtualFile dir, @NotNull ContentIterator iterator) {
-    return VfsUtilCore.iterateChildrenRecursively(dir, myContentFilter, iterator);
-  }
-
-  @Override
-  public boolean isContentSourceFile(@NotNull VirtualFile file) {
-    return !file.isDirectory()
-           && !myFileTypeRegistry.isFileIgnored(file)
-           && isInSourceContent(file);
-  }
-
-  @Override
   public boolean isInContent(@NotNull VirtualFile fileOrDir) {
-    DirectoryInfo info = ProjectFileIndexImpl.getInfoForFileOrDirectory(fileOrDir, myDirectoryIndex);
-    return info != null && myModule.equals(info.getModule());
+    DirectoryInfo info = getInfoForFileOrDirectory(fileOrDir);
+    return info.isInProject(fileOrDir) && myModule.equals(info.getModule());
   }
 
   @Override
   public boolean isInSourceContent(@NotNull VirtualFile fileOrDir) {
-    if (fileOrDir.isDirectory()) {
-      DirectoryInfo info = myDirectoryIndex.getInfoForDirectory(fileOrDir);
-      return info != null && info.isInModuleSource() && myModule.equals(info.getModule());
-    }
-    else {
-      VirtualFile parent = fileOrDir.getParent();
-      return parent != null && isInSourceContent(parent);
-    }
+    DirectoryInfo info = getInfoForFileOrDirectory(fileOrDir);
+    return info.isInModuleSource(fileOrDir) && myModule.equals(info.getModule());
   }
 
   @Override
   @NotNull
   public List<OrderEntry> getOrderEntriesForFile(@NotNull VirtualFile fileOrDir) {
-    DirectoryInfo info = ProjectFileIndexImpl.getInfoForFileOrDirectory(fileOrDir, myDirectoryIndex);
-    if (info == null) return Collections.emptyList();
-    return info.findAllOrderEntriesWithOwnerModule(myModule);
+    return findAllOrderEntriesWithOwnerModule(myModule, myDirectoryIndex.getOrderEntries(getInfoForFileOrDirectory(fileOrDir)));
   }
 
   @Override
   public OrderEntry getOrderEntryForFile(@NotNull VirtualFile fileOrDir) {
-    DirectoryInfo info = ProjectFileIndexImpl.getInfoForFileOrDirectory(fileOrDir, myDirectoryIndex);
-    if (info == null) return null;
-    return info.findOrderEntryWithOwnerModule(myModule);
+    return findOrderEntryWithOwnerModule(myModule, myDirectoryIndex.getOrderEntries(getInfoForFileOrDirectory(fileOrDir)));
   }
 
   @Override
   public boolean isInTestSourceContent(@NotNull VirtualFile fileOrDir) {
-    if (fileOrDir.isDirectory()) {
-      DirectoryInfo info = myDirectoryIndex.getInfoForDirectory(fileOrDir);
-      return info != null && info.isInModuleSource() && info.isTestSource() && myModule.equals(info.getModule());
-    }
-    else {
-      VirtualFile parent = fileOrDir.getParent();
-      return parent != null && isInTestSourceContent(parent);
-    }
+    DirectoryInfo info = getInfoForFileOrDirectory(fileOrDir);
+    return info.isInModuleSource(fileOrDir) && myModule.equals(info.getModule()) && isTestSourcesRoot(info);
   }
 
-  private class ContentFilter implements VirtualFileFilter {
+  @Override
+  public boolean isUnderSourceRootOfType(@NotNull VirtualFile fileOrDir, @NotNull Set<? extends JpsModuleSourceRootType<?>> rootTypes) {
+    DirectoryInfo info = getInfoForFileOrDirectory(fileOrDir);
+    return info.isInModuleSource(fileOrDir) && myModule.equals(info.getModule()) && rootTypes.contains(myDirectoryIndex.getSourceRootType(info));
+  }
+
+  @Override
+  protected boolean isScopeDisposed() {
+    return myModule.isDisposed();
+  }
+
+  @Nullable
+  public static OrderEntry findOrderEntryWithOwnerModule(@NotNull Module ownerModule, @NotNull List<? extends OrderEntry> orderEntries) {
+    if (orderEntries.size() < 10) {
+      for (OrderEntry orderEntry : orderEntries) {
+        if (orderEntry.getOwnerModule() == ownerModule) {
+          return orderEntry;
+        }
+      }
+      return null;
+    }
+    int index = Collections.binarySearch(orderEntries, new FakeOrderEntry(ownerModule), RootIndex.BY_OWNER_MODULE);
+    return index < 0 ? null : orderEntries.get(index);
+  }
+
+  @NotNull
+  private static List<OrderEntry> findAllOrderEntriesWithOwnerModule(@NotNull Module ownerModule, @NotNull List<? extends OrderEntry> entries) {
+    if (entries.isEmpty()) return Collections.emptyList();
+
+    if (entries.size() == 1) {
+      OrderEntry entry = entries.get(0);
+      return entry.getOwnerModule() == ownerModule ?
+             ContainerUtil.newArrayList(entries) : Collections.emptyList();
+    }
+    int index = Collections.binarySearch(entries, new FakeOrderEntry(ownerModule), RootIndex.BY_OWNER_MODULE);
+    if (index < 0) {
+      return Collections.emptyList();
+    }
+    int firstIndex = index;
+    while (firstIndex - 1 >= 0 && entries.get(firstIndex - 1).getOwnerModule() == ownerModule) {
+      firstIndex--;
+    }
+    int lastIndex = index + 1;
+    while (lastIndex < entries.size() && entries.get(lastIndex).getOwnerModule() == ownerModule) {
+      lastIndex++;
+    }
+    return ContainerUtil.newArrayList(entries.subList(firstIndex, lastIndex));
+  }
+
+  private static class FakeOrderEntry implements OrderEntry {
+    private final Module myOwnerModule;
+
+    FakeOrderEntry(Module ownerModule) {
+      myOwnerModule = ownerModule;
+    }
+
+    @NotNull
     @Override
-    public boolean accept(@NotNull VirtualFile file) {
-      if (file.isDirectory()) {
-        DirectoryInfo info = myDirectoryIndex.getInfoForDirectory(file);
-        return info != null && myModule.equals(info.getModule());
-      }
-      else {
-        if(myExclusionManager != null && myExclusionManager.isExcluded(file)) return false;
-        return !myFileTypeRegistry.isFileIgnored(file);
-      }
+    public VirtualFile[] getFiles(@NotNull OrderRootType type) {
+      throw new IncorrectOperationException();
+    }
+
+    @NotNull
+    @Override
+    public String[] getUrls(@NotNull OrderRootType rootType) {
+      throw new IncorrectOperationException();
+    }
+
+    @NotNull
+    @Override
+    public String getPresentableName() {
+      throw new IncorrectOperationException();
+    }
+
+    @Override
+    public boolean isValid() {
+      throw new IncorrectOperationException();
+    }
+
+    @NotNull
+    @Override
+    public Module getOwnerModule() {
+      return myOwnerModule;
+    }
+
+    @Override
+    public <R> R accept(@NotNull RootPolicy<R> policy, @Nullable R initialValue) {
+      throw new IncorrectOperationException();
+    }
+
+    @Override
+    public int compareTo(@NotNull OrderEntry o) {
+      throw new IncorrectOperationException();
+    }
+
+    @Override
+    public boolean isSynthetic() {
+      throw new IncorrectOperationException();
     }
   }
 }

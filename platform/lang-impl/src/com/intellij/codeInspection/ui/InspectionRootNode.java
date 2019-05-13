@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,35 +16,13 @@
 
 package com.intellij.codeInspection.ui;
 
-import com.intellij.codeInspection.InspectionsBundle;
-import com.intellij.openapi.application.ex.ApplicationInfoEx;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.IconLoader;
-
-import javax.swing.*;
-
-/**
- * @author max
- */
 public class InspectionRootNode extends InspectionTreeNode {
-  private static final Icon APP_ICON = IconLoader.getIcon(ApplicationInfoEx.getInstanceEx().getSmallIconUrl());
-  private final Project myProject;
-
-  public InspectionRootNode(Project project) {
-    super(project);
-    myProject = project;
+  protected InspectionRootNode(InspectionTreeModel model) {
+    super(null);
   }
 
-  public String toString() {
-    return isEmpty() ? InspectionsBundle.message("inspection.empty.root.node.text") :
-           myProject.getName();
-  }
-
-  private boolean isEmpty() {
-    return getChildCount() == 0;
-  }
-
-  public Icon getIcon(boolean expanded) {
-    return APP_ICON;
+  @Override
+  public String getPresentableText() {
+    return "InspectionViewTree";
   }
 }

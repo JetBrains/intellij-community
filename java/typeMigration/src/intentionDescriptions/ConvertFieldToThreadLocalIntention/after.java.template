@@ -1,0 +1,15 @@
+import java.text.*;
+import java.util.Date;
+
+class X {
+    private static final ThreadLocal<DateFormat> dateFormat = new ThreadLocal<DateFormat>() {
+        @Override
+        protected DateFormat initialValue() {
+            return new SimpleDateFormat("EEE, dd MMM yyyy HH:mm:ss z");
+        }
+    };
+
+  public String getDateString() {
+    return dateFormat.get().format(new Date());
+  }
+}

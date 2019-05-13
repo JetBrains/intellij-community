@@ -17,6 +17,7 @@ package com.intellij.openapi.actionSystem.impl.actionholder;
 
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
+import org.jetbrains.annotations.NotNull;
 
 public abstract class ActionRef<T extends AnAction> {
   private static ActionManager ourManager;
@@ -27,11 +28,12 @@ public abstract class ActionRef<T extends AnAction> {
     return ourManager;
   }
 
-  public static <T extends AnAction> ActionRef<T> fromAction(T action) {
+  public static <T extends AnAction> ActionRef<T> fromAction(@NotNull T action) {
     String id = getManager().getId(action);
-    return id == null ? new SimpleActionRef<T>(action) : new IdActionRef<T>(id);
+    return id == null ? new SimpleActionRef<>(action) : new IdActionRef<>(id);
   }
 
 
+  @NotNull
   public abstract T getAction();
 }

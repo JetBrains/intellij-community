@@ -16,15 +16,14 @@
 package com.intellij.openapi.roots.ui.configuration;
 
 import com.intellij.openapi.options.ConfigurationException;
-import com.intellij.openapi.roots.LanguageLevelModuleExtension;
+import com.intellij.openapi.roots.LanguageLevelModuleExtensionImpl;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Oct 4, 2003
- *         Time: 6:54:57 PM
  */
 public class ContentEntriesEditor extends JavaContentEntriesEditor {
   private LanguageLevelConfigurable myLanguageLevelConfigurable;
@@ -46,10 +45,11 @@ public class ContentEntriesEditor extends JavaContentEntriesEditor {
 
   @Override
   protected void addAdditionalSettingsToPanel(final JPanel mainPanel) {
-    myLanguageLevelConfigurable = new LanguageLevelConfigurable() {
+    myLanguageLevelConfigurable = new LanguageLevelConfigurable(myProject, this::fireConfigurationChanged) {
+      @NotNull
       @Override
-      public LanguageLevelModuleExtension getLanguageLevelExtension() {
-        return getModel().getModuleExtension(LanguageLevelModuleExtension.class);
+      public LanguageLevelModuleExtensionImpl getLanguageLevelExtension() {
+        return getModel().getModuleExtension(LanguageLevelModuleExtensionImpl.class);
       }
     };
     mainPanel.add(myLanguageLevelConfigurable.createComponent(), BorderLayout.NORTH);

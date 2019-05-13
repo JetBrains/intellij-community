@@ -1,30 +1,27 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testFramework;
 
-import com.intellij.concurrency.JobSchedulerImpl;
+import com.intellij.configurationStore.StateStorageManagerKt;
+import com.intellij.execution.ExecutionException;
+import com.intellij.execution.configurations.GeneralCommandLine;
+import com.intellij.execution.process.ProcessIOExecutorService;
+import com.intellij.execution.process.ProcessOutput;
+import com.intellij.execution.util.ExecUtil;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeEventQueue;
+import com.intellij.ide.fileTemplates.FileTemplateManager;
+import com.intellij.ide.fileTemplates.impl.FileTemplateManagerImpl;
+import com.intellij.ide.util.treeView.AbstractTreeBuilder;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.util.treeView.AbstractTreeStructure;
-import com.intellij.idea.Bombed;
+import com.intellij.ide.util.treeView.AbstractTreeUi;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.actionSystem.ex.ActionUtil;
+import com.intellij.openapi.application.Application;
+import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.impl.ApplicationImpl;
+import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.extensions.ExtensionPoint;
 import com.intellij.openapi.extensions.ExtensionPointName;
@@ -33,74 +30,130 @@ import com.intellij.openapi.extensions.ExtensionsArea;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.fileTypes.FileTypes;
+import com.intellij.openapi.paths.WebReference;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.ui.Queryable;
+import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.JDOMUtil;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileFilter;
-import com.intellij.util.Alarm;
-import com.intellij.util.ArrayUtil;
-import com.intellij.util.StringBuilderSpinAllocator;
-import com.intellij.util.ThrowableRunnable;
-import com.intellij.util.containers.HashMap;
-import com.intellij.util.io.ZipUtil;
+import com.intellij.openapi.vfs.ex.temp.TempFileSystem;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiRecursiveElementWalkingVisitor;
+import com.intellij.psi.PsiReference;
+import com.intellij.rt.execution.junit.FileComparisonFailure;
+import com.intellij.testFramework.fixtures.IdeaTestExecutionPolicy;
+import com.intellij.ui.tree.AsyncTreeModel;
+import com.intellij.util.*;
+import com.intellij.util.concurrency.AppExecutorUtil;
+import com.intellij.util.concurrency.AppScheduledExecutorService;
+import com.intellij.util.io.Decompressor;
+import com.intellij.util.lang.JavaVersion;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.tree.TreeUtil;
+import gnu.trove.Equality;
 import junit.framework.AssertionFailedError;
-import org.jdom.Element;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
-import org.junit.Assert;
+import org.jetbrains.concurrency.AsyncPromise;
+import org.jetbrains.concurrency.Promise;
 
 import javax.swing.*;
-import javax.swing.tree.DefaultMutableTreeNode;
+import javax.swing.tree.TreeModel;
 import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.awt.event.InvocationEvent;
 import java.io.File;
-import java.io.FilenameFilter;
 import java.io.IOException;
-import java.io.StringWriter;
-import java.util.*;
+import java.io.OutputStream;
+import java.io.PrintStream;
+import java.lang.reflect.Method;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.nio.charset.Charset;
 import java.util.List;
+import java.util.*;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.jar.JarFile;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
+import static com.intellij.openapi.application.ApplicationManager.getApplication;
+import static org.junit.Assert.*;
 
 /**
  * @author yole
  */
-@SuppressWarnings("UseOfSystemOutOrSystemErr")
+@SuppressWarnings({"UseOfSystemOutOrSystemErr", "TestOnlyProblems"})
 public class PlatformTestUtil {
   public static final boolean COVERAGE_ENABLED_BUILD = "true".equals(System.getProperty("idea.coverage.enabled.build"));
-  public static final CvsVirtualFileFilter CVS_FILE_FILTER = new CvsVirtualFileFilter();
 
-  public static <T> void registerExtension(final ExtensionPointName<T> name, final T t, final Disposable parentDisposable) {
+  private static final List<Runnable> ourProjectCleanups = new CopyOnWriteArrayList<>();
+  private static final long MAX_WAIT_TIME = TimeUnit.MINUTES.toMillis(2);
+
+  @NotNull
+  public static String getTestName(@NotNull String name, boolean lowercaseFirstLetter) {
+    name = StringUtil.trimStart(name, "test");
+    return StringUtil.isEmpty(name) ? "" : lowercaseFirstLetter(name, lowercaseFirstLetter);
+  }
+
+  @NotNull
+  public static String lowercaseFirstLetter(@NotNull String name, boolean lowercaseFirstLetter) {
+    if (lowercaseFirstLetter && !isAllUppercaseName(name)) {
+      name = Character.toLowerCase(name.charAt(0)) + name.substring(1);
+    }
+    return name;
+  }
+
+  public static boolean isAllUppercaseName(@NotNull String name) {
+    int uppercaseChars = 0;
+    for (int i = 0; i < name.length(); i++) {
+      if (Character.isLowerCase(name.charAt(i))) {
+        return false;
+      }
+      if (Character.isUpperCase(name.charAt(i))) {
+        uppercaseChars++;
+      }
+    }
+    return uppercaseChars >= 3;
+  }
+
+  public static <T> void registerExtension(@NotNull ExtensionPointName<T> name, @NotNull T t, @NotNull Disposable parentDisposable) {
     registerExtension(Extensions.getRootArea(), name, t, parentDisposable);
   }
 
-  public static <T> void registerExtension(final ExtensionsArea area, final ExtensionPointName<T> name, final T t, final Disposable parentDisposable) {
-    final ExtensionPoint<T> extensionPoint = area.getExtensionPoint(name.getName());
+  public static <T> void registerExtension(@NotNull ExtensionsArea area,
+                                           @NotNull ExtensionPointName<T> name,
+                                           @NotNull T t,
+                                           @NotNull Disposable parentDisposable) {
+    ExtensionPoint<T> extensionPoint = area.getExtensionPoint(name.getName());
     extensionPoint.registerExtension(t);
-    Disposer.register(parentDisposable, new Disposable() {
-      @Override
-      public void dispose() {
-        extensionPoint.unregisterExtension(t);
-      }
-    });
+    Disposer.register(parentDisposable, () -> extensionPoint.unregisterExtension(t));
+  }
+
+  public static <T> void unregisterAllExtensions(@NotNull ExtensionPointName<T> name, @NotNull Disposable parentDisposable) {
+    ExtensionPoint<T> extensionPoint = Extensions.getRootArea().getExtensionPoint(name.getName());
+    T[] extensions = name.getExtensions();
+    Arrays.stream(extensions).forEach(extensionPoint::unregisterExtension);
+    Disposer.register(parentDisposable, () -> Arrays.stream(extensions).forEach(extensionPoint::registerExtension));
   }
 
   @Nullable
-  protected static String toString(@Nullable Object node, @Nullable Queryable.PrintInfo printInfo) {
+  public static String toString(@Nullable Object node, @Nullable Queryable.PrintInfo printInfo) {
     if (node instanceof AbstractTreeNode) {
       if (printInfo != null) {
         return ((AbstractTreeNode)node).toTestString(printInfo);
@@ -111,84 +164,80 @@ public class PlatformTestUtil {
         return presentation;
       }
     }
-    else if (node == null) {
-      return "NULL";
-    }
-    else {
-      return node.toString();
-    }
+    return String.valueOf(node);
   }
 
   public static String print(JTree tree, boolean withSelection) {
-    return print(tree, withSelection, null);
+    return print(tree, new TreePath(tree.getModel().getRoot()), withSelection, null, null);
   }
 
-  public static String print(JTree tree, boolean withSelection, @Nullable Condition<String> nodePrintCondition) {
-    StringBuilder buffer = new StringBuilder();
-    final Collection<String> strings = printAsList(tree, withSelection, nodePrintCondition);
-    for (String string : strings) {
-      buffer.append(string).append("\n");  
-    }
-    return buffer.toString();
+  public static String print(JTree tree, TreePath path, @Nullable Queryable.PrintInfo printInfo, boolean withSelection) {
+    return print(tree, path,  withSelection, printInfo, null);
   }
 
-  public static Collection<String> printAsList(JTree tree, boolean withSelection, @Nullable Condition<String> nodePrintCondition) {
-    Collection<String> strings = new ArrayList<String>();
-    Object root = tree.getModel().getRoot();
-    printImpl(tree, root, strings, 0, withSelection, nodePrintCondition);
+  public static String print(JTree tree, boolean withSelection, @Nullable Predicate<? super String> nodePrintCondition) {
+    return print(tree, new TreePath(tree.getModel().getRoot()), withSelection, null, nodePrintCondition);
+  }
+
+  private static String print(JTree tree, TreePath path,
+                             boolean withSelection,
+                             @Nullable Queryable.PrintInfo printInfo,
+                             @Nullable Predicate<? super String> nodePrintCondition) {
+    return StringUtil.join(printAsList(tree, path, withSelection, printInfo, nodePrintCondition), "\n");
+  }
+
+  private static Collection<String> printAsList(JTree tree,
+                                                TreePath path,
+                                                boolean withSelection,
+                                                @Nullable Queryable.PrintInfo printInfo,
+                                                @Nullable Predicate<? super String> nodePrintCondition) {
+    Collection<String> strings = new ArrayList<>();
+    printImpl(tree, path, strings, 0, withSelection, printInfo, nodePrintCondition);
     return strings;
   }
 
   private static void printImpl(JTree tree,
-                                Object root,
-                                Collection<String> strings,
+                                TreePath path,
+                                Collection<? super String> strings,
                                 int level,
                                 boolean withSelection,
-                                @Nullable Condition<String> nodePrintCondition) {
-    DefaultMutableTreeNode defaultMutableTreeNode = (DefaultMutableTreeNode)root;
+                                @Nullable Queryable.PrintInfo printInfo,
+                                @Nullable Predicate<? super String> nodePrintCondition) {
+    Object pathComponent = path.getLastPathComponent();
+    Object userObject = TreeUtil.getUserObject(pathComponent);
+    String nodeText = toString(userObject, printInfo);
 
-    final Object userObject = defaultMutableTreeNode.getUserObject();
-    String nodeText;
-    if (userObject != null) {
-      nodeText = toString(userObject, null);
-    }
-    else {
-      nodeText = "null";
+    if (nodePrintCondition != null && !nodePrintCondition.test(nodeText)) {
+      return;
     }
 
-    if (nodePrintCondition != null && !nodePrintCondition.value(nodeText)) return;
+    StringBuilder buff = new StringBuilder();
+    StringUtil.repeatSymbol(buff, ' ', level);
 
-    final StringBuilder buff = StringBuilderSpinAllocator.alloc();
-    try {
-      StringUtil.repeatSymbol(buff, ' ', level);
-
-      final boolean expanded = tree.isExpanded(new TreePath(defaultMutableTreeNode.getPath()));
-      if (!defaultMutableTreeNode.isLeaf()) {
-        buff.append(expanded ? "-" : "+");
-      }
-
-      final boolean selected = tree.getSelectionModel().isPathSelected(new TreePath(defaultMutableTreeNode.getPath()));
-      if (withSelection && selected) {
-        buff.append("[");
-      }
-
-      buff.append(nodeText);
-
-      if (withSelection && selected) {
-        buff.append("]");
-      }
-
-      strings.add(buff.toString());
-
-      int childCount = tree.getModel().getChildCount(root);
-      if (expanded) {
-        for (int i = 0; i < childCount; i++) {
-          printImpl(tree, tree.getModel().getChild(root, i), strings, level + 1, withSelection, nodePrintCondition);
-        }
-      }
+    boolean expanded = tree.isExpanded(path);
+    int childCount = tree.getModel().getChildCount(pathComponent);
+    if (childCount > 0) {
+      buff.append(expanded ? "-" : "+");
     }
-    finally {
-      StringBuilderSpinAllocator.dispose(buff);
+
+    boolean selected = tree.getSelectionModel().isPathSelected(path);
+    if (withSelection && selected) {
+      buff.append("[");
+    }
+
+    buff.append(nodeText);
+
+    if (withSelection && selected) {
+      buff.append("]");
+    }
+
+    strings.add(buff.toString());
+
+    if (expanded) {
+      for (int i = 0; i < childCount; i++) {
+        TreePath childPath = path.pathByAddingChild(tree.getModel().getChild(pathComponent, i));
+        printImpl(tree, childPath, strings, level + 1, withSelection, printInfo, nodePrintCondition);
+      }
     }
   }
 
@@ -196,101 +245,222 @@ public class PlatformTestUtil {
     assertTreeEqual(tree, expected, false);
   }
 
-  public static void assertTreeEqualIgnoringNodesOrder(JTree tree, @NonNls String expected) {
-    assertTreeEqualIgnoringNodesOrder(tree, expected, false);
-  }
-
   public static void assertTreeEqual(JTree tree, String expected, boolean checkSelected) {
     String treeStringPresentation = print(tree, checkSelected);
-    assertEquals(expected, treeStringPresentation);
+    assertEquals(expected.trim(), treeStringPresentation.trim());
   }
 
-  public static void assertTreeEqualIgnoringNodesOrder(JTree tree, String expected, boolean checkSelected) {
-    final Collection<String> actualNodesPresentation = printAsList(tree, checkSelected, null);
-    final List<String> expectedNodes = StringUtil.split(expected, "\n");
-    UsefulTestCase.assertSameElements(actualNodesPresentation, expectedNodes);
+  public static void expand(JTree tree, int... rows) {
+    for (int row : rows) {
+      tree.expandRow(row);
+      waitWhileBusy(tree);
+    }
   }
 
-  @TestOnly
-  public static void waitForAlarm(final int delay) throws InterruptedException {
-    assert !ApplicationManager.getApplication().isWriteAccessAllowed(): "It's a bad idea to wait for an alarm under the write action. Somebody creates an alarm which requires read action and you are deadlocked.";
-    assert ApplicationManager.getApplication().isDispatchThread();
+  public static void expandAll(JTree tree) {
+    waitForPromise(TreeUtil.promiseExpandAll(tree));
+  }
 
-    final AtomicBoolean invoked = new AtomicBoolean();
-    final Alarm alarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
-    alarm.addRequest(new Runnable() {
-      @Override
-      public void run() {
-        ApplicationManager.getApplication().invokeLater(new Runnable() {
-          @Override
-          public void run() {
-            alarm.addRequest(new Runnable() {
-              @Override
-              public void run() {
-                invoked.set(true);
-              }
-            }, delay);
-          }
-        });
+  private static long getMillisSince(long startTimeMillis) {
+    return System.currentTimeMillis() - startTimeMillis;
+  }
+
+  private static void assertMaxWaitTimeSince(long startTimeMillis) {
+    assertMaxWaitTimeSince(startTimeMillis, MAX_WAIT_TIME);
+  }
+
+  private static void assertMaxWaitTimeSince(long startTimeMillis, long timeout) {
+    assert getMillisSince(startTimeMillis) <= timeout : "the waiting takes too long";
+  }
+
+  private static void assertDispatchThreadWithoutWriteAccess() {
+    assertDispatchThreadWithoutWriteAccess(getApplication());
+  }
+
+  private static void assertDispatchThreadWithoutWriteAccess(Application application) {
+    if (application != null) {
+      assert !application.isWriteAccessAllowed() : "do not wait under the write action to avoid possible deadlock";
+      assert application.isDispatchThread();
+    }
+    else {
+      // do not check for write access in simple tests
+      assert EventQueue.isDispatchThread();
+    }
+  }
+
+  private static boolean isBusy(JTree tree) {
+    UIUtil.dispatchAllInvocationEvents();
+    TreeModel model = tree.getModel();
+    if (model instanceof AsyncTreeModel) {
+      AsyncTreeModel async = (AsyncTreeModel)model;
+      if (async.isProcessing()) return true;
+      UIUtil.dispatchAllInvocationEvents();
+      return async.isProcessing();
+    }
+    AbstractTreeBuilder builder = AbstractTreeBuilder.getBuilderFor(tree);
+    if (builder == null) return false;
+    AbstractTreeUi ui = builder.getUi();
+    if (ui == null) return false;
+    return ui.hasPendingWork();
+  }
+
+  public static void waitWhileBusy(JTree tree) {
+    assertDispatchThreadWithoutWriteAccess();
+    long startTimeMillis = System.currentTimeMillis();
+    while (isBusy(tree)) {
+      assertMaxWaitTimeSince(startTimeMillis);
+    }
+  }
+
+  public static void waitForCallback(@NotNull ActionCallback callback) {
+    AsyncPromise<?> promise = new AsyncPromise<>();
+    callback.doWhenDone(() -> promise.setResult(null));
+    waitForPromise(promise);
+  }
+
+  @Nullable
+  public static <T> T waitForPromise(@NotNull Promise<T> promise) {
+    return waitForPromise(promise, MAX_WAIT_TIME);
+  }
+
+  @Nullable
+  public static <T> T waitForPromise(@NotNull Promise<T> promise, long timeout) {
+    assertDispatchThreadWithoutWriteAccess();
+    AtomicBoolean complete = new AtomicBoolean(false);
+    promise.onProcessed(ignore -> complete.set(true));
+    T result = null;
+    long start = System.currentTimeMillis();
+    do {
+      UIUtil.dispatchAllInvocationEvents();
+      try {
+        result = promise.blockingGet(20, TimeUnit.MILLISECONDS);
       }
+      catch (Exception ignore) {
+      }
+      assertMaxWaitTimeSince(start, timeout);
+    }
+    while (!complete.get());
+    UIUtil.dispatchAllInvocationEvents();
+    return result;
+  }
+
+  public static void waitForAlarm(final int delay) {
+    @NotNull Application app = getApplication();
+    assertDispatchThreadWithoutWriteAccess();
+
+    Disposable tempDisposable = Disposer.newDisposable();
+
+    final AtomicBoolean runnableInvoked = new AtomicBoolean();
+    final AtomicBoolean pooledRunnableInvoked = new AtomicBoolean();
+    final AtomicBoolean alarmInvoked1 = new AtomicBoolean();
+    final AtomicBoolean alarmInvoked2 = new AtomicBoolean();
+    final Alarm alarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
+    final Alarm pooledAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, tempDisposable);
+    ModalityState initialModality = ModalityState.current();
+
+    alarm.addRequest(() -> {
+      alarmInvoked1.set(true);
+      app.invokeLater(() -> {
+        runnableInvoked.set(true);
+        alarm.addRequest(() -> alarmInvoked2.set(true), delay);
+      });
     }, delay);
+    pooledAlarm.addRequest(() -> pooledRunnableInvoked.set(true), delay);
 
     UIUtil.dispatchAllInvocationEvents();
 
-    boolean sleptAlready = false;
-    while (!invoked.get()) {
-      UIUtil.dispatchAllInvocationEvents();
-      //noinspection BusyWait
-      Thread.sleep(sleptAlready ? 10 : delay);
-      sleptAlready = true;
+    long start = System.currentTimeMillis();
+    try {
+      boolean sleptAlready = false;
+      while (!alarmInvoked2.get()) {
+        AtomicBoolean laterInvoked = new AtomicBoolean();
+        app.invokeLater(() -> laterInvoked.set(true));
+        UIUtil.dispatchAllInvocationEvents();
+        assertTrue(laterInvoked.get());
+
+        TimeoutUtil.sleep(sleptAlready ? 10 : delay);
+        sleptAlready = true;
+        if (getMillisSince(start) > MAX_WAIT_TIME) {
+          String queue = ((AppScheduledExecutorService)AppExecutorUtil.getAppScheduledExecutorService()).dumpQueue();
+          throw new AssertionError("Couldn't await alarm" +
+                                   "; alarm passed=" + alarmInvoked1.get() +
+                                   "; modality1=" + initialModality +
+                                   "; modality2=" + ModalityState.current() +
+                                   "; non-modal=" + (initialModality == ModalityState.NON_MODAL) +
+                                   "; invokeLater passed=" + runnableInvoked.get() +
+                                   "; pooled alarm passed=" + pooledRunnableInvoked.get() +
+                                   "; app.disposed=" + app.isDisposed() +
+                                   "; alarm.disposed=" + alarm.isDisposed() +
+                                   "; alarm.requests=" + alarm.getActiveRequestCount() +
+                                   "\n delayQueue=" + StringUtil.trimLog(queue, 1000) +
+                                   "\n invocatorQueue=" + LaterInvocator.getLaterInvocatorQueue()
+          );
+        }
+      }
+    }
+    finally {
+      Disposer.dispose(tempDisposable);
     }
     UIUtil.dispatchAllInvocationEvents();
   }
 
-  @TestOnly
-  public static void dispatchAllInvocationEventsInIdeEventQueue() throws InterruptedException {
-    assert SwingUtilities.isEventDispatchThread() : Thread.currentThread();
-    final EventQueue eventQueue = Toolkit.getDefaultToolkit().getSystemEventQueue();
+  /**
+   * Dispatch all pending invocation events (if any) in the {@link IdeEventQueue}, ignores and removes all other events from the queue.
+   * Should only be invoked in Swing thread (asserted inside {@link IdeEventQueue#dispatchEvent(AWTEvent)})
+   */
+  public static void dispatchAllInvocationEventsInIdeEventQueue() {
+    IdeEventQueue eventQueue = IdeEventQueue.getInstance();
     while (true) {
       AWTEvent event = eventQueue.peekEvent();
       if (event == null) break;
-        AWTEvent event1 = eventQueue.getNextEvent();
-        if (event1 instanceof InvocationEvent) {
-          IdeEventQueue.getInstance().dispatchEvent(event1);
+      try {
+        event = eventQueue.getNextEvent();
+        if (event instanceof InvocationEvent) {
+          eventQueue.dispatchEvent(event);
         }
+      }
+      catch (InterruptedException e) {
+        throw new RuntimeException(e);
+      }
     }
   }
 
-  private static Date raidDate(Bombed bombed) {
-    final Calendar instance = Calendar.getInstance();
-    instance.set(Calendar.YEAR, bombed.year());
-    instance.set(Calendar.MONTH, bombed.month());
-    instance.set(Calendar.DAY_OF_MONTH, bombed.day());
-    instance.set(Calendar.HOUR_OF_DAY, bombed.time());
-    instance.set(Calendar.MINUTE, 0);
-
-    return instance.getTime();
+  /**
+   * Dispatch all pending events (if any) in the {@link IdeEventQueue}.
+   * Should only be invoked in Swing thread (asserted inside {@link IdeEventQueue#dispatchEvent(AWTEvent)})
+   */
+  public static void dispatchAllEventsInIdeEventQueue() throws InterruptedException {
+    IdeEventQueue eventQueue = IdeEventQueue.getInstance();
+    //noinspection StatementWithEmptyBody
+    while (dispatchNextEventIfAny(eventQueue) != null);
   }
 
-  public static boolean bombExplodes(Bombed bombedAnnotation) {
-    Date now = new Date();
-    return now.after(raidDate(bombedAnnotation));
+  /**
+   * Dispatch one pending event (if any) in the {@link IdeEventQueue}.
+   * Should only be invoked in Swing thread (asserted inside {@link IdeEventQueue#dispatchEvent(AWTEvent)})
+   */
+  public static AWTEvent dispatchNextEventIfAny(@NotNull IdeEventQueue eventQueue) throws InterruptedException {
+    assert SwingUtilities.isEventDispatchThread() : Thread.currentThread();
+    AWTEvent event = eventQueue.peekEvent();
+    if (event == null) return null;
+    AWTEvent event1 = eventQueue.getNextEvent();
+    eventQueue.dispatchEvent(event1);
+    return event1;
   }
 
-  public static boolean isRotten(Bombed bomb) {
-    long bombRotPeriod = 30L * 24 * 60 * 60 * 1000; // month
-    return new Date().after(new Date(raidDate(bomb).getTime() + bombRotPeriod));
+  public static StringBuilder print(AbstractTreeStructure structure, Object node, int currentLevel, @Nullable Comparator comparator,
+                                    int maxRowCount, char paddingChar, @Nullable Queryable.PrintInfo printInfo) {
+    return print(structure, node, currentLevel, comparator, maxRowCount, paddingChar, o -> toString(o, printInfo));
   }
 
-  public static StringBuilder print(AbstractTreeStructure structure,
-                                    Object node,
-                                    int currentLevel,
-                                    @Nullable Comparator comparator,
-                                    int maxRowCount,
-                                    char paddingChar,
-                                    @Nullable Queryable.PrintInfo printInfo) {
-    StringBuilder buffer = StringBuilderSpinAllocator.alloc();
-    doPrint(buffer, currentLevel, node, structure, comparator, maxRowCount, 0, paddingChar, printInfo);
+  public static String print(AbstractTreeStructure structure, Object node, Function<Object, String> nodePresenter) {
+    return print(structure, node, 0, Comparator.comparing(nodePresenter), -1, ' ', nodePresenter).toString();
+  }
+
+  private static StringBuilder print(AbstractTreeStructure structure, Object node, int currentLevel, @Nullable Comparator comparator,
+                                     int maxRowCount, char paddingChar, Function<Object, String> nodePresenter) {
+    StringBuilder buffer = new StringBuilder();
+    doPrint(buffer, currentLevel, node, structure, comparator, maxRowCount, 0, paddingChar, nodePresenter);
     return buffer;
   }
 
@@ -302,22 +472,22 @@ public class PlatformTestUtil {
                              int maxRowCount,
                              int currentLine,
                              char paddingChar,
-                             @Nullable Queryable.PrintInfo printInfo) {
+                             Function<Object, String> nodePresenter) {
     if (currentLine >= maxRowCount && maxRowCount != -1) return currentLine;
 
     StringUtil.repeatSymbol(buffer, paddingChar, currentLevel);
-    buffer.append(toString(node, printInfo)).append("\n");
+    buffer.append(nodePresenter.apply(node)).append("\n");
     currentLine++;
     Object[] children = structure.getChildElements(node);
 
     if (comparator != null) {
-      ArrayList<?> list = new ArrayList<Object>(Arrays.asList(children));
+      ArrayList<?> list = new ArrayList<>(Arrays.asList(children));
       @SuppressWarnings({"UnnecessaryLocalVariable", "unchecked"}) Comparator<Object> c = comparator;
       Collections.sort(list, c);
       children = ArrayUtil.toObjectArray(list);
     }
     for (Object child : children) {
-      currentLine = doPrint(buffer, currentLevel + 1, child, structure, comparator, maxRowCount, currentLine, paddingChar, printInfo);
+      currentLine = doPrint(buffer, currentLevel + 1, child, structure, comparator, maxRowCount, currentLine, paddingChar, nodePresenter);
     }
 
     return currentLine;
@@ -353,26 +523,21 @@ public class PlatformTestUtil {
     return print(tree, false);
   }
 
-  public static void assertTreeStructureEquals(final AbstractTreeStructure treeStructure, final String expected) {
-    assertEquals(expected, print(treeStructure, treeStructure.getRootElement(), 0, null, -1, ' ', null).toString());
-  }
-
   public static void invokeNamedAction(final String actionId) {
     final AnAction action = ActionManager.getInstance().getAction(actionId);
     assertNotNull(action);
     final Presentation presentation = new Presentation();
     @SuppressWarnings("deprecation") final DataContext context = DataManager.getInstance().getDataContext();
-    final AnActionEvent event = new AnActionEvent(null, context, "", presentation, ActionManager.getInstance(), 0);
-    action.update(event);
-    Assert.assertTrue(presentation.isEnabled());
+    final AnActionEvent event = AnActionEvent.createFromAnAction(action, null, "", context);
+    action.beforeActionPerformedUpdate(event);
+    assertTrue(presentation.isEnabled());
     action.actionPerformed(event);
   }
 
   public static void assertTiming(final String message, final long expectedMs, final long actual) {
     if (COVERAGE_ENABLED_BUILD) return;
 
-    final long expectedOnMyMachine = Math.max(1, expectedMs * Timings.MACHINE_TIMING / Timings.ETALON_TIMING);
-    final double acceptableChangeFactor = 1.1;
+    long expectedOnMyMachine = Math.max(1, expectedMs * Timings.CPU_TIMING / Timings.REFERENCE_CPU_TIMING);
 
     // Allow 10% more in case of test machine is busy.
     String logMessage = message;
@@ -383,11 +548,9 @@ public class PlatformTestUtil {
     logMessage += ". Expected on my machine: " + expectedOnMyMachine + "." +
                   " Actual: " + actual + "." +
                   " Expected on Standard machine: " + expectedMs + ";" +
-                  " Actual on Standard: " + actual * Timings.ETALON_TIMING / Timings.MACHINE_TIMING + ";" +
                   " Timings: CPU=" + Timings.CPU_TIMING +
-                  ", I/O=" + Timings.IO_TIMING + "." +
-                  " (" + (int)(Timings.MACHINE_TIMING*1.0/Timings.ETALON_TIMING*100) + "% of the Standard)" +
-                  ".";
+                  ", I/O=" + Timings.IO_TIMING + ".";
+    final double acceptableChangeFactor = 1.1;
     if (actual < expectedOnMyMachine) {
       System.out.println(logMessage);
       TeamCityLogger.info(logMessage);
@@ -402,34 +565,11 @@ public class PlatformTestUtil {
   }
 
   /**
-   * example usage: startPerformanceTest("calculating pi",100, testRunnable).cpuBound().assertTiming();
+   * example usage: {@code startPerformanceTest("calculating pi",100, testRunnable).assertTiming();}
    */
-  public static TestInfo startPerformanceTest(@NonNls @NotNull String message, int expectedMs, @NotNull ThrowableRunnable test) {
-    return new TestInfo(test, expectedMs,message);
-  }
-
-  // calculates average of the median values in the selected part of the array. E.g. for part=3 returns average in the middle third.
-  public static long averageAmongMedians(@NotNull long[] time, int part) {
-    assert part >= 1;
-    int n = time.length;
-    Arrays.sort(time);
-    long total = 0;
-    for (int i= n /2- n / part /2; i< n /2+ n / part /2; i++) {
-      total += time[i];
-    }
-    return total/(n / part);
-  }
-
-  public static boolean canRunTest(@NotNull Class testCaseClass) {
-    if (GraphicsEnvironment.isHeadless()) {
-      for (Class<?> clazz = testCaseClass; clazz != null; clazz = clazz.getSuperclass()) {
-        if (clazz.getAnnotation(SkipInHeadlessEnvironment.class) != null) {
-          System.out.println("Class '" + testCaseClass.getName() + "' is skipped because it requires working UI environment");
-          return false;
-        }
-      }
-    }
-    return true;
+  @Contract(pure = true) // to warn about not calling .assertTiming() in the end
+  public static PerformanceTestInfo startPerformanceTest(@NonNls @NotNull String what, int expectedMs, @NotNull ThrowableRunnable test) {
+    return new PerformanceTestInfo(test, expectedMs, what);
   }
 
   public static void assertPathsEqual(@Nullable String expected, @Nullable String actual) {
@@ -438,115 +578,48 @@ public class PlatformTestUtil {
     assertEquals(expected, actual);
   }
 
-  public static class TestInfo {
-    private final ThrowableRunnable test; // runnable to measure
-    private final int expectedMs;           // millis the test is expected to run
-    private ThrowableRunnable setup;      // to run before each test
-    private boolean usesAllCPUCores;      // true if the test runs faster on multi-core
-    private int attempts = 4;             // number of retries if performance failed
-    private final String message;         // to print on fail
-    private boolean adjustForIO = true;   // true if test uses IO, timings need to be re-calibrated according to this agent disk performance
-    private boolean adjustForCPU = true;  // true if test uses CPU, timings need to be re-calibrated according to this agent CPU speed
+  @NotNull
+  public static String getJavaExe() {
+    return SystemProperties.getJavaHome() + (SystemInfo.isWindows ? "\\bin\\java.exe" : "/bin/java");
+  }
 
-    private TestInfo(@NotNull ThrowableRunnable test, int expectedMs, String message) {
-      this.test = test;
-      this.expectedMs = expectedMs;
-      assert expectedMs > 0 : "Expected must be > 0. Was: "+ expectedMs;
-      this.message = message;
+  @NotNull
+  public static String getRtJarPath() {
+    return SystemProperties.getJavaHome() + "/lib/rt.jar";
+  }
+
+  @NotNull
+  public static URL getRtJarURL() {
+    String home = SystemProperties.getJavaHome();
+    try {
+      return JavaVersion.current().feature >= 9 ? new URL("jrt:" + home) : new File(home + "/lib/rt.jar").toURI().toURL();
     }
+    catch (MalformedURLException e) {
+      throw new RuntimeException(e);
+    }
+  }
 
-    public TestInfo setup(@NotNull ThrowableRunnable setup) { assert this.setup==null; this.setup = setup; return this; }
-    public TestInfo usesAllCPUCores() { assert adjustForCPU : "This test configured to be io-bound, it cannot use all cores"; usesAllCPUCores = true; return this; }
-    public TestInfo cpuBound() { adjustForIO = false; adjustForCPU = true; return this; }
-    public TestInfo ioBound() { adjustForIO = true; adjustForCPU = false; return this; }
-    public TestInfo attempts(int attempts) { this.attempts = attempts; return this; }
+  public static void forceCloseProjectWithoutSaving(@NotNull Project project) {
+    ProjectManagerEx.getInstanceEx().forceCloseProject(project, false /* do not dispose */);
+    // explicitly dispose because `dispose` option for forceCloseProject doesn't work todo why?
+    getApplication().runWriteAction(() -> Disposer.dispose(project));
+  }
 
-    public void assertTiming() {
-      assert expectedMs != 0 : "Must call .expect() before run test";
-      if (COVERAGE_ENABLED_BUILD) return;
+  public static void saveProject(@NotNull Project project) {
+    saveProject(project, false);
+  }
 
-      while (true) {
-        attempts--;
-        long start;
-        try {
-          if (setup != null) setup.run();
-          start = System.currentTimeMillis();
-          test.run();
-        }
-        catch (Throwable throwable) {
-          throw new RuntimeException(throwable);
-        }
-        long finish = System.currentTimeMillis();
-        long duration = finish - start;
+  public static void saveProject(@NotNull Project project, boolean isForceSavingAllSettings) {
+    ProjectManagerEx.getInstanceEx().flushChangedProjectFileAlarm();
+    StateStorageManagerKt.saveComponentManager(project, isForceSavingAllSettings);
+  }
 
-        int expectedOnMyMachine = expectedMs;
-        if (adjustForCPU) {
-          expectedOnMyMachine = adjust(expectedOnMyMachine, Timings.CPU_TIMING, Timings.ETALON_CPU_TIMING);
-
-          expectedOnMyMachine = usesAllCPUCores ? expectedOnMyMachine * 8 / JobSchedulerImpl.CORES_COUNT : expectedOnMyMachine;
-        }
-        if (adjustForIO) {
-          expectedOnMyMachine = adjust(expectedOnMyMachine, Timings.IO_TIMING, Timings.ETALON_IO_TIMING);
-        }
-        final double acceptableChangeFactor = 1.1;
-
-        // Allow 10% more in case of test machine is busy.
-        String logMessage = message;
-        if (duration > expectedOnMyMachine) {
-          int percentage = (int)(100.0 * (duration - expectedOnMyMachine) / expectedOnMyMachine);
-          logMessage += ". (" + percentage + "% longer)";
-        }
-        logMessage += ". Expected: " + expectedOnMyMachine + ". Actual: " + duration + "." + Timings.getStatistics() ;
-        if (duration < expectedOnMyMachine) {
-          int percentage = (int)(100.0 * (expectedOnMyMachine - duration) / expectedOnMyMachine);
-          logMessage = "(" + percentage + "% faster). " + logMessage;
-
-          TeamCityLogger.info(logMessage);
-          System.out.println("SUCCESS: "+logMessage);
-        }
-        else if (duration < expectedOnMyMachine * acceptableChangeFactor) {
-          TeamCityLogger.warning(logMessage, null);
-          System.out.println("WARNING: " + logMessage);
-        }
-        else {
-          // try one more time
-          if (attempts == 0) {
-            //try {
-            //  Object result = Class.forName("com.intellij.util.ProfilingUtil").getMethod("captureCPUSnapshot").invoke(null);
-            //  System.err.println("CPU snapshot captured in '"+result+"'");
-            //}
-            //catch (Exception e) {
-            //}
-
-            throw new AssertionFailedError(logMessage);
-          }
-          System.gc();
-          System.gc();
-          System.gc();
-          String s = "Another epic fail (remaining attempts: " + attempts + "): " + logMessage;
-          TeamCityLogger.warning(s, null);
-          System.err.println(s);
-          //if (attempts == 1) {
-          //  try {
-          //    Class.forName("com.intellij.util.ProfilingUtil").getMethod("startCPUProfiling").invoke(null);
-          //  }
-          //  catch (Exception e) {
-          //  }
-          //}
-          continue;
-        }
+  static void waitForAllBackgroundActivityToCalmDown() {
+    for (int i = 0; i < 50; i++) {
+      CpuUsageData data = CpuUsageData.measureCpuUsage(() -> TimeoutUtil.sleep(100));
+      if (!data.hasAnyActivityBesides(Thread.currentThread())) {
         break;
       }
-    }
-
-    private static int adjust(int expectedOnMyMachine, long thisTiming, long ethanolTiming) {
-      // most of our algorithms are quadratic. sad but true.
-      double speed = 1.0 * thisTiming / ethanolTiming;
-      double delta = speed < 1
-                 ? 0.9 + Math.pow(speed - 0.7, 2)
-                 : 0.45 + Math.pow(speed - 0.25, 2);
-      expectedOnMyMachine *= delta;
-      return expectedOnMyMachine;
     }
   }
 
@@ -562,9 +635,11 @@ public class PlatformTestUtil {
     return finish - start;
   }
 
+  @SuppressWarnings("CallToSystemGC")
   public static void assertTiming(String message, long expected, int attempts, @NotNull Runnable actionToMeasure) {
     while (true) {
       attempts--;
+      waitForAllBackgroundActivityToCalmDown();
       long duration = measure(actionToMeasure);
       try {
         assertTiming(message, expected, duration);
@@ -575,15 +650,15 @@ public class PlatformTestUtil {
         System.gc();
         System.gc();
         System.gc();
-        String s = "Another epic fail (remaining attempts: " + attempts + "): " + e.getMessage();
+        String s = e.getMessage() + "\n  " + attempts + " attempts remain";
         TeamCityLogger.warning(s, null);
         System.err.println(s);
       }
     }
   }
 
-  private static HashMap<String, VirtualFile> buildNameToFileMap(VirtualFile[] files, @Nullable VirtualFileFilter filter) {
-    HashMap<String, VirtualFile> map = new HashMap<String, VirtualFile>();
+  private static Map<String, VirtualFile> buildNameToFileMap(VirtualFile[] files, @Nullable VirtualFileFilter filter) {
+    Map<String, VirtualFile> map = new HashMap<>();
     for (VirtualFile file : files) {
       if (filter != null && !filter.accept(file)) continue;
       map.put(file.getName(), file);
@@ -591,28 +666,26 @@ public class PlatformTestUtil {
     return map;
   }
 
+  public static void assertDirectoriesEqual(VirtualFile dirExpected, VirtualFile dirActual) throws IOException {
+    assertDirectoriesEqual(dirExpected, dirActual, null);
+  }
+
   @SuppressWarnings("UnsafeVfsRecursion")
-  public static void assertDirectoriesEqual(VirtualFile dirAfter, VirtualFile dirBefore, @Nullable VirtualFileFilter fileFilter) throws IOException {
+  public static void assertDirectoriesEqual(VirtualFile dirExpected, VirtualFile dirActual, @Nullable VirtualFileFilter fileFilter) throws IOException {
     FileDocumentManager.getInstance().saveAllDocuments();
 
-    VirtualFile[] childrenAfter = dirAfter.getChildren();
-    if (dirAfter.isInLocalFileSystem()) {
-      File[] ioAfter = new File(dirAfter.getPath()).listFiles();
-      shallowCompare(childrenAfter, ioAfter);
-    }
+    VirtualFile[] childrenAfter = dirExpected.getChildren();
+    shallowCompare(dirExpected, childrenAfter);
 
-    VirtualFile[] childrenBefore = dirBefore.getChildren();
-    if (dirBefore.isInLocalFileSystem()) {
-      File[] ioBefore = new File(dirBefore.getPath()).listFiles();
-      shallowCompare(childrenBefore, ioBefore);
-    }
+    VirtualFile[] childrenBefore = dirActual.getChildren();
+    shallowCompare(dirActual, childrenBefore);
 
-    HashMap<String, VirtualFile> mapAfter = buildNameToFileMap(childrenAfter, fileFilter);
-    HashMap<String, VirtualFile> mapBefore = buildNameToFileMap(childrenBefore, fileFilter);
+    Map<String, VirtualFile> mapAfter = buildNameToFileMap(childrenAfter, fileFilter);
+    Map<String, VirtualFile> mapBefore = buildNameToFileMap(childrenBefore, fileFilter);
 
     Set<String> keySetAfter = mapAfter.keySet();
     Set<String> keySetBefore = mapBefore.keySet();
-    assertEquals(dirAfter.getPath(), keySetAfter, keySetBefore);
+    assertEquals(dirExpected.getPath(), keySetAfter, keySetBefore);
 
     for (String name : keySetAfter) {
       VirtualFile fileAfter = mapAfter.get(name);
@@ -626,139 +699,89 @@ public class PlatformTestUtil {
     }
   }
 
-  private static void shallowCompare(VirtualFile[] vfs, @Nullable File[] io) {
-    List<String> vfsPaths = new ArrayList<String>();
-    for (VirtualFile file : vfs) {
-      vfsPaths.add(file.getPath());
+  private static void shallowCompare(VirtualFile dir, VirtualFile[] vfs) {
+    if (dir.isInLocalFileSystem() && dir.getFileSystem() != TempFileSystem.getInstance()) {
+      String vfsPaths = Stream.of(vfs).map(VirtualFile::getPath).sorted().collect(Collectors.joining("\n"));
+      File[] io = notNull(new File(dir.getPath()).listFiles());
+      String ioPaths = Stream.of(io).map(f -> FileUtil.toSystemIndependentName(f.getPath())).sorted().collect(Collectors.joining("\n"));
+      assertEquals(vfsPaths, ioPaths);
     }
-
-    List<String> ioPaths = new ArrayList<String>();
-    if (io != null) {
-      for (File file : io) {
-        ioPaths.add(file.getPath().replace(File.separatorChar, '/'));
-      }
-    }
-
-    assertEquals(sortAndJoin(vfsPaths), sortAndJoin(ioPaths));
   }
 
-  private static String sortAndJoin(List<String> strings) {
-    Collections.sort(strings);
-    StringBuilder buf = new StringBuilder();
-    for (String string : strings) {
-      buf.append(string);
-      buf.append('\n');
-    }
-    return buf.toString();
-  }
-
-  public static void assertFilesEqual(VirtualFile fileAfter, VirtualFile fileBefore) throws IOException {
+  public static void assertFilesEqual(VirtualFile fileExpected, VirtualFile fileActual) throws IOException {
     try {
-      assertJarFilesEqual(VfsUtilCore.virtualToIoFile(fileAfter), VfsUtilCore.virtualToIoFile(fileBefore));
+      assertJarFilesEqual(VfsUtilCore.virtualToIoFile(fileExpected), VfsUtilCore.virtualToIoFile(fileActual));
     }
     catch (IOException e) {
-      FileDocumentManager manager = FileDocumentManager.getInstance();
-
-      Document docBefore = manager.getDocument(fileBefore);
-      boolean canLoadBeforeText = !fileBefore.getFileType().isBinary() || fileBefore.getFileType() == FileTypes.UNKNOWN;
-      String textB = docBefore != null
-                     ? docBefore.getText()
-                     : !canLoadBeforeText
-                       ? null
-                       : LoadTextUtil.getTextByBinaryPresentation(fileBefore.contentsToByteArray(false), fileBefore).toString();
-
-      Document docAfter = manager.getDocument(fileAfter);
-      boolean canLoadAfterText = !fileBefore.getFileType().isBinary() || fileBefore.getFileType() == FileTypes.UNKNOWN;
-      String textA = docAfter != null
-                     ? docAfter.getText()
-                     : !canLoadAfterText
-                       ? null
-                       : LoadTextUtil.getTextByBinaryPresentation(fileAfter.contentsToByteArray(false), fileAfter).toString();
-
-      if (textA != null && textB != null) {
-        assertEquals(fileAfter.getPath(), textA, textB);
+      String actual = fileText(fileActual);
+      String expected = fileText(fileExpected);
+      if (expected == null || actual == null) {
+        assertArrayEquals(fileExpected.getPath(), fileExpected.contentsToByteArray(), fileActual.contentsToByteArray());
       }
-      else {
-        Assert.assertArrayEquals(fileAfter.getPath(), fileAfter.contentsToByteArray(), fileBefore.contentsToByteArray());
+      else if (!StringUtil.equals(expected, actual)) {
+        throw new FileComparisonFailure("Text mismatch in file " + fileExpected.getName(), expected, actual, fileExpected.getPath());
       }
     }
   }
 
-  public static void assertJarFilesEqual(File file1, File file2) throws IOException {
-    final File tempDirectory1;
-    final File tempDirectory2;
+  private static String fileText(VirtualFile file) throws IOException {
+    Document doc = FileDocumentManager.getInstance().getDocument(file);
+    if (doc != null) {
+      return doc.getText();
+    }
+    if (!file.getFileType().isBinary() || file.getFileType() == FileTypes.UNKNOWN) {
+      return LoadTextUtil.getTextByBinaryPresentation(file.contentsToByteArray(false), file).toString();
+    }
+    return null;
+  }
 
-    final JarFile jarFile1 = new JarFile(file1);
+  private static void assertJarFilesEqual(File file1, File file2) throws IOException {
+    final File tempDir = FileUtilRt.createTempDirectory("assert_jar_tmp", null, false);
     try {
-      final JarFile jarFile2 = new JarFile(file2);
-      try {
-        tempDirectory1 = PlatformTestCase.createTempDir("tmp1");
-        tempDirectory2 = PlatformTestCase.createTempDir("tmp2");
-        ZipUtil.extract(jarFile1, tempDirectory1, CVS_FILE_FILTER);
-        ZipUtil.extract(jarFile2, tempDirectory2, CVS_FILE_FILTER);
-      }
-      finally {
-        jarFile2.close();
-      }
-    }
-    finally {
-      jarFile1.close();
-    }
+      final File tempDirectory1 = new File(tempDir, "tmp1");
+      final File tempDirectory2 = new File(tempDir, "tmp2");
+      FileUtilRt.createDirectory(tempDirectory1);
+      FileUtilRt.createDirectory(tempDirectory2);
 
-    final VirtualFile dirAfter = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(tempDirectory1);
-    assertNotNull(tempDirectory1.toString(), dirAfter);
-    final VirtualFile dirBefore = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(tempDirectory2);
-    assertNotNull(tempDirectory2.toString(), dirBefore);
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
-      public void run() {
+      try (JarFile jarFile1 = new JarFile(file1)) {
+        try (JarFile jarFile2 = new JarFile(file2)) {
+          new Decompressor.Zip(new File(jarFile1.getName())).extract(tempDirectory1);
+          new Decompressor.Zip(new File(jarFile2.getName())).extract(tempDirectory2);
+        }
+      }
+
+      final VirtualFile dirAfter = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(tempDirectory1);
+      assertNotNull(tempDirectory1.toString(), dirAfter);
+      final VirtualFile dirBefore = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(tempDirectory2);
+      assertNotNull(tempDirectory2.toString(), dirBefore);
+      getApplication().runWriteAction(() -> {
         dirAfter.refresh(false, true);
         dirBefore.refresh(false, true);
-      }
-    });
-    assertDirectoriesEqual(dirAfter, dirBefore, CVS_FILE_FILTER);
-  }
-
-  public static void assertElementsEqual(final Element expected, final Element actual) throws IOException {
-    if (!JDOMUtil.areElementsEqual(expected, actual)) {
-      junit.framework.Assert.assertEquals(printElement(expected), printElement(actual));
+      });
+      assertDirectoriesEqual(dirAfter, dirBefore);
     }
-  }
-
-  public static String printElement(final Element element) throws IOException {
-    final StringWriter writer = new StringWriter();
-    JDOMUtil.writeElement(element, writer, "\n");
-    return writer.getBuffer().toString();
-  }
-
-  public static class CvsVirtualFileFilter implements VirtualFileFilter, FilenameFilter {
-    @Override
-    public boolean accept(VirtualFile file) {
-      return !file.isDirectory() || !"CVS".equals(file.getName());
-    }
-
-    @Override
-    public boolean accept(File dir, String name) {
-      return !name.contains("CVS");
+    finally {
+      FileUtilRt.delete(tempDir);
     }
   }
 
   public static String getCommunityPath() {
-    final String homePath = PathManager.getHomePath();
-    if (new File(homePath, "community").exists()) {
+    final String homePath = IdeaTestExecutionPolicy.getHomePathWithPolicy();
+    if (new File(homePath, "community/.idea").isDirectory()) {
       return homePath + File.separatorChar + "community";
     }
     return homePath;
   }
 
+  public static String getPlatformTestDataPath() {
+    return getCommunityPath().replace(File.separatorChar, '/') + "/platform/platform-tests/testData/";
+  }
+
   public static Comparator<AbstractTreeNode> createComparator(final Queryable.PrintInfo printInfo) {
-    return new Comparator<AbstractTreeNode>() {
-      @Override
-      public int compare(final AbstractTreeNode o1, final AbstractTreeNode o2) {
-        String displayText1 = o1.toTestString(printInfo);
-        String displayText2 = o2.toTestString(printInfo);
-        return Comparing.compare(displayText1, displayText2);
-      }
+    return (o1, o2) -> {
+      String displayText1 = o1.toTestString(printInfo);
+      String displayText2 = o2.toTestString(printInfo);
+      return Comparing.compare(displayText1, displayText2);
     };
   }
 
@@ -771,5 +794,195 @@ public class PlatformTestUtil {
   @NotNull
   public static String loadFileText(@NotNull String fileName) throws IOException {
     return StringUtil.convertLineSeparators(FileUtil.loadFile(new File(fileName)));
+  }
+
+  public static void withEncoding(@NotNull String encoding, @NotNull ThrowableRunnable r) {
+    try {
+      Charset oldCharset = Charset.defaultCharset();
+      try {
+        patchSystemFileEncoding(encoding);
+        r.run();
+      }
+      finally {
+        patchSystemFileEncoding(oldCharset.name());
+      }
+    }
+    catch (Throwable t) {
+      throw new RuntimeException(t);
+    }
+  }
+
+  private static void patchSystemFileEncoding(String encoding) {
+    ReflectionUtil.resetField(Charset.class, Charset.class, "defaultCharset");
+    System.setProperty("file.encoding", encoding);
+  }
+
+  public static void withStdErrSuppressed(@NotNull Runnable r) {
+    PrintStream std = System.err;
+    System.setErr(new PrintStream(NULL));
+    try {
+      r.run();
+    }
+    finally {
+      System.setErr(std);
+    }
+  }
+
+  @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")
+  private static final OutputStream NULL = new OutputStream() {
+    @Override
+    public void write(int b) { }
+  };
+
+  public static void assertSuccessful(@NotNull GeneralCommandLine command) {
+    try {
+      ProcessOutput output = ExecUtil.execAndGetOutput(command.withRedirectErrorStream(true));
+      assertEquals(output.getStdout(), 0, output.getExitCode());
+    }
+    catch (ExecutionException e) {
+      throw new RuntimeException(e);
+    }
+  }
+
+  @NotNull
+  public static List<WebReference> collectWebReferences(@NotNull PsiElement element) {
+    List<WebReference> refs = new ArrayList<>();
+    element.accept(new PsiRecursiveElementWalkingVisitor() {
+      @Override
+      public void visitElement(PsiElement element) {
+        for (PsiReference ref : element.getReferences()) {
+          if (ref instanceof WebReference) {
+            refs.add((WebReference)ref);
+          }
+        }
+        super.visitElement(element);
+      }
+    });
+    return refs;
+  }
+
+  public static void registerProjectCleanup(@NotNull Runnable cleanup) {
+    ourProjectCleanups.add(cleanup);
+  }
+
+  public static void cleanupAllProjects() {
+    for (Runnable each : ourProjectCleanups) {
+      each.run();
+    }
+    ourProjectCleanups.clear();
+  }
+
+  /**
+   * Disposes the application (it also stops some application-related threads)
+   * and checks for project leaks.
+   */
+  public static void disposeApplicationAndCheckForProjectLeaks() {
+    EdtTestUtil.runInEdtAndWait(() -> {
+      try {
+        LightPlatformTestCase.initApplication(); // in case nobody cared to init. LightPlatformTestCase.disposeApplication() would not work otherwise.
+      }
+      catch (RuntimeException e) {
+        throw e;
+      }
+      catch (Exception e) {
+        throw new RuntimeException(e);
+      }
+
+      cleanupAllProjects();
+
+      UIUtil.dispatchAllInvocationEvents();
+
+      ApplicationImpl application = (ApplicationImpl)getApplication();
+      System.out.println(application.writeActionStatistics());
+      System.out.println(ActionUtil.ActionPauses.STAT.statistics());
+      System.out.println(((AppScheduledExecutorService)AppExecutorUtil.getAppScheduledExecutorService()).statistics());
+      System.out.println("ProcessIOExecutorService threads created: " + ((ProcessIOExecutorService)ProcessIOExecutorService.INSTANCE).getThreadCounter());
+
+      try {
+        LeakHunter.checkNonDefaultProjectLeak();
+      }
+      catch (AssertionError | Exception e) {
+        captureMemorySnapshot();
+        ExceptionUtil.rethrow(e);
+      }
+      finally {
+        application.setDisposeInProgress(true);
+        LightPlatformTestCase.disposeApplication();
+        UIUtil.dispatchAllInvocationEvents();
+      }
+    });
+  }
+
+  public static void captureMemorySnapshot() {
+    try {
+      Method snapshot = ReflectionUtil.getMethod(Class.forName("com.intellij.util.ProfilingUtil"), "captureMemorySnapshot");
+      if (snapshot != null) {
+        Object path = snapshot.invoke(null);
+        System.out.println("Memory snapshot captured to '" + path + "'");
+      }
+    }
+    catch (ClassNotFoundException e) {
+      // ProfilingUtil is missing from the classpath, ignore
+    }
+    catch (Exception e) {
+      e.printStackTrace(System.err);
+    }
+  }
+
+  public static <T> void assertComparisonContractNotViolated(@NotNull List<? extends T> values,
+                                                             @NotNull Comparator<? super T> comparator,
+                                                             @NotNull Equality<? super T> equality) {
+    for (int i1 = 0; i1 < values.size(); i1++) {
+      for (int i2 = i1; i2 < values.size(); i2++) {
+        T value1 = values.get(i1);
+        T value2 = values.get(i2);
+
+        int result12 = comparator.compare(value1, value2);
+        int result21 = comparator.compare(value2, value1);
+        if (equality.equals(value1, value2)) {
+          assertEquals(String.format("Equal, but not 0: '%s' - '%s'", value1, value2), 0, result12);
+          assertEquals(String.format("Equal, but not 0: '%s' - '%s'", value2, value1), 0, result21);
+        }
+        else {
+          if (result12 == 0) fail(String.format("Not equal, but 0: '%s' - '%s'", value1, value2));
+          if (result21 == 0) fail(String.format("Not equal, but 0: '%s' - '%s'", value2, value1));
+          if (Integer.signum(result12) == Integer.signum(result21)) {
+            fail(String.format("Not symmetrical: '%s' - '%s'", value1, value2));
+          }
+        }
+
+        for (int i3 = i2; i3 < values.size(); i3++) {
+          T value3 = values.get(i3);
+
+          int result23 = comparator.compare(value2, value3);
+          int result31 = comparator.compare(value3, value1);
+
+          if (!isTransitive(result12, result23, result31)) {
+            fail(String.format("Not transitive: '%s' - '%s' - '%s'", value1, value2, value3));
+          }
+        }
+      }
+    }
+  }
+
+  private static boolean isTransitive(int result12, int result23, int result31) {
+    if (result12 == 0 && result23 == 0 && result31 == 0) return true;
+
+    if (result12 > 0 && result23 > 0 && result31 > 0) return false;
+    if (result12 < 0 && result23 < 0 && result31 < 0) return false;
+
+    if (result12 == 0 && Integer.signum(result23) * Integer.signum(result31) >= 0) return false;
+    if (result23 == 0 && Integer.signum(result12) * Integer.signum(result31) >= 0) return false;
+    if (result31 == 0 && Integer.signum(result23) * Integer.signum(result12) >= 0) return false;
+
+    return true;
+  }
+
+  public static void setLongMeaninglessFileIncludeTemplateTemporarilyFor(@NotNull Project project, @NotNull Disposable parentDisposable) {
+    FileTemplateManagerImpl templateManager = (FileTemplateManagerImpl)FileTemplateManager.getInstance(project);
+    templateManager.setDefaultFileIncludeTemplateTextTemporarilyForTest(FileTemplateManager.FILE_HEADER_TEMPLATE_NAME,
+    "/**\n" +
+    " * Created by ${USER} on ${DATE}.\n" +
+    " */\n", parentDisposable);
   }
 }

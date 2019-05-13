@@ -27,6 +27,7 @@ import javax.swing.table.AbstractTableModel;
 import javax.swing.table.TableCellRenderer;
 import java.awt.*;
 import java.awt.event.MouseEvent;
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -36,10 +37,10 @@ import java.util.List;
 @SuppressWarnings("unchecked")
 public abstract class AddEditRemovePanel<T> extends PanelWithButtons implements ComponentWithEmptyText {
   private JBTable myTable;
-  private TableModel myModel;
+  private final TableModel myModel;
   private List<T> myData;
   private AbstractTableModel myTableModel;
-  private String myLabel;
+  private final String myLabel;
 
   public AddEditRemovePanel(TableModel<T> model, List<T> data) {
     this(model, data, null);
@@ -62,11 +63,15 @@ public abstract class AddEditRemovePanel<T> extends PanelWithButtons implements 
   @Nullable
   protected abstract T editItem(T o);
 
+  public boolean isUpDownSupported() {
+    return false;
+  }
+
   @Override
   protected void initPanel() {
     setLayout(new BorderLayout());
 
-    final JPanel panel = ToolbarDecorator.createDecorator(myTable)
+    ToolbarDecorator decorator = ToolbarDecorator.createDecorator(myTable)
       .setAddAction(new AnActionButtonRunnable() {
         @Override
         public void run(AnActionButton button) {
@@ -88,10 +93,27 @@ public abstract class AddEditRemovePanel<T> extends PanelWithButtons implements 
           }
           doEdit();
         }
-      })
-      .disableUpAction()
-      .disableDownAction()
-      .createPanel();
+      });
+
+    if (isUpDownSupported()) {
+      decorator
+        .setMoveUpAction(new AnActionButtonRunnable() {
+          @Override
+          public void run(AnActionButton button) {
+            doUp();
+          }})
+        .setMoveDownAction(new AnActionButtonRunnable() {
+          @Override
+          public void run(AnActionButton button) {
+            doDown();
+          }
+        });
+    }
+    else {
+      decorator.disableUpAction().disableDownAction();
+    }
+
+    final JPanel panel = decorator.createPanel();
     add(panel, BorderLayout.CENTER);
     final String label = getLabelText();
     if (label != null) {
@@ -99,6 +121,7 @@ public abstract class AddEditRemovePanel<T> extends PanelWithButtons implements 
     }
   }
 
+  @Override
   protected String getLabelText(){
     return myLabel;
   }
@@ -109,6 +132,7 @@ public abstract class AddEditRemovePanel<T> extends PanelWithButtons implements 
     return myTable.getEmptyText();
   }
 
+  @Override
   protected JComponent createMainComponent(){
     initTable();
 
@@ -117,22 +141,27 @@ public abstract class AddEditRemovePanel<T> extends PanelWithButtons implements 
 
   private void initTable() {
     myTableModel = new AbstractTableModel() {
+      @Override
       public int getColumnCount(){
         return myModel.getColumnCount();
       }
 
+      @Override
       public int getRowCount(){
         return myData != null ? myData.size() : 0;
       }
 
+      @Override
       public Class getColumnClass(int columnIndex){
         return myModel.getColumnClass(columnIndex);
       }
 
+      @Override
       public String getColumnName(int column){
         return myModel.getColumnName(column);
       }
 
+      @Override
       public Object getValueAt(int rowIndex, int columnIndex){
         return myModel.getField(myData.get(rowIndex), columnIndex);
       }
@@ -167,6 +196,7 @@ public abstract class AddEditRemovePanel<T> extends PanelWithButtons implements 
     return new JBTable();
   }
 
+  @Override
   protected JButton[] createButtons(){
     return new JButton[0];
   }
@@ -190,7 +220,7 @@ public abstract class AddEditRemovePanel<T> extends PanelWithButtons implements 
       myTableModel.fireTableRowsUpdated(selected, selected);
     }
   }
-  
+
   protected void doRemove() {
     if (myTable.isEditing()) {
       myTable.getCellEditor().stopCellEditing();
@@ -198,23 +228,32 @@ public abstract class AddEditRemovePanel<T> extends PanelWithButtons implements 
 
     final int[] selected = myTable.getSelectedRows();
     if (selected == null || selected.length == 0) return;
-    for (int i = selected.length - 1; i >= 0; i--) {
-      int idx = selected[i];
-      if (!removeItem(myData.get(idx))) return;
-      myData.remove(idx);
-    }
+
+    Arrays.sort(selected);
 
     for (int i = selected.length - 1; i >= 0; i--) {
       int idx = selected[i];
-      myTableModel.fireTableRowsDeleted(idx, idx);
+      if (!removeItem(myData.get(idx))) continue;
+      myData.remove(idx);
     }
+
+    myTableModel.fireTableDataChanged();
+
     int selection = selected[0];
     if (selection >= myData.size()) {
       selection = myData.size() - 1;
     }
     if (selection >= 0) {
       myTable.setRowSelectionInterval(selection, selection);
-    }   
+    }
+  }
+
+  protected void doUp() {
+    TableUtil.moveSelectedItemsUp(myTable);
+  }
+
+  protected void doDown() {
+    TableUtil.moveSelectedItemsDown(myTable);
   }
 
   public void setData(List<T> data) {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,9 +18,10 @@ package com.intellij.psi.impl.source;
 
 import com.intellij.psi.TokenType;
 import com.intellij.psi.impl.source.tree.FileElement;
+import org.jetbrains.annotations.NotNull;
 
 public class DummyHolderElement extends FileElement {
-  public DummyHolderElement(CharSequence text) {
+  public DummyHolderElement(@NotNull CharSequence text) {
     super(TokenType.DUMMY_HOLDER, text);
   }
 }

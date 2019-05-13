@@ -1,0 +1,7 @@
+f'<error descr="Single '}' is not allowed inside f-strings">}</error>'
+f'{x}{y}<error descr="Single '}' is not allowed inside f-strings">}</error>'
+f'{x}}}<error descr="Single '}' is not allowed inside f-strings">}</error>'
+f'{x:{y}}<error descr="Single '}' is not allowed inside f-strings">}</error>'
+f'{x:{y}}}}'
+f'{"}":{"}"}}'
+f'\N{FOO BAR}'

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,33 +15,37 @@
  */
 package com.intellij.refactoring.typeMigration;
 
+import com.intellij.codeInsight.generation.GetterSetterPrototypeProvider;
+import com.intellij.codeInsight.intention.impl.SplitDeclarationAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
+import com.intellij.psi.controlFlow.DefUseUtil;
+import com.intellij.psi.impl.PsiSubstitutorImpl;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.util.InheritanceUtil;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtil;
-import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.psi.util.*;
 import com.intellij.refactoring.typeMigration.usageInfo.TypeMigrationUsageInfo;
+import com.intellij.util.CommonProcessors;
+import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.Map;
 
 /**
  * @author anna
- * Date: 04-Apr-2008
  */
 class TypeMigrationStatementProcessor extends JavaRecursiveElementVisitor {
   private final PsiElement myStatement;
   private final TypeMigrationLabeler myLabeler;
-  private static final Logger LOG = Logger.getInstance("#" + TypeMigrationStatementProcessor.class.getName());
+  private static final Logger LOG = Logger.getInstance(TypeMigrationStatementProcessor.class);
   private final TypeEvaluator myTypeEvaluator;
 
-  public TypeMigrationStatementProcessor(final PsiElement expression, TypeMigrationLabeler labeler) {
+  TypeMigrationStatementProcessor(final PsiElement expression, TypeMigrationLabeler labeler) {
     myStatement = expression;
     myLabeler = labeler;
     myTypeEvaluator = myLabeler.getTypeEvaluator();
@@ -81,11 +85,17 @@ class TypeMigrationStatementProcessor extends JavaRecursiveElementVisitor {
         break;
 
       case TypeInfection.LEFT_INFECTED:
-        myLabeler.migrateExpressionType(rExpression, ltype, myStatement, TypeConversionUtil.isAssignable(ltype, rtype), true);
+        myLabeler.migrateExpressionType(rExpression, ltype, myStatement, TypeConversionUtil.isAssignable(ltype, rtype) && !isSetter(expression), true);
         break;
 
       case TypeInfection.RIGHT_INFECTED:
-        myLabeler.migrateExpressionType(lExpression, rtype, myStatement, TypeConversionUtil.isAssignable(ltype, rtype), false);
+        if (lExpression instanceof PsiReferenceExpression &&
+            ((PsiReferenceExpression)lExpression).resolve() instanceof PsiLocalVariable &&
+            !canBeVariableType(rtype)) {
+          tryToRemoveLocalVariableAssignment((PsiLocalVariable)((PsiReferenceExpression)lExpression).resolve(), rExpression, rtype);
+        } else {
+          myLabeler.migrateExpressionType(lExpression, rtype, myStatement, TypeConversionUtil.isAssignable(ltype, rtype), false);
+        }
         break;
 
       case TypeInfection.BOTH_INFECTED:
@@ -146,7 +156,7 @@ class TypeMigrationStatementProcessor extends JavaRecursiveElementVisitor {
       final PsiType migrationType = myTypeEvaluator.evaluateType(consideredExpression);
       final PsiType fixedType = typeElement.getType();
       if (migrationType != null && !TypeConversionUtil.isAssignable(migrationType, fixedType)) {
-        myLabeler.markFailedConversion(new Pair<PsiType, PsiType>(fixedType, migrationType), consideredExpression);
+        myLabeler.markFailedConversion(Pair.create(fixedType, migrationType), consideredExpression);
       }
     }
   }
@@ -159,7 +169,7 @@ class TypeMigrationStatementProcessor extends JavaRecursiveElementVisitor {
       final PsiType fixedType = typeElement.getType();
       final PsiType migrationType = myTypeEvaluator.evaluateType(expression.getOperand());
       if (migrationType != null && !TypeConversionUtil.areTypesConvertible(migrationType, fixedType)) {
-        myLabeler.markFailedConversion(new Pair<PsiType, PsiType>(fixedType, migrationType), expression);
+        myLabeler.markFailedConversion(Pair.create(fixedType, migrationType), expression);
       }
     }
   }
@@ -176,20 +186,24 @@ class TypeMigrationStatementProcessor extends JavaRecursiveElementVisitor {
   }
 
   @Override
-  public void visitReturnStatement(PsiReturnStatement statement) { // has to change method return type corresponding to new value type 
+  public void visitReturnStatement(final PsiReturnStatement statement) { // has to change method return type corresponding to new value type
     super.visitReturnStatement(statement);
 
-    final PsiMethod method = PsiTreeUtil.getParentOfType(statement, PsiMethod.class);
+    final PsiElement method = PsiTreeUtil.getParentOfType(statement, PsiMethod.class, PsiLambdaExpression.class);
     final PsiExpression value = statement.getReturnValue();
 
     if (method != null && value != null) {
-      final PsiType returnType = method.getReturnType();
+      if (method instanceof PsiLambdaExpression) {
+        //todo [IDEA-133097]
+        return;
+      }
+      final PsiType returnType = ((PsiMethod)method).getReturnType();
       final PsiType valueType = myTypeEvaluator.evaluateType(value);
-
       if (returnType != null && valueType != null) {
-        if (!myLabeler.addMigrationRoot(method, valueType, myStatement, TypeConversionUtil.isAssignable(returnType, valueType), true)
-            && TypeMigrationLabeler.typeContainsTypeParameters(returnType)) {
-          myLabeler.markFailedConversion(new Pair<PsiType, PsiType>(returnType, valueType), value);
+        if ((isGetter(value, method) || !TypeConversionUtil.isAssignable(returnType, valueType))
+            && returnType.equals(myTypeEvaluator.getType(method))
+            && !myLabeler.addMigrationRoot(method, valueType, myStatement, false, true)) {
+          myLabeler.convertExpression(value, valueType, returnType, false);
         }
       }
     }
@@ -215,14 +229,21 @@ class TypeMigrationStatementProcessor extends JavaRecursiveElementVisitor {
           myLabeler.markFailedConversion(typePair, qualifierExpression);
         } else {
           final PsiElement parent = Util.getEssentialParent(expression);
+          final PsiType type = conversion.conversionType();
           if (parent instanceof PsiMethodCallExpression) {
             myLabeler.setConversionMapping((PsiMethodCallExpression)parent, conversion);
-            myTypeEvaluator.setType(new TypeMigrationUsageInfo(parent), myTypeEvaluator.evaluateType((PsiExpression)parent));
+            myTypeEvaluator.setType(new TypeMigrationUsageInfo(parent), type != null ? type: myTypeEvaluator.evaluateType((PsiExpression)parent));
           } else {
             myLabeler.setConversionMapping(expression, conversion);
-            myTypeEvaluator.setType(new TypeMigrationUsageInfo(expression), myTypeEvaluator.evaluateType(expression));
+            myTypeEvaluator.setType(new TypeMigrationUsageInfo(expression), type != null ? type: myTypeEvaluator.evaluateType(expression));
           }
         }
+      }
+    }
+    else if (PsiUtil.isCondition(expression, expression.getParent())) {
+      final TypeView view = new TypeView(expression);
+      if (view.isChanged()) { //means that boolean condition becomes non-boolean
+        findConversionOrFail(expression, expression, view.getTypePair());
       }
     }
   }
@@ -253,20 +274,9 @@ class TypeMigrationStatementProcessor extends JavaRecursiveElementVisitor {
       else if (psiType instanceof PsiClassType) {
         final PsiClassType.ClassResolveResult resolveResult = ((PsiClassType)psiType).resolveGenerics();
         final PsiClass psiClass = resolveResult.getElement();
-        final Project project = statement.getProject();
-        final PsiClass iterableClass =
-            JavaPsiFacade.getInstance(project).findClass("java.lang.Iterable", GlobalSearchScope.allScope(project));
-        if (iterableClass == null) return;
-        if (!InheritanceUtil.isInheritorOrSelf(psiClass, iterableClass, true)) {
-          findConversionOrFail(value, value, typeView.getTypePair());
-          return;
-        }
-        final PsiSubstitutor iterableParamSubstitutor =
-            TypeConversionUtil.getClassSubstitutor(iterableClass, psiClass, PsiSubstitutor.EMPTY);
-        LOG.assertTrue(iterableParamSubstitutor != null);
-        final PsiTypeParameter[] typeParameters = iterableClass.getTypeParameters();
-        LOG.assertTrue(typeParameters.length == 1);
-        psiType = resolveResult.getSubstitutor().substitute(iterableParamSubstitutor.substitute(typeParameters[0]));
+        final PsiType targetTypeParameter = getTargetTypeParameter(psiClass, value, typeView);
+        if (targetTypeParameter == null) return;
+        psiType = resolveResult.getSubstitutor().substitute(targetTypeParameter);
         if (psiType instanceof PsiWildcardType) {
           psiType = ((PsiWildcardType)psiType).getExtendsBound();
         }
@@ -283,9 +293,13 @@ class TypeMigrationStatementProcessor extends JavaRecursiveElementVisitor {
         } else {
           final PsiClass iterableClass = PsiUtil.resolveClassInType(typeViewType);
           LOG.assertTrue(iterableClass != null);
-          final PsiTypeParameter[] typeParameters = iterableClass.getTypeParameters();
-          LOG.assertTrue(typeParameters.length == 1);
-          final Map<PsiTypeParameter, PsiType> substMap = Collections.singletonMap(typeParameters[0], left.getType());
+
+          final PsiType targetType = getTargetTypeParameter(iterableClass, value, typeView);
+          final PsiClass typeParam = PsiUtil.resolveClassInClassTypeOnly(targetType);
+          if (!(typeParam instanceof PsiTypeParameter)) return;
+
+          final Map<PsiTypeParameter, PsiType> substMap = Collections.singletonMap(((PsiTypeParameter)typeParam), left.getType());
+
           final PsiElementFactory factory = JavaPsiFacade.getElementFactory(iterableClass.getProject());
           iterableType = factory.createType(iterableClass, factory.createSubstitutor(substMap));
         }
@@ -296,6 +310,22 @@ class TypeMigrationStatementProcessor extends JavaRecursiveElementVisitor {
     }
   }
 
+  private PsiType getTargetTypeParameter(PsiClass iterableClass, PsiExpression value, TypeView typeView) {
+    final Project project = iterableClass.getProject();
+    final PsiClass itClass =
+      JavaPsiFacade.getInstance(project).findClass("java.lang.Iterable", GlobalSearchScope.allScope(project));
+    if (itClass == null) return null;
+
+    if (!InheritanceUtil.isInheritorOrSelf(iterableClass, itClass, true)) {
+      findConversionOrFail(value, value, typeView.getTypePair());
+      return null;
+    }
+
+    final PsiSubstitutor aSubstitutor = TypeConversionUtil.getSuperClassSubstitutor(itClass, iterableClass, PsiSubstitutor.EMPTY);
+
+    return aSubstitutor.substitute(itClass.getTypeParameters()[0]);
+  }
+  
   @Override
   public void visitNewExpression(final PsiNewExpression expression) {
     super.visitNewExpression(expression);
@@ -316,21 +346,11 @@ class TypeMigrationStatementProcessor extends JavaRecursiveElementVisitor {
   }
 
   @Override
-  public void visitPostfixExpression(final PsiPostfixExpression expression) {
-    super.visitPostfixExpression(expression);
-    processUnaryExpression(expression, expression.getOperationSign());
-  }
-
-  @Override
-  public void visitPrefixExpression(final PsiPrefixExpression expression) {
-    super.visitPrefixExpression(expression);
-    processUnaryExpression(expression, expression.getOperationSign());
-  }
-
-  private void processUnaryExpression(final PsiExpression expression, PsiJavaToken sign) {
+  public void visitUnaryExpression(final PsiUnaryExpression expression) {
+    super.visitUnaryExpression(expression);
     final TypeView typeView = new TypeView(expression);
     if (typeView.isChanged()) {
-      if (!TypeConversionUtil.isUnaryOperatorApplicable(sign, typeView.getType())) {
+      if (!TypeConversionUtil.isUnaryOperatorApplicable(expression.getOperationSign(), typeView.getType())) {
         findConversionOrFail(expression, expression, typeView.getTypePair());
       }
     }
@@ -362,17 +382,32 @@ class TypeMigrationStatementProcessor extends JavaRecursiveElementVisitor {
       final PsiExpression rOperand = operands[i];
       if (rOperand == null) return;
       final TypeView right = new TypeView(rOperand);
+      if (tryFindConversionIfOperandIsNull(left, right, rOperand)) continue;
+      if (tryFindConversionIfOperandIsNull(right, left, lOperand)) continue;
       if (!TypeConversionUtil.isBinaryOperatorApplicable(operationTokenType, left.getType(), right.getType(), false)) {
         if (left.isChanged()) {
-          findConversionOrFail(expression, lOperand, left.getTypePair());
+          findConversionOrFail(lOperand, lOperand, left.getTypePair());
         }
         if (right.isChanged()) {
-          findConversionOrFail(expression, rOperand, right.getTypePair());
+          findConversionOrFail(rOperand, rOperand, right.getTypePair());
         }
       }
       lOperand = rOperand;
       left = right;
     }
+  }
+
+  protected boolean tryFindConversionIfOperandIsNull(TypeView nullCandidate, TypeView comparingType, PsiExpression comparingExpr) {
+    if (nullCandidate.getType() == PsiType.NULL && comparingType.isChanged()) {
+      Pair<PsiType, PsiType> typePair = comparingType.getTypePair();
+      final TypeConversionDescriptorBase
+        conversion = myLabeler.getRules().findConversion(typePair.getFirst(), typePair.getSecond(), null, comparingExpr, false, myLabeler);
+      if (conversion != null) {
+        myLabeler.setConversionMapping(comparingExpr, conversion);
+      }
+      return true;
+    }
+    return false;
   }
 
   private void processArrayInitializer(final PsiArrayInitializerExpression expression, final PsiExpression parentExpression) {
@@ -384,7 +419,7 @@ class TypeMigrationStatementProcessor extends JavaRecursiveElementVisitor {
         final PsiType type = typeView.getType();
         if (migrationType == null || !TypeConversionUtil.isAssignable(migrationType, type)) {
           if (migrationType != null && !TypeConversionUtil.isAssignable(type, migrationType)) {
-            myLabeler.markFailedConversion(new Pair<PsiType, PsiType>(parentExpression.getType(), type), parentExpression);
+            myLabeler.markFailedConversion(Pair.create(parentExpression.getType(), type), parentExpression);
             return;
           }
           migrationType = type;
@@ -401,7 +436,7 @@ class TypeMigrationStatementProcessor extends JavaRecursiveElementVisitor {
   private void checkIndexExpression(final PsiExpression indexExpression) {
     final PsiType indexType = myTypeEvaluator.evaluateType(indexExpression);
     if (indexType != null && !TypeConversionUtil.isAssignable(PsiType.INT, indexType)) {
-      myLabeler.markFailedConversion(new Pair<PsiType, PsiType>(indexExpression.getType(), indexType), indexExpression);
+      myLabeler.markFailedConversion(Pair.create(indexExpression.getType(), indexType), indexExpression);
     }
   }
 
@@ -411,6 +446,9 @@ class TypeMigrationStatementProcessor extends JavaRecursiveElementVisitor {
     final JavaResolveResult resolveResult = methodCallExpression.resolveMethodGenerics();
     final PsiElement method = resolveResult.getElement();
     if (method instanceof PsiMethod) {
+      if (migrateEqualsMethod(methodCallExpression, (PsiMethod)method)) {
+        return;
+      }
       final PsiExpression[] psiExpressions = methodCallExpression.getArgumentList().getExpressions();
       final PsiParameter[] originalParams = ((PsiMethod)method).getParameterList().getParameters();
       final PsiSubstitutor evalSubstitutor = myTypeEvaluator.createMethodSubstitution(originalParams, psiExpressions, (PsiMethod)method, methodCallExpression);
@@ -433,12 +471,44 @@ class TypeMigrationStatementProcessor extends JavaRecursiveElementVisitor {
         final PsiType qualifierType = qualifier.getType();
         if (qualifierType instanceof PsiClassType) {
           final PsiClassType.ClassResolveResult classResolveResult = ((PsiClassType)qualifierType).resolveGenerics();
-          final PsiType migrationType =
-              classResolveResult.getSubstitutor().substitute(evalSubstitutor.substitute(JavaPsiFacade.getElementFactory(myStatement.getProject()).createType(classResolveResult.getElement(), PsiSubstitutor.EMPTY)));
+          final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(myStatement.getProject());
+          final PsiType migrationType = elementFactory.createType(classResolveResult.getElement(), composeIfNotAssignable(classResolveResult.getSubstitutor(), evalSubstitutor));
           myLabeler.migrateExpressionType(qualifier, migrationType, myStatement, migrationType.equals(qualifierType), true);
         }
       }
     }
+  }
+
+  private boolean migrateEqualsMethod(PsiMethodCallExpression methodCallExpression, PsiMethod method) {
+    final PsiExpression qualifier = methodCallExpression.getMethodExpression().getQualifierExpression();
+    if (qualifier == null) {
+      return false;
+    }
+    final TypeView qualifierTypeView = new TypeView(qualifier);
+    if (!qualifierTypeView.isChanged()) {
+      return false;
+    }
+    if (method.getName().equals("equals") && method.getParameterList().getParametersCount() == 1) {
+      final PsiParameter parameter = method.getParameterList().getParameters()[0];
+      if (parameter.getType().equals(PsiType.getJavaLangObject(methodCallExpression.getManager(), methodCallExpression.getResolveScope()))) {
+        final PsiExpression[] expressions = methodCallExpression.getArgumentList().getExpressions();
+        if (expressions.length != 1) {
+          return false;
+        }
+        final TypeView argumentTypeView = new TypeView(expressions[0]);
+        final PsiType argumentType = argumentTypeView.getType();
+        if (!argumentTypeView.isChanged() && qualifierTypeView.getTypePair().getFirst().equals(argumentType)) {
+          final PsiType migrationType = qualifierTypeView.getType();
+          myLabeler.migrateExpressionType(expressions[0],
+                                          migrationType,
+                                          methodCallExpression,
+                                          TypeConversionUtil.isAssignable(migrationType, argumentType),
+                                          true);
+          return true;
+        }
+      }
+    }
+    return false;
   }
 
   private void processVariable(final PsiVariable variable,
@@ -458,14 +528,36 @@ class TypeMigrationStatementProcessor extends JavaRecursiveElementVisitor {
       case TypeInfection.LEFT_INFECTED:
         final PsiType valueType = right.getType();
         if (valueType != null && declarationType != null) {
-          myLabeler.migrateExpressionType(value, declarationType, myStatement, TypeConversionUtil.isAssignable(declarationType, valueType), true);
+          myLabeler.migrateExpressionType(value,
+                                          adjustMigrationTypeIfGenericArrayCreation(declarationType, value),
+                                          myStatement,
+                                          left.isVarArgs() ? isVarargAssignable(left, right) : TypeConversionUtil.isAssignable(declarationType, valueType), true);
         }
         break;
 
       case TypeInfection.RIGHT_INFECTED:
         PsiType psiType = migrationType != null ? migrationType : right.getType();
-        if (psiType != null && declarationType != null && !myLabeler.addMigrationRoot(variable, psiType, myStatement, TypeConversionUtil.isAssignable(declarationType, psiType), true)) {
-          myLabeler.convertExpression(value, psiType, left.getType(), isCovariantPosition);
+        if (psiType != null) {
+          if (canBeVariableType(psiType)) {
+            if (declarationType != null &&
+                !myLabeler.addMigrationRoot(variable, psiType, myStatement, TypeConversionUtil.isAssignable(declarationType, psiType), true) &&
+                !TypeConversionUtil.isAssignable(left.getType(), psiType)) {
+              PsiType initialType = left.getType();
+              if (initialType instanceof PsiEllipsisType) {
+                initialType = ((PsiEllipsisType)initialType).getComponentType();
+              }
+              myLabeler.convertExpression(value, psiType, initialType, isCovariantPosition);
+            }
+          }
+          else {
+            if (variable instanceof PsiLocalVariable) {
+              final PsiDeclarationStatement decl = PsiTreeUtil.getParentOfType(variable, PsiDeclarationStatement.class);
+              if (decl != null && decl.getDeclaredElements().length == 1) {
+                tryToRemoveLocalVariableAssignment((PsiLocalVariable)variable, value, psiType);
+              }
+              break;
+            }
+          }
         }
         break;
 
@@ -476,6 +568,60 @@ class TypeMigrationStatementProcessor extends JavaRecursiveElementVisitor {
       default:
         LOG.error("Must not happen.");
     }
+  }
+
+  private void tryToRemoveLocalVariableAssignment(@NotNull PsiLocalVariable variable, @NotNull PsiExpression valueExpression, @NotNull PsiType migrationType) {
+    final PsiCodeBlock codeBlock = PsiTreeUtil.getParentOfType(variable, PsiCodeBlock.class);
+    final PsiElement[] refs = DefUseUtil.getRefs(codeBlock, variable, valueExpression);
+    if (refs.length == 0) {
+      myLabeler.setConversionMapping(valueExpression, new TypeConversionDescriptorBase() {
+        @Override
+        public PsiExpression replace(PsiExpression expression, @NotNull TypeEvaluator evaluator) throws IncorrectOperationException {
+          final PsiElement parent = expression.getParent();
+          if (parent instanceof PsiLocalVariable) {
+            final PsiLocalVariable var = (PsiLocalVariable)parent;
+            final PsiDeclarationStatement decl = PsiTreeUtil.getParentOfType(var, PsiDeclarationStatement.class);
+            if (decl == null) return null;
+            final Project project = var.getProject();
+            final PsiAssignmentExpression assignment =
+              SplitDeclarationAction.invokeOnDeclarationStatement(decl, PsiManager.getInstance(project), project);
+            final PsiExpression rExpression = assignment.getRExpression();
+            if (rExpression == null) return null;
+            assignment.replace(rExpression);
+            if (ReferencesSearch.search(var).forEach(new CommonProcessors.FindFirstProcessor<>())) {
+              var.delete();
+            }
+          }
+          else if (parent instanceof PsiAssignmentExpression) {
+            final PsiExpression rExpression = ((PsiAssignmentExpression)parent).getRExpression();
+            return rExpression == null ? null : (PsiExpression)parent.replace(rExpression);
+          }
+          return null;
+        }
+      });
+    } else {
+      myLabeler.markFailedConversion(Pair.pair(null, migrationType), valueExpression);
+    }
+  }
+
+
+  private static boolean canBeVariableType(@NotNull PsiType type) {
+    return !type.getDeepComponentType().equals(PsiType.VOID);
+  }
+
+  private static PsiType adjustMigrationTypeIfGenericArrayCreation(PsiType migrationType, PsiExpression expression) {
+    if (expression instanceof PsiNewExpression) {
+      if (migrationType instanceof PsiArrayType) {
+        final PsiType componentType = migrationType.getDeepComponentType();
+        if (componentType instanceof PsiClassType) {
+          final PsiClassType rawType = ((PsiClassType)componentType).rawType();
+          if (!rawType.equals(componentType)) {
+            return com.intellij.refactoring.typeCook.Util.createArrayType(rawType, migrationType.getArrayDimensions());
+          }
+        }
+      }
+    }
+    return migrationType;
   }
 
 
@@ -497,22 +643,23 @@ class TypeMigrationStatementProcessor extends JavaRecursiveElementVisitor {
     final PsiType myType;
     final boolean myChanged;
 
-    public TypeView(@NotNull PsiExpression expr) {
+    TypeView(@NotNull PsiExpression expr) {
       PsiType exprType = expr.getType();
-      exprType = exprType instanceof PsiEllipsisType ? ((PsiEllipsisType)exprType).toArrayType() : exprType;
-      myOriginType = exprType != null ? GenericsUtil.getVariableTypeByExpressionType(exprType) : null;
+      myOriginType = GenericsUtil.getVariableTypeByExpressionType(exprType);
       PsiType type = myTypeEvaluator.evaluateType(expr);
-      type = type instanceof PsiEllipsisType ? ((PsiEllipsisType)type).toArrayType() : type;
-      myType = type != null ? GenericsUtil.getVariableTypeByExpressionType(type) : null;
-      myChanged = (myOriginType == null || myType == null) ? false : !myType.equals(myOriginType);
+      myType = GenericsUtil.getVariableTypeByExpressionType(type);
+      myChanged = !(myOriginType == null || myType == null) && !myType.equals(myOriginType);
     }
 
-    public TypeView(PsiVariable var, PsiSubstitutor varSubstitutor, PsiSubstitutor evalSubstitutor) {
+    TypeView(PsiVariable var, PsiSubstitutor varSubstitutor, PsiSubstitutor evalSubstitutor) {
       myOriginType = varSubstitutor != null ? varSubstitutor.substitute(var.getType()) : var.getType();
-      myType = evalSubstitutor != null
-               ? evalSubstitutor.substitute(myTypeEvaluator.getType(var))
-               : myTypeEvaluator.getType(var);
-      myChanged = (myOriginType == null || myType == null) ? false : !myType.equals(myOriginType);
+
+      Map<PsiTypeParameter, PsiType> realMap = new HashMap<>();
+      if (varSubstitutor != null) realMap.putAll(varSubstitutor.getSubstitutionMap());
+      if (evalSubstitutor != null) realMap.putAll(evalSubstitutor.getSubstitutionMap());
+
+      myType = PsiSubstitutorImpl.createSubstitutor(realMap).substitute(myTypeEvaluator.getType(var));
+      myChanged = !(myOriginType == null || myType == null) && !myType.equals(myOriginType);
     }
 
     public PsiType getType() {
@@ -524,7 +671,11 @@ class TypeMigrationStatementProcessor extends JavaRecursiveElementVisitor {
     }
 
     public Pair<PsiType, PsiType> getTypePair() {
-      return new Pair<PsiType, PsiType>(myOriginType, myType);
+      return Pair.create(myOriginType, myType);
+    }
+
+    public boolean isVarArgs() {
+      return myType instanceof PsiEllipsisType && myOriginType instanceof PsiEllipsisType;
     }
   }
 
@@ -537,5 +688,76 @@ class TypeMigrationStatementProcessor extends JavaRecursiveElementVisitor {
     static int getInfection(final TypeView left, final TypeView right) {
       return (left.isChanged() ? 1 : 0) + (right.isChanged() ? 2 : 0);
     }
+  }
+
+  private static boolean isSetter(PsiAssignmentExpression expression) {
+    final PsiExpression lExpression = expression.getLExpression();
+    if (lExpression instanceof PsiReferenceExpression) {
+      final PsiElement resolved = ((PsiReferenceExpression)lExpression).resolve();
+      if (resolved instanceof PsiField) {
+        PsiField field = (PsiField) resolved;
+        final NavigatablePsiElement containingMethod = PsiTreeUtil.getParentOfType(expression, PsiMethod.class, PsiLambdaExpression.class);
+        if (containingMethod instanceof PsiMethod) {
+          final PsiMethod setter = PropertyUtilBase
+            .findPropertySetter(field.getContainingClass(), field.getName(), field.hasModifierProperty(PsiModifier.STATIC), false);
+          if (containingMethod.isEquivalentTo(setter)) {
+            return true;
+          }
+        }
+      }
+    }
+    return false;
+  }
+
+  private static boolean isGetter(PsiExpression returnValue, PsiElement containingMethod) {
+    if (returnValue instanceof PsiReferenceExpression) {
+      final PsiElement resolved = ((PsiReferenceExpression)returnValue).resolve();
+      if (resolved instanceof PsiField) {
+        PsiField field = (PsiField)resolved;
+        final boolean isStatic = field.hasModifierProperty(PsiModifier.STATIC);
+        final PsiMethod[] getters = GetterSetterPrototypeProvider.findGetters(field.getContainingClass(), field.getName(), isStatic);
+        if (getters != null) {
+          for (PsiMethod getter : getters) {
+            if (containingMethod.isEquivalentTo(getter)) {
+              return true;
+            }
+          }
+        }
+      }
+    }
+    return false;
+  }
+
+  private static PsiSubstitutor composeIfNotAssignable(PsiSubstitutor actual, PsiSubstitutor required) {
+    if (actual == PsiSubstitutor.EMPTY) {
+      return required;
+    }
+    if (required == PsiSubstitutor.EMPTY) {
+      return actual;
+    }
+    PsiSubstitutor result = PsiSubstitutorImpl.createSubstitutor(actual.getSubstitutionMap());
+    for (Map.Entry<PsiTypeParameter, PsiType> e : required.getSubstitutionMap().entrySet()) {
+      final PsiTypeParameter typeParameter = e.getKey();
+      final PsiType requiredType = e.getValue();
+      final PsiType actualType = result.getSubstitutionMap().get(typeParameter);
+      if (requiredType != null && (actualType == null || !TypeConversionUtil.isAssignable(actualType, requiredType))) {
+        result = result.put(typeParameter, requiredType);
+      }
+    }
+    return result;
+  }
+
+  private static boolean isVarargAssignable(TypeView left, TypeView right) {
+    Pair<PsiType, PsiType> leftPair = left.getTypePair();
+    Pair<PsiType, PsiType> rightPair = right.getTypePair();
+
+    PsiType leftOrigin = leftPair.getFirst();
+    PsiType rightOrigin = rightPair.getFirst();
+
+    boolean isDirectlyAssignable = TypeConversionUtil.isAssignable(leftOrigin, rightOrigin);
+
+    return TypeConversionUtil.isAssignable(isDirectlyAssignable ?
+                                           leftPair.getSecond() :
+                                           ((PsiEllipsisType)leftPair.getSecond()).getComponentType(), rightPair.getSecond());
   }
 }

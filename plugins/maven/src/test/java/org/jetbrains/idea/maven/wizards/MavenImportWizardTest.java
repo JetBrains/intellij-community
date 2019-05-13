@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,16 +17,30 @@ package org.jetbrains.idea.maven.wizards;
 
 import com.intellij.ide.projectWizard.ProjectWizardTestCase;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.projectRoots.impl.JavaAwareProjectJdkTableImpl;
 import org.jetbrains.idea.maven.MavenTestCase;
+import org.jetbrains.idea.maven.server.MavenServerManager;
 
 import java.io.File;
 import java.io.IOException;
 
 /**
  * @author Dmitry Avdeev
- *         Date: 11/6/12
  */
 public class MavenImportWizardTest extends ProjectWizardTestCase {
+  @Override
+  public void tearDown() throws Exception {
+    try {
+      MavenServerManager.getInstance().shutdown(true);
+      JavaAwareProjectJdkTableImpl.removeInternalJdkInTests();
+    }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
+    finally {
+      super.tearDown();
+    }
+  }
 
   public void testImportModule() throws Exception {
     File pom = createPom();

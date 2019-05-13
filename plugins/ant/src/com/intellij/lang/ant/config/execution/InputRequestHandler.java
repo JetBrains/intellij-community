@@ -15,9 +15,9 @@
  */
 package com.intellij.lang.ant.config.execution;
 
-import com.intellij.execution.junit2.segments.SegmentReader;
 import com.intellij.execution.process.OSProcessHandler;
 import com.intellij.lang.ant.AntBundle;
+import com.intellij.lang.ant.segments.SegmentReader;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.ex.MessagesEx;
@@ -53,14 +53,17 @@ class InputRequestHandler {
 
   private static String askUser(SegmentReader reader, Project project) {
     String prompt = reader.readLimitedString();
+    String defaultValue = reader.readLimitedString();
     String[] choices = reader.readStringArray();
     MessagesEx.BaseInputInfo question;
     if (choices.length == 0) {
-      question = new MessagesEx.InputInfo(project);
+      MessagesEx.InputInfo inputInfo = new MessagesEx.InputInfo(project);
+      inputInfo.setDefaultValue(defaultValue);
+      question = inputInfo;
     }
     else {
       MessagesEx.ChoiceInfo choiceInfo = new MessagesEx.ChoiceInfo(project);
-      choiceInfo.setChoices(choices, 0);
+      choiceInfo.setChoices(choices, defaultValue);
       question = choiceInfo;
     }
     question.setIcon(Messages.getQuestionIcon());

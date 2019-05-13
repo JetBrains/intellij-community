@@ -1,38 +1,17 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeEditor.printing;
 
-import com.intellij.openapi.application.PathManager;
-import com.intellij.openapi.components.*;
+import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.components.State;
+import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.util.xmlb.XmlSerializerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.File;
-
-@State(
-  name="PrintSettings",
-  storages= {
-    @Storage(
-      file = StoragePathMacros.APP_CONFIG + "/print.xml"
-    )}
-)
-public class PrintSettings implements PersistentStateComponent<PrintSettings>, ExportableComponent {
+@State(name = "PrintSettings", storages = @Storage("print.xml"))
+public class PrintSettings implements PersistentStateComponent<PrintSettings> {
   @NonNls public String PAPER_SIZE = "A4";
 
   public boolean COLOR_PRINTING = false;
@@ -54,6 +33,8 @@ public class PrintSettings implements PersistentStateComponent<PrintSettings>, E
   public float RIGHT_MARGIN = 1.0f;
 
   public boolean DRAW_BORDER = true;
+
+  public boolean EVEN_NUMBER_OF_PAGES = false;
 
   public String FOOTER_HEADER_TEXT1 = CodeEditorBundle.message("print.header.default.line.1");
   public String FOOTER_HEADER_PLACEMENT1 = HEADER;
@@ -81,16 +62,6 @@ public class PrintSettings implements PersistentStateComponent<PrintSettings>, E
     return ServiceManager.getService(PrintSettings.class);
   }
 
-  @NotNull
-  public File[] getExportFiles() {
-    return new File[]{PathManager.getOptionsFile("print")};
-  }
-
-  @NotNull
-  public String getPresentableName() {
-    return CodeEditorBundle.message("title.print.settings");
-  }
-
   public int getPrintScope() {
     return myPrintScope;
   }
@@ -107,11 +78,13 @@ public class PrintSettings implements PersistentStateComponent<PrintSettings>, E
     myIncludeSubdirectories = includeSubdirectories;
   }
 
+  @Override
   public PrintSettings getState() {
     return this;
   }
 
-  public void loadState(final PrintSettings state) {
+  @Override
+  public void loadState(@NotNull final PrintSettings state) {
     XmlSerializerUtil.copyBean(state, this);
   }
 }

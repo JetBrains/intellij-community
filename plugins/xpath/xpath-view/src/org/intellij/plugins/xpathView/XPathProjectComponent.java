@@ -16,11 +16,11 @@
 package org.intellij.plugins.xpathView;
 
 import com.intellij.openapi.components.*;
-import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.project.Project;
 import org.intellij.plugins.xpathView.util.Namespace;
 import org.intellij.plugins.xpathView.util.Variable;
 import org.jdom.Element;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -33,13 +33,7 @@ import java.util.List;
  * It is configured to write its settings into the .iws file rather
  * than the .ipr file. (see plugin.xml)
  */
-@State(
-  name="XPathView.XPathProjectComponent",
-  storages= {
-    @Storage(
-      file = StoragePathMacros.WORKSPACE_FILE
-    )}
-)
+@State(name = "XPathView.XPathProjectComponent", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
 public class XPathProjectComponent implements PersistentStateComponent<Element> {
     protected static final String HISTORY_ELEMENT = "element";
     protected static final String HISTORY = "history";
@@ -52,17 +46,17 @@ public class XPathProjectComponent implements PersistentStateComponent<Element> 
     protected static final String URI = "uri";
 
     /** A set that maintains the history */
-    private final LinkedHashMap<String, HistoryElement> history = new LinkedHashMap<String, HistoryElement>();
-    private final LinkedHashMap<String, HistoryElement> findHistory = new LinkedHashMap<String, HistoryElement>();
+    private final LinkedHashMap<String, HistoryElement> history = new LinkedHashMap<>();
+    private final LinkedHashMap<String, HistoryElement> findHistory = new LinkedHashMap<>();
 
 //    private Set<Namespace> namespaces = new HashSet();
 
-  public void loadState(Element state) {
+  @Override
+  public void loadState(@NotNull Element state) {
     readHistory(state, HISTORY, history);
     readHistory(state, FIND_HISTORY, findHistory);
   }
 
-    @SuppressWarnings({"unchecked"})
     private static void readHistory(Element element, String s, LinkedHashMap<String, HistoryElement> hst) {
         final Element historyElement = element.getChild(s);
         if (historyElement != null) {
@@ -71,13 +65,13 @@ public class XPathProjectComponent implements PersistentStateComponent<Element> 
                 final String expression = entry.getAttributeValue(EXPRESSION);
                 if (expression != null) {
                     List<Element> children = entry.getChildren(VARIABLE);
-                    final Collection<Variable> variables = new ArrayList<Variable>(children.size());
+                    final Collection<Variable> variables = new ArrayList<>(children.size());
                     for (Element e : children) {
                         variables.add(new Variable(e.getAttributeValue(NAME), e.getAttributeValue(EXPRESSION)));
                     }
 
                     children = entry.getChildren(NAMESPACE);
-                    final Collection<Namespace> namespaces = new ArrayList<Namespace>(children.size());
+                    final Collection<Namespace> namespaces = new ArrayList<>(children.size());
                     for (Element namespaceElement : children) {
                         namespaces.add(new Namespace(namespaceElement.getAttributeValue(PREFIX), namespaceElement.getAttributeValue(URI)));
                     }
@@ -87,6 +81,7 @@ public class XPathProjectComponent implements PersistentStateComponent<Element> 
         }
     }
 
+  @Override
   public Element getState() {
     Element element = new Element("xpathview");
     writeHistory(element, HISTORY, history);
@@ -124,31 +119,27 @@ public class XPathProjectComponent implements PersistentStateComponent<Element> 
      * Add a string to the history list
      */
     public void addHistory(HistoryElement element) {
-        final String expression = element.expression;
-        if (history.containsKey(expression)) {
-            history.remove(expression);
-        }
-        history.put(expression, element);
+      String expression = element.expression;
+      history.remove(expression);
+      history.put(expression, element);
     }
 
-    public void addFindHistory(HistoryElement element) {
-        final String expression = element.expression;
-        if (findHistory.containsKey(expression)) {
-            findHistory.remove(expression);
-        }
-        findHistory.put(expression, element);
-    }
+  public void addFindHistory(HistoryElement element) {
+    String expression = element.expression;
+    findHistory.remove(expression);
+    findHistory.put(expression, element);
+  }
 
     /**
      * Returns the history
      * @return the history as an array of strings
      */
     public HistoryElement[] getHistory() {
-        return history.values().toArray(new HistoryElement[history.values().size()]);
+        return history.values().toArray(new HistoryElement[0]);
     }
 
     public HistoryElement[] getFindHistory() {
-        return findHistory.values().toArray(new HistoryElement[findHistory.values().size()]);
+        return findHistory.values().toArray(new HistoryElement[0]);
     }
 
     public static XPathProjectComponent getInstance(Project project) {

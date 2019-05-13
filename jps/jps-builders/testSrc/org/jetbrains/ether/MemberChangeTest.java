@@ -17,7 +17,6 @@ package org.jetbrains.ether;
 
 /**
  * @author: db
- * Date: 06.10.11
  */
 public class MemberChangeTest extends IncrementalTestCase {
   public MemberChangeTest() {
@@ -25,6 +24,10 @@ public class MemberChangeTest extends IncrementalTestCase {
   }
 
   public void testAddAbstractMethod() {
+    doTest();
+  }
+
+  public void testAddPrivateMethodToAbstractClass() {
     doTest();
   }
 
@@ -116,6 +119,10 @@ public class MemberChangeTest extends IncrementalTestCase {
     doTest();
   }
 
+  public void testAddParameterToConstructor() {
+    doTest();
+  }
+
   public void testDeleteInner() {
     doTest();
   }
@@ -197,6 +204,18 @@ public class MemberChangeTest extends IncrementalTestCase {
   }
 
   public void testAddMethod() {
+    doTest();
+  }
+
+  public void testAddVarargMethod() {
+    doTest();
+  }
+
+  public void testReplaceMethodWithBridge() {
+    doTest();
+  }
+
+  public void testPushFieldDown() {
     doTest();
   }
 }

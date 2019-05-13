@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,14 +41,15 @@ public class MethodElement extends CompositeElement implements Constants {
 
   @Override
   public int getTextOffset() {
-    return findChildByRole(ChildRole.NAME).getStartOffset();
+    ASTNode name = findChildByType(IDENTIFIER);
+    return name != null ? name.getStartOffset() : this.getStartOffset();
   }
 
   @Override
   public TreeElement addInternal(TreeElement first, ASTNode last, ASTNode anchor, Boolean before) {
-    if (first == last && first.getElementType() == ElementType.CODE_BLOCK){
-      ASTNode semicolon = findChildByRole(ChildRole.CLOSING_SEMICOLON);
-      if (semicolon != null){
+    if (first == last && first.getElementType() == JavaElementType.CODE_BLOCK) {
+      ASTNode semicolon = TreeUtil.findChildBackward(this, SEMICOLON);
+      if (semicolon != null) {
         deleteChildInternal(semicolon);
       }
     }
@@ -64,7 +65,7 @@ public class MethodElement extends CompositeElement implements Constants {
 
   @Override
   public void deleteChildInternal(@NotNull ASTNode child) {
-    if (child.getElementType() == CODE_BLOCK){
+    if (child.getElementType() == CODE_BLOCK) {
       final ASTNode prevWS = TreeUtil.prevLeaf(child);
       if (prevWS != null && prevWS.getElementType() == TokenType.WHITE_SPACE) {
         removeChild(prevWS);
@@ -74,15 +75,18 @@ public class MethodElement extends CompositeElement implements Constants {
       LeafElement semicolon = Factory.createSingleLeafElement(SEMICOLON, ";", 0, 1, treeCharTab, getManager());
       addInternal(semicolon, semicolon, null, Boolean.TRUE);
     }
+    else if (child.getElementType() == PARAMETER_LIST) {
+      throw new IllegalArgumentException("Deleting parameter list is prohibited");
+    }
     else {
       super.deleteChildInternal(child);
     }
   }
 
   @Override
-  public ASTNode findChildByRole(int role){
+  public ASTNode findChildByRole(int role) {
     LOG.assertTrue(ChildRole.isUnique(role));
-    switch(role){
+    switch (role) {
       default:
         return null;
 
@@ -119,7 +123,7 @@ public class MethodElement extends CompositeElement implements Constants {
   }
 
   @Override
-  public int getChildRole(ASTNode child) {
+  public int getChildRole(@NotNull ASTNode child) {
     LOG.assertTrue(child.getTreeParent() == this);
     IElementType i = child.getElementType();
     if (i == JavaDocElementType.DOC_COMMENT) {
@@ -161,5 +165,4 @@ public class MethodElement extends CompositeElement implements Constants {
   protected boolean isVisibilitySupported() {
     return true;
   }
-  
 }

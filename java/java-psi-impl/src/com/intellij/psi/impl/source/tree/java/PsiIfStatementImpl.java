@@ -19,12 +19,13 @@ import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiImplUtil;
+import com.intellij.psi.impl.source.Constants;
 import com.intellij.psi.impl.source.tree.ChildRole;
 import com.intellij.psi.impl.source.tree.CompositePsiElement;
 import com.intellij.psi.impl.source.tree.ElementType;
-import com.intellij.psi.impl.source.Constants;
-import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.tree.ChildRoleBase;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
@@ -42,6 +43,10 @@ public class PsiIfStatementImpl extends CompositePsiElement implements PsiIfStat
 
   @Override
   public void deleteChildInternal(@NotNull ASTNode child) {
+    if (child == getThenBranch()) {
+      replaceChildInternal(child, (TreeElement)JavaPsiFacade.getElementFactory(getProject()).createStatementFromText("{}", null));
+      return;
+    }
     if (child == getElseBranch()) {
       ASTNode elseKeyword = findChildByRole(ChildRole.ELSE_KEYWORD);
       if (elseKeyword != null) {
@@ -83,15 +88,15 @@ public class PsiIfStatementImpl extends CompositePsiElement implements PsiIfStat
     PsiKeyword elseElement = getElseElement();
     if (elseElement != null) elseElement.delete();
 
-    PsiElementFactory elementFactory = JavaPsiFacade.getInstance(getProject()).getElementFactory();
-    PsiIfStatement ifStatement = (PsiIfStatement)elementFactory.createStatementFromText("if (true) {} else {}", null);
+    PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(getProject());
+    PsiIfStatement ifStatement = (PsiIfStatement)elementFactory.createStatementFromText("if (true) {} else {}", this);
     ifStatement.getElseBranch().replace(statement);
 
     addRange(ifStatement.getElseElement(), ifStatement.getLastChild());
   }
   @Override
   public void setThenBranch(@NotNull PsiStatement statement) throws IncorrectOperationException {
-    PsiElementFactory elementFactory = JavaPsiFacade.getInstance(getProject()).getElementFactory();
+    PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(getProject());
     ASTNode keyword = findChildByRole(ChildRole.IF_KEYWORD);
     LOG.assertTrue(keyword != null);
     PsiIfStatement ifStatementPattern = (PsiIfStatement)elementFactory.createStatementFromText("if (){}", this);
@@ -137,19 +142,17 @@ public class PsiIfStatementImpl extends CompositePsiElement implements PsiIfStat
         return findChildByType(ELSE_KEYWORD);
 
       case ChildRole.ELSE_BRANCH:
-        {
-          ASTNode elseKeyword = findChildByRole(ChildRole.ELSE_KEYWORD);
-          if (elseKeyword == null) return null;
-          for(ASTNode child = elseKeyword.getTreeNext(); child != null; child = child.getTreeNext()){
-            if (child.getPsi() instanceof PsiStatement) return child;
-          }
-          return null;
+        ASTNode elseKeyword = findChildByRole(ChildRole.ELSE_KEYWORD);
+        if (elseKeyword == null) return null;
+        for(ASTNode child = elseKeyword.getTreeNext(); child != null; child = child.getTreeNext()){
+          if (child.getPsi() instanceof PsiStatement) return child;
         }
+        return null;
     }
   }
 
   @Override
-  public int getChildRole(ASTNode child) {
+  public int getChildRole(@NotNull ASTNode child) {
     LOG.assertTrue(child.getTreeParent() == this);
     IElementType i = child.getElementType();
     if (i == IF_KEYWORD) {
@@ -172,9 +175,7 @@ public class PsiIfStatementImpl extends CompositePsiElement implements PsiIfStat
         if (findChildByRoleAsPsiElement(ChildRole.THEN_BRANCH) == child) {
           return ChildRole.THEN_BRANCH;
         }
-        else {
-          return ChildRole.ELSE_BRANCH;
-        }
+        return ChildRole.ELSE_BRANCH;
       }
       else {
         return ChildRoleBase.NONE;
@@ -192,6 +193,7 @@ public class PsiIfStatementImpl extends CompositePsiElement implements PsiIfStat
     }
   }
 
+  @Override
   public String toString() {
     return "PsiIfStatement";
   }

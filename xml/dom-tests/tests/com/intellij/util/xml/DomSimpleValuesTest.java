@@ -1,3 +1,18 @@
+/*
+ * Copyright 2000-2015 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.intellij.util.xml;
 
 import com.intellij.openapi.application.Result;
@@ -7,11 +22,13 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.xml.events.DomEvent;
+import com.intellij.util.xml.impl.DomTestCase;
 import com.intellij.util.xml.ui.DomUIFactory;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.math.BigDecimal;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
@@ -25,13 +42,13 @@ public class DomSimpleValuesTest extends DomTestCase {
     return createElement(xml, MyElement.class);
   }
 
-  public void testGetValue() throws Throwable {
+  public void testGetValue() {
     final String text = "<a>foo</a>";
     assertEquals("foo", createElement(text).getTagValue());
     assertEquals("foo", createElement(text).getValue());
   }
 
-  public void testSetValue() throws Throwable {
+  public void testSetValue() {
     final MyElement element = createElement("<a/>");
     assertEquals("", element.getValue());
     element.setValue(239);
@@ -42,7 +59,7 @@ public class DomSimpleValuesTest extends DomTestCase {
     myCallRegistry.assertResultsAndClear();
   }
 
-  public void testDefineAndSet() throws Throwable {
+  public void testDefineAndSet() {
     final MyElement element = getDomManager().getFileElement(createXmlFile(""), MyElement.class, "root").getRootElement();
     myCallRegistry.clear();
     assertNull(element.getXmlTag());
@@ -62,10 +79,19 @@ public class DomSimpleValuesTest extends DomTestCase {
   }
 
 
-  public void testSimpleConverters() throws Throwable {
+  public void testSimpleConverters() {
     assertEquals(239, createElement("<a>239</a>").getInt());
     assertEquals(true, createElement("<a>true</a>").getBoolean());
     assertEquals("true", createElement("<a>true</a>").getBuffer().toString());
+
+    assertEquals((short)239, createElement("<a>239</a>").getShort());
+    assertEquals(new Long("239"), createElement("<a>239</a>").getLong());
+    assertEquals(new Float("239.42"), createElement("<a>239.42</a>").getFloat());
+    assertEquals(new BigDecimal("239.42"), createElement("<a>239.42</a>").getBigDecimal());
+
+    final MyElement bigDecimalValue = createElement("<a>239.42</a>");
+    bigDecimalValue.setValue(new BigDecimal("111.234"));
+    assertEquals("111.234", bigDecimalValue.getValue());
 
     try {
       createElement("<a>true</a>").getInt();
@@ -81,7 +107,7 @@ public class DomSimpleValuesTest extends DomTestCase {
     }
   }
 
-  public void testComment() throws Throwable {
+  public void testComment() {
     assertEquals(239, createElement("<a>" +
                                     "  <!-- some comment-->" +
                                     "  239" +
@@ -89,7 +115,7 @@ public class DomSimpleValuesTest extends DomTestCase {
                                     "</a>").getInt());
   }
 
-  public void testPsiClassConverter() throws Throwable {
+  public void testPsiClassConverter() {
     final String className = Object.class.getName();
     final PsiClass objectClass = getJavaFacade().findClass(className, GlobalSearchScope.allScope(getProject()));
     assertEquals(objectClass, createElement("<a>" + className + "</a>").getPsiClass());
@@ -97,7 +123,7 @@ public class DomSimpleValuesTest extends DomTestCase {
     assertNull(createElement("<a>abcdef</a>").getPsiClass());
   }
 
-  public void testEnums() throws Throwable {
+  public void testEnums() {
     final MyElement element = createElement("<a/>", MyElement.class);
     assertNull(element.getEnum());
 
@@ -113,7 +139,7 @@ public class DomSimpleValuesTest extends DomTestCase {
     assertNull(element.getEnum());
   }
 
-  public void testAttributeValues() throws Throwable {
+  public void testAttributeValues() {
     final MyElement element = createElement("<a attra=\"foo\"/>");
     final GenericAttributeValue<String> attributeValue = element.getAttributeValue();
     assertEquals("attra", attributeValue.getXmlElementName());
@@ -145,7 +171,7 @@ public class DomSimpleValuesTest extends DomTestCase {
     assertNull(createElement("<a attra\"/>").getAttributeValue().getStringValue());
   }
 
-  public void testGenericValue() throws Throwable {
+  public void testGenericValue() {
     final MyElement element = createElement("<a><generic-child>239</generic-child></a>");
     final GenericDomValue<Integer> integerChild = element.getGenericChild();
     assertEquals(239, (int)integerChild.getValue());
@@ -155,14 +181,14 @@ public class DomSimpleValuesTest extends DomTestCase {
     assertEquals("42", integerChild.getStringValue());
   }
 
-  public void testAnnotatedGenericValue() throws Throwable {
+  public void testAnnotatedGenericValue() {
     final MyElement element = createElement("<a><buffer>239</buffer></a>");
     element.getGenericChild().getValue();
     final GenericDomValue<StringBuffer> genericChild2 = element.getGenericChild2();
     assertEquals("239", genericChild2.getValue().toString());
   }
 
-  public void testSpecialCharacters() throws Throwable {
+  public void testSpecialCharacters() {
     final MyElement element = createElement("");
     element.setValue("<");
     assertEquals("<", element.getValue());
@@ -173,7 +199,7 @@ public class DomSimpleValuesTest extends DomTestCase {
     assertEquals("\"&lt;\"", element.getXmlTag().getAttribute("attra", null).getValueElement().getText());
   }
 
-  public void testIndicators() throws Throwable {
+  public void testIndicators() {
     final MyElement element = createElement("<a><indicator/></a>");
     final GenericDomValue<Boolean> indicator = element.getIndicator();
     assertTrue(indicator.getValue());
@@ -195,13 +221,10 @@ public class DomSimpleValuesTest extends DomTestCase {
     assertResultsAndClear();
 
     final XmlTag tag = element.getXmlTag();
-    new WriteCommandAction(getProject()) {
-      @Override
-      protected void run(Result result) throws Throwable {
-        tag.add(createTag("<indicator/>"));
-        tag.add(createTag("<indicator/>"));
-      }
-    }.execute();
+    WriteCommandAction.runWriteCommandAction(getProject(), () -> {
+      tag.add(createTag("<indicator/>"));
+      tag.add(createTag("<indicator/>"));
+    });
 
     assertTrue(element.isValid());
     assertTrue(element.getIndicator().getValue());
@@ -228,13 +251,13 @@ public class DomSimpleValuesTest extends DomTestCase {
     assertEquals("def", DomUIFactory.GET_VALUE_METHOD.invoke(generic));
   }
 
-  public void testNameValueInPresentation() throws Throwable {
+  public void testNameValueInPresentation() {
     final MyElement element = createElement("");
     element.getAttr().setValue(23942);
     assertEquals("23942", element.getPresentation().getElementName());
   }
 
-  public void testResolveToDomElement() throws Throwable {
+  public void testResolveToDomElement() {
     final RootInterface element = createElement("", RootInterface.class);
     final MyElement child1 = element.addChild();
     child1.getAttr().setValue(555);
@@ -257,7 +280,7 @@ public class DomSimpleValuesTest extends DomTestCase {
     assertEquals(child2, resolve2.getValue());
   }
 
-  public void testPlainPsiTypeConverter() throws Throwable {
+  public void testPlainPsiTypeConverter() {
     assertNull(createElement("").getPsiType());
     assertSame(PsiType.INT, createElement("<a>int</a>").getPsiType());
     final PsiType psiType = createElement("<a>java.lang.String</a>").getPsiType();
@@ -268,7 +291,7 @@ public class DomSimpleValuesTest extends DomTestCase {
     assertSame(PsiType.INT, ((PsiArrayType) arrayType).getComponentType());
   }
 
-  public void testJvmPsiTypeConverter() throws Throwable {
+  public void testJvmPsiTypeConverter() {
     assertNull(createElement("").getJvmPsiType());
     assertNotNull(createElement("<a>int</a>").getJvmPsiType());
     final PsiClassType string = PsiType.getJavaLangString(getPsiManager(), GlobalSearchScope.allScope(getProject()));
@@ -285,7 +308,7 @@ public class DomSimpleValuesTest extends DomTestCase {
     assertJvmPsiTypeToString(string, "java.lang.String");
   }
 
-  public void testValueCaching() throws Throwable {
+  public void testValueCaching() {
     final GenericDomValue<String> element = createElement("<a><cached-value/></a>", MyElement.class).getCachedValue();
     assertEquals(0, ((MyConverter) element.getConverter()).fromStringCalls);
     assertEquals("", element.getValue());
@@ -310,19 +333,19 @@ public class DomSimpleValuesTest extends DomTestCase {
     assertEquals(element.getJavaStyledAttribute().getXmlElementName(), "javaStyledAttribute");
   }
 
-  public void testGenericValueListConverter() throws Throwable {
+  public void testGenericValueListConverter() {
     final MyElement element = createElement("<a><string-buffer>abc</string-buffer></a>");
     assertEquals("abc", element.getStringBuffers().get(0).getValue().toString());
   }
 
-  public void testConvertAnnotationOnType() throws Throwable {
+  public void testConvertAnnotationOnType() {
     final MyElement element =
       createElement("<a>" + "<my-generic-value>abc</my-generic-value>" + "<my-foo-generic-value>abc</my-foo-generic-value>" + "");
     assertEquals("bar", element.getMyGenericValue().getValue());
     assertEquals("foo", element.getMyFooGenericValue().getValue());
   }
   
-  public void testEntities() throws Throwable {
+  public void testEntities() {
     final MyElement element = createElement("<!DOCTYPE a SYSTEM \"aaa\"\n" +
                                             "[<!ENTITY idgenerator    \"identity\">]>\n" +
                                             "<a attra=\"a&lt;b\" some-attribute=\"&idgenerator;\">&xxx;+&idgenerator;+&amp;</a>");
@@ -385,6 +408,20 @@ public class DomSimpleValuesTest extends DomTestCase {
     @TagValue()
     String getTagValue();
 
+    @TagValue
+    Long getLong();
+
+    @TagValue
+    Float getFloat();
+
+    @TagValue
+    short getShort();
+
+    @TagValue
+    BigDecimal getBigDecimal();
+
+    void setValue(BigDecimal value);
+
     GenericDomValue<Integer> getGenericChild();
 
     @SubTag("buffer")
@@ -431,7 +468,7 @@ public class DomSimpleValuesTest extends DomTestCase {
     void setValue(String s);
   }
 
-  public void testFuhrer() throws Throwable {
+  public void testFuhrer() {
     final FieldGroup group = createElement("<field-group>\n" +
                                            "<group-name>myGroup</load-group-name>\n" +
                                            "<field-name>myField1</field-name>\n" +

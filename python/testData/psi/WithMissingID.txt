@@ -1,0 +1,23 @@
+PyFile:WithMissingID.py
+  PyWithStatement
+    PsiElement(Py:WITH_KEYWORD)('with')
+    PsiWhiteSpace(' ')
+    PyWithItem
+      PyCallExpression: open
+        PyReferenceExpression: open
+          PsiElement(Py:IDENTIFIER)('open')
+        PyArgumentList
+          PsiElement(Py:LPAR)('(')
+          PyStringLiteralExpression: 
+            PsiElement(Py:SINGLE_QUOTED_STRING)('""')
+          PsiElement(Py:RPAR)(')')
+      PsiWhiteSpace(' ')
+      PsiElement(Py:AS_KEYWORD)('as')
+      PsiErrorElement:Identifier expected
+        <empty list>
+    PsiWhiteSpace(' ')
+    PsiElement(Py:COLON)(':')
+    PsiWhiteSpace('\n    ')
+    PyStatementList
+      PyPassStatement
+        PsiElement(Py:PASS_KEYWORD)('pass')

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,12 +17,13 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.codeInsight.CodeInsightUtilBase;
+import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.psi.PsiCodeBlock;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiMethod;
-import com.intellij.psi.PsiCodeBlock;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
@@ -32,7 +33,7 @@ import org.jetbrains.annotations.NotNull;
 public class DeleteMethodBodyFix implements IntentionAction {
   private final PsiMethod myMethod;
 
-  public DeleteMethodBodyFix(PsiMethod method) {
+  public DeleteMethodBodyFix(@NotNull PsiMethod method) {
     myMethod = method;
   }
 
@@ -45,17 +46,22 @@ public class DeleteMethodBodyFix implements IntentionAction {
   @Override
   @NotNull
   public String getFamilyName() {
-    return QuickFixBundle.message("delete.body.family");
+    return getText();
   }
 
   @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    return myMethod.isValid() && myMethod.getManager().isInProject(myMethod) && myMethod.getBody() != null;
+    return myMethod.isValid() && BaseIntentionAction.canModify(myMethod) && myMethod.getBody() != null;
+  }
+
+  @NotNull
+  @Override
+  public PsiElement getElementToMakeWritable(@NotNull PsiFile file) {
+    return myMethod;
   }
 
   @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-    if (!CodeInsightUtilBase.preparePsiElementForWrite(myMethod)) return;
     final PsiCodeBlock body = myMethod.getBody();
     assert body != null;
     body.delete();

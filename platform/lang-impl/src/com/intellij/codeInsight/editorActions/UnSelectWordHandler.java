@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,48 +17,53 @@
 package com.intellij.codeInsight.editorActions;
 
 import com.intellij.ide.DataManager;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.FoldRegion;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.util.Processor;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class UnSelectWordHandler extends EditorActionHandler {
   private final EditorActionHandler myOriginalHandler;
 
   public UnSelectWordHandler(EditorActionHandler originalHandler) {
+    super(true);
     myOriginalHandler = originalHandler;
   }
 
   @Override
-  public void execute(Editor editor, DataContext dataContext) {
-    Project project = PlatformDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(editor.getComponent()));
+  public void doExecute(@NotNull Editor editor, @Nullable Caret caret, DataContext dataContext) {
+    Project project = CommonDataKeys.PROJECT.getData(dataContext);
+    if (project == null) {
+      return;
+    }
     Document document = editor.getDocument();
     final PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(document);
 
     if (file == null) {
       if (myOriginalHandler != null) {
-        myOriginalHandler.execute(editor, dataContext);
+        myOriginalHandler.execute(editor, caret, dataContext);
       }
       return;
     }
 
-    PsiDocumentManager.getInstance(project).commitAllDocuments();
+    PsiDocumentManager.getInstance(project).commitDocument(document);
     doAction(editor, file);
   }
 
-
-  private static void doAction(Editor editor, PsiFile file) {
-    if (file instanceof PsiCompiledFile) {
-      file = ((PsiCompiledFile)file).getDecompiledPsiFile();
-      if (file == null) return;
-    }
-
+  private static void doAction(@NotNull Editor editor, @NotNull PsiFile file) {
     if (!editor.getSelectionModel().hasSelection()) {
       return;
     }
@@ -83,30 +88,49 @@ public class UnSelectWordHandler extends EditorActionHandler {
       }
     }
 
-    while (element instanceof PsiWhiteSpace) {
-      if (element.getNextSibling() == null) {
+    if (element instanceof PsiWhiteSpace) {
+      PsiElement nextSibling = element.getNextSibling();
+      if (nextSibling == null) {
         element = element.getParent();
+        if (element == null || element instanceof PsiFile) {
+          return;
+        }
+        nextSibling = element.getNextSibling();
+        if (nextSibling == null) {
+          return;
+        }
       }
-
-      element = element.getNextSibling();
+      element = nextSibling;
       cursorOffset = element.getTextRange().getStartOffset();
     }
 
     final TextRange selectionRange = new TextRange(editor.getSelectionModel().getSelectionStart(), editor.getSelectionModel().getSelectionEnd());
 
-    final Ref<TextRange> maximumRange = new Ref<TextRange>();
+    final Ref<TextRange> maximumRange = new Ref<>();
 
     final int finalCursorOffset = cursorOffset;
     SelectWordUtil.processRanges(element, text, cursorOffset, editor, new Processor<TextRange>() {
       @Override
       public boolean process(TextRange range) {
-        if (selectionRange.contains(range) && !range.equals(selectionRange) && (range.contains(finalCursorOffset) || finalCursorOffset == range.getEndOffset())) {
+        range = expandToFoldingBoundaries(range);
+        if (selectionRange.contains(range) && !range.equals(selectionRange) &&
+            (range.contains(finalCursorOffset) || finalCursorOffset == range.getEndOffset())) {
           if (maximumRange.get() == null || range.contains(maximumRange.get())) {
             maximumRange.set(range);
           }
         }
 
         return false;
+      }
+
+      private TextRange expandToFoldingBoundaries(TextRange range) {
+        int startOffset = range.getStartOffset();
+        FoldRegion region = editor.getFoldingModel().getCollapsedRegionAtOffset(startOffset);
+        if (region != null) startOffset = region.getStartOffset();
+        int endOffset = range.getEndOffset();
+        region = editor.getFoldingModel().getCollapsedRegionAtOffset(endOffset);
+        if (region != null && endOffset > region.getStartOffset()) endOffset = region.getEndOffset();
+        return new TextRange(startOffset, endOffset);
       }
     });
 

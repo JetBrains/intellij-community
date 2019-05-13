@@ -44,7 +44,7 @@ public class a {
     ia[~i | (i+=(!b?2:i))] -= i + 3.3;
     
     // Object += String
-    <error descr="Operator '+' cannot be applied to 'java.lang.Object', 'java.lang.String'">o += o + "string"</error>;
+    o += o + "string";
 
     return 0;
   }

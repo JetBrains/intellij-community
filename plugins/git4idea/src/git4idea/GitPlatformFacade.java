@@ -15,24 +15,19 @@
  */
 package git4idea;
 
-import com.intellij.dvcs.DvcsPlatformFacade;
-import com.intellij.openapi.project.Project;
-import git4idea.config.GitVcsSettings;
-import git4idea.repo.GitRepositoryManager;
+import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * @author Kirill Likhodedov
+ * @deprecated Use direct instance or ServiceManager methods to access platform structures.
  */
-public interface GitPlatformFacade extends DvcsPlatformFacade {
+@Deprecated
+public interface GitPlatformFacade {
 
-  @NotNull
-  GitRepositoryManager getRepositoryManager(@NotNull Project project);
-
-  @NotNull
-  GitVcsSettings getSettings(Project project);
-
-  @NotNull
-  Notificator getNotificator(@NotNull Project project);
-
+  /**
+   * @deprecated To remove in IDEA 2017. Use {@link VfsUtil#markDirtyAndRefresh(boolean, boolean, boolean, VirtualFile...)}.
+   */
+  @Deprecated
+  void hardRefresh(@NotNull VirtualFile root);
 }

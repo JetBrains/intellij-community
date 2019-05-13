@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,29 +14,17 @@
  * limitations under the License.
  */
 
-/*
- * Created by IntelliJ IDEA.
- * User: max
- * Date: May 13, 2002
- * Time: 10:47:00 PM
- * To change template for new class use
- * Code Style | Class Templates options (Tools | IDE Options).
- */
 package com.intellij.openapi.editor.actions;
 
-import com.intellij.codeStyle.CodeStyleFacade;
+import com.intellij.application.options.CodeStyle;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actionSystem.EditorAction;
 import com.intellij.openapi.editor.actionSystem.EditorWriteActionHandler;
 import com.intellij.openapi.editor.ex.EditorEx;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.VirtualFile;
 
 public class UnindentSelectionAction extends EditorAction {
   public UnindentSelectionAction() {
@@ -44,15 +32,19 @@ public class UnindentSelectionAction extends EditorAction {
   }
 
   private static class Handler extends EditorWriteActionHandler {
+    Handler() {
+      super(true);
+    }
+
     @Override
     public void executeWriteAction(Editor editor, DataContext dataContext) {
-      Project project = PlatformDataKeys.PROJECT.getData(dataContext);
+      Project project = CommonDataKeys.PROJECT.getData(dataContext);
       unindentSelection(editor, project);
     }
 
     @Override
     public boolean isEnabled(Editor editor, DataContext dataContext) {
-      return !editor.isOneLineMode() && !((EditorEx)editor).isEmbeddedIntoDialogWrapper();
+      return !editor.isViewer() && !editor.isOneLineMode() && !((EditorEx)editor).isEmbeddedIntoDialogWrapper();
     }
   }
 
@@ -79,10 +71,7 @@ public class UnindentSelectionAction extends EditorAction {
 
     if (startIndex < 0 || endIndex < 0) return;
 
-    VirtualFile vFile = FileDocumentManager.getInstance().getFile(document);
-    final FileType fileType = vFile == null ? null : vFile.getFileType();
-
-    int blockIndent = CodeStyleFacade.getInstance(project).getIndentSize(fileType);
+    int blockIndent = CodeStyle.getIndentOptions(project, document).INDENT_SIZE;
     IndentSelectionAction.doIndent(endIndex, startIndex, document, project, editor, -blockIndent);
   }
 }

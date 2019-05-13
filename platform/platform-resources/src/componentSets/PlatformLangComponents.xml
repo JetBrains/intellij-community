@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<components xmlns:xi="http://www.w3.org/2001/XInclude"
-            xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-            xsi:schemaLocation="http://www.w3.org/2001/XInclude
+<idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude"
+             xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+             xsi:schemaLocation="http://www.w3.org/2001/XInclude
    http://www.w3.org/2001/XInclude.xsd">
 
   <application-components>
@@ -13,11 +13,7 @@
     </component>
     <component>
       <interface-class>com.intellij.openapi.project.impl.ProjectStoreClassProvider</interface-class>
-      <implementation-class>com.intellij.openapi.components.impl.stores.PlatformLangProjectStoreClassProvider</implementation-class>
-    </component>
-    <component>
-      <interface-class>com.intellij.ide.RecentProjectsManagerBase</interface-class>
-      <implementation-class>com.intellij.ide.RecentDirectoryProjectsManagerEx</implementation-class>
+      <implementation-class>com.intellij.configurationStore.PlatformLangProjectStoreClassProvider</implementation-class>
     </component>
   </application-components>
   <project-components>
@@ -27,15 +23,15 @@
     </component>
   </project-components>
 
-  <xi:include href="/componentSets/Platform.xml" xpointer="xpointer(/components/*)"/>
-  <xi:include href="/componentSets/UICore.xml" xpointer="xpointer(/components/*)"/>
-  <xi:include href="/componentSets/WindowManagement.xml" xpointer="xpointer(/components/*)"/>
-  <xi:include href="/componentSets/Editor.xml" xpointer="xpointer(/components/*)"/>
-  <xi:include href="/componentSets/VCS.xml" xpointer="xpointer(/components/*)"/>
-  <xi:include href="/componentSets/Lang.xml" xpointer="xpointer(/components/*)"/>
-  <xi:include href="/componentSets/ProjectView.xml" xpointer="xpointer(/components/*)"/>
-  <xi:include href="/componentSets/Profiles.xml" xpointer="xpointer(/components/*)"/>
-  <xi:include href="/componentSets/Execution.xml" xpointer="xpointer(/components/*)"/>
+  <xi:include href="/componentSets/Platform.xml" xpointer="xpointer(/idea-plugin/*)"/>
+  <xi:include href="/componentSets/UICore.xml" xpointer="xpointer(/idea-plugin/*)"/>
+  <xi:include href="/componentSets/WindowManagement.xml" xpointer="xpointer(/idea-plugin/*)"/>
+  <xi:include href="/componentSets/Editor.xml" xpointer="xpointer(/idea-plugin/*)"/>
+  <xi:include href="/componentSets/VCS.xml" xpointer="xpointer(/idea-plugin/*)"/>
+  <xi:include href="/componentSets/Lang.xml" xpointer="xpointer(/idea-plugin/*)"/>
+  <xi:include href="/componentSets/ProjectView.xml" xpointer="xpointer(/idea-plugin/*)"/>
+  <xi:include href="/componentSets/Profiles.xml" xpointer="xpointer(/idea-plugin/*)"/>
+  <xi:include href="/componentSets/Execution.xml" xpointer="xpointer(/idea-plugin/*)"/>
 
   <application-components>
     <component>
@@ -49,4 +45,4 @@
     </component>
 
   </project-components>
-</components>
+</idea-plugin>

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2011 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.util.importProject;
 
 import com.intellij.facet.Facet;
@@ -45,7 +31,7 @@ public abstract class FrameworkDetectionInWizardContext extends FrameworkDetecti
   public <F extends Facet, C extends FacetConfiguration> List<? extends DetectedFrameworkDescription> createDetectedFacetDescriptions(@NotNull FacetBasedFrameworkDetector<F, C> detector,
                                                                                                                                       @NotNull Collection<VirtualFile> files) {
     final List<ModuleDescriptor> descriptors = getModuleDescriptors();
-    MultiMap<ModuleDescriptor, VirtualFile> filesByModule = new MultiMap<ModuleDescriptor, VirtualFile>();
+    MultiMap<ModuleDescriptor, VirtualFile> filesByModule = new MultiMap<>();
     for (VirtualFile file : files) {
       final File ioFile = VfsUtil.virtualToIoFile(file);
       ModuleDescriptor descriptor = findDescriptorByFile(descriptors, ioFile);
@@ -54,7 +40,7 @@ public abstract class FrameworkDetectionInWizardContext extends FrameworkDetecti
       }
     }
 
-    final List<DetectedFrameworkDescription> result = new ArrayList<DetectedFrameworkDescription>();
+    final List<DetectedFrameworkDescription> result = new ArrayList<>();
     final FacetType<F,C> facetType = detector.getFacetType();
     for (ModuleDescriptor module : filesByModule.keySet()) {
       if (!facetType.isSuitableModuleType(module.getModuleType())) {
@@ -62,10 +48,10 @@ public abstract class FrameworkDetectionInWizardContext extends FrameworkDetecti
       }
 
       final List<Pair<C, Collection<VirtualFile>>> pairs =
-        detector.createConfigurations(filesByModule.get(module), Collections.<C>emptyList());
+        detector.createConfigurations(filesByModule.get(module), Collections.emptyList());
       for (Pair<C, Collection<VirtualFile>> pair : pairs) {
-        result.add(new FacetBasedDetectedFrameworkDescriptionInWizard<F, C>(module, detector, pair.getFirst(),
-                                                                            new HashSet<VirtualFile>(pair.getSecond())));
+        result.add(new FacetBasedDetectedFrameworkDescriptionInWizard<>(module, detector, pair.getFirst(),
+                                                                        new HashSet<>(pair.getSecond())));
       }
     }
     return result;
@@ -88,6 +74,7 @@ public abstract class FrameworkDetectionInWizardContext extends FrameworkDetecti
     return result;
   }
 
+  @Override
   public VirtualFile getBaseDir() {
     final String path = getContentPath();
     return path != null ? LocalFileSystem.getInstance().refreshAndFindFileByPath(path) : null;

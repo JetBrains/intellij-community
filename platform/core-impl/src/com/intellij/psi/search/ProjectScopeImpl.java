@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,34 +15,27 @@
  */
 package com.intellij.psi.search;
 
-import com.intellij.injected.editor.VirtualFileWindow;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.UnloadedModuleDescription;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.FileIndexFacade;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiBundle;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Collection;
+
 public class ProjectScopeImpl extends GlobalSearchScope {
   private final FileIndexFacade myFileIndex;
 
-  public ProjectScopeImpl(Project project, FileIndexFacade fileIndex) {
+  public ProjectScopeImpl(@NotNull Project project, @NotNull FileIndexFacade fileIndex) {
     super(project);
     myFileIndex = fileIndex;
   }
 
   @Override
-  public boolean contains(VirtualFile file) {
-    if (file instanceof VirtualFileWindow) return true;
-
-    if (myFileIndex.isInLibraryClasses(file) && !myFileIndex.isInSourceContent(file)) return false;
-
-    return myFileIndex.isInContent(file);
-  }
-
-  @Override
-  public int compare(VirtualFile file1, VirtualFile file2) {
-    return 0;
+  public boolean contains(@NotNull VirtualFile file) {
+    return myFileIndex.isInProjectScope(file);
   }
 
   @Override
@@ -55,13 +48,21 @@ public class ProjectScopeImpl extends GlobalSearchScope {
     return false;
   }
 
+  @NotNull
   @Override
   public String getDisplayName() {
     return PsiBundle.message("psi.search.scope.project");
   }
 
+  @Override
   public String toString() {
     return getDisplayName();
+  }
+
+  @NotNull
+  @Override
+  public Collection<UnloadedModuleDescription> getUnloadedModulesBelongingToScope() {
+    return myFileIndex.getUnloadedModuleDescriptions();
   }
 
   @NotNull

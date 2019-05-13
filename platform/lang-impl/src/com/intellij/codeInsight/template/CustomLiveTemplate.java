@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,6 @@
 package com.intellij.codeInsight.template;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
-import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -29,13 +28,13 @@ public interface CustomLiveTemplate {
   @Nullable
   String computeTemplateKey(@NotNull CustomTemplateCallback callback);
 
-  boolean isApplicable(PsiFile file, int offset, boolean wrapping);
+  boolean isApplicable(@NotNull CustomTemplateCallback callback, int offset, boolean wrapping);
 
   boolean supportsWrapping();
 
-  void expand(String key, @NotNull CustomTemplateCallback callback);
+  void expand(@NotNull String key, @NotNull CustomTemplateCallback callback);
 
-  void wrap(String selection, @NotNull CustomTemplateCallback callback);
+  void wrap(@NotNull String selection, @NotNull CustomTemplateCallback callback);
 
   @NotNull
   String getTitle();

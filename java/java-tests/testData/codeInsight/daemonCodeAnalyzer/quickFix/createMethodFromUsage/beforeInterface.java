@@ -1,4 +1,4 @@
-// "Create Method 'test'" "true"
+// "Create method 'test'" "true"
 public interface Test {
 
 }

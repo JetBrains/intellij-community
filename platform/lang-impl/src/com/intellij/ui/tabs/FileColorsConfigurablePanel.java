@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,8 @@ import com.intellij.openapi.ui.MessageType;
 import com.intellij.ui.AnActionButton;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.ToolbarDecorator;
+import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -56,10 +58,12 @@ public class FileColorsConfigurablePanel extends JPanel implements Disposable {
     myEnabledCheckBox = new JCheckBox("Enable File Colors");
     myEnabledCheckBox.setMnemonic('F');
     topPanel.add(myEnabledCheckBox);
+    topPanel.add(Box.createRigidArea(JBUI.size(UIUtil.DEFAULT_HGAP, 0)));
 
     myTabsEnabledCheckBox = new JCheckBox("Use in Editor Tabs");
     myTabsEnabledCheckBox.setMnemonic('T');
     topPanel.add(myTabsEnabledCheckBox);
+    topPanel.add(Box.createRigidArea(JBUI.size(UIUtil.DEFAULT_HGAP, 0)));
 
     myProjectViewEnabledCheckBox = new JCheckBox("Use in Project View");
     myProjectViewEnabledCheckBox.setMnemonic('P');
@@ -70,13 +74,14 @@ public class FileColorsConfigurablePanel extends JPanel implements Disposable {
     add(topPanel, BorderLayout.NORTH);
 
     final JPanel mainPanel = new JPanel(new GridLayout(2, 1));
-    mainPanel.setPreferredSize(new Dimension(300, 500));
+    mainPanel.setPreferredSize(JBUI.size(300, 500));
     mainPanel.setBorder(BorderFactory.createEmptyBorder(5, 5, 0, 0));
 
-    final List<FileColorConfiguration> localConfigurations = manager.getLocalConfigurations();
+    final List<FileColorConfiguration> localConfigurations = manager.getApplicationLevelConfigurations();
     myLocalTable = new FileColorSettingsTable(manager, localConfigurations) {
+      @Override
       protected void apply(@NotNull List<FileColorConfiguration> configurations) {
-        final List<FileColorConfiguration> copied = new ArrayList<FileColorConfiguration>();
+        final List<FileColorConfiguration> copied = new ArrayList<>();
         try {
           for (final FileColorConfiguration configuration : configurations) {
             copied.add(configuration.clone());
@@ -90,7 +95,7 @@ public class FileColorsConfigurablePanel extends JPanel implements Disposable {
     final JPanel panel = ToolbarDecorator.createDecorator(myLocalTable)
       .addExtraAction(new AnActionButton("Share", AllIcons.Actions.Share) {
         @Override
-        public void actionPerformed(AnActionEvent e) {
+        public void actionPerformed(@NotNull AnActionEvent e) {
           share();
         }
 
@@ -105,9 +110,10 @@ public class FileColorsConfigurablePanel extends JPanel implements Disposable {
     localPanel.add(panel, BorderLayout.CENTER);
     mainPanel.add(localPanel);
 
-    mySharedTable = new FileColorSettingsTable(manager, manager.getSharedConfigurations()) {
+    mySharedTable = new FileColorSettingsTable(manager, manager.getProjectLevelConfigurations()) {
+      @Override
       protected void apply(@NotNull List<FileColorConfiguration> configurations) {
-        final List<FileColorConfiguration> copied = new ArrayList<FileColorConfiguration>();
+        final List<FileColorConfiguration> copied = new ArrayList<>();
         for (final FileColorConfiguration configuration : configurations) {
           try {
             copied.add(configuration.clone());
@@ -125,7 +131,7 @@ public class FileColorsConfigurablePanel extends JPanel implements Disposable {
     final JPanel shared = ToolbarDecorator.createDecorator(mySharedTable)
       .addExtraAction(new AnActionButton("Unshare", AllIcons.Actions.Unshare) {
         @Override
-        public void actionPerformed(AnActionEvent e) {
+        public void actionPerformed(@NotNull AnActionEvent e) {
           unshare();
         }
 
@@ -144,9 +150,10 @@ public class FileColorsConfigurablePanel extends JPanel implements Disposable {
     infoPanel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
     infoPanel.add(new JLabel("Scopes are processed from top to bottom with Local colors first.",
                                 MessageType.INFO.getDefaultIcon(), SwingConstants.LEFT));
-    final JButton editScopes = new JButton("Manage Scopes...");
+    JButton editScopes = new JButton("Manage Scopes...");
     editScopes.addActionListener(new ActionListener() {
-      public void actionPerformed(ActionEvent e) {
+      @Override
+      public void actionPerformed(@NotNull ActionEvent e) {
         EditScopesDialog.showDialog(myManager.getProject(), null, true);
       }
     });
@@ -183,6 +190,7 @@ public class FileColorsConfigurablePanel extends JPanel implements Disposable {
     }
   }
 
+  @Override
   public void dispose() {
     myManager = null;
   }
@@ -201,7 +209,7 @@ public class FileColorsConfigurablePanel extends JPanel implements Disposable {
   public void apply() {
     myManager.setEnabled(myEnabledCheckBox.isSelected());
     myManager.setEnabledForTabs(myTabsEnabledCheckBox.isSelected());
-    myManager.setEnabledForProjectView(myProjectViewEnabledCheckBox.isSelected());
+    FileColorManagerImpl.setEnabledForProjectView(myProjectViewEnabledCheckBox.isSelected());
 
     myLocalTable.apply();
     mySharedTable.apply();

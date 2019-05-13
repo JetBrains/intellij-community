@@ -1,23 +1,11 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm.impl;
 
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.UISettingsListener;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.MnemonicHelper;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
@@ -27,9 +15,11 @@ import com.intellij.ui.JBColor;
 import com.intellij.ui.ScreenUtil;
 import com.intellij.util.Alarm;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
@@ -38,8 +28,10 @@ import java.awt.event.WindowEvent;
  * @author Anton Katilin
  * @author Vladimir Kondratyev
  */
-public final class FloatingDecorator extends JDialog{
+public final class FloatingDecorator extends JDialog {
   private static final Logger LOG=Logger.getInstance("#com.intellij.openapi.wm.impl.FloatingDecorator");
+
+  static final int DIVIDER_WIDTH = 3;
 
   private static final int ANCHOR_TOP=1;
   private static final int ANCHOR_LEFT=2;
@@ -53,6 +45,7 @@ public final class FloatingDecorator extends JDialog{
   private final MyUISettingsListener myUISettingsListener;
   private WindowInfoImpl myInfo;
 
+  private final Disposable myDisposable = Disposer.newDisposable();
   private final Alarm myDelayAlarm; // Determines moment when tool window should become transparent
   private final Alarm myFrameTicker; // Determines moments of rendering of next frame
   private final MyAnimator myAnimator; // Renders alpha ratio
@@ -61,9 +54,9 @@ public final class FloatingDecorator extends JDialog{
   private float myEndRatio; // start and end alpha ratio for transparency animation
 
 
-  FloatingDecorator(final IdeFrameImpl owner,final WindowInfoImpl info,final InternalDecorator internalDecorator){
+  FloatingDecorator(final IdeFrameImpl owner, @NotNull WindowInfoImpl info, @NotNull InternalDecorator internalDecorator){
     super(owner,internalDecorator.getToolWindow().getId());
-    new MnemonicHelper().register(getContentPane());
+    MnemonicHelper.init(getContentPane());
     myInternalDecorator=internalDecorator;
 
     setDefaultCloseOperation(JDialog.DO_NOTHING_ON_CLOSE);
@@ -92,7 +85,7 @@ public final class FloatingDecorator extends JDialog{
     //
 
     myDelayAlarm=new Alarm();
-    myFrameTicker=new Alarm(Alarm.ThreadToUse.SHARED_THREAD);
+    myFrameTicker=new Alarm(Alarm.ThreadToUse.POOLED_THREAD,myDisposable);
     myAnimator=new MyAnimator();
     myCurrentFrame=0;
     myStartRatio=0.0f;
@@ -102,77 +95,80 @@ public final class FloatingDecorator extends JDialog{
 
     //
 
-    getRootPane().setGlassPane(new IdeGlassPaneImpl(getRootPane()));
+    IdeGlassPaneImpl ideGlassPane = new IdeGlassPaneImpl(getRootPane(), true);
+    getRootPane().setGlassPane(ideGlassPane);
+
+    //workaround: we need to add this IdeGlassPane instance as dispatcher in IdeEventQueue
+    ideGlassPane.addMousePreprocessor(new MouseAdapter() {
+    }, myDisposable);
 
     apply(info);
   }
 
+  @Override
   public final void show(){
     setFocusableWindowState(myInfo.isActive());
 
     super.show();
-    final UISettings uiSettings=UISettings.getInstance();
-    if(uiSettings.ENABLE_ALPHA_MODE){
-      final WindowManagerEx windowManager=WindowManagerEx.getInstanceEx();
-      windowManager.setAlphaModeEnabled(this,true);
-      if(myInfo.isActive()){
-        windowManager.setAlphaModeRatio(this,0.0f);
-      }else{
-        windowManager.setAlphaModeRatio(this,uiSettings.ALPHA_MODE_RATIO);
+    final UISettings uiSettings = UISettings.getInstance();
+    if (uiSettings.getState().getEnableAlphaMode()) {
+      final WindowManagerEx windowManager = WindowManagerEx.getInstanceEx();
+      windowManager.setAlphaModeEnabled(this, true);
+      if (myInfo.isActive()) {
+        windowManager.setAlphaModeRatio(this, 0.0f);
+      }
+      else {
+        windowManager.setAlphaModeRatio(this, uiSettings.getState().getAlphaModeRatio());
       }
     }
     paint(getGraphics()); // This prevents annoying flick
 
     setFocusableWindowState(true);
 
-    uiSettings.addUISettingsListener(myUISettingsListener, myDelayAlarm);
+    ApplicationManager.getApplication().getMessageBus().connect(myDelayAlarm).subscribe(UISettingsListener.TOPIC, myUISettingsListener);
   }
 
+  @Override
   public final void dispose(){
-    if (ScreenUtil.isStandardAddRemoveNotify(getParent()))
+    if (ScreenUtil.isStandardAddRemoveNotify(getParent())) {
       Disposer.dispose(myDelayAlarm);
-    else {
+      Disposer.dispose(myDisposable);
+    } else {
       if (isShowing()) {
-        SwingUtilities.invokeLater(new Runnable() {
-        @Override
-        public void run() {
-          show();
-        }
-      });
+        SwingUtilities.invokeLater(() -> show());
       }
     }
     super.dispose();
   }
 
-  final void apply(final WindowInfoImpl info){
+  final void apply(@NotNull WindowInfoImpl info){
     LOG.assertTrue(info.isFloating());
     myInfo=info;
     // Set alpha mode
     final UISettings uiSettings=UISettings.getInstance();
-    if(uiSettings.ENABLE_ALPHA_MODE&&isShowing()&&isDisplayable()){
+    if (uiSettings.getState().getEnableAlphaMode() && isShowing() && isDisplayable()) {
       myDelayAlarm.cancelAllRequests();
-      if(myInfo.isActive()){ // make window non transparent
+      if (myInfo.isActive()) { // make window non transparent
         myFrameTicker.cancelAllRequests();
-        myStartRatio=getCurrentAlphaRatio();
-        if(myCurrentFrame>0){
-          myCurrentFrame=TOTAL_FRAME_COUNT-myCurrentFrame;
+        myStartRatio = getCurrentAlphaRatio();
+        if (myCurrentFrame > 0) {
+          myCurrentFrame = TOTAL_FRAME_COUNT - myCurrentFrame;
         }
-        myEndRatio=.0f;
-        myFrameTicker.addRequest(myAnimator,DELAY);
-      }else{ // make window transparent
+        myEndRatio = .0f;
+        myFrameTicker.addRequest(myAnimator, DELAY);
+      }
+      else { // make window transparent
         myDelayAlarm.addRequest(
-          new Runnable(){
-            public void run(){
-              myFrameTicker.cancelAllRequests();
-              myStartRatio=getCurrentAlphaRatio();
-              if(myCurrentFrame>0){
-                myCurrentFrame=TOTAL_FRAME_COUNT-myCurrentFrame;
-              }
-              myEndRatio=uiSettings.ALPHA_MODE_RATIO;
-              myFrameTicker.addRequest(myAnimator,DELAY);
+          () -> {
+            myFrameTicker.cancelAllRequests();
+            myStartRatio = getCurrentAlphaRatio();
+            if (myCurrentFrame > 0) {
+              myCurrentFrame = TOTAL_FRAME_COUNT - myCurrentFrame;
             }
+            myEndRatio = uiSettings.getState().getAlphaModeRatio();
+            myFrameTicker.addRequest(myAnimator, DELAY);
           },
-          uiSettings.ALPHA_MODE_DELAY
+          uiSettings.getState().getAlphaModeDelay()
         );
       }
     }
@@ -188,7 +184,6 @@ public final class FloatingDecorator extends JDialog{
   }
 
   private final class BorderItem extends JPanel{
-    private static final int DIVIDER_WIDTH=3;
     private static final int RESIZER_WIDTH=10;
 
     private final int myAnchor;
@@ -196,20 +191,23 @@ public final class FloatingDecorator extends JDialog{
     private Point myLastPoint;
     private boolean myDragging;
 
-    public BorderItem(final int anchor){
+    BorderItem(final int anchor){
       myAnchor=anchor;
       enableEvents(MouseEvent.MOUSE_EVENT_MASK|MouseEvent.MOUSE_MOTION_EVENT_MASK);
     }
 
+    @Override
     protected final void processMouseMotionEvent(final MouseEvent e){
       super.processMouseMotionEvent(e);
       if(MouseEvent.MOUSE_DRAGGED==e.getID() && myLastPoint != null){
         final Point newPoint=e.getPoint();
         SwingUtilities.convertPointToScreen(newPoint,this);
         final Rectangle screenBounds=WindowManagerEx.getInstanceEx().getScreenBounds();
+        int screenMaxX = screenBounds.x + screenBounds.width;
+        int screenMaxY = screenBounds.y + screenBounds.height;
 
-        newPoint.x=Math.min(Math.max(newPoint.x,screenBounds.x),screenBounds.width);
-        newPoint.y=Math.min(Math.max(newPoint.y,screenBounds.y),screenBounds.height);
+        newPoint.x = Math.min(Math.max(newPoint.x, screenBounds.x), screenMaxX);
+        newPoint.y = Math.min(Math.max(newPoint.y, screenBounds.y), screenMaxY);
 
         final Rectangle oldBounds=FloatingDecorator.this.getBounds();
         final Rectangle newBounds=new Rectangle(oldBounds);
@@ -234,16 +232,16 @@ public final class FloatingDecorator extends JDialog{
         }
         if((myMotionMask&ANCHOR_BOTTOM)>0){
           newPoint.y=Math.max(newPoint.y,oldBounds.y+2*DIVIDER_WIDTH);
-          if(newPoint.y>screenBounds.height-DIVIDER_WIDTH){
-            newPoint.y=screenBounds.height;
+          if (newPoint.y > screenMaxY - DIVIDER_WIDTH) {
+            newPoint.y = screenMaxY;
           }
           final Point offset=new Point(newPoint.x-myLastPoint.x,newPoint.y-myLastPoint.y);
           newBounds.height=oldBounds.height+offset.y;
         }
         if((myMotionMask&ANCHOR_RIGHT)>0){
           newPoint.x=Math.max(newPoint.x,oldBounds.x+2*DIVIDER_WIDTH);
-          if(newPoint.x>screenBounds.width-DIVIDER_WIDTH){
-            newPoint.x=screenBounds.width;
+          if (newPoint.x > screenMaxX - DIVIDER_WIDTH) {
+            newPoint.x = screenMaxX;
           }
           final Point offset=new Point(newPoint.x-myLastPoint.x,newPoint.y-myLastPoint.y);
           newBounds.width=oldBounds.width+offset.x;
@@ -261,6 +259,7 @@ public final class FloatingDecorator extends JDialog{
       }
     }
 
+    @Override
     protected final void processMouseEvent(final MouseEvent e){
       super.processMouseEvent(e);
       switch(e.getID()){
@@ -317,6 +316,7 @@ public final class FloatingDecorator extends JDialog{
       }
     }
 
+    @Override
     public final Dimension getPreferredSize(){
       final Dimension d=super.getPreferredSize();
       if(ANCHOR_TOP==myAnchor||ANCHOR_BOTTOM==myAnchor){
@@ -327,6 +327,7 @@ public final class FloatingDecorator extends JDialog{
       return d;
     }
 
+    @Override
     public final void paint(final Graphics g){
       super.paint(g);
       final JBColor lightGray = new JBColor(Color.lightGray, Gray._95);
@@ -356,6 +357,7 @@ public final class FloatingDecorator extends JDialog{
   }
 
   private final class MyWindowListener extends WindowAdapter{
+    @Override
     public void windowClosing(final WindowEvent e){
       myInternalDecorator.fireResized();
       myInternalDecorator.fireHidden();
@@ -363,6 +365,7 @@ public final class FloatingDecorator extends JDialog{
   }
 
   private final class MyAnimator implements Runnable{
+    @Override
     public final void run(){
       final WindowManagerEx windowManager=WindowManagerEx.getInstanceEx();
       if(isDisplayable()&&isShowing()){
@@ -371,25 +374,28 @@ public final class FloatingDecorator extends JDialog{
       if(myCurrentFrame<TOTAL_FRAME_COUNT){
         myCurrentFrame++;
         myFrameTicker.addRequest(myAnimator,DELAY);
-      }else{
+      }
+      else {
         myFrameTicker.cancelAllRequests();
       }
     }
   }
 
-  private final class MyUISettingsListener implements UISettingsListener{
-    public void uiSettingsChanged(final UISettings uiSettings){
+  private final class MyUISettingsListener implements UISettingsListener {
+    @Override
+    public void uiSettingsChanged(final UISettings uiSettings) {
       LOG.assertTrue(isDisplayable());
       LOG.assertTrue(isShowing());
-      final WindowManagerEx windowManager=WindowManagerEx.getInstanceEx();
+      final WindowManagerEx windowManager = WindowManagerEx.getInstanceEx();
       myDelayAlarm.cancelAllRequests();
-      if(uiSettings.ENABLE_ALPHA_MODE){
-        if(!myInfo.isActive()){
-          windowManager.setAlphaModeEnabled(FloatingDecorator.this,true);
-          windowManager.setAlphaModeRatio(FloatingDecorator.this,uiSettings.ALPHA_MODE_RATIO);
+      if (uiSettings.getState().getEnableAlphaMode()) {
+        if (!myInfo.isActive()) {
+          windowManager.setAlphaModeEnabled(FloatingDecorator.this, true);
+          windowManager.setAlphaModeRatio(FloatingDecorator.this, uiSettings.getState().getAlphaModeRatio());
         }
-      }else{
-        windowManager.setAlphaModeEnabled(FloatingDecorator.this,false);
+      }
+      else {
+        windowManager.setAlphaModeEnabled(FloatingDecorator.this, false);
       }
     }
   }

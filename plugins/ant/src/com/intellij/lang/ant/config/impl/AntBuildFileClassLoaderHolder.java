@@ -31,12 +31,13 @@ public class AntBuildFileClassLoaderHolder extends ClassLoaderHolder {
     super(options);
   }
 
+  @Override
   protected ClassLoader buildClasspath() {
-    final ArrayList<File> files = new ArrayList<File>();
+    final ArrayList<File> files = new ArrayList<>();
     for (final AntClasspathEntry entry : AntBuildFileImpl.ADDITIONAL_CLASSPATH.get(myOptions)) {
       entry.addFilesTo(files);
     }
-    
+
     final AntInstallation antInstallation = AntBuildFileImpl.RUN_WITH_ANT.get(myOptions);
     final ClassLoader parentLoader = (antInstallation != null) ? antInstallation.getClassLoader() : null;
     if (parentLoader != null && files.size() == 0) {
@@ -44,7 +45,7 @@ public class AntBuildFileClassLoaderHolder extends ClassLoaderHolder {
       return parentLoader;
     }
 
-    final List<URL> urls = new ArrayList<URL>(files.size());
+    final List<URL> urls = new ArrayList<>(files.size());
     for (File file : files) {
       try {
         urls.add(file.toURI().toURL());

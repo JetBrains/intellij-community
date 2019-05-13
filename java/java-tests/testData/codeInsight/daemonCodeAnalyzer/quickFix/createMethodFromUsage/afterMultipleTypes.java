@@ -1,4 +1,4 @@
-// "Create Method 'bar'" "true"
+// "Create method 'bar'" "true"
 class A {
     public void foo() {
       Object x = bar();
@@ -6,6 +6,6 @@ class A {
     }
 
     private String bar() {
-        <caret><selection>return null;  //To change body of created methods use File | Settings | File Templates.</selection>
+        <caret><selection>return null;</selection>
     }
 }

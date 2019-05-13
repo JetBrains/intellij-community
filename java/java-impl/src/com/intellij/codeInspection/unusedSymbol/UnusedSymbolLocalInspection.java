@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,74 +16,21 @@
 
 package com.intellij.codeInspection.unusedSymbol;
 
-import com.intellij.codeInsight.daemon.GroupNames;
-import com.intellij.codeInsight.daemon.QuickFixBundle;
-import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
-import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.codeInspection.BaseJavaLocalInspectionTool;
-import com.intellij.codeInspection.ex.EntryPointsManagerImpl;
-import com.intellij.codeInspection.ex.UnfairLocalInspectionTool;
-import com.intellij.codeInspection.util.SpecialAnnotationsUtil;
-import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiModifierListOwner;
-import org.intellij.lang.annotations.Pattern;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.psi.PsiModifier;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
-/**
- * User: anna
- * Date: 17-Feb-2006
- */
-public class UnusedSymbolLocalInspection extends BaseJavaLocalInspectionTool implements UnfairLocalInspectionTool {
+public class UnusedSymbolLocalInspection extends UnusedSymbolLocalInspectionBase {
 
-  @NonNls public static final String SHORT_NAME = HighlightInfoType.UNUSED_SYMBOL_SHORT_NAME;
-  @NonNls public static final String DISPLAY_NAME = HighlightInfoType.UNUSED_SYMBOL_DISPLAY_NAME;
-
-  public boolean LOCAL_VARIABLE = true;
-  public boolean FIELD = true;
-  public boolean METHOD = true;
-  public boolean CLASS = true;
-  public boolean PARAMETER = true;
-  public boolean REPORT_PARAMETER_FOR_PUBLIC_METHODS = true;
-
-
-  @NotNull
-  public String getGroupDisplayName() {
-    return GroupNames.DECLARATION_REDUNDANCY;
-  }
-
-  @NotNull
-  public String getDisplayName() {
-    return DISPLAY_NAME;
-  }
-
-  @NotNull
-  @NonNls
-  public String getShortName() {
-    return SHORT_NAME;
-  }
-
-  @Pattern(VALID_ID_PATTERN)
-  @NotNull
-  @NonNls
-  public String getID() {
-    return HighlightInfoType.UNUSED_SYMBOL_ID;
-  }
-
-  @Override
-  public String getAlternativeID() {
-    return "unused";
-  }
-
-  public boolean isEnabledByDefault() {
-    return true;
+  /**
+   * use {@link com.intellij.codeInspection.deadCode.UnusedDeclarationInspection} instead
+   */
+  @Deprecated
+  public UnusedSymbolLocalInspection() {
   }
 
   public class OptionsPanel {
@@ -92,30 +39,37 @@ public class UnusedSymbolLocalInspection extends BaseJavaLocalInspectionTool imp
     private JCheckBox myCheckFieldsCheckBox;
     private JCheckBox myCheckMethodsCheckBox;
     private JCheckBox myCheckParametersCheckBox;
-    private JCheckBox myReportUnusedParametersInPublics;
-    private JPanel myAnnos;
+    private JCheckBox myAccessors;
     private JPanel myPanel;
+    private JLabel myClassVisibilityCb;
+    private JLabel myFieldVisibilityCb;
+    private JLabel myMethodVisibilityCb;
+    private JLabel myMethodParameterVisibilityCb;
+    private JCheckBox myInnerClassesCheckBox;
+    private JLabel myInnerClassVisibilityCb;
 
     public OptionsPanel() {
       myCheckLocalVariablesCheckBox.setSelected(LOCAL_VARIABLE);
       myCheckClassesCheckBox.setSelected(CLASS);
       myCheckFieldsCheckBox.setSelected(FIELD);
       myCheckMethodsCheckBox.setSelected(METHOD);
-
+      myInnerClassesCheckBox.setSelected(INNER_CLASS);
       myCheckParametersCheckBox.setSelected(PARAMETER);
-      myReportUnusedParametersInPublics.setSelected(REPORT_PARAMETER_FOR_PUBLIC_METHODS);
-      myReportUnusedParametersInPublics.setEnabled(PARAMETER);
+      myAccessors.setSelected(!isIgnoreAccessors());
+      updateEnableState();
 
       final ActionListener listener = new ActionListener() {
+        @Override
         public void actionPerformed(ActionEvent e) {
           LOCAL_VARIABLE = myCheckLocalVariablesCheckBox.isSelected();
           CLASS = myCheckClassesCheckBox.isSelected();
+          INNER_CLASS = myInnerClassesCheckBox.isSelected();
           FIELD = myCheckFieldsCheckBox.isSelected();
           METHOD = myCheckMethodsCheckBox.isSelected();
-
+          setIgnoreAccessors(!myAccessors.isSelected());
           PARAMETER = myCheckParametersCheckBox.isSelected();
-          REPORT_PARAMETER_FOR_PUBLIC_METHODS = PARAMETER && myReportUnusedParametersInPublics.isSelected();
-          myReportUnusedParametersInPublics.setEnabled(PARAMETER);
+
+          updateEnableState();
         }
       };
       myCheckLocalVariablesCheckBox.addActionListener(listener);
@@ -123,31 +77,57 @@ public class UnusedSymbolLocalInspection extends BaseJavaLocalInspectionTool imp
       myCheckMethodsCheckBox.addActionListener(listener);
       myCheckClassesCheckBox.addActionListener(listener);
       myCheckParametersCheckBox.addActionListener(listener);
-      myReportUnusedParametersInPublics.addActionListener(listener);
-      myAnnos.add(EntryPointsManagerImpl.createConfigureAnnotationsBtn(myPanel),
-                  new GridBagConstraints(0, 0, 1, 1, 1, 1, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE,
-                                         new Insets(10, 0, 0, 0), 0, 0));
+      myInnerClassesCheckBox.addActionListener(listener);
+      myAccessors.addActionListener(listener);
+     }
+
+    private void updateEnableState() {
+      UIUtil.setEnabled(myClassVisibilityCb, CLASS, true);
+      UIUtil.setEnabled(myInnerClassVisibilityCb, INNER_CLASS, true);
+      UIUtil.setEnabled(myFieldVisibilityCb, FIELD, true);
+      UIUtil.setEnabled(myMethodVisibilityCb, METHOD, true);
+      UIUtil.setEnabled(myMethodParameterVisibilityCb, PARAMETER, true);
+      myAccessors.setEnabled(METHOD);
     }
 
     public JComponent getPanel() {
       return myPanel;
     }
+
+    private void createUIComponents() {
+      myClassVisibilityCb = new VisibilityModifierChooser(() -> CLASS,
+                                                          myClassVisibility,
+                                                          modifier -> setClassVisibility(modifier),
+                                                          new String[]{PsiModifier.PACKAGE_LOCAL, PsiModifier.PUBLIC});
+
+      myInnerClassVisibilityCb = new VisibilityModifierChooser(() -> INNER_CLASS,
+                                                               myInnerClassVisibility,
+                                                               modifier -> setInnerClassVisibility(modifier));
+
+      myFieldVisibilityCb = new VisibilityModifierChooser(() -> FIELD,
+                                                          myFieldVisibility,
+                                                          modifier -> setFieldVisibility(modifier));
+
+      myMethodVisibilityCb = new VisibilityModifierChooser(() -> METHOD,
+                                                           myMethodVisibility,
+                                                           modifier -> setMethodVisibility(modifier));
+
+      myMethodParameterVisibilityCb = new VisibilityModifierChooser(() -> PARAMETER,
+                                                                    myParameterVisibility,
+                                                                    modifier -> setParameterVisibility(modifier));
+
+      myAccessors = new JCheckBox() {
+        @Override
+        public void setEnabled(boolean b) {
+          super.setEnabled(b && METHOD);
+        }
+      };
+    }
   }
 
+  @Override
   @Nullable
   public JComponent createOptionsPanel() {
     return new OptionsPanel().getPanel();
-  }
-
-  public static IntentionAction createQuickFix(@NonNls String qualifiedName, @Nls String element, Project project) {
-    final EntryPointsManagerImpl entryPointsManager = EntryPointsManagerImpl.getInstance(project);
-    return SpecialAnnotationsUtil.createAddToSpecialAnnotationsListIntentionAction(
-      QuickFixBundle.message("fix.unused.symbol.injection.text", element, qualifiedName),
-      QuickFixBundle.message("fix.unused.symbol.injection.family"),
-      entryPointsManager.ADDITIONAL_ANNOTATIONS, qualifiedName);
-  }
-
-  public static boolean isInjected(final PsiModifierListOwner modifierListOwner) {
-    return EntryPointsManagerImpl.getInstance(modifierListOwner.getProject()).isEntryPoint(modifierListOwner);
   }
 }

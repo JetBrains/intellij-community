@@ -1,81 +1,91 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.ui.laf.darcula.ui;
 
-import com.intellij.openapi.ui.GraphicsConfig;
+import com.intellij.util.ui.JBInsets;
+import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.MacUIUtil;
+import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
-import javax.swing.border.Border;
 import javax.swing.plaf.ComponentUI;
-import javax.swing.plaf.basic.BasicTextFieldUI;
 import javax.swing.text.JTextComponent;
 import java.awt.*;
-import java.awt.event.FocusAdapter;
-import java.awt.event.FocusEvent;
+import java.awt.geom.RoundRectangle2D;
+
+import static com.intellij.ide.ui.laf.darcula.DarculaUIUtil.*;
 
 /**
  * @author Konstantin Bulenkov
  */
-public class DarculaTextFieldUI extends BasicTextFieldUI {
-
-  @SuppressWarnings("MethodOverridesStaticMethodOfSuperclass")
-  public static ComponentUI createUI(final JComponent c) {
-    c.addFocusListener(new FocusAdapter() {
-      @Override
-      public void focusGained(FocusEvent e) {
-        c.repaint();
-      }
-
-      @Override
-      public void focusLost(FocusEvent e) {
-        c.repaint();
-      }
-    });
+public class DarculaTextFieldUI extends TextFieldWithPopupHandlerUI {
+  @SuppressWarnings({"MethodOverridesStaticMethodOfSuperclass", "UnusedDeclaration"})
+  public static ComponentUI createUI(JComponent c) {
     return new DarculaTextFieldUI();
   }
 
   @Override
-  protected void paintBackground(Graphics graphics) {
-    Graphics2D g = (Graphics2D)graphics;
-    final JTextComponent c = getComponent();
-    final Container parent = c.getParent();
-    if (parent != null) {
-      g.setColor(parent.getBackground());
-      g.fillRect(0, 0, c.getWidth(), c.getHeight());
-    }
-    final Border border = c.getBorder();
-    if (border instanceof DarculaTextBorder) {
-      if (c.isEnabled() && c.isEditable()) {
-        g.setColor(c.getBackground());
-      }
-      final int width = c.getWidth();
-      final int height = c.getHeight();
-      final Insets i = border.getBorderInsets(c);
-      if (c.hasFocus()) {
-        final GraphicsConfig config = new GraphicsConfig(g);
-        g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-        g.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, RenderingHints.VALUE_STROKE_NORMALIZE);
+  protected int getMinimumHeight(int textHeight) {
+    Insets i = getComponent().getInsets();
+    JComponent c = getComponent();
+    int minHeight = (isCompact(c) ? COMPACT_HEIGHT.get() : MINIMUM_HEIGHT.get()) + i.top + i.bottom;
+    return DarculaEditorTextFieldBorder.isComboBoxEditor(c) || UIUtil.getParentOfType(JSpinner.class, c) != null ?
+              textHeight : minHeight;
+  }
 
-        g.fillRoundRect(i.left - 5, i.top - 2, width - i.right - i.left + 10, height - i.top - i.bottom + 6, 5, 5);
-        config.restore();
-      } else {
-        g.fillRect(i.left - 5, i.top - 2, width - i.right - i.left + 12, height - i.top - i.bottom + 6);
+  @Override
+  protected int getClearIconPreferredSpace() {
+    return super.getClearIconPreferredSpace() - getClearIconGap();
+  }
+
+  @Override
+  protected void paintBackground(Graphics g) {
+    JTextComponent component = getComponent();
+    if (component != null) {
+      Container parent = component.getParent();
+      if (parent != null && component.isOpaque()) {
+        g.setColor(parent.getBackground());
+        g.fillRect(0, 0, component.getWidth(), component.getHeight());
       }
-    } else {
-      super.paintBackground(g);
+
+      if (component.getBorder() instanceof DarculaTextBorder && !isTableCellEditor(component)) {
+        paintDarculaBackground(g, component);
+      } else if (component.isOpaque()) {
+        super.paintBackground(g);
+      }
     }
+  }
+
+  protected void paintDarculaBackground(Graphics g, JTextComponent component) {
+    Graphics2D g2 = (Graphics2D)g.create();
+    Rectangle r = new Rectangle(component.getSize());
+    JBInsets.removeFrom(r, paddings());
+
+    try {
+      g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+      g2.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL,
+                          MacUIUtil.USE_QUARTZ ? RenderingHints.VALUE_STROKE_PURE : RenderingHints.VALUE_STROKE_NORMALIZE);
+
+      g2.translate(r.x, r.y);
+
+      if (component.isEnabled() && component.isEditable()) {
+        float arc = isSearchField(component) ? COMPONENT_ARC.getFloat() : 0.0f;
+        float bw = bw();
+
+        g2.setColor(component.getBackground());
+        g2.fill(new RoundRectangle2D.Float(bw, bw, r.width - bw * 2, r.height - bw * 2, arc, arc));
+      }
+    } finally {
+      g2.dispose();
+    }
+  }
+
+  @Override
+  protected Insets getDefaultMargins() {
+    Component c = getComponent();
+    return isCompact(c) || isTableCellEditor(c) ? JBUI.insets(0, 3) : JBUI.insets(2, 5);
+  }
+
+  protected float bw() {
+    return BW.getFloat();
   }
 }

@@ -15,35 +15,36 @@
  */
 package com.intellij.lang.ant.config.impl.configuration;
 
-import com.intellij.ui.SortedComboBoxModel;
 import com.intellij.ui.ComboboxWithBrowseButton;
+import com.intellij.ui.SortedComboBoxModel;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Convertor;
-import com.intellij.util.containers.HashMap;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 
 public abstract class ChooseAndEditComboBoxController<Item, Ref> {
   private final ComboboxWithBrowseButton myCombobox;
-  private final Convertor<Item, Ref> myToString;
-  private final Map<Ref, Item> myItems = new HashMap<Ref, Item>();
+  private final Convertor<? super Item, ? extends Ref> myToString;
+  private final Map<Ref, Item> myItems = new HashMap<>();
 
   public ChooseAndEditComboBoxController(ComboboxWithBrowseButton combobox,
-                                         Convertor<Item, Ref> toRef,
-                                         Comparator<Ref> comparator) {
+                                         Convertor<? super Item, ? extends Ref> toRef,
+                                         Comparator<? super Ref> comparator) {
     myCombobox = combobox;
     myToString = toRef;
     myCombobox.addActionListener(new ActionListener() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         resetList(openConfigureDialog(myItems.get(getSelectedString()), getCombobox()));
       }
     });
-    getCombobox().setModel(new SortedComboBoxModel<Ref>(comparator));
+    getCombobox().setModel(new SortedComboBoxModel<>(comparator));
   }
 
   public void resetList(Item selection) {

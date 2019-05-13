@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,10 +20,18 @@
 package com.intellij.psi.search;
 
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.module.UnloadedModuleDescription;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.FileIndexFacade;
+import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Collection;
+import java.util.Collections;
+
+/**
+ * The biggest possible scope: every file on the planet belongs to this.
+ */
 public class EverythingGlobalScope extends GlobalSearchScope {
   public EverythingGlobalScope(Project project) {
     super(project);
@@ -32,18 +40,24 @@ public class EverythingGlobalScope extends GlobalSearchScope {
   public EverythingGlobalScope() {
   }
 
+  @NotNull
   @Override
-  public int compare(final VirtualFile file1, final VirtualFile file2) {
-    return 0;
+  public String getDisplayName() {
+    return "All Places";
   }
 
   @Override
-  public boolean contains(final VirtualFile file) {
+  public boolean contains(@NotNull final VirtualFile file) {
     return true;
   }
 
   @Override
   public boolean isSearchInLibraries() {
+    return true;
+  }
+
+  @Override
+  public boolean isForceSearchingInLibrarySources() {
     return true;
   }
 
@@ -55,6 +69,13 @@ public class EverythingGlobalScope extends GlobalSearchScope {
   @Override
   public boolean isSearchOutsideRootModel() {
     return true;
+  }
+
+  @NotNull
+  @Override
+  public Collection<UnloadedModuleDescription> getUnloadedModulesBelongingToScope() {
+    Project project = getProject();
+    return project != null ? FileIndexFacade.getInstance(project).getUnloadedModuleDescriptions() : Collections.emptySet();
   }
 
   @NotNull

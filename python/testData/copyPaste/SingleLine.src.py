@@ -1,0 +1,2 @@
+<selection>    print "foo"
+</selection>

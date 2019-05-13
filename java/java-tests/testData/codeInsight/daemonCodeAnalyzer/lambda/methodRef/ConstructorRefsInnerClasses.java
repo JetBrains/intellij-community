@@ -16,11 +16,11 @@ class NonStaticInner {
   static void call12(I2 s) {}
 
   static {
-    <error descr="Incompatible types. Found: '<method reference>', required: 'NonStaticInner.I1'">I1 i1 = NonStaticInner.Inner :: new;</error>
-    call11<error descr="'call11(NonStaticInner.I1)' in 'NonStaticInner' cannot be applied to '(<method reference>)'">(NonStaticInner.Inner :: new)</error>;
+    I1 i1 = <error descr="An enclosing instance of type NonStaticInner is not in scope">NonStaticInner.Inner :: new</error>;
+    call11(<error descr="An enclosing instance of type NonStaticInner is not in scope">NonStaticInner.Inner :: new</error>);
 
-    <error descr="Incompatible types. Found: '<method reference>', required: 'NonStaticInner.I2'">I2 i2 = NonStaticInner.Inner :: new;</error>
-    call12<error descr="'call12(NonStaticInner.I2)' in 'NonStaticInner' cannot be applied to '(<method reference>)'">(NonStaticInner.Inner :: new)</error>;
+    I2 i2 = <error descr="An enclosing instance of type NonStaticInner is not in scope">NonStaticInner.Inner :: new</error>;
+    call12(<error descr="An enclosing instance of type NonStaticInner is not in scope">NonStaticInner.Inner :: new</error>);
   }
 }
 
@@ -60,11 +60,11 @@ class StaticInner1 {
     }
 
     interface I1 {
-      Inner _(StaticInner1 rec);
+      Inner m(StaticInner1 rec);
     }
 
     interface I2 {
-      Inner _();
+      Inner m();
     }
 
     static void call3(I1 s) {}
@@ -88,11 +88,11 @@ class StaticInner2 {
 
 
   static {
-     <error descr="Incompatible types. Found: '<method reference>', required: 'StaticInner2.I1'">I1 i1 = StaticInner2.Inner :: new;</error>
+     I1 i1 = StaticInner2.Inner :: <error descr="Cannot resolve constructor 'Inner'">new</error>;
   }
 
   {
-     <error descr="Incompatible types. Found: '<method reference>', required: 'StaticInner2.I1'">I1 i1 = StaticInner2.Inner :: new;</error>
+     I1 i1 = StaticInner2.Inner :: <error descr="Cannot resolve constructor 'Inner'">new</error>;
   }
 }
 
@@ -109,11 +109,11 @@ class NonStaticInner2 {
 
 
   static {
-     <error descr="Incompatible types. Found: '<method reference>', required: 'NonStaticInner2.I1'">I1 i1 = NonStaticInner2.Inner :: new;</error>
+     I1 i1 = <error descr="An enclosing instance of type NonStaticInner2 is not in scope">NonStaticInner2.Inner :: new</error>;
   }
 
   {
-     <error descr="Incompatible types. Found: '<method reference>', required: 'NonStaticInner2.I1'">I1 i1 = NonStaticInner2.Inner :: new;</error>
+     I1 i1 = NonStaticInner2.Inner :: <error descr="Cannot resolve constructor 'Inner'">new</error>;
   }
 }
 
@@ -130,7 +130,7 @@ class NonStaticInner3 {
     interface I2<X> {
         X m();
     }
-    
+
     interface I3<X> {
         X m(NonStaticInner3 rec, int i);
     }
@@ -145,7 +145,7 @@ class NonStaticInner3 {
     }
 
     {
-        <error descr="Incompatible types. Found: '<method reference>', required: 'NonStaticInner3.I3<NonStaticInner3.Foo>'">I3<Foo> b1 = Foo::new;</error>
-        <error descr="Incompatible types. Found: '<method reference>', required: 'NonStaticInner3.I4<NonStaticInner3.Foo>'">I4<Foo> b2 = Foo::new;</error>
+        I3<Foo> b1 = Foo::<error descr="Cannot resolve constructor 'Foo'">new</error>;
+        I4<Foo> b2 = Foo::<error descr="Cannot resolve constructor 'Foo'">new</error>;
     }
 }

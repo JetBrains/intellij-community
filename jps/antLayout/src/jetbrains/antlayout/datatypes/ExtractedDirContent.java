@@ -31,7 +31,7 @@ import java.util.List;
 public class ExtractedDirContent extends Content {
   private String jarPath;
   private String pathInJar = "";
-  private Expand expandTask;
+  private final Expand expandTask;
 
   public ExtractedDirContent() {
     expandTask = new Expand();

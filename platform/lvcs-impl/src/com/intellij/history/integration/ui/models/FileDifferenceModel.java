@@ -16,11 +16,11 @@
 
 package com.intellij.history.integration.ui.models;
 
+import com.intellij.diff.DiffContentFactory;
+import com.intellij.diff.contents.DiffContent;
 import com.intellij.history.core.tree.Entry;
 import com.intellij.history.integration.IdeaGateway;
 import com.intellij.history.integration.LocalHistoryBundle;
-import com.intellij.openapi.diff.DiffContent;
-import com.intellij.openapi.diff.SimpleContent;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
@@ -70,24 +70,16 @@ public abstract class FileDifferenceModel {
   protected abstract Entry getRightEntry();
 
   public DiffContent getLeftDiffContent(RevisionProcessingProgress p) {
-    if (!canShowLeftEntry(p)) return new SimpleContent("");
+    if (!hasLeftEntry()) return DiffContentFactory.getInstance().createEmpty();
+    if (!isLeftContentAvailable(p)) return DiffContentFactory.getInstance().create("Content not available");
     return doGetLeftDiffContent(p);
   }
 
-  protected abstract DiffContent doGetLeftDiffContent(RevisionProcessingProgress p);
-
   public DiffContent getRightDiffContent(RevisionProcessingProgress p) {
-    if (!canShowRightEntry(p)) return new SimpleContent("");
+    if (!hasRightEntry()) return DiffContentFactory.getInstance().createEmpty();
+    if (!isRightContentAvailable(p)) return DiffContentFactory.getInstance().create("Content not available");
     if (isRightContentCurrent) return getEditableRightDiffContent(p);
     return getReadOnlyRightDiffContent(p);
-  }
-
-  private boolean canShowLeftEntry(RevisionProcessingProgress p) {
-    return hasLeftEntry() && isLeftContentAvailable(p);
-  }
-
-  private boolean canShowRightEntry(RevisionProcessingProgress p) {
-    return hasRightEntry() && isRightContentAvailable(p);
   }
 
   private boolean hasLeftEntry() {
@@ -102,13 +94,11 @@ public abstract class FileDifferenceModel {
 
   protected abstract boolean isRightContentAvailable(RevisionProcessingProgress p);
 
+  protected abstract DiffContent doGetLeftDiffContent(RevisionProcessingProgress p);
+
   protected abstract DiffContent getReadOnlyRightDiffContent(RevisionProcessingProgress p);
 
   protected abstract DiffContent getEditableRightDiffContent(RevisionProcessingProgress p);
-
-  protected SimpleContent createSimpleDiffContent(String content, Entry e) {
-    return new SimpleContent(content, myGateway.getFileType(e.getName()));
-  }
 
   protected Document getDocument() {
     return myGateway.getDocument(getRightEntry().getPath());

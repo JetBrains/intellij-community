@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,11 +37,13 @@ import java.util.List;
 
 public class DomElementAnnotationHolderImpl extends SmartList<DomElementProblemDescriptor> implements DomElementAnnotationHolder {
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.xml.highlighting.DomElementAnnotationHolderImpl");
-  private final SmartList<Annotation> myAnnotations = new SmartList<Annotation>();
+  private final SmartList<Annotation> myAnnotations = new SmartList<>();
   private final boolean myOnTheFly;
+  private final DomFileElement myFileElement;
 
-  public DomElementAnnotationHolderImpl(boolean onTheFly) {
+  public DomElementAnnotationHolderImpl(boolean onTheFly, @NotNull DomFileElement fileElement) {
     myOnTheFly = onTheFly;
+    myFileElement = fileElement;
   }
 
   @Override
@@ -50,10 +52,18 @@ public class DomElementAnnotationHolderImpl extends SmartList<DomElementProblemD
   }
 
   @NotNull
+  @Override
+  public DomFileElement<?> getFileElement() {
+    return myFileElement;
+  }
+
+  @Override
+  @NotNull
   public DomElementProblemDescriptor createProblem(@NotNull DomElement domElement, @Nullable String message, LocalQuickFix... fixes) {
     return createProblem(domElement, HighlightSeverity.ERROR, message, fixes);
   }
 
+  @Override
   @NotNull
   public DomElementProblemDescriptor createProblem(@NotNull DomElement domElement,
                                                    DomCollectionChildDescription childDescription,
@@ -61,18 +71,21 @@ public class DomElementAnnotationHolderImpl extends SmartList<DomElementProblemD
     return addProblem(new DomCollectionProblemDescriptorImpl(domElement, message, HighlightSeverity.ERROR, childDescription));
   }
 
+  @Override
   @NotNull
   public final DomElementProblemDescriptor createProblem(@NotNull DomElement domElement, HighlightSeverity highlightType, String message) {
     return createProblem(domElement, highlightType, message, LocalQuickFix.EMPTY_ARRAY);
   }
 
+  @Override
   public DomElementProblemDescriptor createProblem(@NotNull final DomElement domElement,
                                                    final HighlightSeverity highlightType,
                                                    final String message,
-                                                   final LocalQuickFix[] fixes) {
+                                                   final LocalQuickFix... fixes) {
     return createProblem(domElement, highlightType, message, null, fixes);
   }
 
+  @Override
   public DomElementProblemDescriptor createProblem(@NotNull final DomElement domElement,
                                                    final HighlightSeverity highlightType,
                                                    final String message,
@@ -81,6 +94,7 @@ public class DomElementAnnotationHolderImpl extends SmartList<DomElementProblemD
     return addProblem(new DomElementProblemDescriptorImpl(domElement, message, highlightType, textRange, null, fixes));
   }
 
+  @Override
   public DomElementProblemDescriptor createProblem(@NotNull DomElement domElement,
                                                    ProblemHighlightType highlightType,
                                                    String message,
@@ -89,11 +103,13 @@ public class DomElementAnnotationHolderImpl extends SmartList<DomElementProblemD
     return addProblem(new DomElementProblemDescriptorImpl(domElement, message, HighlightSeverity.ERROR, textRange, highlightType, fixes));
   }
 
+  @Override
   @NotNull
   public DomElementResolveProblemDescriptor createResolveProblem(@NotNull GenericDomValue element, @NotNull PsiReference reference) {
     return addProblem(new DomElementResolveProblemDescriptorImpl(element, reference, getQuickFixes(element, reference)));
   }
 
+  @Override
   @NotNull
   public Annotation createAnnotation(@NotNull DomElement element, HighlightSeverity severity, @Nullable String message) {
     final XmlElement xmlElement = element.getXmlElement();
@@ -110,6 +126,7 @@ public class DomElementAnnotationHolderImpl extends SmartList<DomElementProblemD
     return myAnnotations;
   }
 
+  @Override
   public int getSize() {
     return size();
   }
@@ -117,7 +134,7 @@ public class DomElementAnnotationHolderImpl extends SmartList<DomElementProblemD
   private LocalQuickFix[] getQuickFixes(final GenericDomValue element, PsiReference reference) {
     if (!myOnTheFly) return LocalQuickFix.EMPTY_ARRAY;
 
-    final List<LocalQuickFix> result = new SmartList<LocalQuickFix>();
+    final List<LocalQuickFix> result = new SmartList<>();
     final Converter converter = WrappingConverter.getDeepestConverter(element.getConverter(), element);
     if (converter instanceof ResolvingConverter) {
       final ResolvingConverter resolvingConverter = (ResolvingConverter)converter;
@@ -130,7 +147,7 @@ public class DomElementAnnotationHolderImpl extends SmartList<DomElementProblemD
         ContainerUtil.addAll(result, localQuickFixes);
       }
     }
-    return result.isEmpty() ? LocalQuickFix.EMPTY_ARRAY : result.toArray(new LocalQuickFix[result.size()]);
+    return result.isEmpty() ? LocalQuickFix.EMPTY_ARRAY : result.toArray(LocalQuickFix.EMPTY_ARRAY);
   }
 
   public <T extends DomElementProblemDescriptor> T addProblem(final T problemDescriptor) {

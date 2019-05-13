@@ -1,27 +1,32 @@
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.completion;
 
+import com.intellij.application.options.CodeStyle;
+import com.intellij.application.options.editor.WebEditorOptions;
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.completion.impl.CamelHumpMatcher;
 import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.codeInsight.lookup.impl.LookupImpl;
-import com.intellij.codeInsight.template.TemplateManager;
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
 import com.intellij.javaee.ExternalResourceManager;
 import com.intellij.javaee.ExternalResourceManagerEx;
-import com.intellij.javaee.ExternalResourceManagerImpl;
-import com.intellij.openapi.application.Result;
-import com.intellij.openapi.command.WriteCommandAction;
-import com.intellij.psi.PsiReference;
+import com.intellij.javaee.ExternalResourceManagerExImpl;
+import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.psi.formatter.xml.HtmlCodeStyleSettings;
 import com.intellij.psi.statistics.StatisticsManager;
 import com.intellij.psi.statistics.impl.StatisticsManagerImpl;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
 import com.intellij.xml.util.XmlUtil;
 
+import java.util.Arrays;
+import java.util.List;
+
 /**
- * @by Maxim.Mossienko
+ * @author Maxim.Mossienko
  */
+@SuppressWarnings("ConstantConditions")
 public class XmlCompletionTest extends LightCodeInsightFixtureTestCase {
 
   private String myOldDoctype;
@@ -35,13 +40,20 @@ public class XmlCompletionTest extends LightCodeInsightFixtureTestCase {
     final ExternalResourceManagerEx manager = ExternalResourceManagerEx.getInstanceEx();
     myOldDoctype = manager.getDefaultHtmlDoctype(getProject());
     manager.setDefaultHtmlDoctype(XmlUtil.XHTML_URI, getProject());
-    CamelHumpMatcher.forceStartMatching(getTestRootDisposable());
+    CamelHumpMatcher.forceStartMatching(myFixture.getTestRootDisposable());
   }
 
   @Override
   protected void tearDown() throws Exception {
-    ExternalResourceManagerEx.getInstanceEx().setDefaultHtmlDoctype(myOldDoctype, getProject());
-    super.tearDown();
+    try {
+      ExternalResourceManagerEx.getInstanceEx().setDefaultHtmlDoctype(myOldDoctype, getProject());
+    }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
+    finally {
+      super.tearDown();
+    }
   }
 
   @Override
@@ -58,20 +70,10 @@ public class XmlCompletionTest extends LightCodeInsightFixtureTestCase {
       return;
     }
 
-    ExternalResourceManagerImpl.addTestResource(url, location, myTestRootDisposable);
+    ExternalResourceManagerExImpl.registerResourceTemporarily(url, location, myFixture.getTestRootDisposable());
   }
 
-  @Override
-  protected void runTest() throws Throwable {
-    new WriteCommandAction(getProject()) {
-      @Override
-      protected void run(Result result) throws Throwable {
-        XmlCompletionTest.super.runTest();
-      }
-    }.execute();
-  }
-
-  public void testCompleteWithAnyInSchema() throws Exception {
+  public void testCompleteWithAnyInSchema() {
     String location = "29.xsd";
     addResource("aaa",location);
 
@@ -84,15 +86,15 @@ public class XmlCompletionTest extends LightCodeInsightFixtureTestCase {
     myFixture.checkResultByFile(s);
   }
 
-  private void complete() {
-    myFixture.completeBasic();
+  private LookupElement[] complete() {
+    return myFixture.completeBasic();
   }
 
   private void configureByFiles(String... files) {
     myFixture.configureByFiles(files);
   }
 
-  public void testCompleteWithAnyInSchema2() throws Exception {
+  public void testCompleteWithAnyInSchema2() {
     configureByFiles("32.xml", "32.xsd", "32_2.xsd");
     complete();
     checkResultByFile("/32_after.xml");
@@ -102,7 +104,7 @@ public class XmlCompletionTest extends LightCodeInsightFixtureTestCase {
     checkResultByFile("32_2_after.xml");
   }
 
-  public void testCompleteWithAnyInSchema3() throws Exception {
+  public void testCompleteWithAnyInSchema3() {
     addResource("http://www.springframework.org/schema/tx",
                 getTestDataPath() + "/spring-tx-2.0.xsd");
     addResource("http://www.springframework.org/schema/util",
@@ -122,7 +124,7 @@ public class XmlCompletionTest extends LightCodeInsightFixtureTestCase {
     checkResultByFile("36_3_after.xml");
   }
 
-  public void testXmlNonQualifiedElementCompletion() throws Exception {
+  public void testXmlNonQualifiedElementCompletion() {
     String location = "25.xsd";
     String url = "http://www.dummy-temp-address";
     addResource(url,location);
@@ -133,7 +135,7 @@ public class XmlCompletionTest extends LightCodeInsightFixtureTestCase {
     checkResultByFile("25_after.xml");
   }
 
-  public void testXmlCompletion() throws Exception {
+  public void testXmlCompletion() {
     String location = "xslt.xsd";
     String location2 = "xhtml1-strict.xsd";
 
@@ -155,32 +157,28 @@ public class XmlCompletionTest extends LightCodeInsightFixtureTestCase {
     checkResultByFile("/11_after.xml");
   }
 
-  public void testXmlCompletionWhenTagsWithSemicolon() throws Exception {
+  public void testXmlCompletionWhenTagsWithSemicolon() {
     configureByFiles("XmlCompletionWhenTagsWithSemicolon.xml", "XmlCompletionWhenTagsWithSemicolon.dtd");
     complete();
     checkResultByFile("XmlCompletionWhenTagsWithSemicolon_after.xml");
   }
 
-  public void testCompleteTagWithXsiTypeInParent() throws Exception {
+  public void testCompleteTagWithXsiTypeInParent() {
     final String testName = getTestName(false);
     String url = "urn:test";
     doCompletionTest("xml", url, testName + ".xsd");
   }
 
-  public void testAttributesTemplateFinishWithSpace() throws Throwable {
-    ((TemplateManagerImpl)TemplateManager.getInstance(getProject())).setTemplateTesting(true);
-    try {
-      configureByFile(getTestName(false) + ".xml");
-      type('b');
-      type('e');
-      type('a');
-      type('n');
-      type(' ');
-      checkResultByFile(getTestName(false) + "_after.xml");
-    }
-    finally {
-      ((TemplateManagerImpl)TemplateManager.getInstance(getProject())).setTemplateTesting(false);
-    }
+  public void testAttributesTemplateFinishWithSpace() {
+    TemplateManagerImpl.setTemplateTesting(myFixture.getTestRootDisposable());
+
+    configureByFile(getTestName(false) + ".xml");
+    type('b');
+    type('e');
+    type('a');
+    type('n');
+    type(' ');
+    checkResultByFile(getTestName(false) + "_after.xml");
   }
 
   private void configureByFile(String s) {
@@ -188,25 +186,21 @@ public class XmlCompletionTest extends LightCodeInsightFixtureTestCase {
     myFixture.completeBasic();
   }
 
-  public void testNoAttributesTemplateFinishWithSpace() throws Throwable {
-    ((TemplateManagerImpl)TemplateManager.getInstance(getProject())).setTemplateTesting(true);
-    try {
-      configureByFile(getTestName(false) + ".xml");
-      type('d');
-      type('e');
-      type(' ');
-      checkResultByFile(getTestName(false) + "_after.xml");
-    }
-    finally {
-      ((TemplateManagerImpl)TemplateManager.getInstance(getProject())).setTemplateTesting(false);
-    }
+  public void testNoAttributesTemplateFinishWithSpace() {
+    TemplateManagerImpl.setTemplateTesting(myFixture.getTestRootDisposable());
+
+    configureByFile(getTestName(false) + ".xml");
+    type('d');
+    type('e');
+    type(' ');
+    checkResultByFile(getTestName(false) + "_after.xml");
   }
 
   private void type(char c) {
     myFixture.type(c);
   }
 
-  private void doCompletionTest(final String ext, final String url, final String location) throws Exception {
+  private void doCompletionTest(final String ext, final String url, final String location) {
     final String testName = getTestName(false);
     addResource(url, location);
 
@@ -216,20 +210,19 @@ public class XmlCompletionTest extends LightCodeInsightFixtureTestCase {
     checkResultByFile(testName + "_after." + ext);
   }
 
-  public void testSingleCompletionVariantAtRootTag() throws Exception {
+  public void testSingleCompletionVariantAtRootTag() {
     addResource("http://www.springframework.org/dtd/spring-beans.dtd", getTestDataPath() + "/spring-beans-2.0.dtd");
 
     basicDoTest("");
   }
 
-  public void testDtdCompletion() throws Exception {
+  public void testDtdCompletion() {
     final String baseTestFileName = getTestName(false);
     configureByFile(baseTestFileName + ".dtd");
     selectItem(myFixture.getLookupElements()[0], (char)0);
     checkResultByFile(baseTestFileName + "_after.dtd");
 
-    configureByFile(baseTestFileName + "2.dtd");
-    checkResultByFile(baseTestFileName + "2_after.dtd");
+    doCompletionTest(baseTestFileName + "2");
 
     configureByFile(baseTestFileName + "3.dtd");
     checkResultByFile(baseTestFileName + "3_after.dtd");
@@ -239,9 +232,17 @@ public class XmlCompletionTest extends LightCodeInsightFixtureTestCase {
 
     configureByFile(baseTestFileName + "5.dtd");
     checkResultByFile(baseTestFileName + "5_after.dtd");
+
+    // todo uncomment
+//    doCompletionTest("DtdElementCompletion");
   }
 
-  public void testSchemaEnumerationCompletion() throws Exception {
+  private void doCompletionTest(String name) {
+    configureByFile(name + ".dtd");
+    checkResultByFile(name + "_after.dtd");
+  }
+
+  public void testSchemaEnumerationCompletion() {
     addResource("http://java.sun.com/xml/ns/j2ee/web-app_2_4.xsd", getTestDataPath() + "/web-app_2_4.xsd");
     configureByFile("12.xml");
     complete();
@@ -256,29 +257,29 @@ public class XmlCompletionTest extends LightCodeInsightFixtureTestCase {
     checkResultByFile("12_4_after.xml");
   }
 
-  public void testEntityRefCompletion() throws Exception {
+  public void testEntityRefCompletion() {
     configureByFile("13.xml");
     checkResultByFile("13_after.xml");
   }
 
-  public void testEntityRefCompletion_2() throws Exception {
+  public void testEntityRefCompletion_2() {
     configureByFile("13_2.xml");
     checkResultByFile("13_2_after.xml");
   }
 
-  public void testEntityRefCompletion2() throws Exception {
+  public void testEntityRefCompletion2() {
     configureByFiles("28.xml", "28.ent");
     complete();
     type('\n');
     checkResultByFile("28_after.xml");
   }
 
-  public void testEntityRefCompletion3() throws Exception {
+  public void testEntityRefCompletion3() {
     configureByFile("13_3.xml");
     checkResultByFile("13_3_after.xml");
   }
 
-  public void testElementRefCompletionInSchema() throws Exception {
+  public void testElementRefCompletionInSchema() {
     boolean old = CodeInsightSettings.getInstance().AUTOCOMPLETE_ON_CODE_COMPLETION;
     CodeInsightSettings.getInstance().AUTOCOMPLETE_ON_CODE_COMPLETION = false;
     try {
@@ -291,17 +292,17 @@ public class XmlCompletionTest extends LightCodeInsightFixtureTestCase {
     }
   }
 
-  public void testFilePathCompletionInSystem() throws Exception {
+  public void testFilePathCompletionInSystem() {
     configureByFile("14.xml");
     checkResultByFile("14_after.xml");
   }
 
-  public void testFilePathCompletionInSchema() throws Exception {
+  public void testFilePathCompletionInSchema() {
     configureByFile("15.xml");
     checkResultByFile("15_after.xml");
   }
 
-  public void testUrlCompletionInSchema() throws Exception {
+  public void testUrlCompletionInSchema() {
     String url = "http://www.w3.org/1999/xhtml";
     String location = "xhtml1-strict.xsd";
     addResource(url,location);
@@ -319,26 +320,67 @@ public class XmlCompletionTest extends LightCodeInsightFixtureTestCase {
     checkResultByFile("31_after.xml");
   }
 
-  public void testInsertExtraRequiredAttribute() throws Exception {
+  public void testInsertExtraRequiredAttribute() {
     configureByFile("37.xml");
     selectItem(myFixture.getLookupElements()[0], '\t');
     checkResultByFile("37_after.xml");
   }
 
-  public void testBeforeAttributeValue() throws Throwable {
+  public void testInsertExtraRequiredAttributeSingleQuote() {
+    final HtmlCodeStyleSettings settings = getHtmlSettings();
+    final CodeStyleSettings.QuoteStyle quote = settings.HTML_QUOTE_STYLE;
+    try {
+      settings.HTML_QUOTE_STYLE = CodeStyleSettings.QuoteStyle.Single;
+      configureByFile(getTestName(true) + ".html");
+      checkResultByFile(getTestName(true) + "_after.html");
+    } finally {
+      settings .HTML_QUOTE_STYLE = quote;
+    }
+  }
+
+  public void testInsertExtraRequiredAttributeNoneQuote() {
+    final HtmlCodeStyleSettings settings = getHtmlSettings();
+    final CodeStyleSettings.QuoteStyle quote = settings.HTML_QUOTE_STYLE;
+    try {
+      settings.HTML_QUOTE_STYLE = CodeStyleSettings.QuoteStyle.None;
+      configureByFile(getTestName(true) + ".html");
+      checkResultByFile(getTestName(true) + "_after.html");
+    } finally {
+      settings.HTML_QUOTE_STYLE = quote;
+    }
+  }
+
+  public void testBeforeAttributeValue() {
     configureByFile(getTestName(true) + ".xml");
     assertEmpty(myFixture.getLookupElements());
     checkResultByFile(getTestName(true) + ".xml");
   }
 
-  public void testUrlCompletionInDtd() throws Exception {
-    configureByFile("20.xml");
-    final PsiReference referenceAt = myFixture.getFile().findReferenceAt(myFixture.getEditor().getCaretModel().getOffset() - 1);
-    assertNotNull(referenceAt);
-    assertTrue(referenceAt.getVariants().length > 0);
+  public void testAttributeNoQuotes() {
+    boolean oldInsertQuotes = WebEditorOptions.getInstance().isInsertQuotesForAttributeValue();
+    WebEditorOptions.getInstance().setInsertQuotesForAttributeValue(false);
+    try {
+      configureByFile(getTestName(false) + ".xml");
+      selectItem(myFixture.getLookupElements()[0], '\t');
+      checkResultByFile(getTestName(false) + "_after.xml");
+    } finally {
+      WebEditorOptions.getInstance().setInsertQuotesForAttributeValue(oldInsertQuotes);
+    }
   }
 
-  public void testElementFromSchemaIncludeCompletion() throws Exception {
+  public void testBeforeAttributeNameWithPrefix() {
+    configureByFile(getTestName(true) + ".xml");
+    selectItem(myFixture.getLookupElements()[0], '\t');
+    checkResultByFile(getTestName(true) + "_after.xml");
+  }
+
+  public void testUrlCompletionInDtd() {
+    configureByFile("20.xml");
+    complete();
+    checkResultByFile("20_after.xml");
+  }
+
+  public void testElementFromSchemaIncludeCompletion() {
     String location = "21.xsd";
     String location2 = "21_2.xsd";
 
@@ -351,27 +393,27 @@ public class XmlCompletionTest extends LightCodeInsightFixtureTestCase {
     checkResultByFile("21_after.xml");
   }
 
-  public void testSchemaTypeReferenceCompletion() throws Exception {
+  public void testSchemaTypeReferenceCompletion() {
     configureByFile("22.xsd");
     checkResultByFile("22_after.xsd");
   }
 
-  public void testSchemaTypeReferenceCompletion2() throws Exception {
+  public void testSchemaTypeReferenceCompletion2() {
     configureByFile("23.xsd");
     checkResultByFile("23_after.xsd");
   }
 
-  public void testSchemaTypeReferenceCompletion3() throws Exception {
+  public void testSchemaTypeReferenceCompletion3() {
     configureByFile("34.xsd");
     checkResultByFile("34_after.xsd");
   }
 
-  public void testSchemaTypeReferenceCompletion4() throws Exception {
+  public void testSchemaTypeReferenceCompletion4() {
     configureByFile("35.xsd");
     checkResultByFile("35_after.xsd");
   }
 
-  public void testSchemaNonAllowedElementCompletion() throws Exception {
+  public void testSchemaNonAllowedElementCompletion() {
     configureByFiles("33.xml",
                      "33.xsd",
                      "33_2.xsd");
@@ -385,67 +427,67 @@ public class XmlCompletionTest extends LightCodeInsightFixtureTestCase {
     checkResultByFile("33_2_after.xml");
   }
 
-  public void testSchemaBooleanCompletion() throws Exception {
+  public void testSchemaBooleanCompletion() {
     configureByFile("SchemaBooleanCompletion.xsd");
     checkResultByFile("SchemaBooleanCompletion_after.xsd");
   }
 
-  public void testXIncludeCompletion() throws Exception {
+  public void testXIncludeCompletion() {
     configureByFile("XIncludeCompletion.xsd");
     checkResultByFile("XIncludeCompletion_after.xsd");
   }
 
-  public void testCorrectPrefixInsertion() throws Exception {
+  public void testCorrectPrefixInsertion() {
     configureByFile("CorrectPrefixInsertion.xml");
     checkResultByFile("CorrectPrefixInsertion_after.xml");
   }
 
-  public void testDoNotSuggestAbstractElementsFromSchema() throws Exception {
+  public void testDoNotSuggestAbstractElementsFromSchema() {
     basicDoTest("");
   }
 
-  private void basicDoTest(String ext) throws Exception {
+  private void basicDoTest(String ext) {
     final String testName = getTestName(false) + ext;
     configureByFile(testName + ".xml");
     checkResultByFile(testName + "_after.xml");
   }
 
-  public void testDoNotSuggestTagsFromOtherNsInXslt() throws Exception {
+  public void testDoNotSuggestTagsFromOtherNsInXslt() {
     basicDoTest("");
   }
 
-  public void testDoNotSuggestTagsFromOtherNsInXslt_2() throws Exception {
+  public void testDoNotSuggestTagsFromOtherNsInXslt_2() {
     final String testName = getTestName(false);
     configureByFile(testName + ".xml");
     myFixture.type('\n');
     checkResultByFile(testName + "_after.xml");
   }
   
-  public void testDoNotSuggestTagsFromOtherNsInXslt_3() throws Exception {
+  public void testDoNotSuggestTagsFromOtherNsInXslt_3() {
     final String testName = getTestName(false);
     configureByFile(testName + ".xml");
     myFixture.type('\n');
     checkResultByFile(testName + "_after.xml");
   }
 
-  public void testDoNotSuggestTagsInXHtml() throws Exception {
+  public void testDoNotSuggestTagsInXHtml() {
     basicDoTest("");
   }
 
-  public void testSuggestTagsInXHtml() throws Exception {
+  public void testSuggestTagsInXHtml() {
     basicDoTest("");
     basicDoTest("_2");
   }
 
-  public void testCompleteWithSubstitutionGroup() throws Exception {
+  public void testCompleteWithSubstitutionGroup() {
     configureByFiles(getTestName(false) + ".xml", "mule.xsd", "mule-management.xsd");
     complete();
     myFixture.type('\n');
     checkResultByFile(getTestName(false) + "_after.xml");
   }
 
-  public void testCorrectSelectionInsertion() throws Exception {
-    ((StatisticsManagerImpl)StatisticsManager.getInstance()).enableStatistics(getTestRootDisposable());
+  public void testCorrectSelectionInsertion() {
+    ((StatisticsManagerImpl)StatisticsManager.getInstance()).enableStatistics(myFixture.getTestRootDisposable());
     addResource("http://hibernate.sourceforge.net/hibernate-mapping-3.0.dtd",
                 getTestDataPath() + "/hibernate-mapping-3.0.dtd");
 
@@ -453,7 +495,7 @@ public class XmlCompletionTest extends LightCodeInsightFixtureTestCase {
     selectItem(myFixture.getLookupElements()[4], '\t');
     checkResultByFile("CorrectSelectionInsertion_after.xml");
     
-    CompletionLookupArranger.applyLastCompletionStatisticsUpdate();
+    StatisticsUpdate.applyLastCompletionStatisticsUpdate();
 
     configureByFile("CorrectSelectionInsertion2.xml");
     myFixture.getEditor().getSelectionModel().removeSelection();
@@ -461,7 +503,7 @@ public class XmlCompletionTest extends LightCodeInsightFixtureTestCase {
     checkResultByFile("CorrectSelectionInsertion2_after.xml");
   }
 
-  public void testCasePreference() throws Exception {
+  public void testCasePreference() {
     final int old = CodeInsightSettings.getInstance().COMPLETION_CASE_SENSITIVE;
     CodeInsightSettings.getInstance().COMPLETION_CASE_SENSITIVE = CodeInsightSettings.NONE;
 
@@ -480,12 +522,12 @@ public class XmlCompletionTest extends LightCodeInsightFixtureTestCase {
     }
   }
 
-  public void testCompleteXmlLang() throws Exception {
+  public void testCompleteXmlLang() {
     basicDoTest("");
     basicDoTest("_2");
   }
 
-  public void testCompleteWhenNoNsSchemaLocation() throws Exception {
+  public void testCompleteWhenNoNsSchemaLocation() {
     boolean old = CodeInsightSettings.getInstance().AUTOCOMPLETE_ON_CODE_COMPLETION;
     CodeInsightSettings.getInstance().AUTOCOMPLETE_ON_CODE_COMPLETION = false;
     try {
@@ -502,7 +544,7 @@ public class XmlCompletionTest extends LightCodeInsightFixtureTestCase {
     }
   }
 
-  public void testCompleteWhenUnqualifiedElements() throws Exception {
+  public void testCompleteWhenUnqualifiedElements() {
     final String testName = getTestName(false);
 
     configureByFiles(testName + ".xml",
@@ -511,7 +553,7 @@ public class XmlCompletionTest extends LightCodeInsightFixtureTestCase {
     checkResultByFile(testName + "_after.xml");
   }
 
-  public void _testIDEADEV_32773() throws Exception {
+  public void _testIDEADEV_32773() {
     final String testName = getTestName(false);
 
     configureByFiles(testName + ".xml",
@@ -524,7 +566,7 @@ public class XmlCompletionTest extends LightCodeInsightFixtureTestCase {
     checkResultByFile(testName + "_after.xml");
   }
 
-  public void testCompleteEnumeration() throws Exception {
+  public void testCompleteEnumeration() {
     final String testName = getTestName(false);
 
     configureByFiles(testName + ".xml",
@@ -534,18 +576,18 @@ public class XmlCompletionTest extends LightCodeInsightFixtureTestCase {
     checkResultByFile(testName + "_after.xml");
   }
 
-  public void testAttributeNameInAttributeValue() throws Throwable {
+  public void testAttributeNameInAttributeValue() {
     configureByFile(getTestName(false) + ".xml");
     complete();
     assertEmpty(myFixture.getLookupElements());
     checkResultByFile(getTestName(false) + "_after.xml");
   }
 
-  public void testNoFixedAttrComplete() throws Exception {
+  public void testNoFixedAttrComplete() {
     basicDoTest("");
   }
 
-  public void testCompleteWords() throws Exception {
+  public void testCompleteWords() {
     myFixture.addClass("public class ABxxZ {}");
 
     final String testName = getTestName(false);
@@ -557,7 +599,7 @@ public class XmlCompletionTest extends LightCodeInsightFixtureTestCase {
     checkResultByFile(testName + "_after.xml");
   }
 
-  public void testClassNamesOutrankWords() throws Exception {
+  public void testClassNamesOutrankWords() {
     myFixture.addClass("package foo; public class SomeClass {}");
 
     final String testName = getTestName(false);
@@ -567,7 +609,7 @@ public class XmlCompletionTest extends LightCodeInsightFixtureTestCase {
     checkResultByFile(testName + "_after.xml");
   }
 
-  public void testColonInTagName() throws Throwable {
+  public void testColonInTagName() {
     configureByFile(getTestName(false) + ".xml");
     type('f');
     type('o');
@@ -576,7 +618,7 @@ public class XmlCompletionTest extends LightCodeInsightFixtureTestCase {
     assertNotNull(LookupManager.getActiveLookup(myFixture.getEditor()));
   }
 
-  public void testDoNotInsertClosingTagB4Text() throws Exception {
+  public void testDoNotInsertClosingTagB4Text() {
     configureByFile("doNotInsertClosingTagB4Text.xml");
     selectItem(myFixture.getLookupElements()[0], '>');
     checkResultByFile("doNotInsertClosingTagB4Text_after.xml");
@@ -588,7 +630,7 @@ public class XmlCompletionTest extends LightCodeInsightFixtureTestCase {
     lookup.finishLookup(ch);
   }
 
-  public void testDoNotInsertClosingTagWithoutTagName() throws Exception {
+  public void testDoNotInsertClosingTagWithoutTagName() {
     configureByFile("doNotInsertClosingTagWithoutTagName.xml");
     type('>');
     //assertNotNull(myItems);
@@ -596,23 +638,167 @@ public class XmlCompletionTest extends LightCodeInsightFixtureTestCase {
     checkResultByFile("doNotInsertClosingTagWithoutTagName_after.xml");
   }
 
-  public void testCompleteXmlTag() throws Exception {
+  public void testCompleteXmlTag() {
     addResource("http://maven.apache.org/xsd/archetype-descriptor-1.0.0.xsd", getTestDataPath() + "archetype-descriptor-1.0.0.xsd");
     basicDoTest("");
   }
 
-  public void testCompleteXsl() throws Exception {
+  public void testCompleteXsl() {
     basicDoTest("");
   }
 
-  public void testAttributeWildcardFromAnotherNamespace() throws Exception {
+  public void testAttributeWildcardFromAnotherNamespace() {
     configureByFiles("foo.xsd", "bar.xsd");
     basicDoTest("");
   }
 
-  public void testCompleteQualifiedTopLevelTags() throws Exception {
+  public void testCompleteQualifiedTopLevelTags() {
     configureByFiles("foo.xsd", "bar.xsd");
     basicDoTest("");
+  }
+
+  public void testDoNotSuggestExistingAttributes() {
+    myFixture.configureByFile("DoNotSuggestExistingAttributes.xml");
+    myFixture.completeBasic();
+    List<String> strings = myFixture.getLookupElementStrings();
+    assertNotNull(strings);
+    assertFalse(strings.contains("xsi:schemaLocation"));
+    assertSameElements(strings, "attributeFormDefault",
+                       "blockDefault",
+                       "elementFormDefault",
+                       "finalDefault",
+                       "id",
+                       "targetNamespace",
+                       "version",
+                       "xml:base",
+                       "xml:id",
+                       "xml:lang",
+                       "xml:space",
+                       "xsi:nil",
+                       "xsi:noNamespaceSchemaLocation",
+                       "xsi:type");
+  }
+
+  public void testRequiredAttributesOnTop() {
+    myFixture.configureByText("foo.html", "<img <caret>");
+    myFixture.completeBasic();
+    List<String> strings = myFixture.getLookupElementStrings();
+    assertNotNull(strings);
+    assertEquals("alt", strings.get(0));
+    assertEquals("src", strings.get(1));
+    assertEquals("align", strings.get(2));
+  }
+
+  public void testDoNotProcessAnyInRestrictions() {
+    myFixture.configureByText("foo.xsd", "<xs:schema xmlns:xs=\"http://www.w3.org/2001/XMLSchema\">\n" +
+                                         "    <<caret>\n" +
+                                         "</xs:schema>");
+    myFixture.completeBasic();
+    assertSameElements(myFixture.getLookupElementStrings(), "xs:annotation",
+                                                            "xs:attribute",
+                                                            "xs:attributeGroup",
+                                                            "xs:complexType",
+                                                            "xs:element",
+                                                            "xs:group",
+                                                            "xs:import",
+                                                            "xs:include",
+                                                            "xs:notation",
+                                                            "xs:redefine",
+                                                            "xs:simpleType");
+  }
+
+  public void testSubstitute() {
+    myFixture.configureByFiles("Substitute/schema-a.xsd", "Substitute/schema-b.xsd");
+    myFixture.testCompletionVariants("Substitute/test.xml", "b:instance", "instance");
+  }
+
+  public void testAfterPrefix() {
+    myFixture.testCompletion("Substitute/testAfterPrefix.xml", "Substitute/testAfterPrefix_after.xml", "Substitute/schema-a.xsd", "Substitute/schema-b.xsd");
+  }
+
+  public void testEnumeratedTagValue() {
+    myFixture.configureByFile("tagValue/enumerated.xsd");
+    myFixture.testCompletionVariants("tagValue/completeEnum.xml", "none", "standard");
+    myFixture.testCompletionVariants("tagValue/completeBoolean.xml", "false", "true");
+  }
+
+  public void testInheritedAttribute() {
+    myFixture.configureByFiles("InheritedAttr/test.xsd", "InheritedAttr/library.xsd");
+    myFixture.testCompletionVariants("InheritedAttr/test.xml", "buz",
+    "library:boo",
+    "xml:base",
+    "xml:id",
+    "xml:lang",
+    "xml:space");
+  }
+
+  public void testSchemaLocation() {
+    myFixture.configureByFiles("spring-beans.xsd");
+    myFixture.testCompletionVariants("SchemaLocation.xml", "http://www.springframework.org/schema/beans ",
+                                     "http://www.w3.org/2001/XMLSchema ", "http://www.w3.org/2001/XMLSchema-instance ");
+    myFixture.testCompletionVariants("SchemaLocation2.xml", "http://www.w3.org/2001/XMLSchema.xsd");
+  }
+
+  public void testNamespaceCompletion() {
+    myFixture.configureByText("foo.xml", "<schema xmlns=\"<caret>\"/>");
+    LookupElement[] elements = myFixture.completeBasic();
+    assertEquals("http://www.w3.org/2001/XMLSchema", elements[0].getLookupString());
+
+    myFixture.configureByText("unknown.xml", "<unknown_tag_name xmlns=\"<caret>\"/>");
+    myFixture.completeBasic();
+    assertTrue(myFixture.getLookupElementStrings().size() > 3); // all standard schemas actually
+  }
+
+  public void testCustomNamespaceCompletion() {
+    myFixture.configureByFiles("main.xsd", "sub.xsd");
+    LookupElement[] elements = myFixture.completeBasic();
+    assertTrue(Arrays.stream(elements).anyMatch(element -> "http://www.test.com/sub".equals(element.getLookupString())));
+  }
+
+  public void testRootTagCompletion() {
+    boolean old = CodeInsightSettings.getInstance().AUTOCOMPLETE_ON_CODE_COMPLETION;
+    CodeInsightSettings.getInstance().AUTOCOMPLETE_ON_CODE_COMPLETION = false;
+    try {
+      myFixture.configureByText("foo.xml", "<schem<caret>");
+      myFixture.completeBasic();
+      myFixture.type('\n');
+      myFixture.checkResult("<schema xmlns=\"http://www.w3.org/2001/XMLSchema\"<caret>");
+    }
+    finally {
+      CodeInsightSettings.getInstance().AUTOCOMPLETE_ON_CODE_COMPLETION = old;
+    }
+  }
+
+  public void testPi() {
+    myFixture.configureByText("foo.xml", "<<caret>");
+    myFixture.completeBasic();
+    myFixture.type('?');
+    myFixture.type('\n');
+    myFixture.checkResult("<?xml version=\"1.0\" encoding=\"<caret>\" ?>");
+  }
+
+  public void testAttributeValueToken() {
+    myFixture.configureByText("foo.xml", "<schema xmlns=\"http://www.w3.org/2001/XMLSchema\">\n" +
+                                         "    <element name=\"a\" abstract=<caret>\"\"/>\n" +
+                                         "</schema>");
+    LookupElement[] elements = myFixture.completeBasic();
+    assertEquals(0, elements.length);
+  }
+
+  public void testMultipleImports() {
+    List<String> variants =
+      myFixture.getCompletionVariants("MultipleImports/agg.xsd", "MultipleImports/toimport1.xsd", "MultipleImports/toimport2.xsd");
+    assertSameElements(variants, "int", "integer", "invisibleType");
+  }
+
+  public void testEnumeratedTypeUnion() {
+    List<String> variants = myFixture.getCompletionVariants("enumerations.xml", "enumerations.xsd");
+    assertSameElements(variants, "A", "B");
+  }
+
+  private HtmlCodeStyleSettings getHtmlSettings() {
+    return CodeStyle.getSettings(myFixture.getProject())
+                    .getCustomSettings(HtmlCodeStyleSettings.class);
   }
 }
 

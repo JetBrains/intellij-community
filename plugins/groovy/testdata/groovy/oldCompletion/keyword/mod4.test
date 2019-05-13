@@ -1,7 +1,6 @@
 <caret>def foo(){}
 -----
 abstract
-as
 assert
 boolean
 byte
@@ -35,6 +34,7 @@ switch
 synchronized
 this
 throw
+trait
 transient
 true
 try

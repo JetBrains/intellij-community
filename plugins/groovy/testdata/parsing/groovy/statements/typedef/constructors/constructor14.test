@@ -17,6 +17,10 @@ Groovy script
     PsiElement(class)('class')
     PsiWhiteSpace(' ')
     PsiElement(identifier)('ComparableFoo')
+    Extends clause
+      <empty list>
+    Implements clause
+      <empty list>
     PsiWhiteSpace(' ')
     Type definition body
       PsiElement({)('{')
@@ -35,8 +39,8 @@ Groovy script
           PsiElement(public)('public')
         PsiWhiteSpace(' ')
         PsiElement(identifier)('ComparableFoo')
-        PsiElement(()('(')
         Parameter list
+          PsiElement(()('(')
           Parameter
             Modifiers
               <empty list>
@@ -44,10 +48,10 @@ Groovy script
               PsiElement(long)('long')
             PsiWhiteSpace(' ')
             PsiElement(identifier)('theValue')
-        PsiElement())(')')
-        PsiWhiteSpace(' ')
+          PsiElement())(')')
         Throw clause
           <empty list>
+        PsiWhiteSpace(' ')
         Open block
           PsiElement({)('{')
           PsiWhiteSpace('\n    ')
@@ -70,16 +74,16 @@ Groovy script
           PsiElement(def)('def')
         PsiWhiteSpace(' ')
         PsiElement(identifier)('greaterThan')
-        PsiElement(()('(')
         Parameter list
+          PsiElement(()('(')
           Parameter
             Modifiers
               <empty list>
             PsiElement(identifier)('anotherFoo')
-        PsiElement())(')')
-        PsiWhiteSpace(' ')
+          PsiElement())(')')
         Throw clause
           <empty list>
+        PsiWhiteSpace(' ')
         Open block
           PsiElement({)('{')
           PsiWhiteSpace('\n    ')

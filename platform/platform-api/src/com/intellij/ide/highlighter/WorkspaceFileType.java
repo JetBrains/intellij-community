@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,37 +26,48 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 
 public class WorkspaceFileType implements InternalFileType {
+  public static final WorkspaceFileType INSTANCE = new WorkspaceFileType();
+
   @NonNls public static final String DEFAULT_EXTENSION = "iws";
   @NonNls public static final String DOT_DEFAULT_EXTENSION = "." + DEFAULT_EXTENSION;
 
+  private WorkspaceFileType() {}
+
+  @Override
   @NotNull
   public String getName() {
     return "IDEA_WORKSPACE";
   }
 
+  @Override
   @NotNull
   public String getDescription() {
     return IdeBundle.message("filetype.description.idea.workspace");
   }
 
+  @Override
   @NotNull
   public String getDefaultExtension() {
     return DEFAULT_EXTENSION;
   }
 
+  @Override
   public Icon getIcon() {
-    return AllIcons.Nodes.IdeaWorkspace;
+    return AllIcons.Nodes.IdeaModule;
   }
 
+  @Override
   public boolean isBinary() {
     return false;
   }
 
+  @Override
   public boolean isReadOnly() {
     return true;
   }
 
-  public String getCharset(@NotNull VirtualFile file, final byte[] content) {
+  @Override
+  public String getCharset(@NotNull VirtualFile file, @NotNull final byte[] content) {
     return CharsetToolkit.UTF8;
   }
 }

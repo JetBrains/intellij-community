@@ -20,6 +20,7 @@ import com.intellij.designer.designSurface.tools.ToolProvider;
 import com.intellij.designer.palette.PaletteItem;
 import com.intellij.openapi.actionSystem.DataProvider;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -29,7 +30,7 @@ import java.awt.event.MouseEvent;
 /**
  * @author Alexander Lobas
  */
-public final class GlassLayer extends JComponent implements DataProvider {
+public class GlassLayer extends JComponent implements DataProvider {
   private static final long EVENT_FLAGS = AWTEvent.KEY_EVENT_MASK | AWTEvent.MOUSE_EVENT_MASK | AWTEvent.MOUSE_MOTION_EVENT_MASK;
 
   private final ToolProvider myToolProvider;
@@ -77,7 +78,7 @@ public final class GlassLayer extends JComponent implements DataProvider {
   }
 
   @Override
-  public Object getData(@NonNls String dataId) {
+  public Object getData(@NotNull @NonNls String dataId) {
     return EditableArea.DATA_KEY.is(dataId) ? myArea : null;
   }
 }

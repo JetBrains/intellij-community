@@ -27,11 +27,13 @@ public class XPathStringImpl extends XPathElementImpl implements XPathString {
     super(node);
   }
 
+  @Override
   @NotNull
   public XPathType getType() {
     return XPathType.STRING;
   }
 
+  @Override
   public boolean isWellFormed() {
     final String text = getUnescapedText();
     final char quoteChar = getQuoteChar();
@@ -44,14 +46,15 @@ public class XPathStringImpl extends XPathElementImpl implements XPathString {
       final String unescaped = unescape(quoteChar, value);
       return escape(quoteChar, unescaped).equals(value);
     } else {
-      if (getValue().indexOf(quoteChar) != getValue().lastIndexOf(quoteChar)) {
+      if (getValue().indexOf(quoteChar) != -1) {
         return false;
       }
     }
 
-    return text.indexOf('\n') == -1 && text.indexOf('\r') == -1;
+    return !textContains('\n') && !textContains('\r');
   }
 
+  @Override
   public String getValue() {
     final String value = getStringBetweenQuotes();
     if (getXPathVersion() == XPathVersion.V2) {
@@ -65,7 +68,7 @@ public class XPathStringImpl extends XPathElementImpl implements XPathString {
     if (text.endsWith(String.valueOf(getQuoteChar())) && text.length() > 1) {
       return text.substring(1, text.length() - 1);
     } else {
-      return text.substring(1, text.length());
+      return text.substring(1);
     }
   }
 
@@ -85,6 +88,7 @@ public class XPathStringImpl extends XPathElementImpl implements XPathString {
     return value.replaceAll(singleQuote, escapedQuote);
   }
 
+  @Override
   public void accept(XPathElementVisitor visitor) {
     visitor.visitXPathString(this);
   }

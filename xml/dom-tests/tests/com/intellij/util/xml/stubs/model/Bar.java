@@ -26,7 +26,6 @@ import java.util.List;
 
 /**
  * @author Dmitry Avdeev
- *         Date: 8/7/12
  */
 public interface Bar extends DomElement {
 

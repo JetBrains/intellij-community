@@ -18,7 +18,7 @@ package org.intellij.plugins.relaxNG.convert;
 
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
@@ -32,19 +32,16 @@ import com.intellij.psi.xml.XmlTag;
 import org.intellij.plugins.relaxNG.ApplicationLoader;
 import org.intellij.plugins.relaxNG.compact.RncFileType;
 import org.intellij.plugins.relaxNG.validation.ValidateAction;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 
-/*
-* Created by IntelliJ IDEA.
-* User: sweinreuter
-* Date: 16.11.2007
-*/
 public class ConvertSchemaAction extends AnAction {
 
-  public void update(AnActionEvent e) {
-    final VirtualFile[] files = e.getData(PlatformDataKeys.VIRTUAL_FILE_ARRAY);
-    final Project project = e.getData(PlatformDataKeys.PROJECT);
+  @Override
+  public void update(@NotNull AnActionEvent e) {
+    final VirtualFile[] files = e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY);
+    final Project project = e.getData(CommonDataKeys.PROJECT);
     if (files != null && project != null) {
       final SchemaType type = getInputType(project, files);
       e.getPresentation().setEnabled(type != null);
@@ -92,17 +89,17 @@ public class ConvertSchemaAction extends AnAction {
     return null;
   }
 
-  public void actionPerformed(AnActionEvent e) {
-    final VirtualFile file = e.getData(PlatformDataKeys.VIRTUAL_FILE);
-    final Project project = e.getData(PlatformDataKeys.PROJECT);
+  @Override
+  public void actionPerformed(@NotNull AnActionEvent e) {
+    final VirtualFile file = e.getData(CommonDataKeys.VIRTUAL_FILE);
+    final Project project = e.getData(CommonDataKeys.PROJECT);
     if (file != null && project != null) {
-      final VirtualFile[] files = e.getData(PlatformDataKeys.VIRTUAL_FILE_ARRAY);
+      final VirtualFile[] files = e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY);
       assert files != null;
 
       final SchemaType type = getInputType(project, files);
       final ConvertSchemaDialog dialog = new ConvertSchemaDialog(project, type, file);
-      dialog.show();
-      if (!dialog.isOK()) {
+      if (!dialog.showAndGet()) {
         return;
       }
 

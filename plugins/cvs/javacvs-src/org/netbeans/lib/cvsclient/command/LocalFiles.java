@@ -26,11 +26,11 @@ final class LocalFiles {
 
   // Fields =================================================================
 
-  private final Collection<String> fileNames = new ArrayList<String>();
+  private final Collection<String> fileNames = new ArrayList<>();
 
   // Setup ==================================================================
 
-  public LocalFiles(DirectoryObject directoryObject, IClientEnvironment clientEnvironment) {
+  LocalFiles(DirectoryObject directoryObject, IClientEnvironment clientEnvironment) {
     BugLog.getInstance().assertNotNull(directoryObject);
     BugLog.getInstance().assertNotNull(clientEnvironment);
 

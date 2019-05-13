@@ -17,7 +17,15 @@ def verify(repo):
     finally:
         lock.release()
 
+def _normpath(f):
+    # under hg < 2.4, convert didn't sanitize paths properly, so a
+    # converted repo may contain repeated slashes
+    while '//' in f:
+        f = f.replace('//', '/')
+    return f
+
 def _verify(repo):
+    repo = repo.unfiltered()
     mflinkrevs = {}
     filelinkrevs = {}
     filenodes = {}
@@ -34,7 +42,7 @@ def _verify(repo):
         raise util.Abort(_("cannot verify bundle or remote repos"))
 
     def err(linkrev, msg, filename=None):
-        if linkrev != None:
+        if linkrev is not None:
             badrevs.add(linkrev)
         else:
             linkrev = '?'
@@ -48,6 +56,8 @@ def _verify(repo):
         if isinstance(inst, KeyboardInterrupt):
             ui.warn(_("interrupted"))
             raise
+        if not str(inst):
+            inst = repr(inst)
         err(linkrev, "%s: %s" % (msg, inst), filename)
 
     def warn(msg):
@@ -85,7 +95,7 @@ def _verify(repo):
                         # attempt to filter down to real linkrevs
                         linkrevs = [l for l in linkrevs
                                     if lrugetctx(l)[f].filenode() == node]
-                    except:
+                    except Exception:
                         pass
                 warn(_(" (expected %s)") % " ".join(map(str, linkrevs)))
             lr = None # can't be trusted
@@ -94,16 +104,16 @@ def _verify(repo):
             p1, p2 = obj.parents(node)
             if p1 not in seen and p1 != nullid:
                 err(lr, _("unknown parent 1 %s of %s") %
-                    (short(p1), short(n)), f)
+                    (short(p1), short(node)), f)
             if p2 not in seen and p2 != nullid:
                 err(lr, _("unknown parent 2 %s of %s") %
-                    (short(p2), short(p1)), f)
+                    (short(p2), short(node)), f)
         except Exception, inst:
             exc(lr, _("checking parents of %s") % short(node), inst, f)
 
         if node in seen:
-            err(lr, _("duplicate revision %d (%d)") % (i, seen[n]), f)
-        seen[n] = i
+            err(lr, _("duplicate revision %d (%d)") % (i, seen[node]), f)
+        seen[node] = i
         return lr
 
     if os.path.exists(repo.sjoin("journal")):
@@ -118,29 +128,36 @@ def _verify(repo):
     havemf = len(mf) > 0
 
     ui.status(_("checking changesets\n"))
+    refersmf = False
     seen = {}
     checklog(cl, "changelog", 0)
     total = len(repo)
     for i in repo:
-        ui.progress(_('checking'), i, total=total)
+        ui.progress(_('checking'), i, total=total, unit=_('changesets'))
         n = cl.node(i)
         checkentry(cl, i, n, seen, [i], "changelog")
 
         try:
             changes = cl.read(n)
-            mflinkrevs.setdefault(changes[0], []).append(i)
+            if changes[0] != nullid:
+                mflinkrevs.setdefault(changes[0], []).append(i)
+                refersmf = True
             for f in changes[3]:
-                filelinkrevs.setdefault(f, []).append(i)
+                filelinkrevs.setdefault(_normpath(f), []).append(i)
         except Exception, inst:
+            refersmf = True
             exc(i, _("unpacking changeset %s") % short(n), inst)
     ui.progress(_('checking'), None)
 
     ui.status(_("checking manifests\n"))
     seen = {}
-    checklog(mf, "manifest", 0)
+    if refersmf:
+        # Do not check manifest if there are only changelog entries with
+        # null manifests.
+        checklog(mf, "manifest", 0)
     total = len(mf)
     for i in mf:
-        ui.progress(_('checking'), i, total=total)
+        ui.progress(_('checking'), i, total=total, unit=_('manifests'))
         n = mf.node(i)
         lr = checkentry(mf, i, n, seen, mflinkrevs.get(n, []), "manifest")
         if n in mflinkrevs:
@@ -153,7 +170,7 @@ def _verify(repo):
                 if not f:
                     err(lr, _("file without name in manifest"))
                 elif f != "/dev/null":
-                    filenodes.setdefault(f, {}).setdefault(fn, lr)
+                    filenodes.setdefault(_normpath(f), {}).setdefault(fn, lr)
         except Exception, inst:
             exc(lr, _("reading manifest delta %s") % short(n), inst)
     ui.progress(_('checking'), None)
@@ -166,6 +183,8 @@ def _verify(repo):
         for c, m in sorted([(c, m) for m in mflinkrevs
                             for c in mflinkrevs[m]]):
             count += 1
+            if m == nullid:
+                continue
             ui.progress(_('crosschecking'), count, total=total)
             err(c, _("changeset refers to unknown manifest %s") % short(m))
         mflinkrevs = None # del is bad here due to scope issues
@@ -185,7 +204,7 @@ def _verify(repo):
                 try:
                     fl = repo.file(f)
                     lr = min([fl.linkrev(fl.rev(n)) for n in filenodes[f]])
-                except:
+                except Exception:
                     lr = None
                 err(lr, _("in manifest but not in changeset"), f)
 
@@ -197,8 +216,8 @@ def _verify(repo):
     for f, f2, size in repo.store.datafiles():
         if not f:
             err(None, _("cannot decode filename '%s'") % f2)
-        elif size > 0:
-            storefiles.add(f)
+        elif size > 0 or not revlogv1:
+            storefiles.add(_normpath(f))
 
     files = sorted(set(filenodes) | set(filelinkrevs))
     total = len(files)
@@ -229,6 +248,7 @@ def _verify(repo):
 
         checklog(fl, f, lr)
         seen = {}
+        rp = None
         for i in fl:
             revisions += 1
             n = fl.node(i)
@@ -241,12 +261,12 @@ def _verify(repo):
 
             # verify contents
             try:
-                t = fl.read(n)
+                l = len(fl.read(n))
                 rp = fl.renamed(n)
-                if len(t) != fl.size(i):
+                if l != fl.size(i):
                     if len(fl.revision(n)) != fl.size(i):
                         err(lr, _("unpacked size is %s, %s expected") %
-                            (len(t), fl.size(i)), f)
+                            (l, fl.size(i)), f)
             except Exception, inst:
                 exc(lr, _("unpacking %s") % short(n), inst, f)
 

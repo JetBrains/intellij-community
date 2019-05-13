@@ -15,7 +15,7 @@
  */
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
-import com.intellij.codeInsight.CodeInsightUtilBase;
+import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightMessageUtil;
 import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
@@ -23,8 +23,12 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiParameter;
 import com.intellij.psi.PsiSubstitutor;
+import com.intellij.psi.util.PsiFormatUtilBase;
 import com.intellij.refactoring.safeDelete.SafeDeleteHandler;
+import com.intellij.refactoring.safeDelete.SafeDeleteProcessor;
+import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -37,7 +41,11 @@ public class SafeDeleteFix extends LocalQuickFixAndIntentionActionOnPsiElement {
   @NotNull
   public String getText() {
     PsiElement startElement = getStartElement();
-    return QuickFixBundle.message("safe.delete.text", startElement == null ? "" : HighlightMessageUtil.getSymbolName(startElement, PsiSubstitutor.EMPTY));
+    String text = startElement == null
+               ? ""
+               : HighlightMessageUtil.getSymbolName(startElement, PsiSubstitutor.EMPTY,
+                                                    PsiFormatUtilBase.SHOW_TYPE | PsiFormatUtilBase.USE_INTERNAL_CANONICAL_TEXT);
+    return QuickFixBundle.message("safe.delete.text", ObjectUtils.notNull(text, ""));
   }
 
   @Override
@@ -52,8 +60,13 @@ public class SafeDeleteFix extends LocalQuickFixAndIntentionActionOnPsiElement {
                      @Nullable("is null when called from inspection") Editor editor,
                      @NotNull PsiElement startElement,
                      @NotNull PsiElement endElement) {
-    if (!CodeInsightUtilBase.prepareFileForWrite(file)) return;
-    SafeDeleteHandler.invoke(project, new PsiElement[]{startElement}, false);
+    if (!FileModificationService.getInstance().prepareFileForWrite(file)) return;
+    final PsiElement[] elements = {startElement};
+    if (startElement instanceof PsiParameter) {
+      SafeDeleteProcessor.createInstance(project, null, elements, false, false, true).run();
+    } else {
+      SafeDeleteHandler.invoke(project, elements, true);
+    }
   }
 
   @Override

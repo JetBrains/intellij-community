@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,19 +31,31 @@ import java.util.List;
  * it can NOT be done through {@link ChangeListManager} interface; it is for external/IDEA user modifications
  */
 public interface ChangeListManagerGate {
+  @NotNull
   List<LocalChangeList> getListsCopy();
   @Nullable
-  LocalChangeList findChangeList(final String name);
-  LocalChangeList addChangeList(final String name, final String comment);
-  LocalChangeList findOrCreateList(final String name, final String comment);
+  LocalChangeList findChangeList(@Nullable String name);
+  @NotNull
+  LocalChangeList addChangeList(@NotNull String name, @Nullable String comment);
+  @NotNull
+  LocalChangeList findOrCreateList(@NotNull String name, @Nullable String comment);
 
-  void editComment(final String name, final String comment);
-  void editName(final String oldName, final String newName);
-  // must be allowed only for perforce change synchronizer, not during normal update
-  void moveChanges(final String toList, final Collection<Change> changes);
-  void setListsToDisappear(final Collection<String> names);
-  FileStatus getStatus(final VirtualFile file);
-  FileStatus getStatus(final File file);
+  void editComment(@NotNull String name, @Nullable String comment);
+  void editName(@NotNull String oldName, @NotNull String newName);
+
+  void setListsToDisappear(@NotNull Collection<String> names);
+  @Nullable
+  FileStatus getStatus(@NotNull VirtualFile file);
+
+  @Nullable
+  FileStatus getStatus(@NotNull FilePath filePath);
+
+  /**
+   * Use {@link #getStatus(FilePath)
+   * @deprecated to remove in IDEA 16
+   */
+  @Deprecated
+  FileStatus getStatus(@NotNull File file);
 
   void setDefaultChangeList(@NotNull String list);
 }

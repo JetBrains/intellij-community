@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <templateSet group="output">
   <template resource-bundle="messages.CodeInsightBundle" key="livetemplate.description.serr"
-            name="serr" toReformat="true" toShortenFQNames="true" value="System.err.println(&quot;$END$&quot;);">
+            name="serr" toReformat="true" toShortenFQNames="true" value="System.err.println($END$);">
     <context>
       <option name="JAVA_CODE" value="false" />
       <option name="JAVA_STATEMENT" value="true" />
@@ -43,7 +43,7 @@
   <template resource-bundle="messages.CodeInsightBundle" key="livetemplate.description.soutv"
             name="soutv" toReformat="true" toShortenFQNames="true" value="System.out.println(&quot;$EXPR_COPY$ = &quot; + $EXPR$);">
     <variable alwaysStopAt="true" defaultValue="&quot;expr&quot;" expression="variableOfType(&quot;&quot;)" name="EXPR" />
-    <variable alwaysStopAt="false" defaultValue="" expression="EXPR" name="EXPR_COPY" />
+    <variable alwaysStopAt="false" defaultValue="" expression="escapeString(EXPR)" name="EXPR_COPY" />
     <context>
       <option name="JAVA_CODE" value="false" />
       <option name="JAVA_STATEMENT" value="true" />

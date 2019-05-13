@@ -18,37 +18,59 @@ package com.intellij.codeInsight.actions;
 
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.ide.util.PropertiesComponent;
+import com.intellij.lang.Language;
+import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.codeStyle.arrangement.Rearranger;
+import com.intellij.psi.search.SearchScope;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
-public class ReformatFilesDialog extends DialogWrapper {
+import static com.intellij.codeInsight.actions.TextRangeType.VCS_CHANGED_TEXT;
+import static com.intellij.codeInsight.actions.TextRangeType.WHOLE_FILE;
+
+public class ReformatFilesDialog extends DialogWrapper implements ReformatFilesOptions {
   private JPanel myPanel;
   private JCheckBox myOptimizeImports;
   private JCheckBox myOnlyChangedText;
-  private final VirtualFile[] myFiles;
+  private JCheckBox myRearrangeEntriesCb;
+  private JCheckBox myCleanupCode;
+
+  private final LastRunReformatCodeOptionsProvider myLastRunSettings;
 
   public ReformatFilesDialog(@NotNull Project project, @NotNull VirtualFile[] files) {
     super(project, true);
-    myFiles = files;
-    setTitle(CodeInsightBundle.message("dialog.reformat.files.title"));
-    myOptimizeImports.setSelected(isOptmizeImportsOptionOn());
-    boolean canTargetVcsChanges = false;
-    for (VirtualFile file : files) {
-      if (FormatChangedTextUtil.hasChanges(file, project)) {
-        canTargetVcsChanges = true;
-        break;
-      }
-    }
+    myLastRunSettings = new LastRunReformatCodeOptionsProvider(PropertiesComponent.getInstance());
+
+    boolean canTargetVcsChanges = FormatChangedTextUtil.hasChanges(files, project);
     myOnlyChangedText.setEnabled(canTargetVcsChanges);
-    myOnlyChangedText.setSelected(
-      canTargetVcsChanges && PropertiesComponent.getInstance().getBoolean(LayoutCodeConstants.PROCESS_CHANGED_TEXT_KEY, false)
-    ); 
-    myOptimizeImports.setSelected(isOptmizeImportsOptionOn());
+    myOnlyChangedText.setSelected(canTargetVcsChanges && myLastRunSettings.getLastTextRangeType() == VCS_CHANGED_TEXT);
+    myOptimizeImports.setSelected(myLastRunSettings.getLastOptimizeImports());
+    myCleanupCode.setSelected(myLastRunSettings.getLastCodeCleanup());
+    myRearrangeEntriesCb.setSelected(myLastRunSettings.getLastRearrangeCode());
+    myRearrangeEntriesCb.setEnabled(containsAtLeastOneFileToRearrange(files));
+
+    setTitle(CodeInsightBundle.message("dialog.reformat.files.title"));
     init();
+  }
+  
+  private static boolean containsAtLeastOneFileToRearrange(@NotNull VirtualFile[] files) {
+    for (VirtualFile file : files) {
+      FileType fileType = file.getFileType();
+      if (fileType instanceof LanguageFileType) {
+        Language language = ((LanguageFileType)fileType).getLanguage();
+        if (Rearranger.EXTENSION.forLanguage(language) != null) {
+          return true;
+        }
+      }
+      
+    }
+    return false;
   }
 
   @Override
@@ -56,23 +78,50 @@ public class ReformatFilesDialog extends DialogWrapper {
     return myPanel;
   }
 
-  public boolean optimizeImports(){
+  @Override
+  public boolean isOptimizeImports(){
     return myOptimizeImports.isSelected();
   }
 
-  public boolean isProcessOnlyChangedText() {
-    return myOnlyChangedText.isEnabled() && myOnlyChangedText.isSelected();
+  @Override
+  public TextRangeType getTextRangeType() {
+    return myOnlyChangedText.isEnabled() && myOnlyChangedText.isSelected()
+           ? VCS_CHANGED_TEXT
+           : WHOLE_FILE;
+  }
+
+  @Override
+  public boolean isRearrangeCode() {
+    return myRearrangeEntriesCb.isSelected();
+  }
+
+  @Override
+  public boolean isCodeCleanup() {
+    return myCleanupCode.isSelected();
   }
 
   @Override
   protected void doOKAction() {
     super.doOKAction();
-    PropertiesComponent.getInstance().setValue(LayoutCodeConstants.OPTIMIZE_IMPORTS_KEY, Boolean.toString(myOptimizeImports.isSelected()));
-    PropertiesComponent.getInstance().setValue(LayoutCodeConstants.PROCESS_CHANGED_TEXT_KEY,
-                                               Boolean.toString(myOnlyChangedText.isSelected()));
+    myLastRunSettings.saveOptimizeImportsState(isOptimizeImports());
+    myLastRunSettings.saveCodeCleanupState(isCodeCleanup());
+    if (myRearrangeEntriesCb.isEnabled()) {
+      myLastRunSettings.saveRearrangeCodeState(isRearrangeCode());
+    }
+    if (myOnlyChangedText.isEnabled()) {
+      myLastRunSettings.saveProcessVcsChangedTextState(getTextRangeType() == VCS_CHANGED_TEXT);
+    }
   }
 
-  static boolean isOptmizeImportsOptionOn() {
-    return PropertiesComponent.getInstance().getBoolean(LayoutCodeConstants.OPTIMIZE_IMPORTS_KEY, false);
+  @Nullable
+  @Override
+  public SearchScope getSearchScope() {
+    return null;
+  }
+
+  @Nullable
+  @Override
+  public String getFileTypeMask() {
+    return null;
   }
 }

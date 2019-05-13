@@ -4,19 +4,42 @@
 
 package pkg;
 
-/**
- * @deprecated
- */
 class Deprecated {
     /**
      * @deprecated
      */
-    int f;
+    int byComment;
+    /**
+     * @deprecated
+     */
+    @java.lang.Deprecated
+    int byAnno;
 
     Deprecated() { /* compiled code */ }
 
     /**
      * @deprecated
      */
-    void m() { /* compiled code */ }
+    void byComment() { /* compiled code */ }
+
+    /**
+     * @deprecated
+     */
+    @java.lang.Deprecated
+    void byAnno() { /* compiled code */ }
+
+    /**
+     * @deprecated
+     */
+    @java.lang.Deprecated
+    static class ByAnno {
+        ByAnno() { /* compiled code */ }
+    }
+
+    /**
+     * @deprecated
+     */
+    static class ByComment {
+        ByComment() { /* compiled code */ }
+    }
 }

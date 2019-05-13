@@ -1,0 +1,5 @@
+<fold text='# hello...'># hello
+# world</fold>
+[whatever]
+<fold text='; charset=utf-256...'>; charset=utf-256
+; foo</fold>

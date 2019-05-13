@@ -1,30 +1,22 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 #include <CoreServices/CoreServices.h>
 #include <pthread.h>
+#include <stdio.h>
+#include <strings.h>
 #include <sys/mount.h>
 
+#define PRIVATE_DIR "/private/"
+#define PRIVATE_LEN 9
+
 static pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER;
+static bool report_private = true;
 
 static void reportEvent(char *event, char *path) {
-    int len = 0;
+    size_t len = 0;
     if (path != NULL) {
         len = strlen(path);
-        for (char* p = path; *p != '\0'; p++) {
+        for (char *p = path; *p != '\0'; p++) {
             if (*p == '\n') {
                 *p = '\0';
             }
@@ -32,15 +24,15 @@ static void reportEvent(char *event, char *path) {
     }
 
     pthread_mutex_lock(&lock);
-
-    fputs(event, stdout);
-    fputc('\n', stdout);
-    if (path != NULL) {
-        fwrite(path, len, 1, stdout);
+    if (path == NULL || report_private || strncasecmp(path, PRIVATE_DIR, PRIVATE_LEN) != 0) {
+        fputs(event, stdout);
         fputc('\n', stdout);
+        if (path != NULL) {
+            fwrite(path, len, 1, stdout);
+            fputc('\n', stdout);
+        }
+        fflush(stdout);
     }
-
-    fflush(stdout);
     pthread_mutex_unlock(&lock);
 }
 
@@ -57,67 +49,47 @@ static void callback(ConstFSEventStreamRef streamRef,
         FSEventStreamEventFlags flags = eventFlags[i] & 0xFF;
         if ((flags & kFSEventStreamEventFlagMustScanSubDirs) != 0) {
             reportEvent("RECDIRTY", paths[i]);
-        }
-        else if (flags != kFSEventStreamEventFlagNone) {
+        } else if (flags != kFSEventStreamEventFlagNone) {
             reportEvent("RESET", NULL);
-        }
-        else {
+        } else {
             reportEvent("DIRTY", paths[i]);
         }
     }
 }
 
-static void * EventProcessingThread(void *data) {
-    CFStringRef path = CFSTR("/");
-    CFArrayRef pathsToWatch = CFArrayCreate(NULL, (const void **)&path, 1, NULL);
-    void *callbackInfo = NULL;
-    CFAbsoluteTime latency = 0.3;  // Latency in seconds
-
-    FSEventStreamRef stream = FSEventStreamCreate(
-        NULL,
-        &callback,
-        callbackInfo,
-        pathsToWatch,
-        kFSEventStreamEventIdSinceNow,
-        latency,
-        kFSEventStreamCreateFlagNoDefer
-    );
-
+static void *EventProcessingThread(void *data) {
+    FSEventStreamRef stream = (FSEventStreamRef) data;
     FSEventStreamScheduleWithRunLoop(stream, CFRunLoopGetCurrent(), kCFRunLoopDefaultMode);
     FSEventStreamStart(stream);
-
     CFRunLoopRun();
     return NULL;
 }
-
-#define FS_FLAGS (MNT_LOCAL|MNT_JOURNALED)
 
 static void PrintMountedFileSystems(CFArrayRef roots) {
     int fsCount = getfsstat(NULL, 0, MNT_WAIT);
     if (fsCount == -1) return;
 
     struct statfs fs[fsCount];
-    fsCount = getfsstat(fs, sizeof(struct statfs) * fsCount, MNT_NOWAIT);
+    fsCount = getfsstat(fs, (int)(sizeof(struct statfs) * fsCount), MNT_NOWAIT);
     if (fsCount == -1) return;
 
     CFMutableArrayRef mounts = CFArrayCreateMutable(NULL, 0, NULL);
 
     for (int i = 0; i < fsCount; i++) {
-        if ((fs[i].f_flags & FS_FLAGS) != FS_FLAGS) {
+        if ((fs[i].f_flags & MNT_LOCAL) != MNT_LOCAL) {
             char *mount = fs[i].f_mntonname;
-            int mountLen = strlen(mount);
+            size_t mountLen = strlen(mount);
 
             for (int j = 0; j < CFArrayGetCount(roots); j++) {
                 char *root = (char *)CFArrayGetValueAtIndex(roots, j);
-                int rootLen = strlen(root);
+                size_t rootLen = strlen(root);
 
                 if (rootLen >= mountLen && strncmp(root, mount, mountLen) == 0) {
                     // root under mount point
                     if (rootLen == mountLen || root[mountLen] == '/' || strcmp(mount, "/") == 0) {
                         CFArrayAppendValue(mounts, root);
                     }
-                }
-                else if (strncmp(root, mount, rootLen) == 0) {
+                } else if (strncmp(root, mount, rootLen) == 0) {
                     // root over mount point
                     if (strcmp(root, "/") == 0 || mount[rootLen] == '/') {
                         CFArrayAppendValue(mounts, mount);
@@ -145,13 +117,21 @@ static char command[2048];
 
 static void ParseRoots() {
     CFMutableArrayRef roots = CFArrayCreateMutable(NULL, 0, NULL);
+    bool has_private_root = false;
 
     while (TRUE) {
         fscanf(stdin, "%s", command);
         if (strcmp(command, "#") == 0 || feof(stdin)) break;
-        char* path = command[0] == '|' ? command + 1 : command;
+        char *path = command[0] == '|' ? command + 1 : command;
         CFArrayAppendValue(roots, strdup(path));
+        if (strcmp(path, "/") == 0 || strncasecmp(path, PRIVATE_DIR, PRIVATE_LEN) == 0) {
+            has_private_root = true;
+        }
     }
+
+    pthread_mutex_lock(&lock);
+    report_private = has_private_root;
+    pthread_mutex_unlock(&lock);
 
     PrintMountedFileSystems(roots);
 
@@ -162,16 +142,26 @@ static void ParseRoots() {
     CFRelease(roots);
 }
 
-int main(const int argc, const char* argv[]) {
-    // Checking if necessary API is available (need MacOS X 10.5 or later).
-    if (FSEventStreamCreate == NULL) {
+int main(const int argc, const char *argv[]) {
+    CFStringRef path = CFSTR("/");
+    CFArrayRef pathsToWatch = CFArrayCreate(NULL, (const void **)&path, 1, NULL);
+    CFAbsoluteTime latency = 0.3;  // Latency in seconds
+    FSEventStreamRef stream = FSEventStreamCreate(
+            NULL,
+            &callback,
+            NULL,
+            pathsToWatch,
+            kFSEventStreamEventIdSinceNow,
+            latency,
+            kFSEventStreamCreateFlagNoDefer
+    );
+    if (stream == NULL) {
         printf("GIVEUP\n");
         return 1;
     }
 
     pthread_t threadId;
-    if (pthread_create(&threadId, NULL, EventProcessingThread, NULL) != 0) {
-        // Give up if cannot create a thread.
+    if (pthread_create(&threadId, NULL, EventProcessingThread, stream) != 0) {
         printf("GIVEUP\n");
         return 2;
     }

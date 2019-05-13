@@ -1,4 +1,4 @@
-public class X  {
+class X  {
   String <caret>l;
   {
     l = null;

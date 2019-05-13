@@ -29,33 +29,33 @@ import com.intellij.psi.xml.XmlTag;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.dom.MavenDomUtil;
 import org.jetbrains.idea.maven.dom.model.MavenDomProjectModel;
+import org.jetbrains.idea.maven.model.MavenConstants;
 
 import java.io.IOException;
 
 /**
  * @author Dmitry Avdeev
- *         Date: 2/15/13
  */
 public class MavenTemplateFileProcessor extends ProjectTemplateFileProcessor {
 
   @Nullable
   @Override
   protected String encodeFileText(final String content, final VirtualFile file, final Project project) throws IOException {
-    if ("pom.xml".equals(file.getName())) {
+    if (MavenConstants.POM_XML.equals(file.getName())) {
       return ApplicationManager.getApplication().runReadAction(new ThrowableComputable<String, IOException>() {
         @Override
         public String compute() throws IOException {
-          PsiFile psiFile = PsiFileFactory.getInstance(project).createFileFromText("pom.xml", XmlFileType.INSTANCE, content);
+          PsiFile psiFile = PsiFileFactory.getInstance(project).createFileFromText(MavenConstants.POM_XML, XmlFileType.INSTANCE, content);
           final MavenDomProjectModel model = MavenDomUtil.getMavenDomModel(psiFile, MavenDomProjectModel.class);
           if (model == null) return null;
           String text = psiFile.getText();
           XmlElement element = model.getName().getXmlElement();
           if (element instanceof XmlTag) {
-            text = ((XmlTag)element).getValue().getTextRange().replace(text, "${" + ProjectTemplateParameterFactory.IJ_PROJECT_NAME + "}");
+            text = ((XmlTag)element).getValue().getTextRange().replace(text, wrap(ProjectTemplateParameterFactory.IJ_PROJECT_NAME));
           }
           element = model.getArtifactId().getXmlElement();
           if (element instanceof XmlTag) {
-            text = ((XmlTag)element).getValue().getTextRange().replace(text, "${" + ProjectTemplateParameterFactory.IJ_PROJECT_NAME + "}");
+            text = ((XmlTag)element).getValue().getTextRange().replace(text, wrap(ProjectTemplateParameterFactory.IJ_PROJECT_NAME));
           }
           return text;
         }

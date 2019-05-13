@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,13 +24,12 @@ import com.intellij.debugger.ui.tree.NodeDescriptor;
 import com.intellij.debugger.ui.tree.ValueDescriptor;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
-import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiElement;
 import com.sun.jdi.Type;
 import com.sun.jdi.Value;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 
-import java.util.Iterator;
 import java.util.List;
 
 public class CompoundNodeRenderer extends NodeRendererImpl{
@@ -41,16 +40,18 @@ public class CompoundNodeRenderer extends NodeRendererImpl{
   protected final NodeRendererSettings myRendererSettings;
 
   public CompoundNodeRenderer(NodeRendererSettings rendererSettings, String name, ValueLabelRenderer labelRenderer, ChildrenRenderer childrenRenderer) {
+    super(name);
     myRendererSettings = rendererSettings;
-    setName(name);
     myLabelRenderer = labelRenderer;
     myChildrenRenderer = childrenRenderer;
   }
 
+  @Override
   public String getUniqueId() {
     return UNIQUE_ID;
   }
 
+  @Override
   public CompoundNodeRenderer clone() {
     CompoundNodeRenderer renderer = (CompoundNodeRenderer)super.clone();
     renderer.myLabelRenderer    = (myLabelRenderer    != null) ? (ValueLabelRenderer)myLabelRenderer.clone() : null;
@@ -58,22 +59,27 @@ public class CompoundNodeRenderer extends NodeRendererImpl{
     return renderer;
   }
 
+  @Override
   public void buildChildren(Value value, ChildrenBuilder builder, EvaluationContext evaluationContext) {
     getChildrenRenderer().buildChildren(value, builder, evaluationContext);
   }
 
-  public PsiExpression getChildValueExpression(DebuggerTreeNode node, DebuggerContext context) throws EvaluateException {
+  @Override
+  public PsiElement getChildValueExpression(DebuggerTreeNode node, DebuggerContext context) throws EvaluateException {
     return getChildrenRenderer().getChildValueExpression(node, context);
   }
 
+  @Override
   public boolean isExpandable(Value value, EvaluationContext evaluationContext, NodeDescriptor parentDescriptor) {
     return getChildrenRenderer().isExpandable(value, evaluationContext, parentDescriptor);
   }
 
+  @Override
   public boolean isApplicable(Type type) {
     return getLabelRenderer().isApplicable(type) && getChildrenRenderer().isApplicable(type);
   }
 
+  @Override
   public String calcLabel(ValueDescriptor descriptor, EvaluationContext evaluationContext, DescriptorLabelListener listener) throws EvaluateException {
     return getLabelRenderer().calcLabel(descriptor, evaluationContext, listener);
   }
@@ -94,14 +100,14 @@ public class CompoundNodeRenderer extends NodeRendererImpl{
     myChildrenRenderer = childrenRenderer;
   }
 
+  @Override
   @SuppressWarnings({"HardCodedStringLiteral"})
   public void readExternal(Element element) throws InvalidDataException {
     super.readExternal(element);
-    final List children = element.getChildren(NodeRendererSettings.RENDERER_TAG);
+    List<Element> children = element.getChildren(NodeRendererSettings.RENDERER_TAG);
     if (children != null) {
-      for (Iterator it = children.iterator(); it.hasNext();) {
-        final Element elem = (Element)it.next();
-        final String role = elem.getAttributeValue("role");
+      for (Element elem : children) {
+        String role = elem.getAttributeValue("role");
         if (role == null) {
           continue;
         }
@@ -115,6 +121,7 @@ public class CompoundNodeRenderer extends NodeRendererImpl{
     }
   }
 
+  @Override
   @SuppressWarnings({"HardCodedStringLiteral"})
   public void writeExternal(Element element) throws WriteExternalException {
     super.writeExternal(element);

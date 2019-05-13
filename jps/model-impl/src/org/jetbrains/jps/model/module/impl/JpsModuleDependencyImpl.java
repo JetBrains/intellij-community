@@ -51,7 +51,7 @@ public class JpsModuleDependencyImpl extends JpsDependencyElementBase<JpsModuleD
   public JpsModule getModule() {
     Ref<JpsModule> moduleRef = myCachedModule;
     if (moduleRef == null) {
-      moduleRef = new Ref<JpsModule>(getModuleReference().resolve());
+      moduleRef = new Ref<>(getModuleReference().resolve());
       myCachedModule = moduleRef;
     }
     return moduleRef.get();

@@ -23,6 +23,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -31,12 +32,11 @@ import java.util.Map;
  * @author nik
  */
 public class LibraryDetectionManagerImpl extends LibraryDetectionManager {
-  private final Map<List<VirtualFile>, List<Pair<LibraryKind, LibraryProperties>>> myCache = new HashMap<List<VirtualFile>, List<Pair<LibraryKind, LibraryProperties>>>();
+  private final Map<List<VirtualFile>, List<Pair<LibraryKind, LibraryProperties>>> myCache = Collections.synchronizedMap(new HashMap<List<VirtualFile>, List<Pair<LibraryKind, LibraryProperties>>>());
   
   @Override
   public boolean processProperties(@NotNull List<VirtualFile> files, @NotNull LibraryPropertiesProcessor processor) {
     for (Pair<LibraryKind, LibraryProperties> pair : getOrComputeKinds(files)) {
-      //noinspection unchecked
       if (!processor.processProperties(pair.getFirst(), pair.getSecond())) {
         return false;
       }
@@ -54,7 +54,7 @@ public class LibraryDetectionManagerImpl extends LibraryDetectionManager {
         if (result != null) {
           return null;
         }
-        result = Pair.<LibraryType<?>, LibraryProperties<?>>create(type, properties);
+        result = Pair.create(type, properties);
       }
     }
     return result;
@@ -70,7 +70,7 @@ public class LibraryDetectionManagerImpl extends LibraryDetectionManager {
   }
 
   private static List<Pair<LibraryKind, LibraryProperties>> computeKinds(List<VirtualFile> files) {
-    final SmartList<Pair<LibraryKind, LibraryProperties>> result = new SmartList<Pair<LibraryKind, LibraryProperties>>();
+    final SmartList<Pair<LibraryKind, LibraryProperties>> result = new SmartList<>();
     final LibraryType<?>[] libraryTypes = LibraryType.EP_NAME.getExtensions();
     final LibraryPresentationProvider[] presentationProviders = LibraryPresentationProvider.EP_NAME.getExtensions();
     for (LibraryPresentationProvider provider : ContainerUtil.concat(libraryTypes, presentationProviders)) {

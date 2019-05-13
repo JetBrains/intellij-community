@@ -26,46 +26,50 @@ import javax.swing.*;
 public class XPathConfigurable implements SearchableConfigurable {
     private ConfigUI configUI;
 
+    @Override
     public String getDisplayName() {
         return "XPath Viewer";
     }
 
+  @Override
   @Nullable
     public String getHelpTopic() {
         return "xpath.settings";
     }
 
+  @Override
   @NotNull
   public String getId() {
     return getHelpTopic();
   }
 
-  public Runnable enableSearch(String option) {
-    return null;
-  }
-
+  @Override
   public JComponent createComponent() {
         configUI = new ConfigUI(XPathAppComponent.getInstance().getConfig());
 
         return configUI;
     }
 
+    @Override
     public synchronized boolean isModified() {
         return configUI != null && !configUI.getConfig().equals(XPathAppComponent.getInstance().getConfig());
     }
 
+    @Override
     public synchronized void apply() throws ConfigurationException {
         if (configUI != null) {
             XPathAppComponent.getInstance().setConfig(configUI.getConfig());
         }
     }
 
+    @Override
     public synchronized void reset() {
         if (configUI != null) {
             configUI.setConfig(XPathAppComponent.getInstance().getConfig());
         }
     }
 
+    @Override
     public synchronized void disposeUIResources() {
         configUI = null;
     }

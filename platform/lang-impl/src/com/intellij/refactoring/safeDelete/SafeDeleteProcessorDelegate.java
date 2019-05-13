@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
@@ -34,7 +35,7 @@ public interface SafeDeleteProcessorDelegate {
 
   boolean handlesElement(PsiElement element);
   @Nullable
-  NonCodeUsageSearchInfo findUsages(final PsiElement element, final PsiElement[] allElementsToDelete, List<UsageInfo> result);
+  NonCodeUsageSearchInfo findUsages(@NotNull PsiElement element, @NotNull PsiElement[] allElementsToDelete, @NotNull List<UsageInfo> result);
 
   /**
    * Called before the refactoring dialog is shown. Returns the list of elements for which the
@@ -47,13 +48,13 @@ public interface SafeDeleteProcessorDelegate {
    * @return additional elements to search for usages, or null if the user has cancelled the refactoring.
    */
   @Nullable
-  Collection<? extends PsiElement> getElementsToSearch(final PsiElement element, final Collection<PsiElement> allElementsToDelete);
+  Collection<? extends PsiElement> getElementsToSearch(@NotNull PsiElement element, @NotNull Collection<PsiElement> allElementsToDelete);
 
   @Nullable
-  Collection<PsiElement> getAdditionalElementsToDelete(PsiElement element, final Collection<PsiElement> allElementsToDelete, final boolean askUser);
+  Collection<PsiElement> getAdditionalElementsToDelete(@NotNull PsiElement element, @NotNull Collection<PsiElement> allElementsToDelete, final boolean askUser);
 
   @Nullable
-  Collection<String> findConflicts(final PsiElement element, final PsiElement[] allElementsToDelete);
+  Collection<String> findConflicts(@NotNull PsiElement element, @NotNull PsiElement[] allElementsToDelete);
 
   /**
    * Called after the user has confirmed the refactoring. Can filter out some of the usages

@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Bas Leijdekkers
+ * Copyright 2007-2014 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,27 +16,25 @@
 package com.siyeh.ipp.exceptions;
 
 import com.intellij.psi.*;
-import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.ipp.base.PsiElementPredicate;
 
 class ConvertCatchToThrowsPredicate implements PsiElementPredicate {
 
+  @Override
   public boolean satisfiedBy(PsiElement element) {
-    if (!(element instanceof PsiKeyword)) {
-      return false;
-    }
-    final PsiJavaToken javaToken = (PsiJavaToken)element;
-    final IElementType tokenType = javaToken.getTokenType();
-    if (!tokenType.equals(JavaTokenType.CATCH_KEYWORD)) {
-      return false;
-    }
-    final PsiElement parent = javaToken.getParent();
+    final PsiElement parent = element.getParent();
     if (!(parent instanceof PsiCatchSection)) {
       return false;
     }
-    final PsiMethod method =
-      PsiTreeUtil.getParentOfType(parent, PsiMethod.class);
-    return method != null;
+    if (element instanceof PsiCodeBlock) {
+      return false;
+    }
+    final PsiElement owner = PsiTreeUtil.getParentOfType(parent, PsiMethod.class, PsiClass.class, PsiLambdaExpression.class);
+    if (owner instanceof PsiLambdaExpression) {
+      final PsiMethod method = LambdaUtil.getFunctionalInterfaceMethod(owner);
+      return !(method instanceof PsiCompiledElement);
+    }
+    return owner instanceof PsiMethod;
   }
 }

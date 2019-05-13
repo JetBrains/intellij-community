@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,6 @@
  */
 package com.intellij.codeInspection;
 
-import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.codeInsight.generation.surroundWith.JavaWithIfSurrounder;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -26,7 +25,10 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilBase;
+import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.siyeh.ig.psiutils.ParenthesesUtils;
+import com.siyeh.ipp.trivialif.MergeIfAndIntention;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -37,28 +39,34 @@ public class SurroundWithIfFix implements LocalQuickFix {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.SurroundWithIfFix");
   private final String myText;
 
+  @Override
   @NotNull
   public String getName() {
     return InspectionsBundle.message("inspection.surround.if.quickfix", myText);
   }
 
   public SurroundWithIfFix(@NotNull PsiExpression expressionToAssert) {
-    myText = expressionToAssert.getText();
+    myText = ParenthesesUtils.getText(expressionToAssert, ParenthesesUtils.BINARY_AND_PRECEDENCE);
   }
 
+  @Override
   public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
     PsiElement element = descriptor.getPsiElement();
-    PsiStatement anchorStatement = PsiTreeUtil.getParentOfType(element, PsiStatement.class);
+    PsiElement anchorStatement = RefactoringUtil.getParentStatement(element, false);
     LOG.assertTrue(anchorStatement != null);
-    Editor editor = PsiUtilBase.findEditor(element);
+    if (anchorStatement.getParent() instanceof PsiLambdaExpression) {
+      final PsiCodeBlock body = RefactoringUtil.expandExpressionLambdaToCodeBlock((PsiLambdaExpression)anchorStatement.getParent());
+      anchorStatement = body.getStatements()[0];
+    }
+    Editor editor = PsiUtilBase.findEditor(anchorStatement);
     if (editor == null) return;
-    PsiFile file = element.getContainingFile();
+    PsiFile file = anchorStatement.getContainingFile();
     PsiDocumentManager documentManager = PsiDocumentManager.getInstance(project);
     Document document = documentManager.getDocument(file);
-    if (!CodeInsightUtilBase.prepareFileForWrite(file)) return;
+    if (document == null) return;
     PsiElement[] elements = {anchorStatement};
-    PsiElement prev = PsiTreeUtil.skipSiblingsBackward(anchorStatement, PsiWhiteSpace.class);
-    if (prev instanceof PsiComment && SuppressManager.getInstance().getSuppressedInspectionIdsIn(prev) != null) {
+    PsiElement prev = PsiTreeUtil.skipWhitespacesBackward(anchorStatement);
+    if (prev instanceof PsiComment && JavaSuppressionUtil.getSuppressedInspectionIdsIn(prev) != null) {
       elements = new PsiElement[]{prev, anchorStatement};
     }
     try {
@@ -69,6 +77,11 @@ public class SurroundWithIfFix implements LocalQuickFix {
       document.replaceString(textRange.getStartOffset(), textRange.getEndOffset(),newText);
 
       editor.getCaretModel().moveToOffset(textRange.getEndOffset() + newText.length());
+
+      PsiDocumentManager.getInstance(project).commitAllDocuments();
+
+      new MergeIfAndIntention().invoke(project, editor, file);
+
       editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
     }
     catch (IncorrectOperationException e) {
@@ -76,6 +89,7 @@ public class SurroundWithIfFix implements LocalQuickFix {
     }
   }
 
+  @Override
   @NotNull
   public String getFamilyName() {
     return InspectionsBundle.message("inspection.surround.if.family");

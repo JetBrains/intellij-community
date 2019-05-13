@@ -14,10 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * User: anna
- * Date: 11-Jun-2009
- */
 package com.intellij.junit4;
 
 import junit.framework.Test;
@@ -26,6 +22,7 @@ import org.junit.internal.runners.JUnit38ClassRunner;
 import org.junit.internal.runners.SuiteMethod;
 import org.junit.runner.Description;
 import org.junit.runner.Runner;
+import org.junit.runners.Parameterized;
 import org.junit.runners.ParentRunner;
 import org.junit.runners.Suite;
 import org.junit.runners.model.InitializationError;
@@ -37,12 +34,12 @@ import java.util.*;
 class IdeaSuite extends Suite {
   private final String myName;
 
-  public IdeaSuite(List runners, String name) throws InitializationError {
+  IdeaSuite(List runners, String name) throws InitializationError {
     super(null, runners);
     myName = name;
   }
 
-  public IdeaSuite(final RunnerBuilder builder, Class[] classes, String name) throws InitializationError {
+  IdeaSuite(final RunnerBuilder builder, Class[] classes, String name) throws InitializationError {
     super(builder, classes);
     myName = name;
   }
@@ -52,9 +49,9 @@ class IdeaSuite extends Suite {
     try {
       final Method getFilteredChildrenMethod = ParentRunner.class.getDeclaredMethod("getFilteredChildren", new Class[0]);
       getFilteredChildrenMethod.setAccessible(true);
-      List filteredChildren = (List)getFilteredChildrenMethod.invoke(this, new Object[0]);
-      for (int i = 0, filteredChildrenSize = filteredChildren.size(); i < filteredChildrenSize; i++) {
-        Object child = filteredChildren.get(i);
+      Collection filteredChildren = (Collection)getFilteredChildrenMethod.invoke(this, new Object[0]);
+      for (Iterator iterator = filteredChildren.iterator(); iterator.hasNext();) {
+        Object child = iterator.next();
         description.addChild(describeChild((Runner)child));
       }
     }
@@ -78,31 +75,42 @@ class IdeaSuite extends Suite {
   }
 
   protected List getChildren() {
-    final List children = super.getChildren();
-    final Set allNames = new HashSet();
-    for (Iterator iterator = children.iterator(); iterator.hasNext();) {
-      final Object child = iterator.next();
-      allNames.add(describeChild((Runner)child).getDisplayName());
-    }
-    for (Iterator iterator = children.iterator(); iterator.hasNext();) {
-      final Object child = iterator.next();
-      if (isSuite(child)) {
-        skipSuiteComponents(allNames, child);
-      }
-    }
-
+    final List children = new ArrayList(super.getChildren());
+    boolean containsSuiteInside = false;
     for (Iterator iterator = children.iterator(); iterator.hasNext(); ) {
       Object child = iterator.next();
-      if (!isSuite(child) && !allNames.contains(describeChild((Runner)child).getDisplayName())) {
-        iterator.remove();
+      if (isSuite(child)) {
+        containsSuiteInside = true;
+        break;
       }
     }
+    if (!containsSuiteInside) return children;
+    try {
+      final Set allNames = new HashSet();
+      for (Iterator iterator = children.iterator(); iterator.hasNext();) {
+        final Object child = iterator.next();
+        allNames.add(describeChild((Runner)child).getDisplayName());
+      }
+      for (Iterator iterator = children.iterator(); iterator.hasNext();) {
+        final Object child = iterator.next();
+        if (isSuite(child)) {
+          skipSuiteComponents(allNames, child);
+        }
+      }
 
+      for (Iterator iterator = children.iterator(); iterator.hasNext(); ) {
+        Object child = iterator.next();
+        if (!isSuite(child) && !allNames.contains(describeChild((Runner)child).getDisplayName())) {
+          iterator.remove();
+        }
+      }
+    }
+    catch (Throwable e){ }
     return children;
   }
 
   private static boolean isSuite(Object child) {
-    return child instanceof Suite || child instanceof SuiteMethod;
+    return child instanceof Suite && !(child instanceof Parameterized) || child instanceof SuiteMethod;
   }
 
   private void skipSuiteComponents(Set allNames, Object child) {

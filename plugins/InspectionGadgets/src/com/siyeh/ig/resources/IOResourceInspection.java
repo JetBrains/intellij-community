@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2011 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2015 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,14 +20,10 @@ import com.intellij.codeInspection.ui.ListWrappingTableModel;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.*;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.ui.CheckBox;
 import com.siyeh.InspectionGadgetsBundle;
-import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.psiutils.TypeUtils;
 import com.siyeh.ig.ui.UiUtils;
 import org.jdom.Element;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -36,13 +32,12 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class IOResourceInspection extends ResourceInspection {
-
-  private static final String[] IO_TYPES = {
-    "java.io.InputStream", "java.io.OutputStream",
-    "java.io.Reader", "java.io.Writer",
-    "java.io.RandomAccessFile", "java.util.zip.ZipFile"};
-
-  @NonNls
+  protected static final String[] IO_TYPES =
+    {
+      "java.io.InputStream", "java.io.OutputStream", "java.io.Reader", "java.io.Writer",
+      "java.io.RandomAccessFile", "java.util.zip.ZipFile", "java.io.Closeable"
+    };
+  final List<String> ignoredTypes = new ArrayList<>();
   @SuppressWarnings({"PublicField"})
   public String ignoredTypesString = "java.io.ByteArrayOutputStream" +
                                      ',' + "java.io.ByteArrayInputStream" +
@@ -51,13 +46,21 @@ public class IOResourceInspection extends ResourceInspection {
                                      ',' + "java.io.CharArrayReader" +
                                      ',' + "java.io.StringWriter" +
                                      ',' + "java.io.StringReader";
-  final List<String> ignoredTypes = new ArrayList();
-
-  @SuppressWarnings({"PublicField"})
-  public boolean insideTryAllowed = false;
 
   public IOResourceInspection() {
     parseString(ignoredTypesString, ignoredTypes);
+  }
+
+  @Override
+  public JComponent createOptionsPanel() {
+    final JComponent panel = new JPanel(new BorderLayout());
+    final ListTable table =
+      new ListTable(new ListWrappingTableModel(ignoredTypes, InspectionGadgetsBundle.message("ignored.io.resource.types")));
+    final JPanel tablePanel =
+      UiUtils.createAddRemoveTreeClassChooserPanel(table, InspectionGadgetsBundle.message("choose.io.resource.type.to.ignore"), IO_TYPES);
+    panel.add(tablePanel, BorderLayout.CENTER);
+    panel.add(super.createOptionsPanel(), BorderLayout.SOUTH);
+    return panel;
   }
 
   @Override
@@ -69,177 +72,44 @@ public class IOResourceInspection extends ResourceInspection {
   @Override
   @NotNull
   public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "i.o.resource.opened.not.closed.display.name");
+    return InspectionGadgetsBundle.message("i.o.resource.opened.not.closed.display.name");
   }
 
   @Override
-  @NotNull
-  public String buildErrorString(Object... infos) {
-    final PsiExpression expression = (PsiExpression)infos[0];
-    final PsiType type = expression.getType();
-    assert type != null;
-    final String text = type.getPresentableText();
-    return InspectionGadgetsBundle.message(
-      "resource.opened.not.closed.problem.descriptor", text);
-  }
-
-  @Override
-  public JComponent createOptionsPanel() {
-    final JComponent panel = new JPanel(new BorderLayout());
-    final ListTable table =
-      new ListTable(new ListWrappingTableModel(ignoredTypes, InspectionGadgetsBundle.message("ignored.io.resource.types")));
-    JPanel tablePanel =
-      UiUtils.createAddRemoveTreeClassChooserPanel(table, InspectionGadgetsBundle.message("choose.io.resource.type.to.ignore"), IO_TYPES);
-    final CheckBox checkBox =
-      new CheckBox(InspectionGadgetsBundle.message("allow.resource.to.be.opened.inside.a.try.block"), this, "insideTryAllowed");
-    panel.add(tablePanel, BorderLayout.CENTER);
-    panel.add(checkBox, BorderLayout.SOUTH);
-    return panel;
-  }
-
-  @Override
-  public void readSettings(Element element) throws InvalidDataException {
+  public void readSettings(@NotNull Element element) throws InvalidDataException {
     super.readSettings(element);
     parseString(ignoredTypesString, ignoredTypes);
   }
 
   @Override
-  public void writeSettings(Element element) throws WriteExternalException {
+  public void writeSettings(@NotNull Element element) throws WriteExternalException {
     ignoredTypesString = formatString(ignoredTypes);
     super.writeSettings(element);
   }
 
   @Override
-  public BaseInspectionVisitor buildVisitor() {
-    return new IOResourceVisitor();
-  }
-
-  private class IOResourceVisitor extends BaseInspectionVisitor {
-
-    IOResourceVisitor() {
+  public boolean isResourceCreation(PsiExpression expression) {
+    if (expression instanceof PsiNewExpression) {
+      return TypeUtils.expressionHasTypeOrSubtype(expression, IO_TYPES) != null && !isIgnoredType(expression);
     }
-
-    @Override
-    public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
-      if (!isIOResourceFactoryMethodCall(expression)) {
-        return;
+    else if (expression instanceof PsiMethodCallExpression) {
+      final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)expression;
+      final PsiReferenceExpression methodExpression = methodCallExpression.getMethodExpression();
+      final String methodName = methodExpression.getReferenceName();
+      if (!"getResourceAsStream".equals(methodName)) {
+        return false;
       }
-      checkExpression(expression);
+      final PsiExpression qualifier = methodExpression.getQualifierExpression();
+      if (qualifier == null ||
+          TypeUtils.expressionHasTypeOrSubtype(qualifier, CommonClassNames.JAVA_LANG_CLASS, "java.lang.ClassLoader") == null) {
+        return false;
+      }
+      return TypeUtils.expressionHasTypeOrSubtype(expression, "java.io.InputStream");
     }
-
-    @Override
-    public void visitNewExpression(@NotNull PsiNewExpression expression) {
-      super.visitNewExpression(expression);
-      if (!isIOResource(expression)) {
-        return;
-      }
-      checkExpression(expression);
-    }
-
-    private void checkExpression(PsiExpression expression) {
-      final PsiElement parent = getExpressionParent(expression);
-      if (parent instanceof PsiReturnStatement || parent instanceof PsiResourceVariable) {
-        return;
-      }
-      if (parent instanceof PsiExpressionList) {
-        PsiElement grandParent = parent.getParent();
-        if (grandParent instanceof PsiAnonymousClass) {
-          grandParent = grandParent.getParent();
-        }
-        if (grandParent instanceof PsiNewExpression && isIOResource((PsiNewExpression)grandParent)) {
-          return;
-        }
-      }
-      final PsiVariable boundVariable = getVariable(parent);
-      final PsiElement containingBlock = PsiTreeUtil.getParentOfType(expression, PsiCodeBlock.class);
-      if (containingBlock == null) {
-        return;
-      }
-      if (isArgumentOfResourceCreation(boundVariable, containingBlock)) {
-        return;
-      }
-      if (isSafelyClosed(boundVariable, expression, insideTryAllowed)) {
-        return;
-      }
-      if (isResourceEscapedFromMethod(boundVariable, expression)) {
-        return;
-      }
-      registerError(expression, expression);
-    }
-  }
-
-  public static boolean isIOResourceFactoryMethodCall(PsiMethodCallExpression expression) {
-    final PsiReferenceExpression methodExpression = expression.getMethodExpression();
-    @NonNls final String methodName = methodExpression.getReferenceName();
-    if (!"getResourceAsStream".equals(methodName)) {
-      return false;
-    }
-    final PsiExpression qualifier = methodExpression.getQualifierExpression();
-    if (qualifier == null) {
-      return false;
-    }
-    return TypeUtils.expressionHasTypeOrSubtype(qualifier, CommonClassNames.JAVA_LANG_CLASS, "java.lang.ClassLoader") != null;
-  }
-
-  public boolean isIOResource(PsiExpression expression) {
-    return TypeUtils.expressionHasTypeOrSubtype(expression, IO_TYPES) != null && !isIgnoredType(expression);
+    return false;
   }
 
   private boolean isIgnoredType(PsiExpression expression) {
     return TypeUtils.expressionHasTypeOrSubtype(expression, ignoredTypes);
-  }
-
-  private boolean isArgumentOfResourceCreation(
-    PsiVariable boundVariable, PsiElement scope) {
-    final UsedAsIOResourceArgumentVisitor visitor =
-      new UsedAsIOResourceArgumentVisitor(boundVariable);
-    scope.accept(visitor);
-    return visitor.isUsedAsArgumentToResourceCreation();
-  }
-
-  private class UsedAsIOResourceArgumentVisitor
-    extends JavaRecursiveElementVisitor {
-
-    private boolean usedAsArgToResourceCreation = false;
-    private final PsiVariable ioResource;
-
-    UsedAsIOResourceArgumentVisitor(PsiVariable ioResource) {
-      this.ioResource = ioResource;
-    }
-
-    @Override
-    public void visitNewExpression(
-      @NotNull PsiNewExpression expression) {
-      if (usedAsArgToResourceCreation) {
-        return;
-      }
-      super.visitNewExpression(expression);
-      if (!isIOResource(expression)) {
-        return;
-      }
-      final PsiExpressionList argumentList = expression.getArgumentList();
-      if (argumentList == null) {
-        return;
-      }
-      final PsiExpression[] arguments = argumentList.getExpressions();
-      if (arguments.length == 0) {
-        return;
-      }
-      final PsiExpression argument = arguments[0];
-      if (!(argument instanceof PsiReferenceExpression)) {
-        return;
-      }
-      final PsiReference reference = (PsiReference)argument;
-      final PsiElement target = reference.resolve();
-      if (target == null || !target.equals(ioResource)) {
-        return;
-      }
-      usedAsArgToResourceCreation = true;
-    }
-
-    public boolean isUsedAsArgumentToResourceCreation() {
-      return usedAsArgToResourceCreation;
-    }
   }
 }

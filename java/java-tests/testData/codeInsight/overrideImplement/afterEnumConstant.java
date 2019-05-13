@@ -17,7 +17,7 @@ enum E{
   E1 {
       @Override
       public void foo() {
-          <selection>//To change body of implemented methods use File | Settings | File Templates.</selection>
+          <caret>
       }
   };
   public abstract void foo();

@@ -15,25 +15,27 @@
  */
 package org.intellij.lang.xpath.xslt.util;
 
-import org.intellij.lang.xpath.xslt.XsltSupport;
-import org.intellij.lang.xpath.psi.impl.ResolveUtil;
-
 import com.intellij.psi.xml.XmlDocument;
 import com.intellij.psi.xml.XmlTag;
+import org.intellij.lang.xpath.psi.impl.ResolveUtil;
+import org.intellij.lang.xpath.xslt.XsltSupport;
 
 public class TemplateMatcher extends IncludeAwareMatcher {
     public TemplateMatcher(XmlDocument document) {
         super(document);
     }
 
+    @Override
     protected boolean matches(XmlTag element) {
         return XsltSupport.isTemplate(element, false);
     }
 
+    @Override
     protected ResolveUtil.Matcher changeDocument(XmlDocument document) {
         return new TemplateMatcher(document);
     }
 
+    @Override
     public ResolveUtil.Matcher variantMatcher() {
         return new TemplateMatcher(myDocument);
     }

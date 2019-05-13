@@ -17,7 +17,12 @@ package com.intellij.openapi.vcs.actions;
 
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.ColorKey;
-import com.intellij.openapi.vcs.annotate.*;
+import com.intellij.openapi.util.Couple;
+import com.intellij.openapi.vcs.annotate.AnnotationSource;
+import com.intellij.openapi.vcs.annotate.AnnotationSourceSwitcher;
+import com.intellij.openapi.vcs.annotate.FileAnnotation;
+import com.intellij.openapi.vcs.annotate.TextAnnotationPresentation;
+import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.util.Consumer;
 
 import java.awt.*;
@@ -31,11 +36,9 @@ class MergeSourceAvailableMarkerGutter extends AnnotationFieldGutter implements 
   private boolean myTurnedOn;
 
   MergeSourceAvailableMarkerGutter(FileAnnotation annotation,
-                                   Editor editor,
-                                   LineAnnotationAspect aspect,
                                    TextAnnotationPresentation highlighting,
-                                   Map<String, Color> colorScheme) {
-    super(annotation, editor, aspect, highlighting, colorScheme);
+                                   Couple<Map<VcsRevisionNumber, Color>> colorScheme) {
+    super(annotation, highlighting, colorScheme);
   }
 
   @Override
@@ -51,6 +54,7 @@ class MergeSourceAvailableMarkerGutter extends AnnotationFieldGutter implements 
     return switcher.mergeSourceAvailable(line) ? "M" : "";
   }
 
+  @Override
   public void consume(final AnnotationSource annotationSource) {
     myTurnedOn = annotationSource.showMerged();
   }

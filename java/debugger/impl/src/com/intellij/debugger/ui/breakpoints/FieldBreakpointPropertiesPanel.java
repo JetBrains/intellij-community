@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,32 +14,34 @@
  * limitations under the License.
  */
 
-/**
- * class FieldBreakpointPropertiesPanel
- * @author Jeka
- */
 package com.intellij.debugger.ui.breakpoints;
 
 import com.intellij.debugger.DebuggerBundle;
-import com.intellij.openapi.project.Project;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.util.ui.DialogUtil;
+import com.intellij.xdebugger.breakpoints.XLineBreakpoint;
+import com.intellij.xdebugger.breakpoints.ui.XBreakpointCustomPropertiesPanel;
+import com.intellij.xdebugger.impl.breakpoints.XBreakpointBase;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.java.debugger.breakpoints.properties.JavaFieldBreakpointProperties;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
-public class FieldBreakpointPropertiesPanel extends BreakpointPropertiesPanel {
+public class FieldBreakpointPropertiesPanel extends XBreakpointCustomPropertiesPanel<XLineBreakpoint<JavaFieldBreakpointProperties>> {
   private JCheckBox myWatchAccessCheckBox;
   private JCheckBox myWatchModificationCheckBox;
 
-  public FieldBreakpointPropertiesPanel(final Project project, boolean compact) {
-    super(project, FieldBreakpoint.CATEGORY, compact);
-  }
+  //public FieldBreakpointPropertiesPanel(final Project project, boolean compact) {
+  //  super(project, FieldBreakpoint.CATEGORY, compact);
+  //}
 
-  protected JComponent createSpecialBox() {
+
+  @NotNull
+  @Override
+  public JComponent getComponent() {
     JPanel _panel;
     JPanel _panel0;
     myWatchAccessCheckBox = new JCheckBox(DebuggerBundle.message("label.filed.breakpoint.properties.panel.field.access"));
@@ -65,6 +67,7 @@ public class FieldBreakpointPropertiesPanel extends BreakpointPropertiesPanel {
     _panel.setBorder(IdeBorderFactory.createTitledBorder(DebuggerBundle.message("label.group.watch.events"), true));
 
     ActionListener listener = new ActionListener() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         JCheckBox toCheck = null;
         if (!myWatchAccessCheckBox.isSelected() && !myWatchModificationCheckBox.isSelected()) {
@@ -87,20 +90,20 @@ public class FieldBreakpointPropertiesPanel extends BreakpointPropertiesPanel {
     return _panel;
   }
 
-  public void initFrom(Breakpoint breakpoint, boolean moreOptionsVisible) {
-    super.initFrom(breakpoint, moreOptionsVisible);
-    FieldBreakpoint fieldBreakpoint = (FieldBreakpoint)breakpoint;
-
-    myWatchAccessCheckBox.setSelected(fieldBreakpoint.WATCH_ACCESS);
-    myWatchModificationCheckBox.setSelected(fieldBreakpoint.WATCH_MODIFICATION);
+  @Override
+  public void loadFrom(@NotNull XLineBreakpoint<JavaFieldBreakpointProperties> breakpoint) {
+    myWatchAccessCheckBox.setSelected(breakpoint.getProperties().WATCH_ACCESS);
+    myWatchModificationCheckBox.setSelected(breakpoint.getProperties().WATCH_MODIFICATION);
   }
 
-  public void saveTo(Breakpoint breakpoint, @NotNull Runnable afterUpdate) {
-    FieldBreakpoint fieldBreakpoint = (FieldBreakpoint)breakpoint;
-
-    fieldBreakpoint.WATCH_ACCESS = myWatchAccessCheckBox.isSelected();
-    fieldBreakpoint.WATCH_MODIFICATION = myWatchModificationCheckBox.isSelected();
-
-    super.saveTo(breakpoint, afterUpdate);
+  @Override
+  public void saveTo(@NotNull XLineBreakpoint<JavaFieldBreakpointProperties> breakpoint) {
+    boolean changed = breakpoint.getProperties().WATCH_ACCESS != myWatchAccessCheckBox.isSelected();
+    breakpoint.getProperties().WATCH_ACCESS = myWatchAccessCheckBox.isSelected();
+    changed = breakpoint.getProperties().WATCH_MODIFICATION != myWatchModificationCheckBox.isSelected() || changed;
+    breakpoint.getProperties().WATCH_MODIFICATION = myWatchModificationCheckBox.isSelected();
+    if (changed) {
+      ((XBreakpointBase)breakpoint).fireBreakpointChanged();
+    }
   }
 }

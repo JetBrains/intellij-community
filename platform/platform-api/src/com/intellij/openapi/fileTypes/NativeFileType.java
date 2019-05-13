@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,34 +34,41 @@ public class NativeFileType implements INativeFileType {
 
   private NativeFileType() { }
 
+  @Override
   @NotNull
   public String getName() {
     return "Native";
   }
 
+  @Override
   @NotNull
   public String getDescription() {
     return "Files opened in associated applications";
   }
 
+  @Override
   @NotNull
   public String getDefaultExtension() {
     return "";
   }
 
+  @Override
   public Icon getIcon() {
     return AllIcons.FileTypes.Custom;
   }
 
+  @Override
   public boolean isBinary() {
     return true;
   }
 
+  @Override
   public boolean isReadOnly() {
     return false;
   }
 
-  public String getCharset(@NotNull VirtualFile file, byte[] content) {
+  @Override
+  public String getCharset(@NotNull VirtualFile file, @NotNull byte[] content) {
     return null;
   }
 
@@ -76,7 +83,7 @@ public class NativeFileType implements INativeFileType {
   }
 
   public static boolean openAssociatedApplication(@NotNull final VirtualFile file) {
-    final List<String> commands = new ArrayList<String>();
+    final List<String> commands = new ArrayList<>();
     if (SystemInfo.isWindows) {
       commands.add("rundll32.exe");
       commands.add("url.dll,FileProtocolHandler");

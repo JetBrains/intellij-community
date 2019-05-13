@@ -14,10 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * User: anna
- * Date: 28-Aug-2009
- */
 package org.testng;
 
 public interface IDEATestNGListener extends ITestListener {

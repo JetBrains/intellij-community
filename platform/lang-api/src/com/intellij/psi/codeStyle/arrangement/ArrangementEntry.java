@@ -33,7 +33,6 @@ import java.util.List;
  * Implementations of this interface are not obliged to be thread-safe.
  * 
  * @author Denis Zhdanov
- * @since 7/16/12 3:31 PM
  */
 public interface ArrangementEntry {
 
@@ -86,10 +85,10 @@ public interface ArrangementEntry {
    * Sometimes we want particular entry to serve just as another entries holder. For example, we might want to arrange
    * anonymous class entries but don't want the class itself, say, to be arranged with normal inner classes.
    * <p/>
-   * That is achieved for entries which return <code>'false'</code> from this method call.
+   * That is achieved for entries which return {@code 'false'} from this method call.
    * 
-   * @return    <code>true</code> if current entry can be {@link ArrangementEntryMatcher#isMatched(ArrangementEntry) matched};
-   *            <code>false</code> otherwise
+   * @return    {@code true} if current entry can be {@link ArrangementEntryMatcher#isMatched(ArrangementEntry) matched};
+   *            {@code false} otherwise
    */
   boolean canBeMatched();
 }

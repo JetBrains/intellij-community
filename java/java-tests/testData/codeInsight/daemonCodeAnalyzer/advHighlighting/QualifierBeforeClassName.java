@@ -15,7 +15,7 @@ class E {
   class opopo {
     public void main(String[] args) {
       String java = "bla";
-      java.<error descr="Cannot resolve symbol 'lang'">lang</error>.String.valueOf("");
+      <error descr="Expected class or package">java.lang</error>.String.valueOf("");
     }
   }
 }

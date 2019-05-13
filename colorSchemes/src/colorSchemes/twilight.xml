@@ -1,27 +1,24 @@
-<scheme name="Twilight" parent_scheme="Default" version="1">
-  <option name="LINE_SPACING" value="1.0" />
-  <option name="EDITOR_FONT_SIZE" value="12" />
-  <option name="EDITOR_FONT_NAME" value="Menlo" />
+<scheme name="Twilight" parent_scheme="Darcula" version="1">
   <colors>
     <option name="CONSOLE_BACKGROUND_KEY" value="141414" />
-    <option name="INDENT_GUIDE" value="4e4e4e" />
-    <option name="SELECTION_BACKGROUND" value="3c3f42" />
-    <option name="CARET_ROW_COLOR" value="1b1b1b" />
-    <option name="WHITESPACES" value="4e4e4e" />
+    <option name="INDENT_GUIDE" value="4E4E4E" />
+    <option name="SELECTION_BACKGROUND" value="3C3F42" />
+    <option name="CARET_ROW_COLOR" value="1B1B1B" />
+    <option name="WHITESPACES" value="4E4E4E" />
     <option name="CARET_COLOR" value="A7A7A7" />
     <option name="LINE_NUMBERS_COLOR" value="F8F8F8" />
-    <option name="SELECTED_INDENT_GUIDE" value="4e4e4e" />
+    <option name="SELECTED_INDENT_GUIDE" value="4E4E4E" />
     <option name="GUTTER_BACKGROUND" value="141414" />
   </colors>
   <attributes>
     <option name="BAD_CHARACTER">
       <value>
-        <option name="BACKGROUND" value="6e3b3b" />
+        <option name="BACKGROUND" value="6E3B3B" />
       </value>
     </option>
     <option name="BREAKPOINT_ATTRIBUTES">
       <value>
-        <option name="BACKGROUND" value="743d3d" />
+        <option name="BACKGROUND" value="743D3D" />
       </value>
     </option>
     <option name="BUILDOUT.KEY">
@@ -50,6 +47,7 @@
         <option name="FOREGROUND" value="8F9D6A" />
       </value>
     </option>
+    <option baseAttributes="TEXT" name="CLASS_NAME_ATTRIBUTES" />
     <option name="CLASS_REFERENCE">
       <value>
         <option name="FOREGROUND" value="9B703F" />
@@ -57,7 +55,7 @@
     </option>
     <option name="COFFEESCRIPT.BAD_CHARACTER">
       <value>
-        <option name="BACKGROUND" value="6e3b3b" />
+        <option name="BACKGROUND" value="6E3B3B" />
       </value>
     </option>
     <option name="COFFEESCRIPT.BLOCK_COMMENT">
@@ -71,6 +69,8 @@
         <option name="FOREGROUND" value="CF6A4C" />
       </value>
     </option>
+    <option baseAttributes="DEFAULT_BRACES" name="COFFEESCRIPT.BRACE" />
+    <option baseAttributes="DEFAULT_BRACKETS" name="COFFEESCRIPT.BRACKET" />
     <option name="COFFEESCRIPT.CLASS_NAME">
       <value>
         <option name="FOREGROUND" value="9B703F" />
@@ -81,6 +81,8 @@
         <option name="FOREGROUND" value="CDA869" />
       </value>
     </option>
+    <option baseAttributes="DEFAULT_COMMA" name="COFFEESCRIPT.COMMA" />
+    <option baseAttributes="DEFAULT_DOT" name="COFFEESCRIPT.DOT" />
     <option name="COFFEESCRIPT.ESCAPE_SEQUENCE">
       <value>
         <option name="FOREGROUND" value="CF6A4C" />
@@ -91,6 +93,7 @@
         <option name="FOREGROUND" value="CDA869" />
       </value>
     </option>
+    <option baseAttributes="TEXT" name="COFFEESCRIPT.EXPRESSIONS_SUBSTITUTION_MARK" />
     <option name="COFFEESCRIPT.FUNCTION">
       <value>
         <option name="FOREGROUND" value="F9EE98" />
@@ -131,6 +134,8 @@
         <option name="FOREGROUND" value="E9C062" />
       </value>
     </option>
+    <option baseAttributes="TEXT" name="COFFEESCRIPT.IDENTIFIER" />
+    <option baseAttributes="DEFAULT_STRING" name="COFFEESCRIPT.JAVASCRIPT_CONTENT" />
     <option name="COFFEESCRIPT.JAVASCRIPT_ID">
       <value>
         <option name="FOREGROUND" value="8F9D6A" />
@@ -147,6 +152,7 @@
         <option name="FONT_TYPE" value="2" />
       </value>
     </option>
+    <option baseAttributes="COFFEESCRIPT.IDENTIFIER" name="COFFEESCRIPT.LOCAL_VARIABLE" />
     <option name="COFFEESCRIPT.NUMBER">
       <value>
         <option name="FOREGROUND" value="CF6A4C" />
@@ -162,11 +168,13 @@
         <option name="FOREGROUND" value="CDA869" />
       </value>
     </option>
+    <option baseAttributes="DEFAULT_PARENTHS" name="COFFEESCRIPT.PARENTHESIS" />
     <option name="COFFEESCRIPT.PROTOTYPE">
       <value>
         <option name="FOREGROUND" value="9B703F" />
       </value>
     </option>
+    <option baseAttributes="DEFAULT_DOT" name="COFFEESCRIPT.RANGE" />
     <option name="COFFEESCRIPT.REGULAR_EXPRESSION_CONTENT">
       <value>
         <option name="FOREGROUND" value="E9C062" />
@@ -182,6 +190,8 @@
         <option name="FOREGROUND" value="E9C062" />
       </value>
     </option>
+    <option baseAttributes="DEFAULT_SEMICOLON" name="COFFEESCRIPT.SEMICOLON" />
+    <option baseAttributes="DEFAULT_DOT" name="COFFEESCRIPT.SPLAT" />
     <option name="COFFEESCRIPT.STRING">
       <value>
         <option name="FOREGROUND" value="8F9D6A" />
@@ -205,52 +215,52 @@
     </option>
     <option name="CONSOLE_BLUE_OUTPUT">
       <value>
-        <option name="FOREGROUND" value="c7c7ff" />
+        <option name="FOREGROUND" value="C7C7FF" />
       </value>
     </option>
     <option name="CONSOLE_CYAN_OUTPUT">
       <value>
-        <option name="FOREGROUND" value="06b8b8" />
+        <option name="FOREGROUND" value="06B8B8" />
       </value>
     </option>
     <option name="CONSOLE_ERROR_OUTPUT">
       <value>
-        <option name="FOREGROUND" value="ffb3b3" />
+        <option name="FOREGROUND" value="FFB3B3" />
       </value>
     </option>
     <option name="CONSOLE_GRAY_OUTPUT">
       <value>
-        <option name="FOREGROUND" value="a7a7a7" />
+        <option name="FOREGROUND" value="A7A7A7" />
       </value>
     </option>
     <option name="CONSOLE_GREEN_OUTPUT">
       <value>
-        <option name="FOREGROUND" value="68e868" />
+        <option name="FOREGROUND" value="68E868" />
       </value>
     </option>
     <option name="CONSOLE_MAGENTA_OUTPUT">
       <value>
-        <option name="FOREGROUND" value="ff2eff" />
+        <option name="FOREGROUND" value="FF2EFF" />
       </value>
     </option>
     <option name="CONSOLE_NORMAL_OUTPUT">
       <value>
-        <option name="FOREGROUND" value="ffffff" />
+        <option name="FOREGROUND" value="FFFFFF" />
       </value>
     </option>
     <option name="CONSOLE_RED_OUTPUT">
       <value>
-        <option name="FOREGROUND" value="ff6767" />
+        <option name="FOREGROUND" value="FF6767" />
       </value>
     </option>
     <option name="CONSOLE_SYSTEM_OUTPUT">
       <value>
-        <option name="FOREGROUND" value="e4e4ff" />
+        <option name="FOREGROUND" value="E4E4FF" />
       </value>
     </option>
     <option name="CONSOLE_USER_INPUT">
       <value>
-        <option name="FOREGROUND" value="6ae96a" />
+        <option name="FOREGROUND" value="6AE96A" />
         <option name="FONT_TYPE" value="2" />
       </value>
     </option>
@@ -287,7 +297,7 @@
     </option>
     <option name="CSS.PROPERTY_VALUE">
       <value>
-        <option name="FOREGROUND" value="68e868" />
+        <option name="FOREGROUND" value="68E868" />
         <option name="FONT_TYPE" value="1" />
       </value>
     </option>
@@ -303,31 +313,31 @@
     </option>
     <option name="CUSTOM_INVALID_STRING_ESCAPE_ATTRIBUTES">
       <value>
-        <option name="FOREGROUND" value="68e868" />
+        <option name="FOREGROUND" value="68E868" />
         <option name="BACKGROUND" value="481515" />
       </value>
     </option>
     <option name="CUSTOM_KEYWORD1_ATTRIBUTES">
       <value>
-        <option name="FOREGROUND" value="e3e3ff" />
+        <option name="FOREGROUND" value="E3E3FF" />
         <option name="FONT_TYPE" value="1" />
       </value>
     </option>
     <option name="CUSTOM_KEYWORD2_ATTRIBUTES">
       <value>
-        <option name="FOREGROUND" value="fda5ff" />
+        <option name="FOREGROUND" value="FDA5FF" />
         <option name="FONT_TYPE" value="1" />
       </value>
     </option>
     <option name="CUSTOM_KEYWORD3_ATTRIBUTES">
       <value>
-        <option name="FOREGROUND" value="71d7d7" />
+        <option name="FOREGROUND" value="71D7D7" />
         <option name="FONT_TYPE" value="1" />
       </value>
     </option>
     <option name="CUSTOM_KEYWORD4_ATTRIBUTES">
       <value>
-        <option name="FOREGROUND" value="ffc2c2" />
+        <option name="FOREGROUND" value="FFC2C2" />
         <option name="FONT_TYPE" value="1" />
       </value>
     </option>
@@ -407,11 +417,14 @@
         <option name="FONT_TYPE" value="2" />
       </value>
     </option>
+    <option baseAttributes="TEXT" name="DEFAULT_BRACES" />
+    <option baseAttributes="TEXT" name="DEFAULT_BRACKETS" />
     <option name="DEFAULT_CLASS_NAME">
       <value>
         <option name="FOREGROUND" value="9B703F" />
       </value>
     </option>
+    <option baseAttributes="TEXT" name="DEFAULT_COMMA" />
     <option name="DEFAULT_CONSTANT">
       <value>
         <option name="FOREGROUND" value="CF6A4C" />
@@ -435,6 +448,7 @@
         <option name="FONT_TYPE" value="2" />
       </value>
     </option>
+    <option baseAttributes="TEXT" name="DEFAULT_DOT" />
     <option name="DEFAULT_ENTITY">
       <value>
         <option name="FOREGROUND" value="CF6A4C" />
@@ -442,7 +456,7 @@
     </option>
     <option name="DEFAULT_FUNCTION_CALL">
       <value>
-        <option name="FOREGROUND" value="9B703F" />
+        <option name="FOREGROUND" value="DAD085" />
       </value>
     </option>
     <option name="DEFAULT_FUNCTION_DECLARATION">
@@ -476,6 +490,7 @@
         <option name="FOREGROUND" value="9B703F" />
       </value>
     </option>
+    <option baseAttributes="TEXT" name="DEFAULT_INVALID_STRING_ESCAPE" />
     <option name="DEFAULT_KEYWORD">
       <value>
         <option name="FOREGROUND" value="CDA869" />
@@ -517,11 +532,13 @@
         <option name="FOREGROUND" value="7587A6" />
       </value>
     </option>
+    <option baseAttributes="TEXT" name="DEFAULT_PARENTHS" />
     <option name="DEFAULT_PREDEFINED_SYMBOL">
       <value>
         <option name="FOREGROUND" value="9B859D" />
       </value>
     </option>
+    <option baseAttributes="TEXT" name="DEFAULT_SEMICOLON" />
     <option name="DEFAULT_STATIC_FIELD">
       <value>
         <option name="FOREGROUND" value="7587A6" />
@@ -538,6 +555,8 @@
         <option name="FOREGROUND" value="8F9D6A" />
       </value>
     </option>
+    <option baseAttributes="TEXT" name="DEFAULT_TAG" />
+    <option baseAttributes="TEXT" name="DEFAULT_TEMPLATE_LANGUAGE_COLOR" />
     <option name="DEFAULT_VALID_STRING_ESCAPE">
       <value>
         <option name="FOREGROUND" value="CF6A4C" />
@@ -546,31 +565,7 @@
     <option name="DEPRECATED_ATTRIBUTES">
       <value>
         <option name="EFFECT_TYPE" value="3" />
-        <option name="EFFECT_COLOR" value="c0c0c0" />
-      </value>
-    </option>
-    <option name="DIFF_CONFLICT">
-      <value>
-        <option name="BACKGROUND" value="763f34" />
-        <option name="ERROR_STRIPE_COLOR" value="ff6647" />
-      </value>
-    </option>
-    <option name="DIFF_DELETED">
-      <value>
-        <option name="BACKGROUND" value="5b5b5b" />
-        <option name="ERROR_STRIPE_COLOR" value="747474" />
-      </value>
-    </option>
-    <option name="DIFF_INSERTED">
-      <value>
-        <option name="BACKGROUND" value="2f632f" />
-        <option name="ERROR_STRIPE_COLOR" value="99ff99" />
-      </value>
-    </option>
-    <option name="DIFF_MODIFIED">
-      <value>
-        <option name="BACKGROUND" value="465983" />
-        <option name="ERROR_STRIPE_COLOR" value="99ccff" />
+        <option name="EFFECT_COLOR" value="C0C0C0" />
       </value>
     </option>
     <option name="DJANGO_COMMENT">
@@ -606,12 +601,13 @@
     </option>
     <option name="DJANGO_TAG_NAME">
       <value>
-        <option name="FOREGROUND" value="AC885B" />
+        <option name="FOREGROUND" value="9B703F" />
       </value>
     </option>
+    <option baseAttributes="DEFAULT_BRACES" name="DJANGO_TAG_START_END" />
     <option name="DUPLICATE_FROM_SERVER">
       <value>
-        <option name="BACKGROUND" value="30322b" />
+        <option name="BACKGROUND" value="30322B" />
       </value>
     </option>
     <option name="ENUM_CONST">
@@ -622,32 +618,17 @@
     <option name="ERRORS_ATTRIBUTES">
       <value>
         <option name="EFFECT_TYPE" value="2" />
-        <option name="EFFECT_COLOR" value="ff6767" />
-        <option name="ERROR_STRIPE_COLOR" value="ff0000" />
-      </value>
-    </option>
-    <option name="EXECUTIONPOINT_ATTRIBUTES">
-      <value>
-        <option name="FOREGROUND" value="000101" />
-        <option name="BACKGROUND" value="c7c7ff" />
-      </value>
-    </option>
-    <option name="FOLDED_TEXT_ATTRIBUTES">
-      <value>
-        <option name="FOREGROUND" value="3c3d3c" />
-        <option name="BACKGROUND" value="101010" />
-        <option name="FONT_TYPE" value="1" />
-        <option name="EFFECT_TYPE" value="1" />
-        <option name="EFFECT_COLOR" value="3c3d3c" />
+        <option name="EFFECT_COLOR" value="FF6767" />
+        <option name="ERROR_STRIPE_COLOR" value="FF0000" />
       </value>
     </option>
     <option name="FOLLOWED_HYPERLINK_ATTRIBUTES">
       <value>
-        <option name="FOREGROUND" value="c7c7ff" />
+        <option name="FOREGROUND" value="C7C7FF" />
         <option name="BACKGROUND" value="161717" />
         <option name="FONT_TYPE" value="2" />
         <option name="EFFECT_TYPE" value="1" />
-        <option name="EFFECT_COLOR" value="c7c7ff" />
+        <option name="EFFECT_COLOR" value="C7C7FF" />
       </value>
     </option>
     <option name="First symbol in list">
@@ -659,8 +640,8 @@
     <option name="GENERIC_SERVER_ERROR_OR_WARNING">
       <value>
         <option name="EFFECT_TYPE" value="2" />
-        <option name="EFFECT_COLOR" value="aa4e00" />
-        <option name="ERROR_STRIPE_COLOR" value="f49810" />
+        <option name="EFFECT_COLOR" value="AA4E00" />
+        <option name="ERROR_STRIPE_COLOR" value="F49810" />
       </value>
     </option>
     <option name="GHERKIN_COMMENT">
@@ -689,6 +670,7 @@
         <option name="FOREGROUND" value="8F9D6A" />
       </value>
     </option>
+    <option baseAttributes="GHERKIN_TEXT" name="GHERKIN_TABLE_CELL" />
     <option name="GHERKIN_TABLE_HEADER_CELL">
       <value>
         <option name="FOREGROUND" value="7587A6" />
@@ -704,6 +686,7 @@
         <option name="FOREGROUND" value="F9EE98" />
       </value>
     </option>
+    <option baseAttributes="TEXT" name="GHERKIN_TEXT" />
     <option name="GQL_ID">
       <value>
         <option name="FOREGROUND" value="CF6A4C" />
@@ -735,11 +718,17 @@
         <option name="FONT_TYPE" value="2" />
       </value>
     </option>
+    <option baseAttributes="HAML_TEXT" name="HAML_FILTER" />
+    <option baseAttributes="HAML_TEXT" name="HAML_FILTER_CONTENT" />
     <option name="HAML_ID">
       <value>
         <option name="FOREGROUND" value="9B703F" />
       </value>
     </option>
+    <option baseAttributes="HAML_TEXT" name="HAML_LINE_CONTINUATION" />
+    <option baseAttributes="DEFAULT_PARENTHS" name="HAML_PARENTHS" />
+    <option baseAttributes="HAML_TEXT" name="HAML_RUBY_CODE" />
+    <option baseAttributes="HAML_TEXT" name="HAML_RUBY_START" />
     <option name="HAML_STRING">
       <value>
         <option name="FOREGROUND" value="8F9D6A" />
@@ -750,11 +739,15 @@
         <option name="FOREGROUND" value="8F9D6A" />
       </value>
     </option>
+    <option baseAttributes="HAML_TEXT" name="HAML_TAG" />
     <option name="HAML_TAG_NAME">
       <value>
         <option name="FOREGROUND" value="AC885B" />
       </value>
     </option>
+    <option baseAttributes="TEXT" name="HAML_TEXT" />
+    <option baseAttributes="HAML_TEXT" name="HAML_WS_REMOVAL" />
+    <option baseAttributes="HAML_TEXT" name="HAML_XHTML" />
     <option name="HTML_ATTRIBUTE_NAME">
       <value>
         <option name="FOREGROUND" value="9B703F" />
@@ -778,35 +771,36 @@
         <option name="FONT_TYPE" value="1" />
       </value>
     </option>
+    <option baseAttributes="XML_TAG" name="HTML_TAG" />
     <option name="HTML_TAG_NAME">
       <value>
-        <option name="FOREGROUND" value="AC885B" />
+        <option name="FOREGROUND" value="9B703F" />
       </value>
     </option>
     <option name="HYPERLINK_ATTRIBUTES">
       <value>
-        <option name="FOREGROUND" value="c7c7ff" />
+        <option name="FOREGROUND" value="C7C7FF" />
         <option name="FONT_TYPE" value="2" />
         <option name="EFFECT_TYPE" value="1" />
-        <option name="EFFECT_COLOR" value="c7c7ff" />
+        <option name="EFFECT_COLOR" value="C7C7FF" />
       </value>
     </option>
     <option name="IDENTIFIER_UNDER_CARET_ATTRIBUTES">
       <value>
-        <option name="BACKGROUND" value="3c3c57" />
-        <option name="ERROR_STRIPE_COLOR" value="ccccff" />
+        <option name="BACKGROUND" value="3C3C57" />
+        <option name="ERROR_STRIPE_COLOR" value="CCCCFF" />
       </value>
     </option>
     <option name="IMPLICIT_ANONYMOUS_CLASS_PARAMETER_ATTRIBUTES">
       <value>
-        <option name="FOREGROUND" value="fda5ff" />
+        <option name="FOREGROUND" value="FDA5FF" />
       </value>
     </option>
     <option name="INFO_ATTRIBUTES">
       <value>
         <option name="EFFECT_TYPE" value="2" />
         <option name="EFFECT_COLOR" value="333434" />
-        <option name="ERROR_STRIPE_COLOR" value="ffffcc" />
+        <option name="ERROR_STRIPE_COLOR" value="FFFFCC" />
       </value>
     </option>
     <option name="INJECTED_LANGUAGE_FRAGMENT">
@@ -816,7 +810,7 @@
     </option>
     <option name="INSTANCE_FIELD_ATTRIBUTES">
       <value>
-        <option name="FOREGROUND" value="fda5ff" />
+        <option name="FOREGROUND" value="FDA5FF" />
         <option name="FONT_TYPE" value="1" />
       </value>
     </option>
@@ -825,12 +819,35 @@
         <option name="FOREGROUND" value="7587A6" />
       </value>
     </option>
+    <option name="JADE_FILE_PATH">
+      <value>
+        <option name="FOREGROUND" value="8F9D6A" />
+      </value>
+    </option>
+    <option name="JADE_FILTER_NAME">
+      <value>
+        <option name="FOREGROUND" value="9B703F" />
+      </value>
+    </option>
+    <option name="JADE_JS_BLOCK">
+      <value>
+        <option name="FOREGROUND" value="9B703F" />
+      </value>
+    </option>
+    <option name="JADE_STATEMENTS">
+      <value>
+        <option name="FOREGROUND" value="CDA869" />
+      </value>
+    </option>
     <option name="JAVA_BLOCK_COMMENT">
       <value>
         <option name="FOREGROUND" value="5F5A60" />
         <option name="FONT_TYPE" value="2" />
       </value>
     </option>
+    <option baseAttributes="TEXT" name="JAVA_BRACES" />
+    <option baseAttributes="TEXT" name="JAVA_BRACKETS" />
+    <option baseAttributes="TEXT" name="JAVA_COMMA" />
     <option name="JAVA_DOC_COMMENT">
       <value>
         <option name="FOREGROUND" value="5F5A60" />
@@ -839,19 +856,20 @@
     </option>
     <option name="JAVA_DOC_MARKUP">
       <value>
-        <option name="BACKGROUND" value="223f22" />
+        <option name="BACKGROUND" value="223F22" />
       </value>
     </option>
     <option name="JAVA_DOC_TAG">
       <value>
         <option name="FONT_TYPE" value="1" />
         <option name="EFFECT_TYPE" value="1" />
-        <option name="EFFECT_COLOR" value="80807f" />
+        <option name="EFFECT_COLOR" value="80807F" />
       </value>
     </option>
+    <option baseAttributes="TEXT" name="JAVA_DOT" />
     <option name="JAVA_INVALID_STRING_ESCAPE">
       <value>
-        <option name="FOREGROUND" value="68e868" />
+        <option name="FOREGROUND" value="68E868" />
         <option name="BACKGROUND" value="481515" />
       </value>
     </option>
@@ -876,6 +894,8 @@
         <option name="FOREGROUND" value="CDA869" />
       </value>
     </option>
+    <option baseAttributes="TEXT" name="JAVA_PARENTH" />
+    <option baseAttributes="TEXT" name="JAVA_SEMICOLON" />
     <option name="JAVA_STRING">
       <value>
         <option name="FOREGROUND" value="8F9D6A" />
@@ -886,19 +906,20 @@
         <option name="FOREGROUND" value="CF6A4C" />
       </value>
     </option>
-    <option name="JS.ATTRIBUTE">
+    <option name="JS.GLOBAL_VARIABLE">
       <value>
-        <option name="BACKGROUND" value="423535" />
+        <option name="FOREGROUND" value="7587A6" />
+        <option name="FONT_TYPE" value="2" />
       </value>
     </option>
     <option name="JS.INSTANCE_MEMBER_FUNCTION">
       <value>
-        <option name="FOREGROUND" value="979748" />
+        <option name="FOREGROUND" value="9B703F" />
       </value>
     </option>
     <option name="JS.LOCAL_VARIABLE">
       <value>
-        <option name="FOREGROUND" value="64a2a2" />
+        <option name="FOREGROUND" value="7587A6" />
       </value>
     </option>
     <option name="JS.PARAMETER">
@@ -931,32 +952,33 @@
         <option name="FOREGROUND" value="7587A6" />
       </value>
     </option>
+    <option baseAttributes="TEXT" name="LOCAL_VARIABLE_ATTRIBUTES" />
     <option name="MACRONAME">
       <value>
         <option name="FOREGROUND" value="9B703F" />
       </value>
     </option>
+    <option baseAttributes="TEXT" name="MACRO_PARAMETER" />
     <option name="MATCHED_BRACE_ATTRIBUTES">
       <value>
-        <option name="BACKGROUND" value="3a6da0" />
-      </value>
-    </option>
-    <option name="MESSAGE_ARGUMENT">
-      <value>
-        <option name="FOREGROUND" value="9B703F" />
+        <option name="BACKGROUND" value="3A6DA0" />
       </value>
     </option>
     <option name="NOT_USED_ELEMENT_ATTRIBUTES">
       <value>
-        <option name="FOREGROUND" value="80807f" />
+        <option name="FOREGROUND" value="80807F" />
       </value>
     </option>
+    <option baseAttributes="TEXT" name="OC.BADCHARACTER" />
     <option name="OC.BLOCK_COMMENT">
       <value>
         <option name="FOREGROUND" value="5F5A60" />
         <option name="FONT_TYPE" value="2" />
       </value>
     </option>
+    <option baseAttributes="OC.DOT" name="OC.BRACES" />
+    <option baseAttributes="OC.DOT" name="OC.BRACKETS" />
+    <option baseAttributes="OC.DOT" name="OC.COMMA" />
     <option name="OC.CPP_KEYWORD">
       <value>
         <option name="FOREGROUND" value="CDA869" />
@@ -967,19 +989,10 @@
         <option name="FOREGROUND" value="CDA869" />
       </value>
     </option>
+    <option baseAttributes="TEXT" name="OC.DOT" />
     <option name="OC.EXTERN_VARIABLE">
       <value>
         <option name="FOREGROUND" value="7587A6" />
-      </value>
-    </option>
-    <option name="OC.FUNCTION">
-      <value>
-        <option name="FOREGROUND" value="9B703F" />
-      </value>
-    </option>
-    <option name="OC.FUNCTION">
-      <value>
-        <option name="FOREGROUND" value="9B703F" />
       </value>
     </option>
     <option name="OC.GLOBAL_VARIABLE">
@@ -1003,16 +1016,28 @@
         <option name="FOREGROUND" value="7587A6" />
       </value>
     </option>
+    <option name="OC.MESSAGE_ARGUMENT">
+      <value>
+        <option name="FOREGROUND" value="9B703F" />
+      </value>
+    </option>
+    <option name="OC.METHOD_DECLARATION">
+      <value>
+        <option name="FOREGROUND" value="9B703F" />
+      </value>
+    </option>
     <option name="OC.NUMBER">
       <value>
         <option name="FOREGROUND" value="CF6A4C" />
       </value>
     </option>
+    <option baseAttributes="OC.DOT" name="OC.OPERATION_SIGN" />
     <option name="OC.PARAMETER">
       <value>
         <option name="FOREGROUND" value="7587A6" />
       </value>
     </option>
+    <option baseAttributes="OC.DOT" name="OC.PARENTHS" />
     <option name="OC.PROPERTY">
       <value>
         <option name="FOREGROUND" value="7587A6" />
@@ -1023,6 +1048,7 @@
         <option name="FOREGROUND" value="7587A6" />
       </value>
     </option>
+    <option baseAttributes="OC.DOT" name="OC.SEMICOLON" />
     <option name="OC.STRING">
       <value>
         <option name="FOREGROUND" value="8F9D6A" />
@@ -1038,6 +1064,17 @@
         <option name="FOREGROUND" value="8F9D6A" />
       </value>
     </option>
+    <option baseAttributes="TEXT" name="PARAMETER_ATTRIBUTES" />
+    <option name="PHP_PARAMETER">
+      <value>
+        <option name="FOREGROUND" value="7587A6" />
+      </value>
+    </option>
+    <option name="PHP_VAR">
+      <value>
+        <option name="FOREGROUND" value="7587A6" />
+      </value>
+    </option>
     <option name="PROTOCOL_REFERENCE">
       <value>
         <option name="FOREGROUND" value="9B703F" />
@@ -1045,7 +1082,7 @@
     </option>
     <option name="PUPPET_BAD_CHARACTER">
       <value>
-        <option name="BACKGROUND" value="6e3b3b" />
+        <option name="BACKGROUND" value="6E3B3B" />
       </value>
     </option>
     <option name="PUPPET_BLOCK_COMMENT">
@@ -1054,11 +1091,15 @@
         <option name="FONT_TYPE" value="2" />
       </value>
     </option>
+    <option baseAttributes="DEFAULT_BRACES" name="PUPPET_BRACES" />
+    <option baseAttributes="DEFAULT_BRACKETS" name="PUPPET_BRACKETS" />
     <option name="PUPPET_CLASS">
       <value>
         <option name="FOREGROUND" value="9B703F" />
       </value>
     </option>
+    <option baseAttributes="DEFAULT_COMMA" name="PUPPET_COMMA" />
+    <option baseAttributes="DEFAULT_DOT" name="PUPPET_DOT" />
     <option name="PUPPET_ESCAPE_SEQUENCE">
       <value>
         <option name="FOREGROUND" value="CF6A4C" />
@@ -1079,11 +1120,14 @@
         <option name="FOREGROUND" value="CDA869" />
       </value>
     </option>
+    <option baseAttributes="DEFAULT_PARENTHS" name="PUPPET_PARENTH" />
     <option name="PUPPET_REGEX">
       <value>
         <option name="FOREGROUND" value="E9C062" />
       </value>
     </option>
+    <option baseAttributes="TEXT" name="PUPPET_RESOURCE_REFERENCE" />
+    <option baseAttributes="DEFAULT_SEMICOLON" name="PUPPET_SEMICOLON" />
     <option name="PUPPET_SQ_STRING">
       <value>
         <option name="FOREGROUND" value="8F9D6A" />
@@ -1104,6 +1148,8 @@
         <option name="FOREGROUND" value="8F9D6A" />
       </value>
     </option>
+    <option baseAttributes="DEFAULT_BRACES" name="PY.BRACES" />
+    <option baseAttributes="DEFAULT_BRACKETS" name="PY.BRACKETS" />
     <option name="PY.BUILTIN_NAME">
       <value>
         <option name="FOREGROUND" value="DAD085" />
@@ -1114,6 +1160,7 @@
         <option name="FOREGROUND" value="9B703F" />
       </value>
     </option>
+    <option baseAttributes="DEFAULT_COMMA" name="PY.COMMA" />
     <option name="PY.DECORATOR">
       <value>
         <option name="FOREGROUND" value="9B703F" />
@@ -1125,11 +1172,13 @@
         <option name="FONT_TYPE" value="2" />
       </value>
     </option>
+    <option baseAttributes="DEFAULT_DOT" name="PY.DOT" />
     <option name="PY.FUNC_DEFINITION">
       <value>
         <option name="FOREGROUND" value="9B703F" />
       </value>
     </option>
+    <option baseAttributes="DEFAULT_INVALID_STRING_ESCAPE" name="PY.INVALID_STRING_ESCAPE" />
     <option name="PY.KEYWORD">
       <value>
         <option name="FOREGROUND" value="F9EE98" />
@@ -1151,6 +1200,8 @@
         <option name="FOREGROUND" value="CDA869" />
       </value>
     </option>
+    <option baseAttributes="DEFAULT_PARENTHS" name="PY.PARENTHS" />
+    <option baseAttributes="TEXT" name="PY.PREDEFINED_DEFINITION" />
     <option name="PY.PREDEFINED_USAGE">
       <value>
         <option name="FOREGROUND" value="DAD085" />
@@ -1183,7 +1234,7 @@
     </option>
     <option name="REST.FIXED">
       <value>
-        <option name="BACKGROUND" value="48485f" />
+        <option name="BACKGROUND" value="48485F" />
       </value>
     </option>
     <option name="REST.INLINE">
@@ -1193,7 +1244,7 @@
     </option>
     <option name="REST.INTERPRETED">
       <value>
-        <option name="BACKGROUND" value="4d5d3d" />
+        <option name="BACKGROUND" value="4D5D3D" />
       </value>
     </option>
     <option name="REST.ITALIC">
@@ -1223,11 +1274,20 @@
         <option name="FONT_TYPE" value="2" />
       </value>
     </option>
+    <option baseAttributes="XML_TAG" name="RHTML_EXPRESSION_END_ID" />
+    <option baseAttributes="XML_TAG" name="RHTML_EXPRESSION_START_ID" />
+    <option baseAttributes="XML_TAG" name="RHTML_OMIT_NEW_LINE_ID" />
     <option name="RHTML_SCRIPTING_BACKGROUND_ID">
       <value>
         <option name="BACKGROUND" value="202020" />
       </value>
     </option>
+    <option baseAttributes="XML_TAG" name="RHTML_SCRIPTLET_END_ID" />
+    <option baseAttributes="XML_TAG" name="RHTML_SCRIPTLET_START_ID" />
+    <option baseAttributes="TEXT" name="RUBY_BAD_CHARACTER" />
+    <option baseAttributes="DEFAULT_BRACKETS" name="RUBY_BRACKETS" />
+    <option baseAttributes="DEFAULT_SEMICOLON" name="RUBY_COLON" />
+    <option baseAttributes="DEFAULT_COMMA" name="RUBY_COMMA" />
     <option name="RUBY_COMMENT">
       <value>
         <option name="FOREGROUND" value="5F5A60" />
@@ -1249,6 +1309,7 @@
         <option name="FOREGROUND" value="7587A6" />
       </value>
     </option>
+    <option baseAttributes="DEFAULT_DOT" name="RUBY_DOT" />
     <option name="RUBY_ESCAPE_SEQUENCE">
       <value>
         <option name="FOREGROUND" value="CF6A4C" />
@@ -1289,6 +1350,7 @@
         <option name="FOREGROUND" value="8F9D6A" />
       </value>
     </option>
+    <option baseAttributes="DEFAULT_INVALID_STRING_ESCAPE" name="RUBY_INVALID_ESCAPE_SEQUENCE" />
     <option name="RUBY_IVAR">
       <value>
         <option name="FOREGROUND" value="7587A6" />
@@ -1314,6 +1376,7 @@
         <option name="FOREGROUND" value="9B703F" />
       </value>
     </option>
+    <option baseAttributes="TEXT" name="RUBY_NTH_REF" />
     <option name="RUBY_NUMBER">
       <value>
         <option name="FOREGROUND" value="CF6A4C" />
@@ -1331,7 +1394,7 @@
     </option>
     <option name="RUBY_PARAMETER_ID">
       <value>
-        <option name="FOREGROUND" value="7587A6" />
+        <option name="FOREGROUND" value="A0C2D6" />
       </value>
     </option>
     <option name="RUBY_REGEXP">
@@ -1339,6 +1402,7 @@
         <option name="FOREGROUND" value="E9C062" />
       </value>
     </option>
+    <option baseAttributes="DEFAULT_SEMICOLON" name="RUBY_SEMICOLON" />
     <option name="RUBY_SPECIFIC_CALL">
       <value>
         <option name="FOREGROUND" value="F9EE98" />
@@ -1437,7 +1501,7 @@
     </option>
     <option name="SEARCH_RESULT_ATTRIBUTES">
       <value>
-        <option name="BACKGROUND" value="4f4f82" />
+        <option name="BACKGROUND" value="4F4F82" />
       </value>
     </option>
     <option name="SLIM_BAD_CHARACTER">
@@ -1446,6 +1510,7 @@
         <option name="BACKGROUND" value="452645" />
       </value>
     </option>
+    <option baseAttributes="SLIM_STATIC_CONTENT" name="SLIM_CALL" />
     <option name="SLIM_CLASS">
       <value>
         <option name="FOREGROUND" value="9B703F" />
@@ -1467,6 +1532,7 @@
         <option name="FOREGROUND" value="9B703F" />
       </value>
     </option>
+    <option baseAttributes="SLIM_STATIC_CONTENT" name="SLIM_FILTER_CONTENT" />
     <option name="SLIM_ID">
       <value>
         <option name="FOREGROUND" value="9B703F" />
@@ -1477,6 +1543,9 @@
         <option name="FOREGROUND" value="8F9D6A" />
       </value>
     </option>
+    <option baseAttributes="DEFAULT_PARENTHS" name="SLIM_PARENTHS" />
+    <option baseAttributes="HAML_TEXT" name="SLIM_RUBY_CODE" />
+    <option baseAttributes="TEXT" name="SLIM_STATIC_CONTENT" />
     <option name="SLIM_STRING_INTERPOLATED">
       <value>
         <option name="FOREGROUND" value="8F9D6A" />
@@ -1492,9 +1561,45 @@
         <option name="FOREGROUND" value="9B703F" />
       </value>
     </option>
+    <option baseAttributes="SLIM_STATIC_CONTENT" name="SLIM_TAG_START" />
+    <option name="SPY-JS.EXCEPTION">
+      <value>
+        <option name="BACKGROUND" value="713F3F" />
+        <option name="EFFECT_TYPE" value="2" />
+        <option name="EFFECT_COLOR" value="F8F8F8" />
+      </value>
+    </option>
+    <option name="SPY-JS.FUNCTION_SCOPE">
+      <value>
+        <option name="BACKGROUND" value="2E2E1F" />
+        <option name="EFFECT_TYPE" value="2" />
+        <option name="EFFECT_COLOR" value="F8F8F8" />
+      </value>
+    </option>
+    <option name="SPY-JS.PATH_LEVEL_ONE">
+      <value>
+        <option name="BACKGROUND" value="264326" />
+        <option name="EFFECT_TYPE" value="2" />
+        <option name="EFFECT_COLOR" value="F8F8F8" />
+      </value>
+    </option>
+    <option name="SPY-JS.PATH_LEVEL_TWO">
+      <value>
+        <option name="EFFECT_TYPE" value="1" />
+        <option name="EFFECT_COLOR" value="F8F8F8" />
+      </value>
+    </option>
+    <option name="SPY-JS.PROGRAM_SCOPE">
+      <value>
+        <option name="BACKGROUND" value="2B2B2B" />
+        <option name="EFFECT_TYPE" value="2" />
+        <option name="EFFECT_COLOR" value="F8F8F8" />
+      </value>
+    </option>
+    <option baseAttributes="TEXT" name="SPY-JS.VALUE_HINT" />
     <option name="STATIC_FIELD_ATTRIBUTES">
       <value>
-        <option name="FOREGROUND" value="fda5ff" />
+        <option name="FOREGROUND" value="FDA5FF" />
         <option name="FONT_TYPE" value="3" />
       </value>
     </option>
@@ -1516,15 +1621,15 @@
     </option>
     <option name="TEXT_SEARCH_RESULT_ATTRIBUTES">
       <value>
-        <option name="BACKGROUND" value="5f5f00" />
-        <option name="ERROR_STRIPE_COLOR" value="00ff00" />
+        <option name="BACKGROUND" value="5F5F00" />
+        <option name="ERROR_STRIPE_COLOR" value="00FF00" />
       </value>
     </option>
     <option name="TODO_DEFAULT_ATTRIBUTES">
       <value>
-        <option name="FOREGROUND" value="c7c7ff" />
+        <option name="FOREGROUND" value="C7C7FF" />
         <option name="FONT_TYPE" value="3" />
-        <option name="ERROR_STRIPE_COLOR" value="ff" />
+        <option name="ERROR_STRIPE_COLOR" value="FF" />
       </value>
     </option>
     <option name="TYPEDEF">
@@ -1539,16 +1644,16 @@
     </option>
     <option name="WARNING_ATTRIBUTES">
       <value>
-        <option name="BACKGROUND" value="4a3f10" />
+        <option name="BACKGROUND" value="4A3F10" />
         <option name="EFFECT_TYPE" value="1" />
         <option name="EFFECT_COLOR" value="F8F8F8" />
-        <option name="ERROR_STRIPE_COLOR" value="ffff00" />
+        <option name="ERROR_STRIPE_COLOR" value="FFFF00" />
       </value>
     </option>
     <option name="WRITE_IDENTIFIER_UNDER_CARET_ATTRIBUTES">
       <value>
-        <option name="BACKGROUND" value="472c47" />
-        <option name="ERROR_STRIPE_COLOR" value="ffcdff" />
+        <option name="BACKGROUND" value="472C47" />
+        <option name="ERROR_STRIPE_COLOR" value="FFCDFF" />
       </value>
     </option>
     <option name="WRITE_SEARCH_RESULT_ATTRIBUTES">
@@ -1576,6 +1681,7 @@
         <option name="FONT_TYPE" value="2" />
       </value>
     </option>
+    <option baseAttributes="TEXT" name="XML_TAG" />
     <option name="XML_TAG_DATA">
       <value>
         <option name="FONT_TYPE" value="1" />
@@ -1583,7 +1689,7 @@
     </option>
     <option name="XML_TAG_NAME">
       <value>
-        <option name="FOREGROUND" value="AC885B" />
+        <option name="FOREGROUND" value="9B703F" />
       </value>
     </option>
     <option name="YAML_COMMENT">

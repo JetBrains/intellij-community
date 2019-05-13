@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,24 +15,42 @@
  */
 package com.intellij.ide.browsers;
 
+import com.intellij.lang.Language;
+import com.intellij.lang.html.HTMLLanguage;
+import com.intellij.lang.xhtml.XHTMLLanguage;
+import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.openapi.components.ServiceManager;
-import com.intellij.psi.PsiElement;
+import com.intellij.openapi.fileTypes.LanguageFileType;
+import com.intellij.psi.PsiFile;
+import com.intellij.util.Url;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-/**
- * @author nik
- */
+import java.util.Collection;
+
 public abstract class WebBrowserService {
   public static WebBrowserService getInstance() {
     return ServiceManager.getService(WebBrowserService.class);
   }
 
-  public abstract boolean canOpenInBrowser(@NotNull PsiElement psiElement);
+  @NotNull
+  public abstract Collection<Url> getUrlsToOpen(@NotNull OpenInBrowserRequest request, boolean preferLocalUrl) throws WebBrowserUrlProvider.BrowserException;
 
-  @Nullable
-  public abstract String getUrlToOpen(@NotNull PsiElement psiElement);
+  public static boolean isHtmlOrXmlLanguage(@NotNull Language language) {
+    return language.isKindOf(HTMLLanguage.INSTANCE)
+           || language == XHTMLLanguage.INSTANCE
+           || language == XMLLanguage.INSTANCE;
+  }
 
-  @Nullable
-  public abstract String getUrlToOpen(@NotNull PsiElement psiElement, boolean preferLocalUrl) throws WebBrowserUrlProvider.BrowserException;
+  public static boolean isHtmlOrXmlFile(@NotNull PsiFile psiFile) {
+    Language baseLanguage = psiFile.getViewProvider().getBaseLanguage();
+    if (isHtmlOrXmlLanguage(baseLanguage)) {
+      return true;
+    }
+
+    if (psiFile.getFileType() instanceof LanguageFileType) {
+      return isHtmlOrXmlLanguage(((LanguageFileType)psiFile.getFileType()).getLanguage());
+    }
+
+    return false;
+  }
 }

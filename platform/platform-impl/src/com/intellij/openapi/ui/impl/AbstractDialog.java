@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,7 @@ package com.intellij.openapi.ui.impl;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.wm.IdeFocusManager;
-import com.intellij.ui.FocusTrackback;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -37,6 +37,7 @@ interface AbstractDialog extends Disposable {
 
   void addKeyListener(KeyListener listener);
 
+  @Deprecated // Use setModalityType instead
   void setModal(boolean b);
 
   void toFront();
@@ -81,17 +82,23 @@ interface AbstractDialog extends Disposable {
 
   void setResizable(boolean resizable);
 
+  @NotNull
   Point getLocation();
 
-  void setLocation(Point p);
+  void setLocation(@NotNull Point p);
 
   void setLocation(int x, int y);
 
+  @Deprecated // use getModalityTypeInstead
   boolean isModal();
+
+  void setModalityType(Dialog.ModalityType modalityType);
+
+  Dialog.ModalityType getModalityType();
 
   void show();
 
+  @NotNull
   IdeFocusManager getFocusManager();
 
-  FocusTrackback getFocusTrackback();
 }

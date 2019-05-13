@@ -1,3 +1,4 @@
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.completion;
 
 import com.intellij.codeInsight.CodeInsightSettings;
@@ -5,7 +6,6 @@ import com.intellij.codeInsight.completion.impl.CamelHumpMatcher;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.codeInsight.lookup.impl.LookupImpl;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiMember;
 import com.intellij.psi.PsiPackage;
@@ -24,24 +24,21 @@ import java.util.List;
  * author ven
  */
 public abstract class CompletionTestBase extends JavaCodeInsightFixtureTestCase {
-
   protected void doTest() {
     doTest("");
   }
   protected void doTest(String directory) {
-    CamelHumpMatcher.forceStartMatching(getTestRootDisposable());
+    CamelHumpMatcher.forceStartMatching(myFixture.getTestRootDisposable());
     final List<String> stringList = TestUtils.readInput(getTestDataPath() + "/" + getTestName(true) + ".test");
     if (directory.length()!=0) directory += "/";
     final String fileName = directory + getTestName(true) + "." + getExtension();
     myFixture.addFileToProject(fileName, stringList.get(0));
     myFixture.configureByFile(fileName);
 
-    boolean old = CodeInsightSettings.getInstance().AUTOCOMPLETE_COMMON_PREFIX;
-    CodeInsightSettings.getInstance().AUTOCOMPLETE_COMMON_PREFIX = false;
     CodeInsightSettings.getInstance().AUTOCOMPLETE_ON_CODE_COMPLETION = false;
 
 
-    String result = "";
+    StringBuilder result = new StringBuilder();
     try {
       myFixture.completeBasic();
 
@@ -49,34 +46,25 @@ public abstract class CompletionTestBase extends JavaCodeInsightFixtureTestCase 
       if (lookup != null) {
         List<LookupElement> items = lookup.getItems();
         if (!addReferenceVariants()) {
-          items = ContainerUtil.findAll(items, new Condition<LookupElement>() {
-            @Override
-            public boolean value(LookupElement lookupElement) {
-              final Object o = lookupElement.getObject();
-              return !(o instanceof PsiMember) && !(o instanceof GrVariable) && !(o instanceof GroovyResolveResult) && !(o instanceof PsiPackage);
-            }
+          items = ContainerUtil.findAll(items, lookupElement -> {
+            final Object o = lookupElement.getObject();
+            return !(o instanceof PsiMember) && !(o instanceof GrVariable) && !(o instanceof GroovyResolveResult) && !(o instanceof PsiPackage);
           });
         }
-        Collections.sort(items, new Comparator<LookupElement>() {
-          @Override
-          public int compare(LookupElement o1, LookupElement o2) {
-            return o1.getLookupString().compareTo(o2.getLookupString());
-          }
-        });
-        result = "";
+        Collections.sort(items, Comparator.comparing(LookupElement::getLookupString));
+        result = new StringBuilder();
         for (LookupElement item : items) {
-          result = result + "\n" + item.getLookupString();
+          result.append("\n").append(item.getLookupString());
         }
-        result = result.trim();
-        LookupManager.getInstance(myFixture.getProject()).hideActiveLookup();
+        result = new StringBuilder(result.toString().trim());
+        LookupManager.hideActiveLookup(myFixture.getProject());
       }
 
     }
     finally {
       CodeInsightSettings.getInstance().AUTOCOMPLETE_ON_CODE_COMPLETION = true;
-      CodeInsightSettings.getInstance().AUTOCOMPLETE_COMMON_PREFIX = old;
     }
-    assertEquals(StringUtil.trimEnd(stringList.get(1), "\n"), result);
+    assertEquals(StringUtil.trimEnd(stringList.get(1), "\n"), result.toString());
   }
 
   protected String getExtension() {

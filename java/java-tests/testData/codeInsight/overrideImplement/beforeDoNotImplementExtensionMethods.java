@@ -4,7 +4,7 @@ interface A<T> {
 }
 
 interface B<T> extends A<T> {
-    void m1(T t) default { }
+    default void m1(T t) { }
 }
 
 class MyClass<T> implements B<T> {

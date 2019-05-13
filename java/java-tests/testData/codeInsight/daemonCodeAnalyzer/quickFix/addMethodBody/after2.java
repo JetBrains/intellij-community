@@ -1,7 +1,7 @@
-// "Add Method Body" "true"
+// "Add method body" "true"
 class a {
     String f() {
-        <caret><selection>return null;  //To change body of created methods use File | Settings | File Templates.</selection>
+        <caret><selection>return null;</selection>
     }
 }
 

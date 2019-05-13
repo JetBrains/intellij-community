@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2011 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.cvsSupport2.actions;
 
 import com.intellij.CvsBundle;
@@ -29,13 +15,11 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsConfiguration;
-import com.intellij.openapi.vcs.VcsDirectoryMapping;
 import com.intellij.openapi.vcs.actions.VcsContext;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-
-import java.util.ArrayList;
-import java.util.List;
+import com.intellij.vcsUtil.VcsUtil;
+import org.jetbrains.annotations.NotNull;
 
 public class ImportAction extends ActionOnSelectedElement {
   private ImportDetails myImportDetails;
@@ -44,26 +28,31 @@ public class ImportAction extends ActionOnSelectedElement {
     super(false);
   }
 
-  public void update(AnActionEvent e) {
+  @Override
+  public void update(@NotNull AnActionEvent e) {
     e.getPresentation().setVisible(true);
     e.getPresentation().setEnabled(true);
   }
 
+  @Override
   protected String getTitle(VcsContext context) {
     return CvsBundle.message("operation.name.import");
   }
 
+  @Override
   protected CvsHandler getCvsHandler(CvsContext context) {
     final VirtualFile selectedFile = context.getSelectedFile();
     final ImportWizard importWizard = new ImportWizard(context.getProject(), selectedFile);
-    importWizard.show();
-    if (!importWizard.isOK()) return CvsHandler.NULL;
+    if (!importWizard.showAndGet()) {
+      return CvsHandler.NULL;
+    }
 
     myImportDetails = importWizard.createImportDetails();
     if (myImportDetails == null) return CvsHandler.NULL;
     return CommandCvsHandler.createImportHandler(myImportDetails);
   }
 
+  @Override
   protected void onActionPerformed(CvsContext context, CvsTabbedWindow tabbedWindow, boolean successfully, CvsHandler handler) {
     super.onActionPerformed(context, tabbedWindow, successfully, handler);
     final ImportConfiguration importConfiguration = ImportConfiguration.getInstance();
@@ -74,10 +63,12 @@ public class ImportAction extends ActionOnSelectedElement {
 
   private AbstractAction createCheckoutAction(final boolean makeNewFilesReadOnly) {
     return new AbstractAction(false) {
+      @Override
       protected String getTitle(VcsContext context) {
         return CvsBundle.message("operation.name.check.out.project");
       }
 
+      @Override
       protected CvsHandler getCvsHandler(CvsContext context) {
         final Project project = context.getProject();
         return CommandCvsHandler.createCheckoutHandler(myImportDetails.getCvsRoot(),
@@ -87,6 +78,7 @@ public class ImportAction extends ActionOnSelectedElement {
                                                        project == null ? null : VcsConfiguration.getInstance(project).getCheckoutOption());
       }
 
+      @Override
       protected void onActionPerformed(CvsContext context, CvsTabbedWindow tabbedWindow, boolean successfully, CvsHandler handler) {
         super.onActionPerformed(context, tabbedWindow, successfully, handler);
         final Project project = context.getProject();
@@ -111,29 +103,8 @@ public class ImportAction extends ActionOnSelectedElement {
         }
         mapRoot.refresh(false, false);
         final String path = mapRoot.equals(projectBaseDir) ? "" : mapRoot.getPath();
-        final ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(project);
-        final List<VcsDirectoryMapping> vcsDirectoryMappings = new ArrayList<VcsDirectoryMapping>(vcsManager.getDirectoryMappings());
-        VcsDirectoryMapping mapping = new VcsDirectoryMapping(path, CvsVcs2.getInstance(project).getName());
-        for (int i = 0; i < vcsDirectoryMappings.size(); i++) {
-          final VcsDirectoryMapping m = vcsDirectoryMappings.get(i);
-          if (!m.getDirectory().equals(path)) {
-            continue;
-          }
-          if (m.getVcs().length() == 0) {
-            vcsDirectoryMappings.set(i, mapping);
-            mapping = null;
-            break;
-          }
-          else if (m.getVcs().equals(mapping.getVcs())) {
-            mapping = null;
-            break;
-          }
-        }
-        if (mapping != null) {
-          vcsDirectoryMappings.add(mapping);
-        }
-        vcsManager.setDirectoryMappings(vcsDirectoryMappings);
-        vcsManager.updateActiveVcss();
+        ProjectLevelVcsManager manager = ProjectLevelVcsManager.getInstance(project);
+        manager.setDirectoryMappings(VcsUtil.addMapping(manager.getDirectoryMappings(), path, CvsVcs2.getInstance(project).getName()));
       }
     };
   }

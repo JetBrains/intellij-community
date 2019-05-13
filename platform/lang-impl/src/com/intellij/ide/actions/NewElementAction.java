@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,39 +17,43 @@
 package com.intellij.ide.actions;
 
 import com.intellij.ide.IdeBundle;
-import com.intellij.ide.IdeView;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.util.Condition;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Konstantin Bulenkov
  */
-@SuppressWarnings({"MethodMayBeStatic"})
-public class NewElementAction extends AnAction  implements DumbAware, PopupAction {
-  public void actionPerformed(final AnActionEvent event) {
-    showPopup(event.getDataContext());
+public class NewElementAction extends DumbAwareAction implements PopupAction {
+
+  @Override
+  public void actionPerformed(@NotNull AnActionEvent e) {
+    createPopup(e.getDataContext())
+      .showInBestPositionFor(e.getDataContext());
   }
 
-  protected void showPopup(DataContext context) {
-    createPopup(context).showInBestPositionFor(context);
+  @NotNull
+  protected ListPopup createPopup(@NotNull DataContext dataContext) {
+    return JBPopupFactory.getInstance().createActionGroupPopup(
+      getPopupTitle(),
+      getGroup(dataContext),
+      dataContext,
+      getActionSelectionAid(),
+      isShowDisabledActions(),
+      getDisposeCallback(),
+      getMaxRowCount(),
+      getPreselectActionCondition(dataContext),
+      getPlace());
   }
 
-  protected ListPopup createPopup(DataContext dataContext) {
-    return JBPopupFactory.getInstance()
-      .createActionGroupPopup(getPopupTitle(),
-                              getGroup(dataContext),
-                              dataContext,
-                              isShowNumbers(),
-                              isShowDisabledActions(),
-                              isHonorActionMnemonics(),
-                              getDisposeCallback(),
-                              getMaxRowCount(),
-                              getPreselectActionCondition(dataContext));
+  @Nullable
+  protected JBPopupFactory.ActionSelectionAid getActionSelectionAid() {
+    return null;
   }
 
   protected int getMaxRowCount() {
@@ -66,15 +70,7 @@ public class NewElementAction extends AnAction  implements DumbAware, PopupActio
     return null;
   }
 
-  protected boolean isHonorActionMnemonics() {
-    return false;
-  }
-
   protected boolean isShowDisabledActions() {
-    return false;
-  }
-
-  protected boolean isShowNumbers() {
     return false;
   }
 
@@ -82,28 +78,35 @@ public class NewElementAction extends AnAction  implements DumbAware, PopupActio
     return IdeBundle.message("title.popup.new.element");
   }
 
-  public void update(AnActionEvent e){
-    final Presentation presentation = e.getPresentation();
-    final DataContext context = e.getDataContext();
-    final Project project = PlatformDataKeys.PROJECT.getData(context);
+  @Override
+  public void update(@NotNull AnActionEvent e) {
+    Presentation presentation = e.getPresentation();
+    Project project = e.getProject();
     if (project == null) {
       presentation.setEnabled(false);
       return;
     }
-    if (Boolean.TRUE.equals(LangDataKeys.NO_NEW_ACTION.getData(context))) {
-      presentation.setEnabled(false);
-      return;
-    }
-    final IdeView ideView = LangDataKeys.IDE_VIEW.getData(context);
-    if (ideView == null) {
+    if (!isEnabled(e)) {
       presentation.setEnabled(false);
       return;
     }
 
-    presentation.setEnabled(!ActionGroupUtil.isGroupEmpty(getGroup(context), e));
+    presentation.setEnabled(!ActionGroupUtil.isGroupEmpty(getGroup(e.getDataContext()), e, isEnabledInModalContext()));
+  }
+
+  protected boolean isEnabled(@NotNull AnActionEvent e) {
+    if (Boolean.TRUE.equals(LangDataKeys.NO_NEW_ACTION.getData(e.getDataContext()))) {
+      return false;
+    }
+    return true;
   }
 
   protected ActionGroup getGroup(DataContext dataContext) {
     return (ActionGroup)ActionManager.getInstance().getAction(IdeActions.GROUP_WEIGHING_NEW);
+  }
+
+  @NotNull
+  protected String getPlace() {
+    return ActionPlaces.getActionGroupPopupPlace(IdeActions.GROUP_WEIGHING_NEW);
   }
 }

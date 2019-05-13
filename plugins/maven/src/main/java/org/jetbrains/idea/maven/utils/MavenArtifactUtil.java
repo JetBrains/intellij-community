@@ -15,6 +15,7 @@
  */
 package org.jetbrains.idea.maven.utils;
 
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import gnu.trove.THashMap;
@@ -70,6 +71,33 @@ public class MavenArtifactUtil {
     return getArtifactFile(localRepository, id.getGroupId(), id.getArtifactId(), id.getVersion(), "pom");
   }
 
+  public static boolean isPluginIdEquals(@Nullable String groupId1, @Nullable String artifactId1,
+                                         @Nullable String groupId2, @Nullable String artifactId2) {
+    if (artifactId1 == null) return false;
+
+    if (!artifactId1.equals(artifactId2)) return false;
+
+    if (groupId1 != null) {
+      for (String group : DEFAULT_GROUPS) {
+        if (groupId1.equals(group)) {
+          groupId1 = null;
+          break;
+        }
+      }
+    }
+
+    if (groupId2 != null) {
+      for (String group : DEFAULT_GROUPS) {
+        if (groupId2.equals(group)) {
+          groupId2 = null;
+          break;
+        }
+      }
+    }
+
+    return Comparing.equal(groupId1, groupId2);
+  }
+
   @NotNull
   public static File getArtifactFile(File localRepository, String groupId, String artifactId, String version, String type) {
     File dir = null;
@@ -95,7 +123,7 @@ public class MavenArtifactUtil {
   }
 
   private static String resolveVersion(File pluginDir) {
-    List<String> versions = new ArrayList<String>();
+    List<String> versions = new ArrayList<>();
 
     File[] children;
     try {

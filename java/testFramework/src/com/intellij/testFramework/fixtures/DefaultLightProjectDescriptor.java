@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,11 +25,13 @@ import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.LightProjectDescriptor;
+import org.jetbrains.annotations.NotNull;
 
 /**
 * @author peter
 */
-public class DefaultLightProjectDescriptor implements LightProjectDescriptor {
+public class DefaultLightProjectDescriptor extends LightProjectDescriptor {
+  @NotNull
   @Override
   public ModuleType getModuleType() {
     return StdModuleTypes.JAVA;
@@ -41,7 +43,7 @@ public class DefaultLightProjectDescriptor implements LightProjectDescriptor {
   }
 
   @Override
-  public void configureModule(Module module, ModifiableRootModel model, ContentEntry contentEntry) {
+  public void configureModule(@NotNull Module module, @NotNull ModifiableRootModel model, @NotNull ContentEntry contentEntry) {
     LanguageLevelModuleExtension extension = model.getModuleExtension(LanguageLevelModuleExtension.class);
     if (extension != null) {
       extension.setLanguageLevel(LanguageLevel.HIGHEST);

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.codeInsight.editorActions;
 
@@ -21,9 +7,11 @@ import com.intellij.ide.DataManager;
 import com.intellij.injected.editor.EditorWindow;
 import com.intellij.lang.CompositeLanguage;
 import com.intellij.lang.Language;
+import com.intellij.lang.injection.InjectedLanguageManager;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
@@ -31,12 +19,17 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.*;
-import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiWhiteSpace;
+import com.intellij.psi.impl.DebugUtil;
+import com.intellij.psi.impl.source.tree.injected.InjectedCaret;
 import com.intellij.psi.templateLanguages.OuterLanguageElement;
-import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.List;
 
 public class SelectWordHandler extends EditorActionHandler {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.editorActions.SelectWordHandler");
@@ -44,50 +37,61 @@ public class SelectWordHandler extends EditorActionHandler {
   private final EditorActionHandler myOriginalHandler;
 
   public SelectWordHandler(EditorActionHandler originalHandler) {
+    super(true);
     myOriginalHandler = originalHandler;
   }
 
   @Override
-  public void execute(@NotNull Editor editor, DataContext dataContext) {
+  public void doExecute(@NotNull Editor editor, @Nullable Caret caret, DataContext dataContext) {
+    assert caret != null;
     if (LOG.isDebugEnabled()) {
       LOG.debug("enter: execute(editor='" + editor + "')");
     }
-    if (editor instanceof EditorWindow && editor.getSelectionModel().hasSelection()
-        && InjectedLanguageUtil.isSelectionIsAboutToOverflowInjectedFragment((EditorWindow)editor)) {
-      // selection about to spread beyond injected fragment
-      editor = ((EditorWindow)editor).getDelegate();
-    }
-    Project project = PlatformDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(editor.getComponent()));
+    Project project = CommonDataKeys.PROJECT.getData(dataContext);
     if (project == null) {
       if (myOriginalHandler != null) {
-        myOriginalHandler.execute(editor, dataContext);
+        myOriginalHandler.execute(editor, caret, dataContext);
       }
       return;
     }
+    PsiDocumentManager.getInstance(project).commitDocument(editor.getDocument());
 
-    Document document = editor.getDocument();
-    final PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(document);
-
-    if (file == null) {
+    TextRange range = selectWord(caret, project);
+    if (editor instanceof EditorWindow) {
+      if (range == null || !isInsideEditableInjection((EditorWindow)editor, range, project) || TextRange.from(0, editor.getDocument().getTextLength()).equals(
+        new TextRange(caret.getSelectionStart(), caret.getSelectionEnd()))) {
+        editor = ((EditorWindow)editor).getDelegate();
+        caret = ((InjectedCaret)caret).getDelegate();
+        range = selectWord(caret, project);
+      }
+    }
+    if (range == null) {
       if (myOriginalHandler != null) {
-        myOriginalHandler.execute(editor, dataContext);
+        myOriginalHandler.execute(editor, caret, dataContext);
       }
-      return;
     }
-
-    PsiDocumentManager.getInstance(project).commitAllDocuments();
-    doAction(editor, file);
+    else {
+      caret.setSelection(range.getStartOffset(), range.getEndOffset());
+    }
   }
 
-  private static void doAction(@NotNull Editor editor, @NotNull PsiFile file) {
-    if (file instanceof PsiCompiledFile) {
-      file = ((PsiCompiledFile)file).getDecompiledPsiFile();
-      if (file == null) return;
-    }
+  private static boolean isInsideEditableInjection(EditorWindow editor, TextRange range, Project project) {
+    PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
+    if (file == null) return true;
+    List<TextRange> editables = InjectedLanguageManager.getInstance(project).intersectWithAllEditableFragments(file, range);
+
+    return editables.size() == 1 && range.equals(editables.get(0));
+  }
+
+  @Nullable("null means unable to select")
+  private static TextRange selectWord(@NotNull Caret caret, @NotNull Project project) {
+    Document document = caret.getEditor().getDocument();
+    PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(document);
+    if (file == null) return null;
 
     FeatureUsageTracker.getInstance().triggerFeatureUsed("editing.select.word");
 
-    int caretOffset = adjustCaretOffset(editor);
+    int caretOffset = adjustCaretOffset(caret);
 
     PsiElement element = findElementAt(file, caretOffset);
 
@@ -101,7 +105,7 @@ public class SelectWordHandler extends EditorActionHandler {
 
     while (element instanceof PsiWhiteSpace || element != null && StringUtil.isEmptyOrSpaces(element.getText())) {
       while (element.getNextSibling() == null) {
-        if (element instanceof PsiFile) return;
+        if (element instanceof PsiFile) return null;
         final PsiElement parent = element.getParent();
         final PsiElement[] children = parent.getChildren();
 
@@ -114,55 +118,59 @@ public class SelectWordHandler extends EditorActionHandler {
         }
       }
 
+      if (element instanceof PsiFile) return null;
       element = element.getNextSibling();
-      if (element == null) return;
+      if (element == null) return null;
       TextRange range = element.getTextRange();
-      if (range == null) return; // Fix NPE (EA-29110)
+      if (range == null) return null; // Fix NPE (EA-29110)
       caretOffset = range.getStartOffset();
     }
 
     if (element instanceof OuterLanguageElement) {
       PsiElement elementInOtherTree = file.getViewProvider().findElementAt(element.getTextOffset(), element.getLanguage());
-      if (elementInOtherTree == null || elementInOtherTree.getContainingFile() != element.getContainingFile()) {
+      if (elementInOtherTree != null && elementInOtherTree.getContainingFile() != element.getContainingFile()) {
         while (elementInOtherTree != null && elementInOtherTree.getPrevSibling() == null) {
           elementInOtherTree = elementInOtherTree.getParent();
         }
 
         if (elementInOtherTree != null) {
-          assert elementInOtherTree.getTextOffset() == caretOffset;
-          element = elementInOtherTree;
+          if (elementInOtherTree.getTextOffset() == caretOffset) element = elementInOtherTree;
         }
       }
     }
 
-    final TextRange selectionRange = new TextRange(editor.getSelectionModel().getSelectionStart(), editor.getSelectionModel().getSelectionEnd());
+    checkElementRange(document, element);
 
-    final Ref<TextRange> minimumRange = new Ref<TextRange>(new TextRange(0, editor.getDocument().getTextLength()));
+    final TextRange selectionRange = new TextRange(caret.getSelectionStart(), caret.getSelectionEnd());
 
-    SelectWordUtil.processRanges(element, editor.getDocument().getCharsSequence(), caretOffset, editor, new Processor<TextRange>() {
-      @Override
-      public boolean process(@NotNull TextRange range) {
-        if (range.contains(selectionRange) && !range.equals(selectionRange)) {
-          if (minimumRange.get().contains(range)) {
-            minimumRange.set(range);
-            return true;
-          }
+    final Ref<TextRange> minimumRange = new Ref<>(new TextRange(0, document.getTextLength()));
+
+    SelectWordUtil.processRanges(element, document.getCharsSequence(), caretOffset, caret.getEditor(), range -> {
+      if (range.contains(selectionRange) && !range.equals(selectionRange)) {
+        if (minimumRange.get().contains(range)) {
+          minimumRange.set(range);
+          return true;
         }
-        return false;
       }
+      return false;
     });
 
-    TextRange range = minimumRange.get();
-    editor.getSelectionModel().setSelection(range.getStartOffset(), range.getEndOffset());
+    return minimumRange.get();
   }
 
-  private static int adjustCaretOffset(@NotNull Editor editor) {
-    int caretOffset = editor.getCaretModel().getOffset();
+  private static void checkElementRange(Document document, PsiElement element) {
+    if (element != null && element.getTextRange().getEndOffset() > document.getTextLength()) {
+      throw new AssertionError(DebugUtil.diagnosePsiDocumentInconsistency(element, document));
+    }
+  }
+
+  private static int adjustCaretOffset(@NotNull Caret caret) {
+    int caretOffset = caret.getOffset();
     if (caretOffset == 0) {
       return caretOffset;
     }
 
-    CharSequence text = editor.getDocument().getCharsSequence();
+    CharSequence text = caret.getEditor().getDocument().getCharsSequence();
     char prev = text.charAt(caretOffset - 1);
     if (caretOffset < text.length() &&
         !Character.isJavaIdentifierPart(text.charAt(caretOffset)) && Character.isJavaIdentifierPart(prev)) {

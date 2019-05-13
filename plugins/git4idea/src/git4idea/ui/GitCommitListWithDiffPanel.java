@@ -15,41 +15,42 @@
  */
 package git4idea.ui;
 
+import com.intellij.dvcs.ui.CommitListPanel;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.vcs.changes.Change;
-import com.intellij.openapi.vcs.changes.ui.ChangesBrowser;
+import com.intellij.openapi.vcs.changes.ui.SimpleChangesBrowser;
 import com.intellij.util.Consumer;
-import git4idea.history.browser.GitCommit;
+import git4idea.GitCommit;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.Collections;
 import java.util.List;
 
 /**
- * List of commits at the left, the {@link ChangesBrowser} at the right.
+ * List of commits at the left, the {@link SimpleChangesBrowser} at the right.
  * Select a commit to shows its changes in the changes browser.
  *
  * @author Kirill Likhodedov
  */
 public class GitCommitListWithDiffPanel extends JPanel {
 
-  private final ChangesBrowser myChangesBrowser;
-  private final GitCommitListPanel myCommitListPanel;
+  private final SimpleChangesBrowser myChangesBrowser;
+  private final CommitListPanel myCommitListPanel;
 
   public GitCommitListWithDiffPanel(@NotNull Project project, @NotNull List<GitCommit> commits) {
     super(new BorderLayout());
 
-    myCommitListPanel = new GitCommitListPanel(commits, null);
-    myCommitListPanel.addListSelectionListener(new Consumer<GitCommit>() {
-      @Override public void consume(GitCommit commit) {
-        myChangesBrowser.setChangesToDisplay(commit.getChanges());
+    myCommitListPanel = new CommitListPanel(commits, null);
+    myCommitListPanel.addListMultipleSelectionListener(new Consumer<List<Change>>() {
+      @Override
+      public void consume(List<Change> changes) {
+        myChangesBrowser.setChangesToDisplay(changes);
       }
     });
 
-    myChangesBrowser = new ChangesBrowser(project, null, Collections.<Change>emptyList(), null, false, true, null, ChangesBrowser.MyUseCase.LOCAL_CHANGES, null);
+    myChangesBrowser = new SimpleChangesBrowser(project, false, true);
     myCommitListPanel.registerDiffAction(myChangesBrowser.getDiffAction());
 
     Splitter splitter = new Splitter(false, 0.7f);

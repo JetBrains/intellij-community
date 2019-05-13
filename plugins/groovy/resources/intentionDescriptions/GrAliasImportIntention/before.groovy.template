@@ -1,3 +1,0 @@
-import foo.Bar.staticMethod
-
-print <spot>staticMethod()</spot>

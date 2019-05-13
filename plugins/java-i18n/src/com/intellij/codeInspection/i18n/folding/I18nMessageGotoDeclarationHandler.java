@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,11 +19,8 @@ import com.intellij.codeInsight.folding.impl.EditorFoldingInfo;
 import com.intellij.codeInsight.navigation.actions.GotoDeclarationHandlerBase;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.folding.CompositeFoldingBuilder;
-import com.intellij.lang.folding.FoldingBuilder;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.FoldRegion;
-import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.util.Key;
 import com.intellij.psi.*;
 import org.jetbrains.annotations.Nullable;
 
@@ -31,15 +28,15 @@ import org.jetbrains.annotations.Nullable;
  * @author Konstantin Bulenkov
  */
 public class I18nMessageGotoDeclarationHandler extends GotoDeclarationHandlerBase {
-  private static final Key<FoldingBuilder> KEY = CompositeFoldingBuilder.FOLDING_BUILDER;
 
-  public PsiElement getGotoDeclarationTarget(PsiElement element, Editor editor) {
+  @Override
+  public PsiElement getGotoDeclarationTarget(@Nullable PsiElement element, Editor editor) {
     if (!(element instanceof PsiJavaToken)) return null;
 
     int i = 4; //some street magic
     while (element != null && i > 0) {
       final ASTNode node = element.getNode();
-      if (node != null && node.getUserData(KEY) != null) {
+      if (node != null && node.getUserData(CompositeFoldingBuilder.FOLDING_BUILDER) instanceof PropertyFoldingBuilder) {
         break;
       }
       else {
@@ -67,7 +64,7 @@ public class I18nMessageGotoDeclarationHandler extends GotoDeclarationHandlerBas
       if (foldRegion == null || foldRegion.isExpanded()) return null;
 
       for (PsiExpression expression : methodCall.getArgumentList().getExpressions()) {
-        if (expression instanceof PsiLiteralExpression && PropertyFoldingBuilder.isI18nProperty(expression.getProject(), (PsiLiteralExpression)expression)) {
+        if (expression instanceof PsiLiteralExpression && PropertyFoldingBuilder.isI18nProperty((PsiLiteralExpression)expression)) {
           return resolve(expression);
         }
       }

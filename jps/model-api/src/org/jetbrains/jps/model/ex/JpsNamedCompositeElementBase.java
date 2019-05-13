@@ -16,7 +16,8 @@
 package org.jetbrains.jps.model.ex;
 
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.jps.model.*;
+import org.jetbrains.jps.model.JpsEventDispatcher;
+import org.jetbrains.jps.model.JpsNamedElement;
 
 /**
  * @author nik
@@ -41,6 +42,7 @@ public abstract class JpsNamedCompositeElementBase<Self extends JpsNamedComposit
     return myName;
   }
 
+  @Override
   public void applyChanges(@NotNull Self modified) {
     super.applyChanges(modified);
     setName(modified.getName());

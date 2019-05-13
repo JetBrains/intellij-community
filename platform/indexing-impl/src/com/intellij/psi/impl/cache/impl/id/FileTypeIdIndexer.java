@@ -16,12 +16,11 @@
 
 package com.intellij.psi.impl.cache.impl.id;
 
-import com.intellij.util.indexing.DataIndexer;
-import com.intellij.util.indexing.FileContent;
-
 /**
+ * @deprecated left for compatibility, use IdIndexer interface instead. To be removed in IntelliJ 2018.3
+ *
  * @author Eugene Zhuravlev
- *         Date: Jan 16, 2008
  */
-public abstract class FileTypeIdIndexer implements DataIndexer<IdIndexEntry, Integer, FileContent> {
+@Deprecated
+public abstract class FileTypeIdIndexer implements IdIndexer {
 }

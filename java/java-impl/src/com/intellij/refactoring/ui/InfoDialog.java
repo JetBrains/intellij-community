@@ -16,16 +16,16 @@
  */
 package com.intellij.refactoring.ui;
 
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.refactoring.RefactoringBundle;
+import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NotNull;
+
+import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import javax.swing.*;
-
-import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.project.Project;
-import com.intellij.util.ui.UIUtil;
-import com.intellij.refactoring.RefactoringBundle;
-import org.jetbrains.annotations.NotNull;
 
 public class InfoDialog extends DialogWrapper{
   private JCheckBox myShowInFutureCheckBox;
@@ -38,16 +38,17 @@ public class InfoDialog extends DialogWrapper{
     myText = text;
     setButtonsAlignment(SwingUtilities.CENTER);
     setTitle(RefactoringBundle.message("information.title"));
-    setButtonsMargin(null);
     init();
     setOKButtonText(RefactoringBundle.message("ok.button"));
   }
 
+  @Override
   @NotNull
   protected Action[] createActions(){
     return new Action[]{getOKAction()};
   }
 
+  @Override
   protected JComponent createCenterPanel() {
     JPanel panel = new JPanel();
     panel.setBorder(BorderFactory.createEtchedBorder());
@@ -75,6 +76,7 @@ public class InfoDialog extends DialogWrapper{
     isToShowInFuture = true;
     myShowInFutureCheckBox.addActionListener(
       new ActionListener() {
+        @Override
         public void actionPerformed(ActionEvent event) {
           isToShowInFuture = !myShowInFutureCheckBox.isSelected();
         }

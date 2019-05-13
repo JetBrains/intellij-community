@@ -34,34 +34,33 @@ import org.intellij.plugins.relaxNG.ApplicationLoader;
 import org.intellij.plugins.relaxNG.xml.dom.RngGrammar;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * Created by IntelliJ IDEA.
- * User: sweinreuter
- * Date: 17.07.2007
- */
 // XXX: the tests rely on this still being an intention action
 class CreatePatternFix implements IntentionAction, LocalQuickFix {
   private final PsiReference myReference;
 
-  public CreatePatternFix(PsiReference reference) {
+  CreatePatternFix(PsiReference reference) {
     myReference = reference;
   }
 
+  @Override
   @NotNull
   public String getText() {
     return "Create Pattern '" + myReference.getCanonicalText() + "'";
   }
 
+  @Override
   @NotNull
   public String getFamilyName() {
     return "Create Pattern";
   }
 
+  @Override
   @NotNull
   public String getName() {
     return getText();
   }
 
+  @Override
   public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
     if (!isAvailable()) {
       return;
@@ -73,6 +72,7 @@ class CreatePatternFix implements IntentionAction, LocalQuickFix {
     }
   }
 
+  @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
     return isAvailable();
   }
@@ -91,6 +91,7 @@ class CreatePatternFix implements IntentionAction, LocalQuickFix {
     }
   }
 
+  @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
     doFix();
   }
@@ -120,6 +121,7 @@ class CreatePatternFix implements IntentionAction, LocalQuickFix {
     root.add(defineTag);
   }
 
+  @Override
   public boolean startInWriteAction() {
     return true;
   }

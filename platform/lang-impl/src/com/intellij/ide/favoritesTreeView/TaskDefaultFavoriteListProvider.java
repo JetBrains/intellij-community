@@ -31,18 +31,13 @@ import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.Consumer;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-/**
- * Created with IntelliJ IDEA.
- * User: Irina.Chernushina
- * Date: 6/7/12
- * Time: 4:33 PM
- */
 public class TaskDefaultFavoriteListProvider extends AbstractFavoritesListProvider {
   public static final String CURRENT_TASK = "Current task";
 
@@ -68,6 +63,11 @@ public class TaskDefaultFavoriteListProvider extends AbstractFavoritesListProvid
   @Override
   public FavoritesListNode createFavoriteListNode(Project project) {
     return null;
+  }
+
+  @Override
+  public int getWeight() {
+    return TASKS_WEIGHT;
   }
 
   //@Override
@@ -154,7 +154,7 @@ public class TaskDefaultFavoriteListProvider extends AbstractFavoritesListProvid
 
   // ! containing self
   public static List<AbstractTreeNode> getPathToUsualNode(final AbstractTreeNode treeNode) {
-    final List<AbstractTreeNode> result = new ArrayList<AbstractTreeNode>();
+    final List<AbstractTreeNode> result = new ArrayList<>();
     AbstractTreeNode current = treeNode;
     while (current != null && (!(current instanceof FavoritesRootNode))) {
       result.add(current);
@@ -180,7 +180,7 @@ public class TaskDefaultFavoriteListProvider extends AbstractFavoritesListProvid
 
   private void showNotePopup(Project project,
                              final DnDAwareTree tree,
-                             final Consumer<String> after, final String initText) {
+                             final Consumer<? super String> after, final String initText) {
     final JTextArea textArea = new JTextArea(3, 50);
     textArea.setFont(UIUtil.getTreeFont());
     textArea.setText(initText);
@@ -195,19 +195,14 @@ public class TaskDefaultFavoriteListProvider extends AbstractFavoritesListProvid
     final JComponent content = popup.getContent();
     final AnAction action = new AnAction() {
       @Override
-      public void actionPerformed(AnActionEvent e) {
+      public void actionPerformed(@NotNull AnActionEvent e) {
         popup.closeOk(e.getInputEvent());
         unregisterCustomShortcutSet(content);
         after.consume(textArea.getText());
       }
     };
     action.registerCustomShortcutSet(CommonShortcuts.CTRL_ENTER, content);
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
-      @Override
-      public void run() {
-        popup.showInCenterOf(tree);
-      }
-    }, ModalityState.NON_MODAL, project.getDisposed());
+    ApplicationManager.getApplication().invokeLater(() -> popup.showInCenterOf(tree), ModalityState.NON_MODAL, project.getDisposed());
   }
 
   //private Operation getCustomEditOperation() {

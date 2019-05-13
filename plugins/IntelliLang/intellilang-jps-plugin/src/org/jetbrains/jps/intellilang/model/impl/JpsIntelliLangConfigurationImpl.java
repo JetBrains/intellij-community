@@ -1,3 +1,4 @@
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.jps.intellilang.model.impl;
 
 import org.jetbrains.annotations.NotNull;
@@ -9,11 +10,9 @@ import org.jetbrains.jps.model.ex.JpsElementChildRoleBase;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: 11/29/12
  */
-public class JpsIntelliLangConfigurationImpl extends JpsElementBase<JpsIntelliLangConfigurationImpl> implements
-                                                                                             JpsIntelliLangConfiguration {
-  public static final JpsElementChildRole<JpsIntelliLangConfiguration> ROLE = JpsElementChildRoleBase.create("IntelliLang");
+public class JpsIntelliLangConfigurationImpl extends JpsElementBase<JpsIntelliLangConfigurationImpl> implements JpsIntelliLangConfiguration {
+  public static final JpsElementChildRole<JpsIntelliLangConfiguration> ROLE = JpsElementChildRoleBase.create("LangInjection");
 
   private String myPatternAnnotationClassName = "org.intellij.lang.annotations.Pattern";
   private InstrumentationType myInstrumentationType = InstrumentationType.ASSERT;
@@ -30,21 +29,23 @@ public class JpsIntelliLangConfigurationImpl extends JpsElementBase<JpsIntelliLa
     myInstrumentationType = modified.myInstrumentationType;
   }
 
+  @NotNull
   @Override
   public String getPatternAnnotationClass() {
     return myPatternAnnotationClassName;
   }
 
+  @NotNull
   @Override
   public InstrumentationType getInstrumentationType() {
     return myInstrumentationType;
   }
 
-  public void setPatternAnnotationClassName(String patternAnnotationClassName) {
+  public void setPatternAnnotationClassName(@NotNull String patternAnnotationClassName) {
     myPatternAnnotationClassName = patternAnnotationClassName;
   }
 
-  public void setInstrumentationType(InstrumentationType instrumentationType) {
+  public void setInstrumentationType(@NotNull InstrumentationType instrumentationType) {
     myInstrumentationType = instrumentationType;
   }
 }

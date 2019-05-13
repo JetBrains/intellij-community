@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,7 @@
  */
 package com.intellij.codeInsight.template;
 
-import com.intellij.codeInsight.completion.JavaCompletionData;
+import com.intellij.codeInsight.completion.JavaKeywordCompletion;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.ide.highlighter.JavaFileHighlighter;
 import com.intellij.lang.java.JavaLanguage;
@@ -24,13 +24,14 @@ import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtilBase;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import static com.intellij.patterns.PlatformPatterns.psiElement;
+import static com.intellij.patterns.StandardPatterns.instanceOf;
 
 public abstract class JavaCodeContextType extends TemplateContextType {
 
@@ -42,7 +43,7 @@ public abstract class JavaCodeContextType extends TemplateContextType {
 
   @Override
   public boolean isInContext(@NotNull final PsiFile file, final int offset) {
-    if (PsiUtilBase.getLanguageAtOffset(file, offset).isKindOf(JavaLanguage.INSTANCE)) {
+    if (PsiUtilCore.getLanguageAtOffset(file, offset).isKindOf(JavaLanguage.INSTANCE)) {
       PsiElement element = file.findElementAt(offset);
       if (element instanceof PsiWhiteSpace) {
         return false;
@@ -99,7 +100,14 @@ public abstract class JavaCodeContextType extends TemplateContextType {
         return false;
       }
       
-      PsiStatement statement = PsiTreeUtil.getParentOfType(element, PsiStatement.class);
+      PsiElement statement = PsiTreeUtil.getParentOfType(element, PsiStatement.class, PsiLambdaExpression.class);
+      if (statement instanceof PsiLambdaExpression) {
+        PsiElement body = ((PsiLambdaExpression)statement).getBody();
+        if (body != null && PsiTreeUtil.isAncestor(body, element, false)) {
+          statement = body;
+        }
+      }
+
       return statement != null && statement.getTextRange().getStartOffset() == element.getTextRange().getStartOffset();
     }
   }
@@ -121,15 +129,16 @@ public abstract class JavaCodeContextType extends TemplateContextType {
       if (((PsiJavaCodeReferenceElement)parent).isQualified()) {
         return false;
       }
-      if (parent.getParent() instanceof PsiMethodCallExpression) {
+      PsiElement grandpa = parent.getParent();
+      if (grandpa instanceof PsiMethodCallExpression || grandpa instanceof PsiReferenceList) {
         return false;
       }
 
-      if (psiElement().withParents(PsiTypeElement.class, PsiMember.class).accepts(parent)) {
+      if (grandpa instanceof PsiTypeElement && (grandpa.getParent() instanceof PsiMember || grandpa.getParent() instanceof PsiReferenceParameterList)) {
         return false;
       }
 
-      if (JavaCompletionData.isInsideParameterList(element)) {
+      if (JavaKeywordCompletion.isInsideParameterList(element)) {
         return false;
       }
 
@@ -139,7 +148,8 @@ public abstract class JavaCodeContextType extends TemplateContextType {
 
   private static boolean isAfterExpression(PsiElement element) {
     ProcessingContext context = new ProcessingContext();
-    if (psiElement().inside(PsiExpression.class).afterLeaf(psiElement().inside(psiElement(PsiExpression.class).save("prevExpr"))).accepts(element, context)) {
+    if (psiElement().withAncestor(1, instanceOf(PsiExpression.class))
+      .afterLeaf(psiElement().withAncestor(1, psiElement(PsiExpression.class).save("prevExpr"))).accepts(element, context)) {
       PsiExpression prevExpr = (PsiExpression)context.get("prevExpr");
       if (prevExpr.getTextRange().getEndOffset() <= element.getTextRange().getStartOffset()) {
         return true;
@@ -160,7 +170,9 @@ public abstract class JavaCodeContextType extends TemplateContextType {
         return false;
       }
 
-      return JavaCompletionData.isSuitableForClass(element) || JavaCompletionData.isInsideParameterList(element);
+      return JavaKeywordCompletion.isSuitableForClass(element) ||
+             JavaKeywordCompletion.isInsideParameterList(element) ||
+             PsiTreeUtil.getParentOfType(element, PsiReferenceParameterList.class) != null;
     }
   }
 

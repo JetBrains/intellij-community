@@ -23,6 +23,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileFactory;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.dom.MavenDomUtil;
 import org.jetbrains.idea.maven.project.MavenProject;
 
@@ -39,7 +40,7 @@ public class MavenFilteredPropertyPsiReference extends MavenPropertyPsiReference
     PsiElement result = super.doResolve();
     if (result != null) return result;
 
-    for (String each : myMavenProject.getFilters()) {
+    for (String each : myMavenProject.getFilterPropertiesFiles()) {
       VirtualFile file = LocalFileSystem.getInstance().findFileByPath(each);
       if (file == null) continue;
       IProperty property = MavenDomUtil.findProperty(myProject, file, myText);
@@ -53,7 +54,7 @@ public class MavenFilteredPropertyPsiReference extends MavenPropertyPsiReference
   protected void collectVariants(List<Object> result, Set<String> variants) {
     super.collectVariants(result, variants);
 
-    for (String each : myMavenProject.getFilters()) {
+    for (String each : myMavenProject.getFilterPropertiesFiles()) {
       VirtualFile file = LocalFileSystem.getInstance().findFileByPath(each);
       if (file == null) continue;
       collectPropertiesFileVariants(MavenDomUtil.getPropertiesFile(myProject, file), null, result, variants);
@@ -61,7 +62,7 @@ public class MavenFilteredPropertyPsiReference extends MavenPropertyPsiReference
   }
 
   @Override
-  public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {
+  public PsiElement handleElementRename(@NotNull String newElementName) throws IncorrectOperationException {
     String newText = myRange.replace(myElement.getText(), newElementName);
     PsiFile psiFile = myElement.getContainingFile();
     String newFileText = myElement.getTextRange().replace(psiFile.getText(), newText);

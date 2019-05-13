@@ -25,7 +25,9 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.*;
@@ -37,61 +39,112 @@ import org.intellij.plugins.relaxNG.compact.RncFileType;
 import org.intellij.plugins.relaxNG.compact.psi.RncFile;
 import org.intellij.plugins.relaxNG.model.resolve.RelaxIncludeIndex;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.xml.sax.ErrorHandler;
-import org.xml.sax.SAXException;
 import org.xml.sax.SAXParseException;
 import org.xml.sax.helpers.DefaultHandler;
 
 import java.net.URL;
+import java.util.ArrayList;
+import java.util.List;
 
-/**
- * Created by IntelliJ IDEA.
- * User: sweinreuter
- * Date: 18.07.2007
- */
-public class RngSchemaValidator extends ExternalAnnotator {
+public class RngSchemaValidator extends ExternalAnnotator<RngSchemaValidator.MyValidationMessageConsumer,RngSchemaValidator.MyValidationMessageConsumer> {
   private static final Logger LOG = Logger.getInstance(RngSchemaValidator.class.getName());
 
-  public void annotate(final PsiFile file, final AnnotationHolder holder) {
+  @Nullable
+  @Override
+  public MyValidationMessageConsumer collectInformation(@NotNull final PsiFile file) {
     final FileType type = file.getFileType();
     if (type != StdFileTypes.XML && type != RncFileType.getInstance()) {
-      return;
+      return null;
     }
     final XmlFile xmlfile = (XmlFile)file;
     final XmlDocument document = xmlfile.getDocument();
     if (document == null) {
-      return;
+      return null;
     }
     if (type == StdFileTypes.XML) {
       final XmlTag rootTag = document.getRootTag();
       if (rootTag == null) {
-        return;
+        return null;
       }
       if (!ApplicationLoader.RNG_NAMESPACE.equals(rootTag.getNamespace())) {
-        return;
+        return null;
       }
     } else {
       if (!ApplicationManager.getApplication().isUnitTestMode() && MyErrorFinder.hasError(xmlfile)) {
-        return;
+        return null;
       }
     }
     final Document doc = PsiDocumentManager.getInstance(file.getProject()).getDocument(file);
 
+    final MyValidationMessageConsumer consumer = new MyValidationMessageConsumer();
     ErrorHandler eh = new DefaultHandler() {
-      public void warning(SAXParseException e) throws SAXException {
-        handleError(e, file, doc, new WarningMessageConsumer(holder));
+      @Override
+      public void warning(SAXParseException e) {
+        handleError(e, file, doc, consumer.warning());
       }
 
-      public void error(SAXParseException e) throws SAXException {
-        handleError(e, file, doc, new ErrorMessageConsumer(holder));
+      @Override
+      public void error(SAXParseException e) {
+        handleError(e, file, doc, consumer.error());
       }
     };
 
     RngParser.parsePattern(file, eh, true);
+    return consumer;
+  }
+
+  @Nullable
+  @Override
+  public MyValidationMessageConsumer doAnnotate(MyValidationMessageConsumer collectedInfo) {
+    return collectedInfo;
+  }
+
+  @Override
+  public void apply(@NotNull PsiFile file,
+                    MyValidationMessageConsumer annotationResult,
+                    @NotNull AnnotationHolder holder) {
+    annotationResult.apply(holder);
+  }
+
+  static class MyValidationMessageConsumer  {
+    final List<Pair<PsiElement, String >> errors = new ArrayList<>();
+    final List<Pair<PsiElement, String >> warnings = new ArrayList<>();
+    ValidationMessageConsumer error() {
+      return new ValidationMessageConsumer() {
+        @Override
+        public void onMessage(PsiElement context, String message) {
+          errors.add(Pair.create(context, message));
+        }
+      }; 
+    }
+    ValidationMessageConsumer warning() {
+      return new ValidationMessageConsumer() {
+        @Override
+        public void onMessage(PsiElement context, String message) {
+          warnings.add(Pair.create(context, message));
+        }
+      }; 
+    }
+    void apply(AnnotationHolder holder) {
+      MessageConsumerImpl errorc = new ErrorMessageConsumer(holder);
+      MessageConsumerImpl warningc = new WarningMessageConsumer(holder);
+      for (Pair<PsiElement, String> error : errors) {
+        errorc.onMessage(error.first, error.second);
+      }
+      for (Pair<PsiElement, String> warning : warnings) {
+        warningc.onMessage(warning.first, warning.second);
+      }
+    }
   }
 
   public static void handleError(SAXParseException ex, PsiFile file, Document document, ValidationMessageConsumer consumer) {
     final String systemId = ex.getSystemId();
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("RNG Schema error: " + ex.getMessage() + " [" + systemId + "]");
+    }
 
     if (systemId != null) {
       final VirtualFile virtualFile = findVirtualFile(systemId);
@@ -147,7 +200,7 @@ public class RngSchemaValidator extends ExternalAnnotator {
       return VfsUtil.findFileByURL(new URL(systemId));
     } catch (Exception e) {
       LOG.warn("Failed to build file from uri <" + systemId + ">", e);
-      return VirtualFileManager.getInstance().findFileByUrl(VfsUtil.fixURLforIDEA(systemId));
+      return VirtualFileManager.getInstance().findFileByUrl(VfsUtilCore.fixURLforIDEA(systemId));
     }
   }
 
@@ -155,13 +208,14 @@ public class RngSchemaValidator extends ExternalAnnotator {
     void onMessage(PsiElement context, String message);
   }
 
-  private static abstract class MessageConsumerImpl implements ValidationMessageConsumer {
+  private abstract static class MessageConsumerImpl implements ValidationMessageConsumer {
     protected final AnnotationHolder myHolder;
 
-    public MessageConsumerImpl(AnnotationHolder holder) {
+    MessageConsumerImpl(AnnotationHolder holder) {
       myHolder = holder;
     }
 
+    @Override
     public void onMessage(PsiElement host, String message) {
       final ASTNode node = host.getNode();
       assert node != null;
@@ -192,15 +246,16 @@ public class RngSchemaValidator extends ExternalAnnotator {
     private static final String MISSING_START_ELEMENT = "missing \"start\" element";
     private static final String UNDEFINED_PATTERN = "reference to undefined pattern ";
 
-    public ErrorMessageConsumer(AnnotationHolder holder) {
+    ErrorMessageConsumer(AnnotationHolder holder) {
       super(holder);
     }
 
+    @Override
     protected void createAnnotation(ASTNode node, String message) {
       if (MISSING_START_ELEMENT.equals(message)) {
         final PsiFile psiFile = node.getPsi().getContainingFile();
         if (psiFile instanceof XmlFile) {
-          final PsiElementProcessor.FindElement<XmlFile> processor = new PsiElementProcessor.FindElement<XmlFile>();
+          final PsiElementProcessor.FindElement<XmlFile> processor = new PsiElementProcessor.FindElement<>();
           RelaxIncludeIndex.processBackwardDependencies((XmlFile)psiFile, processor);
           if (processor.isFound()) {
             // files that are included from other files do not need a <start> element.
@@ -218,10 +273,11 @@ public class RngSchemaValidator extends ExternalAnnotator {
 
   private static class WarningMessageConsumer extends MessageConsumerImpl {
 
-    public WarningMessageConsumer(AnnotationHolder holder) {
+    WarningMessageConsumer(AnnotationHolder holder) {
       super(holder);
     }
 
+    @Override
     protected void createAnnotation(ASTNode node, String message) {
       myHolder.createWarningAnnotation(node, message);
     }
@@ -234,6 +290,7 @@ public class RngSchemaValidator extends ExternalAnnotator {
     }
     private static final HasError FOUND = new HasError();
 
+    @Override
     public void visitErrorElement(PsiErrorElement element) {
       throw FOUND;
     }
@@ -247,4 +304,5 @@ public class RngSchemaValidator extends ExternalAnnotator {
       }
     }
   }
+
 }

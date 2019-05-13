@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,17 +15,16 @@
  */
 package org.jetbrains.plugins.groovy.refactoring.safeDelete
 
-import com.intellij.codeInsight.TargetElementUtilBase
+import com.intellij.codeInsight.TargetElementUtil
 import com.intellij.psi.PsiElement
 import com.intellij.refactoring.safeDelete.SafeDeleteHandler
-import com.intellij.refactoring.safeDelete.SafeDeleteProcessor
 import org.jetbrains.plugins.groovy.LightGroovyTestCase
-import org.jetbrains.plugins.groovy.util.TestUtils;
+import org.jetbrains.plugins.groovy.util.TestUtils
 
 /**
  * @author Max Medvedev
  */
-public class SafeDeleteJavaParameterTest extends LightGroovyTestCase {
+class SafeDeleteJavaParameterTest extends LightGroovyTestCase {
 
   final String basePath = TestUtils.testDataPath + "refactoring/safeDeleteJavaParameter/"
 
@@ -63,8 +62,8 @@ class X{}
     myFixture.configureByText('test.java', java)
     def groovyFile = myFixture.addFileToProject('test.groovy', groovy)
 
-    final PsiElement psiElement = TargetElementUtilBase
-            .findTargetElement(myFixture.editor, TargetElementUtilBase.ELEMENT_NAME_ACCEPTED | TargetElementUtilBase.REFERENCED_ELEMENT_ACCEPTED);
+    final PsiElement psiElement = TargetElementUtil
+            .findTargetElement(myFixture.editor, TargetElementUtil.ELEMENT_NAME_ACCEPTED | TargetElementUtil.REFERENCED_ELEMENT_ACCEPTED)
 
     SafeDeleteHandler.invoke(myFixture.project, [psiElement] as PsiElement[], true)
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,14 +21,15 @@ import com.intellij.openapi.util.Condition;
  * @author max
  */
 public class FilteringProcessor<T> implements Processor<T> {
-  private final Condition<T> myFilter;
-  private final Processor<T> myProcessor;
+  private final Condition<? super T> myFilter;
+  private final Processor<? super T> myProcessor;
 
-  public FilteringProcessor(final Condition<T> filter, Processor<T> processor) {
+  public FilteringProcessor(final Condition<? super T> filter, Processor<? super T> processor) {
     myFilter = filter;
     myProcessor = processor;
   }
 
+  @Override
   public boolean process(final T t) {
     if (!myFilter.value(t)) return true;
     return myProcessor.process(t);

@@ -39,6 +39,7 @@ public class PsiTypeParameterListImpl extends JavaStubPsiElement<PsiTypeParamete
     super(node);
   }
 
+  @NotNull
   @Override
   public PsiTypeParameter[] getTypeParameters() {
     return getStubOrPsiChildren(JavaStubElementTypes.TYPE_PARAMETER, PsiTypeParameter.ARRAY_FACTORY);
@@ -69,6 +70,7 @@ public class PsiTypeParameterListImpl extends JavaStubPsiElement<PsiTypeParamete
     }
   }
 
+  @Override
   public String toString() {
     return "PsiTypeParameterList";
   }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,17 +20,17 @@ import com.intellij.refactoring.changeSignature.ThrownExceptionInfo
 * @author Max Medvedev
 */
 class SimpleExceptionsGen implements ChangeSignatureTestCase.GenExceptions {
-  private final List<ThrownExceptionInfo> myInfos;
+  private final List<ThrownExceptionInfo> myInfos
 
-  public SimpleExceptionsGen(List<ThrownExceptionInfo> infos) {
-    myInfos = infos;
+  SimpleExceptionsGen(List<ThrownExceptionInfo> infos) {
+    myInfos = infos
   }
 
   @Override
-  public ThrownExceptionInfo[] genExceptions(PsiMethod method) {
+  ThrownExceptionInfo[] genExceptions(PsiMethod method) {
     for (ThrownExceptionInfo info : myInfos) {
-      info.updateFromMethod(method);
+      info.updateFromMethod(method)
     }
-    return myInfos;
+    return myInfos
   }
 }

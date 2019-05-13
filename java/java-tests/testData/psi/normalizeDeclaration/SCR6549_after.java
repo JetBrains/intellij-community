@@ -1,6 +1,6 @@
 class A{
     {
-        long x; // comment
+        long x;  // comment
         long y;
     }
 }

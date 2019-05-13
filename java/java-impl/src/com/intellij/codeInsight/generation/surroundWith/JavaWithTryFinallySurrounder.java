@@ -16,18 +16,19 @@
 package com.intellij.codeInsight.generation.surroundWith;
 
 import com.intellij.codeInsight.CodeInsightBundle;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.EditorModificationUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 
-class JavaWithTryFinallySurrounder extends JavaStatementsSurrounder{
+public class JavaWithTryFinallySurrounder extends JavaStatementsSurrounder{
+  private static final Logger LOG = Logger.getInstance(JavaWithTryFinallySurrounder.class);
+
   @Override
   public String getTemplateDescription() {
     return CodeInsightBundle.message("surround.with.try.finally.template");
@@ -36,7 +37,7 @@ class JavaWithTryFinallySurrounder extends JavaStatementsSurrounder{
   @Override
   public TextRange surroundStatements(Project project, Editor editor, PsiElement container, PsiElement[] statements) throws IncorrectOperationException{
     PsiManager manager = PsiManager.getInstance(project);
-    PsiElementFactory factory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();
+    PsiElementFactory factory = JavaPsiFacade.getElementFactory(manager.getProject());
     CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(project);
 
     statements = SurroundWithUtil.moveDeclarationsOut(container, statements, false);
@@ -48,28 +49,32 @@ class JavaWithTryFinallySurrounder extends JavaStatementsSurrounder{
     PsiTryStatement tryStatement = (PsiTryStatement)factory.createStatementFromText(text, null);
     tryStatement = (PsiTryStatement)codeStyleManager.reformat(tryStatement);
 
-    tryStatement = (PsiTryStatement)container.addAfter(tryStatement, statements[statements.length - 1]);
+    tryStatement = (PsiTryStatement)addAfter(tryStatement, container, statements);
 
     PsiCodeBlock tryBlock = tryStatement.getTryBlock();
     if (tryBlock == null) {
       return null;
     }
     SurroundWithUtil.indentCommentIfNecessary(tryBlock, statements);
-    tryBlock.addRange(statements[0], statements[statements.length - 1]);
+    addRangeWithinContainer(tryBlock, container, statements, true);
     container.deleteChildRange(statements[0], statements[statements.length - 1]);
 
     PsiCodeBlock finallyBlock = tryStatement.getFinallyBlock();
     if (finallyBlock == null) {
       return null;
     }
-    int offset = finallyBlock.getTextRange().getStartOffset() + 2;
-    editor.getCaretModel().moveToOffset(offset);
-    final Document document = editor.getDocument();
-    PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(document);
-    editor.getSelectionModel().removeSelection();
-    final PsiStatement firstTryStmt = tryBlock.getStatements()[0];
-    final int indent = firstTryStmt.getTextOffset() - document.getLineStartOffset(document.getLineNumber(firstTryStmt.getTextOffset()));
-    EditorModificationUtil.insertStringAtCaret(editor, StringUtil.repeat(" ", indent), false, true);
+    moveCaretToFinallyBlock(project, editor, finallyBlock);
     return new TextRange(editor.getCaretModel().getOffset(), editor.getCaretModel().getOffset());
+  }
+
+  public static void moveCaretToFinallyBlock(Project project, Editor editor, PsiCodeBlock finallyBlock) {
+    Document document = editor.getDocument();
+    PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(document);
+    TextRange finallyBlockRange = finallyBlock.getTextRange();
+    int newLineOffset = finallyBlockRange.getStartOffset() + 2;
+    editor.getCaretModel().moveToOffset(newLineOffset);
+    editor.getSelectionModel().removeSelection();
+    CodeStyleManager.getInstance(project).adjustLineIndent(document, newLineOffset);
+    PsiDocumentManager.getInstance(project).commitDocument(document);
   }
 }

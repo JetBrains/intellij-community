@@ -10,7 +10,7 @@ class A {
 
 
             newMethod(allStats[i], sb, statMember);
-            
+
         }
     }
 

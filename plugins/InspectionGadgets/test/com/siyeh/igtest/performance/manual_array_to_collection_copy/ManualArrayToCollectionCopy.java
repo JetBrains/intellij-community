@@ -9,7 +9,7 @@ public class ManualArrayToCollectionCopy {
 
     void foo(Object[] xs, Object[] ys) {
         List list = new ArrayList();
-        for (int i = 0; (i < (int)(xs.length)); i++) {
+        <warning descr="Manual array to collection copy">for</warning> (int i = 0; (i < (int)(xs.length)); i++) {
             list.add(xs[i]);
         }
         list.addAll(Arrays.asList(xs).subList(0, xs.length));
@@ -17,7 +17,7 @@ public class ManualArrayToCollectionCopy {
 
     List arg(Object[] os) {
         List list = new ArrayList();
-        for (int i = 0; i < os.length - 1; i++) {
+        <warning descr="Manual array to collection copy">for</warning> (int i = 0; i < os.length - 1; i++) {
             list.add(os[i + 1]);
         }
         Object[] ps = new Object[os.length - 1];
@@ -38,14 +38,14 @@ public class ManualArrayToCollectionCopy {
 
     List<String> shouldWorkForForeachToo(String[] strings) {
         List<String> list = new ArrayList();
-        for (String string : strings) {
+        <warning descr="Manual array to collection copy">for</warning> (String string : strings) {
             list.add(string);
         }
         return list;
     }
 
     void replaceWithSubList(List<String> parameters, String[] args) {
-        for (int i = 2; i < args.length; ++i)
+        <warning descr="Manual array to collection copy">for</warning> (int i = 2; i < args.length; ++i)
         {
             parameters.add(args[i]);
         }
@@ -70,5 +70,32 @@ public class ManualArrayToCollectionCopy {
         for (int i = 1; i < N; ++i) {
             li[nextInt()].add(values[i]);
         }
+    }
+
+    void foo() {
+        List<Double> rowObj = new ArrayList<Double>();
+        double[] polynom = new double[] { 0, 0, 0, 0 };
+
+        // верно добавляет в строчку объекты, но предлагает заменить на Collections.addAll(...)
+        // кричит о том, что ручное копирование массива в коллекцию
+        for (int i = 0; i < polynom.length; i++) { // warning about manual copy
+            Double d = polynom[i];
+            rowObj.add(d);
+        }
+    }
+
+    class Node {
+        ArrayList<Node> children = new ArrayList<>();
+    }
+
+    private Node buildTree(int[] parents) {
+        Node[] nodes = new Node[parents.length];
+        for (int i = 0; i < parents.length; ++i) {
+            nodes[i] = new Node();
+        }
+        for (int i = 1; i < parents.length; ++i) {
+            nodes[parents[i]].children.add(nodes[i]);
+        }
+        return nodes[0];
     }
 }

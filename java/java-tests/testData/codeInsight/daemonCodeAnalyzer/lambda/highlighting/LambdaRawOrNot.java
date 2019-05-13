@@ -1,7 +1,7 @@
 import java.util.*;
 class TestData<K> {}
 interface TerminalOp<L, M> extends IntermediateOp<L, M> {}
-interface IntermediateOp<L1, M1> { boolean _(L1 l, M1 m);}
+interface IntermediateOp<L1, M1> { boolean m(L1 l, M1 m);}
 
 
 class Test1 {
@@ -12,7 +12,7 @@ class Test1 {
 
 class Test2 {
   protected <T, U> U exerciseOps(TestData<T> data, TerminalOp<T, U> terminal, IntermediateOp... ops) {
-    return exerciseOps(data, <error descr="Cyclic inference">(u, v) -> u.equals(v)</error>, terminal);
+    return exerciseOps(data, (u, v) -> u.equals(v), terminal);
   }
 }
 
@@ -23,15 +23,15 @@ class Test3 {
 
   static <T> void bar(I<T> i, List<T> l){
     bar(x -> {}, l);
-    bar(<error descr="Cyclic inference">x -> {}</error>, null);
+    bar(x -> {}, null);
     bar((I<T>)x -> {}, null);
     bar((T x) -> {}, null);
     bar(x -> {}, new ArrayList<T>());
-    bar(<error descr="Cyclic inference">x -> {}</error>, new ArrayList());
+    bar(x -> {}, new ArrayList());
   }
 
   static {
-    bar(<error descr="Cyclic inference">x->{}</error>, new ArrayList());
+    bar(x->{}, new ArrayList());
   }
 }
 
@@ -52,7 +52,7 @@ class Test4 {
 
   }
   public interface BiPredicate1<T, U> extends IntermediateOp1<T, U>{
-    boolean _(T t, U u);
+    boolean m(T t, U u);
   }
 
   public interface TerminalOp1<T, U> extends IntermediateOp1<T, U> {}

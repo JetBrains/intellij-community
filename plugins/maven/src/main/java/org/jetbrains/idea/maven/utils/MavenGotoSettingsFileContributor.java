@@ -32,32 +32,34 @@ import java.util.List;
 import java.util.Set;
 
 public class MavenGotoSettingsFileContributor implements ChooseByNameContributor, DumbAware {
+  @Override
   @NotNull
   public String[] getNames(Project project, boolean includeNonProjectItems) {
     if (!includeNonProjectItems) return ArrayUtil.EMPTY_STRING_ARRAY;
 
-    Set<String> result = new THashSet<String>();
+    Set<String> result = new THashSet<>();
     for (VirtualFile each : getSettingsFiles(project)) {
       result.add(each.getName());
     }
     return ArrayUtil.toStringArray(result);
   }
 
+  @Override
   @NotNull
   public NavigationItem[] getItemsByName(String name, String pattern, Project project, boolean includeNonProjectItems) {
     if (!includeNonProjectItems) return NavigationItem.EMPTY_NAVIGATION_ITEM_ARRAY;
 
-    List<NavigationItem> result = new ArrayList<NavigationItem>();
+    List<NavigationItem> result = new ArrayList<>();
     for (VirtualFile each : getSettingsFiles(project)) {
       if (each.getName().equals(name)) {
         PsiFile psiFile = PsiManager.getInstance(project).findFile(each);
         if (psiFile != null) result.add(psiFile);
       }
     }
-    return result.toArray(new NavigationItem[result.size()]);
+    return result.toArray(NavigationItem.EMPTY_NAVIGATION_ITEM_ARRAY);
   }
 
-  private List<VirtualFile> getSettingsFiles(Project project) {
+  private static List<VirtualFile> getSettingsFiles(Project project) {
     return MavenProjectsManager.getInstance(project).getGeneralSettings().getEffectiveSettingsFiles();
   }
 }

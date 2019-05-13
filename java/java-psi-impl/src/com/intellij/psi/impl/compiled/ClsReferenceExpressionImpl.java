@@ -121,11 +121,13 @@ public class ClsReferenceExpressionImpl extends ClsElementImpl implements PsiRef
     return result != JavaResolveResult.EMPTY ? new JavaResolveResult[]{result} : JavaResolveResult.EMPTY_ARRAY;
   }
 
+  @NotNull
   @Override
   public PsiElement getElement() {
     return this;
   }
 
+  @NotNull
   @Override
   public TextRange getRangeInElement() {
     return new TextRange(0, getTextLength());
@@ -148,7 +150,7 @@ public class ClsReferenceExpressionImpl extends ClsElementImpl implements PsiRef
   }
 
   @Override
-  public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {
+  public PsiElement handleElementRename(@NotNull String newElementName) throws IncorrectOperationException {
     throw new IncorrectOperationException();
   }
 
@@ -158,7 +160,7 @@ public class ClsReferenceExpressionImpl extends ClsElementImpl implements PsiRef
   }
 
   @Override
-  public boolean isReferenceTo(PsiElement element) {
+  public boolean isReferenceTo(@NotNull PsiElement element) {
     return myPatternExpression.isReferenceTo(element);
   }
 
@@ -169,7 +171,7 @@ public class ClsReferenceExpressionImpl extends ClsElementImpl implements PsiRef
   }
 
   @Override
-  public void processVariants(PsiScopeProcessor processor) {
+  public void processVariants(@NotNull PsiScopeProcessor processor) {
     myPatternExpression.processVariants(processor);
   }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,8 +18,11 @@ package com.intellij.ide.ui.laf.darcula.ui;
 import com.intellij.ide.ui.laf.darcula.DarculaLaf;
 import com.intellij.ui.ShowUIDefaultsAction;
 import com.intellij.ui.components.JBCheckBox;
+import com.intellij.ui.table.JBTable;
+import com.intellij.util.TimeoutUtil;
 
 import javax.swing.*;
+import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.awt.event.AWTEventListener;
 import java.awt.event.ActionEvent;
@@ -56,6 +59,7 @@ public class DarculaTest {
   private JButton myProgressButton;
   private JProgressBar myProgressBar2;
   private JButton myStartButton;
+  private JBTable myTable;
 
   public DarculaTest() {
     myProgressButton.addActionListener(new ActionListener() {
@@ -74,23 +78,15 @@ public class DarculaTest {
       @Override
       public void actionPerformed(ActionEvent e) {
         myStartButton.setEnabled(false);
-        new Thread(){
+        new Thread("darcula test"){
           @Override
           public void run() {
             while (myProgressBar2.getValue() < 100) {
-              try {
-                sleep(20);
-              }
-              catch (InterruptedException e1) {
-              }
+              TimeoutUtil.sleep(20);
               myProgressBar2.setValue(myProgressBar2.getValue() + 1);
             }
 
-            try {
-              sleep(1000);
-            }
-            catch (InterruptedException e1) {
-            }
+            TimeoutUtil.sleep(1000);
 
             myProgressBar2.setValue(0);
             myStartButton.setEnabled(true);
@@ -98,6 +94,8 @@ public class DarculaTest {
         }.start();
       }
     });
+
+    myTable.setModel(new DefaultTableModel(new Object[][]{{"Test", "Darcula"}, {"Test1", "Darcula1"}}, new Object[]{"Name", "Value"}));
   }
 
   public static void main(String[] args) {
@@ -116,15 +114,10 @@ public class DarculaTest {
       @Override
       public void eventDispatched(AWTEvent event) {
         if (event instanceof KeyEvent && event.getID() == KeyEvent.KEY_PRESSED && ((KeyEvent)event).getKeyCode() == KeyEvent.VK_F1) {
-          new ShowUIDefaultsAction().actionPerformed(null);
+          new ShowUIDefaultsAction().perform(null);
         }
       }
     }, AWTEvent.KEY_EVENT_MASK);
-    SwingUtilities.invokeLater(new Runnable() {
-      @Override
-      public void run() {
-        frame.setVisible(true);
-      }
-    });
+    SwingUtilities.invokeLater(() -> frame.setVisible(true));
   }
 }

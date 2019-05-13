@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,9 +19,11 @@ import com.intellij.ide.util.projectWizard.WizardContext;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.*;
+import com.intellij.openapi.roots.ModifiableRootModel;
+import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.roots.OrderRootType;
+import com.intellij.openapi.roots.impl.OrderEntryUtil;
 import com.intellij.openapi.roots.impl.libraries.LibraryEx;
-import com.intellij.openapi.roots.impl.libraries.LibraryTableBase;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
@@ -33,11 +35,9 @@ import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.openapi.roots.ui.configuration.libraryEditor.ExistingLibraryEditor;
 import com.intellij.openapi.roots.ui.configuration.libraryEditor.LibraryEditor;
 import com.intellij.openapi.roots.ui.configuration.libraryEditor.NewLibraryEditor;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.Function;
 import com.intellij.util.text.UniqueNameGenerator;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -53,7 +53,7 @@ import java.util.List;
  */
 public class LibrariesContainerFactory {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContainerFactory");
-  private static final Library[] EMPTY_LIBRARIES_ARRAY = new Library[0];
+  private static final Library[] EMPTY_LIBRARIES_ARRAY = Library.EMPTY_ARRAY;
 
   private LibrariesContainerFactory() {
   }
@@ -90,7 +90,7 @@ public class LibrariesContainerFactory {
 
   @NotNull
   private static Library createLibraryInTable(final @NotNull NewLibraryEditor editor, final LibraryTable table) {
-    LibraryTableBase.ModifiableModelEx modifiableModel = (LibraryTableBase.ModifiableModelEx) table.getModifiableModel();
+    LibraryTable.ModifiableModel modifiableModel = table.getModifiableModel();
     final String name = StringUtil.isEmpty(editor.getName()) ? null : getUniqueLibraryName(editor.getName(), modifiableModel);
     final LibraryType<?> type = editor.getType();
     Library library = modifiableModel.createLibrary(name, type == null ? null : type.getKind());
@@ -102,12 +102,7 @@ public class LibrariesContainerFactory {
   }
 
   private static String getUniqueLibraryName(final String baseName, final LibraryTable.ModifiableModel model) {
-    return UniqueNameGenerator.generateUniqueName(baseName, "", "", " (", ")", new Condition<String>() {
-      @Override
-      public boolean value(String s) {
-        return model.getLibraryByName(s) == null;
-      }
-    });
+    return UniqueNameGenerator.generateUniqueName(baseName, "", "", " (", ")", s -> model.getLibraryByName(s) == null);
   }
 
   @NotNull
@@ -171,7 +166,7 @@ public class LibrariesContainerFactory {
     @NotNull
     @Override
     public List<LibraryLevel> getAvailableLevels() {
-      final List<LibraryLevel> levels = new ArrayList<LibraryLevel>();
+      final List<LibraryLevel> levels = new ArrayList<>();
       for (LibraryLevel level : LibraryLevel.values()) {
         if (canCreateLibrary(level)) {
           levels.add(level);
@@ -184,12 +179,7 @@ public class LibrariesContainerFactory {
     @Override
     public String suggestUniqueLibraryName(@NotNull String baseName) {
       if (myNameGenerator == null) {
-        myNameGenerator = new UniqueNameGenerator(Arrays.asList(getAllLibraries()), new Function<Library, String>() {
-          @Override
-          public String fun(Library o) {
-            return o.getName();
-          }
-        });
+        myNameGenerator = new UniqueNameGenerator(Arrays.asList(getAllLibraries()), o -> o.getName());
       }
       return myNameGenerator.generateUniqueName(baseName, "", "", " (", ")");
     }
@@ -236,17 +226,8 @@ public class LibrariesContainerFactory {
       if (myRootModel != null) {
         return myRootModel.getModuleLibraryTable().getLibraries();
       }
-      OrderEntry[] orderEntries = ModuleRootManager.getInstance(myModule).getOrderEntries();
-      List<Library> libraries = new ArrayList<Library>();
-      for (OrderEntry orderEntry : orderEntries) {
-        if (orderEntry instanceof LibraryOrderEntry) {
-          final LibraryOrderEntry entry = (LibraryOrderEntry)orderEntry;
-          if (entry.isModuleLevel()) {
-            libraries.add(entry.getLibrary());
-          }
-        }
-      }
-      return libraries.toArray(new Library[libraries.size()]);
+      List<Library> libraries = OrderEntryUtil.getModuleLibraries(ModuleRootManager.getInstance(myModule));
+      return libraries.toArray(Library.EMPTY_ARRAY);
     }
 
     @Override
@@ -293,7 +274,7 @@ public class LibrariesContainerFactory {
   private static class StructureConfigurableLibrariesContainer extends LibrariesContainerBase {
     private final StructureConfigurableContext myContext;
 
-    public StructureConfigurableLibrariesContainer(final StructureConfigurableContext context) {
+    StructureConfigurableLibrariesContainer(final StructureConfigurableContext context) {
       myContext = context;
     }
 
@@ -305,7 +286,7 @@ public class LibrariesContainerFactory {
         LOG.error("cannot create module library in this context");
       }
 
-      LibraryTableBase.ModifiableModelEx model = (LibraryTableBase.ModifiableModelEx)provider.getModifiableModel();
+      LibraryTable.ModifiableModel model = provider.getModifiableModel();
       final LibraryType<?> type = libraryEditor.getType();
       Library library = model.createLibrary(getUniqueLibraryName(libraryEditor.getName(), model), type == null ? null : type.getKind());
       ExistingLibraryEditor createdLibraryEditor = ((LibrariesModifiableModel)model).getLibraryEditor(library);

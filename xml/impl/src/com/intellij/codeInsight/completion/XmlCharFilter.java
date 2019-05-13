@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,14 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * Created by IntelliJ IDEA.
- * User: mike
- * Date: Jul 23, 2002
- * Time: 3:15:07 PM
- * To change template for new class use 
- * Code Style | Class Templates options (Tools | IDE Options).
- */
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.editorActions.XmlAutoPopupHandler;
@@ -70,19 +62,17 @@ public class XmlCharFilter extends CharFilter {
   public static boolean isWithinTag(Lookup lookup) {
     if (isInXmlContext(lookup)) {
       PsiElement psiElement = lookup.getPsiElement();
-      final PsiElement parentElement = psiElement.getParent() != null ? psiElement.getParent():null;
-      String s;
-      return parentElement != null &&
-             ( parentElement instanceof XmlTag ||
-               ( parentElement instanceof PsiErrorElement &&
-                 parentElement.getParent() instanceof XmlDocument
-               ) ||
-                 ((parentElement instanceof XmlDocument || parentElement instanceof XmlText) &&
-                  ((s = psiElement.getText()).equals("<") || s.equals("\""))));
+      final PsiElement parentElement = psiElement != null ? psiElement.getParent() : null;
+      if (parentElement instanceof XmlTag) return true;
+      if (parentElement instanceof PsiErrorElement && parentElement.getParent() instanceof XmlDocument) return true;
+
+      return (parentElement instanceof XmlDocument || parentElement instanceof XmlText) &&
+             (psiElement.textMatches("<") || psiElement.textMatches("\""));
     }
     return false;
   }
 
+  @Override
   public Result acceptChar(char c, final int prefixLength, final Lookup lookup) {
     if (!isInXmlContext(lookup)) return null;
 
@@ -90,13 +80,14 @@ public class XmlCharFilter extends CharFilter {
     switch(c){
       case '-':
       case ':':
+      case '?':
         return Result.ADD_TO_PREFIX;
       case '/':
         if (isWithinTag(lookup)) {
           if (prefixLength > 0) {
             return Result.SELECT_ITEM_AND_FINISH_LOOKUP;
           }
-          XmlAutoPopupHandler.autoPopupXmlLookup(lookup.getEditor().getProject(), lookup.getEditor());
+          XmlAutoPopupHandler.autoPopupXmlLookup(lookup.getProject(), lookup.getEditor());
           return Result.HIDE_LOOKUP;
         }
         return Result.ADD_TO_PREFIX;

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import com.intellij.xdebugger.impl.ui.tree.ValueMarkup;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -33,11 +34,11 @@ public class XValueMarkers<V extends XValue, M> {
 
   private XValueMarkers(@NotNull XValueMarkerProvider<V, M> provider) {
     myProvider = provider;
-    myMarkers = new HashMap<M, ValueMarkup>();
+    myMarkers = new HashMap<>();
   }
 
   public static <V extends XValue, M> XValueMarkers<V, M> createValueMarkers(@NotNull XValueMarkerProvider<V, M> provider) {
-    return new XValueMarkers<V, M>(provider);
+    return new XValueMarkers<>(provider);
   }
 
   @Nullable
@@ -62,6 +63,12 @@ public class XValueMarkers<V extends XValue, M> {
   }
 
   public void markValue(@NotNull XValue value, @NotNull ValueMarkup markup) {
+    // remove the existing label if any
+    myMarkers.entrySet().stream()
+      .filter(entry -> markup.getText().equals(entry.getValue().getText()))
+      .findFirst()
+      .ifPresent(entry -> myMarkers.remove(entry.getKey()));
+
     //noinspection unchecked
     M m = myProvider.markValue((V)value);
     myMarkers.put(m, markup);
@@ -75,5 +82,13 @@ public class XValueMarkers<V extends XValue, M> {
       myProvider.unmarkValue(v, m);
       myMarkers.remove(m);
     }
+  }
+
+  public Map<M, ValueMarkup> getAllMarkers() {
+    return Collections.unmodifiableMap(myMarkers);
+  }
+
+  public void clear() {
+    myMarkers.clear();
   }
 }

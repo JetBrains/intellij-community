@@ -15,19 +15,17 @@
  */
 package org.intellij.plugins.xpathView.search;
 
+import com.intellij.application.options.ModulesComboBox;
 import com.intellij.ide.util.scopeChooser.ScopeChooserCombo;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
-import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.ui.ComboboxWithBrowseButton;
 import com.intellij.ui.DocumentAdapter;
-import com.intellij.ui.ListCellRendererWrapper;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -40,13 +38,13 @@ import java.util.Vector;
 
 public class ScopePanel extends JPanel implements Disposable{
 
-    @SuppressWarnings({ "FieldCanBeLocal", "UnusedDeclaration" })
+    @SuppressWarnings({"UnusedDeclaration" })
     private JPanel myRoot;
 
     private JRadioButton myWholeProjectScope;
 
     private JRadioButton myModuleScope;
-    private ComboBox myModuleSelection;
+    private ModulesComboBox myModuleSelection;
 
     private JRadioButton myDirectoryScope;
     private TextFieldWithBrowseButton myDirectory;
@@ -63,6 +61,7 @@ public class ScopePanel extends JPanel implements Disposable{
 
     public void initComponent(@Nullable Module currentModule, final SearchScope scope) {
         final ItemListener stateListener = new ItemListener() {
+            @Override
             public void itemStateChanged(ItemEvent e) {
                 myModuleSelection.setEnabled(myModuleScope.isSelected());
                 myDirectory.setEnabled(myDirectoryScope.isSelected());
@@ -75,6 +74,7 @@ public class ScopePanel extends JPanel implements Disposable{
             }
         };
         final ItemListener scopeListener = new ItemListener() {
+            @Override
             public void itemStateChanged(ItemEvent e) {
                 if (e.getStateChange() == ItemEvent.SELECTED) {
                     firePropertyChange("scope", null, getSelectedScope());
@@ -91,16 +91,7 @@ public class ScopePanel extends JPanel implements Disposable{
         myCustomScope.addItemListener(stateListener);
         myCustomScope.setSelected(scope.getScopeType() == SearchScope.ScopeType.CUSTOM);
 
-        myModuleSelection.setModel(createModel(ModuleManager.getInstance(myProject).getModules()));
-        myModuleSelection.setRenderer(new ListCellRendererWrapper<Module>() {
-          @Override
-          public void customize(JList list, Module m, int index, boolean selected, boolean hasFocus) {
-            if (m != null) {
-              setIcon(ModuleType.get(m).getIcon());
-              setText(m.getName());
-            }
-          }
-        });
+        myModuleSelection.fillModules(myProject);
 
         Module m;
         if (scope.getModuleName() != null) {
@@ -111,7 +102,7 @@ public class ScopePanel extends JPanel implements Disposable{
             m = currentModule;
         }
         if (m != null) {
-            myModuleSelection.setSelectedItem(m);
+            myModuleSelection.setSelectedModule(m);
         }
 
         myModuleSelection.addItemListener(scopeListener);
@@ -120,7 +111,8 @@ public class ScopePanel extends JPanel implements Disposable{
         myCustomScopeSelection.getComboBox().addItemListener(scopeListener);
 
         myDirectory.getTextField().getDocument().addDocumentListener(new DocumentAdapter() {
-            protected void textChanged(DocumentEvent e) {
+            @Override
+            protected void textChanged(@NotNull DocumentEvent e) {
                 firePropertyChange("scope", null, getSelectedScope());
             }
         });
@@ -148,7 +140,7 @@ public class ScopePanel extends JPanel implements Disposable{
 
     @Nullable
     private String getModuleName() {
-        final Module module = ((Module)myModuleSelection.getSelectedItem());
+        final Module module = myModuleSelection.getSelectedModule();
         return module != null ? module.getName() : null;
     }
 
@@ -176,6 +168,7 @@ public class ScopePanel extends JPanel implements Disposable{
                 ((ScopeChooserCombo)myCustomScopeSelection).getSelectedScopeName());
     }
 
+  @Override
   public void dispose() {
     Disposer.dispose(myCustomScopeSelection);
   }

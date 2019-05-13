@@ -18,6 +18,7 @@ Groovy script
     Reference element
       PsiElement(identifier)('b')
     PsiWhiteSpace(' ')
-    PsiElement(as)('as')
-    PsiWhiteSpace(' ')
-    PsiElement(identifier)('c')
+    GrImportAliasImpl(IMPORT_ALIAS)
+      PsiElement(as)('as')
+      PsiWhiteSpace(' ')
+      PsiElement(identifier)('c')

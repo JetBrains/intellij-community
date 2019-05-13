@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,20 +14,13 @@
  * limitations under the License.
  */
 
-/*
- * Created by IntelliJ IDEA.
- * User: spleaner
- * Date: Aug 7, 2007
- * Time: 2:44:37 PM
- */
 package com.intellij.xml.refactoring;
 
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.ide.TitledHandler;
 import com.intellij.lang.Language;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.LangDataKeys;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -35,7 +28,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
-import com.intellij.psi.util.PsiUtilBase;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.refactoring.actions.BaseRefactoringAction;
@@ -50,7 +43,8 @@ public class XmlTagRenameHandler implements RenameHandler, TitledHandler {
   private static final Logger LOG = Logger.getInstance("#com.intellij.xml.refactoring.XmlTagRenameHandler");
 
 
-  public boolean isAvailableOnDataContext(final DataContext dataContext) {
+  @Override
+  public boolean isAvailableOnDataContext(@NotNull final DataContext dataContext) {
     final PsiElement element = getElement(dataContext);
     if (element == null || PsiElementRenameHandler.isVetoed(element)) return false;
     PsiElement parent = element.getParent();
@@ -67,11 +61,11 @@ public class XmlTagRenameHandler implements RenameHandler, TitledHandler {
         return false;
       }
     }
-    //noinspection ConstantConditions
     return isDeclarationOutOfProjectOrAbsent(element.getProject(), dataContext);
   }
 
-  public boolean isRenaming(final DataContext dataContext) {
+  @Override
+  public boolean isRenaming(@NotNull final DataContext dataContext) {
     return isAvailableOnDataContext(dataContext);
   }
 
@@ -100,7 +94,7 @@ public class XmlTagRenameHandler implements RenameHandler, TitledHandler {
 
   @Nullable
   private static Editor getEditor(@Nullable DataContext context) {
-    return PlatformDataKeys.EDITOR.getData(context);
+    return CommonDataKeys.EDITOR.getData(context);
   }
 
   @Nullable
@@ -109,12 +103,12 @@ public class XmlTagRenameHandler implements RenameHandler, TitledHandler {
       final Editor editor = getEditor(context);
       if (editor != null) {
         final int offset = editor.getCaretModel().getOffset();
-        final PsiFile file = LangDataKeys.PSI_FILE.getData(context);
+        final PsiFile file = CommonDataKeys.PSI_FILE.getData(context);
         if (file instanceof XmlFile) {
           return file.getViewProvider().findElementAt(offset);
         }
         if (file != null) {
-          final Language language = PsiUtilBase.getLanguageAtOffset(file, offset);
+          final Language language = PsiUtilCore.getLanguageAtOffset(file, offset);
           if (language != file.getLanguage()) {
             final PsiFile psiAtOffset = file.getViewProvider().getPsi(language);
             if (psiAtOffset instanceof XmlFile) {
@@ -143,6 +137,7 @@ public class XmlTagRenameHandler implements RenameHandler, TitledHandler {
     }
   }
 
+  @Override
   public void invoke(@NotNull final Project project, final Editor editor, final PsiFile file, @Nullable final DataContext dataContext) {
     if (!isRenaming(dataContext)) {
       return;
@@ -154,6 +149,7 @@ public class XmlTagRenameHandler implements RenameHandler, TitledHandler {
     invoke(editor, element, dataContext);
   }
 
+  @Override
   public void invoke(@NotNull final Project project, @NotNull final PsiElement[] elements, @Nullable final DataContext dataContext) {
     PsiElement element = elements.length == 1 ? elements[0] : null;
     if (element == null) {

@@ -14,14 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * Created by IntelliJ IDEA.
- * User: dsl
- * Date: 17.04.2002
- * Time: 14:39:57
- * To change template for new class use
- * Code Style | Class Templates options (Tools | IDE Options).
- */
 package com.intellij.refactoring.makeStatic;
 
 import com.intellij.psi.*;
@@ -29,27 +21,26 @@ import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.refactoring.util.ParameterTablePanel;
 import com.intellij.refactoring.util.RefactoringUtil;
+import com.intellij.refactoring.util.VariableData;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.HashSet;
 
 public class MakeStaticUtil {
   public static InternalUsageInfo[] findClassRefsInMember(PsiTypeParameterListOwner member, boolean includeSelf) {
     PsiClass containingClass = member.getContainingClass();
-    ArrayList<InternalUsageInfo> classRefs = new ArrayList<InternalUsageInfo>();
+    ArrayList<InternalUsageInfo> classRefs = new ArrayList<>();
     addClassRefs(member, classRefs, containingClass, member, includeSelf);
-    return classRefs.toArray(new InternalUsageInfo[classRefs.size()]);
+    return classRefs.toArray(new InternalUsageInfo[0]);
   }
 
   public static boolean isParameterNeeded(PsiTypeParameterListOwner member) {
     return findClassRefsInMember(member, false).length > 0;
   }
 
-  private static void addClassRefs(PsiTypeParameterListOwner originalMember, ArrayList<InternalUsageInfo> classRefs,
+  private static void addClassRefs(PsiTypeParameterListOwner originalMember, ArrayList<? super InternalUsageInfo> classRefs,
                                    PsiClass containingClass, PsiElement element, boolean includeSelf) {
     if (element instanceof PsiReferenceExpression) {
       PsiReferenceExpression ref = (PsiReferenceExpression)element;
@@ -132,15 +123,15 @@ public class MakeStaticUtil {
     return false;
   }
 
-  public static boolean buildVariableData(PsiTypeParameterListOwner member, ArrayList<ParameterTablePanel.VariableData> result) {
+  public static boolean buildVariableData(PsiTypeParameterListOwner member, ArrayList<? super VariableData> result) {
     final InternalUsageInfo[] classRefsInMethod = findClassRefsInMember(member, false);
     return collectVariableData(member, classRefsInMethod, result);
   }
 
   public static boolean collectVariableData(PsiMember member, InternalUsageInfo[] internalUsages,
-                                             ArrayList<ParameterTablePanel.VariableData> variableDatum) {
-    HashSet<PsiField> reported = new HashSet<PsiField>();
-    HashSet<PsiField> accessedForWriting = new HashSet<PsiField>();
+                                            ArrayList<? super VariableData> variableDatum) {
+    HashSet<PsiField> reported = new HashSet<>();
+    HashSet<PsiField> accessedForWriting = new HashSet<>();
     boolean needClassParameter = false;
     for (InternalUsageInfo usage : internalUsages) {
       final PsiElement referencedElement = usage.getReferencedElement();
@@ -157,15 +148,11 @@ public class MakeStaticUtil {
       }
     }
 
-    final ArrayList<PsiField> psiFields = new ArrayList<PsiField>(reported);
-    Collections.sort(psiFields, new Comparator<PsiField>() {
-      public int compare(PsiField psiField, PsiField psiField1) {
-        return psiField.getName().compareTo(psiField1.getName());
-      }
-    });
+    final ArrayList<PsiField> psiFields = new ArrayList<>(reported);
+    Collections.sort(psiFields, (psiField, psiField1) -> psiField.getName().compareTo(psiField1.getName()));
     for (final PsiField field : psiFields) {
       if (accessedForWriting.contains(field)) continue;
-      ParameterTablePanel.VariableData data = new ParameterTablePanel.VariableData(field);
+      VariableData data = new VariableData(field);
       JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(member.getProject());
       String name = field.getName();
       name = codeStyleManager.variableNameToPropertyName(name, VariableKind.FIELD);

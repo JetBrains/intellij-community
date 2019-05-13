@@ -1,3 +1,7 @@
+
+  /** This character denotes the end of file */
+  public static final int YYEOF = -1;
+
   /** initial size of the lookahead buffer */
 --- private static final int ZZ_BUFFERSIZE = ...;
 
@@ -8,18 +12,18 @@
   private static final int ZZ_UNKNOWN_ERROR = 0;
   private static final int ZZ_NO_MATCH = 1;
   private static final int ZZ_PUSHBACK_2BIG = 2;
-  private static final char[] EMPTY_BUFFER = new char[0];
-  private static final int YYEOF = -1;
-  private static java.io.Reader zzReader = null; // Fake
 
   /* error messages for the codes above */
-  private static final String ZZ_ERROR_MSG[] = {
-    "Unkown internal scanner error",
+  private static final String[] ZZ_ERROR_MSG = {
+    "Unknown internal scanner error",
     "Error: could not match input",
     "Error: pushback value was too large"
   };
 
 --- isFinal list
+  /** the input device */
+  private java.io.Reader zzReader;
+
   /** the current state of the DFA */
   private int zzState;
 
@@ -30,14 +34,8 @@
       the source of the yytext() string */
   private CharSequence zzBuffer = "";
 
-  /** this buffer may contains the current text array to be matched when it is cheap to acquire it */
-  private char[] zzBufferArray;
-
   /** the textposition at the last accepting state */
   private int zzMarkedPos;
-
-  /** the textposition at the last state to be included in yytext */
-  private int zzPushbackPos;
 
   /** the current text position in the buffer */
   private int zzCurrentPos;
@@ -57,23 +55,24 @@
   /** zzAtEOF == true <=> the scanner is at the EOF */
   private boolean zzAtEOF;
 
+  /** denotes if the user-EOF-code has already been executed */
+  private boolean zzEOFDone;
+
 --- user class code
 
 --- constructor declaration
 
-  public final int getTokenStart(){
+  public final int getTokenStart() {
     return zzStartRead;
   }
 
-  public final int getTokenEnd(){
+  public final int getTokenEnd() {
     return getTokenStart() + yylength();
   }
 
-  public void reset(CharSequence buffer, int start, int end,int initialState){
+  public void reset(CharSequence buffer, int start, int end, int initialState) {
     zzBuffer = buffer;
-    zzBufferArray = com.intellij.util.text.CharArrayUtil.fromSequenceWithoutCopying(buffer);
     zzCurrentPos = zzMarkedPos = zzStartRead = start;
-    zzPushbackPos = 0;
     zzAtEOF  = false;
     zzAtBOL = true;
     zzEndRead = end;
@@ -130,7 +129,7 @@
    * @return the character at position pos
    */
   public final char yycharat(int pos) {
-    return zzBufferArray != null ? zzBufferArray[zzStartRead+pos]:zzBuffer.charAt(zzStartRead+pos);
+    return zzBuffer.charAt(zzStartRead+pos);
   }
 
 
@@ -202,8 +201,6 @@
     int zzMarkedPosL;
     int zzEndReadL = zzEndRead;
     CharSequence zzBufferL = zzBuffer;
-    char[] zzBufferArrayL = zzBufferArray;
-    char [] zzCMapL = ZZ_CMAP;
 
 --- local declarations
 
@@ -233,13 +230,13 @@
       zzMarkedPos = zzMarkedPosL;
 --- char count update
 
---- actions
-        default:
-          if (zzInput == YYEOF && zzStartRead == zzCurrentPos) {
-            zzAtEOF = true;
+      if (zzInput == YYEOF && zzStartRead == zzCurrentPos) {
+        zzAtEOF = true;
 --- eofvalue
-          }
-          else {
+      }
+      else {
+--- actions
+          default:
 --- no match
           }
       }

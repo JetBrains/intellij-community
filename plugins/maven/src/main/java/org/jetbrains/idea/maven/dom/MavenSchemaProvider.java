@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,7 @@ import com.intellij.javaee.ExternalResourceManager;
 import com.intellij.javaee.ExternalResourceManagerEx;
 import com.intellij.javaee.ResourceRegistrar;
 import com.intellij.javaee.StandardResourceProvider;
-import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 
@@ -28,6 +28,7 @@ public class MavenSchemaProvider implements StandardResourceProvider {
   public static final String MAVEN_PROFILES_SCHEMA_URL = "http://maven.apache.org/xsd/profiles-1.0.0.xsd";
   public static final String MAVEN_SETTINGS_SCHEMA_URL = "http://maven.apache.org/xsd/settings-1.0.0.xsd";
 
+  @Override
   public void registerResources(ResourceRegistrar registrar) {
     registrar.addStdResource("http://maven.apache.org/maven-v4_0_0.xsd", "/schemas/maven-4.0.0.xsd", getClass());
     registrar.addStdResource(MAVEN_PROJECT_SCHEMA_URL, "/schemas/maven-4.0.0.xsd", getClass());
@@ -41,7 +42,7 @@ public class MavenSchemaProvider implements StandardResourceProvider {
     String location = ((ExternalResourceManagerEx)ExternalResourceManager.getInstance()).getStdResource(url, null);
     assert location != null : "cannot find a standard resource for " + url;
 
-    VirtualFile result = VfsUtil.findRelativeFile(location, null);
+    VirtualFile result = VfsUtilCore.findRelativeFile(location, null);
     assert result != null : "cannot find a schema file for URL: " + url + " location: " + location;
 
     return result;

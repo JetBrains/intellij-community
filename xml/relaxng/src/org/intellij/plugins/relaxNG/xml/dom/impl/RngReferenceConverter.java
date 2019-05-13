@@ -17,7 +17,6 @@
 package org.intellij.plugins.relaxNG.xml.dom.impl;
 
 import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.PsiReferenceBase;
@@ -36,12 +35,8 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Map;
 import java.util.Set;
 
-/**
- * Created by IntelliJ IDEA.
- * User: sweinreuter
- * Date: 18.08.2007
- */
 public class RngReferenceConverter implements CustomReferenceConverter {
+  @Override
   @NotNull
   public PsiReference[] createReferences(GenericDomValue genericDomValue, PsiElement element, ConvertContext context) {
     final GenericAttributeValue<String> e = (GenericAttributeValue<String>)genericDomValue;
@@ -53,7 +48,8 @@ public class RngReferenceConverter implements CustomReferenceConverter {
       }
 
       return new PsiReference[]{
-              new PsiReferenceBase<XmlAttributeValue>(value, TextRange.from(1, value.getTextLength() - 2), true) {
+              new PsiReferenceBase<XmlAttributeValue>(value, true) {
+                @Override
                 public PsiElement resolve() {
 //                  final XmlTag tag = PsiTreeUtil.getParentOfType(value, XmlTag.class);
 //                  final XmlTag include = getAncestorTag(tag, "include", ProjectLoader.RNG_NAMESPACE);
@@ -65,6 +61,7 @@ public class RngReferenceConverter implements CustomReferenceConverter {
                   return myElement.getParent().getParent();
                 }
 
+                @Override
                 @NotNull
                 public Object[] getVariants() {
                   final RngInclude include = e.getParentOfType(RngInclude.class, true);
@@ -77,7 +74,7 @@ public class RngReferenceConverter implements CustomReferenceConverter {
                         return EMPTY_ARRAY;
                       }
                       
-                      final Ref<Object[]> ref = new Ref<Object[]>(ArrayUtil.EMPTY_STRING_ARRAY);
+                      final Ref<Object[]> ref = new Ref<>(ArrayUtil.EMPTY_STRING_ARRAY);
                       fileElement.acceptChildren(new RngDomVisitor(){
                         @Override
                         public void visit(RngGrammar grammar) {

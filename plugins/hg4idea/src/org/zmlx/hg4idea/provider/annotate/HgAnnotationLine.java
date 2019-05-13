@@ -18,8 +18,8 @@ import java.util.EnumMap;
 
 public class HgAnnotationLine {
 
-  private EnumMap<HgAnnotation.FIELD, Object> fields =
-    new EnumMap<HgAnnotation.FIELD, Object>(HgAnnotation.FIELD.class);
+  private final EnumMap<HgAnnotation.FIELD, Object> fields =
+    new EnumMap<>(HgAnnotation.FIELD.class);
 
   public HgAnnotationLine(String user, VcsRevisionNumber revision,
     String date, Integer line, String content) {

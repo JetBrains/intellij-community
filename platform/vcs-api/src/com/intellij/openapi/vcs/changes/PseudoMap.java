@@ -29,13 +29,15 @@ public class PseudoMap<Key, Value> implements PairConsumer<Key, Value>, Nullable
   }
 
   protected Map<Key, Value> createMap() {
-    return new HashMap<Key, Value>();
+    return new HashMap<>();
   }
 
+  @Override
   public Value fun(Key key) {
     return myMap.get(key);
   }
 
+  @Override
   public void consume(Key key, Value value) {
     myMap.put(key, value);
   }

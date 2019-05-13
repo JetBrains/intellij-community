@@ -1,4 +1,3 @@
-
 /*
  * Copyright 2000-2011 JetBrains s.r.o.
  *
@@ -15,14 +14,10 @@
  * limitations under the License.
  */
 
-/*
- * User: anna
- * Date: 05-Feb-2007
- */
 package com.intellij.lang.properties.psi;
 
 import com.intellij.codeInsight.CodeInsightBundle;
-import com.intellij.codeInsight.daemon.impl.quickfix.SetupJDKFix;
+import com.intellij.codeInsight.intention.QuickFixFactory;
 import com.intellij.ide.fileTemplates.JavaTemplateUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.JavaPsiFacade;
@@ -36,26 +31,31 @@ public class DefaultResourceBundleManager extends ResourceBundleManager {
     super(project);
   }
 
+  @Override
   @Nullable
   public PsiClass getResourceBundle() {
     return JavaPsiFacade.getInstance(myProject).findClass("java.util.ResourceBundle", GlobalSearchScope.allScope(myProject));
   }
 
+  @Override
   public String getTemplateName() {
     return JavaTemplateUtil.TEMPLATE_I18NIZED_EXPRESSION;
   }
 
+  @Override
   public String getConcatenationTemplateName() {
     return JavaTemplateUtil.TEMPLATE_I18NIZED_CONCATENATION;
   }
 
+  @Override
   public boolean isActive(PsiFile context) throws ResourceBundleNotFoundException{
     if (getResourceBundle() != null) {
       return true;
     }
-    throw new ResourceBundleNotFoundException(CodeInsightBundle.message("i18nize.dialog.error.jdk.message"), SetupJDKFix.getInstance());
+    throw new ResourceBundleNotFoundException(CodeInsightBundle.message("i18nize.dialog.error.jdk.message"), QuickFixFactory.getInstance().createSetupJDKFix());
   }
 
+  @Override
   public boolean canShowJavaCodeInfo() {
     return true;
   }

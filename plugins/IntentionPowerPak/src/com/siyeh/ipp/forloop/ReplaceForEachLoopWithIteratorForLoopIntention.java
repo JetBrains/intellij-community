@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2012 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2018 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,13 +17,14 @@ package com.siyeh.ipp.forloop;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.CodeStyleSettings;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
-import com.intellij.psi.codeStyle.JavaCodeStyleManager;
-import com.intellij.util.IncorrectOperationException;
+import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
+import com.intellij.psi.codeStyle.VariableKind;
+import com.siyeh.ig.PsiReplacementUtil;
+import com.siyeh.ig.psiutils.CommentTracker;
+import com.siyeh.ig.psiutils.ParenthesesUtils;
+import com.siyeh.ig.psiutils.VariableNameGenerator;
 import com.siyeh.ipp.base.Intention;
 import com.siyeh.ipp.base.PsiElementPredicate;
-import com.siyeh.ipp.psiutils.ParenthesesUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -36,7 +37,7 @@ public class ReplaceForEachLoopWithIteratorForLoopIntention extends Intention {
   }
 
   @Override
-  public void processIntention(@NotNull PsiElement element) throws IncorrectOperationException {
+  public void processIntention(@NotNull PsiElement element) {
     final PsiForeachStatement statement = (PsiForeachStatement)element.getParent();
     if (statement == null) {
       return;
@@ -49,29 +50,22 @@ public class ReplaceForEachLoopWithIteratorForLoopIntention extends Intention {
     if (!(iteratedValueType instanceof PsiClassType)) {
       return;
     }
-    @NonNls final StringBuilder methodCall = new StringBuilder();
-    if (ParenthesesUtils.getPrecedence(iteratedValue) > ParenthesesUtils.METHOD_CALL_PRECEDENCE) {
-      methodCall.append('(').append(iteratedValue.getText()).append(')');
-    }
-    else {
-      methodCall.append(iteratedValue.getText());
-    }
-    methodCall.append(".iterator()");
+    CommentTracker tracker = new CommentTracker();
+    final String methodCall = tracker.text(iteratedValue, ParenthesesUtils.METHOD_CALL_PRECEDENCE) + ".iterator()";
     final Project project = statement.getProject();
-    final PsiElementFactory factory = JavaPsiFacade.getInstance(project).getElementFactory();
-    final PsiExpression iteratorCall = factory.createExpressionFromText(methodCall.toString(), iteratedValue);
+    final PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
+    final PsiExpression iteratorCall = factory.createExpressionFromText(methodCall, iteratedValue);
     final PsiType variableType = GenericsUtil.getVariableTypeByExpressionType(iteratorCall.getType());
     if (variableType == null) {
       return;
     }
     @NonNls final StringBuilder newStatement = new StringBuilder();
     newStatement.append("for(").append(variableType.getCanonicalText()).append(' ');
-    final JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(project);
-    final String iterator = codeStyleManager.suggestUniqueVariableName("iterator", statement, true);
+    final String iterator = new VariableNameGenerator(statement, VariableKind.LOCAL_VARIABLE)
+      .byName("iterator", "iter", "it").generate(true);
     newStatement.append(iterator).append("=").append(iteratorCall.getText()).append(';');
     newStatement.append(iterator).append(".hasNext();) {");
-    final CodeStyleSettings codeStyleSettings = CodeStyleSettingsManager.getSettings(project);
-    if (codeStyleSettings.GENERATE_FINAL_LOCALS) {
+    if (JavaCodeStyleSettings.getInstance(statement.getContainingFile()).GENERATE_FINAL_LOCALS) {
       newStatement.append("final ");
     }
     final PsiParameter iterationParameter = statement.getIterationParameter();
@@ -87,13 +81,14 @@ public class ReplaceForEachLoopWithIteratorForLoopIntention extends Intention {
       final PsiElement[] children = block.getChildren();
       for (int i = 1; i < children.length - 1; i++) {
         //skip the braces
-        newStatement.append(children[i].getText());
+        newStatement.append(tracker.text(children[i]));
       }
     }
     else {
-      newStatement.append(body.getText());
+      newStatement.append(tracker.text(body));
     }
     newStatement.append('}');
-    replaceStatementAndShorten(newStatement.toString(), statement);
+
+    PsiReplacementUtil.replaceStatementAndShortenClassNames(statement, newStatement.toString(), tracker);
   }
 }

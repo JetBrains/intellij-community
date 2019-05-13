@@ -14,14 +14,15 @@
  * limitations under the License.
  */
 
-/*
- * Created by IntelliJ IDEA.
- * User: yole
- * Date: 23.10.2006
- * Time: 17:05:00
- */
 package com.intellij.openapi.actionSystem;
 
+import org.jetbrains.annotations.NotNull;
+
+/**
+ * @deprecated This API proved to be rather inconvenient
+ * @see DataProvider
+ */
+@Deprecated
 public interface TypeSafeDataProvider {
-  void calcData(DataKey key, DataSink sink);
+  void calcData(@NotNull DataKey key, @NotNull DataSink sink);
 }

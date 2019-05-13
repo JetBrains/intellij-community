@@ -23,9 +23,9 @@ def f(
     // comment for this formal parameter
     , b) {
   [a + b
-      // comment for this formula
-      , a * b
-      , a / b
+   // comment for this formula
+   , a * b
+   , a / b
   ].collect { it * 2 }
 }
 

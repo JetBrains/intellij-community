@@ -27,15 +27,17 @@ abstract class AbstractLookup implements DeferredUserLookupValue, LookupValueWit
     protected final String myName;
     protected final String myPresentation;
 
-    public AbstractLookup(String name, String presentation) {
+    AbstractLookup(String name, String presentation) {
         this.myName = name;
         this.myPresentation = presentation;
     }
 
+    @Override
     public int getPriority() {
         return HIGHER; // stay above all word-completion stuff in XSLT
     }
 
+    @Override
     public boolean handleUserSelection(LookupItem lookupItem, Project project) {
         lookupItem.setLookupString(myName);
         return true;
@@ -45,31 +47,37 @@ abstract class AbstractLookup implements DeferredUserLookupValue, LookupValueWit
         return myName;
     }
 
+    @Override
     public String getPresentation() {
         return myPresentation;
     }
 
-    @SuppressWarnings({"ConstantConditions"})
+    @Override
     public Color getColorHint() {
         return null;
     }
 
+    @Override
     public String getTypeHint() {
         return "";
     }
 
+    @Override
     public boolean isFunction() {
         return false;
     }
 
+    @Override
     public boolean hasParameters() {
         return false;
     }
 
+    @Override
     public boolean isKeyword() {
         return false;
     }
 
+    @Override
     public boolean isBold() {
         return isKeyword();
     }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,7 @@
  */
 package com.intellij.internal;
 
-import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.util.containers.ContainerUtil;
@@ -33,33 +33,30 @@ import java.util.*;
 public class BuildIcons {
   public static void main(String[] args) throws Exception {
     File root = new File("/Users/max/IDEA/out/classes/production/");
-    final MultiMap<Pair<Integer, Integer>, String> dimToPath = new MultiMap<Pair<Integer, Integer>, String>();
+    final MultiMap<Couple<Integer>, String> dimToPath = new MultiMap<>();
 
     walk(root, dimToPath, root);
 
-    ArrayList<Pair<Integer, Integer>> keys = new ArrayList<Pair<Integer, Integer>>(dimToPath.keySet());
-    Collections.sort(keys, new Comparator<Pair<Integer, Integer>>() {
-      @Override
-      public int compare(Pair<Integer, Integer> o1, Pair<Integer, Integer> o2) {
-        int d0 = dimToPath.get(o2).size() - dimToPath.get(o1).size();
-        if (d0 != 0) return d0;
-        int d1 = o1.first - o2.first;
-        if (d1 != 0) {
-          return d1;
-        }
-        return o1.second - o2.second;
+    ArrayList<Couple<Integer>> keys = new ArrayList<>(dimToPath.keySet());
+    Collections.sort(keys, (o1, o2) -> {
+      int d0 = dimToPath.get(o2).size() - dimToPath.get(o1).size();
+      if (d0 != 0) return d0;
+      int d1 = o1.first - o2.first;
+      if (d1 != 0) {
+        return d1;
       }
+      return o1.second - o2.second;
     });
 
     int total = 0;
-    for (Pair<Integer, Integer> key : keys) {
+    for (Couple<Integer> key : keys) {
       Collection<String> paths = dimToPath.get(key);
       System.out.println("------------------------   " + key.first + "x" + key.second + "  (total " +paths.size() + " icons) --------------------------------");
       for (String path : paths) {
         System.out.println(path);
         total ++;
       }
-      System.out.println("");
+      System.out.println();
     }
 
     System.out.println("Total icons: " + total);
@@ -68,7 +65,7 @@ public class BuildIcons {
   private static final Set<String> IMAGE_EXTENSIONS = ContainerUtil.newTroveSet(FileUtil.PATH_HASHING_STRATEGY,
                                                                                 "png", "gif", "jpg", "jpeg");
 
-  private static void walk(File root, MultiMap<Pair<Integer,Integer>, String> dimToPath, File file) throws IOException {
+  private static void walk(File root, MultiMap<Couple<Integer>, String> dimToPath, File file) throws IOException {
     if (file.isDirectory()) {
       for (File child : file.listFiles()) {
         walk(root, dimToPath, child);
@@ -86,7 +83,7 @@ public class BuildIcons {
         }
         else {
           target = new File("/Users/max/images/icons", relativePath);
-          dimToPath.putValue(new Pair<Integer, Integer>(width, height), relativePath);
+          dimToPath.putValue(new Couple<>(width, height), relativePath);
         }
         FileUtil.copy(file, target);
       }

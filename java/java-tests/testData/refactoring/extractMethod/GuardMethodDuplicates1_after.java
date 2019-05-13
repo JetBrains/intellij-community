@@ -7,7 +7,6 @@ public class Test {
     }
 
     private boolean newMethod() {
-        Object result;
         if (test1()) return true;
         if (test2()) return true;
         return false;

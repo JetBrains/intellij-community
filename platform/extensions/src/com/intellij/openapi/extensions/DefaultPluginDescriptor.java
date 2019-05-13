@@ -15,27 +15,33 @@
  */
 package com.intellij.openapi.extensions;
 
+import org.jetbrains.annotations.NotNull;
+
 /**
  * @author Alexander Kireyev
  */
 public class DefaultPluginDescriptor implements PluginDescriptor {
-  private PluginId myPluginId;
-  private ClassLoader myPluginClassLoader;
+  @NotNull
+  private final PluginId myPluginId;
+  private final ClassLoader myPluginClassLoader;
 
   public DefaultPluginDescriptor(String pluginId) {
     myPluginId = PluginId.getId(pluginId);
+    myPluginClassLoader = null;
   }
 
-  public DefaultPluginDescriptor(final PluginId pluginId) {
+  public DefaultPluginDescriptor(@NotNull PluginId pluginId) {
     myPluginId = pluginId;
+    myPluginClassLoader = null;
   }
 
-  public DefaultPluginDescriptor(final PluginId pluginId, final ClassLoader pluginClassLoader) {
+  public DefaultPluginDescriptor(@NotNull PluginId pluginId, final ClassLoader pluginClassLoader) {
     myPluginId = pluginId;
     myPluginClassLoader = pluginClassLoader;
   }
 
   @Override
+  @NotNull
   public PluginId getPluginId() {
     return myPluginId;
   }
@@ -43,13 +49,5 @@ public class DefaultPluginDescriptor implements PluginDescriptor {
   @Override
   public ClassLoader getPluginClassLoader() {
     return myPluginClassLoader;
-  }
-
-  public void setPluginId(final PluginId pluginId) {
-    myPluginId = pluginId;
-  }
-
-  public void setPluginClassLoader(final ClassLoader pluginClassLoader) {
-    myPluginClassLoader = pluginClassLoader;
   }
 }

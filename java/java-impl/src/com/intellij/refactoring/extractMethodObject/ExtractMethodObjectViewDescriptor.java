@@ -14,10 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * User: anna
- * Date: 06-May-2008
- */
 package com.intellij.refactoring.extractMethodObject;
 
 import com.intellij.psi.PsiElement;
@@ -32,19 +28,24 @@ public class ExtractMethodObjectViewDescriptor implements UsageViewDescriptor {
     myMethod = method;
   }
 
+  @Override
   @NotNull
   public PsiElement[] getElements() {
     return new PsiElement[]{myMethod};
   }
 
+  @Override
   public String getProcessedElementsHeader() {
     return "Method to be converted";
   }
 
+  @NotNull
+  @Override
   public String getCodeReferencesText(final int usagesCount, final int filesCount) {
     return "References to be changed";
   }
 
+  @Override
   public String getCommentReferencesText(final int usagesCount, final int filesCount) {
     return null;
   }

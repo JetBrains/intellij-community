@@ -1,55 +1,43 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.usages;
 
 import com.intellij.ide.SelectInEditorManager;
+import com.intellij.ide.TypePresentationService;
 import com.intellij.injected.editor.VirtualFileWindow;
+import com.intellij.lang.findUsages.LanguageFindUsages;
 import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.actionSystem.DataSink;
 import com.intellij.openapi.actionSystem.TypeSafeDataProvider;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.editor.DefaultLanguageHighlighterColors;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileEditor.*;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.Segment;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.reference.SoftReference;
+import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.usageView.UsageInfo;
+import com.intellij.usageView.UsageTreeColorsScheme;
 import com.intellij.usageView.UsageViewBundle;
+import com.intellij.usages.impl.rules.UsageType;
 import com.intellij.usages.rules.*;
-import com.intellij.util.ArrayUtil;
-import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.NotNullFunction;
-import com.intellij.util.Processor;
+import com.intellij.util.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.awt.*;
 import java.lang.ref.Reference;
-import java.util.Arrays;
-import java.util.Comparator;
 import java.util.List;
+import java.util.*;
 
 /**
  * @author max
@@ -58,19 +46,8 @@ public class UsageInfo2UsageAdapter implements UsageInModule,
                                                UsageInLibrary, UsageInFile, PsiElementUsage,
                                                MergeableUsage, Comparable<UsageInfo2UsageAdapter>,
                                                RenameableUsage, TypeSafeDataProvider, UsagePresentation {
-  public static final NotNullFunction<UsageInfo, Usage> CONVERTER = new NotNullFunction<UsageInfo, Usage>() {
-    @Override
-    @NotNull
-    public Usage fun(UsageInfo usageInfo) {
-      return new UsageInfo2UsageAdapter(usageInfo);
-    }
-  };
-  private static final Comparator<UsageInfo> BY_NAVIGATION_OFFSET = new Comparator<UsageInfo>() {
-    @Override
-    public int compare(UsageInfo o1, UsageInfo o2) {
-      return o1.getNavigationOffset() - o2.getNavigationOffset();
-    }
-  };
+  public static final NotNullFunction<UsageInfo, Usage> CONVERTER = UsageInfo2UsageAdapter::new;
+  private static final Comparator<UsageInfo> BY_NAVIGATION_OFFSET = Comparator.comparingInt(UsageInfo::getNavigationOffset);
 
   private final UsageInfo myUsageInfo;
   @NotNull
@@ -78,43 +55,43 @@ public class UsageInfo2UsageAdapter implements UsageInModule,
   private final int myLineNumber;
   private final int myOffset;
   protected Icon myIcon;
-  private Reference<TextChunk[]> myTextChunks; // allow to be gced and recreated on-demand because it requires a lot of memory
+  private volatile Reference<TextChunk[]> myTextChunks; // allow to be gced and recreated on-demand because it requires a lot of memory
+  private volatile UsageType myUsageType;
 
   public UsageInfo2UsageAdapter(@NotNull final UsageInfo usageInfo) {
     myUsageInfo = usageInfo;
     myMergedUsageInfos = usageInfo;
 
-    Pair<Integer,Integer> data =
-    ApplicationManager.getApplication().runReadAction(new Computable<Pair<Integer,Integer>>() {
-      @Override
-      public Pair<Integer, Integer> compute() {
-        PsiElement element = getElement();
-        PsiFile psiFile = usageInfo.getFile();
-        Document document = psiFile == null ? null : PsiDocumentManager.getInstance(getProject()).getDocument(psiFile);
+    Point data =
+    ReadAction.compute(() -> {
+      PsiElement element = getElement();
+      PsiFile psiFile = usageInfo.getFile();
+      boolean isNullOrBinary = psiFile == null || psiFile.getFileType().isBinary();
+      Document document = isNullOrBinary
+                          ? null : PsiDocumentManager.getInstance(getProject()).getDocument(psiFile);
 
-        int offset;
-        int lineNumber;
-        if (document == null) {
-          // element over light virtual file
-          offset = element.getTextOffset();
+      int offset;
+      int lineNumber;
+      if (document == null) {
+        // element over light virtual file
+        offset = element == null || isNullOrBinary ? 0 : element.getTextOffset();
+        lineNumber = -1;
+      }
+      else {
+        int startOffset = myUsageInfo.getNavigationOffset();
+        if (startOffset == -1) {
+          offset = element == null ? 0 : element.getTextOffset();
           lineNumber = -1;
         }
         else {
-          int startOffset = myUsageInfo.getNavigationOffset();
-          if (startOffset == -1) {
-            offset = element == null ? 0 : element.getTextOffset();
-            lineNumber = -1;
-          }
-          else {
-            offset = -1;
-            lineNumber = getLineNumber(document, startOffset);
-          }
+          offset = -1;
+          lineNumber = getLineNumber(document, startOffset);
         }
-        return Pair.create(offset, lineNumber);
       }
+      return new Point(offset, lineNumber);
     });
-    myOffset = data.first;
-    myLineNumber = data.second;
+    myOffset = data.x;
+    myLineNumber = data.y;
     myModificationStamp = getCurrentModificationStamp();
   }
 
@@ -126,19 +103,37 @@ public class UsageInfo2UsageAdapter implements UsageInModule,
 
   @NotNull
   private TextChunk[] initChunks() {
-    PsiFile psiFile = getPsiFile();
-    Document document = psiFile == null ? null : PsiDocumentManager.getInstance(getProject()).getDocument(psiFile);
     TextChunk[] chunks;
-    if (document == null) {
-      // element over light virtual file
-      PsiElement element = getElement();
-      chunks = new TextChunk[] {new TextChunk(new TextAttributes(), element.getText())};
+    VirtualFile file = getFile();
+    boolean isNullOrBinary = file == null || file.getFileType().isBinary();
+
+    PsiElement element = getElement();
+    if (element != null && isNullOrBinary) {
+      EditorColorsScheme scheme = UsageTreeColorsScheme.getInstance().getScheme();
+      chunks = new TextChunk[]{
+        new TextChunk(scheme.getAttributes(DefaultLanguageHighlighterColors.CLASS_NAME), clsType(element)),
+        new TextChunk(SimpleTextAttributes.REGULAR_ATTRIBUTES.toTextAttributes(), " "),
+        new TextChunk(SimpleTextAttributes.REGULAR_ATTRIBUTES.toTextAttributes(), clsName(element)),
+      };
     }
     else {
-      chunks = ChunkExtractor.extractChunks(psiFile, this);
+      PsiFile psiFile = getPsiFile();
+      Document document = psiFile == null ? null : PsiDocumentManager.getInstance(getProject()).getDocument(psiFile);
+      if (document == null) {
+        // element over light virtual file
+        if (element == null) {
+          chunks = new TextChunk[]{
+            new TextChunk(SimpleTextAttributes.ERROR_ATTRIBUTES.toTextAttributes(), UsageViewBundle.message("node.invalid"))};
+        }
+        else {
+          chunks = new TextChunk[]{new TextChunk(new TextAttributes(), element.getText())};
+        }
+      }
+      else {
+        chunks = ChunkExtractor.extractChunks(psiFile, this);
+      }
     }
-
-    myTextChunks = new SoftReference<TextChunk[]>(chunks);
+    myTextChunks = new SoftReference<>(chunks);
     return chunks;
   }
 
@@ -155,14 +150,15 @@ public class UsageInfo2UsageAdapter implements UsageInModule,
       return false;
     }
     for (UsageInfo usageInfo : getMergedInfos()) {
-      if (usageInfo.getSegment() == null) return false;
+      if (usageInfo.isValid()) return true;
     }
-    return true;
+    return false;
   }
 
   @Override
   public boolean isReadOnly() {
-    return isValid() && !getElement().isWritable();
+    PsiFile psiFile = getPsiFile();
+    return psiFile == null || psiFile.isValid() && !psiFile.isWritable();
   }
 
   @Override
@@ -183,7 +179,9 @@ public class UsageInfo2UsageAdapter implements UsageInModule,
     if (!isValid()) return;
     Editor editor = openTextEditor(true);
     Segment marker = getFirstSegment();
-    editor.getSelectionModel().setSelection(marker.getStartOffset(), marker.getEndOffset());
+    if (marker != null) {
+      editor.getSelectionModel().setSelection(marker.getStartOffset(), marker.getEndOffset());
+    }
   }
 
   @Override
@@ -191,7 +189,9 @@ public class UsageInfo2UsageAdapter implements UsageInModule,
     if (!isValid()) return;
 
     Segment marker = getFirstSegment();
-    SelectInEditorManager.getInstance(getProject()).selectInEditor(getFile(), marker.getStartOffset(), marker.getEndOffset(), false, false);
+    if (marker != null) {
+      SelectInEditorManager.getInstance(getProject()).selectInEditor(getFile(), marker.getStartOffset(), marker.getEndOffset(), false, false);
+    }
   }
 
   private Segment getFirstSegment() {
@@ -199,7 +199,7 @@ public class UsageInfo2UsageAdapter implements UsageInModule,
   }
 
   // must iterate in start offset order
-  public boolean processRangeMarkers(@NotNull Processor<Segment> processor) {
+  public boolean processRangeMarkers(@NotNull Processor<? super Segment> processor) {
     for (UsageInfo usageInfo : getMergedInfos()) {
       Segment segment = usageInfo.getSegment();
       if (segment != null && !processor.process(segment)) {
@@ -238,12 +238,16 @@ public class UsageInfo2UsageAdapter implements UsageInModule,
     return canNavigate();
   }
 
-  @Nullable
   private OpenFileDescriptor getDescriptor() {
     VirtualFile file = getFile();
     if(file == null) return null;
-    int offset = getNavigationOffset();
-    return new OpenFileDescriptor(getProject(), file, offset);
+    Segment range = getNavigationRange();
+    if (range != null && file instanceof VirtualFileWindow && range.getStartOffset() >= 0) {
+      // have to use injectedToHost(TextRange) to calculate right offset in case of multiple shreds
+      range = ((VirtualFileWindow)file).getDocumentWindow().injectedToHost(TextRange.create(range));
+      file = ((VirtualFileWindow)file).getDelegate();
+    }
+    return new OpenFileDescriptor(getProject(), file, range == null ? getNavigationOffset() : range.getStartOffset());
   }
 
   int getNavigationOffset() {
@@ -258,11 +262,30 @@ public class UsageInfo2UsageAdapter implements UsageInModule,
     return offset;
   }
 
+  /**
+   * Returns the text range of the usage relative to the start of the file.
+   */
+  public Segment getNavigationRange() {
+    Document document = getDocument();
+    if (document == null) return null;
+    Segment range = getUsageInfo().getNavigationRange();
+    if (range == null) {
+      ProperTextRange rangeInElement = getUsageInfo().getRangeInElement();
+      range = myOffset < 0 ? new UnfairTextRange(-1,-1) : rangeInElement == null ? TextRange.from(myOffset,1) : rangeInElement.shiftRight(myOffset);
+    }
+    if (range.getEndOffset() >= document.getTextLength()) {
+      int line = Math.max(0, Math.min(myLineNumber, document.getLineCount() - 1));
+      range = TextRange.from(document.getLineStartOffset(line),1);
+    }
+    return range;
+  }
+
   @NotNull
   private Project getProject() {
     return getUsageInfo().getProject();
   }
 
+  @Override
   public String toString() {
     TextChunk[] textChunks = getPresentation().getText();
     StringBuilder result = new StringBuilder();
@@ -279,11 +302,7 @@ public class UsageInfo2UsageAdapter implements UsageInModule,
   public Module getModule() {
     if (!isValid()) return null;
     VirtualFile virtualFile = getFile();
-    if (virtualFile == null) return null;
-
-    ProjectRootManager projectRootManager = ProjectRootManager.getInstance(getProject());
-    ProjectFileIndex fileIndex = projectRootManager.getFileIndex();
-    return fileIndex.getModuleForFile(virtualFile);
+    return virtualFile != null ? ProjectFileIndex.getInstance(getProject()).getModuleForFile(virtualFile) : null;
   }
 
   @Override
@@ -293,10 +312,8 @@ public class UsageInfo2UsageAdapter implements UsageInModule,
     VirtualFile virtualFile = getFile();
     if (virtualFile == null) return null;
 
-    ProjectRootManager projectRootManager = ProjectRootManager.getInstance(getProject());
-    ProjectFileIndex fileIndex = projectRootManager.getFileIndex();
-
-    if (psiFile instanceof PsiCompiledElement || fileIndex.isInLibrarySource(virtualFile)) {
+    ProjectFileIndex fileIndex = ProjectFileIndex.getInstance(getProject());
+    if (virtualFile.getFileType().isBinary() || fileIndex.isInLibrarySource(virtualFile)) {
       List<OrderEntry> orders = fileIndex.getOrderEntriesForFile(virtualFile);
       for (OrderEntry order : orders) {
         if (order instanceof LibraryOrderEntry || order instanceof JdkOrderEntry) {
@@ -306,6 +323,35 @@ public class UsageInfo2UsageAdapter implements UsageInModule,
     }
 
     return null;
+  }
+
+  @NotNull
+  @Override
+  public List<SyntheticLibrary> getSyntheticLibraries() {
+    if (!isValid()) return Collections.emptyList();
+    VirtualFile virtualFile = getFile();
+    if (virtualFile == null) return Collections.emptyList();
+
+    Project project = getProject();
+    ProjectFileIndex fileIndex = ProjectFileIndex.getInstance(project);
+    if (!fileIndex.isInLibrarySource(virtualFile)) return Collections.emptyList();
+
+    VirtualFile sourcesRoot = fileIndex.getSourceRootForFile(virtualFile);
+    if (sourcesRoot != null) {
+      List<SyntheticLibrary> list = new ArrayList<>();
+      for (AdditionalLibraryRootsProvider e : AdditionalLibraryRootsProvider.EP_NAME.getExtensionList()) {
+        for (SyntheticLibrary library : e.getAdditionalProjectLibraries(project)) {
+          if (library.getSourceRoots().contains(sourcesRoot)) {
+            Condition<VirtualFile> excludeFileCondition = library.getExcludeFileCondition();
+            if (excludeFileCondition == null || !excludeFileCondition.value(virtualFile)) {
+              list.add(library);
+            }
+          }
+        }
+      }
+      return list;
+    }
+    return Collections.emptyList();
   }
 
   @Override
@@ -329,7 +375,7 @@ public class UsageInfo2UsageAdapter implements UsageInModule,
     UsageInfo[] merged = ArrayUtil.mergeArrays(getMergedInfos(), u2.getMergedInfos());
     myMergedUsageInfos = merged.length == 1 ? merged[0] : merged;
     Arrays.sort(getMergedInfos(), BY_NAVIGATION_OFFSET);
-    initChunks();
+    myTextChunks = null; // chunks will be rebuilt lazily (IDEA-126048)
     return true;
   }
 
@@ -345,10 +391,6 @@ public class UsageInfo2UsageAdapter implements UsageInModule,
     return getUsageInfo().getElement();
   }
 
-  public PsiReference getReference() {
-    return getElement().getReference();
-  }
-
   @Override
   public boolean isNonCodeUsage() {
     return getUsageInfo().isNonCodeUsage;
@@ -361,35 +403,12 @@ public class UsageInfo2UsageAdapter implements UsageInModule,
 
   // by start offset
   @Override
-  public int compareTo(final UsageInfo2UsageAdapter o) {
-    VirtualFile containingFile = getFile();
-    int shift1 = 0;
-    if (containingFile instanceof VirtualFileWindow) {
-      shift1 = ((VirtualFileWindow)containingFile).getDocumentWindow().injectedToHost(0);
-      containingFile = ((VirtualFileWindow)containingFile).getDelegate();
-    }
-    VirtualFile oContainingFile = o.getFile();
-    int shift2 = 0;
-    if (oContainingFile instanceof VirtualFileWindow) {
-      shift2 = ((VirtualFileWindow)oContainingFile).getDocumentWindow().injectedToHost(0);
-      oContainingFile = ((VirtualFileWindow)oContainingFile).getDelegate();
-    }
-    if (containingFile == null && oContainingFile == null || !Comparing.equal(containingFile, oContainingFile)) {
-      return 0;
-    }
-    Segment s1 = getFirstSegment();
-    Segment s2 = o.getFirstSegment();
-    if (s1 == null || s2 == null) return 0;
-    return s1.getStartOffset() + shift1 - s2.getStartOffset() - shift2;
+  public int compareTo(@NotNull final UsageInfo2UsageAdapter o) {
+    return getUsageInfo().compareToByStartOffset(o.getUsageInfo());
   }
 
   @Override
-  public boolean equals(Object obj) {
-    return super.equals(obj);
-  }
-
-  @Override
-  public void rename(String newName) throws IncorrectOperationException {
+  public void rename(@NotNull String newName) throws IncorrectOperationException {
     final PsiReference reference = getUsageInfo().getReference();
     assert reference != null : this;
     reference.handleElementRename(newName);
@@ -406,7 +425,7 @@ public class UsageInfo2UsageAdapter implements UsageInModule,
   }
 
   @Override
-  public void calcData(final DataKey key, final DataSink sink) {
+  public void calcData(@NotNull final DataKey key, @NotNull final DataSink sink) {
     if (key == UsageView.USAGE_INFO_KEY) {
       sink.put(UsageView.USAGE_INFO_KEY, getUsageInfo());
     }
@@ -417,7 +436,7 @@ public class UsageInfo2UsageAdapter implements UsageInModule,
   }
 
   @NotNull
-  private UsageInfo[] getMergedInfos() {
+  public UsageInfo[] getMergedInfos() {
     Object infos = myMergedUsageInfos;
     return infos instanceof UsageInfo ? new UsageInfo[]{(UsageInfo)infos} : (UsageInfo[])infos;
   }
@@ -431,8 +450,23 @@ public class UsageInfo2UsageAdapter implements UsageInModule,
   @Override
   @NotNull
   public TextChunk[] getText() {
-    Reference<TextChunk[]> reference = myTextChunks;
-    TextChunk[] chunks = reference == null ? null : reference.get();
+    return doUpdateCachedText();
+  }
+
+  @Nullable
+  @Override
+  public TextChunk[] getCachedText() {
+    return SoftReference.dereference(myTextChunks);
+  }
+
+  @Override
+  public void updateCachedText() {
+    doUpdateCachedText();
+  }
+
+  @NotNull
+  private TextChunk[] doUpdateCachedText() {
+    TextChunk[] chunks = SoftReference.dereference(myTextChunks);
     final long currentModificationStamp = getCurrentModificationStamp();
     boolean isModified = currentModificationStamp != myModificationStamp;
     if (chunks == null || isValid() && isModified) {
@@ -443,12 +477,30 @@ public class UsageInfo2UsageAdapter implements UsageInModule,
     return chunks;
   }
 
+  @NotNull
+  private static String clsType(@NotNull PsiElement psiElement) {
+    String type = LanguageFindUsages.getType(psiElement);
+    if (!type.isEmpty()) return type;
+    return ObjectUtils.notNull(TypePresentationService.getService().getTypePresentableName(psiElement.getClass()), "");
+  }
+  @NotNull
+  private static String clsName(@NotNull PsiElement psiElement) {
+    String name = LanguageFindUsages.getNodeText(psiElement, false);
+    if (!name.isEmpty()) return name;
+    return ObjectUtils.notNull(psiElement instanceof PsiNamedElement ? ((PsiNamedElement)psiElement).getName() : null, "");
+  }
+
   @Override
   @NotNull
   public String getPlainText() {
-    int startOffset = getNavigationOffset();
     final PsiElement element = getElement();
-    if (element != null && startOffset != -1) {
+    VirtualFile file = getFile();
+    boolean isNullOrBinary = file == null || file.getFileType().isBinary();
+    if (element != null && isNullOrBinary) {
+      return clsType(element) + " " + clsName(element);
+    }
+    int startOffset;
+    if (element != null && (startOffset = getNavigationOffset()) != -1) {
       final Document document = getDocument();
       if (document != null) {
         int lineNumber = document.getLineNumber(startOffset);
@@ -456,7 +508,7 @@ public class UsageInfo2UsageAdapter implements UsageInModule,
         int lineEnd = document.getLineEndOffset(lineNumber);
         String prefixSuffix = null;
 
-        if (lineEnd - lineStart > ChunkExtractor.MAX_LINE_TO_SHOW) {
+        if (lineEnd - lineStart > ChunkExtractor.MAX_LINE_LENGTH_TO_SHOW) {
           prefixSuffix = "...";
           lineStart = Math.max(startOffset - ChunkExtractor.OFFSET_BEFORE_TO_SHOW_WHEN_LONG_LINE, lineStart);
           lineEnd = Math.min(startOffset + ChunkExtractor.OFFSET_AFTER_TO_SHOW_WHEN_LONG_LINE, lineEnd);
@@ -474,13 +526,57 @@ public class UsageInfo2UsageAdapter implements UsageInModule,
     Icon icon = myIcon;
     if (icon == null) {
       PsiElement psiElement = getElement();
-      myIcon = icon = psiElement != null && psiElement.isValid() ? psiElement.getIcon(0) : null;
+      myIcon = icon = psiElement != null && psiElement.isValid() && !isFindInPathUsage(psiElement) ? psiElement.getIcon(0) : null;
     }
     return icon;
+  }
+
+  private boolean isFindInPathUsage(PsiElement psiElement) {
+    return psiElement instanceof PsiFile && getUsageInfo().getPsiFileRange() != null;
   }
 
   @Override
   public String getTooltipText() {
     return myUsageInfo.getTooltipText();
+  }
+
+  @Nullable
+  public UsageType getUsageType() {
+    UsageType usageType = myUsageType;
+
+    if (usageType == null) {
+      usageType = UsageType.UNCLASSIFIED;
+      PsiFile file = getPsiFile();
+
+      if (file != null) {
+        Segment segment = getFirstSegment();
+
+        if (segment != null) {
+          Document document = PsiDocumentManager.getInstance(getProject()).getDocument(file);
+          if (document != null) {
+            ChunkExtractor extractor = ChunkExtractor.getExtractor(file);
+            SmartList<TextChunk> chunks = new SmartList<>();
+            extractor.createTextChunks(
+              this,
+              document.getCharsSequence(),
+              segment.getStartOffset(),
+              segment.getEndOffset(),
+              false,
+              chunks
+            );
+
+            for(TextChunk chunk:chunks) {
+              UsageType chunkUsageType = chunk.getType();
+              if (chunkUsageType != null) {
+                usageType = chunkUsageType;
+                break;
+              }
+            }
+          }
+        }
+      }
+      myUsageType = usageType;
+    }
+    return usageType;
   }
 }

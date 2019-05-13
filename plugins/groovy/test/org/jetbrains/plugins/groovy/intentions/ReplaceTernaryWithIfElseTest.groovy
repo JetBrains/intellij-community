@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,14 +34,14 @@ class ReplaceTernaryWithIfElseTest extends GrIntentionTestCase {
 //
 //  }
 
-  public void testDoNotTriggerOnIncompleteTernary() {
+  void testDoNotTriggerOnIncompleteTernary() {
     doAntiTest '''
 return aaa ? <caret>bbb
 '''
   }
 
-  
-  public void testSimpleCondition() {
+
+  void testSimpleCondition() {
 
     doTextTest '''
 return aaa <caret>? bbb : ccc
@@ -54,7 +54,7 @@ if (aaa)<caret> {
 '''
   }
 
-  public void testCaretAfterQuestionMark() {
+  void testCaretAfterQuestionMark() {
 
     doTextTest '''
 return aaa ?<caret> bbb : ccc
@@ -67,7 +67,7 @@ if (aaa)<caret> {
 '''
   }
 
-  public void testCaretInfrontOfConditional() {
+  void testCaretInfrontOfConditional() {
 
     doTextTest '''
 return <caret>aaa ? bbb : ccc
@@ -80,7 +80,7 @@ if (aaa)<caret> {
 '''
   }
 
-  public void testCaretInfrontOfElse() {
+  void testCaretInfrontOfElse() {
 
     doTextTest '''
 return aaa ? bbb <caret>: ccc
@@ -93,7 +93,7 @@ if (aaa)<caret> {
 '''
   }
 
-  public void testCaretAfterElse() {
+  void testCaretAfterElse() {
 
     doTextTest '''
 return aaa ? bbb :<caret> ccc
@@ -106,7 +106,7 @@ if (aaa)<caret> {
 '''
   }
 
-  public void testCaretBeforeElseReturn() {
+  void testCaretBeforeElseReturn() {
 
     doTextTest '''
 return aaa ? bbb : <caret>ccc
@@ -119,7 +119,7 @@ if (aaa)<caret> {
 '''
   }
 
-  public void testCaretBeforeReturnStatement() {
+  void testCaretBeforeReturnStatement() {
 
     doTextTest '''
 <caret>return aaa ? bbb : ccc

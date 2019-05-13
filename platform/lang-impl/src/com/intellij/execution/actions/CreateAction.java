@@ -1,30 +1,14 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.execution.actions;
 
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.RunManager;
-import com.intellij.execution.RunManagerEx;
 import com.intellij.execution.RunnerAndConfigurationSettings;
-import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.impl.RunDialog;
 import com.intellij.execution.impl.RunManagerImpl;
-import com.intellij.execution.junit.RuntimeConfigurationProducer;
 import com.intellij.openapi.actionSystem.Presentation;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
@@ -33,11 +17,13 @@ public class CreateAction extends BaseRunConfigurationAction {
     super(ExecutionBundle.message("create.run.configuration.action.name"), null, null);
   }
 
+  @Override
   protected void perform(final ConfigurationContext context) {
     choosePolicy(context).perform(context);
   }
 
-  protected void updatePresentation(final Presentation presentation, final String actionText, final ConfigurationContext context) {
+  @Override
+  protected void updatePresentation(final Presentation presentation, @NotNull final String actionText, final ConfigurationContext context) {
     choosePolicy(context).update(presentation, context, actionText);
   }
 
@@ -46,7 +32,7 @@ public class CreateAction extends BaseRunConfigurationAction {
     if (configuration == null) return CREATE_AND_EDIT;
     final RunManager runManager = context.getRunManager();
     if (runManager.getSelectedConfiguration() != configuration) return SELECT;
-    if (runManager.isTemporary(configuration.getConfiguration())) return SAVE;
+    if (configuration.isTemporary()) return SAVE;
     return SELECTED_STABLE;
   }
 
@@ -60,19 +46,20 @@ public class CreateAction extends BaseRunConfigurationAction {
 
     private final ActionType myType;
 
-    public BaseCreatePolicy(final ActionType type) {
+    BaseCreatePolicy(final ActionType type) {
       myType = type;
     }
 
-    public void update(final Presentation presentation, final ConfigurationContext context, final String actionText) {
+    public void update(final Presentation presentation, final ConfigurationContext context, @NotNull final String actionText) {
       updateText(presentation, actionText);
       updateIcon(presentation, context);
     }
 
     protected void updateIcon(final Presentation presentation, final ConfigurationContext context) {
-      final List<RuntimeConfigurationProducer> producers = context.findPreferredProducers();
-      if (producers != null && producers.size() == 1) { //hide fuzzy icon when multiple run configurations are possible
-        presentation.setIcon(context.getConfiguration().getFactory().getIcon());
+      final List<ConfigurationFromContext> fromContext = context.getConfigurationsFromContext();
+      if (fromContext != null && fromContext.size() == 1) {
+        //hide fuzzy icon when multiple run configurations are possible
+        presentation.setIcon(fromContext.iterator().next().getConfiguration().getIcon());
       }
     }
 
@@ -92,16 +79,18 @@ public class CreateAction extends BaseRunConfigurationAction {
   }
 
   private static class SelectPolicy extends BaseCreatePolicy {
-    public SelectPolicy() {
+    SelectPolicy() {
       super(ActionType.SELECT);
     }
 
+    @Override
     public void perform(final ConfigurationContext context) {
       final RunnerAndConfigurationSettings configuration = context.findExisting();
       if (configuration == null) return;
-      ((RunManagerEx)context.getRunManager()).setActiveConfiguration(configuration);
+      context.getRunManager().setSelectedConfiguration(configuration);
     }
 
+    @Override
     protected void updateIcon(final Presentation presentation, final ConfigurationContext context) {
       final RunnerAndConfigurationSettings configuration = context.findExisting();
       if (configuration != null) {
@@ -113,51 +102,50 @@ public class CreateAction extends BaseRunConfigurationAction {
   }
 
   private static class CreatePolicy extends BaseCreatePolicy {
-    public CreatePolicy() {
+    CreatePolicy() {
       super(ActionType.CREATE);
     }
 
+    @Override
     public void perform(final ConfigurationContext context) {
-      final RunManagerImpl runManager = (RunManagerImpl)context.getRunManager();
-      final RunnerAndConfigurationSettings configuration = context.getConfiguration();
-      final RunnerAndConfigurationSettings template = runManager.getConfigurationTemplate(configuration.getFactory());
-      final RunConfiguration templateConfiguration = template.getConfiguration();
-      runManager.addConfiguration(configuration,
-                                  runManager.isConfigurationShared(template),
-                                  runManager.getBeforeRunTasks(templateConfiguration),
-                                  false);
-      runManager.setActiveConfiguration(configuration);
+      RunManagerImpl runManager = (RunManagerImpl)context.getRunManager();
+      RunnerAndConfigurationSettings configuration = context.getConfiguration();
+      configuration.setShared(runManager.getConfigurationTemplate(configuration.getFactory()).isShared());
+      runManager.addConfiguration(configuration);
+      runManager.setSelectedConfiguration(configuration);
     }
   }
 
   private static class CreateAndEditPolicy extends CreatePolicy {
+    @Override
     protected void updateText(final Presentation presentation, final String actionText) {
       presentation.setText(actionText.length() > 0 ? ExecutionBundle.message("create.run.configuration.for.item.action.name", actionText) + "..."
                                                    : ExecutionBundle.message("create.run.configuration.action.name"), false);
     }
 
+    @Override
     public void perform(final ConfigurationContext context) {
       final RunnerAndConfigurationSettings configuration = context.getConfiguration();
       if (RunDialog.editConfiguration(context.getProject(), configuration, ExecutionBundle.message("create.run.configuration.for.item.dialog.title", configuration.getName()))) {
         final RunManagerImpl runManager = (RunManagerImpl)context.getRunManager();
-        runManager.addConfiguration(configuration,
-                                    runManager.isConfigurationShared(configuration),
-                                    runManager.getBeforeRunTasks(configuration.getConfiguration()), false);
-        runManager.setActiveConfiguration(configuration);
+        runManager.addConfiguration(configuration);
+        runManager.setSelectedConfiguration(configuration);
       }
     }
   }
 
   private static class SavePolicy extends BaseCreatePolicy {
-    public SavePolicy() {
+    SavePolicy() {
       super(ActionType.SAVE);
     }
 
+    @Override
     public void perform(final ConfigurationContext context) {
       RunnerAndConfigurationSettings settings = context.findExisting();
-      if (settings != null) context.getRunManager().makeStable(settings.getConfiguration());
+      if (settings != null) context.getRunManager().makeStable(settings);
     }
 
+    @Override
     protected void updateIcon(final Presentation presentation, final ConfigurationContext context) {
       final RunnerAndConfigurationSettings configuration = context.findExisting();
       if (configuration != null) {
@@ -172,9 +160,11 @@ public class CreateAction extends BaseRunConfigurationAction {
   private static final BaseCreatePolicy SELECT = new SelectPolicy();
   private static final BaseCreatePolicy SAVE = new SavePolicy();
   private static final BaseCreatePolicy SELECTED_STABLE = new BaseCreatePolicy(BaseCreatePolicy.ActionType.SELECT) {
+    @Override
     public void perform(final ConfigurationContext context) {}
 
-    public void update(final Presentation presentation, final ConfigurationContext context, final String actionText) {
+    @Override
+    public void update(final Presentation presentation, final ConfigurationContext context, @NotNull final String actionText) {
       super.update(presentation, context, actionText);
       presentation.setVisible(false);
     }

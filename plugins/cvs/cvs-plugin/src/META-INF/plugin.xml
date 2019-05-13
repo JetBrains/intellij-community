@@ -1,16 +1,25 @@
-<idea-plugin version="2">
+<idea-plugin>
   <name>CVS Integration</name>
   <id>CVS</id>
-  <version>11</version>
   <vendor>JetBrains</vendor>
   <resource-bundle>com.intellij.cvsSupport2.CvsBundle</resource-bundle>
   <category>VCS Integration</category>
+  <description>
+      <![CDATA[
+      Allows working with CVS version control system.
+      The following features are available:
+        <ul>
+        <li>Dedicated page under the Version Control node in the Settings/Preferences dialog.</li>
+        <li>When CVS is not enabled, it is still possible to browse, check out sources from and import into the available CVS repositories.</li>
+        <li>When CVS is enabled, the CVS node appears on the VCS menu, and on the context menu of the editor.
+        </ul>
+      ]]>
+   </description>
 
   <depends>com.intellij.modules.lang</depends>
   <depends>com.intellij.modules.vcs</depends>
 
   <extensions defaultExtensionNs="com.intellij">
-    <errorHandler implementation="com.intellij.diagnostic.ITNReporter"/>
     <checkoutProvider implementation="com.intellij.cvsSupport2.checkout.CvsCheckoutProvider"/>
 
     <applicationService serviceInterface="com.intellij.openapi.cvsIntegration.CvsServices"
@@ -30,29 +39,27 @@
     <applicationService serviceInterface="com.intellij.cvsSupport2.connections.ssh.SocksAuthenticatorManager"
                         serviceImplementation="com.intellij.cvsSupport2.connections.ssh.SocksAuthenticatorManager"/>
 
-    <projectService serviceInterface="com.intellij.cvsSupport2.ui.CvsTabbedWindow"
-               serviceImplementation="com.intellij.cvsSupport2.ui.CvsTabbedWindow"/>
-    <projectService serviceInterface="com.intellij.cvsSupport2.config.CvsConfiguration"
-               serviceImplementation="com.intellij.cvsSupport2.config.CvsConfiguration"/>
-    <projectService serviceInterface="com.intellij.cvsSupport2.application.CvsStorageComponent"
-               serviceImplementation="com.intellij.cvsSupport2.application.CvsStorageSupportingDeletionComponent"/>
+    <projectService serviceImplementation="com.intellij.cvsSupport2.ui.CvsTabbedWindow"/>
+    <projectService serviceImplementation="com.intellij.cvsSupport2.config.CvsConfiguration"/>
+    <projectService serviceImplementation="com.intellij.cvsSupport2.application.CvsStorageSupportingDeletionComponent"/>
 
     <vcsCheckinHandlerFactory implementation="com.intellij.cvsSupport2.CvsCheckinHandlerFactory"/>
 
+    <search.topHitProvider implementation="com.intellij.cvsSupport2.config.CvsOptionsTopHitProvider"/>
     <vcs name="CVS" vcsClass="com.intellij.cvsSupport2.CvsVcs2" displayName="CVS" administrativeAreaName="CVS"/>
-    <vcsPopupProvider implementation="com.intellij.cvsSupport2.actions.CvsQuickListContentProvider"/>
   </extensions>
 
   <actions>
     <action id="Cvs.Import" class="com.intellij.cvsSupport2.actions.ImportAction">
       <add-to-group group-id="Vcs.Import"/>
+      <add-to-group group-id="Vcs.Operations.Popup.NonVcsAware" relative-to-action="Start.Use.Vcs" anchor="before"/>
     </action>
 
     <action id="Cvs.BrowseCVSRepository" class="com.intellij.cvsSupport2.actions.BrowseCvsRepositoryAction">
       <add-to-group group-id="Vcs.Browse"/>
     </action>
 
-    <group id="CvsGlobalGroup" class="com.intellij.cvsSupport2.actions.Cvs2Group" test="CVS" popup="true">
+    <group id="CvsGlobalGroup" class="com.intellij.cvsSupport2.actions.Cvs2Group" popup="true">
       <add-to-group group-id="VcsGlobalGroup" anchor="after" relative-to-action="Vcs.Specific"/>
       <separator/>
       <action id="GlobalSettings" class="com.intellij.cvsSupport2.actions.GlobalSettingsAction"/>
@@ -61,23 +68,21 @@
       <separator/>
     </group>
 
-    <group id="CvsFilePopupGroup" class="com.intellij.cvsSupport2.actions.Cvs2Group" test="CVS" popup="true">
+    <group id="CvsFilePopupGroup" class="com.intellij.cvsSupport2.actions.Cvs2Group" popup="true">
       <add-to-group group-id="VcsGroup" anchor="last"/>
     </group>
 
     <action id="Cvs.GetFromRepository" class="com.intellij.cvsSupport2.actions.GetFileFromRepositoryAction">
       <add-to-group group-id="UpdateActionGroup" anchor="last"/>
     </action>
-    
-    <group id="AddOptionDialogActionGroup" test="">
-    <action id="Cvs.Ignore" class="com.intellij.cvsSupport2.actions.IgnoreFileAction">
-        <add-to-group group-id="Vcs.CheckinProjectPopup" anchor="last"/>
-      </action>
+
+    <group id="AddOptionDialogActionGroup">
+      <action id="Cvs.Ignore" class="com.intellij.cvsSupport2.actions.IgnoreFileAction"/>
     </group>
 
     <group id="CvsActions" class="com.intellij.cvsSupport2.actions.Cvs2Group">
       <reference id="CheckinFiles"/>
-      <reference id="ChangesView.Rollback"/>
+      <reference id="ChangesView.Revert"/>
       <reference id="UpdateFiles"/>
       <reference id="CheckStatusForFiles"/>
       <action id="Cvs.Checkout" class="com.intellij.cvsSupport2.actions.CheckoutFileAction"/>
@@ -88,7 +93,6 @@
 
       <action id="Cvs.Add" class="com.intellij.cvsSupport2.actions.AddFileOrDirectoryAction"/>
       <action id="Cvs.UndoAdd" class="com.intellij.cvsSupport2.actions.UnmarkAddedAction"/>
-      <action id="Cvs.Remove" class="com.intellij.cvsSupport2.actions.RemoveLocallyDeletedFilesAction"/>
       <reference id="Cvs.Ignore"/>
 
       <separator/>

@@ -15,9 +15,12 @@
  */
 package com.intellij.refactoring.extractMethod;
 
+import org.jetbrains.annotations.NotNull;
+
 /**
  * @author oleg
  */
-public interface ExtractMethodDecorator {
-  String createMethodPreview(String methodName, AbstractVariableData[] variableDatas);
+public interface ExtractMethodDecorator<T> {
+  String createMethodSignature(@NotNull ExtractMethodSettings<T> settings);
+
 }

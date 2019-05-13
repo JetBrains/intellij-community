@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,9 @@ package com.intellij.ide.actions;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.ToggleAction;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.tabs.impl.JBEditorTabs;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
@@ -27,20 +29,20 @@ import javax.swing.*;
  */
 public class TabsAlphabeticalModeSwitcher extends ToggleAction {
   @Override
-  public boolean isSelected(AnActionEvent e) {
-    return JBEditorTabs.isAlphabeticalMode();
+  public boolean isSelected(@NotNull AnActionEvent e) {
+    return Registry.is(JBEditorTabs.TABS_ALPHABETICAL_KEY);
   }
 
   @Override
-  public void setSelected(AnActionEvent e, boolean state) {
+  public void setSelected(@NotNull AnActionEvent e, boolean state) {
     JBEditorTabs.setAlphabeticalMode(state);
   }
 
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     super.update(e);
-    final int place = UISettings.getInstance().EDITOR_TAB_PLACEMENT;
-    e.getPresentation().setEnabled(UISettings.getInstance().SCROLL_TAB_LAYOUT_IN_EDITOR
+    final int place = UISettings.getInstance().getEditorTabPlacement();
+    e.getPresentation().setEnabled(UISettings.getInstance().getScrollTabLayoutInEditor()
                                    || place == SwingConstants.LEFT
                                    || place == SwingConstants.RIGHT);
   }

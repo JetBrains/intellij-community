@@ -19,10 +19,13 @@ package com.intellij.application.options.codeStyle;
 import com.intellij.application.options.CodeStyleAbstractConfigurable;
 import com.intellij.application.options.CodeStyleAbstractPanel;
 import com.intellij.application.options.OptionsContainingConfigurable;
-import com.intellij.lang.Language;
+import com.intellij.application.options.TabbedLanguageCodeStylePanel;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
+import com.intellij.psi.codeStyle.CodeStyleConfigurable;
+import com.intellij.psi.codeStyle.CodeStyleSettings;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -33,16 +36,23 @@ import java.util.Set;
 /**
  * @author max
  */
-public class NewCodeStyleSettingsPanel extends JPanel {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.application.options.codeStyle.NewCodeStyleSettingsPanel");
+public class NewCodeStyleSettingsPanel extends JPanel implements TabbedLanguageCodeStylePanel.TabChangeListener {
+  private static final Logger LOG = Logger.getInstance(NewCodeStyleSettingsPanel.class);
 
   private final Configurable myTab;
+  private final CodeStyleSchemesModel myModel;
 
-  public NewCodeStyleSettingsPanel(Configurable tab) {
+  public NewCodeStyleSettingsPanel(@NotNull Configurable tab, @NotNull CodeStyleSchemesModel model) {
     super(new BorderLayout());
     myTab = tab;
+    myModel = model;
     JComponent component = myTab.createComponent();
-    add(component, BorderLayout.CENTER);
+    if (component != null) {
+      add(component, BorderLayout.CENTER);
+    }
+    else {
+      LOG.warn("No component for " + tab.getDisplayName());
+    }
   }
 
   public boolean isModified() {
@@ -55,14 +65,9 @@ public class NewCodeStyleSettingsPanel extends JPanel {
     }
   }
 
-  public void apply() {
-    try {
-      if (myTab.isModified()) {
-        myTab.apply();
-      }
-    }
-    catch (ConfigurationException e) {
-      LOG.error(e);
+  public void apply() throws ConfigurationException {
+    if (myTab.isModified()) {
+      myTab.apply();
     }
   }
 
@@ -75,6 +80,22 @@ public class NewCodeStyleSettingsPanel extends JPanel {
     myTab.disposeUIResources();
   }
 
+  public void reset(CodeStyleSettings settings) {
+    try {
+      myModel.setUiEventsEnabled(false);
+      if (myTab instanceof CodeStyleConfigurable) {
+        ((CodeStyleConfigurable)myTab).reset(settings);
+      }
+      else {
+        myTab.reset();
+      }
+      updatePreview();
+    }
+    finally {
+      myModel.setUiEventsEnabled(true);
+    }
+  }
+
   public void reset() {
     myTab.reset();
     updatePreview();
@@ -84,16 +105,9 @@ public class NewCodeStyleSettingsPanel extends JPanel {
     return myTab.getDisplayName();
   }
 
-  public void setModel(final CodeStyleSchemesModel model) {
+  public void setModel(@NotNull CodeStyleSchemesModel model) {
     if (myTab instanceof CodeStyleAbstractConfigurable) {
       ((CodeStyleAbstractConfigurable)myTab).setModel(model);
-    }
-  }
-
-  public void setLanguageSelector(final LanguageSelector langSelector) {
-    if (myTab instanceof CodeStyleAbstractConfigurable) {
-      CodeStyleAbstractConfigurable configurable = (CodeStyleAbstractConfigurable)myTab;      
-      configurable.getPanel().setLanguageSelector(langSelector);
     }
   }
 
@@ -103,20 +117,13 @@ public class NewCodeStyleSettingsPanel extends JPanel {
     }
   }
 
-  public void setLanguage(Language language) {
-    if (myTab instanceof CodeStyleAbstractConfigurable) {
-      CodeStyleAbstractConfigurable configurable = (CodeStyleAbstractConfigurable)myTab;
-      configurable.getPanel().setPanelLanguage(language);
-    }
-  }
-
   public Set<String> processListOptions() {
     if (myTab instanceof OptionsContainingConfigurable) {
       return ((OptionsContainingConfigurable) myTab).processListOptions();
     }
     return Collections.emptySet();
   }
-  
+
 
   @Nullable
   public CodeStyleAbstractPanel getSelectedPanel() {
@@ -124,5 +131,13 @@ public class NewCodeStyleSettingsPanel extends JPanel {
       return ((CodeStyleAbstractConfigurable)myTab).getPanel();
     }
     return null;
+  }
+
+  @Override
+  public void tabChanged(@NotNull TabbedLanguageCodeStylePanel source, @NotNull String tabTitle) {
+    CodeStyleAbstractPanel panel = getSelectedPanel();
+    if (panel instanceof TabbedLanguageCodeStylePanel && panel != source) {
+      ((TabbedLanguageCodeStylePanel)panel).changeTab(tabTitle);
+    }
   }
 }

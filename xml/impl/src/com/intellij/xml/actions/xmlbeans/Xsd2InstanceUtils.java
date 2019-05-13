@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,6 +26,7 @@ import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlDocument;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
+import com.intellij.util.ArrayUtil;
 import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.XmlNSDescriptor;
 import com.intellij.xml.impl.schema.XmlNSDescriptorImpl;
@@ -79,25 +80,21 @@ public class Xsd2InstanceUtils {
 
         // Process Schema files
         List sdocs = new ArrayList();
-        for (int i = 0; i < schemaFiles.length; i++)
-        {
-            try
-            {
-                sdocs.add(XmlObject.Factory.parse(schemaFiles[i],
-                        (new XmlOptions()).setLoadLineNumbers().setLoadMessageDigest()));
-            }
-            catch (Exception e)
-            {
-                throw new IllegalArgumentException("Can not load schema file: " + schemaFiles[i] + ": " + e.getLocalizedMessage());
-            }
+      for (File schemaFile : schemaFiles) {
+        try {
+          sdocs.add(XmlObject.Factory.parse(schemaFile,
+                                            (new XmlOptions()).setLoadLineNumbers().setLoadMessageDigest()));
         }
+        catch (Exception e) {
+          throw new IllegalArgumentException("Can not load schema file: " + schemaFile + ": " + e.getLocalizedMessage());
+        }
+      }
 
-        XmlObject[] schemas = (XmlObject[]) sdocs.toArray(new XmlObject[sdocs.size()]);
+        XmlObject[] schemas = (XmlObject[]) sdocs.toArray(new XmlObject[0]);
 
         SchemaTypeSystem sts = null;
         if (schemas.length > 0)
         {
-            Collection errors = new ArrayList();
             XmlOptions compileOptions = new XmlOptions();
             if (dl)
                 compileOptions.setCompileDownloadUrls();
@@ -108,10 +105,12 @@ public class Xsd2InstanceUtils {
 
           try {
             sts = XmlBeans.compileXsd(schemas, XmlBeans.getBuiltinTypeSystem(), compileOptions);
-          } catch (XmlException e) {
-              String out = "Schema compilation errors: ";
-              for (Object error : errors) out += "\n" + error;
-              throw new IllegalArgumentException(out);
+          }
+          catch (XmlException e) {
+            StringBuilder out = new StringBuilder("Schema compilation errors: ");
+            Collection errors = e.getErrors();
+            for (Object error : errors) out.append("\n").append(error);
+              throw new IllegalArgumentException(out.toString());
           }
         }
 
@@ -121,14 +120,12 @@ public class Xsd2InstanceUtils {
         }
         SchemaType[] globalElems = sts.documentTypes();
         SchemaType elem = null;
-        for (int i = 0; i < globalElems.length; i++)
-        {
-            if (rootName.equals(globalElems[i].getDocumentElementName().getLocalPart()))
-            {
-                elem = globalElems[i];
-                break;
-            }
+      for (SchemaType globalElem : globalElems) {
+        if (rootName.equals(globalElem.getDocumentElementName().getLocalPart())) {
+          elem = globalElem;
+          break;
         }
+      }
 
         if (elem == null) {
             throw new IllegalArgumentException("Could not find a global element with name \"" + rootName + "\"");
@@ -154,7 +151,7 @@ public class Xsd2InstanceUtils {
     if (metaData instanceof XmlNSDescriptorImpl) {
       XmlNSDescriptorImpl nsDescriptor = (XmlNSDescriptorImpl) metaData;
 
-      List<String> elementDescriptors = new ArrayList<String>();
+      List<String> elementDescriptors = new ArrayList<>();
       XmlElementDescriptor[] rootElementsDescriptors = nsDescriptor.getRootElementsDescriptors(PsiTreeUtil.getParentOfType(rootTag, XmlDocument.class));
       for(XmlElementDescriptor e:rootElementsDescriptors) {
         elementDescriptors.add(e.getName());
@@ -204,8 +201,9 @@ public class Xsd2InstanceUtils {
         } else if ("schemaLocation".equals(xmlAttribute.getName())) {
           final PsiReference[] references = xmlAttribute.getValueElement().getReferences();
 
-          if (references.length > 0) {
-            PsiElement psiElement = references[0].resolve();
+          PsiReference reference = ArrayUtil.getLastElement(references);
+          if (reference != null) {
+            PsiElement psiElement = reference.resolve();
 
             if (psiElement instanceof XmlFile) {
               final String s = processAndSaveAllSchemas(((XmlFile) psiElement), scannedToFileName, schemaReferenceProcessor);

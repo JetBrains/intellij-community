@@ -22,15 +22,10 @@ import com.intellij.openapi.vcs.VcsKey;
 import com.intellij.openapi.vcs.changes.CommitContext;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author irengrig
- *         Date: 1/28/11
- *         Time: 3:49 PM
- */
 public abstract class VcsCheckinHandlerFactory implements BaseCheckinHandlerFactory {
   public static final ExtensionPointName<VcsCheckinHandlerFactory> EP_NAME = ExtensionPointName.create("com.intellij.vcsCheckinHandlerFactory");
 
-  private VcsKey myKey;
+  private final VcsKey myKey;
 
   protected VcsCheckinHandlerFactory(@NotNull final VcsKey key) {
     myKey = key;
@@ -38,7 +33,7 @@ public abstract class VcsCheckinHandlerFactory implements BaseCheckinHandlerFact
 
   @NotNull
   @Override
-  public CheckinHandler createHandler(CheckinProjectPanel panel, CommitContext commitContext) {
+  public CheckinHandler createHandler(@NotNull CheckinProjectPanel panel, @NotNull CommitContext commitContext) {
     if (! panel.vcsIsAffected(myKey.getName())) return CheckinHandler.DUMMY;
     return createVcsHandler(panel);
   }
@@ -51,7 +46,7 @@ public abstract class VcsCheckinHandlerFactory implements BaseCheckinHandlerFact
   }
 
   @Override
-  public BeforeCheckinDialogHandler createSystemReadyHandler(Project project) {
+  public BeforeCheckinDialogHandler createSystemReadyHandler(@NotNull Project project) {
     return null;
   }
 }

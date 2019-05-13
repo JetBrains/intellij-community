@@ -1,49 +1,54 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang
 
+import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.util.RecursionManager
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiFile
+import com.intellij.psi.SyntaxTraverser
 import com.intellij.testFramework.IdeaTestUtil
+import com.intellij.testFramework.LightProjectDescriptor
+import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.util.ThrowableRunnable
+import groovy.transform.CompileStatic
+import org.jetbrains.plugins.groovy.GroovyProjectDescriptors
 import org.jetbrains.plugins.groovy.LightGroovyTestCase
+import org.jetbrains.plugins.groovy.codeInspection.assignment.GroovyAssignabilityCheckInspection
+import org.jetbrains.plugins.groovy.codeInspection.confusing.GrUnusedIncDecInspection
 import org.jetbrains.plugins.groovy.codeInspection.noReturnMethod.MissingReturnInspection
+import org.jetbrains.plugins.groovy.codeInspection.unusedDef.UnusedDefInspection
 import org.jetbrains.plugins.groovy.dsl.GroovyDslFileIndex
+import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssignmentExpression
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager
+import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrBindingVariable
+import org.jetbrains.plugins.groovy.util.Slow
+import org.jetbrains.plugins.groovy.util.TestUtils
 
 /**
  * @author peter
  */
+@Slow
 class GroovyStressPerformanceTest extends LightGroovyTestCase {
 
-  final String basePath = ''
+  final String basePath = TestUtils.testDataPath + 'highlighting/'
+
+  final LightProjectDescriptor projectDescriptor = GroovyProjectDescriptors.GROOVY_2_3
 
   ThrowableRunnable configureAndHighlight(String text) {
     return {
+      myFixture.psiManager.dropPsiCaches()
       myFixture.configureByText 'a.groovy', text
       myFixture.doHighlighting()
     } as ThrowableRunnable
   }
 
-  public void testDontWalkLongInferenceChain() throws Exception {
-    RecursionManager.assertOnRecursionPrevention(testRootDisposable)
+  void testDontWalkLongInferenceChain() throws Exception {
+    //RecursionManager.assertOnRecursionPrevention(testRootDisposable)
     Map<Integer, PsiClass> classes = [:]
     myFixture.addFileToProject "Foo0.groovy", """class Foo0 {
       def foo() { return 0 }
@@ -80,7 +85,7 @@ class GroovyStressPerformanceTest extends LightGroovyTestCase {
   }
 
 
-  public void testQuickIncrementalReparse() {
+  void testQuickIncrementalReparse() {
     def story = '''scenario {
   given "some precondition", {
     // do something
@@ -99,32 +104,31 @@ class GroovyStressPerformanceTest extends LightGroovyTestCase {
     myFixture.type 'foo {}\n'
     PsiDocumentManager.getInstance(project).commitAllDocuments()
 
-    def start = System.currentTimeMillis()
+    PlatformTestUtil.startPerformanceTest(getTestName(false), 10000, {
+      story.toCharArray().each {
+        myFixture.type it
+        PsiDocumentManager.getInstance(project).commitAllDocuments()
+      }
 
-    story.toCharArray().each {
-      myFixture.type it
-      PsiDocumentManager.getInstance(project).commitAllDocuments()
-    }
-
-    IdeaTestUtil.assertTiming "slow", 10000, (System.currentTimeMillis() - start)
+    } as ThrowableRunnable).assertTiming()
   }
 
-  public void testManyAnnotatedFields() {
+  void testManyAnnotatedFields() {
     String text = "class Foo {\n"
     for (i in 1..10) {
       text += "@Deprecated String foo$i\n"
     }
     text += "}"
 
-    measureHighlighting(text, 5000)
+    measureHighlighting(text, 250)
   }
 
   private void measureHighlighting(String text, int time) {
-    IdeaTestUtil.startPerformanceTest("slow", time, configureAndHighlight(text)).cpuBound().usesAllCPUCores().assertTiming()
+    IdeaTestUtil.startPerformanceTest(getTestName(false), time, configureAndHighlight(text)).usesAllCPUCores().assertTiming()
   }
 
-  public void testDeeplyNestedClosures() {
-    RecursionManager.assertOnRecursionPrevention(testRootDisposable)
+  void testDeeplyNestedClosures() {
+    RecursionManager.assertOnRecursionPrevention(myFixture.testRootDisposable)
     String text = "println 'hi'"
     String defs = ""
     for (i in 1..10) {
@@ -132,41 +136,57 @@ class GroovyStressPerformanceTest extends LightGroovyTestCase {
       defs += "def foo$i(Closure cl) {}\n"
     }
     myFixture.enableInspections(new MissingReturnInspection())
-    measureHighlighting(defs + text, 10000)
+    measureHighlighting(defs + text, 300)
   }
 
-  public void testDeeplyNestedClosuresInGenericCalls() {
-    RecursionManager.assertOnRecursionPrevention(testRootDisposable)
+  void testDeeplyNestedClosuresInCompileStatic() {
+    RecursionManager.assertOnRecursionPrevention(myFixture.testRootDisposable)
+
+    String text = "println 'hi'"
+    String defs = ""
+    for (i in 1..10) {
+      text = "foo$i {a = 5; $text }"
+      defs += "def foo$i(Closure cl) {}\n"
+    }
+    myFixture.enableInspections(new MissingReturnInspection())
+
+    addCompileStatic()
+    measureHighlighting(defs + "\n @groovy.transform.CompileStatic def compiledStatically() {\ndef a = ''\n" + text + "\n}", 500)
+  }
+
+  void testDeeplyNestedClosuresInGenericCalls() {
+    RecursionManager.assertOnRecursionPrevention(myFixture.testRootDisposable)
     String text = "println it"
     for (i in 1..10) {
       text = "foo(it) { $text }"
     }
     myFixture.enableInspections(new MissingReturnInspection())
-    measureHighlighting("def <T> foo(T t, Closure cl) {}\n" + text, 10000)
+
+    measureHighlighting("def <T> void foo(T t, Closure cl) {}\n$text", 1600)
   }
 
-  public void testDeeplyNestedClosuresInGenericCalls2() {
-    RecursionManager.assertOnRecursionPrevention(testRootDisposable)
+  void testDeeplyNestedClosuresInGenericCalls2() {
+    RecursionManager.assertOnRecursionPrevention(myFixture.testRootDisposable)
     String text = "println it"
     for (i in 1..10) {
       text = "foo(it) { $text }"
     }
     myFixture.enableInspections(new MissingReturnInspection())
-    measureHighlighting("def <T> foo(T t, Closure<T> cl) {}\n" + text, 10000)
+    measureHighlighting("def <T> void foo(T t, Closure<T> cl) {}\n$text", 1200)
   }
 
-  public void testManyAnnotatedScriptVariables() {
-    measureHighlighting((0..100).collect { "@Anno String i$it = null" }.join("\n"), 10000)
+  void testManyAnnotatedScriptVariables() {
+    measureHighlighting((0..100).collect { "@Anno String i$it = null" }.join("\n"), 1000)
   }
 
-  public void "test no recursion prevention when resolving supertype"() {
-    RecursionManager.assertOnRecursionPrevention(testRootDisposable)
+  void "test no recursion prevention when resolving supertype"() {
+    RecursionManager.assertOnRecursionPrevention(myFixture.testRootDisposable)
     myFixture.addClass("interface Bar {}")
     measureHighlighting("class Foo implements Bar {}", 200)
   }
 
-  public void "test no recursion prevention when contributing constructors"() {
-    RecursionManager.assertOnRecursionPrevention(testRootDisposable)
+  void "test no recursion prevention when contributing constructors"() {
+    RecursionManager.assertOnRecursionPrevention(myFixture.testRootDisposable)
     myFixture.addClass("interface Bar {}")
     def text = """
 @groovy.transform.TupleConstructor
@@ -180,8 +200,8 @@ class Foo implements Bar {
     measureHighlighting(text, 200)
   }
 
-  public void "test using non-reassigned for loop parameters"() {
-    RecursionManager.assertOnRecursionPrevention(testRootDisposable)
+  void "test using non-reassigned for loop parameters"() {
+    RecursionManager.assertOnRecursionPrevention(myFixture.testRootDisposable)
     def text = """
 def foo(List<File> list) {
   for (file in list) {
@@ -195,7 +215,7 @@ def bar(File file) { file.path }
     measureHighlighting(text, 2000)
   }
 
-  public void "test using SSA variables in a for loop"() {
+  void "test using SSA variables in a for loop"() {
     def text = """
 def foo(List<String> list, SomeClass sc) {
   List<String> result
@@ -219,13 +239,38 @@ class SomeClass {
   void someMethod(String s) {}
 }
 """
-    measureHighlighting(text, 8000)
+    measureHighlighting(text, 14_000)
   }
 
-  public void "test infer only the variable types that are needed"() {
+  void "test constructor call's"() {
+    def text = """
+class Cl {
+
+    Cl(Map<String, Integer> a, Condition<Cl> con, String s) {
+    }
+
+    interface Condition<T> {}
+
+    static <T> Condition<T> alwaysFalse() {
+        return (Condition<T>)null
+    }
+
+
+    static m() {
+        ${'''new Cl(alwaysFalse(), name: 1, m: 2, new Object().toString(), sad: 12)\n'''*100}
+    }
+}
+"""
+    IdeaTestUtil.startPerformanceTest(getTestName(false), 750, configureAndHighlight(text))
+      .attempts(20)
+      .usesAllCPUCores()
+      .assertTiming()
+  }
+
+  void "test infer only the variable types that are needed"() {
     addGdsl '''contribute(currentType(String.name)) {
   println 'sleeping'
-  Thread.sleep(1000)
+  Thread.sleep(100_000)
   method name:'foo', type:String, params:[:], namedParams:[
     parameter(name:'param1', type:String),
   ]
@@ -238,7 +283,180 @@ while (true) {
   f.canoPath<caret>
 }
 '''
-    IdeaTestUtil.startPerformanceTest("slow", 300, configureAndComplete(text)).cpuBound().usesAllCPUCores().assertTiming()
+    PlatformTestUtil.startPerformanceTest(getTestName(false), 20_000, configureAndComplete(text)).attempts(1).usesAllCPUCores().assertTiming()
+  }
+
+  void testClosureRecursion() {
+    def text = '''
+class AwsService {
+    def grailsApplication
+    def configService
+
+    def rdsTypeTranslation = [
+            "udbInstClass.uDBInst" : "db.t1.micro",
+            "dbInstClass.uDBInst" : "db.t1.micro",
+            "dbInstClass.smDBInst" : "db.m1.small",
+            "dbInstClass.medDBInst" : "db.m1.medium",
+            "dbInstClass.lgDBInst" : "db.m1.large",
+            "dbInstClass.xlDBInst" : "db.m1.xlarge",
+            "hiMemDBInstClass.xlDBInst" : "db.m2.xlarge",
+            "hiMemDBInstClass.xxlDBInst" : "db.m2.2xlarge",
+            "hiMemDBInstClass.xxxxDBInst" : "db.m2.4xlarge",
+            "multiAZDBInstClass.uDBInst" : "db.t1.micro",
+            "multiAZDBInstClass.smDBInst" : "db.m1.small",
+            "multiAZDBInstClass.medDBInst" : "db.m1.medium",
+            "multiAZDBInstClass.lgDBInst" : "db.m1.large",
+            "multiAZDBInstClass.xlDBInst" : "db.m1.xlarge",
+            "multiAZHiMemInstClass.xlDBInst" : "db.m2.xlarge",
+            "multiAZHiMemInstClass.xxlDBInst" : "db.m2.2xlarge",
+            "multiAZHiMemInstClass.xxxxDBInst" : "db.m2.4xlarge"]
+
+    def regionTranslation = [
+            'us-east-1' : 'us-east',
+            'us-west-2' : 'us-west-2',
+            'us-west-1' : 'us-west',
+            'eu-west-1' : 'eu-ireland',
+            'ap-southeast-1' : 'apac-sin',
+            'ap-northeast-1' : 'apac-tokyo',
+            'sa-east-1' : 'sa-east-1']
+
+    def price(env) {
+        def priceMap = [:]
+        def region = env.region
+
+        def aws = new AwsApi(configService.getAwsConfiguration(), env, configService.getTempPath())
+        def price = 0.0
+        def count = 0
+
+        //def ec2EbsPricing = aws.getEbsOptimizedComputePricing()
+        def rdsMySqlPricing
+        def rdsMySqlMultiPricing
+        def rdsOraclePricing
+        try {
+            rdsMySqlPricing = aws.getMySqlPricing()
+            rdsMySqlMultiPricing = aws.getMySqlMultiAZPricing()
+            rdsOraclePricing = aws.getOracleLIPricing()
+        } catch (Exception) {
+            //TODO : Find new rds pricing json
+        }
+        //def elbPricing = aws.getELBPricing()
+        def ebsPricing = aws.getEBSPricing()
+
+        aws.getComputeResponse(region).reservations.each { Reservation inst ->
+            inst.instances.each { Instance it ->
+                if (it.state.code.toInteger() == 16) {
+                    def os
+                    switch (it.platform) {
+                        case 'windows':
+                            os = "mswin"
+                            break;
+                        case 'linux':
+                        default:
+                            os = "linux"
+                            break;
+                    }
+
+                    aws.getComputePricing(os).config.regions.each { pricingRegion ->
+                        if (pricingRegion.region == regionTranslation[region]) {
+                            pricingRegion.instanceTypes.each { instanceType ->
+                                instanceType.sizes.each { size ->
+                                    if (size.size == it.instanceType) {
+                                        size.valueColumns.each { valueColumn ->
+                                            if (valueColumn.name == os) {
+                                                //Price by type
+                                                def key = "price-ec2-" + os + "-" + it.instanceType
+                                                if (!priceMap.containsKey(key)){
+                                                    priceMap[key] = 0.0
+                                                }
+                                                priceMap[key] += valueColumn.prices.USD.toFloat()
+
+                                                //Type count
+                                                key = "count-ec2-" + os + "-" + it.instanceType
+                                                if (!priceMap.containsKey(key)){
+                                                    priceMap[key] = 0
+                                                }
+                                                priceMap[key] += 1
+                                                count++
+
+                                                //Price for all
+                                                if (!priceMap.containsKey("price-ec2")){
+                                                    priceMap["price-ec2"] = 0.0
+                                                }
+                                                priceMap["price-ec2"] += valueColumn.prices.USD.toFloat()
+
+                                                //Total
+                                                price += valueColumn.prices.USD.toFloat()
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        def rdsPrice = 0.0
+        aws.getRDSResponse(region).dBInstances.each { DBInstance it ->
+            def json
+            switch (it.engine) {
+                case 'mysql':
+                    if (it.multiAZ) {
+                        json = rdsMySqlMultiPricing
+                    } else {
+                        json = rdsMySqlPricing
+                    }
+                    break;
+                case 'oracle-se1':
+                    json = rdsOraclePricing
+                    break;
+            }
+
+            if (json != null) {
+                json.config.regions.each { pricingRegion ->
+                    if (pricingRegion.region == regionTranslation[region]) {
+                        pricingRegion.types.each { instanceType ->
+                            instanceType.tiers.each { tier ->
+                                if (rdsTypeTranslation[instanceType.name + "." + tier.name] == it.DBInstanceClass) {
+                                    rdsPrice += tier.prices.USD.toFloat()
+                                    price += tier.prices.USD.toFloat()
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        //TODO : IOPS
+        def ebsPrice = 0.0
+        aws.getEBSResponse(region).volumes.each { Volume it ->
+            ebsPricing.config.regions.each { pricingRegion ->
+                if (pricingRegion.region == regionTranslation[region]) {
+                    pricingRegion.types.each { ebsType ->
+                        if (ebsType.name == "ebsVols") {
+                            ebsType.values.each { ebsValue ->
+                                if (ebsValue.rate == "perGBmoProvStorage") {
+                                    ebsPrice += (ebsValue.prices.USD.toFloat() * it.size.toFloat() / 30 / 24)
+                                    price += (ebsValue.prices.USD.toFloat() * it.size.toFloat() / 30 / 24)
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        priceMap.put("price-total", price)
+        priceMap.put("price-rds", rdsPrice)
+        priceMap.put("price-ebs", ebsPrice)
+        priceMap.put("count-total", count)
+        return priceMap
+    }
+}
+'''
+    measureHighlighting(text, 700)
   }
 
   ThrowableRunnable configureAndComplete(String text) {
@@ -250,7 +468,127 @@ while (true) {
 
   private def addGdsl(String text) {
     final PsiFile file = myFixture.addFileToProject("Enhancer.gdsl", text)
-    GroovyDslFileIndex.activateUntilModification(file.virtualFile)
+    GroovyDslFileIndex.activate(file.virtualFile)
   }
 
+  @CompileStatic
+  void "test performance of resolving methods with many siblings"() {
+    int classMethodCount = 50000
+    assert myFixture.addClass("""class Foo {
+${(1..classMethodCount).collect({"void foo${it}() {}"}).join("\n")}
+}""")
+
+    def refCountInBlock = 50
+    def blockCount = 10
+    def methodBody = (1..refCountInBlock).collect({ "foo$it()" }).join("\n")
+    String text = "class Bar extends Foo { " +
+                  (0..blockCount).collect({ "def zoo$it() {\n" + methodBody + "\n}"}).join("\n") +
+                  "}"
+    myFixture.configureByText('a.groovy', '')
+    assert myFixture.file instanceof GroovyFile
+    PlatformTestUtil.startPerformanceTest('many siblings', 1000, {
+      // clear caches
+      WriteCommandAction.runWriteCommandAction(project) {
+        myFixture.editor.document.text = ""
+        PsiDocumentManager.getInstance(project).commitAllDocuments()
+        myFixture.editor.document.text = text
+        PsiDocumentManager.getInstance(project).commitAllDocuments()
+      }
+
+      def refs = SyntaxTraverser.psiTraverser(myFixture.file).filter(GrReferenceElement).toList()
+      assert refs.size() > refCountInBlock * blockCount
+      for (ref in refs) {
+        assert ref.resolve(): ref.text
+      }
+    }).attempts(2).assertTiming()
+  }
+
+  @CompileStatic
+  void testVeryLongDfaWithComplexGenerics() {
+    def configure = { int i ->
+      myFixture.configureByText "a${i}.groovy", """\
+class TroubleCase$i {
+  private Foo$i<Bar$i> fooBar;
+  private Foo$i<Baz$i> fooBaz;
+
+  private void troubleMethod(boolean b) {
+    def <warning descr="Assignment is not used">icDao</warning> = (b?fooBaz:fooBar);
+    for(Object x: new ArrayList()) {}
+  }
+}
+
+public interface Foo$i<FFIC$i> {}
+public class Bar$i implements Cloneable, Zoo$i<Goo$i, Doo$i, Coo$i, Woo$i> {}
+public interface Zoo$i<AR$i, FR$i, AM$i extends Hoo$i<AR$i>, FM$i extends Hoo$i<FR$i>> {}
+public interface Hoo$i<R$i> {}
+public class Baz$i implements Cloneable, Zoo$i<String,String,Too$i,Yoo$i> {}
+public class Goo$i {}
+public class Too$i implements Hoo$i<String> {}
+public class Coo$i implements Serializable, Cloneable, Hoo$i<Goo$i> {}
+public class Woo$i implements Serializable, Cloneable, Hoo$i<Doo$i> {}
+public class Yoo$i implements Serializable, Cloneable, Hoo$i<String> {}
+public class Doo$i {}
+"""
+    }
+    IdeaTestUtil.startPerformanceTest("testing dfa", 800, {
+      myFixture.checkHighlighting true, false, false
+    }).setup({
+      myFixture.enableInspections GroovyAssignabilityCheckInspection, UnusedDefInspection, GrUnusedIncDecInspection
+      configure 1
+      myFixture.checkHighlighting true, false, false
+      configure 2
+    }).attempts(1).assertTiming()
+  }
+
+  void 'test resolve long chain of references'() {
+    def header = """\
+class Node {
+  public Node nn
+}
+def a = new Node()
+"""
+    // a.nn.nn ... .nn
+    def file = (GroovyFile)fixture.configureByText('_.groovy', header + "a${'.nn' * 500}.nn")
+    def reference = (GrReferenceExpression)file.statements.last()
+    assert reference.resolve() != null
+  }
+
+  void 'test resolve long chain of method calls'() {
+    def header = """\
+class Node {
+  public Node nn
+  public Node nn() {}
+}
+def a = new Node()
+"""
+    // a.nn() ... .nn().nn
+    def file = (GroovyFile)fixture.configureByText('_.groovy', header + "a${'.nn()' * 250}.nn")
+    def reference = (GrReferenceExpression)file.statements.last()
+    assert reference.resolve() != null
+  }
+
+  void 'test resolve long chain of operators'() {
+    def header = """\
+class Node {
+  public Node plus(Node n) {n}
+}
+def a = new Node()
+"""
+    // a += a ... += a += new Node()
+    def file = (GroovyFile)fixture.configureByText('_.groovy', header + "a${' += a' * 500} += new Node()")
+    def reference = ((GrAssignmentExpression)file.statements.last()).reference
+    assert reference.resolve() != null
+  }
+
+  void "test do not resolve LHS and RHS of assignment when name doesn't match"() {
+    def text = new StringBuilder("a0 = 1\n")
+    def n = 1000
+    for (i in 1..n) {
+      text.append "a$i = a${i - 1}\n"
+    }
+    text.append "a$n"
+    def file = (GroovyFile)fixture.configureByText('_.groovy', text.toString())
+    def last = (GrReferenceExpression)file.statements.last()
+    assert last.resolve() instanceof GrBindingVariable
+  }
 }

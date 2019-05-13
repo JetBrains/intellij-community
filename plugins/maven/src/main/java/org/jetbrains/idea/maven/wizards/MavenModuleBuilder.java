@@ -1,40 +1,27 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.wizards;
 
-import com.intellij.icons.AllIcons;
-import com.intellij.ide.util.projectWizard.ModuleBuilder;
-import com.intellij.ide.util.projectWizard.ModuleWizardStep;
-import com.intellij.ide.util.projectWizard.SourcePathsBuilder;
-import com.intellij.ide.util.projectWizard.WizardContext;
+import com.intellij.ide.util.projectWizard.*;
+import com.intellij.openapi.Disposable;
+import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsManagerImpl;
 import com.intellij.openapi.module.JavaModuleType;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.module.StdModuleTypes;
-import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JavaSdk;
 import com.intellij.openapi.projectRoots.SdkTypeId;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import icons.MavenIcons;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.model.MavenArchetype;
 import org.jetbrains.idea.maven.model.MavenId;
 import org.jetbrains.idea.maven.project.MavenEnvironmentForm;
@@ -49,7 +36,6 @@ import java.util.List;
 import java.util.Map;
 
 public class MavenModuleBuilder extends ModuleBuilder implements SourcePathsBuilder {
-
   private MavenProject myAggregatorProject;
   private MavenProject myParentProject;
 
@@ -63,23 +49,27 @@ public class MavenModuleBuilder extends ModuleBuilder implements SourcePathsBuil
 
   private Map<String, String> myPropertiesToCreateByArtifact;
 
-  public void setupRootModel(ModifiableRootModel rootModel) throws ConfigurationException {
+  @Override
+  public void setupRootModel(@NotNull ModifiableRootModel rootModel) {
     final Project project = rootModel.getProject();
 
     final VirtualFile root = createAndGetContentEntry();
     rootModel.addContentEntry(root);
 
-    rootModel.inheritSdk();
+    // todo this should be moved to generic ModuleBuilder
+    if (myJdk != null){
+      rootModel.setSdk(myJdk);
+    } else {
+      rootModel.inheritSdk();
+    }
 
-    MavenUtil.runWhenInitialized(project, new DumbAwareRunnable() {
-      public void run() {
-        if (myEnvironmentForm != null) {
-          myEnvironmentForm.setData(MavenProjectsManager.getInstance(project).getGeneralSettings());
-        }
-
-        new MavenModuleBuilderHelper(myProjectId, myAggregatorProject, myParentProject, myInheritGroupId,
-                                     myInheritVersion, myArchetype, myPropertiesToCreateByArtifact, "Create new Maven module").configure(project, root, false);
+    MavenUtil.runWhenInitialized(project, (DumbAwareRunnable)() -> {
+      if (myEnvironmentForm != null) {
+        myEnvironmentForm.setData(MavenProjectsManager.getInstance(project).getGeneralSettings());
       }
+
+      new MavenModuleBuilderHelper(myProjectId, myAggregatorProject, myParentProject, myInheritGroupId,
+                                   myInheritVersion, myArchetype, myPropertiesToCreateByArtifact, "Create new Maven module").configure(project, root, false);
     });
   }
 
@@ -90,7 +80,17 @@ public class MavenModuleBuilder extends ModuleBuilder implements SourcePathsBuil
 
   @Override
   public String getPresentableName() {
-    return "Maven Module";
+    return "Maven";
+  }
+
+  @Override
+  public String getParentGroup() {
+    return JavaModuleType.BUILD_TOOLS_GROUP;
+  }
+
+  @Override
+  public int getWeight() {
+    return JavaModuleBuilder.BUILD_SYSTEM_WEIGHT;
   }
 
   @Override
@@ -100,15 +100,11 @@ public class MavenModuleBuilder extends ModuleBuilder implements SourcePathsBuil
   }
 
   @Override
-  public Icon getBigIcon() {
-    return AllIcons.Modules.Types.JavaModule;
-  }
-
-  @Override
   public Icon getNodeIcon() {
     return MavenIcons.MavenLogo;
   }
 
+  @Override
   public ModuleType getModuleType() {
     return StdModuleTypes.JAVA;
   }
@@ -119,22 +115,11 @@ public class MavenModuleBuilder extends ModuleBuilder implements SourcePathsBuil
   }
 
   @Override
-  public ModuleWizardStep[] createWizardSteps(WizardContext wizardContext, ModulesProvider modulesProvider) {
+  public ModuleWizardStep[] createWizardSteps(@NotNull WizardContext wizardContext, @NotNull ModulesProvider modulesProvider) {
     return new ModuleWizardStep[]{
-      new MavenModuleWizardStep(wizardContext.getProject(), this, wizardContext),
+      new MavenModuleWizardStep(this, wizardContext, !wizardContext.isNewWizard()),
       new SelectPropertiesStep(wizardContext.getProject(), this)
     };
-  }
-
-  public MavenProject findPotentialParentProject(Project project) {
-    if (!MavenProjectsManager.getInstance(project).isMavenizedProject()) return null;
-
-    File parentDir = new File(getContentEntryPath()).getParentFile();
-    if (parentDir == null) return null;
-    VirtualFile parentPom = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(new File(parentDir, "pom.xml"));
-    if (parentPom == null) return null;
-
-    return MavenProjectsManager.getInstance(project).findProject(parentPom);
   }
 
   private VirtualFile createAndGetContentEntry() {
@@ -143,13 +128,16 @@ public class MavenModuleBuilder extends ModuleBuilder implements SourcePathsBuil
     return LocalFileSystem.getInstance().refreshAndFindFileByPath(path);
   }
 
+  @Override
   public List<Pair<String, String>> getSourcePaths() {
     return Collections.emptyList();
   }
 
+  @Override
   public void setSourcePaths(List<Pair<String, String>> sourcePaths) {
   }
 
+  @Override
   public void addSourcePath(Pair<String, String> sourcePathInfo) {
   }
 
@@ -216,6 +204,33 @@ public class MavenModuleBuilder extends ModuleBuilder implements SourcePathsBuil
 
   @Override
   public String getGroupName() {
-    return JavaModuleType.JAVA_GROUP;
+    return "Maven";
+  }
+
+  @Nullable
+  @Override
+  public ModuleWizardStep getCustomOptionsStep(WizardContext context, Disposable parentDisposable) {
+    MavenArchetypesStep step = new MavenArchetypesStep(this, null);
+    Disposer.register(parentDisposable, step);
+    return step;
+  }
+
+  @Nullable
+  @Override
+  public ModuleWizardStep modifySettingsStep(@NotNull SettingsStep settingsStep) {
+    final ModuleNameLocationSettings nameLocationSettings = settingsStep.getModuleNameLocationSettings();
+    if (nameLocationSettings != null && myProjectId != null && myProjectId.getArtifactId() != null) {
+      nameLocationSettings.setModuleName(StringUtil.sanitizeJavaIdentifier(myProjectId.getArtifactId()));
+      if (myAggregatorProject != null) {
+        nameLocationSettings.setModuleContentRoot(myAggregatorProject.getDirectory() + "/" + myProjectId.getArtifactId());
+      }
+    }
+    return super.modifySettingsStep(settingsStep);
+  }
+
+  @Nullable
+  @Override
+  public Project createProject(String name, String path) {
+    return ExternalProjectsManagerImpl.setupCreatedProject(super.createProject(name, path));
   }
 }

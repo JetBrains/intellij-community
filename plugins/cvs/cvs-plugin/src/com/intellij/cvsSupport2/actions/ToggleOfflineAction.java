@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,12 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * Created by IntelliJ IDEA.
- * User: yole
- * Date: 04.09.2006
- * Time: 21:00:01
- */
 package com.intellij.cvsSupport2.actions;
 
 import com.intellij.CvsBundle;
@@ -29,12 +23,16 @@ import com.intellij.cvsSupport2.application.CvsEntriesManager;
 import com.intellij.cvsSupport2.connections.CvsConnectionSettings;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.ToggleAction;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NotNull;
 
-public class ToggleOfflineAction extends ToggleAction {
-  public boolean isSelected(AnActionEvent e) {
+public class ToggleOfflineAction extends ToggleAction implements DumbAware {
+
+  @Override
+  public boolean isSelected(@NotNull AnActionEvent e) {
     CvsContext cvsContext = CvsContextWrapper.createInstance(e);
     if (!cvsContext.cvsIsActive()) return false;
     VirtualFile root = cvsContext.getSelectedFile();
@@ -47,7 +45,8 @@ public class ToggleOfflineAction extends ToggleAction {
     return settings.isOffline();
   }
 
-  public void setSelected(AnActionEvent e, boolean state) {
+  @Override
+  public void setSelected(@NotNull AnActionEvent e, boolean state) {
     CvsContext cvsContext = CvsContextWrapper.createInstance(e);
     final CvsEntriesManager entriesManager = CvsEntriesManager.getInstance();
     final VirtualFile file = cvsContext.getSelectedFile();
@@ -69,7 +68,7 @@ public class ToggleOfflineAction extends ToggleAction {
   }
 
   @Override
-  public void update(final AnActionEvent e) {
+  public void update(@NotNull final AnActionEvent e) {
     super.update(e);
     CvsContext cvsContext = CvsContextWrapper.createInstance(e);
     final VirtualFile[] files = cvsContext.getSelectedFiles();

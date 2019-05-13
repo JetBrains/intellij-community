@@ -25,11 +25,10 @@ import java.util.Map;
 
 /**
  * @author Maxim.Medvedev
- *         Date: Apr 17, 2009 5:16:10 PM
  */
 public interface IntroduceParameterMethodUsagesProcessor {
   ExtensionPointName<IntroduceParameterMethodUsagesProcessor> EP_NAME =
-    new ExtensionPointName<IntroduceParameterMethodUsagesProcessor>("com.intellij.refactoring.introduceParameterMethodUsagesProcessor");
+    new ExtensionPointName<>("com.intellij.refactoring.introduceParameterMethodUsagesProcessor");
 
   boolean isMethodUsage(UsageInfo usage);
 

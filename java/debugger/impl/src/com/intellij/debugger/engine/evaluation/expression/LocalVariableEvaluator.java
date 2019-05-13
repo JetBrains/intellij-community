@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,19 +21,27 @@
 package com.intellij.debugger.engine.evaluation.expression;
 
 import com.intellij.debugger.DebuggerBundle;
+import com.intellij.debugger.engine.ContextUtil;
+import com.intellij.debugger.engine.DebugProcess;
+import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluateExceptionUtil;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
-import com.intellij.debugger.jdi.LocalVariableProxyImpl;
-import com.intellij.debugger.jdi.StackFrameProxyImpl;
-import com.intellij.debugger.jdi.ThreadReferenceProxyImpl;
+import com.intellij.debugger.engine.jdi.StackFrameProxy;
+import com.intellij.debugger.impl.SimpleStackFrameContext;
+import com.intellij.debugger.jdi.*;
 import com.intellij.debugger.ui.impl.watch.LocalVariableDescriptorImpl;
 import com.intellij.debugger.ui.impl.watch.NodeDescriptorImpl;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiVariable;
 import com.sun.jdi.*;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.List;
+import java.util.Map;
 
 class LocalVariableEvaluator implements Evaluator {
   private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.engine.evaluation.expression.LocalVariableEvaluator");
@@ -41,18 +49,15 @@ class LocalVariableEvaluator implements Evaluator {
   private final String myLocalVariableName;
   private EvaluationContextImpl myContext;
   private LocalVariableProxyImpl myEvaluatedVariable;
-  private final boolean myIsJspSpecial;
-  private int myParameterIndex = -1;
+  private DecompiledLocalVariable myEvaluatedDecompiledVariable;
+  private final boolean myCanScanFrames;
 
-  public LocalVariableEvaluator(String localVariableName, boolean isJspSpecial) {
+  LocalVariableEvaluator(String localVariableName, boolean canScanFrames) {
     myLocalVariableName = localVariableName;
-    myIsJspSpecial = isJspSpecial;
+    myCanScanFrames = canScanFrames;
   }
 
-  public void setParameterIndex(int parameterIndex) {
-    myParameterIndex = parameterIndex;
-  }
-
+  @Override
   public Object evaluate(EvaluationContextImpl context) throws EvaluateException {
     StackFrameProxyImpl frameProxy = context.getFrameProxy();
     if (frameProxy == null) {
@@ -62,39 +67,61 @@ class LocalVariableEvaluator implements Evaluator {
     try {
       ThreadReferenceProxyImpl threadProxy = null;
       int lastFrameIndex = -1;
+      PsiVariable variable = null;
+      DebugProcessImpl process = context.getDebugProcess();
+
+      boolean topFrame = true;
 
       while (true) {
         try {
           LocalVariableProxyImpl local = frameProxy.visibleVariableByName(myLocalVariableName);
           if (local != null) {
-            myEvaluatedVariable = local;
-            myContext = context;
-            return frameProxy.getValue(local);
+            if (topFrame ||
+                variable.equals(resolveVariable(frameProxy, myLocalVariableName, context.getProject(), process))) {
+              myEvaluatedVariable = local;
+              myContext = context;
+              return frameProxy.getValue(local);
+            }
           }
         }
         catch (EvaluateException e) {
           if (!(e.getCause() instanceof AbsentInformationException)) {
             throw e;
           }
-          if (myParameterIndex < 0) {
-            throw e;
+
+          // try to look in slots
+          try {
+            Map<DecompiledLocalVariable, Value> vars = LocalVariablesUtil.fetchValues(frameProxy, process, true);
+            for (Map.Entry<DecompiledLocalVariable, Value> entry : vars.entrySet()) {
+              DecompiledLocalVariable var = entry.getKey();
+              if (var.getMatchedNames().contains(myLocalVariableName) || var.getDefaultName().equals(myLocalVariableName)) {
+                myEvaluatedDecompiledVariable = var;
+                myContext = context;
+                return entry.getValue();
+              }
+            }
           }
-          final List<Value> values = frameProxy.getArgumentValues();
-          if (values.isEmpty() || myParameterIndex >= values.size()) {
-            throw e;
+          catch (Exception e1) {
+            LOG.info(e1);
           }
-          return values.get(myParameterIndex);
         }
 
-        if (myIsJspSpecial) {
+        if (myCanScanFrames) {
+          if (topFrame) {
+            variable = resolveVariable(frameProxy, myLocalVariableName, context.getProject(), process);
+            if (variable == null) break;
+          }
           if (threadProxy == null /* initialize it lazily */) {
             threadProxy = frameProxy.threadProxy();
             lastFrameIndex = threadProxy.frameCount() - 1;
           }
-          final int currentFrameIndex = frameProxy.getFrameIndex();
+          int currentFrameIndex = frameProxy.getFrameIndex();
           if (currentFrameIndex < lastFrameIndex) {
             frameProxy = threadProxy.frame(currentFrameIndex + 1);
-            continue;
+            if (frameProxy != null) {
+              topFrame = false;
+              continue;
+            }
           }
         }
 
@@ -109,42 +136,73 @@ class LocalVariableEvaluator implements Evaluator {
     }
   }
 
+  @Override
   public Modifier getModifier() {
     Modifier modifier = null;
-    if (myEvaluatedVariable != null && myContext != null) {
+    if ((myEvaluatedVariable != null || myEvaluatedDecompiledVariable != null) && myContext != null) {
       modifier = new Modifier() {
+        @Override
         public boolean canInspect() {
           return true;
         }
 
+        @Override
         public boolean canSetValue() {
           return true;
         }
 
+        @Override
         public void setValue(Value value) throws ClassNotLoadedException, InvalidTypeException {
           StackFrameProxyImpl frameProxy = myContext.getFrameProxy();
           try {
-            frameProxy.setValue(myEvaluatedVariable, value);
+            assert frameProxy != null;
+            if (myEvaluatedVariable != null) {
+              frameProxy.setValue(myEvaluatedVariable, value);
+            }
+            else { // no debug info
+              LocalVariablesUtil.setValue(frameProxy.getStackFrame(), myEvaluatedDecompiledVariable.getSlot(), value);
+            }
           }
           catch (EvaluateException e) {
-            LOG.error(e);  
+            LOG.error(e);
           }
         }
 
+        @Override
         public Type getExpectedType() throws ClassNotLoadedException {
           try {
             return myEvaluatedVariable.getType();
-          } catch (EvaluateException e) {
+          }
+          catch (EvaluateException e) {
             LOG.error(e);
             return null;
           }
         }
 
+        @Override
         public NodeDescriptorImpl getInspectItem(Project project) {
           return new LocalVariableDescriptorImpl(project, myEvaluatedVariable);
         }
       };
     }
     return modifier;
+  }
+
+  @Nullable
+  private static PsiVariable resolveVariable(final StackFrameProxy frame,
+                                             final String name,
+                                             final Project project,
+                                             final DebugProcess process) {
+    PsiElement place = ContextUtil.getContextElement(new SimpleStackFrameContext(frame, process));
+    if (place == null) {
+      return null;
+    }
+    return ReadAction.compute(() ->
+      JavaPsiFacade.getInstance(project).getResolveHelper().resolveReferencedVariable(name, place));
+  }
+
+  @Override
+  public String toString() {
+    return myLocalVariableName;
   }
 }

@@ -1,0 +1,21 @@
+<html>
+<body>
+Reports method parameter types in methods that look like they are overriding a super method,
+but do not because of the parameter type coming from a different package than the super method type,
+although the class name matches.
+This prevents the parameter's method from overriding the super method and can be very confusing.
+<p>Example:
+<pre><code>
+<b>public class</b> A {
+  <b>public void</b> method(Object o) {}
+}
+
+<b>public class</b> B <b>extends</b> A {
+  <b>public void</b> method(Object o) {} // warning on parameter type here
+  <b>class</b> Object {}
+}
+</code></pre>
+<!-- tooltip end -->
+<p>
+</body>
+</html>

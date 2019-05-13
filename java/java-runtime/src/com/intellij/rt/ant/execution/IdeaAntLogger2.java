@@ -15,15 +15,16 @@
  */
 package com.intellij.rt.ant.execution;
 
-import com.intellij.rt.execution.junit.segments.PacketWriter;
-import com.intellij.rt.execution.junit.segments.SegmentedOutputStream;
 import org.apache.tools.ant.BuildEvent;
 import org.apache.tools.ant.DefaultLogger;
 import org.apache.tools.ant.Project;
+import org.apache.tools.ant.Task;
 
 import java.io.PrintStream;
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.lang.reflect.Field;
+import java.util.Stack;
 
 public final class IdeaAntLogger2 extends DefaultLogger {
   static SegmentedOutputStream ourErr;
@@ -46,9 +47,15 @@ public final class IdeaAntLogger2 extends DefaultLogger {
    */
   public static final String OUTPUT_PREFIX = "IDEA_ANT_INTEGRATION";
 
+  private final ThreadLocal myCallingTasks = new ThreadLocal() {
+    protected Object initialValue() {
+      return new Stack();
+    }
+  };
+
   private final Priority myMessagePriority = new MessagePriority();
   private final Priority myTargetPriority = new StatePriority(Project.MSG_INFO);
-  private final Priority myTaskPriority = new StatePriority(Project.MSG_INFO);
+  private final Priority myTaskPriority = new StatePriority(Project.MSG_VERBOSE);
   private final Priority myAlwaysSend = new Priority() {
     public void setPriority(int level) {}
 
@@ -82,34 +89,73 @@ public final class IdeaAntLogger2 extends DefaultLogger {
   }
 
   public synchronized void targetFinished(BuildEvent event) {
-    sendException(event);
+    sendException(event, true);
     myTargetPriority.sendMessage(TARGET_END, event.getPriority(), event.getException());
   }
 
   public synchronized void taskStarted(BuildEvent event) {
-    myTaskPriority.sendMessage(TASK, event.getPriority(), event.getTask().getTaskName());
+    final String taskName = event.getTask().getTaskName();
+    getTaskCallStack().push(taskName);
+    myTaskPriority.sendMessage(TASK, event.getPriority(), taskName);
   }
 
   public synchronized void taskFinished(BuildEvent event) {
-    sendException(event);
-    myTaskPriority.sendMessage(TASK_END, event.getPriority(), event.getException());
+    try {
+      sendException(event, true);
+      myTaskPriority.sendMessage(TASK_END, event.getPriority(), event.getException());
+    }
+    finally {
+      getTaskCallStack().pop();
+    }
   }
 
   public synchronized void messageLogged(BuildEvent event) {
-    if (sendException(event)) return;
+    final boolean failOnError = isFailOnError(event);
+    if (sendException(event, failOnError)) {
+      return;
+    }
+
     int priority = event.getPriority();
-    String message = event.getMessage();
-    if (priority == Project.MSG_ERR)
+    if (priority == Project.MSG_ERR && !failOnError) {
+      // some ant tasks (like Copy) with 'failOnError' attribute set to 'false'
+      // send warnings with priority level = Project.MSG_ERR
+      // this heuristic corrects the priority level, so that IDEA considers the message not as an error but as a warning
+      priority = Project.MSG_WARN;
+    }
+
+    final String message = event.getMessage();
+
+    if (priority == Project.MSG_ERR) {
       myMessagePriority.sendMessage(ERROR, priority, message);
-    else
+    }
+    else {
       myMessagePriority.sendMessage(MESSAGE, priority, message);
+    }
   }
 
-  private boolean sendException(BuildEvent event) {
+  private static boolean isFailOnError(BuildEvent event) {
+    final Task task = event.getTask();
+    if (task != null) {
+      try {
+        final Field field = task.getClass().getDeclaredField("failonerror");
+        field.setAccessible(true);
+        return !Boolean.FALSE.equals(field.get(task));
+      }
+      catch (Exception ignored) {
+      }
+    }
+    return true; // default value
+  }
+
+  private boolean sendException(BuildEvent event, boolean isFailOnError) {
     Throwable exception = event.getException();
     if (exception != null) {
-      myAlwaysSend.sendMessage(EXCEPTION, event.getPriority(), exception);
-      return true;
+      final boolean insideTryTask = getTaskCallStack().contains("try");
+      if (isFailOnError && !insideTryTask) {
+        myAlwaysSend.sendMessage(EXCEPTION, event.getPriority(), exception);
+        return true;
+      }
+      myMessagePriority.sendMessage(MESSAGE, insideTryTask? Project.MSG_VERBOSE : Project.MSG_WARN, exception.getMessage());
     }
     return false;
   }
@@ -132,6 +178,10 @@ public final class IdeaAntLogger2 extends DefaultLogger {
     PacketWriter packet = PacketFactory.ourInstance.createPacket(id);
     packet.appendLong(priority);
     return packet;
+  }
+
+  private Stack getTaskCallStack() {
+    return (Stack)myCallingTasks.get();
   }
 
   private abstract class Priority {
@@ -183,7 +233,7 @@ public final class IdeaAntLogger2 extends DefaultLogger {
     private boolean myEnabled = true;
     private final int myMinLevel;
 
-    public StatePriority(int minLevel) {
+    StatePriority(int minLevel) {
       myMinLevel = minLevel;
     }
 

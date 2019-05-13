@@ -1,20 +1,9 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi;
 
+import com.intellij.lang.jvm.JvmMethod;
+import com.intellij.lang.jvm.JvmParameter;
+import com.intellij.lang.jvm.types.JvmReferenceType;
 import com.intellij.pom.PomRenameableTarget;
 import com.intellij.psi.util.MethodSignature;
 import com.intellij.psi.util.MethodSignatureBackedByPsiMethod;
@@ -32,24 +21,20 @@ import java.util.List;
  * @see PsiClass#getMethods()
  */
 public interface PsiMethod extends PsiMember, PsiNameIdentifierOwner, PsiModifierListOwner, PsiDocCommentOwner, PsiTypeParameterListOwner,
-                                   PomRenameableTarget<PsiElement>, PsiTarget {
+                                   PomRenameableTarget<PsiElement>, PsiTarget, PsiParameterListOwner, JvmMethod {
   /**
    * The empty array of PSI methods which can be reused to avoid unnecessary allocations.
    */
   PsiMethod[] EMPTY_ARRAY = new PsiMethod[0];
 
-  ArrayFactory<PsiMethod> ARRAY_FACTORY = new ArrayFactory<PsiMethod>() {
-    @Override
-    public PsiMethod[] create(final int count) {
-      return count == 0 ? EMPTY_ARRAY : new PsiMethod[count];
-    }
-  };
+  ArrayFactory<PsiMethod> ARRAY_FACTORY = count -> count == 0 ? EMPTY_ARRAY : new PsiMethod[count];
 
   /**
    * Returns the return type of the method.
    *
    * @return the method return type, or null if the method is a constructor.
    */
+  @Override
   @Nullable
   PsiType getReturnType();
 
@@ -66,6 +51,7 @@ public interface PsiMethod extends PsiMember, PsiNameIdentifierOwner, PsiModifie
    *
    * @return the parameter list instance.
    */
+  @Override
   @NotNull
   PsiParameterList getParameterList();
 
@@ -82,6 +68,7 @@ public interface PsiMethod extends PsiMember, PsiNameIdentifierOwner, PsiModifie
    *
    * @return the method body, or null if the method belongs to a compiled class.
    */
+  @Override
   @Nullable
   PsiCodeBlock getBody();
 
@@ -90,6 +77,7 @@ public interface PsiMethod extends PsiMember, PsiNameIdentifierOwner, PsiModifie
    *
    * @return true if the method is a constructor, false otherwise
    */
+  @Override
   boolean isConstructor();
 
   /**
@@ -97,6 +85,7 @@ public interface PsiMethod extends PsiMember, PsiNameIdentifierOwner, PsiModifie
    *
    * @return true if the method is varargs, false otherwise.
    */
+  @Override
   boolean isVarArgs();
 
   /**
@@ -179,6 +168,7 @@ public interface PsiMethod extends PsiMember, PsiNameIdentifierOwner, PsiModifie
    *         or implement any other method.
    * @deprecated use {@link #findDeepestSuperMethods()} instead
    */
+  @Deprecated
   @Nullable
   PsiMethod findDeepestSuperMethod();
 
@@ -200,6 +190,20 @@ public interface PsiMethod extends PsiMember, PsiNameIdentifierOwner, PsiModifie
   @NotNull
   HierarchicalMethodSignature getHierarchicalMethodSignature();
 
-  @Nullable
-  PsiType getReturnTypeNoResolve();
+  @Override
+  default boolean hasParameters() {
+    return !getParameterList().isEmpty();
+  }
+
+  @NotNull
+  @Override
+  default JvmParameter[] getParameters() {
+    return getParameterList().getParameters();
+  }
+
+  @NotNull
+  @Override
+  default JvmReferenceType[] getThrowsTypes() {
+    return getThrowsList().getReferencedTypes();
+  }
 }

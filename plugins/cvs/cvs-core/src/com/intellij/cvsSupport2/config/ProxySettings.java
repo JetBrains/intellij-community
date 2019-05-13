@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,15 +26,16 @@ public class ProxySettings implements JDOMExternalizable, Cloneable {
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.cvsSupport2.config.ConnectionSettingsImpl");
 
-  public static int HTTP = 0;
-  public static int SOCKS4 = 1;
-  public static int SOCKS5 = 2;
+  public static final int HTTP = 0;
+  public static final int SOCKS4 = 1;
+  public static final int SOCKS5 = 2;
 
   public boolean USE_PROXY = false;
   public String PROXY_HOST = "";
   public int PROXY_PORT = 8080;
   public int TYPE = HTTP;
   public String LOGIN = "";
+  public String PASSWORD = "";
 
   @Override
   public boolean equals(Object o) {
@@ -65,8 +66,6 @@ public class ProxySettings implements JDOMExternalizable, Cloneable {
     result = 31 * result + PASSWORD.hashCode();
     return result;
   }
-
-  public String PASSWORD = "";
 
   @Override
   public void readExternal(Element element) throws InvalidDataException {

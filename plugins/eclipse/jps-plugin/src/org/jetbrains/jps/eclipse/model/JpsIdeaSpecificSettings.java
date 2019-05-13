@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,43 +16,41 @@
 package org.jetbrains.jps.eclipse.model;
 
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.ArrayUtil;
 import org.jdom.Element;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.eclipse.IdeaXml;
 import org.jetbrains.idea.eclipse.conversion.AbstractIdeaSpecificSettings;
+import org.jetbrains.jps.model.JpsElement;
 import org.jetbrains.jps.model.java.*;
 import org.jetbrains.jps.model.library.sdk.JpsSdkType;
 import org.jetbrains.jps.model.module.JpsDependenciesList;
 import org.jetbrains.jps.model.module.JpsModule;
 import org.jetbrains.jps.model.module.JpsModuleSourceRoot;
 import org.jetbrains.jps.model.serialization.JpsMacroExpander;
+import org.jetbrains.jps.model.serialization.java.JpsJavaModelSerializerExtension;
 import org.jetbrains.jps.model.serialization.library.JpsSdkTableSerializer;
 
-import java.util.List;
+import java.io.File;
 import java.util.Map;
 
-/**
-* User: anna
-* Date: 11/8/12
-*/
 class JpsIdeaSpecificSettings extends AbstractIdeaSpecificSettings<JpsModule, String, JpsSdkType<?>> {
-  private JpsMacroExpander myExpander;
+  private final JpsMacroExpander myExpander;
 
   JpsIdeaSpecificSettings(JpsMacroExpander expander) {
     myExpander = expander;
   }
 
   @Override
-  protected void readLibraryLevels(Element root, Map<String, String> levels) {
+  protected void readLibraryLevels(Element root, @NotNull Map<String, String> levels) {
     final Element levelsElement = root.getChild("levels");
     if (levelsElement != null) {
-      for (Object child : levelsElement.getChildren("level")) {
-        final Element element = (Element)child;
-        final String libName = element.getAttributeValue("name");
-        final String libLevel = element.getAttributeValue("value");
+      for (Element element : levelsElement.getChildren("level")) {
+        String libName = element.getAttributeValue("name");
+        String libLevel = element.getAttributeValue("value");
         if (libName != null && libLevel != null) {
           levels.put(libName, libLevel);
         }
@@ -62,8 +60,7 @@ class JpsIdeaSpecificSettings extends AbstractIdeaSpecificSettings<JpsModule, St
 
   @Override
   protected String[] getEntries(JpsModule model) {
-    final List<String> urls = model.getContentRootsList().getUrls();
-    return ArrayUtil.toStringArray(urls);
+    return ArrayUtil.toStringArray(model.getContentRootsList().getUrls());
   }
 
   @Override
@@ -110,15 +107,15 @@ class JpsIdeaSpecificSettings extends AbstractIdeaSpecificSettings<JpsModule, St
       extension.setTestOutputUrl(testOutputElement.getAttributeValue(IdeaXml.URL_ATTR));
     }
 
-    final String inheritedOutput = root.getAttributeValue(IdeaXml.INHERIT_COMPILER_OUTPUT_ATTR);
-    if (inheritedOutput != null && Boolean.valueOf(inheritedOutput).booleanValue()) {
+    final String inheritedOutput = root.getAttributeValue(JpsJavaModelSerializerExtension.INHERIT_COMPILER_OUTPUT_ATTRIBUTE);
+    if (inheritedOutput != null && Boolean.parseBoolean(inheritedOutput)) {
       extension.setInheritOutput(true);
     }
     extension.setExcludeOutput(root.getChild(IdeaXml.EXCLUDE_OUTPUT_TAG) != null);
   }
 
   @Override
-  protected void readLanguageLevel(Element root, JpsModule model) throws InvalidDataException {
+  protected void readLanguageLevel(Element root, JpsModule model) {
     final String languageLevel = root.getAttributeValue("LANGUAGE_LEVEL");
     final JpsJavaModuleExtension extension = getService().getOrCreateModuleExtension(model);
     if (languageLevel != null) {
@@ -149,6 +146,28 @@ class JpsIdeaSpecificSettings extends AbstractIdeaSpecificSettings<JpsModule, St
         model.removeSourceRoot(folderToBeTest.getUrl(), JavaSourceRootType.SOURCE);
       }
       model.addSourceRoot(url, JavaSourceRootType.TEST_SOURCE);
+    }
+
+    for (Object o : root.getChildren(IdeaXml.EXCLUDE_FOLDER_TAG)) {
+      final String excludeUrl = ((Element)o).getAttributeValue(IdeaXml.URL_ATTR);
+      if (FileUtil.isAncestor(new File(contentUrl), new File(excludeUrl), false)) {
+        model.getExcludeRootsList().addUrl(excludeUrl);
+      }
+    }
+
+    for (Object o : root.getChildren(IdeaXml.PACKAGE_PREFIX_TAG)) {
+      Element ppElement = (Element)o;
+      final String prefix = ppElement.getAttributeValue(IdeaXml.PACKAGE_PREFIX_VALUE_ATTR);
+      final String url = ppElement.getAttributeValue(IdeaXml.URL_ATTR);
+      for (JpsModuleSourceRoot sourceRoot : model.getSourceRoots()) {
+        if (Comparing.strEqual(sourceRoot.getUrl(), url)) {
+          JpsElement properties = sourceRoot.getProperties();
+          if (properties instanceof JavaSourceRootProperties) {
+            ((JavaSourceRootProperties)properties).setPackagePrefix(prefix);
+          }
+          break;
+        }
+      }
     }
   }
 

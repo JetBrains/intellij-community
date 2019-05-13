@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2019 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,83 +15,97 @@
  */
 package com.intellij.openapi.vfs;
 
+import org.jetbrains.annotations.NotNull;
+
 import java.util.EventListener;
 
 /**
  * Receives notifications about changes in the virtual file system.
  *
- * @see com.intellij.openapi.vfs.VirtualFileManager#addVirtualFileListener(VirtualFileListener)
- * @see com.intellij.openapi.vfs.VirtualFileAdapter
+ * @see VirtualFileManager#addVirtualFileListener(VirtualFileListener)
+ * @see VirtualFileListener
  */
 public interface VirtualFileListener extends EventListener {
+
   /**
-   * Fired when a virtual file is renamed from within IDEA, or its writable status is changed.
-   * For files renamed externally, {@link #fileCreated} and {@link #fileDeleted} events will be fired.
+   * Fired when a virtual file is renamed from within the IDE, or its writable status is changed.
+   * For files renamed externally, {@link #fileCreated(VirtualFileEvent)} and {@link #fileDeleted(VirtualFileEvent)} events will be fired.
    *
    * @param event the event object containing information about the change.
    */
-  void propertyChanged(VirtualFilePropertyEvent event);
+  default void propertyChanged(@NotNull VirtualFilePropertyEvent event) {
+  }
 
   /**
    * Fired when the contents of a virtual file is changed.
    *
    * @param event the event object containing information about the change.
    */
-  void contentsChanged(VirtualFileEvent event);
+  default void contentsChanged(@NotNull VirtualFileEvent event) {
+  }
 
   /**
    * Fired when a virtual file is created. This event is not fired for files discovered during initial VFS initialization.
    *
    * @param event the event object containing information about the change.
    */
-  void fileCreated(VirtualFileEvent event);
+  default void fileCreated(@NotNull VirtualFileEvent event) {
+  }
 
   /**
    * Fired when a virtual file is deleted.
    *
    * @param event the event object containing information about the change.
    */
-  void fileDeleted(VirtualFileEvent event);
+  default void fileDeleted(@NotNull VirtualFileEvent event) {
+  }
 
   /**
-   * Fired when a virtual file is moved from within IDEA.
+   * Fired when a virtual file is moved from within the IDE.
    *
    * @param event the event object containing information about the change.
    */
-  void fileMoved(VirtualFileMoveEvent event);
+  default void fileMoved(@NotNull VirtualFileMoveEvent event) {
+  }
 
   /**
-   * Fired when a virtual file is copied from within IDEA.
+   * Fired when a virtual file is copied from within the IDE.
    *
    * @param event the event object containing information about the change.
    */
-  void fileCopied(VirtualFileCopyEvent event);
+  default void fileCopied(@NotNull VirtualFileCopyEvent event) {
+    fileCreated(event);
+  }
 
   /**
    * Fired before the change of a name or writable status of a file is processed.
    *
    * @param event the event object containing information about the change.
    */
-  void beforePropertyChange(VirtualFilePropertyEvent event);
+  default void beforePropertyChange(@NotNull VirtualFilePropertyEvent event) {
+  }
 
   /**
    * Fired before the change of contents of a file is processed.
    *
    * @param event the event object containing information about the change.
    */
-  void beforeContentsChange(VirtualFileEvent event);
+  default void beforeContentsChange(@NotNull VirtualFileEvent event) {
+  }
 
   /**
    * Fired before the deletion of a file is processed.
    *
    * @param event the event object containing information about the change.
    */
-  void beforeFileDeletion(VirtualFileEvent event);
+  default void beforeFileDeletion(@NotNull VirtualFileEvent event) {
+  }
 
   /**
    * Fired before the movement of a file is processed.
    *
    * @param event the event object containing information about the change.
    */
-  void beforeFileMovement(VirtualFileMoveEvent event);
+  default void beforeFileMovement(@NotNull VirtualFileMoveEvent event) {
+  }
 }

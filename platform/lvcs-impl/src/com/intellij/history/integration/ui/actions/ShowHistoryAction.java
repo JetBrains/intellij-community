@@ -24,16 +24,18 @@ import com.intellij.history.integration.ui.views.HistoryDialog;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-public class ShowHistoryAction extends LocalHistoryActionWithDialog {
+public class ShowHistoryAction extends LocalHistoryAction {
   @Override
-  protected void showDialog(Project p, IdeaGateway gw, VirtualFile f, AnActionEvent e) {
+  protected void actionPerformed(@NotNull Project p, @NotNull IdeaGateway gw, @NotNull VirtualFile f, @NotNull AnActionEvent e) {
     HistoryDialog frame = f.isDirectory() ? new DirectoryHistoryDialog(p, gw, f) : new FileHistoryDialog(p, gw, f);
     frame.show();
   }
 
   @Override
-  protected boolean isEnabled(LocalHistoryFacade vcs, IdeaGateway gw, VirtualFile f, AnActionEvent e) {
+  protected boolean isEnabled(@NotNull LocalHistoryFacade vcs, @NotNull IdeaGateway gw, @Nullable VirtualFile f, @NotNull AnActionEvent e) {
     return f != null && gw.isVersioned(f) && (f.isDirectory() || gw.areContentChangesVersioned(f));
   }
 }

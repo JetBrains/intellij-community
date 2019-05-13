@@ -24,7 +24,6 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Apr 6, 2010
  */
 public class AntlibDomFileDescription extends AntFileDescription<AntDomAntlib> {
   private static final String ROOT_TAG_NAME = "antlib";
@@ -33,6 +32,7 @@ public class AntlibDomFileDescription extends AntFileDescription<AntDomAntlib> {
     super(AntDomAntlib.class, ROOT_TAG_NAME);
   }
 
+  @Override
   public boolean isMyFile(@NotNull XmlFile file, @Nullable Module module) {
     return super.isMyFile(file, module) && isAntLibFile(file);
   }

@@ -1,81 +1,56 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationActivationListener;
-import com.intellij.openapi.application.impl.ApplicationImpl;
-import com.intellij.openapi.components.ApplicationComponent;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.BusyObject;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.wm.IdeFrame;
-import com.intellij.util.Alarm;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-public class FrameStateManagerImpl extends FrameStateManager implements ApplicationComponent {
+public class FrameStateManagerImpl extends FrameStateManager {
   private final List<FrameStateListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
 
-  private boolean myShouldSynchronize;
-  private final Alarm mySyncAlarm;
+  private final BusyObject.Impl myActive = new BusyObject.Impl() {
+    @Override
+    public boolean isReady() {
+      return ApplicationManager.getApplication().isActive();
+    }
+  };
 
-  private final BusyObject.Impl myActive;
-  private final ApplicationImpl myApp;
+  public FrameStateManagerImpl() {
+    ApplicationManager.getApplication().getMessageBus().connect()
+      .subscribe(ApplicationActivationListener.TOPIC, new ApplicationActivationListener() {
+        private final FrameStateListener myPublisher = ApplicationManager.getApplication().getMessageBus().syncPublisher(FrameStateListener.TOPIC);
 
-  public FrameStateManagerImpl(final ApplicationImpl app) {
-    myApp = app;
-    myActive = new BusyObject.Impl() {
-      @Override
-      public boolean isReady() {
-        return myApp.isActive();
-      }
-    };
-
-    myShouldSynchronize = false;
-    mySyncAlarm = new Alarm();
-
-    app.getMessageBus().connect().subscribe(ApplicationActivationListener.TOPIC, new ApplicationActivationListener() {
-      @Override
-      public void applicationActivated(IdeFrame ideFrame) {
-        myActive.onReady();
-        mySyncAlarm.cancelAllRequests();
-        if (myShouldSynchronize) {
-          myShouldSynchronize = false;
-          fireActivationEvent();
-        }
-      }
-
-      @Override
-      public void applicationDeactivated(IdeFrame ideFrame) {
-        mySyncAlarm.cancelAllRequests();
-        mySyncAlarm.addRequest(new Runnable() {
-          public void run() {
-            if (!app.isActive()) {
-              myShouldSynchronize = true;
-              fireDeactivationEvent();
-            }
+        @Override
+        public void applicationActivated(@NotNull IdeFrame ideFrame) {
+          System.setProperty("com.jetbrains.suppressWindowRaise", "false");
+          myActive.onReady();
+          myPublisher.onFrameActivated();
+          for (FrameStateListener listener : myListeners) {
+            listener.onFrameActivated();
           }
-        }, 200);
-      }
-    });
+        }
+
+        @Override
+        public void applicationDeactivated(@NotNull IdeFrame ideFrame) {
+          System.setProperty("com.jetbrains.suppressWindowRaise", "true");
+          if (ApplicationManager.getApplication().isDisposed()) {
+            return;
+          }
+
+          myPublisher.onFrameDeactivated();
+          for (FrameStateListener listener : myListeners) {
+            listener.onFrameDeactivated();
+          }
+        }
+      });
   }
 
   @Override
@@ -83,47 +58,23 @@ public class FrameStateManagerImpl extends FrameStateManager implements Applicat
     return myActive.getReady(this);
   }
 
-  @NotNull
-  @NonNls
-  public String getComponentName() {
-    return "FrameStateManager";
-  }
-
-  public void initComponent() {
-  }
-
-  public void disposeComponent() {
-  }
-
-  private void fireDeactivationEvent() {
-    for (FrameStateListener listener : myListeners) {
-      listener.onFrameDeactivated();
-    }
-  }
-
-  private void fireActivationEvent() {
-    for (FrameStateListener listener : myListeners) {
-      listener.onFrameActivated();
-    }
-  }
-
-  public synchronized void addListener(@NotNull FrameStateListener listener) {
-    addListener(listener, null);
-  }
-
-  public synchronized void addListener(@NotNull final FrameStateListener listener, @Nullable Disposable disposable) {
+  @Override
+  public void addListener(@NotNull FrameStateListener listener) {
     myListeners.add(listener);
-    if (disposable != null) {
-      Disposer.register(disposable, new Disposable() {
-        @Override
-        public void dispose() {
-          removeListener(listener);
-        }
-      });
+  }
+
+  @Override
+  public void addListener(@NotNull final FrameStateListener listener, @Nullable Disposable disposable) {
+    if (disposable == null) {
+      myListeners.add(listener);
+    }
+    else {
+      ApplicationManager.getApplication().getMessageBus().connect(disposable).subscribe(FrameStateListener.TOPIC, listener);
     }
   }
 
-  public synchronized void removeListener(@NotNull FrameStateListener listener) {
+  @Override
+  public void removeListener(@NotNull FrameStateListener listener) {
     myListeners.remove(listener);
   }
 }

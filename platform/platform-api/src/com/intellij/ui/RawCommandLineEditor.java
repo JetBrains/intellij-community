@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,79 +15,83 @@
  */
 package com.intellij.ui;
 
-import com.intellij.icons.AllIcons;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
-import com.intellij.openapi.ui.LabeledComponent;
-import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.ui.TextFieldWithBrowseButton;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.ui.components.fields.ExpandableTextField;
+import com.intellij.util.Function;
+import com.intellij.util.execution.ParametersListUtil;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.text.Document;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
+import java.util.List;
 
-public class RawCommandLineEditor extends JPanel {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.ui.RawCommandLineEditor");
-
-  private final TextFieldWithBrowseButton myTextField;
+public class RawCommandLineEditor extends JPanel implements TextAccessor {
+  private final ExpandableTextField myEditor;
   private String myDialogCaption = "";
 
   public RawCommandLineEditor() {
+    this(ParametersListUtil.DEFAULT_LINE_PARSER, ParametersListUtil.DEFAULT_LINE_JOINER);
+  }
+
+  public RawCommandLineEditor(final Function<? super String, ? extends List<String>> lineParser, final Function<? super List<String>, String> lineJoiner) {
     super(new BorderLayout());
-    myTextField = new TextFieldWithBrowseButton(new ActionListener() {
-      public void actionPerformed(ActionEvent e) {
-        if (myDialogCaption == null) {
-          Container parent = getParent();
-          if (parent instanceof LabeledComponent) {
-            parent = parent.getParent();
-          }
-          LOG.error("Did not call RawCommandLineEditor.setDialogCaption() in " + parent);
-          myDialogCaption = "Parameters";
-        }
-        Messages.showTextAreaDialog(myTextField.getTextField(), myDialogCaption, "EditParametersPopupWindow");
-      }
-    });
-    myTextField.setButtonIcon(AllIcons.Actions.ShowViewer);
-    add(myTextField, BorderLayout.CENTER);
+    myEditor = new ExpandableTextField(lineParser, lineJoiner);
+    add(myEditor, BorderLayout.CENTER);
     setDescriptor(null);
   }
 
   public void setDescriptor(FileChooserDescriptor descriptor) {
-    InsertPathAction.addTo(myTextField.getTextField(), descriptor);
+    setDescriptor(descriptor, true);
+  }
+  
+  public void setDescriptor(FileChooserDescriptor descriptor, boolean insertSystemDependentPaths) {
+    InsertPathAction.addTo(myEditor, descriptor, insertSystemDependentPaths);
   }
 
+  @Deprecated
   public String getDialogCaption() {
     return myDialogCaption;
   }
 
+  /**
+   * Won't be used anymore as dialog is replaced with lightweight popup
+   */
+  @Deprecated
   public void setDialogCaption(String dialogCaption) {
     myDialogCaption = dialogCaption != null ? dialogCaption : "";
   }
 
-  public void setText(String text) {
-    myTextField.setText(text);
+  @Override
+  public void setText(@Nullable String text) {
+    myEditor.setText(text);
   }
 
+  @Override
   public String getText() {
-    return myTextField.getText();
+    return StringUtil.notNullize(myEditor.getText());
   }
 
   public JTextField getTextField() {
-    return myTextField.getTextField();
+    return myEditor;
+  }
+
+  public ExpandableTextField getEditorField() {
+    return myEditor;
   }
 
   public Document getDocument() {
-    return myTextField.getTextField().getDocument();
+    return myEditor.getDocument();
   }
 
   public void attachLabel(JLabel label) {
-    label.setLabelFor(myTextField.getTextField());
+    label.setLabelFor(myEditor);
   }
 
+  @Override
   public void setEnabled(boolean enabled) {
     super.setEnabled(enabled);
-    myTextField.setEnabled(enabled);
+    myEditor.setEnabled(enabled);
   }
 }

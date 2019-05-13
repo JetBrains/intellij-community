@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package com.intellij.psi.formatter.java;
 
 import com.intellij.formatting.Wrap;
+import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.impl.source.tree.ElementType;
 
@@ -32,7 +33,7 @@ public abstract class WrappingStrategy {
     return new WrappingStrategy(wrap) {
       @Override
       protected boolean shouldWrap(final IElementType type) {
-        return type != ElementType.COMMA && type != ElementType.SEMICOLON;
+        return type != JavaTokenType.COMMA && type != JavaTokenType.SEMICOLON;
       }
     };
   }

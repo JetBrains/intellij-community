@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,39 +15,8 @@
  */
 package com.intellij.core;
 
-import com.intellij.openapi.vfs.CharsetToolkit;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.encoding.EncodingRegistry;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-
-import java.nio.charset.Charset;
-
 /**
  * @author yole
  */
-public class CoreEncodingRegistry extends EncodingRegistry {
-  @Override
-  public boolean isNative2Ascii(@NotNull VirtualFile virtualFile) {
-    return false;
-  }
-
-  @Override
-  public Charset getDefaultCharset() {
-    return CharsetToolkit.getDefaultSystemCharset();
-  }
-
-  @Override
-  public Charset getEncoding(@Nullable VirtualFile virtualFile, boolean useParentDefaults) {
-    return getDefaultCharset();
-  }
-
-  @Override
-  public boolean isUseUTFGuessing(VirtualFile virtualFile) {
-    return true;
-  }
-
-  @Override
-  public void setEncoding(@Nullable VirtualFile virtualFileOrDir, @Nullable Charset charset) {
-  }
+public class CoreEncodingRegistry extends CoreEncodingProjectManager {
 }

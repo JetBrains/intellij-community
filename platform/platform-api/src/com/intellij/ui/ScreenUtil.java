@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,12 +17,14 @@ package com.intellij.ui;
 
 import com.intellij.Patches;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.SystemInfo;
-import com.intellij.util.containers.WeakHashMap;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.JBInsets;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.geom.Area;
 import java.util.Map;
 
 /**
@@ -32,58 +34,116 @@ import java.util.Map;
 public class ScreenUtil {
   public static final String DISPOSE_TEMPORARY = "dispose.temporary";
 
-  @Nullable private static final Map<GraphicsConfiguration, Pair<Insets, Long>> ourInsetsCache;
-  static {
-    final boolean useCache = SystemInfo.isXWindow && !GraphicsEnvironment.isHeadless();
-    ourInsetsCache = useCache ? new WeakHashMap<GraphicsConfiguration, Pair<Insets, Long>>() : null;
-  }
+  @Nullable private static final Map<GraphicsConfiguration, Pair<Insets, Long>> ourInsetsCache =
+    Patches.isJdkBugId8004103() ? ContainerUtil.createWeakMap() : null;
   private static final int ourInsetsTimeout = 5000;  // shouldn't be too long
 
   private ScreenUtil() { }
 
-  public static boolean isVisible(Rectangle bounds) {
-    final Rectangle intersection = getScreenBounds().intersection(bounds);
-    final int sq1 = intersection.width * intersection.height;
-    final int sq2 = bounds.width * bounds.height;
-    if (sq1 == 0 || sq2 == 0) return false;
-    return (double)sq1 / (double)sq2 > 0.1;
+  public static boolean isVisible(@NotNull Point location) {
+    return getScreenRectangle(location).contains(location);
   }
 
-  public static Rectangle getScreenBounds() {
-    Rectangle screenBounds = new Rectangle();
-    final GraphicsEnvironment env = GraphicsEnvironment.getLocalGraphicsEnvironment();
-    final GraphicsDevice[] devices = env.getScreenDevices();
-    for (final GraphicsDevice device : devices) {
-      screenBounds = screenBounds.union(device.getDefaultConfiguration().getBounds());
-    }
-    return screenBounds;
-  }
-
-  public static Rectangle getScreenRectangle(Point p) {
-    double distance = -1;
-    Rectangle answer = null;
-
-    for (GraphicsDevice device : GraphicsEnvironment.getLocalGraphicsEnvironment().getScreenDevices()) {
-      GraphicsConfiguration config = device.getDefaultConfiguration();
-      final Rectangle rect = applyInsets(config.getBounds(), getScreenInsets(config));
-      if (rect.contains(p)) {
-        return rect;
-      }
-
-      final double d = findNearestPointOnBorder(rect, p).distance(p.x, p.y);
-      if (answer == null || distance > d) {
-        distance = d;
-        answer = rect;
+  public static boolean isVisible(@NotNull Rectangle bounds) {
+    if (bounds.isEmpty()) return false;
+    Rectangle[] allScreenBounds = getAllScreenBounds();
+    for (Rectangle screenBounds : allScreenBounds) {
+      final Rectangle intersection = screenBounds.intersection(bounds);
+      if (intersection.isEmpty()) continue;
+      final int sq1 = intersection.width * intersection.height;
+      final int sq2 = bounds.width * bounds.height;
+      double visibleFraction = (double)sq1 / (double)sq2;
+      if (visibleFraction > 0.1) {
+        return true;
       }
     }
-
-    if (answer == null) {
-      throw new IllegalStateException("It's impossible to determine target graphics environment for point (" + p.x + "," + p.y + ")");
-    }
-
-    return answer;
+    return false;
   }
 
+  public static Rectangle getMainScreenBounds() {
+    return getScreenRectangle(GraphicsEnvironment.getLocalGraphicsEnvironment().getDefaultScreenDevice());
+  }
+
+  private static Rectangle[] getAllScreenBounds() {
+    GraphicsDevice[] devices = GraphicsEnvironment.getLocalGraphicsEnvironment().getScreenDevices();
+    Rectangle[] result = new Rectangle[devices.length];
+    for (int i = 0; i < devices.length; i++) {
+      result[i] = getScreenRectangle(devices[i]);
+    }
+    return result;
+  }
+
+  public static Shape getAllScreensShape() {
+    GraphicsDevice[] devices = GraphicsEnvironment.getLocalGraphicsEnvironment().getScreenDevices();
+    if (devices.length == 0) {
+      return new Rectangle();
+    }
+    if (devices.length == 1) {
+      return getScreenRectangle(devices[0]);
+    }
+    Area area = new Area();
+    for (GraphicsDevice device : devices) {
+      area.add(new Area(getScreenRectangle(device)));
+    }
+    return area;
+  }
+
+  /**
+   * Returns the smallest rectangle that encloses a visible area of every screen.
+   *
+   * @return the smallest rectangle that encloses a visible area of every screen
+   */
+  public static Rectangle getAllScreensRectangle() {
+    GraphicsDevice[] devices = GraphicsEnvironment.getLocalGraphicsEnvironment().getScreenDevices();
+    if (devices.length == 0) {
+      return new Rectangle();
+    }
+    if (devices.length == 1) {
+      return getScreenRectangle(devices[0]);
+    }
+    int minX = 0;
+    int maxX = 0;
+    int minY = 0;
+    int maxY = 0;
+    for (GraphicsDevice device : devices) {
+      Rectangle rectangle = getScreenRectangle(device);
+      int x = rectangle.x;
+      if (minX > x) {
+        minX = x;
+      }
+      x += rectangle.width;
+      if (maxX < x) {
+        maxX = x;
+      }
+      int y = rectangle.y;
+      if (minY > y) {
+        minY = y;
+      }
+      y += rectangle.height;
+      if (maxY < y) {
+        maxY = y;
+      }
+    }
+    return new Rectangle(minX, minY, maxX - minX, maxY - minY);
+  }
+
+  public static Rectangle getScreenRectangle(@NotNull Point p) {
+    return getScreenRectangle(p.x, p.y);
+  }
+
+  public static Rectangle getScreenRectangle(@NotNull Component component) {
+    GraphicsConfiguration configuration = component.getGraphicsConfiguration();
+    if (configuration != null) return getScreenRectangle(configuration);
+    // try to find the nearest screen if configuration is not available
+    Point p = new Point();
+    SwingUtilities.convertPointToScreen(p, component);
+    return getScreenRectangle(p);
+  }
+
+  /**
+   * @param bounds a rectangle used to find corresponding graphics device
+   * @return a graphics device that contains the biggest part of the specified rectangle
+   */
   public static GraphicsDevice getScreenDevice(Rectangle bounds) {
     GraphicsDevice candidate = null;
     int maxIntersection = 0;
@@ -125,11 +185,9 @@ public class ScreenUtil {
   }
 
   private static Rectangle applyInsets(Rectangle rect, Insets i) {
-    if (i == null) {
-      return rect;
-    }
-
-    return new Rectangle(rect.x + i.left, rect.y + i.top, rect.width - (i.left + i.right), rect.height - (i.top + i.bottom));
+    rect = new Rectangle(rect);
+    JBInsets.removeFrom(rect, i);
+    return rect;
   }
 
   public static Insets getScreenInsets(final GraphicsConfiguration gc) {
@@ -149,15 +207,110 @@ public class ScreenUtil {
   }
 
   private static Insets calcInsets(GraphicsConfiguration gc) {
-    if (Patches.SUN_BUG_ID_9000030 && GraphicsEnvironment.getLocalGraphicsEnvironment().getScreenDevices().length > 1) {
+    if (Patches.SUN_BUG_ID_8020443 && GraphicsEnvironment.getLocalGraphicsEnvironment().getScreenDevices().length > 1) {
       return new Insets(0, 0, 0, 0);
     }
 
     return Toolkit.getDefaultToolkit().getScreenInsets(gc);
   }
 
+  /**
+   * Returns a visible area for the specified graphics device.
+   *
+   * @param device one of available devices
+   * @return a visible area rectangle
+   */
+  private static Rectangle getScreenRectangle(GraphicsDevice device) {
+    return getScreenRectangle(device.getDefaultConfiguration());
+  }
+
+  /**
+   * Returns a visible area for the specified graphics configuration.
+   *
+   * @param configuration one of available configurations
+   * @return a visible area rectangle
+   */
+  public static Rectangle getScreenRectangle(GraphicsConfiguration configuration) {
+    return applyInsets(configuration.getBounds(), getScreenInsets(configuration));
+  }
+
+  /**
+   * Returns a visible area for a graphics device that is the closest to the specified point.
+   *
+   * @param x the X coordinate of the specified point
+   * @param y the Y coordinate of the specified point
+   * @return a visible area rectangle
+   */
   public static Rectangle getScreenRectangle(int x, int y) {
-    return getScreenRectangle(new Point(x, y));
+    GraphicsDevice[] devices = GraphicsEnvironment.getLocalGraphicsEnvironment().getScreenDevices();
+    if (devices.length == 0) {
+      return new Rectangle(x, y, 0, 0);
+    }
+    if (devices.length == 1) {
+      return getScreenRectangle(devices[0]);
+    }
+    Rectangle[] rectangles = new Rectangle[devices.length];
+    for (int i = 0; i < devices.length; i++) {
+      GraphicsConfiguration configuration = devices[i].getDefaultConfiguration();
+      Rectangle bounds = configuration.getBounds();
+      rectangles[i] = applyInsets(bounds, getScreenInsets(configuration));
+      if (bounds.contains(x, y)) {
+        return rectangles[i];
+      }
+    }
+    Rectangle bounds = rectangles[0];
+    int minimum = distance(bounds, x, y);
+    if (bounds.width == 0 || bounds.height == 0) {
+      //Screen is invalid, give maximum score
+      minimum = Integer.MAX_VALUE;
+    }
+    for (int i = 1; i < rectangles.length; i++) {
+      if (rectangles[i].width == 0 || rectangles[i].height == 0) {
+        //Screen is invalid
+        continue;
+      }
+      int distance = distance(rectangles[i], x, y);
+      if (minimum > distance) {
+        minimum = distance;
+        bounds = rectangles[i];
+      }
+    }
+    if (bounds.width == 0 || bounds.height == 0) {
+      //All screens were invalid, return sensible default
+      return new Rectangle(x, y, 0, 0);
+    }
+    return bounds;
+  }
+
+  /**
+   * Normalizes a specified value in the specified range.
+   * If value less than the minimal value,
+   * the method returns the minimal value.
+   * If value greater than the maximal value,
+   * the method returns the maximal value.
+   *
+   * @param value the value to normalize
+   * @param min   the minimal value of the range
+   * @param max   the maximal value of the range
+   * @return a normalized value
+   */
+  private static int normalize(int value, int min, int max) {
+    return value < min ? min : value > max ? max : value;
+  }
+
+  /**
+   * Returns a square of the distance from
+   * the specified point to the specified rectangle,
+   * which does not contain the specified point.
+   *
+   * @param x the X coordinate of the specified point
+   * @param y the Y coordinate of the specified point
+   * @return a square of the distance
+   */
+  private static int distance(Rectangle bounds, int x, int y) {
+    x -= normalize(x, bounds.x, bounds.x + bounds.width);
+    y -= normalize(y, bounds.y, bounds.y + bounds.height);
+    return x * x + y * y;
   }
 
   public static boolean isOutsideOnTheRightOFScreen(Rectangle rect) {
@@ -176,10 +329,8 @@ public class ScreenUtil {
   }
 
   public static void moveToFit(final Rectangle rectangle, final Rectangle container, @Nullable Insets padding) {
-    Insets insets = padding != null ? padding : new Insets(0, 0, 0, 0);
-
-    Rectangle move = new Rectangle(rectangle.x - insets.left, rectangle.y - insets.top, rectangle.width + insets.left + insets.right,
-                                   rectangle.height + insets.top + insets.bottom);
+    Rectangle move = new Rectangle(rectangle);
+    JBInsets.addTo(move, padding);
 
     if (move.getMaxX() > container.getMaxX()) {
       move.x = (int)container.getMaxX() - move.width;
@@ -198,10 +349,51 @@ public class ScreenUtil {
       move.y = (int)container.getMinY();
     }
 
-    rectangle.x = move.x + insets.left;
-    rectangle.y = move.y + insets.right;
-    rectangle.width = move.width - insets.left - insets.right;
-    rectangle.height = move.height - insets.top - insets.bottom;
+    JBInsets.removeFrom(move, padding);
+    rectangle.setBounds(move);
+  }
+
+  /**
+   * Finds the best place for the specified rectangle on the screen.
+   *
+   * @param rectangle    the rectangle to move and resize
+   * @param top          preferred offset between {@code rectangle.y} and popup above
+   * @param bottom       preferred offset between {@code rectangle.y} and popup below
+   * @param rightAligned shows that the rectangle should be moved to the left
+   */
+  public static void fitToScreenVertical(Rectangle rectangle, int top, int bottom, boolean rightAligned) {
+    Rectangle screen = getScreenRectangle(rectangle.x, rectangle.y);
+    if (rectangle.width > screen.width) {
+      rectangle.width = screen.width;
+    }
+    if (rightAligned) {
+      rectangle.x -= rectangle.width;
+    }
+    if (rectangle.x < screen.x) {
+      rectangle.x = screen.x;
+    }
+    else {
+      int max = screen.x + screen.width;
+      if (rectangle.x > max) {
+        rectangle.x = max - rectangle.width;
+      }
+    }
+    int above = rectangle.y - screen.y - top;
+    int below = screen.height - above - top - bottom;
+    if (below > rectangle.height) {
+      rectangle.y += bottom;
+    }
+    else if (above > rectangle.height) {
+      rectangle.y -= rectangle.height + top;
+    }
+    else if (below > above) {
+      rectangle.y += bottom;
+      rectangle.height = below;
+    }
+    else {
+      rectangle.y -= rectangle.height + top;
+      rectangle.height = above;
+    }
   }
 
   public static void fitToScreen(Rectangle r) {
@@ -281,6 +473,10 @@ public class ScreenUtil {
       return false;
     }
     if (prevLocation == null || prevLocation.equals(location)) {
+      return true;
+    }
+    // consider any movement inside a rectangle as a valid movement towards
+    if (bounds.contains(location)) {
       return true;
     }
 

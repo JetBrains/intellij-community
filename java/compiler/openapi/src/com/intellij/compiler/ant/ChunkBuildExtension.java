@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,12 +20,15 @@ import com.intellij.ExtensionPoints;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Couple;
 import com.intellij.packaging.artifacts.Artifact;
+import com.intellij.packaging.artifacts.ArtifactType;
 import com.intellij.packaging.elements.ArtifactAntGenerationContext;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -50,12 +53,23 @@ public abstract class ChunkBuildExtension {
                                        CompositeGenerator generator) {
   }
 
+  @Nullable
+  public Couple<String> getArtifactXmlNs(ArtifactType artifactType) {
+    return null;
+  } 
+
+  public boolean needAntArtifactInstructions(ArtifactType type) {
+    return true;
+  }
+  
+  public void initArtifacts(Project project, GenerationOptions genOptions, CompositeGenerator generator) {}
+  
   public List<String> getCleanTargetNames(Project project, GenerationOptions genOptions) {
     return Collections.emptyList();
   }
 
   public static String[] getAllTargets(ModuleChunk chunk) {
-    List<String> allTargets = new ArrayList<String>();
+    List<String> allTargets = new ArrayList<>();
     final ChunkBuildExtension[] extensions = Extensions.getRootArea().getExtensionPoint(EP_NAME).getExtensions();
     for (ChunkBuildExtension extension : extensions) {
       ContainerUtil.addAll(allTargets, extension.getTargets(chunk));

@@ -50,18 +50,20 @@ public class DirectoryCopyElementType extends PackagingElementType<DirectoryCopy
     return true;
   }
 
+  @Override
   @NotNull
   public List<? extends DirectoryCopyPackagingElement> chooseAndCreate(@NotNull ArtifactEditorContext context, @NotNull Artifact artifact,
                                                                    @NotNull CompositePackagingElement<?> parent) {
     final FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createMultipleFoldersDescriptor();
     final VirtualFile[] files = FileChooser.chooseFiles(descriptor, context.getProject(), null);
-    final List<DirectoryCopyPackagingElement> list = new ArrayList<DirectoryCopyPackagingElement>();
+    final List<DirectoryCopyPackagingElement> list = new ArrayList<>();
     for (VirtualFile file : files) {
       list.add(new DirectoryCopyPackagingElement(file.getPath()));
     }
     return list;
   }
 
+  @Override
   @NotNull
   public DirectoryCopyPackagingElement createEmpty(@NotNull Project project) {
     return new DirectoryCopyPackagingElement();

@@ -32,39 +32,40 @@ import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * Created by IntelliJ IDEA.
- * User: max
- * Date: Sep 5, 2003
- * Time: 10:54:59 PM
- * To change this template use Options | File Templates.
- */
 public class PlainEnterProcessor implements EnterProcessor {
   @Override
   public boolean doEnter(Editor editor, PsiElement psiElement, boolean isModified) {
+    if (expandCodeBlock(editor, psiElement)) return true;
+
+    getEnterHandler(IdeActions.ACTION_EDITOR_START_NEW_LINE).execute(editor, ((EditorEx)editor).getDataContext());
+    return true;
+  }
+
+  static boolean expandCodeBlock(Editor editor, PsiElement psiElement) {
     PsiCodeBlock block = getControlStatementBlock(editor.getCaretModel().getOffset(), psiElement);
     if (processExistingBlankLine(editor, block, psiElement)) {
       return true;
     }
-    EditorActionHandler enterHandler = getEnterHandler(IdeActions.ACTION_EDITOR_START_NEW_LINE);
-    if (block != null) {
-      PsiElement firstElement = block.getFirstBodyElement();
-      if (firstElement == null) {
-        firstElement = block.getRBrace();
-        // Plain enter processor inserts enter after the end of line, hence, we don't want to use it here because the line ends with 
-        // the empty braces block. So, we get the following in case of default handler usage:
-        //     Before:
-        //         if (condition[caret]) {}
-        //     After:
-        //         if (condition) {}
-        //             [caret]
-        enterHandler = getEnterHandler(IdeActions.ACTION_EDITOR_ENTER);
-      }
-      editor.getCaretModel().moveToOffset(firstElement != null ?
-                                          firstElement.getTextRange().getStartOffset() :
-                                          block.getTextRange().getEndOffset());
+    if (block == null) {
+      return false;
     }
 
+    EditorActionHandler enterHandler = getEnterHandler(IdeActions.ACTION_EDITOR_START_NEW_LINE);
+    PsiElement firstElement = block.getFirstBodyElement();
+    if (firstElement == null) {
+      firstElement = block.getRBrace();
+      // Plain enter processor inserts enter after the end of line, hence, we don't want to use it here because the line ends with
+      // the empty braces block. So, we get the following in case of default handler usage:
+      //     Before:
+      //         if (condition[caret]) {}
+      //     After:
+      //         if (condition) {}
+      //             [caret]
+      enterHandler = getEnterHandler(IdeActions.ACTION_EDITOR_ENTER);
+    }
+    editor.getCaretModel().moveToOffset(firstElement != null ?
+                                        firstElement.getTextRange().getStartOffset() :
+                                        block.getTextRange().getEndOffset());
     enterHandler.execute(editor, ((EditorEx)editor).getDataContext());
     return true;
   }
@@ -75,6 +76,30 @@ public class PlainEnterProcessor implements EnterProcessor {
 
   @Nullable
   private static PsiCodeBlock getControlStatementBlock(int caret, PsiElement element) {
+    if (element instanceof PsiTryStatement) {
+      PsiCodeBlock tryBlock = ((PsiTryStatement)element).getTryBlock();
+      if (tryBlock != null && caret < tryBlock.getTextRange().getEndOffset()) return tryBlock;
+
+      for (PsiCodeBlock catchBlock : ((PsiTryStatement)element).getCatchBlocks()) {
+        if (catchBlock != null && caret < catchBlock.getTextRange().getEndOffset()) return catchBlock;
+      }
+
+      return ((PsiTryStatement)element).getFinallyBlock();
+    }
+
+    if (element instanceof PsiSynchronizedStatement) {
+      return ((PsiSynchronizedStatement)element).getBody();
+    }
+
+    if (element instanceof PsiMethod) {
+      PsiCodeBlock methodBody = ((PsiMethod)element).getBody();
+      if (methodBody != null) return methodBody;
+    }
+
+    if (element instanceof PsiSwitchStatement) {
+      return ((PsiSwitchStatement)element).getBody();
+    }
+
     PsiStatement body = null;
     if (element instanceof PsiIfStatement) {
       body =  ((PsiIfStatement)element).getThenBranch();
@@ -94,10 +119,6 @@ public class PlainEnterProcessor implements EnterProcessor {
     else if (element instanceof PsiDoWhileStatement) {
       body =  ((PsiDoWhileStatement)element).getBody();
     }
-    else if (element instanceof PsiMethod) {
-      PsiCodeBlock methodBody = ((PsiMethod)element).getBody();
-      if (methodBody != null) return methodBody;
-    }
 
     return body instanceof PsiBlockStatement ? ((PsiBlockStatement)body).getCodeBlock() : null;
   }
@@ -116,14 +137,14 @@ public class PlainEnterProcessor implements EnterProcessor {
    * @param editor      target editor
    * @param codeBlock   target code block to which new empty line is going to be inserted
    * @param element     target element under caret
-   * @return            <code>true</code> if it was found out that the given code block starts with the empty line and caret
+   * @return            {@code true} if it was found out that the given code block starts with the empty line and caret
    *                    is pointed to correct position there, i.e. no additional processing is required;
-   *                    <code>false</code> otherwise
+   *                    {@code false} otherwise
    */
   private static boolean processExistingBlankLine(@NotNull Editor editor, @Nullable PsiCodeBlock codeBlock, @Nullable PsiElement element) {
     PsiWhiteSpace whiteSpace = null;
     if (codeBlock == null) {
-      if (element != null) {
+      if (element != null && !(element instanceof PsiMember)) {
         final PsiElement next = PsiTreeUtil.nextLeaf(element);
         if (next instanceof PsiWhiteSpace) {
           whiteSpace = (PsiWhiteSpace)next;

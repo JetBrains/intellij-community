@@ -21,12 +21,11 @@ public abstract class EdtRunnable implements ExpirableRunnable {
 
   private boolean myExpired;
 
+  @Override
   public final void run() {
-    UIUtil.invokeLaterIfNeeded(new Runnable() {
-      public void run() {
-        if (!isExpired()) {
-          runEdt();
-        }
+    UIUtil.invokeLaterIfNeeded(() -> {
+      if (!isExpired()) {
+        runEdt();
       }
     });
   }

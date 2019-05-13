@@ -12,10 +12,14 @@
  */
 package org.netbeans.lib.cvsclient.command.importcmd;
 
+import org.jetbrains.annotations.NonNls;
 import org.netbeans.lib.cvsclient.IClientEnvironment;
 import org.netbeans.lib.cvsclient.IRequestProcessor;
+import org.netbeans.lib.cvsclient.command.Command;
+import org.netbeans.lib.cvsclient.command.CommandException;
+import org.netbeans.lib.cvsclient.command.CommandUtils;
+import org.netbeans.lib.cvsclient.command.KeywordSubstitution;
 import org.netbeans.lib.cvsclient.connection.AuthenticationException;
-import org.netbeans.lib.cvsclient.command.*;
 import org.netbeans.lib.cvsclient.event.ICvsListenerRegistry;
 import org.netbeans.lib.cvsclient.event.IEventSender;
 import org.netbeans.lib.cvsclient.file.DirectoryObject;
@@ -27,11 +31,12 @@ import org.netbeans.lib.cvsclient.request.DirectoryRequest;
 import org.netbeans.lib.cvsclient.request.Requests;
 import org.netbeans.lib.cvsclient.util.BugLog;
 import org.netbeans.lib.cvsclient.util.SimpleStringPattern;
-import org.jetbrains.annotations.NonNls;
 
 import java.io.File;
-import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * The import command imports local directory structures into the repository.
@@ -56,7 +61,8 @@ public final class ImportCommand extends Command {
 
 	// Implemented ============================================================
 
-	public boolean execute(IRequestProcessor requestProcessor, IEventSender eventManager, ICvsListenerRegistry listenerRegistry, IClientEnvironment clientEnvironment, IProgressViewer progressViewer) throws CommandException,
+	@Override
+        public boolean execute(IRequestProcessor requestProcessor, IEventSender eventManager, ICvsListenerRegistry listenerRegistry, IClientEnvironment clientEnvironment, IProgressViewer progressViewer) throws CommandException,
                                                                                                                                                                                                                   AuthenticationException {
 		// check necessary fields
 		BugLog.getInstance().assertNotNull(getModule());
@@ -64,34 +70,30 @@ public final class ImportCommand extends Command {
 		BugLog.getInstance().assertNotNull(getVendorTag());
 
 		final Requests requests;
-		try {
-			requests = new Requests(CommandRequest.IMPORT, clientEnvironment);
-			requests.addArgumentRequest(getVendorBranchNotNull(), "-b");
-			requests.addMessageRequests(CommandUtils.getMessageNotNull(getLogMessage()));
-			requests.addArgumentRequest(getKeywordSubstitutionOption(), "-k");
+		requests = new Requests(CommandRequest.IMPORT, clientEnvironment);
+		requests.addArgumentRequest(getVendorBranchNotNull(), "-b");
+		requests.addMessageRequests(CommandUtils.getMessageNotNull(getLogMessage()));
+		requests.addArgumentRequest(getKeywordSubstitutionOption(), "-k");
 
-			addWrapperRequests(requests, this.wrapperMap);
+		addWrapperRequests(requests, this.wrapperMap);
 
-			requests.addArgumentRequest(getModule());
-			requests.addArgumentRequest(getVendorTag());
-			requests.addArgumentRequest(getReleaseTag());
+		requests.addArgumentRequest(getModule());
+		requests.addArgumentRequest(getVendorTag());
+		requests.addArgumentRequest(getReleaseTag());
 
-			final File rootDirectory = clientEnvironment.getCvsFileSystem().getLocalFileSystem().getRootDirectory();
-			addFileRequests(rootDirectory, requests, requestProcessor, clientEnvironment);
+		final File rootDirectory = clientEnvironment.getCvsFileSystem().getLocalFileSystem().getRootDirectory();
+		addFileRequests(rootDirectory, requests, requestProcessor, clientEnvironment);
 
-			// This is necessary when importing a directory structure with CVS directories.
-			// If requests.addLocalPathDirectoryRequest(); would be used, the repository path
-			// would be used from the CVS folders.
-			requests.addRequest(new DirectoryRequest(".", getRepositoryRoot(clientEnvironment)));
-		}
-		catch (IOException ex) {
-			throw new IOCommandException(ex);
-		}
+		// This is necessary when importing a directory structure with CVS directories.
+		// If requests.addLocalPathDirectoryRequest(); would be used, the repository path
+		// would be used from the CVS folders.
+		requests.addRequest(new DirectoryRequest(".", getRepositoryRoot(clientEnvironment)));
 
 		return requestProcessor.processRequests(requests, new DummyRequestsProgressHandler());
 	}
 
-	public void resetCvsCommand() {
+	@Override
+        public void resetCvsCommand() {
 		super.resetCvsCommand();
 		setLogMessage(null);
 		setModule(null);
@@ -104,7 +106,8 @@ public final class ImportCommand extends Command {
 		}
 	}
 
-	public String getCvsCommandLine() {
+	@Override
+        public String getCvsCommandLine() {
 		@NonNls final StringBuilder cvsArguments = new StringBuilder("import ");
 		cvsArguments.append(getCvsArguments());
 
@@ -247,7 +250,7 @@ public final class ImportCommand extends Command {
 	 * Adds recursively all request for files and directories in the specified
 	 * directory to the specified requestList.
 	 */
-	private void addFileRequests(File directory, Requests requests, IRequestProcessor requestProcessor, IClientEnvironment clientEnvironment) throws IOException {
+	private void addFileRequests(File directory, Requests requests, IRequestProcessor requestProcessor, IClientEnvironment clientEnvironment) {
 		final DirectoryObject directoryObject = clientEnvironment.getCvsFileSystem().getLocalFileSystem().getDirectoryObject(directory);
 
 		final String relativePath = directoryObject.toUnixPath();

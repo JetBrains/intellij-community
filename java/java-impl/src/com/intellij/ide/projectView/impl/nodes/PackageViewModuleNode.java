@@ -17,8 +17,8 @@ package com.intellij.ide.projectView.impl.nodes;
 
 import com.intellij.ide.projectView.ViewSettings;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
+import com.intellij.ide.util.treeView.AbstractTreeUi;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
@@ -27,25 +27,24 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.List;
 
 public class PackageViewModuleNode extends AbstractModuleNode{
-  public PackageViewModuleNode(Project project, Module value, ViewSettings viewSettings) {
+  public PackageViewModuleNode(Project project, @NotNull Module value, ViewSettings viewSettings) {
     super(project, value, viewSettings);
-  }
-
-  public PackageViewModuleNode(Project project, Object value, ViewSettings viewSettings) {
-    this(project, (Module)value, viewSettings);
   }
 
   @Override
   @NotNull
   public Collection<AbstractTreeNode> getChildren() {
-    final Collection<AbstractTreeNode> result = PackageUtil.createPackageViewChildrenOnFiles(Arrays.asList(ModuleRootManager.getInstance(getValue()).getSourceRoots()), myProject, getSettings(), getValue(), false);
-    if (getSettings().isShowLibraryContents()) {
-      result.add(new PackageViewLibrariesNode(getProject(), getValue(),getSettings()));
-    }
-    return result;
-
+    return AbstractTreeUi.calculateYieldingToWriteAction(() -> {
+      List<VirtualFile> roots = Arrays.asList(ModuleRootManager.getInstance(getValue()).getSourceRoots());
+      final Collection<AbstractTreeNode> result = PackageUtil.createPackageViewChildrenOnFiles(roots, myProject, getSettings(), getValue(), false);
+      if (getSettings().isShowLibraryContents()) {
+        result.add(new PackageViewLibrariesNode(getProject(), getValue(),getSettings()));
+      }
+      return result;
+    });
   }
 
   @Override
@@ -53,6 +52,11 @@ public class PackageViewModuleNode extends AbstractModuleNode{
     Module module = getValue();
     return module != null && !module.isDisposed() &&
            (ModuleUtilCore.moduleContainsFile(module, file, false) || ModuleUtilCore.moduleContainsFile(module, file, true));
+  }
+
+  @Override
+  public boolean validate() {
+    return getValue() != null;
   }
 
   @Override

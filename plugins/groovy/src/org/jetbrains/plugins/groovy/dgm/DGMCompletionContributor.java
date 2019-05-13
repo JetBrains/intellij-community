@@ -20,9 +20,7 @@ import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.lang.properties.parsing.PropertiesTokenTypes;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.patterns.PlatformPatterns;
-import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
-import com.intellij.util.Consumer;
 import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.completion.GroovyCompletionUtil;
@@ -38,7 +36,7 @@ public class DGMCompletionContributor extends CompletionContributor {
            new CompletionProvider<CompletionParameters>() {
              @Override
              protected void addCompletions(@NotNull CompletionParameters parameters,
-                                           ProcessingContext context,
+                                           @NotNull ProcessingContext context,
                                            @NotNull CompletionResultSet result) {
                PsiElement position = parameters.getPosition();
                if (!DGMUtil.isInDGMFile(position)) return;
@@ -56,17 +54,13 @@ public class DGMCompletionContributor extends CompletionContributor {
            new CompletionProvider<CompletionParameters>() {
              @Override
              protected void addCompletions(@NotNull CompletionParameters parameters,
-                                           ProcessingContext context,
+                                           @NotNull ProcessingContext context,
                                            @NotNull final CompletionResultSet result) {
                PsiElement position = parameters.getPosition();
                if (!DGMUtil.isInDGMFile(position)) return;
 
-               AllClassesGetter.processJavaClasses(parameters, result.getPrefixMatcher(), true, new Consumer<PsiClass>() {
-                 @Override
-                 public void consume(PsiClass aClass) {
-                   result.addElement(GroovyCompletionUtil.createClassLookupItem(aClass));
-                 }
-               });
+               AllClassesGetter.processJavaClasses(parameters, result.getPrefixMatcher(), true,
+                                                   aClass -> result.addElement(GroovyCompletionUtil.createClassLookupItem(aClass)));
              }
            });
   }

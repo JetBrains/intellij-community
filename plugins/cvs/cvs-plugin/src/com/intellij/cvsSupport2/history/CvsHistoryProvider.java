@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,10 +16,13 @@
 package com.intellij.cvsSupport2.history;
 
 import com.intellij.CvsBundle;
+import com.intellij.cvsSupport2.CvsFilePath;
 import com.intellij.cvsSupport2.CvsUtil;
 import com.intellij.cvsSupport2.application.CvsEntriesManager;
 import com.intellij.cvsSupport2.changeBrowser.CvsChangeList;
+import com.intellij.cvsSupport2.changeBrowser.CvsRepositoryLocation;
 import com.intellij.cvsSupport2.connections.CvsConnectionSettings;
+import com.intellij.cvsSupport2.connections.CvsEnvironment;
 import com.intellij.cvsSupport2.cvsExecution.CvsOperationExecutor;
 import com.intellij.cvsSupport2.cvsExecution.DefaultCvsOperationExecutorCallback;
 import com.intellij.cvsSupport2.cvshandlers.CommandCvsHandler;
@@ -29,7 +32,6 @@ import com.intellij.cvsSupport2.util.CvsVfsUtil;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FilePath;
-import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.annotate.ShowAllAffectedGenericAction;
 import com.intellij.openapi.vcs.history.*;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -47,33 +49,34 @@ import javax.swing.table.TableCellEditor;
 import javax.swing.table.TableCellRenderer;
 import java.awt.*;
 import java.io.File;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 
 public class CvsHistoryProvider implements VcsHistoryProvider {
   public static final ColumnInfo<VcsFileRevision, String> STATE = new ColumnInfo<VcsFileRevision, String>(
     CvsBundle.message("file.history.state.column.name")) {
+    @Override
     public String valueOf(VcsFileRevision vcsFileRevision) {
       if (!(vcsFileRevision instanceof CvsFileRevision)) return "";
       return ((CvsFileRevision)vcsFileRevision).getState();
     }
 
+    @Override
     public Comparator<VcsFileRevision> getComparator() {
-      return new Comparator<VcsFileRevision>() {
-        public int compare(VcsFileRevision r1, VcsFileRevision r2) {
-          if (!(r1 instanceof CvsFileRevision)) return 1;
-          if (!(r2 instanceof CvsFileRevision)) return -1;
-          return ((CvsFileRevision)r1).getState().compareTo(((CvsFileRevision)r2).getState());
-        }
+      return (r1, r2) -> {
+        if (!(r1 instanceof CvsFileRevision)) return 1;
+        if (!(r2 instanceof CvsFileRevision)) return -1;
+        return ((CvsFileRevision)r1).getState().compareTo(((CvsFileRevision)r2).getState());
       };
     }
   };
 
-  abstract class TagOrBranchColumn extends ColumnInfo {
-    public TagOrBranchColumn(final String name) {
+  abstract static class TagOrBranchColumn extends ColumnInfo {
+    TagOrBranchColumn(final String name) {
       super(name);
     }
 
+    @Override
     public TableCellRenderer getRenderer(Object object) {
       final TableCellRenderer rendererFromSuper = super.getRenderer(object);
       if (!(object instanceof CvsFileRevision)) return rendererFromSuper;
@@ -82,18 +85,22 @@ public class CvsHistoryProvider implements VcsHistoryProvider {
       return new TagsPanel(getName());
     }
 
+    @Override
     public boolean isCellEditable(Object object) {
       if (!(object instanceof CvsFileRevision)) return false;
       return getValues(((CvsFileRevision)object)).size() > 1;
     }
 
+    @Override
     public TableCellEditor getEditor(final Object object) {
       if (!(object instanceof CvsFileRevision)) return null;
       return new AbstractTableCellEditor() {
+        @Override
         public Object getCellEditorValue() {
           return "";
         }
 
+        @Override
         public Component getTableCellEditorComponent(JTable table,
                                                      Object value,
                                                      boolean isSelected,
@@ -109,6 +116,7 @@ public class CvsHistoryProvider implements VcsHistoryProvider {
 
     protected abstract Collection<String> getValues(CvsFileRevision revision);
 
+    @Override
     public Object valueOf(Object object) {
       if (!(object instanceof CvsFileRevision)) return "";
       final Collection values = getValues(((CvsFileRevision)object));
@@ -121,12 +129,14 @@ public class CvsHistoryProvider implements VcsHistoryProvider {
   }
 
   private final ColumnInfo TAG = new TagOrBranchColumn(CvsBundle.message("file.history.tag.column.name")) {
+    @Override
     protected Collection<String> getValues(CvsFileRevision revision) {
       return revision.getTags();
     }
   };
 
   public final ColumnInfo BRANCHES = new TagOrBranchColumn(CvsBundle.message("file.history.branches.column.name")) {
+    @Override
     protected Collection<String> getValues(CvsFileRevision revision) {
       return revision.getBranches();
     }
@@ -139,20 +149,24 @@ public class CvsHistoryProvider implements VcsHistoryProvider {
     myProject = project;
   }
 
+  @Override
   public boolean isDateOmittable() {
     return false;
   }
 
+  @Override
   public VcsDependentHistoryComponents getUICustomization(final VcsHistorySession session, JComponent forShortcutRegistration) {
     return VcsDependentHistoryComponents.createOnlyColumns(new ColumnInfo[]{
       STATE, TAG, BRANCHES
     });
   }
 
+  @Override
   public String getHelpId() {
     return null;
   }
 
+  @Override
   @Nullable
   public VcsHistorySession createSessionFor(final FilePath filePath) {
     final List<VcsFileRevision> fileRevisionList = createRevisions(filePath);
@@ -168,6 +182,7 @@ public class CvsHistoryProvider implements VcsHistoryProvider {
       myFilePath = filePath;
     }
 
+    @Override
     @Nullable
     public VcsRevisionNumber calcCurrentRevisionNumber() {
       return myFilePath == null ? null : getCurrentRevision(myFilePath);
@@ -182,6 +197,7 @@ public class CvsHistoryProvider implements VcsHistoryProvider {
       return super.shouldBeRefreshed();
     }
 
+    @Override
     public boolean isContentAvailable(final VcsFileRevision revision) {
       if (revision instanceof CvsFileRevision) {
         final CvsFileRevision cvsFileRevision = (CvsFileRevision)revision;
@@ -190,6 +206,7 @@ public class CvsHistoryProvider implements VcsHistoryProvider {
       return super.isContentAvailable(revision);
     }
 
+    @Override
     public HistoryAsTreeProvider getHistoryAsTreeProvider() {
       return MyHistoryAsTreeProvider.getInstance();
     }
@@ -200,10 +217,19 @@ public class CvsHistoryProvider implements VcsHistoryProvider {
     }
   }
 
-  public void reportAppendableHistory(FilePath path, VcsAppendableHistorySessionPartner partner) throws VcsException {
-    // todo some time after ... this could be done
-    final VcsHistorySession session = createSessionFor(path);
-    partner.reportCreatedEmptySession((VcsAbstractHistorySession) session);
+  @Override
+  public void reportAppendableHistory(FilePath path, VcsAppendableHistorySessionPartner partner) {
+    final VcsHistorySession session;
+    if (path instanceof CvsFilePath) {
+      final CvsRepositoryLocation location = ((CvsFilePath)path).getRepositoryLocation();
+      final List<VcsFileRevision> fileRevisionList = createRevisions(location.getEnvironment(), path.getIOFile());
+      if (fileRevisionList == null) return;
+      session = new MyHistorySession(fileRevisionList, path);
+    }
+    else {
+      session = createSessionFor(path);
+    }
+    partner.reportCreatedEmptySession((VcsAbstractHistorySession)session);
   }
 
   private static VcsRevisionNumber getCurrentRevision(FilePath filePath) {
@@ -222,21 +248,26 @@ public class CvsHistoryProvider implements VcsHistoryProvider {
     final VirtualFile root = CvsVfsUtil.refreshAndFindFileByIoFile(file.getParentFile());
     // check if we have a history pane open for a file in a package which has just been deleted
     if (root == null) return null;
-    final LocalPathIndifferentLogOperation logOperation = new LocalPathIndifferentLogOperation(file);
+    final CvsConnectionSettings env = CvsEntriesManager.getInstance().getCvsConnectionSettingsFor(filePath.getVirtualFileParent());
+    final File lightweightFileForFile = CvsUtil.getCvsLightweightFileForFile(file);
+    return createRevisions(env, lightweightFileForFile);
+  }
+
+  private List<VcsFileRevision> createRevisions(final CvsEnvironment connectionSettings, final File lightweightFileForFile) {
+    final LocalPathIndifferentLogOperation logOperation = new LocalPathIndifferentLogOperation(connectionSettings);
+    logOperation.addFile(lightweightFileForFile);
     final CvsOperationExecutor executor = new CvsOperationExecutor(myProject);
-    final ArrayList<VcsFileRevision> result = new ArrayList<VcsFileRevision>();
+    final ArrayList<VcsFileRevision> result = new ArrayList<>();
     executor.performActionSync(new CommandCvsHandler(CvsBundle.message("operation.name.load.file.content"), logOperation),
                                new DefaultCvsOperationExecutorCallback() {
                                  @Override
                                  public void executionFinishedSuccessfully() {
-                                   final CvsConnectionSettings env = CvsEntriesManager.getInstance()
-                                     .getCvsConnectionSettingsFor(filePath.getVirtualFileParent());
                                    final LogInformation firstLogInformation = logOperation.getFirstLogInformation();
                                    if (firstLogInformation != null) {
                                      final List<Revision> revisionList = firstLogInformation.getRevisionList();
                                      for (Revision revision : revisionList) {
-                                       result.add(new CvsFileRevisionImpl(revision, CvsUtil.getCvsLightweightFileForFile(file),
-                                                                          firstLogInformation, env, myProject));
+                                       result.add(new CvsFileRevisionImpl(revision, lightweightFileForFile,
+                                                                          firstLogInformation, connectionSettings, myProject));
                                      }
                                    }
                                  }
@@ -245,10 +276,12 @@ public class CvsHistoryProvider implements VcsHistoryProvider {
     return result;
   }
 
+  @Override
   public AnAction[] getAdditionalActions(final Runnable refresher) {
     return new AnAction[]{ ShowAllAffectedGenericAction.getInstance() };
   }
 
+  @Override
   public boolean supportsHistoryForDirectories() {
     return false;
   }
@@ -270,15 +303,16 @@ public class CvsHistoryProvider implements VcsHistoryProvider {
       return ourInstance;
     }
 
+    @Override
     public List<TreeItem<VcsFileRevision>> createTreeOn(List<VcsFileRevision> allRevisions) {
       Collections.sort(allRevisions, VcsFileRevisionComparator.INSTANCE);
 
-      final List<TreeItem<VcsFileRevision>> result = new ArrayList<TreeItem<VcsFileRevision>>();
+      final List<TreeItem<VcsFileRevision>> result = new ArrayList<>();
 
       TreeItem<VcsFileRevision> prevRevision = null;
       for (final VcsFileRevision sortedRevision : allRevisions) {
         final CvsFileRevisionImpl cvsFileRevision = (CvsFileRevisionImpl)sortedRevision;
-        final TreeItem<VcsFileRevision> treeItem = new TreeItem<VcsFileRevision>(cvsFileRevision);
+        final TreeItem<VcsFileRevision> treeItem = new TreeItem<>(cvsFileRevision);
         final TreeItem<VcsFileRevision> commonParent = getCommonParent(prevRevision, treeItem);
         if (commonParent != null) {
           commonParent.addChild(treeItem);
@@ -315,6 +349,7 @@ public class CvsHistoryProvider implements VcsHistoryProvider {
 
     private VcsFileRevisionComparator() {}
 
+    @Override
     public int compare(VcsFileRevision rev1, VcsFileRevision rev2) {
       return VcsHistoryUtil.compare(rev1, rev2);
     }

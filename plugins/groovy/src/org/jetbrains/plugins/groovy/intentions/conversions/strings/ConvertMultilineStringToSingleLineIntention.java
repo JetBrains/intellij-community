@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,22 +15,21 @@
  */
 package org.jetbrains.plugins.groovy.intentions.conversions.strings;
 
-import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.tree.IElementType;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.intentions.GroovyIntentionsBundle;
 import org.jetbrains.plugins.groovy.intentions.base.Intention;
 import org.jetbrains.plugins.groovy.intentions.base.PsiElementPredicate;
-import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
-import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrStringContent;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrStringInjection;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.literals.GrLiteralImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.literals.GrStringImpl;
@@ -45,7 +44,7 @@ public class ConvertMultilineStringToSingleLineIntention extends Intention {
   public static final String hint = GroovyIntentionsBundle.message("convert.multiline.string.to.single.line.intention.name");
 
   @Override
-  protected void processIntention(@NotNull PsiElement element, Project project, Editor editor) throws IncorrectOperationException {
+  protected void processIntention(@NotNull PsiElement element, @NotNull Project project, Editor editor) throws IncorrectOperationException {
     String quote = element.getText().substring(0, 1);
 
     StringBuilder buffer = new StringBuilder();
@@ -59,11 +58,11 @@ public class ConvertMultilineStringToSingleLineIntention extends Intention {
     }
     else {
       final GrStringImpl gstring = (GrStringImpl)element;
-      for (ASTNode child = gstring.getNode().getFirstChildNode(); child != null; child = child.getTreeNext()) {
-        if (child.getElementType() == GroovyTokenTypes.mGSTRING_CONTENT) {
-          appendSimpleStringValue(child.getPsi(), buffer, "\"");
+      for (GroovyPsiElement child : gstring.getAllContentParts()) {
+        if (child instanceof GrStringContent) {
+          appendSimpleStringValue(child, buffer, "\"");
         }
-        else if (child.getElementType() == GroovyElementTypes.GSTRING_INJECTION) {
+        else if (child instanceof GrStringInjection) {
           buffer.append(child.getText());
         }
       }
@@ -119,26 +118,13 @@ public class ConvertMultilineStringToSingleLineIntention extends Intention {
   protected PsiElementPredicate getElementPredicate() {
     return new PsiElementPredicate() {
       @Override
-      public boolean satisfiedBy(PsiElement element) {
-        if (element instanceof GrLiteralImpl) {
-          final ASTNode node = element.getFirstChild().getNode();
-          final IElementType type = node.getElementType();
-          if (type == GroovyTokenTypes.mSTRING_LITERAL) {
-            return GrStringUtil.isMultilineStringElement(element.getNode());
-          }
-          if (type == GroovyTokenTypes.mGSTRING_LITERAL) {
-            return GrStringUtil.isMultilineStringElement(element.getNode());
-          }
-        }
-        else if (element instanceof GrStringImpl) {
-          final GrStringImpl gstring = (GrStringImpl)element;
-          final GrStringInjection[] injections = gstring.getInjections();
-          for (GrStringInjection injection : injections) {
-            if (injection.getText().indexOf('\n') >= 0) return false;
-          }
-          return !gstring.isPlainString();
-        }
-        return false;
+      public boolean satisfiedBy(@NotNull PsiElement element) {
+        if (!(element instanceof GrLiteral)) return false;
+
+        String text = element.getText();
+        String quote = GrStringUtil.getStartQuote(text);
+        return GrStringUtil.TRIPLE_QUOTES.equals(quote) ||
+               GrStringUtil.TRIPLE_DOUBLE_QUOTES.equals(quote);
       }
     };
   }

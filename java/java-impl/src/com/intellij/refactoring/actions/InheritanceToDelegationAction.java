@@ -24,10 +24,12 @@ import com.intellij.refactoring.inheritanceToDelegation.InheritanceToDelegationH
 import org.jetbrains.annotations.NotNull;
 
 public class InheritanceToDelegationAction extends BaseRefactoringAction {
+  @Override
   public boolean isAvailableInEditorOnly() {
     return false;
   }
 
+  @Override
   public boolean isEnabledOnElements(@NotNull PsiElement[] elements) {
     return elements.length == 1 &&
            elements[0] instanceof PsiClass &&
@@ -35,6 +37,7 @@ public class InheritanceToDelegationAction extends BaseRefactoringAction {
            elements[0].getLanguage().isKindOf(JavaLanguage.INSTANCE);
   }
 
+  @Override
   public RefactoringActionHandler getHandler(@NotNull DataContext dataContext) {
     return new InheritanceToDelegationHandler();
   }

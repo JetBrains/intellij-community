@@ -14,14 +14,16 @@
  * limitations under the License.
  */
 
-/*
- * User: anna
- * Date: 25-May-2007
- */
 package com.intellij.execution.testframework;
 
-import com.intellij.execution.testframework.ui.AbstractTestTreeBuilder;
+import com.intellij.execution.testframework.ui.AbstractTestTreeBuilderBase;
+import com.intellij.execution.testframework.ui.BaseTestProxyNodeDescriptor;
+import com.intellij.ide.util.treeView.AlphaComparator;
+import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.util.Comparing;
+
+import java.util.Comparator;
 
 public interface TestFrameworkRunningModel extends Disposable {
   TestConsoleProperties getProperties();
@@ -32,11 +34,32 @@ public interface TestFrameworkRunningModel extends Disposable {
 
   TestTreeView getTreeView();
 
-  AbstractTestTreeBuilder getTreeBuilder();
+  AbstractTestTreeBuilderBase getTreeBuilder();
 
   boolean hasTestSuites();
 
   AbstractTestProxy getRoot();
 
   void selectAndNotify(AbstractTestProxy testProxy);
+  
+  default Comparator<NodeDescriptor> createComparator() {
+    TestConsoleProperties properties = getProperties();
+    Comparator<NodeDescriptor> comparator;
+    if (TestConsoleProperties.SORT_BY_DURATION.value(properties) && !isRunning()) {
+      comparator = (o1, o2) -> {
+        if (o1.getParentDescriptor() == o2.getParentDescriptor() &&
+            o1 instanceof BaseTestProxyNodeDescriptor &&
+            o2 instanceof BaseTestProxyNodeDescriptor) {
+          final Long d1 = ((BaseTestProxyNodeDescriptor)o1).getElement().getDuration();
+          final Long d2 = ((BaseTestProxyNodeDescriptor)o2).getElement().getDuration();
+          return Comparing.compare(d2, d1);
+        }
+        return 0;
+      };
+    }
+    else {
+      comparator = TestConsoleProperties.SORT_ALPHABETICALLY.value(properties) ? AlphaComparator.INSTANCE : null;
+    }
+    return comparator;
+  }
 }

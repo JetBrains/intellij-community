@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,22 +19,26 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiPackage;
 import com.intellij.psi.search.GlobalSearchScope;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author yole
  */
 public abstract class PsiPackageImplementationHelper {
-  public abstract GlobalSearchScope adjustAllScope(PsiPackage psiPackage, GlobalSearchScope globalSearchScope);
+  @NotNull
+  public abstract GlobalSearchScope adjustAllScope(@NotNull PsiPackage psiPackage, @NotNull GlobalSearchScope globalSearchScope);
 
-  public abstract VirtualFile[] occursInPackagePrefixes(PsiPackage psiPackage);
+  @NotNull
+  public abstract VirtualFile[] occursInPackagePrefixes(@NotNull PsiPackage psiPackage);
 
-  public abstract void handleQualifiedNameChange(PsiPackage psiPackage, String newQualifiedName);
+  public abstract void handleQualifiedNameChange(@NotNull PsiPackage psiPackage, @NotNull String newQualifiedName);
 
-  public abstract void navigate(PsiPackage psiPackage, boolean requestFocus);
+  public abstract void navigate(@NotNull PsiPackage psiPackage, boolean requestFocus);
 
-  public abstract boolean packagePrefixExists(PsiPackage psiPackage);
+  public abstract boolean packagePrefixExists(@NotNull PsiPackage psiPackage);
 
-  public abstract Object[] getDirectoryCachedValueDependencies(PsiPackage cachedValueProvider);
+  @NotNull
+  public abstract Object[] getDirectoryCachedValueDependencies(@NotNull PsiPackage cachedValueProvider);
 
   public static PsiPackageImplementationHelper getInstance() {
     return ServiceManager.getService(PsiPackageImplementationHelper.class);

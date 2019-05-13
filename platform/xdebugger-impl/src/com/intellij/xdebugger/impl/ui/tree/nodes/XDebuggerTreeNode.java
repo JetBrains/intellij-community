@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,8 +15,9 @@
  */
 package com.intellij.xdebugger.impl.ui.tree.nodes;
 
-import com.intellij.ui.SimpleColoredComponent;
+import com.intellij.ui.ColoredTextContainer;
 import com.intellij.ui.SimpleColoredText;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.enumeration.EmptyEnumeration;
 import com.intellij.xdebugger.frame.XDebuggerTreeNodeHyperlink;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
@@ -45,32 +46,38 @@ public abstract class XDebuggerTreeNode implements TreeNode {
     myTree = tree;
   }
 
+  @Override
   public TreeNode getChildAt(final int childIndex) {
-    if (isLeaf()) return null;
-    return getChildren().get(childIndex);
+    return isLeaf() ? null : getChildren().get(childIndex);
   }
 
+  @Override
   public int getChildCount() {
     return isLeaf() ? 0 : getChildren().size();
   }
 
+  @Override
   public TreeNode getParent() {
     return myParent;
   }
 
-  public int getIndex(final TreeNode node) {
+  @Override
+  public int getIndex(@NotNull TreeNode node) {
     if (isLeaf()) return -1;
     return getChildren().indexOf(node);
   }
 
+  @Override
   public boolean getAllowsChildren() {
     return true;
   }
 
+  @Override
   public boolean isLeaf() {
     return myLeaf;
   }
 
+  @Override
   public Enumeration children() {
     if (isLeaf()) {
       return EmptyEnumeration.INSTANCE;
@@ -78,7 +85,8 @@ public abstract class XDebuggerTreeNode implements TreeNode {
     return Collections.enumeration(getChildren());
   }
 
-  protected abstract List<? extends TreeNode> getChildren();
+  @NotNull
+  public abstract List<? extends TreeNode> getChildren();
 
   protected void setIcon(final Icon icon) {
     myIcon = icon;
@@ -89,7 +97,7 @@ public abstract class XDebuggerTreeNode implements TreeNode {
   }
 
   @Nullable
-  protected XDebuggerTreeNodeHyperlink getLink() {
+  public XDebuggerTreeNodeHyperlink getLink() {
     return null;
   }
 
@@ -128,7 +136,7 @@ public abstract class XDebuggerTreeNode implements TreeNode {
   }
 
   protected int[] getNodesIndices(@Nullable Collection<? extends TreeNode> children) {
-    if (children == null) return new int[0];
+    if (children == null) return ArrayUtilRt.EMPTY_INT_ARRAY;
 
     final int[] ints = new int[children.size()];
     int i = 0;
@@ -165,17 +173,26 @@ public abstract class XDebuggerTreeNode implements TreeNode {
     return myPath;
   }
 
-  @Nullable
+  @NotNull
   public abstract List<? extends XDebuggerTreeNode> getLoadedChildren();
 
   public abstract void clearChildren();
 
-  public void appendToComponent(SimpleColoredComponent component) {
+  public void appendToComponent(@NotNull ColoredTextContainer component) {
     getText().appendToComponent(component);
 
     XDebuggerTreeNodeHyperlink link = getLink();
     if (link != null) {
       component.append(link.getLinkText(), link.getTextAttributes(), link);
     }
+  }
+
+  public void invokeNodeUpdate(Runnable runnable) {
+    myTree.invokeLater(runnable);
+  }
+
+  @Override
+  public String toString() {
+    return myText.toString();
   }
 }

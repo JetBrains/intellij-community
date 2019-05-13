@@ -16,11 +16,6 @@
 
 package org.intellij.plugins.xsltDebugger.rt.engine;
 
-/**
- * Created by IntelliJ IDEA.
- * User: sweinreuter
- * Date: 29.05.2007
- */
 class BreakpointImpl implements Breakpoint {
   private final String myUri;
   private final int myLine;
@@ -30,7 +25,7 @@ class BreakpointImpl implements Breakpoint {
   private String myTraceMsg;
   private boolean mySuspend;
 
-  public BreakpointImpl(String uri, int line) {
+  BreakpointImpl(String uri, int line) {
     myUri = uri;
     myLine = line;
     myEnabled = true;

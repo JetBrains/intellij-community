@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package com.intellij.util.xml;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.codeStyle.NameUtil;
 import com.intellij.util.Function;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
 
@@ -27,16 +28,15 @@ import java.util.Arrays;
  * @author peter
  */
 public class JavaNameStrategy extends DomNameStrategy {
-  public static final Function<String,String> DECAPITALIZE_FUNCTION = new Function<String, String>() {
-    public String fun(final String s) {
-      return StringUtil.decapitalize(s);
-    }
-  };
+  public static final Function<String,String> DECAPITALIZE_FUNCTION = s -> StringUtil.decapitalize(s);
 
-  public final String convertName(String propertyName) {
+  @NotNull
+  @Override
+  public final String convertName(@NotNull String propertyName) {
     return StringUtil.decapitalize(propertyName);
   }
 
+  @Override
   public final String splitIntoWords(final String tagName) {
     return StringUtil.join(Arrays.asList(NameUtil.nameToWords(tagName)), DECAPITALIZE_FUNCTION, " ");
   }

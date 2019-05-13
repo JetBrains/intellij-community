@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -68,6 +68,7 @@ public class BoundIconRenderer extends GutterIconRenderer {
     }
   }
 
+  @Override
   @NotNull
   public Icon getIcon() {
     if (myIcon != null) {
@@ -76,14 +77,17 @@ public class BoundIconRenderer extends GutterIconRenderer {
     return PlatformIcons.UI_FORM_ICON;
   }
 
+  @Override
   public boolean isNavigateAction() {
     return true;
   }
 
+  @Override
   @Nullable
   public AnAction getClickAction() {
     return new AnAction() {
-      public void actionPerformed(AnActionEvent e) {
+      @Override
+      public void actionPerformed(@NotNull AnActionEvent e) {
         List<PsiFile> formFiles = getBoundFormFiles();
         if (formFiles.size() > 0) {
           final VirtualFile virtualFile = formFiles.get(0).getVirtualFile();
@@ -104,6 +108,7 @@ public class BoundIconRenderer extends GutterIconRenderer {
     };
   }
 
+  @Override
   @Nullable
   public String getTooltipText() {
     List<PsiFile> formFiles = getBoundFormFiles();
@@ -124,7 +129,7 @@ public class BoundIconRenderer extends GutterIconRenderer {
       aClass = (PsiClass) myElement;
     }
     if (aClass != null && aClass.getQualifiedName() != null) {
-      formFiles = FormClassIndex.findFormsBoundToClass(aClass);
+      formFiles = FormClassIndex.findFormsBoundToClass(aClass.getProject(), aClass);
     }
     return formFiles;
   }

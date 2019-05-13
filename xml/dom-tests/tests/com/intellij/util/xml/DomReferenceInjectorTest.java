@@ -1,29 +1,44 @@
+/*
+ * Copyright 2000-2014 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.intellij.util.xml;
 
-import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.Key;
+import com.intellij.lang.ASTNode;
+import com.intellij.lang.Language;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
+import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.SearchScope;
-import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.lang.Language;
-import com.intellij.lang.ASTNode;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 
 public class DomReferenceInjectorTest extends DomHardCoreTestCase {
-  public void testBasic() throws Exception {
+  public void testBasic() {
     MyElement element = createElement("<a><value>abc${prop}def</value></a>", MyElement.class);
     assertEquals("abc${prop}def", element.getValue().getStringValue());
     assertEquals("abc${prop}def", element.getValue().getValue());
   }
 
-  public void testWithInjector() throws Exception {
+  public void testWithInjector() {
     MyElement element = createElement("<a><value>abc${prop}def</value></a>", MyElement.class);
 
     registerInjectorFor(element, null);
@@ -32,7 +47,7 @@ public class DomReferenceInjectorTest extends DomHardCoreTestCase {
     assertEquals("abcFOOdef", element.getValue().getValue());
   }
 
-  public void testCorrectlyCalculateOffsetWithInjector() throws Exception {
+  public void testCorrectlyCalculateOffsetWithInjector() {
     MyElement element = createElement("<a><value>   abc${prop}def   </value></a>", MyElement.class);
 
     registerInjectorFor(element, null);
@@ -41,7 +56,7 @@ public class DomReferenceInjectorTest extends DomHardCoreTestCase {
     assertEquals("abcFOOdef", element.getValue().getValue());
   }
 
-  public void testWithInjectorAndConverter() throws Exception {
+  public void testWithInjectorAndConverter() {
     MyElement element = createElement("<a><converted-value>abc${prop}def</converted-value></a>", MyElement.class);
 
     registerInjectorFor(element, null);
@@ -50,7 +65,7 @@ public class DomReferenceInjectorTest extends DomHardCoreTestCase {
     assertEquals("abcBARdef", element.getConvertedValue().getValue());
   }
 
-  public void testReference() throws Exception {
+  public void testReference() {
     String text = "<a><value>abc${prop}def</value></a>";
     MyElement element = createElement(text, MyElement.class);
 
@@ -63,7 +78,7 @@ public class DomReferenceInjectorTest extends DomHardCoreTestCase {
     assertReference(element.getValue(), targetElement, text.indexOf("${prop}") + 1);
   }
 
-  public void testAttribute() throws Exception {
+  public void testAttribute() {
     String text = "<a attr=\"abc${prop}def\"/>";
     MyElement element = createElement(text, MyElement.class);
 
@@ -382,7 +397,7 @@ public class DomReferenceInjectorTest extends DomHardCoreTestCase {
   private static class MyInjector implements DomReferenceInjector {
     private final PsiElement myMyTargetElement;
 
-    public MyInjector(PsiElement myTargetElement) {
+    MyInjector(PsiElement myTargetElement) {
       myMyTargetElement = myTargetElement;
     }
 
@@ -403,11 +418,13 @@ public class DomReferenceInjectorTest extends DomHardCoreTestCase {
 
       return new PsiReference[] {
         new PsiReference() {
+          @NotNull
           @Override
           public PsiElement getElement() {
             return element;
           }
 
+          @NotNull
           @Override
           public TextRange getRangeInElement() {
             return refRange;
@@ -425,7 +442,7 @@ public class DomReferenceInjectorTest extends DomHardCoreTestCase {
           }
 
           @Override
-          public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {
+          public PsiElement handleElementRename(@NotNull String newElementName) throws IncorrectOperationException {
             return null;
           }
 
@@ -435,14 +452,8 @@ public class DomReferenceInjectorTest extends DomHardCoreTestCase {
           }
 
           @Override
-          public boolean isReferenceTo(PsiElement element) {
+          public boolean isReferenceTo(@NotNull PsiElement element) {
             return false;
-          }
-
-          @Override
-          @NotNull
-          public Object[] getVariants() {
-            return EMPTY_ARRAY;
           }
 
           @Override

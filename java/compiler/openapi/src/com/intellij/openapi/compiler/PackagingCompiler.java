@@ -23,7 +23,12 @@ import org.jetbrains.annotations.Nullable;
  * This affects the order of compiler calls.
  * The sequence in which compilers are called:
  * SourceGeneratingCompiler -> SourceInstrumentingCompiler -> TranslatingCompiler ->  ClassInstrumentingCompiler -> ClassPostProcessingCompiler -> PackagingCompiler -> Validator
+ *
+ * @deprecated this interface is part of the obsolete build system which runs as part of the IDE process. Since IDEA 12 plugins need to
+ * integrate into 'external build system' instead (https://confluence.jetbrains.com/display/IDEADEV/External+Builder+API+and+Plugins).
+ * Since IDEA 13 users cannot switch to the old build system via UI and it will be completely removed in IDEA 14.
  */
+@Deprecated
 public interface PackagingCompiler extends FileProcessingCompiler{
   /**
    * Called when the compiler detects that an item in the output directory is outdated
@@ -32,7 +37,7 @@ public interface PackagingCompiler extends FileProcessingCompiler{
    *
    * @param context the current compile context.
    * @param url     the URL of a file in the output directory which will be recompiled.
-   * @param state   the validity state of the file specified by <code>url</code>.
+   * @param state   the validity state of the file specified by {@code url}.
    */
   void processOutdatedItem(CompileContext context, String url, @Nullable ValidityState state);
 }

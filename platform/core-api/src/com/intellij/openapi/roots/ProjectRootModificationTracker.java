@@ -23,7 +23,16 @@ import com.intellij.openapi.util.ModificationTracker;
  * @author yole
  */
 public abstract class ProjectRootModificationTracker implements ModificationTracker {
+  private static final ProjectRootModificationTracker NEVER_CHANGED = new ProjectRootModificationTracker() {
+    @Override
+    public long getModificationCount() {
+      return 0;
+    }
+  };
+
   public static ProjectRootModificationTracker getInstance(Project project) {
-    return ServiceManager.getService(project, ProjectRootModificationTracker.class);
+    ProjectRootModificationTracker instance = ServiceManager.getService(project, ProjectRootModificationTracker.class);
+    if (instance == null) return NEVER_CHANGED;
+    return instance;
   }
 }

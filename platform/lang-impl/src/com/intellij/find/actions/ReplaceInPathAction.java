@@ -20,12 +20,13 @@ package com.intellij.find.actions;
 import com.intellij.find.replaceInProject.ReplaceInProjectManager;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.NotNull;
 
 public class ReplaceInPathAction extends AnAction {
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     DataContext dataContext = e.getDataContext();
-    Project project = PlatformDataKeys.PROJECT.getData(dataContext);
+    Project project = CommonDataKeys.PROJECT.getData(dataContext);
 
     ReplaceInProjectManager replaceManager = ReplaceInProjectManager.getInstance(project);
     if (!replaceManager.isEnabled()) {
@@ -33,11 +34,11 @@ public class ReplaceInPathAction extends AnAction {
       return;
     }
 
-    replaceManager.replaceInProject(dataContext);
+    replaceManager.replaceInProject(dataContext, null);
   }
 
   @Override
-  public void update(AnActionEvent event){
+  public void update(@NotNull AnActionEvent event){
     FindInPathAction.doUpdate(event);
   }
 }

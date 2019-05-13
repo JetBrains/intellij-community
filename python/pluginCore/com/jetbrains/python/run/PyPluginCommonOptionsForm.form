@@ -1,0 +1,144 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<form xmlns="http://www.intellij.com/uidesigner/form/" version="1" bind-to-class="com.jetbrains.python.run.PyPluginCommonOptionsForm">
+  <grid id="42d7b" binding="myHideablePanel" layout-manager="BorderLayout" hgap="0" vgap="0">
+    <constraints>
+      <xy x="20" y="20" width="457" height="297"/>
+    </constraints>
+    <properties/>
+    <border type="none"/>
+    <children>
+      <grid id="27dc6" binding="myMainPanel" layout-manager="GridLayoutManager" row-count="9" column-count="3" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+        <margin top="0" left="0" bottom="0" right="0"/>
+        <constraints border-constraint="Center"/>
+        <properties/>
+        <border type="none"/>
+        <children>
+          <component id="c3528" class="com.intellij.ui.components.JBLabel" binding="myWorkingDirectoryJBLabel">
+            <constraints>
+              <grid row="5" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+            </constraints>
+            <properties>
+              <labelFor value=""/>
+              <text resource-bundle="com/jetbrains/python/PyBundle" key="runcfg.labels.working_directory"/>
+            </properties>
+          </component>
+          <component id="78c75" class="com.intellij.openapi.ui.TextFieldWithBrowseButton" binding="myWorkingDirectoryTextField">
+            <constraints>
+              <grid row="5" column="1" row-span="1" col-span="2" vsize-policy="0" hsize-policy="6" anchor="8" fill="1" indent="0" use-parent-layout="false">
+                <preferred-size width="150" height="-1"/>
+              </grid>
+            </constraints>
+            <properties/>
+          </component>
+          <component id="32654" class="com.intellij.execution.configuration.EnvironmentVariablesComponent" binding="myEnvsComponent">
+            <constraints>
+              <grid row="0" column="0" row-span="1" col-span="3" vsize-policy="3" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
+            </constraints>
+            <properties>
+              <labelLocation value="West"/>
+              <text resource-bundle="com/jetbrains/python/PyBundle" key="runcfg.labels.environment_variables"/>
+            </properties>
+          </component>
+          <component id="cdd29" class="com.intellij.ui.components.JBLabel" binding="myInterpreterOptionsJBLabel">
+            <constraints>
+              <grid row="4" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+            </constraints>
+            <properties>
+              <text resource-bundle="com/jetbrains/python/PyBundle" key="runcfg.labels.interpreter_options"/>
+            </properties>
+          </component>
+          <component id="1a856" class="com.intellij.ui.RawCommandLineEditor" binding="myInterpreterOptionsTextField">
+            <constraints>
+              <grid row="4" column="1" row-span="1" col-span="2" vsize-policy="0" hsize-policy="6" anchor="8" fill="1" indent="0" use-parent-layout="false">
+                <preferred-size width="150" height="-1"/>
+              </grid>
+            </constraints>
+            <properties>
+              <dialogCaption resource-bundle="com/jetbrains/python/PyBundle" key="runcfg.captions.interpreter_options_dialog"/>
+              <text value=""/>
+            </properties>
+          </component>
+          <component id="a4f87" class="com.intellij.ui.components.JBLabel" binding="myPythonInterpreterJBLabel">
+            <constraints>
+              <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+            </constraints>
+            <properties>
+              <text value="Python Interpreter:"/>
+            </properties>
+          </component>
+          <component id="64e87" class="javax.swing.JRadioButton" binding="myUseModuleSdkRadioButton" default-binding="true">
+            <constraints>
+              <grid row="1" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+            </constraints>
+            <properties>
+              <selected value="true"/>
+              <text value="Use SDK of module:"/>
+            </properties>
+          </component>
+          <component id="5f300" class="com.intellij.application.options.ModulesComboBox" binding="myModuleComboBox">
+            <constraints>
+              <grid row="1" column="2" row-span="1" col-span="1" vsize-policy="0" hsize-policy="2" anchor="8" fill="1" indent="0" use-parent-layout="false"/>
+            </constraints>
+            <properties/>
+          </component>
+          <component id="b7269" class="javax.swing.JRadioButton" binding="myUseSpecifiedSdkRadioButton">
+            <constraints>
+              <grid row="2" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+            </constraints>
+            <properties>
+              <text resource-bundle="com/jetbrains/python/PyBundle" key="runcfg.labels.interpreter"/>
+            </properties>
+          </component>
+          <component id="3f9aa" class="com.intellij.openapi.ui.ComboBox" binding="myInterpreterComboBox" default-binding="true">
+            <constraints>
+              <grid row="2" column="2" row-span="1" col-span="1" vsize-policy="0" hsize-policy="2" anchor="8" fill="1" indent="0" use-parent-layout="false"/>
+            </constraints>
+            <properties/>
+          </component>
+          <vspacer id="a3bda">
+            <constraints>
+              <grid row="3" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="1" anchor="0" fill="2" indent="0" use-parent-layout="false">
+                <minimum-size width="-1" height="15"/>
+                <preferred-size width="-1" height="15"/>
+                <maximum-size width="-1" height="15"/>
+              </grid>
+            </constraints>
+          </vspacer>
+          <component id="86ab7" class="com.intellij.execution.util.PathMappingsComponent" binding="myPathMappingsComponent">
+            <constraints>
+              <grid row="6" column="0" row-span="1" col-span="3" vsize-policy="3" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
+            </constraints>
+            <properties>
+              <labelLocation value="West"/>
+              <text value="Path mappings"/>
+            </properties>
+          </component>
+          <component id="d919b" class="com.intellij.ui.components.JBCheckBox" binding="myAddContentRootsCheckbox">
+            <constraints>
+              <grid row="7" column="0" row-span="1" col-span="2" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+            </constraints>
+            <properties>
+              <selected value="true"/>
+              <text value="Add content roots to PYTHONPATH"/>
+            </properties>
+          </component>
+          <component id="1c6cd" class="com.intellij.ui.components.JBCheckBox" binding="myAddSourceRootsCheckbox">
+            <constraints>
+              <grid row="8" column="0" row-span="1" col-span="2" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+            </constraints>
+            <properties>
+              <selected value="true"/>
+              <text value="Add source roots to PYTHONPATH"/>
+            </properties>
+          </component>
+        </children>
+      </grid>
+    </children>
+  </grid>
+  <buttonGroups>
+    <group name="buttonGroup1">
+      <member id="64e87"/>
+      <member id="b7269"/>
+    </group>
+  </buttonGroups>
+</form>

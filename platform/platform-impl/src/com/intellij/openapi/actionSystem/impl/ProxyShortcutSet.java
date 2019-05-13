@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,21 +24,22 @@ import org.jetbrains.annotations.NotNull;
 /**
  * Please do not use this class outside impl package!!!
  * Please do not use this class even if you managed to make it public!!!
- * Thank you in advance. 
- *    The UI Engineers. 
- */ 
+ * Thank you in advance.
+ * The UI Engineers.
+ */
 final class ProxyShortcutSet implements ShortcutSet {
   private final String myActionId;
   private final KeymapManager myKeymapManager;
 
-  public ProxyShortcutSet(String actionId, KeymapManager keymapManager) {
+  ProxyShortcutSet(@NotNull String actionId, @NotNull KeymapManager keymapManager) {
     myActionId = actionId;
     myKeymapManager = keymapManager;
   }
 
+  @Override
   @NotNull
   public Shortcut[] getShortcuts() {
-    Keymap keymap=myKeymapManager.getActiveKeymap();
+    Keymap keymap = myKeymapManager.getActiveKeymap();
     return keymap.getShortcuts(myActionId);
   }
 }

@@ -15,9 +15,12 @@
  */
 package org.jetbrains.jps.incremental.artifacts.instructions;
 
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.builders.storage.BuildDataPaths;
 import org.jetbrains.jps.model.JpsModel;
 import org.jetbrains.jps.model.artifact.JpsArtifact;
+
+import java.util.Set;
 
 /**
  * @author nik
@@ -31,4 +34,7 @@ public interface ArtifactInstructionsBuilderContext {
   BuildDataPaths getDataPaths();
 
   JpsModel getModel();
+
+  @NotNull
+  Set<JpsArtifact> getParentArtifacts();
 }

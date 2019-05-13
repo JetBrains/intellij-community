@@ -17,16 +17,19 @@ package com.intellij.openapi.editor.actions;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.idea.ActionsBundle;
-import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.ToggleAction;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
+import com.intellij.openapi.project.DumbAware;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @author oleg
  */
-public class ScrollToTheEndToolbarAction extends AnAction {
+public class ScrollToTheEndToolbarAction extends ToggleAction implements DumbAware {
   private final Editor myEditor;
 
   public ScrollToTheEndToolbarAction(@NotNull final Editor editor) {
@@ -39,7 +42,20 @@ public class ScrollToTheEndToolbarAction extends AnAction {
   }
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
-    EditorUtil.scrollToTheEnd(myEditor);
+  public boolean isSelected(@NotNull AnActionEvent e) {
+    Document document = myEditor.getDocument();
+    return document.getLineCount() == 0 || document.getLineNumber(myEditor.getCaretModel().getOffset()) == document.getLineCount() - 1;
+  }
+
+  @Override
+  public void setSelected(@NotNull AnActionEvent e, boolean state) {
+    if (state) {
+      EditorUtil.scrollToTheEnd(myEditor);
+    } else {
+      int lastLine = Math.max(0, myEditor.getDocument().getLineCount() - 1);
+      LogicalPosition currentPosition = myEditor.getCaretModel().getLogicalPosition();
+      LogicalPosition position = new LogicalPosition(Math.max(0, Math.min(currentPosition.line, lastLine - 1)), currentPosition.column);
+      myEditor.getCaretModel().moveToLogicalPosition(position);
+    }
   }
 }

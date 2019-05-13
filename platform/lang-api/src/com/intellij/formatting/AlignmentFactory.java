@@ -37,7 +37,7 @@ interface AlignmentFactory {
    * Provides 
    *
    * @param base    base alignment to use within returned alignment object
-   * @return        alignment object with the given alignment defined as a <code>'base alignment'</code>
+   * @return        alignment object with the given alignment defined as a {@code 'base alignment'}
    */
   Alignment createChildAlignment(final Alignment base);
 }

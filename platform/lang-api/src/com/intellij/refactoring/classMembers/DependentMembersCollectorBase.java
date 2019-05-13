@@ -25,9 +25,9 @@ import java.util.Set;
  * @author Dennis.Ushakov
  */
 public abstract class DependentMembersCollectorBase<T extends PsiElement, C> {
-  protected final HashSet<T> myCollection = new HashSet<T>();
-  private final C myClass;
-  private final C mySuperClass;
+  protected final HashSet<T> myCollection = new HashSet<>();
+  protected final C myClass;
+  protected final C mySuperClass;
 
   public DependentMembersCollectorBase(C clazz, C superClass) {
     myClass = clazz;

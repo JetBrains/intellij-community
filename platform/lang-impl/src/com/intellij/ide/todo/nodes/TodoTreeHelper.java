@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 
 package com.intellij.ide.todo.nodes;
 
+import com.intellij.ide.projectView.ProjectViewNode;
 import com.intellij.ide.todo.TodoFileDirAndModuleComparator;
 import com.intellij.ide.todo.TodoTreeBuilder;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
@@ -35,10 +36,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-/**
- * User: anna
- * Date: May 27, 2005
- */
 public class TodoTreeHelper {
   private final Project myProject;
   
@@ -50,22 +47,26 @@ public class TodoTreeHelper {
     myProject = project;
   }
 
-  public void addPackagesToChildren(ArrayList<AbstractTreeNode> children,
-                                           Module module,
-                                           TodoTreeBuilder builder) {
-    final PsiManager psiManager = PsiManager.getInstance(myProject);
-    final List<VirtualFile> roots = new ArrayList<VirtualFile>();
-    final List<VirtualFile> sourceRoots = new ArrayList<VirtualFile>();
+  public void addPackagesToChildren(ArrayList<? super AbstractTreeNode> children,
+                                    Module module,
+                                    TodoTreeBuilder builder) {
+    addDirsToChildren(collectContentRoots(module), children, builder);
+  }
+
+  protected List<VirtualFile> collectContentRoots(Module module) {
+    final List<VirtualFile> roots = new ArrayList<>();
     if (module == null) {
-      final ProjectRootManager projectRootManager = ProjectRootManager.getInstance(myProject);
-      ContainerUtil.addAll(roots, projectRootManager.getContentRoots());
-      ContainerUtil.addAll(sourceRoots, projectRootManager.getContentSourceRoots());
+      ContainerUtil.addAll(roots, ProjectRootManager.getInstance(myProject).getContentRoots());
     } else {
-      ModuleRootManager moduleRootManager = ModuleRootManager.getInstance(module);
-      ContainerUtil.addAll(roots, moduleRootManager.getContentRoots());
-      ContainerUtil.addAll(sourceRoots, moduleRootManager.getSourceRoots());
+      ContainerUtil.addAll(roots, ModuleRootManager.getInstance(module).getContentRoots());
     }
-    roots.removeAll(sourceRoots);
+    return roots;
+  }
+
+  protected void addDirsToChildren(List<? extends VirtualFile> roots,
+                                   ArrayList<? super AbstractTreeNode> children,
+                                   TodoTreeBuilder builder) {
+    final PsiManager psiManager = PsiManager.getInstance(myProject);
     for (VirtualFile dir : roots) {
       final PsiDirectory directory = psiManager.findDirectory(dir);
       if (directory == null) {
@@ -80,8 +81,8 @@ public class TodoTreeHelper {
     }
   }
 
- public Collection<AbstractTreeNode> getDirectoryChildren(PsiDirectory psiDirectory, TodoTreeBuilder builder, boolean isFlatten) {
-    ArrayList<AbstractTreeNode> children = new ArrayList<AbstractTreeNode>();
+  public Collection<AbstractTreeNode> getDirectoryChildren(PsiDirectory psiDirectory, TodoTreeBuilder builder, boolean isFlatten) {
+    ArrayList<AbstractTreeNode> children = new ArrayList<>();
     if (!isFlatten || !skipDirectory(psiDirectory)) {
       final Iterator<PsiFile> iterator = builder.getFiles(psiDirectory);
       while (iterator.hasNext()) {
@@ -127,7 +128,7 @@ public class TodoTreeHelper {
           }
           // Add directories
           final PsiDirectory _dir = psiFile.getContainingDirectory();
-          if (skipDirectory(_dir)){
+          if (_dir == null || skipDirectory(_dir)){
             continue;
           }
           TodoDirNode todoDirNode = new TodoDirNode(getProject(), _dir, builder);
@@ -169,6 +170,11 @@ public class TodoTreeHelper {
     }
     return null;
   }
+  
+  public boolean contains(ProjectViewNode node, Object element) {
+    return false;
+  }
+
 
   public Project getProject() {
     return myProject;

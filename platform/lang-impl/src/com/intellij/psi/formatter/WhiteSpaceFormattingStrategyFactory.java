@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
+import com.intellij.reference.SoftReference;
 import com.intellij.util.PatchedWeakReference;
 import org.jetbrains.annotations.NotNull;
 
@@ -31,16 +32,15 @@ import java.util.concurrent.atomic.AtomicReference;
  * Contains utility methods for working with {@link WhiteSpaceFormattingStrategy}.
  *
  * @author Denis Zhdanov
- * @since 10/1/10 3:31 PM
  */
 public class WhiteSpaceFormattingStrategyFactory {
 
-  private static final List<WhiteSpaceFormattingStrategy> SHARED_STRATEGIES = Arrays.<WhiteSpaceFormattingStrategy>asList(
+  private static final List<WhiteSpaceFormattingStrategy> SHARED_STRATEGIES = Arrays.asList(
     new StaticSymbolWhiteSpaceDefinitionStrategy(' ', '\t', '\n')
   );
 
   private static final AtomicReference<PatchedWeakReference<Collection<WhiteSpaceFormattingStrategy>>> myCachedStrategies
-    = new AtomicReference<PatchedWeakReference<Collection<WhiteSpaceFormattingStrategy>>>();
+    = new AtomicReference<>();
   
   private WhiteSpaceFormattingStrategyFactory() {
   }
@@ -74,20 +74,18 @@ public class WhiteSpaceFormattingStrategyFactory {
   @NotNull
   public static Collection<WhiteSpaceFormattingStrategy> getAllStrategies() {
     final WeakReference<Collection<WhiteSpaceFormattingStrategy>> reference = myCachedStrategies.get();
-    if (reference != null) {
-      final Collection<WhiteSpaceFormattingStrategy> strategies = reference.get();
-      if (strategies != null) {
-        return strategies;
-      }
+    final Collection<WhiteSpaceFormattingStrategy> strategies = SoftReference.dereference(reference);
+    if (strategies != null) {
+      return strategies;
     }
     final Collection<Language> languages = Language.getRegisteredLanguages();
     if (languages == null) {
       final List<WhiteSpaceFormattingStrategy> result = Collections.emptyList();
-      myCachedStrategies.set(new PatchedWeakReference<Collection<WhiteSpaceFormattingStrategy>>(result));
+      myCachedStrategies.set(new PatchedWeakReference<>(result));
       return result;
     }
 
-    Set<WhiteSpaceFormattingStrategy> result = new HashSet<WhiteSpaceFormattingStrategy>(SHARED_STRATEGIES);
+    Set<WhiteSpaceFormattingStrategy> result = new HashSet<>(SHARED_STRATEGIES);
     final LanguageWhiteSpaceFormattingStrategy languageStrategy = LanguageWhiteSpaceFormattingStrategy.INSTANCE;
     for (Language language : languages) {
       final WhiteSpaceFormattingStrategy strategy = languageStrategy.forLanguage(language);
@@ -95,7 +93,7 @@ public class WhiteSpaceFormattingStrategyFactory {
         result.add(strategy);
       }
     }
-    myCachedStrategies.set(new PatchedWeakReference<Collection<WhiteSpaceFormattingStrategy>>(result));
+    myCachedStrategies.set(new PatchedWeakReference<>(result));
     return result;
   }
 

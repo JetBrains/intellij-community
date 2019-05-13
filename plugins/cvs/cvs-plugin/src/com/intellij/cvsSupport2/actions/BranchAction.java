@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,16 +39,19 @@ public class BranchAction extends ActionOnSelectedElement{
     visibility.addCondition(FILES_EXIST_IN_CVS);
   }
 
+  @Override
   protected String getTitle(VcsContext context) {
     return CvsBundle.message("operation.name.create.branch");
   }
 
+  @Override
   protected CvsHandler getCvsHandler(CvsContext context) {
     final FilePath[] selectedFiles = context.getSelectedFilePaths();
     final Project project = context.getProject();
     final CreateTagDialog dialog = new CreateTagDialog(selectedFiles, project, false);
-    dialog.show();
-    if (!dialog.isOK()) return CvsHandler.NULL;
+    if (!dialog.showAndGet()) {
+      return CvsHandler.NULL;
+    }
 
     final boolean makeNewFilesReadOnly = CvsConfiguration.getInstance(project).MAKE_NEW_FILES_READONLY;
     return CommandCvsHandler.createBranchHandler(

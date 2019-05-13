@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.intellij.openapi.vfs.newvfs;
 
 import com.intellij.openapi.util.io.FileAttributes;
@@ -21,26 +20,22 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileListener;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.VirtualFileSystem;
-import org.jetbrains.annotations.NonNls;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
-import java.util.HashMap;
 import java.util.Map;
 
 /**
  * @author max
  */
 public abstract class NewVirtualFileSystem extends VirtualFileSystem implements FileSystemInterface, CachingVirtualFileSystem {
-  private final Map<VirtualFileListener, VirtualFileListener> myListenerWrappers = new HashMap<VirtualFileListener, VirtualFileListener>();
-
-  public abstract boolean isCaseSensitive();
+  private final Map<VirtualFileListener, VirtualFileListener> myListenerWrappers = ContainerUtil.newConcurrentMap();
 
   @Nullable
-  public abstract VirtualFile findFileByPathIfCached(@NotNull @NonNls final String path);
+  public abstract VirtualFile findFileByPathIfCached(@NotNull String path);
 
-  @Nullable
   protected String normalize(@NotNull String path) {
     return path;
   }
@@ -65,35 +60,27 @@ public abstract class NewVirtualFileSystem extends VirtualFileSystem implements 
     return null;
   }
 
-  @Override
-  public boolean isSpecialFile(@NotNull final VirtualFile file) {
-    return false;
-  }
-
   @NotNull
   protected abstract String extractRootPath(@NotNull String path);
 
   @Override
   public void addVirtualFileListener(@NotNull final VirtualFileListener listener) {
-    synchronized (myListenerWrappers) {
-      VirtualFileListener wrapper = new VirtualFileFilteringListener(listener, this);
-      VirtualFileManager.getInstance().addVirtualFileListener(wrapper);
-      myListenerWrappers.put(listener, wrapper);
-    }
+    VirtualFileListener wrapper = new VirtualFileFilteringListener(listener, this);
+    VirtualFileManager.getInstance().addVirtualFileListener(wrapper);
+    myListenerWrappers.put(listener, wrapper);
   }
 
   @Override
   public void removeVirtualFileListener(@NotNull final VirtualFileListener listener) {
-    synchronized (myListenerWrappers) {
-      final VirtualFileListener wrapper = myListenerWrappers.remove(listener);
-      if (wrapper != null) {
-        VirtualFileManager.getInstance().removeVirtualFileListener(wrapper);
-      }
+    VirtualFileListener wrapper = myListenerWrappers.remove(listener);
+    if (wrapper != null) {
+      VirtualFileManager.getInstance().removeVirtualFileListener(wrapper);
     }
   }
 
   public abstract int getRank();
 
+  @NotNull
   @Override
   public abstract VirtualFile copyFile(Object requestor, @NotNull VirtualFile file, @NotNull VirtualFile newParent, @NotNull String copyName) throws IOException;
 
@@ -101,6 +88,7 @@ public abstract class NewVirtualFileSystem extends VirtualFileSystem implements 
   @NotNull
   public abstract VirtualFile createChildDirectory(Object requestor, @NotNull VirtualFile parent, @NotNull String dir) throws IOException;
 
+  @NotNull
   @Override
   public abstract VirtualFile createChildFile(Object requestor, @NotNull VirtualFile parent, @NotNull String file) throws IOException;
 
@@ -117,6 +105,7 @@ public abstract class NewVirtualFileSystem extends VirtualFileSystem implements 
     return false;
   }
 
+  @NotNull
   public String getCanonicallyCasedName(@NotNull VirtualFile file) {
     return file.getName();
   }
@@ -125,7 +114,7 @@ public abstract class NewVirtualFileSystem extends VirtualFileSystem implements 
    * Reads various file attributes in one shot (to reduce the number of native I/O calls).
    *
    * @param file file to get attributes of.
-   * @return attributes of a given file, or <code>null</code> if the file doesn't exist.
+   * @return attributes of a given file, or {@code null} if the file doesn't exist.
    * @since 11.1
    */
   @Nullable

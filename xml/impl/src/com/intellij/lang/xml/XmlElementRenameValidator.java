@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,7 @@
 package com.intellij.lang.xml;
 
 import com.intellij.patterns.ElementPattern;
-import com.intellij.patterns.PlatformPatterns;
+import com.intellij.patterns.StandardPatterns;
 import com.intellij.patterns.XmlPatterns;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.xml.XmlAttributeDecl;
@@ -34,18 +34,19 @@ public class XmlElementRenameValidator implements RenameInputValidator {
   public ElementPattern<? extends PsiElement> getPattern() {
     return or(
       XmlPatterns.xmlTag().withMetaData(
-        or(PlatformPatterns.instanceOf(XmlElementDescriptor.class),
-           PlatformPatterns.instanceOf(XmlAttributeDescriptor.class))
+        or(StandardPatterns.instanceOf(XmlElementDescriptor.class),
+           StandardPatterns.instanceOf(XmlAttributeDescriptor.class))
       ),
       psiElement(XmlElementDecl.class),
       psiElement(XmlAttributeDecl.class),
       XmlPatterns.xmlTag().withDescriptor(
-        or(PlatformPatterns.instanceOf(XmlElementDescriptor.class),
-           PlatformPatterns.instanceOf(XmlAttributeDescriptor.class))
+        or(StandardPatterns.instanceOf(XmlElementDescriptor.class),
+           StandardPatterns.instanceOf(XmlAttributeDescriptor.class))
       )
     );
   }
 
+  @Override
   public boolean isInputValid(final String newName, final PsiElement element, final ProcessingContext context) {
     return newName.trim().matches("([\\d\\w\\_\\.\\-]+:)?[\\d\\w\\_\\.\\-]+");
   }

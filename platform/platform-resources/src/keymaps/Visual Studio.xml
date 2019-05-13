@@ -1,0 +1,218 @@
+<keymap name="Visual Studio" parent="$default" version="1" disable-mnemonics="false">
+  <action id="StepOut">
+    <keyboard-shortcut first-keystroke="shift F11"/>
+    <keyboard-shortcut first-keystroke="shift control F8"/>
+  </action>
+  <action id="Resume">
+    <keyboard-shortcut first-keystroke="F5"/>
+  </action>
+  <action id="QuickEvaluateExpression">
+    <keyboard-shortcut first-keystroke="shift F9"/>
+  </action>
+  <action id="EditorDeleteLine">
+    <keyboard-shortcut first-keystroke="shift control L"/>
+  </action>
+  <action id="ShowErrorDescription">
+    <keyboard-shortcut first-keystroke="control F1"/>
+    <keyboard-shortcut first-keystroke="alt T"/>
+  </action>
+  <action id="FindUsages">
+    <keyboard-shortcut first-keystroke="shift alt F7"/>
+  </action>
+  <action id="StepInto">
+    <keyboard-shortcut first-keystroke="F11"/>
+    <keyboard-shortcut first-keystroke="F8"/>
+  </action>
+  <action id="ForceStepInto">
+    <keyboard-shortcut first-keystroke="alt F11"/>
+    <keyboard-shortcut first-keystroke="alt F8"/>
+  </action>
+  <action id="$Cut">
+    <keyboard-shortcut first-keystroke="control X"/>
+    <keyboard-shortcut first-keystroke="shift DELETE"/>
+  </action>
+  <action id="Compile">
+    <keyboard-shortcut first-keystroke="control F7"/>
+  </action>
+  <action id="ReformatCode">
+    <keyboard-shortcut first-keystroke="alt F8"/>
+    <keyboard-shortcut first-keystroke="control alt F"/>
+  </action>
+  <action id="Generate">
+    <keyboard-shortcut first-keystroke="control N"/>
+    <keyboard-shortcut first-keystroke="alt INSERT"/>
+  </action>
+  <action id="ShowExecutionPoint">
+    <keyboard-shortcut first-keystroke="alt MULTIPLY"/>
+    <keyboard-shortcut first-keystroke="control L"/>
+  </action>
+  <action id="$Paste">
+    <keyboard-shortcut first-keystroke="control V"/>
+    <keyboard-shortcut first-keystroke="shift INSERT"/>
+  </action>
+  <action id="CommentByBlockComment">
+    <keyboard-shortcut first-keystroke="shift control SLASH"/>
+    <keyboard-shortcut first-keystroke="shift control DIVIDE"/>
+    <keyboard-shortcut first-keystroke="shift control COLON"/>
+  </action>
+  <action id="JumpToLastWindow"/>
+  <action id="ActivateWebToolWindow">
+    <keyboard-shortcut first-keystroke="control alt W"/>
+  </action>
+  <action id="StepOver">
+    <keyboard-shortcut first-keystroke="F10"/>
+    <keyboard-shortcut first-keystroke="shift F8"/>
+  </action>
+  <action id="GotoTypeDeclaration">
+    <keyboard-shortcut first-keystroke="shift alt F12"/>
+    <keyboard-shortcut first-keystroke="shift alt F2"/>
+  </action>
+  <action id="$Undo">
+    <keyboard-shortcut first-keystroke="control Z"/>
+  </action>
+  <action id="$Copy">
+    <keyboard-shortcut first-keystroke="control C"/>
+    <keyboard-shortcut first-keystroke="control INSERT"/>
+  </action>
+  <action id="GotoClass">
+    <keyboard-shortcut first-keystroke="control COMMA"/>
+  </action>
+  <action id="GotoChangedFile">
+    <keyboard-shortcut first-keystroke="control COMMA"/>
+  </action>
+  <action id="$Redo">
+    <keyboard-shortcut first-keystroke="control Y"/>
+    <keyboard-shortcut first-keystroke="shift control Z"/>
+  </action>
+  <action id="ParameterInfo">
+    <keyboard-shortcut first-keystroke="shift control SPACE"/>
+  </action>
+  <action id="ExpressionTypeInfo"/>
+  <action id="RunClass">
+    <keyboard-shortcut first-keystroke="control F9"/>
+  </action>
+  <action id="FindNext">
+    <keyboard-shortcut first-keystroke="F3"/>
+  </action>
+  <action id="Print">
+    <keyboard-shortcut first-keystroke="control P"/>
+  </action>
+  <action id="ImplementMethods">
+    <keyboard-shortcut first-keystroke="shift control I"/>
+  </action>
+  <action id="SmartTypeCompletion">
+    <keyboard-shortcut first-keystroke="shift alt SPACE"/>
+  </action>
+  <action id="GotoDeclaration">
+    <keyboard-shortcut first-keystroke="F12"/>
+    <keyboard-shortcut first-keystroke="shift F2"/>
+    <keyboard-shortcut first-keystroke="control B"/>
+    <mouse-shortcut keystroke="ctrl button1"/>
+    <mouse-shortcut keystroke="button2"/>
+  </action>
+  <action id="NewElement">
+    <keyboard-shortcut first-keystroke="alt INSERT"/>
+  </action>
+  <action id="FindPrevious">
+    <keyboard-shortcut first-keystroke="shift F3"/>
+  </action>
+  <action id="FindUsagesInFile">
+    <keyboard-shortcut first-keystroke="shift control F7"/>
+    <keyboard-shortcut first-keystroke="shift F12"/>
+  </action>
+  <action id="CompileDirty">
+    <keyboard-shortcut first-keystroke="F7"/>
+  </action>
+  <action id="GotoLine">
+    <keyboard-shortcut first-keystroke="control G"/>
+  </action>
+  <action id="JumpToLastChange">
+    <keyboard-shortcut first-keystroke="shift control F2"/>
+  </action>
+  <action id="EditorCodeBlockEnd">
+    <keyboard-shortcut first-keystroke="control CLOSE_BRACKET"/>
+    <keyboard-shortcut first-keystroke="control ASTERISK"/>
+  </action>
+  <action id="OverrideMethods">
+    <keyboard-shortcut first-keystroke="shift control O"/>
+  </action>
+  <action id="Debug">
+    <keyboard-shortcut first-keystroke="alt F5"/>
+  </action>
+  <action id="ToggleLineBreakpoint">
+    <keyboard-shortcut first-keystroke="F9"/>
+  </action>
+  <action id="ToggleBookmark">
+    <keyboard-shortcut first-keystroke="control F2"/>
+  </action>
+  <action id="Pause">
+    <keyboard-shortcut first-keystroke="control PAUSE"/>
+    <keyboard-shortcut first-keystroke="shift control P"/>
+  </action>
+  <action id="Stop">
+    <keyboard-shortcut first-keystroke="shift F5"/>
+  </action>
+  <action id="StopBackgroundProcesses">
+    <keyboard-shortcut first-keystroke="shift control F5"/>
+  </action>
+  <action id="CommentByLineComment">
+    <keyboard-shortcut first-keystroke="control SLASH"/>
+    <keyboard-shortcut first-keystroke="control DIVIDE"/>
+    <keyboard-shortcut first-keystroke="control COLON"/>
+  </action>
+  <action id="RunToCursor">
+    <keyboard-shortcut first-keystroke="control F10"/>
+    <keyboard-shortcut first-keystroke="control F8"/>
+  </action>
+  <action id="QuickJavaDoc">
+    <keyboard-shortcut first-keystroke="control Q"/>
+  </action>
+  <action id="ShowBookmarks">
+    <keyboard-shortcut first-keystroke="alt F2"/>
+  </action>
+  <action id="ViewBreakpoints">
+    <keyboard-shortcut first-keystroke="alt F9"/>
+  </action>
+  <action id="EditBreakpoint">
+    <keyboard-shortcut first-keystroke="alt F9"/>
+  </action>
+  <action id="TypeHierarchy">
+    <keyboard-shortcut first-keystroke="alt H"/>
+  </action>
+  <action id="EditorCodeBlockStart">
+    <keyboard-shortcut first-keystroke="control OPEN_BRACKET"/>
+  </action>
+  <action id="Run">
+    <keyboard-shortcut first-keystroke="control F5"/>
+  </action>
+  <action id="Replace">
+    <keyboard-shortcut first-keystroke="control H"/>
+  </action>
+  <action id="OpenFile">
+    <keyboard-shortcut first-keystroke="control O"/>
+  </action>
+  <action id="ShowSettings">
+    <keyboard-shortcut first-keystroke="alt F7"/>
+  </action>
+  <action id="Refresh">
+    <keyboard-shortcut first-keystroke="control alt R"/>
+  </action>
+  <action id="ExternalJavaDoc">
+    <keyboard-shortcut first-keystroke="shift F1"/>
+    <keyboard-shortcut first-keystroke="control F1"/>
+  </action>
+  <action id="VcsShowNextChangeMarker">
+    <keyboard-shortcut first-keystroke="shift control alt DOWN"/>
+  </action>
+  <action id="VcsShowPrevChangeMarker">
+    <keyboard-shortcut first-keystroke="shift control alt UP"/>
+  </action>
+  <action id="GotoNextElementUnderCaretUsage">
+    <keyboard-shortcut first-keystroke="alt shift D"/>
+  </action>
+  <action id="GotoPrevElementUnderCaretUsage">
+    <keyboard-shortcut first-keystroke="alt shift U"/>
+  </action>
+  <action id="CopyElement"/>
+  <action id="Rerun"/>
+</keymap>

@@ -9,7 +9,7 @@ Groovy script
       Open block
         PsiElement({)('{')
         Literal
-          PsiElement(string)(''parse'')
+          PsiElement(single quoted string)(''parse'')
         PsiElement(})('}')
     Arguments
       PsiElement(()('(')

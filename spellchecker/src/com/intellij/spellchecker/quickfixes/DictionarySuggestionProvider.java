@@ -15,18 +15,19 @@
  */
 package com.intellij.spellchecker.quickfixes;
 
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.codeStyle.SuggestedNameInfo;
 import com.intellij.refactoring.rename.PreferrableNameSuggestionProvider;
+import com.intellij.refactoring.rename.RenameUtil;
 import com.intellij.spellchecker.SpellCheckerManager;
 
 import java.util.Set;
-import java.util.TreeSet;
 
 
 public class DictionarySuggestionProvider extends PreferrableNameSuggestionProvider {
-  
+
   private boolean active;
 
   public void setActive(boolean active) {
@@ -38,6 +39,7 @@ public class DictionarySuggestionProvider extends PreferrableNameSuggestionProvi
     return !active;
   }
 
+  @Override
   public SuggestedNameInfo getSuggestedNames(PsiElement element, PsiElement nameSuggestionContext, Set<String> result) {
     assert result != null;
     if (!active || nameSuggestionContext==null) {
@@ -45,18 +47,19 @@ public class DictionarySuggestionProvider extends PreferrableNameSuggestionProvi
     }
     String text = nameSuggestionContext.getText();
     if (nameSuggestionContext instanceof PsiNamedElement) {
-      //noinspection ConstantConditions
       text = ((PsiNamedElement)element).getName();
     }
     if (text == null) {
       return null;
     }
 
-    SpellCheckerManager manager = SpellCheckerManager.getInstance(element.getProject());
+    Project project = element.getProject();
+    SpellCheckerManager manager = SpellCheckerManager.getInstance(project);
 
-    Set<String> set = new TreeSet<String>();
-    set.addAll(manager.getSuggestions(text));
-    result.addAll(set);
+    manager.getSuggestions(text).stream()
+      .filter(newName -> RenameUtil.isValidName(project, element, newName))
+      .forEach(result::add);
+
     return SuggestedNameInfo.NULL_INFO;
   }
 }

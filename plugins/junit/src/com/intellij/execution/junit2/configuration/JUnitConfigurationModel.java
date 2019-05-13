@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,7 @@ package com.intellij.execution.junit2.configuration;
 import com.intellij.execution.JavaExecutionUtil;
 import com.intellij.execution.junit.JUnitConfiguration;
 import com.intellij.execution.junit.JUnitUtil;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -42,19 +42,31 @@ public class JUnitConfigurationModel {
   public static final int METHOD = 2;
   public static final int PATTERN = 3;
   public static final int DIR = 4;
+  public static final int CATEGORY = 5;
+  public static final int UNIQUE_ID = 6;
+  public static final int TAGS = 7;
+  public static final int BY_SOURCE_POSITION = 8;
+  public static final int BY_SOURCE_CHANGES = 9;
 
   private static final List<String> ourTestObjects;
 
   static {
-    ourTestObjects = Arrays.asList(JUnitConfiguration.TEST_PACKAGE, JUnitConfiguration.TEST_CLASS, JUnitConfiguration.TEST_METHOD,
+    ourTestObjects = Arrays.asList(JUnitConfiguration.TEST_PACKAGE,
+                                   JUnitConfiguration.TEST_CLASS, 
+                                   JUnitConfiguration.TEST_METHOD,
                                    JUnitConfiguration.TEST_PATTERN,
-                                   JUnitConfiguration.TEST_DIRECTORY);
+                                   JUnitConfiguration.TEST_DIRECTORY,
+                                   JUnitConfiguration.TEST_CATEGORY,
+                                   JUnitConfiguration.TEST_UNIQUE_ID,
+                                   JUnitConfiguration.TEST_TAGS,
+                                   JUnitConfiguration.BY_SOURCE_POSITION,
+                                   JUnitConfiguration.BY_SOURCE_CHANGES);
   }
 
 
   private JUnitConfigurable myListener;
   private int myType = -1;
-  private final Object[] myJUnitDocuments = new Object[5];
+  private final Object[] myJUnitDocuments = new Object[6];
   private final Project myProject;
 
   public JUnitConfigurationModel(final Project project) {
@@ -99,7 +111,9 @@ public class JUnitConfigurationModel {
     data.TEST_OBJECT = testObject;
     if (testObject != JUnitConfiguration.TEST_PACKAGE &&
         testObject != JUnitConfiguration.TEST_PATTERN &&
-        testObject != JUnitConfiguration.TEST_DIRECTORY) {
+        testObject != JUnitConfiguration.TEST_DIRECTORY &&
+        testObject != JUnitConfiguration.TEST_CATEGORY  &&
+        testObject != JUnitConfiguration.BY_SOURCE_CHANGES) {
       try {
         data.METHOD_NAME = getJUnitTextValue(METHOD);
         final PsiClass testClass = !myProject.isDefault() && !StringUtil.isEmptyOrSpaces(className) ? JUnitUtil.findPsiClass(className, module, myProject) : null;
@@ -110,22 +124,22 @@ public class JUnitConfigurationModel {
           data.MAIN_CLASS_NAME = className;
         }
       }
-      catch (ProcessCanceledException e) {
-        data.MAIN_CLASS_NAME = className;
-      }
-      catch (IndexNotReadyException e) {
+      catch (ProcessCanceledException | IndexNotReadyException e) {
         data.MAIN_CLASS_NAME = className;
       }
     }
-    else {
+    else if (testObject != JUnitConfiguration.BY_SOURCE_CHANGES) {
       if (testObject == JUnitConfiguration.TEST_PACKAGE) {
         data.PACKAGE_NAME = getJUnitTextValue(ALL_IN_PACKAGE);
       }
       else if (testObject == JUnitConfiguration.TEST_DIRECTORY) {
         data.setDirName(getJUnitTextValue(DIR));
       }
+      else if (testObject == JUnitConfiguration.TEST_CATEGORY) {
+        data.setCategoryName(getJUnitTextValue(CATEGORY));
+      }
       else {
-        final LinkedHashSet<String> set = new LinkedHashSet<String>();
+        final LinkedHashSet<String> set = new LinkedHashSet<>();
         final String[] patterns = getJUnitTextValue(PATTERN).split("\\|\\|");
         for (String pattern : patterns) {
           if (pattern.length() > 0) {
@@ -164,17 +178,18 @@ public class JUnitConfigurationModel {
     final JUnitConfiguration.Data data = configuration.getPersistentData();
     setTestType(data.TEST_OBJECT);
     setJUnitTextValue(ALL_IN_PACKAGE, data.getPackageName());
-    setJUnitTextValue(CLASS, data.getMainClassName());
-    setJUnitTextValue(METHOD, data.getMethodName());
+    setJUnitTextValue(CLASS, data.getMainClassName() != null ? data.getMainClassName().replaceAll("\\$", "\\.") : "");
+    setJUnitTextValue(METHOD, data.getMethodNameWithSignature());
     setJUnitTextValue(PATTERN, data.getPatternPresentation());
     setJUnitTextValue(DIR, data.getDirName());
+    setJUnitTextValue(CATEGORY, data.getCategory());
   }
 
   private void setJUnitTextValue(final int index, final String text) {
     setDocumentText(index, text, myJUnitDocuments);
   }
 
-  private static void setDocumentText(final int index, final String text, final Object[] documents) {
+  private void setDocumentText(final int index, final String text, final Object[] documents) {
     final Object document = documents[index];
     if (document instanceof PlainDocument) {
       try {
@@ -186,11 +201,7 @@ public class JUnitConfigurationModel {
       }
     }
     else {
-      ApplicationManager.getApplication().runWriteAction(new Runnable() {
-        public void run() {
-          ((Document)document).replaceString(0, ((Document)document).getTextLength(), text);
-        }
-      });
+      WriteCommandAction.runWriteCommandAction(myProject, () -> ((Document)document).replaceString(0, ((Document)document).getTextLength(), text));
     }
   }
 

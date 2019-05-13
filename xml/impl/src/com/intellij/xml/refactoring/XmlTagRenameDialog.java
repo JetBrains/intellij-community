@@ -1,35 +1,15 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
-/*
- * Created by IntelliJ IDEA.
- * User: spleaner
- * Date: Aug 9, 2007
- * Time: 4:45:40 PM
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xml.refactoring;
 
+import com.intellij.codeInsight.completion.TagNameReferenceCompletionProvider;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupManager;
+import com.intellij.lang.findUsages.DescriptiveNameUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileTypes.FileTypes;
-import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
@@ -39,7 +19,6 @@ import com.intellij.psi.xml.XmlTag;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.ui.NameSuggestionsField;
 import com.intellij.refactoring.ui.RefactoringDialog;
-import com.intellij.ui.IdeBorderFactory;
 import com.intellij.usageView.UsageViewUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.xml.XmlBundle;
@@ -60,7 +39,6 @@ public class XmlTagRenameDialog extends RefactoringDialog {
   private final Editor myEditor;
   private JLabel myTitleLabel;
   private NameSuggestionsField myNameSuggestionsField;
-  private String myHelpID;
   private final XmlTag myTag;
   private NameSuggestionsField.DataChanged myNameChangedListener;
 
@@ -81,17 +59,19 @@ public class XmlTagRenameDialog extends RefactoringDialog {
     validateButtons();
   }
 
+  @Override
   protected void dispose() {
     myNameSuggestionsField.removeDataChangedListener(myNameChangedListener);
     super.dispose();
   }
 
+  @Override
   protected boolean hasHelpAction() {
     return false;
   }
 
   private static String getFullName(@NotNull final XmlTag tag) {
-    final String name = UsageViewUtil.getDescriptiveName(tag);
+    final String name = DescriptiveNameUtil.getDescriptiveName(tag);
     return (UsageViewUtil.getType(tag) + " " + name).trim();
   }
 
@@ -102,14 +82,11 @@ public class XmlTagRenameDialog extends RefactoringDialog {
 
   private void createNewNameComponent() {
     myNameSuggestionsField = new NameSuggestionsField(new String[] { myTag.getName() }, myProject, FileTypes.PLAIN_TEXT, myEditor);
-    myNameChangedListener = new NameSuggestionsField.DataChanged() {
-      public void dataChanged() {
-        validateButtons();
-      }
-    };
+    myNameChangedListener = () -> validateButtons();
     myNameSuggestionsField.addDataChangedListener(myNameChangedListener);
 
     myNameSuggestionsField.getComponent().registerKeyboardAction(new ActionListener() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         completeVariable(myNameSuggestionsField.getEditor());
       }
@@ -121,43 +98,41 @@ public class XmlTagRenameDialog extends RefactoringDialog {
 
     final PsiReference reference = myTag.getReference();
     if (reference instanceof TagNameReference) {
-      LookupElement[] lookupItems = ((TagNameReference)reference).getVariants();
+      LookupElement[] lookupItems = TagNameReferenceCompletionProvider.getTagNameVariants(myTag, myTag.getNamespacePrefix());
       editor.getCaretModel().moveToOffset(prefix.length());
       editor.getSelectionModel().removeSelection();
       LookupManager.getInstance(getProject()).showLookup(editor, lookupItems, prefix);
     }
   }
 
+  @Override
   protected void doAction() {
     LOG.assertTrue(myElement.isValid());
 
-    CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
-      public void run() {
-        ApplicationManager.getApplication().runWriteAction(new Runnable() {
-          public void run() {
-            try {
-              myTag.setName(getNewName());
-            }
-            catch (IncorrectOperationException e) {
-              LOG.error(e);
-            }
-          }
-        });
+    CommandProcessor.getInstance().executeCommand(myProject, () -> ApplicationManager.getApplication().runWriteAction(() -> {
+      try {
+        myTag.setName(getNewName());
       }
-    }, RefactoringBundle.message("rename.title"), null);
+      catch (IncorrectOperationException e) {
+        LOG.error(e);
+      }
+    }), RefactoringBundle.message("rename.title"), null);
 
     close(DialogWrapper.OK_EXIT_CODE);
   }
 
+  @Override
   @Nullable
   protected JComponent createCenterPanel() {
     return null;
   }
 
+  @Override
   public JComponent getPreferredFocusedComponent() {
     return myNameSuggestionsField.getFocusableComponent();
   }
 
+  @Override
   protected JComponent createNorthPanel() {
     final JPanel panel = new JPanel();
     panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
@@ -171,20 +146,18 @@ public class XmlTagRenameDialog extends RefactoringDialog {
     return panel;
   }
 
-  protected void doHelpAction() {
-    HelpManager.getInstance().invokeHelp(myHelpID);
-  }
-
   public String getNewName() {
     return myNameSuggestionsField.getEnteredName().trim();
   }
 
+  @Override
   protected void validateButtons() {
     super.validateButtons();
 
     getPreviewAction().setEnabled(false);
   }
 
+  @Override
   protected boolean areButtonsValid() {
     final String newName = getNewName();
     return !StringUtil.containsAnyChar(newName, "\t ;*'\"\\/,()^&<>={}"); // RenameUtil.isValidName(myProject, myTag, newName); // IDEADEV-34531

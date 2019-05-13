@@ -1,27 +1,13 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.jps.builders.java.dependencyView;
 
-import com.intellij.util.Processor;
 import com.intellij.util.containers.SLRUCache;
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.KeyDescriptor;
 import com.intellij.util.io.PersistentHashMap;
 import gnu.trove.TIntObjectProcedure;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.jps.builders.storage.BuildDataCorruptedException;
 
 import java.io.*;
 import java.util.Collection;
@@ -29,9 +15,8 @@ import java.util.Collections;
 
 /**
  * @author: db
- * Date: 08.03.11
  */
-class IntObjectPersistentMultiMaplet<V extends Streamable> extends IntObjectMultiMaplet<V> {
+public class IntObjectPersistentMultiMaplet<V> extends IntObjectMultiMaplet<V> {
   private static final Collection NULL_COLLECTION = Collections.emptySet();
   private static final int CACHE_SIZE = 128;
   private final PersistentHashMap<Integer, Collection<V>> myMap;
@@ -43,7 +28,8 @@ class IntObjectPersistentMultiMaplet<V extends Streamable> extends IntObjectMult
                                         final DataExternalizer<V> valueExternalizer,
                                         final CollectionFactory<V> collectionFactory) throws IOException {
     myValueExternalizer = valueExternalizer;
-    myMap = new PersistentHashMap<Integer, Collection<V>>(file, keyExternalizer, new CollectionDataExternalizer<V>(valueExternalizer, collectionFactory));
+    myMap = new PersistentHashMap<>(file, keyExternalizer,
+                                    new CollectionDataExternalizer<>(valueExternalizer, collectionFactory));
     myCache = new SLRUCache<Integer, Collection>(CACHE_SIZE, CACHE_SIZE) {
       @NotNull
       @Override
@@ -53,7 +39,7 @@ class IntObjectPersistentMultiMaplet<V extends Streamable> extends IntObjectMult
           return collection == null? NULL_COLLECTION : collection;
         }
         catch (IOException e) {
-          throw new RuntimeException(e);
+          throw new BuildDataCorruptedException(e);
         }
       }
     };
@@ -66,7 +52,7 @@ class IntObjectPersistentMultiMaplet<V extends Streamable> extends IntObjectMult
       return myMap.containsMapping(key);
     }
     catch (IOException e) {
-      throw new RuntimeException(e);
+      throw new BuildDataCorruptedException(e);
     }
   }
 
@@ -88,7 +74,7 @@ class IntObjectPersistentMultiMaplet<V extends Streamable> extends IntObjectMult
       }
     }
     catch (IOException e) {
-      throw new RuntimeException(e);
+      throw new BuildDataCorruptedException(e);
     }
   }
 
@@ -97,6 +83,7 @@ class IntObjectPersistentMultiMaplet<V extends Streamable> extends IntObjectMult
     try {
       myCache.remove(key);
       myMap.appendData(key, new PersistentHashMap.ValueDataAppender() {
+        @Override
         public void append(DataOutput out) throws IOException {
           for (V v : value) {
             myValueExternalizer.save(out, v);
@@ -105,7 +92,7 @@ class IntObjectPersistentMultiMaplet<V extends Streamable> extends IntObjectMult
       });
     }
     catch (IOException e) {
-      throw new RuntimeException(e);
+      throw new BuildDataCorruptedException(e);
     }
   }
 
@@ -132,7 +119,7 @@ class IntObjectPersistentMultiMaplet<V extends Streamable> extends IntObjectMult
       }
     }
     catch (IOException e) {
-      throw new RuntimeException(e);
+      throw new BuildDataCorruptedException(e);
     }
   }
 
@@ -154,7 +141,7 @@ class IntObjectPersistentMultiMaplet<V extends Streamable> extends IntObjectMult
       }
     }
     catch (IOException e) {
-      throw new RuntimeException(e);
+      throw new BuildDataCorruptedException(e);
     }
   }
 
@@ -165,7 +152,7 @@ class IntObjectPersistentMultiMaplet<V extends Streamable> extends IntObjectMult
       myMap.remove(key);
     }
     catch (IOException e) {
-      throw new RuntimeException(e);
+      throw new BuildDataCorruptedException(e);
     }
   }
 
@@ -198,10 +185,11 @@ class IntObjectPersistentMultiMaplet<V extends Streamable> extends IntObjectMult
       myMap.close();
     }
     catch (IOException e) {
-      throw new RuntimeException(e);
+      throw new BuildDataCorruptedException(e);
     }
   }
 
+  @Override
   public void flush(boolean memoryCachesOnly) {
     if (memoryCachesOnly) {
       if (myMap.isDirty()) {
@@ -216,20 +204,17 @@ class IntObjectPersistentMultiMaplet<V extends Streamable> extends IntObjectMult
   @Override
   public void forEachEntry(final TIntObjectProcedure<Collection<V>> procedure) {
     try {
-      myMap.processKeysWithExistingMapping(new Processor<Integer>() {
-        @Override
-        public boolean process(Integer key) {
-          try {
-            return procedure.execute(key, myMap.get(key));
-          }
-          catch (IOException e) {
-            throw new RuntimeException(e);
-          }
+      myMap.processKeysWithExistingMapping(key -> {
+        try {
+          return procedure.execute(key, myMap.get(key));
+        }
+        catch (IOException e) {
+          throw new BuildDataCorruptedException(e);
         }
       });
     }
     catch (IOException e) {
-      throw new RuntimeException(e);
+      throw new BuildDataCorruptedException(e);
     }
   }
 
@@ -237,21 +222,21 @@ class IntObjectPersistentMultiMaplet<V extends Streamable> extends IntObjectMult
     private final DataExternalizer<V> myElementExternalizer;
     private final CollectionFactory<V> myCollectionFactory;
 
-    public CollectionDataExternalizer(DataExternalizer<V> elementExternalizer,
+    CollectionDataExternalizer(DataExternalizer<V> elementExternalizer,
                                       CollectionFactory<V> collectionFactory) {
       myElementExternalizer = elementExternalizer;
       myCollectionFactory = collectionFactory;
     }
 
     @Override
-    public void save(final DataOutput out, final Collection<V> value) throws IOException {
+    public void save(@NotNull final DataOutput out, final Collection<V> value) throws IOException {
       for (V x : value) {
         myElementExternalizer.save(out, x);
       }
     }
 
     @Override
-    public Collection<V> read(final DataInput in) throws IOException {
+    public Collection<V> read(@NotNull final DataInput in) throws IOException {
       final Collection<V> result = myCollectionFactory.create();
       final DataInputStream stream = (DataInputStream)in;
       while (stream.available() > 0) {

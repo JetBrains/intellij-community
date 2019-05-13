@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,9 +19,11 @@ package com.intellij.psi.impl.source.tree;
 import com.intellij.lang.ASTFactory;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
+import com.intellij.reference.SoftReference;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
@@ -29,16 +31,18 @@ import org.jetbrains.annotations.Nullable;
 
 public abstract class LeafElement extends TreeElement {
   private static final Logger LOG = Logger.getInstance("com.intellij.psi.impl.source.tree.LeafElement");
+  private static final Key<SoftReference<String>> CACHED_TEXT = Key.create("CACHED_TEXT");
 
   private static final int TEXT_MATCHES_THRESHOLD = 5;
 
   private final CharSequence myText;
 
-  protected LeafElement(IElementType type, CharSequence text) {
+  protected LeafElement(@NotNull IElementType type, CharSequence text) {
     super(type);
     myText = text;
   }
 
+  @NotNull
   @Override
   public LeafElement clone() {
     LeafElement clone = (LeafElement)super.clone();
@@ -51,14 +55,26 @@ public abstract class LeafElement extends TreeElement {
     return myText.length();
   }
 
+  @NotNull
   @Override
   public CharSequence getChars() {
     return myText;
   }
 
+  @NotNull
   @Override
   public String getText() {
-    return myText.toString();
+    CharSequence text = myText;
+    if (text.length() > 1000 && !(text instanceof String)) { // e.g. a large text file
+      String cachedText = SoftReference.dereference(getUserData(CACHED_TEXT));
+      if (cachedText == null) {
+        cachedText = text.toString();
+        putUserData(CACHED_TEXT, new SoftReference<>(cachedText));
+      }
+      return cachedText;
+    }
+
+    return text.toString();
   }
 
   public char charAt(int position) {
@@ -84,10 +100,10 @@ public abstract class LeafElement extends TreeElement {
   @Override
   public boolean textContains(char c) {
     final CharSequence text = myText;
-    final int len = myText.length();
+    final int len = text.length();
 
     if (len > TEXT_MATCHES_THRESHOLD) {
-      char[] chars = CharArrayUtil.fromSequenceWithoutCopying(myText);
+      char[] chars = CharArrayUtil.fromSequenceWithoutCopying(text);
       if (chars != null) {
         for (char aChar : chars) {
           if (aChar == c) return true;
@@ -106,11 +122,10 @@ public abstract class LeafElement extends TreeElement {
   @Override
   protected int textMatches(@NotNull CharSequence buffer, int start) {
     assert start >= 0 : start;
-    final CharSequence text = myText;
-    return leafTextMatches(text, buffer, start);
+    return leafTextMatches(myText, buffer, start);
   }
 
-  public static int leafTextMatches(@NotNull CharSequence text, @NotNull CharSequence buffer, int start) {
+  static int leafTextMatches(@NotNull CharSequence text, @NotNull CharSequence buffer, int start) {
     assert start >= 0 : start;
     final int length = text.length();
     if(buffer.length() - start < length) {
@@ -125,15 +140,17 @@ public abstract class LeafElement extends TreeElement {
     return start + length;
   }
 
-  public LeafElement rawReplaceWithText(String newText) {
+  @NotNull
+  public LeafElement rawReplaceWithText(@NotNull String newText) {
     LeafElement newLeaf = ASTFactory.leaf(getElementType(), newText);
     copyUserDataTo(newLeaf);
     rawReplaceWithList(newLeaf);
     newLeaf.clearCaches();
     return newLeaf;
   }
-  
-  public LeafElement replaceWithText(String newText) {
+
+  @NotNull
+  public LeafElement replaceWithText(@NotNull String newText) {
     LeafElement newLeaf = ChangeUtil.copyLeafWithText(this, newText);
     getTreeParent().replaceChild(this, newLeaf);
     return newLeaf;
@@ -145,7 +162,6 @@ public abstract class LeafElement extends TreeElement {
   }
 
   @Override
-  @SuppressWarnings({"MethodOverloadsMethodOfSuperclass"})
   public boolean textMatches(@NotNull final CharSequence buf, int start, int end) {
     final CharSequence text = getChars();
     final int len = text.length();
@@ -165,17 +181,17 @@ public abstract class LeafElement extends TreeElement {
   }
 
   @Override
-  public void acceptTree(TreeElementVisitor visitor) {
+  public void acceptTree(@NotNull TreeElementVisitor visitor) {
     visitor.visitLeaf(this);
   }
 
   @Override
-  public ASTNode findChildByType(IElementType type) {
+  public ASTNode findChildByType(@NotNull IElementType type) {
     return null;
   }
 
   @Override
-  public ASTNode findChildByType(IElementType type, @Nullable ASTNode anchor) {
+  public ASTNode findChildByType(@NotNull IElementType type, @Nullable ASTNode anchor) {
     return null;
   }
 
@@ -196,7 +212,7 @@ public abstract class LeafElement extends TreeElement {
     return leafHC(getChars());
   }
 
-  public static int leafHC(CharSequence text) {
+  static int leafHC(CharSequence text) {
     final int len = text.length();
     int hc = 0;
 
@@ -227,6 +243,7 @@ public abstract class LeafElement extends TreeElement {
     return getNotCachedLength();
   }
 
+  @NotNull
   @Override
   public ASTNode[] getChildren(TokenSet filter) {
     return EMPTY_ARRAY;
@@ -234,42 +251,42 @@ public abstract class LeafElement extends TreeElement {
 
   @Override
   public void addChild(@NotNull ASTNode child, ASTNode anchorBefore) {
-    throw new RuntimeException(new IncorrectOperationException("Leaf elements cannot have children."));
+    throw new IncorrectOperationException("Leaf elements cannot have children.");
   }
 
   @Override
-  public void addLeaf(@NotNull final IElementType leafType, final CharSequence leafText, final ASTNode anchorBefore) {
-    throw new RuntimeException(new IncorrectOperationException("Leaf elements cannot have children."));
+  public void addLeaf(@NotNull final IElementType leafType, @NotNull final CharSequence leafText, final ASTNode anchorBefore) {
+    throw new IncorrectOperationException("Leaf elements cannot have children.");
   }
 
   @Override
   public void addChild(@NotNull ASTNode child) {
-    throw new RuntimeException(new IncorrectOperationException("Leaf elements cannot have children."));
+    throw new IncorrectOperationException("Leaf elements cannot have children.");
   }
 
   @Override
   public void removeChild(@NotNull ASTNode child) {
-    throw new RuntimeException(new IncorrectOperationException("Leaf elements cannot have children."));
+    throw new IncorrectOperationException("Leaf elements cannot have children.");
   }
 
   @Override
   public void replaceChild(@NotNull ASTNode oldChild, @NotNull ASTNode newChild) {
-    throw new RuntimeException(new IncorrectOperationException("Leaf elements cannot have children."));
+    throw new IncorrectOperationException("Leaf elements cannot have children.");
   }
 
   @Override
-  public void replaceAllChildrenToChildrenOf(ASTNode anotherParent) {
-    throw new RuntimeException(new IncorrectOperationException("Leaf elements cannot have children."));
+  public void replaceAllChildrenToChildrenOf(@NotNull ASTNode anotherParent) {
+    throw new IncorrectOperationException("Leaf elements cannot have children.");
   }
 
   @Override
   public void removeRange(@NotNull ASTNode first, ASTNode firstWhichStayInTree) {
-    throw new RuntimeException(new IncorrectOperationException("Leaf elements cannot have children."));
+    throw new IncorrectOperationException("Leaf elements cannot have children.");
   }
 
   @Override
-  public void addChildren(ASTNode firstChild, ASTNode lastChild, ASTNode anchorBefore) {
-    throw new RuntimeException(new IncorrectOperationException("Leaf elements cannot have children."));
+  public void addChildren(@NotNull ASTNode firstChild, ASTNode lastChild, ASTNode anchorBefore) {
+    throw new IncorrectOperationException("Leaf elements cannot have children.");
   }
 
   @Override
@@ -278,16 +295,14 @@ public abstract class LeafElement extends TreeElement {
   }
 
   @Override
-  @Nullable
-  public <T extends PsiElement> T getPsi(Class<T> clazz) {
+  public <T extends PsiElement> T getPsi(@NotNull Class<T> clazz) {
     return getPsi(clazz, getPsi(), LOG);
   }
 
-  @Nullable
-  static <T extends PsiElement> T getPsi(Class<T> clazz, PsiElement element, Logger log) {
+  static <T extends PsiElement> T getPsi(@NotNull Class<T> clazz, PsiElement element, @NotNull Logger log) {
     log.assertTrue(clazz.isInstance(element), "unexpected psi class. expected: " + clazz
                                              + " got: " + (element == null ? null : element.getClass()));
+    //noinspection unchecked
     return (T)element;
   }
-
 }

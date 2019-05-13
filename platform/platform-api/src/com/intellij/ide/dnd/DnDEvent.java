@@ -42,10 +42,13 @@ public interface DnDEvent extends Transferable, UserDataHolder {
 
   String getExpectedDropResult();
 
+  @Override
   DataFlavor[] getTransferDataFlavors();
 
+  @Override
   boolean isDataFlavorSupported(DataFlavor flavor);
 
+  @Override
   Object getTransferData(DataFlavor flavor) throws UnsupportedFlavorException, IOException;
 
   boolean isDropPossible();

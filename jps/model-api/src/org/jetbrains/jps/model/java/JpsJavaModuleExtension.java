@@ -15,6 +15,8 @@
  */
 package org.jetbrains.jps.model.java;
 
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.JpsElement;
 import org.jetbrains.jps.model.JpsUrlList;
 
@@ -22,21 +24,26 @@ import org.jetbrains.jps.model.JpsUrlList;
  * @author nik
  */
 public interface JpsJavaModuleExtension extends JpsElement {
+  @NotNull
   JpsUrlList getJavadocRoots();
 
+  @NotNull
   JpsUrlList getAnnotationRoots();
 
+  @Nullable
   String getOutputUrl();
 
-  void setOutputUrl(String outputUrl);
+  void setOutputUrl(@Nullable String outputUrl);
 
+  @Nullable
   String getTestOutputUrl();
 
-  void setTestOutputUrl(String testOutputUrl);
+  void setTestOutputUrl(@Nullable String testOutputUrl);
 
+  @Nullable
   LanguageLevel getLanguageLevel();
 
-  void setLanguageLevel(LanguageLevel languageLevel);
+  void setLanguageLevel(@Nullable LanguageLevel languageLevel);
 
   boolean isInheritOutput();
 

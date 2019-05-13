@@ -42,7 +42,7 @@ public class RegExpUtil {
       return null;
     }
     final RegExpBranch[] branches = pattern.getBranches();
-    final Set<String> values = new HashSet<String>();
+    final Set<String> values = new HashSet<>();
     for (RegExpBranch branch : branches) {
       if (analyzeBranch(branch)) {
         values.add(branch.getUnescapedText());
@@ -54,7 +54,7 @@ public class RegExpUtil {
   private static boolean analyzeBranch(RegExpBranch branch) {
     final RegExpAtom[] atoms = branch.getAtoms();
     for (RegExpAtom atom : atoms) {
-      if (!(atom instanceof RegExpChar) || ((RegExpChar)atom).getValue() == null) {
+      if (!(atom instanceof RegExpChar) || ((RegExpChar)atom).getValue() == -1) {
         return false;
       }
       else if (((RegExpChar)atom).getType() != RegExpChar.Type.CHAR) {

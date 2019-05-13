@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,11 +24,12 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.intentions.GroovyIntentionsBundle;
 import org.jetbrains.plugins.groovy.intentions.base.MutablyNamedIntention;
 import org.jetbrains.plugins.groovy.intentions.base.PsiElementPredicate;
-import org.jetbrains.plugins.groovy.intentions.utils.ComparisonUtils;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrBinaryExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
+import org.jetbrains.plugins.groovy.lang.psi.impl.utils.ComparisonUtils;
 
 public class NegateComparisonIntention extends MutablyNamedIntention {
+  @Override
   protected String getTextForElement(PsiElement element) {
     final GrBinaryExpression binaryExpression =
         (GrBinaryExpression) element;
@@ -39,12 +40,14 @@ public class NegateComparisonIntention extends MutablyNamedIntention {
     return GroovyIntentionsBundle.message("negate.comparison.intention.name", comparison, negatedComparison);
   }
 
+  @Override
   @NotNull
   public PsiElementPredicate getElementPredicate() {
     return new ComparisonPredicate();
   }
 
-  public void processIntention(@NotNull PsiElement element, Project project, Editor editor)
+  @Override
+  public void processIntention(@NotNull PsiElement element, @NotNull Project project, Editor editor)
       throws IncorrectOperationException {
     final GrBinaryExpression exp =
         (GrBinaryExpression) element;

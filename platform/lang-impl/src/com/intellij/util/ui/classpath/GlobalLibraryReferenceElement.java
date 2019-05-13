@@ -63,7 +63,7 @@ public class GlobalLibraryReferenceElement implements SimpleClasspathElement {
   public List<String> getClassesRootUrls() {
     final Library library = getLibrary();
     if (library != null) {
-      final List<String> list = new ArrayList<String>();
+      final List<String> list = new ArrayList<>();
       for (VirtualFile file : library.getFiles(OrderRootType.CLASSES)) {
         list.add(file.getUrl());
       }

@@ -20,7 +20,6 @@ import com.intellij.util.xml.GenericAttributeValue;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Aug 6, 2010
  */
 public abstract class AntDomPropertyDefiningTaskWithDefaultValue extends AntDomPropertyDefiningTask {
 
@@ -29,6 +28,7 @@ public abstract class AntDomPropertyDefiningTaskWithDefaultValue extends AntDomP
   @Attribute("value")
   public abstract GenericAttributeValue<String> getPropertyValue();
 
+  @Override
   protected final String calcPropertyValue(String propertyName) {
     final String value = getPropertyValue().getStringValue();
     return value != null? value : DEFAULT_PROPERTY_VALUE;

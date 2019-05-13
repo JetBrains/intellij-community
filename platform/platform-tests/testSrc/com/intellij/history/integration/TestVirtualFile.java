@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,22 +25,22 @@ import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 
 // todo get rid of!!!!!!!!!!!!!
 public class TestVirtualFile extends VirtualFile {
-  private String myName;
+  private final String myName;
   private String myContent;
   private boolean isReadOnly;
   private long myTimestamp;
 
-  private boolean IsDirectory;
+  private final boolean IsDirectory;
   private VirtualFile myParent;
-  private final List<TestVirtualFile> myChildren = new ArrayList<TestVirtualFile>();
+  private final List<TestVirtualFile> myChildren = new ArrayList<>();
 
   public TestVirtualFile(@NotNull String name, String content, long timestamp) {
     this(name, content,  timestamp, false);
@@ -76,6 +76,7 @@ public class TestVirtualFile extends VirtualFile {
     return IsDirectory;
   }
 
+  @NotNull
   @Override
   public String getPath() {
     if (myParent == null) return myName;
@@ -99,13 +100,13 @@ public class TestVirtualFile extends VirtualFile {
 
   @Override
   public long getLength() {
-    return myContent == null ? 0 : myContent.getBytes().length;
+    return myContent == null ? 0 : myContent.getBytes(StandardCharsets.UTF_8).length;
   }
 
   @Override
   @NotNull
-  public byte[] contentsToByteArray() throws IOException {
-    return myContent == null ? ArrayUtil.EMPTY_BYTE_ARRAY : myContent.getBytes();
+  public byte[] contentsToByteArray() {
+    return myContent == null ? ArrayUtil.EMPTY_BYTE_ARRAY : myContent.getBytes(StandardCharsets.UTF_8);
   }
 
   @Override
@@ -114,7 +115,7 @@ public class TestVirtualFile extends VirtualFile {
     return new MockLocalFileSystem() {
       @Override
       public boolean equals(Object o) {
-        return true;
+        return o != null;
       }
     };
   }
@@ -137,7 +138,7 @@ public class TestVirtualFile extends VirtualFile {
 
   @Override
   @NotNull
-  public OutputStream getOutputStream(Object requestor, long newModificationStamp, long newTimeStamp) throws IOException {
+  public OutputStream getOutputStream(Object requestor, long newModificationStamp, long newTimeStamp) {
     throw new UnsupportedOperationException();
   }
 
@@ -147,7 +148,7 @@ public class TestVirtualFile extends VirtualFile {
   }
 
   @Override
-  public InputStream getInputStream() throws IOException {
+  public InputStream getInputStream() {
     throw new UnsupportedOperationException();
   }
 }

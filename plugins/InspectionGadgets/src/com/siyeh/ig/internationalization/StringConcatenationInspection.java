@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2012 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2014 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,22 +16,18 @@
 package com.siyeh.ig.internationalization;
 
 import com.intellij.codeInsight.AnnotationUtil;
-import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil;
-import com.intellij.codeInsight.intention.AddAnnotationFix;
+import com.intellij.codeInsight.intention.AddAnnotationPsiFix;
 import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.DelegatingFix;
 import com.siyeh.ig.InspectionGadgetsFix;
-import com.siyeh.ig.psiutils.ExpressionUtils;
-import com.siyeh.ig.psiutils.MethodUtils;
-import com.siyeh.ig.psiutils.TestUtils;
-import com.siyeh.ig.psiutils.TypeUtils;
+import com.siyeh.ig.fixes.SuppressForTestsScopeFix;
+import com.siyeh.ig.psiutils.*;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -57,8 +53,8 @@ public class StringConcatenationInspection extends BaseInspection {
   @SuppressWarnings({"PublicField"})
   public boolean ignoreConstantInitializers = false;
 
-  @SuppressWarnings({"PublicField"})
-  public boolean ignoreInTestCode = false;
+  @SuppressWarnings({"PublicField", "UnusedDeclaration"})
+  public boolean ignoreInTestCode = false; // keep for compatibility
 
   @SuppressWarnings("PublicField")
   public boolean ignoreInToString = false;
@@ -79,11 +75,11 @@ public class StringConcatenationInspection extends BaseInspection {
   @NotNull
   protected InspectionGadgetsFix[] buildFixes(Object... infos) {
     final PsiPolyadicExpression polyadicExpression = (PsiPolyadicExpression)infos[0];
-    final Collection<InspectionGadgetsFix> result = new ArrayList();
-    final PsiElement parent = polyadicExpression.getParent();
+    final Collection<InspectionGadgetsFix> result = new ArrayList<>();
+    final PsiElement parent = ParenthesesUtils.getParentSkipParentheses(polyadicExpression);
     if (parent instanceof PsiVariable) {
       final PsiVariable variable = (PsiVariable)parent;
-      final InspectionGadgetsFix fix = new DelegatingFix(new AddAnnotationFix(AnnotationUtil.NON_NLS, variable));
+      final InspectionGadgetsFix fix = createAddAnnotationFix(variable);
       result.add(fix);
     }
     else if (parent instanceof PsiAssignmentExpression) {
@@ -94,8 +90,24 @@ public class StringConcatenationInspection extends BaseInspection {
         final PsiElement target = referenceExpression.resolve();
         if (target instanceof PsiModifierListOwner) {
           final PsiModifierListOwner modifierListOwner = (PsiModifierListOwner)target;
-          final InspectionGadgetsFix fix = new DelegatingFix(new AddAnnotationFix(AnnotationUtil.NON_NLS, modifierListOwner));
+          final InspectionGadgetsFix fix = createAddAnnotationFix(modifierListOwner);
           result.add(fix);
+        }
+      }
+    }
+    else if (parent instanceof PsiExpressionList) {
+      final PsiElement grandParent = parent.getParent();
+      if (grandParent instanceof PsiMethodCallExpression) {
+        final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)grandParent;
+        final PsiReferenceExpression methodExpression = methodCallExpression.getMethodExpression();
+        final PsiExpression qualifierExpression = methodExpression.getQualifierExpression();
+        if (qualifierExpression instanceof PsiReferenceExpression) {
+          final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)qualifierExpression;
+          final PsiElement target = referenceExpression.resolve();
+          if (target instanceof PsiModifierListOwner) {
+            final PsiModifierListOwner modifierListOwner = (PsiModifierListOwner)target;
+            result.add(createAddAnnotationFix(modifierListOwner));
+          }
         }
       }
     }
@@ -103,7 +115,7 @@ public class StringConcatenationInspection extends BaseInspection {
     for (PsiExpression operand : operands) {
       final PsiModifierListOwner element1 = getAnnotatableElement(operand);
       if (element1 != null) {
-        final InspectionGadgetsFix fix = new DelegatingFix(new AddAnnotationFix(AnnotationUtil.NON_NLS, element1));
+        final InspectionGadgetsFix fix = createAddAnnotationFix(element1);
         result.add(fix);
       }
     }
@@ -111,11 +123,22 @@ public class StringConcatenationInspection extends BaseInspection {
     if (!(expressionParent instanceof PsiExpressionList) && expressionParent != null) {
       final PsiMethod method = PsiTreeUtil.getParentOfType(expressionParent, PsiMethod.class);
       if (method != null) {
-        final InspectionGadgetsFix fix = new DelegatingFix(new AddAnnotationFix(AnnotationUtil.NON_NLS, method));
+        final InspectionGadgetsFix fix = createAddAnnotationFix(method);
         result.add(fix);
       }
     }
-    return result.toArray(new InspectionGadgetsFix[result.size()]);
+
+    final SuppressForTestsScopeFix suppressFix = SuppressForTestsScopeFix.build(this, polyadicExpression);
+    if (suppressFix == null) {
+      return result.toArray(InspectionGadgetsFix.EMPTY_ARRAY);
+    }
+    result.add(suppressFix);
+   
+    return result.toArray(InspectionGadgetsFix.EMPTY_ARRAY);
+  }
+
+  private static DelegatingFix createAddAnnotationFix(PsiModifierListOwner variable) {
+    return new DelegatingFix(new AddAnnotationPsiFix(AnnotationUtil.NON_NLS, variable,PsiNameValuePair.EMPTY_ARRAY));
   }
 
   @Nullable
@@ -135,14 +158,12 @@ public class StringConcatenationInspection extends BaseInspection {
   @Nullable
   public JComponent createOptionsPanel() {
     final MultipleCheckboxOptionsPanel optionsPanel = new MultipleCheckboxOptionsPanel(this);
-    optionsPanel.addCheckbox(InspectionGadgetsBundle.message("string.concatenation.ignore.assert.option"), "ignoreAsserts");
-    optionsPanel.addCheckbox(InspectionGadgetsBundle.message("string.concatenation.ignore.system.out.option"), "ignoreSystemOuts");
-    optionsPanel.addCheckbox(InspectionGadgetsBundle.message("string.concatenation.ignore.system.err.option"), "ignoreSystemErrs");
-    optionsPanel.addCheckbox(InspectionGadgetsBundle.message("string.concatenation.ignore.exceptions.option"), "ignoreThrowableArguments");
-    optionsPanel.addCheckbox(InspectionGadgetsBundle.message("string.concatenation.ignore.constant.initializers.option"),
-                             "ignoreConstantInitializers");
-    optionsPanel.addCheckbox(InspectionGadgetsBundle.message("ignore.in.test.code"), "ignoreInTestCode");
-    optionsPanel.addCheckbox(InspectionGadgetsBundle.message("ignore.in.tostring"), "ignoreInToString");
+    optionsPanel.addCheckbox(InspectionGadgetsBundle.message("inspection.option.ignore.assert"), "ignoreAsserts");
+    optionsPanel.addCheckbox(InspectionGadgetsBundle.message("inspection.option.ignore.system.out"), "ignoreSystemOuts");
+    optionsPanel.addCheckbox(InspectionGadgetsBundle.message("inspection.option.ignore.system.err"), "ignoreSystemErrs");
+    optionsPanel.addCheckbox(InspectionGadgetsBundle.message("inspection.option.ignore.exceptions"), "ignoreThrowableArguments");
+    optionsPanel.addCheckbox(InspectionGadgetsBundle.message("inspection.option.ignore.constant.initializers"), "ignoreConstantInitializers");
+    optionsPanel.addCheckbox(InspectionGadgetsBundle.message("inspection.option.ignore.in.tostring"), "ignoreInToString");
     return optionsPanel;
   }
 
@@ -173,9 +194,6 @@ public class StringConcatenationInspection extends BaseInspection {
       if (AnnotationUtil.isInsideAnnotation(expression)) {
         return;
       }
-      if (ignoreInTestCode && TestUtils.isInTestCode(expression)) {
-        return;
-      }
       if (ignoreAsserts) {
         final PsiAssertStatement assertStatement =
           PsiTreeUtil.getParentOfType(expression, PsiAssertStatement.class, true, PsiCodeBlock.class, PsiClass.class);
@@ -199,20 +217,7 @@ public class StringConcatenationInspection extends BaseInspection {
         }
       }
       if (ignoreThrowableArguments) {
-        final PsiNewExpression newExpression =
-          PsiTreeUtil.getParentOfType(expression, PsiNewExpression.class, true, PsiCodeBlock.class, PsiClass.class);
-        if (newExpression != null) {
-          final PsiType newExpressionType = newExpression.getType();
-          if (InheritanceUtil.isInheritor(newExpressionType, "java.lang.Throwable")) {
-            return;
-          }
-        } else {
-          final PsiMethodCallExpression methodCallExpression =
-            PsiTreeUtil.getParentOfType(expression, PsiMethodCallExpression.class, true, PsiCodeBlock.class, PsiClass.class);
-          if (HighlightUtil.isSuperOrThisMethodCall(methodCallExpression)) {
-            return;
-          }
-        }
+        if (ExceptionUtils.isExceptionArgument(expression)) return;
       }
       if (ignoreConstantInitializers) {
         PsiElement parent = expression.getParent();
@@ -231,7 +236,7 @@ public class StringConcatenationInspection extends BaseInspection {
         }
       }
       if (ignoreInToString) {
-        final PsiMethod method = PsiTreeUtil.getParentOfType(expression, PsiMethod.class, true, PsiClass.class);
+        final PsiMethod method = PsiTreeUtil.getParentOfType(expression, PsiMethod.class, true, PsiClass.class, PsiLambdaExpression.class);
         if (MethodUtils.isToString(method)) {
           return;
         }

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.packaging.impl.elements;
 
 import com.intellij.compiler.ant.BuildProperties;
@@ -22,7 +8,10 @@ import com.intellij.compiler.ant.artifacts.ArchiveAntCopyInstructionCreator;
 import com.intellij.compiler.ant.taskdefs.Jar;
 import com.intellij.compiler.ant.taskdefs.Zip;
 import com.intellij.packaging.artifacts.ArtifactType;
-import com.intellij.packaging.elements.*;
+import com.intellij.packaging.elements.AntCopyInstructionCreator;
+import com.intellij.packaging.elements.ArtifactAntGenerationContext;
+import com.intellij.packaging.elements.PackagingElement;
+import com.intellij.packaging.elements.PackagingElementResolvingContext;
 import com.intellij.packaging.impl.ui.ArchiveElementPresentation;
 import com.intellij.packaging.ui.ArtifactEditorContext;
 import com.intellij.packaging.ui.PackagingElementPresentation;
@@ -50,10 +39,13 @@ public class ArchivePackagingElement extends CompositeElementWithManifest<Archiv
     myArchiveFileName = archiveFileName;
   }
 
+  @Override
+  @NotNull
   public PackagingElementPresentation createPresentation(@NotNull ArtifactEditorContext context) {
     return new ArchiveElementPresentation(this);
   }
 
+  @NotNull
   @Override
   public List<? extends Generator> computeAntInstructions(@NotNull PackagingElementResolvingContext resolvingContext, @NotNull AntCopyInstructionCreator creator,
                                                           @NotNull ArtifactAntGenerationContext generationContext,
@@ -74,13 +66,6 @@ public class ArchivePackagingElement extends CompositeElementWithManifest<Archiv
     return Collections.singletonList(creator.createFileCopyInstruction(jarPath, myArchiveFileName));
   }
 
-  @Override
-  public void computeIncrementalCompilerInstructions(@NotNull IncrementalCompilerInstructionCreator creator,
-                                                     @NotNull PackagingElementResolvingContext resolvingContext,
-                                                     @NotNull ArtifactIncrementalCompilerContext compilerContext, @NotNull ArtifactType artifactType) {
-    computeChildrenInstructions(creator.archive(myArchiveFileName), resolvingContext, compilerContext, artifactType);
-  }
-
   @Attribute(NAME_ATTRIBUTE)
   public String getArchiveFileName() {
     return myArchiveFileName;
@@ -91,6 +76,7 @@ public class ArchivePackagingElement extends CompositeElementWithManifest<Archiv
     return "archive:" + myArchiveFileName;
   }
 
+  @Override
   public ArchivePackagingElement getState() {
     return this;
   }
@@ -99,10 +85,12 @@ public class ArchivePackagingElement extends CompositeElementWithManifest<Archiv
     myArchiveFileName = archiveFileName;
   }
 
+  @Override
   public String getName() {
     return myArchiveFileName;
   }
 
+  @Override
   public void rename(@NotNull String newName) {
     myArchiveFileName = newName;
   }
@@ -112,7 +100,8 @@ public class ArchivePackagingElement extends CompositeElementWithManifest<Archiv
     return element instanceof ArchivePackagingElement && ((ArchivePackagingElement)element).getArchiveFileName().equals(myArchiveFileName);
   }
 
-  public void loadState(ArchivePackagingElement state) {
+  @Override
+  public void loadState(@NotNull ArchivePackagingElement state) {
     XmlSerializerUtil.copyBean(state, this);
   }
 }

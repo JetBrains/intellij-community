@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,13 +19,14 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.projectRoots.SdkModificator;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class SdkPathEditor extends PathEditor {
   private final String myDisplayName;
   private final OrderRootType myOrderRootType;
 
-  public SdkPathEditor(String displayName, OrderRootType orderRootType, FileChooserDescriptor descriptor) {
+  public SdkPathEditor(String displayName, @NotNull OrderRootType orderRootType, FileChooserDescriptor descriptor) {
     super(descriptor);
     myDisplayName = displayName;
     myOrderRootType = orderRootType;
@@ -35,6 +36,7 @@ public class SdkPathEditor extends PathEditor {
     return myDisplayName;
   }
 
+  @NotNull
   public OrderRootType getOrderRootType() {
     return myOrderRootType;
   }
@@ -56,5 +58,4 @@ public class SdkPathEditor extends PathEditor {
       setEnabled(false);
     }
   }
-
 }

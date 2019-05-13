@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui;
 
 import javax.swing.*;
@@ -31,7 +17,7 @@ import java.util.Collection;
 public class SelectionSaver implements TreeSelectionListener, TreeModelListener, PropertyChangeListener{
 
   private final JTree myTree;
-  private Collection<TreeNode> myCurrentSelection = new ArrayList<TreeNode>();
+  private Collection<TreeNode> myCurrentSelection = new ArrayList<>();
 
 
   private SelectionSaver(JTree tree) {
@@ -48,6 +34,7 @@ public class SelectionSaver implements TreeSelectionListener, TreeModelListener,
     myTree.addPropertyChangeListener(this);
   }
 
+  @Override
   public void propertyChange(PropertyChangeEvent evt) {
     if (evt.getPropertyName().equals(JTree.TREE_MODEL_PROPERTY)){
       ((TreeModel)evt.getOldValue()).removeTreeModelListener(this);
@@ -55,13 +42,13 @@ public class SelectionSaver implements TreeSelectionListener, TreeModelListener,
     }
   }
 
+  @Override
   public void treeNodesRemoved(TreeModelEvent treeModelEvent) {
     TreePath pathToDelete = treeModelEvent.getTreePath();
     Object[] children = treeModelEvent.getChildren();
 
-    for (int i = 0; i < children.length; i++) {
-      Object nodeToDelete = children[i];
-      if (myCurrentSelection.contains(nodeToDelete)){
+    for (Object nodeToDelete : children) {
+      if (myCurrentSelection.contains(nodeToDelete)) {
         int deletedRow = myTree.getRowForPath(pathToDelete.pathByAddingChild(nodeToDelete));
         if (deletedRow == 0) return;
         TreePath treePath = new TreePath(myTree.getPathForRow(deletedRow - 1));
@@ -71,24 +58,27 @@ public class SelectionSaver implements TreeSelectionListener, TreeModelListener,
 
   }
 
+  @Override
   public void valueChanged(TreeSelectionEvent e) {
-    myCurrentSelection = new ArrayList<TreeNode>();
+    myCurrentSelection = new ArrayList<>();
     TreePath[] selection = myTree.getSelectionModel().getSelectionPaths();
     if (selection == null) return;
-    for (int i = 0; i < selection.length; i++) {
-      TreePath treePath = selection[i];
+    for (TreePath treePath : selection) {
       myCurrentSelection.add((TreeNode)treePath.getLastPathComponent());
     }
   }
 
+  @Override
   public void treeNodesChanged(TreeModelEvent e) {
 
   }
 
+  @Override
   public void treeNodesInserted(TreeModelEvent e) {
 
   }
 
+  @Override
   public void treeStructureChanged(TreeModelEvent e) {
 
   }

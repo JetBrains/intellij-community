@@ -15,10 +15,20 @@
  */
 package com.intellij.refactoring.extractMethod;
 
+import com.intellij.refactoring.util.AbstractVariableData;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
 /**
  * @author oleg
  */
-public interface ExtractMethodSettings {
+public interface ExtractMethodSettings<T> {
+  @NotNull
   String getMethodName();
-  AbstractVariableData[] getVariableData();
+
+  @NotNull
+  AbstractVariableData[] getAbstractVariableData();
+
+  @Nullable
+  T getVisibility();
 }

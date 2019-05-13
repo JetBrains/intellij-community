@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,8 @@ package com.intellij.extapi.psi;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectCoreUtil;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
@@ -32,11 +34,13 @@ import com.intellij.psi.impl.PsiElementBase;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
-import com.intellij.psi.impl.source.tree.*;
+import com.intellij.psi.impl.source.tree.ChangeUtil;
+import com.intellij.psi.impl.source.tree.CompositeElement;
+import com.intellij.psi.impl.source.tree.SharedImplUtil;
+import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.PsiUtilCore;
-import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -52,7 +56,16 @@ public abstract class ASTDelegatePsiElement extends PsiElementBase {
   private static final List EMPTY = Collections.emptyList();
 
   @Override
+  public PsiFile getContainingFile() {
+    return SharedImplUtil.getContainingFile(getNode());
+  }
+
+  @Override
   public PsiManagerEx getManager() {
+    Project project = ProjectCoreUtil.theOnlyOpenProject();
+    if (project != null) {
+      return PsiManagerEx.getInstanceEx(project);
+    }
     PsiElement parent = this;
 
     while (parent instanceof ASTDelegatePsiElement) {
@@ -72,7 +85,7 @@ public abstract class ASTDelegatePsiElement extends PsiElementBase {
     PsiElement psiChild = getFirstChild();
     if (psiChild == null) return PsiElement.EMPTY_ARRAY;
 
-    List<PsiElement> result = new ArrayList<PsiElement>();
+    List<PsiElement> result = new ArrayList<>();
     while (psiChild != null) {
       if (psiChild.getNode() instanceof CompositeElement) {
         result.add(psiChild);
@@ -145,12 +158,12 @@ public abstract class ASTDelegatePsiElement extends PsiElementBase {
   }
 
   @Override
-  public <T> T getCopyableUserData(Key<T> key) {
+  public <T> T getCopyableUserData(@NotNull Key<T> key) {
     return getNode().getCopyableUserData(key);
   }
 
   @Override
-  public <T> void putCopyableUserData(Key<T> key, T value) {
+  public <T> void putCopyableUserData(@NotNull Key<T> key, T value) {
     getNode().putCopyableUserData(key, value);
   }
 
@@ -168,18 +181,17 @@ public abstract class ASTDelegatePsiElement extends PsiElementBase {
   }
 
   @Nullable
-  protected PsiElement findChildByType(IElementType type) {
+  protected <T extends PsiElement> T findChildByType(IElementType type) {
     ASTNode node = getNode().findChildByType(type);
-    return node == null ? null : node.getPsi();
+    return node == null ? null : (T)node.getPsi();
   }
 
-
   @Nullable
-  protected PsiElement findLastChildByType(IElementType type) {
+  protected <T extends PsiElement> T findLastChildByType(IElementType type) {
     PsiElement child = getLastChild();
     while (child != null) {
       final ASTNode node = child.getNode();
-      if (node != null && node.getElementType() == type) return child;
+      if (node != null && node.getElementType() == type) return (T)child;
       child = child.getPrevSibling();
     }
     return null;
@@ -188,39 +200,30 @@ public abstract class ASTDelegatePsiElement extends PsiElementBase {
 
 
   @NotNull
-  protected PsiElement findNotNullChildByType(IElementType type) {
-    return notNullChild(findChildByType(type));
+  protected <T extends PsiElement> T findNotNullChildByType(IElementType type) {
+    return notNullChild(this.<T>findChildByType(type));
   }
 
   @Nullable
-  protected PsiElement findChildByType(TokenSet type) {
+  protected <T extends PsiElement> T findChildByType(TokenSet type) {
     ASTNode node = getNode().findChildByType(type);
-    return node == null ? null : node.getPsi();
+    return node == null ? null : (T)node.getPsi();
   }
 
   @NotNull
-  protected PsiElement findNotNullChildByType(TokenSet type) {
-    return notNullChild(findChildByType(type));
+  protected <T extends PsiElement> T findNotNullChildByType(TokenSet type) {
+    return notNullChild(this.<T>findChildByType(type));
   }
 
   @Nullable
   protected PsiElement findChildByFilter(TokenSet tokenSet) {
     ASTNode[] nodes = getNode().getChildren(tokenSet);
-    return nodes == null || nodes.length == 0 ? null : nodes[0].getPsi();
+    return nodes.length == 0 ? null : nodes[0].getPsi();
   }
 
   @NotNull
-  protected PsiElement findNotNullChildByFilter(TokenSet tokenSet) {
-    return notNullChild(findChildByFilter(tokenSet));
-  }
-
   protected <T extends PsiElement> T[] findChildrenByType(IElementType elementType, Class<T> arrayClass) {
-    return ContainerUtil.map2Array(SharedImplUtil.getChildrenOfType(getNode(), elementType), arrayClass, new Function<ASTNode, T>() {
-      @Override
-      public T fun(final ASTNode s) {
-        return (T)s.getPsi();
-      }
-    });
+    return ContainerUtil.map2Array(SharedImplUtil.getChildrenOfType(getNode(), elementType), arrayClass, s -> (T)s.getPsi());
   }
 
   protected <T extends PsiElement> List<T> findChildrenByType(TokenSet elementType) {
@@ -230,7 +233,7 @@ public abstract class ASTDelegatePsiElement extends PsiElementBase {
       final IElementType tt = child.getElementType();
       if (elementType.contains(tt)) {
         if (result == EMPTY) {
-          result = new ArrayList<T>();
+          result = new ArrayList<>();
         }
         result.add((T)child.getPsi());
       }
@@ -245,7 +248,7 @@ public abstract class ASTDelegatePsiElement extends PsiElementBase {
     while (child != null) {
       if (elementType == child.getElementType()) {
         if (result == EMPTY) {
-          result = new ArrayList<T>();
+          result = new ArrayList<>();
         }
         result.add((T)child.getPsi());
       }
@@ -254,13 +257,9 @@ public abstract class ASTDelegatePsiElement extends PsiElementBase {
     return result;
   }
 
-  protected <T extends PsiElement> T[] findChildrenByType(TokenSet elementType, Class<T> arrayClass) {
-    return (T[])ContainerUtil.map2Array(getNode().getChildren(elementType), arrayClass, new Function<ASTNode, PsiElement>() {
-      @Override
-      public PsiElement fun(final ASTNode s) {
-        return s.getPsi();
-      }
-    });
+  @NotNull
+  protected <T extends PsiElement> T[] findChildrenByType(TokenSet elementType, Class<? super T> arrayClass) {
+    return ContainerUtil.map2Array(getNode().getChildren(elementType), arrayClass, s -> (T)s.getPsi());
   }
 
   @Override
@@ -334,9 +333,9 @@ public abstract class ASTDelegatePsiElement extends PsiElementBase {
       CheckUtil.checkWritable(this);
       ((ASTDelegatePsiElement)parent).deleteChildInternal(getNode());
     }
-    else if (parent instanceof CompositePsiElement) {
+    else if (parent instanceof CompositeElement) {
       CheckUtil.checkWritable(this);
-      ((CompositePsiElement)parent).deleteChildInternal(getNode());
+      ((CompositeElement)parent).deleteChildInternal(getNode());
     }
     else if (parent instanceof PsiFile) {
       CheckUtil.checkWritable(this);
@@ -348,7 +347,7 @@ public abstract class ASTDelegatePsiElement extends PsiElementBase {
   }
 
   public void deleteChildInternal(@NotNull ASTNode child) {
-    CodeEditUtil.removeChild(getNode(), child);
+    ((CompositeElement)getNode()).deleteChildInternal(child);
   }
 
   @Override
@@ -400,5 +399,11 @@ public abstract class ASTDelegatePsiElement extends PsiElementBase {
       }
     }
     return anchorBefore;
+  }
+
+  @Override
+  public boolean textMatches(@NotNull CharSequence text) {
+    ASTNode node = getNode();
+    return node instanceof TreeElement ? ((TreeElement)node).textMatches(text) : super.textMatches(text);
   }
 }

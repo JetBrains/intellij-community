@@ -30,6 +30,11 @@ public class AnonymousClassMethodCountInspection
   private static final int DEFAULT_METHOD_COUNT_LIMIT = 1;
 
   @Override
+  protected InspectionGadgetsFix buildFix(Object... infos) {
+    return new MoveAnonymousToInnerClassFix();
+  }
+
+  @Override
   @NotNull
   public String getID() {
     return "AnonymousInnerClassWithTooManyMethods";
@@ -50,11 +55,6 @@ public class AnonymousClassMethodCountInspection
   @Override
   protected String getConfigurationLabel() {
     return InspectionGadgetsBundle.message("method.count.limit.option");
-  }
-
-  @Override
-  protected InspectionGadgetsFix buildFix(Object... infos) {
-    return new MoveAnonymousToInnerClassFix();
   }
 
   @Override

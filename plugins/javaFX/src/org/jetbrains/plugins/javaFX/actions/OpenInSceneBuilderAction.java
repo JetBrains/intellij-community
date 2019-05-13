@@ -16,48 +16,48 @@
 package org.jetbrains.plugins.javaFX.actions;
 
 import com.intellij.CommonBundle;
-import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.fileChooser.FileChooser;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import org.jetbrains.plugins.javaFX.JavaFxSettings;
-import org.jetbrains.plugins.javaFX.JavaFxSettingsConfigurable;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.javaFX.fxml.JavaFxFileTypeFactory;
+import org.jetbrains.plugins.javaFX.sceneBuilder.SceneBuilderInfo;
 
-/**
- * User: anna
- * Date: 2/14/13
- */
+import java.io.File;
+
 public class OpenInSceneBuilderAction extends AnAction {
-  private static final Logger LOG = Logger.getInstance("#" + OpenInSceneBuilderAction.class.getName());
+  private static final Logger LOG = Logger.getInstance(OpenInSceneBuilderAction.class);
+  public static final String OLD_LAUNCHER = "scenebuilder-launcher.sh";
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
-    final VirtualFile virtualFile = e.getData(PlatformDataKeys.VIRTUAL_FILE);
+  public void actionPerformed(@NotNull AnActionEvent e) {
+    final VirtualFile virtualFile = e.getData(CommonDataKeys.VIRTUAL_FILE);
     LOG.assertTrue(virtualFile != null);
     final String path = virtualFile.getPath();
+    final Project project = getEventProject(e);
 
-    final JavaFxSettings settings = JavaFxSettings.getInstance();
-    String pathToSceneBuilder = settings.getPathToSceneBuilder();
-    if (StringUtil.isEmptyOrSpaces(settings.getPathToSceneBuilder())){
-      final VirtualFile sceneBuilderFile = FileChooser.chooseFile(JavaFxSettingsConfigurable.createSceneBuilderDescriptor(), e.getProject(), null);
-      if (sceneBuilderFile == null) return;
-
-      pathToSceneBuilder = sceneBuilderFile.getPath();
-      settings.setPathToSceneBuilder(FileUtil.toSystemIndependentName(pathToSceneBuilder));
+    final SceneBuilderInfo info = SceneBuilderInfo.get(project, true);
+    if (info == SceneBuilderInfo.EMPTY) {
+      return;
     }
 
+    String pathToSceneBuilder = info.path;
+
     if (SystemInfo.isMac) {
-      pathToSceneBuilder += "/Contents/MacOS/JavaAppLauncher";
+      pathToSceneBuilder += "/Contents/MacOS/"; 
+      if (new File(pathToSceneBuilder, OLD_LAUNCHER).exists()) {
+        pathToSceneBuilder += OLD_LAUNCHER;
+      } else {
+        pathToSceneBuilder += "SceneBuilder";
+      }
     }
 
     final GeneralCommandLine commandLine = new GeneralCommandLine();
@@ -66,18 +66,18 @@ public class OpenInSceneBuilderAction extends AnAction {
       commandLine.addParameter(path);
       commandLine.createProcess();
     }
-    catch (ExecutionException ex) {
+    catch (Exception ex) {
       Messages.showErrorDialog("Failed to start SceneBuilder: " + commandLine.getCommandLineString(), CommonBundle.getErrorTitle());
     }
   }
 
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     final Presentation presentation = e.getPresentation();
     presentation.setEnabled(false);
     presentation.setVisible(false);
-    final VirtualFile virtualFile = e.getData(PlatformDataKeys.VIRTUAL_FILE);
-    if (virtualFile != null && 
+    final VirtualFile virtualFile = e.getData(CommonDataKeys.VIRTUAL_FILE);
+    if (virtualFile != null &&
         JavaFxFileTypeFactory.isFxml(virtualFile) &&
         e.getProject() != null) {
       presentation.setEnabled(true);

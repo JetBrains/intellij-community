@@ -14,10 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * User: anna
- * Date: 02-Oct-2008
- */
 package com.intellij.refactoring.inlineSuperClass.usageInfo;
 
 import com.intellij.psi.PsiReferenceExpression;
@@ -33,6 +29,7 @@ public class RemoveQualifierUsageInfo extends FixableUsageInfo {
   }
 
 
+  @Override
   public void fixUsage() throws IncorrectOperationException {
     myExpression.getQualifierExpression().delete();
   }

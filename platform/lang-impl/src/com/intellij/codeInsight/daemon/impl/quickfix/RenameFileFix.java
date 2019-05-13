@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,7 +20,6 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.CodeInsightBundle;
-import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
@@ -29,7 +28,6 @@ import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ex.MessagesEx;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -45,7 +43,7 @@ public class RenameFileFix implements IntentionAction, LocalQuickFix {
   /**
    * @param newFileName with extension
    */
-  public RenameFileFix(String newFileName) {
+  public RenameFileFix(@NotNull String newFileName) {
     myNewFileName = newFileName;
   }
 
@@ -71,18 +69,15 @@ public class RenameFileFix implements IntentionAction, LocalQuickFix {
   public void applyFix(@NotNull final Project project, @NotNull ProblemDescriptor descriptor) {
     final PsiFile file = descriptor.getPsiElement().getContainingFile();
     if (isAvailable(project, null, file)) {
-      new WriteCommandAction(project) {
-        @Override
-        protected void run(Result result) throws Throwable {
-          invoke(project, FileEditorManager.getInstance(project).getSelectedTextEditor(), file);
-        }
-      }.execute();
+      WriteCommandAction.writeCommandAction(project).run(() -> {
+        invoke(project, null, file);
+      });
     }
   }
 
   @Override
   public final boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    if (!file.isValid()) return false;
+    if (file == null || !file.isValid()) return false;
     VirtualFile vFile = file.getVirtualFile();
     if (vFile == null) return false;
     final VirtualFile parent = vFile.getParent();
@@ -100,11 +95,8 @@ public class RenameFileFix implements IntentionAction, LocalQuickFix {
     try {
       vFile.rename(file.getManager(), myNewFileName);
     }
-    catch(IOException e){
+    catch (IOException e) {
       MessagesEx.error(project, e.getMessage()).showLater();
-    }
-    if (editor != null) {
-      DaemonCodeAnalyzer.getInstance(project).updateVisibleHighlighters(editor);
     }
   }
 

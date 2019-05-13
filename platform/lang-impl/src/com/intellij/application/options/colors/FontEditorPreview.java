@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,20 +30,21 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
+import java.util.function.Supplier;
 
 public class FontEditorPreview implements PreviewPanel{
   private final EditorEx myEditor;
 
-  private final ColorAndFontOptions myOptions;
+  private final Supplier<? extends EditorColorsScheme> mySchemeSupplier;
 
   private final EventDispatcher<ColorAndFontSettingsListener> myDispatcher = EventDispatcher.create(ColorAndFontSettingsListener.class);
 
-  public FontEditorPreview(final ColorAndFontOptions options, boolean editable) {
-    myOptions = options;
+  public FontEditorPreview(final Supplier<? extends EditorColorsScheme> schemeSupplier, boolean editable) {
+    mySchemeSupplier = schemeSupplier;
 
     @Nls String text = getIDEDemoText();
 
-    myEditor = (EditorEx)createPreviewEditor(text, 10, 3, -1, myOptions, editable);
+    myEditor = (EditorEx)createPreviewEditor(text, 10, 3, -1, mySchemeSupplier.get(), editable);
 
     installTrafficLights(myEditor);
   }
@@ -65,9 +66,10 @@ public class FontEditorPreview implements PreviewPanel{
   }
 
   static void installTrafficLights(@NotNull EditorEx editor) {
-    TrafficLightRenderer renderer = new TrafficLightRenderer(null, null,null){
+    TrafficLightRenderer renderer = new TrafficLightRenderer(null, null,null) {
+      @NotNull
       @Override
-      protected DaemonCodeAnalyzerStatus getDaemonCodeAnalyzerStatus(boolean fillErrorsCount, SeverityRegistrar severityRegistrar) {
+      protected DaemonCodeAnalyzerStatus getDaemonCodeAnalyzerStatus(@NotNull SeverityRegistrar severityRegistrar) {
         DaemonCodeAnalyzerStatus status = new DaemonCodeAnalyzerStatus();
         status.errorAnalyzingFinished = true;
         status.errorCount = new int[]{1, 2};
@@ -79,11 +81,11 @@ public class FontEditorPreview implements PreviewPanel{
     ((EditorMarkupModel)editor.getMarkupModel()).setErrorStripeVisible(true);
   }
 
-  static Editor createPreviewEditor(String text, int column, int line, int selectedLine, ColorAndFontOptions options, boolean editable) {
+  static Editor createPreviewEditor(String text, int column, int line, int selectedLine, EditorColorsScheme scheme, boolean editable) {
     EditorFactory editorFactory = EditorFactory.getInstance();
     Document editorDocument = editorFactory.createDocument(text);
     EditorEx editor = (EditorEx) (editable ? editorFactory.createEditor(editorDocument) : editorFactory.createViewer(editorDocument));
-    editor.setColorsScheme(options.getSelectedScheme());
+    editor.setColorsScheme(scheme);
     EditorSettings settings = editor.getSettings();
     settings.setLineNumbersShown(true);
     settings.setWhitespacesShown(true);
@@ -112,7 +114,7 @@ public class FontEditorPreview implements PreviewPanel{
 
   @Override
   public void updateView() {
-    EditorColorsScheme scheme = updateOptionsScheme(myOptions.getSelectedScheme());
+    EditorColorsScheme scheme = updateOptionsScheme(mySchemeSupplier.get());
 
     myEditor.setColorsScheme(scheme);
     myEditor.reinitSettings();

@@ -1,27 +1,12 @@
-/*
- * Copyright 2000-2011 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.refactoring.convertToJava;
 
 import com.intellij.psi.*;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap;
-import org.jetbrains.plugins.groovy.lang.psi.api.signatures.GrClosureSignature;
+import org.jetbrains.plugins.groovy.lang.psi.api.signatures.GrSignature;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArgument;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrCodeBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
@@ -31,10 +16,6 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.signatures.GrClosureSignatureU
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-
-import static org.jetbrains.plugins.groovy.refactoring.convertToJava.ModifierListGenerator.JAVA_MODIFIERS_WITHOUT_ABSTRACT;
-import static org.jetbrains.plugins.groovy.refactoring.convertToJava.TypeWriter.writeType;
-import static org.jetbrains.plugins.groovy.refactoring.convertToJava.TypeWriter.writeTypeForNew;
 
 /**
  * @author Maxim.Medvedev
@@ -57,7 +38,7 @@ public class AnonymousFromMapGenerator {
       substitutor = PsiSubstitutor.EMPTY;
     }
     builder.append("new ");
-    writeTypeForNew(builder, type, operand);
+    TypeWriter.writeTypeForNew(builder, type, operand);
     builder.append("() {\n");
 
     final GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(operand.getProject());
@@ -66,30 +47,35 @@ public class AnonymousFromMapGenerator {
     for (GrNamedArgument arg : operand.getNamedArguments()) {
       final String name = arg.getLabelName();
       final GrExpression expression = arg.getExpression();
-      if (name == null || expression == null || !(expression instanceof GrClosableBlock)) continue;
+      if (name == null || !(expression instanceof GrClosableBlock)) continue;
 
-      final GrParameter[] allParameters = ((GrClosableBlock)expression).getAllParameters();
-      List<GrParameter> actual = new ArrayList<GrParameter>(Arrays.asList(allParameters));
-      final PsiType clReturnType = ((GrClosableBlock)expression).getReturnType();
+      final GrClosableBlock closure = (GrClosableBlock)expression;
+      final GrParameter[] allParameters = closure.getAllParameters();
+      List<GrParameter> actual = new ArrayList<>(Arrays.asList(allParameters));
+      final PsiType clReturnType = context.typeProvider.getReturnType(closure);
 
       GrExpression[] args = new GrExpression[allParameters.length];
       for (int i = 0; i < allParameters.length; i++) {
         args[i] = factory.createExpressionFromText(allParameters[i].getName());
       }
-
+      boolean singleParam = allParameters.length == 1;
       for (int param = allParameters.length; param >= 0; param--) {
-
-
-        if (param < allParameters.length && !actual.get(param).isOptional()) continue;
+        if (param < allParameters.length && !(actual.get(param).isOptional() || singleParam)) continue;
 
         if (param < allParameters.length) {
           final GrParameter opt = actual.remove(param);
-          args[param] = opt.getInitializerGroovy();
+          GrExpression initializer = opt.getInitializerGroovy();
+          if (initializer == null) {
+            args[param] = factory.createExpressionFromText("null");
+          }
+          else {
+            args[param] = initializer;
+          }
         }
 
-        final GrParameter[] parameters = actual.toArray(new GrParameter[actual.size()]);
+        final GrParameter[] parameters = actual.toArray(GrParameter.EMPTY_ARRAY);
 
-        final GrClosureSignature signature = GrClosureSignatureUtil.createSignature(parameters, clReturnType);
+        final GrSignature signature = GrClosureSignatureUtil.createSignature(parameters, clReturnType);
         final GrMethod pattern = factory.createMethodFromSignature(name, signature);
 
         PsiMethod found = null;
@@ -98,7 +84,7 @@ public class AnonymousFromMapGenerator {
         }
 
         if (found != null) {
-          ModifierListGenerator.writeModifiers(builder, found.getModifierList(), JAVA_MODIFIERS_WITHOUT_ABSTRACT);
+          ModifierListGenerator.writeModifiers(builder, found.getModifierList(), ModifierListGenerator.JAVA_MODIFIERS_WITHOUT_ABSTRACT);
         }
         else {
           builder.append("public ");
@@ -112,7 +98,7 @@ public class AnonymousFromMapGenerator {
           returnType = signature.getReturnType();
         }
 
-        writeType(builder, returnType, operand);
+        TypeWriter.writeType(builder, returnType, operand);
 
         builder.append(' ').append(name);
         GenerationUtil.writeParameterList(builder, parameters, new GeneratorClassNameProvider(), context);
@@ -120,7 +106,7 @@ public class AnonymousFromMapGenerator {
         final ExpressionContext extended = context.extend();
         extended.setInAnonymousContext(true);
         if (param == allParameters.length) {
-          new CodeBlockGenerator(builder, extended).generateCodeBlock((GrCodeBlock)expression, false);
+          new CodeBlockGenerator(builder, extended).generateCodeBlock(allParameters, closure, false);
         }
         else {
           builder.append("{\n");

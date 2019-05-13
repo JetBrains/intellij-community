@@ -1,4 +1,4 @@
-// "Create Method 'f'" "true"
+// "Create method 'f'" "true"
 interface I {}
 class A implements I {
   {
@@ -6,6 +6,6 @@ class A implements I {
   }
 
     private static void f() {
-        <selection>//To change body of created methods use File | Settings | File Templates.</selection>
+        <selection></selection>
     }
 }

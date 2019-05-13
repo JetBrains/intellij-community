@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,8 @@
 package com.intellij.openapi.ui;
 
 import com.intellij.openapi.util.ActionCallback;
+import com.intellij.util.ArrayUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -23,7 +25,6 @@ import java.awt.*;
 import java.awt.event.KeyListener;
 import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
-import java.util.List;
 
 public abstract class DialogWrapperPeer {
   public static Object HAVE_INITIAL_SELECTION = new Object();
@@ -58,7 +59,7 @@ public abstract class DialogWrapperPeer {
   /**
    * Dispose the wrapped and releases all resources allocated be the wrapper to help
    * more efficient garbage collection. You should never invoke this method twice or
-   * invoke any method of the wrapper after invocation of <code>dispose</code>.
+   * invoke any method of the wrapper after invocation of {@code dispose}.
    */
   protected abstract void dispose();
 
@@ -129,12 +130,13 @@ public abstract class DialogWrapperPeer {
   /**
    * @see javax.swing.JDialog#getLocation
    */
+  @NotNull
   public abstract Point getLocation();
 
   /**
    * @see javax.swing.JDialog#setLocation(java.awt.Point)
    */
-  public abstract void setLocation(Point p);
+  public abstract void setLocation(@NotNull Point p);
 
   /**
    * @see javax.swing.JDialog#setLocation(int,int)
@@ -151,15 +153,11 @@ public abstract class DialogWrapperPeer {
   public abstract void repaint();
   public abstract void pack();
 
-  /** @deprecated use {@linkplain Window#setIconImages(List)} (to remove in IDEA 13) */
-  @SuppressWarnings("UnusedDeclaration")
-  public abstract void setIconImages(List<Image> image);
-
   public abstract void setAppIcons();
 
   public abstract boolean isHeadless();
 
   public Object[] getCurrentModalEntities() {
-    return new Object[0];
+    return ArrayUtil.EMPTY_OBJECT_ARRAY;
   }
 }

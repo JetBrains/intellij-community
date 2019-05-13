@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,6 @@
 
 package com.intellij.history.integration;
 
-
 import com.intellij.history.FileRevisionTimestampComparator;
 import com.intellij.history.LocalHistory;
 import com.intellij.history.LocalHistoryAction;
@@ -30,10 +29,10 @@ public class GettingContentAtDateTest extends IntegrationTestCase {
   @Override
   protected void setUpInWriteAction() throws Exception {
     super.setUpInWriteAction();
-    f = myRoot.createChildData(null, "f.txt");
+    f = createChildData(myRoot, "f.txt");
   }
 
-  public void testContentAtDate() throws Exception {
+  public void testContentAtDate() {
     setContent(f, "1", TIMESTAMP_INCREMENT);
     setContent(f, "2", TIMESTAMP_INCREMENT * 2);
 
@@ -44,14 +43,14 @@ public class GettingContentAtDateTest extends IntegrationTestCase {
     assertContentAt(TIMESTAMP_INCREMENT * 3, null);
   }
 
-  public void testContentAtDateForFilteredFilesIsNull() throws Exception {
-    VirtualFile f = myRoot.createChildData(null, "f.class");
+  public void testContentAtDateForFilteredFilesIsNull() {
+    VirtualFile f = createChildData(myRoot, "f.class");
     setContent(f, "1", 1111);
 
     assertContentAt(1111, null);
   }
 
-  public void testGettingFirstAvailableContentAfterPurge() throws Exception {
+  public void testGettingFirstAvailableContentAfterPurge() {
     Clock.setTime(1);
     setContent(f, "1", TIMESTAMP_INCREMENT);
     Clock.setTime(2);
@@ -66,7 +65,7 @@ public class GettingContentAtDateTest extends IntegrationTestCase {
     assertContentAt(TIMESTAMP_INCREMENT * 3, "3");
   }
 
-  public void testGettingMostRecentRevisionContent() throws Exception {
+  public void testGettingMostRecentRevisionContent() {
     setContent(f, "1", TIMESTAMP_INCREMENT);
     setContent(f, "2", TIMESTAMP_INCREMENT * 2);
 
@@ -79,7 +78,7 @@ public class GettingContentAtDateTest extends IntegrationTestCase {
     assertContentAt(c, "2");
   }
 
-  public void testWithUnsavedDocuments() throws Exception {
+  public void testWithUnsavedDocuments() {
     setContent(f, "FILE1", TIMESTAMP_INCREMENT);
 
     Clock.setTime(TIMESTAMP_INCREMENT * 2);

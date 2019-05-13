@@ -17,7 +17,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.ObjectsConvertor;
-import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcsUtil.VcsFileUtil;
 import org.jetbrains.annotations.NotNull;
@@ -39,28 +39,35 @@ public class HgStatusCommand {
   private static final int ITEM_COUNT = 3;
   private static final int STATUS_INDEX = 0;
 
-  private final Project project;
+  @NotNull private final Project myProject;
 
-  private final boolean includeAdded;
-  private final boolean includeModified;
-  private final boolean includeRemoved;
-  private final boolean includeDeleted;
-  private final boolean includeUnknown;
-  private final boolean includeIgnored;
-  private final boolean includeCopySource;
+  private final boolean myIncludeAdded;
+  private final boolean myIncludeModified;
+  private final boolean myIncludeRemoved;
+  private final boolean myIncludeDeleted;
+  private final boolean myIncludeUnknown;
+  private final boolean myIncludeIgnored;
+  private final boolean myIncludeCopySource;
+  private boolean myCleanStatus = false; // should be always false, except checking file existence in revision
 
-  @Nullable private HgRevisionNumber baseRevision;
-  @Nullable private HgRevisionNumber targetRevision;
+  @Nullable private final HgRevisionNumber myBaseRevision;
+  @Nullable private final HgRevisionNumber myTargetRevision;
 
+  public void cleanFilesOption(boolean clean) {
+    myCleanStatus = clean;
+  }
 
   public static class Builder {
-    private boolean includeAdded;
-    private boolean includeModified;
+    private final boolean includeAdded;
+    private final boolean includeModified;
     private boolean includeRemoved;
-    private boolean includeDeleted;
+    private final boolean includeDeleted;
     private boolean includeUnknown;
     private boolean includeIgnored;
     private boolean includeCopySource;
+
+    private HgRevisionNumber baseRevision;
+    private HgRevisionNumber targetRevision;
 
     public Builder(boolean initValue) {
       includeAdded = initValue;
@@ -70,97 +77,112 @@ public class HgStatusCommand {
       includeUnknown = initValue;
       includeIgnored = initValue;
       includeCopySource = initValue;
+      baseRevision = null;
+      targetRevision = null;
     }
 
-    public Builder includeUnknown(boolean val) {
+    public Builder removed(boolean val) {
+      includeRemoved = val;
+      return this;
+    }
+
+    public Builder unknown(boolean val) {
       includeUnknown = val;
       return this;
     }
 
-    public Builder includeIgnored(boolean val) {
+    public Builder ignored(boolean val) {
       includeIgnored = val;
       return this;
     }
 
-    public Builder includeCopySource(boolean val) {
+    public Builder copySource(boolean val) {
       includeCopySource = val;
       return this;
     }
 
-    public HgStatusCommand build(Project project) {
+    public Builder baseRevision(HgRevisionNumber val) {
+      baseRevision = val;
+      return this;
+    }
+
+    public Builder targetRevision(HgRevisionNumber val) {
+      targetRevision = val;
+      return this;
+    }
+
+    public HgStatusCommand build(@NotNull Project project) {
       return new HgStatusCommand(project, this);
     }
 
   }
 
-  private HgStatusCommand(Project project, Builder builder) {
-    this.project = project;
-    includeAdded = builder.includeAdded;
-    includeModified = builder.includeModified;
-    includeRemoved = builder.includeRemoved;
-    includeDeleted = builder.includeDeleted;
-    includeUnknown = builder.includeUnknown;
-    includeIgnored = builder.includeIgnored;
-    includeCopySource = builder.includeCopySource;
+  private HgStatusCommand(@NotNull Project project, @NotNull Builder builder) {
+    myProject = project;
+    myIncludeAdded = builder.includeAdded;
+    myIncludeModified = builder.includeModified;
+    myIncludeRemoved = builder.includeRemoved;
+    myIncludeDeleted = builder.includeDeleted;
+    myIncludeUnknown = builder.includeUnknown;
+    myIncludeIgnored = builder.includeIgnored;
+    myIncludeCopySource = builder.includeCopySource;
+    myBaseRevision = builder.baseRevision;
+    myTargetRevision = builder.targetRevision;
   }
 
-  public void setBaseRevision(@Nullable HgRevisionNumber base) {
-    baseRevision = base;
+  public Set<HgChange> executeInCurrentThread(VirtualFile repo) {
+    return executeInCurrentThread(repo, null);
   }
 
-  public void setTargetRevision(@Nullable HgRevisionNumber target) {
-    targetRevision = target;
-  }
-
-  public Set<HgChange> execute(VirtualFile repo) {
-    return execute(repo, null);
-  }
-
-  public Set<HgChange> execute(VirtualFile repo, @Nullable Collection<FilePath> paths) {
+  public Set<HgChange> executeInCurrentThread(VirtualFile repo, @Nullable Collection<FilePath> paths) {
     if (repo == null) {
       return Collections.emptySet();
     }
 
-    HgCommandExecutor executor = new HgCommandExecutor(project, null);
+    HgCommandExecutor executor = new HgCommandExecutor(myProject);
     executor.setSilent(true);
 
-    List<String> options = new LinkedList<String>();
-    if (includeAdded) {
+    List<String> options = new LinkedList<>();
+    if (myIncludeAdded) {
       options.add("--added");
     }
-    if (includeModified) {
+    if (myIncludeModified) {
       options.add("--modified");
     }
-    if (includeRemoved) {
+    if (myIncludeRemoved) {
       options.add("--removed");
     }
-    if (includeDeleted) {
+    if (myIncludeDeleted) {
       options.add("--deleted");
     }
-    if (includeUnknown) {
+    if (myIncludeUnknown) {
       options.add("--unknown");
     }
-    if (includeIgnored) {
+    if (myIncludeIgnored) {
       options.add("--ignored");
     }
-    if (includeCopySource) {
+    if (myIncludeCopySource) {
       options.add("--copies");
     }
-    if (baseRevision != null && !baseRevision.getRevision().isEmpty()) {
+    if (myCleanStatus) {
+      options.add("--clean");
+    }
+    executor.setOutputAlwaysSuppressed(myCleanStatus || myIncludeUnknown || myIncludeIgnored);
+    if (myBaseRevision != null && (!myBaseRevision.getRevision().isEmpty() || !myBaseRevision.getChangeset().isEmpty())) {
       options.add("--rev");
-      options.add(baseRevision.getChangeset().isEmpty() ? baseRevision.getRevision() : baseRevision.getChangeset());
-      if (targetRevision != null) {
+      options.add(StringUtil.isEmptyOrSpaces(myBaseRevision.getChangeset()) ? myBaseRevision.getRevision() : myBaseRevision.getChangeset());
+      if (myTargetRevision != null) {
         options.add("--rev");
-        options.add(targetRevision.getChangeset());
+        options.add(myTargetRevision.getChangeset());
       }
     }
 
-    final Set<HgChange> changes = new HashSet<HgChange>();
+    final Set<HgChange> changes = new HashSet<>();
 
     if (paths != null) {
       final List<List<String>> chunked = VcsFileUtil.chunkPaths(repo, paths);
       for (List<String> chunk : chunked) {
-        List<String> args = new ArrayList<String>();
+        List<String> args = new ArrayList<>();
         args.addAll(options);
         args.addAll(chunk);
         HgCommandResult result = executor.executeInCurrentThread(repo, "status", args);
@@ -173,11 +195,21 @@ public class HgStatusCommand {
     return changes;
   }
 
-  private static Collection<HgChange> parseChangesFromResult(VirtualFile repo, HgCommandResult result, List<String> args) {
-    final Set<HgChange> changes = new HashSet<HgChange>();
+  private  Collection<HgChange> parseChangesFromResult(VirtualFile repo, HgCommandResult result, List<String> args) {
+    final Set<HgChange> changes = new HashSet<>();
     HgChange previous = null;
     if (result == null) {
       return changes;
+    }
+    List<String> errors = result.getErrorLines();
+    if (!errors.isEmpty()) {
+      if (result.getExitValue() != 0 && !myProject.isDisposed()) {
+        String title = "Could not execute hg status command ";
+        LOG.warn(title + errors.toString());
+        VcsNotifier.getInstance(myProject).logInfo(title, errors.toString());
+        return changes;
+      }
+      LOG.warn(errors.toString());
     }
     for (String line : result.getOutputLines()) {
       if (StringUtil.isEmptyOrSpaces(line) || line.length() < ITEM_COUNT) {
@@ -205,13 +237,20 @@ public class HgStatusCommand {
   }
 
   @NotNull
-  public Collection<VirtualFile> getHgUntrackedFiles(@NotNull VirtualFile repo, @NotNull List<VirtualFile> files) throws VcsException {
-    Collection<VirtualFile> untrackedFiles = new HashSet<VirtualFile>();
-    List<FilePath> filePaths = ObjectsConvertor.vf2fp(files);
-    Set<HgChange> change = execute(repo, filePaths);
+  public Collection<VirtualFile> getFiles(@NotNull VirtualFile repo, @Nullable List<VirtualFile> files) {
+    return getFiles(repo, files != null ? ObjectsConvertor.vf2fp(files): null);
+  }
+
+  @NotNull
+  public Collection<VirtualFile> getFiles(@NotNull VirtualFile repo, @Nullable Collection<FilePath> paths) {
+    Collection<VirtualFile> resultFiles = new HashSet<>();
+    Set<HgChange> change = executeInCurrentThread(repo, paths);
     for (HgChange hgChange : change) {
-      untrackedFiles.add(hgChange.afterFile().toFilePath().getVirtualFile());
+      VirtualFile file = hgChange.afterFile().toFilePath().getVirtualFile();
+      if (file != null) {
+        resultFiles.add(file);
+      }
     }
-    return untrackedFiles;
+    return resultFiles;
   }
 }

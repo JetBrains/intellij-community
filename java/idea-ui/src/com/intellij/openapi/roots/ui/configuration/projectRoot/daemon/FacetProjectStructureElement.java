@@ -43,9 +43,15 @@ public class FacetProjectStructureElement extends ProjectStructureElement {
     return Collections.emptyList();
   }
 
+  @NotNull
+  @Override
+  public String getPresentableText() {
+    return "Facet '" + myFacet.getName() + "' in module '" + myFacet.getModule().getName() + "'";
+  }
+
   @Override
   public String getPresentableName() {
-    return "Facet '" + myFacet.getName() + "' in module '" + myFacet.getModule().getName() + "'";
+    return myFacet.getName();
   }
 
   @Override

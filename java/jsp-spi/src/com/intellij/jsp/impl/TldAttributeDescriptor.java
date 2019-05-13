@@ -16,12 +16,11 @@
 package com.intellij.jsp.impl;
 
 import com.intellij.xml.XmlAttributeDescriptor;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Maxim.Mossienko
  */
-public interface TldAttributeDescriptor extends XmlAttributeDescriptor {
+public interface TldAttributeDescriptor extends XmlAttributeDescriptor, MethodSignatureAwareAttributeDescriptor, TypeAwareAttributeDescriptor{
 
   /**
    * Indicates that attribute is a fragment
@@ -29,22 +28,6 @@ public interface TldAttributeDescriptor extends XmlAttributeDescriptor {
    * @return
    */
   boolean isIndirectSyntax();
-
-  /**
-   * Returns method signature for deferred methods
-   *
-   * @return
-   */
-  @Nullable
-  String getMethodSignature();
-
-  /**
-   * Returns value of "type" subtag
-   *
-   * @return
-   */
-  @Nullable
-  String getType();
 
   boolean isDeferred();
 

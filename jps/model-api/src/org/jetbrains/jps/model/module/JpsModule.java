@@ -22,8 +22,8 @@ import org.jetbrains.jps.model.library.JpsLibrary;
 import org.jetbrains.jps.model.library.JpsLibraryCollection;
 import org.jetbrains.jps.model.library.JpsLibraryType;
 import org.jetbrains.jps.model.library.sdk.JpsSdk;
-import org.jetbrains.jps.model.library.sdk.JpsSdkType;
 import org.jetbrains.jps.model.library.sdk.JpsSdkReference;
+import org.jetbrains.jps.model.library.sdk.JpsSdkType;
 
 import java.util.List;
 
@@ -45,24 +45,28 @@ public interface JpsModule extends JpsNamedElement, JpsReferenceableElement<JpsM
   Iterable<JpsTypedModuleSourceRoot<P>> getSourceRoots(@NotNull JpsModuleSourceRootType<P> type);
 
   @NotNull
-  <P extends JpsElement, Type extends JpsModuleSourceRootType<P> & JpsElementTypeWithDefaultProperties<P>>
-  JpsModuleSourceRoot addSourceRoot(@NotNull String url, @NotNull Type rootType);
+  <P extends JpsElement>
+  JpsModuleSourceRoot addSourceRoot(@NotNull String url, @NotNull JpsModuleSourceRootType<P> rootType);
 
   @NotNull
   <P extends JpsElement>
   JpsModuleSourceRoot addSourceRoot(@NotNull String url, @NotNull JpsModuleSourceRootType<P> rootType, @NotNull P properties);
 
+  void addSourceRoot(@NotNull JpsModuleSourceRoot root);
+
   void removeSourceRoot(@NotNull String url, @NotNull JpsModuleSourceRootType rootType);
 
-  @NotNull
-  <P extends JpsElement>
-  JpsFacet addFacet(@NotNull String name, @NotNull JpsFacetType<P> type, @NotNull P properties);
+  /**
+   * Add a {@link JpsExcludePattern pattern} for names of files which should be excluded from this module.
+   */
+  void addExcludePattern(@NotNull String baseDirUrl, @NotNull String pattern);
+  void removeExcludePattern(@NotNull String baseDirUrl, @NotNull String pattern);
 
-  @NotNull
-  List<JpsFacet> getFacets();
+  List<JpsExcludePattern> getExcludePatterns();
 
   JpsDependenciesList getDependenciesList();
 
+  @Override
   @NotNull
   JpsModuleReference createReference();
 

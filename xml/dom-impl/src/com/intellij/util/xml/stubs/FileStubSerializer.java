@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,24 +17,25 @@ package com.intellij.util.xml.stubs;
 
 import com.intellij.psi.stubs.*;
 import com.intellij.util.xml.XmlFileHeader;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 
 /**
  * @author Dmitry Avdeev
- *         Date: 8/8/12
  */
 public class FileStubSerializer implements ObjectStubSerializer<FileStub, Stub> {
 
-  public static FileStubSerializer INSTANCE = new FileStubSerializer();
+  final static FileStubSerializer INSTANCE = new FileStubSerializer();
 
+  @NotNull
   @Override
   public String getExternalId() {
     return "FileStubSerializer";
   }
 
   @Override
-  public void serialize(FileStub stub, StubOutputStream dataStream) throws IOException {
+  public void serialize(@NotNull FileStub stub, @NotNull StubOutputStream dataStream) throws IOException {
     XmlFileHeader header = stub.getHeader();
     dataStream.writeName(header.getRootTagLocalName());
     dataStream.writeName(header.getRootTagNamespace());
@@ -42,13 +43,14 @@ public class FileStubSerializer implements ObjectStubSerializer<FileStub, Stub> 
     dataStream.writeName(header.getSystemId());
   }
 
+  @NotNull
   @Override
-  public FileStub deserialize(StubInputStream dataStream, Stub parentStub) throws IOException {
+  public FileStub deserialize(@NotNull StubInputStream dataStream, Stub parentStub) throws IOException {
     return new FileStub(dataStream.readName(), dataStream.readName(), dataStream.readName(), dataStream.readName());
   }
 
   @Override
-  public void indexStub(FileStub stub, IndexSink sink) {
+  public void indexStub(@NotNull FileStub stub, @NotNull IndexSink sink) {
   }
 
   @Override

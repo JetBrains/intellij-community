@@ -27,7 +27,10 @@ import org.jetbrains.annotations.Nullable;
 public interface PsiImportStatementStub extends StubElement<PsiImportStatementBase> {
   boolean isStatic();
   boolean isOnDemand();
+
+  @Nullable
   String getImportReferenceText();
+
   @Nullable
   PsiJavaCodeReferenceElement getReference();
 }

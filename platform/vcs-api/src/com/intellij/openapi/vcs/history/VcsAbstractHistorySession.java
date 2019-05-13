@@ -42,16 +42,17 @@ public abstract class VcsAbstractHistorySession implements VcsHistorySession {
 
   public VcsAbstractHistorySession(List<? extends VcsFileRevision> revisions) {
     myLock = new Object();
-    myRevisions = new ArrayList<VcsFileRevision>(revisions);
+    myRevisions = new ArrayList<>(revisions);
     myCachedRevisionNumber = calcCurrentRevisionNumber();
   }
 
   protected VcsAbstractHistorySession(List<? extends VcsFileRevision> revisions, VcsRevisionNumber currentRevisionNumber) {
     myLock = new Object();
-    myRevisions = new ArrayList<VcsFileRevision>(revisions);
+    myRevisions = new ArrayList<>(revisions);
     myCachedRevisionNumber = currentRevisionNumber;
   }
 
+  @Override
   public List<VcsFileRevision> getRevisionList() {
     return myRevisions;
   }
@@ -68,15 +69,18 @@ public abstract class VcsAbstractHistorySession implements VcsHistorySession {
   @Nullable
   protected abstract VcsRevisionNumber calcCurrentRevisionNumber();
 
+  @Override
   public final VcsRevisionNumber getCurrentRevisionNumber() {
     return getCachedRevision();
   }
 
+  @Override
   public boolean isCurrentRevision(VcsRevisionNumber rev) {
     VcsRevisionNumber revNumber = getCurrentRevisionNumber();
     return revNumber != null && revNumber.compareTo(rev) == 0;
   }
 
+  @Override
   public synchronized boolean shouldBeRefreshed() {
     final VcsRevisionNumber oldValue = getCachedRevision();
     final VcsRevisionNumber newNumber = calcCurrentRevisionNumber();
@@ -84,6 +88,7 @@ public abstract class VcsAbstractHistorySession implements VcsHistorySession {
     return !Comparing.equal(oldValue, newNumber);
   }
 
+  @Override
   public boolean isContentAvailable(VcsFileRevision revision) {
     return true;
   }
@@ -97,7 +102,7 @@ public abstract class VcsAbstractHistorySession implements VcsHistorySession {
   }
 
   public Map<VcsRevisionNumber, VcsFileRevision> getHistoryAsMap() {
-    final Map<VcsRevisionNumber, VcsFileRevision> map = new HashMap<VcsRevisionNumber, VcsFileRevision>();
+    final Map<VcsRevisionNumber, VcsFileRevision> map = new HashMap<>();
     for (VcsFileRevision revision : myRevisions) {
       map.put(revision.getRevisionNumber(), revision);
     }

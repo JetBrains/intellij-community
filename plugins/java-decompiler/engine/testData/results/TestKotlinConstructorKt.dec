@@ -1,0 +1,75 @@
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.List;
+import kotlin.Metadata;
+import kotlin.TypeCastException;
+import kotlin.collections.CollectionsKt;
+
+@Metadata(
+   mv = {1, 1, 1},
+   bv = {1, 0, 0},
+   k = 2,
+   d1 = {"\u0000\u0016\n\u0000\n\u0002\u0010 \n\u0002\u0018\u0002\n\u0000\n\u0002\u0010\u001e\n\u0002\u0010\u000e\n\u0000\u001a\u001c\u0010\u0000\u001a\b\u0012\u0004\u0012\u00020\u00020\u00012\f\u0010\u0003\u001a\b\u0012\u0004\u0012\u00020\u00050\u0004H\u0002¨\u0006\u0006"},
+   d2 = {"foo", "", "LMapping;", "list", "", "", "module1"}
+)
+public final class TestKotlinConstructorKt {
+   private static final List<Mapping> foo(Collection<String> list) {
+      Iterable $receiver$iv = (Iterable)list;// 2
+      Collection destination$iv$iv = (Collection)(new ArrayList(CollectionsKt.collectionSizeOrDefault($receiver$iv, 10)));// 10
+      Iterator var4 = $receiver$iv.iterator();// 11
+
+      while(var4.hasNext()) {
+         Object item$iv$iv = var4.next();
+         String it = (String)item$iv$iv;// 12
+         Mapping var10000 = new Mapping;
+         if (it == null) {// 3
+            throw new TypeCastException("null cannot be cast to non-null type kotlin.String");
+         }
+
+         var10000.<init>((String)it);
+         Mapping var11 = var10000;
+         destination$iv$iv.add(var11);
+      }
+
+      return CollectionsKt.toList((Iterable)((List)destination$iv$iv));// 4 13
+   }
+}
+
+class 'TestKotlinConstructorKt' {
+   method 'foo (Ljava/util/Collection;)Ljava/util/List;' {
+      1      17
+      4      17
+      d      18
+      f      18
+      15      18
+      18      18
+      1b      19
+      20      19
+      24      21
+      2e      22
+      33      22
+      38      23
+      3b      23
+      46      25
+      4d      26
+      52      26
+      53      29
+      56      29
+      59      30
+      5f      31
+      69      34
+      6c      34
+      6f      34
+      72      34
+   }
+}
+
+Lines mapping:
+2 <-> 18
+3 <-> 26
+4 <-> 35
+10 <-> 19
+11 <-> 20
+12 <-> 24
+13 <-> 35

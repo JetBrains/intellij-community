@@ -30,7 +30,7 @@
       <val name="flags" val="{java.awt.event.HierarchyEvent.PARENT_CHANGED,java.awt.event.HierarchyEvent.DISPLAYABILITY_CHANGED,java.awt.event.HierarchyEvent.SHOWING_CHANGED}" />
     </annotation>
   </item>
-  <item name="java.awt.event.HierarchyEvent int getChangeFlags()">
+  <item name="java.awt.event.HierarchyEvent long getChangeFlags()">
     <annotation name="org.intellij.lang.annotations.MagicConstant">
       <val name="flags" val="{java.awt.event.HierarchyEvent.PARENT_CHANGED,java.awt.event.HierarchyEvent.DISPLAYABILITY_CHANGED,java.awt.event.HierarchyEvent.SHOWING_CHANGED}" />
     </annotation>
@@ -80,6 +80,9 @@
       <val name="flagsFromClass" val="java.awt.event.InputEvent.class" />
     </annotation>
   </item>
+  <item name='java.awt.event.KeyEvent java.lang.String getKeyText(int)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
   <item name="java.awt.event.KeyEvent void setModifiers(int) 0">
     <annotation name="org.intellij.lang.annotations.MagicConstant">
       <val name="flagsFromClass" val="java.awt.event.InputEvent.class" />
@@ -99,6 +102,9 @@
     <annotation name="org.intellij.lang.annotations.MagicConstant">
       <val name="flagsFromClass" val="java.awt.event.InputEvent.class" />
     </annotation>
+  </item>
+  <item name='java.awt.event.MouseEvent java.awt.Point getPoint()'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
   <item name="java.awt.event.MouseEvent java.lang.String getMouseModifiersText(int) 0">
     <annotation name="org.intellij.lang.annotations.MagicConstant">

@@ -16,44 +16,33 @@
 package com.intellij.junit3;
 
 import com.intellij.rt.execution.junit.*;
-import com.intellij.rt.execution.junit.segments.OutputObjectRegistry;
-import com.intellij.rt.execution.junit.segments.SegmentedOutputStream;
 import junit.framework.*;
 import junit.textui.ResultPrinter;
 import junit.textui.TestRunner;
 
-import java.util.ArrayList;
-import java.util.Enumeration;
-import java.util.List;
-import java.util.Vector;
+import java.io.PrintWriter;
+import java.io.StringWriter;
+import java.util.*;
 
 public class JUnit3IdeaTestRunner extends TestRunner implements IdeaTestRunner {
-  private TestListener myTestsListener;
-  private JUnit3OutputObjectRegistry myRegistry;
+  private SMTestListener myTestsListener;
   private ArrayList myListeners;
-  private boolean mySendTree;
 
   public JUnit3IdeaTestRunner() {
     super(DeafStream.DEAF_PRINT_STREAM);
   }
 
-  public int startRunnerWithArgs(String[] args, ArrayList listeners, boolean sendTree) {
+  public void createListeners(ArrayList listeners, int count) {
+    myTestsListener = new SMTestListener();
     myListeners = listeners;
-    mySendTree = sendTree;
-    if (sendTree) {
-      setPrinter(new TimeSender(myRegistry));
-    }
-    else {
-      setPrinter(new MockResultPrinter());
-    }
+  }
+
+  public int startRunnerWithArgs(String[] args, String name, int count, boolean sendTree) {
+    setPrinter(new MockResultPrinter());
     try {
       Test suite = TestRunnerUtil.getTestSuite(this, args);
       if (suite == null) return -1;
-      TestResult result = doRun(suite);
-      if (!result.wasSuccessful()) {
-        return -1;
-      }
-      return 0;
+      return doRun(suite).wasSuccessful() ? 0 : -1;
     }
     catch (Exception e) {
       e.printStackTrace(System.err);
@@ -69,12 +58,7 @@ public class JUnit3IdeaTestRunner extends TestRunner implements IdeaTestRunner {
     super.runFailed(message);
   }
 
-  public void setStreams(SegmentedOutputStream segmentedOut, SegmentedOutputStream segmentedErr, int lastIdx) {
-    myRegistry = new JUnit3OutputObjectRegistry(segmentedOut, lastIdx);
-    myTestsListener = new TestResultsSender(myRegistry);
-  }
-
-  public Object getTestToStart(String[] args) {
+  public Object getTestToStart(String[] args, String name) {
     return TestRunnerUtil.getTestSuite(this, args);
   }
 
@@ -82,8 +66,8 @@ public class JUnit3IdeaTestRunner extends TestRunner implements IdeaTestRunner {
     return getTestCasesOf((Test)description);
   }
 
-  public OutputObjectRegistry getRegistry() {
-    return myRegistry;
+  public String getTestClassName(Object child) {
+    return child instanceof TestSuite ? ((TestSuite)child).getName() : child.getClass().getName();
   }
 
   public String getStartDescription(Object child) {
@@ -126,17 +110,10 @@ public class JUnit3IdeaTestRunner extends TestRunner implements IdeaTestRunner {
   }
 
   public TestResult doRun(Test suite, boolean wait) {  //todo
-    if (mySendTree) {
-      try {
-        TreeSender.sendTree(this, suite);
-      }
-      catch (Exception e) {
-        //noinspection HardCodedStringLiteral
-        System.err.println("Internal Error occured.");
-        e.printStackTrace(System.err);
-      }
-    }
-    return super.doRun(suite, wait);
+    final TestResult testResult = super.doRun(suite, wait);
+    myTestsListener.finishSuite();
+
+    return testResult;
   }
 
   static Vector getTestCasesOf(Test test) {
@@ -159,6 +136,99 @@ public class JUnit3IdeaTestRunner extends TestRunner implements IdeaTestRunner {
   public static class MockResultPrinter extends ResultPrinter {
     public MockResultPrinter() {
       super(DeafStream.DEAF_PRINT_STREAM);
+    }
+  }
+
+  private static class SMTestListener implements TestListener {
+    private String myClassName;
+    private long myCurrentTestStart;
+
+    public void addError(Test test, Throwable e) {
+      testFailure(e, MapSerializerUtil.TEST_FAILED, getMethodName(test));
+    }
+
+    private void testFailure(Throwable failure, String messageName, String methodName) {
+      final Map attrs = new HashMap();
+      attrs.put("name", methodName);
+      final long duration = System.currentTimeMillis() - myCurrentTestStart;
+      if (duration > 0) {
+        attrs.put("duration", Long.toString(duration));
+      }
+      try {
+        final String trace = getTrace(failure);
+        ComparisonFailureData notification = null;
+        if (failure instanceof FileComparisonFailure) {
+          final FileComparisonFailure comparisonFailure = (FileComparisonFailure)failure;
+          notification = new ComparisonFailureData(comparisonFailure.getExpected(), comparisonFailure.getActual(), 
+                                                   comparisonFailure.getFilePath(), comparisonFailure.getActualFilePath());
+        }
+        else if (failure instanceof ComparisonFailure || failure.getClass().getName().equals("org.junit.ComparisonFailure")) {
+          notification = new ComparisonFailureData(ComparisonDetailsExtractor.getExpected(failure), ComparisonDetailsExtractor.getActual(failure));
+        }
+        ComparisonFailureData.registerSMAttributes(notification, trace, failure.getMessage(), attrs, failure);
+      }
+      catch (Throwable e) {
+        final StringWriter stringWriter = new StringWriter();
+        final PrintWriter writer = new PrintWriter(stringWriter);
+        e.printStackTrace(writer);
+        ComparisonFailureData.registerSMAttributes(null, stringWriter.toString(), e.getMessage(), attrs, e);
+      }
+      finally {
+        System.out.println("\n" + MapSerializerUtil.asString(messageName, attrs));
+      }
+    }
+
+    public String getTrace(Throwable failure) {
+      StringWriter stringWriter = new StringWriter();
+      PrintWriter writer = new PrintWriter(stringWriter);
+      failure.printStackTrace(writer);
+      return stringWriter.toString();
+    }
+    
+    private static String getMethodName(Test test) {
+      final String toString = test.toString();
+      final int braceIdx = toString.indexOf("(");
+      return braceIdx > 0 ? toString.substring(0, braceIdx) : toString;
+    }
+    
+    private static String getClassName(Test test) {
+      final String toString = test.toString();
+      final int braceIdx = toString.indexOf("(");
+      return braceIdx > 0 && toString.endsWith(")") ? toString.substring(braceIdx + 1, toString.length() - 1) : null;
+    }
+
+    public void addFailure(Test test, AssertionFailedError e) {
+      addError(test, e);
+    }
+
+    public void endTest(Test test) {
+      final long duration = System.currentTimeMillis() - myCurrentTestStart;
+      System.out.println("\n##teamcity[testFinished name=\'" + escapeName(getMethodName(test)) +
+                         (duration > 0 ? "\' duration=\'" + duration : "") + "\']");
+    }
+
+    public void startTest(Test test) {
+      myCurrentTestStart = System.currentTimeMillis();
+      final String className = getClassName(test);
+      if (className != null && !className.equals(myClassName)) {
+        finishSuite();
+        myClassName = className;
+        System.out.println("##teamcity[testSuiteStarted name =\'" + escapeName(myClassName) + 
+                           "\' locationHint=\'java:suite://" + escapeName(className) + "\']");
+      }
+      final String methodName = getMethodName(test);
+      System.out.println("##teamcity[testStarted name=\'" + escapeName(methodName) + 
+                         "\' locationHint=\'java:test://" + escapeName(className + "/" + methodName) + "\']");
+    }
+
+    protected void finishSuite() {
+      if (myClassName != null) {
+        System.out.println("##teamcity[testSuiteFinished name=\'" + escapeName(myClassName) + "\']");
+      }
+    }
+
+    private static String escapeName(String str) {
+      return MapSerializerUtil.escapeStr(str, MapSerializerUtil.STD_ESCAPER);
     }
   }
 }

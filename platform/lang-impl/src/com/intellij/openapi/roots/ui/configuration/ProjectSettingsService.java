@@ -45,6 +45,9 @@ public class ProjectSettingsService {
   public void openGlobalLibraries() {
   }
 
+  public void openLibrary(@NotNull Library library) {
+  }
+
   public void openModuleSettings(final Module module) {
   }
 
@@ -73,7 +76,7 @@ public class ProjectSettingsService {
     return false;
   }
 
-  public void openLibraryOrSdkSettings(final @NotNull OrderEntry orderEntry) {
+  public void openLibraryOrSdkSettings(@NotNull final OrderEntry orderEntry) {
     Configurable additionalSettingsConfigurable = getLibrarySettingsConfigurable(orderEntry);
     if (additionalSettingsConfigurable != null) {
       ShowSettingsUtil.getInstance().showSettingsDialog(orderEntry.getOwnerModule().getProject(),

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,11 +18,8 @@ package com.intellij.psi.impl.compiled;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiImplUtil;
-import com.intellij.psi.impl.meta.MetaRegistry;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.tree.TreeElement;
-import com.intellij.psi.meta.PsiMetaData;
-import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -30,13 +27,13 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author ven
  */
-public abstract class ClsAnnotationValueImpl extends ClsElementImpl implements PsiAnnotation, Navigatable {
+abstract class ClsAnnotationValueImpl extends ClsElementImpl implements PsiAnnotation, Navigatable {
   private final ClsElementImpl myParent;
   private final ClsJavaCodeReferenceElementImpl myReferenceElement;
   private final ClsAnnotationParameterListImpl myParameterList;
 
   @SuppressWarnings("AbstractMethodCallInConstructor")
-  public ClsAnnotationValueImpl(@NotNull ClsElementImpl parent) {
+  ClsAnnotationValueImpl(@NotNull ClsElementImpl parent) {
     myParent = parent;
     myReferenceElement = createReference();
     myParameterList = createParameterList();
@@ -112,7 +109,7 @@ public abstract class ClsAnnotationValueImpl extends ClsElementImpl implements P
 
   @Override
   public <T extends PsiAnnotationMemberValue> T setDeclaredAttributeValue(@NonNls String attributeName, T value) {
-    throw new IncorrectOperationException(CAN_NOT_MODIFY_MESSAGE);
+    throw cannotModifyException(this);
   }
 
   @Override
@@ -120,10 +117,5 @@ public abstract class ClsAnnotationValueImpl extends ClsElementImpl implements P
     final StringBuilder buffer = new StringBuilder();
     appendMirrorText(0, buffer);
     return buffer.toString();
-  }
-
-  @Override
-  public PsiMetaData getMetaData() {
-    return MetaRegistry.getMetaBase(this);
   }
 }

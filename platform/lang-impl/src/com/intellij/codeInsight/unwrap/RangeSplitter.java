@@ -22,12 +22,12 @@ import java.util.List;
 import java.util.ArrayList;
 
 public class RangeSplitter {
-  public static List<TextRange> split(TextRange target, List<TextRange> deviders) {
-    List<TextRange> result = new ArrayList<TextRange>();
+  public static List<TextRange> split(TextRange target, List<? extends TextRange> deviders) {
+    List<TextRange> result = new ArrayList<>();
     result.add(target);
 
     for (TextRange devider : deviders) {
-      List<TextRange> temp = new ArrayList<TextRange>();
+      List<TextRange> temp = new ArrayList<>();
       for (TextRange range : result) {
         if (!range.contains(devider)) {
           temp.add(range);

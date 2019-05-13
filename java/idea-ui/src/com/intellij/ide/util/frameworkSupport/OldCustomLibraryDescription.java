@@ -20,6 +20,7 @@ import com.intellij.facet.ui.libraries.LibraryDownloadInfo;
 import com.intellij.facet.ui.libraries.LibraryInfo;
 import com.intellij.framework.library.DownloadableLibraryDescription;
 import com.intellij.framework.library.DownloadableLibraryFileDescription;
+import com.intellij.framework.FrameworkAvailabilityCondition;
 import com.intellij.framework.library.FrameworkLibraryVersion;
 import com.intellij.framework.library.impl.DownloadableLibraryDescriptionImpl;
 import com.intellij.framework.library.impl.DownloadableLibraryFileDescriptionImpl;
@@ -51,9 +52,9 @@ public class OldCustomLibraryDescription extends CustomLibraryDescriptionBase {
   private OldCustomLibraryDescription(final List<FrameworkVersion> versions, String defaultLibraryName) {
     super(defaultLibraryName);
     myVersions = versions;
-    final List<FrameworkLibraryVersion> libraryVersions = new ArrayList<FrameworkLibraryVersion>();
+    final List<FrameworkLibraryVersion> libraryVersions = new ArrayList<>();
     for (FrameworkVersion version : versions) {
-      List<DownloadableLibraryFileDescription> downloads = new ArrayList<DownloadableLibraryFileDescription>();
+      List<DownloadableLibraryFileDescription> downloads = new ArrayList<>();
       for (LibraryInfo info : version.getLibraries()) {
         final LibraryDownloadInfo downloadingInfo = info.getDownloadingInfo();
         if (downloadingInfo != null) {
@@ -61,7 +62,9 @@ public class OldCustomLibraryDescription extends CustomLibraryDescriptionBase {
                                                                    downloadingInfo.getFileNameSuffix(), null, null, false));
         }
       }
-      libraryVersions.add(new FrameworkLibraryVersionImpl(version.getVersionName(), downloads, version.getLibraryName()));
+      String libraryName = version.getLibraryName();
+      libraryVersions.add(new FrameworkLibraryVersionImpl(libraryName, version.getVersionName(), FrameworkAvailabilityCondition.ALWAYS_TRUE, downloads,
+                                                          libraryName));
     }
     myDownloadableDescription = !libraryVersions.isEmpty() ? new DownloadableLibraryDescriptionImpl(libraryVersions) : null;
   }
@@ -89,7 +92,7 @@ public class OldCustomLibraryDescription extends CustomLibraryDescriptionBase {
   @Nullable
   public static CustomLibraryDescription createByVersions(List<? extends FrameworkVersion> versions) {
     String defaultLibraryName = null;
-    List<FrameworkVersion> withLibraries = new ArrayList<FrameworkVersion>();
+    List<FrameworkVersion> withLibraries = new ArrayList<>();
     for (FrameworkVersion version : versions) {
       if (version.getLibraries().length > 0) {
         if (version.isDefault()) {

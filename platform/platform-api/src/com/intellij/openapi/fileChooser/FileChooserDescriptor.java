@@ -1,30 +1,20 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.fileChooser;
 
+import com.intellij.ide.highlighter.ArchiveFileType;
 import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.fileTypes.FileTypeManager;
-import com.intellij.openapi.fileTypes.FileTypes;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.vfs.JarFileSystem;
+import com.intellij.openapi.vfs.VFileProperty;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.LayeredIcon;
 import com.intellij.ui.UIBundle;
 import com.intellij.util.IconUtil;
 import com.intellij.util.PlatformIcons;
+import gnu.trove.THashMap;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -36,7 +26,7 @@ import java.util.*;
  */
 public class FileChooserDescriptor implements Cloneable {
   private final boolean myChooseFiles;
-  private boolean myChooseFolders;
+  private final boolean myChooseFolders;
   private final boolean myChooseJars;
   private final boolean myChooseJarsAsFiles;
   private final boolean myChooseJarContents;
@@ -46,11 +36,14 @@ public class FileChooserDescriptor implements Cloneable {
   private String myDescription;
 
   private boolean myHideIgnored = true;
-  private final List<VirtualFile> myRoots = new ArrayList<VirtualFile>();
+  private final List<VirtualFile> myRoots = new ArrayList<>();
   private boolean myShowFileSystemRoots = true;
-  private boolean myIsTreeRootVisible = false;
+  private boolean myTreeRootVisible = false;
+  private boolean myShowHiddenFiles = false;
+  private Condition<VirtualFile> myFileFilter = null;
+  private boolean myForcedToUseIdeaFileChooser = false;
 
-  private final Map<String, Object> myUserData = new HashMap<String, Object>();
+  private final Map<String, Object> myUserData = new THashMap<>();
 
   /**
    * Creates new instance. Use methods from {@link FileChooserDescriptorFactory} for most used descriptors.
@@ -76,12 +69,101 @@ public class FileChooserDescriptor implements Cloneable {
     myChooseMultiple = chooseMultiple;
   }
 
-  public final String getTitle() {
+  public FileChooserDescriptor(@NotNull FileChooserDescriptor d) {
+    this(d.isChooseFiles(), d.isChooseFolders(), d.isChooseJars(), d.isChooseJarsAsFiles(), d.isChooseJarContents(), d.isChooseMultiple());
+    withTitle(d.getTitle());
+    withDescription(d.getDescription());
+    withHideIgnored(d.isHideIgnored());
+    withRoots(d.getRoots());
+    withShowFileSystemRoots(d.isShowFileSystemRoots());
+    withTreeRootVisible(d.isTreeRootVisible());
+    withShowHiddenFiles(d.isShowHiddenFiles());
+  }
+
+  public boolean isChooseFiles() {
+    return myChooseFiles;
+  }
+
+  public boolean isChooseFolders() {
+    return myChooseFolders;
+  }
+
+  public boolean isChooseJars() {
+    return myChooseJars;
+  }
+
+  public boolean isChooseJarsAsFiles() {
+    return myChooseJarsAsFiles;
+  }
+
+  public boolean isChooseJarContents() {
+    return myChooseJarContents;
+  }
+
+  public boolean isChooseMultiple() {
+    return myChooseMultiple;
+  }
+
+  public String getTitle() {
     return myTitle;
   }
 
-  public final void setTitle(String title) {
+  public void setTitle(@Nls(capitalization = Nls.Capitalization.Title) String title) {
+    withTitle(title);
+  }
+
+  public FileChooserDescriptor withTitle(@Nls(capitalization = Nls.Capitalization.Title) String title) {
     myTitle = title;
+    return this;
+  }
+
+  public String getDescription() {
+    return myDescription;
+  }
+
+  public void setDescription(@Nls(capitalization = Nls.Capitalization.Sentence) String description) {
+    withDescription(description);
+  }
+
+  public FileChooserDescriptor withDescription(@Nls(capitalization = Nls.Capitalization.Sentence) String description) {
+    myDescription = description;
+    return this;
+  }
+
+  public boolean isHideIgnored() {
+    return myHideIgnored;
+  }
+
+  public void setHideIgnored(boolean hideIgnored) {
+    withHideIgnored(hideIgnored);
+  }
+
+  public FileChooserDescriptor withHideIgnored(boolean hideIgnored) {
+    myHideIgnored = hideIgnored;
+    return this;
+  }
+
+  public List<VirtualFile> getRoots() {
+    return Collections.unmodifiableList(myRoots);
+  }
+
+  public void setRoots(@NotNull VirtualFile... roots) {
+    withRoots(roots);
+  }
+
+  public void setRoots(@NotNull List<VirtualFile> roots) {
+    withRoots(roots);
+  }
+
+  public FileChooserDescriptor withRoots(final VirtualFile... roots) {
+    return withRoots(Arrays.asList(roots));
+  }
+
+  public FileChooserDescriptor withRoots(@NotNull List<? extends VirtualFile> roots) {
+    if (roots.contains(null)) throw new IllegalArgumentException("'null' in roots: " + roots);
+    myRoots.clear();
+    myRoots.addAll(roots);
+    return this;
   }
 
   public boolean isShowFileSystemRoots() {
@@ -89,84 +171,99 @@ public class FileChooserDescriptor implements Cloneable {
   }
 
   public void setShowFileSystemRoots(boolean showFileSystemRoots) {
+    withShowFileSystemRoots(showFileSystemRoots);
+  }
+
+  public FileChooserDescriptor withShowFileSystemRoots(boolean showFileSystemRoots) {
     myShowFileSystemRoots = showFileSystemRoots;
+    return this;
   }
 
-  public final String getDescription() {
-    return myDescription;
+  public boolean isTreeRootVisible() {
+    return myTreeRootVisible;
   }
 
-  public final void setDescription(String description) {
-    myDescription = description;
+  public FileChooserDescriptor withTreeRootVisible(boolean isTreeRootVisible) {
+    myTreeRootVisible = isTreeRootVisible;
+    return this;
   }
 
-  public final boolean isChooseJarContents() {
-    return myChooseJarContents;
+  public boolean isShowHiddenFiles() {
+    return myShowHiddenFiles;
   }
 
-  public boolean isChooseFiles() {
-    return myChooseFiles;
+  public FileChooserDescriptor withShowHiddenFiles(boolean showHiddenFiles) {
+    myShowHiddenFiles = showHiddenFiles;
+    return this;
   }
 
   /**
-   * If true, the user will be able to choose multiple files.
+   * Sets simple boolean condition for use in {@link #isFileVisible(VirtualFile, boolean)} and {@link #isFileSelectable(VirtualFile)}.
    */
-  public final boolean getChooseMultiple() {
-    return isChooseMultiple();
+  public FileChooserDescriptor withFileFilter(@Nullable Condition<VirtualFile> filter) {
+    myFileFilter = filter;
+    return this;
   }
 
   /**
-   * Defines whether file can be chosen or not 
-   */ 
-  public boolean isFileSelectable(VirtualFile file) {
-    if (file == null) return false;
-    if (file.isDirectory() && myChooseFolders) return true;
-    if (acceptAsJarFile(file)) return true;
-    if (acceptAsGeneralFile(file)) return true;
-    return false;
-  }
-
-  /**
-   * Defines whether file is visible in the tree
-   */ 
+   * Defines whether a file is visible in the tree.
+   */
   public boolean isFileVisible(VirtualFile file, boolean showHiddenFiles) {
+    if (file.is(VFileProperty.SYMLINK) && file.getCanonicalPath() == null) {
+      return false;
+    }
+
     if (!file.isDirectory()) {
       if (FileElement.isArchive(file)) {
         if (!myChooseJars && !myChooseJarContents) {
           return false;
         }
       }
-      else {
-        if (!myChooseFiles) {
-          return false;
-        }
+      else if (!myChooseFiles) {
+        return false;
+      }
+      if (myFileFilter != null && !myFileFilter.value(file)) {
+        return false;
       }
     }
 
-    // do not include ignored files
     if (isHideIgnored() && FileTypeManager.getInstance().isFileIgnored(file)) {
       return false;
     }
 
-    // do not include hidden files
-    if (!showHiddenFiles) {
-      if (FileElement.isFileHidden(file)) {
-        return false;
-      }
+    if (!showHiddenFiles && FileElement.isFileHidden(file)) {
+      return false;
     }
-    
+
     return true;
   }
 
-  public Icon getIcon(final VirtualFile file) {
-    if (file.isDirectory()) {
-      return dressIcon(file, PlatformIcons.DIRECTORY_CLOSED_ICON);
+  /**
+   * Defines whether a file can be chosen.
+   */
+  public boolean isFileSelectable(VirtualFile file) {
+    if (file == null) return false;
+
+    if (file.is(VFileProperty.SYMLINK) && file.getCanonicalPath() == null) {
+      return false;
     }
-    return IconUtil.getIcon(file, Iconable.ICON_FLAG_READ_STATUS, null);
+    if (file.isDirectory() && myChooseFolders) {
+      return true;
+    }
+
+    if (myFileFilter != null && !file.isDirectory()) {
+      return myFileFilter.value(file);
+    }
+
+    return acceptAsJarFile(file) || acceptAsGeneralFile(file);
+  }
+
+  public Icon getIcon(final VirtualFile file) {
+    return dressIcon(file, IconUtil.getIcon(file, Iconable.ICON_FLAG_READ_STATUS, null));
   }
 
   protected static Icon dressIcon(final VirtualFile file, final Icon baseIcon) {
-    return file.isValid() && file.isSymLink() ? new LayeredIcon(baseIcon, PlatformIcons.SYMLINK_ICON) : baseIcon;
+    return file.isValid() && file.is(VFileProperty.SYMLINK) ? new LayeredIcon(baseIcon, PlatformIcons.SYMLINK_ICON) : baseIcon;
   }
 
   public String getName(final VirtualFile file) {
@@ -187,6 +284,14 @@ public class FileChooserDescriptor implements Cloneable {
   public void validateSelectedFiles(VirtualFile[] files) throws Exception {
   }
 
+  public boolean isForcedToUseIdeaFileChooser() {
+    return myForcedToUseIdeaFileChooser;
+  }
+
+  public void setForcedToUseIdeaFileChooser(boolean forcedToUseIdeaFileChooser) {
+    myForcedToUseIdeaFileChooser = forcedToUseIdeaFileChooser;
+  }
+
   private boolean acceptAsGeneralFile(VirtualFile file) {
     if (FileElement.isArchive(file)) return false; // should be handle by acceptsAsJarFile
     return !file.isDirectory() && myChooseFiles;
@@ -201,7 +306,7 @@ public class FileChooserDescriptor implements Cloneable {
     if (file.isDirectory() && (myChooseFolders || isFileSelectable(file))) {
       return file;
     }
-    boolean isJar = file.getFileType() == FileTypes.ARCHIVE;
+    boolean isJar = file.getFileType() == ArchiveFileType.INSTANCE;
     if (!isJar) {
       return acceptAsGeneralFile(file) ? file : null;
     }
@@ -215,45 +320,7 @@ public class FileChooserDescriptor implements Cloneable {
     return JarFileSystem.getInstance().findFileByPath(path + JarFileSystem.JAR_SEPARATOR);
   }
 
-  public final void setHideIgnored(boolean hideIgnored) {
-    myHideIgnored = hideIgnored;
-  }
-
-  public final List<VirtualFile> getRoots() {
-    return Collections.unmodifiableList(myRoots);
-  }
-
-  public final void setRoots(final VirtualFile... roots) {
-    setRoots(Arrays.asList(roots));
-  }
-
-  public final void setRoots(@NotNull final List<VirtualFile> roots) {
-    myRoots.clear();
-    myRoots.addAll(roots);
-  }
-
-  /** @deprecated use {@linkplain #setRoots(com.intellij.openapi.vfs.VirtualFile...)} (to remove in IDEA 13) */
-  @SuppressWarnings("UnusedDeclaration")
-  public final void setRoot(VirtualFile root) {
-    myRoots.clear();
-    myRoots.add(root);
-  }
-
-  /** @deprecated use {@linkplain #setRoots(com.intellij.openapi.vfs.VirtualFile...)} (to remove in IDEA 13) */
-  @SuppressWarnings("UnusedDeclaration")
-  public final void addRoot(VirtualFile root) {
-    myRoots.add(root);
-  }
-
-  public boolean isTreeRootVisible() {
-    return myIsTreeRootVisible;
-  }
-
-  public FileChooserDescriptor setIsTreeRootVisible(boolean isTreeRootVisible) {
-    myIsTreeRootVisible = isTreeRootVisible;
-    return this;
-  }
-
+  @Override
   public final Object clone() {
     try {
       return super.clone();
@@ -263,28 +330,8 @@ public class FileChooserDescriptor implements Cloneable {
     }
   }
 
-  public boolean isChooseFolders() {
-    return myChooseFolders;
-  }
-
-  public boolean isChooseJars() {
-    return myChooseJars;
-  }
-
-  public boolean isChooseJarsAsFiles() {
-    return myChooseJarsAsFiles;
-  }
-
-  public boolean isChooseMultiple() {
-    return myChooseMultiple;
-  }
-
-  public boolean isHideIgnored() {
-    return myHideIgnored;
-  }
-
   @Nullable
-  public Object getUserData(String dataId) {
+  public Object getUserData(@NotNull String dataId) {
     return myUserData.get(dataId);
   }
 

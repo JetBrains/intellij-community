@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,7 +38,7 @@ public class JpsApplicationRunConfigurationSerializer extends JpsRunConfiguratio
   public JpsApplicationRunConfigurationProperties loadProperties(@Nullable Element runConfigurationTag) {
     JpsApplicationRunConfigurationState properties = runConfigurationTag != null ?
                                                      XmlSerializer.deserialize(runConfigurationTag, JpsApplicationRunConfigurationState.class) : new JpsApplicationRunConfigurationState();
-    return JpsJavaExtensionService.getInstance().createRunConfigurationProperties(properties != null ? properties : new JpsApplicationRunConfigurationState());
+    return JpsJavaExtensionService.getInstance().createRunConfigurationProperties(properties);
   }
 
   @Override

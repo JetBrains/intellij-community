@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,7 +43,7 @@ import java.util.Set;
 */
 public class GroovyLibraryDescription extends CustomLibraryDescription {
   private static final String GROOVY_FRAMEWORK_NAME = "Groovy";
-  private String myEnvVariable;
+  private final String myEnvVariable;
   private final Set<? extends LibraryKind> myLibraryKinds;
   private final String myFrameworkName;
 
@@ -52,7 +52,7 @@ public class GroovyLibraryDescription extends CustomLibraryDescription {
   }
 
   public static Set<? extends LibraryKind> getAllGroovyKinds() {
-    final HashSet<LibraryKind> kinds = new HashSet<LibraryKind>();
+    final HashSet<LibraryKind> kinds = new HashSet<>();
     for (LibraryPresentationProvider provider : LibraryPresentationProvider.EP_NAME.getExtensions()) {
       if (provider instanceof GroovyLibraryPresentationProviderBase) {
         kinds.add(provider.getKind());
@@ -126,7 +126,7 @@ public class GroovyLibraryDescription extends CustomLibraryDescription {
     final String sdkVersion = provider.getSDKVersion(path);
     if (AbstractConfigUtils.UNDEFINED_VERSION.equals(sdkVersion)) {
       Messages.showErrorDialog(parentComponent,
-                               "Looks like " + myFrameworkName + " distribution in specified path is broken. Cannot determinate version.",
+                               "Looks like " + myFrameworkName + " distribution in specified path is broken. Cannot determine version.",
                                "Failed to Create Library");
       return null;
     }
@@ -141,7 +141,7 @@ public class GroovyLibraryDescription extends CustomLibraryDescription {
 
   @Nullable
   private static VirtualFile findFile(String path) {
-    if (path != null && path.length() > 0) {
+    if (path != null && !path.isEmpty()) {
       return LocalFileSystem.getInstance().findFileByPath(FileUtil.toSystemIndependentName(path));
     }
     return null;

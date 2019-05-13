@@ -15,81 +15,14 @@
  */
 package org.jetbrains.plugins.groovy.codeInspection.control;
 
-import com.intellij.psi.PsiElement;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.groovy.codeInspection.BaseInspection;
-import org.jetbrains.plugins.groovy.codeInspection.BaseInspectionVisitor;
 import org.jetbrains.plugins.groovy.codeInspection.utils.SingleIntegerFieldOptionsPanel;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrIfStatement;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 
 import javax.swing.*;
 
-public class GroovyIfStatementWithTooManyBranchesInspection extends BaseInspection {
+public class GroovyIfStatementWithTooManyBranchesInspection extends GroovyIfStatementWithTooManyBranchesInspectionBase {
 
-  private static final int DEFAULT_BRANCH_LIMIT = 3;
-
-  /**
-   * @noinspection PublicField,WeakerAccess
-   */
-  public int m_limit = DEFAULT_BRANCH_LIMIT;  //this is public for the DefaultJDOMExternalizer thingy
-
-  @NotNull
-  public String getDisplayName() {
-    return "If statement with too many branches";
-  }
-
-  @NotNull
-  public String getGroupDisplayName() {
-    return CONTROL_FLOW;
-  }
-
-  private int getLimit() {
-    return m_limit;
-  }
-
+  @Override
   public JComponent createOptionsPanel() {
     return new SingleIntegerFieldOptionsPanel("Maximum number of branches:", this, "m_limit");
-  }
-
-  protected String buildErrorString(Object... args) {
-    final GrIfStatement statement = (GrIfStatement) args[0];
-    final int branches = calculateNumBranches(statement);
-    return "'#ref' statement with too many branches (" + branches + ") #loc";
-  }
-
-  private static int calculateNumBranches(GrIfStatement statement) {
-    final GrStatement branch = statement.getElseBranch();
-    if (branch == null) {
-      return 1;
-    }
-    if (!(branch instanceof GrIfStatement)) {
-      return 2;
-    }
-    return 1 + calculateNumBranches((GrIfStatement) branch);
-  }
-
-  public BaseInspectionVisitor buildVisitor() {
-    return new Visitor();
-  }
-
-  private class Visitor extends BaseInspectionVisitor {
-
-    public void visitIfStatement(@NotNull GrIfStatement statement) {
-      super.visitIfStatement(statement);
-      final PsiElement parent = statement.getParent();
-      if (parent instanceof GrIfStatement) {
-        final GrIfStatement parentStatement = (GrIfStatement) parent;
-        final GrStatement elseBranch = parentStatement.getElseBranch();
-        if (statement.equals(elseBranch)) {
-          return;
-        }
-      }
-      final int branches = calculateNumBranches(statement);
-      if (branches <= getLimit()) {
-        return;
-      }
-      registerStatementError(statement, statement);
-    }
   }
 }

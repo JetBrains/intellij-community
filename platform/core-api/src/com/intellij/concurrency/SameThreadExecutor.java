@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,8 @@
  */
 package com.intellij.concurrency;
 
+import org.jetbrains.annotations.NotNull;
+
 import java.util.concurrent.Executor;
 
 /**
@@ -23,7 +25,7 @@ import java.util.concurrent.Executor;
 public class SameThreadExecutor implements Executor {
   public static final Executor INSTANCE = new SameThreadExecutor();
   @Override
-  public void execute(Runnable command) {
+  public void execute(@NotNull Runnable command) {
     command.run();
   }
 }

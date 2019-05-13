@@ -1,6 +1,6 @@
 
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,20 +16,22 @@
  */
 package com.intellij.refactoring.migration;
 
+import com.intellij.openapi.util.io.FileUtil;
+
 import java.util.ArrayList;
 
 public class MigrationMap {
   private String myName;
   private String myDescription;
-  private final ArrayList<MigrationMapEntry> myEntries = new ArrayList<MigrationMapEntry>();
+  private final ArrayList<MigrationMapEntry> myEntries = new ArrayList<>();
+  private String myFileName;
 
   public MigrationMap() {
 
   }
 
   public MigrationMap(MigrationMapEntry[] entries) {
-    for (int i = 0; i < entries.length; i++) {
-      MigrationMapEntry entry = entries[i];
+    for (MigrationMapEntry entry : entries) {
       addEntry(entry);
     }
   }
@@ -38,6 +40,7 @@ public class MigrationMap {
     MigrationMap newMap = new MigrationMap();
     newMap.myName = myName;
     newMap.myDescription = myDescription;
+    newMap.myFileName = myFileName;
     for(int i = 0; i < myEntries.size(); i++){
       MigrationMapEntry entry = getEntryAt(i);
       newMap.addEntry(entry.cloneEntry());
@@ -87,6 +90,17 @@ public class MigrationMap {
 
   public String toString() {
     return getName();
+  }
+
+  public String getFileName() {
+    if (myFileName == null) {
+      return FileUtil.sanitizeFileName(myName, false);
+    }
+    return myFileName;
+  }
+
+  public void setFileName(String fileName) {
+    myFileName = fileName;
   }
 }
 

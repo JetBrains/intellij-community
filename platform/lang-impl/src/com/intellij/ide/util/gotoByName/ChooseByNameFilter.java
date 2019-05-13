@@ -1,23 +1,11 @@
-/*
- * Copyright 2000-2010 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.util.gotoByName;
 
+import com.intellij.execution.runners.ExecutionUtil;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.util.ElementsChooser;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
@@ -66,7 +54,7 @@ public abstract class ChooseByNameFilter<T> {
   private final Project myProject;
 
   /**
-   * A constuctor
+   * A constructor
    *
    * @param popup               a parent popup
    * @param model               a model for popup
@@ -79,20 +67,10 @@ public abstract class ChooseByNameFilter<T> {
                             @NotNull Project project) {
     myParentPopup = popup;
     DefaultActionGroup actionGroup = new DefaultActionGroup("go.to.file.filter", false);
-    ToggleAction action = new ToggleAction("Filter", "Filter files by type", AllIcons.General.Filter) {
+    ToggleAction action = new FilterAction() {
       @Override
-      public boolean isSelected(final AnActionEvent e) {
-        return myPopup != null;
-      }
-
-      @Override
-      public void setSelected(final AnActionEvent e, final boolean state) {
-        if (state) {
-          createPopup();
-        }
-        else {
-          close();
-        }
+      protected boolean isActive() {
+        return !filterConfiguration.getState().getFilteredOutFileTypeNames().isEmpty();
       }
     };
     actionGroup.add(action);
@@ -135,11 +113,7 @@ public abstract class ChooseByNameFilter<T> {
     invert.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(final ActionEvent e) {
-        final int count = myChooser.getElementCount();
-        for (int i = 0; i < count; i++) {
-          T type = myChooser.getElementAt(i);
-          myChooser.setElementMarked(type, !myChooser.isElementMarked(type));
-        }
+        myChooser.invertSelection();
       }
     });
     buttons.add(invert);
@@ -157,8 +131,8 @@ public abstract class ChooseByNameFilter<T> {
    */
   @NotNull
   protected ElementsChooser<T> createChooser(@NotNull final FilteringGotoByModel<T> model,
-                                             @NotNull final ChooseByNameFilterConfiguration<T> filterConfiguration) {
-    List<T> elements = new ArrayList<T>(getAllFilterValues());
+                                             @NotNull final ChooseByNameFilterConfiguration<? super T> filterConfiguration) {
+    List<T> elements = new ArrayList<>(getAllFilterValues());
     final ElementsChooser<T> chooser = new ElementsChooser<T>(elements, true) {
       @Override
       protected String getItemText(@NotNull final T value) {
@@ -219,9 +193,9 @@ public abstract class ChooseByNameFilter<T> {
     myPopup = JBPopupFactory.getInstance().createComponentPopupBuilder(myChooserPanel, myChooser).setModalContext(false).setFocusable(false)
         .setResizable(true).setCancelOnClickOutside(false).setMinSize(new Dimension(200, 200))
         .setDimensionServiceKey(myProject, "GotoFile_FileTypePopup", false).createPopup();
-    myPopup.addListener(new JBPopupListener.Adapter() {
+    myPopup.addListener(new JBPopupListener() {
       @Override
-      public void onClosed(LightweightWindowEvent event) {
+      public void onClosed(@NotNull LightweightWindowEvent event) {
         myPopup = null;
       }
     });
@@ -235,5 +209,37 @@ public abstract class ChooseByNameFilter<T> {
     if (myPopup != null) {
       Disposer.dispose(myPopup);
     }
+  }
+
+  private class FilterAction extends ToggleAction implements DumbAware {
+    FilterAction() {
+      super("Filter", "Filter files by type", AllIcons.General.Filter);
+    }
+
+    @Override
+    public boolean isSelected(@NotNull final AnActionEvent e) {
+      return myPopup != null;
+    }
+
+    @Override
+    public void setSelected(@NotNull final AnActionEvent e, final boolean state) {
+      if (state) {
+        createPopup();
+      }
+      else {
+        close();
+      }
+    }
+
+    @Override
+    public void update(@NotNull AnActionEvent e) {
+      Icon icon = getTemplatePresentation().getIcon();
+      e.getPresentation().setIcon(isActive() ? ExecutionUtil.getLiveIndicator(icon) : icon);
+    }
+    
+    protected boolean isActive() {
+      return false;
+    }
+    
   }
 }

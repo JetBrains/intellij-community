@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,23 +14,15 @@
  * limitations under the License.
  */
 
-/*
- * Created by IntelliJ IDEA.
- * User: max
- * Date: Jun 10, 2002
- * Time: 5:54:59 PM
- * To change template for new interface use 
- * Code Style | Class Templates options (Tools | IDE Options).
- */
 package com.intellij.openapi.editor.ex;
 
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.event.DocumentEvent;
-import com.intellij.openapi.editor.impl.MutableInterval;
 import com.intellij.openapi.util.Segment;
+import org.jetbrains.annotations.NotNull;
 
-public interface RangeMarkerEx extends RangeMarker, MutableInterval, Segment {
-  void documentChanged(DocumentEvent e);
+public interface RangeMarkerEx extends RangeMarker, Segment {
+  void documentChanged(@NotNull DocumentEvent e);
 
   long getId();
 }

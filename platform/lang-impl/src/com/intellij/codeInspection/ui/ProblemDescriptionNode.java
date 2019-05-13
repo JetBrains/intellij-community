@@ -1,62 +1,114 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.codeInspection.ui;
 
+import com.intellij.codeHighlighting.HighlightDisplayLevel;
+import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
+import com.intellij.codeInsight.daemon.impl.SeverityRegistrar;
 import com.intellij.codeInspection.CommonProblemDescriptor;
-import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.codeInspection.ProblemHighlightType;
-import com.intellij.codeInspection.ex.DescriptorProviderInspection;
-import com.intellij.codeInspection.ex.ProblemDescriptorImpl;
+import com.intellij.codeInspection.ProblemDescriptorUtil;
+import com.intellij.codeInspection.ex.InspectionProfileImpl;
+import com.intellij.codeInspection.ex.InspectionToolWrapper;
 import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.codeInspection.reference.RefEntity;
-import com.intellij.icons.AllIcons;
-import com.intellij.openapi.util.TextRange;
+import com.intellij.lang.annotation.HighlightSeverity;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vcs.FileStatus;
+import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.psi.PsiElement;
+import com.intellij.util.ObjectUtils;
+import com.intellij.util.containers.WeakStringInterner;
+import gnu.trove.TObjectIntHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import java.util.function.IntSupplier;
 
 /**
  * @author max
  */
-public class ProblemDescriptionNode extends InspectionTreeNode {
-  protected RefEntity myElement;
+public class ProblemDescriptionNode extends SuppressableInspectionTreeNode {
   private final CommonProblemDescriptor myDescriptor;
-  protected final DescriptorProviderInspection myTool;
-
-  public ProblemDescriptionNode(final Object userObject, final DescriptorProviderInspection tool) {
-    super(userObject);
-    myTool = tool;
-    myDescriptor = null;
-  }
+  private final HighlightDisplayLevel myLevel;
+  protected final int myLineNumber;
+  protected final RefEntity myElement;
 
   public ProblemDescriptionNode(RefEntity element,
-                                CommonProblemDescriptor descriptor,
-                                DescriptorProviderInspection descriptorProviderInspection) {
-    super(descriptor);
-    myElement = element;
-    myDescriptor = descriptor;
-    myTool = descriptorProviderInspection;
+                                @NotNull CommonProblemDescriptor descriptor,
+                                @NotNull InspectionToolPresentation presentation,
+                                @NotNull InspectionTreeNode parent) {
+    this(element, descriptor, presentation, null, parent);
   }
 
+  protected ProblemDescriptionNode(@Nullable RefEntity element,
+                                   CommonProblemDescriptor descriptor,
+                                   @NotNull InspectionToolPresentation presentation,
+                                   @Nullable IntSupplier lineNumberCounter,
+                                   @NotNull InspectionTreeNode parent) {
+    super(presentation, parent);
+    myElement = element;
+    myDescriptor = descriptor;
+    myLevel = ObjectUtils.notNull(calculatePreciseLevel(element, descriptor, presentation), () -> {
+      String shortName = presentation.getToolWrapper().getShortName();
+      final InspectionProfileImpl profile = presentation.getContext().getCurrentProfile();
+      return profile.getTools(shortName, presentation.getContext().getProject()).getLevel();
+    });
+    myLineNumber = myDescriptor instanceof ProblemDescriptor
+                   ? ((ProblemDescriptor)myDescriptor).getLineNumber()
+                   : lineNumberCounter == null ? -1 : lineNumberCounter.getAsInt();
+  }
+
+  private static HighlightDisplayLevel calculatePreciseLevel(@Nullable RefEntity element,
+                                                             @Nullable CommonProblemDescriptor descriptor,
+                                                             @NotNull InspectionToolPresentation presentation) {
+    if (element == null) return null;
+    final InspectionProfileImpl profile = presentation.getContext().getCurrentProfile();
+    String shortName = presentation.getToolWrapper().getShortName();
+    if (descriptor instanceof ProblemDescriptor) {
+      InspectionProfileManager inspectionProfileManager = profile.getProfileManager();
+      RefElement refElement = (RefElement)element;
+      SeverityRegistrar severityRegistrar = inspectionProfileManager.getSeverityRegistrar();
+      HighlightSeverity severity = presentation.getSeverity(refElement);
+      if (severity == null) return null;
+      HighlightInfoType highlightInfoType = ProblemDescriptorUtil.highlightTypeFromDescriptor((ProblemDescriptor)descriptor, severity, severityRegistrar);
+      HighlightSeverity highlightSeverity = highlightInfoType.getSeverity(refElement.getPsiElement());
+      return HighlightDisplayLevel.find(highlightSeverity);
+    }
+    else {
+      return profile.getTools(shortName, presentation.getContext().getProject()).getLevel();
+    }
+  }
+
+  @Nullable
+  public String getToolTipText() {
+    if (!isValid()) return null;
+    CommonProblemDescriptor descriptor = getDescriptor();
+    if (descriptor == null) return null;
+    PsiElement element = descriptor instanceof ProblemDescriptor ? ((ProblemDescriptor)descriptor).getPsiElement() : null;
+    return ProblemDescriptorUtil.renderDescriptionMessage(descriptor, element, false);
+  }
+
+  @Override
+  public final boolean isAlreadySuppressedFromView() {
+    return myDescriptor != null && getPresentation().isSuppressed(myDescriptor);
+  }
+
+  public int getLineNumber() {
+    return myLineNumber;
+  }
+
+  @Override
+  public boolean canSuppress() {
+    return super.canSuppress() && !isQuickFixAppliedFromView();
+  }
+
+  @NotNull
+  public InspectionToolWrapper getToolWrapper() {
+    return getPresentation().getToolWrapper();
+  }
+
+  @Override
   @Nullable
   public RefEntity getElement() {
     return myElement;
@@ -67,110 +119,80 @@ public class ProblemDescriptionNode extends InspectionTreeNode {
     return myDescriptor;
   }
 
-  public Icon getIcon(boolean expanded) {
-    if (myDescriptor instanceof ProblemDescriptorImpl) {
-      ProblemHighlightType problemHighlightType = ((ProblemDescriptorImpl)myDescriptor).getHighlightType();
-      if (problemHighlightType == ProblemHighlightType.ERROR) return AllIcons.General.Error;
-      if (problemHighlightType == ProblemHighlightType.GENERIC_ERROR_OR_WARNING) return AllIcons.General.Warning;
+  @Override
+  public void excludeElement() {
+    CommonProblemDescriptor descriptor = getDescriptor();
+    if (descriptor != null) {
+      getPresentation().exclude(descriptor);
     }
-    return AllIcons.General.Information;
   }
 
-  public int getProblemCount() {
-    return 1;
+  @Override
+  public void amnestyElement() {
+    CommonProblemDescriptor descriptor = getDescriptor();
+    if (descriptor != null) {
+      getPresentation().amnesty(descriptor);
+    }
   }
 
-  public boolean isValid() {
-    if (myElement instanceof RefElement && !myElement.isValid()) return false;
-    final CommonProblemDescriptor descriptor = getDescriptor();
-    if (descriptor instanceof ProblemDescriptor) {
-      final PsiElement psiElement = ((ProblemDescriptor)descriptor).getPsiElement();
+  @Override
+  protected void visitProblemSeverities(@NotNull TObjectIntHashMap<HighlightDisplayLevel> counter) {
+    if (isValid() && !isExcluded() && !isQuickFixAppliedFromView() && !isAlreadySuppressedFromView()) {
+      counter.put(myLevel, counter.get(myLevel) + 1);
+    }
+  }
+
+  @Override
+  protected boolean calculateIsValid() {
+    if (myDescriptor == null) return false;
+    if (myElement == null || !myElement.isValid()) return false;
+    if (myDescriptor instanceof ProblemDescriptor) {
+      final PsiElement psiElement = ((ProblemDescriptor)myDescriptor).getPsiElement();
       return psiElement != null && psiElement.isValid();
     }
     return true;
   }
 
-
-  public boolean isResolved() {
-    return myElement instanceof RefElement && myTool.isProblemResolved(myElement, getDescriptor());
+  @Override
+  public boolean isExcluded() {
+    CommonProblemDescriptor descriptor = getDescriptor();
+    return descriptor != null && getPresentation().isExcluded(descriptor);
   }
 
-  public void ignoreElement() {
-    myTool.ignoreCurrentElementProblem(getElement(), getDescriptor());
-  }
+  private static final WeakStringInterner NAME_INTERNER = new WeakStringInterner();
 
-  public void amnesty() {
-    myTool.amnesty(getElement());
-  }
-
-  public FileStatus getNodeStatus() {
-    if (myElement instanceof RefElement){
-      return myTool.getProblemStatus(myDescriptor);
-    }
-    return FileStatus.NOT_CHANGED;
-  }
-
-  public String toString() {
+  @NotNull
+  @Override
+  protected String calculatePresentableName() {
     CommonProblemDescriptor descriptor = getDescriptor();
     if (descriptor == null) return "";
     PsiElement element = descriptor instanceof ProblemDescriptor ? ((ProblemDescriptor)descriptor).getPsiElement() : null;
+    String name = StringUtil.removeHtmlTags(ProblemDescriptorUtil.renderDescriptionMessage(descriptor, element, ProblemDescriptorUtil.TRIM_AT_TREE_END), true);
+    return NAME_INTERNER.intern(name);
+  }
 
-    return renderDescriptionMessage(descriptor, element, true)/*.replaceAll("<[^>]*>", "")*/;
+  @Override
+  public boolean isQuickFixAppliedFromView() {
+    return myDescriptor != null && getPresentation().isProblemResolved(myDescriptor) && !isAlreadySuppressedFromView();
+  }
+
+  @Nullable
+  @Override
+  public String getTailText() {
+    final String text = super.getTailText();
+    return text == null ? "" : text;
   }
 
   @NotNull
-  public static String renderDescriptionMessage(@NotNull CommonProblemDescriptor descriptor, PsiElement element) {
-    return renderDescriptionMessage(descriptor, element, false);
-  }
-
-  @NotNull
-  public static String renderDescriptionMessage(@NotNull CommonProblemDescriptor descriptor, PsiElement element, boolean appendLineNumber) {
-    String message = descriptor.getDescriptionTemplate();
-
-    // no message. Should not be the case if inspection correctly implemented.
-    // noinspection ConstantConditions
-    if (message == null) return "";
-
-    if (appendLineNumber && descriptor instanceof ProblemDescriptor && !message.contains("#ref") && message.contains("#loc")) {
-      final int lineNumber = ((ProblemDescriptor)descriptor).getLineNumber();
-      if (lineNumber >= 0) {
-        message = StringUtil.replace(message, "#loc", "(" + InspectionsBundle.message("inspection.export.results.at.line") + " " + lineNumber + ")");
-      }
-    }
-    message = StringUtil.replace(message, "<code>", "'");
-    message = StringUtil.replace(message, "</code>", "'");
-    message = StringUtil.replace(message, "#loc ", "");
-    message = StringUtil.replace(message, " #loc", "");
-    message = StringUtil.replace(message, "#loc", "");
-    if (message.contains("#ref")) {
-      String ref = extractHighlightedText(descriptor, element);
-      message = StringUtil.replace(message, "#ref", ref);
-    }
-
-    final int endIndex = message.indexOf("#end");
-    if (endIndex > 0) {
-      message = message.substring(0, endIndex);
-    }
-
-    message = StringUtil.unescapeXml(message).trim();
-    return message;
-  }
-
-  public static String extractHighlightedText(@NotNull CommonProblemDescriptor descriptor, PsiElement psiElement) {
-    if (psiElement == null || !psiElement.isValid()) return "";
-    String ref = psiElement.getText();
-    if (descriptor instanceof ProblemDescriptorImpl) {
-      TextRange textRange = ((ProblemDescriptorImpl)descriptor).getTextRange();
-      final TextRange elementRange = psiElement.getTextRange();
-      if (textRange != null && elementRange != null) {
-        textRange = textRange.shiftRight(-elementRange.getStartOffset());
-        if (textRange.getStartOffset() >= 0 && textRange.getEndOffset() <= elementRange.getLength()) {
-          ref = textRange.substring(ref);
-        }
-      }
-    }
-    ref = StringUtil.replaceChar(ref, '\n', ' ').trim();
-    ref = StringUtil.first(ref, 100, true);
-    return ref;
+  @Override
+  public Pair<PsiElement, CommonProblemDescriptor> getSuppressContent() {
+    RefEntity refElement = getElement();
+    CommonProblemDescriptor descriptor = getDescriptor();
+    PsiElement element = descriptor instanceof ProblemDescriptor
+                         ? ((ProblemDescriptor)descriptor).getPsiElement()
+                         : refElement instanceof RefElement
+                           ? ((RefElement)refElement).getPsiElement()
+                           : null;
+    return Pair.create(element, descriptor);
   }
 }

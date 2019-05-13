@@ -16,9 +16,9 @@
 package com.intellij.uiDesigner.compiler;
 
 import com.intellij.uiDesigner.lw.IconDescriptor;
-import org.jetbrains.asm4.Type;
-import org.jetbrains.asm4.commons.GeneratorAdapter;
-import org.jetbrains.asm4.commons.Method;
+import org.jetbrains.org.objectweb.asm.Type;
+import org.jetbrains.org.objectweb.asm.commons.GeneratorAdapter;
+import org.jetbrains.org.objectweb.asm.commons.Method;
 
 import javax.swing.*;
 
@@ -33,6 +33,7 @@ public class IconPropertyCodeGenerator extends PropertyCodeGenerator {
   private static final Type ourObjectType = Type.getType(Object.class);
   private static final Type ourClassType = Type.getType(Class.class);
 
+  @Override
   public void generatePushValue(final GeneratorAdapter generator, final Object value) {
     IconDescriptor descriptor = (IconDescriptor) value;
     generator.newInstance(ourImageIconType);

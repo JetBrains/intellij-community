@@ -1,4 +1,4 @@
-// "Create Method 'test'" "true"
+// "Create method 'test'" "true"
 public class Test {
     static void test(int i) {}
     public Test() {
@@ -6,6 +6,6 @@ public class Test {
     }
 
     private void test() {
-        <caret><selection>//To change body of created methods use File | Settings | File Templates.</selection>
+        <caret><selection></selection>
     }
 }

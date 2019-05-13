@@ -15,6 +15,8 @@
  */
 package org.jetbrains.jps.incremental.messages;
 
+import com.intellij.openapi.util.text.StringUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.ByteArrayOutputStream;
@@ -23,7 +25,6 @@ import java.io.PrintStream;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: 9/29/11
  */
 public class CompilerMessage extends BuildMessage {
 
@@ -35,19 +36,23 @@ public class CompilerMessage extends BuildMessage {
   private final long myLine;
   private final long myColumn;
 
-  public CompilerMessage(String compilerName, Throwable internalError) {
+  /**
+   * @deprecated use either {@link #createInternalCompilationError(String, Throwable)} or {@link #createInternalBuilderError(String, Throwable)} instead
+   */
+  @Deprecated
+  public CompilerMessage(@NotNull String compilerName, @NotNull Throwable internalError) {
     this(compilerName, Kind.ERROR, getTextFromThrowable(internalError), null, -1L, -1L, -1L, -1L, -1L);
   }
 
-  public CompilerMessage(String compilerName, Kind kind, String messageText) {
+  public CompilerMessage(@NotNull String compilerName, Kind kind, String messageText) {
     this(compilerName, kind, messageText, null, -1L, -1L, -1L, -1L, -1L);
   }
 
-  public CompilerMessage(String compilerName, Kind kind, String messageText, String sourcePath) {
+  public CompilerMessage(@NotNull String compilerName, Kind kind, String messageText, String sourcePath) {
     this(compilerName, kind, messageText, sourcePath, -1L, -1L, -1L, -1L, -1L);
   }
 
-  public CompilerMessage(String compilerName, Kind kind, String messageText,
+  public CompilerMessage(@NotNull String compilerName, Kind kind, String messageText,
                          @Nullable String sourcePath,
                          long problemBeginOffset,
                          long problemEndOffset,
@@ -64,6 +69,7 @@ public class CompilerMessage extends BuildMessage {
     myColumn = locationColumn;
   }
 
+  @NotNull
   public String getCompilerName() {
     return myCompilerName;
   }
@@ -94,14 +100,41 @@ public class CompilerMessage extends BuildMessage {
   }
 
   public String toString() {
-    return getCompilerName() + ":" + getKind().name() + ":" + super.toString();
+    final StringBuilder builder = new StringBuilder();
+    builder.append(getCompilerName()).append(":").append(getKind().name()).append(":").append(super.toString());
+    final String path = getSourcePath();
+    if (path != null) {
+      builder.append("; file: ").append(path);
+      final long line = getLine();
+      final long column = getColumn();
+      if (line >= 0 && column >= 0) {
+        builder.append(" at (").append(line).append(":").append(column).append(")");
+      }
+    }
+    return builder.toString();
   }
 
-  private static String getTextFromThrowable(Throwable internalError) {
+
+  /**
+   * Return a message describing an exception in the underlying compiler. Such messages will be reported as compilation errors.
+   */
+  public static CompilerMessage createInternalCompilationError(@NotNull String compilerName, @NotNull Throwable t) {
+    return new CompilerMessage(compilerName, t);
+  }
+
+  /**
+   * Return a message describing an error in JPS builders code. Such messages will be reported as regular compilation errors and also will be logger
+   * as fatal errors of the IDE.
+   */
+  public static CompilerMessage createInternalBuilderError(@NotNull String compilerName, @NotNull Throwable t) {
+    return new CompilerMessage(compilerName, Kind.INTERNAL_BUILDER_ERROR, getTextFromThrowable(t));
+  }
+
+  public static String getTextFromThrowable(Throwable internalError) {
     StringBuilder text = new StringBuilder();
     text.append("Error: ");
     final String msg = internalError.getMessage();
-    if (msg != null) {
+    if (!StringUtil.isEmptyOrSpaces(msg)) {
       text.append(msg);
     }
     else {

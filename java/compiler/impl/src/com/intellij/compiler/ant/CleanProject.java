@@ -29,13 +29,12 @@ import java.util.List;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Mar 24, 2004
  */
 public class CleanProject extends Generator {
   private final Target myTarget;
 
   public CleanProject(Project project, @NotNull GenerationOptions genOptions, @NotNull ArtifactsGenerator artifactsGenerator) {
-    List<String> dependencies = new ArrayList<String>();
+    List<String> dependencies = new ArrayList<>();
     final ModuleChunk[] chunks = genOptions.getModuleChunks();
     for (ModuleChunk chunk : chunks) {
       dependencies.add(BuildProperties.getModuleCleanTargetName(chunk.getName()));
@@ -48,6 +47,7 @@ public class CleanProject extends Generator {
                           CompilerBundle.message("generated.ant.build.clean.all.task.comment"), null);
   }
 
+  @Override
   public void generate(PrintWriter out) throws IOException {
     myTarget.generate(out);
   }

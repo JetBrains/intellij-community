@@ -16,6 +16,7 @@
 package com.intellij.codeInsight.lookup;
 
 import com.intellij.openapi.util.Iconable;
+import com.intellij.openapi.util.ScalableIcon;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.psi.util.PsiUtilCore;
@@ -31,14 +32,12 @@ import javax.swing.*;
  */
 public class DefaultLookupItemRenderer extends LookupElementRenderer<LookupItem>{
   public static final DefaultLookupItemRenderer INSTANCE = new DefaultLookupItemRenderer();
-  private static final Icon SAMPLE_ICON = PlatformIcons.CLASS_ICON;
 
   @Override
   public void renderElement(final LookupItem item, final LookupElementPresentation presentation) {
     presentation.setIcon(getRawIcon(item, presentation.isReal()));
 
     presentation.setItemText(getName(item));
-    presentation.setStrikeout(isToStrikeout(item));
     presentation.setItemTextBold(item.getAttribute(LookupItem.HIGHLIGHTED_ATTR) != null);
     presentation.setTailText(getText2(item), item.getAttribute(LookupItem.TAIL_TEXT_SMALL_ATTR) != null);
     presentation.setTypeText(getText3(item), null);
@@ -46,9 +45,10 @@ public class DefaultLookupItemRenderer extends LookupElementRenderer<LookupItem>
 
   @Nullable
   public static Icon getRawIcon(final LookupElement item, boolean real) {
-    final Icon icon = _getRawIcon(item, real);
-    if (icon != null && icon.getIconHeight() > SAMPLE_ICON.getIconHeight()) {
-      return new SizedIcon(icon, icon.getIconWidth(), SAMPLE_ICON.getIconHeight());
+    Icon icon = _getRawIcon(item, real);
+    if (icon instanceof ScalableIcon) icon = ((ScalableIcon)icon).scale(1f);
+    if (icon != null && icon.getIconHeight() > PlatformIcons.CLASS_ICON.getIconHeight()) {
+      return new SizedIcon(icon, icon.getIconWidth(), PlatformIcons.CLASS_ICON.getIconHeight());
     }
     return icon;
   }
@@ -67,7 +67,7 @@ public class DefaultLookupItemRenderer extends LookupElementRenderer<LookupItem>
         return EmptyIcon.ICON_0;
       }
 
-      return new EmptyIcon(SAMPLE_ICON.getIconWidth() * 2, SAMPLE_ICON.getIconHeight());
+      return EmptyIcon.create(PlatformIcons.CLASS_ICON.getIconWidth() * 2, PlatformIcons.CLASS_ICON.getIconHeight());
     }
 
     if (o instanceof Iconable && !(o instanceof PsiElement)) {
@@ -97,10 +97,6 @@ public class DefaultLookupItemRenderer extends LookupElementRenderer<LookupItem>
 
   private static String getText2(final LookupItem item) {
     return (String)item.getAttribute(LookupItem.TAIL_TEXT_ATTR);
-  }
-
-  private static boolean isToStrikeout(LookupItem item) {
-    return item.getAttribute(LookupItem.DEPRECATED_ATTR) != null;
   }
 
   private static String getName(final LookupItem item){

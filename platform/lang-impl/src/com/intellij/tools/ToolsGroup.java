@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,14 +24,20 @@ public class ToolsGroup<T extends Tool> extends CompoundScheme<T> {
   }
 
   public void moveElementUp(final T tool) {
-    int index = getElements().indexOf(tool);
+    int index = myElements.indexOf(tool);
     removeElement(tool);
     insertElement(tool, index - 1);
   }
 
   public void moveElementDown(final T tool) {
-    int index = getElements().indexOf(tool);
+    int index = myElements.indexOf(tool);
     removeElement(tool);
     insertElement(tool, index + 1);
+  }
+
+  public void insertElement(T element, final int i) {
+    if (!contains(element)) {
+      myElements.add(i, element);
+    }
   }
 }

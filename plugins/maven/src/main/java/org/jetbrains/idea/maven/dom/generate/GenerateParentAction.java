@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,11 +15,11 @@
  */
 package org.jetbrains.idea.maven.dom.generate;
 
-import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.util.xml.DomUtil;
 import com.intellij.util.xml.ui.actions.generate.GenerateDomElementAction;
+import icons.MavenIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.dom.MavenDomBundle;
 import org.jetbrains.idea.maven.dom.MavenDomUtil;
@@ -31,25 +31,24 @@ import org.jetbrains.idea.maven.project.MavenProject;
 public class GenerateParentAction extends GenerateDomElementAction {
   public GenerateParentAction() {
     super(new MavenGenerateProvider<MavenDomParent>(MavenDomBundle.message("generate.parent"), MavenDomParent.class) {
+        @Override
         protected MavenDomParent doGenerate(@NotNull final MavenDomProjectModel mavenModel, Editor editor) {
           SelectMavenProjectDialog d = new SelectMavenProjectDialog(editor.getProject(), null);
-          d.show();
-          if (!d.isOK()) return null;
+          if (!d.showAndGet()) {
+            return null;
+          }
           final MavenProject parentProject = d.getResult();
           if (parentProject == null) return null;
 
-          return new WriteCommandAction<MavenDomParent>(editor.getProject(), getDescription()) {
-            protected void run(Result result) throws Throwable {
-              result.setResult(MavenDomUtil.updateMavenParent(mavenModel, parentProject));
-            }
-          }.execute().getResultObject();
+          return WriteCommandAction.writeCommandAction(editor.getProject()).withName(getDescription())
+                                   .compute(() -> MavenDomUtil.updateMavenParent(mavenModel, parentProject));
         }
 
         @Override
         protected boolean isAvailableForModel(MavenDomProjectModel mavenModel) {
           return !DomUtil.hasXml(mavenModel.getMavenParent());
         }
-      }, icons.MavenIcons.MavenProject);
+      }, MavenIcons.MavenProject);
   }
 
   @Override

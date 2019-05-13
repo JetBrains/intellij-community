@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,6 +38,7 @@ public abstract class MergingFileDescription<T extends DomElement> extends DomFi
   @NotNull
   protected abstract Set<XmlFile> getFilesToMerge(DomElement element);
 
+  @Override
   @NotNull
   public DomElement getResolveScope(GenericDomValue<?> reference) {
     final DomElement annotation = getScopeFromAnnotation(reference);
@@ -51,7 +52,7 @@ public abstract class MergingFileDescription<T extends DomElement> extends DomFi
     final DomManager domManager = element.getManager();
 
     XmlFile xmlFile = element.getFile();
-    Set<XmlFile> files = new HashSet<XmlFile>();
+    Set<XmlFile> files = new HashSet<>();
     files.add(xmlFile);
     final XmlFile originalFile = (XmlFile)xmlFile.getOriginalFile();
     if (originalFile != xmlFile) {
@@ -64,7 +65,7 @@ public abstract class MergingFileDescription<T extends DomElement> extends DomFi
     files.addAll(getFilesToMerge(element));
 
 
-    ArrayList<T> roots = new ArrayList<T>(files.size());
+    ArrayList<T> roots = new ArrayList<>(files.size());
     for (XmlFile file: files) {
       final DomFileElement<T> fileElement = domManager.getFileElement(file);
       if (fileElement != null) {
@@ -82,6 +83,7 @@ public abstract class MergingFileDescription<T extends DomElement> extends DomFi
     return myMerger.mergeModels(getRootElementClass(), roots);
   }
 
+  @Override
   @NotNull
   public DomElement getIdentityScope(DomElement element) {
     final DomElement annotation = getScopeFromAnnotation(element);
@@ -98,6 +100,7 @@ public abstract class MergingFileDescription<T extends DomElement> extends DomFi
     return (DomElement)o;
   }
 
+  @Override
   public boolean isAutomaticHighlightingEnabled() {
     return false;
   }

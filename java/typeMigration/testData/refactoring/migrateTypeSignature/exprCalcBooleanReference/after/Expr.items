@@ -1,0 +1,15 @@
+Types:
+PsiParameter:ps : double
+PsiReferenceExpression:ps : double
+PsiReferenceExpression:ps : double
+PsiReferenceExpression:ps : double
+PsiReferenceExpression:ps : double
+
+Conversions:
+
+New expression type changes:
+Fails:
+ps->double
+ps->double
+ps->double
+ps->double

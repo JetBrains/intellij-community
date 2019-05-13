@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,14 +16,8 @@
 package com.intellij.openapi.roots;
 
 /**
- * @author nik
- */
+ * @deprecated Please useModuleRootListener
+*/
+@Deprecated
 public abstract class ModuleRootAdapter implements ModuleRootListener {
-  @Override
-  public void beforeRootsChange(ModuleRootEvent event) {
-  }
-
-  @Override
-  public void rootsChanged(ModuleRootEvent event) {
-  }
 }

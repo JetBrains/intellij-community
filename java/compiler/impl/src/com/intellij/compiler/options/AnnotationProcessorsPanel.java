@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,13 +31,14 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.AnActionButton;
 import com.intellij.ui.ColoredTreeCellRenderer;
-import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.ToolbarDecorator;
 import com.intellij.ui.awt.RelativePoint;
-import com.intellij.ui.components.JBList;
 import com.intellij.ui.treeStructure.Tree;
+import com.intellij.util.SmartList;
 import com.intellij.util.ui.EditableTreeModel;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.tree.TreeUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.model.java.compiler.ProcessorConfigProfile;
 import org.jetbrains.jps.model.java.impl.compiler.ProcessorConfigProfileImpl;
 
@@ -49,8 +50,8 @@ import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.awt.event.MouseEvent;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 
 /**
  * @author Konstantin Bulenkov
@@ -58,8 +59,8 @@ import java.util.List;
 @SuppressWarnings({"unchecked", "UseOfObsoleteCollectionType"})
 public class AnnotationProcessorsPanel extends JPanel {
   private final ProcessorConfigProfile myDefaultProfile = new ProcessorConfigProfileImpl("");
-  private final List<ProcessorConfigProfile> myModuleProfiles = new ArrayList<ProcessorConfigProfile>();
-  private final Map<String, Module> myAllModulesMap = new HashMap<String, Module>();
+  private final List<ProcessorConfigProfile> myModuleProfiles = new ArrayList<>();
+  private final Map<String, Module> myAllModulesMap = new HashMap<>();
   private final Project myProject;
   private final Tree myTree;
   private final ProcessorProfilePanel myProfilePanel;
@@ -76,50 +77,41 @@ public class AnnotationProcessorsPanel extends JPanel {
     myTree = new Tree(new MyTreeModel());
     myTree.setRootVisible(false);
         final JPanel treePanel =
-          ToolbarDecorator.createDecorator(myTree).addExtraAction(new AnActionButton("Move to", AllIcons.Actions.Nextfile) {
+          ToolbarDecorator.createDecorator(myTree).addExtraAction(new AnActionButton("Move to", AllIcons.Actions.Forward) {
             @Override
-            public void actionPerformed(AnActionEvent e) {
+            public void actionPerformed(@NotNull AnActionEvent e) {
               final MyModuleNode node = (MyModuleNode)myTree.getSelectionPath().getLastPathComponent();
               final TreePath[] selectedNodes = myTree.getSelectionPaths();
               final ProcessorConfigProfile nodeProfile = ((ProfileNode)node.getParent()).myProfile;
-              final List<ProcessorConfigProfile> profiles = new ArrayList<ProcessorConfigProfile>();
+              final List<ProcessorConfigProfile> profiles = new ArrayList<>();
               profiles.add(myDefaultProfile);
-              for (ProcessorConfigProfile profile : myModuleProfiles) {
-                profiles.add(profile);
-              }
+              profiles.addAll(myModuleProfiles);
               profiles.remove(nodeProfile);
-              final JBList list = new JBList(profiles);
-              final JBPopup popup = JBPopupFactory.getInstance().createListPopupBuilder(list)
+              final JBPopup popup = JBPopupFactory.getInstance()
+                .createPopupChooserBuilder(profiles)
                 .setTitle("Move to")
-                .setItemChoosenCallback(new Runnable() {
-                  @Override
-                  public void run() {
-                    final Object value = list.getSelectedValue();
-                    if (value instanceof ProcessorConfigProfile) {
-                      final ProcessorConfigProfile chosenProfile = (ProcessorConfigProfile)value;
-                      final Module toSelect = (Module)node.getUserObject();
-                      if (selectedNodes != null) {
-                        for (TreePath selectedNode : selectedNodes) {
-                          final Object node = selectedNode.getLastPathComponent();
-                          if (node instanceof MyModuleNode) {
-                            final Module module = (Module)((MyModuleNode)node).getUserObject();
-                            if (nodeProfile != myDefaultProfile) {
-                              nodeProfile.removeModuleName(module.getName());
-                            }
-                            if (chosenProfile != myDefaultProfile) {
-                              chosenProfile.addModuleName(module.getName());
-                            }
-                          }
+                .setItemChosenCallback((chosenProfile) -> {
+                  final Module toSelect = (Module)node.getUserObject();
+                  if (selectedNodes != null) {
+                    for (TreePath selectedNode : selectedNodes) {
+                      final Object node1 = selectedNode.getLastPathComponent();
+                      if (node1 instanceof MyModuleNode) {
+                        final Module module = (Module)((MyModuleNode)node1).getUserObject();
+                        if (nodeProfile != myDefaultProfile) {
+                          nodeProfile.removeModuleName(module.getName());
+                        }
+                        if (chosenProfile != myDefaultProfile) {
+                          chosenProfile.addModuleName(module.getName());
                         }
                       }
-
-                      final RootNode root = (RootNode)myTree.getModel().getRoot();
-                      root.sync();
-                      final DefaultMutableTreeNode node = TreeUtil.findNodeWithObject(root, toSelect);
-                      if (node != null) {
-                        TreeUtil.selectNode(myTree, node);
-                      }
                     }
+                  }
+
+                  final RootNode root = (RootNode)myTree.getModel().getRoot();
+                  root.sync();
+                  final DefaultMutableTreeNode node1 = TreeUtil.findNodeWithObject(root, toSelect);
+                  if (node1 != null) {
+                    TreeUtil.selectNode(myTree, node1);
                   }
                 })
                 .createPopup();
@@ -167,11 +159,11 @@ public class AnnotationProcessorsPanel extends JPanel {
       }
     });
     myProfilePanel = new ProcessorProfilePanel(project);
-    myProfilePanel.setBorder(IdeBorderFactory.createEmptyBorder(0, 6, 0, 0));
+    myProfilePanel.setBorder(JBUI.Borders.emptyLeft(6));
     splitter.setSecondComponent(myProfilePanel);
   }
 
-  public void initProfiles(ProcessorConfigProfile defaultProfile, Collection<ProcessorConfigProfile> moduleProfiles) {
+  public void initProfiles(ProcessorConfigProfile defaultProfile, Collection<? extends ProcessorConfigProfile> moduleProfiles) {
     myDefaultProfile.initFrom(defaultProfile);
     myModuleProfiles.clear();
     for (ProcessorConfigProfile profile : moduleProfiles) {
@@ -204,21 +196,8 @@ public class AnnotationProcessorsPanel extends JPanel {
     return myModuleProfiles;
   }
 
-  private static void expand(JTree tree) {
-    int oldRowCount = 0;
-    do {
-      int rowCount = tree.getRowCount();
-      if (rowCount == oldRowCount) break;
-      oldRowCount = rowCount;
-      for (int i = 0; i < rowCount; i++) {
-        tree.expandRow(i);
-      }
-    }
-    while (true);
-  }
-
   private class MyTreeModel extends DefaultTreeModel implements EditableTreeModel{
-    public MyTreeModel() {
+    MyTreeModel() {
       super(new RootNode());
     }
 
@@ -270,14 +249,30 @@ public class AnnotationProcessorsPanel extends JPanel {
 
     @Override
     public void removeNode(TreePath nodePath) {
-      Object node = nodePath.getLastPathComponent();
-      if (node instanceof ProfileNode) {
-        final ProcessorConfigProfile nodeProfile = ((ProfileNode)node).myProfile;
-        if (nodeProfile != myDefaultProfile) {
+      removeNodes(Collections.singleton(nodePath));
+    }
+
+    @Override
+    public void removeNodes(Collection<TreePath> paths) {
+      final List<ProcessorConfigProfile> toRemove = new SmartList<>();
+      for (TreePath path : paths) {
+        Object node = path.getLastPathComponent();
+        if (node instanceof ProfileNode) {
+          final ProcessorConfigProfile nodeProfile = ((ProfileNode)node).myProfile;
+          if (nodeProfile != myDefaultProfile) {
+            toRemove.add(nodeProfile);
+          }
+        }
+      }
+      if (!toRemove.isEmpty()) {
+        boolean changed = false;
+        for (ProcessorConfigProfile nodeProfile : toRemove) {
           if (mySelectedProfile == nodeProfile) {
             mySelectedProfile = null;
           }
-          myModuleProfiles.remove(nodeProfile);
+          changed |= myModuleProfiles.remove(nodeProfile);
+        }
+        if (changed) {
           ((DataSynchronizable)getRoot()).sync();
           final DefaultMutableTreeNode object = TreeUtil.findNodeWithObject((DefaultMutableTreeNode)getRoot(), myDefaultProfile);
           if (object != null) {
@@ -304,7 +299,7 @@ public class AnnotationProcessorsPanel extends JPanel {
       }
       children = newKids;
       ((DefaultTreeModel)myTree.getModel()).reload();
-      expand(myTree);
+      TreeUtil.expandAll(myTree);
       return this;
     }
   }
@@ -317,7 +312,7 @@ public class AnnotationProcessorsPanel extends JPanel {
     private final ProcessorConfigProfile myProfile;
     private final boolean myIsDefault;
 
-    public ProfileNode(ProcessorConfigProfile profile, RootNode parent, boolean isDefault) {
+    ProfileNode(ProcessorConfigProfile profile, RootNode parent, boolean isDefault) {
       super(profile);
       setParent(parent);
       myIsDefault = isDefault;
@@ -326,9 +321,9 @@ public class AnnotationProcessorsPanel extends JPanel {
 
     @Override
     public DataSynchronizable sync() {
-      final List<Module> nodeModules = new ArrayList<Module>();
+      final List<Module> nodeModules = new ArrayList<>();
       if (myIsDefault) {
-        final Set<String> nonDefaultProfileModules = new HashSet<String>();
+        final Set<String> nonDefaultProfileModules = new HashSet<>();
         for (ProcessorConfigProfile profile : myModuleProfiles) {
           nonDefaultProfileModules.addAll(profile.getModuleNames());
         }
@@ -358,7 +353,7 @@ public class AnnotationProcessorsPanel extends JPanel {
   }
 
   private static class MyModuleNode extends DefaultMutableTreeNode {
-    public MyModuleNode(Module module, ProfileNode parent) {
+    MyModuleNode(Module module, ProfileNode parent) {
       super(module);
       setParent(parent);
       setAllowsChildren(false);

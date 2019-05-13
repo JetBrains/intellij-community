@@ -1,0 +1,5 @@
+<root>
+    <item name='rename.Bar'>
+      <annotation name='java.lang.Deprecated'/>
+    </item>
+</root>

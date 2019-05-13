@@ -16,12 +16,14 @@
 package com.intellij.openapi.roots;
 
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * Interface which can be used to receive the contents of a project.
  *
  * @see FileIndex#iterateContent(ContentIterator)
  */
+@FunctionalInterface
 public interface ContentIterator {
   /**
    * Processes the specified file or directory.
@@ -29,5 +31,5 @@ public interface ContentIterator {
    * @param fileOrDir the file or directory to process.
    * @return false if files processing should be stopped, true if it should be continued.
    */
-  boolean processFile(VirtualFile fileOrDir);
+  boolean processFile(@NotNull VirtualFile fileOrDir);
 }

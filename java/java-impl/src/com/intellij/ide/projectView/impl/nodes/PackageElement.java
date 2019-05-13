@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,8 +32,6 @@ import java.util.Set;
 
 /**
  * @author Eugene Zhuravlev
- * Date: Sep 19, 2003
- * Time: 3:51:02 PM
  */
 public final class PackageElement implements Queryable, RootsProvider {
   public static final DataKey<PackageElement> DATA_KEY =  DataKey.create("package.element");
@@ -58,16 +56,18 @@ public final class PackageElement implements Queryable, RootsProvider {
     return myElement;
   }
 
+  @NotNull
   @Override
   public Collection<VirtualFile> getRoots() {
-    Set<VirtualFile> roots= new HashSet<VirtualFile>();
-    final PsiDirectory[] dirs = PackageUtil.getDirectories(getPackage(), myElement.getProject(), myModule, isLibraryElement());
+    Set<VirtualFile> roots= new HashSet<>();
+    final PsiDirectory[] dirs = PackageUtil.getDirectories(getPackage(), myModule, isLibraryElement());
     for (PsiDirectory each : dirs) {
       roots.add(each.getVirtualFile());
     }
     return roots;
   }
 
+  @Override
   public boolean equals(Object o) {
     if (this == o) return true;
     if (!(o instanceof PackageElement)) return false;
@@ -81,10 +81,10 @@ public final class PackageElement implements Queryable, RootsProvider {
     return true;
   }
 
+  @Override
   public int hashCode() {
-    int result;
-    result = (myModule != null ? myModule.hashCode() : 0);
-    result = 29 * result + (myElement.hashCode());
+    int result = myModule != null ? myModule.hashCode() : 0;
+    result = 29 * result + myElement.hashCode();
     result = 29 * result + (myIsLibraryElement ? 1 : 0);
     return result;
   }

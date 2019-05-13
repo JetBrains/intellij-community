@@ -1,45 +1,27 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.ui.tree.render;
 
 import com.intellij.debugger.DebuggerManager;
 import com.intellij.debugger.engine.DebugProcess;
-import com.intellij.debugger.engine.DebugProcessAdapter;
+import com.intellij.debugger.engine.DebugProcessListener;
+import com.intellij.debugger.engine.JVMNameUtil;
 import com.intellij.debugger.engine.SuspendContext;
-import com.intellij.debugger.engine.SuspendContextImpl;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluateExceptionUtil;
 import com.intellij.debugger.engine.evaluation.EvaluationContext;
 import com.intellij.debugger.engine.jdi.ThreadReferenceProxy;
 import com.intellij.debugger.engine.managerThread.SuspendContextCommand;
+import com.intellij.debugger.impl.DebuggerUtilsEx;
+import com.intellij.debugger.impl.DebuggerUtilsImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.rt.debugger.BatchEvaluatorServer;
-import com.intellij.util.containers.HashMap;
 import com.sun.jdi.*;
+import one.util.streamex.StreamEx;
+import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
-
-/**
- * User: lex
- * Date: Jul 7, 2003
- * Time: 11:13:52 PM
- */
+import java.util.*;
 
 public class BatchEvaluator {
   private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.ui.tree.render.BatchEvaluator");
@@ -49,15 +31,16 @@ public class BatchEvaluator {
   private ObjectReference myBatchEvaluatorObject;
   private Method myBatchEvaluatorMethod;
 
-  private static final Key<BatchEvaluator> BATCH_EVALUATOR_KEY = new Key<BatchEvaluator>("BatchEvaluator");
-  public static final Key<Boolean> REMOTE_SESSION_KEY = new Key<Boolean>("is_remote_session_key");
+  private static final Key<BatchEvaluator> BATCH_EVALUATOR_KEY = new Key<>("BatchEvaluator");
+  public static final Key<Boolean> REMOTE_SESSION_KEY = new Key<>("is_remote_session_key");
 
-  private final HashMap<SuspendContext, List<ToStringCommand>> myBuffer = new HashMap<SuspendContext, List<ToStringCommand>>();
+  private final HashMap<SuspendContext, List<ToStringCommand>> myBuffer = new HashMap<>();
 
   private BatchEvaluator(DebugProcess process) {
     myDebugProcess = process;
-    myDebugProcess.addDebugProcessListener(new DebugProcessAdapter() {
-      public void processDetached(DebugProcess process, boolean closedByUser) {
+    myDebugProcess.addDebugProcessListener(new DebugProcessListener() {
+      @Override
+      public void processDetached(@NotNull DebugProcess process, boolean closedByUser) {
         myBatchEvaluatorChecked = false;
         myBatchEvaluatorObject= null;
         myBatchEvaluatorMethod = null;
@@ -68,8 +51,7 @@ public class BatchEvaluator {
   @SuppressWarnings({"HardCodedStringLiteral"}) public boolean hasBatchEvaluator(EvaluationContext evaluationContext) {
     if (!myBatchEvaluatorChecked) {
       myBatchEvaluatorChecked = true;
-      final Boolean isRemote = myDebugProcess.getUserData(REMOTE_SESSION_KEY);
-      if (isRemote != null && isRemote.booleanValue()) {
+      if (DebuggerUtilsImpl.isRemote(myDebugProcess)) {
         // optimization: for remote sessions the BatchEvaluator is not there for sure
         return false;
       }
@@ -94,11 +76,11 @@ public class BatchEvaluator {
       }
 
       if (batchEvaluatorClass != null) {
-        Method constructor = batchEvaluatorClass.concreteMethodByName("<init>", "()V");
+        Method constructor = batchEvaluatorClass.concreteMethodByName(JVMNameUtil.CONSTRUCTOR_NAME, "()V");
         if(constructor != null){
           ObjectReference evaluator = null;
           try {
-            evaluator = myDebugProcess.newInstance(evaluationContext, batchEvaluatorClass, constructor, new ArrayList());
+            evaluator = myDebugProcess.newInstance(evaluationContext, batchEvaluatorClass, constructor, Collections.emptyList());
           }
           catch (Exception e) {
             LOG.debug(e);
@@ -120,32 +102,32 @@ public class BatchEvaluator {
     final EvaluationContext evaluationContext = command.getEvaluationContext();
     final SuspendContext suspendContext = evaluationContext.getSuspendContext();
 
-    if(!hasBatchEvaluator(evaluationContext)) {
+    if(!Registry.is("debugger.batch.evaluation") || !hasBatchEvaluator(evaluationContext)) {
       myDebugProcess.getManagerThread().invokeCommand(command);
     }
     else {
       List<ToStringCommand> toStringCommands = myBuffer.get(suspendContext);
       if(toStringCommands == null) {
-        final List<ToStringCommand> commands = new ArrayList<ToStringCommand>();
+        final List<ToStringCommand> commands = new ArrayList<>();
         toStringCommands = commands;
         myBuffer.put(suspendContext, commands);
 
         myDebugProcess.getManagerThread().invokeCommand(new SuspendContextCommand() {
+          @Override
           public SuspendContext getSuspendContext() {
             return suspendContext;
           }
 
+          @Override
           public void action() {
             myBuffer.remove(suspendContext);
 
             if(!doEvaluateBatch(commands, evaluationContext)) {
-              for (Iterator<ToStringCommand> iterator = commands.iterator(); iterator.hasNext();) {
-                ToStringCommand toStringCommand = iterator.next();
-                toStringCommand.action();
-              }
+              commands.forEach(ToStringCommand::action);
             }
           }
 
+          @Override
           public void commandCancelled() {
             myBuffer.remove(suspendContext);
           }
@@ -170,12 +152,7 @@ public class BatchEvaluator {
   private boolean doEvaluateBatch(List<ToStringCommand> requests, EvaluationContext evaluationContext) {
     try {
       DebugProcess debugProcess = evaluationContext.getDebugProcess();
-      List<Value> values = new ArrayList<Value>();
-      for (Iterator<ToStringCommand> iterator = requests.iterator(); iterator.hasNext();) {
-        ToStringCommand toStringCommand = iterator.next();
-        final Value value = toStringCommand.getValue();
-        values.add(value instanceof ObjectReference? ((ObjectReference)value) : value);
-      }
+      List<Value> values = StreamEx.of(requests).map(ToStringCommand::getValue).toList();
 
       ArrayType objectArrayClass = (ArrayType)debugProcess.findClass(
         evaluationContext,
@@ -185,18 +162,17 @@ public class BatchEvaluator {
         return false;
       }
 
-      ArrayReference argArray = debugProcess.newInstance(objectArrayClass, values.size());
-      ((SuspendContextImpl)evaluationContext.getSuspendContext()).keep(argArray); // to avoid ObjectCollectedException
+      ArrayReference argArray = DebuggerUtilsEx.mirrorOfArray(objectArrayClass, values.size(), evaluationContext);
       argArray.setValues(values);
       List argList = new ArrayList(1);
       argList.add(argArray);
       Value value = debugProcess.invokeMethod(evaluationContext, myBatchEvaluatorObject,
                                               myBatchEvaluatorMethod, argList);
       if (value instanceof ArrayReference) {
-        ((SuspendContextImpl)evaluationContext.getSuspendContext()).keep((ArrayReference)value); // to avoid ObjectCollectedException for both the array and its elements
+        evaluationContext.keep(value); // to avoid ObjectCollectedException for both the array and its elements
         final ArrayReference strings = (ArrayReference)value;
         final List<Value> allValuesArray = strings.getValues();
-        final Value[] allValues = allValuesArray.toArray(new Value[allValuesArray.size()]);
+        final Value[] allValues = allValuesArray.toArray(new Value[0]);
         int idx = 0;
         for (Iterator<ToStringCommand> iterator = requests.iterator(); iterator.hasNext(); idx++) {
           ToStringCommand request = iterator.next();
@@ -209,10 +185,10 @@ public class BatchEvaluator {
             catch (ObjectCollectedException e) {
               // ignored
             }
-          } 
+          }
           else if(strValue instanceof ObjectReference){
             request.evaluationError(EvaluateExceptionUtil.createEvaluateException(new InvocationException((ObjectReference)strValue)).getMessage());
-          } 
+          }
           else {
             LOG.assertTrue(false);
           }
@@ -221,13 +197,7 @@ public class BatchEvaluator {
       }
       return true;
     }
-    catch (ClassNotLoadedException e) {
-    }
-    catch (InvalidTypeException e) {
-    }
-    catch (EvaluateException e) {
-    }
-    catch (ObjectCollectedException e) {
+    catch (ClassNotLoadedException | ObjectCollectedException | EvaluateException | InvalidTypeException e) {
     }
     return false;
   }

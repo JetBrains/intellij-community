@@ -17,12 +17,20 @@ package com.intellij.debugger.actions;
 
 import com.intellij.openapi.editor.Document;
 
-/**
- * User: lex
- * Date: Oct 7, 2003
- * Time: 3:12:54 PM
- */
-interface PlaceInDocument {
-  public Document getDocument();
-  public int      getOffset();
+class PlaceInDocument {
+  private final Document myDocument;
+  private final int myOffset;
+
+  PlaceInDocument(Document document, int offset) {
+    myDocument = document;
+    myOffset = offset;
+  }
+
+  public Document getDocument() {
+    return myDocument;
+  }
+
+  public int getOffset() {
+    return myOffset;
+  }
 }

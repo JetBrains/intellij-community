@@ -1,4 +1,4 @@
-// "Create Annotation 'Smth'" "false"
+// "Create annotation 'Smth'" "false"
 class Test {
   void foo(S<caret>mth s){}
 }

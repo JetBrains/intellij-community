@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,7 +36,7 @@ public abstract class GrChangeMemberVisibilityModifierBase extends Intention {
   }
 
   @Override
-  protected void processIntention(@NotNull PsiElement element, Project project, Editor editor) throws IncorrectOperationException {
+  protected void processIntention(@NotNull PsiElement element, @NotNull Project project, Editor editor) throws IncorrectOperationException {
     final PsiElement parent = element.getParent();
     if (!(parent instanceof GrMember)) return;
 
@@ -48,11 +48,11 @@ public abstract class GrChangeMemberVisibilityModifierBase extends Intention {
   protected PsiElementPredicate getElementPredicate() {
     return new PsiElementPredicate() {
       @Override
-      public boolean satisfiedBy(PsiElement element) {
+      public boolean satisfiedBy(@NotNull PsiElement element) {
         final PsiElement parent = element.getParent();
         return parent instanceof GrMember &&
                parent instanceof GrNamedElement &&
-               (((GrNamedElement)parent).getNameIdentifierGroovy() == element || ((GrNamedElement)parent).getModifierList() == element) &&
+               (((GrNamedElement)parent).getNameIdentifierGroovy() == element || ((GrMember)parent).getModifierList() == element) &&
                ((GrMember)parent).getModifierList() != null && !((GrMember)parent).getModifierList().hasExplicitModifier(myModifier);
       }
     };

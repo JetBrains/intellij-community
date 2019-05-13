@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,18 +17,16 @@ package org.jetbrains.plugins.groovy.lang.surroundWith;
 
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrParenthesizedExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrTypeCastExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 
-/**
- * User: Dmitry.Krasilschikov
- * Date: 25.05.2007
- */
 public class TypeCastSurrounder extends GroovyExpressionSurrounder {
-  protected TextRange surroundExpression(GrExpression expression, PsiElement context) {
+  @Override
+  protected TextRange surroundExpression(@NotNull GrExpression expression, PsiElement context) {
     GrParenthesizedExpression parenthesized = (GrParenthesizedExpression) GroovyPsiElementFactory.getInstance(expression.getProject()).createExpressionFromText("((Type)a)", context);
     GrTypeCastExpression typeCast = (GrTypeCastExpression) parenthesized.getOperand();
     replaceToOldExpression(typeCast.getOperand(), expression);
@@ -42,6 +40,7 @@ public class TypeCastSurrounder extends GroovyExpressionSurrounder {
     return new TextRange(endOffset, endOffset);
   }
 
+  @Override
   public String getTemplateDescription() {
     return "((Type) expr)";
   }

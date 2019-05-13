@@ -17,7 +17,6 @@ package org.jetbrains.idea.maven.execution;
 
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.ExecutionException;
-import com.intellij.execution.Executor;
 import com.intellij.execution.RunCanceledByUserException;
 import com.intellij.execution.configurations.JavaParameters;
 import com.intellij.execution.process.ProcessAdapter;
@@ -25,6 +24,7 @@ import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.execution.runners.ExecutionEnvironment;
+import com.intellij.execution.runners.ExecutionEnvironmentBuilder;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnAction;
@@ -62,14 +62,13 @@ public class MavenResumeAction extends AnAction {
   public static final int STATE_WTF = -1;
 
   private final ProgramRunner myRunner;
-  private final Executor myExecutor;
   private final ExecutionEnvironment myEnvironment;
 
   private int myState = STATE_INITIAL;
 
   private int myBuildingProjectIndex = 0;
 
-  private final List<String> myMavenProjectNames = new ArrayList<String>();
+  private final List<String> myMavenProjectNames = new ArrayList<>();
 
   private String myResumeFromModuleName;
 
@@ -77,11 +76,9 @@ public class MavenResumeAction extends AnAction {
 
   public MavenResumeAction(ProcessHandler processHandler,
                            ProgramRunner runner,
-                           Executor executor,
                            ExecutionEnvironment environment) {
     super("Resume build from specified module", null, AllIcons.RunConfigurations.RerunFailedTests);
     myRunner = runner;
-    myExecutor = executor;
     myEnvironment = environment;
 
     final MavenRunConfiguration runConfiguration = (MavenRunConfiguration)environment.getRunProfile();
@@ -90,7 +87,7 @@ public class MavenResumeAction extends AnAction {
 
     processHandler.addProcessListener(new ProcessAdapter() {
       @Override
-      public void processTerminated(ProcessEvent event) {
+      public void processTerminated(@NotNull ProcessEvent event) {
         if (myState == STATE_WTF) return;
 
         if (event.getExitCode() == 0 && myBuildingProjectIndex != myMavenProjectNames.size()) {
@@ -114,7 +111,7 @@ public class MavenResumeAction extends AnAction {
       }
 
       @Override
-      public void onTextAvailable(ProcessEvent event, Key outputType) {
+      public void onTextAvailable(@NotNull ProcessEvent event, @NotNull Key outputType) {
         if (outputType != ProcessOutputTypes.STDOUT) return;
 
         String text = event.getText().trim();
@@ -141,6 +138,8 @@ public class MavenResumeAction extends AnAction {
             }
             else if (textWithoutInfo.length() > 0) {
               myMavenProjectNames.add(textWithoutInfo);
+            } else if (!myMavenProjectNames.isEmpty()) {
+              myState = STATE_WAIT_FOR______;
             }
             break;
 
@@ -277,7 +276,7 @@ public class MavenResumeAction extends AnAction {
   }
 
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     if (myResumeFromModuleName != null && myResumeModuleId != null) {
       e.getPresentation().setEnabled(true);
       e.getPresentation().setText("Resume build from \"" + myResumeFromModuleName + "\"");
@@ -285,7 +284,7 @@ public class MavenResumeAction extends AnAction {
   }
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     Project project = myEnvironment.getProject();
     try {
       MavenRunConfiguration runConfiguration = ((MavenRunConfiguration)myEnvironment.getRunProfile()).clone();
@@ -300,8 +299,9 @@ public class MavenResumeAction extends AnAction {
         goals.add(myResumeModuleId);
       }
 
-      myRunner.execute(myExecutor, new ExecutionEnvironment(runConfiguration, project, myEnvironment.getRunnerSettings(),
-                                                            myEnvironment.getConfigurationSettings(), null));
+      runConfiguration.getRunnerParameters().setGoals(goals);
+
+      myRunner.execute(new ExecutionEnvironmentBuilder(myEnvironment).contentToReuse(null).runProfile(runConfiguration).build());
     }
     catch (RunCanceledByUserException ignore) {
     }

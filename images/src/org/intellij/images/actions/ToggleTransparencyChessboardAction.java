@@ -18,6 +18,7 @@ package org.intellij.images.actions;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.ToggleAction;
 import org.intellij.images.ui.ImageComponentDecorator;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * Show/hide background action.
@@ -26,19 +27,22 @@ import org.intellij.images.ui.ImageComponentDecorator;
  * @see org.intellij.images.ui.ImageComponentDecorator#setTransparencyChessboardVisible
  */
 public final class ToggleTransparencyChessboardAction extends ToggleAction {
-  public boolean isSelected(AnActionEvent e) {
+  @Override
+  public boolean isSelected(@NotNull AnActionEvent e) {
     ImageComponentDecorator decorator = ImageComponentDecorator.DATA_KEY.getData(e.getDataContext());
     return decorator != null && decorator.isEnabledForActionPlace(e.getPlace()) && decorator.isTransparencyChessboardVisible();
   }
 
-  public void setSelected(AnActionEvent e, boolean state) {
+  @Override
+  public void setSelected(@NotNull AnActionEvent e, boolean state) {
     ImageComponentDecorator decorator = ImageComponentDecorator.DATA_KEY.getData(e.getDataContext());
     if (decorator != null && decorator.isEnabledForActionPlace(e.getPlace())) {
       decorator.setTransparencyChessboardVisible(state);
     }
   }
 
-  public void update(final AnActionEvent e) {
+  @Override
+  public void update(@NotNull final AnActionEvent e) {
     super.update(e);
     ImageComponentDecorator decorator = ImageComponentDecorator.DATA_KEY.getData(e.getDataContext());
     e.getPresentation().setEnabled(decorator != null && decorator.isEnabledForActionPlace(e.getPlace()));

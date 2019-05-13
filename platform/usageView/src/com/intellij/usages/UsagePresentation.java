@@ -16,6 +16,7 @@
 package com.intellij.usages;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
@@ -25,6 +26,20 @@ import javax.swing.*;
 public interface UsagePresentation {
   @NotNull
   TextChunk[] getText();
+
+  /**
+   * If the implementation caches or lazy-loades the text chunks internally, this method gives it a chance to avoid
+   * re-calculating it synchronously on EDT and return the possibly obsolete data.
+   *
+   * The component using this presentation might call {@link UsagePresentation#updateCachedText()} in a background
+   * thread and then use {@link UsagePresentation#getCachedText()} to draw the text.
+   */
+  @Nullable
+  default TextChunk[] getCachedText() {
+    return getText();
+  }
+
+  default void updateCachedText() {}
 
   @NotNull
   String getPlainText();

@@ -27,27 +27,33 @@ import org.intellij.plugins.intelliLang.util.RemoveAnnotationFix;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-public class PatternAnnotationNotApplicable extends LocalInspectionTool {
+import static com.intellij.codeInsight.AnnotationUtil.CHECK_EXTERNAL;
 
+public class PatternAnnotationNotApplicable extends LocalInspectionTool {
+  @Override
   @NotNull
   public HighlightDisplayLevel getDefaultLevel() {
     return HighlightDisplayLevel.ERROR;
   }
 
+  @Override
   public boolean isEnabledByDefault() {
     return true;
   }
 
+  @Override
   @NotNull
   public String getGroupDisplayName() {
     return PatternValidator.PATTERN_VALIDATION;
   }
 
+  @Override
   @NotNull
   public String getDisplayName() {
     return "Pattern Annotation not applicable";
   }
 
+  @Override
   @NotNull
   public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, boolean isOnTheFly) {
     return new JavaElementVisitor() {
@@ -61,7 +67,7 @@ public class PatternAnnotationNotApplicable extends LocalInspectionTool {
         }
         else if (name != null) {
           final PsiClass psiClass = JavaPsiFacade.getInstance(annotation.getProject()).findClass(name, annotation.getResolveScope());
-          if (psiClass != null && AnnotationUtil.isAnnotated(psiClass, annotationName, false, false)) {
+          if (psiClass != null && AnnotationUtil.isAnnotated(psiClass, annotationName, CHECK_EXTERNAL)) {
             checkAnnotation(annotation, holder);
           }
         }
@@ -89,6 +95,7 @@ public class PatternAnnotationNotApplicable extends LocalInspectionTool {
     holder.registerProblem(annotation, "Pattern Annotation is only applicable to elements of type String", new RemoveAnnotationFix(this));
   }
 
+  @Override
   @NotNull
   @NonNls
   public String getShortName() {

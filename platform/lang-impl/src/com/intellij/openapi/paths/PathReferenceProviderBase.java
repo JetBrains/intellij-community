@@ -1,8 +1,8 @@
 
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.paths;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.ElementManipulators;
 import com.intellij.psi.PsiElement;
@@ -25,7 +25,9 @@ public abstract class PathReferenceProviderBase implements PathReferenceProvider
     int offset = range.getStartOffset();
     int endOffset = range.getEndOffset();
     final String elementText = psiElement.getText();
-    for (DynamicContextProvider provider: Extensions.getExtensions(DynamicContextProvider.EP_NAME)) {
+    if (elementText == null)
+      return false;
+    for (DynamicContextProvider provider: DynamicContextProvider.EP_NAME.getExtensionList()) {
       final int dynamicOffset = provider.getOffset(psiElement, offset, elementText);
       if (dynamicOffset == -1) {
         return false;

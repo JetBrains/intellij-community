@@ -17,7 +17,7 @@
 package com.intellij.codeInsight.generation.surroundWith;
 
 import com.intellij.codeInsight.CodeInsightBundle;
-import com.intellij.codeInsight.CodeInsightUtilBase;
+import com.intellij.codeInsight.CodeInsightUtilCore;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
@@ -26,7 +26,7 @@ import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 
-class JavaWithIfElseSurrounder extends JavaStatementsSurrounder{
+public class JavaWithIfElseSurrounder extends JavaStatementsSurrounder{
   @Override
   public String getTemplateDescription() {
     return CodeInsightBundle.message("surround.with.ifelse.template");
@@ -35,7 +35,7 @@ class JavaWithIfElseSurrounder extends JavaStatementsSurrounder{
   @Override
   public TextRange surroundStatements(Project project, Editor editor, PsiElement container, PsiElement[] statements) throws IncorrectOperationException{
     PsiManager manager = PsiManager.getInstance(project);
-    PsiElementFactory factory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();
+    PsiElementFactory factory = JavaPsiFacade.getElementFactory(manager.getProject());
     CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(project);
 
     statements = SurroundWithUtil.moveDeclarationsOut(container, statements, false);
@@ -47,7 +47,7 @@ class JavaWithIfElseSurrounder extends JavaStatementsSurrounder{
     PsiIfStatement ifStatement = (PsiIfStatement)factory.createStatementFromText(text, null);
     ifStatement = (PsiIfStatement)codeStyleManager.reformat(ifStatement);
 
-    ifStatement = (PsiIfStatement)container.addAfter(ifStatement, statements[statements.length - 1]);
+    ifStatement = (PsiIfStatement)addAfter(ifStatement, container, statements);
 
     PsiStatement thenBranch = ifStatement.getThenBranch();
     if (!(thenBranch instanceof PsiBlockStatement)) {
@@ -55,9 +55,9 @@ class JavaWithIfElseSurrounder extends JavaStatementsSurrounder{
     }
     PsiCodeBlock thenBlock = ((PsiBlockStatement)thenBranch).getCodeBlock();
     SurroundWithUtil.indentCommentIfNecessary(thenBlock, statements);
-    thenBlock.addRange(statements[0], statements[statements.length - 1]);
+    addRangeWithinContainer(thenBlock, container, statements, true);
     container.deleteChildRange(statements[0], statements[statements.length - 1]);
-    ifStatement = CodeInsightUtilBase.forcePsiPostprocessAndRestoreElement(ifStatement);
+    ifStatement = CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(ifStatement);
     PsiExpression condition = ifStatement.getCondition();
     if (condition == null) {
       return null;

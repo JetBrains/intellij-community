@@ -27,7 +27,6 @@ import java.util.List;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Mar 24, 2004
  */
 public abstract class ProjectBuild extends Generator {
   protected final Project myProject;
@@ -76,7 +75,7 @@ public abstract class ProjectBuild extends Generator {
 
     myAntProject.add(new Target(BuildProperties.TARGET_BUILD_MODULES, buildModulesTargetNames.toString(),
                                 CompilerBundle.message("generated.ant.build.build.all.modules.target.name"), null), 1);
-    
+
     StringBuilder buildAllTargetNames = new StringBuilder();
     buildAllTargetNames.append(BuildProperties.TARGET_BUILD_MODULES);
     if (artifactsGenerator.hasArtifacts()) {
@@ -92,8 +91,8 @@ public abstract class ProjectBuild extends Generator {
                                 CompilerBundle.message("generated.ant.build.build.all.target.name"), null), 1);
   }
 
+  @Override
   public void generate(PrintWriter out) throws IOException {
-    //noinspection HardCodedStringLiteral
     writeXmlHeader(out);
     myAntProject.generate(out);
   }

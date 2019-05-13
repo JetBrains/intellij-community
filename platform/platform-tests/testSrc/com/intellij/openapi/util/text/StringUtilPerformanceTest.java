@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,9 +15,7 @@
  */
 package com.intellij.openapi.util.text;
 
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.testFramework.PlatformTestUtil;
-import com.intellij.util.ThrowableRunnable;
 import org.junit.Test;
 
 import java.util.Random;
@@ -28,17 +26,18 @@ public class StringUtilPerformanceTest {
   private static final String TEST_STRING = "0123456789abcdefghijklmnopqrstuvwxyz";
 
   @Test
-  public void containsAnyChar() throws Exception {
+  public void containsAnyChar() {
     assertTrue(StringUtil.containsAnyChar(TEST_STRING, Integer.toString(new Random().nextInt())));
 
-    PlatformTestUtil.startPerformanceTest("StringUtil.containsAnyChar()", SystemInfo.isWindows ? 500 : 200, new ThrowableRunnable() {
-      @Override
-      public void run() throws Throwable {
-        for (int i = 0; i < 1000000; i++) {
-          StringUtil.containsAnyChar(TEST_STRING, "XYZ");
-          StringUtil.containsAnyChar("XYZ", TEST_STRING);
+    PlatformTestUtil.startPerformanceTest("StringUtil.containsAnyChar()", 600, () -> {
+      for (int i = 0; i < 1_000_000; i++) {
+        if (StringUtil.containsAnyChar(TEST_STRING, "XYZ")) {
+          throw new AssertionError();
+        }
+        if (StringUtil.containsAnyChar("XYZ", TEST_STRING)) {
+          throw new AssertionError();
         }
       }
-    }).cpuBound().assertTiming();
+    }).assertTiming();
   }
 }

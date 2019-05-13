@@ -19,15 +19,18 @@ import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationListener;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.ShowSettingsUtil;
+import com.intellij.openapi.progress.util.BackgroundTaskUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.HgProjectSettings;
 import org.zmlx.hg4idea.HgVcs;
 import org.zmlx.hg4idea.action.HgCommandResultNotifier;
-import org.zmlx.hg4idea.execution.HgCommandExecutor;
 import org.zmlx.hg4idea.execution.HgCommandResult;
+import org.zmlx.hg4idea.execution.HgRemoteCommandExecutor;
 import org.zmlx.hg4idea.util.HgErrorUtil;
+import org.zmlx.hg4idea.util.HgUtil;
 
 import javax.swing.event.HyperlinkEvent;
 import java.util.List;
@@ -54,18 +57,19 @@ public abstract class HgRemoteChangesetsCommand extends HgChangesetsCommand {
     return true;
   }
 
-  protected String getRepositoryUrl(VirtualFile repo) {
-    return new HgShowConfigCommand(project).getDefaultPath(repo);
+  @Nullable
+  protected String getRepositoryUrl(VirtualFile root) {
+    return HgUtil.getRepositoryDefaultPath(project, root);
   }
 
   @Override
-  protected HgCommandResult executeCommand(VirtualFile repo, List<String> args) {
+  protected HgCommandResult executeCommandInCurrentThread(VirtualFile repo, List<String> args) {
     String repositoryURL = getRepositoryUrl(repo);
     if (repositoryURL == null) {
       LOG.info("executeCommand no default path configured");
       return null;
     }
-    HgCommandExecutor executor = new HgCommandExecutor(project, repositoryURL);
+    HgRemoteCommandExecutor executor = new HgRemoteCommandExecutor(project, repositoryURL);
     HgCommandResult result = executor.executeInCurrentThread(repo, command, args);
     if (result == HgCommandResult.CANCELLED || HgErrorUtil.isAuthorizationError(result)) {
       final HgVcs vcs = HgVcs.getInstance(project);
@@ -85,6 +89,7 @@ public abstract class HgRemoteChangesetsCommand extends HgChangesetsCommand {
                                                        });
       final HgProjectSettings projectSettings = vcs.getProjectSettings();
       projectSettings.setCheckIncomingOutgoing(false);
+      BackgroundTaskUtil.syncPublisher(project, HgVcs.INCOMING_OUTGOING_CHECK_TOPIC).hide();
     }
     return result;
   }

@@ -1,13 +1,34 @@
 package com.siyeh.ig.classlayout;
 
-import com.siyeh.ig.IGInspectionTestCase;
+import com.intellij.codeInspection.InspectionProfileEntry;
+import com.siyeh.ig.LightInspectionTestCase;
+import org.jetbrains.annotations.Nullable;
 
-public class EmptyClassInspectionTest extends IGInspectionTestCase {
+public class EmptyClassInspectionTest extends LightInspectionTestCase {
 
-  public void test() throws Exception {
-    final EmptyClassInspection tool = new EmptyClassInspection();
-    tool.ignoreClassWithParameterization = true;
-    tool.ignoreThrowables = true;
-    doTest("com/siyeh/igtest/classlayout/emptyclass", tool);
+  public void testEmptyClass() {
+    doTest();
+  }
+
+  public void testPackageInfo() {
+    doNamedTest("package-info");
+  }
+
+  public void testEmptyFile() {
+    doTest();
+  }
+
+  public void testClassWithComments() {
+    doTest();
+  }
+
+  @Nullable
+  @Override
+  protected InspectionProfileEntry getInspection() {
+    final EmptyClassInspection inspection = new EmptyClassInspection();
+    inspection.ignoreClassWithParameterization = true;
+    inspection.ignoreThrowables = true;
+    inspection.commentsAreContent = true;
+    return inspection;
   }
 }

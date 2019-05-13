@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,23 +15,22 @@
  */
 package com.intellij.ui;
 
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
-import java.util.ArrayList;
 import java.util.Collection;
-
-import org.jetbrains.annotations.NonNls;
 
 public class CollapsiblePanel extends JPanel {
   private final JButton myToggleCollapseButton;
   private final JComponent myContent;
   private boolean myIsCollapsed;
-  private final Collection<CollapsingListener> myListeners = new ArrayList<CollapsingListener>();
+  private final Collection<CollapsingListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
   private boolean myIsInitialized = false;
   private final Icon myExpandIcon;
   private final Icon myCollapseIcon;
@@ -62,12 +61,14 @@ public class CollapsiblePanel extends JPanel {
     myToggleCollapseButton.setFocusable(true);
 
     myToggleCollapseButton.getActionMap().put(COLLAPSE, new AbstractAction() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         collapse();
       }
     });
 
     myToggleCollapseButton.getActionMap().put(EXPAND, new AbstractAction() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         expand();
       }
@@ -98,6 +99,7 @@ public class CollapsiblePanel extends JPanel {
     }
 
     myToggleCollapseButton.addActionListener(new ActionListener() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         setCollapsed(!myIsCollapsed);
       }
@@ -146,7 +148,7 @@ public class CollapsiblePanel extends JPanel {
         myContent.requestFocusInWindow();
       }
 
-      notifyListners();
+      notifyListeners();
 
       revalidate();
       repaint();
@@ -174,9 +176,8 @@ public class CollapsiblePanel extends JPanel {
     }
   }
 
-  private void notifyListners() {
-    CollapsingListener[] listeners = myListeners.toArray(new CollapsingListener[myListeners.size()]);
-    for (CollapsingListener listener : listeners) {
+  private void notifyListeners() {
+    for (CollapsingListener listener : myListeners) {
       listener.onCollapsingChanged(this, isCollapsed());
     }
   }
@@ -221,6 +222,7 @@ public class CollapsiblePanel extends JPanel {
     return myToggleCollapseButton.getInputMap();
   }
 
+  @Override
   protected void paintComponent(Graphics g) {
     updatePanel();
     super.paintComponent(g);
@@ -234,6 +236,7 @@ public class CollapsiblePanel extends JPanel {
     }
   }
 
+  @Override
   protected void paintChildren(Graphics g) {
     if (myTitleLabel != null) {
       updateTitle();

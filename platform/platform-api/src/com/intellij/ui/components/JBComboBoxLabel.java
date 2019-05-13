@@ -1,22 +1,9 @@
-/*
- * Copyright 2000-2011 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.components;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.util.PlatformIcons;
+import org.intellij.lang.annotations.MagicConstant;
 
 import javax.swing.*;
 import java.awt.*;
@@ -32,6 +19,10 @@ public class JBComboBoxLabel extends JPanel {
     super(new BorderLayout());
     add(myText, BorderLayout.CENTER);
     add(myIcon, BorderLayout.EAST);
+  }
+
+  public void setTextFont(Font font) {
+    myText.setFont(font);
   }
 
   public void setText(String text) {
@@ -55,14 +46,27 @@ public class JBComboBoxLabel extends JPanel {
   }
 
   public void setSelectionIcon() {
-    myIcon.setIcon(AllIcons.General.Combo);
+    myIcon.setIcon(AllIcons.General.ArrowDown);
   }
 
   @Override
   public void setForeground(Color color) {
     super.setForeground(color);
+    //noinspection ConstantConditions
     if (myText != null) {
+      // null when called from the constructor of the superclass
       myText.setForeground(color);
     }
+  }
+
+  public void setHorizontalAlignment(@MagicConstant(valuesFromClass = SwingConstants.class) int alignment) {
+     myText.setHorizontalAlignment(alignment);
+  }
+
+  @Override
+  public void setEnabled(boolean enabled) {
+    super.setEnabled(enabled);
+    myText.setEnabled(enabled);
+    myIcon.setEnabled(enabled);
   }
 }

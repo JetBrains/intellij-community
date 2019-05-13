@@ -17,142 +17,125 @@ package com.intellij.ide;
 
 import com.intellij.pom.Navigatable;
 import com.intellij.util.ui.tree.TreeUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
-import java.util.ArrayList;
 import java.util.Enumeration;
 
 public abstract class OccurenceNavigatorSupport implements OccurenceNavigator {
   private final JTree myTree;
 
-  public OccurenceNavigatorSupport(JTree tree) {
+  public OccurenceNavigatorSupport(@NotNull JTree tree) {
     myTree = tree;
   }
 
   @Nullable
-  protected abstract Navigatable createDescriptorForNode(DefaultMutableTreeNode node);
+  protected abstract Navigatable createDescriptorForNode(@NotNull DefaultMutableTreeNode node);
 
+  /**
+   * @return true if this node is an actual occurrence, i.e. the "next/prev occurrence" actions should show this node (as opposed to groups or other nodes which should be skipped)
+   * Override in your occurrence support for more efficient impl
+   */
+  protected boolean isOccurrenceNode(@NotNull DefaultMutableTreeNode node) {
+    return createDescriptorForNode(node) != null;
+  }
+
+  @Override
   public OccurenceInfo goNextOccurence() {
-    Counters counters = new Counters();
-    DefaultMutableTreeNode node = findNode(myTree, true, counters);
+    DefaultMutableTreeNode node = findNode(myTree, true);
     if (node == null) return null;
     TreePath treePath = new TreePath(node.getPath());
     TreeUtil.selectPath(myTree, treePath);
     Navigatable editSourceDescriptor = createDescriptorForNode(node);
     if (editSourceDescriptor == null) return null;
+    Counters counters = calculatePosition(node);
     return new OccurenceInfo(editSourceDescriptor, counters.myFoundOccurenceNumber, counters.myOccurencesCount);
   }
 
+  @Override
   public OccurenceInfo goPreviousOccurence() {
-    Counters counters = new Counters();
-    DefaultMutableTreeNode node = findNode(myTree, false, counters);
+    DefaultMutableTreeNode node = findNode(myTree, false);
     if (node == null) return null;
     TreePath treePath = new TreePath(node.getPath());
     TreeUtil.selectPath(myTree, treePath);
     Navigatable editSourceDescriptor = createDescriptorForNode(node);
     if (editSourceDescriptor == null) return null;
+    Counters counters = calculatePosition(node);
     return new OccurenceInfo(editSourceDescriptor, counters.myFoundOccurenceNumber, counters.myOccurencesCount);
   }
 
+  @NotNull
+  private Counters calculatePosition(@NotNull DefaultMutableTreeNode foundNode) {
+    Counters counters = new Counters();
+    @SuppressWarnings("unchecked")
+    Enumeration<TreeNode> enumeration = ((DefaultMutableTreeNode)foundNode.getRoot()).preorderEnumeration();
+    while (enumeration.hasMoreElements()) {
+      TreeNode node = enumeration.nextElement();
+      if (node instanceof DefaultMutableTreeNode && isOccurrenceNode((DefaultMutableTreeNode)node)) {
+        counters.myOccurencesCount++;
+      }
+      if (node == foundNode) {
+        counters.myFoundOccurenceNumber = counters.myOccurencesCount;
+      }
+    }
+    return counters;
+  }
+
+  @Override
   public boolean hasNextOccurence() {
-    DefaultMutableTreeNode node = findNode(myTree, true, null);
+    DefaultMutableTreeNode node = findNode(myTree, true);
     return node != null;
   }
 
+  @Override
   public boolean hasPreviousOccurence() {
-    DefaultMutableTreeNode node = findNode(myTree, false, null);
+    DefaultMutableTreeNode node = findNode(myTree, false);
     return node != null;
   }
 
-  protected static class Counters {
+  private static class Counters {
     /**
-     * Equals to <code>-1</code> if this value is unsupported.
+     * Equals to {@code -1} if this value is unsupported.
      */
-    public int myFoundOccurenceNumber;
+    int myFoundOccurenceNumber; // starts with 1
     /**
-     * Equals to <code>-1</code> if this value is unsupported.
+     * Equals to {@code -1} if this value is unsupported.
      */
-    public int myOccurencesCount;
+    int myOccurencesCount;
   }
 
-  protected DefaultMutableTreeNode findNode(JTree tree, boolean forward, Counters counters) {
+  private DefaultMutableTreeNode findNode(@NotNull JTree tree, boolean forward) {
     TreePath selectionPath = tree.getSelectionPath();
     TreeNode selectedNode = null;
-    boolean[] ready = new boolean[] {true};
     if (selectionPath != null) {
       selectedNode = (TreeNode)selectionPath.getLastPathComponent();
-      ready[0] = false;
     }
+    return findNextNodeAfter(tree, selectedNode, forward);
+  }
 
-    DefaultMutableTreeNode root = (DefaultMutableTreeNode)tree.getModel().getRoot();
-
-    Enumeration enumeration = root.preorderEnumeration();
-    ArrayList<TreeNode> nodes = new ArrayList<TreeNode>();
-    while (enumeration.hasMoreElements()) {
-      TreeNode node = (TreeNode)enumeration.nextElement();
-      nodes.add(node);
+  public DefaultMutableTreeNode findNextNodeAfter(@NotNull JTree tree, TreeNode selectedNode, boolean forward) {
+    if (selectedNode == null) {
+      selectedNode = (TreeNode)tree.getModel().getRoot();
     }
-
-    DefaultMutableTreeNode result = null;
-
     if (forward) {
-      for (TreeNode node : nodes) {
-        DefaultMutableTreeNode nextNode = getNode(node, selectedNode, ready);
-        if (nextNode != null) {
-          result = nextNode;
-          break;
+      for (DefaultMutableTreeNode node=((DefaultMutableTreeNode)selectedNode).getNextNode(); node != null; node = node.getNextNode()) {
+        if (createDescriptorForNode(node) != null) {
+          return node;
         }
       }
     }
     else {
-      for (int i=nodes.size() - 1; i >= 0; i--) {
-        TreeNode node = nodes.get(i);
-        DefaultMutableTreeNode nextNode = getNode(node, selectedNode, ready);
-        if (nextNode != null) {
-          result = nextNode;
-          break;
+      for (DefaultMutableTreeNode node=((DefaultMutableTreeNode)selectedNode).getPreviousNode(); node != null; node = node.getPreviousNode()) {
+        if (createDescriptorForNode(node) != null) {
+          return node;
         }
       }
     }
 
-    if (result == null) {
-      return null;
-    }
-
-    if (counters != null) {
-      counters.myFoundOccurenceNumber = 0;
-      counters.myOccurencesCount = 0;
-      for (TreeNode node : nodes) {
-        if (!(node instanceof DefaultMutableTreeNode)) continue;
-
-        Navigatable descriptor = createDescriptorForNode((DefaultMutableTreeNode)node);
-        if (descriptor == null) continue;
-
-        counters.myOccurencesCount++;
-        if (result == node) {
-          counters.myFoundOccurenceNumber = counters.myOccurencesCount;
-        }
-      }
-    }
-
-    return result;
-  }
-
-  protected DefaultMutableTreeNode getNode(TreeNode node, TreeNode selectedNode, boolean[] ready) {
-    if (!ready[0]) {
-      if (node == selectedNode) {
-        ready[0] = true;
-      }
-      return null;
-    }
-    if (!(node instanceof DefaultMutableTreeNode)) return null;
-
-    Navigatable descriptor = createDescriptorForNode((DefaultMutableTreeNode)node);
-    if (descriptor == null) return null;
-    return (DefaultMutableTreeNode)node;
+    return null;
   }
 }

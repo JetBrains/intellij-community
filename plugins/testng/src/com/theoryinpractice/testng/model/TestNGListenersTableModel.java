@@ -14,27 +14,23 @@
  * limitations under the License.
  */
 
-/*
- * Created by IntelliJ IDEA.
- * User: amrk
- * Date: Jul 26, 2005
- * Time: 7:33:45 PM
- */
 package com.theoryinpractice.testng.model;
 
+import javax.swing.*;
 import java.util.ArrayList;
 import java.util.List;
-import javax.swing.*;
 
 public class TestNGListenersTableModel extends AbstractListModel
 {
 
-  private final List<String> listenerList = new ArrayList<String>();
+  private final List<String> listenerList = new ArrayList<>();
 
+  @Override
   public int getSize() {
     return listenerList.size();
   }
 
+  @Override
   public Object getElementAt(int i) {
     return listenerList.get(i);
   }

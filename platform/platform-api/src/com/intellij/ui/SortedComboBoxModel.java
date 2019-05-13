@@ -16,22 +16,23 @@
 package com.intellij.ui;
 
 import com.intellij.openapi.util.Comparing;
-import com.intellij.ui.SortedListModel;
 
 import javax.swing.*;
 import java.util.Comparator;
 
-public class SortedComboBoxModel<T> extends SortedListModel<T> implements ComboBoxModel {
+public class SortedComboBoxModel<T> extends SortedListModel<T> implements ComboBoxModel<T> {
   private T mySelection;
 
-  public SortedComboBoxModel(Comparator<T> comparator) {
+  public SortedComboBoxModel(Comparator<? super T> comparator) {
     super(comparator);
   }
 
+  @Override
   public T getSelectedItem() {
     return mySelection;
   }
 
+  @Override
   public void setSelectedItem(Object anItem) {
     if (Comparing.equal(mySelection, anItem)) return;
     mySelection = (T)anItem;

@@ -15,7 +15,6 @@
  */
 package com.intellij.lang.ant.config.explorer;
 
-import com.intellij.icons.AllIcons;
 import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.lang.ant.config.AntBuildFile;
 import com.intellij.lang.ant.config.AntBuildFileBase;
@@ -26,6 +25,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.ui.HtmlListCellRenderer;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
+import icons.AntIcons;
 import org.jetbrains.annotations.NotNull;
 
 final class AntBuildFileNodeDescriptor extends AntNodeDescriptor {
@@ -33,11 +33,12 @@ final class AntBuildFileNodeDescriptor extends AntNodeDescriptor {
   private final AntBuildFileBase myBuildFile;
   private CompositeAppearance myAppearance;
 
-  public AntBuildFileNodeDescriptor(Project project, NodeDescriptor parentDescriptor, AntBuildFileBase buildFile) {
+  AntBuildFileNodeDescriptor(Project project, NodeDescriptor parentDescriptor, AntBuildFileBase buildFile) {
     super(project, parentDescriptor);
     myBuildFile = buildFile;
   }
 
+  @Override
   public Object getElement() {
     return myBuildFile;
   }
@@ -46,6 +47,7 @@ final class AntBuildFileNodeDescriptor extends AntNodeDescriptor {
     return myBuildFile;
   }
 
+  @Override
   public boolean update() {
     CompositeAppearance oldAppearance = myAppearance;
     myAppearance = new CompositeAppearance();
@@ -54,11 +56,12 @@ final class AntBuildFileNodeDescriptor extends AntNodeDescriptor {
     if (buildModel != null) {
       AntTargetNodeDescriptor.addShortcutText(buildModel.getDefaultTargetActionId(), myAppearance);
     }
-    setIcon(AllIcons.Ant.Build);
+    myAppearance.setIcon(AntIcons.Build);
     myName = myBuildFile.getPresentableName();
     return !Comparing.equal(myAppearance, oldAppearance);
   }
 
+  @Override
   public void customize(@NotNull SimpleColoredComponent component) {
     if (myAppearance != null) {
       myAppearance.customize(component);
@@ -78,6 +81,7 @@ final class AntBuildFileNodeDescriptor extends AntNodeDescriptor {
     }
   }
 
+  @Override
   public boolean isAutoExpand() {
     return myBuildFile.shouldExpand();
   }

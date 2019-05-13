@@ -1,807 +1,893 @@
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.diagnostic;
 
 import com.intellij.CommonBundle;
 import com.intellij.ExtensionPoints;
-import com.intellij.diagnostic.errordialog.*;
+import com.intellij.credentialStore.CredentialAttributesKt;
+import com.intellij.credentialStore.Credentials;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
-import com.intellij.ide.impl.DataManagerImpl;
+import com.intellij.ide.IdeBundle;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginManager;
+import com.intellij.ide.plugins.PluginManagerCore;
+import com.intellij.ide.plugins.PluginManagerMain;
+import com.intellij.ide.plugins.cl.PluginClassLoader;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
-import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
-import com.intellij.openapi.application.ex.ApplicationManagerEx;
-import com.intellij.openapi.diagnostic.ErrorReportSubmitter;
-import com.intellij.openapi.diagnostic.IdeaLoggingEvent;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.diagnostic.SubmittedReportInfo;
+import com.intellij.openapi.diagnostic.*;
 import com.intellij.openapi.extensions.ExtensionException;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.extensions.PluginId;
+import com.intellij.openapi.extensions.impl.PicoPluginExtensionInitializationException;
 import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.IdeFrame;
-import com.intellij.ui.HeaderlessTabbedPane;
-import com.intellij.ui.HyperlinkLabel;
-import com.intellij.ui.IdeBorderFactory;
-import com.intellij.util.Consumer;
-import com.intellij.util.Function;
+import com.intellij.openapi.wm.WindowManager;
+import com.intellij.ui.*;
+import com.intellij.ui.components.JBLabel;
+import com.intellij.ui.components.JBScrollPane;
+import com.intellij.util.ExceptionUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.DateFormatUtil;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.NonNls;
+import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
+import javax.swing.event.DocumentEvent;
 import javax.swing.event.HyperlinkEvent;
-import javax.swing.event.HyperlinkListener;
 import java.awt.*;
 import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
+import java.awt.event.ItemEvent;
 import java.io.IOException;
-import java.math.BigInteger;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
-import java.util.*;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
+import java.util.*;
+import java.util.zip.CRC32;
 
-public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListener, TypeSafeDataProvider {
-  private static final Logger LOG = Logger.getInstance(IdeErrorsDialog.class.getName());
-  private final boolean myInternalMode;
-  @NonNls private static final String ACTIVE_TAB_OPTION = IdeErrorsDialog.class.getName() + "activeTab";
-  public static DataKey<String> CURRENT_TRACE_KEY = DataKey.create("current_stack_trace_key");
-  public static final int COMPONENTS_WIDTH = 670;
-  public static Collection<Developer> ourDevelopersList = Collections.emptyList();
+import static com.intellij.openapi.util.Pair.pair;
+import static java.awt.GridBagConstraints.*;
 
-  private JPanel myContentPane;
-  private JPanel myBackButtonPanel;
-  private HyperlinkLabel.Croppable myInfoLabel;
-  private JPanel myNextButtonPanel;
-  private JPanel myTabsPanel;
-  private JLabel myCountLabel;
-  private HyperlinkLabel.Croppable myForeignPluginWarningLabel;
-  private HyperlinkLabel.Croppable myDisableLink;
-  private JPanel myCredentialsPanel;
-  private HyperlinkLabel myCredentialsLabel;
-  private JPanel myForeignPluginWarningPanel;
-  private JPanel myAttachmentWarningPanel;
-  private HyperlinkLabel myAttachmentWarningLabel;
+public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListener, DataProvider {
+  private static final Logger LOG = Logger.getInstance(IdeErrorsDialog.class);
 
-  private int myIndex = 0;
-  private final List<ArrayList<AbstractMessage>> myMergedMessages = new ArrayList<ArrayList<AbstractMessage>>();
-  private List<AbstractMessage> myRawMessages;
+  public static final DataKey<String> CURRENT_TRACE_KEY = DataKey.create("current_stack_trace_key");
+
+  private static final String STACKTRACE_ATTACHMENT = "stacktrace.txt";
+  private static final String ACCEPTED_NOTICES_KEY = "exception.accepted.notices";
+  private static final String ACCEPTED_NOTICES_SEPARATOR = ":";
+  private static List<Developer> ourDevelopersList = Collections.emptyList();
+
   private final MessagePool myMessagePool;
-  private HeaderlessTabbedPane myTabs;
-  @Nullable
-  private CommentsTabForm myCommentsTabForm;
-  private DetailsTabForm myDetailsTabForm;
-  private AttachmentsTabForm myAttachmentsTabForm;
+  private final Project myProject;
+  private final boolean myInternalMode;
+  private final Set<String> myAcceptedNotices;
+  private final List<MessageCluster> myMessageClusters = new ArrayList<>();  // exceptions with the same stacktrace
+  private int myIndex, myLastIndex = -1;
 
-  private ClearFatalsAction myClearAction = new ClearFatalsAction();
-  private BlameAction myBlameAction = new BlameAction();
-  @Nullable
-  private AnalyzeAction myAnalyzeAction;
-  private boolean myMute;
+  private JLabel myCountLabel;
+  private HyperlinkLabel.Croppable myInfoLabel;
+  private HyperlinkLabel.Croppable myDisableLink;
+  private HyperlinkLabel.Croppable myForeignPluginWarningLabel;
+  private JTextArea myCommentArea;
+  private AttachmentsList myAttachmentsList;
+  private JTextArea myAttachmentArea;
+  private JPanel myAssigneePanel;
+  private JPanel myNoticePanel;
+  private HideableDecorator myNoticeDecorator;
+  private JEditorPane myNoticeArea;
+  private ComboBox<Developer> myAssigneeCombo;
+  private HyperlinkLabel myCredentialsLabel;
 
-  public IdeErrorsDialog(MessagePool messagePool, @Nullable LogMessage defaultMessage) {
-    super(JOptionPane.getRootFrame(), false);
+  IdeErrorsDialog(@NotNull MessagePool messagePool, @Nullable Project project, @Nullable LogMessage defaultMessage) {
+    super(project, true);
     myMessagePool = messagePool;
-    ApplicationEx app = ApplicationManagerEx.getApplicationEx();
-    myInternalMode = app != null && app.isInternal();
+    myProject = project;
+    myInternalMode = ApplicationManager.getApplication().isInternal();
+
     setTitle(DiagnosticBundle.message("error.list.title"));
-    init();
-    rebuildHeaders();
-    if (defaultMessage == null || !moveSelectionToMessage(defaultMessage)) {
-      moveSelectionToEarliestMessage();
-    }
-    setCancelButtonText(CommonBundle.message("close.action.name"));
     setModal(false);
+    init();
+    setCancelButtonText(CommonBundle.message("close.action.name"));
+
     if (myInternalMode) {
-      if (ourDevelopersList.isEmpty()) {
-        loadDevelopersAsynchronously();
-      } else {
-        myDetailsTabForm.setDevelopers(ourDevelopersList);
-      }
-    }
-  }
-
-  private void loadDevelopersAsynchronously() {
-    Task.Backgroundable task = new Task.Backgroundable(null, "Loading developers list", true) {
-      private final Collection[] myDevelopers = new Collection[]{Collections.emptyList()};
-
-      @Override
-      public void run(@NotNull ProgressIndicator indicator) {
-        try {
-          myDevelopers[0] = DevelopersLoader.fetchDevelopers(indicator);
-        } catch (IOException e) {
-          //Notifications.Bus.register("Error reporter", NotificationDisplayType.BALLOON);
-          //Notifications.Bus.notify(new Notification("Error reporter", "Communication error",
-          //                                          "Unable to load developers list from server.", NotificationType.WARNING));
-        }
-      }
-
-      @Override
-      public void onSuccess() {
-        Collection<Developer> developers = myDevelopers[0];
-        myDetailsTabForm.setDevelopers(developers);
-        //noinspection AssignmentToStaticFieldFromInstanceMethod
-        ourDevelopersList = developers;
-      }
-    };
-    ProgressManager.getInstance().run(task);
-  }
-
-  private boolean moveSelectionToMessage(LogMessage defaultMessage) {
-    int index = -1;
-    for (int i = 0; i < myMergedMessages.size(); i++) {
-      final AbstractMessage each = getMessageAt(i);
-      if (each == defaultMessage) {
-        index = i;
-        break;
-      }
+      loadDevelopersList();
     }
 
-    if (index >= 0) {
-      myIndex = index;
-      updateControls();
-      return true;
+    String rawValue = PropertiesComponent.getInstance().getValue(ACCEPTED_NOTICES_KEY, "");
+    myAcceptedNotices = ContainerUtil.newLinkedHashSet(StringUtil.split(rawValue, ACCEPTED_NOTICES_SEPARATOR));
+
+    updateMessages();
+    myIndex = selectMessage(defaultMessage);
+    updateControls();
+
+    messagePool.addListener(this);
+  }
+
+  private void loadDevelopersList() {
+    if (!ourDevelopersList.isEmpty()) {
+      myAssigneeCombo.setModel(new CollectionComboBoxModel<>(ourDevelopersList));
     }
     else {
-      return false;
+      new Task.Backgroundable(null, "Loading Developers List", true) {
+        @Override
+        public void run(@NotNull ProgressIndicator indicator) {
+          try {
+            List<Developer> developers = ITNProxy.fetchDevelopers(indicator);
+            //noinspection AssignmentToStaticFieldFromInstanceMethod
+            ourDevelopersList = developers;
+            UIUtil.invokeLaterIfNeeded(() -> {
+              if (isShowing()) {
+                myAssigneeCombo.setModel(new CollectionComboBoxModel<>(developers));
+              }
+            });
+          }
+          catch (IOException e) {
+            LOG.warn(e);
+          }
+        }
+      }.queue();
     }
   }
 
-  public void newEntryAdded() {
-    SwingUtilities.invokeLater(new Runnable() {
-      public void run() {
-        rebuildHeaders();
-        updateControls();
+  private int selectMessage(@Nullable LogMessage defaultMessage) {
+    if (defaultMessage != null) {
+      for (int i = 0; i < myMessageClusters.size(); i++) {
+        if (myMessageClusters.get(i).messages.contains(defaultMessage)) return i;
       }
-    });
+    }
+    else {
+      for (int i = 0; i < myMessageClusters.size(); i++) {
+        if (!myMessageClusters.get(i).messages.get(0).isRead()) return i;
+      }
+      for (int i = 0; i < myMessageClusters.size(); i++) {
+        for (AbstractMessage message : myMessageClusters.get(i).messages) {
+          if (!message.isRead()) return i;
+        }
+      }
+      for (int i = 0; i < myMessageClusters.size(); i++) {
+        if (!myMessageClusters.get(i).messages.get(0).isSubmitted()) return i;
+      }
+    }
+    return 0;
   }
 
-  public void poolCleared() {
-    SwingUtilities.invokeLater(new Runnable() {
-      public void run() {
-        doOKAction();
+  @Nullable
+  @Override
+  protected JComponent createNorthPanel() {
+    myCountLabel = new JBLabel();
+    myInfoLabel = new HyperlinkLabel.Croppable();
+
+    myDisableLink = new HyperlinkLabel.Croppable();
+    myDisableLink.setHyperlinkText(UIUtil.removeMnemonic(DiagnosticBundle.message("error.list.disable.plugin")));
+    myDisableLink.addHyperlinkListener(e -> {
+      if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
+        disablePlugin();
       }
     });
+
+    myForeignPluginWarningLabel = new HyperlinkLabel.Croppable();
+
+    JPanel controls = new JPanel(new BorderLayout());
+    controls.add(actionToolbar("IdeErrorsBack", new BackAction()), BorderLayout.WEST);
+    controls.add(myCountLabel, BorderLayout.CENTER);
+    controls.add(actionToolbar("IdeErrorsForward", new ForwardAction()), BorderLayout.EAST);
+
+    JPanel panel = new JPanel(new GridBagLayout());
+    panel.add(controls, new GridBagConstraints(0, 0, 1, 1, 0.0, 0.0, CENTER, NONE, JBUI.insets(2), 0, 0));
+    panel.add(myInfoLabel, new GridBagConstraints(1, 0, 1, 1, 0.0, 0.0, WEST, NONE, JBUI.emptyInsets(), 0, 0));
+    panel.add(myDisableLink, new GridBagConstraints(2, 0, 1, 1, 0.0, 0.0, WEST, NONE, JBUI.emptyInsets(), 0, 0));
+    panel.add(new JPanel(), new GridBagConstraints(3, 0, 1, 1, 1.0, 0.0, CENTER, BOTH, JBUI.emptyInsets(), 0, 0));  // expander
+    panel.add(myForeignPluginWarningLabel, new GridBagConstraints(1, 1, 3, 1, 0.0, 0.0, WEST, NONE, JBUI.emptyInsets(), 0, 0));
+    return panel;
+  }
+
+  private static JComponent actionToolbar(String id, AnAction action) {
+    ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar(id, new DefaultActionGroup(action), true);
+    toolbar.setLayoutPolicy(ActionToolbar.NOWRAP_LAYOUT_POLICY);
+    toolbar.getComponent().setBorder(JBUI.Borders.empty());
+    return toolbar.getComponent();
   }
 
   @Override
-  public void entryWasRead() {
+  protected JComponent createCenterPanel() {
+    JBLabel commentLabel = new JBLabel(DiagnosticBundle.message("error.dialog.comment.prompt"));
+
+    myCommentArea = new JTextArea(5, 0);
+    myCommentArea.setMargin(JBUI.insets(2));
+    myCommentArea.getDocument().addDocumentListener(new DocumentAdapter() {
+      @Override
+      protected void textChanged(@NotNull DocumentEvent e) {
+        selectedMessage().setAdditionalInfo(myCommentArea.getText().trim());
+      }
+    });
+
+    JBLabel attachmentsLabel = new JBLabel(DiagnosticBundle.message("error.dialog.attachments.prompt"));
+
+    myAttachmentsList = new AttachmentsList();
+    myAttachmentsList.addListSelectionListener(e -> {
+      int index = myAttachmentsList.getSelectedIndex();
+      if (index < 0) {
+        myAttachmentArea.setText("");
+        myAttachmentArea.setEditable(false);
+      }
+      else if (index == 0) {
+        MessageCluster cluster = selectedCluster();
+        myAttachmentArea.setText(cluster.detailsText);
+        myAttachmentArea.setEditable(cluster.isUnsent());
+      }
+      else {
+        myAttachmentArea.setText(selectedMessage().getAllAttachments().get(index - 1).getDisplayText());
+        myAttachmentArea.setEditable(false);
+      }
+      myAttachmentArea.setCaretPosition(0);
+    });
+    myAttachmentsList.setCheckBoxListListener((index, value) -> {
+      if (index > 0) {
+        selectedMessage().getAllAttachments().get(index - 1).setIncluded(value);
+      }
+    });
+
+    myAttachmentArea = new JTextArea();
+    myAttachmentArea.setMargin(JBUI.insets(2));
+    myAttachmentArea.getDocument().addDocumentListener(new DocumentAdapter() {
+      @Override
+      protected void textChanged(@NotNull DocumentEvent e) {
+        if (myAttachmentsList.getSelectedIndex() == 0) {
+          String detailsText = myAttachmentArea.getText();
+          MessageCluster cluster = selectedCluster();
+          cluster.detailsText = detailsText;
+          setOKActionEnabled(cluster.canSubmit() && !StringUtil.isEmptyOrSpaces(detailsText));
+        }
+      }
+    });
+
+    if (myInternalMode) {
+      myAssigneeCombo = new ComboBox<>();
+      myAssigneeCombo.setRenderer(new ListCellRendererWrapper<Developer>() {
+        @Override
+        public void customize(JList list, Developer value, int index, boolean selected, boolean hasFocus) {
+          setText(value == null ? "<none>" : value.getDisplayText());
+        }
+      });
+      myAssigneeCombo.setPrototypeDisplayValue(new Developer(0, StringUtil.repeatSymbol('-', 30)));
+      myAssigneeCombo.addItemListener(e -> {
+        if (e.getStateChange() == ItemEvent.SELECTED) {
+          Developer developer = (Developer)e.getItem();
+          selectedMessage().setAssigneeId(developer == null ? null : developer.getId());
+        }
+      });
+      new ComboboxSpeedSearch(myAssigneeCombo) {
+        @Override
+        protected String getElementText(Object element) {
+          return element == null ? "" : ((Developer)element).getDisplayText();
+        }
+      };
+
+      myAssigneePanel = new JPanel();
+      myAssigneePanel.add(new JBLabel("Assignee:"));
+      myAssigneePanel.add(myAssigneeCombo);
+    }
+
+    myCredentialsLabel = new HyperlinkLabel();
+    myCredentialsLabel.addHyperlinkListener(e -> {
+      if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
+        JetBrainsAccountDialogKt.showJetBrainsAccountDialog(getRootPane()).show();
+        updateControls();
+      }
+    });
+
+    myNoticeArea = new JEditorPane();
+    myNoticeArea.setEditable(false);
+    myNoticeArea.setFocusable(false);
+    myNoticeArea.setBackground(UIUtil.getPanelBackground());
+    myNoticeArea.setEditorKit(UIUtil.getHTMLEditorKit());
+    myNoticeArea.addHyperlinkListener(BrowserHyperlinkListener.INSTANCE);
+
+    JPanel decoratorPanel = new JPanel(new BorderLayout());
+    myNoticeDecorator = new NoticeDecorator(decoratorPanel);
+    myNoticeDecorator.setContentComponent(myNoticeArea);
+
+    JPanel commentPanel = new JPanel(new BorderLayout());
+    commentPanel.setBorder(JBUI.Borders.emptyTop(5));
+    commentPanel.add(commentLabel, BorderLayout.NORTH);
+    commentPanel.add(scrollPane(myCommentArea, 0, 0), BorderLayout.CENTER);
+
+    JPanel attachmentsPanel = new JPanel(new BorderLayout(JBUI.scale(5), 0));
+    attachmentsPanel.setBorder(JBUI.Borders.emptyTop(5));
+    attachmentsPanel.add(attachmentsLabel, BorderLayout.NORTH);
+    attachmentsPanel.add(scrollPane(myAttachmentsList, 150, 350), BorderLayout.WEST);
+    attachmentsPanel.add(scrollPane(myAttachmentArea, 500, 350), BorderLayout.CENTER);
+
+    JPanel accountRow = new JPanel(new BorderLayout());
+    if (myInternalMode) accountRow.add(myAssigneePanel, BorderLayout.WEST);
+    accountRow.add(myCredentialsLabel, BorderLayout.EAST);
+    myNoticePanel = new JPanel(new GridBagLayout());
+    myNoticePanel.add(new JBLabel(UIUtil.getBalloonWarningIcon()), new GridBagConstraints(0, 0, 1, 1, 0, 0, NORTH, NONE, JBUI.insets(7, 0, 0, 5), 0, 0));
+    myNoticePanel.add(decoratorPanel, new GridBagConstraints(1, 0, 1, 1, 1.0, 0, CENTER, HORIZONTAL, JBUI.emptyInsets(), 0, 0));
+    JPanel bottomRow = new JPanel(new BorderLayout());
+    bottomRow.add(accountRow, BorderLayout.NORTH);
+    bottomRow.add(myNoticePanel, BorderLayout.CENTER);
+
+    JPanel rootPanel = new JPanel(new BorderLayout());
+    rootPanel.setPreferredSize(JBUI.size(800, 400));
+    rootPanel.add(commentPanel, BorderLayout.NORTH);
+    rootPanel.add(attachmentsPanel, BorderLayout.CENTER);
+    rootPanel.add(bottomRow, BorderLayout.SOUTH);
+    return rootPanel;
+  }
+
+  private static JScrollPane scrollPane(JComponent component, int width, int height) {
+    JScrollPane scrollPane = new JBScrollPane(component);
+    if (width > 0 && height > 0) {
+      scrollPane.setMinimumSize(JBUI.size(width, height));
+    }
+    return scrollPane;
   }
 
   @NotNull
   @Override
   protected Action[] createActions() {
-    if (SystemInfo.isMac) {
-      return new Action[]{getCancelAction(), myClearAction, myBlameAction};
-    }
-    else {
-      return new Action[]{myClearAction, myBlameAction, getCancelAction()};
-    }
-  }
-
-  @Override
-  protected void createDefaultActions() {
-    super.createDefaultActions();
-    getCancelAction().putValue(DEFAULT_ACTION, Boolean.TRUE);
-  }
-
-  private class ForwardAction extends AnAction implements DumbAware {
-    public ForwardAction() {
-      super("Next", null, AllIcons.Actions.Forward);
-      AnAction forward = ActionManager.getInstance().getAction("Forward");
-      if (forward != null) {
-        registerCustomShortcutSet(forward.getShortcutSet(), getRootPane(), getDisposable());
-      }
-
-    }
-
-    public void actionPerformed(AnActionEvent e) {
-      goForward();
-    }
-
-    public void update(AnActionEvent e) {
-      Presentation presentation = e.getPresentation();
-      presentation.setEnabled(myIndex < myMergedMessages.size() - 1);
-    }
-  }
-
-  private class BackAction extends AnAction implements DumbAware {
-    public BackAction() {
-      super("Previous", null, AllIcons.Actions.Back);
-      AnAction back = ActionManager.getInstance().getAction("Back");
-      if (back != null) {
-        registerCustomShortcutSet(back.getShortcutSet(), getRootPane(), getDisposable());
+    List<Action> actions = new ArrayList<>();
+    if (myInternalMode && myProject != null && !myProject.isDefault()) {
+      AnAction action = ActionManager.getInstance().getAction("Unscramble");
+      if (action != null) {
+        actions.add(new AnalyzeAction(action));
       }
     }
-
-    public void actionPerformed(AnActionEvent e) {
-      goBack();
-    }
-
-    public void update(AnActionEvent e) {
-      Presentation presentation = e.getPresentation();
-      presentation.setEnabled(myIndex > 0);
-    }
-  }
-
-  @Override
-  protected JComponent createCenterPanel() {
-    DefaultActionGroup goBack = new DefaultActionGroup();
-    BackAction back = new BackAction();
-    goBack.add(back);
-    ActionToolbar backToolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, goBack, true);
-    backToolbar.getComponent().setBorder(IdeBorderFactory.createEmptyBorder(0));
-    backToolbar.setLayoutPolicy(ActionToolbar.NOWRAP_LAYOUT_POLICY);
-    myBackButtonPanel.add(backToolbar.getComponent(), BorderLayout.CENTER);
-
-    DefaultActionGroup goForward = new DefaultActionGroup();
-    ForwardAction forward = new ForwardAction();
-    goForward.add(forward);
-    ActionToolbar forwardToolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, goForward, true);
-    forwardToolbar.setLayoutPolicy(ActionToolbar.NOWRAP_LAYOUT_POLICY);
-    forwardToolbar.getComponent().setBorder(IdeBorderFactory.createEmptyBorder(0));
-    myNextButtonPanel.add(forwardToolbar.getComponent(), BorderLayout.CENTER);
-
-    myTabs = new HeaderlessTabbedPane(getDisposable());
-    final LabeledTextComponent.TextListener commentsListener = new LabeledTextComponent.TextListener() {
-      @Override
-      public void textChanged(String newText) {
-        if (myMute) {
-          return;
-        }
-
-        AbstractMessage message = getSelectedMessage();
-        if (message != null) {
-          message.setAdditionalInfo(newText);
-        }
-      }
-    };
-    if (!myInternalMode) {
-      myDetailsTabForm = new DetailsTabForm(null, myInternalMode);
-      myCommentsTabForm = new CommentsTabForm();
-      myCommentsTabForm.addCommentsListener(commentsListener);
-      myTabs.addTab(DiagnosticBundle.message("error.comments.tab.title"), myCommentsTabForm.getContentPane());
-      myDetailsTabForm.setCommentsAreaVisible(false);
-    }
-    else {
-      final AnAction analyzePlatformAction = ActionManager.getInstance().getAction("AnalyzeStacktraceOnError");
-      if (analyzePlatformAction != null) {
-        myAnalyzeAction = new AnalyzeAction(analyzePlatformAction);
-      }
-      myDetailsTabForm = new DetailsTabForm(myAnalyzeAction, myInternalMode);
-      myDetailsTabForm.setCommentsAreaVisible(true);
-      myDetailsTabForm.addCommentsListener(commentsListener);
-    }
-
-    myTabs.addTab(DiagnosticBundle.message("error.details.tab.title"), myDetailsTabForm.getContentPane());
-
-    myAttachmentsTabForm = new AttachmentsTabForm();
-    myAttachmentsTabForm.addInclusionListener(new ChangeListener() {
-      public void stateChanged(final ChangeEvent e) {
-        updateAttachmentWarning(getSelectedMessage());
-      }
-    });
-
-    int activeTabIndex = Integer.parseInt(PropertiesComponent.getInstance().getValue(ACTIVE_TAB_OPTION, "0"));
-    if (activeTabIndex >= myTabs.getTabCount() || activeTabIndex < 0) {
-      activeTabIndex = 0; // may happen if myInternalMode changed since last open
-    }
-
-    myTabs.setSelectedIndex(activeTabIndex);
-
-    myTabs.addChangeListener(new ChangeListener() {
-      @Override
-      public void stateChanged(ChangeEvent e) {
-        final JComponent c = getPreferredFocusedComponent();
-        if (c != null) {
-          IdeFocusManager.findInstanceByComponent(myContentPane).requestFocus(c, true);
-        }
-      }
-    });
-
-    myTabsPanel.add(myTabs, BorderLayout.CENTER);
-
-    myDisableLink.setHyperlinkText(UIUtil.removeMnemonic(DiagnosticBundle.message("error.list.disable.plugin")));
-    myDisableLink.addHyperlinkListener(new HyperlinkListener() {
-      @Override
-      public void hyperlinkUpdate(HyperlinkEvent e) {
-        if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
-          disablePlugin();
-        }
-      }
-    });
-
-    myCredentialsLabel.addHyperlinkListener(new HyperlinkListener() {
-      @Override
-      public void hyperlinkUpdate(HyperlinkEvent e) {
-        if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
-          new JetBrainsAccountDialog(getRootPane()).show();
-          updateCredentialsPane(getSelectedMessage());
-        }
-      }
-    });
-
-    myAttachmentWarningLabel.setIcon(UIUtil.getBalloonWarningIcon());
-    myAttachmentWarningLabel.addHyperlinkListener(new HyperlinkListener() {
-      public void hyperlinkUpdate(final HyperlinkEvent e) {
-        if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
-          myTabs.setSelectedIndex(myTabs.indexOfComponent(myAttachmentsTabForm.getContentPane()));
-          myAttachmentsTabForm.selectFirstIncludedAttachment();
-        }
-      }
-    });
-
-    myDetailsTabForm.addAssigneeListener(new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        if (myMute) return;
-
-        AbstractMessage message = getSelectedMessage();
-        if (message != null) {
-          message.setAssigneeId(myDetailsTabForm.getAssigneeId());
-        }
-      }
-    });
-
-    return myContentPane;
-  }
-
-  private void moveSelectionToEarliestMessage() {
-    myIndex = 0;
-    for (int i = 0; i < myMergedMessages.size(); i++) {
-      final AbstractMessage each = getMessageAt(i);
-      if (!each.isRead()) {
-        myIndex = i;
-        break;
-      }
-    }
-
-    updateControls();
-  }
-
-  private void disablePlugin() {
-    final PluginId pluginId = findPluginId(getSelectedMessage().getThrowable());
-    if (pluginId == null) {
-      return;
-    }
-
-    IdeaPluginDescriptor plugin = PluginManager.getPlugin(pluginId);
-    final Ref<Boolean> hasDependants = new Ref<Boolean>(false);
-    PluginManager.checkDependants(plugin, new Function<PluginId, IdeaPluginDescriptor>() {
-                                    @Override
-                                    public IdeaPluginDescriptor fun(PluginId pluginId) {
-                                      return PluginManager.getPlugin(pluginId);
-                                    }
-                                  }, new Condition<PluginId>() {
-      @Override
-      public boolean value(PluginId pluginId) {
-        if (PluginManager.CORE_PLUGIN_ID.equals(pluginId.getIdString())) {
-          return true;
-        }
-        hasDependants.set(true);
-        return false;
-      }
-    }
-    );
-
-    Application app = ApplicationManager.getApplication();
-    DisablePluginWarningDialog d =
-      new DisablePluginWarningDialog(getRootPane(), plugin.getName(), hasDependants.get(), app.isRestartCapable());
-    d.show();
-    switch (d.getExitCode()) {
-      case CANCEL_EXIT_CODE:
-        return;
-      case DisablePluginWarningDialog.DISABLE_EXIT_CODE:
-        PluginManager.disablePlugin(pluginId.getIdString());
-        break;
-      case DisablePluginWarningDialog.DISABLE_AND_RESTART_EXIT_CODE:
-        PluginManager.disablePlugin(pluginId.getIdString());
-        app.restart();
-        break;
-    }
-  }
-
-  private void goBack() {
-    myIndex--;
-    updateControls();
-  }
-
-  private void goForward() {
-    myIndex++;
-    updateControls();
-  }
-
-  private void updateControls() {
-    updateCountLabel();
-    final AbstractMessage message = getSelectedMessage();
-    updateInfoLabel(message);
-    updateCredentialsPane(message);
-    updateAssigneePane(message);
-    updateAttachmentWarning(message);
-    myDisableLink.setVisible(canDisablePlugin(message));
-    updateForeignPluginLabel(message != null ? message : null);
-    updateTabs();
-
-    myClearAction.update();
-    myBlameAction.update();
-    if (myAnalyzeAction != null) {
-      myAnalyzeAction.update();
-    }
-  }
-
-  private void updateAttachmentWarning(final AbstractMessage message) {
-    final List<Attachment> includedAttachments;
-    if (message instanceof LogMessageEx &&
-        !(includedAttachments = ContainerUtil.filter(((LogMessageEx)message).getAttachments(), new Condition<Attachment>() {
-          public boolean value(final Attachment attachment) {
-            return attachment.isIncluded();
-          }
-        })).isEmpty()) {
-      myAttachmentWarningPanel.setVisible(true);
-      if (includedAttachments.size() == 1) {
-        myAttachmentWarningLabel.setHtmlText(
-          DiagnosticBundle.message("diagnostic.error.report.include.attachment.warning", includedAttachments.get(0).getName()));
-      }
-      else {
-        myAttachmentWarningLabel.setHtmlText(
-          DiagnosticBundle.message("diagnostic.error.report.include.attachments.warning", includedAttachments.size()));
-      }
-    }
-    else {
-      myAttachmentWarningPanel.setVisible(false);
-    }
-  }
-
-  private static boolean canDisablePlugin(AbstractMessage message) {
-    if (message == null) {
-      return false;
-    }
-
-    PluginId pluginId = findPluginId(message.getThrowable());
-    if (pluginId == null) {
-      return false;
-    }
-
-    if (ApplicationInfoEx.getInstanceEx().isEssentialPlugin(pluginId.getIdString())) {
-      return false;
-    }
-    return true;
-  }
-
-  private void updateCountLabel() {
-    if (myMergedMessages.isEmpty()) {
-      myCountLabel.setText(DiagnosticBundle.message("error.list.empty"));
-    }
-    else {
-      myCountLabel
-        .setText(DiagnosticBundle.message("error.list.message.index.count", Integer.toString(myIndex + 1), myMergedMessages.size()));
-    }
-  }
-
-
-  private void updateCredentialsPane(AbstractMessage message) {
-    if (message != null) {
-      final ErrorReportSubmitter submitter = getSubmitter(message.getThrowable());
-      if (submitter instanceof ITNReporter) {
-        myCredentialsPanel.setVisible(true);
-        String userName = ErrorReportConfigurable.getInstance().ITN_LOGIN;
-        if (StringUtil.isEmpty(userName)) {
-          myCredentialsLabel.setHtmlText(DiagnosticBundle.message("diagnostic.error.report.submit.error.anonymously"));
-        }
-        else {
-          myCredentialsLabel.setHtmlText(DiagnosticBundle.message("diagnostic.error.report.submit.report.as", userName));
-        }
-        return;
-      }
-    }
-    myCredentialsPanel.setVisible(false);
-  }
-
-  private void updateAssigneePane(AbstractMessage message) {
-    final ErrorReportSubmitter submitter = message != null ? getSubmitter(message.getThrowable()) : null;
-    myDetailsTabForm.setAssigneeVisible(submitter instanceof ITNReporter && myInternalMode);
-  }
-
-  private void updateInfoLabel(AbstractMessage message) {
-    if (message == null) {
-      myInfoLabel.setText("");
-      return;
-    }
-    final Throwable throwable = message.getThrowable();
-    if (throwable instanceof MessagePool.TooManyErrorsException) {
-      myInfoLabel.setText("");
-      return;
-    }
-
-    StringBuilder text = new StringBuilder("<html>");
-    String url = null;
-    PluginId pluginId = findPluginId(throwable);
-    if (pluginId == null || ApplicationInfoEx.getInstanceEx().isEssentialPlugin(pluginId.getIdString())) {
-      if (throwable instanceof AbstractMethodError) {
-        text.append(DiagnosticBundle.message("error.list.message.blame.unknown.plugin"));
-      }
-      else {
-        text.append(DiagnosticBundle.message("error.list.message.blame.core", ApplicationNamesInfo.getInstance().getProductName()));
-      }
-    }
-    else {
-      text.append(DiagnosticBundle.message("error.list.message.blame.plugin", PluginManager.getPlugin(pluginId).getName()));
-    }
-    text.append(" ").append(DiagnosticBundle.message("error.list.message.info",
-                                                     DateFormatUtil.formatPrettyDateTime(message.getDate()),
-                                                     myMergedMessages.get(myIndex).size()));
-
-    if (message.isSubmitted()) {
-      final SubmittedReportInfo info = message.getSubmissionInfo();
-      url = getUrl(info, getSubmitter(throwable) instanceof ITNReporter);
-      appendSubmissionInformation(info, text, url);
-      text.append(". ");
-    }
-    else if (message.isSubmitting()) {
-      text.append(" Submitting...");
-    }
-    else if (!message.isRead()) {
-      text.append(" ").append(DiagnosticBundle.message("error.list.message.unread"));
-    }
-    myInfoLabel.setHtmlText(text.toString());
-    myInfoLabel.setHyperlinkTarget(url);
-  }
-
-  public static void appendSubmissionInformation(SubmittedReportInfo info, StringBuilder out, @Nullable String url) {
-    if (info.getStatus() == SubmittedReportInfo.SubmissionStatus.FAILED) {
-      out.append(" ").append(DiagnosticBundle.message("error.list.message.submission.failed"));
-    }
-    else {
-      if (info.getLinkText() != null) {
-        out.append(" ").append(DiagnosticBundle.message("error.list.message.submitted.as.link", url, info.getLinkText()));
-        if (info.getStatus() == SubmittedReportInfo.SubmissionStatus.DUPLICATE) {
-          out.append(" ").append(DiagnosticBundle.message("error.list.message.duplicate"));
-        }
-      }
-      else {
-        out.append(DiagnosticBundle.message("error.list.message.submitted"));
-      }
-    }
-  }
-
-  @Nullable
-  public static String getUrl(SubmittedReportInfo info, boolean reportedToJetbrains) {
-    if (info.getStatus() == SubmittedReportInfo.SubmissionStatus.FAILED || info.getLinkText() == null) {
-      return null;
-    }
-    if (reportedToJetbrains) {
-      return "http://ea.jetbrains.com/browser/ea_reports/" + info.getLinkText();
-    }
-    else {
-      return info.getURL();
-    }
-  }
-
-  private void updateForeignPluginLabel(AbstractMessage message) {
-    if (message != null) {
-      final Throwable throwable = message.getThrowable();
-      ErrorReportSubmitter submitter = getSubmitter(throwable);
-      if (submitter == null) {
-        PluginId pluginId = findPluginId(throwable);
-        if (pluginId == null || !ApplicationInfoEx.getInstanceEx().isEssentialPlugin(pluginId.getIdString())) {
-          IdeaPluginDescriptor plugin = PluginManager.getPlugin(pluginId);
-          if (plugin == null) {
-            // unknown plugin
-            myForeignPluginWarningPanel.setVisible(false);
-            return;
-          }
-          myForeignPluginWarningPanel.setVisible(true);
-          String vendor = plugin.getVendor();
-          String contactInfo = plugin.getVendorUrl();
-          if (StringUtil.isEmpty(contactInfo)) {
-            contactInfo = plugin.getVendorEmail();
-          }
-          if (StringUtil.isEmpty(vendor)) {
-            if (StringUtil.isEmpty(contactInfo)) {
-              myForeignPluginWarningLabel.setText(DiagnosticBundle.message("error.dialog.foreign.plugin.warning.text"));
-            }
-            else {
-              myForeignPluginWarningLabel
-                .setHyperlinkText(DiagnosticBundle.message("error.dialog.foreign.plugin.warning.text.vendor") + " ",
-                                  contactInfo, ".");
-              myForeignPluginWarningLabel.setHyperlinkTarget(contactInfo);
-            }
-          }
-          else {
-            if (StringUtil.isEmpty(contactInfo)) {
-              myForeignPluginWarningLabel.setText(DiagnosticBundle.message("error.dialog.foreign.plugin.warning.text.vendor") +
-                                                  " " + vendor + ".");
-            }
-            else {
-              myForeignPluginWarningLabel
-                .setHyperlinkText(
-                  DiagnosticBundle.message("error.dialog.foreign.plugin.warning.text.vendor") + " " + vendor + " (",
-                  contactInfo, ").");
-              myForeignPluginWarningLabel.setHyperlinkTarget(contactInfo);
-            }
-          }
-          myForeignPluginWarningPanel.setVisible(true);
-          return;
-        }
-      }
-    }
-    myForeignPluginWarningPanel.setVisible(false);
-  }
-
-  private void updateTabs() {
-    myMute = true;
-    try {
-      if (myInternalMode) {
-        boolean hasAttachment = false;
-        for (ArrayList<AbstractMessage> merged : myMergedMessages) {
-          final AbstractMessage message = merged.get(0);
-          if (message instanceof LogMessageEx && !((LogMessageEx)message).getAttachments().isEmpty()) {
-            hasAttachment = true;
-            break;
-          }
-        }
-        myTabs.setHeaderVisible(hasAttachment);
-      }
-
-      final AbstractMessage message = getSelectedMessage();
-      if (myCommentsTabForm != null) {
-        if (message != null) {
-          String msg = message.getMessage();
-          int i = msg.indexOf("\n");
-          if (i != -1) {
-            // take first line
-            msg = msg.substring(0, i);
-          }
-          myCommentsTabForm.setErrorText(msg);
-        }
-        else {
-          myCommentsTabForm.setErrorText(null);
-        }
-        if (message != null) {
-          myCommentsTabForm.setCommentText(message.getAdditionalInfo());
-          myCommentsTabForm.setCommentsTextEnabled(true);
-        }
-        else {
-          myCommentsTabForm.setCommentText(null);
-          myCommentsTabForm.setCommentsTextEnabled(false);
-        }
-      }
-
-      myDetailsTabForm.setDetailsText(message != null ? getDetailsText(message) : null);
-      if (message != null) {
-        myDetailsTabForm.setCommentsText(message.getAdditionalInfo());
-        myDetailsTabForm.setCommentsTextEnabled(true);
-      }
-      else {
-        myDetailsTabForm.setCommentsText(null);
-        myDetailsTabForm.setCommentsTextEnabled(false);
-      }
-
-      myDetailsTabForm.setAssigneeId(message == null ? null : message.getAssigneeId());
-
-      List<Attachment> attachments =
-        message instanceof LogMessageEx ? ((LogMessageEx)message).getAttachments() : Collections.<Attachment>emptyList();
-      if (!attachments.isEmpty()) {
-        if (myTabs.indexOfComponent(myAttachmentsTabForm.getContentPane()) == -1) {
-          myTabs.addTab(DiagnosticBundle.message("error.attachments.tab.title"), myAttachmentsTabForm.getContentPane());
-        }
-        myAttachmentsTabForm.setAttachments(attachments);
-      }
-      else {
-        int index = myTabs.indexOfComponent(myAttachmentsTabForm.getContentPane());
-        if (index != -1) {
-          myTabs.removeTabAt(index);
-        }
-      }
-    }
-    finally {
-      myMute = false;
-    }
-  }
-
-  private static String getDetailsText(AbstractMessage message) {
-    final Throwable throwable = message.getThrowable();
-    if (throwable instanceof MessagePool.TooManyErrorsException) {
-      return throwable.getMessage();
-    }
-    else {
-      return new StringBuffer().append(message.getMessage()).append("\n").append(message.getThrowableText()).toString();
-    }
-  }
-
-  private void rebuildHeaders() {
-    myMergedMessages.clear();
-    myRawMessages = myMessagePool.getFatalErrors(true, true);
-
-    Map<String, ArrayList<AbstractMessage>> hash2Messages = mergeMessages(myRawMessages);
-
-    for (final ArrayList<AbstractMessage> abstractMessages : hash2Messages.values()) {
-      myMergedMessages.add(abstractMessages);
-    }
-  }
-
-  private void markAllAsRead() {
-    for (AbstractMessage each : myRawMessages) {
-      each.setRead(true);
-    }
+    actions.add(new ClearErrorsAction());
+    actions.add(getOKAction());
+    actions.add(getCancelAction());
+    return actions.toArray(new Action[0]);
   }
 
   @Override
   public JComponent getPreferredFocusedComponent() {
-    final int selectedIndex = myTabs.getSelectedIndex();
-    JComponent result;
-    if (selectedIndex == 0) {
-      result = myInternalMode ? myDetailsTabForm.getPreferredFocusedComponent() : myCommentsTabForm.getPreferredFocusedComponent();
-    }
-    else if (selectedIndex == 1) {
-      result = myInternalMode ? myAttachmentsTabForm.getPreferredFocusedComponent() : myDetailsTabForm.getPreferredFocusedComponent();
-    }
-    else {
-      result = myAttachmentsTabForm.getPreferredFocusedComponent();
-    }
-    return result != null ? result : super.getPreferredFocusedComponent();
+    return myCommentArea;
   }
 
-  private static Map<String, ArrayList<AbstractMessage>> mergeMessages(List<AbstractMessage> aErrors) {
-    Map<String, ArrayList<AbstractMessage>> hash2Messages = new LinkedHashMap<String, ArrayList<AbstractMessage>>();
-    for (final AbstractMessage each : aErrors) {
-      final String hashCode = getThrowableHashCode(each.getThrowable());
-      ArrayList<AbstractMessage> list;
-      if (hash2Messages.containsKey(hashCode)) {
-        list = hash2Messages.get(hashCode);
+  @Override
+  protected String getDimensionServiceKey() {
+    return "IDE.errors.dialog";
+  }
+
+  @Override
+  public void doOKAction() {
+    if (getOKAction().isEnabled()) {
+      boolean closeDialog = myMessageClusters.size() == 1;
+      boolean reportingStarted = reportMessage(selectedCluster(), closeDialog);
+      if (!closeDialog) {
+        updateControls();
+      }
+      else if (reportingStarted) {
+        super.doOKAction();
+      }
+    }
+  }
+
+  @Override
+  protected void dispose() {
+    myMessagePool.removeListener(this);
+    super.dispose();
+  }
+
+  private MessageCluster selectedCluster() {
+    return myMessageClusters.get(myIndex);
+  }
+
+  private AbstractMessage selectedMessage() {
+    return selectedCluster().first;
+  }
+
+  private void updateMessages() {
+    List<AbstractMessage> messages = myMessagePool.getFatalErrors(true, true);
+    Map<Long, MessageCluster> clusters = new LinkedHashMap<>();
+    for (AbstractMessage message : messages) {
+      CRC32 digest = new CRC32();
+      digest.update(ExceptionUtil.getThrowableText(message.getThrowable()).getBytes(StandardCharsets.UTF_8));
+      clusters.computeIfAbsent(digest.getValue(), k -> new MessageCluster(message)).messages.add(message);
+    }
+    myMessageClusters.clear();
+    myMessageClusters.addAll(clusters.values());
+  }
+
+  private void updateControls() {
+    MessageCluster cluster = selectedCluster();
+    ErrorReportSubmitter submitter = cluster.submitter;
+
+    cluster.messages.forEach(m -> m.setRead(true));
+
+    updateLabels(cluster);
+    updateDetails(cluster);
+    if (myInternalMode) {
+      updateAssigneePanel(cluster);
+    }
+    updateCredentialsPanel(submitter);
+
+    setOKActionEnabled(cluster.canSubmit());
+    setOKButtonText(submitter != null ? submitter.getReportActionText() : DiagnosticBundle.message("error.report.impossible.action"));
+    setOKButtonTooltip(submitter != null ? null : DiagnosticBundle.message("error.report.impossible.tooltip"));
+  }
+
+  private void updateLabels(MessageCluster cluster) {
+    AbstractMessage message = cluster.first;
+
+    myCountLabel.setText(DiagnosticBundle.message("error.list.message.index.count", myIndex + 1, myMessageClusters.size()));
+
+    Throwable t = message.getThrowable();
+    if (t instanceof MessagePool.TooManyErrorsException) {
+      myInfoLabel.setText(t.getMessage());
+      myDisableLink.setVisible(false);
+      myForeignPluginWarningLabel.setVisible(false);
+      myNoticePanel.setVisible(false);
+      return;
+    }
+
+    PluginId pluginId = cluster.pluginId;
+    IdeaPluginDescriptor plugin = cluster.plugin;
+
+    StringBuilder info = new StringBuilder();
+    String url = null;
+
+    if (pluginId != null) {
+      String name = plugin != null ? plugin.getName() : pluginId.toString();
+      if (plugin != null && (!plugin.isBundled() || plugin.allowBundledUpdate())) {
+        info.append(DiagnosticBundle.message("error.list.message.blame.plugin.version", name, plugin.getVersion()));
       }
       else {
-        list = new ArrayList<AbstractMessage>();
-        hash2Messages.put(hashCode, list);
+        info.append(DiagnosticBundle.message("error.list.message.blame.plugin", name));
       }
-      list.add(0, each);
     }
-    return hash2Messages;
+    else if (t instanceof AbstractMethodError) {
+      info.append(DiagnosticBundle.message("error.list.message.blame.unknown.plugin"));
+    }
+    else {
+      info.append(DiagnosticBundle.message("error.list.message.blame.core", ApplicationNamesInfo.getInstance().getProductName()));
+    }
+
+    int count = cluster.messages.size();
+    String date = DateFormatUtil.formatPrettyDateTime(cluster.messages.get(count - 1).getDate());
+    info.append(' ').append(DiagnosticBundle.message("error.list.message.info", date, count));
+
+    if (message.isSubmitted()) {
+      SubmittedReportInfo submissionInfo = message.getSubmissionInfo();
+      appendSubmissionInformation(submissionInfo, info);
+      info.append('.');
+      url = submissionInfo.getURL();
+    }
+    else if (message.isSubmitting()) {
+      info.append(' ').append(DiagnosticBundle.message("error.list.message.submitting"));
+    }
+
+    myInfoLabel.setHtmlText(XmlStringUtil.wrapInHtml(info));
+    myInfoLabel.setHyperlinkTarget(url);
+    myInfoLabel.setToolTipText(url);
+
+    myDisableLink.setVisible(pluginId != null && !ApplicationInfoEx.getInstanceEx().isEssentialPlugin(pluginId.getIdString()));
+
+    ErrorReportSubmitter submitter = cluster.submitter;
+    if (submitter == null && plugin != null && !PluginManagerMain.isDevelopedByJetBrains(plugin)) {
+      myForeignPluginWarningLabel.setVisible(true);
+      String vendor = plugin.getVendor();
+      String contactUrl = plugin.getVendorUrl();
+      String contactEmail = plugin.getVendorEmail();
+      if (!StringUtil.isEmpty(vendor) && !StringUtil.isEmpty(contactUrl)) {
+        myForeignPluginWarningLabel.setHtmlText(DiagnosticBundle.message("error.dialog.foreign.plugin.warning.vendor", vendor));
+        myForeignPluginWarningLabel.setHyperlinkTarget(contactUrl);
+      }
+      else if (!StringUtil.isEmpty(contactUrl)) {
+        myForeignPluginWarningLabel.setHtmlText(DiagnosticBundle.message("error.dialog.foreign.plugin.warning.unknown"));
+        myForeignPluginWarningLabel.setHyperlinkTarget(contactUrl);
+      }
+      else if (!StringUtil.isEmpty(contactEmail)) {
+        contactEmail = StringUtil.trimStart(contactEmail, "mailto:");
+        myForeignPluginWarningLabel.setHtmlText(DiagnosticBundle.message("error.dialog.foreign.plugin.warning.vendor", contactEmail));
+        myForeignPluginWarningLabel.setHyperlinkTarget("mailto:" + contactEmail);
+      }
+      else {
+        myForeignPluginWarningLabel.setHtmlText(DiagnosticBundle.message("error.dialog.foreign.plugin.warning"));
+        myForeignPluginWarningLabel.setHyperlinkTarget(null);
+      }
+      myForeignPluginWarningLabel.setToolTipText(contactUrl);
+    }
+    else {
+      myForeignPluginWarningLabel.setVisible(false);
+    }
+
+    String notice = submitter != null ? submitter.getPrivacyNoticeText() : null;
+    if (notice != null) {
+      myNoticePanel.setVisible(true);
+      String hash = Integer.toHexString(StringUtil.stringHashCodeIgnoreWhitespaces(notice));
+      myNoticeDecorator.setOn(!myAcceptedNotices.contains(hash));
+      myNoticeArea.setText(notice);
+    }
+    else {
+      myNoticePanel.setVisible(false);
+    }
   }
 
-  private AbstractMessage getSelectedMessage() {
-    return getMessageAt(myIndex);
+  private void updateDetails(MessageCluster cluster) {
+    AbstractMessage message = cluster.first;
+    boolean canReport = cluster.canSubmit();
+
+    if (myLastIndex != myIndex) {
+      myCommentArea.setText(message.getAdditionalInfo());
+
+      myAttachmentsList.clear();
+      myAttachmentsList.addItem(STACKTRACE_ATTACHMENT, true);
+      for (Attachment attachment : message.getAllAttachments()) {
+        myAttachmentsList.addItem(attachment.getName(), attachment.isIncluded());
+      }
+      myAttachmentsList.setSelectedIndex(0);
+
+      myLastIndex = myIndex;
+    }
+
+    myCommentArea.setEditable(canReport);
+    myAttachmentsList.setEditable(canReport);
   }
 
-  private AbstractMessage getMessageAt(int idx) {
-    if (idx < 0 || idx >= myMergedMessages.size()) return null;
-    return myMergedMessages.get(idx).get(0);
+  private void updateAssigneePanel(MessageCluster cluster) {
+    if (cluster.submitter instanceof ITNReporter) {
+      myAssigneePanel.setVisible(true);
+      myAssigneeCombo.setEnabled(cluster.isUnsent());
+      Integer assignee = cluster.first.getAssigneeId();
+      if (assignee == null) {
+        myAssigneeCombo.setSelectedIndex(-1);
+      }
+      else {
+        Condition<Developer> lookup = d -> Objects.equals(assignee, d.getId());
+        myAssigneeCombo.setSelectedIndex(ContainerUtil.indexOf(ourDevelopersList, lookup));
+      }
+    }
+    else {
+      myAssigneePanel.setVisible(false);
+    }
   }
 
-  @Nullable
-  public static PluginId findPluginId(Throwable t) {
+  private void updateCredentialsPanel(ErrorReportSubmitter submitter) {
+    if (submitter instanceof ITNReporter) {
+      myCredentialsLabel.setVisible(true);
+      Credentials credentials = ErrorReportConfigurable.getCredentials();
+      if (CredentialAttributesKt.isFulfilled(credentials)) {
+        myCredentialsLabel.setHtmlText(DiagnosticBundle.message("error.dialog.submit.named", credentials.getUserName()));
+      }
+      else {
+        myCredentialsLabel.setHtmlText(DiagnosticBundle.message("error.dialog.submit.anonymous"));
+      }
+    }
+    else {
+      myCredentialsLabel.setVisible(false);
+    }
+  }
+
+  private boolean reportMessage(MessageCluster cluster, boolean dialogClosed) {
+    ErrorReportSubmitter submitter = cluster.submitter;
+    if (submitter == null) return false;
+    AbstractMessage message = cluster.first;
+
+    message.setSubmitting(true);
+
+    String notice = submitter.getPrivacyNoticeText();
+    if (notice != null) {
+      String hash = Integer.toHexString(StringUtil.stringHashCodeIgnoreWhitespaces(notice));
+      if (myAcceptedNotices.add(hash)) {
+        PropertiesComponent.getInstance().setValue(ACCEPTED_NOTICES_KEY, StringUtil.join(myAcceptedNotices, ACCEPTED_NOTICES_SEPARATOR));
+      }
+    }
+
+    Pair<String, String> pair = cluster.decouple();
+    IdeaLoggingEvent[] events = {new IdeaReportingEvent(message, pair.first, pair.second, cluster.plugin)};
+
+    Container parentComponent = getRootPane();
+    if (dialogClosed) {
+      IdeFrame frame = UIUtil.getParentOfType(IdeFrame.class, parentComponent);
+      parentComponent = frame != null ? frame.getComponent() : WindowManager.getInstance().findVisibleFrame();
+    }
+
+    return submitter.submit(events, message.getAdditionalInfo(), parentComponent, reportInfo -> {
+      message.setSubmitting(false);
+      message.setSubmitted(reportInfo);
+      UIUtil.invokeLaterIfNeeded(() -> updateOnSubmit());
+    });
+  }
+
+  private void disablePlugin() {
+    IdeaPluginDescriptor plugin = selectedCluster().plugin;
+    if (plugin != null) {
+      Ref<Boolean> hasDependants = new Ref<>(false);
+      PluginManagerCore.checkDependants(plugin, PluginManager::getPlugin, dependantId -> {
+        if (PluginManagerCore.CORE_PLUGIN_ID.equals(dependantId.getIdString())) {
+          return true;
+        }
+        else {
+          hasDependants.set(true);
+          return false;
+        }
+      });
+      boolean canRestart = ApplicationManager.getApplication().isRestartCapable();
+
+      String message =
+        "<html>" +
+        DiagnosticBundle.message("error.dialog.disable.prompt", plugin.getName()) + "<br/>" +
+        DiagnosticBundle.message(hasDependants.get() ? "error.dialog.disable.prompt.deps" : "error.dialog.disable.prompt.lone") + "<br/><br/>" +
+        DiagnosticBundle.message(canRestart ? "error.dialog.disable.plugin.can.restart" : "error.dialog.disable.plugin.no.restart") +
+        "</html>";
+      String title = DiagnosticBundle.message("error.dialog.disable.plugin.title");
+      String disable = DiagnosticBundle.message("error.dialog.disable.plugin.action.disable");
+      String cancel = IdeBundle.message("button.cancel");
+
+      boolean doDisable, doRestart;
+      if (canRestart) {
+        String restart = DiagnosticBundle.message("error.dialog.disable.plugin.action.disableAndRestart");
+        int result = Messages.showYesNoCancelDialog(myProject, message, title, disable, restart, cancel, Messages.getQuestionIcon());
+        doDisable = result == Messages.YES || result == Messages.NO;
+        doRestart = result == Messages.NO;
+      }
+      else {
+        int result = Messages.showYesNoDialog(myProject, message, title, disable, cancel, Messages.getQuestionIcon());
+        doDisable = result == Messages.YES;
+        doRestart = false;
+      }
+
+      if (doDisable) {
+        PluginManagerCore.disablePlugin(plugin.getPluginId().getIdString());
+        if (doRestart) {
+          ApplicationManager.getApplication().restart();
+        }
+      }
+    }
+  }
+
+  protected void updateOnSubmit() {
+    if (isShowing()) {
+      updateControls();
+    }
+  }
+
+  /* UI components */
+
+  private class BackAction extends AnAction implements DumbAware {
+    BackAction() {
+      super("Previous", null, AllIcons.Actions.Back);
+      AnAction action = ActionManager.getInstance().getAction(IdeActions.ACTION_PREVIOUS_TAB);
+      if (action != null) {
+        registerCustomShortcutSet(action.getShortcutSet(), getRootPane(), getDisposable());
+      }
+    }
+
+    @Override
+    public void update(@NotNull AnActionEvent e) {
+      e.getPresentation().setEnabled(myIndex > 0);
+    }
+
+    @Override
+    public void actionPerformed(@NotNull AnActionEvent e) {
+      myLastIndex = myIndex--;
+      updateControls();
+    }
+  }
+
+  private class ForwardAction extends AnAction implements DumbAware {
+    ForwardAction() {
+      super("Next", null, AllIcons.Actions.Forward);
+      AnAction action = ActionManager.getInstance().getAction(IdeActions.ACTION_NEXT_TAB);
+      if (action != null) {
+        registerCustomShortcutSet(action.getShortcutSet(), getRootPane(), getDisposable());
+      }
+    }
+
+    @Override
+    public void update(@NotNull AnActionEvent e) {
+      e.getPresentation().setEnabled(myIndex < myMessageClusters.size() - 1);
+    }
+
+    @Override
+    public void actionPerformed(@NotNull AnActionEvent e) {
+      myLastIndex = myIndex++;
+      updateControls();
+    }
+  }
+
+  private class ClearErrorsAction extends AbstractAction {
+    private ClearErrorsAction() {
+      super(DiagnosticBundle.message("error.dialog.clear.all.action"));
+    }
+
+    @Override
+    public void actionPerformed(ActionEvent e) {
+      myMessagePool.clearErrors();
+      doCancelAction();
+    }
+  }
+
+  private class AnalyzeAction extends AbstractAction {
+    private final AnAction myAnalyze;
+
+    private AnalyzeAction(AnAction analyze) {
+      super(analyze.getTemplatePresentation().getText());
+      putValue(Action.MNEMONIC_KEY, analyze.getTemplatePresentation().getMnemonic());
+      myAnalyze = analyze;
+    }
+
+    @Override
+    public void actionPerformed(ActionEvent e) {
+      DataContext ctx = DataManager.getInstance().getDataContext((Component)e.getSource());
+      AnActionEvent event = AnActionEvent.createFromAnAction(myAnalyze, null, ActionPlaces.UNKNOWN, ctx);
+      myAnalyze.actionPerformed(event);
+      doCancelAction();
+    }
+  }
+
+  private static class AttachmentsList extends CheckBoxList<String> {
+    private boolean myEditable = true;
+
+    private void addItem(String item, boolean selected) {
+      addItem(item, item + "  ", selected);
+    }
+
+    public void setEditable(boolean editable) {
+      myEditable = editable;
+    }
+
+    @Override
+    protected boolean isEnabled(int index) {
+      return myEditable && index > 0;
+    }
+  }
+
+  private static class NoticeDecorator extends HideableDecorator {
+    private NoticeDecorator(JPanel panel) {
+      super(panel, "...", false);
+    }
+
+    @Override
+    protected void on() {
+      super.on();
+      setTitle(DiagnosticBundle.message("error.dialog.notice.label.expanded"));
+    }
+
+    @Override
+    protected void off() {
+      super.off();
+      setTitle(DiagnosticBundle.message("error.dialog.notice.label"));
+    }
+  }
+
+  /* interfaces */
+
+  @Override
+  public void newEntryAdded() {
+    UIUtil.invokeLaterIfNeeded(() -> {
+      if (isShowing()) {
+        updateMessages();
+        updateControls();
+      }
+    });
+  }
+
+  @Override
+  public void poolCleared() {
+    UIUtil.invokeLaterIfNeeded(() -> {
+      if (isShowing()) {
+        doCancelAction();
+      }
+    });
+  }
+
+  @Override
+  public void entryWasRead() { }
+
+  @Override
+  public Object getData(@NotNull String dataId) {
+    return CURRENT_TRACE_KEY.is(dataId) ? selectedMessage().getThrowableText() : null;
+  }
+
+  /* helpers */
+
+  private static class MessageCluster {
+    private final AbstractMessage first;
+    private final @Nullable PluginId pluginId;
+    private final @Nullable IdeaPluginDescriptor plugin;
+    private final @Nullable ErrorReportSubmitter submitter;
+    private String detailsText;
+    private final List<AbstractMessage> messages = new ArrayList<>();
+
+    private MessageCluster(AbstractMessage message) {
+      first = message;
+      pluginId = findPluginId(message.getThrowable());
+      plugin = PluginManager.getPlugin(pluginId);
+      submitter = getSubmitter(message.getThrowable(), pluginId, plugin);
+      detailsText = detailsText();
+    }
+
+    private String detailsText() {
+      Throwable t = first.getThrowable();
+      if (t instanceof MessagePool.TooManyErrorsException) {
+        return t.getMessage();
+      }
+
+      String userMessage = first.getMessage();
+      String stacktrace = first.getThrowableText();
+      return StringUtil.isEmptyOrSpaces(userMessage) ? stacktrace : userMessage + "\n\n" + stacktrace;
+    }
+
+    private boolean isUnsent() {
+      return !(first.isSubmitted() || first.isSubmitting());
+    }
+
+    private boolean canSubmit() {
+      return submitter != null && isUnsent();
+    }
+
+    private Pair<String, String> decouple() {
+      String className = first.getThrowable().getClass().getName();
+      int p = detailsText.indexOf(className);
+      if (p == 0) {
+        return pair(null, detailsText);
+      }
+      else if (p > 0 && detailsText.charAt(p - 1) == '\n') {
+        return pair(detailsText.substring(0, p).trim(), detailsText.substring(p));
+      }
+      else {
+        return pair("*** exception class was changed or removed", detailsText);
+      }
+    }
+  }
+
+  /** @deprecated use {@link #getPlugin(IdeaLoggingEvent)} instead and take the plugin name and version from the returned instance */
+  @Deprecated
+  public static @Nullable Pair<String, String> getPluginInfo(@NotNull IdeaLoggingEvent event) {
+    IdeaPluginDescriptor plugin = getPlugin(event);
+    return plugin != null && (!plugin.isBundled() || plugin.allowBundledUpdate()) ? pair(plugin.getName(), plugin.getVersion()) : null;
+  }
+
+  public static @Nullable IdeaPluginDescriptor getPlugin(@NotNull IdeaLoggingEvent event) {
+    IdeaPluginDescriptor plugin = null;
+    if (event instanceof IdeaReportingEvent) {
+      plugin = ((IdeaReportingEvent)event).getPlugin();
+    }
+    else {
+      Throwable t = event.getThrowable();
+      if (t != null) {
+        plugin = PluginManager.getPlugin(findPluginId(t));
+      }
+    }
+    return plugin;
+  }
+
+  public static @Nullable PluginId findPluginId(@NotNull Throwable t) {
     if (t instanceof PluginException) {
       return ((PluginException)t).getPluginId();
     }
+    if (t instanceof PicoPluginExtensionInitializationException) {
+      return ((PicoPluginExtensionInitializationException)t).getPluginId();
+    }
 
+    Set<String> visitedClassNames = ContainerUtil.newHashSet();
     for (StackTraceElement element : t.getStackTrace()) {
       if (element != null) {
         String className = element.getClassName();
-        if (PluginManager.isPluginClass(className)) {
-          return PluginManager.getPluginByClassName(className);
+        if (visitedClassNames.add(className) && PluginManagerCore.isPluginClass(className)) {
+          PluginId id = PluginManagerCore.getPluginByClassName(className);
+          logPluginDetection(className, id);
+          return id;
         }
       }
     }
@@ -809,17 +895,18 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
     if (t instanceof NoSuchMethodException) {
       // check is method called from plugin classes
       if (t.getMessage() != null) {
-        String className = "";
+        StringBuilder className = new StringBuilder();
         StringTokenizer tok = new StringTokenizer(t.getMessage(), ".");
         while (tok.hasMoreTokens()) {
           String token = tok.nextToken();
-          if (token.length() > 0 && Character.isJavaIdentifierStart(token.charAt(0))) {
-            className += token;
+          if (!token.isEmpty() && Character.isJavaIdentifierStart(token.charAt(0))) {
+            className.append(token);
           }
         }
 
-        if (PluginManager.isPluginClass(className)) {
-          return PluginManager.getPluginByClassName(className);
+        PluginId pluginId = PluginManagerCore.getPluginByClassName(className.toString());
+        if (pluginId != null) {
+          return pluginId;
         }
       }
     }
@@ -828,255 +915,105 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
       if (t.getMessage() != null) {
         String className = t.getMessage();
 
-        if (PluginManager.isPluginClass(className)) {
-          return PluginManager.getPluginByClassName(className);
+        if (PluginManagerCore.isPluginClass(className)) {
+          return PluginManagerCore.getPluginByClassName(className);
         }
       }
     }
     else if (t instanceof AbstractMethodError && t.getMessage() != null) {
       String s = t.getMessage();
-      // org.antlr.works.plugin.intellij.PIFileType.getHighlighter(Lcom/intellij/openapi/project/Project;Lcom/intellij/openapi/vfs/VirtualFile;)Lcom/intellij/openapi/fileTypes/SyntaxHighlighter;
       int pos = s.indexOf('(');
       if (pos >= 0) {
         s = s.substring(0, pos);
         pos = s.lastIndexOf('.');
         if (pos >= 0) {
           s = s.substring(0, pos);
-          if (PluginManager.isPluginClass(s)) {
-            return PluginManager.getPluginByClassName(s);
+          if (PluginManagerCore.isPluginClass(s)) {
+            return PluginManagerCore.getPluginByClassName(s);
           }
         }
       }
     }
-
     else if (t instanceof ExtensionException) {
       String className = ((ExtensionException)t).getExtensionClass().getName();
-      if (PluginManager.isPluginClass(className)) {
-        return PluginManager.getPluginByClassName(className);
+      if (PluginManagerCore.isPluginClass(className)) {
+        return PluginManagerCore.getPluginByClassName(className);
+      }
+    }
+    Throwable cause = t.getCause();
+    if (cause != null) {
+      return findPluginId(cause);
+    }
+
+    return null;
+  }
+
+  private static void logPluginDetection(String className, PluginId id) {
+    if (LOG.isDebugEnabled()) {
+      String message = "Detected plugin " + id + " by class " + className;
+      IdeaPluginDescriptor descriptor = PluginManager.getPlugin(id);
+      if (descriptor != null) {
+        ClassLoader loader = descriptor.getPluginClassLoader();
+        message += "; loader=" + loader + '/' + loader.getClass();
+        if (loader instanceof PluginClassLoader) {
+          message += "; loaded class: " + ((PluginClassLoader)loader).hasLoadedClass(className);
+        }
+      }
+      LOG.debug(message);
+    }
+  }
+
+  static @Nullable ErrorReportSubmitter getSubmitter(@NotNull Throwable t, PluginId pluginId) {
+    IdeaPluginDescriptor plugin = PluginManager.getPlugin(pluginId);
+    return getSubmitter(t, pluginId, plugin);
+  }
+
+  private static ErrorReportSubmitter getSubmitter(Throwable t, PluginId pluginId, IdeaPluginDescriptor plugin) {
+    if (t instanceof MessagePool.TooManyErrorsException || t instanceof AbstractMethodError) {
+      return null;
+    }
+
+    List<ErrorReportSubmitter> reporters;
+    try {
+      reporters = ExtensionPoints.ERROR_HANDLER_EP.getExtensionList();
+    }
+    catch (Throwable ignored) {
+      return null;
+    }
+
+    if (plugin != null) {
+      for (ErrorReportSubmitter reporter : reporters) {
+        PluginDescriptor descriptor = reporter.getPluginDescriptor();
+        if (descriptor != null && Comparing.equal(pluginId, descriptor.getPluginId())) {
+          return reporter;
+        }
+      }
+    }
+
+    if (plugin == null || PluginManagerMain.isDevelopedByJetBrains(plugin)) {
+      for (ErrorReportSubmitter reporter : reporters) {
+        PluginDescriptor descriptor = reporter.getPluginDescriptor();
+        if (descriptor == null || PluginId.getId(PluginManagerCore.CORE_PLUGIN_ID) == descriptor.getPluginId()) {
+          return reporter;
+        }
       }
     }
 
     return null;
   }
 
-  private class ClearFatalsAction extends AbstractAction {
-    protected ClearFatalsAction() {
-      super(DiagnosticBundle.message("error.dialog.clear.action"));
+  public static void appendSubmissionInformation(@NotNull SubmittedReportInfo info, @NotNull StringBuilder out) {
+    if (info.getStatus() == SubmittedReportInfo.SubmissionStatus.FAILED) {
+      out.append(' ').append(DiagnosticBundle.message("error.list.message.submission.failed"));
     }
-
-    @Override
-    public void actionPerformed(ActionEvent e) {
-      myMessagePool.clearFatals();
-      doOKAction();
-    }
-
-    public void update() {
-      putValue(NAME, DiagnosticBundle.message(myMergedMessages.size() > 1 ? "error.dialog.clear.all.action" : "error.dialog.clear.action"));
-      setEnabled(!myMergedMessages.isEmpty());
-    }
-  }
-
-  private class BlameAction extends AbstractAction {
-    protected BlameAction() {
-      super(DiagnosticBundle.message("error.report.to.jetbrains.action"));
-    }
-
-    public void update() {
-      AbstractMessage logMessage = getSelectedMessage();
-      if (logMessage != null && !logMessage.isSubmitted()) {
-        ErrorReportSubmitter submitter = getSubmitter(logMessage.getThrowable());
-        if (submitter != null) {
-          putValue(NAME, submitter.getReportActionText());
-          setEnabled(true);
-          return;
-        }
-      }
-      putValue(NAME, DiagnosticBundle.message("error.report.to.jetbrains.action"));
-      setEnabled(false);
-    }
-
-    public void actionPerformed(ActionEvent e) {
-      boolean closeDialog = myMergedMessages.size() == 1;
-      final AbstractMessage logMessage = getSelectedMessage();
-      boolean reportingStarted = reportMessage(logMessage, closeDialog);
-      if (closeDialog) {
-        if (reportingStarted) {
-          doOKAction();
-        }
-      }
-      else {
-        rebuildHeaders();
-        updateControls();
+    else if (info.getURL() != null && info.getLinkText() != null) {
+      out.append(' ').append(DiagnosticBundle.message("error.list.message.submitted.as.link", info.getURL(), info.getLinkText()));
+      if (info.getStatus() == SubmittedReportInfo.SubmissionStatus.DUPLICATE) {
+        out.append(' ').append(DiagnosticBundle.message("error.list.message.duplicate"));
       }
     }
-
-    private boolean reportMessage(final AbstractMessage logMessage, final boolean dialogClosed) {
-      final ErrorReportSubmitter submitter = getSubmitter(logMessage.getThrowable());
-
-      if (submitter != null) {
-        logMessage.setSubmitting(true);
-        if (!dialogClosed) {
-          updateControls();
-        }
-        Container parentComponent;
-        if (dialogClosed) {
-          IdeFrame ideFrame = UIUtil.getParentOfType(IdeFrame.class, getContentPane());
-          parentComponent = ideFrame.getComponent();
-        }
-        else {
-          parentComponent = getContentPane();
-        }
-        return submitter.trySubmitAsync(getEvents(logMessage), logMessage.getAdditionalInfo(), parentComponent,
-                                        new Consumer<SubmittedReportInfo>() {
-                                          @Override
-                                          public void consume(final SubmittedReportInfo submittedReportInfo) {
-                                            logMessage.setSubmitting(false);
-                                            logMessage.setSubmitted(submittedReportInfo);
-                                            ApplicationManager.getApplication().invokeLater(new Runnable() {
-                                              @Override
-                                              public void run() {
-                                                if (!dialogClosed) {
-                                                  updateOnSubmit();
-                                                }
-                                              }
-                                            });
-                                          }
-                                        });
-      }
-      return false;
-    }
-
-    private IdeaLoggingEvent[] getEvents(final AbstractMessage logMessage) {
-      if (logMessage instanceof GroupedLogMessage) {
-        final List<AbstractMessage> messages = ((GroupedLogMessage)logMessage).getMessages();
-        IdeaLoggingEvent[] res = new IdeaLoggingEvent[messages.size()];
-        for (int i = 0; i < res.length; i++) {
-          res[i] = getEvent(messages.get(i));
-        }
-        return res;
-      }
-      return new IdeaLoggingEvent[]{getEvent(logMessage)};
-    }
-
-    private IdeaLoggingEvent getEvent(final AbstractMessage logMessage) {
-      if (logMessage instanceof LogMessageEx) {
-        return ((LogMessageEx)logMessage).toEvent();
-      }
-      return new IdeaLoggingEvent(logMessage.getMessage(), logMessage.getThrowable()) {
-        @Override
-        public AbstractMessage getData() {
-          return logMessage;
-        }
-      };
-    }
-  }
-
-  protected void updateOnSubmit() {
-    updateControls();
-  }
-
-  public void calcData(DataKey key, DataSink sink) {
-    if (CURRENT_TRACE_KEY == key) {
-      final AbstractMessage message = getSelectedMessage();
-      if (message != null) {
-        sink.put(CURRENT_TRACE_KEY, getDetailsText(message));
-      }
-    }
-  }
-
-  @Nullable
-  public static ErrorReportSubmitter getSubmitter(final Throwable throwable) {
-    if (throwable instanceof MessagePool.TooManyErrorsException || throwable instanceof AbstractMethodError) {
-      return null;
-    }
-    final PluginId pluginId = findPluginId(throwable);
-    final ErrorReportSubmitter[] reporters;
-    try {
-      reporters = Extensions.getExtensions(ExtensionPoints.ERROR_HANDLER_EP);
-    }
-    catch (Throwable t) {
-      return null;
-    }
-    ErrorReportSubmitter submitter = null;
-    for (ErrorReportSubmitter reporter : reporters) {
-      final PluginDescriptor descriptor = reporter.getPluginDescriptor();
-      if (pluginId == null && (descriptor == null || PluginId.getId("com.intellij") == descriptor.getPluginId())
-          || descriptor != null && Comparing.equal(pluginId, descriptor.getPluginId())) {
-        submitter = reporter;
-      }
-    }
-    return submitter;
-  }
-
-  @Override
-  public void doOKAction() {
-    onClose();
-    super.doOKAction();
-  }
-
-  private void onClose() {
-    markAllAsRead();
-    PropertiesComponent.getInstance().setValue(ACTIVE_TAB_OPTION, String.valueOf(myTabs.getSelectedIndex()));
-  }
-
-  @Override
-  public void doCancelAction() {
-    onClose();
-    super.doCancelAction();
-  }
-
-  @Override
-  protected String getDimensionServiceKey() {
-    return "IdeErrosDialog";
-  }
-
-  private static String getThrowableHashCode(Throwable exception) {
-    try {
-      return md5(StringUtil.getThrowableText(exception), "stack-trace");
-    }
-    catch (NoSuchAlgorithmException e) {
-      LOG.error(e);
-      return "";
-    }
-  }
-
-  private static String md5(String buffer, @NonNls String key) throws NoSuchAlgorithmException {
-    MessageDigest md5 = MessageDigest.getInstance("MD5");
-    md5.update(buffer.getBytes());
-    byte[] code = md5.digest(key.getBytes());
-    BigInteger bi = new BigInteger(code).abs();
-    return bi.abs().toString(16);
-  }
-
-  private class AnalyzeAction extends AbstractAction {
-    private final AnAction myAnalyze;
-
-    public AnalyzeAction(AnAction analyze) {
-      super(analyze.getTemplatePresentation().getText());
-      putValue(Action.MNEMONIC_KEY, analyze.getTemplatePresentation().getMnemonic());
-      myAnalyze = analyze;
-    }
-
-    public void update() {
-      setEnabled(getSelectedMessage() != null);
-    }
-
-    public void actionPerformed(ActionEvent e) {
-      final DataContext dataContext = ((DataManagerImpl)DataManager.getInstance()).getDataContextTest((Component)e.getSource());
-
-      AnActionEvent event = new AnActionEvent(
-        null, dataContext,
-        ActionPlaces.UNKNOWN,
-        myAnalyze.getTemplatePresentation(),
-        ActionManager.getInstance(),
-        e.getModifiers()
-      );
-
-      final Project project = PlatformDataKeys.PROJECT.getData(dataContext);
-      if (project != null) {
-        myAnalyze.actionPerformed(event);
-        doOKAction();
-      }
+    else {
+      out.append(' ').append(DiagnosticBundle.message("error.list.message.submitted"));
     }
   }
 }

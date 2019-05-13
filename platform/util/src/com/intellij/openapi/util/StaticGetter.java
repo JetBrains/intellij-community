@@ -15,12 +15,6 @@
  */
 package com.intellij.openapi.util;
 
-/**
- * Created by IntelliJ IDEA.
- * User: Irina.Chernushina
- * Date: 9/30/11
- * Time: 1:18 PM
- */
 public class StaticGetter<T> implements Getter<T> {
   private final T myT;
 

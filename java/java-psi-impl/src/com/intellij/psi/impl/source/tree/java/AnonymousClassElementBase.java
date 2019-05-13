@@ -14,12 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * Created by IntelliJ IDEA.
- * User: ven
- * Date: Jun 10, 2004
- * Time: 8:05:20 PM
- */
 package com.intellij.psi.impl.source.tree.java;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -28,6 +22,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.ChildRoleBase;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.lang.ASTNode;
+import org.jetbrains.annotations.NotNull;
 
 public abstract class AnonymousClassElementBase extends ClassElement {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.java.AnonymousClassElement");
@@ -58,7 +53,7 @@ public abstract class AnonymousClassElementBase extends ClassElement {
   }
 
   @Override
-  public int getChildRole(ASTNode child) {
+  public int getChildRole(@NotNull ASTNode child) {
     LOG.assertTrue(child.getTreeParent() == this);
     IElementType i = child.getElementType();
     if (i == JavaElementType.JAVA_CODE_REFERENCE) {
@@ -84,6 +79,9 @@ public abstract class AnonymousClassElementBase extends ClassElement {
     }
     else if (i == JavaTokenType.RBRACE) {
       return getChildRole(child, ChildRole.RBRACE);
+    }
+    else if (i == JavaTokenType.COMMA) {
+      return ChildRole.COMMA;
     }
     else {
       return ChildRoleBase.NONE;

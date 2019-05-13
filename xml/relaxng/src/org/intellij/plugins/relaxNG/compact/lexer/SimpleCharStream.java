@@ -308,7 +308,7 @@ public class SimpleCharStream implements CharStream
   public SimpleCharStream(java.io.InputStream dstream, int startline,
   int startcolumn, int buffersize)
   {
-     this(new java.io.InputStreamReader(dstream), startline, startcolumn, 4096);
+     this(new java.io.InputStreamReader(dstream), startline, startcolumn, buffersize);
   }
 
   public SimpleCharStream(java.io.InputStream dstream, int startline,
@@ -325,7 +325,7 @@ public class SimpleCharStream implements CharStream
   public void ReInit(java.io.InputStream dstream, int startline,
                           int startcolumn, int buffersize)
   {
-     ReInit(new java.io.InputStreamReader(dstream), startline, startcolumn, 4096);
+     ReInit(new java.io.InputStreamReader(dstream), startline, startcolumn, buffersize);
   }
 
   public void ReInit(java.io.InputStream dstream)

@@ -1,5 +1,6 @@
 package com.siyeh.ig.fixes.performance;
 
+import com.intellij.codeInspection.CommonQuickFixBundle;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.IGQuickFixesTestCase;
 import com.siyeh.ig.performance.ManualArrayCopyInspection;
@@ -11,9 +12,10 @@ public class ManualArrayCopyFixTest extends IGQuickFixesTestCase {
     super.setUp();
     myFixture.enableInspections(new ManualArrayCopyInspection());
     myRelativePath = "performance/replace_with_system_arraycopy";
-    myDefaultHint = InspectionGadgetsBundle.message("manual.array.copy.replace.quickfix");
+    myDefaultHint = CommonQuickFixBundle.message("fix.replace.with.x", "System.arraycopy()");
   }
 
   public void testSimple() { doTest(); }
   public void testDecrement() { doTest(); }
+  public void testLengthSmallerThanOffset() { doTest(); }
 }

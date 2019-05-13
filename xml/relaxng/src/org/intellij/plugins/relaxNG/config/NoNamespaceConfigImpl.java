@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.intellij.plugins.relaxNG.config;
 
 import com.intellij.openapi.components.PersistentStateComponent;
@@ -36,18 +35,10 @@ import org.jetbrains.annotations.Nullable;
 import java.util.HashMap;
 import java.util.Map;
 
-/**
- * Created by IntelliJ IDEA.
- * User: sweinreuter
- * Date: 25.11.2007
- */
-@State(
-        name = "NoNamespaceConfig.Mappings",
-        storages = { @Storage(
-                file = StoragePathMacros.WORKSPACE_FILE) })
+@State(name = "NoNamespaceConfig.Mappings", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
 class NoNamespaceConfigImpl extends NoNamespaceConfig implements PersistentStateComponent<NoNamespaceConfigImpl.Mappings> {
 
-  private final Map<VirtualFilePointer, VirtualFilePointer> myMappings = new HashMap<VirtualFilePointer, VirtualFilePointer>();
+  private final Map<VirtualFilePointer, VirtualFilePointer> myMappings = new HashMap<>();
   private final Project myProject;
 
   NoNamespaceConfigImpl(Project project) {
@@ -67,17 +58,20 @@ class NoNamespaceConfigImpl extends NoNamespaceConfig implements PersistentState
     return null;
   }
 
+  @Override
   @Nullable
   public String getMapping(@NotNull PsiFile file) {
     final VirtualFilePointer pointer = getMappedPointer(file);
     return pointer != null ? pointer.getUrl() : null;
   }
 
+  @Override
   public VirtualFile getMappedFile(@NotNull PsiFile file) {
     final VirtualFilePointer url = getMappedPointer(file);
     return url != null ? url.getFile() : null;
   }
 
+  @Override
   public void setMapping(@NotNull PsiFile file, String location) {
     final VirtualFile virtualFile = file.getVirtualFile();
     assert virtualFile != null;
@@ -102,33 +96,28 @@ class NoNamespaceConfigImpl extends NoNamespaceConfig implements PersistentState
     }
   }
 
-  public void initComponent() {
-  }
-
-  public void disposeComponent() {
-  }
-
+  @Override
   @NotNull
   public String getComponentName() {
     return "RELAX-NG.NoNamespaceConfig";
   }
 
-  public void projectOpened() {
-  }
-
+  @Override
   public void projectClosed() {
     reset();
   }
 
+  @Override
   public Mappings getState() {
-    final HashMap<String, String> map = new HashMap<String, String>();
+    final HashMap<String, String> map = new HashMap<>();
     for (Map.Entry<VirtualFilePointer, VirtualFilePointer> entry : myMappings.entrySet()) {
       map.put(entry.getKey().getUrl(), entry.getValue().getUrl());
     }
     return new Mappings(map);
   }
 
-  public void loadState(Mappings state) {
+  @Override
+  public void loadState(@NotNull Mappings state) {
     reset();
 
     final VirtualFilePointerManager manager = VirtualFilePointerManager.getInstance();
@@ -148,7 +137,7 @@ class NoNamespaceConfigImpl extends NoNamespaceConfig implements PersistentState
     public Map<String, String> myMappings;
 
     public Mappings() {
-      myMappings = new HashMap<String, String>();
+      myMappings = new HashMap<>();
     }
 
     Mappings(Map<String, String> map) {
@@ -157,6 +146,7 @@ class NoNamespaceConfigImpl extends NoNamespaceConfig implements PersistentState
   }
 
   public static class HectorProvider implements HectorComponentPanelsProvider {
+    @Override
     @Nullable
     public HectorComponentPanel createConfigurable(@NotNull PsiFile file) {
       if (file instanceof XmlFile) {

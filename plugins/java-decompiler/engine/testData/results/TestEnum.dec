@@ -1,0 +1,69 @@
+package pkg;
+
+public enum TestEnum {
+   E1,
+   E2 {
+      public void m() {
+      }// 22
+   },
+   E3("-", TestEnum.Type.ODD),
+   E4("+", TestEnum.Type.EVEN) {
+      public void m() {
+      }// 27
+   };
+
+   private String s;
+
+   public void m() {
+   }// 32
+
+   private TestEnum() {
+      this("?", (TestEnum.Type)null);// 36
+   }
+
+   private TestEnum(@Deprecated String var3, TestEnum.Type var4) {
+      this.s = var3;// 37
+   }
+
+   private static enum Type {
+      ODD,
+      EVEN;
+   }
+}
+
+class 'pkg/TestEnum$1' {
+   method 'm ()V' {
+      0      6
+   }
+}
+
+class 'pkg/TestEnum$2' {
+   method 'm ()V' {
+      0      11
+   }
+}
+
+class 'pkg/TestEnum' {
+   method 'm ()V' {
+      0      17
+   }
+
+   method '<init> (Ljava/lang/String;I)V' {
+      3      20
+      5      20
+      6      20
+      9      21
+   }
+
+   method '<init> (Ljava/lang/String;ILjava/lang/String;Lpkg/TestEnum$Type;)V' {
+      8      24
+      b      25
+   }
+}
+
+Lines mapping:
+22 <-> 7
+27 <-> 12
+32 <-> 18
+36 <-> 21
+37 <-> 25

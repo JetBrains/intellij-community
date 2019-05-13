@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,10 +36,6 @@ import java.awt.*;
 import java.util.EventObject;
 import java.util.List;
 
-/**
- * User: Dmitry.Krasilschikov
- * Date: 18.02.2008
- */
 public class DynamicMethodDialog extends DynamicDialog {
 
   public DynamicMethodDialog(GrReferenceExpression referenceExpression) {
@@ -60,6 +56,7 @@ public class DynamicMethodDialog extends DynamicDialog {
     myParametersTable.setDefaultEditor(String.class, suggestedNameCellEditor);
 
     suggestedNameCellEditor.addCellEditorListener(new CellEditorListener() {
+      @Override
       public void editingStopped(ChangeEvent e) {
         final int editingColumn = myParametersTable.getSelectedColumn();
         if (editingColumn != 0) return;
@@ -73,13 +70,14 @@ public class DynamicMethodDialog extends DynamicDialog {
         editingPair.name = newNameValue;
       }
 
+      @Override
       public void editingCanceled(ChangeEvent e) {
       }
     });
   }
 
   private void setupParameterList(List<ParamInfo> arguments) {
-    final ListTableModel<ParamInfo> dataModel = new ListTableModel<ParamInfo>(new NameColumnInfo(), new TypeColumnInfo());
+    final ListTableModel<ParamInfo> dataModel = new ListTableModel<>(new NameColumnInfo(), new TypeColumnInfo());
     dataModel.setItems(arguments);
     myParametersTable.setModel(dataModel);
 
@@ -102,18 +100,16 @@ public class DynamicMethodDialog extends DynamicDialog {
 
 
   private class TypeColumnInfo extends ColumnInfo<ParamInfo, String> {
-    public TypeColumnInfo() {
-      super(GroovyBundle.message("dynamic.name"));
+    TypeColumnInfo() {
+      super(GroovyBundle.message("dynamic.type"));
     }
 
+    @Override
     public String valueOf(ParamInfo pair) {
       return pair.type;
     }
 
-    public boolean isCellEditable(ParamInfo stringPsiTypeMyPair) {
-      return false;
-    }
-
+    @Override
     public void setValue(ParamInfo pair, String value) {
       PsiType type;
       try {
@@ -123,20 +119,21 @@ public class DynamicMethodDialog extends DynamicDialog {
         return;
       }
 
-      if (type == null) return;
-      pair.type =type.getCanonicalText();
+      pair.type = type.getCanonicalText();
     }
   }
 
   private static class NameColumnInfo extends ColumnInfo<ParamInfo, String> {
-    public NameColumnInfo() {
-      super(GroovyBundle.message("dynamic.type"));
+    NameColumnInfo() {
+      super(GroovyBundle.message("dynamic.name"));
     }
 
+    @Override
     public boolean isCellEditable(ParamInfo myPair) {
       return true;
     }
 
+    @Override
     public String valueOf(ParamInfo pair) {
       return pair.name;
     }
@@ -145,18 +142,21 @@ public class DynamicMethodDialog extends DynamicDialog {
   private static class MySuggestedNameCellEditor extends AbstractTableCellEditor {
     JTextField myNameField;
 
-    public MySuggestedNameCellEditor(String[] names) {
+    MySuggestedNameCellEditor(String[] names) {
       myNameField = names.length == 0 ? new JTextField() : new JTextField(names[0]);
     }
 
+    @Override
     public String getCellEditorValue() {
       return myNameField.getText();
     }
 
+    @Override
     public boolean isCellEditable(EventObject e) {
       return true;
     }
 
+    @Override
     public Component getTableCellEditorComponent(JTable table, Object value, boolean isSelected, int row, int column) {
       if (value instanceof String) {
         myNameField.setText((String)value);

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions;
 
 import com.intellij.openapi.ui.DialogWrapper;
@@ -48,23 +34,24 @@ class StartUseVcsDialog extends DialogWrapper {
     return myVcsCombo;
   }
 
+  @Override
   protected JComponent createCenterPanel() {
     final JLabel selectText = new JLabel(VcsBundle.message("dialog.enable.version.control.integration.select.vcs.label.text"));
     selectText.setUI(new MultiLineLabelUI());
 
     final JPanel mainPanel = new JPanel(new GridBagLayout());
     final GridBagConstraints gb =
-      new GridBagConstraints(0, 0, 1, 1, 0, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, new Insets(5, 5, 5, 5), 0, 0);
+      new GridBagConstraints(0, 0, 1, 1, 0, 0, GridBagConstraints.BASELINE, GridBagConstraints.NONE, new Insets(5, 5, 5, 5), 0, 0);
 
     mainPanel.add(selectText, gb);
 
     ++ gb.gridx;
-    gb.anchor = GridBagConstraints.NORTHEAST;
 
     myVcsCombo = new VcsCombo(prepareComboData());
     mainPanel.add(myVcsCombo, gb);
 
     myVcsCombo.addActionListener(new ActionListener() {
+      @Override
       public void actionPerformed(final ActionEvent e) {
         validateVcs();
       }
@@ -100,12 +87,12 @@ class StartUseVcsDialog extends DialogWrapper {
   @Override
   protected void doOKAction() {
     mySelected = myVcsCombo.getSelectedItem();
-    super.doOKAction();    
+    super.doOKAction();
   }
 
   private Object[] prepareComboData() {
     final Collection<String> displayNames = myData.getVcses().keySet();
-    final List<String> keys = new ArrayList<String>(displayNames.size() + 1);
+    final List<String> keys = new ArrayList<>(displayNames.size() + 1);
     keys.add("");
     keys.addAll(displayNames);
     Collections.sort(keys);

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,6 +26,7 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.DummyHolder;
 import com.intellij.psi.impl.source.DummyHolderFactory;
@@ -51,8 +52,8 @@ public class PsiFileFactoryImpl extends PsiFileFactory {
   @Override
   @NotNull
   public PsiFile createFileFromText(@NotNull String name, @NotNull FileType fileType, @NotNull CharSequence text,
-                                    long modificationStamp, final boolean physical) {
-    return createFileFromText(name, fileType, text, modificationStamp, physical, true);
+                                    long modificationStamp, final boolean eventSystemEnabled) {
+    return createFileFromText(name, fileType, text, modificationStamp, eventSystemEnabled, true);
   }
 
   @Override
@@ -61,23 +62,30 @@ public class PsiFileFactoryImpl extends PsiFileFactory {
   }
 
   @Override
-  public PsiFile createFileFromText(@NotNull String name, @NotNull Language language, @NotNull CharSequence text, boolean physical,
-                                    final boolean markAsCopy) {
-    return createFileFromText(name, language, text, physical, markAsCopy, false);
+  public PsiFile createFileFromText(@NotNull String name, @NotNull Language language, @NotNull CharSequence text,
+                                    boolean eventSystemEnabled, boolean markAsCopy) {
+    return createFileFromText(name, language, text, eventSystemEnabled, markAsCopy, false);
   }
 
   @Override
-  public PsiFile createFileFromText(@NotNull String name,
-                                    @NotNull Language language,
-                                    @NotNull CharSequence text,
-                                    boolean physical,
-                                    boolean markAsCopy,
-                                    boolean noSizeLimit) {
+  public PsiFile createFileFromText(@NotNull String name, @NotNull Language language, @NotNull CharSequence text,
+                                    boolean eventSystemEnabled, boolean markAsCopy, boolean noSizeLimit) {
+    return createFileFromText(name, language, text, eventSystemEnabled, markAsCopy, noSizeLimit, null);
+  }
+
+  @Override
+  public PsiFile createFileFromText(@NotNull String name, @NotNull Language language, @NotNull CharSequence text,
+                                    boolean eventSystemEnabled, boolean markAsCopy, boolean noSizeLimit,
+                                    @Nullable VirtualFile original) {
     LightVirtualFile virtualFile = new LightVirtualFile(name, language, text);
+    if (original != null) {
+      virtualFile.setOriginalFile(original);
+      virtualFile.setFileType(original.getFileType());
+    }
     if (noSizeLimit) {
       SingleRootFileViewProvider.doNotCheckFileSizeLimit(virtualFile);
     }
-    return trySetupPsiForFile(virtualFile, language, physical, markAsCopy);
+    return trySetupPsiForFile(virtualFile, language, eventSystemEnabled, markAsCopy);
   }
 
   @Override
@@ -86,24 +94,25 @@ public class PsiFileFactoryImpl extends PsiFileFactory {
                                     @NotNull FileType fileType,
                                     @NotNull CharSequence text,
                                     long modificationStamp,
-                                    final boolean physical,
+                                    final boolean eventSystemEnabled,
                                     boolean markAsCopy) {
     final LightVirtualFile virtualFile = new LightVirtualFile(name, fileType, text, modificationStamp);
     if(fileType instanceof LanguageFileType){
       final Language language =
           LanguageSubstitutors.INSTANCE.substituteLanguage(((LanguageFileType)fileType).getLanguage(), virtualFile, myManager.getProject());
-      final PsiFile file = trySetupPsiForFile(virtualFile, language, physical, markAsCopy);
+      final PsiFile file = trySetupPsiForFile(virtualFile, language, eventSystemEnabled, markAsCopy);
       if (file != null) return file;
     }
     final SingleRootFileViewProvider singleRootFileViewProvider =
-      new SingleRootFileViewProvider(myManager, virtualFile, physical);
+      new SingleRootFileViewProvider(myManager, virtualFile, eventSystemEnabled);
     final PsiPlainTextFileImpl plainTextFile = new PsiPlainTextFileImpl(singleRootFileViewProvider);
     if(markAsCopy) CodeEditUtil.setNodeGenerated(plainTextFile.getNode(), true);
     return plainTextFile;
   }
 
   @Nullable
-  public PsiFile trySetupPsiForFile(final LightVirtualFile virtualFile, Language language,
+  public PsiFile trySetupPsiForFile(@NotNull LightVirtualFile virtualFile,
+                                    @NotNull Language language,
                                     final boolean physical, final boolean markAsCopy) {
     final FileViewProviderFactory factory = LanguageFileViewProviders.INSTANCE.forLanguage(language);
     FileViewProvider viewProvider = factory != null ? factory.createFileViewProvider(virtualFile, language, myManager, physical) : null;
@@ -115,6 +124,9 @@ public class PsiFileFactoryImpl extends PsiFileFactory {
       final PsiFile psiFile = viewProvider.getPsi(language);
       if (psiFile != null) {
         if (markAsCopy) {
+          if (psiFile.getNode() == null) {
+            throw new AssertionError("No node for file " + psiFile + "; language=" + language);
+          }
           markGenerated(psiFile);
         }
         return psiFile;

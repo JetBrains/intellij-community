@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,24 +15,26 @@
  */
 package com.intellij.psi.search;
 
-import com.intellij.openapi.application.ApplicationManager;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @author peter
  */
 public class PsiSearchRequest {
-  public final SearchScope searchScope;
-  public final String word;
+  @NotNull public final SearchScope searchScope;
+  @NotNull public final String word;
   public final short searchContext;
   public final boolean caseSensitive;
   public final RequestResultProcessor processor;
+  public final String containerName;
 
-  public PsiSearchRequest(@NotNull SearchScope searchScope,
-                          @NotNull String word,
-                          short searchContext,
-                          boolean caseSensitive,
-                          @NotNull RequestResultProcessor processor) {
+  PsiSearchRequest(@NotNull SearchScope searchScope,
+                   @NotNull String word,
+                   short searchContext,
+                   boolean caseSensitive,
+                   String containerName,
+                   @NotNull RequestResultProcessor processor) {
+    this.containerName = containerName;
     if (word.isEmpty()) {
       throw new IllegalArgumentException("Cannot search for elements with empty text");
     }
@@ -42,7 +44,7 @@ public class PsiSearchRequest {
     this.caseSensitive = caseSensitive;
     this.processor = processor;
     if (searchScope instanceof GlobalSearchScope && ((GlobalSearchScope)searchScope).getProject() == null) {
-      throw new AssertionError("Every search scope must be associated with a project");
+      throw new AssertionError("Every search scope must be associated with a project: " + searchScope);
     }
   }
 

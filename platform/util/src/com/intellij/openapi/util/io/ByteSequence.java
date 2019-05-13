@@ -18,34 +18,16 @@ package com.intellij.openapi.util.io;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * @author Eugene Zhuravlev
- *         Date: 11/23/10
+ * A sequence of bytes.
  */
-public class ByteSequence {
-  private final byte[] myBytes;
-  private final int myOffset;
-  private final int myLen;
+public interface ByteSequence {
+  int length();
 
-  public ByteSequence(@NotNull byte[] bytes) {
-    this(bytes, 0, bytes.length);
-  }
-  
-  public ByteSequence(@NotNull byte[] bytes, int offset, int len) {
-    myBytes = bytes;
-    myOffset = offset;
-    myLen = len;
-  }
+  byte byteAt(int index);
 
   @NotNull
-  public byte[] getBytes() {
-    return myBytes;
-  }
+  ByteSequence subSequence(int start, int end);
 
-  public int getOffset() {
-    return myOffset;
-  }
-
-  public int getLength() {
-    return myLen;
-  }
+  @NotNull
+  byte[] toBytes();
 }

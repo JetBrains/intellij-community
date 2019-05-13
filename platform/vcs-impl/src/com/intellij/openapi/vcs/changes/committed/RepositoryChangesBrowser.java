@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,117 +15,66 @@
  */
 package com.intellij.openapi.vcs.changes.committed;
 
-import com.intellij.icons.AllIcons;
-import com.intellij.ide.actions.EditSourceAction;
 import com.intellij.ide.impl.TypeSafeDataProviderAdapter;
-import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeList;
 import com.intellij.openapi.vcs.changes.ChangesUtil;
-import com.intellij.openapi.vcs.changes.actions.OpenRepositoryVersionAction;
-import com.intellij.openapi.vcs.changes.actions.RevertSelectedChangesAction;
-import com.intellij.openapi.vcs.changes.actions.ShowDiffWithLocalAction;
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowser;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.pom.Navigatable;
+import com.intellij.util.ObjectUtils;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-import java.util.Arrays;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 
 /**
- * @author yole
+ * @deprecated Use {@link CommittedChangesBrowser}
  */
+@Deprecated
 public class RepositoryChangesBrowser extends ChangesBrowser implements DataProvider {
-  private CommittedChangesBrowserUseCase myUseCase;
-
-  public RepositoryChangesBrowser(final Project project, final List<CommittedChangeList> changeLists) {
-    super(project, changeLists, Collections.<Change>emptyList(), null, false, false, null, MyUseCase.COMMITTED_CHANGES, null);
+  public RepositoryChangesBrowser(final Project project, final List<? extends CommittedChangeList> changeLists) {
+    this(project, changeLists, null, null);
   }
 
   public RepositoryChangesBrowser(final Project project, final List<? extends ChangeList> changeLists, final List<Change> changes,
                                   final ChangeList initialListSelection) {
-    super(project, changeLists, changes, initialListSelection, false, false, null, MyUseCase.COMMITTED_CHANGES, null);
+    super(project, null, Collections.emptyList(), initialListSelection, false, false, null, MyUseCase.COMMITTED_CHANGES, null);
   }
 
-  public RepositoryChangesBrowser(final Project project, final List<? extends ChangeList> changeLists, final List<Change> changes,
-                                  final ChangeList initialListSelection, VirtualFile toSelect) {
-    super(project, changeLists, changes, initialListSelection, false, false, null, MyUseCase.COMMITTED_CHANGES, toSelect);
-  }
-
+  @Override
   protected void buildToolBar(final DefaultActionGroup toolBarGroup) {
     super.buildToolBar(toolBarGroup);
 
-    toolBarGroup.add(new ShowDiffWithLocalAction());
-    final MyEditSourceAction editSourceAction = new MyEditSourceAction();
-    editSourceAction.registerCustomShortcutSet(CommonShortcuts.getEditSource(), this);
-    toolBarGroup.add(editSourceAction);
-    OpenRepositoryVersionAction action = new OpenRepositoryVersionAction();
-    toolBarGroup.add(action);
-    final RevertSelectedChangesAction revertSelectedChangesAction = new RevertSelectedChangesAction();
-    toolBarGroup.add(revertSelectedChangesAction);
-
-    ActionGroup group = (ActionGroup) ActionManager.getInstance().getAction("RepositoryChangesBrowserToolbar");
-    final AnAction[] actions = group.getChildren(null);
-    for (AnAction anAction : actions) {
-      toolBarGroup.add(anAction);
-    }
+    toolBarGroup.add(ActionManager.getInstance().getAction("Vcs.RepositoryChangesBrowserToolbar"));
   }
 
-  public void setUseCase(final CommittedChangesBrowserUseCase useCase) {
-    myUseCase = useCase;
-  }
-
-  public Object getData(@NonNls final String dataId) {
-    if (CommittedChangesBrowserUseCase.DATA_KEY.is(dataId)) {
-      return myUseCase;
-    }
-
-    else if (VcsDataKeys.SELECTED_CHANGES.is(dataId)) {
+  @Override
+  public Object getData(@NotNull @NonNls final String dataId) {
+    if (VcsDataKeys.SELECTED_CHANGES.is(dataId)) {
       final List<Change> list = myViewer.getSelectedChanges();
-      return list.toArray(new Change [list.size()]);
-    } else if (VcsDataKeys.CHANGE_LEAD_SELECTION.is(dataId)) {
+      return list.toArray(new Change[0]);
+    }
+    else if (VcsDataKeys.CHANGE_LEAD_SELECTION.is(dataId)) {
       final Change highestSelection = myViewer.getHighestLeadSelection();
-      return (highestSelection == null) ? new Change[]{} : new Change[] {highestSelection};
-    } else {
+      return (highestSelection == null) ? new Change[]{} : new Change[]{highestSelection};
+    }
+    else if (VcsDataKeys.VCS.is(dataId)) {
+      Set<AbstractVcs> abstractVcs = ChangesUtil.getAffectedVcses(myViewer.getSelectedChanges(), myProject);
+      if (abstractVcs.size() == 1) return ObjectUtils.assertNotNull(ContainerUtil.getFirstItem(abstractVcs)).getKeyInstanceMethod();
+      return null;
+    }
+    else {
       final TypeSafeDataProviderAdapter adapter = new TypeSafeDataProviderAdapter(this);
       return adapter.getData(dataId);
-    }
-  }
-
-  private class MyEditSourceAction extends EditSourceAction {
-    private final Icon myEditSourceIcon;
-
-    public MyEditSourceAction() {
-      myEditSourceIcon = AllIcons.Actions.EditSource;
-    }
-
-    public void update(final AnActionEvent event) {
-      super.update(event);
-      event.getPresentation().setIcon(myEditSourceIcon);
-      event.getPresentation().setText("Edit Source");
-      if ((! ModalityState.NON_MODAL.equals(ModalityState.current())) ||
-          CommittedChangesBrowserUseCase.IN_AIR.equals(CommittedChangesBrowserUseCase.DATA_KEY.getData(event.getDataContext()))) {
-        event.getPresentation().setEnabled(false);
-      } else {
-        event.getPresentation().setEnabled(true);
-      }
-    }
-
-    protected Navigatable[] getNavigatables(final DataContext dataContext) {
-      Change[] changes = VcsDataKeys.SELECTED_CHANGES.getData(dataContext);
-      if (changes != null) {
-        Collection<Change> changeCollection = Arrays.asList(changes);
-        return ChangesUtil.getNavigatableArray(myProject, ChangesUtil.getFilesFromChanges(changeCollection));
-      }
-      return null;
     }
   }
 }

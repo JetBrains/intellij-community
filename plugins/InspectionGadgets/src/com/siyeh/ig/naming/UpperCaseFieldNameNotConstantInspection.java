@@ -27,6 +27,11 @@ import org.jetbrains.annotations.NotNull;
 public class UpperCaseFieldNameNotConstantInspection extends BaseInspection {
 
   @Override
+  protected InspectionGadgetsFix buildFix(Object... infos) {
+    return new RenameFix();
+  }
+
+  @Override
   @NotNull
   public String getDisplayName() {
     return InspectionGadgetsBundle.message(
@@ -37,11 +42,6 @@ public class UpperCaseFieldNameNotConstantInspection extends BaseInspection {
   @NotNull
   public String getID() {
     return "NonConstantFieldWithUpperCaseName";
-  }
-
-  @Override
-  protected InspectionGadgetsFix buildFix(Object... infos) {
-    return new RenameFix();
   }
 
   @Override

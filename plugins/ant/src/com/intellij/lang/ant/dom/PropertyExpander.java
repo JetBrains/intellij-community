@@ -23,21 +23,20 @@ import java.util.regex.Pattern;
 
 /**
 * @author Eugene Zhuravlev
-*         Date: Apr 23, 2010
 */
 public class PropertyExpander {
   private static final Pattern $$_PATTERN = Pattern.compile("\\$\\$");
-  final List<PropertiesProvider> myProviders = new ArrayList<PropertiesProvider>();
+  final List<PropertiesProvider> myProviders = new ArrayList<>();
   final Resolver myResolver;
-  final Set<String> myNamesToSkip = new HashSet<String>();
+  final Set<String> myNamesToSkip = new HashSet<>();
   private PropertyExpansionListener myPropertyExpansionListener;
 
   public interface PropertyExpansionListener {
     void onPropertyExpanded(String propName, String propValue);
   }
-  
+
   public PropertyExpander(final @NotNull String str) {
-    this(str, Collections.<String>emptySet());
+    this(str, Collections.emptySet());
   }
 
   private PropertyExpander(final @NotNull String str, Set<String> namesToSkip) {
@@ -109,9 +108,9 @@ public class PropertyExpander {
 
   private static class Resolver implements Iterator<String> {
     private int myCurrentIndex = -1;
-    private List<Pair<String /*property name without ${} characters*/, Integer /*offset of property occurrence including '$' char*/>> myPropertyNames; 
-    private StringBuilder myBuilder;
-    
+    private List<Pair<String /*property name without ${} characters*/, Integer /*offset of property occurrence including '$' char*/>> myPropertyNames;
+    private final StringBuilder myBuilder;
+
     private Resolver(final String str, Set<String> namesToSkip) {
       myBuilder = new StringBuilder(str);
       int startProp = 0;
@@ -129,9 +128,9 @@ public class PropertyExpander {
         final String prop = str.substring(startProp + 2, endProp);
         if (!namesToSkip.contains(prop)) {
           if (myPropertyNames == null) {
-            myPropertyNames = new ArrayList<Pair<String, Integer>>();
+            myPropertyNames = new ArrayList<>();
           }
-          myPropertyNames.add(new Pair<String, Integer>(prop, startProp));
+          myPropertyNames.add(new Pair<>(prop, startProp));
         }
         startProp += 2;
       }
@@ -168,7 +167,7 @@ public class PropertyExpander {
 
     private void setPropertyOffset(int index, int value) {
       final Pair<String, Integer> pair = myPropertyNames.get(index);
-      myPropertyNames.set(index, new Pair<String, Integer>(pair.getFirst(), value));
+      myPropertyNames.set(index, new Pair<>(pair.getFirst(), value));
     }
 
     String getResult() {
@@ -179,14 +178,17 @@ public class PropertyExpander {
       return value;
     }
 
+    @Override
     public boolean hasNext() {
       return (myCurrentIndex + 1) < myPropertyNames.size();
     }
 
+    @Override
     public String next() {
       return getPropertyName(++myCurrentIndex);
     }
 
+    @Override
     public void remove() {
       replace("");
     }

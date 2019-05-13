@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,9 @@
  */
 package com.intellij.codeInsight.folding.impl;
 
+import com.intellij.lang.Language;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
@@ -30,7 +32,6 @@ import java.util.StringTokenizer;
  * Thread-safe.
  * 
  * @author Denis Zhdanov
- * @since 11/7/11 11:59 AM
  */
 public class OffsetsElementSignatureProvider extends AbstractElementSignatureProvider {
 
@@ -74,32 +75,53 @@ public class OffsetsElementSignatureProvider extends AbstractElementSignaturePro
         // Do nothing
       }
     }
-
-    PsiElement result = null;
-    PsiElement element = file.findElementAt(start);
-    if (element != null) {
-      result = findElement(start, end, index, element, processingInfoStorage);
-      if (result == null && processingInfoStorage != null) {
-        processingInfoStorage.append(String.format(
-          "Failed to find an element by the given offsets. Started by the element '%s' (%s)", element, element.getText()
-        ));
+    Language language = file.getLanguage();
+    if (tokenizer.hasMoreTokens()) {
+      String languageId = tokenizer.nextToken();
+      Language languageFromSignature = Language.findLanguageByID(languageId);
+      if (languageFromSignature == null) {
+        if (processingInfoStorage != null) {
+          processingInfoStorage.append(String.format("Couldn't find language for id %s", languageId));
+        }
+      }
+      else {
+        language = languageFromSignature;
       }
     }
 
-    if (result == null) {
-      final PsiElement injectedStartElement = InjectedLanguageUtil.findElementAtNoCommit(file, start);
+    FileViewProvider viewProvider = file.getViewProvider();
+    PsiElement element = viewProvider.findElementAt(start, language);
+    if (element == null) {
+      return null;
+    }
+    PsiElement result = findElement(start, end, index, element, processingInfoStorage);
+    if (result != null) {
+      return result;
+    }
+    else if (processingInfoStorage != null) {
+      processingInfoStorage.append(String.format(
+        "Failed to find an element by the given offsets for language %s. Started by the element '%s' (%s)",
+        language, element, element.getText()
+      ));
+    }
+    PsiFile psiFile = viewProvider.getPsi(language);
+    if (psiFile == null) {
       if (processingInfoStorage != null) {
-        processingInfoStorage.append(String.format(
-          "Trying to find injected element starting from the '%s'%s%n",
-          injectedStartElement, injectedStartElement == null ? "" : String.format("(%s)", injectedStartElement.getText())
-        ));
+        processingInfoStorage.append(String.format("Couldn't find PSI for language %s", language.toString()));
       }
-      if (injectedStartElement != null && injectedStartElement != element) {
-        result = findElement(start, end, index, injectedStartElement, processingInfoStorage);
-      } 
+      return null;
     }
-
-    return result;
+    final PsiElement injectedStartElement = InjectedLanguageUtil.findElementAtNoCommit(psiFile, start);
+    if (processingInfoStorage != null) {
+      processingInfoStorage.append(String.format(
+        "Trying to find injected element starting from the '%s'%s%n",
+        injectedStartElement, injectedStartElement == null ? "" : String.format("(%s)", injectedStartElement.getText())
+      ));
+    }
+    if (injectedStartElement != null && injectedStartElement != element) {
+      return findElement(start, end, index, injectedStartElement, processingInfoStorage);
+    }
+    return null;
   }
 
   @Nullable
@@ -110,6 +132,12 @@ public class OffsetsElementSignatureProvider extends AbstractElementSignaturePro
     }
     while (range != null && range.getStartOffset() == start && range.getEndOffset() < end) {
       element = element.getParent();
+      if (element == null) {
+        if (processingInfoStorage != null) {
+          processingInfoStorage.append("Reached top of PSI tree");
+        }
+        return null;
+      }
       range = element.getTextRange();
       if (processingInfoStorage != null) {
         processingInfoStorage.append(String.format("Expanding element to '%s' and range to '%s'%n", element, range));
@@ -126,11 +154,8 @@ public class OffsetsElementSignatureProvider extends AbstractElementSignaturePro
 
     // There is a possible case that we have a hierarchy of PSI elements that target the same document range. We need to find
     // out the right one then.
-    
-    int indexFromRoot = 0;
-    for (PsiElement e = element.getParent(); e != null && range.equals(e.getTextRange()); e = e.getParent()) {
-      indexFromRoot++;
-    }
+
+    int indexFromRoot = getElementHierarchyIndex(element);
 
     if (processingInfoStorage != null) {
       processingInfoStorage.append(String.format("Target element index is %d. Current index from root is %d%n", index, indexFromRoot));
@@ -176,11 +201,22 @@ public class OffsetsElementSignatureProvider extends AbstractElementSignaturePro
     
     // There is a possible case that given PSI element has a parent or child that targets the same range. So, we remember
     // not only target range offsets but 'hierarchy index' as well.
+    int index = getElementHierarchyIndex(element);
+
+    buffer.append(ELEMENT_TOKENS_SEPARATOR).append(index);
+    PsiFile containingFile = element.getContainingFile();
+    if (containingFile != null && containingFile.getViewProvider().getLanguages().size() > 1) {
+      buffer.append(ELEMENT_TOKENS_SEPARATOR).append(containingFile.getLanguage().getID());
+    }
+    return buffer.toString();
+  }
+
+  private static int getElementHierarchyIndex(@NotNull PsiElement element) {
+    TextRange range = element.getTextRange();
     int index = 0;
     for (PsiElement e = element.getParent(); e != null && range.equals(e.getTextRange()); e = e.getParent()) {
       index++;
     }
-    buffer.append(ELEMENT_TOKENS_SEPARATOR).append(index);
-    return buffer.toString();
+    return index;
   }
 }

@@ -16,6 +16,7 @@
 package com.intellij.util;
 
 import com.intellij.openapi.application.ApplicationManager;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -26,15 +27,14 @@ public class BufferedListConsumer<T> implements Consumer<List<T>> {
   private final int mySize;
   private List<T> myBuffer;
   private final Object myFlushLock;
-  private final Consumer<List<T>> myConsumer;
+  private final Consumer<? super List<T>> myConsumer;
   private int myCnt;
-  private Runnable myFlushListener;
-  private volatile boolean myPendingFlush;
+  private boolean myPendingFlush;
 
-  public BufferedListConsumer(int size, Consumer<List<T>> consumer, int interval) {
+  public BufferedListConsumer(int size, Consumer<? super List<T>> consumer, int interval) {
     mySize = size;
     myFlushLock = new Object();
-    myBuffer = new ArrayList<T>(size);
+    myBuffer = new ArrayList<>(size);
     myConsumer = consumer;
     myInterval = interval;
     myTs = System.currentTimeMillis();
@@ -50,6 +50,7 @@ public class BufferedListConsumer<T> implements Consumer<List<T>> {
     }
   }
 
+  @Override
   public void consume(List<T> list) {
     synchronized (myFlushLock) {
       myCnt += list.size();
@@ -72,42 +73,36 @@ public class BufferedListConsumer<T> implements Consumer<List<T>> {
     synchronized (myFlushLock) {
       if (myPendingFlush || myBuffer.isEmpty()) return;
       myPendingFlush = true;
-      ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
-        @Override
-        public void run() {
-          myTs = ts;
-          final List<T> list;
-          synchronized (myFlushLock) {
-            myPendingFlush = false;
-            if (myBuffer.isEmpty()) return;
-            list = myBuffer;
-            myBuffer = new ArrayList<T>(mySize);
-          }
-          myConsumer.consume(list);
-        }
-      });
+      invokeConsumer(createConsumerRunnable(ts));
     }
+  }
+
+  protected void invokeConsumer(@NotNull Runnable consumerRunnable) {
+    ApplicationManager.getApplication().executeOnPooledThread(consumerRunnable);
+  }
+
+  @NotNull
+  private Runnable createConsumerRunnable(final long ts) {
+    return () -> {
+      final List<T> list;
+      synchronized (myFlushLock) {
+        myTs = ts;
+        myPendingFlush = false;
+        if (myBuffer.isEmpty()) return;
+        list = myBuffer;
+        myBuffer = new ArrayList<>(mySize);
+      }
+      myConsumer.consume(list);
+    };
   }
 
   public void flush() {
     flushImpl(System.currentTimeMillis());
-    if (myFlushListener != null) {
-      myFlushListener.run();
-    }
   }
 
   public int getCnt() {
     synchronized (myFlushLock) {
       return myCnt;
     }
-  }
-
-  public Consumer<T> asConsumer() {
-    return new Consumer<T>() {
-      @Override
-      public void consume(T t) {
-        consumeOne(t);
-      }
-    };
   }
 }

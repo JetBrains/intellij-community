@@ -1,6 +1,6 @@
 class Test {
-    /**
-     *  <warning>@return</warning> returns
-     */
-     public void foo() {}
+  /**
+   * <warning descr="Tag 'return' is not allowed here">@return</warning> returns
+   */
+  public void foo() {}
 }

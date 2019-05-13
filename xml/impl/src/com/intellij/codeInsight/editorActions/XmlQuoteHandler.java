@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,18 +23,22 @@ import com.intellij.psi.xml.XmlTokenType;
  * @author peter
 */
 public class XmlQuoteHandler implements QuoteHandler {
+  @Override
   public boolean isClosingQuote(HighlighterIterator iterator, int offset) {
     return iterator.getTokenType() == XmlTokenType.XML_ATTRIBUTE_VALUE_END_DELIMITER;
   }
 
+  @Override
   public boolean isOpeningQuote(HighlighterIterator iterator, int offset) {
     return iterator.getTokenType() == XmlTokenType.XML_ATTRIBUTE_VALUE_START_DELIMITER;
   }
 
+  @Override
   public boolean hasNonClosedLiteral(Editor editor, HighlighterIterator iterator, int offset) {
     return true;
   }
 
+  @Override
   public boolean isInsideLiteral(HighlighterIterator iterator) {
     return false;
   }

@@ -1,36 +1,20 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm.impl.content;
 
-import com.intellij.openapi.ui.GraphicsConfig;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.awt.RelativeRectangle;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManagerEvent;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 
 import java.awt.*;
-import java.awt.image.BufferedImage;
 
 class ComboContentLayout extends ContentLayout {
 
   ContentComboLabel myComboLabel;
-  private BufferedImage myImage;
 
   ComboContentLayout(ToolWindowContentUi ui) {
     super(ui);
@@ -48,13 +32,12 @@ class ComboContentLayout extends ContentLayout {
   public void reset() {
     myIdLabel = null;
     myComboLabel = null;
-    myImage = null;
   }
 
   @Override
   public void layout() {
     Rectangle bounds = myUi.getBounds();
-    Dimension idSize = isIdVisible() ? myIdLabel.getPreferredSize() : new Dimension(0, 0);
+    Dimension idSize = isIdVisible() ? myIdLabel.getPreferredSize() : JBUI.emptySize();
 
     int eachX = 0;
     int eachY = 0;
@@ -80,48 +63,17 @@ class ComboContentLayout extends ContentLayout {
 
   @Override
   public void paintComponent(Graphics g) {
-    if (!isToDrawCombo()) return;
+    if (!isToDrawCombo() || !myIdLabel.isVisible()) return;
 
-    Rectangle r = myComboLabel.getBounds();
-    if (UIUtil.isUnderDarcula()) {
-      g.setColor(ColorUtil.toAlpha(UIUtil.getLabelForeground(), 20));
-      g.drawLine(r.width, 0, r.width, r.height);
-      g.setColor(ColorUtil.toAlpha(UIUtil.getBorderColor(), 50));
-      g.drawLine(r.width-1, 0, r.width-1, r.height);
-      return;
-    }
-    if (myImage == null || myImage.getHeight() != r.height || myImage.getWidth() != r.width) {
-      myImage = UIUtil.createImage(r.width, r.height, BufferedImage.TYPE_INT_ARGB);
-      final Graphics2D g2d = myImage.createGraphics();
-      final GraphicsConfig c = new GraphicsConfig(g);
-      c.setAntialiasing(true);
-  
-      g2d.setPaint(UIUtil.getGradientPaint(0, 0, new Color(0, 0, 0, 10), 0, r.height, new Color(0, 0, 0, 30)));
-      g2d.fillRect(0, 0, r.width, r.height);
-  
-      g2d.setColor(new Color(0, 0, 0, 60));
-      g2d.drawLine(0, 0, 0, r.height);
-      g2d.drawLine(r.width - 1, 0, r.width - 1, r.height);
-
-      g2d.setColor(new Color(255, 255, 255, 80));
-      g2d.drawRect(1, 0, r.width - 3, r.height - 1);
-      
-      g2d.dispose();
-    }
-    
-    g.drawImage(myImage, isIdVisible() ? r.x : r.x - 2, r.y, null);
+    Rectangle r = myIdLabel.getBounds();
+    g.setColor(ColorUtil.toAlpha(UIUtil.getLabelForeground(), 20));
+    g.drawLine(r.width, 0, r.width, r.height);
+    g.setColor(UIUtil.CONTRAST_BORDER_COLOR);
+    g.drawLine(r.width - 1, 0, r.width - 1, r.height);
   }
 
   @Override
-  public void paintChildren(Graphics g) {
-    if (!isToDrawCombo()) return;
-
-    final GraphicsConfig c = new GraphicsConfig(g);
-    c.setAntialiasing(true);
-
-    final Graphics2D g2d = (Graphics2D)g;
-    c.restore();
-  }
+  public void paintChildren(Graphics g) { }
 
   @Override
   public void update() {
@@ -134,10 +86,10 @@ class ComboContentLayout extends ContentLayout {
     myUi.removeAll();
 
     myUi.add(myIdLabel);
-    myUi.initMouseListeners(myIdLabel, myUi);
+    ToolWindowContentUi.initMouseListeners(myIdLabel, myUi, true);
 
     myUi.add(myComboLabel);
-    myUi.initMouseListeners(myComboLabel, myUi);
+    ToolWindowContentUi.initMouseListeners(myComboLabel, myUi, false);
   }
 
   boolean isToDrawCombo() {
@@ -150,11 +102,6 @@ class ComboContentLayout extends ContentLayout {
 
   @Override
   public void contentRemoved(ContentManagerEvent event) {
-  }
-
-  @Override
-  public boolean shouldDrawDecorations() {
-    return isToDrawCombo();
   }
 
   @Override

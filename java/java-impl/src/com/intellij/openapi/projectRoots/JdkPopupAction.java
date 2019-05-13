@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package com.intellij.openapi.projectRoots;
 
 import com.intellij.execution.ExecutionException;
+import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.process.ProcessOutput;
 import com.intellij.execution.util.ExecUtil;
 import com.intellij.icons.AllIcons;
@@ -39,13 +40,9 @@ import java.awt.*;
 import java.awt.event.InputEvent;
 import java.io.File;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
-/**
- * User: Vassiliy.Kudryashov
- */
 public class JdkPopupAction extends AnAction {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.fileChooser.actions.JDKPopupAction");
 
@@ -54,7 +51,7 @@ public class JdkPopupAction extends AnAction {
   }
 
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     boolean enabled = isEnabledInCurrentOS();
     if (enabled) {
       FileSystemTree tree = FileSystemTree.DATA_KEY.getData(e.getDataContext());
@@ -67,7 +64,7 @@ public class JdkPopupAction extends AnAction {
   }
 
   @Override
-  public void actionPerformed(final AnActionEvent e) {
+  public void actionPerformed(@NotNull final AnActionEvent e) {
     final JComponent component;
     final boolean showInMiddle;
     InputEvent inputEvent = e.getInputEvent();
@@ -84,23 +81,14 @@ public class JdkPopupAction extends AnAction {
 
     if (!isEnabledInCurrentOS() || component == null) return;
 
-    ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
+    ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
+      final ArrayList<Pair<File, String>> jdkLocations = retrieveJDKLocations();
 
-      @Override
-      public void run() {
-        final ArrayList<Pair<File, String>> jdkLocations = retrieveJDKLocations();
-
-        if (jdkLocations.isEmpty()) {
-          return;
-        }
-
-        ApplicationManager.getApplication().invokeLater(new Runnable() {
-          @Override
-          public void run() {
-            showPopupMenu(e, jdkLocations, showInMiddle, component);
-          }
-        });
+      if (jdkLocations.isEmpty()) {
+        return;
       }
+
+      ApplicationManager.getApplication().invokeLater(() -> showPopupMenu(e, jdkLocations, showInMiddle, component));
     }, "Looking for JDK locations...", false, e.getProject(), component);
   }
 
@@ -117,7 +105,7 @@ public class JdkPopupAction extends AnAction {
         @NotNull
         @Override
         public AnAction[] getChildren(@Nullable AnActionEvent e) {
-          List<AnAction> result = new ArrayList<AnAction>();
+          List<AnAction> result = new ArrayList<>();
           for (final Pair<File, String> homes : jdkLocations) {
             result.add(new FileChooserAction("", null, null) {
               @Override
@@ -128,7 +116,7 @@ public class JdkPopupAction extends AnAction {
                 if (selectedFile != null) {
                   selected = homes.getFirst().getAbsolutePath().equals(VfsUtilCore.virtualToIoFile(selectedFile).getAbsolutePath());
                 }
-                e.getPresentation().setIcon(selected ? AllIcons.Diff.CurrentLine : null);
+                e.getPresentation().setIcon(selected ? AllIcons.Actions.Forward : null);
               }
 
               @Override
@@ -137,7 +125,7 @@ public class JdkPopupAction extends AnAction {
               }
             });
           }
-          return result.toArray(new AnAction[result.size()]);
+          return result.toArray(AnAction.EMPTY_ARRAY);
         }
       });
     JPopupMenu menuComponent = menu.getComponent();
@@ -152,13 +140,13 @@ public class JdkPopupAction extends AnAction {
   }
 
   private static ArrayList<Pair<File, String>> retrieveJDKLocations() {
-    ArrayList<Pair<File, String>> jdkLocations = new ArrayList<Pair<File, String>>();
+    ArrayList<Pair<File, String>> jdkLocations = new ArrayList<>();
     Collection<String> homePaths = JavaSdk.getInstance().suggestHomePaths();
     for (final String path : homePaths) {
       try {
         File file = new File(path);
         File javaExe = new File(new File(file, "bin"), "java.exe");
-        ProcessOutput output = ExecUtil.execAndGetOutput(Arrays.asList(javaExe.getAbsolutePath(), "-version"), null);
+        ProcessOutput output = ExecUtil.execAndGetOutput(new GeneralCommandLine(javaExe.getAbsolutePath(), "-version"));
         List<String> lines = output.getStderrLines();
         if (lines.isEmpty()) {
           lines = output.getStdoutLines();
@@ -169,7 +157,7 @@ public class JdkPopupAction extends AnAction {
           String line = lines.get(1);
           int pos = line.indexOf("(build ");
           if (pos != -1) {
-            stringBuilder.append(line.substring(pos + 7, line.length() - 1));
+            stringBuilder.append(line, pos + 7, line.length() - 1);
           }
           line = lines.get(2);
           pos = line.indexOf(" (build");

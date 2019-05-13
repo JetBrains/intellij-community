@@ -12,13 +12,12 @@ Groovy script
       PsiElement(void)('void')
     PsiWhiteSpace(' ')
     PsiElement(identifier)('stat')
-    PsiElement(()('(')
     Parameter list
-      <empty list>
-    PsiElement())(')')
-    PsiWhiteSpace(' ')
+      PsiElement(()('(')
+      PsiElement())(')')
     Throw clause
       <empty list>
+    PsiWhiteSpace(' ')
     Open block
       PsiElement({)('{')
       PsiWhiteSpace('\n    ')

@@ -15,38 +15,50 @@
  */
 package com.intellij.openapi.vcs.checkout;
 
-import com.intellij.openapi.actionSystem.ActionGroup;
+import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.extensions.Extensions;
-import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.actionSystem.ComputableActionGroup;
 import com.intellij.openapi.vcs.CheckoutProvider;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
 
-public class CheckoutActionGroup extends ActionGroup implements DumbAware {
+public class CheckoutActionGroup extends ComputableActionGroup.Simple {
+  protected final String myIdPrefix;
 
-  private AnAction[] myChildren;
-
-  public void update(AnActionEvent e) {
-    super.update(e);
-    final CheckoutProvider[] providers = Extensions.getExtensions(CheckoutProvider.EXTENSION_POINT_NAME);
-    if (providers.length == 0) {
-      e.getPresentation().setVisible(false);
-    }
+  @SuppressWarnings("unused")
+  public CheckoutActionGroup() {
+    this("Vcs.Checkout");
   }
 
-  public AnAction[] getChildren(@Nullable AnActionEvent e) {
-    if (myChildren == null) {
-      final CheckoutProvider[] providers = Extensions.getExtensions(CheckoutProvider.EXTENSION_POINT_NAME);
-      Arrays.sort(providers, new CheckoutProvider.CheckoutProviderComparator());
-      myChildren = new AnAction[providers.length];
-      for (int i = 0; i < providers.length; i++) {
-        CheckoutProvider provider = providers[i];
-        myChildren[i] = new CheckoutAction(provider);
-      }
+  public CheckoutActionGroup(String idPrefix) {
+    myIdPrefix = idPrefix;
+  }
+
+  @NotNull
+  @Override
+  protected AnAction[] computeChildren(@NotNull ActionManager manager) {
+    return getActions();
+  }
+
+  @NotNull
+  public AnAction[] getActions() {
+    CheckoutProvider[] providers = CheckoutProvider.EXTENSION_POINT_NAME.getExtensions();
+    if (providers.length == 0) {
+      return EMPTY_ARRAY;
     }
-    return myChildren;
+
+    Arrays.sort(providers, new CheckoutProvider.CheckoutProviderComparator());
+    AnAction[] children = new AnAction[providers.length];
+    for (int i = 0; i < providers.length; i++) {
+      CheckoutProvider provider = providers[i];
+      children[i] = createAction(provider);
+    }
+    return children;
+  }
+
+  @NotNull
+  protected AnAction createAction(CheckoutProvider provider) {
+    return new CheckoutAction(provider, myIdPrefix);
   }
 }

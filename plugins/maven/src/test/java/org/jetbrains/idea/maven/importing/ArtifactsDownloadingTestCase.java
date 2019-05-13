@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,11 +16,16 @@
 package org.jetbrains.idea.maven.importing;
 
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.IoTestUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.MavenCustomRepositoryHelper;
 import org.jetbrains.idea.maven.MavenImportingTestCase;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.PrintWriter;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 
 public abstract class ArtifactsDownloadingTestCase extends MavenImportingTestCase {
   @Override
@@ -32,7 +37,31 @@ public abstract class ArtifactsDownloadingTestCase extends MavenImportingTestCas
   }
 
   protected void createDummyArtifact(String remoteRepo, String name) throws IOException {
-    FileUtil.writeToFile(new File(remoteRepo, name), "111".getBytes());
-    FileUtil.writeToFile(new File(remoteRepo, name + ".sha1"), ("6216f8a75fd5bb3d5f22b6f9958cdede3fc086c2  " + name).getBytes());
+    createEmptyJar(remoteRepo, name);
+  }
+
+  public static void createEmptyJar(@NotNull String dir, @NotNull String name) throws IOException {
+    File jar = new File(dir, name);
+    FileUtil.ensureExists(jar.getParentFile());
+    IoTestUtil.createTestJar(jar);
+
+    MessageDigest digest;
+    try {
+      digest = MessageDigest.getInstance("SHA1");
+    }
+    catch (NoSuchAlgorithmException e) {
+      throw new RuntimeException(e);
+    }
+    digest.update(FileUtil.loadFileBytes(jar));
+    byte[] sha1 = digest.digest();
+
+    PrintWriter out = new PrintWriter(new File(dir, name + ".sha1"), "UTF-8");
+    try {
+      for (byte b : sha1) out.printf("%02x", b);
+      out.println("  " + name);
+    }
+    finally {
+      out.close();
+    }
   }
 }

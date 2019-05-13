@@ -1,53 +1,46 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.ide.projectView.impl;
 
+import com.intellij.ide.dnd.aware.DnDAwareTree;
+import com.intellij.ide.projectView.ProjectViewNode;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.ide.util.treeView.NodeRenderer;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.newvfs.VfsPresentationUtil;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiDirectoryContainer;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiUtilCore;
-import com.intellij.ui.ColorUtil;
-import com.intellij.ui.FileColorManager;
-import com.intellij.ui.JBTreeWithHintProvider;
+import com.intellij.ui.popup.HintUpdateSupply;
 import com.intellij.ui.tabs.FileColorManagerImpl;
-import com.intellij.util.Function;
-import com.intellij.util.NullableFunction;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.util.ObjectUtils;
+import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreeModel;
+import javax.swing.tree.TreePath;
 import java.awt.*;
+import java.util.ArrayDeque;
 
 /**
  * @author Konstantin Bulenkov
  */
-public abstract class ProjectViewTree extends JBTreeWithHintProvider {
-  private final Project myProject;
+public class ProjectViewTree extends DnDAwareTree {
+  private static final Logger LOG = Logger.getInstance(ProjectViewTree.class);
 
   protected ProjectViewTree(Project project, TreeModel model) {
+    this(model);
+  }
+
+  public ProjectViewTree(TreeModel model) {
     super(model);
-    myProject = project;
 
     final NodeRenderer cellRenderer = new NodeRenderer() {
       @Override
@@ -60,27 +53,38 @@ public abstract class ProjectViewTree extends JBTreeWithHintProvider {
     cellRenderer.setIconOpaque(false);
     setCellRenderer(cellRenderer);
     cellRenderer.setTransparentIconBackground(true);
+
+    HintUpdateSupply.installDataContextHintUpdateSupply(this);
   }
 
-  public abstract DefaultMutableTreeNode getSelectedNode();
-
-  public Project getProject() {
-    return myProject;
+  /**
+   * Not every tree employs {@link DefaultMutableTreeNode} so
+   * use {@link #getSelectionPaths()} or {@link TreeUtil#getSelectedPathIfOne(JTree)} directly.
+   */
+  @Deprecated
+  public DefaultMutableTreeNode getSelectedNode() {
+    TreePath path = TreeUtil.getSelectedPathIfOne(this);
+    return path == null ? null : ObjectUtils.tryCast(path.getLastPathComponent(), DefaultMutableTreeNode.class);
   }
 
   @Override
   public final int getToggleClickCount() {
-    final DefaultMutableTreeNode selectedNode = getSelectedNode();
-    if (selectedNode != null) {
-      final Object object = selectedNode.getUserObject();
-      if (object instanceof NodeDescriptor) {
-        NodeDescriptor descriptor = (NodeDescriptor)object;
-        if (!descriptor.expandOnDoubleClick()) {
-          return -1;
-        }
+    int count = super.getToggleClickCount();
+    TreePath path = getSelectionPath();
+    if (path != null) {
+      NodeDescriptor descriptor = TreeUtil.getLastUserObject(NodeDescriptor.class, path);
+      if (descriptor != null && !descriptor.expandOnDoubleClick()) {
+        LOG.debug("getToggleClickCount: -1 for ", descriptor.getClass().getName());
+        return -1;
       }
     }
-    return super.getToggleClickCount();
+    return count;
+  }
+
+  @Override
+  public void setToggleClickCount(int count) {
+    if (count != 2) LOG.info(new IllegalStateException("setToggleClickCount: unexpected count = " + count));
+    super.setToggleClickCount(count);
   }
 
   @Override
@@ -89,11 +93,12 @@ public abstract class ProjectViewTree extends JBTreeWithHintProvider {
   }
 
   public static boolean isFileColorsEnabledFor(JTree tree) {
-    final boolean enabled = FileColorManagerImpl._isEnabled() && FileColorManagerImpl._isEnabledForProjectView();
-    final boolean opaque = tree.isOpaque();
+    boolean enabled = FileColorManagerImpl._isEnabled() && FileColorManagerImpl._isEnabledForProjectView();
+    boolean opaque = tree.isOpaque();
     if (enabled && opaque) {
       tree.setOpaque(false);
-    } else if (!enabled && !opaque) {
+    }
+    else if (!enabled && !opaque) {
       tree.setOpaque(true);
     }
     return enabled;
@@ -102,46 +107,78 @@ public abstract class ProjectViewTree extends JBTreeWithHintProvider {
   @Nullable
   @Override
   public Color getFileColorFor(Object object) {
-    return getColorForObject(object, getProject(), new NullableFunction<Object, PsiElement>() {
-      @Override
-      public PsiElement fun(Object object) {
-        if (object instanceof AbstractTreeNode) {
-          final Object element = ((AbstractTreeNode)object).getValue();
-          if (element instanceof PsiElement) {
-            return (PsiElement)element;
-          }
-        }
-        return null;
+    if (object instanceof DefaultMutableTreeNode) {
+      DefaultMutableTreeNode node = (DefaultMutableTreeNode)object;
+      object = node.getUserObject();
+    }
+    if (object instanceof AbstractTreeNode) {
+      AbstractTreeNode node = (AbstractTreeNode)object;
+      Object value = node.getValue();
+      if (value instanceof PsiElement) {
+        return getColorForElement((PsiElement)value);
       }
-    });
+    }
+    if (object instanceof ProjectViewNode) {
+      ProjectViewNode node = (ProjectViewNode)object;
+      VirtualFile file = node.getVirtualFile();
+      if (file != null) {
+        Project project = node.getProject();
+        if (project != null && !project.isDisposed()) {
+          Color color = VfsPresentationUtil.getFileBackgroundColor(project, file);
+          if (color != null) return color;
+        }
+      }
+    }
+    return null;
   }
 
   @Nullable
-  public static <T> Color getColorForObject(T object, Project project, @NotNull Function<T, PsiElement> converter) {
+  public static Color getColorForElement(@Nullable PsiElement psi) {
     Color color = null;
-    final PsiElement psi = converter.fun(object);
     if (psi != null) {
       if (!psi.isValid()) return null;
 
+      Project project = psi.getProject();
       final VirtualFile file = PsiUtilCore.getVirtualFile(psi);
 
       if (file != null) {
-        color = FileColorManager.getInstance(project).getFileColor(file);
-      } else if (psi instanceof PsiDirectory) {
-        color = FileColorManager.getInstance(project).getFileColor(((PsiDirectory)psi).getVirtualFile());
-      } else if (psi instanceof PsiDirectoryContainer) {
+        color = VfsPresentationUtil.getFileBackgroundColor(project, file);
+      }
+      else if (psi instanceof PsiDirectory) {
+        color = VfsPresentationUtil.getFileBackgroundColor(project, ((PsiDirectory)psi).getVirtualFile());
+      }
+      else if (psi instanceof PsiDirectoryContainer) {
         final PsiDirectory[] dirs = ((PsiDirectoryContainer)psi).getDirectories();
         for (PsiDirectory dir : dirs) {
-          Color c = FileColorManager.getInstance(project).getFileColor(dir.getVirtualFile());
+          Color c = VfsPresentationUtil.getFileBackgroundColor(project, dir.getVirtualFile());
           if (c != null && color == null) {
             color = c;
-          } else if (c != null) {
+          }
+          else if (c != null) {
             color = null;
             break;
           }
         }
       }
     }
-    return color == null ? null : ColorUtil.softer(color);
+    return color;
+  }
+
+  @Override
+  public void collapsePath(TreePath path) {
+    int row = Registry.is("async.project.view.collapse.tree.path.recursively") ? getRowForPath(path) : -1;
+    if (row < 0) {
+      super.collapsePath(path);
+    }
+    else {
+      ArrayDeque<TreePath> deque = new ArrayDeque<>();
+      deque.addFirst(path);
+      while (++row < getRowCount()) {
+        TreePath next = getPathForRow(row);
+        if (!path.isDescendant(next)) break;
+        if (isExpanded(next)) deque.addFirst(next);
+      }
+      deque.forEach(super::collapsePath);
+    }
   }
 }

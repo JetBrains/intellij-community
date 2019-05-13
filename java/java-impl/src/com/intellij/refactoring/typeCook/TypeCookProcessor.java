@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,12 +28,10 @@ import com.intellij.refactoring.typeCook.deductive.resolver.Binding;
 import com.intellij.refactoring.typeCook.deductive.resolver.ResolverTree;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
+import java.util.*;
 
 public class TypeCookProcessor extends BaseRefactoringProcessor {
   private PsiElement[] myElements;
@@ -47,11 +45,13 @@ public class TypeCookProcessor extends BaseRefactoringProcessor {
     mySettings = settings;
   }
 
+  @Override
   @NotNull
-  protected UsageViewDescriptor createUsageViewDescriptor(UsageInfo[] usages) {
+  protected UsageViewDescriptor createUsageViewDescriptor(@NotNull UsageInfo[] usages) {
     return new TypeCookViewDescriptor(myElements);
   }
 
+  @Override
   @NotNull
   protected UsageInfo[] findUsages() {
     final SystemBuilder systemBuilder = new SystemBuilder(myProject, mySettings);
@@ -75,13 +75,14 @@ public class TypeCookProcessor extends BaseRefactoringProcessor {
       }
     }
 
-    final HashSet<PsiElement> changedItems = myResult.getCookedElements();
+    final Set<PsiElement> changedItems = myResult.getCookedElements();
     final UsageInfo[] usages = new UsageInfo[changedItems.size()];
 
     int i = 0;
     for (final PsiElement element : changedItems) {
       if (!(element instanceof PsiTypeCastExpression)) {
         usages[i++] = new UsageInfo(element) {
+          @Override
           public String getTooltipText() {
             return myResult.getCookedType(element).getCanonicalText();
           }
@@ -95,12 +96,14 @@ public class TypeCookProcessor extends BaseRefactoringProcessor {
     return usages;
   }
 
-  protected void refreshElements(PsiElement[] elements) {
+  @Override
+  protected void refreshElements(@NotNull PsiElement[] elements) {
     myElements = elements;
   }
 
-  protected void performRefactoring(UsageInfo[] usages) {
-    final HashSet<PsiElement> victims = new HashSet<PsiElement>();
+  @Override
+  protected void performRefactoring(@NotNull UsageInfo[] usages) {
+    final Set<PsiElement> victims = new HashSet<>();
 
     for (UsageInfo usage : usages) {
       victims.add(usage.getElement());
@@ -116,11 +119,13 @@ public class TypeCookProcessor extends BaseRefactoringProcessor {
     return true;
   }
 
+  @Override
+  @NotNull
   protected String getCommandName() {
     return RefactoringBundle.message("type.cook.command");
   }
 
   public List<PsiElement> getElements() {
-    return Collections.unmodifiableList(Arrays.asList(myElements));
+    return ContainerUtil.immutableList(myElements);
   }
 }

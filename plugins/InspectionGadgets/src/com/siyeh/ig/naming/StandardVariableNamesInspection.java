@@ -26,17 +26,17 @@ import com.siyeh.ig.fixes.RenameFix;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.JComponent;
+import javax.swing.*;
 import java.util.HashMap;
 import java.util.Map;
 
 public class StandardVariableNamesInspection extends BaseInspection {
 
-  @NonNls static final Map<String, String> s_expectedTypes =
-    new HashMap<String, String>(13);
-  @NonNls static final Map<String, String> s_boxingClasses =
-    new HashMap<String, String>(8);
 
+  @NonNls static final Map<String, String> s_expectedTypes =
+    new HashMap<>(13);
+  @NonNls static final Map<String, String> s_boxingClasses =
+    new HashMap<>(8);
   static {
     s_expectedTypes.put("b", "byte");
     s_expectedTypes.put("c", "char");
@@ -66,15 +66,23 @@ public class StandardVariableNamesInspection extends BaseInspection {
   public boolean ignoreParameterNameSameAsSuper = false;
 
   @Override
+  protected InspectionGadgetsFix buildFix(Object... infos) {
+    return new RenameFix();
+  }
+
+  @Override
+  public JComponent createOptionsPanel() {
+    return new SingleCheckboxOptionsPanel(
+      InspectionGadgetsBundle.message(
+        "standard.variable.names.ignore.override.option"),
+      this, "ignoreParameterNameSameAsSuper");
+  }
+
+  @Override
   @NotNull
   public String getDisplayName() {
     return InspectionGadgetsBundle.message(
       "standard.variable.names.display.name");
-  }
-
-  @Override
-  protected InspectionGadgetsFix buildFix(Object... infos) {
-    return new RenameFix();
   }
 
   @Override
@@ -98,14 +106,6 @@ public class StandardVariableNamesInspection extends BaseInspection {
     }
     return InspectionGadgetsBundle.message(
       "standard.variable.names.problem.descriptor", expectedType);
-  }
-
-  @Override
-  public JComponent createOptionsPanel() {
-    return new SingleCheckboxOptionsPanel(
-      InspectionGadgetsBundle.message(
-        "standard.variable.names.ignore.override.option"),
-      this, "ignoreParameterNameSameAsSuper");
   }
 
   @Override

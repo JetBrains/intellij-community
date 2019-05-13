@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -34,6 +35,7 @@ import java.util.Set;
 public abstract class UnwrapDescriptorBase implements UnwrapDescriptor {
   private Unwrapper[] myUnwrappers;
 
+  @NotNull 
   public final Unwrapper[] getUnwrappers() {
     if (myUnwrappers == null) {
       myUnwrappers = createUnwrappers();
@@ -42,16 +44,17 @@ public abstract class UnwrapDescriptorBase implements UnwrapDescriptor {
     return myUnwrappers;
   }
 
+  @NotNull
   @Override
-  public List<Pair<PsiElement, Unwrapper>> collectUnwrappers(Project project, Editor editor, PsiFile file) {
+  public List<Pair<PsiElement, Unwrapper>> collectUnwrappers(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
     PsiElement e = findTargetElement(editor, file);
 
-     List<Pair<PsiElement, Unwrapper>> result = new ArrayList<Pair<PsiElement, Unwrapper>>();
-     Set<PsiElement> ignored = new HashSet<PsiElement>();
+     List<Pair<PsiElement, Unwrapper>> result = new ArrayList<>();
+     Set<PsiElement> ignored = new HashSet<>();
      while (e != null) {
        for (Unwrapper u : getUnwrappers()) {
          if (u.isApplicableTo(e) && !ignored.contains(e)) {
-           result.add(new Pair<PsiElement, Unwrapper>(e, u));
+           result.add(Pair.create(e, u));
            u.collectElementsToIgnore(e, ignored);
          }
        }

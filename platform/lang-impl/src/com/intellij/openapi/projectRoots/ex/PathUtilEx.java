@@ -38,22 +38,11 @@ import static com.intellij.util.containers.ContainerUtil.skipNulls;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Apr 14, 2004
  */
 public class PathUtilEx {
 
-  private static final Function<Module, Sdk> MODULE_JDK = new Function<Module, Sdk>() {
-    @Override
-    public Sdk fun(Module module) {
-      return ModuleRootManager.getInstance(module).getSdk();
-    }
-  };
-  private static final Convertor<Sdk, String> JDK_VERSION = new Convertor<Sdk, String>() {
-    @Override
-    public String convert(Sdk jdk) {
-      return StringUtil.notNullize(jdk.getVersionString());
-    }
-  };
+  private static final Function<Module, Sdk> MODULE_JDK = module -> ModuleRootManager.getInstance(module).getSdk();
+  private static final Convertor<Sdk, String> JDK_VERSION = jdk -> StringUtil.notNullize(jdk.getVersionString());
 
   @Nullable
   public static Sdk getAnyJdk(Project project) {
@@ -61,7 +50,7 @@ public class PathUtilEx {
   }
 
   @Nullable
-  public static Sdk chooseJdk(Project project, Collection<Module> modules) {
+  public static Sdk chooseJdk(Project project, Collection<? extends Module> modules) {
     Sdk projectJdk = ProjectRootManager.getInstance(project).getProjectSdk();
     if (projectJdk != null) {
       return projectJdk;
@@ -70,7 +59,7 @@ public class PathUtilEx {
   }
 
   @Nullable
-  public static Sdk chooseJdk(Collection<Module> modules) {
+  public static Sdk chooseJdk(Collection<? extends Module> modules) {
     List<Sdk> jdks = skipNulls(map(skipNulls(modules), MODULE_JDK));
     if (jdks.isEmpty()) {
       return null;

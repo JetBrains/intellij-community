@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,9 +14,6 @@
  * limitations under the License.
  */
 
-/**
- * @author cdr
- */
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
@@ -31,12 +28,15 @@ import org.jetbrains.annotations.NotNull;
 public class ChangeExtendsToImplementsFix extends ExtendsListFix {
   private final String myName;
 
-  public ChangeExtendsToImplementsFix(PsiClass aClass, PsiClassType classToExtendFrom) {
+  public ChangeExtendsToImplementsFix(@NotNull PsiClass aClass, @NotNull PsiClassType classToExtendFrom) {
     super(aClass, classToExtendFrom, true);
-    myName = QuickFixBundle.message("exchange.extends.implements.keyword",
-                                    aClass.isInterface() == myClassToExtendFrom.isInterface() ? PsiKeyword.IMPLEMENTS : PsiKeyword.EXTENDS,
-                                    aClass.isInterface() == myClassToExtendFrom.isInterface() ? PsiKeyword.EXTENDS : PsiKeyword.IMPLEMENTS,
-                                    myClassToExtendFrom.getName());
+    PsiClass classToExtendFromPointer = myClassToExtendFromPointer != null ? myClassToExtendFromPointer.getElement() : null;
+
+    myName = classToExtendFromPointer == null ? getFamilyName() :
+             QuickFixBundle.message("exchange.extends.implements.keyword",
+                                    aClass.isInterface() == classToExtendFromPointer.isInterface() ? PsiKeyword.IMPLEMENTS : PsiKeyword.EXTENDS,
+                                    aClass.isInterface() == classToExtendFromPointer.isInterface() ? PsiKeyword.EXTENDS : PsiKeyword.IMPLEMENTS,
+                                    classToExtendFromPointer.getName());
   }
 
   @Override

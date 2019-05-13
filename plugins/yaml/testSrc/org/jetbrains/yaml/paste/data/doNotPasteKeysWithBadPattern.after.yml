@@ -1,0 +1,3 @@
+top:
+  next: value1
+  some strange text<caret>

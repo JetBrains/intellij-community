@@ -14,10 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * User: anna
- * Date: 11-Nov-2008
- */
 package org.jetbrains.idea.eclipse.importWizard;
 
 import com.intellij.ide.util.PropertiesComponent;

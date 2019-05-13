@@ -19,7 +19,6 @@ import java.util.List;
  * Thread-safe.
  * 
  * @author Denis Zhdanov
- * @since 5/31/11 1:22 PM
  */
 public class JavadocFixer {
 
@@ -31,7 +30,7 @@ public class JavadocFixer {
    * 
    * @param editor   target editor
    * @param psiFile  PSI file for the document exposed via the given editor
-   * @return  <code>true</code> if smart completion was performed; <code>false</code> otherwise
+   * @return  {@code true} if smart completion was performed; {@code false} otherwise
    */
   public boolean process(@NotNull Editor editor, @NotNull PsiFile psiFile) {
     // Check parameter description completion.
@@ -98,7 +97,7 @@ public class JavadocFixer {
   }
   
   @Nullable
-  private static JavadocHelper.JavadocParameterInfo findNext(@NotNull Collection<JavadocHelper.JavadocParameterInfo> data,
+  private static JavadocHelper.JavadocParameterInfo findNext(@NotNull Collection<? extends JavadocHelper.JavadocParameterInfo> data,
                                                              @NotNull JavadocHelper.JavadocParameterInfo anchor)
   {
     boolean returnNow = false;

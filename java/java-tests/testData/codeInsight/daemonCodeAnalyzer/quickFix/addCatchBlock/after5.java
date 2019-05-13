@@ -1,4 +1,4 @@
-// "Add Catch Clause(s)" "true"
+// "Add 'catch' clause(s)" "true"
 import java.io.IOException;
 
 class Test {
@@ -9,7 +9,7 @@ class Test {
     void m() {
         try (MyResource r = new MyResource()) {
         } catch (IOException e) {
-            <selection>e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.</selection>
+            <selection>e.printStackTrace();</selection>
         }
     }
 }

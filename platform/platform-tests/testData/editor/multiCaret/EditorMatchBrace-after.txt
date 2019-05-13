@@ -1,0 +1,4 @@
+<caret>{ a }
+<caret>{ b }
+<caret>{ c }
+text

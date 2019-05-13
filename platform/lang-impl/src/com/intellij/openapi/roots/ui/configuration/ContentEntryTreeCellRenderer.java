@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,27 +21,34 @@ import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.ide.util.treeView.NodeRenderer;
 import com.intellij.openapi.fileChooser.FileElement;
 import com.intellij.openapi.roots.ContentEntry;
-import com.intellij.openapi.roots.ExcludeFolder;
 import com.intellij.openapi.roots.SourceFolder;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.SimpleTextAttributes;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
+import org.jetbrains.jps.model.java.JavaResourceRootProperties;
+import org.jetbrains.jps.model.java.JavaSourceRootProperties;
+import org.jetbrains.jps.model.module.JpsModuleSourceRoot;
+import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
-import java.awt.*;
+import java.util.List;
 
 public class ContentEntryTreeCellRenderer extends NodeRenderer {
   protected final ContentEntryTreeEditor myTreeEditor;
+  private final List<? extends ModuleSourceRootEditHandler<?>> myEditHandlers;
 
-  public ContentEntryTreeCellRenderer(@NotNull final ContentEntryTreeEditor treeEditor) {
+  public ContentEntryTreeCellRenderer(@NotNull final ContentEntryTreeEditor treeEditor, List<? extends ModuleSourceRootEditHandler<?>> editHandlers) {
     myTreeEditor = treeEditor;
+    myEditHandlers = editHandlers;
   }
 
   @Override
-  public void customizeCellRenderer(JTree tree, Object value, boolean selected, boolean expanded, boolean leaf, int row, boolean hasFocus) {
+  public void customizeCellRenderer(@NotNull JTree tree, Object value, boolean selected, boolean expanded, boolean leaf, int row, boolean hasFocus) {
     super.customizeCellRenderer(tree, value, selected, expanded, leaf, row, hasFocus);
 
     final ContentEntryEditor editor = myTreeEditor.getContentEntryEditor();
@@ -54,9 +61,9 @@ public class ContentEntryTreeCellRenderer extends NodeRenderer {
           if (file != null && file.isDirectory()) {
             final ContentEntry contentEntry = editor.getContentEntry();
             if (contentEntry != null) {
-              final String prefix = getPrefix(contentEntry, file);
+              final String prefix = getPresentablePrefix(contentEntry, file);
               if (!prefix.isEmpty()) {
-                append(" (" + prefix + ")", new SimpleTextAttributes(Font.PLAIN, JBColor.GRAY));
+                append(" (" + prefix + ")", new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, JBColor.GRAY));
               }
               setIcon(updateIcon(contentEntry, file, getIcon()));
             }
@@ -66,27 +73,28 @@ public class ContentEntryTreeCellRenderer extends NodeRenderer {
     }
   }
 
-  private static String getPrefix(final ContentEntry entry, final VirtualFile file) {
+  private static String getPresentablePrefix(final ContentEntry entry, final VirtualFile file) {
     for (final SourceFolder sourceFolder : entry.getSourceFolders()) {
       if (file.equals(sourceFolder.getFile())) {
-        return sourceFolder.getPackagePrefix();
+        JpsModuleSourceRoot element = sourceFolder.getJpsElement();
+        JavaSourceRootProperties properties = element.getProperties(JavaModuleSourceRootTypes.SOURCES);
+        if (properties != null) return properties.getPackagePrefix();
+        JavaResourceRootProperties resourceRootProperties = element.getProperties(JavaModuleSourceRootTypes.RESOURCES);
+        if (resourceRootProperties != null) return resourceRootProperties.getRelativeOutputPath();
       }
     }
     return "";
   }
 
   protected Icon updateIcon(final ContentEntry entry, final VirtualFile file, Icon originalIcon) {
-    for (ExcludeFolder excludeFolder : entry.getExcludeFolders()) {
-      final VirtualFile excludePath = excludeFolder.getFile();
-      if (excludePath != null && VfsUtilCore.isAncestor(excludePath, file, false)) {
-        return AllIcons.Modules.ExcludeRoot;
-      }
+    if (ContentEntryEditor.isExcludedOrUnderExcludedDirectory(myTreeEditor.getProject(), entry, file)) {
+      return AllIcons.Modules.ExcludeRoot;
     }
 
     final SourceFolder[] sourceFolders = entry.getSourceFolders();
     for (SourceFolder sourceFolder : sourceFolders) {
       if (file.equals(sourceFolder.getFile())) {
-        return IconSet.getSourceRootIcon(sourceFolder.isTestSource());
+        return SourceRootPresentation.getSourceRootIcon(sourceFolder);
       }
     }
 
@@ -98,10 +106,23 @@ public class ContentEntryTreeCellRenderer extends NodeRenderer {
         if (currentRoot != null && VfsUtilCore.isAncestor(sourcePath, currentRoot, false)) {
           continue;
         }
-        icon = IconSet.getSourceFolderIcon(sourceFolder.isTestSource());
+        Icon folderIcon = getSourceFolderIcon(sourceFolder.getRootType());
+        if (folderIcon != null) {
+          icon = folderIcon;
+        }
         currentRoot = sourcePath;
       }
     }
     return icon;
+  }
+
+  @Nullable
+  private Icon getSourceFolderIcon(JpsModuleSourceRootType<?> type) {
+    for (ModuleSourceRootEditHandler<?> handler : myEditHandlers) {
+      if (handler.getRootType().equals(type)) {
+        return handler.getFolderUnderRootIcon();
+      }
+    }
+    return null;
   }
 }

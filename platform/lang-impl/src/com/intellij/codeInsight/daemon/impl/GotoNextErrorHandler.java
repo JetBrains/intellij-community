@@ -1,19 +1,4 @@
-
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.codeInsight.daemon.impl;
 
@@ -23,14 +8,10 @@ import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.lang.annotation.HighlightSeverity;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.ScrollType;
-import com.intellij.openapi.editor.ScrollingModel;
+import com.intellij.openapi.editor.*;
 import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
-import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
 
 public class GotoNextErrorHandler implements CodeInsightActionHandler {
@@ -52,11 +33,12 @@ public class GotoNextErrorHandler implements CodeInsightActionHandler {
   }
 
   private void gotoNextError(Project project, Editor editor, PsiFile file, int caretOffset) {
-    final SeverityRegistrar severityRegistrar = SeverityRegistrar.getInstance(project);
+    final SeverityRegistrar severityRegistrar = SeverityRegistrar.getSeverityRegistrar(project);
     DaemonCodeAnalyzerSettings settings = DaemonCodeAnalyzerSettings.getInstance();
-    int maxSeverity = settings.NEXT_ERROR_ACTION_GOES_TO_ERRORS_FIRST ? severityRegistrar.getSeveritiesCount() - 1 : 0;
+    int maxSeverity = settings.isNextErrorActionGoesToErrorsFirst() ? severityRegistrar.getSeveritiesCount() - 1
+                                                                    : SeverityRegistrar.SHOWN_SEVERITIES_OFFSET;
 
-    for (int idx = maxSeverity; idx >= 0; idx--) {
+    for (int idx = maxSeverity; idx >= SeverityRegistrar.SHOWN_SEVERITIES_OFFSET; idx--) {
       final HighlightSeverity minSeverity = severityRegistrar.getSeverityByIndex(idx);
       HighlightInfo infoToGo = findInfo(project, editor, caretOffset, minSeverity);
       if (infoToGo != null) {
@@ -72,18 +54,15 @@ public class GotoNextErrorHandler implements CodeInsightActionHandler {
     final HighlightInfo[][] infoToGo = new HighlightInfo[2][2]; //HighlightInfo[luck-noluck][skip-noskip]
     final int caretOffsetIfNoLuck = myGoForward ? -1 : document.getTextLength();
 
-    DaemonCodeAnalyzerImpl.processHighlights(document, project, minSeverity, 0, document.getTextLength(), new Processor<HighlightInfo>() {
-      @Override
-      public boolean process(HighlightInfo info) {
-        int startOffset = getNavigationPositionFor(info, document);
-        if (SeverityRegistrar.isGotoBySeverityEnabled(info.getSeverity())) {
-          infoToGo[0][0] = getBetterInfoThan(infoToGo[0][0], caretOffset, startOffset, info);
-          infoToGo[1][0] = getBetterInfoThan(infoToGo[1][0], caretOffsetIfNoLuck, startOffset, info);
-        }
-        infoToGo[0][1] = getBetterInfoThan(infoToGo[0][1], caretOffset, startOffset, info);
-        infoToGo[1][1] = getBetterInfoThan(infoToGo[1][1], caretOffsetIfNoLuck, startOffset, info);
-        return true;
+    DaemonCodeAnalyzerEx.processHighlights(document, project, minSeverity, 0, document.getTextLength(), info -> {
+      int startOffset = getNavigationPositionFor(info, document);
+      if (SeverityRegistrar.isGotoBySeverityEnabled(info.getSeverity())) {
+        infoToGo[0][0] = getBetterInfoThan(infoToGo[0][0], caretOffset, startOffset, info);
+        infoToGo[1][0] = getBetterInfoThan(infoToGo[1][0], caretOffsetIfNoLuck, startOffset, info);
       }
+      infoToGo[0][1] = getBetterInfoThan(infoToGo[0][1], caretOffset, startOffset, info);
+      infoToGo[1][1] = getBetterInfoThan(infoToGo[1][1], caretOffsetIfNoLuck, startOffset, info);
+      return true;
     });
     if (infoToGo[0][0] == null) infoToGo[0][0] = infoToGo[1][0];
     if (infoToGo[0][1] == null) infoToGo[0][1] = infoToGo[1][1];
@@ -100,7 +79,7 @@ public class GotoNextErrorHandler implements CodeInsightActionHandler {
 
   private boolean isBetterThan(HighlightInfo oldInfo, int caretOffset, int newOffset) {
     if (oldInfo == null) return true;
-    int oldOffset = getNavigationPositionFor(oldInfo, oldInfo.highlighter.getDocument());
+    int oldOffset = getNavigationPositionFor(oldInfo, oldInfo.getHighlighter().getDocument());
     if (myGoForward) {
       return caretOffset < oldOffset != caretOffset < newOffset ? caretOffset < newOffset : newOffset < oldOffset;
     }
@@ -109,7 +88,7 @@ public class GotoNextErrorHandler implements CodeInsightActionHandler {
     }
   }
 
-  static void showMessageWhenNoHighlights(Project project, PsiFile file, Editor editor) {
+  private static void showMessageWhenNoHighlights(Project project, PsiFile file, Editor editor) {
     DaemonCodeAnalyzerImpl codeHighlighter = (DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(project);
     String message = codeHighlighter.isErrorAnalyzingFinished(file)
                      ? InspectionsBundle.message("no.errors.found.in.this.file")
@@ -127,19 +106,19 @@ public class GotoNextErrorHandler implements CodeInsightActionHandler {
     if (offset != oldOffset) {
       ScrollType scrollType = offset > oldOffset ? ScrollType.CENTER_DOWN : ScrollType.CENTER_UP;
       editor.getSelectionModel().removeSelection();
+      editor.getCaretModel().removeSecondaryCarets();
       editor.getCaretModel().moveToOffset(offset);
       scrollingModel.scrollToCaret(scrollType);
+      FoldRegion regionAtOffset = editor.getFoldingModel().getCollapsedRegionAtOffset(offset);
+      if (regionAtOffset != null) editor.getFoldingModel().runBatchFoldingOperation(() -> regionAtOffset.setExpanded(true));
     }
 
     scrollingModel.runActionOnScrollingFinished(
-      new Runnable(){
-        @Override
-        public void run() {
-          int maxOffset = editor.getDocument().getTextLength() - 1;
-          if (maxOffset == -1) return;
-          scrollingModel.scrollTo(editor.offsetToLogicalPosition(Math.min(maxOffset, endOffset)), ScrollType.MAKE_VISIBLE);
-          scrollingModel.scrollTo(editor.offsetToLogicalPosition(Math.min(maxOffset, offset)), ScrollType.MAKE_VISIBLE);
-        }
+      () -> {
+        int maxOffset = editor.getDocument().getTextLength() - 1;
+        if (maxOffset == -1) return;
+        scrollingModel.scrollTo(editor.offsetToLogicalPosition(Math.min(maxOffset, endOffset)), ScrollType.MAKE_VISIBLE);
+        scrollingModel.scrollTo(editor.offsetToLogicalPosition(Math.min(maxOffset, offset)), ScrollType.MAKE_VISIBLE);
       }
     );
 
@@ -150,7 +129,7 @@ public class GotoNextErrorHandler implements CodeInsightActionHandler {
     int start = info.getActualStartOffset();
     if (start >= document.getTextLength()) return document.getTextLength();
     char c = document.getCharsSequence().charAt(start);
-    int shift = info.isAfterEndOfLine && c != '\n' ? 1 : info.navigationShift;
+    int shift = info.isAfterEndOfLine() && c != '\n' ? 1 : info.navigationShift;
 
     int offset = info.getActualStartOffset() + shift;
     return Math.min(offset, document.getTextLength());

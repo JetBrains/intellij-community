@@ -1,63 +1,83 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.branchConfig;
 
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import org.jetbrains.idea.svn.SvnConfiguration;
+import com.intellij.openapi.ui.MessageType;
+import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
+import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.SvnVcs;
-import org.jetbrains.idea.svn.integrate.SvnBranchItem;
-import org.tmatesoft.svn.core.*;
-import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
-import org.tmatesoft.svn.core.wc.SVNLogClient;
-import org.tmatesoft.svn.core.wc.SVNRevision;
+import org.jetbrains.idea.svn.api.Depth;
+import org.jetbrains.idea.svn.api.Revision;
+import org.jetbrains.idea.svn.api.Target;
+import org.jetbrains.idea.svn.api.Url;
+import org.jetbrains.idea.svn.browse.BrowseClient;
+import org.jetbrains.idea.svn.browse.DirectoryEntryConsumer;
 
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 
-public class BranchesLoader {
-  private static final Logger LOG = Logger.getInstance("#org.jetbrains.idea.svn.branchConfig.BranchesLoader");
+public class BranchesLoader implements Runnable {
+  @NotNull private final Project myProject;
+  @NotNull private final NewRootBunch myBunch;
+  @NotNull private final VirtualFile myRoot;
+  @NotNull private final Url myUrl;
+  @NotNull private final InfoReliability myInfoReliability;
+  private final boolean myPassive;
 
-  private BranchesLoader() {
+  public BranchesLoader(@NotNull Project project,
+                        @NotNull NewRootBunch bunch,
+                        @NotNull Url url,
+                        @NotNull InfoReliability infoReliability,
+                        @NotNull VirtualFile root,
+                        boolean passive) {
+    myProject = project;
+    myBunch = bunch;
+    myUrl = url;
+    myInfoReliability = infoReliability;
+    myRoot = root;
+    myPassive = passive;
   }
 
-  public static List<SvnBranchItem> loadBranches(final Project project, final String url, boolean passive) throws SVNException {
-    final List<SvnBranchItem> result = new LinkedList<SvnBranchItem>();
+  @Override
+  public void run() {
+    try {
+      List<SvnBranchItem> branches = loadBranches();
+      myBunch.updateBranches(myRoot, myUrl, new InfoStorage<>(branches, myInfoReliability));
+    }
+    catch (VcsException e) {
+      showError(e);
+    }
+  }
 
-    final SvnConfiguration configuration = SvnConfiguration.getInstance(project);
-    final SvnVcs vcs = SvnVcs.getInstance(project);
-    final ISVNAuthenticationManager passiveManager = passive ?
-      configuration.getPassiveAuthenticationManager(project) : configuration.getInteractiveManager(vcs);
+  @NotNull
+  public List<SvnBranchItem> loadBranches() throws VcsException {
+    SvnVcs vcs = SvnVcs.getInstance(myProject);
+    List<SvnBranchItem> result = new LinkedList<>();
+    Target target = Target.on(myUrl);
+    DirectoryEntryConsumer handler = createConsumer(result);
 
-    final SVNLogClient logClient = vcs.createLogClient(passiveManager);
-    final SVNURL branchesUrl = SVNURL.parseURIEncoded(url);
-    logClient.doList(branchesUrl, SVNRevision.UNDEFINED, SVNRevision.HEAD, false, SVNDepth.IMMEDIATES, SVNDirEntry.DIRENT_ALL, new ISVNDirEntryHandler() {
-      public void handleDirEntry(final SVNDirEntry dirEntry) throws SVNException {
-        final SVNURL currentUrl = dirEntry.getURL();
-        if (! branchesUrl.equals(currentUrl)) {
-          final String url = currentUrl.toString();
-          // if have permissions
-          if (dirEntry.getDate() != null) {
-            result.add(new SvnBranchItem(url, dirEntry.getDate(), dirEntry.getRevision()));
-          }
-        }
-      }
-    });
+    vcs.getFactory(target).create(BrowseClient.class, !myPassive).list(target, Revision.HEAD, Depth.IMMEDIATES, handler);
+
     Collections.sort(result);
     return result;
+  }
+
+  private void showError(Exception e) {
+    // already logged inside
+    if (InfoReliability.setByUser.equals(myInfoReliability)) {
+      VcsBalloonProblemNotifier.showOverChangesView(myProject, "Branches load error: " + e.getMessage(), MessageType.ERROR);
+    }
+  }
+
+  @NotNull
+  private static DirectoryEntryConsumer createConsumer(@NotNull final List<SvnBranchItem> result) {
+    return entry -> {
+      if (entry.getDate() != null) {
+        result.add(new SvnBranchItem(entry.getUrl(), entry.getDate().getTime(), entry.getRevision()));
+      }
+    };
   }
 }

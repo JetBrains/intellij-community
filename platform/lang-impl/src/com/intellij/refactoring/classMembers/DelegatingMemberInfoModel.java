@@ -14,14 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * Created by IntelliJ IDEA.
- * User: dsl
- * Date: 09.07.2002
- * Time: 15:44:58
- * To change template for new class use 
- * Code Style | Class Templates options (Tools | IDE Options).
- */
 package com.intellij.refactoring.classMembers;
 
 import com.intellij.psi.PsiElement;
@@ -43,35 +35,43 @@ public class DelegatingMemberInfoModel<T extends PsiElement, M extends MemberInf
     return myDelegatingTarget;
   }
 
+  @Override
   public boolean isMemberEnabled(M member) {
     return myDelegatingTarget.isMemberEnabled(member);
   }
 
+  @Override
   public boolean isCheckedWhenDisabled(M member) {
     return myDelegatingTarget.isCheckedWhenDisabled(member);
   }
 
+  @Override
   public boolean isAbstractEnabled(M member) {
     return myDelegatingTarget.isAbstractEnabled(member);
   }
 
+  @Override
   public boolean isAbstractWhenDisabled(M member) {
     return myDelegatingTarget.isAbstractWhenDisabled(member);
   }
 
+  @Override
   public int checkForProblems(@NotNull M member) {
     return myDelegatingTarget.checkForProblems(member);
   }
 
-  public void memberInfoChanged(MemberInfoChange<T, M> event) {
+  @Override
+  public void memberInfoChanged(@NotNull MemberInfoChange<T, M> event) {
     myDelegatingTarget.memberInfoChanged(event);
   }
 
+  @Override
   @Nullable
   public Boolean isFixedAbstract(M member) {
     return myDelegatingTarget.isFixedAbstract(member);
   }
 
+  @Override
   public String getTooltipText(M member) {
     return myDelegatingTarget.getTooltipText(member);
   }

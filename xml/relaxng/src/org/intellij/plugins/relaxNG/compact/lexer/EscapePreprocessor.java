@@ -30,7 +30,6 @@ import java.io.Reader;
  * <p/>
  * Created by IntelliJ IDEA.
  * User: sweinreuter
- * Date: 05.08.2007
  */
 class EscapePreprocessor extends FilterReader {
   private final TIntArrayList myQueuedChars;
@@ -38,7 +37,7 @@ class EscapePreprocessor extends FilterReader {
 
   private int myOffset;
 
-  public EscapePreprocessor(Reader reader, int startOffset, TIntIntHashMap map) {
+  EscapePreprocessor(Reader reader, int startOffset, TIntIntHashMap map) {
     super(reader);
     myOffset = startOffset;
     myQueuedChars = new TIntArrayList();
@@ -46,7 +45,7 @@ class EscapePreprocessor extends FilterReader {
   }
 
   @Override
-  public int read(char cbuf[], int off, int len) throws IOException {
+  public int read(char[] cbuf, int off, int len) throws IOException {
     final int i = read();
     if (i == -1) {
       return -1;

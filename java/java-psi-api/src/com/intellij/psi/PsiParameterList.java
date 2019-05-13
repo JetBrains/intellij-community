@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,11 +23,8 @@ import org.jetbrains.annotations.NotNull;
  * @see PsiMethod#getParameterList()
  */
 public interface PsiParameterList extends PsiElement {
-
   /**
-   * Returns the array of parameters in the list.
-   *
-   * @return the array of parameters.
+   * Returns the array of parameters in the list (excluding type annotation receiver).
    */
   @NotNull
   PsiParameter[] getParameters();
@@ -38,12 +35,18 @@ public interface PsiParameterList extends PsiElement {
    * @param parameter the parameter to search for (must belong to this parameter list).
    * @return the index of the parameter.
    */
-  int getParameterIndex(PsiParameter parameter);
+  int getParameterIndex(@NotNull PsiParameter parameter);
 
   /**
-   * Returns the number of parameters.
-   *
-   * @return the parameters count
+   * Returns the number of parameters (excluding type annotation receiver).
    */
   int getParametersCount();
+
+  /**
+   * @return true if this parameter list has no parameters (excluding type annotation receiver).
+   * @since 2018.1
+   */
+  default boolean isEmpty() {
+    return getParametersCount() == 0;
+  }
 }

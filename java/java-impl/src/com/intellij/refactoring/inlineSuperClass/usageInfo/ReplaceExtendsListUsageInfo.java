@@ -14,10 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * User: anna
- * Date: 27-Aug-2008
- */
 package com.intellij.refactoring.inlineSuperClass.usageInfo;
 
 import com.intellij.psi.PsiClass;
@@ -34,6 +30,7 @@ public class ReplaceExtendsListUsageInfo extends FixableUsageInfo {
     mySafeDeleteUsageInfo = new SafeDeleteExtendsClassUsageInfo(element, superClass, targetClass);
   }
 
+  @Override
   public void fixUsage() throws IncorrectOperationException {
     if (mySafeDeleteUsageInfo.isSafeDelete()) {
       mySafeDeleteUsageInfo.deleteElement();

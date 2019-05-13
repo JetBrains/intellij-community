@@ -20,7 +20,6 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileVisitor;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.idea.maven.model.MavenConstants;
 
 import java.util.List;
 
@@ -29,6 +28,9 @@ public class FileFinder {
                                                final boolean lookForNested,
                                                final MavenProgressIndicator indicator,
                                                final List<VirtualFile> result) throws MavenProcessCanceledException {
+
+    // TODO locate pom files using maven embedder?
+
     for (VirtualFile f : roots) {
       VfsUtilCore.visitChildrenRecursively(f, new VirtualFileVisitor() {
         @Override
@@ -46,7 +48,7 @@ public class FileFinder {
               }
             }
             else {
-              if (f.getName().equalsIgnoreCase(MavenConstants.POM_XML)) {
+              if (MavenUtil.isPomFile(f)) {
                 result.add(f);
               }
             }

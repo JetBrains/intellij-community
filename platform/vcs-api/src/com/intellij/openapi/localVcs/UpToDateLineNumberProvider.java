@@ -17,7 +17,9 @@ package com.intellij.openapi.localVcs;
 
 public interface UpToDateLineNumberProvider {
   int ABSENT_LINE_NUMBER = -1;
+  int FAKE_LINE_NUMBER = -2;
 
+  int getLineCount();
   int getLineNumber(int currentNumber);
   boolean isLineChanged(int currentNumber);
   boolean isRangeChanged(final int start, final int end);

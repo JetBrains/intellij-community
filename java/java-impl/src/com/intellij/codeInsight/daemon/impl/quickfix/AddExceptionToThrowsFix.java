@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,11 +15,12 @@
  */
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
-import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.codeInsight.ExceptionUtil;
+import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -28,6 +29,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.util.IncorrectOperationException;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
@@ -53,34 +55,36 @@ public class AddExceptionToThrowsFix extends BaseIntentionAction {
 
   @Override
   public void invoke(@NotNull final Project project, Editor editor, PsiFile file) {
-    if (!CodeInsightUtilBase.prepareFileForWrite(file)) return;
+    if (!FileModificationService.getInstance().prepareFileForWrite(file)) return;
 
     PsiDocumentManager.getInstance(project).commitAllDocuments();
 
-    PsiMethod targetMethod = PsiTreeUtil.getParentOfType(myWrongElement, PsiMethod.class);
-    List<PsiClassType> exceptions = getUnhandledExceptions(myWrongElement, targetMethod);
-    if (exceptions == null || targetMethod == null) return;
-    Set<PsiClassType> unhandledExceptions = new THashSet<PsiClassType>(exceptions);
+    final List<PsiClassType> exceptions = new ArrayList<>();
+    final PsiMethod targetMethod = collectExceptions(exceptions);
+    if (targetMethod == null) return;
+
+    Set<PsiClassType> unhandledExceptions = new THashSet<>(exceptions);
 
     addExceptionsToThrowsList(project, targetMethod, unhandledExceptions);
   }
 
-  static void addExceptionsToThrowsList(@NotNull final Project project, @NotNull final PsiMethod targetMethod, @NotNull final Set<PsiClassType> unhandledExceptions) {
+  static void addExceptionsToThrowsList(@NotNull final Project project, @NotNull final PsiMethod targetMethod, @NotNull final Set<? extends PsiClassType> unhandledExceptions) {
     final PsiMethod[] superMethods = getSuperMethods(targetMethod);
 
     boolean hasSuperMethodsWithoutExceptions = hasSuperMethodsWithoutExceptions(superMethods, unhandledExceptions);
 
     final boolean processSuperMethods;
     if (hasSuperMethodsWithoutExceptions && superMethods.length > 0) {
-      int result = Messages.showYesNoCancelDialog(
+      int result = ApplicationManager.getApplication().isUnitTestMode() ? Messages.YES :
+                   Messages.showYesNoCancelDialog(
         QuickFixBundle.message("add.exception.to.throws.inherited.method.warning.text", targetMethod.getName()),
         QuickFixBundle.message("method.is.inherited.warning.title"),
         Messages.getQuestionIcon());
 
-      if (result == 0) {
+      if (result == Messages.YES) {
         processSuperMethods = true;
       }
-      else if (result == 1) {
+      else if (result == Messages.NO) {
         processSuperMethods = false;
       }
       else {
@@ -91,41 +95,31 @@ public class AddExceptionToThrowsFix extends BaseIntentionAction {
       processSuperMethods = false;
     }
 
-    ApplicationManager.getApplication().runWriteAction(
-      new Runnable() {
-        @Override
-        public void run() {
-          if (!CodeInsightUtilBase.prepareFileForWrite(targetMethod.getContainingFile())) return;
-          if (processSuperMethods) {
-            for (PsiMethod superMethod : superMethods) {
-              if (!CodeInsightUtilBase.prepareFileForWrite(superMethod.getContainingFile())) return;
-            }
-          }
+    List<PsiElement> toModify = new ArrayList<>();
+    toModify.add(targetMethod);
+    if (processSuperMethods) {
+      Collections.addAll(toModify, superMethods);
+    }
+    if (!FileModificationService.getInstance().preparePsiElementsForWrite(toModify)) return;
+    WriteAction.run(() -> {
+      processMethod(project, targetMethod, unhandledExceptions);
 
-          try {
-            processMethod(project, targetMethod, unhandledExceptions);
-
-            if (processSuperMethods) {
-              for (PsiMethod superMethod : superMethods) {
-                processMethod(project, superMethod, unhandledExceptions);
-              }
-            }
-          }
-          catch (IncorrectOperationException e) {
-            LOG.error(e);
-          }
+      if (processSuperMethods) {
+        for (PsiMethod superMethod : superMethods) {
+          processMethod(project, superMethod, unhandledExceptions);
         }
       }
-    );
+    });
   }
 
+  @NotNull
   private static PsiMethod[] getSuperMethods(@NotNull PsiMethod targetMethod) {
-    List<PsiMethod> result = new ArrayList<PsiMethod>();
+    List<PsiMethod> result = new ArrayList<>();
     collectSuperMethods(targetMethod, result);
-    return result.toArray(new PsiMethod[result.size()]);
+    return result.toArray(PsiMethod.EMPTY_ARRAY);
   }
 
-  private static void collectSuperMethods(@NotNull PsiMethod method, @NotNull List<PsiMethod> result) {
+  private static void collectSuperMethods(@NotNull PsiMethod method, @NotNull List<? super PsiMethod> result) {
     PsiMethod[] superMethods = method.findSuperMethods();
     for (PsiMethod superMethod : superMethods) {
       result.add(superMethod);
@@ -133,11 +127,11 @@ public class AddExceptionToThrowsFix extends BaseIntentionAction {
     }
   }
 
-  private static boolean hasSuperMethodsWithoutExceptions(@NotNull PsiMethod[] superMethods, @NotNull Set<PsiClassType> unhandledExceptions) {
+  private static boolean hasSuperMethodsWithoutExceptions(@NotNull PsiMethod[] superMethods, @NotNull Set<? extends PsiClassType> unhandledExceptions) {
     for (PsiMethod superMethod : superMethods) {
       PsiClassType[] referencedTypes = superMethod.getThrowsList().getReferencedTypes();
 
-      Set<PsiClassType> exceptions = new HashSet<PsiClassType>(unhandledExceptions);
+      Set<PsiClassType> exceptions = new HashSet<>(unhandledExceptions);
       for (PsiClassType referencedType : referencedTypes) {
         for (PsiClassType exception : unhandledExceptions) {
           if (referencedType.isAssignableFrom(exception)) exceptions.remove(exception);
@@ -152,7 +146,7 @@ public class AddExceptionToThrowsFix extends BaseIntentionAction {
 
   private static void processMethod(@NotNull Project project,
                                     @NotNull PsiMethod targetMethod,
-                                    @NotNull Set<PsiClassType> unhandledExceptions) throws IncorrectOperationException {
+                                    @NotNull Set<? extends PsiClassType> unhandledExceptions) throws IncorrectOperationException {
     for (PsiClassType unhandledException : unhandledExceptions) {
       PsiClass exceptionClass = unhandledException.resolve();
       if (exceptionClass != null) {
@@ -166,15 +160,49 @@ public class AddExceptionToThrowsFix extends BaseIntentionAction {
   @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
     if (!(file instanceof PsiJavaFile)) return false;
-    if (myWrongElement == null || !myWrongElement.isValid()) return false;
+    if (!myWrongElement.isValid()) return false;
 
-    PsiMethod method = PsiTreeUtil.getParentOfType(myWrongElement, PsiMethod.class);
-    if (method == null || !method.getThrowsList().isPhysical()) return false;
-    List<PsiClassType> unhandled = getUnhandledExceptions(myWrongElement, method);
-    if (unhandled == null || unhandled.isEmpty()) return false;
+    final List<PsiClassType> unhandled = new ArrayList<>();
+    if (collectExceptions(unhandled) == null) return false;
 
     setText(QuickFixBundle.message("add.exception.to.throws.text", unhandled.size()));
     return true;
+  }
+
+  @Nullable
+  private PsiMethod collectExceptions(List<? super PsiClassType> unhandled) {
+    PsiElement targetElement = null;
+    PsiMethod targetMethod = null;
+
+    final PsiElement psiElement;
+    if (myWrongElement instanceof PsiMethodReferenceExpression) {
+      psiElement = myWrongElement;
+    }
+    else {
+      PsiElement parentStatement = RefactoringUtil.getParentStatement(myWrongElement, false);
+      if (parentStatement instanceof PsiDeclarationStatement) {
+        PsiElement[] declaredElements = ((PsiDeclarationStatement)parentStatement).getDeclaredElements();
+        if (declaredElements.length > 0 && declaredElements[0] instanceof PsiClass) {
+          return null;
+        }
+      }
+
+      psiElement = PsiTreeUtil.getParentOfType(myWrongElement, PsiFunctionalExpression.class, PsiMethod.class);
+    }
+    if (psiElement instanceof PsiFunctionalExpression) {
+      targetMethod = LambdaUtil.getFunctionalInterfaceMethod(psiElement);
+      targetElement = psiElement instanceof PsiLambdaExpression ? ((PsiLambdaExpression)psiElement).getBody() : psiElement;
+    }
+    else if (psiElement instanceof PsiMethod) {
+      targetMethod = (PsiMethod)psiElement;
+      targetElement = psiElement;
+    }
+
+    if (targetElement == null || targetMethod == null || !targetMethod.getThrowsList().isPhysical()) return null;
+    List<PsiClassType> exceptions = getUnhandledExceptions(myWrongElement, targetElement, targetMethod);
+    if (exceptions == null || exceptions.isEmpty()) return null;
+    unhandled.addAll(exceptions);
+    return targetMethod;
   }
 
   @Override
@@ -184,22 +212,25 @@ public class AddExceptionToThrowsFix extends BaseIntentionAction {
   }
 
   @Nullable
-  private static List<PsiClassType> getUnhandledExceptions(@Nullable PsiElement element, PsiMethod topElement) {
-    if (element == null || element == topElement) return null;
+  private static List<PsiClassType> getUnhandledExceptions(@Nullable PsiElement element, PsiElement topElement, PsiMethod targetMethod) {
+    if (element == null || element == topElement && !(topElement instanceof PsiMethodReferenceExpression)) return null;
     List<PsiClassType> unhandledExceptions = ExceptionUtil.getUnhandledExceptions(element);
-    if (!filterInProjectExceptions(topElement, unhandledExceptions).isEmpty()) {
+    if (!filterInProjectExceptions(targetMethod, unhandledExceptions).isEmpty()) {
       return unhandledExceptions;
     }
-    return getUnhandledExceptions(element.getParent(), topElement);
+    if (topElement instanceof PsiMethodReferenceExpression) {
+      return null;
+    }
+    return getUnhandledExceptions(element.getParent(), topElement, targetMethod);
   }
 
   @NotNull
-  private static Set<PsiClassType> filterInProjectExceptions(@Nullable PsiMethod targetMethod, @NotNull List<PsiClassType> unhandledExceptions) {
+  private static Set<PsiClassType> filterInProjectExceptions(@Nullable PsiMethod targetMethod, @NotNull List<? extends PsiClassType> unhandledExceptions) {
     if (targetMethod == null) return Collections.emptySet();
 
-    Set<PsiClassType> result = new HashSet<PsiClassType>();
+    Set<PsiClassType> result = new HashSet<>();
 
-    if (targetMethod.getManager().isInProject(targetMethod)) {
+    if (canModify(targetMethod)) {
       PsiMethod[] superMethods = targetMethod.findSuperMethods();
       for (PsiMethod superMethod : superMethods) {
         Set<PsiClassType> classTypes = filterInProjectExceptions(superMethod, unhandledExceptions);

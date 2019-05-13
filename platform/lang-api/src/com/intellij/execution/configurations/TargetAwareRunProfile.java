@@ -19,5 +19,9 @@ import com.intellij.execution.ExecutionTarget;
 import org.jetbrains.annotations.NotNull;
 
 public interface TargetAwareRunProfile extends RunProfile {
+  /**
+   * Checks if this configuration supports running on the provided target (see {@link ExecutionTarget} for details).
+   * @param target target provided by {@link com.intellij.execution.ExecutionTargetProvider}
+   */
   boolean canRunOn(@NotNull ExecutionTarget target);
 }

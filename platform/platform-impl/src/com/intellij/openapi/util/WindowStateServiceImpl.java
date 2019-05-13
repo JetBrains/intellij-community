@@ -1,0 +1,470 @@
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+package com.intellij.openapi.util;
+
+import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.wm.WindowManager;
+import com.intellij.ui.FrameState;
+import com.intellij.ui.ScreenUtil;
+import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.UIUtil;
+import org.jdom.Element;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import java.awt.*;
+import java.util.Map;
+import java.util.TreeMap;
+import java.util.function.BiFunction;
+import java.util.function.Function;
+
+/**
+ * @author Sergey.Malenkov
+ */
+abstract class WindowStateServiceImpl extends WindowStateService implements PersistentStateComponent<Element> {
+  @NonNls private static final String KEY = "key";
+  @NonNls private static final String STATE = "state";
+  @NonNls private static final String X = "x";
+  @NonNls private static final String Y = "y";
+  @NonNls private static final String WIDTH = "width";
+  @NonNls private static final String HEIGHT = "height";
+  @NonNls private static final String MAXIMIZED = "maximized";
+  @NonNls private static final String FULL_SCREEN = "full-screen";
+
+  private static final Logger LOG = Logger.getInstance(WindowStateService.class);
+  private final Map<String, WindowState> myStateMap = new TreeMap<>();
+
+  abstract Point getDefaultLocationFor(@NotNull String key);
+
+  abstract Dimension getDefaultSizeFor(@NotNull String key);
+
+  abstract Rectangle getDefaultBoundsFor(@NotNull String key);
+
+  abstract boolean getDefaultMaximizedFor(Object object, @NotNull String key);
+
+  @Override
+  public final Element getState() {
+    Element element = new Element(STATE);
+    synchronized (myStateMap) {
+      for (Map.Entry<String, WindowState> entry : myStateMap.entrySet()) {
+        String key = entry.getKey();
+        if (key != null) {
+          WindowState state = entry.getValue();
+          Element child = new Element(STATE);
+          if (state.myLocation != null) {
+            child.setAttribute(X, Integer.toString(state.myLocation.x));
+            child.setAttribute(Y, Integer.toString(state.myLocation.y));
+          }
+          if (state.mySize != null) {
+            child.setAttribute(WIDTH, Integer.toString(state.mySize.width));
+            child.setAttribute(HEIGHT, Integer.toString(state.mySize.height));
+          }
+          if (state.myMaximized) {
+            child.setAttribute(MAXIMIZED, Boolean.toString(true));
+          }
+          if (state.myFullScreen) {
+            child.setAttribute(FULL_SCREEN, Boolean.toString(true));
+          }
+          child.setAttribute(KEY, key);
+          element.addContent(child);
+        }
+      }
+    }
+    return element;
+  }
+
+  @Override
+  public final void loadState(@NotNull Element element) {
+    synchronized (myStateMap) {
+      myStateMap.clear();
+      for (Element child : element.getChildren()) {
+        if (STATE.equals(child.getName())) {
+          String key = child.getAttributeValue(KEY);
+          if (key != null) {
+            Point location = null;
+            try {
+              location = new Point(
+                Integer.parseInt(child.getAttributeValue(X)),
+                Integer.parseInt(child.getAttributeValue(Y)));
+            }
+            catch (NumberFormatException ignored) {
+            }
+            Dimension size = null;
+            try {
+              size = new Dimension(
+                Integer.parseInt(child.getAttributeValue(WIDTH)),
+                Integer.parseInt(child.getAttributeValue(HEIGHT)));
+            }
+            catch (NumberFormatException ignored) {
+            }
+            if (location != null || size != null) {
+              WindowState state = new WindowState();
+              state.myLocation = location;
+              state.mySize = size;
+              state.myMaximized = Boolean.parseBoolean(child.getAttributeValue(MAXIMIZED));
+              state.myFullScreen = Boolean.parseBoolean(child.getAttributeValue(FULL_SCREEN));
+              myStateMap.put(key, state);
+            }
+          }
+        }
+      }
+    }
+  }
+
+  @Override
+  public boolean loadStateFor(Object object, @NotNull String key, @NotNull Component component) {
+    Point location = null;
+    Dimension size = null;
+    boolean maximized = false;
+    synchronized (myStateMap) {
+      WindowState state = getFor(object, key, WindowState.class);
+      if (state != null) {
+        location = state.myLocation;
+        size = state.mySize;
+        maximized = state.myMaximized;
+      }
+    }
+    if (location == null && size == null) {
+      location = getDefaultLocationFor(key);
+      size = getDefaultSizeFor(key);
+      if (!isVisible(location, size)) {
+        return false;
+      }
+      maximized = getDefaultMaximizedFor(object, key);
+    }
+    Frame frame = component instanceof Frame ? (Frame)component : null;
+    if (frame != null && Frame.NORMAL != frame.getExtendedState()) {
+      frame.setExtendedState(Frame.NORMAL);
+    }
+    Rectangle bounds = component.getBounds();
+    if (location != null) {
+      bounds.setLocation(location);
+    }
+    if (size != null) {
+      bounds.setSize(size);
+    }
+    if (bounds.isEmpty()) {
+      bounds.setSize(component.getPreferredSize());
+    }
+    component.setBounds(bounds);
+    if (maximized && frame != null) {
+      frame.setExtendedState(Frame.MAXIMIZED_BOTH);
+    }
+    return true;
+  }
+
+  @Override
+  public void saveStateFor(Object object, @NotNull String key, @NotNull Component component) {
+    FrameState state = FrameState.getFrameState(component);
+    putFor(object, key, state.getLocation(), true, state.getSize(), true, state.isMaximized(), true, state.isFullScreen(), true);
+  }
+
+  @Override
+  public Point getLocationFor(Object object, @NotNull String key) {
+    Point location;
+    synchronized (myStateMap) {
+      location = getFor(object, key, Point.class);
+    }
+    return location != null ? location : getDefaultLocationFor(key);
+  }
+
+  @Override
+  public void putLocationFor(Object object, @NotNull String key, Point location) {
+    putFor(object, key, location, true, null, false, false, false, false, false);
+  }
+
+  @Override
+  public Dimension getSizeFor(Object object, @NotNull String key) {
+    Dimension size;
+    synchronized (myStateMap) {
+      size = getFor(object, key, Dimension.class);
+    }
+    return size != null ? size : getDefaultSizeFor(key);
+  }
+
+  @Override
+  public void putSizeFor(Object object, @NotNull String key, Dimension size) {
+    putFor(object, key, null, false, size, true, false, false, false, false);
+  }
+
+  @Override
+  public Rectangle getBoundsFor(Object object, @NotNull String key) {
+    Rectangle bounds;
+    synchronized (myStateMap) {
+      bounds = getFor(object, key, Rectangle.class);
+    }
+    return bounds != null ? bounds : getDefaultBoundsFor(key);
+  }
+
+  @Override
+  public void putBoundsFor(Object object, @NotNull String key, Rectangle bounds) {
+    Point location = bounds == null ? null : bounds.getLocation();
+    Dimension size = bounds == null ? null : bounds.getSize();
+    putFor(object, key, location, true, size, true, false, false, false, false);
+  }
+
+  @SuppressWarnings("unchecked")
+  private <T> T getFor(Object object, @NotNull String key, @NotNull Class<T> type) {
+    GraphicsDevice screen = getScreen(object);
+    float scale = getSysScale(screen);
+
+    Function<String, T> getState = (_key) -> {
+      WindowState state = myStateMap.get(_key);
+      if (state == null) return null;
+      state = state.copy().scaleDown(scale);
+      if (isVisible(state)) {
+        if (type == WindowState.class) return (T)state;
+        if (type == Point.class) return (T)state.getLocation();
+        if (type == Dimension.class) return (T)state.getSize();
+        if (type == Rectangle.class) return (T)state.getBounds();
+      }
+      return null;
+    };
+
+    T state = getState.apply(getKey(screen, key));
+    if (state == null) {
+      state = getState.apply(getOldKey(screen, key));
+    }
+    if (state != null) {
+      return state;
+    }
+    if (object != null) {
+      return getFor(null, key, type);
+    }
+    return getState.apply(key);
+  }
+
+  private void putFor(Object object, @NotNull String key,
+                      Point location, boolean locationSet,
+                      Dimension size, boolean sizeSet,
+                      boolean maximized, boolean maximizedSet,
+                      boolean fullScreen, boolean fullScreenSet) {
+    synchronized (myStateMap) {
+      GraphicsDevice screen = getScreen(object);
+      float scale = getSysScale(screen);
+
+      BiFunction<String, String, Void> putState = (newKey, oldKey) -> {
+        // remove & migrate the old key state
+        WindowState oldState = oldKey != null ? myStateMap.remove(oldKey) : null;
+        if (oldState != null) {
+          oldState.scaleDown(scale);
+          WindowState newState = myStateMap.get(newKey);
+          if (newState != null) {
+            newState.merge(oldState);
+          } else {
+            myStateMap.put(newKey, oldState);
+          }
+        }
+        // put the new key state
+        WindowState state = myStateMap.get(newKey);
+        if (state != null) {
+          if (state.set(location, locationSet, size, sizeSet, maximized, maximizedSet, fullScreen, fullScreenSet)) {
+            state.scaleUp(scale);
+          } else {
+            myStateMap.remove(newKey);
+          }
+        }
+        else {
+          state = new WindowState();
+          if (state.set(location, locationSet, size, sizeSet, maximized, maximizedSet, fullScreen, fullScreenSet)) {
+            state.scaleUp(scale);
+            myStateMap.put(newKey, state);
+          }
+        }
+        return null;
+      };
+
+      putState.apply(getKey(screen, key), getOldKey(screen, key));
+      if (screen != null) {
+        putState.apply(getKey(null, key), getOldKey(null, key));
+      }
+      putState.apply(key, null);
+    }
+  }
+
+  private static float getSysScale(GraphicsDevice screen) {
+    return UIUtil.isJreHiDPIEnabled() && screen != null ? JBUI.sysScale(screen.getDefaultConfiguration()) : 1f;
+  }
+
+  /*
+   * todo: old hidpi-unaware key; to be removed
+   */
+  @NotNull
+  private static String getOldKey(@Nullable GraphicsDevice screen, String key) {
+    GraphicsEnvironment environment = GraphicsEnvironment.getLocalGraphicsEnvironment();
+    if (environment.isHeadlessInstance()) {
+      return key + ".headless";
+    }
+    StringBuilder sb = new StringBuilder(key);
+    for (GraphicsDevice device : environment.getScreenDevices()) {
+      Rectangle bounds = device.getDefaultConfiguration().getBounds();
+      normalizeSize(device, bounds);
+      sb.append('/').append(bounds.x);
+      sb.append('.').append(bounds.y);
+      sb.append('.').append(bounds.width);
+      sb.append('.').append(bounds.height);
+    }
+    if (screen != null) {
+      Rectangle bounds = screen.getDefaultConfiguration().getBounds();
+      normalizeSize(screen, bounds);
+      sb.append('@').append(bounds.x);
+      sb.append('.').append(bounds.y);
+      sb.append('.').append(bounds.width);
+      sb.append('.').append(bounds.height);
+    }
+    return sb.toString();
+  }
+
+  @NotNull
+  private static String getKey(@Nullable GraphicsDevice screen, String key) {
+    GraphicsEnvironment environment = GraphicsEnvironment.getLocalGraphicsEnvironment();
+    if (environment.isHeadlessInstance()) {
+      return key + ".headless";
+    }
+    StringBuilder sb = new StringBuilder(key);
+    // not storing screen x,y due to relying on isVisible(state) on key retrieval
+    if (screen == null) {
+      for (GraphicsDevice device : environment.getScreenDevices()) {
+        Rectangle bounds = device.getDefaultConfiguration().getBounds();
+        normalizeSize(device, bounds);
+        sb.append('/').append(bounds.width);
+        sb.append('.').append(bounds.height);
+      }
+    }
+    else {
+      Rectangle bounds = screen.getDefaultConfiguration().getBounds();
+      normalizeSize(screen, bounds);
+      sb.append('@').append(bounds.width);
+      sb.append('.').append(bounds.height);
+      if (JBUI.isPixHiDPI(screen.getDefaultConfiguration())) {
+        int dpi = ((int)(96 * JBUI.pixScale(screen.getDefaultConfiguration())));
+        sb.append("@").append(dpi).append("dpi");
+      }
+    }
+    return sb.toString();
+  }
+
+  private static void normalizeSize(GraphicsDevice screen, Rectangle bounds) {
+    if (UIUtil.isJreHiDPIEnabled()) {
+      float scale = JBUI.sysScale(screen.getDefaultConfiguration());
+      bounds.setSize((int)Math.ceil(bounds.width * scale), (int)Math.ceil(bounds.height * scale));
+    }
+  }
+
+  private static GraphicsDevice getScreen(Object object) {
+    if (object == null) {
+      return null;
+    }
+    if (object instanceof Project) {
+      Project project = (Project)object;
+      object = WindowManager.getInstance().getFrame(project);
+      if (object == null) {
+        LOG.warn("cannot find a project frame for " + project);
+        return null;
+      }
+    }
+    if (object instanceof Window) {
+      Window window = (Window)object;
+      GraphicsConfiguration gc = window.getGraphicsConfiguration();
+      GraphicsDevice device = gc != null ?
+        window.getGraphicsConfiguration().getDevice() : ScreenUtil.getScreenDevice(window.getBounds());
+      if (device != null) {
+        return device;
+      }
+    }
+    LOG.warn("cannot find a screen for " + object);
+    return null;
+  }
+
+  private static final class WindowState {
+    private Point myLocation;
+    private Dimension mySize;
+    private boolean myMaximized;
+    private boolean myFullScreen;
+
+    private Point getLocation() {
+      return myLocation == null ? null : new Point(myLocation);
+    }
+
+    private Dimension getSize() {
+      return mySize == null ? null : new Dimension(mySize);
+    }
+
+    private Rectangle getBounds() {
+      return myLocation == null || mySize == null ? null : new Rectangle(myLocation, mySize);
+    }
+
+    private WindowState scaleDown(float scale) {
+      if (scale == 1f) return this;
+      if (myLocation != null) myLocation.setLocation(myLocation.x / scale, myLocation.y / scale);
+      if (mySize != null) mySize.setSize(mySize.width / scale, mySize.height / scale);
+      return this;
+    }
+
+    public WindowState scaleUp(float scale) {
+      if (scale == 1f) return this;
+      if (myLocation != null) myLocation.setLocation(myLocation.x * scale, myLocation.y * scale);
+      if (mySize != null) mySize.setSize(mySize.width * scale, mySize.height * scale);
+      return this;
+    }
+
+    private WindowState copy() {
+      WindowState ws = new WindowState();
+      ws.myLocation = myLocation == null ? null : myLocation.getLocation();
+      ws.mySize = mySize == null ? null : mySize.getSize();
+      ws.myMaximized = myMaximized;
+      ws.myFullScreen = myFullScreen;
+      return ws;
+    }
+
+    private boolean set(Point location, boolean locationSet,
+                        Dimension size, boolean sizeSet,
+                        boolean maximized, boolean maximizedSet,
+                        boolean fullScreen, boolean fullScreenSet) {
+      if (locationSet) {
+        myLocation = location == null ? null : new Point(location);
+      }
+      if (sizeSet) {
+        mySize = size == null ? null : new Dimension(size);
+      }
+      if (maximizedSet) {
+        myMaximized = maximized;
+      }
+      if (fullScreenSet) {
+        myFullScreen = fullScreen;
+      }
+      return myLocation != null || mySize != null;
+    }
+
+    /**
+     * Merges this state with the passed one, preferring this state.
+     */
+    private void merge(@NotNull WindowState state) {
+      if (myLocation == null && state.myLocation != null) {
+        myLocation = state.myLocation.getLocation();
+      }
+      if (mySize == null && state.mySize != null) {
+        mySize = state.mySize.getSize();
+      }
+    }
+  }
+
+  private static boolean isVisible(WindowState state) {
+    return state != null && isVisible(state.myLocation, state.mySize);
+  }
+
+  private static boolean isVisible(Point location, Dimension size) {
+    if (location == null) {
+      return size != null;
+    }
+    if (ScreenUtil.isVisible(location)) {
+      return true;
+    }
+    if (size == null) {
+      return false;
+    }
+    return ScreenUtil.isVisible(new Rectangle(location, size));
+  }
+}

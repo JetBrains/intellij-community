@@ -1,3 +1,18 @@
+/*
+ * Copyright 2000-2016 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package org.jetbrains.plugins.groovy.mvc.projectView;
 
 import com.intellij.ide.projectView.ViewSettings;
@@ -20,13 +35,12 @@ import java.util.List;
 public class ClassNode extends AbstractMvcPsiNodeDescriptor {
   public ClassNode(@NotNull final Module module,
                    @NotNull final GrTypeDefinition rClass,
-                   @Nullable final String locationMark,
-                   @Nullable final ViewSettings viewSettings) {
-    super(module, viewSettings, new NodeId(rClass, locationMark), CLASS);
+                   final ViewSettings viewSettings) {
+    super(module, viewSettings, rClass, CLASS);
   }
 
   @Override
-  protected String getTestPresentationImpl(@NotNull final NodeId nodeId, @NotNull final PsiElement psiElement) {
+  protected String getTestPresentationImpl(@NotNull final PsiElement psiElement) {
     return "GrTypeDefinition: " + ((GrTypeDefinition)psiElement).getName();
   }
 
@@ -35,9 +49,10 @@ public class ClassNode extends AbstractMvcPsiNodeDescriptor {
     return (GrTypeDefinition)super.extractPsiFromValue();
   }
 
+  @Override
   @Nullable
   protected Collection<AbstractTreeNode> getChildrenImpl() {
-    final List<AbstractTreeNode> children = new ArrayList<AbstractTreeNode>();
+    final List<AbstractTreeNode> children = new ArrayList<>();
     final Module module = getModule();
 
     final GrTypeDefinition grTypeDefinition = extractPsiFromValue();
@@ -49,13 +64,12 @@ public class ClassNode extends AbstractMvcPsiNodeDescriptor {
   }
 
   protected void buildChildren(final Module module, final GrTypeDefinition grClass, final List<AbstractTreeNode> children) {
-    final String parentLocationRootMark = getValue().getLocationRootMark();
 
     final GrMethod[] methods = grClass.getCodeMethods();
     for (final GrMethod method : methods) {
       if (method.hasModifierProperty(PsiModifier.STATIC)) continue;
 
-      final MethodNode node = createNodeForMethod(module, method, parentLocationRootMark);
+      final MethodNode node = createNodeForMethod(module, method);
       if (node != null) children.add(node);
     }
   }
@@ -66,7 +80,7 @@ public class ClassNode extends AbstractMvcPsiNodeDescriptor {
   }
 
   @Nullable
-  protected MethodNode createNodeForMethod(final Module module, final GrMethod method, final String parentLocationRootMark) {
+  protected MethodNode createNodeForMethod(final Module module, final GrMethod method) {
     return null;
   }
 

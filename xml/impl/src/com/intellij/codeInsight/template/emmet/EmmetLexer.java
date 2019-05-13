@@ -23,17 +23,13 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * User: zolotov
- * Date: 1/25/13
- */
 public class EmmetLexer {
   private static final String DELIMS = ">^+*|()[]{}.#,='\" \0";
 
   @Nullable
   public List<ZenCodingToken> lex(@NotNull String text) {
     text += ZenCodingTemplate.MARKER;
-    final List<ZenCodingToken> result = new ArrayList<ZenCodingToken>();
+    final List<ZenCodingToken> result = new ArrayList<>();
 
     boolean inQuotes = false;
     boolean inApostrophes = false;

@@ -1,54 +1,86 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.extensions;
 
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-/**
- * @author mike
- */
-public class ExtensionPointName<T> {
-  private final String myName;
+import java.util.List;
+import java.util.stream.Stream;
 
-  public ExtensionPointName(@NonNls final String name) {
-    myName = name;
-  }
-
-  public static <T> ExtensionPointName<T> create(@NonNls final String name) {
-    return new ExtensionPointName<T>(name);
-  }
-
-  public String getName() {
-    return myName;
-  }
-
-
-  public String toString() {
-    return myName;
+public final class ExtensionPointName<T> extends BaseExtensionPointName {
+  public ExtensionPointName(@NotNull String name) {
+    super(name);
   }
 
   @NotNull
-  public T[] getExtensions() {
-    return Extensions.getExtensions(this);
+  public static <T> ExtensionPointName<T> create(@NotNull @NonNls final String name) {
+    return new ExtensionPointName<>(name);
   }
 
-  public <V extends T> V findExtension(Class<V> instanceOf) {
-    return ContainerUtil.findInstance(getExtensions(), instanceOf);
+  /**
+   * Prefer to use {@link #getExtensionList()}.
+   */
+  @NotNull
+  public T[] getExtensions() {
+    return getPoint(null).getExtensions();
+  }
+
+  @NotNull
+  public List<T> getExtensionList() {
+    return getPoint(null).getExtensionList();
+  }
+
+  @NotNull
+  public Stream<T> extensions() {
+    return getPoint(null).extensions();
+  }
+
+  public boolean hasAnyExtensions() {
+    return getPoint(null).hasAnyExtensions();
+  }
+
+  /**
+   * Consider using {@link ProjectExtensionPointName#getExtensions(AreaInstance)}
+   */
+  @NotNull
+  public List<T> getExtensionList(@Nullable AreaInstance areaInstance) {
+    return getPoint(areaInstance).getExtensionList();
+  }
+
+  /**
+   * Consider using {@link ProjectExtensionPointName#getExtensions(AreaInstance)}
+   */
+  @NotNull
+  public T[] getExtensions(@Nullable AreaInstance areaInstance) {
+    return getPoint(areaInstance).getExtensions();
+  }
+
+  /**
+   * Consider using {@link ProjectExtensionPointName#extensions(AreaInstance)}
+   */
+  @NotNull
+  public Stream<T> extensions(@Nullable AreaInstance areaInstance) {
+    return getPoint(areaInstance).extensions();
+  }
+
+  @NotNull
+  public ExtensionPoint<T> getPoint(@Nullable AreaInstance areaInstance) {
+    return Extensions.getArea(areaInstance).getExtensionPoint(getName());
+  }
+
+  @Nullable
+  public <V extends T> V findExtension(@NotNull Class<V> instanceOf) {
+    return ContainerUtil.findInstance(getExtensionList(), instanceOf);
+  }
+
+  @NotNull
+  public <V extends T> V findExtensionOrFail(@NotNull Class<V> instanceOf) {
+    V result = findExtension(instanceOf);
+    if (result == null) {
+      throw new IllegalArgumentException("could not find extension implementation " + instanceOf);
+    }
+    return result;
   }
 }

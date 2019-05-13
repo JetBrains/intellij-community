@@ -32,7 +32,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
-public interface RunnerLayoutUi  {
+public interface RunnerLayoutUi {
 
   @NotNull
   LayoutStateDefaults getDefaults();

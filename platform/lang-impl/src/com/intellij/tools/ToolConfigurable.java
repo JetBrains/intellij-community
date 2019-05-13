@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,56 +20,58 @@ import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.io.IOException;
 
 public class ToolConfigurable implements SearchableConfigurable, Configurable.NoScroll {
   private BaseToolsPanel myPanel;
 
+  @Override
   public String getDisplayName() {
     return ToolsBundle.message("tools.settings.title");
   }
 
+  @Override
   public JComponent createComponent() {
-    myPanel = new ToolsPanel();
+    if (myPanel == null) {
+      myPanel = new ToolsPanel();
+    }
     return myPanel;
   }
 
+  @Override
   public void apply() throws ConfigurationException {
-    try {
+    if (myPanel != null) {
       myPanel.apply();
     }
-    catch (IOException e) {
-      throw new ConfigurationException(e.getMessage());
+  }
+
+  @Override
+  public boolean isModified() {
+    return myPanel != null && myPanel.isModified();
+  }
+
+  @Override
+  public void reset() {
+    if (myPanel != null) {
+      myPanel.reset();
     }
   }
 
-  public boolean isModified() {
-    return myPanel.isModified();
-  }
-
-  public void reset() {
-    myPanel.reset();
-  }
-
+  @Override
   public void disposeUIResources() {
     myPanel = null;
   }
 
+  @Override
   public String getHelpTopic() {
     return "preferences.externalTools";
   }
 
 
+  @Override
   @NotNull
   public String getId() {
-    return getHelpTopic();
-  }
-
-  @Nullable
-  public Runnable enableSearch(String option) {
-    return null;
+    return "preferences.externalTools";
   }
 }

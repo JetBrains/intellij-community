@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,7 +20,6 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.libraries.Library;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
@@ -49,7 +48,7 @@ public class GantUtils {
   }
 
   public static GrArgumentLabel[] getScriptTargets(GroovyFile file) {
-    ArrayList<GrArgumentLabel> labels = new ArrayList<GrArgumentLabel>();
+    ArrayList<GrArgumentLabel> labels = new ArrayList<>();
     for (PsiElement child : file.getChildren()) {
       if (child instanceof GrMethodCallExpression) {
         GrMethodCallExpression call = (GrMethodCallExpression)child;
@@ -62,7 +61,7 @@ public class GantUtils {
         }
       }
     }
-    return labels.toArray(new GrArgumentLabel[labels.size()]);
+    return labels.toArray(GrArgumentLabel.EMPTY_ARRAY);
   }
 
   public static boolean isPlainIdentifier(final GrArgumentLabel label) {
@@ -149,11 +148,7 @@ public class GantUtils {
 
   @Nullable
   public static String getSdkHomeFromClasspath(@NotNull Module module) {
-    Library[] libraries = LibrariesUtil.getLibrariesByCondition(module, new Condition<Library>() {
-      public boolean value(Library library1) {
-        return isSDKLibrary(library1);
-      }
-    });
+    Library[] libraries = LibrariesUtil.getLibrariesByCondition(module, library1 -> isSDKLibrary(library1));
     if (libraries.length != 0) {
       final String home = getGantLibraryHome(libraries[0]);
       if (StringUtil.isNotEmpty(home)) {
@@ -164,6 +159,6 @@ public class GantUtils {
   }
 
   public static boolean isSDKConfiguredToRun(@NotNull Module module) {
-    return getSDKInstallPath(module, module.getProject()).length() > 0;
+    return !getSDKInstallPath(module, module.getProject()).isEmpty();
   }
 }

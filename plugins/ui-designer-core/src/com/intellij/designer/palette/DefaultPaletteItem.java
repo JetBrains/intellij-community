@@ -18,6 +18,8 @@ package com.intellij.designer.palette;
 import com.intellij.designer.model.MetaModel;
 import com.intellij.openapi.util.IconLoader;
 import org.jdom.Element;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
@@ -25,12 +27,15 @@ import javax.swing.*;
  * @author Alexander Lobas
  */
 public class DefaultPaletteItem implements PaletteItem {
+  @NotNull
   private final String myTitle;
   protected final String myIconPath;
   protected Icon myIcon;
   private final String myTooltip;
   private final String myVersion;
   private boolean myEnabled = true;
+  private final String myDeprecatedVersion;
+  private final String myDeprecatedHint;
 
   protected MetaModel myMetaModel;
 
@@ -38,16 +43,26 @@ public class DefaultPaletteItem implements PaletteItem {
     this(palette.getAttributeValue("title"),
          palette.getAttributeValue("icon"),
          palette.getAttributeValue("tooltip"),
-         palette.getAttributeValue("version"));
+         palette.getAttributeValue("version"),
+         palette.getAttributeValue("deprecated"),
+         palette.getAttributeValue("deprecatedHint"));
   }
 
-  public DefaultPaletteItem(String title, String iconPath, String tooltip, String version) {
+  public DefaultPaletteItem(@NotNull String title,
+                            String iconPath,
+                            String tooltip,
+                            String version,
+                            String deprecatedVersion,
+                            String deprecatedHint) {
     myTitle = title;
     myIconPath = iconPath;
     myTooltip = tooltip;
     myVersion = version;
+    myDeprecatedVersion = deprecatedVersion;
+    myDeprecatedHint = deprecatedHint;
   }
 
+  @NotNull
   @Override
   public String getTitle() {
     return myTitle;
@@ -80,10 +95,29 @@ public class DefaultPaletteItem implements PaletteItem {
     myEnabled = enabled;
   }
 
+  @Nullable
+  @Override
+  public String getDeprecatedIn() {
+    return myDeprecatedVersion;
+  }
+
+  @Nullable
+  @Override
+  public String getDeprecatedHint() {
+    return myDeprecatedHint;
+  }
+
+  @Override
+  public String getCreation() {
+    return myMetaModel.getCreation();
+  }
+
+  @Override
   public MetaModel getMetaModel() {
     return myMetaModel;
   }
 
+  @Override
   public void setMetaModel(MetaModel metaModel) {
     myMetaModel = metaModel;
   }

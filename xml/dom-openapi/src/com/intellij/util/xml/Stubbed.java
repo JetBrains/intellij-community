@@ -27,6 +27,4 @@ import java.lang.annotation.Target;
 @Retention(value = RetentionPolicy.RUNTIME)
 @Target(value = {ElementType.METHOD, ElementType.TYPE})
 public @interface Stubbed {
-
-  boolean stubAllAttributes() default false;
 }

@@ -16,31 +16,34 @@
 package com.intellij.codeInsight.generation;
 
 import com.intellij.codeInsight.hint.HintManager;
+import com.intellij.lang.ContextAwareActionHandler;
 import com.intellij.lang.LanguageCodeInsightActionHandler;
+import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiCodeFragment;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiJavaFile;
+import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @author yole
  */
-public class JavaImplementMethodsHandler implements LanguageCodeInsightActionHandler {
+public class JavaImplementMethodsHandler implements ContextAwareActionHandler, LanguageCodeInsightActionHandler {
   @Override
   public boolean isValidFor(final Editor editor, final PsiFile file) {
-    if (!(file instanceof PsiJavaFile)) {
+    if (!(file instanceof PsiJavaFile) && !(file instanceof PsiCodeFragment)) {
       return false;
     }
 
-    PsiClass aClass = OverrideImplementUtil.getContextClass(file.getProject(), editor, file, false);
-    return aClass != null && !OverrideImplementUtil.getMethodSignaturesToImplement(aClass).isEmpty();
+    return OverrideImplementUtil.getContextClass(file.getProject(), editor, file, PsiUtil.isLanguageLevel8OrHigher(file)) != null;
   }
 
   @Override
   public void invoke(@NotNull final Project project, @NotNull final Editor editor, @NotNull final PsiFile file) {
-    PsiClass aClass = OverrideImplementUtil.getContextClass(project, editor, file, false);
+    PsiClass aClass = OverrideImplementUtil.getContextClass(project, editor, file, PsiUtil.isLanguageLevel8OrHigher(file));
     if (aClass == null) {
       return;
     }
@@ -54,5 +57,11 @@ public class JavaImplementMethodsHandler implements LanguageCodeInsightActionHan
   @Override
   public boolean startInWriteAction() {
     return false;
+  }
+
+  @Override
+  public boolean isAvailableForQuickList(@NotNull Editor editor, @NotNull PsiFile file, @NotNull DataContext dataContext) {
+    PsiClass aClass = OverrideImplementUtil.getContextClass(file.getProject(), editor, file, PsiUtil.isLanguageLevel8OrHigher(file));
+    return aClass != null && !OverrideImplementUtil.getMethodSignaturesToImplement(aClass).isEmpty();
   }
 }

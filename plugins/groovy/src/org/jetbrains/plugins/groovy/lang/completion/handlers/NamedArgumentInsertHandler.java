@@ -1,20 +1,7 @@
-/*
- * Copyright 2000-2010 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.completion.handlers;
 
+import com.intellij.application.options.CodeStyle;
 import com.intellij.codeInsight.completion.InsertHandler;
 import com.intellij.codeInsight.completion.InsertionContext;
 import com.intellij.codeInsight.lookup.Lookup;
@@ -24,9 +11,9 @@ import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
-import org.jetbrains.plugins.groovy.GroovyFileType;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.GroovyLanguage;
 import org.jetbrains.plugins.groovy.codeStyle.GroovyCodeStyleSettings;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
@@ -43,7 +30,8 @@ public class NamedArgumentInsertHandler implements InsertHandler<LookupElement> 
 
   private NamedArgumentInsertHandler() {}
 
-  public void handleInsert(InsertionContext context, LookupElement item) {
+  @Override
+  public void handleInsert(@NotNull InsertionContext context, @NotNull LookupElement item) {
     int tailOffset = context.getTailOffset();
 
     PsiElement argumentList = context.getFile().findElementAt(tailOffset - 1);
@@ -54,9 +42,9 @@ public class NamedArgumentInsertHandler implements InsertHandler<LookupElement> 
     final Editor editor = context.getEditor();
 
     if (argumentList != null) {
-      CodeStyleSettings settings = CodeStyleSettingsManager.getInstance(context.getProject()).getCurrentSettings();
+      CodeStyleSettings settings = CodeStyle.getSettings(context.getFile());
       GroovyCodeStyleSettings codeStyleSettings = settings.getCustomSettings(GroovyCodeStyleSettings.class);
-      CommonCodeStyleSettings commonCodeStyleSettings = settings.getCommonSettings(GroovyFileType.GROOVY_LANGUAGE);
+      CommonCodeStyleSettings commonCodeStyleSettings = settings.getCommonSettings(GroovyLanguage.INSTANCE);
 
       boolean insertSpace = codeStyleSettings.SPACE_IN_NAMED_ARGUMENT;
 
@@ -69,7 +57,7 @@ public class NamedArgumentInsertHandler implements InsertHandler<LookupElement> 
       String s = argumentListText.substring(tailOffset - argumentList.getTextOffset());
       s = StringUtil.trimEnd(s, ")");
 
-      if (s.trim().length() == 0) {
+      if (s.trim().isEmpty()) {
         String toInsert = insertSpace ? ": " : ":";
         editor.getDocument().insertString(tailOffset, toInsert);
         editor.getCaretModel().moveToOffset(tailOffset + toInsert.length());

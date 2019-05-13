@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,6 +26,7 @@ import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
+import org.jetbrains.annotations.NotNull;
 
 public class HighlightUsagesAction extends AnAction implements DumbAware {
   public HighlightUsagesAction() {
@@ -33,33 +34,29 @@ public class HighlightUsagesAction extends AnAction implements DumbAware {
   }
 
   @Override
-  public void update(final AnActionEvent event) {
-    final Presentation presentation = event.getPresentation();
-    final DataContext dataContext = event.getDataContext();
-    presentation.setEnabled(PlatformDataKeys.PROJECT.getData(dataContext) != null &&
-                            PlatformDataKeys.EDITOR.getData(dataContext) != null);
+  public void update(@NotNull AnActionEvent e) {
+    Presentation presentation = e.getPresentation();
+    presentation.setEnabled(e.getProject() != null && CommonDataKeys.EDITOR.getData(e.getDataContext()) != null);
   }
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
-    final Editor editor = PlatformDataKeys.EDITOR.getData(e.getDataContext());
-    final Project project = PlatformDataKeys.PROJECT.getData(e.getDataContext());
+  public void actionPerformed(@NotNull AnActionEvent e) {
+    final Editor editor = CommonDataKeys.EDITOR.getData(e.getDataContext());
+    final Project project = e.getProject();
     if (editor == null || project == null) return;
+
     String commandName = getTemplatePresentation().getText();
     if (commandName == null) commandName = "";
 
     CommandProcessor.getInstance().executeCommand(
       project,
-      new Runnable() {
-        @Override
-        public void run() {
-          PsiFile psiFile = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
-          try {
-            HighlightUsagesHandler.invoke(project, editor, psiFile);
-          }
-          catch (IndexNotReadyException ex) {
-            DumbService.getInstance(project).showDumbModeNotification(ActionsBundle.message("action.HighlightUsagesInFile.not.ready"));
-          }
+      () -> {
+        PsiFile psiFile = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
+        try {
+          HighlightUsagesHandler.invoke(project, editor, psiFile);
+        }
+        catch (IndexNotReadyException ex) {
+          DumbService.getInstance(project).showDumbModeNotification(ActionsBundle.message("action.HighlightUsagesInFile.not.ready"));
         }
       },
       commandName,

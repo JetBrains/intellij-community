@@ -1,66 +1,65 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 package com.intellij.openapi.editor.ex;
 
-import com.intellij.openapi.application.Application;
+import com.intellij.ide.ui.UINumericRange;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.PathManager;
-import com.intellij.openapi.components.ExportableApplicationComponent;
+import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.components.State;
+import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.editor.impl.softwrap.SoftWrapAppliancePlaces;
-import com.intellij.openapi.options.OptionsBundle;
-import com.intellij.openapi.util.DefaultJDOMExternalizer;
-import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.NamedJDOMExternalizable;
-import com.intellij.openapi.util.WriteExternalException;
-import com.intellij.openapi.vfs.CharsetToolkit;
-import com.intellij.openapi.vfs.encoding.EncodingManager;
+import com.intellij.openapi.util.text.StringUtil;
 import org.intellij.lang.annotations.MagicConstant;
-import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
-import java.io.File;
-import java.lang.reflect.Field;
-import java.nio.charset.Charset;
 import java.util.EnumSet;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Set;
 
-public class EditorSettingsExternalizable implements NamedJDOMExternalizable, ExportableApplicationComponent, Cloneable {
+@State(name = "EditorSettings", storages = @Storage("editor.xml"))
+public class EditorSettingsExternalizable implements PersistentStateComponent<EditorSettingsExternalizable.OptionSet> {
+  @NonNls
+  public static final String PROP_VIRTUAL_SPACE = "VirtualSpace";
+
+  public static final UINumericRange BLINKING_RANGE = new UINumericRange(500, 10, 1500);
+  public static final UINumericRange QUICK_DOC_DELAY_RANGE = new UINumericRange(500, 1, 5000);
+
   //Q: make it interface?
-  public static class OptionSet implements Cloneable {
+  public static final class OptionSet {
     public String LINE_SEPARATOR;
     public String USE_SOFT_WRAPS;
     public boolean USE_CUSTOM_SOFT_WRAP_INDENT = false;
     public int CUSTOM_SOFT_WRAP_INDENT = 0;
-    public boolean IS_VIRTUAL_SPACE = true;
+    public boolean IS_VIRTUAL_SPACE = false;
     public boolean IS_CARET_INSIDE_TABS;
     @NonNls public String STRIP_TRAILING_SPACES = STRIP_TRAILING_SPACES_CHANGED;
     public boolean IS_ENSURE_NEWLINE_AT_EOF = false;
+    public boolean SHOW_QUICK_DOC_ON_MOUSE_OVER_ELEMENT = false;
+    public int QUICK_DOC_ON_MOUSE_OVER_DELAY_MS = QUICK_DOC_DELAY_RANGE.initial;
+    public boolean SHOW_INTENTION_BULB = true;
     public boolean IS_CARET_BLINKING = true;
-    public int CARET_BLINKING_PERIOD = 500;
+    public int CARET_BLINKING_PERIOD = BLINKING_RANGE.initial;
     public boolean IS_RIGHT_MARGIN_SHOWN = true;
-    public boolean ARE_LINE_NUMBERS_SHOWN = false;
+    public boolean ARE_LINE_NUMBERS_SHOWN = true;
+    public boolean ARE_GUTTER_ICONS_SHOWN = true;
     public boolean IS_FOLDING_OUTLINE_SHOWN = true;
+    public boolean SHOW_BREADCRUMBS_ABOVE = false;
+    public boolean SHOW_BREADCRUMBS = true;
 
     public boolean SMART_HOME = true;
 
     public boolean IS_BLOCK_CURSOR = false;
     public boolean IS_WHITESPACES_SHOWN = false;
+    public boolean IS_LEADING_WHITESPACES_SHOWN = true;
+    public boolean IS_INNER_WHITESPACES_SHOWN = true;
+    public boolean IS_TRAILING_WHITESPACES_SHOWN = true;
+    @SuppressWarnings("SpellCheckingInspection")
     public boolean IS_ALL_SOFTWRAPS_SHOWN = false;
     public boolean IS_INDENT_GUIDES_SHOWN = true;
     public boolean IS_ANIMATED_SCROLLING = true;
@@ -68,26 +67,38 @@ public class EditorSettingsExternalizable implements NamedJDOMExternalizable, Ex
     public boolean ADDITIONAL_PAGE_AT_BOTTOM = false;
 
     public boolean IS_DND_ENABLED = true;
+    @SuppressWarnings("SpellCheckingInspection")
     public boolean IS_WHEEL_FONTCHANGE_ENABLED = false;
     public boolean IS_MOUSE_CLICK_SELECTION_HONORS_CAMEL_WORDS = true;
-    @Deprecated
-    public boolean IS_NATIVE2ASCII_FOR_PROPERTIES_FILES;
-    @Deprecated
-    public String DEFAULT_PROPERTIES_FILES_CHARSET_NAME;
 
     public boolean RENAME_VARIABLES_INPLACE = true;
     public boolean PRESELECT_RENAME = true;
+    public boolean SHOW_INLINE_DIALOG = true;
+
     public boolean REFRAIN_FROM_SCROLLING = false;
 
-    public boolean SHOW_REFORMAT_DIALOG = true;
-    public boolean SHOW_OPIMIZE_IMPORTS_DIALOG = true;
+    public boolean SHOW_NOTIFICATION_AFTER_REFORMAT_CODE_ACTION = true;
+    public boolean SHOW_NOTIFICATION_AFTER_OPTIMIZE_IMPORTS_ACTION = true;
 
-    @Override
-    public Object clone() {
-      try {
-        return super.clone();
-      } catch (CloneNotSupportedException e) {
-        return null;
+    public boolean ADD_CARETS_ON_DOUBLE_CTRL = true;
+
+    public BidiTextDirection BIDI_TEXT_DIRECTION = BidiTextDirection.CONTENT_BASED;
+
+    public boolean SHOW_PARAMETER_NAME_HINTS = true;
+
+    public boolean KEEP_TRAILING_SPACE_ON_CARET_LINE = true;
+
+    private final Map<String, Boolean> mapLanguageBreadcrumbs = new HashMap<>();
+
+    public Map<String, Boolean> getLanguageBreadcrumbsMap() {
+      return mapLanguageBreadcrumbs;
+    }
+
+    @SuppressWarnings("unused")
+    public void setLanguageBreadcrumbsMap(Map<String, Boolean> map) {
+      if (this.mapLanguageBreadcrumbs != map) {
+        this.mapLanguageBreadcrumbs.clear();
+        this.mapLanguageBreadcrumbs.putAll(map);
       }
     }
   }
@@ -103,7 +114,7 @@ public class EditorSettingsExternalizable implements NamedJDOMExternalizable, Ex
   //private boolean myUseTabCharacter = false;
 
   private int myAdditionalLinesCount = 10;
-  private int myAdditinalColumnsCount = 20;
+  private int myAdditionalColumnsCount = 20;
   private boolean myLineMarkerAreaShown = true;
 
   @NonNls public static final String STRIP_TRAILING_SPACES_NONE = "None";
@@ -111,21 +122,15 @@ public class EditorSettingsExternalizable implements NamedJDOMExternalizable, Ex
   @NonNls public static final String STRIP_TRAILING_SPACES_WHOLE = "Whole";
 
   @MagicConstant(stringValues = {STRIP_TRAILING_SPACES_NONE, STRIP_TRAILING_SPACES_CHANGED, STRIP_TRAILING_SPACES_WHOLE})
-  @interface StripTrailingSpaces {}
-
-  @NonNls public static final String DEFAULT_FONT_NAME = "Courier";
+  public @interface StripTrailingSpaces {}
 
   public static EditorSettingsExternalizable getInstance() {
-    final Application app = ApplicationManager.getApplication();
-    if (app.isDisposed()) return new EditorSettingsExternalizable();
-    return app.getComponent(EditorSettingsExternalizable.class);
-  }
-
-  @Override
-  public void initComponent() { }
-
-  @Override
-  public void disposeComponent() {
+    if (ApplicationManager.getApplication().isDisposed()) {
+      return new EditorSettingsExternalizable();
+    }
+    else {
+      return ServiceManager.getService(EditorSettingsExternalizable.class);
+    }
   }
 
   public void addPropertyChangeListener(PropertyChangeListener listener){
@@ -136,24 +141,22 @@ public class EditorSettingsExternalizable implements NamedJDOMExternalizable, Ex
     myPropertyChangeSupport.removePropertyChangeListener(listener);
   }
 
+  @NotNull
   @Override
-  public void readExternal(Element element) throws InvalidDataException {
-    DefaultJDOMExternalizer.readExternal(myOptions, element);
+  public OptionSet getState() {
+    return myOptions;
+  }
+
+  @Override
+  public void loadState(@NotNull OptionSet state) {
+    myOptions = state;
     parseRawSoftWraps();
   }
 
-  @Override
-  public void writeExternal(Element element) throws WriteExternalException {
-    DefaultJDOMExternalizer.writeExternal(myOptions, element, new DefaultJDOMExternalizer.JDOMFilter() {
-      @Override
-      public boolean isAccept(final Field field) {
-        return !field.getName().equals("IS_NATIVE2ASCII_FOR_PROPERTIES_FILES") && !field.getName().equals("DEFAULT_PROPERTIES_FILES_CHARSET_NAME");
-      }
-    });
-  }
-
   private void parseRawSoftWraps() {
-    if (myOptions.USE_SOFT_WRAPS == null || myOptions.USE_SOFT_WRAPS.isEmpty()) {
+    myPlacesToUseSoftWraps.clear();
+
+    if (StringUtil.isEmpty(myOptions.USE_SOFT_WRAPS)) {
       return;
     }
 
@@ -161,10 +164,6 @@ public class EditorSettingsExternalizable implements NamedJDOMExternalizable, Ex
     for (String placeName : placeNames) {
       try {
         SoftWrapAppliancePlaces place = SoftWrapAppliancePlaces.valueOf(placeName);
-        if (place == SoftWrapAppliancePlaces.VCS_DIFF) {
-          // Don't keep separate setting for vcs diff window for now and let it share the value for main editor.
-          continue;
-        }
         myPlacesToUseSoftWraps.add(place);
       }
       catch (IllegalArgumentException e) {
@@ -187,11 +186,6 @@ public class EditorSettingsExternalizable implements NamedJDOMExternalizable, Ex
     myOptions.USE_SOFT_WRAPS = buffer.toString();
   }
 
-  @Override
-  public String getExternalFileName() {
-    return "editor";
-  }
-
   public OptionSet getOptions() {
     return myOptions;
   }
@@ -212,6 +206,14 @@ public class EditorSettingsExternalizable implements NamedJDOMExternalizable, Ex
     myOptions.ARE_LINE_NUMBERS_SHOWN = val;
   }
 
+  public boolean areGutterIconsShown() {
+    return myOptions.ARE_GUTTER_ICONS_SHOWN;
+  }
+
+  public void setGutterIconsShown(boolean val) {
+    myOptions.ARE_GUTTER_ICONS_SHOWN = val;
+  }
+
   public int getAdditionalLinesCount() {
     return myAdditionalLinesCount;
   }
@@ -220,12 +222,13 @@ public class EditorSettingsExternalizable implements NamedJDOMExternalizable, Ex
     myAdditionalLinesCount = additionalLinesCount;
   }
 
+  @SuppressWarnings({"UnusedDeclaration", "SpellCheckingInspection"})
   public int getAdditinalColumnsCount() {
-    return myAdditinalColumnsCount;
+    return myAdditionalColumnsCount;
   }
 
-  public void setAdditionalColumnsCount(int additinalColumnsCount) {
-    myAdditinalColumnsCount = additinalColumnsCount;
+  public void setAdditionalColumnsCount(int value) {
+    myAdditionalColumnsCount = value;
   }
 
   public boolean isLineMarkerAreaShown() {
@@ -244,12 +247,69 @@ public class EditorSettingsExternalizable implements NamedJDOMExternalizable, Ex
     myOptions.IS_FOLDING_OUTLINE_SHOWN = val;
   }
 
+  /**
+   * @return {@code true} if breadcrumbs should be shown above the editor, {@code false} otherwise
+   */
+  public boolean isBreadcrumbsAbove() {
+    return myOptions.SHOW_BREADCRUMBS_ABOVE;
+  }
+
+  /**
+   * @param value {@code true} if breadcrumbs should be shown above the editor, {@code false} otherwise
+   * @return {@code true} if an option was modified, {@code false} otherwise
+   */
+  public boolean setBreadcrumbsAbove(boolean value) {
+    if (myOptions.SHOW_BREADCRUMBS_ABOVE == value) return false;
+    myOptions.SHOW_BREADCRUMBS_ABOVE = value;
+    return true;
+  }
+
+  /**
+   * @return {@code true} if breadcrumbs should be shown, {@code false} otherwise
+   */
+  public boolean isBreadcrumbsShown() {
+    return myOptions.SHOW_BREADCRUMBS;
+  }
+
+  /**
+   * @param value {@code true} if breadcrumbs should be shown, {@code false} otherwise
+   * @return {@code true} if an option was modified, {@code false} otherwise
+   */
+  public boolean setBreadcrumbsShown(boolean value) {
+    if (myOptions.SHOW_BREADCRUMBS == value) return false;
+    myOptions.SHOW_BREADCRUMBS = value;
+    return true;
+  }
+
+  /**
+   * @param languageID the language identifier to configure
+   * @return {@code true} if breadcrumbs should be shown for the specified language, {@code false} otherwise
+   */
+  public boolean isBreadcrumbsShownFor(String languageID) {
+    Boolean visible = myOptions.mapLanguageBreadcrumbs.get(languageID);
+    return visible == null || visible;
+  }
+
+  /**
+   * @param languageID the language identifier to configure
+   * @param value      {@code true} if breadcrumbs should be shown for the specified language, {@code false} otherwise
+   * @return {@code true} if an option was modified, {@code false} otherwise
+   */
+  public boolean setBreadcrumbsShownFor(String languageID, boolean value) {
+    Boolean visible = myOptions.mapLanguageBreadcrumbs.put(languageID, value);
+    return (visible == null || visible) != value;
+  }
+
   public boolean isBlockCursor() {
     return myOptions.IS_BLOCK_CURSOR;
   }
 
   public void setBlockCursor(boolean val) {
     myOptions.IS_BLOCK_CURSOR = val;
+  }
+
+  public boolean isCaretRowShown() {
+    return true;
   }
 
   public int getBlockIndent() {
@@ -273,15 +333,7 @@ public class EditorSettingsExternalizable implements NamedJDOMExternalizable, Ex
   }
 
   public boolean isUseSoftWraps(@NotNull SoftWrapAppliancePlaces place) {
-    if (myPlacesToUseSoftWraps.contains(place)) {
-      return true;
-    }
-    
-    // For now use soft wraps at vcs diff if they are enabled for the main editors.
-    if (place == SoftWrapAppliancePlaces.VCS_DIFF) {
-      return myPlacesToUseSoftWraps.contains(SoftWrapAppliancePlaces.MAIN_EDITOR);
-    }
-    return false;
+    return myPlacesToUseSoftWraps.contains(place);
   }
 
   public void setUseSoftWraps(boolean use) {
@@ -324,7 +376,9 @@ public class EditorSettingsExternalizable implements NamedJDOMExternalizable, Ex
   }
 
   public void setVirtualSpace(boolean val) {
+    boolean oldValue = myOptions.IS_VIRTUAL_SPACE;
     myOptions.IS_VIRTUAL_SPACE = val;
+    myPropertyChangeSupport.firePropertyChange(PROP_VIRTUAL_SPACE, oldValue, val);
   }
 
   public boolean isCaretInsideTabs() {
@@ -344,11 +398,11 @@ public class EditorSettingsExternalizable implements NamedJDOMExternalizable, Ex
   }
 
   public int getBlinkPeriod() {
-    return myOptions.CARET_BLINKING_PERIOD;
+    return BLINKING_RANGE.fit(myOptions.CARET_BLINKING_PERIOD);
   }
 
   public void setBlinkPeriod(int blinkInterval) {
-    myOptions.CARET_BLINKING_PERIOD = blinkInterval;
+    myOptions.CARET_BLINKING_PERIOD = BLINKING_RANGE.fit(blinkInterval);
   }
 
 
@@ -369,6 +423,30 @@ public class EditorSettingsExternalizable implements NamedJDOMExternalizable, Ex
     myOptions.STRIP_TRAILING_SPACES = stripTrailingSpaces;
   }
 
+  public boolean isShowQuickDocOnMouseOverElement() {
+    return myOptions.SHOW_QUICK_DOC_ON_MOUSE_OVER_ELEMENT;
+  }
+
+  public void setShowQuickDocOnMouseOverElement(boolean show) {
+    myOptions.SHOW_QUICK_DOC_ON_MOUSE_OVER_ELEMENT = show;
+  }
+
+  public int getQuickDocOnMouseOverElementDelayMillis() {
+    return QUICK_DOC_DELAY_RANGE.fit(myOptions.QUICK_DOC_ON_MOUSE_OVER_DELAY_MS);
+  }
+
+  public void setQuickDocOnMouseOverElementDelayMillis(int delay) {
+    myOptions.QUICK_DOC_ON_MOUSE_OVER_DELAY_MS = QUICK_DOC_DELAY_RANGE.fit(delay);
+  }
+
+  public boolean isShowIntentionBulb() {
+    return myOptions.SHOW_INTENTION_BULB;
+  }
+
+  public void setShowIntentionBulb(boolean show) {
+    myOptions.SHOW_INTENTION_BULB = show;
+  }
+
   public boolean isRefrainFromScrolling() {
     return myOptions.REFRAIN_FROM_SCROLLING;
   }
@@ -377,44 +455,36 @@ public class EditorSettingsExternalizable implements NamedJDOMExternalizable, Ex
     myOptions.REFRAIN_FROM_SCROLLING = b;
   }
 
-  @Override
-  public Object clone() {
-    EditorSettingsExternalizable copy = new EditorSettingsExternalizable();
-    copy.myOptions = (OptionSet) myOptions.clone();
-    copy.myBlockIndent = myBlockIndent;
-    //copy.myTabSize = myTabSize;
-    //copy.myUseTabCharacter = myUseTabCharacter;
-    copy.myAdditionalLinesCount = myAdditionalLinesCount;
-    copy.myAdditinalColumnsCount = myAdditinalColumnsCount;
-    copy.myLineMarkerAreaShown = myLineMarkerAreaShown;
-
-    return copy;
-  }
-
-  @Override
-  @NotNull
-  public String getComponentName() {
-    return "EditorSettings";
-  }
-
-  @Override
-  @NotNull
-  public File[] getExportFiles() {
-    return new File[]{PathManager.getOptionsFile(this)};
-  }
-
-  @Override
-  @NotNull
-  public String getPresentableName() {
-    return OptionsBundle.message("options.editor.settings.presentable.name");
-  }
-
   public boolean isWhitespacesShown() {
     return myOptions.IS_WHITESPACES_SHOWN;
   }
 
   public void setWhitespacesShown(boolean val) {
     myOptions.IS_WHITESPACES_SHOWN = val;
+  }
+
+  public boolean isLeadingWhitespacesShown() {
+    return myOptions.IS_LEADING_WHITESPACES_SHOWN;
+  }
+
+  public void setLeadingWhitespacesShown(boolean val) {
+    myOptions.IS_LEADING_WHITESPACES_SHOWN = val;
+  }
+
+  public boolean isInnerWhitespacesShown() {
+    return myOptions.IS_INNER_WHITESPACES_SHOWN;
+  }
+
+  public void setInnerWhitespacesShown(boolean val) {
+    myOptions.IS_INNER_WHITESPACES_SHOWN = val;
+  }
+
+  public boolean isTrailingWhitespacesShown() {
+    return myOptions.IS_TRAILING_WHITESPACES_SHOWN;
+  }
+
+  public void setTrailingWhitespacesShown(boolean val) {
+    myOptions.IS_TRAILING_WHITESPACES_SHOWN = val;
   }
 
   public boolean isAllSoftWrapsShown() {
@@ -497,17 +567,43 @@ public class EditorSettingsExternalizable implements NamedJDOMExternalizable, Ex
     myOptions.PRESELECT_RENAME = val;
   }
 
+  public boolean isShowInlineLocalDialog() {
+    return myOptions.SHOW_INLINE_DIALOG;
+  }
 
-  // returns true if something has been migrated
-  public boolean migrateCharsetSettingsTo(EncodingManager encodingManager) {
-    if (myOptions.DEFAULT_PROPERTIES_FILES_CHARSET_NAME != null) {
-      Charset charset = CharsetToolkit.forName(myOptions.DEFAULT_PROPERTIES_FILES_CHARSET_NAME);
-      if (charset != null) {
-        encodingManager.setDefaultCharsetForPropertiesFiles(null, charset);
-        encodingManager.setNative2AsciiForPropertiesFiles(null, myOptions.IS_NATIVE2ASCII_FOR_PROPERTIES_FILES);
-      }
-      return true;
-    }
-    return false;
+  public void setShowInlineLocalDialog(final boolean val) {
+    myOptions.SHOW_INLINE_DIALOG = val;
+  }
+
+  public boolean addCaretsOnDoubleCtrl() {
+    return myOptions.ADD_CARETS_ON_DOUBLE_CTRL;
+  }
+
+  public void setAddCaretsOnDoubleCtrl(boolean val) {
+    myOptions.ADD_CARETS_ON_DOUBLE_CTRL = val;
+  }
+
+  public BidiTextDirection getBidiTextDirection() {
+    return myOptions.BIDI_TEXT_DIRECTION;
+  }
+
+  public void setBidiTextDirection(BidiTextDirection direction) {
+    myOptions.BIDI_TEXT_DIRECTION = direction;
+  }
+
+  public boolean isShowParameterNameHints() {
+    return myOptions.SHOW_PARAMETER_NAME_HINTS;
+  }
+
+  public void setShowParameterNameHints(boolean value) {
+    myOptions.SHOW_PARAMETER_NAME_HINTS = value;
+  }
+
+  public boolean isKeepTrailingSpacesOnCaretLine() {
+    return myOptions.KEEP_TRAILING_SPACE_ON_CARET_LINE;
+  }
+
+  public void setKeepTrailingSpacesOnCaretLine(boolean keep) {
+    myOptions.KEEP_TRAILING_SPACE_ON_CARET_LINE = keep;
   }
 }

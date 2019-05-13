@@ -34,10 +34,10 @@ public class DefaultModuleEditorsProvider implements ModuleConfigurationEditorPr
     }
 
     String moduleName = module.getName();
-    List<ModuleConfigurationEditor> editors = new ArrayList<ModuleConfigurationEditor>();
+    List<ModuleConfigurationEditor> editors = new ArrayList<>();
     editors.add(new ContentEntriesEditor(moduleName, state));
     editors.add(new OutputEditor(state));
     editors.add(new ClasspathEditor(state));
-    return editors.toArray(new ModuleConfigurationEditor[editors.size()]);
+    return editors.toArray(ModuleConfigurationEditor.EMPTY);
   }
 }

@@ -22,14 +22,15 @@ import java.util.List;
 
 /**
  * @author Denis Zhdanov
- * @since 9/26/12 5:47 PM
  */
 public class JavaArrangementOverriddenMethodsInfo {
 
-  @NotNull private final List<JavaElementArrangementEntry> myMethodEntries = new ArrayList<JavaElementArrangementEntry>();
-  @NotNull private final String myName;
+  @NotNull private final List<JavaElementArrangementEntry> myMethodEntries = new ArrayList<>();
+  // Name of base class, which contains overridden methods
+  // Used only for debug purposes
+  private final String myName;
 
-  public JavaArrangementOverriddenMethodsInfo(@NotNull String name) {
+  public JavaArrangementOverriddenMethodsInfo(String name) {
     myName = name;
   }
 

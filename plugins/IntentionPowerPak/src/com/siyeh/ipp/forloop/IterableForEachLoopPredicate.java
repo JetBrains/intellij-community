@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2013 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,11 +17,13 @@ package com.siyeh.ipp.forloop;
 
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.util.InheritanceUtil;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import com.siyeh.ipp.psiutils.ErrorUtil;
 
 class IterableForEachLoopPredicate implements PsiElementPredicate {
 
+  @Override
   public boolean satisfiedBy(PsiElement element) {
     if (!(element instanceof PsiJavaToken)) {
       return false;
@@ -35,13 +37,15 @@ class IterableForEachLoopPredicate implements PsiElementPredicate {
     if (!(parent instanceof PsiForeachStatement)) {
       return false;
     }
-    final PsiForeachStatement foreachStatement =
-      (PsiForeachStatement)parent;
+    final PsiForeachStatement foreachStatement = (PsiForeachStatement)parent;
     final PsiExpression iteratedValue = foreachStatement.getIteratedValue();
     if (iteratedValue == null) {
       return false;
     }
     final PsiType type = iteratedValue.getType();
-    return type instanceof PsiClassType && !ErrorUtil.containsError(parent);
+    if (!InheritanceUtil.isInheritor(type, CommonClassNames.JAVA_LANG_ITERABLE)) {
+      return false;
+    }
+    return !ErrorUtil.containsError(foreachStatement);
   }
 }

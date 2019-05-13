@@ -37,12 +37,11 @@ import java.util.*;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Nov 25, 2004
  */
 public class LibraryDefinitionsGeneratorFactory {
   private final ProjectEx myProject;
   private final GenerationOptions myGenOptions;
-  private final Set<String> myUsedLibraries = new HashSet<String>();
+  private final Set<String> myUsedLibraries = new HashSet<>();
 
   public LibraryDefinitionsGeneratorFactory(ProjectEx project, GenerationOptions genOptions) {
     myProject = project;
@@ -50,15 +49,12 @@ public class LibraryDefinitionsGeneratorFactory {
     final ModuleManager moduleManager = ModuleManager.getInstance(project);
     final Module[] modules = moduleManager.getModules();
     for (Module module : modules) {
-      ModuleRootManager.getInstance(module).orderEntries().forEachLibrary(new Processor<Library>() {
-        @Override
-        public boolean process(Library library) {
-          final String name = library.getName();
-          if (name != null) {
-            myUsedLibraries.add(name);
-          }
-          return true;
+      ModuleRootManager.getInstance(module).orderEntries().forEachLibrary(library -> {
+        final String name = library.getName();
+        if (name != null) {
+          myUsedLibraries.add(name);
         }
+        return true;
       });
     }
   }
@@ -82,7 +78,7 @@ public class LibraryDefinitionsGeneratorFactory {
 
     gen.add(new Comment(comment), 1);
     // sort libraries to ensure stable order of them.
-    TreeMap<String, Library> sortedLibs = new TreeMap<String, Library>();
+    TreeMap<String, Library> sortedLibs = new TreeMap<>();
     for (final Library library : libraries) {
       final String libraryName = library.getName();
       if (!myUsedLibraries.contains(libraryName)) {
@@ -123,7 +119,7 @@ public class LibraryDefinitionsGeneratorFactory {
     if (genOptions.expandJarDirectories) {
       final VirtualFile[] files = library.getFiles(rootType);
       // note that it is assumed that directory entries inside library path are unordered
-      TreeSet<String> visitedPaths = new TreeSet<String>();
+      TreeSet<String> visitedPaths = new TreeSet<>();
       for (final VirtualFile file : files) {
         final String path = GenerationUtils
           .toRelativePath(file, baseDir, BuildProperties.getProjectBaseDirProperty(), genOptions);
@@ -134,7 +130,7 @@ public class LibraryDefinitionsGeneratorFactory {
       }
     }
     else {
-      TreeSet<String> urls = new TreeSet<String>(Arrays.asList(library.getUrls(rootType)));
+      TreeSet<String> urls = new TreeSet<>(Arrays.asList(library.getUrls(rootType)));
       for (String url : urls) {
         File file = fileFromUrl(url);
         final String path = GenerationUtils

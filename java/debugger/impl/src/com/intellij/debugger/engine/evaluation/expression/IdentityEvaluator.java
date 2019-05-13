@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,7 +21,6 @@ import com.sun.jdi.Value;
 
 /**
 * @author Eugene Zhuravlev
-*         Date: Feb 9, 2010
 */
 public class IdentityEvaluator implements Evaluator {
   private final Value myValue;
@@ -30,11 +29,8 @@ public class IdentityEvaluator implements Evaluator {
     myValue = value;
   }
 
+  @Override
   public Object evaluate(EvaluationContextImpl context) throws EvaluateException {
     return myValue;
-  }
-
-  public Modifier getModifier() {
-    return null;
   }
 }

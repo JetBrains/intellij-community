@@ -1,28 +1,9 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
-/*
- * User: anna
- * Date: 11-Nov-2008
- */
 package org.jetbrains.idea.eclipse.conversion;
 
 import com.intellij.openapi.components.ExpandMacroToPathMap;
 import com.intellij.openapi.components.PathMacroManager;
-import com.intellij.openapi.components.impl.BasePathMacroManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
@@ -36,11 +17,13 @@ import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.containers.hash.HashSet;
+import gnu.trove.THashSet;
 import org.jdom.Element;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.eclipse.*;
 import org.jetbrains.idea.eclipse.config.EclipseModuleManagerImpl;
+import org.jetbrains.idea.eclipse.importWizard.EclipseNatureImporter;
 import org.jetbrains.idea.eclipse.util.ErrorLog;
 
 import java.io.IOException;
@@ -52,33 +35,37 @@ public class EclipseClasspathReader extends AbstractEclipseClasspathReader<Modif
   private final Project myProject;
   private ContentEntry myContentEntry;
 
-  public EclipseClasspathReader(final String rootPath, final Project project, @Nullable List<String> currentRoots) {
+  public EclipseClasspathReader(@NotNull String rootPath, @NotNull Project project, @Nullable List<String> currentRoots) {
     this(rootPath, project, currentRoots, null);
   }
 
-  public EclipseClasspathReader(final String rootPath, final Project project, @Nullable List<String> currentRoots, @Nullable Set<String> moduleNames) {
+  public EclipseClasspathReader(@NotNull String rootPath, @NotNull Project project, @Nullable List<String> currentRoots, @Nullable Set<String> moduleNames) {
     super(rootPath, currentRoots, moduleNames);
+
     myProject = project;
   }
 
-  public void init(ModifiableRootModel model) {
+  public void init(@NotNull ModifiableRootModel model) {
     myContentEntry = model.addContentEntry(pathToUrl(myRootPath));
   }
 
-  public static void collectVariables(Set<String> usedVariables, Element classpathElement, final String rootPath) {
-    for (Object o : classpathElement.getChildren(EclipseXml.CLASSPATHENTRY_TAG)) {
-      final Element element = (Element)o;
+  public static void collectVariables(Set<? super String> usedVariables, Element classpathElement, final String rootPath) {
+    for (Element element : classpathElement.getChildren(EclipseXml.CLASSPATHENTRY_TAG)) {
       String path = element.getAttributeValue(EclipseXml.PATH_ATTR);
-      if (path == null) continue;
-      final String kind = element.getAttributeValue(EclipseXml.KIND_ATTR);
+      if (path == null) {
+        continue;
+      }
+
+      String kind = element.getAttributeValue(EclipseXml.KIND_ATTR);
       if (Comparing.strEqual(kind, EclipseXml.VAR_KIND)) {
-        createEPathVariable(usedVariables, path, 0);
-        final String srcPath = element.getAttributeValue(EclipseXml.SOURCEPATH_ATTR);
+        createEPathVariable(path, 0);
+        String srcPath = element.getAttributeValue(EclipseXml.SOURCEPATH_ATTR);
         if (srcPath != null) {
-          createEPathVariable(usedVariables, srcPath, srcVarStart(srcPath));
+          createEPathVariable(srcPath, srcVarStart(srcPath));
         }
-      } else if (Comparing.strEqual(kind, EclipseXml.SRC_KIND) || Comparing.strEqual(kind, EclipseXml.OUTPUT_KIND)) {
-        final EclipseProjectFinder.LinkedResource linkedResource = EclipseProjectFinder.findLinkedResource(rootPath, path);
+      }
+      else if (Comparing.strEqual(kind, EclipseXml.SRC_KIND) || Comparing.strEqual(kind, EclipseXml.OUTPUT_KIND)) {
+        EclipseProjectFinder.LinkedResource linkedResource = EclipseProjectFinder.findLinkedResource(rootPath, path);
         if (linkedResource != null && linkedResource.containsPathVariable()) {
           usedVariables.add(linkedResource.getVariableName());
         }
@@ -86,10 +73,14 @@ public class EclipseClasspathReader extends AbstractEclipseClasspathReader<Modif
     }
   }
 
-  public void readClasspath(ModifiableRootModel model,
-                            final Collection<String> unknownLibraries,
-                            Collection<String> unknownJdks,
-                            final Set<String> usedVariables,
+  public void readClasspath(@NotNull ModifiableRootModel model, @NotNull Element classpathElement) throws IOException, ConversionException {
+    Set<String> sink = new THashSet<>();
+    readClasspath(model, sink, sink, sink, null, classpathElement);
+  }
+
+  public void readClasspath(@NotNull ModifiableRootModel model,
+                            @NotNull Collection<String> unknownLibraries,
+                            @NotNull Collection<String> unknownJdks,
                             Set<String> refsToModules,
                             final String testPattern,
                             Element classpathElement) throws IOException, ConversionException {
@@ -99,13 +90,13 @@ public class EclipseClasspathReader extends AbstractEclipseClasspathReader<Modif
       }
     }
     int idx = 0;
-    final EclipseModuleManagerImpl eclipseModuleManager = EclipseModuleManagerImpl.getInstance(model.getModule());
-    final HashSet<String> libs = new HashSet<String>();
-    for (Object o : classpathElement.getChildren(EclipseXml.CLASSPATHENTRY_TAG)) {
+    EclipseModuleManagerImpl eclipseModuleManager = EclipseModuleManagerImpl.getInstance(model.getModule());
+    Set<String> libs = new THashSet<>();
+    for (Element o : classpathElement.getChildren(EclipseXml.CLASSPATHENTRY_TAG)) {
       try {
-        readClasspathEntry(model, unknownLibraries, unknownJdks, usedVariables, refsToModules, testPattern, (Element)o, idx++,
+        readClasspathEntry(model, unknownLibraries, unknownJdks, refsToModules, testPattern, o, idx++,
                            eclipseModuleManager,
-                           ((BasePathMacroManager)PathMacroManager.getInstance(model.getModule())).getExpandMacroMap(), libs);
+                           PathMacroManager.getInstance(model.getModule()).getExpandMacroMap(), libs);
       }
       catch (ConversionException e) {
         ErrorLog.rethrow(ErrorLog.Level.Warning, null, EclipseXml.CLASSPATH_FILE, e);
@@ -124,7 +115,16 @@ public class EclipseClasspathReader extends AbstractEclipseClasspathReader<Modif
 
   @Override
   protected String expandEclipsePath2Url(ModifiableRootModel rootModel, String path) {
+    final VirtualFile contentRoot = myContentEntry.getFile();
+    if (contentRoot != null) {
+      return EPathUtil.expandEclipsePath2Url(path, rootModel, myCurrentRoots, contentRoot);
+    }
     return EPathUtil.expandEclipsePath2Url(path, rootModel, myCurrentRoots);
+  }
+
+  @Override
+  protected Set<String> getDefinedCons() {
+    return EclipseNatureImporter.getAllDefinedCons();
   }
 
   @Override
@@ -133,13 +133,20 @@ public class EclipseClasspathReader extends AbstractEclipseClasspathReader<Modif
                                   boolean exported,
                                   String libName,
                                   String url,
-                                  String srcUrl, ExpandMacroToPathMap macroMap) {
+                                  String srcUrl,
+                                  String nativeRoot,
+                                  ExpandMacroToPathMap macroMap) {
     final Library library = rootModel.getModuleLibraryTable().getModifiableModel().createLibrary(libName);
     final Library.ModifiableModel modifiableModel = library.getModifiableModel();
     modifiableModel.addRoot(url, OrderRootType.CLASSES);
     if (srcUrl != null) {
       modifiableModel.addRoot(srcUrl, OrderRootType.SOURCES);
     }
+
+    if (nativeRoot != null) {
+      modifiableModel.addRoot(nativeRoot, NativeLibraryOrderRootType.getInstance());
+    }
+
     EJavadocUtil.appendJavadocRoots(element, rootModel, myCurrentRoots, modifiableModel);
     modifiableModel.commit();
 
@@ -213,8 +220,8 @@ public class EclipseClasspathReader extends AbstractEclipseClasspathReader<Modif
     setOutputUrl(rootModel, path);
   }
 
-  public static void setOutputUrl(ModifiableRootModel rootModel, String path) {
-    final CompilerModuleExtension compilerModuleExtension = rootModel.getModuleExtension(CompilerModuleExtension.class);
+  public static void setOutputUrl(@NotNull ModifiableRootModel rootModel, @NotNull String path) {
+    CompilerModuleExtension compilerModuleExtension = rootModel.getModuleExtension(CompilerModuleExtension.class);
     compilerModuleExtension.setCompilerOutputPath(pathToUrl(path));
     compilerModuleExtension.inheritCompilerOutputPath(false);
   }
@@ -275,6 +282,7 @@ public class EclipseClasspathReader extends AbstractEclipseClasspathReader<Modif
   }
 
 
+  @Override
   protected String prepareValidUrlInsideJar(String url) {
     final VirtualFile localFile = VirtualFileManager.getInstance().findFileByUrl(url);
     if (localFile != null) {

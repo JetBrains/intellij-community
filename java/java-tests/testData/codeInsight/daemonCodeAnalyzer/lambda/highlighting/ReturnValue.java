@@ -24,6 +24,7 @@ class Test1 {
 
 
   public static void main(String[] args) {
+    Extractor<String, Integer> e0 = s -> s.equals("1") ? Option.option(1) : Option.none();
     Extractor<String, Integer> e = s -> {
       if (s.equals("1")) {
         return Option.option(1);
@@ -32,13 +33,17 @@ class Test1 {
       }
     };
 
-    Extractor<String, Integer> e1 = <error descr="Incompatible return type Option<String> in lambda expression">s -> {
+    Extractor<String, Integer> e1 = s -> {
       if (s.equals("1")) {
         return Option.option(1);
       } else {
-        return Option.option("2");
+        return <error descr="Incompatible types. Required Option<Integer> but 'option' was inferred to Option<T>:
+no instance(s) of type variable(s) exist so that String conforms to Integer
+inference variable T has incompatible bounds:
+ equality constraints: Integer
+lower bounds: String">Option.option("2");</error>
       }
-    }</error>;
+    };
   }
 }
 
@@ -48,7 +53,7 @@ class Test2 {
   }
 
   {
-    X<?> x = <error descr="No instance of type X<?> exists so that lambda expression can be type-checked">() -> 123</error>;
+    X<?> x = () -> 123;
     X<? extends Number> x1 = () -> 123;
     
   }

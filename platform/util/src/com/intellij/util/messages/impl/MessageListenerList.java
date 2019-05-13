@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,14 +15,14 @@
  */
 package com.intellij.util.messages.impl;
 
+import com.intellij.openapi.Disposable;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.messages.Topic;
-import com.intellij.openapi.Disposable;
-import com.intellij.openapi.util.Disposer;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -31,7 +31,7 @@ import java.util.Map;
 public class MessageListenerList<T> {
   private final MessageBus myMessageBus;
   private final Topic<T> myTopic;
-  private final Map<T, MessageBusConnection> myListenerToConnectionMap = new HashMap<T, MessageBusConnection>();
+  private final Map<T, MessageBusConnection> myListenerToConnectionMap = ContainerUtil.newConcurrentMap();
 
   public MessageListenerList(@NotNull MessageBus messageBus, @NotNull Topic<T> topic) {
     myTopic = topic;
@@ -46,6 +46,7 @@ public class MessageListenerList<T> {
 
   public void add(@NotNull final T listener, @NotNull Disposable parentDisposable) {
     Disposer.register(parentDisposable, new Disposable() {
+      @Override
       public void dispose() {
         myListenerToConnectionMap.remove(listener);
       }

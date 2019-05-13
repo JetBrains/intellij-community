@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,47 +22,36 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiLiteralExpression;
-import com.intellij.psi.StringEscapesTokenTypes;
+import com.intellij.psi.PsiType;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
+import static com.intellij.psi.CommonClassNames.JAVA_LANG_STRING;
+
 public class LiteralSelectioner extends BasicSelectioner {
   @Override
-  public boolean canSelect(PsiElement e) {
+  public boolean canSelect(@NotNull PsiElement e) {
     PsiElement parent = e.getParent();
     return
       isStringLiteral(e) || isStringLiteral(parent);
   }
 
   private static boolean isStringLiteral(PsiElement element) {
-    return element instanceof PsiLiteralExpression &&
-           ((PsiLiteralExpression)element).getType().equalsToText("java.lang.String") && element.getText().startsWith("\"") && element.getText().endsWith("\"");
+    final PsiType type = element instanceof PsiLiteralExpression ? ((PsiLiteralExpression)element).getType() : null;
+    return  type != null && type.equalsToText(JAVA_LANG_STRING)
+            && element.getText().startsWith("\"")
+            && element.getText().endsWith("\"");
   }
 
   @Override
-  public List<TextRange> select(PsiElement e, CharSequence editorText, int cursorOffset, Editor editor) {
+  public List<TextRange> select(@NotNull PsiElement e, @NotNull CharSequence editorText, int cursorOffset, @NotNull Editor editor) {
     List<TextRange> result = super.select(e, editorText, cursorOffset, editor);
 
     TextRange range = e.getTextRange();
-    final StringLiteralLexer lexer = new StringLiteralLexer('\"', JavaTokenType.STRING_LITERAL);
-    lexer.start(editorText, range.getStartOffset(), range.getEndOffset());
-
-    while (lexer.getTokenType() != null) {
-      if (lexer.getTokenStart() <= cursorOffset && cursorOffset < lexer.getTokenEnd()) {
-        if (StringEscapesTokenTypes.STRING_LITERAL_ESCAPES.contains(lexer.getTokenType())) {
-          result.add(new TextRange(lexer.getTokenStart(), lexer.getTokenEnd()));
-        }
-        else {
-          TextRange word = SelectWordUtil.getWordSelectionRange(editorText, cursorOffset);
-          if (word != null) {
-            result.add(new TextRange(Math.max(word.getStartOffset(), lexer.getTokenStart()),
-                                     Math.min(word.getEndOffset(), lexer.getTokenEnd())));
-          }
-        }
-        break;
-      }
-      lexer.advance();
-    }
+    SelectWordUtil.addWordHonoringEscapeSequences(editorText, range, cursorOffset,
+                                                  new StringLiteralLexer('\"', JavaTokenType.STRING_LITERAL),
+                                                  result);
 
     result.add(new TextRange(range.getStartOffset() + 1, range.getEndOffset() - 1));
 

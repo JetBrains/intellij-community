@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor.ex.util;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -26,6 +12,7 @@ import com.intellij.openapi.editor.highlighter.HighlighterClient;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.psi.tree.IElementType;
+import org.jetbrains.annotations.NotNull;
 
 public class EmptyEditorHighlighter implements EditorHighlighter, PrioritizedDocumentListener {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.editor.ex.util.EmptyEditorHighlighter");
@@ -43,34 +30,32 @@ public class EmptyEditorHighlighter implements EditorHighlighter, PrioritizedDoc
   }
 
   @Override
-  public void setText(CharSequence text) {
+  public void setText(@NotNull CharSequence text) {
     myTextLength = text.length();
   }
 
   @Override
-  public void setEditor(HighlighterClient editor) {
+  public void setEditor(@NotNull HighlighterClient editor) {
     LOG.assertTrue(myEditor == null, "Highlighters cannot be reused with different editors");
     myEditor = editor;
   }
 
   @Override
-  public void setColorScheme(EditorColorsScheme scheme) {
+  public void setColorScheme(@NotNull EditorColorsScheme scheme) {
     setAttributes(scheme.getAttributes(HighlighterColors.TEXT));
   }
 
   @Override
-  public void documentChanged(DocumentEvent e) {
+  public void documentChanged(@NotNull DocumentEvent e) {
     myTextLength += e.getNewLength() - e.getOldLength();
   }
-
-  @Override
-  public void beforeDocumentChange(DocumentEvent event) {}
 
   @Override
   public int getPriority() {
     return 2;
   }
 
+  @NotNull
   @Override
   public HighlighterIterator createIterator(int startOffset) {
     return new HighlighterIterator(){

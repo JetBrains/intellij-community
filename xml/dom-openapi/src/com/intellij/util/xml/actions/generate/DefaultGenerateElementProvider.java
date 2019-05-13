@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,9 +35,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-/**
- * User: Sergey.Vasiliev
- */
 public abstract class DefaultGenerateElementProvider<T extends DomElement> extends GenerateDomElementProvider<T> {
   private final Class<T> myChildElementClass;
 
@@ -48,6 +45,7 @@ public abstract class DefaultGenerateElementProvider<T extends DomElement> exten
   }
 
 
+  @Override
   @Nullable
   public T generate(final Project project, final Editor editor, final PsiFile file) {
     return generate(getParentDomElement(project, editor, file), editor);

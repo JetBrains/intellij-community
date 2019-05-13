@@ -48,20 +48,17 @@ public abstract class FacetBasedPackagingSourceItemsProvider<F extends Facet, E 
                                                                   @Nullable PackagingSourceItem parent) {
     if (parent instanceof ModuleSourceItemGroup) {
       final Module module = ((ModuleSourceItemGroup)parent).getModule();
-      final Set<F> facets = new HashSet<F>(editorContext.getFacetsProvider().getFacetsByType(module, myFacetTypeId));
-      ArtifactUtil.processPackagingElements(artifact, myElementType, new Processor<E>() {
-        @Override
-        public boolean process(E e) {
-          F facet = getFacet(e);
-          if (facet != null) {
-            facets.remove(facet);
-          }
-          return true;
+      final Set<F> facets = new HashSet<>(editorContext.getFacetsProvider().getFacetsByType(module, myFacetTypeId));
+      ArtifactUtil.processPackagingElements(artifact, myElementType, e -> {
+        F facet = getFacet(e);
+        if (facet != null) {
+          facets.remove(facet);
         }
+        return true;
       }, editorContext, true);
 
       if (!facets.isEmpty()) {
-        return Collections.singletonList(new FacetBasedSourceItem<F>(this, facets.iterator().next()));
+        return Collections.singletonList(new FacetBasedSourceItem<>(this, facets.iterator().next()));
       }
     }
     return Collections.emptyList();
@@ -79,10 +76,10 @@ public abstract class FacetBasedPackagingSourceItemsProvider<F extends Facet, E 
   protected abstract PackagingElement<?> createElement(ArtifactEditorContext context, F facet);
 
   protected static class FacetBasedSourceItem<F extends Facet> extends PackagingSourceItem {
-    private final FacetBasedPackagingSourceItemsProvider<F, ?> myProvider;
+    private final FacetBasedPackagingSourceItemsProvider<? super F, ?> myProvider;
     private final F myFacet;
 
-    public FacetBasedSourceItem(FacetBasedPackagingSourceItemsProvider<F, ?> provider, F facet) {
+    public FacetBasedSourceItem(FacetBasedPackagingSourceItemsProvider<? super F, ?> provider, F facet) {
       myProvider = provider;
       myFacet = facet;
     }
@@ -98,6 +95,7 @@ public abstract class FacetBasedPackagingSourceItemsProvider<F extends Facet, E 
       return myFacet.hashCode() + 31*myProvider.hashCode();
     }
 
+    @NotNull
     @Override
     public SourceItemPresentation createPresentation(@NotNull ArtifactEditorContext context) {
       return new DelegatedSourceItemPresentation(myProvider.createPresentation(myFacet));

@@ -1,0 +1,8 @@
+<schema xmlns="http://www.w3.org/2001/XMLSchema" targetNamespace="test.required">
+    <element name="root">
+        <complexType>
+            <attribute name="required" fixed="foo" use="required"/>
+            <attribute name="fixed" fixed="foo"/>
+        </complexType>
+    </element>
+</schema>

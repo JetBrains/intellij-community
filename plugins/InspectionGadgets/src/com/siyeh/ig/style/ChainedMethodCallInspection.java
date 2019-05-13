@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2012 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2016 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,25 +18,35 @@ package com.siyeh.ig.style;
 import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.JavaPsiConstructorUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.IntroduceVariableFix;
-import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.ParenthesesUtils;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
 public class ChainedMethodCallInspection extends BaseInspection {
-
   @SuppressWarnings("PublicField")
   public boolean m_ignoreFieldInitializations = true;
-
   @SuppressWarnings("PublicField")
   public boolean m_ignoreThisSuperCalls = true;
+
+  @Override
+  public JComponent createOptionsPanel() {
+    final MultipleCheckboxOptionsPanel panel = new MultipleCheckboxOptionsPanel(this);
+    panel.addCheckbox(InspectionGadgetsBundle.message("chained.method.call.ignore.option"), "m_ignoreFieldInitializations");
+    panel.addCheckbox(InspectionGadgetsBundle.message("chained.method.call.ignore.this.super.option"), "m_ignoreThisSuperCalls");
+    return panel;
+  }
+
+  @Override
+  protected InspectionGadgetsFix buildFix(Object... infos) {
+    return new IntroduceVariableFix(true);
+  }
 
   @Override
   @NotNull
@@ -51,37 +61,13 @@ public class ChainedMethodCallInspection extends BaseInspection {
   }
 
   @Override
-  public JComponent createOptionsPanel() {
-    final MultipleCheckboxOptionsPanel panel = new MultipleCheckboxOptionsPanel(this);
-    panel.addCheckbox(InspectionGadgetsBundle.message("chained.method.call.ignore.option"), "m_ignoreFieldInitializations");
-    panel.addCheckbox(InspectionGadgetsBundle.message("chained.method.call.ignore.this.super.option"), "m_ignoreThisSuperCalls");
-    return panel;
-  }
-
-  @Override
-  protected boolean buildQuickFixesOnlyForOnTheFlyErrors() {
-    return true;
-  }
-
-  @Override
   public BaseInspectionVisitor buildVisitor() {
     return new ChainedMethodCallVisitor();
   }
 
   @Override
-  protected InspectionGadgetsFix buildFix(Object... infos) {
-    return new IntroduceVariableFix(false) {
-      @Nullable
-      @Override
-      public PsiExpression getExpressionToExtract(PsiElement element) {
-        final PsiElement parent = element.getParent();
-        if (!(parent instanceof PsiReferenceExpression)) {
-          return null;
-        }
-        final PsiReferenceExpression methodExpression = (PsiReferenceExpression)parent;
-        return methodExpression.getQualifierExpression();
-      }
-    };
+  protected boolean buildQuickFixesOnlyForOnTheFlyErrors() {
+    return true;
   }
 
   private class ChainedMethodCallVisitor extends BaseInspectionVisitor {
@@ -107,7 +93,7 @@ public class ChainedMethodCallInspection extends BaseInspection {
         final PsiExpressionList expressionList = PsiTreeUtil.getParentOfType(expression, PsiExpressionList.class);
         if (expressionList != null) {
           final PsiElement parent = expressionList.getParent();
-          if (ExpressionUtils.isConstructorInvocation(parent)) {
+          if (JavaPsiConstructorUtil.isConstructorCall(parent)) {
             return;
           }
         }

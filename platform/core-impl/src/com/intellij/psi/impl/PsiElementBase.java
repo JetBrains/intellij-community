@@ -1,6 +1,6 @@
 
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,7 +28,6 @@ import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.ReflectionCache;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -108,6 +107,46 @@ public abstract class PsiElementBase extends ElementBase implements NavigatableP
   @Override
   public void deleteChildRange(PsiElement first, PsiElement last) throws IncorrectOperationException {
     throw new IncorrectOperationException("Operation not supported in: " + getClass());
+  }
+
+  @Override
+  public PsiElement copy() {
+    return (PsiElement)clone();
+  }
+
+  @Override
+  public PsiElement add(@NotNull PsiElement element) throws IncorrectOperationException {
+    throw new UnsupportedOperationException(getClass().getName());
+  }
+
+  @Override
+  public PsiElement addBefore(@NotNull PsiElement element, PsiElement anchor) throws IncorrectOperationException {
+    throw new UnsupportedOperationException(getClass().getName());
+  }
+
+  @Override
+  public PsiElement addAfter(@NotNull PsiElement element, PsiElement anchor) throws IncorrectOperationException {
+    throw new UnsupportedOperationException(getClass().getName());
+  }
+
+  @Override
+  public void checkAdd(@NotNull PsiElement element) throws IncorrectOperationException {
+    throw new UnsupportedOperationException(getClass().getName());
+  }
+
+  @Override
+  public void delete() throws IncorrectOperationException {
+    throw new UnsupportedOperationException(getClass().getName());
+  }
+
+  @Override
+  public void checkDelete() throws IncorrectOperationException {
+    throw new UnsupportedOperationException(getClass().getName());
+  }
+
+  @Override
+  public PsiElement replace(@NotNull PsiElement newElement) throws IncorrectOperationException {
+    throw new UnsupportedOperationException(getClass().getName());
   }
 
   @Override
@@ -212,7 +251,10 @@ public abstract class PsiElementBase extends ElementBase implements NavigatableP
 
   @Override
   public boolean isValid() {
-    final PsiElement parent = getParent();
+    PsiElement parent = getParent();
+    while (parent != null && parent.getClass() == this.getClass()) {
+      parent = parent.getParent();
+    }
     return parent != null && parent.isValid();
   }
 
@@ -247,9 +289,9 @@ public abstract class PsiElementBase extends ElementBase implements NavigatableP
 
   @NotNull
   protected <T> T[] findChildrenByClass(Class<T> aClass) {
-    List<T> result = new ArrayList<T>();
+    List<T> result = new ArrayList<>();
     for (PsiElement cur = getFirstChild(); cur != null; cur = cur.getNextSibling()) {
-      if (ReflectionCache.isInstance(cur, aClass)) result.add((T)cur);
+      if (aClass.isInstance(cur)) result.add((T)cur);
     }
     return result.toArray((T[]) Array.newInstance(aClass, result.size()));
   }
@@ -257,7 +299,7 @@ public abstract class PsiElementBase extends ElementBase implements NavigatableP
   @Nullable
   protected <T> T findChildByClass(Class<T> aClass) {
     for (PsiElement cur = getFirstChild(); cur != null; cur = cur.getNextSibling()) {
-      if (ReflectionCache.isInstance(cur, aClass)) return (T)cur;
+      if (aClass.isInstance(cur)) return (T)cur;
     }
     return null;
   }
@@ -265,5 +307,10 @@ public abstract class PsiElementBase extends ElementBase implements NavigatableP
   @NotNull
   protected <T> T findNotNullChildByClass(Class<T> aClass) {
     return notNullChild(findChildByClass(aClass));
+  }
+
+  @Override
+  public PsiManager getManager() {
+    return PsiManager.getInstance(getProject());
   }
 }

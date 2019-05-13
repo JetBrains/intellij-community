@@ -29,6 +29,7 @@ import java.util.List;
  * @author peter
  */
 public class PerIndexDocumentVersionMap {
+  private static final int INVALID_STAMP = -1; // 0 isn't acceptable as Document has 0 stamp when loaded from unchanged file
   private volatile int mapVersion;
   private static class IdVersionInfo {
     private final ID<?,?> id;
@@ -43,10 +44,10 @@ public class PerIndexDocumentVersionMap {
   }
 
   private static final Key<List<IdVersionInfo>> KEY = Key.create("UnsavedDocIdVersionInfo");
-  public long getAndSet(@NotNull Document document, @NotNull ID<?, ?> indexId, long value) {
+  public long set(@NotNull Document document, @NotNull ID<?, ?> indexId, long value) {
     List<IdVersionInfo> list = document.getUserData(KEY);
     if (list == null) {
-      list = ((UserDataHolderEx)document).putUserDataIfAbsent(KEY, new ArrayList<IdVersionInfo>());
+      list = ((UserDataHolderEx)document).putUserDataIfAbsent(KEY, new ArrayList<>());
     }
 
     synchronized (list) {
@@ -54,7 +55,7 @@ public class PerIndexDocumentVersionMap {
         if (info.id == indexId) {
           long old = info.docVersion;
           if (info.mapVersion != mapVersion) {
-            old = 0;
+            old = INVALID_STAMP;
             info.mapVersion = mapVersion;
           }
           info.docVersion = value;
@@ -62,10 +63,33 @@ public class PerIndexDocumentVersionMap {
         }
       }
       list.add(new IdVersionInfo(indexId, value, mapVersion));
-      return 0;
+      return INVALID_STAMP;
     }
   }
 
+  public long get(@NotNull Document document, @NotNull ID<?, ?> indexId) {
+    List<IdVersionInfo> list = document.getUserData(KEY);
+    if (list == null) {
+      return INVALID_STAMP;
+    }
+
+    synchronized (list) {
+      for (IdVersionInfo info : list) {
+        if (info.id == indexId) {
+          long old = info.docVersion;
+          if (info.mapVersion != mapVersion) {
+            return INVALID_STAMP;
+          }
+          return old;
+        }
+      }
+      return INVALID_STAMP;
+    }
+  }
+
+  public void clearForDocument(@NotNull Document document) {
+    document.putUserData(KEY, new ArrayList<>());
+  }
   public void clear() {
     mapVersion++;
   }

@@ -1,82 +1,56 @@
+/*
+ * Copyright 2000-2013 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.intellij.ui;
 
 import com.intellij.openapi.ui.popup.JBPopup;
-import com.intellij.openapi.ui.popup.PopupChooserBuilder;
 import com.intellij.psi.PsiElement;
 import com.intellij.ui.components.JBList;
-import com.intellij.ui.popup.PopupUpdateProcessorBase;
+import com.intellij.ui.popup.HintUpdateSupply;
+import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.event.ListSelectionEvent;
-import javax.swing.event.ListSelectionListener;
 import java.util.Collection;
 
 /**
  * @author pegov
+ * @deprecated use HintUpdateSupply directly
+ * @see HintUpdateSupply
  */
+@Deprecated
 public abstract class JBListWithHintProvider extends JBList {
-  private JBPopup myHint;
+  {
+    HintUpdateSupply.installHintUpdateSupply(this, o -> getPsiElementForHint(o));
+  }
 
   public JBListWithHintProvider() {
-    addSelectionListener();
   }
 
   public JBListWithHintProvider(ListModel dataModel) {
     super(dataModel);
-    addSelectionListener();
   }
 
   public JBListWithHintProvider(Object... listData) {
     super(listData);
-    addSelectionListener();
   }
 
   public JBListWithHintProvider(Collection items) {
     super(items);
-    addSelectionListener();
   }
   
-  private void addSelectionListener() {
-    addListSelectionListener(new ListSelectionListener() {
-      @Override
-      public void valueChanged(final ListSelectionEvent e) {
-        if (getClientProperty(PopupChooserBuilder.SELECTED_BY_MOUSE_EVENT) != Boolean.TRUE) {
-          final Object[] selectedValues = ((JList)e.getSource()).getSelectedValues();
-          if (selectedValues.length != 1) return;
-
-          final PsiElement element = getPsiElementForHint(selectedValues[0]);
-          if (element != null && element.isValid()) {
-            updateHint(element);
-          }
-        }
-      }
-    });
-  }
-
   @Nullable
   protected abstract PsiElement getPsiElementForHint(final Object selectedValue);
-
-  public void registerHint(final JBPopup hint) {
-    hideHint();
-    myHint = hint;
-  }
-  
-  public void hideHint() {
-    if (myHint != null && myHint.isVisible()) {
-      myHint.cancel();
-    }
-
-    myHint = null;
-  }
-  
-  public void updateHint(PsiElement element) {
-    if (myHint == null || !myHint.isVisible()) return;
-
-    final PopupUpdateProcessorBase updateProcessor = myHint.getUserData(PopupUpdateProcessorBase.class);
-    if (updateProcessor != null) {
-      updateProcessor.updatePopup(element);
-    }
-  }
-  
 }

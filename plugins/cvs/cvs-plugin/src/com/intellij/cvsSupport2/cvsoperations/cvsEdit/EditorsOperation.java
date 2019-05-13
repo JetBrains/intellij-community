@@ -16,8 +16,8 @@
 package com.intellij.cvsSupport2.cvsoperations.cvsEdit;
 
 import com.intellij.cvsSupport2.connections.CvsRootProvider;
-import com.intellij.cvsSupport2.cvsoperations.common.CvsOperationOnFiles;
 import com.intellij.cvsSupport2.cvsoperations.common.CvsExecutionEnvironment;
+import com.intellij.cvsSupport2.cvsoperations.common.CvsOperationOnFiles;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.netbeans.lib.cvsclient.command.Command;
 import org.netbeans.lib.cvsclient.command.reservedcheckout.EditorsCommand;
@@ -29,7 +29,7 @@ import java.util.List;
  * author: lesya
  */
 public class EditorsOperation extends CvsOperationOnFiles{
-  private final List<EditorInfo> myEditorInfos = new ArrayList<EditorInfo>();
+  private final List<EditorInfo> myEditorInfos = new ArrayList<>();
 
   public EditorsOperation(VirtualFile[] files){
     for (VirtualFile file : files) {
@@ -37,12 +37,14 @@ public class EditorsOperation extends CvsOperationOnFiles{
     }
   }
 
+  @Override
   protected Command createCommand(CvsRootProvider root, CvsExecutionEnvironment cvsExecutionEnvironment) {
     final EditorsCommand result = new EditorsCommand();
     addFilesToCommand(root, result);
     return result;
   }
 
+  @Override
   public void messageSent(String message, final byte[] byteMessage, boolean error, boolean tagged) {
     super.messageSent(message, byteMessage, error, tagged);
     if (!error && !tagged){
@@ -51,6 +53,7 @@ public class EditorsOperation extends CvsOperationOnFiles{
     }
   }
 
+  @Override
   protected String getOperationName() {
     return "editors";
   }

@@ -15,8 +15,9 @@
  */
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
-import com.intellij.codeInsight.CodeInsightUtilBase;
+import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
+import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
 import com.intellij.openapi.command.undo.UndoUtil;
 import com.intellij.openapi.diagnostic.Logger;
@@ -74,12 +75,11 @@ public class MethodParameterFix extends LocalQuickFixAndIntentionActionOnPsiElem
                              @NotNull PsiElement startElement,
                              @NotNull PsiElement endElement) {
     final PsiMethod myMethod = (PsiMethod)startElement;
-    return myMethod.isValid()
-        && myMethod.getManager().isInProject(myMethod)
-        && myParameterType != null
-        && !TypeConversionUtil.isNullType(myParameterType)
-        && myMethod.getReturnType() != null
-        && !Comparing.equal(myParameterType, myMethod.getReturnType());
+    return BaseIntentionAction.canModify(myMethod)
+           && myParameterType != null
+           && !TypeConversionUtil.isNullType(myParameterType)
+           && myMethod.getReturnType() != null
+           && !Comparing.equal(myParameterType, myMethod.getReturnType());
   }
 
   @Override
@@ -89,7 +89,7 @@ public class MethodParameterFix extends LocalQuickFixAndIntentionActionOnPsiElem
                      @NotNull PsiElement startElement,
                      @NotNull PsiElement endElement) {
     final PsiMethod myMethod = (PsiMethod)startElement;
-    if (!CodeInsightUtilBase.prepareFileForWrite(myMethod.getContainingFile())) return;
+    if (!FileModificationService.getInstance().prepareFileForWrite(myMethod.getContainingFile())) return;
     try {
       PsiMethod method = myMethod;
       if (myFixWholeHierarchy) {
@@ -115,10 +115,16 @@ public class MethodParameterFix extends LocalQuickFixAndIntentionActionOnPsiElem
     }
   }
 
+  @Override
+  public boolean startInWriteAction() {
+    return false;
+  }
+
+  @NotNull
   private ParameterInfoImpl[] getNewParametersInfo(PsiMethod method) throws IncorrectOperationException {
-    List<ParameterInfoImpl> result = new ArrayList<ParameterInfoImpl>();
+    List<ParameterInfoImpl> result = new ArrayList<>();
     PsiParameter[] parameters = method.getParameterList().getParameters();
-    PsiElementFactory factory = JavaPsiFacade.getInstance(method.getProject()).getElementFactory();
+    PsiElementFactory factory = JavaPsiFacade.getElementFactory(method.getProject());
     JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(method.getProject());
     SuggestedNameInfo nameInfo = codeStyleManager.suggestVariableName(VariableKind.PARAMETER, null, null, myParameterType);
     PsiParameter newParameter = factory.createParameter(nameInfo.names[0], myParameterType);
@@ -137,6 +143,6 @@ public class MethodParameterFix extends LocalQuickFixAndIntentionActionOnPsiElem
     if (parameters.length == myIndex) {
       result.add(new ParameterInfoImpl(-1, newParameter.getName(), newParameter.getType()));
     }
-    return result.toArray(new ParameterInfoImpl[result.size()]);
+    return result.toArray(new ParameterInfoImpl[0]);
   }
 }

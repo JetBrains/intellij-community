@@ -1,4 +1,4 @@
-// "Add 'java.io.IOException' to 'a.f' throws list" "true"
+// "Add 'IOException' to 'a.f' throws list" "true"
 import java.io.*;
 
 class a {

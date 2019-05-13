@@ -51,14 +51,15 @@ final class AnnotateMessageParser extends AbstractMessageParser {
 
 	// Setup ==================================================================
 
-	public AnnotateMessageParser(IEventSender eventManager, ICvsFileSystem cvsFileSystem) {
+	AnnotateMessageParser(IEventSender eventManager, ICvsFileSystem cvsFileSystem) {
 		this.eventManager = eventManager;
 		this.cvsFileSystem = cvsFileSystem;
 	}
 
 	// Implemented ============================================================
 
-	protected void outputDone() {
+	@Override
+        protected void outputDone() {
 		if (annotateInformation == null) {
 			return;
 		}
@@ -67,7 +68,8 @@ final class AnnotateMessageParser extends AbstractMessageParser {
 		annotateInformation = null;
 	}
 
-	public void parseLine(String line, boolean isErrorMessage) {
+	@Override
+        public void parseLine(String line, boolean isErrorMessage) {
 		if (isErrorMessage) {
 			if (line.startsWith(ANNOTATING)) {
 				outputDone();
@@ -121,7 +123,4 @@ final class AnnotateMessageParser extends AbstractMessageParser {
 
 		annotateInformation.addLine(new AnnotateLine(revision, author, date, contents));
 	}
-
-        public void binaryMessageSent(final byte[] bytes) {
-        }
 }

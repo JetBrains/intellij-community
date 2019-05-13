@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package com.intellij.util.ui;
 
 import com.intellij.openapi.ui.ComponentWithBrowseButton;
+import com.intellij.openapi.wm.IdeFocusManager;
 
 import javax.swing.*;
 import javax.swing.event.CellEditorListener;
@@ -33,14 +34,16 @@ public class CellEditorComponentWithBrowseButton<Comp extends JComponent> extend
   private final ComponentWithBrowseButton<Comp> myComponent;
   private final TableCellEditor myEditor;
   private final CellEditorListener myCellEditorListener = new CellEditorListener() {
-        public void editingCanceled(ChangeEvent e) {
-          onEditingFinished();
-        }
+    @Override
+    public void editingCanceled(ChangeEvent e) {
+      onEditingFinished();
+    }
 
-        public void editingStopped(ChangeEvent e) {
-          onEditingFinished();
-        }
-      };
+    @Override
+    public void editingStopped(ChangeEvent e) {
+      onEditingFinished();
+    }
+  };
   private boolean myEditingFinished = false;
 
   public CellEditorComponentWithBrowseButton(ComponentWithBrowseButton<Comp> component, TableCellEditor editor) {
@@ -49,11 +52,13 @@ public class CellEditorComponentWithBrowseButton<Comp extends JComponent> extend
     myEditor = editor;
     add(myComponent, BorderLayout.CENTER);
     registerKeyboardAction(new ActionListener() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         myEditor.stopCellEditing();
       }
     }, KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
     registerKeyboardAction(new ActionListener() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         myEditor.cancelCellEditing();
       }
@@ -68,20 +73,27 @@ public class CellEditorComponentWithBrowseButton<Comp extends JComponent> extend
     return getComponentWithButton().getChildComponent();
   }
 
+  @Override
   public void requestFocus() {
-    myComponent.requestFocus();
+    IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
+      IdeFocusManager.getGlobalInstance().requestFocus(myComponent, true);
+    });
   }
 
+  @SuppressWarnings("deprecation")
+  @Override
   public void setNextFocusableComponent(Component aComponent) {
     myComponent.setNextFocusableComponent(aComponent);
   }
 
+  @Override
   public void addNotify() {
     super.addNotify();
     myEditingFinished = false;
     myEditor.addCellEditorListener(myCellEditorListener);
   }
 
+  @Override
   public void removeNotify() {
     if (!myEditingFinished) {
       myEditor.stopCellEditing();
@@ -96,6 +108,7 @@ public class CellEditorComponentWithBrowseButton<Comp extends JComponent> extend
   }
 
   private KeyEvent myCurrentEvent = null;
+  @Override
   protected boolean processKeyBinding(KeyStroke ks, KeyEvent e, int condition, boolean pressed) {
     if (condition == WHEN_FOCUSED && myCurrentEvent != e)
       try {

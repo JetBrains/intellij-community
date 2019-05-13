@@ -23,7 +23,6 @@ class FormattingTest {
         instanceFoo.instanceMethodWithQuiteLongNameIndeed().staticMethodWithQuiteLongNameIndeed()
             .instanceFoo.instanceMethodWithQuiteLongNameIndeed().staticMethodWithQuiteLongNameIndeed().instanceMethodWithQuiteLongNameIndeed();
 
-        // Chained calls with implicit target - method calls are not aligned and use continuation indent instead.
         instanceMethodWithQuiteLongNameIndeed().instanceMethodWithQuiteLongNameIndeed().instanceMethodWithQuiteLongNameIndeed().instanceMethodWithQuiteLongNameIndeed();
     }
 

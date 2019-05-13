@@ -15,10 +15,10 @@
  */
 package com.siyeh.ig.classlayout;
 
+import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.psi.PsiAnonymousClass;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiTypeParameter;
-import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -35,23 +35,32 @@ public class InnerClassOnInterfaceInspection extends BaseInspection {
    */
   public boolean m_ignoreInnerInterfaces = false;
 
-  @NotNull
-  public String getID() {
-    return "InnerClassOfInterface";
-  }
-
-  @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "inner.class.on.interface.display.name");
-  }
-
+  @Override
   public JComponent createOptionsPanel() {
     return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message(
       "inner.class.on.interface.ignore.option"),
                                           this, "m_ignoreInnerInterfaces");
   }
 
+  @Override
+  protected InspectionGadgetsFix buildFix(Object... infos) {
+    return new MoveClassFix();
+  }
+
+  @Override
+  @NotNull
+  public String getID() {
+    return "InnerClassOfInterface";
+  }
+
+  @Override
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message(
+      "inner.class.on.interface.display.name");
+  }
+
+  @Override
   @NotNull
   public String buildErrorString(Object... infos) {
     final PsiClass parentInterface = (PsiClass)infos[0];
@@ -60,14 +69,12 @@ public class InnerClassOnInterfaceInspection extends BaseInspection {
       "inner.class.on.interface.problem.descriptor", interfaceName);
   }
 
-  protected InspectionGadgetsFix buildFix(Object... infos) {
-    return new MoveClassFix();
-  }
-
+  @Override
   protected boolean buildQuickFixesOnlyForOnTheFlyErrors() {
     return true;
   }
 
+  @Override
   public BaseInspectionVisitor buildVisitor() {
     return new InnerClassOnInterfaceVisitor();
   }

@@ -1,49 +1,40 @@
-/*
- * Copyright 2000-2011 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.ui.impl.watch;
 
 import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.DebuggerContext;
-import com.intellij.debugger.DebuggerInvocationUtil;
-import com.intellij.debugger.EvaluatingComputable;
+import com.intellij.debugger.DebuggerManagerEx;
+import com.intellij.debugger.SourcePosition;
 import com.intellij.debugger.engine.ContextUtil;
+import com.intellij.debugger.engine.JavaValue;
+import com.intellij.debugger.engine.JavaValueModifier;
 import com.intellij.debugger.engine.StackFrameContext;
-import com.intellij.debugger.engine.evaluation.*;
+import com.intellij.debugger.engine.evaluation.EvaluateException;
+import com.intellij.debugger.engine.evaluation.EvaluateExceptionUtil;
+import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
+import com.intellij.debugger.engine.evaluation.TextWithImports;
 import com.intellij.debugger.engine.evaluation.expression.ExpressionEvaluator;
 import com.intellij.debugger.engine.evaluation.expression.Modifier;
+import com.intellij.debugger.engine.evaluation.expression.UnsupportedExpressionException;
+import com.intellij.debugger.impl.DebuggerContextImpl;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
-import com.intellij.debugger.impl.PositionUtil;
 import com.intellij.debugger.jdi.StackFrameProxyImpl;
+import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiCodeFragment;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiExpression;
-import com.intellij.psi.PsiExpressionCodeFragment;
-import com.sun.jdi.ObjectReference;
-import com.sun.jdi.Value;
+import com.intellij.psi.*;
+import com.intellij.xdebugger.XExpression;
+import com.intellij.xdebugger.frame.XValueModifier;
+import com.sun.jdi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * @author lex
  */
-public abstract class EvaluationDescriptor extends ValueDescriptorImpl{
+public abstract class EvaluationDescriptor extends ValueDescriptorImpl {
   private Modifier myModifier;
   protected TextWithImports myText;
-  private CodeFragmentFactory myCodeFragmentFactory = null; // used to force specific context, e.g. from evaluation
 
   protected EvaluationDescriptor(TextWithImports text, Project project, Value value) {
     super(project, value);
@@ -56,38 +47,37 @@ public abstract class EvaluationDescriptor extends ValueDescriptorImpl{
     myText = text;
   }
 
-  public final void setCodeFragmentFactory(CodeFragmentFactory codeFragmentFactory) {
-    myCodeFragmentFactory = codeFragmentFactory != null? new CodeFragmentFactoryContextWrapper(codeFragmentFactory) : null;
-  }
-
-  @Nullable
-  public final CodeFragmentFactory getCodeFragmentFactory() {
-    return myCodeFragmentFactory;
-  }
-
-  protected final @NotNull CodeFragmentFactory getEffectiveCodeFragmentFactory(final PsiElement psiContext) {
-    if (myCodeFragmentFactory != null) {
-      return myCodeFragmentFactory;
-    }
-    return DebuggerUtilsEx.getEffectiveCodeFragmentFactory(psiContext);
-  }
-
-  protected abstract EvaluationContextImpl getEvaluationContext (EvaluationContextImpl evaluationContext);
+  protected abstract EvaluationContextImpl getEvaluationContext(EvaluationContextImpl evaluationContext);
 
   protected abstract PsiCodeFragment getEvaluationCode(StackFrameContext context) throws EvaluateException;
 
-  public final Value calcValue(final EvaluationContextImpl evaluationContext) throws EvaluateException {
-    try {
-      final EvaluationContextImpl thisEvaluationContext = getEvaluationContext(evaluationContext);
+  public PsiCodeFragment createCodeFragment(PsiElement context) {
+    TextWithImports text = getEvaluationText();
+    return DebuggerUtilsEx.findAppropriateCodeFragmentFactory(text, context).createCodeFragment(text, context, myProject);
+  }
 
-      final ExpressionEvaluator evaluator = DebuggerInvocationUtil.commitAndRunReadAction(myProject, new EvaluatingComputable<ExpressionEvaluator>() {
-        public ExpressionEvaluator compute() throws EvaluateException {
-          final PsiElement psiContext = PositionUtil.getContextElement(evaluationContext);
-          return getEffectiveCodeFragmentFactory(psiContext).getEvaluatorBuilder().build(getEvaluationCode(thisEvaluationContext),
-                                                            ContextUtil.getSourcePosition(thisEvaluationContext));
+  @Override
+  public final Value calcValue(EvaluationContextImpl evaluationContext) throws EvaluateException {
+    try {
+      PsiDocumentManager.getInstance(myProject).commitAndRunReadAction(() -> {});
+
+      EvaluationContextImpl thisEvaluationContext = getEvaluationContext(evaluationContext);
+      SourcePosition position = ContextUtil.getSourcePosition(evaluationContext);
+
+      ExpressionEvaluator evaluator = ReadAction.compute(() -> {
+        PsiCodeFragment code = getEvaluationCode(thisEvaluationContext);
+        PsiElement psiContext = ContextUtil.getContextElement(evaluationContext, position);
+        try {
+          return DebuggerUtilsEx.findAppropriateCodeFragmentFactory(getEvaluationText(), psiContext).getEvaluatorBuilder().build(code, position);
+        }
+        catch (UnsupportedExpressionException ex) {
+          ExpressionEvaluator eval = CompilingEvaluatorImpl.create(myProject, code.getContext(), element -> code);
+          if (eval != null) {
+            return eval;
+          }
+          throw ex;
         }
       });
-
 
       if (!thisEvaluationContext.getDebugProcess().isAttached()) {
         throw EvaluateExceptionUtil.PROCESS_EXITED;
@@ -97,27 +87,29 @@ public abstract class EvaluationDescriptor extends ValueDescriptorImpl{
         throw EvaluateExceptionUtil.NULL_STACK_FRAME;
       }
 
-      final Value value = evaluator.evaluate(thisEvaluationContext);
-      if (value instanceof ObjectReference) {
-        thisEvaluationContext.getSuspendContext().keep(((ObjectReference)value));
-      }
+      Value value = evaluator.evaluate(thisEvaluationContext);
+      thisEvaluationContext.keep(value);
+
       myModifier = evaluator.getModifier();
       setLvalue(myModifier != null);
 
       return value;
     }
+    catch (IndexNotReadyException ex) {
+      throw new EvaluateException("Evaluation is not possible during indexing", ex);
+    }
     catch (final EvaluateException ex) {
       throw new EvaluateException(ex.getLocalizedMessage(), ex);
     }
+    catch (ObjectCollectedException ex) {
+      throw EvaluateExceptionUtil.OBJECT_WAS_COLLECTED;
+    }
   }
 
-  public String calcValueName() {
-    return getName();
-  }
-
+  @Override
   public PsiExpression getDescriptorEvaluation(DebuggerContext context) throws EvaluateException {
     PsiElement evaluationCode = getEvaluationCode(context);
-    if(evaluationCode instanceof PsiExpressionCodeFragment) {
+    if (evaluationCode instanceof PsiExpressionCodeFragment) {
       return ((PsiExpressionCodeFragment)evaluationCode).getExpression();
     }
     else {
@@ -125,15 +117,51 @@ public abstract class EvaluationDescriptor extends ValueDescriptorImpl{
     }
   }
 
+  @Override
+  protected boolean isPrintExceptionToConsole() {
+    return false;
+  }
+
+  @Nullable
   public Modifier getModifier() {
     return myModifier;
   }
 
+  @Override
   public boolean canSetValue() {
     return super.canSetValue() && myModifier != null && myModifier.canSetValue();
   }
 
   public TextWithImports getEvaluationText() {
     return myText;
+  }
+
+  @Override
+  public XValueModifier getModifier(JavaValue value) {
+    return new JavaValueModifier(value) {
+      @Override
+      protected void setValueImpl(@NotNull XExpression expression, @NotNull XModificationCallback callback) {
+        final EvaluationDescriptor evaluationDescriptor = EvaluationDescriptor.this;
+        if (evaluationDescriptor.canSetValue()) {
+          final DebuggerContextImpl debuggerContext = DebuggerManagerEx.getInstanceEx(getProject()).getContext();
+          set(expression, callback, debuggerContext, new SetValueRunnable() {
+            @Override
+            public void setValue(EvaluationContextImpl evaluationContext, Value newValue)
+              throws ClassNotLoadedException, InvalidTypeException, EvaluateException {
+              //noinspection ConstantConditions
+              evaluationDescriptor.getModifier().setValue(preprocessValue(evaluationContext, newValue, getLType()));
+              update(debuggerContext);
+            }
+
+            @NotNull
+            @Override
+            public Type getLType() throws EvaluateException, ClassNotLoadedException {
+              //noinspection ConstantConditions
+              return evaluationDescriptor.getModifier().getExpectedType();
+            }
+          });
+        }
+      }
+    };
   }
 }

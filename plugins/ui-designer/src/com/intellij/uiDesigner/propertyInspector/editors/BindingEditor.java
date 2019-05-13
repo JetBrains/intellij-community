@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.uiDesigner.propertyInspector.editors;
 
 import com.intellij.openapi.actionSystem.AnAction;
@@ -20,13 +6,13 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonShortcuts;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.psi.*;
 import com.intellij.uiDesigner.FormEditingUtil;
 import com.intellij.uiDesigner.core.Spacer;
 import com.intellij.uiDesigner.inspections.FormInspectionUtil;
 import com.intellij.uiDesigner.lw.IRootContainer;
 import com.intellij.uiDesigner.propertyInspector.InplaceContext;
-import com.intellij.uiDesigner.propertyInspector.UIDesignerToolWindowManager;
 import com.intellij.uiDesigner.propertyInspector.properties.BindingProperty;
 import com.intellij.uiDesigner.radComponents.RadComponent;
 import com.intellij.uiDesigner.radComponents.RadErrorComponent;
@@ -34,12 +20,15 @@ import com.intellij.uiDesigner.radComponents.RadHSpacer;
 import com.intellij.uiDesigner.radComponents.RadVSpacer;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.Arrays;
+
+import static com.intellij.uiDesigner.propertyInspector.DesignerToolWindowManager.getInstance;
 
 /**
  * @author Anton Katilin
@@ -54,6 +43,7 @@ public final class BindingEditor extends ComboBoxPropertyEditor<String> {
 
     myCbx.addActionListener(
       new ActionListener(){
+        @Override
         public void actionPerformed(final ActionEvent e){
           fireValueCommitted(true, false);
         }
@@ -61,23 +51,22 @@ public final class BindingEditor extends ComboBoxPropertyEditor<String> {
     );
 
     new AnAction(){
-      public void actionPerformed(final AnActionEvent e) {
+      @Override
+      public void actionPerformed(@NotNull final AnActionEvent e) {
         if (!myCbx.isPopupVisible()) {
           fireEditingCancelled();
-          SwingUtilities.invokeLater(
-            new Runnable(){
-              public void run(){
-                UIDesignerToolWindowManager.getInstance(project).getPropertyInspector().requestFocus();
-              }
-            }
-          );
+          IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
+            IdeFocusManager.getGlobalInstance()
+              .requestFocus(getInstance(getInstance(project).getActiveFormEditor())
+                              .getPropertyInspector(), true);
+          });
         }
       }
     }.registerCustomShortcutSet(CommonShortcuts.ESCAPE, myCbx);
   }
 
   private static String[] getFieldNames(final RadComponent component, final String currentName) {
-    final ArrayList<String> result = new ArrayList<String>();
+    final ArrayList<String> result = new ArrayList<>();
     if (currentName != null){
       result.add(currentName);
     }
@@ -142,7 +131,7 @@ public final class BindingEditor extends ComboBoxPropertyEditor<String> {
     if (text != null) {
       String binding = BindingProperty.suggestBindingFromText(component, text);
       if (binding != null && !result.contains(binding)) {
-        result.add(binding);        
+        result.add(binding);
       }
     }
 
@@ -151,11 +140,13 @@ public final class BindingEditor extends ComboBoxPropertyEditor<String> {
     return names;
   }
 
+  @Override
   public String getValue() throws Exception {
     final String value = super.getValue();
     return value != null ? value.replace('$', '.') : null; // PSI works only with dots
   }
 
+  @Override
   public JComponent getComponent(final RadComponent component, final String value, final InplaceContext inplaceContext){
     final String[] fieldNames = getFieldNames(component, value);
     myCbx.setModel(new DefaultComboBoxModel(fieldNames));

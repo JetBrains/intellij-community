@@ -4,7 +4,7 @@ class S {
     public void f() {
         //noinspection HardCodedStringLiteral
         String s=null;
-        //noinspection HardCodedStringLiteral
+        //noinspection unused, HardCodedStringLiteral
         String s2="sssssss";
     }
     @SuppressWarnings({"HardCodedStringLiteral"})
@@ -65,5 +65,8 @@ class S {
 
     @SuppressWarnings({"EmptyMethod"})
     void foo1() {String f;}
+
+    @SuppressWarnings("unknown")
+    void fooUnknownSuppression() {}
 
 }

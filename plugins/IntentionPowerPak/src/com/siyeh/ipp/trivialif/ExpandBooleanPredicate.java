@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2012 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2017 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,19 +17,22 @@ package com.siyeh.ipp.trivialif;
 
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.siyeh.ipp.base.PsiElementPredicate;
 
 class ExpandBooleanPredicate implements PsiElementPredicate {
 
+  @Override
   public boolean satisfiedBy(PsiElement element) {
-    if (!(element instanceof PsiJavaToken)) {
+    if (!(element instanceof PsiStatement)) {
       return false;
     }
-    final PsiStatement containingStatement = PsiTreeUtil.getParentOfType(element, PsiStatement.class);
-    if (containingStatement == null) {
+    final PsiStatement statement = (PsiStatement)element;
+    final PsiElement lastLeaf = PsiTreeUtil.getDeepestLast(statement);
+    if (PsiUtil.isJavaToken(lastLeaf, JavaTokenType.SEMICOLON) && PsiTreeUtil.prevLeaf(lastLeaf) instanceof PsiErrorElement) {
       return false;
     }
-    return isBooleanReturn(containingStatement) || isBooleanAssignment(containingStatement) || isBooleanDeclaration(containingStatement);
+    return isBooleanReturn(statement) || isBooleanAssignment(statement) || isBooleanDeclaration(statement);
   }
 
   public static boolean isBooleanReturn(PsiStatement statement) {
@@ -37,7 +40,7 @@ class ExpandBooleanPredicate implements PsiElementPredicate {
       return false;
     }
     final PsiReturnStatement returnStatement = (PsiReturnStatement)statement;
-    final PsiExpression returnValue = returnStatement.getReturnValue();
+    final PsiExpression returnValue = PsiUtil.skipParenthesizedExprDown(returnStatement.getReturnValue());
     if (returnValue == null || returnValue instanceof PsiLiteralExpression) {
       return false;
     }
@@ -55,7 +58,7 @@ class ExpandBooleanPredicate implements PsiElementPredicate {
       return false;
     }
     final PsiAssignmentExpression assignment = (PsiAssignmentExpression)expression;
-    final PsiExpression rhs = assignment.getRExpression();
+    final PsiExpression rhs = PsiUtil.skipParenthesizedExprDown(assignment.getRExpression());
     if (rhs == null || rhs instanceof PsiLiteralExpression) {
       return false;
     }
@@ -77,7 +80,7 @@ class ExpandBooleanPredicate implements PsiElementPredicate {
       return false;
     }
     final PsiLocalVariable variable = (PsiLocalVariable)element;
-    final PsiExpression initializer = variable.getInitializer();
+    final PsiExpression initializer = PsiUtil.skipParenthesizedExprDown(variable.getInitializer());
     if (initializer == null || initializer instanceof PsiLiteralExpression) {
       return false;
     }

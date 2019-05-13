@@ -17,14 +17,15 @@
 package com.intellij.util.containers;
 
 import junit.framework.Assert;
-import junit.framework.TestCase;
+import junit.framework.TestCase;import java.util.HashMap;
+import java.util.HashSet;
 
 /**
  * @author lvo
  */
 public class ObjectCacheTest extends TestCase {
   public void testCacheFiniteness() {
-    ObjectCache<String, String> cache = new ObjectCache<String, String>(4);
+    ObjectCache<String, String> cache = new ObjectCache<>(4);
     cache.put("Eclipse", "Sucking IDE");
     cache.put("IDEA", "good");
     cache.put("IDEA 4.5", "better");
@@ -35,13 +36,13 @@ public class ObjectCacheTest extends TestCase {
   }
 
   public void testCacheIterator() {
-    ObjectCache<String, String> cache = new ObjectCache<String, String>(4);
+    ObjectCache<String, String> cache = new ObjectCache<>(4);
     cache.put("Eclipse", "Sucking IDE");
     cache.put("IDEA", "good IDEA");
     cache.put("IDEA 4.5", "better IDEA");
     cache.put("IDEA 5.0", "perfect IDEA");
     cache.put("IDEA 6.0", "IDEAL");
-    HashSet<String> values = new HashSet<String>();
+    java.util.HashSet<String> values = new java.util.HashSet<>();
     for (Object obj : cache) {
       values.add((String)obj);
     }
@@ -53,7 +54,7 @@ public class ObjectCacheTest extends TestCase {
     Assert.assertTrue(values.contains("IDEAL"));
   }
 
-  final private static HashMap removedPairs = new HashMap();
+  final private static HashMap removedPairs = new java.util.HashMap();
 
   private static class CacheDeletedPairsListener implements ObjectCache.DeletedPairsListener {
     @Override
@@ -63,7 +64,7 @@ public class ObjectCacheTest extends TestCase {
   }
 
   public void testCacheListeners() {
-    ObjectCache<String, String> cache = new ObjectCache<String, String>(4);
+    ObjectCache<String, String> cache = new ObjectCache<>(4);
     cache.addDeletedPairsListener(new CacheDeletedPairsListener());
     removedPairs.clear();
     cache.put("Eclipse", "Sucking IDE");
@@ -77,7 +78,7 @@ public class ObjectCacheTest extends TestCase {
   }
 
   public void testIntCacheFiniteness() {
-    IntObjectCache<Integer> cache = new IntObjectCache<Integer>(4);
+    IntObjectCache<Integer> cache = new IntObjectCache<>(4);
     cache.put(0, 0);
     cache.put(1, 1);
     cache.put(2, 2);
@@ -88,13 +89,13 @@ public class ObjectCacheTest extends TestCase {
   }
 
   public void testIntCacheIterator() {
-    IntObjectCache<Integer> cache = new IntObjectCache<Integer>(4);
+    IntObjectCache<Integer> cache = new IntObjectCache<>(4);
     cache.put(0, 0);
     cache.put(1, 1);
     cache.put(2, 2);
     cache.put(3, 3);
     cache.put(4, 4);
-    HashSet<Object> values = new HashSet<Object>();
+    java.util.HashSet<Object> values = new HashSet<>();
     for (Object obj : cache) {
       values.add(obj);
     }
@@ -106,7 +107,7 @@ public class ObjectCacheTest extends TestCase {
   }
 
   public void testIntCacheNegativeKeys() {
-    IntObjectCache<Object> cache = new IntObjectCache<Object>(8);
+    IntObjectCache<Object> cache = new IntObjectCache<>(8);
     cache.put(-1, 1);
     cache.put(-2, 2);
     cache.put(-3, 3);

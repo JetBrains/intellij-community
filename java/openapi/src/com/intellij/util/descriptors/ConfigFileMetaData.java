@@ -52,7 +52,7 @@ public class ConfigFileMetaData {
     myDirectoryPath = directoryPath;
     myFileNameFixed = fileNameFixed;
     myUnique = unique;
-    LOG.assertTrue(versions.length > 0);
+    LOG.assertTrue(versions.length > 0, "No versions specified for '" + id + "' descriptor");
     myVersions = versions;
     myOptional = optional;
     myDefaultVersion = defaultVersion != null ? defaultVersion : myVersions[myVersions.length - 1];

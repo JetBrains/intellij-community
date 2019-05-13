@@ -22,11 +22,6 @@ import javax.rmi.PortableRemoteObject;
 import java.rmi.RemoteException;
 import java.util.List;
 
-/**
- * Created by IntelliJ IDEA.
- * User: sweinreuter
- * Date: 08.06.2007
- */
 public class RemoteEventQueueImpl extends PortableRemoteObject implements RemoteDebugger.EventQueue {
   private final OutputEventQueue myQueue;
 

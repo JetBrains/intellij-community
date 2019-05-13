@@ -1,4 +1,4 @@
-// "Add Catch Clause(s)" "true"
+// "Add 'catch' clause(s)" "true"
 class MyException1 extends Exception {}
 class MyException2 extends Exception {}
 
@@ -10,7 +10,7 @@ class Test {
       foo();
     } catch (MyException1 e) {
     } catch (MyException2 myException2) {
-        <caret><selection>myException2.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.</selection>
+        <caret><selection>myException2.printStackTrace();</selection>
     }
   }
 }

@@ -20,9 +20,10 @@ package com.intellij.codeInsight.template.impl.actions;
 import com.intellij.codeInsight.CodeInsightActionHandler;
 import com.intellij.codeInsight.actions.BaseCodeInsightAction;
 import com.intellij.codeInsight.template.impl.ListTemplatesHandler;
+import com.intellij.openapi.project.DumbAware;
 import org.jetbrains.annotations.NotNull;
 
-public class ListTemplatesAction extends BaseCodeInsightAction{
+public class ListTemplatesAction extends BaseCodeInsightAction implements DumbAware {
   @NotNull
   @Override
   protected CodeInsightActionHandler getHandler() {

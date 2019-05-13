@@ -22,10 +22,10 @@ import com.intellij.util.xml.GenericDomValue;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Jun 24, 2010
  */
 public class AntDomDeclarationSearcher extends AbstractDomDeclarationSearcher {
 
+  @Override
   protected DomTarget createDomTarget(DomElement parent, DomElement nameElement) {
     if (parent instanceof AntDomElement && nameElement.equals(((AntDomElement)parent).getId())) { // id attrib is defined
       return DomTarget.getTarget(parent, (GenericDomValue)nameElement);

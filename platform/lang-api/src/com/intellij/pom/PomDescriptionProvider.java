@@ -25,6 +25,7 @@ import org.jetbrains.annotations.Nullable;
  * @author peter
  */
 public abstract class PomDescriptionProvider implements ElementDescriptionProvider{
+  @Override
   @Nullable
   public String getElementDescription(@NotNull PsiElement element, @NotNull ElementDescriptionLocation location) {
     if (element instanceof PomTargetPsiElement) {

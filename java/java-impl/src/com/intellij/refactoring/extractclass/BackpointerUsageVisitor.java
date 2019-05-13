@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,10 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * User: anna
- * Date: 01-Sep-2008
- */
 package com.intellij.refactoring.extractclass;
 
 import com.intellij.psi.*;
@@ -25,21 +21,21 @@ import com.intellij.psi.*;
 import java.util.List;
 
 class BackpointerUsageVisitor extends JavaRecursiveElementWalkingVisitor {
-  private PsiMember myCause = null;
+  private PsiMember myCause;
 
-  private final List<PsiField> myFields;
-  private final List<PsiClass> myInnerClasses;
-  private final List<PsiMethod> myMethods;
+  private final List<? extends PsiField> myFields;
+  private final List<? extends PsiClass> myInnerClasses;
+  private final List<? extends PsiMethod> myMethods;
   private final PsiClass mySourceClass;
   private final boolean myCheckThisExpression;
 
 
-  public BackpointerUsageVisitor(final List<PsiField> fields,
-                          final List<PsiClass> innerClasses, final List<PsiMethod> methods, final PsiClass sourceClass) {
+  BackpointerUsageVisitor(final List<? extends PsiField> fields,
+                                 final List<? extends PsiClass> innerClasses, final List<? extends PsiMethod> methods, final PsiClass sourceClass) {
     this(fields, innerClasses, methods, sourceClass, true);
   }
 
-  public BackpointerUsageVisitor(List<PsiField> fields, List<PsiClass> innerClasses, List<PsiMethod> methods, PsiClass sourceClass,
+  BackpointerUsageVisitor(List<? extends PsiField> fields, List<? extends PsiClass> innerClasses, List<? extends PsiMethod> methods, PsiClass sourceClass,
                                  final boolean checkThisExpression) {
     myFields = fields;
     myInnerClasses = innerClasses;
@@ -48,6 +44,7 @@ class BackpointerUsageVisitor extends JavaRecursiveElementWalkingVisitor {
     myCheckThisExpression = checkThisExpression;
   }
 
+  @Override
   public void visitElement(PsiElement element) {
     if (myCause != null) {
       return;
@@ -55,6 +52,7 @@ class BackpointerUsageVisitor extends JavaRecursiveElementWalkingVisitor {
     super.visitElement(element);
   }
 
+  @Override
   public void visitReferenceExpression(PsiReferenceExpression expression) {
     if (myCause != null) {
       return;
@@ -78,6 +76,7 @@ class BackpointerUsageVisitor extends JavaRecursiveElementWalkingVisitor {
     }
   }
 
+  @Override
   public void visitMethodCallExpression(PsiMethodCallExpression expression) {
     if (myCause != null) {
       return;

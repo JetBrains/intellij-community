@@ -1,0 +1,77 @@
+package pkg;
+
+import java.io.File;
+
+public class TestLocalsNames {
+   private static void rename(File file, boolean recursively) {
+      if (file.isDirectory()) {// 22
+         long start = System.currentTimeMillis();// 23
+         File[] files = file.listFiles();// 25
+         File[] var5 = files;
+         int var6 = files.length;
+
+         for(int var7 = 0; var7 < var6; ++var7) {// 26
+            File s = var5[var7];
+            File dest = new File(s.getAbsolutePath() + ".tmp");// 27
+
+            assert s.renameTo(dest) : "unable to rename " + s + " to " + dest;// 28
+         }
+
+         long elapsed = System.currentTimeMillis() - start;// 31
+         System.out.println("took " + elapsed + "ms (" + elapsed / (long)files.length + "ms per dir)");// 32
+      }
+
+   }// 34
+}
+
+class 'pkg/TestLocalsNames' {
+   method 'rename (Ljava/io/File;Z)V' {
+      1      6
+      4      6
+      7      7
+      a      7
+      c      8
+      f      8
+      13      9
+      17      10
+      18      10
+      1a      12
+      1b      12
+      21      12
+      28      13
+      29      13
+      38      14
+      3e      14
+      43      14
+      49      14
+      55      16
+      66      16
+      70      16
+      7a      16
+      81      12
+      87      19
+      8b      19
+      8c      19
+      8e      20
+      98      20
+      a2      20
+      ab      20
+      ac      20
+      ad      20
+      b1      20
+      b6      20
+      b9      20
+      bc      23
+   }
+}
+
+Lines mapping:
+22 <-> 7
+23 <-> 8
+25 <-> 9
+26 <-> 13
+27 <-> 15
+28 <-> 17
+31 <-> 20
+32 <-> 21
+34 <-> 24

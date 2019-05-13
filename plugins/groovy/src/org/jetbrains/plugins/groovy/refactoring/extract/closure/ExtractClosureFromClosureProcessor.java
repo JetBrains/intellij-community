@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,14 +18,13 @@ package org.jetbrains.plugins.groovy.refactoring.extract.closure;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
-import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.refactoring.IntroduceParameterRefactoring;
 import com.intellij.refactoring.introduceParameter.ExternalUsageInfo;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.groovy.GroovyFileType;
+import org.jetbrains.plugins.groovy.GroovyLanguage;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCall;
@@ -48,9 +47,9 @@ public class ExtractClosureFromClosureProcessor extends ExtractClosureProcessorB
   }
 
   @Override
-  protected boolean preprocessUsages(Ref<UsageInfo[]> refUsages) {
+  protected boolean preprocessUsages(@NotNull Ref<UsageInfo[]> refUsages) {
     UsageInfo[] usagesIn = refUsages.get();
-    MultiMap<PsiElement, String> conflicts = new MultiMap<PsiElement, String>();
+    MultiMap<PsiElement, String> conflicts = new MultiMap<>();
 
     if (!myHelper.generateDelegate()) {
       for (GrStatement statement : myHelper.getStatements()) {
@@ -65,7 +64,7 @@ public class ExtractClosureFromClosureProcessor extends ExtractClosureProcessorB
 
 
   @Override
-  protected void performRefactoring(UsageInfo[] usages) {
+  protected void performRefactoring(@NotNull UsageInfo[] usages) {
     GrIntroduceClosureParameterProcessor.processExternalUsages(usages, myHelper, generateClosure(myHelper));
     GrIntroduceClosureParameterProcessor.processClosure(usages, myHelper);
 
@@ -78,10 +77,10 @@ public class ExtractClosureFromClosureProcessor extends ExtractClosureProcessorB
   protected UsageInfo[] findUsages() {
     final GrVariable var = (GrVariable)myHelper.getToSearchFor();
     if (var != null) {
-      final List<UsageInfo> result = new ArrayList<UsageInfo>();
-      for (PsiReference ref : ReferencesSearch.search(var, GlobalSearchScope.allScope(myHelper.getProject()), true)) {
+      final List<UsageInfo> result = new ArrayList<>();
+      for (PsiReference ref : ReferencesSearch.search(var)) {
         final PsiElement element = ref.getElement();
-        if (element.getLanguage() != GroovyFileType.GROOVY_LANGUAGE) {
+        if (element.getLanguage() != GroovyLanguage.INSTANCE) {
           result.add(new OtherLanguageUsageInfo(ref));
           continue;
         }
@@ -91,7 +90,7 @@ public class ExtractClosureFromClosureProcessor extends ExtractClosureProcessorB
 
         result.add(new ExternalUsageInfo(element));
       }
-      return result.toArray(new UsageInfo[result.size()]);
+      return result.toArray(UsageInfo.EMPTY_ARRAY);
     }
     return UsageInfo.EMPTY_ARRAY;
   }

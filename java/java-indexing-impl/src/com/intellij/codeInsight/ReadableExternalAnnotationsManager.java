@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,17 +18,16 @@ package com.intellij.codeInsight;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.roots.*;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.PsiManager;
-import com.intellij.util.ThreeState;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 public class ReadableExternalAnnotationsManager extends BaseExternalAnnotationsManager {
-  @NotNull private volatile ThreeState myHasAnyAnnotationsRoots = ThreeState.UNSURE;
+  @Nullable private Set<VirtualFile> myAnnotationsRoots;
 
   public ReadableExternalAnnotationsManager(PsiManager psiManager) {
     super(psiManager);
@@ -36,47 +35,46 @@ public class ReadableExternalAnnotationsManager extends BaseExternalAnnotationsM
 
   @Override
   protected boolean hasAnyAnnotationsRoots() {
-    if (myHasAnyAnnotationsRoots == ThreeState.UNSURE) {
+    return !initRoots().isEmpty();
+  }
+
+  @NotNull
+  private synchronized Set<VirtualFile> initRoots() {
+    if (myAnnotationsRoots == null) {
+      myAnnotationsRoots = new HashSet<>();
       final Module[] modules = ModuleManager.getInstance(myPsiManager.getProject()).getModules();
       for (Module module : modules) {
         for (OrderEntry entry : ModuleRootManager.getInstance(module).getOrderEntries()) {
-          final String[] urls = AnnotationOrderRootType.getUrls(entry);
-          if (urls.length > 0) {
-            myHasAnyAnnotationsRoots = ThreeState.YES;
-            return true;
+          final VirtualFile[] files = AnnotationOrderRootType.getFiles(entry);
+          if (files.length > 0) {
+            Collections.addAll(myAnnotationsRoots, files);
           }
         }
       }
-      myHasAnyAnnotationsRoots = ThreeState.NO;
     }
-    return myHasAnyAnnotationsRoots == ThreeState.YES;
+    return myAnnotationsRoots;
   }
 
   @Override
   @NotNull
   protected List<VirtualFile> getExternalAnnotationsRoots(@NotNull VirtualFile libraryFile) {
     ProjectFileIndex fileIndex = ProjectRootManager.getInstance(myPsiManager.getProject()).getFileIndex();
-    List<OrderEntry> entries = fileIndex.getOrderEntriesForFile(libraryFile);
-    List<VirtualFile> result = new ArrayList<VirtualFile>();
-    VirtualFileManager vfManager = VirtualFileManager.getInstance();
-    for (OrderEntry entry : entries) {
-      if (entry instanceof ModuleOrderEntry) {
-        continue;
-      }
-      final String[] externalUrls = AnnotationOrderRootType.getUrls(entry);
-      for (String url : externalUrls) {
-        VirtualFile root = vfManager.findFileByUrl(url);
-        if (root != null) {
-          result.add(root);
-        }
+    Set<VirtualFile> result = new LinkedHashSet<>();
+    for (OrderEntry entry : fileIndex.getOrderEntriesForFile(libraryFile)) {
+      if (!(entry instanceof ModuleOrderEntry)) {
+        Collections.addAll(result, AnnotationOrderRootType.getFiles(entry));
       }
     }
-    return result;
+    return new ArrayList<>(result);
   }
 
   @Override
-  protected void dropCache() {
-    myHasAnyAnnotationsRoots = ThreeState.UNSURE;
+  protected synchronized void dropCache() {
+    myAnnotationsRoots = null;
     super.dropCache();
+  }
+
+  public boolean isUnderAnnotationRoot(VirtualFile file) {
+    return VfsUtilCore.isUnder(file, initRoots());
   }
 }

@@ -18,10 +18,13 @@ package com.intellij.psi.jsp;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.ServerPageFile;
 import com.intellij.psi.xml.XmlTag;
+import org.jetbrains.annotations.Nullable;
 
 public interface JspFile extends BaseJspFile, ServerPageFile {
   JspFile[] EMPTY_ARRAY = new JspFile[0];
 
   XmlTag[] getDirectiveTagsInContext(JspDirectiveKind directiveKind);
+
+  @Nullable
   PsiClass getJavaClass();
 }

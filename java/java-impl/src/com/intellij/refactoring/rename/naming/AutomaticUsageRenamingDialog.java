@@ -1,39 +1,25 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.rename.naming;
 
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.wm.IdeFocusManager;
+import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.ui.*;
 import com.intellij.ui.components.panels.ValidatingComponent;
-import com.intellij.util.ui.Table;
-import com.intellij.refactoring.RefactoringBundle;
-import com.intellij.ide.IdeBundle;
+import com.intellij.ui.table.JBTable;
+import com.intellij.util.ui.JBUI;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.border.EmptyBorder;
-import javax.swing.event.*;
+import javax.swing.event.DocumentEvent;
 import javax.swing.table.AbstractTableModel;
-import javax.swing.table.TableColumn;
 import java.awt.*;
 import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.util.List;
 
@@ -49,7 +35,7 @@ public class AutomaticUsageRenamingDialog<T> extends DialogWrapper {
   private boolean[] myShouldRename;
   private String[] myNewNames;
   private MyTableModel myTableModel;
-  private Table myTable;
+  private JBTable myTable;
   private DocumentAdapter myCellEditorListener;
   private ValidatingComponent myValidatingComponent;
 
@@ -80,6 +66,7 @@ public class AutomaticUsageRenamingDialog<T> extends DialogWrapper {
     return getElements().size();
   }
 
+  @Override
   protected JComponent createNorthPanel() {
     final Box box = Box.createHorizontalBox();
     box.add(new JLabel(myRenamer.getDialogDescription()));
@@ -87,12 +74,13 @@ public class AutomaticUsageRenamingDialog<T> extends DialogWrapper {
     return box;
   }
 
+  @Override
   public void show() {
     if (ApplicationManager.getApplication().isUnitTestMode()) return;
     super.show();
   }
 
-  protected void handleChanges() {
+  private void handleChanges() {
     updateRenamer();
 
     boolean okActionEnabled = true;
@@ -119,7 +107,7 @@ public class AutomaticUsageRenamingDialog<T> extends DialogWrapper {
     return isChecked(element) ? myRenamer.getErrorText(element) : null;
   }
 
-  private SimpleTextAttributes highlightIfNeeded(SimpleTextAttributes attributes, String errorText) {
+  private static SimpleTextAttributes highlightIfNeeded(SimpleTextAttributes attributes, String errorText) {
     if (errorText != null) {
       Color errorColor = SimpleTextAttributes.ERROR_ATTRIBUTES.getFgColor();
       int style = attributes.getStyle() | SimpleTextAttributes.STYLE_ITALIC | SimpleTextAttributes.STYLE_WAVED;
@@ -128,30 +116,29 @@ public class AutomaticUsageRenamingDialog<T> extends DialogWrapper {
     return attributes;
   }
 
+  @Override
   public JComponent getPreferredFocusedComponent() {
     return myTable;
   }
 
+  @Override
   protected JComponent createCenterPanel() {
     final Box box = Box.createVerticalBox();
     setupTable();
 
-    myTableModel.addTableModelListener(new TableModelListener() {
-      public void tableChanged(TableModelEvent e) {
-        handleChanges();
-      }
-    });
+    myTableModel.addTableModelListener(e -> handleChanges());
 
-    setupCheckColumn();
+    TableUtil.setupCheckboxColumn(myTable, CHECK_COLUMN);
     setupOldNameColumn();
     setupNewNameColumn();
 
     myValidatingComponent = new ValidatingComponent() {
+      @Override
       protected JComponent createMainComponent() {
         return ScrollPaneFactory.createScrollPane(myTable);
       }
     };
-    
+
     myValidatingComponent.doInitialize();
 
     box.add(myValidatingComponent);
@@ -162,23 +149,19 @@ public class AutomaticUsageRenamingDialog<T> extends DialogWrapper {
     buttonBox.add(Box.createHorizontalStrut(4));
     final JButton deselectAllButton = new JButton(RefactoringBundle.message("unselect.all.button"));
     buttonBox.add(deselectAllButton);
-    selectAllButton.addActionListener(new ActionListener() {
-      public void actionPerformed(ActionEvent e) {
-        for (int i = 0; i < getElementCount(); i++) {
-          myShouldRename[i] = true;
-        }
-        myTableModel.fireTableDataChanged();
+    selectAllButton.addActionListener(e -> {
+      for (int i = 0; i < getElementCount(); i++) {
+        myShouldRename[i] = true;
       }
+      myTableModel.fireTableDataChanged();
     });
     selectAllButton.setMnemonic('S');
 
-    deselectAllButton.addActionListener(new ActionListener() {
-      public void actionPerformed(ActionEvent e) {
-        for (int i = 0; i < getElementCount(); i++) {
-          myShouldRename[i] = false;
-        }
-        myTableModel.fireTableDataChanged();
+    deselectAllButton.addActionListener(e -> {
+      for (int i = 0; i < getElementCount(); i++) {
+        myShouldRename[i] = false;
       }
+      myTableModel.fireTableDataChanged();
     });
     deselectAllButton.setMnemonic('U');
     box.add(Box.createVerticalStrut(4));
@@ -189,15 +172,11 @@ public class AutomaticUsageRenamingDialog<T> extends DialogWrapper {
   }
 
   private void setupTable() {
-    myTable = new Table();
+    myTable = new JBTable();
     myTableModel = new MyTableModel();
     myTable.setModel(myTableModel);
 
-    myTable.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
-      public void valueChanged(ListSelectionEvent e) {
-        refreshValidatingComponent();
-      }
-    });
+    myTable.getSelectionModel().addListSelectionListener(e -> refreshValidatingComponent());
     myTable.setCellSelectionEnabled(false);
     myTable.setColumnSelectionAllowed(false);
     myTable.setRowSelectionAllowed(false);
@@ -206,6 +185,7 @@ public class AutomaticUsageRenamingDialog<T> extends DialogWrapper {
 
   private void setupNewNameColumn() {
     myTable.getColumnModel().getColumn(NEW_NAME_COLUMN).setCellRenderer(new ColoredTableCellRenderer() {
+      @Override
       protected void customizeCellRenderer(JTable table, Object value, boolean selected, boolean hasFocus, int row, int column) {
         T element = getElements().get(row);
         String errorText = getErrorText(element);
@@ -215,19 +195,22 @@ public class AutomaticUsageRenamingDialog<T> extends DialogWrapper {
     });
 
     final JTextField textField = new JTextField("");
-    textField.setBorder(new EmptyBorder(0, 0, 0, 0));
+    textField.setBorder(JBUI.Borders.empty());
     myTable.getColumnModel().getColumn(NEW_NAME_COLUMN).setCellEditor(new DefaultCellEditor(textField) {
+      @Override
       public boolean stopCellEditing() {
         removeListener(textField);
         return super.stopCellEditing();
       }
 
+      @Override
       public Component getTableCellEditorComponent(JTable table, Object value, boolean isSelected, final int row, final int column) {
         super.getTableCellEditorComponent(table, value, isSelected, row, column);
         removeListener(textField);
 
         myCellEditorListener = new DocumentAdapter() {
-          protected void textChanged(DocumentEvent e) {
+          @Override
+          protected void textChanged(@NotNull DocumentEvent e) {
             myTableModel.setValueAt(getCellEditorValue(), row, column);
             setChecked(row, true);
             String errorText = myRenamer.getErrorText(getElements().get(row));
@@ -236,9 +219,10 @@ public class AutomaticUsageRenamingDialog<T> extends DialogWrapper {
             if (errorText != null) {
               textField.setForeground(SimpleTextAttributes.ERROR_ATTRIBUTES.getFgColor());
               textField.setFont(font.deriveFont(font.getStyle() | Font.ITALIC));
-            } else {
+            }
+            else {
               textField.setForeground(SimpleTextAttributes.REGULAR_ATTRIBUTES.getFgColor());
-              textField.setFont(font.deriveFont(font.getStyle() & (~Font.ITALIC)));
+              textField.setFont(font.deriveFont(font.getStyle() & ~Font.ITALIC));
             }
             repaintTable();
           }
@@ -257,7 +241,9 @@ public class AutomaticUsageRenamingDialog<T> extends DialogWrapper {
 
   private void setupOldNameColumn() {
     myTable.getColumnModel().getColumn(OLD_NAME_COLUMN).setCellRenderer(new ColoredTableCellRenderer() {
+      @Override
       protected void customizeCellRenderer(JTable table, Object value, boolean selected, boolean hasFocus, int row, int column) {
+        //noinspection unchecked
         T element = (T) value;
         setToolTipText(getErrorText(element));
         append(myRenamer.getName(element), SimpleTextAttributes.REGULAR_ATTRIBUTES);
@@ -267,13 +253,6 @@ public class AutomaticUsageRenamingDialog<T> extends DialogWrapper {
         }
       }
     });
-  }
-
-  private void setupCheckColumn() {
-    TableColumn column = myTable.getColumnModel().getColumn(CHECK_COLUMN);
-    int checkBoxWidth = new JCheckBox().getPreferredSize().width;
-    column.setMaxWidth(checkBoxWidth);
-    column.setMinWidth(checkBoxWidth);
   }
 
   private void removeListener(JTextField textField) {
@@ -286,6 +265,7 @@ public class AutomaticUsageRenamingDialog<T> extends DialogWrapper {
     return new SimpleTextAttributes(SimpleTextAttributes.STYLE_ITALIC | attributes.getStyle(), attributes.getFgColor(), attributes.getWaveColor());
   }
 
+  @Override
   protected void doOKAction() {
     TableUtil.stopEditing(myTable);
     handleChanges();
@@ -308,10 +288,6 @@ public class AutomaticUsageRenamingDialog<T> extends DialogWrapper {
     myTableModel.setValueAt(checked, rowIndex, CHECK_COLUMN);
   }
 
-  protected String[] getNewNames() {
-    return myNewNames;
-  }
-
   protected void setChecked(T element, boolean checked) {
     setChecked(getElements().indexOf(element), checked);
   }
@@ -325,7 +301,7 @@ public class AutomaticUsageRenamingDialog<T> extends DialogWrapper {
   }
 
   private class MyTableModel extends AbstractTableModel {
-    public MyTableModel() {
+    MyTableModel() {
       InputMap inputMap = myTable.getInputMap();
       inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_SPACE, 0), "enable_disable");
       myTable.getActionMap().put("enable_disable", new MySpaceAction());
@@ -333,14 +309,17 @@ public class AutomaticUsageRenamingDialog<T> extends DialogWrapper {
       myTable.getActionMap().put("enter", new EnterAction());
     }
 
+    @Override
     public int getColumnCount() {
       return 3;
     }
 
+    @Override
     public int getRowCount() {
       return getElementCount();
     }
 
+    @Override
     public Object getValueAt(int rowIndex, int columnIndex) {
       switch(columnIndex) {
         case CHECK_COLUMN:
@@ -355,6 +334,7 @@ public class AutomaticUsageRenamingDialog<T> extends DialogWrapper {
       }
     }
 
+    @Override
     public void setValueAt(Object aValue, int rowIndex, int columnIndex) {
       switch(columnIndex) {
         case CHECK_COLUMN:
@@ -370,10 +350,12 @@ public class AutomaticUsageRenamingDialog<T> extends DialogWrapper {
       repaintTable();
     }
 
+    @Override
     public boolean isCellEditable(int rowIndex, int columnIndex) {
       return columnIndex != OLD_NAME_COLUMN;
     }
 
+    @Override
     @Nullable
     public Class getColumnClass(int columnIndex) {
       switch(columnIndex) {
@@ -384,6 +366,7 @@ public class AutomaticUsageRenamingDialog<T> extends DialogWrapper {
       }
     }
 
+    @Override
     public String getColumnName(int column) {
       switch(column) {
         case OLD_NAME_COLUMN:
@@ -396,6 +379,7 @@ public class AutomaticUsageRenamingDialog<T> extends DialogWrapper {
     }
 
     private class MySpaceAction extends AbstractAction {
+      @Override
       public void actionPerformed(ActionEvent e) {
         if (myTable.isEditing()) return;
 
@@ -404,12 +388,15 @@ public class AutomaticUsageRenamingDialog<T> extends DialogWrapper {
           myShouldRename[row] = !myShouldRename[row];
           fireTableDataChanged();
           repaintTable();
-          myTable.requestFocus();
+          IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
+            IdeFocusManager.getGlobalInstance().requestFocus(myTable, true);
+          });
         }
       }
     }
 
     private class EnterAction extends AbstractAction {
+      @Override
       public void actionPerformed(ActionEvent e) {
         if (!myTable.isEditing()) {
           doOKAction();

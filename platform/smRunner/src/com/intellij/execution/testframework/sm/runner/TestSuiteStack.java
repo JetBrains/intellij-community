@@ -1,30 +1,17 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.testframework.sm.runner;
 
 import com.intellij.execution.testframework.sm.SMTestRunnerConnectionUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.Function;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.EmptyStackException;
+import java.util.Iterator;
 import java.util.Stack;
+import java.util.concurrent.ConcurrentLinkedDeque;
 
 /**
  * @author Roman Chernyatchik
@@ -34,7 +21,12 @@ public class TestSuiteStack {
 
   @NonNls private static final String EMPTY = "empty";
 
-  private final Stack<SMTestProxy> myStack = new Stack<SMTestProxy>();
+  private final ConcurrentLinkedDeque<SMTestProxy> myStack = new ConcurrentLinkedDeque<>();
+  private final String myTestFrameworkName;
+
+  public TestSuiteStack(@NotNull String testFrameworkName) {
+    myTestFrameworkName = testFrameworkName;
+  }
 
   public void pushSuite(@NotNull final SMTestProxy suite) {
     myStack.push(suite);
@@ -45,10 +37,7 @@ public class TestSuiteStack {
    */
   @Nullable
   public SMTestProxy getCurrentSuite() {
-    if (getStackSize() != 0) {
-      return myStack.peek();
-    }
-    return null;
+    return myStack.peek();
   }
 
   /**
@@ -67,6 +56,11 @@ public class TestSuiteStack {
       return null;
     }
     final SMTestProxy topSuite = myStack.peek();
+    if (suiteName == null) {
+      String msg = "Pop error: undefined suite name. Rest of stack: " + getSuitePathPresentation();
+      GeneralTestEventsProcessor.logProblem(LOG, msg, true, myTestFrameworkName);
+      return null;
+    }
 
     if (!suiteName.equals(topSuite.getName())) {
       if (SMTestRunnerConnectionUtil.isInDebugMode()) {
@@ -114,8 +108,9 @@ public class TestSuiteStack {
   protected String[] getSuitePath() {
     final int stackSize = getStackSize();
     final String[] names = new String[stackSize];
-    for (int i = 0; i < stackSize; i++) {
-      names[i] = myStack.get(i).getName();
+    int i = 0;
+    for (Iterator<SMTestProxy> it = myStack.descendingIterator(); it.hasNext();) {
+      names[i++] = it.next().getName();
     }
     return names;
   }
@@ -126,12 +121,7 @@ public class TestSuiteStack {
       return EMPTY;
     }
 
-    return StringUtil.join(names, new Function<String, String>() {
-      @Override
-      public String fun(String s) {
-        return "[" + s + "]";
-      }
-    }, "->");
+    return StringUtil.join(names, s -> "[" + s + "]", "->");
   }
 
   public void clear() {

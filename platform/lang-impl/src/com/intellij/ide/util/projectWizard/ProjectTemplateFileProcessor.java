@@ -24,7 +24,6 @@ import java.io.IOException;
 
 /**
  * @author Dmitry Avdeev
- *         Date: 2/15/13
  */
 public abstract class ProjectTemplateFileProcessor {
 
@@ -41,5 +40,9 @@ public abstract class ProjectTemplateFileProcessor {
       if (text != null) return text;
     }
     return content;
+  }
+
+  protected static String wrap(String param) {
+    return "${" + param + "}";
   }
 }

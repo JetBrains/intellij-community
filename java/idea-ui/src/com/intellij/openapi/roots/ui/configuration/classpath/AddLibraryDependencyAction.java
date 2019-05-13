@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.roots.ui.configuration.classpath;
 
+import com.intellij.facet.impl.ProjectFacetsConfigurator;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.libraries.Library;
@@ -40,7 +41,7 @@ import java.util.List;
 class AddLibraryDependencyAction extends AddItemPopupAction<Library> {
   private final StructureConfigurableContext myContext;
 
-  public AddLibraryDependencyAction(ClasspathPanel classpathPanel, final int index, final String title,
+  AddLibraryDependencyAction(ClasspathPanel classpathPanel, final int index, final String title,
                                     final StructureConfigurableContext context) {
     super(classpathPanel, index, title, PlatformIcons.LIBRARY_ICON);
     myContext = context;
@@ -53,12 +54,8 @@ class AddLibraryDependencyAction extends AddItemPopupAction<Library> {
 
   @Override
   public PopupStep createSubStep() {
-    return LibraryEditingUtil.createChooseTypeStep(myClasspathPanel, new ParameterizedRunnable<LibraryType>() {
-      @Override
-      public void run(LibraryType libraryType) {
-        new AddNewLibraryDependencyAction(myClasspathPanel, myContext, libraryType).execute();
-      }
-    });
+    return LibraryEditingUtil.createChooseTypeStep(myClasspathPanel,
+                                                   libraryType -> new AddNewLibraryDependencyAction(myClasspathPanel, myContext, libraryType).execute());
   }
 
   @Override
@@ -72,7 +69,7 @@ class AddLibraryDependencyAction extends AddItemPopupAction<Library> {
   }
 
   private boolean hasLibraries() {
-    final Predicate<Library> condition = LibraryEditingUtil.getNotAddedLibrariesCondition(myClasspathPanel.getRootModel());
+    final Predicate<Library> condition = getNotAddedSuitableLibrariesCondition();
     for (LibraryTable table : ChooseLibrariesFromTablesDialog.getLibraryTables(myClasspathPanel.getProject(), true)) {
       final LibrariesModifiableModel model = myContext.myLevel2Providers.get(table.getTableLevel());
       if (model != null) {
@@ -84,6 +81,11 @@ class AddLibraryDependencyAction extends AddItemPopupAction<Library> {
       }
     }
     return false;
+  }
+
+  private Predicate<Library> getNotAddedSuitableLibrariesCondition() {
+    ProjectFacetsConfigurator facetsConfigurator = myContext.getModulesConfigurator().getFacetsConfigurator();
+    return LibraryEditingUtil.getNotAddedSuitableLibrariesCondition(myClasspathPanel.getRootModel(), facetsConfigurator);
   }
 
   @Override
@@ -112,22 +114,8 @@ class AddLibraryDependencyAction extends AddItemPopupAction<Library> {
       }
     }
     final LibraryOrderEntry orderEntry = rootModel.addLibraryEntry(item);
-    DependencyScope defaultScope = getDefaultScope(item);
-    if (defaultScope != null) {
-      orderEntry.setScope(defaultScope);
-    }
+    orderEntry.setScope(LibraryDependencyScopeSuggester.getDefaultScope(item));
     return ClasspathTableItem.createLibItem(orderEntry, myContext);
-  }
-
-  @Nullable
-  private static DependencyScope getDefaultScope(Library item) {
-    for (LibraryDependencyScopeSuggester suggester : LibraryDependencyScopeSuggester.EP_NAME.getExtensions()) {
-      DependencyScope scope = suggester.getDefaultDependencyScope(item);
-      if (scope != null) {
-        return scope;
-      }
-    }
-    return null;
   }
 
   @Override
@@ -139,9 +127,8 @@ class AddLibraryDependencyAction extends AddItemPopupAction<Library> {
     @Override
     @NotNull
     public List<Library> chooseElements() {
-      final Predicate<Library> condition = LibraryEditingUtil.getNotAddedLibrariesCondition(myClasspathPanel.getRootModel());
       ProjectStructureChooseLibrariesDialog dialog = new ProjectStructureChooseLibrariesDialog(myClasspathPanel, myContext,
-                                                                                               condition);
+                                                                                               getNotAddedSuitableLibrariesCondition());
       dialog.show();
       return dialog.getSelectedLibraries();
     }

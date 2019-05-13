@@ -34,52 +34,60 @@ public class JavaDummyHolder extends DummyHolder implements PsiImportHolder {
   private static final Map<String,PsiClass> EMPTY = Collections.emptyMap();
   private Map<String, PsiClass> myPseudoImports = EMPTY;
 
-  public JavaDummyHolder(@NotNull PsiManager manager, TreeElement contentElement, PsiElement context) {
+  JavaDummyHolder(@NotNull PsiManager manager, TreeElement contentElement, PsiElement context) {
     super(manager, contentElement, context, null, null, language(context, JavaLanguage.INSTANCE));
   }
 
-  public JavaDummyHolder(@NotNull PsiManager manager, CharTable table, boolean validity) {
-    super(manager, null, null, table, Boolean.valueOf(validity), JavaLanguage.INSTANCE);
+  JavaDummyHolder(@NotNull PsiManager manager, CharTable table, boolean validity) {
+    super(manager, null, null, table, validity, JavaLanguage.INSTANCE);
   }
 
-  public JavaDummyHolder(@NotNull PsiManager manager, PsiElement context) {
+  JavaDummyHolder(@NotNull PsiManager manager, PsiElement context) {
     super(manager, null, context, null, null, language(context, JavaLanguage.INSTANCE));
   }
 
-  public JavaDummyHolder(@NotNull PsiManager manager, TreeElement contentElement, PsiElement context, CharTable table) {
+  JavaDummyHolder(@NotNull PsiManager manager, TreeElement contentElement, PsiElement context, CharTable table) {
     super(manager, contentElement, context, table, null, language(context, JavaLanguage.INSTANCE));
   }
 
-  public JavaDummyHolder(@NotNull PsiManager manager, PsiElement context, CharTable table) {
+  JavaDummyHolder(@NotNull PsiManager manager, PsiElement context, CharTable table) {
     super(manager, null, context, table, null, language(context, JavaLanguage.INSTANCE));
   }
 
-  public JavaDummyHolder(@NotNull PsiManager manager, final CharTable table) {
+  JavaDummyHolder(@NotNull PsiManager manager, final CharTable table) {
     super(manager, null, null, table, null, JavaLanguage.INSTANCE);
   }
 
   @Override
-  public boolean importClass(PsiClass aClass) {
-    if (myContext != null) {
-      final PsiClass resolved = JavaPsiFacade.getInstance(getProject()).getResolveHelper().resolveReferencedClass(aClass.getName(), myContext);
+  public boolean importClass(@NotNull PsiClass aClass) {
+    PsiElement context = getContext();
+    String className = aClass.getName();
+    if (context != null && className != null) {
+      final PsiClass resolved = JavaPsiFacade.getInstance(getProject()).getResolveHelper().resolveReferencedClass(className, context);
       if (resolved != null) {
         return getManager().areElementsEquivalent(aClass, resolved);
       }
     }
 
-    String className = aClass.getName();
     if (!myPseudoImports.containsKey(className)) {
       if (myPseudoImports == EMPTY) {
-        myPseudoImports = new LinkedHashMap<String, PsiClass>();
+        myPseudoImports = new LinkedHashMap<>();
       }
 
       myPseudoImports.put(className, aClass);
       myManager.beforeChange(false); // to clear resolve caches!
-      return true;
     }
-    else {
-      return true;
-    }
+    return true;
+  }
+
+  @FunctionalInterface
+  public interface InjectedDeclarations {
+    boolean process(@NotNull PsiScopeProcessor processor, @NotNull ResolveState state, PsiElement lastParent, @NotNull PsiElement place);
+  }
+  private InjectedDeclarations myInjectedDeclarations;
+
+  public void setInjectedDeclarations(@NotNull InjectedDeclarations injectedDeclarations) {
+    myInjectedDeclarations = injectedDeclarations;
   }
 
   @Override
@@ -100,17 +108,21 @@ public class JavaDummyHolder extends DummyHolder implements PsiImportHolder {
         }
       }
 
-      if (myContext == null) {
-        if (!JavaResolveUtil.processImplicitlyImportedPackages(processor, state, place, getManager())) return false;
+      if (getContext() == null) {
+        return JavaResolveUtil.processImplicitlyImportedPackages(processor, state, place, getManager());
       }
+    }
+    if (myInjectedDeclarations != null) {
+      return myInjectedDeclarations.process(processor, state, lastParent, place);
     }
     return true;
   }
 
   public boolean isSamePackage(PsiElement other) {
+    PsiElement myContext = getContext();
     if (other instanceof DummyHolder) {
-      final PsiElement otherContext = ((DummyHolder)other).myContext;
-      if (myContext == null) return otherContext == null;
+      final PsiElement otherContext = other.getContext();
+      if (myContext == null || otherContext == null) return myContext == otherContext;
       return JavaPsiFacade.getInstance(myContext.getProject()).arePackagesTheSame(myContext, otherContext);
     }
     if (other instanceof PsiJavaFile) {
@@ -122,6 +134,7 @@ public class JavaDummyHolder extends DummyHolder implements PsiImportHolder {
   }
 
   public boolean isInPackage(PsiPackage aPackage) {
+    PsiElement myContext = getContext();
     if (myContext != null) return JavaPsiFacade.getInstance(myContext.getProject()).isInPackage(myContext, aPackage);
     return aPackage == null || aPackage.getQualifiedName().isEmpty();
   }

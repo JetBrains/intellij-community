@@ -1,22 +1,11 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.completion;
 
+import com.intellij.codeInsight.TailType;
 import com.intellij.codeInsight.completion.util.ParenthesesInsertHandler;
+import com.intellij.codeInsight.generation.GenerateMembersUtil;
 import com.intellij.codeInsight.lookup.*;
+import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
@@ -27,15 +16,17 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.SuggestedNameInfo;
 import com.intellij.psi.codeStyle.VariableKind;
-import com.intellij.psi.util.PropertyUtil;
+import com.intellij.psi.util.PropertyUtilBase;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.refactoring.introduceField.InplaceIntroduceFieldPopup;
 import com.intellij.refactoring.introduceVariable.IntroduceVariableBase;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -52,18 +43,25 @@ import static com.intellij.patterns.StandardPatterns.or;
  * @author peter
  */
 public class JavaMemberNameCompletionContributor extends CompletionContributor {
-  public static final ElementPattern<PsiElement> INSIDE_TYPE_PARAMS_PATTERN =
-    psiElement().afterLeaf(psiElement().withText("?").afterLeaf("<", ","));
+  public static final ElementPattern<PsiElement> INSIDE_TYPE_PARAMS_PATTERN = psiElement().
+    afterLeaf(psiElement().withText("?").andOr(
+      psiElement().afterLeaf("<", ","),
+      psiElement().afterSiblingSkipping(psiElement().whitespaceCommentEmptyOrError(), psiElement(PsiAnnotation.class))));
+
   static final int MAX_SCOPE_SIZE_TO_SEARCH_UNRESOLVED = 50000;
 
   @Override
-  public void fillCompletionVariants(CompletionParameters parameters, CompletionResultSet result) {
+  public void fillCompletionVariants(@NotNull CompletionParameters parameters, @NotNull CompletionResultSet result) {
     if (parameters.getCompletionType() != CompletionType.BASIC && parameters.getCompletionType() != CompletionType.SMART) {
       return;
     }
 
+    if (parameters.getInvocationCount() == 0 && TemplateManagerImpl.getTemplateState(parameters.getEditor()) != null) {
+      return;
+    }
+
     PsiElement position = parameters.getPosition();
-    final Set<LookupElement> lookupSet = new THashSet<LookupElement>();
+    final Set<LookupElement> lookupSet = new THashSet<>();
     if (psiElement(PsiIdentifier.class).andNot(INSIDE_TYPE_PARAMS_PATTERN).withParent(
       or(psiElement(PsiLocalVariable.class), psiElement(PsiParameter.class))).accepts(position)) {
       completeLocalVariableName(lookupSet, result.getPrefixMatcher(), (PsiVariable)parameters.getPosition().getParent(),
@@ -99,7 +97,9 @@ public class JavaMemberNameCompletionContributor extends CompletionContributor {
     String propertyName = null;
     if (variableKind == VariableKind.PARAMETER) {
       final PsiMethod method = PsiTreeUtil.getParentOfType(var, PsiMethod.class);
-      propertyName = PropertyUtil.getPropertyName(method);
+      if (method != null) {
+        propertyName = PropertyUtilBase.getPropertyName(method);
+      }
       if (method != null && method.getName().startsWith("with")) {
         propertyName = StringUtil.decapitalize(method.getName().substring(4));
       }
@@ -112,10 +112,10 @@ public class JavaMemberNameCompletionContributor extends CompletionContributor {
     addLookupItems(set, suggestedNameInfo, matcher, project, suggestedNames);
     if (!hasStartMatches(set, matcher)) {
       if (type.equalsToText(CommonClassNames.JAVA_LANG_OBJECT) && matcher.prefixMatches("object")) {
-        set.add(LookupElementBuilder.create("object"));
+        set.add(withInsertHandler(suggestedNameInfo, LookupElementBuilder.create("object")));
       }
       if (type.equalsToText(CommonClassNames.JAVA_LANG_STRING) && matcher.prefixMatches("string")) {
-        set.add(LookupElementBuilder.create("string"));
+        set.add(withInsertHandler(suggestedNameInfo, LookupElementBuilder.create("string")));
       }
     }
 
@@ -123,8 +123,8 @@ public class JavaMemberNameCompletionContributor extends CompletionContributor {
       addLookupItems(set, null, matcher, project, getOverlappedNameVersions(matcher.getPrefix(), suggestedNames, ""));
     }
     PsiElement parent = PsiTreeUtil.getParentOfType(var, PsiCodeBlock.class);
-    if(parent == null) parent = PsiTreeUtil.getParentOfType(var, PsiMethod.class);
-    addLookupItems(set, suggestedNameInfo, matcher, project, getUnresolvedReferences(parent, false));
+    if(parent == null) parent = PsiTreeUtil.getParentOfType(var, PsiMethod.class, PsiLambdaExpression.class);
+    addLookupItems(set, suggestedNameInfo, matcher, project, getUnresolvedReferences(parent, false, matcher));
     if (var instanceof PsiParameter && parent instanceof PsiMethod) {
       addSuggestionsInspiredByFieldNames(set, matcher, var, project, codeStyleManager);
     }
@@ -164,15 +164,16 @@ public class JavaMemberNameCompletionContributor extends CompletionContributor {
     }
 
     for (PsiField field : psiClass.getFields()) {
-      if (field.getType().isAssignableFrom(var.getType())) {
-        String prop = codeStyleManager.variableNameToPropertyName(field.getName(), VariableKind.FIELD);
+      String name = field.getName();
+      if (field.getType().isAssignableFrom(var.getType()) && name != null) {
+        String prop = codeStyleManager.variableNameToPropertyName(name, VariableKind.FIELD);
         addLookupItems(set, null, matcher, project, codeStyleManager.propertyNameToVariableName(prop, VariableKind.PARAMETER));
       }
     }
   }
 
   private static String[] getOverlappedNameVersions(final String prefix, final String[] suggestedNames, String suffix) {
-    final List<String> newSuggestions = new ArrayList<String>();
+    final List<String> newSuggestions = new ArrayList<>();
     int longestOverlap = 0;
 
     for (String suggestedName : suggestedNames) {
@@ -180,12 +181,12 @@ public class JavaMemberNameCompletionContributor extends CompletionContributor {
         continue;
       }
 
-      if (suggestedName.toUpperCase().startsWith(prefix.toUpperCase())) {
+      if (StringUtil.startsWithIgnoreCase(suggestedName, prefix)) {
         newSuggestions.add(suggestedName);
         longestOverlap = prefix.length();
       }
 
-      suggestedName = String.valueOf(Character.toUpperCase(suggestedName.charAt(0))) + suggestedName.substring(1);
+      suggestedName = Character.toUpperCase(suggestedName.charAt(0)) + suggestedName.substring(1);
       final int overlap = getOverlap(suggestedName, prefix);
 
       if (overlap < longestOverlap) continue;
@@ -221,23 +222,19 @@ public class JavaMemberNameCompletionContributor extends CompletionContributor {
     return overlap;
   }
 
-  private static String[] getUnresolvedReferences(final PsiElement parentOfType, final boolean referenceOnMethod) {
+  private static String[] getUnresolvedReferences(final PsiElement parentOfType, final boolean referenceOnMethod, PrefixMatcher matcher) {
     if (parentOfType != null && parentOfType.getTextLength() > MAX_SCOPE_SIZE_TO_SEARCH_UNRESOLVED) return ArrayUtil.EMPTY_STRING_ARRAY;
-    final Set<String> unresolvedRefs = new LinkedHashSet<String>();
+    final Set<String> unresolvedRefs = new LinkedHashSet<>();
 
     if (parentOfType != null) {
       parentOfType.accept(new JavaRecursiveElementWalkingVisitor() {
         @Override public void visitReferenceExpression(PsiReferenceExpression reference) {
           final PsiElement parent = reference.getParent();
-          if (parent instanceof PsiReference) return;
-          if (referenceOnMethod && parent instanceof PsiMethodCallExpression &&
-              reference == ((PsiMethodCallExpression)parent).getMethodExpression()) {
-            if (reference.resolve() == null) {
-              ContainerUtil.addIfNotNull(unresolvedRefs, reference.getReferenceName());
-            }
-          }
-          else if (!referenceOnMethod && !(parent instanceof PsiMethodCallExpression) &&reference.resolve() == null) {
-            ContainerUtil.addIfNotNull(unresolvedRefs, reference.getReferenceName());
+          if (parent instanceof PsiReference || referenceOnMethod != parent instanceof PsiMethodCallExpression) return;
+
+          String refName = reference.getReferenceName();
+          if (refName != null && matcher.prefixMatches(refName) && reference.resolve() == null) {
+            unresolvedRefs.add(refName);
           }
         }
       });
@@ -274,7 +271,7 @@ public class JavaMemberNameCompletionContributor extends CompletionContributor {
       addLookupItems(set, null, matcher, project, getOverlappedNameVersions(prefix, suggestedNames, requiredSuffix));
     }
 
-    addLookupItems(set, suggestedNameInfo, matcher, project, getUnresolvedReferences(var.getParent(), false));
+    addLookupItems(set, suggestedNameInfo, matcher, project, getUnresolvedReferences(var.getParent(), false, matcher));
 
     PsiExpression initializer = var.getInitializer();
     PsiClass containingClass = var.getContainingClass();
@@ -303,7 +300,7 @@ public class JavaMemberNameCompletionContributor extends CompletionContributor {
                                                             final VariableKind varKind,
                                                             SuggestedNameInfo suggestedNameInfo,
                                                             final boolean includeOverlapped, final boolean methodPrefix) {
-    Set<String> result = new LinkedHashSet<String>();
+    Set<String> result = new LinkedHashSet<>();
     final String[] suggestedNames = suggestedNameInfo.names;
     for (final String suggestedName : suggestedNames) {
       if (matcher.prefixMatches(suggestedName)) {
@@ -311,7 +308,7 @@ public class JavaMemberNameCompletionContributor extends CompletionContributor {
       }
     }
 
-    if (!hasStartMatches(matcher, result) && PsiType.VOID != varType && includeOverlapped) {
+    if (!hasStartMatches(matcher, result) && !PsiType.VOID.equals(varType) && includeOverlapped) {
       // use suggested names as suffixes
       final String requiredSuffix = codeStyleManager.getSuffixByVariableKind(varKind);
       final String prefix = matcher.getPrefix();
@@ -353,7 +350,15 @@ public class JavaMemberNameCompletionContributor extends CompletionContributor {
                 .withInsertHandler(ParenthesesInsertHandler.NO_PARAMETERS));
     }
 
-    addLookupItems(set, null, matcher, element.getProject(), getUnresolvedReferences(ourClassParent, true));
+    if (element instanceof PsiField && ((PsiField)element).hasModifierProperty(PsiModifier.STATIC) &&
+        ourClassParent.equals(PsiUtil.resolveClassInClassTypeOnly(((PsiField)element).getType()))) {
+      set.add(LookupElementBuilder.create("getInstance")
+                                  .withIcon(PlatformIcons.METHOD_ICON)
+                                  .withTailText("()")
+                                  .withInsertHandler(ParenthesesInsertHandler.WITH_PARAMETERS));
+
+    }
+    addLookupItems(set, null, matcher, element.getProject(), getUnresolvedReferences(ourClassParent, true, matcher));
 
     addLookupItems(set, null, matcher, element.getProject(), getPropertiesHandlersNames(
       ourClassParent,
@@ -365,30 +370,31 @@ public class JavaMemberNameCompletionContributor extends CompletionContributor {
                                                     final boolean staticContext,
                                                     final PsiType varType,
                                                     final PsiElement element) {
-    final List<String> propertyHandlers = new ArrayList<String>();
+    final List<String> propertyHandlers = new ArrayList<>();
 
     for (final PsiField field : psiClass.getFields()) {
       if (field == element) continue;
+      if (StringUtil.isEmpty(field.getName())) continue;
 
-      assert field.isValid() : "invalid field: " + field;
+      PsiUtilCore.ensureValid(field);
       PsiType fieldType = field.getType();
-      assert fieldType.isValid() : "invalid field type: " + field + "; " + fieldType + " of " + fieldType.getClass();
+      PsiUtil.ensureValidType(fieldType);
 
       final PsiModifierList modifierList = field.getModifierList();
       if (staticContext && (modifierList != null && !modifierList.hasModifierProperty(PsiModifier.STATIC))) continue;
 
       if (fieldType.equals(varType)) {
-        final String getterName = PropertyUtil.suggestGetterName(field.getProject(), field);
+        final String getterName = PropertyUtilBase.suggestGetterName(field);
         if ((psiClass.findMethodsByName(getterName, true).length == 0 ||
-             psiClass.findMethodBySignature(PropertyUtil.generateGetterPrototype(field), true) == null)) {
+             psiClass.findMethodBySignature(GenerateMembersUtil.generateGetterPrototype(field), true) == null)) {
           propertyHandlers.add(getterName);
         }
       }
 
       if (PsiType.VOID.equals(varType)) {
-        final String setterName = PropertyUtil.suggestSetterName(field.getProject(), field);
+        final String setterName = PropertyUtilBase.suggestSetterName(field);
         if ((psiClass.findMethodsByName(setterName, true).length == 0 ||
-             psiClass.findMethodBySignature(PropertyUtil.generateSetterPrototype(field), true) == null)) {
+             psiClass.findMethodBySignature(GenerateMembersUtil.generateSetterPrototype(field), true) == null)) {
           propertyHandlers.add(setterName);
         }
       }
@@ -401,7 +407,7 @@ public class JavaMemberNameCompletionContributor extends CompletionContributor {
     outer:
     for (int i = 0; i < strings.length; i++) {
       String name = strings[i];
-      if (!matcher.prefixMatches(name) || !JavaPsiFacade.getInstance(project).getNameHelper().isIdentifier(name, LanguageLevel.HIGHEST)) {
+      if (!matcher.prefixMatches(name) || !PsiNameHelper.getInstance(project).isIdentifier(name, LanguageLevel.HIGHEST)) {
         continue;
       }
 
@@ -410,17 +416,26 @@ public class JavaMemberNameCompletionContributor extends CompletionContributor {
           continue outer;
         }
       }
-      
+
       LookupElement element = PrioritizedLookupElement.withPriority(LookupElementBuilder.create(name).withAutoCompletionPolicy(AutoCompletionPolicy.GIVE_CHANCE_TO_OVERWRITE), -i);
       if (callback != null) {
-        element = LookupElementDecorator.withInsertHandler(element, new InsertHandler<LookupElementDecorator<LookupElement>>() {
-          @Override
-          public void handleInsert(InsertionContext context, LookupElementDecorator<LookupElement> item) {
-            callback.nameChosen(item.getLookupString());
-          }
-        });
+        element = withInsertHandler(callback, element);
       }
       lookupElements.add(element);
     }
+  }
+
+  private static LookupElementDecorator<LookupElement> withInsertHandler(final SuggestedNameInfo callback, LookupElement element) {
+    return LookupElementDecorator.withInsertHandler(element, new InsertHandler<LookupElementDecorator<LookupElement>>() {
+      @Override
+      public void handleInsert(@NotNull InsertionContext context, @NotNull LookupElementDecorator<LookupElement> item) {
+        TailType tailType = LookupItem.getDefaultTailType(context.getCompletionChar());
+        if (tailType != null) {
+          context.setAddCompletionChar(false);
+          tailType.processTail(context.getEditor(), context.getTailOffset());
+        }
+        callback.nameChosen(item.getLookupString());
+      }
+    });
   }
 }

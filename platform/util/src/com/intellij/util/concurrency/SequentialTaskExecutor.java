@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,11 +16,23 @@
 
 package com.intellij.util.concurrency;
 
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NotNull;
+
 import java.util.concurrent.Executor;
+import java.util.concurrent.ExecutorService;
 
-public class SequentialTaskExecutor extends BoundedTaskExecutor {
+public class SequentialTaskExecutor {
+  private SequentialTaskExecutor() {
+  }
 
-  public SequentialTaskExecutor(Executor executor) {
-    super(executor, 1);
+  @NotNull
+  public static ExecutorService createSequentialApplicationPoolExecutor(@NotNull @Nls(capitalization = Nls.Capitalization.Title) String name) {
+    return AppExecutorUtil.createBoundedApplicationPoolExecutor(name, 1);
+  }
+
+  @NotNull
+  public static ExecutorService createSequentialApplicationPoolExecutor(@NotNull @Nls(capitalization = Nls.Capitalization.Title) String name,  @NotNull Executor executor) {
+    return AppExecutorUtil.createBoundedApplicationPoolExecutor(name, executor, 1);
   }
 }

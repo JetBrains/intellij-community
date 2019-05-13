@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,19 +33,15 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.roots.ProjectFileIndex;
-import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.vcs.FilePath;
-import com.intellij.openapi.vcs.FileStatus;
-import com.intellij.openapi.vcs.ObjectsConvertor;
-import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.actions.VcsContextFactory;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.containers.HashMap;
+import com.intellij.util.containers.ContainerUtil;
+import java.util.HashMap;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -63,28 +59,29 @@ public class CvsChangeProvider implements ChangeProvider {
 
   private final CvsVcs2 myVcs;
   private final CvsEntriesManager myEntriesManager;
-  private final ProjectFileIndex myFileIndex;
+  private final ProjectLevelVcsManager myVcsManager;
   private final ChangeListManager myChangeListManager;
 
   public CvsChangeProvider(final CvsVcs2 vcs, CvsEntriesManager entriesManager) {
     myVcs = vcs;
     myEntriesManager = entriesManager;
-    myFileIndex = ProjectRootManager.getInstance(vcs.getProject()).getFileIndex();
+    myVcsManager = ProjectLevelVcsManager.getInstance(vcs.getProject());
     myChangeListManager = ChangeListManager.getInstance(vcs.getProject());
   }
 
   @Override
-  public void getChanges(final VcsDirtyScope dirtyScope, final ChangelistBuilder builder, final ProgressIndicator progress,
-                         final ChangeListManagerGate addGate) throws VcsException {
+  public void getChanges(@NotNull final VcsDirtyScope dirtyScope, @NotNull final ChangelistBuilder builder, @NotNull final ProgressIndicator progress,
+                         @NotNull final ChangeListManagerGate addGate) throws VcsException {
     if (LOG.isDebugEnabled()) {
       LOG.debug("Processing changes for scope " + dirtyScope);
     }
-    showBranchImOn(builder, dirtyScope);
+    final HashSet<VirtualFile> cvsRoots = ContainerUtil.newHashSet(myVcsManager.getRootsUnderVcs(myVcs));
+    showBranchImOn(builder, dirtyScope, cvsRoots);
 
     for (FilePath path : dirtyScope.getRecursivelyDirtyDirectories()) {
       final VirtualFile dir = path.getVirtualFile();
       if (dir != null) {
-        processEntriesIn(dir, dirtyScope, builder, true, progress);
+        processEntriesIn(dir, dirtyScope, builder, true, cvsRoots, progress);
       }
       else {
         processFile(path, builder, progress);
@@ -95,7 +92,7 @@ public class CvsChangeProvider implements ChangeProvider {
       if (path.isDirectory()) {
         final VirtualFile dir = path.getVirtualFile();
         if (dir != null) {
-          processEntriesIn(dir, dirtyScope, builder, false, progress);
+          processEntriesIn(dir, dirtyScope, builder, false, cvsRoots, progress);
         }
         else {
           processFile(path, builder, progress);
@@ -119,7 +116,7 @@ public class CvsChangeProvider implements ChangeProvider {
   public void doCleanup(final List<VirtualFile> files) {}
 
   private void processEntriesIn(@NotNull VirtualFile dir, VcsDirtyScope scope, ChangelistBuilder builder, boolean recursively,
-                                final ProgressIndicator progress) throws VcsException {
+                                Collection<VirtualFile> cvsRoots, final ProgressIndicator progress) throws VcsException {
     final FilePath path = VcsContextFactory.SERVICE.getInstance().createFilePathOn(dir);
     if (!scope.belongsTo(path)) {
       if (LOG.isDebugEnabled()) {
@@ -152,7 +149,7 @@ public class CvsChangeProvider implements ChangeProvider {
     */
 
     progress.checkCanceled();
-    checkSwitchedDir(dir, builder, scope);
+    checkSwitchedDir(dir, builder, scope, cvsRoots);
 
     if (CvsUtil.fileIsUnderCvs(dir) && dir.getChildren().length == 1 /* admin dir */ &&
         dirContent.getDeletedFiles().isEmpty() && hasRemovedFiles(dirContent.getFiles())) {
@@ -164,19 +161,15 @@ public class CvsChangeProvider implements ChangeProvider {
     }
 
     if (recursively) {
-      final VirtualFile[] children = CvsVfsUtil.getChildrenOf(dir);
-      if (children != null) {
-        for (VirtualFile file : children) {
-          progress.checkCanceled();
-          if (file.isDirectory()) {
-            final boolean isIgnored = myFileIndex.isIgnored(file);
-            if (!isIgnored) {
-              processEntriesIn(file, scope, builder, true, progress);
-            }
-            else {
-              if (LOG.isDebugEnabled()) {
-                LOG.debug("Skipping ignored path " + file.getPath());
-              }
+      for (VirtualFile file : CvsVfsUtil.getChildrenOf(dir)) {
+        progress.checkCanceled();
+        if (file.isDirectory()) {
+          if (!myVcsManager.isIgnored(file)) {
+            processEntriesIn(file, scope, builder, true, cvsRoots, progress);
+          }
+          else {
+            if (LOG.isDebugEnabled()) {
+              LOG.debug("Skipping ignored path " + file.getPath());
             }
           }
         }
@@ -193,7 +186,6 @@ public class CvsChangeProvider implements ChangeProvider {
     return false;
   }
 
-
   private void processFile(final FilePath filePath, final ChangelistBuilder builder, final ProgressIndicator progress) throws VcsException {
     final VirtualFile dir = filePath.getVirtualFileParent();
     if (dir == null) return;
@@ -208,7 +200,7 @@ public class CvsChangeProvider implements ChangeProvider {
 
   private void processFile(final VirtualFile dir, @Nullable VirtualFile file, Entry entry, final ChangelistBuilder builder,
                            final ProgressIndicator progress) throws VcsException {
-    final FilePath filePath = VcsContextFactory.SERVICE.getInstance().createFilePathOn(dir, entry.getFileName());
+    final FilePath filePath = VcsUtil.getFilePath(dir, entry.getFileName());
     final FileStatus status = CvsStatusProvider.getStatus(file, entry);
     final VcsRevisionNumber number = createRevisionNumber(entry.getRevision(), status);
     processStatus(filePath, file, status, number, builder);
@@ -227,18 +219,12 @@ public class CvsChangeProvider implements ChangeProvider {
     return new CvsRevisionNumber(correctedRevision);
   }
 
-  private void showBranchImOn(final ChangelistBuilder builder, final VcsDirtyScope scope) {
+  private void showBranchImOn(final ChangelistBuilder builder, final VcsDirtyScope scope, HashSet<VirtualFile> cvsRoots) {
     final List<VirtualFile> dirs = ObjectsConvertor.fp2vf(scope.getRecursivelyDirtyDirectories());
-    final Collection<VirtualFile> roots = new ArrayList<VirtualFile>(scope.getAffectedContentRoots());
-
-    for (Iterator<VirtualFile> iterator = roots.iterator(); iterator.hasNext();) {
-      final VirtualFile root = iterator.next();
-      if (! dirs.contains(root)) iterator.remove();
-    }
-
-    if (roots.isEmpty()) return;
-    for (VirtualFile root : roots) {
-      checkTopLevelForBeingSwitched(root, builder);
+    for (VirtualFile root : cvsRoots) {
+      if (dirs.contains(root)) {
+        checkTopLevelForBeingSwitched(root, builder);
+      }
     }
   }
 
@@ -282,15 +268,22 @@ public class CvsChangeProvider implements ChangeProvider {
     return null;
   }
 
-  private void checkSwitchedDir(final VirtualFile dir, final ChangelistBuilder builder, final VcsDirtyScope scope) {
+  private void checkSwitchedDir(final VirtualFile dir,
+                                final ChangelistBuilder builder,
+                                final VcsDirtyScope scope,
+                                Collection<VirtualFile> cvsRoots) {
     final VirtualFile parentDir = dir.getParent();
-    if (parentDir == null || !myFileIndex.isInContent(parentDir)) {
+    if (parentDir == null || cvsRoots.contains(dir) || !myVcsManager.isFileInContent(parentDir)) {
       return;
     }
     final CvsInfo info = myEntriesManager.getCvsInfoFor(dir);
     if (info.getRepository() == null) {
-      // don't report unversioned directories as switched (IDEADEV-17178)
-      builder.processUnversionedFile(dir);
+      if (info.getIgnoreFilter().shouldBeIgnored(dir)) {
+        builder.processIgnoredFile(dir);
+      }
+      else {
+        builder.processUnversionedFile(dir);
+      }
       return;
     }
     final String dirTag = info.getStickyTag();
@@ -313,7 +306,7 @@ public class CvsChangeProvider implements ChangeProvider {
 
   private void checkSwitchedFile(final FilePath filePath, final ChangelistBuilder builder, final VirtualFile dir, final Entry entry) {
     // if content root itself is switched, ignore
-    if (!myFileIndex.isInContent(dir)) {
+    if (!myVcsManager.isFileInContent(dir)) {
       return;
     }
     final String dirTag = myEntriesManager.getCvsInfoFor(dir).getStickyTag();
@@ -456,17 +449,12 @@ public class CvsChangeProvider implements ChangeProvider {
     final CvsInfo cvsInfo = CvsEntriesManager.getInstance().getCvsInfoFor(directory);
     final DirectoryContent result = new DirectoryContent(cvsInfo);
 
-    VirtualFile[] children = CvsVfsUtil.getChildrenOf(directory);
-    if (children == null) children = VirtualFile.EMPTY_ARRAY;
-
-    final Collection<Entry> entries = cvsInfo.getEntries();
-
-    final HashMap<String, VirtualFile> nameToFileMap = new HashMap<String, VirtualFile>();
-    for (VirtualFile child : children) {
+    final HashMap<String, VirtualFile> nameToFileMap = new HashMap<>();
+    for (VirtualFile child : CvsVfsUtil.getChildrenOf(directory)) {
       nameToFileMap.put(child.getName(), child);
     }
 
-    for (final Entry entry : entries) {
+    for (final Entry entry : cvsInfo.getEntries()) {
       progress.checkCanceled();
       final String fileName = entry.getFileName();
       if (entry.isDirectory()) {
@@ -504,7 +492,7 @@ public class CvsChangeProvider implements ChangeProvider {
       }
       else {
         if (isInContent(unknown)) {
-          final boolean isIgnored = result.getCvsInfo().getIgnoreFilter().shouldBeIgnored(unknown.getName());
+          final boolean isIgnored = result.getCvsInfo().getIgnoreFilter().shouldBeIgnored(unknown);
           if (isIgnored) {
             result.addIgnoredFile(unknown);
           }
@@ -518,10 +506,11 @@ public class CvsChangeProvider implements ChangeProvider {
     return result;
   }
 
-  private class CvsUpToDateRevision implements ContentRevision {
+  private class CvsUpToDateRevision implements ByteBackedContentRevision {
     protected final FilePath myPath;
     private final VcsRevisionNumber myRevisionNumber;
-    private String myContent;
+
+    private byte[] myContent;
 
     protected CvsUpToDateRevision(final FilePath path, final VcsRevisionNumber revisionNumber) {
       myRevisionNumber = revisionNumber;
@@ -531,20 +520,26 @@ public class CvsChangeProvider implements ChangeProvider {
     @Override
     @Nullable
     public String getContent() throws VcsException {
+      final byte[] fileBytes = getContentAsBytes();
+      return fileBytes == null ? null : CharsetToolkit.bytesToString(fileBytes, myPath.getCharset());
+    }
+
+    @Nullable
+    @Override
+    public byte[] getContentAsBytes() throws VcsException {
       if (myContent == null) {
         try {
-          final byte[] fileBytes = getUpToDateBinaryContent();
-          myContent = fileBytes == null ? null : CharsetToolkit.bytesToString(fileBytes, myPath.getCharset());
+          myContent = getUpToDateBinaryContent();
         }
         catch (CannotFindCvsRootException e) {
-          myContent = null;
+          throw new VcsException(e);
         }
       }
       return myContent;
     }
 
     @Nullable
-    protected byte[] getUpToDateBinaryContent() throws CannotFindCvsRootException {
+    private byte[] getUpToDateBinaryContent() throws CannotFindCvsRootException {
       final VirtualFile virtualFile = myPath.getVirtualFile();
       byte[] result = null;
       if (virtualFile != null) {
@@ -597,24 +592,14 @@ public class CvsChangeProvider implements ChangeProvider {
   }
 
   private class CvsUpToDateBinaryRevision extends CvsUpToDateRevision implements BinaryContentRevision {
-    private byte[] myBinaryContent;
-
-    public CvsUpToDateBinaryRevision(final FilePath path, final VcsRevisionNumber revisionNumber) {
+    CvsUpToDateBinaryRevision(final FilePath path, final VcsRevisionNumber revisionNumber) {
       super(path, revisionNumber);
     }
 
     @Override
     @Nullable
     public byte[] getBinaryContent() throws VcsException {
-      if (myBinaryContent == null) {
-        try {
-          myBinaryContent = getUpToDateBinaryContent();
-        }
-        catch (CannotFindCvsRootException e) {
-          throw new VcsException(e);
-        }
-      }
-      return myBinaryContent;
+      return getContentAsBytes();
     }
 
     @NonNls

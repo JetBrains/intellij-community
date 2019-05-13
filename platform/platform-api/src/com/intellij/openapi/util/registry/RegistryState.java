@@ -1,51 +1,54 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.util.registry;
 
-import com.intellij.openapi.components.*;
+import com.intellij.openapi.application.ExperimentalFeature;
+import com.intellij.openapi.application.Experiments;
+import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.State;
+import com.intellij.openapi.components.Storage;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.SmartList;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
-@State(
-    name = "Registry",
-    storages = {
-        @Storage(
-            file = StoragePathMacros.APP_CONFIG + "/other.xml")}
-)
-public class RegistryState implements BaseComponent, PersistentStateComponent<Element> {
+import java.util.List;
+import java.util.Map;
+import java.util.SortedMap;
+import java.util.TreeMap;
 
-  public RegistryState() {
-  }
+@State(name = "Registry", storages = @Storage("ide.general.xml"))
+public class RegistryState implements PersistentStateComponent<Element> {
+  private static final Logger LOG = Logger.getInstance(RegistryState.class);
 
+  @Override
   public Element getState() {
     return Registry.getInstance().getState();
   }
 
-  public void loadState(Element state) {
+  @Override
+  public void loadState(@NotNull Element state) {
     Registry.getInstance().loadState(state);
-  }
 
-  @NotNull
-  public String getComponentName() {
-    return "Registry";
-  }
+    SortedMap<String, String> userProperties = new TreeMap<>(Registry.getInstance().getUserProperties());
+    userProperties.remove("ide.firstStartup");
+    if (!userProperties.isEmpty()) {
+      LOG.info("Registry values changed by user:");
+      for (Map.Entry<String, String> entry : userProperties.entrySet()) {
+        LOG.info("  " + entry.getKey() + " = " + entry.getValue());
+      }
+    }
 
-  public void initComponent() {
-  }
+    // make logging for experimental features here to have registry + experiments together in the log file
+    List<String> enabledIds = new SmartList<>();
+    for (ExperimentalFeature e : Experiments.EP_NAME.getExtensionList()) {
+      if (Experiments.isFeatureEnabled(e.id)) {
+        enabledIds.add(e.id);
+      }
+    }
 
-  public void disposeComponent() {
+    if (!enabledIds.isEmpty()) {
+      LOG.info("Experimental features enabled for user: " + StringUtil.join(enabledIds, ", "));
+    }
   }
 }

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.uiDesigner.designSurface;
 
@@ -36,8 +22,8 @@ import com.intellij.uiDesigner.FormEditingUtil;
 import com.intellij.uiDesigner.UIDesignerBundle;
 import com.intellij.uiDesigner.lw.IRootContainer;
 import com.intellij.uiDesigner.radComponents.RadComponent;
-import com.intellij.util.Processor;
 import icons.UIDesignerIcons;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -67,6 +53,7 @@ public class ListenerNavigateButton extends JButton implements ActionListener {
     addActionListener(this);
   }
 
+  @Override
   public void actionPerformed(ActionEvent e) {
     showNavigatePopup(myComponent, false);
   }
@@ -112,31 +99,33 @@ public class ListenerNavigateButton extends JButton implements ActionListener {
       LOG.error(e);
       return null;
     }
-    final LocalSearchScope scope = new LocalSearchScope(boundField.getContainingFile());
-    ReferencesSearch.search(boundField, scope).forEach(new Processor<PsiReference>() {
-      public boolean process(final PsiReference ref) {
-        final PsiElement element = ref.getElement();
-        if (element.getParent() instanceof PsiReferenceExpression) {
-          PsiReferenceExpression refExpr = (PsiReferenceExpression) element.getParent();
-          if (refExpr.getParent() instanceof PsiMethodCallExpression) {
-            PsiMethodCallExpression methodCall = (PsiMethodCallExpression) refExpr.getParent();
-            final PsiElement psiElement = refExpr.resolve();
-            if (psiElement instanceof PsiMethod) {
-              PsiMethod method = (PsiMethod) psiElement;
-              for(EventSetDescriptor eventSetDescriptor: eventSetDescriptors) {
-                if (Comparing.equal(eventSetDescriptor.getAddListenerMethod().getName(), method.getName())) {
-                  final String eventName = eventSetDescriptor.getName();
-                  final PsiExpression[] args = methodCall.getArgumentList().getExpressions();
-                  if (args.length > 0) {
-                    addListenerRef(actionGroup, eventName, args[0]);
-                  }
+    PsiFile boundClassFile = boundField.getContainingFile();
+    if (boundClassFile == null) {
+      return null;
+    }
+    final LocalSearchScope scope = new LocalSearchScope(boundClassFile);
+    ReferencesSearch.search(boundField, scope).forEach(ref -> {
+      final PsiElement element = ref.getElement();
+      if (element.getParent() instanceof PsiReferenceExpression) {
+        PsiReferenceExpression refExpr = (PsiReferenceExpression) element.getParent();
+        if (refExpr.getParent() instanceof PsiMethodCallExpression) {
+          PsiMethodCallExpression methodCall = (PsiMethodCallExpression) refExpr.getParent();
+          final PsiElement psiElement = refExpr.resolve();
+          if (psiElement instanceof PsiMethod) {
+            PsiMethod method = (PsiMethod) psiElement;
+            for(EventSetDescriptor eventSetDescriptor: eventSetDescriptors) {
+              if (Comparing.equal(eventSetDescriptor.getAddListenerMethod().getName(), method.getName())) {
+                final String eventName = eventSetDescriptor.getName();
+                final PsiExpression[] args = methodCall.getArgumentList().getExpressions();
+                if (args.length > 0) {
+                  addListenerRef(actionGroup, eventName, args[0]);
                 }
               }
             }
           }
         }
-        return true;
       }
+      return true;
     });
 
     return actionGroup;
@@ -189,18 +178,19 @@ public class ListenerNavigateButton extends JButton implements ActionListener {
   private static class MyNavigateAction extends AnAction {
     private final PsiElement myElement;
 
-    public MyNavigateAction(final String name, PsiElement element) {
+    MyNavigateAction(final String name, PsiElement element) {
       super(name);
       myElement = element;
     }
 
-    public void actionPerformed(AnActionEvent e) {
+    @Override
+    public void actionPerformed(@NotNull AnActionEvent e) {
       if (myElement instanceof Navigatable) {
         ((Navigatable) myElement).navigate(true);
       }
     }
 
-    @Override public void update(AnActionEvent e) {
+    @Override public void update(@NotNull AnActionEvent e) {
       e.getPresentation().setEnabled(myElement != null &&
                                      (!(myElement instanceof PsiClass) || !isAbstractOrInterface((PsiClass)myElement)));
     }

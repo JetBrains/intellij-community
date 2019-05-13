@@ -14,14 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * Created by IntelliJ IDEA.
- * User: dsl
- * Date: 17.06.2002
- * Time: 20:38:33
- * To change template for new class use
- * Code Style | Class Templates options (Tools | IDE Options).
- */
 package com.intellij.refactoring.ui;
 
 import com.intellij.refactoring.util.DocCommentPolicy;
@@ -70,6 +62,7 @@ public class DocCommentPanel extends JPanel {
     bg.setSelected(myRbJavaDocMove.getModel(), true);
   }
 
+  @Override
   public Dimension getPreferredSize() {
     final Dimension preferredSize = super.getPreferredSize();
     final Dimension borderSize = myBorder.getMinimumSize(this);

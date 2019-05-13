@@ -24,9 +24,11 @@ import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.ProcessingContext;
-import com.intellij.util.containers.HashSet;
 import com.intellij.xml.XmlAttributeDescriptor;
 import com.intellij.xml.util.XmlUtil;
+import org.jetbrains.annotations.NotNull;
+
+import java.util.HashSet;
 
 /**
  * @author peter
@@ -35,7 +37,7 @@ public class DomCompletionContributor extends CompletionContributor{
   private final GenericValueReferenceProvider myProvider = new GenericValueReferenceProvider();
 
   @Override
-  public void fillCompletionVariants(final CompletionParameters parameters, final CompletionResultSet result) {
+  public void fillCompletionVariants(@NotNull final CompletionParameters parameters, @NotNull final CompletionResultSet result) {
     if (parameters.getCompletionType() != CompletionType.BASIC) return;
 
     if (domKnowsBetter(parameters, result)) {
@@ -68,7 +70,7 @@ public class DomCompletionContributor extends CompletionContributor{
   public static boolean isSchemaEnumerated(final PsiElement element) {
     if (element instanceof XmlTag) {
       final XmlTag simpleContent = XmlUtil.getSchemaSimpleContent((XmlTag)element);
-      if (simpleContent != null && XmlUtil.collectEnumerationValues(simpleContent, new HashSet<String>())) {
+      if (simpleContent != null && XmlUtil.collectEnumerationValues(simpleContent, new HashSet<>())) {
         return true;
       }                  
     }
@@ -81,7 +83,7 @@ public class DomCompletionContributor extends CompletionContributor{
         }
 
         String[] enumeratedValues = XmlAttributeValueGetter.getEnumeratedValues((XmlAttribute)parent);
-        if (enumeratedValues != null && enumeratedValues.length > 0) {
+        if (enumeratedValues.length > 0) {
           String value = descriptor == null ? null : descriptor.getDefaultValue();
           if (value == null || enumeratedValues.length != 1 || !value.equals(enumeratedValues[0])) {
             return true;

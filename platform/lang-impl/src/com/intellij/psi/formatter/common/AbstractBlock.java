@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,12 +19,12 @@ package com.intellij.psi.formatter.common;
 import com.intellij.formatting.*;
 import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.lang.ASTNode;
+import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.formatter.FormatterUtil;
-import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.util.containers.ContainerUtilRt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -32,13 +32,15 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collections;
 import java.util.List;
 
-public abstract class AbstractBlock implements ASTBlock {
+public abstract class AbstractBlock implements ASTBlock, ExtraRangesProvider {
   public static final List<Block> EMPTY = Collections.emptyList();
   @NotNull protected final  ASTNode     myNode;
   @Nullable protected final Wrap        myWrap;
   @Nullable protected final Alignment   myAlignment;
-  private                   List<Block> mySubBlocks;
-  private                   Boolean     myIncomplete;
+
+  private List<Block> mySubBlocks;
+  private Boolean myIncomplete;
+  private boolean myBuildIndentsOnly = false;
 
   protected AbstractBlock(@NotNull ASTNode node, @Nullable Wrap wrap, @Nullable Alignment alignment) {
     myNode = node;
@@ -56,18 +58,32 @@ public abstract class AbstractBlock implements ASTBlock {
   @NotNull
   public List<Block> getSubBlocks() {
     if (mySubBlocks == null) {
-
       List<Block> list = buildChildren();
       if (list.isEmpty()) {
         list = buildInjectedBlocks();
       }
-      mySubBlocks = list.size() > 0 ? list : EMPTY;
+      mySubBlocks = !list.isEmpty() ? list : EMPTY;
     }
     return mySubBlocks;
   }
 
+  /**
+   * Prevents from building injected blocks, which allows to build blocks faster
+   * Initially was made for formatting-based indent detector
+   */
+  public void setBuildIndentsOnly(boolean value) {
+    myBuildIndentsOnly = value;
+  }
+
+  protected boolean isBuildIndentsOnly() {
+    return myBuildIndentsOnly;
+  }
+
   @NotNull
   private List<Block> buildInjectedBlocks() {
+    if (myBuildIndentsOnly) {
+      return EMPTY;
+    }
     if (!(this instanceof SettingsAwareBlock)) {
       return EMPTY;
     }
@@ -79,13 +95,13 @@ public abstract class AbstractBlock implements ASTBlock {
     if (file == null) {
       return EMPTY;
     }
-    
-    if (InjectedLanguageUtil.getCachedInjectedDocuments(file).isEmpty()) {
+
+    TextRange blockRange = myNode.getTextRange();
+    List<DocumentWindow> documentWindows = InjectedLanguageManager.getInstance(file.getProject()).getCachedInjectedDocumentsInRange(file, blockRange);
+    if (documentWindows.isEmpty()) {
       return EMPTY;
     }
-    
-    TextRange blockRange = myNode.getTextRange();
-    List<DocumentWindow> documentWindows = InjectedLanguageUtil.getCachedInjectedDocuments(file);
+
     for (DocumentWindow documentWindow : documentWindows) {
       int startOffset = documentWindow.injectedToHost(0);
       int endOffset = startOffset + documentWindow.getTextLength();
@@ -162,4 +178,18 @@ public abstract class AbstractBlock implements ASTBlock {
   public String toString() {
     return myNode.getText() + " " + getTextRange();
   }
+
+  /**
+   * @return additional range to reformat, when this block if formatted
+   */
+  @Override
+  @Nullable
+  public List<TextRange> getExtraRangesToFormat(@NotNull FormattingRangesInfo info) {
+    int startOffset = getTextRange().getStartOffset();
+    if (info.isOnInsertedLine(startOffset) && myNode.textContains('\n')) {
+      return new NodeIndentRangesCalculator(myNode).calculateExtraRanges();
+    }
+    return null;
+  }
+  
 }

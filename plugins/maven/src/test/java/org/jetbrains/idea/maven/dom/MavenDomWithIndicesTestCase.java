@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,12 +28,22 @@ public abstract class MavenDomWithIndicesTestCase extends MavenDomTestCase {
   }
 
   protected MavenIndicesTestFixture createIndicesFixture() {
-    return new MavenIndicesTestFixture(myDir, myProject);
+    return new MavenIndicesTestFixture(myDir.toPath(), myProject);
   }
 
   @Override
   protected void tearDown() throws Exception {
-    myIndicesFixture.tearDown();
-    super.tearDown();
+    try {
+      if (myIndicesFixture != null) {
+        myIndicesFixture.tearDown();
+        myIndicesFixture = null;
+      }
+    }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
+    finally {
+      super.tearDown();
+    }
   }
 }

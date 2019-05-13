@@ -18,8 +18,7 @@ package com.intellij.openapi.vcs.changes;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentSynchronizationVetoer;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vcs.changes.ui.CommitHelper;
-import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vcs.changes.ui.AbstractCommitter;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
@@ -27,28 +26,23 @@ import java.util.Collections;
 /**
  * @author yole
  */
-public class SaveCommittingDocumentsVetoer implements FileDocumentSynchronizationVetoer {
+public class SaveCommittingDocumentsVetoer extends FileDocumentSynchronizationVetoer {
   private final VetoSavingCommittingDocumentsAdapter myAdapter;
 
   public SaveCommittingDocumentsVetoer(VetoSavingCommittingDocumentsAdapter adapter) {
     myAdapter = adapter;
   }
 
-  public boolean maySaveDocument(@NotNull Document document) {
-    final Object beingCommitted = document.getUserData(CommitHelper.DOCUMENT_BEING_COMMITTED_KEY);
+  @Override
+  public boolean maySaveDocument(@NotNull Document document, boolean isSaveExplicit) {
+    final Object beingCommitted = document.getUserData(AbstractCommitter.DOCUMENT_BEING_COMMITTED_KEY);
     if (beingCommitted == VetoSavingCommittingDocumentsAdapter.SAVE_DENIED) {
       return false;
     }
     if (beingCommitted instanceof Project) {
-      boolean allowSave = myAdapter.showAllowSaveDialog(Collections.singletonMap(document, (Project)beingCommitted));
-      if (!allowSave) {
-        return false;
-      }
+      return myAdapter.showAllowSaveDialog(Collections.singletonMap(document, (Project)beingCommitted));
     }
     return true;
   }
 
-  public boolean mayReloadFileContent(VirtualFile file, @NotNull Document document)  {
-    return true;
-  }
 }

@@ -1,4 +1,4 @@
-// "Create Inner Class 'Foo'" "true"
+// "Create inner class 'Foo'" "true"
 public class Test {
   void foo(Class<Number> n){}
   void bar() {

@@ -42,9 +42,8 @@ public class PsiThisExpressionImpl extends ExpressionPsiElement implements PsiTh
   public PsiType getType() {
     PsiJavaCodeReferenceElement qualifier = getQualifier();
     if (qualifier != null){
-      PsiClass qualifierResolve = (PsiClass)qualifier.resolve();
-      if (qualifierResolve != null) return new PsiImmediateClassType(qualifierResolve, PsiSubstitutor.EMPTY);
-
+      PsiElement qualifierResolve = qualifier.resolve();
+      if (qualifierResolve instanceof PsiClass) return new PsiImmediateClassType((PsiClass)qualifierResolve, PsiSubstitutor.EMPTY);
       return new PsiClassReferenceType(qualifier, null);
     }
     for(PsiElement scope = getContext(); scope != null; scope = scope.getContext()){
@@ -87,7 +86,7 @@ public class PsiThisExpressionImpl extends ExpressionPsiElement implements PsiTh
   }
 
   @Override
-  public int getChildRole(ASTNode child) {
+  public int getChildRole(@NotNull ASTNode child) {
     LOG.assertTrue(child.getTreeParent() == this);
     IElementType i = child.getElementType();
     if (i == JAVA_CODE_REFERENCE) {
@@ -114,6 +113,7 @@ public class PsiThisExpressionImpl extends ExpressionPsiElement implements PsiTh
     }
   }
 
+  @Override
   public String toString() {
     return "PsiThisExpression:" + getText();
   }

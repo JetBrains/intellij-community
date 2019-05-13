@@ -23,9 +23,8 @@ import com.intellij.openapi.ui.Queryable;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.CheckUtil;
-import com.intellij.psi.impl.PsiElementBase;
-import com.intellij.psi.impl.PsiManagerImpl;
+import com.intellij.psi.impl.*;
+import com.intellij.psi.impl.file.impl.FileManagerImpl;
 import com.intellij.psi.impl.source.resolve.FileContextUtil;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.util.ArrayUtil;
@@ -37,20 +36,16 @@ import org.jetbrains.annotations.Nullable;
 import java.io.IOException;
 import java.util.Map;
 
-public class PsiBinaryFileImpl extends PsiElementBase implements PsiBinaryFile, Cloneable, Queryable {
+public class PsiBinaryFileImpl extends PsiElementBase implements PsiBinaryFile, PsiFileEx, Cloneable, Queryable {
   private final PsiManagerImpl myManager;
   private String myName; // for myFile == null only
   private byte[] myContents; // for myFile == null only
-  private final long myModificationStamp;
-  private final FileType myFileType;
-  private final FileViewProvider myViewProvider;
+  private final AbstractFileViewProvider myViewProvider;
+  private volatile boolean myPossiblyInvalidated;
 
-  public PsiBinaryFileImpl(PsiManagerImpl manager, FileViewProvider viewProvider) {
-    myViewProvider = viewProvider;
+  public PsiBinaryFileImpl(@NotNull PsiManagerImpl manager, @NotNull FileViewProvider viewProvider) {
+    myViewProvider = (AbstractFileViewProvider)viewProvider;
     myManager = manager;
-    final VirtualFile virtualFile = myViewProvider.getVirtualFile();
-    myModificationStamp = virtualFile.getModificationStamp();
-    myFileType = viewProvider.getVirtualFile().getFileType();
   }
 
   @Override
@@ -64,7 +59,7 @@ public class PsiBinaryFileImpl extends PsiElementBase implements PsiBinaryFile, 
     return true;
   }
 
-  public byte[] getStoredContents() {
+  byte[] getStoredContents() {
     return myContents;
   }
 
@@ -111,7 +106,7 @@ public class PsiBinaryFileImpl extends PsiElementBase implements PsiBinaryFile, 
 
   @Override
   public long getModificationStamp() {
-    return myModificationStamp;
+    return getVirtualFile().getModificationStamp();
   }
 
   @Override
@@ -196,10 +191,10 @@ public class PsiBinaryFileImpl extends PsiElementBase implements PsiBinaryFile, 
   public PsiElement copy() {
     PsiBinaryFileImpl clone = (PsiBinaryFileImpl)clone();
     clone.myName = getName();
-    try{
+    try {
       clone.myContents = !isCopy() ? getVirtualFile().contentsToByteArray() : myContents;
     }
-    catch(IOException e){
+    catch (IOException ignored) {
     }
     return clone;
   }
@@ -250,7 +245,18 @@ public class PsiBinaryFileImpl extends PsiElementBase implements PsiBinaryFile, 
   @Override
   public boolean isValid() {
     if (isCopy()) return true; // "dummy" file
-    return getVirtualFile().isValid() && !myManager.getProject().isDisposed() && myManager.getFileManager().findFile(getVirtualFile()) == this;
+    if (!getVirtualFile().isValid() || myManager.getProject().isDisposed()) return false;
+
+
+    if (!myPossiblyInvalidated) return true;
+
+    // synchronized by read-write action
+    if (((FileManagerImpl)myManager.getFileManager()).evaluateValidity(this)) {
+      myPossiblyInvalidated = false;
+      PsiInvalidElementAccessException.setInvalidationTrace(this, null);
+      return true;
+    }
+    return false;
   }
 
   @Override
@@ -269,6 +275,7 @@ public class PsiBinaryFileImpl extends PsiElementBase implements PsiBinaryFile, 
     return this;
   }
 
+  @Override
   @NonNls
   public String toString() {
     return "PsiBinaryFile:" + getName();
@@ -277,7 +284,7 @@ public class PsiBinaryFileImpl extends PsiElementBase implements PsiBinaryFile, 
   @Override
   @NotNull
   public FileType getFileType() {
-    return myFileType;
+    return myViewProvider.getFileType();
   }
 
   @Override
@@ -310,5 +317,20 @@ public class PsiBinaryFileImpl extends PsiElementBase implements PsiBinaryFile, 
   public void putInfo(@NotNull Map<String, String> info) {
     info.put("fileName", getName());
     info.put("fileType", getFileType().getName());
+  }
+
+  @Override
+  public boolean isContentsLoaded() {
+    return false;
+  }
+
+  @Override
+  public void onContentReload() {
+  }
+
+  @Override
+  public void markInvalidated() {
+    myPossiblyInvalidated = true;
+    DebugUtil.onInvalidated(this);
   }
 }

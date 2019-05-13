@@ -1,3 +1,4 @@
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.intellij.plugins.relaxNG.model.resolve;
 
 import com.intellij.ide.highlighter.XmlFileType;
@@ -5,8 +6,10 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.impl.include.FileIncludeInfo;
 import com.intellij.psi.impl.include.FileIncludeProvider;
+import com.intellij.util.Consumer;
 import com.intellij.util.indexing.FileContent;
 import com.intellij.util.text.CharArrayUtil;
+import com.intellij.util.xml.NanoXmlBuilder;
 import com.intellij.util.xml.NanoXmlUtil;
 import org.intellij.plugins.relaxNG.ApplicationLoader;
 import org.intellij.plugins.relaxNG.compact.RncFileType;
@@ -17,11 +20,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 
-/*
-* Created by IntelliJ IDEA.
-* User: sweinreuter
-* Date: 09.06.2010
-*/
 public class RelaxIncludeProvider extends FileIncludeProvider {
   @NotNull
   @Override
@@ -35,6 +33,12 @@ public class RelaxIncludeProvider extends FileIncludeProvider {
     return type == XmlFileType.INSTANCE || type == RncFileType.getInstance();
   }
 
+  @Override
+  public void registerFileTypesUsedForIndexing(@NotNull Consumer<FileType> fileTypeSink) {
+    fileTypeSink.consume(XmlFileType.INSTANCE);
+    fileTypeSink.consume(RncFileType.getInstance());
+  }
+
   @NotNull
   @Override
   public FileIncludeInfo[] getIncludeInfos(FileContent content) {
@@ -43,10 +47,11 @@ public class RelaxIncludeProvider extends FileIncludeProvider {
     if (content.getFileType() == XmlFileType.INSTANCE) {
       CharSequence inputDataContentAsText = content.getContentAsText();
       if (CharArrayUtil.indexOf(inputDataContentAsText, ApplicationLoader.RNG_NAMESPACE, 0) == -1) return FileIncludeInfo.EMPTY;
-      infos = new ArrayList<FileIncludeInfo>();
+      infos = new ArrayList<>();
       NanoXmlUtil.parse(CharArrayUtil.readerFromCharSequence(content.getContentAsText()), new RngBuilderAdapter(infos));
-    } else if (content.getFileType() == RncFileType.getInstance()) {
-      infos = new ArrayList<FileIncludeInfo>();
+    }
+    else if (content.getFileType() == RncFileType.getInstance()) {
+      infos = new ArrayList<>();
       content.getPsiFile().acceptChildren(new RncElementVisitor() {
         @Override
         public void visitElement(RncElement element) {
@@ -64,15 +69,15 @@ public class RelaxIncludeProvider extends FileIncludeProvider {
     } else {
       return FileIncludeInfo.EMPTY;
     }
-    return infos.toArray(new FileIncludeInfo[infos.size()]);
+    return infos.toArray(FileIncludeInfo.EMPTY);
   }
 
-  private static class RngBuilderAdapter extends NanoXmlUtil.IXMLBuilderAdapter {
+  private static class RngBuilderAdapter implements NanoXmlBuilder {
     boolean isRNG;
     boolean isInclude;
     private final ArrayList<FileIncludeInfo> myInfos;
 
-    public RngBuilderAdapter(ArrayList<FileIncludeInfo> infos) {
+    RngBuilderAdapter(ArrayList<FileIncludeInfo> infos) {
       myInfos = infos;
     }
 
@@ -80,10 +85,11 @@ public class RelaxIncludeProvider extends FileIncludeProvider {
     public void startElement(String name, String nsPrefix, String nsURI, String systemID, int lineNr) throws Exception {
       boolean isRngTag = ApplicationLoader.RNG_NAMESPACE.equals(nsURI);
       if (!isRNG) { // analyzing start tag
-        if (!isRngTag) {
-          stop();
-        } else {
+        if (isRngTag) {
           isRNG = true;
+        }
+        else {
+          throw NanoXmlUtil.ParserStoppedXmlException.INSTANCE;
         }
       }
       isInclude = isRngTag && "include".equals(name);

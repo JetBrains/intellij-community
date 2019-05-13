@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,24 +16,21 @@
 
 package com.intellij.codeInsight.daemon.quickFix;
 
-import com.intellij.codeInsight.daemon.impl.HighlightInfo;
-import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixAction;
 import com.intellij.codeInsight.daemon.impl.quickfix.RenameFileFix;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
+import com.intellij.ide.fileTemplates.actions.CreateFromTemplateActionBase;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.UnknownFileType;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleUtil;
+import com.intellij.openapi.module.ModuleUtilCore;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiDirectory;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFileSystemItem;
-import com.intellij.psi.PsiNamedElement;
+import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReference;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReferenceSet;
 import com.intellij.util.IncorrectOperationException;
@@ -52,7 +49,8 @@ import java.util.List;
 public class FileReferenceQuickFixProvider {
   private FileReferenceQuickFixProvider() {}
 
-  public static List<? extends LocalQuickFix> registerQuickFix(final HighlightInfo info, final FileReference reference) {
+  @NotNull
+  public static List<? extends LocalQuickFix> registerQuickFix(@NotNull FileReference reference) {
     final FileReferenceSet fileReferenceSet = reference.getFileReferenceSet();
     int index = reference.getIndex();
 
@@ -60,7 +58,7 @@ public class FileReferenceQuickFixProvider {
     final String newFileName = reference.getFileNameToCreate();
 
     // check if we could create file
-    if (newFileName.length() == 0 ||
+    if (newFileName.isEmpty() ||
         newFileName.indexOf('\\') != -1 ||
         newFileName.indexOf('*') != -1 ||
         newFileName.indexOf('?') != -1 ||
@@ -69,16 +67,19 @@ public class FileReferenceQuickFixProvider {
     }
 
     PsiFileSystemItem context = null;
+    PsiElement element = reference.getElement();
+    PsiFile containingFile = element.getContainingFile();
+
     if(index > 0) {
       context = fileReferenceSet.getReference(index - 1).resolve();
-    } else { // index == 0
+    }
+    else { // index == 0
       final Collection<PsiFileSystemItem> defaultContexts = fileReferenceSet.getDefaultContexts();
       if (defaultContexts.isEmpty()) {
         return Collections.emptyList();
       }
 
-      PsiElement element = reference.getElement();
-      Module module = element != null ? ModuleUtil.findModuleForPsiElement(element) : null;
+      Module module = containingFile == null ? null : ModuleUtilCore.findModuleForPsiElement(containingFile);
 
       for (PsiFileSystemItem defaultContext : defaultContexts) {
         if (defaultContext != null) {
@@ -87,7 +88,7 @@ public class FileReferenceQuickFixProvider {
             if (context == null) {
               context = defaultContext;
             }
-            else if (module != null && module == getModuleForContext(defaultContext)) {
+            if (module != null && module == getModuleForContext(defaultContext)) {
               // fixes IDEA-64156
               // todo: fix it on PsiFileReferenceHelper level in 10.X
               context = defaultContext;
@@ -103,27 +104,24 @@ public class FileReferenceQuickFixProvider {
     if (context == null) return Collections.emptyList();
 
     final VirtualFile virtualFile = context.getVirtualFile();
-    if (virtualFile == null) return Collections.emptyList();
-    
+    if (virtualFile == null || !virtualFile.isValid()) return Collections.emptyList();
+
     final PsiDirectory directory = context.getManager().findDirectory(virtualFile);
     if (directory == null) return Collections.emptyList();
 
     if (fileReferenceSet.isCaseSensitive()) {
-      final PsiElement psiElement = reference.innerSingleResolve(false);
+      final PsiElement psiElement = containingFile == null ? null : reference.innerSingleResolve(false, containingFile);
 
-      if (psiElement instanceof PsiNamedElement) {
+      if (psiElement != null) {
         final String existingElementName = ((PsiNamedElement)psiElement).getName();
 
         final RenameFileReferenceIntentionAction renameRefAction = new RenameFileReferenceIntentionAction(existingElementName, reference);
-        QuickFixAction.registerQuickFixAction(info, renameRefAction);
-
         final RenameFileFix renameFileFix = new RenameFileFix(newFileName);
-        QuickFixAction.registerQuickFixAction(info, renameFileFix);
         return Arrays.asList(renameRefAction, renameFileFix);
       }
     }
 
-    final boolean isdirectory;
+    final boolean isDirectory;
 
     if (!reference.isLast()) {
       // directory
@@ -132,7 +130,7 @@ public class FileReferenceQuickFixProvider {
       } catch(IncorrectOperationException ex) {
         return Collections.emptyList();
       }
-      isdirectory = true;
+      isDirectory = true;
     } else {
       FileType ft = FileTypeManager.getInstance().getFileTypeByFileName(newFileName);
       if (ft instanceof UnknownFileType) return Collections.emptyList();
@@ -143,36 +141,73 @@ public class FileReferenceQuickFixProvider {
         return Collections.emptyList();
       }
 
-      isdirectory = false;
+      isDirectory = false;
     }
 
-    final CreateFileFix action = new CreateFileFix(isdirectory, newFileName, directory) {
-      @Override
-      protected String getFileText() {
-        if (!isdirectory) {
-          String templateName = reference.getNewFileTemplateName();
-          if (templateName != null) {
-            FileTemplate template = FileTemplateManager.getInstance().getTemplate(templateName);
-            if (template != null) {
-              try {
-                return template.getText(FileTemplateManager.getInstance().getDefaultProperties(directory.getProject()));
-              } catch (IOException ex) {
-                throw new RuntimeException(ex);
-              }
-            }
-          }
-        }
-        return super.getFileText();
-      }
-    };
-    QuickFixAction.registerQuickFixAction(info, action);
-    return Arrays.asList(action);
+    final CreateFileFix action = new MyCreateFileFix(isDirectory, newFileName, directory, reference);
+    return Collections.singletonList(action);
   }
 
 
   @Nullable
   private static Module getModuleForContext(@NotNull PsiFileSystemItem context) {
     VirtualFile file = context.getVirtualFile();
-    return file != null ? ModuleUtil.findModuleForFile(file, context.getProject()) : null;
+    return file != null ? ModuleUtilCore.findModuleForFile(file, context.getProject()) : null;
+  }
+
+  private static class MyCreateFileFix extends CreateFileFix {
+    private final boolean isDirectory;
+    private final String myNewFileTemplateName;
+
+    MyCreateFileFix(boolean isDirectory, String newFileName, PsiDirectory directory, FileReference reference) {
+      super(isDirectory, newFileName, directory);
+      this.isDirectory = isDirectory;
+      myNewFileTemplateName = this.isDirectory ? null : reference.getNewFileTemplateName();
+    }
+
+    @Override
+    protected String getFileText() {
+      if (!isDirectory && myNewFileTemplateName != null) {
+        Project project = getStartElement().getProject();
+        FileTemplateManager fileTemplateManager = FileTemplateManager.getInstance(project);
+        FileTemplate template = findTemplate(fileTemplateManager);
+
+        if (template != null) {
+          try {
+            return template.getText(fileTemplateManager.getDefaultProperties());
+          } catch (IOException ex) {
+            throw new RuntimeException(ex);
+          }
+        }
+      }
+      return super.getFileText();
+    }
+
+    private FileTemplate findTemplate(FileTemplateManager fileTemplateManager) {
+      FileTemplate template = fileTemplateManager.getTemplate(myNewFileTemplateName);
+      if (template == null) template = fileTemplateManager.findInternalTemplate(myNewFileTemplateName);
+      if (template == null) {
+        for (FileTemplate fileTemplate : fileTemplateManager.getAllJ2eeTemplates()) {
+          final String fileTemplateWithExtension = fileTemplate.getName() + '.' + fileTemplate.getExtension();
+          if (fileTemplateWithExtension.equals(myNewFileTemplateName)) {
+            return fileTemplate;
+          }
+        }
+      }
+      return template;
+    }
+
+    @Override
+    protected void openFile(@NotNull Project project, PsiDirectory directory, PsiFile newFile, String text) {
+      super.openFile(project, directory, newFile, text);
+      if (!isDirectory && myNewFileTemplateName != null) {
+        FileTemplateManager fileTemplateManager = FileTemplateManager.getInstance(project);
+        FileTemplate template = findTemplate(fileTemplateManager);
+
+        if (template != null && template.isLiveTemplateEnabled()) {
+          CreateFromTemplateActionBase.startLiveTemplate(newFile);
+        }
+      }
+    }
   }
 }

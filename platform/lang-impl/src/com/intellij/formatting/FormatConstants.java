@@ -15,13 +15,18 @@
  */
 package com.intellij.formatting;
 
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.fileTypes.PlainTextLanguage;
+import org.jetbrains.annotations.NotNull;
+
+import static com.intellij.psi.util.PsiUtilBase.getLanguageInEditor;
+
 /**
  * Is assumed to be a single place to hold various constants to use during formatting.
  * <p/>
  * Thread-safe.
  *
  * @author Denis Zhdanov
- * @since Sep 14, 2010 2:56:04 PM
  */
 public class FormatConstants {
 
@@ -53,5 +58,13 @@ public class FormatConstants {
                                                                    // 'space' and 'plus' operator
 
   private FormatConstants() {
+  }
+
+  public static int getReservedLineWrapWidthInColumns(@NotNull Editor editor) {
+    return isPlainTextFile(editor) ? 0 : RESERVED_LINE_WRAP_WIDTH_IN_COLUMNS;
+  }
+
+  private static boolean isPlainTextFile(@NotNull Editor editor) {
+    return editor.getProject() != null && PlainTextLanguage.INSTANCE.is(getLanguageInEditor(editor, editor.getProject()));
   }
 }

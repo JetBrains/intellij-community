@@ -32,16 +32,19 @@ import java.util.Collection;
 public class DefaultFacetsProvider implements FacetsProvider {
   public static final FacetsProvider INSTANCE = new DefaultFacetsProvider();
 
+  @Override
   @NotNull
   public Facet[] getAllFacets(Module module) {
     return FacetManager.getInstance(module).getAllFacets();
   }
 
+  @Override
   @NotNull
   public <F extends Facet> Collection<F> getFacetsByType(Module module, FacetTypeId<F> type) {
     return FacetManager.getInstance(module).getFacetsByType(type);
   }
 
+  @Override
   @Nullable
   public <F extends Facet> F findFacet(Module module, FacetTypeId<F> type, String name) {
     return FacetManager.getInstance(module).findFacet(type, name);

@@ -1,0 +1,45 @@
+++
+b
+
+--
+b
+
++
+b
+
+-
+b
+
+!
+b
+-----
+Groovy script
+  Unary expression
+    PsiElement(++)('++')
+    PsiElement(new line)('\n')
+    Reference expression
+      PsiElement(identifier)('b')
+  PsiElement(new line)('\n\n')
+  Unary expression
+    PsiElement(--)('--')
+    PsiElement(new line)('\n')
+    Reference expression
+      PsiElement(identifier)('b')
+  PsiElement(new line)('\n\n')
+  Unary expression
+    PsiElement(+)('+')
+    PsiElement(new line)('\n')
+    Reference expression
+      PsiElement(identifier)('b')
+  PsiElement(new line)('\n\n')
+  Unary expression
+    PsiElement(-)('-')
+    PsiElement(new line)('\n')
+    Reference expression
+      PsiElement(identifier)('b')
+  PsiElement(new line)('\n\n')
+  Unary expression
+    PsiElement(!)('!')
+    PsiElement(new line)('\n')
+    Reference expression
+      PsiElement(identifier)('b')

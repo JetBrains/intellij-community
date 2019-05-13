@@ -1,16 +1,21 @@
+/*
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ */
 package com.intellij.xdebugger;
 
-import com.intellij.util.NotNullFunction;
 import com.intellij.xdebugger.frame.XFullValueEvaluator;
-import com.intellij.xdebugger.frame.XValueNode;
-import org.jetbrains.annotations.NonNls;
+import com.intellij.xdebugger.frame.presentation.XValuePresentation;
+import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodePresentationConfigurator;
+import com.intellij.xdebugger.impl.ui.tree.nodes.XValuePresentationUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.concurrent.Semaphore;
+import java.util.function.BiFunction;
 
-public class XTestValueNode implements XValueNode {
+public class XTestValueNode extends XValueNodePresentationConfigurator.ConfigurableXValueNodeImpl {
+  public Icon myIcon;
   public String myName;
   public String myType;
   public String myValue;
@@ -20,70 +25,34 @@ public class XTestValueNode implements XValueNode {
 
   private final Semaphore myFinished = new Semaphore(0);
 
+  @Override
+  public void applyPresentation(@Nullable Icon icon,
+                                @NotNull XValuePresentation valuePresentation,
+                                boolean hasChildren) {
+    myIcon = icon;
+    myType = valuePresentation.getType();
+    myValue = XValuePresentationUtil.computeValueText(valuePresentation);
+    myHasChildren = hasChildren;
+
+    myFinished.release();
+  }
 
   @Override
-    public void setPresentation(@Nullable Icon icon, @NonNls @Nullable String type, @NonNls @NotNull String value, boolean hasChildren) {
-      myType = type;
-      myValue = value;
-      myHasChildren = hasChildren;
-
-      myFinished.release();
-    }
-
-    @Override
-    public void setPresentation(@Nullable Icon icon,
-                                @NonNls @Nullable String type,
-                                @NonNls @NotNull String separator,
-                                @NonNls @NotNull String value,
-                                @Nullable NotNullFunction<String, String> valuePresenter,
-                                boolean hasChildren) {
-      setPresentation(icon, type, value, hasChildren);
-    }
-
-    @Override
-    public void setPresentation(@Nullable Icon icon,
-                                @NonNls @Nullable String type,
-                                @NonNls @NotNull String separator,
-                                @NonNls @NotNull String value,
-                                boolean hasChildren) {
-      setPresentation(icon, type, value, hasChildren);
-    }
-
-    @Override
-    public void setPresentation(@Nullable Icon icon,
-                                @NonNls @Nullable String type,
-                                @NonNls @NotNull String value,
-                                @Nullable NotNullFunction<String, String> valuePresenter,
-                                boolean hasChildren) {
-      setPresentation(icon, type, value, hasChildren);
-    }
-
-    public void setPresentation(@NonNls @NotNull String name,
-                                @Nullable Icon icon,
-                                @NonNls @Nullable String type,
-                                @NonNls @NotNull String value,
-                                boolean hasChildren) {
-      setPresentation(icon, type, value, hasChildren);
-    }
-
-    public void setPresentation(@NonNls @NotNull String name,
-                                @Nullable Icon icon,
-                                @NonNls @Nullable String type,
-                                @NonNls @NotNull String separator,
-                                @NonNls @NotNull String value,
-                                boolean hasChildren) {
-      setPresentation(icon, type, value, hasChildren);
-    }
-
   public void setFullValueEvaluator(@NotNull XFullValueEvaluator fullValueEvaluator) {
     myFullValueEvaluator = fullValueEvaluator;
   }
 
-  public boolean isObsolete() {
-    return false;
+  public void waitFor(long timeoutInMillis) {
+    waitFor(timeoutInMillis, XDebuggerTestUtil::waitFor);
+  }
+  public void waitFor(long timeoutInMillis, BiFunction<Semaphore, Long, Boolean> waitFunction) {
+    if (!waitFunction.apply(myFinished, timeoutInMillis)) {
+      throw new AssertionError("Waiting timed out");
+    }
   }
 
-  public boolean waitFor(long timeoutInMillis) throws InterruptedException {
-    return XDebuggerTestUtil.waitFor(myFinished, timeoutInMillis);
+  @Override
+  public String toString() {
+    return myName + "{" + myType + "} = " + myValue + ", hasChildren = " + myHasChildren;
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,20 +17,30 @@ package com.siyeh.ig.logging;
 
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.ComboBox;
+import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
-import com.intellij.util.IncorrectOperationException;
+import com.intellij.psi.util.InheritanceUtil;
+import com.intellij.util.ui.FormBuilder;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.ExpressionUtils;
+import com.siyeh.ig.psiutils.ParenthesesUtils;
 import com.siyeh.ig.psiutils.TypeUtils;
 import gnu.trove.THashSet;
+import org.jdom.Element;
 import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
@@ -40,13 +50,40 @@ import java.util.Set;
  */
 public class StringConcatenationArgumentToLogCallInspection extends BaseInspection {
 
-  private static final Set<String> logNames = new THashSet<String>();
+  @NonNls
+  private static final Set<String> logNames = new THashSet<>();
   static {
     logNames.add("trace");
     logNames.add("debug");
     logNames.add("info");
     logNames.add("warn");
     logNames.add("error");
+    logNames.add("fatal");
+    logNames.add("log");
+  }
+  @SuppressWarnings("PublicField") public int warnLevel = 0;
+
+  @Nullable
+  @Override
+  public JComponent createOptionsPanel() {
+    final ComboBox<String> comboBox = new ComboBox<>(new String[]{
+      InspectionGadgetsBundle.message("all.levels.option"),
+      InspectionGadgetsBundle.message("warn.level.and.lower.option"),
+      InspectionGadgetsBundle.message("info.level.and.lower.option"),
+      InspectionGadgetsBundle.message("debug.level.and.lower.option"),
+      InspectionGadgetsBundle.message("trace.level.option")
+    });
+    comboBox.setSelectedIndex(warnLevel);
+    comboBox.addActionListener(new ActionListener() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        warnLevel = comboBox.getSelectedIndex();
+      }
+    });
+    return new FormBuilder()
+      .addLabeledComponent(InspectionGadgetsBundle.message("warn.on.label"), comboBox)
+      .addVerticalGap(-1)
+      .getPanel();
   }
 
   @Nls
@@ -62,6 +99,13 @@ public class StringConcatenationArgumentToLogCallInspection extends BaseInspecti
     return InspectionGadgetsBundle.message("string.concatenation.argument.to.log.call.problem.descriptor");
   }
 
+  @Override
+  public void writeSettings(@NotNull Element node) throws WriteExternalException {
+    if (warnLevel != 0) {
+      node.addContent(new Element("option").setAttribute("name", "warnLevel").setAttribute("value", String.valueOf(warnLevel)));
+    }
+  }
+
   @Nullable
   @Override
   protected InspectionGadgetsFix buildFix(Object... infos) {
@@ -71,19 +115,23 @@ public class StringConcatenationArgumentToLogCallInspection extends BaseInspecti
     return new StringConcatenationArgumentToLogCallFix();
   }
 
+  @Override
+  public BaseInspectionVisitor buildVisitor() {
+    return new StringConcatenationArgumentToLogCallVisitor();
+  }
+
   private static class StringConcatenationArgumentToLogCallFix extends InspectionGadgetsFix {
 
-
-    public StringConcatenationArgumentToLogCallFix() {}
+    StringConcatenationArgumentToLogCallFix() {}
 
     @NotNull
     @Override
-    public String getName() {
-      return InspectionGadgetsBundle.message("string.concatenation.in.format.call.quickfix");
+    public String getFamilyName() {
+      return InspectionGadgetsBundle.message("string.concatenation.argument.to.log.call.quickfix");
     }
 
     @Override
-    protected void doFix(Project project, ProblemDescriptor descriptor) throws IncorrectOperationException {
+    protected void doFix(Project project, ProblemDescriptor descriptor) {
       final PsiElement element = descriptor.getPsiElement();
       final PsiElement grandParent = element.getParent().getParent();
       if (!(grandParent instanceof PsiMethodCallExpression)) {
@@ -95,8 +143,8 @@ public class StringConcatenationArgumentToLogCallInspection extends BaseInspecti
       if (arguments.length == 0) {
         return;
       }
-      final StringBuilder newMethodCall = new StringBuilder(methodCallExpression.getMethodExpression().getText());
-      newMethodCall.append("(");
+      @NonNls final StringBuilder newMethodCall = new StringBuilder(methodCallExpression.getMethodExpression().getText());
+      newMethodCall.append('(');
       PsiExpression argument = arguments[0];
       int usedArguments;
       if (!(argument instanceof PsiPolyadicExpression)) {
@@ -137,11 +185,11 @@ public class StringConcatenationArgumentToLogCallInspection extends BaseInspecti
       boolean inStringLiteral = false;
       for (PsiExpression operand : operands) {
         if (ExpressionUtils.isEvaluatedAtCompileTime(operand)) {
-          if (ExpressionUtils.hasStringType(operand)) {
+          if (ExpressionUtils.hasStringType(operand) && operand instanceof PsiLiteralExpression) {
             final String text = operand.getText();
             final int count = StringUtil.getOccurrenceCount(text, "{}");
             for (int i = 0; i < count && usedArguments + i < arguments.length; i++) {
-              newArguments.add((PsiExpression)arguments[i + usedArguments].copy());
+              newArguments.add(ParenthesesUtils.stripParentheses((PsiExpression)arguments[i + usedArguments].copy()));
             }
             usedArguments += count;
             if (!inStringLiteral) {
@@ -151,7 +199,7 @@ public class StringConcatenationArgumentToLogCallInspection extends BaseInspecti
               newMethodCall.append('"');
               inStringLiteral = true;
             }
-            newMethodCall.append(text.substring(1, text.length() - 1));
+            newMethodCall.append(text, 1, text.length() - 1);
           }
           else {
             if (inStringLiteral) {
@@ -165,7 +213,7 @@ public class StringConcatenationArgumentToLogCallInspection extends BaseInspecti
           }
         }
         else {
-          newArguments.add((PsiExpression)operand.copy());
+          newArguments.add(ParenthesesUtils.stripParentheses((PsiExpression)operand.copy()));
           if (!inStringLiteral) {
             if (addPlus) {
               newMethodCall.append('+');
@@ -191,19 +239,24 @@ public class StringConcatenationArgumentToLogCallInspection extends BaseInspecti
             newMethodCall.append(',');
           }
           else {
-            comma =true;
+            comma = true;
           }
-          newMethodCall.append(newArgument.getText());
+          if (newArgument != null) {
+            newMethodCall.append(newArgument.getText());
+          }
         }
         newMethodCall.append('}');
       }
       else {
         for (PsiExpression newArgument : newArguments) {
-          newMethodCall.append(',').append(newArgument.getText());
+          newMethodCall.append(',');
+          if (newArgument != null) {
+            newMethodCall.append(newArgument.getText());
+          }
         }
       }
       newMethodCall.append(')');
-      replaceExpression(methodCallExpression, newMethodCall.toString());
+      PsiReplacementUtil.replaceExpression(methodCallExpression, newMethodCall.toString());
     }
 
     public static boolean isAvailable(PsiExpression expression) {
@@ -221,12 +274,7 @@ public class StringConcatenationArgumentToLogCallInspection extends BaseInspecti
     }
   }
 
-  @Override
-  public BaseInspectionVisitor buildVisitor() {
-    return new StringConcatenationArgumentToLogCallVisitor();
-  }
-
-  private static class StringConcatenationArgumentToLogCallVisitor extends BaseInspectionVisitor {
+  private class StringConcatenationArgumentToLogCallVisitor extends BaseInspectionVisitor {
 
     @Override
     public void visitMethodCallExpression(PsiMethodCallExpression expression) {
@@ -236,12 +284,19 @@ public class StringConcatenationArgumentToLogCallInspection extends BaseInspecti
       if (!logNames.contains(referenceName)) {
         return;
       }
+      switch (warnLevel) {
+        case 4: if ("debug".equals(referenceName)) return;
+        case 3: if ("info".equals(referenceName)) return;
+        case 2: if ("warn".equals(referenceName)) return;
+        case 1: if ("error".equals(referenceName) || "fatal".equals(referenceName)) return;
+      }
       final PsiMethod method = expression.resolveMethod();
       if (method == null) {
         return;
       }
       final PsiClass containingClass = method.getContainingClass();
-      if (containingClass == null || !"org.slf4j.Logger".equals(containingClass.getQualifiedName())) {
+      if (!InheritanceUtil.isInheritor(containingClass, "org.slf4j.Logger") &&
+          !InheritanceUtil.isInheritor(containingClass, "org.apache.logging.log4j.Logger")) {
         return;
       }
       final PsiExpressionList argumentList = expression.getArgumentList();
@@ -265,7 +320,7 @@ public class StringConcatenationArgumentToLogCallInspection extends BaseInspecti
       registerMethodCallError(expression, argument);
     }
 
-    private static boolean containsNonConstantConcatenation(@Nullable PsiExpression expression) {
+    private boolean containsNonConstantConcatenation(@Nullable PsiExpression expression) {
       if (expression instanceof PsiParenthesizedExpression) {
         final PsiParenthesizedExpression parenthesizedExpression = (PsiParenthesizedExpression)expression;
         return containsNonConstantConcatenation(parenthesizedExpression.getExpression());

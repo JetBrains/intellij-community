@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,20 +17,18 @@ package org.jetbrains.plugins.groovy.lang.surroundWith;
 
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrBlockStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrWhileStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 
-/**
- * User: Dmitry.Krasilschikov
- * Date: 25.05.2007
- */
 public class WhileExprSurrounder extends GroovyConditionSurrounder {
-  protected TextRange surroundExpression(GrExpression expression, PsiElement context) {
+  @Override
+  protected TextRange surroundExpression(@NotNull GrExpression expression, PsiElement context) {
     GrWhileStatement whileStatement = (GrWhileStatement) GroovyPsiElementFactory.getInstance(expression.getProject()).createStatementFromText("while(a){4\n}", context);
-    replaceToOldExpression((GrExpression)whileStatement.getCondition(), expression);
+    replaceToOldExpression(whileStatement.getCondition(), expression);
     whileStatement = expression.replaceWithStatement(whileStatement);
     GrStatement body = whileStatement.getBody();
 
@@ -45,6 +43,7 @@ public class WhileExprSurrounder extends GroovyConditionSurrounder {
     return new TextRange(offset, offset);
   }
 
+  @Override
   public String getTemplateDescription() {
     return "while (expr)";
   }

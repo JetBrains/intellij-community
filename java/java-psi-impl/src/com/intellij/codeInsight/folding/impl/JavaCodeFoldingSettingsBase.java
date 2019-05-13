@@ -1,18 +1,35 @@
+/*
+ * Copyright 2000-2017 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.intellij.codeInsight.folding.impl;
 
 import com.intellij.codeInsight.folding.CodeFoldingSettings;
 import com.intellij.codeInsight.folding.JavaCodeFoldingSettings;
 
 public class JavaCodeFoldingSettingsBase extends JavaCodeFoldingSettings {
-  @SuppressWarnings({"WeakerAccess"}) public boolean COLLAPSE_ACCESSORS = false;
-  @SuppressWarnings({"WeakerAccess"}) public boolean COLLAPSE_INNER_CLASSES = false;
-  @SuppressWarnings({"WeakerAccess"}) public boolean COLLAPSE_ANONYMOUS_CLASSES = false;
-  @SuppressWarnings({"WeakerAccess"}) public boolean COLLAPSE_ANNOTATIONS = false;
-  @SuppressWarnings({"WeakerAccess"}) public boolean COLLAPSE_CLOSURES = true;
-  @SuppressWarnings({"WeakerAccess"}) public boolean COLLAPSE_CONSTRUCTOR_GENERIC_PARAMETERS = true;
-  @SuppressWarnings({"WeakerAccess"}) public boolean COLLAPSE_I18N_MESSAGES = true;
-  @SuppressWarnings({"WeakerAccess"}) public boolean COLLAPSE_SUPPRESS_WARNINGS = true;
-  @SuppressWarnings({"WeakerAccess"}) public boolean COLLAPSE_END_OF_LINE_COMMENTS = false;
+  private boolean COLLAPSE_ACCESSORS;
+  private boolean COLLAPSE_ONE_LINE_METHODS = true;
+  private boolean COLLAPSE_INNER_CLASSES;
+  private boolean COLLAPSE_ANONYMOUS_CLASSES;
+  private boolean COLLAPSE_ANNOTATIONS;
+  private boolean COLLAPSE_CLOSURES = true;
+  private boolean COLLAPSE_CONSTRUCTOR_GENERIC_PARAMETERS = true;
+  private boolean COLLAPSE_I18N_MESSAGES = true;
+  private boolean COLLAPSE_SUPPRESS_WARNINGS = true;
+  private boolean COLLAPSE_END_OF_LINE_COMMENTS;
+  private boolean REPLACE_VAR_WITH_INFERRED_TYPE = false;
 
   @Override
   public boolean isCollapseImports() {
@@ -62,6 +79,15 @@ public class JavaCodeFoldingSettingsBase extends JavaCodeFoldingSettings {
   @Override
   public void setCollapseAccessors(boolean value) {
     COLLAPSE_ACCESSORS = value;
+  }
+  @Override
+  public boolean isCollapseOneLineMethods() {
+    return COLLAPSE_ONE_LINE_METHODS;
+  }
+
+  @Override
+  public void setCollapseOneLineMethods(boolean value) {
+    COLLAPSE_ONE_LINE_METHODS = value;
   }
 
   @Override
@@ -142,5 +168,15 @@ public class JavaCodeFoldingSettingsBase extends JavaCodeFoldingSettings {
   @Override
   public void setCollapseEndOfLineComments(boolean value) {
     COLLAPSE_END_OF_LINE_COMMENTS = value;
+  }
+
+  @Override
+  public boolean isReplaceVarWithInferredType() {
+    return REPLACE_VAR_WITH_INFERRED_TYPE;
+  }
+
+  @Override
+  public void setReplaceVarWithInferredType(boolean value) {
+    REPLACE_VAR_WITH_INFERRED_TYPE = value;
   }
 }

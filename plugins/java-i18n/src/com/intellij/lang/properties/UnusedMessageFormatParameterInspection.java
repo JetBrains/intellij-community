@@ -15,12 +15,14 @@
  */
 package com.intellij.lang.properties;
 
+import com.intellij.codeInsight.daemon.impl.quickfix.RenameElementFix;
 import com.intellij.codeInspection.InspectionManager;
+import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemHighlightType;
-import com.intellij.codeInspection.ex.BaseLocalInspectionTool;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.properties.psi.PropertiesFile;
+import com.intellij.lang.properties.psi.Property;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NonNls;
@@ -32,38 +34,24 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-/**
- * User: anna
- * Date: 07-Sep-2005
- */
-public class UnusedMessageFormatParameterInspection extends BaseLocalInspectionTool {
-  @NotNull
-  public String getGroupDisplayName() {
-    return PropertiesBundle.message("properties.files.inspection.group.display.name");
-  }
+public class UnusedMessageFormatParameterInspection extends PropertiesInspectionBase {
+  public static final String REGEXP = "regexp";
 
-  @NotNull
-  public String getDisplayName() {
-    return PropertiesBundle.message("unused.message.format.parameter.display.name");
-  }
-
-  @NotNull
-  @NonNls
-  public String getShortName() {
-    return "UnusedMessageFormatParameter";
-  }
-
+  @Override
   @Nullable
   public ProblemDescriptor[] checkFile(@NotNull PsiFile file, @NotNull InspectionManager manager, boolean isOnTheFly) {
     if (!(file instanceof PropertiesFile)) return null;
     PropertiesFile propertiesFile = (PropertiesFile)file;
     final List<IProperty> properties = propertiesFile.getProperties();
-    List<ProblemDescriptor> problemDescriptors = new ArrayList<ProblemDescriptor>();
+    List<ProblemDescriptor> problemDescriptors = new ArrayList<>();
     for (IProperty property : properties) {
       @NonNls String name = property.getName();
-      if (name != null && name.startsWith("log4j")) continue;
+      if (name != null) {
+        if (name.startsWith("log4j")) continue;
+        if (name.startsWith(REGEXP + ".") || name.endsWith("." + REGEXP)) continue;
+      }
       String value = property.getValue();
-      Set<Integer> parameters = new HashSet<Integer>();
+      Set<Integer> parameters = new HashSet<>();
       if (value != null) {
         int index = value.indexOf('{');
         while (index != -1) {
@@ -90,14 +78,16 @@ public class UnusedMessageFormatParameterInspection extends BaseLocalInspectionT
             if (!parameters.contains(new Integer(i))) {
               ASTNode[] nodes = property.getPsiElement().getNode().getChildren(null);
               PsiElement valElement = nodes.length < 3 ? property.getPsiElement() : nodes[2].getPsi();
-              problemDescriptors.add(manager.createProblemDescriptor(valElement, PropertiesBundle.message(
-                "unused.message.format.parameter.problem.descriptor", integer.toString(), Integer.toString(i)), isOnTheFly, null, ProblemHighlightType.GENERIC_ERROR_OR_WARNING));
+              final String message = PropertiesBundle.message("unused.message.format.parameter.problem.descriptor", integer.toString(), Integer.toString(i));
+              final String propertyKey = property.getKey();
+              final LocalQuickFix[] fixes = isOnTheFly ? new LocalQuickFix[]{new RenameElementFix(((Property)property), propertyKey == null ? REGEXP : propertyKey + "." + REGEXP)} : null;
+              problemDescriptors.add(manager.createProblemDescriptor(valElement, message, isOnTheFly, fixes, ProblemHighlightType.GENERIC_ERROR_OR_WARNING));
               break;
             }
           }
         }
       }
     }
-    return problemDescriptors.isEmpty() ? null : problemDescriptors.toArray(new ProblemDescriptor[problemDescriptors.size()]);
+    return problemDescriptors.isEmpty() ? null : problemDescriptors.toArray(ProblemDescriptor.EMPTY_ARRAY);
   }
 }

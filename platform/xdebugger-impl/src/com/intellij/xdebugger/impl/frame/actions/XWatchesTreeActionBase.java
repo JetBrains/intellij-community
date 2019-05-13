@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,8 @@ package com.intellij.xdebugger.impl.frame.actions;
 
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.project.DumbAware;
+import com.intellij.xdebugger.impl.frame.XWatchesView;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
 import org.jetbrains.annotations.NotNull;
 
@@ -28,9 +30,10 @@ import java.util.List;
 /**
  * @author nik
  */
-public abstract class XWatchesTreeActionBase extends AnAction {
-  protected static <T extends TreeNode> List<? extends T> getSelectedNodes(final @NotNull XDebuggerTree tree, Class<T> nodeClass) {
-    List<T> list = new ArrayList<T>();
+public abstract class XWatchesTreeActionBase extends AnAction implements DumbAware {
+  @NotNull
+  public static <T extends TreeNode> List<? extends T> getSelectedNodes(final @NotNull XDebuggerTree tree, Class<? extends T> nodeClass) {
+    List<T> list = new ArrayList<>();
     TreePath[] selectionPaths = tree.getSelectionPaths();
     if (selectionPaths != null) {
       for (TreePath selectionPath : selectionPaths) {
@@ -43,23 +46,26 @@ public abstract class XWatchesTreeActionBase extends AnAction {
     return list;
   }
 
-  public void update(final AnActionEvent e) {
+  @Override
+  public void update(@NotNull final AnActionEvent e) {
     final XDebuggerTree tree = XDebuggerTree.getTree(e);
-    boolean enabled = tree != null && isEnabled(e, tree);
+    XWatchesView watchesView = e.getData(XWatchesView.DATA_KEY);
+    boolean enabled = tree != null && watchesView != null && isEnabled(e, tree);
     e.getPresentation().setEnabled(enabled);
   }
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     final XDebuggerTree tree = XDebuggerTree.getTree(e);
-    if (tree != null) {
-      perform(e, tree);
+    XWatchesView watchesView = e.getData(XWatchesView.DATA_KEY);
+    if (tree != null && watchesView != null) {
+      perform(e, tree, watchesView);
     }
   }
 
-  protected abstract void perform(AnActionEvent e, XDebuggerTree tree);
+  protected abstract void perform(@NotNull AnActionEvent e, @NotNull XDebuggerTree tree, @NotNull XWatchesView watchesView);
 
-  protected boolean isEnabled(AnActionEvent e, @NotNull XDebuggerTree tree) {
+  protected boolean isEnabled(@NotNull AnActionEvent e, @NotNull XDebuggerTree tree) {
     return true;
   }
 }

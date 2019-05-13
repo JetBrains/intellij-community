@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,8 +17,8 @@ package com.theoryinpractice.testng.configuration.browser;
 
 import com.intellij.openapi.ui.DialogBuilder;
 import com.intellij.psi.PsiClass;
-import com.intellij.ui.ListScrollingUtil;
 import com.intellij.ui.ScrollPaneFactory;
+import com.intellij.ui.ScrollingUtil;
 import com.intellij.ui.SortedListModel;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.ArrayUtil;
@@ -37,12 +37,7 @@ public class GroupList extends JPanel
     public GroupList(PsiClass[] classes)
     {
         super(new BorderLayout());
-        SortedListModel<String> model = new SortedListModel<String>(new Comparator<String>()
-        {
-            public int compare(String s1, String s2) {
-                return s1.compareTo(s2);
-            }
-        });
+        SortedListModel<String> model = new SortedListModel<>((s1, s2) -> s1.compareTo(s2));
         list = new JBList(model);
         Set<String> groups = TestNGUtil.getAnnotationValues("groups", classes);
       String[] array = ArrayUtil.toStringArray(groups);
@@ -50,7 +45,7 @@ public class GroupList extends JPanel
         model.addAll(array);
         add(ScrollPaneFactory.createScrollPane(list));
         list.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-        ListScrollingUtil.ensureSelectionExists(list);
+        ScrollingUtil.ensureSelectionExists(list);
     }
 
     public String getSelected()

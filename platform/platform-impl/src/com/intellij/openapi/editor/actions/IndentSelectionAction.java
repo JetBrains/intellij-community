@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,33 +14,24 @@
  * limitations under the License.
  */
 
-/*
- * Created by IntelliJ IDEA.
- * User: max
- * Date: May 13, 2002
- * Time: 10:29:01 PM
- */
 package com.intellij.openapi.editor.actions;
 
-import com.intellij.codeStyle.CodeStyleFacade;
+import com.intellij.application.options.CodeStyle;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.actionSystem.Presentation;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.IndentStrategy;
-import com.intellij.openapi.editor.LanguageIndentStrategy;
+import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.actionSystem.EditorAction;
 import com.intellij.openapi.editor.actionSystem.EditorWriteActionHandler;
-import com.intellij.openapi.editor.ex.DocumentEx;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
+import com.intellij.util.DocumentUtil;
+import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -51,16 +42,22 @@ public class IndentSelectionAction extends EditorAction {
   }
 
   private static class Handler extends EditorWriteActionHandler {
+    Handler() {
+      super(true);
+    }
+
     @Override
-    public void executeWriteAction(Editor editor, DataContext dataContext) {
-      Project project = PlatformDataKeys.PROJECT.getData(dataContext);
-      indentSelection(editor, project);
+    public void executeWriteAction(Editor editor, @Nullable Caret caret, DataContext dataContext) {
+      Project project = CommonDataKeys.PROJECT.getData(dataContext);
+      if (isEnabled(editor, caret, dataContext)) {
+        indentSelection(editor, project);
+      }
     }
   }
 
   @Override
   public void update(Editor editor, Presentation presentation, DataContext dataContext) {
-    presentation.setEnabled(originalIsEnabled(editor));
+    presentation.setEnabled(originalIsEnabled(editor, true));
   }
 
   @Override
@@ -69,19 +66,33 @@ public class IndentSelectionAction extends EditorAction {
   }
 
   protected boolean isEnabled(Editor editor, DataContext dataContext) {
-    return originalIsEnabled(editor);
+    return originalIsEnabled(editor, true);
   }
 
-  private static boolean originalIsEnabled(Editor editor) {
-    return editor.getSelectionModel().hasSelection() && !editor.isOneLineMode();
+  protected static boolean originalIsEnabled(Editor editor, boolean wantSelection) {
+    return (!wantSelection || hasSuitableSelection(editor)) && !editor.isOneLineMode() && !editor.isViewer();
+  }
+
+  /**
+   * Returns true if there is a selection in the editor and it contains at least one non-whitespace character
+   */
+  private static boolean hasSuitableSelection(Editor editor) {
+    if (!editor.getSelectionModel().hasSelection()) {
+      return false;
+    }
+    Document document = editor.getDocument();
+    int selectionStart = editor.getSelectionModel().getSelectionStart();
+    int selectionEnd = editor.getSelectionModel().getSelectionEnd();
+    return !CharArrayUtil.containsOnlyWhiteSpaces(document.getCharsSequence().subSequence(selectionStart, selectionEnd));
   }
 
   private static void indentSelection(Editor editor, Project project) {
-    if(!editor.getSelectionModel().hasSelection())
-      return;
-
     int oldSelectionStart = editor.getSelectionModel().getSelectionStart();
     int oldSelectionEnd = editor.getSelectionModel().getSelectionEnd();
+    if(!editor.getSelectionModel().hasSelection()) {
+      oldSelectionStart = editor.getCaretModel().getOffset();
+      oldSelectionEnd = oldSelectionStart;
+    }
 
     Document document = editor.getDocument();
     int startIndex = document.getLineNumber(oldSelectionStart);
@@ -89,26 +100,24 @@ public class IndentSelectionAction extends EditorAction {
       startIndex = document.getLineCount() - 1;
     }
     int endIndex = document.getLineNumber(oldSelectionEnd);
-    if(endIndex > 0 && document.getLineStartOffset(endIndex) == oldSelectionEnd) {
+    if(endIndex > 0 && document.getLineStartOffset(endIndex) == oldSelectionEnd && editor.getSelectionModel().hasSelection()) {
       endIndex --;
     }
     if(endIndex == -1) {
       endIndex = document.getLineCount() - 1;
     }
     
-    VirtualFile vFile = FileDocumentManager.getInstance().getFile(document);
-    final FileType fileType = vFile == null ? null : vFile.getFileType();
-    int blockIndent = CodeStyleFacade.getInstance(project).getIndentSize(fileType);
+    int blockIndent = CodeStyle.getIndentOptions(project, document).INDENT_SIZE;
     doIndent(endIndex, startIndex, document, project, editor, blockIndent);
   }
 
   static void doIndent(final int endIndex, final int startIndex, final Document document, final Project project, final Editor editor,
                                final int blockIndent) {
+    final int[] caretOffset = {editor.getCaretModel().getOffset()};
+    
     boolean bulkMode = endIndex - startIndex > 50;
-    if (bulkMode) ((DocumentEx)document).setInBulkUpdate(true);
-
-    try {
-      List<Integer> nonModifiableLines = new ArrayList<Integer>();
+    DocumentUtil.executeInBulk(document, bulkMode, ()-> {
+      List<Integer> nonModifiableLines = new ArrayList<>();
       if (project != null) {
         PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(document);
         IndentStrategy indentStrategy = LanguageIndentStrategy.getIndentStrategy(file);
@@ -122,13 +131,12 @@ public class IndentSelectionAction extends EditorAction {
       }
       for(int i=startIndex; i<=endIndex; i++) {
         if (!nonModifiableLines.contains(i)) {
-          EditorActionUtil.indentLine(project, editor, i, blockIndent);
+          caretOffset[0] = EditorActionUtil.indentLine(project, editor, i, blockIndent, caretOffset[0]);
         }
       }
-    }
-    finally {
-      if (bulkMode) ((DocumentEx)document).setInBulkUpdate(false);
-    }
+    });
+
+    editor.getCaretModel().moveToOffset(caretOffset[0]);
   }
 
   static boolean canIndent(Document document, PsiFile file, int line, @NotNull IndentStrategy indentStrategy) {

@@ -1,0 +1,21 @@
+<html>
+<body>
+Reports <b>if</b> statements which can be simplified to single assignment
+or
+<b>return</b> statements. For example:
+ <pre>
+    <b>if</b>(foo())
+    {
+       <b>return true</b>;
+    }
+    <b>else</b>
+    {
+       <b>return false</b>;
+    }
+</pre>
+can be simplified to
+ <pre>
+    <b>return</b> foo();
+</pre>
+</body>
+</html>

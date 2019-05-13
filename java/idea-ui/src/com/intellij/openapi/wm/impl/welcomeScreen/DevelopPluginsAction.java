@@ -21,6 +21,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.project.DumbAware;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 
@@ -29,16 +30,16 @@ import java.io.File;
  */
 public class DevelopPluginsAction extends AnAction implements DumbAware {
   @NonNls private static final String PLUGIN_URL = PathManager.getHomePath() + "/Plugin Development Readme.html";
-  @NonNls private static final String PLUGIN_WEBSITE = "http://www.jetbrains.com/idea/plugins/plugin_developers.html";
+  @NonNls private static final String PLUGIN_WEBSITE = "https://www.jetbrains.com/idea/plugins/plugin_developers.html";
 
   @Override
-  public void actionPerformed(final AnActionEvent e) {
+  public void actionPerformed(@NotNull final AnActionEvent e) {
     try {
       if (new File(PLUGIN_URL).isFile()) {
-        BrowserUtil.launchBrowser(PLUGIN_URL);
+        BrowserUtil.browse(PLUGIN_URL);
       }
       else {
-        BrowserUtil.launchBrowser(PLUGIN_WEBSITE);
+        BrowserUtil.browse(PLUGIN_WEBSITE);
       }
     }
     catch(IllegalStateException ex) {

@@ -1,30 +1,45 @@
+/*
+ * Copyright 2000-2014 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.intellij.xml;
 
-import com.intellij.testFramework.fixtures.CodeInsightFixtureTestCase;
 import com.intellij.testFramework.fixtures.CodeInsightTestUtil;
+import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
 import com.intellij.xml.refactoring.SchemaPrefixRenameHandler;
 
 /**
  * @author Konstantin Bulenkov
  */
-public class XmlSchemaPrefixTest extends CodeInsightFixtureTestCase {
+public class XmlSchemaPrefixTest extends LightCodeInsightFixtureTestCase {
 
-  public void testPrefixUsages() throws Exception {
+  public void testPrefixUsages() {
     doFindUsages("usages.xml", 16);
     doFindUsages("usages1.xml", 16);
   }
 
-  public void testRename() throws Exception {doRename();}
-  public void testRename1() throws Exception {doRename();}
+  public void testRename() {doRename();}
+  public void testRename1() {doRename();}
 
-  public void testRename2() throws Exception {doRename();}
-  public void testRenameFromClosingTag() throws Exception {doRename();}
+  public void testRename2() {doRename();}
+  public void testRenameFromClosingTag() {doRename();}
 
-  private void doRename() throws Exception {
+  private void doRename() {
     doRename("xsd");
   }
 
-  private void doRename(String newValue) throws Exception {
+  private void doRename(String newValue) {
     final String name = getTestName(true);
     CodeInsightTestUtil.doInlineRenameTest(new SchemaPrefixRenameHandler(), name, "xml", newValue, myFixture);
   }
@@ -34,14 +49,8 @@ public class XmlSchemaPrefixTest extends CodeInsightFixtureTestCase {
     return "/xml/tests/testData/schemaPrefix";
   }
 
-  @Override
-  protected boolean isCommunity() {
-    return true;
-  }
-
   protected void doFindUsages(String filename, int usages) {
-    final int size = myFixture.testFindUsages(filename).size();
-    assert size == usages : "Threre should be " + usages + " usages, but found " + size + ". File: " + filename;
+    assertSize(usages, myFixture.testFindUsages(filename));
   }
 
 }

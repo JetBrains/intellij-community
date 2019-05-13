@@ -26,13 +26,9 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
-/**
- * Created by IntelliJ IDEA.
- * User: sweinreuter
- * Date: 19.08.2007
- */
 public class RngDefineMetaData extends DomMetaData<RngDefine> {
 
+  @Override
   @Nullable
   protected GenericDomValue getNameElement(final RngDefine element) {
     final GenericAttributeValue<String> id = element.getNameAttr();
@@ -42,14 +38,17 @@ public class RngDefineMetaData extends DomMetaData<RngDefine> {
     return null;
   }
 
+  @Override
   public void setName(final String name) throws IncorrectOperationException {
     getElement().setName(name);
   }
 
+  @Override
   public Icon getIcon() {
     return AllIcons.Nodes.Property;
   }
 
+  @Override
   public String getTypeName() {
     return "Pattern Definition";
   }

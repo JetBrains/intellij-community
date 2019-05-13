@@ -15,23 +15,26 @@
  */
 package com.intellij.openapi.roots.ui.configuration.libraryEditor;
 
-import com.intellij.ui.ListCellRendererWrapper;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContainer;
 import com.intellij.ui.CollectionComboBoxModel;
+import com.intellij.ui.ListCellRendererWrapper;
 import com.intellij.util.ui.FormBuilder;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.*;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * @author Dmitry Avdeev
  */
 public class LibraryNameAndLevelPanel {
-  private JTextField myLibraryNameField;
-  private JComboBox myLevelComboBox;
+  private final JTextField myLibraryNameField;
+  private final JComboBox myLevelComboBox;
   private String myDefaultLibraryName;
 
   public LibraryNameAndLevelPanel(@NotNull FormBuilder formBuilder, @NotNull String libraryName, @Nullable LibrariesContainer.LibraryLevel level) {
@@ -46,7 +49,7 @@ public class LibraryNameAndLevelPanel {
     myLevelComboBox = new JComboBox();
     if (level != null && !availableLevels.isEmpty()) {
       formBuilder.addLabeledComponent("&Level:", myLevelComboBox);
-      final Map<LibrariesContainer.LibraryLevel, String> levels = new HashMap<LibrariesContainer.LibraryLevel, String>();
+      final Map<LibrariesContainer.LibraryLevel, String> levels = new HashMap<>();
       levels.put(LibrariesContainer.LibraryLevel.GLOBAL, ProjectBundle.message("combobox.item.global.library"));
       levels.put(LibrariesContainer.LibraryLevel.PROJECT, ProjectBundle.message("combobox.item.project.library"));
       levels.put(LibrariesContainer.LibraryLevel.MODULE, ProjectBundle.message("combobox.item.module.library"));

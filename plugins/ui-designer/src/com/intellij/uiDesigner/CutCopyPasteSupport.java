@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2011 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.uiDesigner;
 
 import com.intellij.ide.CopyProvider;
@@ -39,7 +25,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.datatransfer.DataFlavor;
-import java.awt.datatransfer.Transferable;
 import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.List;
@@ -62,14 +47,17 @@ public final class CutCopyPasteSupport implements CopyProvider, CutProvider, Pas
     myEditor = uiEditor;
   }
 
+  @Override
   public boolean isCopyEnabled(@NotNull final DataContext dataContext) {
     return FormEditingUtil.getSelectedComponents(myEditor).size() > 0 && !myEditor.getInplaceEditingLayer().isEditing();
   }
 
+  @Override
   public boolean isCopyVisible(@NotNull DataContext dataContext) {
     return true;
   }
 
+  @Override
   public void performCopy(@NotNull final DataContext dataContext) {
     doCopy();
   }
@@ -77,7 +65,7 @@ public final class CutCopyPasteSupport implements CopyProvider, CutProvider, Pas
   private boolean doCopy() {
     final ArrayList<RadComponent> selectedComponents = FormEditingUtil.getSelectedComponents(myEditor);
     final SerializedComponentData data = new SerializedComponentData(serializeForCopy(myEditor, selectedComponents));
-    final SimpleTransferable transferable = new SimpleTransferable<SerializedComponentData>(data, SerializedComponentData.class, ourDataFlavor);
+    final SimpleTransferable transferable = new SimpleTransferable<>(data, SerializedComponentData.class, ourDataFlavor);
     try {
       CopyPasteManager.getInstance().setContents(transferable);
       return true;
@@ -88,39 +76,41 @@ public final class CutCopyPasteSupport implements CopyProvider, CutProvider, Pas
     }
   }
 
+  @Override
   public boolean isCutEnabled(@NotNull final DataContext dataContext) {
     return isCopyEnabled(dataContext) && FormEditingUtil.canDeleteSelection(myEditor);
   }
 
+  @Override
   public boolean isCutVisible(@NotNull DataContext dataContext) {
     return true;
   }
 
+  @Override
   public void performCut(@NotNull final DataContext dataContext) {
     if (doCopy() && myEditor.ensureEditable()) {
-      CommandProcessor.getInstance().executeCommand(myEditor.getProject(), new Runnable() {
-        public void run() {
-          FormEditingUtil.deleteSelection(myEditor);
-        }
-      }, UIDesignerBundle.message("command.cut"), null);
+      CommandProcessor.getInstance().executeCommand(myEditor.getProject(), () -> FormEditingUtil.deleteSelection(myEditor), UIDesignerBundle.message("command.cut"), null);
     }
   }
 
+  @Override
   public boolean isPastePossible(@NotNull final DataContext dataContext) {
     return isPasteEnabled(dataContext);
   }
 
+  @Override
   public boolean isPasteEnabled(@NotNull final DataContext dataContext) {
     return getSerializedComponents() != null && !myEditor.getInplaceEditingLayer().isEditing();
   }
 
+  @Override
   public void performPaste(@NotNull final DataContext dataContext) {
     final String serializedComponents = getSerializedComponents();
     if (serializedComponents == null) {
       return;
     }
 
-    final ArrayList<RadComponent> componentsToPaste = new ArrayList<RadComponent>();
+    final ArrayList<RadComponent> componentsToPaste = new ArrayList<>();
     final TIntArrayList xs = new TIntArrayList();
     final TIntArrayList ys = new TIntArrayList();
     loadComponentsToPaste(myEditor, serializedComponents, xs, ys, componentsToPaste);
@@ -130,7 +120,7 @@ public final class CutCopyPasteSupport implements CopyProvider, CutProvider, Pas
 
   @Nullable
   private static ArrayList<RadComponent> deserializeComponents(final GuiEditor editor, final String serializedComponents) {
-    ArrayList<RadComponent> components = new ArrayList<RadComponent>();
+    ArrayList<RadComponent> components = new ArrayList<>();
     TIntArrayList xs = new TIntArrayList();
     TIntArrayList ys = new TIntArrayList();
     if (!loadComponentsToPaste(editor, serializedComponents, xs, ys, components)) {
@@ -165,14 +155,14 @@ public final class CutCopyPasteSupport implements CopyProvider, CutProvider, Pas
         if (parentLayout != null) {
           container.setLayoutManager(parentLayout);
         }
-        
+
         final int x = Integer.parseInt(e.getAttributeValue(ATTRIBUTE_X));
         final int y = Integer.parseInt(e.getAttributeValue(ATTRIBUTE_Y));
 
         xs.add(x);
         ys.add(y);
 
-        final Element componentElement = (Element)e.getChildren().get(0);
+        final Element componentElement = e.getChildren().get(0);
         final LwComponent lwComponent = LwContainer.createComponentFromTag(componentElement);
 
         container.addComponent(lwComponent);
@@ -181,6 +171,7 @@ public final class CutCopyPasteSupport implements CopyProvider, CutProvider, Pas
 
         // pasted components should have no bindings
         FormEditingUtil.iterate(lwComponent, new FormEditingUtil.ComponentVisitor<LwComponent>() {
+          @Override
           public boolean visit(final LwComponent c) {
             if (c.getBinding() != null && FormEditingUtil.findComponentWithBinding(editor.getRootContainer(), c.getBinding()) != null) {
               c.setBinding(null);
@@ -204,17 +195,7 @@ public final class CutCopyPasteSupport implements CopyProvider, CutProvider, Pas
   @Nullable
   private static String getSerializedComponents() {
     try {
-      final CopyPasteManager copyPasteManager = CopyPasteManager.getInstance();
-      if (!copyPasteManager.isDataFlavorAvailable(ourDataFlavor)) {
-        return null;
-      }
-
-      final Transferable content = copyPasteManager.getContents();
-      if (content == null) {
-        return null;
-      }
-
-      final Object transferData = content.getTransferData(ourDataFlavor);
+      final Object transferData = CopyPasteManager.getInstance().getContents(ourDataFlavor);
       if (!(transferData instanceof SerializedComponentData)) {
         return null;
       }

@@ -15,7 +15,6 @@
  */
 package com.intellij.ide.util.projectWizard;
 
-import com.intellij.ide.util.newProjectWizard.modes.ImportImlMode;
 import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.ConfigurationException;
@@ -31,7 +30,6 @@ import java.util.List;
 
 /**
  * @author Dmitry Avdeev
- *         Date: 10/31/12
  */
 public class ModuleImportBuilder extends ProjectImportBuilder {
 
@@ -71,6 +69,6 @@ public class ModuleImportBuilder extends ProjectImportBuilder {
                              ModulesProvider modulesProvider,
                              ModifiableArtifactModel artifactModel) {
 
-    return ImportImlMode.setUpLoader(getFileToImport()).commit(project, model, modulesProvider);
+    return ExistingModuleLoader.setUpLoader(getFileToImport()).commit(project, model, modulesProvider);
   }
 }

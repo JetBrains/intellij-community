@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,8 +15,10 @@
  */
 package com.intellij.refactoring.typeCook;
 
+import com.intellij.codeInspection.RemoveRedundantTypeArgumentsUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.PsiDiamondTypeUtil;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.typeCook.deductive.PsiTypeVariableFactory;
@@ -25,13 +27,6 @@ import com.intellij.util.IncorrectOperationException;
 import java.util.HashSet;
 import java.util.Set;
 
-/**
- * Created by IntelliJ IDEA.
- * User: db
- * Date: 30.07.2003
- * Time: 18:57:30
- * To change this template use Options | File Templates.
- */
 public class Util {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.typeCook.Util");
 
@@ -94,10 +89,10 @@ public class Util {
       }
 
       if (anyBottom || newbst == PsiSubstitutor.EMPTY) {
-        newbst = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory().createRawSubstitutor(aclass);
+        newbst = JavaPsiFacade.getElementFactory(manager.getProject()).createRawSubstitutor(aclass);
       }
 
-      return JavaPsiFacade.getInstance(manager.getProject()).getElementFactory().createType(aclass, newbst);
+      return JavaPsiFacade.getElementFactory(manager.getProject()).createType(aclass, newbst);
     }
     else {
       return t;
@@ -192,7 +187,7 @@ public class Util {
         }
       }
 
-      return JavaPsiFacade.getInstance(theManager.getProject()).getElementFactory().createType(theClass, subst);
+      return JavaPsiFacade.getElementFactory(theManager.getProject()).createType(theClass, subst);
     }
     else if (t instanceof PsiArrayType) {
       return banalize(((PsiArrayType)t).getComponentType()).createArrayType();
@@ -217,7 +212,7 @@ public class Util {
     return subst;
   }
 
-  public static boolean bindsTypeParameters(PsiType t, HashSet<PsiTypeParameter> params) {
+  public static boolean bindsTypeParameters(PsiType t, Set<PsiTypeParameter> params) {
     if (t instanceof PsiWildcardType) {
       final PsiWildcardType wct = ((PsiWildcardType)t);
       final PsiType bound = wct.getBound();
@@ -225,7 +220,7 @@ public class Util {
       return bound != null && wct.isExtends() && bindsTypeParameters(bound, params);
     }
 
-    final PsiClassType.ClassResolveResult result = Util.resolveType(t);
+    final PsiClassType.ClassResolveResult result = resolveType(t);
     final PsiClass theClass = result.getElement();
     final PsiSubstitutor theSubst = result.getSubstitutor();
 
@@ -286,7 +281,7 @@ public class Util {
 
       PsiSubstitutor theSubst = PsiSubstitutor.EMPTY;
 
-      final HashSet<PsiTypeVariable> cluster = new HashSet<PsiTypeVariable>();
+      final Set<PsiTypeVariable> cluster = new HashSet<>();
 
       for (final PsiTypeParameter parm : aSubst.getSubstitutionMap().keySet()) {
         final PsiType type = createParameterizedType(aSubst.substitute(parm), factory, false, context);
@@ -302,7 +297,7 @@ public class Util {
         factory.registerCluster(cluster);
       }
 
-      return JavaPsiFacade.getInstance(aClass.getProject()).getElementFactory().createType(aClass, theSubst);
+      return JavaPsiFacade.getElementFactory(aClass.getProject()).createType(aClass, theSubst);
     }
     else if (t instanceof PsiArrayType) {
       return createParameterizedType(((PsiArrayType)t).getComponentType(), factory, upper, context).createArrayType();
@@ -356,22 +351,22 @@ public class Util {
       if (element instanceof PsiTypeCastExpression) {
         final PsiTypeCastExpression cast = ((PsiTypeCastExpression)element);
 
-        cast.getCastType().replace(JavaPsiFacade.getInstance(cast.getProject()).getElementFactory().createTypeElement(type));
+        cast.getCastType().replace(JavaPsiFacade.getElementFactory(cast.getProject()).createTypeElement(type));
       }
       else if (element instanceof PsiVariable) {
         final PsiVariable field = ((PsiVariable)element);
 
         field.normalizeDeclaration();
-        field.getTypeElement().replace(JavaPsiFacade.getInstance(field.getProject()).getElementFactory().createTypeElement(type));
+        field.getTypeElement().replace(JavaPsiFacade.getElementFactory(field.getProject()).createTypeElement(type));
       }
       else if (element instanceof PsiMethod) {
         final PsiMethod method = ((PsiMethod)element);
 
-        method.getReturnTypeElement().replace(JavaPsiFacade.getInstance(method.getProject()).getElementFactory().createTypeElement(type));
+        method.getReturnTypeElement().replace(JavaPsiFacade.getElementFactory(method.getProject()).createTypeElement(type));
       }
       else if (element instanceof PsiNewExpression) {
         final PsiNewExpression newx = (PsiNewExpression)element;
-        final PsiClassType.ClassResolveResult result = Util.resolveType(type);
+        final PsiClassType.ClassResolveResult result = resolveType(type);
 
         if (result == null) {
           return;
@@ -388,7 +383,7 @@ public class Util {
             return;
           }
 
-          final PsiElementFactory factory = JavaPsiFacade.getInstance(newx.getProject()).getElementFactory();
+          final PsiElementFactory factory = JavaPsiFacade.getElementFactory(newx.getProject());
 
           PsiTypeElement[] elements = list.getTypeParameterElements();
           for (PsiTypeElement element1 : elements) {
@@ -404,6 +399,10 @@ public class Util {
 
             list
               .add(factory.createTypeElement(aType == null ? PsiType.getJavaLangObject(list.getManager(), list.getResolveScope()) : aType));
+          }
+
+          if (PsiDiamondTypeUtil.canCollapseToDiamond(newx, newx, newx.getType())) {
+            RemoveRedundantTypeArgumentsUtil.replaceExplicitWithDiamond(list);
           }
         }
       }

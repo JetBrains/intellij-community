@@ -27,7 +27,6 @@ import java.io.PrintWriter;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Mar 19, 2004
  */
 public class CompilerExcludes extends Generator {
   private final PatternSet myPatternSet;
@@ -60,6 +59,7 @@ public class CompilerExcludes extends Generator {
   }
 
 
+  @Override
   public void generate(PrintWriter out) throws IOException {
     myPatternSet.generate(out);
   }

@@ -15,7 +15,11 @@
  */
 package com.intellij.psi.presentation.java;
 
+import com.intellij.extapi.psi.StubBasedPsiElementBase;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.java.stubs.FunctionalExpressionStub;
+import com.intellij.psi.stubs.StubElement;
+import com.intellij.psi.util.PsiExpressionTrimRenderer;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -28,9 +32,9 @@ public class ClassPresentationUtil {
       if (aClass instanceof PsiEnumConstantInitializer) {
         PsiEnumConstant enumConstant = ((PsiEnumConstantInitializer)aClass).getEnumConstant();
         String name = enumConstant.getName();
-        return PsiBundle.message("enum.constant.context", name, getContextName(enumConstant, qualified));
+        return PsiBundle.message("enum.constant.context", name, getContextName(enumConstant, qualified, false));
       }
-      return PsiBundle.message("anonymous.class.context.display", getContextName(aClass, qualified));
+      return PsiBundle.message("anonymous.class.context.display", getContextName(aClass, qualified, false));
     }
     if (qualified){
       String qName = aClass.getQualifiedName();
@@ -42,34 +46,52 @@ public class ClassPresentationUtil {
     return contextName != null ? PsiBundle.message("class.context.display", className, contextName) : className;
   }
 
-  private static String getNameForElement(@NotNull PsiElement element, boolean qualified) {
+  private static String getNameForElement(@NotNull PsiElement element, boolean qualified, boolean ignorePsiClassOwner) {
     if (element instanceof PsiClass){
       return getNameForClass((PsiClass)element, qualified);
     }
     else if (element instanceof PsiMethod){
       PsiMethod method = (PsiMethod)element;
       String methodName = method.getName();
-      return PsiBundle.message("method.context.display", methodName, getContextName(method, qualified));
+      return PsiBundle.message("method.context.display", methodName, getContextName(method, qualified, false));
     }
-    else if (element instanceof PsiClassOwner){
+    else if (element instanceof PsiClassOwner && ignorePsiClassOwner) {
       return null;
     }
     else if (element instanceof PsiFile){
       return ((PsiFile)element).getName();
+    }
+    else if (element instanceof PsiField) {
+      return ((PsiField)element).getName() + " in " + getContextName(element, qualified, false);
     }
     else{
       return null;
     }
   }
 
-  private static String getContextName(@NotNull PsiElement element, boolean qualified) {
-    PsiElement parent = PsiTreeUtil.getParentOfType(element, PsiMember.class, PsiFile.class);
+  public static String getContextName(@NotNull PsiElement element, boolean qualified) {
+    return getContextName(element, qualified, true);
+  }
+
+  public static String getContextName(@NotNull PsiElement element,
+                                      boolean qualified,
+                                      boolean ignorePsiClassOwner) {
+    PsiElement parent = PsiTreeUtil.getStubOrPsiParentOfType(element, PsiMember.class);
+    if (parent == null) parent = element.getContainingFile();
     while(true){
       if (parent == null) return null;
-      String name = getNameForElement(parent, qualified);
+      String name = getNameForElement(parent, qualified, ignorePsiClassOwner);
       if (name != null) return name;
       if (parent instanceof PsiFile) return null;
-      parent = parent.getParent();
+      parent = PsiTreeUtil.getStubOrPsiParent(parent);
     }
+  }
+
+  public static String getFunctionalExpressionPresentation(PsiFunctionalExpression functionalExpression, boolean qualified) {
+    final StubElement stub = ((StubBasedPsiElementBase<?>)functionalExpression).getGreenStub();
+    final String lambdaText = stub instanceof FunctionalExpressionStub
+                              ? ((FunctionalExpressionStub)stub).getPresentableText()
+                              : PsiExpressionTrimRenderer.render(functionalExpression);
+    return PsiBundle.message("class.context.display", lambdaText, getContextName(functionalExpression, qualified, false)) ;
   }
 }

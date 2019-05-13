@@ -22,10 +22,12 @@ import org.netbeans.lib.cvsclient.command.watch.WatchMode;
  * author: lesya
  */
 public class WatchOnAction extends AbstractWatchOnOffAction {
+  @Override
   protected String getTitle(VcsContext context) {
     return com.intellij.CvsBundle.message("operation.name.watching.on");
   }
 
+  @Override
   protected WatchMode getMode() {
     return WatchMode.ON;
   }

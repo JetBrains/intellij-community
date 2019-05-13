@@ -3,19 +3,19 @@ class MyTest<E> {
    }
 
    interface I<T> {
-       MyTest<T> _(T t);
+       MyTest<T> m(T t);
    }
 
    static <Y> void bar(Y arg, I<Y> i) {
-       i._(arg);
+       i.m(arg);
    }
 
    static <Y> void bar(I<Y> i, Y arg) {
-       i._(arg);
+       i.m(arg);
    }
 
    static <Y> void bar(I<Y> i) {
-       i._(null);
+       i.m(null);
    }
 
    public static void main(String[] args) {
@@ -27,7 +27,7 @@ class MyTest<E> {
        bar(MyTest<String>::new, "");
        bar(MyTest::new, "");
 
-       bar(<error descr="Cyclic inference">MyTest::new</error>);
-       bar(<error descr="Cyclic inference">MyTest<String>::new</error>);
+       bar(MyTest::new);
+       bar(MyTest<String>::new);
    }
 }

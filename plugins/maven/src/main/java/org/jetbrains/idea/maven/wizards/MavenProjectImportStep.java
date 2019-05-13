@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.wizards;
 
 import com.intellij.ide.util.projectWizard.NamePathComponent;
@@ -23,9 +9,9 @@ import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.projectImport.ProjectImportWizardStep;
+import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.project.*;
 
 import javax.swing.*;
@@ -42,6 +28,7 @@ public class MavenProjectImportStep extends ProjectImportWizardStep {
     super(wizardContext);
 
     myImportingSettingsForm = new MavenImportingSettingsForm(true, wizardContext.isCreatingNewProject()) {
+      @Override
       public String getDefaultModuleDir() {
         return myRootPathComponent.getPath();
       }
@@ -56,6 +43,7 @@ public class MavenProjectImportStep extends ProjectImportWizardStep {
 
     JButton envSettingsButton = new JButton(ProjectBundle.message("maven.import.environment.settings"));
     envSettingsButton.addActionListener(new ActionListener() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         ShowSettingsUtil.getInstance().editConfigurable(myPanel, new MavenEnvironmentConfigurable());
       }
@@ -69,28 +57,30 @@ public class MavenProjectImportStep extends ProjectImportWizardStep {
     c.gridy = 0;
     c.weightx = 1;
     c.fill = GridBagConstraints.HORIZONTAL;
-    c.insets = new Insets(4, 4, 0, 4);
+    c.insets = JBUI.insets(4, 4, 0, 4);
 
     myPanel.add(myRootPathComponent, c);
 
     c.gridy = 1;
-    c.insets = new Insets(4, 4, 0, 4);
+    c.insets = JBUI.insets(4, 4, 0, 4);
     myPanel.add(myImportingSettingsForm.createComponent(), c);
 
     c.gridy = 2;
     c.fill = GridBagConstraints.NONE;
     c.anchor = GridBagConstraints.NORTHEAST;
     c.weighty = 1;
-    c.insets = new Insets(4 + envSettingsButton.getPreferredSize().height, 4, 4, 4);
+    c.insets = JBUI.insets(4 + envSettingsButton.getPreferredSize().height, 4, 4, 4);
     myPanel.add(envSettingsButton, c);
 
     myRootPathComponent.setNameComponentVisible(false);
   }
 
+  @Override
   public JComponent getComponent() {
     return myPanel;
   }
 
+  @Override
   public void updateDataModel() {
     MavenImportingSettings settings = getImportingSettings();
     myImportingSettingsForm.getData(settings);
@@ -100,11 +90,13 @@ public class MavenProjectImportStep extends ProjectImportWizardStep {
     suggestProjectNameAndPath(settings.getDedicatedModuleDir(), myRootPathComponent.getPath());
   }
 
+  @Override
   public boolean validate() throws ConfigurationException {
     updateDataModel(); // needed to make 'exhaustive search' take an effect.
-    return getBuilder().setRootDirectory(myRootPathComponent.getPath());
+    return getBuilder().setRootDirectory(getWizardContext().getProject(), myRootPathComponent.getPath());
   }
 
+  @Override
   public void updateStep() {
     if (!myRootPathComponent.isPathChangedByUser()) {
       final VirtualFile rootDirectory = getBuilder().getRootDirectory();
@@ -115,14 +107,13 @@ public class MavenProjectImportStep extends ProjectImportWizardStep {
       else {
         path = getWizardContext().getProjectFileDirectory();
       }
-      if (path != null) {
-        myRootPathComponent.setPath(FileUtil.toSystemDependentName(path));
-        myRootPathComponent.getPathComponent().selectAll();
-      }
+      myRootPathComponent.setPath(FileUtil.toSystemDependentName(path));
+      myRootPathComponent.getPathComponent().selectAll();
     }
-    myImportingSettingsForm.setData(getImportingSettings());
+    myImportingSettingsForm.setData(getImportingSettings(), null);
   }
 
+  @Override
   public JComponent getPreferredFocusedComponent() {
     return myRootPathComponent.getPathComponent();
   }
@@ -140,6 +131,7 @@ public class MavenProjectImportStep extends ProjectImportWizardStep {
     return getBuilder().getImportingSettings();
   }
 
+  @Override
   @NonNls
   public String getHelpId() {
     return "reference.dialogs.new.project.import.maven.page1";
@@ -148,34 +140,30 @@ public class MavenProjectImportStep extends ProjectImportWizardStep {
   class MavenEnvironmentConfigurable implements Configurable {
     MavenEnvironmentForm myForm = new MavenEnvironmentForm();
 
+    @Override
     @Nls
     public String getDisplayName() {
       return ProjectBundle.message("maven.import.environment.settings.title");
     }
 
-    @Nullable
-    @NonNls
-    public String getHelpTopic() {
-      return null;
-    }
-
+    @Override
     public JComponent createComponent() {
       return myForm.createComponent();
     }
 
+    @Override
     public boolean isModified() {
       return myForm.isModified(getGeneralSettings());
     }
 
+    @Override
     public void apply() throws ConfigurationException {
       myForm.setData(getGeneralSettings());
     }
 
+    @Override
     public void reset() {
       myForm.getData(getGeneralSettings());
-    }
-
-    public void disposeUIResources() {
     }
   }
 }

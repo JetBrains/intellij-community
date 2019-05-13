@@ -22,7 +22,6 @@ import com.intellij.openapi.project.Project;
 /**
  * Please use {@link com.intellij.openapi.options.ConfigurableEP#parentId} to put your configurable under Compiler Settings
  * @author Eugene Zhuravlev
- *         Date: Sep 17, 2008
  */
 @Deprecated
 public interface CompilerSettingsFactory {

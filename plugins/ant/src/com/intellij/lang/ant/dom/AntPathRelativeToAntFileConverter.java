@@ -21,13 +21,14 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Apr 26, 2010
  */
 public class AntPathRelativeToAntFileConverter extends AntPathConverter {
+  @Override
   protected AntDomProject getEffectiveAntProject(GenericAttributeValue attribValue) {
     return attribValue.getParentOfType(AntDomProject.class, false);
   }
 
+  @Override
   @Nullable
   protected String getPathResolveRoot(ConvertContext context, AntDomProject antProject) {
     return antProject.getContainingFileDir();

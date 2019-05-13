@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,21 +16,20 @@
 
 package com.intellij.util.xml.ui;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Factory;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomFileElement;
 import com.intellij.util.xml.DomUtil;
 import com.intellij.util.xml.GenericDomValue;
 import com.intellij.util.xml.highlighting.DomElementAnnotationsManager;
+import com.intellij.util.xml.reflect.AbstractDomChildrenDescription;
 import com.intellij.util.xml.reflect.DomChildrenDescription;
 import com.intellij.util.xml.reflect.DomCollectionChildDescription;
 import com.intellij.util.xml.reflect.DomFixedChildDescription;
-import com.intellij.util.xml.reflect.AbstractDomChildrenDescription;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -38,13 +37,9 @@ import java.lang.reflect.Field;
 import java.util.HashMap;
 import java.util.Map;
 
-/**
- * User: Sergey.Vasiliev
- * Date: Nov 17, 2005
- */
 public abstract class BasicDomElementComponent<T extends DomElement> extends AbstractDomElementComponent<T> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.xml.ui.editors.BasicDomElementComponent");
-  private final Map<JComponent, DomUIControl> myBoundComponents = new HashMap<JComponent, DomUIControl>();
+  private final Map<JComponent, DomUIControl> myBoundComponents = new HashMap<>();
 
   public BasicDomElementComponent(T domElement) {
     super(domElement);
@@ -62,12 +57,11 @@ public abstract class BasicDomElementComponent<T extends DomElement> extends Abs
     if (domElement == null) return;
 
     DomElementAnnotationsManager.getInstance(domElement.getManager().getProject()).addHighlightingListener(new DomElementAnnotationsManager.DomHighlightingListener() {
+      @Override
       public void highlightingFinished(@NotNull final DomFileElement element) {
-        ApplicationManager.getApplication().invokeLater(new Runnable() {
-          public void run() {
-            if (getComponent().isShowing() && element.isValid()) {
-              updateHighlighting();
-            }
+        ApplicationManager.getApplication().invokeLater(() -> {
+          if (getComponent().isShowing() && element.isValid()) {
+            updateHighlighting();
           }
         });
       }
@@ -78,11 +72,8 @@ public abstract class BasicDomElementComponent<T extends DomElement> extends Abs
       if (boundComponent != null) {
         if (description instanceof DomFixedChildDescription && DomUtil.isGenericValueType(description.getType())) {
           if ((description.getValues(domElement)).size() == 1) {
-            final GenericDomValue element = domElement.getManager().createStableValue(new Factory<GenericDomValue>() {
-              public GenericDomValue create() {
-                return domElement.isValid() ? (GenericDomValue)description.getValues(domElement).get(0) : null;
-              }
-            });
+            final GenericDomValue element = domElement.getManager().createStableValue(
+              () -> domElement.isValid() ? (GenericDomValue)description.getValues(domElement).get(0) : null);
             doBind(DomUIFactory.createControl(element, commitOnEveryChange(element)), boundComponent);
           }
           else {
@@ -124,8 +115,9 @@ public abstract class BasicDomElementComponent<T extends DomElement> extends Abs
     return null;
   }
 
-  private String convertFieldName(String propertyName, final DomChildrenDescription description) {
-    if (propertyName.startsWith("my")) propertyName = propertyName.substring(2);
+  @NotNull
+  private String convertFieldName(@NotNull String propertyName, final DomChildrenDescription description) {
+    propertyName = StringUtil.trimStart(propertyName, "my");
 
     String convertedName = description.getDomNameStrategy(getDomElement()).convertName(propertyName);
 

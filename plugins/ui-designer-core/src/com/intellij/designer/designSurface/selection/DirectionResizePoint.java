@@ -28,10 +28,10 @@ import java.awt.*;
  * @author Alexander Lobas
  */
 public class DirectionResizePoint extends ResizePoint {
-  private int myDirection;
+  protected int myDirection;
   final private Object myType;
-  private double myXSeparator;
-  private double myYSeparator;
+  protected double myXSeparator;
+  protected double myYSeparator;
   private final String myDescription;
 
   public DirectionResizePoint(int direction, Object type, @Nullable String description) {

@@ -1,213 +1,218 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeEditor.printing;
 
 import com.intellij.CommonBundle;
+import com.intellij.application.options.CodeStyle;
+import com.intellij.execution.configurations.RunProfile;
 import com.intellij.ide.highlighter.HighlighterFactory;
+import com.intellij.notification.Notification;
+import com.intellij.notification.NotificationType;
+import com.intellij.notification.Notifications;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.LangDataKeys;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.colors.EditorColorsManager;
+import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.progress.*;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.Pair;
-import com.intellij.psi.PsiDirectory;
-import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.util.PsiUtilBase;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.*;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-import java.awt.print.*;
+import java.awt.print.PageFormat;
+import java.awt.print.Paper;
+import java.awt.print.PrinterException;
+import java.awt.print.PrinterJob;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 class PrintManager {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeEditor.printing.PrintManager");
 
   public static void executePrint(DataContext dataContext) {
-    final Project project = PlatformDataKeys.PROJECT.getData(dataContext);
+    final Project project = CommonDataKeys.PROJECT.getData(dataContext);
+    if (project == null) return;
 
-    final PrinterJob printerJob = PrinterJob.getPrinterJob();
-
-    final PsiDirectory[] psiDirectory = new PsiDirectory[1];
-    PsiElement psiElement = LangDataKeys.PSI_ELEMENT.getData(dataContext);
-    if(psiElement instanceof PsiDirectory) {
-      psiDirectory[0] = (PsiDirectory)psiElement;
+    PsiDirectory psiDirectory = null;
+    PsiElement psiElement = CommonDataKeys.PSI_ELEMENT.getData(dataContext);
+    if (psiElement instanceof PsiDirectory) {
+      psiDirectory = (PsiDirectory)psiElement;
     }
 
-    final PsiFile psiFile = LangDataKeys.PSI_FILE.getData(dataContext);
-    final String[] shortFileName = new String[1];
-    final String[] directoryName = new String[1];
-    if(psiFile != null || psiDirectory[0] != null) {
-      if(psiFile != null) {
-        shortFileName[0] = psiFile.getVirtualFile().getName();
-        if(psiDirectory[0] == null) {
-          psiDirectory[0] = psiFile.getContainingDirectory();
+    PsiFile psiFile = CommonDataKeys.PSI_FILE.getData(dataContext);
+    String shortFileName = null;
+    String directoryName = null;
+    if (psiFile != null || psiDirectory != null) {
+      if (psiFile != null) {
+        shortFileName = psiFile.getName();
+        if (psiDirectory == null) {
+          psiDirectory = psiFile.getContainingDirectory();
         }
       }
-      if(psiDirectory[0] != null) {
-        directoryName[0] = psiDirectory[0].getVirtualFile().getPresentableUrl();
+      if (psiDirectory != null) {
+        directoryName = psiDirectory.getVirtualFile().getPresentableUrl();
       }
     }
 
-    Editor editor = PlatformDataKeys.EDITOR.getData(dataContext);
+    Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
     String text = null;
-    if(editor != null) {
-      if(editor.getSelectionModel().hasSelection()) {
+    if (editor != null) {
+      if (editor.getSelectionModel().hasSelection()) {
         text = CodeEditorBundle.message("print.selected.text.radio");
-      } else {
+      }
+      else {
         text = psiFile == null ? "Console text" : null;
       }
     }
-    PrintDialog printDialog = new PrintDialog(shortFileName[0], directoryName[0], text, project);
+
+    List<PsiFile> psiFiles = getSelectedPsiFiles(dataContext);
+
+    PrintDialog printDialog = new PrintDialog(shortFileName, directoryName, text, psiFiles.size(), project);
     printDialog.reset();
-    printDialog.show();
-    if(!printDialog.isOK()) {
+    if (!printDialog.showAndGet()) {
       return;
     }
     printDialog.apply();
 
     final PageFormat pageFormat = createPageFormat();
-    PrintSettings printSettings = PrintSettings.getInstance();
-    Printable painter;
+    final BasePainter painter;
 
-    if(printSettings.getPrintScope() != PrintSettings.PRINT_DIRECTORY) {
+    PrintSettings printSettings = PrintSettings.getInstance();
+    if (printSettings.getPrintScope() == PrintSettings.PRINT_FILE && psiFiles.size() > 1) {
+      painter = new MultiFilePainter(psiFiles, printSettings.EVEN_NUMBER_OF_PAGES);
+    }
+    else if (printSettings.getPrintScope() == PrintSettings.PRINT_DIRECTORY) {
+      List<PsiFile> filesList = ContainerUtil.newArrayList();
+      boolean isRecursive = printSettings.isIncludeSubdirectories();
+      addToPsiFileList(psiDirectory, filesList, isRecursive);
+      painter = new MultiFilePainter(filesList, printSettings.EVEN_NUMBER_OF_PAGES);
+    }
+    else {
       if (psiFile == null && editor == null) return;
-      TextPainter textPainter = psiFile != null ? initTextPainter(psiFile, editor) : initTextPainter((DocumentEx)editor.getDocument(), project);
+      TextPainter textPainter;
+      if (psiFile != null) {
+        textPainter = initTextPainter(psiFile);
+      }
+      else {
+        textPainter = initTextPainter((DocumentEx)editor.getDocument(), project, generateFileName(dataContext));
+      }
       if (textPainter == null) return;
 
-      if(printSettings.getPrintScope() == PrintSettings.PRINT_SELECTED_TEXT && editor != null && editor.getSelectionModel().hasSelection()) {
-        int firstLine = editor.getDocument().getLineNumber(editor.getSelectionModel().getSelectionStart());
-        textPainter.setSegment(editor.getSelectionModel().getSelectionStart(), editor.getSelectionModel().getSelectionEnd(), firstLine+1);
+      if (printSettings.getPrintScope() == PrintSettings.PRINT_SELECTED_TEXT &&
+          editor != null &&
+          editor.getSelectionModel().hasSelection()) {
+        textPainter.setSegment(editor.getSelectionModel().getSelectionStart(), editor.getSelectionModel().getSelectionEnd());
       }
       painter = textPainter;
     }
-    else {
-      List<Pair<PsiFile, Editor>> filesList = ContainerUtil.newArrayList();
-      boolean isRecursive = printSettings.isIncludeSubdirectories();
-      addToPsiFileList(psiDirectory[0], filesList, isRecursive);
 
-      painter = new MultiFilePainter(filesList);
-    }
-    final Printable painter0 = painter;
-    Pageable document = new Pageable(){
-      public int getNumberOfPages() {
-        return Pageable.UNKNOWN_NUMBER_OF_PAGES;
-      }
-
-      public PageFormat getPageFormat(int pageIndex)
-        throws IndexOutOfBoundsException {
-        return pageFormat;
-      }
-
-      public Printable getPrintable(int pageIndex)
-        throws IndexOutOfBoundsException {
-        return painter0;
-      }
-    };
-
-
+    final PrinterJob printerJob = PrinterJob.getPrinterJob();
     try {
-      printerJob.setPageable(document);
       printerJob.setPrintable(painter, pageFormat);
-      if(!printerJob.printDialog()) {
+      if (!printerJob.printDialog()) {
         return;
       }
-    } catch (Exception e) {
-      // In case print dialog is not supported on some platform. Strange thing but there was a checking
-      // for Windows only...
+    }
+    catch (Exception e) {
+      LOG.warn(e);
     }
 
     PsiDocumentManager.getInstance(project).commitAllDocuments();
 
-    ProgressManager.getInstance().run(new Task.Backgroundable(project, CodeEditorBundle.message("print.progress"), true, PerformInBackgroundOption.ALWAYS_BACKGROUND) {
-      @Override
-      public void run(@NotNull ProgressIndicator indicator) {
-        try {
-          ProgressIndicator progress = ProgressManager.getInstance().getProgressIndicator();
-          if (painter0 instanceof MultiFilePainter) {
-            ((MultiFilePainter)painter0).setProgress(progress);
+    ProgressManager.getInstance()
+      .run(new Task.Backgroundable(project, CodeEditorBundle.message("print.progress"), true, PerformInBackgroundOption.ALWAYS_BACKGROUND) {
+        @Override
+        public void run(@NotNull ProgressIndicator indicator) {
+          try {
+            painter.setProgress(indicator);
+            printerJob.print();
           }
-          else {
-            ((TextPainter)painter0).setProgress(progress);
+          catch (ProcessCanceledException e) {
+            LOG.info("Cancelled");
+            printerJob.cancel();
           }
-
-          printerJob.print();
+          catch (PrinterException e) {
+            LOG.warn(e);
+            String message = ObjectUtils.notNull(e.getMessage(), e.getClass().getName());
+            Notifications.Bus.notify(new Notification("Print", CommonBundle.getErrorTitle(), message, NotificationType.ERROR));
+          }
+          catch (Exception e) {
+            LOG.error(e);
+          }
+          finally {
+            painter.dispose();
+          }
         }
-        catch(final PrinterException e) {
-          SwingUtilities.invokeLater(new Runnable() {
-            @Override
-            public void run() {
-              Messages.showErrorDialog(project, e.getMessage(), CommonBundle.getErrorTitle());
-            }
-          });
-          LOG.info(e);
-        }
-        catch(ProcessCanceledException e) {
-          printerJob.cancel();
-        }
-      }
-    });
+      });
   }
 
-  private static void addToPsiFileList(PsiDirectory psiDirectory, List<Pair<PsiFile, Editor>> filesList, boolean isRecursive) {
-    PsiFile[] files = psiDirectory.getFiles();
-    for (PsiFile file : files) {
-      filesList.add(Pair.create(file, PsiUtilBase.findEditor(file)));
+  private static String generateFileName(DataContext dataContext) {
+    RunProfile runProfile = dataContext.getData(LangDataKeys.RUN_PROFILE);
+    if (runProfile != null) {
+      String name = runProfile.getName();
+      if (name != null) return name;
     }
+    return "unknown";
+  }
+
+  private static void addToPsiFileList(PsiDirectory psiDirectory, List<? super PsiFile> filesList, boolean isRecursive) {
+    PsiFile[] files = psiDirectory.getFiles();
+    Collections.addAll(filesList, files);
     if (isRecursive) {
       for (PsiDirectory directory : psiDirectory.getSubdirectories()) {
         if (!Project.DIRECTORY_STORE_FOLDER.equals(directory.getName())) {
-          addToPsiFileList(directory, filesList, isRecursive);
+          addToPsiFileList(directory, filesList, true);
         }
       }
     }
   }
 
+  static List<PsiFile> getSelectedPsiFiles(DataContext dataContext) {
+    Project project = CommonDataKeys.PROJECT.getData(dataContext);
+    if (project == null) return Collections.emptyList();
+    VirtualFile[] virtualFiles = CommonDataKeys.VIRTUAL_FILE_ARRAY.getData(dataContext);
+    if (virtualFiles == null) return Collections.emptyList();
+    PsiManager psiManager = PsiManager.getInstance(project);
+    List<PsiFile> psiFiles = new ArrayList<>(virtualFiles.length);
+    for (VirtualFile virtualFile : virtualFiles) {
+      if (virtualFile.isDirectory()) return Collections.emptyList();
+      PsiFile psiFile = psiManager.findFile(virtualFile);
+      if (psiFile == null) return Collections.emptyList();
+      psiFiles.add(psiFile);
+    }
+    return psiFiles;
+  }
 
   private static PageFormat createPageFormat() {
     PrintSettings printSettings = PrintSettings.getInstance();
     PageFormat pageFormat = new PageFormat();
     Paper paper = new Paper();
     String paperSize = printSettings.PAPER_SIZE;
-    double paperWidth = PageSizes.getWidth(paperSize)*72;
-    double paperHeight = PageSizes.getHeight(paperSize)*72;
-    double leftMargin = printSettings.LEFT_MARGIN*72;
-    double rightMargin = printSettings.RIGHT_MARGIN*72;
-    double topMargin = printSettings.TOP_MARGIN*72;
-    double bottomMargin = printSettings.BOTTOM_MARGIN*72;
+    double paperWidth = PageSizes.getWidth(paperSize) * 72;
+    double paperHeight = PageSizes.getHeight(paperSize) * 72;
+    double leftMargin = printSettings.LEFT_MARGIN * 72;
+    double rightMargin = printSettings.RIGHT_MARGIN * 72;
+    double topMargin = printSettings.TOP_MARGIN * 72;
+    double bottomMargin = printSettings.BOTTOM_MARGIN * 72;
 
     paper.setSize(paperWidth, paperHeight);
-    if(printSettings.PORTRAIT_LAYOUT) {
+    if (printSettings.PORTRAIT_LAYOUT) {
       pageFormat.setOrientation(PageFormat.PORTRAIT);
       paperWidth -= leftMargin + rightMargin;
       paperHeight -= topMargin + bottomMargin;
       paper.setImageableArea(leftMargin, topMargin, paperWidth, paperHeight);
     }
-    else{
+    else {
       pageFormat.setOrientation(PageFormat.LANDSCAPE);
       paperWidth -= topMargin + bottomMargin;
       paperHeight -= leftMargin + rightMargin;
@@ -217,39 +222,41 @@ class PrintManager {
     return pageFormat;
   }
 
-  public static TextPainter initTextPainter(final PsiFile psiFile, final Editor editor) {
-    return ApplicationManager.getApplication().runReadAction(new Computable<TextPainter>() {
-      @Override
-      public TextPainter compute() {
-        return doInitTextPainter(psiFile, editor);
-      }
-    });
+  static TextPainter initTextPainter(final PsiFile psiFile) {
+    return ReadAction.compute(() -> doInitTextPainter(psiFile));
   }
 
-  private static TextPainter doInitTextPainter(final PsiFile psiFile, final Editor editor) {
-    final String fileName = psiFile.getVirtualFile().getPresentableUrl();
+  private static TextPainter doInitTextPainter(final PsiFile psiFile) {
+    VirtualFile virtualFile = psiFile.getVirtualFile();
+    if (virtualFile == null) return null;
     DocumentEx doc = (DocumentEx)PsiDocumentManager.getInstance(psiFile.getProject()).getDocument(psiFile);
     if (doc == null) return null;
-    EditorHighlighter highlighter = HighlighterFactory.createHighlighter(psiFile.getProject(), psiFile.getVirtualFile());
+    EditorHighlighter highlighter = HighlighterFactory.createHighlighter(virtualFile, getColorSchemeForPrinting(), psiFile.getProject());
     highlighter.setText(doc.getCharsSequence());
-    return new TextPainter(doc, highlighter, fileName, psiFile, psiFile.getFileType(), editor);
+    return new TextPainter(doc, highlighter, virtualFile.getPresentableUrl(), virtualFile.getPresentableName(), 
+                           psiFile, psiFile.getFileType());
   }
 
-  public static TextPainter initTextPainter(@NotNull final DocumentEx doc, final Project project) {
+  private static TextPainter initTextPainter(@NotNull final DocumentEx doc, final @NotNull Project project,
+                                             final @NotNull String fileName) {
     final TextPainter[] res = new TextPainter[1];
     ApplicationManager.getApplication().runReadAction(
-      new Runnable() {
-        public void run() {
-          res[0] = doInitTextPainter(doc, project);
-        }
+      () -> {
+        res[0] = doInitTextPainter(doc, project, fileName);
       }
     );
     return res[0];
   }
-  
-  private static TextPainter doInitTextPainter(@NotNull final DocumentEx doc, Project project) {
-     EditorHighlighter highlighter = HighlighterFactory.createHighlighter(project, "unknown");
-     highlighter.setText(doc.getCharsSequence());
-     return new TextPainter(doc, highlighter, "unknown", project, FileTypes.PLAIN_TEXT, null);
-   }
+
+  private static TextPainter doInitTextPainter(@NotNull final DocumentEx doc, @NotNull Project project, @NotNull String fileName) {
+    EditorHighlighter highlighter = HighlighterFactory.createHighlighter(getColorSchemeForPrinting(), "unknown", project);
+    highlighter.setText(doc.getCharsSequence());
+    return new TextPainter(doc, highlighter, fileName, fileName, FileTypes.PLAIN_TEXT, null, CodeStyle.getSettings(project));
+  }
+
+  private static EditorColorsScheme getColorSchemeForPrinting() {
+    EditorColorsManager colorsManager = EditorColorsManager.getInstance();
+    return colorsManager.isDarkEditor() ? colorsManager.getScheme(EditorColorsManager.DEFAULT_SCHEME_NAME)
+                                        : colorsManager.getGlobalScheme();
+  }
 }

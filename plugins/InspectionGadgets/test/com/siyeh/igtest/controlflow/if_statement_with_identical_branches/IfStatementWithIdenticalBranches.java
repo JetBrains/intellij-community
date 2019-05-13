@@ -7,20 +7,20 @@ import java.util.Set;
 public class IfStatementWithIdenticalBranches {
 
     void one() {
-        if (true) {
+        <warning descr="'if' statement with identical branches">if</warning> (true) {
 
         } else {
 
         }
-        if (false) {
+        <warning descr="'if' statement with identical branches">if</warning> (false) {
             System.out.println();
             return;
         }
         System.out.println();
     }
 
-    int two() { 
-        if (true) {
+    int two() {
+        <warning descr="'if' statement with identical branches">if</warning> (true) {
             int i = 2;
             return i;
         } else {
@@ -41,7 +41,7 @@ public class IfStatementWithIdenticalBranches {
 
     void four() {
         if (true) {
-            if (false) {
+            <warning descr="'if' statement with identical branches">if</warning> (false) {
                 System.out.println();
                 return;
             }
@@ -61,7 +61,7 @@ public class IfStatementWithIdenticalBranches {
 
     void six() {
         if (true) {
-            if (false) {
+            <warning descr="'if' statement with identical branches">if</warning> (false) {
                 System.out.println();
                 System.out.println();
                 return;
@@ -93,16 +93,24 @@ public class IfStatementWithIdenticalBranches {
     }
 
     void nine() {
-        if (true) {
+        <warning descr="'if' statement with identical branches">if</warning> (true) {
 
-        } else if (true) {
+        } else <warning descr="'if' statement with identical branches">if</warning> (true) {
 
-        } else if (true) {
+        } else <warning descr="'if' statement with identical branches">if</warning> (true) {
 
         } else {
 
         }
     }
+
+  void blocks() {
+    <warning descr="'if' statement with identical branches">if</warning> (true) {
+      System.out.println();
+      return;
+    }
+    System.out.println();
+  }
 }
 
 class NotADup {
@@ -127,4 +135,107 @@ class NotADup {
         return null;
     }
 
+  public static String calculate(int someNumber) {
+    if (someNumber == 0 ) {
+      try {
+        return placeOrder(3, null);
+      }
+      catch( Exception e ) {
+        System.out.println("e = " + e);
+      }
+    }
+    else if (someNumber == 1) {
+      try {
+        return placeOrder(3, someNumber, null);
+      }
+      catch(Exception e ) {
+        System.out.println("e = " + e);
+      }
+    }
+    return null;
+  }
+
+  private static String placeOrder(int i, int someNumber, Object o) {
+    return null;
+  }
+
+  private static String placeOrder(int i, Object o) {
+    return null;
+  }
+
+  void m() {
+    int j;
+    <warning descr="'if' statement with identical branches">if</warning> (true) {
+      j = 2;
+    }
+    else {
+      j = 2;
+    }
+    System.out.println("j = " + j);
+  }
+
+  void n(int i) {
+    <warning descr="'if' statement with identical branches">if</warning> (i == 0) {
+      System.out.println(((i)));
+      ;
+      ;
+      {
+      }
+    }
+    else System.out.println(i);
+  }
+
+  public static String o(List<String> list) {
+    String tmp = null;
+    for (final String comp : list) {
+      if (!comp.contains("bad")) {
+        return comp;
+      } else if (tmp == null) {
+        tmp = comp;
+      }
+    }
+    return tmp;
+  }
+
+  Object foo() {
+    Object a = new Object();
+
+    while (true) {
+      Object b = bar(a);
+      if (b == a) {
+        return b;
+      }
+      else {
+        a = b;
+      }
+    }
+  }
+
+  private Object bar(Object x) {
+    return null;
+  }
+
+  void nesting(int i, int j) {
+    if (i == 2) {
+      System.out.println("2");
+    } else {
+      if (j == 2) {
+        System.out.println("2");
+      }
+    }
+  }
+}
+class Poly {
+  Poly rotateRight() {
+    return this;
+  }
+
+  public Poly rotate(boolean rotateRight) {
+    // Code inspection claims that the following if statement has identical branches, but that is incorrect.
+    if (rotateRight) {
+      return rotateRight();
+    } else {
+      return rotateRight().rotateRight().rotateRight();
+    }
+  }
 }

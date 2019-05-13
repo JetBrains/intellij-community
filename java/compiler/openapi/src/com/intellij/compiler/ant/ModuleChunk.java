@@ -1,63 +1,46 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.compiler.ant;
 
+import com.intellij.compiler.CompilerConfiguration;
+import com.intellij.compiler.CompilerEncodingService;
+import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.module.EffectiveLanguageLevelUtil;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.CompilerModuleExtension;
 import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.pom.java.LanguageLevel;
+import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.jps.model.java.JpsJavaSdkType;
 
 import java.io.File;
+import java.nio.charset.Charset;
+import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Comparator;
+import java.util.List;
 
 /**
  * Module chunk consists of interdependent modules.
  *
  * @author Eugene Zhuravlev
- *         Date: Nov 19, 2004
  */
 public class ModuleChunk {
-  /**
-   * Modules in the chunk
-   */
+  /* Modules in the chunk */
   private final Module[] myModules;
-  /**
-   * A array of custom compilation providers.
-   */
+  /* An array of custom compilation providers. */
   private final ChunkCustomCompilerExtension[] myCustomCompilers;
-  /**
-   * The main module in the chunck (guessed by heuristic or selected by user)
-   */
+  /* The main module in the chunk (guessed by heuristic or selected by user) */
   private Module myMainModule;
-  /**
-   * Chucnk dependendencies
-   */
+  /* Chunk dependencies */
   private ModuleChunk[] myDependentChunks;
   private File myBaseDir = null;
 
   public ModuleChunk(Module[] modules) {
     myModules = modules;
-    Arrays.sort(myModules, new Comparator<Module>() {
-      public int compare(final Module o1, final Module o2) {
-        return o1.getName().compareToIgnoreCase(o2.getName());
-      }
-    });
+    Arrays.sort(myModules, (o1, o2) -> o1.getName().compareToIgnoreCase(o2.getName()));
     myMainModule = myModules[0];
     myCustomCompilers = ChunkCustomCompilerExtension.getCustomCompile(this);
   }
@@ -79,12 +62,14 @@ public class ModuleChunk {
 
   @Nullable
   public String getOutputDirUrl() {
-    return CompilerModuleExtension.getInstance(myMainModule).getCompilerOutputUrl();
+    CompilerModuleExtension extension = CompilerModuleExtension.getInstance(myMainModule);
+    return extension != null ? extension.getCompilerOutputUrl() : null;
   }
 
   @Nullable
   public String getTestsOutputDirUrl() {
-    return CompilerModuleExtension.getInstance(myMainModule).getCompilerOutputUrlForTests();
+    CompilerModuleExtension extension = CompilerModuleExtension.getInstance(myMainModule);
+    return extension != null ? extension.getCompilerOutputUrlForTests() : null;
   }
 
   public boolean isJdkInherited() {
@@ -105,10 +90,7 @@ public class ModuleChunk {
   }
 
   public File getBaseDir() {
-    if (myBaseDir != null) {
-      return myBaseDir;
-    }
-    return new File(myMainModule.getModuleFilePath()).getParentFile();
+    return myBaseDir != null ? myBaseDir : new File(myMainModule.getModuleFilePath()).getParentFile();
   }
 
   public void setBaseDir(File baseDir) {
@@ -123,12 +105,36 @@ public class ModuleChunk {
     return myMainModule.getProject();
   }
 
-  public boolean contains(final Module module) {
-    for (Module chunkModule : myModules) {
-      if (chunkModule.equals(module)) {
-        return true;
-      }
+  public String getChunkSpecificCompileOptions() {
+    List<String> options = new ArrayList<>();
+
+    Charset encoding = CompilerEncodingService.getInstance(getProject()).getPreferredModuleEncoding(myMainModule);
+    if (encoding != null) {
+      options.add("-encoding");
+      options.add(encoding.name());
     }
-    return false;
+
+    LanguageLevel languageLevel = ReadAction.compute(() -> EffectiveLanguageLevelUtil.getEffectiveLanguageLevel(myMainModule));
+    String sourceVersion = JpsJavaSdkType.complianceOption(languageLevel.toJavaVersion());
+    options.add("-source");
+    options.add(sourceVersion);
+
+    if (languageLevel.isPreview()) {
+      options.add("--enable-preview");
+    }
+
+    String bytecodeTarget = CompilerConfiguration.getInstance(getProject()).getBytecodeTargetLevel(myMainModule);
+    if (StringUtil.isEmpty(bytecodeTarget)) {
+      // according to IDEA rule: if not specified explicitly, set target to be the same as source language level
+      bytecodeTarget = sourceVersion;
+    }
+    options.add("-target");
+    options.add(bytecodeTarget);
+
+    return StringUtil.join(options, " ");
+  }
+
+  public boolean contains(final Module module) {
+    return ArrayUtil.contains(module, myModules);
   }
 }

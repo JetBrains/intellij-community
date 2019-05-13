@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xdebugger.impl.breakpoints.ui;
 
 import com.intellij.openapi.editor.Editor;
@@ -37,11 +23,11 @@ public class BreakpointChooser {
 
   private DetailView myDetailViewDelegate;
 
-  private Delegate myDelegate;
+  private final Delegate myDelegate;
 
-  private final ComboBox myComboBox;
+  private final ComboBox<BreakpointItem> myComboBox;
 
-  private DetailController myDetailController;
+  private final DetailController myDetailController;
   private final List<BreakpointItem> myBreakpointItems;
   private BreakpointChooser.MyDetailView myDetailView;
 
@@ -66,7 +52,7 @@ public class BreakpointChooser {
     }
   }
 
-  public void setSelectesBreakpoint(Object breakpoint) {
+  public void setSelectedBreakpoint(Object breakpoint) {
     myComboBox.setSelectedItem(findItem(breakpoint, myBreakpointItems));
   }
 
@@ -82,7 +68,7 @@ public class BreakpointChooser {
     final Ref<Object> hackedSelection = Ref.create();
 
     myDetailController = new DetailController(new MasterController() {
-      JLabel fake = new JLabel();
+      final JLabel fake = new JLabel();
       @Override
       public ItemWrapper[] getSelectedItems() {
         if (hackedSelection.get() == null) {
@@ -97,8 +83,8 @@ public class BreakpointChooser {
       }
     });
 
-    ComboBoxModel model = new CollectionComboBoxModel(myBreakpointItems, breakpointItem);
-    myComboBox = new ComboBox(model);
+    ComboBoxModel<BreakpointItem> model = new CollectionComboBoxModel<>(myBreakpointItems, breakpointItem);
+    myComboBox = new ComboBox<>(model);
 
     myComboBox.addPopupMenuListener(new PopupMenuListener() {
       @Override
@@ -121,12 +107,12 @@ public class BreakpointChooser {
     });
     myComboBox.setRenderer(new ItemWrapperListRenderer(project, null) {
       @Override
-      protected void customizeCellRenderer(JList list, Object value, int index, boolean selected, boolean hasFocus) {
+      protected void customizeCellRenderer(@NotNull JList list, Object value, int index, boolean selected, boolean hasFocus) {
         super.customizeCellRenderer(list, value, index, selected, hasFocus);
         if (selected) {
           if (hackedSelection.get() != value) {
             hackedSelection.set(value);
-            myDetailController.selectionChanged();
+            myDetailController.updateDetailView();
           }
         }
       }
@@ -141,7 +127,7 @@ public class BreakpointChooser {
   }
 
   @Nullable
-  private static BreakpointItem findItem(Object baseBreakpoint, List<BreakpointItem> breakpointItems) {
+  private static BreakpointItem findItem(Object baseBreakpoint, List<? extends BreakpointItem> breakpointItems) {
     BreakpointItem breakpointItem = null;
     for (BreakpointItem item : breakpointItems) {
       if (item.getBreakpoint() == baseBreakpoint) {
@@ -161,7 +147,7 @@ public class BreakpointChooser {
     private final PreviewEditorState myPushed;
     private ItemWrapper myCurrentItem;
 
-    public MyDetailView(PreviewEditorState pushed) {
+    MyDetailView(PreviewEditorState pushed) {
       myPushed = pushed;
       putUserData(BreakpointItem.EDITOR_ONLY, Boolean.TRUE);
     }
@@ -180,12 +166,12 @@ public class BreakpointChooser {
 
     @Override
     public JPanel getPropertiesPanel() {
-      return null;  //To change body of implemented methods use File | Settings | File Templates.
+      return null;
     }
 
     @Override
     public void setPropertiesPanel(@Nullable JPanel panel) {
-      //To change body of implemented methods use File | Settings | File Templates.
+
     }
 
     @Override
@@ -198,6 +184,7 @@ public class BreakpointChooser {
       return myDetailViewDelegate.getEditorState();
     }
 
+    @Override
     public void setCurrentItem(ItemWrapper currentItem) {
       myCurrentItem = currentItem;
     }
@@ -212,7 +199,7 @@ public class BreakpointChooser {
       return true;
     }
 
-    UserDataHolderBase myDataHolderBase = new UserDataHolderBase();
+    final UserDataHolderBase myDataHolderBase = new UserDataHolderBase();
 
     @Override
     public <T> T getUserData(@NotNull Key<T> key) {

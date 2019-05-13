@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,12 +26,11 @@ import java.awt.event.ActionListener;
  * @see JBPopupFactory#createBalloonBuilder(javax.swing.JComponent)
  */
 public interface BalloonBuilder {
-
-  @NotNull
-  BalloonBuilder setPreferredPosition(Balloon.Position position);
-
   @NotNull
   BalloonBuilder setBorderColor(@NotNull Color color);
+
+  @NotNull
+  BalloonBuilder setBorderInsets(@Nullable Insets insets);
 
   @NotNull
   BalloonBuilder setFillColor(@NotNull Color color);
@@ -58,7 +57,7 @@ public interface BalloonBuilder {
   BalloonBuilder setHideOnFrameResize(boolean hide);
 
   @NotNull
-  Balloon createBalloon();
+  BalloonBuilder setHideOnLinkClick(boolean hide);
 
   @NotNull
   BalloonBuilder setClickHandler(ActionListener listener, boolean closeOnClick);
@@ -71,8 +70,6 @@ public interface BalloonBuilder {
 
   @NotNull
   BalloonBuilder setPositionChangeYShift(int positionChangeYShift);
-
-  boolean isHideOnAction();
 
   @NotNull
   BalloonBuilder setHideOnAction(boolean hideOnAction);
@@ -91,22 +88,36 @@ public interface BalloonBuilder {
 
   @NotNull
   BalloonBuilder setSmallVariant(boolean smallVariant);
-  
+
   @NotNull
   BalloonBuilder setLayer(Balloon.Layer layer);
 
   @NotNull
   BalloonBuilder setBlockClicksThroughBalloon(boolean block);
 
+  @NotNull
+  BalloonBuilder setRequestFocus(boolean requestFocus);
+
+  @NotNull
+  default BalloonBuilder setPointerSize(Dimension size) { return this; }
+
+  @NotNull
+  default BalloonBuilder setCornerToPointerDistance(int distance) { return this; }
+
+  BalloonBuilder setHideOnCloseClick(boolean hideOnCloseClick);
+
   /**
    * Links target balloon life cycle to the given object. I.e. current balloon will be auto-hide and collected as soon
    * as given anchor is disposed.
    * <p/>
    * <b>Note:</b> given disposable anchor is assumed to correctly implement {@link #hashCode()} and {@link #equals(Object)}.
-   * 
+   *
    * @param anchor  target anchor to link to
    * @return        balloon builder which produces balloon linked to the given object life cycle
    */
   @NotNull
   BalloonBuilder setDisposable(@NotNull Disposable anchor);
+
+  @NotNull
+  Balloon createBalloon();
 }

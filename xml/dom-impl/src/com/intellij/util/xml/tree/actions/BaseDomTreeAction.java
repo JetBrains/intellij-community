@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,10 +19,8 @@ package com.intellij.util.xml.tree.actions;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.util.xml.tree.DomModelTreeView;
+import org.jetbrains.annotations.NotNull;
 
-/**
- * User: Sergey.Vasiliev
- */
 abstract public class BaseDomTreeAction extends AnAction {
   private DomModelTreeView myTreeView;
 
@@ -33,7 +31,8 @@ abstract public class BaseDomTreeAction extends AnAction {
     myTreeView = treeView;
   }
 
-  final public void update(AnActionEvent e) {
+  @Override
+  final public void update(@NotNull AnActionEvent e) {
     final DomModelTreeView treeView = getTreeView(e);
 
     if (treeView != null) {
@@ -50,7 +49,8 @@ abstract public class BaseDomTreeAction extends AnAction {
     return DomModelTreeView.DATA_KEY.getData(e.getDataContext());
   }
 
-  final public void actionPerformed(AnActionEvent e) {
+  @Override
+  final public void actionPerformed(@NotNull AnActionEvent e) {
     final DomModelTreeView treeView = getTreeView(e);
     if (treeView != null) {
       actionPerformed(e, treeView);

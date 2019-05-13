@@ -8,7 +8,7 @@ public class c1 {
         try {
             fis = new FileInputStream("");
             DataInputStream dis = new DataInputStream(fis);
-            <caret>dis.readInt();
+            dis.<caret>readInt();
         } catch (FileNotFoundException e) {
             e.printStackTrace();  
         }

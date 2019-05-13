@@ -1,25 +1,9 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.util;
 
 import com.intellij.openapi.util.text.StringUtil;
 
 public abstract class PsiFormatUtilBase {
-
   public static final int SHOW_NAME = 0x0001; // variable, method, class
   public static final int SHOW_TYPE = 0x0002; // variable, method
   public static final int TYPE_AFTER = 0x0004; // variable, method
@@ -38,6 +22,7 @@ public abstract class PsiFormatUtilBase {
   public static final int SHOW_ANONYMOUS_CLASS_VERBOSE = 0x8000; // class
   public static final int SHOW_RAW_TYPE = 0x10000; //type
   public static final int SHOW_RAW_NON_TOP_TYPE = 0x20000;
+  public static final int USE_INTERNAL_CANONICAL_TEXT = 0x40000; // variable/method/parameter types
   public static final int MAX_PARAMS_TO_SHOW = 7;
 
   protected static void appendSpaceIfNeeded(StringBuilder buffer) {
@@ -45,23 +30,4 @@ public abstract class PsiFormatUtilBase {
       buffer.append(' ');
     }
   }
-
-  protected static boolean testOption(int options, int flag) {
-    return (options & flag) != 0;
-  }
-
-  protected static boolean testOneOf(int options, int... flags) {
-    for (int flag : flags) {
-      if (testOption(options, flag)) return true;
-    }
-    return false;
-  }
-
-  protected static boolean testAll(int options, int... flags) {
-    for (int flag : flags) {
-      if (!testOption(options, flag)) return false;
-    }
-    return true;
-  }
-
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2010 Dave Griffith, Bas Leijdekkers
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,31 +15,17 @@
  */
 package com.siyeh.ig.assignment;
 
-import com.intellij.psi.*;
+import com.intellij.psi.PsiCatchSection;
+import com.intellij.psi.PsiParameter;
 import com.siyeh.InspectionGadgetsBundle;
-import com.siyeh.ig.BaseInspection;
-import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.ExtractParameterAsLocalVariableFix;
-import com.siyeh.ig.psiutils.WellFormednessUtils;
 import org.jetbrains.annotations.NotNull;
 
-public class AssignmentToCatchBlockParameterInspection
-  extends BaseInspection {
-
-  @Override
-  @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "assignment.to.catch.block.parameter.display.name");
-  }
-
-  @Override
-  @NotNull
-  public String buildErrorString(Object... infos) {
-    return InspectionGadgetsBundle.message(
-      "assignment.to.catch.block.parameter.problem.descriptor");
-  }
+/**
+ * @author Bas Leijdekkers
+ */
+public class AssignmentToCatchBlockParameterInspection extends BaseAssignmentToParameterInspection {
 
   @Override
   protected InspectionGadgetsFix buildFix(Object... infos) {
@@ -47,36 +33,19 @@ public class AssignmentToCatchBlockParameterInspection
   }
 
   @Override
-  public BaseInspectionVisitor buildVisitor() {
-    return new AssignmentToCatchBlockParameterVisitor();
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message("assignment.to.catch.block.parameter.display.name");
   }
 
-  private static class AssignmentToCatchBlockParameterVisitor
-    extends BaseInspectionVisitor {
+  @Override
+  @NotNull
+  public String buildErrorString(Object... infos) {
+    return InspectionGadgetsBundle.message("assignment.to.catch.block.parameter.problem.descriptor");
+  }
 
-    @Override
-    public void visitAssignmentExpression(
-      @NotNull PsiAssignmentExpression expression) {
-      super.visitAssignmentExpression(expression);
-      if (!WellFormednessUtils.isWellFormed(expression)) {
-        return;
-      }
-      final PsiExpression lhs = expression.getLExpression();
-      if (!(lhs instanceof PsiReferenceExpression)) {
-        return;
-      }
-      final PsiReferenceExpression reference =
-        (PsiReferenceExpression)lhs;
-      final PsiElement variable = reference.resolve();
-      if (!(variable instanceof PsiParameter)) {
-        return;
-      }
-      final PsiParameter parameter = (PsiParameter)variable;
-      final PsiElement declarationScope = parameter.getDeclarationScope();
-      if (!(declarationScope instanceof PsiCatchSection)) {
-        return;
-      }
-      registerError(lhs);
-    }
+  @Override
+  protected boolean isApplicable(PsiParameter parameter) {
+    return parameter.getDeclarationScope() instanceof PsiCatchSection;
   }
 }

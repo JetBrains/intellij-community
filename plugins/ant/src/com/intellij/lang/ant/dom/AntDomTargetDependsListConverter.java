@@ -37,10 +37,10 @@ import java.util.List;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Apr 16, 2010
  */
 public class AntDomTargetDependsListConverter extends Converter<TargetResolver.Result> implements CustomReferenceConverter<TargetResolver.Result>{
-  
+
+  @Override
   public TargetResolver.Result fromString(@Nullable @NonNls String s, ConvertContext context) {
     final AntDomProject project = context.getInvocationElement().getParentOfType(AntDomProject.class, false);
     if (project == null) {
@@ -55,7 +55,7 @@ public class AntDomTargetDependsListConverter extends Converter<TargetResolver.R
       refs = Collections.emptyList();
     }
     else {
-      refs = new ArrayList<String>();
+      refs = new ArrayList<>();
       final StringTokenizer tokenizer = new StringTokenizer(s, ",", false);
       while (tokenizer.hasMoreTokens()) {
         final String ref = tokenizer.nextToken();
@@ -67,11 +67,13 @@ public class AntDomTargetDependsListConverter extends Converter<TargetResolver.R
     return result;
   }
 
+  @Override
   @Nullable
   public String toString(@Nullable TargetResolver.Result result, ConvertContext context) {
     return result != null? result.getRefsString() : null;
   }
 
+  @Override
   @NotNull
   public PsiReference[] createReferences(GenericDomValue<TargetResolver.Result> value, PsiElement element, ConvertContext context) {
     final XmlElement xmlElement = value.getXmlElement();
@@ -86,7 +88,7 @@ public class AntDomTargetDependsListConverter extends Converter<TargetResolver.R
     if (refsString == null) {
       return PsiReference.EMPTY_ARRAY;
     }
-    final List<PsiReference> refs = new ArrayList<PsiReference>();
+    final List<PsiReference> refs = new ArrayList<>();
     final AntDomTargetReference.ReferenceGroup group = new AntDomTargetReference.ReferenceGroup();
     final TextRange wholeStringRange = ElementManipulators.getValueTextRange(valueElement);
     final StringTokenizer tokenizer = new StringTokenizer(refsString, ",", false);
@@ -106,7 +108,7 @@ public class AntDomTargetDependsListConverter extends Converter<TargetResolver.R
       }
       refs.add(new AntDomTargetReference(element, TextRange.from(wholeStringRange.getStartOffset() + tokenStartOffset, ref.length()), group));
     }
-    return refs.toArray(new PsiReference[refs.size()]);
+    return refs.toArray(PsiReference.EMPTY_ARRAY);
   }
 
 }

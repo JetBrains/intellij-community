@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@
 package com.intellij.psi;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.WalkingState;
 import org.jetbrains.annotations.NotNull;
 
@@ -30,12 +31,17 @@ public abstract class PsiWalkingState extends WalkingState<PsiElement> {
   private static class PsiTreeGuide implements TreeGuide<PsiElement> {
     @Override
     public PsiElement getNextSibling(@NotNull PsiElement element) {
-      return element.getNextSibling();
+      return checkSanity(element, element.getNextSibling());
+    }
+
+    private static PsiElement checkSanity(PsiElement element, PsiElement sibling) {
+      if (sibling == PsiUtilCore.NULL_PSI_ELEMENT) throw new PsiInvalidElementAccessException(element, "Sibling of "+element+" is NULL_PSI_ELEMENT");
+      return sibling;
     }
 
     @Override
     public PsiElement getPrevSibling(@NotNull PsiElement element) {
-      return element.getPrevSibling();
+      return checkSanity(element, element.getPrevSibling());
     }
 
     @Override
@@ -52,7 +58,10 @@ public abstract class PsiWalkingState extends WalkingState<PsiElement> {
   }
 
   protected PsiWalkingState(@NotNull PsiElementVisitor delegate) {
-    super(PsiTreeGuide.instance);
+    this(delegate, PsiTreeGuide.instance);
+  }
+  protected PsiWalkingState(@NotNull PsiElementVisitor delegate, @NotNull TreeGuide<PsiElement> guide) {
+    super(guide);
     myVisitor = delegate;
   }
 

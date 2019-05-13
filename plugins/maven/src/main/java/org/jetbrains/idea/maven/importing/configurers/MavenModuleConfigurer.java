@@ -36,12 +36,15 @@ public abstract class MavenModuleConfigurer {
   public static List<MavenModuleConfigurer> getConfigurers() {
     List<MavenModuleConfigurer> configurers = ourConfigurersList;
     if (configurers == null) {
-      configurers = new ArrayList<MavenModuleConfigurer>();
+      configurers = new ArrayList<>();
 
       for (MavenModuleConfigurer configurer : new MavenModuleConfigurer[]{
         new MavenCompilerConfigurer(),
         new MavenEncodingConfigurer(),
-        new MavenAnnotationProcessorConfigurer()}) {
+        new MavenAnnotationProcessorConfigurer(),
+
+        new MavenIdeaPluginConfigurer()
+      }) {
 
         if (!Boolean.parseBoolean(System.getProperty("idea.maven.disable." + configurer.getClass().getSimpleName()))) {
           configurers.add(configurer);

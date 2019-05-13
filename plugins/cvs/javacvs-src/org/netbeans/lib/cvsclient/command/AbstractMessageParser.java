@@ -32,17 +32,20 @@ public abstract class AbstractMessageParser extends AbstractParser
 
 	// Implemented ============================================================
 
-	public void registerListeners(ICvsListenerRegistry listenerRegistry) {
+	@Override
+        public void registerListeners(ICvsListenerRegistry listenerRegistry) {
 		listenerRegistry.addMessageListener(this);
 		super.registerListeners(listenerRegistry);
 	}
 
-	public void unregisterListeners(ICvsListenerRegistry listenerRegistry) {
+	@Override
+        public void unregisterListeners(ICvsListenerRegistry listenerRegistry) {
 		super.unregisterListeners(listenerRegistry);
 		listenerRegistry.removeMessageListener(this);
 	}
 
-	public final void messageSent(String message, final byte[] byteMessage, boolean error, boolean tagged) {
+	@Override
+        public final void messageSent(String message, final byte[] byteMessage, boolean error, boolean tagged) {
 		if (tagged) {
 			final String parsedMessage = taggedMessageParser.parseTaggedMessage(message);
 			if (parsedMessage != null) {
@@ -58,7 +61,8 @@ public abstract class AbstractMessageParser extends AbstractParser
 		}
 	}
 
-	public final void commandTerminated(boolean error) {
+	@Override
+        public final void commandTerminated(boolean error) {
 		final String taggedLine = taggedMessageParser.getString();
 		if (taggedLine != null) {
 			parseLine(taggedLine, false);
@@ -66,6 +70,7 @@ public abstract class AbstractMessageParser extends AbstractParser
 		super.commandTerminated(error);
 	}
 
+  @Override
   public void binaryMessageSent(final byte[] bytes) {
   }
 }

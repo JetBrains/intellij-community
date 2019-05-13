@@ -1,24 +1,11 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util;
 
-import com.intellij.openapi.util.UserDataHolder;
-import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.UserDataHolderEx;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Getter;
+import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.UserDataHolder;
+import com.intellij.openapi.util.UserDataHolderEx;
 import com.intellij.psi.util.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -36,11 +23,13 @@ public class CachedValuesManagerImpl extends CachedValuesManager {
     myFactory = factory == null ? new DefaultCachedValuesFactory(project) : factory;
   }
 
+  @NotNull
   @Override
   public <T> CachedValue<T> createCachedValue(@NotNull CachedValueProvider<T> provider, boolean trackValue) {
     return myFactory.createCachedValue(provider, trackValue);
   }
 
+  @NotNull
   @Override
   public <T,P> ParameterizedCachedValue<T,P> createParameterizedCachedValue(@NotNull ParameterizedCachedValueProvider<T,P> provider, boolean trackValue) {
     return myFactory.createParameterizedCachedValue(provider, trackValue);
@@ -48,40 +37,73 @@ public class CachedValuesManagerImpl extends CachedValuesManager {
 
   @Override
   @Nullable
-  public <T, D extends UserDataHolder> T getCachedValue(@NotNull D dataHolder,
-                                                        @NotNull Key<CachedValue<T>> key,
-                                                        @NotNull CachedValueProvider<T> provider,
-                                                        boolean trackValue) {
-    CachedValue<T> value;
-    if (dataHolder instanceof UserDataHolderEx) {
-      UserDataHolderEx dh = (UserDataHolderEx)dataHolder;
-      value = dh.getUserData(key);
-      if (value instanceof CachedValueBase && !((CachedValueBase)value).isFromMyProject(myProject)) {
+  public <T> T getCachedValue(@NotNull UserDataHolder dataHolder,
+                              @NotNull Key<CachedValue<T>> key,
+                              @NotNull CachedValueProvider<T> provider,
+                              boolean trackValue) {
+    return dataHolder instanceof UserDataHolderEx
+           ? getCachedValueFromExHolder((UserDataHolderEx)dataHolder, key, provider, trackValue)
+           : getCachedValueFromHolder(dataHolder, key, provider, trackValue);
+  }
+
+  private <T> T getCachedValueFromExHolder(@NotNull UserDataHolderEx dataHolder,
+                                           @NotNull Key<CachedValue<T>> key,
+                                           @NotNull CachedValueProvider<T> provider,
+                                           boolean trackValue) {
+    CachedValue<T> value = dataHolder.getUserData(key);
+    if (value instanceof CachedValueBase && ((CachedValueBase)value).isFromMyProject(myProject)) {
+      Getter<T> data = value.getUpToDateOrNull();
+      if (data != null) {
+        return data.get();
+      }
+
+      CachedValueStabilityChecker.checkProvidersEquivalent(provider, value.getValueProvider(), key);
+    }
+    while (isOutdated(value)) {
+      if (dataHolder.replace(key, value, null)) {
         value = null;
-        dataHolder.putUserData(key, null);
+        break;
+      }
+      value = dataHolder.getUserData(key);
+    }
+    if (value == null) {
+      value = dataHolder.putUserDataIfAbsent(key, freshCachedValue(dataHolder, key, provider, trackValue));
+    }
+    return value.getValue();
+  }
+
+  private <T> T getCachedValueFromHolder(@NotNull UserDataHolder dataHolder,
+                                         @NotNull Key<CachedValue<T>> key,
+                                         @NotNull CachedValueProvider<T> provider, boolean trackValue) {
+    CachedValue<T> value;
+    //noinspection SynchronizationOnLocalVariableOrMethodParameter
+    synchronized (dataHolder) {
+      value = dataHolder.getUserData(key);
+      if (isOutdated(value)) {
+        value = null;
       }
       if (value == null) {
-        value = createCachedValue(provider, trackValue);
-        assert ((CachedValueBase)value).isFromMyProject(myProject);
-        value = dh.putUserDataIfAbsent(key, value);
-      }
-    }
-    else {
-      synchronized (dataHolder) {
-        value = dataHolder.getUserData(key);
-        if (value instanceof CachedValueBase && !((CachedValueBase)value).isFromMyProject(myProject)) {
-          value = null;
-        }
-        if (value == null) {
-          value = createCachedValue(provider, trackValue);
-          dataHolder.putUserData(key, value);
-        }
+        value = freshCachedValue(dataHolder, key, provider, trackValue);
+        dataHolder.putUserData(key, value);
       }
     }
     return value.getValue();
   }
 
-  public Project getProject() {
-    return myProject;
+  private <T> CachedValue<T> freshCachedValue(UserDataHolder dh, Key<CachedValue<T>> key, CachedValueProvider<T> provider, boolean trackValue) {
+    CachedValueLeakChecker.checkProvider(provider, key, dh);
+    CachedValue<T> value = createCachedValue(provider, trackValue);
+    assert ((CachedValueBase)value).isFromMyProject(myProject);
+    return value;
   }
+
+  private boolean isOutdated(CachedValue<?> value) {
+    return value instanceof CachedValueBase &&
+           (!((CachedValueBase)value).isFromMyProject(myProject) || hasOutdatedValue((CachedValueBase)value));
+  }
+
+  private static boolean hasOutdatedValue(CachedValueBase base) {
+    return !base.hasUpToDateValue() && base.getRawData() != null;
+  }
+
 }

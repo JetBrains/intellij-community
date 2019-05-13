@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,13 +17,9 @@
 package com.intellij.ide.favoritesTreeView;
 
 import com.intellij.icons.AllIcons;
-import com.intellij.ide.IdeBundle;
 import com.intellij.ide.SelectInTarget;
 import com.intellij.ide.projectView.ProjectView;
 import com.intellij.ide.projectView.impl.AbstractProjectViewPane;
-import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.DefaultActionGroup;
-import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ActionCallback;
@@ -42,56 +38,74 @@ import javax.swing.*;
 public class FavoritesProjectViewPane extends AbstractProjectViewPane {
   @NonNls public static final String ID = "Favorites";
   private FavoritesTreeViewPanel myViewPanel;
-  private final ProjectView myProjectView;
   private final FavoritesManager myFavoritesManager;
-  private final FavoritesListener myFavoritesListener;
-  private static final Logger LOG = Logger.getInstance("#" + FavoritesProjectViewPane.class.getName());
+  private static final Logger LOG = Logger.getInstance(FavoritesProjectViewPane.class);
 
-  protected FavoritesProjectViewPane(final Project project, ProjectView projectView, FavoritesManager favoritesManager) {
+  protected FavoritesProjectViewPane(@NotNull Project project, @NotNull FavoritesManager favoritesManager) {
     super(project);
-    myProjectView = projectView;
+
     myFavoritesManager = favoritesManager;
-    myFavoritesListener = new FavoritesListener() {
+    FavoritesListener favoritesListener = new FavoritesListener() {
+      private boolean enabled = true;
+
+      @Override
       public void rootsChanged() {
       }
 
-      public void listAdded(String listName) {
+      @Override
+      public void listAdded(@NotNull String listName) {
         refreshMySubIdsAndSelect(listName);
       }
 
-      public void listRemoved(String listName) {
+      @Override
+      public void listRemoved(@NotNull String listName) {
         String selectedSubId = getSubId();
         refreshMySubIdsAndSelect(selectedSubId);
       }
 
       private void refreshMySubIdsAndSelect(String listName) {
-        myFavoritesManager.removeFavoritesListener(myFavoritesListener);
-        myProjectView.removeProjectPane(FavoritesProjectViewPane.this);
-        myProjectView.addProjectPane(FavoritesProjectViewPane.this);
-        myFavoritesManager.addFavoritesListener(myFavoritesListener);
-
-        if (!myFavoritesManager.getAvailableFavoritesListNames().contains(listName)) {
-          listName = null;
+        if (!enabled) {
+          return;
         }
-        myProjectView.changeView(ID, listName);
+
+        try {
+          enabled = false;
+          ProjectView projectView = ProjectView.getInstance(myProject);
+          projectView.removeProjectPane(FavoritesProjectViewPane.this);
+          projectView.addProjectPane(FavoritesProjectViewPane.this);
+          if (!myFavoritesManager.getAvailableFavoritesListNames().contains(listName)) {
+            listName = null;
+          }
+          projectView.changeView(ID, listName);
+        }
+        finally {
+          enabled = true;
+        }
       }
     };
-    myFavoritesManager.addFavoritesListener(myFavoritesListener);
+    myFavoritesManager.addFavoritesListener(favoritesListener, this);
   }
 
+  @NotNull
+  @Override
   public String getTitle() {
-    return IdeBundle.message("action.toolwindow.favorites");
+    return "Favorites";
   }
 
+  @NotNull
+  @Override
   public Icon getIcon() {
     return AllIcons.Toolwindows.ToolWindowFavorites;
   }
 
+  @Override
   @NotNull
   public String getId() {
     return ID;
   }
 
+  @NotNull
+  @Override
   public JComponent createComponent() {
     //if (myViewPanel != null) return myViewPanel;
 
@@ -106,26 +120,31 @@ public class FavoritesProjectViewPane extends AbstractProjectViewPane {
     return myViewPanel;
   }
 
+  @Override
   public void dispose() {
     myViewPanel = null;
-    myFavoritesManager.removeFavoritesListener(myFavoritesListener);
     super.dispose();
   }
 
+  @Override
   @NotNull
   public String[] getSubIds() {
     return ArrayUtil.toStringArray(myFavoritesManager.getAvailableFavoritesListNames());
   }
 
+  @Override
   @NotNull
   public String getPresentableSubIdName(@NotNull final String subId) {
     return subId;
   }
 
+  @NotNull
+  @Override
   public ActionCallback updateFromRoot(boolean restoreExpandedPaths) {
     return ((FavoritesViewTreeBuilder)getTreeBuilder()).updateFromRootCB();
   }
 
+  @Override
   public void select(Object object, VirtualFile file, boolean requestFocus) {
     if (!(object instanceof PsiElement)) return;
     /*PsiElement element = (PsiElement)object;
@@ -151,15 +170,14 @@ public class FavoritesProjectViewPane extends AbstractProjectViewPane {
     myViewPanel.selectElement(object, virtualFile, requestFocus);
   }
 
+  @Override
   public int getWeight() {
     return 4;
   }
 
+  @NotNull
+  @Override
   public SelectInTarget createSelectInTarget() {
     return new FavoritesViewSelectInTarget(myProject);
-  }
-
-  public void addToolbarActions(final DefaultActionGroup group) {
-    group.add(ActionManager.getInstance().getAction(IdeActions.RENAME_FAVORITES_LIST));
   }
 }

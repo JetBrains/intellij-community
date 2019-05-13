@@ -25,7 +25,7 @@ import org.jetbrains.annotations.Nullable;
  */
 public class BaseUsageViewDescriptor implements UsageViewDescriptor {
 
-  private PsiElement[] myElements;
+  private final PsiElement[] myElements;
 
   public BaseUsageViewDescriptor(PsiElement... elements) {
     myElements = elements;
@@ -42,6 +42,7 @@ public class BaseUsageViewDescriptor implements UsageViewDescriptor {
     return "Element(s) to be refactored:";
   }
 
+  @NotNull
   @Override
   public String getCodeReferencesText(int usagesCount, int filesCount) {
     return RefactoringBundle.message("references.to.be.changed", UsageViewBundle.getReferencesString(usagesCount, filesCount));

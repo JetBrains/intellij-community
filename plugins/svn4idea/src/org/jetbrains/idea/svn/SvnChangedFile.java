@@ -1,52 +1,42 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn;
 
 import com.intellij.openapi.vcs.FilePath;
-import org.tmatesoft.svn.core.wc.SVNStatus;
+import com.intellij.util.ObjectUtils;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.svn.api.Url;
+import org.jetbrains.idea.svn.status.Status;
 
 class SvnChangedFile {
-  private final FilePath myFilePath;
-  private final SVNStatus myStatus;
-  private String myCopyFromURL;
 
-  public SvnChangedFile(final FilePath filePath, final SVNStatus status) {
-    myFilePath = filePath;
-    myStatus = status;
+  @NotNull private final FilePath myFilePath;
+  @NotNull private final Status myStatus;
+  @Nullable private final Url myCopyFromURL;
+
+  SvnChangedFile(@NotNull FilePath filePath, @NotNull Status status) {
+    this(filePath, status, null);
   }
 
-  public SvnChangedFile(final FilePath filePath, final SVNStatus status, final String copyFromURL) {
+  SvnChangedFile(@NotNull FilePath filePath, @NotNull Status status, @Nullable Url copyFromURL) {
     myFilePath = filePath;
     myStatus = status;
     myCopyFromURL = copyFromURL;
   }
 
+  @NotNull
   public FilePath getFilePath() {
     return myFilePath;
   }
 
-  public SVNStatus getStatus() {
+  @NotNull
+  public Status getStatus() {
     return myStatus;
   }
 
-  public String getCopyFromURL() {
-    if (myCopyFromURL == null) {
-      return myStatus.getCopyFromURL();
-    }
-    return myCopyFromURL;
+  @Nullable
+  public Url getCopyFromURL() {
+    return ObjectUtils.chooseNotNull(myCopyFromURL, myStatus.getCopyFromUrl());
   }
 
   @Override
@@ -61,13 +51,11 @@ class SvnChangedFile {
 
     final SvnChangedFile that = (SvnChangedFile)o;
 
-    if (myFilePath != null ? !myFilePath.equals(that.myFilePath) : that.myFilePath != null) return false;
-
-    return true;
+    return myFilePath.equals(that.myFilePath);
   }
 
   @Override
   public int hashCode() {
-    return myFilePath != null ? myFilePath.hashCode() : 0;
+    return myFilePath.hashCode();
   }
 }

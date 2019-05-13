@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,6 +31,7 @@ import com.intellij.psi.PsiManager;
 import com.intellij.psi.impl.PsiFileEx;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.stubs.ObjectStubTree;
+import com.intellij.psi.stubs.Stub;
 import com.intellij.psi.stubs.StubTreeLoader;
 import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
@@ -55,12 +56,10 @@ import java.util.List;
 public class DomServiceImpl extends DomService {
   private static final Key<CachedValue<XmlFileHeader>> ROOT_TAG_NS_KEY = Key.create("rootTag&ns");
   private static final UserDataCache<CachedValue<XmlFileHeader>,XmlFile,Object> ourRootTagCache = new UserDataCache<CachedValue<XmlFileHeader>, XmlFile, Object>() {
+    @Override
     protected CachedValue<XmlFileHeader> compute(final XmlFile file, final Object o) {
-      return CachedValuesManager.getManager(file.getProject()).createCachedValue(new CachedValueProvider<XmlFileHeader>() {
-        public Result<XmlFileHeader> compute() {
-          return new Result<XmlFileHeader>(calcXmlFileHeader(file), file);
-        }
-      }, false);
+      return CachedValuesManager.getManager(file.getProject()).createCachedValue(
+        () -> new CachedValueProvider.Result<>(calcXmlFileHeader(file), file), false);
     }
   };
 
@@ -71,18 +70,26 @@ public class DomServiceImpl extends DomService {
       return computeHeaderByPsi(file);
     }
 
-    if (!XmlUtil.isStubBuilding(file) && file.getFileType() == XmlFileType.INSTANCE) {
+    if (!XmlUtil.isStubBuilding() && file.getFileType() == XmlFileType.INSTANCE) {
       VirtualFile virtualFile = file.getVirtualFile();
       if (virtualFile instanceof VirtualFileWithId) {
         ObjectStubTree tree = StubTreeLoader.getInstance().readFromVFile(file.getProject(), virtualFile);
         if (tree != null) {
-          return ((FileStub)tree.getRoot()).getHeader();
+          Stub root = tree.getRoot();
+          if (root instanceof FileStub) {
+            return ((FileStub)root).getHeader();
+          }
         }
       }
     }
 
     if (!file.isValid()) return XmlFileHeader.EMPTY;
-    return NanoXmlUtil.parseHeader(file);
+
+    XmlFileHeader header = NanoXmlUtil.parseHeader(file);
+    if (header.getRootTagLocalName() == null) { // nanoxml failed
+      return computeHeaderByPsi(file);
+    }
+    return header;
   }
 
   private static XmlFileHeader computeHeaderByPsi(XmlFile file) {
@@ -123,6 +130,7 @@ public class DomServiceImpl extends DomService {
     return XmlFileHeader.EMPTY;
   }
 
+  @Override
   public ModelMerger createModelMerger() {
     return new ModelMergerImpl();
   }
@@ -132,6 +140,7 @@ public class DomServiceImpl extends DomService {
     return DomAnchorImpl.createAnchor(domElement);
   }
 
+  @Override
   @NotNull
   public XmlFile getContainingFile(@NotNull DomElement domElement) {
     if (domElement instanceof DomFileElement) {
@@ -140,24 +149,29 @@ public class DomServiceImpl extends DomService {
     return DomManagerImpl.getNotNullHandler(domElement).getFile();
   }
 
+  @Override
   @NotNull
   public EvaluatedXmlName getEvaluatedXmlName(@NotNull final DomElement element) {
     return DomManagerImpl.getNotNullHandler(element).getXmlName();
   }
 
+  @Override
   @NotNull
   public XmlFileHeader getXmlFileHeader(XmlFile file) {
     return file.isValid() ? ourRootTagCache.get(ROOT_TAG_NS_KEY, file, null).getValue() : XmlFileHeader.EMPTY;
   }
 
-
-  public Collection<VirtualFile> getDomFileCandidates(Class<? extends DomElement> description, Project project) {
-    return FileBasedIndex.getInstance().getContainingFiles(DomFileIndex.NAME, description.getName(), GlobalSearchScope.allScope(project));
+  @Override
+  public Collection<VirtualFile> getDomFileCandidates(Class<? extends DomElement> rootElementClass,
+                                                      Project project,
+                                                      final GlobalSearchScope scope) {
+    return FileBasedIndex.getInstance().getContainingFiles(DomFileIndex.NAME, rootElementClass.getName(), scope);
   }
 
+  @Override
   public <T extends DomElement> List<DomFileElement<T>> getFileElements(final Class<T> clazz, final Project project, @Nullable final GlobalSearchScope scope) {
-    final Collection<VirtualFile> list = scope == null ? getDomFileCandidates(clazz, project) : getDomFileCandidates(clazz, project, scope);
-    final ArrayList<DomFileElement<T>> result = new ArrayList<DomFileElement<T>>(list.size());
+    final Collection<VirtualFile> list = getDomFileCandidates(clazz, project, scope != null ? scope : GlobalSearchScope.allScope(project));
+    final ArrayList<DomFileElement<T>> result = new ArrayList<>(list.size());
     for (VirtualFile file : list) {
       final PsiFile psiFile = PsiManager.getInstance(project).findFile(file);
       if (psiFile instanceof XmlFile) {
@@ -172,8 +186,8 @@ public class DomServiceImpl extends DomService {
   }
 
 
+  @Override
   public StructureViewBuilder createSimpleStructureViewBuilder(final XmlFile file, final Function<DomElement, StructureViewMode> modeProvider) {
     return new DomStructureViewBuilder(file, modeProvider);
   }
-
 }

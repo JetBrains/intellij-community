@@ -1,26 +1,12 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.uiDesigner.radComponents;
 
 import com.intellij.openapi.actionSystem.ActionGroup;
+import com.intellij.uiDesigner.FormEditingUtil;
 import com.intellij.uiDesigner.GridChangeUtil;
 import com.intellij.uiDesigner.UIFormXmlConstants;
 import com.intellij.uiDesigner.XmlWriter;
-import com.intellij.uiDesigner.FormEditingUtil;
 import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.designSurface.*;
 import com.intellij.util.IncorrectOperationException;
@@ -39,7 +25,7 @@ import java.util.Map;
  * @author yole
  */
 public abstract class RadAbstractGridLayoutManager extends RadLayoutManager {
-  protected final Map<RadComponent, MyPropertyChangeListener> myListenerMap = new HashMap<RadComponent, MyPropertyChangeListener>();
+  protected final Map<RadComponent, MyPropertyChangeListener> myListenerMap = new HashMap<>();
 
   @Override
   public boolean isGrid() {
@@ -435,7 +421,7 @@ public abstract class RadAbstractGridLayoutManager extends RadLayoutManager {
   }
 
   private static List<Boolean> collectCanCellsGrow(final RadAbstractGridLayoutManager grid, final RadContainer container, final boolean isRow) {
-    List<Boolean> result = new ArrayList<Boolean>();
+    List<Boolean> result = new ArrayList<>();
     for(int i=0; i<grid.getGridCellCount(container, isRow); i++) {
       if (!grid.isGapCell(container, isRow, i)) {
         result.add(grid.canCellGrow(container, isRow, i));
@@ -445,7 +431,7 @@ public abstract class RadAbstractGridLayoutManager extends RadLayoutManager {
   }
 
   private static List<RadComponent> collectComponents(final RadContainer container) {
-    List<RadComponent> contents = new ArrayList<RadComponent>();
+    List<RadComponent> contents = new ArrayList<>();
     for(int i=container.getComponentCount()-1; i >= 0; i--) {
       final RadComponent component = container.getComponent(i);
       if (!(component instanceof RadHSpacer) && !(component instanceof RadVSpacer)) {
@@ -456,6 +442,7 @@ public abstract class RadAbstractGridLayoutManager extends RadLayoutManager {
     return contents;
   }
 
+  @Override
   public boolean canMoveComponent(RadComponent c, int rowDelta, int colDelta, final int rowSpanDelta, final int colSpanDelta) {
     final int newRow = getNewRow(c, rowDelta);
     final int newCol = getNewColumn(c, colDelta);
@@ -532,10 +519,11 @@ public abstract class RadAbstractGridLayoutManager extends RadLayoutManager {
   private class MyPropertyChangeListener implements PropertyChangeListener {
     private final RadComponent myComponent;
 
-    public MyPropertyChangeListener(final RadComponent component) {
+    MyPropertyChangeListener(final RadComponent component) {
       myComponent = component;
     }
 
+    @Override
     public void propertyChange(PropertyChangeEvent evt) {
       if (evt.getPropertyName().equals(RadComponent.PROP_CONSTRAINTS)) {
         updateConstraints(myComponent);

@@ -1,33 +1,27 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.projectRoots.impl;
 
+import com.intellij.ide.highlighter.ArchiveFileType;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.*;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.fileTypes.FileTypes;
+import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.projectRoots.*;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.WriteExternalException;
-import com.intellij.openapi.vfs.*;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.openapi.vfs.newvfs.BulkFileListener;
+import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
+import com.intellij.util.ThreeState;
+import com.intellij.util.containers.SmartHashSet;
 import com.intellij.util.messages.MessageBus;
+import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.messages.impl.MessageListenerList;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -35,59 +29,74 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 @State(
-  name="ProjectJdkTable",
-  roamingType = RoamingType.DISABLED,
-  storages= {
-    @Storage(
-      file = StoragePathMacros.APP_CONFIG + "/jdk.table.xml"
-    )}
+  name = "ProjectJdkTable",
+  storages = @Storage(value = "jdk.table.xml", roamingType = RoamingType.DISABLED, useSaveThreshold = ThreeState.NO)
 )
-public class ProjectJdkTableImpl extends ProjectJdkTable implements PersistentStateComponent<Element>, ExportableComponent {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.projectRoots.impl.ProjectJdkTableImpl");
-
-  private final List<Sdk> mySdks = new ArrayList<Sdk>();
+public class ProjectJdkTableImpl extends ProjectJdkTable implements ExportableComponent, PersistentStateComponent<Element> {
+  private final List<Sdk> mySdks = new ArrayList<>();
 
   private final MessageListenerList<Listener> myListenerList;
 
-  @NonNls public static final String ELEMENT_JDK = "jdk";
+  @NonNls private static final String ELEMENT_JDK = "jdk";
 
-  private final Map<String, ProjectJdkImpl> myCachedProjectJdks = new HashMap<String, ProjectJdkImpl>();
+  private final Map<String, ProjectJdkImpl> myCachedProjectJdks = new HashMap<>();
   private final MessageBus myMessageBus;
 
+  // constructor is public because it is accessed from Upsource
   public ProjectJdkTableImpl() {
     myMessageBus = ApplicationManager.getApplication().getMessageBus();
-    myListenerList = new MessageListenerList<Listener>(myMessageBus, JDK_TABLE_TOPIC);
+    myListenerList = new MessageListenerList<>(myMessageBus, JDK_TABLE_TOPIC);
     // support external changes to jdk libraries (Endorsed Standards Override)
-    VirtualFileManager.getInstance().addVirtualFileListener(new VirtualFileAdapter() {
+    final MessageBusConnection connection = ApplicationManager.getApplication().getMessageBus().connect();
+    connection.subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener() {
+      private final FileTypeManager myFileTypeManager = FileTypeManager.getInstance();
+
       @Override
-      public void fileCreated(VirtualFileEvent event) {
-        updateJdks(event.getFile());
+      public void after(@NotNull List<? extends VFileEvent> events) {
+        if (!events.isEmpty()) {
+          final Set<Sdk> affected = new SmartHashSet<>();
+          for (VFileEvent event : events) {
+            addAffectedJavaSdk(event, affected);
+          }
+          if (!affected.isEmpty()) {
+            for (Sdk sdk : affected) {
+              ((SdkType)sdk.getSdkType()).setupSdkPaths(sdk);
+            }
+          }
+        }
       }
 
-      private void updateJdks(VirtualFile file) {
-        if (file.isDirectory() || !FileTypes.ARCHIVE.equals(file.getFileType())) {
-          // consider only archive files that may contain libraries
-          return;
+      private void addAffectedJavaSdk(VFileEvent event, Set<? super Sdk> affected) {
+        final VirtualFile file = event.getFile();
+        CharSequence fileName = null;
+        if (file != null && file.isValid()) {
+          if (file.isDirectory()) {
+            return;
+          }
+          fileName = file.getNameSequence();
         }
+        if (fileName == null) {
+          final String eventPath = event.getPath();
+          fileName = VfsUtil.extractFileName(eventPath);
+        }
+        if (fileName != null) {
+          // avoid calling getFileType() because it will try to detect file type from content for unknown/text file types
+          // consider only archive files that may contain libraries
+          if (!ArchiveFileType.INSTANCE.equals(myFileTypeManager.getFileTypeByFileName(fileName))) {
+            return;
+          }
+        }
+
         for (Sdk sdk : mySdks) {
-          final SdkType sdkType = (SdkType)sdk.getSdkType();
-          if (!(sdkType instanceof JavaSdkType)) {
-            continue;
-          }
-          final VirtualFile home = sdk.getHomeDirectory();
-          if (home == null) {
-            continue;
-          }
-          if (VfsUtilCore.isAncestor(home, file, true)) {
-            sdkType.setupSdkPaths(sdk);
-            // no need to iterate further assuming the file cannot be under the home of several SDKs
-            break;
+          if (sdk.getSdkType() instanceof JavaSdkType && !affected.contains(sdk)) {
+            final String homePath = sdk.getHomePath();
+            final String eventPath = event.getPath();
+            if (!StringUtil.isEmpty(homePath) && FileUtil.isAncestor(homePath, eventPath, true)) {
+              affected.add(sdk);
+            }
           }
         }
       }
@@ -109,7 +118,9 @@ public class ProjectJdkTableImpl extends ProjectJdkTable implements PersistentSt
   @Override
   @Nullable
   public Sdk findJdk(String name) {
-    for (Sdk jdk : mySdks) {
+    //noinspection ForLoopReplaceableByForEach
+    for (int i = 0, len = mySdks.size(); i < len; ++i) { // avoid foreach,  it instantiates ArrayList$Itr, this traversal happens very often
+      final Sdk jdk = mySdks.get(i);
       if (Comparing.strEqual(name, jdk.getName())) {
         return jdk;
       }
@@ -121,7 +132,7 @@ public class ProjectJdkTableImpl extends ProjectJdkTable implements PersistentSt
   @Nullable
   public Sdk findJdk(String name, String type) {
     Sdk projectJdk = findJdk(name);
-    if (projectJdk != null){
+    if (projectJdk != null) {
       return projectJdk;
     }
     final String sdkTypeName = getSdkTypeName(type);
@@ -135,7 +146,7 @@ public class ProjectJdkTableImpl extends ProjectJdkTable implements PersistentSt
 
     final SdkType[] sdkTypes = SdkType.getAllTypes();
     for (SdkType sdkType : sdkTypes) {
-      if (Comparing.strEqual(sdkTypeName, sdkType.getName())){
+      if (Comparing.strEqual(sdkTypeName, sdkType.getName())) {
         if (sdkType.isValidSdkHome(jdkPath)) {
           ProjectJdkImpl projectJdkImpl = new ProjectJdkImpl(name, sdkType);
           projectJdkImpl.setHomePath(jdkPath);
@@ -153,16 +164,18 @@ public class ProjectJdkTableImpl extends ProjectJdkTable implements PersistentSt
     return type;
   }
 
+  @NotNull
   @Override
   public Sdk[] getAllJdks() {
-    return mySdks.toArray(new Sdk[mySdks.size()]);
+    return mySdks.toArray(new Sdk[0]);
   }
 
+  @NotNull
   @Override
-  public List<Sdk> getSdksOfType(final SdkTypeId type) {
-    List<Sdk> result = new ArrayList<Sdk>();
+  public List<Sdk> getSdksOfType(@NotNull final SdkTypeId type) {
+    List<Sdk> result = new ArrayList<>();
     final Sdk[] sdks = getAllJdks();
-    for(Sdk sdk: sdks) {
+    for (Sdk sdk : sdks) {
       if (sdk.getSdkType() == type) {
         result.add(sdk);
       }
@@ -171,21 +184,24 @@ public class ProjectJdkTableImpl extends ProjectJdkTable implements PersistentSt
   }
 
   @Override
-  public void addJdk(Sdk jdk) {
+  public void addJdk(@NotNull Sdk jdk) {
     ApplicationManager.getApplication().assertWriteAccessAllowed();
     mySdks.add(jdk);
     myMessageBus.syncPublisher(JDK_TABLE_TOPIC).jdkAdded(jdk);
   }
 
   @Override
-  public void removeJdk(Sdk jdk) {
+  public void removeJdk(@NotNull Sdk jdk) {
     ApplicationManager.getApplication().assertWriteAccessAllowed();
     myMessageBus.syncPublisher(JDK_TABLE_TOPIC).jdkRemoved(jdk);
     mySdks.remove(jdk);
+    if (jdk instanceof Disposable) {
+      Disposer.dispose((Disposable)jdk);
+    }
   }
 
   @Override
-  public void updateJdk(Sdk originalJdk, Sdk modifiedJdk) {
+  public void updateJdk(@NotNull Sdk originalJdk, @NotNull Sdk modifiedJdk) {
     final String previousName = originalJdk.getName();
     final String newName = modifiedJdk.getName();
 
@@ -198,26 +214,29 @@ public class ProjectJdkTableImpl extends ProjectJdkTable implements PersistentSt
   }
 
   @Override
-  public void addListener(Listener listener) {
+  public void addListener(@NotNull Listener listener) {
     myListenerList.add(listener);
   }
 
   @Override
-  public void removeListener(Listener listener) {
+  public void removeListener(@NotNull Listener listener) {
     myListenerList.remove(listener);
   }
 
   @Override
+  @NotNull
   public SdkTypeId getDefaultSdkType() {
-    return UnknownSdkType.getInstance(null);
+    return UnknownSdkType.getInstance("");
   }
 
   @Override
-  public SdkTypeId getSdkTypeByName(String sdkTypeName) {
+  @NotNull
+  public SdkTypeId getSdkTypeByName(@NotNull String sdkTypeName) {
     return findSdkTypeByName(sdkTypeName);
   }
 
-  public static SdkTypeId findSdkTypeByName(String sdkTypeName) {
+  @NotNull
+  private static SdkTypeId findSdkTypeByName(@NotNull String sdkTypeName) {
     final SdkType[] allSdkTypes = SdkType.getAllTypes();
     for (final SdkType type : allSdkTypes) {
       if (type.getName().equals(sdkTypeName)) {
@@ -227,40 +246,29 @@ public class ProjectJdkTableImpl extends ProjectJdkTable implements PersistentSt
     return UnknownSdkType.getInstance(sdkTypeName);
   }
 
+  @NotNull
   @Override
-  public Sdk createSdk(final String name, final SdkTypeId sdkType) {
+  public Sdk createSdk(@NotNull final String name, @NotNull final SdkTypeId sdkType) {
     return new ProjectJdkImpl(name, sdkType);
   }
 
   @Override
-  public void loadState(Element element) {
+  public void loadState(@NotNull Element element) {
     mySdks.clear();
 
-    final List children = element.getChildren(ELEMENT_JDK);
-    for (final Object aChildren : children) {
-      final Element e = (Element)aChildren;
-      final ProjectJdkImpl jdk = new ProjectJdkImpl(null, null);
-      try {
-        jdk.readExternal(e);
-      }
-      catch (InvalidDataException ex) {
-        LOG.error(ex);
-      }
+    for (Element child : element.getChildren(ELEMENT_JDK)) {
+      ProjectJdkImpl jdk = new ProjectJdkImpl(null, null);
+      jdk.readExternal(child, this);
       mySdks.add(jdk);
     }
   }
 
   @Override
   public Element getState() {
-    Element element = new Element("ProjectJdkTableImpl");
+    Element element = new Element("state");
     for (Sdk jdk : mySdks) {
-      final Element e = new Element(ELEMENT_JDK);
-      try {
-        ((ProjectJdkImpl)jdk).writeExternal(e);
-      }
-      catch (WriteExternalException e1) {
-        continue;
-      }
+      Element e = new Element(ELEMENT_JDK);
+      ((ProjectJdkImpl)jdk).writeExternal(e);
       element.addContent(e);
     }
     return element;

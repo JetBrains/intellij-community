@@ -26,9 +26,6 @@ import org.jetbrains.plugins.javaFX.fxml.JavaFxPsiUtil;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
-* User: anna
-*/
 class JavaFxFactoryReferenceProvider extends PsiReferenceProvider {
   @NotNull
   @Override
@@ -39,7 +36,7 @@ class JavaFxFactoryReferenceProvider extends PsiReferenceProvider {
   }
 
   private static class JavaFXFactoryReference extends PsiReferenceBase<XmlAttributeValue> {
-    public JavaFXFactoryReference(XmlAttributeValue attributeValue) {
+    JavaFXFactoryReference(XmlAttributeValue attributeValue) {
       super(attributeValue);
     }
 
@@ -59,7 +56,9 @@ class JavaFxFactoryReferenceProvider extends PsiReferenceProvider {
     }
 
     private static boolean isFactoryMethod(PsiMethod method) {
-      return method.hasModifierProperty(PsiModifier.STATIC) && method.getParameterList().getParametersCount() == 0;
+      return method.hasModifierProperty(PsiModifier.STATIC) &&
+             method.getParameterList().isEmpty() &&
+             !PsiType.VOID.equals(method.getReturnType());
     }
 
     @NotNull
@@ -67,7 +66,7 @@ class JavaFxFactoryReferenceProvider extends PsiReferenceProvider {
     public Object[] getVariants() {
       final PsiClass psiClass = JavaFxPsiUtil.getTagClass(getElement());
       if (psiClass != null) {
-        final List<PsiMethod> methods = new ArrayList<PsiMethod>();
+        final List<PsiMethod> methods = new ArrayList<>();
         for (PsiMethod method : psiClass.getMethods()) {
           if (isFactoryMethod(method)) {
             methods.add(method);

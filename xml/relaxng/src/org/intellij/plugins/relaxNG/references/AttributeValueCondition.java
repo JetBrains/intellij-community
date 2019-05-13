@@ -24,11 +24,12 @@ import org.jetbrains.annotations.NotNull;
 class AttributeValueCondition extends PatternCondition<XmlAttributeValue> {
   private final String myRef;
 
-  public AttributeValueCondition(String ref) {
+  AttributeValueCondition(String ref) {
     super("AttributeValue");
     myRef = ref;
   }
 
+  @Override
   public boolean accepts(@NotNull XmlAttributeValue value, ProcessingContext context) {
     return myRef.equals(value.getValue());
   }

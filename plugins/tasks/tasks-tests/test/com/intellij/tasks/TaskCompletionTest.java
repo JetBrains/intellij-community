@@ -6,12 +6,11 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.ui.CommitMessage;
 import com.intellij.psi.PsiFile;
-import com.intellij.tasks.actions.OpenTaskDialog;
+import com.intellij.tasks.actions.TaskAutoCompletionListProvider;
 import com.intellij.tasks.impl.LocalTaskImpl;
 import com.intellij.tasks.impl.TaskManagerImpl;
-import com.intellij.testFramework.MapDataContext;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
-import com.intellij.ui.TextFieldWithAutoCompletionContributor;
+import com.intellij.ui.TextFieldWithAutoCompletion;
 
 import java.util.Arrays;
 import java.util.List;
@@ -22,22 +21,22 @@ import java.util.List;
 public class TaskCompletionTest extends LightCodeInsightFixtureTestCase {
 
   public TaskCompletionTest() {
-//    super(UsefulTestCase.IDEA_MARKER_CLASS, "PlatformLangXml");
+    //    super(UsefulTestCase.IDEA_MARKER_CLASS, "PlatformLangXml");
   }
 
-  public void testTaskCompletion() throws Exception {
+  public void testTaskCompletion() {
     doTest("<caret>", "TEST-001 Test task<caret>");
   }
 
-  public void testPrefix() throws Exception {
+  public void testPrefix() {
     doTest("TEST-<caret>", "TEST-001 Test task<caret>");
   }
 
-  public void testSecondWord() throws Exception {
+  public void testSecondWord() {
     doTest("my TEST-<caret>", "my TEST-001 Test task<caret>");
   }
 
-  public void testNumberCompletion() throws Exception {
+  public void testNumberCompletion() {
     configureFile("TEST-0<caret>");
     configureRepository(new LocalTaskImpl("TEST-001", "Test task"), new LocalTaskImpl("TEST-002", "Test task 2"));
     LookupElement[] elements = myFixture.complete(CompletionType.BASIC);
@@ -45,7 +44,7 @@ public class TaskCompletionTest extends LightCodeInsightFixtureTestCase {
     assertEquals(2, elements.length);
   }
 
-  public void testKeepOrder() throws Exception {
+  public void testKeepOrder() {
     configureFile("<caret>");
     configureRepository(new LocalTaskImpl("TEST-002", "Test task 2"),
                         new LocalTaskImpl("TEST-003", "Test task 1"),
@@ -55,13 +54,13 @@ public class TaskCompletionTest extends LightCodeInsightFixtureTestCase {
 
     getManager().updateIssues(null);
     List<Task> issues = getManager().getCachedIssues();
-//    assertEquals("TEST-002", issues.get(0).getSummary());
+    //    assertEquals("TEST-002", issues.get(0).getSummary());
 
     myFixture.complete(CompletionType.BASIC);
     assertEquals(Arrays.asList("TEST-002", "TEST-003", "TEST-001", "TEST-004"), myFixture.getLookupElementStrings());
   }
 
-  public void testSIOOBE() throws Exception {
+  public void testSIOOBE() {
     doTest("  <caret>    my", "  TEST-001 Test task    my");
   }
 
@@ -87,10 +86,10 @@ public class TaskCompletionTest extends LightCodeInsightFixtureTestCase {
     PsiFile psiFile = myFixture.configureByText("test.txt", text);
     Document document = myFixture.getDocument(psiFile);
     final Project project = getProject();
-    TextFieldWithAutoCompletionContributor.installCompletion(document, project,
-                                                             new OpenTaskDialog.MyTextFieldWithAutoCompletionListProvider(project),
-                                                             false);
-    document.putUserData(CommitMessage.DATA_CONTEXT_KEY, new MapDataContext());
+    TextFieldWithAutoCompletion.installCompletion(document, project,
+                                                  new TaskAutoCompletionListProvider(project),
+                                                  false);
+    document.putUserData(CommitMessage.DATA_KEY, new CommitMessage(project));
   }
 
   private TestRepository configureRepository(LocalTaskImpl... tasks) {

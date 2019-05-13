@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,7 +24,7 @@ import com.intellij.refactoring.util.MoveRenameUsageInfo;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
-import org.jetbrains.plugins.groovy.refactoring.GroovyChangeContextUtil;
+import org.jetbrains.plugins.groovy.util.GroovyChangeContextUtil;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -53,12 +53,13 @@ public class MoveGroovyFileHandler extends MoveFileHandler {
 
   @Override
   public List<UsageInfo> findUsages(PsiFile psiFile, PsiDirectory newParent, boolean searchInComments, boolean searchInNonJavaFiles) {
-    final List<UsageInfo> result = new ArrayList<UsageInfo>();
+    final List<UsageInfo> result = new ArrayList<>();
     final PsiPackage newParentPackage = JavaDirectoryService.getInstance().getPackage(newParent);
     final String qualifiedName = newParentPackage == null ? "" : newParentPackage.getQualifiedName();
     for (PsiClass aClass : ((GroovyFile)psiFile).getClasses()) {
       Collections.addAll(result, MoveClassesOrPackagesUtil
-        .findUsages(aClass, searchInComments, searchInNonJavaFiles, StringUtil.getQualifiedName(qualifiedName, aClass.getName())));
+        .findUsages(aClass, searchInComments, searchInNonJavaFiles, StringUtil.getQualifiedName(qualifiedName,
+                                                                                                StringUtil.notNullize(aClass.getName()))));
     }
     return result.isEmpty() ? null : result;
   }

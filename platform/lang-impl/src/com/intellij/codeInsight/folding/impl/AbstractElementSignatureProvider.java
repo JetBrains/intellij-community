@@ -1,38 +1,35 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.folding.impl;
 
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiNamedElement;
-import com.intellij.util.ReflectionCache;
+import com.intellij.psi.util.CachedValueProvider;
+import com.intellij.psi.util.CachedValuesManager;
+import com.intellij.util.ReflectionUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Arrays;
+import java.util.List;
+import java.util.Set;
 import java.util.StringTokenizer;
 
 /**
  * @author Denis Zhdanov
- * @since 11/7/11 12:00 PM
  */
 public abstract class AbstractElementSignatureProvider implements ElementSignatureProvider {
+  private static final int CHILDREN_COUNT_LIMIT = 100;
 
-  protected static final char ELEMENTS_SEPARATOR = ';';
+  protected static final String ELEMENTS_SEPARATOR = ";";
   protected static final String ELEMENT_TOKENS_SEPARATOR = "#";
+
+  private static final String ESCAPE_CHAR = "\\";
+  private static final List<String> ESCAPE_FROM = Arrays.asList(ESCAPE_CHAR, ELEMENT_TOKENS_SEPARATOR, ELEMENTS_SEPARATOR);
+  private static final List<String> ESCAPE_TO = Arrays.asList(ESCAPE_CHAR + ESCAPE_CHAR, ESCAPE_CHAR + "s", ESCAPE_CHAR + "h");
 
   @Override
   @Nullable
@@ -76,12 +73,24 @@ public abstract class AbstractElementSignatureProvider implements ElementSignatu
                                                          @NotNull StringTokenizer tokenizer,
                                                          @Nullable StringBuilder processingInfoStorage);
 
-  protected static <T extends PsiNamedElement> int getChildIndex(T element, PsiElement parent, String name, Class<T> hisClass) {
+  /**
+   * @return -1, if {@code parent} has too many children and calculating child index would be too slow
+   */
+  protected static <T extends PsiNamedElement> int getChildIndex(T element, PsiElement parent, String name, Class<? extends T> hisClass) {
+    PsiFile file = parent.getContainingFile();
+    Set<PsiElement> cache = file == null ? null :
+      CachedValuesManager.getCachedValue(file, () -> new CachedValueProvider.Result<>(ContainerUtil.createWeakSet(), file));
+    if (cache != null && cache.contains(parent)) return -1; 
     PsiElement[] children = parent.getChildren();
+    if (children.length > CHILDREN_COUNT_LIMIT) {
+      if (cache != null) cache.add(parent);
+      return -1;
+    }
+
     int index = 0;
 
     for (PsiElement child : children) {
-      if (ReflectionCache.isAssignable(hisClass, child.getClass())) {
+      if (ReflectionUtil.isAssignable(hisClass, child.getClass())) {
         T namedChild = hisClass.cast(child);
         final String childName = namedChild.getName();
 
@@ -99,14 +108,14 @@ public abstract class AbstractElementSignatureProvider implements ElementSignatu
 
   @Nullable
   protected static <T extends PsiNamedElement> T restoreElementInternal(@NotNull PsiElement parent,
-                                                                        String name,
-                                                                        int index,
-                                                                        @NotNull Class<T> hisClass)
+                                                              String name,
+                                                              int index,
+                                                              @NotNull Class<T> hisClass)
   {
     PsiElement[] children = parent.getChildren();
 
     for (PsiElement child : children) {
-      if (ReflectionCache.isAssignable(hisClass, child.getClass())) {
+      if (ReflectionUtil.isAssignable(hisClass, child.getClass())) {
         T namedChild = hisClass.cast(child);
         final String childName = namedChild.getName();
 
@@ -120,5 +129,13 @@ public abstract class AbstractElementSignatureProvider implements ElementSignatu
     }
 
     return null;
+  }
+
+  protected static String escape(String name) {
+    return StringUtil.replace(name, ESCAPE_FROM, ESCAPE_TO);
+  }
+
+  protected static String unescape(String name) {
+    return StringUtil.replace(name, ESCAPE_TO, ESCAPE_FROM);
   }
 }

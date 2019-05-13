@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package com.intellij.openapi.util;
 
 import com.intellij.openapi.util.text.StringUtilRt;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -27,11 +28,13 @@ import java.util.*;
 public class Comparing {
   private Comparing() { }
 
-  public static <T> boolean equal(@Nullable T arg1, @Nullable T arg2){
-    if (arg1 == null || arg2 == null){
-      return arg1 == arg2;
+  @Contract(value = "null,!null -> false; !null,null -> false; null,null -> true", pure = true)
+  public static <T> boolean equal(@Nullable T arg1, @Nullable T arg2) {
+    if (arg1 == arg2) return true;
+    if (arg1 == null || arg2 == null) {
+      return false;
     }
-    if (arg1 instanceof Object[] && arg2 instanceof Object[]){
+    if (arg1 instanceof Object[] && arg2 instanceof Object[]) {
       Object[] arr1 = (Object[])arg1;
       Object[] arr2 = (Object[])arg2;
       return Arrays.equals(arr1, arr2);
@@ -42,21 +45,26 @@ public class Comparing {
     return arg1.equals(arg2);
   }
 
-  public static <T> boolean equal(@Nullable T[] arr1, @Nullable T[] arr2){
-    if (arr1 == null || arr2 == null){
+  @Contract(value = "null,!null -> false; !null,null -> false; null,null -> true", pure = true)
+  public static <T> boolean equal(@Nullable T[] arr1, @Nullable T[] arr2) {
+    if (arr1 == null || arr2 == null) {
+      //noinspection ArrayEquality
       return arr1 == arr2;
     }
     return Arrays.equals(arr1, arr2);
   }
 
+  @Contract(value = "null,!null -> false; !null,null -> false; null,null -> true", pure = true)
   public static boolean equal(CharSequence s1, CharSequence s2) {
     return equal(s1, s2, true);
   }
 
+  @Contract(value = "null,!null -> false; !null,null -> false; null,null -> true", pure = true)
   public static boolean equal(@Nullable String arg1, @Nullable String arg2) {
-    return equal(arg1, arg2, true);
+    return arg1 == null ? arg2 == null : arg1.equals(arg2);
   }
 
+  @Contract("null,!null,_ -> false; !null,null,_ -> false; null,null,_ -> true")
   public static boolean equal(@Nullable CharSequence s1, @Nullable CharSequence s2, boolean caseSensitive) {
     if (s1 == s2) return true;
     if (s1 == null || s2 == null) return false;
@@ -81,24 +89,26 @@ public class Comparing {
     return true;
   }
 
-  public static boolean equal(@Nullable String arg1, @Nullable String arg2, boolean caseSensitive){
-    if (arg1 == null || arg2 == null){
+  @Contract("null,!null,_ -> false; !null,null,_ -> false; null,null,_ -> true")
+  public static boolean equal(@Nullable String arg1, @Nullable String arg2, boolean caseSensitive) {
+    if (arg1 == null || arg2 == null) {
+      //noinspection StringEquality
       return arg1 == arg2;
     }
-    else{
+    else {
       return caseSensitive ? arg1.equals(arg2) : arg1.equalsIgnoreCase(arg2);
     }
   }
 
-  public static boolean strEqual(String arg1, String arg2){
+  public static boolean strEqual(@Nullable String arg1, @Nullable String arg2) {
     return strEqual(arg1, arg2, true);
   }
 
-  public static boolean strEqual(@Nullable String arg1, @Nullable String arg2, boolean caseSensitive){
+  public static boolean strEqual(@Nullable String arg1, @Nullable String arg2, boolean caseSensitive) {
     return equal(arg1 == null ? "" : arg1, arg2 == null ? "" : arg2, caseSensitive);
   }
 
-  public static <T> boolean haveEqualElements(@NotNull Collection<T> a, @NotNull Collection<T> b) {
+  public static <T> boolean haveEqualElements(@NotNull Collection<? extends T> a, @NotNull Collection<? extends T> b) {
     if (a.size() != b.size()) {
       return false;
     }
@@ -109,11 +119,13 @@ public class Comparing {
         return false;
       }
     }
+
     return true;
   }
 
   public static <T> boolean haveEqualElements(@Nullable T[] a, @Nullable T[] b) {
     if (a == null || b == null) {
+      //noinspection ArrayEquality
       return a == b;
     }
 
@@ -127,11 +139,18 @@ public class Comparing {
         return false;
       }
     }
+
     return true;
   }
 
-  public static int hashcode(@Nullable Object obj) { return obj == null ? 0 : obj.hashCode(); }
-  public static int hashcode(Object obj1, Object obj2) { return hashcode(obj1) ^ hashcode(obj2); }
+  @SuppressWarnings("MethodNamesDifferingOnlyByCase")
+  public static int hashcode(@Nullable Object obj) {
+    return obj == null ? 0 : obj.hashCode();
+  }
+
+  public static int hashcode(Object obj1, Object obj2) {
+    return hashcode(obj1) ^ hashcode(obj2);
+  }
 
   public static int compare(byte o1, byte o2) {
     return o1 < o2 ? -1 : o1 == o2 ? 0 : 1;
@@ -148,11 +167,13 @@ public class Comparing {
   public static int compare(long o1, long o2) {
     return o1 < o2 ? -1 : o1 == o2 ? 0 : 1;
   }
+
   public static int compare(double o1, double o2) {
-    return o1 < o2 ? -1 : o1 == o2 ? 0 : 1;
+    return Double.compare(o1, o2);
   }
 
   public static int compare(@Nullable byte[] o1, @Nullable byte[] o2) {
+    //noinspection ArrayEquality
     if (o1 == o2) return 0;
     if (o1 == null) return 1;
     if (o2 == null) return -1;
@@ -164,17 +185,20 @@ public class Comparing {
       if (o1[i] > o2[i]) return 1;
       else if (o1[i] < o2[i]) return -1;
     }
+
     return 0;
   }
 
-  public static <T extends Comparable<T>> int compare(@Nullable final T o1, @Nullable final T o2) {
-    if (o1 == null) return o2 == null ? 0 : -1;
+  public static <T extends Comparable<T>> int compare(@Nullable T o1, @Nullable T o2) {
+    if (o1 == o2) return 0;
+    if (o1 == null) return -1;
     if (o2 == null) return 1;
     return o1.compareTo(o2);
   }
 
-  public static <T> int compare(@Nullable final T o1, @Nullable final T o2, @NotNull final Comparator<T> notNullComparator) {
-    if (o1 == null) return o2 == null ? 0 : -1;
+  public static <T> int compare(@Nullable T o1, @Nullable T o2, @NotNull Comparator<? super T> notNullComparator) {
+    if (o1 == o2) return 0;
+    if (o1 == null) return -1;
     if (o2 == null) return 1;
     return notNullComparator.compare(o1, o2);
   }

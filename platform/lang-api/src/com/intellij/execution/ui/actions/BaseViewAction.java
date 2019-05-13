@@ -22,11 +22,13 @@ import com.intellij.execution.ui.layout.ViewContext;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.ui.content.Content;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public abstract class BaseViewAction extends DumbAwareAction {
 
-  public final void update(final AnActionEvent e) {
+  @Override
+  public final void update(@NotNull final AnActionEvent e) {
     ViewContext context = getViewFacade(e);
     Content[] content = getContent(e);
 
@@ -55,13 +57,14 @@ public abstract class BaseViewAction extends DumbAwareAction {
 
   }
 
-  public final void actionPerformed(final AnActionEvent e) {
+  @Override
+  public final void actionPerformed(@NotNull final AnActionEvent e) {
     actionPerformed(e, getViewFacade(e), getContent(e));
   }
 
 
   protected abstract void actionPerformed(AnActionEvent e, ViewContext context, Content[] content);
-  
+
 
   @Nullable
   private ViewContext getViewFacade(final AnActionEvent e) {

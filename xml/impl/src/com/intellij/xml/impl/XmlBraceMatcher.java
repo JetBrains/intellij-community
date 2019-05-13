@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,14 +39,12 @@ import java.util.List;
 
 /**
  * @author Maxim.Mossienko
- *         Date: Apr 15, 2008
- *         Time: 4:27:25 PM
  */
 public class XmlBraceMatcher implements XmlAwareBraceMatcher {
   private static final int XML_TAG_TOKEN_GROUP = 1;
   private static final int XML_VALUE_DELIMITER_GROUP = 2;
 
-  private static final BidirectionalMap<IElementType, IElementType> PAIRING_TOKENS = new BidirectionalMap<IElementType, IElementType>();
+  private static final BidirectionalMap<IElementType, IElementType> PAIRING_TOKENS = new BidirectionalMap<>();
 
   static {
     PAIRING_TOKENS.put(XmlTokenType.XML_TAG_END, XmlTokenType.XML_START_TAG_START);
@@ -55,6 +53,7 @@ public class XmlBraceMatcher implements XmlAwareBraceMatcher {
     PAIRING_TOKENS.put(XmlTokenType.XML_ATTRIBUTE_VALUE_START_DELIMITER, XmlTokenType.XML_ATTRIBUTE_VALUE_END_DELIMITER);
   }
 
+  @Override
   public int getBraceTokenGroupId(IElementType tokenType) {
     final Language l = tokenType.getLanguage();
     PairedBraceMatcher matcher = LanguageBraceMatching.INSTANCE.forLanguage(l);
@@ -77,6 +76,7 @@ public class XmlBraceMatcher implements XmlAwareBraceMatcher {
     }
   }
 
+  @Override
   public boolean isLBraceToken(HighlighterIterator iterator, CharSequence fileText, FileType fileType) {
     final IElementType tokenType = iterator.getTokenType();
     PairedBraceMatcher matcher = LanguageBraceMatching.INSTANCE.forLanguage(tokenType.getLanguage());
@@ -91,6 +91,7 @@ public class XmlBraceMatcher implements XmlAwareBraceMatcher {
            tokenType == XmlTokenType.XML_CDATA_START;
   }
 
+  @Override
   public boolean isRBraceToken(HighlighterIterator iterator, CharSequence fileText, FileType fileType) {
     final IElementType tokenType = iterator.getTokenType();
     PairedBraceMatcher matcher = LanguageBraceMatching.INSTANCE.forLanguage(tokenType.getLanguage());
@@ -129,6 +130,7 @@ public class XmlBraceMatcher implements XmlAwareBraceMatcher {
     return fileType == StdFileTypes.HTML;
   }
 
+  @Override
   public boolean isPairBraces(IElementType tokenType1, IElementType tokenType2) {
     PairedBraceMatcher matcher = LanguageBraceMatching.INSTANCE.forLanguage(tokenType1.getLanguage());
     if (matcher != null) {
@@ -143,6 +145,7 @@ public class XmlBraceMatcher implements XmlAwareBraceMatcher {
     return keys != null && keys.contains(tokenType2);
   }
 
+  @Override
   public boolean isStructuralBrace(HighlighterIterator iterator,CharSequence text, FileType fileType) {
     IElementType tokenType = iterator.getTokenType();
 
@@ -167,19 +170,18 @@ public class XmlBraceMatcher implements XmlAwareBraceMatcher {
            tokenType == XmlTokenType.XML_TAG_END && isFileTypeWithSingleHtmlTags(fileType) && isEndOfSingleHtmlTag(text, iterator);
   }
 
+  @Override
   public boolean isPairedBracesAllowedBeforeType(@NotNull final IElementType lbraceType, @Nullable final IElementType contextType) {
     return true;
   }
 
+  @Override
   public boolean isStrictTagMatching(final FileType fileType, final int braceGroupId) {
-    switch(braceGroupId){
-      case XML_TAG_TOKEN_GROUP:
-        // Other xml languages may have nonbalanced tag names
-        return isStrictTagMatchingForFileType(fileType);
-
-      default:
-        return false;
+    if (braceGroupId == XML_TAG_TOKEN_GROUP) {
+      // Other xml languages may have nonbalanced tag names
+      return isStrictTagMatchingForFileType(fileType);
     }
+    return false;
   }
 
   protected boolean isStrictTagMatchingForFileType(final FileType fileType) {
@@ -187,13 +189,9 @@ public class XmlBraceMatcher implements XmlAwareBraceMatcher {
            fileType == StdFileTypes.XHTML;
   }
 
+  @Override
   public boolean areTagsCaseSensitive(final FileType fileType, final int braceGroupId) {
-    switch(braceGroupId){
-      case XML_TAG_TOKEN_GROUP:
-        return fileType == StdFileTypes.XML;
-      default:
-        return false;
-    }
+    return braceGroupId == XML_TAG_TOKEN_GROUP && fileType == StdFileTypes.XML;
   }
 
   private static boolean findEndTagStart(HighlighterIterator iterator) {
@@ -221,6 +219,7 @@ public class XmlBraceMatcher implements XmlAwareBraceMatcher {
     return tagName != null && HtmlUtil.isSingleHtmlTag(tagName);
   }
 
+  @Override
   public String getTagName(CharSequence fileText, HighlighterIterator iterator) {
     final IElementType tokenType = iterator.getTokenType();
     String name = null;
@@ -274,6 +273,7 @@ public class XmlBraceMatcher implements XmlAwareBraceMatcher {
     return tokenType1 == TokenType.WHITE_SPACE;
   }
 
+  @Override
   public IElementType getOppositeBraceTokenType(@NotNull final IElementType type) {
     PairedBraceMatcher matcher = LanguageBraceMatching.INSTANCE.forLanguage(type.getLanguage());
     if (matcher != null) {
@@ -286,6 +286,7 @@ public class XmlBraceMatcher implements XmlAwareBraceMatcher {
     return null;
   }
 
+  @Override
   public int getCodeConstructStart(final PsiFile file, int openingBraceOffset) {
     return openingBraceOffset;
   }

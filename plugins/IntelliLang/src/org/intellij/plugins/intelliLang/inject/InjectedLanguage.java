@@ -15,9 +15,8 @@
  */
 package org.intellij.plugins.intelliLang.inject;
 
-import com.intellij.lang.*;
-import com.intellij.psi.templateLanguages.TemplateLanguage;
-import com.intellij.openapi.fileTypes.FileTypes;
+import com.intellij.lang.Language;
+import com.intellij.lang.LanguageUtil;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -28,8 +27,11 @@ public final class InjectedLanguage {
   private static Map<String, Language> ourLanguageCache;
   private static int ourLanguageCount;
 
+  @NotNull
   private final String myID;
+  @NotNull
   private final String myPrefix;
+  @NotNull
   private final String mySuffix;
   private final boolean myDynamic;
 
@@ -69,7 +71,7 @@ public final class InjectedLanguage {
 
   @Nullable
   public static Language findLanguageById(@Nullable String langID) {
-    if (langID == null || langID.length() == 0) {
+    if (langID == null || langID.isEmpty()) {
       return null;
     }
     synchronized (InjectedLanguage.class) {
@@ -98,18 +100,18 @@ public final class InjectedLanguage {
         initLanguageCache();
       }
       final Collection<Language> keys = ourLanguageCache.values();
-      return keys.toArray(new Language[keys.size()]);
+      return keys.toArray(new Language[0]);
     }
   }
 
   private static void initLanguageCache() {
-    ourLanguageCache = new HashMap<String, Language>();
+    ourLanguageCache = new HashMap<>();
 
     Collection<Language> registeredLanguages;
     do {
-      registeredLanguages = new ArrayList<Language>(Language.getRegisteredLanguages());
+      registeredLanguages = new ArrayList<>(Language.getRegisteredLanguages());
       for (Language language : registeredLanguages) {
-        if (isInjectableLanguage(language)) {
+        if (LanguageUtil.isInjectableLanguage(language)) {
           ourLanguageCache.put(language.getID(), language);
         }
       }
@@ -118,36 +120,17 @@ public final class InjectedLanguage {
     ourLanguageCount = registeredLanguages.size();
   }
 
-  private static boolean isInjectableLanguage(Language language) {
-    if (language == Language.ANY || language == FileTypes.PLAIN_TEXT.getLanguage()) {
-      return false;
-    }
-    if (language.getID().startsWith("$")) {
-      return false;
-    }
-    if (language instanceof InjectableLanguage) {
-      return true;
-    }                                    
-    if (language instanceof TemplateLanguage || language instanceof DependentLanguage) {
-      return false;
-    }
-    if (LanguageParserDefinitions.INSTANCE.forLanguage(language) == null) {
-      return false;
-    }
-    return true;
-  }
-
   public boolean equals(Object o) {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
 
     final InjectedLanguage that = (InjectedLanguage)o;
 
-    return !(myID != null ? !myID.equals(that.myID) : that.myID != null);
+    return myID.equals(that.myID);
   }
 
   public int hashCode() {
-    return (myID != null ? myID.hashCode() : 0);
+    return myID.hashCode();
   }
 
   @Nullable

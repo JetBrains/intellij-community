@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,9 +19,9 @@ package com.intellij.util;
 import com.intellij.openapi.Disposable;
 import org.jetbrains.annotations.NotNull;
 
-@SuppressWarnings({"NonPrivateFieldAccessedInSynchronizedContext"})
+@SuppressWarnings("NonPrivateFieldAccessedInSynchronizedContext")
 public abstract class TimedComputable<T>  extends Timed<T> {
-  private int myAcquireCount = 0;
+  private int myAcquireCount;
 
   public TimedComputable(Disposable parentDisposable) {
     super(parentDisposable);
@@ -46,11 +46,13 @@ public abstract class TimedComputable<T>  extends Timed<T> {
     assert myAcquireCount >= 0;
   }
 
+  @Override
   public synchronized void dispose() {
     assert myAcquireCount == 0;
     super.dispose();
   }
 
+  @Override
   protected synchronized boolean isLocked() {
     return myAcquireCount != 0;
   }

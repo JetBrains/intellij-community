@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,14 +24,13 @@ import com.intellij.psi.impl.cache.RecordUtil;
 import com.intellij.psi.impl.cache.TypeInfo;
 import com.intellij.psi.impl.java.stubs.impl.PsiParameterStubImpl;
 import com.intellij.psi.impl.source.PsiParameterImpl;
-import com.intellij.psi.impl.source.PsiReceiverParameterImpl;
 import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.impl.source.tree.LightTreeUtil;
+import com.intellij.psi.impl.source.tree.java.ParameterElement;
 import com.intellij.psi.stubs.IndexSink;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.stubs.StubInputStream;
 import com.intellij.psi.stubs.StubOutputStream;
-import com.intellij.psi.tree.TokenSet;
 import com.intellij.util.io.StringRef;
 import org.jetbrains.annotations.NotNull;
 
@@ -40,11 +39,15 @@ import java.io.IOException;
 /**
  * @author max
  */
-public abstract class JavaParameterElementType extends JavaStubElementType<PsiParameterStub, PsiParameter> {
-  public static final TokenSet ID_TYPES = TokenSet.create(JavaTokenType.IDENTIFIER, JavaTokenType.THIS_KEYWORD);
+public class JavaParameterElementType extends JavaStubElementType<PsiParameterStub, PsiParameter> {
+  public JavaParameterElementType() {
+    super("PARAMETER");
+  }
 
-  public JavaParameterElementType(@NotNull String id) {
-    super(id);
+  @NotNull
+  @Override
+  public ASTNode createCompositeNode() {
+    return new ParameterElement(JavaElementType.PARAMETER);
   }
 
   @Override
@@ -54,34 +57,35 @@ public abstract class JavaParameterElementType extends JavaStubElementType<PsiPa
 
   @Override
   public PsiParameter createPsi(@NotNull ASTNode node) {
-    boolean receiver = node.getElementType() == JavaElementType.RECEIVER_PARAMETER;
-    return receiver ? new PsiReceiverParameterImpl(node) : new PsiParameterImpl(node);
+    return new PsiParameterImpl(node);
   }
 
+  @NotNull
   @Override
-  public PsiParameterStub createStub(LighterAST tree, LighterASTNode node, StubElement parentStub) {
+  public PsiParameterStub createStub(@NotNull LighterAST tree, @NotNull LighterASTNode node, @NotNull StubElement parentStub) {
     TypeInfo typeInfo = TypeInfo.create(tree, node, parentStub);
-    LighterASTNode id = LightTreeUtil.requiredChildOfType(tree, node, ID_TYPES);
+    LighterASTNode id = LightTreeUtil.requiredChildOfType(tree, node, JavaTokenType.IDENTIFIER);
     String name = RecordUtil.intern(tree.getCharTable(), id);
-    return new PsiParameterStubImpl(parentStub, name, typeInfo, typeInfo.isEllipsis);
+    return new PsiParameterStubImpl(parentStub, name, typeInfo, typeInfo.isEllipsis, false);
   }
 
   @Override
-  public void serialize(PsiParameterStub stub, StubOutputStream dataStream) throws IOException {
+  public void serialize(@NotNull PsiParameterStub stub, @NotNull StubOutputStream dataStream) throws IOException {
     dataStream.writeName(stub.getName());
     TypeInfo.writeTYPE(dataStream, stub.getType(false));
-    dataStream.writeBoolean(stub.isParameterTypeEllipsis());
+    dataStream.writeByte(((PsiParameterStubImpl)stub).getFlags());
+  }
+
+  @NotNull
+  @Override
+  public PsiParameterStub deserialize(@NotNull StubInputStream dataStream, StubElement parentStub) throws IOException {
+    String name = dataStream.readNameString();
+    if (name == null) throw new IOException("corrupted indices");
+    TypeInfo type = TypeInfo.readTYPE(dataStream);
+    byte flags = dataStream.readByte();
+    return new PsiParameterStubImpl(parentStub, name, type, flags);
   }
 
   @Override
-  public PsiParameterStub deserialize(StubInputStream dataStream, StubElement parentStub) throws IOException {
-    StringRef name = dataStream.readName();
-    TypeInfo type = TypeInfo.readTYPE(dataStream, parentStub);
-    boolean isEllipsis = dataStream.readBoolean();
-    return new PsiParameterStubImpl(parentStub, name, type, isEllipsis);
-  }
-
-  @Override
-  public void indexStub(PsiParameterStub stub, IndexSink sink) {
-  }
+  public void indexStub(@NotNull PsiParameterStub stub, @NotNull IndexSink sink) { }
 }

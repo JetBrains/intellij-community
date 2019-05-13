@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,7 +25,7 @@ import org.jetbrains.annotations.NotNull;
 
 public class PsiIdentifierImpl extends LeafPsiElement implements PsiIdentifier, PsiJavaToken {
   public PsiIdentifierImpl(CharSequence text) {
-    super(Constants.IDENTIFIER, text);
+    super(JavaTokenType.IDENTIFIER, text);
   }
 
   @Override
@@ -44,26 +44,6 @@ public class PsiIdentifierImpl extends LeafPsiElement implements PsiIdentifier, 
   }
 
   @Override
-  public PsiElement replace(@NotNull PsiElement newElement) throws IncorrectOperationException {
-    PsiElement result = super.replace(newElement);
-
-    // We want to reformat method parameters on method name change as well because there is a possible situation that they are aligned
-    // and method name change breaks the alignment.
-    // Example:
-    //     public void test(int i,
-    //                      int j) {}
-    // Suppose we're renaming the method to test123. We get the following if parameter list is not reformatted:
-    //     public void test123(int i,
-    //                     int j) {}
-    PsiElement methodCandidate = result.getParent();
-    if (methodCandidate instanceof PsiMethod) {
-      PsiMethod method = (PsiMethod)methodCandidate;
-      CodeEditUtil.markToReformat(method.getParameterList().getNode(), true);
-    }
-
-    return result;
-  }
-
   public String toString(){
     return "PsiIdentifier:" + getText();
   }

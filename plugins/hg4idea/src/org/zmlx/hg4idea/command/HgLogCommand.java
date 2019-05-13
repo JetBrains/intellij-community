@@ -12,55 +12,110 @@
 // limitations under the License.
 package org.zmlx.hg4idea.command;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.HgFile;
-import org.zmlx.hg4idea.execution.HgCommandExecutor;
-import org.zmlx.hg4idea.execution.HgCommandResult;
+import org.zmlx.hg4idea.HgFileRevision;
+import org.zmlx.hg4idea.HgVcs;
+import org.zmlx.hg4idea.execution.*;
+import org.zmlx.hg4idea.log.HgBaseLogParser;
+import org.zmlx.hg4idea.log.HgFileRevisionLogParser;
+import org.zmlx.hg4idea.log.HgHistoryUtil;
+import org.zmlx.hg4idea.util.HgChangesetUtil;
+import org.zmlx.hg4idea.util.HgUtil;
+import org.zmlx.hg4idea.util.HgVersion;
 
+import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 
-public class HgLogCommand extends HgRevisionsCommand {
-  private boolean includeRemoved;
-  private boolean followCopies;
-  private boolean logFile = true;
+public class HgLogCommand {
 
-  public HgLogCommand(Project project) {
-    super(project);
-  }
+  private static final Logger LOG = Logger.getInstance(HgLogCommand.class.getName());
+
+  @NotNull private final Project myProject;
+  @NotNull private HgVersion myVersion;
+  private boolean myIncludeRemoved;
+  private boolean myFollowCopies;
+  private boolean myLogFile = true;
+  private boolean myLargeFilesWithFollowSupported = false;
 
   public void setIncludeRemoved(boolean includeRemoved) {
-    this.includeRemoved = includeRemoved;
+    myIncludeRemoved = includeRemoved;
   }
 
   public void setFollowCopies(boolean followCopies) {
-    this.followCopies = followCopies;
+    myFollowCopies = followCopies;
   }
 
   public void setLogFile(boolean logFile) {
-    this.logFile = logFile;
+    myLogFile = logFile;
   }
 
-  @Override
-  public HgCommandResult execute(HgCommandExecutor executor, VirtualFile repo,
-    String template, int limit, HgFile hgFile) {
-    return execute(executor, repo, template, limit, hgFile,null);
-  }
-
-  @Override
-  public HgCommandResult execute(HgCommandExecutor executor, VirtualFile repo,
-                                 String template, int limit, HgFile hgFile, List<String> argsForCmd) {
-    List<String> arguments = new LinkedList<String>();
-    if (followCopies) {
-      arguments.add("--follow");
+  public HgLogCommand(@NotNull Project project) {
+    myProject = project;
+    HgVcs vcs = HgVcs.getInstance(myProject);
+    if (vcs == null) {
+      LOG.info("Vcs couldn't be null for project");
+      return;
     }
-    if (includeRemoved) {
+    myVersion = vcs.getVersion();
+    myLargeFilesWithFollowSupported = myVersion.isLargeFilesWithFollowSupported();
+  }
+
+  /**
+   * @param limit Pass -1 to set no limits on history
+   */
+  public final List<HgFileRevision> execute(final HgFile hgFile, int limit, boolean includeFiles) {
+    return execute(hgFile, limit, includeFiles, null);
+  }
+
+  @NotNull
+  public HgVersion getVersion() {
+    return myVersion;
+  }
+
+  /**
+   * @param limit Pass -1 to set no limits on history
+   */
+  public final List<HgFileRevision> execute(final HgFile hgFile, int limit, boolean includeFiles, @Nullable List<String> argsForCmd) {
+    if ((limit <= 0 && limit != -1) || hgFile == null) {
+      return Collections.emptyList();
+    }
+
+    String[] templates = HgBaseLogParser.constructFullTemplateArgument(includeFiles, myVersion);
+    String template = HgChangesetUtil.makeTemplate(templates);
+    FilePath originalFileName = HgUtil.getOriginalFileName(hgFile.toFilePath(), ChangeListManager.getInstance(myProject));
+    HgFile originalHgFile = new HgFile(hgFile.getRepo(), originalFileName);
+    HgCommandResult result = execute(hgFile.getRepo(), template, limit, originalHgFile, argsForCmd);
+
+    return HgHistoryUtil.getCommitRecords(myProject, result,
+                                          new HgFileRevisionLogParser(myProject, originalHgFile, myVersion));
+  }
+
+  @NotNull
+  private List<String> createArguments(@NotNull String template, int limit, @Nullable HgFile hgFile, @Nullable List<String> argsForCmd) {
+    List<String> arguments = new LinkedList<>();
+    if (myIncludeRemoved) {
       // There is a bug in mercurial that causes --follow --removed <file> to cause
       // an error (http://mercurial.selenic.com/bts/issue2139). Avoid this combination
-      // for now, preferring to use --follow over --removed. 
-      if (!(followCopies && logFile)) {
+      // for now, preferring to use --follow over --removed.
+      if (!(myFollowCopies && myLogFile)) {
         arguments.add("--removed");
+      }
+    }
+    if (myFollowCopies) {
+      arguments.add("--follow");
+      //workaround: --follow  options doesn't work with largefiles extension, so we need to switch off this extension in log command
+      //see http://selenic.com/pipermail/mercurial-devel/2013-May/051209.html  fixed since 2.7
+      if (!myLargeFilesWithFollowSupported) {
+        arguments.add("--config");
+        arguments.add("extensions.largefiles=!");
       }
     }
     arguments.add("--template");
@@ -71,11 +126,27 @@ public class HgLogCommand extends HgRevisionsCommand {
     }
     if (argsForCmd != null) {
       arguments.addAll(argsForCmd);
-    }
-    if (logFile) {
+    }  //to do  double check the same condition should be simplified
+
+    if (myLogFile && hgFile != null) {
       arguments.add(hgFile.getRelativePath());
     }
-    return executor.executeInCurrentThread(repo, "log", arguments);
+    return arguments;
   }
 
+  @Nullable
+  public HgCommandResult execute(@NotNull VirtualFile repo, @NotNull String template, int limit, @Nullable HgFile hgFile,
+                                 @Nullable List<String> argsForCmd) {
+    ShellCommand.CommandResultCollector collector = new ShellCommand.CommandResultCollector(false);
+    boolean success = execute(repo, template, limit, hgFile, argsForCmd, collector);
+    return success ? collector.getResult() : null;
+  }
+
+  public boolean execute(@NotNull VirtualFile repo, @NotNull String template, int limit, @Nullable HgFile hgFile,
+                         @Nullable List<String> argsForCmd, @NotNull HgLineProcessListener listener) {
+    List<String> arguments = createArguments(template, limit, hgFile, argsForCmd);
+    HgCommandExecutor commandExecutor = new HgCommandExecutor(myProject);
+    commandExecutor.setOutputAlwaysSuppressed(true);
+    return commandExecutor.executeInCurrentThread(repo, "log", arguments, false, listener);
+  }
 }

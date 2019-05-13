@@ -1,33 +1,22 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 package org.intellij.lang.regexp.intention;
 
 import com.intellij.codeInsight.intention.impl.QuickEditAction;
+import com.intellij.codeInsight.intention.impl.QuickEditHandler;
 import com.intellij.lang.Language;
+import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.util.IncorrectOperationException;
 import org.intellij.lang.regexp.RegExpLanguage;
 import org.jetbrains.annotations.NotNull;
 
@@ -41,14 +30,28 @@ public class CheckRegExpIntentionAction extends QuickEditAction implements Icona
 
   @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    final Pair<PsiElement, TextRange> pair = getRangePair(file, editor);
-    /*super.isAvailable(project, editor, file) && */
+    if (editor.getUserData(CheckRegExpForm.CHECK_REG_EXP_EDITOR) != null) {
+      // to disable intention inside CheckRegExpForm itself
+      return false;
+    }
+    Pair<PsiElement, TextRange> pair = getRangePair(file, editor);
     if (pair != null && pair.first != null) {
       Language language = pair.first.getLanguage();
-      Language baseLanguage = language.getBaseLanguage();
-      return language == RegExpLanguage.INSTANCE || baseLanguage == RegExpLanguage.INSTANCE;
+      return language.isKindOf(RegExpLanguage.INSTANCE);
     }
-    return false;
+    PsiFile baseFile = InjectedLanguageManager.getInstance(project).getTopLevelFile(file);
+    return baseFile != null && baseFile.getLanguage().isKindOf(RegExpLanguage.INSTANCE);
+  }
+
+  @Override
+  public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
+    PsiFile baseFile = InjectedLanguageManager.getInstance(project).getTopLevelFile(file);
+    if (baseFile == null || !baseFile.getLanguage().isKindOf(RegExpLanguage.INSTANCE)) {
+      super.invoke(project, editor, file);
+      return;
+    }
+    JComponent component = createBalloonComponent(file);
+    if (component != null) QuickEditHandler.showBalloon(editor, file, component);
   }
 
   @Override
@@ -57,11 +60,11 @@ public class CheckRegExpIntentionAction extends QuickEditAction implements Icona
   }
 
   @Override
-  protected JComponent createBalloonComponent(PsiFile file, final Ref<Balloon> ref) {
+  protected JComponent createBalloonComponent(@NotNull PsiFile file) {
     final Project project = file.getProject();
     final Document document = PsiDocumentManager.getInstance(project).getDocument(file);
     if (document != null) {
-      return new CheckRegExpForm(new Pair<PsiFile, Ref<Balloon>>(file, ref)).getRootPanel();
+      return new CheckRegExpForm(file).getRootPanel();
     }
     return null;
   }

@@ -15,7 +15,7 @@ from monotone import monotone_source
 from gnuarch import gnuarch_source
 from bzr import bzr_source
 from p4 import p4_source
-import filemap
+import filemap, common
 
 import os, shutil
 from mercurial import hg, util, encoding
@@ -70,7 +70,28 @@ def convertsink(ui, path, type):
                 return sink(ui, path)
         except NoRepo, inst:
             ui.note(_("convert: %s\n") % inst)
+        except MissingTool, inst:
+            raise util.Abort('%s\n' % inst)
     raise util.Abort(_('%s: unknown repository type') % path)
+
+class progresssource(object):
+    def __init__(self, ui, source, filecount):
+        self.ui = ui
+        self.source = source
+        self.filecount = filecount
+        self.retrieved = 0
+
+    def getfile(self, file, rev):
+        self.retrieved += 1
+        self.ui.progress(_('getting files'), self.retrieved,
+                         item=file, total=self.filecount)
+        return self.source.getfile(file, rev)
+
+    def lookuprev(self, rev):
+        return self.source.lookuprev(rev)
+
+    def close(self):
+        self.ui.progress(_('getting files'), None)
 
 class converter(object):
     def __init__(self, ui, source, dest, revmapfile, opts):
@@ -93,11 +114,11 @@ class converter(object):
         if authorfile and os.path.exists(authorfile):
             self.readauthormap(authorfile)
         # Extend/Override with new author map if necessary
-        if opts.get('authors'):
-            self.readauthormap(opts.get('authors'))
+        if opts.get('authormap'):
+            self.readauthormap(opts.get('authormap'))
             self.authorfile = self.dest.authorfile()
 
-        self.splicemap = mapfile(ui, opts.get('splicemap'))
+        self.splicemap = common.parsesplicemap(opts.get('splicemap'))
         self.branchmap = mapfile(ui, opts.get('branchmap'))
 
     def walktree(self, heads):
@@ -111,17 +132,42 @@ class converter(object):
             if n in known or n in self.map:
                 continue
             known.add(n)
+            self.ui.progress(_('scanning'), len(known), unit=_('revisions'))
             commit = self.cachecommit(n)
             parents[n] = []
             for p in commit.parents:
                 parents[n].append(p)
                 visit.append(p)
+        self.ui.progress(_('scanning'), None)
 
         return parents
 
+    def mergesplicemap(self, parents, splicemap):
+        """A splicemap redefines child/parent relationships. Check the
+        map contains valid revision identifiers and merge the new
+        links in the source graph.
+        """
+        for c in sorted(splicemap):
+            if c not in parents:
+                if not self.dest.hascommit(self.map.get(c, c)):
+                    # Could be in source but not converted during this run
+                    self.ui.warn(_('splice map revision %s is not being '
+                                   'converted, ignoring\n') % c)
+                continue
+            pc = []
+            for p in splicemap[c]:
+                # We do not have to wait for nodes already in dest.
+                if self.dest.hascommit(self.map.get(p, p)):
+                    continue
+                # Parent is not in dest and not being converted, not good
+                if p not in parents:
+                    raise util.Abort(_('unknown splice map parent: %s') % p)
+                pc.append(p)
+            parents[c] = pc
+
     def toposort(self, parents, sortmode):
         '''Return an ordering such that every uncommitted changeset is
-        preceeded by all its uncommitted ancestors.'''
+        preceded by all its uncommitted ancestors.'''
 
         def mapchildren(parents):
             """Return a (children, roots) tuple where 'children' maps parent
@@ -129,7 +175,7 @@ class converter(object):
             revisions without parents. 'parents' must be a mapping of revision
             identifier to its parents ones.
             """
-            visit = parents.keys()
+            visit = sorted(parents)
             seen = set()
             children = {}
             roots = []
@@ -144,7 +190,7 @@ class converter(object):
                 children.setdefault(n, [])
                 hasparent = False
                 for p in parents[n]:
-                    if not p in self.map:
+                    if p not in self.map:
                         visit.append(p)
                         hasparent = True
                     children.setdefault(p, []).append(n)
@@ -181,6 +227,14 @@ class converter(object):
                 return sorted(nodes, key=keyfn)[0]
             return picknext
 
+        def makeclosesorter():
+            """Close order sort."""
+            keyfn = lambda n: ('close' not in self.commitcache[n].extra,
+                               self.commitcache[n].sortkey)
+            def picknext(nodes):
+                return sorted(nodes, key=keyfn)[0]
+            return picknext
+
         def makedatesorter():
             """Sort revisions by date."""
             dates = {}
@@ -200,6 +254,8 @@ class converter(object):
             picknext = makedatesorter()
         elif sortmode == 'sourcesort':
             picknext = makesourcesorter()
+        elif sortmode == 'closesort':
+            picknext = makeclosesorter()
         else:
             raise util.Abort(_('unknown sort mode: %s') % sortmode)
 
@@ -234,7 +290,7 @@ class converter(object):
     def writeauthormap(self):
         authorfile = self.authorfile
         if authorfile:
-            self.ui.status(_('Writing author map file %s\n') % authorfile)
+            self.ui.status(_('writing author map file %s\n') % authorfile)
             ofile = open(authorfile, 'w+')
             for author in self.authors:
                 ofile.write("%s=%s\n" % (author, self.authors[author]))
@@ -251,7 +307,7 @@ class converter(object):
             try:
                 srcauthor, dstauthor = line.split('=', 1)
             except ValueError:
-                msg = _('Ignoring bad line in author map file %s: %s\n')
+                msg = _('ignoring bad line in author map file %s: %s\n')
                 self.ui.warn(msg % (authorfile, line.rstrip()))
                 continue
 
@@ -296,14 +352,16 @@ class converter(object):
                                   self.commitcache[prev].branch))
         self.dest.setbranch(commit.branch, pbranches)
         try:
-            parents = self.splicemap[rev].replace(',', ' ').split()
+            parents = self.splicemap[rev]
             self.ui.status(_('spliced in %s as parents of %s\n') %
                            (parents, rev))
             parents = [self.map.get(p, p) for p in parents]
         except KeyError:
             parents = [b[0] for b in pbranches]
+        source = progresssource(self.ui, self.source, len(files))
         newnode = self.dest.putcommit(files, copies, parents, commit,
-                                      self.source, self.map)
+                                      source, self.map)
+        source.close()
         self.source.converted(rev, newnode)
         self.map[rev] = newnode
 
@@ -315,23 +373,27 @@ class converter(object):
             self.ui.status(_("scanning source...\n"))
             heads = self.source.getheads()
             parents = self.walktree(heads)
+            self.mergesplicemap(parents, self.splicemap)
             self.ui.status(_("sorting...\n"))
             t = self.toposort(parents, sortmode)
             num = len(t)
             c = None
 
             self.ui.status(_("converting...\n"))
-            for c in t:
+            for i, c in enumerate(t):
                 num -= 1
                 desc = self.commitcache[c].desc
                 if "\n" in desc:
                     desc = desc.splitlines()[0]
                 # convert log message to local encoding without using
-                # tolocal() because encoding.encoding conver() use it as
-                # 'utf-8'
+                # tolocal() because the encoding.encoding convert()
+                # uses is 'utf-8'
                 self.ui.status("%d %s\n" % (num, recode(desc)))
                 self.ui.note(_("source: %s\n") % recode(c))
+                self.ui.progress(_('converting'), i, unit=_('revisions'),
+                                 total=len(t))
                 self.copy(c)
+            self.ui.progress(_('converting'), None)
 
             tags = self.source.gettags()
             ctags = {}
@@ -350,6 +412,16 @@ class converter(object):
                     if tagsparents:
                         self.map[tagsparents[0][0]] = nrev
 
+            bookmarks = self.source.getbookmarks()
+            cbookmarks = {}
+            for k in bookmarks:
+                v = bookmarks[k]
+                if self.map.get(v, SKIPREV) != SKIPREV:
+                    cbookmarks[k] = self.map[v]
+
+            if c and cbookmarks:
+                self.dest.putbookmarks(cbookmarks)
+
             self.writeauthormap()
         finally:
             self.cleanup()
@@ -366,6 +438,10 @@ def convert(ui, src, dest=None, revmapfile=None, **opts):
     orig_encoding = encoding.encoding
     encoding.encoding = 'UTF-8'
 
+    # support --authors as an alias for --authormap
+    if not opts.get('authormap'):
+        opts['authormap'] = opts.get('authors')
+
     if not dest:
         dest = hg.defaultdest(src) + "-hg"
         ui.status(_("assuming destination %s\n") % dest)
@@ -380,13 +456,15 @@ def convert(ui, src, dest=None, revmapfile=None, **opts):
             shutil.rmtree(path, True)
         raise
 
-    sortmodes = ('branchsort', 'datesort', 'sourcesort')
+    sortmodes = ('branchsort', 'datesort', 'sourcesort', 'closesort')
     sortmode = [m for m in sortmodes if opts.get(m)]
     if len(sortmode) > 1:
         raise util.Abort(_('more than one sort mode specified'))
     sortmode = sortmode and sortmode[0] or defaultsort
     if sortmode == 'sourcesort' and not srcc.hasnativeorder():
         raise util.Abort(_('--sourcesort is not supported by this data source'))
+    if sortmode == 'closesort' and not srcc.hasnativeclose():
+        raise util.Abort(_('--closesort is not supported by this data source'))
 
     fmap = opts.get('filemap')
     if fmap:
@@ -396,7 +474,7 @@ def convert(ui, src, dest=None, revmapfile=None, **opts):
     if not revmapfile:
         try:
             revmapfile = destc.revmapfile()
-        except:
+        except Exception:
             revmapfile = os.path.join(destc, "map")
 
     c = converter(ui, srcc, destc, revmapfile, opts)

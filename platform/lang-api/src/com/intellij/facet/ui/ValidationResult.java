@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.intellij.facet.ui;
 
 import org.jetbrains.annotations.Nullable;
@@ -23,14 +22,15 @@ import org.jetbrains.annotations.Nullable;
  */
 public class ValidationResult {
   public static final ValidationResult OK = new ValidationResult(null, null);
-  private String myErrorMessage;
-  private FacetConfigurationQuickFix myQuickFix;
+
+  private final String myErrorMessage;
+  private final FacetConfigurationQuickFix myQuickFix;
 
   public ValidationResult(String errorMessage) {
     this(errorMessage, null);
   }
 
-  public ValidationResult(String errorMessage, final @Nullable FacetConfigurationQuickFix quickFix) {
+  public ValidationResult(String errorMessage, @Nullable FacetConfigurationQuickFix quickFix) {
     myErrorMessage = errorMessage;
     myQuickFix = quickFix;
   }

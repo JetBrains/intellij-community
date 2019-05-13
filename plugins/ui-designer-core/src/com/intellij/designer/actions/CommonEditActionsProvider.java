@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,8 @@ import com.intellij.designer.designSurface.DesignerEditorPanel;
 import com.intellij.designer.designSurface.EditableArea;
 import com.intellij.designer.designSurface.tools.ComponentPasteFactory;
 import com.intellij.designer.designSurface.tools.PasteTool;
+import com.intellij.designer.model.IComponentCopyProvider;
+import com.intellij.designer.model.IComponentDeletionParticipant;
 import com.intellij.designer.model.IGroupDeleteComponent;
 import com.intellij.designer.model.RadComponent;
 import com.intellij.ide.CopyProvider;
@@ -38,14 +40,16 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.datatransfer.DataFlavor;
-import java.awt.datatransfer.Transferable;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author Alexander Lobas
  */
 public class CommonEditActionsProvider implements DeleteProvider, CopyProvider, PasteProvider, CutProvider {
   private static final DataFlavor DATA_FLAVOR = FileCopyPasteUtil.createJvmDataFlavor(SerializedComponentData.class);
+
+  public static boolean isDeleting;
 
   private final DesignerEditorPanel myDesigner;
 
@@ -83,38 +87,72 @@ public class CommonEditActionsProvider implements DeleteProvider, CopyProvider, 
 
   @Override
   public void deleteElement(final @NotNull DataContext dataContext) {
-    myDesigner.getToolProvider().execute(new ThrowableRunnable<Exception>() {
-      @Override
-      public void run() throws Exception {
-        EditableArea area = getArea(dataContext);
-        List<RadComponent> selection = area.getSelection();
+    myDesigner.getToolProvider().execute(() -> {
+      EditableArea area = getArea(dataContext);
+      List<RadComponent> selection = area.getSelection();
 
-        if (selection.isEmpty()) {
-          return;
-        }
-
-        myDesigner.getToolProvider().loadDefaultTool();
-
-        List<RadComponent> components = RadComponent.getPureSelection(selection);
-
-        RadComponent newSelection = getNewSelection(components.get(0), selection);
-        if (newSelection == null) {
-          area.deselectAll();
-        }
-        else {
-          area.select(newSelection);
-        }
-
-        if (components.get(0) instanceof IGroupDeleteComponent) {
-          ((IGroupDeleteComponent)components.get(0)).delete(components);
-        }
-        else {
-          for (RadComponent component : components) {
-            component.delete();
-          }
-        }
+      if (selection.isEmpty()) {
+        return;
       }
+
+      myDesigner.getToolProvider().loadDefaultTool();
+      List<RadComponent> components = RadComponent.getPureSelection(selection);
+      updateSelectionBeforeDelete(area, components.get(0), selection);
+      handleDeletion(components);
     }, DesignerBundle.message("command.delete.selection"), true);
+  }
+
+  private static void handleDeletion(@NotNull List<RadComponent> components) throws Exception {
+    // Segment the deleted components into lists of siblings
+    Map<RadComponent, List<RadComponent>> siblingLists = RadComponent.groupSiblings(components);
+
+    // Notify parent components about children getting deleted
+    for (Map.Entry<RadComponent, List<RadComponent>> entry : siblingLists.entrySet()) {
+      RadComponent parent = entry.getKey();
+      List<RadComponent> children = entry.getValue();
+      boolean finished = false;
+      if (parent instanceof IComponentDeletionParticipant) {
+        IComponentDeletionParticipant handler = (IComponentDeletionParticipant)parent;
+        finished = handler.deleteChildren(parent, children);
+      }
+      else if (parent != null && /*check root*/
+               parent.getLayout() instanceof IComponentDeletionParticipant) {
+        IComponentDeletionParticipant handler = (IComponentDeletionParticipant)parent.getLayout();
+        finished = handler.deleteChildren(parent, children);
+      }
+
+      if (!finished) {
+        deleteComponents(children);
+      }
+    }
+  }
+
+  private static void deleteComponents(List<RadComponent> components) throws Exception {
+    if (components.get(0) instanceof IGroupDeleteComponent) {
+      ((IGroupDeleteComponent)components.get(0)).delete(components);
+    }
+    else {
+      for (RadComponent component : components) {
+        component.delete();
+      }
+    }
+  }
+
+  public static void updateSelectionBeforeDelete(EditableArea area, RadComponent component, List<RadComponent> excludes) {
+    try {
+      isDeleting = true;
+
+      RadComponent newSelection = getNewSelection(component, excludes);
+      if (newSelection == null) {
+        area.deselectAll();
+      }
+      else {
+        area.select(newSelection);
+      }
+    }
+    finally {
+      isDeleting = false;
+    }
   }
 
   @Nullable
@@ -148,7 +186,22 @@ public class CommonEditActionsProvider implements DeleteProvider, CopyProvider, 
 
   @Override
   public boolean isCopyEnabled(@NotNull DataContext dataContext) {
-    return !myDesigner.getInplaceEditingLayer().isEditing() && !getArea(dataContext).getSelection().isEmpty();
+    if (myDesigner.getInplaceEditingLayer().isEditing()) {
+      return false;
+    }
+
+    List<RadComponent> selection = getArea(dataContext).getSelection();
+    if (selection.isEmpty()) {
+      return false;
+    }
+
+    RadComponent rootComponent = myDesigner.getRootComponent();
+    if (rootComponent instanceof IComponentCopyProvider) {
+      IComponentCopyProvider copyProvider = (IComponentCopyProvider)rootComponent;
+      return copyProvider.isCopyEnabled(selection);
+    }
+
+    return true;
   }
 
   @Override
@@ -162,8 +215,16 @@ public class CommonEditActionsProvider implements DeleteProvider, CopyProvider, 
       root.setAttribute("target", myDesigner.getPlatformTarget());
 
       List<RadComponent> components = RadComponent.getPureSelection(getArea(dataContext).getSelection());
-      for (RadComponent component : components) {
-        component.copyTo(root);
+      RadComponent rootComponent = myDesigner.getRootComponent();
+
+      if (rootComponent instanceof IComponentCopyProvider) {
+        IComponentCopyProvider copyProvider = (IComponentCopyProvider)rootComponent;
+        copyProvider.copyTo(root, components);
+      }
+      else {
+        for (RadComponent component : components) {
+          component.copyTo(root);
+        }
       }
 
       SerializedComponentData data = new SerializedComponentData(new XMLOutputter().outputString(root));
@@ -195,17 +256,7 @@ public class CommonEditActionsProvider implements DeleteProvider, CopyProvider, 
   @Nullable
   private String getSerializedComponentData() {
     try {
-      CopyPasteManager copyPasteManager = CopyPasteManager.getInstance();
-      if (!copyPasteManager.isDataFlavorAvailable(DATA_FLAVOR)) {
-        return null;
-      }
-
-      Transferable content = copyPasteManager.getContents();
-      if (content == null) {
-        return null;
-      }
-
-      Object transferData = content.getTransferData(DATA_FLAVOR);
+      Object transferData = CopyPasteManager.getInstance().getContents(DATA_FLAVOR);
       if (transferData instanceof SerializedComponentData) {
         SerializedComponentData data = (SerializedComponentData)transferData;
         String xmlComponents = data.getSerializedComponents();
@@ -214,7 +265,8 @@ public class CommonEditActionsProvider implements DeleteProvider, CopyProvider, 
         }
       }
     }
-    catch (Throwable e) {
+    catch (Throwable ignored) {
+      // ignored
     }
 
     return null;

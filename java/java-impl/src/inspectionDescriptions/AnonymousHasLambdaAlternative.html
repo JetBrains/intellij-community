@@ -1,0 +1,12 @@
+<html>
+<body>
+Reports anonymous classes which could be transformed to constructor or factory method call accepting lambda expression.
+<p>The following classes are reported by this inspection:</p>
+<ul>
+  <li><b>ThreadLocal</b> anonymous classes having <b>initialValue()</b> method (could be replaced with <b>ThreadLocal.withInitial</b>)</li>
+  <li><b>Thread</b> anonymous classes having <b>run()</b> method (could be replaced with <b>new Thread(Runnable)</b></li>
+</ul>
+<!-- tooltip end -->
+<p><small>New in 2016.3</small></p>
+</body>
+</html>

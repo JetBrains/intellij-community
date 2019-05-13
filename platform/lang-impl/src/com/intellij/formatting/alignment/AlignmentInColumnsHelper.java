@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,7 @@
 package com.intellij.formatting.alignment;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.psi.tree.IElementType;
@@ -27,9 +27,9 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 
 /**
- * This class provides helper methods to use for <code>'align in columns'</code> processing.
+ * This class provides helper methods to use for {@code 'align in columns'} processing.
  * <p/>
- * <code>'Align in columns'</code> here means format the code like below:
+ * {@code 'Align in columns'} here means format the code like below:
  * <pre>
  *     class Test {
  *         private int    iii = 1;
@@ -43,7 +43,6 @@ import java.util.List;
  * Thread-safe.
  *
  * @author Denis Zhdanov
- * @since May 24, 2010 3:09:52 PM
  */
 public class AlignmentInColumnsHelper {
 
@@ -59,9 +58,8 @@ public class AlignmentInColumnsHelper {
    * @param node                         target node which alignment strategy is to be defined
    * @param config                       alignment config to use for processing
    * @param blankLinesToBeKeptOnReformat corresponding KEEP_LINE_IN_* formatting setting
-   * @return <code>true</code> if given node should be aligned to the previous one; <code>false</code> otherwise
+   * @return {@code true} if given node should be aligned to the previous one; {@code false} otherwise
    */
-  @SuppressWarnings({"MethodMayBeStatic"})
   public boolean useDifferentVarDeclarationAlignment(ASTNode node, AlignmentInColumnsConfig config, int blankLinesToBeKeptOnReformat) {
     ASTNode prev = getPreviousAdjacentNodeOfTargetType(node, config, blankLinesToBeKeptOnReformat);
     if (prev == null) {
@@ -141,9 +139,8 @@ public class AlignmentInColumnsHelper {
    * @param config                       current processing config
    * @param blankLinesToBeKeptOnReformat
    * @return previous node to the given base node that has that same type and is adjacent to it if possible;
-   *         <code>null</code> otherwise
+   *         {@code null} otherwise
    */
-  @SuppressWarnings({"StatementWithEmptyBody"})
   @Nullable
   private static ASTNode getPreviousAdjacentNodeOfTargetType(ASTNode baseNode,
                                                              AlignmentInColumnsConfig config,
@@ -169,7 +166,7 @@ public class AlignmentInColumnsHelper {
     if (prev[0] == null) return null;
 
     // ensure there are no non-whitespace, non-comment elements on the top level between baseNode and the found one
-    Pair<ASTNode, ASTNode> siblingParents = TreeUtil.findTopmostSiblingParents(prev[0], baseNode);
+    Couple<ASTNode> siblingParents = TreeUtil.findTopmostSiblingParents(prev[0], baseNode);
     if (siblingParents.first != null && siblingParents.second != null) {
       for (ASTNode each = siblingParents.second.getTreePrev(); each != null && each != siblingParents.first; each = each.getTreePrev()) {
         IElementType eachType = each.getElementType();
@@ -190,7 +187,7 @@ public class AlignmentInColumnsHelper {
    * @param targetTypes target node types
    * @return base node or its first descendant child that has
    *         {@link AlignmentInColumnsConfig#getTargetDeclarationTypes() target type} target type if the one if found;
-   *         <code>null</code> otherwise
+   *         {@code null} otherwise
    */
   @Nullable
   private static ASTNode deriveNodeOfTargetType(ASTNode baseNode, TokenSet targetTypes) {
@@ -230,11 +227,11 @@ public class AlignmentInColumnsHelper {
    *                 |      |
    *                n31    n32
    * </pre>
-   * Let's assume that target node is <code>'n32'</code>. 'n31' is assumed to be returned from this method then.
+   * Let's assume that target node is {@code 'n32'}. 'n31' is assumed to be returned from this method then.
    * <p/>
    * <b>Note:</b> current method avoids going too deep if found node type is the same as start node type
    *
-   * @return direct or indirect previous node of the given one having target type if possible; <code>null</code> otherwise
+   * @return direct or indirect previous node of the given one having target type if possible; {@code null} otherwise
    */
   private static boolean findPreviousNode(AlignmentInColumnsConfig config,
                                           ASTNode from,
@@ -274,7 +271,6 @@ public class AlignmentInColumnsHelper {
     }
   }
 
-  @SuppressWarnings({"StatementWithEmptyBody"})
   @Nullable
   private static ASTNode getSubNodeThatStartsNewLine(@Nullable ASTNode startNode, AlignmentInColumnsConfig config) {
     if (startNode == null) {
@@ -329,7 +325,7 @@ public class AlignmentInColumnsHelper {
   }
 
   private static List<IElementType> findSubNodeTypes(ASTNode node, TokenSet types) {
-    List<IElementType> foundTypes = new SmartList<IElementType>();
+    List<IElementType> foundTypes = new SmartList<>();
     for (ASTNode child = node.getFirstChildNode(); child != null && child.getTreeParent() == node; child = child.getTreeNext()) {
       IElementType type = child.getElementType();
       if (types.contains(type)) {

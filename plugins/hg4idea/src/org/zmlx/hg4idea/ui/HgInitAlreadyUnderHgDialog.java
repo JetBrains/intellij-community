@@ -32,8 +32,8 @@ public class HgInitAlreadyUnderHgDialog extends DialogWrapper {
   private JRadioButton myCreateNewRepoButton;
   private JRadioButton myUseParentRepoButton;
   private TitlePanel myTitlePanel;
-  private String myParentRoot;
-  private String mySelectedRoot;
+  private final String myParentRoot;
+  private final String mySelectedRoot;
 
   public enum Answer {
     USE_PARENT_REPO,

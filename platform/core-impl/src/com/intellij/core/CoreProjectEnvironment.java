@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.core;
 
 import com.intellij.mock.MockDumbService;
@@ -26,18 +12,22 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.roots.FileIndexFacade;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFileFactory;
 import com.intellij.psi.PsiManager;
+import com.intellij.psi.SmartPointerManager;
 import com.intellij.psi.impl.*;
 import com.intellij.psi.impl.file.PsiDirectoryFactory;
 import com.intellij.psi.impl.file.PsiDirectoryFactoryImpl;
-import com.intellij.psi.impl.file.impl.FileManagerImpl;
+import com.intellij.psi.impl.smartPointers.SmartPointerManagerImpl;
 import com.intellij.psi.impl.source.resolve.ResolveCache;
 import com.intellij.psi.search.ProjectScopeBuilder;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.util.CachedValuesManagerImpl;
-import com.intellij.util.messages.impl.MessageBusImpl;
+import com.intellij.util.messages.MessageBus;
+import org.jetbrains.annotations.NotNull;
+import org.picocontainer.PicoContainer;
 
 public class CoreProjectEnvironment {
   private final Disposable myParentDisposable;
@@ -46,27 +36,29 @@ public class CoreProjectEnvironment {
   protected final FileIndexFacade myFileIndexFacade;
   protected final PsiManagerImpl myPsiManager;
   protected final MockProject myProject;
-  protected final MessageBusImpl myMessageBus;
+  protected final MessageBus myMessageBus;
 
-  public CoreProjectEnvironment(Disposable parentDisposable, CoreApplicationEnvironment applicationEnvironment) {
+  public CoreProjectEnvironment(@NotNull Disposable parentDisposable, @NotNull CoreApplicationEnvironment applicationEnvironment) {
     myParentDisposable = parentDisposable;
     myEnvironment = applicationEnvironment;
-    myProject = new MockProject(myEnvironment.getApplication().getPicoContainer(), myParentDisposable);
+    myProject = createProject(myEnvironment.getApplication().getPicoContainer(), myParentDisposable);
 
     preregisterServices();
 
     myFileIndexFacade = createFileIndexFacade();
-    myMessageBus = new MessageBusImpl();
+    myMessageBus = myProject.getMessageBus();
 
     PsiModificationTrackerImpl modificationTracker = new PsiModificationTrackerImpl(myProject);
     myProject.registerService(PsiModificationTracker.class, modificationTracker);
     myProject.registerService(FileIndexFacade.class, myFileIndexFacade);
     myProject.registerService(ResolveCache.class, new ResolveCache(myMessageBus));
 
-    registerProjectExtensionPoint(PsiTreeChangePreprocessor.EP_NAME, PsiTreeChangePreprocessor.class);
     myPsiManager = new PsiManagerImpl(myProject, null, null, myFileIndexFacade, myMessageBus, modificationTracker);
-    ((FileManagerImpl) myPsiManager.getFileManager()).markInitialized();
     registerProjectComponent(PsiManager.class, myPsiManager);
+    myProject.registerService(SmartPointerManager.class, SmartPointerManagerImpl.class);
+    registerProjectComponent(PsiDocumentManager.class, new CorePsiDocumentManager(myProject, myPsiManager,
+                                                                                  myMessageBus,
+                                                                                  new MockDocumentCommitProcessor()));
 
     myProject.registerService(ResolveScopeManager.class, createResolveScopeManager(myPsiManager));
 
@@ -75,8 +67,15 @@ public class CoreProjectEnvironment {
     myProject.registerService(PsiDirectoryFactory.class, new PsiDirectoryFactoryImpl(myPsiManager));
     myProject.registerService(ProjectScopeBuilder.class, createProjectScopeBuilder());
     myProject.registerService(DumbService.class, new MockDumbService(myProject));
+    myProject.registerService(CoreEncodingProjectManager.class, CoreEncodingProjectManager.class);
   }
 
+  @NotNull
+  protected MockProject createProject(@NotNull PicoContainer parent, @NotNull Disposable parentDisposable) {
+    return new MockProject(parent, parentDisposable);
+  }
+
+  @NotNull
   protected ProjectScopeBuilder createProjectScopeBuilder() {
     return new CoreProjectScopeBuilder(myProject, myFileIndexFacade);
   }
@@ -85,20 +84,22 @@ public class CoreProjectEnvironment {
 
   }
 
+  @NotNull
   protected FileIndexFacade createFileIndexFacade() {
     return new MockFileIndexFacade(myProject);
   }
 
-  protected ResolveScopeManager createResolveScopeManager(PsiManager psiManager) {
-    return new MockResolveScopeManager(myProject);
+  @NotNull
+  protected ResolveScopeManager createResolveScopeManager(@NotNull PsiManager psiManager) {
+    return new MockResolveScopeManager(psiManager.getProject());
   }
 
-  public <T> void registerProjectExtensionPoint(final ExtensionPointName<T> extensionPointName,
-                                                final Class<? extends T> aClass) {
+  public <T> void registerProjectExtensionPoint(@NotNull ExtensionPointName<T> extensionPointName,
+                                                @NotNull Class<? extends T> aClass) {
     CoreApplicationEnvironment.registerExtensionPoint(Extensions.getArea(myProject), extensionPointName, aClass);
   }
 
-  public <T> void addProjectExtension(final ExtensionPointName<T> name, final T extension) {
+  public <T> void addProjectExtension(@NotNull ExtensionPointName<T> name, @NotNull final T extension) {
     final ExtensionPoint<T> extensionPoint = Extensions.getArea(myProject).getExtensionPoint(name);
     extensionPoint.registerExtension(extension);
     Disposer.register(myParentDisposable, new Disposable() {
@@ -110,18 +111,24 @@ public class CoreProjectEnvironment {
   }
 
 
-  public <T> void registerProjectComponent(final Class<T> interfaceClass, final T implementation) {
+  public <T> void registerProjectComponent(@NotNull Class<T> interfaceClass, @NotNull T implementation) {
     CoreApplicationEnvironment.registerComponentInstance(myProject.getPicoContainer(), interfaceClass, implementation);
+    if (implementation instanceof Disposable) {
+      Disposer.register(myProject, (Disposable) implementation);
+    }
   }
 
+  @NotNull
   public Disposable getParentDisposable() {
     return myParentDisposable;
   }
 
+  @NotNull
   public CoreApplicationEnvironment getEnvironment() {
     return myEnvironment;
   }
 
+  @NotNull
   public MockProject getProject() {
     return myProject;
   }

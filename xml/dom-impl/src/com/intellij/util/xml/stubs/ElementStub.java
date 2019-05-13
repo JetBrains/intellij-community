@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,22 +26,36 @@ import java.util.List;
 
 /**
  * @author Dmitry Avdeev
- *         Date: 8/2/12
  */
 public class ElementStub extends DomStub {
 
-  private final List<DomStub> myChildren = new SmartList<DomStub>();
+  private final List<DomStub> myChildren = new SmartList<>();
+  private final int myIndex;
   private final boolean myCustom;
 
-  public ElementStub(@Nullable ElementStub parent, @NotNull StringRef name, @Nullable StringRef namespace, boolean custom) {
+  @Nullable
+  private final StringRef myElementClass;
+  private final String myValue;
+
+  public ElementStub(@Nullable ElementStub parent,
+                     @NotNull StringRef name,
+                     @Nullable StringRef namespace,
+                     int index,
+                     boolean custom,
+                     @Nullable StringRef elementClass,
+                     @NotNull String value) {
     super(parent, name, namespace);
+    myIndex = index;
     myCustom = custom;
+    myElementClass = elementClass;
+    myValue = value;
   }
 
   void addChild(DomStub child) {
     myChildren.add(child);
   }
 
+  @NotNull
   @Override
   public List<DomStub> getChildrenStubs() {
     return myChildren;
@@ -55,16 +69,27 @@ public class ElementStub extends DomStub {
   @Override
   public String toString() {
     String key = getNamespaceKey();
-    return StringUtil.isEmpty(key) ? getName() : key + ":" + getName();
+    return (StringUtil.isEmpty(key) ? getName() : key + ":" + getName()) +
+           (StringUtil.isEmpty(getValue()) ? "" : ":" + getValue());
   }
 
   @Override
-  public boolean equals(Object obj) {
-    if (obj == this) return true;
-    return obj instanceof ElementStub && id == ((ElementStub)obj).id && myLocalName.equals(((ElementStub)obj).myLocalName);
-  }
-
   public boolean isCustom() {
     return myCustom;
+  }
+
+  @Override
+  public int getIndex() {
+    return myIndex;
+  }
+
+  @Nullable
+  String getElementClass() {
+    return myElementClass == null ? null : myElementClass.getString();
+  }
+
+  @NotNull
+  public String getValue() {
+    return myValue;
   }
 }

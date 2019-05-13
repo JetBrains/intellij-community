@@ -27,7 +27,7 @@ import java.awt.event.MouseEvent;
  * @author Alexander Lobas
  */
 public abstract class AbstractCreationTool extends TargetingTool {
-  private boolean myCanUnload;
+  private final boolean myCanUnload;
 
   protected AbstractCreationTool(boolean canUnload) {
     myCanUnload = canUnload;
@@ -131,8 +131,14 @@ public abstract class AbstractCreationTool extends TargetingTool {
 
   @Override
   public void keyPressed(KeyEvent event, EditableArea area) throws Exception {
+    super.keyPressed(event, area);
+
     if (event.getKeyCode() == KeyEvent.VK_ESCAPE) {
       myToolProvider.loadDefaultTool();
     }
+  }
+
+  @Override
+  protected void handleKeyEvent() {
   }
 }

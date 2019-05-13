@@ -1,57 +1,45 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.actions;
 
 import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.DebuggerManagerEx;
 import com.intellij.debugger.InstanceFilter;
 import com.intellij.debugger.SourcePosition;
-import com.intellij.debugger.engine.requests.RequestManagerImpl;
+import com.intellij.debugger.engine.DebugProcessImpl;
+import com.intellij.debugger.engine.DebuggerUtils;
+import com.intellij.debugger.engine.SourcePositionProvider;
+import com.intellij.debugger.engine.SuspendContextImpl;
+import com.intellij.debugger.engine.events.DebuggerContextCommandImpl;
+import com.intellij.debugger.impl.DebuggerContextImpl;
 import com.intellij.debugger.impl.DebuggerSession;
-import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.ui.breakpoints.Breakpoint;
 import com.intellij.debugger.ui.breakpoints.BreakpointManager;
 import com.intellij.debugger.ui.breakpoints.FieldBreakpoint;
-import com.intellij.debugger.ui.impl.watch.DebuggerTree;
-import com.intellij.debugger.ui.impl.watch.DebuggerTreeNodeImpl;
-import com.intellij.debugger.ui.impl.watch.FieldDescriptorImpl;
+import com.intellij.debugger.ui.impl.watch.*;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.xdebugger.frame.XValue;
+import com.intellij.xdebugger.impl.ui.tree.actions.XDebuggerTreeActionBase;
 import com.sun.jdi.Field;
 import com.sun.jdi.ObjectReference;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * User: lex
- * Date: Sep 4, 2003
- * Time: 8:59:30 PM
- */
 public class ToggleFieldBreakpointAction extends AnAction {
 
-  public void actionPerformed(AnActionEvent e) {
-    Project project = e.getData(PlatformDataKeys.PROJECT);
+  @Override
+  public void actionPerformed(@NotNull AnActionEvent e) {
+    Project project = e.getData(CommonDataKeys.PROJECT);
     if (project == null) {
       return;
     }
@@ -73,17 +61,16 @@ public class ToggleFieldBreakpointAction extends AnAction {
               if (selectedNode != null && selectedNode.getDescriptor() instanceof FieldDescriptorImpl) {
                 ObjectReference object = ((FieldDescriptorImpl)selectedNode.getDescriptor()).getObject();
                 if(object != null) {
-                  long id = object.uniqueID();
-                  InstanceFilter[] instanceFilters = new InstanceFilter[] { InstanceFilter.create(Long.toString(id))};
-                  fieldBreakpoint.setInstanceFilters(instanceFilters);
-                  fieldBreakpoint.INSTANCE_FILTERS_ENABLED = true;
+                  fieldBreakpoint.setInstanceFilters(new InstanceFilter[] { InstanceFilter.create(object.uniqueID())});
+                  fieldBreakpoint.setInstanceFiltersEnabled(true);
                 }
               }
             }
 
-            RequestManagerImpl.createRequests(fieldBreakpoint);
-
-            manager.editBreakpoint(fieldBreakpoint, PlatformDataKeys.EDITOR.getData(e.getDataContext()));
+            final Editor editor = CommonDataKeys.EDITOR.getData(e.getDataContext());
+            if (editor != null) {
+              manager.editBreakpoint(fieldBreakpoint, editor);
+            }
           }
         }
         else {
@@ -93,7 +80,8 @@ public class ToggleFieldBreakpointAction extends AnAction {
     }
   }
 
-  public void update(AnActionEvent event){
+  @Override
+  public void update(@NotNull AnActionEvent event){
     SourcePosition place = getPlace(event);
     boolean toEnable = place != null;
 
@@ -105,7 +93,7 @@ public class ToggleFieldBreakpointAction extends AnAction {
     }
     else if(DebuggerAction.isContextView(event)) {
       presentation.setText(DebuggerBundle.message("action.add.field.watchpoint.text"));
-      Project project = event.getData(PlatformDataKeys.PROJECT);
+      Project project = event.getData(CommonDataKeys.PROJECT);
       if(project != null && place != null) {
         Document document = PsiDocumentManager.getInstance(project).getDocument(place.getFile());
         if (document != null) {
@@ -125,24 +113,46 @@ public class ToggleFieldBreakpointAction extends AnAction {
   @Nullable
   public static SourcePosition getPlace(AnActionEvent event) {
     final DataContext dataContext = event.getDataContext();
-    Project project = event.getData(PlatformDataKeys.PROJECT);
+    final Project project = event.getData(CommonDataKeys.PROJECT);
     if(project == null) {
       return null;
     }
     if (ActionPlaces.PROJECT_VIEW_POPUP.equals(event.getPlace()) ||
         ActionPlaces.STRUCTURE_VIEW_POPUP.equals(event.getPlace()) ||
         ActionPlaces.FAVORITES_VIEW_POPUP.equals(event.getPlace())) {
-      final PsiElement psiElement = event.getData(LangDataKeys.PSI_ELEMENT);
+      final PsiElement psiElement = event.getData(CommonDataKeys.PSI_ELEMENT);
       if(psiElement instanceof PsiField) {
         return SourcePosition.createFromElement(psiElement);
       }
       return null;
     }
 
-    final DebuggerTreeNodeImpl selectedNode = DebuggerAction.getSelectedNode(dataContext);
-    if(selectedNode != null && selectedNode.getDescriptor() instanceof FieldDescriptorImpl) {
-      FieldDescriptorImpl descriptor = (FieldDescriptorImpl)selectedNode.getDescriptor();
-      return descriptor.getSourcePosition(project, DebuggerAction.getDebuggerContext(dataContext));
+    XValue value = XDebuggerTreeActionBase.getSelectedValue(dataContext);
+    if (value instanceof NodeDescriptorProvider) {
+      NodeDescriptorImpl descriptor = ((NodeDescriptorProvider)value).getDescriptor();
+      if (descriptor instanceof FieldDescriptorImpl) {
+        final DebuggerContextImpl debuggerContext = DebuggerAction.getDebuggerContext(dataContext);
+        final DebugProcessImpl debugProcess = debuggerContext.getDebugProcess();
+        if (debugProcess != null) { // if there is an active debug session
+          final Ref<SourcePosition> positionRef = new Ref<>(null);
+          debugProcess.getManagerThread().invokeAndWait(new DebuggerContextCommandImpl(debuggerContext) {
+            @Override
+            public Priority getPriority() {
+              return Priority.HIGH;
+            }
+
+            @Override
+            public void threadAction(@NotNull SuspendContextImpl suspendContext) {
+              ApplicationManager.getApplication().runReadAction(
+                () -> positionRef.set(SourcePositionProvider.getSourcePosition(descriptor, project, debuggerContext)));
+            }
+          });
+          final SourcePosition sourcePosition = positionRef.get();
+          if (sourcePosition != null) {
+            return sourcePosition;
+          }
+        }
+      }
     }
 
     if(DebuggerAction.isContextView(event)) {
@@ -152,7 +162,7 @@ public class ToggleFieldBreakpointAction extends AnAction {
         if(node != null && node.getDescriptor() instanceof FieldDescriptorImpl) {
           Field field = ((FieldDescriptorImpl)node.getDescriptor()).getField();
           DebuggerSession session = tree.getDebuggerContext().getDebuggerSession();
-          PsiClass psiClass = DebuggerUtilsEx.findClass(field.declaringType().name(), project, (session != null) ? session.getSearchScope(): GlobalSearchScope.allScope(project));
+          PsiClass psiClass = DebuggerUtils.findClass(field.declaringType().name(), project, (session != null) ? session.getSearchScope() : GlobalSearchScope.allScope(project));
           if(psiClass != null) {
             psiClass = (PsiClass) psiClass.getNavigationElement();
             final PsiField psiField = psiClass.findFieldByName(field.name(), true);
@@ -165,7 +175,7 @@ public class ToggleFieldBreakpointAction extends AnAction {
       return null;
     }
 
-    Editor editor = event.getData(PlatformDataKeys.EDITOR);
+    Editor editor = event.getData(CommonDataKeys.EDITOR);
     if(editor == null) {
       editor = FileEditorManager.getInstance(project).getSelectedTextEditor();
     }
@@ -173,7 +183,6 @@ public class ToggleFieldBreakpointAction extends AnAction {
       final Document document = editor.getDocument();
       PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(document);
       if (file != null) {
-        FileTypeManager fileTypeManager = FileTypeManager.getInstance();
         final VirtualFile virtualFile = file.getVirtualFile();
         FileType fileType = virtualFile != null ? virtualFile.getFileType() : null;
         if (StdFileTypes.JAVA == fileType || StdFileTypes.CLASS  == fileType) {

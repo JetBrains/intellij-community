@@ -42,6 +42,7 @@ public class WeightBasedComparator implements Comparator<NodeDescriptor> {
     myCompareToString = compareToString;
   }
 
+  @Override
   public int compare(NodeDescriptor o1, NodeDescriptor o2) {
     final int w1 = getWeight(o1);
     final int w2 = getWeight(o2);
@@ -62,6 +63,6 @@ public class WeightBasedComparator implements Comparator<NodeDescriptor> {
   }
 
   protected static int compareToString(final NodeDescriptor first, final NodeDescriptor second) {
-    return StringUtil.compare(first.toString(), second.toString(), true);
+    return StringUtil.naturalCompare(first.toString(), second.toString());
   }
 }

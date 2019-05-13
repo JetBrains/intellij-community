@@ -17,6 +17,7 @@ package org.jetbrains.idea.maven.navigator;
 
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.idea.maven.MavenImportingTestCase;
+import org.jetbrains.idea.maven.model.MavenExplicitProfiles;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -38,7 +39,14 @@ public class MavenProjectsNavigatorTest extends MavenImportingTestCase {
     myStructure = myNavigator.getStructureForTests();
   }
 
-  public void testActivation() throws Exception {
+  @Override
+  protected void tearDown() throws Exception {
+    myNavigator = null;
+    myStructure = null;
+    super.tearDown();
+  }
+
+  public void testActivation() {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +
@@ -50,7 +58,7 @@ public class MavenProjectsNavigatorTest extends MavenImportingTestCase {
     createModulePom("m", "<groupId>test</groupId>" +
                          "<artifactId>m</artifactId>" +
                          "<version>1</version>");
-    myProjectsManager.resetManagedFilesAndProfilesInTests(Collections.singletonList(myProjectPom), Collections.<String>emptyList());
+    myProjectsManager.resetManagedFilesAndProfilesInTests(Collections.singletonList(myProjectPom), MavenExplicitProfiles.NONE);
     waitForReadingCompletion();
 
     myProjectsManager.fireActivatedInTests();
@@ -58,7 +66,7 @@ public class MavenProjectsNavigatorTest extends MavenImportingTestCase {
     assertEquals(1, getRootNodes().get(0).getModulesNode().getProjectNodesInTests().size());
   }
 
-  public void testReconnectingModulesWhenModuleRead() throws Exception {
+  public void testReconnectingModulesWhenModuleRead() {
     myProjectsManager.fireActivatedInTests();
 
     createProjectPom("<groupId>test</groupId>" +
@@ -85,7 +93,7 @@ public class MavenProjectsNavigatorTest extends MavenImportingTestCase {
     assertEquals(m, getRootNodes().get(0).getModulesNode().getProjectNodesInTests().get(0).getVirtualFile());
   }
 
-  public void testReconnectingModulesWhenParentRead() throws Exception {
+  public void testReconnectingModulesWhenParentRead() {
     myProjectsManager.fireActivatedInTests();
 
     VirtualFile m = createModulePom("m", "<groupId>test</groupId>" +
@@ -111,7 +119,7 @@ public class MavenProjectsNavigatorTest extends MavenImportingTestCase {
     assertEquals(m, getRootNodes().get(0).getModulesNode().getProjectNodesInTests().get(0).getVirtualFile());
   }
 
-  public void testReconnectingModulesWhenProjectBecomesParent() throws Exception {
+  public void testReconnectingModulesWhenProjectBecomesParent() {
     myProjectsManager.fireActivatedInTests();
 
     createProjectPom("<groupId>test</groupId>" +
@@ -140,7 +148,7 @@ public class MavenProjectsNavigatorTest extends MavenImportingTestCase {
     assertEquals(m, getRootNodes().get(0).getModulesNode().getProjectNodesInTests().get(0).getVirtualFile());
   }
 
-  public void testUpdatingWhenManagedFilesChange() throws Exception {
+  public void testUpdatingWhenManagedFilesChange() {
     myProjectsManager.fireActivatedInTests();
 
     createProjectPom("<groupId>test</groupId>" +
@@ -154,7 +162,7 @@ public class MavenProjectsNavigatorTest extends MavenImportingTestCase {
     assertEquals(0, getRootNodes().size());
   }
 
-  public void testGroupModulesAndGroupNot() throws Exception {
+  public void testGroupModulesAndGroupNot() {
     myProjectsManager.fireActivatedInTests();
 
     myNavigator.setGroupModules(true);
@@ -192,7 +200,7 @@ public class MavenProjectsNavigatorTest extends MavenImportingTestCase {
     assertEquals(1, getRootNodes().get(0).getModulesNode().getProjectNodesInTests().get(0).getModulesNode().getProjectNodesInTests().size());
   }
 
-  public void testIgnoringProjects() throws Exception {
+  public void testIgnoringProjects() {
     myProjectsManager.fireActivatedInTests();
 
     createProjectPom("<groupId>test</groupId>" +
@@ -219,7 +227,7 @@ public class MavenProjectsNavigatorTest extends MavenImportingTestCase {
     assertEquals(0, getRootNodes().get(0).getModulesNode().getChildren().length);
   }
 
-  public void testIgnoringParentProjectWhenNeedNoReconnectModule() throws Exception {
+  public void testIgnoringParentProjectWhenNeedNoReconnectModule() {
     myProjectsManager.fireActivatedInTests();
 
     createProjectPom("<groupId>test</groupId>" +
@@ -252,7 +260,7 @@ public class MavenProjectsNavigatorTest extends MavenImportingTestCase {
     assertEquals(0, projectNode.getModulesNode().getProjectNodesInTests().size());
   }
 
-  public void testReorderingProjectsWhenNameChanges() throws Exception {
+  public void testReorderingProjectsWhenNameChanges() {
     myProjectsManager.fireActivatedInTests();
 
     VirtualFile m1 = createModulePom("m1", "<groupId>test</groupId>" +
@@ -278,7 +286,7 @@ public class MavenProjectsNavigatorTest extends MavenImportingTestCase {
     assertEquals(m1, getRootNodes().get(1).getVirtualFile());
   }
 
-  public void testReloadingState() throws Exception {
+  public void testReloadingState() {
     myProjectsManager.fireActivatedInTests();
 
     createProjectPom("<groupId>test</groupId>" +
@@ -304,7 +312,7 @@ public class MavenProjectsNavigatorTest extends MavenImportingTestCase {
     assertEquals(2, getRootNodes().size());
   }
 
-  public void testNavigatableForProjectNode() throws Exception {
+  public void testNavigatableForProjectNode() {
     myProjectsManager.fireActivatedInTests();
 
     createProjectPom("<groupId>test</groupId>" +

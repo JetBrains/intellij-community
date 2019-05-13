@@ -19,6 +19,7 @@ import com.intellij.facet.frameworks.LibrariesDownloadAssistant;
 import com.intellij.facet.frameworks.beans.Artifact;
 import com.intellij.facet.frameworks.beans.ArtifactItem;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.download.DownloadableFileDescription;
 import com.intellij.util.download.DownloadableFileSetDescription;
@@ -36,12 +37,8 @@ import java.util.List;
  * @author nik
  */
 public abstract class FileSetVersionsFetcherBase<FS extends DownloadableFileSetDescription, F extends DownloadableFileDescription> implements DownloadableFileSetVersions<FS> {
-  private static final Comparator<DownloadableFileSetDescription> VERSIONS_COMPARATOR = new Comparator<DownloadableFileSetDescription>() {
-    @Override
-    public int compare(DownloadableFileSetDescription o1, DownloadableFileSetDescription o2) {
-      return -StringUtil.compareVersionNumbers(o1.getVersionString(), o2.getVersionString());
-    }
-  };
+  private static final Comparator<DownloadableFileSetDescription> VERSIONS_COMPARATOR =
+    (o1, o2) -> -StringUtil.compareVersionNumbers(o1.getVersionString(), o2.getVersionString());
   protected final String myGroupId;
   private final URL[] myLocalUrls;
 
@@ -52,40 +49,42 @@ public abstract class FileSetVersionsFetcherBase<FS extends DownloadableFileSetD
 
   @Override
   public void fetchVersions(@NotNull final FileSetVersionsCallback<FS> callback) {
-    ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
-      @Override
-      public void run() {
-        final Artifact[] versions;
-        if (myGroupId != null) {
-          versions = LibrariesDownloadAssistant.getVersions(myGroupId, myLocalUrls);
-        }
-        else {
-          versions = LibrariesDownloadAssistant.getVersions(myLocalUrls);
-        }
-        final List<FS> result = new ArrayList<FS>();
-        for (Artifact version : versions) {
-          final ArtifactItem[] items = version.getItems();
-          final List<F> files = new ArrayList<F>();
-          for (ArtifactItem item : items) {
-            String url = item.getUrl();
-            final String prefix = version.getUrlPrefix();
-            if (url == null) {
-              if (prefix != null) {
-                url = prefix + item.getName();
-              }
-            } else {
-              url = prependPrefix(url, prefix);
-            }
-            assert url != null;
+    ApplicationManager.getApplication().executeOnPooledThread(() -> callback.onSuccess(fetchVersions()));
+  }
 
-            files.add(createFileDescription(item, url, prefix));
+  @NotNull
+  @Override
+  public List<FS> fetchVersions() {
+    ApplicationManagerEx.getApplicationEx().assertTimeConsuming();
+    final Artifact[] versions;
+    if (myGroupId != null) {
+      versions = LibrariesDownloadAssistant.getVersions(myGroupId, myLocalUrls);
+    }
+    else {
+      versions = LibrariesDownloadAssistant.getVersions(myLocalUrls);
+    }
+    final List<FS> result = new ArrayList<>();
+    for (Artifact version : versions) {
+      final ArtifactItem[] items = version.getItems();
+      final List<F> files = new ArrayList<>();
+      for (ArtifactItem item : items) {
+        String url = item.getUrl();
+        final String prefix = version.getUrlPrefix();
+        if (url == null) {
+          if (prefix != null) {
+            url = prefix + item.getName();
           }
-          result.add(createVersion(version, files));
+        } else {
+          url = prependPrefix(url, prefix);
         }
-        Collections.sort(result, VERSIONS_COMPARATOR);
-        callback.onSuccess(result);
+        assert url != null;
+
+        files.add(createFileDescription(item, url, prefix));
       }
-    });
+      result.add(createVersion(version, files));
+    }
+    Collections.sort(result, VERSIONS_COMPARATOR);
+    return result;
   }
 
   @NotNull

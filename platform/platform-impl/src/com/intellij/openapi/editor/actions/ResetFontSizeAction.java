@@ -23,10 +23,10 @@ import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.ex.EditorEx;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Denis Zhdanov
- * @since 10/23/12 4:52 PM
  */
 public class ResetFontSizeAction extends EditorAction {
 
@@ -36,12 +36,12 @@ public class ResetFontSizeAction extends EditorAction {
   
   private static class MyHandler extends EditorActionHandler {
     @Override
-    public void execute(Editor editor, DataContext dataContext) {
+    public void execute(@NotNull Editor editor, DataContext dataContext) {
       if (!(editor instanceof EditorEx)) {
         return;
       }
       EditorColorsScheme globalScheme = EditorColorsManager.getInstance().getGlobalScheme();
-      int fontSize = editor.getUserData(ConsoleViewUtil.EDITOR_IS_CONSOLE_VIEW) == Boolean.TRUE
+      int fontSize = ConsoleViewUtil.isConsoleViewEditor(editor)
                      ? globalScheme.getConsoleFontSize() : globalScheme.getEditorFontSize();
       EditorEx editorEx = (EditorEx)editor;
       editorEx.setFontSize(fontSize);

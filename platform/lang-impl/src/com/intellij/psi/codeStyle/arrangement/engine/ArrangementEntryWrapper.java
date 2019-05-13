@@ -40,11 +40,10 @@ import java.util.List;
  * Not thread-safe.
  *
  * @author Denis Zhdanov
- * @since 8/31/12 12:06 PM
  */
 public class ArrangementEntryWrapper<E extends ArrangementEntry> {
 
-  @NotNull private final List<ArrangementEntryWrapper<E>> myChildren = new ArrayList<ArrangementEntryWrapper<E>>();
+  @NotNull private final List<ArrangementEntryWrapper<E>> myChildren = new ArrayList<>();
   @NotNull private final E myEntry;
 
   @Nullable private ArrangementEntryWrapper<E> myParent;
@@ -62,7 +61,7 @@ public class ArrangementEntryWrapper<E extends ArrangementEntry> {
     myEndOffset = entry.getEndOffset();
     ArrangementEntryWrapper<E> previous = null;
     for (ArrangementEntry child : entry.getChildren()) {
-      ArrangementEntryWrapper<E> childWrapper = new ArrangementEntryWrapper<E>((E)child);
+      ArrangementEntryWrapper<E> childWrapper = new ArrangementEntryWrapper<>((E)child);
       childWrapper.setParent(this);
       if (previous != null) {
         previous.setNext(childWrapper);
@@ -119,25 +118,17 @@ public class ArrangementEntryWrapper<E extends ArrangementEntry> {
 
   @SuppressWarnings("AssignmentToForLoopParameter")
   public void updateBlankLines(@NotNull Document document) {
-    int startLine = document.getLineNumber(getStartOffset());
     myBlankLinesBefore = 0;
-    if (startLine <= 0) {
-      return;
-    }
-    
+    int lineFeeds = 0;
     CharSequence text = document.getCharsSequence();
-    int lastLineFeed = document.getLineStartOffset(startLine) - 1;
-    for (int i = lastLineFeed - 1; i >= 0; i--) {
-      i = CharArrayUtil.shiftBackward(text, i, " \t");
-      if (text.charAt(i) == '\n') {
-        ++myBlankLinesBefore;
-      }
-      else {
-        break;
-      }
+    for (int current = getStartOffset() - 1; current >= 0; current--) {
+      current = CharArrayUtil.shiftBackward(text, current, " \t");
+      if (current > 0 && text.charAt(current) == '\n') lineFeeds++;
+      else break;
     }
+    if (lineFeeds > 0) myBlankLinesBefore = lineFeeds - 1;
   }
-  
+
   public void setNext(@Nullable ArrangementEntryWrapper<E> next) {
     myNext = next;
   }

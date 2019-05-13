@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,38 +15,49 @@
  */
 package org.jetbrains.plugins.groovy.lang.surroundWith
 
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
 import com.intellij.codeInsight.generation.surroundWith.SurroundWithHandler
 import com.intellij.openapi.actionSystem.Separator
 import com.intellij.openapi.application.WriteAction
+import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
 
 /**
  * @author peter
  */
 class SurrounderOrderTest extends LightCodeInsightFixtureTestCase {
 
-  public void testStatementSurrounders() {
+  void testStatementSurrounders() {
     def names = getSurrounders("<selection>println a</selection>")
     assertOrderedEquals names,
-                        "if", "if / else", "while",
+                        "if", "if / else",
+                        "while",
                         "{ -> ... }.call()",
-                        "for", "try / catch", "try / finally", "try / catch / finally",
+                        "{}",
+                        "for", "try / catch",
+                        "try / finally",
+                        "try / catch / finally",
                         "shouldFail () {...}",
-                        "(expr)", "((Type) expr)",
-                        "with () {...}"
+                        "(expr)",
+                        "!(expr)",
+                        "((Type) expr)",
+                        "with () {...}",
+                        "<editor-fold...> Comments",
+                        "region...endregion Comments"
   }
 
-  public void testStatementWithSemicolon() throws Exception {
+  void testStatementWithSemicolon() throws Exception {
     def names = getSurrounders("<selection>println a;</selection>")
     assertOrderedEquals names,
                         "if", "if / else", "while",
                         "{ -> ... }.call()",
+                        "{}",
                         "for", "try / catch", "try / finally", "try / catch / finally",
                         "shouldFail () {...}",
-                        "with () {...}"
+                        "with () {...}",
+                        "<editor-fold...> Comments",
+                        "region...endregion Comments"
   }
 
-  public void testStatementsWithComments() throws Exception {
+  void testStatementsWithComments() throws Exception {
     def names = getSurrounders("""<selection>println a; //a is very important
 println b
 println c /*also important */
@@ -54,34 +65,46 @@ println c /*also important */
     assertOrderedEquals names,
                         "if", "if / else", "while",
                         "{ -> ... }.call()",
+                        "{}",
                         "for", "try / catch", "try / finally", "try / catch / finally",
                         "shouldFail () {...}",
-                        "with () {...}"
+                        "with () {...}",
+                        "<editor-fold...> Comments",
+                        "region...endregion Comments"
   }
 
-  public void testInnerExpressionSurrounders() {
+  void testInnerExpressionSurrounders() {
     def names = getSurrounders("boolean a; println <selection>a</selection>")
-    assertOrderedEquals names, "(expr)", "((Type) expr)"
+    assertOrderedEquals names, "(expr)", "!(expr)", "((Type) expr)"
   }
 
-  public void testOuterExpressionSurrounders() {
+  void testOuterExpressionSurrounders() {
     def names = getSurrounders("boolean a; <selection>a</selection>")
     assertOrderedEquals names,
-                        "if", "if / else", "while",
+                        "if",
+                        "if / else",
+                        "while",
                         "{ -> ... }.call()",
-                        "for", "try / catch", "try / finally", "try / catch / finally",
+                        "{}",
+                        "for",
+                        "try / catch",
+                        "try / finally",
+                        "try / catch / finally",
                         "shouldFail () {...}",
-                        "(expr)", "((Type) expr)",
+                        "(expr)",
+                        "!(expr)",
+                        "((Type) expr)",
                         "with () {...}",
-                        "if (expr)", "if (expr) / else", "while (expr)", "with (expr)"
+                        "if (expr)",
+                        "if (expr) / else",
+                        "while (expr)",
+                        "with (expr)"
   }
 
   private List<String> getSurrounders(final String fileText) {
     myFixture.configureByText("a.groovy", fileText)
 
-    def token = WriteAction.start()
-
-    try {
+    WriteAction.compute {
       def actions = SurroundWithHandler.buildSurroundActions(project, myFixture.editor, myFixture.file, null)
       def names = []
       for (action in actions) {
@@ -93,9 +116,6 @@ println c /*also important */
         names << text.substring(text.indexOf('. ') + 2)
       }
       return names
-    }
-    finally {
-      token.finish()
     }
   }
 }

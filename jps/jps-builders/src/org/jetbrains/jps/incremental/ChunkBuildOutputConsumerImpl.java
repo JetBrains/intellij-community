@@ -30,20 +30,19 @@ import java.util.Map;
 
 /**
 * @author Eugene Zhuravlev
-*         Date: 11/16/12
 */
 class ChunkBuildOutputConsumerImpl implements ModuleLevelBuilder.OutputConsumer {
   private final CompileContext myContext;
-  private Map<BuildTarget<?>, BuildOutputConsumerImpl> myTarget2Consumer = new THashMap<BuildTarget<?>, BuildOutputConsumerImpl>();
-  private Map<String, CompiledClass> myClasses = new THashMap<String, CompiledClass>();
-  private Map<BuildTarget<?>, Collection<CompiledClass>> myTargetToClassesMap = new THashMap<BuildTarget<?>, Collection<CompiledClass>>();
+  private final Map<BuildTarget<?>, BuildOutputConsumerImpl> myTarget2Consumer = new THashMap<>();
+  private final Map<String, CompiledClass> myClasses = new THashMap<>();
+  private final Map<BuildTarget<?>, Collection<CompiledClass>> myTargetToClassesMap = new THashMap<>();
 
-  public ChunkBuildOutputConsumerImpl(CompileContext context) {
+  ChunkBuildOutputConsumerImpl(CompileContext context) {
     myContext = context;
   }
 
   @Override
-  public Collection<CompiledClass> getTargetCompiledClasses(BuildTarget<?> target) {
+  public Collection<CompiledClass> getTargetCompiledClasses(@NotNull BuildTarget<?> target) {
     final Collection<CompiledClass> classes = myTargetToClassesMap.get(target);
     if (classes != null) {
       return Collections.unmodifiableCollection(classes);
@@ -65,21 +64,25 @@ class ChunkBuildOutputConsumerImpl implements ModuleLevelBuilder.OutputConsumer 
   }
 
   @Override
-  public void registerCompiledClass(BuildTarget<?> target, CompiledClass compiled) throws IOException {
+  public void registerCompiledClass(@Nullable BuildTarget<?> target, CompiledClass compiled) throws IOException {
     if (compiled.getClassName() != null) {
       myClasses.put(compiled.getClassName(), compiled);
-      Collection<CompiledClass> classes = myTargetToClassesMap.get(target);
-      if (classes == null) {
-        classes = new ArrayList<CompiledClass>();
-        myTargetToClassesMap.put(target, classes);
+      if (target != null) {
+        Collection<CompiledClass> classes = myTargetToClassesMap.get(target);
+        if (classes == null) {
+          classes = new ArrayList<>();
+          myTargetToClassesMap.put(target, classes);
+        }
+        classes.add(compiled);
       }
-      classes.add(compiled);
     }
-    registerOutputFile(target, compiled.getOutputFile(), Collections.<String>singleton(compiled.getSourceFile().getPath()));
+    if (target != null) {
+      registerOutputFile(target, compiled.getOutputFile(), compiled.getSourceFilesPaths());
+    }
   }
 
   @Override
-  public void registerOutputFile(BuildTarget<?> target, File outputFile, Collection<String> sourcePaths) throws IOException {
+  public void registerOutputFile(@NotNull BuildTarget<?> target, File outputFile, Collection<String> sourcePaths) throws IOException {
     BuildOutputConsumerImpl consumer = myTarget2Consumer.get(target);
     if (consumer == null) {
       consumer = new BuildOutputConsumerImpl(target, myContext);
@@ -92,6 +95,14 @@ class ChunkBuildOutputConsumerImpl implements ModuleLevelBuilder.OutputConsumer 
     for (BuildOutputConsumerImpl consumer : myTarget2Consumer.values()) {
       consumer.fireFileGeneratedEvent();
     }
+  }
+
+  public int getNumberOfProcessedSources() {
+    int total = 0;
+    for (BuildOutputConsumerImpl consumer : myTarget2Consumer.values()) {
+      total += consumer.getNumberOfProcessedSources();
+    }
+    return total;
   }
 
   public void clear() {

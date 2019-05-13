@@ -15,21 +15,19 @@
  */
 package git4idea.history;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FilePath;
-import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.Change;
-import com.intellij.openapi.vcs.changes.ContentRevision;
-import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.vcs.log.impl.VcsFileStatusInfo;
 import com.intellij.vcsUtil.VcsUtil;
-import git4idea.GitContentRevision;
-import git4idea.GitRevisionNumber;
 import git4idea.GitUtil;
 import git4idea.commands.GitHandler;
-import git4idea.history.wholeTree.AbstractHash;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -41,219 +39,200 @@ import static git4idea.history.GitLogParser.GitLogOption.*;
  * One record (commit information) returned by git log output.
  * The access methods try heavily to return some default value if real is unavailable, for example, blank string is better than null.
  * BUT if one tries to get an option which was not specified to the GitLogParser, one will get null.
+ *
  * @see git4idea.history.GitLogParser
  */
 class GitLogRecord {
 
-  private final Map<GitLogParser.GitLogOption, String> myOptions;
-  private final List<String> myPaths;
-  private final List<GitLogStatusInfo> myStatusInfo;
+  private static final Logger LOG = Logger.getInstance(GitLogRecord.class);
+
+  @NotNull private final Map<GitLogParser.GitLogOption, String> myOptions;
+  @NotNull private final List<VcsFileStatusInfo> myStatusInfo;
   private final boolean mySupportsRawBody;
 
   private GitHandler myHandler;
 
-  GitLogRecord(@NotNull Map<GitLogParser.GitLogOption, String> options, @NotNull List<String> paths, @NotNull List<GitLogStatusInfo> statusInfo, boolean supportsRawBody) {
+  GitLogRecord(@NotNull Map<GitLogParser.GitLogOption, String> options,
+               @NotNull List<VcsFileStatusInfo> statusInfo,
+               boolean supportsRawBody) {
     myOptions = options;
-    myPaths = paths;
     myStatusInfo = statusInfo;
     mySupportsRawBody = supportsRawBody;
   }
 
-  private List<String> getPaths() {
-    return myPaths;
+  @NotNull
+  private Collection<String> getPaths() {
+    LinkedHashSet<String> result = ContainerUtil.newLinkedHashSet();
+    for (VcsFileStatusInfo info : myStatusInfo) {
+      result.add(info.getFirstPath());
+      if (info.getSecondPath() != null) result.add(info.getSecondPath());
+    }
+    return result;
   }
 
   @NotNull
-  List<GitLogStatusInfo> getStatusInfos() {
+  List<VcsFileStatusInfo> getStatusInfos() {
     return myStatusInfo;
   }
 
   @NotNull
-  public List<FilePath> getFilePaths(VirtualFile root) throws VcsException {
-    List<FilePath> res = new ArrayList<FilePath>();
+  public List<FilePath> getFilePaths(@NotNull VirtualFile root) {
+    List<FilePath> res = new ArrayList<>();
     String prefix = root.getPath() + "/";
     for (String strPath : getPaths()) {
-      final String subPath = GitUtil.unescapePath(strPath);
-      final FilePath revisionPath = VcsUtil.getFilePathForDeletedFile(prefix + subPath, false);
-      res.add(revisionPath);
+      res.add(VcsUtil.getFilePath(prefix + strPath, false));
     }
     return res;
   }
 
-  private String lookup(GitLogParser.GitLogOption key) {
-    return shortBuffer(myOptions.get(key));
+  @NotNull
+  private String lookup(@NotNull GitLogParser.GitLogOption key) {
+    String value = myOptions.get(key);
+    if (value == null) {
+      LOG.error("Missing value for option " + key + ", while executing " + myHandler);
+      return "";
+    }
+    return shortBuffer(value);
   }
 
   // trivial access methods
-  String getHash() { return lookup(HASH); }
-  String getShortHash() { return lookup(SHORT_HASH); }
-  String getAuthorName() { return lookup(AUTHOR_NAME); }
-  String getAuthorEmail() { return lookup(AUTHOR_EMAIL); }
-  String getCommitterName() { return lookup(COMMITTER_NAME); }
-  String getCommitterEmail() { return lookup(COMMITTER_EMAIL); }
-  String getSubject() { return lookup(SUBJECT); }
-  String getBody() { return lookup(BODY); }
-  String getRawBody() { return lookup(RAW_BODY); }
-  String getShortenedRefLog() { return lookup(SHORT_REF_LOG_SELECTOR); }
+  @NotNull
+  String getHash() {
+    return lookup(HASH);
+  }
+
+  @NotNull
+  String getTreeHash() {
+    return lookup(TREE);
+  }
+
+  @NotNull
+  String getAuthorName() {
+    return lookup(AUTHOR_NAME);
+  }
+
+  @NotNull
+  String getAuthorEmail() {
+    return lookup(AUTHOR_EMAIL);
+  }
+
+  @NotNull
+  String getCommitterName() {
+    return lookup(COMMITTER_NAME);
+  }
+
+  @NotNull
+  String getCommitterEmail() {
+    return lookup(COMMITTER_EMAIL);
+  }
+
+  @NotNull
+  String getSubject() {
+    return lookup(SUBJECT);
+  }
+
+  @NotNull
+  String getBody() {
+    return lookup(BODY);
+  }
+
+  @NotNull
+  String getRawBody() {
+    return lookup(RAW_BODY);
+  }
+
+  @NotNull
+  String getShortenedRefLog() {
+    return lookup(SHORT_REF_LOG_SELECTOR);
+  }
 
   // access methods with some formatting or conversion
 
+  @NotNull
   Date getDate() {
-    return GitUtil.parseTimestampWithNFEReport(myOptions.get(COMMIT_TIME), myHandler, myOptions.toString());
+    return new Date(getCommitTime());
   }
 
-  long getLongTimeStamp() {
-    return Long.parseLong(myOptions.get(COMMIT_TIME).trim());
+  long getCommitTime() {
+    try {
+      return Long.parseLong(myOptions.get(COMMIT_TIME).trim()) * 1000;
+    }
+    catch (NumberFormatException e) {
+      LOG.error("Couldn't get commit time from " + toString() + ", while executing " + myHandler, e);
+      return 0;
+    }
   }
 
   long getAuthorTimeStamp() {
-    return Long.parseLong(myOptions.get(AUTHOR_TIME).trim());
-  }
-
-  String getAuthorAndCommitter() {
-    String author = String.format("%s <%s>", myOptions.get(AUTHOR_NAME), myOptions.get(AUTHOR_EMAIL));
-    String committer = String.format("%s <%s>", myOptions.get(COMMITTER_NAME), myOptions.get(COMMITTER_EMAIL));
-    return GitUtil.adjustAuthorName(author, committer);
+    try {
+      return Long.parseLong(myOptions.get(AUTHOR_TIME).trim()) * 1000;
+    }
+    catch (NumberFormatException e) {
+      LOG.error("Couldn't get author time from " + toString() + ", while executing " + myHandler, e);
+      return 0;
+    }
   }
 
   String getFullMessage() {
     return mySupportsRawBody ? getRawBody().trim() : ((getSubject() + "\n\n" + getBody()).trim());
   }
 
-  String[] getParentsShortHashes() {
-    final String parents = lookup(SHORT_PARENTS);
-    if (parents.trim().length() == 0) return ArrayUtil.EMPTY_STRING_ARRAY;
-    return parents.split(" ");
-  }
-
+  @NotNull
   String[] getParentsHashes() {
     final String parents = lookup(PARENTS);
     if (parents.trim().length() == 0) return ArrayUtil.EMPTY_STRING_ARRAY;
     return parents.split(" ");
   }
 
+  @NotNull
   public Collection<String> getRefs() {
     final String decorate = myOptions.get(REF_NAMES);
-    final String[] refNames = parseRefNames(decorate);
-    final List<String> result = new ArrayList<String>(refNames.length);
-    for (String refName : refNames) {
-      result.add(shortBuffer(refName));
+    return parseRefNames(decorate);
+  }
+
+  @NotNull
+  public Map<GitLogParser.GitLogOption, String> getOptions() {
+    return myOptions;
+  }
+
+  public boolean isSupportsRawBody() {
+    return mySupportsRawBody;
+  }
+
+  @NotNull
+  private static List<String> parseRefNames(@Nullable final String decoration) {
+    if (decoration == null) {
+      return ContainerUtil.emptyList();
+    }
+    final int startParentheses = decoration.indexOf("(");
+    final int endParentheses = decoration.indexOf(")");
+    if ((startParentheses == -1) || (endParentheses == -1)) return Collections.emptyList();
+    String refs = decoration.substring(startParentheses + 1, endParentheses);
+    String[] names = refs.split(", ");
+    List<String> result = ContainerUtil.newArrayList();
+    for (String item : names) {
+      final String POINTER = " -> ";   // HEAD -> refs/heads/master in Git 2.4.3+
+      if (item.contains(POINTER)) {
+        List<String> parts = StringUtil.split(item, POINTER);
+        result.addAll(ContainerUtil.map(parts, s -> shortBuffer(s.trim())));
+      }
+      else {
+        int colon = item.indexOf(':'); // tags have the "tag:" prefix.
+        result.add(shortBuffer(colon > 0 ? item.substring(colon + 1).trim() : item));
+      }
     }
     return result;
   }
-  /**
-   * Returns the list of tags and the list of branches.
-   * A single method is used to return both, because they are returned together by Git and we don't want to parse them twice.
-   * @return
-   * @param allBranchesSet
-   */
-  /*Pair<List<String>, List<String>> getTagsAndBranches(SymbolicRefs refs) {
-    final String decorate = myOptions.get(REF_NAMES);
-    final String[] refNames = parseRefNames(decorate);
-    final List<String> tags = refNames.length > 0 ? new ArrayList<String>() : Collections.<String>emptyList();
-    final List<String> branches = refNames.length > 0 ? new ArrayList<String>() : Collections.<String>emptyList();
-    for (String refName : refNames) {
-      if (refs.contains(refName)) {
-        // also some gits can return ref name twice (like (HEAD, HEAD), so check we will show it only once)
-        if (!branches.contains(refName)) {
-          branches.add(shortBuffer(refName));
-        }
-      } else {
-        if (!tags.contains(refName)) {
-          tags.add(shortBuffer(refName));
-        }
-      }
-    }
-    return Pair.create(tags, branches);
-  }*/
 
-  private static String[] parseRefNames(final String decorate) {
-    final int startParentheses = decorate.indexOf("(");
-    final int endParentheses = decorate.indexOf(")");
-    if ((startParentheses == -1) || (endParentheses == -1)) return ArrayUtil.EMPTY_STRING_ARRAY;
-    final String refs = decorate.substring(startParentheses + 1, endParentheses);
-    return refs.split(", ");
-  }
-
-  private static String shortBuffer(String raw) {
+  @NotNull
+  private static String shortBuffer(@NotNull String raw) {
     return new String(raw);
   }
 
-  public List<Change> parseChanges(Project project, VirtualFile vcsRoot) throws VcsException {
-    GitRevisionNumber thisRevision = new GitRevisionNumber(getHash(), getDate());
-    List<GitRevisionNumber> parentRevisions = prepareParentRevisions();
-
-    List<Change> result = new ArrayList<Change>();
-    for (GitLogStatusInfo statusInfo: myStatusInfo) {
-      result.add(parseChange(project, vcsRoot, parentRevisions, statusInfo, thisRevision));
-    }
-    return result;
-  }
-
-  private List<GitRevisionNumber> prepareParentRevisions() {
-    final String[] parentsShortHashes = getParentsShortHashes();
-    final List<AbstractHash> parents = new ArrayList<AbstractHash>(parentsShortHashes.length);
-    for (String parentsShortHash : parentsShortHashes) {
-      parents.add(AbstractHash.create(parentsShortHash));
-    }
-
-    final List<GitRevisionNumber> parentRevisions = new ArrayList<GitRevisionNumber>(parents.size());
-    for (AbstractHash parent : parents) {
-      parentRevisions.add(new GitRevisionNumber(parent.getString()));
-    }
-    return parentRevisions;
-  }
-
-  private static Change parseChange(final Project project, final VirtualFile vcsRoot, final List<GitRevisionNumber> parentRevisions,
-                                    final GitLogStatusInfo statusInfo, final VcsRevisionNumber thisRevision) throws VcsException {
-    final ContentRevision before;
-    final ContentRevision after;
-    FileStatus status = null;
-    final String path = statusInfo.getFirstPath();
-    @Nullable GitRevisionNumber firstParent = parentRevisions.isEmpty() ? null : parentRevisions.get(0);
-
-    switch (statusInfo.getType()) {
-      case ADDED:
-        before = null;
-        status = FileStatus.ADDED;
-        after = GitContentRevision.createRevision(vcsRoot, path, thisRevision, project, false, false, true);
-        break;
-      case UNRESOLVED:
-        status = FileStatus.MERGED_WITH_CONFLICTS;
-      case MODIFIED:
-        if (status == null) {
-          status = FileStatus.MODIFIED;
-        }
-        final FilePath filePath = GitContentRevision.createPath(vcsRoot, path, false, true, true);
-        before = GitContentRevision.createRevision(vcsRoot, path, firstParent, project, false, false, true);
-        after = GitContentRevision.createMultipleParentsRevision(project, filePath, (GitRevisionNumber)thisRevision, parentRevisions);
-        break;
-      case DELETED:
-        status = FileStatus.DELETED;
-        final FilePath filePathDeleted = GitContentRevision.createPath(vcsRoot, path, true, true, true);
-        before = GitContentRevision.createRevision(filePathDeleted, firstParent, project, null);
-        after = null;
-        break;
-      case COPIED:
-      case RENAMED:
-        status = FileStatus.MODIFIED;
-        String secondPath = statusInfo.getSecondPath();
-        final FilePath filePathAfterRename = GitContentRevision.createPath(vcsRoot, secondPath == null ? path : secondPath,
-                                                                           false, false, true);
-        before = GitContentRevision.createRevision(vcsRoot, path, firstParent, project, true, true, true);
-        after = GitContentRevision.createMultipleParentsRevision(project, filePathAfterRename,
-                                                                 (GitRevisionNumber)thisRevision, parentRevisions);
-        break;
-      case TYPE_CHANGED:
-        status = FileStatus.MODIFIED;
-        final FilePath filePath2 = GitContentRevision.createPath(vcsRoot, path, false, true, true);
-        before = GitContentRevision.createRevision(vcsRoot, path, firstParent, project, false, false, true);
-        after = GitContentRevision.createMultipleParentsRevision(project, filePath2, (GitRevisionNumber)thisRevision, parentRevisions);
-        break;
-      default:
-        throw new AssertionError("Unknown file status: " + statusInfo);
-    }
-    return new Change(before, after, status);
+  @NotNull
+  public List<Change> parseChanges(@NotNull Project project, @NotNull VirtualFile vcsRoot) throws VcsException {
+    String[] hashes = getParentsHashes();
+    return GitChangesParser.parse(project, vcsRoot, myStatusInfo, getHash(), getDate(), hashes.length == 0 ? null : hashes[0]);
   }
 
   /**
@@ -265,7 +244,7 @@ class GitLogRecord {
 
   @Override
   public String toString() {
-    return String.format("GitLogRecord{myOptions=%s, myPaths=%s, myStatusInfo=%s, mySupportsRawBody=%s, myHandler=%s}",
-                         myOptions, myPaths, myStatusInfo, mySupportsRawBody, myHandler);
+    return String.format("GitLogRecord{myOptions=%s, myStatusInfo=%s, mySupportsRawBody=%s, myHandler=%s}",
+                         myOptions, myStatusInfo, mySupportsRawBody, myHandler);
   }
 }

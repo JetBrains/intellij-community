@@ -16,6 +16,11 @@ public abstract class ProjectStructureElement {
     myContext = context;
   }
 
+  @NotNull
+  public String getPresentableText() {
+    return getTypeName() + " '" + getPresentableName() + "'";
+  }
+
   public abstract String getPresentableName();
 
   @Nullable

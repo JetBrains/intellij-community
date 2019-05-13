@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,7 +21,13 @@ public interface VcsAppendableHistorySessionPartner {
   void reportCreatedEmptySession(VcsAbstractHistorySession session);
   void acceptRevision(final VcsFileRevision revision);
   void reportException(final VcsException exception);
-  void finished();
-  void forceRefresh();
-  void beforeRefresh();
+
+  @Deprecated
+  default void finished() {}
+
+  @Deprecated
+  default void beforeRefresh() {}
+
+  @Deprecated
+  default void forceRefresh() {}
 }

@@ -1,3 +1,18 @@
+/*
+ * Copyright 2000-2017 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.intellij.codeInsight.intention.impl.config;
 
 import com.intellij.openapi.editor.*;
@@ -18,6 +33,7 @@ import javax.swing.*;
 import javax.swing.border.Border;
 import java.awt.*;
 import java.awt.event.MouseEvent;
+import java.awt.geom.Point2D;
 
 /**
  * @author Dmitry Avdeev
@@ -27,7 +43,7 @@ class LazyEditor extends UserDataHolderBase implements Editor {
   private final PsiFile myFile;
   private Editor myEditor;
 
-  public LazyEditor(PsiFile file) {
+  LazyEditor(PsiFile file) {
     myFile = file;
   }
 
@@ -109,6 +125,18 @@ class LazyEditor extends UserDataHolderBase implements Editor {
     return getEditor().getSoftWrapModel();
   }
 
+  @NotNull
+  @Override
+  public InlayModel getInlayModel() {
+    return getEditor().getInlayModel();
+  }
+
+  @NotNull
+  @Override
+  public EditorKind getEditorKind() {
+    return getEditor().getEditorKind();
+  }
+
   @Override
   @NotNull
   public EditorSettings getSettings() {
@@ -149,6 +177,12 @@ class LazyEditor extends UserDataHolderBase implements Editor {
     return getEditor().visualPositionToXY(visible);
   }
 
+  @NotNull
+  @Override
+  public Point2D visualPositionToPoint2D(@NotNull VisualPosition pos) {
+    return getEditor().visualPositionToPoint2D(pos);
+  }
+
   @Override
   @NotNull
   public LogicalPosition visualToLogicalPosition(@NotNull final VisualPosition visiblePos) {
@@ -169,6 +203,12 @@ class LazyEditor extends UserDataHolderBase implements Editor {
 
   @Override
   @NotNull
+  public VisualPosition offsetToVisualPosition(int offset, boolean leanForward, boolean beforeSoftWrap) {
+    return getEditor().offsetToVisualPosition(offset, leanForward, beforeSoftWrap);
+  }
+
+  @Override
+  @NotNull
   public LogicalPosition xyToLogicalPosition(@NotNull final Point p) {
     return getEditor().xyToLogicalPosition(p);
   }
@@ -176,6 +216,12 @@ class LazyEditor extends UserDataHolderBase implements Editor {
   @Override
   @NotNull
   public VisualPosition xyToVisualPosition(@NotNull final Point p) {
+    return getEditor().xyToVisualPosition(p);
+  }
+
+  @NotNull
+  @Override
+  public VisualPosition xyToVisualPosition(@NotNull Point2D p) {
     return getEditor().xyToVisualPosition(p);
   }
 

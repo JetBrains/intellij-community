@@ -33,12 +33,8 @@ import java.util.List;
 
 public class ModuleListNode extends ProjectViewNode<Module> {
 
-  public ModuleListNode(Project project, Module value, ViewSettings viewSettings) {
+  public ModuleListNode(Project project, @NotNull Module value, ViewSettings viewSettings) {
     super(project, value, viewSettings);
-  }
-
-  public ModuleListNode(final Project project, final Object value, final ViewSettings viewSettings) {
-    this(project, (Module)value, viewSettings);
   }
 
   @Override
@@ -47,7 +43,7 @@ public class ModuleListNode extends ProjectViewNode<Module> {
     Module module = getValue();
 
     final Module[] deps = ModuleRootManager.getInstance(module).getDependencies(true);
-    final List<AbstractTreeNode> children = new ArrayList<AbstractTreeNode>();
+    final List<AbstractTreeNode> children = new ArrayList<>();
     for (Module dependency : deps) {
       children.add(new ProjectViewModuleNode(myProject, dependency, getSettings()) {
         @Override
@@ -72,7 +68,7 @@ public class ModuleListNode extends ProjectViewNode<Module> {
   }
 
   @Override
-  public void update(PresentationData presentation) {
+  public void update(@NotNull PresentationData presentation) {
     presentation.setPresentableText("Module Dependencies");
     presentation.setIcon(PlatformIcons.CLOSED_MODULE_GROUP_ICON);
   }

@@ -27,8 +27,7 @@ import org.jetbrains.annotations.NotNull;
 public class GlobalLibrariesConfigurable extends BaseLibrariesConfigurable {
 
   public GlobalLibrariesConfigurable(final Project project) {
-    super(project);
-    myLevel = LibraryTablesRegistrar.APPLICATION_LEVEL;
+    super(project, LibraryTablesRegistrar.APPLICATION_LEVEL);
   }
 
   @Override

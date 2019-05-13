@@ -12,22 +12,65 @@
 // limitations under the License.
 package org.zmlx.hg4idea.util;
 
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.zmlx.hg4idea.action.HgCommandResultNotifier;
 import org.zmlx.hg4idea.execution.HgCommandResult;
 
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public final class HgErrorUtil {
 
-  private HgErrorUtil() { }
+  private static final Logger LOG = Logger.getInstance(HgErrorUtil.class.getName());
+
+  private static final String MERGE_WITH_ANCESTOR_ERROR = "merging with a working directory ancestor has no effect";
+  private static final String NOTHING_TO_REBASE_WARNING = "nothing to rebase";
+
+  private HgErrorUtil() {
+  }
+
+  public static HgCommandResult ensureSuccess(@Nullable HgCommandResult result) throws VcsException {
+    if (result == null) {
+      throw new VcsException("Couldn't execute Mercurial command");
+    }
+    // workaround for mercurial: trying to merge with ancestor is not important/fatal error but natively hg produces abort error.
+    if (fatalErrorOccurred(result) && !isAncestorMergeError(result)) {
+      throw new VcsException(result.getRawError());
+    }
+    return result;
+  }
+
+  private static boolean fatalErrorOccurred(@NotNull HgCommandResult result) {
+    return result.getExitValue() == 255 || result.getRawError().contains("** unknown exception encountered");
+  }
 
   public static boolean isAbort(@Nullable HgCommandResult result) {
-    if (result == null) {
-      return true;
-    }
-    String line = getLastErrorLine(result);
-    return !StringUtil.isEmptyOrSpaces(line) && line.contains("abort:");
+    return result == null || getAbortLine(result) != null;
+  }
+
+  @Nullable
+  private static String getAbortLine(@NotNull HgCommandResult result) {
+    final List<String> errorLines = result.getErrorLines();
+    return ContainerUtil.find(errorLines, s -> isAbortLine(s));
+  }
+
+  public static boolean isAncestorMergeError(@Nullable HgCommandResult result) {
+    if (result == null) return false;
+    String errorLine = getAbortLine(result);
+    return errorLine != null && StringUtil.contains(errorLine, MERGE_WITH_ANCESTOR_ERROR);
+  }
+
+  public static boolean isNothingToRebase(@Nullable HgCommandResult result) {
+    if (result == null) return false;
+    return ContainerUtil.exists(result.getOutputLines(), s -> StringUtil.contains(s, NOTHING_TO_REBASE_WARNING));
   }
 
   public static boolean isAuthorizationError(@Nullable HgCommandResult result) {
@@ -35,8 +78,7 @@ public final class HgErrorUtil {
       return false;
     }
     String line = getLastErrorLine(result);
-    return !StringUtil.isEmptyOrSpaces(line) && (line.contains("authorization required") || line.contains("authorization failed")
-    );
+    return isAuthorizationError(line);
   }
 
   @Nullable
@@ -51,8 +93,13 @@ public final class HgErrorUtil {
     return errorLines.get(errorLines.size() - 1);
   }
 
+  //unresolved conflict errors included
   public static boolean hasErrorsInCommandExecution(@Nullable HgCommandResult result) {
     return isAbort(result) || result.getExitValue() != 0;
+  }
+
+  public static boolean isCommandExecutionFailed(@Nullable HgCommandResult result) {
+    return isAbort(result) || result.getExitValue() > 1;
   }
 
   public static boolean hasAuthorizationInDestinationPath(@Nullable String destinationPath) {
@@ -60,5 +107,53 @@ public final class HgErrorUtil {
       return false;
     }
     return HgUtil.URL_WITH_PASSWORD.matcher(destinationPath).matches();
+  }
+
+  public static boolean isUnknownEncodingError(@NotNull List<String> errorLines) {
+    if (errorLines.isEmpty()) {
+      return false;
+    }
+    String line = errorLines.get(0);
+    return !StringUtil.isEmptyOrSpaces(line) && (line.contains("abort") && line.contains("unknown encoding"));
+  }
+
+  //during update  or revert action with  uncommitted merges/changes
+  public static boolean hasUncommittedChangesConflict(@Nullable HgCommandResult result) {
+    if (result == null) {
+      return false;
+    }
+    // error messages from mercurial after update command failed: "abort: outstanding uncommitted merges", "abort: uncommitted changes";
+    //after revert command failed: abort: "uncommitted merge"
+    final Pattern UNCOMMITTED_PATTERN = Pattern.compile(".*abort.*uncommitted\\s*(change|merge).*", Pattern.DOTALL);
+    Matcher matcher = UNCOMMITTED_PATTERN.matcher(result.getRawError());
+    return matcher.matches();
+  }
+
+  public static boolean isAuthorizationError(String line) {
+    return !StringUtil.isEmptyOrSpaces(line) && (line.contains("authorization required") || line.contains("authorization failed"));
+  }
+
+  public static boolean isAbortLine(String line) {
+    return !StringUtil.isEmptyOrSpaces(line) && line.trim().startsWith("abort:");
+  }
+
+  public static void handleException(@Nullable Project project, @NotNull Exception e) {
+    handleException(project, "Error", e);
+  }
+
+  public static void handleException(@Nullable Project project, @NotNull String title, @NotNull Exception e) {
+    LOG.info(e);
+    new HgCommandResultNotifier(project).notifyError(null, title, e.getMessage());
+  }
+
+  @Deprecated
+  public static void markDirtyAndHandleErrors(Project project, VirtualFile repository) {
+    HgUtil.markDirectoryDirty(project, repository);
+  }
+
+  public static boolean isWLockError(@Nullable HgCommandResult result) {
+    //abort: working directory of repo_name: timed out waiting for lock held by 'process:id'
+    if (result == null) return false;
+    return isAbort(result) && result.getRawError().contains("timed out waiting for lock");
   }
 }

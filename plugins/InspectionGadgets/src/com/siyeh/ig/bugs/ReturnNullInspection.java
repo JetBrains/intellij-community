@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2011 Dave Griffith, Bas Leijdekkers
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,19 +16,23 @@
 package com.siyeh.ig.bugs;
 
 import com.intellij.codeInsight.AnnotationUtil;
+import com.intellij.codeInsight.NullableNotNullDialog;
 import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInspection.AnnotateMethodFix;
+import com.intellij.codeInspection.CommonQuickFixBundle;
+import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
+import com.intellij.codeInspection.util.OptionalUtil;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ArrayUtil;
 import com.siyeh.InspectionGadgetsBundle;
-import com.siyeh.ig.BaseInspection;
-import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.DelegatingFix;
-import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.*;
 import com.siyeh.ig.psiutils.CollectionUtils;
-import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
+import com.siyeh.ig.psiutils.TypeUtils;
 import org.intellij.lang.annotations.Pattern;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -44,6 +48,17 @@ public class ReturnNullInspection extends BaseInspection {
   public boolean m_reportCollectionMethods = true;
   @SuppressWarnings({"PublicField"})
   public boolean m_ignorePrivateMethods = false;
+
+  @Override
+  public JComponent createOptionsPanel() {
+    final MultipleCheckboxOptionsPanel optionsPanel = new MultipleCheckboxOptionsPanel(this);
+    optionsPanel.addCheckbox(InspectionGadgetsBundle.message("return.of.null.ignore.private.option"), "m_ignorePrivateMethods");
+    optionsPanel.addCheckbox(InspectionGadgetsBundle.message("return.of.null.arrays.option"), "m_reportArrayMethods");
+    optionsPanel.addCheckbox(InspectionGadgetsBundle.message("return.of.null.collections.option"), "m_reportCollectionMethods");
+    optionsPanel.addCheckbox(InspectionGadgetsBundle.message("return.of.null.objects.option"), "m_reportObjectMethods");
+    optionsPanel.addComponent(NullableNotNullDialog.createConfigureAnnotationsButton(optionsPanel));
+    return optionsPanel;
+  }
 
   @Override
   @Pattern("[a-zA-Z_0-9.-]+")
@@ -72,28 +87,24 @@ public class ReturnNullInspection extends BaseInspection {
     if (!AnnotationUtil.isAnnotatingApplicable(elt)) {
       return null;
     }
-    final NullableNotNullManager manager =
-      NullableNotNullManager.getInstance(elt.getProject());
+
+    final PsiElement element = PsiTreeUtil.getParentOfType(elt, PsiMethod.class, PsiLambdaExpression.class);
+    if (element instanceof PsiLambdaExpression) {
+      return null;
+    }
+    if (element instanceof PsiMethod) {
+      final PsiMethod method = (PsiMethod)element;
+      final PsiType type = method.getReturnType();
+      if (TypeUtils.isOptional(type)) {
+        // don't suggest to annotate Optional methods as Nullable
+        return new ReplaceWithEmptyOptionalFix(((PsiClassType)type).rawType().getCanonicalText());
+      }
+    }
+
+    final NullableNotNullManager manager = NullableNotNullManager.getInstance(elt.getProject());
     return new DelegatingFix(new AnnotateMethodFix(
       manager.getDefaultNullable(),
       ArrayUtil.toStringArray(manager.getNotNulls())));
-  }
-
-  @Override
-  public JComponent createOptionsPanel() {
-    final MultipleCheckboxOptionsPanel optionsPanel =
-      new MultipleCheckboxOptionsPanel(this);
-    optionsPanel.addCheckbox(InspectionGadgetsBundle.message(
-      "return.of.null.ignore.private.option"),
-                             "m_ignorePrivateMethods");
-    optionsPanel.addCheckbox(InspectionGadgetsBundle.message(
-      "return.of.null.arrays.option"), "m_reportArrayMethods");
-    optionsPanel.addCheckbox(InspectionGadgetsBundle.message(
-      "return.of.null.collections.option"),
-                             "m_reportCollectionMethods");
-    optionsPanel.addCheckbox(InspectionGadgetsBundle.message(
-      "return.of.null.objects.option"), "m_reportObjectMethods");
-    return optionsPanel;
   }
 
   @Override
@@ -101,11 +112,48 @@ public class ReturnNullInspection extends BaseInspection {
     return new ReturnNullVisitor();
   }
 
+  private static class ReplaceWithEmptyOptionalFix extends InspectionGadgetsFix {
+
+    private final String myTypeText;
+
+    ReplaceWithEmptyOptionalFix(String typeText) {
+      myTypeText = typeText;
+    }
+
+    @Nls
+    @NotNull
+    @Override
+    public String getName() {
+      return CommonQuickFixBundle.message("fix.replace.with.x", getReplacementText());
+    }
+
+    @Nls
+    @NotNull
+    @Override
+    public String getFamilyName() {
+      return CommonQuickFixBundle.message("fix.replace.with.x", "Optional.empty()");
+    }
+
+    @Override
+    protected void doFix(Project project, ProblemDescriptor descriptor) {
+      final PsiElement element = descriptor.getPsiElement();
+      if (!(element instanceof PsiLiteralExpression)) {
+        return;
+      }
+      final PsiLiteralExpression literalExpression = (PsiLiteralExpression)element;
+      PsiReplacementUtil.replaceExpression(literalExpression, getReplacementText());
+    }
+
+    @NotNull
+    private String getReplacementText() {
+      return myTypeText + "." + (OptionalUtil.GUAVA_OPTIONAL.equals(myTypeText) ? "absent" : "empty") + "()";
+    }
+  }
+
   private class ReturnNullVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitLiteralExpression(
-      @NotNull PsiLiteralExpression value) {
+    public void visitLiteralExpression(@NotNull PsiLiteralExpression value) {
       super.visitLiteralExpression(value);
       final String text = value.getText();
       if (!PsiKeyword.NULL.equals(text)) {
@@ -120,23 +168,35 @@ public class ReturnNullInspection extends BaseInspection {
       if (!(parent instanceof PsiReturnStatement)) {
         return;
       }
-      final PsiMethod method =
-        PsiTreeUtil.getParentOfType(value, PsiMethod.class);
-      if (method == null) {
+      final PsiElement element = PsiTreeUtil.getParentOfType(value, PsiMethod.class, PsiLambdaExpression.class);
+      final PsiMethod method;
+      final PsiType returnType;
+      if (element instanceof PsiMethod) {
+        method = (PsiMethod)element;
+        returnType = method.getReturnType();
+      } 
+      else if (element instanceof PsiLambdaExpression) {
+        final PsiType functionalInterfaceType = ((PsiLambdaExpression)element).getFunctionalInterfaceType();
+        method = LambdaUtil.getFunctionalInterfaceMethod(functionalInterfaceType);
+        returnType = LambdaUtil.getFunctionalInterfaceReturnType(functionalInterfaceType);
+      } 
+      else {
         return;
       }
-      if (m_ignorePrivateMethods &&
-          method.hasModifierProperty(PsiModifier.PRIVATE)) {
+      if (method == null || returnType == null) {
         return;
       }
-      final PsiType returnType = method.getReturnType();
-      if (returnType == null) {
+
+      if (TypeUtils.isOptional(returnType)) {
+        registerError(value, value);
         return;
       }
-      final boolean isArray = returnType.getArrayDimensions() > 0;
-      final NullableNotNullManager nullableNotNullManager =
-        NullableNotNullManager.getInstance(method.getProject());
-      if (nullableNotNullManager.isNullable(method, false)) {
+
+      if (m_ignorePrivateMethods && method.hasModifierProperty(PsiModifier.PRIVATE)) {
+        return;
+      }
+
+      if (NullableNotNullManager.isNullable(method)) {
         return;
       }
       if (CollectionUtils.isCollectionClassOrInterface(returnType)) {
@@ -144,12 +204,12 @@ public class ReturnNullInspection extends BaseInspection {
           registerError(value, value);
         }
       }
-      else if (isArray) {
+      else if (returnType.getArrayDimensions() > 0) {
         if (m_reportArrayMethods) {
           registerError(value, value);
         }
       }
-      else {
+      else if (!returnType.equalsToText("java.lang.Void")){
         if (m_reportObjectMethods) {
           registerError(value, value);
         }

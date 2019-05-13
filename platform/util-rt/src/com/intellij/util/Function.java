@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,19 +15,21 @@
  */
 package com.intellij.util;
 
+import org.jetbrains.annotations.Nullable;
+
 import java.util.Collection;
 
 /**
+ * Please use {@link java.util.function.Function} instead
+ *
  * @author max
- * @author Konstantin Bulenkov
+ * @see Functions for some common implementations
  */
-@SuppressWarnings({"unchecked"})
 public interface Function<Param, Result> {
   Result fun(Param param);
 
-  Function ID = new Function() {
-    @Override
-    public Object fun(final Object o) {
+  Function ID = new Function.Mono() {
+    public Object fun(Object o) {
       return o;
     }
   };
@@ -35,39 +37,40 @@ public interface Function<Param, Result> {
   Function NULL = NullableFunction.NULL;
 
   Function TO_STRING = new Function() {
-    @Override
     public Object fun(Object o) {
       return String.valueOf(o);
     }
   };
 
-  final class Self<P, R> implements Function<P, R> {
-    @Override
+  interface Mono<T> extends Function<T, T> {}
+
+  final class InstanceOf<P, R extends P> implements NullableFunction<P, R> {
+
+    private final Class<R> myResultClass;
+
+    public InstanceOf(Class<R> resultClass) {
+      myResultClass = resultClass;
+    }
+
+    @Nullable
     public R fun(P p) {
-      return (R)p;
+      //noinspection unchecked
+      return p.getClass().isAssignableFrom(myResultClass) ? (R)p : null;
     }
   }
 
   final class First<P, R extends P> implements Function<P[], R> {
-    @Override
     public R fun(P[] ps) {
+      //noinspection unchecked
       return (R)ps[0];
     }
   }
 
   final class FirstInCollection<P, R extends P> implements Function<Collection<P>, R> {
-    @Override
     public R fun(Collection<P> ps) {
+      //noinspection unchecked
       return (R)ps.iterator().next();
     }
   }
 
-  class Predefined {
-    public static <I,O> Function<I, O> NULL() {
-      return NULL;
-    }
-    public static <I,O> Function<I, O> TO_STRING() {
-      return TO_STRING;
-    }
-  }
 }

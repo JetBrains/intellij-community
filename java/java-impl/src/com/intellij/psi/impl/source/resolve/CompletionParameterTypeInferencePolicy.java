@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,19 +41,39 @@ public class CompletionParameterTypeInferencePolicy extends ProcessCandidatePara
   @Override
   public Pair<PsiType, ConstraintType> getInferredTypeWithNoConstraint(PsiManager psiManager, PsiType superType) {
     if (!(superType instanceof PsiWildcardType)) {
-      return new Pair<PsiType, ConstraintType>(PsiWildcardType.createExtends(psiManager, superType), ConstraintType.EQUALS);
+      return new Pair<>(PsiWildcardType.createExtends(psiManager, superType), ConstraintType.EQUALS);
     }
     else {
-      return new Pair<PsiType, ConstraintType>(superType, ConstraintType.SUBTYPE);
+      return Pair.create(superType, ConstraintType.SUBTYPE);
     }
   }
 
   @Override
+  public boolean inferRuntimeExceptionForThrownBoundWithNoConstraints() {
+    return false;
+  }
+
+  @Override
   public PsiType adjustInferredType(PsiManager manager, PsiType guess, ConstraintType constraintType) {
-    if (guess != null && !(guess instanceof PsiWildcardType)) {
+    if (guess != null && !(guess instanceof PsiWildcardType) && guess != PsiType.NULL) {
       if (constraintType == ConstraintType.SUPERTYPE) return PsiWildcardType.createExtends(manager, guess);
       else if (constraintType == ConstraintType.SUBTYPE) return PsiWildcardType.createSuper(manager, guess);
     }
     return guess;
+  }
+
+  @Override
+  public boolean isVarargsIgnored() {
+    return true;
+  }
+
+  @Override
+  public boolean inferLowerBoundForFreshVariables() {
+    return true;
+  }
+
+  @Override
+  public boolean requestForBoxingExplicitly() {
+    return true;
   }
 }

@@ -1,0 +1,5 @@
+<idea-plugin>
+  <id>test</id>
+  <version>1.0</version>
+  <vendor>JetBrains</vendor>
+</idea-plugin>

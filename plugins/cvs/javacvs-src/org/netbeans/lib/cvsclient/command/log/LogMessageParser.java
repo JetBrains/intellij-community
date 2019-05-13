@@ -64,13 +64,14 @@ final public class LogMessageParser extends AbstractMessageParser {
     initDateFormats();
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
   private static void initDateFormats() {
-    EXPECTED_DATE_FORMATS[0] = new SyncDateFormat(new SimpleDateFormat("yyyy/MM/dd HH:mm:ss", Locale.US));
-    EXPECTED_DATE_FORMATS[0].setTimeZone(TimeZone.getTimeZone("GMT"));
+    SimpleDateFormat delegate = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss", Locale.US);
+    delegate.setTimeZone(TimeZone.getTimeZone("GMT"));
+    EXPECTED_DATE_FORMATS[0] = new SyncDateFormat(delegate);
 
-    EXPECTED_DATE_FORMATS[1] = new SyncDateFormat(new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.US));
-    EXPECTED_DATE_FORMATS[1].setTimeZone(TimeZone.getTimeZone("GMT"));
+    delegate = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.US);
+    delegate.setTimeZone(TimeZone.getTimeZone("GMT"));
+    EXPECTED_DATE_FORMATS[1] = new SyncDateFormat(delegate);
   }
 
   // Fields =================================================================
@@ -99,6 +100,7 @@ final public class LogMessageParser extends AbstractMessageParser {
 
   // Implemented ============================================================
 
+  @Override
   protected void outputDone() {
     if (addingDescription) {
       addingDescription = false;
@@ -138,6 +140,7 @@ final public class LogMessageParser extends AbstractMessageParser {
     return logMessageString.startsWith(FINAL_SPLIT) || logMessageString.startsWith(FINAL_SPLIT_WITH_TAB);
   }
 
+  @Override
   public void parseLine(String line, boolean isErrorMessage) {
     if (isErrorMessage) return;
     if (processingRevision) {
@@ -212,8 +215,7 @@ final public class LogMessageParser extends AbstractMessageParser {
       return;
     }
     if (line.startsWith(TOTAL_REVISIONS)) {
-      final String separator = SELECTED_REVISIONS;
-      final int semicolonIndex = line.indexOf(separator);
+      final int semicolonIndex = line.indexOf(SELECTED_REVISIONS);
       if (semicolonIndex < 0) {
         // no selected revisions here..
         logInfo.setTotalRevisions(line.substring(TOTAL_REVISIONS.length()).trim());
@@ -237,7 +239,7 @@ final public class LogMessageParser extends AbstractMessageParser {
     }
 
     if (line.startsWith(DESCRIPTION)) {
-      logMessageBuffer = new ArrayList<String>();
+      logMessageBuffer = new ArrayList<>();
       logMessageBuffer.add(line.substring(DESCRIPTION.length()));
       addingDescription = true;
     }
@@ -277,7 +279,7 @@ final public class LogMessageParser extends AbstractMessageParser {
     }
 
     final String symName = line.substring(0, index).trim();
-    final String revName = line.substring(index + 1, line.length()).trim();
+    final String revName = line.substring(index + 1).trim();
     logInfo.addSymbolicName(symName, revName);
   }
 
@@ -352,13 +354,10 @@ final public class LogMessageParser extends AbstractMessageParser {
     }
 
     processingRevision = true;
-    logMessageBuffer = new ArrayList<String>();
+    logMessageBuffer = new ArrayList<>();
   }
 
   private File createFile(String fileName) {
     return cvsFileSystem.getLocalFileSystem().getFile(fileName);
-  }
-
-  public void binaryMessageSent(final byte[] bytes) {
   }
 }

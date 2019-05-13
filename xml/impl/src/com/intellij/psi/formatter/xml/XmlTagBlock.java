@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.xml.XmlElementType;
 import com.intellij.psi.xml.XmlTag;
+import com.intellij.psi.xml.XmlTokenType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -49,6 +50,7 @@ public class XmlTagBlock extends AbstractXmlBlock{
     myIndent = indent;
   }
 
+  @Override
   protected List<Block> buildChildren() {
     ASTNode child = myNode.getFirstChildNode();
     final Wrap attrWrap = Wrap.createWrap(getWrapType(myXmlFormattingPolicy.getAttributesWrap()), false);
@@ -56,8 +58,8 @@ public class XmlTagBlock extends AbstractXmlBlock{
     final Wrap tagBeginWrap = createTagBeginWrapping(getTag());
     final Alignment attrAlignment = Alignment.createAlignment();
     final Alignment textAlignment = Alignment.createAlignment();
-    final ArrayList<Block> result = new ArrayList<Block>(3);
-    ArrayList<Block> localResult = new ArrayList<Block>(1);
+    final ArrayList<Block> result = new ArrayList<>(3);
+    ArrayList<Block> localResult = new ArrayList<>(1);
 
     boolean insideTag = true;
 
@@ -67,31 +69,47 @@ public class XmlTagBlock extends AbstractXmlBlock{
         Wrap wrap = chooseWrap(child, tagBeginWrap, attrWrap, textWrap);
         Alignment alignment = chooseAlignment(child, attrAlignment, textAlignment);
 
-        if (child.getElementType() == XmlElementType.XML_TAG_END) {
-          child = processChild(localResult,child, wrap, alignment, null);
+        if (child.getElementType() == XmlTokenType.XML_TAG_END) {
+          child = processChild(localResult,child, wrap, alignment, myXmlFormattingPolicy.getTagEndIndent());
           result.add(createTagDescriptionNode(localResult));
-          localResult = new ArrayList<Block>(1);
+          localResult = new ArrayList<>(1);
           insideTag = true;
         }
-        else if (child.getElementType() == XmlElementType.XML_START_TAG_START) {
+        else if (child.getElementType() == XmlTokenType.XML_START_TAG_START) {
           insideTag = false;
           if (!localResult.isEmpty()) {
             result.add(createTagContentNode(localResult));
           }
-          localResult = new ArrayList<Block>(1);
+          localResult = new ArrayList<>(1);
           child = processChild(localResult,child, wrap, alignment, null);
         }
-        else if (child.getElementType() == XmlElementType.XML_END_TAG_START) {
+        else if (child.getElementType() == XmlTokenType.XML_END_TAG_START) {
           insideTag = false;
           if (!localResult.isEmpty()) {
             result.add(createTagContentNode(localResult));
-            localResult = new ArrayList<Block>(1);
+            localResult = new ArrayList<>(1);
           }
           child = processChild(localResult,child, wrap, alignment, null);
-        } else if (child.getElementType() == XmlElementType.XML_EMPTY_ELEMENT_END) {
-          child = processChild(localResult,child, wrap, alignment, null);
+        } else if (child.getElementType() == XmlTokenType.XML_EMPTY_ELEMENT_END) {
+          child = processChild(localResult,child, wrap, alignment, myXmlFormattingPolicy.getTagEndIndent());
           result.add(createTagDescriptionNode(localResult));
-          localResult = new ArrayList<Block>(1);
+          localResult = new ArrayList<>(1);
+        }
+        else if (isTagListStart(child.getElementType())) {
+          child = processChild(localResult, child, wrap, alignment, null);
+          result.add(createTagDescriptionNode(localResult));
+          localResult = new ArrayList<>(1);
+          insideTag = true;
+        }
+        else if (isTagListEnd(child.getElementType())){
+          insideTag = false;
+          if (!localResult.isEmpty()) {
+            result.add(createTagContentNode(localResult));
+            localResult = new ArrayList<>(1);
+          }
+          child = processChild(localResult,child, wrap, alignment, myXmlFormattingPolicy.getTagEndIndent());
+          result.add(createTagDescriptionNode(localResult));
+          localResult = new ArrayList<>(1);
         }
         else if (isJspxJavaContainingNode(child)) {
           createJspTextNode(localResult, child, getChildIndent());
@@ -130,12 +148,21 @@ public class XmlTagBlock extends AbstractXmlBlock{
 
   }
 
+  protected boolean isTagListEnd(IElementType elementType) {
+    return false;
+  }
+
+  protected boolean isTagListStart(IElementType elementType) {
+    return false;
+  }
+
   protected boolean isJspResult(final ArrayList<Block> localResult) {
     return false;
   }
 
-  protected
+  @Override
   @Nullable
+  protected
   ASTNode processChild(List<Block> result, final ASTNode child, final Wrap wrap, final Alignment alignment, final Indent indent) {
     IElementType type = child.getElementType();
     if (type == XmlElementType.XML_TEXT) {
@@ -160,6 +187,7 @@ public class XmlTagBlock extends AbstractXmlBlock{
            : Indent.getNoneIndent();
   }
 
+  @Override
   public Indent getIndent() {
     return myIndent;
   }
@@ -174,7 +202,7 @@ public class XmlTagBlock extends AbstractXmlBlock{
                                       final Alignment alignment
   ) {
     while (child != null) {
-      if (!XmlBlock.containsWhiteSpacesOnly(child) && child.getTextLength() > 0){
+      if (!AbstractXmlBlock.containsWhiteSpacesOnly(child) && child.getTextLength() > 0){
         final Indent indent = getChildrenIndent();
         child = processChild(list,child,  wrap, alignment, indent);
         if (child == null) return child;
@@ -203,6 +231,7 @@ public class XmlTagBlock extends AbstractXmlBlock{
     return createSyntheticBlock(localResult, null);
   }
 
+  @Override
   public Spacing getSpacing(Block child1, @NotNull Block child2) {
     if (isPreserveSpace()) return Spacing.getReadOnlySpacing();
     if(child1 instanceof AbstractSyntheticBlock && child2 instanceof AbstractSyntheticBlock) {
@@ -291,14 +320,22 @@ public class XmlTagBlock extends AbstractXmlBlock{
     }
   }
 
+  @Override
   public boolean insertLineBreakBeforeTag() {
     return myXmlFormattingPolicy.insertLineBreakBeforeTag(getTag());
   }
 
+  @Override
+  public int getBlankLinesBeforeTag() {
+    return myXmlFormattingPolicy.getBlankLinesBeforeTag(getTag());
+  }
+
+  @Override
   public boolean removeLineBreakBeforeTag() {
     return myXmlFormattingPolicy.removeLineBreakBeforeTag(getTag());
   }
 
+  @Override
   public boolean isTextElement() {
     return myXmlFormattingPolicy.isTextElement(getTag());
   }

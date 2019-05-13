@@ -1,0 +1,97 @@
+package pkg;
+
+class TestSyntheticAccess {
+   private static int s;
+   private int i;
+
+   private class Assigner {
+      void assignI(int var1) {
+         TestSyntheticAccess.this.i = var1;// 32
+      }// 33
+
+      void assignS(int var1) {
+         TestSyntheticAccess.s = var1;// 36
+      }// 37
+   }
+
+   private class Incrementer {
+      void orI() {
+         TestSyntheticAccess.this.i = TestSyntheticAccess.this.i | 1;// 10
+      }// 11
+
+      void incrementI() {
+         TestSyntheticAccess.this.i++;// 14
+      }// 15
+
+      void decrementI() {
+         --TestSyntheticAccess.this.i;// 18
+      }// 19
+
+      void incrementS() {
+         ++TestSyntheticAccess.s;// 22
+      }// 23
+
+      void decrementS() {
+         TestSyntheticAccess.s--;// 26
+      }// 27
+   }
+}
+
+class 'pkg/TestSyntheticAccess$Assigner' {
+   method 'assignI (I)V' {
+      5      8
+      9      9
+   }
+
+   method 'assignS (I)V' {
+      1      12
+      5      13
+   }
+}
+
+class 'pkg/TestSyntheticAccess$Incrementer' {
+   method 'orI ()V' {
+      8      18
+      b      18
+      d      18
+      11      19
+   }
+
+   method 'incrementI ()V' {
+      2      22
+      4      22
+      8      23
+   }
+
+   method 'decrementI ()V' {
+      2      26
+      4      26
+      8      27
+   }
+
+   method 'incrementS ()V' {
+      0      30
+      4      31
+   }
+
+   method 'decrementS ()V' {
+      0      34
+      4      35
+   }
+}
+
+Lines mapping:
+10 <-> 19
+11 <-> 20
+14 <-> 23
+15 <-> 24
+18 <-> 27
+19 <-> 28
+22 <-> 31
+23 <-> 32
+26 <-> 35
+27 <-> 36
+32 <-> 9
+33 <-> 10
+36 <-> 13
+37 <-> 14

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,11 +16,9 @@
 package com.intellij.codeInsight.daemon.quickFix;
 
 import com.intellij.codeInsight.CodeInsightBundle;
-import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -36,7 +34,7 @@ class RenameFileReferenceIntentionAction implements IntentionAction, LocalQuickF
   private final String myExistingElementName;
   private final FileReference myFileReference;
 
-  public RenameFileReferenceIntentionAction(final String existingElementName, final FileReference fileReference) {
+  RenameFileReferenceIntentionAction(final String existingElementName, final FileReference fileReference) {
     myExistingElementName = existingElementName;
     myFileReference = fileReference;
   }
@@ -62,12 +60,7 @@ class RenameFileReferenceIntentionAction implements IntentionAction, LocalQuickF
   @Override
   public void applyFix(@NotNull final Project project, @NotNull final ProblemDescriptor descriptor) {
     if (isAvailable(project, null, null)) {
-      new WriteCommandAction(project) {
-        @Override
-        protected void run(Result result) throws Throwable {
-          invoke(project, null, descriptor.getPsiElement().getContainingFile());
-        }
-      }.execute();
+      WriteCommandAction.writeCommandAction(project).run(() -> invoke(project, null, descriptor.getPsiElement().getContainingFile()));
     }
   }
 
@@ -78,7 +71,6 @@ class RenameFileReferenceIntentionAction implements IntentionAction, LocalQuickF
 
   @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-    if (!CodeInsightUtilBase.prepareFileForWrite(file)) return;
     myFileReference.handleElementRename(myExistingElementName);
   }
 

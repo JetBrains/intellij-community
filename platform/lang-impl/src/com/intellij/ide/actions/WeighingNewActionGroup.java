@@ -16,6 +16,7 @@
 package com.intellij.ide.actions;
 
 import com.intellij.openapi.actionSystem.*;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author peter
@@ -23,6 +24,7 @@ import com.intellij.openapi.actionSystem.*;
 public class WeighingNewActionGroup extends WeighingActionGroup {
   private ActionGroup myDelegate;
 
+  @Override
   protected ActionGroup getDelegate() {
     if (myDelegate == null) {
       myDelegate = (ActionGroup)ActionManager.getInstance().getAction(IdeActions.GROUP_NEW);
@@ -38,7 +40,7 @@ public class WeighingNewActionGroup extends WeighingActionGroup {
   }
 
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     super.update(e);
     e.getPresentation().setText(getTemplatePresentation().getText());
   }

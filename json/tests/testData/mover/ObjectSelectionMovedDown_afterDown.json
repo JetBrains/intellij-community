@@ -1,0 +1,10 @@
+{
+  "foo": false,
+  "quux": null,
+  "bar": 42,
+  "baz": [
+    1,
+    2,
+    3
+  ]
+}

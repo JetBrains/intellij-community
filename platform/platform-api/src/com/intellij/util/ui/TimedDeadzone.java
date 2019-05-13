@@ -15,62 +15,42 @@
  */
 package com.intellij.util.ui;
 
-import com.intellij.util.Alarm;
 import org.jetbrains.annotations.NotNull;
 
-public final class TimedDeadzone {
+import java.awt.event.MouseEvent;
 
+public final class TimedDeadzone {
   public static final Length DEFAULT = new Length(150);
   public static final Length NULL = new Length(-1);
   
-  private Alarm myAlarm;
   private Length myLength = NULL;
-
-  private boolean myWithin;
-
-  private final Runnable myClear = new Runnable() {
-    public void run() {
-      clear();
-    }
-  };
-
-  public TimedDeadzone(Length zoneLength, Alarm.ThreadToUse thread) {
-    myLength = zoneLength;
-    myAlarm = new Alarm(thread);
-  }
+  private boolean myMouseWithin;
+  private long myTimeEntered = -1;
 
   public TimedDeadzone(Length zoneLength) {
-    this(zoneLength, Alarm.ThreadToUse.SWING_THREAD);
+    myLength = zoneLength;
   }
 
   public int getLength() {
     return myLength.getLength();
   }
 
-  public void enter() {
-    if (!isWithin()) {
-      reEnter();
-    }
-  }
-
-  public void reEnter() {
-    if (myLength == NULL) {
-      clear();
+  public void enter(MouseEvent e) {
+    if (myMouseWithin) {
       return;
     }
 
-    myAlarm.cancelAllRequests();
-    myWithin = true;
-    myAlarm.addRequest(myClear, getLength());
+    myTimeEntered = e.getWhen();
+    myMouseWithin = true;
   }
 
   public void clear() {
-    myAlarm.cancelAllRequests();
-    myWithin = false;
+    myMouseWithin = false;
   }
 
   public boolean isWithin() {
-    return myWithin;
+    long now = System.currentTimeMillis();
+    return myMouseWithin && now > myTimeEntered && now - myTimeEntered < getLength();
   }
 
   public void setLength(@NotNull final Length deadZone) {

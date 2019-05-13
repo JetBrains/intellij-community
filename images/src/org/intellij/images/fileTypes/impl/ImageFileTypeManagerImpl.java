@@ -15,8 +15,10 @@
  */
 package org.intellij.images.fileTypes.impl;
 
-import com.intellij.openapi.components.ApplicationComponent;
-import com.intellij.openapi.fileTypes.*;
+import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.FileTypeConsumer;
+import com.intellij.openapi.fileTypes.UserBinaryFileType;
+import com.intellij.openapi.fileTypes.UserFileType;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import gnu.trove.THashSet;
@@ -24,67 +26,53 @@ import icons.ImagesIcons;
 import org.intellij.images.ImagesBundle;
 import org.intellij.images.fileTypes.ImageFileTypeManager;
 import org.intellij.images.vfs.IfsUtil;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.imageio.ImageIO;
+import javax.swing.*;
+import java.util.Locale;
 import java.util.Set;
 
 /**
  * Image file type manager.
- *
- * @author <a href="mailto:aefimov.box@gmail.com">Alexey Efimov</a>
  */
-final class ImageFileTypeManagerImpl extends ImageFileTypeManager implements ApplicationComponent {
-  @NonNls private static final String NAME = "ImagesFileTypeManager";
-
-  @NonNls private static final String IMAGE_FILE_TYPE_NAME = "Images";
+final class ImageFileTypeManagerImpl extends ImageFileTypeManager {
+  private static final String IMAGE_FILE_TYPE_NAME = "Image";
   private static final String IMAGE_FILE_TYPE_DESCRIPTION = ImagesBundle.message("images.filetype.description");
-  private static final UserFileType imageFileType;
+  private static final UserFileType IMAGE_FILE_TYPE = new ImageFileType();
 
-  static {
-    imageFileType = new ImageFileType();
-    imageFileType.setIcon(ImagesIcons.ImagesFileType);
-    imageFileType.setName(IMAGE_FILE_TYPE_NAME);
-    imageFileType.setDescription(IMAGE_FILE_TYPE_DESCRIPTION);
+  @Override
+  public boolean isImage(@NotNull VirtualFile file) {
+    return file.getFileType() == IMAGE_FILE_TYPE || file.getFileType() instanceof SvgFileType;
   }
 
-  public ImageFileTypeManagerImpl() {
-  }
-
-  public boolean isImage(VirtualFile file) {
-    return file.getFileType() instanceof ImageFileType;
-  }
-
-  public FileType getImageFileType() {
-    return imageFileType;
-  }
-
+  @Override
   @NotNull
-  public String getComponentName() {
-    return NAME;
-  }
-
-  public void initComponent() {
-  }
-
-  public void disposeComponent() {
+  public FileType getImageFileType() {
+    return IMAGE_FILE_TYPE;
   }
 
   public static final class ImageFileType extends UserBinaryFileType {
-  }
-
-  public void createFileTypes(final @NotNull FileTypeConsumer consumer) {
-    final Set<String> processed = new THashSet<String>();
-
-    final String[] readerFormatNames = ImageIO.getReaderFormatNames();
-    for (String format : readerFormatNames) {
-      final String ext = format.toLowerCase();
-      processed.add(ext);
+    private ImageFileType() {
+      setName(IMAGE_FILE_TYPE_NAME);
+      setDescription(IMAGE_FILE_TYPE_DESCRIPTION);
     }
 
-    processed.add(IfsUtil.ICO_FORMAT.toLowerCase());
+    @Override
+    public Icon getIcon() {
+      return ImagesIcons.ImagesFileType;
+    }
+  }
 
-    consumer.consume(imageFileType, StringUtil.join(processed, FileTypeConsumer.EXTENSION_DELIMITER));
+  @Override
+  public void createFileTypes(final @NotNull FileTypeConsumer consumer) {
+    final Set<String> processed = new THashSet<>();
+    for (String format : ImageIO.getReaderFormatNames()) {
+      processed.add(format.toLowerCase(Locale.ENGLISH));
+    }
+    processed.add(IfsUtil.ICO_FORMAT.toLowerCase(Locale.ENGLISH));
+
+    consumer.consume(IMAGE_FILE_TYPE, StringUtil.join(processed, FileTypeConsumer.EXTENSION_DELIMITER));
+    consumer.consume(SvgFileType.INSTANCE, "svg");
   }
 }

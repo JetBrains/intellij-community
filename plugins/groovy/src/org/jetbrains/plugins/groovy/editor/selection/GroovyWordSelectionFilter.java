@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,15 +17,16 @@ package org.jetbrains.plugins.groovy.editor.selection;
 
 import com.intellij.openapi.util.Condition;
 import com.intellij.psi.PsiElement;
-import org.jetbrains.plugins.groovy.GroovyFileType;
+import org.jetbrains.plugins.groovy.GroovyLanguage;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 
 /**
  * @author Maxim.Medvedev
  */
 public class GroovyWordSelectionFilter implements Condition<PsiElement> {
+  @Override
   public boolean value(PsiElement element) {
-return !(element instanceof GroovyPsiElement || element.getLanguage() == GroovyFileType.GROOVY_LANGUAGE);
+return !(element instanceof GroovyPsiElement || element.getLanguage() == GroovyLanguage.INSTANCE);
 /*    final ASTNode node = element.getNode();
     if (node == null) return false;
 

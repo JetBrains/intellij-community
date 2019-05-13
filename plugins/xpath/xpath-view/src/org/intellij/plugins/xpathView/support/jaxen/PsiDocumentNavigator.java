@@ -19,15 +19,16 @@ import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiWhiteSpace;
+import com.intellij.psi.XmlRecursiveElementVisitor;
 import com.intellij.psi.xml.*;
 import com.intellij.xml.XmlAttributeDescriptor;
 import org.intellij.plugins.xpathView.util.MyPsiUtil;
 import org.jaxen.DefaultNavigator;
-import org.jaxen.FunctionCallException;
-import org.jaxen.UnsupportedAxisException;
 import org.jaxen.XPath;
 import org.jaxen.saxpath.SAXPathException;
 import org.jetbrains.annotations.NotNull;
@@ -48,28 +49,23 @@ public class PsiDocumentNavigator extends DefaultNavigator {
         this.file = file;
     }
 
-    public Iterator getChildAxisIterator(Object contextNode) throws UnsupportedAxisException {
-        if (LOG.isDebugEnabled()) {
-            LOG.debug("enter: getChildAxisIterator " + contextNode);
-        }
-
+    @Override
+    public Iterator getChildAxisIterator(Object contextNode) {
         if (!(contextNode instanceof XmlElement)) {
-            return Collections.emptyList().iterator();
+            return Collections.emptyIterator();
         }
         return new PsiChildAxisIterator(contextNode);
     }
 
 
+    @Override
     public Iterator getParentAxisIterator(Object contextNode) {
-        if (LOG.isDebugEnabled()) {
-            LOG.debug("enter: getParentAxisIterator " + contextNode);
-        }
-
         if (!(contextNode instanceof XmlElement)) {
-            return Collections.emptyList().iterator();
+            return Collections.emptyIterator();
         }
 
         return new NodeIterator((XmlElement)contextNode) {
+            @Override
             protected PsiElement getFirstNode(PsiElement n) {
                 while (n != null) {
                     n = n.getParent();
@@ -80,6 +76,7 @@ public class PsiDocumentNavigator extends DefaultNavigator {
                 return null;
             }
 
+            @Override
             protected PsiElement getNextNode(PsiElement n) {
                 return null;
             }
@@ -87,18 +84,8 @@ public class PsiDocumentNavigator extends DefaultNavigator {
     }
 
 
-    public Iterator getNamespaceAxisIterator(Object contextNode) throws UnsupportedAxisException {
-        if (LOG.isDebugEnabled()) {
-            LOG.debug("enter: getNamespaceAxisIterator()");
-        }
-
-        // TODO
-        return super.getNamespaceAxisIterator(contextNode);
-    }
-
-    public Object getDocumentNode(Object contextNode) {
-        LOG.debug("enter: getDocumentNode");
-
+  @Override
+  public Object getDocumentNode(Object contextNode) {
         if (contextNode instanceof XmlDocument) {
             return contextNode;
         }
@@ -113,18 +100,16 @@ public class PsiDocumentNavigator extends DefaultNavigator {
         return null;
     }
 
+    @Override
     public String translateNamespacePrefixToUri(String prefix, Object element) {
-        if (LOG.isDebugEnabled()) {
-            LOG.debug("enter: translateNamespacePrefixToUri()");
-        }
         if (isElement(element)) {
             return ((XmlTag)element).getNamespaceByPrefix(prefix);
         }
         return super.translateNamespacePrefixToUri(prefix, element);
     }
 
+    @Override
     public String getProcessingInstructionTarget(Object obj) {
-        LOG.debug("enter: getProcessingInstructionTarget");
         LOG.assertTrue(obj instanceof XmlProcessingInstruction);
 
         XmlProcessingInstruction pi = (XmlProcessingInstruction)obj;
@@ -145,37 +130,29 @@ public class PsiDocumentNavigator extends DefaultNavigator {
             text = text.substring(i);
         }
 
-        if (LOG.isDebugEnabled()) {
-          LOG.debug("Target: " + text);
-        }
         return text;
     }
 
+    @Override
     @NotNull
     public String getProcessingInstructionData(Object obj) {
-        LOG.debug("enter: getProcessingInstructionData");
         LOG.assertTrue(obj instanceof XmlProcessingInstruction);
 
         XmlProcessingInstruction pi = (XmlProcessingInstruction)obj;
         int targetLength = getProcessingInstructionTarget(obj).length();
         int piLength= pi.getText().length();
-
-        final String s = pi.getText().substring(2 + targetLength, piLength - 2).trim();
-        if (LOG.isDebugEnabled()) {
-          LOG.debug("Data: " + s);
-        }
-        return s;
+        return pi.getText().substring(2 + targetLength, piLength - 2).trim();
     }
 
-    public Object getParentNode(Object contextNode) throws UnsupportedAxisException {
+    @Override
+    public Object getParentNode(Object contextNode) {
         return ((PsiElement)contextNode).getParent();
     }
 
-    public Object getDocument(String url) throws FunctionCallException {
-        LOG.debug("enter: getDocument: " + url);
-        final VirtualFile virtualFile = VfsUtil.findRelativeFile(url, file.getVirtualFile());
+    @Override
+    public Object getDocument(String url) {
+        final VirtualFile virtualFile = VfsUtilCore.findRelativeFile(url, file.getVirtualFile());
         if (virtualFile != null) {
-            LOG.debug("document() -> VirtualFile = " + virtualFile.getPath());
             final PsiFile file = this.file.getManager().findFile(virtualFile);
             if (file instanceof XmlFile) {
                 return ((XmlFile)file).getDocument();
@@ -184,52 +161,40 @@ public class PsiDocumentNavigator extends DefaultNavigator {
         return null;
     }
 
+    @Override
     public Iterator getAttributeAxisIterator(Object contextNode) {
         if (isElement(contextNode)) {
             return new AttributeIterator((XmlElement)contextNode);
         } else {
-            return Collections.emptyList().iterator();
+            return Collections.emptyIterator();
         }
     }
 
+    @Override
     public String getElementNamespaceUri(Object element) {
         LOG.assertTrue(element instanceof XmlTag);
 
         final XmlTag context = (XmlTag)element;
         final String namespaceUri = context.getNamespace();
         if (!MyPsiUtil.isInDeclaredNamespace(context, namespaceUri, context.getNamespacePrefix())) {
-          if (LOG.isDebugEnabled()) {
-            LOG.debug("getElementNamespaceUri: not returning implicit namespace uri: " + namespaceUri);
-          }
           return "";
         }
-        if (LOG.isDebugEnabled()) {
-            LOG.debug("enter: getElementNamespaceUri: " + namespaceUri);
-        }
-
         return namespaceUri;
     }
 
+    @Override
     public String getElementName(Object element) {
         LOG.assertTrue(element instanceof XmlTag);
-
-        final String name = ((XmlTag)element).getLocalName();
-        if (LOG.isDebugEnabled()) {
-            LOG.debug("getElementName: " + name);
-        }
-        return name;
+        return ((XmlTag)element).getLocalName();
     }
 
+    @Override
     public String getElementQName(Object element) {
         LOG.assertTrue(element instanceof XmlTag);
-
-        if (LOG.isDebugEnabled()) {
-            LOG.debug("enter: getElementQName: " + ((XmlTag)element).getName());
-        }
-
         return ((XmlTag)element).getName();
     }
 
+    @Override
     public String getAttributeNamespaceUri(Object attr) {
         LOG.assertTrue(attr instanceof XmlAttribute);
 
@@ -242,46 +207,29 @@ public class PsiDocumentNavigator extends DefaultNavigator {
             LOG.info("getElementNamespaceUri: not returning implicit attribute-namespace uri: " + uri);
             return "";
         }
-        if (LOG.isDebugEnabled()) {
-            LOG.debug("getAttributeNamespaceUri: " + uri);
-        }
         return uri;
     }
 
+    @Override
     public String getAttributeName(Object attr) {
         LOG.assertTrue(attr instanceof XmlAttribute);
-
-        final String name = ((XmlAttribute)attr).getLocalName();
-        if (LOG.isDebugEnabled()) {
-            LOG.debug("getAttributeName: " + name);
-        }
-        return name;
+        return ((XmlAttribute)attr).getLocalName();
     }
 
+    @Override
     public String getAttributeQName(Object attr) {
         LOG.assertTrue(attr instanceof XmlAttribute);
-
-        if (LOG.isDebugEnabled()) {
-            LOG.debug("enter: getAttributeQName");
-        }
-
         return ((XmlAttribute)attr).getName();
     }
 
+    @Override
     public boolean isDocument(Object object) {
-        final boolean b = object instanceof XmlDocument;
-        if (LOG.isDebugEnabled()) {
-            LOG.debug("enter: isDocument(): " + object + " = " + b);
-        }
-        return b;
+        return object instanceof XmlDocument;
     }
 
+    @Override
     public boolean isElement(Object object) {
-        final boolean b = object instanceof XmlTag;
-        if (LOG.isDebugEnabled()) {
-            LOG.debug("enter: isElement(): " + object + " = " + b);
-        }
-        return b && isSupportedElement((XmlTag)object);
+        return object instanceof XmlTag && isSupportedElement((XmlTag)object);
     }
 
     private static boolean isSupportedElement(XmlTag object) {
@@ -289,58 +237,36 @@ public class PsiDocumentNavigator extends DefaultNavigator {
         return object.getLanguage() == XMLLanguage.INSTANCE || MyPsiUtil.findNameElement(object) != null;
     }
 
+    @Override
     public boolean isAttribute(Object object) {
-        final boolean b = object instanceof XmlAttribute;
-        if (LOG.isDebugEnabled()) {
-            LOG.debug("enter: isAttribute(): "  + object + " = " + b);
-        }
-        return b;
+        return object instanceof XmlAttribute;
     }
 
+    @Override
     public boolean isNamespace(Object object) {
-        if (LOG.isDebugEnabled()) {
-            LOG.debug("enter: isNamespace(): "  + object);
-        }
         // TODO: implement when namespace axis is supported
         return false;
     }
 
+    @Override
     public boolean isComment(Object object) {
-        final boolean b = object instanceof XmlComment;
-        if (LOG.isDebugEnabled()) {
-            LOG.debug("enter: isComment():"  + object + " = " + b);
-        }
-        return b;
+        return object instanceof XmlComment;
     }
 
+    @Override
     public boolean isText(Object object) {
-        final boolean b;
-        if (object instanceof PsiWhiteSpace) {
-            b = ((PsiWhiteSpace)object).getParent() instanceof XmlText;
-        } else {
-            b = object instanceof XmlText;
-        }
-        if (LOG.isDebugEnabled()) {
-            LOG.debug("enter: isText():" + object + " = " + b);
-        }
-        return b;
+        return object instanceof PsiWhiteSpace ? ((PsiWhiteSpace)object).getParent() instanceof XmlText : object instanceof XmlText;
     }
 
+    @Override
     public boolean isProcessingInstruction(Object object) {
-        final boolean b = object instanceof XmlProcessingInstruction;
-        if (LOG.isDebugEnabled()) {
-            LOG.debug("enter: isProcessingInstruction(): "  + object + " = " + b);
-        }
-        return b;
+        return object instanceof XmlProcessingInstruction;
     }
 
+    @Override
     @NotNull
     public String getCommentStringValue(Object comment) {
         LOG.assertTrue(comment instanceof XmlComment);
-
-        if (LOG.isDebugEnabled()) {
-            LOG.debug("enter: getCommentStringValue()");
-        }
 
         PsiElement c = (PsiElement)comment;
         final PsiElement[] children = c.getChildren();
@@ -352,46 +278,38 @@ public class PsiDocumentNavigator extends DefaultNavigator {
         return "";
     }
 
+    @Override
     @NotNull
     public String getElementStringValue(Object element) {
         LOG.assertTrue(element instanceof XmlTag);
-
-        if (LOG.isDebugEnabled()) {
-            LOG.debug("enter: getElementStringValue()");
-        }
 
         final TextCollector collector = new TextCollector();
         ((XmlTag)element).accept(collector);
         return collector.getText();
     }
 
+    @Override
     @NotNull
     public String getAttributeStringValue(Object attr) {
         LOG.assertTrue(attr instanceof XmlAttribute);
         return StringUtil.notNullize(((XmlAttribute)attr).getValue());
     }
 
+    @Override
     public String getNamespaceStringValue(Object ns) {
-        if (LOG.isDebugEnabled()) {
-            LOG.debug("enter: getNamespaceStringValue");
-            LOG.debug("ns = " + ns);
-        }
         // TODO: implement when namespace axis is supported
         return null;
     }
 
+    @Override
     public String getNamespacePrefix(Object ns) {
-        if (LOG.isDebugEnabled()) {
-            LOG.debug("enter: getNamespacePrefix");
-            LOG.debug("ns = " + ns);
-        }
         // TODO: implement when namespace axis is supported
         return null;
     }
 
+    @Override
     @NotNull
     public String getTextStringValue(Object txt) {
-        LOG.debug("enter: getTextStringValue");
 
         if (txt instanceof XmlText) {
           return ((XmlText)txt).getValue();
@@ -399,21 +317,19 @@ public class PsiDocumentNavigator extends DefaultNavigator {
         return txt instanceof PsiElement ? ((PsiElement)txt).getText() : txt.toString();
     }
 
+    @Override
     public XPath parseXPath(String xpath) throws SAXPathException {
         return new PsiXPath(file, xpath);
     }
 
+    @Override
     public Object getElementById(Object object, final String elementId) {
-      if (LOG.isDebugEnabled()) {
-        LOG.debug("enter: getElementById: " + object + " -- " + elementId);
-      }
-
       final XmlTag rootTag = ((XmlFile)((XmlElement)object).getContainingFile()).getRootTag();
       if (rootTag == null) {
         return null;
       }
 
-      final Ref<XmlTag> ref = new Ref<XmlTag>();
+      final Ref<XmlTag> ref = new Ref<>();
       rootTag.accept(new XmlRecursiveElementVisitor() {
         @Override
         public void visitElement(PsiElement element) {

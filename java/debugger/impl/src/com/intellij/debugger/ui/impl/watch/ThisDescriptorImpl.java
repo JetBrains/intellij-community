@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,32 +25,26 @@ import com.intellij.psi.PsiExpression;
 import com.intellij.util.IncorrectOperationException;
 import com.sun.jdi.Value;
 
-/**
- * User: lex
- * Date: Oct 8, 2003
- * Time: 5:08:07 PM
- */
 public class ThisDescriptorImpl extends ValueDescriptorImpl{
 
   public ThisDescriptorImpl(Project project) {
     super(project);
   }
 
+  @Override
   public Value calcValue(EvaluationContextImpl evaluationContext) throws EvaluateException {
-    return evaluationContext != null? evaluationContext.getThisObject() : null;
+    return evaluationContext != null ? evaluationContext.computeThisObject() : null;
   }
 
+  @Override
   public String getName() {
     //noinspection HardCodedStringLiteral
-    return "this"; 
+    return "this";
   }
 
-  public String calcValueName() {
-    return getName();
-  }
-
+  @Override
   public PsiExpression getDescriptorEvaluation(DebuggerContext context) throws EvaluateException {
-    PsiElementFactory elementFactory = JavaPsiFacade.getInstance(context.getProject()).getElementFactory();
+    PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(myProject);
     try {
       return elementFactory.createExpressionFromText("this", null);
     }
@@ -59,6 +53,7 @@ public class ThisDescriptorImpl extends ValueDescriptorImpl{
     }
   }
 
+  @Override
   public boolean canSetValue() {
     return false;
   }

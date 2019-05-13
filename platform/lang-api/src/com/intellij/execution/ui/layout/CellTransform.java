@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,15 +34,14 @@ public interface CellTransform {
         myActions.add(restore);
       }
 
+      @Override
       public ActionCallback restoreInGrid() {
         myRestoringNow = true;
-        if (myActions.size() == 0) return new ActionCallback.Done();
+        if (myActions.size() == 0) return ActionCallback.DONE;
         final ActionCallback topCallback = restore(0);
-        return topCallback.doWhenDone(new Runnable() {
-          public void run() {
-            myActions.clear();
-            myRestoringNow = false;
-          }
+        return topCallback.doWhenDone(() -> {
+          myActions.clear();
+          myRestoringNow = false;
         });
       }
 
@@ -50,13 +49,11 @@ public interface CellTransform {
         final ActionCallback result = new ActionCallback();
         final Restore action = myActions.get(index);
         final ActionCallback actionCalback = action.restoreInGrid();
-        actionCalback.doWhenDone(new Runnable() {
-          public void run() {
-            if (index < myActions.size() - 1) {
-              restore(index + 1).notifyWhenDone(result);
-            } else {
-              result.setDone();
-            }
+        actionCalback.doWhenDone(() -> {
+          if (index < myActions.size() - 1) {
+            restore(index + 1).notifyWhenDone(result);
+          } else {
+            result.setDone();
           }
         });
 
@@ -73,5 +70,5 @@ public interface CellTransform {
   interface Facade {
     void minimize(Content content, Restore restore);
   }
- 
+
 }

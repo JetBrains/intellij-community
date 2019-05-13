@@ -1,4 +1,5 @@
 
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.uiDesigner.propertyInspector.editors;
 
 import java.lang.reflect.Method;
@@ -13,6 +14,7 @@ public final class PrimitiveTypeEditor<T> extends AbstractTextFieldEditor<T> {
     myClass = aClass;
   }
 
+  @Override
   public T getValue() throws Exception {
     try {
       final Method method = myClass.getMethod("valueOf", String.class);

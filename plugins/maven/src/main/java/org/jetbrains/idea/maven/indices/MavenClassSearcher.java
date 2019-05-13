@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package org.jetbrains.idea.maven.indices;
 
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import gnu.trove.THashMap;
@@ -33,10 +34,20 @@ import java.util.regex.PatternSyntaxException;
 public class MavenClassSearcher extends MavenSearcher<MavenClassSearchResult> {
   public static final String TERM = MavenServerIndexer.SEARCH_TERM_CLASS_NAMES;
 
+  @Override
+  protected List<MavenClassSearchResult> searchImpl(Project project, String pattern, int maxResult) {
+    Pair<String, Query> patternAndQuery = preparePatternAndQuery(pattern);
+
+    MavenProjectIndicesManager m = MavenProjectIndicesManager.getInstance(project);
+    Set<MavenArtifactInfo> infos = m.search(patternAndQuery.second, maxResult);
+
+    return new ArrayList<>(processResults(infos, patternAndQuery.first, maxResult));
+  }
+
   protected Pair<String, Query> preparePatternAndQuery(String pattern) {
     pattern = pattern.toLowerCase();
     if (pattern.trim().length() == 0) {
-      return new Pair<String, Query>(pattern, new MatchAllDocsQuery());
+      return new Pair<>(pattern, new MatchAllDocsQuery());
     }
 
     List<String> parts = StringUtil.split(pattern, ".");
@@ -56,7 +67,7 @@ public class MavenClassSearcher extends MavenSearcher<MavenClassSearchResult> {
     pattern = newPattern.toString();
     String queryPattern = "*/" + pattern.replaceAll("\\.", "/");
 
-    return new Pair<String, Query>(pattern, new WildcardQuery(new Term(TERM, queryPattern)));
+    return new Pair<>(pattern, new WildcardQuery(new Term(TERM, queryPattern)));
   }
 
   protected Collection<MavenClassSearchResult> processResults(Set<MavenArtifactInfo> infos, String pattern, int maxResult) {
@@ -86,7 +97,7 @@ public class MavenClassSearcher extends MavenSearcher<MavenClassSearchResult> {
       return Collections.emptyList();
     }
 
-    Map<String, MavenClassSearchResult> result = new THashMap<String, MavenClassSearchResult>();
+    Map<String, MavenClassSearchResult> result = new THashMap<>();
     for (MavenArtifactInfo each : infos) {
       if (each.getClassNames() == null) continue;
 
@@ -94,7 +105,7 @@ public class MavenClassSearcher extends MavenSearcher<MavenClassSearchResult> {
       while (matcher.find()) {
         String classFQName = matcher.group(1);
         classFQName = classFQName.replace("/", ".");
-        if (classFQName.startsWith(".")) classFQName = classFQName.substring(1);
+        classFQName = StringUtil.trimStart(classFQName, ".");
 
         String key = makeKey(classFQName, each);
 

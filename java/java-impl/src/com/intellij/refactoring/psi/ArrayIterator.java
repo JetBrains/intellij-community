@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,7 +20,7 @@ import java.util.NoSuchElementException;
 
 class ArrayIterator<T> implements Iterator<T>{
     private final T[] contents;
-    private int currentIndex = 0;
+    private int currentIndex;
     private final Object lock = new Object();
 
     ArrayIterator(T[] contents){
@@ -28,12 +28,14 @@ class ArrayIterator<T> implements Iterator<T>{
         this.contents = contents.clone();
     }
 
+    @Override
     public boolean hasNext(){
         synchronized(lock){
             return currentIndex < contents.length;
         }
     }
 
+    @Override
     public T next(){
         synchronized(lock){
             if(currentIndex >= contents.length){
@@ -45,6 +47,7 @@ class ArrayIterator<T> implements Iterator<T>{
         }
     }
 
+    @Override
     public void remove(){
 
     }

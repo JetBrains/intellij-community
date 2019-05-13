@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,33 +15,15 @@
  */
 package com.intellij.codeInsight.template.impl.editorActions;
 
-import com.intellij.codeInsight.template.TemplateManager;
-import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
 import com.intellij.codeInsight.template.impl.TemplateSettings;
-import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actionSystem.EditorAction;
-import com.intellij.openapi.editor.actionSystem.EditorWriteActionHandler;
-import com.intellij.openapi.project.Project;
 
 /**
  * @author peter
  */
 public class ExpandLiveTemplateByTabAction extends EditorAction {
   public ExpandLiveTemplateByTabAction() {
-    super(new EditorWriteActionHandler() {
-      @Override
-      public void executeWriteAction(Editor editor, DataContext dataContext) {
-        Project project = editor.getProject();
-        TemplateManager.getInstance(project).startTemplate(editor, TemplateSettings.TAB_CHAR);
-      }
-
-      @Override
-      public boolean isEnabled(Editor editor, DataContext dataContext) {
-        Project project = editor.getProject();
-        return project != null &&
-               ((TemplateManagerImpl)TemplateManager.getInstance(project)).prepareTemplate(editor, TemplateSettings.TAB_CHAR, null) != null;
-      }
-    });
+    super(ExpandLiveTemplateCustomAction.createExpandTemplateHandler(TemplateSettings.TAB_CHAR));
+    setInjectedContext(true);
   }
 }

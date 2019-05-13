@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,9 @@
  */
 package com.intellij.refactoring.makeStatic;
 
+import com.intellij.codeInsight.AnnotationUtil;
+import com.intellij.codeInsight.TestFrameworks;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -23,32 +26,101 @@ import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.refactoring.changeSignature.JavaChangeInfoImpl;
+import com.intellij.refactoring.changeSignature.JavaChangeSignatureUsageProcessor;
+import com.intellij.refactoring.changeSignature.ParameterInfoImpl;
+import com.intellij.refactoring.changeSignature.ThrownExceptionInfo;
+import com.intellij.refactoring.changeSignature.inCallers.JavaCallerChooser;
+import com.intellij.refactoring.util.CanonicalTypes;
+import com.intellij.refactoring.util.LambdaRefactoringUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.refactoring.util.javadoc.MethodJavaDocHelper;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.VisibilityUtil;
+import com.intellij.util.containers.MultiMap;
+import com.intellij.util.ui.tree.TreeUtil;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 
 /**
  * @author dsl
  */
 public class MakeMethodStaticProcessor extends MakeMethodOrClassStaticProcessor<PsiMethod> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.makeMethodStatic.MakeMethodStaticProcessor");
+  private List<PsiMethod> myAdditionalMethods;
 
   public MakeMethodStaticProcessor(final Project project, final PsiMethod method, final Settings settings) {
     super(project, method, settings);
   }
 
+  @Override
+  protected boolean findAdditionalMembers(final Set<UsageInfo> toMakeStatic) {
+    if (!toMakeStatic.isEmpty()) {
+      myAdditionalMethods = new ArrayList<>();
+      if (ApplicationManager.getApplication().isUnitTestMode()) {
+        for (UsageInfo usageInfo : toMakeStatic) {
+          myAdditionalMethods.add((PsiMethod)usageInfo.getElement());
+        }
+      }
+      else {
+        final JavaCallerChooser chooser = new MakeStaticJavaCallerChooser(myMember, myProject,
+                                                                          methods -> myAdditionalMethods.addAll(methods)) {
+          @Override
+          protected ArrayList<UsageInfo> getTopLevelItems() {
+            return new ArrayList<>(toMakeStatic);
+          }
+        };
+        TreeUtil.expand(chooser.getTree(), 2);
+        if (!chooser.showAndGet()) {
+          return false;
+        }
+      }
+    }
+    return true;
+  }
+
+  @Override
+  protected MultiMap<PsiElement, String> getConflictDescriptions(UsageInfo[] usages) {
+    MultiMap<PsiElement, String> descriptions = super.getConflictDescriptions(usages);
+    for (UsageInfo usage : usages) {
+      PsiElement element = usage.getElement();
+      if (element instanceof PsiMethodReferenceExpression && needLambdaConversion((PsiMethodReferenceExpression)element)) {
+        descriptions.putValue(element, "Method reference will be converted to lambda");
+      }
+    }
+    return descriptions;
+  }
+
+  @Override
   protected void changeSelfUsage(SelfUsageInfo usageInfo) throws IncorrectOperationException {
-    PsiElement parent = usageInfo.getElement().getParent();
-    LOG.assertTrue(parent instanceof PsiMethodCallExpression);
+    PsiElement element = usageInfo.getElement();
+    PsiElement parent = element.getParent();
+    if (element instanceof PsiMethodReferenceExpression) {
+      if (needLambdaConversion((PsiMethodReferenceExpression)element)) {
+        PsiMethodCallExpression methodCallExpression = getMethodCallExpression((PsiMethodReferenceExpression)element);
+        if (methodCallExpression == null) return;
+        parent = methodCallExpression;
+      }
+      else {
+        PsiElementFactory factory = JavaPsiFacade.getElementFactory(parent.getProject());
+        PsiClass memberClass = myMember.getContainingClass();
+        LOG.assertTrue(memberClass != null);
+        PsiElement qualifier = ((PsiMethodReferenceExpression)element).getQualifier();
+        LOG.assertTrue(qualifier != null);
+        qualifier.replace(factory.createReferenceExpression(memberClass));
+        return;
+      }
+    }
+    LOG.assertTrue(parent instanceof PsiMethodCallExpression, parent);
     PsiMethodCallExpression methodCall = (PsiMethodCallExpression) parent;
     final PsiExpression qualifier = methodCall.getMethodExpression().getQualifierExpression();
     if (qualifier != null) qualifier.delete();
 
-    PsiElementFactory factory = JavaPsiFacade.getInstance(methodCall.getProject()).getElementFactory();
+    PsiElementFactory factory = JavaPsiFacade.getElementFactory(methodCall.getProject());
     PsiExpressionList args = methodCall.getArgumentList();
     PsiElement addParameterAfter = null;
 
@@ -71,17 +143,53 @@ public class MakeMethodStaticProcessor extends MakeMethodOrClassStaticProcessor<
     }
   }
 
+  @Override
   protected void changeSelf(PsiElementFactory factory, UsageInfo[] usages)
           throws IncorrectOperationException {
     final MethodJavaDocHelper javaDocHelper = new MethodJavaDocHelper(myMember);
     PsiParameterList paramList = myMember.getParameterList();
     PsiElement addParameterAfter = null;
     PsiDocTag anchor = null;
-    List<PsiType> addedTypes = new ArrayList<PsiType>();
+    List<PsiType> addedTypes = new ArrayList<>();
+
+    final PsiClass containingClass = myMember.getContainingClass();
+    LOG.assertTrue(containingClass != null);
+
+    if (mySettings.isDelegate()) {
+      List<ParameterInfoImpl> params = new ArrayList<>();
+      PsiParameter[] parameters = myMember.getParameterList().getParameters();
+
+      if (mySettings.isMakeClassParameter()) {
+        params.add(new ParameterInfoImpl(-1, mySettings.getClassParameterName(),
+                                         factory.createType(containingClass, PsiSubstitutor.EMPTY), "this"));
+      }
+
+      if (mySettings.isMakeFieldParameters()) {
+        for (Settings.FieldParameter parameter : mySettings.getParameterOrderList()) {
+          params.add(new ParameterInfoImpl(-1, mySettings.getClassParameterName(), parameter.type, parameter.field.getName()));
+        }
+      }
+
+      for (int i = 0; i < parameters.length; i++) {
+        params.add(new ParameterInfoImpl(i));
+      }
+
+      final PsiType returnType = myMember.getReturnType();
+      LOG.assertTrue(returnType != null);
+      JavaChangeSignatureUsageProcessor.generateDelegate(new JavaChangeInfoImpl(VisibilityUtil.getVisibilityModifier(myMember.getModifierList()),
+                                                                                myMember,
+                                                                                myMember.getName(),
+                                                                                CanonicalTypes.createTypeWrapper(returnType),
+                                                                                params.toArray(new ParameterInfoImpl[0]),
+                                                                                new ThrownExceptionInfo[0],
+                                                                                false,
+                                                                                Collections.emptySet(),
+                                                                                Collections.emptySet()));
+    }
 
     if (mySettings.isMakeClassParameter()) {
       // Add parameter for object
-      PsiType parameterType = factory.createType(myMember.getContainingClass(), PsiSubstitutor.EMPTY);
+      PsiType parameterType = factory.createType(containingClass, PsiSubstitutor.EMPTY);
       addedTypes.add(parameterType);
 
       final String classParameterName = mySettings.getClassParameterName();
@@ -107,13 +215,29 @@ public class MakeMethodStaticProcessor extends MakeMethodOrClassStaticProcessor<
         anchor = javaDocHelper.addParameterAfter(fieldParameter.name, anchor);
       }
     }
-    setupTypeParameterList();
-    // Add static modifier
-    final PsiModifierList modifierList = myMember.getModifierList();
-    modifierList.setModifierProperty(PsiModifier.STATIC, true);
-    modifierList.setModifierProperty(PsiModifier.FINAL, false);
+    makeStatic(myMember);
+
+    if (myAdditionalMethods != null) {
+      for (PsiMethod method : myAdditionalMethods) {
+        makeStatic(method);
+      }
+    }
   }
 
+  private void makeStatic(PsiMethod member) {
+    final PsiAnnotation overrideAnnotation = AnnotationUtil.findAnnotation(member, CommonClassNames.JAVA_LANG_OVERRIDE);
+    if (overrideAnnotation != null) {
+      overrideAnnotation.delete();
+    }
+    setupTypeParameterList(member);
+    // Add static modifier
+    final PsiModifierList modifierList = member.getModifierList();
+    modifierList.setModifierProperty(PsiModifier.STATIC, true);
+    modifierList.setModifierProperty(PsiModifier.FINAL, false);
+    modifierList.setModifierProperty(PsiModifier.DEFAULT, false);
+  }
+
+  @Override
   protected void changeInternalUsage(InternalUsageInfo usage, PsiElementFactory factory)
           throws IncorrectOperationException {
     if (!mySettings.isChangeSignature()) return;
@@ -160,12 +284,18 @@ public class MakeMethodStaticProcessor extends MakeMethodOrClassStaticProcessor<
     }
   }
 
+  @Override
   protected void changeExternalUsage(UsageInfo usage, PsiElementFactory factory)
           throws IncorrectOperationException {
     final PsiElement element = usage.getElement();
     if (!(element instanceof PsiReferenceExpression)) return;
 
     PsiReferenceExpression methodRef = (PsiReferenceExpression) element;
+    if (methodRef instanceof PsiMethodReferenceExpression && needLambdaConversion((PsiMethodReferenceExpression)methodRef)) {
+      PsiMethodCallExpression expression = getMethodCallExpression((PsiMethodReferenceExpression)methodRef);
+      if (expression == null) return;
+      methodRef = expression.getMethodExpression();
+    }
     PsiElement parent = methodRef.getParent();
 
     PsiExpression instanceRef;
@@ -198,7 +328,7 @@ public class MakeMethodStaticProcessor extends MakeMethodOrClassStaticProcessor<
 
     PsiElement anchor = null;
     PsiExpressionList argList = null;
-    PsiExpression[] exprs = new PsiExpression[0];
+    PsiExpression[] exprs = PsiExpression.EMPTY_ARRAY;
     if (parent instanceof PsiMethodCallExpression) {
       argList = ((PsiMethodCallExpression)parent).getArgumentList();
       exprs = argList.getExpressions();
@@ -230,7 +360,7 @@ public class MakeMethodStaticProcessor extends MakeMethodOrClassStaticProcessor<
         if (anchor != null) {
           anchor = argList.addAfter(fieldRef, anchor);
         }
-        else {
+        else if (argList != null) {
           if (exprs.length > 0) {
             anchor = argList.addBefore(fieldRef, exprs[0]);
           }
@@ -246,7 +376,39 @@ public class MakeMethodStaticProcessor extends MakeMethodOrClassStaticProcessor<
     }
   }
 
+  private static PsiMethodCallExpression getMethodCallExpression(PsiMethodReferenceExpression methodRef) {
+    PsiLambdaExpression lambdaExpression =
+      LambdaRefactoringUtil.convertMethodReferenceToLambda(methodRef, true, true);
+    List<PsiExpression> returnExpressions = LambdaUtil.getReturnExpressions(lambdaExpression);
+    if (returnExpressions.size() != 1) return null;
+    PsiExpression expression = returnExpressions.get(0);
+    if (!(expression instanceof PsiMethodCallExpression)) return null;
+    return (PsiMethodCallExpression)expression;
+  }
+
+  private boolean needLambdaConversion(PsiMethodReferenceExpression methodRef) {
+    if (mySettings.isMakeFieldParameters()) {
+      return true;
+    }
+    if (PsiMethodReferenceUtil.isResolvedBySecondSearch(methodRef)) {
+      return myMember.getParameters().length != 0 || !mySettings.isMakeClassParameter();
+    }
+    return mySettings.isMakeClassParameter();
+  }
+
+  @Override
   protected void findExternalUsages(final ArrayList<UsageInfo> result) {
+    if (mySettings.isDelegate()) return;
     findExternalReferences(myMember, result);
+  }
+
+  @Override
+  protected void processExternalReference(PsiElement element, PsiMethod method, ArrayList<UsageInfo> result) {
+    if (!mySettings.isChangeSignature()) {
+      final PsiMethod containingMethod = MakeStaticJavaCallerChooser.isTheLastClassRef(element, method);
+      if (containingMethod != null && !TestFrameworks.getInstance().isTestMethod(containingMethod)) {
+        result.add(new ChainedCallUsageInfo(containingMethod));
+      }
+    }
   }
 }

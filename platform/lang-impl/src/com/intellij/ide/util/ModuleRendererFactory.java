@@ -24,7 +24,7 @@ import javax.swing.*;
  * @author yole
  */
 public abstract class ModuleRendererFactory {
-  private static ExtensionPointName<ModuleRendererFactory> EP_NAME = ExtensionPointName.create("com.intellij.moduleRendererFactory");
+  private static final ExtensionPointName<ModuleRendererFactory> EP_NAME = ExtensionPointName.create("com.intellij.moduleRendererFactory");
 
   public static ModuleRendererFactory findInstance(Object element) {
     for (ModuleRendererFactory factory : EP_NAME.getExtensions()) {

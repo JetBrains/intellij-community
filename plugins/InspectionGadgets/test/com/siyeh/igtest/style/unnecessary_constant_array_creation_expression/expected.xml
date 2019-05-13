@@ -1,9 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<problems>
-  <problem>
-    <file>UnnecessaryConstantArrayCreationExpression.java</file>
-    <line>4</line>
-    <problem_class>Constant array creation expression can be replaced with array initializer</problem_class>
-    <description>&lt;code&gt;new Class[]{}&lt;/code&gt; can be replaced with array initializer expression #loc</description>
-  </problem>
-</problems>

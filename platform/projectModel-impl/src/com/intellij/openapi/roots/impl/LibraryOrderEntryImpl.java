@@ -30,8 +30,8 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.jps.model.serialization.module.JpsModuleRootModelSerializer;
 import org.jetbrains.jps.model.serialization.java.JpsJavaModelSerializerExtension;
+import org.jetbrains.jps.model.serialization.module.JpsModuleRootModelSerializer;
 
 /**
  *  @author dsl
@@ -40,7 +40,7 @@ class LibraryOrderEntryImpl extends LibraryOrderEntryBaseImpl implements Library
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.roots.impl.LibraryOrderEntryImpl");
   private Library myLibrary;
   @Nullable private String myLibraryName; // is non-null if myLibrary == null
-  @Nullable private String myLibraryLevel; // is non-null if myLibraryLevel == null
+  private String myLibraryLevel; // is non-null if myLibrary == null
   private boolean myExported;
   @NonNls static final String ENTRY_TYPE = JpsModuleRootModelSerializer.LIBRARY_TYPE;
   @NonNls private static final String NAME_ATTR = JpsModuleRootModelSerializer.NAME_ATTRIBUTE;
@@ -63,8 +63,8 @@ class LibraryOrderEntryImpl extends LibraryOrderEntryBaseImpl implements Library
     myScope = DependencyScope.readExternal(element);
     String level = element.getAttributeValue(LEVEL_ATTR);
     String name = element.getAttributeValue(NAME_ATTR);
-    if (name == null) throw new InvalidDataException();
-    if (level == null) throw new InvalidDataException();
+    if (name == null) throw new InvalidDataException("Incorrect '" + ENTRY_TYPE + "' entry in '" + rootModel.getModule().getName() + "' module: '" + NAME_ATTR + "' isn't specified");
+    if (level == null) throw new InvalidDataException("Incorrect '" + ENTRY_TYPE + "' entry in '" + rootModel.getModule().getName() + "' module: '" + LEVEL_ATTR + "' isn't specified");
     searchForLibrary(name, level);
     addListeners();
     init();
@@ -85,7 +85,7 @@ class LibraryOrderEntryImpl extends LibraryOrderEntryBaseImpl implements Library
     init();
   }
 
-  public LibraryOrderEntryImpl(@NotNull String name,
+  LibraryOrderEntryImpl(@NotNull String name,
                                @NotNull String level,
                                @NotNull RootModelImpl rootModel,
                                @NotNull ProjectRootManagerImpl projectRootManager) {
@@ -180,8 +180,8 @@ class LibraryOrderEntryImpl extends LibraryOrderEntryBaseImpl implements Library
   @Override
   @NotNull
   public OrderEntry cloneEntry(@NotNull RootModelImpl rootModel,
-                               ProjectRootManagerImpl projectRootManager,
-                               VirtualFilePointerManager filePointerManager) {
+                               @NotNull ProjectRootManagerImpl projectRootManager,
+                               @NotNull VirtualFilePointerManager filePointerManager) {
     ProjectRootManagerImpl rootManager = ProjectRootManagerImpl.getInstanceImpl(getRootModel().getModule().getProject());
     return new LibraryOrderEntryImpl(this, rootModel, rootManager);
   }
@@ -200,14 +200,13 @@ class LibraryOrderEntryImpl extends LibraryOrderEntryBaseImpl implements Library
   }
 
   @Override
-  @Nullable
+  @NotNull
   public String getLibraryLevel() {
-    if (myLibrary != null) {
-      final LibraryTable table = myLibrary.getTable();
-      return table.getTableLevel();
-    } else {
+    if (myLibrary == null) {
       return myLibraryLevel;
     }
+    LibraryTable table = myLibrary.getTable();
+    return table.getTableLevel();
   }
 
   @Override
@@ -261,7 +260,7 @@ class LibraryOrderEntryImpl extends LibraryOrderEntryBaseImpl implements Library
   }
 
   private class MyOrderEntryLibraryTableListener implements LibraryTable.Listener {
-    public MyOrderEntryLibraryTableListener() {
+    MyOrderEntryLibraryTableListener() {
     }
 
     @Override
@@ -275,12 +274,8 @@ class LibraryOrderEntryImpl extends LibraryOrderEntryBaseImpl implements Library
     }
 
     @Override
-    public void beforeLibraryRemoved(Library library) {
+    public void beforeLibraryRemoved(@NotNull Library library) {
       LibraryOrderEntryImpl.this.beforeLibraryRemoved(library);
-    }
-
-    @Override
-    public void afterLibraryRemoved(Library library) {
     }
   }
 }

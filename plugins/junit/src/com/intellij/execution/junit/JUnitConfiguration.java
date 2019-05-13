@@ -1,70 +1,131 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.execution.junit;
 
+import com.intellij.codeInsight.MetaAnnotationUtil;
 import com.intellij.diagnostic.logging.LogConfigurationPanel;
 import com.intellij.execution.*;
+import com.intellij.execution.actions.RunConfigurationProducer;
+import com.intellij.execution.application.ApplicationConfiguration;
 import com.intellij.execution.configuration.EnvironmentVariablesComponent;
 import com.intellij.execution.configurations.*;
+import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.execution.junit2.configuration.JUnitConfigurable;
 import com.intellij.execution.junit2.info.MethodLocation;
+import com.intellij.execution.junit2.ui.properties.JUnitConsoleProperties;
 import com.intellij.execution.runners.ExecutionEnvironment;
+import com.intellij.execution.runners.ExecutionEnvironmentBuilder;
 import com.intellij.execution.testframework.TestSearchScope;
+import com.intellij.execution.testframework.sm.runner.SMTRunnerConsoleProperties;
 import com.intellij.execution.util.JavaParametersUtil;
-import com.intellij.openapi.components.PathMacroManager;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.options.SettingsEditorGroup;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.DefaultJDOMExternalizer;
-import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
+import com.intellij.psi.util.ClassUtil;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
+import com.intellij.rt.execution.junit.RepeatCount;
+import com.intellij.util.ArrayUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.jps.model.serialization.PathMacroUtil;
 
+import java.lang.reflect.Field;
 import java.util.*;
 
-public class JUnitConfiguration extends ModuleBasedConfiguration<JavaRunConfigurationModule>
-  implements CommonJavaRunConfigurationParameters, RefactoringListenerProvider {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.execution.junit.JUnitConfiguration");
+public class JUnitConfiguration extends JavaTestConfigurationWithDiscoverySupport implements InputRedirectAware {
   public static final String DEFAULT_PACKAGE_NAME = ExecutionBundle.message("default.package.presentable.name");
+  public static final byte FRAMEWORK_ID = 0x0;
 
   @NonNls public static final String TEST_CLASS = "class";
   @NonNls public static final String TEST_PACKAGE = "package";
   @NonNls public static final String TEST_DIRECTORY = "directory";
+  @NonNls public static final String TEST_CATEGORY = "category";
   @NonNls public static final String TEST_METHOD = "method";
-  @NonNls private static final String PATTERN_EL_NAME = "pattern";
-  @NonNls public static final String TEST_PATTERN = PATTERN_EL_NAME;
+  @NonNls public static final String TEST_UNIQUE_ID = "uniqueId";
+  @NonNls public static final String TEST_TAGS = "tags";
+  @NonNls public static final String BY_SOURCE_POSITION = "source location";
+  @NonNls public static final String BY_SOURCE_CHANGES = "changes";
 
-  @NonNls private static final String TEST_CLASS_ATT_NAME = "testClass";
-  @NonNls private static final String PATTERNS_EL_NAME = "patterns";
-
-  private final Data myData;
+  //fork modes
+  @NonNls public static final String FORK_NONE = "none";
+  @NonNls public static final String FORK_METHOD = "method";
+  @NonNls public static final String FORK_KLASS = "class";
+  @NonNls public static final String FORK_REPEAT = "repeat";
   // See #26522
   @NonNls public static final String JUNIT_START_CLASS = "com.intellij.rt.execution.junit.JUnitStarter";
+  @NonNls private static final String PATTERN_EL_NAME = "pattern";
+  @NonNls public static final String TEST_PATTERN = PATTERN_EL_NAME;
+  @NonNls private static final String TEST_CLASS_ATT_NAME = "testClass";
+  @NonNls private static final String PATTERNS_EL_NAME = "patterns";
+  private final Data myData;
+  private final InputRedirectAware.InputRedirectOptionsImpl myInputRedirectOptions = new InputRedirectOptionsImpl();
 
+  final RefactoringListeners.Accessor<PsiPackage> myPackage = new RefactoringListeners.Accessor<PsiPackage>() {
+    @Override
+    public void setName(final String qualifiedName) {
+      final boolean generatedName = isGeneratedName();
+      myData.PACKAGE_NAME = qualifiedName;
+      if (generatedName) setGeneratedName();
+    }
+
+    @Override
+    public PsiPackage getPsiElement() {
+      final String qualifiedName = myData.getPackageName();
+      return qualifiedName != null ? JavaPsiFacade.getInstance(getProject()).findPackage(qualifiedName)
+                                   : null;
+    }
+
+    @Override
+    public void setPsiElement(final PsiPackage psiPackage) {
+      setName(psiPackage.getQualifiedName());
+    }
+  };
+  final RefactoringListeners.Accessor<PsiClass> myClass = new RefactoringListeners.Accessor<PsiClass>() {
+    @Override
+    public void setName(@NotNull final String qualifiedName) {
+      final boolean generatedName = isGeneratedName();
+      myData.MAIN_CLASS_NAME = qualifiedName;
+      if (generatedName) setGeneratedName();
+    }
+
+    @Override
+    public PsiClass getPsiElement() {
+      return getConfigurationModule().findClass(myData.getMainClassName());
+    }
+
+    @Override
+    public void setPsiElement(final PsiClass psiClass) {
+      final Module originalModule = getConfigurationModule().getModule();
+      setMainClass(psiClass);
+      restoreOriginalModule(originalModule);
+    }
+  };
+
+  final RefactoringListeners.Accessor<PsiClass> myCategory = new RefactoringListeners.Accessor<PsiClass>() {
+    @Override
+    public void setName(@NotNull final String qualifiedName) {
+      setCategory(qualifiedName);
+    }
+
+    @Override
+    public PsiClass getPsiElement() {
+      return getConfigurationModule().findClass(myData.getCategory());
+    }
+
+    @Override
+    public void setPsiElement(final PsiClass psiClass) {
+      setCategory(JavaExecutionUtil.getRuntimeQualifiedName(psiClass));
+    }
+  };
   public boolean ALTERNATIVE_JRE_PATH_ENABLED;
   public String ALTERNATIVE_JRE_PATH;
 
@@ -72,21 +133,32 @@ public class JUnitConfiguration extends ModuleBasedConfiguration<JavaRunConfigur
     this(name, project, new Data(), configurationFactory);
   }
 
-  private JUnitConfiguration(final String name, final Project project, final Data data, ConfigurationFactory configurationFactory) {
-    super(name, new JavaRunConfigurationModule(project, false), configurationFactory);
+  public JUnitConfiguration(final String name, final Project project) {
+    this(name, project, new Data(), JUnitConfigurationType.getInstance().getConfigurationFactories()[0]);
+  }
+
+  protected JUnitConfiguration(final String name, final Project project, final Data data, ConfigurationFactory configurationFactory) {
+    super(name, new JavaRunConfigurationModule(project, true), configurationFactory);
     myData = data;
   }
 
-  public RunProfileState getState(@NotNull final Executor executor, @NotNull final ExecutionEnvironment env) throws ExecutionException {
-    return TestObject.fromString(myData.TEST_OBJECT, getProject(), this, env);
+  protected JUnitConfiguration(@NotNull Project project, Data data, @NotNull ConfigurationFactory configurationFactory) {
+    super(new JavaRunConfigurationModule(project, true), configurationFactory);
+    myData = data;
   }
 
+  @Override
+  public TestObject getState(@NotNull final Executor executor, @NotNull final ExecutionEnvironment env) throws ExecutionException {
+    return TestObject.fromString(myData.TEST_OBJECT, this, env);
+  }
 
+  @Override
+  @NotNull
   public SettingsEditor<? extends RunConfiguration> getConfigurationEditor() {
-    SettingsEditorGroup<JUnitConfiguration> group = new SettingsEditorGroup<JUnitConfiguration>();
+    SettingsEditorGroup<JUnitConfiguration> group = new SettingsEditorGroup<>();
     group.addEditor(ExecutionBundle.message("run.configuration.configuration.tab.title"), new JUnitConfigurable(getProject()));
     JavaRunConfigurationExtensionManager.getInstance().appendEditors(this, group);
-    group.addEditor(ExecutionBundle.message("logs.tab.title"), new LogConfigurationPanel<JUnitConfiguration>());
+    group.addEditor(ExecutionBundle.message("logs.tab.title"), new LogConfigurationPanel<>());
     return group;
   }
 
@@ -94,26 +166,25 @@ public class JUnitConfiguration extends ModuleBasedConfiguration<JavaRunConfigur
     return myData;
   }
 
+  @Override
   public RefactoringElementListener getRefactoringElementListener(final PsiElement element) {
-    final RefactoringElementListener listener = myData.getTestObject(getProject(), this).getListener(element, this);
+    final RefactoringElementListener listener = getTestObject().getListener(element, this);
     return RunConfigurationExtension.wrapRefactoringElementListener(element, this, listener);
   }
 
-  public String getGeneratedName() {
-    return myData.getGeneratedName(getConfigurationModule());
-  }
-
+  @Override
   public void checkConfiguration() throws RuntimeConfigurationException {
-    myData.getTestObject(getProject(), this).checkConfiguration();
+    getTestObject().checkConfiguration();
     JavaRunConfigurationExtensionManager.checkConfigurationIsValid(this);
   }
 
+  @Override
   public Collection<Module> getValidModules() {
     if (TEST_PACKAGE.equals(myData.TEST_OBJECT) || TEST_PATTERN.equals(myData.TEST_OBJECT)) {
       return Arrays.asList(ModuleManager.getInstance(getProject()).getModules());
     }
     try {
-      myData.getTestObject(getProject(), this).checkConfiguration();
+      getTestObject().checkConfiguration();
     }
     catch (RuntimeConfigurationError e) {
       return Arrays.asList(ModuleManager.getInstance(getProject()).getModules());
@@ -125,91 +196,163 @@ public class JUnitConfiguration extends ModuleBasedConfiguration<JavaRunConfigur
     return JavaRunConfigurationModule.getModulesForClass(getProject(), myData.getMainClassName());
   }
 
-  protected ModuleBasedConfiguration createInstance() {
-    return new JUnitConfiguration(getName(), getProject(), myData.clone(), JUnitConfigurationType.getInstance().getConfigurationFactories()[0]);// throw new RuntimeException("Should not call");
-  }
-
-  public boolean isGeneratedName() {
-    final String name = getName();
-    return myData.isGeneratedName(name, getConfigurationModule());
-  }
-
+  @Override
   public String suggestedName() {
+    String repeat;
+    switch (getRepeatMode()) {
+      case RepeatCount.UNLIMITED :
+      case RepeatCount.UNTIL_FAILURE :
+        repeat = " [*]";
+        break;
+      case RepeatCount.N:
+        repeat = " [" + getRepeatCount() + "]";
+        break;
+      default:
+        repeat = "";
+    }
+    String generatedName = myData.getGeneratedName(getConfigurationModule());
+    if (generatedName == null) return null;
+    return generatedName + repeat;
+  }
+
+  @Override
+  public String getActionName() {
     return getTestObject().suggestActionName();
   }
 
-  public void setVMParameters(String value) {
-    myData.setVMParameters(value);
-  }
-
+  @Override
   public String getVMParameters() {
     return myData.getVMParameters();
   }
 
-  public void setProgramParameters(String value) {
-    myData.setProgramParameters(value);
+  @Override
+  public void setVMParameters(@Nullable String value) {
+    myData.setVMParameters(StringUtil.nullize(value));
   }
 
+  @Override
   public String getProgramParameters() {
     return myData.getProgramParameters();
   }
 
-  public void setWorkingDirectory(String value) {
-    myData.setWorkingDirectory(value);
+  @Override
+  public void setProgramParameters(String value) {
+    myData.setProgramParameters(value);
   }
 
+  @Override
   public String getWorkingDirectory() {
     return myData.getWorkingDirectory();
   }
 
-  public void setEnvs(@NotNull Map<String, String> envs) {
-    myData.setEnvs(envs);
+  @Override
+  public void setWorkingDirectory(String value) {
+    myData.setWorkingDirectory(value);
   }
 
+  @Override
   @NotNull
   public Map<String, String> getEnvs() {
     return myData.getEnvs();
   }
 
-  public void setPassParentEnvs(boolean passParentEnvs) {
-    myData.PASS_PARENT_ENVS = passParentEnvs;
+  @Override
+  public void setEnvs(@NotNull Map<String, String> envs) {
+    myData.setEnvs(envs);
   }
 
+  @Override
   public boolean isPassParentEnvs() {
     return myData.PASS_PARENT_ENVS;
   }
 
+  @Override
+  public void setPassParentEnvs(boolean passParentEnvs) {
+    myData.PASS_PARENT_ENVS = passParentEnvs;
+  }
+
+  @Override
   public boolean isAlternativeJrePathEnabled() {
     return ALTERNATIVE_JRE_PATH_ENABLED;
   }
 
+  @Override
   public void setAlternativeJrePathEnabled(boolean enabled) {
-    this.ALTERNATIVE_JRE_PATH_ENABLED = enabled;
+    boolean changed = ALTERNATIVE_JRE_PATH_ENABLED != enabled;
+    ALTERNATIVE_JRE_PATH_ENABLED = enabled;
+    ApplicationConfiguration.onAlternativeJreChanged(changed, getProject());
   }
 
+  @Override
   public String getAlternativeJrePath() {
     return ALTERNATIVE_JRE_PATH;
   }
 
+  @Override
   public void setAlternativeJrePath(String path) {
-    this.ALTERNATIVE_JRE_PATH = path;
+    boolean changed = !Objects.equals(ALTERNATIVE_JRE_PATH, path);
+    ALTERNATIVE_JRE_PATH = path;
+    ApplicationConfiguration.onAlternativeJreChanged(changed, getProject());
   }
 
+  @Override
   public String getRunClass() {
     final Data data = getPersistentData();
-    return data.TEST_OBJECT != TEST_CLASS && data.TEST_OBJECT != TEST_METHOD ? null : data.getMainClassName();
+    return !Comparing.strEqual(data.TEST_OBJECT, TEST_CLASS) &&
+           !Comparing.strEqual(data.TEST_OBJECT, TEST_METHOD) ? null : data.getMainClassName();
   }
 
+  @Override
   public String getPackage() {
     final Data data = getPersistentData();
     return !Comparing.strEqual(data.TEST_OBJECT, TEST_PACKAGE) ? null : data.getPackageName();
   }
 
-
+  @Override
   public void beClassConfiguration(final PsiClass testClass) {
+    if (FORK_KLASS.equals(getForkMode())) {
+      setForkMode(FORK_NONE);
+    }
     setMainClass(testClass);
     myData.TEST_OBJECT = TEST_CLASS;
     setGeneratedName();
+  }
+
+  @Override
+  public boolean isConfiguredByElement(PsiElement element) {
+    final PsiClass testClass = JUnitUtil.getTestClass(element);
+    final PsiMethod testMethod = JUnitUtil.getTestMethod(element, false);
+    final PsiPackage testPackage;
+    if (element instanceof PsiPackage) {
+      testPackage = (PsiPackage)element;
+    } else if (element instanceof PsiDirectory){
+      testPackage = JavaDirectoryService.getInstance().getPackage(((PsiDirectory)element));
+    } else {
+      testPackage = null;
+    }
+    PsiDirectory testDir = element instanceof PsiDirectory ? (PsiDirectory)element : null;
+
+    return getTestObject().isConfiguredByElement(this, testClass, testMethod, testPackage, testDir);
+  }
+
+  @Override
+  public String getTestType() {
+    return getPersistentData().TEST_OBJECT;
+  }
+
+  @Override
+  public TestSearchScope getTestSearchScope() {
+    return getPersistentData().getScope();
+  }
+
+  @Override
+  public void setSearchScope(TestSearchScope searchScope) {
+    getPersistentData().setScope(searchScope);
+  }
+
+  public void beFromSourcePosition(PsiLocation<? extends PsiMethod> sourceLocation) {
+    myData.setTestMethod(sourceLocation);
+    myData.TEST_OBJECT = BY_SOURCE_POSITION;
   }
 
   public void setMainClass(final PsiClass testClass) {
@@ -218,15 +361,20 @@ public class JUnitConfiguration extends ModuleBasedConfiguration<JavaRunConfigur
     if (shouldUpdateName) setGeneratedName();
   }
 
-  public void setGeneratedName() {
-    setName(getGeneratedName());
+  public void setCategory(String categoryName) {
+    final boolean shouldUpdateName = isGeneratedName();
+    myData.setCategoryName(categoryName);
+    if (shouldUpdateName) setGeneratedName();
   }
 
+  @Override
   public void beMethodConfiguration(final Location<PsiMethod> methodLocation) {
+    setForkMode(FORK_NONE);
     setModule(myData.setTestMethod(methodLocation));
     setGeneratedName();
   }
 
+  @Override
   @NotNull
   public Module[] getModules() {
     if (TEST_PACKAGE.equals(myData.TEST_OBJECT) &&
@@ -236,59 +384,27 @@ public class JUnitConfiguration extends ModuleBasedConfiguration<JavaRunConfigur
     return super.getModules();
   }
 
-  final RefactoringListeners.Accessor<PsiPackage> myPackage = new RefactoringListeners.Accessor<PsiPackage>() {
-    public void setName(final String qualifiedName) {
-      final boolean generatedName = isGeneratedName();
-      myData.PACKAGE_NAME = qualifiedName;
-      if (generatedName) setGeneratedName();
-    }
-
-    public PsiPackage getPsiElement() {
-      final String qualifiedName = myData.getPackageName();
-      return qualifiedName != null ? JavaPsiFacade.getInstance(getProject()).findPackage(qualifiedName)
-             : null;
-    }
-
-    public void setPsiElement(final PsiPackage psiPackage) {
-      setName(psiPackage.getQualifiedName());
-    }
-  };
-
-  final RefactoringListeners.Accessor<PsiClass> myClass = new RefactoringListeners.Accessor<PsiClass>() {
-    public void setName(@NotNull final String qualifiedName) {
-      final boolean generatedName = isGeneratedName();
-      myData.MAIN_CLASS_NAME = qualifiedName;
-      if (generatedName) setGeneratedName();
-    }
-
-    public PsiClass getPsiElement() {
-      return getConfigurationModule().findClass(myData.getMainClassName());
-    }
-
-    public void setPsiElement(final PsiClass psiClass) {
-      final Module originalModule = getConfigurationModule().getModule();
-      setMainClass(psiClass);
-      restoreOriginalModule(originalModule);
-    }
-  };
-
   public TestObject getTestObject() {
-    return myData.getTestObject(getProject(), this);
+    return myData.getTestObject(this);
   }
 
-  public void readExternal(final Element element) throws InvalidDataException {
-    PathMacroManager.getInstance(getProject()).expandPaths(element);
+  @NotNull
+  @Override
+  public InputRedirectOptions getInputRedirectOptions() {
+    return myInputRedirectOptions;
+  }
+
+  @Override
+  public void readExternal(@NotNull final Element element) throws InvalidDataException {
     super.readExternal(element);
     JavaRunConfigurationExtensionManager.getInstance().readExternal(this, element);
-    readModule(element);
     DefaultJDOMExternalizer.readExternal(this, element);
     DefaultJDOMExternalizer.readExternal(getPersistentData(), element);
     EnvironmentVariablesComponent.readExternal(element, getPersistentData().getEnvs());
     final Element patternsElement = element.getChild(PATTERNS_EL_NAME);
     if (patternsElement != null) {
-      final Set<String> tests = new LinkedHashSet<String>();
-      for (Object o : patternsElement.getChildren(PATTERN_EL_NAME)) {
-        Element patternElement = (Element)o;
+      final LinkedHashSet<String> tests = new LinkedHashSet<>();
+      for (Element patternElement : patternsElement.getChildren(PATTERN_EL_NAME)) {
         tests.add(patternElement.getAttributeValue(TEST_CLASS_ATT_NAME));
       }
       myData.setPatterns(tests);
@@ -300,61 +416,129 @@ public class JUnitConfiguration extends ModuleBasedConfiguration<JavaRunConfigur
         setForkMode(mode);
       }
     }
+    final String count = element.getAttributeValue("repeat_count");
+    if (count != null) {
+      try {
+        setRepeatCount(Integer.parseInt(count));
+      }
+      catch (NumberFormatException e) {
+        setRepeatCount(1);
+      }
+    }
+    final String repeatMode = element.getAttributeValue("repeat_mode");
+    if (repeatMode != null) {
+      setRepeatMode(repeatMode);
+    }
     final Element dirNameElement = element.getChild("dir");
     if (dirNameElement != null) {
       final String dirName = dirNameElement.getAttributeValue("value");
       getPersistentData().setDirName(FileUtil.toSystemDependentName(dirName));
     }
+
+    final Element categoryNameElement = element.getChild("category");
+    if (categoryNameElement != null) {
+      final String categoryName = categoryNameElement.getAttributeValue("value");
+      getPersistentData().setCategoryName(categoryName);
+    }
+
+    Element idsElement = element.getChild("uniqueIds");
+    if (idsElement != null) {
+      List<String> ids = new ArrayList<>();
+      idsElement.getChildren("uniqueId").forEach(uniqueIdElement -> ids.add(uniqueIdElement.getAttributeValue("value")));
+      getPersistentData().setUniqueIds(ArrayUtil.toStringArray(ids));
+    }
+
+    Element tagElement = element.getChild("tag");
+    if (tagElement != null) {
+      getPersistentData().setTags(tagElement.getAttributeValue("value"));
+    }
+    else {
+      Element tagsElement = element.getChild("tags");
+      if (tagsElement != null) {
+        List<String> tags = new ArrayList<>();
+        tagsElement.getChildren("tag").forEach(tElement -> tags.add(tElement.getAttributeValue("value")));
+        getPersistentData().setTags(StringUtil.join(tags, "|"));
+      }
+    }
+    myInputRedirectOptions.readExternal(element);
   }
 
-  public void writeExternal(final Element element) throws WriteExternalException {
+  @Override
+  public void writeExternal(@NotNull final Element element) throws WriteExternalException {
     super.writeExternal(element);
     JavaRunConfigurationExtensionManager.getInstance().writeExternal(this, element);
-    writeModule(element);
-    DefaultJDOMExternalizer.writeExternal(this, element);
+    DefaultJDOMExternalizer.writeExternal(this, element, JavaParametersUtil.getFilter(this));
     final Data persistentData = getPersistentData();
-    DefaultJDOMExternalizer.writeExternal(persistentData, element);
-    EnvironmentVariablesComponent.writeExternal(element, persistentData.getEnvs());
+    DefaultJDOMExternalizer.writeExternal(persistentData, element, new DifferenceFilter<Data>(persistentData, new Data()) {
+      @Override
+      public boolean isAccept(@NotNull Field field) {
+        return "TEST_OBJECT".equals(field.getName()) || super.isAccept(field);
+      }
+    });
+
+    if (!persistentData.getEnvs().isEmpty()) {
+      EnvironmentVariablesComponent.writeExternal(element, persistentData.getEnvs());
+    }
+
     final String dirName = persistentData.getDirName();
     if (!dirName.isEmpty()) {
       final Element dirNameElement = new Element("dir");
       dirNameElement.setAttribute("value", FileUtil.toSystemIndependentName(dirName));
       element.addContent(dirNameElement);
     }
-    final Element patternsElement = new Element(PATTERNS_EL_NAME);
-    for (String o : persistentData.getPatterns()) {
-      final Element patternElement = new Element(PATTERN_EL_NAME);
-      patternElement.setAttribute(TEST_CLASS_ATT_NAME, o);
-      patternsElement.addContent(patternElement);
+
+    final String categoryName = persistentData.getCategory();
+    if (!categoryName.isEmpty()) {
+      final Element categoryNameElement = new Element("category");
+      categoryNameElement.setAttribute("value", categoryName);
+      element.addContent(categoryNameElement);
     }
+
+    if (!persistentData.getPatterns().isEmpty()) {
+      final Element patternsElement = new Element(PATTERNS_EL_NAME);
+      for (String o : persistentData.getPatterns()) {
+        final Element patternElement = new Element(PATTERN_EL_NAME);
+        patternElement.setAttribute(TEST_CLASS_ATT_NAME, o);
+        patternsElement.addContent(patternElement);
+      }
+      element.addContent(patternsElement);
+    }
+
     final String forkMode = getForkMode();
     if (!forkMode.equals("none")) {
       final Element forkModeElement = new Element("fork_mode");
       forkModeElement.setAttribute("value", forkMode);
       element.addContent(forkModeElement);
     }
-    element.addContent(patternsElement);
-    PathMacroManager.getInstance(getProject()).collapsePathsRecursively(element);
-  }
-
-  public void configureClasspath(final JavaParameters javaParameters) throws CantRunException {
-    RunConfigurationModule module = getConfigurationModule();
-    final String jreHome = isAlternativeJrePathEnabled() ? getAlternativeJrePath() : null;
-    final int pathType = JavaParameters.JDK_AND_CLASSES_AND_TESTS;
-    if (myData.getScope() == TestSearchScope.WHOLE_PROJECT) {
-      JavaParametersUtil.configureProject(module.getProject(), javaParameters, pathType, jreHome);
+    if (getRepeatCount() != 1) {
+      element.setAttribute("repeat_count", String.valueOf(getRepeatCount()));
     }
-    else {
-      JavaParametersUtil.configureModule(module, javaParameters, pathType, jreHome);
+    final String repeatMode = getRepeatMode();
+    if (!RepeatCount.ONCE.equals(repeatMode)) {
+      element.setAttribute("repeat_mode", repeatMode);
     }
-  }
+    String[] ids = persistentData.getUniqueIds();
+    if (ids != null && ids.length > 0) {
+      Element uniqueIds = new Element("uniqueIds");
+      Arrays.stream(ids).forEach(id -> uniqueIds.addContent(new Element("uniqueId").setAttribute("value", id)));
+      element.addContent(uniqueIds);
+    }
 
-  public void setForkMode(@NotNull String forkMode) {
-    myData.FORK_MODE = forkMode;
+    String tags = persistentData.getTags();
+    if (tags != null && tags.length() > 0) {
+      Element tagsElement = new Element("tag");
+      tagsElement.setAttribute("value", tags);
+      element.addContent(tagsElement);
+    }
+    myInputRedirectOptions.writeExternal(element);
   }
 
   public String getForkMode() {
     return myData.FORK_MODE;
+  }
+
+  public void setForkMode(@NotNull String forkMode) {
+    myData.FORK_MODE = forkMode;
   }
 
   @Override
@@ -362,12 +546,13 @@ public class JUnitConfiguration extends ModuleBasedConfiguration<JavaRunConfigur
     return false;
   }
 
+  @Override
   public void bePatternConfiguration(List<PsiClass> classes, PsiMethod method) {
     myData.TEST_OBJECT = TEST_PATTERN;
-    final Set<String> patterns = new HashSet<String>();
+    final LinkedHashSet<String> patterns = new LinkedHashSet<>();
     final String methodSufiix;
     if (method != null) {
-      myData.METHOD_NAME = method.getName();
+      myData.METHOD_NAME = Data.getMethodPresentation(method);
       methodSufiix = "," + myData.METHOD_NAME;
     } else {
       methodSufiix = "";
@@ -376,27 +561,63 @@ public class JUnitConfiguration extends ModuleBasedConfiguration<JavaRunConfigur
       patterns.add(JavaExecutionUtil.getRuntimeQualifiedName(pattern) + methodSufiix);
     }
     myData.setPatterns(patterns);
+    final Module module = RunConfigurationProducer.getInstance(PatternConfigurationProducer.class).findModule(this, getConfigurationModule()
+      .getModule(), patterns);
+    if (module == null) {
+      myData.setScope(TestSearchScope.WHOLE_PROJECT);
+      setModule(null);
+    } else {
+      setModule(module);
+    }
     setGeneratedName();
+  }
+
+  public int getRepeatCount() {
+    return myData.REPEAT_COUNT;
+  }
+
+  public void setRepeatCount(int repeatCount) {
+    myData.REPEAT_COUNT = repeatCount;
+  }
+
+  public String getRepeatMode() {
+    return myData.REPEAT_MODE;
+  }
+
+  public void setRepeatMode(String repeatMode) {
+    myData.REPEAT_MODE = repeatMode;
+  }
+
+  @Override
+  public SMTRunnerConsoleProperties createTestConsoleProperties(Executor executor) {
+    return new JUnitConsoleProperties(this, executor);
+  }
+
+  @Override
+  public byte getTestFrameworkId() {
+    return FRAMEWORK_ID;
   }
 
   public static class Data implements Cloneable {
     public String PACKAGE_NAME;
-    private String DIR_NAME;
     public String MAIN_CLASS_NAME;
     public String METHOD_NAME;
+    private String[] UNIQUE_ID = ArrayUtil.EMPTY_STRING_ARRAY;
+    private String TAGS;
     public String TEST_OBJECT = TEST_CLASS;
-    public String VM_PARAMETERS;
+    public String VM_PARAMETERS = "-ea";
     public String PARAMETERS;
-    public String WORKING_DIRECTORY;
-    private String FORK_MODE = "none";
-    private Set<String> myPattern = new LinkedHashSet<String>();
-
-    //iws/ipr compatibility
-    public String ENV_VARIABLES;
-    private Map<String, String> myEnvs = new LinkedHashMap<String, String>();
+    public String WORKING_DIRECTORY = PathMacroUtil.MODULE_WORKING_DIR;
     public boolean PASS_PARENT_ENVS = true;
-
     public TestSearchScope.Wrapper TEST_SEARCH_SCOPE = new TestSearchScope.Wrapper();
+    private String DIR_NAME;
+    private String CATEGORY_NAME;
+    private String FORK_MODE = FORK_NONE;
+    private int REPEAT_COUNT = 1;
+    private String REPEAT_MODE = RepeatCount.ONCE;
+    private LinkedHashSet<String> myPattern = new LinkedHashSet<>();
+    private Map<String, String> myEnvs = new LinkedHashMap<>();
+    private String myChangeList = "All";
 
     public boolean equals(final Object object) {
       if (!(object instanceof Data)) return false;
@@ -404,38 +625,53 @@ public class JUnitConfiguration extends ModuleBasedConfiguration<JavaRunConfigur
       return Comparing.equal(TEST_OBJECT, second.TEST_OBJECT) &&
              Comparing.equal(getMainClassName(), second.getMainClassName()) &&
              Comparing.equal(getPackageName(), second.getPackageName()) &&
-             Comparing.equal(getMethodName(), second.getMethodName()) &&
+             Comparing.equal(getMethodNameWithSignature(), second.getMethodNameWithSignature()) &&
              Comparing.equal(getWorkingDirectory(), second.getWorkingDirectory()) &&
              Comparing.equal(VM_PARAMETERS, second.VM_PARAMETERS) &&
              Comparing.equal(PARAMETERS, second.PARAMETERS) &&
              Comparing.equal(myPattern, second.myPattern) &&
              Comparing.equal(FORK_MODE, second.FORK_MODE) &&
-             Comparing.equal(DIR_NAME, second.DIR_NAME);
+             Comparing.equal(DIR_NAME, second.DIR_NAME) &&
+             Comparing.equal(CATEGORY_NAME, second.CATEGORY_NAME) &&
+             Comparing.equal(UNIQUE_ID, second.UNIQUE_ID) &&
+             Comparing.equal(TAGS, second.TAGS) &&
+             Comparing.equal(REPEAT_MODE, second.REPEAT_MODE) &&
+             REPEAT_COUNT == second.REPEAT_COUNT;
     }
 
     public int hashCode() {
       return Comparing.hashcode(TEST_OBJECT) ^
              Comparing.hashcode(getMainClassName()) ^
              Comparing.hashcode(getPackageName()) ^
-             Comparing.hashcode(getMethodName()) ^
+             Comparing.hashcode(getMethodNameWithSignature()) ^
              Comparing.hashcode(getWorkingDirectory()) ^
              Comparing.hashcode(VM_PARAMETERS) ^
              Comparing.hashcode(PARAMETERS) ^
              Comparing.hashcode(myPattern) ^
              Comparing.hashcode(FORK_MODE) ^
-             Comparing.hashcode(DIR_NAME);
+             Comparing.hashcode(DIR_NAME) ^
+             Comparing.hashcode(CATEGORY_NAME) ^
+             Comparing.hashcode(UNIQUE_ID) ^
+             Comparing.hashcode(TAGS) ^
+             Comparing.hashcode(REPEAT_MODE) ^
+             Comparing.hashcode(REPEAT_COUNT);
     }
 
     public TestSearchScope getScope() {
       return TEST_SEARCH_SCOPE.getScope();
     }
 
+    public void setScope(final TestSearchScope scope) {
+      TEST_SEARCH_SCOPE.setScope(scope);
+    }
+
+    @Override
     public Data clone() {
       try {
         Data data = (Data)super.clone();
         data.TEST_SEARCH_SCOPE = new TestSearchScope.Wrapper();
         data.setScope(getScope());
-        data.myEnvs = new LinkedHashMap<String, String>(myEnvs);
+        data.myEnvs = new LinkedHashMap<>(myEnvs);
         return data;
       }
       catch (CloneNotSupportedException e) {
@@ -443,52 +679,69 @@ public class JUnitConfiguration extends ModuleBasedConfiguration<JavaRunConfigur
       }
     }
 
-    public void setVMParameters(String value) {
-      VM_PARAMETERS = value;
-    }
-
     public String getVMParameters() {
       return VM_PARAMETERS;
     }
 
-    public void setProgramParameters(String value) {
-      PARAMETERS = value;
+    public void setVMParameters(String value) {
+      VM_PARAMETERS = value;
     }
 
     public String getProgramParameters() {
       return PARAMETERS;
     }
 
-    public void setWorkingDirectory(String value) {
-      WORKING_DIRECTORY = ExternalizablePath.urlValue(value);
+    public void setProgramParameters(String value) {
+      PARAMETERS = value;
     }
 
     public String getWorkingDirectory() {
       return ExternalizablePath.localPathValue(WORKING_DIRECTORY);
     }
 
-    public Module setTestMethod(final Location<PsiMethod> methodLocation) {
+    public void setWorkingDirectory(String value) {
+      WORKING_DIRECTORY = StringUtil.isEmptyOrSpaces(value) ? "" : FileUtilRt.toSystemIndependentName(value.trim());
+    }
+
+    public void setUniqueIds(String... uniqueId) {
+      UNIQUE_ID = uniqueId;
+    }
+
+    public String[] getUniqueIds() {
+      return UNIQUE_ID;
+    }
+
+    public Module setTestMethod(final Location<? extends PsiMethod> methodLocation) {
       final PsiMethod method = methodLocation.getPsiElement();
-      METHOD_NAME = method.getName();
+      METHOD_NAME = getMethodPresentation(method);
       TEST_OBJECT = TEST_METHOD;
       return setMainClass(methodLocation instanceof MethodLocation ? ((MethodLocation)methodLocation).getContainingClass() : method.getContainingClass());
     }
 
-    public boolean isGeneratedName(final String name, final JavaRunConfigurationModule configurationModule) {
-      if (TEST_OBJECT == null) return true;
-      if ((TEST_CLASS.equals(TEST_OBJECT) || TEST_METHOD.equals(TEST_OBJECT)) && getMainClassName().length() == 0) {
-        return JavaExecutionUtil.isNewName(name);
+    public String getTags() {
+      return TAGS;
+    }
+
+    public void setTags(String tags) {
+      TAGS = tags;
+    }
+
+    public static String getMethodPresentation(PsiMethod method) {
+      if (!method.getParameterList().isEmpty() && MetaAnnotationUtil.isMetaAnnotated(method, JUnitUtil.TEST5_ANNOTATIONS)) {
+        return method.getName() + "(" + ClassUtil.getVMParametersMethodSignature(method) + ")";
       }
-      if (TEST_METHOD.equals(TEST_OBJECT) && getMethodName().length() == 0) {
-        return JavaExecutionUtil.isNewName(name);
+      else {
+        return method.getName();
       }
-      return Comparing.equal(name, getGeneratedName(configurationModule));
     }
 
     public String getGeneratedName(final JavaRunConfigurationModule configurationModule) {
       if (TEST_PACKAGE.equals(TEST_OBJECT) || TEST_DIRECTORY.equals(TEST_OBJECT)) {
+        if (TEST_SEARCH_SCOPE.getScope() == TestSearchScope.WHOLE_PROJECT) {
+          return ExecutionBundle.message("default.junit.config.name.whole.project");
+        }
         final String moduleName = TEST_SEARCH_SCOPE.getScope() == TestSearchScope.WHOLE_PROJECT ? "" : configurationModule.getModuleName();
-        final String packageName = getPackageName();
+        final String packageName = TEST_PACKAGE.equals(TEST_OBJECT) ? getPackageName() : StringUtil.getShortName(FileUtil.toSystemIndependentName(getDirName()), '/');
         if (packageName.length() == 0) {
           if (moduleName.length() > 0) {
             return ExecutionBundle.message("default.junit.config.name.all.in.module", moduleName);
@@ -503,10 +756,22 @@ public class JUnitConfiguration extends ModuleBasedConfiguration<JavaRunConfigur
       if (TEST_PATTERN.equals(TEST_OBJECT)) {
         final int size = myPattern.size();
         if (size == 0) return "Temp suite";
-        final String fqName = myPattern.iterator().next();
-        return (fqName.contains("*") ? fqName : StringUtil.getShortName(fqName)) + (size > 1 ? " and " + (size - 1) + " more" : "");
+        String fqName = myPattern.iterator().next();
+        String firstName =
+          fqName.contains("*") ? fqName
+                               : StringUtil.getShortName(fqName.contains("(") ? StringUtil.getPackageName(fqName, '(') : fqName);
+        return firstName + (size > 1 ? " and " + (size - 1) + " more" : "");
       }
-      final String className = JavaExecutionUtil.getPresentableClassName(getMainClassName(), configurationModule);
+      if (TEST_CATEGORY.equals(TEST_OBJECT)) {
+        return "@Category(" + (StringUtil.isEmpty(CATEGORY_NAME) ? "Invalid" : CATEGORY_NAME) + ")";
+      }
+      if (TEST_UNIQUE_ID.equals(TEST_OBJECT)) {
+        return UNIQUE_ID != null && UNIQUE_ID.length > 0 ? StringUtil.join(UNIQUE_ID, " ") : "Temp suite";
+      }
+      if (TEST_TAGS.equals(TEST_OBJECT)) {
+        return TAGS != null && TAGS.length() > 0 ? "Tags (" + StringUtil.join(TAGS, " ") + ")" : "Temp suite";
+      }
+      final String className = JavaExecutionUtil.getPresentableClassName(getMainClassName());
       if (TEST_METHOD.equals(TEST_OBJECT)) {
         return className + '.' + getMethodName();
       }
@@ -523,6 +788,12 @@ public class JUnitConfiguration extends ModuleBasedConfiguration<JavaRunConfigur
     }
 
     public String getMethodName() {
+      String signature = getMethodNameWithSignature();
+      int paramsIdx = signature.lastIndexOf("(");
+      return paramsIdx > -1 ? signature.substring(0, paramsIdx) : signature;
+    }
+
+    public String getMethodNameWithSignature() {
       return METHOD_NAME != null ? METHOD_NAME : "";
     }
 
@@ -530,25 +801,26 @@ public class JUnitConfiguration extends ModuleBasedConfiguration<JavaRunConfigur
       return DIR_NAME != null ? DIR_NAME : "";
     }
 
+    public void setDirName(String dirName) {
+      DIR_NAME = dirName;
+    }
+
     public Set<String> getPatterns() {
       return myPattern;
     }
 
-    public String getPatternPresentation() {
-      final List<String> enabledTests = new ArrayList<String>();
-      for (String pattern : myPattern) {
-        enabledTests.add(pattern);
-      }
-      return StringUtil.join(enabledTests, "||");
-    }
-
-    public void setPatterns(Set<String> pattern) {
+    public void setPatterns(LinkedHashSet<String> pattern) {
       myPattern = pattern;
     }
 
-    public TestObject getTestObject(final Project project, final JUnitConfiguration configuration) {
-      //TODO[dyoma]!
-      return TestObject.fromString(TEST_OBJECT, project, configuration, null);
+    public String getPatternPresentation() {
+      return StringUtil.join(myPattern, "||");
+    }
+
+    public TestObject getTestObject(@NotNull JUnitConfiguration configuration) {
+      final ExecutionEnvironment environment = ExecutionEnvironmentBuilder.create(DefaultRunExecutor.getRunExecutorInstance(), configuration).build();
+      final TestObject testObject = TestObject.fromString(TEST_OBJECT, configuration, environment);
+      return testObject == null ? new UnknownTestTarget(configuration, environment) : testObject;
     }
 
     public Module setMainClass(final PsiClass testClass) {
@@ -556,10 +828,6 @@ public class JUnitConfiguration extends ModuleBasedConfiguration<JavaRunConfigur
       PsiPackage containingPackage = JUnitUtil.getContainingPackage(testClass);
       PACKAGE_NAME = containingPackage != null ? containingPackage.getQualifiedName() : "";
       return JavaExecutionUtil.findModule(testClass);
-    }
-
-    public void setScope(final TestSearchScope scope) {
-      TEST_SEARCH_SCOPE.setScope(scope);
     }
 
     public Map<String, String> getEnvs() {
@@ -570,8 +838,20 @@ public class JUnitConfiguration extends ModuleBasedConfiguration<JavaRunConfigur
       myEnvs = envs;
     }
 
-    public void setDirName(String dirName) {
-      DIR_NAME = dirName;
+    public String getCategory() {
+      return CATEGORY_NAME != null ? CATEGORY_NAME : "";
+    }
+
+    public void setCategoryName(String categoryName) {
+      CATEGORY_NAME = categoryName;
+    }
+
+    public String getChangeList() {
+      return myChangeList;
+    }
+
+    public void setChangeList(String changeList) {
+      myChangeList = changeList;
     }
   }
 

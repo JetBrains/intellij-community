@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,19 +19,16 @@ import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.javaee.ExternalResourceManagerEx;
 import com.intellij.javaee.XMLCatalogConfigurable;
 import com.intellij.javaee.XMLCatalogManager;
-import com.intellij.testFramework.IdeaTestCase;
 import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase;
 import org.apache.xml.resolver.CatalogManager;
 
 import java.io.File;
-import java.io.IOException;
 import java.net.URI;
 import java.util.List;
 import java.util.Vector;
 
 /**
  * @author Dmitry Avdeev
- *         Date: 7/20/12
  */
 @SuppressWarnings("UseOfObsoleteCollectionType")
 public class XMLCatalogManagerTest extends LightPlatformCodeInsightFixtureTestCase {
@@ -46,13 +43,13 @@ public class XMLCatalogManagerTest extends LightPlatformCodeInsightFixtureTestCa
     assertTrue(filePath, new File(new URI(filePath)).exists());
   }
 
-  public void testResolvePublic() throws Exception {
+  public void testResolvePublic() {
     String resolve = getManager().resolve("-//W3C//DTD XHTML 1.0 Strict//EN");
     assertNotNull(resolve);
     assertTrue(resolve, resolve.endsWith("/catalog/xhtml1-strict.dtd"));
   }
 
-  public void testResolveSystem() throws Exception {
+  public void testResolveSystem() {
     String resolve = getManager().resolve("http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd");
     assertNotNull(resolve);
     assertTrue(resolve, resolve.endsWith("/catalog/xhtml1-strict.dtd"));
@@ -61,32 +58,34 @@ public class XMLCatalogManagerTest extends LightPlatformCodeInsightFixtureTestCa
   public void testHighlighting() {
     myFixture.configureByFile("policy.xml");
     List<HighlightInfo> infos = myFixture.doHighlighting();
-    assertEquals("urn:oasis:names:tc:xacml:1.0:policy", infos.get(0).text);
+    assertSize(27, infos);
+    String expectedUrn = "urn:oasis:names:tc:xacml:1.0:policy";
+    boolean hasUrn = false;
+    for (HighlightInfo info : infos) {
+      String text = info.getText();
+      assertOneOf(text, "x", expectedUrn);
+      hasUrn |= expectedUrn.equals(text);
+    }
+    assertTrue(hasUrn);
   }
 
-  public void testFixedHighlighting() throws Exception {
+  public void testFixedHighlighting() {
     myFixture.configureByFile("policy.xml");
     try {
       ExternalResourceManagerEx.getInstanceEx().setCatalogPropertiesFile(getTestDataPath() + "catalog.properties");
-      List<HighlightInfo> infos = myFixture.doHighlighting();
-      assertEquals(infos.toString(), 0, infos.size());
+      myFixture.checkHighlighting();
     }
     finally {
       ExternalResourceManagerEx.getInstanceEx().setCatalogPropertiesFile(null);
     }
   }
 
-  public void testConfigurable() throws Exception {
+  public void testConfigurable() {
     assertFalse(new XMLCatalogConfigurable().isModified());
   }
 
-  private XMLCatalogManager getManager() throws IOException {
+  private XMLCatalogManager getManager() {
     return new XMLCatalogManager(getTestDataPath() + "catalog.properties");
-  }
-
-  @Override
-  protected boolean isWriteActionRequired() {
-    return false;
   }
 
   @Override
@@ -97,10 +96,5 @@ public class XMLCatalogManagerTest extends LightPlatformCodeInsightFixtureTestCa
   @Override
   protected boolean isCommunity() {
     return true;
-  }
-
-  @SuppressWarnings("JUnitTestCaseWithNonTrivialConstructors")
-  public XMLCatalogManagerTest() {
-    IdeaTestCase.initPlatformPrefix();
   }
 }

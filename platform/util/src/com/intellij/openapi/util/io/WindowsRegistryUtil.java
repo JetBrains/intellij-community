@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,10 +23,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
-/**
- * User: Vassiliy.Kudryashov
- */
 public class WindowsRegistryUtil {
   private WindowsRegistryUtil() {
   }
@@ -72,7 +71,7 @@ public class WindowsRegistryUtil {
   @NotNull
   public static List<String> readRegistryBranch(@NotNull String location) {
     List<String> result = new ArrayList<String>();
-    StringBuilder output = readRegistry("reg query \"" + location + "\" /s");
+    StringBuilder output = doReadBranch(location);
     if (output != null) {
       for (int pos = output.indexOf(location); pos != -1; pos = output.indexOf(location, pos + location.length())) {
         int pos2 = output.indexOf("\r\n", pos + location.length());
@@ -86,6 +85,26 @@ public class WindowsRegistryUtil {
       }
     }
     return result;
+  }
+  
+  @NotNull
+  public static List<String> readRegistryBranchValues(@NotNull String location) {
+    List<String> result = new ArrayList<String>();
+    StringBuilder output = doReadBranch(location);
+    if (output != null) {
+      // there seem to be no way to get machine-readable list of value names.
+      // so we are trying to make pattern as precise as possible.
+      Pattern pattern = Pattern.compile("^\\s{4}(.+)\\s{4}REG_\\w+\\s{4}.+$", Pattern.MULTILINE);
+      Matcher m = pattern.matcher(output);
+      while(m.find()) {
+        result.add(m.group(1));
+      }
+    }
+    return result;
+  }
+
+  private static StringBuilder doReadBranch(@NotNull String location) {
+    return readRegistry("reg query \"" + location + "\"");
   }
 
   @Nullable

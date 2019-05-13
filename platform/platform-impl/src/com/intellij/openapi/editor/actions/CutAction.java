@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,35 +14,32 @@
  * limitations under the License.
  */
 
-/*
- * Created by IntelliJ IDEA.
- * User: max
- * Date: May 13, 2002
- * Time: 6:41:17 PM
- * To change template for new class use 
- * Code Style | Class Templates options (Tools | IDE Options).
- */
 package com.intellij.openapi.editor.actions;
 
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorModificationUtil;
-import com.intellij.openapi.editor.actionSystem.EditorAction;
 import com.intellij.openapi.editor.actionSystem.EditorWriteActionHandler;
-import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.util.registry.Registry;
+import org.jetbrains.annotations.Nullable;
 
-public class CutAction extends EditorAction {
+public class CutAction extends TextComponentEditorAction {
   public CutAction() {
     super(new Handler());
   }
 
   public static class Handler extends EditorWriteActionHandler {
     @Override
-    public void executeWriteAction(Editor editor, DataContext dataContext) {
-      if(!editor.getSelectionModel().hasSelection()) {
-        editor.getSelectionModel().selectLineAtCaret();
+    public void executeWriteAction(final Editor editor, @Nullable Caret caret, DataContext dataContext) {
+      if(!editor.getSelectionModel().hasSelection(true)) {
+        if (Registry.is(CopyAction.SKIP_COPY_AND_CUT_FOR_EMPTY_SELECTION_KEY)) {
+          return;
+        }
+        editor.getCaretModel().runForEachCaret(__ -> editor.getSelectionModel().selectLineAtCaret());
       }
       editor.getSelectionModel().copySelectionToClipboard();
-      EditorModificationUtil.deleteSelectedText(editor);
+      EditorModificationUtil.deleteSelectedTextForAllCarets(editor);
     }
   }
 }

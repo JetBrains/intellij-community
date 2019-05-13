@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,14 +15,13 @@
  */
 package com.intellij.psi.formatter.java;
 
+import com.intellij.formatting.WrapType;
 import com.intellij.lang.ASTNode;
-import com.intellij.psi.PsiExpression;
-import com.intellij.psi.PsiExpressionList;
 import com.intellij.psi.PsiPolyadicExpression;
+import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -31,36 +30,34 @@ import static java.util.Arrays.asList;
 
 /**
  * @author Denis Zhdanov
- * @since 4/12/11 3:26 PM
  */
 public class JavaFormatterUtil {
   /**
    * Holds type of AST elements that are considered to be assignments.
    */
-  private static final Set<IElementType> ASSIGNMENT_ELEMENT_TYPES = new HashSet<IElementType>(asList(
+  private static final Set<IElementType> ASSIGNMENT_ELEMENT_TYPES = new HashSet<>(asList(
     JavaElementType.ASSIGNMENT_EXPRESSION, JavaElementType.LOCAL_VARIABLE, JavaElementType.FIELD
   ));
 
-  private JavaFormatterUtil() {
-  }
+  private JavaFormatterUtil() { }
 
   /**
    * Allows to answer if given node wraps assignment operation.
    *
    * @param node node to check
-   * @return <code>true</code> if given node wraps assignment operation; <code>false</code> otherwise
+   * @return {@code true} if given node wraps assignment operation; {@code false} otherwise
    */
   public static boolean isAssignment(ASTNode node) {
     return ASSIGNMENT_ELEMENT_TYPES.contains(node.getElementType());
   }
 
   /**
-   * Allows to check if given <code>AST</code> nodes refer to binary expressions which have the same priority.
+   * Allows to check if given {@code AST} nodes refer to binary expressions which have the same priority.
    *
    * @param node1 node to check
    * @param node2 node to check
-   * @return <code>true</code> if given nodes are binary expressions and have the same priority;
-   *         <code>false</code> otherwise
+   * @return {@code true} if given nodes are binary expressions and have the same priority;
+   *         {@code false} otherwise
    */
   public static boolean areSamePriorityBinaryExpressions(ASTNode node1, ASTNode node2) {
     if (node1 == null || node2 == null) {
@@ -75,35 +72,17 @@ public class JavaFormatterUtil {
     return expression1.getOperationTokenType() == expression2.getOperationTokenType();
   }
 
-  /**
-   * Allows to check if given expression list has given number of anonymous classes.
-   *
-   * @param count   interested number of anonymous classes used at the given expression list
-   * @return        <code>true</code> if given expression list contains given number of anonymous classes;
-   *                <code>false</code> otherwise
-   */
-  public static boolean hasAnonymousClassesArguments(@NotNull PsiExpressionList expressionList, int count) {
-    int found = 0;
-    for (PsiExpression expression : expressionList.getExpressions()) {
-      ASTNode node = expression.getNode();
-      if (isAnonymousClass(node)) {
-        found++;
-      }
-      if (found >= count) {
-        return true;
-      }
+  @NotNull
+  public static WrapType getWrapType(int wrap) {
+    switch (wrap) {
+      case CommonCodeStyleSettings.WRAP_ALWAYS:
+        return WrapType.ALWAYS;
+      case CommonCodeStyleSettings.WRAP_AS_NEEDED:
+        return WrapType.NORMAL;
+      case CommonCodeStyleSettings.DO_NOT_WRAP:
+        return WrapType.NONE;
+      default:
+        return WrapType.CHOP_DOWN_IF_LONG;
     }
-    return false;
-  }
-
-  private static boolean isAnonymousClass(@Nullable final ASTNode node) {
-    if (node == null) {
-      return false;
-    }
-    ASTNode nodeToCheck = node;
-    if (node.getElementType() == JavaElementType.NEW_EXPRESSION) {
-      nodeToCheck = node.getLastChildNode();
-    }
-    return nodeToCheck != null && nodeToCheck.getElementType() == JavaElementType.ANONYMOUS_CLASS;
   }
 }

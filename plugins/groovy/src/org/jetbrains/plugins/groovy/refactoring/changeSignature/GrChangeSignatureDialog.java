@@ -1,23 +1,9 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.refactoring.changeSignature;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
+import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
@@ -33,27 +19,25 @@ import com.intellij.refactoring.ui.CodeFragmentTableCellRenderer;
 import com.intellij.refactoring.ui.JavaCodeFragmentTableCellEditor;
 import com.intellij.refactoring.ui.VisibilityPanelBase;
 import com.intellij.refactoring.util.CanonicalTypes;
-import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.ToolbarDecorator;
 import com.intellij.ui.table.JBTable;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.Consumer;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifier;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
+import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringBundle;
 import org.jetbrains.plugins.groovy.refactoring.ui.GroovyComboboxVisibilityPanel;
 
 import javax.swing.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
-
-import static org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringBundle.message;
 
 /**
  * @author Max Medvedev
@@ -77,8 +61,9 @@ public class GrChangeSignatureDialog extends ChangeSignatureDialogBase<GrParamet
     return GroovyFileType.GROOVY_FILE_TYPE;
   }
 
+  @NotNull
   @Override
-  protected GrParameterTableModel createParametersInfoModel(GrMethodDescriptor method) {
+  protected GrParameterTableModel createParametersInfoModel(@NotNull GrMethodDescriptor method) {
     final PsiParameterList parameterList = method.getMethod().getParameterList();
     return new GrParameterTableModel(parameterList, myDefaultValueContext, this);
   }
@@ -103,9 +88,9 @@ public class GrChangeSignatureDialog extends ChangeSignatureDialogBase<GrParamet
     table.setRowHeight(20);
     table.getColumnModel().getColumn(0).setCellRenderer(new CodeFragmentTableCellRenderer(myProject));
     final JavaCodeFragmentTableCellEditor cellEditor = new JavaCodeFragmentTableCellEditor(myProject);
-    cellEditor.addDocumentListener(new DocumentAdapter() {
+    cellEditor.addDocumentListener(new DocumentListener() {
       @Override
-      public void documentChanged(DocumentEvent e) {
+      public void documentChanged(@NotNull DocumentEvent e) {
         final int row = table.getSelectedRow();
         final int col = table.getSelectedColumn();
         myExceptionsModel.setValueAt(cellEditor.getCellEditorValue(), row, col);
@@ -141,11 +126,11 @@ public class GrChangeSignatureDialog extends ChangeSignatureDialogBase<GrParamet
 
     final JPanel panel = ToolbarDecorator.createDecorator(table).createPanel();
       //.addExtraAction(myPropExceptionsButton).createPanel();
-    panel.setBorder(IdeBorderFactory.createEmptyBorder(0));
+    panel.setBorder(JBUI.Borders.empty());
 
     myExceptionsModel.addTableModelListener(mySignatureUpdater);
 
-    final ArrayList<Pair<String, JPanel>> result = new ArrayList<Pair<String, JPanel>>();
+    final ArrayList<Pair<String, JPanel>> result = new ArrayList<>();
     final String message = RefactoringBundle.message("changeSignature.exceptions.panel.border.title");
     result.add(Pair.create(message, panel));
     return result;
@@ -160,9 +145,7 @@ public class GrChangeSignatureDialog extends ChangeSignatureDialogBase<GrParamet
         returnType = ((PsiTypeCodeFragment)myReturnTypeCodeFragment).getType();
       }
     }
-    catch (PsiTypeCodeFragment.TypeSyntaxException ignored) {
-    }
-    catch (PsiTypeCodeFragment.NoTypeException ignored) {
+    catch (PsiTypeCodeFragment.TypeSyntaxException | PsiTypeCodeFragment.NoTypeException ignored) {
     }
 
     return returnType == null ? null : CanonicalTypes.createTypeWrapper(returnType);
@@ -210,7 +193,7 @@ public class GrChangeSignatureDialog extends ChangeSignatureDialogBase<GrParamet
   @Override
   protected String validateAndCommitData() {
     if (myReturnTypeCodeFragment != null && !checkType((PsiTypeCodeFragment)myReturnTypeCodeFragment, true)) {
-      return message("return.type.is.wrong");
+      return GroovyRefactoringBundle.message("return.type.is.wrong");
     }
 
     List<GrParameterTableModelItem> parameterInfos = myParametersTableModel.getItems();
@@ -220,11 +203,11 @@ public class GrChangeSignatureDialog extends ChangeSignatureDialogBase<GrParamet
 
       String name = item.parameter.getName();
       if (!StringUtil.isJavaIdentifier(name)) {
-        return message("name.is.wrong", name);
+        return GroovyRefactoringBundle.message("name.is.wrong", name);
       }
 
       if (!checkType((PsiTypeCodeFragment)item.typeCodeFragment, i == newParameterCount - 1)) {
-        return message("type.for.parameter.is.incorrect", name);
+        return GroovyRefactoringBundle.message("type.for.parameter.is.incorrect", name);
       }
       try {
         item.parameter.setType(((PsiTypeCodeFragment)item.typeCodeFragment).getType());
@@ -238,8 +221,8 @@ public class GrChangeSignatureDialog extends ChangeSignatureDialogBase<GrParamet
 
       String defaultValue = item.defaultValueCodeFragment.getText();
       final String initializer = item.initializerCodeFragment.getText();
-      if (item.parameter.getOldIndex() < 0 && defaultValue.trim().length() == 0 && initializer.trim().length() == 0) {
-        return message("specify.default.value", name);
+      if (item.parameter.getOldIndex() < 0 && defaultValue.trim().isEmpty() && initializer.trim().isEmpty()) {
+        return GroovyRefactoringBundle.message("specify.default.value", name);
       }
 
       item.parameter.setInitializer(initializer);
@@ -254,21 +237,21 @@ public class GrChangeSignatureDialog extends ChangeSignatureDialogBase<GrParamet
       try {
         PsiType type = typeCodeFragment.getType();
         if (!(type instanceof PsiClassType)) {
-          return message("changeSignature.wrong.type.for.exception", typeCodeFragment.getText());
+          return GroovyRefactoringBundle.message("changeSignature.wrong.type.for.exception", typeCodeFragment.getText());
         }
 
         PsiElementFactory factory = JavaPsiFacade.getInstance(getProject()).getElementFactory();
         PsiClassType throwable = factory.createTypeByFQClassName("java.lang.Throwable", myMethod.getMethod().getResolveScope());
         if (!throwable.isAssignableFrom(type)) {
-          return message("changeSignature.not.throwable.type", typeCodeFragment.getText());
+          return GroovyRefactoringBundle.message("changeSignature.not.throwable.type", typeCodeFragment.getText());
         }
         exceptionInfo.setType((PsiClassType)type);
       }
       catch (PsiTypeCodeFragment.TypeSyntaxException e) {
-        return message("changeSignature.wrong.type.for.exception", typeCodeFragment.getText());
+        return GroovyRefactoringBundle.message("changeSignature.wrong.type.for.exception", typeCodeFragment.getText());
       }
       catch (PsiTypeCodeFragment.NoTypeException e) {
-        return message("changeSignature.no.type.for.exception");
+        return GroovyRefactoringBundle.message("changeSignature.no.type.for.exception");
       }
     }
 
@@ -279,7 +262,7 @@ public class GrChangeSignatureDialog extends ChangeSignatureDialogBase<GrParamet
   private static String generateParameterText(GrParameterInfo info) {
     StringBuilder builder = new StringBuilder();
     String typeText = info.getTypeText();
-    if (typeText.length() == 0) typeText = GrModifier.DEF;
+    if (typeText.isEmpty()) typeText = GrModifier.DEF;
     builder.append(typeText).append(' ');
     builder.append(info.getName());
 
@@ -305,12 +288,8 @@ public class GrChangeSignatureDialog extends ChangeSignatureDialogBase<GrParamet
     builder.append('(');
 
     final List<GrParameterInfo> infos = getParameters();
-    if (infos.size() > 0) {
-      final List<String> paramsText = ContainerUtil.map(infos, new Function<GrParameterInfo, String>() {
-        public String fun(GrParameterInfo info) {
-          return generateParameterText(info);
-        }
-      });
+    if (!infos.isEmpty()) {
+      final List<String> paramsText = ContainerUtil.map(infos, info -> generateParameterText(info));
       builder.append("\n").append(INDENT);
       builder.append(StringUtil.join(paramsText, ",\n" + INDENT));
       builder.append('\n');
@@ -320,11 +299,7 @@ public class GrChangeSignatureDialog extends ChangeSignatureDialogBase<GrParamet
     final PsiTypeCodeFragment[] exceptions = myExceptionsModel.getTypeCodeFragments();
     if (exceptions.length > 0) {
       builder.append("\nthrows\n");
-      final List<String> exceptionNames = ContainerUtil.map(exceptions, new Function<PsiTypeCodeFragment, String>() {
-        public String fun(PsiTypeCodeFragment fragment) {
-          return fragment.getText();
-        }
-      });
+      final List<String> exceptionNames = ContainerUtil.map(exceptions, fragment -> fragment.getText());
 
       builder.append(INDENT).append(StringUtil.join(exceptionNames, ",\n" + INDENT));
     }

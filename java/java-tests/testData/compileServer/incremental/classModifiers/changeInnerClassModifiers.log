@@ -1,0 +1,16 @@
+Cleaning output files:
+out/production/ChangeInnerClassModifiers/A$Inner1.class
+out/production/ChangeInnerClassModifiers/A$Inner2.class
+out/production/ChangeInnerClassModifiers/A.class
+End of files
+Compiling files:
+src/A.java
+End of files
+Cleaning output files:
+out/production/ChangeInnerClassModifiers/B.class
+out/production/ChangeInnerClassModifiers/C.class
+End of files
+Compiling files:
+src/B.java
+src/C.java
+End of files

@@ -1,29 +1,16 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.startupWizard;
 
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.openapi.extensions.PluginId;
+import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.ClickListener;
 import com.intellij.ui.CollectionListModel;
 import com.intellij.ui.wizard.WizardNavigationState;
 import com.intellij.ui.wizard.WizardStep;
-import com.intellij.util.Function;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -33,7 +20,6 @@ import java.awt.*;
 import java.awt.event.*;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
 
 /**
@@ -45,20 +31,22 @@ public class SelectPluginsStep extends WizardStep<StartupWizardModel> {
   private JTextPane myDescriptionArea;
   private JButton myEnableAllButton;
   private JButton myDisableAllButton;
-  private final List<IdeaPluginDescriptor> myPlugins = new ArrayList<IdeaPluginDescriptor>();
+  private final List<IdeaPluginDescriptor> myPlugins = new ArrayList<>();
   private final StartupWizardModel myModel;
   private final String myRequirePlugin;
 
   private static final String[] ourSuffixes = new String[] { "integration", "support", "plugin" };
 
-  public SelectPluginsStep(final String title, final StartupWizardModel model, final String requirePlugin) {
-    super(title, "Select the plugins to enable. Disabling unused plugins will improve IDE startup speed and performance.\n\nTo change plugin settings later, go to Settings | Plugins.",
+  public SelectPluginsStep(@NotNull String title, @NotNull StartupWizardModel model, @Nullable String requirePlugin) {
+    super(title, "Select the plugins to enable. Disabling unused plugins will improve IDE startup speed and performance.\n\nTo change plugin settings later, go to " +
+                 ShowSettingsUtil.getSettingsMenuName() + " | Plugins.",
           null);
     myModel = model;
     myRequirePlugin = requirePlugin;
     myPluginsList.setCellRenderer(new ListCellRenderer() {
       private final JCheckBox myCheckbox = new JCheckBox();
 
+      @Override
       public Component getListCellRendererComponent(final JList list,
                                                     final Object value,
                                                     final int index,
@@ -80,6 +68,7 @@ public class SelectPluginsStep extends WizardStep<StartupWizardModel> {
       }
     });
     myPluginsList.addListSelectionListener(new ListSelectionListener() {
+      @Override
       public void valueChanged(final ListSelectionEvent e) {
         final IdeaPluginDescriptor pluginDescriptor = getSelectedPlugin();
         if (pluginDescriptor != null) {
@@ -96,7 +85,7 @@ public class SelectPluginsStep extends WizardStep<StartupWizardModel> {
     final int clickableArea = new JCheckBox("").getMinimumSize().width;
     new ClickListener() {
       @Override
-      public boolean onClick(MouseEvent e, int clickCount) {
+      public boolean onClick(@NotNull MouseEvent e, int clickCount) {
         if (e.getX() < clickableArea) {
           toggleSelection();
         }
@@ -105,19 +94,22 @@ public class SelectPluginsStep extends WizardStep<StartupWizardModel> {
     }.installOn(myPluginsList);
 
     myPluginsList.addKeyListener(new KeyAdapter() {
+      @Override
       public void keyTyped(final KeyEvent e) {
         if (e.getKeyChar() == ' ') {
           toggleSelection();
         }
       }
     });
-    
+
     myEnableAllButton.addActionListener(new ActionListener() {
+      @Override
       public void actionPerformed(final ActionEvent e) {
         setAllPluginsEnabled(true);
       }
     });
     myDisableAllButton.addActionListener(new ActionListener() {
+      @Override
       public void actionPerformed(final ActionEvent e) {
         setAllPluginsEnabled(false);
       }
@@ -148,12 +140,7 @@ public class SelectPluginsStep extends WizardStep<StartupWizardModel> {
         requiresBuffer.append("   (");
       }
       requiresBuffer.append("required by ");
-      requiresBuffer.append(StringUtil.join(requiredBy, new Function<IdeaPluginDescriptor, String>() {
-        @Override
-        public String fun(IdeaPluginDescriptor ideaPluginDescriptor) {
-          return getAbbreviatedName(ideaPluginDescriptor);
-        }
-      }, ", "));
+      requiresBuffer.append(StringUtil.join(requiredBy, ideaPluginDescriptor -> getAbbreviatedName(ideaPluginDescriptor), ", "));
     }
     if (requiresBuffer.length() > 0) {
       requiresBuffer.append(")");
@@ -214,6 +201,7 @@ public class SelectPluginsStep extends WizardStep<StartupWizardModel> {
     return (leadSelectionIndex < 0) ? null : myPlugins.get(leadSelectionIndex);
   }
 
+  @Override
   public JComponent prepare(final WizardNavigationState state) {
     myRootPanel.revalidate();
     myPluginsList.requestFocusInWindow();
@@ -225,15 +213,12 @@ public class SelectPluginsStep extends WizardStep<StartupWizardModel> {
   }
 
   public void fillPlugins() {
-    Collections.sort(myPlugins, new Comparator<IdeaPluginDescriptor>() {
-      public int compare(final IdeaPluginDescriptor o1, final IdeaPluginDescriptor o2) {
-        return StringUtil.compare(o1.getName(), o2.getName(), true);
-      }
-    });
+    Collections.sort(myPlugins, (o1, o2) -> StringUtil.compare(o1.getName(), o2.getName(), true));
     myPluginsList.setModel(new CollectionListModel(myPlugins));
     myPluginsList.setSelectedIndex(0);
   }
 
+  @Nullable
   public String getRequirePlugin() {
     return myRequirePlugin;
   }

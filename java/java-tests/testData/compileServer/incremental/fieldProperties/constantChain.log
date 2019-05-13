@@ -12,3 +12,9 @@ Compiling files:
 src/Client.java
 src/ServerClient.java
 End of files
+Cleaning output files:
+out/production/ConstantChain/Server.class
+End of files
+Compiling files:
+src/Server.java
+End of files

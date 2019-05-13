@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,10 +20,10 @@
  */
 package com.intellij.debugger.engine.evaluation.expression;
 
-import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
+import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluateExceptionUtil;
-import com.intellij.debugger.DebuggerBundle;
+import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.sun.jdi.ReferenceType;
 
 public class ClassObjectEvaluator implements Evaluator {
@@ -33,10 +33,7 @@ public class ClassObjectEvaluator implements Evaluator {
     myTypeEvaluator = typeEvaluator;
   }
 
-  public Modifier getModifier() {
-    return null;
-  }
-
+  @Override
   public Object evaluate(EvaluationContextImpl context) throws EvaluateException {
     Object object = myTypeEvaluator.evaluate(context);
     if (!(object instanceof ReferenceType)) {

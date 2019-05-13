@@ -44,6 +44,7 @@ public class SelectImportLocationStep extends SelectLocationStep {
     }
   }
 
+  @Override
   protected AnAction[] getActions() {
     return new AnAction[]{
       myImportTree.createExcludeAction(),
@@ -55,6 +56,7 @@ public class SelectImportLocationStep extends SelectLocationStep {
     return myImportTree.getIgnoreFileFilter();
   }
 
+  @Override
   public boolean nextIsEnabled() {
     return super.nextIsEnabled() && !myImportTree.isExcluded(myFileSystemTree.getSelectedFile());
   }

@@ -24,17 +24,18 @@ import org.zmlx.hg4idea.HgRevisionNumber;
 class HgCurrentContentRevision extends CurrentContentRevision {
   private final VcsRevisionNumber revisionNumber;
 
-  public HgCurrentContentRevision(HgFile hgFile, VcsRevisionNumber revisionNumber, VirtualFile virtualFile) {
+  HgCurrentContentRevision(HgFile hgFile, VcsRevisionNumber revisionNumber, VirtualFile virtualFile) {
     super( hgFile.toFilePath() );
     this.revisionNumber = revisionNumber;
   }
 
+  @Override
   @NotNull
   public VcsRevisionNumber getRevisionNumber() {
     return revisionNumber;
   }
 
-  public static ContentRevision create(@NotNull HgFile hgFile, HgRevisionNumber revision) {
+  public static ContentRevision create(@NotNull HgFile hgFile, @NotNull HgRevisionNumber revision) {
     VirtualFile virtualFile = VcsUtil.getVirtualFile(hgFile.getFile());
     if (virtualFile == null) {
       return null;

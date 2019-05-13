@@ -15,16 +15,15 @@
  */
 package com.intellij.uiDesigner.compiler;
 
+import com.intellij.uiDesigner.core.AbstractLayout;
 import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.core.GridLayoutManager;
-import com.intellij.uiDesigner.core.AbstractLayout;
 import com.intellij.uiDesigner.core.Util;
 import com.intellij.uiDesigner.lw.*;
 
 import javax.swing.*;
 import java.awt.*;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.Map;
 
 /**
@@ -36,8 +35,8 @@ public class GridBagConverter {
   private int myVGap;
   private boolean mySameSizeHorz;
   private boolean mySameSizeVert;
-  private final ArrayList myComponents = new ArrayList();
-  private final ArrayList myConstraints = new ArrayList();
+  private final ArrayList<JComponent> myComponents = new ArrayList<JComponent>();
+  private final ArrayList<GridConstraints> myConstraints = new ArrayList<GridConstraints>();
   private int myLastRow = -1;
   private int myLastCol = -1;
 
@@ -79,10 +78,10 @@ public class GridBagConverter {
     }
     Result[] results = converter.convert();
     int componentIndex = 0;
-    for(int i=0; i<results.length; i++) {
-      if (!results [i].isFillerPanel) {
+    for (Result result : results) {
+      if (!result.isFillerPanel) {
         final LwComponent component = (LwComponent)container.getComponent(componentIndex++);
-        idToConstraintsMap.put(component.getId(), results [i]);
+        idToConstraintsMap.put(component.getId(), result);
       }
       // else generateFillerPanel(generator, componentLocal, results [i]);
     }
@@ -118,12 +117,12 @@ public class GridBagConverter {
   }
 
   public Result[] convert() {
-    ArrayList results = new ArrayList();
+    ArrayList<Result> results = new ArrayList<Result>();
     for(int i=0; i<myComponents.size(); i++) {
-      results.add(convert((JComponent) myComponents.get(i), (GridConstraints) myConstraints.get(i)));
+      results.add(convert(myComponents.get(i), myConstraints.get(i)));
     }
     //addFillerPanels(results);
-    final Result[] resultArray = (Result[])results.toArray(new Result[results.size()]);
+    final Result[] resultArray = results.toArray(new Result[0]);
     if (myHGap > 0 || myVGap > 0) {
       applyGaps(resultArray);
     }
@@ -142,18 +141,17 @@ public class GridBagConverter {
     int rightGap = myHGap - myHGap/2;
     int topGap = myVGap / 2;
     int bottomGap = myVGap - myVGap/2;
-    for(int i=0; i<resultArray.length; i++) {
-      Result result = resultArray [i];
+    for (Result result : resultArray) {
       if (result.constraints.gridx > 0) {
         result.constraints.insets.left += leftGap;
       }
-      if (result.constraints.gridx + result.constraints.gridwidth-1 < myLastCol) {
+      if (result.constraints.gridx + result.constraints.gridwidth - 1 < myLastCol) {
         result.constraints.insets.right += rightGap;
       }
       if (result.constraints.gridy > 0) {
         result.constraints.insets.top += topGap;
       }
-      if (result.constraints.gridy + result.constraints.gridheight-1 < myLastRow) {
+      if (result.constraints.gridy + result.constraints.gridheight - 1 < myLastRow) {
         result.constraints.insets.bottom += bottomGap;
       }
     }
@@ -162,8 +160,7 @@ public class GridBagConverter {
   private static void makeSameSizes(final Result[] resultArray, boolean horizontal) {
     int minimum = -1;
     int preferred = -1;
-    for(int i=0; i<resultArray.length; i++) {
-      Result result = resultArray [i];
+    for (Result result : resultArray) {
       Dimension minSize = result.minimumSize != null || result.component == null
                           ? result.minimumSize
                           : result.component.getMinimumSize();
@@ -179,9 +176,7 @@ public class GridBagConverter {
     }
 
     if (minimum >= 0 || preferred >= 0) {
-      for(int i=0; i<resultArray.length; i++) {
-        Result result = resultArray [i];
-
+      for (Result result : resultArray) {
         if ((result.minimumSize != null || result.component != null) && minimum >= 0) {
           if (result.minimumSize == null) {
             result.minimumSize = result.component.getMinimumSize();
@@ -295,8 +290,8 @@ public class GridBagConverter {
       return 1.0;
     }
     boolean canGrow = ((policy & GridConstraints.SIZEPOLICY_CAN_GROW) != 0);
-    for (Iterator iterator = myConstraints.iterator(); iterator.hasNext();) {
-      GridConstraints otherConstraints = (GridConstraints)iterator.next();
+    for (Object myConstraint : myConstraints) {
+      GridConstraints otherConstraints = (GridConstraints)myConstraint;
 
       if (!constraintsIntersect(horizontal, constraints, otherConstraints)) {
         int otherPolicy = horizontal ? otherConstraints.getHSizePolicy() : otherConstraints.getVSizePolicy();
@@ -311,9 +306,9 @@ public class GridBagConverter {
     return 1.0;
   }
 
-  private boolean constraintsIntersect(final boolean horizontal,
-                                       final GridConstraints constraints,
-                                       final GridConstraints otherConstraints) {
+  private static boolean constraintsIntersect(final boolean horizontal,
+                                              final GridConstraints constraints,
+                                              final GridConstraints otherConstraints) {
     int start = constraints.getCell(!horizontal);
     int end = start + constraints.getSpan(!horizontal) - 1;
     int otherStart = otherConstraints.getCell(!horizontal);

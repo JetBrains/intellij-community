@@ -51,28 +51,27 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * Created by IntelliJ IDEA.
- * User: sweinreuter
- * Date: 26.07.2007
- */
 public class UnusedDefineInspection extends BaseInspection {
+  @Override
   public boolean isEnabledByDefault() {
     return false;
   }
 
+  @Override
   @Nls
   @NotNull
   public String getDisplayName() {
     return "Unused Define";
   }
 
+  @Override
   @NonNls
   @NotNull
   public String getShortName() {
     return "UnusedDefine";
   }
 
+  @Override
   @NotNull
   public RncElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
     return new MyElementVisitor(holder);
@@ -88,10 +87,11 @@ public class UnusedDefineInspection extends BaseInspection {
       }
     };
 
-    public MyElementVisitor(ProblemsHolder holder) {
+    MyElementVisitor(ProblemsHolder holder) {
       myHolder = holder;
     }
 
+    @Override
     protected void superVisitElement(PsiElement element) {
       element.accept(myXmlVisitor);
     }
@@ -106,13 +106,13 @@ public class UnusedDefineInspection extends BaseInspection {
         if (processRncUsages(pattern, new LocalSearchScope(file))) return;
       }
 
-      final PsiElementProcessor.CollectElements<XmlFile> collector = new PsiElementProcessor.CollectElements<XmlFile>();
+      final PsiElementProcessor.CollectElements<XmlFile> collector = new PsiElementProcessor.CollectElements<>();
       RelaxIncludeIndex.processBackwardDependencies((XmlFile)file, collector);
 
       if (processRncUsages(pattern, new LocalSearchScope(collector.toArray()))) return;
 
       final ASTNode astNode = ((RncDefineImpl)pattern).getNameNode();
-      myHolder.registerProblem(astNode.getPsi(), "Unreferenced define", ProblemHighlightType.LIKE_UNUSED_SYMBOL, new MyFix<RncDefine>(pattern));
+      myHolder.registerProblem(astNode.getPsi(), "Unreferenced define", ProblemHighlightType.LIKE_UNUSED_SYMBOL, new MyFix<>(pattern));
     }
 
     private static boolean processRncUsages(PsiElement tag, LocalSearchScope scope) {
@@ -176,12 +176,12 @@ public class UnusedDefineInspection extends BaseInspection {
         if (processUsages(tag, value, new LocalSearchScope(file))) return;
       }
 
-      final PsiElementProcessor.CollectElements<XmlFile> collector = new PsiElementProcessor.CollectElements<XmlFile>();
+      final PsiElementProcessor.CollectElements<XmlFile> collector = new PsiElementProcessor.CollectElements<>();
       RelaxIncludeIndex.processBackwardDependencies((XmlFile)file, collector);
 
       if (processUsages(tag, value, new LocalSearchScope(collector.toArray()))) return;
 
-      myHolder.registerProblem(value, "Unreferenced define", ProblemHighlightType.LIKE_UNUSED_SYMBOL, new MyFix<XmlTag>(tag));
+      myHolder.registerProblem(value, "Unreferenced define", ProblemHighlightType.LIKE_UNUSED_SYMBOL, new MyFix<>(tag));
     }
 
     private static boolean processUsages(PsiElement tag, XmlAttributeValue value, LocalSearchScope scope) {
@@ -201,20 +201,17 @@ public class UnusedDefineInspection extends BaseInspection {
     private static class MyFix<T extends PsiElement> implements LocalQuickFix {
       private final T myTag;
 
-      public MyFix(T tag) {
+      MyFix(T tag) {
         myTag = tag;
       }
 
-      @NotNull
-      public String getName() {
-        return "Remove Define";
-      }
-
+      @Override
       @NotNull
       public String getFamilyName() {
-        return getName();
+        return "Remove define";
       }
 
+      @Override
       public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
         try {
           if (myTag.isValid()) {
